@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2004, 2017 IBM Corp. and others
+ * Copyright (c) 2004, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,24 +29,25 @@ public class NameAndSignature implements ConstantPoolItem {
 		this.name = new J9UTF8(name);
 		this.signature = new J9UTF8(signature);
 	}
-	
+
 	public boolean equals(Object nas) {
-		return (nas instanceof NameAndSignature) 
-			&& name.equals(((NameAndSignature)nas).name) 
-			&& signature.equals(((NameAndSignature)nas).signature);
+		return (nas instanceof NameAndSignature)
+			&& name.equals(((NameAndSignature) nas).name)
+			&& signature.equals(((NameAndSignature) nas).signature);
 	}
 
 	public int hashCode() {
 		return name.hashCode() ^ signature.hashCode();
 	}
-	
+
 	public void write(ConstantPoolStream ds) {
 		ds.writeSecondaryItem(name);
 		ds.writeSecondaryItem(signature);
 
 		ds.alignTo(4);
 		ds.setOffset(this);
-		ds.writeInt( ds.getOffset(name) - ds.getOffset() );
-		ds.writeInt( ds.getOffset(signature) - ds.getOffset() );
+		ds.writeInt(ds.getOffset(name) - ds.getOffset());
+		ds.writeInt(ds.getOffset(signature) - ds.getOffset());
 	}
+
 }

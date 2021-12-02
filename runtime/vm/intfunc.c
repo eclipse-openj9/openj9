@@ -301,7 +301,9 @@ J9InternalVMFunctions J9InternalFunctions = {
 	resolveConstantDynamic,
 	resolveInvokeDynamic,
 	sendResolveOpenJDKInvokeHandle,
+#if JAVA_SPEC_VERSION >= 11
 	sendResolveConstantDynamic,
+#endif /* JAVA_SPEC_VERSION >= 11 */
 	sendResolveInvokeDynamic,
 	resolveMethodHandleRef,
 	resolveNativeAddress,
@@ -326,7 +328,9 @@ J9InternalVMFunctions J9InternalFunctions = {
 	getMonitorForWait,
 	jvmPhaseChange,
 	prepareClass,
+#if defined(J9VM_OPT_METHOD_HANDLE)
 	buildMethodTypeFrame,
+#endif /* defined(J9VM_OPT_METHOD_HANDLE) */
 	fatalRecursiveStackOverflow,
 	setIllegalAccessErrorNonPublicInvokeInterface,
 	createThreadWithCategory,

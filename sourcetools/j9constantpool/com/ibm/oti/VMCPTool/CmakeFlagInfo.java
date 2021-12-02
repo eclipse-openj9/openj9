@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2019 IBM Corp. and others
+ * Copyright (c) 2017, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,19 +22,18 @@
 package com.ibm.oti.VMCPTool;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.FileReader;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.regex.Pattern;
 import java.util.regex.Matcher;
-
+import java.util.regex.Pattern;
 
 class CmakeFlagInfo implements IFlagInfo {
-	private HashSet<String> seenFlags = new HashSet<String>();
-	private HashSet<String> setFlags = new HashSet<String>();
 
-	// Convert string  to  bool using same rules as cmake
+	private Set<String> seenFlags = new HashSet<>();
+	private Set<String> setFlags = new HashSet<>();
+
+	// Convert string to bool using same rules as cmake
 	private static boolean strToBool(String str) {
 		str = str.trim().toUpperCase();
 		if (str.isEmpty() || str.equals("NO") || str.equals("FALSE") || str.equals("OFF") || str.endsWith("-NOTFOUND")) {
@@ -49,37 +48,37 @@ class CmakeFlagInfo implements IFlagInfo {
 
 		// Pick out any lines Where <Type> == BOOL
 		Pattern cacheVarPattern = Pattern.compile("([a-zA-Z0-9_]+):BOOL=(.*)$");
-		BufferedReader reader = new BufferedReader(new FileReader(cacheInfo));
-		String line;
+		try (BufferedReader reader = new BufferedReader(new FileReader(cacheInfo))) {
+			String line;
 
-		while (null != (line = reader.readLine())) {
-			Matcher matcher = cacheVarPattern.matcher(line);
-			if (matcher.matches()) {
-				
-				String flagName = matcher.group(1);
-				boolean flagValue = strToBool(matcher.group(2));
+			while (null != (line = reader.readLine())) {
+				Matcher matcher = cacheVarPattern.matcher(line);
+				if (matcher.matches()) {
+					String flagName = matcher.group(1);
+					boolean flagValue = strToBool(matcher.group(2));
 
-				if (flagName.startsWith("J9VM_")) {
-					flagName = Util.transformFlag(flagName);
-					if (flagValue) {
-						setFlags.add(flagName);
-					} 
-					seenFlags.add(flagName);
-
+					if (flagName.startsWith("J9VM_")) {
+						flagName = Util.transformFlag(flagName);
+						if (flagValue) {
+							setFlags.add(flagName);
+						}
+						seenFlags.add(flagName);
+					}
 				}
 			}
 		}
 	}
 
+	@Override
 	public Set<String> getAllSetFlags() {
 		return setFlags;
 	}
 
-
+	@Override
 	public boolean isFlagValid(String flagName) {
 		// TODO We need to properly define all the flags from cmake before we turn this on
 		// return seenFlags.contains(Util.transformFlag(flagName));
 		return true;
 	}
-	
+
 }

@@ -343,11 +343,13 @@ public:
 	methodHandleCompiledEntryPoint(J9JavaVM *vm, J9VMThread *currentThread, j9object_t methodHandle)
 	{
 		void *compiledEntryPoint = NULL;
+#if defined(J9VM_OPT_METHOD_HANDLE)
 		if (J9_EXTENDED_RUNTIME_I2J_MH_TRANSITION_ENABLED == (vm->extendedRuntimeFlags & J9_EXTENDED_RUNTIME_I2J_MH_TRANSITION_ENABLED)) {
 			j9object_t thunks = J9VMJAVALANGINVOKEMETHODHANDLE_THUNKS(currentThread, methodHandle);
 			I_64 i2jEntry = J9VMJAVALANGINVOKETHUNKTUPLE_I2JINVOKEEXACTTHUNK(currentThread, thunks);
 			compiledEntryPoint = (void *)(UDATA)i2jEntry;
 		}
+#endif /* defined(J9VM_OPT_METHOD_HANDLE) */
 		return compiledEntryPoint;
 	}
 
@@ -1818,6 +1820,7 @@ exit:
 	isLambdaFormGeneratedMethod(J9VMThread const *currentThread, J9Method *method)
 	{
 		bool result = false;
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
 		J9Class *methodClass = J9_CLASS_FROM_METHOD(method);
 		if (J9_ARE_ANY_BITS_SET(methodClass->classFlags, J9ClassIsAnonymous) || J9ROMCLASS_IS_HIDDEN(methodClass->romClass)) {
 			J9Class *lambdaFormClass = J9VMJAVALANGINVOKELAMBDAFORM_OR_NULL(currentThread->javaVM);
@@ -1825,6 +1828,7 @@ exit:
 				result = true;
 			}
 		}
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 		return result;
 	}
 

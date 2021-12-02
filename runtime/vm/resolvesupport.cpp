@@ -1436,6 +1436,7 @@ resolveVirtualMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA c
 		J9Method *method = NULL;
 		J9Class *cpClass = NULL;
 
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE) || (defined(J9VM_OPT_METHOD_HANDLE) && (JAVA_SPEC_VERSION >= 11))
 		/* Stack allocate a byte array for MethodHandle & VarHandle method name and signature. The array size is:
 		 *  - J9ROMNameAndSignature
 		 *  - Modified method name
@@ -1445,6 +1446,7 @@ resolveVirtualMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA c
 		 *  - J9UTF8 for empty signature
 		 */
 		U_8 onStackNAS[sizeof(J9ROMNameAndSignature) + (sizeof(U_16) + 26 + 5) + sizeof(J9UTF8)];
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) || (defined(J9VM_OPT_METHOD_HANDLE) && (JAVA_SPEC_VERSION >= 11)) */
 
 		lookupOptions |= J9_LOOK_VIRTUAL;
 		if ((resolveFlags & J9_RESOLVE_FLAG_JCL_CONSTANT_POOL) == J9_RESOLVE_FLAG_JCL_CONSTANT_POOL) {
@@ -1553,6 +1555,7 @@ resolveVirtualMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA c
 
 				goto done;
 			}
+#if JAVA_SPEC_VERSION >= 11
 		} else if (resolvedClass == J9VMJAVALANGINVOKEVARHANDLE_OR_NULL(vm)) {
 			J9UTF8 *nameUTF = J9ROMNAMEANDSIGNATURE_NAME(nameAndSig);
 			J9UTF8 *sigUTF = J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSig);
@@ -1635,6 +1638,7 @@ resolveVirtualMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA c
 					}
 				}
 			}
+#endif /* JAVA_SPEC_VERSION >= 11 */
 		}
 #else /* defined(J9VM_OPT_METHOD_HANDLE) */
 		Trc_VM_Assert_ShouldNeverHappen();
@@ -1702,9 +1706,9 @@ resolveVirtualMethodRef(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA cpInd
 	return resolveVirtualMethodRefInto(vmStruct, ramCP, cpIndex, resolveFlags, resolvedMethod, ramVirtualMethodRef);
 }
 
-
-j9object_t   
-resolveMethodTypeRefInto(J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cpIndex, UDATA resolveFlags, J9RAMMethodTypeRef *ramCPEntry) {
+j9object_t
+resolveMethodTypeRefInto(J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cpIndex, UDATA resolveFlags, J9RAMMethodTypeRef *ramCPEntry)
+{
 	j9object_t methodType;
 	J9ROMMethodTypeRef *romMethodTypeRef = NULL;
 	J9UTF8 *lookupSig = NULL;
@@ -1714,7 +1718,7 @@ resolveMethodTypeRefInto(J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cpIn
 	UDATA lookupOptions = 0;
 	if (canRunJavaCode) {
 		if (!throwException) {
-			lookupOptions = J9_LOOK_NO_THROW;			
+			lookupOptions = J9_LOOK_NO_THROW;
 		}
 	} else {
 		lookupOptions = J9_LOOK_NO_JAVA;
@@ -1834,7 +1838,8 @@ resolveMethodTypeRef(J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cpIndex,
 }
 
 j9object_t   
-resolveMethodHandleRefInto(J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cpIndex, UDATA resolveFlags, J9RAMMethodHandleRef *ramCPEntry) {
+resolveMethodHandleRefInto(J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cpIndex, UDATA resolveFlags, J9RAMMethodHandleRef *ramCPEntry)
+{
 	J9ROMMethodHandleRef *romMethodHandleRef;
 	U_32 fieldOrMethodIndex;
 	J9ROMMethodRef *cpItem;
@@ -1910,7 +1915,7 @@ resolveMethodHandleRefInto(J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cp
 				break;
 			}
 		}
-#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE) && (JAVA_SPEC_VERSION >= 11)
 		if (resolvedClass == J9VMJAVALANGINVOKEVARHANDLE(vmThread->javaVM)) {
 			J9ROMNameAndSignature* nameAndSig = J9ROMMETHODREF_NAMEANDSIGNATURE(romMethodRef);
 			J9UTF8 *nameUTF = J9ROMNAMEANDSIGNATURE_NAME(nameAndSig);
@@ -1920,7 +1925,7 @@ resolveMethodHandleRefInto(J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cp
 				break;
 			}
 		}
-#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) && (JAVA_SPEC_VERSION >= 11) */
 
 		if (resolveVirtualMethodRef(vmThread, ramCP, fieldOrMethodIndex, resolveFlags, NULL) == 0) {
 			/* private methods don't end up in the vtable - we need to determine if invokeSpecial is
@@ -1930,7 +1935,7 @@ resolveMethodHandleRefInto(J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cp
 
 			/* Clear the exception and let the resolveSpecialMethodRef set an exception if necessary */
 			VM_VMHelpers::clearException(vmThread);
-			
+
 			memset(&ramSpecialMethodRef, 0, sizeof(J9RAMSpecialMethodRef));
 			if (resolveSpecialMethodRefInto(vmThread, ramCP, fieldOrMethodIndex, resolveFlags, &ramSpecialMethodRef) == NULL) {
 				/* Only the class and {Name, Signature} are used by the java code so it is safe to use the fake specialMethodRef */
@@ -2071,10 +2076,11 @@ resolveOpenJDKInvokeHandle(J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cp
 j9object_t
 resolveConstantDynamic(J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cpIndex, UDATA resolveFlags)
 {
+	j9object_t value = NULL;
+#if JAVA_SPEC_VERSION >= 11
 	Assert_VM_true(J9_RESOLVE_FLAG_RUNTIME_RESOLVE == resolveFlags);
 	J9RAMConstantDynamicRef *ramCPEntry = (J9RAMConstantDynamicRef*)ramCP + cpIndex;
 	J9JavaVM *vm = vmThread->javaVM;
-	j9object_t value = NULL;
 	bool resolved = false;
 
 retry:
@@ -2185,7 +2191,9 @@ retry:
 		omrthread_monitor_notify_all(vm->constantDynamicMutex);
 		omrthread_monitor_exit(vm->constantDynamicMutex);
 	}
-
+#else /* JAVA_SPEC_VERSION >= 11 */
+	Trc_VM_Assert_ShouldNeverHappen();
+#endif /* JAVA_SPEC_VERSION >= 11 */
 	return value;
 }
 

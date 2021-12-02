@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2017 IBM Corp. and others
+ * Copyright (c) 2017, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,27 +24,32 @@ package com.ibm.oti.VMCPTool;
 public class Util {
 
 	public static String transformFlag(String oldFlag) {
-		if (!oldFlag.startsWith("J9VM_")) { 
+		if (!oldFlag.startsWith("J9VM_")) {
 			return oldFlag;
 		}
-		
-		// hack some special cases in 
-		if ( oldFlag.equals("J9VM_IVE_JXE_OERELOCATOR")) return "ive_jxeOERelocator";
-		
+
+		// hack some special cases in
+		if (oldFlag.equals("J9VM_IVE_JXE_OERELOCATOR")) {
+			return "ive_jxeOERelocator";
+		}
+
 		String newFlag = oldFlag.substring(5); // trim off the J9VM_
-		int pos = newFlag.indexOf("_") + 1;
+		int pos = newFlag.indexOf('_') + 1;
 		String flag = newFlag.substring(0, pos).toLowerCase();
 		boolean makeUpper = false;
-		while ( true ) {
+		while (true) {
 			int last = pos;
-			pos = newFlag.indexOf("_", last);
-			if ( pos < 0 ) {
-				if ( last >= newFlag.length() )	break;
-				else pos = newFlag.length();
+			pos = newFlag.indexOf('_', last);
+			if (pos < 0) {
+				if (last >= newFlag.length()) {
+					break;
+				} else {
+					pos = newFlag.length();
+				}
 			}
 			if (makeUpper) {
 				flag += newFlag.substring(last, ++last).toUpperCase();
-			} else { 
+			} else {
 				makeUpper = true;
 			}
 			flag += newFlag.substring(last, pos).toLowerCase();
@@ -52,4 +57,5 @@ public class Util {
 		}
 		return flag;
 	}
+
 }

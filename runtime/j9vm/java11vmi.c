@@ -35,6 +35,8 @@
 #include "j9vmnls.h"
 #include "j9version.h"
 
+#if JAVA_SPEC_VERSION >= 11
+
 #define J9TIME_NANOSECONDS_PER_SECOND         ((jlong) 1000000000)
 /* Need to do a |currentSecondsTime - secondsOffset| < (2^32) check to ensure that the
  * resulting time fits into a long so it doesn't overflow. This is equivalent to doing
@@ -1106,7 +1108,7 @@ trcModulesAddReadsModule(J9VMThread *currentThread, jobject toModule, J9Module *
 		Assert_SC_true(J9VM_PACKAGE_NAME_BUFFER_LENGTH > sizeof(LOOSE_MODULE));
 		memcpy(toModuleNameBuf, LOOSE_MODULE, sizeof(LOOSE_MODULE));
 		toModuleNameUTF = toModuleNameBuf;
-#undef	LOOSE_MODULE
+#undef LOOSE_MODULE
 	}
 	if ((NULL != fromModuleNameUTF) && (NULL != toModuleNameUTF)) {
 		Trc_MODULE_addReadsModule(currentThread, fromModuleNameUTF, j9FromMod, toModuleNameUTF, toModule);
@@ -1306,7 +1308,6 @@ JVM_AddModuleExportsToAllUnnamed(JNIEnv * env, jobject fromModule, const char *p
 	f_monitorEnter(vm->classLoaderModuleAndLocationMutex);
 #endif /* defined(CALL_BUNDLED_FUNCTIONS_DIRECTLY) */
 
-
 #if JAVA_SPEC_VERSION >= 15
 	if (NULL != packageObj) {
 		j9object_t stringObject = J9_JNI_UNWRAP_REFERENCE(packageObj);
@@ -1349,40 +1350,45 @@ done:
 	f_monitorExit(vm->classLoaderModuleAndLocationMutex);
 #endif /* defined(CALL_BUNDLED_FUNCTIONS_DIRECTLY) */
 	vmFuncs->internalExitVMToJNI(currentThread);
-
 }
 
 jstring JNICALL
-JVM_GetSimpleBinaryName(JNIEnv *env, jclass arg1) {
+JVM_GetSimpleBinaryName(JNIEnv *env, jclass arg1)
+{
 	assert(!"JVM_GetSimpleBinaryName unimplemented"); /* Jazz 108925: Revive J9JCL raw pConfig build */
 	return NULL;
 }
 
 void JNICALL
-JVM_SetMethodInfo(JNIEnv *env, jobject arg1) {
+JVM_SetMethodInfo(JNIEnv *env, jobject arg1)
+{
 	assert(!"JVM_SetMethodInfo unimplemented"); /* Jazz 108925: Revive J9JCL raw pConfig build */
 }
 
 jint JNICALL
-JVM_ConstantPoolGetNameAndTypeRefIndexAt(JNIEnv *env, jobject arg1, jobject arg2, jint arg3) {
+JVM_ConstantPoolGetNameAndTypeRefIndexAt(JNIEnv *env, jobject arg1, jobject arg2, jint arg3)
+{
 	assert(!"JVM_ConstantPoolGetNameAndTypeRefIndexAt unimplemented"); /* Jazz 108925: Revive J9JCL raw pConfig build */
-    return -1;
+	return -1;
 }
 
 jint JNICALL
-JVM_MoreStackWalk(JNIEnv *env, jobject arg1, jlong arg2, jlong arg3, jint arg4, jint arg5, jobjectArray arg6, jobjectArray arg7) {
+JVM_MoreStackWalk(JNIEnv *env, jobject arg1, jlong arg2, jlong arg3, jint arg4, jint arg5, jobjectArray arg6, jobjectArray arg7)
+{
 	assert(!"JVM_MoreStackWalk unimplemented"); /* Jazz 108925: Revive J9JCL raw pConfig build */
-    return -1;
+	return -1;
 }
 
 jint JNICALL
-JVM_ConstantPoolGetClassRefIndexAt(JNIEnv *env, jobject arg1, jlong arg2, jint arg3) {
+JVM_ConstantPoolGetClassRefIndexAt(JNIEnv *env, jobject arg1, jlong arg2, jint arg3)
+{
 	assert(!"JVM_ConstantPoolGetClassRefIndexAt unimplemented"); /* Jazz 108925: Revive J9JCL raw pConfig build */
-    return -1;
+	return -1;
 }
 
 jobjectArray JNICALL
-JVM_GetVmArguments(JNIEnv *env) {
+JVM_GetVmArguments(JNIEnv *env)
+{
 	J9VMThread* currentThread = (J9VMThread*)env;
 	J9JavaVM* vm = currentThread->javaVM;
 	J9InternalVMFunctions* internalFunctions = vm->internalVMFunctions;
@@ -1414,7 +1420,6 @@ JVM_GetVmArguments(JNIEnv *env) {
 				}
 			}
 		}
-
 	}
 	/* if code reaches here, something went wrong */
 	internalFunctions->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, NULL);
@@ -1425,46 +1430,56 @@ success:
 }
 
 void JNICALL
-JVM_FillStackFrames(JNIEnv *env, jclass arg1, jint arg2, jobjectArray arg3, jint arg4, jint arg5) {
+JVM_FillStackFrames(JNIEnv *env, jclass arg1, jint arg2, jobjectArray arg3, jint arg4, jint arg5)
+{
 	assert(!"JVM_FillStackFrames unimplemented"); /* Jazz 108925: Revive J9JCL raw pConfig build */
 }
 
 jclass JNICALL
-JVM_FindClassFromCaller(JNIEnv* env, const char* arg1, jboolean arg2, jobject arg3, jclass arg4) {
+JVM_FindClassFromCaller(JNIEnv* env, const char* arg1, jboolean arg2, jobject arg3, jclass arg4)
+{
 	assert(!"JVM_FindClassFromCaller unimplemented"); /* Jazz 108925: Revive J9JCL raw pConfig build */
-    return NULL;
+	return NULL;
 }
 
 jobjectArray JNICALL
-JVM_ConstantPoolGetNameAndTypeRefInfoAt(JNIEnv *env, jobject arg1, jobject arg2, jint arg3) {
-    assert(!"JVM_ConstantPoolGetNameAndTypeRefInfoAt unimplemented"); /* Jazz 108925: Revive J9JCL raw pConfig build */
-    return NULL;
+JVM_ConstantPoolGetNameAndTypeRefInfoAt(JNIEnv *env, jobject arg1, jobject arg2, jint arg3)
+{
+	assert(!"JVM_ConstantPoolGetNameAndTypeRefInfoAt unimplemented"); /* Jazz 108925: Revive J9JCL raw pConfig build */
+	return NULL;
 }
 
 jbyte JNICALL
-JVM_ConstantPoolGetTagAt(JNIEnv *env, jobject arg1, jobject arg2, jint arg3) {
-    assert(!"JVM_ConstantPoolGetTagAt unimplemented"); /* Jazz 108925: Revive J9JCL raw pConfig build */
-    return 0;
+JVM_ConstantPoolGetTagAt(JNIEnv *env, jobject arg1, jobject arg2, jint arg3)
+{
+	assert(!"JVM_ConstantPoolGetTagAt unimplemented"); /* Jazz 108925: Revive J9JCL raw pConfig build */
+	return 0;
 }
 
 jobject JNICALL
-JVM_CallStackWalk(JNIEnv *env, jobject arg1, jlong arg2, jint arg3, jint arg4, jint arg5, jobjectArray arg6, jobjectArray arg7) {
-    assert(!"JVM_CallStackWalk unimplemented"); /* Jazz 108925: Revive J9JCL raw pConfig build */
-    return NULL;
+JVM_CallStackWalk(JNIEnv *env, jobject arg1, jlong arg2, jint arg3, jint arg4, jint arg5, jobjectArray arg6, jobjectArray arg7)
+{
+	assert(!"JVM_CallStackWalk unimplemented"); /* Jazz 108925: Revive J9JCL raw pConfig build */
+	return NULL;
 }
 
 JNIEXPORT jobject JNICALL
-JVM_GetAndClearReferencePendingList(JNIEnv *env) {
+JVM_GetAndClearReferencePendingList(JNIEnv *env)
+{
 	assert(!"JVM_GetAndClearReferencePendingList unimplemented"); /* Jazz 108925: Revive J9JCL raw pConfig build */
 	return NULL;
 }
+
 JNIEXPORT jboolean JNICALL
-JVM_HasReferencePendingList(JNIEnv *env) {
+JVM_HasReferencePendingList(JNIEnv *env)
+{
 	assert(!"JVM_HasReferencePendingList unimplemented"); /* Jazz 108925: Revive J9JCL raw pConfig build */
 	return JNI_FALSE;
 }
+
 JNIEXPORT void JNICALL
-JVM_WaitForReferencePendingList(JNIEnv *env) {
+JVM_WaitForReferencePendingList(JNIEnv *env)
+{
 	assert(!"JVM_WaitForReferencePendingList unimplemented"); /* Jazz 108925: Revive J9JCL raw pConfig build */
 	return;
 }
@@ -1482,7 +1497,8 @@ JVM_WaitForReferencePendingList(JNIEnv *env) {
  * @throws NullPointerException if module is NULL
  */
 void JNICALL
-JVM_SetBootLoaderUnnamedModule(JNIEnv *env, jobject module) {
+JVM_SetBootLoaderUnnamedModule(JNIEnv *env, jobject module)
+{
 	J9VMThread * const currentThread = (J9VMThread*)env;
 	J9JavaVM * vm = currentThread->javaVM;
 	J9InternalVMFunctions const * const vmFuncs = vm->internalVMFunctions;
@@ -1521,27 +1537,26 @@ JVM_SetBootLoaderUnnamedModule(JNIEnv *env, jobject module) {
 void JNICALL
 JVM_ToStackTraceElement(JNIEnv* env, jobject arg1, jobject arg2)
 {
-    assert(!"JVM_ToStackTraceElement unimplemented");
+	assert(!"JVM_ToStackTraceElement unimplemented");
 }
 
 void JNICALL
 JVM_GetStackTraceElements(JNIEnv *env, jobject throwable, jobjectArray elements)
 {
-    assert(!"JVM_GetStackTraceElements unimplemented");
+	assert(!"JVM_GetStackTraceElements unimplemented");
 }
 
 void JNICALL
 JVM_InitStackTraceElementArray(JNIEnv *env, jobjectArray elements, jobject throwable)
 {
-    assert(!"JVM_InitStackTraceElementArray unimplemented");
+	assert(!"JVM_InitStackTraceElementArray unimplemented");
 }
 
- void JNICALL
+void JNICALL
 JVM_InitStackTraceElement(JNIEnv* env, jobject element, jobject stackFrameInfo)
- {
-     assert(!"JVM_InitStackTraceElement unimplemented");
- }
-
+{
+	assert(!"JVM_InitStackTraceElement unimplemented");
+}
 
 /* JVM_GetModuleByPackageName is to be deleted for b156 */
 /**
@@ -1640,7 +1655,6 @@ exit:
 	return module;
 }
 
-
 /**
  * Return the clock time in nanoseconds at given offset
  *
@@ -1677,7 +1691,6 @@ JVM_GetNanoTimeAdjustment(JNIEnv *env, jclass clazz, jlong offsetSeconds)
 	return result;
 }
 
-#if JAVA_SPEC_VERSION >= 11
 JNIEXPORT jclass JNICALL
 JVM_GetNestHost(JNIEnv *env, jclass clz)
 {
@@ -1773,6 +1786,7 @@ JVM_IsCDSDumpingEnabled(JNIEnv *env)
 #endif /* JAVA_SPEC_VERSION >= 15 */
 
 #if JAVA_SPEC_VERSION >= 16
+
 JNIEXPORT jlong JNICALL
 JVM_GetRandomSeedForDumping()
 {
@@ -1786,7 +1800,8 @@ JVM_IsSharingEnabled(JNIEnv *env)
 	/* OpenJ9 does not support CDS, so we return false unconditionally. */
 	return JNI_FALSE;
 }
-#endif /* JAVA_SPEC_VERSION == 15 */
+
+#endif /* JAVA_SPEC_VERSION >= 16 */
 
 JNIEXPORT jboolean JNICALL
 JVM_IsUseContainerSupport(JNIEnv *env)

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2004, 2019 IBM Corp. and others
+ * Copyright (c) 2004, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -174,13 +174,13 @@ public class Main implements Constants {
 	private static final String optionVerbose = "-verbose";
 	private static final String constantPool = "vmconstantpool.xml";
 
-	private static String buildSpecId = null;
-	private static Integer version = null;
-	private static String configDirectory = null;
+	private static String buildSpecId;
+	private static Integer version;
+	private static String configDirectory;
 	private static String rootDirectory = ".";
-	private static String outputDirectory = null;
-	private static String cmakeCache = null;
-	private static boolean verbose = false;
+	private static String outputDirectory;
+	private static String cmakeCache;
+	private static boolean verbose;
 
 	private static IFlagInfo flagInfo;
 	private static TreeMap<String, JCLRuntimeFlag> runtimeFlagDefs;
@@ -277,8 +277,10 @@ public class Main implements Constants {
 		}
 
 		ConstantPool pool = parseConstantPool();
-		writeHeader(pool);
 
+		pool.removeNonApplicableItems(version.intValue(), flagInfo.getAllSetFlags());
+
+		writeHeader(pool);
 		writeDefinition(pool, version.intValue(), flagInfo.getAllSetFlags());
 	}
 
@@ -359,7 +361,7 @@ public class Main implements Constants {
 	}
 
 	private static ConstantPool parseConstantPool() throws IOException {
-		NodeList nodes = null;
+		NodeList nodes;
 
 		try {
 			File dir = new File(rootDirectory, "oti");
@@ -371,23 +373,30 @@ public class Main implements Constants {
 		} catch (Exception e) {
 			e.printStackTrace();
 			System.exit(-1);
+			return null; // unreachable
 		}
 
-		Map<String, ClassRef> classes = new HashMap<String, ClassRef>();
+		Map<String, ClassRef> classes = new HashMap<>();
 		final int nodeCount = nodes.getLength();
 
-		// Find classrefs.
+		// Find classref elements.
 		for (int i = 0; i < nodeCount; ++i) {
 			Node node = nodes.item(i);
 			if (node.getNodeType() == Node.ELEMENT_NODE && node.getNodeName().equals(CLASSREF)) {
-				classes.put(((Element) node).getAttribute("name"), new ClassRef((Element) node));
+				Element element = (Element) node;
+				if (element.hasAttribute("name")) {
+					classes.put(element.getAttribute("name"), new ClassRef(element));
+				} else {
+					System.err.println("Missing name for " + CLASSREF + " element");
+					System.exit(-1);
+				}
 			}
 		}
 
 		// Build constant pool
 		ConstantPool pool = new ConstantPool();
 		// TreeMap keeps flags ordered by name.
-		runtimeFlagDefs = new TreeMap<String, JCLRuntimeFlag>();
+		runtimeFlagDefs = new TreeMap<>();
 
 		int lastFlagValue = 0x1;
 		JCLRuntimeFlag defaultFlag = new JCLRuntimeFlag("default", lastFlagValue);
@@ -440,7 +449,7 @@ public class Main implements Constants {
 	private static PrimaryItem cpItem(Element e, Map<String, ClassRef> classes) {
 		String type = e.getNodeName();
 		if (CLASSREF.equals(type)) {
-			return (ClassRef) classes.get(e.getAttribute("name"));
+			return classes.get(e.getAttribute("name"));
 		} else if (FIELDREF.equals(type)) {
 			return new FieldRef(e, classes);
 		} else if (STATICFIELDREF.equals(type)) {

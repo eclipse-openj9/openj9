@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2004, 2019 IBM Corp. and others
+ * Copyright (c) 2004, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -50,11 +50,11 @@ import java.util.Set;
 public class ConstantPoolStream {
 	public final int version;
 	public final Set<String> flags;
-	private List<byte[]> outputQueue = new ArrayList<byte[]>();
+	private final List<byte[]> outputQueue = new ArrayList<>();
 	private ConstantPool constantPool;
 	private int[] cpDescription;
-	private PrintWriter out = null;
-	private int offset = 0;
+	private PrintWriter out;
+	private int offset;
 	private int itemCount;
 	private boolean even = true;
 
@@ -79,7 +79,7 @@ public class ConstantPoolStream {
 		this.constantPool = constantPool;
 		this.itemCount = itemCount;
 		this.cpDescription = new int[(itemCount + J9_CP_DESCRIPTIONS_PER_U32 - 1) / J9_CP_DESCRIPTIONS_PER_U32];
-		
+
 		// Initialize constant pool descriptors
 		for (int i = 0; i < itemCount; i++) {
 			mark(i, J9CPTYPE_UNUSED);
@@ -103,15 +103,15 @@ public class ConstantPoolStream {
 	public void markInstanceField() {
 		mark(J9CPTYPE_INSTANCE_FIELD);
 	}
-	
+
 	public void markStaticField() {
 		mark(J9CPTYPE_STATIC_FIELD);
 	}
-	
+
 	public void markStaticMethod() {
 		mark(J9CPTYPE_STATIC_METHOD);
 	}
-	
+
 	public void markVirtualMethod() {
 		mark(J9CPTYPE_VIRTUAL_METHOD);
 	}
@@ -133,7 +133,7 @@ public class ConstantPoolStream {
 	}
 
 	public void writeByte(int arg0) {
-		write(new byte[] { (byte)arg0 });
+		write(new byte[] { (byte) arg0 });
 	}
 
 	public void writeBytes(String arg0) {
@@ -141,7 +141,7 @@ public class ConstantPoolStream {
 	}
 
 	public void writeChar(int arg0) {
-		writeShort((short)arg0);
+		writeShort((short) arg0);
 	}
 
 	public void writeChars(String arg0) {
@@ -157,15 +157,17 @@ public class ConstantPoolStream {
 	}
 
 	public void writeInt(int arg0) {
-		write(new byte[] { (byte)(arg0 >> 24), (byte)(arg0 >> 16), (byte)(arg0 >> 8), (byte)arg0 } );
+		write(new byte[] { (byte) (arg0 >> 24), (byte) (arg0 >> 16), (byte) (arg0 >> 8), (byte) arg0 });
 	}
 
 	public void writeLong(long arg0) {
-		write(new byte[] { (byte)(arg0 >> 56), (byte)(arg0 >> 48), (byte)(arg0 >> 40), (byte)(arg0 >> 32), (byte)(arg0 >> 24), (byte)(arg0 >> 16), (byte)(arg0 >> 8), (byte)arg0 } );
+		write(new byte[] {
+				(byte) (arg0 >> 56), (byte) (arg0 >> 48), (byte) (arg0 >> 40), (byte) (arg0 >> 32),
+				(byte) (arg0 >> 24), (byte) (arg0 >> 16), (byte) (arg0 >> 8), (byte) arg0 });
 	}
 
 	public void writeShort(int arg0) {
-		write(new byte[] { (byte)(arg0 >> 8), (byte)arg0 } );
+		write(new byte[] { (byte) (arg0 >> 8), (byte) arg0 });
 	}
 
 	public void writeUTF(String arg0) {
@@ -187,10 +189,10 @@ public class ConstantPoolStream {
 				flushQueue();
 			}
 		}
-		
+
 		offset += data.length;
 	}
-	
+
 	public int getOffset() {
 		return offset;
 	}
@@ -200,13 +202,13 @@ public class ConstantPoolStream {
 			writeByte(0);
 		}
 	}
-	
+
 	private void flushQueue() {
 		for (Iterator<byte[]> iter = outputQueue.iterator(); iter.hasNext();) {
 			if (even) {
 				out.print("\t\t{");
 			}
-			
+
 			byte[] r0 = iter.next();
 			if (r0.length == 4) {
 				out.print(hex(r0));
@@ -256,11 +258,12 @@ public class ConstantPoolStream {
 		return buffer.toString();
 	}
 
-	private Map<ConstantPoolItem, Offset> secondaryItems = new HashMap<ConstantPoolItem, Offset>();
-	
+	private final Map<ConstantPoolItem, Offset> secondaryItems = new HashMap<>();
+
 	private class Offset {
-		int offset;
-		boolean wrote;
+		final int offset;
+		final boolean wrote;
+
 		Offset(int offset, boolean wrote) {
 			this.offset = offset;
 			this.wrote = wrote;
@@ -275,7 +278,7 @@ public class ConstantPoolStream {
 			item.write(this);
 		}
 	}
-	
+
 	public void setOffset(ConstantPoolItem item) {
 		Offset offset = secondaryItems.get(item);
 		if (null != offset && getOffset() != offset.offset) {
@@ -369,4 +372,5 @@ public class ConstantPoolStream {
 			out.print("\t/* " + string + " */");
 		}
 	}
+
 }

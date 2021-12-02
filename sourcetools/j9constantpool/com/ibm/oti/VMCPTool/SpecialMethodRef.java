@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2004, 2019 IBM Corp. and others
+ * Copyright (c) 2004, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,6 +27,7 @@ import java.util.Map;
 import org.w3c.dom.Element;
 
 public class SpecialMethodRef extends PrimaryItem implements Constants {
+
 	private static class Alias extends PrimaryItem.AliasWithClass {
 		final NameAndSignature nas;
 
@@ -40,58 +41,59 @@ public class SpecialMethodRef extends PrimaryItem implements Constants {
 				ds.writeSecondaryItem(nas);
 			}
 		}
-		
+
 		void write(ConstantPoolStream ds) {
 			if (checkClassForWrite(ds)) {
 				ds.alignTo(4);
 				ds.markSpecialMethod();
-				ds.writeInt( ds.getIndex(classRef) );
-				ds.writeInt( ds.getOffset(nas) - ds.getOffset() );
+				ds.writeInt(ds.getIndex(classRef));
+				ds.writeInt(ds.getOffset(nas) - ds.getOffset());
 			}
 		}
 	}
-	
+
 	private static class Factory implements Alias.Factory {
-		private Map classes;
+
+		private final Map<String, ClassRef> classes;
 		private ClassRef classRef;
 
-		Factory(Map classes) {
+		Factory(Map<String, ClassRef> classes) {
 			this.classes = classes;
 			this.classRef = null;
 		}
-		
+
 		public PrimaryItem.Alias alias(Element e, PrimaryItem.Alias proto) {
 			Alias p = (Alias) proto;
 			return new Alias(
-				versions(e, p),
-				flags(e, p),
-				classRef(e),
-				new NameAndSignature(
-						attribute(e, "name", p != null ? p.nas.name.data : ""),
-						attribute(e, "signature", p != null ? p.nas.signature.data : "")));
+					versions(e, p),
+					flags(e, p),
+					classRef(e),
+					new NameAndSignature(
+							attribute(e, "name", p != null ? p.nas.name.data : ""),
+							attribute(e, "signature", p != null ? p.nas.signature.data : "")));
 		}
-		
+
 		private ClassRef classRef(Element e) {
 			String name = attribute(e, "class", null);
 			if (name == null) {
 				return classRef;
 			}
 			if (classRef == null) {
-				classRef = (ClassRef) classes.get(name);
+				classRef = classes.get(name);
 			}
-			return (ClassRef) classes.get(name);
+			return classes.get(name);
 		}
 	}
 
-	public SpecialMethodRef(Element e, Map classes) {
+	public SpecialMethodRef(Element e, Map<String, ClassRef> classes) {
 		super(e, METHODALIAS, new Factory(classes));
 	}
-	
+
 	protected String cMacroName() {
 		String methodName = ((Alias) primary).nas.name.data.toUpperCase();
 		if (methodName.indexOf('<') != -1) {
-			StringBuffer newName = new StringBuffer();
-			for (int i=0; i<methodName.length(); i++) {
+			StringBuilder newName = new StringBuilder();
+			for (int i = 0; i < methodName.length(); i++) {
 				char ch = methodName.charAt(i);
 				if (ch != '<' && ch != '>') {
 					newName.append(ch);
@@ -101,7 +103,7 @@ public class SpecialMethodRef extends PrimaryItem implements Constants {
 		}
 		return ((Alias) primary).classRef.cMacroName() + "_" + methodName;
 	}
-	
+
 	public void writeMacros(ConstantPool pool, PrintWriter out) {
 		super.writeMacros(pool, out);
 		String macroName = cMacroName();
@@ -111,7 +113,7 @@ public class SpecialMethodRef extends PrimaryItem implements Constants {
 
 	public String commentText() {
 		Alias alias = (Alias) primary;
-		return "SpecialMethodRef[" + alias.classRef.getClassName() + "." + alias.nas.name.data +  alias.nas.signature.data + "]";
-	}	
+		return "SpecialMethodRef[" + alias.classRef.getClassName() + "." + alias.nas.name.data + alias.nas.signature.data + "]";
+	}
 
 }

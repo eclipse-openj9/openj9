@@ -4414,6 +4414,7 @@ setLogOptions (J9JavaVM *vm, char *options);
 
 /* -------------------- NativeHelpers.cpp ------------ */
 
+#if defined(J9VM_OPT_METHOD_HANDLE)
 /**
 * @brief
 * @param currentThread
@@ -4422,6 +4423,7 @@ setLogOptions (J9JavaVM *vm, char *options);
 */
 J9SFMethodTypeFrame *
 buildMethodTypeFrame(J9VMThread * currentThread, j9object_t methodType);
+#endif /* defined(J9VM_OPT_METHOD_HANDLE) */
 
 /* -------------------- drophelp.c ------------ */
 
