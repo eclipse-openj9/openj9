@@ -2081,3 +2081,19 @@ J9NLS_VM_VALUETYPE_HAS_WRONG_SUPERCLASS.explanation=The specified class cannot b
 J9NLS_VM_VALUETYPE_HAS_WRONG_SUPERCLASS.system_action=The JVM will throw IncompatibleClassChangeError.
 J9NLS_VM_VALUETYPE_HAS_WRONG_SUPERCLASS.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE
+
+# Messages related to parsing the ensureHashed configuration
+J9NLS_VM_INVALID_EMPTY_OPTION=Empty string passed to option \"%s\" is not allowed
+# START NON-TRANSLATABLE
+J9NLS_VM_INVALID_EMPTY_OPTION.sample_input_1=-XX:+EnsureHashed:
+J9NLS_VM_INVALID_EMPTY_OPTION.explanation=The options cannot be empty.
+J9NLS_VM_INVALID_EMPTY_OPTION.system_action=The JVM prints this message and terminates.
+J9NLS_VM_INVALID_EMPTY_OPTION.user_response=Provide non-empty options.
+# END NON-TRANSLATABLE
+
+J9NLS_ENSUREHASHED_CONFIG_OUT_OF_MEM=Could not allocate memory for the hashed classes table.
+# START NON-TRANSLATABLE
+J9NLS_ENSUREHASHED_CONFIG_OUT_OF_MEM.explanation=There was a failure to allocate native memory to store the hashed classes options.
+J9NLS_ENSUREHASHED_CONFIG_OUT_OF_MEM.system_action=The JVM prints this message and terminates.
+J9NLS_ENSUREHASHED_CONFIG_OUT_OF_MEM.user_response=Check the system memory configuration.
+# END NON-TRANSLATABLE
