@@ -572,4 +572,11 @@ public static int markCurrentThreadAsSystem()
 
 private static native int markCurrentThreadAsSystemImpl();
 
+/**
+ * Gets the J9ConstantPool address from a J9Class address
+ * @param j9clazz J9Class address
+ * @return Address of J9ConstantPool
+ */
+public static native long getJ9ConstantPoolFromJ9Class(long j9clazz);
+
 }

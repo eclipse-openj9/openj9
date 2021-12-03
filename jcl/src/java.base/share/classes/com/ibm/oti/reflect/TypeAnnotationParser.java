@@ -3,9 +3,15 @@ package com.ibm.oti.reflect;
 
 import java.lang.reflect.AnnotatedType;
 import java.lang.reflect.Constructor;
+import com.ibm.oti.vm.VM;
+/*[IF JAVA_SPEC_VERSION == 8]
+import sun.misc.Unsafe;
+/*[ELSE]*/
+import jdk.internal.misc.Unsafe;
+/*[ENDIF]*/
 
 /*******************************************************************************
- * Copyright (c) 2014, 2014 IBM Corp. and others
+ * Copyright (c) 2014, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -99,7 +105,17 @@ public class TypeAnnotationParser {
 	 */
 	public  static AnnotatedType[] buildAnnotatedInterfaces(Class clazz) {
 		byte[] attr = getAttributeData(clazz);
-		AnnotatedType[] annotatedInterfaces = sun.reflect.annotation.TypeAnnotationParser.buildAnnotatedInterfaces(attr, AnnotationParser.getConstantPool(clazz), clazz);
+		long offset = Unsafe.ARRAY_BYTE_BASE_OFFSET + ((attr.length * Unsafe.ARRAY_BYTE_INDEX_SCALE) - VM.FJ9OBJECT_SIZE);
+		long ramCPAddr = 0;
+		if (VM.FJ9OBJECT_SIZE == 4) {
+			/* Compressed object refs */
+			ramCPAddr = Integer.toUnsignedLong(Unsafe.getUnsafe().getInt(attr, offset));
+		} else {
+			ramCPAddr = Unsafe.getUnsafe().getLong(attr, offset);
+		}
+		Object internalConstantPool = VM.getVMLangAccess().createInternalConstantPool(ramCPAddr);
+
+		AnnotatedType[] annotatedInterfaces = sun.reflect.annotation.TypeAnnotationParser.buildAnnotatedInterfaces(attr, AnnotationParser.getConstantPool(internalConstantPool), clazz);
 		return annotatedInterfaces;
 	}
 	/**
@@ -109,7 +125,17 @@ public class TypeAnnotationParser {
 	 */
 	public  static AnnotatedType buildAnnotatedSupertype(Class clazz) {
 		byte[] attr = getAttributeData(clazz);
-		AnnotatedType annotatedSuperclass = sun.reflect.annotation.TypeAnnotationParser.buildAnnotatedSuperclass(attr, AnnotationParser.getConstantPool(clazz), clazz);
+		long offset = Unsafe.ARRAY_BYTE_BASE_OFFSET + ((attr.length * Unsafe.ARRAY_BYTE_INDEX_SCALE) - VM.FJ9OBJECT_SIZE);
+		long ramCPAddr = 0;
+		if (VM.FJ9OBJECT_SIZE == 4) {
+			/* Compressed object refs */
+			ramCPAddr = Integer.toUnsignedLong(Unsafe.getUnsafe().getInt(attr, offset));
+		} else {
+			ramCPAddr = Unsafe.getUnsafe().getLong(attr, offset);
+		}
+		Object internalConstantPool = VM.getVMLangAccess().createInternalConstantPool(ramCPAddr);
+
+		AnnotatedType annotatedSuperclass = sun.reflect.annotation.TypeAnnotationParser.buildAnnotatedSuperclass(attr, AnnotationParser.getConstantPool(internalConstantPool), clazz);
 		return annotatedSuperclass;
 	}
 }
