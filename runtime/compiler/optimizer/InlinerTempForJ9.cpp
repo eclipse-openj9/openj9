@@ -4144,7 +4144,8 @@ int32_t TR_MultipleCallTargetInliner::scaleSizeBasedOnBlockFrequency(int32_t byt
       int adjFrequency = frequency ? frequency : 1;
 
       float factor = (float)adjFrequency / (float)maxFrequency;
-      bytecodeSize = (int32_t)((float)bytecodeSize / (factor*factor));
+      float weight = (float)bytecodeSize / (factor*factor);
+      bytecodeSize = (weight > 0x7fffffff) ? 0x7fffffff : ((int32_t)weight);
 
       heuristicTrace(tracer(),"exceedsSizeThreshold: Scaled up size for call from %d to %d", oldSize, bytecodeSize);
       }
