@@ -2166,13 +2166,6 @@ TR_J9ServerVM::targetMethodFromMethodHandle(TR::Compilation* comp, TR::KnownObje
    return NULL;
    }
 
-TR_OpaqueMethodBlock*
-TR_J9ServerVM::targetMethodFromMethodHandle(uintptr_t methodHandle)
-   {
-   TR_ASSERT_FATAL(false, "targetMethodFromMethodHandle must not be called on JITServer");
-   return NULL;
-   }
-
 TR::KnownObjectTable::Index
 TR_J9ServerVM::getKnotIndexOfInvokeCacheArrayAppendixElement(TR::Compilation *comp, uintptr_t *invokeCacheArray)
    {

@@ -790,13 +790,6 @@ public:
     * \brief
     *    Return MethodHandle.form.vmentry.vmtarget, J9method for the underlying java method
     *    The J9Method is the target to be invoked intrinsically by MethodHandle.invokeBasic
-    *    Caller must acquire VM access
-    */
-   virtual TR_OpaqueMethodBlock* targetMethodFromMethodHandle(uintptr_t methodHandle);
-   /*
-    * \brief
-    *    Return MethodHandle.form.vmentry.vmtarget, J9method for the underlying java method
-    *    The J9Method is the target to be invoked intrinsically by MethodHandle.invokeBasic
     *    VM access is not required
     */
    virtual TR_OpaqueMethodBlock* targetMethodFromMethodHandle(TR::Compilation* comp, TR::KnownObjectTable::Index objIndex);
