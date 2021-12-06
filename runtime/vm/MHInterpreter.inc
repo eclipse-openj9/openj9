@@ -20,16 +20,13 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 #include "clang_comp.h"
-
 #include "j9cfg.h"
-#if defined(J9VM_OPT_METHOD_HANDLE)
 #include "VM_MethodHandleKinds.h"
-
 #include "MHInterpreter.hpp"
 #include "VMAccess.hpp"
 
 #if defined(MH_TRACE)
-static const char * names[] = {
+static const char * const names[] = {
 	"J9_METHOD_HANDLE_KIND_BOUND",
 	"J9_METHOD_HANDLE_KIND_GET_FIELD",
 	"J9_METHOD_HANDLE_KIND_GET_STATIC_FIELD",
@@ -62,13 +59,13 @@ static const char * names[] = {
 	"J9_METHOD_HANDLE_KIND_FILTER_ARGUMENTS",
 	"J9_METHOD_HANDLE_KIND_VARHANDLE_INVOKE_EXACT",
 	"J9_METHOD_HANDLE_KIND_VARHANDLE_INVOKE_GENERIC",
-/* #ifdef J9VM_OPT_PANAMA */
+#if defined(J9VM_OPT_PANAMA)
 	"J9_METHOD_HANDLE_KIND_NATIVE",
-/* #else */
+#else /* defined(J9VM_OPT_PANAMA) */
 	"",
-/* #endif J9VM_OPT_PANAMA */
+#endif /* defined(J9VM_OPT_PANAMA) */
 };
-#endif /* MH_TRACE */
+#endif /* defined(MH_TRACE) */
 
 VM_BytecodeAction
 VM_MHInterpreter::dispatchLoop(j9object_t methodHandle)
@@ -81,7 +78,7 @@ VM_MHInterpreter::dispatchLoop(j9object_t methodHandle)
 		Assert_VM_mhStackHandleMatch(doesMHandStackMHMatch(methodHandle));
 #if defined(MH_TRACE)
 		printf("#(%p)# dispatchLoop: MH=%p\tkind=%x\t%s\n", _currentThread, methodHandle, kind, names[kind]);
-#endif
+#endif /* defined(MH_TRACE) */
 		switch(kind) {
 		case J9_METHOD_HANDLE_KIND_CONSTANT_OBJECT:
 			dropAllArgumentsLeavingMH(methodHandle);
@@ -628,7 +625,7 @@ VM_MHInterpreter::dispatchLoop(j9object_t methodHandle)
 			nextAction = GOTO_RUN_METHODHANDLE_COMPILED;
 #if defined(MH_TRACE)
 	printf("#(%p)# dispatchLoop run MH %p compiled.  Entrypoint = %p\n", _currentThread, methodHandle, compiledEntryPoint);
-#endif
+#endif /* defined(MH_TRACE) */
 			goto done;
 		}
 	}
@@ -636,7 +633,7 @@ VM_MHInterpreter::dispatchLoop(j9object_t methodHandle)
 runMethod: {
 #if defined(MH_TRACE)
 	printf("#(%p)# dispatchLoop run method=%p\n", _currentThread, method);
-#endif
+#endif /* defined(MH_TRACE) */
 	_currentThread->tempSlot = (UDATA)method;
 	nextAction = GOTO_RUN_METHOD_FROM_METHOD_HANDLE;
 	goto done;
@@ -650,7 +647,7 @@ returnFromSend: {
 throwCurrentException: {
 #if defined(MH_TRACE)
 	printf("#(%p)# dispatchLoop throw current exception %p\n", _currentThread, _currentThread->currentException);
-#endif
+#endif /* defined(MH_TRACE) */
 	nextAction = GOTO_THROW_CURRENT_EXCEPTION;
 	goto done;
 }
@@ -658,7 +655,7 @@ throwCurrentException: {
 throwHeapOOM: {
 #if defined(MH_TRACE)
 	printf("#(%p)# dispatchLoop throw heap OOM\n", _currentThread);
-#endif
+#endif /* defined(MH_TRACE) */
 	nextAction = THROW_HEAP_OOM;
 	goto done;
 }
@@ -666,7 +663,7 @@ throwHeapOOM: {
 done:
 #if defined(MH_TRACE)
 	printf("#(%p)# dispatchLoop done - nextAction=%d\n", _currentThread, (I_32)nextAction);
-#endif
+#endif /* defined(MH_TRACE) */
 	return nextAction;
 }
 
@@ -2430,4 +2427,3 @@ ffi_exit:
 	return ret;
 }
 #endif /* J9VM_OPT_PANAMA */
-#endif /* defined(J9VM_OPT_METHOD_HANDLE) */
