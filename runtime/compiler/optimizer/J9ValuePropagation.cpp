@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -37,6 +37,7 @@
 #include "optimizer/Optimization_inlines.hpp"
 #include "env/j9method.h"
 #include "env/TRMemory.hpp"
+#include "env/TypeLayout.hpp"
 #include "il/Block.hpp"
 #include "infra/Cfg.hpp"
 #include "compile/VirtualGuard.hpp"
@@ -712,8 +713,8 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
             _valueTypesHelperCallsToBeFolded.add(
                   new (trStackMemory()) ValueTypesHelperCallTransform(_curTree, node,
                                               ValueTypesHelperCallTransform::IsRefCompare
-                                              | ValueTypesHelperCallTransform::InsertDebugCounter));
-
+                                              | ValueTypesHelperCallTransform::InsertDebugCounter,
+                                              NULL));
 
             // Replace the non-helper equality/inequality comparison with an address comparison
             TR::Node::recreate(node, acmpOp.getOpCodeValue());
@@ -796,14 +797,75 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
          isStoreValueVT = isValue(storeValueConstraint);
          }
 
-      // If the array's component type is definitely not a value type, or if the value
-      // being assigned in an array store operation is definitely not a value type, add
-      // a delayed transformation to replace the helper call with inline code to
-      // perform the array element access.
-      //
-      if ((arrayConstraint != NULL && isCompTypeVT == TR_no)
-          || (isStoreFlattenableArrayElement && isStoreValueVT == TR_no))
+      bool canTransformFlattenedArrayElementLoadStore = false;
+      // If the array element is VT and flattened, add a delayed transformation to replace
+      // the helper call with sym refs access.
+      if ((isLoadFlattenableArrayElement || (isStoreFlattenableArrayElement && storeValueConstraint)) &&
+          arrayConstraint &&
+          isArrayElementFlattened(arrayConstraint) == TR_yes)
          {
+         TR_OpaqueClassBlock *arrayComponentClass = fe()->getComponentClassFromArrayClass(arrayConstraint->getClass());
+
+         if (arrayComponentClass)
+            {
+            if (isLoadFlattenableArrayElement)
+               {
+               canTransformFlattenedArrayElementLoadStore = true;
+               }
+            else // isStoreFlattenableArrayElement
+               {
+               TR_OpaqueClassBlock *valueClass = storeValueConstraint->getClass();
+               TR_YesNoMaybe isInstanceOfComponentType = comp()->fej9()->isInstanceOf(valueClass,
+                                                                                   arrayComponentClass,
+                                                                                   storeValueConstraint->isFixedClass(),
+                                                                                   arrayConstraint->isFixedClass());
+
+               // If the value that's being stored is not the same as the array component type, use helper call.
+               canTransformFlattenedArrayElementLoadStore = (isInstanceOfComponentType == TR_yes);
+               }
+            }
+         }
+
+      // If the array is known to be of a value type that is not flattened, transform the helper call to regular aaload and aastore.
+      bool canTransformUnflattenedVTArrayElementLoadStore = false;
+      if (arrayConstraint &&
+          (isCompTypeVT == TR_yes) &&
+          (TR::Compiler->cls.isValueTypeClassFlattened(arrayConstraint->getClass()) == TR_no))
+         {
+         canTransformUnflattenedVTArrayElementLoadStore = true;
+         }
+
+      if (canTransformFlattenedArrayElementLoadStore)
+         {
+         flags8_t flagsForTransform(isLoadFlattenableArrayElement ? ValueTypesHelperCallTransform::IsArrayLoad
+                                                                  : ValueTypesHelperCallTransform::IsArrayStore);
+
+         flagsForTransform.set(ValueTypesHelperCallTransform::IsFlattenedElement);
+
+         if (!owningMethodDoesNotContainBoundChecks(this, node))
+            {
+            flagsForTransform.set(ValueTypesHelperCallTransform::RequiresBoundCheck);
+            }
+
+         // The value that is being stored into the array element has to be non null.
+         if (isStoreFlattenableArrayElement && !storeValueConstraint->isNonNullObject())
+            {
+            flagsForTransform.set(ValueTypesHelperCallTransform::RequiresNullValueCheck);
+            }
+
+         _valueTypesHelperCallsToBeFolded.add(
+               new (trStackMemory()) ValueTypesHelperCallTransform(_curTree, node, flagsForTransform, arrayConstraint->getClass()));
+         }
+      else if (canTransformUnflattenedVTArrayElementLoadStore
+               || (arrayConstraint != NULL && isCompTypeVT == TR_no)
+               || (isStoreFlattenableArrayElement && isStoreValueVT == TR_no))
+         {
+         // If the array is known to be of a value type that is not flattened,
+         // or the array's component type is definitely not a value type, or if the value
+         // being assigned in an array store operation is definitely not a value type, add
+         // a delayed transformation to replace the helper call with inline code to
+         // perform the array element access.
+         //
          flags8_t flagsForTransform(isLoadFlattenableArrayElement ? ValueTypesHelperCallTransform::IsArrayLoad
                                                                   : ValueTypesHelperCallTransform::IsArrayStore);
          flagsForTransform.set(ValueTypesHelperCallTransform::InsertDebugCounter);
@@ -818,7 +880,8 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
             //
             if ((isCompTypeVT != TR_no) && (storeValueConstraint == NULL || !storeValueConstraint->isNonNullObject()))
                {
-               flagsForTransform.set(ValueTypesHelperCallTransform::RequiresStoreAndNullCheck);
+               flagsForTransform.set(ValueTypesHelperCallTransform::RequiresStoreCheck);
+               flagsForTransform.set(ValueTypesHelperCallTransform::RequiresNullValueCheck);
                }
             else
                {
@@ -832,7 +895,7 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
             }
 
          _valueTypesHelperCallsToBeFolded.add(
-               new (trStackMemory()) ValueTypesHelperCallTransform(_curTree, node, flagsForTransform));
+               new (trStackMemory()) ValueTypesHelperCallTransform(_curTree, node, flagsForTransform, NULL));
          }
       else
          {
@@ -1651,6 +1714,277 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
       }
    }
 
+void
+J9::ValuePropagation::transformFlattenedArrayElementLoad(TR_OpaqueClassBlock *arrayClass, TR::Node *callNode)
+   {
+   /*
+    * primitive public class MultipleFieldsPrimitive {
+    *    public final int x;
+    *    public final int y;
+    * }
+    * primitive public class NestedFieldsPrimitive {
+    *    public final MultipleFieldsPrimitive vtField0;
+    *    public final MultipleFieldsPrimitive vtField1;
+    * }
+    *
+    * Before:
+    * n50n      treetop
+    * n49n        acall  jitLoadFlattenableArrayElement
+    * n46n          iload  <parm 0 I>
+    * n45n          aload  <parm 1 [QNestedFieldsPrimitive;>
+    *
+    * After:
+    * n50n      treetop
+    * n49n        newvalue  jitNewValue
+    * n3036n        loadaddr  NestedFieldsPrimitive
+    * n3043n        iloadi  <Q-NestedFieldsPrimitive-array-shadow>.vtField0.x
+    * n3042n          aladd
+    * n45n 	            aload  <parm 1 [QNestedFieldsPrimitive;>
+    * n3041n            ladd
+    * n3039n              lmul
+    * n3037n                i2l
+    * n46n                    ==>iload
+    * n3038n                lconst 16
+    * n3040n              lconst 16
+    * n3044n        iloadi  <Q-NestedFieldsPrimitive-array-shadow>.vtField0.y
+    * n3042n          ==>aladd
+    * n3045n        iloadi  <Q-NestedFieldsPrimitive-array-shadow>.vtField1.x
+    * n3042n          ==>aladd
+    * n3046n        iloadi  <Q-NestedFieldsPrimitive-array-shadow>.vtField1.y
+    * n3042n          ==>aladd
+    */
+   TR::Node *indexNode = callNode->getChild(0);
+   TR::Node *arrayRefNode = callNode->getChild(1);
+
+   TR_OpaqueClassBlock *arrayComponentClass = fe()->getComponentClassFromArrayClass(arrayClass);
+
+   const TR::TypeLayout *fieldTypeLayout = comp()->typeLayout(arrayComponentClass);
+   size_t fieldCount = fieldTypeLayout->count();
+
+   TR::ResolvedMethodSymbol *method = comp()->getOwningMethodSymbol(callNode->getOwningMethod());
+
+   // create loadaddr
+   TR::Node *classNode = TR::Node::createWithSymRef(callNode, TR::loadaddr, 0,
+                                            comp()->getSymRefTab()->findOrCreateClassSymbol(method, -1, arrayComponentClass));
+
+   // Create newvalue
+   TR::Node *newValueNode = TR::Node::recreateWithoutProperties(callNode, TR::newvalue, fieldCount+1, classNode, comp()->getSymRefTab()->findOrCreateNewValueSymbolRef(method));
+   newValueNode->setIdentityless(true);
+
+   // If the array element contains zero field, the newvalue will contain only loadaddr
+   if (fieldCount == 0)
+      {
+      if (trace())
+         {
+         traceMsg(comp(),"%s fieldCount 0: The call node is recreated to newValueNode n%dn\n", __FUNCTION__, newValueNode->getGlobalIndex());
+         }
+      return;
+      }
+
+   // Generate aladd for element address
+   int32_t elementStride = TR::Compiler->cls.flattenedArrayElementSize(comp(), arrayClass);
+   TR::Node *elementAddressNode = J9::TransformUtil::calculateElementAddressWithElementStride(comp(), arrayRefNode, indexNode, elementStride);
+
+   // Generate load for each of the final fields
+   int newValueNodeChildIndex = 1;
+   for (size_t idx = 0; idx < fieldCount; idx++)
+      {
+      const TR::TypeLayoutEntry &fieldEntry = fieldTypeLayout->entry(idx);
+      TR::ILOpCodes loadOpCode = comp()->il.opCodeForIndirectLoad(fieldEntry._datatype);
+
+      auto * fieldSymRef = comp()->getSymRefTab()->findOrFabricateFlattenedArrayElementFieldShadowSymbol(arrayComponentClass,
+                                                                  fieldEntry._datatype,
+                                                                  fieldEntry._offset,
+                                                                  fieldEntry._isPrivate,
+                                                                  fieldEntry._fieldname,
+                                                                  fieldEntry._typeSignature);
+      if (trace())
+         {
+         traceMsg(comp(), "%s %s fieldSymRef: %s fieldEntry[%d] fieldName %s fieldSig %s type %d offset %d\n", __FUNCTION__,
+            comp()->getDebug()->getName(loadOpCode), comp()->getDebug()->getName(fieldSymRef), (int)idx,
+            fieldEntry._fieldname, fieldEntry._typeSignature, fieldEntry._datatype.getDataType(), fieldEntry._offset);
+         }
+
+      TR::Node *loadNode = TR::Node::createWithSymRef(loadOpCode, 1, elementAddressNode, 0, fieldSymRef);
+      newValueNode->setAndIncChild(newValueNodeChildIndex++, loadNode);
+      }
+   }
+
+bool
+J9::ValuePropagation::transformFlattenedArrayElementStore(TR_OpaqueClassBlock *arrayClass, TR::TreeTop *callTree, TR::Node *callNode, bool needsNullValueCheck)
+   {
+   /*
+    * primitive public class MultipleFieldsPrimitive {
+    *    public final int x;
+    *    public final int y;
+    * }
+    * primitive public class NestedFieldsPrimitive {
+    *    public final MultipleFieldsPrimitive vtField0;
+    *    public final MultipleFieldsPrimitive vtField1;
+    * }
+    *
+    * Before:
+    * n9n       treetop
+    * n8n         call  jitStoreFlattenableArrayElement
+    * n5n           aload  <parm 2 QNestedFieldsPrimitive;>
+    * n4n           iload  <parm 0 I>
+    * n3n           aload  <parm 1 [QNestedFieldsPrimitive;>
+    *
+    * After:
+    * n9n       treetop
+    * n8n         istorei  <Q-NestedFieldsPrimitive-array-shadow>.vtField0.x
+    * n3123n        aladd
+    * n3n             aload  <parm 1 [QNestedFieldsPrimitive;>
+    * n3122n          ladd
+    * n3120n            lshl
+    * n3118n              i2l
+    * n4n                   iload  <parm 0 I>
+    * n3119n              iconst 4
+    * n3121n            lconst 16
+    * n3124n        iloadi  NestedFieldsPrimitive.vtField0.x
+    * n5n             aload  <parm 2 QNestedFieldsPrimitive;>
+    * n3156n    istorei  <Q-NestedFieldsPrimitive-array-shadow>.vtField0.y
+    * n3153n      ==>aladd
+    * n3155n      iloadi  NestedFieldsPrimitive.vtField0.y
+    * n5n           ==>aload
+    * n3158n    istorei  <Q-NestedFieldsPrimitive-array-shadow>.vtField1.x
+    * n3153n      ==>aladd
+    * n3157n      iloadi  NestedFieldsPrimitive.vtField1.x
+    * n5n           ==>aload
+    * n3160n    istorei  <Q-NestedFieldsPrimitive-array-shadow>.vtField1.y
+    * n3153n      ==>aladd
+    * n3159n      iloadi  NestedFieldsPrimitive.vtField1.y
+    * n5n           ==>aload
+    *
+    */
+   TR_OpaqueClassBlock *arrayComponentClass = fe()->getComponentClassFromArrayClass(arrayClass);
+
+   const TR::TypeLayout *fieldTypeLayout = comp()->typeLayout(arrayComponentClass);
+   size_t fieldCount = fieldTypeLayout->count();
+
+   TR::Node *valueNode = callNode->getChild(0);
+   TR::Node *indexNode = callNode->getChild(1);
+   TR::Node *arrayRefNode = callNode->getChild(2);
+
+   // The value that is being stored into the array element has to be non null.
+   if (needsNullValueCheck)
+      {
+      TR::Node *passThru  = TR::Node::create(callNode, TR::PassThrough, 1, valueNode);
+      TR::Node *nullCheck = TR::Node::createWithSymRef(callNode, TR::NULLCHK, 1, passThru, comp()->getSymRefTab()->findOrCreateNullCheckSymbolRef(comp()->getMethodSymbol()));
+      callTree->insertBefore(TR::TreeTop::create(comp(), nullCheck));
+      if (trace())
+         {
+         traceMsg(comp(),"%s inserted NULLCHK n%dn on valueNode n%dn\n", __FUNCTION__, nullCheck->getGlobalIndex(), valueNode->getGlobalIndex());
+         }
+      }
+
+   // If the array element contains zero field, there is nothing to store into.
+   // Remove the whole helper call tree.
+   if (fieldCount == 0)
+      {
+      TR::TransformUtil::removeTree(comp(), callTree);
+      if (trace())
+         {
+         traceMsg(comp(),"%s fieldCount 0 callTree n%dn is removed\n", __FUNCTION__, callTree->getNode()->getGlobalIndex());
+         }
+      return true;
+      }
+
+   // Generate aladd for element address
+   int32_t elementStride = TR::Compiler->cls.flattenedArrayElementSize(comp(), arrayClass);
+   TR::Node *elementAddressNode = J9::TransformUtil::calculateElementAddressWithElementStride(comp(), arrayRefNode, indexNode, elementStride);
+
+   // Generate store for each of the final fields
+   TR::TreeTop *tt = callTree;
+   for (size_t idx = 0; idx < fieldCount; idx++)
+      {
+      const TR::TypeLayoutEntry &fieldEntry = fieldTypeLayout->entry(idx);
+
+      auto * loadFieldSymRef = comp()->getSymRefTab()->findOrFabricateShadowSymbol(arrayComponentClass,
+                                                                     fieldEntry._datatype,
+                                                                     fieldEntry._offset,
+                                                                     fieldEntry._isVolatile,
+                                                                     fieldEntry._isPrivate,
+                                                                     fieldEntry._isFinal,
+                                                                     fieldEntry._fieldname,
+                                                                     fieldEntry._typeSignature
+                                                                     );
+
+      auto * storeFieldSymRef = comp()->getSymRefTab()->findOrFabricateFlattenedArrayElementFieldShadowSymbol(arrayComponentClass,
+                                                                  fieldEntry._datatype,
+                                                                  fieldEntry._offset,
+                                                                  fieldEntry._isPrivate,
+                                                                  fieldEntry._fieldname,
+                                                                  fieldEntry._typeSignature);
+
+      TR::DataType dataType = fieldEntry._datatype;
+      bool useReadBarrier = comp()->getOption(TR_EnableFieldWatch);
+      bool useWriteBarrier = ((dataType == TR::Address) && (TR::Compiler->om.writeBarrierType() != gc_modron_wrtbar_none)) || comp()->getOption(TR_EnableFieldWatch);
+
+      TR::ILOpCodes loadOpCode = useReadBarrier ? comp()->il.opCodeForIndirectReadBarrier(dataType) : comp()->il.opCodeForIndirectLoad(dataType);
+      TR::ILOpCodes storeOpCode = useWriteBarrier ? comp()->il.opCodeForIndirectWriteBarrier(dataType) : comp()->il.opCodeForIndirectStore(dataType);
+
+      if (trace())
+         {
+         traceMsg(comp(),"%s fieldEntry[%d] fieldName %s fieldSig %s type %d offset %d\n", __FUNCTION__,
+            (int)idx, fieldEntry._fieldname, fieldEntry._typeSignature, dataType.getDataType(), fieldEntry._offset);
+         traceMsg(comp(),"    %s loadFieldSymRef %p %s . %s storeFieldSymRef %p %s\n",
+            comp()->getDebug()->getName(loadOpCode), loadFieldSymRef, comp()->getDebug()->getName(loadFieldSymRef),
+            comp()->getDebug()->getName(storeOpCode), storeFieldSymRef, comp()->getDebug()->getName(storeFieldSymRef));
+         }
+
+      // There's no need to apply a NULLCHK on the load because the value is known to be a value type, which is never null.
+      TR::Node *loadNode = TR::Node::createWithSymRef(loadOpCode, 1, 1, valueNode, loadFieldSymRef);
+      TR::Node *storeNode = NULL;
+
+      if (idx == 0)
+         {
+         if (useWriteBarrier)
+            storeNode = TR::Node::recreateWithoutProperties(callNode, storeOpCode, 3, elementAddressNode, loadNode, arrayRefNode, storeFieldSymRef);
+         else
+            storeNode = TR::Node::recreateWithoutProperties(callNode, storeOpCode, 2, elementAddressNode, loadNode, storeFieldSymRef);
+         }
+      else
+         {
+         if (useWriteBarrier)
+            storeNode = TR::Node::createWithSymRef(storeOpCode, 3, 3, elementAddressNode, loadNode, arrayRefNode, storeFieldSymRef);
+         else
+            storeNode = TR::Node::createWithSymRef(storeOpCode, 2, 2, elementAddressNode, loadNode, storeFieldSymRef);
+
+         tt = tt->insertAfter(TR::TreeTop::create(comp(), storeNode));
+         }
+      }
+
+   return false;
+   }
+
+TR_YesNoMaybe
+J9::ValuePropagation::isArrayElementFlattened(TR::VPConstraint *arrayConstraint)
+   {
+   if (!TR::Compiler->om.areValueTypesEnabled())
+      {
+      return TR_no;
+      }
+
+   TR_YesNoMaybe isCompTypeVT = isArrayCompTypeValueType(arrayConstraint);
+
+   if (isCompTypeVT == TR_yes)
+      {
+      TR_OpaqueClassBlock *arrayClass = arrayConstraint->getClass();
+      if (TR::Compiler->cls.isValueTypeClassFlattened(arrayClass))
+         {
+         return TR_yes;
+         }
+      else
+         {
+         return TR_no;
+         }
+      }
+
+   // Return TR_maybe or TR_no
+   return isCompTypeVT;
+   }
+
 TR_YesNoMaybe
 J9::ValuePropagation::isArrayCompTypeValueType(TR::VPConstraint *arrayConstraint)
    {
@@ -1768,14 +2102,15 @@ J9::ValuePropagation::doDelayedTransformations()
       const bool isStore = callToTransform->_flags.testAny(ValueTypesHelperCallTransform::IsArrayStore);
       const bool isCompare = callToTransform->_flags.testAny(ValueTypesHelperCallTransform::IsRefCompare);
       const bool needsStoreCheck = callToTransform->_flags.testAny(ValueTypesHelperCallTransform::RequiresStoreCheck);
-      const bool needsStoreAndNullCheck = callToTransform->_flags.testAny(ValueTypesHelperCallTransform::RequiresStoreAndNullCheck);
+      const bool needsNullValueCheck = callToTransform->_flags.testAny(ValueTypesHelperCallTransform::RequiresNullValueCheck);
       const bool needsBoundCheck = callToTransform->_flags.testAny(ValueTypesHelperCallTransform::RequiresBoundCheck);
+      const bool isFlattenedElement = callToTransform->_flags.testAny(ValueTypesHelperCallTransform::IsFlattenedElement);
 
       // performTransformation was already checked for comparison non-helper call
       // Only need to check for array element load or store helper calls
       if (!isCompare && !performTransformation(
                             comp(),
-                            "%s Replacing n%dn from acall of <jit%sFlattenableArrayElement> to aloadi\n",
+                            "%s Replacing n%dn acall of <jit%sFlattenableArrayElement>\n",
                             OPT_DETAILS,
                             callNode->getGlobalIndex(),
                             isLoad ? "Load" : "Store"))
@@ -1807,8 +2142,6 @@ J9::ValuePropagation::doDelayedTransformations()
       TR::Node *indexNode = callNode->getChild(opIndex++);
       TR::Node *arrayRefNode = callNode->getChild(opIndex);
 
-      TR::Node *elementAddressNode = J9::TransformUtil::calculateElementAddress(comp(), arrayRefNode, indexNode, TR::Address);
-
       if (needsBoundCheck)
          {
          const int32_t width = comp()->useCompressedPointers() ? TR::Compiler->om.sizeofReferenceField()
@@ -1827,10 +2160,12 @@ J9::ValuePropagation::doDelayedTransformations()
          optimizer()->setAliasSetsAreValid(false);
          }
 
+      bool isCallTreeRemoved = false;
       TR::SymbolReference *elementSymRef = comp()->getSymRefTab()->findOrCreateArrayShadowSymbolRef(TR::Address, arrayRefNode);
 
-      if (isLoad)
+      if (isLoad && !isFlattenedElement)
          {
+         TR::Node *elementAddressNode = J9::TransformUtil::calculateElementAddress(comp(), arrayRefNode, indexNode, TR::Address);
          const TR::ILOpCodes loadOp = comp()->il.opCodeForIndirectArrayLoad(TR::Address);
 
          TR::Node *elementLoadNode = TR::Node::recreateWithoutProperties(callNode, loadOp, 1, elementAddressNode, elementSymRef);
@@ -1841,8 +2176,9 @@ J9::ValuePropagation::doDelayedTransformations()
             callTree->insertBefore(TR::TreeTop::create(comp(), compressNode));
             }
          }
-      else
+      else if (isStore && !isFlattenedElement)
          {
+         TR::Node *elementAddressNode = J9::TransformUtil::calculateElementAddress(comp(), arrayRefNode, indexNode, TR::Address);
          TR::Node *oldAnchorNode = callTree->getNode();
 
          TR_ASSERT_FATAL_WITH_NODE(oldAnchorNode, (oldAnchorNode->getNumChildren() == 1) && oldAnchorNode->getFirstChild() == callNode, "Expected call node n%un for jitStoreFlattenableArrayElement was anchored under node n%un\n", callNode->getGlobalIndex(), oldAnchorNode->getGlobalIndex());
@@ -1850,21 +2186,13 @@ J9::ValuePropagation::doDelayedTransformations()
          TR::Node *elementStoreNode = TR::Node::recreateWithoutProperties(callNode, TR::awrtbari, 3, elementAddressNode,
                                                    valueNode, arrayRefNode, elementSymRef);
 
-         if (needsStoreCheck || needsStoreAndNullCheck)
+         if (needsStoreCheck)
             {
             TR::ResolvedMethodSymbol *methodSym = comp()->getMethodSymbol();
             TR::SymbolReference *storeCheckSymRef = comp()->getSymRefTab()->findOrCreateTypeCheckArrayStoreSymbolRef(methodSym);
             TR::Node *storeCheckNode = TR::Node::createWithRoomForThree(TR::ArrayStoreCHK, elementStoreNode, 0, storeCheckSymRef);
             storeCheckNode->setByteCodeInfo(elementStoreNode->getByteCodeInfo());
             callTree->setNode(storeCheckNode);
-
-            if (needsStoreAndNullCheck)
-               {
-               TR::SymbolReference *nonNullableArrayNullStoreCheckSymRef = comp()->getSymRefTab()->findOrCreateNonNullableArrayNullStoreCheckSymbolRef();
-               TR::Node *nullCheckNode = TR::Node::createWithSymRef(TR::call, 2, 2, valueNode, arrayRefNode, nonNullableArrayNullStoreCheckSymRef);
-               nullCheckNode->setByteCodeInfo(elementStoreNode->getByteCodeInfo());
-               callTree->insertBefore(TR::TreeTop::create(comp(), TR::Node::create(TR::treetop, 1,  nullCheckNode)));
-               }
 
             // This might be the first time the various checking symbol references are used
             // Need to ensure aliasing for them is correctly constructed
@@ -1874,6 +2202,16 @@ J9::ValuePropagation::doDelayedTransformations()
          else
             {
             callTree->setNode(TR::Node::create(TR::treetop, 1, elementStoreNode));
+            }
+
+         if (needsNullValueCheck)
+            {
+            TR::SymbolReference *nonNullableArrayNullStoreCheckSymRef = comp()->getSymRefTab()->findOrCreateNonNullableArrayNullStoreCheckSymbolRef();
+            TR::Node *nullCheckNode = TR::Node::createWithSymRef(TR::call, 2, 2, valueNode, arrayRefNode, nonNullableArrayNullStoreCheckSymRef);
+            nullCheckNode->setByteCodeInfo(elementStoreNode->getByteCodeInfo());
+            callTree->insertBefore(TR::TreeTop::create(comp(), TR::Node::create(TR::treetop, 1,  nullCheckNode)));
+
+            optimizer()->setAliasSetsAreValid(false);
             }
 
          // The old anchor node is no longer needed.  Remove what was previously a child
@@ -1886,17 +2224,30 @@ J9::ValuePropagation::doDelayedTransformations()
             callTree->insertAfter(TR::TreeTop::create(comp(), compressNode));
             }
          }
-
-      // The indexNode, arrayRefNode and valueNode (if any), were referenced by the
-      // original callNode.  Now that the call node has been recreated with either
-      // an aloadi, awrtbari or ArrayStoreCHK, we need to decrement their references.
-      if (valueNode != NULL)
+      else if (isLoad && isFlattenedElement)
          {
-         valueNode->recursivelyDecReferenceCount();
+         transformFlattenedArrayElementLoad(callToTransform->_arrayClass, callNode);
+         }
+      else
+         {
+         TR_ASSERT_FATAL(isStore && isFlattenedElement, "Missing flags: isLoad %d isStore %d isFlattenedElement %d for call tree n%dn\n", isLoad, isStore, isFlattenedElement, callTree->getNode()->getGlobalIndex());
+         isCallTreeRemoved = transformFlattenedArrayElementStore(callToTransform->_arrayClass, callTree, callNode, needsNullValueCheck);
          }
 
-      indexNode->recursivelyDecReferenceCount();
-      arrayRefNode->recursivelyDecReferenceCount();
+      if (!isCallTreeRemoved)
+         {
+         // The indexNode, arrayRefNode and valueNode (if any), were referenced by the
+         // original callNode.  Now that the call node has been recreated with either
+         // an aloadi, awrtbari or ArrayStoreCHK, or jitNewValue (flattened aaload),
+         // or *storei (flattened aastore), we need to decrement their references.
+         if (valueNode != NULL)
+            {
+            valueNode->recursivelyDecReferenceCount();
+            }
+
+         indexNode->recursivelyDecReferenceCount();
+         arrayRefNode->recursivelyDecReferenceCount();
+         }
       }
 
    _valueTypesHelperCallsToBeFolded.deleteAll();
