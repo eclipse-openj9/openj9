@@ -12143,6 +12143,42 @@ TR::Register *J9::Power::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::
       TR::Node::recreate(node, TR::vadd);
       return vaddEvaluator(node, cg);
       }
+   else if (callee->getRecognizedMethod() == TR::jdk_internal_vm_vector_VectorSupport_compare &&
+       node->getOpCodeValue() == TR::vcall) // was vectorized
+      {
+      TR::DataType dataType = TR_VectorAPIExpansion::getDataTypeFromClassNode(cg->comp(), node->getChild(3));
+      bool supported = true;
+      if (dataType != TR::Float)
+         supported = false;
+      if (!node->getChild(0)->getOpCode().isLoadConst() ||
+          node->getChild(0)->getInt() != TR_VectorAPIExpansion::BT_gt)
+         supported = false;
+      if (!node->getChild(4)->getOpCode().isLoadConst() ||
+          node->getChild(4)->getInt() != 4)
+         supported = false;
+
+      TR_ASSERT_FATAL(supported, "Vector API opcode, type, and number of lanes should be supported\n");
+
+      // evaluate unused children
+      cg->evaluate(node->getChild(0));
+      cg->evaluate(node->getChild(1));
+      cg->evaluate(node->getChild(2));
+      cg->evaluate(node->getChild(3));
+      cg->evaluate(node->getChild(4));
+      cg->evaluate(node->getChild(7));
+      cg->recursivelyDecReferenceCount(node->getChild(0));
+      cg->recursivelyDecReferenceCount(node->getChild(1));
+      cg->recursivelyDecReferenceCount(node->getChild(2));
+      cg->recursivelyDecReferenceCount(node->getChild(3));
+      cg->recursivelyDecReferenceCount(node->getChild(4));
+      cg->recursivelyDecReferenceCount(node->getChild(7));
+
+      node->setChild(0, node->getChild(5));
+      node->setChild(1, node->getChild(6));
+      node->setNumChildren(2);
+      TR::Node::recreate(node, TR::vcall);
+      return vscmpgtEvaluator(node, cg);
+      }
 
 
    if (!cg->inlineDirectCall(node, returnRegister))
