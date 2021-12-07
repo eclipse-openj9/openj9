@@ -23,6 +23,12 @@
 <playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../TestConfig/playlist.xsd">
 	<test>
 		<testCaseName>Jep397Tests</testCaseName>
+		<disables>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/14028#issuecomment-988225623</comment>
+				<impl>hotspot</impl>
+			</disable>
+		</disables>
 		<variations>
 			<variation>--enable-preview</variation>
 		</variations>
@@ -46,6 +52,12 @@
 	
 	<test>
 		<testCaseName>Jep397Tests_testSubClassOfSealedSuperFromDifferentModule</testCaseName>
+		<disables>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/14028#issuecomment-988225623</comment>
+				<impl>hotspot</impl>
+			</disable>
+		</disables>
 		<variations>
 			<variation>--enable-preview</variation>
 		</variations>
@@ -77,6 +89,12 @@
 	
 	<test>
 		<testCaseName>Jep397Tests_testSubClassOfSealedSuperFromDifferentPackageInSameUnamedModule</testCaseName>
+		<disables>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/14028#issuecomment-988225623</comment>
+				<impl>hotspot</impl>
+			</disable>
+		</disables>
 		<variations>
 			<variation>--enable-preview</variation>
 		</variations>
@@ -100,6 +118,12 @@
 	
 	<test>
 		<testCaseName>Jep397Tests_testSubClassOfSealedSuperFromDifferentPackageInSameNamedModule</testCaseName>
+		<disables>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/14028#issuecomment-988225623</comment>
+				<impl>hotspot</impl>
+			</disable>
+		</disables>
 		<variations>
 			<variation>--enable-preview</variation>
 		</variations>
@@ -126,8 +150,15 @@
 			<version>16+</version>
 		</versions>
 	</test>
+
 	<test>
 		<testCaseName>CloseScope0Tests</testCaseName>
+		<disables>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/14028#issuecomment-988225623</comment>
+				<impl>hotspot</impl>
+			</disable>
+		</disables>
 		<variations>
 			<variation>--enable-preview</variation>
 		</variations>
@@ -153,8 +184,15 @@
 			<version>16+</version>
 		</versions>
 	</test>
+
 	<test>
 		<testCaseName>Jep389Tests_testClinkerFfi</testCaseName>
+		<disables>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/14028#issuecomment-988225623</comment>
+				<impl>hotspot</impl>
+			</disable>
+		</disables>
 		<variations>
 			<variation>--enable-preview</variation>
 		</variations>
