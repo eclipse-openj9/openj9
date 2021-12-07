@@ -195,7 +195,7 @@ verifyJ9ClassHeader(J9JavaVM *vm, J9Class *clazz, J9Class *javaLangObjectClass)
 	}
 
 	if ((NULL != romClass) && (0 != romClass->ramConstantPoolCount)) {
-		J9ConstantPool *constantPool = (J9ConstantPool*)clazz->ramConstantPool;
+		J9ConstantPool *constantPool = clazz->ramConstantPool;
 		J9Class *cpClass = constantPool->ramClass;
 
 		if (clazz != cpClass) {

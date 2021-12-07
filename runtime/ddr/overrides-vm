@@ -82,6 +82,9 @@ typeoverride.J9AnnotationInfoEntry.annotationType=J9SRP(J9UTF8)
 typeoverride.J9AnnotationInfoEntry.memberName=J9SRP(J9UTF8)
 typeoverride.J9AnnotationInfoEntry.memberSignature=J9SRP(J9UTF8)
 
+# Retain the old type for compatibility with dumps from older VMs.
+typeoverride.J9Class.ramConstantPool=UDATA*
+
 typeoverride.J9MethodParameter.name=J9SRP(J9UTF8)
 
 typeoverride.J9EnclosingObject.nameAndSignature=J9SRP(J9ROMNameAndSignature)
