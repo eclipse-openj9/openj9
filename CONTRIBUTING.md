@@ -76,7 +76,7 @@ Following these guidelines will help us merge your pull requests smoothly:
 
 In order to build OpenJ9, see the [build instructions](https://github.com/eclipse-openj9/openj9/tree/master/doc/build-instructions).
 Once the build system is prepared, building consists of a few simple steps. If
-building the original source fails, check the [level of the compiler](https://eclipse.github.io/openj9-docs/openj9_support/)
+building the original source fails, check the [level of the compiler](https://eclipse-openj9.github.io/openj9-docs/openj9_support/)
 being used.
 
 
