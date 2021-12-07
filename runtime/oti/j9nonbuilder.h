@@ -3122,7 +3122,6 @@ typedef struct J9ROMImageHeader {
 
 /* @ddr_namespace: map_to_type=J9ClassLocation */
 
-struct J9Class;
 typedef struct J9ClassLocation {
 	struct J9Class *clazz;
 	IDATA entryIndex;
@@ -3179,7 +3178,7 @@ typedef struct J9Class {
 	struct J9Class* replacedClass;
 	UDATA finalizeLinkOffset;
 	struct J9Class* nextClassInSegment;
-	UDATA* ramConstantPool;
+	struct J9ConstantPool *ramConstantPool;
 	j9object_t* callSites;
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
 	j9object_t* invokeCache;

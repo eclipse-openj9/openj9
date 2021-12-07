@@ -2460,8 +2460,8 @@ swapClassesForFastHCR(J9Class *originalClass, J9Class *obsoleteClass)
 	SWAP_MEMBER(romClass, J9ROMClass *, originalClass, obsoleteClass);
 	SWAP_MEMBER(ramMethods, J9Method *, originalClass, obsoleteClass);
 	SWAP_MEMBER(ramConstantPool, J9ConstantPool *, originalClass, obsoleteClass);
-	((J9ConstantPool *) originalClass->ramConstantPool)->ramClass = originalClass;
-	((J9ConstantPool *) obsoleteClass->ramConstantPool)->ramClass = obsoleteClass;
+	originalClass->ramConstantPool->ramClass = originalClass;
+	obsoleteClass->ramConstantPool->ramClass = obsoleteClass;
 	SWAP_MEMBER(replacedClass, J9Class *, originalClass, obsoleteClass);
 	SWAP_MEMBER(staticSplitMethodTable, J9Method **, originalClass, obsoleteClass);
 	SWAP_MEMBER(specialSplitMethodTable, J9Method **, originalClass, obsoleteClass);

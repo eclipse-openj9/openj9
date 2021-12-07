@@ -170,7 +170,7 @@ fieldContainsRuntimeAnnotation(J9VMThread *currentThread, J9Class *clazz, UDATA 
 	J9UTF8 *name = NULL;
 	J9UTF8 *signature = NULL;
 	J9Class *definingClass = NULL;
-	J9ConstantPool *ramCP = (J9ConstantPool *)clazz->ramConstantPool;
+	J9ConstantPool *ramCP = clazz->ramConstantPool;
 
 	Assert_VMUtil_true(NULL != clazz);
 	Assert_VMUtil_true(NULL != annotationName);
@@ -206,7 +206,7 @@ fieldContainsRuntimeAnnotation(J9VMThread *currentThread, J9Class *clazz, UDATA 
 				U_32 len = *fieldAnnotationData;
 				U_8 *data = (U_8 *)(fieldAnnotationData + 1);
 
-				annotationFound = findRuntimeVisibleAnnotation(currentThread, data, len, annotationName, ((J9ConstantPool *)definingClass->ramConstantPool)->romConstantPool);
+				annotationFound = findRuntimeVisibleAnnotation(currentThread, data, len, annotationName, definingClass->ramConstantPool->romConstantPool);
 			}
 		}
 	} else {
