@@ -45,7 +45,7 @@ class MM_VLHGCAccessBarrier : public MM_ObjectAccessBarrier
 {
 private:
 	void postObjectStoreImpl(J9VMThread *vmThread, J9Object *dstObject, J9Object *srcObject);
-	void preBatchObjectStoreImpl(J9VMThread *vmThread, J9Object *dstObject);
+	void postBatchObjectStoreImpl(J9VMThread *vmThread, J9Object *dstObject);
 	void copyArrayCritical(J9VMThread *vmThread, GC_ArrayObjectModel *indexableObjectModel,
 				J9InternalVMFunctions *functions, void **data,
 				J9IndexableObject *arrayObject, jboolean *isCopy);
@@ -74,8 +74,8 @@ public:
 
 	virtual void postObjectStore(J9VMThread *vmThread, J9Object *destObject, fj9object_t *destAddress, J9Object *value, bool isVolatile=false);
 	virtual void postObjectStore(J9VMThread *vmThread, J9Class *destClass, J9Object **destAddress, J9Object *value, bool isVolatile=false);
-	virtual bool preBatchObjectStore(J9VMThread *vmThread, J9Object *destObject, bool isVolatile=false);
-	virtual bool preBatchObjectStore(J9VMThread *vmThread, J9Class *destClass, bool isVolatile=false);
+	virtual bool postBatchObjectStore(J9VMThread *vmThread, J9Object *destObject, bool isVolatile=false);
+	virtual bool postBatchObjectStore(J9VMThread *vmThread, J9Class *destClass, bool isVolatile=false);
 	virtual void recentlyAllocatedObject(J9VMThread *vmThread, J9Object *object); 
 	virtual void postStoreClassToClassLoader(J9VMThread *vmThread, J9ClassLoader* destClassLoader, J9Class* srcClass);
 	
@@ -93,7 +93,7 @@ public:
 	virtual void referenceReprocess(J9VMThread *vmThread, J9Object *refObject)
 	{
 		/* Equivalent to J9WriteBarrierBatchStore */
-		preBatchObjectStore(vmThread, refObject);
+		postBatchObjectStore(vmThread, refObject);
 	}
 };
 

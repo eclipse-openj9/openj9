@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -48,11 +48,11 @@ protected:
 	virtual bool initialize(MM_EnvironmentBase *env);
 	virtual void tearDown(MM_EnvironmentBase *env);
 public:
-	static MM_ReadBarrierVerifier *newInstance(MM_EnvironmentBase *env);
+	static MM_ReadBarrierVerifier *newInstance(MM_EnvironmentBase *env, MM_MarkingScheme *markingScheme);
 	virtual void kill(MM_EnvironmentBase *env);
 
-	MM_ReadBarrierVerifier(MM_EnvironmentBase *env) :
-		MM_StandardAccessBarrier(env)
+	MM_ReadBarrierVerifier(MM_EnvironmentBase *env, MM_MarkingScheme *markingScheme) :
+		MM_StandardAccessBarrier(env, markingScheme)
 	{
 		_typeId = __FUNCTION__;
 	}

@@ -106,19 +106,19 @@ MM_VLHGCAccessBarrier::postObjectStore(J9VMThread *vmThread, J9Class *destClass,
 }
 
 bool 
-MM_VLHGCAccessBarrier::preBatchObjectStore(J9VMThread *vmThread, J9Object *destObject, bool isVolatile)
+MM_VLHGCAccessBarrier::postBatchObjectStore(J9VMThread *vmThread, J9Object *destObject, bool isVolatile)
 {
-	preBatchObjectStoreImpl(vmThread, destObject);
+	postBatchObjectStoreImpl(vmThread, destObject);
 	
 	return true;
 }
 
 bool 
-MM_VLHGCAccessBarrier::preBatchObjectStore(J9VMThread *vmThread, J9Class *destClass, bool isVolatile)
+MM_VLHGCAccessBarrier::postBatchObjectStore(J9VMThread *vmThread, J9Class *destClass, bool isVolatile)
 {
 	j9object_t destObject = J9VM_J9CLASS_TO_HEAPCLASS(destClass);
 	
-	preBatchObjectStoreImpl(vmThread, destObject);
+	postBatchObjectStoreImpl(vmThread, destObject);
 	
 	return true;
 }
@@ -167,7 +167,7 @@ MM_VLHGCAccessBarrier::postObjectStoreImpl(J9VMThread *vmThread, J9Object *dstOb
  * to optimistically add an object to the remembered set without checking too hard.
  */
 void 
-MM_VLHGCAccessBarrier::preBatchObjectStoreImpl(J9VMThread *vmThread, J9Object *dstObject)
+MM_VLHGCAccessBarrier::postBatchObjectStoreImpl(J9VMThread *vmThread, J9Object *dstObject)
 {
 	MM_EnvironmentVLHGC *env = MM_EnvironmentVLHGC::getEnvironment(vmThread);
 	_extensions->cardTable->dirtyCard(env, dstObject);
