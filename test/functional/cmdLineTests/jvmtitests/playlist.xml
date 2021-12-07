@@ -428,6 +428,16 @@
 	</test>
 	<test>
 		<testCaseName>cmdLineTester_jvmtitests_hcr_OSRG_nongold_SE80</testCaseName>
+		<disables>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/14014#issuecomment-987012106</comment>
+				<platform>.*aarch64.*</platform>
+			</disable>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/14014#issuecomment-987012106</comment>
+				<platform>.*ppc.*</platform>
+			</disable>
+		</disables>
 		<variations>
 			<variation>Mode107-OSRG -Xnocompressedrefs</variation>
 			<variation>Mode110-OSRG -Xnocompressedrefs</variation>
@@ -468,6 +478,14 @@
 			<disable>
 				<comment>https://github.com/eclipse-openj9/openj9/issues/14014</comment>
 				<version>17+</version>
+			</disable>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/14014#issuecomment-987012106</comment>
+				<platform>.*aarch64.*</platform>
+			</disable>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/14014#issuecomment-987012106</comment>
+				<platform>.*ppc.*</platform>
 			</disable>
 		</disables>
 		<variations>
