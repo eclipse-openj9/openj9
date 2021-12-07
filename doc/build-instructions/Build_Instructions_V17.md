@@ -39,7 +39,7 @@ Build instructions are available for the following platforms:
 
 User documentation for the latest release of Eclipse OpenJ9 is available at the [Eclipse Foundation](https://www.eclipse.org/openj9/docs).
 If you build a binary from the current OpenJ9 source, new features and changes might be in place for the next release of OpenJ9. Draft user
-documentation for the next release of OpenJ9 can be found [here](https://eclipse.github.io/openj9-docs/).
+documentation for the next release of OpenJ9 can be found [here](https://eclipse-openj9.github.io/openj9-docs/).
 
 ----------------------------------
 
@@ -149,8 +149,8 @@ bash configure --with-boot-jdk=/home/jenkins/bootjdks/jdk16
 Mixed references is the default to build when no options are specified. _Note that `--with-cmake=no` cannot be used to build mixed references._ `configure` options include:
 - `--with-mixedrefs` create a mixed references static build (equivalent to `--with-mixedrefs=static`)
 - `--with-mixedrefs=no` create a build supporting compressed references only
-- `--with-mixedrefs=dynamic` create a mixed references build that uses runtime checks 
-- `--with-mixedrefs=static` (this is the default) create a mixed references build which avoids runtime checks by compiling source twice 
+- `--with-mixedrefs=dynamic` create a mixed references build that uses runtime checks
+- `--with-mixedrefs=static` (this is the default) create a mixed references build which avoids runtime checks by compiling source twice
 - `--with-noncompressedrefs` create a build supporting non-compressed references only
 
 :pencil: **OpenSSL support:** If you want to build an OpenJDK that includes OpenSSL, you must specify `--with-openssl={fetched|system|path_to_library}`
@@ -286,8 +286,8 @@ where `<cups_include_path>` is the absolute path to CUPS. For example, `/opt/fre
 Mixed references is the default to build when no options are specified. _Note that `--with-cmake=no` cannot be used to build mixed references._ `configure` options include:
 - `--with-mixedrefs` create a mixed references static build (equivalent to `--with-mixedrefs=static`)
 - `--with-mixedrefs=no` create a build supporting compressed references only
-- `--with-mixedrefs=dynamic` create a mixed references build that uses runtime checks 
-- `--with-mixedrefs=static` (this is the default) create a mixed references build which avoids runtime checks by compiling source twice 
+- `--with-mixedrefs=dynamic` create a mixed references build that uses runtime checks
+- `--with-mixedrefs=static` (this is the default) create a mixed references build which avoids runtime checks by compiling source twice
 - `--with-noncompressedrefs` create a build supporting non-compressed references only
 
 :pencil: **OpenSSL support:** If you want to build an OpenJDK that includes OpenSSL, you must specify `--with-openssl={fetched|system|path_to_library}`
@@ -451,8 +451,8 @@ Note: If you have multiple versions of Visual Studio installed, you can enforce 
 Mixed references is the default to build when no options are specified. _Note that `--with-cmake=no` cannot be used to build mixed references._ `configure` options include:
 - `--with-mixedrefs` create a mixed references static build (equivalent to `--with-mixedrefs=static`)
 - `--with-mixedrefs=no` create a build supporting compressed references only
-- `--with-mixedrefs=dynamic` create a mixed references build that uses runtime checks 
-- `--with-mixedrefs=static` (this is the default) create a mixed references build which avoids runtime checks by compiling source twice 
+- `--with-mixedrefs=dynamic` create a mixed references build that uses runtime checks
+- `--with-mixedrefs=static` (this is the default) create a mixed references build which avoids runtime checks by compiling source twice
 - `--with-noncompressedrefs` create a build supporting non-compressed references only
 
 :pencil: **OpenSSL support:** If you want to build an OpenJDK that includes OpenSSL, you must specify `--with-openssl=path_to_library`, where `path_to_library` specifies the path to the prebuilt OpenSSL library that you obtained in **2. Get the source**. If you want to include the OpenSSL cryptographic library in the OpenJDK binary, you must also include `--enable-openssl-bundling`.
@@ -589,8 +589,8 @@ bash configure --with-boot-jdk=<path_to_boot_JDK16>
 Mixed references is the default to build when no options are specified. _Note that `--with-cmake=no` cannot be used to build mixed references._ `configure` options include:
 - `--with-mixedrefs` create a mixed references static build (equivalent to `--with-mixedrefs=static`)
 - `--with-mixedrefs=no` create a build supporting compressed references only
-- `--with-mixedrefs=dynamic` create a mixed references build that uses runtime checks 
-- `--with-mixedrefs=static` (this is the default) create a mixed references build which avoids runtime checks by compiling source twice 
+- `--with-mixedrefs=dynamic` create a mixed references build that uses runtime checks
+- `--with-mixedrefs=static` (this is the default) create a mixed references build which avoids runtime checks by compiling source twice
 - `--with-noncompressedrefs` create a build supporting non-compressed references only
 
 :pencil: **OpenSSL support:** If you want to build an OpenJDK that includes OpenSSL, you must specify `--with-openssl=path_to_library`, where `path_to_library` specifies the path to the prebuilt OpenSSL library that you obtained in **2. Get the source**. If you want to include the OpenSSL cryptographic library in the OpenJDK binary, you must also include `--enable-openssl-bundling`.
@@ -732,8 +732,8 @@ bash configure --openjdk-target=${OPENJ9_CC_PREFIX} \
 Mixed references is the default to build when no options are specified. _Note that `--with-cmake=no` cannot be used to build mixed references._ `configure` options include:
 - `--with-mixedrefs` create a mixed references static build (equivalent to `--with-mixedrefs=static`)
 - `--with-mixedrefs=no` create a build supporting compressed references only
-- `--with-mixedrefs=dynamic` create a mixed references build that uses runtime checks 
-- `--with-mixedrefs=static` (this is the default) create a mixed references build which avoids runtime checks by compiling source twice 
+- `--with-mixedrefs=dynamic` create a mixed references build that uses runtime checks
+- `--with-mixedrefs=static` (this is the default) create a mixed references build which avoids runtime checks by compiling source twice
 - `--with-noncompressedrefs` create a build supporting non-compressed references only
 
 :pencil: **OpenSSL support:** If you want to build an OpenJDK that uses OpenSSL, you must specify `--with-openssl={system|path_to_library}`

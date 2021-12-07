@@ -39,7 +39,7 @@ Build instructions are available for the following platforms:
 
 User documentation for the latest release of Eclipse OpenJ9 is available at the [Eclipse Foundation](https://www.eclipse.org/openj9/docs).
 If you build a binary from the current OpenJ9 source, new features and changes might be in place for the next release of OpenJ9. Draft user
-documentation for the next release of OpenJ9 can be found [here](https://eclipse.github.io/openj9-docs/).
+documentation for the next release of OpenJ9 can be found [here](https://eclipse-openj9.github.io/openj9-docs/).
 
 ----------------------------------
 
