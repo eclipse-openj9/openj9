@@ -3761,6 +3761,32 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 	}
 #endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) */
 
+#if JAVA_SPEC_VERSION >= 18
+	{
+		/* JEP 421: Deprecate Finalization for Removal - Expecting values: "enabled" and "disabled".
+		 * The default value for now will be "enabled", i.e., finalization is enabled by default.
+		 * Other values will cause an error, additional values may be added in the future.
+		 */
+		IDATA argIndex = FIND_AND_CONSUME_ARG(STARTSWITH_MATCH, VMOPT_DISABLE_FINALIZATION, NULL);
+		if (argIndex >= 0) {
+			PORT_ACCESS_FROM_JAVAVM(vm);
+			char *optionArg = NULL;
+			GET_OPTION_VALUE(argIndex, '=', &optionArg);
+			if (NULL != optionArg) {
+				if (strcmp(optionArg, "disabled") == 0) {
+					vm->extendedRuntimeFlags |= J9_EXTENDED_RUNTIME_DISABLE_FINALIZATION;
+				} else if (strcmp(optionArg, "enabled") == 0) {
+					/* do nothing as finalization is enabled by default */
+				} else {
+					j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_VM_UNRECOGNISED_CMD_LINE_OPT, VMOPT_DISABLE_FINALIZATION);
+				}
+			} else {
+				j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_VM_UNRECOGNISED_CMD_LINE_OPT, VMOPT_DISABLE_FINALIZATION);
+			}
+		}
+	}
+#endif /* JAVA_SPEC_VERSION >= 18 */
+
 	return JNI_OK;
 }
 
