@@ -1,8 +1,6 @@
-/*[INCLUDE-IF Sidecar16]*/
-package java.lang;
-
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 /*******************************************************************************
- * Copyright (c) 1998, 2017 IBM Corp. and others
+ * Copyright (c) 1998, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,7 +20,8 @@ package java.lang;
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
- 
+package java.lang;
+
 /**
  * Object is the root of the java class hierarchy. All non-base types
  * respond to the messages defined in this class.
@@ -30,7 +29,6 @@ package java.lang;
  * @author		OTI
  * @version		initial
  */
- 
 public class Object {
 
 /**
@@ -75,7 +73,7 @@ protected Object clone() throws CloneNotSupportedException
  *						if it is different from this object.
  * @see			#hashCode
  */
-public boolean equals (Object o) {
+public boolean equals(Object o) {
 	return this == o;
 }
 
@@ -95,7 +93,7 @@ public boolean equals (Object o) {
  *					which are thrown during finalization.
  *
 /*[IF Sidecar19-SE]
- * @deprecated  May cause performance issues, deadlocks and hangs. 
+ * @deprecated  May cause performance issues, deadlocks and hangs.
  *              Errors in  finalizers can lead to resource leaks.
 /*[ENDIF]
  */
@@ -105,14 +103,16 @@ public boolean equals (Object o) {
 	but he can still invoke it. Since this method is empty, the space cost for it
 	is negligible, so we leave it in.
 /*[ENDIF]*/
-/*[IF Sidecar19-SE] */
+/*[IF JAVA_SPEC_VERSION >= 18] */
+@Deprecated(forRemoval=true, since="9")
+/*[ELSEIF JAVA_SPEC_VERSION >= 9] */
 @Deprecated(forRemoval=false, since="9")
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 18 */
 protected void finalize () throws Throwable {
 }
 
 /**
- * Answers the unique instance of java.lang.Class which 
+ * Answers the unique instance of java.lang.Class which
  * represents the class of the receiver.
  *
  * @return	the receiver's Class
@@ -120,8 +120,8 @@ protected void finalize () throws Throwable {
 public final native Class<? extends Object> getClass();
 
 /**
- * Answers an integer hash code for the receiver. Any two 
- * objects which answer <code>true</code> when passed to 
+ * Answers an integer hash code for the receiver. Any two
+ * objects which answer <code>true</code> when passed to
  * <code>.equals</code> must answer the same value for this
  * method.
  *
@@ -153,7 +153,7 @@ public final native void notify();
  * according to their priorities as specified in class Thread.
  * Between any two threads of the same priority the one which
  * waited first will be the first thread that runs after
- * being notified. The method can only be invoked by a thread 
+ * being notified. The method can only be invoked by a thread
  * which owns the receiver's monitor.
  *
  * @see			#notify
@@ -171,8 +171,8 @@ public final native void notifyAll();
  * @return		String
  *					a printable representation for the receiver.
  */
-public String toString () {
-	/*[IF] 
+public String toString() {
+	/*[IF]
 	The explicit use of StringBuffer is not necessary as the hex string will not exceed 8 chars
 	and thus the StringBuffer (allocated with classname.length()+16) in the  will not grow.
 	/*[ENDIF]*/
@@ -183,13 +183,13 @@ public String toString () {
  * Causes the thread which sent this message to be made not
  * ready to run pending some change in the receiver (as
  * indicated by <code>notify</code> or <code>notifyAll</code>).
- * The method can only be invoked by a thread which owns the 
+ * The method can only be invoked by a thread which owns the
  * receiver's monitor. A waiting thread can be sent
  * <code>interrupt()</code> to cause it to prematurely stop
  * waiting, so senders of wait should check that the condition
  * they were waiting for has been met.
  * <p>
- * When the thread waits, it gives up ownership of the 
+ * When the thread waits, it gives up ownership of the
  * receiver's monitor. When it is notified (or interrupted) it
  * re-acquires the monitor before it starts running.
  *
@@ -203,21 +203,21 @@ public String toString () {
  * @see			#wait(long,int)
  * @see			java.lang.Thread
  */
-public final void wait () throws InterruptedException {
+public final void wait() throws InterruptedException {
 	wait(0, 0);
 }
 
 /**
  * Causes the thread which sent this message to be made not
- * ready to run either pending some change in the receiver 
- * (as indicated by <code>notify</code> or <code>notifyAll</code>) 
- * or the expiration of the timeout. The method can only be invoked 
- * by a thread which owns the receiver's monitor. A waiting thread 
- * can be sent <code>interrupt()</code> to cause it to prematurely 
+ * ready to run either pending some change in the receiver
+ * (as indicated by <code>notify</code> or <code>notifyAll</code>)
+ * or the expiration of the timeout. The method can only be invoked
+ * by a thread which owns the receiver's monitor. A waiting thread
+ * can be sent <code>interrupt()</code> to cause it to prematurely
  * stop waiting, so senders of wait should check that the condition
  * they were waiting for has been met.
  * <p>
- * When the thread waits, it gives up ownership of the 
+ * When the thread waits, it gives up ownership of the
  * receiver's monitor. When it is notified (or interrupted) it
  * re-acquires the monitor before it starts running.
  *
@@ -232,21 +232,21 @@ public final void wait () throws InterruptedException {
  * @see			#wait(long,int)
  * @see			java.lang.Thread
  */
-public final void wait (long time) throws InterruptedException {
+public final void wait(long time) throws InterruptedException {
 	wait(time, 0);
 }
 
 /**
  * Causes the thread which sent this message to be made not
- * ready to run either pending some change in the receiver 
- * (as indicated by <code>notify</code> or <code>notifyAll</code>) 
- * or the expiration of the timeout. The method can only be invoked 
- * by a thread which owns the receiver's monitor. A waiting thread 
- * can be sent <code>interrupt()</code> to cause it to prematurely 
+ * ready to run either pending some change in the receiver
+ * (as indicated by <code>notify</code> or <code>notifyAll</code>)
+ * or the expiration of the timeout. The method can only be invoked
+ * by a thread which owns the receiver's monitor. A waiting thread
+ * can be sent <code>interrupt()</code> to cause it to prematurely
  * stop waiting, so senders of wait should check that the condition
  * they were waiting for has been met.
  * <p>
- * When the thread waits, it gives up ownership of the 
+ * When the thread waits, it gives up ownership of the
  * receiver's monitor. When it is notified (or interrupted) it
  * re-acquires the monitor before it starts running.
  *
@@ -264,7 +264,7 @@ public final void wait (long time) throws InterruptedException {
  * @see			#wait(long)
  * @see			java.lang.Thread
  */
-public final native void wait (long time, int frac) throws InterruptedException;
+public final native void wait(long time, int frac) throws InterruptedException;
 
 /*
  * Used as a prototype for the jit.
