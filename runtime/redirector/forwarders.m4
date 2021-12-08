@@ -355,4 +355,6 @@ _IF([JAVA_SPEC_VERSION >= 17],
 _IF([JAVA_SPEC_VERSION >= 17],
 	[_X(JVM_DumpDynamicArchive, JNICALL, false, void, JNIEnv *env, jstring str)])
 _IF([JAVA_SPEC_VERSION >= 18],
+	[_X(JVM_IsFinalizationEnabled, JNICALL, false, jboolean, JNIEnv *env)])
+_IF([JAVA_SPEC_VERSION >= 18],
 	[_X(JVM_ReportFinalizationComplete, JNICALL, false, void, JNIEnv *env, jobject obj)])

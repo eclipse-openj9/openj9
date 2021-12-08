@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -53,7 +53,7 @@ public:
 	void tearDown(MM_EnvironmentBase *env);
 
 	void postObjectStore(J9VMThread *vmThread, J9Object *dstObject, J9Object *srcObject);
-	void preBatchObjectStore(J9VMThread *vmThread, J9Object *dstObject);
+	void postBatchObjectStore(J9VMThread *vmThread, J9Object *dstObject);
 	
 	MM_GenerationalAccessBarrierComponent()
 	{

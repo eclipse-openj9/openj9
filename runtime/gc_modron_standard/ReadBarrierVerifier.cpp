@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -44,13 +44,13 @@
 #if defined(OMR_ENV_DATA64) && defined(OMR_GC_FULL_POINTERS)
 
 MM_ReadBarrierVerifier *
-MM_ReadBarrierVerifier::newInstance(MM_EnvironmentBase *env)
+MM_ReadBarrierVerifier::newInstance(MM_EnvironmentBase *env, MM_MarkingScheme *markingScheme)
 {
 	MM_ReadBarrierVerifier *barrier;
 
 	barrier = (MM_ReadBarrierVerifier *)env->getForge()->allocate(sizeof(MM_ReadBarrierVerifier), MM_AllocationCategory::FIXED, J9_GET_CALLSITE());
 	if (barrier) {
-		new(barrier) MM_ReadBarrierVerifier(env);
+		new(barrier) MM_ReadBarrierVerifier(env, markingScheme);
 		if (!barrier->initialize(env)) {
 			barrier->kill(env);
 			barrier = NULL;

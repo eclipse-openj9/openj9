@@ -698,7 +698,7 @@ J9WriteBarrierBatch(J9VMThread *vmThread, J9Object *dstObject)
 {
 	MM_ObjectAccessBarrier *barrier = MM_GCExtensions::getExtensions(vmThread->javaVM)->accessBarrier;
 	/* In Metronome, write barriers are always pre-store */
-	barrier->preBatchObjectStore(vmThread, dstObject);	
+	barrier->postBatchObjectStore(vmThread, dstObject);
 }
 
 void
@@ -706,7 +706,7 @@ J9WriteBarrierClassBatch(J9VMThread *vmThread, J9Class *dstClazz)
 {
 	MM_ObjectAccessBarrier *barrier = MM_GCExtensions::getExtensions(vmThread->javaVM)->accessBarrier;
 	/* In Metronome, write barriers are always pre-store */
-	barrier->preBatchObjectStore(vmThread, dstClazz);	
+	barrier->postBatchObjectStore(vmThread, dstClazz);
 }
 
 void

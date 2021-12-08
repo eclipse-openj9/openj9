@@ -2047,7 +2047,7 @@ MM_ObjectAccessBarrier::postObjectStore(J9VMThread *vmThread, J9Object **destAdd
  * TODO: This should probably be postBatchObjectStore, not pre-.
  */
 bool
-MM_ObjectAccessBarrier::preBatchObjectStore(J9VMThread *vmThread, J9Object *destObject, bool isVolatile)
+MM_ObjectAccessBarrier::postBatchObjectStore(J9VMThread *vmThread, J9Object *destObject, bool isVolatile)
 {
 #if defined(J9VM_GC_COMBINATION_SPEC)
 	/* (assert here to verify that we aren't defaulting to this implementation through some unknown path - delete once combination is stable) */
@@ -2057,7 +2057,7 @@ MM_ObjectAccessBarrier::preBatchObjectStore(J9VMThread *vmThread, J9Object *dest
 }
 
 bool
-MM_ObjectAccessBarrier::preBatchObjectStore(J9VMThread *vmThread, J9Class *destClass, bool isVolatile)
+MM_ObjectAccessBarrier::postBatchObjectStore(J9VMThread *vmThread, J9Class *destClass, bool isVolatile)
 {
 #if defined(J9VM_GC_COMBINATION_SPEC)
 	/* (assert here to verify that we aren't defaulting to this implementation through some unknown path - delete once combination is stable) */

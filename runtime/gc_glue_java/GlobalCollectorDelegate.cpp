@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2020 IBM Corp. and others
+ * Copyright (c) 2017, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -103,11 +103,11 @@ MM_GlobalCollectorDelegate::initialize(MM_EnvironmentBase *env, MM_GlobalCollect
 
 #if defined(OMR_ENV_DATA64) && defined(OMR_GC_FULL_POINTERS)
 		if (1 == _extensions->fvtest_enableReadBarrierVerification) {
-			_extensions->accessBarrier = MM_ReadBarrierVerifier::newInstance(env);
+			_extensions->accessBarrier = MM_ReadBarrierVerifier::newInstance(env, _markingScheme);
 		} else
 #endif /* defined(OMR_ENV_DATA64) && defined(OMR_GC_FULL_POINTERS) */
 		{
-			_extensions->accessBarrier = MM_StandardAccessBarrier::newInstance(env);
+			_extensions->accessBarrier = MM_StandardAccessBarrier::newInstance(env, _markingScheme);
 		}
 
 		if (NULL == _extensions->accessBarrier) {

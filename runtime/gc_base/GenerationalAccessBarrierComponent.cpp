@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -133,7 +133,7 @@ MM_GenerationalAccessBarrierComponent::postObjectStore(J9VMThread *vmThread, J9O
  * to optimistically add an object to the remembered set without checking too hard.
  */
 void 
-MM_GenerationalAccessBarrierComponent::preBatchObjectStore(J9VMThread *vmThread, J9Object *dstObject)
+MM_GenerationalAccessBarrierComponent::postBatchObjectStore(J9VMThread *vmThread, J9Object *dstObject)
 {
 	MM_EnvironmentBase *env = MM_EnvironmentBase::getEnvironment(vmThread->omrVMThread);
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
