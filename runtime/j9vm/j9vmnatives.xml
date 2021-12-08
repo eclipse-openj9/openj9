@@ -387,6 +387,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 
 	<exports group="jdk18">
 		<!-- Additions for Java 18 (General) -->
+		<export name="JVM_IsFinalizationEnabled"/>
 		<export name="JVM_ReportFinalizationComplete"/>
 	</exports>
 
