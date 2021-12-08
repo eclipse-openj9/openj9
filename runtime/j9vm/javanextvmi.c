@@ -176,6 +176,13 @@ JVM_DumpDynamicArchive(JNIEnv *env, jstring str)
 #endif /* JAVA_SPEC_VERSION >= 17 */
 
 #if JAVA_SPEC_VERSION >= 18
+JNIEXPORT jboolean JNICALL
+JVM_IsFinalizationEnabled(JNIEnv *env)
+{
+	assert(!"JVM_IsFinalizationEnabled unimplemented");
+	return JNI_FALSE;
+}
+
 JNIEXPORT void JNICALL
 JVM_ReportFinalizationComplete(JNIEnv *env, jobject obj)
 {

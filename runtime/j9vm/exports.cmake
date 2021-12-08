@@ -394,6 +394,7 @@ endif()
 if(NOT JAVA_SPEC_VERSION LESS 18)
 	jvm_add_exports(jvm
 		# Additions for Java 18 (General)
+		JVM_IsFinalizationEnabled
 		JVM_ReportFinalizationComplete
 	)
 endif()
