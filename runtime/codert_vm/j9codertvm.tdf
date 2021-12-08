@@ -118,7 +118,7 @@ TraceEvent=Trc_Decomp_performDecompile_buildingJ2IFrame Overhead=1 Level=1 Templ
 TraceEvent=Trc_Decomp_performDecompile_fixingDecompStack Overhead=1 Level=1 Template="fixing top of decomp stack (%p) from %p to %p (pc = %p)"
 TraceEvent=Trc_Decomp_performDecompile_addedPopNotification Overhead=1 Level=1 Template="frame pop notification added at %p"
 TraceEvent=Trc_Decomp_performDecompile_fixingInvokeInterface Overhead=1 Level=1 Template="at JBinvokeinterface, backing pc up to JBinvokeinterface2"
-TraceExit=Trc_Decomp_performDecompile_Exit Overhead=1 Level=1 Template="performDecompile - new SP = %p"
+TraceExit=Trc_Decomp_performDecompile_Exit Obsolete Overhead=1 Level=1 Template="performDecompile - new SP = %p"
 TraceEvent=Trc_Decomp_performDecompile_monitorNotEntered Overhead=1 Level=1 Template="monitor not entered"
 
 TraceEntry=Trc_Decomp_jitStackLocalsModified_Entry Overhead=1 Level=1 Template="jitStackLocalsModified"
@@ -165,3 +165,22 @@ TraceAssert=Assert_Decomp_breakpointFailed noEnv Overhead=1 Level=1 Assert="(0 /
 TraceAssert=Assert_CodertVM_mustHaveVMAccess noEnv overhead=1 Level=1 Assert="(P1)->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS"
 
 TraceEvent=Trc_Decomp_jitExceptionCaught_SyntheticHandler Overhead=1 Level=1 Template="jitExceptionCaught - synthetic handler - do not report or decompile"
+
+TraceExit=Trc_Decomp_performDecompile_Exit Overhead=1 Level=1 Template="performDecompile - new SP = %p, literals = %p, pc = %p"
+
+TraceEntry=Trc_Decomp_DecompileAtExceptionCatch_Entry Overhead=1 Level=2 Template="DecompileAtExceptionCatch entry: jitPC = %p, exception = %p"
+TraceExit=Trc_Decomp_DecompileAtExceptionCatch_Exit Overhead=1 Level=2 Template="DecompileAtExceptionCatch exit: sp = %p, literals = %p, pc = %p"
+TraceEntry=Trc_Decomp_DecompileMethodForFramePop_Entry Overhead=1 Level=2 Template="DecompileMethodForFramePop entry: decompPC = %p"
+TraceExit=Trc_Decomp_DecompileMethodForFramePop_Exit Overhead=1 Level=2 Template="DecompileMethodForFramePop exit"
+TraceEntry=Trc_Decomp_DecompileAfterAllocation_Entry Overhead=1 Level=2 Template="DecompileAfterAllocation entry: obj = %p, pc = %p"
+TraceExit=Trc_Decomp_DecompileAfterAllocation_Exit Overhead=1 Level=2 Template="DecompileAfterAllocation exit: sp = %p, pc = %p"
+TraceEntry=Trc_Decomp_DecompileAtCurrentPC_Entry Overhead=1 Level=2 Template="DecompileAtCurrentPC entry"
+TraceExit=Trc_Decomp_DecompileAtCurrentPC_Exit Overhead=1 Level=2 Template="DecompileAtCurrentPC exit"
+TraceEntry=Trc_Decomp_DecompileBeforeMethodMonitorEnter_Entry Overhead=1 Level=2 Template="DecompileBeforeMethodMonitorEnter entry"
+TraceExit=Trc_Decomp_DecompileBeforeMethodMonitorEnter_Exit Overhead=1 Level=2 Template="DecompileBeforeMethodMonitorEnter exit"
+TraceEntry=Trc_Decomp_DecompileBeforeReportMethodEnter_Entry Overhead=1 Level=2 Template="DecompileBeforeReportMethodEnter entry"
+TraceExit=Trc_Decomp_DecompileBeforeReportMethodEnter_Exit Overhead=1 Level=2 Template="DecompileBeforeReportMethodEnter exit: method = %p"
+TraceEntry=Trc_Decomp_DecompileAfterMonitorEnter_Entry Overhead=1 Level=2 Template="DecompileAfterMonitorEnter entry: pc = %p"
+TraceExit=Trc_Decomp_DecompileAfterMonitorEnter_Exit Overhead=1 Level=2 Template="DecompileAfterMonitorEnter exit: exitPC = %p, method = %p"
+TraceEntry=Trc_Decomp_DecompileOnReturn_Entry Overhead=1 Level=2 Template="DecompileOnReturn entry: pc = %p, sp = %p"
+TraceExit=Trc_Decomp_DecompileOnReturn_Exit Overhead=1 Level=2 Template="DecompileOnReturn exit: pc = %p, sp = %p, returnVal = %p"

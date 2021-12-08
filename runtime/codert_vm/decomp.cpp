@@ -810,7 +810,7 @@ performDecompile(J9VMThread *currentThread, J9JITDecompileState *decompileState,
 	currentThread->sp -= outgoingArgCount;
 	memcpy(currentThread->sp, outgoingArgs, outgoingArgCount * sizeof(UDATA));
 
-	Trc_Decomp_performDecompile_Exit(currentThread, currentThread->sp);
+	Trc_Decomp_performDecompile_Exit(currentThread, currentThread->sp, currentThread->literals, currentThread->pc);
 }
 
 
@@ -1206,6 +1206,9 @@ c_jitDecompileAtExceptionCatch(J9VMThread * currentThread)
 	/* Fetch and unstack the decompilation information for this frame */
 	J9JITDecompilationInfo *decompRecord = fetchAndUnstackDecompilationInfo(currentThread);
 	U_8 *jitPC = decompRecord->pc;
+
+	Trc_Decomp_DecompileAtExceptionCatch_Entry(currentThread, jitPC, exception);
+
 	/* Simulate a call to a resolve helper to make the stack walkable */
 	buildBranchJITResolveFrame(currentThread, jitPC, J9_STACK_FLAGS_JIT_EXCEPTION_CATCH_RESOLVE);
 
@@ -1277,6 +1280,8 @@ c_jitDecompileAtExceptionCatch(J9VMThread * currentThread)
 	currentThread->sp = sp;
 	dumpStack(currentThread, "after jitDecompileAtExceptionCatch");
 	currentThread->tempSlot = (UDATA)J9_BUILDER_SYMBOL(executeCurrentBytecodeFromJIT);
+
+	Trc_Decomp_DecompileAtExceptionCatch_Exit(currentThread, currentThread->sp, currentThread->literals, currentThread->pc);
 }
 
 #if (defined(J9VM_INTERP_HOT_CODE_REPLACEMENT)) /* priv. proto (autogen) */
@@ -1291,6 +1296,8 @@ jitDecompileMethodForFramePop(J9VMThread * currentThread, UDATA skipCount)
 	J9OSRBuffer *osrBuffer = &decompRecord->osrBuffer;
 	UDATA numberOfFrames = osrBuffer->numberOfFrames;
 	J9OSRFrame *osrFrame = (J9OSRFrame*)(osrBuffer + 1);
+
+	Trc_Decomp_DecompileMethodForFramePop_Entry(currentThread, decompRecord->pc);
 
 	/* Unstack the decomp record and fix the stacked PC */
 
@@ -1313,6 +1320,8 @@ jitDecompileMethodForFramePop(J9VMThread * currentThread, UDATA skipCount)
 	freeDecompilationRecord(currentThread, decompRecord, TRUE);
 
 	dumpStack(currentThread, "after jitDecompileMethodForFramePop");
+
+	Trc_Decomp_DecompileMethodForFramePop_Exit(currentThread);
 }
 
 #endif /* J9VM_INTERP_HOT_CODE_REPLACEMENT (autogen) */
@@ -2352,6 +2361,9 @@ c_jitDecompileAfterAllocation(J9VMThread *currentThread)
 	/* Allocated object stored in floatTemp1 */
 	j9object_t const obj = (j9object_t)currentThread->floatTemp1;
 	/* Fetch and unstack the decompilation information for this frame */
+
+	Trc_Decomp_DecompileAfterAllocation_Entry(currentThread, obj, currentThread->pc);
+
 	J9JITDecompilationInfo *decompRecord = fetchAndUnstackDecompilationInfo(currentThread);
 	/* Fix the saved PC since the frame is still on the stack */
 	fixSavedPC(currentThread, decompRecord);
@@ -2364,12 +2376,16 @@ c_jitDecompileAfterAllocation(J9VMThread *currentThread)
 	currentThread->pc += (J9JavaInstructionSizeAndBranchActionTable[*currentThread->pc] & 0x7);
 	dumpStack(currentThread, "after jitDecompileAfterAllocation");
 	currentThread->tempSlot = (UDATA)J9_BUILDER_SYMBOL(executeCurrentBytecodeFromJIT);
+
+	Trc_Decomp_DecompileAfterAllocation_Exit(currentThread, currentThread->sp, currentThread->pc);
 }
 
 /* Resolve frame is already built */
 void
 c_jitDecompileAtCurrentPC(J9VMThread *currentThread)
 {
+	Trc_Decomp_DecompileAtCurrentPC_Entry(currentThread);
+
 	/* Fetch and unstack the decompilation information for this frame */
 	J9JITDecompilationInfo *decompRecord = fetchAndUnstackDecompilationInfo(currentThread);
 	/* Fix the saved PC since the frame is still on the stack */
@@ -2378,12 +2394,16 @@ c_jitDecompileAtCurrentPC(J9VMThread *currentThread)
 	jitDecompileMethod(currentThread, decompRecord);
 	dumpStack(currentThread, "after jitDecompileAtCurrentPC");
 	currentThread->tempSlot = (UDATA)J9_BUILDER_SYMBOL(executeCurrentBytecodeFromJIT);
+
+	Trc_Decomp_DecompileAtCurrentPC_Exit(currentThread);
 }
 
 /* Resolve frame is already built */
 void
 c_jitDecompileBeforeMethodMonitorEnter(J9VMThread *currentThread)
 {
+	Trc_Decomp_DecompileBeforeMethodMonitorEnter_Entry(currentThread);
+
 	/* Fetch and unstack the decompilation information for this frame */
 	J9JITDecompilationInfo *decompRecord = fetchAndUnstackDecompilationInfo(currentThread);
 	J9Method * const method = decompRecord->method;
@@ -2394,12 +2414,16 @@ c_jitDecompileBeforeMethodMonitorEnter(J9VMThread *currentThread)
 	dumpStack(currentThread, "after jitDecompileBeforeMethodMonitorEnter");
 	currentThread->floatTemp1 = (void*)method;
 	currentThread->tempSlot = (UDATA)J9_BUILDER_SYMBOL(enterMethodMonitorFromJIT);
+
+	Trc_Decomp_DecompileBeforeMethodMonitorEnter_Exit(currentThread);
 }
 
 /* Resolve frame is already built */
 void
 c_jitDecompileBeforeReportMethodEnter(J9VMThread *currentThread)
 {
+	Trc_Decomp_DecompileBeforeReportMethodEnter_Entry(currentThread);
+
 	/* Fetch and unstack the decompilation information for this frame */
 	J9JITDecompilationInfo *decompRecord = fetchAndUnstackDecompilationInfo(currentThread);
 	J9Method * const method = decompRecord->method;
@@ -2410,12 +2434,16 @@ c_jitDecompileBeforeReportMethodEnter(J9VMThread *currentThread)
 	dumpStack(currentThread, "after jitDecompileBeforeReportMethodEnter");
 	currentThread->floatTemp1 = (void*)method;
 	currentThread->tempSlot = (UDATA)J9_BUILDER_SYMBOL(reportMethodEnterFromJIT);
+
+	Trc_Decomp_DecompileBeforeReportMethodEnter_Exit(currentThread, method);
 }
 
 /* Resolve frame is already built */
 void
 c_jitDecompileAfterMonitorEnter(J9VMThread *currentThread)
 {
+	Trc_Decomp_DecompileAfterMonitorEnter_Entry(currentThread, currentThread->pc);
+
 	/* Fetch and unstack the decompilation information for this frame */
 	J9JITDecompilationInfo *decompRecord = fetchAndUnstackDecompilationInfo(currentThread);
 	/* Fix the saved PC since the frame is still on the stack */
@@ -2436,11 +2464,15 @@ c_jitDecompileAfterMonitorEnter(J9VMThread *currentThread)
 		dumpStack(currentThread, "after jitDecompileAfterMonitorEnter - JBmonitorenter");
 		currentThread->tempSlot = (UDATA)J9_BUILDER_SYMBOL(executeCurrentBytecodeFromJIT);
 	}
+
+	Trc_Decomp_DecompileAfterMonitorEnter_Exit(currentThread, currentThread->pc, currentThread->literals);
 }
 
 void
 c_jitDecompileOnReturn(J9VMThread *currentThread)
 {
+	Trc_Decomp_DecompileOnReturn_Entry(currentThread, currentThread->pc, currentThread->sp);
+
 	UDATA const slots = currentThread->tempSlot;
 	/* Fetch and unstack the decompilation information for this frame */
 	J9JITDecompilationInfo *decompRecord = fetchAndUnstackDecompilationInfo(currentThread);
@@ -2455,6 +2487,8 @@ c_jitDecompileOnReturn(J9VMThread *currentThread)
 	currentThread->pc += 3;
 	dumpStack(currentThread, "after jitDecompileOnReturn");
 	currentThread->tempSlot = (UDATA)J9_BUILDER_SYMBOL(executeCurrentBytecodeFromJIT);
+
+	Trc_Decomp_DecompileOnReturn_Exit(currentThread, currentThread->pc, currentThread->sp, currentThread->returnValue);
 }
 
 void
