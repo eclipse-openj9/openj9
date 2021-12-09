@@ -155,17 +155,24 @@ public class J9ObjectFieldOffsetIterator_V1 extends J9ObjectFieldOffsetIterator 
 
 		if (walkHiddenFields && hiddenInstanceFieldWalkIndex != 0) {
 			/* Note: hiddenInstanceFieldWalkIndex is the index of the last hidden instance field that was returned. */
-			HiddenInstanceField hiddenField = hiddenInstanceFieldList.get(--hiddenInstanceFieldWalkIndex);
 
-			field = hiddenField.shape();
-			isHidden = true;
-			/*
-			 * This function returns offsets relative to the end of the object header,
-			 * whereas fieldOffset is relative to the start of the header.
-			 */
-			offset = new UDATA(hiddenField.fieldOffset().intValue() - J9ObjectHelper.headerSize());
-			/* Hidden fields do not have a valid JVMTI index. */
-			index = new UDATA(-1);
+			while (hiddenInstanceFieldWalkIndex != 0) {
+				HiddenInstanceField hiddenField = hiddenInstanceFieldList.get(--hiddenInstanceFieldWalkIndex);
+				if (!walkFlags.allBitsIn(J9VM_FIELD_OFFSET_WALK_ONLY_OBJECT_SLOTS)
+				|| hiddenField.shape().modifiers().allBitsIn(J9FieldFlagObject)
+				) {
+					/* If we are only looking for o-slots we've found one, or we can return anything */
+					field = hiddenField.shape();
+					isHidden = true;
+					/*
+					 * This function returns offsets relative to the end of the object header,
+					 * whereas fieldOffset is relative to the start of the header.
+					 */
+					offset = new UDATA(hiddenField.fieldOffset().intValue() - J9ObjectHelper.headerSize());
+					/* Hidden fields do not have a valid JVMTI index. */
+					index = new UDATA(-1);
+				}
+			}
 		}
 	}
 

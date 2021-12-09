@@ -49,7 +49,12 @@ MM_ObjectAccessBarrier::initialize(MM_EnvironmentBase *env)
 	_heap = _extensions->heap;
 	J9JavaVM *vm = (J9JavaVM*)env->getOmrVM()->_language_vm;
 	OMR_VM *omrVM = env->getOmrVM();
-	
+	char *refSignature = (char*) "I";
+
+	if (sizeof(U_64) == J9JAVAVM_REFERENCE_SIZE(vm)) {
+		refSignature = (char *) "J";
+	}
+
 #if defined(OMR_GC_COMPRESSED_POINTERS)
 	if (env->compressObjectReferences()) {
 
@@ -80,11 +85,11 @@ MM_ObjectAccessBarrier::initialize(MM_EnvironmentBase *env)
 	vm->objectAlignmentShift = omrVM->_objectAlignmentShift;
 
 	/* request an extra slot in java/lang/ref/Reference which we will use to maintain linked lists of reference objects */
-	if (0 != vm->internalVMFunctions->addHiddenInstanceField(vm, "java/lang/ref/Reference", "gcLink", "Ljava/lang/ref/Reference;", &_referenceLinkOffset)) {
+	if (0 != vm->internalVMFunctions->addHiddenInstanceField(vm, "java/lang/ref/Reference", "gcLink", refSignature, &_referenceLinkOffset)) {
 		return false;
 	}
 	/* request an extra slot in java/util/concurrent/locks/AbstractOwnableSynchronizer which we will use to maintain linked lists of ownable synchronizer objects */
-	if (0 != vm->internalVMFunctions->addHiddenInstanceField(vm, "java/util/concurrent/locks/AbstractOwnableSynchronizer", "ownableSynchronizerLink", "Ljava/util/concurrent/locks/AbstractOwnableSynchronizer;", &_ownableSynchronizerLinkOffset)) {
+	if (0 != vm->internalVMFunctions->addHiddenInstanceField(vm, "java/util/concurrent/locks/AbstractOwnableSynchronizer", "ownableSynchronizerLink", refSignature, &_ownableSynchronizerLinkOffset)) {
 		return false;
 	}
 	
