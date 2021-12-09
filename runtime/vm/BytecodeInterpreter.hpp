@@ -4775,12 +4775,10 @@ done:
 		U_8 typeCode = 0;
 		if (&ffi_type_void == type) {
 			typeCode = J9NtcVoid;
-		} else if (&ffi_type_uint32 == type) {
+		} else if (&ffi_type_uint8 == type) {
 			typeCode = J9NtcBoolean;
 		} else if (&ffi_type_sint8 == type) {
 			typeCode = J9NtcByte;
-		} else if (&ffi_type_uint16 == type) {
-			typeCode = J9NtcChar;
 		} else if (&ffi_type_sint16 == type) {
 			typeCode = J9NtcShort;
 		} else if (&ffi_type_sint32 == type) {
@@ -4811,8 +4809,8 @@ done:
 		 * with big-endianness given UDATA (8 bytes) is used to hold all types of arguments.
 		 */
 		const U_8 extraBytesOfInt = 4;
-		const U_8 extraBytesOfByte = extraBytesOfInt + 3;
-		const U_8 extraBytesOfShortAndChar = + extraBytesOfInt + 2;
+		const U_8 extraBytesOfShortAndChar = extraBytesOfInt + 2;
+		const U_8 extraBytesOfBoolAndByte = extraBytesOfInt + 3;
 #endif /* J9VM_ENV_LITTLE_ENDIAN */
 #if FFI_NATIVE_RAW_API
 		/* Make sure we can fit a double in each sValues_raw[] slot but assuring we end up
@@ -4896,17 +4894,18 @@ done:
 				values[i] = &(ffiArgs[i]);
 #if !defined(J9VM_ENV_LITTLE_ENDIAN)
 				/* Note: A float number is converted to int by Float.floatToIntBits() in ProgrammableInvoker */
-				if ((J9NtcInt == argType) || (J9NtcBoolean == argType) || (J9NtcFloat == argType)) {
+				if ((J9NtcInt == argType) || (J9NtcFloat == argType)) {
 					values[i] = (void *)((U_64)values[i] + extraBytesOfInt);
 				} else if ((J9NtcShort == argType) || (J9NtcChar == argType)) {
 					values[i] = (void *)((U_64)values[i] + extraBytesOfShortAndChar);
-				} else if (J9NtcByte == argType) {
-					values[i] = (void *)((U_64)values[i] + extraBytesOfByte);
+				} else if ((J9NtcBoolean == argType) || (J9NtcByte == argType)) {
+					values[i] = (void *)((U_64)values[i] + extraBytesOfBoolAndByte);
 				}
 #endif /*J9VM_ENV_LITTLE_ENDIAN */
 			}
 		}
 
+		updateVMStruct(REGISTER_ARGS);
 		VM_VMAccess::inlineExitVMToJNI(_currentThread);
 #if FFI_NATIVE_RAW_API
 		ffi_ptrarray_to_raw(cif, values, values_raw);
@@ -4915,8 +4914,9 @@ done:
 		ffi_call(cif, FFI_FN(function), returnStorage, values);
 #endif /* FFI_NATIVE_RAW_API */
 		VM_VMAccess::inlineEnterVMFromJNI(_currentThread);
+		VMStructHasBeenUpdated(REGISTER_ARGS);
 
-		VM_VMHelpers::convertJNIReturnValue(returnType, returnStorage);
+		VM_VMHelpers::convertFFIReturnValue(_currentThread, returnType, returnStorage);
 		returnDoubleFromINL(REGISTER_ARGS, _currentThread->returnValue, 6);
 		goto done;
 

@@ -20,31 +20,20 @@ OpenJDK Assembly Exception [2].
 
 SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
-<project name="Java17AndUp" default="build" basedir=".">
+<project name="Java18AndUp" default="build" basedir=".">
 	<taskdef resource='net/sf/antcontrib/antlib.xml' />
 	<description>
-		Tests for Java 17 and up
+		Tests for Java 18 and up
 	</description>
 
 	<!-- set global properties for this build -->
-	<property name="DEST" value="${BUILD_ROOT}/functional/Java17andUp" />
+	<property name="DEST" value="${BUILD_ROOT}/functional/Java18andUp" />
 
 	<!--Properties for this particular build-->
 	<property name="src" location="src" />
 	<property name="build" location="bin" />
 	<property name="LIB" value="asm,testng,jcommander" />
 	<import file="${TEST_ROOT}/TKG/scripts/getDependencies.xml" />
-
-	<if>
-		<equals arg1="${JDK_VERSION}" arg2="17" />
-		<then>
-			<!-- Java APIs of JEP389 and related features in Java 16 is incompatible with the APIs in Java17 and beyond -->
-			<property name="src_170" value="src_170" />
-		</then>
-		<else>
-			<property name="src_170" value="" />
-		</else>
-	</if>
 
 	<target name="init">
 		<mkdir dir="${DEST}" />
@@ -61,7 +50,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 
 		<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
 			<src path="${src}" />
-			<src path="${src_170}" />
 			<compilerarg line='--add-modules jdk.incubator.foreign' />
 			<compilerarg line='--add-opens jdk.incubator.foreign/jdk.internal.foreign=ALL-UNNAMED' />
 			<classpath>
@@ -88,7 +76,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<target name="build">
 		<if>
 			<not>
-				<matches string="${JDK_VERSION}" pattern="^(8|9|10|11|12|13|14|15|16)$$" />
+				<matches string="${JDK_VERSION}" pattern="^(8|9|10|11|12|13|14|15|16|17)$$" />
 			</not>
 			<then>
 				<antcall target="clean" inheritall="true" />

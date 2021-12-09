@@ -262,6 +262,8 @@ doneGetArrayFFIType:
 		case 'V':	/* VOID */
 			typeFFI = &ffi_type_void;
 			break;
+		case 'B':	/* C_BOOL */
+			typeFFI = &ffi_type_uint8;
 		case 'C':	/* C_CHAR */
 			typeFFI = &ffi_type_sint8;
 			break;

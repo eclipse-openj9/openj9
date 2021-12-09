@@ -26,19 +26,20 @@ import org.testng.Assert;
 import org.testng.AssertJUnit;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
+
+import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.CLinker;
 import static jdk.incubator.foreign.CLinker.*;
 import static jdk.incubator.foreign.CLinker.VaList.Builder;
 import jdk.incubator.foreign.FunctionDescriptor;
-import jdk.incubator.foreign.ValueLayout;
-import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemoryAccess;
 import jdk.incubator.foreign.MemoryAddress;
+import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.foreign.Addressable;
-import jdk.incubator.foreign.SymbolLookup;
-import jdk.incubator.foreign.SegmentAllocator;
 import jdk.incubator.foreign.ResourceScope;
+import jdk.incubator.foreign.SegmentAllocator;
+import jdk.incubator.foreign.SymbolLookup;
+import jdk.incubator.foreign.ValueLayout;
 
 /**
  * Test cases for JEP 389: Foreign Linker API (Incubator) DownCall for primitive types,
@@ -64,7 +65,7 @@ public class PrimitiveTypeTests3 {
 	@Test
 	public void test_addTwoBoolsWithOr_3() throws Throwable {
 		MethodType mt = MethodType.methodType(boolean.class, boolean.class, boolean.class);
-		FunctionDescriptor fd = FunctionDescriptor.of(C_INT, C_INT, C_INT);
+		FunctionDescriptor fd = FunctionDescriptor.of(C_CHAR, C_CHAR, C_CHAR);
 		Addressable functionSymbol = nativeLibLookup.lookup("add2BoolsWithOr").get();
 		MethodHandle mh = clinker.downcallHandle(mt, fd);
 		boolean result = (boolean)mh.invokeExact(functionSymbol, true, false);
@@ -74,20 +75,20 @@ public class PrimitiveTypeTests3 {
 	@Test
 	public void test_addBoolAndBoolFromPointerWithOr_3() throws Throwable {
 		MethodType mt = MethodType.methodType(boolean.class, boolean.class, MemoryAddress.class);
-		FunctionDescriptor fd = FunctionDescriptor.of(C_INT, C_INT, C_POINTER);
+		FunctionDescriptor fd = FunctionDescriptor.of(C_CHAR, C_CHAR, C_POINTER);
 		Addressable functionSymbol = nativeLibLookup.lookup("addBoolAndBoolFromPointerWithOr").get();
 		MethodHandle mh = clinker.downcallHandle(mt, fd);
 
-		MemorySegment intSegmt = MemorySegment.allocateNative(C_INT, resourceScope);
-		MemoryAccess.setInt(intSegmt, 1);
-		boolean result = (boolean)mh.invokeExact(functionSymbol, false, intSegmt.address());
+		MemorySegment boolSegmt = MemorySegment.allocateNative(C_CHAR, resourceScope);
+		MemoryAccess.setByte(boolSegmt, (byte)1);
+		boolean result = (boolean)mh.invokeExact(functionSymbol, false, boolSegmt.address());
 		Assert.assertEquals(result, true);
 	}
 
 	@Test
 	public void test_addTwoBoolsWithOr_fromMemAddr_3() throws Throwable {
 		MethodType mt = MethodType.methodType(boolean.class, boolean.class, boolean.class);
-		FunctionDescriptor fd = FunctionDescriptor.of(C_INT, C_INT, C_INT);
+		FunctionDescriptor fd = FunctionDescriptor.of(C_CHAR, C_CHAR, C_CHAR);
 		Addressable functionSymbol = nativeLibLookup.lookup("add2BoolsWithOr").get();
 		MemoryAddress memAddr = functionSymbol.address();
 		MethodHandle mh = clinker.downcallHandle(mt, fd);

@@ -22,7 +22,7 @@
 -->
 <playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../TestConfig/playlist.xsd">
 	<test>
-		<testCaseName>Jep389Tests_testClinkerFfi</testCaseName>
+		<testCaseName>Jep419Tests_testClinkerFfi</testCaseName>
 		<variations>
 			<variation>--enable-preview</variation>
 		</variations>
@@ -31,7 +31,7 @@
 			--enable-native-access=ALL-UNNAMED \
 			-Dforeign.restricted=permit \
 			-cp $(Q)$(LIB_DIR)$(D)asm.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
-			org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testClinkerFfi.xml$(Q) -testnames Jep389Tests_testClinkerFfi \
+			org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testClinkerFfi.xml$(Q) -testnames Jep419Tests_testClinkerFfi \
 			-groups $(TEST_GROUP) \
 			-excludegroups $(DEFAULT_EXCLUDE); \
 			$(TEST_STATUS)
@@ -47,7 +47,7 @@
 			<impl>openj9</impl>
 		</impls>
 		<versions>
-			<version>17</version>
+			<version>18+</version>
 		</versions>
 	</test>
 </playlist>

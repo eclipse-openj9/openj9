@@ -19,28 +19,27 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-package org.openj9.test.jep389.downcall;
+package org.openj9.test.jep419.downcall;
 
 import org.testng.annotations.Test;
 import org.testng.Assert;
 import org.testng.AssertJUnit;
+
 import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodType;
 import jdk.incubator.foreign.CLinker;
-import static jdk.incubator.foreign.CLinker.*;
 import jdk.incubator.foreign.FunctionDescriptor;
-import jdk.incubator.foreign.Addressable;
+import jdk.incubator.foreign.NativeSymbol;
 import jdk.incubator.foreign.SymbolLookup;
-import jdk.incubator.foreign.ResourceScope;
+import static jdk.incubator.foreign.ValueLayout.*;
 
 /**
- * Test cases for JEP 389: Foreign Linker API (Incubator) DownCall for primitive types,
+ * Test cases for JEP 419: Foreign Linker API (Second Incubator) DownCall for primitive types,
  * which verifies multiple downcalls combined with the diffrent layouts/arguments/return types in multithreading.
  */
 @Test(groups = { "level.sanity" })
 public class MultiThreadingTests4 implements Thread.UncaughtExceptionHandler {
 	private volatile Throwable initException;
-	private static CLinker clinker = CLinker.getInstance();
+	private static CLinker clinker = CLinker.systemCLinker();
 
 	static {
 		System.loadLibrary("clinkerffitests");
@@ -58,10 +57,9 @@ public class MultiThreadingTests4 implements Thread.UncaughtExceptionHandler {
 		Thread thr1 = new Thread(){
 			public void run() {
 				try {
-					MethodType mt = MethodType.methodType(int.class, int.class, int.class);
-					FunctionDescriptor fd = FunctionDescriptor.of(C_INT, C_INT, C_INT);
-					Addressable functionSymbol = nativeLibLookup.lookup("add2Ints").get();
-					MethodHandle mh = clinker.downcallHandle(functionSymbol, mt, fd);
+					FunctionDescriptor fd = FunctionDescriptor.of(JAVA_INT, JAVA_INT, JAVA_INT);
+					NativeSymbol functionSymbol = nativeLibLookup.lookup("add2Ints").get();
+					MethodHandle mh = clinker.downcallHandle(functionSymbol, fd);
 					int result = (int)mh.invokeExact(128, 246);
 					Assert.assertEquals(result, 374);
 				} catch (Throwable t) {
@@ -73,10 +71,9 @@ public class MultiThreadingTests4 implements Thread.UncaughtExceptionHandler {
 		Thread thr2 = new Thread(){
 			public void run() {
 				try {
-					MethodType mt = MethodType.methodType(int.class, int.class, int.class, int.class);
-					FunctionDescriptor fd = FunctionDescriptor.of(C_INT, C_INT, C_INT, C_INT);
-					Addressable functionSymbol = nativeLibLookup.lookup("add3Ints").get();
-					MethodHandle mh = clinker.downcallHandle(functionSymbol, mt, fd);
+					FunctionDescriptor fd = FunctionDescriptor.of(JAVA_INT, JAVA_INT, JAVA_INT, JAVA_INT);
+					NativeSymbol functionSymbol = nativeLibLookup.lookup("add3Ints").get();
+					MethodHandle mh = clinker.downcallHandle(functionSymbol, fd);
 					int result = (int)mh.invokeExact(112, 642, 971);
 					Assert.assertEquals(result, 1725);
 				} catch (Throwable t) {
@@ -88,10 +85,9 @@ public class MultiThreadingTests4 implements Thread.UncaughtExceptionHandler {
 		Thread thr3 = new Thread(){
 			public void run() {
 				try {
-					MethodType mt = MethodType.methodType(boolean.class, boolean.class, boolean.class);
-					FunctionDescriptor fd = FunctionDescriptor.of(C_INT, C_INT, C_INT);
-					Addressable functionSymbol = nativeLibLookup.lookup("add2BoolsWithOr").get();
-					MethodHandle mh = clinker.downcallHandle(functionSymbol, mt, fd);
+					FunctionDescriptor fd = FunctionDescriptor.of(JAVA_BOOLEAN, JAVA_BOOLEAN, JAVA_BOOLEAN);
+					NativeSymbol functionSymbol = nativeLibLookup.lookup("add2BoolsWithOr").get();
+					MethodHandle mh = clinker.downcallHandle(functionSymbol, fd);
 					boolean result = (boolean)mh.invokeExact(true, false);
 					Assert.assertEquals(result, true);
 				} catch (Throwable t) {
@@ -103,10 +99,9 @@ public class MultiThreadingTests4 implements Thread.UncaughtExceptionHandler {
 		Thread thr4 = new Thread(){
 			public void run() {
 				try {
-					MethodType mt = MethodType.methodType(int.class, int.class, int.class);
-					FunctionDescriptor fd = FunctionDescriptor.of(C_INT, C_INT, C_INT);
-					Addressable functionSymbol = nativeLibLookup.lookup("add2Ints").get();
-					MethodHandle mh = clinker.downcallHandle(functionSymbol, mt, fd);
+					FunctionDescriptor fd = FunctionDescriptor.of(JAVA_INT, JAVA_INT, JAVA_INT);
+					NativeSymbol functionSymbol = nativeLibLookup.lookup("add2Ints").get();
+					MethodHandle mh = clinker.downcallHandle(functionSymbol, fd);
 					int result = (int)mh.invokeExact(416, 728);
 					Assert.assertEquals(result, 1144);
 				} catch (Throwable t) {
@@ -118,10 +113,9 @@ public class MultiThreadingTests4 implements Thread.UncaughtExceptionHandler {
 		Thread thr5 = new Thread(){
 			public void run() {
 				try {
-					MethodType mt = MethodType.methodType(int.class, int.class, int.class, int.class);
-					FunctionDescriptor fd = FunctionDescriptor.of(C_INT, C_INT, C_INT, C_INT);
-					Addressable functionSymbol = nativeLibLookup.lookup("add3Ints").get();
-					MethodHandle mh = clinker.downcallHandle(functionSymbol, mt, fd);
+					FunctionDescriptor fd = FunctionDescriptor.of(JAVA_INT, JAVA_INT, JAVA_INT, JAVA_INT);
+					NativeSymbol functionSymbol = nativeLibLookup.lookup("add3Ints").get();
+					MethodHandle mh = clinker.downcallHandle(functionSymbol, fd);
 					int result = (int)mh.invokeExact(1012, 1023, 2035);
 					Assert.assertEquals(result, 4070);
 				} catch (Throwable t) {
@@ -133,10 +127,9 @@ public class MultiThreadingTests4 implements Thread.UncaughtExceptionHandler {
 		Thread thr6 = new Thread(){
 			public void run() {
 				try {
-					MethodType mt = MethodType.methodType(boolean.class, boolean.class, boolean.class);
-					FunctionDescriptor fd = FunctionDescriptor.of(C_INT, C_INT, C_INT);
-					Addressable functionSymbol = nativeLibLookup.lookup("add2BoolsWithOr").get();
-					MethodHandle mh = clinker.downcallHandle(functionSymbol, mt, fd);
+					FunctionDescriptor fd = FunctionDescriptor.of(JAVA_BOOLEAN, JAVA_BOOLEAN, JAVA_BOOLEAN);
+					NativeSymbol functionSymbol = nativeLibLookup.lookup("add2BoolsWithOr").get();
+					MethodHandle mh = clinker.downcallHandle(functionSymbol, fd);
 					boolean result = (boolean)mh.invokeExact(false, false);
 					Assert.assertEquals(result, false);
 				} catch (Throwable t) {

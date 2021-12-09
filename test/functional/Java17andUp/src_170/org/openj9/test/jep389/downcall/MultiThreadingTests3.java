@@ -26,19 +26,20 @@ import org.testng.Assert;
 import org.testng.AssertJUnit;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
+
+import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.CLinker;
 import static jdk.incubator.foreign.CLinker.*;
 import jdk.incubator.foreign.FunctionDescriptor;
-import jdk.incubator.foreign.Addressable;
-import jdk.incubator.foreign.SymbolLookup;
 import jdk.incubator.foreign.ResourceScope;
+import jdk.incubator.foreign.SymbolLookup;
 
 /**
  * Test cases for JEP 389: Foreign Linker API (Incubator) DownCall for primitive types,
- * which verifies the downcalls with the same layout & argument and return types in multithreading.
+ * which verifies the downcalls with the diffrent return types in multithreading.
  */
 @Test(groups = { "level.sanity" })
-public class MultiThreadingTests1 implements Thread.UncaughtExceptionHandler {
+public class MultiThreadingTests3 implements Thread.UncaughtExceptionHandler {
 	private volatile Throwable initException;
 	private static CLinker clinker = CLinker.getInstance();
 
@@ -54,7 +55,7 @@ public class MultiThreadingTests1 implements Thread.UncaughtExceptionHandler {
 	}
 
 	@Test
-	public void test_twoThreadsWithSameFuncDescriptor() throws Throwable {
+	public void test_twoThreadsWithDiffReturnType() throws Throwable {
 		Thread thr1 = new Thread(){
 			public void run() {
 				try {
@@ -69,24 +70,25 @@ public class MultiThreadingTests1 implements Thread.UncaughtExceptionHandler {
 				}
 			}
 		};
-		thr1.setUncaughtExceptionHandler(this);
-		thr1.start();
 
 		Thread thr2 = new Thread(){
 			public void run() {
 				try {
-					MethodType mt = MethodType.methodType(int.class, int.class, int.class);
-					FunctionDescriptor fd = FunctionDescriptor.of(C_INT, C_INT, C_INT);
-					Addressable functionSymbol = nativeLibLookup.lookup("add2Ints").get();
+					MethodType mt = MethodType.methodType(void.class, int.class, int.class);
+					FunctionDescriptor fd = FunctionDescriptor.ofVoid(C_INT, C_INT);
+					Addressable functionSymbol = nativeLibLookup.lookup("add2IntsReturnVoid").get();
 					MethodHandle mh = clinker.downcallHandle(functionSymbol, mt, fd);
-					int result = (int)mh.invokeExact(235, 439);
-					Assert.assertEquals(result, 674);
+					mh.invokeExact(454, 398);
 				} catch (Throwable t) {
 					throw new RuntimeException(t);
 				}
 			}
 		};
+
+		thr1.setUncaughtExceptionHandler(this);
 		thr2.setUncaughtExceptionHandler(this);
+
+		thr1.start();
 		thr2.start();
 
 		thr1.join();
