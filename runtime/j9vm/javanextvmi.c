@@ -179,8 +179,12 @@ JVM_DumpDynamicArchive(JNIEnv *env, jstring str)
 JNIEXPORT jboolean JNICALL
 JVM_IsFinalizationEnabled(JNIEnv *env)
 {
-	assert(!"JVM_IsFinalizationEnabled unimplemented");
-	return JNI_FALSE;
+	jboolean isFinalizationEnabled = JNI_TRUE;
+	J9VMThread *currentThread = (J9VMThread*)env;
+	if (J9_ARE_ANY_BITS_SET(currentThread->javaVM->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_DISABLE_FINALIZATION)) {
+		isFinalizationEnabled = JNI_FALSE;
+	}
+	return isFinalizationEnabled;
 }
 
 JNIEXPORT void JNICALL

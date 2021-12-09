@@ -596,6 +596,9 @@ enum INIT_STAGE {
 #define VMOPT_ILLEGAL_ACCESS "--illegal-access="
 #define VMOPT_ENABLE_NATIVE_ACCESS "--enable-native-access"
 
+/* JEP 421: Deprecate Finalization for Removal */
+#define VMOPT_DISABLE_FINALIZATION "--finalization="
+
 #define ENVVAR_IBM_MIXED_MODE_THRESHOLD "IBM_MIXED_MODE_THRESHOLD"
 #define ENVVAR_JAVA_COMPILER "JAVA_COMPILER"
 #define ENVVAR_JAVA_OPTIONS "_JAVA_OPTIONS"
