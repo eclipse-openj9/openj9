@@ -26,12 +26,13 @@ import org.testng.Assert;
 import org.testng.AssertJUnit;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
+
+import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.CLinker;
 import static jdk.incubator.foreign.CLinker.*;
 import jdk.incubator.foreign.FunctionDescriptor;
-import jdk.incubator.foreign.Addressable;
-import jdk.incubator.foreign.SymbolLookup;
 import jdk.incubator.foreign.ResourceScope;
+import jdk.incubator.foreign.SymbolLookup;
 
 /**
  * Test cases for JEP 389: Foreign Linker API (Incubator) DownCall for primitive types,
@@ -145,13 +146,5 @@ public class MultiCallTests {
 		Addressable functionSymbol2 = nativeLibLookup.lookup("add2IntsReturnVoid").get();
 		mh = clinker.downcallHandle(functionSymbol2, mt2, fd2);
 		mh.invokeExact(454, 398);
-
-		MethodType mt3 = MethodType.methodType(boolean.class, boolean.class, boolean.class);
-		Addressable functionSymbol3 = nativeLibLookup.lookup("add2BoolsWithOr").get();
-		mh = clinker.downcallHandle(functionSymbol3, mt3, fd);
-		boolean boolResult = (boolean)mh.invokeExact(true, false);
-		Assert.assertEquals(boolResult, true);
-		boolResult = (boolean)mh.invokeExact(false, false);
-		Assert.assertEquals(boolResult, false);
 	}
 }

@@ -1560,15 +1560,49 @@ exit:
 			*returnStorage = (UDATA)*(U_32*)returnStorage;
 			break;
 		case J9NtcVoid:
-			*returnStorage = (UDATA)0;
+			/* Fall through is intentional */
+		case J9NtcLong:
+			/* Fall through is intentional */
+		case J9NtcDouble:
+			/* Fall through is intentional */
+		case J9NtcClass:
+			break;
+		}
+	}
+
+	/**
+	 * @brief Converts the type of the return value to the return type intended for JEP389/419 FFI downcall/upcall
+	 * @param currentThread[in] The pointer to the current J9VMThread
+	 * @param returnType[in] The type of the return value
+	 * @param returnStorage[in] The pointer to the return value
+	 */
+	static VMINLINE void
+	convertFFIReturnValue(J9VMThread* currentThread, U_8 returnType, UDATA* returnStorage)
+	{
+		switch (returnType) {
+		case J9NtcVoid:
+			currentThread->returnValue = (UDATA)0;
+			break;
+		case J9NtcBoolean:
+			currentThread->returnValue = (UDATA)(U_8)*returnStorage;
+			break;
+		case J9NtcByte:
+			currentThread->returnValue = (UDATA)(IDATA)(I_8)*returnStorage;
+			break;
+		case J9NtcShort:
+			currentThread->returnValue = (UDATA)(IDATA)(I_16)*returnStorage;
+			break;
+		case J9NtcInt:
+			currentThread->returnValue = (UDATA)(IDATA)(I_32)*returnStorage;
+			break;
+		case J9NtcFloat:
+			currentThread->returnValue = (UDATA)*(U_32*)returnStorage;
 			break;
 		case J9NtcLong:
 			/* Fall through is intentional */
 		case J9NtcDouble:
 			/* Fall through is intentional */
 		case J9NtcPointer:
-			/* Fall through is intentional */
-		case J9NtcClass:
 			break;
 		}
 	}

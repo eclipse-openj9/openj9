@@ -27,16 +27,17 @@ import org.testng.AssertJUnit;
 import static org.testng.Assert.fail;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
+
+import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.CLinker;
 import static jdk.incubator.foreign.CLinker.*;
 import jdk.incubator.foreign.FunctionDescriptor;
-import jdk.incubator.foreign.ValueLayout;
+import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemoryLayouts;
-import jdk.incubator.foreign.MemoryAddress;
-import jdk.incubator.foreign.Addressable;
-import jdk.incubator.foreign.SymbolLookup;
 import jdk.incubator.foreign.ResourceScope;
+import jdk.incubator.foreign.SymbolLookup;
+import jdk.incubator.foreign.ValueLayout;
 
 /**
  * Test cases for JEP 389: Foreign Linker API (Incubator) DownCall for primitive types,
@@ -58,7 +59,7 @@ public class InvalidDownCallTests {
 	@Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "The return type must be .*")
 	public void test_invalidBooleanTypeOnReturn() throws Throwable {
 		MethodType mt = MethodType.methodType(Boolean.class, boolean.class, boolean.class);
-		FunctionDescriptor fd = FunctionDescriptor.of(C_INT, C_INT, C_INT);
+		FunctionDescriptor fd = FunctionDescriptor.of(C_CHAR, C_CHAR, C_CHAR);
 		Addressable functionSymbol = nativeLibLookup.lookup("add2BoolsWithOr").get();
 		MethodHandle mh = clinker.downcallHandle(functionSymbol, mt, fd);
 		fail("Failed to throw out IllegalArgumentException in the case of the Boolean return type");
@@ -67,7 +68,7 @@ public class InvalidDownCallTests {
 	@Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "The passed-in argument type at index .*")
 	public void test_invalidBooleanTypeArgument() throws Throwable {
 		MethodType mt = MethodType.methodType(boolean.class, Boolean.class, boolean.class);
-		FunctionDescriptor fd = FunctionDescriptor.of(C_INT, C_INT, C_INT);
+		FunctionDescriptor fd = FunctionDescriptor.of(C_CHAR, C_CHAR, C_CHAR);
 		Addressable functionSymbol = nativeLibLookup.lookup("add2BoolsWithOr").get();
 		MethodHandle mh = clinker.downcallHandle(functionSymbol, mt, fd);
 		fail("Failed to throw out IllegalArgumentException in the case of the Boolean argument");
@@ -247,7 +248,7 @@ public class InvalidDownCallTests {
 	@Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "Mismatched size .*")
 	public void test_mismatchedBoolArgWithShortLayout() throws Throwable {
 		MethodType mt = MethodType.methodType(boolean.class, boolean.class, boolean.class);
-		FunctionDescriptor fd = FunctionDescriptor.of(C_INT, C_SHORT, C_INT);
+		FunctionDescriptor fd = FunctionDescriptor.of(C_CHAR, C_SHORT, C_CHAR);
 		Addressable functionSymbol = nativeLibLookup.lookup("add2BoolsWithOr").get();
 		MethodHandle mh = clinker.downcallHandle(functionSymbol, mt, fd);
 		fail("Failed to throw out IllegalArgumentException in the case of the mismatched layout");
