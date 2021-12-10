@@ -84,7 +84,10 @@ J9::SymbolReferenceTable::SymbolReferenceTable(size_t sizeHint, TR::Compilation 
      _constantPoolAddressSymbolRefs(c->trMemory()),
      _resolvedFieldShadows(
         std::less<ResolvedFieldShadowKey>(),
-        getTypedAllocator<ResolvedFieldShadowsEntry>(c->allocator()))
+        getTypedAllocator<ResolvedFieldShadowsEntry>(c->allocator())),
+    _flattenedArrayElementFieldShadows(
+        std::less<ResolvedFieldShadowKey>(),
+        getTypedAllocator<FlattenedArrayElementFieldShadowsEntry>(c->allocator()))
    {
    for (uint32_t i = 0; i < _numImmutableClasses; i++)
       _immutableSymRefNumbers[i] = new (trHeapMemory()) TR_BitVector(sizeHint, c->trMemory(), heapAlloc, growable);
@@ -839,6 +842,90 @@ J9::SymbolReferenceTable::findOrFabricateShadowSymbol(
    initShadowSymbol(NULL, symRef, isResolved, type, offset, isUnresolvedInCP);
 
    _resolvedFieldShadows.insert(std::make_pair(key, symRef));
+   return symRef;
+   }
+
+TR::SymbolReference *
+J9::SymbolReferenceTable::findFlattenedArrayElementFieldShadow(
+   ResolvedFieldShadowKey key,
+   bool isPrivate)
+   {
+   const auto entry = _flattenedArrayElementFieldShadows.find(key);
+   if (entry == _flattenedArrayElementFieldShadows.end())
+      return NULL;
+
+   TR::SymbolReference *symRef = entry->second;
+   int32_t refNum = symRef->getReferenceNumber();
+   TR::Symbol *sym = symRef->getSymbol();
+
+   TR_ASSERT_FATAL(sym->isPrivate() == isPrivate,  "expecting %s symref but found %s: symref #%d\n",
+         isPrivate ? "private" : "non-private", sym->isPrivate() ? "private" : "non-private", refNum);
+
+   // When an array element is flattened, a write through this field shadow doesn't represent a write
+   // to the field. It is a partial write to an array element which is non volatile.
+   TR_ASSERT_FATAL(sym->isVolatile() == false, "expecting non-volatile symref but found volatile: symref #%d\n", refNum);
+   // The field is flattened into the array element which is mutable.
+   TR_ASSERT_FATAL(sym->isFinal() == false, "expecting non-final symref but found final: symref #%d\n", refNum);
+
+   return symRef;
+   }
+
+TR::SymbolReference *
+J9::SymbolReferenceTable::findOrFabricateFlattenedArrayElementFieldShadowSymbol(
+   TR_OpaqueClassBlock *arrayComponentClass,
+   TR::DataType type,
+   uint32_t fieldOffset,
+   bool isPrivate,
+   const char *fieldName,
+   const char *fieldSignature)
+   {
+   int32_t flattenedFieldOffset = (int32_t)fieldOffset - (int32_t)TR::Compiler->om.objectHeaderSizeInBytes();
+
+   TR_ASSERT_FATAL(flattenedFieldOffset >= 0, "flattenedFieldOffset %d is invalid: fieldOffset %u objectHeaderSizeInBytes %" OMR_PRIuPTR " \n", flattenedFieldOffset, fieldOffset, TR::Compiler->om.objectHeaderSizeInBytes());
+
+   ResolvedFieldShadowKey key(arrayComponentClass, flattenedFieldOffset, type);
+
+   TR::SymbolReference *symRef = findFlattenedArrayElementFieldShadow(key, isPrivate);
+   if (symRef != NULL)
+      return symRef;
+
+   int32_t classNameLen = 0;
+   const char *className = TR::Compiler->cls.classNameChars(comp(), arrayComponentClass, classNameLen);
+
+   // "<Q-className-array-shadow>.fieldName fieldSignature"
+   char qNameMem[128];
+   TR::StringBuf qNameBuf(trMemory()->currentStackRegion(), qNameMem, sizeof(qNameMem));
+   qNameBuf.appendf("<Q-%.*s-array-shadow>.%s %s", classNameLen, className, fieldName, fieldSignature);
+
+   size_t qualifiedFieldNameSize = qNameBuf.len() + 1; // +1 for NULL terminator
+   char *qualifiedFieldName = (char*)trHeapMemory().allocate(qualifiedFieldNameSize);
+   memcpy(qualifiedFieldName, qNameBuf.text(), qualifiedFieldNameSize);
+
+   // isVolatile is false because when an array element is flattened, a write through
+   // this field shadow doesn't represent a write to the field. It is a partial write
+   // to an array element which is non volatile.
+   // isFinal is false because the field is flattened into the array element which is mutable.
+   TR::Symbol *sym = createShadowSymbol(
+      type,
+      false /*isVolatile*/,
+      isPrivate,
+      false /*isFinal*/,
+      qualifiedFieldName,
+      TR::Symbol::UnknownField);
+
+   mcount_t methodIndex = mcount_t::valueOf(0);
+   int32_t cpIndex = -1;
+   symRef = new (trHeapMemory()) TR::SymbolReference(
+      self(),
+      sym,
+      methodIndex,
+      cpIndex);
+
+   bool isResolved = true;
+   bool isUnresolvedInCP = false;
+   initShadowSymbol(NULL, symRef, isResolved, type, flattenedFieldOffset, isUnresolvedInCP);
+
+   _flattenedArrayElementFieldShadows.insert(std::make_pair(key, symRef));
    return symRef;
    }
 
