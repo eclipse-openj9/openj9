@@ -201,6 +201,26 @@ class SymbolReferenceTable : public OMR::SymbolReferenceTableConnector
     */
    TR::SymbolReference * findOrFabricateShadowSymbol(TR_OpaqueClassBlock *containingClass, TR::DataType type, uint32_t offset, bool isVolatile, bool isPrivate, bool isFinal,  const char *name, const char *signature);
 
+   /** \brief
+    *     Returns an array shadow symbol reference fabricated for the field of a flattened array element.
+    *
+    *  \param arrayComponentClass
+    *     The array component class that contains the field.
+    *  \param type
+    *     The data type of the field.
+    *  \param fieldOffset
+    *     The offset of the field.
+    *  \param isPrivate
+    *     Specifies whether the field is private.
+    *  \param fieldName
+    *     The name of the field.
+    *  \param fieldSignature
+    *     The signature of the field.
+    *  \return
+    *     Returns an array shadow symbol reference fabricated for the field of a flattened array element.
+    */
+   TR::SymbolReference * findOrFabricateFlattenedArrayElementFieldShadowSymbol(TR_OpaqueClassBlock *arrayComponentClass, TR::DataType type, uint32_t fieldOffset, bool isPrivate, const char *fieldName, const char *fieldSignature);
+
    TR::SymbolReference * findOrCreateObjectNewInstanceImplSymbol(TR::ResolvedMethodSymbol * owningMethodSymbol);
    TR::SymbolReference * findOrCreateDLTBlockSymbolRef();
    TR::SymbolReference * findDLTBlockSymbolRef();
@@ -462,6 +482,10 @@ class SymbolReferenceTable : public OMR::SymbolReferenceTableConnector
    typedef TR::typed_allocator<ResolvedFieldShadowsEntry, TR::Allocator> ResolvedFieldShadowsAlloc;
    typedef std::map<ResolvedFieldShadowKey, TR::SymbolReference*, std::less<ResolvedFieldShadowKey>, ResolvedFieldShadowsAlloc> ResolvedFieldShadows;
 
+   typedef std::pair<const ResolvedFieldShadowKey, TR::SymbolReference*> FlattenedArrayElementFieldShadowsEntry;
+   typedef TR::typed_allocator<FlattenedArrayElementFieldShadowsEntry, TR::Allocator> FlattenedArrayElementFieldShadowsAlloc;
+   typedef std::map<ResolvedFieldShadowKey, TR::SymbolReference*, std::less<ResolvedFieldShadowKey>, FlattenedArrayElementFieldShadowsAlloc> FlattenedArrayElementFieldShadows;
+
    /**
     * \brief Find if an existing resolved shadow exists matching the given key.
     *
@@ -488,6 +512,14 @@ class SymbolReferenceTable : public OMR::SymbolReferenceTableConnector
     * \return TR::SymbolReference* the shadow symref if found, NULL otherwise
     */
    TR::SymbolReference * findResolvedFieldShadow(ResolvedFieldShadowKey key, bool isVolatile, bool isPrivate, bool isFinal);
+   /**
+    * \brief Find if an existing flattened array shadow exists matching the given key.
+    *
+    * \param key is the key used to search for the symref
+    * \param isPrivate specifies whether the symbol found must be private.
+    * \return TR::SymbolReference* the flattened array shadow symref if found, NULL otherwise
+    */
+   TR::SymbolReference * findFlattenedArrayElementFieldShadow(ResolvedFieldShadowKey key, bool isPrivate);
 
    /**
     * \brief Create a shadow symbol
@@ -521,6 +553,8 @@ class SymbolReferenceTable : public OMR::SymbolReferenceTableConnector
    TR_Array<TR::SymbolReference *> * _unsafeJavaStaticVolatileSymRefs;
 
    ResolvedFieldShadows _resolvedFieldShadows;
+
+   FlattenedArrayElementFieldShadows _flattenedArrayElementFieldShadows;
 
    static const char *_commonNonHelperSymbolNames[];
 
