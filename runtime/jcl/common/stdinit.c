@@ -251,13 +251,22 @@ standardInit( J9JavaVM *vm, char *dllName)
 
 #ifdef J9VM_OPT_REFLECT
 	if (vm->reflectFunctions.idToReflectMethod) {
-		jmethodID invokeMethod;
+		jmethodID invokeMethod = NULL;
 
 		clazz = (*(JNIEnv*)vmThread)->FindClass((JNIEnv*)vmThread, "java/lang/reflect/Method");
 		if (!clazz) goto _fail;
 		invokeMethod = (*(JNIEnv*)vmThread)->GetMethodID((JNIEnv*)vmThread, clazz, "invoke", "(Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;");
 		if (!invokeMethod) goto _fail;
 		vm->jlrMethodInvoke = ((J9JNIMethodID *) invokeMethod)->method;
+#if JAVA_SPEC_VERSION >= 18
+		{
+			jmethodID invokeMethodMH = (*(JNIEnv*)vmThread)->GetMethodID((JNIEnv*)vmThread, clazz, "invoke", "(Ljava/lang/Object;[Ljava/lang/Object;Ljava/lang/Class;)Ljava/lang/Object;");
+			if (NULL == invokeMethodMH) {
+				goto _fail;
+			}
+			vm->jlrMethodInvokeMH = ((J9JNIMethodID *) invokeMethodMH)->method;
+		}
+#endif /* JAVA_SPEC_VERSION >= 18 */
 		(*(JNIEnv*)vmThread)->DeleteLocalRef((JNIEnv*)vmThread, clazz);
 
 #ifndef J9VM_IVE_RAW_BUILD /* J9VM_IVE_RAW_BUILD is not enabled by default */
