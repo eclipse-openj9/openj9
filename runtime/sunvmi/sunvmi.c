@@ -177,7 +177,13 @@ getCallerClassIterator(J9VMThread * currentThread, J9StackWalkState * walkState)
 		return J9_STACKWALK_KEEP_ITERATING;
 	}
 
-	if ((walkState->method != vm->jlrMethodInvoke) && (walkState->method != vm->jliMethodHandleInvokeWithArgs) && (walkState->method != vm->jliMethodHandleInvokeWithArgsList)) {
+	if ((walkState->method != vm->jlrMethodInvoke)
+#if JAVA_SPEC_VERSION >= 18
+		&& (walkState->method != vm->jlrMethodInvokeMH)
+#endif /* JAVA_SPEC_VERSION >= 18 */
+		&& (walkState->method != vm->jliMethodHandleInvokeWithArgs)
+		&& (walkState->method != vm->jliMethodHandleInvokeWithArgsList)
+	) {
 		J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 		J9Class * currentClass = J9_CLASS_FROM_CP(walkState->constantPool);
 
@@ -231,6 +237,9 @@ getCallerClassJEP176Iterator(J9VMThread * currentThread, J9StackWalkState * walk
 		if ((walkState->method == vm->jliMethodHandleInvokeWithArgs)
 				|| (walkState->method == vm->jliMethodHandleInvokeWithArgsList)
 				|| (walkState->method == vm->jlrMethodInvoke)
+#if JAVA_SPEC_VERSION >= 18
+				|| (walkState->method == vm->jlrMethodInvokeMH)
+#endif /* JAVA_SPEC_VERSION >= 18 */
 				|| (vm->srMethodAccessor && vmFuncs->instanceOfOrCheckCast(currentClass, J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, *((j9object_t*) vm->srMethodAccessor))))
 				|| (vm->srConstructorAccessor && vmFuncs->instanceOfOrCheckCast(currentClass, J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, *((j9object_t*) vm->srConstructorAccessor))))
 		) {
@@ -565,7 +574,13 @@ getClassContextIterator(J9VMThread * currentThread, J9StackWalkState * walkState
 		return J9_STACKWALK_KEEP_ITERATING;
 	}
 
-	if ((walkState->method != vm->jlrMethodInvoke) && (walkState->method != vm->jliMethodHandleInvokeWithArgs) && (walkState->method != vm->jliMethodHandleInvokeWithArgsList)) {
+	if ((walkState->method != vm->jlrMethodInvoke)
+#if JAVA_SPEC_VERSION >= 18
+		&& (walkState->method != vm->jlrMethodInvokeMH)
+#endif /* JAVA_SPEC_VERSION >= 18 */
+		&& (walkState->method != vm->jliMethodHandleInvokeWithArgs)
+		&& (walkState->method != vm->jliMethodHandleInvokeWithArgsList)
+	) {
 		J9Class * currentClass = J9_CLASS_FROM_CP(walkState->constantPool);
 		J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 
