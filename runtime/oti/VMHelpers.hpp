@@ -1478,6 +1478,9 @@ exit:
 		J9Class* currentClass = J9_CLASS_FROM_METHOD(method);
 		J9JavaVM* vm = currentThread->javaVM;
 		return ((method == vm->jlrMethodInvoke)
+#if JAVA_SPEC_VERSION >= 18
+				|| (method == vm->jlrMethodInvokeMH)
+#endif /* JAVA_SPEC_VERSION >= 18 */
 				|| (method == vm->jliMethodHandleInvokeWithArgs)
 				|| (method == vm->jliMethodHandleInvokeWithArgsList)
 				|| (vm->srMethodAccessor

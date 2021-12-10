@@ -5391,6 +5391,9 @@ typedef struct J9JavaVM {
 	jclass srMethodAccessor;
 	jclass srConstructorAccessor;
 	struct J9Method* jlrMethodInvoke;
+#if JAVA_SPEC_VERSION >= 18
+	struct J9Method* jlrMethodInvokeMH;
+#endif /* JAVA_SPEC_VERSION >= 18 */
 	struct J9Method* jliMethodHandleInvokeWithArgs;
 	struct J9Method* jliMethodHandleInvokeWithArgsList;
 	jclass jliArgumentHelper;
