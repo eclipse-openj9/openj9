@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -41,6 +41,7 @@
 
 #include "AtomicSupport.hpp"
 #include "ObjectMonitor.hpp"
+#include "ObjectAccessBarrierAPI.hpp"
 
 class MM_ObjectAllocationAPI
 {
@@ -57,6 +58,8 @@ private:
 #if defined (J9VM_GC_SEGREGATED_HEAP)
 	const J9VMGCSizeClasses *_sizeClasses;
 #endif /* J9VM_GC_SEGREGATED_HEAP */
+
+	const MM_ObjectAccessBarrierAPI _objectAccessBarrierAPI;
 
 	VMINLINE void
 	initializeIndexableSlots(bool initializeSlots, uintptr_t dataSize, void *dataAddr)
@@ -173,6 +176,9 @@ private:
 						/* Do not zero the TLH if it is already zero's */
 						initializeSlots = initializeSlots && _initializeSlotsOnTLHAllocate;
 #endif /* J9VM_GC_BATCH_CLEAR_TLH */
+#if defined(J9VM_GC_REALTIME)
+						initializeSlots = initializeSlots || _objectAccessBarrierAPI.isSATBBarrierEnabled(currentThread);
+#endif /* J9VM_GC_REALTIME */
 					} else {
 						return NULL;
 					}
@@ -320,6 +326,7 @@ public:
 #if defined (J9VM_GC_SEGREGATED_HEAP)
 		, _sizeClasses(currentThread->javaVM->realtimeSizeClasses)
 #endif /* J9VM_GC_SEGREGATED_HEAP */
+		, _objectAccessBarrierAPI(currentThread)
 	{}
 
 	VMINLINE j9object_t
@@ -351,6 +358,9 @@ public:
 				/* Do not zero the TLH if it is already zero'd */
 				initializeSlots = initializeSlots && _initializeSlotsOnTLHAllocate;
 #endif /* J9VM_GC_BATCH_CLEAR_TLH */
+#if defined(J9VM_GC_REALTIME)
+				initializeSlots = initializeSlots || _objectAccessBarrierAPI.isSATBBarrierEnabled(currentThread);
+#endif /* J9VM_GC_REALTIME */
 			} else {
 				return NULL;
 			}

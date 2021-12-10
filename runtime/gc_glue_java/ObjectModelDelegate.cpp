@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2021 IBM Corp. and others
+ * Copyright (c) 2017, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -84,3 +84,17 @@ GC_ObjectModelDelegate::calculateObjectDetailsForCopy(MM_EnvironmentBase *env, M
 	*hotFieldAlignmentDescriptor = clazz->instanceHotFieldDescription;
 }
 #endif /* defined(OMR_GC_MODRON_SCAVENGER) */
+
+void
+GC_ObjectModelDelegate::initializeMinimumSizeObject(MM_EnvironmentBase *env, void *allocAddr)
+{
+	J9JavaVM *javaVM = (J9JavaVM *)env->getLanguageVM();
+	J9Class *clazz = J9VMJAVALANGOBJECT_OR_NULL(javaVM);
+	j9object_t instance = (j9object_t) allocAddr;
+
+	memset(instance, 0, OMR_MINIMUM_OBJECT_SIZE);
+
+	MM_GCExtensions::getExtensions(env)->objectModel.setObjectClass(instance, clazz);
+
+	Assert_MM_true(J9GC_J9OBJECT_CLAZZ(allocAddr, env) == clazz);
+}
