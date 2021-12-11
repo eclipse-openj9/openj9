@@ -106,7 +106,10 @@ jstring JNICALL
 Java_java_lang_System_getSysPropBeforePropertiesInitialized(JNIEnv *env, jclass clazz, jint sysPropID)
 {
 	const char *sysPropValue = NULL;
+#if !defined(OSX) || (JAVA_SPEC_VERSION < 18)
+	/* The sysPropValue points to following property which has to be declared at top level. */
 	char property[128] = {0};
+#endif /* !defined(OSX) || (JAVA_SPEC_VERSION < 18) */
 	jstring result = NULL;
 	PORT_ACCESS_FROM_ENV(env);
 
@@ -137,7 +140,11 @@ Java_java_lang_System_getSysPropBeforePropertiesInitialized(JNIEnv *env, jclass 
 	case 2: /* file.encoding */
 		sysPropValue = getDefinedEncoding(env, "-Dfile.encoding=");
 		if (NULL == sysPropValue) {
+#if JAVA_SPEC_VERSION >= 18
+			sysPropValue = "UTF-8";
+#else /* JAVA_SPEC_VERSION >= 18 */
 			sysPropValue = getPlatformFileEncoding(env, property, sizeof(property), sysPropID);
+#endif /* JAVA_SPEC_VERSION >= 18 */
 		}
 #if defined(J9ZOS390)
 		if (__CSNameType(sysPropValue) == _CSTYPE_ASCII) {
