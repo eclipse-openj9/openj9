@@ -30,10 +30,8 @@ import java.security.PrivilegedAction;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 /*[IF JAVA_SPEC_VERSION == 8] */
 import sun.misc.Unsafe;
 /*[ELSE]
@@ -52,39 +50,20 @@ import java.lang.reflect.Method;
  */
 public final class CRIUSupport {
 
-	static {
-		try {
-			Field f = Unsafe.class.getDeclaredField("theUnsafe");
-			f.setAccessible(true);
-			unsafe = (Unsafe) f.get(null);
-		} catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e) {
-			throw new InternalError(e);
-		}
-
-		try {
-			/* [IF JAVA_SPEC_VERSION < 17] */
-			AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
-			/* [ENDIF] JAVA_SPEC_VERSION < 17 */
-				System.loadLibrary("j9criu29"); //$NON-NLS-1$
-			/* [IF JAVA_SPEC_VERSION < 17] */
-				return null;
-			});
-			/* [ENDIF] JAVA_SPEC_VERSION < 17 */
-		} catch (UnsatisfiedLinkError e) {
-			throw new InternalError(e);
-		}
-	}
-
 	@SuppressWarnings("restriction")
 	private static Unsafe unsafe;
 
 	private static final CRIUDumpPermission CRIU_DUMP_PERMISSION = new CRIUDumpPermission();
 
-	private static final boolean criuSupportEnabled = isCRIUSupportEnabledImpl();
+	private static boolean criuSupportEnabled = false;
 
 	private static native boolean isCRIUSupportEnabledImpl();
 
 	private static native boolean isCheckpointAllowed();
+
+	private static boolean nativeLoaded = false;
+
+	private static boolean initComplete = false;
 
 	private static native void checkpointJVMImpl(String imageDir,
 			boolean leaveRunning,
@@ -129,13 +108,36 @@ public final class CRIUSupport {
 	 */
 	public CRIUSupport(Path imageDir) {
 		/* [IF JAVA_SPEC_VERSION < 17] */
+		@SuppressWarnings({"deprecation" })
+		/* [ENDIF] JAVA_SPEC_VERSION < 17 */
 		SecurityManager manager = System.getSecurityManager();
 		if (manager != null) {
 			manager.checkPermission(CRIU_DUMP_PERMISSION);
 		}
-		/* [ENDIF] JAVA_SPEC_VERSION < 17 */
 
 		setImageDir(imageDir);
+	}
+
+	@SuppressWarnings({ "restriction", "deprecation" })
+	private static synchronized void init() {
+		if (!initComplete) {
+			if (loadNativeLibrary()) {
+				criuSupportEnabled = isCRIUSupportEnabledImpl();
+				AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
+					try {
+						Field f = Unsafe.class.getDeclaredField("theUnsafe"); //$NON-NLS-1$
+						f.setAccessible(true);
+						unsafe = (Unsafe) f.get(null);
+					} catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e) {
+						throw new InternalError(e);
+					}
+					return null;
+				});
+
+			}
+
+			initComplete = true;
+		}
 	}
 
 	/**
@@ -143,11 +145,38 @@ public final class CRIUSupport {
 	 *
 	 * @return TRUE is support is enabled, FALSE otherwise
 	 */
-	public static boolean isCRIUSupportEnabled() {
+	public synchronized static boolean isCRIUSupportEnabled() {
+		if (!initComplete) {
+			init();
+		}
+
 		return criuSupportEnabled;
 	}
 
-	private static final int RESTORE_ENVIRONMENT_VARIABLES_PRIORITY = 0;
+	/**
+	 * Returns an error message describing why isCRIUSupportEnabled()
+	 * returns false, and what can be done to remediate the issue.
+	 *
+	 * @return NULL if isCRIUSupportEnabled() returns true. Otherwise the error message
+	 */
+	public static String getErrorMessage() {
+		String s = null;
+		if (!isCRIUSupportEnabled()) {
+			if (nativeLoaded) {
+				s = "To enable criu support, please run java with the `-XX:+EnableCRIUSupport` option.";
+			} else {
+				s = "There was a problem loaded the criu native library.\n"
+						+ "Please check that criu is installed on the machine by running `criu check`.\n"
+						+ "Also, please ensure that the JDK is criu enabled by contacting your JDK provider.";
+			}
+		}
+		return s;
+	}
+	/* Higher priority hooks are run last in pre-checkoint hooks, and are run
+	 * first in post restore hooks.
+	 */
+	private static final int RESTORE_ENVIRONMENT_VARIABLES_PRIORITY = 100;
+	private static final int USER_HOOKS_PRIORITY = 1;
 
 	private String imageDir;
 	private boolean leaveRunning;
@@ -161,6 +190,25 @@ public final class CRIUSupport {
 	private boolean autoDedup;
 	private boolean trackMemory;
 	private Path envFile;
+
+	@SuppressWarnings("deprecation")
+	private synchronized static boolean loadNativeLibrary() {
+		if (!nativeLoaded) {
+			try {
+				AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
+					System.loadLibrary("j9criu29"); //$NON-NLS-1$
+					nativeLoaded = true;
+					return null;
+				});
+			} catch (UnsatisfiedLinkError e) {
+				if (System.getProperty("enable.j9internal.checkpoint.hook.api.debug") != null) { //$NON-NLS-1$
+					e.printStackTrace();
+				}
+			}
+		}
+
+		return nativeLoaded;
+	}
 
 	/**
 	 * Sets the directory that will hold the images upon checkpoint. This must be
@@ -180,11 +228,12 @@ public final class CRIUSupport {
 		String dir = imageDir.toAbsolutePath().toString();
 
 		/* [IF JAVA_SPEC_VERSION < 17] */
+		@SuppressWarnings({"deprecation" })
+		/* [ENDIF] JAVA_SPEC_VERSION < 17 */
 		SecurityManager manager = System.getSecurityManager();
 		if (manager != null) {
 			manager.checkWrite(dir);
 		}
-		/* [ENDIF] JAVA_SPEC_VERSION < 17 */
 
 		this.imageDir = dir;
 		return this;
@@ -343,11 +392,12 @@ public final class CRIUSupport {
 		String dir = workDir.toAbsolutePath().toString();
 
 		/* [IF JAVA_SPEC_VERSION < 17] */
+		@SuppressWarnings({"deprecation" })
+		/* [ENDIF] JAVA_SPEC_VERSION < 17 */
 		SecurityManager manager = System.getSecurityManager();
 		if (manager != null) {
 			manager.checkWrite(dir);
 		}
-		/* [ENDIF] JAVA_SPEC_VERSION < 17 */
 
 		this.workDir = dir;
 		return this;
@@ -368,6 +418,58 @@ public final class CRIUSupport {
 	 */
 	public CRIUSupport registerRestoreEnvFile(Path envFile) {
 		this.envFile = envFile;
+		return this;
+	}
+
+	/**
+	 * User hook that is run before checkpointing the JVM.
+	 *
+	 * Hooks will be run in single threaded mode, no other application threads
+	 * will be active. Users should avoid synchronization of objects that are not owned
+	 * by the thread, terminally blocking operations and launching new threads in the hook.
+	 *
+	 * @param hook user hook
+	 *
+	 * @return this
+	 *
+	 * TODO: Additional JVM capabilities will be added to prevent certain deadlock scenarios
+	 */
+	public CRIUSupport registerPostRestoreHook(Runnable hook) {
+		if (hook != null) {
+			J9InternalCheckpointHookAPI.registerPostRestoreHook(USER_HOOKS_PRIORITY, "User post-restore hook", ()->{ //$NON-NLS-1$
+				try {
+					hook.run();
+				} catch (Throwable t) {
+					throw new RestoreException("Exception thrown when running user post-restore hook", 0, t);
+				}
+			});
+		}
+		return this;
+	}
+
+	/**
+	 * User hook that is run after restoring a checkpoint image.
+	 *
+	 * Hooks will be run in single threaded mode, no other application threads
+	 * will be active. Users should avoid synchronization of objects that are not owned
+	 * by the thread, terminally blocking operations and launching new threads in the hook.
+	 *
+	 * @param hook user hook
+	 *
+	 * @return this
+	 *
+	 * TODO: Additional JVM capabilities will be added to prevent certain deadlock scenarios
+	 */
+	public CRIUSupport registerPreSnapshotHook(Runnable hook) {
+		if (hook != null) {
+			J9InternalCheckpointHookAPI.registerPreCheckpointHook(USER_HOOKS_PRIORITY, "User pre-checkpoint hook", ()->{ //$NON-NLS-1$
+				try {
+					hook.run();
+				} catch (Throwable t) {
+					throw new JVMCheckpointException("Exception thrown when running user pre-checkpoint hook", 0, t);
+				}
+			});
+		}
 		return this;
 	}
 
@@ -468,7 +570,6 @@ public final class CRIUSupport {
 	 *                                       restore
 	 */
 	public void checkpointJVM() {
-
 		/* Add env variables restore hook */
 		registerRestoreEnvVariables();
 
