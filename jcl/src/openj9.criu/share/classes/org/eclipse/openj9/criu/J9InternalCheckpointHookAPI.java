@@ -22,12 +22,14 @@
  *******************************************************************************/
 package org.eclipse.openj9.criu;
 
-import java.util.PriorityQueue;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 final class J9InternalCheckpointHookAPI {
 
-	private static PriorityQueue<J9InternalCheckpointHook> postRestoreHooks = new PriorityQueue<>();
-	private static PriorityQueue<J9InternalCheckpointHook> preCheckpointHooks = new PriorityQueue<>();
+	private static List<J9InternalCheckpointHook> postRestoreHooks = new ArrayList<>();
+	private static List<J9InternalCheckpointHook> preCheckpointHooks = new ArrayList<>();
 
 	/**
 	 * This is an internal API
@@ -42,7 +44,7 @@ final class J9InternalCheckpointHookAPI {
 	 * @param name     the name of the hook
 	 * @param hook     the runnable hook
 	 */
-	static void registerPostRestoreHook(int priority, String name, Runnable hook) {
+	static synchronized void registerPostRestoreHook(int priority, String name, Runnable hook) {
 		postRestoreHooks.add(new J9InternalCheckpointHook(priority, name, hook));
 	}
 
@@ -58,13 +60,20 @@ final class J9InternalCheckpointHookAPI {
 	 * @param name     the name of the hook
 	 * @param hook     the runnable hook
 	 */
-	static void registerPreCheckpointHook(int priority, String name, Runnable hook) {
+	static synchronized void registerPreCheckpointHook(int priority, String name, Runnable hook) {
 		preCheckpointHooks.add(new J9InternalCheckpointHook(priority, name, hook));
 	}
 
-	private static void runHooks(PriorityQueue<J9InternalCheckpointHook> queue) {
+	private static void runHooks(List<J9InternalCheckpointHook> hooks, boolean reverse) {
 		boolean debug = System.getProperty("enable.j9internal.checkpoint.hook.api.debug") != null; //$NON-NLS-1$
-		for (J9InternalCheckpointHook hookWrapper : queue) {
+
+		if (reverse) {
+			Collections.sort(hooks, Collections.reverseOrder());
+		} else {
+			Collections.sort(hooks);
+		}
+
+		for (J9InternalCheckpointHook hookWrapper : hooks) {
 			if (debug) {
 				System.err.println(hookWrapper);
 			}
@@ -76,15 +85,17 @@ final class J9InternalCheckpointHookAPI {
 	/*
 	 * Only called by the VM
 	 */
+	@SuppressWarnings("unused")
 	private static void runPreCheckpointHooks() {
-		runHooks(preCheckpointHooks);
+		runHooks(preCheckpointHooks, true);
 	}
 
 	/*
 	 * Only called by the VM
 	 */
+	@SuppressWarnings("unused")
 	private static void runPostRestoreHooks() {
-		runHooks(postRestoreHooks);
+		runHooks(postRestoreHooks, false);
 	}
 
 	final private static class J9InternalCheckpointHook implements Comparable<J9InternalCheckpointHook> {
@@ -93,17 +104,17 @@ final class J9InternalCheckpointHookAPI {
 		private final Runnable hook;
 		private final String name;
 
-		private int getHookPriority() {
+		int getHookPriority() {
 			return priority;
-		}
-
-		void runHook() {
-			hook.run();
 		}
 
 		@Override
 		public int compareTo(J9InternalCheckpointHook o) {
 			return o.getHookPriority() - this.getHookPriority();
+		}
+
+		void runHook() {
+			hook.run();
 		}
 
 		J9InternalCheckpointHook(int priority, String name, Runnable hook) {
@@ -114,9 +125,7 @@ final class J9InternalCheckpointHookAPI {
 
 		@Override
 		public String toString() {
-			String s = "[J9InternalCheckpointHook: [" + name + "], priority:[" + priority + "], runnable:[" + hook //$NON-NLS-1$//$NON-NLS-2$ //$NON-NLS-3$
-					+ "] " + this + "]"; //$NON-NLS-1$ //$NON-NLS-2$
-			return s;
+			return "[J9InternalCheckpointHook: [" + name + "], priority:[" + priority + "], runnable:[" + hook + "]]"; //$NON-NLS-1$//$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
 		}
 
 		@Override
