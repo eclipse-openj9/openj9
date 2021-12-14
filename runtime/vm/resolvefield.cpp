@@ -1030,16 +1030,24 @@ fieldOffsetsNextDo(J9ROMFieldOffsetWalkState *state)
 	if (walkHiddenFields && (0 != state->hiddenInstanceFieldWalkIndex)) {
 		UDATA const objectHeaderSize = J9JAVAVM_OBJECT_HEADER_SIZE(state->vm);
 		/* Note: hiddenInstanceFieldWalkIndex is the index of the last hidden instance field that was returned. */
-		J9HiddenInstanceField *hiddenField = state->hiddenInstanceFields[--state->hiddenInstanceFieldWalkIndex];
 
-		state->result.field = hiddenField->shape;
-		/*
-		 * This function returns offsets relative to the end of the object header,
-		 * whereas fieldOffset is relative to the start of the header.
-		 */
-		state->result.offset = hiddenField->fieldOffset - objectHeaderSize;
-		/* Hidden fields do not have a valid JVMTI index. */
-		state->result.index = (UDATA)-1;
+		while (0 != state->hiddenInstanceFieldWalkIndex) {
+			J9HiddenInstanceField *hiddenField = state->hiddenInstanceFields[--state->hiddenInstanceFieldWalkIndex];
+			if (J9_ARE_NO_BITS_SET(state->walkFlags, J9VM_FIELD_OFFSET_WALK_ONLY_OBJECT_SLOTS)
+				|| J9_ARE_ALL_BITS_SET(hiddenField->shape->modifiers, J9FieldFlagObject)
+			) {
+				/* If we are only looking for o-slots we've found one, or we can return anything */
+				state->result.field = hiddenField->shape;
+				/*
+				 * This function returns offsets relative to the end of the object header,
+				 * whereas fieldOffset is relative to the start of the header.
+				 */
+				state->result.offset = hiddenField->fieldOffset - objectHeaderSize;
+				/* Hidden fields do not have a valid JVMTI index. */
+				state->result.index = (UDATA)-1;
+				break;
+			}
+		}
 	}
 
 	Trc_VM_romFieldOffsetsNextDo_result(NULL, state->result.field, state->result.offset, state->result.index);

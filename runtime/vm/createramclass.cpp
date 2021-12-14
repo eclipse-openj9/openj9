@@ -2553,7 +2553,7 @@ fail:
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 		romWalkResult = fieldOffsetsStartDo(javaVM, romClass, superclass, &romWalkState,
 			(J9VM_FIELD_OFFSET_WALK_CALCULATE_INSTANCE_SIZE | J9VM_FIELD_OFFSET_WALK_INCLUDE_INSTANCE |
-			 J9VM_FIELD_OFFSET_WALK_ONLY_OBJECT_SLOTS), flattenedClassCache);
+			 J9VM_FIELD_OFFSET_WALK_ONLY_OBJECT_SLOTS | J9VM_FIELD_OFFSET_WALK_INCLUDE_HIDDEN), flattenedClassCache);
 
 		if (romWalkState.classRequiresPrePadding) {
 			*valueTypeFlags |= J9ClassRequiresPrePadding;
@@ -2561,7 +2561,7 @@ fail:
 #else /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 		romWalkResult = fieldOffsetsStartDo(javaVM, romClass, superclass, &romWalkState,
 			(J9VM_FIELD_OFFSET_WALK_CALCULATE_INSTANCE_SIZE | J9VM_FIELD_OFFSET_WALK_INCLUDE_INSTANCE |
-			 J9VM_FIELD_OFFSET_WALK_ONLY_OBJECT_SLOTS));
+			 J9VM_FIELD_OFFSET_WALK_ONLY_OBJECT_SLOTS | J9VM_FIELD_OFFSET_WALK_INCLUDE_HIDDEN));
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 
 		/* inherited from superclass: superclasses array, instance shape and interface slots */
