@@ -1592,6 +1592,12 @@ CISCTransform2FindBytes(TR_CISCTransformer *trans)
       }
    else
       {
+      // the static table currently cannot be relocated
+      if (comp->compileRelocatableCode())
+         {
+         if (disptrace) traceMsg(comp, "Abandoning reduction since we can't relocate the static table\n");
+         return false;
+         }
       tableNode = createTableLoad(comp, baseRepNode, 8, 8, tmpTable, disptrace);    // function table for TRT
       }
 
