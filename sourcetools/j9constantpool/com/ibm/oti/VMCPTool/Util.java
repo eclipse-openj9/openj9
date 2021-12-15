@@ -24,6 +24,10 @@ package com.ibm.oti.VMCPTool;
 public class Util {
 
 	public static String transformFlag(String oldFlag) {
+		if (oldFlag.startsWith("!")) {
+			// remove starting !
+			oldFlag = oldFlag.substring(1);
+		}
 		if (!oldFlag.startsWith("J9VM_")) {
 			return oldFlag;
 		}
