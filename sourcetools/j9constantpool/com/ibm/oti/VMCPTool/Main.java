@@ -421,6 +421,10 @@ public class Main implements Constants {
 						System.exit(-1);
 					}
 
+					if (flagName.startsWith("!")) {
+						// skip flag w/ starting !
+						flagName = flagName.substring(1);
+					}
 					/* Find or create the flag object */
 					JCLRuntimeFlag flag = runtimeFlagDefs.get(flagName);
 					if (null == flag) {
