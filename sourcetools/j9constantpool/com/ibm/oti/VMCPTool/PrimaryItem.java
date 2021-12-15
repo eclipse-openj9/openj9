@@ -180,7 +180,15 @@ public abstract class PrimaryItem {
 
 		private boolean hasFlag(Set<String> flags) {
 			for (String s : this.flags) {
-				if (flags.contains(s)) {
+				if (s.startsWith("!")) {
+					// remove starting !
+					String actualFlag = s.substring(1);
+					if (flags.contains(actualFlag)) {
+						return false;
+					} else {
+						return true;
+					}
+				} else if (flags.contains(s)) {
 					return true;
 				}
 			}
