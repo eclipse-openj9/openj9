@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2019, 2020 IBM Corp. and others
+# Copyright (c) 2019, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,5 +26,6 @@ j9jit_files(
 	net/LoadSSLLibs.cpp
 	net/MessageBuffer.cpp
 	net/Message.cpp
+	net/MessageTypes.cpp
 	net/ServerStream.cpp
 )
