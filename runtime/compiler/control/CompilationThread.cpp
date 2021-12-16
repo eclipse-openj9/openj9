@@ -6915,36 +6915,28 @@ TR::CompilationInfoPerThreadBase::isCPUCheapCompilation(uint32_t bcsz, TR_Hotnes
    }
 
 bool
-TR::CompilationInfoPerThreadBase::shouldPerformLocalComp(const TR_MethodToBeCompiled *entry, bool &forcedLocal)
+TR::CompilationInfoPerThreadBase::cannotPerformRemoteComp()
+   {
+   return !JITServer::ClientStream::isServerCompatible(OMRPORT_FROM_J9PORT(_jitConfig->javaVM->portLibrary)) ||
+          (!JITServerHelpers::isServerAvailable() && !JITServerHelpers::shouldRetryConnection(OMRPORT_FROM_J9PORT(_jitConfig->javaVM->portLibrary))) ||
+          (TR::Compiler->target.cpu.isPower() && _jitConfig->inlineFieldWatches); // Power codegen is missing some FieldWatch relocation support
+   }
+
+bool
+TR::CompilationInfoPerThreadBase::preferLocalComp(const TR_MethodToBeCompiled *entry)
    {
    // As a heuristic, cold compilations could be performed locally because
    // they are supposed to be cheap with respect to memory and CPU, but
    // only if we think we have enough resources
-   if (!JITServer::ClientStream::isServerCompatible(OMRPORT_FROM_J9PORT(_jitConfig->javaVM->portLibrary)) ||
-       (!JITServerHelpers::isServerAvailable() && !JITServerHelpers::shouldRetryConnection(OMRPORT_FROM_J9PORT(_jitConfig->javaVM->portLibrary))))
+   //
+   if (TR::Options::getCmdLineOptions()->getOption(TR_EnableJITServerHeuristics))
       {
-      forcedLocal = true; // Inform the caller that remote compilation is not possible
-      return true; // I really cannot do a remote compilation
+      TR_Hotness optLevel = entry->_optimizationPlan->getOptLevel();
+      J9Method *method = entry->getMethodDetails().getMethod();
+      uint32_t bcsz = TR::CompilationInfo::getMethodBytecodeSize(method);
+      return isMemoryCheapCompilation(bcsz, optLevel) && isCPUCheapCompilation(bcsz, optLevel);
       }
-
-   // Do a local compile because the Power codegen is missing some FieldWatch relocation support.
-   if (TR::Compiler->target.cpu.isPower() && _jitConfig->inlineFieldWatches)
-      return true;
-
-   // AOT compilations are expensive, so don't keep them local
-   if (entry->_useAotCompilation)
-      return false;
-
-   // Only do local compilations if the options indicate so
-   static char *localColdCompilations = feGetEnv("TR_LocalColdCompilations");
-   if (!TR::Options::getCmdLineOptions()->getOption(TR_EnableJITServerHeuristics) &&  !localColdCompilations)
-      return false;
-
-   TR_Hotness optLevel = entry->_optimizationPlan->getOptLevel();
-   J9Method *method = entry->getMethodDetails().getMethod();
-   uint32_t bcsz = TR::CompilationInfo::getMethodBytecodeSize(method);
-
-   return (isMemoryCheapCompilation(bcsz, optLevel) && isCPUCheapCompilation(bcsz, optLevel));
+   return false;
    }
 
 void
@@ -7171,6 +7163,9 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
             }
          }
       }
+#if defined(J9VM_OPT_JITSERVER)
+   bool cannotDoRemoteCompilation = cannotPerformRemoteComp();
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
    if (!entry->isAotLoad()) // We don't/can't relocate this method
       {
@@ -7268,13 +7263,29 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
             {
             canDoRelocatableCompile = true;
             }
-         else
+         else // Use AOT heruristics
             {
-            // Heuristic: generate AOT only for downgraded compilations in the second run
+            // Heuristic: generate AOT only for downgraded compilations in the first run
             if ((!isSecondAOTRun && entry->_optimizationPlan->isOptLevelDowngraded()) ||
                 entry->getMethodDetails().isJitDumpAOTMethod())
                {
                canDoRelocatableCompile = true;
+               }
+            else
+               {
+#if defined(J9VM_OPT_JITSERVER)
+               // We also want AOT compilations for JITServer clients that are attached to a
+               // JITServer with an AOT cache, because those can be served relatively fast
+               if (_compInfo.getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT &&
+                   _compInfo.getPersistentInfo()->getJITServerUseAOTCache() && // Ideally we would check if the options allow us to use the AOT cache for this method
+                   !cannotDoRemoteCompilation) // Make sure remote compilations are possible (no strong guarantees)
+                  {
+                  if (!preferLocalComp(entry))
+                     {
+                     canDoRelocatableCompile = true;
+                     }
+                  }
+#endif /* defined(J9VM_OPT_JITSERVER) */
                }
             }
          }
@@ -7287,20 +7298,23 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
       entry->_useAotCompilation = true;
 #if defined(J9VM_OPT_JITSERVER)
       if (entry->isOutOfProcessCompReq())
+         {
          _vm = TR_J9VMBase::get(_jitConfig, vmThread, TR_J9VMBase::J9_SHARED_CACHE_SERVER_VM);
+         }
       else
 #endif /* defined(J9VM_OPT_JITSERVER) */
+         {
          _vm = TR_J9VMBase::get(_jitConfig, vmThread, TR_J9VMBase::AOT_VM);
 #if defined(J9VM_OPT_JITSERVER)
-      if (_compInfo.getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
-         {
-         bool forcedLocal = false;
-         if (!shouldPerformLocalComp(entry, forcedLocal))
-            entry->setRemoteCompReq();
-         else if (forcedLocal)
-            downgradeLocalCompilationIfLowPhysicalMemory(entry);
-         }
+         if (_compInfo.getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
+            {
+            if (cannotDoRemoteCompilation)
+               downgradeLocalCompilationIfLowPhysicalMemory(entry);
+            else // AOT compilations are more expensive, so they should all be done remotely
+               entry->setRemoteCompReq();
+            }
 #endif /* defined(J9VM_OPT_JITSERVER) */
+         }
       }
    else if (entry->isOutOfProcessCompReq())
       {
@@ -7320,7 +7334,7 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
           TR::Options::canJITCompile())
          {
          bool forcedLocal = false;
-         bool doLocalCompilation = shouldPerformLocalComp(entry, forcedLocal);
+         bool doLocalCompilation = cannotDoRemoteCompilation || preferLocalComp(entry);
 
          // If this is a remote sync compilation, change it to a local sync compilation.
          // After the local compilation is completed successfully, a remote async compilation
@@ -7346,29 +7360,12 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
                TR_VerboseLog::writeLineLocked(TR_Vlog_DISPATCH, "Changed the remote sync compilation to a local sync cold compilation: j9method=%p",
                entry->getMethodDetails().getMethod());
             }
-         // In another heuristic we could downgrade all first time compilations
-         // that happen during startup.
-         if (false)
-            {
-            if (!TR::CompilationInfo::isCompiled(method) &&  //recompilations should be sent remotely
-               !TR::Options::getCmdLineOptions()->getOption(TR_DontDowngradeToCold) &&
-               !TR::Options::getCmdLineOptions()->getOption(TR_DisableUpgradingColdCompilations) &&
-               TR::Options::getCmdLineOptions()->allowRecompilation() &&
-               entry->_optimizationPlan->getOptLevel() == warm)
-               {
-               doLocalCompilation = true;
-               entry->_optimizationPlan->setOptLevel(cold);
-               entry->_optimizationPlan->setOptLevelDowngraded(true);
-               // JITServer TODO: queue a remote upgrade right away, but at a lower priority
-               // If so, disable GCR trees for those cold compilations.
-               }
-            }
 
          if (!doLocalCompilation)
             {
             entry->setRemoteCompReq();
             }
-         else if (forcedLocal)
+         else if (cannotDoRemoteCompilation)
             {
             downgradeLocalCompilationIfLowPhysicalMemory(entry);
             }
