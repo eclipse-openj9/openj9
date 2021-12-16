@@ -450,6 +450,7 @@
    jdk_internal_vm_vector_VectorSupport_load = FirstVectorMethod,
    jdk_internal_vm_vector_VectorSupport_store,
    jdk_internal_vm_vector_VectorSupport_binaryOp,
+   jdk_internal_vm_vector_VectorSupport_blend,
    jdk_internal_vm_vector_VectorSupport_broadcastCoerced,
    jdk_internal_vm_vector_VectorSupport_compare,
    jdk_internal_vm_vector_VectorSupport_unaryOp,
