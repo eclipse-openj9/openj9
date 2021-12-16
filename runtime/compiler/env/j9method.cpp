@@ -4479,6 +4479,7 @@ TR_ResolvedJ9Method::setRecognizedMethodInfo(TR::RecognizedMethod rm)
       {
       switch (rm)
          {
+         case TR::java_lang_J9VMInternals_getSuperclass:
          case TR::com_ibm_jit_JITHelpers_getSuperclass:
          case TR::com_ibm_jit_DecimalFormatHelper_formatAsDouble:
          case TR::com_ibm_jit_DecimalFormatHelper_formatAsFloat:
