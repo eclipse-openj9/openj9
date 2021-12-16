@@ -316,13 +316,8 @@ public class ProgrammableInvoker {
 			 * So we have to rely on the method type (deduced from the function descriptor in OpenJDK)
 			 * to differentiate the functions' signature (Only for primitives).
 			 */
-			/*[IF JAVA_SPEC_VERSION >= 18]*/
 			int funcSigHash = funcMethodType.hashCode();
 			int argTypesHash = argTypes.hashCode();
-			/*[ELSE] JAVA_SPEC_VERSION >= 18 */
-			int funcSigHash = funcDescriptor.hashCode();
-			int argTypesHash = argLayouts.hashCode();
-			/*[ENDIF] JAVA_SPEC_VERSION >= 18 */
 			Long cifNativeThunk = cachedCifNativeThunkAddr.get(funcSigHash);
 			if (cifNativeThunk != null) {
 				cifNativeThunkAddr = cifNativeThunk.longValue();
