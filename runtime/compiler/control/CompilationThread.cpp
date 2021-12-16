@@ -8159,10 +8159,13 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
 
                TR_ASSERT(vm->isAOT_DEPRECATED_DO_NOT_USE(), "assertion failure");
 
-               // Do not delay relocations for JITServer
-               // FIXME: JITServer does not reach this code
-               //if (that->getCompilationInfo()->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
-               //   options->setOption(TR_DisableDelayRelocationForAOTCompilations);
+               // Do not delay relocations for JITServer client when server side AOT caching is used (gives better performance)
+               // Testing the presence of the deserializer is sufficient, because the deserializer
+               // is only created at the client and only if server side AOT caching is enabled
+#if defined(J9VM_OPT_JITSERVER)
+               if (that->getCompilationInfo()->getJITServerAOTDeserializer())
+                  options->setOption(TR_DisableDelayRelocationForAOTCompilations);
+#endif /* defined(J9VM_OPT_JITSERVER) */
                }
 
             if (that->_methodBeingCompiled->_optimizationPlan->disableCHOpts())
