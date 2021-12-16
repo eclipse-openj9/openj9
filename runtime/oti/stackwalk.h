@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -142,7 +142,14 @@ extern "C" {
 #define J9_STACK_FLAGS_JIT_FAILED_METHOD_MONITOR_ENTER_RESOLVE 0x01000000
 #define J9_STACK_FLAGS_JIT_EXCEPTION_CATCH_RESOLVE 0x01100000
 
-/* Platform-specific defines */
+/* Platform-specific defines
+ *
+ * - J9SW_JIT_STACK_SLOTS_USED_BY_CALL
+ *     Number of slots pushed on a stack by call itself. Should be 0 (zero)
+ *     for architectures that store return address into a link register.
+ *     Currently only X86 defines it as 1 since x86 `call` instruction pushes
+ *     return address onto a stack.
+ */
 
 #if defined(J9VM_ARCH_X86)
 
