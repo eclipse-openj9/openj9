@@ -9152,13 +9152,14 @@ TR::CompilationInfoPerThreadBase::compile(
             {
             TR_VerboseLog::writeLineLocked(
                TR_Vlog_COMPSTART,
-               "(%s%s) Compiling %s %s %s j9m=%p t=%llu compThreadID=%d memLimit=%zu KB freePhysicalMemory=%llu MB",
+               "(%s%s) Compiling %s %s %s j9m=%p %s t=%llu compThreadID=%d memLimit=%zu KB freePhysicalMemory=%llu MB",
                compilationTypeString,
                compiler->getHotnessName(compiler->getMethodHotness()),
                compiler->signature(),
                compiler->isDLT() ? "DLT" : "",
                details.name(),
                method,
+               _methodBeingCompiled->isRemoteCompReq() ? "remote" : "",
                _compInfo.getPersistentInfo()->getElapsedTime(),
                compiler->getCompThreadID(),
                scratchSegmentProvider.allocationLimit() >> 10,
@@ -10446,8 +10447,14 @@ void TR::CompilationInfoPerThreadBase::logCompilationSuccess(
             if (_methodBeingCompiled->_reqFromJProfilingQueue)
                TR_VerboseLog::write(" JPQ");
 
+#if defined(J9VM_OPT_JITSERVER)
             if (_methodBeingCompiled->isRemoteCompReq())
+               {
                TR_VerboseLog::write(" remote");
+               if (compiler->isDeserializedAOTMethod())
+                  TR_VerboseLog::write(" deserialized");
+               }
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
             if (TR::Options::getVerboseOption(TR_VerboseGc))
                {
