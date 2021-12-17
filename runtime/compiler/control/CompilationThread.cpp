@@ -7263,7 +7263,7 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
             {
             canDoRelocatableCompile = true;
             }
-         else // Use AOT heruristics
+         else // Use AOT heuristics
             {
             // Heuristic: generate AOT only for downgraded compilations in the first run
             if ((!isSecondAOTRun && entry->_optimizationPlan->isOptLevelDowngraded()) ||
@@ -7282,7 +7282,18 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
                   {
                   if (!preferLocalComp(entry))
                      {
-                     canDoRelocatableCompile = true;
+                     // Even if this compilation is too expensive to be performed locally,
+                     // we may still want to refrain from generating too many remote AOT
+                     // compilations, because of the negative effect of GCR. Smaller methods
+                     // can be jitted remotely (no AOT) because the server would not save too
+                     // much CPU by using its AOT cache.
+                     //
+                     J9ROMMethod * romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
+                     if (J9ROMMETHOD_HAS_BACKWARDS_BRANCHES(romMethod) ||
+                         TR::CompilationInfo::getMethodBytecodeSize(method) >= TR::Options::_smallMethodBytecodeSizeThresholdForJITServerAOTCache)
+                        {
+                        canDoRelocatableCompile = true;
+                        }
                      }
                   }
 #endif /* defined(J9VM_OPT_JITSERVER) */

@@ -100,6 +100,7 @@ int32_t J9::Options::_profilerStackSize = 128;
 
 int32_t J9::Options::_smallMethodBytecodeSizeThreshold = 0;
 int32_t J9::Options::_smallMethodBytecodeSizeThresholdForCold = -1; // -1 means not set (or disabled)
+int32_t J9::Options::_smallMethodBytecodeSizeThresholdForJITServerAOTCache = 0; // 0 means disabled; good values to try 0-32
 
 int32_t J9::Options::_countForMethodsCompiledDuringStartup = 10;
 
@@ -975,12 +976,15 @@ TR::OptionTable OMR::Options::_feOptions[] = {
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_sharedROMClassCacheNumPartitions, 0, "F%d", NOT_IN_SUBSET},
 #endif /* defined(J9VM_OPT_JITSERVER) */
    {"singleCache", "C\tallow only one code cache and one data cache to be allocated", RESET_JITCONFIG_RUNTIME_FLAG(J9JIT_GROW_CACHES) },
-   {"smallMethodBytecodeSizeThreshold=", "O<nnn> Threshold for determining small methods\t "
+   {"smallMethodBytecodeSizeThreshold=", "O<nnn> \tThreshold for determining small methods "
                                          "(measured in number of bytecodes)",
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_smallMethodBytecodeSizeThreshold, 0, "F%d", NOT_IN_SUBSET},
-   {"smallMethodBytecodeSizeThresholdForCold=", "O<nnn> Threshold for determining small methods at cold\t "
+   {"smallMethodBytecodeSizeThresholdForCold=", "O<nnn>\tThreshold for determining small methods at cold "
                                          "(measured in number of bytecodes)",
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_smallMethodBytecodeSizeThresholdForCold, 0, "F%d", NOT_IN_SUBSET},
+   {"smallMethodBytecodeSizeThresholdForJITServerAOTCache=", "O<nnn>\tThreshold for determining small methods that should "
+                                         "not be converted to AOT, but rather be jitted remotely",
+        TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_smallMethodBytecodeSizeThresholdForJITServerAOTCache, 0, "F%d", NOT_IN_SUBSET},
    {"stack=",             "C<nnn>\tcompilation thread stack size in KB",
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_stackSize, 0, "F%d", NOT_IN_SUBSET},
 #if defined(J9VM_OPT_JITSERVER)
