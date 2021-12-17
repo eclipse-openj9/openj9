@@ -189,8 +189,8 @@ J9::Z::TreeEvaluator::inlineStringLatin1Inflate(TR::Node *node, TR::CodeGenerato
 
    // Done storing 16 chars. Now do some bookkeeping and then branch back to start label.
    generateRILInstruction(cg, TR::InstOpCode::AFI, node, srcOffRegister, 16);
-   generateRILInstruction(cg, TR::InstOpCode::AFI, node, sourceArrayReferenceRegister, 16);
-   generateRILInstruction(cg, TR::InstOpCode::AFI, node, charArrayReferenceRegister, 32);
+   generateRXInstruction(cg, TR::InstOpCode::getLoadAddressOpCode(), node, sourceArrayReferenceRegister, generateS390MemoryReference(sourceArrayReferenceRegister, 16, cg));
+   generateRXInstruction(cg, TR::InstOpCode::getLoadAddressOpCode(), node, charArrayReferenceRegister, generateS390MemoryReference(charArrayReferenceRegister, 32, cg));
    generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, vectorLoopStart);
 
    // Once we reach this label, only the residual characters need to be processed.
