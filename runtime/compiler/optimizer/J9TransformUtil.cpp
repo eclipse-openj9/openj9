@@ -1717,14 +1717,6 @@ TR::Node * J9::TransformUtil::calculateElementAddress(TR::Compilation *comp, TR:
    return addrCalc;
 }
 
-/**
- * Calculate offset for an array element given its index
- *
- * @param index The index in the array of type Int32
- * @param type  The data type of the array element
- *
- * @return The Int64 value representing the offset into an array of the specified type given the index
- */
 TR::Node * J9::TransformUtil::calculateOffsetFromIndexInContiguousArray(TR::Compilation *comp, TR::Node * index, TR::DataType type)
    {
    int32_t width = TR::Symbol::convertTypeToSize(type);
@@ -1734,7 +1726,50 @@ TR::Node * J9::TransformUtil::calculateOffsetFromIndexInContiguousArray(TR::Comp
    if (comp->useCompressedPointers() && type == TR::Address)
       width = TR::Compiler->om.sizeofReferenceField();
 
-   int32_t shift = TR::TransformUtil::convertWidthToShift(width);
+   return calculateOffsetFromIndexInContiguousArrayWithElementStride(comp, index, width);
+   }
+
+TR::Node * J9::TransformUtil::calculateElementAddressWithElementStride(TR::Compilation *comp, TR::Node *array, TR::Node *index, int32_t elementStride)
+{
+   TR::Node * offset = TR::TransformUtil::calculateOffsetFromIndexInContiguousArrayWithElementStride(comp, index, elementStride);
+   offset->setIsNonNegative(true);
+
+   // Calculate element address
+   TR::Node *addrCalc = NULL;
+   if (comp->target().is64Bit())
+      addrCalc = TR::Node::create(TR::aladd, 2, array, offset);
+   else
+      addrCalc = TR::Node::create(TR::aiadd, 2, array, TR::Node::create(TR::l2i, 1, offset));
+
+   addrCalc->setIsInternalPointer(true);
+   return addrCalc;
+}
+
+static int32_t checkNonNegativePowerOfTwo(int32_t value)
+   {
+   if (isNonNegativePowerOf2(value))
+      {
+      int32_t shiftAmount = 0;
+      while ((value = ((uint32_t) value) >> 1))
+         {
+         ++shiftAmount;
+         }
+      return shiftAmount;
+      }
+   else
+      {
+      return -1;
+      }
+   }
+
+TR::Node * J9::TransformUtil::calculateOffsetFromIndexInContiguousArrayWithElementStride(TR::Compilation *comp, TR::Node * index, int32_t elementStride)
+   {
+   int32_t shift = -1;
+   if (elementStride > 0)
+      {
+      shift = checkNonNegativePowerOfTwo(elementStride);
+      }
+
    int32_t headerSize = TR::Compiler->om.contiguousArrayHeaderSizeInBytes();
 
    TR::Node * offset = index;
@@ -1746,13 +1781,21 @@ TR::Node * J9::TransformUtil::calculateOffsetFromIndexInContiguousArray(TR::Comp
    TR::ILOpCodes constOp = comp->target().is64Bit() ? TR::lconst : TR::iconst;
    TR::ILOpCodes shlOp = comp->target().is64Bit() ? TR::lshl : TR::ishl;
    TR::ILOpCodes addOp = comp->target().is64Bit() ? TR::ladd : TR::iadd;
+   TR::ILOpCodes mulOp = comp->target().is64Bit() ? TR::lmul : TR::imul;
 
-   if (shift)
+   if (shift > 0)
       {
       TR::Node *shiftNode = TR::Node::create(TR::iconst, 0);
       shiftNode->setConstValue(shift);
       offset = TR::Node::create(shlOp, 2, offset, shiftNode);
       }
+   else
+      {
+      TR::Node *elementStrideNode = TR::Node::create(constOp, 0);
+      elementStrideNode->setConstValue(elementStride);
+      offset = TR::Node::create(mulOp, 2, offset, elementStrideNode);
+      }
+
    if (headerSize > 0)
       {
       TR::Node *headerSizeNode = TR::Node::create(constOp, 0);

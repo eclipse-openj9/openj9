@@ -94,6 +94,21 @@ public:
    bool isValueTypeClass(TR_OpaqueClassBlock *);
    bool isValueTypeClassFlattened(TR_OpaqueClassBlock *clazz);
    bool isValueBasedOrValueTypeClass(TR_OpaqueClassBlock *);
+
+   /** \brief
+    *    Returns the size of the flattened array element
+    *
+    *  \param comp
+    *    The compilation object
+    *
+    *  \param arrayClass
+    *    The array class that is to be checked
+    *
+    *  \return
+    *    Size of the flattened array element
+    */
+   int32_t flattenedArrayElementSize(TR::Compilation *comp, TR_OpaqueClassBlock *arrayClass);
+
    /** \brief
     *	    Checks whether a class implements `IdentityObject`/`IdentityInterface`
     *
