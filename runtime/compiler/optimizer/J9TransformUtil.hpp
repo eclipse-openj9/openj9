@@ -92,7 +92,7 @@ public:
    static bool avoidFoldingInstanceField(
       uintptr_t object,
       TR::Symbol *field,
-      uint32_t fieldOffset,       
+      uint32_t fieldOffset,
       int cpIndex,
       TR_ResolvedMethod *owningMethod,
       TR::Compilation *comp);
@@ -105,7 +105,7 @@ public:
    static TR::Node *generateArrayElementShiftAmountTrees(
          TR::Compilation *comp,
          TR::Node *object);
-   
+
    static bool transformDirectLoad(TR::Compilation *, TR::Node *node);
 
    /**
@@ -201,8 +201,34 @@ public:
    static bool fieldShouldBeCompressed(TR::Node *node, TR::Compilation *comp);
 
    static TR::Block *insertNewFirstBlockForCompilation(TR::Compilation *comp);
+   /**
+    * \brief
+    *    Calculate offset for an array element given its index based on `type`
+    *
+    * \param index
+    *    The index into the array
+    *
+    * \param type
+    *    The data type of the array element
+    *
+    * \return The Int64 value representing the offset into an array of the specified type given the index
+    */
    static TR::Node *calculateOffsetFromIndexInContiguousArray(TR::Compilation *, TR::Node * index, TR::DataType type);
+   /**
+    * \brief
+    *    Calculate offset for an array element given its index based on `elementStride`
+    *
+    * \param index
+    *    The index into the array
+    *
+    * \param elementStride
+    *    The size of the array element
+    *
+    * \return The Int64 value representing the offset into an array of the specified element size given the index
+    */
+   static TR::Node *calculateOffsetFromIndexInContiguousArrayWithElementStride(TR::Compilation *, TR::Node * index, int32_t elementStride);
    static TR::Node *calculateElementAddress(TR::Compilation *, TR::Node *array, TR::Node * index, TR::DataType type);
+   static TR::Node *calculateElementAddressWithElementStride(TR::Compilation *, TR::Node *array, TR::Node * index, int32_t elementStride);
    static TR::Node *calculateIndexFromOffsetInContiguousArray(TR::Compilation *, TR::Node * offset, TR::DataType type);
 
    static TR::Node* saveNodeToTempSlot(TR::Compilation* comp, TR::Node* node, TR::TreeTop* insertTreeTop);
