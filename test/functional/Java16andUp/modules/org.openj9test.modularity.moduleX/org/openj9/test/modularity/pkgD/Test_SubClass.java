@@ -26,9 +26,6 @@ import org.testng.annotations.Test;
 import org.testng.Assert;
 import org.testng.AssertJUnit;
 import org.objectweb.asm.*;
-import static org.objectweb.asm.Opcodes.V_PREVIEW;
-import static org.objectweb.asm.Opcodes.ACC_PRIVATE;
-import static org.objectweb.asm.Opcodes.V16;
 
 /**
  * Test cases for JEP 397: Sealed Classes (Second Preview)
@@ -39,36 +36,14 @@ import static org.objectweb.asm.Opcodes.V16;
 @Test(groups = { "level.sanity" })
 public class Test_SubClass {
 	static String subClassName = "org.openj9.test.modularity.pkgD.SubClassPermitted1";
-	
-	/* sealed classes are still a preview feature as of jdk 16, and OpenJ9 requires that
-	 * major version match the latest supported version when --enable-preview flag is active
-	 */
-	private static int latestPreviewVersion;
-	static {
-		String runtimeVersion = System.getProperty("java.version");
-		int versionNum = Integer.parseInt(runtimeVersion.substring(0, 2));
-		switch (versionNum) {
-			case 16:
-				latestPreviewVersion = V16;
-				break;
-			case 17:
-				latestPreviewVersion = 61; // does ASM support jdk17 yet?
-				break;
-			case 18:
-				latestPreviewVersion = 62; // does ASM support jdk18 yet?
-				break;
-			default:
-				latestPreviewVersion = V16; // next release
-		}
-	}
-	
+
 	@Test
 	public void test_subClassInTheDifferentPackageFromSealedSuperClass() throws ClassNotFoundException {
 		String subClassName = "org.openj9.test.modularity.pkgD.SubClassPermitted1";
 		ClassLoader classloader = Test_SubClass.class.getClassLoader();
 		Class<?> subClass = classloader.loadClass(subClassName);
 	}
-	
+
 	@Test
 	public void test_subClassInTheDifferentPackageFromSealedSuperInterface() throws ClassNotFoundException {
 		String subClassName = "org.openj9.test.modularity.pkgD.SubClassPermitted2";

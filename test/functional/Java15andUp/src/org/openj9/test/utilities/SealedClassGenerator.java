@@ -23,39 +23,18 @@ package org.openj9.test.utilities;
  *******************************************************************************/
 
  import org.objectweb.asm.*;
+ import org.openj9.test.util.VersionCheck;
 
  public class SealedClassGenerator implements Opcodes {
 	private static String dummySubclassName = "TestSubclassGen";
-	/* sealed classes are still a preview feature as of jdk 16, and OpenJ9 requires that
-	 * major version match the latest supported version when --enable-preview flag is active
-	 */
-	private static int latestPreviewVersion;
-	static {
-		String runtimeVersion = System.getProperty("java.version");
-		int versionNum = Integer.parseInt(runtimeVersion.substring(0, 2));
-		switch (versionNum) {
-			case 15:
-				latestPreviewVersion = V15;
-				break;
-			case 16:
-				latestPreviewVersion = V16;
-				break;
-			case 17:
-				latestPreviewVersion = 61; // does ASM support jdk17 yet?
-				break;
-			case 18:
-				latestPreviewVersion = 62; // does ASM support jdk18 yet?
-				break;
-			default:
-				latestPreviewVersion = V16; // next release
-		}
-	}
+	/* sealed classes are NOT a preview feature since LTS jdk 17 */
+	private static int latestVersion = VersionCheck.classFile();
 
 	public static byte[] generateFinalSealedClass(String className) {
 		int accessFlags = ACC_FINAL | ACC_SUPER;
 
 		ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
-		cw.visit(latestPreviewVersion | V_PREVIEW, accessFlags, className, null, "java/lang/Object", null);
+		cw.visit(latestVersion, accessFlags, className, null, "java/lang/Object", null);
 
 		/* Sealed class must have a PermittedSubclasses attribute */
 		cw.visitPermittedSubclass(dummySubclassName);
@@ -67,7 +46,7 @@ package org.openj9.test.utilities;
 	public static byte[] generateSubclassIllegallyExtendingSealedSuperclass(String className, Class<?> superClass) {
 		String superName = superClass.getName().replace('.', '/');
 		ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
-		cw.visit(latestPreviewVersion | V_PREVIEW, ACC_SUPER, className, null, superName, null);
+		cw.visit(latestVersion, ACC_SUPER, className, null, superName, null);
 		cw.visitEnd();
 		return cw.toByteArray();
 	}
@@ -75,14 +54,14 @@ package org.openj9.test.utilities;
 	public static byte[] generateSubinterfaceIllegallyExtendingSealedSuperinterface(String className, Class<?> superInterface) {
 		String[] interfaces = { superInterface.getName().replace('.', '/') };
 		ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
-		cw.visit(latestPreviewVersion | V_PREVIEW, ACC_SUPER, className, null, "java/lang/Object", interfaces);
+		cw.visit(latestVersion, ACC_SUPER, className, null, "java/lang/Object", interfaces);
 		cw.visitEnd();
 		return cw.toByteArray();
 	}
 
 	public static byte[] generateSealedClass(String className, String[] permittedSubclassNames) {
 		ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
-		cw.visit(latestPreviewVersion | V_PREVIEW, ACC_SUPER, className, null, "java/lang/Object", null);
+		cw.visit(latestVersion, ACC_SUPER, className, null, "java/lang/Object", null);
 
 		for (String psName : permittedSubclassNames) {
 			cw.visitPermittedSubclass(psName);
