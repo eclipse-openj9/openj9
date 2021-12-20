@@ -23,9 +23,6 @@
 <playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../TestConfig/playlist.xsd">
 	<test>
 		<testCaseName>Jep359Tests</testCaseName>
-		<variations>
-			<variation>--enable-preview</variation>
-		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 			--add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.lang.reflect=ALL-UNNAMED \
             -cp $(Q)$(LIB_DIR)$(D)asm.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
@@ -50,10 +47,6 @@
 	</test>
 	<test>
 		<testCaseName>ThreadInterruptImplTest</testCaseName>
-		<variations>
-			<!-- enable-preview is needed here because JEP 359 test class files will be included on the classpath. -->
-			<variation>--enable-preview</variation>
-		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
             -cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
             org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames ThreadInterruptImplTest \
@@ -78,7 +71,7 @@
 	<test>
 		<testCaseName>JEP358NPEMessageTests</testCaseName>
 		<variations>
-			<variation>--enable-preview -XX:+ShowCodeDetailsInExceptionMessages --add-exports java.base/jdk.internal.org.objectweb.asm=ALL-UNNAMED</variation>
+			<variation>-XX:+ShowCodeDetailsInExceptionMessages --add-exports java.base/jdk.internal.org.objectweb.asm=ALL-UNNAMED</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -DhasDebugInfo=true \
             -cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
@@ -104,7 +97,7 @@
 	<test>
 		<testCaseName>JEP358NPEMessageTests-noDebugInfo</testCaseName>
 		<variations>
-			<variation>--enable-preview -XX:+ShowCodeDetailsInExceptionMessages --add-exports java.base/jdk.internal.org.objectweb.asm=ALL-UNNAMED</variation>
+			<variation>-XX:+ShowCodeDetailsInExceptionMessages --add-exports java.base/jdk.internal.org.objectweb.asm=ALL-UNNAMED</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -DhasDebugInfo=false \
             -cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest-noDebugInfo.jar$(Q) \

@@ -1,7 +1,7 @@
 package org.openj9.test.utilities;
 
 /*******************************************************************************
- * Copyright (c) 2020, 2020 IBM Corp. and others
+ * Copyright (c) 2020, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,7 +32,7 @@ import org.openj9.test.util.VersionCheck;
     /* Generata a valid record with optional attributes */
     public static byte[] generateRecordAttributes(String className, String rcName, String rcType, String rcSignature) {
         ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
-        cw.visit(classVersion | V_PREVIEW, ACC_FINAL | ACC_SUPER, className, null, "java/lang/Record", null);
+        cw.visit(classVersion, ACC_FINAL | ACC_SUPER, className, null, "java/lang/Record", null);
 
         /* add record component */
         RecordComponentVisitor rcv = cw.visitRecordComponent(
@@ -62,14 +62,14 @@ import org.openj9.test.util.VersionCheck;
 
     private static byte[] generateRecordWithCustomOpcodes(String className, int access) {
         ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
-        cw.visit(classVersion | V_PREVIEW, access, className, null, "java/lang/Record", null);
+        cw.visit(classVersion, access, className, null, "java/lang/Record", null);
         cw.visitEnd();
         return cw.toByteArray();
     }
 
     public static byte[] generateRecordAttributesWithNoAccessor(String className, String rcName, String rcType) {
         ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
-        cw.visit(classVersion | V_PREVIEW, ACC_FINAL | ACC_SUPER, className, null, "java/lang/Record", null);
+        cw.visit(classVersion, ACC_FINAL | ACC_SUPER, className, null, "java/lang/Record", null);
 
         RecordComponentVisitor rcv = cw.visitRecordComponent(
                 rcName,
@@ -85,7 +85,7 @@ import org.openj9.test.util.VersionCheck;
 
     public static byte[] generateRecordAttributesWithInvalidAccessor(String className, String rcName, String rcType, String invalidType) {
         ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
-        cw.visit(classVersion | V_PREVIEW, ACC_FINAL | ACC_SUPER, className, null, "java/lang/Record", null);
+        cw.visit(classVersion, ACC_FINAL | ACC_SUPER, className, null, "java/lang/Record", null);
 
         RecordComponentVisitor rcv = cw.visitRecordComponent(
                 rcName,
