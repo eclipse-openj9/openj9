@@ -26,12 +26,11 @@ import org.testng.annotations.Test;
 import org.testng.Assert;
 import org.testng.AssertJUnit;
 import org.objectweb.asm.*;
-import static org.objectweb.asm.Opcodes.V_PREVIEW;
 import static org.objectweb.asm.Opcodes.ACC_PUBLIC;
-import static org.objectweb.asm.Opcodes.V16;
 import org.openj9.test.modularity.pkgA.SuperClassSealed;
 import org.openj9.test.modularity.pkgA.SuperInterfaceSealed;
 import org.openj9.test.modularity.pkgB.SuperClassFromPkgB;
+import org.openj9.test.util.VersionCheck;
 
 /**
  * Test cases for JEP 397: Sealed Classes (Second Preview)
@@ -42,28 +41,9 @@ import org.openj9.test.modularity.pkgB.SuperClassFromPkgB;
  */
  @Test(groups = { "level.sanity" })
 public class Test_SubClass {
-	/* sealed classes are still a preview feature as of jdk 16, and OpenJ9 requires that
-	 * major version match the latest supported version when --enable-preview flag is active
-	 */
-	private static int latestPreviewVersion;
-	static {
-		String runtimeVersion = System.getProperty("java.version");
-		int versionNum = Integer.parseInt(runtimeVersion.substring(0, 2));
-		switch (versionNum) {
-			case 16:
-				latestPreviewVersion = V16;
-				break;
-			case 17:
-				latestPreviewVersion = 61; // does ASM support jdk17 yet?
-				break;
-			case 18:
-				latestPreviewVersion = 62; // does ASM support jdk18 yet?
-				break;
-			default:
-				latestPreviewVersion = V16; // next release
-		}
-	}
-	
+	/* sealed classes are NOT a preview feature since LTS jdk 17 */
+	private static int latestVersion = VersionCheck.classFile();
+
 	@Test(expectedExceptions = java.lang.IncompatibleClassChangeError.class)
 	public void test_subClassInTheDifferentModuleFromSealedSuperClass() {
 		String subClassName = "TestSubclass";
@@ -71,7 +51,7 @@ public class Test_SubClass {
 		byte[] subClassNameBytes = generateSubclassInDifferentModuleFromSealedSuper(subClassName, SuperClassSealed.class, null);
 		Class<?> clazz = classloader.getClass(subClassName, subClassNameBytes);
 	}
-	
+
 	@Test(expectedExceptions = java.lang.IncompatibleClassChangeError.class)
 	public void test_subClassInTheDifferentModuleFromSealedSuperInterface() {
 		String subClassName = "TestSubclass";
@@ -79,7 +59,7 @@ public class Test_SubClass {
 		byte[] subClassNameBytes = generateSubclassInDifferentModuleFromSealedSuper(subClassName, SuperClassFromPkgB.class, SuperInterfaceSealed.class);
 		Class<?> clazz = classloader.getClass(subClassName, subClassNameBytes);
 	}
-	
+
 	private static byte[] generateSubclassInDifferentModuleFromSealedSuper(String className, Class<?> superClass, Class<?> superInterface) {
 		String superClassName = superClass.getName().replace('.', '/');
 		String[] superInterfaceNames = null;
@@ -89,7 +69,7 @@ public class Test_SubClass {
 		}
 		
 		ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
-		cw.visit(latestPreviewVersion | V_PREVIEW, ACC_PUBLIC, className, null, superClassName, superInterfaceNames);
+		cw.visit(latestVersion, ACC_PUBLIC, className, null, superClassName, superInterfaceNames);
 		cw.visitEnd();
 		return cw.toByteArray();
 	}

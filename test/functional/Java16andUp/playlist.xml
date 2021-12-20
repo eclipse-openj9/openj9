@@ -29,9 +29,6 @@
 				<impl>hotspot</impl>
 			</disable>
 		</disables>
-		<variations>
-			<variation>--enable-preview</variation>
-		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
             -cp $(Q)$(LIB_DIR)$(D)asm.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
             org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames Jep397Tests \
@@ -58,9 +55,6 @@
 				<impl>hotspot</impl>
 			</disable>
 		</disables>
-		<variations>
-			<variation>--enable-preview</variation>
-		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 			-cp $(Q)$(LIB_DIR)$(D)asm.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
 			-cp $(Q)$(TEST_RESROOT)$(D)module_bin$(D)org.openj9test.modularity.moduleX$(Q) \
@@ -95,9 +89,6 @@
 				<impl>hotspot</impl>
 			</disable>
 		</disables>
-		<variations>
-			<variation>--enable-preview</variation>
-		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 			-cp $(Q)$(LIB_DIR)$(D)asm.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
 			org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testSubClassOfSealedSuperFromDifferentPackageInSameUnamedModule.xml$(Q) -testnames Jep397Tests_testSubClassOfSealedSuperFromDifferentPackageInSameUnamedModule \
@@ -124,9 +115,6 @@
 				<impl>hotspot</impl>
 			</disable>
 		</disables>
-		<variations>
-			<variation>--enable-preview</variation>
-		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 			-cp $(Q)$(LIB_DIR)$(D)asm.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
 			-cp $(Q)$(TEST_RESROOT)$(D)module_bin$(D)org.openj9test.modularity.moduleX$(Q) \
@@ -159,9 +147,6 @@
 				<impl>hotspot</impl>
 			</disable>
 		</disables>
-		<variations>
-			<variation>--enable-preview</variation>
-		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) $(JAVA_COMMAND) $(JVM_OPTIONS) \
 			--add-opens jdk.incubator.foreign/jdk.internal.foreign=ALL-UNNAMED \
 			--add-opens java.base/jdk.internal.misc=ALL-UNNAMED \
@@ -193,9 +178,6 @@
 				<impl>hotspot</impl>
 			</disable>
 		</disables>
-		<variations>
-			<variation>--enable-preview</variation>
-		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) $(JAVA_COMMAND) $(JVM_OPTIONS) \
 			--add-modules jdk.incubator.foreign \
 			-Dforeign.restricted=permit \

@@ -69,10 +69,16 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 				<var name="module_bin_dir" value="${module_bin_root}/${MODULE_NAME_ROOT}.@{mod}" />
 				<mkdir dir="${module_bin_dir}" />
 				<var name="modpath" value="--module-path ${module_bin_root} -d ${module_bin_dir}" />
-				<javac srcdir="${module_src_dir}" destdir="${module_bin_dir}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
-					<src path="${module_src_dir}" />
+				<javac srcdir="${module_src_dir}"
+					destdir="${module_bin_dir}"
+					includes="org/openj9/test/modularity/**,org/openj9/test/util/VersionCheck.java"
+					debug="true" fork="true"
+					executable="${compiler.javac}"
+					includeAntRuntime="false"
+					encoding="ISO-8859-1">
+					<compilerarg line='--add-reads org.openj9test.modularity.@{mod}=ALL-UNNAMED' />
 					<compilerarg line='--add-exports java.base/jdk.internal.misc=ALL-UNNAMED' />
-					<compilerarg line='--enable-preview --source ${JDK_VERSION}' />
+					<compilerarg line='--source ${JDK_VERSION}' />
 					<compilerarg line="${modpath}" />
 					<classpath>
 						<pathelement location="${LIB_DIR}/testng.jar" />
@@ -98,7 +104,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<src path="${src_160}" />
 			<src path="${TestUtilities}" />
 			<exclude name="**/modules/**" />
-			<compilerarg line='--enable-preview --source ${JDK_VERSION}' />
+			<compilerarg line='--source ${JDK_VERSION}' />
 			<compilerarg line='--add-modules jdk.incubator.foreign' />
 			<compilerarg line='--add-opens jdk.incubator.foreign/jdk.internal.foreign=ALL-UNNAMED' />
 			<compilerarg line='--add-exports java.base/jdk.internal.misc=ALL-UNNAMED' />
@@ -125,6 +131,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<fileset dir="${dest_module_bin}" />
 			<fileset dir="${src}/../" includes="*.properties,*.xml" />
 		</jar>
+		<copy file="${DEST}/GeneralTest.jar" todir="${dest_module_bin}" />
 		<copy todir="${DEST}">
 			<fileset dir="${src}/../" includes="*.xml" />
 			<fileset dir="${src}/../" includes="*.mk" />

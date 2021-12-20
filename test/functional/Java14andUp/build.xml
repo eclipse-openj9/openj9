@@ -56,7 +56,7 @@
 		<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
 			<src path="${src}"/>
 			<src path="${TestUtilities}" />
-			<compilerarg line='--enable-preview --source ${JDK_VERSION} --add-exports java.base/jdk.internal.org.objectweb.asm=ALL-UNNAMED' />
+			<compilerarg line='--source ${JDK_VERSION} --add-exports java.base/jdk.internal.org.objectweb.asm=ALL-UNNAMED' />
 			<classpath>
 				<pathelement location="${LIB_DIR}/testng.jar"/>
 				<pathelement location="${LIB_DIR}/jcommander.jar"/>
@@ -77,7 +77,7 @@
 		<javac srcdir="${src}" destdir="${build-noDebugInfo}" debug="false" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
 			<src path="${src}"/>
 			<src path="${TestUtilities}" />
-			<compilerarg line='--enable-preview --source ${JDK_VERSION} --add-exports java.base/jdk.internal.org.objectweb.asm=ALL-UNNAMED' />
+			<compilerarg line='--source ${JDK_VERSION} --add-exports java.base/jdk.internal.org.objectweb.asm=ALL-UNNAMED' />
 			<classpath>
 				<pathelement location="${LIB_DIR}/testng.jar"/>
 				<pathelement location="${LIB_DIR}/jcommander.jar"/>
