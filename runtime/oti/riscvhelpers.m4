@@ -1,4 +1,4 @@
-dnl Copyright (c) 2021, 2021 IBM Corp. and others
+dnl Copyright (c) 2021, 2022 IBM Corp. and others
 dnl
 dnl This program and the accompanying materials are made available under
 dnl the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,19 +35,23 @@ define({FUNC_LABEL},{$1})
 
 define({DECLARE_PUBLIC},{
     .globl FUNC_LABEL($1)
-    .type FUNC_LABEL($1),function
-})
+    .type FUNC_LABEL($1),function})
 
-define({DECLARE_EXTERN},{.extern $1})
+define({DECLARE_EXTERN},{.extern FUNC_LABEL($1)})
 
 define({START_PROC},{
     .text
-    DECLARE_PUBLIC($1)
+    .globl FUNC_LABEL($1)
+    .type FUNC_LABEL($1),function
     .align 2
 FUNC_LABEL($1):
-})
+    .cfi_startproc
+    pushdef({CURRENT_PROC},{$1})})
 
-define({END_PROC})
+define({END_PROC},{
+    .cfi_endproc
+    .size   FUNC_LABEL(CURRENT_PROC), .-FUNC_LABEL(CURRENT_PROC)
+    popdef({CURRENT_PROC})})
 
 define({BRANCH_SYMBOL},{FUNC_LABEL($1)})
 
