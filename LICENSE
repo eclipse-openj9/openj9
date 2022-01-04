@@ -1,6 +1,6 @@
 Product: OpenJ9
 
-Copyright (c) 2017, 2020 IBM Corp. and others
+Copyright (c) 2017, 2021 IBM Corp. and others
 
 This program and the accompanying materials are made available under the terms of the Eclipse Public License 2 which accompanies this distribution and is available at https://www.eclipse.org/legal/epl-2.0/ or the Apache License, Version 2.0 which accompanies this distribution and is available at https://www.apache.org/licenses/LICENSE-2.0.
 
@@ -510,7 +510,7 @@ MurmurHash3 was written by Austin Appleby, and is placed in the public domain. T
 Note - The x86 and x64 versions do _not_ produce the same results, as the algorithms are optimized for their respective platforms. You can still compile and run any of them on any platform, but your performance with the non-native version will be less than optimal
 
 E.      libffi
-libffi - Copyright (c) 1996-2014  Anthony Green, Red Hat, Inc and others.
+libffi - Copyright (c) 1996-2021  Anthony Green, Red Hat, Inc and others.
 See source files for details.
 
 Permission is hereby granted, free of charge, to any person obtaining
@@ -533,7 +533,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 F.      zlib
-  (C) 1995-2012 Jean-loup Gailly and Mark Adler
+  (C) 1995-2017 Jean-loup Gailly and Mark Adler
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
