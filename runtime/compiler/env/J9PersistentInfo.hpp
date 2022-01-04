@@ -45,12 +45,46 @@ class TR_PersistentClassLoaderTable;
 class TR_J2IThunkTable;
 namespace J9 { class Options; }
 
+/**
+ * @brief The JitStates enum is used to represent the various states
+ *        the JIT can enter. The heuristics and behaviour of the JIT
+ *        is directly affected by the state it is in.
+ */
 enum JitStates {
+
+   /** Uninitialized */
    UNDEFINED_STATE = 0,
+
+   /** The JVM isn't doing any work. This is when the application threads
+    *  are doing no orminimal work.
+    */
    IDLE_STATE,
+
+   /** The application is starting up; this includes the classloading phase.
+    *  The heuristics in this state target ensuring the application starts
+    *  up as quickly as possible.
+    */
    STARTUP_STATE,
+
+   /** The application is ramping up. This means that the application has
+    *  started up and is running normally; however it has not yet
+    *  reached peak throughput. As such, there can be a lot of compilation
+    *  occurring during this phase to achieve peak throughput.
+    */
    RAMPUP_STATE,
+
+   /** The application is in steady state. This means that the application
+    *  is doing work, but there aren't many new compilations the JIT has
+    *  to perform. This state is generally when the application runs are
+    *  peak throughput performance.
+    */
    STEADY_STATE,
+
+   /** Like STEADY_STATE, but used to represent the circumstances when
+    *  there is extremely little work the JIT has to do. This state is
+    *  generally used to ensure the JIT does not take away CPU resources
+    *  from application threads.
+    */
    DEEPSTEADY_STATE,
 };
 
