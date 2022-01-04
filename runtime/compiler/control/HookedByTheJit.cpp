@@ -4851,6 +4851,87 @@ static void earlyStartupPhaseHeuristics(J9JavaVM * javaVM,
       }
    }
 
+static void outOfStartupPhase(TR::CompilationInfo * compInfo,
+                              TR::PersistentInfo *persistentInfo,
+                              uint8_t newState,
+                              uint64_t crtElapsedTime)
+   {
+   // We just exited the STARTUP phase
+   // Print a message in the vlog
+   if (TR::Options::getCmdLineOptions()->isAnyVerboseOptionSet(TR_VerboseJitState, TR_VerboseCompileEnd, TR_VerbosePerformance))
+      {
+      TR_VerboseLog::writeLineLocked(TR_Vlog_JITSTATE,"t=%6u VM changed state to NOT_STARTUP", (uint32_t)crtElapsedTime);
+      }
+   // Release AOT data caches to normal compilations
+   TR_DataCacheManager::getManager()->startupOver();
+
+   // Logic related to IdleCPU exploitation
+   // If we are in idle mode immediately after JVM exited startup mode, set specific flag
+   if (newState == IDLE_STATE)
+      {
+      firstIdleStateAfterStartup = true;
+      }
+   // If we don't hit idle state when we exit JVM startup, set the desired timestamp to allocate the tracking hashtable
+   else if (TR::Options::getCmdLineOptions()->getOption(TR_UseIdleTime) &&
+            !compInfo->getLowPriorityCompQueue().isTrackingEnabled())
+      {
+      uint64_t t = crtElapsedTime + TR::Options::_delayToEnableIdleCpuExploitation;
+      if (TR::Options::_compilationDelayTime > 0 && (uint64_t)TR::Options::_compilationDelayTime > t)
+         t = TR::Options::_compilationDelayTime;
+      timeToAllocateTrackingHT = t;
+      }
+
+   // If we wanted to restrict inliner during startup, now it's the time to let the inliner go
+   // Note: if we want to extend the heuristic of when Inliner should be restricted
+   // we have to change the condition below
+   if ((TR::Options::getCmdLineOptions()->getOption(TR_RestrictInlinerDuringStartup) ||
+        TR::Options::getAOTCmdLineOptions()->getOption(TR_RestrictInlinerDuringStartup)) &&
+       persistentInfo->getInlinerTemporarilyRestricted())
+      {
+      persistentInfo->setInlinerTemporarilyRestricted(false);
+      if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
+         {
+         TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "t=%6u Stopped restricting the inliner", (uint32_t)crtElapsedTime);
+         }
+      }
+
+
+   // If using lower counts, start using higher counts
+   if (TR::Options::getCmdLineOptions()->getOption(TR_UseHigherMethodCountsAfterStartup) &&
+       TR::Options::sharedClassCache())
+      {
+      if (TR::Options::getCmdLineOptions()->isAnyVerboseOptionSet(TR_VerboseJitState, TR_VerbosePerformance))
+         {
+         TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "t=%6u JIT counts: %d %d %d  AOT counts: %d %d %d",
+            (uint32_t)crtElapsedTime,
+            TR::Options::getCmdLineOptions()->getInitialCount(),
+            TR::Options::getCmdLineOptions()->getInitialBCount(),
+            TR::Options::getCmdLineOptions()->getInitialMILCount(),
+            TR::Options::getAOTCmdLineOptions()->getInitialCount(),
+            TR::Options::getAOTCmdLineOptions()->getInitialBCount(),
+            TR::Options::getAOTCmdLineOptions()->getInitialMILCount());
+         }
+      TR::Options::getCmdLineOptions()->setInitialCount(TR_DEFAULT_INITIAL_COUNT);
+      TR::Options::getCmdLineOptions()->setInitialBCount(TR_DEFAULT_INITIAL_BCOUNT);
+      TR::Options::getCmdLineOptions()->setInitialMILCount(TR_DEFAULT_INITIAL_MILCOUNT);
+      TR::Options::getAOTCmdLineOptions()->setInitialCount(TR_DEFAULT_INITIAL_COUNT);
+      TR::Options::getAOTCmdLineOptions()->setInitialBCount(TR_DEFAULT_INITIAL_BCOUNT);
+      TR::Options::getAOTCmdLineOptions()->setInitialMILCount(TR_DEFAULT_INITIAL_MILCOUNT);
+
+      if (TR::Options::getCmdLineOptions()->isAnyVerboseOptionSet(TR_VerboseJitState, TR_VerbosePerformance))
+         {
+         TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "t=%6u JIT changed invocation counts to: JIT: %d %d %d  AOT: %d %d %d",
+            (uint32_t)crtElapsedTime,
+            TR::Options::getCmdLineOptions()->getInitialCount(),
+            TR::Options::getCmdLineOptions()->getInitialBCount(),
+            TR::Options::getCmdLineOptions()->getInitialMILCount(),
+            TR::Options::getAOTCmdLineOptions()->getInitialCount(),
+            TR::Options::getAOTCmdLineOptions()->getInitialBCount(),
+            TR::Options::getAOTCmdLineOptions()->getInitialMILCount());
+         }
+      }
+   }
+
 static void jitStateLogic(J9JITConfig * jitConfig, TR::CompilationInfo * compInfo, uint32_t diffTime)
    {
    // We enter STARTUP too often because IDLE is not operating correctly
@@ -4935,80 +5016,7 @@ static void jitStateLogic(J9JITConfig * jitConfig, TR::CompilationInfo * compInf
          }
       if (javaVM->phase == J9VM_PHASE_NOT_STARTUP)
          {
-         // We just exited the STARTUP phase
-         // Print a message in the vlog
-         if (TR::Options::getCmdLineOptions()->isAnyVerboseOptionSet(TR_VerboseJitState, TR_VerboseCompileEnd, TR_VerbosePerformance))
-            {
-            TR_VerboseLog::writeLineLocked(TR_Vlog_JITSTATE,"t=%6u VM changed state to NOT_STARTUP", (uint32_t)crtElapsedTime);
-            }
-         // Release AOT data caches to normal compilations
-         TR_DataCacheManager::getManager()->startupOver();
-
-         // Logic related to IdleCPU exploitation
-         // If we are in idle mode immediately after JVM exited startup mode, set specific flag
-         if (newState == IDLE_STATE)
-            {
-            firstIdleStateAfterStartup = true;
-            }
-         // If we don't hit idle state when we exit JVM startup, set the desired timestamp to allocate the tracking hashtable
-         else if (TR::Options::getCmdLineOptions()->getOption(TR_UseIdleTime) &&
-                  !compInfo->getLowPriorityCompQueue().isTrackingEnabled())
-            {
-            uint64_t t = crtElapsedTime + TR::Options::_delayToEnableIdleCpuExploitation;
-            if (TR::Options::_compilationDelayTime > 0 && (uint64_t)TR::Options::_compilationDelayTime > t)
-               t = TR::Options::_compilationDelayTime;
-            timeToAllocateTrackingHT = t;
-            }
-
-         // If we wanted to restrict inliner during startup, now it's the time to let the inliner go
-         // Note: if we want to extend the heuristic of when Inliner should be restricted
-         // we have to change the condition below
-         if ((TR::Options::getCmdLineOptions()->getOption(TR_RestrictInlinerDuringStartup) ||
-              TR::Options::getAOTCmdLineOptions()->getOption(TR_RestrictInlinerDuringStartup)) &&
-             persistentInfo->getInlinerTemporarilyRestricted())
-            {
-            persistentInfo->setInlinerTemporarilyRestricted(false);
-            if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
-               {
-               TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "t=%6u Stopped restricting the inliner", (uint32_t)crtElapsedTime);
-               }
-            }
-
-
-         // If using lower counts, start using higher counts
-         if (TR::Options::getCmdLineOptions()->getOption(TR_UseHigherMethodCountsAfterStartup) &&
-             TR::Options::sharedClassCache())
-            {
-            if (TR::Options::getCmdLineOptions()->isAnyVerboseOptionSet(TR_VerboseJitState, TR_VerbosePerformance))
-               {
-               TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "t=%6u JIT counts: %d %d %d  AOT counts: %d %d %d",
-                  (uint32_t)crtElapsedTime,
-                  TR::Options::getCmdLineOptions()->getInitialCount(),
-                  TR::Options::getCmdLineOptions()->getInitialBCount(),
-                  TR::Options::getCmdLineOptions()->getInitialMILCount(),
-                  TR::Options::getAOTCmdLineOptions()->getInitialCount(),
-                  TR::Options::getAOTCmdLineOptions()->getInitialBCount(),
-                  TR::Options::getAOTCmdLineOptions()->getInitialMILCount());
-               }
-            TR::Options::getCmdLineOptions()->setInitialCount(TR_DEFAULT_INITIAL_COUNT);
-            TR::Options::getCmdLineOptions()->setInitialBCount(TR_DEFAULT_INITIAL_BCOUNT);
-            TR::Options::getCmdLineOptions()->setInitialMILCount(TR_DEFAULT_INITIAL_MILCOUNT);
-            TR::Options::getAOTCmdLineOptions()->setInitialCount(TR_DEFAULT_INITIAL_COUNT);
-            TR::Options::getAOTCmdLineOptions()->setInitialBCount(TR_DEFAULT_INITIAL_BCOUNT);
-            TR::Options::getAOTCmdLineOptions()->setInitialMILCount(TR_DEFAULT_INITIAL_MILCOUNT);
-
-            if (TR::Options::getCmdLineOptions()->isAnyVerboseOptionSet(TR_VerboseJitState, TR_VerbosePerformance))
-               {
-               TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "t=%6u JIT changed invocation counts to: JIT: %d %d %d  AOT: %d %d %d",
-                  (uint32_t)crtElapsedTime,
-                  TR::Options::getCmdLineOptions()->getInitialCount(),
-                  TR::Options::getCmdLineOptions()->getInitialBCount(),
-                  TR::Options::getCmdLineOptions()->getInitialMILCount(),
-                  TR::Options::getAOTCmdLineOptions()->getInitialCount(),
-                  TR::Options::getAOTCmdLineOptions()->getInitialBCount(),
-                  TR::Options::getAOTCmdLineOptions()->getInitialMILCount());
-               }
-            }
+         outOfStartupPhase(compInfo, persistentInfo, newState, crtElapsedTime);
          } // if (javaVM->phase == J9VM_PHASE_NOT_STARTUP)
 
       // May need to update the iprofilerMaxCount; this has a higher value in startup
