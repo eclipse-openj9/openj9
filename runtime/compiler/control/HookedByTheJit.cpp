@@ -4534,6 +4534,99 @@ static void transitionToNewStateIfNeeded(TR::CompilationInfo * compInfo,
    //t= 98186 oldState=3 newState=2 cSamples=125 iSamples= 11 comp=239 recomp=  4, Q_SZ=114
    }
 
+static void onStateChange(J9JavaVM * javaVM,
+                          TR::CompilationInfo * compInfo,
+                          TR::PersistentInfo *persistentInfo,
+                          uint8_t oldState,
+                          uint8_t newState,
+                          int32_t avgJvmCpuUtil,
+                          uint64_t crtElapsedTime)
+   {
+   if (newState != oldState) // state changed
+      {
+      persistentInfo->setJitState(newState);
+      persistentInfo->setJitStateChangeSampleCount(persistentInfo->getJitTotalSampleCount());
+      if ((oldState == IDLE_STATE || oldState == STARTUP_STATE) &&
+          (newState != IDLE_STATE && newState != STARTUP_STATE))
+         persistentInfo->setJitSampleCountWhenActiveStateEntered(persistentInfo->getJitTotalSampleCount());
+
+      if (newState == STARTUP_STATE) // I have moved from some state into STARTUP
+         {
+         persistentInfo->setJitSampleCountWhenStartupStateEntered(persistentInfo->getJitTotalSampleCount());
+         if (compInfo->getCpuUtil()->isFunctional())
+            persistentInfo->setVmTotalCpuTimeWhenStartupStateEntered(compInfo->getCpuUtil()->getVmTotalCpuTime());
+         }
+      else
+         {
+         persistentInfo->setJitSampleCountWhenStartupStateExited(persistentInfo->getJitTotalSampleCount());
+         if (compInfo->getCpuUtil()->isFunctional())
+            persistentInfo->setVmTotalCpuTimeWhenStartupStateExited(compInfo->getCpuUtil()->getVmTotalCpuTime());
+         }
+
+
+      if (newState == IDLE_STATE)
+         {
+         static char *disableIdleRATCleanup = feGetEnv("TR_disableIdleRATCleanup");
+         if (disableIdleRATCleanup == NULL)
+            persistentInfo->getRuntimeAssumptionTable()->reclaimMarkedAssumptionsFromRAT(-1);
+         }
+
+      // Logic related to IdleCPU exploitation
+      // If I left IDLE state we may set a desired delay to allocate some data structures
+      if (oldState == IDLE_STATE)
+         {
+         if (firstIdleStateAfterStartup) // This flag only gets set once if we happen to be in idle state when we exit JVM startup
+            {
+            firstIdleStateAfterStartup = false;
+            if (TR::Options::getCmdLineOptions()->getOption(TR_UseIdleTime) &&
+               !compInfo->getLowPriorityCompQueue().isTrackingEnabled())
+               {
+               uint64_t t = crtElapsedTime + TR::Options::_delayToEnableIdleCpuExploitation;
+               if (TR::Options::_compilationDelayTime > 0 && (uint64_t)TR::Options::_compilationDelayTime > t)
+                  t = TR::Options::_compilationDelayTime;
+               timeToAllocateTrackingHT = t;
+               }
+            }
+         }
+
+      if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJitState, TR_VerbosePerformance))
+         {
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITSTATE,"t=%6u JIT changed state from %s to %s cSmpl=%3u iSmpl=%3u comp=%3u recomp=%3u, Q_SZ=%3d CLP=%s jvmCPU=%d%%",
+                      (uint32_t)crtElapsedTime,
+                      jitStateNames[oldState], jitStateNames[newState], compInfo->_intervalStats._compiledMethodSamples,
+                      compInfo->_intervalStats._interpretedMethodSamples,
+                      compInfo->_intervalStats._numFirstTimeCompilationsInInterval,
+                      compInfo->_intervalStats._numRecompilationsInInterval,
+                      compInfo->getMethodQueueSize(),
+                      persistentInfo->isClassLoadingPhase()?"ON":"OFF",
+                      avgJvmCpuUtil);
+         }
+
+      // Turn on/off profiling in the jit
+      if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableSamplingJProfiling))
+         {
+         int32_t newProfilingValue = -1;
+         if ((oldState == STARTUP_STATE || oldState == IDLE_STATE) &&
+            (newState == RAMPUP_STATE || newState == STEADY_STATE))
+            newProfilingValue = 1;
+         else if ((oldState == RAMPUP_STATE || oldState == STEADY_STATE) &&
+            (newState == STARTUP_STATE || newState == IDLE_STATE))
+            newProfilingValue = 0;
+         if (newProfilingValue != -1)
+            {
+            //fprintf(stderr, "Changed profiling value to %d\n", newProfilingValue);
+            j9thread_monitor_enter(javaVM->vmThreadListMutex);
+            J9VMThread * currentThread = javaVM->mainThread;
+            do
+               {
+               currentThread->debugEventData4 = newProfilingValue;
+               } while ((currentThread = currentThread->linkNext) != javaVM->mainThread);
+               j9thread_monitor_exit(javaVM->vmThreadListMutex);
+            }
+         }
+      }
+   }
+
 static void adjustJProfilingRecompConfig(J9JavaVM * javaVM,
                                          uint64_t lastTimeInJITStartupMode,
                                          uint64_t crtElapsedTime)
@@ -5066,89 +5159,8 @@ static void jitStateLogic(J9JITConfig * jitConfig, TR::CompilationInfo * compInf
 
    startupHeuristics(javaVM, compInfo, persistentInfo, newState, lastTimeInStartupMode, crtElapsedTime);
 
-   if (newState != oldState) // state changed
-      {
-      persistentInfo->setJitState(newState);
-      persistentInfo->setJitStateChangeSampleCount(persistentInfo->getJitTotalSampleCount());
-      if ((oldState == IDLE_STATE || oldState == STARTUP_STATE) &&
-          (newState != IDLE_STATE && newState != STARTUP_STATE))
-         persistentInfo->setJitSampleCountWhenActiveStateEntered(persistentInfo->getJitTotalSampleCount());
+   onStateChange(javaVM, compInfo, persistentInfo, oldState, newState, avgJvmCpuUtil, crtElapsedTime);
 
-      if (newState == STARTUP_STATE) // I have moved from some state into STARTUP
-         {
-         persistentInfo->setJitSampleCountWhenStartupStateEntered(persistentInfo->getJitTotalSampleCount());
-         if (compInfo->getCpuUtil()->isFunctional())
-            persistentInfo->setVmTotalCpuTimeWhenStartupStateEntered(compInfo->getCpuUtil()->getVmTotalCpuTime());
-         }
-      else
-         {
-         persistentInfo->setJitSampleCountWhenStartupStateExited(persistentInfo->getJitTotalSampleCount());
-         if (compInfo->getCpuUtil()->isFunctional())
-            persistentInfo->setVmTotalCpuTimeWhenStartupStateExited(compInfo->getCpuUtil()->getVmTotalCpuTime());
-         }
-
-
-      if (newState == IDLE_STATE)
-         {
-         static char *disableIdleRATCleanup = feGetEnv("TR_disableIdleRATCleanup");
-         if (disableIdleRATCleanup == NULL)
-            persistentInfo->getRuntimeAssumptionTable()->reclaimMarkedAssumptionsFromRAT(-1);
-         }
-
-      // Logic related to IdleCPU exploitation
-      // If I left IDLE state we may set a desired delay to allocate some data structures
-      if (oldState == IDLE_STATE)
-         {
-         if (firstIdleStateAfterStartup) // This flag only gets set once if we happen to be in idle state when we exit JVM startup
-            {
-            firstIdleStateAfterStartup = false;
-            if (TR::Options::getCmdLineOptions()->getOption(TR_UseIdleTime) &&
-               !compInfo->getLowPriorityCompQueue().isTrackingEnabled())
-               {
-               uint64_t t = crtElapsedTime + TR::Options::_delayToEnableIdleCpuExploitation;
-               if (TR::Options::_compilationDelayTime > 0 && (uint64_t)TR::Options::_compilationDelayTime > t)
-                  t = TR::Options::_compilationDelayTime;
-               timeToAllocateTrackingHT = t;
-               }
-            }
-         }
-
-      if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJitState, TR_VerbosePerformance))
-         {
-         TR_VerboseLog::writeLineLocked(TR_Vlog_JITSTATE,"t=%6u JIT changed state from %s to %s cSmpl=%3u iSmpl=%3u comp=%3u recomp=%3u, Q_SZ=%3d CLP=%s jvmCPU=%d%%",
-                      (uint32_t)crtElapsedTime,
-                      jitStateNames[oldState], jitStateNames[newState], compInfo->_intervalStats._compiledMethodSamples,
-                      compInfo->_intervalStats._interpretedMethodSamples,
-                      compInfo->_intervalStats._numFirstTimeCompilationsInInterval,
-                      compInfo->_intervalStats._numRecompilationsInInterval,
-                      compInfo->getMethodQueueSize(),
-                      persistentInfo->isClassLoadingPhase()?"ON":"OFF",
-                      avgJvmCpuUtil);
-         }
-
-      // Turn on/off profiling in the jit
-      if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableSamplingJProfiling))
-         {
-         int32_t newProfilingValue = -1;
-         if ((oldState == STARTUP_STATE || oldState == IDLE_STATE) &&
-            (newState == RAMPUP_STATE || newState == STEADY_STATE))
-            newProfilingValue = 1;
-         else if ((oldState == RAMPUP_STATE || oldState == STEADY_STATE) &&
-            (newState == STARTUP_STATE || newState == IDLE_STATE))
-            newProfilingValue = 0;
-         if (newProfilingValue != -1)
-            {
-            //fprintf(stderr, "Changed profiling value to %d\n", newProfilingValue);
-            j9thread_monitor_enter(javaVM->vmThreadListMutex);
-            J9VMThread * currentThread = javaVM->mainThread;
-            do
-               {
-               currentThread->debugEventData4 = newProfilingValue;
-               } while ((currentThread = currentThread->linkNext) != javaVM->mainThread);
-               j9thread_monitor_exit(javaVM->vmThreadListMutex);
-            }
-         }
-      }
    if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseJitState))
       {
       TR_VerboseLog::writeLineLocked(TR_Vlog_JITSTATE,"t=%6u oldState=%s newState=%s cls=%3u ssn=%u tsn=%3u cSmpl=%3u iSmpl=%3u comp=%3u recomp=%3u, Q_SZ=%3d VMSTATE=%d jvmCPU=%d%%",
@@ -5165,7 +5177,8 @@ static void jitStateLogic(J9JITConfig * jitConfig, TR::CompilationInfo * compInf
                    javaVM->phase,
                    avgJvmCpuUtil);
       }
-   if(TR::Options::getVerboseOption(TR_VerboseJitMemory))
+
+   if (TR::Options::getVerboseOption(TR_VerboseJitMemory))
       {
       TR_VerboseLog::writeLine(TR_Vlog_MEMORY, "FIXME: Report JIT memory usage\n");
       }
