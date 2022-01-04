@@ -4826,6 +4826,31 @@ static void startupPhaseHeuristics(J9JavaVM * javaVM,
       }
    }
 
+static void earlyStartupPhaseHeuristics(J9JavaVM * javaVM,
+                                        TR::PersistentInfo *persistentInfo,
+                                        uint8_t newState,
+                                        uint64_t crtElapsedTime)
+   {
+   //TR_ASSERT(!TR::Options::getCmdLineOptions()->getOption(TR_AssumeStartupPhaseUntilToldNotTo), "assertion failure"); // we should be in STARTUP
+   // Use JIT heuristics if (1) 'beginningOfStartup' hint didn't arrive yet  OR
+   // (2) Both 'beginningOfStartup' and 'endOfStartup' hints arrived,
+   // but we don't follow hints strictly outside startup
+   if (!TR::Options::getCmdLineOptions()->getOption(TR_AssumeStartupPhaseUntilToldNotTo) ||
+      (persistentInfo->getExternalStartupEndedSignal() && !TR::Options::getCmdLineOptions()->getOption(TR_UseStrictStartupHints)))
+      {
+      // Normal gracePeriod rules apply
+      if (crtElapsedTime >= (uint64_t)persistentInfo->getClassLoadingPhaseGracePeriod()) // grace period has ended
+         javaVM->internalVMFunctions->jvmPhaseChange(javaVM, (newState == STARTUP_STATE) ? J9VM_PHASE_STARTUP : J9VM_PHASE_NOT_STARTUP);
+      }
+   else
+      {
+      // 'beginningOfStartup' hint was seen
+      // If 'endOfStartup' was not seen, move to STARTUP, otherwise, following hints strictly,
+      // we have to exit STARTUP
+      javaVM->internalVMFunctions->jvmPhaseChange(javaVM, !persistentInfo->getExternalStartupEndedSignal() ? J9VM_PHASE_STARTUP : J9VM_PHASE_NOT_STARTUP);
+      }
+   }
+
 static void jitStateLogic(J9JITConfig * jitConfig, TR::CompilationInfo * compInfo, uint32_t diffTime)
    {
    // We enter STARTUP too often because IDLE is not operating correctly
@@ -4906,24 +4931,7 @@ static void jitStateLogic(J9JITConfig * jitConfig, TR::CompilationInfo * compInf
          }
       else // javaVM->phase == J9VM_PHASE_EARLY_STARTUP
          {
-         //TR_ASSERT(!TR::Options::getCmdLineOptions()->getOption(TR_AssumeStartupPhaseUntilToldNotTo), "assertion failure"); // we should be in STARTUP
-         // Use JIT heuristics if (1) 'beginningOfStartup' hint didn't arrive yet  OR
-         // (2) Both 'beginningOfStartup' and 'endOfStartup' hints arrived,
-         // but we don't follow hints strictly outside startup
-         if (!TR::Options::getCmdLineOptions()->getOption(TR_AssumeStartupPhaseUntilToldNotTo) ||
-            (persistentInfo->getExternalStartupEndedSignal() && !TR::Options::getCmdLineOptions()->getOption(TR_UseStrictStartupHints)))
-            {
-            // Normal gracePeriod rules apply
-            if (crtElapsedTime >= (uint64_t)persistentInfo->getClassLoadingPhaseGracePeriod()) // grace period has ended
-               javaVM->internalVMFunctions->jvmPhaseChange(javaVM, (newState == STARTUP_STATE) ? J9VM_PHASE_STARTUP : J9VM_PHASE_NOT_STARTUP);
-            }
-         else
-            {
-            // 'beginningOfStartup' hint was seen
-            // If 'endOfStartup' was not seen, move to STARTUP, otherwise, following hints strictly,
-            // we have to exit STARTUP
-            javaVM->internalVMFunctions->jvmPhaseChange(javaVM, !persistentInfo->getExternalStartupEndedSignal() ? J9VM_PHASE_STARTUP : J9VM_PHASE_NOT_STARTUP);
-            }
+         earlyStartupPhaseHeuristics(javaVM, persistentInfo, newState, crtElapsedTime);
          }
       if (javaVM->phase == J9VM_PHASE_NOT_STARTUP)
          {
