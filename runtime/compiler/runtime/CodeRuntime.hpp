@@ -24,6 +24,7 @@
 #define CODERUNTIME_HPP
 
 namespace TR { class CodeGenerator; }
+namespace TR { class CompilationInfoPerThread; }
 
 namespace TR {
 
@@ -34,6 +35,11 @@ extern uint32_t getCCPreLoadedCodeSize();
 
 struct J9JITConfig;
 void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP);
+
+void rtlogPrint(J9JITConfig *jitConfig, TR::CompilationInfoPerThread *compInfoPT, const char *buffer, bool lock = false);
+void rtlogPrintLocked(J9JITConfig *jitConfig, TR::CompilationInfoPerThread *compInfoPT, const char *buffer);
+void rtlogPrintf(J9JITConfig *jitConfig, TR::CompilationInfoPerThread *compInfoPT, const char *format, ...);
+void rtlogPrintfLocked(J9JITConfig *jitConfig, TR::CompilationInfoPerThread *compInfoPT, const char *format, ...);
 
 // Uses of these next three (the JITRT_PRINTF looks a bit weird, but not completely awful):
 //   JITRT_LOCK_LOG(jitConfig);

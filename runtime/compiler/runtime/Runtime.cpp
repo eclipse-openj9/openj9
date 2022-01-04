@@ -37,12 +37,16 @@
 #include "jitprotos.h"
 #include "rommeth.h"
 #include "emfloat.h"
+#include "env/FilePointer.hpp"
 #include "env/FrontEnd.hpp"
 #include "codegen/PreprologueConst.hpp"
 #include "codegen/PrivateLinkage.hpp"
+#include "control/CompilationThread.hpp"
 #include "control/Recompilation.hpp"
 #include "control/RecompilationInfo.hpp"
 #include "env/jittypes.h"
+#include "infra/String.hpp"
+#include "runtime/CodeRuntime.hpp"
 #include "runtime/CodeCacheManager.hpp"
 #include "runtime/RuntimeAssumptions.hpp"
 #include "runtime/asmprotos.h"
@@ -2132,4 +2136,48 @@ bool isOrderedPair(U_8 recordType)
    return isOrderedPair;
    }
 
+void rtlogPrint(J9JITConfig *jitConfig, TR::CompilationInfoPerThread *compInfoPT, const char *buffer, bool locked)
+   {
+   TR::FILE *rtFile = compInfoPT ? compInfoPT->getRTLogFile() : NULL;
+   if (rtFile)
+      {
+      j9jit_fprintf(rtFile, "%s", buffer);
+      }
+   else
+      {
+      if (locked)
+         JITRT_LOCK_LOG(jitConfig);
+      JITRT_PRINTF(jitConfig)(jitConfig, "%s", buffer);
+      if (locked)
+         JITRT_UNLOCK_LOG(jitConfig);
+      }
+   }
 
+void rtlogPrintLocked(J9JITConfig *jitConfig, TR::CompilationInfoPerThread *compInfoPT, const char *buffer)
+   {
+   rtlogPrint(jitConfig, compInfoPT, buffer, true);
+   }
+
+void rtlogPrintf(J9JITConfig *jitConfig, TR::CompilationInfoPerThread *compInfoPT, const char *format, ...)
+   {
+   char buffer[512];
+
+   va_list args;
+   va_start(args, format);
+   TR::vsnprintfTrunc(buffer, sizeof(buffer), format, args);
+   va_end(args);
+
+   rtlogPrint(jitConfig, compInfoPT, buffer);
+   }
+
+void rtlogPrintfLocked(J9JITConfig *jitConfig, TR::CompilationInfoPerThread *compInfoPT, const char *format, ...)
+   {
+   char buffer[512];
+
+   va_list args;
+   va_start(args, format);
+   TR::vsnprintfTrunc(buffer, sizeof(buffer), format, args);
+   va_end(args);
+
+   rtlogPrintLocked(jitConfig, compInfoPT, buffer);
+   }
