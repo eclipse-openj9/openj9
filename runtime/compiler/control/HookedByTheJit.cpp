@@ -4740,6 +4740,47 @@ static void ensureAppThreadsHaveSufficientCPU(TR::CompilationInfo * compInfo, ui
       }
    }
 
+static void iprofilerLogic(J9JavaVM * javaVM,
+                           J9JITConfig * jitConfig,
+                           TR::CompilationInfo * compInfo,
+                           uint64_t lastTimeInJITStartupMode,
+                           uint64_t crtElapsedTime)
+   {
+#if defined(J9VM_INTERP_PROFILING_BYTECODES)
+   // Turn on Iprofiler if we started with it OFF and it has never been activated before
+   //
+   static bool IProfilerOffSinceStartup = true;
+
+   if (IProfilerOffSinceStartup &&
+       !TR::Options::getCmdLineOptions()->getOption(TR_DisableInterpreterProfiling) &&
+       TR::Options::getCmdLineOptions()->getOption(TR_NoIProfilerDuringStartupPhase) &&
+       interpreterProfilingState == IPROFILING_STATE_OFF)
+      {
+       // Should we turn it ON?
+      TR_IProfiler *iProfiler = TR_J9VMBase::get(jitConfig, 0)->getIProfiler();
+      uint32_t failRate = iProfiler->getReadSampleFailureRate();
+      if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseJitState))
+         {
+         TR_VerboseLog::writeLineLocked(TR_Vlog_IPROFILER,"t=%6u IProfiler current fail rate = %u total=%u fail=%u samplesInBuffer=%u",
+            (uint32_t)crtElapsedTime, failRate, iProfiler->getTotalReadSampleRequests(),
+            iProfiler->getFailedReadSampleRequests(), iProfiler->numSamplesInHistoryBuffer());
+         }
+      if (crtElapsedTime - lastTimeInJITStartupMode > TR::Options::_waitTimeToStartIProfiler ||
+         (int32_t)failRate > TR::Options::_iprofilerFailRateThreshold)
+         {
+         interpreterProfilingMonitoringWindow = 0;
+         IProfilerOffSinceStartup = false;
+         turnOnInterpreterProfiling(jitConfig->javaVM, compInfo);
+         if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJitState, TR_VerbosePerformance))
+            {
+            TR_VerboseLog::writeLineLocked(TR_Vlog_IPROFILER,"t=%6u IProfiler enabled", (uint32_t)crtElapsedTime);
+            }
+         }
+      iProfiler->advanceEpochForHistoryBuffer();
+      }
+#endif // defined(J9VM_INTERP_PROFILING_BYTECODES)
+   }
+
 static void jitStateLogic(J9JITConfig * jitConfig, TR::CompilationInfo * compInfo, uint32_t diffTime)
    {
    // We enter STARTUP too often because IDLE is not operating correctly
@@ -4795,39 +4836,7 @@ static void jitStateLogic(J9JITConfig * jitConfig, TR::CompilationInfo * compInf
    // application threads more time on the CPU
    ensureAppThreadsHaveSufficientCPU(compInfo, crtElapsedTime);
 
-#if defined(J9VM_INTERP_PROFILING_BYTECODES)
-   // Turn on Iprofiler if we started with it OFF and it has never been activated before
-   //
-   static bool IProfilerOffSinceStartup = true;
-
-   if (IProfilerOffSinceStartup &&
-       !TR::Options::getCmdLineOptions()->getOption(TR_DisableInterpreterProfiling) &&
-       TR::Options::getCmdLineOptions()->getOption(TR_NoIProfilerDuringStartupPhase) &&
-       interpreterProfilingState == IPROFILING_STATE_OFF)
-      {
-       // Should we turn it ON?
-      TR_IProfiler *iProfiler = TR_J9VMBase::get(jitConfig, 0)->getIProfiler();
-      uint32_t failRate = iProfiler->getReadSampleFailureRate();
-      if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseJitState))
-         {
-         TR_VerboseLog::writeLineLocked(TR_Vlog_IPROFILER,"t=%6u IProfiler current fail rate = %u total=%u fail=%u samplesInBuffer=%u",
-            (uint32_t)crtElapsedTime, failRate, iProfiler->getTotalReadSampleRequests(),
-            iProfiler->getFailedReadSampleRequests(), iProfiler->numSamplesInHistoryBuffer());
-         }
-      if (crtElapsedTime - lastTimeInJITStartupMode > TR::Options::_waitTimeToStartIProfiler ||
-         (int32_t)failRate > TR::Options::_iprofilerFailRateThreshold)
-         {
-         interpreterProfilingMonitoringWindow = 0;
-         IProfilerOffSinceStartup = false;
-         turnOnInterpreterProfiling(jitConfig->javaVM, compInfo);
-         if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJitState, TR_VerbosePerformance))
-            {
-            TR_VerboseLog::writeLineLocked(TR_Vlog_IPROFILER,"t=%6u IProfiler enabled", (uint32_t)crtElapsedTime);
-            }
-         }
-      iProfiler->advanceEpochForHistoryBuffer();
-      }
-#endif // defined(J9VM_INTERP_PROFILING_BYTECODES)
+   iprofilerLogic(javaVM, jitConfig, compInfo, lastTimeInJITStartupMode, crtElapsedTime);
 
    if (TR::Options::getCmdLineOptions()->getOption(TR_UseIdleTime) &&
        TR::Options::getCmdLineOptions()->getOption(TR_EarlyLPQ))
