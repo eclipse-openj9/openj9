@@ -1,6 +1,6 @@
-/*[INCLUDE-IF Sidecar16 & !Sidecar19-SE]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION == 8]*/
 /*******************************************************************************
- * Copyright (c) 2005, 2021 IBM Corp. and others
+ * Copyright (c) 2005, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,10 +23,10 @@
 package java.lang;
 
 import java.io.IOException;
-import java.io.InvalidObjectException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.io.StreamCorruptedException;
 import java.util.Arrays;
 import java.util.Properties;
 
@@ -1816,42 +1816,30 @@ private void writeObject(ObjectOutputStream stream) throws IOException {
 
 private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
 	stream.defaultReadObject();
-	
 	int streamCount = stream.readInt();
-
 	char[] streamValue = (char[])stream.readObject();
-	
-	if (streamCount > streamValue.length) {
-		throw new InvalidObjectException(com.ibm.oti.util.Msg.getString("K0199")); //$NON-NLS-1$
-	} 
-	
+
+	if ((streamCount < 0) || (streamCount > streamValue.length)) {
+		/*[MSG "K0199", "count value invalid"]*/
+		throw new StreamCorruptedException(com.ibm.oti.util.Msg.getString("K0199")); //$NON-NLS-1$
+	}
 	if (String.COMPACT_STRINGS) {
 		if (String.canEncodeAsLatin1(streamValue, 0, streamValue.length)) {
 			value = new char[(streamValue.length + 1) >>> 1];
-			
 			String.compress(streamValue, 0, value, 0, streamValue.length);
-			
 			count = streamCount;
-
 			capacity = streamValue.length;
 		} else {
 			value = new char[streamValue.length];
-			
 			System.arraycopy(streamValue, 0, value, 0, streamValue.length);
-			
 			count = streamCount | uncompressedBit;
-
 			capacity = streamValue.length;
-			
 			String.initCompressionFlag();
 		}
 	} else {
 		value = new char[streamValue.length];
-		
 		System.arraycopy(streamValue, 0, value, 0, streamValue.length);
-		
 		count = streamCount;
-
 		capacity = streamValue.length;
 	}
 }
