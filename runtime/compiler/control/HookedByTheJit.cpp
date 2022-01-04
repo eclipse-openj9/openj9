@@ -4713,6 +4713,33 @@ static void riBufferProcessingLogic(J9JavaVM * javaVM,
       }
    }
 
+static void ensureAppThreadsHaveSufficientCPU(TR::CompilationInfo * compInfo, uint64_t crtElapsedTime)
+   {
+   TR_YesNoMaybe starvation = compInfo->detectCompThreadStarvation();
+   bool newStarvationStatus = (starvation == TR_yes);
+   if (newStarvationStatus != compInfo->getStarvationDetected()) // did the status change?
+      {
+      if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_INFO,"t=%6u Starvation status changed to %d QWeight=%d CompCPUUtil=%d CompThreadsActive=%d",
+                                          (uint32_t)crtElapsedTime, starvation, compInfo->getOverallQueueWeight(),
+                                          compInfo->getTotalCompThreadCpuUtilWhenStarvationComputed(),
+                                          compInfo->getNumActiveCompThreadsWhenStarvationComputed());
+      compInfo->setStarvationDetected(newStarvationStatus);
+      }
+
+   if (TR::Options::getCmdLineOptions()->getOption(TR_EnableAppThreadYield))
+      {
+      int32_t oldSleepNano = compInfo->getAppSleepNano();
+      int32_t newSleepNano = starvation != TR_yes ? 0 :compInfo->computeAppSleepNano(); // TODO should we look at JIT state as well
+      if (newSleepNano != oldSleepNano)
+         {
+         compInfo->setAppSleepNano(newSleepNano);
+         if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_INFO,"t=%6u SleepTime changed from %d to %d QWeight=%d", (uint32_t)crtElapsedTime, oldSleepNano, newSleepNano, compInfo->getOverallQueueWeight());
+         }
+      }
+   }
+
 static void jitStateLogic(J9JITConfig * jitConfig, TR::CompilationInfo * compInfo, uint32_t diffTime)
    {
    // We enter STARTUP too often because IDLE is not operating correctly
@@ -4766,30 +4793,7 @@ static void jitStateLogic(J9JITConfig * jitConfig, TR::CompilationInfo * compInf
 
    // Control how much application threads will be sleeping to give
    // application threads more time on the CPU
-   TR_YesNoMaybe starvation = compInfo->detectCompThreadStarvation();
-   bool newStarvationStatus = (starvation == TR_yes);
-   if (newStarvationStatus != compInfo->getStarvationDetected()) // did the status change?
-      {
-      if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
-         TR_VerboseLog::writeLineLocked(TR_Vlog_INFO,"t=%6u Starvation status changed to %d QWeight=%d CompCPUUtil=%d CompThreadsActive=%d",
-                                          (uint32_t)crtElapsedTime, starvation, compInfo->getOverallQueueWeight(),
-                                          compInfo->getTotalCompThreadCpuUtilWhenStarvationComputed(),
-                                          compInfo->getNumActiveCompThreadsWhenStarvationComputed());
-      compInfo->setStarvationDetected(newStarvationStatus);
-      }
-
-   if (TR::Options::getCmdLineOptions()->getOption(TR_EnableAppThreadYield))
-      {
-      int32_t oldSleepNano = compInfo->getAppSleepNano();
-      int32_t newSleepNano = starvation != TR_yes ? 0 :compInfo->computeAppSleepNano(); // TODO should we look at JIT state as well
-      if (newSleepNano != oldSleepNano)
-         {
-         compInfo->setAppSleepNano(newSleepNano);
-         if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
-            TR_VerboseLog::writeLineLocked(TR_Vlog_INFO,"t=%6u SleepTime changed from %d to %d QWeight=%d", (uint32_t)crtElapsedTime, oldSleepNano, newSleepNano, compInfo->getOverallQueueWeight());
-         }
-      }
-
+   ensureAppThreadsHaveSufficientCPU(compInfo, crtElapsedTime);
 
 #if defined(J9VM_INTERP_PROFILING_BYTECODES)
    // Turn on Iprofiler if we started with it OFF and it has never been activated before
