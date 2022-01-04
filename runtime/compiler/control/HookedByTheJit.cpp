@@ -4781,6 +4781,51 @@ static void iprofilerLogic(J9JavaVM * javaVM,
 #endif // defined(J9VM_INTERP_PROFILING_BYTECODES)
    }
 
+static void startupPhaseHeuristics(J9JavaVM * javaVM,
+                                   TR::CompilationInfo * compInfo,
+                                   TR::PersistentInfo *persistentInfo,
+                                   uint8_t newState,
+                                   uint64_t &lastTimeInStartupMode,
+                                   uint64_t crtElapsedTime)
+   {
+   // Analyze if we exited the STARTUP stage
+   // Tolerate situations when we temporarily go out from STARTUP
+   // Use JIT heuristics if (1) 'beginningOfStartup' hint didn't arrive yet  OR
+   // (2) Both 'beginningOfStartup' and 'endOfStartup' hints arrived,
+   // but we don't follow hints strictly outside startup
+   if (!TR::Options::getCmdLineOptions()->getOption(TR_AssumeStartupPhaseUntilToldNotTo) ||
+      (persistentInfo->getExternalStartupEndedSignal() && !TR::Options::getCmdLineOptions()->getOption(TR_UseStrictStartupHints)))
+      {
+      //if (newState != STARTUP_STATE && oldState != STARTUP_STATE)
+      //   javaVM->internalVMFunctions->jvmPhaseChange(javaVM, J9VM_PHASE_NOT_STARTUP);
+      if (newState != STARTUP_STATE)
+         {
+         int32_t waitTime = TR::Options::_waitTimeToExitStartupMode;
+         // Double this value for zOS control region
+#if defined(J9ZOS390)
+         if (compInfo->isInZOSSupervisorState())
+            waitTime = waitTime * 2;
+#endif
+         if (crtElapsedTime - lastTimeInStartupMode > waitTime)
+            {
+            javaVM->internalVMFunctions->jvmPhaseChange(javaVM, J9VM_PHASE_NOT_STARTUP);
+            }
+         }
+      else
+         {
+         lastTimeInStartupMode = crtElapsedTime;
+         }
+      }
+   else // The application will provide hints about startup ending
+      {
+      // Exit startup when the 'endOfStartup' arrives
+      // The case where the 'endOfStartup' hint arrived, but don't want to follow strictly
+      // is implemented above in the IF block
+      if (persistentInfo->getExternalStartupEndedSignal())
+         javaVM->internalVMFunctions->jvmPhaseChange(javaVM, J9VM_PHASE_NOT_STARTUP);
+      }
+   }
+
 static void jitStateLogic(J9JITConfig * jitConfig, TR::CompilationInfo * compInfo, uint32_t diffTime)
    {
    // We enter STARTUP too often because IDLE is not operating correctly
@@ -4857,42 +4902,7 @@ static void jitStateLogic(J9JITConfig * jitConfig, TR::CompilationInfo * compInf
       {
       if (javaVM->phase == J9VM_PHASE_STARTUP)
          {
-         // Analyze if we exited the STARTUP stage
-         // Tolerate situations when we temporarily go out from STARTUP
-         // Use JIT heuristics if (1) 'beginningOfStartup' hint didn't arrive yet  OR
-         // (2) Both 'beginningOfStartup' and 'endOfStartup' hints arrived,
-         // but we don't follow hints strictly outside startup
-         if (!TR::Options::getCmdLineOptions()->getOption(TR_AssumeStartupPhaseUntilToldNotTo) ||
-            (persistentInfo->getExternalStartupEndedSignal() && !TR::Options::getCmdLineOptions()->getOption(TR_UseStrictStartupHints)))
-            {
-            //if (newState != STARTUP_STATE && oldState != STARTUP_STATE)
-            //   javaVM->internalVMFunctions->jvmPhaseChange(javaVM, J9VM_PHASE_NOT_STARTUP);
-            if (newState != STARTUP_STATE)
-               {
-               int32_t waitTime = TR::Options::_waitTimeToExitStartupMode;
-               // Double this value for zOS control region
-#if defined(J9ZOS390)
-               if (compInfo->isInZOSSupervisorState())
-                  waitTime = waitTime * 2;
-#endif
-               if (crtElapsedTime - lastTimeInStartupMode > waitTime)
-                  {
-                  javaVM->internalVMFunctions->jvmPhaseChange(javaVM, J9VM_PHASE_NOT_STARTUP);
-                  }
-               }
-            else
-               {
-               lastTimeInStartupMode = crtElapsedTime;
-               }
-            }
-         else // The application will provide hints about startup ending
-            {
-            // Exit startup when the 'endOfStartup' arrives
-            // The case where the 'endOfStartup' hint arrived, but don't want to follow strictly
-            // is implemented above in the IF block
-            if (persistentInfo->getExternalStartupEndedSignal())
-               javaVM->internalVMFunctions->jvmPhaseChange(javaVM, J9VM_PHASE_NOT_STARTUP);
-            }
+         startupPhaseHeuristics(javaVM, compInfo, persistentInfo, newState, lastTimeInStartupMode, crtElapsedTime);
          }
       else // javaVM->phase == J9VM_PHASE_EARLY_STARTUP
          {
