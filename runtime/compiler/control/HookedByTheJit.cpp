@@ -4532,52 +4532,13 @@ static void transitionToNewStateIfNeeded(TR::CompilationInfo * compInfo,
    //t= 98186 oldState=3 newState=2 cSamples=125 iSamples= 11 comp=239 recomp=  4, Q_SZ=114
    }
 
-static void jitStateLogic(J9JITConfig * jitConfig, TR::CompilationInfo * compInfo, uint32_t diffTime)
+static void adjustJProfilingRecompConfig(J9JavaVM * javaVM,
+                                         uint64_t lastTimeInJITStartupMode,
+                                         uint64_t crtElapsedTime)
    {
-   // We enter STARTUP too often because IDLE is not operating correctly
-   static uint64_t lastTimeInJITStartupMode = 0;
-   TR::PersistentInfo *persistentInfo = compInfo->getPersistentInfo();
-   uint64_t crtElapsedTime = persistentInfo->getElapsedTime();
-
-   static uint32_t oldNumClassesLoaded = 0;
-   J9JavaVM * javaVM = jitConfig->javaVM;
-
-   uint32_t numClassesLoadedInInterval = (uint32_t)persistentInfo->getNumLoadedClasses() - oldNumClassesLoaded;
-   uint32_t numClassesLoadedInIntervalNormalized = numClassesLoadedInInterval*1000/diffTime;
-   oldNumClassesLoaded = (uint32_t)persistentInfo->getNumLoadedClasses(); // remember for next time
-
-   uint8_t oldState = persistentInfo->getJitState();
-   uint8_t newState;
-   uint32_t totalSamples = compInfo->_intervalStats._compiledMethodSamples + compInfo->_intervalStats._interpretedMethodSamples;
-   uint32_t totalSamplesNormalized = totalSamples*1000/diffTime;
-   uint32_t samplesSentNormalized = compInfo->_intervalStats._samplesSentInInterval*1000/diffTime;
-
-   // Read the CPU utilization as a percentage; -1 if not functional;
-   // Can be greater than 100% if multiple cores
-   static int32_t oldJvmCpuUtil = 10;
-   int32_t avgJvmCpuUtil;
-   if (compInfo->getCpuUtil()->isFunctional())
-      {
-      int32_t jvmCpuUtil = compInfo->getCpuUtil()->getVmCpuUsage();
-      avgJvmCpuUtil = (oldJvmCpuUtil + jvmCpuUtil) >> 1;
-      oldJvmCpuUtil = jvmCpuUtil;
-      }
-   else
-      {
-      avgJvmCpuUtil = -1;
-      }
-
-   transitionToNewStateIfNeeded(compInfo, persistentInfo, oldState, newState,
-                                lastTimeInJITStartupMode, avgJvmCpuUtil, totalSamples,
-                                totalSamplesNormalized, samplesSentNormalized,
-                                numClassesLoadedInIntervalNormalized,
-                                crtElapsedTime, diffTime);
-
-   static uint64_t lastTimeInStartupMode = 0;
-   #define GCR_HYSTERESIS 100
-
    // current JPQ implementation does not use this, but it may need to be re-animated shortly so leaving commented out for now
-   /*static char *disableJProfilingRecomp = feGetEnv("TR_DisableJProfilingRecomp");
+   /*
+   static char *disableJProfilingRecomp = feGetEnv("TR_DisableJProfilingRecomp");
    const int32_t intervalBase = 17000;
    if (disableJProfilingRecomp == NULL
        && javaVM->phase == J9VM_PHASE_NOT_STARTUP)
@@ -4622,16 +4583,63 @@ static void jitStateLogic(J9JITConfig * jitConfig, TR::CompilationInfo * compInf
              TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "Lowering JProfiling recompilation thresholds. recompileThrehold = %d loopRecompileThreshold = %d nestedLoopRecompileThreshold = %d", TR_JProfiling::recompileThreshold, TR_JProfiling::loopRecompileThreshold, TR_JProfiling::nestedLoopRecompileThreshold);
              }
          }
-      }*/
-   /*if (disableJProfilingRecomp == NULL
+      }
+   if (disableJProfilingRecomp == NULL
        && javaVM->phase == J9VM_PHASE_NOT_STARTUP
        && (crtElapsedTime - lastTimeInJITStartupMode) > 80000 //&& crtElapsedTime > 150000
        && *(TR_BlockFrequencyInfo::getEnableJProfilingRecompilation()) == 0)
       {
       printf("Enabling JProfiling recompilation\n");
       TR_BlockFrequencyInfo::enableJProfilingRecompilation();
-      }*/
+      }
+   */
+   }
 
+static void jitStateLogic(J9JITConfig * jitConfig, TR::CompilationInfo * compInfo, uint32_t diffTime)
+   {
+   // We enter STARTUP too often because IDLE is not operating correctly
+   static uint64_t lastTimeInJITStartupMode = 0;
+   TR::PersistentInfo *persistentInfo = compInfo->getPersistentInfo();
+   uint64_t crtElapsedTime = persistentInfo->getElapsedTime();
+
+   static uint32_t oldNumClassesLoaded = 0;
+   J9JavaVM * javaVM = jitConfig->javaVM;
+
+   uint32_t numClassesLoadedInInterval = (uint32_t)persistentInfo->getNumLoadedClasses() - oldNumClassesLoaded;
+   uint32_t numClassesLoadedInIntervalNormalized = numClassesLoadedInInterval*1000/diffTime;
+   oldNumClassesLoaded = (uint32_t)persistentInfo->getNumLoadedClasses(); // remember for next time
+
+   uint8_t oldState = persistentInfo->getJitState();
+   uint8_t newState;
+   uint32_t totalSamples = compInfo->_intervalStats._compiledMethodSamples + compInfo->_intervalStats._interpretedMethodSamples;
+   uint32_t totalSamplesNormalized = totalSamples*1000/diffTime;
+   uint32_t samplesSentNormalized = compInfo->_intervalStats._samplesSentInInterval*1000/diffTime;
+
+   // Read the CPU utilization as a percentage; -1 if not functional;
+   // Can be greater than 100% if multiple cores
+   static int32_t oldJvmCpuUtil = 10;
+   int32_t avgJvmCpuUtil;
+   if (compInfo->getCpuUtil()->isFunctional())
+      {
+      int32_t jvmCpuUtil = compInfo->getCpuUtil()->getVmCpuUsage();
+      avgJvmCpuUtil = (oldJvmCpuUtil + jvmCpuUtil) >> 1;
+      oldJvmCpuUtil = jvmCpuUtil;
+      }
+   else
+      {
+      avgJvmCpuUtil = -1;
+      }
+
+   transitionToNewStateIfNeeded(compInfo, persistentInfo, oldState, newState,
+                                lastTimeInJITStartupMode, avgJvmCpuUtil, totalSamples,
+                                totalSamplesNormalized, samplesSentNormalized,
+                                numClassesLoadedInIntervalNormalized,
+                                crtElapsedTime, diffTime);
+
+   static uint64_t lastTimeInStartupMode = 0;
+   #define GCR_HYSTERESIS 100
+
+   adjustJProfilingRecompConfig(javaVM, lastTimeInJITStartupMode, crtElapsedTime);
 
    // Enable/disable GCR counting
    if (!TR::Options::getAOTCmdLineOptions()->getOption(TR_DisableGuardedCountingRecompilations) &&
