@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2021 IBM Corp. and others
+ * Copyright (c) 1998, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1001,7 +1001,7 @@ createDirectByteBuffer(JNIEnv* env, const void* address, UDATA dataLen)
 #endif /* J9VM_OPT_SHARED_CLASSES */
 
 
-jint JNICALL 
+jint JNICALL
 Java_com_ibm_oti_shared_SharedClassAbstractHelper_initializeShareableClassloaderImpl(JNIEnv* env, jobject thisObj, jobject classloader) 
 {
 #if defined(J9VM_OPT_SHARED_CLASSES)
@@ -1035,7 +1035,7 @@ Java_com_ibm_oti_shared_SharedClassAbstractHelper_initializeShareableClassloader
 #endif
 }
 
-jboolean JNICALL 
+jboolean JNICALL
 Java_com_ibm_oti_shared_SharedClassTokenHelperImpl_findSharedClassImpl2(JNIEnv* env, jobject thisObj, jint helperID, 
 		jstring classNameObj, jobject loaderObj, jstring tokenObj, jboolean doFind, jboolean doStore, jbyteArray romClassCookie) 
 {
@@ -1113,7 +1113,7 @@ _errorPostNameToken:
 	return FALSE;
 }
 
-jint JNICALL 
+jint JNICALL
 Java_com_ibm_oti_shared_SharedClassTokenHelperImpl_storeSharedClassImpl2(JNIEnv* env, jobject thisObj, jint helperID, 
 		jobject loaderObj, jstring tokenObj, jclass clazzObj, jbyteArray nativeFlags) 
 {
@@ -1207,7 +1207,7 @@ Java_com_ibm_oti_shared_SharedClassURLHelperImpl_init(JNIEnv *env, jclass clazz)
 	getURLMethodIDs(env);
 }
 
-jboolean JNICALL 
+jboolean JNICALL
 Java_com_ibm_oti_shared_SharedClassURLHelperImpl_findSharedClassImpl3(JNIEnv* env, jobject thisObj, jint helperID, jstring partitionObj, 
 		jstring classNameObj, jobject loaderObj, jobject urlObj, jboolean doFind, jboolean doStore, jbyteArray romClassCookie, jboolean newJarFile, jboolean minimizeUpdateChecks)
 {
@@ -1317,7 +1317,7 @@ _error:
 	return FALSE;
 }
 
-jint JNICALL 
+jint JNICALL
 Java_com_ibm_oti_shared_SharedClassURLHelperImpl_storeSharedClassImpl3(JNIEnv* env, jobject thisObj, jint helperID, 
 		jstring partitionObj, jobject loaderObj, jobject urlObj, jclass clazzObj, jboolean newJarFile, jboolean minimizeUpdateChecks, jbyteArray nativeFlags)
 {
@@ -1440,7 +1440,7 @@ Java_com_ibm_oti_shared_SharedClassURLClasspathHelperImpl_init(JNIEnv *env, jcla
 	getURLMethodIDs(env);
 }
 
-jint JNICALL 
+jint JNICALL
 Java_com_ibm_oti_shared_SharedClassURLClasspathHelperImpl_storeSharedClassImpl2(JNIEnv* env, jobject thisObj, jint helperID, 
 		jstring partitionObj, jobject loaderObj, jobjectArray urlArrayObj, jint urlCount, jint cpLoadIndex, jclass clazzObj, jbyteArray nativeFlags)
 {
@@ -1590,7 +1590,7 @@ _error:
 	return FALSE;
 }
 
-jint JNICALL 
+jint JNICALL
 Java_com_ibm_oti_shared_SharedClassURLClasspathHelperImpl_findSharedClassImpl2(JNIEnv* env, jobject thisObj, jint helperID, 
 		jstring partitionObj, jstring classNameObj, jobject loaderObj, jobjectArray urlArrayObj, jboolean doFind, jboolean doStore,  
 		jint urlCount, jint confirmedCount, jbyteArray romClassCookie)
@@ -1750,7 +1750,7 @@ _errorPostClassNamePartition:
 }
 
 
-jlong JNICALL 
+jlong JNICALL
 Java_com_ibm_oti_shared_SharedClassStatistics_maxSizeBytesImpl(JNIEnv* env, jobject thisObj)
 {
 #if defined(J9VM_OPT_SHARED_CLASSES)
@@ -1869,7 +1869,7 @@ Java_com_ibm_oti_shared_SharedClassStatistics_maxJitDataBytesImpl(JNIEnv* env, j
 	return (jlong)ret;
 }
 
-jlong JNICALL 
+jlong JNICALL
 Java_com_ibm_oti_shared_SharedClassStatistics_freeSpaceBytesImpl(JNIEnv* env, jobject thisObj)
 {
 #if defined(J9VM_OPT_SHARED_CLASSES)
@@ -1890,8 +1890,56 @@ Java_com_ibm_oti_shared_SharedClassStatistics_freeSpaceBytesImpl(JNIEnv* env, jo
 #endif
 }
 
+jstring JNICALL
+Java_com_ibm_oti_shared_SharedClassStatistics_cachePathImpl(JNIEnv *env, jobject thisObj)
+{
+#if defined(J9VM_OPT_SHARED_CLASSES)
+	J9JavaVM *vm = ((J9VMThread *)env)->javaVM;
+	J9SharedClassJavacoreDataDescriptor descriptor;
+	const char *cacheDir = NULL;
+	jstring result = NULL;
 
-void JNICALL 
+	Trc_JCL_com_ibm_oti_shared_SharedClassStatistics_cachePathImpl_Entry(env);
+
+	if (NULL != vm->sharedClassConfig) {
+		if (0 != vm->sharedClassConfig->getJavacoreData(vm, &descriptor)) {
+			cacheDir = descriptor.cacheDir;
+			result = (*env)->NewStringUTF(env, cacheDir);
+		}
+	}
+
+	Trc_JCL_com_ibm_oti_shared_SharedClassStatistics_cachePathImpl_Exit(env, result, cacheDir);
+	return result;
+#else /* defined(J9VM_OPT_SHARED_CLASSES) */
+	return NULL;
+#endif /* defined(J9VM_OPT_SHARED_CLASSES) */
+}
+
+jlong JNICALL
+Java_com_ibm_oti_shared_SharedClassStatistics_numberAttachedImpl(JNIEnv *env, jobject thisObj)
+{
+#if defined(J9VM_OPT_SHARED_CLASSES)
+	J9JavaVM *vm = ((J9VMThread *)env)->javaVM;
+	jlong result = -1;
+
+	Trc_JCL_com_ibm_oti_shared_SharedClassStatistics_numberAttachedImpl_Entry(env);
+
+	if (NULL != vm->sharedClassConfig) {
+		J9SharedClassJavacoreDataDescriptor descriptor;
+		if (0 != vm->sharedClassConfig->getJavacoreData(vm, &descriptor)) {
+			result = (IDATA)descriptor.nattach;
+		}
+	}
+
+	Trc_JCL_com_ibm_oti_shared_SharedClassStatistics_numberAttachedImpl_Exit(env, result);
+	return result;
+#else /* defined(J9VM_OPT_SHARED_CLASSES) */
+	return 0;
+#endif /* defined(J9VM_OPT_SHARED_CLASSES) */
+}
+
+
+void JNICALL
 Java_com_ibm_oti_shared_SharedClassURLClasspathHelperImpl_notifyClasspathChange2(JNIEnv* env, jobject thisObj, jobject classLoaderObj)
 {
 #if defined(J9VM_OPT_SHARED_CLASSES)
@@ -2201,7 +2249,7 @@ _error:
 }
 
 
-jboolean JNICALL 
+jboolean JNICALL
 Java_com_ibm_oti_shared_SharedAbstractHelper_getIsVerboseImpl(JNIEnv* env, jobject thisObj) 
 {
 #if defined(J9VM_OPT_SHARED_CLASSES)

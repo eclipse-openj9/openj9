@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2021 IBM Corp. and others
+ * Copyright (c) 2001, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -83,12 +83,12 @@ populateCacheInfoList(J9JavaVM *vm, J9SharedClassConfig *sharedClassConfig, cons
 #if !defined(WIN32)
 	if (NUM_SNAPSHOT > 0) {
 		cacheInfoList[NUM_CACHE].name = cacheName;
-		cacheInfoList[NUM_CACHE].cacheSize = (UDATA)J9SH_OSCACHE_UNKNOWN;
-		cacheInfoList[NUM_CACHE].softMaxBytes = (UDATA)J9SH_OSCACHE_UNKNOWN;
+		cacheInfoList[NUM_CACHE].cacheSize = J9SH_OSCACHE_UNKNOWN;
+		cacheInfoList[NUM_CACHE].softMaxBytes = J9SH_OSCACHE_UNKNOWN;
 		cacheInfoList[NUM_CACHE].cacheDir = cacheDir;
 		cacheInfoList[NUM_CACHE].found = FALSE;
 		cacheInfoList[NUM_CACHE].cacheType = J9PORT_SHR_CACHE_TYPE_SNAPSHOT;
-		cacheInfoList[NUM_CACHE].debugBytes = (UDATA)J9SH_OSCACHE_UNKNOWN;
+		cacheInfoList[NUM_CACHE].debugBytes = J9SH_OSCACHE_UNKNOWN;
 	}
 #endif /* !defined(WIN32) */
 }
@@ -237,16 +237,16 @@ validateSharedCacheCallback(J9JavaVM *vm, J9SharedCacheInfo *cacheInfo, void *us
 		/* J9PORT_SHR_CACHE_TYPE_SNAPSHOT == cacheInfo->cacheType */
 		if ((strcmp(cacheInfo->name, cacheInfoList[NUM_CACHE].name) == 0)
 			&& (cacheInfo->cacheType == cacheInfoList[NUM_CACHE].cacheType)
-			&& (J9SH_OSCACHE_UNKNOWN == (IDATA)cacheInfo->isCorrupt)
+			&& (J9SH_OSCACHE_UNKNOWN == cacheInfo->isCorrupt)
 			&& (1 == cacheInfo->isCompatible)
 			&& (addrMode == cacheInfo->addrMode)
 			&& (getShcModlevelForJCL(J2SE_VERSION(vm)) == cacheInfo->modLevel)
-			&& (J9SH_OSCACHE_UNKNOWN == cacheInfo->lastDetach)
-			&& (J9SH_OSCACHE_UNKNOWN == (IDATA)cacheInfo->os_shmid)
-			&& (J9SH_OSCACHE_UNKNOWN == (IDATA)cacheInfo->os_semid)
-			&& (J9SH_OSCACHE_UNKNOWN == (IDATA)cacheInfo->cacheSize)
-			&& (J9SH_OSCACHE_UNKNOWN == (IDATA)cacheInfo->freeBytes)
-			&& (J9SH_OSCACHE_UNKNOWN == (IDATA)cacheInfo->softMaxBytes)
+			&& (J9SH_OSCACHE_UNKNOWN == (UDATA)(U_64)cacheInfo->lastDetach)
+			&& (J9SH_OSCACHE_UNKNOWN == cacheInfo->os_shmid)
+			&& (J9SH_OSCACHE_UNKNOWN == cacheInfo->os_semid)
+			&& (J9SH_OSCACHE_UNKNOWN == cacheInfo->cacheSize)
+			&& (J9SH_OSCACHE_UNKNOWN == cacheInfo->freeBytes)
+			&& (J9SH_OSCACHE_UNKNOWN == cacheInfo->softMaxBytes)
 			&& (0 == cacheInfo->layer)
 		) {
 			cacheInfoList[NUM_CACHE].found = TRUE;

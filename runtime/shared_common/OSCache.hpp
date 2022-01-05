@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2021 IBM Corp. and others
+ * Copyright (c) 2001, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,7 +33,7 @@
 #define J9SH_OSCACHE_OPEXIST_DESTROY	0x2
 #define J9SH_OSCACHE_OPEXIST_STATS		0x4
 #define J9SH_OSCACHE_OPEXIST_DO_NOT_CREATE	0x8
-#define J9SH_OSCACHE_UNKNOWN -1
+#define J9SH_OSCACHE_UNKNOWN (~(UDATA)0)
 
 /* 
  * The different results from attempting to open/create a cache are
@@ -98,20 +98,20 @@
  * If the information is not available, the value will be equals to @arg J9SH_OSCACHE_UNKNOWN
  */
 typedef struct SH_OSCache_Info {
-        char name[CACHE_ROOT_MAXLEN]; /** The name of the cache */
-        UDATA os_shmid; /** Operating System specific shared memory id */
-        UDATA os_semid; /** Operating System specific semaphore id */
-        I_64 lastattach; /** time from which last attach has happened */
-        I_64 lastdetach; /** time from which last detach has happened */
-        I_64 createtime; /** time from which cache has been created */
-        IDATA nattach; /** number of process attached to this region */
-        J9PortShcVersion versionData; /** Cache version data */
-        UDATA generation; /** cache generation number */
-        UDATA isCompatible; /** Is the cache compatible with this VM */
-        UDATA isCorrupt; /** Is set when the cache is found to be corrupt */
-        UDATA isJavaCorePopulated; /** Is set when the javacoreData contains valid data */
-        I_8 layer; /** cache layer number */
-        J9SharedClassJavacoreDataDescriptor javacoreData; /** If isCompatible is true, then extra information about the cache is available in here*/
+	char name[CACHE_ROOT_MAXLEN]; /** The name of the cache */
+	UDATA os_shmid; /** Operating System specific shared memory id */
+	UDATA os_semid; /** Operating System specific semaphore id */
+	I_64 lastattach; /** time from which last attach has happened */
+	I_64 lastdetach; /** time from which last detach has happened */
+	I_64 createtime; /** time from which cache has been created */
+	UDATA nattach; /** number of process attached to this region */
+	J9PortShcVersion versionData; /** Cache version data */
+	UDATA generation; /** cache generation number */
+	UDATA isCompatible; /** Is the cache compatible with this VM */
+	UDATA isCorrupt; /** Is set when the cache is found to be corrupt */
+	UDATA isJavaCorePopulated; /** Is set when the javacoreData contains valid data */
+	I_8 layer; /** cache layer number */
+	J9SharedClassJavacoreDataDescriptor javacoreData; /** If isCompatible is true, then extra information about the cache is available in here*/
 } SH_OSCache_Info;
 
 /* DO NOT use UDATA/IDATA in the cache headers so that 32-bit/64-bit JVMs can read each others headers

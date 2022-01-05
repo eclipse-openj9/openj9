@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2003, 2021 IBM Corp. and others
+ * Copyright (c) 2003, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -3107,6 +3107,11 @@ JavaCoreDumpWriter::writeSharedClassSectionTopLayerStatsHelper(J9SharedClassJava
 			"\n2SCLTEXTDAV            Class LocalVariableTable bytes            = "
 	);
 	_OutputStream.writeInteger(javacoreData->debugAreaLocalVariableTableBytes, "%zu");
+
+	_OutputStream.writeCharacters(
+			"\n2SCLTEXTONA            OS Number Attached (nattach)              = "
+	);
+	_OutputStream.writeInteger(javacoreData->nattach, "%zd");
 	_OutputStream.writeCharacters("\n");
 }
 
