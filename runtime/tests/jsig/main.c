@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2018 IBM Corp. and others
+ * Copyright (c) 2016, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -58,7 +58,15 @@
 
 #define PRIMARY_CALLED 1
 #define SECONDARY_CALLED 2
+#if !defined(_AIX)
 static volatile sig_atomic_t handlerCalled = 0;
+#else /* !defined(_AIX) */
+/*
+ * In /usr/include/sys/signal.h the keyword 'volatile'
+ * is included in the typedef of sig_atomic_t
+ */
+static sig_atomic_t handlerCalled = 0;
+#endif /* !defined(_AIX) */
 
 typedef jint (JNICALL *CreateVM)(JavaVM**, JNIEnv**, void*);
 
