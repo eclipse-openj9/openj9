@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2021 IBM Corp. and others
+ * Copyright (c) 2001, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -998,13 +998,13 @@ SH_OSCache::getCacheStatistics(J9JavaVM* vm, const char* ctrlDirName, const char
 	} else if (J9PORT_SHR_CACHE_TYPE_SNAPSHOT == result->versionData.cacheType) {
 		Trc_SHR_OSC_getCacheStatistics_stattingSnapshot();
 		if (0 == removeCacheVersionAndGen(result->name, CACHE_ROOT_MAXLEN, J9SH_VERSION_STRING_LEN + 1, cacheNameWithVGen)) {
-			result->lastattach = J9SH_OSCACHE_UNKNOWN;
-			result->lastdetach = J9SH_OSCACHE_UNKNOWN;
-			result->createtime = J9SH_OSCACHE_UNKNOWN;
-			result->os_shmid = (UDATA)J9SH_OSCACHE_UNKNOWN;
-			result->os_semid = (UDATA)J9SH_OSCACHE_UNKNOWN;
-			result->nattach = (UDATA)J9SH_OSCACHE_UNKNOWN;
-			result->isCorrupt = (UDATA)J9SH_OSCACHE_UNKNOWN;
+			result->lastattach = (IDATA)J9SH_OSCACHE_UNKNOWN;
+			result->lastdetach = (IDATA)J9SH_OSCACHE_UNKNOWN;
+			result->createtime = (IDATA)J9SH_OSCACHE_UNKNOWN;
+			result->os_shmid = J9SH_OSCACHE_UNKNOWN;
+			result->os_semid = J9SH_OSCACHE_UNKNOWN;
+			result->nattach = J9SH_OSCACHE_UNKNOWN;
+			result->isCorrupt = J9SH_OSCACHE_UNKNOWN;
 			/* rc is initialized to -1. If reach this point, getCacheStatistics() is successful for snapshot, set rc to 0 */
 			rc = 0;
 		}

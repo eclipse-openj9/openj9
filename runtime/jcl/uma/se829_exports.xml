@@ -1,5 +1,5 @@
 <!-- 
-	Copyright (c) 2016, 2021 IBM Corp. and others
+	Copyright (c) 2016, 2022 IBM Corp. and others
 	
 	This program and the accompanying materials are made available under
 	the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,11 +20,13 @@
 	SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 <exports group="se829">
-	<export name="Java_com_ibm_oti_shared_SharedClassStatistics_softmxBytesImpl" />
-	<export name="Java_com_ibm_oti_shared_SharedClassStatistics_minAotBytesImpl" />
+	<export name="Java_com_ibm_oti_shared_SharedClassStatistics_cachePathImpl" />
 	<export name="Java_com_ibm_oti_shared_SharedClassStatistics_maxAotBytesImpl" />
-	<export name="Java_com_ibm_oti_shared_SharedClassStatistics_minJitDataBytesImpl" />
 	<export name="Java_com_ibm_oti_shared_SharedClassStatistics_maxJitDataBytesImpl" />
+	<export name="Java_com_ibm_oti_shared_SharedClassStatistics_minAotBytesImpl" />
+	<export name="Java_com_ibm_oti_shared_SharedClassStatistics_minJitDataBytesImpl" />
+	<export name="Java_com_ibm_oti_shared_SharedClassStatistics_numberAttachedImpl" />
+	<export name="Java_com_ibm_oti_shared_SharedClassStatistics_softmxBytesImpl" />
 	<export name="Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_setSharedClassCacheSoftmxBytesImpl" />
 	<export name="Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_setSharedClassCacheMinAotBytesImpl" />
 	<export name="Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_setSharedClassCacheMaxAotBytesImpl" />

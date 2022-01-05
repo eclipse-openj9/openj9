@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2019, 2021 IBM Corp. and others
+# Copyright (c) 2019, 2022 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -256,12 +256,14 @@ omr_add_exports(jclse
 	Java_com_ibm_oti_reflect_TypeAnnotationParser_getTypeAnnotationsDataImpl__Ljava_lang_reflect_Method_2
 	Java_com_ibm_oti_shared_SharedAbstractHelper_getIsVerboseImpl
 	Java_com_ibm_oti_shared_SharedClassAbstractHelper_initializeShareableClassloaderImpl
+	Java_com_ibm_oti_shared_SharedClassStatistics_cachePathImpl
 	Java_com_ibm_oti_shared_SharedClassStatistics_freeSpaceBytesImpl
 	Java_com_ibm_oti_shared_SharedClassStatistics_maxAotBytesImpl
 	Java_com_ibm_oti_shared_SharedClassStatistics_maxJitDataBytesImpl
 	Java_com_ibm_oti_shared_SharedClassStatistics_maxSizeBytesImpl
 	Java_com_ibm_oti_shared_SharedClassStatistics_minAotBytesImpl
 	Java_com_ibm_oti_shared_SharedClassStatistics_minJitDataBytesImpl
+	Java_com_ibm_oti_shared_SharedClassStatistics_numberAttachedImpl
 	Java_com_ibm_oti_shared_SharedClassStatistics_softmxBytesImpl
 	Java_com_ibm_oti_shared_SharedClassTokenHelperImpl_findSharedClassImpl2
 	Java_com_ibm_oti_shared_SharedClassTokenHelperImpl_storeSharedClassImpl2
