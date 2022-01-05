@@ -40,4 +40,14 @@
 			<class name="org.openj9.test.lworld.ValueTypeUnsafeTests"/>
 		</classes>
 	</test>
+	<test name="ValueTypeOptTests">
+		<classes>
+			<class name="org.openj9.test.lworld.ValueTypeOptTests"/>
+		</classes>
+	</test>
+	<test name="NullRestrictedTypeOptTests">
+		<classes>
+			<class name="org.openj9.test.lworld.NullRestrictedTypeOptTests"/>
+		</classes>
+	</test>
 </suite> <!-- Suite -->
