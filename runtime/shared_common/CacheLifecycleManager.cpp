@@ -392,7 +392,7 @@ deleteExpiredSharedCache(void *element, void *param)
 
 	Trc_SHR_CLM_deleteExpiredSharedCache_Entry();
 
-	if (cacheInfo->nattach > 0) {
+	if ((0 != cacheInfo->nattach) && (J9SH_OSCACHE_UNKNOWN != cacheInfo->nattach)) {
 		/* Somebody still attached to the cache */
 		Trc_SHR_CLM_deleteExpiredSharedCache_StillAttached();
 		return;
