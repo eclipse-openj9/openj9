@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2021 IBM Corp. and others
+ * Copyright (c) 2019, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -537,14 +537,14 @@ static TR::Instruction* initializeLocals(TR::Instruction *cursor, uint32_t numSl
             cursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addimmx, NULL, baseReg, baseReg, offset, cursor);
             offset = 0;
             }
-         TR::MemoryReference *localMR = new (cg->trHeapMemory()) TR::MemoryReference(baseReg, offset, cg);
+         TR::MemoryReference *localMR = TR::MemoryReference::createWithDisplacement(cg, baseReg, offset);
          cursor = generateMemSrc2Instruction(cg, TR::InstOpCode::stpoffx, NULL, localMR, zeroReg, zeroReg, cursor);
          offset += (TR::Compiler->om.sizeofReferenceAddress() * 2);
          }
       if (numSlotsToBeInitialized % 2)
          {
          // clear residue
-         TR::MemoryReference *localMR = new (cg->trHeapMemory()) TR::MemoryReference(baseReg, offset, cg);
+         TR::MemoryReference *localMR = TR::MemoryReference::createWithDisplacement(cg, baseReg, offset);
          cursor = generateMemSrc1Instruction(cg, TR::InstOpCode::strimmx, NULL, localMR, zeroReg, cursor);
          }
       }
@@ -552,13 +552,13 @@ static TR::Instruction* initializeLocals(TR::Instruction *cursor, uint32_t numSl
       {
       for (int32_t i = 0; i < loopCount; i++, offset += (TR::Compiler->om.sizeofReferenceAddress() * 2))
          {
-         TR::MemoryReference *localMR = new (cg->trHeapMemory()) TR::MemoryReference(javaSP, offset, cg);
+         TR::MemoryReference *localMR = TR::MemoryReference::createWithDisplacement(cg, javaSP, offset);
          cursor = generateMemSrc2Instruction(cg, TR::InstOpCode::stpoffx, NULL, localMR, zeroReg, zeroReg, cursor);
          }
       if (numSlotsToBeInitialized % 2)
          {
          // clear residue
-         TR::MemoryReference *localMR = new (cg->trHeapMemory()) TR::MemoryReference(javaSP, offset, cg);
+         TR::MemoryReference *localMR = TR::MemoryReference::createWithDisplacement(cg, javaSP, offset);
          cursor = generateMemSrc1Instruction(cg, TR::InstOpCode::strimmx, NULL, localMR, zeroReg, cursor);
          }
       }
@@ -663,7 +663,7 @@ void J9::ARM64::PrivateLinkage::createPrologue(TR::Instruction *cursor)
    // --------------------------------------------------------------------------
    // Store return address (RA)
    //
-   TR::MemoryReference *returnAddressMR = new (cg()->trHeapMemory()) TR::MemoryReference(javaSP, firstLocalOffset, cg());
+   TR::MemoryReference *returnAddressMR = TR::MemoryReference::createWithDisplacement(cg(), javaSP, firstLocalOffset);
    cursor = generateMemSrc1Instruction(cg(), TR::InstOpCode::sturx, NULL, returnAddressMR, machine->getRealRegister(TR::RealRegister::lr), cursor);
 
    // --------------------------------------------------------------------------
@@ -701,7 +701,7 @@ void J9::ARM64::PrivateLinkage::createPrologue(TR::Instruction *cursor)
       //
       // stackOverflowRestartLabel:
       //
-      TR::MemoryReference *somMR = new (cg()->trHeapMemory()) TR::MemoryReference(vmThread, cg()->getStackLimitOffset(), cg());
+      TR::MemoryReference *somMR = TR::MemoryReference::createWithDisplacement(cg(), vmThread, cg()->getStackLimitOffset());
       TR::RealRegister *somReg = machine->getRealRegister(TR::RealRegister::RegNum::x10);
       cursor = generateTrg1MemInstruction(cg(), TR::InstOpCode::ldrimmx, NULL, somReg, somMR, cursor);
 
@@ -750,7 +750,7 @@ void J9::ARM64::PrivateLinkage::createPrologue(TR::Instruction *cursor)
          TR::RealRegister *preservedRealReg = machine->getRealRegister(regIndex);
          if (preservedRealReg->getHasBeenAssignedInMethod())
             {
-            TR::MemoryReference *preservedRegMR = new (cg()->trHeapMemory()) TR::MemoryReference(javaSP, preservedRegisterOffsetFromJavaSP, cg());
+            TR::MemoryReference *preservedRegMR = TR::MemoryReference::createWithDisplacement(cg(), javaSP, preservedRegisterOffsetFromJavaSP);
             cursor = generateMemSrc1Instruction(cg(), TR::InstOpCode::strimmx, NULL, preservedRegMR, preservedRealReg, cursor);
             preservedRegisterOffsetFromJavaSP += 8;
             numGPRsSaved--;
@@ -848,7 +848,7 @@ void J9::ARM64::PrivateLinkage::createEpilogue(TR::Instruction *cursor)
       TR::RealRegister *rr = machine->getRealRegister(r);
       if (rr->getHasBeenAssignedInMethod())
          {
-         TR::MemoryReference *preservedRegMR = new (trHeapMemory()) TR::MemoryReference(javaSP, preservedRegisterOffsetFromJavaSP, cg());
+         TR::MemoryReference *preservedRegMR = TR::MemoryReference::createWithDisplacement(cg(), javaSP, preservedRegisterOffsetFromJavaSP);
          cursor = generateTrg1MemInstruction(cg(), TR::InstOpCode::ldrimmx, lastNode, rr, preservedRegMR, cursor);
          preservedRegisterOffsetFromJavaSP += 8;
          }
@@ -873,7 +873,7 @@ void J9::ARM64::PrivateLinkage::createEpilogue(TR::Instruction *cursor)
    TR::RealRegister *lr = machine->getRealRegister(TR::RealRegister::lr);
    if (machine->getLinkRegisterKilled())
       {
-      TR::MemoryReference *returnAddressMR = new (cg()->trHeapMemory()) TR::MemoryReference(javaSP, firstLocalOffset, cg());
+      TR::MemoryReference *returnAddressMR = TR::MemoryReference::createWithDisplacement(cg(), javaSP, firstLocalOffset);
       cursor = generateTrg1MemInstruction(cg(), TR::InstOpCode::ldurx, lastNode, lr, returnAddressMR, cursor);
       }
 
@@ -886,7 +886,7 @@ void J9::ARM64::PrivateLinkage::pushOutgoingMemArgument(TR::Register *argReg, in
    const TR::ARM64LinkageProperties& properties = self()->getProperties();
    TR::RealRegister *javaSP = cg()->machine()->getRealRegister(properties.getStackPointerRegister()); // x20
 
-   TR::MemoryReference *result = new (self()->trHeapMemory()) TR::MemoryReference(javaSP, offset, cg());
+   TR::MemoryReference *result = TR::MemoryReference::createWithDisplacement(cg(), javaSP, offset);
    memArg.argRegister = argReg;
    memArg.argMemory = result;
    memArg.opCode = opCode;
@@ -1510,7 +1510,7 @@ static void buildVirtualCall(TR::CodeGenerator *cg, TR::Node *callNode, TR::Regi
                                  (((offset >> 16) & 0xFFFF) | TR::MOV_LSL16));
       generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::sbfmx, callNode, x9, x9, 0x1F); // sxtw x9, w9
       }
-   TR::MemoryReference *tempMR = new (cg->trHeapMemory()) TR::MemoryReference(vftReg, x9, cg);
+   TR::MemoryReference *tempMR = TR::MemoryReference::createWithIndexReg(cg, vftReg, x9);
    generateTrg1MemInstruction(cg, TR::InstOpCode::ldroffx, callNode, x9, tempMR);
    TR::Instruction *gcPoint = generateRegBranchInstruction(cg, TR::InstOpCode::blr, callNode, x9);
    gcPoint->ARM64NeedsGCMap(cg, regMapForGC);
@@ -1669,7 +1669,7 @@ void J9::ARM64::PrivateLinkage::buildVirtualDispatch(TR::Node *callNode,
          generateLabelInstruction(cg(), TR::InstOpCode::b, callNode, vcSnippetLabel);
          generateTrg1ImmInstruction(cg(), TR::InstOpCode::movkx, callNode, x9, TR::MOV_LSL16);
          generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::sbfmx, callNode, x9, x9, 0x1F); // sxtw x9, w9
-         tempMR = new (trHeapMemory()) TR::MemoryReference(vftReg, x9, cg());
+         tempMR = TR::MemoryReference::createWithIndexReg(cg(), vftReg, x9);
          generateTrg1MemInstruction(cg(), TR::InstOpCode::ldroffx, callNode, x9, tempMR);
          gcPoint = generateRegBranchInstruction(cg(), TR::InstOpCode::blr, callNode, x9);
          gcPoint->ARM64NeedsGCMap(cg(), regMapForGC);
@@ -2009,7 +2009,7 @@ J9::ARM64::PrivateLinkage::loadStackParametersToLinkageRegisters(TR::Instruction
             op = (dataType == TR::Int64 || dataType == TR::Address) ? TR::InstOpCode::ldrimmx : TR::InstOpCode::ldrimmw;
             }
 
-         TR::MemoryReference *stackMR = new (cg()->trHeapMemory()) TR::MemoryReference(javaSP, parmCursor->getParameterOffset(), cg());
+         TR::MemoryReference *stackMR = TR::MemoryReference::createWithDisplacement(cg(), javaSP, parmCursor->getParameterOffset());
          cursor = generateTrg1MemInstruction(cg(), op, NULL, linkageReg, stackMR, cursor);
          }
       }
@@ -2051,7 +2051,7 @@ J9::ARM64::PrivateLinkage::saveParametersToStack(TR::Instruction *cursor)
             op = TR::InstOpCode::strimmx;
             }
 
-         TR::MemoryReference *stackMR = new (cg()->trHeapMemory()) TR::MemoryReference(javaSP, parmCursor->getParameterOffset(), cg());
+         TR::MemoryReference *stackMR = TR::MemoryReference::createWithDisplacement(cg(), javaSP, parmCursor->getParameterOffset());
          cursor = generateMemSrc1Instruction(cg(), op, NULL, stackMR, linkageReg, cursor);
          }
       }
