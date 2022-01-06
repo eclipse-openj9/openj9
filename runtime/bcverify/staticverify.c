@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1301,6 +1301,10 @@ checkStackMap (J9CfrClassFile* classfile, J9CfrMethod * method, J9CfrAttributeCo
 						delayedErrorCode = FALLBACK_VERIFY_ERROR;
 						exceptionDetails->stackmapFrameIndex = (I_32)j;
 						exceptionDetails->stackmapFrameBCI = (U_32)offset;
+#if JAVA_SPEC_VERSION >= 18
+						/* Report the VerifyError without delay so as to match the RI's behavior on Java18 */
+						goto _failedCheck;
+#endif /* JAVA_SPEC_VERSION >= 18 */
 					}
 				} else {
 					errorCode = FALLBACK_VERIFY_ERROR;
