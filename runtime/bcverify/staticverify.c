@@ -1245,9 +1245,6 @@ checkStackMap (J9CfrClassFile* classfile, J9CfrMethod * method, J9CfrAttributeCo
 {
 	UDATA i;
 	IDATA errorCode = 0;
-	/* delayedErrorCode only used to hold the "stack map not at a bytecode boundary" error while completing other checks */
-	/* It is a verification retry error */
-	IDATA delayedErrorCode = 0;
 	J9CfrAttribute* attribute;
 
 	for (i = 0; i < code->attributesCount; i++) {
@@ -1291,22 +1288,8 @@ checkStackMap (J9CfrClassFile* classfile, J9CfrMethod * method, J9CfrAttributeCo
 				}
 				offset++;
 
-				if (offset < code->codeLength) {
-					/* Check only possibly valid offsets */
-					if (map[offset] == 0) {
-						/* invalid bytecode index */
-						/* Don't go to _failedCheck - delay reporting the VerifyError */
-						/* continue parsing the attribute to check for other failures first */
-						/* particularly extra or missing bytes */
-						delayedErrorCode = FALLBACK_VERIFY_ERROR;
-						exceptionDetails->stackmapFrameIndex = (I_32)j;
-						exceptionDetails->stackmapFrameBCI = (U_32)offset;
-#if JAVA_SPEC_VERSION >= 18
-						/* Report the VerifyError without delay so as to match the RI's behavior on Java18 */
-						goto _failedCheck;
-#endif /* JAVA_SPEC_VERSION >= 18 */
-					}
-				} else {
+				/* Throw the VerifyError without delay in the case of bad offset so as to match the RI's behavior */
+				if ((offset >= code->codeLength) || (0 == map[offset])) {
 					errorCode = FALLBACK_VERIFY_ERROR;
 					exceptionDetails->stackmapFrameIndex = (I_32)j;
 					exceptionDetails->stackmapFrameBCI = (U_32)offset;
@@ -1364,19 +1347,18 @@ checkStackMap (J9CfrClassFile* classfile, J9CfrMethod * method, J9CfrAttributeCo
 		}
 	}
 _failedCheck:
-	if (delayedErrorCode || (errorCode == FALLBACK_CLASS_FORMAT_ERROR) || (errorCode == FALLBACK_VERIFY_ERROR)) {
-		if ((classfile->majorVersion < CFR_MAJOR_VERSION_REQUIRING_STACKMAPS) && ((flags & J9_VERIFY_NO_FALLBACK) == 0)) {
+	if ((FALLBACK_CLASS_FORMAT_ERROR == errorCode)
+	|| (FALLBACK_VERIFY_ERROR == errorCode)
+	) {
+		if ((classfile->majorVersion < CFR_MAJOR_VERSION_REQUIRING_STACKMAPS)
+		&& (0 == (flags & J9_VERIFY_NO_FALLBACK))
+		) {
 			/* Hide the bad StackMap/StackMapTable attribute and error.  Major version 51 and greater do not allow fallback to type inference */
 			attribute->tag = CFR_ATTRIBUTE_Unknown;
-			errorCode = 0; 	
-			delayedErrorCode = 0;
+			errorCode = 0;
 		}
 	}
 
-	if (errorCode == 0) {
-		errorCode = delayedErrorCode;
-	}
-	
 	return errorCode;
 }
 
