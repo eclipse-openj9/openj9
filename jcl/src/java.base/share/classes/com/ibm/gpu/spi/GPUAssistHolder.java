@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar19-SE]*/
 /*******************************************************************************
- * Copyright (c) 2018, 2019 IBM Corp. and others
+ * Copyright (c) 2018, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,8 +28,9 @@ package com.ibm.gpu.spi;
 public final class GPUAssistHolder {
 
 	/**
-	 * The value of this field is updated as necessary by System.completeInitialization().
+	 * The instance to be used to sort primitive arrays.
 	 */
+	/* Note: The value of this field is updated as necessary by System.initGPUAssist(). */
 	public static GPUAssist instance = GPUAssist.NONE;
 
 }
