@@ -1,6 +1,6 @@
 /*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 /*******************************************************************************
- * Copyright (c) 1998, 2021 IBM Corp. and others
+ * Copyright (c) 1998, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -98,11 +98,19 @@ final class J9VMInternals {
 
 				CleanerShutdown.shutdownCleaner();
 				ThreadGroup threadGroup = Thread.currentThread().group; // the system ThreadGroup
+				/*[IF OJDKTHREAD_SUPPORT]*/
+				ThreadGroup threadGroups[] = new ThreadGroup[threadGroup.ngroups];
+				/*[ELSE] OJDKTHREAD_SUPPORT
 				ThreadGroup threadGroups[] = new ThreadGroup[threadGroup.numGroups];
+				/*[ENDIF] OJDKTHREAD_SUPPORT */
 				threadGroup.enumerate(threadGroups, false); /* non-recursive enumeration */
 				for (ThreadGroup tg : threadGroups) {
 					if ("InnocuousThreadGroup".equals(tg.getName())) { //$NON-NLS-1$
+						/*[IF OJDKTHREAD_SUPPORT]*/
+						Thread threads[] = new Thread[tg.nthreads];
+						/*[ELSE] OJDKTHREAD_SUPPORT
 						Thread threads[] = new Thread[tg.numThreads];
+						/*[ENDIF] OJDKTHREAD_SUPPORT */
 						tg.enumerate(threads, false);
 						for (Thread t : threads) {
 							if (t.getName().equals("Common-Cleaner")) { //$NON-NLS-1$
@@ -310,7 +318,11 @@ final class J9VMInternals {
 		/*[PR 106323] -- remove might throw an exception, so make sure we finish the cleanup*/
 		try {
 			// Leave the ThreadGroup. This is why remove can't be private
+			/*[IF OJDKTHREAD_SUPPORT]*/
+			thread.group.threadTerminated(thread);
+			/*[ELSE] OJDKTHREAD_SUPPORT*/
 			thread.group.remove(thread);
+			/*[ENDIF] OJDKTHREAD_SUPPORT */
 		}
 		finally {
 			thread.cleanup();
