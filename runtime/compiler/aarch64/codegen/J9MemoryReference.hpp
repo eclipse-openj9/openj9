@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2020 IBM Corp. and others
+ * Copyright (c) 2019, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -48,14 +48,7 @@ class OMR_EXTENSIBLE MemoryReference : public OMR::MemoryReferenceConnector
    {
    flags8_t _j9Flags;
 
-public:
-   TR_ALLOC(TR_Memory::MemoryReference)
-
-   typedef enum
-      {
-      TR_ARM64MemoryReferenceControl_ThrowsImplicitNullPointerException  = 0x01,
-      /* To be added more if necessary */
-      } TR_ARM64MemoryReferenceExtraControl;
+protected:
 
    /**
     * @brief Constructor
@@ -128,6 +121,16 @@ public:
     * @param[in] cg : CodeGenerator object
     */
    MemoryReference(TR::Node *node, TR::SymbolReference *symRef, TR::CodeGenerator *cg);
+
+public:
+   TR_ALLOC(TR_Memory::MemoryReference)
+
+   typedef enum
+      {
+      TR_ARM64MemoryReferenceControl_ThrowsImplicitNullPointerException  = 0x01,
+      /* To be added more if necessary */
+      } TR_ARM64MemoryReferenceExtraControl;
+
 
    /**
     * @brief Implicit NullPointerException can be thrown or not
