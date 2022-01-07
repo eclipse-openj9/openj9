@@ -93,9 +93,10 @@ final class J9VMInternals {
 		Thread.currentThread().completeInitialization();
 
 		/*[IF Sidecar19-SE]*/
-		if (Boolean.getBoolean("ibm.java9.forceCommonCleanerShutdown")) {//$NON-NLS-1$
-			Runnable runnable = () -> {
+		System.initGPUAssist();
 
+		if (Boolean.getBoolean("ibm.java9.forceCommonCleanerShutdown")) { //$NON-NLS-1$
+			Runnable runnable = () -> {
 				CleanerShutdown.shutdownCleaner();
 				ThreadGroup threadGroup = Thread.currentThread().group; // the system ThreadGroup
 				/*[IF OJDKTHREAD_SUPPORT]*/
@@ -115,22 +116,22 @@ final class J9VMInternals {
 						for (Thread t : threads) {
 							if (t.getName().equals("Common-Cleaner")) { //$NON-NLS-1$
 								t.interrupt();
-			 					try {
-			 						/* Need to wait for the Common-Cleaner thread to die before
-			 						 * continuing. If not this will result in a race condition where
-			 						 * the VM might attempt to shutdown before Common-Cleaner has a
-			 						 * chance to stop properly. This will result in an unsuccessful
-			 						 * shutdown and we will not release vm resources.
-			 						 */
-				 					 t.join(3000);
-				 					 /* giving this a 3sec timeout. If it works it should work fairly
-				 					  * quickly, 3 seconds should be more than enough time. If it doesn't
-				 					  * work it may block indefinitely. Turning on -verbose:shutdown will
-				 					  * let us know if it worked or not
-				 					  */
-			 					} catch (Throwable e) {
-			 						/* empty block */
-			 					}
+								try {
+									/* Need to wait for the Common-Cleaner thread to die before
+									 * continuing. If not this will result in a race condition where
+									 * the VM might attempt to shutdown before Common-Cleaner has a
+									 * chance to stop properly. This will result in an unsuccessful
+									 * shutdown and we will not release vm resources.
+									 */
+									t.join(3000);
+									/* giving this a 3sec timeout. If it works it should work fairly
+									 * quickly, 3 seconds should be more than enough time. If it doesn't
+									 * work it may block indefinitely. Turning on -verbose:shutdown will
+									 * let us know if it worked or not
+									 */
+								} catch (Throwable e) {
+									/* empty block */
+								}
 							}
 						}
 					}
@@ -138,7 +139,7 @@ final class J9VMInternals {
 			};
 			Runtime.getRuntime().addShutdownHook(new Thread(runnable, "CommonCleanerShutdown", true, false, false, null)); //$NON-NLS-1$
 		}
-		/*[ENDIF]*/
+		/*[ENDIF] Sidecar19-SE */
 	}
 
 	/**

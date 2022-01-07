@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 1998, 2021 IBM Corp. and others
+ * Copyright (c) 1998, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -426,10 +426,6 @@ static void completeInitialization() {
 	/*[PR 102344] call Terminator.setup() after Thread init */
 	Terminator.setup();
 
-	/*[IF Sidecar19-SE]*/
-	initGPUAssist();
-	/*[ENDIF] Sidecar19-SE */
-
 	/*[IF !Sidecar19-SE_RAWPLUSJ9&!Sidecar18-SE-OpenJ9]*/
 	try {
 		if (null != systemInitialization) {
@@ -443,7 +439,7 @@ static void completeInitialization() {
 }
 
 /*[IF Sidecar19-SE]*/
-private static void initGPUAssist() {
+static void initGPUAssist() {
 	Properties props = internalGetProperties();
 
 	if ((props.getProperty("com.ibm.gpu.enable") == null) //$NON-NLS-1$
