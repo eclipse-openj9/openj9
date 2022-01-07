@@ -1590,3 +1590,11 @@ J9NLS_CFR_ERR_OUTER_CLASS_BAD_ARRAY_CLASS.system_action=The JVM will throw a ver
 J9NLS_CFR_ERR_OUTER_CLASS_BAD_ARRAY_CLASS.user_response=Contact the provider of the classfile for a corrected version.
 
 # END NON-TRANSLATABLE
+
+J9NLS_CFR_ERR_LOCAL_VERSION_MORE_THAN_COMPILED_VERSION=local version more than compiled
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_LOCAL_VERSION_MORE_THAN_COMPILED_VERSION.explanation=The local version of JVM is more than compiled version.
+J9NLS_CFR_ERR_LOCAL_VERSION_MORE_THAN_COMPILED_VERSION.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_LOCAL_VERSION_MORE_THAN_COMPILED_VERSION.user_response=Contact the provider of the classfile for a corrected version.
+
+# END NON-TRANSLATABLE
