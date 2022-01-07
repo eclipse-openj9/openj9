@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -209,7 +209,7 @@ static void reportHook(J9VMThread *curThread, char *name, char *format=NULL, ...
    if (  TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseHooks)
       || TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseHookDetails))
       {
-      TR_VerboseLog::vlogAcquire();
+      TR_VerboseLog::CriticalSection vlogLock;
       TR_VerboseLog::write(TR_Vlog_HK,"vmThread=%p hook %s ", curThread, name);
       if (format)
          {
@@ -219,7 +219,6 @@ static void reportHook(J9VMThread *curThread, char *name, char *format=NULL, ...
          va_end(args);
          }
       TR_VerboseLog::writeLine("");
-      TR_VerboseLog::vlogRelease();
       }
    }
 
@@ -229,7 +228,7 @@ static void reportHookFinished(J9VMThread *curThread, char *name, char *format=N
    TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
    if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseHookDetails))
       {
-      TR_VerboseLog::vlogAcquire();
+      TR_VerboseLog::CriticalSection vlogLock;
       TR_VerboseLog::writeLine(TR_Vlog_HD,"vmThread=%p hook %s finished ", curThread, name);
       if (format)
          {
@@ -238,7 +237,6 @@ static void reportHookFinished(J9VMThread *curThread, char *name, char *format=N
          j9jit_vprintf(jitConfig, format, args);
          va_end(args);
          }
-      TR_VerboseLog::vlogRelease();
       }
    }
 
@@ -248,13 +246,12 @@ static void reportHookDetail(J9VMThread *curThread, char *name, char *format, ..
    TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
    if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseHookDetails))
       {
-      TR_VerboseLog::vlogAcquire();
+      TR_VerboseLog::CriticalSection vlogLock;
       TR_VerboseLog::writeLine(TR_Vlog_HD,"vmThread=%p hook %s detail ", curThread, name);
       va_list args;
       va_start(args, format);
       j9jit_vprintf(jitConfig, format, args);
       va_end(args);
-      TR_VerboseLog::vlogRelease();
       }
    }
 
@@ -4383,7 +4380,7 @@ static void samplingObservationsLogic(J9JITConfig * jitConfig, TR::CompilationIn
    {
    if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseHeartbeat))
       {
-      TR_VerboseLog::vlogAcquire();
+      TR_VerboseLog::CriticalSection vlogLock;
       TR_VerboseLog::writeLine(TR_Vlog_INFO,"<samplewindow intervalTicks=%u interpretedMethodSamples=%u",
                    jitConfig->samplingTickCount + 1 - compInfo->_stats._windowStartTick, compInfo->_stats._interpretedMethodSamples);
       TR_VerboseLog::writeLine(TR_Vlog_INFO,"  compiledMethodSamples=%u compiledMethodSamplesIgnored=%u",
@@ -4392,7 +4389,6 @@ static void samplingObservationsLogic(J9JITConfig * jitConfig, TR::CompilationIn
                    compInfo->_stats._sampleMessagesSent, compInfo->_stats._sampleMessagesReceived, compInfo->_stats._ticksInIdleMode);
       TR_VerboseLog::writeLine(TR_Vlog_INFO,"  methodsCompiledOnCount=%u methodsReachingSampleInterval=%u",
                    compInfo->_stats._methodsCompiledOnCount, compInfo->_stats._methodsReachingSampleInterval);
-      TR_VerboseLog::vlogRelease();
       }
 
    // sample tick is about to be incremented for the samples we're about to take
@@ -5153,7 +5149,7 @@ static void DoCalculateOverallCompCPUUtilization(TR::CompilationInfo *compInfo, 
    // Print the overall comp CPU utilization if the right verbose option is specified
    if (TR::Options::isAnyVerboseOptionSet(TR_VerboseCompilationThreads, TR_VerboseCompilationThreadsDetails))
       {
-      TR_VerboseLog::vlogAcquire();
+      TR_VerboseLog::CriticalSection vlogLock;
       TR_VerboseLog::write(TR_Vlog_INFO, "t=%6u TotalCompCpuUtil=%3d%%.", static_cast<uint32_t>(crtTime), totalCompCPUUtilization);
       TR::CompilationInfoPerThread * const *arrayOfCompInfoPT = compInfo->getArrayOfCompilationInfoPerThread();
       for (int32_t i = 0; i < compInfo->getNumUsableCompilationThreads(); i++)
@@ -5167,7 +5163,6 @@ static void DoCalculateOverallCompCPUUtilization(TR::CompilationInfo *compInfo, 
                cpuUtil.getLowResolutionClockAtLastUpdate());
          }
       TR_VerboseLog::writeLine("");
-      TR_VerboseLog::vlogRelease();
       }
    }
 
@@ -5862,7 +5857,7 @@ static int32_t J9THREAD_PROC samplerThreadProc(void * entryarg)
       char timestamp[32];
       bool incomplete;
       omrstr_ftime_ex(timestamp, sizeof(timestamp), "%b %d %H:%M:%S %Y", persistentInfo->getStartTime(), OMRSTR_FTIME_FLAG_LOCAL);
-      TR_VerboseLog::vlogAcquire();
+      TR_VerboseLog::CriticalSection vlogLock;
       TR_VerboseLog::writeLine(TR_Vlog_INFO, "StartTime: %s", timestamp);
       uint64_t phMemAvail = compInfo->computeAndCacheFreePhysicalMemory(incomplete);
       if (phMemAvail != OMRPORT_MEMINFO_NOT_AVAILABLE)
@@ -5920,7 +5915,6 @@ static int32_t J9THREAD_PROC samplerThreadProc(void * entryarg)
          {
          TR_VerboseLog::writeLine(TR_Vlog_INFO, "CPU entitlement = %3.2f", compInfo->getJvmCpuEntitlement());
          }
-      TR_VerboseLog::vlogRelease();
       } // if (TR::Options::isAnyVerboseOptionSet())
 
    if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableScorchingSampleThresholdScalingBasedOnNumProc))
@@ -6129,7 +6123,7 @@ static int32_t J9THREAD_PROC samplerThreadProc(void * entryarg)
                {
                bool incomplete;
                TR_PersistentMemory *persistentMemory = compInfo->persistentMemory();
-               TR_VerboseLog::vlogAcquire();
+               TR_VerboseLog::CriticalSection vlogLock;
                uint64_t phMemAvail = compInfo->computeAndCacheFreePhysicalMemory(incomplete);
                if (phMemAvail != OMRPORT_MEMINFO_NOT_AVAILABLE)
                   TR_VerboseLog::writeLine(TR_Vlog_INFO, "Free Physical Memory: %lld MB %s", phMemAvail >> 20, incomplete ? "estimated" : "");
@@ -6144,7 +6138,6 @@ static int32_t J9THREAD_PROC samplerThreadProc(void * entryarg)
                TR_RuntimeAssumptionTable * rat = persistentInfo->getRuntimeAssumptionTable();
                for (int32_t i=0; i < LastAssumptionKind; i++)
                   TR_VerboseLog::writeLine(TR_Vlog_MEMORY,"\tAssumptionType=%d allocated=%d reclaimed=%d", i, rat->getAssumptionCount(i), rat->getReclaimedAssumptionCount(i));
-               TR_VerboseLog::vlogRelease();
                }
 #if defined(WINDOWS) && defined(TR_TARGET_32BIT)
             if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseVMemAvailable))

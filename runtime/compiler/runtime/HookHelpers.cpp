@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -447,8 +447,7 @@ void vlogReclamation(const char * prefix, J9JITExceptionTable *metaData, size_t 
    {
    if (TR::Options::getVerboseOption(TR_VerboseReclamation))
       {
-
-      TR_VerboseLog::vlogAcquire();
+      TR_VerboseLog::CriticalSection vlogLock;
       TR_VerboseLog::write(
          TR_Vlog_RECLAMATION,
          "%s %.*s.%.*s%.*s @ %s [" POINTER_PRINTF_FORMAT "-",
@@ -470,7 +469,5 @@ void vlogReclamation(const char * prefix, J9JITExceptionTable *metaData, size_t 
       TR_VerboseLog::writeLine(
          POINTER_PRINTF_FORMAT "]",
          metaData->endPC);
-
-      TR_VerboseLog::vlogRelease();
       }
    }

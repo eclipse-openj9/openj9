@@ -1,6 +1,6 @@
 /*******************************************************************************
 /*******************************************************************************
- * Copyright (c) 2020, 2020 IBM Corp. and others
+ * Copyright (c) 2020, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -118,7 +118,7 @@ void
 Message::print()
    {
    const MetaData *metaData = getMetaData();
-   TR_VerboseLog::vlogAcquire();
+   TR_VerboseLog::CriticalSection vlogLock;
    TR_VerboseLog::writeLine(TR_Vlog_JITServer, "Message: type=%d numDataPoints=%u version=%lu numDescriptors=%lu\n",
                             metaData->_type, metaData->_numDataPoints, metaData->_version, _descriptorOffsets.size());
    uint32_t numDescriptorsPrinted = 0;
@@ -127,6 +127,5 @@ Message::print()
       DataDescriptor* desc = getDescriptor(i);
       numDescriptorsPrinted = desc->print(0);
       }
-   TR_VerboseLog::vlogRelease();
    }
 };
