@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -205,9 +205,7 @@ TR_J9SharedCache::log(char *format, ...)
    j9str_vprintf(outputBuffer+startOffset, 512, format, args);
    va_end(args);
 
-   JITRT_LOCK_LOG(jitConfig());
-   JITRT_PRINTF(jitConfig())(jitConfig(), "%s", outputBuffer);
-   JITRT_UNLOCK_LOG(jitConfig());
+   rtlogPrintLocked(jitConfig(), _fe->_compInfoPT, outputBuffer);
    }
 
 TR_J9SharedCache::SCCHint
