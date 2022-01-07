@@ -108,7 +108,7 @@ public final class System {
 
 	private static String lineSeparator;
 
-	private static boolean propertiesInitialized = false;
+	private static boolean propertiesInitialized;
 
 	private static String platformEncoding;
 	private static String fileEncoding;
@@ -750,7 +750,7 @@ public static String getenv(String var) {
  * Answers the system properties. Note that this is
  * not a copy, so that changes made to the returned
  * Properties object will be reflected in subsequent
- * calls to getProperty and getProperties.
+ * calls to {@code getProperty()} and {@code getProperties()}.
  * <p>
  * Security managers should restrict access to this
  * API if possible.
@@ -780,29 +780,29 @@ static Properties internalGetProperties() {
 }
 /**
  * Answers the value of a particular system property.
- * Answers null if no such property exists,
+ * Answers null if no such property exists.
  * <p>
  * The properties currently provided by the virtual
  * machine are:
  * <pre>
+ *     file.separator
+ *     java.class.path
+ *     java.class.version
+ *     java.home
 /*[IF JAVA_SPEC_VERSION < 12]
  *     java.vendor
  *     java.vendor.url
- /*[ENDIF] JAVA_SPEC_VERSION < 12
- *     java.class.path
- *     user.home
- *     java.class.version
- *     os.version
- *     user.dir
- *     user.timezone
- *     path.separator
- *     os.name
- *     os.arch
- *     line.separator
- *     file.separator
- *     user.name
+/*[ENDIF] JAVA_SPEC_VERSION < 12
  *     java.version
- *     java.home
+ *     line.separator
+ *     os.arch
+ *     os.name
+ *     os.version
+ *     path.separator
+ *     user.dir
+ *     user.home
+ *     user.name
+ *     user.timezone
  * </pre>
  *
  * @param		prop		the system property to look up
@@ -1000,26 +1000,21 @@ public static void runFinalization() {
  *
  * @deprecated 	This method is unsafe.
  */
-/*[IF Sidecar19-SE]*/
-@Deprecated(forRemoval=true, since="1.2")
-/*[ELSE]
 @Deprecated
-/*[ENDIF]*/
 public static void runFinalizersOnExit(boolean flag) {
 	Runtime.runFinalizersOnExit(flag);
 }
 /*[ENDIF] JAVA_SPEC_VERSION < 11 */
 
 /**
- * Answers the system properties. Note that the object
- * which is passed in not copied, so that subsequent
- * changes made to the object will be reflected in
- * calls to getProperty and getProperties.
+ * Sets the system properties. Note that the object which is passed in
+ * is not copied, so that subsequent changes made to it will be reflected
+ * in calls to {@code getProperty()} and {@code getProperties()}.
  * <p>
  * Security managers should restrict access to this
  * API if possible.
  *
- * @param		p			the property to set
+ * @param		p			the properties to set
  */
 public static void setProperties(Properties p) {
 	@SuppressWarnings("removal")
@@ -1042,10 +1037,10 @@ public static void setProperties(Properties p) {
  * @param		s			the new security manager
  *
  * @throws		SecurityException 	if the security manager has already been set and its checkPermission method doesn't allow it to be replaced.
- /*[IF JAVA_SPEC_VERSION >= 12]
+/*[IF JAVA_SPEC_VERSION >= 12]
  * @throws		UnsupportedOperationException 	if s is non-null and a special token "disallow" has been set for system property "java.security.manager"
  * 												which indicates that a security manager is not allowed to be set dynamically.
- /*[ENDIF] JAVA_SPEC_VERSION >= 12
+/*[ENDIF] JAVA_SPEC_VERSION >= 12
  */
 /*[IF JAVA_SPEC_VERSION >= 17] */
 /*[IF OPENJDK_METHODHANDLES] */
@@ -1121,11 +1116,11 @@ public static void setSecurityManager(final SecurityManager s) {
 }
 
 /**
- * Answers the platform specific file name format for the shared
+ * Answers the platform-specific filename for the shared
  * library named by the argument.
  *
  * @param		userLibName 	the name of the library to look up.
- * @return		the platform specific filename for the library
+ * @return		the platform-specific filename for the library
  */
 public static native String mapLibraryName(String userLibName);
 
@@ -1501,10 +1496,10 @@ private static void multiLeafArrayCopy(Object src, int srcPos, Object dest,
 
 
 /**
- * Return platform specific line separator character(s)
- * Unix is \n while Windows is \r\n as per the prop set by the VM
+ * Return platform specific line separator character(s).
+ * Unix is \n while Windows is \r\n as per the prop set by the VM.
  *
- * @return platform specific line separator character(s)
+ * @return platform specific line separator string
  */
 //  Refer to Jazz 30875
 public static String lineSeparator() {
@@ -1521,13 +1516,14 @@ public static String lineSeparator() {
  */
 @CallerSensitive
 public static Logger getLogger(String loggerName) {
-	loggerName = Objects.requireNonNull(loggerName);
+	Objects.requireNonNull(loggerName);
 	Class<?> caller = Reflection.getCallerClass();
 	return jdk.internal.logger.LazyLoggers.getLogger(loggerName, caller.getModule());
 }
 
 /**
- * Return an instance of Logger that is localized based on the ResourceBundle
+ * Return an instance of Logger that is localized based on the ResourceBundle.
+ *
  * @param loggerName The name of the logger to return
  * @param bundle The ResourceBundle to use for localization
  * @return An instance of the logger localized to 'bundle'
@@ -1535,8 +1531,8 @@ public static Logger getLogger(String loggerName) {
  */
 @CallerSensitive
 public static Logger getLogger(String loggerName, ResourceBundle bundle) {
-	loggerName = Objects.requireNonNull(loggerName);
-	bundle = Objects.requireNonNull(bundle);
+	Objects.requireNonNull(loggerName);
+	Objects.requireNonNull(bundle);
 	Class<?> caller = Reflection.getCallerClass();
 	return LoggerFinder.getLoggerFinder().getLocalizedLogger(loggerName, bundle, caller.getModule());
 }
@@ -1546,7 +1542,7 @@ public static Logger getLogger(String loggerName, ResourceBundle bundle) {
  * to the underlying framework it uses.
  */
 public abstract static class LoggerFinder {
-	private static volatile LoggerFinder loggerFinder = null;
+	private static volatile LoggerFinder loggerFinder;
 
 	/**
 	 * Checks needed runtime permissions
@@ -1569,8 +1565,8 @@ public abstract static class LoggerFinder {
 	 */
 	public Logger getLocalizedLogger(String loggerName, ResourceBundle bundle, Module callerModule) {
 		verifyPermissions();
-		loggerName = Objects.requireNonNull(loggerName);
-		callerModule = Objects.requireNonNull(callerModule);
+		Objects.requireNonNull(loggerName);
+		Objects.requireNonNull(callerModule);
 		Logger logger = this.getLogger(loggerName, callerModule);
 		Logger localizedLogger = new jdk.internal.logger.LocalizedLoggerWrapper(logger, bundle);
 		return localizedLogger;
@@ -1700,7 +1696,7 @@ public interface Logger {
 	 * @throws NullPointerException if level is null
 	 */
 	public default void log(Level level, String msg) {
-		level = Objects.requireNonNull(level);
+		Objects.requireNonNull(level);
 		log(level, (ResourceBundle)null, msg, (Object[])null);
 	}
 
@@ -1712,8 +1708,8 @@ public interface Logger {
 	 * @throws NullPointerException if level or supplier is null
 	 */
 	public default void log(Level level, Supplier<String> supplier) {
-		level = Objects.requireNonNull(level);
-		supplier = Objects.requireNonNull(supplier);
+		Objects.requireNonNull(level);
+		Objects.requireNonNull(supplier);
 		if (isLoggable(level)) {
 			log(level, (ResourceBundle)null, supplier.get(), (Object[])null);
 		}
@@ -1727,8 +1723,8 @@ public interface Logger {
 	 * @throws NullPointerException if level or value is null
 	 */
 	public default void log(Level level, Object value) {
-		level = Objects.requireNonNull(level);
-		value = Objects.requireNonNull(value);
+		Objects.requireNonNull(level);
+		Objects.requireNonNull(value);
 		if (isLoggable(level)) {
 			log(level, (ResourceBundle)null, value.toString(), (Object[])null);
 		}
@@ -1743,7 +1739,7 @@ public interface Logger {
 	 * @throws NullPointerException if level is null
 	 */
 	public default void log(Level level, String msg, Throwable throwable) {
-		level = Objects.requireNonNull(level);
+		Objects.requireNonNull(level);
 		log(level, (ResourceBundle)null, msg, throwable);
 	}
 
@@ -1756,8 +1752,8 @@ public interface Logger {
 	 * @throws NullPointerException if level or supplier is null
 	 */
 	public default void log(Level level, Supplier<String> supplier, Throwable throwable) {
-		level = Objects.requireNonNull(level);
-		supplier = Objects.requireNonNull(supplier);
+		Objects.requireNonNull(level);
+		Objects.requireNonNull(supplier);
 		if (isLoggable(level)) {
 			log(level, (ResourceBundle)null, supplier.get(), throwable);
 		}
@@ -1772,7 +1768,7 @@ public interface Logger {
 	 * @throws NullPointerException if level is null
 	 */
 	public default void log(Level level, String msg, Object... values) {
-		level = Objects.requireNonNull(level);
+		Objects.requireNonNull(level);
 		log(level, (ResourceBundle)null, msg, values);
 	}
 
