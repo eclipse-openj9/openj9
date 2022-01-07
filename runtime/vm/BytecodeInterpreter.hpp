@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -3981,24 +3981,79 @@ done:
 	}
 
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-	/* ToDo: unimplemented - https://github.com/eclipse-openj9/openj9/issues/13614 */
 	/* jdk.internal.misc.Unsafe: public native <V> V getValue(Object obj, long offset, Class<?> clz); */
 	VMINLINE VM_BytecodeAction
 	inlUnsafeGetValue(REGISTER_ARGS_LIST)
 	{
-		updateVMStruct(REGISTER_ARGS);
-		Assert_VM_unreachable();
-		return EXECUTE_BYTECODE;
+		j9object_t clz = *(j9object_t*)_sp;
+		I_64 offset = *(I_64*)(_sp + 1);
+		j9object_t obj = *(j9object_t*)(_sp + 3);
+
+		j9object_t result = NULL;
+		VM_BytecodeAction rc = EXECUTE_BYTECODE;
+
+		/* TODO (#14073): update this function to have the same behavior as OpenJDK when obj is null, clz is null, or when clz is not a VT class (currently OpenJDK segfaults in all of these scenarios) */
+		if (NULL != obj && NULL != clz) {
+			J9Class *clzJ9Class = J9VM_J9CLASS_FROM_HEAPCLASS(_currentThread, clz);
+
+			if (J9_IS_J9CLASS_VALUETYPE(clzJ9Class)) {
+				result = VM_ValueTypeHelpers::getFlattenableFieldAtOffset(
+					_currentThread,
+					_objectAccessBarrier,
+					_objectAllocate,
+					clzJ9Class,
+					obj,
+					offset,
+					true);
+
+				if (NULL == result) {
+					result = VM_ValueTypeHelpers::getFlattenableFieldAtOffset(
+						_currentThread,
+						_objectAccessBarrier,
+						_objectAllocate,
+						clzJ9Class,
+						obj,
+						offset,
+						false);
+				}
+			}
+		} else {
+			rc = THROW_NPE;
+		}
+
+		returnObjectFromINL(REGISTER_ARGS, result, 5);
+		return rc;
 	}
 
-	/* ToDo: unimplemented - https://github.com/eclipse-openj9/openj9/issues/13614 */
 	/* jdk.internal.misc.Unsafe: public native <V> void putValue(Object obj, long offset, Class<?> clz, V value); */
 	VMINLINE VM_BytecodeAction
 	inlUnsafePutValue(REGISTER_ARGS_LIST)
 	{
-		updateVMStruct(REGISTER_ARGS);
-		Assert_VM_unreachable();
-		return EXECUTE_BYTECODE;
+		j9object_t value = *(j9object_t*)_sp;
+		j9object_t clz = *(j9object_t*)(_sp + 1);
+		I_64 offset = *(I_64*)(_sp + 2);
+		j9object_t obj = *(j9object_t*)(_sp + 4);
+
+		VM_BytecodeAction rc = EXECUTE_BYTECODE;
+
+		/* TODO (#14073): update this function to have the same behavior as OpenJDK when obj is null, clz is null, or when clz is not a VT class (currently OpenJDK segfaults in all of these scenarios) */
+		if ((NULL != obj) && (NULL != clz) && (NULL != value)) {
+			J9Class *clzJ9Class = J9VM_J9CLASS_FROM_HEAPCLASS(_currentThread, clz);
+
+			if (J9_IS_J9CLASS_VALUETYPE(clzJ9Class)) {
+				VM_ValueTypeHelpers::putFlattenableFieldAtOffset(_currentThread,
+					_objectAccessBarrier,
+					clzJ9Class,
+					value,
+					obj,
+					offset);
+			}
+		} else {
+			rc = THROW_NPE;
+		}
+
+		returnVoidFromINL(REGISTER_ARGS, 6);
+		return rc;
 	}
 
 	/* jdk.internal.misc.Unsafe: public native <V> V uninitializedDefaultValue(Class<?> clz); */
