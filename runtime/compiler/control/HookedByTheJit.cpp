@@ -4405,6 +4405,8 @@ static void samplingObservationsLogic(J9JITConfig * jitConfig, TR::CompilationIn
    compInfo->_stats._methodsSampleWindowReset = 0;
    }
 
+#define GCR_HYSTERESIS 100
+
 char* jitStateNames[]=
    {
    "UNDEFINED",
@@ -4416,47 +4418,42 @@ char* jitStateNames[]=
    };
 
 static int32_t startupPhaseId = 0;
+static int32_t rampupPhaseID = 0;
 static bool firstIdleStateAfterStartup = false;
 static uint64_t timeToAllocateTrackingHT = 0xffffffffffffffff; // never
 
-
-static void jitStateLogic(J9JITConfig * jitConfig, TR::CompilationInfo * compInfo, uint32_t diffTime)
+/**
+ * @brief Contains the logic that determines what state the JIT should
+ *        transition to, if at all.
+ *
+ * @param[in]  compInfo The TR::CompilationInfo object
+ * @param[in]  persistentInfo The TR::PersistentInfo Object
+ * @param[in]  oldState The old state
+ * @param[out] newState The new state the JIT may transition to
+ * @param[out] lastTimeInJITStartupMode Keeps track of when the JIT transitioned out of startup
+ * @param[in]  avgJvmCpuUtil The average JVM CPU utilization
+ * @param[in]  totalSamples Total samples acquired within the last sampling window
+ * @param[in]  totalSamplesNormalized Total samples normalized
+ * @param[in]  samplesSentNormalized Total samples sent normalized
+ * @param[in]  numClassesLoadedInIntervalNormalized Classes loaded normalized
+ * @param[in]  crtElapsedTime The elapsed time since the JVM start
+ * @param[in]  diffTime The length of the sampled interval
+ */
+static void transitionToNewStateIfNeeded(TR::CompilationInfo * compInfo,
+                                         TR::PersistentInfo *persistentInfo,
+                                         uint8_t oldState,
+                                         uint8_t &newState,
+                                         uint64_t &lastTimeInJITStartupMode,
+                                         int32_t avgJvmCpuUtil,
+                                         uint32_t totalSamples,
+                                         uint32_t totalSamplesNormalized,
+                                         uint32_t samplesSentNormalized,
+                                         uint32_t numClassesLoadedInIntervalNormalized,
+                                         uint64_t crtElapsedTime,
+                                         uint32_t diffTime)
    {
-   // We enter STARTUP too often because IDLE is not operating correctly
-   static uint64_t lastTimeInJITStartupMode = 0;
-   TR::PersistentInfo *persistentInfo = compInfo->getPersistentInfo();
-   uint64_t crtElapsedTime = persistentInfo->getElapsedTime();
-
-   static int32_t rampupPhaseID = 0;
-   static uint32_t oldNumClassesLoaded = 0;
-   J9JavaVM * javaVM = jitConfig->javaVM;
-
-   uint32_t numClassesLoadedInInterval = (uint32_t)persistentInfo->getNumLoadedClasses() - oldNumClassesLoaded;
-   uint32_t numClassesLoadedInIntervalNormalized = numClassesLoadedInInterval*1000/diffTime;
-   oldNumClassesLoaded = (uint32_t)persistentInfo->getNumLoadedClasses(); // remember for next time
-
-   uint8_t oldState = persistentInfo->getJitState();
-   uint8_t newState;
-   uint32_t totalSamples = compInfo->_intervalStats._compiledMethodSamples + compInfo->_intervalStats._interpretedMethodSamples;
-   uint32_t totalSamplesNormalized = totalSamples*1000/diffTime;
-   uint32_t samplesSentNormalized = compInfo->_intervalStats._samplesSentInInterval*1000/diffTime;
    float iSamplesRatio = totalSamples ? compInfo->_intervalStats._interpretedMethodSamples/(float)totalSamples : 0;
    uint32_t totalCompilationsNormalized = (compInfo->_intervalStats._numRecompilationsInInterval + compInfo->_intervalStats._numFirstTimeCompilationsInInterval)*1000/diffTime;
-
-   // Read the CPU utilization as a percentage; -1 if not functional;
-   // Can be greater than 100% if multiple cores
-   static int32_t oldJvmCpuUtil = 10;
-   int32_t avgJvmCpuUtil;
-   if (compInfo->getCpuUtil()->isFunctional())
-      {
-      int32_t jvmCpuUtil = compInfo->getCpuUtil()->getVmCpuUsage();
-      avgJvmCpuUtil = (oldJvmCpuUtil + jvmCpuUtil) >> 1;
-      oldJvmCpuUtil = jvmCpuUtil;
-      }
-   else
-      {
-      avgJvmCpuUtil = -1;
-      }
 
    if (compInfo->getSamplerState() == TR::CompilationInfo::SAMPLER_IDLE || // No need to acquire the monitor to read these
        compInfo->getSamplerState() == TR::CompilationInfo::SAMPLER_DEEPIDLE ||
@@ -4548,423 +4545,27 @@ static void jitStateLogic(J9JITConfig * jitConfig, TR::CompilationInfo * compInf
       }
    // A surge in compilations can make the transition back to STARTUP
    //t= 98186 oldState=3 newState=2 cSamples=125 iSamples= 11 comp=239 recomp=  4, Q_SZ=114
+   }
 
-   static uint64_t lastTimeInStartupMode = 0;
-   #define GCR_HYSTERESIS 100
-
-   // current JPQ implementation does not use this, but it may need to be re-animated shortly so leaving commented out for now
-   /*static char *disableJProfilingRecomp = feGetEnv("TR_DisableJProfilingRecomp");
-   const int32_t intervalBase = 17000;
-   if (disableJProfilingRecomp == NULL
-       && javaVM->phase == J9VM_PHASE_NOT_STARTUP)
-      {
-      if (*(TR_BlockFrequencyInfo::getEnableJProfilingRecompilation()) == 0)
-         {
-         if ((crtElapsedTime - lastTimeInJITStartupMode) > intervalBase)
-            {
-            TR_BlockFrequencyInfo::enableJProfilingRecompilation();
-            if (TR::Options::getCmdLineOptions()->isAnyVerboseOptionSet(TR_VerboseJitState, TR_VerboseCompileEnd, TR_VerbosePerformance))
-               {
-               TR_VerboseLog::writeLineLocked(TR_Vlog_INFO,"Enabling JProfiling recompilation. recompileThrehold = %d loopRecompileThreshold = %d nestedLoopRecompileThreshold = %d", TR_JProfiling::recompileThreshold, TR_JProfiling::loopRecompileThreshold, TR_JProfiling::nestedLoopRecompileThreshold);
-               }
-            }
-         }
-      else if (TR_JProfiling::recompileThreshold > 100)
-         {
-         bool thresholdsLowered = false;
-         if ((crtElapsedTime - lastTimeInJITStartupMode) > intervalBase + 30000)
-            {
-            TR_JProfiling::recompileThreshold = 100;
-            TR_JProfiling::loopRecompileThreshold = 10;
-            TR_JProfiling::nestedLoopRecompileThreshold = 1;
-            thresholdsLowered = true;
-            }
-         else if ((crtElapsedTime - lastTimeInJITStartupMode) > intervalBase + 20000)
-            {
-            TR_JProfiling::recompileThreshold = 10000;
-            TR_JProfiling::loopRecompileThreshold = 1000;
-            TR_JProfiling::nestedLoopRecompileThreshold = 100;
-            thresholdsLowered = true;
-            }
-         else if ((crtElapsedTime - lastTimeInJITStartupMode) > intervalBase + 10000)
-            {
-            TR_JProfiling::recompileThreshold = 100000;
-            TR_JProfiling::loopRecompileThreshold = 10000;
-            TR_JProfiling::nestedLoopRecompileThreshold = 1000;
-            thresholdsLowered = true;
-            }
-          if (thresholdsLowered && TR::Options::getCmdLineOptions()->isAnyVerboseOptionSet(TR_VerboseJitState, TR_VerboseCompileEnd, TR_VerbosePerformance))
-             {
-             TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "Lowering JProfiling recompilation thresholds. recompileThrehold = %d loopRecompileThreshold = %d nestedLoopRecompileThreshold = %d", TR_JProfiling::recompileThreshold, TR_JProfiling::loopRecompileThreshold, TR_JProfiling::nestedLoopRecompileThreshold);
-             }
-         }
-      }*/
-   /*if (disableJProfilingRecomp == NULL
-       && javaVM->phase == J9VM_PHASE_NOT_STARTUP
-       && (crtElapsedTime - lastTimeInJITStartupMode) > 80000 //&& crtElapsedTime > 150000
-       && *(TR_BlockFrequencyInfo::getEnableJProfilingRecompilation()) == 0)
-      {
-      printf("Enabling JProfiling recompilation\n");
-      TR_BlockFrequencyInfo::enableJProfilingRecompilation();
-      }*/
-
-
-   // Enable/disable GCR counting
-   if (!TR::Options::getAOTCmdLineOptions()->getOption(TR_DisableGuardedCountingRecompilations) &&
-       !TR::Options::getJITCmdLineOptions()->getOption(TR_DisableGuardedCountingRecompilations))
-      {
-      if (!persistentInfo->_countForRecompile)// if counting is not yet enabled
-         {
-         bool enable = false;
-         if (TR::Options::getAOTCmdLineOptions()->getOption(TR_EnableMultipleGCRPeriods) ||
-             TR::Options::getJITCmdLineOptions()->getOption(TR_EnableMultipleGCRPeriods))
-            {
-            if (newState != STARTUP_STATE &&  // Do not enable GCR counting during JIT startup
-               javaVM->phase == J9VM_PHASE_NOT_STARTUP && // Do not enable GCR counting during VM startup
-               newState != DEEPSTEADY_STATE && // Do not enable GCR counting during DEEPSTEADY
-               crtElapsedTime - lastTimeInJITStartupMode > TR::Options::_waitTimeToGCR &&
-               // Do not enable GCR counting if we already have a large number of queued GCR requests
-               compInfo->getNumGCRRequestsQueued() <= TR::Options::_GCRQueuedThresholdForCounting-GCR_HYSTERESIS)
-               enable = true;
-            }
-         else // Old scheme
-            {
-            if (crtElapsedTime - lastTimeInJITStartupMode > TR::Options::_waitTimeToGCR)
-               enable = true;
-            }
-         if (enable)
-            {
-            persistentInfo->_countForRecompile = 1; // flip the bit
-            // write a message in the vlog
-            if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJitState, TR_VerbosePerformance))
-               TR_VerboseLog::writeLineLocked(TR_Vlog_INFO,"t=%6u GCR enabled; GCR queued=%d", (uint32_t)crtElapsedTime, compInfo->getNumGCRRequestsQueued());
-            }
-         }
-      else // GCR counting is already enabled; see if we need to disable it
-         {
-         if ((TR::Options::getAOTCmdLineOptions()->getOption(TR_EnableMultipleGCRPeriods) ||
-              TR::Options::getJITCmdLineOptions()->getOption(TR_EnableMultipleGCRPeriods))
-            && // stop counting if STARTUP, DEEPSTEADY or too many queued GCR requests
-             (newState == STARTUP_STATE ||
-              newState == DEEPSTEADY_STATE ||
-              compInfo->getNumGCRRequestsQueued() > TR::Options::_GCRQueuedThresholdForCounting+GCR_HYSTERESIS)
-            )
-            {
-            persistentInfo->_countForRecompile = 0; // disable counting
-            // write a message in the vlog
-            if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJitState, TR_VerbosePerformance))
-               TR_VerboseLog::writeLineLocked(TR_Vlog_INFO,"t=%6u GCR disabled; GCR queued=%d", (uint32_t)crtElapsedTime, compInfo->getNumGCRRequestsQueued());
-            }
-         }
-      }
-
-   // Enable/Disable RI Buffer processing
-   if (persistentInfo->isRuntimeInstrumentationEnabled())
-      {
-      TR_HWProfiler *hwProfiler = compInfo->getHWProfiler();
-
-      if (TR::Options::_hwProfilerExpirationTime != 0 &&
-          crtElapsedTime > TR::Options::_hwProfilerExpirationTime)
-         {
-         if (!hwProfiler->isExpired())
-            {
-            hwProfiler->setExpired();
-            hwProfiler->setProcessBufferState(-1);
-            if (TR::Options::isAnyVerboseOptionSet(TR_VerboseHWProfiler, TR_VerbosePerformance))
-               TR_VerboseLog::writeLineLocked(TR_Vlog_HWPROFILER, "Buffer processing is disabled because expiration time has been reached");
-            }
-         }
-      else if (hwProfiler->getProcessBufferState() >= 0) // Buffer profiling is ON
-         {
-         // Should we turn it off?
-         if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableDynamicRIBufferProcessing))
-            {
-            hwProfiler->checkAndTurnBufferProcessingOff();
-            }
-         else if (TR::Options::getCmdLineOptions()->getOption(TR_InhibitRIBufferProcessingDuringDeepSteady))
-            {
-            if (oldState != newState && newState == DEEPSTEADY_STATE)
-               {
-               hwProfiler->setProcessBufferState(-1);
-               if (TR::Options::isAnyVerboseOptionSet(TR_VerboseHWProfiler, TR_VerbosePerformance))
-                  TR_VerboseLog::writeLineLocked(TR_Vlog_HWPROFILER, "Buffer processing is disabled");
-               }
-            }
-         }
-      else // Should we turn it on?
-         {
-         if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableDynamicRIBufferProcessing))
-            {
-            // Do not turn on during startup
-            if (javaVM->phase == J9VM_PHASE_NOT_STARTUP)
-               hwProfiler->checkAndTurnBufferProcessingOn();
-            }
-         else if (TR::Options::getCmdLineOptions()->getOption(TR_InhibitRIBufferProcessingDuringDeepSteady))
-            {
-            if (oldState != newState && oldState == DEEPSTEADY_STATE)
-               {
-               hwProfiler->setProcessBufferState(TR::Options::_hwProfilerRIBufferProcessingFrequency);
-               if (TR::Options::isAnyVerboseOptionSet(TR_VerboseHWProfiler, TR_VerbosePerformance))
-                  TR_VerboseLog::writeLineLocked(TR_Vlog_HWPROFILER, "Buffer processing is enabled");
-               }
-            }
-         }
-      }
-
-   // Control how much application threads will be sleeping to give
-   // application threads more time on the CPU
-   TR_YesNoMaybe starvation = compInfo->detectCompThreadStarvation();
-   bool newStarvationStatus = (starvation == TR_yes);
-   if (newStarvationStatus != compInfo->getStarvationDetected()) // did the status change?
-      {
-      if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
-         TR_VerboseLog::writeLineLocked(TR_Vlog_INFO,"t=%6u Starvation status changed to %d QWeight=%d CompCPUUtil=%d CompThreadsActive=%d",
-                                          (uint32_t)crtElapsedTime, starvation, compInfo->getOverallQueueWeight(),
-                                          compInfo->getTotalCompThreadCpuUtilWhenStarvationComputed(),
-                                          compInfo->getNumActiveCompThreadsWhenStarvationComputed());
-      compInfo->setStarvationDetected(newStarvationStatus);
-      }
-
-   if (TR::Options::getCmdLineOptions()->getOption(TR_EnableAppThreadYield))
-      {
-      int32_t oldSleepNano = compInfo->getAppSleepNano();
-      int32_t newSleepNano = starvation != TR_yes ? 0 :compInfo->computeAppSleepNano(); // TODO should we look at JIT state as well
-      if (newSleepNano != oldSleepNano)
-         {
-         compInfo->setAppSleepNano(newSleepNano);
-         if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
-            TR_VerboseLog::writeLineLocked(TR_Vlog_INFO,"t=%6u SleepTime changed from %d to %d QWeight=%d", (uint32_t)crtElapsedTime, oldSleepNano, newSleepNano, compInfo->getOverallQueueWeight());
-         }
-      }
-
-
-#if defined(J9VM_INTERP_PROFILING_BYTECODES)
-   // Turn on Iprofiler if we started with it OFF and it has never been activated before
-   //
-   static bool IProfilerOffSinceStartup = true;
-
-   if (IProfilerOffSinceStartup &&
-       !TR::Options::getCmdLineOptions()->getOption(TR_DisableInterpreterProfiling) &&
-       TR::Options::getCmdLineOptions()->getOption(TR_NoIProfilerDuringStartupPhase) &&
-       interpreterProfilingState == IPROFILING_STATE_OFF)
-      {
-       // Should we turn it ON?
-      TR_IProfiler *iProfiler = TR_J9VMBase::get(jitConfig, 0)->getIProfiler();
-      uint32_t failRate = iProfiler->getReadSampleFailureRate();
-      if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseJitState))
-         {
-         TR_VerboseLog::writeLineLocked(TR_Vlog_IPROFILER,"t=%6u IProfiler current fail rate = %u total=%u fail=%u samplesInBuffer=%u",
-            (uint32_t)crtElapsedTime, failRate, iProfiler->getTotalReadSampleRequests(),
-            iProfiler->getFailedReadSampleRequests(), iProfiler->numSamplesInHistoryBuffer());
-         }
-      if (crtElapsedTime - lastTimeInJITStartupMode > TR::Options::_waitTimeToStartIProfiler ||
-         (int32_t)failRate > TR::Options::_iprofilerFailRateThreshold)
-         {
-         interpreterProfilingMonitoringWindow = 0;
-         IProfilerOffSinceStartup = false;
-         turnOnInterpreterProfiling(jitConfig->javaVM, compInfo);
-         if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJitState, TR_VerbosePerformance))
-            {
-            TR_VerboseLog::writeLineLocked(TR_Vlog_IPROFILER,"t=%6u IProfiler enabled", (uint32_t)crtElapsedTime);
-            }
-         }
-      iProfiler->advanceEpochForHistoryBuffer();
-      }
-#endif // defined(J9VM_INTERP_PROFILING_BYTECODES)
-
-   if (TR::Options::getCmdLineOptions()->getOption(TR_UseIdleTime) &&
-       TR::Options::getCmdLineOptions()->getOption(TR_EarlyLPQ))
-      {
-      if (!compInfo->getLowPriorityCompQueue().isTrackingEnabled() && timeToAllocateTrackingHT == 0xffffffffffffffff)
-         {
-         uint64_t t = crtElapsedTime + TR::Options::_delayToEnableIdleCpuExploitation;
-         if (TR::Options::_compilationDelayTime > 0 && (uint64_t)TR::Options::_compilationDelayTime > t)
-            t = TR::Options::_compilationDelayTime;
-         timeToAllocateTrackingHT = t;
-         }
-      }
-
-   // We should accelerate compilations of methods that get samples during rampup or steady state
-   // The invocation count is decremented too slow
-   // Set the state in the VM
-   if (javaVM->phase != J9VM_PHASE_NOT_STARTUP) // once in NOT_STARTUP we cannot perform any changes
-      {
-      if (javaVM->phase == J9VM_PHASE_STARTUP)
-         {
-         // Analyze if we exited the STARTUP stage
-         // Tolerate situations when we temporarily go out from STARTUP
-         // Use JIT heuristics if (1) 'beginningOfStartup' hint didn't arrive yet  OR
-         // (2) Both 'beginningOfStartup' and 'endOfStartup' hints arrived,
-         // but we don't follow hints strictly outside startup
-         if (!TR::Options::getCmdLineOptions()->getOption(TR_AssumeStartupPhaseUntilToldNotTo) ||
-            (persistentInfo->getExternalStartupEndedSignal() && !TR::Options::getCmdLineOptions()->getOption(TR_UseStrictStartupHints)))
-            {
-            //if (newState != STARTUP_STATE && oldState != STARTUP_STATE)
-            //   javaVM->internalVMFunctions->jvmPhaseChange(javaVM, J9VM_PHASE_NOT_STARTUP);
-            if (newState != STARTUP_STATE)
-               {
-               int32_t waitTime = TR::Options::_waitTimeToExitStartupMode;
-               // Double this value for zOS control region
-#if defined(J9ZOS390)
-               if (compInfo->isInZOSSupervisorState())
-                  waitTime = waitTime * 2;
-#endif
-               if (crtElapsedTime - lastTimeInStartupMode > waitTime)
-                  {
-                  javaVM->internalVMFunctions->jvmPhaseChange(javaVM, J9VM_PHASE_NOT_STARTUP);
-                  }
-               }
-            else
-               {
-               lastTimeInStartupMode = crtElapsedTime;
-               }
-            }
-         else // The application will provide hints about startup ending
-            {
-            // Exit startup when the 'endOfStartup' arrives
-            // The case where the 'endOfStartup' hint arrived, but don't want to follow strictly
-            // is implemented above in the IF block
-            if (persistentInfo->getExternalStartupEndedSignal())
-               javaVM->internalVMFunctions->jvmPhaseChange(javaVM, J9VM_PHASE_NOT_STARTUP);
-            }
-         }
-      else // javaVM->phase == J9VM_PHASE_EARLY_STARTUP
-         {
-         //TR_ASSERT(!TR::Options::getCmdLineOptions()->getOption(TR_AssumeStartupPhaseUntilToldNotTo), "assertion failure"); // we should be in STARTUP
-         // Use JIT heuristics if (1) 'beginningOfStartup' hint didn't arrive yet  OR
-         // (2) Both 'beginningOfStartup' and 'endOfStartup' hints arrived,
-         // but we don't follow hints strictly outside startup
-         if (!TR::Options::getCmdLineOptions()->getOption(TR_AssumeStartupPhaseUntilToldNotTo) ||
-            (persistentInfo->getExternalStartupEndedSignal() && !TR::Options::getCmdLineOptions()->getOption(TR_UseStrictStartupHints)))
-            {
-            // Normal gracePeriod rules apply
-            if (crtElapsedTime >= (uint64_t)persistentInfo->getClassLoadingPhaseGracePeriod()) // grace period has ended
-               javaVM->internalVMFunctions->jvmPhaseChange(javaVM, (newState == STARTUP_STATE) ? J9VM_PHASE_STARTUP : J9VM_PHASE_NOT_STARTUP);
-            }
-         else
-            {
-            // 'beginningOfStartup' hint was seen
-            // If 'endOfStartup' was not seen, move to STARTUP, otherwise, following hints strictly,
-            // we have to exit STARTUP
-            javaVM->internalVMFunctions->jvmPhaseChange(javaVM, !persistentInfo->getExternalStartupEndedSignal() ? J9VM_PHASE_STARTUP : J9VM_PHASE_NOT_STARTUP);
-            }
-         }
-      if (javaVM->phase == J9VM_PHASE_NOT_STARTUP)
-         {
-         // We just exited the STARTUP phase
-         // Print a message in the vlog
-         if (TR::Options::getCmdLineOptions()->isAnyVerboseOptionSet(TR_VerboseJitState, TR_VerboseCompileEnd, TR_VerbosePerformance))
-            {
-            TR_VerboseLog::writeLineLocked(TR_Vlog_JITSTATE,"t=%6u VM changed state to NOT_STARTUP", (uint32_t)crtElapsedTime);
-            }
-         // Release AOT data caches to normal compilations
-         TR_DataCacheManager::getManager()->startupOver();
-
-         // Logic related to IdleCPU exploitation
-         // If we are in idle mode immediately after JVM exited startup mode, set specific flag
-         if (newState == IDLE_STATE)
-            {
-            firstIdleStateAfterStartup = true;
-            }
-         // If we don't hit idle state when we exit JVM startup, set the desired timestamp to allocate the tracking hashtable
-         else if (TR::Options::getCmdLineOptions()->getOption(TR_UseIdleTime) &&
-                  !compInfo->getLowPriorityCompQueue().isTrackingEnabled())
-            {
-            uint64_t t = crtElapsedTime + TR::Options::_delayToEnableIdleCpuExploitation;
-            if (TR::Options::_compilationDelayTime > 0 && (uint64_t)TR::Options::_compilationDelayTime > t)
-               t = TR::Options::_compilationDelayTime;
-            timeToAllocateTrackingHT = t;
-            }
-
-         // If we wanted to restrict inliner during startup, now it's the time to let the inliner go
-         // Note: if we want to extend the heuristic of when Inliner should be restricted
-         // we have to change the condition below
-         if ((TR::Options::getCmdLineOptions()->getOption(TR_RestrictInlinerDuringStartup) ||
-              TR::Options::getAOTCmdLineOptions()->getOption(TR_RestrictInlinerDuringStartup)) &&
-             persistentInfo->getInlinerTemporarilyRestricted())
-            {
-            persistentInfo->setInlinerTemporarilyRestricted(false);
-            if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
-               {
-               TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "t=%6u Stopped restricting the inliner", (uint32_t)crtElapsedTime);
-               }
-            }
-
-
-         // If using lower counts, start using higher counts
-         if (TR::Options::getCmdLineOptions()->getOption(TR_UseHigherMethodCountsAfterStartup) &&
-             TR::Options::sharedClassCache())
-            {
-            if (TR::Options::getCmdLineOptions()->isAnyVerboseOptionSet(TR_VerboseJitState, TR_VerbosePerformance))
-               {
-               TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "t=%6u JIT counts: %d %d %d  AOT counts: %d %d %d",
-                  (uint32_t)crtElapsedTime,
-                  TR::Options::getCmdLineOptions()->getInitialCount(),
-                  TR::Options::getCmdLineOptions()->getInitialBCount(),
-                  TR::Options::getCmdLineOptions()->getInitialMILCount(),
-                  TR::Options::getAOTCmdLineOptions()->getInitialCount(),
-                  TR::Options::getAOTCmdLineOptions()->getInitialBCount(),
-                  TR::Options::getAOTCmdLineOptions()->getInitialMILCount());
-               }
-            TR::Options::getCmdLineOptions()->setInitialCount(TR_DEFAULT_INITIAL_COUNT);
-            TR::Options::getCmdLineOptions()->setInitialBCount(TR_DEFAULT_INITIAL_BCOUNT);
-            TR::Options::getCmdLineOptions()->setInitialMILCount(TR_DEFAULT_INITIAL_MILCOUNT);
-            TR::Options::getAOTCmdLineOptions()->setInitialCount(TR_DEFAULT_INITIAL_COUNT);
-            TR::Options::getAOTCmdLineOptions()->setInitialBCount(TR_DEFAULT_INITIAL_BCOUNT);
-            TR::Options::getAOTCmdLineOptions()->setInitialMILCount(TR_DEFAULT_INITIAL_MILCOUNT);
-
-            if (TR::Options::getCmdLineOptions()->isAnyVerboseOptionSet(TR_VerboseJitState, TR_VerbosePerformance))
-               {
-               TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "t=%6u JIT changed invocation counts to: JIT: %d %d %d  AOT: %d %d %d",
-                  (uint32_t)crtElapsedTime,
-                  TR::Options::getCmdLineOptions()->getInitialCount(),
-                  TR::Options::getCmdLineOptions()->getInitialBCount(),
-                  TR::Options::getCmdLineOptions()->getInitialMILCount(),
-                  TR::Options::getAOTCmdLineOptions()->getInitialCount(),
-                  TR::Options::getAOTCmdLineOptions()->getInitialBCount(),
-                  TR::Options::getAOTCmdLineOptions()->getInitialMILCount());
-               }
-            }
-         } // if (javaVM->phase == J9VM_PHASE_NOT_STARTUP)
-
-      // May need to update the iprofilerMaxCount; this has a higher value in startup
-      // mode to minimize overhead, but a higher value in throughput mode.
-      // The startup mode for this variable is defined as classLoadPhase AND
-      // VM->phase != NOT_STARTUP
-      if (interpreterProfilingWasOnAtStartup) // if we used -Xjit:disableInterpreterProfiling don't bother
-         {
-         int32_t newIprofilerMaxCount = -1;
-         //if (persistentInfo->isClassLoadingPhase() && javaVM->phase != J9VM_PHASE_NOT_STARTUP)
-         if (javaVM->phase == J9VM_PHASE_EARLY_STARTUP || (persistentInfo->isClassLoadingPhase() && javaVM->phase == J9VM_PHASE_STARTUP))
-            {
-            if (compInfo->getIprofilerMaxCount() != TR::Options::_maxIprofilingCountInStartupMode)
-               newIprofilerMaxCount = TR::Options::_maxIprofilingCountInStartupMode;
-            }
-         else
-            {
-            if (compInfo->getIprofilerMaxCount() != TR::Options::_maxIprofilingCount)
-               newIprofilerMaxCount = TR::Options::_maxIprofilingCount;
-            }
-         if (newIprofilerMaxCount != -1) // needs to be updated
-            {
-            compInfo->setIprofilerMaxCount(newIprofilerMaxCount);
-
-            j9thread_monitor_enter(javaVM->vmThreadListMutex);
-            J9VMThread * currentThread = javaVM->mainThread;
-            do {
-               currentThread->maxProfilingCount = (UDATA)encodeCount(newIprofilerMaxCount);
-               } while ((currentThread = currentThread->linkNext) != javaVM->mainThread);
-            j9thread_monitor_exit(javaVM->vmThreadListMutex);
-
-            if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJitState, TR_VerbosePerformance))
-               {
-               TR_VerboseLog::writeLineLocked(TR_Vlog_JITSTATE,"t=%6u Changing maxIProfilingCount to %d", (uint32_t)crtElapsedTime, newIprofilerMaxCount);
-               }
-            }
-         } // if (interpreterProfilingWasOnAtStartup)
-      } // if (javaVM->phase != J9VM_PHASE_NOT_STARTUP)
-
-
+/**
+ * @brief Tasks to perform if the JIT changed states
+ *
+ * @param[in] javaVM The J9JavaVM
+ * @param[in] compInfo The TR::CompilationInfo object
+ * @param[in] persistentInfo The TR::PersistentInfo object
+ * @param[in] oldState The old state the JIT was in
+ * @param[in] newState The new state the JIT may have transitioned to
+ * @param[in] avgJvmCpuUtil The Average JVM CPU Utilization
+ * @param[in] crtElapsedTime The elapsed time since JVM start
+ */
+static void onStateChange(J9JavaVM * javaVM,
+                          TR::CompilationInfo * compInfo,
+                          TR::PersistentInfo *persistentInfo,
+                          uint8_t oldState,
+                          uint8_t newState,
+                          int32_t avgJvmCpuUtil,
+                          uint64_t crtElapsedTime)
+   {
    if (newState != oldState) // state changed
       {
       persistentInfo->setJitState(newState);
@@ -5048,6 +4649,630 @@ static void jitStateLogic(J9JITConfig * jitConfig, TR::CompilationInfo * compInf
             }
          }
       }
+   }
+
+/**
+ * @brief JProfiling Heuristics surrounding recompilation
+ *
+ * @param[in] javaVM The J9JavaVM
+ * @param[in] lastTimeInJITStartupMode The last time the JIT was in startup
+ * @param[in] crtElapsedTime The elapsed time since JVM start
+ */
+static void adjustJProfilingRecompConfig(J9JavaVM * javaVM,
+                                         uint64_t lastTimeInJITStartupMode,
+                                         uint64_t crtElapsedTime)
+   {
+   // current JPQ implementation does not use this, but it may need to be re-animated shortly so leaving commented out for now
+   /*
+   static char *disableJProfilingRecomp = feGetEnv("TR_DisableJProfilingRecomp");
+   const int32_t intervalBase = 17000;
+   if (disableJProfilingRecomp == NULL
+       && javaVM->phase == J9VM_PHASE_NOT_STARTUP)
+      {
+      if (*(TR_BlockFrequencyInfo::getEnableJProfilingRecompilation()) == 0)
+         {
+         if ((crtElapsedTime - lastTimeInJITStartupMode) > intervalBase)
+            {
+            TR_BlockFrequencyInfo::enableJProfilingRecompilation();
+            if (TR::Options::getCmdLineOptions()->isAnyVerboseOptionSet(TR_VerboseJitState, TR_VerboseCompileEnd, TR_VerbosePerformance))
+               {
+               TR_VerboseLog::writeLineLocked(TR_Vlog_INFO,"Enabling JProfiling recompilation. recompileThrehold = %d loopRecompileThreshold = %d nestedLoopRecompileThreshold = %d", TR_JProfiling::recompileThreshold, TR_JProfiling::loopRecompileThreshold, TR_JProfiling::nestedLoopRecompileThreshold);
+               }
+            }
+         }
+      else if (TR_JProfiling::recompileThreshold > 100)
+         {
+         bool thresholdsLowered = false;
+         if ((crtElapsedTime - lastTimeInJITStartupMode) > intervalBase + 30000)
+            {
+            TR_JProfiling::recompileThreshold = 100;
+            TR_JProfiling::loopRecompileThreshold = 10;
+            TR_JProfiling::nestedLoopRecompileThreshold = 1;
+            thresholdsLowered = true;
+            }
+         else if ((crtElapsedTime - lastTimeInJITStartupMode) > intervalBase + 20000)
+            {
+            TR_JProfiling::recompileThreshold = 10000;
+            TR_JProfiling::loopRecompileThreshold = 1000;
+            TR_JProfiling::nestedLoopRecompileThreshold = 100;
+            thresholdsLowered = true;
+            }
+         else if ((crtElapsedTime - lastTimeInJITStartupMode) > intervalBase + 10000)
+            {
+            TR_JProfiling::recompileThreshold = 100000;
+            TR_JProfiling::loopRecompileThreshold = 10000;
+            TR_JProfiling::nestedLoopRecompileThreshold = 1000;
+            thresholdsLowered = true;
+            }
+          if (thresholdsLowered && TR::Options::getCmdLineOptions()->isAnyVerboseOptionSet(TR_VerboseJitState, TR_VerboseCompileEnd, TR_VerbosePerformance))
+             {
+             TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "Lowering JProfiling recompilation thresholds. recompileThrehold = %d loopRecompileThreshold = %d nestedLoopRecompileThreshold = %d", TR_JProfiling::recompileThreshold, TR_JProfiling::loopRecompileThreshold, TR_JProfiling::nestedLoopRecompileThreshold);
+             }
+         }
+      }
+   if (disableJProfilingRecomp == NULL
+       && javaVM->phase == J9VM_PHASE_NOT_STARTUP
+       && (crtElapsedTime - lastTimeInJITStartupMode) > 80000 //&& crtElapsedTime > 150000
+       && *(TR_BlockFrequencyInfo::getEnableJProfilingRecompilation()) == 0)
+      {
+      printf("Enabling JProfiling recompilation\n");
+      TR_BlockFrequencyInfo::enableJProfilingRecompilation();
+      }
+   */
+   }
+
+/**
+ * @brief Logic to control enabling/disabling GCR
+ *
+ * @param[in] javaVM The J9JavaVM
+ * @param[in] compInfo The TR::CompilationInfo object
+ * @param[in] persistentInfo The TR::PersistentInfo object
+ * @param[in] newState The new state the JIT may have transitioned to
+ * @param[in] lastTimeInJITStartupMode The last time the JIT was in startup
+ * @param[in] crtElapsedTime The elapsed time since JVM start
+ */
+static void gcrLogic(J9JavaVM * javaVM,
+                     TR::CompilationInfo * compInfo,
+                     TR::PersistentInfo *persistentInfo,
+                     uint8_t newState,
+                     uint64_t lastTimeInJITStartupMode,
+                     uint64_t crtElapsedTime)
+   {
+   if (!TR::Options::getAOTCmdLineOptions()->getOption(TR_DisableGuardedCountingRecompilations) &&
+       !TR::Options::getJITCmdLineOptions()->getOption(TR_DisableGuardedCountingRecompilations))
+      {
+      if (!persistentInfo->_countForRecompile)// if counting is not yet enabled
+         {
+         bool enable = false;
+         if (TR::Options::getAOTCmdLineOptions()->getOption(TR_EnableMultipleGCRPeriods) ||
+             TR::Options::getJITCmdLineOptions()->getOption(TR_EnableMultipleGCRPeriods))
+            {
+            if (newState != STARTUP_STATE &&  // Do not enable GCR counting during JIT startup
+               javaVM->phase == J9VM_PHASE_NOT_STARTUP && // Do not enable GCR counting during VM startup
+               newState != DEEPSTEADY_STATE && // Do not enable GCR counting during DEEPSTEADY
+               crtElapsedTime - lastTimeInJITStartupMode > TR::Options::_waitTimeToGCR &&
+               // Do not enable GCR counting if we already have a large number of queued GCR requests
+               compInfo->getNumGCRRequestsQueued() <= TR::Options::_GCRQueuedThresholdForCounting-GCR_HYSTERESIS)
+               enable = true;
+            }
+         else // Old scheme
+            {
+            if (crtElapsedTime - lastTimeInJITStartupMode > TR::Options::_waitTimeToGCR)
+               enable = true;
+            }
+         if (enable)
+            {
+            persistentInfo->_countForRecompile = 1; // flip the bit
+            // write a message in the vlog
+            if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJitState, TR_VerbosePerformance))
+               TR_VerboseLog::writeLineLocked(TR_Vlog_INFO,"t=%6u GCR enabled; GCR queued=%d", (uint32_t)crtElapsedTime, compInfo->getNumGCRRequestsQueued());
+            }
+         }
+      else // GCR counting is already enabled; see if we need to disable it
+         {
+         if ((TR::Options::getAOTCmdLineOptions()->getOption(TR_EnableMultipleGCRPeriods) ||
+              TR::Options::getJITCmdLineOptions()->getOption(TR_EnableMultipleGCRPeriods))
+            && // stop counting if STARTUP, DEEPSTEADY or too many queued GCR requests
+             (newState == STARTUP_STATE ||
+              newState == DEEPSTEADY_STATE ||
+              compInfo->getNumGCRRequestsQueued() > TR::Options::_GCRQueuedThresholdForCounting+GCR_HYSTERESIS)
+            )
+            {
+            persistentInfo->_countForRecompile = 0; // disable counting
+            // write a message in the vlog
+            if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJitState, TR_VerbosePerformance))
+               TR_VerboseLog::writeLineLocked(TR_Vlog_INFO,"t=%6u GCR disabled; GCR queued=%d", (uint32_t)crtElapsedTime, compInfo->getNumGCRRequestsQueued());
+            }
+         }
+      }
+   }
+
+/**
+ * @brief Logic to control when to process HW Profiling Buffers
+ *
+ * @param[in] javaVM The J9JavaVM
+ * @param[in] compInfo The TR::CompilationInfo object
+ * @param[in] persistentInfo The TR::PersistentInfo object
+ * @param[in] oldState The old state the JIT was in
+ * @param[in] newState The new state the JIT may have transitioned to
+ * @param[in] crtElapsedTime The elapsed time since JVM start
+ */
+static void riBufferProcessingLogic(J9JavaVM * javaVM,
+                                    TR::CompilationInfo * compInfo,
+                                    TR::PersistentInfo *persistentInfo,
+                                    uint8_t oldState,
+                                    uint8_t newState,
+                                    uint64_t crtElapsedTime)
+   {
+   if (persistentInfo->isRuntimeInstrumentationEnabled())
+      {
+      TR_HWProfiler *hwProfiler = compInfo->getHWProfiler();
+
+      if (TR::Options::_hwProfilerExpirationTime != 0 &&
+          crtElapsedTime > TR::Options::_hwProfilerExpirationTime)
+         {
+         if (!hwProfiler->isExpired())
+            {
+            hwProfiler->setExpired();
+            hwProfiler->setProcessBufferState(-1);
+            if (TR::Options::isAnyVerboseOptionSet(TR_VerboseHWProfiler, TR_VerbosePerformance))
+               TR_VerboseLog::writeLineLocked(TR_Vlog_HWPROFILER, "Buffer processing is disabled because expiration time has been reached");
+            }
+         }
+      else if (hwProfiler->getProcessBufferState() >= 0) // Buffer profiling is ON
+         {
+         // Should we turn it off?
+         if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableDynamicRIBufferProcessing))
+            {
+            hwProfiler->checkAndTurnBufferProcessingOff();
+            }
+         else if (TR::Options::getCmdLineOptions()->getOption(TR_InhibitRIBufferProcessingDuringDeepSteady))
+            {
+            if (oldState != newState && newState == DEEPSTEADY_STATE)
+               {
+               hwProfiler->setProcessBufferState(-1);
+               if (TR::Options::isAnyVerboseOptionSet(TR_VerboseHWProfiler, TR_VerbosePerformance))
+                  TR_VerboseLog::writeLineLocked(TR_Vlog_HWPROFILER, "Buffer processing is disabled");
+               }
+            }
+         }
+      else // Should we turn it on?
+         {
+         if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableDynamicRIBufferProcessing))
+            {
+            // Do not turn on during startup
+            if (javaVM->phase == J9VM_PHASE_NOT_STARTUP)
+               hwProfiler->checkAndTurnBufferProcessingOn();
+            }
+         else if (TR::Options::getCmdLineOptions()->getOption(TR_InhibitRIBufferProcessingDuringDeepSteady))
+            {
+            if (oldState != newState && oldState == DEEPSTEADY_STATE)
+               {
+               hwProfiler->setProcessBufferState(TR::Options::_hwProfilerRIBufferProcessingFrequency);
+               if (TR::Options::isAnyVerboseOptionSet(TR_VerboseHWProfiler, TR_VerbosePerformance))
+                  TR_VerboseLog::writeLineLocked(TR_Vlog_HWPROFILER, "Buffer processing is enabled");
+               }
+            }
+         }
+      }
+   }
+
+/**
+ * @brief Ensure application threads have sufficient CPU resources. As the application threads are
+ *        what do the actual work in a java application, this ensures that the compilation threads
+ *        don't take too much CPU resources away from them.
+ *
+ * @param[in] compInfo The TR::CompilationInfo object
+ * @param[in] crtElapsedTime The elapsed time since JVM start
+ */
+static void ensureAppThreadsHaveSufficientCPU(TR::CompilationInfo * compInfo, uint64_t crtElapsedTime)
+   {
+   TR_YesNoMaybe starvation = compInfo->detectCompThreadStarvation();
+   bool newStarvationStatus = (starvation == TR_yes);
+   if (newStarvationStatus != compInfo->getStarvationDetected()) // did the status change?
+      {
+      if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_INFO,"t=%6u Starvation status changed to %d QWeight=%d CompCPUUtil=%d CompThreadsActive=%d",
+                                          (uint32_t)crtElapsedTime, starvation, compInfo->getOverallQueueWeight(),
+                                          compInfo->getTotalCompThreadCpuUtilWhenStarvationComputed(),
+                                          compInfo->getNumActiveCompThreadsWhenStarvationComputed());
+      compInfo->setStarvationDetected(newStarvationStatus);
+      }
+
+   if (TR::Options::getCmdLineOptions()->getOption(TR_EnableAppThreadYield))
+      {
+      int32_t oldSleepNano = compInfo->getAppSleepNano();
+      int32_t newSleepNano = starvation != TR_yes ? 0 :compInfo->computeAppSleepNano(); // TODO should we look at JIT state as well
+      if (newSleepNano != oldSleepNano)
+         {
+         compInfo->setAppSleepNano(newSleepNano);
+         if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_INFO,"t=%6u SleepTime changed from %d to %d QWeight=%d", (uint32_t)crtElapsedTime, oldSleepNano, newSleepNano, compInfo->getOverallQueueWeight());
+         }
+      }
+   }
+
+/**
+ * @brief Logic to control when to process the IProfiler Buffers
+ *
+ * @param[in] javaVM The J9JavaVM
+ * @param[in] jitConfig The J9JITConfig
+ * @param[in] compInfo The TR::CompilationInfo object
+ * @param[in] lastTimeInJITStartupMode The last time the JIT was in startup
+ * @param[in] crtElapsedTime The elapsed time since JVM start
+ */
+static void iprofilerLogic(J9JavaVM * javaVM,
+                           J9JITConfig * jitConfig,
+                           TR::CompilationInfo * compInfo,
+                           uint64_t lastTimeInJITStartupMode,
+                           uint64_t crtElapsedTime)
+   {
+#if defined(J9VM_INTERP_PROFILING_BYTECODES)
+   // Turn on Iprofiler if we started with it OFF and it has never been activated before
+   //
+   static bool IProfilerOffSinceStartup = true;
+
+   if (IProfilerOffSinceStartup &&
+       !TR::Options::getCmdLineOptions()->getOption(TR_DisableInterpreterProfiling) &&
+       TR::Options::getCmdLineOptions()->getOption(TR_NoIProfilerDuringStartupPhase) &&
+       interpreterProfilingState == IPROFILING_STATE_OFF)
+      {
+       // Should we turn it ON?
+      TR_IProfiler *iProfiler = TR_J9VMBase::get(jitConfig, 0)->getIProfiler();
+      uint32_t failRate = iProfiler->getReadSampleFailureRate();
+      if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseJitState))
+         {
+         TR_VerboseLog::writeLineLocked(TR_Vlog_IPROFILER,"t=%6u IProfiler current fail rate = %u total=%u fail=%u samplesInBuffer=%u",
+            (uint32_t)crtElapsedTime, failRate, iProfiler->getTotalReadSampleRequests(),
+            iProfiler->getFailedReadSampleRequests(), iProfiler->numSamplesInHistoryBuffer());
+         }
+      if (crtElapsedTime - lastTimeInJITStartupMode > TR::Options::_waitTimeToStartIProfiler ||
+         (int32_t)failRate > TR::Options::_iprofilerFailRateThreshold)
+         {
+         interpreterProfilingMonitoringWindow = 0;
+         IProfilerOffSinceStartup = false;
+         turnOnInterpreterProfiling(javaVM, compInfo);
+         if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJitState, TR_VerbosePerformance))
+            {
+            TR_VerboseLog::writeLineLocked(TR_Vlog_IPROFILER,"t=%6u IProfiler enabled", (uint32_t)crtElapsedTime);
+            }
+         }
+      iProfiler->advanceEpochForHistoryBuffer();
+      }
+#endif // defined(J9VM_INTERP_PROFILING_BYTECODES)
+   }
+
+/**
+ * @brief Heuristics for when the JVM is in the startup phase
+ *
+ * @param[in] javaVM The J9JavaVM
+ * @param[in] compInfo The TR::CompilationInfo object
+ * @param[in] persistentInfo The TR::PersistenInfo object
+ * @param[in] newState The new state the JIT may have transitioned to
+ * @param[inout] lastTimeInStartupMode THe last time the JVM was in startup
+ * @param[in] crtElapsedTime The elapsed time since JVM start
+ */
+static void startupPhaseHeuristics(J9JavaVM * javaVM,
+                                   TR::CompilationInfo * compInfo,
+                                   TR::PersistentInfo *persistentInfo,
+                                   uint8_t newState,
+                                   uint64_t &lastTimeInStartupMode,
+                                   uint64_t crtElapsedTime)
+   {
+   // Analyze if we exited the STARTUP stage
+   // Tolerate situations when we temporarily go out from STARTUP
+   // Use JIT heuristics if (1) 'beginningOfStartup' hint didn't arrive yet  OR
+   // (2) Both 'beginningOfStartup' and 'endOfStartup' hints arrived,
+   // but we don't follow hints strictly outside startup
+   if (!TR::Options::getCmdLineOptions()->getOption(TR_AssumeStartupPhaseUntilToldNotTo) ||
+      (persistentInfo->getExternalStartupEndedSignal() && !TR::Options::getCmdLineOptions()->getOption(TR_UseStrictStartupHints)))
+      {
+      //if (newState != STARTUP_STATE && oldState != STARTUP_STATE)
+      //   javaVM->internalVMFunctions->jvmPhaseChange(javaVM, J9VM_PHASE_NOT_STARTUP);
+      if (newState != STARTUP_STATE)
+         {
+         int32_t waitTime = TR::Options::_waitTimeToExitStartupMode;
+         // Double this value for zOS control region
+#if defined(J9ZOS390)
+         if (compInfo->isInZOSSupervisorState())
+            waitTime = waitTime * 2;
+#endif
+         if (crtElapsedTime - lastTimeInStartupMode > waitTime)
+            {
+            javaVM->internalVMFunctions->jvmPhaseChange(javaVM, J9VM_PHASE_NOT_STARTUP);
+            }
+         }
+      else
+         {
+         lastTimeInStartupMode = crtElapsedTime;
+         }
+      }
+   else // The application will provide hints about startup ending
+      {
+      // Exit startup when the 'endOfStartup' arrives
+      // The case where the 'endOfStartup' hint arrived, but don't want to follow strictly
+      // is implemented above in the IF block
+      if (persistentInfo->getExternalStartupEndedSignal())
+         javaVM->internalVMFunctions->jvmPhaseChange(javaVM, J9VM_PHASE_NOT_STARTUP);
+      }
+   }
+
+/**
+ * @brief Heuristics for when the JVM is in early startup phase
+ *
+ * @param[in] javaVM The J9JavaVM
+ * @param[in] persistentInfo The TR::PersistentInfo object
+ * @param[in] newState The new state the JIT may have transitioned to
+ * @param[in] crtElapsedTime The elapsed time since JVM start
+ */
+static void earlyStartupPhaseHeuristics(J9JavaVM * javaVM,
+                                        TR::PersistentInfo *persistentInfo,
+                                        uint8_t newState,
+                                        uint64_t crtElapsedTime)
+   {
+   //TR_ASSERT(!TR::Options::getCmdLineOptions()->getOption(TR_AssumeStartupPhaseUntilToldNotTo), "assertion failure"); // we should be in STARTUP
+   // Use JIT heuristics if (1) 'beginningOfStartup' hint didn't arrive yet  OR
+   // (2) Both 'beginningOfStartup' and 'endOfStartup' hints arrived,
+   // but we don't follow hints strictly outside startup
+   if (!TR::Options::getCmdLineOptions()->getOption(TR_AssumeStartupPhaseUntilToldNotTo) ||
+      (persistentInfo->getExternalStartupEndedSignal() && !TR::Options::getCmdLineOptions()->getOption(TR_UseStrictStartupHints)))
+      {
+      // Normal gracePeriod rules apply
+      if (crtElapsedTime >= (uint64_t)persistentInfo->getClassLoadingPhaseGracePeriod()) // grace period has ended
+         javaVM->internalVMFunctions->jvmPhaseChange(javaVM, (newState == STARTUP_STATE) ? J9VM_PHASE_STARTUP : J9VM_PHASE_NOT_STARTUP);
+      }
+   else
+      {
+      // 'beginningOfStartup' hint was seen
+      // If 'endOfStartup' was not seen, move to STARTUP, otherwise, following hints strictly,
+      // we have to exit STARTUP
+      javaVM->internalVMFunctions->jvmPhaseChange(javaVM, !persistentInfo->getExternalStartupEndedSignal() ? J9VM_PHASE_STARTUP : J9VM_PHASE_NOT_STARTUP);
+      }
+   }
+
+/**
+ * @brief Tasks to perform once out of the startup phase
+ *
+ * @param[in] compInfo The TR::CompilationInfo object
+ * @param[in] persistentInfo The TR::PersistentInfo object
+ * @param[in] newState The new state the JIT may have transitioned to
+ * @param[in] crtElapsedTime The elapsed time since JVM start
+ */
+static void outOfStartupPhase(TR::CompilationInfo * compInfo,
+                              TR::PersistentInfo *persistentInfo,
+                              uint8_t newState,
+                              uint64_t crtElapsedTime)
+   {
+   // We just exited the STARTUP phase
+   // Print a message in the vlog
+   if (TR::Options::getCmdLineOptions()->isAnyVerboseOptionSet(TR_VerboseJitState, TR_VerboseCompileEnd, TR_VerbosePerformance))
+      {
+      TR_VerboseLog::writeLineLocked(TR_Vlog_JITSTATE,"t=%6u VM changed state to NOT_STARTUP", (uint32_t)crtElapsedTime);
+      }
+   // Release AOT data caches to normal compilations
+   TR_DataCacheManager::getManager()->startupOver();
+
+   // Logic related to IdleCPU exploitation
+   // If we are in idle mode immediately after JVM exited startup mode, set specific flag
+   if (newState == IDLE_STATE)
+      {
+      firstIdleStateAfterStartup = true;
+      }
+   // If we don't hit idle state when we exit JVM startup, set the desired timestamp to allocate the tracking hashtable
+   else if (TR::Options::getCmdLineOptions()->getOption(TR_UseIdleTime) &&
+            !compInfo->getLowPriorityCompQueue().isTrackingEnabled())
+      {
+      uint64_t t = crtElapsedTime + TR::Options::_delayToEnableIdleCpuExploitation;
+      if (TR::Options::_compilationDelayTime > 0 && (uint64_t)TR::Options::_compilationDelayTime > t)
+         t = TR::Options::_compilationDelayTime;
+      timeToAllocateTrackingHT = t;
+      }
+
+   // If we wanted to restrict inliner during startup, now it's the time to let the inliner go
+   // Note: if we want to extend the heuristic of when Inliner should be restricted
+   // we have to change the condition below
+   if ((TR::Options::getCmdLineOptions()->getOption(TR_RestrictInlinerDuringStartup) ||
+        TR::Options::getAOTCmdLineOptions()->getOption(TR_RestrictInlinerDuringStartup)) &&
+       persistentInfo->getInlinerTemporarilyRestricted())
+      {
+      persistentInfo->setInlinerTemporarilyRestricted(false);
+      if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
+         {
+         TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "t=%6u Stopped restricting the inliner", (uint32_t)crtElapsedTime);
+         }
+      }
+
+
+   // If using lower counts, start using higher counts
+   if (TR::Options::getCmdLineOptions()->getOption(TR_UseHigherMethodCountsAfterStartup) &&
+       TR::Options::sharedClassCache())
+      {
+      if (TR::Options::getCmdLineOptions()->isAnyVerboseOptionSet(TR_VerboseJitState, TR_VerbosePerformance))
+         {
+         TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "t=%6u JIT counts: %d %d %d  AOT counts: %d %d %d",
+            (uint32_t)crtElapsedTime,
+            TR::Options::getCmdLineOptions()->getInitialCount(),
+            TR::Options::getCmdLineOptions()->getInitialBCount(),
+            TR::Options::getCmdLineOptions()->getInitialMILCount(),
+            TR::Options::getAOTCmdLineOptions()->getInitialCount(),
+            TR::Options::getAOTCmdLineOptions()->getInitialBCount(),
+            TR::Options::getAOTCmdLineOptions()->getInitialMILCount());
+         }
+      TR::Options::getCmdLineOptions()->setInitialCount(TR_DEFAULT_INITIAL_COUNT);
+      TR::Options::getCmdLineOptions()->setInitialBCount(TR_DEFAULT_INITIAL_BCOUNT);
+      TR::Options::getCmdLineOptions()->setInitialMILCount(TR_DEFAULT_INITIAL_MILCOUNT);
+      TR::Options::getAOTCmdLineOptions()->setInitialCount(TR_DEFAULT_INITIAL_COUNT);
+      TR::Options::getAOTCmdLineOptions()->setInitialBCount(TR_DEFAULT_INITIAL_BCOUNT);
+      TR::Options::getAOTCmdLineOptions()->setInitialMILCount(TR_DEFAULT_INITIAL_MILCOUNT);
+
+      if (TR::Options::getCmdLineOptions()->isAnyVerboseOptionSet(TR_VerboseJitState, TR_VerbosePerformance))
+         {
+         TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "t=%6u JIT changed invocation counts to: JIT: %d %d %d  AOT: %d %d %d",
+            (uint32_t)crtElapsedTime,
+            TR::Options::getCmdLineOptions()->getInitialCount(),
+            TR::Options::getCmdLineOptions()->getInitialBCount(),
+            TR::Options::getCmdLineOptions()->getInitialMILCount(),
+            TR::Options::getAOTCmdLineOptions()->getInitialCount(),
+            TR::Options::getAOTCmdLineOptions()->getInitialBCount(),
+            TR::Options::getAOTCmdLineOptions()->getInitialMILCount());
+         }
+      }
+   }
+
+/**
+ * @brief Heuristics to run during startup
+ *
+ * @param[in] javaVM The J9JavaVM
+ * @param[in] compInfo The TR::CompilationInfo object
+ * @param[in] persistentInfo The TR::PersistentInfo object
+ * @param[in] newState The new state the JIT may have transitioned to
+ * @param[in] lastTimeInStartupMode The last time the JVM was in startup
+ * @param[in] crtElapsedTime The elapsed time since JVM start
+ */
+static void startupHeuristics(J9JavaVM * javaVM,
+                              TR::CompilationInfo * compInfo,
+                              TR::PersistentInfo *persistentInfo,
+                              uint8_t newState,
+                              uint64_t lastTimeInStartupMode,
+                              uint64_t crtElapsedTime)
+   {
+   // We should accelerate compilations of methods that get samples during rampup or steady state
+   // The invocation count is decremented too slow
+   // Set the state in the VM
+   if (javaVM->phase != J9VM_PHASE_NOT_STARTUP) // once in NOT_STARTUP we cannot perform any changes
+      {
+      if (javaVM->phase == J9VM_PHASE_STARTUP)
+         {
+         startupPhaseHeuristics(javaVM, compInfo, persistentInfo, newState, lastTimeInStartupMode, crtElapsedTime);
+         }
+      else
+         {
+         earlyStartupPhaseHeuristics(javaVM, persistentInfo, newState, crtElapsedTime);
+         }
+      if (javaVM->phase == J9VM_PHASE_NOT_STARTUP)
+         {
+         outOfStartupPhase(compInfo, persistentInfo, newState, crtElapsedTime);
+         }
+
+      // May need to update the iprofilerMaxCount; this has a higher value in startup
+      // mode to minimize overhead, but a higher value in throughput mode.
+      // The startup mode for this variable is defined as classLoadPhase AND
+      // VM->phase != NOT_STARTUP
+      if (interpreterProfilingWasOnAtStartup) // if we used -Xjit:disableInterpreterProfiling don't bother
+         {
+         int32_t newIprofilerMaxCount = -1;
+         //if (persistentInfo->isClassLoadingPhase() && javaVM->phase != J9VM_PHASE_NOT_STARTUP)
+         if (javaVM->phase == J9VM_PHASE_EARLY_STARTUP || (persistentInfo->isClassLoadingPhase() && javaVM->phase == J9VM_PHASE_STARTUP))
+            {
+            if (compInfo->getIprofilerMaxCount() != TR::Options::_maxIprofilingCountInStartupMode)
+               newIprofilerMaxCount = TR::Options::_maxIprofilingCountInStartupMode;
+            }
+         else
+            {
+            if (compInfo->getIprofilerMaxCount() != TR::Options::_maxIprofilingCount)
+               newIprofilerMaxCount = TR::Options::_maxIprofilingCount;
+            }
+         if (newIprofilerMaxCount != -1) // needs to be updated
+            {
+            compInfo->setIprofilerMaxCount(newIprofilerMaxCount);
+
+            j9thread_monitor_enter(javaVM->vmThreadListMutex);
+            J9VMThread * currentThread = javaVM->mainThread;
+            do {
+               currentThread->maxProfilingCount = (UDATA)encodeCount(newIprofilerMaxCount);
+               } while ((currentThread = currentThread->linkNext) != javaVM->mainThread);
+            j9thread_monitor_exit(javaVM->vmThreadListMutex);
+
+            if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJitState, TR_VerbosePerformance))
+               {
+               TR_VerboseLog::writeLineLocked(TR_Vlog_JITSTATE,"t=%6u Changing maxIProfilingCount to %d", (uint32_t)crtElapsedTime, newIprofilerMaxCount);
+               }
+            }
+         } // if (interpreterProfilingWasOnAtStartup)
+      } // if (javaVM->phase != J9VM_PHASE_NOT_STARTUP)
+   }
+
+/**
+ * @brief Determine whether the JIT should change states, and run heuristics
+ *        and other tasks appropriately.
+ *
+ * @param[in] jitConfig The J9JITConfig
+ * @param[in] compInfo The TR::CompilationInfo object
+ * @param[in] diffTime The length of the sampled interval
+ */
+static void jitStateLogic(J9JITConfig * jitConfig, TR::CompilationInfo * compInfo, uint32_t diffTime)
+   {
+   // We enter STARTUP too often because IDLE is not operating correctly
+   static uint64_t lastTimeInJITStartupMode = 0;
+   static uint64_t lastTimeInStartupMode = 0;
+
+   TR::PersistentInfo *persistentInfo = compInfo->getPersistentInfo();
+   uint64_t crtElapsedTime = persistentInfo->getElapsedTime();
+
+   static uint32_t oldNumClassesLoaded = 0;
+   J9JavaVM * javaVM = jitConfig->javaVM;
+
+   uint32_t numClassesLoadedInInterval = (uint32_t)persistentInfo->getNumLoadedClasses() - oldNumClassesLoaded;
+   uint32_t numClassesLoadedInIntervalNormalized = numClassesLoadedInInterval*1000/diffTime;
+   oldNumClassesLoaded = (uint32_t)persistentInfo->getNumLoadedClasses(); // remember for next time
+
+   uint8_t oldState = persistentInfo->getJitState();
+   uint8_t newState;
+   uint32_t totalSamples = compInfo->_intervalStats._compiledMethodSamples + compInfo->_intervalStats._interpretedMethodSamples;
+   uint32_t totalSamplesNormalized = totalSamples*1000/diffTime;
+   uint32_t samplesSentNormalized = compInfo->_intervalStats._samplesSentInInterval*1000/diffTime;
+
+   // Read the CPU utilization as a percentage; -1 if not functional;
+   // Can be greater than 100% if multiple cores
+   static int32_t oldJvmCpuUtil = 10;
+   int32_t avgJvmCpuUtil;
+   if (compInfo->getCpuUtil()->isFunctional())
+      {
+      int32_t jvmCpuUtil = compInfo->getCpuUtil()->getVmCpuUsage();
+      avgJvmCpuUtil = (oldJvmCpuUtil + jvmCpuUtil) >> 1;
+      oldJvmCpuUtil = jvmCpuUtil;
+      }
+   else
+      {
+      avgJvmCpuUtil = -1;
+      }
+
+   transitionToNewStateIfNeeded(compInfo, persistentInfo, oldState, newState,
+                                lastTimeInJITStartupMode, avgJvmCpuUtil, totalSamples,
+                                totalSamplesNormalized, samplesSentNormalized,
+                                numClassesLoadedInIntervalNormalized,
+                                crtElapsedTime, diffTime);
+
+   adjustJProfilingRecompConfig(javaVM, lastTimeInJITStartupMode, crtElapsedTime);
+
+   // Enable/disable GCR counting
+   gcrLogic(javaVM, compInfo, persistentInfo, newState, lastTimeInJITStartupMode, crtElapsedTime);
+
+   // Enable/Disable RI Buffer processing
+   riBufferProcessingLogic(javaVM, compInfo, persistentInfo, oldState, newState, crtElapsedTime);
+
+   // Control how much application threads will be sleeping to give
+   // application threads more time on the CPU
+   ensureAppThreadsHaveSufficientCPU(compInfo, crtElapsedTime);
+
+   iprofilerLogic(javaVM, jitConfig, compInfo, lastTimeInJITStartupMode, crtElapsedTime);
+
+   if (TR::Options::getCmdLineOptions()->getOption(TR_UseIdleTime) &&
+       TR::Options::getCmdLineOptions()->getOption(TR_EarlyLPQ))
+      {
+      if (!compInfo->getLowPriorityCompQueue().isTrackingEnabled() && timeToAllocateTrackingHT == 0xffffffffffffffff)
+         {
+         uint64_t t = crtElapsedTime + TR::Options::_delayToEnableIdleCpuExploitation;
+         if (TR::Options::_compilationDelayTime > 0 && (uint64_t)TR::Options::_compilationDelayTime > t)
+            t = TR::Options::_compilationDelayTime;
+         timeToAllocateTrackingHT = t;
+         }
+      }
+
+   startupHeuristics(javaVM, compInfo, persistentInfo, newState, lastTimeInStartupMode, crtElapsedTime);
+
+   onStateChange(javaVM, compInfo, persistentInfo, oldState, newState, avgJvmCpuUtil, crtElapsedTime);
+
    if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseJitState))
       {
       TR_VerboseLog::writeLineLocked(TR_Vlog_JITSTATE,"t=%6u oldState=%s newState=%s cls=%3u ssn=%u tsn=%3u cSmpl=%3u iSmpl=%3u comp=%3u recomp=%3u, Q_SZ=%3d VMSTATE=%d jvmCPU=%d%%",
@@ -5064,7 +5289,8 @@ static void jitStateLogic(J9JITConfig * jitConfig, TR::CompilationInfo * compInf
                    javaVM->phase,
                    avgJvmCpuUtil);
       }
-   if(TR::Options::getVerboseOption(TR_VerboseJitMemory))
+
+   if (TR::Options::getVerboseOption(TR_VerboseJitMemory))
       {
       TR_VerboseLog::writeLine(TR_Vlog_MEMORY, "FIXME: Report JIT memory usage\n");
       }
