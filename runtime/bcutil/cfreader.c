@@ -2509,6 +2509,8 @@ _errorFound:
  * version >= 56.  The -1 version is only allowed when combined with the max 
  * supported version for this release and the --enable-preview flag is specified.
  *
+ * Added ErrorType when local version is more than compiled class version
+ *
  * Returns -1 on error, 0 on success.
  */
 
@@ -2550,6 +2552,8 @@ checkClassVersion(J9CfrClassFile* classfile, U_8* segment, U_32 vmVersionShifted
 				return 0;
 			}
 		}
+	} else if(majorVersion>max_allowed_version){
+		errorCode = J9NLS_CFR_ERR_LOCAL_VERSION_MORE_THAN_COMPILED_VERSION;
 	}
 
 	buildError((J9CfrError *) segment, errorCode, CFR_ThrowUnsupportedClassVersionError, offset);
