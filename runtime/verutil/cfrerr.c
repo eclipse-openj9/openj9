@@ -156,6 +156,9 @@ buildError(J9CfrError * errorStruct, UDATA code, UDATA action, UDATA offset)
 	errorStruct->errorBsmIndex = -1;
 	errorStruct->errorBsmArgsIndex = 0;
 	errorStruct->errorCPType = 0;
+	errorStruct->minorVersion = 0;
+	errorStruct->majorVersion = 0;
+	errorStruct->max_allowed_version = 0;
 }
 
 void
