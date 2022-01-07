@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -172,6 +172,26 @@ extern "C" J9Method * getNewInstancePrototype(J9VMThread *context);
 // psuedo-call to asm function
 extern "C" void _getSTFLEBits(int numDoubleWords, uint64_t * bits);  /* 390 asm stub */
 extern "C" bool _isPSWInProblemState();  /* 390 asm stub */
+
+TR::FILE *fileOpen(TR::Options *options, J9JITConfig *jitConfig, char *name, char *permission, bool b1)
+   {
+   PORT_ACCESS_FROM_ENV(jitConfig->javaVM);
+   char tmp[1025];
+   char *formattedTmp = NULL;
+   if (!options->getOption(TR_EnablePIDExtension))
+      {
+      formattedTmp = TR_J9VMBase::getJ9FormattedName(jitConfig, PORTLIB, tmp, sizeof(tmp), name, NULL, false);
+      }
+   else
+      {
+      formattedTmp = TR_J9VMBase::getJ9FormattedName(jitConfig, PORTLIB, tmp, sizeof(tmp), name, options->getSuffixLogsFormat(), true);
+      }
+   if (NULL != formattedTmp)
+      {
+      return j9jit_fopen(formattedTmp, permission, b1);
+      }
+   return NULL;
+   }
 
 // Returns -1 if given vmThread is not a compilation thread
 int32_t

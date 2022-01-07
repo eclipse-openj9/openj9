@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,6 +32,7 @@
 #include "j9protos.h"
 #include "rommeth.h"
 #include "env/FrontEnd.hpp"
+#include "control/CompilationThread.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
 #include "runtime/MethodMetaData.h"
@@ -82,9 +83,8 @@ TR_RelocationRuntimeLogger::debug_printf(char *format, ...)
    va_start(args, format);
    j9str_vprintf(outputBuffer, 512, format, args);
    va_end(args);
-   JITRT_LOCK_LOG(jitConfig());
-   JITRT_PRINTF(jitConfig())(jitConfig(), "%s", outputBuffer);
-   JITRT_UNLOCK_LOG(jitConfig());
+
+   rtlogPrintLocked(jitConfig(), reloRuntime()->fej9()->_compInfoPT, outputBuffer);
    }
 
 void
@@ -99,9 +99,8 @@ TR_RelocationRuntimeLogger::printf(char *format, ...)
    va_start(args, format);
    j9str_vprintf(outputBuffer, 512, format, args);
    va_end(args);
-   JITRT_LOCK_LOG(jitConfig());
-   JITRT_PRINTF(jitConfig())(jitConfig(), "%s", outputBuffer);
-   JITRT_UNLOCK_LOG(jitConfig());
+
+   rtlogPrintLocked(jitConfig(), reloRuntime()->fej9()->_compInfoPT, outputBuffer);
    }
 
 void
@@ -143,9 +142,8 @@ TR_RelocationRuntimeLogger::method(bool newLine)
    int signatureLen= J9UTF8_LENGTH(J9ROMMETHOD_SIGNATURE(J9_ROM_METHOD_FROM_RAM_METHOD(reloRuntime()->method())));
 
    bool wasLocked = lockLog();
-   JITRT_PRINTF(jitConfig())(jitConfig(), patternString, classNameLen, className,
-                                                         methodNameLen, methodName,
-                                                         signatureLen, signature);
+   rtlogPrintf(jitConfig(), reloRuntime()->fej9()->_compInfoPT, patternString,
+               classNameLen, className, methodNameLen, methodName, signatureLen, signature);
    unlockLog(wasLocked);
    }
 
@@ -153,23 +151,24 @@ void
 TR_RelocationRuntimeLogger::exceptionTable()
    {
    J9JITExceptionTable *data = reloRuntime()->exceptionTable();
+   TR::CompilationInfoPerThread *compInfoPT = reloRuntime()->fej9()->_compInfoPT;
 
    bool wasLocked = lockLog();
 
-   JITRT_PRINTF(jitConfig())(jitConfig(), "%-12s",   "startPC");
-   JITRT_PRINTF(jitConfig())(jitConfig(), "%-12s",   "endPC");
-   JITRT_PRINTF(jitConfig())(jitConfig(), "%-8s",    "size");
-   JITRT_PRINTF(jitConfig())(jitConfig(), "%-14s",   "gcStackAtlas");
-   JITRT_PRINTF(jitConfig())(jitConfig(), "%-12s\n", "bodyInfo");
+   rtlogPrintf(jitConfig(), compInfoPT, "%-12s",   "startPC");
+   rtlogPrintf(jitConfig(), compInfoPT, "%-12s",   "endPC");
+   rtlogPrintf(jitConfig(), compInfoPT, "%-8s",    "size");
+   rtlogPrintf(jitConfig(), compInfoPT, "%-14s",   "gcStackAtlas");
+   rtlogPrintf(jitConfig(), compInfoPT, "%-12s\n", "bodyInfo");
 
-   JITRT_PRINTF(jitConfig())(jitConfig(), "%-12p",   data->startPC);
-   JITRT_PRINTF(jitConfig())(jitConfig(), "%-12p",   data->endPC);
-   JITRT_PRINTF(jitConfig())(jitConfig(), "%-8x",    data->size);
-   JITRT_PRINTF(jitConfig())(jitConfig(), "%-14p",   data->gcStackAtlas);
-   JITRT_PRINTF(jitConfig())(jitConfig(), "%-12p\n", data->bodyInfo);
+   rtlogPrintf(jitConfig(), compInfoPT, "%-12p",   reinterpret_cast<void *>(data->startPC));
+   rtlogPrintf(jitConfig(), compInfoPT, "%-12p",   reinterpret_cast<void *>(data->endPC));
+   rtlogPrintf(jitConfig(), compInfoPT, "%-8x",    data->size);
+   rtlogPrintf(jitConfig(), compInfoPT, "%-14p",   data->gcStackAtlas);
+   rtlogPrintf(jitConfig(), compInfoPT, "%-12p\n", data->bodyInfo);
 
-   JITRT_PRINTF(jitConfig())(jitConfig(), "%-12s\n", "inlinedCalls");
-   JITRT_PRINTF(jitConfig())(jitConfig(), "%-12x\n", data->inlinedCalls);
+   rtlogPrintf(jitConfig(), compInfoPT, "%-12s\n", "inlinedCalls");
+   rtlogPrintf(jitConfig(), compInfoPT, "%-12p\n", data->inlinedCalls);
 
    unlockLog(wasLocked);
    }
@@ -197,36 +196,6 @@ TR_RelocationRuntimeLogger::relocationDump()
    J9JavaVM *javaVM = jitConfig()->javaVM;
    PORT_ACCESS_FROM_JAVAVM(javaVM);
    _reloStartTime = (UDATA) j9time_usec_clock();
-   if (verbose())
-      {
-      if (0)
-         {
-         UDATA count = 0;
-         TR_RelocationRecord *header;
-         TR_RelocationRecord *endRecord;
-         U_8 *reloRecord;
-
-         bool wasLocked=lockLog();
-         JITRT_PRINTF(jitConfig())(jitConfig(), "Relocation Data:\n");
-
-         // TODO: this code is busTED
-         header = (TR_RelocationRecord *)((U_8 *)reloRuntime()->exceptionTableCacheEntry() + reloRuntime()->aotMethodHeaderEntry()->offsetToRelocationDataItems);
-         endRecord = (TR_RelocationRecord *) ((U_8 *) header + header->size(reloRuntime()->reloTarget()));
-
-         reloRecord = (U_8 *) header;
-         while (reloRecord < (U_8*)endRecord)
-            {
-            if (count % 16 == 0)
-               JITRT_PRINTF(jitConfig())(jitConfig(), "\n");
-            count++;
-            JITRT_PRINTF(jitConfig())(jitConfig(), "%2.2x ", *reloRecord);
-            reloRecord++;
-            }
-         JITRT_PRINTF(jitConfig())(jitConfig(), "\n");
-
-         unlockLog(wasLocked);
-         }
-      }
    }
 
 void
@@ -240,10 +209,16 @@ TR_RelocationRuntimeLogger::relocationTime()
 
       bool wasLocked = lockLog();
       method(false);
-      JITRT_PRINTF(jitConfig())(jitConfig(), " <%p-%p> ",
-                                             reloRuntime()->exceptionTable()->startPC,
-                                             reloRuntime()->exceptionTable()->endPC);
-      JITRT_PRINTF(jitConfig())(jitConfig(), " Time: %d usec\n", reloEndTime-_reloStartTime);
+
+      rtlogPrintf(jitConfig(), reloRuntime()->fej9()->_compInfoPT,
+                  " <%p-%p> ",
+                  reinterpret_cast<void *>(reloRuntime()->exceptionTable()->startPC),
+                  reinterpret_cast<void *>(reloRuntime()->exceptionTable()->endPC));
+
+      rtlogPrintf(jitConfig(), reloRuntime()->fej9()->_compInfoPT,
+                  " Time: %d usec\n",
+                  static_cast<uint32_t>(reloEndTime-_reloStartTime));
+
       unlockLog(wasLocked);
       }
    }
@@ -255,11 +230,11 @@ TR_RelocationRuntimeLogger::versionMismatchWarning()
    if (verbose())
       {
       bool wasLocked = lockLog();
-      JITRT_PRINTF(jitConfig())(jitConfig(), warningMessageFormat,
-                                             reloRuntime()->aotMethodHeaderEntry()->majorVersion,
-                                             TR_AOTMethodHeader_MajorVersion,
-                                             reloRuntime()->aotMethodHeaderEntry()->minorVersion,
-                                             TR_AOTMethodHeader_MinorVersion);
+      rtlogPrintf(jitConfig(), reloRuntime()->fej9()->_compInfoPT, warningMessageFormat,
+                  reloRuntime()->aotMethodHeaderEntry()->majorVersion,
+                  TR_AOTMethodHeader_MajorVersion,
+                  reloRuntime()->aotMethodHeaderEntry()->minorVersion,
+                  TR_AOTMethodHeader_MinorVersion);
       unlockLog(wasLocked);
 
       method(true);
@@ -283,7 +258,8 @@ TR_RelocationRuntimeLogger::maxCodeOrDataSizeWarning()
 bool
 TR_RelocationRuntimeLogger::lockLog()
    {
-   if (!_logLocked)
+   TR::CompilationInfoPerThread *compInfoPT = reloRuntime()->fej9()->_compInfoPT;
+   if (!_logLocked && !(compInfoPT && compInfoPT->getRTLogFile()))
       {
       JITRT_LOCK_LOG(jitConfig());
       _logLocked = true;
@@ -308,11 +284,11 @@ TR_RelocationRuntimeLogger::unlockLog(bool shouldUnlock)
 void
 TR_RelocationRuntimeLogger::startTag(const char *tag)
    {
-   JITRT_PRINTF(jitConfig())(jitConfig(), "<%s>\n", tag);
+   rtlogPrintf(jitConfig(), reloRuntime()->fej9()->_compInfoPT, "<%s>\n", tag);
    }
 
 void
 TR_RelocationRuntimeLogger::endTag(const char *tag)
    {
-   JITRT_PRINTF(jitConfig())(jitConfig(), "</%s>\n", tag);
+   rtlogPrintf(jitConfig(), reloRuntime()->fej9()->_compInfoPT, "</%s>\n", tag);
    }

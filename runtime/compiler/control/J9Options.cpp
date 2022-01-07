@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2305,26 +2305,6 @@ J9::Options::fePreProcess(void * base)
 #endif
 
    return true;
-   }
-
-static TR::FILE *fileOpen(TR::Options *options, J9JITConfig *jitConfig, char *name, char *permission, bool b1)
-   {
-   PORT_ACCESS_FROM_ENV(jitConfig->javaVM);
-   char tmp[1025];
-   char *formattedTmp = NULL;
-   if (!options->getOption(TR_EnablePIDExtension))
-      {
-      formattedTmp = TR_J9VMBase::getJ9FormattedName(jitConfig, PORTLIB, tmp, sizeof(tmp), name, NULL, false);
-      }
-   else
-      {
-      formattedTmp = TR_J9VMBase::getJ9FormattedName(jitConfig, PORTLIB, tmp, sizeof(tmp), name, options->getSuffixLogsFormat(), true);
-      }
-   if (NULL != formattedTmp)
-      {
-      return j9jit_fopen(formattedTmp, permission, b1);
-      }
-   return NULL;
    }
 
 void

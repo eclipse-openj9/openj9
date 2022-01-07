@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -209,6 +209,8 @@ static TR_Processor portLibCall_getX86ProcessorType();
 static bool portLibCall_sysinfo_has_resumable_trap_handler();
 static bool portLibCall_sysinfo_has_fixed_frame_C_calling_convention();
 static bool portLibCall_sysinfo_has_floating_point_unit();
+
+TR::FILE *fileOpen(TR::Options *options, J9JITConfig *jitConfig, char *name, char *permission, bool b1);
 
 TR::CompilationInfo *getCompilationInfo(J9JITConfig *jitConfig);
 

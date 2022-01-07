@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -481,6 +481,7 @@ class CompilationInfoPerThread : public TR::CompilationInfoPerThreadBase
    void                   setLastCompilationDuration(int32_t t) { _lastCompilationDuration = t; }
    bool                   isDiagnosticThread() const { return _isDiagnosticThread; }
    CpuSelfThreadUtilization& getCompThreadCPU() { return _compThreadCPU; }
+   TR::FILE              *getRTLogFile() { return _rtLogFile; }
    virtual void           freeAllResources();
 
 #if defined(J9VM_OPT_JITSERVER)
@@ -509,6 +510,7 @@ class CompilationInfoPerThread : public TR::CompilationInfoPerThreadBase
    bool                   _initializationSucceeded;
    bool                   _isDiagnosticThread;
    CpuSelfThreadUtilization _compThreadCPU;
+   TR::FILE              *_rtLogFile;
 #if defined(J9VM_OPT_JITSERVER)
    TR_J9ServerVM         *_serverVM;
    TR_J9SharedCacheServerVM *_sharedCacheServerVM;
