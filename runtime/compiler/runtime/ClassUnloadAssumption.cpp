@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -200,11 +200,10 @@ OMR::RuntimeAssumption::addToRAT(TR_PersistentMemory * persistentMemory, TR_Runt
    bool reportDetails = TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseRuntimeAssumptions);
    if (reportDetails)
       {
-      TR_VerboseLog::vlogAcquire();
+      TR_VerboseLog::CriticalSection vlogLock;
       TR_VerboseLog::write(TR_Vlog_RA,"Adding %s assumption: ", runtimeAssumptionKindNames[kind] );
       dumpInfo();
       TR_VerboseLog::writeLine("");
-      TR_VerboseLog::vlogRelease();
       }
    }
 
@@ -293,11 +292,10 @@ void OMR::RuntimeAssumption::dequeueFromListOfAssumptionsForJittedBody()
 
    if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseRuntimeAssumptions))
       {
-      TR_VerboseLog::vlogAcquire();
+      TR_VerboseLog::CriticalSection vlogLock;
       TR_VerboseLog::write(TR_Vlog_RA, "Deleting %s assumption: ", runtimeAssumptionKindNames[getAssumptionKind()] );
       dumpInfo();
       TR_VerboseLog::writeLine("");
-      TR_VerboseLog::vlogRelease();
       }
    }
 
@@ -638,33 +636,24 @@ TR_RuntimeAssumptionTable::notifyIllegalStaticFinalFieldModificationEvent(TR_Fro
 
    while (cursor)
       {
+      TR_VerboseLog::CriticalSection vlogLock(reportDetails);
+
       OMR::RuntimeAssumption* next = cursor->getNext();
       if (reportDetails)
-         {
-         TR_VerboseLog::vlogAcquire();
          TR_VerboseLog::write(TR_Vlog_RA, "key=%p @ %p", cursor->getKey(), cursor->getFirstAssumingPC());
-         TR_VerboseLog::vlogRelease();
-         }
 
       if (cursor->matches((uintptr_t)key))
          {
          found = true;
          if (reportDetails)
-            {
-            TR_VerboseLog::vlogAcquire();
             TR_VerboseLog::write(" compensating key=%p", key);
-            TR_VerboseLog::vlogRelease();
-            }
+
          cursor->compensate(vm, 0, 0);
          markForDetachFromRAT(cursor);
          }
 
       if (reportDetails)
-         {
-         TR_VerboseLog::vlogAcquire();
          TR_VerboseLog::writeLine("");
-         TR_VerboseLog::vlogRelease();
-         }
 
       cursor = next;
       }
@@ -814,31 +803,24 @@ TR_RuntimeAssumptionTable::notifyClassRedefinitionEvent(TR_FrontEnd *vm, bool is
 
    if (reportDetails)
       {
-      TR_VerboseLog::vlogAcquire();
+      TR_VerboseLog::CriticalSection vlogLock;
       TR_VerboseLog::writeLine(TR_Vlog_RA,"Scanning for PIC assumptions for %p in array %p bucket %p", oldKey, raArray, oldHeadPtr);
       if (!pic_cursor)
          TR_VerboseLog::writeLine(TR_Vlog_RA,"oldKey %p not registered with PIC!", oldKey);
-      TR_VerboseLog::vlogRelease();
       }
 
    while (pic_cursor)
       {
       TR_RedefinedClassPicSite *pic_next = (TR_RedefinedClassPicSite*)pic_cursor->getNext();
+
+      TR_VerboseLog::CriticalSection vlogLock(reportDetails);
       if (reportDetails)
-         {
-         TR_VerboseLog::vlogAcquire();
          TR_VerboseLog::write(TR_Vlog_RA, "old=%p @ %p", pic_cursor->getKey(), pic_cursor->getPicLocation());
-         TR_VerboseLog::vlogRelease();
-         }
 
       if (pic_cursor->matches((uintptr_t)oldKey))
          {
          if (reportDetails)
-            {
-            TR_VerboseLog::vlogAcquire();
             TR_VerboseLog::write(" compensating new=%p (array %p bucket %p)", newKey, raArray, newHeadPtr);
-            TR_VerboseLog::vlogRelease();
-            }
 
          pic_cursor->compensate(vm, 0, newKey);
 
@@ -865,11 +847,7 @@ TR_RuntimeAssumptionTable::notifyClassRedefinitionEvent(TR_FrontEnd *vm, bool is
          }
 
       if (reportDetails)
-         {
-         TR_VerboseLog::vlogAcquire();
          TR_VerboseLog::writeLine("");
-         TR_VerboseLog::vlogRelease();
-         }
 
       pic_cursor = pic_next;
       }
@@ -879,31 +857,34 @@ TR_RuntimeAssumptionTable::notifyClassRedefinitionEvent(TR_FrontEnd *vm, bool is
    raArray = findAssumptionHashTable(RuntimeAssumptionOnClassRedefinitionNOP)->_htSpineArray;
    if (reportDetails)
       {
-      TR_VerboseLog::vlogAcquire();
+      TR_VerboseLog::CriticalSection vlogLock;
       TR_VerboseLog::writeLine(TR_Vlog_RA,"Scanning for NOP assumptions for %p in array %p bucket %p", oldKey, raArray, oldHeadPtr);
       if (!nop_cursor)
          TR_VerboseLog::writeLine(TR_Vlog_RA,"oldKey %p not registered with NOP!", oldKey);
-      TR_VerboseLog::vlogRelease();
       }
 
    while (nop_cursor)
       {
       OMR::RuntimeAssumption* nop_next = nop_cursor->getNext();
+
+      TR_VerboseLog::CriticalSection vlogLock(reportDetails);
       if (reportDetails)
-         TR_VerboseLog::writeLine(TR_Vlog_RA, "old=%p @ %p", nop_cursor->getKey(), nop_cursor->getFirstAssumingPC());
+         TR_VerboseLog::write(TR_Vlog_RA, "old=%p @ %p", nop_cursor->getKey(), nop_cursor->getFirstAssumingPC());
+
       if (nop_cursor->matches((uintptr_t)oldKey))
          {
          if (reportDetails)
-            {
-            TR_VerboseLog::vlogAcquire();
-            TR_VerboseLog::write(" compensating new=%p", newKey);
-            TR_VerboseLog::vlogRelease();
-            }
+            TR_VerboseLog::writeLine(" compensating new=%p", newKey);
+
          nop_cursor->compensate(vm, 0, 0);
          markForDetachFromRAT(nop_cursor);
          nop_cursor = nop_next;
          continue;
          }
+
+      if (reportDetails)
+         TR_VerboseLog::writeLine("");
+
       nop_cursor = nop_next;
       }
 
@@ -1029,9 +1010,9 @@ TR_RuntimeAssumptionTable::notifyClassRedefinitionEvent(TR_FrontEnd *vm, bool is
 
                if (isAddressMaterialization)
                   {
+                  TR_VerboseLog::CriticalSection vlogLock(reportDetails);
                   if (reportDetails)
                      {
-                     TR_VerboseLog::vlogAcquire();
                      TR_VerboseLog::write(TR_Vlog_RA, "o=%p @ %p  r=%p %p %p %p",
                         initialKey, pic_cursor->getPicLocation(),
                         resolvedKey1, resolvedKey2, resolvedKey3, resolvedKey4);
@@ -1049,7 +1030,6 @@ TR_RuntimeAssumptionTable::notifyClassRedefinitionEvent(TR_FrontEnd *vm, bool is
                         *(uint32_t *)(pic_cursor->getPicLocation() + 4),
                         *(uint32_t *)(pic_cursor->getPicLocation() + 12),
                         *(uint32_t *)(pic_cursor->getPicLocation() + 16));
-                     TR_VerboseLog::vlogRelease();
                      }
                   }
                }
@@ -1065,20 +1045,15 @@ TR_RuntimeAssumptionTable::notifyClassRedefinitionEvent(TR_FrontEnd *vm, bool is
                   && ((resolvedKey2 >> 26) == 0x0e); //addi
                if (isAddressMaterialization)
                   {
+                  TR_VerboseLog::CriticalSection vlogLock(reportDetails);
                   if (reportDetails)
-                     {
-                     TR_VerboseLog::vlogAcquire();
                      TR_VerboseLog::write(TR_Vlog_RA, "o=%p r=%p %p @ %p", initialKey, resolvedKey1, resolvedKey2, pic_cursor->getPicLocation());
-                     }
 
                   *(uint32_t *)(pic_cursor->getPicLocation()) = resolvedKey1 & 0xffff0000 | HI_VALUE((uint32_t)newKey);
                   *(uint32_t *)(pic_cursor->getPicLocation() + 4) = resolvedKey2 & 0xffff0000 | LO_VALUE((uint32_t)newKey);
 
                   if (reportDetails)
-                     {
                      TR_VerboseLog::writeLine(" patched n=%p %p", *(uint32_t *)(pic_cursor->getPicLocation()), *(uint32_t *)(pic_cursor->getPicLocation() + 4));
-                     TR_VerboseLog::vlogRelease();
-                     }
                   }
                }
 #endif
@@ -1106,11 +1081,10 @@ TR_RuntimeAssumptionTable::notifyMethodBreakpointed(TR_FrontEnd *fe, TR_OpaqueMe
          {
          if (reportDetails)
             {
-            TR_VerboseLog::vlogAcquire();
+            TR_VerboseLog::CriticalSection vlogLock;
             TR_VerboseLog::write(TR_Vlog_RA,"compensating key (breakpointed method) " UINT64_PRINTF_FORMAT_HEX " ", method);
             cursor->dumpInfo();
             TR_VerboseLog::writeLine("");
-            TR_VerboseLog::vlogRelease();
             }
          cursor->compensate(fe, 0, 0);
          markForDetachFromRAT(cursor);
@@ -1137,11 +1111,10 @@ TR_RuntimeAssumptionTable::notifyMutableCallSiteChangeEvent(TR_FrontEnd *fe, uin
          {
          if (reportDetails)
             {
-            TR_VerboseLog::vlogAcquire();
+            TR_VerboseLog::CriticalSection vlogLock;
             TR_VerboseLog::write(TR_Vlog_RA,"compensating cookie " UINT64_PRINTF_FORMAT_HEX " ", cookie);
             cursor->dumpInfo();
             TR_VerboseLog::writeLine("");
-            TR_VerboseLog::vlogRelease();
             }
          cursor->compensate(fe, 0, 0);
          markForDetachFromRAT(cursor);

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2021 IBM Corp. and others
+ * Copyright (c) 2018, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -117,7 +117,7 @@ static int32_t J9THREAD_PROC statisticsThreadProc(void * entryarg)
                }
             omrstr_ftime_ex(timestamp, sizeof(timestamp), "%b %d %H:%M:%S %Y", crtTime, OMRSTR_FTIME_FLAG_LOCAL);
             
-            TR_VerboseLog::vlogAcquire();
+            TR_VerboseLog::CriticalSection vlogLock;
             TR_VerboseLog::writeLine(TR_Vlog_JITServer, "CurrentTime: %s", timestamp);
             TR_VerboseLog::writeLine(TR_Vlog_JITServer, "Compilation Queue Size: %d", compInfo->getMethodQueueSize());
             TR_VerboseLog::writeLine(TR_Vlog_JITServer, "Number of clients : %u", compInfo->getClientSessionHT()->size());
@@ -131,7 +131,6 @@ static int32_t J9THREAD_PROC statisticsThreadProc(void * entryarg)
                {
                TR_VerboseLog::writeLine(TR_Vlog_JITServer, "CpuLoad %d%% (AvgUsage %d%%) JvmCpu %d%%", cpuUsage, avgCpuUsage, vmCpuUsage);
                }
-            TR_VerboseLog::vlogRelease();
             lastStatsTime = crtTime;
             }
             
