@@ -8539,15 +8539,15 @@ TR::CompilationInfoPerThreadBase::aotCompilationReUpgradedToWarm(CompilationInfo
          {
          // In some circumstances AOT compilations are performed at warm
          if ((TR::Options::getCmdLineOptions()->getAggressivityLevel() == TR::Options::AGGRESSIVE_AOT ||
-            compilationInfo->getCompilationInfo()->importantMethodForStartup((J9Method*)method) ||
-            (!TR::Compiler->target.cpu.isPower() && // Temporary change until we figure out the AOT bug on PPC
-               !TR::Options::getAOTCmdLineOptions()->getOption(TR_DisableAotAtCheapWarm))) &&
-            compileParameters->_optimizationPlan->isOptLevelDowngraded() &&
-            compileParameters->_optimizationPlan->getOptLevel() == cold // Is this test really needed?
+             compilationInfo->getCompilationInfo()->importantMethodForStartup((J9Method*)method) ||
+             (!TR::Compiler->target.cpu.isPower() && // Temporary change until we figure out the AOT bug on PPC
+              !TR::Options::getAOTCmdLineOptions()->getOption(TR_DisableAotAtCheapWarm))) &&
+             compileParameters->_optimizationPlan->isOptLevelDowngraded() &&
+             compileParameters->_optimizationPlan->getOptLevel() == cold // Is this test really needed?
 #if defined(J9VM_OPT_JITSERVER)
             // Do not reupgrade a compilation that was downgraded due to low memory
             && (TR::Options::getCmdLineOptions()->getOption(TR_DisableJITServerBufferedExpensiveCompilations) ||
-                  !compilationInfo->_methodBeingCompiled->shouldUpgradeOutOfProcessCompilation())
+                !compilationInfo->_methodBeingCompiled->shouldUpgradeOutOfProcessCompilation())
 #endif
             )
             {
@@ -8566,8 +8566,10 @@ TR::CompilationInfoPerThreadBase::storeHintsInTheSCC(CompilationInfoPerThreadBas
       // Store hints in the SCC
       TR_J9SharedCache *sc = (TR_J9SharedCache *) (vm->sharedCache());
       J9JITConfig *jitConfig = compilationInfo->_jitConfig;
-      if (metaData  && !compilationInfo->_methodBeingCompiled->isDLTCompile() &&
-         !compilationInfo->_methodBeingCompiled->isAotLoad() && sc) // skip AOT loads
+      if (metaData &&
+          !compilationInfo->_methodBeingCompiled->isDLTCompile() &&
+          !compilationInfo->_methodBeingCompiled->isAotLoad() &&
+          sc) // skip AOT loads
          {
          J9Method *method = compilationInfo->_methodBeingCompiled->getMethodDetails().getMethod();
          if (!fej9->isAOT_DEPRECATED_DO_NOT_USE())
@@ -8894,14 +8896,16 @@ TR::CompilationInfoPerThreadBase::processSamplingJProfiling(CompilationInfoPerTh
          {
          // Check other preconditions
          if (!TR::CompilationInfo::isCompiled((J9Method*)method) &&
-            // GCR is needed for moving away from profiling
-            !options->getOption(TR_DisableGuardedCountingRecompilations) &&
-            // recompilation must be allowed to move away from profiling
-            options->allowRecompilation() && !options->getOption(TR_NoRecompile) &&
-            // exclude newInstance, methodHandle
-            (methodDetails.isOrdinaryMethod() || (methodDetails.isMethodInProgress() && options->getOption(TR_UseSamplingJProfilingForDLT))) &&
-            // exclude natives
-            !TR::CompilationInfo::isJNINative((J9Method*)method))
+             // GCR is needed for moving away from profiling
+             !options->getOption(TR_DisableGuardedCountingRecompilations) &&
+             // recompilation must be allowed to move away from profiling
+             options->allowRecompilation() && !options->getOption(TR_NoRecompile) &&
+             // exclude newInstance, methodHandle
+             (methodDetails.isOrdinaryMethod() ||
+              (methodDetails.isMethodInProgress() &&
+               options->getOption(TR_UseSamplingJProfilingForDLT))) &&
+               // exclude natives
+               !TR::CompilationInfo::isJNINative((J9Method*)method))
             // TODO: should we prevent SamplingJProfiling for AOT bodies?
             {
             // Check which heuristic is enabled
@@ -8911,7 +8915,7 @@ TR::CompilationInfoPerThreadBase::processSamplingJProfiling(CompilationInfoPerTh
                options->setDisabled(OMR::samplingJProfiling, false);
                }
             if (options->getOption(TR_UseSamplingJProfilingForLPQ) &&
-               compilationInfo->_methodBeingCompiled->_reqFromSecondaryQueue)
+                compilationInfo->_methodBeingCompiled->_reqFromSecondaryQueue)
                {
                // Enable SamplingJProfiling
                options->setDisabled(OMR::samplingJProfiling, false);
@@ -8922,7 +8926,7 @@ TR::CompilationInfoPerThreadBase::processSamplingJProfiling(CompilationInfoPerTh
                options->setGCRCount(500); // add 500 more invocations
                }
             if (options->getOption(TR_UseSamplingJProfilingForDLT) &&
-               (methodDetails.isMethodInProgress() || compileParameters->_optimizationPlan->isInducedByDLT()))
+                (methodDetails.isMethodInProgress() || compileParameters->_optimizationPlan->isInducedByDLT()))
                {
                // Enable SamplingJProfiling
                options->setDisabled(OMR::samplingJProfiling, false);
@@ -8953,8 +8957,8 @@ TR::CompilationInfoPerThreadBase::processSamplingJProfiling(CompilationInfoPerTh
             // When using SamplingJProfiling downgrade to cold to avoid overhead
             //
             if (!options->isDisabled(OMR::samplingJProfiling) &&
-               // Check whether we are allowed to downgrade
-               !options->getOption(TR_DontDowngradeToCold))
+                // Check whether we are allowed to downgrade
+                !options->getOption(TR_DontDowngradeToCold))
                {
                compileParameters->_optimizationPlan->setOptLevel(cold);
                compileParameters->_optimizationPlan->setDowngradedDueToSamplingJProfiling(true);
@@ -8983,7 +8987,7 @@ TR::CompilationInfoPerThreadBase::processSamplingJProfiling(CompilationInfoPerTh
                doJProfile = true;
                }
             else if (jitConfig->javaVM->phase != J9VM_PHASE_NOT_STARTUP ||
-               compilationInfo->getCompilationInfo()->getPersistentInfo()->getJitState() == STARTUP_STATE)
+                     compilationInfo->getCompilationInfo()->getPersistentInfo()->getJitState() == STARTUP_STATE)
                {
                // We want to JProfile this method, but maybe not just now
                if (compilationInfo->getCompilationInfo()->canProcessJProfilingRequest())
@@ -9060,7 +9064,7 @@ TR::CompilationInfoPerThreadBase::tweakNonAotLoadCompilationStrategy(Compilation
          // Strategy tweaks during STARTUP and IDLE
          //
          if (jitConfig->javaVM->phase != J9VM_PHASE_NOT_STARTUP ||
-            compilationInfo->getCompilationInfo()->getPersistentInfo()->getJitState() == IDLE_STATE)
+             compilationInfo->getCompilationInfo()->getPersistentInfo()->getJitState() == IDLE_STATE)
             {
             // Disable idiomRecognition during startup of -Xquickstart runs to save memory
             if (TR::Options::isQuickstartDetected())
@@ -9093,11 +9097,11 @@ TR::CompilationInfoPerThreadBase::tweakNonAotLoadCompilationStrategy(Compilation
             //
             static char *disableNextGenHCRDuringStartup = feGetEnv("TR_DisableNextGenHCRDuringStartup");
             static char *enableStartupNextGenHCRAtAllOpts = feGetEnv("TR_EnableStartupNextGenHCRAtAllOpts");
-            if (jitConfig->javaVM->phase != J9VM_PHASE_NOT_STARTUP
-                  && (disableNextGenHCRDuringStartup
-                     || compilationInfo->_methodBeingCompiled->isDLTCompile()
-                     || (options->getOptLevel() <= warm
-                        && !enableStartupNextGenHCRAtAllOpts)))
+            if (jitConfig->javaVM->phase != J9VM_PHASE_NOT_STARTUP &&
+                (disableNextGenHCRDuringStartup ||
+                 compilationInfo->_methodBeingCompiled->isDLTCompile() ||
+                 (options->getOptLevel() <= warm &&
+                  !enableStartupNextGenHCRAtAllOpts)))
                {
                options->setOption(TR_DisableNextGenHCR);
                }
@@ -9109,13 +9113,15 @@ TR::CompilationInfoPerThreadBase::tweakNonAotLoadCompilationStrategy(Compilation
 
             // Disable optServer for some classes of compilations during STARTUP and IDLE
             //
-            if (!options->getOption(TR_NoOptServer) && !options->getOption(TR_DisableSelectiveNoOptServer) && !options->getOption(TR_Server))
+            if (!options->getOption(TR_NoOptServer) &&
+                !options->getOption(TR_DisableSelectiveNoOptServer) &&
+                !options->getOption(TR_Server))
                {
                if (compilationInfo->_methodBeingCompiled->_oldStartPC == 0) // first time compilations
                   {
                   // sync requests during startup in an asynchronous environment
                   if (compilationInfo->_methodBeingCompiled->_priority >= CP_SYNC_MIN &&
-                     compilationInfo->getCompilationInfo()->asynchronousCompilation())
+                      compilationInfo->getCompilationInfo()->asynchronousCompilation())
                      {
                      options->setOption(TR_NoOptServer);
                      reducedWarm = true;
@@ -9163,8 +9169,10 @@ TR::CompilationInfoPerThreadBase::tweakNonAotLoadCompilationStrategy(Compilation
             if (options->getOption(TR_VaryInlinerAggressivenessWithTime))
                {
                int32_t inlAggr = compilationInfo->getCompilationInfo()->getPersistentInfo()->getInliningAggressiveness();
-               if (inlAggr != 100 && options->getOptLevel() == warm && !vm->isAOT_DEPRECATED_DO_NOT_USE() &&
-                  TR::Options::getCmdLineOptions()->getAggressivityLevel() == TR::Options::AGGRESSIVE_AOT)
+               if (inlAggr != 100 &&
+                   options->getOptLevel() == warm &&
+                   !vm->isAOT_DEPRECATED_DO_NOT_USE() &&
+                   TR::Options::getCmdLineOptions()->getAggressivityLevel() == TR::Options::AGGRESSIVE_AOT)
                   {
                   options->setInlinerCGBorderFrequency(9800 - 8 * inlAggr);
                   options->setInlinerCGColdBorderFrequency(7500 - 25 * inlAggr);
@@ -9193,12 +9201,14 @@ TR::CompilationInfoPerThreadBase::tweakNonAotLoadCompilationStrategy(Compilation
 
          // See if we need to insert GCR trees
          if (!methodDetails.supportsInvalidation() ||
-               options->getOptLevel() >= hot) // Workaround for a bug with GCR inserted in hot bodies. See #4549 for details.
+             options->getOptLevel() >= hot) // Workaround for a bug with GCR inserted in hot bodies. See #4549 for details.
             {                               // Upgrades hot-->scorching should be done through sampling, not GCR
             options->setOption(TR_DisableGuardedCountingRecompilations);
             }
-         else if (vm->isAOT_DEPRECATED_DO_NOT_USE() || (options->getOptLevel() < warm &&
-            !(compilationInfo->_methodBeingCompiled->_jitStateWhenQueued == IDLE_STATE && compilationInfo->getCompilationInfo()->getPersistentInfo()->getJitState() == IDLE_STATE)))
+         else if (vm->isAOT_DEPRECATED_DO_NOT_USE() ||
+                  (options->getOptLevel() < warm &&
+                   !(compilationInfo->_methodBeingCompiled->_jitStateWhenQueued == IDLE_STATE &&
+                     compilationInfo->getCompilationInfo()->getPersistentInfo()->getJitState() == IDLE_STATE)))
             {
             options->setInsertGCRTrees(); // This is a recommendation not a directive
             }
@@ -9262,7 +9272,9 @@ TR::CompilationInfoPerThreadBase::initializeNonOutOfProcessComp(CompilationInfoP
          options->setOption(TR_DisableTOC);
          }
       // Determine if known annotations exist and if so, keep annotations enabled
-      if (!compilationInfo->_methodBeingCompiled->isAotLoad() && !vm->isAOT_DEPRECATED_DO_NOT_USE() && options->getOption(TR_EnableAnnotations))
+      if (!compilationInfo->_methodBeingCompiled->isAotLoad() &&
+          !vm->isAOT_DEPRECATED_DO_NOT_USE() &&
+          options->getOption(TR_EnableAnnotations))
          {
          if (!TR_AnnotationBase::scanForKnownAnnotationsAndRecord(&compilationInfo->_compInfo, methodDetails.getMethod(), vmThread->javaVM, vm))
             options->setOption(TR_EnableAnnotations,false);
@@ -9304,7 +9316,7 @@ TR::CompilationInfoPerThreadBase::initializeNonOutOfProcessComp(CompilationInfoP
       // (just in case it fails again). Note that the log file must be specified.
       //
       if (options->getOption(TR_EnableLastCompilationRetrialLogging) &&
-            (compilationInfo->_methodBeingCompiled->_compilationAttemptsLeft == 1))
+          (compilationInfo->_methodBeingCompiled->_compilationAttemptsLeft == 1))
          {
          if (options->getLogFile() != NULL)
             options->setOption(TR_TraceAll);
@@ -9515,9 +9527,9 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
          TR_ASSERT(p->_optimizationPlan, "Must have an optimization plan");
 
          if (isOutOfProcessCompReq(that))
-               initializeOutOfProcessComp(that, p, vm, options);
+            initializeOutOfProcessComp(that, p, vm, options);
          else
-               initializeNonOutOfProcessComp(that, compilee, p, filterInfo, details, options, reducedWarm, vm);
+            initializeNonOutOfProcessComp(that, compilee, p, filterInfo, details, options, reducedWarm, vm);
 
          uint64_t proposedScratchMemoryLimit = static_cast<uint64_t>(TR::Options::getScratchSpaceLimit());
 
