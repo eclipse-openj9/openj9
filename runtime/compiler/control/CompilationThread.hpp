@@ -193,6 +193,7 @@ class CompilationInfoPerThreadBase
                                 );
 #endif
 
+   static void setJitDumpSpecificOptions(CompilationInfoPerThreadBase *compilationInfo, TR::IlGeneratorMethodDetails &methodDetails, TR::Options *&options, uint64_t &proposedScratchMemoryLimit);
    static void processSamplingJProfiling(CompilationInfoPerThreadBase *compilationInfo, CompileParameters *compileParameters, TR::IlGeneratorMethodDetails &methodDetails, TR_J9VMBase *vm, TR::Options *&options);
    static void tweakNonAotLoadCompilationStrategy(CompilationInfoPerThreadBase *compilationInfo, CompileParameters *compileParameters, TR::IlGeneratorMethodDetails &methodDetails, TR_J9VMBase *vm, TR::Options *&options, bool &reducedWarm);
    static bool aotCompilationReUpgradedToWarm(CompilationInfoPerThreadBase *compilationInfo, CompileParameters *compileParameters, TR_OpaqueMethodBlock *method);

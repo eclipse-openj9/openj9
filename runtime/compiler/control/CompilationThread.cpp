@@ -8561,6 +8561,89 @@ TR::CompilationInfoPerThreadBase::aotCompilationReUpgradedToWarm(CompilationInfo
    }
 
 void
+TR::CompilationInfoPerThreadBase::setJitDumpSpecificOptions(CompilationInfoPerThreadBase *compilationInfo, TR::IlGeneratorMethodDetails &methodDetails, TR::Options *&options, uint64_t &proposedScratchMemoryLimit)
+   {
+      if (methodDetails.isJitDumpMethod() && options->getDebug())
+         {
+         auto jitDumpDetails = static_cast<J9::JitDumpMethodDetails&>(methodDetails);
+         if (jitDumpDetails.getOptionsFromOriginalCompile() != NULL)
+            {
+            // We have the original `TR::Options` from the crashed compilation. The above logic which adjusts
+            // various options is timing sensitive, and can be dependent on the VM state (startup vs not), which
+            // can drastically change how the compilation looks (ex. is NextGenHCR enabled, is SVM to be used).
+            //
+            // Ideally we would just copy construct the current options from the original crashed compile, however
+            // this is currently not possible. Although a copy constructor exists, it is not a good idea to use it
+            // here due to a number of problems:
+            //
+            // 1. The non-copy constructor takes care of initializing tracing, among other things, which may have
+            //    not been active on the original compilation. There is currently no easy way for us to reinitialize
+            //    such logic.
+            //
+            // 2. Options can be set at any point during the compilation, and decisions to set options can be based
+            //    off of whether other options are set or not. This is very problematic. For example during the
+            //    original compilation we may have set option A at some point X during the compilation thus changing
+            //    the value of that option from that point onward. This means that if we were to copy construct the
+            //    set of options from the original compile right here for the JitDump compilation then option A
+            //    would yield a different value from the start of the compilation until point X.
+            //
+            // This should eventually be improved if the options framework is ever simplified to contain only option
+            // values, not things like optimization plans, start PCs, compile thread IDs, etc.
+            //
+            // Because of this limitation we do our best to only copy options which are known to be timing sensitive
+            // and that could change between the JitDump compilation and the original compilation. This is not a
+            // silver bullet, and should be updated as we encounter more sources of non-determinism for JitDump
+            // recompilation.
+
+            TR::Options* optionsFromOriginalCompile = jitDumpDetails.getOptionsFromOriginalCompile();
+
+            options->setOption(TR_UseSymbolValidationManager, optionsFromOriginalCompile->getOption(TR_UseSymbolValidationManager));
+            options->setOption(TR_DisableGuardedCountingRecompilations, optionsFromOriginalCompile->getOption(TR_DisableGuardedCountingRecompilations));
+            options->setOption(TR_DisableNextGenHCR, optionsFromOriginalCompile->getOption(TR_DisableNextGenHCR));
+            }
+
+         options->setOption(TR_TraceAll);
+         options->setOption(TR_EnableParanoidOptCheck);
+
+         // Tracing higher optimization level compilations may put us past the allocation limit and result in an
+         // std::bad_alloc exception being thrown. To maximize our chances of getting a trace log we artificially
+         // inflate the scratch space memory for JitDump compilations.
+         proposedScratchMemoryLimit = UINT_MAX;
+
+         // Trace crashing optimization or the codegen depending on where we crashed
+         UDATA vmState = compilationInfo->_compInfo.getVMStateOfCrashedThread();
+         if ((vmState & J9VMSTATE_JIT_CODEGEN) == J9VMSTATE_JIT_CODEGEN)
+            {
+            options->setOption(TR_TraceCG);
+            options->setOption(TR_TraceRA);
+            }
+         else if ((vmState & J9VMSTATE_JIT_OPTIMIZER) == J9VMSTATE_JIT_OPTIMIZER)
+            {
+            OMR::Optimizations opt = static_cast<OMR::Optimizations>((vmState & 0xFF00) >> 8);
+            if (0 < opt && opt < OMR::numOpts)
+               {
+               options->enableTracing(opt);
+               }
+
+            // Enable additional tracing which are not part of standard optimizer tracing infrastructure
+            switch (opt)
+               {
+               case OMR::Optimizations::inlining:
+               case OMR::Optimizations::targetedInlining:
+               case OMR::Optimizations::trivialInlining:
+                  {
+                  options->setOption(TR_DebugInliner);
+                  break;
+                  }
+               default:
+                  break;
+               }
+            }
+         }
+   }
+
+
+void
 TR::CompilationInfoPerThreadBase::processSamplingJProfiling(CompilationInfoPerThreadBase *compilationInfo, CompileParameters *compileParameters, TR::IlGeneratorMethodDetails &methodDetails, TR_J9VMBase *vm, TR::Options *&options)
    {
       J9Method *method = methodDetails.getMethod();
@@ -9199,83 +9282,7 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
          uint64_t proposedScratchMemoryLimit = static_cast<uint64_t>(TR::Options::getScratchSpaceLimit());
 
          // Finally, set JitDump specific options as the last step of options adjustments
-         if (details.isJitDumpMethod() && options->getDebug())
-            {
-            auto jitDumpDetails = static_cast<J9::JitDumpMethodDetails&>(details);
-            if (jitDumpDetails.getOptionsFromOriginalCompile() != NULL)
-               {
-               // We have the original `TR::Options` from the crashed compilation. The above logic which adjusts
-               // various options is timing sensitive, and can be dependent on the VM state (startup vs not), which
-               // can drastically change how the compilation looks (ex. is NextGenHCR enabled, is SVM to be used).
-               //
-               // Ideally we would just copy construct the current options from the original crashed compile, however
-               // this is currently not possible. Although a copy constructor exists, it is not a good idea to use it
-               // here due to a number of problems:
-               //
-               // 1. The non-copy constructor takes care of initializing tracing, among other things, which may have
-               //    not been active on the original compilation. There is currently no easy way for us to reinitialize
-               //    such logic.
-               //
-               // 2. Options can be set at any point during the compilation, and decisions to set options can be based
-               //    off of whether other options are set or not. This is very problematic. For example during the
-               //    original compilation we may have set option A at some point X during the compilation thus changing
-               //    the value of that option from that point onward. This means that if we were to copy construct the
-               //    set of options from the original compile right here for the JitDump compilation then option A
-               //    would yield a different value from the start of the compilation until point X.
-               //
-               // This should eventually be improved if the options framework is ever simplified to contain only option
-               // values, not things like optimization plans, start PCs, compile thread IDs, etc.
-               //
-               // Because of this limitation we do our best to only copy options which are known to be timing sensitive
-               // and that could change between the JitDump compilation and the original compilation. This is not a
-               // silver bullet, and should be updated as we encounter more sources of non-determinism for JitDump
-               // recompilation.
-
-               TR::Options* optionsFromOriginalCompile = jitDumpDetails.getOptionsFromOriginalCompile();
-
-               options->setOption(TR_UseSymbolValidationManager, optionsFromOriginalCompile->getOption(TR_UseSymbolValidationManager));
-               options->setOption(TR_DisableGuardedCountingRecompilations, optionsFromOriginalCompile->getOption(TR_DisableGuardedCountingRecompilations));
-               options->setOption(TR_DisableNextGenHCR, optionsFromOriginalCompile->getOption(TR_DisableNextGenHCR));
-               }
-
-            options->setOption(TR_TraceAll);
-            options->setOption(TR_EnableParanoidOptCheck);
-
-            // Tracing higher optimization level compilations may put us past the allocation limit and result in an
-            // std::bad_alloc exception being thrown. To maximize our chances of getting a trace log we artificially
-            // inflate the scratch space memory for JitDump compilations.
-            proposedScratchMemoryLimit = UINT_MAX;
-
-            // Trace crashing optimization or the codegen depending on where we crashed
-            UDATA vmState = that->_compInfo.getVMStateOfCrashedThread();
-            if ((vmState & J9VMSTATE_JIT_CODEGEN) == J9VMSTATE_JIT_CODEGEN)
-               {
-               options->setOption(TR_TraceCG);
-               options->setOption(TR_TraceRA);
-               }
-            else if ((vmState & J9VMSTATE_JIT_OPTIMIZER) == J9VMSTATE_JIT_OPTIMIZER)
-               {
-               OMR::Optimizations opt = static_cast<OMR::Optimizations>((vmState & 0xFF00) >> 8);
-               if (0 < opt && opt < OMR::numOpts)
-                  {
-                  options->enableTracing(opt);
-                  }
-
-               // Enable additional tracing which are not part of standard optimizer tracing infrastructure
-               switch (opt)
-                  {
-                  case OMR::Optimizations::inlining:
-                  case OMR::Optimizations::targetedInlining:
-                  case OMR::Optimizations::trivialInlining:
-                     {
-                     options->setOption(TR_DebugInliner);
-                     break;
-                     }
-                  default:
-                     break;
-                  }
-               }
-            }
+         setJitDumpSpecificOptions(that, details, options, proposedScratchMemoryLimit);
 
          // In JITServer, we would like to use JITClient's processor info for the compilation
          // The following code effectively replaces the cpu with client's cpu through the getProcessorDescription() that has JITServer support
