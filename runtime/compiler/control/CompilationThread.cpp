@@ -8889,7 +8889,7 @@ TR::CompilationInfoPerThreadBase::tweakNonAotLoadCompilationStrategy(Compilation
    }
 
 void
-TR::CompilationInfoPerThreadBase::processNonOutOfProcessComp(CompilationInfoPerThreadBase *compilationInfo, TR_ResolvedMethod *compilee, CompileParameters *compileParameters, TR_FilterBST *filterInfo, TR::IlGeneratorMethodDetails &methodDetails, TR::Options *&options, bool &reducedWarm, TR_J9VMBase *vm)
+TR::CompilationInfoPerThreadBase::initializeNonOutOfProcessComp(CompilationInfoPerThreadBase *compilationInfo, TR_ResolvedMethod *compilee, CompileParameters *compileParameters, TR_FilterBST *filterInfo, TR::IlGeneratorMethodDetails &methodDetails, TR::Options *&options, bool &reducedWarm, TR_J9VMBase *vm)
    {
       J9VMThread *vmThread = compileParameters->_vmThread;
       TR_OpaqueMethodBlock *method = (TR_OpaqueMethodBlock *) methodDetails.getMethod();
@@ -9005,7 +9005,7 @@ TR::CompilationInfoPerThreadBase::processNonOutOfProcessComp(CompilationInfoPerT
    }
 
 void
-TR::CompilationInfoPerThreadBase::processOutOfProcessComp(CompilationInfoPerThreadBase *compilationInfo, CompileParameters *compileParameters, TR_J9VMBase *vm, TR::Options *&options)
+TR::CompilationInfoPerThreadBase::initializeOutOfProcessComp(CompilationInfoPerThreadBase *compilationInfo, CompileParameters *compileParameters, TR_J9VMBase *vm, TR::Options *&options)
    {
 #if defined(J9VM_OPT_JITSERVER)
       auto compInfoPTRemote = static_cast<TR::CompilationInfoPerThreadRemote *>(compilationInfo);
@@ -9192,9 +9192,9 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
          TR_ASSERT(p->_optimizationPlan, "Must have an optimization plan");
 
          if (isOutOfProcessCompReq(that))
-               processOutOfProcessComp(that, p, vm, options);
+               initializeOutOfProcessComp(that, p, vm, options);
          else
-               processNonOutOfProcessComp(that, compilee, p, filterInfo, details, options, reducedWarm, vm);
+               initializeNonOutOfProcessComp(that, compilee, p, filterInfo, details, options, reducedWarm, vm);
 
          uint64_t proposedScratchMemoryLimit = static_cast<uint64_t>(TR::Options::getScratchSpaceLimit());
 
