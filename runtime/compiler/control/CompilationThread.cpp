@@ -8561,6 +8561,86 @@ TR::CompilationInfoPerThreadBase::aotCompilationReUpgradedToWarm(CompilationInfo
    }
 
 void
+TR::CompilationInfoPerThreadBase::storeHintsInTheSCC(CompilationInfoPerThreadBase *compilationInfo, TR_J9VMBase *vm, TR_J9VMBase *fej9, TR_MethodMetaData *metaData, TR_CatchBlockProfileInfo *profileInfo, TR::SegmentAllocator &scratchSegmentProvider)
+   {
+      // Store hints in the SCC
+      TR_J9SharedCache *sc = (TR_J9SharedCache *) (vm->sharedCache());
+      J9JITConfig *jitConfig = compilationInfo->_jitConfig;
+      if (metaData  && !compilationInfo->_methodBeingCompiled->isDLTCompile() &&
+         !compilationInfo->_methodBeingCompiled->isAotLoad() && sc) // skip AOT loads
+         {
+         J9Method *method = compilationInfo->_methodBeingCompiled->getMethodDetails().getMethod();
+         if (!fej9->isAOT_DEPRECATED_DO_NOT_USE())
+            {
+            bool isEDOCompilation = false;
+            // TODO: how to avoid compiler_tmp workaround?
+            // TR_CatchBlockProfileInfo * profileInfo = TR_CatchBlockProfileInfo::get(compiler);
+            if (profileInfo && profileInfo->getCatchCounter() >= TR_CatchBlockProfileInfo::EDOThreshold)
+               {
+               isEDOCompilation = true;
+               sc->addHint(method, TR_HintEDO);
+               }
+
+            // There is the possibility that a hot/scorching compilation happened outside
+            // startup and with hints we move this expensive compilation during startup
+            // thus affecting startup time
+            // To minimize risk, add hot/scorching hints only if we are in startup mode
+            if (TR::Compiler->vm.isVMInStartupPhase(jitConfig))
+               {
+               TR_Hotness hotness = compilationInfo->_methodBeingCompiled->_optimizationPlan->getOptLevel();
+               if (hotness == hot)
+                  {
+                  if (!isEDOCompilation)
+                     sc->addHint(method, TR_HintHot);
+                  }
+               else if (hotness == scorching)
+                  {
+                  sc->addHint(method, TR_HintScorching);
+                  }
+               // We also want to add a hint about methods compiled (not AOTed) during startup
+               // In subsequent runs we should give such method lower counts the idea being
+               // that if I take the time to compile method, why not do it sooner
+               sc->addHint(method, TR_HintMethodCompiledDuringStartup);
+               }
+            }
+
+         // If this is a cold/warm compilation that takes too much memory
+         // add a hint to avoid queuing a forced upgrade
+         // Look only during startup to avoid creating too many hints.
+         // If SCC is larger we could store hints for more methods
+         //
+         if (TR::Compiler->vm.isVMInStartupPhase(jitConfig))
+            {
+            if (scratchSegmentProvider.regionBytesAllocated() > TR::Options::_memExpensiveCompThreshold)
+               {
+               TR_Hotness hotness = compilationInfo->_methodBeingCompiled->_optimizationPlan->getOptLevel();
+               if (hotness <= cold)
+                  {
+                  sc->addHint(method, TR_HintLargeMemoryMethodC);
+                  }
+               else if (hotness == warm)
+                  {
+                  sc->addHint(method, TR_HintLargeMemoryMethodW);
+                  }
+               }
+
+            if (compilationInfo->getCompilationInfo()->getMethodQueueSize() - compilationInfo->getQszWhenCompStarted() > TR::Options::_cpuExpensiveCompThreshold)
+               {
+               TR_Hotness hotness = compilationInfo->_methodBeingCompiled->_optimizationPlan->getOptLevel();
+               if (hotness <= cold)
+                  {
+                  sc->addHint(method, TR_HintLargeCompCPUC);
+                  }
+               else if (hotness == warm)
+                  {
+                  sc->addHint(method, TR_HintLargeCompCPUW);
+                  }
+               }
+            }
+         }
+   }
+
+void
 TR::CompilationInfoPerThreadBase::initializeCompiler(CompilationInfoPerThreadBase *compilationInfo, CompileParameters *compileParameters, TR_ResolvedMethod *&compilee, TR::Compilation *&compiler_tmp, TR::IlGeneratorMethodDetails &methodDetails, TR::Options *&options, TR_J9VMBase *vm, TR_RelocationRuntime *reloRuntime, uint64_t &proposedScratchMemoryLimit, TR::SegmentAllocator &scratchSegmentProvider)
    {
       // In JITServer, we would like to use JITClient's processor info for the compilation
@@ -9446,6 +9526,7 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
 
          initializeCompiler(that, p, compilee, compiler_tmp, details, options, vm, reloRuntime, proposedScratchMemoryLimit, scratchSegmentProvider);
 
+         // TODO: how to avoid compiler_tmp workaround?
          compiler = compiler_tmp;
 
          if (debug("traceInfo") && optionSetIndex > 0)
@@ -9542,80 +9623,10 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
 
    try
       {
-      // Store hints in the SCC
-      TR_J9SharedCache *sc = (TR_J9SharedCache *) (vm->sharedCache());
-      if (metaData  && !that->_methodBeingCompiled->isDLTCompile() &&
-         !that->_methodBeingCompiled->isAotLoad() && sc) // skip AOT loads
-         {
-         J9Method *method = that->_methodBeingCompiled->getMethodDetails().getMethod();
-         TR_J9VMBase *fej9 = (TR_J9VMBase *)(compiler->fej9());
-         if (!fej9->isAOT_DEPRECATED_DO_NOT_USE())
-            {
-            bool isEDOCompilation = false;
-            TR_CatchBlockProfileInfo * profileInfo = TR_CatchBlockProfileInfo::get(compiler);
-            if (profileInfo && profileInfo->getCatchCounter() >= TR_CatchBlockProfileInfo::EDOThreshold)
-               {
-               isEDOCompilation = true;
-               sc->addHint(method, TR_HintEDO);
-               }
-
-            // There is the possibility that a hot/scorching compilation happened outside
-            // startup and with hints we move this expensive compilation during startup
-            // thus affecting startup time
-            // To minimize risk, add hot/scorching hints only if we are in startup mode
-            if (TR::Compiler->vm.isVMInStartupPhase(jitConfig))
-               {
-               TR_Hotness hotness = that->_methodBeingCompiled->_optimizationPlan->getOptLevel();
-               if (hotness == hot)
-                  {
-                  if (!isEDOCompilation)
-                     sc->addHint(method, TR_HintHot);
-                  }
-               else if (hotness == scorching)
-                  {
-                  sc->addHint(method, TR_HintScorching);
-                  }
-               // We also want to add a hint about methods compiled (not AOTed) during startup
-               // In subsequent runs we should give such method lower counts the idea being
-               // that if I take the time to compile method, why not do it sooner
-               sc->addHint(method, TR_HintMethodCompiledDuringStartup);
-               }
-            }
-
-         // If this is a cold/warm compilation that takes too much memory
-         // add a hint to avoid queuing a forced upgrade
-         // Look only during startup to avoid creating too many hints.
-         // If SCC is larger we could store hints for more methods
-         //
-         if (TR::Compiler->vm.isVMInStartupPhase(jitConfig))
-            {
-            if (scratchSegmentProvider.regionBytesAllocated() > TR::Options::_memExpensiveCompThreshold)
-               {
-               TR_Hotness hotness = that->_methodBeingCompiled->_optimizationPlan->getOptLevel();
-               if (hotness <= cold)
-                  {
-                  sc->addHint(method, TR_HintLargeMemoryMethodC);
-                  }
-               else if (hotness == warm)
-                  {
-                  sc->addHint(method, TR_HintLargeMemoryMethodW);
-                  }
-               }
-
-            if (that->getCompilationInfo()->getMethodQueueSize() - that->getQszWhenCompStarted() > TR::Options::_cpuExpensiveCompThreshold)
-               {
-               TR_Hotness hotness = that->_methodBeingCompiled->_optimizationPlan->getOptLevel();
-               if (hotness <= cold)
-                  {
-                  sc->addHint(method, TR_HintLargeCompCPUC);
-                  }
-               else if (hotness == warm)
-                  {
-                  sc->addHint(method, TR_HintLargeCompCPUW);
-                  }
-               }
-            }
-         }
+      // TODO: how to avoid compiler_tmp workaround?
+      TR_J9VMBase *fej9 = (TR_J9VMBase *)(compiler->fej9());
+      TR_CatchBlockProfileInfo * profileInfo = TR_CatchBlockProfileInfo::get(compiler);
+      storeHintsInTheSCC(that, vm, fej9, metaData, profileInfo, scratchSegmentProvider);
       }
 #if defined(J9VM_OPT_JITSERVER)
    catch (const JITServer::StreamFailure &e)
