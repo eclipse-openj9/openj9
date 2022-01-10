@@ -4419,6 +4419,7 @@ static int32_t startupPhaseId = 0;
 static bool firstIdleStateAfterStartup = false;
 static uint64_t timeToAllocateTrackingHT = 0xffffffffffffffff; // never
 
+#define GCR_HYSTERESIS 100
 
 static void jitStateLogic(J9JITConfig * jitConfig, TR::CompilationInfo * compInfo, uint32_t diffTime)
    {
@@ -4550,7 +4551,6 @@ static void jitStateLogic(J9JITConfig * jitConfig, TR::CompilationInfo * compInf
    //t= 98186 oldState=3 newState=2 cSamples=125 iSamples= 11 comp=239 recomp=  4, Q_SZ=114
 
    static uint64_t lastTimeInStartupMode = 0;
-   #define GCR_HYSTERESIS 100
 
    // current JPQ implementation does not use this, but it may need to be re-animated shortly so leaving commented out for now
    /*static char *disableJProfilingRecomp = feGetEnv("TR_DisableJProfilingRecomp");
@@ -6178,6 +6178,23 @@ static int32_t J9THREAD_PROC samplerThreadProc(void * entryarg)
 
             if (compInfo->getCpuUtil()->isCpuUsageCircularBufferFunctional())
                compInfo->getCpuUtil()->updateCpuUsageCircularBuffer(jitConfig);
+            }
+
+         // Determine if we need to turn GCR counting off. GCR counting is known to have high overhead.
+         // If more than a certain number of GCR induced compilations is queued, turn off counting.
+         if (persistentInfo->_countForRecompile) // No need to check if GCR is disabled
+            {
+            if (TR::Options::getAOTCmdLineOptions()->getOption(TR_EnableMultipleGCRPeriods) ||
+                TR::Options::getJITCmdLineOptions()->getOption(TR_EnableMultipleGCRPeriods))
+               {
+               if (compInfo->getNumGCRRequestsQueued() > TR::Options::_GCRQueuedThresholdForCounting + GCR_HYSTERESIS)
+                  {
+                  persistentInfo->_countForRecompile = 0; // disable counting
+                  // write a message in the vlog
+                  if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJitState, TR_VerbosePerformance))
+                     TR_VerboseLog::writeLineLocked(TR_Vlog_INFO,"t=%6u GCR disabled; GCR queued=%d", (uint32_t)crtTime, compInfo->getNumGCRRequestsQueued());
+                  }
+               }
             }
 
          // sample every _classLoadingPhaseInterval (i.e. 500 ms)
