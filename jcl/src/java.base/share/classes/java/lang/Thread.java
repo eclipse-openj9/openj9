@@ -134,7 +134,7 @@ public class Thread implements Runnable {
 	int threadLocalRandomSecondarySeed;
 
 /**
- * 	Constructs a new Thread with no runnable object and a newly generated name.
+ * Constructs a new Thread with no runnable object and a newly generated name.
  * The new Thread will belong to the same ThreadGroup as the Thread calling
  * this constructor.
  *
@@ -187,7 +187,7 @@ private Thread(String vmName, Object vmThreadGroup, int vmPriority, boolean vmIs
 	/*[PR 1FEVFSU] The rest of the configuration/initialization is shared between this constructor and the public one */
 	initialize(booting, threadGroup, null, null, true);	// no parent Thread
 	/*[PR 115667, CMVC 94448] In 1.5 and CDC/Foundation 1.1, thread is added to ThreadGroup when started */
- 	this.group.add(this);
+	this.group.add(this);
 
 	/*[PR 100718] Initialize System.in after the main thread */
 	if (booting) {
@@ -250,7 +250,7 @@ void completeInitialization() {
 }
 
 /**
- * 	Constructs a new Thread with a runnable object and a newly generated name.
+ * Constructs a new Thread with a runnable object and a newly generated name.
  * The new Thread will belong to the same ThreadGroup as the Thread calling
  * this constructor.
  *
@@ -300,7 +300,7 @@ public Thread(Runnable runnable, String threadName) {
 
 
 /**
- * 	Constructs a new Thread with no runnable object and the name provided.
+ * Constructs a new Thread with no runnable object and the name provided.
  * The new Thread will belong to the same ThreadGroup as the Thread calling
  * this constructor.
  *
@@ -314,7 +314,7 @@ public Thread(String threadName) {
 }
 
 /**
- * 	Constructs a new Thread with a runnable object and a newly generated name.
+ * Constructs a new Thread with a runnable object and a newly generated name.
  * The new Thread will belong to the ThreadGroup passed as parameter.
  *
  * @param		group			ThreadGroup to which the new Thread will belong
@@ -335,7 +335,7 @@ public Thread(ThreadGroup group, Runnable runnable) {
 }
 
 /**
- * 	Constructs a new Thread with a runnable object, the given name and
+ * Constructs a new Thread with a runnable object, the given name and
  * belonging to the ThreadGroup passed as parameter.
  *
  * @param		group			ThreadGroup to which the new Thread will belong
@@ -385,7 +385,7 @@ public Thread(ThreadGroup group, Runnable runnable, String threadName, long stac
 /*[ENDIF]*/
 
 /**
- * 	Constructs a new Thread with a runnable object, the given name and
+ * Constructs a new Thread with a runnable object, the given name and
  * belonging to the ThreadGroup passed as parameter.
  *
  * @param		group			ThreadGroup to which the new Thread will belong
@@ -419,7 +419,7 @@ private Thread(ThreadGroup group, Runnable runnable, String threadName, AccessCo
 	if (threadName==null) throw new NullPointerException();
 	this.name = threadName;		// We avoid the public API 'setName', since it does redundant work (checkAccess)
 	this.runnable = runnable;	// No API available here, so just direct access to inst. var.
-	Thread currentThread  = currentThread();
+	Thread currentThread = currentThread();
 
 	this.isDaemon = currentThread.isDaemon(); // We avoid the public API 'setDaemon', since it does redundant work (checkAccess)
 
@@ -445,7 +445,7 @@ private Thread(ThreadGroup group, Runnable runnable, String threadName, AccessCo
 }
 
 /**
- * 	Initialize the thread according to its parent Thread and the ThreadGroup
+ * Initialize the thread according to its parent Thread and the ThreadGroup
  * where it should be added.
  *
  * @param		booting					Indicates if the JVM is booting up, i.e. if the main thread is being attached
@@ -534,7 +534,7 @@ private void initialize(boolean booting, ThreadGroup threadGroup, Thread parentT
 }
 
 /**
- * 	Constructs a new Thread with no runnable object, the given name and
+ * Constructs a new Thread with no runnable object, the given name and
  * belonging to the ThreadGroup passed as parameter.
  *
  * @param		group			ThreadGroup to which the new Thread will belong
@@ -584,7 +584,7 @@ public final void checkAccess() {
 }
 
 /**
- * 	Returns the number of stack frames in this thread.
+ * Returns the number of stack frames in this thread.
  *
  * @return		Number of stack frames
  *
@@ -617,7 +617,7 @@ public static native Thread currentThread();
 
 /*[IF JAVA_SPEC_VERSION < 11]*/
 /**
- * 	Destroys the receiver without any monitor cleanup. Not implemented.
+ * Destroys the receiver without any monitor cleanup. Not implemented.
  *
  * @deprecated May cause deadlocks.
  */
@@ -633,14 +633,14 @@ public void destroy() {
 /*[ENDIF] JAVA_SPEC_VERSION < 11 */
 
 /**
- * 	Prints a text representation of the stack for this Thread.
+ * Prints a text representation of the stack for this Thread.
  */
 public static void dumpStack() {
 	new Throwable().printStackTrace();
 }
 
 /**
- * 	Copies an array with all Threads which are in the same ThreadGroup as
+ * Copies an array with all Threads which are in the same ThreadGroup as
  * the receiver - and subgroups - into the array <code>threads</code>
  * passed as parameter. If the array passed as parameter is too small no
  * exception is thrown - the extra elements are simply not copied.
@@ -661,7 +661,7 @@ public static int enumerate(Thread[] threads) {
 
 
 /**
- * 	Returns the context ClassLoader for the receiver.
+ * Returns the context ClassLoader for the receiver.
  *
  * @return		ClassLoader		The context ClassLoader
  *
@@ -994,7 +994,7 @@ public void run() {
 }
 
 /**
- * 	Set the context ClassLoader for the receiver.
+ * Set the context ClassLoader for the receiver.
  *
  * @param		cl		The context ClassLoader
  *
@@ -1187,11 +1187,11 @@ public synchronized void start() {
 
 			success = true;
 		}
- 	} finally {
- 		if (!success && !started) {
- 	 		group.remove(this);
- 		}
- 	}
+	} finally {
+		if (!success && !started) {
+			group.remove(this);
+		}
+	}
 }
 
 private native void startImpl();
@@ -1400,7 +1400,7 @@ public StackTraceElement[] getStackTrace() {
  * @return an array of StackTraceElement
  *
  * @throws SecurityException if the RuntimePermission "getStackTrace" is not allowed, or the
- * 		RuntimePermission "modifyThreadGroup" is not allowed
+ *      RuntimePermission "modifyThreadGroup" is not allowed
  *
  * @see #getStackTrace()
  */
@@ -1415,8 +1415,8 @@ public static Map<Thread, StackTraceElement[]> getAllStackTraces() {
 	int count = systemThreadGroup.activeCount() + 20;
 	Thread[] threads = new Thread[count];
 	count = systemThreadGroup.enumerate(threads);
-	java.util.Map result = new java.util.HashMap(count*4/3);
-	for (int i=0; i<count; i++) {
+	Map<Thread, StackTraceElement[]> result = new java.util.HashMap<>(count);
+	for (int i = 0; i < count; i++) {
 		result.put(threads[i], threads[i].getStackTrace());
 	}
 	return result;
@@ -1481,7 +1481,7 @@ public static UncaughtExceptionHandler getDefaultUncaughtExceptionHandler() {
 }
 
 /**
- * Set the UncaughtExceptionHandler used for new  Threads.
+ * Set the UncaughtExceptionHandler used for new Threads.
  *
  * @param handler the UncaughtExceptionHandler to set
  *
