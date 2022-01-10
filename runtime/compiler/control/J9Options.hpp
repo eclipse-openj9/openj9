@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -140,6 +140,7 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
    static int32_t _profilerStackSize;
    static int32_t _smallMethodBytecodeSizeThreshold; // used on setting invocation counts
    static int32_t _smallMethodBytecodeSizeThresholdForCold; // used in GCR filtering
+   static int32_t _smallMethodBytecodeSizeThresholdForJITServerAOTCache; // for determining which methods to convert to AOT done remotely
 
    static int32_t _countForMethodsCompiledDuringStartup;
    static int32_t getCountForMethodsCompiledDuringStartup() { return _countForMethodsCompiledDuringStartup; }
