@@ -419,11 +419,11 @@ BEGIN_HELPER(jitReleaseVMAccess)
 END_HELPER(jitReleaseVMAccess)
 
 START_PROC(cInterpreterFromJIT)
-    sd a0,M(J9VMTHREAD, J9TR_VMThread_returnValue)
-    sd a1,M(J9VMTHREAD, J9TR_VMThread_returnValue2)
-    ld a0,M(J9VMTHREAD, J9TR_VMThread_javaVM)
-    ld a0,M(a0, J9TR_JavaVM_cInterpreter)
-    jr a0
+    sd a0,M(J9VMTHREAD, J9TR_VMThread_returnValue)   # store into J9TR_VMThread_returnValue
+    sd a1,M(J9VMTHREAD, J9TR_VMThread_returnValue2)  # store into J9TR_VMThread_returnValue2
+    ld a0,M(J9VMTHREAD, J9TR_VMThread_javaVM)        # load javaVM into a0
+    ld a0,M(a0, J9TR_JavaVM_cInterpreter)            # load javaVM->cInterpreter into a0
+    jr a0                                            # jump to intepreter
 END_PROC(cInterpreterFromJIT)
 
 BEGIN_RETURN_POINT(jitExitInterpreter0)

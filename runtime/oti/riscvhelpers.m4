@@ -345,11 +345,11 @@ define({SAVE_PRESERVED_REGS},{
     sd  s6,  JIT_GPR_SAVE_SLOT(s6)
     sd  s7,  JIT_GPR_SAVE_SLOT(s7)
     sd  s8,  JIT_GPR_SAVE_SLOT(s8)
-    sd  s9,  JIT_GPR_SAVE_SLOT(s9)
+    sd  s9,  JIT_GPR_SAVE_SLOT(s9)                  # save preserved regs (end)
 })
 
 define({RESTORE_PRESERVED_REGS},{
-    ld  s0,  JIT_GPR_SAVE_SLOT(s0)
+    ld  s0,  JIT_GPR_SAVE_SLOT(s0)                  # restore preserved regs
     ld  s1,  JIT_GPR_SAVE_SLOT(s1)
 
     ld  s2,  JIT_GPR_SAVE_SLOT(s2)
@@ -359,7 +359,7 @@ define({RESTORE_PRESERVED_REGS},{
     ld  s6,  JIT_GPR_SAVE_SLOT(s6)
     ld  s7,  JIT_GPR_SAVE_SLOT(s7)
     ld  s8,  JIT_GPR_SAVE_SLOT(s8)
-    ld  s9,  JIT_GPR_SAVE_SLOT(s9)
+    ld  s9,  JIT_GPR_SAVE_SLOT(s9)                  # restore preserved regs (end)
 })
 
 define({BRANCH_VIA_VMTHREAD},{
@@ -368,9 +368,9 @@ define({BRANCH_VIA_VMTHREAD},{
 })
 
 define({SWITCH_TO_JAVA_STACK},{
-    ld J9SP,M(J9VMTHREAD, J9TR_VMThread_sp)
+    ld J9SP,M(J9VMTHREAD, J9TR_VMThread_sp)         # restore Java SP from VMThread
 })
 
 define({SWITCH_TO_C_STACK},{
-    sd J9SP,M(J9VMTHREAD, J9TR_VMThread_sp)
+    sd J9SP,M(J9VMTHREAD, J9TR_VMThread_sp)         # save Java SP to VMThread
 })
