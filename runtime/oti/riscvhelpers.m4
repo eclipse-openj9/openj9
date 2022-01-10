@@ -28,8 +28,13 @@ define({M},{$2{(}$1{)}})
 
 define({ALen},{8})
 
+dnl
+dnl See J9::RV::PrivateLinkageProperties::PrivateLinkageProperties() in RVPrivateLinkage.cpp
+dnl Following definitions must be kept in sync with private linkage.
+dnl
 define({J9VMTHREAD},{s10})
 define({J9SP},{s11})
+define({J9VTABLEINDEX},{t3})
 
 define({FUNC_LABEL},{$1})
 

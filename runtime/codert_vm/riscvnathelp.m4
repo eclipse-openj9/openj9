@@ -519,13 +519,13 @@ dnl All arguments are on stack
 dnl Return address is in LR
 dnl JIT preserved registers are live
 dnl a0 contains the receiver
-dnl x9 contains the vTable index
+dnl t3 contains the vTable index
 
 START_PROC(j2iVirtual)
     SWITCH_TO_C_STACK
     SAVE_PRESERVED_REGS
     SAVE_FPLR
-    sd x9,M(J9VMTHREAD, J9TR_VMThread_tempSlot)
+    sd J9VTABLEINDEX,M(J9VMTHREAD, J9TR_VMThread_tempSlot) # store v-table index into vmThread->tempSlot
     mv a1,a0
     li a0, J9TR_bcloop_j2i_virtual
     j FUNC_LABEL(cInterpreterFromJIT)
@@ -538,11 +538,11 @@ dnl Arguments are in registers/stack per JIT linkage
 dnl Return address is in LR
 dnl JIT preserved registers are live
 dnl a0 contains the receiver
-dnl x9 contains the vTable index
+dnl t3 contains the vTable index
 
 BEGIN_HELPER(icallVMprJavaSendPatchupVirtual)
-    sd a0,M(J9VMTHREAD, J9TR_VMThread_returnValue2)
-    sd x9,M(J9VMTHREAD, J9TR_VMThread_tempSlot)
+    sd a0,M(J9VMTHREAD, J9TR_VMThread_returnValue2) # store receiver into vmThread->returnValue2
+    sd J9VTABLEINDEX,M(J9VMTHREAD, J9TR_VMThread_tempSlot) # store v-table index into vmThread->tempSlot
     CALL_SLOW_PATH_ONLY_HELPER_NO_EXCEPTION_NO_RETURN_VALUE(icallVMprJavaSendPatchupVirtual)
     BRANCH_VIA_VMTHREAD(J9TR_VMThread_tempSlot)
 END_PROC(icallVMprJavaSendPatchupVirtual)
