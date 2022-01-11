@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -51,7 +51,7 @@ extern "C" {
 #define AGENT_XRUN 0x20000
 #define NEVER_CLOSE_DLL 0x40000
 #define BUNDLED_COMP 0x80000
-	
+
 /* Value for RC_SILENT_EXIT should not be changed as this is
  * used by launcher to hide message "Could not create the Java virtual machine"
  */
@@ -187,13 +187,13 @@ enum INIT_STAGE {
 	JIT_INITIALIZED,
 	AGENTS_STARTED,
 	ABOUT_TO_BOOTSTRAP,
-	JCL_INITIALIZED, 
+	JCL_INITIALIZED,
 	VM_INITIALIZATION_COMPLETE,
 	INTERPRETER_SHUTDOWN,
 	LIBRARIES_ONUNLOAD,
 	HEAP_STRUCTURES_FREED,
 	GC_SHUTDOWN_COMPLETE,
-	/* this stage will only be invoked for the jcl shared library when it is being run remotely */ 
+	/* this stage will only be invoked for the jcl shared library when it is being run remotely */
 	OFFLOAD_JCL_PRECONFIGURE
 
 
@@ -425,6 +425,8 @@ enum INIT_STAGE {
 #define VMOPT_XXDISCLAIMJITSCRATCH		"-XX:+DisclaimJitScratch"
 #define VMOPT_XXNODISCLAIMJITSCRATCH	"-XX:-DisclaimJitScratch"
 
+#define VMOPT_TUNE_QUICKSTART "-Xtune:quickstart"
+#define VMOPT_TUNE_THROUGHPUT "-Xtune:throughput"
 #define VMOPT_TUNE_VIRTUALIZED "-Xtune:virtualized"
 
 #define VMOPT_XXCOMPACTSTRINGS "-XX:+CompactStrings"
