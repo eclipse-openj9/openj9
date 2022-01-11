@@ -618,6 +618,10 @@ private static void ensureProperties(boolean isInitialization) {
 	initializedProperties.put("java.specification.name", "Java Platform API Specification"); //$NON-NLS-1$ //$NON-NLS-2$
 	initializedProperties.put("com.ibm.oti.configuration", "scar"); //$NON-NLS-1$
 
+	/*[IF CRIU_SUPPORT]*/
+	initializedProperties.put("org.eclipse.openj9.criu.isCRIUCapable", "true"); //$NON-NLS-1$ //$NON-NLS-2$
+	/*[ENDIF] CRIU_SUPPORT*/
+
 	String[] list = getPropertyList();
 	for (int i = 0; i < list.length; i += 2) {
 		String key = list[i];
