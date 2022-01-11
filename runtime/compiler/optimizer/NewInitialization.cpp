@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -876,7 +876,17 @@ bool TR_NewInitialization::visitNode(TR::Node *node)
             //
             offset = node->getSymbolReference()->getOffset() + base->getSecondChild()->getInt() - c->startOffset;
             }
-         else if (node->getOpCode().isLoadVar())
+         else if (base->getSecondChild()->getOpCodeValue() == TR::lconst)
+            {
+            int64_t longOffset = base->getSecondChild()->getLongInt();
+	    if ((longOffset <= (int64_t) INT_MAX) && (longOffset >= (int64_t) INT_MIN))
+	       {
+               // Array new reference with constant index
+               //
+               offset = node->getSymbolReference()->getOffset() + ((int32_t) longOffset) - c->startOffset;
+	       }
+            }
+	 else if (node->getOpCode().isLoadVar())
             {
             // Array new reference with unknown index
             //
