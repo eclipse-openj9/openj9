@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1359,16 +1359,6 @@ readPool(J9CfrClassFile* classfile, U_8* data, U_8* dataEnd, U_8* segment, U_8* 
 				offset = (U_32)(index - data - 1);
 				goto _errorFound;
 			}
-
-			if (!J9_ARE_ALL_BITS_SET(classfile->accessFlags, CFR_ACC_MODULE)) {
-				if (J9_ARE_ALL_BITS_SET(info->tag, CFR_CONSTANT_Module)) {
-					errorCode = J9NLS_CFR_ERR_CONSTANT_MODULE_OUTSIDE_MODULE__ID;
-				} else {
-					errorCode = J9NLS_CFR_ERR_CONSTANT_PACKAGE_OUTSIDE_MODULE__ID;
-				}
-				offset = (U_32)(index - data - 1);
-				goto _errorFound;
-			}
 			CHECK_EOF(2);
 			NEXT_U16(info->slot1, index);
 			i++;
@@ -1586,10 +1576,20 @@ checkPool(J9CfrClassFile* classfile, U_8* segment, U_8* poolStart, I_32 *maxBoot
 			index += 5;
 			break;
 
+			/* According to the VM Spec, a CONSTANT_Module_info or CONSTANT_Package_info structure
+			 * is permitted only in the constant pool of a class file where the access_flags item
+			 * has the ACC_MODULE flag set, which means any other class with a CONSTANT_Module_info
+			 * or CONSTANT_Package_info structure is illegal.
+			 * Note: a class with ACC_MODULE set is checked and rejected in j9bcutil_readClassFileBytes()
+			 * prior to checkPool().
+			 */
 		case CFR_CONSTANT_Module:
+			errorCode = J9NLS_CFR_ERR_CONSTANT_MODULE_OUTSIDE_MODULE__ID;
+			goto _errorFound;
+
 		case CFR_CONSTANT_Package:
-			index += 3;
-			break;
+			errorCode = J9NLS_CFR_ERR_CONSTANT_PACKAGE_OUTSIDE_MODULE__ID;
+			goto _errorFound;
 
 		default:
 			errorCode = J9NLS_CFR_ERR_UNKNOWN_CONSTANT__ID;
