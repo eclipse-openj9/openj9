@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -5324,8 +5324,8 @@ static StatusArrayStore checkArrayStore(TR::Compilation *comp, TR::Node *inputNo
    // and a typical arraycopy loop. loops like above cannot be reduced to an arraycopy
    // (look at the java semantics for arraycopy)
    //
-   if (comp->target().cpu.isZ())
-      return NO_NEED_TO_CHECK;       // On 390, MVC (which performs byte copies) is generated.
+   if (comp->target().cpu.isZ() || comp->target().cpu.isARM64())
+      return NO_NEED_TO_CHECK;       // On 390, MVC (which performs byte copies) is generated. ARM64 arraycopy can handle byte copies.
 
    if (inputNode->getFirstChild()->getSymbol()->getRegisterMappedSymbol() == outputNode->getFirstChild()->getSymbol()->getRegisterMappedSymbol())
       {
