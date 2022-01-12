@@ -4945,7 +4945,7 @@ TR::Register *J9::Power::TreeEvaluator::VMmonexitEvaluator(TR::Node *node, TR::C
 
          generateTrg1Src1Instruction(cg, TR::InstOpCode::mr, node, lookupOffsetReg, objReg);
 
-         int32_t t = trailingZeroes(TR::Compiler->om.objectAlignmentInBytes());
+         int32_t t = trailingZeroes(TR::Compiler->om.getObjectAlignmentInBytes());
 
          if (comp->target().is64Bit())
          generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::sradi, node, lookupOffsetReg, lookupOffsetReg, t);
@@ -5387,7 +5387,7 @@ static void genHeapAlloc(TR::Node *node, TR::Instruction *&iCursor, TR_OpaqueCla
                TR::LabelSymbol *nonZeroLengthLabel = generateLabelSymbol(cg);
                iCursor = generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, nonZeroLengthLabel, condReg, iCursor);
 
-               int32_t zeroLenArraySize = (TR::Compiler->om.discontiguousArrayHeaderSizeInBytes() + TR::Compiler->om.objectAlignmentInBytes() - 1) & (-TR::Compiler->om.objectAlignmentInBytes());
+               int32_t zeroLenArraySize = (TR::Compiler->om.discontiguousArrayHeaderSizeInBytes() + TR::Compiler->om.getObjectAlignmentInBytes() - 1) & (-TR::Compiler->om.getObjectAlignmentInBytes());
                TR_ASSERT(zeroLenArraySize >= J9_GC_MINIMUM_OBJECT_SIZE, "Zero-length array size must be bigger than MIN_OBJECT_SIZE");
                TR_ASSERT(zeroLenArraySize <= maxSafeSize, "Zero-length array size must be smaller than maxSafeSize");
                // Load TLH heapAlloc and heapTop values.
@@ -5604,8 +5604,8 @@ static void genHeapAlloc(TR::Node *node, TR::Instruction *&iCursor, TR_OpaqueCla
                   }
 
                int32_t round; // zero indicates no rounding is necessary
-               round = (elementSize >= TR::Compiler->om.objectAlignmentInBytes()) ? 0 : TR::Compiler->om.objectAlignmentInBytes();
-               bool headerAligned = allocSize % TR::Compiler->om.objectAlignmentInBytes() ? 0 : 1;
+               round = (elementSize >= TR::Compiler->om.getObjectAlignmentInBytes()) ? 0 : TR::Compiler->om.getObjectAlignmentInBytes();
+               bool headerAligned = allocSize % TR::Compiler->om.getObjectAlignmentInBytes() ? 0 : 1;
 
                //TODO: The code below pads up the object allocation size so that zero init code later
                //will have multiples of wordsize to work with. For now leaving this code as is, but
@@ -5713,8 +5713,8 @@ static void genHeapAlloc(TR::Node *node, TR::Instruction *&iCursor, TR_OpaqueCla
          //
          if (generateArraylets && (node->getOpCodeValue() == TR::anewarray || node->getOpCodeValue() == TR::newarray))
             {
-            iCursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, temp2Reg, temp2Reg, TR::Compiler->om.objectAlignmentInBytes() - 1, iCursor);
-            iCursor = generateTrg1Src1Imm2Instruction(cg, comp->target().is64Bit() ? TR::InstOpCode::rldicr : TR::InstOpCode::rlwinm, node, temp2Reg, temp2Reg, 0, int64_t(-TR::Compiler->om.objectAlignmentInBytes()), iCursor);
+            iCursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, temp2Reg, temp2Reg, TR::Compiler->om.getObjectAlignmentInBytes() - 1, iCursor);
+            iCursor = generateTrg1Src1Imm2Instruction(cg, comp->target().is64Bit() ? TR::InstOpCode::rldicr : TR::InstOpCode::rlwinm, node, temp2Reg, temp2Reg, 0, int64_t(-TR::Compiler->om.getObjectAlignmentInBytes()), iCursor);
             static const char *p = feGetEnv("TR_TarokAlignHeapTopBreak");
             if (p)
                iCursor = generateInstruction(cg, TR::InstOpCode::bad, node, iCursor);
@@ -6314,7 +6314,7 @@ TR::Register *J9::Power::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeG
 
    if (!isVariableLen)
       {
-      allocateSize = (allocateSize + TR::Compiler->om.objectAlignmentInBytes() - 1) & (-TR::Compiler->om.objectAlignmentInBytes());
+      allocateSize = (allocateSize + TR::Compiler->om.getObjectAlignmentInBytes() - 1) & (-TR::Compiler->om.getObjectAlignmentInBytes());
       }
 
    if (comp->compileRelocatableCode())
@@ -7429,7 +7429,7 @@ TR::Register *J9::Power::TreeEvaluator::VMmonentEvaluator(TR::Node *node, TR::Co
 
          generateTrg1Src1Instruction(cg, TR::InstOpCode::mr, node, lookupOffsetReg, objReg);
 
-         int32_t t = trailingZeroes(TR::Compiler->om.objectAlignmentInBytes());
+         int32_t t = trailingZeroes(TR::Compiler->om.getObjectAlignmentInBytes());
 
          if (comp->target().is64Bit())
             generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::sradi, node, lookupOffsetReg, lookupOffsetReg, t);

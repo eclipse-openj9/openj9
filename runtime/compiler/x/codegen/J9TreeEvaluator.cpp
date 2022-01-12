@@ -959,7 +959,7 @@ static void generateCommonLockNurseryCodes(TR::Node          *node,
       //generateRegMemInstruction(TR::InstOpCode::LRegMem(), node, objectClassReg, generateX86MemoryReference(vmThreadReg, offsetOfMonitorLookupCache, cg), cg);
       generateRegRegInstruction(TR::InstOpCode::MOVRegReg(), node, lookupOffsetReg, objectReg, cg);
 
-      generateRegImmInstruction(TR::InstOpCode::SARRegImm1(comp->target().is64Bit()), node, lookupOffsetReg, trailingZeroes(TR::Compiler->om.objectAlignmentInBytes()), cg);
+      generateRegImmInstruction(TR::InstOpCode::SARRegImm1(comp->target().is64Bit()), node, lookupOffsetReg, trailingZeroes(TR::Compiler->om.getObjectAlignmentInBytes()), cg);
 
       J9JavaVM * jvm = fej9->getJ9JITConfig()->javaVM;
       generateRegImmInstruction(TR::InstOpCode::ANDRegImms(), node, lookupOffsetReg, J9VMTHREAD_OBJECT_MONITOR_CACHE_SIZE - 1, cg);
@@ -1553,7 +1553,7 @@ TR::Register *J9::X86::TreeEvaluator::multianewArrayEvaluator(TR::Node *node, TR
    generateRegMemInstruction(TR::InstOpCode::LRegMem(), node, targetReg, generateX86MemoryReference(vmThreadReg, offsetof(J9VMThread, heapAlloc), cg), cg);
 
    // Take into account alignment requirements for the size of the zero-length array header
-   int32_t zeroArraySizeAligned = OMR::align(TR::Compiler->om.discontiguousArrayHeaderSizeInBytes(), TR::Compiler->om.objectAlignmentInBytes());
+   int32_t zeroArraySizeAligned = OMR::align(TR::Compiler->om.discontiguousArrayHeaderSizeInBytes(), TR::Compiler->om.getObjectAlignmentInBytes());
    generateRegMemInstruction(TR::InstOpCode::LEARegMem(), node, temp1Reg, generateX86MemoryReference(targetReg, zeroArraySizeAligned, cg), cg);
 
    generateRegMemInstruction(TR::InstOpCode::CMPRegMem(), node, temp1Reg, generateX86MemoryReference(vmThreadReg, offsetof(J9VMThread, heapTop), cg), cg);
@@ -1587,7 +1587,7 @@ TR::Register *J9::X86::TreeEvaluator::multianewArrayEvaluator(TR::Node *node, TR
 
    generateRegRegInstruction(TR::InstOpCode::MOVRegReg(), node, temp1Reg, firstDimLenReg, cg);
 
-   int32_t elementSizeAligned = OMR::align(elementSize, TR::Compiler->om.objectAlignmentInBytes());
+   int32_t elementSizeAligned = OMR::align(elementSize, TR::Compiler->om.getObjectAlignmentInBytes());
    int32_t alignmentCompensation = (elementSize == elementSizeAligned) ? 0 : elementSizeAligned - 1;
 
    TR_ASSERT_FATAL(elementSize <= 8, "multianewArrayEvaluator - elementSize cannot be greater than 8!");
@@ -6273,7 +6273,7 @@ static void genHeapAlloc(
             }
 
 
-         round = (elementSize < TR::Compiler->om.objectAlignmentInBytes()) ? TR::Compiler->om.objectAlignmentInBytes() : 0;
+         round = (elementSize < TR::Compiler->om.getObjectAlignmentInBytes()) ? TR::Compiler->om.getObjectAlignmentInBytes() : 0;
 
          int32_t disp32 = round ? (round-1) : 0;
 #ifdef J9VM_INTERP_FLAGS_IN_CLASS_SLOT
@@ -6341,7 +6341,7 @@ static void genHeapAlloc(
       else
          {
          isSmallAllocation = allocationSizeOrDataOffset <= 0x40 ? true : false;
-         allocationSizeOrDataOffset = (allocationSizeOrDataOffset+TR::Compiler->om.objectAlignmentInBytes()-1) & (-TR::Compiler->om.objectAlignmentInBytes());
+         allocationSizeOrDataOffset = (allocationSizeOrDataOffset+TR::Compiler->om.getObjectAlignmentInBytes()-1) & (-TR::Compiler->om.getObjectAlignmentInBytes());
 
 #if defined(J9VM_GC_THREAD_LOCAL_HEAP)
          if ((node->getOpCodeValue() == TR::New) &&
@@ -6490,11 +6490,11 @@ static void genHeapAlloc(
       //
       if (generateArraylets && (node->getOpCodeValue() == TR::anewarray || node->getOpCodeValue() == TR::newarray) )
          {
-         generateRegMemInstruction(TR::InstOpCode::LEARegMem(),node,tempReg, generateX86MemoryReference(tempReg,TR::Compiler->om.objectAlignmentInBytes()-1,cg),cg);
+         generateRegMemInstruction(TR::InstOpCode::LEARegMem(),node,tempReg, generateX86MemoryReference(tempReg,TR::Compiler->om.getObjectAlignmentInBytes()-1,cg),cg);
          if (cg->comp()->target().is64Bit())
-            generateRegImmInstruction(TR::InstOpCode::AND8RegImm4,node,tempReg,-TR::Compiler->om.objectAlignmentInBytes(),cg);
+            generateRegImmInstruction(TR::InstOpCode::AND8RegImm4,node,tempReg,-TR::Compiler->om.getObjectAlignmentInBytes(),cg);
          else
-            generateRegImmInstruction(TR::InstOpCode::AND4RegImm4,node,tempReg,-TR::Compiler->om.objectAlignmentInBytes(),cg);
+            generateRegImmInstruction(TR::InstOpCode::AND4RegImm4,node,tempReg,-TR::Compiler->om.getObjectAlignmentInBytes(),cg);
          }
 
       generateMemRegInstruction(TR::InstOpCode::SMemReg(),
@@ -6664,7 +6664,7 @@ static void genHeapAlloc2(
 //            TR_ASSERT(allocationSizeOrDataOffset % fej9->getObjectAlignmentInBytes() == 0, "Array header size of %d is not a multiple of %d", allocationSizeOrDataOffset, fej9->getObjectAlignmentInBytes());
             }
 
-         round = (elementSize >= TR::Compiler->om.objectAlignmentInBytes())? 0 : TR::Compiler->om.objectAlignmentInBytes();
+         round = (elementSize >= TR::Compiler->om.getObjectAlignmentInBytes())? 0 : TR::Compiler->om.getObjectAlignmentInBytes();
          int32_t disp32 = round ? (round-1) : 0;
 
 /*
@@ -6729,7 +6729,7 @@ static void genHeapAlloc2(
          if (comp->getOptLevel() < hot)
             isTooSmallToPrefetch = allocationSizeOrDataOffset <= 0x40 ? true : false;
 
-         allocationSizeOrDataOffset = (allocationSizeOrDataOffset+TR::Compiler->om.objectAlignmentInBytes()-1) & (-TR::Compiler->om.objectAlignmentInBytes());
+         allocationSizeOrDataOffset = (allocationSizeOrDataOffset+TR::Compiler->om.getObjectAlignmentInBytes()-1) & (-TR::Compiler->om.getObjectAlignmentInBytes());
 
 #if defined(J9VM_GC_THREAD_LOCAL_HEAP)
          if ((node->getOpCodeValue() == TR::New) &&
@@ -6890,11 +6890,11 @@ static void genHeapAlloc2(
       //
       if (generateArraylets && (node->getOpCodeValue() == TR::anewarray || node->getOpCodeValue() == TR::newarray) )
          {
-         generateRegMemInstruction(TR::InstOpCode::LEARegMem(),node,segmentReg, generateX86MemoryReference(tempReg,TR::Compiler->om.objectAlignmentInBytes()-1,cg),cg);
+         generateRegMemInstruction(TR::InstOpCode::LEARegMem(),node,segmentReg, generateX86MemoryReference(tempReg,TR::Compiler->om.getObjectAlignmentInBytes()-1,cg),cg);
          if (cg->comp()->target().is64Bit())
-            generateRegImmInstruction(TR::InstOpCode::AND8RegImm4,node,segmentReg,-TR::Compiler->om.objectAlignmentInBytes(),cg);
+            generateRegImmInstruction(TR::InstOpCode::AND8RegImm4,node,segmentReg,-TR::Compiler->om.getObjectAlignmentInBytes(),cg);
          else
-            generateRegImmInstruction(TR::InstOpCode::AND4RegImm4,node,segmentReg,-TR::Compiler->om.objectAlignmentInBytes(),cg);
+            generateRegImmInstruction(TR::InstOpCode::AND4RegImm4,node,segmentReg,-TR::Compiler->om.getObjectAlignmentInBytes(),cg);
          }
 
       generateMemRegInstruction(TR::InstOpCode::SMemReg(),
