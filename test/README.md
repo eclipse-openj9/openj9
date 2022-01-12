@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2016, 2021 IBM Corp. and others
+Copyright (c) 2016, 2022 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,7 +27,7 @@ Linux x86-64 cmprssptrs OpenJ9 SDK:
 
 ```
     cd openj9/test
-    git clone https://github.com/AdoptOpenJDK/TKG.git
+    git clone https://github.com/adoptium/TKG.git
     cd TKG
     export TEST_JDK_HOME=/my/openj9/jdk
     make compile               // downloads test related material/libs
@@ -36,7 +36,7 @@ Linux x86-64 cmprssptrs OpenJ9 SDK:
 ```
 
 Please read [OpenJ9 Test User Guide](./docs/OpenJ9TestUserGuide.md) for
-details and other examples.  For example, if you wish to test a JDK11 version, 
+details and other examples.  For example, if you wish to test a JDK11 version,
 you would export JDK_VERSION=11 (default JDK_VERSION=8).
 
 ## Prerequisites:
@@ -81,7 +81,7 @@ Adding a testNG test as an example:
 Please refer to the [video and tutorial](https://blog.adoptopenjdk.net/2018/02/adding-third-party-application-tests-adoptopenjdk)
 that describes how to add container-based 3rd party application tests
 (run inside of Docker images). These tests are added and run in the
-automated test builds at the AdoptOpenJDK project.
+automated test builds at the Adoptium project.
 
 ## 3) How to disable a test?
 
@@ -110,11 +110,11 @@ add a line to `TestConfig/resources/excludes/latest_exclude_$(JDK_VERSION).txt`
     org.openj9.test.java.lang.management.TestOperatingSystemMXBean 123 linux_x86-64
 ```
 
-Please read [Configure environment](./docs/OpenJ9TestUserGuide.md#5-exclude-tests) for details and examples. 
+Please read [Configure environment](./docs/OpenJ9TestUserGuide.md#5-exclude-tests) for details and examples.
 
 ## 4) How to execute a different group of tests?
 
-Test can be run with different levels, groups and types or combination of two 
+Test can be run with different levels, groups and types or combination of two
 (i.e., level.group, level.type, group.type) or three (i.e., level.group.type)
 
 Supported levels are `sanity|extended`
@@ -143,15 +143,15 @@ make _testList TESTLIST=jit_jitt,jit_recognizedMethod,testSCCMLTests2_1
 
 If a test is disabled using `<disabled>` tag in playlist.xml, it can be executed through specifying the test target or adding `disabled` in front of regular target.
 
-```    
-    make _disabled.testA    // testA has <disabled> tag in playlist.xml  
+```
+    make _disabled.testA    // testA has <disabled> tag in playlist.xml
     make _disabled.sanity.functional
     make _disabled.extended
 ```
 
 Disabled tests and reasons can also be printed through adding `echo.disabled` in front of regular target.
 
-```    
+```
     make _echo.disabled.testA
     make _echo.disabled.sanity.functional
     make _echo.disabled.extended
@@ -169,7 +169,7 @@ Only the tests in `BUILD_LIST` will be executed.
 
 ## 8) How to run an individual JCK?
 
-Please read [How-to Run customized JCK test targets](https://github.com/AdoptOpenJDK/openjdk-tests/blob/master/jck/README.md) for details.
+Please read [How-to Run customized JCK test targets](https://github.com/adoptium/aqa-tests/blob/master/jck/README.md) for details.
 
 ## 9) How to run the test with different `JDK_VERSION` and `JDK_IMPL`?
 
@@ -180,9 +180,9 @@ where developers need to verify features for a specific version or
 compare behaviour against a particular implementation.
 
 There is no extra step needed.
-By default, AUTO_DETECT is turned on, and the test framework will 
+By default, AUTO_DETECT is turned on, and the test framework will
 auto detect SPEC, JDK_IMPL, and JDK_VERSION. Please read [Configure environment](./docs/OpenJ9TestUserGuide.md#1-configure-environment) for
-details and examples. 
+details and examples.
 
 ## 10) How to interpret test results?
 - test results summary
