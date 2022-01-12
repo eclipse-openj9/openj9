@@ -1206,7 +1206,9 @@ private native void startImpl();
  *
  * @deprecated
  */
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 18]*/
+@Deprecated(forRemoval=true, since="1.2")
+/*[ELSEIF JAVA_SPEC_VERSION >= 9]*/
 @Deprecated(forRemoval=false, since="1.2")
 /*[ELSE]*/
 @Deprecated
