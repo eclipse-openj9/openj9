@@ -4078,7 +4078,7 @@ J9::Z::TreeEvaluator::multianewArrayEvaluator(TR::Node * node, TR::CodeGenerator
    generateRXInstruction(cg, TR::InstOpCode::LG, node, targetReg, generateS390MemoryReference(vmThreadReg, offsetof(J9VMThread, heapAlloc), cg));
 
    // Take into account alignment requirements for the size of the zero-length array header
-   int32_t zeroArraySizeAligned = OMR::align(TR::Compiler->om.discontiguousArrayHeaderSizeInBytes(), TR::Compiler->om.objectAlignmentInBytes());
+   int32_t zeroArraySizeAligned = OMR::align(TR::Compiler->om.discontiguousArrayHeaderSizeInBytes(), TR::Compiler->om.getObjectAlignmentInBytes());
 
    // Branch to OOL if there's not enough space for an array of size 0.
    TR::Register *temp1Reg = cg->allocateRegister();
@@ -4121,7 +4121,7 @@ J9::Z::TreeEvaluator::multianewArrayEvaluator(TR::Node * node, TR::CodeGenerator
    iComment("Jump to oolJumpLabel if 1st dim len > the num of elements a block can fit.");
 
    // Now check to see if we have enough space to do the allocation. If not then jump to OOL code.
-   int32_t elementSizeAligned = OMR::align(elementSize, TR::Compiler->om.objectAlignmentInBytes());
+   int32_t elementSizeAligned = OMR::align(elementSize, TR::Compiler->om.getObjectAlignmentInBytes());
    int32_t alignmentCompensation = (elementSize == elementSizeAligned) ? 0 : elementSizeAligned - 1;
    static const uint8_t multiplierToStrideMap[] = {0, 0, 1, 0, 2, 0, 0, 0, 3};
    TR_ASSERT_FATAL(elementSize <= 8, "multianewArrayEvaluator - elementSize cannot be greater than 8!");
@@ -8412,7 +8412,7 @@ J9::Z::TreeEvaluator::VMmonentEvaluator(TR::Node * node, TR::CodeGenerator * cg)
          OOLConditions->addPostCondition(lookupOffsetReg, TR::RealRegister::AssignAny);
 
          int32_t offsetOfMonitorLookupCache = offsetof(J9VMThread, objectMonitorLookupCache);
-         int32_t t = trailingZeroes(TR::Compiler->om.objectAlignmentInBytes());
+         int32_t t = trailingZeroes(TR::Compiler->om.getObjectAlignmentInBytes());
          int32_t shiftAmount = trailingZeroes((int32_t) TR::Compiler->om.sizeofReferenceField()) - t;
          int32_t end = 63 - trailingZeroes((int32_t) TR::Compiler->om.sizeofReferenceField());
          int32_t start = end - trailingZeroes(J9VMTHREAD_OBJECT_MONITOR_CACHE_SIZE) + 1;
@@ -8829,7 +8829,7 @@ J9::Z::TreeEvaluator::VMmonexitEvaluator(TR::Node * node, TR::CodeGenerator * cg
 
 
          int32_t offsetOfMonitorLookupCache = offsetof(J9VMThread, objectMonitorLookupCache);
-         int32_t t = trailingZeroes(TR::Compiler->om.objectAlignmentInBytes());
+         int32_t t = trailingZeroes(TR::Compiler->om.getObjectAlignmentInBytes());
          int32_t shiftAmount = trailingZeroes((int32_t) TR::Compiler->om.sizeofReferenceField()) - t;
          int32_t end = 63 - trailingZeroes((int32_t) TR::Compiler->om.sizeofReferenceField());
          int32_t start = end - trailingZeroes(J9VMTHREAD_OBJECT_MONITOR_CACHE_SIZE) + 1;
@@ -9088,7 +9088,7 @@ roundArrayLengthToObjectAlignment(TR::CodeGenerator* cg, TR::Node* node, TR::Ins
       TR::RegisterDependencyConditions* conditions, TR::Register *litPoolBaseReg, int32_t allocSize, int32_t elementSize, TR::Register* sizeReg, TR::LabelSymbol * exitOOLLabel = NULL)
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
-   int32_t alignmentConstant = TR::Compiler->om.objectAlignmentInBytes();
+   int32_t alignmentConstant = TR::Compiler->om.getObjectAlignmentInBytes();
    if (exitOOLLabel)
       {
       TR_Debug * debugObj = cg->getDebug();
@@ -9138,7 +9138,7 @@ genHeapAlloc(TR::Node * node, TR::Instruction *& iCursor, bool isVariableLen, TR
 
       // bool sizeInReg = (isVariableLen || (allocSize > MAX_IMMEDIATE_VAL));
 
-      int alignmentConstant = TR::Compiler->om.objectAlignmentInBytes();
+      int alignmentConstant = TR::Compiler->om.getObjectAlignmentInBytes();
 
       if (isVariableLen)
          {
@@ -9819,7 +9819,7 @@ J9::Z::TreeEvaluator::VMnewEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       // if variable-length array   - dataSizeReg will contain the (calculated) size
       // if outlined                - tmpReg will contain the value of
       // otherwise                  - size is in (int) allocateSize
-      int alignmentConstant = TR::Compiler->om.objectAlignmentInBytes();
+      int alignmentConstant = TR::Compiler->om.getObjectAlignmentInBytes();
 
       if (isVariableLen)
          allocateSize += dataBegin;

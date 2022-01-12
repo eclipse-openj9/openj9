@@ -268,7 +268,7 @@ void J9::ARM64::PrivateLinkage::mapStack(TR::ResolvedMethodSymbol *method)
       // offset needs to be aligned.
       //
       uint32_t unalignedStackIndex = stackIndex;
-      stackIndex &= ~(TR::Compiler->om.objectAlignmentInBytes() - 1);
+      stackIndex &= ~(TR::Compiler->om.getObjectAlignmentInBytes() - 1);
       uint32_t paddingBytes = unalignedStackIndex - stackIndex;
       if (paddingBytes > 0)
          {
@@ -358,7 +358,7 @@ void J9::ARM64::PrivateLinkage::mapStack(TR::ResolvedMethodSymbol *method)
 
 void J9::ARM64::PrivateLinkage::mapSingleAutomatic(TR::AutomaticSymbol *p, uint32_t &stackIndex)
    {
-   int32_t roundup = (comp()->useCompressedPointers() && p->isLocalObject() ? TR::Compiler->om.objectAlignmentInBytes() : TR::Compiler->om.sizeofReferenceAddress()) - 1;
+   int32_t roundup = (comp()->useCompressedPointers() && p->isLocalObject() ? TR::Compiler->om.getObjectAlignmentInBytes() : TR::Compiler->om.sizeofReferenceAddress()) - 1;
    int32_t roundedSize = (p->getSize() + roundup) & (~roundup);
    if (roundedSize == 0)
       roundedSize = 4;

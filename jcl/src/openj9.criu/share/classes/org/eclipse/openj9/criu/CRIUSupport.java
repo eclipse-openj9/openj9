@@ -1,6 +1,6 @@
 /*[INCLUDE-IF CRIU_SUPPORT]*/
 /*******************************************************************************
- * Copyright (c) 2021, 2021 IBM Corp. and others
+ * Copyright (c) 2021, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -516,12 +516,13 @@ public final class CRIUSupport {
 
 						List<String> illegalKeys = new ArrayList<>(0);
 						while ((entry = envFileReader.readLine()) != null) {
-							if (!entry.isBlank()) {
+							// Keep the leading or trailing spaces of entry
+							if (!entry.trim().isEmpty()) {
 								// Only split into 2 (max) allow "=" to be contained in the value.
 								String entrySplit[] = entry.split("=", 2); //$NON-NLS-1$
 								if (entrySplit.length != 2) {
 									throw new IllegalArgumentException(
-											"Env File entry is not in the correct format: [envVarName]=[envVarVal]: "
+											"Env File entry is not in the correct format: [envVarName]=[envVarVal]: " //$NON-NLS-1$
 													+ entry);
 								}
 
