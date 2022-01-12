@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2021 IBM Corp. and others
+ * Copyright (c) 2018, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -40,17 +40,17 @@ import org.testng.annotations.BeforeClass;
 
 /*
  * Instructions to run this test:
- * 
+ *
  * 1)  Build the JDK with the '--enable-inline-types' configure flag
  * 2)  cd [openj9-openjdk-dir]/openj9/test
- * 3)  git clone https://github.com/AdoptOpenJDK/TKG.git
+ * 3)  git clone https://github.com/adoptium/TKG.git
  * 4)  cd TKG
  * 5)  export TEST_JDK_HOME=[openj9-openjdk-dir]/build/linux-x86_64-server-release/images/jdk
  * 6)  export JDK_VERSION=Valhalla
  * 7)  export SPEC=linux_x86-64_cmprssptrs
  * 8)  export BUILD_LIST=functional/Valhalla
  * 9)  export AUTO_DETECT=false
- * 10) export JDK_IMPL=openj9 
+ * 10) export JDK_IMPL=openj9
  * 11) make -f run_configure.mk && make compile && make _sanity
  */
 
@@ -284,7 +284,7 @@ public class ValueTypeTests {
 
 	/*
 	 * Create a value type
-	 * 
+	 *
 	 * value Point2D {
 	 * 	int x;
 	 * 	int y;
@@ -448,7 +448,7 @@ public class ValueTypeTests {
 
 	/*
 	 * Create a value type with double slot primitive members
-	 * 
+	 *
 	 * value Point2DComplex {
 	 * 	double d;
 	 * 	long j;
@@ -495,12 +495,12 @@ public class ValueTypeTests {
 
 	/*
 	 * Test with nested values in reference type
-	 * 
+	 *
 	 * value Line2D {
 	 * 	Point2D st;
 	 * 	Point2D en;
 	 * }
-	 * 
+	 *
 	 */
 	@Test(priority=2)
 	static public void testCreateLine2D() throws Throwable {
@@ -553,12 +553,12 @@ public class ValueTypeTests {
 	
 	/*
 	 * Test with nested values in reference type
-	 * 
+	 *
 	 * value FlattenedLine2D {
 	 * 	flattened Point2D st;
 	 * 	flattened Point2D en;
 	 * }
-	 * 
+	 *
 	 */
 	@Test(priority=2)
 	static public void testCreateFlattenedLine2D() throws Throwable {
@@ -611,12 +611,12 @@ public class ValueTypeTests {
 
 	/*
 	 * Test array of FlattenedLine2D
-	 * 
+	 *
 	 * value FlattenedLine2D {
 	 * 	flattened Point2D st;
 	 * 	flattened Point2D en;
 	 * }
-	 * 
+	 *
 	 */
 	@Test(priority=3, invocationCount=2)
 	static public void testCreateArrayFlattenedLine2D() throws Throwable {
@@ -656,12 +656,12 @@ public class ValueTypeTests {
 
 	/*
 	 * Test with nested values
-	 * 
+	 *
 	 * value InvalidField {
 	 * 	flattened Point2D st;
 	 * 	flattened Invalid x;
 	 * }
-	 * 
+	 *
 	 */
 	@Test(priority=3)
 	static public void testInvalidNestedField() throws Throwable {
@@ -675,12 +675,12 @@ public class ValueTypeTests {
 	
 	/*
 	 * Test with none value Qtype
-	 * 
+	 *
 	 * value NoneValueQType {
 	 * 	flattened Point2D st;
 	 * 	flattened Object o;
 	 * }
-	 * 
+	 *
 	 */
 	@Test(priority=3)
 	static public void testNoneValueQTypeAsNestedField() throws Throwable {
@@ -693,12 +693,12 @@ public class ValueTypeTests {
 	
 	/*
 	 * Test defaultValue with ref type
-	 * 
+	 *
 	 * class DefaultValueWithNoneValueType {
 	 * 	Object f1;
 	 * 	Object f1;
 	 * }
-	 * 
+	 *
 	 */
 	@Test(enabled=false, priority=3)
 	static public void testDefaultValueWithNonValueType() throws Throwable {
@@ -713,11 +713,11 @@ public class ValueTypeTests {
 	
 	/*
 	 * Test withField on non Value Type
-	 * 
+	 *
 	 * class TestWithFieldOnNonValueType {
 	 *  long longField
 	 * }
-	 * 
+	 *
 	 * TODO: Change VM to throw verification error when the reciever for the withfield instruction is not a Valuetype.
 	 */
 	@Test(enabled=false, priority=1)
@@ -733,11 +733,11 @@ public class ValueTypeTests {
 	
 	/*
 	 * Test withField on non Null type
-	 * 
+	 *
 	 * class TestWithFieldOnNull {
 	 *  long longField
 	 * }
-	 * 
+	 *
 	 * TODO: Change VM to throw verification error when the reciever for the withfield instruction is not a Valuetype.
 	 */
 	@Test(enabled=false, priority=1)
@@ -754,7 +754,7 @@ public class ValueTypeTests {
 	
 	/*
 	 * Test withField on non existent class
-	 * 
+	 *
 	 * class TestWithFieldOnNonExistentClass {
 	 *  long longField
 	 * }
@@ -1152,7 +1152,7 @@ public class ValueTypeTests {
 
 	/*
 	 * Test monitorExit on valueType
-	 * 
+	 *
 	 * class TestMonitorExitOnValueType {
 	 *  long longField
 	 * }
@@ -1225,7 +1225,7 @@ public class ValueTypeTests {
 
 	/*
 	 * Test monitorExit with refType
-	 * 
+	 *
 	 * class TestMonitorExitWithRefType {
 	 *  long longField
 	 * }
@@ -1246,7 +1246,7 @@ public class ValueTypeTests {
 
 	/*
 	 * Test monitorEnterAndExit with refType
-	 * 
+	 *
 	 * class TestMonitorEnterAndExitWithRefType {
 	 *  long longField
 	 * }
@@ -1268,7 +1268,7 @@ public class ValueTypeTests {
 
 	/*	
 	 * Create a valueType with three valueType members
-	 * 
+	 *
 	 * value Triangle2D {
 	 *  flattened Line2D v1;
 	 *  flattened Line2D v2;
@@ -1334,7 +1334,7 @@ public class ValueTypeTests {
 
 	/*
 	 * Create a value type with a long primitive member
-	 * 
+	 *
 	 * value ValueLong {
 	 * 	long j;
 	 * }
@@ -1362,7 +1362,7 @@ public class ValueTypeTests {
 
 	/*
 	 * Create a value type with a int primitive member
-	 * 
+	 *
 	 * value ValueInt {
 	 * 	int i;
 	 * }
@@ -1390,7 +1390,7 @@ public class ValueTypeTests {
 
 	/*
 	 * Create a value type with a double primitive member
-	 * 
+	 *
 	 * value ValueDouble {
 	 * 	double d;
 	 * }
@@ -1419,7 +1419,7 @@ public class ValueTypeTests {
 
 	/*
 	 * Create a value type with a float primitive member
-	 * 
+	 *
 	 * value ValueFloat {
 	 * 	float f;
 	 * }
@@ -1448,7 +1448,7 @@ public class ValueTypeTests {
 
 	/*
 	 * Create a value type with a reference member
-	 * 
+	 *
 	 * value ValueObject {
 	 * 	Object val;
 	 * }
@@ -1478,8 +1478,8 @@ public class ValueTypeTests {
 	}
 	
 	/*	
-	 * Create a valueType with four valueType members including 2 volatile.  
-	 * 
+	 * Create a valueType with four valueType members including 2 volatile.
+	 *
 	 * value valueWithVolatile {
 	 *  flattened ValueInt i;
 	 *  flattened ValueInt i2;
@@ -1496,10 +1496,10 @@ public class ValueTypeTests {
 		atomicFlattenedLine2DClass = ValueTypeGenerator.generateValueClass("AtomicFlattenedLine2D", "java/lang/Object", fieldsAtomicFlattenedLine2D, ValueTypeGenerator.ACC_ATOMIC);
 		makeAtomicFlattenedLine2D = lookup.findStatic(atomicFlattenedLine2DClass, "makeValueGeneric", MethodType.methodType(Object.class, Object.class, Object.class));
 		
-		String fields[] = {"i:QValueInt;:value", "i2:QValueInt;:value", "point:QPoint2D;:value", "vpoint:QPoint2D;:volatile", 
+		String fields[] = {"i:QValueInt;:value", "i2:QValueInt;:value", "point:QPoint2D;:value", "vpoint:QPoint2D;:volatile",
 				"line:QFlattenedLine2D;:value", "vline:QFlattenedLine2D;:volatile", "aline:QAtomicFlattenedLine2D;:value"};
 		Class ValueTypeWithVolatileFieldsClass = ValueTypeGenerator.generateValueClass("ValueTypeWithVolatileFields", fields);
-		MethodHandle valueWithVolatile = lookup.findStatic(ValueTypeWithVolatileFieldsClass, "makeValueGeneric", MethodType.methodType(Object.class, Object.class, Object.class, Object.class, 
+		MethodHandle valueWithVolatile = lookup.findStatic(ValueTypeWithVolatileFieldsClass, "makeValueGeneric", MethodType.methodType(Object.class, Object.class, Object.class, Object.class,
 				Object.class, Object.class, Object.class, Object.class));
 		MethodHandle[][] getterAndWither = generateGenericGetterAndWither(ValueTypeWithVolatileFieldsClass, fields);
 		Object valueWithVolatileObj = createAssorted(valueWithVolatile, fields);
@@ -1509,7 +1509,7 @@ public class ValueTypeTests {
 
 	/*
 	 * Create an assorted value type with long alignment
-	 * 
+	 *
 	 * value AssortedValueWithLongAlignment {
 	 *	flattened Point2D point;
 	 *	flattened Line2D line;
@@ -1542,7 +1542,7 @@ public class ValueTypeTests {
 
 	/*
 	 * Create an assorted refType with long alignment
-	 * 
+	 *
 	 * class AssortedReftWithLongAlignment {
 	 *	flattened Point2D point;
 	 *	flattened Line2D line;
@@ -1746,8 +1746,8 @@ public class ValueTypeTests {
 	}
 	
 	/*
-	 * Create an assorted value type with object alignment 
-	 * 
+	 * Create an assorted value type with object alignment
+	 *
 	 * value AssortedValueWithObjectAlignment {
 	 * 	flattened Triangle2D tri;
 	 * 	flattened Point2D point;
@@ -1780,8 +1780,8 @@ public class ValueTypeTests {
 	}
 
 	/*
-	 * Create an assorted refType with object alignment 
-	 * 
+	 * Create an assorted refType with object alignment
+	 *
 	 * class AssortedRefWithObjectAlignment {
 	 * 	flattened Triangle2D tri;
 	 * 	flattened Point2D point;
@@ -1813,8 +1813,8 @@ public class ValueTypeTests {
 	}
 
 	/*
-	 * Create an assorted value type with single alignment 
-	 * 
+	 * Create an assorted value type with single alignment
+	 *
 	 * value AssortedValueWithSingleAlignment {
 	 * 	flattened Triangle2D tri;
 	 * 	flattened Point2D point;
@@ -1845,8 +1845,8 @@ public class ValueTypeTests {
 	}
 
 	/*
-	 * Create an assorted refType with single alignment 
-	 * 
+	 * Create an assorted refType with single alignment
+	 *
 	 * class AssortedRefWithSingleAlignment {
 	 * 	flattened Triangle2D tri;
 	 * 	flattened Point2D point;
@@ -1878,7 +1878,7 @@ public class ValueTypeTests {
 
 	/*
 	 * Create a large valueType with 16 valuetypes as its members
-	 * Create a mega valueType with 16 large valuetypes as its members 
+	 * Create a mega valueType with 16 large valuetypes as its members
 	 *
 	 * value LargeObject {
 	 *	flattened ValueObject val1;
@@ -1889,7 +1889,7 @@ public class ValueTypeTests {
 	 *
 	 * value MegaObject {
 	 *	flattened LargeObject val1;
-	 *	... 
+	 *	...
 	 *	flattened LargeObject val16;
 	 * }
 	 */
@@ -1970,7 +1970,7 @@ public class ValueTypeTests {
 
 	/*
 	 * Create a large refType with 16 valuetypes as its members
-	 * Create a mega refType with 16 large valuetypes as its members 
+	 * Create a mega refType with 16 large valuetypes as its members
 	 *
 	 * class LargeRef {
 	 *	flattened ValObject val1;
@@ -1981,7 +1981,7 @@ public class ValueTypeTests {
 	 *
 	 * class MegaObject {
 	 *	flattened LargeObject val1;
-	 *	... 
+	 *	...
 	 *	flattened LargeObject val16;
 	 * }
 	 */
@@ -2221,8 +2221,8 @@ public class ValueTypeTests {
 	}
 
 	/*
-	 * Create large number of value types and instantiate them 
-	 * 
+	 * Create large number of value types and instantiate them
+	 *
 	 * value Point2D {
 	 * 	int x;
 	 * 	int y;
@@ -2496,7 +2496,7 @@ public class ValueTypeTests {
 	}
 
 	/*
-	 * Create a 2D array of valueTypes, verify that the default elements are null. 
+	 * Create a 2D array of valueTypes, verify that the default elements are null.
 	 */
 	@Test(priority=5, invocationCount=2)
 	static public void testMultiDimentionalArrays() throws Throwable {
@@ -2529,7 +2529,7 @@ public class ValueTypeTests {
 	}
 
 	/*
-	 * Ensure that casting null to invalid Qtype class will throw a NoClassDef 
+	 * Ensure that casting null to invalid Qtype class will throw a NoClassDef
 	 */
 	@Test(priority=1)
 	static public void testCheckCastValueTypeOnInvalidLtype() throws Throwable {
@@ -2544,7 +2544,7 @@ public class ValueTypeTests {
 	}
 	
 	/*
-	 * Ensure that casting null to invalid Qtype class will throw a null pointer exception 
+	 * Ensure that casting null to invalid Qtype class will throw a null pointer exception
 	 */
 	@Test(enabled=false, priority=1, expectedExceptions=NullPointerException.class)
 	static public void testCheckCastValueTypeOnInvalidQtype() throws Throwable {
@@ -2555,7 +2555,7 @@ public class ValueTypeTests {
 	}
 	
 	/*
-	 * Ensure that casting null to a value type class will throw a null pointer exception 
+	 * Ensure that casting null to a value type class will throw a null pointer exception
 	 */
 	@Test(priority=1, expectedExceptions=NullPointerException.class)
 	static public void testCheckCastValueTypeOnNull() throws Throwable {
@@ -2588,7 +2588,7 @@ public class ValueTypeTests {
 	}
 
 	/*
-	 * Maintain a buffer of flattened arrays with long-aligned valuetypes while keeping a certain amount of classes alive at any 
+	 * Maintain a buffer of flattened arrays with long-aligned valuetypes while keeping a certain amount of classes alive at any
 	 * single time. This forces the GC to unload the classes.
 	 */
 	@Test(priority=5, invocationCount=2)
@@ -2614,7 +2614,7 @@ public class ValueTypeTests {
 	}
 
 	/*
-	 * Maintain a buffer of flattened arrays with object-aligned valuetypes while keeping a certain amount of classes alive at any 
+	 * Maintain a buffer of flattened arrays with object-aligned valuetypes while keeping a certain amount of classes alive at any
 	 * single time. This forces the GC to unload the classes.
 	 */
 	@Test(priority=5, invocationCount=2)
@@ -2640,7 +2640,7 @@ public class ValueTypeTests {
 	}
 
 	/*
-	 * Maintain a buffer of flattened arrays with single-aligned valuetypes while keeping a certain amount of classes alive at any 
+	 * Maintain a buffer of flattened arrays with single-aligned valuetypes while keeping a certain amount of classes alive at any
 	 * single time. This forces the GC to unload the classes.
 	 */
 	@Test(priority=5, invocationCount=2)
