@@ -1063,6 +1063,10 @@ def set_job_variables(job_type) {
     CODE_COVERAGE = (params.CODE_COVERAGE) ? params.CODE_COVERAGE : false
     echo "Using CODE_COVERAGE = ${CODE_COVERAGE}"
 
+    USE_TESTENV_PROPERTIES = params.USE_TESTENV_PROPERTIES ?: false
+    echo "Using params.USE_TESTENV_PROPERTIES = ${params.USE_TESTENV_PROPERTIES}"
+    echo "Using USE_TESTENV_PROPERTIES = ${USE_TESTENV_PROPERTIES}"
+
     switch (job_type) {
         case "build":
             // set the node the Jenkins build would run on
