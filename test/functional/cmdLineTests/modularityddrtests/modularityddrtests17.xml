@@ -1,0 +1,737 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+
+<!--
+  Copyright (c) 2018, 2022 IBM Corp. and others
+
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] http://openjdk.java.net/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+-->
+
+<!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
+
+<suite id="J9 modularity ddr command Tests" timeout="600">
+
+	<variable name="PROGRAM" value="-version" />
+	<variable name="DUMPFILE" value="j9core.dmp" />
+	<variable name="DUMPDIR" value="dumpdir" />
+	<variable name="XDUMP" value="-Xdump:system:file=$DUMPFILE$,events=vmstop" />
+
+	<!-- override the -Xdump command on z/OS -->
+	<variable name="XDUMP" value="-Xdump:system:opts=IEATDUMP,dsn=%uid.J9CORE.DMP,events=vmstop,request=exclusive+compact" platforms="zos.*" />
+
+ <test id="Create core file">
+  <exec command="tso delete J9CORE.DMP.*" platforms="zos_390-64.*" />
+  <exec command="tso delete J9CORE.DMP" platforms="zos_390-31.*" />
+  <exec command="rm -f $DUMPFILE$" />
+  <command>$EXE$ -Xmx4m $XDUMP$ $PROGRAM$</command>
+  <output regex="no" type="success">System dump written</output>
+  <!-- check for unexpected core dumps -->
+  <output regex="no" type="failure">0001.dmp</output>
+ </test>
+
+ <exec command="cp //'$LOGNAME$.J9CORE.DMP.X001' $DUMPFILE$" platforms="zos_390-64.*" />
+ <exec command="cp //'$LOGNAME$.J9CORE.DMP' $DUMPFILE$" platforms="zos_390-31.*" />
+ <exec command="tso delete J9CORE.DMP.*" platforms="zos_390-64.*" />
+ <exec command="tso delete J9CORE.DMP" platforms="zos_390-31.*" />
+
+ <test id="Run !findallmodules">
+        <command command="$JDMPVIEW_EXE$">
+                <arg>-core $DUMPFILE$</arg>
+                <input>!findallmodules</input>
+                <input>quit</input>
+        </command>
+  <output regex="no" type="success">java.base</output>
+  <output regex="no" type="required">!j9module</output>
+  <output regex="no" type="failure">DDRInteractiveCommandException</output>
+ </test>
+
+ <test id="Run !findmodulebyname">
+        <command command="$JDMPVIEW_EXE$">
+                <arg>-core $DUMPFILE$</arg>
+                <input>!findmodulebyname java.base</input>
+                <input>quit</input>
+        </command>
+  <saveoutput regex="no" type="success" saveName="moduleAddr" splitIndex="1" splitBy="!j9module ">!j9module 0x</saveoutput>
+  <output regex="no" type="required">java.base</output>
+  <output regex="no" type="required">Found 1 module(s)</output>
+  <output regex="no" type="failure">DDRInteractiveCommandException</output>
+
+ </test>
+
+ <test id="Verify !findmodulebyname">
+        <command command="$JDMPVIEW_EXE$">
+                <arg>-core $DUMPFILE$</arg>
+                <input>echo $moduleAddr$</input>
+                <input>!j9module $moduleAddr$</input>
+                <input>quit</input>
+        </command>
+  <output regex="no" type="success">Fields for J9Module:</output>
+  <output regex="no" type="required">moduleName</output>
+  <output regex="no" type="required">version</output>
+  <output regex="no" type="required">readAccessHashTable</output>
+  <output regex="no" type="failure">DDRInteractiveCommandException</output>
+  <output regex="no" type="failure">&lt;FAULT&gt;</output>
+
+ </test>
+
+ <test id="Run !findmodulebyname find non-existing module">
+        <command command="$JDMPVIEW_EXE$">
+                <arg>-core $DUMPFILE$</arg>
+                <input>!findmodulebyname thisdoesnotexist</input>
+                <input>quit</input>
+        </command>
+  <output regex="no" type="success">thisdoesnotexist</output>
+  <output regex="no" type="required">Found 0 module(s)</output>
+  <output regex="no" type="failure">DDRInteractiveCommandException</output>
+
+ </test>
+
+ <test id="Run !dumpmoduleexports">
+        <command command="$JDMPVIEW_EXE$">
+                <arg>-core $DUMPFILE$</arg>
+                <input>!dumpmoduleexports $moduleAddr$</input>
+                <input>quit</input>
+        </command>
+  <output regex="no" type="success">!j9package 0x</output>
+  <saveoutput regex="no" type="required" saveName="packageAddr" splitIndex="1" splitBy="!j9package ">jdk/internal/vm </saveoutput>
+  <output regex="no" type="required">sun/net</output>
+  <output regex="no" type="required">java/util/stream</output>
+  <output regex="no" type="failure">DDRInteractiveCommandException</output>
+
+ </test>
+
+ <test id="Verify !dumpmoduleexports">
+        <command command="$JDMPVIEW_EXE$">
+                <arg>-core $DUMPFILE$</arg>
+                <input>!j9package $packageAddr$</input>
+                <input>quit</input>
+        </command>
+  <output regex="no" type="success">Fields for J9Package:</output>
+  <output regex="no" type="required">packageName</output>
+  <output regex="no" type="required">jdk/internal/vm</output>
+  <output regex="no" type="required">module</output>
+  <output regex="no" type="required">exportsHashTable</output>
+  <output regex="no" type="failure">DDRInteractiveCommandException</output>
+  <output regex="no" type="failure">&lt;FAULT&gt;</output>
+
+ </test>
+
+ <test id="Run !dumpmodulereads">
+        <command command="$JDMPVIEW_EXE$">
+                <arg>-core $DUMPFILE$</arg>
+                <input>!dumpmodulereads $moduleAddr$</input>
+                <input>quit</input>
+        </command>
+  <output regex="no" type="success">!j9module 0x</output>
+  <saveoutput regex="no" type="required" saveName="readModuleAddr" splitIndex="1" splitBy="!j9module ">openj9.cuda</saveoutput>
+  <output regex="no" type="required">jdk.net</output>
+  <output regex="no" type="required">java.se</output>
+  <output regex="no" type="failure">DDRInteractiveCommandException</output>
+
+ </test>
+
+ <test id="Verify !dumpmodulereads">
+        <command command="$JDMPVIEW_EXE$">
+                <arg>-core $DUMPFILE$</arg>
+                <input>!j9module $readModuleAddr$</input>
+                <input>quit</input>
+        </command>
+  <output regex="no" type="success">Fields for J9Module:</output>
+  <output regex="no" type="required">moduleName</output>
+  <output regex="no" type="required">version</output>
+  <output regex="no" type="required">readAccessHashTable</output>
+  <output regex="no" type="failure">DDRInteractiveCommandException</output>
+  <output regex="no" type="failure">&lt;FAULT&gt;</output>
+
+ </test>
+
+ <test id="Run !dumpmoduleexports">
+        <command command="$JDMPVIEW_EXE$">
+                <arg>-core $DUMPFILE$</arg>
+                <input>!dumpmoduleexports $moduleAddr$</input>
+                <input>quit</input>
+        </command>
+  <output regex="no" type="success">!j9package 0x</output>
+  <saveoutput regex="no" type="required" saveName="packageAddr" splitIndex="1" splitBy="!j9package ">jdk/internal/vm </saveoutput>
+  <output regex="no" type="required">sun/net</output>
+  <output regex="no" type="required">java/util/stream</output>
+  <output regex="no" type="failure">DDRInteractiveCommandException</output>
+
+ </test>
+
+ <test id="Verify !dumpmoduleexports">
+        <command command="$JDMPVIEW_EXE$">
+                <arg>-core $DUMPFILE$</arg>
+                <input>!j9package $packageAddr$</input>
+                <input>quit</input>
+        </command>
+  <output regex="no" type="success">Fields for J9Package:</output>
+  <output regex="no" type="required">packageName</output>
+  <output regex="no" type="required">jdk/internal/vm</output>
+  <output regex="no" type="required">module</output>
+  <output regex="no" type="required">exportsHashTable</output>
+  <output regex="no" type="failure">DDRInteractiveCommandException</output>
+  <output regex="no" type="failure">&lt;FAULT&gt;</output>
+
+ </test>
+
+ <test id="Run !dumpmodulereads">
+        <command command="$JDMPVIEW_EXE$">
+                <arg>-core $DUMPFILE$</arg>
+                <input>!dumpmodulereads $moduleAddr$</input>
+                <input>quit</input>
+        </command>
+  <output regex="no" type="success">!j9module 0x</output>
+  <saveoutput regex="no" type="required" saveName="readModuleAddr" splitIndex="1" splitBy="!j9module ">openj9.cuda</saveoutput>
+  <output regex="no" type="required">jdk.net</output>
+  <output regex="no" type="required">java.se</output>
+  <output regex="no" type="failure">DDRInteractiveCommandException</output>
+
+ </test>
+
+ <test id="Verify !dumpmodulereads">
+        <command command="$JDMPVIEW_EXE$">
+                <arg>-core $DUMPFILE$</arg>
+                <input>!j9module $readModuleAddr$</input>
+                <input>quit</input>
+        </command>
+  <output regex="no" type="success">Fields for J9Module:</output>
+  <output regex="no" type="required">moduleName</output>
+  <output regex="no" type="required">version</output>
+  <output regex="no" type="required">readAccessHashTable</output>
+  <output regex="no" type="failure">DDRInteractiveCommandException</output>
+  <output regex="no" type="failure">&lt;FAULT&gt;</output>
+
+ </test>
+
+ <test id="Run !findallreads">
+        <command command="$JDMPVIEW_EXE$">
+                <arg>-core $DUMPFILE$</arg>
+                <input>!findallreads $readModuleAddr$</input>
+                <input>quit</input>
+        </command>
+  <output regex="no" type="success">!j9module 0x</output>
+  <output regex="no" type="required">java.base</output>
+  <output regex="no" type="required">Found 1 module(s)</output>
+  <output regex="no" type="failure">DDRInteractiveCommandException</output>
+
+ </test>
+
+ <test id="Run !dumpmoduledirectedexports">
+        <command command="$JDMPVIEW_EXE$">
+                <arg>-core $DUMPFILE$</arg>
+                <input>!dumpmoduledirectedexports $packageAddr$</input>
+                <input>quit</input>
+        </command>
+  <output regex="no" type="success">!j9module 0x</output>
+  <output regex="no" type="required">jdk.management.agent</output>
+  <output regex="no" type="required">jdk.internal.jvmstat</output>
+  <output regex="no" type="failure">DDRInteractiveCommandException</output>
+
+ </test>
+
+ <test id="Run !dumpallclassesinmodule">
+        <command command="$JDMPVIEW_EXE$">
+                <arg>-core $DUMPFILE$</arg>
+                <input>!dumpallclassesinmodule $moduleAddr$</input>
+                <input>quit</input>
+        </command>
+  <output regex="no" type="success">!j9class 0x</output>
+  <output regex="no" type="required">java/lang</output>
+  <output regex="no" type="required">classes in !j9module</output>
+  <output regex="no" type="failure">DDRInteractiveCommandException</output>
+
+ </test>
+
+	<!-- Test !findmodules and all options -->
+	<test id="Run !findmodules">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core</arg>
+			<arg>$DUMPFILE$</arg>
+			<input>!findmodules</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success">java.base</output>
+		<output regex="no" type="required">!j9module 0x</output>
+		<output regex="no" type="failure">DDRInteractiveCommandException</output>
+	</test>
+
+	<test id="Run !findmodules all">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core</arg>
+			<arg>$DUMPFILE$</arg>
+			<input>!findmodules all</input>
+			<input>quit</input>
+		</command>
+		<saveoutput regex="no" type="required" saveName="javaCompilerModuleAddr" splitIndex="1" splitBy="!j9module ">java.compiler</saveoutput>
+		<output regex="no" type="success">java.base</output>
+		<output regex="no" type="required">!j9module 0x</output>
+		<output regex="no" type="failure">DDRInteractiveCommandException</output>
+	</test>
+
+	<test id="Run !findmodules name">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core</arg>
+			<arg>$DUMPFILE$</arg>
+			<input>!findmodules name java.base</input>
+			<input>quit</input>
+		</command>
+		<saveoutput regex="no" type="success" saveName="javaBaseModuleAddr" splitIndex="1" splitBy="!j9module ">!j9module 0x</saveoutput>
+		<output regex="no" type="required">java.base</output>
+		<output regex="no" type="required">Found 1 module</output>
+		<output regex="no" type="failure">DDRInteractiveCommandException</output>
+	</test>
+
+	<test id="Verify !findmodules name">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core</arg>
+			<arg>$DUMPFILE$</arg>
+			<input>!j9module $javaBaseModuleAddr$</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success">Fields for J9Module:</output>
+		<output regex="no" type="required">moduleName</output>
+		<output regex="no" type="required">version</output>
+		<output regex="no" type="required">readAccessHashTable</output>
+		<output regex="no" type="failure">DDRInteractiveCommandException</output>
+		<output regex="no" type="failure">&lt;FAULT&gt;</output>
+	</test>
+
+	<test id="Run !findmodules name on non-existing module">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core</arg>
+			<arg>$DUMPFILE$</arg>
+			<input>!findmodules name thisdoesnotexist</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success">Found 0 modules</output>
+		<output regex="no" type="failure">!j9module</output>
+		<output regex="no" type="failure">DDRInteractiveCommandException</output>
+	</test>
+
+	<test id="Run !findmodules requires">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core</arg>
+			<arg>$DUMPFILE$</arg>
+			<input>!findmodules requires java.base</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success">jdk.compiler</output>
+		<output regex="no" type="required">!j9module 0x</output>
+		<output regex="no" type="failure">DDRInteractiveCommandException</output>
+	 </test>
+
+	 <test id="Run !findmodules requires on non-existing module">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core</arg>
+			<arg>$DUMPFILE$</arg>
+			<input>!findmodules requires thisdoesnotexist</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success">Found 0 modules</output>
+		<output regex="no" type="failure">!j9module</output>
+		<output regex="no" type="failure">DDRInteractiveCommandException</output>
+	</test>
+
+	<test id="Run !findmodules package">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core</arg>
+			<arg>$DUMPFILE$</arg>
+			<input>!findmodules package java/io</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success">java.base</output>
+		<output regex="no" type="required">!j9module 0x</output>
+		<output regex="no" type="required">Found 1 module</output>
+		<output regex="no" type="failure">DDRInteractiveCommandException</output>
+	</test>
+
+	<test id="Run !findmodules package on non-existing package">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core</arg>
+			<arg>$DUMPFILE$</arg>
+			<input>!findmodules package thisdoesnotexist</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success">Found 0 modules</output>
+		<output regex="no" type="failure">!j9module</output>
+		<output regex="no" type="failure">DDRInteractiveCommandException</output>
+	</test>
+
+	<test id="Run !findmodules help">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core</arg>
+			<arg>$DUMPFILE$</arg>
+			<input>!findmodules help</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success">Usage:</output>
+		<output regex="no" type="required">!findmodules all</output>
+		<output regex="no" type="required">!findmodules name</output>
+		<output regex="no" type="required">!findmodules requires</output>
+		<output regex="no" type="required">!findmodules package</output>
+		<output regex="no" type="failure">Argument failed to parse or was parsed to an unhandled subcommand.</output>
+		<output regex="no" type="failure">DDRInteractiveCommandException</output>
+	</test>
+
+	<test id="Run !findmodules with an invalid subcommand">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core</arg>
+			<arg>$DUMPFILE$</arg>
+			<input>!findmodules someInvalidOption</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success">Argument failed to parse or was parsed to an unhandled subcommand.</output>
+		<output regex="no" type="required">Usage:</output>
+		<output regex="no" type="required">!findmodules all</output>
+		<output regex="no" type="required">!findmodules name</output>
+		<output regex="no" type="required">!findmodules requires</output>
+		<output regex="no" type="required">!findmodules package</output>
+		<output regex="no" type="failure">DDRInteractiveCommandException</output>
+	</test>
+
+	<test id="Run !findmodules with too many arguments">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core</arg>
+			<arg>$DUMPFILE$</arg>
+			<input>!findmodules multiple options</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success">Argument failed to parse or was parsed to an unhandled subcommand.</output>
+		<output regex="no" type="required">Usage:</output>
+		<output regex="no" type="required">!findmodules all</output>
+		<output regex="no" type="required">!findmodules name</output>
+		<output regex="no" type="required">!findmodules requires</output>
+		<output regex="no" type="required">!findmodules package</output>
+		<output regex="no" type="failure">DDRInteractiveCommandException</output>
+	</test>
+
+	<!-- Test !dumpmodule and all options-->
+	<test id="Run !dumpmodule">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core</arg>
+			<arg>$DUMPFILE$</arg>
+			<input>!dumpmodule $javaBaseModuleAddr$</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success">Module:</output>
+		<output regex="no" type="required">Exports:</output>
+		<output regex="no" type="required">Requires:</output>
+		<output regex="no" type="required">Exports java/nio/file/spi</output>
+		<output regex="no" type="required">!j9package 0x</output>
+		<output regex="no" type="required">Exports com/ibm/gpu/spi</output>
+		<output regex="no" type="required">to openj9.gpu</output>
+		<output regex="no" type="required">!j9module 0x</output>
+		<output regex="no" type="failure">to ALL-UNNAMED</output>
+		<output regex="no" type="failure">DDRInteractiveCommandException</output>
+	</test>
+
+	<test id="Run !dumpmodule packages">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core</arg>
+			<arg>$DUMPFILE$</arg>
+			<input>!dumpmodule packages $javaBaseModuleAddr$</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success">!j9package 0x</output>
+		<saveoutput regex="no" type="required" saveName="javaUtilPackageAddr" splitIndex="1" splitBy="!j9package ">java/util </saveoutput>
+		<output regex="no" type="failure">DDRInteractiveCommandException</output>
+	</test>
+
+	<test id="Verify !dumpmodule package">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core</arg>
+			<arg>$DUMPFILE$</arg>
+			<input>!j9package $javaUtilPackageAddr$</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success">Fields for J9Package:</output>
+		<output regex="no" type="required">packageName</output>
+		<output regex="no" type="required">java/util</output>
+		<output regex="no" type="required">module</output>
+		<output regex="no" type="required">exportsHashTable</output>
+		<output regex="no" type="failure">DDRInteractiveCommandException</output>
+		<output regex="no" type="failure">&lt;FAULT&gt;</output>
+	</test>
+
+	<test id="Run !dumpmodule classes">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core</arg>
+			<arg>$DUMPFILE$</arg>
+			<input>!dumpmodule classes $javaBaseModuleAddr$</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success">java/lang/Long</output>
+		<output regex="no" type="required">!j9class 0x</output>
+		<output regex="no" type="required">java/lang/Integer</output>
+		<output regex="no" type="failure">DDRInteractiveCommandException</output>
+	</test>
+
+	<test id="Run !dumpmodule requires">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core</arg>
+			<arg>$DUMPFILE$</arg>
+			<input>!dumpmodule requires $javaCompilerModuleAddr$</input>
+			<input>quit</input>
+		</command>
+		<saveoutput regex="no" type="required" saveName="requiredModuleAddr" splitIndex="1" splitBy="!j9module ">!j9module 0x</saveoutput>
+		<output regex="no" type="success">!j9module 0x</output>
+		<output regex="no" type="required">java.base</output>
+		<output regex="no" type="failure">DDRInteractiveCommandException</output>
+	</test>
+
+	<test id="Verify !dumpmodule requires">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core</arg>
+			<arg>$DUMPFILE$</arg>
+			<input>!j9module $requiredModuleAddr$</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success">Fields for J9Module:</output>
+		<output regex="no" type="required">moduleName</output>
+		<output regex="no" type="required">version</output>
+		<output regex="no" type="required">readAccessHashTable</output>
+		<output regex="no" type="failure">DDRInteractiveCommandException</output>
+		<output regex="no" type="failure">&lt;FAULT&gt;</output>
+	</test>
+
+	<test id="Run !dumpmodule exports">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core</arg>
+			<arg>$DUMPFILE$</arg>
+			<input>!dumpmodule exports $javaBaseModuleAddr$</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success">Exports java/nio/file/spi</output>
+		<output regex="no" type="required">!j9package 0x</output>
+		<output regex="no" type="required">Exports com/ibm/gpu/spi</output>
+		<output regex="no" type="required">to openj9.gpu</output>
+		<output regex="no" type="required">!j9module 0x</output>
+		<output regex="no" type="failure">to ALL-UNNAMED</output>
+		<saveoutput regex="no" type="required" saveName="limitedExportPackage" splitIndex="1" splitBy="!j9package ">com/ibm/gpu/spi </saveoutput>
+		<output regex="no" type="failure">DDRInteractiveCommandException</output>
+	</test>
+
+	<test id="Verify !dumpmodule exports">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core</arg>
+			<arg>$DUMPFILE$</arg>
+			<input>!j9package $javaUtilPackageAddr$</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success">Fields for J9Package:</output>
+		<output regex="no" type="required">packageName</output>
+		<output regex="no" type="required">module</output>
+		<output regex="no" type="required">exportsHashTable</output>
+		<output regex="no" type="failure">DDRInteractiveCommandException</output>
+		<output regex="no" type="failure">&lt;FAULT&gt;</output>
+	</test>
+
+	<test id="Run !dumpmodule help">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core</arg>
+			<arg>$DUMPFILE$</arg>
+			<input>!dumpmodule help</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success">Usage:</output>
+		<output regex="no" type="required">!dumpmodule all</output>
+		<output regex="no" type="required">!dumpmodule requires</output>
+		<output regex="no" type="required">!dumpmodule exports</output>
+		<output regex="no" type="required">!dumpmodule classes</output>
+		<output regex="no" type="required">!dumpmodule packages</output>
+		<output regex="no" type="failure">Argument failed to parse or was parsed to an unhandled subcommand.</output>
+		<output regex="no" type="failure">DDRInteractiveCommandException</output>
+	</test>
+
+	<test id="Run !dumpmodule with an invalid subcommand">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core</arg>
+			<arg>$DUMPFILE$</arg>
+			<input>!dumpmodule someInvalidOption $javaBaseModuleAddr$</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success">Argument failed to parse or was parsed to an unhandled subcommand.</output>
+		<output regex="no" type="required">Usage:</output>
+		<output regex="no" type="required">!dumpmodule all</output>
+		<output regex="no" type="required">!dumpmodule requires</output>
+		<output regex="no" type="required">!dumpmodule exports</output>
+		<output regex="no" type="required">!dumpmodule classes</output>
+		<output regex="no" type="required">!dumpmodule packages</output>
+		<output regex="no" type="failure">DDRInteractiveCommandException</output>
+	</test>
+
+	<test id="Run !dumpmodule with too many arguments">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core</arg>
+			<arg>$DUMPFILE$</arg>
+			<input>!dumpmodule too many options</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success">Argument failed to parse or was parsed to an unhandled subcommand.</output>
+		<output regex="no" type="required">Usage:</output>
+		<output regex="no" type="required">!dumpmodule all</output>
+		<output regex="no" type="required">!dumpmodule requires</output>
+		<output regex="no" type="required">!dumpmodule exports</output>
+		<output regex="no" type="required">!dumpmodule classes</output>
+		<output regex="no" type="required">!dumpmodule packages</output>
+		<output regex="no" type="failure">DDRInteractiveCommandException</output>
+	</test>
+
+	<test id="Run !dumpmodule with a non-numeric module address">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core</arg>
+			<arg>$DUMPFILE$</arg>
+			<input>!dumpmodule NotANumber</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success">Problem running command:</output>
+		<output regex="no" type="required">The argument "NotANumber" is not a valid number. It should be the address of a J9Module.</output>
+	</test>
+
+	<test id="Run !dumpmodule with an invalid module address">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core</arg>
+			<arg>$DUMPFILE$</arg>
+			<input>!dumpmodule 0x0</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success">Memory Fault reading 0x</output>
+		<output regex="no" type="required">Problem running command:</output>
+		<output regex="no" type="required">The argument "0x0" is not the address of a valid J9Module.</output>
+	</test>
+
+	<!-- Test !dumppackage and all options-->
+	<test id="Run !dumppackage on a globally exported package">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core</arg>
+			<arg>$DUMPFILE$</arg>
+			<input>!dumppackage $javaUtilPackageAddr$</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success">Package is exported to all</output>
+		<output regex="no" type="failure">DDRInteractiveCommandException</output>
+	</test>
+
+	<test id="Run !dumppackage on a package exported to specific modules">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core</arg>
+			<arg>$DUMPFILE$</arg>
+			<input>!dumppackage $limitedExportPackage$</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="required">Exported to:</output>
+		<output regex="no" type="success">openj9.gpu</output>
+		<output regex="no" type="required">!j9module </output>
+		<output regex="no" type="failure">DDRInteractiveCommandException</output>
+	</test>
+
+	<test id="Run !dumppackage classes">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core</arg>
+			<arg>$DUMPFILE$</arg>
+			<input>!dumppackage classes $javaUtilPackageAddr$</input>
+			<input>quit</input>
+		</command>
+		<saveoutput regex="no" type="success" saveName="queueClassAddr" splitIndex="1" splitBy="!j9class ">java/util/Queue</saveoutput>
+		<output regex="no" type="required">!j9class 0x</output>
+		<output regex="no" type="failure">DDRInteractiveCommandException</output>
+	</test>
+
+	<test id="Verify !dumppackage classes">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core</arg>
+			<arg>$DUMPFILE$</arg>
+			<input>!j9class $queueClassAddr$</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success">J9Class at 0x</output>
+		<output regex="no" type="required">Fields for J9Class:</output>
+		<output regex="no" type="required">Class name: java/util/Queue</output>
+		<output regex="no" type="required">packageID</output>
+		<output regex="no" type="failure">DDRInteractiveCommandException</output>
+		<output regex="no" type="failure">&lt;FAULT&gt;</output>
+	</test>
+
+	<test id="Run !dumppackage help">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core</arg>
+			<arg>$DUMPFILE$</arg>
+			<input>!dumppackage help</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success">Usage:</output>
+		<output regex="no" type="required">!dumppackage all</output>
+		<output regex="no" type="required">!dumppackage exportsTo</output>
+		<output regex="no" type="required">!dumppackage classes</output>
+		<output regex="no" type="failure">Argument failed to parse or was parsed to an unhandled subcommand.</output>
+		<output regex="no" type="failure">DDRInteractiveCommandException</output>
+	</test>
+
+	<test id="Run !dumppackage with an invalid subcommand">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core</arg>
+			<arg>$DUMPFILE$</arg>
+			<input>!dumppackage someInvalidOption $javaUtilPackageAddr$</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success">Argument failed to parse or was parsed to an unhandled subcommand.</output>
+		<output regex="no" type="required">Usage:</output>
+		<output regex="no" type="required">!dumppackage all</output>
+		<output regex="no" type="required">!dumppackage exportsTo</output>
+		<output regex="no" type="required">!dumppackage classes</output>
+		<output regex="no" type="failure">DDRInteractiveCommandException</output>
+	</test>
+
+	<test id="Run !dumppackage with too many arguments">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core</arg>
+			<arg>$DUMPFILE$</arg>
+			<input>!dumppackage too many options</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success">Argument failed to parse or was parsed to an unhandled subcommand.</output>
+		<output regex="no" type="required">Usage:</output>
+		<output regex="no" type="required">!dumppackage all</output>
+		<output regex="no" type="required">!dumppackage exportsTo</output>
+		<output regex="no" type="required">!dumppackage classes</output>
+		<output regex="no" type="failure">DDRInteractiveCommandException</output>
+	</test>
+
+	<test id="Run !dumppackage with a non-numeric package address">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core</arg>
+			<arg>$DUMPFILE$</arg>
+			<input>!dumppackage NotANumber</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success">Problem running command:</output>
+		<output regex="no" type="required">The argument "NotANumber" is not a valid number. It should be the address of a J9Package.</output>
+	</test>
+
+	<test id="Run !dumppackage with an invalid package address">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core</arg>
+			<arg>$DUMPFILE$</arg>
+			<input>!dumppackage 0x0</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success">Memory Fault reading 0x</output>
+		<output regex="no" type="required">Problem running command:</output>
+	</test>
+</suite>

@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2018, 2021 IBM Corp. and others
+Copyright (c) 2018, 2022 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -102,5 +102,5 @@ End User issues
 To indicate an issue has been raised by an end user or affects the User-experience rather than being a developer-centric issue.
 
 * `userRaised`
-* `svtRaised`: Indicate an issue was raised for an AdoptOpenJDK 3rd party issue or the OpenJ9 system verification test (svt).
+* `svtRaised`: Indicate an issue was raised for an Adoptium third party issue or the OpenJ9 system verification test (svt).
 

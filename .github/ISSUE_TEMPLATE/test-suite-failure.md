@@ -8,7 +8,7 @@ Failure link
 ------------
 
 Public link to the failing test
-and ideally extracting relevant info from the failed run (just enough info to [run a Grinder](https://github.com/AdoptOpenJDK/openjdk-tests/wiki/How-to-Run-a-Grinder-Build-on-Jenkins)), include:
+and ideally extracting relevant info from the failed run (just enough info to [run a Grinder](https://github.com/adoptium/aqa-tests/wiki/How-to-Run-a-Grinder-Build-on-Jenkins)), include:
 - test category, in Grinder equates to BUILD_LIST (functional, systemtest, openjdk, etc): 
 - test target name, in Grinder equates to TARGET (testCaseName from playlist.xml, jdk_lang, jdk_net, etc):
 - OS/architecture, in Grinder equates to Jenkinsfile (openjdk_x86-64_linux, openjdk_x86-64_windows, etc): 
