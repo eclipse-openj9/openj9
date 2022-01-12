@@ -117,6 +117,7 @@ pipelineJob("$JOB_NAME") {
             stringParam('RESTART_TIMEOUT_UNITS')
             choiceParam('AUTOMATIC_GENERATION', ['true', 'false'])
             choiceParam('JOB_TYPE', ['pipeline'])
+            booleanParam('USE_TESTENV_PROPERTIES', false)
         } else if (jobType == 'build') {
             stringParam('NODE')
             choiceParam('JOB_TYPE', ['build'])
