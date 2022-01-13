@@ -325,6 +325,13 @@ bool J9::TransformUtil::avoidFoldingInstanceField(
             && fej9->isInstanceOf(objectClass, mcsClass, true) != TR_no;
          }
 
+      // MethodHandle.form can change even though it's declared final, so don't
+      // create a known object for it. Refinement doesn't rely on folding loads
+      // of this field to a known object. (LambdaForm.vmentry doesn't need to
+      // be listed here because it isn't even final.)
+      case TR::Symbol::Java_lang_invoke_MethodHandle_form:
+         return true;
+
       default:
          break;
       }

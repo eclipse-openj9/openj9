@@ -5573,6 +5573,7 @@ typedef struct J9JavaVM {
 	UDATA vmindexOffset;
 	UDATA vmtargetOffset;
 	UDATA mutableCallSiteInvalidationCookieOffset;
+	UDATA jitVMEntryKeepAliveOffset;
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 #if defined(J9VM_ZOS_3164_INTEROPERABILITY)
 	U_32 javaVM31;
