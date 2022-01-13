@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2021 IBM Corp. and others
+ * Copyright (c) 2018, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -343,6 +343,15 @@ static int32_t J9THREAD_PROC listenerThreadProc(void * entryarg)
       return JNI_ERR; // attaching the JITServer Listener thread failed
 
    j9thread_set_name(j9thread_self(), "JITServer Listener");
+
+   if (TR::Options::isAnyVerboseOptionSet())
+      {
+      OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
+      char timestamp[32];
+
+      omrstr_ftime_ex(timestamp, sizeof(timestamp), "%b %d %H:%M:%S %Y", j9time_current_time_millis(), OMRSTR_FTIME_FLAG_LOCAL);
+      TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "StartTime: %s", timestamp);
+      }
 
    J9CompileDispatcher handler(jitConfig);
    listener->serveRemoteCompilationRequests(&handler);
