@@ -226,7 +226,6 @@ public:
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
    virtual TR_OpaqueMethodBlock* targetMethodFromMemberName(uintptr_t memberName) override;
    virtual TR_OpaqueMethodBlock* targetMethodFromMemberName(TR::Compilation* comp, TR::KnownObjectTable::Index objIndex) override;
-   virtual TR_OpaqueMethodBlock* targetMethodFromMethodHandle(uintptr_t methodHandle) override;
    virtual TR_OpaqueMethodBlock* targetMethodFromMethodHandle(TR::Compilation* comp, TR::KnownObjectTable::Index objIndex) override;
    virtual TR_ResolvedMethod *targetMethodFromInvokeCacheArrayMemberNameObj(TR::Compilation *comp, TR_ResolvedMethod *owningMethod, uintptr_t *invokeCacheArray) override;
    virtual TR::KnownObjectTable::Index getKnotIndexOfInvokeCacheArrayAppendixElement(TR::Compilation *comp, uintptr_t *invokeCacheArray) override;

@@ -4937,24 +4937,97 @@ TR_J9VMBase::targetMethodFromMethodHandle(TR::Compilation* comp, TR::KnownObject
        knot &&
        !knot->isNull(objIndex))
       {
-      TR::VMAccessCriticalSection getTarget(this);
-      uintptr_t object = knot->getPointer(objIndex);
-      return targetMethodFromMethodHandle(object);
-      }
-   return NULL;
-   }
+      const char *mhClassName = "java/lang/invoke/MethodHandle";
+      int32_t mhClassNameLen = strlen(mhClassName);
+      TR_OpaqueClassBlock *mhClass =
+         getSystemClassFromClassName(mhClassName, mhClassNameLen);
 
-TR_OpaqueMethodBlock*
-TR_J9VMBase::targetMethodFromMethodHandle(uintptr_t methodHandle)
-   {
-   TR_ASSERT(haveAccess(), "targetFromMethodHandle requires VM access");
-   uintptr_t form = getReferenceField(
-      methodHandle,
-      "form",             "Ljava/lang/invoke/LambdaForm;");
-   uintptr_t vmentry = getReferenceField(
-      form,
-      "vmentry",             "Ljava/lang/invoke/MemberName;");
-   return targetMethodFromMemberName(vmentry);
+      if (mhClass == NULL)
+         {
+         if (comp->getOption(TR_TraceOptDetails))
+            traceMsg(comp, "targetMethodFromMethodHandle: MethodHandle is not loaded\n");
+
+         return NULL;
+         }
+
+      TR::VMAccessCriticalSection getTarget(this);
+
+      uintptr_t handle = knot->getPointer(objIndex);
+      TR_OpaqueClassBlock *objClass = getObjectClass(handle);
+      if (isInstanceOf(objClass, mhClass, true, true) != TR_yes)
+         {
+         if (comp->getOption(TR_TraceOptDetails))
+            {
+            traceMsg(
+               comp,
+               "targetMethodFromMethodHandle: Cannot load ((MethodHandle)obj%d).form "
+               "because obj%d is not a MethodHandle\n",
+               objIndex,
+               objIndex);
+            }
+
+         return NULL;
+         }
+
+      J9JavaVM *javaVM = _jitConfig->javaVM;
+      uint32_t keepAliveOffset = javaVM->jitVMEntryKeepAliveOffset;
+      uint32_t keepAliveOffsetNoHeader = keepAliveOffset - getObjectHeaderSizeInBytes();
+      uintptr_t vmentry = getVolatileReferenceFieldAt(handle, keepAliveOffsetNoHeader);
+      if (vmentry == 0)
+         {
+         uintptr_t form = getReferenceField(
+            handle, "form", "Ljava/lang/invoke/LambdaForm;");
+
+         if (form == 0)
+            {
+            if (comp->getOption(TR_TraceOptDetails))
+               {
+               traceMsg(
+                  comp,
+                  "targetMethodFromMethodHandle: null ((MethodHandle)obj%d).form\n",
+                  objIndex);
+               }
+
+            return NULL;
+            }
+
+         vmentry = getReferenceField(
+            form, "vmentry", "Ljava/lang/invoke/MemberName;");
+
+         if (vmentry == 0)
+            {
+            if (comp->getOption(TR_TraceOptDetails))
+               {
+               traceMsg(
+                  comp,
+                  "targetMethodFromMethodHandle: null ((MethodHandle)obj%d).form.vmentry\n",
+                  objIndex);
+               }
+
+            return NULL;
+            }
+
+         // This should be fj9object_t*, but j9gc_objaccess_compareAndSwapObject
+         // still expects J9Object** in its signature.
+         auto **keepAliveAddr = (J9Object**)(handle + keepAliveOffset);
+         UDATA success = javaVM->memoryManagerFunctions->j9gc_objaccess_compareAndSwapObject(
+            vmThread(), (J9Object*)handle, keepAliveAddr, NULL, (J9Object*)vmentry);
+
+         if (success == 0)
+            {
+            vmentry = getVolatileReferenceFieldAt(handle, keepAliveOffsetNoHeader);
+            TR_ASSERT_FATAL(
+               vmentry != 0,
+               "((MethodHandle)obj%d).jitVMEntryKeepAlive is still null "
+               "after failing compare and swap",
+               objIndex);
+            }
+         }
+
+      return targetMethodFromMemberName(vmentry);
+      }
+
+   return NULL;
    }
 
 J9JNIMethodID*
