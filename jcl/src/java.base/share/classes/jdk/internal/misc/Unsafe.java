@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar19-SE]*/
 /*******************************************************************************
- * Copyright (c) 2017, 2021 IBM Corp. and others
+ * Copyright (c) 2017, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -6549,9 +6549,25 @@ public final class Unsafe {
 
 	/*[IF INLINE-TYPES]*/
 	/**
-	 * ToDo: add comments for public methods - https://github.com/eclipse-openj9/openj9/issues/13614
+	 * Retrieves the primitive type in the obj parameter referenced by offset.
+	 * This is a non-volatile operation.
+	 *
+	 * @param obj object from which to retrieve the primitive type
+	 * @param offset position of the primitive type in obj
+	 * @param clz the class of primitive type to return
+	 * @return primitive type stored in obj
 	 */
 	public native <V> V getValue(Object obj, long offset, Class<?> clz);
+
+	/**
+	 * Sets the value of the primitive type in the obj parameter at memory offset.
+	 * This is a non-volatile operation.
+	 *
+	 * @param obj object into which to store the primitive type
+	 * @param offset position of the primitive type in obj
+	 * @param clz the class of the primitive type to store in obj
+	 * @param value primitive type to store in obj
+	 */
 	public native <V> void putValue(Object obj, long offset, Class<?> clz, V value);
 
 	/**
@@ -6618,12 +6634,29 @@ public final class Unsafe {
 		throw OpenJDKCompileStubThrowError();
 	}
 
+	/**
+	 * Atomically retrieves the primitive type in the obj parameter referenced by offset.
+	 *
+	 * @param obj object from which to retrieve the primitive type
+	 * @param offset position of the primitive type in obj
+	 * @param clz the class of primitive type to return
+	 * @return primitive type stored in obj
+	 */
 	public final <V> Object getValueVolatile(Object obj, long offset, Class<?> clz) {
-		throw OpenJDKCompileStubThrowError();
+		return getValue(obj, offset, clz);
 	}
 
+	/**
+	 * Atomically sets the value of the primitive type in the obj parameter at memory offset.
+	 * This is a non-volatile operation.
+	 *
+	 * @param obj object into which to store the primitive type
+	 * @param offset position of the primitive type in obj
+	 * @param clz the class of the primitive type to store in obj
+	 * @param value primitive type to store in obj
+	 */
 	public final <V> void putValueVolatile(Object obj, long offset, Class<?> clz, V v) {
-		throw OpenJDKCompileStubThrowError();
+		putValue(obj, offset, clz, v);
 	}
 
 	public final <V> Object getValueAcquire(Object obj, long offset, Class<?> clz) {
