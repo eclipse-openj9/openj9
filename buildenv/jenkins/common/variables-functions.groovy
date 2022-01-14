@@ -1473,50 +1473,20 @@ def set_build_extra_options(build_specs=null) {
  * Set the Git repository URL and branch for the AdoptOpenJDK Testing material.
  */
 def set_adoptopenjdk_tests_repository(build_releases=null) {
-    ADOPTOPENJDK_MAP = [:]
+    // fetch from the variables file
+    def adoptOpenJdkByReleaseMap = VARIABLES.adoptopenjdk.default
 
-    if (build_releases) {
-        for (release in build_releases) {
-            // fetch from the variables file
-            def adoptOpenJdkByReleaseMap = [:]
-            if (get_value(VARIABLES.adoptopenjdk, release)) {
-                adoptOpenJdkByReleaseMap.putAll(get_value(VARIABLES.adoptopenjdk, release))
-            } else {
-                adoptOpenJdkByReleaseMap.putAll(VARIABLES.adoptopenjdk.default)
-            }
-
-            if (params."ADOPTOPENJDK${release}_REPO") {
-                // override repo with user value
-                adoptOpenJdkByReleaseMap['repoUrl'] = params."ADOPTOPENJDK${release}_REPO"
-            }
-
-            if (params."ADOPTOPENJDK${release}_BRANCH") {
-                // override branch with user value
-                adoptOpenJdkByReleaseMap['branch'] = params."ADOPTOPENJDK${release}_BRANCH"
-            }
-
-            if (adoptOpenJdkByReleaseMap) {
-                ADOPTOPENJDK_MAP.put(release, adoptOpenJdkByReleaseMap)
-            }
-        }
-
-        echo "ADOPTOPENJDK_MAP = ${ADOPTOPENJDK_MAP.toString()}"
-    } else {
-        // fetch from the variables file
-        def adoptOpenJdkByReleaseMap = VARIABLES.adoptopenjdk.default
-
-        ADOPTOPENJDK_REPO = params.ADOPTOPENJDK_REPO
-        if (!ADOPTOPENJDK_REPO && adoptOpenJdkByReleaseMap) {
-            ADOPTOPENJDK_REPO = adoptOpenJdkByReleaseMap.get('repoUrl')
-        }
-
-        ADOPTOPENJDK_BRANCH = params.ADOPTOPENJDK_BRANCH
-        if (!ADOPTOPENJDK_BRANCH && adoptOpenJdkByReleaseMap) {
-            ADOPTOPENJDK_BRANCH = adoptOpenJdkByReleaseMap.get('branch')
-        }
-
-        echo "Using ADOPTOPENJDK_REPO = ${ADOPTOPENJDK_REPO} ADOPTOPENJDK_BRANCH = ${ADOPTOPENJDK_BRANCH}"
+    ADOPTOPENJDK_REPO = params.ADOPTOPENJDK_REPO
+    if (!ADOPTOPENJDK_REPO && adoptOpenJdkByReleaseMap) {
+        ADOPTOPENJDK_REPO = adoptOpenJdkByReleaseMap.get('repoUrl')
     }
+
+    ADOPTOPENJDK_BRANCH = params.ADOPTOPENJDK_BRANCH
+    if (!ADOPTOPENJDK_BRANCH && adoptOpenJdkByReleaseMap) {
+        ADOPTOPENJDK_BRANCH = adoptOpenJdkByReleaseMap.get('branch')
+    }
+
+    echo "Using ADOPTOPENJDK_REPO = ${ADOPTOPENJDK_REPO} ADOPTOPENJDK_BRANCH = ${ADOPTOPENJDK_BRANCH}"
 }
 
 // Creates a job using the job DSL plugin on Jenkins
