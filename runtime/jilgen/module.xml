@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-Copyright (c) 2017, 2020 IBM Corp. and others
+Copyright (c) 2017, 2022 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,7 +22,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 -->
 <module>
 	<artifact type="executable" name="constgen">
-		<exclude-if condition="spec.linux_riscv.*" />
 		<options>
 			<option name="isCPlusPlus"/>
 			<option name="doesNotRequireCMAIN"/>
@@ -53,10 +52,12 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<library name="j9thrstatic" type="external">
 				<include-if condition="spec.linux_arm.*" />
 				<include-if condition="spec.linux_aarch64.* and spec.flags.env_crossbuild" />
+				<include-if condition="spec.linux_riscv.* and spec.flags.env_crossbuild" />
 			</library>
 			<library name="j9thr">
 				<exclude-if condition="spec.linux_arm.*" />
 				<exclude-if condition="spec.linux_aarch64.* and spec.flags.env_crossbuild" />
+				<exclude-if condition="spec.linux_riscv64.* and spec.flags.env_crossbuild" />
 			</library>
 			<library name="j9hashtable" type="external"/>
 			<library name="j9avl" type="external"/>
@@ -93,7 +94,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	</artifact>
 
 	<artifact type="target" name="run_constgen">
-		<exclude-if condition="spec.linux_riscv.*" />
 		<phase>core j2se</phase>
 		<dependencies>
 			<dependency name="constgen"/>
@@ -102,6 +102,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<command line="cd $(UMA_PATH_TO_ROOT) &amp;&amp; ./constgen" type="all">
 				<exclude-if condition="spec.linux_arm.*"/>
 				<exclude-if condition="spec.linux_aarch64.* and spec.flags.env_crossbuild" />
+				<exclude-if condition="spec.linux_riscv.* and spec.flags.env_crossbuild" />
 				<exclude-if condition="spec.linux_ztpf.*"/>
 				<exclude-if condition="spec.zos_390.*"/>
 			</command>
@@ -110,6 +111,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			</command>
 			<command line="cd $(UMA_PATH_TO_ROOT) &amp;&amp; qemu-aarch64 -r '9' ./constgen" type="all">
 				<include-if condition="spec.linux_aarch64.* and spec.flags.env_crossbuild" />
+			</command>
+			<command line="cd $(UMA_PATH_TO_ROOT) &amp;&amp; qemu-riscv64-static -r '9' -L $(patsubst --sysroot=%, %, $(SYSROOT_CFLAGS)) ./constgen" type="all">
+				<include-if condition="spec.linux_riscv.* and spec.flags.env_crossbuild" />
 			</command>
 			<command line="sleep 20;cd $(UMA_PATH_TO_ROOT); if [ -x ../build_constgen.sh ] &amp;&amp; [ ! -e ../constgen.completed ] ; then ../build_constgen.sh ; fi" type="all">
 				<include-if condition="spec.linux_ztpf.*"/>
