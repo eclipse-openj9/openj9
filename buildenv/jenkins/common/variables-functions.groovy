@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2021 IBM Corp. and others
+ * Copyright (c) 2018, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1064,7 +1064,6 @@ def set_job_variables(job_type) {
     echo "Using CODE_COVERAGE = ${CODE_COVERAGE}"
 
     USE_TESTENV_PROPERTIES = params.USE_TESTENV_PROPERTIES ?: false
-    echo "Using params.USE_TESTENV_PROPERTIES = ${params.USE_TESTENV_PROPERTIES}"
     echo "Using USE_TESTENV_PROPERTIES = ${USE_TESTENV_PROPERTIES}"
 
     switch (job_type) {

@@ -364,7 +364,7 @@ def build_with_slack(DOWNSTREAM_JOB_NAME, ghprbGhRepository, ghprbActualCommit, 
 
 def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH, TESTS_TARGETS, VENDOR_TEST_REPOS_MAP, VENDOR_TEST_BRANCHES_MAP, VENDOR_TEST_DIRS_MAP, USER_CREDENTIALS_ID, SETUP_LABEL, ghprbGhRepository, ghprbActualCommit, EXTRA_GETSOURCE_OPTIONS, EXTRA_CONFIGURE_OPTIONS, EXTRA_MAKE_OPTION, OPENJDK_CLONE_DIR, ADOPTOPENJDK_REPO, ADOPTOPENJDK_BRANCH, BUILD_JOB_NAME, CUSTOM_DESCRIPTION, ARCHIVE_JAVADOC, CODE_COVERAGE, USE_TESTENV_PROPERTIES) {
     def jobs = [:]
-    echo "workflow USE_TESTENV_PROPERTIES:'${USE_TESTENV_PROPERTIES}'"
+
     // Set ghprbGhRepository and ghprbActualCommit for the purposes of Github commit status updates
     // Only for Nightly build
     // PR build will already have them set
@@ -413,7 +413,7 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
         if (params.ghprbPullId && params.ghprbGhRepository == 'eclipse-openj9/openj9') {
             SHAS['OPENJ9'] = "origin/pr/${params.ghprbPullId}/merge"
         }
-        echo "USE_TESTENV_PROPERTIES:'${USE_TESTENV_PROPERTIES}'"
+
         TESTS.each { id, target ->
             def testFlag = target['testFlag']
             def extraTestLabels = target['extraTestLabels']
