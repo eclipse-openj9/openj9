@@ -455,13 +455,6 @@ try {
                                 def EXTRA_MAKE_OPTIONS = get_value_by_spec(EXTRA_MAKE_OPTIONS_MAP, SDK_VERSION, SPEC)
                                 def OPENJDK_CLONE_DIR = get_value_by_spec(OPENJDK_CLONE_DIR_MAP, SDK_VERSION, SPEC)
 
-                                def ADOPTOPENJDK_REPO = ''
-                                def ADOPTOPENJDK_BRANCH = ''
-                                if (ADOPTOPENJDK_MAP.get(SDK_VERSION)) {
-                                    ADOPTOPENJDK_REPO = ADOPTOPENJDK_MAP.get(SDK_VERSION).get('repoUrl')
-                                    ADOPTOPENJDK_BRANCH = ADOPTOPENJDK_MAP.get(SDK_VERSION).get('branch')
-                                }
-
                                 builds["${job_name}"] = {
                                     if (AUTOMATIC_GENERATION != 'false') {
                                         node(SETUP_LABEL) {
