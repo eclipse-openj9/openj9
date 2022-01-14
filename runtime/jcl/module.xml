@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-Copyright (c) 2006, 2021 IBM Corp. and others
+Copyright (c) 2006, 2022 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -117,9 +117,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<group name="se16">
 				<include-if condition="spec.java16"/>
 			</group>
-			<group name="se18">
-				<include-if condition="spec.java18"/>
-			</group>
 		</exports>
 
 		<includes>
@@ -216,5 +213,4 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<library name="sunvmi"/>
 		</libraries>
 	</artifact>
-
 </module>
