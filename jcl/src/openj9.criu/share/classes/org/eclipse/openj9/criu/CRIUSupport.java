@@ -422,7 +422,7 @@ public final class CRIUSupport {
 	}
 
 	/**
-	 * User hook that is run before checkpointing the JVM.
+	 * User hook that is run after restoring a checkpoint image.
 	 *
 	 * Hooks will be run in single threaded mode, no other application threads
 	 * will be active. Users should avoid synchronization of objects that are not owned
@@ -448,7 +448,7 @@ public final class CRIUSupport {
 	}
 
 	/**
-	 * User hook that is run after restoring a checkpoint image.
+	 * User hook that is run before checkpointing the JVM.
 	 *
 	 * Hooks will be run in single threaded mode, no other application threads
 	 * will be active. Users should avoid synchronization of objects that are not owned
