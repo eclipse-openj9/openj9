@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -228,7 +228,7 @@ public:
 	virtual U_8 *getArrayObjectDataAddress(J9VMThread *vmThread, J9IndexableObject *arrayObject);
 	virtual j9objectmonitor_t *getLockwordAddress(J9VMThread *vmThread, J9Object *object);
 	virtual void cloneObject(J9VMThread *vmThread, J9Object *srcObject, J9Object *destObject);
-	virtual void copyObjectFields(J9VMThread *vmThread, J9Class *valueClass, J9Object *srcObject, UDATA srcOffset, J9Object *destObject, UDATA destOffset);
+	virtual void copyObjectFields(J9VMThread *vmThread, J9Class *valueClass, J9Object *srcObject, UDATA srcOffset, J9Object *destObject, UDATA destOffset, MM_objectMapFunction objectMapFunction, void *objectMapData);
 	virtual BOOLEAN structuralCompareFlattenedObjects(J9VMThread *vmThread, J9Class *valueClass, j9object_t lhsObject, j9object_t rhsObject, UDATA startOffset);
 	virtual void cloneIndexableObject(J9VMThread *vmThread, J9IndexableObject *srcObject, J9IndexableObject *destObject);
 	virtual J9Object *asConstantPoolObject(J9VMThread *vmThread, J9Object* toConvert, UDATA allocationFlags);
@@ -488,6 +488,27 @@ public:
 		fj9object_t *ownableSynchronizerLink = (fj9object_t*)((UDATA)object + linkOffset);
 		GC_SlotObject slot(_extensions->getOmrVM(), ownableSynchronizerLink);		
 		return slot.readReferenceFromSlot();
+	}
+
+	/**
+	 * Copy all of the fields of a value class instance to another value class instance.
+	 * The source or destination may be a flattened value within another object, meaning
+	 * srcOffset and destOffset need not be equal. This is based on cloneObject(...). If
+	 * Type has pre-padding the size of the object will be adjusted to remove the padding
+	 * bytes. The caller of this API must ensure that the starting offset provided does
+	 * not include pre-padding.
+	 * @TODO This does not currently check if the fields that it is reading are volatile.
+	 *
+	 * @oaram objectClass The j9class.
+	 * @param srcObject The object containing the value class instance fields being copied.
+	 * @param srcOffset The offset of the value class instance fields in srcObject.
+	 * @param destValue The object containing the value class instance fields being copied to.
+	 * @param destOffset The offset of the value class instance fields in destObject.
+	 */
+	void
+	copyObjectFields(J9VMThread *vmThread, J9Class *objectClass, J9Object *srcObject, UDATA srcOffset, J9Object *destObject, UDATA destOffset)
+	{
+		copyObjectFields(vmThread, objectClass, srcObject, srcOffset, destObject, destOffset, NULL, NULL);
 	}
 
 	/**

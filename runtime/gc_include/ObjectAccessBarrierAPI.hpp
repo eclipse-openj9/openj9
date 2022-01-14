@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -376,11 +376,17 @@ public:
 	}
 
 	VMINLINE void
-	cloneObject(J9VMThread *currentThread, j9object_t original, j9object_t copy, J9Class *objectClass)
+	cloneObject(J9VMThread *currentThread, j9object_t original, j9object_t copy, J9Class *objectClass, MM_objectMapFunction objectMapFunction, void *objectMapData)
 	{
 		UDATA offset = mixedObjectGetHeaderSize(objectClass);
 
-		copyObjectFields(currentThread, objectClass, original, offset, copy, offset);
+		copyObjectFields(currentThread, objectClass, original, offset, copy, offset, objectMapFunction, objectMapData);
+	}
+
+	VMINLINE void
+	cloneObject(J9VMThread *currentThread, j9object_t original, j9object_t copy, J9Class *objectClass)
+	{
+		cloneObject(currentThread, original, copy, objectClass, NULL, NULL);
 	}
 
 	VMINLINE void 
@@ -425,16 +431,18 @@ public:
 	 * @param srcOffset The offset of the field.
 	 * @param destObject The object being used.
 	 * @param destOffset The offset of the field.
+	 * @param objectMapFunction Function to allow replacement of object fields
+	 * @param objectMapData Data to pass to objectMapFunction
 	 */
 	VMINLINE void
-	copyObjectFields(J9VMThread *vmThread, J9Class *objectClass, j9object_t srcObject, UDATA srcOffset, j9object_t destObject, UDATA destOffset)
+	copyObjectFields(J9VMThread *vmThread, J9Class *objectClass, j9object_t srcObject, UDATA srcOffset, j9object_t destObject, UDATA destOffset, MM_objectMapFunction objectMapFunction, void *objectMapData)
 	{
 #if defined(J9VM_GC_ALWAYS_CALL_OBJECT_ACCESS_BARRIER)
-		vmThread->javaVM->memoryManagerFunctions->j9gc_objaccess_copyObjectFields(vmThread, objectClass, srcObject, srcOffset, destObject, destOffset);
+		vmThread->javaVM->memoryManagerFunctions->j9gc_objaccess_copyObjectFields(vmThread, objectClass, srcObject, srcOffset, destObject, destOffset, objectMapFunction, objectMapData);
 #else /* defined(J9VM_GC_ALWAYS_CALL_OBJECT_ACCESS_BARRIER) */
 		bool hasReferences = J9CLASS_HAS_REFERENCES(objectClass);
-		if (hasReferences && ((j9gc_modron_readbar_none != _readBarrierType) || (j9gc_modron_wrtbar_always == _writeBarrierType))) {
-			vmThread->javaVM->memoryManagerFunctions->j9gc_objaccess_copyObjectFields(vmThread, objectClass, srcObject, srcOffset, destObject, destOffset);
+		if (hasReferences && ((NULL != objectMapFunction) || (j9gc_modron_readbar_none != _readBarrierType) || (j9gc_modron_wrtbar_always == _writeBarrierType))) {
+			vmThread->javaVM->memoryManagerFunctions->j9gc_objaccess_copyObjectFields(vmThread, objectClass, srcObject, srcOffset, destObject, destOffset, objectMapFunction, objectMapData);
 		} else {
 			UDATA offset = 0;
 			UDATA limit = mixedObjectGetDataSize(objectClass);
@@ -2150,7 +2158,7 @@ protected:
 	{
 		internalPostBatchStoreObject(vmThread, object);
 	}
-	
+
 	/**
 	 * Perform the preRead barrier for a reference slot within a mixed heap object
 	 *

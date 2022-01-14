@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2572,6 +2572,7 @@ jvmtiIsModifiableModule(jvmtiEnv* env,
 		jboolean* is_modifiable_module_ptr);
 
 #endif /* JAVA_SPEC_VERSION >= 9 */
+
 /* ---------------- suspendhelper.cpp ---------------- */
 /**
 * @brief
@@ -2583,6 +2584,16 @@ jvmtiIsModifiableModule(jvmtiEnv* env,
 */
 jvmtiError
 suspendThread(J9VMThread *currentThread, jthread thread, UDATA allowNull, UDATA *currentThreadSuspended);
+
+/* ---------------- heapify.cpp ---------------- */
+/**
+* @brief
+* @param currentThread - the current thread
+* @param safePoint - TRUE if safepoint exclusive is in use, FALSE if not
+* @return JVMTI error code
+*/
+jvmtiError
+heapifyStackAllocatedObjects(J9VMThread *currentThread, UDATA safePoint);
 
 #ifdef __cplusplus
 }
