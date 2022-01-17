@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2021, 2021 IBM Corp. and others
+ * Copyright (c) 2021, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,11 +20,13 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 #include "j9.h"
+#include "j9comp.h"
 #include "j9protos.h"
 #include "ut_j9vm.h"
 #include "vm_api.h"
-#include "j9comp.h"
 
+#include "HeapIteratorAPI.h"
+#include "ObjectAccessBarrierAPI.hpp"
 #include "VMHelpers.hpp"
 
 extern "C" {
@@ -34,6 +36,15 @@ J9_DECLARE_CONSTANT_UTF8(runPostRestoreHooks_name, "runPostRestoreHooks");
 J9_DECLARE_CONSTANT_UTF8(runPreCheckpointHooks_sig, "()V");
 J9_DECLARE_CONSTANT_UTF8(runPreCheckpointHooks_name, "runPreCheckpointHooks");
 J9_DECLARE_CONSTANT_UTF8(j9InternalCheckpointHookAPI_name, "org/eclipse/openj9/criu/J9InternalCheckpointHookAPI");
+
+static void addInternalJVMCheckpointHook(J9VMThread *currentThread, BOOLEAN isRestore, J9Class *instanceType, BOOLEAN includeSubClass, hookFunc hookFunc);
+static void cleanupCriuHooks(J9JavaVM *vm);
+static BOOLEAN fillinHookRecords(J9JavaVM *vm, j9object_t object);
+static IDATA findinstanceFieldOffsetHelper(J9VMThread *currentThread, J9Class *instanceType, const char *fieldName, const char *fieldSig);
+static void initializeCriuHooks(J9JavaVM *vm);
+static BOOLEAN juRandomReseed(J9JavaVM *vm, void *userData);
+static jvmtiIterationControl objectIteratorCallback(J9JavaVM *vm, J9MM_IterateObjectDescriptor *objectDesc, void *userData);
+
 
 BOOLEAN
 jvmCheckpointHooks(J9VMThread *currentThread)
@@ -99,6 +110,272 @@ isCheckpointAllowed(J9VMThread *currentThread)
 	if (isCRIUSupportEnabled(currentThread)) {
 		result = currentThread->javaVM->checkpointState.isCheckPointAllowed;
 	}
+
+	return result;
+}
+
+/**
+ * This adds an internal CRIU hook to trace all heap objects of instanceType and its subclasses if specified.
+ *
+ * @param[in] currentThread vmThread token
+ * @param[in] isRestore If FALSE, run the hook at checkpoint, otherwise run at restore
+ * @param[in] instanceType J9Class of type to be tracked
+ * @param[in] includeSubClass If TRUE subclasses of instanceType should be included
+ * @param[in] hookFunc The hook function to be invoked for the internal hook record
+ *
+ * @return void
+ */
+static void
+addInternalJVMCheckpointHook(J9VMThread *currentThread, BOOLEAN isRestore, J9Class *instanceType, BOOLEAN includeSubClass, hookFunc hookFunc)
+{
+	J9JavaVM *vm = currentThread->javaVM;
+	J9InternalHookRecord *newHook = (J9InternalHookRecord*)pool_newElement(vm->checkpointState.hookRecords);
+	if (NULL == newHook) {
+		setNativeOutOfMemoryError(currentThread, 0, 0);
+	} else {
+		newHook->isRestore = isRestore;
+		newHook->instanceType = instanceType;
+		newHook->includeSubClass = includeSubClass;
+		newHook->hookFunc = hookFunc;
+		/* newHook->instanceObjects is to be lazy initialized */
+	}
+}
+
+static IDATA
+findinstanceFieldOffsetHelper(J9VMThread *currentThread, J9Class *instanceType, const char *fieldName, const char *fieldSig)
+{
+	IDATA offset = (UDATA)instanceFieldOffset(
+		currentThread, instanceType,
+		(U_8*)fieldName, strlen(fieldName),
+		(U_8*)fieldSig, strlen(fieldSig),
+		NULL, NULL, 0);
+
+	if (-1 != offset) {
+		offset += J9VMTHREAD_OBJECT_HEADER_SIZE(currentThread);
+	}
+
+	return offset;
+}
+
+static BOOLEAN
+juRandomReseed(J9JavaVM *vm, void *userData)
+{
+	BOOLEAN result = TRUE;
+	J9InternalHookRecord *hookRecord = (J9InternalHookRecord*)userData;
+	J9VMThread *currentThread = vm->mainThread;
+	MM_ObjectAccessBarrierAPI objectAccessBarrier = MM_ObjectAccessBarrierAPI(currentThread);
+
+	/* Assuming this hook record is to re-seed java.util.Random.seed.value */
+	IDATA seedOffset = findinstanceFieldOffsetHelper(currentThread, hookRecord->instanceType, "seed", "Ljava/util/concurrent/atomic/AtomicLong;");
+	if (-1 != seedOffset) {
+#define JUCA_ATOMICLONG "java/util/concurrent/atomic/AtomicLong"
+		J9Class *jucaAtomicLongClass = hashClassTableAt(vm->systemClassLoader, (U_8 *)JUCA_ATOMICLONG, LITERAL_STRLEN(JUCA_ATOMICLONG));
+#undef JUCA_ATOMICLONG
+		if (NULL != jucaAtomicLongClass) {
+			IDATA valueOffset = findinstanceFieldOffsetHelper(currentThread, jucaAtomicLongClass, "value", "J");
+			if (-1 != valueOffset) {
+				PORT_ACCESS_FROM_JAVAVM(vm);
+				pool_state walkState = {0};
+				J9Object *objectRecord = (J9Object*)pool_startDo(hookRecord->instanceObjects, &walkState);
+				while (NULL != objectRecord) {
+					j9object_t object = (j9object_t)objectRecord->clazz;
+					j9object_t seedObject = objectAccessBarrier.inlineMixedObjectReadObject(currentThread, object, seedOffset, FALSE);
+					I_64 valueLong = objectAccessBarrier.inlineMixedObjectReadI64(currentThread, seedObject, valueOffset, TRUE);
+
+					/* Algorithm used in Random.seedUniquifier() */
+					valueLong *= 1181783497276652981;
+					valueLong ^= j9time_nano_time();
+					objectAccessBarrier.inlineMixedObjectStoreI64(currentThread, seedObject, valueOffset, valueLong, TRUE);
+
+					objectRecord = (J9Object*)pool_nextDo(&walkState);
+				}
+			} else {
+				Trc_VM_criu_jur_invalid_valueOffset(currentThread, jucaAtomicLongClass);
+				result = FALSE;
+			}
+		} else {
+			Trc_VM_criu_jur_AtomicLong_CNF(currentThread);
+			result = FALSE;
+		}
+	} else {
+		Trc_VM_criu_jur_invalid_seedOffset(currentThread, hookRecord->instanceType);
+		result = FALSE;
+	}
+
+	return result;
+}
+
+/**
+ * This cleans up the instanceObjects associated with each J9JavaVM->checkpointState.hookRecords
+ * and the hookRecords as well if checkpointState.isNonPortableRestoreMode is TRUE.
+ *
+ * @param[in] vm J9JavaVM
+ *
+ * @return void
+ */
+static void
+cleanupCriuHooks(J9JavaVM *vm)
+{
+	J9Pool *hookRecords = vm->checkpointState.hookRecords;
+	if (NULL != hookRecords) {
+		pool_state walkState = {0};
+		J9InternalHookRecord *hookRecord = (J9InternalHookRecord*)pool_startDo(hookRecords, &walkState);
+		while (NULL != hookRecord) {
+			pool_kill(hookRecord->instanceObjects);
+			hookRecord->instanceObjects = NULL;
+			hookRecord = (J9InternalHookRecord*)pool_nextDo(&walkState);
+		}
+
+		if (vm->checkpointState.isNonPortableRestoreMode) {
+			/* No more checkpoint, cleanup hook records */
+			pool_kill(vm->checkpointState.hookRecords);
+			vm->checkpointState.hookRecords = NULL;
+		}
+	}
+}
+
+/**
+ * This initializes J9JavaVM->checkpointState.hookRecords and
+ * adds an internal JVMCheckpointHook to re-seed java.util.Random.seed.value.
+ *
+ * @param[in] vm J9JavaVM
+ *
+ * @return void
+ */
+static void
+initializeCriuHooks(J9JavaVM *vm)
+{
+	J9VMThread *currentThread = vm->mainThread;
+
+	Trc_VM_criu_initHooks_Entry(currentThread);
+	cleanupCriuHooks(vm);
+	if (NULL == vm->checkpointState.hookRecords) {
+		vm->checkpointState.hookRecords = pool_new(sizeof(J9InternalHookRecord), 0, 0, 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(vm->portLibrary));
+		if (NULL == vm->checkpointState.hookRecords) {
+			setNativeOutOfMemoryError(currentThread, 0, 0);
+		}
+	}
+	if (NULL != vm->checkpointState.hookRecords) {
+		/* Add restore hook to re-seed java.uti.Random.seed.value */
+#define JAVA_UTIL_RANDOM "java/util/Random"
+		J9Class *juRandomClass = hashClassTableAt(vm->systemClassLoader, (U_8 *)JAVA_UTIL_RANDOM, LITERAL_STRLEN(JAVA_UTIL_RANDOM));
+#undef JAVA_UTIL_RANDOM
+		if (NULL != juRandomClass) {
+			addInternalJVMCheckpointHook(currentThread, TRUE, juRandomClass, FALSE, juRandomReseed);
+		}
+	}
+	Trc_VM_criu_initHooks_Exit(currentThread, vm->checkpointState.hookRecords);
+}
+
+/**
+ * After initializeCriuHooks() and before invoking JVM criu hooks, j9mm_iterate_all_objects iterates the heap,
+ * for each object discovered, this will be called to iterate CRIU internal hook records, and fills in all instances of
+ * instanceType and its subclasses if specified.
+ *
+ * @param[in] vm J9JavaVM
+ * @param[in] object an instance to be checked and filled in if it is the instanceType specified
+ *
+ * @return BOOLEAN TRUE if no error, otherwise FALSE
+ */
+static BOOLEAN
+fillinHookRecords(J9JavaVM *vm, j9object_t object)
+{
+	J9Pool *hookRecords = vm->checkpointState.hookRecords;
+	pool_state walkState = {0};
+	BOOLEAN result = TRUE;
+	J9VMThread *currentThread = vm->mainThread;
+
+	J9InternalHookRecord *hookRecord = (J9InternalHookRecord*)pool_startDo(hookRecords, &walkState);
+	while (NULL != hookRecord) {
+		J9Class *clazz = J9OBJECT_CLAZZ_VM(vm, object);
+		if ((clazz == hookRecord->instanceType)
+			|| (hookRecord->includeSubClass && isSameOrSuperClassOf(hookRecord->instanceType, clazz))
+		) {
+			if (NULL == hookRecord->instanceObjects) {
+				hookRecord->instanceObjects = pool_new(sizeof(J9Object), 0, 0, 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(vm->portLibrary));
+				if (NULL == hookRecord->instanceObjects) {
+					setNativeOutOfMemoryError(currentThread, 0, 0);
+					result = FALSE;
+					break;
+				}
+			}
+			J9Object *objectRecord = (J9Object*)pool_newElement(hookRecord->instanceObjects);
+			if (NULL == objectRecord) {
+				result = FALSE;
+				setNativeOutOfMemoryError(currentThread, 0, 0);
+			} else {
+				objectRecord->clazz = (j9objectclass_t)object;
+			}
+		}
+
+		hookRecord = (J9InternalHookRecord*)pool_nextDo(&walkState);
+	}
+
+	return result;
+}
+
+static jvmtiIterationControl
+objectIteratorCallback(J9JavaVM *vm, J9MM_IterateObjectDescriptor *objectDesc, void *userData)
+{
+	j9object_t object = objectDesc->object;
+
+	fillinHookRecords(vm, object);
+
+	return JVMTI_ITERATION_CONTINUE;
+}
+
+BOOLEAN
+runInternalJVMCheckpointHooks(J9JavaVM *vm)
+{
+	J9VMThread *currentThread = vm->mainThread;
+	J9Pool *hookRecords = vm->checkpointState.hookRecords;
+	pool_state walkState = {0};
+	BOOLEAN result = TRUE;
+
+	Trc_VM_criu_runCheckpointHooks_Entry(currentThread);
+
+	initializeCriuHooks(vm);
+	/* Iterate heap objects to prepare internal hooks at checkpoint */
+	vm->memoryManagerFunctions->j9mm_iterate_all_objects(vm, vm->portLibrary, 0, objectIteratorCallback, vm->checkpointState.hookRecords);
+
+	J9InternalHookRecord *hookRecord = (J9InternalHookRecord*)pool_startDo(hookRecords, &walkState);
+	while (NULL != hookRecord) {
+		if (!hookRecord->isRestore) {
+			if (FALSE == hookRecord->hookFunc(vm, hookRecord)) {
+				result = FALSE;
+				break;
+			}
+		}
+		hookRecord = (J9InternalHookRecord*)pool_nextDo(&walkState);
+	}
+	Trc_VM_criu_runCheckpointHooks_Exit(currentThread);
+
+	return result;
+}
+
+BOOLEAN
+runInternalJVMRestoreHooks(J9JavaVM *vm)
+{
+	J9VMThread *currentThread = vm->mainThread;
+	J9Pool *hookRecords = vm->checkpointState.hookRecords;
+	pool_state walkState = {0};
+	BOOLEAN result = TRUE;
+
+	Trc_VM_criu_runRestoreHooks_Entry(currentThread);
+	J9InternalHookRecord *hookRecord = (J9InternalHookRecord*)pool_startDo(hookRecords, &walkState);
+	while (NULL != hookRecord) {
+		if (hookRecord->isRestore) {
+			if (FALSE == hookRecord->hookFunc(vm, hookRecord)) {
+				result = FALSE;
+				break;
+			}
+		}
+		hookRecord = (J9InternalHookRecord*)pool_nextDo(&walkState);
+	}
+
+	/* Cleanup at restore */
+	cleanupCriuHooks(vm);
+	Trc_VM_criu_runRestoreHooks_Exit(currentThread);
 
 	return result;
 }

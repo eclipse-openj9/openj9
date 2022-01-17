@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -531,6 +531,30 @@ jvmCheckpointHooks(J9VMThread *currentThread);
  */
 BOOLEAN
 jvmRestoreHooks(J9VMThread *currentThread);
+
+/**
+ * @brief This iterates heap objects first, then goes through hook records,
+ * and run the checkpoint hook function.
+ * ExclusiveVMAccess is required since J9InternalHookRecord hold live object references
+ * and GC are not allowed while running these hook functions.
+ *
+ * @param vm J9JavaVM
+ * @return BOOLEAN TRUE if no error, otherwise FALSE
+ */
+BOOLEAN
+runInternalJVMCheckpointHooks(J9JavaVM *vm);
+
+/**
+ * @brief This runs the restore hook function, and cleanup.
+ * ExclusiveVMAccess is required since J9InternalHookRecord hold live object references
+ * and GC are not allowed while running these hook functions.
+ *
+ * @param vm J9JavaVM
+ * @param isRestore If FALSE, run the hook specified for checkpoint, otherwise run the hook specified for restore
+ * @return BOOLEAN TRUE if no error, otherwise FALSE
+ */
+BOOLEAN
+runInternalJVMRestoreHooks(J9JavaVM *vm);
 
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
