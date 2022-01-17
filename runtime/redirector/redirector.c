@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2021 IBM Corp. and others
+ * Copyright (c) 2001, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -911,23 +911,26 @@ JNI_GetDefaultJavaVMInitArgs(void *vm_args)
 	if(globalInitArgs) {
 		return globalInitArgs(vm_args);
 	} else {
-		UDATA jniVersion = (UDATA)((JDK1_1InitArgs *)vm_args)->version;
+		jint jniVersion = ((JavaVMInitArgs *)vm_args)->version;
 
-		if ((jniVersion == JNI_VERSION_1_2)
-			|| (jniVersion == JNI_VERSION_1_4)
-			|| (jniVersion == JNI_VERSION_1_6)
-			|| (jniVersion == JNI_VERSION_1_8)
+		switch (jniVersion) {
+		case JNI_VERSION_1_1:
+			((JDK1_1InitArgs *)vm_args)->javaStackSize = J9_OS_STACK_SIZE;
+			break;
+		case JNI_VERSION_1_2:
+		case JNI_VERSION_1_4:
+		case JNI_VERSION_1_6:
+		case JNI_VERSION_1_8:
 #if JAVA_SPEC_VERSION >= 9
-			|| (jniVersion == JNI_VERSION_9)
+		case JNI_VERSION_9:
 #endif /* JAVA_SPEC_VERSION >= 9 */
 #if JAVA_SPEC_VERSION >= 10
-			|| (jniVersion == JNI_VERSION_10)
+		case JNI_VERSION_10:
 #endif /* JAVA_SPEC_VERSION >= 10 */
-		) {
 			return JNI_OK;
-		} else {
-			return JNI_EVERSION;
 		}
+
+		return JNI_EVERSION;
 	}
 }
 
