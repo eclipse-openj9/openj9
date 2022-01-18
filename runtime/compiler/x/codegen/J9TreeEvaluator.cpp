@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -11950,11 +11950,14 @@ J9::X86::TreeEvaluator::inlineStringLatin1Inflate(TR::Node *node, TR::CodeGenera
    TR::Register *zeroReg = cg->allocateRegister(TR_FPR);
    TR::Register *scratchReg = cg->allocateRegister(TR_GPR);
 
-   TR::RegisterDependencyConditions *deps = generateRegisterDependencyConditions((uint8_t)0, 7, cg);
+   int depCount = 9;
+   TR::RegisterDependencyConditions *deps = generateRegisterDependencyConditions((uint8_t)0, depCount, cg);
    deps->addPostCondition(xmmHighReg, TR::RealRegister::NoReg, cg);
    deps->addPostCondition(xmmLowReg, TR::RealRegister::NoReg, cg);
    deps->addPostCondition(zeroReg, TR::RealRegister::NoReg, cg);
    deps->addPostCondition(lengthReg, TR::RealRegister::NoReg, cg);
+   deps->addPostCondition(srcBufferReg, TR::RealRegister::NoReg, cg);
+   deps->addPostCondition(destBufferReg, TR::RealRegister::NoReg, cg);
    deps->addPostCondition(scratchReg, TR::RealRegister::eax, cg);
    deps->addPostCondition(srcOffsetReg, TR::RealRegister::ecx, cg);
    deps->addPostCondition(destOffsetReg, TR::RealRegister::edx, cg);
@@ -11963,6 +11966,10 @@ J9::X86::TreeEvaluator::inlineStringLatin1Inflate(TR::Node *node, TR::CodeGenera
    TR::LabelSymbol *doneLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *copyResidueLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *afterCopy8Label = generateLabelSymbol(cg);
+
+   TR::LabelSymbol *startLabel = generateLabelSymbol(cg);
+   startLabel->setStartInternalControlFlow();
+   generateLabelInstruction(TR::InstOpCode::label, node, startLabel, cg);
 
    TR::Node *destOffsetNode = node->getChild(3);
 
@@ -11981,12 +11988,8 @@ J9::X86::TreeEvaluator::inlineStringLatin1Inflate(TR::Node *node, TR::CodeGenera
    // make sure the register is zero before interleaving
    generateRegRegInstruction(TR::InstOpCode::PXORRegReg, node, zeroReg, zeroReg, cg);
 
-
    TR::LabelSymbol *startLoop = generateLabelSymbol(cg);
    TR::LabelSymbol *endLoop = generateLabelSymbol(cg);
-
-   startLoop->setStartInternalControlFlow();
-   endLoop->setEndInternalControlFlow();
 
    // vectorized add in loop, 16 bytes per iteration
    // use srcOffsetReg for loop counter, add starting offset to lengthReg, subtract 16 (xmm register size)
