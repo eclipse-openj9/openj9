@@ -219,7 +219,7 @@ def build(BUILD_JOB_NAME, OPENJDK_REPO, OPENJDK_BRANCH, OPENJDK_SHA, OPENJ9_REPO
     }
 }
 
-def test(JOB_NAME, UPSTREAM_JOB_NAME, UPSTREAM_JOB_NUMBER, NODE, OPENJ9_REPO, OPENJ9_BRANCH, OPENJ9_SHA, VENDOR_TEST_REPOS, VENDOR_TEST_BRANCHES, VENDOR_TEST_SHAS, VENDOR_TEST_DIRS, USER_CREDENTIALS_ID, CUSTOMIZED_SDK_URL, ARTIFACTORY_CREDS, TEST_FLAG, BUILD_IDENTIFIER, ghprbGhRepository, ghprbActualCommit, GITHUB_SERVER, ADOPTOPENJDK_REPO, ADOPTOPENJDK_BRANCH, PARALLEL, extraTestLabels, keepReportDir, buildList, NUM_MACHINES, OPENJDK_REPO, OPENJDK_BRANCH, USE_TESTENV_PROPERTIES) {
+def test(JOB_NAME, UPSTREAM_JOB_NAME, UPSTREAM_JOB_NUMBER, NODE, OPENJ9_REPO, OPENJ9_BRANCH, OPENJ9_SHA, VENDOR_TEST_REPOS, VENDOR_TEST_BRANCHES, VENDOR_TEST_SHAS, VENDOR_TEST_DIRS, USER_CREDENTIALS_ID, CUSTOMIZED_SDK_URL, ARTIFACTORY_CREDS, TEST_FLAG, BUILD_IDENTIFIER, ghprbGhRepository, ghprbActualCommit, GITHUB_SERVER, ADOPTOPENJDK_REPO, ADOPTOPENJDK_BRANCH, PARALLEL, extraTestLabels, keepReportDir, buildList, NUM_MACHINES, OPENJDK_REPO, OPENJDK_BRANCH, USE_TESTENV_PROPERTIES, GENERATE_JOBS) {
     stage ("${JOB_NAME}") {
         def testParams = []
         testParams.addAll([string(name: 'LABEL', value: NODE),
@@ -241,7 +241,8 @@ def test(JOB_NAME, UPSTREAM_JOB_NAME, UPSTREAM_JOB_NUMBER, NODE, OPENJ9_REPO, OP
             string(name: 'BUILD_IDENTIFIER', value: BUILD_IDENTIFIER),
             string(name: 'PARALLEL', value: PARALLEL),
             string(name: 'NUM_MACHINES', value: NUM_MACHINES),
-            booleanParam(name: 'USE_TESTENV_PROPERTIES', value: USE_TESTENV_PROPERTIES)])
+            booleanParam(name: 'USE_TESTENV_PROPERTIES', value: USE_TESTENV_PROPERTIES),
+            booleanParam(name: 'GENERATE_JOBS', value: GENERATE_JOBS)])
         if (ARTIFACTORY_CREDS) {
             testParams.addAll([string(name: 'CUSTOMIZED_SDK_URL', value: CUSTOMIZED_SDK_URL),
                 string(name: 'CUSTOMIZED_SDK_URL_CREDENTIAL_ID', value: ARTIFACTORY_CREDS)])
@@ -439,6 +440,10 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
                 PARALLEL = "Dynamic"
                 NUM_MACHINES = "4"
             }
+
+            // generate child test jobs
+            def GENERATE_JOBS = params.AUTOMATIC_GENERATION ?: false
+
             testJobs[id] = {
                 if (params.ghprbPullId) {
                     cancel_running_builds(testJobName, BUILD_IDENTIFIER)
@@ -446,7 +451,7 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
                 if (ARTIFACTORY_CREDS) {
                     cleanup_artifactory(ARTIFACTORY_MANUAL_CLEANUP, testJobName, ARTIFACTORY_SERVER, ARTIFACTORY_REPO, ARTIFACTORY_NUM_ARTIFACTS)
                 }
-                jobs[id] = test(testJobName, BUILD_JOB_NAME, jobs["build"].getNumber(), TEST_NODE, OPENJ9_REPO, OPENJ9_BRANCH, SHAS['OPENJ9'], VENDOR_TEST_REPOS, VENDOR_TEST_BRANCHES, VENDOR_TEST_SHAS, VENDOR_TEST_DIRS, USER_CREDENTIALS_ID, CUSTOMIZED_SDK_URL, ARTIFACTORY_CREDS, testFlag, BUILD_IDENTIFIER, ghprbGhRepository, ghprbActualCommit, GITHUB_SERVER, ADOPTOPENJDK_REPO, ADOPTOPENJDK_BRANCH, PARALLEL, extraTestLabels, keepReportDir, buildList, NUM_MACHINES, OPENJDK_REPO, OPENJDK_BRANCH, USE_TESTENV_PROPERTIES)
+                jobs[id] = test(testJobName, BUILD_JOB_NAME, jobs["build"].getNumber(), TEST_NODE, OPENJ9_REPO, OPENJ9_BRANCH, SHAS['OPENJ9'], VENDOR_TEST_REPOS, VENDOR_TEST_BRANCHES, VENDOR_TEST_SHAS, VENDOR_TEST_DIRS, USER_CREDENTIALS_ID, CUSTOMIZED_SDK_URL, ARTIFACTORY_CREDS, testFlag, BUILD_IDENTIFIER, ghprbGhRepository, ghprbActualCommit, GITHUB_SERVER, ADOPTOPENJDK_REPO, ADOPTOPENJDK_BRANCH, PARALLEL, extraTestLabels, keepReportDir, buildList, NUM_MACHINES, OPENJDK_REPO, OPENJDK_BRANCH, USE_TESTENV_PROPERTIES, GENERATE_JOBS)
             }
         }
         if (params.AUTOMATIC_GENERATION != 'false') {
@@ -595,6 +600,12 @@ def generate_test_jobs(TESTS, SPEC, ARTIFACTORY_SERVER, ARTIFACTORY_REPO) {
         auto_detect = false
     }
 
+    // LIGHT_WEIGHT_CHECKOUT=false is needed for the releases in order for test jobs to consume ADOPTOPENJDK_REPO and ADOPTOPENJDK_BRANCH
+    def light_weight_checkout = true
+    if (BUILD_IDENTIFIER.toLowerCase() == "release") {
+        light_weight_checkout = false
+    }
+
     if (levels && groups) {
         def parameters = [
             string(name: 'LEVELS', value: levels.join(',')),
@@ -606,7 +617,8 @@ def generate_test_jobs(TESTS, SPEC, ARTIFACTORY_SERVER, ARTIFACTORY_REPO) {
             string(name: 'ARTIFACTORY_SERVER', value: ARTIFACTORY_SERVER),
             string(name: 'ARTIFACTORY_REPO', value: ARTIFACTORY_REPO),
             string(name: 'BUILDS_TO_KEEP', value: DISCARDER_NUM_BUILDS),
-            booleanParam(name: 'AUTO_DETECT', value: auto_detect)
+            booleanParam(name: 'AUTO_DETECT', value: auto_detect),
+            booleanParam(name: 'LIGHT_WEIGHT_CHECKOUT', value: light_weight_checkout)
         ]
         build job: 'Test_Job_Auto_Gen', parameters: parameters, propagate: false
     }
