@@ -128,7 +128,7 @@ public final class System {
 	private static String consoleDefaultEncoding;
 	/* The consoleDefaultCharset is different from the default console encoding when the encoding
 	 * doesn't exist, or isn't available at startup. Some Charset's are not available in the
-	 * ava.base module and so are not used at startup.
+	 * java.base module and so are not used at startup.
 	 */
 	private static Charset consoleDefaultCharset;
 	/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
@@ -330,7 +330,11 @@ public final class System {
 		/*[IF Sidecar18-SE-OpenJ9]*/
 		Properties props = internalGetProperties();
 		/*[IF JAVA_SPEC_VERSION >= 11]*/
+		/*[IF JAVA_SPEC_VERSION >= 18]*/
+		consoleDefaultCharset = Charset.forName(props.getProperty("native.encoding"), sun.nio.cs.US_ASCII.INSTANCE);
+		/*[ELSE] JAVA_SPEC_VERSION >= 18 */
 		consoleDefaultCharset = Charset.defaultCharset();
+		/*[ENDIF] JAVA_SPEC_VERSION >= 18 */
 		/*[IF PLATFORM-mz31|PLATFORM-mz64]*/
 		try {
 			consoleDefaultEncoding = props.getProperty("console.encoding"); //$NON-NLS-1$
@@ -341,13 +345,17 @@ public final class System {
 		} catch (IllegalArgumentException e) {
 			// use the defaultCharset()
 		}
-		/*[ELSE]*/
+		/*[ELSE] PLATFORM-mz31|PLATFORM-mz64 */
+		/*[IF JAVA_SPEC_VERSION >= 18]*/
+		consoleDefaultEncoding = props.getProperty("native.encoding"); //$NON-NLS-1$
+		/*[ELSE] JAVA_SPEC_VERSION >= 18 */
 		consoleDefaultEncoding = props.getProperty("file.encoding"); //$NON-NLS-1$
+		/*[ENDIF] JAVA_SPEC_VERSION >= 18 */
 		/*[ENDIF] PLATFORM-mz31|PLATFORM-mz64 */
 		/* consoleDefaultCharset must be initialized before calling getCharset() */
 		Charset stdoutCharset = getCharset(props.getProperty("sun.stdout.encoding"), false); //$NON-NLS-1$
 		Charset stderrCharset = getCharset(props.getProperty("sun.stderr.encoding"), false); //$NON-NLS-1$
-		/*[ELSE]*/
+		/*[ELSE] JAVA_SPEC_VERSION >= 11 */
 		Charset consoleCharset = Charset.defaultCharset();
 		String stdoutCharset = getCharsetName(props.getProperty("sun.stdout.encoding"), consoleCharset); //$NON-NLS-1$
 		String stderrCharset = getCharsetName(props.getProperty("sun.stderr.encoding"), consoleCharset); //$NON-NLS-1$
@@ -607,9 +615,6 @@ private static void ensureProperties(boolean isInitialization) {
 	initializedProperties.put("ibm.system.encoding", platformEncoding); //$NON-NLS-1$
 	initializedProperties.put("sun.jnu.encoding", platformEncoding); //$NON-NLS-1$
 	initializedProperties.put("file.encoding", fileEncoding); //$NON-NLS-1$
-	/*[IF JAVA_SPEC_VERSION >= 17]*/
-	initializedProperties.put("native.encoding", (fileEncoding == null) ? platformEncoding : fileEncoding); //$NON-NLS-1$
-	/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 	initializedProperties.put("file.encoding.pkg", "sun.io"); //$NON-NLS-1$ //$NON-NLS-2$
 	/*[IF JAVA_SPEC_VERSION < 12]*/
 	/* System property java.specification.vendor is set via VersionProps.init(systemProperties) since JDK12 */
@@ -631,6 +636,11 @@ private static void ensureProperties(boolean isInitialization) {
 		}
 		initializedProperties.put(key, list[i+1]);
 	}
+
+	/*[IF JAVA_SPEC_VERSION >= 17]*/
+	/* Set native.encoding after setting all the defined properties, it can't be modified by using -D on the command line */
+	initializedProperties.put("native.encoding", platformEncoding); //$NON-NLS-1$
+	/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 
 	/* java.lang.VersionProps.init() eventually calls into System.setProperty() where propertiesInitialized needs to be true */
 	propertiesInitialized = true;
