@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -565,11 +565,18 @@ gcStartupHeapManagement(J9JavaVM *javaVM)
 	int result = 0;
 
 #if defined(J9VM_GC_FINALIZATION)
-	result = j9gc_finalizer_startup(javaVM);
-	if (JNI_OK != result) {
-		PORT_ACCESS_FROM_JAVAVM(javaVM);
-		j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_FAILED_TO_INITIALIZE_FINALIZE_SUPPORT);
-		return result;
+#if JAVA_SPEC_VERSION >= 18
+	if (J9_ARE_ANY_BITS_SET(javaVM->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_DISABLE_FINALIZATION)) {
+		/* Finalization is disabled */
+	} else
+#endif /* JAVA_SPEC_VERSION >= 18 */
+	{
+		result = j9gc_finalizer_startup(javaVM);
+		if (JNI_OK != result) {
+			PORT_ACCESS_FROM_JAVAVM(javaVM);
+			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_FAILED_TO_INITIALIZE_FINALIZE_SUPPORT);
+			return result;
+		}
 	}
 #endif /* J9VM_GC_FINALIZATION */
 
