@@ -4140,6 +4140,30 @@ done:
 
 		return rc;
 	}
+
+	VMINLINE VM_BytecodeAction
+	inlUnsafeGetObjectSize(REGISTER_ARGS_LIST)
+	{
+		j9object_t receiver = *(j9object_t*)_sp;
+		VM_BytecodeAction rc = EXECUTE_BYTECODE;
+
+		if (NULL == receiver) {
+			rc = THROW_NPE;
+		} else {
+			J9Class *receiverClass = J9OBJECT_CLAZZ(_currentThread, receiver);
+
+			if (J9CLASS_IS_ARRAY(receiverClass)) {
+				I_64 arrayDataSize = J9INDEXABLEOBJECT_SIZE(_currentThread, receiver) * J9ARRAYCLASS_GET_STRIDE(receiverClass);
+				I_64 headerSize = J9VMTHREAD_CONTIGUOUS_HEADER_SIZE(_currentThread);
+				returnDoubleFromINL(REGISTER_ARGS, arrayDataSize + headerSize, 2);
+			} else {
+				I_64 headerSize = (I_64)J9VMTHREAD_OBJECT_HEADER_SIZE(_currentThread);
+				returnDoubleFromINL(REGISTER_ARGS, receiverClass->totalInstanceSize + headerSize, 2);
+			}
+		}
+
+		return rc;
+	}
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 
 	/* java.lang.J9VMInternals: private native static void prepareClassImpl(Class clazz); */
@@ -9763,6 +9787,7 @@ public:
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_VALUEHEADERSIZE),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_ISFLATTENEDARRAY),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_ISFLATTENED),
+		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_GETOBJECTSIZE),
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_INTERNALS_GET_INTERFACES),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_ARRAY_NEW_ARRAY_IMPL),
@@ -10334,6 +10359,8 @@ runMethod: {
 		PERFORM_ACTION(inlUnsafeIsFlattenedArray(REGISTER_ARGS));
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_ISFLATTENED):
 		PERFORM_ACTION(inlUnsafeIsFlattened(REGISTER_ARGS));
+	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_GETOBJECTSIZE):
+		PERFORM_ACTION(inlUnsafeGetObjectSize(REGISTER_ARGS));
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_INTERNALS_GET_INTERFACES):
 		PERFORM_ACTION(inlInternalsGetInterfaces(REGISTER_ARGS));

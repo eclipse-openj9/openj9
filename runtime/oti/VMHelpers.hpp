@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -156,6 +156,7 @@ typedef enum {
 	J9_BCLOOP_SEND_TARGET_INL_UNSAFE_VALUEHEADERSIZE,
 	J9_BCLOOP_SEND_TARGET_INL_UNSAFE_ISFLATTENEDARRAY,
 	J9_BCLOOP_SEND_TARGET_INL_UNSAFE_ISFLATTENED,
+	J9_BCLOOP_SEND_TARGET_INL_UNSAFE_GETOBJECTSIZE,
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 	J9_BCLOOP_SEND_TARGET_INL_INTERNALS_GET_INTERFACES,
 	J9_BCLOOP_SEND_TARGET_INL_ARRAY_NEW_ARRAY_IMPL,
