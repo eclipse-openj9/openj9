@@ -146,9 +146,15 @@ public final class System {
 		/*[IF JAVA_SPEC_VERSION >= 18]*/
 		sysPropOSVersion = getSysPropBeforePropertiesInitialized(sysPropID_OSVersion);
 		/*[ENDIF] JAVA_SPEC_VERSION >= 18 */
-		platformEncoding = getSysPropBeforePropertiesInitialized(sysPropID_PlatformEncoding);;
-		String definedFileEncoding = getSysPropBeforePropertiesInitialized(sysPropID_FileEncoding);
+		platformEncoding = getSysPropBeforePropertiesInitialized(sysPropID_PlatformEncoding);
 		String definedOSEncoding = getSysPropBeforePropertiesInitialized(sysPropID_OSEncoding);
+		/*[IF JAVA_SPEC_VERSION >= 18]*/
+		/* -Dfile.encoding=COMPAT is mapped to platform encoding within getSysPropBeforePropertiesInitialized.
+		 * During early VM boot stage, JITHelpers hasn't been initialized yet, COMPACT_STRINGS related APIs
+		 * might not work properly.
+		 */
+		/*[ENDIF] JAVA_SPEC_VERSION >= 18 */
+		String definedFileEncoding = getSysPropBeforePropertiesInitialized(sysPropID_FileEncoding);
 		if (definedFileEncoding != null) {
 			fileEncoding = definedFileEncoding;
 			// if file.encoding is defined, and os.encoding is not, use the detected
@@ -614,7 +620,6 @@ private static void ensureProperties(boolean isInitialization) {
 	/*[PR The launcher apparently needs sun.jnu.encoding property or it does not work]*/
 	initializedProperties.put("ibm.system.encoding", platformEncoding); //$NON-NLS-1$
 	initializedProperties.put("sun.jnu.encoding", platformEncoding); //$NON-NLS-1$
-	initializedProperties.put("file.encoding", fileEncoding); //$NON-NLS-1$
 	initializedProperties.put("file.encoding.pkg", "sun.io"); //$NON-NLS-1$ //$NON-NLS-2$
 	/*[IF JAVA_SPEC_VERSION < 12]*/
 	/* System property java.specification.vendor is set via VersionProps.init(systemProperties) since JDK12 */
@@ -636,6 +641,7 @@ private static void ensureProperties(boolean isInitialization) {
 		}
 		initializedProperties.put(key, list[i+1]);
 	}
+	initializedProperties.put("file.encoding", fileEncoding); //$NON-NLS-1$
 
 	/*[IF JAVA_SPEC_VERSION >= 17]*/
 	/* Set native.encoding after setting all the defined properties, it can't be modified by using -D on the command line */
