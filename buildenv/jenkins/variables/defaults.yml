@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2018, 2021 IBM Corp. and others
+# Copyright (c) 2018, 2022 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -545,11 +545,11 @@ x86-64_windows:
   freemarker: '/cygdrive/c/openjdk/freemarker.jar'
   extra_configure_options:
     all: '--disable-ccache --with-cuda="C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v9.0"'
-    8: '--with-toolchain-version=2013 --with-freetype-src=/cygdrive/c/openjdk/freetype-2.5.3 --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1l-x86_64-VS2013'
-    11: '--with-toolchain-version=2017 --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1l-x86_64-VS2017'
-    16: '--with-toolchain-version=2019 --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1l-x86_64-VS2019'
-    17: '--with-toolchain-version=2019 --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1l-x86_64-VS2019'
-    next: '--with-toolchain-version=2019 --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1l-x86_64-VS2019'
+    8: '--with-toolchain-version=2013 --with-freetype-src=/cygdrive/c/openjdk/freetype-2.5.3 --with-openssl=/cygdrive/f/Users/jenkins/openssl/OpenSSL-1.1.1m-x86_64-VS2013'
+    11: '--with-toolchain-version=2017 --with-openssl=/cygdrive/f/Users/jenkins/openssl/OpenSSL-1.1.1m-x86_64-VS2017'
+    16: '--with-toolchain-version=2019 --with-openssl=/cygdrive/f/Users/jenkins/openssl/OpenSSL-1.1.1m-x86_64-VS2019'
+    17: '--with-toolchain-version=2019 --with-openssl=/cygdrive/f/Users/jenkins/openssl/OpenSSL-1.1.1m-x86_64-VS2019'
+    next: '--with-toolchain-version=2019 --with-openssl=/cygdrive/f/Users/jenkins/openssl/OpenSSL-1.1.1m-x86_64-VS2019'
   node_labels:
     build: 'ci.role.build && hw.arch.x86 && sw.os.windows'
   build_env:
@@ -602,7 +602,7 @@ x86-32_windows:
   release:
     8: 'windows-x86-normal-server-release'
   extra_configure_options:
-    8: '--with-toolchain-version=2013 --with-freetype-src=/cygdrive/c/openjdk/freetype-2.5.3 --with-target-bits=32 --disable-ccache --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1l-x86_32-VS2013'
+    8: '--with-toolchain-version=2013 --with-freetype-src=/cygdrive/c/openjdk/freetype-2.5.3 --with-target-bits=32 --disable-ccache --with-openssl=/cygdrive/f/Users/jenkins/openssl/OpenSSL-1.1.1m-x86_32-VS2013'
   freemarker: '/cygdrive/c/openjdk/freemarker.jar'
   node_labels:
     build:
