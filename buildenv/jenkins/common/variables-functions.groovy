@@ -1556,6 +1556,35 @@ def set_build_variables_per_node() {
     if (!check_path(OPENJDK_REFERENCE_REPO)) {
         println("The git cache OPENJDK_REFERENCE_REPO: ${buildspec.getScalarField('openjdk_reference_repo', SDK_VERSION)} does not exist on ${NODE_NAME}!")
     }
+
+    if(SPEC.contains('win')) {
+        echo "Check for OpenSSL install..."
+        def configureOptions = buildspec.getScalarField('extra_configure_options', SDK_VERSION)
+        def match = (configureOptions =~ /.*--with-openssl=(\S+)\b/)
+        def opensslLocation = ''
+        if (match.find()) {
+            opensslLocation = match.group(1)
+        } else {
+            error("Unable to parse variables for OpenSSL location")
+        }
+        if (!check_path("${opensslLocation}")) {
+            echo "Downloading OpenSSL..."
+            def opensslVersion = opensslLocation.substring(opensslLocation.lastIndexOf('/') + 1)
+            def opensslParentFolder = opensslLocation.substring(0, opensslLocation.lastIndexOf('/'))
+            dir('openssl') {
+                sh """
+                    curl -Ok ${JENKINS_URL}userContent/${opensslVersion}.zip
+                    unzip ${opensslVersion}.zip
+                    rm ${opensslVersion}.zip
+                    mkdir -p ${opensslParentFolder}
+                    mv ${opensslVersion} ${opensslParentFolder}/
+                """
+            }
+            cleanWs()
+        } else {
+            echo "OpenSSL found at ${opensslLocation}"
+        }
+    }
 }
 
 def check_path(inPath) {
