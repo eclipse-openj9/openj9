@@ -23,6 +23,7 @@
 #include <criu/criu.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <dlfcn.h>
 #endif /* defined(LINUX) */
 
 #include "criusupport.hpp"
@@ -35,6 +36,8 @@
 #include "omrthread.h"
 
 extern "C" {
+
+typedef void (*criuSetUnprivilegedFunctionPointerType)(bool unprivileged);
 
 #define STRING_BUFFER_SIZE 256
 
@@ -115,6 +118,10 @@ Java_openj9_internal_criu_InternalCRIUSupport_isCheckpointAllowedImpl(JNIEnv *en
 #define J9_NATIVE_STRING_NO_ERROR 0
 #define J9_NATIVE_STRING_OUT_OF_MEMORY (-1)
 #define J9_NATIVE_STRING_FAIL_TO_CONVERT (-2)
+
+#define J9_CRIU_UNPRIVILEGED_NO_ERROR 0
+#define J9_CRIU_UNPRIVILEGED_DLSYM_ERROR (-1)
+#define J9_CRIU_UNPRIVILEGED_DLSYM_NULL_SYMBOL (-2)
 
 /**
  * Converts the given java string to native representation. The nativeString parameter should point
@@ -245,7 +252,8 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 		jstring workDir,
 		jboolean tcpEstablished,
 		jboolean autoDedup,
-		jboolean trackMemory)
+		jboolean trackMemory,
+		jboolean unprivileged)
 {
 	J9VMThread *currentThread = (J9VMThread*)env;
 	J9JavaVM *vm = currentThread->javaVM;
@@ -256,6 +264,8 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 	const char *nlsMsgFormat = NULL;
 	UDATA msgCharLength = 0;
 	IDATA systemReturnCode = 0;
+	criuSetUnprivilegedFunctionPointerType criuSetUnprivileged = NULL;
+	const char *dlerrorReturnString = NULL;
 	PORT_ACCESS_FROM_VMC(currentThread);
 
 	vm->checkpointState.checkpointThread = currentThread;
@@ -348,6 +358,29 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 			currentExceptionClass = vm->criuSystemCheckpointExceptionClass;
 			nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_JCL_CRIU_INIT_FAILED, NULL);
 			goto closeWorkDirFD;
+		}
+
+		if (JNI_TRUE == unprivileged) {
+			/*
+			 * dlsym() can return NULL in case of error or if the specified symbol's value is actually NULL.
+			 * In order to distinguish between the two cases we need to check for (and thereby clear) any pending errors by first calling dlerror(),
+			 * then calling dlsym(), then calling dlerror() again to check for any new error. We can then call our function
+			 * via the pointer returned by dlsym(), assuming it is not NULL.
+			 */
+			dlerrorReturnString = dlerror();
+			if (NULL == dlerrorReturnString) {
+				criuSetUnprivileged = (criuSetUnprivilegedFunctionPointerType)dlsym(RTLD_DEFAULT, "criu_set_unprivileged");
+				dlerrorReturnString = dlerror();
+			}
+			if ((NULL == dlerrorReturnString) && (NULL != criuSetUnprivileged)) {
+				systemReturnCode = J9_CRIU_UNPRIVILEGED_NO_ERROR;
+				criuSetUnprivileged(JNI_FALSE != unprivileged);
+			} else {
+				currentExceptionClass = vm->criuSystemCheckpointExceptionClass;
+				systemReturnCode = NULL != dlerrorReturnString ? J9_CRIU_UNPRIVILEGED_DLSYM_ERROR : J9_CRIU_UNPRIVILEGED_DLSYM_NULL_SYMBOL;
+				nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_JCL_CRIU_CANNOT_SET_UNPRIVILEGED, NULL);
+				goto closeWorkDirFD;
+			}
 		}
 
 		criu_set_images_dir_fd(dirFD);
