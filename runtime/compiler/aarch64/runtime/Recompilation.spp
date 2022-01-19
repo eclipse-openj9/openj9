@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2021 IBM Corp. and others
+ * Copyright (c) 2019, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -83,7 +83,7 @@ FUNC_LABEL(_samplingRecompileMethod):
 	ldr	x7, [x30, #J9TR_SamplingLR_BodyInfo]	// J9TR_SamplingLR_BodyInfo = 0
 	ldr	x7, [x7, #J9TR_BodyInfo_MethodInfo]	// fetch method info
 	ldr	x0, [x7, #J9TR_MethodInfo_J9Method]	// x0 is the rammethod (first arg to jitRetranslateMethod)
-	ldr	x7, const_jitRetranslateMethod		// load helper address
+	LOAD_FUNC_PTR(x7, const_jitRetranslateMethod)	// load helper address
 	mov	x1, x10					// old startPC is the second arg to jitRetranslateMethod
 	mov	x2, x8					// saved LR is the third arg to jitRetranslateMethod
 	blr	x7					// call jitRetranslateMethod
@@ -103,9 +103,14 @@ L_samplingRestoreAndDispatch:
 	ldp	x30, x9, [J9SP], #24			// restore saved LR and vtable offset
 	br	x10
 
+#if defined(OSX)
+	.data
+#endif
 	.align	3
 const_jitRetranslateMethod:
 	.dword	FUNC_LABEL(jitRetranslateMethod)
+
+	.text
 
 FUNC_LABEL(_countingPatchCallSite):
 	hlt	#0	// Not implemented yet
@@ -154,9 +159,9 @@ L_commonPatchPoint:
 	asr	w1, w1, #24
 	and	w1, w1, #0xFC
 	cmp	w1, #0x94				// check BL instruction (0x94000000 with imm26)
-	ldr	x0, const_mcc_callPointPatching_unwrapper
+	LOAD_FUNC_PTR(x0, const_mcc_callPointPatching_unwrapper)
 	beq	L_directCallPatching
-	ldr	x0, const_arm64IndirectCallPatching_unwrapper
+	LOAD_FUNC_PTR(x0, const_arm64IndirectCallPatching_unwrapper)
 L_directCallPatching:
 	str	x5, [J9SP, #-8]!			// push:	new startPC
 	str	x8, [J9SP, #-8]!			// 		call site
@@ -175,11 +180,16 @@ L_directCallPatching:
 	ldr	x9, [J9SP], #8				// restore vtable offset
 	br	x10					// jump to the new jitEntry
 
+#if defined(OSX)
+	.data
+#endif
 	.align	3
 const_mcc_callPointPatching_unwrapper:
 	.dword	FUNC_LABEL(mcc_callPointPatching_unwrapper)
 const_arm64IndirectCallPatching_unwrapper:
 	.dword	FUNC_LABEL(arm64IndirectCallPatching_unwrapper)
+
+	.text
 
 // _induceRecompilation
 
@@ -188,7 +198,7 @@ FUNC_LABEL(_induceRecompilation):
 	str	x0, [J9SP, #-24]!			// first argument is startPC in x0
 	str	J9VMTHREAD, [J9SP, #8]			// second argument is VMThread
 	str	x30, [J9SP, #16]			// save LR
-	ldr	x0, const_induceRecompilation_unwrapper
+	LOAD_FUNC_PTR(x0, const_induceRecompilation_unwrapper)
 	mov	x1, J9SP
 	movz	x2, #0					// result pointer (not used)
 	bl	FUNC_LABEL(jitCallCFunction)
@@ -196,9 +206,14 @@ FUNC_LABEL(_induceRecompilation):
 	add	J9SP, J9SP, #24
 	ret
 
+#if defined(OSX)
+	.data
+#endif
 	.align	3
 const_induceRecompilation_unwrapper:
 	.dword	FUNC_LABEL(induceRecompilation_unwrapper)
+
+	.text
 
 // revertToInterpreterGlue
 
@@ -219,7 +234,7 @@ FUNC_LABEL(_initialInvokeExactThunkGlue):
 	stp	x0, x1, [J9SP, #-32]!	// save regs
 	stp	x2, x30, [J9SP, #16]	// jitCallCFunction preserves x3-x7
 	stp	x0, J9VMTHREAD, [J9SP, #-16]! // MethodHandle, VMThread
-	ldr	x0, const_initialInvokeExactThunk_unwrapper
+	LOAD_FUNC_PTR(x0, const_initialInvokeExactThunk_unwrapper)
 	mov	x1, J9SP		// argument array
 	mov	x2, J9SP		// result pointer
 	bl	FUNC_LABEL(jitCallCFunction)
@@ -228,6 +243,9 @@ FUNC_LABEL(_initialInvokeExactThunkGlue):
 	ldp	x2, x30, [J9SP], #16
 	br	x8			// jump to thunk
 
+#if defined(OSX)
+	.data
+#endif
 	.align	3
 const_initialInvokeExactThunk_unwrapper:
 	.dword	FUNC_LABEL(initialInvokeExactThunk_unwrapper)
