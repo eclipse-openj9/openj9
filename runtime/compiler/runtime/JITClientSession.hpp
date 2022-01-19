@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2021 IBM Corp. and others
+ * Copyright (c) 2019, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -209,6 +209,7 @@ public:
       uintptr_t _classChainOffsetIdentifyingLoader;
       std::string _classNameIdentifyingLoader;
       const AOTCacheClassRecord *_aotCacheClassRecord;
+      int32_t _arrayElementSize;
 
       PersistentUnorderedMap<int32_t, TR_OpaqueClassBlock *> _classOfStaticCache;
       PersistentUnorderedMap<int32_t, TR_OpaqueClassBlock *> _constantClassPoolCache;
