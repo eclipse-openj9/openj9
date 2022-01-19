@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2021 IBM Corp. and others
+ * Copyright (c) 2019, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -185,7 +185,7 @@ L_outOfRange:
 	sub	J9SP, J9SP, #32
 	stp	x0, x30, [J9SP, #16]		// save registers
 	stp	x0, x2, [J9SP]			// push call site addr (x0) and helper index (x2)
-	ldr	x0, const_mcc_lookupHelperTrampoline_unwrapper
+	LOAD_FUNC_PTR(x0, const_mcc_lookupHelperTrampoline_unwrapper)
 	mov	x1, J9SP			// addr of the first arg for mcc_lookupHelperTrampoline_unwrapper
 	mov	x2, J9SP			// addr of the return value from mcc_lookupHelperTrampoline_unwrapper
 	bl	FUNC_LABEL(jitCallCFunction)
@@ -194,6 +194,9 @@ L_outOfRange:
 	add	J9SP, J9SP, #32
 	b	L_rewriteBranch
 
+#if defined(OSX)
+	.data
+#endif
 	.align	3
 const_mcc_lookupHelperTrampoline_unwrapper:
 	.dword	FUNC_LABEL(mcc_lookupHelperTrampoline_unwrapper)
@@ -205,6 +208,10 @@ const_mcc_lookupHelperTrampoline_unwrapper:
 
 	.set	J9TR_staticGlueTableSyncOffset,	40
 
+#if defined(OSX)
+	.data
+#endif
+	.align	3
 __staticGlueTable:
 	.dword	FUNC_LABEL(_interpreterVoidStaticGlue)
 	.dword	FUNC_LABEL(_interpreterIntStaticGlue)
@@ -216,6 +223,8 @@ __staticGlueTable:
 	.dword	FUNC_LABEL(_interpreterSyncLongStaticGlue)
 	.dword	FUNC_LABEL(_interpreterSyncFloatStaticGlue)
 	.dword	FUNC_LABEL(_interpreterSyncDoubleStaticGlue)
+
+	.text
 
 // Handles calls to unresolved call snippets
 //
@@ -236,11 +245,11 @@ L_mergedUnresolvedSpecialStaticGlue:
 	mov	x2, x0						// save method (x0 trashed by following call)
 	bl	FUNC_LABEL(jitMethodIsNative)			// is the method native?
 	cbz	x0, L_notNative
-	ldr	x1, const_nativeStaticHelper			// if so, use nativeStaticHelper
+	LOAD_FUNC_PTR(x1, const_nativeStaticHelper)		// if so, use nativeStaticHelper
 	mov	x2, #TR_ARM64nativeStaticHelper
 	b	L_gotHelper					// and skip to writing the address into the instruction
 L_notNative:
-	ldr	x3, const_staticGlueTable			// get helper table address
+	LOAD_FUNC_PTR(x3, const_staticGlueTable)		// get helper table address
 	lsr	x1, x11, #J9TR_USCSnippet_HelperOffsetShift	// get helper offset
 	mov	x0, x2						// recover method
 	bl	FUNC_LABEL(jitMethodIsSync)			// is method synchronized?
@@ -264,7 +273,7 @@ L_gotHelper:
 	str	x3, [J9SP, #-8]!				// 		method
 	str	x0, [J9SP, #-8]!				//
 								// prepare args for jitCallCFunction:
-	ldr	x0, const_mcc_reservationAdjustment_unwrapper
+	LOAD_FUNC_PTR(x0, const_mcc_reservationAdjustment_unwrapper)
 	mov	x1, J9SP
 	mov	x2, J9SP
 	bl	FUNC_LABEL(jitCallCFunction)
@@ -277,6 +286,21 @@ L_USSGclinitCase:
 	mov	x30, x10					// send helpers expect link register to contain snippet return address
 	br	x1						// in <clinit> case, dispatch method directly without patching
 
+FUNC_LABEL(_interpreterUnresolvedStaticGlue:)
+	LOAD_FUNC_PTR(x3, const_jitResolveStaticMethod)
+	b	L_mergedUnresolvedSpecialStaticGlue
+
+FUNC_LABEL(_interpreterUnresolvedSpecialGlue):
+	LOAD_FUNC_PTR(x3, const_jitResolveSpecialMethod)
+	b	L_mergedUnresolvedSpecialStaticGlue
+
+FUNC_LABEL(_interpreterUnresolvedDirectVirtualGlue):
+	LOAD_FUNC_PTR(x3, const_jitResolveSpecialMethod)
+	b	L_mergedUnresolvedSpecialStaticGlue
+
+#if defined(OSX)
+	.data
+#endif
 	.align	3
 const_mcc_reservationAdjustment_unwrapper:
 	.dword	FUNC_LABEL(mcc_reservationAdjustment_unwrapper)
@@ -284,24 +308,12 @@ const_staticGlueTable:
 	.dword	__staticGlueTable
 const_nativeStaticHelper:
 	.dword	FUNC_LABEL(_nativeStaticHelper)
-
-FUNC_LABEL(_interpreterUnresolvedStaticGlue:)
-	ldr	x3, const_jitResolveStaticMethod
-	b	L_mergedUnresolvedSpecialStaticGlue
-
-FUNC_LABEL(_interpreterUnresolvedSpecialGlue):
-	ldr	x3, const_jitResolveSpecialMethod
-	b	L_mergedUnresolvedSpecialStaticGlue
-
-FUNC_LABEL(_interpreterUnresolvedDirectVirtualGlue):
-	ldr	x3, const_jitResolveSpecialMethod
-	b	L_mergedUnresolvedSpecialStaticGlue
-
-	.align	3
 const_jitResolveStaticMethod:
 	.dword	FUNC_LABEL(jitResolveStaticMethod)
 const_jitResolveSpecialMethod:
 	.dword	FUNC_LABEL(jitResolveSpecialMethod)
+
+	.text
 
 // Handles calls to unresolved data snippets
 //
@@ -408,7 +420,7 @@ FUNC_LABEL(_interpreterUnresolvedClassGlue):
 	stp	x24, x25, [J9SP, #192]
 	stp	x26, x27, [J9SP, #208]
 	str	x28, [J9SP, #224]
-	ldr	x3, const_jitResolveClass			// load resolve helper address
+	LOAD_FUNC_PTR(x3, const_jitResolveClass)		// load resolve helper address
 	b	L_mergedDataResolve
 
 FUNC_LABEL(_interpreterUnresolvedClassGlue2):
@@ -427,7 +439,7 @@ FUNC_LABEL(_interpreterUnresolvedClassGlue2):
 	stp	x24, x25, [J9SP, #192]
 	stp	x26, x27, [J9SP, #208]
 	str	x28, [J9SP, #224]
-	ldr	x3, const_jitResolveClassFromStaticField	// load resolve helper address
+	LOAD_FUNC_PTR(x3, const_jitResolveClassFromStaticField)	// load resolve helper address
 	b	L_mergedDataResolve
 
 FUNC_LABEL(_interpreterUnresolvedStringGlue):
@@ -446,7 +458,7 @@ FUNC_LABEL(_interpreterUnresolvedStringGlue):
 	stp	x24, x25, [J9SP, #192]
 	stp	x26, x27, [J9SP, #208]
 	str	x28, [J9SP, #224]
-	ldr	x3, const_jitResolveString			// load resolve helper address
+	LOAD_FUNC_PTR(x3, const_jitResolveString)		// load resolve helper address
 	b	L_mergedDataResolve
 
 FUNC_LABEL(_interpreterUnresolvedMethodTypeGlue):
@@ -465,7 +477,7 @@ FUNC_LABEL(_interpreterUnresolvedMethodTypeGlue):
 	stp	x24, x25, [J9SP, #192]
 	stp	x26, x27, [J9SP, #208]
 	str	x28, [J9SP, #224]
-	ldr	x3, const_jitResolveMethodType			// load resolve helper address
+	LOAD_FUNC_PTR(x3, const_jitResolveMethodType)		// load resolve helper address
 	b	L_mergedDataResolve
 
 FUNC_LABEL(_interpreterUnresolvedMethodHandleGlue):
@@ -484,7 +496,7 @@ FUNC_LABEL(_interpreterUnresolvedMethodHandleGlue):
 	stp	x24, x25, [J9SP, #192]
 	stp	x26, x27, [J9SP, #208]
 	str	x28, [J9SP, #224]
-	ldr	x3, const_jitResolveMethodHandle		// load resolve helper address
+	LOAD_FUNC_PTR(x3, const_jitResolveMethodHandle)		// load resolve helper address
 	b	L_mergedDataResolve
 
 FUNC_LABEL(_interpreterUnresolvedCallSiteTableEntryGlue):
@@ -503,7 +515,7 @@ FUNC_LABEL(_interpreterUnresolvedCallSiteTableEntryGlue):
 	stp	x24, x25, [J9SP, #192]
 	stp	x26, x27, [J9SP, #208]
 	str	x28, [J9SP, #224]
-	ldr	x3, const_jitResolveInvokeDynamic		// load resolve helper address
+	LOAD_FUNC_PTR(x3, const_jitResolveInvokeDynamic)	// load resolve helper address
 	b	L_mergedDataResolve
 
 FUNC_LABEL(_interpreterUnresolvedMethodTypeTableEntryGlue):
@@ -522,7 +534,7 @@ FUNC_LABEL(_interpreterUnresolvedMethodTypeTableEntryGlue):
 	stp	x24, x25, [J9SP, #192]
 	stp	x26, x27, [J9SP, #208]
 	str	x28, [J9SP, #224]
-	ldr	x3, const_jitResolveHandleMethod		// load resolve helper address
+	LOAD_FUNC_PTR(x3, const_jitResolveHandleMethod)		// load resolve helper address
 	b	L_mergedDataResolve
 
 FUNC_LABEL(_interpreterUnresolvedStaticDataGlue):
@@ -541,7 +553,7 @@ FUNC_LABEL(_interpreterUnresolvedStaticDataGlue):
 	stp	x24, x25, [J9SP, #192]
 	stp	x26, x27, [J9SP, #208]
 	str	x28, [J9SP, #224]
-	ldr	x3, const_jitResolveStaticField			// load resolve helper address
+	LOAD_FUNC_PTR(x3, const_jitResolveStaticField)		// load resolve helper address
 	b	L_mergedDataResolve
 
 FUNC_LABEL(_interpreterUnresolvedStaticDataStoreGlue):
@@ -560,7 +572,7 @@ FUNC_LABEL(_interpreterUnresolvedStaticDataStoreGlue):
 	stp	x24, x25, [J9SP, #192]
 	stp	x26, x27, [J9SP, #208]
 	str	x28, [J9SP, #224]
-	ldr	x3, const_jitResolveStaticFieldSetter		// load resolve helper address
+	LOAD_FUNC_PTR(x3, const_jitResolveStaticFieldSetter)	// load resolve helper address
 	b	L_mergedDataResolve
 
 FUNC_LABEL(_interpreterUnresolvedInstanceDataGlue):
@@ -579,7 +591,7 @@ FUNC_LABEL(_interpreterUnresolvedInstanceDataGlue):
 	stp	x24, x25, [J9SP, #192]
 	stp	x26, x27, [J9SP, #208]
 	str	x28, [J9SP, #224]
-	ldr	x3, const_jitResolveField			// load resolve helper address
+	LOAD_FUNC_PTR(x3, const_jitResolveField)		// load resolve helper address
 	b	L_mergedDataResolve
 
 FUNC_LABEL(_interpreterUnresolvedInstanceDataStoreGlue):
@@ -598,7 +610,7 @@ FUNC_LABEL(_interpreterUnresolvedInstanceDataStoreGlue):
 	stp	x24, x25, [J9SP, #192]
 	stp	x26, x27, [J9SP, #208]
 	str	x28, [J9SP, #224]
-	ldr	x3, const_jitResolveFieldSetter			// load resolve helper address
+	LOAD_FUNC_PTR(x3, const_jitResolveFieldSetter)		// load resolve helper address
 	b	L_mergedDataResolve
 
 FUNC_LABEL(_interpreterUnresolvedConstantDynamicGlue):
@@ -617,9 +629,12 @@ FUNC_LABEL(_interpreterUnresolvedConstantDynamicGlue):
 	stp	x24, x25, [J9SP, #192]
 	stp	x26, x27, [J9SP, #208]
 	str	x28, [J9SP, #224]
-	ldr	x3, const_jitResolveConstantDynamic		// load resolve helper address
+	LOAD_FUNC_PTR(x3, const_jitResolveConstantDynamic)	// load resolve helper address
 	b	L_mergedDataResolve
 
+#if defined(OSX)
+	.data
+#endif
 	.align	3
 const_jitResolveClass:
 	.dword	FUNC_LABEL(jitResolveClass)
@@ -645,6 +660,8 @@ const_jitResolveFieldSetter:
 	.dword	FUNC_LABEL(jitResolveFieldSetter)
 const_jitResolveConstantDynamic:
 	.dword	FUNC_LABEL(jitResolveConstantDynamic)
+
+	.text
 
 // Handles calls to virtual unresolved call snippets
 //
@@ -705,7 +722,7 @@ L_callVirtual:
 	cbnz	w2, L_spinForUpdate				// already locked by another thread
 	stxr	w2, w3, [x1]					// try to lock
 	cbnz	w2, L_spinForUpdate				// failed to lock
-	mov	x12, x0					// resolved index
+	mov	x12, x0						// resolved index
 	sub	x0, x10, #16					// get the address of the movk instruction
 	ldr	w1, [x0]					// fetch the movk instruction
 	ubfx	x2, x12, #16, #16				// upper 16 bits of the index
@@ -874,7 +891,7 @@ L_continueLookup:
 	add	x8, x2, x8					// Addr of JIT-to-JIT in x8
 	add	x3, x7, #J9TR_ICSnippet_FirstClass		// class1 address
 L_tryToCompleteSlot1:
-	ldxr	x4, [x3]		// either zero or class
+	ldxr	x4, [x3]					// either zero or class
 	cbnz	x4, L_commonJitDispatch
 	stxr	w2, x1, [x3]					// trying to write class pointer to 1st pic slot
 	cbnz	w2, L_tryToCompleteSlot1			// failed to store
@@ -883,7 +900,7 @@ L_tryToCompleteSlot1:
 
 	mov	x8, x0						// Preserve x0 in x8
 	add	x0, x7, #J9TR_Snippet_CallInstruction		// addr of BL instruction in snippet
-	ldr	x1, const_interfaceCompleteSlot2		// Load the callee address
+	LOAD_FUNC_PTR(x1, const_interfaceCompleteSlot2)		// Load the callee address
 	mov	x2, #TR_ARM64interfaceCompleteSlot2
 	bl	L_refreshHelper					// rewrite the BL
 
@@ -934,11 +951,11 @@ L_tryToCompleteSlot2:
 	stxr	w2, x1, [x6]					// trying to write class pointer to 2nd pic slot
 	cbnz	w2, L_tryToCompleteSlot2			// failed to store
 	str	x8, [x7, #J9TR_ICSnippet_SecondTarget]		// Modify Slot2 target addr
-	dmb ish							// make the update of the pic slot become visible to other threads as soon as possible
+	dmb	ish						// make the update of the pic slot become visible to other threads as soon as possible
 
 	mov	x8, x0						// Preserve x0 in x8
 	add	x0, x7, #J9TR_Snippet_CallInstruction		// get address of BL instruction in snippet
-	ldr	x1, const_interfaceSlotsUnavailable		// address of final helper
+	LOAD_FUNC_PTR(x1, const_interfaceSlotsUnavailable)	// address of final helper
 	mov	x2, #TR_ARM64interfaceSlotsUnavailable
 	bl	L_refreshHelper					// rewrite the BL
 
@@ -999,11 +1016,16 @@ L_commonLookupException:
 	mov	x30, x10					// move correct LR in to get exception throw.
 	b	FUNC_LABEL(jitThrowException)			// throw it
 
+#if defined(OSX)
+	.data
+#endif
 	.align	3
 const_interfaceCompleteSlot2:
 	.dword	FUNC_LABEL(_interfaceCompleteSlot2)
 const_interfaceSlotsUnavailable:
 	.dword	FUNC_LABEL(_interfaceSlotsUnavailable)
+
+	.text
 
 // Handles calls to static call snippets
 //
@@ -1031,7 +1053,7 @@ L_StaticGlueCallFixer1:
 	str	x11, [J9SP, #-8]!				// 		addr of BL instr
 	str	x0, [J9SP, #-8]!				// 		method
 								// prepare args for jitCallCFunction:
-	ldr	x0, const_mcc_callPointPatching_unwrapper	// addr of mcc_callPointPatching_unwrapper
+	LOAD_FUNC_PTR(x0, const_mcc_callPointPatching_unwrapper)	// addr of mcc_callPointPatching_unwrapper
 	mov	x1, J9SP					// addr of the first arg for patchCallPoint
 	mov	x2, J9SP					// where to put the return value
 	bl	FUNC_LABEL(jitCallCFunction)
@@ -1046,9 +1068,15 @@ L_SGCclinitCase:
 	ret	x2						// if not, return to static glue to call interpreter
 L_SGCclinitCase1:
 	br	x1						// in <clinit> case, dispatch method directly without patching
+
+#if defined(OSX)
+	.data
+#endif
 	.align	3
 const_mcc_callPointPatching_unwrapper:
 	.dword	FUNC_LABEL(mcc_callPointPatching_unwrapper)
+
+	.text
 
 FUNC_LABEL(_interpreterVoidStaticGlue):
 	mov	x1, x30

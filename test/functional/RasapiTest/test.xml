@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
 
 <!--
-  Copyright (c) 2016, 2021 IBM Corp. and others
+  Copyright (c) 2016, 2022 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -66,6 +66,7 @@
 		<echo message="Running com.ibm.jvm.ras.tests.DumpAPIBasicTests"/>
 		<junit fork="yes" showoutput="true" haltonfailure="true">
 			<jvmarg value="-showversion"/>
+			<jvmarg value="-Xmx32m"/>
 			<classpath>
 				<pathelement location="junit4.jar"/>
 				<pathelement location="com.ibm.jvm.ras.tests.jar"/>
@@ -76,6 +77,7 @@
 		<echo message="Running com.ibm.jvm.ras.tests.DumpAPITriggerTests"/>
 		<junit fork="yes" showoutput="true" haltonfailure="true">
 			<jvmarg value="-showversion"/>
+			<jvmarg value="-Xmx32m"/>
 			<classpath>
 				<pathelement location="junit4.jar"/>
 				<pathelement location="com.ibm.jvm.ras.tests.jar"/>
@@ -86,6 +88,7 @@
 		<echo message="Running com.ibm.jvm.ras.tests.DumpAPIQuerySetReset"/>
 		<junit fork="yes" showoutput="true" haltonfailure="true">
 			<jvmarg value="-showversion" />
+			<jvmarg value="-Xmx32m"/>
 			<classpath>
 				<pathelement location="junit4.jar" />
 				<pathelement location="com.ibm.jvm.ras.tests.jar" />
@@ -96,6 +99,7 @@
 		<echo message="Running com.ibm.jvm.ras.tests.DumpAPITokensTests" />
 		<junit fork="yes" showoutput="true" haltonfailure="true">
 			<jvmarg value="-showversion"/>
+			<jvmarg value="-Xmx32m"/>
 			<classpath>
 				<pathelement location="junit4.jar"/>
 				<pathelement location="com.ibm.jvm.ras.tests.jar"/>
@@ -103,17 +107,18 @@
 			<formatter type="plain" usefile="false" />
 			<test name="com.ibm.jvm.ras.tests.DumpAPITokensTests"/>
 		</junit>
-        <echo message="Running com.ibm.jvm.ras.tests.DumpAPISetTestXdumpdynamic with Xdump:dynamic"/>
-        <junit fork="yes" showoutput="true" haltonfailure="true">
-                <jvmarg value="-showversion" />
-                <jvmarg value="-Xdump:dynamic" />
-                <classpath>
-                        <pathelement location="junit4.jar" />
-                        <pathelement location="com.ibm.jvm.ras.tests.jar" />
-                </classpath>
-                <formatter type="plain" usefile="false" />
-                <test name="com.ibm.jvm.ras.tests.DumpAPISetTestXdumpdynamic" />
-        </junit>
+		<echo message="Running com.ibm.jvm.ras.tests.DumpAPISetTestXdumpdynamic with Xdump:dynamic"/>
+		<junit fork="yes" showoutput="true" haltonfailure="true">
+				<jvmarg value="-showversion" />
+				<jvmarg value="-Xmx32m"/>
+				<jvmarg value="-Xdump:dynamic" />
+				<classpath>
+					<pathelement location="junit4.jar" />
+					<pathelement location="com.ibm.jvm.ras.tests.jar" />
+				</classpath>
+				<formatter type="plain" usefile="false" />
+				<test name="com.ibm.jvm.ras.tests.DumpAPISetTestXdumpdynamic" />
+		</junit>
 		<!-- Run security tests (that assume dumping will fail) with security enabled. -->
 		<!-- These need to be run with fork="no" to preserve the security settings -->
 		<echo message="Running com.ibm.jvm.ras.tests.[Dump|Log|Trace]APISecurityTests"/>
