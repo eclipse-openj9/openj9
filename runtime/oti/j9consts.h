@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -349,6 +349,8 @@ extern "C" {
 #define J9_EXTENDED_RUNTIME2_LOAD_HEALTHCENTER_MODULE 0x4000
 #define J9_EXTENDED_RUNTIME2_3164_INTEROPERABILITY 0x8000
 #define J9_EXTENDED_RUNTIME2_ENABLE_UTF_CACHE 0x10000
+#define J9_EXTENDED_RUNTIME2_TUNE_THROUGHPUT 0x20000
+#define J9_EXTENDED_RUNTIME2_TUNE_QUICKSTART 0x40000
 
 #define J9_OBJECT_HEADER_AGE_DEFAULT 0xA /* OBJECT_HEADER_AGE_DEFAULT */
 #define J9_OBJECT_HEADER_SHAPE_MASK 0xE /* OBJECT_HEADER_SHAPE_MASK */
