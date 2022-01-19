@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 1998, 2021 IBM Corp. and others
+ * Copyright (c) 1998, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -67,6 +67,10 @@ import sun.reflect.CallerSensitive;
 import jdk.internal.loader.NativeLibraries;
 import jdk.internal.loader.NativeLibrary;
 /*[ENDIF] JAVA_SPEC_VERSION >= 15 */
+
+/*[IF JAVA_SPEC_VERSION >= 18]*/
+import jdk.internal.reflect.CallerSensitiveAdapter;
+/*[ENDIF] JAVA_SPEC_VERSION >= 18 */
 
 /**
  * ClassLoaders are used to dynamically load, link and install
@@ -1400,6 +1404,13 @@ Class<?> loadClassHelper(final String className, boolean resolveClass, boolean d
 protected static boolean registerAsParallelCapable() {
 	final Class<?> callerCls = System.getCallerClass();
 	
+/*[IF JAVA_SPEC_VERSION >= 18]*/
+	return registerAsParallelCapable(callerCls);
+}
+
+@CallerSensitiveAdapter
+private static boolean registerAsParallelCapable(Class<?> callerCls) {
+/*[ENDIF] JAVA_SPEC_VERSION >= 18 */
 	if (parallelCapableCollection.containsKey(callerCls)) {
 		return true;
 	}

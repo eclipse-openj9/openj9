@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2021 IBM Corp. and others
+ * Copyright (c) 2001, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -51,6 +51,11 @@ ClassFileOracle::KnownAnnotation ClassFileOracle::_knownAnnotations[] = {
 #define JDK_INTERNAL_REFLECT_CALLERSENSITIVE_SIGNATURE "Ljdk/internal/reflect/CallerSensitive;"
 		{JDK_INTERNAL_REFLECT_CALLERSENSITIVE_SIGNATURE, sizeof(JDK_INTERNAL_REFLECT_CALLERSENSITIVE_SIGNATURE)},
 #undef JDK_INTERNAL_REFLECT_CALLERSENSITIVE_SIGNATURE
+#if JAVA_SPEC_VERSION >= 18
+#define JDK_INTERNAL_REFLECT_CALLERSENSITIVEADAPTER_SIGNATURE "Ljdk/internal/reflect/CallerSensitiveAdapter;"
+		{JDK_INTERNAL_REFLECT_CALLERSENSITIVEADAPTER_SIGNATURE, sizeof(JDK_INTERNAL_REFLECT_CALLERSENSITIVEADAPTER_SIGNATURE)},
+#undef JDK_INTERNAL_REFLECT_CALLERSENSITIVEADAPTER_SIGNATURE
+#endif /* JAVA_SPEC_VERSION >= 18 */
 #define JAVA8_CONTENDED_SIGNATURE "Lsun/misc/Contended;" /* TODO remove this if VM does not support Java 8 */
 		{JAVA8_CONTENDED_SIGNATURE, sizeof(JAVA8_CONTENDED_SIGNATURE)},
 #undef JAVA8_CONTENDED_SIGNATURE
@@ -923,6 +928,9 @@ ClassFileOracle::walkMethodAttributes(U_16 methodIndex)
 			knownAnnotations = addAnnotationBit(knownAnnotations, FRAMEITERATORSKIP_ANNOTATION);
 			knownAnnotations = addAnnotationBit(knownAnnotations, SUN_REFLECT_CALLERSENSITIVE_ANNOTATION);
 			knownAnnotations = addAnnotationBit(knownAnnotations, JDK_INTERNAL_REFLECT_CALLERSENSITIVE_ANNOTATION);
+#if JAVA_SPEC_VERSION >= 18
+			knownAnnotations = addAnnotationBit(knownAnnotations, JDK_INTERNAL_REFLECT_CALLERSENSITIVEADAPTER_ANNOTATION);
+#endif /* JAVA_SPEC_VERSION >= 18*/
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
 			knownAnnotations = addAnnotationBit(knownAnnotations, HIDDEN_ANNOTATION);
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
@@ -935,6 +943,9 @@ ClassFileOracle::walkMethodAttributes(U_16 methodIndex)
 				UDATA foundAnnotations = walkAnnotations(attribAnnotations->numberOfAnnotations, attribAnnotations->annotations, knownAnnotations);
 				if (containsKnownAnnotation(foundAnnotations, SUN_REFLECT_CALLERSENSITIVE_ANNOTATION)
 					|| containsKnownAnnotation(foundAnnotations, JDK_INTERNAL_REFLECT_CALLERSENSITIVE_ANNOTATION)
+#if JAVA_SPEC_VERSION >= 18
+					|| containsKnownAnnotation(foundAnnotations, JDK_INTERNAL_REFLECT_CALLERSENSITIVEADAPTER_ANNOTATION)
+#endif /* JAVA_SPEC_VERSION >= 18*/
 				) {
 					_methodsInfo[methodIndex].modifiers |= J9AccMethodCallerSensitive;
 				}
