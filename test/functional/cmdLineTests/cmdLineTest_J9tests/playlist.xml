@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <!--
-  Copyright (c) 2016, 2021 IBM Corp. and others
+  Copyright (c) 2016, 2022 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -164,6 +164,32 @@
 		</impls>
 	</test>
 	<test>
+		<testCaseName>cmdLineTest_J9test_consoleUpTo17</testCaseName>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	-DJARPATH=$(Q)$(TEST_RESROOT)$(D)cmdLineTest_J9tests.jar$(Q) -DJDK_VERSION=$(JDK_VERSION) \
+	-DJVMLIBPATH=$(Q)$(J9VM_PATH)$(Q) \
+	-DTESTDIR=$(Q)$(TEST_RESROOT)$(Q) -DRESJAR=$(CMDLINETESTER_RESJAR) -DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump$(SQ) \
+	-jar $(CMDLINETESTER_JAR) \
+	-config $(Q)$(TEST_RESROOT)$(D)j9tests_consoleUpTo17.xml$(Q) \
+	-xids all,$(PLATFORM) -plats all,$(PLATFORM) -xlist $(Q)$(TEST_RESROOT)$(D)j9tests_exclude.xml$(Q) \
+	-explainExcludes -nonZeroExitWhenError; \
+	$(TEST_STATUS)</command>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<versions>
+			<version>8</version>
+			<version>11</version>
+			<version>17</version>
+		</versions>
+		<impls>
+			<impl>openj9</impl>
+		</impls>
+	</test>
+	<test>
 		<testCaseName>cmdLineTest_J9test_console_zos</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-DJARPATH=$(Q)$(TEST_RESROOT)$(D)cmdLineTest_J9tests.jar$(Q) -DJDK_VERSION=$(JDK_VERSION) \
@@ -183,6 +209,33 @@
 		</groups>
 		<versions>
 			<version>11+</version>
+		</versions>
+		<impls>
+			<impl>ibm</impl>
+			<impl>openj9</impl>
+		</impls>
+	</test>
+	<test>
+		<testCaseName>cmdLineTest_J9test_consoleUpTo17_zos</testCaseName>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	-DJARPATH=$(Q)$(TEST_RESROOT)$(D)cmdLineTest_J9tests.jar$(Q) -DJDK_VERSION=$(JDK_VERSION) \
+	-DJVMLIBPATH=$(Q)$(J9VM_PATH)$(Q) \
+	-DTESTDIR=$(Q)$(TEST_RESROOT)$(Q) -DRESJAR=$(CMDLINETESTER_RESJAR) -DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump$(SQ) \
+	-jar $(CMDLINETESTER_JAR) \
+	-config $(Q)$(TEST_RESROOT)$(D)j9tests_consoleUpTo17.xml$(Q) \
+	-xids all,$(PLATFORM) -plats all,$(PLATFORM) -xlist $(Q)$(TEST_RESROOT)$(D)j9tests_exclude.xml$(Q) \
+	-explainExcludes -nonZeroExitWhenError; \
+	$(TEST_STATUS)</command>
+		<platformRequirements>os.zos</platformRequirements>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<versions>
+			<version>11</version>
+			<version>17</version>
 		</versions>
 		<impls>
 			<impl>ibm</impl>
