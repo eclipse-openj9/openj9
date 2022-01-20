@@ -1005,6 +1005,9 @@ public static void loadLibrary(String libName) {
  * be useful to attempt to perform any outstanding
  * object finalizations.
  */
+/*[IF JAVA_SPEC_VERSION >= 18] */
+@Deprecated(forRemoval=true, since="18")
+/*[ENDIF] JAVA_SPEC_VERSION >= 18 */
 public static void runFinalization() {
 	RUNTIME.runFinalization();
 }
