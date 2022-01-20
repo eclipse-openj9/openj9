@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -171,15 +171,12 @@ static const struct J9VMIgnoredOption ignoredOptionTable[] = {
 	{ VMOPT_VFPRINTF, EXACT_MATCH },
 	{ VMOPT_EXIT, EXACT_MATCH },
 	{ VMOPT_ABORT, EXACT_MATCH },
-	{ VMOPT_XQUICKSTART, EXACT_MATCH }, /* sorta bogus... j9c now uses this option in the romclass.c which can be run with a Micro JIT, which does not take this option */
-													/* also note we had this inside the #if defined(J9VM_OPT_SIDECAR) before the j9c thing because sov launchers specify with JIT off (sigh) */
-	{ VMOPT_XNOQUICKSTART, EXACT_MATCH }, /* since we eat -Xquickstart, we should eat -Xnoquickstart for the same reason. */
+	{ VMOPT_XNOQUICKSTART, EXACT_MATCH },
 	{ VMOPT_XJ9, EXACT_MATCH },
 	{ VMOPT_XMXCL, STARTSWITH_MATCH },
 	/* extra-extended options start with -XX. Ignore any not explicitly processed. */
 #if defined(J9VM_OPT_SIDECAR)
 	{ VMOPT_XJVM, STARTSWITH_MATCH },
-	{ VMOPT_CLIENT, EXACT_MATCH },
 	{ VMOPT_SERVER, EXACT_MATCH },
 	{ VMOPT_X142BOOSTGCTHRPRIO, EXACT_MATCH },
 
@@ -1994,9 +1991,34 @@ VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved)
 			}
 #endif
 
+			IDATA xtuneQuickstartIndex = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_TUNE_QUICKSTART, NULL);
+			IDATA xquickstartIndex = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XQUICKSTART, NULL);
+			IDATA clientIndex = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_CLIENT, NULL);
+			/* VMOPT_TUNE_QUICKSTART, VMOPT_XQUICKSTART and VMOPT_CLIENT are
+			 * aliases, so take the largest index of these 3 */
+			if (xtuneQuickstartIndex < xquickstartIndex) {
+				xtuneQuickstartIndex = xquickstartIndex;
+			}
+			if (xtuneQuickstartIndex < clientIndex) {
+				xtuneQuickstartIndex = clientIndex;
+			}
 			/* -Xtune:virtualized was added so that consumers could start adding it to their command lines */
-			if (FIND_AND_CONSUME_ARG(EXACT_MATCH,VMOPT_TUNE_VIRTUALIZED, NULL) >= 0) {
-				vm->runtimeFlags |= J9_RUNTIME_TUNE_VIRTUALIZED;
+			IDATA xtuneVirtualizedIndex = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_TUNE_VIRTUALIZED, NULL);
+			IDATA xtuneThroughputIndex = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_TUNE_THROUGHPUT, NULL);
+
+			/* Only the last appearance of any of VMOPT_TUNE_VIRTUALIZED, VMOPT_TUNE_THROUGHPUT, VMOPT_TUNE_QUICKSTART will take effect */
+			if (xtuneVirtualizedIndex > xtuneThroughputIndex) {
+				if (xtuneVirtualizedIndex > xtuneQuickstartIndex) {
+					vm->runtimeFlags |= J9_RUNTIME_TUNE_VIRTUALIZED;
+				} else {
+					vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_TUNE_QUICKSTART;
+				}
+			} else {
+				if (xtuneThroughputIndex > xtuneQuickstartIndex) {
+					vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_TUNE_THROUGHPUT;
+				} else if (xtuneQuickstartIndex >= 0) {
+					vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_TUNE_QUICKSTART;
+				}
 			}
 
 			argIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, VMOPT_XXNODISCLAIMVIRTUALMEMORY, NULL);
