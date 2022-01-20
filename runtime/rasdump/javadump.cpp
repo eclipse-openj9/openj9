@@ -21,10 +21,6 @@
  *******************************************************************************/
 
 /* Includes */
-#if defined(J9ZOS390)
-#define _LARGE_TIME_API
-#endif /* defined(J9ZOS390) */
-#include <time.h>
 #if defined(AIXPPC)
 #include <sys/time.h>
 #endif /* defined(AIXPPC) */
@@ -654,48 +650,11 @@ JavaCoreDumpWriter::writeTitleSection(void)
 	_OutputStream.writeInteger(now % 1000, ":%03d"); /* add the milliseconds */
 	_OutputStream.writeCharacters("\n");
 
-	bool zoneAvailable = false;
 	int32_t zoneSecondsEast = 0;
-	const char *zoneName = NULL;
-
-#if defined(WIN32)
-	/* until a reliable mechanism is found, don't report timezone */
-#elif defined(J9ZOS390) /* defined(WIN32) */
-	time64_t timeNow = time64(NULL);
-	struct tm utc;
-	struct tm local;
-
-	if ((NULL != gmtime64_r(&timeNow, &utc)) && (NULL != localtime64_r(&timeNow, &local))) {
-		zoneAvailable = true;
-		zoneSecondsEast = (int32_t)difftime64(timeNow, mktime64(&utc));
-		if (0 == local.tm_isdst) {
-			zoneName = tzname[0];
-		} else if (local.tm_isdst > 0) {
-			zoneName = tzname[1];
-			/* compensate for DST because difftime64() doesn't appear to do so */
-			zoneSecondsEast += 60 * 60;
-		}
-	}
-#else /* defined(WIN32) */
-	time_t timeNow = time(NULL);
-	struct tm utc;
-	struct tm local;
-
-	if ((NULL != gmtime_r(&timeNow, &utc)) && (NULL != localtime_r(&timeNow, &local))) {
-		zoneAvailable = true;
-		zoneSecondsEast = (int32_t)difftime(timeNow, mktime(&utc));
-		if (0 == local.tm_isdst) {
-			zoneName = tzname[0];
-		} else if (local.tm_isdst > 0) {
-			zoneName = tzname[1];
-			/* compensate for DST because difftime() doesn't appear to do so */
-			zoneSecondsEast += 60 * 60;
-		}
-	}
-#endif /* defined(WIN32) */
+	char zoneName[32];
 
 	_OutputStream.writeCharacters("1TITIMEZONE    Timezone: ");
-	if (!zoneAvailable) {
+	if (0 != omrstr_current_time_zone(&zoneSecondsEast, zoneName, sizeof(zoneName))) {
 		_OutputStream.writeCharacters("(unavailable)");
 	} else {
 		_OutputStream.writeCharacters("UTC");
@@ -710,7 +669,7 @@ JavaCoreDumpWriter::writeTitleSection(void)
 				_OutputStream.writeInteger(minutes, ":%02d");
 			}
 		}
-		if ((NULL != zoneName) && ('\0' != *zoneName)) {
+		if ('\0' != *zoneName) {
 			_OutputStream.writeCharacters(" (");
 			_OutputStream.writeCharacters(zoneName);
 			_OutputStream.writeCharacters(")");
