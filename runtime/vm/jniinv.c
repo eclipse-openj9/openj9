@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -822,14 +822,9 @@ jint JNICALL GetEnv(JavaVM *jvm, void **penv, jint version)
 		return JNI_EDETACHED;
 	}
 
-	/* Call the hook - if rc changes from JNI_EVERSION, return it.
-	 * Note: the JavaVM parameter must be used in the call instead of the J9JavaVM
-	 * because the JavaVM parameter should be a J9InvocationJavaVM* when GetEnv()
-	 * is called from JVMTI agents.
-	 */
-	TRIGGER_J9HOOK_VM_GETENV(vm->hookInterface, jvm, penv, version, rc);
-	if (rc != JNI_EVERSION) {
-		return rc;
+	if (jniVersionIsValid((UDATA)version)) {
+		*penv = (void *)vmThread;
+		return JNI_OK;
 	}
 
 	if (version == UTE_VERSION_1_1) {
@@ -844,9 +839,8 @@ jint JNICALL GetEnv(JavaVM *jvm, void **penv, jint version)
 		if (vm->j9rasGlobalStorage == NULL) {	
 			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_VM_JVMRI_REQUESTED_WITHOUT_TRACE);
 			return JNI_EINVAL;
-		} else {
-			*penv = ((RasGlobalStorage *)vm->j9rasGlobalStorage)->jvmriInterface;
 		}
+		*penv = ((RasGlobalStorage *)vm->j9rasGlobalStorage)->jvmriInterface;
 		return *penv == NULL ? JNI_EVERSION : JNI_OK;
 	}
 
@@ -863,15 +857,22 @@ jint JNICALL GetEnv(JavaVM *jvm, void **penv, jint version)
 	 */
 	if (IFA_ENABLED_JNI_VERSION == (version & IFA_ENABLED_JNI_VERSION_MASK)) {
 		version &= ~IFA_ENABLED_JNI_VERSION_MASK;
+		if (jniVersionIsValid((UDATA)version)) {
+			*penv = (void *)vmThread;
+			return JNI_OK;
+		}
+		return JNI_EVERSION;
 	}
 #endif /* defined(J9VM_OPT_JAVA_OFFLOAD_SUPPORT) */
 
-   if (!jniVersionIsValid((UDATA)version)) {
-		return JNI_EVERSION;
-	}
-
-	*penv = (void *)vmThread;
-	return JNI_OK;
+	/* Call the hook to allow modules to add custom version numbers.
+	 *
+	 * Note: the JavaVM parameter must be used in the call instead of the J9JavaVM
+	 * because the JavaVM parameter should be a J9InvocationJavaVM* when GetEnv()
+	 * is called from JVMTI agents.
+	 */
+	TRIGGER_J9HOOK_VM_GETENV(vm->hookInterface, jvm, penv, version, rc);
+	return rc;
 }
 
 
