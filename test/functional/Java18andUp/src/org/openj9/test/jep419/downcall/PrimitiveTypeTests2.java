@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2021, 2021 IBM Corp. and others
+ * Copyright (c) 2021, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -40,15 +40,14 @@ import static jdk.incubator.foreign.ValueLayout.*;
 import static jdk.incubator.foreign.VaList.Builder;
 
 /**
- * Test cases for JEP 419: Foreign Linker API (Second Incubator) DownCall for primitive types, which
- * covers generic tests, tests with the void return type and tests with the vararg list.
+ * Test cases for JEP 419: Foreign Linker API (Second Incubator) for primitive types in downcall.
  *
  * Note: the test suite is intended for the following Clinker API:
  * MethodHandle downcallHandle(FunctionDescriptor function)
  */
 @Test(groups = { "level.sanity" })
 public class PrimitiveTypeTests2 {
-	private static boolean isWinOS = System.getProperty("os.name").toLowerCase().contains("win");
+	private static boolean isAixOS = System.getProperty("os.name").toLowerCase().contains("aix");
 	private static CLinker clinker = CLinker.systemCLinker();
 	private static ResourceScope resourceScope = ResourceScope.newImplicitScope();
 	private static SegmentAllocator nativeAllocator = SegmentAllocator.nativeAllocator(resourceScope);
@@ -187,19 +186,6 @@ public class PrimitiveTypeTests2 {
 	}
 
 	@Test
-	public void test_addIntsWithVaList_2() throws Throwable {
-		NativeSymbol functionSymbol = nativeLibLookup.lookup("addIntsFromVaList").get();
-		FunctionDescriptor fd = FunctionDescriptor.of(JAVA_INT, JAVA_INT, ADDRESS);
-		VaList vaList = VaList.make(vaListBuilder -> vaListBuilder.addVarg(JAVA_INT, 700)
-				.addVarg(JAVA_INT, 800)
-				.addVarg(JAVA_INT, 900)
-				.addVarg(JAVA_INT, 1000), resourceScope);
-		MethodHandle mh = clinker.downcallHandle(fd);
-		int result = (int)mh.invoke(functionSymbol, 4, vaList);
-		Assert.assertEquals(result, 3400);
-	}
-
-	@Test
 	public void test_addTwoIntsReturnVoid_2() throws Throwable {
 		FunctionDescriptor fd = FunctionDescriptor.ofVoid(JAVA_INT, JAVA_INT);
 		NativeSymbol functionSymbol = nativeLibLookup.lookup("add2IntsReturnVoid").get();
@@ -234,19 +220,6 @@ public class PrimitiveTypeTests2 {
 		MemorySegment longSegmt = nativeAllocator.allocate(JAVA_LONG, 57424L);
 		long result = (long)mh.invoke(functionSymbol, longSegmt, 698235L);
 		Assert.assertEquals(result, 755659L);
-	}
-
-	@Test
-	public void test_addLongsWithVaList_2() throws Throwable {
-		NativeSymbol functionSymbol = nativeLibLookup.lookup("addLongsFromVaList").get();
-		FunctionDescriptor fd = FunctionDescriptor.of(JAVA_LONG, JAVA_INT, ADDRESS);
-		VaList vaList = VaList.make(vaListBuilder -> vaListBuilder.addVarg(JAVA_LONG, 700000L)
-				.addVarg(JAVA_LONG, 800000L)
-				.addVarg(JAVA_LONG, 900000L)
-				.addVarg(JAVA_LONG, 1000000L), resourceScope);
-		MethodHandle mh = clinker.downcallHandle(fd);
-		long result = (long)mh.invoke(functionSymbol, 4, vaList);
-		Assert.assertEquals(result, 3400000L);
 	}
 
 	@Test
@@ -290,67 +263,54 @@ public class PrimitiveTypeTests2 {
 	}
 
 	@Test
-	public void test_addDoublesWithVaList_2() throws Throwable {
-		NativeSymbol functionSymbol = nativeLibLookup.lookup("addDoublesFromVaList").get();
-		FunctionDescriptor fd = FunctionDescriptor.of(JAVA_DOUBLE, JAVA_INT, ADDRESS);
-		VaList vaList = VaList.make(vaListBuilder -> vaListBuilder.addVarg(JAVA_DOUBLE, 150.1001D)
-				.addVarg(JAVA_DOUBLE, 160.2002D)
-				.addVarg(JAVA_DOUBLE, 170.1001D)
-				.addVarg(JAVA_DOUBLE, 180.2002D), resourceScope);
-		MethodHandle mh = clinker.downcallHandle(fd);
-		double result = (double)mh.invoke(functionSymbol, 4, vaList);
-		Assert.assertEquals(result, 660.6006D);
-	}
-
-	@Test
 	public void test_strlenFromDefaultLibWithMemAddr_2() throws Throwable {
-		NativeSymbol strlenSymbol = clinker.lookup("strlen").get();
-		FunctionDescriptor fd = FunctionDescriptor.of(JAVA_LONG, ADDRESS);
-		MethodHandle mh = clinker.downcallHandle(fd);
-		MemorySegment funcSegmt = nativeAllocator.allocateUtf8String("JEP419 DOWNCALL TEST SUITES");
-		long strLength = (long)mh.invoke(strlenSymbol, funcSegmt);
-		Assert.assertEquals(strLength, 27);
+		/* Temporarily disable the default library loading on AIX till we figure out a way
+		 * around to handle the case as the official implementation in OpenJDK17 doesn't
+		 * help to load the static libray (libc.a).
+		 */
+		if (!isAixOS) {
+			NativeSymbol strlenSymbol = clinker.lookup("strlen").get();
+			FunctionDescriptor fd = FunctionDescriptor.of(JAVA_LONG, ADDRESS);
+			MethodHandle mh = clinker.downcallHandle(fd);
+			MemorySegment funcSegmt = nativeAllocator.allocateUtf8String("JEP419 DOWNCALL TEST SUITES");
+			long strLength = (long)mh.invoke(strlenSymbol, funcSegmt);
+			Assert.assertEquals(strLength, 27);
+		}
 	}
 
 	@Test
 	public void test_memoryAllocFreeFromDefaultLib_2() throws Throwable {
-		NativeSymbol allocSymbol = clinker.lookup("malloc").get();
-		FunctionDescriptor allocFuncDesc = FunctionDescriptor.of(ADDRESS, JAVA_LONG);
-		MethodHandle allocHandle = clinker.downcallHandle(allocFuncDesc);
-		MemoryAddress allocMemAddr = (MemoryAddress)allocHandle.invokeExact(allocSymbol, 10L);
-		allocMemAddr.set(JAVA_INT, 0, 15);
-		Assert.assertEquals(allocMemAddr.get(JAVA_INT, 0), 15);
+		/* Temporarily disable the default library loading on AIX till we figure out a way
+		 * around to handle the case as the official implementation in OpenJDK17 doesn't
+		 * help to load the static libray (libc.a).
+		 */
+		if (!isAixOS) {
+			NativeSymbol allocSymbol = clinker.lookup("malloc").get();
+			FunctionDescriptor allocFuncDesc = FunctionDescriptor.of(ADDRESS, JAVA_LONG);
+			MethodHandle allocHandle = clinker.downcallHandle(allocFuncDesc);
+			MemoryAddress allocMemAddr = (MemoryAddress)allocHandle.invokeExact(allocSymbol, 10L);
+			allocMemAddr.set(JAVA_INT, 0, 15);
+			Assert.assertEquals(allocMemAddr.get(JAVA_INT, 0), 15);
 
-		NativeSymbol freeSymbol = clinker.lookup("free").get();
-		FunctionDescriptor freeFuncDesc = FunctionDescriptor.ofVoid(ADDRESS);
-		MethodHandle freeHandle = clinker.downcallHandle(freeFuncDesc);
-		freeHandle.invoke(freeSymbol, allocMemAddr);
+			NativeSymbol freeSymbol = clinker.lookup("free").get();
+			FunctionDescriptor freeFuncDesc = FunctionDescriptor.ofVoid(ADDRESS);
+			MethodHandle freeHandle = clinker.downcallHandle(freeFuncDesc);
+			freeHandle.invoke(freeSymbol, allocMemAddr);
+		}
 	}
 
 	@Test
 	public void test_printfFromDefaultLibWithMemAddr_2() throws Throwable {
-		NativeSymbol functionSymbol = clinker.lookup("printf").get();
-		FunctionDescriptor fd = FunctionDescriptor.of(JAVA_INT, ADDRESS, JAVA_INT, JAVA_INT, JAVA_INT);
-		MethodHandle mh = clinker.downcallHandle(fd);
-		MemorySegment formatSegmt = nativeAllocator.allocateUtf8String("\n%d + %d = %d\n");
-		mh.invoke(functionSymbol, formatSegmt, 15, 27, 42);
-	}
-
-	@Test
-	public void test_vprintfFromDefaultLibWithVaList_2() throws Throwable {
-		/* Disable the test on Windows given a misaligned access exception coming from
-		 * java.base/java.lang.invoke.MemoryAccessVarHandleBase triggered by CLinker.toCString()
-		 * is also captured on OpenJDK/Hotspot.
+		/* Temporarily disable the default library loading on AIX till we figure out a way
+		 * around to handle the case as the official implementation in OpenJDK17 doesn't
+		 * help to load the static libray (libc.a).
 		 */
-		if (!isWinOS) {
-			NativeSymbol functionSymbol = clinker.lookup("vprintf").get();
-			FunctionDescriptor fd = FunctionDescriptor.of(JAVA_INT, ADDRESS, ADDRESS);
-			MemorySegment formatSegmt = nativeAllocator.allocateUtf8String("%d * %d = %d\n");
-			VaList vaList = VaList.make(vaListBuilder -> vaListBuilder.addVarg(JAVA_INT, 7)
-					.addVarg(JAVA_INT, 8)
-					.addVarg(JAVA_INT, 56), resourceScope);
+		if (!isAixOS) {
+			NativeSymbol functionSymbol = clinker.lookup("printf").get();
+			FunctionDescriptor fd = FunctionDescriptor.of(JAVA_INT, ADDRESS, JAVA_INT, JAVA_INT, JAVA_INT);
 			MethodHandle mh = clinker.downcallHandle(fd);
-			mh.invoke(functionSymbol, formatSegmt, vaList);
+			MemorySegment formatSegmt = nativeAllocator.allocateUtf8String("\n%d + %d = %d\n");
+			mh.invoke(functionSymbol, formatSegmt, 15, 27, 42);
 		}
 	}
 }
