@@ -977,7 +977,6 @@ public:
    virtual bool      isString(TR_OpaqueClassBlock *clazz);
    virtual TR_YesNoMaybe typeReferenceStringObject(TR_OpaqueClassBlock *clazz);
    virtual bool      isJavaLangObject(TR_OpaqueClassBlock *clazz);
-   virtual bool      isString(uintptr_t objectPointer);
    virtual int32_t   getStringLength(uintptr_t objectPointer);
    virtual uint16_t  getStringCharacter(uintptr_t objectPointer, int32_t index);
    virtual intptr_t getStringUTF8Length(uintptr_t objectPointer);
