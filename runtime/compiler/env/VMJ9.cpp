@@ -5560,13 +5560,6 @@ TR_J9VMBase::isString(TR_OpaqueClassBlock *clazz)
    return (J9Class*)clazz == J9VMJAVALANGSTRING(jitConfig->javaVM);
    }
 
-bool
-TR_J9VMBase::isString(uintptr_t objectPointer)
-   {
-   TR_ASSERT(haveAccess(), "isString requires VM access");
-   return isString(getObjectClass(objectPointer));
-   }
-
 int32_t
 TR_J9VMBase::getStringLength(uintptr_t objectPointer)
    {
