@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 1998, 2021 IBM Corp. and others
+ * Copyright (c) 1998, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -117,10 +117,10 @@ public final class System {
 	private static final int sysPropID_PlatformEncoding = 1;
 	private static final int sysPropID_FileEncoding = 2;
 	private static final int sysPropID_OSEncoding = 3;
-	/*[IF JAVA_SPEC_VERSION >= 18]*/
+	/*[IF JAVA_SPEC_VERSION >= 17]*/
 	private static final int sysPropID_OSVersion = 0;
 	private static final String sysPropOSVersion;
-	/*[ENDIF] JAVA_SPEC_VERSION >= 18 */
+	/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 
 	/*[IF JAVA_SPEC_VERSION >= 11]*/
 	private static boolean hasSetErrEncoding;
@@ -143,9 +143,9 @@ public final class System {
 		 * at early boot stage in which System is not fully initialized
 		 * os.version, os.encoding, ibm.system.encoding/sun.jnu.encoding, file.encoding
 		 */
-		/*[IF JAVA_SPEC_VERSION >= 18]*/
+		/*[IF JAVA_SPEC_VERSION >= 17]*/
 		sysPropOSVersion = getSysPropBeforePropertiesInitialized(sysPropID_OSVersion);
-		/*[ENDIF] JAVA_SPEC_VERSION >= 18 */
+		/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 		platformEncoding = getSysPropBeforePropertiesInitialized(sysPropID_PlatformEncoding);;
 		String definedFileEncoding = getSysPropBeforePropertiesInitialized(sysPropID_FileEncoding);
 		String definedOSEncoding = getSysPropBeforePropertiesInitialized(sysPropID_OSEncoding);
@@ -600,9 +600,9 @@ private static void ensureProperties(boolean isInitialization) {
 	Properties initializedProperties = new Properties();
 /*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 
-	/*[IF JAVA_SPEC_VERSION >= 18]*/
+	/*[IF JAVA_SPEC_VERSION >= 17]*/
 	initializedProperties.put("os.version", sysPropOSVersion); //$NON-NLS-1$
-	/*[ENDIF] JAVA_SPEC_VERSION >= 18 */
+	/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 
 	if (osEncoding != null) {
 		initializedProperties.put("os.encoding", osEncoding); //$NON-NLS-1$
@@ -838,11 +838,11 @@ public static String getProperty(String prop, String defaultValue) {
 			&& !prop.equals("file.encoding.pkg") //$NON-NLS-1$
 			&& !prop.equals("sun.nio.cs.map") //$NON-NLS-1$
 	) {
-		/*[IF JAVA_SPEC_VERSION >= 18]*/
+		/*[IF JAVA_SPEC_VERSION >= 17]*/
 		if (prop.equals("os.version")) { //$NON-NLS-1$
 			return sysPropOSVersion;
 		} else
-		/*[ENDIF] JAVA_SPEC_VERSION >= 18 */
+		/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 		if (prop.equals("os.encoding")) { //$NON-NLS-1$
 			return osEncoding;
 		} else if (prop.equals("ibm.system.encoding")) { //$NON-NLS-1$
