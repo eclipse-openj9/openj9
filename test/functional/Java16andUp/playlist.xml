@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <!--
-  Copyright (c) 2021, 2021 IBM Corp. and others
+  Copyright (c) 2021, 2022 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -46,7 +46,7 @@
 			<version>16+</version>
 		</versions>
 	</test>
-	
+
 	<test>
 		<testCaseName>Jep397Tests_testSubClassOfSealedSuperFromDifferentModule</testCaseName>
 		<disables>
@@ -80,7 +80,7 @@
 			<version>16+</version>
 		</versions>
 	</test>
-	
+
 	<test>
 		<testCaseName>Jep397Tests_testSubClassOfSealedSuperFromDifferentPackageInSameUnamedModule</testCaseName>
 		<disables>
@@ -106,7 +106,7 @@
 			<version>16+</version>
 		</versions>
 	</test>
-	
+
 	<test>
 		<testCaseName>Jep397Tests_testSubClassOfSealedSuperFromDifferentPackageInSameNamedModule</testCaseName>
 		<disables>
@@ -171,7 +171,7 @@
 	</test>
 
 	<test>
-		<testCaseName>Jep389Tests_testClinkerFfi</testCaseName>
+		<testCaseName>Jep389Tests_testClinkerFfi_DownCall</testCaseName>
 		<disables>
 			<disable>
 				<comment>https://github.com/eclipse-openj9/openj9/issues/14028#issuecomment-988225623</comment>
@@ -182,12 +182,44 @@
 			--add-modules jdk.incubator.foreign \
 			-Dforeign.restricted=permit \
 			-cp $(Q)$(LIB_DIR)$(D)asm.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
-			org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng_160.xml$(Q) -testnames Jep389Tests_testClinkerFfi \
+			org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng_160.xml$(Q) -testnames Jep389Tests_testClinkerFfi_DownCall \
 			-groups $(TEST_GROUP) \
 			-excludegroups $(DEFAULT_EXCLUDE); \
 			$(TEST_STATUS)
 		</command>
-		<platformRequirements>bits.64,^arch.ppc,^arch.390,^arch.arm,^arch.riscv,^os.zos,^os.sunos,^os.osx</platformRequirements>
+		<platformRequirements>bits.64,^arch.riscv,^os.zos,^os.sunos,^arch.arm,^os.osx</platformRequirements>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<impls>
+			<impl>openj9</impl>
+		</impls>
+		<versions>
+			<version>16</version>
+		</versions>
+	</test>
+
+	<test>
+		<testCaseName>Jep389Tests_testClinkerFfi_VaList</testCaseName>
+		<disables>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/14028#issuecomment-988225623</comment>
+				<impl>hotspot</impl>
+			</disable>
+		</disables>
+		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) $(JAVA_COMMAND) $(JVM_OPTIONS) \
+			--add-modules jdk.incubator.foreign \
+			-Dforeign.restricted=permit \
+			-cp $(Q)$(LIB_DIR)$(D)asm.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
+			org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng_160.xml$(Q) -testnames Jep389Tests_testClinkerFfi_VaList \
+			-groups $(TEST_GROUP) \
+			-excludegroups $(DEFAULT_EXCLUDE); \
+			$(TEST_STATUS)
+		</command>
+		<platformRequirements>bits.64,^arch.ppc,^arch.390,^arch.riscv,^os.zos,^os.sunos,^arch.arm,^os.osx</platformRequirements>
 		<levels>
 			<level>sanity</level>
 		</levels>
