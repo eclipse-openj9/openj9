@@ -54,7 +54,7 @@
 				<pathelement location="${ant.home}/lib/ant-launcher.jar"/>
 			</classpath>
 			<jvmarg value="-showversion"/>
-			<jvmarg value="-Xmx128m"/>
+			<jvmarg value="-Xmx512M"/>
 			<arg value="-buildfile"/>
 			<arg file="${ant.file}"/>
 			<arg value="test"/>
@@ -66,7 +66,7 @@
 		<echo message="Running com.ibm.jvm.ras.tests.DumpAPIBasicTests"/>
 		<junit fork="yes" showoutput="true" haltonfailure="true">
 			<jvmarg value="-showversion"/>
-			<jvmarg value="-Xmx32m"/>
+			<jvmarg value="-Xmx512M"/>
 			<classpath>
 				<pathelement location="junit4.jar"/>
 				<pathelement location="com.ibm.jvm.ras.tests.jar"/>
@@ -77,7 +77,7 @@
 		<echo message="Running com.ibm.jvm.ras.tests.DumpAPITriggerTests"/>
 		<junit fork="yes" showoutput="true" haltonfailure="true">
 			<jvmarg value="-showversion"/>
-			<jvmarg value="-Xmx32m"/>
+			<jvmarg value="-Xmx512M"/>
 			<classpath>
 				<pathelement location="junit4.jar"/>
 				<pathelement location="com.ibm.jvm.ras.tests.jar"/>
@@ -88,7 +88,7 @@
 		<echo message="Running com.ibm.jvm.ras.tests.DumpAPIQuerySetReset"/>
 		<junit fork="yes" showoutput="true" haltonfailure="true">
 			<jvmarg value="-showversion" />
-			<jvmarg value="-Xmx32m"/>
+			<jvmarg value="-Xmx512M"/>
 			<classpath>
 				<pathelement location="junit4.jar" />
 				<pathelement location="com.ibm.jvm.ras.tests.jar" />
@@ -99,7 +99,7 @@
 		<echo message="Running com.ibm.jvm.ras.tests.DumpAPITokensTests" />
 		<junit fork="yes" showoutput="true" haltonfailure="true">
 			<jvmarg value="-showversion"/>
-			<jvmarg value="-Xmx32m"/>
+			<jvmarg value="-Xmx512M"/>
 			<classpath>
 				<pathelement location="junit4.jar"/>
 				<pathelement location="com.ibm.jvm.ras.tests.jar"/>
@@ -110,7 +110,7 @@
 		<echo message="Running com.ibm.jvm.ras.tests.DumpAPISetTestXdumpdynamic with Xdump:dynamic"/>
 		<junit fork="yes" showoutput="true" haltonfailure="true">
 				<jvmarg value="-showversion" />
-				<jvmarg value="-Xmx32m"/>
+				<jvmarg value="-Xmx512M"/>
 				<jvmarg value="-Xdump:dynamic" />
 				<classpath>
 					<pathelement location="junit4.jar" />
