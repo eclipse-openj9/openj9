@@ -286,31 +286,7 @@ public abstract class ClassLoader {
 		}
 		/*[ENDIF] JAVA_SPEC_VERSION >= 10 */
 		jdk.internal.misc.VM.initLevel(2);
-		String javaSecurityManager = System.internalGetProperties().getProperty("java.security.manager"); //$NON-NLS-1$
-		if ((javaSecurityManager != null) 
-		/*[IF JAVA_SPEC_VERSION >= 12]*/
-			/* See the SecurityManager javadoc for details about special tokens. */
-			&& !javaSecurityManager.equals("disallow") //$NON-NLS-1$ /* special token to disallow SecurityManager */
-			&& !javaSecurityManager.equals("allow") //$NON-NLS-1$ /* special token to allow SecurityManager */
-			/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
-		) {
-			/*[IF JAVA_SPEC_VERSION >= 17]*/
-			System.initialErr.println("WARNING: A command line option has enabled the Security Manager"); //$NON-NLS-1$
-			System.initialErr.println("WARNING: The Security Manager is deprecated and will be removed in a future release"); //$NON-NLS-1$
-			/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
-			if (javaSecurityManager.isEmpty() || "default".equals(javaSecurityManager)) { //$NON-NLS-1$
-				System.setSecurityManager(new SecurityManager());
-			} else {
-				try {
-					Constructor<?> constructor = Class.forName(javaSecurityManager, true, applicationClassLoader).getConstructor();
-					constructor.setAccessible(true);
-					System.setSecurityManager((SecurityManager)constructor.newInstance());
-				} catch (Throwable e) {
-					/*[MSG "K0631", "JVM can't set custom SecurityManager due to {0}"]*/
-					throw new Error(com.ibm.oti.util.Msg.getString("K0631", e.toString()), e); //$NON-NLS-1$
-				}
-			}
-		}
+		System.initSecurityManager(applicationClassLoader);
 		jdk.internal.misc.VM.initLevel(3);
 		/*[ELSE]*/
 		applicationClassLoader = sun.misc.Launcher.getLauncher().getClassLoader();
