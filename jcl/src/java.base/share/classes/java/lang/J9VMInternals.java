@@ -194,7 +194,7 @@ final class J9VMInternals {
 				exceptions = new WeakHashMap();
 			synchronized(exceptions) {
 /*[IF JAVA_SPEC_VERSION >= 18]*/
-				if (!(err instanceof ExceptionInInitializerError)) {
+				if (!(err instanceof Error)) {
 					err = new ExceptionInInitializerError(err);
 				}
 				exceptions.put(clazz, new SoftReference(copyThrowable(err)));
@@ -219,14 +219,14 @@ final class J9VMInternals {
 	 * Otherwise, wrap it in a new ExceptionInInitializerError and throw that.
 	 */
 	private static void ensureError(Throwable err) {
+/*[IF JAVA_SPEC_VERSION >= 18]*/
+		throw (Error)err;
+/*[ELSE] JAVA_SPEC_VERSION >= 18*/
 		if (err instanceof Error) {
 			throw (Error)err;
-/*[IF JAVA_SPEC_VERSION >= 18]*/
-		} else if (err instanceof ExceptionInInitializerError) {
-			throw (ExceptionInInitializerError)err;
-/*[ENDIF] JAVA_SPEC_VERSION >= 18*/
 		}
 		throw new ExceptionInInitializerError(err);
+/*[ENDIF] JAVA_SPEC_VERSION >= 18*/
 	}
 
 	private static native Throwable newInstance(Class exceptionClass, Class constructorClass);
