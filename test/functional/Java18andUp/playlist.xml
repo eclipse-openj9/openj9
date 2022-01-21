@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <!--
-  Copyright (c) 2021, 2022 IBM Corp. and others
+  Copyright (c) 2021, 2021 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,7 +22,7 @@
 -->
 <playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../TestConfig/playlist.xsd">
 	<test>
-		<testCaseName>Jep419Tests_testClinkerFfi_DownCall</testCaseName>
+		<testCaseName>Jep419Tests_testClinkerFfi</testCaseName>
 		<variations>
 			<variation>--enable-preview</variation>
 		</variations>
@@ -31,36 +31,7 @@
 			--enable-native-access=ALL-UNNAMED \
 			-Dforeign.restricted=permit \
 			-cp $(Q)$(LIB_DIR)$(D)asm.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
-			org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testClinkerFfi.xml$(Q) -testnames Jep419Tests_testClinkerFfi_DownCall \
-			-groups $(TEST_GROUP) \
-			-excludegroups $(DEFAULT_EXCLUDE); \
-			$(TEST_STATUS)
-		</command>
-		<platformRequirements>bits.64,^arch.riscv,^os.zos,^os.sunos,^arch.arm,^os.osx</platformRequirements>
-		<levels>
-			<level>sanity</level>
-		</levels>
-		<groups>
-			<group>functional</group>
-		</groups>
-		<impls>
-			<impl>openj9</impl>
-		</impls>
-		<versions>
-			<version>18+</version>
-		</versions>
-	</test>
-	<test>
-		<testCaseName>Jep419Tests_testClinkerFfi_VaList</testCaseName>
-		<variations>
-			<variation>--enable-preview</variation>
-		</variations>
-		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) $(JAVA_COMMAND) $(JVM_OPTIONS) \
-			--add-modules jdk.incubator.foreign \
-			--enable-native-access=ALL-UNNAMED \
-			-Dforeign.restricted=permit \
-			-cp $(Q)$(LIB_DIR)$(D)asm.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
-			org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testClinkerFfi.xml$(Q) -testnames Jep419Tests_testClinkerFfi_VaList \
+			org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testClinkerFfi.xml$(Q) -testnames Jep419Tests_testClinkerFfi \
 			-groups $(TEST_GROUP) \
 			-excludegroups $(DEFAULT_EXCLUDE); \
 			$(TEST_STATUS)

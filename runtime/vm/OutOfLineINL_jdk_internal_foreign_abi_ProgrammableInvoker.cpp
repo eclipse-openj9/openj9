@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2021, 2022 IBM Corp. and others
+ * Copyright (c) 2021, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,7 +25,7 @@
 #include "UnsafeAPI.hpp"
 #include "j9vmnls.h"
 #include "OutOfLineINL.hpp"
-#include "LayoutFFITypeHelpers.hpp"
+#include "FFITypeHelpers.hpp"
 #include "AtomicSupport.hpp"
 
 extern "C" {
@@ -79,63 +79,33 @@ OutOfLineINL_jdk_internal_foreign_abi_ProgrammableInvoker_initCifNativeThunkData
 {
 	VM_BytecodeAction rc = EXECUTE_BYTECODE;
 	J9JavaVM *vm = currentThread->javaVM;
-	LayoutFFITypeHelpers ffiTypeHelpers(currentThread);
+	FFITypeHelpers ffiTypeHelpers(currentThread);
 	ffi_cif *cif = NULL;
 	ffi_type *returnType = NULL;
 	ffi_type **argTypes = NULL;
 	J9CifArgumentTypes *cifArgTypesNode = NULL;
+
+	PORT_ACCESS_FROM_JAVAVM(vm);
 
 	bool newArgTypes = (bool)(*(U_32*)currentThread->sp);
 	j9object_t retLayoutStrObject = J9_JNI_UNWRAP_REFERENCE(currentThread->sp + 1);
 	j9object_t argLayoutStrsObject = J9_JNI_UNWRAP_REFERENCE(currentThread->sp + 2);
 	j9object_t nativeInvoker = J9_JNI_UNWRAP_REFERENCE(currentThread->sp + 3);
 	U_32 argTypesCount = J9INDEXABLEOBJECT_SIZE(currentThread, argLayoutStrsObject);
-	UDATA returnLayoutSize = 0;
-
-	PORT_ACCESS_FROM_JAVAVM(vm);
-
-	/* Set up the ffi_type of the return layout in the case of primitive or struct */
-	returnLayoutSize = ffiTypeHelpers.getLayoutFFIType(&returnType, retLayoutStrObject);
-	if (returnLayoutSize == UDATA_MAX) {
-		rc = GOTO_THROW_CURRENT_EXCEPTION;
-		setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, NULL);
-		goto done;
-	/* Only intended for strut as the primitive's ffi_type is non-null */
-	} else if ((NULL == returnType)
-	|| ((FFI_TYPE_STRUCT == returnType->type) && (NULL == returnType->elements))
-	) {
-		rc = GOTO_THROW_CURRENT_EXCEPTION;
-		setNativeOutOfMemoryError(currentThread, 0, 0);
-		goto done;
-	}
+	returnType = ffiTypeHelpers.getPrimitiveFFIType(retLayoutStrObject);
 
 	if (!newArgTypes) {
 		argTypes = (ffi_type **)(UDATA)J9VMJDKINTERNALFOREIGNABIPROGRAMMABLEINVOKER_ARGTYPESADDR(currentThread, nativeInvoker);
 	} else {
-		argTypes = (ffi_type **)j9mem_allocate_memory(sizeof(ffi_type *) * (argTypesCount + 1), OMRMEM_CATEGORY_VM);
+		argTypes = (ffi_type **)j9mem_allocate_memory(sizeof(ffi_type *) * argTypesCount, OMRMEM_CATEGORY_VM);
 		if (NULL == argTypes) {
 			rc = GOTO_THROW_CURRENT_EXCEPTION;
 			setNativeOutOfMemoryError(currentThread, 0, 0);
-			goto freeAllMemoryThenExit;
+			goto done;
 		}
-		argTypes[argTypesCount] = NULL;
 
-		for (U_32 argIndex = 0; argIndex < argTypesCount; argIndex++) {
-			j9object_t argLayoutStrObject = J9JAVAARRAYOFOBJECT_LOAD(currentThread, argLayoutStrsObject, argIndex);
-			/* Set up the ffi_type of the argument layout in the case of primitive or struct */
-			UDATA argLayoutSize = ffiTypeHelpers.getLayoutFFIType(&argTypes[argIndex], argLayoutStrObject);
-			if (argLayoutSize == UDATA_MAX) {
-				rc = GOTO_THROW_CURRENT_EXCEPTION;
-				setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, NULL);
-				goto freeAllMemoryThenExit;
-			/* Only intended for struct as the primitive's ffi_type is non-null */
-			} else if ((NULL == argTypes[argIndex])
-			|| ((FFI_TYPE_STRUCT == argTypes[argIndex]->type) && (NULL == argTypes[argIndex]->elements))
-			) {
-				rc = GOTO_THROW_CURRENT_EXCEPTION;
-				setNativeOutOfMemoryError(currentThread, 0, 0);
-				goto freeAllMemoryThenExit;
-			}
+		for (U_32 i = 0; i < argTypesCount; i++) {
+			argTypes[i] = ffiTypeHelpers.getPrimitiveFFIType(J9JAVAARRAYOFOBJECT_LOAD(currentThread, argLayoutStrsObject, i));
 		}
 	}
 
@@ -195,14 +165,10 @@ done:
 	return rc;
 
 freeAllMemoryThenExit:
-	if (newArgTypes && (NULL != argTypes)) {
-		for (U_32 argIndex = 0; argTypes[argIndex] != NULL; argIndex++) {
-			ffiTypeHelpers.freeStructFFIType(argTypes[argIndex]);
-		}
+	if (newArgTypes) {
 		j9mem_free_memory(argTypes);
 		argTypes = NULL;
 	}
-	ffiTypeHelpers.freeStructFFIType(returnType);
 	goto done;
 }
 

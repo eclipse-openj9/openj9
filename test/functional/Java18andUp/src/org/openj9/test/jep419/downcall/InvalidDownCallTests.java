@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2021, 2022 IBM Corp. and others
+ * Copyright (c) 2021, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,7 +34,6 @@ import jdk.incubator.foreign.NativeSymbol;
 import jdk.incubator.foreign.SymbolLookup;
 import static jdk.incubator.foreign.ValueLayout.*;
 
-
 /**
  * Test cases for JEP 419: Foreign Linker API (Second Incubator) DownCall for primitive types,
  * which verifies the illegal cases including unsupported layouts, etc.
@@ -43,7 +42,6 @@ import static jdk.incubator.foreign.ValueLayout.*;
  */
 @Test(groups = { "level.sanity" })
 public class InvalidDownCallTests {
-	private static boolean isAixOS = System.getProperty("os.name").toLowerCase().contains("aix");
 	private static CLinker clinker = CLinker.systemCLinker();
 
 	static {
@@ -51,43 +49,27 @@ public class InvalidDownCallTests {
 	}
 	private static final SymbolLookup nativeLibLookup = SymbolLookup.loaderLookup();
 
-	@Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "Unsupported layout.*")
-	public void test_invalidMemoryLayoutForIntType() throws Throwable {
+	@Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "Unsupported layout: .*")
+	public void test_invalidLayoutForIntType() throws Throwable {
 		FunctionDescriptor fd = FunctionDescriptor.ofVoid(JAVA_INT, MemoryLayout.paddingLayout(32));
 		NativeSymbol functionSymbol = nativeLibLookup.lookup("add2IntsReturnVoid").get();
 		MethodHandle mh = clinker.downcallHandle(functionSymbol, fd);
 		fail("Failed to throw out IllegalArgumentException in the case of the invalid MemoryLayout");
 	}
 
-	@Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "Unsupported layout.*")
-	public void test_invalidMemoryLayoutForMemoryAddress() throws Throwable {
-		/* Temporarily disable the default library loading on AIX till we figure out a way
-		 * around to handle the case as the official implementation in OpenJDK17 doesn't
-		 * help to load the static libray (libc.a).
-		 */
-		if (isAixOS) {
-			throw new IllegalArgumentException("Unsupported layout");
-		} else {
-			NativeSymbol functionSymbol = clinker.lookup("strlen").get();
-			FunctionDescriptor fd = FunctionDescriptor.of(JAVA_LONG, MemoryLayout.paddingLayout(64));
-			MethodHandle mh = clinker.downcallHandle(functionSymbol, fd);
-			fail("Failed to throw out IllegalArgumentException in the case of the invalid MemoryLayout");
-		}
+	@Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "Unsupported layout: .*")
+	public void test_invalidLayoutForMemoryAddress() throws Throwable {
+		NativeSymbol functionSymbol = clinker.lookup("strlen").get();
+		FunctionDescriptor fd = FunctionDescriptor.of(JAVA_LONG, MemoryLayout.paddingLayout(64));
+		MethodHandle mh = clinker.downcallHandle(functionSymbol, fd);
+		fail("Failed to throw out IllegalArgumentException in the case of the invalid MemoryLayout");
 	}
 
-	@Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "Unsupported layout.*")
-	public void test_invalidMemoryLayoutForReturnType() throws Throwable {
-		/* Temporarily disable the default library loading on AIX till we figure out a way
-		 * around to handle the case as the official implementation in OpenJDK17 doesn't
-		 * help to load the static libray (libc.a).
-		 */
-		if (isAixOS) {
-			throw new IllegalArgumentException("Unsupported layout");
-		} else {
-			NativeSymbol functionSymbol = clinker.lookup("strlen").get();
-			FunctionDescriptor fd = FunctionDescriptor.of(MemoryLayout.paddingLayout(64), JAVA_LONG);
-			MethodHandle mh = clinker.downcallHandle(functionSymbol, fd);
-			fail("Failed to throw out IllegalArgumentException in the case of the invalid MemoryLayout");
-		}
+	@Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "Unsupported layout: .*")
+	public void test_invalidLayoutForReturnType() throws Throwable {
+		NativeSymbol functionSymbol = clinker.lookup("strlen").get();
+		FunctionDescriptor fd = FunctionDescriptor.of(MemoryLayout.paddingLayout(64), JAVA_LONG);
+		MethodHandle mh = clinker.downcallHandle(functionSymbol, fd);
+		fail("Failed to throw out IllegalArgumentException in the case of the invalid MemoryLayout");
 	}
 }

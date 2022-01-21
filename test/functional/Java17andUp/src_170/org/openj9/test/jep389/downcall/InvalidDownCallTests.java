@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2021, 2022 IBM Corp. and others
+ * Copyright (c) 2021, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -40,24 +40,21 @@ import jdk.incubator.foreign.SymbolLookup;
 import jdk.incubator.foreign.ValueLayout;
 
 /**
- * Test cases for JEP 389: Foreign Linker API (Incubator) in downcall, which verifies
- * the majority of illegal cases including the mismatch between the type and the
- * corresponding layout, the inconsisitency of the arity, etc.
+ * Test cases for JEP 389: Foreign Linker API (Incubator) DownCall for primitive types,
+ * which verifies the majority of illegal cases including the mismatch between the type
+ * and the corresponding layout, the inconsisitency of the arity, etc.
  */
 @Test(groups = { "level.sanity" })
 public class InvalidDownCallTests {
-	private static String osName = System.getProperty("os.name").toLowerCase();
-	private static boolean isAixOS = osName.contains("aix");
-	private static boolean isWinOS = osName.contains("win");
-	/* long long is 64 bits on AIX/ppc64, which is the same as Windows */
-	private static ValueLayout longLayout = (isWinOS || isAixOS) ? C_LONG_LONG : C_LONG;
+	private static boolean isWinOS = System.getProperty("os.name").toLowerCase().contains("win");
+	private static ValueLayout longLayout = isWinOS ? C_LONG_LONG : C_LONG;
 	private static CLinker clinker = CLinker.getInstance();
 
 	static {
 		System.loadLibrary("clinkerffitests");
 	}
 	private static final SymbolLookup nativeLibLookup = SymbolLookup.loaderLookup();
-	private static final SymbolLookup defaultLibLookup = (!isAixOS) ? CLinker.systemLookup() : null;
+	private static final SymbolLookup defaultLibLookup = CLinker.systemLookup();
 
 	@Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "The return type must be .*")
 	public void test_invalidBooleanTypeOnReturn() throws Throwable {
@@ -358,19 +355,11 @@ public class InvalidDownCallTests {
 
 	@Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "ValueLayout is expected.*")
 	public void test_invalidMemoryLayoutForMemoryAddress() throws Throwable {
-		/* Temporarily disable the default library loading on AIX till we figure out a way
-		 * around to handle the case as the official implementation in OpenJDK17 doesn't
-		 * help to load the static libray (libc.a).
-		 */
-		if (isAixOS) {
-			throw new IllegalArgumentException("ValueLayout is expected");
-		} else {
-			Addressable functionSymbol = defaultLibLookup.lookup("strlen").get();
-			MethodType mt = MethodType.methodType(long.class, MemoryAddress.class);
-			FunctionDescriptor fd = FunctionDescriptor.of(longLayout, MemoryLayout.paddingLayout(64));
-			MethodHandle mh = clinker.downcallHandle(functionSymbol, mt, fd);
-			fail("Failed to throw out IllegalArgumentException in the case of the invalid MemoryLayout");
-		}
+		Addressable functionSymbol = defaultLibLookup.lookup("strlen").get();
+		MethodType mt = MethodType.methodType(long.class, MemoryAddress.class);
+		FunctionDescriptor fd = FunctionDescriptor.of(longLayout, MemoryLayout.paddingLayout(64));
+		MethodHandle mh = clinker.downcallHandle(functionSymbol, mt, fd);
+		fail("Failed to throw out IllegalArgumentException in the case of the invalid MemoryLayout");
 	}
 
 	@Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "Mismatched size .*")
@@ -384,19 +373,11 @@ public class InvalidDownCallTests {
 
 	@Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "Mismatched size .*")
 	public void test_mismatchedLayoutSizeForMemoryAddress() throws Throwable {
-		/* Temporarily disable the default library loading on AIX till we figure out a way
-		 * around to handle the case as the official implementation in OpenJDK17 doesn't
-		 * help to load the static libray (libc.a).
-		 */
-		if (isAixOS) {
-			throw new IllegalArgumentException("Mismatched size ");
-		} else {
-			Addressable functionSymbol = defaultLibLookup.lookup("strlen").get();
-			MethodType mt = MethodType.methodType(long.class, MemoryAddress.class);
-			FunctionDescriptor fd = FunctionDescriptor.of(longLayout, MemoryLayouts.BITS_16_LE);
-			MethodHandle mh = clinker.downcallHandle(functionSymbol, mt, fd);
-			fail("Failed to throw out IllegalArgumentException in the case of the mismatched layout size");
-		}
+		Addressable functionSymbol = defaultLibLookup.lookup("strlen").get();
+		MethodType mt = MethodType.methodType(long.class, MemoryAddress.class);
+		FunctionDescriptor fd = FunctionDescriptor.of(longLayout, MemoryLayouts.BITS_16_LE);
+		MethodHandle mh = clinker.downcallHandle(functionSymbol, mt, fd);
+		fail("Failed to throw out IllegalArgumentException in the case of the mismatched layout size");
 	}
 
 	@Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = ".* neither primitive nor .*")
