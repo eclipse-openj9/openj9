@@ -6602,6 +6602,13 @@ public final class Unsafe {
 	 */
 	public native boolean isFlattened(Field field);
 
+	/**
+	 * Determines the size of an object in bytes
+	 *
+	 * @param o the object to determine the size of
+	 */
+	public native long getObjectSize(Object o);
+
 	public final <V> boolean compareAndSetValue(Object obj, long offset, Class<?> clz, V v1, V v2) {
 		throw OpenJDKCompileStubThrowError();
 	}
@@ -6684,10 +6691,6 @@ public final class Unsafe {
 	}
 
 	public final <V> Object getAndSetValueAcquire(Object obj, long offset, Class<?> clz, V v) {
-		throw OpenJDKCompileStubThrowError();
-	}
-
-	public long getObjectSize(Object o) {
 		throw OpenJDKCompileStubThrowError();
 	}
 
