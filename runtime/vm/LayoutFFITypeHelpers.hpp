@@ -25,7 +25,9 @@
 
 #include "ut_j9vm.h"
 #include "vm_internal.h"
+#if JAVA_SPEC_VERSION >= 16
 #include "ffi.h"
+#endif /* JAVA_SPEC_VERSION >= 16 */
 
 #define J9VM_LAYOUT_STRING_ON_STACK_LIMIT 128
 
