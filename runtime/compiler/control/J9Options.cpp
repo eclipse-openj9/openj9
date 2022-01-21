@@ -123,12 +123,14 @@ int32_t J9::Options::_bigAppSampleThresholdAdjust = 3; //amount to shift the hot
 int32_t J9::Options::_availableCPUPercentage = 100;
 int32_t J9::Options::_cpuCompTimeExpensiveThreshold = 4000;
 uintptr_t J9::Options::_compThreadAffinityMask = 0;
+
 #if defined(J9VM_OPT_JITSERVER)
-int64_t J9::Options::_oldAge = 1000*60*1000; // 1000 minutes
-int64_t J9::Options::_oldAgeUnderLowMemory = 1000*60*5; // 5 minute
-int64_t J9::Options::_timeBetweenPurges = 1000*60*1; // 1 minute
+int64_t J9::Options::_oldAge = 1000 * 60 * 1000; // 1000 minutes
+int64_t J9::Options::_oldAgeUnderLowMemory = 1000 * 60 * 5; // 5 minutes
+int64_t J9::Options::_timeBetweenPurges = 1000 * 60 * 1; // 1 minute
 bool J9::Options::_shareROMClasses = false;
 int32_t J9::Options::_sharedROMClassCacheNumPartitions = 16;
+int32_t J9::Options::_reconnectWaitTimeMs = 1000;
 int32_t J9::Options::_highActiveThreadThreshold = -1;
 int32_t J9::Options::_veryHighActiveThreadThreshold = -1;
 #endif /* defined(J9VM_OPT_JITSERVER) */
@@ -939,6 +941,10 @@ TR::OptionTable OMR::Options::_feOptions[] = {
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_qszThresholdToDowngradeOptLevel , 0, "F%d", NOT_IN_SUBSET},
    {"queueSizeThresholdToDowngradeOptLevelDuringStartup=", "M<nnn>\tCompilation queue size threshold when opt level is downgraded during startup phase",
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_qszThresholdToDowngradeOptLevelDuringStartup , 0, "F%d", NOT_IN_SUBSET },
+#if defined(J9VM_OPT_JITSERVER)
+   {"reconnectWaitTimeMs=", " \tInitial wait time in milliseconds until attempting to reconnect to JITServer",
+        TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_reconnectWaitTimeMs, 0, "F%d", NOT_IN_SUBSET},
+#endif /* defined(J9VM_OPT_JITSERVER) */
    {"regmap",             0, SET_JITCONFIG_RUNTIME_FLAG(J9JIT_CG_REGISTER_MAPS) },
    {"relaxedCompilationLimitsSampleThreshold=", "R<nnn>\tGlobal samples below this threshold means we can use higher compilation limits",
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_relaxedCompilationLimitsSampleThreshold, 0, "F%d", NOT_IN_SUBSET },

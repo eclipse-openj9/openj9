@@ -37,7 +37,7 @@
 
 
 uint32_t     JITServerHelpers::serverMsgTypeCount[] = {};
-uint64_t     JITServerHelpers::_waitTimeMs = 1000;
+uint64_t     JITServerHelpers::_waitTimeMs = 0;
 bool         JITServerHelpers::_serverAvailable = true;
 uint64_t     JITServerHelpers::_nextConnectionRetryTime = 0;
 TR::Monitor *JITServerHelpers::_clientStreamMonitor = NULL;
@@ -922,18 +922,18 @@ JITServerHelpers::postStreamFailure(OMRPortLibrary *portLibrary, TR::Compilation
 
    OMRPORT_ACCESS_FROM_OMRPORT(portLibrary);
    uint64_t current_time = omrtime_current_time_millis();
+   if (!_waitTimeMs)
+      _waitTimeMs = TR::Options::_reconnectWaitTimeMs;
    if (current_time >= _nextConnectionRetryTime)
-      {
       _waitTimeMs *= 2; // Exponential backoff
-      }
    _nextConnectionRetryTime = current_time + _waitTimeMs;
 
    if (_serverAvailable && TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseJITServerConns))
       {
       TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
                                      "t=%6u Lost connection to the server (serverUID=%llu)",
-                                     (uint32_t) compInfo->getPersistentInfo()->getElapsedTime(),
-                                     compInfo->getPersistentInfo()->getServerUID());
+                                     (uint32_t)compInfo->getPersistentInfo()->getElapsedTime(),
+                                     (unsigned long long)compInfo->getPersistentInfo()->getServerUID());
       compInfo->getPersistentInfo()->setServerUID(0);
       }
 
@@ -943,11 +943,11 @@ JITServerHelpers::postStreamFailure(OMRPortLibrary *portLibrary, TR::Compilation
    // and client compiles locally or connects to a new server
    compInfo->setCompThreadActivationPolicy(JITServer::CompThreadActivationPolicy::AGGRESSIVE);
    if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompilationThreads) ||
-        TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseJITServer))
+       TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseJITServer))
       {
       TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
                                      "t=%6u client has lost connection, resetting activation policy to AGGRESSIVE",
-                                     (uint32_t) compInfo->getPersistentInfo()->getElapsedTime());
+                                     (uint32_t)compInfo->getPersistentInfo()->getElapsedTime());
       }
    }
 
@@ -955,7 +955,7 @@ void
 JITServerHelpers::postStreamConnectionSuccess()
    {
    _serverAvailable = true;
-   _waitTimeMs = 1000;
+   _waitTimeMs = TR::Options::_reconnectWaitTimeMs;
    }
 
 bool
