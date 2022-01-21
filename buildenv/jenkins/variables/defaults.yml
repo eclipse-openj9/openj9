@@ -685,6 +685,25 @@ x86-64_mac_uma:
 x86-64_mac_xl_uma:
   extends: ['x86-64_mac_xl', 'uma']
 #========================================#
+# Linux RISC-V 64bits
+#========================================#
+riscv64_linux:
+  extends: ['boot_jdk_default', 'openjdk_reference_repo']
+  boot_jdk:
+    arch: 'x64'
+    os: 'linux'
+  release:
+    all: 'linux-x86_64-server-release'
+    8: 'linux-riscv64-normal-server-release'
+    11: 'linux-riscv64-normal-server-release'
+  extra_configure_options: "--disable-warnings-as-errors --with-openssl=/usr/local/openssl-1.0.2 --enable-ccache --disable-ddr --openjdk-target=riscv64-unknown-linux-gnu --with-sysroot=/opt/fedora28_riscv_root"
+  node_labels:
+    build:
+      all: 'ci.role.build && hw.arch.x86 && sw.tool.docker'
+    docker_image: 'adoptopenjdk/centos6_build_image@sha256:19cdb5284da031aef7c73cb52ee7018502d65d0ca21cebc45d9652eec3926458'
+  build_env:
+    vars: 'PATH+FOO=/opt/riscv_toolchain_linux/bin LD_LIBRARY_PATH=/opt/riscv_toolchain_linux/lib64 CC=/opt/riscv_toolchain_linux/bin/riscv64-unknown-linux-gnu-gcc CXX=/opt/riscv_toolchain_linux/bin/riscv64-unknown-linux-gnu-g++'
+#========================================#
 # Linux PPCLE 64bits Compressed Pointers /w OpenJDK JSR292
 #========================================#
 ppc64le_linux_ojdk292:

@@ -270,15 +270,21 @@ def checkoutRef (REF) {
 }
 
 def build() {
+    sh """
+        curl -O https://ci.adoptopenjdk.net/userContent/freemarker-2.3.8.tar.gz
+        tar zxf freemarker-2.3.8.tar.gz
+    """
+    FREEMARKER = "${WORKSPACE}/freemarker-2.3.8/lib/freemarker.jar"
     stage('Compile') {
         def make_target = 'all'
         OPENJDK_CLONE_DIR = "${env.WORKSPACE}/${OPENJDK_CLONE_DIR}"
 
+        println "BUILD_ENV_VARS_LIST:$BUILD_ENV_VARS_LIST"
         withEnv(BUILD_ENV_VARS_LIST) {
             dir(OPENJDK_CLONE_DIR) {
                 try {
                     def freemarker_option = FREEMARKER ? "--with-freemarker-jar=${FREEMARKER}" : ""
-                    sh "${BUILD_ENV_CMD} bash configure ${freemarker_option} --with-boot-jdk=${BOOT_JDK} ${EXTRA_CONFIGURE_OPTIONS} && make ${EXTRA_MAKE_OPTIONS} ${make_target}"
+                    sh "${BUILD_ENV_CMD} bash configure ${freemarker_option} --with-boot-jdk=${BOOT_JDK} ${EXTRA_CONFIGURE_OPTIONS} && printenv && echo $PATH && echo $LD_LIBRARY_PATH && ls -al /opt/riscv_toolchain_linux/bin/ && which riscv64-unknown-linux-gnu-g++ && make ${EXTRA_MAKE_OPTIONS} ${make_target}"
                 } catch (e) {
                     archive_diagnostics()
                     throw e
@@ -677,6 +683,7 @@ def build_all() {
         timeout(time: 10, unit: 'HOURS') {
             node("${NODE}") {
                 timeout(time: 5, unit: 'HOURS') {
+                    variableFile.set_build_variables_per_node()
                     if ("${DOCKER_IMAGE}") {
                         prepare_docker_environment()
                         docker.image(DOCKER_IMAGE_ID).inside("-v /home/jenkins/openjdk_cache:/home/jenkins/openjdk_cache:rw,z") {
