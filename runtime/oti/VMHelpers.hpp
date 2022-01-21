@@ -1581,6 +1581,7 @@ exit:
 		}
 	}
 
+#if JAVA_SPEC_VERSION >= 16
 	/**
 	 * @brief Converts the type of the return value to the return type intended for JEP389/419 FFI downcall/upcall
 	 * @param currentThread[in] The pointer to the current J9VMThread
@@ -1637,6 +1638,7 @@ exit:
 			break;
 		}
 	}
+#endif /* JAVA_SPEC_VERSION >= 16 */
 
 	/**
 	 * @brief Notify JIT upon the first modification of a final field, a stack frame should be build before calling this method to make the stack walkable
