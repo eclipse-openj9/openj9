@@ -1,4 +1,4 @@
-dnl Copyright (c) 2001, 2021 IBM Corp. and others
+dnl Copyright (c) 2001, 2022 IBM Corp. and others
 dnl
 dnl This program and the accompanying materials are made available under
 dnl the terms of the Eclipse Public License 2.0 which accompanies this
@@ -85,7 +85,7 @@ _X(JVM_InvokeMethod,JNICALL,true,jobject,JNIEnv *env, jobject method, jobject ob
 _X(JVM_IsNaN,JNICALL,true,jboolean,jdouble dbl)
 _X(JVM_LatestUserDefinedLoader,JNICALL,true,jobject,JNIEnv *env)
 _X(JVM_Listen,JNICALL,true,jint,jint descriptor, jint count)
-_IF([JAVA_SPEC_VERSION < 18],
+_IF([JAVA_SPEC_VERSION < 17],
 	_X(JVM_LoadLibrary,JNICALL,true,void *,const char *libName),
 	_X(JVM_LoadLibrary,JNICALL,true,void *,const char *libName, jboolean throwOnFailure))
 _X(JVM_Lseek,JNICALL,true,jlong,jint descriptor, jlong bytesToSeek, jint origin)
