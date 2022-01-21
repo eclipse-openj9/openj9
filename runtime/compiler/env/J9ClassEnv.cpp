@@ -967,8 +967,9 @@ J9::ClassEnv::flattenedArrayElementSize(TR::Compilation *comp, TR_OpaqueClassBlo
 #if defined(J9VM_OPT_JITSERVER)
    if (auto stream = TR::CompilationInfo::getStream())
       {
-      stream->write(JITServer::MessageType::ClassEnv_flattenedArrayElementSize, arrayClass);
-      return std::get<0>(stream->read<int32_t>());
+      int32_t arrayElementSize = 0;
+      JITServerHelpers::getAndCacheRAMClassInfo((J9Class *)arrayClass, TR::compInfoPT->getClientData(), stream, JITServerHelpers::CLASSINFO_ARRAY_ELEMENT_SIZE, (void *)&arrayElementSize);
+      return arrayElementSize;
       }
    else
 #endif /* defined(J9VM_OPT_JITSERVER) */
