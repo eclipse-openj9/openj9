@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-  Copyright (c) 2021, 2022 IBM Corp. and others
+  Copyright (c) 2021, 2021 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,7 +24,7 @@
 
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
 <suite name="Java16 test suites" parallel="none" verbose="2">
-	<test name="Jep389Tests_testClinkerFfi_DownCall">
+	<test name="Jep389Tests_testClinkerFfi">
 		<classes>
 			<class name="org.openj9.test.jep389.downcall.InvalidDownCallTests"/>
 			<class name="org.openj9.test.jep389.downcall.MultiCallTests"/>
@@ -33,12 +33,6 @@
 			<class name="org.openj9.test.jep389.downcall.MultiThreadingTests3"/>
 			<class name="org.openj9.test.jep389.downcall.MultiThreadingTests4"/>
 			<class name="org.openj9.test.jep389.downcall.PrimitiveTypeTests"/>
-			<class name="org.openj9.test.jep389.downcall.StructTests"/>
-		</classes>
-	</test>
-	<test name="Jep389Tests_testClinkerFfi_VaList">
-		<classes>
-			<class name="org.openj9.test.jep389.valist.VaListTests"/>
 		</classes>
 	</test>
 </suite>

@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!--
-Copyright (c) 2021, 2022 IBM Corp. and others
+Copyright (c) 2021, 2021 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -78,7 +78,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 					encoding="ISO-8859-1">
 					<compilerarg line='--add-reads org.openj9test.modularity.@{mod}=ALL-UNNAMED' />
 					<compilerarg line='--add-exports java.base/jdk.internal.misc=ALL-UNNAMED' />
-					<compilerarg line='--enable-preview --source ${JDK_VERSION}' />
+					<compilerarg line='--source ${JDK_VERSION}' />
 					<compilerarg line="${modpath}" />
 					<classpath>
 						<pathelement location="${LIB_DIR}/testng.jar" />
@@ -104,7 +104,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<src path="${src_160}" />
 			<src path="${TestUtilities}" />
 			<exclude name="**/modules/**" />
-			<compilerarg line='--enable-preview --source ${JDK_VERSION}' />
+			<compilerarg line='--source ${JDK_VERSION}' />
 			<compilerarg line='--add-modules jdk.incubator.foreign' />
 			<compilerarg line='--add-opens jdk.incubator.foreign/jdk.internal.foreign=ALL-UNNAMED' />
 			<compilerarg line='--add-exports java.base/jdk.internal.misc=ALL-UNNAMED' />

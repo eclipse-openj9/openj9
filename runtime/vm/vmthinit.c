@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2022 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -84,11 +84,6 @@ UDATA initializeVMThreading(J9JavaVM *vm)
 		omrthread_monitor_init_with_name(&vm->valueTypeVerificationMutex, 0, "Wait mutex for verifying valuetypes") ||
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
-#if JAVA_SPEC_VERSION >= 16
-		omrthread_monitor_init_with_name(&vm->cifNativeCalloutDataCacheMutex, 0, "CIF cache mutex") ||
-		omrthread_monitor_init_with_name(&vm->cifArgumentTypesCacheMutex, 0, "CIF argument types mutex") ||
-#endif /* JAVA_SPEC_VERSION >= 16 */
-
 		initializeMonitorTable(vm)
 	)
 	{
@@ -169,17 +164,6 @@ void terminateVMThreading(J9JavaVM *vm)
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 	if (vm->valueTypeVerificationMutex) omrthread_monitor_destroy(vm->valueTypeVerificationMutex);
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
-#if JAVA_SPEC_VERSION >= 16
-	if (NULL != vm->cifNativeCalloutDataCacheMutex) {
-		omrthread_monitor_destroy(vm->cifNativeCalloutDataCacheMutex);
-		vm->cifNativeCalloutDataCacheMutex = NULL;
-	}
-
-	if (NULL != vm->cifArgumentTypesCacheMutex) {
-		omrthread_monitor_destroy(vm->cifArgumentTypesCacheMutex);
-		vm->cifArgumentTypesCacheMutex = NULL;
-	}
-#endif /* JAVA_SPEC_VERSION >= 16 */
 	destroyMonitorTable(vm);
 }
 

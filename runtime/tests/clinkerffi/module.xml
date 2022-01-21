@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-Copyright (c) 2021, 2022 IBM Corp. and others
+Copyright (c) 2021, 2021 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -46,118 +46,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<export name="addLongAndLongFromPointer"/>
 		<export name="addFloatAndFloatFromPointer"/>
 		<export name="addDoubleAndDoubleFromPointer"/>
-		<export name="addBoolAndBoolsFromStructWithXor"/>
-		<export name="addBoolFromPointerAndBoolsFromStructWithXor"/>
-		<export name="addBoolFromPointerAndBoolsFromStructWithXor_returnBoolPointer"/>
-		<export name="addBoolAndBoolsFromStructPointerWithXor"/>
-		<export name="addBoolAndBoolsFromNestedStructWithXor"/>
-		<export name="addBoolAndBoolsFromNestedStructWithXor_reverseOrder"/>
-		<export name="addBoolAndBoolsFromStructWithNestedBoolArray"/>
-		<export name="addBoolAndBoolsFromStructWithNestedBoolArray_reverseOrder"/>
-		<export name="addBoolAndBoolsFromStructWithNestedStructArray"/>
-		<export name="addBoolAndBoolsFromStructWithNestedStructArray_reverseOrder"/>
-		<export name="add2BoolStructsWithXor_returnStruct"/>
-		<export name="add2BoolStructsWithXor_returnStructPointer"/>
-		<export name="add3BoolStructsWithXor_returnStruct"/>
-		<export name="addByteAndBytesFromStruct"/>
-		<export name="addByteFromPointerAndBytesFromStruct"/>
-		<export name="addByteFromPointerAndBytesFromStruct_returnBytePointer"/>
-		<export name="addByteAndBytesFromStructPointer"/>
-		<export name="addByteAndBytesFromNestedStruct"/>
-		<export name="addByteAndBytesFromNestedStruct_reverseOrder"/>
-		<export name="addByteAndBytesFromStructWithNestedByteArray"/>
-		<export name="addByteAndBytesFromStructWithNestedByteArray_reverseOrder"/>
-		<export name="addByteAndBytesFromStructWithNestedStructArray"/>
-		<export name="addByteAndBytesFromStructWithNestedStructArray_reverseOrder"/>
-		<export name="add2ByteStructs_returnStruct"/>
-		<export name="add2ByteStructs_returnStructPointer"/>
-		<export name="add3ByteStructs_returnStruct"/>
-		<export name="addCharAndCharsFromStruct"/>
-		<export name="addCharFromPointerAndCharsFromStruct"/>
-		<export name="addCharFromPointerAndCharsFromStruct_returnCharPointer"/>
-		<export name="addCharAndCharsFromStructPointer"/>
-		<export name="addCharAndCharsFromNestedStruct"/>
-		<export name="addCharAndCharsFromNestedStruct_reverseOrder"/>
-		<export name="addCharAndCharsFromStructWithNestedCharArray"/>
-		<export name="addCharAndCharsFromStructWithNestedCharArray_reverseOrder"/>
-		<export name="addCharAndCharsFromStructWithNestedStructArray"/>
-		<export name="addCharAndCharsFromStructWithNestedStructArray_reverseOrder"/>
-		<export name="add2CharStructs_returnStruct"/>
-		<export name="add2CharStructs_returnStructPointer"/>
-		<export name="add3CharStructs_returnStruct"/>
-		<export name="addShortAndShortsFromStruct"/>
-		<export name="addShortFromPointerAndShortsFromStruct"/>
-		<export name="addShortFromPointerAndShortsFromStruct_returnShortPointer"/>
-		<export name="addShortAndShortsFromStructPointer"/>
-		<export name="addShortAndShortsFromNestedStruct"/>
-		<export name="addShortAndShortsFromNestedStruct_reverseOrder"/>
-		<export name="addShortAndShortsFromStructWithNestedShortArray"/>
-		<export name="addShortAndShortsFromStructWithNestedShortArray_reverseOrder"/>
-		<export name="addShortAndShortsFromStructWithNestedStructArray"/>
-		<export name="addShortAndShortsFromStructWithNestedStructArray_reverseOrder"/>
-		<export name="add2ShortStructs_returnStruct"/>
-		<export name="add2ShortStructs_returnStructPointer"/>
-		<export name="add3ShortStructs_returnStruct"/>
-		<export name="addIntAndIntsFromStruct"/>
-		<export name="addIntAndIntShortFromStruct"/>
-		<export name="addIntAndShortIntFromStruct"/>
-		<export name="addIntFromPointerAndIntsFromStruct"/>
-		<export name="addIntFromPointerAndIntsFromStruct_returnIntPointer"/>
-		<export name="addIntAndIntsFromStructPointer"/>
-		<export name="addIntAndIntsFromNestedStruct"/>
-		<export name="addIntAndIntsFromNestedStruct_reverseOrder"/>
-		<export name="addIntAndIntsFromStructWithNestedIntArray"/>
-		<export name="addIntAndIntsFromStructWithNestedIntArray_reverseOrder"/>
-		<export name="addIntAndIntsFromStructWithNestedStructArray"/>
-		<export name="addIntAndIntsFromStructWithNestedStructArray_reverseOrder"/>
-		<export name="add2IntStructs_returnStruct"/>
-		<export name="add2IntStructs_returnStructPointer"/>
-		<export name="add3IntStructs_returnStruct"/>
-		<export name="addLongAndLongsFromStruct"/>
-		<export name="addIntAndIntLongFromStruct"/>
-		<export name="addIntAndLongIntFromStruct"/>
-		<export name="addLongFromPointerAndLongsFromStruct"/>
-		<export name="addLongFromPointerAndLongsFromStruct_returnLongPointer"/>
-		<export name="addLongAndLongsFromStructPointer"/>
-		<export name="addLongAndLongsFromNestedStruct"/>
-		<export name="addLongAndLongsFromNestedStruct_reverseOrder"/>
-		<export name="addLongAndLongsFromStructWithNestedLongArray"/>
-		<export name="addLongAndLongsFromStructWithNestedLongArray_reverseOrder"/>
-		<export name="addLongAndLongsFromStructWithNestedStructArray"/>
-		<export name="addLongAndLongsFromStructWithNestedStructArray_reverseOrder"/>
-		<export name="add2LongStructs_returnStruct"/>
-		<export name="add2LongStructs_returnStructPointer"/>
-		<export name="add3LongStructs_returnStruct"/>
-		<export name="addFloatAndFloatsFromStruct"/>
-		<export name="addFloatFromPointerAndFloatsFromStruct"/>
-		<export name="addFloatFromPointerAndFloatsFromStruct_returnFloatPointer"/>
-		<export name="addFloatAndFloatsFromStructPointer"/>
-		<export name="addFloatAndFloatsFromNestedStruct"/>
-		<export name="addFloatAndFloatsFromNestedStruct_reverseOrder"/>
-		<export name="addFloatAndFloatsFromStructWithNestedFloatArray"/>
-		<export name="addFloatAndFloatsFromStructWithNestedFloatArray_reverseOrder"/>
-		<export name="addFloatAndFloatsFromStructWithNestedStructArray"/>
-		<export name="addFloatAndFloatsFromStructWithNestedStructArray_reverseOrder"/>
-		<export name="add2FloatStructs_returnStruct"/>
-		<export name="add2FloatStructs_returnStructPointer"/>
-		<export name="add3FloatStructs_returnStruct"/>
-		<export name="addDoubleAndDoublesFromStruct"/>
-		<export name="addDoubleAndFloatDoubleFromStruct"/>
-		<export name="addDoubleAndIntDoubleFromStruct"/>
-		<export name="addDoubleAndDoubleFloatFromStruct"/>
-		<export name="addDoubleAndDoubleIntFromStruct"/>
-		<export name="addDoubleFromPointerAndDoublesFromStruct"/>
-		<export name="addDoubleFromPointerAndDoublesFromStruct_returnDoublePointer"/>
-		<export name="addDoubleAndDoublesFromStructPointer"/>
-		<export name="addDoubleAndDoublesFromNestedStruct"/>
-		<export name="addDoubleAndDoublesFromNestedStruct_reverseOrder"/>
-		<export name="addDoubleAndDoublesFromStructWithNestedDoubleArray"/>
-		<export name="addDoubleAndDoublesFromStructWithNestedDoubleArray_reverseOrder"/>
-		<export name="addDoubleAndDoublesFromStructWithNestedStructArray"/>
-		<export name="addDoubleAndDoublesFromStructWithNestedStructArray_reverseOrder"/>
-		<export name="add2DoubleStructs_returnStruct"/>
-		<export name="add2DoubleStructs_returnStructPointer"/>
-		<export name="add3DoubleStructs_returnStruct"/>
 	</exports>
 
 	<artifact type="shared" name="clinkerffitests" appendrelease="false">
