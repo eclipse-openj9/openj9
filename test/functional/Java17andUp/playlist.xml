@@ -36,7 +36,7 @@
 			-excludegroups $(DEFAULT_EXCLUDE); \
 			$(TEST_STATUS)
 		</command>
-		<platformRequirements>bits.64,^arch.riscv,^os.zos,^os.sunos,^arch.arm,^os.osx</platformRequirements>
+		<platformRequirements>bits.64,^arch.ppc,^arch.390,^arch.arm,^arch.riscv,^os.zos,^os.sunos,^os.osx</platformRequirements>
 		<levels>
 			<level>sanity</level>
 		</levels>
