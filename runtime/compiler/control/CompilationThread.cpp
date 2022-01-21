@@ -1126,6 +1126,9 @@ TR::CompilationInfo::CompilationInfo(J9JITConfig *jitConfig) :
 #if defined(J9VM_JIT_DYNAMIC_LOOP_TRANSFER)
    _dltMonitor = TR::Monitor::create("JIT-DLTmonitor");
 #endif
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+   _crMonitor = TR::Monitor::create("JIT-CheckpointRestoreMonitor");
+#endif
    _iprofilerBufferArrivalMonitor = TR::Monitor::create("JIT-IProfilerBufferArrivalMonitor");
    _classUnloadMonitor = TR::MonitorTable::get()->getClassUnloadMonitor(); // by this time this variable is initialized
                                              // TODO: hang these monitors to something persistent
@@ -1428,6 +1431,23 @@ void TR::CompilationInfo::releaseCompilationLock()
       releaseCompMonitor(0);
       }
    }
+
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+void TR::CompilationInfo::acquireCRMonitor()
+   {
+   getCRMonitor()->enter();
+   }
+
+void TR::CompilationInfo::releaseCRMonitor()
+   {
+   getCRMonitor()->exit();
+   }
+
+void TR::CompilationInfo::waitOnCRMonitor()
+   {
+   getCRMonitor()->wait();
+   }
+#endif
 
 TR::Monitor * TR::CompilationInfo::createLogMonitor()
    {

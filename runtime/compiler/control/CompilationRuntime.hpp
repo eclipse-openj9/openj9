@@ -691,6 +691,17 @@ public:
    void waitOnCompMonitor(J9VMThread *vmThread);
    intptr_t waitOnCompMonitorTimed(J9VMThread *vmThread, int64_t millis, int32_t nanos);
 
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+   /* The CR Monitor (Checkpoint/Restore Monitor) must always be acquired with the Comp Monitor
+    * in hand. If waiting on the CR Monitor, the Comp Monitor should be released. After being
+    * notified, the CR Monitor should be released before re-acquiring the Comp Monitor.
+    */
+   TR::Monitor *getCRMonitor() { return _crMonitor; }
+   void acquireCRMonitor();
+   void releaseCRMonitor();
+   void waitOnCRMonitor();
+#endif
+
    TR_PersistentMemory *     persistentMemory() { return _persistentMemory; }
 
    TR::PersistentInfo    * getPersistentInfo() { return persistentMemory()->getPersistentInfo(); }
@@ -1155,6 +1166,10 @@ private:
    struct DLT_record     *_dltHash[DLT_HASHSIZE];
 #endif
    DLTTracking           *_dltHT;
+
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+   TR::Monitor *_crMonitor;
+#endif
 
    TR::Monitor *_vlogMonitor;
    TR::Monitor *_rtlogMonitor;
