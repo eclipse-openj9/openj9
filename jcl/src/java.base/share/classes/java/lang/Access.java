@@ -1,6 +1,6 @@
 /*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 /*******************************************************************************
- * Copyright (c) 2007, 2021 IBM Corp. and others
+ * Copyright (c) 2007, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -497,11 +497,11 @@ final class Access implements JavaLangAccess {
 		Shutdown.exit(status);
 	}
 
-	/*[IF JAVA_SPEC_VERSION >= 18]*/
+	/*[IF JAVA_SPEC_VERSION >= 17]*/
 	public int encodeASCII(char[] sa, int sp, byte[] da, int dp, int len) {
 		return StringCoding.implEncodeAsciiArray(sa, sp, da, dp, len);
 	}
-	/*[ENDIF] JAVA_SPEC_VERSION >= 18 */
+	/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 
 /*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 

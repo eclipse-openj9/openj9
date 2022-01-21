@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -759,11 +759,11 @@ static const char * const excludeArray[] = {
    "java/security/AccessController.doPrivileged(Ljava/security/PrivilegedAction;Ljava/security/AccessControlContext;[Ljava/security/Permission;)Ljava/lang/Object;",
    "java/security/AccessController.doPrivileged(Ljava/security/PrivilegedExceptionAction;Ljava/security/AccessControlContext;[Ljava/security/Permission;)Ljava/lang/Object;",
    "java/lang/NullPointerException.fillInStackTrace()Ljava/lang/Throwable;",
-#if JAVA_SPEC_VERSION >= 18
+#if JAVA_SPEC_VERSION >= 17
    "jdk/internal/loader/NativeLibraries.load(Ljdk/internal/loader/NativeLibraries$NativeLibraryImpl;Ljava/lang/String;ZZZ)Z",
-#else /* JAVA_SPEC_VERSION >= 18 */
+#else /* JAVA_SPEC_VERSION >= 17 */
    "jdk/internal/loader/NativeLibraries.load(Ljdk/internal/loader/NativeLibraries$NativeLibraryImpl;Ljava/lang/String;ZZ)Z",
-#endif /* JAVA_SPEC_VERSION >= 18 */
+#endif /* JAVA_SPEC_VERSION >= 17 */
 };
 
 bool
@@ -3000,11 +3000,11 @@ void TR_ResolvedJ9Method::construct()
 
    static X NativeLibrariesMethods[] =
       {
-#if JAVA_SPEC_VERSION >= 18
+#if JAVA_SPEC_VERSION >= 17
       {x(TR::jdk_internal_loader_NativeLibraries_load, "load", "(Ljdk/internal/loader/NativeLibraries$NativeLibraryImpl;Ljava/lang/String;ZZZ)Z")},
-#else /* JAVA_SPEC_VERSION >= 18 */
+#else /* JAVA_SPEC_VERSION >= 17 */
       {x(TR::jdk_internal_loader_NativeLibraries_load, "load", "(Ljdk/internal/loader/NativeLibraries$NativeLibraryImpl;Ljava/lang/String;ZZ)Z")},
-#endif /* JAVA_SPEC_VERSION >= 18 */
+#endif /* JAVA_SPEC_VERSION >= 17 */
       {  TR::unknownMethod}
       };
 
