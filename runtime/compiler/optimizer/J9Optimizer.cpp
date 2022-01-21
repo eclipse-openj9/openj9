@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -451,6 +451,11 @@ const OptimizationStrategy hotStrategyOpts[] =
    { OMR::blockSplitter,                         OMR::IfNews                   }, // treeSimplification + blockSplitter + VP => opportunity for EA
    { OMR::expensiveGlobalValuePropagationGroup                            },
    { OMR::localCSE,                              OMR::IfVectorAPI },
+   { OMR::loopCanonicalization,                  OMR::IfVectorAPI },
+   { OMR::partialRedundancyEliminationGroup,     OMR::IfVectorAPI },
+   { OMR::globalDeadStoreElimination,            OMR::IfVectorAPI }, // global dead store removal
+   { OMR::deadTreesElimination,                  OMR::IfVectorAPI }, // cleanup after dead store removal
+   { OMR::vectorAPIExpansion,                    OMR::IfVectorAPI },
    { OMR::dataAccessAccelerator                                           },
    { OMR::osrGuardRemoval,                       OMR::IfEnabled           }, // run after calls/monents/asyncchecks have been removed
    { OMR::globalDeadStoreGroup,                                           },
@@ -493,9 +498,6 @@ const OptimizationStrategy hotStrategyOpts[] =
    { OMR::arraycopyTransformation      },
    { OMR::checkcastAndProfiledGuardCoalescer                              },
    { OMR::jProfilingRecompLoopTest,              OMR::IfLoops                  },
-   { OMR::globalDeadStoreElimination,            OMR::IfVectorAPI              },  // global dead store removal
-   { OMR::deadTreesElimination,                  OMR::IfVectorAPI              }, // cleanup after dead store removal
-   { OMR::vectorAPIExpansion,                    OMR::IfVectorAPI              },
    { OMR::tacticalGlobalRegisterAllocatorGroup,  OMR::IfEnabled                },
    { OMR::jProfilingValue,                           OMR::MustBeDone           },
    { OMR::treeLowering,                              OMR::MustBeDone           },
@@ -547,6 +549,11 @@ const OptimizationStrategy scorchingStrategyOpts[] =
    { OMR::idiomRecognition,                      OMR::IfLoopsAndNotProfiling   }, // Early pass of idiomRecognition - Loop Canonicalizer transformations break certain idioms (i.e. arrayTranslateAndTest)
    { OMR::globalCopyPropagation,                 OMR::IfNoLoops       },
    { OMR::localCSE,                              OMR::IfVectorAPI },
+   { OMR::loopCanonicalization,                  OMR::IfVectorAPI },
+   { OMR::partialRedundancyEliminationGroup,     OMR::IfVectorAPI },
+   { OMR::globalDeadStoreElimination,            OMR::IfVectorAPI }, // global dead store removal
+   { OMR::deadTreesElimination,                  OMR::IfVectorAPI }, // cleanup after dead store removal
+   { OMR::vectorAPIExpansion,                    OMR::IfVectorAPI },
    { OMR::loopCanonicalizationGroup,             OMR::IfLoops     }, // canonicalize loops (improve fall throughs)
    { OMR::inductionVariableAnalysis,             OMR::IfLoops     },
    { OMR::redundantInductionVarElimination,      OMR::IfLoops     },
@@ -581,9 +588,6 @@ const OptimizationStrategy scorchingStrategyOpts[] =
    { OMR::localValuePropagation,                 OMR::MarkLastRun              },
    { OMR::arraycopyTransformation      },
    { OMR::checkcastAndProfiledGuardCoalescer      },
-   { OMR::globalDeadStoreElimination,            OMR::IfVectorAPI               }, // global dead store removal
-   { OMR::deadTreesElimination,                  OMR::IfVectorAPI               }, // cleanup after dead store removal
-   { OMR::vectorAPIExpansion,                    OMR::IfVectorAPI               },
    { OMR::tacticalGlobalRegisterAllocatorGroup,  OMR::IfEnabled   },
    { OMR::jProfilingValue,                           OMR::MustBeDone                 },
    { OMR::treeLowering,                              OMR::MustBeDone                 },
@@ -638,7 +642,12 @@ static const OptimizationStrategy AOTStrategyOpts[] =
    { OMR::stripMiningGroup,                      OMR::IfLoops   }, // strip mining in loops
    { OMR::loopReplicator,                        OMR::IfLoops   }, // tail-duplication in loops
    { OMR::expensiveGlobalValuePropagationGroup             },
-   { OMR::localCSE,                                    OMR::IfVectorAPI },
+   { OMR::localCSE,                              OMR::IfVectorAPI },
+   { OMR::loopCanonicalization,                  OMR::IfVectorAPI },
+   { OMR::partialRedundancyEliminationGroup,     OMR::IfVectorAPI },
+   { OMR::globalDeadStoreElimination,            OMR::IfVectorAPI }, // global dead store removal
+   { OMR::deadTreesElimination,                  OMR::IfVectorAPI }, // cleanup after dead store removal
+   { OMR::vectorAPIExpansion,                    OMR::IfVectorAPI },
    { OMR::globalDeadStoreGroup,                            },
    { OMR::globalCopyPropagation,                 OMR::IfNoLoops },
    { OMR::loopCanonicalizationGroup,             OMR::IfLoops   }, // canonicalize loops (improve fall throughs) and versioning
@@ -654,9 +663,6 @@ static const OptimizationStrategy AOTStrategyOpts[] =
    { OMR::localCSE,                              OMR::IfEnabled  },  //common up lit pool refs in the same block
    { OMR::signExtendLoadsGroup,                  OMR::IfEnabled }, // last opt before GRA
    { OMR::arraysetStoreElimination                                              },
-   { OMR::globalDeadStoreElimination,            OMR::IfVectorAPI            }, // global dead store removal
-   { OMR::deadTreesElimination,                  OMR::IfVectorAPI            }, // cleanup after dead store removal
-   { OMR::vectorAPIExpansion,                    OMR::IfVectorAPI            },
    { OMR::tacticalGlobalRegisterAllocatorGroup,  OMR::IfEnabled },
    { OMR::treeLowering,                          OMR::MustBeDone},
    { OMR::globalCopyPropagation,                 OMR::IfMoreThanOneBlock}, // global copy propagation
