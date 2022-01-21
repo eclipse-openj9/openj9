@@ -29,6 +29,10 @@ public class ValueTypeUnsafeTestClasses {
 		final int i;
 	}
 
+	static primitive class ValueTypeLong {
+		ValueTypeLong(long l) {this.l = l;}
+		final long l;
+	}
 
 	static primitive class ValueTypePoint2D {
 		final ValueTypeInt x, y;
@@ -39,13 +43,20 @@ public class ValueTypeUnsafeTestClasses {
 		}
 	}
 
-
 	static class Point2D {
 		final int x, y;
 
 		Point2D(int x, int y) {
 			this.x = x;
 			this.y = y;
+		}
+	}
+
+	static primitive class ValueTypeWithLongField {
+		final ValueTypeLong l;
+
+		ValueTypeWithLongField() {
+			l = new ValueTypeLong(1);
 		}
 	}
 }
