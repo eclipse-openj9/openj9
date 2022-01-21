@@ -421,9 +421,9 @@ final class Access implements JavaLangAccess {
 
 	/**
 	 * Returns the classData stored in the class.
-	 * 
+	 *
 	 * @param the class from where to retrieve the classData.
-	 * 
+	 *
 	 * @return the classData (Object).
 	 */
 	public Object classData(Class<?> clazz) {
@@ -475,19 +475,19 @@ final class Access implements JavaLangAccess {
 	public String join(String prefix, String suffix, String delimiter, String[] elements, int size) {
 		return String.join(prefix, suffix, delimiter, elements, size);
 	}
-	
+
 	public boolean isEnableNativeAccess(Module mod) {
 		return mod.implIsEnableNativeAccess();
 	}
-	
+
 	public void addEnableNativeAccessAllUnnamed() {
 		Module.implAddEnableNativeAccessAllUnnamed();
 	}
-	
+
 	public Module addEnableNativeAccess(Module mod) {
 		return mod.implAddEnableNativeAccess();
 	}
-	
+
 	public long findNative(ClassLoader loader, String entryName) {
 		return ClassLoader.findNative(loader, entryName);
 	}
@@ -497,12 +497,9 @@ final class Access implements JavaLangAccess {
 		Shutdown.exit(status);
 	}
 
-	/*[IF JAVA_SPEC_VERSION >= 17]*/
 	public int encodeASCII(char[] sa, int sp, byte[] da, int dp, int len) {
 		return StringCoding.implEncodeAsciiArray(sa, sp, da, dp, len);
 	}
-	/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
-
 /*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 
 /*[ENDIF] Sidecar19-SE */
