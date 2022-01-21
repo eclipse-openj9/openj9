@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2019, 2021 IBM Corp. and others
+# Copyright (c) 2019, 2022 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -290,7 +290,7 @@ jvm_add_exports(jvm
 	JVM_BeforeHalt
 )
 
-if(JAVA_SPEC_VERSION LESS 18)
+if(JAVA_SPEC_VERSION LESS 17)
 	jvm_add_exports(jvm _JVM_LoadLibrary@4)
 else()
 	jvm_add_exports(jvm _JVM_LoadLibrary@8)

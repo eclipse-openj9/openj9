@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2021 IBM Corp. and others
+ * Copyright (c) 2012, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -177,7 +177,7 @@ getCurrentClassLoader(J9VMThread *currentThread)
 			 * is the current native method, use the class loader of "impl.fromClass".
 			 * This nativeMethod can't be cached cause HCR might make it invalid.
 			 *
-			 * Note that in jdk18, the signature of that method changed to
+			 * Note that in jdk17, the signature of that method changed to
 			 *   NativeLibraries.load(NativeLibraryImpl impl, String name, boolean isBuiltin, boolean isJNI, boolean throwOnFailure)
 			 */
 			if (J9VMJDKINTERNALLOADERNATIVELIBRARIES_LOAD_METHOD(currentThread->javaVM) == nativeMethod) {
