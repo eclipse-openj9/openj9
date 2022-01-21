@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2018, 2021 IBM Corp. and others
+Copyright (c) 2018, 2022 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,9 +30,12 @@ Some of the most commonly used items in the client session data are the cached R
 
 ## Adding new items to the client session
 
-1. Modify the relevant structure (`ClientSessionData`, `ClassInfo`, or `J9MethodInfo`) to contain your data. See below for information about what goes where.
+1. Modify the relevant structure (`ClientSessionData`, `ClassInfo`, or `J9MethodInfo`) by adding a new field and change the constructor to initialize the new field. See below for information about what goes where.
 2. Modify ClassInfoTuple (add to end)
-3. Modify cacheRemoteROMClass packRemoteROMClassInfo
+3. Modify `enum ClassInfoDataType`
+4. Modify `JITServerHelpers::cacheRemoteROMClass` and `JITServerHelpers::packRemoteROMClassInfo`
+5. Modify `JITServerHelpers::getROMClassData`to return the new field when asked
+6. Update the version `MINOR_NUMBER` for JITServer
 
 ## `ClientSessionData`
 
