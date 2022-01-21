@@ -263,6 +263,9 @@ int32_t J9::Options::_updateFreeMemoryMinPeriod = 500;  // 500 ms
 size_t J9::Options::_scratchSpaceLimitKBWhenLowVirtualMemory = 64*1024; // 64MB; currently, only used on 32 bit Windows
 
 int32_t J9::Options::_scratchSpaceFactorWhenJSR292Workload = JSR292_SCRATCH_SPACE_FACTOR;
+#if defined(J9VM_OPT_JITSERVER)
+int32_t J9::Options::_scratchSpaceFactorWhenJITServerWorkload = 2;
+#endif /* defined(J9VM_OPT_JITSERVER) */
 int32_t J9::Options::_lowVirtualMemoryMBThreshold = 300; // Used on 32 bit Windows, Linux, 31 bit z/OS, Linux
 int32_t J9::Options::_safeReservePhysicalMemoryValue = 32 << 20;  // 32 MB
 
@@ -962,6 +965,10 @@ TR::OptionTable OMR::Options::_feOptions[] = {
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_samplingThreadExpirationTime, 0, "F%d", NOT_IN_SUBSET},
    {"scorchingSampleThreshold=", "R<nnn>\tThe maximum number of global samples taken during a sample interval for which the method will be recompiled as scorching",
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_scorchingSampleThreshold, 0, "F%d", NOT_IN_SUBSET},
+#if defined(J9VM_OPT_JITSERVER)
+   {"scratchSpaceFactorWhenJITServerWorkload=","M<nnn>\tMultiplier for scratch space limit at JITServer",
+        TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_scratchSpaceFactorWhenJITServerWorkload, 0, "F%d", NOT_IN_SUBSET},
+#endif /* defined(J9VM_OPT_JITSERVER) */
    {"scratchSpaceFactorWhenJSR292Workload=","M<nnn>\tMultiplier for scratch space limit when MethodHandles are in use",
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_scratchSpaceFactorWhenJSR292Workload, 0, "F%d", NOT_IN_SUBSET},
    {"scratchSpaceLimitKBWhenLowVirtualMemory=","M<nnn>\tLimit for memory used by JIT when running on low virtual memory",
