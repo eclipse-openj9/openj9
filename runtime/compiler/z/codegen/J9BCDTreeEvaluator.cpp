@@ -1899,12 +1899,40 @@ J9::Z::TreeEvaluator::pd2zdVectorEvaluatorHelper(TR::Node * node, TR::CodeGenera
          }
       }
 
-   if(cg->traceBCDCodeGen())
+   static bool disablePdVector2ZdVectorBCD = feGetEnv("TR_disablezdsle2zdVectorBCD") != NULL;
+   if (!disablePdVector2ZdVectorBCD
+      && cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL_ENHANCEMENT_FACILITY_2))
       {
-      traceMsg(comp, "gen VUKPZ, sizeOfZonedValue=%d, precision=%d\n", sizeOfZonedValue, precision);
-      }
+      TR::Register *zonedDecimalHigh = cg->allocateRegister(TR_VRF);
+      TR::Register *zonedDecimalLow = cg->allocateRegister(TR_VRF);
 
-   generateVSIInstruction(cg, TR::InstOpCode::VUPKZ, node, valueRegister, targetMR, sizeOfZonedValue - 1);
+      // 0 we store 1 byte, 15 we store 16 bytes.
+      // 15 - lengthToStore = index from which to start.
+      uint8_t lengthToStore = precision - 1;
+      uint8_t M3 = 0x8; // Disable sign validation.
+      TR::MemoryReference * zonedDecimalMR = targetMR;
+      generateVRRkInstruction(cg, TR::InstOpCode::VUPKZL, node, zonedDecimalLow, valueRegister, M3); // Also copies the sign bit.
+
+      if (precision > TR_VECTOR_REGISTER_SIZE)
+         {
+         generateVRRkInstruction(cg, TR::InstOpCode::VUPKZH, node, zonedDecimalHigh, valueRegister, M3);
+         lengthToStore = precision - TR_VECTOR_REGISTER_SIZE;
+         generateVSIInstruction(cg, TR::InstOpCode::VSTRL, node, zonedDecimalHigh, zonedDecimalMR, lengthToStore - 1);
+         zonedDecimalMR = generateS390MemoryReference(*targetMR, lengthToStore, cg);
+         lengthToStore = TR_VECTOR_REGISTER_SIZE - 1;
+         }
+
+      generateVSIInstruction(cg, TR::InstOpCode::VSTRL, node, zonedDecimalLow, zonedDecimalMR, lengthToStore);
+      }
+   else
+      {
+      if(cg->traceBCDCodeGen())
+         {
+         traceMsg(comp, "gen VUKPZ, sizeOfZonedValue=%d, precision=%d\n", sizeOfZonedValue, precision);
+         }
+
+      generateVSIInstruction(cg, TR::InstOpCode::VUPKZ, node, valueRegister, targetMR, sizeOfZonedValue - 1);
+      }
 
    // Fix pd2zd signs. VUPKZ and its non-vector counterpart don't validate digits nor signs.
    pd2zdSignFixup(node, targetMR, cg, true);
