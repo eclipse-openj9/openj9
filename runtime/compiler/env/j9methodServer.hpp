@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2021 IBM Corp. and others
+ * Copyright (c) 2018, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -256,8 +256,8 @@ private:
    bool _isLambdaFormGeneratedMethod;
    bool _isForceInline;
 
-   virtual char * fieldOrStaticName(I_32 cpIndex, int32_t & len, TR_Memory * trMemory, TR_AllocationKind kind = heapAlloc) override;
-   void unpackMethodInfo(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd * fe, TR_Memory * trMemory, uint32_t vTableSlot, TR::CompilationInfoPerThread *threadCompInfo, const TR_ResolvedJ9JITServerMethodInfo &methodInfo);
+   void unpackMethodInfo(TR_OpaqueMethodBlock *aMethod, TR_FrontEnd *fe, TR_Memory *trMemory, uint32_t vTableSlot,
+                         TR::CompilationInfoPerThread *threadCompInfo, const TR_ResolvedJ9JITServerMethodInfo &methodInfo);
    };
 
 
