@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -100,6 +100,11 @@ J9::Z::CPU::customize(OMRProcessorDesc processorDescription)
       omrsysinfo_processor_set_feature(&processorDescription, OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL_ENHANCEMENT_FACILITY, FALSE);
       }
 
+   if (processorDescription.processor < OMR_PROCESSOR_S390_ZNEXT)
+      {
+      omrsysinfo_processor_set_feature(&processorDescription, OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL_ENHANCEMENT_FACILITY_2, FALSE);
+      }
+
    // This variable is used internally by the j9sysinfo macros below and cannot be folded away
    J9PortLibrary* privatePortLibrary = TR::Compiler->portLib;
 
@@ -145,7 +150,8 @@ J9::Z::CPU::enableFeatureMasks()
                                          OMR_FEATURE_S390_VECTOR_FACILITY_ENHANCEMENT_1,
                                          OMR_FEATURE_S390_VECTOR_FACILITY_ENHANCEMENT_2,
                                          OMR_FEATURE_S390_MISCELLANEOUS_INSTRUCTION_EXTENSION_3,
-                                         OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL_ENHANCEMENT_FACILITY};
+                                         OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL_ENHANCEMENT_FACILITY,
+                                         OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL_ENHANCEMENT_FACILITY_2};
 
    memset(_supportedFeatureMasks.features, 0, OMRPORT_SYSINFO_FEATURES_SIZE*sizeof(uint32_t));
    OMRPORT_ACCESS_FROM_OMRPORT(TR::Compiler->omrPortLib);

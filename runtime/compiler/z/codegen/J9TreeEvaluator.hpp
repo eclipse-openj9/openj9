@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -314,7 +314,8 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
    static TR::Register *zdsls2pdEvaluator(TR::Node * node, TR::CodeGenerator * cg);
    static void zonedToZonedSeparateSignHelper(TR::Node *node, TR_PseudoRegister *srcReg, TR_PseudoRegister *targetReg, TR::MemoryReference *sourceMR, TR::MemoryReference *destMR, TR::CodeGenerator * cg);
    static TR::MemoryReference *packedToZonedHelper(TR::Node *node, TR_PseudoRegister *targetReg, TR::MemoryReference *sourceMR, TR_PseudoRegister *childReg, TR::CodeGenerator * cg);
-   static void pd2zdSignFixup(TR::Node *node, TR::MemoryReference *destMR, TR::CodeGenerator * cg);
+   static void pd2zdSignFixup(TR::Node *node, TR::MemoryReference *destMR, TR::CodeGenerator * cg, bool useLeftAlignedMR);
+   static TR::Register *zdstoreiVectorEvaluatorHelper(TR::Node *node, TR::CodeGenerator *cg);
 
    static void zonedSeparateSignToPackedOrZonedHelper(TR::Node *node, TR_PseudoRegister *targetReg, TR::MemoryReference *sourceMR, TR::MemoryReference *destMR, TR::CodeGenerator * cg);
    static TR::Register *zdsle2zdEvaluator(TR::Node *node, TR::CodeGenerator *cg);
@@ -551,6 +552,10 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
    static TR::Register *dwrtbariEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *awrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *awrtbariEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+
+   static TR::Register *inlineIntegerStringSize(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *inlineIntegerToCharsForLatin1Strings(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *inlineIntegerToCharsForUTF16Strings(TR::Node *node, TR::CodeGenerator *cg);
    };
 }
 

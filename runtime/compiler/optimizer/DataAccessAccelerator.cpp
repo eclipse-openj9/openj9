@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2693,7 +2693,7 @@ bool TR_DataAccessAccelerator::generatePD2UD(TR::TreeTop* treeTop, TR::Node* cal
          TR_ASSERT(false, "unsupported decimalType.\n");
          }
 
-      TR::Node * pd2decimalNode;
+      TR::Node * pd2decimalNode = NULL;
       if (isPD2UD || type == 1)
          {
          pd2decimalNode = TR::Node::create(op, 1, pdload);

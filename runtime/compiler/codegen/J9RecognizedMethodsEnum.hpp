@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -223,6 +223,8 @@
    java_lang_StringUTF16_newBytesFor,
    java_lang_StringUTF16_putChar,
    java_lang_StringUTF16_toBytes,
+   java_lang_StringUTF16_getChars_Integer,
+   java_lang_StringUTF16_getChars_Long,
 
    java_lang_StringBuffer_append,
    java_lang_StringBuffer_capacityInternal,
@@ -496,6 +498,13 @@
    java_lang_Integer_rotateRight,
    java_lang_Integer_valueOf,
    java_lang_Integer_toUnsignedLong,
+   java_lang_Integer_stringSize,
+   java_lang_Integer_getChars,
+   java_lang_Integer_getChars_charBuffer,
+   java_lang_Integer_toString,
+
+   java_lang_Long_getChars,
+   java_lang_Long_getChars_charBuffer,
    java_lang_Long_bitCount,
    java_lang_Long_lowestOneBit,
    java_lang_Long_highestOneBit,
@@ -505,6 +514,8 @@
    java_lang_Long_rotateLeft,
    java_lang_Long_rotateRight,
    java_lang_Short_reverseBytes,
+   java_lang_Long_stringSize,
+   java_lang_Long_toString,
 
    java_math_BigDecimal_add,
    java_math_BigDecimal_clone,
