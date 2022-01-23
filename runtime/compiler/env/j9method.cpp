@@ -3199,6 +3199,8 @@ void TR_ResolvedJ9Method::construct()
       { x(TR::java_lang_StringUTF16_newBytesFor,                              "newBytesFor",        "(I)[B")},
       { x(TR::java_lang_StringUTF16_putChar,                                  "putChar",            "([BII)V")},
       { x(TR::java_lang_StringUTF16_toBytes,                                  "toBytes",            "([CII)[B")},
+      { x(TR::java_lang_StringUTF16_getChars_Integer,                         "getChars",            "(II[B)I")},
+      { x(TR::java_lang_StringUTF16_getChars_Long,                            "getChars",            "(JI[B)I")},
       { TR::unknownMethod }
       };
 
@@ -3234,6 +3236,10 @@ void TR_ResolvedJ9Method::construct()
       {x(TR::java_lang_Integer_valueOf,                 "valueOf",               "(I)Ljava/lang/Integer;")},
       {  TR::java_lang_Integer_init,              6,    "<init>", (int16_t)-1,    "*"},
       {x(TR::java_lang_Integer_toUnsignedLong,          "toUnsignedLong",         "(I)J")},
+      {x(TR::java_lang_Integer_stringSize,              "stringSize",         "(I)I")},
+      {x(TR::java_lang_Integer_toString,                "toString",         "(I)Ljava/lang/String;")},
+      {x(TR::java_lang_Integer_getChars,                "getChars",        "(II[B)I")},
+      {x(TR::java_lang_Integer_getChars_charBuffer,     "getChars",        "(II[C)V")},
       {  TR::unknownMethod}
       };
 
@@ -3248,6 +3254,10 @@ void TR_ResolvedJ9Method::construct()
       {x(TR::java_lang_Long_rotateLeft,                 "rotateLeft",            "(JI)J")},
       {x(TR::java_lang_Long_rotateRight,                "rotateRight",           "(JI)J")},
       {  TR::java_lang_Long_init,                  6,    "<init>", (int16_t)-1,    "*"},
+      {x(TR::java_lang_Long_stringSize,                 "stringSize",            "(J)I") },
+      {x(TR::java_lang_Long_toString,                   "toString",            "(J)Ljava/lang/String;") },
+      {x(TR::java_lang_Long_getChars,                   "getChars",        "(JI[B)I")},
+      {x(TR::java_lang_Long_getChars_charBuffer,        "getChars",        "(JI[C)V")},
       {  TR::unknownMethod}
       };
 
