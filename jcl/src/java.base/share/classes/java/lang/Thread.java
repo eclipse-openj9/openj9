@@ -38,6 +38,8 @@ import jdk.internal.reflect.CallerSensitive;
 /*[ELSE] JAVA_SPEC_VERSION >= 11 */
 import sun.reflect.CallerSensitive;
 /*[ENDIF] JAVA_SPEC_VERSION >= 11 */
+import java.lang.reflect.Method;
+import sun.nio.ch.Interruptible;
 
 /**
  *	A Thread is a unit of concurrent execution in Java. It has its own call stack
@@ -111,7 +113,7 @@ public class Thread implements Runnable {
 	private Object lock = new ThreadLock();
 
 	ThreadLocal.ThreadLocalMap inheritableThreadLocals;
-	private volatile sun.nio.ch.Interruptible blockOn;
+	private volatile Interruptible blockOn;
 
 	int threadLocalsIndex;
 	int inheritableThreadLocalsIndex;
@@ -132,6 +134,8 @@ public class Thread implements Runnable {
 	long threadLocalRandomSeed;
 	int threadLocalRandomProbe;
 	int threadLocalRandomSecondarySeed;
+
+	private static final StackTraceElement[] EMPTY_STACK_TRACE = new StackTraceElement[0];
 
 /**
  * Constructs a new Thread with no runnable object and a newly generated name.
@@ -478,20 +482,21 @@ private void initialize(boolean booting, ThreadGroup threadGroup, Thread parentT
 		/*[PR CMVC 90230] enableContextClassLoaderOverride check added in 1.5 */
 		@SuppressWarnings("removal")
 		final SecurityManager sm = System.getSecurityManager();
-		final Class implClass = getClass();
-		final Class thisClass = Thread.class;
-		if (sm != null && implClass != thisClass) {
-			boolean override = ((Boolean)AccessController.doPrivileged(new PrivilegedAction() {
-				public Object run() {
+		final Class<?> implClass = getClass();
+		final Class<?> thisClass = Thread.class;
+		if ((sm != null) && (implClass != thisClass)) {
+			boolean override = AccessController.doPrivileged(new PrivilegedAction<Boolean>() {
+				@Override
+				public Boolean run() {
 					try {
-						java.lang.reflect.Method method = implClass.getMethod("getContextClassLoader", new Class[0]); //$NON-NLS-1$
+						Method method = implClass.getMethod("getContextClassLoader"); //$NON-NLS-1$
 						if (method.getDeclaringClass() != thisClass) {
 							return Boolean.TRUE;
 						}
 					} catch (NoSuchMethodException e) {
 					}
 					try {
-						java.lang.reflect.Method method = implClass.getDeclaredMethod("setContextClassLoader", new Class[]{ClassLoader.class}); //$NON-NLS-1$
+						Method method = implClass.getDeclaredMethod("setContextClassLoader", ClassLoader.class); //$NON-NLS-1$
 						if (method.getDeclaringClass() != thisClass) {
 							return Boolean.TRUE;
 						}
@@ -499,7 +504,7 @@ private void initialize(boolean booting, ThreadGroup threadGroup, Thread parentT
 					}
 					return Boolean.FALSE;
 				}
-			})).booleanValue();
+			}).booleanValue();
 			if (override) {
 				sm.checkPermission(com.ibm.oti.util.RuntimePermissions.permissionEnableContextClassLoaderOverride);
 			}
@@ -740,9 +745,9 @@ public void interrupt() {
 		}
 	}
 
-	synchronized(lock) {
+	synchronized (lock) {
 		interruptImpl();
-		sun.nio.ch.Interruptible localBlockOn = blockOn;
+		Interruptible localBlockOn = blockOn;
 		if (localBlockOn != null) {
 			localBlockOn.interrupt(this);
 		}
@@ -787,7 +792,7 @@ private native void interruptImpl();
  * @see			Thread#start
  */
 public final boolean isAlive() {
-	synchronized(lock) {
+	synchronized (lock) {
 		/*[PR CMVC 88976] the Thread is alive until cleanup() is called */
 		return threadRef != NO_REF;
 	}
@@ -1172,23 +1177,20 @@ public synchronized void start() {
 	 *
 	 * Release the lock before calling threadgroup's remove method for this thread.
 	/*[ENDIF]*/
+	if (started) {
+		/*[MSG "K0341", "Thread is already started"]*/
+		throw new IllegalThreadStateException(com.ibm.oti.util.Msg.getString("K0341")); //$NON-NLS-1$
+	}
+	/*[PR 115667, CMVC 94448] In 1.5, thread is added to ThreadGroup when started */
+	group.add(this);
 
 	try {
-		synchronized(lock) {
-			if (started) {
-				/*[MSG "K0341", "Thread is already started"]*/
-				throw new IllegalThreadStateException(com.ibm.oti.util.Msg.getString("K0341")); //$NON-NLS-1$
-			}
-
-			/*[PR 115667, CMVC 94448] In 1.5, thread is added to ThreadGroup when started */
-			group.add(this);
-
+		synchronized (lock) {
 			startImpl();
-
 			success = true;
 		}
 	} finally {
-		if (!success && !started) {
+		if (!success) {
 			group.remove(this);
 		}
 	}
@@ -1242,16 +1244,17 @@ public final void stop(Throwable throwable) {
 private final synchronized void stopWithThrowable(Throwable throwable) {
 	checkAccess();
 	/*[PR 95390]*/
-	if (currentThread() != this || !(throwable instanceof ThreadDeath)) {
+	if ((currentThread() != this) || !(throwable instanceof ThreadDeath)) {
+		@SuppressWarnings("removal")
 		SecurityManager currentManager = System.getSecurityManager();
-		if (currentManager != null)	{
+		if (currentManager != null) {
 			currentManager.checkPermission(SecurityConstants.STOP_THREAD_PERMISSION);
 		}
 	}
 
-	synchronized(lock) {
-		if (throwable != null){
-			if (!started){
+	synchronized (lock) {
+		if (throwable != null) {
+			if (!started) {
 				/* [PR CMVC 179978] Java7:JCK:java_lang.Thread fails in all plat*/
 				/*
 				 * if the thread has not yet been simply store the fact that stop has been called
@@ -1262,8 +1265,9 @@ private final synchronized void stopWithThrowable(Throwable throwable) {
 				/* thread was started so do the full stop */
 				stopImpl(throwable);
 			}
+		} else {
+			throw new NullPointerException();
 		}
-		else throw new NullPointerException();
 	}
 }
 
@@ -1299,9 +1303,10 @@ private native void stopImpl(Throwable throwable);
 public final void suspend() {
 	checkAccess();
 	/*[PR 106321]*/
-	if (currentThread() == this) suspendImpl();
-	else {
-		synchronized( lock ) {
+	if (currentThread() == this) {
+		suspendImpl();
+	} else {
+		synchronized (lock) {
 			suspendImpl();
 		}
 	}
@@ -1352,14 +1357,14 @@ public static native boolean holdsLock(Object object);
 /*[IF JAVA_SPEC_VERSION >= 11]*/
 static
 /*[ENDIF] JAVA_SPEC_VERSION >= 11 */
-void blockedOn(sun.nio.ch.Interruptible interruptible) {
+void blockedOn(Interruptible interruptible) {
 	Thread currentThread;
 	/*[IF JAVA_SPEC_VERSION >= 11]*/
 	currentThread = currentThread();
 	/*[ELSE] JAVA_SPEC_VERSION >= 11
 	currentThread = this;
 	/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
-	synchronized(currentThread.lock) {
+	synchronized (currentThread.lock) {
 		currentThread.blockOn = interruptible;
 	}
 }
@@ -1381,14 +1386,15 @@ public StackTraceElement[] getStackTrace() {
 	if (Thread.currentThread() != this) {
 		@SuppressWarnings("removal")
 		SecurityManager security = System.getSecurityManager();
-		if (security != null)
+		if (security != null) {
 			security.checkPermission(SecurityConstants.GET_STACK_TRACE_PERMISSION); //$NON-NLS-1$
+		}
 	}
 	Throwable t;
 
-	synchronized(lock) {
+	synchronized (lock) {
 		if (!isAlive()) {
-			return new StackTraceElement[0];
+			return EMPTY_STACK_TRACE;
 		}
 		t = getStackTraceImpl();
 	}
