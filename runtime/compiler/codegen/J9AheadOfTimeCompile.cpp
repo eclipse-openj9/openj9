@@ -121,6 +121,17 @@ J9::AheadOfTimeCompile::addSerializationRecord(const AOTCacheRecord *record, con
       uint8_t *end = start + *(uintptr_t *)start;// Total size of relocation data is stored in the first word
       TR_ASSERT_FATAL(((uint8_t *)sccOffsetAddr >= start + sizeof(uintptr_t)) && ((uint8_t *)sccOffsetAddr < end),
                       "SCC offset address %p not in range %p - %p", sccOffsetAddr, start + sizeof(uintptr_t), end);
+#if defined(DEBUG)
+      if (record && TR::Options::getVerboseOption(TR_VerboseJITServer))
+         {
+         const AOTSerializationRecord *r = record->dataAddr();
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+            "AOT cache %s: Adding record type %u ID %zu for SCC offset %zu at relo data offset %zu in method %s",
+            comp->getClientData()->getAOTCache()->name().c_str(), r->type(), r->id(),
+            *sccOffsetAddr, (uint8_t *)sccOffsetAddr - start, comp->signature()
+         );
+         }
+#endif /* defined(DEBUG) */
       comp->addSerializationRecord(record, (uint8_t *)sccOffsetAddr - start);
       }
    }
