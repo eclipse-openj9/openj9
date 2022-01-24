@@ -3702,23 +3702,12 @@ J9::Z::TreeEvaluator::pdstoreEvaluator(TR::Node *node, TR::CodeGenerator *cg)
                             1, TR::DebugCounter::Cheap);
 
    static bool disablePdstoreVectorEvaluator = (feGetEnv("TR_DisablePdstoreVectorEvaluator") != NULL);
-   static bool disableZdstoreVectorEvaluator = (feGetEnv("TR_DisableZdstoreVectorEvaluator") != NULL);
 
    if (!cg->comp()->getOption(TR_DisableVectorBCD) && !disablePdstoreVectorEvaluator
       && cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL)
       && (node->getOpCodeValue() == TR::pdstore || node->getOpCodeValue() == TR::pdstorei))
       {
       pdstoreVectorEvaluatorHelper(node, cg);
-      }
-   else if (!cg->comp()->getOption(TR_DisableVectorBCD) && !disableZdstoreVectorEvaluator
-         && cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL_ENHANCEMENT_FACILITY_2)
-         && node->getOpCodeValue() == TR::zdstorei
-         && node->getSecondChild()->getReferenceCount() == 1
-         && node->getSecondChild()->getRegister() == NULL
-         && (node->getSecondChild())->getOpCodeValue() == TR::pd2zd
-         && ((node->getSecondChild())->getFirstChild())->getOpCodeValue() == TR::pdloadi)
-      {
-      zdstoreiVectorEvaluatorHelper(node, cg);
       }
    else
       {
@@ -6423,60 +6412,4 @@ J9::Z::TreeEvaluator::pdshrVectorEvaluatorHelper(TR::Node *node, TR::CodeGenerat
    cg->decReferenceCount(roundAmountNode);
 
    return targetReg;
-   }
-
-TR::Register*
-J9::Z::TreeEvaluator::zdstoreiVectorEvaluatorHelper(TR::Node *node, TR::CodeGenerator *cg)
-   {
-   if (cg->comp()->getOption(TR_TraceCG))
-      traceMsg(cg->comp(), "DAA: Entering zdstoreiVectorEvaluator %d\n", __LINE__);
-
-   TR::Node* pd2zdNode = node->getSecondChild();
-   TR::Node* pdloadiNode = pd2zdNode->getFirstChild();
-   TR::Register* pdValueReg = cg->evaluate(pdloadiNode);
-   TR_ASSERT_FATAL_WITH_NODE(pdloadiNode, (pdValueReg->getKind() == TR_FPR || pdValueReg->getKind() == TR_VRF),
-            "vectorized zdstore is expecting the packed decimal to be in a vector register.");
-
-   // No need to evaluate the address node of the zdstorei.
-   // generateVSIInstruction() API will call separateIndexRegister() to separate the index
-   // register by emitting an LA instruction. If there's a need for large displacement adjustment,
-   // LAY will be emitted instead.
-   TR::MemoryReference * targetMR = TR::MemoryReference::create(cg, node);
-
-   TR::Register *zonedDecimalHigh = cg->allocateRegister(TR_VRF);
-   TR::Register *zonedDecimalLow = cg->allocateRegister(TR_VRF);
-
-   // 0 we store 1 byte, 15 we store 16 bytes.
-   // 15 - lengthToStore = index from which to start.
-   uint8_t lengthToStore = pd2zdNode->getDecimalPrecision() - 1;
-   uint8_t M3 = 0x8; // Disable sign validation.
-   TR::MemoryReference * zonedDecimalMR = targetMR;
-   generateVRRkInstruction(cg, TR::InstOpCode::VUPKZL, node, zonedDecimalLow, pdValueReg, M3); // Also copies the sign bit.
-
-   if (pd2zdNode->getDecimalPrecision() > TR_VECTOR_REGISTER_SIZE)
-      {
-      generateVRRkInstruction(cg, TR::InstOpCode::VUPKZH, node, zonedDecimalHigh, pdValueReg, M3);
-      lengthToStore = pd2zdNode->getDecimalPrecision() - TR_VECTOR_REGISTER_SIZE;
-      generateVSIInstruction(cg, TR::InstOpCode::VSTRL, node, zonedDecimalHigh, zonedDecimalMR, lengthToStore - 1);
-      zonedDecimalMR = generateS390MemoryReference(*targetMR, lengthToStore, cg);
-      lengthToStore = TR_VECTOR_REGISTER_SIZE - 1;
-      }
-
-   generateVSIInstruction(cg, TR::InstOpCode::VSTRL, node, zonedDecimalLow, zonedDecimalMR, lengthToStore);
-
-   pd2zdSignFixup(node, targetMR, cg, false);
-
-   // This would have been decremented in pd2zdVectorEvaluatorHelper
-   // but since we skip that evaluator we decrement it here.
-   cg->decReferenceCount(pdloadiNode);
-
-   for (int32_t i = 0; i < node->getNumChildren(); ++i)
-      {
-      cg->decReferenceCount(node->getChild(i));
-      }
-
-   cg->stopUsingRegister(zonedDecimalHigh);
-   cg->stopUsingRegister(zonedDecimalLow);
-
-   return NULL;
    }
