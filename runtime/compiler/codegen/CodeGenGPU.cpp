@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -490,16 +490,17 @@ static const char* getOpCodeName(TR::ILOpCodes opcode) {
 }
 
 
-char *nvvmTypeNames[TR::NumTypes] =
+char *nvvmTypeNames[TR::NumOMRTypes] =
    {
-   "void",    // "TR::NoType"
-   "i8",      // "TR::Int8"
-   "i16",     // "TR::Int16"
-   "i32",     // "TR::Int32"
-   "i64",     // "TR::Int64"
-   "float",   // "TR::Float"
-   "double",  // "TR::Double"
-   "i8*"      // "TR::Address"
+   "void",    // TR::NoType
+   "i8",      // TR::Int8
+   "i16",     // TR::Int16
+   "i32",     // TR::Int32
+   "i64",     // TR::Int64
+   "float",   // TR::Float
+   "double",  // TR::Double
+   "i8*",     // TR::Address
+   "aggr"     // TR::Aggregate: not used
    };
 
 static const char* getTypeName(TR::DataType type) {
@@ -514,16 +515,17 @@ static const char* getTypeName(TR::DataType type) {
        }
 }
 
-char *nvvmVarTypeNames[TR::NumTypes] =
+char *nvvmVarTypeNames[TR::NumOMRTypes] =
    {
-   "void",    // "TR::NoType"
-   "i8",      // "TR::Int8"
-   "i16",     // "TR::Int16"
-   "i32",     // "TR::Int32"
-   "i64",     // "TR::Int64"
-   "f32",     // "TR::Float"
-   "f64",     // "TR::Double"
-   "p64"      // "TR::Address"
+   "void",    // TR::NoType
+   "i8",      // TR::Int8
+   "i16",     // TR::Int16
+   "i32",     // TR::Int32
+   "i64",     // TR::Int64
+   "f32",     // TR::Float
+   "f64",     // TR::Double
+   "p64",     // TR::Address
+   "paggr"    // TR::Aggregate: not used
    };
 
 static const char* getVarTypeName(TR::DataType type) {

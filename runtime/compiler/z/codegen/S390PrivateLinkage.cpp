@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -939,17 +939,17 @@ J9::Z::PrivateLinkage::setParameterLinkageRegisterIndex(TR::ResolvedMethodSymbol
          case TR::UnicodeDecimalSignTrailing:
          case TR::Aggregate:
             break;
-         case TR::VectorInt8:
-         case TR::VectorInt16:
-         case TR::VectorInt32:
-         case TR::VectorInt64:
-         case TR::VectorDouble:
-            if (numVectorArgs < self()->getNumVectorArgumentRegisters())
+         default:
+            if (dt.isVector())
                {
-               index = numVectorArgs;
+               // TODO: special handling for Float?
+               if (numVectorArgs < self()->getNumVectorArgumentRegisters())
+                  {
+                  index = numVectorArgs;
+                  }
+               numVectorArgs++;
+               break;
                }
-            numVectorArgs++;
-            break;
          }
       paramCursor->setLinkageRegisterIndex(index);
       paramCursor = paramIterator.getNext();

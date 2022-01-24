@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -6358,7 +6358,7 @@ bool TR_EscapeAnalysis::fixupFieldAccessForNonContiguousAllocation(TR::Node *nod
          TR_ASSERT(i >= 0, "element 0 should exist\n");
 
          if (!newOpType.isVector())
-            newOpType = newOpType.scalarToVector();
+            newOpType = newOpType.scalarToVector(TR::VectorLength128); // TODO: use best vector length available
 
          TR_ASSERT(newOpType != TR::NoType, "wrong type at node %p\n", node);
          }
@@ -6390,7 +6390,9 @@ bool TR_EscapeAnalysis::fixupFieldAccessForNonContiguousAllocation(TR::Node *nod
          if (autoSymRef->getSymbol()->getDataType().isVector() &&
              !node->getDataType().isVector())
             {
-            TR::Node::recreate(node, node->getDataType() == TR::VectorDouble ? TR::vdgetelem : TR::vigetelem);
+            TR::Node::recreate(node,
+                               (node->getDataType().isVector() && node->getDataType().getVectorElementType() == TR::Double)
+                               ? TR::vdgetelem : TR::vigetelem);
             node->setAndIncChild(0, TR::Node::create(node, TR::vload, 0));
             node->setNumChildren(2);
             node->getFirstChild()->setSymbolReference(autoSymRef);
@@ -6438,7 +6440,9 @@ bool TR_EscapeAnalysis::fixupFieldAccessForNonContiguousAllocation(TR::Node *nod
             {
             TR::Node::recreate(node, TR::vstore);
             TR::Node *value = node->getFirstChild();
-            TR::Node *newValue = TR::Node::create(node, node->getDataType() == TR::VectorDouble ? TR::vdsetelem : TR::visetelem, 3);
+            TR::Node *newValue = TR::Node::create(node,
+                                                  (node->getDataType().isVector() && node->getDataType().getVectorElementType() == TR::Double)
+                                                  ? TR::vdsetelem : TR::visetelem, 3);
             newValue->setAndIncChild(0, TR::Node::create(node, TR::vload, 0));
             newValue->getFirstChild()->setSymbolReference(autoSymRef);
             newValue->setChild(1, value);

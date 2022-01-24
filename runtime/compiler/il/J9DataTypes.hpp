@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -87,7 +87,6 @@ public:
    static const char    * getName(TR::DataType dt);
    static const int32_t   getSize(TR::DataType dt);
    static void            setSize(TR::DataType dt, int32_t newValue);
-   static const char    * getPrefix(TR::DataType dt);
 
    // for the overloaded instances of getName:
    // OMR::DataType::getName(TR_RawBCDSignCode)

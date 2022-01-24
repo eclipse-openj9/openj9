@@ -27,6 +27,7 @@
 #include "optimizer/OptimizationManager.hpp"
 #include "codegen/RecognizedMethods.hpp"
 #include "il/SymbolReference.hpp"
+#include "infra/Assert.hpp"
 
 namespace TR { class Block; }
 
@@ -235,7 +236,7 @@ class TR_VectorAPIExpansion : public TR::Optimization
    TR_BitVector _seenClasses;
 
   /** \brief
-   *     Checks if vector length is supported on current platform
+   *     Checks if vector is supported on current platform
    *
    *  \param comp
    *     Compilation
@@ -244,15 +245,24 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *     Vector length in bits
    *
    *  \return
-   *     \c true if plaform supports \c vectorLength
-   *     \c false otherwise
+   *     \c corresponding TR::VectorLength enum if plaform supports \c vectorLength
+   *     \c TR::NoVectorLength otherwise
    */
-   static bool supportedOnPlatform(TR::Compilation *comp, vec_sz_t vectorLength)
+   static TR::VectorLength supportedOnPlatform(TR::Compilation *comp, vec_sz_t vectorLength)
          {
-         if (comp->target().cpu.isPower() && vectorLength == 128)
-            return true;
-         else
-            return false;
+         // General check for supported infrastructure
+         if (!comp->target().cpu.isPower() && !comp->target().cpu.isZ())
+            return TR::NoVectorLength;
+
+         if (vectorLength != 128)
+            return TR::NoVectorLength;
+
+         TR::VectorLength length = OMR::DataType::bitsToVectorLength(vectorLength);
+
+         TR_ASSERT_FATAL(length > TR::NoVectorLength && length <= TR::NumVectorLengths,
+                         "VectorAPIExpansion requested invalid vector length %d\n", length);
+
+         return length;
          }
 
    /** \brief
