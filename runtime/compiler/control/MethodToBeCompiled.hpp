@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -67,11 +67,12 @@ struct TR_MethodToBeCompiled
    static TR_MethodToBeCompiled *allocate(J9JITConfig *jitConfig);
    void shutdown();
 
-   void initialize(TR::IlGeneratorMethodDetails & details, void *oldStartPC, CompilationPriority p, TR_OptimizationPlan *optimizationPlan);
+   void initialize(TR::IlGeneratorMethodDetails &details, void *oldStartPC,
+                   CompilationPriority priority, TR_OptimizationPlan *optimizationPlan);
 
    TR::Monitor *getMonitor() { return _monitor; }
-   TR::IlGeneratorMethodDetails & getMethodDetails() const { return *_methodDetails; }
-   bool isDLTCompile()   { return getMethodDetails().isMethodInProgress(); }
+   TR::IlGeneratorMethodDetails &getMethodDetails() const { return *_methodDetails; }
+   bool isDLTCompile() const { return getMethodDetails().isMethodInProgress(); }
    bool isCompiled() const;
    bool isJNINative() const;
    void acquireSlotMonitor(J9VMThread *vmThread);
@@ -84,10 +85,10 @@ struct TR_MethodToBeCompiled
    void unsetRemoteCompReq() { _remoteCompReq = false; }
    bool isOutOfProcessCompReq() const { return _stream != NULL; } // at the server
    uint64_t getClientUID() const;
-   bool hasChangedToLocalSyncComp() const { return (_origOptLevel != unknownHotness); }
+   bool hasChangedToLocalSyncComp() const { return _origOptLevel != unknownHotness; }
    void setShouldUpgradeOutOfProcessCompilation() { _shouldUpgradeOutOfProcessCompilation = true; }
-   bool shouldUpgradeOutOfProcessCompilation() { return _shouldUpgradeOutOfProcessCompilation; }
-#else
+   bool shouldUpgradeOutOfProcessCompilation() const { return _shouldUpgradeOutOfProcessCompilation; }
+#else /* defined(J9VM_OPT_JITSERVER) */
    bool isRemoteCompReq() const { return false; } // at the client
    bool isOutOfProcessCompReq() const { return false; } // at the server
 #endif /* defined(J9VM_OPT_JITSERVER) */
@@ -97,10 +98,11 @@ struct TR_MethodToBeCompiled
    TR::IlGeneratorMethodDetails *_methodDetails;
    void                  *_oldStartPC;
    void                  *_newStartPC;
-   TR::Monitor *_monitor;
-   char                   _monitorName[30]; // to be able to deallocate the string
+   TR::Monitor           *_monitor;
+   char                   _monitorName[28]; // to be able to deallocate the string
+                                            // "JIT-QueueSlotMonitor-N" for 16-bit index N fits into 28 characters
    TR_OptimizationPlan   *_optimizationPlan;
-   uint64_t              _entryTime; // time it was added to the queue (ms)
+   uint64_t               _entryTime; // time it was added to the queue (ms)
    TR::CompilationInfoPerThreadBase *_compInfoPT; // pointer to the thread that is handling this request
    const void *           _aotCodeToBeRelocated;
 
@@ -126,37 +128,38 @@ struct TR_MethodToBeCompiled
                                                    // exists, so that any further normal compilation
                                                    // requests for the same method will be performed
                                                    // synchronously
-   bool                   _entryShouldBeDeallocated;  // when set, the thread requesting the compilation
-                                                      // should deallocate the entry
-                                                      // It is set only when stopping compilation thread
-   bool                  _entryIsCountedAsInvRequest; // when adding a request to the queue, if this is
-                                                      // an invalidation request, flag the entry and
-                                                      // increment a counter. Note that this flag is solely
-                                                      // used for proper counting. An entry could have been
-                                                      // queued as a normal request and later on be
-                                                      // transformed into a INV request. The flag is only set
-                                                      // if the request started as an INV request
+   bool                   _entryShouldBeDeallocated; // when set, the thread requesting the compilation
+                                                     // should deallocate the entry
+                                                     // It is set only when stopping compilation thread
+   bool                   _entryIsCountedAsInvRequest; // when adding a request to the queue, if this is
+                                                       // an invalidation request, flag the entry and
+                                                       // increment a counter. Note that this flag is solely
+                                                       // used for proper counting. An entry could have been
+                                                       // queued as a normal request and later on be
+                                                       // transformed into a INV request. The flag is only set
+                                                       // if the request started as an INV request
    bool                   _GCRrequest; // Needed to be able to decrement the number of GCR requests in the queue
                                        // The flag in methodInfo is not enough because it may indicate true when
                                        // the entry is queued, but change afterwards if method receives samples
                                        // to be upgraded to hot or scorching
+   bool                   _hasIncrementedNumCompThreadsCompilingHotterMethods;
+
    int16_t                _index;
    uint8_t                _freeTag; // temporary to catch a nasty bug
    uint8_t                _weight; // Up to 256 levels of weight
-   bool                   _hasIncrementedNumCompThreadsCompilingHotterMethods;
    uint8_t                _jitStateWhenQueued;
 
 #if defined(J9VM_OPT_JITSERVER)
    // Comp request should be sent remotely to JITServer
    bool _remoteCompReq;
-   // A non-NULL field denotes an out-of-process compilation request
-   JITServer::ServerStream *_stream;
-   // Cache original optLevel when transforming a remote sync compilation to a local cheap one
-   TR_Hotness _origOptLevel;
    // Flag used to determine whether a cold local compilation should be upgraded by LPQ
    bool _shouldUpgradeOutOfProcessCompilation;
    // Set at the client after a failed AOT deserialization or load to bypass AOT cache on the next compilation attempt
    bool _doNotLoadFromJITServerAOTCache;
+   // Cache original optLevel when transforming a remote sync compilation to a local cheap one
+   TR_Hotness _origOptLevel;
+   // A non-NULL field denotes an out-of-process compilation request
+   JITServer::ServerStream *_stream;
 #endif /* defined(J9VM_OPT_JITSERVER) */
    }; // TR_MethodToBeCompiled
 
