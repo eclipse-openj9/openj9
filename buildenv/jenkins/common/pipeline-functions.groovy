@@ -442,7 +442,7 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
             }
 
             // generate child test jobs
-            def GENERATE_JOBS = params.AUTOMATIC_GENERATION ?: false
+            def GENERATE_JOBS = params.AUTOMATIC_GENERATION ? params.AUTOMATIC_GENERATION.toBoolean() : false
 
             testJobs[id] = {
                 if (params.ghprbPullId) {
