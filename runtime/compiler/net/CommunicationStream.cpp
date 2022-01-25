@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2021 IBM Corp. and others
+ * Copyright (c) 2018, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -58,33 +58,7 @@ void CommunicationStream::initSSL()
    (*OSSL_load_error_strings)();
    (*OSSL_library_init)();
    // OpenSSL_add_ssl_algorithms() is a synonym for SSL_library_init() and is implemented as a macro
-   // It's redundant, should be able to remove it later
-   // OpenSSL_add_ssl_algorithms();
-   }
-
-void
-CommunicationStream::readMessage2(Message &msg)
-   {
-   msg.clearForRead();
-
-   // read message size
-   uint32_t serializedSize;
-   readBlocking(serializedSize);
-
-   msg.expandBufferIfNeeded(serializedSize);
-   msg.setSerializedSize(serializedSize);
-
-   // read the rest of the message
-   uint32_t messageSize = serializedSize - sizeof(uint32_t);
-   readBlocking(msg.getBufferStartForRead() + sizeof(uint32_t), messageSize);
-
-   // rebuild the message
-   msg.deserialize();
-
-   // collect message size
-#if defined(MESSAGE_SIZE_STATS)
-   msgSizeStats[int(msg.type())].update(serializedSize);
-#endif /* defined(MESSAGE_SIZE_STATS) */
+   // It's redundant and doesn't need to be called
    }
 
 void
@@ -103,7 +77,7 @@ CommunicationStream::readMessage(Message &msg)
    // an exception already if (bytesRead <= 0).
    if (bytesRead < sizeof(uint32_t))
       {
-      throw JITServer::StreamFailure("JITServer I/O error: fail to read the size of the message");
+      throw JITServer::StreamFailure("JITServer I/O error: failed to read the size of the message");
       }
 
    // bytesRead >= sizeof(uint32_t)

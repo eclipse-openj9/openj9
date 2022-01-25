@@ -86,9 +86,6 @@ protected:
    // Build a message sent by a remote party by reading from the socket
    // as much as possible (up to internal buffer capacity)
    void readMessage(Message &msg);
-   // Build a message sent by a remote party by first reading the message
-   // size and then reading the rest of the message
-   void readMessage2(Message &msg);
    void writeMessage(Message &msg);
 
    int getConnFD() const { return _connfd; }
@@ -104,16 +101,6 @@ protected:
    static uint32_t CONFIGURATION_FLAGS;
 
 private:
-   // readBlocking and writeBlocking are functions that directly read/write
-   // passed object from/to the socket. For the object to be correctly written,
-   // it needs to be contiguous.
-   template <typename T>
-   void readBlocking(T &val)
-      {
-      static_assert(std::is_trivially_copyable<T>::value == true, "T must be trivially copyable.");
-      readBlocking((char*)&val, sizeof(T));
-      }
-
    void readBlocking(char *data, size_t size)
       {
       size_t totalBytesRead = 0;
@@ -167,13 +154,6 @@ private:
             }
          }
       return bytesRead;
-      }
-
-   template <typename T>
-   void writeBlocking(const T &val)
-      {
-      static_assert(std::is_trivially_copyable<T>::value == true, "T must be trivially copyable.");
-      writeBlocking(&val, sizeof(T));
       }
 
    void writeBlocking(const char *data, size_t size)
