@@ -399,6 +399,9 @@ TR::CompilationInfoPerThreadRemote::serveCachedAOTMethod(TR_MethodToBeCompiled &
                                                          TR_OptimizationPlan *optPlan, ClientSessionData *clientData,
                                                          J9::J9SegmentProvider &scratchSegmentProvider)
    {
+   PORT_ACCESS_FROM_JITCONFIG(_jitConfig);
+   uintptr_t startTime = TR::Options::getVerboseOption(TR_VerbosePerformance) ? j9time_usec_clock() : 0;
+
    auto aotCache = clientData->getAOTCache();
    auto serializedMethod = aotCache->findMethod(_definingClassChainRecord, _methodIndex,
                                                 optPlan->getOptLevel(), clientData->getAOTHeaderRecord());
@@ -426,12 +429,61 @@ TR::CompilationInfoPerThreadRemote::serveCachedAOTMethod(TR_MethodToBeCompiled &
    for (auto r : records)
       serializedRecords.push_back(std::string((const char *)r, r->size()));
 
+   // Record the AOT cache hit as a "compilation end" in vlog.
+   // The code is mostly copied from CompilationInfoPerThreadBase::logCompilationSuccess().
+   if (TR::Options::isAnyVerboseOptionSet(TR_VerbosePerformance, TR_VerboseCompileEnd))
+      {
+      uintptr_t currentTime = TR::Options::getVerboseOption(TR_VerbosePerformance) ? j9time_usec_clock() : 0;
+
+      auto &classRecord = serializedMethod->definingClassRecord()->data();
+      const J9ROMMethod *romMethod;
+         {
+         OMR::CriticalSection cs(clientData->getROMMapMonitor());
+         auto it = clientData->getJ9MethodMap().find(method);
+         TR_ASSERT(it != clientData->getJ9MethodMap().end(), "Method %p must be cached", method);
+         romMethod = it->second._romMethod;
+         }
+
+      TR_VerboseLog::CriticalSection vlogLock;
+      TR_VerboseLog::write(TR_Vlog_COMP,
+         "(AOT cache %s) %.*s.%.*s%.*s %s Q_SZ=%d Q_SZI=%d QW=%d j9m=%p bcsz=%u",
+         TR::Compilation::getHotnessName(optPlan->getOptLevel()), (int)classRecord.nameLength(), classRecord.name(),
+         J9UTF8_LENGTH(J9ROMMETHOD_NAME(romMethod)), (const char *)J9UTF8_DATA(J9ROMMETHOD_NAME(romMethod)),
+         J9UTF8_LENGTH(J9ROMMETHOD_SIGNATURE(romMethod)), (const char *)J9UTF8_DATA(J9ROMMETHOD_SIGNATURE(romMethod)),
+         entry.getMethodDetails().name(), _compInfo.getMethodQueueSize(), _compInfo.getNumQueuedFirstTimeCompilations(),
+         _compInfo.getQueueWeight(), method, _compInfo.getMethodBytecodeSize(romMethod)
+      );
+
+      if (TR::Options::getVerboseOption(TR_VerbosePerformance))
+         TR_VerboseLog::write(" time=%zuus mem=[region=%llu system=%llu]KB", currentTime - startTime,
+                              (unsigned long long)segmentProvider.regionBytesAllocated() / 1024,
+                              (unsigned long long)segmentProvider.systemBytesAllocated() / 1024);
+
+      TR_VerboseLog::write(" compThreadID=%d", getCompThreadId());
+
+      CpuUtilization *cpuUtil = _compInfo.getCpuUtil();
+      if (cpuUtil->isFunctional())
+         TR_VerboseLog::write(" CpuLoad=%d%%(%d%%avg) JvmCpu=%d%%", cpuUtil->getCpuUsage(),
+                              cpuUtil->getAvgCpuUsage(), cpuUtil->getVmCpuUsage());
+
+      if (TR::Options::getVerboseOption(TR_VerboseCompilationThreads))
+         {
+         int32_t cpuUtil = getCompThreadCPU().getThreadLastCpuUtil();
+         if (cpuUtil >= 0)
+            TR_VerboseLog::write(" compCPU=%d%%", cpuUtil);
+         }
+
+      if (TR::Options::getVerboseOption(TR_VerbosePerformance))
+         TR_VerboseLog::write(" queueTime=%zuus", currentTime - entry._entryTime);
+
+      TR_VerboseLog::writeLine("");
+      }
+
    //NOTE: Leaving optimization plan unchanged. This can be changed in the future.
    entry._stream->write(JITServer::MessageType::AOTCache_serializedAOTMethod,
                         std::string((const char *)&serializedMethod->data(), serializedMethod->data().size()),
                         serializedRecords, *optPlan, computeServerMemoryState(getCompilationInfo()),
                         computeServerActiveThreadsState(getCompilationInfo()));
-
    return true;
    }
 
