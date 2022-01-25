@@ -1896,5 +1896,24 @@ class TR_RelocationRecordBreakpointGuard : public TR_RelocationRecordWithInlined
       uintptr_t destinationAddress(TR_RelocationTarget *reloTarget);
    };
 
+class TR_RelocationRecordValidateJ2IThunkFromMethod : public TR_RelocationRecord
+   {
+   public:
+      TR_RelocationRecordValidateJ2IThunkFromMethod() {}
+      TR_RelocationRecordValidateJ2IThunkFromMethod(TR_RelocationRuntime *reloRuntime, TR_RelocationRecordBinaryTemplate *record) : TR_RelocationRecord(reloRuntime, record) {}
+      virtual bool isValidationRecord() { return true; }
+      virtual char *name() { return "TR_RelocationRecordValidateJ2IThunkFromMethod"; }
+      virtual void preparePrivateData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget) {}
+      virtual int32_t applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation);
+
+      virtual void print(TR_RelocationRuntime *reloRuntime);
+
+      void setThunkID(TR_RelocationTarget *reloTarget, uint16_t methodClassID);
+      uint16_t thunkID(TR_RelocationTarget *reloTarget);
+
+      void setMethodID(TR_RelocationTarget *reloTarget, uint16_t methodID);
+      uint16_t methodID(TR_RelocationTarget *reloTarget);
+   };
+
 #endif   // RELOCATION_RECORD_INCL
 
