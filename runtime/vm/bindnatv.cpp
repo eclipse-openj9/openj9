@@ -292,7 +292,7 @@ static inlMapping mappings[] = {
 	{ "Java_sun_reflect_Reflection_getClassAccessFlags__Ljava_lang_Class_2", J9_BCLOOP_SEND_TARGET_INL_REFLECTION_GETCLASSACCESSFLAGS },
 #endif /* JAVA_SPEC_VERSION >= 11 */
 #if JAVA_SPEC_VERSION >= 16
-	{ "Java_jdk_internal_foreign_abi_ProgrammableInvoker_invokeNative__JJ_3J", J9_BCLOOP_SEND_TARGET_INL_PROGRAMMABLEINVOKER_INVOKENATIVE },
+	{ "Java_jdk_internal_foreign_abi_ProgrammableInvoker_invokeNative__JJJ_3J", J9_BCLOOP_SEND_TARGET_INL_PROGRAMMABLEINVOKER_INVOKENATIVE },
 #endif /* JAVA_SPEC_VERSION >= 16 */
 };
 

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2021, 2021 IBM Corp. and others
+ * Copyright (c) 2021, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,7 +35,7 @@ import jdk.incubator.foreign.ResourceScope;
 import jdk.incubator.foreign.SymbolLookup;
 
 /**
- * Test cases for JEP 389: Foreign Linker API (Incubator) DownCall for primitive types,
+ * Test cases for JEP 389: Foreign Linker API (Incubator) for primitive types in downcall,
  * which verifies the downcalls with the diffrent layouts and arguments/return types in multithreading.
  */
 @Test(groups = { "level.sanity" })

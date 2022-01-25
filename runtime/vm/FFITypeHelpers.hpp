@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,9 +25,9 @@
 
 #include "ut_j9vm.h"
 #include "vm_internal.h"
-#if JAVA_SPEC_VERSION >= 16
+#ifdef J9VM_OPT_PANAMA
 #include "ffi.h"
-#endif /* JAVA_SPEC_VERSION >= 16 */
+#endif /* J9VM_OPT_PANAMA */
 
 #define J9VM_LAYOUT_STRING_ON_STACK_LIMIT 128
 
@@ -44,10 +44,10 @@ class FFITypeHelpers
  * Data members
  */
 private:
-#if JAVA_SPEC_VERSION >= 16
+#ifdef J9VM_OPT_PANAMA
 	J9VMThread *const _currentThread;
 	J9JavaVM *const _vm;
-#endif /* JAVA_SPEC_VERSION >= 16 */
+#endif /* J9VM_OPT_PANAMA */
 
 protected:
 
@@ -62,7 +62,7 @@ protected:
 
 public:
 
-#if JAVA_SPEC_VERSION >= 16
+#ifdef J9VM_OPT_PANAMA
 	/**
 	 * @brief Convert argument or return type from J9Class to ffi_type.
 	 * Only primitive types are currently supported. Objects will likely be passed as a pointer, so they are type long.
@@ -249,93 +249,6 @@ doneGetArrayFFIType:
 	}
 
 	/**
-	 * @brief obtain the ffi_type from the layout symbol (the starting letter of the layout type)
-	 * @param layoutSymb[in] The layout symbol describing the type of the layout
-	 * @return The pointer to the ffi_type corresponding to the layout symbol
-	 */
-	VMINLINE ffi_type*
-	mapPrimitiveLayoutToFFIType(char layoutSymb)
-	{
-		ffi_type* typeFFI = NULL;
-
-		switch (layoutSymb) {
-		case 'V':	/* VOID */
-			typeFFI = &ffi_type_void;
-			break;
-		case 'B':	/* C_BOOL */
-			typeFFI = &ffi_type_uint8;
-		case 'C':	/* C_CHAR */
-			typeFFI = &ffi_type_sint8;
-			break;
-		case 'S':	/* C_SHORT */
-			typeFFI = &ffi_type_sint16;
-			break;
-		case 'I':	/* C_INT */
-			typeFFI = &ffi_type_sint32;
-			break;
-		case 'L':	/* 8 bytes for either C_LONG or C_LONG_LONG(maps to long long specific to Windows) */
-			typeFFI = &ffi_type_sint64;
-			break;
-		case 'F':	/* C_FLOAT */
-			typeFFI = &ffi_type_float;
-			break;
-		case 'D':	/* C_DOUBLE */
-			typeFFI = &ffi_type_double;
-			break;
-		case 'P':	/* C_POINTER */
-			typeFFI = &ffi_type_pointer;
-			break;
-		default:
-			Assert_VM_unreachable();
-		}
-
-		return typeFFI;
-	}
-
-	/**
-	 * @brief Obtain a primitive FFI type from a layout string object
-	 * @param typeFFI[in] The primitive FFI type to be obtain
-	 * @param layoutStringObject[in] An object containing the layout string describing the target type.
-	 *        e.g. C_INT = b32[abi/kind=INT]
-	 *             C_INT with name c_int = b32(c_int)[abi/kind=INT,layout/name=c_int]
-	 * @return The pointer to the ffi_type corresponding to the layout
-	 */
-	VMINLINE ffi_type*
-	getPrimitiveFFIType(j9object_t layoutStringObject)
-	{
-		PORT_ACCESS_FROM_JAVAVM(_vm);
-
-		ffi_type *primitiveTypeFFI = NULL;
-		char *currentLayout = NULL;
-		char layoutBuffer[J9VM_LAYOUT_STRING_ON_STACK_LIMIT];
-		char *layoutStr = copyStringToUTF8WithMemAlloc(_currentThread, layoutStringObject,
-				J9_STR_NULL_TERMINATE_RESULT,
-				"", 0, layoutBuffer, sizeof(layoutBuffer), NULL);
-		if (NULL == layoutStr) {
-			goto done;
-		}
-
-		/* The string of layout consists of the endianness ('B' for big-endianness while 'b' for little-endianness),
-		 * the data size and the data type, e.g. b8[abi/kind=CHAR] stands for C_CHAR.
-		 * Thus, we need to skip over '=' to obtain the first character of the type.
-		 */
-		currentLayout = layoutStr;
-		while ('=' != *currentLayout) {
-			currentLayout += 1;
-		}
-		currentLayout += 1; // skip over '=' to the kind name
-		primitiveTypeFFI = mapPrimitiveLayoutToFFIType(*currentLayout);
-
-done:
-		if (layoutStr != layoutBuffer) {
-			j9mem_free_memory(layoutStr);
-			layoutStr = NULL;
-		}
-
-		return primitiveTypeFFI;
-	}
-
-	/**
 	 * @brief Create an array of elements for a custom FFI type
 	 * @param layout[in] A pointer to a c string describing the types of the struct elements
 	 * @param inPtr[in] Describes whether the current symbols are in a pointer
@@ -376,7 +289,7 @@ done:
 			, _vm(_currentThread->javaVM)
 	{ };
 
-#endif /* JAVA_SPEC_VERSION >= 16 */
+#endif /* J9VM_OPT_PANAMA */
 };
 
 #endif /* FFITYPEHELPERS_HPP_ */

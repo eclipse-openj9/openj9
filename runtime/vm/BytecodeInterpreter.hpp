@@ -59,6 +59,9 @@
 #include "UnsafeAPI.hpp"
 #include "ObjectMonitor.hpp"
 #include "JITInterface.hpp"
+#if JAVA_SPEC_VERSION >= 16
+#include "LayoutFFITypeHelpers.hpp"
+#endif /* JAVA_SPEC_VERSION >= 16 */
 
 #if 0
 #define DEBUG_MUST_HAVE_VM_ACCESS(vmThread) Assert_VM_mustHaveVMAccess(vmThread)
@@ -4861,41 +4864,8 @@ done:
 	}
 
 #if JAVA_SPEC_VERSION >= 16
-	/**
-	 * @brief Convert argument or return type from ffi_type to J9NativeTypeCode
-	 * @param type[in] The pointer to the J9Class of the type
-	 * @return The J9NativeTypeCode corresponding to the J9Class
-	 */
-	VMINLINE U_8
-	getJ9NativeTypeCodeFromFFIType(ffi_type *type)
-	{
-		U_8 typeCode = 0;
-		if (&ffi_type_void == type) {
-			typeCode = J9NtcVoid;
-		} else if (&ffi_type_uint8 == type) {
-			typeCode = J9NtcBoolean;
-		} else if (&ffi_type_sint8 == type) {
-			typeCode = J9NtcByte;
-		} else if (&ffi_type_sint16 == type) {
-			typeCode = J9NtcShort;
-		} else if (&ffi_type_sint32 == type) {
-			typeCode = J9NtcInt;
-		} else if (&ffi_type_sint64 == type) {
-			typeCode = J9NtcLong;
-		} else if (&ffi_type_float == type) {
-			typeCode = J9NtcFloat;
-		} else if (&ffi_type_double == type) {
-			typeCode = J9NtcDouble;
-		} else if (&ffi_type_pointer == type) {
-			typeCode = J9NtcPointer;
-		} else {
-			Assert_VM_unreachable();
-		}
-		return typeCode;
-	}
-
 	/* jdk.internal.foreign.abi.ProgrammableInvoker:
-	 * private native long invokeNative(long functionAddr, long calloutThunk, long[] argValues);
+	 * private native long invokeNative(long returnStructMemAddr, long functionAddr, long calloutThunk, long[] argValues);
 	 */
 	VMINLINE VM_BytecodeAction
 	inlProgrammableInvokerInvokeNative(REGISTER_ARGS_LIST)
@@ -4928,12 +4898,19 @@ done:
 		j9object_t argValues = *(j9object_t *)_sp; // argValues
 		ffi_cif *cif = (ffi_cif *)(UDATA)*(I_64 *)(_sp + 1); // calloutThunk
 		void *function = (void *)(UDATA)*(I_64 *)(_sp + 3); // functionAddr
-		U_8 returnType = getJ9NativeTypeCodeFromFFIType(cif->rtype);
+		ffi_type *ffiRetType = cif->rtype;
+		UDATA returnTypeSize = ffiRetType->size;
+		U_8 returnType = LayoutFFITypeHelpers::getJ9NativeTypeCodeFromFFIType(ffiRetType);
 		U_32 ffiArgCount = J9INDEXABLEOBJECT_SIZE(currentThread, argValues);
 		const U_8 minimalCallout = 16;
 		bool isMinimal = (ffiArgCount <= minimalCallout);
 
 		PORT_ACCESS_FROM_JAVAVM(_vm);
+
+		if (J9NtcStruct == returnType) {
+			/* The struct memory is allocated by the memory segment at java level */
+			returnStorage = (UDATA *)(UDATA)*(I_64 *)(_sp + 5); // returnStructMemAddr
+		}
 
 		if (isMinimal) {
 			values = sValues;
@@ -4979,7 +4956,7 @@ done:
 		ffiArgs = convertToNativeArgArray(_currentThread, argValues, ffiArgs);
 
 		for (U_8 i = 0; i < ffiArgCount; i++) {
-			U_8 argType = getJ9NativeTypeCodeFromFFIType(cif->arg_types[i]);
+			U_8 argType = LayoutFFITypeHelpers::getJ9NativeTypeCodeFromFFIType(cif->arg_types[i]);
 
 			if (0 == ffiArgs[i]) {
 				values[i] = &(ffiArgs[i]);
@@ -4987,6 +4964,9 @@ done:
 				/* ffi_call expects the address of the pointer is the address of the stackslot */
 				pointerValues[i] = (U_64)ffiArgs[i];
 				values[i] = &pointerValues[i];
+			} else if (J9NtcStruct == argType) {
+				/* ffi_call expects the address of the struct is the address of the native memory that stores the struct */
+				values[i] = (void *)(U_64)ffiArgs[i];
 			} else {
 				values[i] = &(ffiArgs[i]);
 #if !defined(J9VM_ENV_LITTLE_ENDIAN)
@@ -5013,15 +4993,8 @@ done:
 		VM_VMAccess::inlineEnterVMFromJNI(_currentThread);
 		VMStructHasBeenUpdated(REGISTER_ARGS);
 
-		VM_VMHelpers::convertFFIReturnValue(_currentThread, returnType, returnStorage);
-		returnDoubleFromINL(REGISTER_ARGS, _currentThread->returnValue, 6);
-		goto done;
-
-ffi_OOM:
-		updateVMStruct(REGISTER_ARGS);
-		setNativeOutOfMemoryError(_currentThread, J9NLS_VM_NATIVE_OOM);
-		VMStructHasBeenUpdated(REGISTER_ARGS);
-		rc = GOTO_THROW_CURRENT_EXCEPTION;
+		VM_VMHelpers::convertFFIReturnValue(_currentThread, returnType, returnTypeSize, returnStorage);
+		returnDoubleFromINL(REGISTER_ARGS, _currentThread->returnValue, 8);
 
 done:
 		if (!isMinimal) {
@@ -5033,6 +5006,13 @@ done:
 		}
 
 		return rc;
+
+ffi_OOM:
+		updateVMStruct(REGISTER_ARGS);
+		setNativeOutOfMemoryError(_currentThread, J9NLS_VM_NATIVE_OOM);
+		VMStructHasBeenUpdated(REGISTER_ARGS);
+		rc = GOTO_THROW_CURRENT_EXCEPTION;
+		goto done;
 	}
 #endif /* JAVA_SPEC_VERSION >= 16 */
 

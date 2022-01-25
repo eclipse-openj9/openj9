@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2021 IBM Corp. and others
+# Copyright (c) 2017, 2022 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -134,6 +134,7 @@ set(main_sources
 	jvminitcommon.c
 	jvmrisup.c
 	KeyHashTable.c
+	LayoutFFITypeHelpers.cpp
 	leconditionexceptionsup.c
 	linearswalk.c
 	lockwordconfig.c
