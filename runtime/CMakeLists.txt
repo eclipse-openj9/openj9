@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2021 IBM Corp. and others
+# Copyright (c) 2017, 2022 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -567,7 +567,7 @@ endif()
 if(J9VM_MODULE_THREAD)
 	add_subdirectory(thread)
 endif()
-if(J9VM_INTERP_NATIVE_SUPPORT AND NOT (OMR_ARCH_AARCH64 AND OMR_OS_OSX))
+if(J9VM_INTERP_NATIVE_SUPPORT)
 	add_subdirectory(compiler)
 endif()
 if(J9VM_MODULE_UTIL)

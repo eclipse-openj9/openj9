@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,6 +31,10 @@
 #include "env/j9method.h"
 #include "env/VMJ9.h"
 #include "env/VerboseLog.hpp"
+
+#if defined(OSX) && defined(AARCH64)
+#include <pthread.h> // for pthread_jit_write_protect_np
+#endif
 
 static int32_t
 computeSignatureLength(char *signature)
@@ -64,9 +68,15 @@ TR_J2IThunk::allocate(
       {
       result = (TR_J2IThunk*)cg->allocateCodeMemory(totalSize, true, false);
       }
+#if defined(OSX) && defined(AARCH64)
+   pthread_jit_write_protect_np(0);
+#endif
    result->_codeSize  = codeSize;
    result->_totalSize = totalSize;
    thunkTable->getTerseSignature(result->terseSignature(), terseSignatureBufLength, signature);
+#if defined(OSX) && defined(AARCH64)
+   pthread_jit_write_protect_np(1);
+#endif
    return result;
    }
 

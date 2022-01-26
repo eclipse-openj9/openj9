@@ -4774,7 +4774,13 @@ TR::CompilationInfo::addMethodToBeCompiled(TR::IlGeneratorMethodDetails & detail
       if (pc)
          {
          J9::PrivateLinkage::LinkageInfo *linkageInfo = J9::PrivateLinkage::LinkageInfo::get(pc);
+#if defined(OSX) && defined(AARCH64)
+         pthread_jit_write_protect_np(0);
+#endif
          linkageInfo->setIsBeingRecompiled(); // mark that we try to compile it
+#if defined(OSX) && defined(AARCH64)
+         pthread_jit_write_protect_np(1);
+#endif
 
          // Update persistentMethodInfo with the level we want to compile to
          //
@@ -9030,6 +9036,10 @@ TR::CompilationInfoPerThreadBase::performAOTLoad(
          compiler->getHotnessName()
          );
       }
+
+#if defined(OSX) && defined(AARCH64)
+   pthread_jit_write_protect_np(0);
+#endif
    TR_MethodMetaData *metaData = installAotCachedMethod(
       vmThread,
       _methodBeingCompiled->_aotCodeToBeRelocated,
@@ -9040,6 +9050,10 @@ TR::CompilationInfoPerThreadBase::performAOTLoad(
       _methodBeingCompiled,
       compiler
       );
+#if defined(OSX) && defined(AARCH64)
+   pthread_jit_write_protect_np(1);
+#endif
+
    _methodBeingCompiled->_newStartPC = metaData ? reinterpret_cast<void *>(metaData->startPC) : 0;
 
    if (!metaData) // Failed to relocate!
@@ -9506,6 +9520,10 @@ TR::CompilationInfoPerThreadBase::compile(
                );
             }
 
+
+#if defined(OSX) && defined(AARCH64)
+         pthread_jit_write_protect_np(0);
+#endif
          // Put a metaData pointer into the Code Cache Header(s).
          //
          uint8_t *warmMethodHeader = compiler->cg()->getBinaryBufferStart() - sizeof(OMR::CodeCacheMethodHeader);
@@ -9523,6 +9541,9 @@ TR::CompilationInfoPerThreadBase::compile(
          // and in fact it would be wrong to do so because code during chtable.commit is
          // expecting something in the compiler object
          }
+#if defined(OSX) && defined(AARCH64)
+         pthread_jit_write_protect_np(1);
+#endif
 
       setMetadata(metaData);
 

@@ -155,6 +155,50 @@
 #define LOAD_CLASS(dest64, dest32, src)	ldr	dest64, [src, J9TR_J9Object_class]
 #endif /* OMR_GC_COMPRESSED_POINTERS */
 
+#if defined(LINUX)
+#define START_MODIFYING_CODE	// do nothing
+#define FINISH_MODIFYING_CODE	// do nothing
+#elif defined(OSX)
+	.extern	FUNC_LABEL(pthread_jit_write_protect_np)
+	.macro	SAVE_REGS_IN_NATIVE_STACK
+	stp	x0, x1, [sp, #-144]!
+	stp	x2, x3, [sp, #16]
+	stp	x4, x5, [sp, #32]
+	stp	x6, x7, [sp, #48]
+	stp	x8, x9, [sp, #64]
+	stp	x10, x11, [sp, #80]
+	stp	x12, x13, [sp, #96]
+	stp	x14, x15, [sp, #112]
+	stp	x18, x30, [sp, #128]
+	.endm
+	.macro	RESTORE_REGS_FROM_NATIVE_STACK
+	ldp	x18, x30, [sp, #128]
+	ldp	x14, x15, [sp, #112]
+	ldp	x12, x13, [sp, #96]
+	ldp	x10, x11, [sp, #80]
+	ldp	x8, x9, [sp, #64]
+	ldp	x6, x7, [sp, #48]
+	ldp	x4, x5, [sp, #32]
+	ldp	x2, x3, [sp, #16]
+	ldp	x0, x1, [sp, #0]
+	add	sp, sp, #144
+	.endm
+	.macro	START_MODIFYING_CODE
+	SAVE_REGS_IN_NATIVE_STACK
+	mov	x0, #0
+	bl	FUNC_LABEL(pthread_jit_write_protect_np)
+	RESTORE_REGS_FROM_NATIVE_STACK
+	.endm
+	.macro	FINISH_MODIFYING_CODE
+	SAVE_REGS_IN_NATIVE_STACK
+	mov	x0, #1
+	bl	FUNC_LABEL(pthread_jit_write_protect_np)
+	RESTORE_REGS_FROM_NATIVE_STACK
+	.endm
+#else
+#error Unsupported platform
+#endif
+
 // Rewrite the distance of the specified branch instruction (BL or unconditional B)
 //
 // in:     x0  = address of branch instruction
@@ -176,7 +220,9 @@ L_rewriteBranch:
 	ubfx	x1, x3, #2, #26			// distance >> 2, masking out sign bits
 	and	w2, w2, #0xFC000000		// mask out branch distance
 	orr	w2, w2, w1			// embed distance
+	START_MODIFYING_CODE
 	str	w2, [x0]			// rewrite branch instruction
+	FINISH_MODIFYING_CODE
 	mov	x1, #4				// 1 instruction to flush
 	b	flushICache
 
@@ -240,7 +286,9 @@ L_mergedUnresolvedSpecialStaticGlue:
 	ldr	x11, [x10, #J9TR_USCSnippet_CPIndex]		// get CP index & flags
 	and	x2, x11, #~(J9TR_USCSnippet_HelperOffset)	// remove helper offset from CP index
 	blr	x3						// call resolve helper
+	START_MODIFYING_CODE
 	str	x0, [x10, #J9TR_SCSnippet_method]		// update snippet with resolved method
+	FINISH_MODIFYING_CODE
 	and	x0, x0, #(~clinit_bit)				// clear the clinit bit in the returned address
 	mov	x2, x0						// save method (x0 trashed by following call)
 	bl	FUNC_LABEL(jitMethodIsNative)			// is the method native?
@@ -337,6 +385,7 @@ L_mergedDataResolve:
 	tbnz	x0, #clinit_bit_number, L_UDclinitCase		// branch if the LSB (the "clinit" bit) was set in the resolved address
 	ldrsw	x6, [x11, #J9TR_UDSnippet_offset]		// load offset
 	add	x3, x0, x6					// add in offset to return value
+	START_MODIFYING_CODE
 	ldr	w1, [x10, #4]					// fetch the first movk instruction
 	ubfx	x2, x3, #16, #16				// bits 16-31 of the address
 	orr	w1, w1, w2, LSL #5				// encode the address in the movk instruction
@@ -359,6 +408,7 @@ L_mergedDataResolve:
 	str	w11, [x0]					// store the movz instruction
 	mov	x1, #4						// 1 instruction to flush
 	bl	flushICache					// flush movz instruction
+	FINISH_MODIFYING_CODE
 	mov	x30, x10					// return address
 	ldp	x0, x1, [J9SP, #0]				// restore regs
 	ldp	x2, x3, [J9SP, #16]
@@ -694,7 +744,9 @@ FUNC_LABEL(_virtualUnresolvedHelper):
 	ands	x1, x0, #J9TR_J9_VTABLE_INDEX_DIRECT_METHOD_FLAG	// Check if result is tagged with J9TR_J9_VTABLE_INDEX_DIRECT_METHOD_FLAG
 	beq	L_callVirtual					// If it is not, go to the original path
 	eor	x0, x0, x1					// x1 currently equals 0x1 so this will clear the direct method flag bit
+	START_MODIFYING_CODE
 	str	x0, [x11, #J9TR_UVCSnippet_method]		// stores the J9Method for future calls to this helper
+	FINISH_MODIFYING_CODE
 L_callPrivate:
 	ldr	x1, [x0, #J9TR_MethodPCStartOffset]		// Load startPC/extra field
 	tst	x1, #J9TR_MethodNotCompiledBit			// Check to see if the method has already been compiled
@@ -718,12 +770,15 @@ L_calloutPrivate:
 L_callVirtual:
 	add	x1, x11, #J9TR_UVCSnippet_lockword		// address of the lockword
 	mov	w3, #1
+	START_MODIFYING_CODE
 	ldxr	w2, [x1]
 	cbnz	w2, L_spinForUpdate				// already locked by another thread
 	stxr	w2, w3, [x1]					// try to lock
 	cbnz	w2, L_spinForUpdate				// failed to lock
+	FINISH_MODIFYING_CODE
 	mov	x12, x0						// resolved index
 	sub	x0, x10, #16					// get the address of the movk instruction
+	START_MODIFYING_CODE
 	ldr	w1, [x0]					// fetch the movk instruction
 	ubfx	x2, x12, #16, #16				// upper 16 bits of the index
 	orr	w1, w1, w2, LSL #5				// encode the index in the movk instruction
@@ -740,6 +795,7 @@ L_callVirtual:
 	mov	w0, #0
 	dmb	sy
 	str	w0, [x11, #J9TR_UVCSnippet_lockword]		// unlock
+	FINISH_MODIFYING_CODE
 L_calloutVirtual:
 	sub	x30, x10, #20					// set the movz instruction as the destination
 	ldp	x7, x6, [J9SP, #0]				// restore other parameter regs
@@ -750,6 +806,7 @@ L_calloutVirtual:
 	ret							// jump back to the movz instruction
 
 L_spinForUpdate:
+	FINISH_MODIFYING_CODE
 	ldr	w2, [x1]
 	cbnz	w2, L_spinForUpdate
 	b	L_calloutVirtual				// another thread completed rewriting instructions
@@ -846,12 +903,15 @@ L_interfaceCallout:
 	br	x11						// Call: does not return here
 L_callInterface:
 	add	x6, x7, #J9TR_ICSnippet_FirstClass		// class1 address
+	START_MODIFYING_CODE
 L_loopToSetZero:
 	ldxr	x4, [x6]
 	cmp	x4, #-1
-	bne	L_continueLookup
+	bne	L_exitLoopToSetZero
 	stxr	w3, xzr, [x6]
 	cbnz	w3, L_loopToSetZero
+L_exitLoopToSetZero:
+	FINISH_MODIFYING_CODE
 	b	L_continueLookup
 
 L_commonJitDispatch:
@@ -890,13 +950,15 @@ L_continueLookup:
 	lsr	w8, w8, 16					// shift right to get the bits we want
 	add	x8, x2, x8					// Addr of JIT-to-JIT in x8
 	add	x3, x7, #J9TR_ICSnippet_FirstClass		// class1 address
+	START_MODIFYING_CODE
 L_tryToCompleteSlot1:
 	ldxr	x4, [x3]					// either zero or class
-	cbnz	x4, L_commonJitDispatch
+	cbnz	x4, L_exitTryToCompleteSlot1
 	stxr	w2, x1, [x3]					// trying to write class pointer to 1st pic slot
 	cbnz	w2, L_tryToCompleteSlot1			// failed to store
 	str	x8, [x7, #J9TR_ICSnippet_FirstTarget]		// Modify Slot1 target addr
 	dmb	ish
+	FINISH_MODIFYING_CODE
 
 	mov	x8, x0						// Preserve x0 in x8
 	add	x0, x7, #J9TR_Snippet_CallInstruction		// addr of BL instruction in snippet
@@ -913,6 +975,10 @@ L_tryToCompleteSlot1:
 	beq	L_commonJitDispatch
 	mov	x6, #J9TR_ICSnippet_FirstClass			// slot1 class offset
 	bl	L_picRegistration
+	b	L_commonJitDispatch
+
+L_exitTryToCompleteSlot1:
+	FINISH_MODIFYING_CODE
 	b	L_commonJitDispatch
 
 FUNC_LABEL(_interfaceCompleteSlot2):
@@ -944,14 +1010,16 @@ FUNC_LABEL(_interfaceCompleteSlot2):
 	lsr	w8, w8, 16					// shift right to get the bits we want
 	add	x8, x2, x8					// Addr of JIT-to-JIT in x8
 	add	x6, x7, J9TR_ICSnippet_SecondClass		// class2 address
+	START_MODIFYING_CODE
 L_tryToCompleteSlot2:
 	ldxr	x4, [x6]					// either -1 or class
 	cmp	x4, #-1
-	bne	L_commonJitDispatch
+	bne	L_exitTryToCompleteSlot2
 	stxr	w2, x1, [x6]					// trying to write class pointer to 2nd pic slot
 	cbnz	w2, L_tryToCompleteSlot2			// failed to store
 	str	x8, [x7, #J9TR_ICSnippet_SecondTarget]		// Modify Slot2 target addr
 	dmb	ish						// make the update of the pic slot become visible to other threads as soon as possible
+	FINISH_MODIFYING_CODE
 
 	mov	x8, x0						// Preserve x0 in x8
 	add	x0, x7, #J9TR_Snippet_CallInstruction		// get address of BL instruction in snippet
@@ -968,6 +1036,10 @@ L_tryToCompleteSlot2:
 	beq	L_commonJitDispatch
 	mov	x6, #J9TR_ICSnippet_SecondClass			// slot2 class offset
 	bl	L_picRegistration
+	b	L_commonJitDispatch
+
+L_exitTryToCompleteSlot2:
+	FINISH_MODIFYING_CODE
 	b	L_commonJitDispatch
 
 L_picRegistration:
@@ -1137,8 +1209,10 @@ FUNC_LABEL(_nativeStaticHelper):
 // x0 holds address of the compare instruction
 // trashes x1
 FUNC_LABEL(_patchGCRHelper):
+	START_MODIFYING_CODE
 	ldr	w1, [x0]						// load compare instruction
 	orr	w1, w1, #2048					// set bit 11 (change immediate to 3)
 	str	w1, [x0]						// write updated compare instruction
+	FINISH_MODIFYING_CODE
 	mov	x1, #4						// 1 instruction to flush
 	b	flushICache
