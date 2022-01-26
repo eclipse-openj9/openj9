@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2021 IBM Corp. and others
+ * Copyright (c) 2019, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -923,6 +923,10 @@ uint8_t *TR::ARM64CallSnippet::generateVIThunk(TR::Node *callNode, int32_t argSi
                          cg->getDebug()->getName(dataType));
       }
 
+#if defined(OSX)
+   pthread_jit_write_protect_np(0);
+#endif
+
    dispatcher = (uintptr_t)cg->symRefTab()->findOrCreateRuntimeHelper(helper)->getMethodAddress();
 
    buffer = flushArgumentsToStack(buffer, callNode, argSize, cg);
@@ -955,6 +959,10 @@ uint8_t *TR::ARM64CallSnippet::generateVIThunk(TR::Node *callNode, int32_t argSi
 
 #ifdef TR_HOST_ARM64
    arm64CodeSync(thunk, codeSize);
+#endif
+
+#if defined(OSX)
+   pthread_jit_write_protect_np(1);
 #endif
 
    return returnValue;
@@ -995,6 +1003,10 @@ TR_J2IThunk *TR::ARM64CallSnippet::generateInvokeExactJ2IThunk(TR::Node *callNod
                   cg->getDebug()->getName(dataType));
       }
 
+#if defined(OSX)
+   pthread_jit_write_protect_np(0);
+#endif
+
    dispatcher = (intptr_t)cg->symRefTab()->findOrCreateRuntimeHelper(helper)->getMethodAddress();
 
    buffer = flushArgumentsToStack(buffer, callNode, argSize, cg);
@@ -1024,6 +1036,10 @@ TR_J2IThunk *TR::ARM64CallSnippet::generateInvokeExactJ2IThunk(TR::Node *callNod
 
 #ifdef TR_HOST_ARM64
    arm64CodeSync(thunk->entryPoint(), codeSize);
+#endif
+
+#if defined(OSX)
+   pthread_jit_write_protect_np(1);
 #endif
 
    return thunk;

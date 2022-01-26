@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1010,7 +1010,13 @@ TR_RelocationRecord::applyRelocationAtAllOffsets(TR_RelocationRuntime *reloRunti
             uint8_t *reloLocationHigh = reloOrigin + offsetHigh + 2; // Add 2 to skip the first 16 bits of instruction
             uint8_t *reloLocationLow = reloOrigin + offsetLow + 2; // Add 2 to skip the first 16 bits of instruction
             RELO_LOG(reloRuntime->reloLogger(), 6, "\treloLocation: from %p high %p low %p (offsetHigh %x offsetLow %x)\n", offsetPtr, reloLocationHigh, reloLocationLow, offsetHigh, offsetLow);
+#if defined(OSX) && defined(AARCH64)
+            pthread_jit_write_protect_np(0);
+#endif
             int32_t rc = applyRelocation(reloRuntime, reloTarget, reloLocationHigh, reloLocationLow);
+#if defined(OSX) && defined(AARCH64)
+            pthread_jit_write_protect_np(1);
+#endif
             if (rc != 0)
                {
                RELO_LOG(reloRuntime->reloLogger(), 6, "\tapplyRelocationAtAllOffsets: rc = %d\n", rc);
@@ -1029,7 +1035,13 @@ TR_RelocationRecord::applyRelocationAtAllOffsets(TR_RelocationRuntime *reloRunti
             uint8_t *reloLocationHigh = reloOrigin + offsetHigh + 2; // Add 2 to skip the first 16 bits of instruction
             uint8_t *reloLocationLow = reloOrigin + offsetLow + 2; // Add 2 to skip the first 16 bits of instruction
             RELO_LOG(reloRuntime->reloLogger(), 6, "\treloLocation: from %p high %p low %p (offsetHigh %x offsetLow %x)\n", offsetPtr, reloLocationHigh, reloLocationLow, offsetHigh, offsetLow);
+#if defined(OSX) && defined(AARCH64)
+            pthread_jit_write_protect_np(0);
+#endif
             int32_t rc = applyRelocation(reloRuntime, reloTarget, reloLocationHigh, reloLocationLow);
+#if defined(OSX) && defined(AARCH64)
+            pthread_jit_write_protect_np(1);
+#endif
             if (rc != 0)
                {
                RELO_LOG(reloRuntime->reloLogger(), 6, "\tapplyRelocationAtAllOffsets: rc = %d\n", rc);
@@ -1049,7 +1061,13 @@ TR_RelocationRecord::applyRelocationAtAllOffsets(TR_RelocationRuntime *reloRunti
             int32_t offset = *offsetPtr;
             uint8_t *reloLocation = reloOrigin + offset;
             RELO_LOG(reloRuntime->reloLogger(), 6, "\treloLocation: from %p at %p (offset %x)\n", offsetPtr, reloLocation, offset);
+#if defined(OSX) && defined(AARCH64)
+            pthread_jit_write_protect_np(0);
+#endif
             int32_t rc = applyRelocation(reloRuntime, reloTarget, reloLocation);
+#if defined(OSX) && defined(AARCH64)
+            pthread_jit_write_protect_np(1);
+#endif
             if (rc != 0)
                {
                RELO_LOG(reloRuntime->reloLogger(), 6, "\tapplyRelocationAtAllOffsets: rc = %d\n", rc);
@@ -1066,7 +1084,13 @@ TR_RelocationRecord::applyRelocationAtAllOffsets(TR_RelocationRuntime *reloRunti
             int16_t offset = *offsetPtr;
             uint8_t *reloLocation = reloOrigin + offset;
             RELO_LOG(reloRuntime->reloLogger(), 6, "\treloLocation: from %p at %p (offset %x)\n", offsetPtr, reloLocation, offset);
+#if defined(OSX) && defined(AARCH64)
+            pthread_jit_write_protect_np(0);
+#endif
             int32_t rc = applyRelocation(reloRuntime, reloTarget, reloLocation);
+#if defined(OSX) && defined(AARCH64)
+            pthread_jit_write_protect_np(1);
+#endif
             if (rc != 0)
                {
                RELO_LOG(reloRuntime->reloLogger(), 6, "\tapplyRelocationAtAllOffsets: rc = %d\n", rc);
@@ -1126,6 +1150,7 @@ TR_RelocationRecordWithOffset::applyRelocation(TR_RelocationRuntime *reloRuntime
    {
    TR_RelocationRecordWithOffsetPrivateData *reloPrivateData = &(privateData()->offset);
    reloTarget->storeAddress(reloPrivateData->_addressToPatch, reloLocationHigh, reloLocationLow, reloFlags(reloTarget));
+
    return 0;
    }
 
@@ -2308,6 +2333,9 @@ TR_RelocationRecordThunks::relocateAndRegisterThunk(
       U_8 *thunkAddress;
       if (thunkStart)
          {
+#if defined(OSX) && defined(AARCH64)
+         pthread_jit_write_protect_np(0);
+#endif
          // Relocate the thunk
          //
          RELO_LOG(reloRuntime->reloLogger(), 7, "\t\t\trelocateAndRegisterThunk: thunkStart from cache %p\n", thunkStart);
@@ -2326,6 +2354,9 @@ TR_RelocationRecordThunks::relocateAndRegisterThunk(
             ALWAYS_TRIGGER_J9HOOK_VM_DYNAMIC_CODE_LOAD(javaVM->hookInterface, javaVM->internalVMFunctions->currentVMThread(javaVM), NULL, (void *) thunkAddress, *((uint32_t *)thunkAddress - 2), "JIT virtual thunk", NULL);
 
          relocateJ2IVirtualThunkPointer(reloTarget, reloLocation, thunkAddress);
+#if defined(OSX) && defined(AARCH64)
+         pthread_jit_write_protect_np(1);
+#endif
          }
       else
          {

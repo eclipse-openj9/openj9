@@ -909,7 +909,14 @@ TR_RuntimeAssumptionTable::notifyClassRedefinitionEvent(TR_FrontEnd *vm, bool is
                {
                if (reportDetails)
                   TR_VerboseLog::writeLineLocked(TR_Vlog_RA, "old=%p resolved=%p @ %p patching new=%p", initialKey, resolvedKey, pic_cursor->getPicLocation(), *(uintptr_t *)(pic_cursor->getPicLocation()));
+
+#if defined(OSX) && defined(AARCH64)
+               pthread_jit_write_protect_np(0);
+#endif
                *(uintptr_t *)(pic_cursor->getPicLocation()) = (uintptr_t)newKey;
+#if defined(OSX) && defined(AARCH64)
+               pthread_jit_write_protect_np(1);
+#endif
                }
             }
          pic_cursor = pic_next;

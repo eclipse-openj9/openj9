@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -329,12 +329,26 @@ J9::CodeCache::addFreeBlock(OMR::FaintCacheBlock *block)
    realStartPC = (realStartPC + round) & ~round;
    size_t endPtr = (size_t) warmBlock+warmBlock->_size;
    if (endPtr > realStartPC+sizeof(OMR::CodeCacheFreeCacheBlock))
-       warmBlock->_size = realStartPC - (UDATA)warmBlock;
+      {
+#if defined(OSX) && defined(AARCH64)
+      pthread_jit_write_protect_np(0);
+#endif
+      warmBlock->_size = realStartPC - (UDATA)warmBlock;
+#if defined(OSX) && defined(AARCH64)
+      pthread_jit_write_protect_np(1);
+#endif
+      }
 
    if (self()->addFreeBlock2((uint8_t *) realStartPC, (uint8_t *)endPtr))
       {
       // Update the block size to reflect the remaining stub
+#if defined(OSX) && defined(AARCH64)
+      pthread_jit_write_protect_np(0);
+#endif
       warmBlock->_size = realStartPC - (UDATA)warmBlock;
+#if defined(OSX) && defined(AARCH64)
+      pthread_jit_write_protect_np(1);
+#endif
       }
    else
       {
