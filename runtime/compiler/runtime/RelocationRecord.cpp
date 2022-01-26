@@ -2286,38 +2286,31 @@ TR_RelocationRecordThunks::applyRelocation(TR_RelocationRuntime *reloRuntime, TR
    return relocateAndRegisterThunk(reloRuntime, reloTarget, newConstantPool, cpIndex, reloLocation);
    }
 
-int32_t
-TR_RelocationRecordThunks::relocateAndRegisterThunk(
+// Returns 0 for success, or a TR_CompilationErrorCode value on failure.
+// On success, the address of the J2I thunk is stored into *outThunkAddress.
+static int32_t relocateAndRegisterThunk(
    TR_RelocationRuntime *reloRuntime,
    TR_RelocationTarget *reloTarget,
-   uintptr_t cp,
-   uintptr_t cpIndex,
-   uint8_t *reloLocation)
+   int32_t signatureLength,
+   char *signatureString,
+   void **outThunkAddress)
    {
+   *outThunkAddress = NULL;
+
    J9JITConfig *jitConfig = reloRuntime->jitConfig();
    J9JavaVM *javaVM = reloRuntime->jitConfig()->javaVM;
-   J9ConstantPool *constantPool = (J9ConstantPool *)cp;
 
-   J9ROMClass * romClass = J9_CLASS_FROM_CP(constantPool)->romClass;
-   J9ROMMethodRef *romMethodRef = &J9ROM_CP_BASE(romClass, J9ROMMethodRef)[cpIndex];
-   J9ROMNameAndSignature * nameAndSignature = J9ROMMETHODREF_NAMEANDSIGNATURE(romMethodRef);
-
-   bool matchFound = false;
-
-   int32_t signatureLength = J9UTF8_LENGTH(J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSignature));
-   char *signatureString = (char *) J9UTF8_DATA(J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSignature));
-
-   RELO_LOG(reloRuntime->reloLogger(), 6, "\t\trelocateAndRegisterThunk: %.*s%.*s\n", J9UTF8_LENGTH(J9ROMNAMEANDSIGNATURE_NAME(nameAndSignature)), J9UTF8_DATA(J9ROMNAMEANDSIGNATURE_NAME(nameAndSignature)),  signatureLength, signatureString);
+   RELO_LOG(reloRuntime->reloLogger(), 6, "\t\trelocateAndRegisterThunk: %.*s\n", signatureLength, signatureString);
 
    // Everything below is run with VM Access in hand
    TR::VMAccessCriticalSection relocateAndRegisterThunkCriticalSection(reloRuntime->fej9());
 
-   void *existingThunk = j9ThunkLookupNameAndSig(jitConfig, nameAndSignature);
+   void *existingThunk = j9ThunkLookupSignature(jitConfig, signatureLength, signatureString);
    if (existingThunk != NULL)
       {
       /* Matching thunk found */
-      RELO_LOG(reloRuntime->reloLogger(), 6, "\t\t\trelocateAndRegisterThunk:found matching thunk %p\n", existingThunk);
-      relocateJ2IVirtualThunkPointer(reloTarget, reloLocation, existingThunk);
+      RELO_LOG(reloRuntime->reloLogger(), 6, "\t\t\trelocateAndRegisterThunk: found matching thunk %p\n", existingThunk);
+      *outThunkAddress = existingThunk;
       return 0; // return successful
       }
 
@@ -2350,9 +2343,6 @@ TR_RelocationRecordThunks::relocateAndRegisterThunk(
       U_8 *thunkAddress;
       if (thunkStart)
          {
-#if defined(OSX) && defined(AARCH64)
-         pthread_jit_write_protect_np(0);
-#endif
          // Relocate the thunk
          //
          RELO_LOG(reloRuntime->reloLogger(), 7, "\t\t\trelocateAndRegisterThunk: thunkStart from cache %p\n", thunkStart);
@@ -2365,15 +2355,12 @@ TR_RelocationRecordThunks::relocateAndRegisterThunk(
          RELO_LOG(reloRuntime->reloLogger(), 7, "\t\t\trelocateAndRegisterThunk: vmHelper %p\n", vmHelper);
          reloTarget->performThunkRelocation(thunkAddress, (UDATA)vmHelper);
 
-         j9ThunkNewNameAndSig(jitConfig, nameAndSignature, thunkAddress);
+         j9ThunkNewSignature(jitConfig, signatureLength, signatureString, thunkAddress);
 
          if (J9_EVENT_IS_HOOKED(javaVM->hookInterface, J9HOOK_VM_DYNAMIC_CODE_LOAD))
             ALWAYS_TRIGGER_J9HOOK_VM_DYNAMIC_CODE_LOAD(javaVM->hookInterface, javaVM->internalVMFunctions->currentVMThread(javaVM), NULL, (void *) thunkAddress, *((uint32_t *)thunkAddress - 2), "JIT virtual thunk", NULL);
 
-         relocateJ2IVirtualThunkPointer(reloTarget, reloLocation, thunkAddress);
-#if defined(OSX) && defined(AARCH64)
-         pthread_jit_write_protect_np(1);
-#endif
+         *outThunkAddress = thunkAddress;
          }
       else
          {
@@ -2381,15 +2368,39 @@ TR_RelocationRecordThunks::relocateAndRegisterThunk(
          // return error
          return compilationAotCacheFullReloFailure;
          }
-
       }
-    else
+   else
       {
       // return error
       return compilationAotThunkReloFailure;
       }
 
    return 0;
+   }
+
+int32_t
+TR_RelocationRecordThunks::relocateAndRegisterThunk(
+   TR_RelocationRuntime *reloRuntime,
+   TR_RelocationTarget *reloTarget,
+   uintptr_t cp,
+   uintptr_t cpIndex,
+   uint8_t *reloLocation)
+   {
+   J9ConstantPool *constantPool = (J9ConstantPool *)cp;
+   J9ROMClass * romClass = J9_CLASS_FROM_CP(constantPool)->romClass;
+   J9ROMMethodRef *romMethodRef = &J9ROM_CP_BASE(romClass, J9ROMMethodRef)[cpIndex];
+   J9ROMNameAndSignature * nameAndSignature = J9ROMMETHODREF_NAMEANDSIGNATURE(romMethodRef);
+   int32_t signatureLength = J9UTF8_LENGTH(J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSignature));
+   char *signatureString = (char *) J9UTF8_DATA(J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSignature));
+
+   void *thunkAddress;
+   int32_t err = ::relocateAndRegisterThunk(
+      reloRuntime, reloTarget, signatureLength, signatureString, &thunkAddress);
+
+   if (err == 0)
+      relocateJ2IVirtualThunkPointer(reloTarget, reloLocation, thunkAddress);
+
+   return err;
    }
 
 // TR_J2IVirtualThunkPointer Relocation
