@@ -1573,10 +1573,15 @@ public final class Unsafe {
 	 * 
 	 * @throws NullPointerException if class is null
 	 * @throws IllegalArgumentException if class is not an array
+	 * @throws RuntimeException if index scale is not a power of 2
 	 */
 	public int arrayIndexScale(Class<?> c) {
 		Objects.requireNonNull(c);
-		return arrayIndexScale0(c);
+		int indexScale = arrayIndexScale0(c);
+		if (indexScale == 0 || (indexScale & (indexScale - 1)) != 0) {
+			throw new RuntimeException("The class array index scale is not a power of two");
+		}
+		return indexScale;
 	}
 
 	/**
