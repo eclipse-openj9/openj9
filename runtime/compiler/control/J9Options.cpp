@@ -2118,6 +2118,14 @@ bool J9::Options::preProcessJitServer(J9JavaVM *vm, J9JITConfig *jitConfig)
          // Enable ROMClass sharing at the server by default (unless explicitly disabled) if using AOT cache
          _shareROMClasses = true;
          }
+      if ((compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT) &&
+           compInfo->getPersistentInfo()->getJITServerUseAOTCache())
+         {
+         // With JITServer AOT cache, the client generates a lot of AOT compilations
+         // that have GCR IL trees in them. Due to the negative affect of GCR counting
+         // we want to limit the amount of time counting takes place.
+         TR::Options::_GCRQueuedThresholdForCounting = 200;
+         }
       }
 #endif /* defined(J9VM_OPT_JITSERVER) */
    return true;
