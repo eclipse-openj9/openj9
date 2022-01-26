@@ -1602,8 +1602,7 @@ J9::Z::TreeEvaluator::zd2pdVectorEvaluatorHelper(TR::Node * node, TR::CodeGenera
 void
 J9::Z::TreeEvaluator::pd2zdSignFixup(TR::Node *node,
                                              TR::MemoryReference *destMR,
-                                             TR::CodeGenerator * cg,
-                                             bool useLeftAlignedMR)
+                                             TR::CodeGenerator * cg)
    {
    TR::Register* signCode     = cg->allocateRegister();
    TR::Register* signCode4Bit = cg->allocateRegister();
@@ -1616,11 +1615,7 @@ J9::Z::TreeEvaluator::pd2zdSignFixup(TR::Node *node,
    generateS390LabelInstruction(cg, TR::InstOpCode::label, node, processSign);
    processSign->setStartInternalControlFlow();
 
-   TR::MemoryReference* signByteMR = NULL;
-   if (useLeftAlignedMR)
-      signByteMR = generateS390LeftAlignedMemoryReference(*destMR, node, 0, cg, 1);
-   else
-      signByteMR = generateS390MemoryReference(*destMR, (node->getSecondChild())->getDecimalPrecision() - 1, cg);
+   TR::MemoryReference* signByteMR = generateS390LeftAlignedMemoryReference(*destMR, node, 0, cg, 1);
 
    // Load the sign byte of the Zoned Decimal from memory
    generateRXInstruction(cg, TR::InstOpCode::LLC, node, signCode, signByteMR);
@@ -1850,7 +1845,7 @@ J9::Z::TreeEvaluator::packedToZonedHelper(TR::Node *node, TR_PseudoRegister *tar
    if (!evaluatedPaddingAnchor)
       cg->processUnusedNodeDuringEvaluation(paddingAnchor);
 
-   pd2zdSignFixup(node, destMR, cg, true);
+   pd2zdSignFixup(node, destMR, cg);
 
    targetReg->transferSignState(childReg, isTruncation);
    targetReg->transferDataState(childReg);
@@ -1935,7 +1930,7 @@ J9::Z::TreeEvaluator::pd2zdVectorEvaluatorHelper(TR::Node * node, TR::CodeGenera
       }
 
    // Fix pd2zd signs. VUPKZ and its non-vector counterpart don't validate digits nor signs.
-   pd2zdSignFixup(node, targetMR, cg, true);
+   pd2zdSignFixup(node, targetMR, cg);
 
    node->setRegister(targetReg);
    cg->decReferenceCount(child);
