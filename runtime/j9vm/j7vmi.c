@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2002, 2021 IBM Corp. and others
+ * Copyright (c) 2002, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -440,6 +440,10 @@ JVM_FillInStackTrace(JNIEnv* env, jobject throwable)
 		if ((NULL == result) || (J9_PRIVATE_FLAGS_FILL_EXISTING_TRACE == (currentThread->privateFlags & J9_PRIVATE_FLAGS_FILL_EXISTING_TRACE))) {
 			flags |= J9_STACKWALK_HIDE_EXCEPTION_FRAMES;
 			walkState->restartException = unwrappedThrowable;
+		}
+		/* If -XX:+ShowHiddenFrames option has not been set, skip hidden method frames */
+		if (J9_ARE_NO_BITS_SET(javaVM->runtimeFlags, J9_RUNTIME_SHOW_HIDDEN_FRAMES)) {
+			flags |= J9_STACKWALK_SKIP_HIDDEN_FRAMES;
 		}
 		walkState->skipCount = 1; /* skip the INL frame -- TODO revisit this */
 #if JAVA_SPEC_VERSION >= 15

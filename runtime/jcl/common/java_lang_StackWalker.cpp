@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2021 IBM Corp. and others
+ * Copyright (c) 2017, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -67,9 +67,6 @@ stackFrameFilter(J9VMThread * currentThread, J9StackWalkState * walkState)
 	) {
 		/* skip reflection/MethodHandleInvoke frames */
 		result = J9_STACKWALK_KEEP_ITERATING;
-	} else if (J9_ARE_NO_BITS_SET((UDATA) (walkState->userData1), SHOW_HIDDEN_FRAMES) && VM_VMHelpers::isHiddenMethod(walkState->method)
-	) {
-			result = J9_STACKWALK_KEEP_ITERATING;
 	} else {
 		result = J9_STACKWALK_STOP_ITERATING;
 	}
@@ -93,6 +90,12 @@ Java_java_lang_StackWalker_walkWrapperImpl(JNIEnv *env, jclass clazz, jint flags
 	walkState->walkThread = vmThread;
 	walkState->flags = J9_STACKWALK_ITERATE_FRAMES | J9_STACKWALK_WALK_TRANSLATE_PC
 			|  J9_STACKWALK_INCLUDE_NATIVES | J9_STACKWALK_VISIBLE_ONLY;
+	/* If -XX:+ShowHiddenFrames and StackWalker.SHOW_HIDDEN_FRAMES option has not been set, skip hidden method frames */
+	if (J9_ARE_NO_BITS_SET(vm->runtimeFlags, J9_RUNTIME_SHOW_HIDDEN_FRAMES)
+	&& J9_ARE_NO_BITS_SET((UDATA)flags, SHOW_HIDDEN_FRAMES)
+	) {
+		walkState->flags |= J9_STACKWALK_SKIP_HIDDEN_FRAMES;
+	}
 	walkState->frameWalkFunction = stackFrameFilter;
 	const char * walkerMethodChars = env->GetStringUTFChars(stackWalkerMethod, NULL);
 	if (NULL == walkerMethodChars) { /* native out of memory exception pending */
