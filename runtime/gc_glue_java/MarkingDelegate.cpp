@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2021 IBM Corp. and others
+ * Copyright (c) 2017, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -343,6 +343,10 @@ MM_MarkingDelegate::completeMarking(MM_EnvironmentBase *env)
 											_markingScheme->markObjectNoCheck(env, (omrobjectptr_t )module->version);
 										}
 										modulePtr = (J9Module**)hashTableNextDo(&moduleWalkState);
+									}
+
+									if (classLoader == javaVM->systemClassLoader) {
+										_markingScheme->markObjectNoCheck(env, (omrobjectptr_t )javaVM->unamedModuleForSystemLoader->moduleObject);
 									}
 								}
 							}
