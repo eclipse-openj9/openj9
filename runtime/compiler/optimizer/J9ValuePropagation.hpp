@@ -121,6 +121,20 @@ class ValuePropagation : public OMR::ValuePropagation
     */
    bool transformFlattenedArrayElementStore(TR_OpaqueClassBlock *arrayClass, TR::TreeTop *callTree, TR::Node *callNode, bool needsNullValueCheck);
 
+   /**
+    * Determine the bounds and element size for an array constraint
+    *
+    * \param[in] arrayConstraint A \ref TR::VPConstraint for an array reference
+    * \param[out] lowerBoundLimit The lower bound on the size of the array
+    * \param[out] upperBoundLimit The upper bound on the size of the array
+    * \param[out] elementSize The size of an element of the array; zero if not known
+    * \param[out] isKnownObj Set to \c true if this constraint represents a known object;\n
+    *             \c false otherwise.
+    */
+   virtual void getArrayLengthLimits(TR::VPConstraint *arrayConstraint, int32_t &lowerBoundLimit, int32_t &upperBoundLimit,
+                   int32_t &elementSize, bool &isKnownObj);
+
+
    virtual void getParmValues();
 
    /**
@@ -190,11 +204,17 @@ class ValuePropagation : public OMR::ValuePropagation
       TR_ALLOC(TR_Memory::ValuePropagation)
       TR::TreeTop *_tree;
       TR::Node *_callNode;
-      flags8_t _flags;
       TR_OpaqueClassBlock *_arrayClass;
+      TR_OpaqueClassBlock *_storeClassForArrayStoreCHK;
+      TR_OpaqueClassBlock *_componentClassForArrayStoreCHK;
+      int32_t _arrayLength;
+      flags8_t _flags;
 
-      ValueTypesHelperCallTransform(TR::TreeTop *tree, TR::Node *callNode, flags8_t flags, TR_OpaqueClassBlock *arrayClass)
-         : _tree(tree), _callNode(callNode), _flags(flags), _arrayClass(arrayClass) {}
+      ValueTypesHelperCallTransform(TR::TreeTop *tree, TR::Node *callNode, flags8_t flags,
+               TR_OpaqueClassBlock *arrayClass = NULL, TR_OpaqueClassBlock *storeClass = NULL,
+               TR_OpaqueClassBlock *compClass = NULL)
+         : _tree(tree), _callNode(callNode), _flags(flags), _arrayClass(arrayClass),
+           _storeClassForArrayStoreCHK(storeClass), _componentClassForArrayStoreCHK(compClass), _arrayLength(-1) {}
 
       enum // flag bits
          {
