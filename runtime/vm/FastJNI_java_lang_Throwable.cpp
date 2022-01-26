@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2020 IBM Corp. and others
+ * Copyright (c) 2001, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -56,6 +56,10 @@ Fast_java_lang_Throwable_fillInStackTrace(J9VMThread *currentThread, j9object_t 
 			if ((NULL == walkback) || (currentThread->privateFlags & J9_PRIVATE_FLAGS_FILL_EXISTING_TRACE)) {
 				walkFlags |= J9_STACKWALK_HIDE_EXCEPTION_FRAMES;
 				walkState->restartException = receiver;
+			}
+			/* If -XX:+ShowHiddenFrames option has not been set, skip hidden method frames */
+			if (J9_ARE_NO_BITS_SET(vm->runtimeFlags, J9_RUNTIME_SHOW_HIDDEN_FRAMES)) {
+				walkFlags |= J9_STACKWALK_SKIP_HIDDEN_FRAMES;
 			}
 			walkState->flags = walkFlags;
 			walkState->skipCount = 1;	/* skip the INL frame */
