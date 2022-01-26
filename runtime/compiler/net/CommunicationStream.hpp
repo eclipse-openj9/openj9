@@ -43,8 +43,10 @@ public:
    static bool useSSL();
    static void initSSL();
 
+   static uint32_t _msgTypeCount[MessageType::MessageType_MAXTYPE];
+   static uint64_t _totalMsgSize;
 #if defined(MESSAGE_SIZE_STATS)
-   static TR_Stats msgSizeStats[JITServer::MessageType_MAXTYPE];
+   static TR_Stats _msgSizeStats[MessageType::MessageType_MAXTYPE];
 #endif /* defined(MESSAGE_SIZE_STATS) */
 
    static void initConfigurationFlags();

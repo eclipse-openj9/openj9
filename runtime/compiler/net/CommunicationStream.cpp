@@ -31,8 +31,10 @@ namespace JITServer
 
 uint32_t CommunicationStream::CONFIGURATION_FLAGS = 0;
 
+uint32_t CommunicationStream::_msgTypeCount[] = {0};
+uint64_t CommunicationStream::_totalMsgSize = 0;
 #if defined(MESSAGE_SIZE_STATS)
-TR_Stats JITServer::CommunicationStream::msgSizeStats[];
+TR_Stats CommunicationStream::_msgSizeStats[];
 #endif /* defined(MESSAGE_SIZE_STATS) */
 
 void
@@ -109,8 +111,11 @@ CommunicationStream::readMessage(Message &msg)
    // rebuild the message
    msg.deserialize();
 
+   // Update message count and size statistics
+   _msgTypeCount[msg.type()] += 1;
+   _totalMsgSize += serializedSize;
 #if defined(MESSAGE_SIZE_STATS)
-   msgSizeStats[int(msg.type())].update(serializedSize);
+   _msgSizeStats[msg.type()].update(serializedSize);
 #endif /* defined(MESSAGE_SIZE_STATS) */
    }
 
