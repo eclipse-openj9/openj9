@@ -102,7 +102,11 @@ struct TR_MethodToBeCompiled
    char                   _monitorName[28]; // to be able to deallocate the string
                                             // "JIT-QueueSlotMonitor-N" for 16-bit index N fits into 28 characters
    TR_OptimizationPlan   *_optimizationPlan;
-   uint64_t               _entryTime; // time it was added to the queue (ms)
+   // Timestamp of when the request was added to the queue (microseconds). Only set when the TR_VerbosePerformance
+   // option (i.e. -Xjit:verbose=compilePerformance) is enabled. Note that this timestamp is not reset when the
+   // request is re-queued after a failed compilation. Once the compilation is finally successful, the timestamp
+   // is used to compute the total compilation request latency (including queuing time and failed attempts).
+   uintptr_t              _entryTime;
    TR::CompilationInfoPerThreadBase *_compInfoPT; // pointer to the thread that is handling this request
    const void *           _aotCodeToBeRelocated;
 

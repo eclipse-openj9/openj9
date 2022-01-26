@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2021 IBM Corp. and others
+ * Copyright (c) 2018, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -795,20 +795,24 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
             optPlan->setLogCompilation(clientOptPlan.getLogCompilation());
          }
 
+      // Remember the timestamp of when the request was queued before re-initializing the entry
+      uintptr_t entryTime = entry._entryTime;
+
       // All entries have the same priority for now. In the future we may want to give higher priority to sync requests
       // Also, oldStartPC is always NULL for JITServer
       entry._freeTag = ENTRY_IN_POOL_FREE; // Pretend we just got it from the pool because we need to initialize it again
       entry.initialize(*serverDetails, NULL, CP_SYNC_NORMAL, optPlan);
-      entry._jitStateWhenQueued = compInfo->getPersistentInfo()->getJitState();
-      entry._stream = stream; // Add the stream to the entry
-      entry._entryTime = compInfo->getPersistentInfo()->getElapsedTime(); // Cheaper version
-      entry._methodIsInSharedCache = false; // No SCC for now in JITServer
+
+      entry._entryTime = entryTime; // Use the more accurate original entry timestamp
       entry._compInfoPT = this; // Need to know which comp thread is handling this request
+      entry._methodIsInSharedCache = false; // No SCC for now in JITServer
+      entry._useAotCompilation = useAotCompilation;
       entry._async = true; // All of requests at the server are async
       // Weight is irrelevant for JITServer.
       // If we want something then we need to increaseQueueWeightBy(weight) while holding compilation monitor
       entry._weight = 0;
-      entry._useAotCompilation = useAotCompilation;
+      entry._jitStateWhenQueued = compInfo->getPersistentInfo()->getJitState();
+      entry._stream = stream; // Add the stream to the entry
 
       auto aotCache = clientSession->getOrCreateAOTCache(stream);
       _aotCacheStore = classChain && aotCache;
