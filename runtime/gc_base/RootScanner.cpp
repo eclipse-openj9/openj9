@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -85,6 +85,7 @@ MM_RootScanner::scanModularityObjects(J9ClassLoader * classLoader)
 {
 	if (NULL != classLoader->moduleHashTable) {
 		J9HashTableState moduleWalkState;
+		J9JavaVM *javaVM = static_cast<J9JavaVM*>(_omrVM->_language_vm);
 		J9Module **modulePtr = (J9Module**)hashTableStartDo(classLoader->moduleHashTable, &moduleWalkState);
 		while (NULL != modulePtr) {
 			J9Module * const module = *modulePtr;
@@ -98,7 +99,13 @@ MM_RootScanner::scanModularityObjects(J9ClassLoader * classLoader)
 			}
 			modulePtr = (J9Module**)hashTableNextDo(&moduleWalkState);
 		}
+
+		if (classLoader == javaVM->systemClassLoader) {
+			doSlot(&javaVM->unamedModuleForSystemLoader->moduleObject);
+		}
 	}
+
+
 }
 
 /**

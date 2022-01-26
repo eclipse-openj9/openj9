@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2021 IBM Corp. and others
+ * Copyright (c) 2019, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1000,6 +1000,10 @@ MM_MetronomeDelegate::doClassTracing(MM_EnvironmentRealtime *env)
 							didWork |= _markingScheme->markObject(env, module->moduleName);
 							didWork |= _markingScheme->markObject(env, module->version);
 							modulePtr = (J9Module**)hashTableNextDo(&walkState);
+						}
+
+						if (classLoader == _javaVM->systemClassLoader) {
+							didWork |= _markingScheme->markObject(env, _javaVM->unamedModuleForSystemLoader->moduleObject);
 						}
 					}
 				}
