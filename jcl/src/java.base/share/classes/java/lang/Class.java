@@ -403,12 +403,35 @@ public static Class<?> forName(String className) throws ClassNotFoundException
 {
 /*[IF JAVA_SPEC_VERSION >= 18]*/
 	return forName(className, getStackClass(1));
+/*[ELSE] JAVA_SPEC_VERSION >= 18
+	@SuppressWarnings("removal")
+	SecurityManager sm = null;
+	/**
+	 * Get the SecurityManager from System.  If the VM has not yet completed bootstrapping (i.e., J9VMInternals.initialized is still false)
+	 * sm is kept as null without referencing System in order to avoid loading System earlier than necessary.
+	 */
+	if (J9VMInternals.initialized) {
+		sm = System.getSecurityManager();
+	}
+	if (null == sm) {
+		return forNameImpl(className, true, ClassLoader.callerClassLoader());
+	}
+	Class<?> caller = getStackClass(1);
+	ClassLoader callerClassLoader = null;
+	if (null != caller) {
+		callerClassLoader = caller.getClassLoaderImpl();
+	}
+	Class<?> c = forNameImpl(className, false, callerClassLoader);
+	forNameAccessCheck(sm, caller, c);
+	J9VMInternals.initialize(c);
+	return c;
+/*[ENDIF] JAVA_SPEC_VERSION >= 18 */
 }
 
+/*[IF JAVA_SPEC_VERSION >= 18]*/
 @CallerSensitiveAdapter
 private static Class<?> forName(String className, Class<?> caller) throws ClassNotFoundException
 {
-/*[ENDIF] JAVA_SPEC_VERSION >= 18 */
 	@SuppressWarnings("removal")
 	SecurityManager sm = null;
 	/**
@@ -420,18 +443,11 @@ private static Class<?> forName(String className, Class<?> caller) throws ClassN
 	}
 	ClassLoader callerClassLoader = null;
 	if (null == sm) {
-/*[IF JAVA_SPEC_VERSION >= 18]*/
 		if (null != caller) {
 			callerClassLoader = caller.internalGetClassLoader();
 		}
-/*[ELSE] JAVA_SPEC_VERSION >= 18
-		callerClassLoader = ClassLoader.callerClassLoader();
-/*[ENDIF] JAVA_SPEC_VERSION >= 18 */
 		return forNameImpl(className, true, callerClassLoader);
 	}
-/*[IF JAVA_SPEC_VERSION <= 17]*/
-	Class<?> caller = getStackClass(1);
-/*[ENDIF] JAVA_SPEC_VERSION <= 17 */
 	if (null != caller) {
 		callerClassLoader = caller.getClassLoaderImpl();
 	}
@@ -440,6 +456,7 @@ private static Class<?> forName(String className, Class<?> caller) throws ClassN
 	J9VMInternals.initialize(c);
 	return c;
 }
+/*[ENDIF] JAVA_SPEC_VERSION >= 18 */
 
 AnnotationType getAnnotationType() {
 	AnnotationVars localAnnotationVars = getAnnotationVars();
@@ -499,8 +516,36 @@ public static Class<?> forName(
 {
 /*[IF JAVA_SPEC_VERSION >= 18]*/
 	return forNameHelper(className, initializeBoolean, classLoader, null, false);
+/*[ELSE] JAVA_SPEC_VERSION >= 18
+	@SuppressWarnings("removal")
+	SecurityManager sm = null;
+	if (J9VMInternals.initialized) {
+		sm = System.getSecurityManager();
+	}
+	if (null == sm) {
+		return forNameImpl(className, initializeBoolean, classLoader);
+	}
+	Class<?> caller = getStackClass(1);
+	/* perform security checks */
+	if (null == classLoader) {
+		if (null != caller) {
+			ClassLoader callerClassLoader = caller.getClassLoaderImpl();
+			if (callerClassLoader != ClassLoader.bootstrapClassLoader) {
+				/* only allowed if caller has RuntimePermission("getClassLoader") permission */
+				sm.checkPermission(SecurityConstants.GET_CLASSLOADER_PERMISSION);
+			}
+		}
+	}
+	Class<?> c = forNameImpl(className, false, classLoader);
+	forNameAccessCheck(sm, caller, c);
+	if (initializeBoolean) {
+		J9VMInternals.initialize(c);
+	}
+	return c;
+/*[ENDIF] JAVA_SPEC_VERSION >= 18 */
 }
 
+/*[IF JAVA_SPEC_VERSION >= 18]*/
 @CallerSensitiveAdapter
 private static Class<?> forName(
 	String className, boolean initializeBoolean, ClassLoader classLoader,
@@ -514,7 +559,6 @@ private static Class<?> forNameHelper(
 	String className, boolean initializeBoolean, ClassLoader classLoader,
 	Class<?> caller, boolean isAdapter) throws ClassNotFoundException
 {
-/*[ENDIF] JAVA_SPEC_VERSION >= 18 */
 	@SuppressWarnings("removal")
 	SecurityManager sm = null;
 	if (J9VMInternals.initialized) {
@@ -523,13 +567,9 @@ private static Class<?> forNameHelper(
 	if (null == sm) {
 		return forNameImpl(className, initializeBoolean, classLoader);
 	}
-/*[IF JAVA_SPEC_VERSION >= 18]*/
 	if (!isAdapter) {
 		caller = getStackClass(2);
 	}
-/*[ELSE] JAVA_SPEC_VERSION >= 18
-	Class<?> caller = getStackClass(1);
-/*[ENDIF] JAVA_SPEC_VERSION >= 18 */
 	/* perform security checks */
 	if (null == classLoader) {
 		if (null != caller) {
@@ -547,6 +587,7 @@ private static Class<?> forNameHelper(
 	}
 	return c;
 }
+/*[ENDIF] JAVA_SPEC_VERSION >= 18 */
 
 /*[IF Sidecar19-SE]*/
 /**
@@ -573,18 +614,7 @@ public static Class<?> forName(Module module, String name)
 {
 /*[IF JAVA_SPEC_VERSION >= 18]*/
 	return forNameHelper(module, name, null, false);
-}
-
-@CallerSensitiveAdapter
-private static Class<?> forName(Module module, String name, Class<?> caller)
-{
-	return forNameHelper(module, name, caller, true);
-}
-
-@CallerSensitive
-private static Class<?> forNameHelper(Module module, String name, Class<?> caller, boolean isAdapter)
-{
-/*[ENDIF] JAVA_SPEC_VERSION >= 18 */
+/*[ELSE] JAVA_SPEC_VERSION >= 18
 	@SuppressWarnings("removal")
 	SecurityManager sm = null;
 	ClassLoader classLoader;
@@ -597,13 +627,68 @@ private static Class<?> forNameHelper(Module module, String name, Class<?> calle
 		sm = System.getSecurityManager();
 	}
 	if (null != sm) {
+		Class<?> caller = getStackClass(1);
+		/* If the caller is not the specified module and RuntimePermission("getClassLoader") permission is denied, throw SecurityException */
+		if ((null != caller) && (caller.getModule() != module)) {
+			sm.checkPermission(SecurityConstants.GET_CLASSLOADER_PERMISSION);
+		}
+		classLoader = AccessController.doPrivileged(new PrivilegedAction<ClassLoader>() {
+	        public ClassLoader run() {
+				return module.getClassLoader();
+	        }
+		});
+	} else {
+		classLoader = module.getClassLoader();
+	}
+
+	try {
+		if (classLoader == null) {
+			c = ClassLoader.bootstrapClassLoader.loadClass(module, name);
+		} else {
+			c = classLoader.loadClassHelper(name, false, false, module);
+		}
+	} catch (ClassNotFoundException e) {
+		/* This method returns null on failure rather than throwing a ClassNotFoundException */
+		return null;
+	}
+	if (null != c) {
+		/* If the class loader of the given module defines other modules and
+		 * the given name is a class defined in a different module,
+		 * this method returns null after the class is loaded.
+		 */
+		if (c.getModule() != module) {
+			return null;
+		}
+	}
+	return c;
+/*[ENDIF] JAVA_SPEC_VERSION >= 18 */
+}
+
 /*[IF JAVA_SPEC_VERSION >= 18]*/
+@CallerSensitiveAdapter
+private static Class<?> forName(Module module, String name, Class<?> caller)
+{
+	return forNameHelper(module, name, caller, true);
+}
+
+@CallerSensitive
+private static Class<?> forNameHelper(Module module, String name, Class<?> caller, boolean isAdapter)
+{
+	@SuppressWarnings("removal")
+	SecurityManager sm = null;
+	ClassLoader classLoader;
+	Class<?> c;
+
+	if ((null == module) || (null == name)) {
+		throw new NullPointerException();
+	}
+	if (J9VMInternals.initialized) {
+		sm = System.getSecurityManager();
+	}
+	if (null != sm) {
 		if (!isAdapter) {
 			caller = getStackClass(2);
 		}
-/*[ELSE] JAVA_SPEC_VERSION >= 18
-		Class<?> caller = getStackClass(1);
-/*[ENDIF] JAVA_SPEC_VERSION >= 18 */
 		/* If the caller is not the specified module and RuntimePermission("getClassLoader") permission is denied, throw SecurityException */
 		if ((null != caller) && (caller.getModule() != module)) {
 			sm.checkPermission(SecurityConstants.GET_CLASSLOADER_PERMISSION);
@@ -638,6 +723,7 @@ private static Class<?> forNameHelper(Module module, String name, Class<?> calle
 	}
 	return c;
 }
+/*[ENDIF] JAVA_SPEC_VERSION >= 18 */
 /*[ENDIF] Sidecar19-SE */
 
 /**
