@@ -193,6 +193,12 @@ final class J9VMInternals {
 			if (exceptions == null)
 				exceptions = new WeakHashMap();
 			synchronized(exceptions) {
+/*[IF JAVA_SPEC_VERSION >= 18]*/
+				if (!(err instanceof Error)) {
+					err = new ExceptionInInitializerError(err);
+				}
+				exceptions.put(clazz, new SoftReference(copyThrowable(err)));
+/*[ELSE] JAVA_SPEC_VERSION >= 18*/
 				Throwable cause = err;
 				if (err instanceof ExceptionInInitializerError) {
 					cause = ((ExceptionInInitializerError)err).getException();
@@ -202,6 +208,7 @@ final class J9VMInternals {
 					}
 				}
 				exceptions.put(clazz, new SoftReference(copyThrowable(cause)));
+/*[ENDIF] JAVA_SPEC_VERSION >= 18*/
 			}
 		}
 		ensureError(err);
