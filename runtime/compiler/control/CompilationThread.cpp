@@ -1128,6 +1128,7 @@ TR::CompilationInfo::CompilationInfo(J9JITConfig *jitConfig) :
 #endif
 #if defined(J9VM_OPT_CRIU_SUPPORT)
    _crMonitor = TR::Monitor::create("JIT-CheckpointRestoreMonitor");
+   _checkpointStatus = TR_CheckpointStatus::NO_CHECKPOINT_IN_PROGRESS;
 #endif
    _iprofilerBufferArrivalMonitor = TR::Monitor::create("JIT-IProfilerBufferArrivalMonitor");
    _classUnloadMonitor = TR::MonitorTable::get()->getClassUnloadMonitor(); // by this time this variable is initialized
