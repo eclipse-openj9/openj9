@@ -471,6 +471,12 @@ int32_t TR::CompilationInfo::computeDynamicDumbInlinerBytecodeSizeCutoff(TR::Opt
 // Must have compilation queue monitor in hand when calling this routine
 TR_YesNoMaybe TR::CompilationInfo::shouldActivateNewCompThread()
    {
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+   // If a checkpoint is in progress, don't activate any threads until the restore.
+   if (isCheckpointInProgress())
+      return TR_no;
+#endif
+
    // If further compilations have been disabled we could be in a dire situation, for example virtual memory could be
    // really low, there could be failures when attempting to allocate persistent memory, a compilation thread could
    // have crashed, etc. In such situations we never want to activate a new compilation driven by this API.
@@ -5943,7 +5949,12 @@ void *TR::CompilationInfo::compileOnSeparateThread(J9VMThread * vmThread, TR::Il
    // end this compilation request. The only exception to this case is if we are performing a JitDump compilation,
    // in which case we always want to proceed with the compilation since it will be performed on the diagnostic
    // thread. Note that the diagnostic thread is not counted towards `getNumCompThreadsActive` count.
-   if ((getNumCompThreadsActive() == 0 || getPersistentInfo()->getDisableFurtherCompilation()) && !details.isJitDumpMethod())
+   if ((getNumCompThreadsActive() == 0
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+        || isCheckpointInProgress()
+#endif
+        || getPersistentInfo()->getDisableFurtherCompilation())
+       && !details.isJitDumpMethod())
       {
       bool shouldReturn = true;
 
