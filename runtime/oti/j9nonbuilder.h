@@ -123,10 +123,10 @@
 /* @ddr_namespace: map_to_type=J9ArrayShapeFlags */
 
 /* Constants from J9ArrayShapeFlags */
-#define J9ArraySizeBytes 0x0
-#define J9ArraySizeDoubles 0x3
-#define J9ArraySizeLongs 0x2
-#define J9ArraySizeWords 0x1
+#define J9ArrayShape8Bit 0x0
+#define J9ArrayShape16Bit 0x1
+#define J9ArrayShape32Bit 0x2
+#define J9ArrayShape64Bit 0x3
 
 /* @ddr_namespace: map_to_type=J9ClassInitFlags */
 

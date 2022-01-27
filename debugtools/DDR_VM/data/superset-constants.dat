@@ -1,4 +1,4 @@
-# Copyright (c) 2021, 2021 IBM Corp. and others
+# Copyright (c) 2021, 2022 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -652,11 +652,6 @@ C|ANNOTATION_TYPE_FIELD
 C|ANNOTATION_TYPE_MASK
 C|ANNOTATION_TYPE_METHOD
 C|ANNOTATION_TYPE_PARAMETER
-S|J9ArrayShapeFlags|J9ArrayShapeFlagsPointer|
-C|J9ArraySizeBytes
-C|J9ArraySizeDoubles
-C|J9ArraySizeLongs
-C|J9ArraySizeWords
 S|J9AsyncEventRecord|J9AsyncEventRecordPointer|
 C|J9ASYNC_ERROR_HANDLER_NOT_HOOKED
 C|J9ASYNC_ERROR_INVALID_HANDLER_KEY
