@@ -1406,11 +1406,25 @@ protected static boolean registerAsParallelCapable() {
 	
 /*[IF JAVA_SPEC_VERSION >= 18]*/
 	return registerAsParallelCapable(callerCls);
+/*[ELSE] JAVA_SPEC_VERSION >= 18
+	if (parallelCapableCollection.containsKey(callerCls)) {
+		return true;
+	}
+
+	Class<?> superCls = callerCls.getSuperclass();
+
+	if (superCls == ClassLoader.class || parallelCapableCollection.containsKey(superCls)) {
+		parallelCapableCollection.put(callerCls, null);
+		return true;
+	}
+
+	return false;
+/*[ENDIF] JAVA_SPEC_VERSION >= 18 */
 }
 
+/*[IF JAVA_SPEC_VERSION >= 18]*/
 @CallerSensitiveAdapter
 private static boolean registerAsParallelCapable(Class<?> callerCls) {
-/*[ENDIF] JAVA_SPEC_VERSION >= 18 */
 	if (parallelCapableCollection.containsKey(callerCls)) {
 		return true;
 	}
@@ -1424,6 +1438,7 @@ private static boolean registerAsParallelCapable(Class<?> callerCls) {
 	
 	return false;
 }
+/*[ENDIF] JAVA_SPEC_VERSION >= 18 */
 
 /**
  * Answers the lock object for class loading in parallel. 
