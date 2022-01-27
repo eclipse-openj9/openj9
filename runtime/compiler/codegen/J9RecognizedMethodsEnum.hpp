@@ -453,6 +453,7 @@
    jdk_internal_vm_vector_VectorSupport_store,
    jdk_internal_vm_vector_VectorSupport_binaryOp,
    jdk_internal_vm_vector_VectorSupport_broadcastCoerced,
+   jdk_internal_vm_vector_VectorSupport_ternaryOp,
    jdk_internal_vm_vector_VectorSupport_unaryOp,
    LastVectorIntrinsicMethod = jdk_internal_vm_vector_VectorSupport_unaryOp,
    jdk_incubator_vector_FloatVector_fromArray,
