@@ -633,6 +633,24 @@ public:
    */
    void setSupportsIntegerToChars() {_j9Flags.set(SupportsIntegerToChars); }
 
+   /**
+    * \brief Determine whether this code generator guarantees resolved direct
+    * dispatch under AOT with SVM.
+    *
+    * \return true if resolved direct dispatch is guaranteed, false otherwise
+    * \see TR_J9VMBase::isResolvedDirectDispatchGuaranteed
+    */
+   bool guaranteesResolvedDirectDispatchForSVM() { return false; } // safe default
+
+   /**
+    * \brief Determine whether this code generator guarantees resolved virtual
+    * dispatch under AOT with SVM.
+    *
+    * \return true if resolved virtual dispatch is guaranteed, false otherwise
+    * \see TR_J9VMBase::isResolvedVirtualDispatchGuaranteed
+    */
+   bool guaranteesResolvedVirtualDispatchForSVM() { return false; } // safe default
+
 private:
 
    enum // Flags

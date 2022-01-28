@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2021 IBM Corp. and others
+ * Copyright (c) 2018, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -285,7 +285,6 @@ public:
    virtual bool       needRelocationsForLookupEvaluationData() override        { return true; }
    virtual bool       needRelocationsForBodyInfoData() override                { return true; }
    virtual bool       needRelocationsForPersistentInfoData() override          { return true; }
-   virtual bool       forceUnresolvedDispatch() override                       { return true; }
    virtual bool       nopsAlsoProcessedByRelocations() override                { return true; }
    virtual bool       supportsGuardMerging() override                          { return false; }
    virtual bool       canDevirtualizeDispatch() override                       { return false; }
@@ -296,6 +295,9 @@ public:
    virtual bool       supportsJitMethodEntryAlignment() override               { return false; }
    virtual bool       isBenefitInliningCheckIfFinalizeObject() override        { return true; }
    virtual bool       needsContiguousCodeAndDataCacheAllocation() override     { return true; }
+
+   virtual bool       isResolvedDirectDispatchGuaranteed(TR::Compilation *comp) override;
+   virtual bool       isResolvedVirtualDispatchGuaranteed(TR::Compilation *comp) override;
 
    virtual bool shouldDelayAotLoad() override                                  { return true; }
    virtual bool isStable(int cpIndex, TR_ResolvedMethod *owningMethod, TR::Compilation *comp) override { return false; }

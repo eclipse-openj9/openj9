@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2190,6 +2190,19 @@ bool
 J9::TransformUtil::refineMethodHandleInvokeBasic(TR::Compilation* comp, TR::TreeTop* treetop, TR::Node* node, TR::KnownObjectTable::Index mhIndex, bool trace)
    {
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+   if (!comp->fej9()->isResolvedDirectDispatchGuaranteed(comp))
+      {
+      if (trace)
+         {
+         traceMsg(
+            comp,
+            "Cannot refine invokeBasic n%un %p without isResolvedDirectDispatchGuaranteed()\n",
+            node->getGlobalIndex(),
+            node);
+         }
+      return false;
+      }
+
    auto knot = comp->getKnownObjectTable();
    if (mhIndex == TR::KnownObjectTable::UNKNOWN ||
        !knot ||
@@ -2273,16 +2286,39 @@ bool
 J9::TransformUtil::refineMethodHandleLinkTo(TR::Compilation* comp, TR::TreeTop* treetop, TR::Node* node, TR::KnownObjectTable::Index mnIndex, bool trace)
    {
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+   TR_J9VMBase* fej9 = comp->fej9();
    auto symRef = node->getSymbolReference();
    auto rm = node->getSymbol()->castToMethodSymbol()->getMandatoryRecognizedMethod();
+   const char *missingResolvedDispatch = NULL;
    switch (rm)
       {
       case TR::java_lang_invoke_MethodHandle_linkToStatic:
       case TR::java_lang_invoke_MethodHandle_linkToSpecial:
-      case TR::java_lang_invoke_MethodHandle_linkToVirtual:
+         if (!fej9->isResolvedDirectDispatchGuaranteed(comp))
+            missingResolvedDispatch = "Direct";
          break;
+
+      case TR::java_lang_invoke_MethodHandle_linkToVirtual:
+         if (!fej9->isResolvedVirtualDispatchGuaranteed(comp))
+            missingResolvedDispatch = "Virtual";
+         break;
+
       default:
         TR_ASSERT_FATAL(false, "Unsupported method %s", symRef->getSymbol()->getResolvedMethodSymbol()->getResolvedMethod()->signature(comp->trMemory()));
+      }
+
+   if (missingResolvedDispatch != NULL)
+      {
+      if (trace)
+         {
+         traceMsg(
+            comp,
+            "Cannot refine linkToXXX n%un %p without isResolved%sDispatchGuaranteed()\n",
+            node->getGlobalIndex(),
+            node,
+            missingResolvedDispatch);
+         }
+      return false;
       }
 
    auto knot = comp->getKnownObjectTable();
@@ -2295,7 +2331,6 @@ J9::TransformUtil::refineMethodHandleLinkTo(TR::Compilation* comp, TR::TreeTop* 
       return false;
       }
 
-   TR_J9VMBase* fej9 = comp->fej9();
    auto targetMethod = fej9->targetMethodFromMemberName(comp, mnIndex);
 
    TR_ASSERT(targetMethod, "Can't get target method from MethodName obj%d\n", mnIndex);

@@ -330,8 +330,70 @@ public:
    virtual bool canDevirtualizeDispatch()     { return true; }
    virtual bool doStringPeepholing()          { return true; }
 
-   virtual bool forceUnresolvedDispatch() { return false; }
+   /**
+    * \brief Determine whether resolved direct dispatch is guaranteed.
+    *
+    * Resolved direct dispatch means that the sequence generated for a resolved
+    * direct call will not attempt to resolve a constant pool entry at runtime.
+    * If resolved direct dispatch is guaranteed, the compiler may generate
+    * resolved direct call nodes that do not correspond straightforwardly to
+    * any invokespecial or invokestatic bytecode instruction, e.g. for private
+    * invokevirtual, private invokeinterface, invokeinterface calling final
+    * Object methods, and refined invokeBasic(), linkToSpecial(), and
+    * linkToStatic(). If OTOH it is not guaranteed, the compiler must refrain
+    * from creating such call nodes.
+    *
+    * Note that even if resolved direct dispatch is not guaranteed, there may
+    * be special cases in which it is nonetheless possible or even required for
+    * code generation. This query simply determines whether it can be relied
+    * upon by earlier stages of the compiler.
+    *
+    * \param[in] comp the compilation object
+    * \return true if resolved direct dispatch is guaranteed, false otherwise
+    */
+   virtual bool isResolvedDirectDispatchGuaranteed(TR::Compilation *comp)
+      {
+      return true;
+      }
 
+   /**
+    * \brief Determine whether resolved virtual dispatch is guaranteed.
+    *
+    * Resolved virtual dispatch means that the sequence generated for a
+    * resolved virtual call will not attempt to resolve a constant pool entry
+    * at runtime. If resolved virtual dispatch is guaranteed, the compiler may
+    * generate resolved virtual call nodes that do not correspond
+    * straightforwardly to any invokevirtual bytecode instruction, e.g. for
+    * refined invokeVirtual(), and for invokeinterface calling non-final Object
+    * methods. If OTOH it is not guaranteed, the compiler must refrain from
+    * creating such call nodes.
+    *
+    * Note that even if resolved virtual dispatch is not guaranteed, there may
+    * be special cases in which it is nonetheless possible or even required for
+    * code generation. This query simply determines whether it can be relied
+    * upon by earlier stages of the compiler.
+    *
+    * \param[in] comp the compilation object
+    * \return true if resolved virtual dispatch is guaranteed, false otherwise
+    */
+   virtual bool isResolvedVirtualDispatchGuaranteed(TR::Compilation *comp)
+      {
+      return true;
+      }
+
+   // NOTE: isResolvedInterfaceDispatchGuaranteed() is omitted because there is
+   // not yet any such thing as a resolved interface call node. At present, any
+   // transformation (e.g. refinement of linkToInterface()) that would require
+   // a resolved interface dispatch guarantee is simply impossible. If/when
+   // resolved interface calls are implemented in order to allow for such
+   // transformations, this query should be defined as well.
+
+protected:
+   // Shared logic for both TR_J9SharedCacheVM and TR_J9SharedCacheServerVM
+   bool isAotResolvedDirectDispatchGuaranteed(TR::Compilation *comp);
+   bool isAotResolvedVirtualDispatchGuaranteed(TR::Compilation *comp);
+
+public:
    virtual TR_OpaqueMethodBlock * getMethodFromClass(TR_OpaqueClassBlock *, char *, char *, TR_OpaqueClassBlock * = NULL);
 
    TR_OpaqueMethodBlock * getMatchingMethodFromNameAndSignature(TR_OpaqueClassBlock * classPointer, const char* methodName, const char *signature, bool validate = true);
@@ -1355,7 +1417,6 @@ public:
    virtual bool               needRelocationsForLookupEvaluationData()        { return true; }
    virtual bool               needRelocationsForBodyInfoData()                { return true; }
    virtual bool               needRelocationsForPersistentInfoData()          { return true; }
-   virtual bool               forceUnresolvedDispatch()                       { return true; }
    virtual bool               nopsAlsoProcessedByRelocations()                { return true; }
    virtual bool               supportsGuardMerging()                          { return false; }
    virtual bool               canDevirtualizeDispatch()                       { return false; }
@@ -1368,6 +1429,9 @@ public:
    virtual bool               needsContiguousCodeAndDataCacheAllocation()     { return true; }
    virtual bool               needRelocatableTarget()                          { return true; }
    virtual bool               isStable(int cpIndex, TR_ResolvedMethod *owningMethod, TR::Compilation *comp) { return false; }
+
+   virtual bool               isResolvedDirectDispatchGuaranteed(TR::Compilation *comp);
+   virtual bool               isResolvedVirtualDispatchGuaranteed(TR::Compilation *comp);
 
    virtual bool               shouldDelayAotLoad();
 

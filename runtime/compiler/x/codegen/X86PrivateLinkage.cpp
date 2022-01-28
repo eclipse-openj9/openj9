@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1538,8 +1538,13 @@ bool TR::X86CallSite::resolvedVirtualShouldUseVFTCall()
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
    TR_ASSERT(getMethodSymbol()->isVirtual() && !getSymbolReference()->isUnresolved(), "assertion failure");
 
+   // WARNING: VPIC doesn't work for resolved calls at the moment, so setting
+   // TR_EnableVPICForResolvedVirtualCalls won't work. The most straightforward
+   // way to get VPIC to support (most) resolved calls is to simply treat them
+   // the same way as unresolved ones, but that isn't allowed when we are
+   // promising isResolvedVirtualDispatchGuaranteed().
    return
-      !fej9->forceUnresolvedDispatch() &&
+      fej9->isResolvedVirtualDispatchGuaranteed(comp()) &&
       (!comp()->getOption(TR_EnableVPICForResolvedVirtualCalls)    ||
        getProfiledTargets()                                        ||
        getCallNode()->isTheVirtualCallNodeForAGuardedInlinedCall() ||

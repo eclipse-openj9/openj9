@@ -1319,13 +1319,15 @@ TR_ResolvedMethod *
 TR_ResolvedJ9Method::aotMaskResolvedPossiblyPrivateVirtualMethod(
    TR::Compilation *comp, TR_ResolvedMethod *method)
    {
-   if (comp->getOption(TR_UseSymbolValidationManager))
+   if (method == NULL
+       || !method->isPrivate()
+       || comp->fej9()->isResolvedDirectDispatchGuaranteed(comp))
       return method;
 
-   // For now leave private invokevirtual unresolved in AOT. If we resolve it,
-   // we may forceUnresolvedDispatch in codegen, in which case the generated
-   // code would attempt to resolve the wrong kind of constant pool entry.
-   return (method == NULL || method->isPrivate()) ? NULL : method;
+   // Leave private invokevirtual unresolved. If we resolve it, we may not
+   // necessarily have resolved dispatch in codegen, and the generated code
+   // could attempt to resolve the wrong kind of constant pool entry.
+   return NULL;
    }
 
 bool
@@ -1808,13 +1810,21 @@ TR_ResolvedMethod *
 TR_ResolvedJ9Method::aotMaskResolvedImproperInterfaceMethod(
    TR::Compilation *comp, TR_ResolvedMethod *method)
    {
-   if (comp->getOption(TR_UseSymbolValidationManager))
+   if (method == NULL)
+      return NULL;
+
+   bool resolvedDispatch = false;
+   if (method->isPrivate() || method->convertToMethod()->isFinalInObject())
+      resolvedDispatch = comp->fej9()->isResolvedDirectDispatchGuaranteed(comp);
+   else
+      resolvedDispatch = comp->fej9()->isResolvedVirtualDispatchGuaranteed(comp);
+
+   if (resolvedDispatch)
       return method;
 
-   // For now leave private and Object invokeinterface unresolved in AOT. If we
-   // resolve it, we may forceUnresolvedDispatch in codegen, in which case the
-   // generated code would attempt to resolve the wrong kind of constant pool
-   // entry.
+   // Leave this method unresolved. If we resolve it, we may not necessarily
+   // have resolved dispatch in codegen, and the generated code could attempt
+   // to resolve the wrong kind of constant pool entry.
    return NULL;
    }
 

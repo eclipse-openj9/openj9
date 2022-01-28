@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -695,7 +695,9 @@ void J9::X86::I386::PrivateLinkage::buildVirtualOrComputedCall(
       uint8_t *thunk)
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
-   bool resolvedSite = !(site.getSymbolReference()->isUnresolved() || fej9->forceUnresolvedDispatch());
+   bool resolvedSite = !site.getSymbolReference()->isUnresolved()
+      && fej9->isResolvedVirtualDispatchGuaranteed(comp());
+
    if (site.getSymbolReference()->getSymbol()->castToMethodSymbol()->isComputed())
       {
       // TODO:JSR292: Try to avoid the explicit VFT load
