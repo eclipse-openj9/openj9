@@ -740,8 +740,14 @@ void TR_UnloadedClassPicSite::compensate(TR_FrontEnd *, bool isSMP, void *)
 #elif defined(TR_HOST_ARM64)
    // On aarch64, we use constant data snippet for class unloading pic site
    extern void arm64CodeSync(unsigned char *codeStart, unsigned int codeSize);
+#if defined(OSX)
+   pthread_jit_write_protect_np(0);
+#endif
    *(int64_t *)_picLocation = -1;
    arm64CodeSync(_picLocation, 8);
+#if defined(OSX)
+   pthread_jit_write_protect_np(1);
+#endif
 #else
    //   TR_ASSERT(0, "unloaded class PIC patching is not implemented on this platform yet");
 #endif
