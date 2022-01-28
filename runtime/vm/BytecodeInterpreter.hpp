@@ -9175,7 +9175,7 @@ done:
 
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 	VMINLINE VM_BytecodeAction
-	defaultvalue(REGISTER_ARGS_LIST)
+	aconst_init(REGISTER_ARGS_LIST)
 	{
 retry:
 		VM_BytecodeAction rc = EXECUTE_BYTECODE;
@@ -9595,7 +9595,7 @@ public:
 		JUMP_TABLE_ENTRY(JBunimplemented), /* 0xCA(202) */
 #endif /* DEBUG_VERSION */
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-		JUMP_TABLE_ENTRY(JBdefaultvalue), /* 0xCB(203) */
+		JUMP_TABLE_ENTRY(JBaconst_init), /* 0xCB(203) */
 		JUMP_TABLE_ENTRY(JBwithfield), /* 0xCC(204) */
 #else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 		JUMP_TABLE_ENTRY(JBunimplemented), /* 0xCB(203) */
@@ -11254,9 +11254,9 @@ executeBytecodeFromLocal:
 			/* No single step for this bytecode */
 			PERFORM_ACTION(impdep2(REGISTER_ARGS));
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-		JUMP_TARGET(JBdefaultvalue):
+		JUMP_TARGET(JBaconst_init):
 			SINGLE_STEP();
-			PERFORM_ACTION(defaultvalue(REGISTER_ARGS));
+			PERFORM_ACTION(aconst_init(REGISTER_ARGS));
 		JUMP_TARGET(JBwithfield):
 			SINGLE_STEP();
 			PERFORM_ACTION(withfield(REGISTER_ARGS));

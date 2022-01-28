@@ -2169,11 +2169,11 @@ ClassFileOracle::walkMethodCodeAttributeCode(U_16 methodIndex)
 		}
 
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-		case CFR_BC_defaultvalue:
+		case CFR_BC_aconst_init:
 			if (_classFile->majorVersion >= VALUE_TYPES_MAJOR_VERSION) {
 				cpIndex = PARAM_U16();
-				addBytecodeFixupEntry(entry++, codeIndex + 1, cpIndex, ConstantPoolMap::DEFAULT_VALUE);
-				markClassAsUsedByDefaultValue(cpIndex);
+				addBytecodeFixupEntry(entry++, codeIndex + 1, cpIndex, ConstantPoolMap::ACONST_INIT);
+				markClassAsUsedByAconst_init(cpIndex);
 			}
 			break;
 		case CFR_BC_withfield:
@@ -2882,10 +2882,10 @@ ClassFileOracle::markClassAsUsedByNew(U_16 classCPIndex)
 
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 void
-ClassFileOracle::markClassAsUsedByDefaultValue(U_16 classCPIndex)
+ClassFileOracle::markClassAsUsedByAconst_init(U_16 classCPIndex)
 {
 	markClassAsReferenced(classCPIndex);
-	_constantPoolMap->markClassAsUsedByDefaultValue(classCPIndex);
+	_constantPoolMap->markClassAsUsedByAconst_init(classCPIndex);
 }
 
 void

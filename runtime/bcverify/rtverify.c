@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1806,7 +1806,7 @@ _illegalPrimitiveReturn:
 		case RTV_PUSH_NEW:
 			switch (bc) {
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-			case JBdefaultvalue:
+			case JBaconst_init:
 				index = PARAM_16(bcIndex, 1);
 				info = &constantPool[index];
 				utf8string = J9ROMSTRINGREF_UTF8DATA((J9ROMStringRef *) info);

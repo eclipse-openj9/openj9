@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -807,7 +807,7 @@ typedef struct J9CfrMethod {
 #define CFR_BC_goto_w 200
 #define CFR_BC_jsr_w 201
 #define CFR_BC_breakpoint 202  			/* Reserved opcodes */
-#define CFR_BC_defaultvalue 203
+#define CFR_BC_aconst_init 203
 #define CFR_BC_withfield 204
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 #define CFR_BC_MaxDefined CFR_BC_withfield

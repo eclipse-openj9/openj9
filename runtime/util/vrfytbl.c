@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -226,7 +226,7 @@ const U_16 J9JavaBytecodeVerificationTable[] = {
 		0x0E85 /* JBgotow - 200 */,
 		0x1700 /* JBunimplemented - 201 */,
 		0x1700 /* JBbreakpoint - 202 */,
-		0x1200 /* JBdefaultvalue = 203 */,
+		0x1200 /* JBaconst_init = 203 */,
 		0x1000 /* JBwithfield = 204 */,
 		0x1700 /* JBunimplemented - 205 */,
 		0x1700 /* JBunimplemented - 206 */,
