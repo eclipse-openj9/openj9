@@ -104,8 +104,6 @@ MM_RootScanner::scanModularityObjects(J9ClassLoader * classLoader)
 			doSlot(&javaVM->unamedModuleForSystemLoader->moduleObject);
 		}
 	}
-
-
 }
 
 /**
