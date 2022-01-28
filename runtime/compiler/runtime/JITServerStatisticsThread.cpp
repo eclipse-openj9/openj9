@@ -82,9 +82,9 @@ static int32_t J9THREAD_PROC statisticsThreadProc(void * entryarg)
 
    persistentInfo->setStartTime(crtTime);
    persistentInfo->setElapsedTime(0);
-   while(!statsThreadObj->getStatisticsThreadExitFlag())
+   while (!statsThreadObj->getStatisticsThreadExitFlag())
       {
-      while(!statsThreadObj->getStatisticsThreadExitFlag() && j9thread_sleep_interruptable((IDATA) samplingPeriod, 0) == 0)
+      while (!statsThreadObj->getStatisticsThreadExitFlag() && j9thread_sleep_interruptable(samplingPeriod, 0) == 0)
          {
          // Read current time but prevent situations where clock goes backwards
          // Maybe we should use a monotonic clock
@@ -93,18 +93,17 @@ static int32_t J9THREAD_PROC statisticsThreadProc(void * entryarg)
             crtTime = t;
          persistentInfo->setElapsedTime(crtTime - persistentInfo->getStartTime());
 
-         // Every 10000 ms look for stale sessions from clients that were inactive
-         // for a long time and purge them
-         if (crtTime - lastPurgeTime >= 10000)
+         // Look for stale sessions from clients that were inactive for a long time and purge them
+         if (crtTime - lastPurgeTime >= TR::Options::_timeBetweenPurges)
             {
             lastPurgeTime = crtTime;
             OMR::CriticalSection compilationMonitorLock(compInfo->getCompilationMonitor());
             compInfo->getClientSessionHT()->purgeOldDataIfNeeded();
-            }     
+            }
 
          // Print operational statistics to vlog if enabled
          CpuUtilization *cpuUtil = compInfo->getCpuUtil(); 
-         if ((statsThreadObj->getStatisticsFrequency() != 0) && ((crtTime - lastStatsTime) > statsThreadObj->getStatisticsFrequency()))
+         if ((statsThreadObj->getStatisticsFrequency() != 0) && (crtTime - lastStatsTime > statsThreadObj->getStatisticsFrequency()))
             {
             int32_t cpuUsage = 0, avgCpuUsage = 0, vmCpuUsage = 0;
             if (cpuUtil->isFunctional())
