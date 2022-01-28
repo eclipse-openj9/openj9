@@ -222,8 +222,9 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
    static int32_t getScratchSpaceFactorWhenJSR292Workload() { return _scratchSpaceFactorWhenJSR292Workload; }
 
 #if defined(J9VM_OPT_JITSERVER)
-   static int32_t getScratchSpaceFactorWhenJITServerWorkload() { return 2; }
-#endif
+   static int32_t _scratchSpaceFactorWhenJITServerWorkload;
+   static int32_t getScratchSpaceFactorWhenJITServerWorkload() { return _scratchSpaceFactorWhenJITServerWorkload; }
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
    static int32_t _lowVirtualMemoryMBThreshold;
    static int32_t getLowVirtualMemoryMBThreshold() { return _lowVirtualMemoryMBThreshold; }
@@ -265,14 +266,16 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
    static int32_t _TLHPrefetchBoundaryLineCount;
    static int32_t _TLHPrefetchTLHEndLineCount;
    static int32_t _numFirstTimeCompilationsToExitIdleMode; // use large number to disable the feature
+
 #if defined(J9VM_OPT_JITSERVER)
    static int64_t _oldAge;
    static int64_t _oldAgeUnderLowMemory;
    static int64_t _timeBetweenPurges;
    static bool _shareROMClasses;
    static int32_t _sharedROMClassCacheNumPartitions;
-   const static uint32_t DEFAULT_JITCLIENT_TIMEOUT = 10000; // ms
-   const static uint32_t DEFAULT_JITSERVER_TIMEOUT = 30000; // ms
+   static int32_t _reconnectWaitTimeMs;
+   static const uint32_t DEFAULT_JITCLIENT_TIMEOUT = 10000; // ms
+   static const uint32_t DEFAULT_JITSERVER_TIMEOUT = 30000; // ms
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
    static int32_t _waitTimeToEnterIdleMode;
