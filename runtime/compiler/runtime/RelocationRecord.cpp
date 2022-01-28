@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -166,6 +166,11 @@ struct TR_RelocationRecordConstantPoolWithIndexBinaryTemplate : public TR_Reloca
 struct TR_RelocationRecordJ2IVirtualThunkPointerBinaryTemplate : public TR_RelocationRecordConstantPoolBinaryTemplate
    {
    IDATA _offsetToJ2IVirtualThunkPointer;
+   };
+
+struct TR_RelocationRecordDirectToJNIBinaryTemplate : public TR_RelocationRecordConstantPoolWithIndexBinaryTemplate
+   {
+   uint8_t _offsetToReloLocation;
    };
 
 struct TR_RelocationRecordInlinedAllocationBinaryTemplate : public TR_RelocationRecordConstantPoolWithIndexBinaryTemplate
@@ -1940,7 +1945,48 @@ TR_RelocationRecordDirectJNIVirtualMethodCall::getMethodFromCP(TR_RelocationRunt
    return getVirtualMethodFromCP(reloRuntime, void_cp, cpIndex);
    }
 
-int32_t TR_RelocationRecordRamMethodConst::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation)
+void
+TR_RelocationRecordDirectJNICall::setOffsetToReloLocation(TR_RelocationTarget *reloTarget, uint8_t offsetToReloLocation)
+   {
+   reloTarget->storeUnsigned8b(offsetToReloLocation, &((TR_RelocationRecordDirectToJNIBinaryTemplate *)_record)->_offsetToReloLocation);
+   }
+
+uint8_t
+TR_RelocationRecordDirectJNICall::offsetToReloLocation(TR_RelocationTarget *reloTarget)
+   {
+   return reloTarget->loadUnsigned8b(&((TR_RelocationRecordDirectToJNIBinaryTemplate *)_record)->_offsetToReloLocation);
+   }
+
+int32_t
+TR_RelocationRecordDirectJNICall::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation)
+   {
+   void *addressForAssumption = reloLocation;
+   reloLocation = reloLocation + offsetToReloLocation(reloTarget);
+
+   TR_RelocationRuntimeLogger *reloLogger = reloRuntime->reloLogger();
+   J9ConstantPool * newConstantPool =(J9ConstantPool *) computeNewConstantPool(reloRuntime, reloTarget, constantPool(reloTarget));
+   TR_OpaqueMethodBlock *ramMethod = getMethodFromCP(reloRuntime, newConstantPool, cpIndex(reloTarget));
+
+   if (!ramMethod) return compilationAotClassReloFailure;
+
+   TR_ResolvedMethod *callerResolvedMethod = reloRuntime->fej9()->createResolvedMethod(reloRuntime->comp()->trMemory(), ramMethod, NULL);
+   void * newAddress = NULL;
+   if (callerResolvedMethod->isJNINative())
+      newAddress = callerResolvedMethod->startAddressForJNIMethod(reloRuntime->comp());
+
+   if (!newAddress) return compilationAotClassReloFailure;
+
+   RELO_LOG(reloLogger, 6, "\tJNI call relocation: found JNI target address %p\n", newAddress);
+
+   createJNICallSite((void *)ramMethod, addressForAssumption, getMetadataAssumptionList(reloRuntime->exceptionTable()));
+   RELO_LOG(reloRuntime->reloLogger(), 6, "\t\tapplyRelocation: registered JNI Call redefinition site\n");
+
+   reloTarget->storeRelativeAddressSequence((uint8_t *)newAddress, reloLocation, fixedSequence1);
+   return 0;
+   }
+
+int32_t
+TR_RelocationRecordRamMethodConst::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation)
    {
    TR_RelocationRuntimeLogger *reloLogger = reloRuntime->reloLogger();
    J9ConstantPool * newConstantPool =(J9ConstantPool *) computeNewConstantPool(reloRuntime, reloTarget, constantPool(reloTarget));
@@ -1955,35 +2001,6 @@ int32_t TR_RelocationRecordRamMethodConst::applyRelocation(TR_RelocationRuntime 
    return 0;
    }
 
-int32_t
-TR_RelocationRecordDirectJNICall::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation)
-   {
-   uintptr_t oldAddress = (uintptr_t) reloTarget->loadAddress(reloLocation);
-
-   TR_RelocationRuntimeLogger *reloLogger = reloRuntime->reloLogger();
-   J9ConstantPool * newConstantPool =(J9ConstantPool *) computeNewConstantPool(reloRuntime, reloTarget, constantPool(reloTarget));
-   TR_OpaqueMethodBlock *ramMethod = getMethodFromCP(reloRuntime, newConstantPool, cpIndex(reloTarget));
-
-   if (!ramMethod) return compilationAotClassReloFailure;
-
-
-   TR_ResolvedMethod *callerResolvedMethod = reloRuntime->fej9()->createResolvedMethod(reloRuntime->comp()->trMemory(), ramMethod, NULL);
-   void * newAddress = NULL;
-   if (callerResolvedMethod->isJNINative())
-      newAddress = callerResolvedMethod->startAddressForJNIMethod(reloRuntime->comp());
-
-
-   if (!newAddress) return compilationAotClassReloFailure;
-
-   RELO_LOG(reloLogger, 6, "\tJNI call relocation: found JNI target address %p\n", newAddress);
-
-   createJNICallSite((void *)ramMethod, (void *)reloLocation,getMetadataAssumptionList(reloRuntime->exceptionTable()));
-   RELO_LOG(reloRuntime->reloLogger(), 6, "\t\tapplyRelocation: registered JNI Call redefinition site\n");
-
-   reloTarget->storeRelativeAddressSequence((uint8_t *)newAddress, reloLocation, fixedSequence1);
-   return 0;
-
-   }
 
 
 // Data Address Relocations
@@ -3694,7 +3711,7 @@ TR_RelocationRecordValidateStaticField::getClass(TR_RelocationRuntime *reloRunti
    TR_OpaqueClassBlock *definingClass = NULL;
    if (void_cp)
       {
-      definingClass = TR_ResolvedJ9Method::definingClassFromCPFieldRef(reloRuntime->comp(), (J9ConstantPool *) void_cp, cpIndex(reloTarget), true); 
+      definingClass = TR_ResolvedJ9Method::definingClassFromCPFieldRef(reloRuntime->comp(), (J9ConstantPool *) void_cp, cpIndex(reloTarget), true);
       }
 
    return definingClass;
@@ -6245,8 +6262,8 @@ uint32_t TR_RelocationRecord::_relocationRecordHeaderSizeTable[TR_NumExternalRel
    sizeof(TR_RelocationRecordHelperAddressBinaryTemplate),                           // TR_AbsoluteHelperAddress                        = 8
    sizeof(TR_RelocationRecordWithOffsetBinaryTemplate),                              // TR_FixedSeqAddress                              = 9
    sizeof(TR_RelocationRecordWithOffsetBinaryTemplate),                              // TR_FixedSeq2Address                             = 10
-   sizeof(TR_RelocationRecordConstantPoolWithIndexBinaryTemplate),                   // TR_JNIVirtualTargetAddress                      = 11
-   sizeof(TR_RelocationRecordConstantPoolWithIndexBinaryTemplate),                   // TR_JNIStaticTargetAddress                       = 12
+   sizeof(TR_RelocationRecordDirectToJNIBinaryTemplate),                             // TR_JNIVirtualTargetAddress                      = 11
+   sizeof(TR_RelocationRecordDirectToJNIBinaryTemplate),                             // TR_JNIStaticTargetAddress                       = 12
    sizeof(TR_RelocationRecordBinaryTemplate),                                        // TR_ArrayCopyHelper                              = 13
    sizeof(TR_RelocationRecordBinaryTemplate),                                        // TR_ArrayCopyToc                                 = 14
    sizeof(TR_RelocationRecordBinaryTemplate),                                        // TR_BodyInfoAddress                              = 15
@@ -6286,7 +6303,7 @@ uint32_t TR_RelocationRecord::_relocationRecordHeaderSizeTable[TR_NumExternalRel
    sizeof(TR_RelocationRecordMethodTracingCheckBinaryTemplate),                      // TR_CheckMethodExit                              = 49
    sizeof(TR_RelocationRecordValidateArbitraryClassBinaryTemplate),                  // TR_ValidateArbitraryClass                       = 50
    sizeof(TR_RelocationRecordEmitClassBinaryTemplate),                               // TR_EmitClass                                    = 51
-   sizeof(TR_RelocationRecordConstantPoolWithIndexBinaryTemplate),                   // TR_JNISpecialTargetAddress                      = 52
+   sizeof(TR_RelocationRecordDirectToJNIBinaryTemplate),                             // TR_JNISpecialTargetAddress                      = 52
    sizeof(TR_RelocationRecordConstantPoolWithIndexBinaryTemplate),                   // TR_VirtualRamMethodConst                        = 53
    sizeof(TR_RelocationRecordInlinedMethodBinaryTemplate),                           // TR_InlinedInterfaceMethod                       = 54
    sizeof(TR_RelocationRecordInlinedMethodBinaryTemplate),                           // TR_InlinedVirtualMethod                         = 55

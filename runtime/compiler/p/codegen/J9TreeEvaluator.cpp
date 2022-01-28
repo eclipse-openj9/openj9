@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -12008,7 +12008,7 @@ TR::Instruction *loadAddressJNI32(TR::CodeGenerator *cg, TR::Node * node, int32_
 
    cursor = generateTrg1ImmInstruction(cg, TR::InstOpCode::lis, node, trgReg, isAOT ? 0 : value>>16, cursor);
 
-   if (value != 0x0)
+   if (isAOT && value != 0x0)
       {
       TR_ExternalRelocationTargetKind reloType;
       if (node->getSymbol()->castToResolvedMethodSymbol()->isSpecial())
@@ -12022,11 +12022,20 @@ TR::Instruction *loadAddressJNI32(TR::CodeGenerator *cg, TR::Node * node, int32_
          reloType = TR_NoRelocation;
          TR_ASSERT(0,"JNI relocation not supported.");
          }
-      if(isAOT)
-         cg->addExternalRelocation(new (cg->trHeapMemory()) TR::BeforeBinaryEncodingExternalRelocation(cursor, (uint8_t *) node->getSymbolReference(),
-               node ? (uint8_t *)(intptr_t)node->getInlinedSiteIndex() : (uint8_t *)-1,
-                  reloType, cg),
-                  __FILE__, __LINE__, node);
+
+      TR_RelocationRecordInformation *info = new (comp->trHeapMemory()) TR_RelocationRecordInformation();
+      info->data1 = 0;
+      info->data2 = reinterpret_cast<uintptr_t>(node->getSymbolReference());
+      int16_t inlinedSiteIndex = node ? node->getInlinedSiteIndex() : -1;
+      info->data3 = static_cast<uintptr_t>(inlinedSiteIndex);
+
+      cg->addExternalRelocation(
+         new (cg->trHeapMemory()) TR::BeforeBinaryEncodingExternalRelocation(
+            cursor,
+            reinterpret_cast<uint8_t *>(info),
+            reloType,
+            cg),
+         __FILE__, __LINE__, node);
       }
 
    cursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::ori, node, trgReg, trgReg, isAOT ? 0 : value&0x0000ffff, cursor);
@@ -12050,7 +12059,7 @@ TR::Instruction *loadAddressJNI(TR::CodeGenerator *cg, TR::Node * node, intptr_t
 
    // lis trgReg, upper 16-bits
    cursor = generateTrg1ImmInstruction(cg, TR::InstOpCode::lis, node, trgReg, isAOT? 0: (value>>48) , cursor);
-   if (value != 0x0)
+   if (isAOT && value != 0x0)
       {
       TR_ExternalRelocationTargetKind reloType;
       if (node->getSymbol()->castToResolvedMethodSymbol()->isSpecial())
@@ -12064,11 +12073,20 @@ TR::Instruction *loadAddressJNI(TR::CodeGenerator *cg, TR::Node * node, intptr_t
          reloType = TR_NoRelocation;
          TR_ASSERT(0,"JNI relocation not supported.");
          }
-      if(isAOT)
-         cg->addExternalRelocation(new (cg->trHeapMemory()) TR::BeforeBinaryEncodingExternalRelocation(cursor, (uint8_t *) node->getSymbolReference(),
-               node ? (uint8_t *)(intptr_t)node->getInlinedSiteIndex() : (uint8_t *)-1,
-                  reloType, cg),
-                  __FILE__,__LINE__, node);
+
+      TR_RelocationRecordInformation *info = new (comp->trHeapMemory()) TR_RelocationRecordInformation();
+      info->data1 = 0;
+      info->data2 = reinterpret_cast<uintptr_t>(node->getSymbolReference());
+      int16_t inlinedSiteIndex = node ? node->getInlinedSiteIndex() : -1;
+      info->data3 = static_cast<uintptr_t>(inlinedSiteIndex);
+
+      cg->addExternalRelocation(
+         new (cg->trHeapMemory()) TR::BeforeBinaryEncodingExternalRelocation(
+            cursor,
+            reinterpret_cast<uint8_t *>(info),
+            reloType,
+            cg),
+         __FILE__, __LINE__, node);
       }
    // ori trgReg, trgReg, next 16-bits
    cursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::ori, node, trgReg, trgReg, isAOT ? 0 : ((value>>32) & 0x0000ffff), cursor);

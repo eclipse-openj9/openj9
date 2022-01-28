@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1713,10 +1713,19 @@ TR::S390JNICallDataSnippet::emitSnippetBody()
 
       if (cg()->needClassAndMethodPointerRelocations())
          {
-         cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, (uint8_t *) callNode->getSymbolReference(),
-               callNode  ? (uint8_t *)(intptr_t)callNode->getInlinedSiteIndex() : (uint8_t *)-1,
-                     reloType, cg()),
-                     __FILE__, __LINE__, callNode);
+         TR_RelocationRecordInformation *info = new (comp->trHeapMemory()) TR_RelocationRecordInformation();
+         info->data1 = 0;
+         info->data2 = reinterpret_cast<uintptr_t>(callNode->getSymbolReference());
+         int16_t inlinedSiteIndex = callNode ? callNode->getInlinedSiteIndex() : -1;
+         info->data3 = static_cast<uintptr_t>(inlinedSiteIndex);
+
+         cg()->addExternalRelocation(
+            new (cg()->trHeapMemory()) TR::ExternalRelocation(
+               cursor,
+               reinterpret_cast<uint8_t *>(info),
+               reloType,
+               cg()),
+            __FILE__, __LINE__, callNode);
          }
 
       cursor += TR::Compiler->om.sizeofReferenceAddress();

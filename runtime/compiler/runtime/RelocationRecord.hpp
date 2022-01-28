@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -547,6 +547,10 @@ class TR_RelocationRecordDirectJNICall : public TR_RelocationRecordConstantPoolW
    TR_RelocationRecordDirectJNICall() {}
    TR_RelocationRecordDirectJNICall(TR_RelocationRuntime *reloRuntime, TR_RelocationRecordBinaryTemplate *record) : TR_RelocationRecordConstantPoolWithIndex(reloRuntime, record) {}
    virtual char *name();
+
+   void setOffsetToReloLocation(TR_RelocationTarget *reloTarget, uint8_t offsetToReloLocation);
+   uint8_t offsetToReloLocation(TR_RelocationTarget *reloTarget);
+
    virtual int32_t applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation);
 
    private:
@@ -1077,7 +1081,7 @@ class TR_RelocationRecordValidateInstanceField : public TR_RelocationRecordValid
    public:
       TR_RelocationRecordValidateInstanceField() {}
       TR_RelocationRecordValidateInstanceField(TR_RelocationRuntime *reloRuntime, TR_RelocationRecordBinaryTemplate *record) : TR_RelocationRecordValidateClass(reloRuntime, record) {}
-      virtual char *name();      
+      virtual char *name();
 
    protected:
       virtual TR_OpaqueClassBlock *getClassFromCP(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, void *void_cp);
