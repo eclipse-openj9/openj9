@@ -1312,6 +1312,13 @@ TR_ResolvedRelocatableJ9Method::getResolvedPossiblyPrivateVirtualMethod(
          ignoreRtResolve,
          unresolvedInCP);
 
+   return aotMaskResolvedPossiblyPrivateVirtualMethod(comp, method);
+   }
+
+TR_ResolvedMethod *
+TR_ResolvedJ9Method::aotMaskResolvedPossiblyPrivateVirtualMethod(
+   TR::Compilation *comp, TR_ResolvedMethod *method)
+   {
    if (comp->getOption(TR_UseSymbolValidationManager))
       return method;
 
@@ -1793,8 +1800,16 @@ TR_ResolvedRelocatableJ9Method::getResolvedImproperInterfaceMethod(
    TR::Compilation * comp,
    I_32 cpIndex)
    {
+   return aotMaskResolvedImproperInterfaceMethod(
+      comp, TR_ResolvedJ9Method::getResolvedImproperInterfaceMethod(comp, cpIndex));
+   }
+
+TR_ResolvedMethod *
+TR_ResolvedJ9Method::aotMaskResolvedImproperInterfaceMethod(
+   TR::Compilation *comp, TR_ResolvedMethod *method)
+   {
    if (comp->getOption(TR_UseSymbolValidationManager))
-      return TR_ResolvedJ9Method::getResolvedImproperInterfaceMethod(comp, cpIndex);
+      return method;
 
    // For now leave private and Object invokeinterface unresolved in AOT. If we
    // resolve it, we may forceUnresolvedDispatch in codegen, in which case the

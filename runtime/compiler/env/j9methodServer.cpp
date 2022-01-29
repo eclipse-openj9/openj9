@@ -2217,14 +2217,9 @@ TR_ResolvedRelocatableJ9JITServerMethod::getResolvedImproperInterfaceMethod(
    TR::Compilation * comp,
    I_32 cpIndex)
    {
-   if (comp->getOption(TR_UseSymbolValidationManager))
-      return TR_ResolvedJ9JITServerMethod::getResolvedImproperInterfaceMethod(comp, cpIndex);
-
-   // For now leave private and Object invokeinterface unresolved in AOT. If we
-   // resolve it, we may forceUnresolvedDispatch in codegen, in which case the
-   // generated code would attempt to resolve the wrong kind of constant pool
-   // entry.
-   return NULL;
+   return aotMaskResolvedImproperInterfaceMethod(
+      comp,
+      TR_ResolvedJ9JITServerMethod::getResolvedImproperInterfaceMethod(comp, cpIndex));
    }
 
 void *
@@ -2390,13 +2385,7 @@ TR_ResolvedRelocatableJ9JITServerMethod::getResolvedPossiblyPrivateVirtualMethod
          ignoreRtResolve,
          unresolvedInCP);
 
-   if (comp->getOption(TR_UseSymbolValidationManager))
-      return method;
-
-   // For now leave private invokevirtual unresolved in AOT. If we resolve it,
-   // we may forceUnresolvedDispatch in codegen, in which case the generated
-   // code would attempt to resolve the wrong kind of constant pool entry.
-   return (method == NULL || method->isPrivate()) ? NULL : method;
+   return aotMaskResolvedPossiblyPrivateVirtualMethod(comp, method);
    }
 
 bool

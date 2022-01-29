@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -466,6 +466,11 @@ public:
    virtual TR_ResolvedMethod *     getResolvedInterfaceMethod( TR::Compilation *, TR_OpaqueClassBlock * classObject, int32_t cpIndex);
    virtual TR_ResolvedMethod *     getResolvedVirtualMethod( TR::Compilation *, TR_OpaqueClassBlock * classObject, int32_t virtualCallOffset, bool ignoreRtResolve = true);
 
+protected:
+   TR_ResolvedMethod *             aotMaskResolvedPossiblyPrivateVirtualMethod(TR::Compilation *comp, TR_ResolvedMethod *method);
+   TR_ResolvedMethod *             aotMaskResolvedImproperInterfaceMethod(TR::Compilation *comp, TR_ResolvedMethod *method);
+
+public:
    virtual bool                    virtualMethodIsOverridden();
    virtual void                    setVirtualMethodIsOverridden();
    virtual void *                  addressContainingIsOverriddenBit();
