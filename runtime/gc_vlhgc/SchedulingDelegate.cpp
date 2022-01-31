@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -364,6 +364,7 @@ MM_SchedulingDelegate::partialGarbageCollectCompleted(MM_EnvironmentVLHGC *env, 
 	Trc_MM_SchedulingDelegate_partialGarbageCollectCompleted_Entry(env->getLanguageVMThread(), reclaimableRegions, defragmentReclaimableRegions);
 	PORT_ACCESS_FROM_ENVIRONMENT(env);
 	MM_CopyForwardStats *copyForwardStats = &static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._copyForwardStats;
+	MM_CompactVLHGCStats *compactStats = &static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._compactStats;
 	bool globalSweepHappened = _globalSweepRequired;
 	_globalSweepRequired = false;
 	/* copy out the Eden size of the previous interval (between the last PGC and this one) before we recalculate the next one */
@@ -374,6 +375,7 @@ MM_SchedulingDelegate::partialGarbageCollectCompleted(MM_EnvironmentVLHGC *env, 
 			copyForwardStats->_nonEdenEvacuateRegionCount,
 			copyForwardStats->_edenSurvivorRegionCount,
 			copyForwardStats->_nonEdenSurvivorRegionCount,
+			compactStats->_survivorRegionCount,
 			edenCountBeforeCollect);
 
 	if (env->_cycleState->_shouldRunCopyForward) {
@@ -846,8 +848,24 @@ MM_SchedulingDelegate::measureConsumptionForPartialGC(MM_EnvironmentVLHGC *env, 
 		/* this must be the first PGC after a GMP. Since the GMP affected reclaimable memory, we have no reliable way to measure consumption for this cycle */ 
 		Trc_MM_SchedulingDelegate_measureConsumptionForPartialGC_noPreviousData(env->getLanguageVMThread());
 	} else {
-		/* Use a signed number. The PGC may have negative consumption if it recovered more than an Eden-worth of memory, or if the estimates are a bit off */
-		IDATA regionsConsumed = (IDATA)_previousReclaimableRegions - (IDATA)currentReclaimableRegions;
+		MM_CopyForwardStats *copyForwardStats = &static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._copyForwardStats;
+		MM_CompactVLHGCStats *compactStats = &static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._compactStats;
+
+		/* TODO: try to remove _previousReclaimableRegions/currentReclaimableRegions, as it does not seem to be used anymore,
+		 * and it was not quite correct, since it was not accounting for heap resizing changes (while it should)
+		 * and also accounting for sweep reclamation (while it should not)
+		 */
+		/* Consumption is (occupied regions - freed regions) during PGC.
+		 * Occupied regions is the sum of those occupied during both CopyForward and Compact phase.
+		 * Freed regions do not account for eden component since we free them up all, exactly what we consumed since the end of previous GC.
+		 * Freed regions is represented by _nonEdenEvacuateRegionCount regardless if CopyForward or Compact was done.
+		 * Using a signed number. The PGC may have negative consumption if it recovered more than an Eden-worth of memory
+		 */
+		intptr_t regionsConsumed = copyForwardStats->_edenSurvivorRegionCount
+									+ copyForwardStats->_nonEdenSurvivorRegionCount
+									+ compactStats->_survivorRegionCount
+									- copyForwardStats->_nonEdenEvacuateRegionCount;
+
 		const double historicWeight = 0.80; /* arbitrarily give 80% weight to historical result, 20% to newest result */
 		_regionConsumptionRate = (_regionConsumptionRate * historicWeight) + (regionsConsumed * (1.0 - historicWeight));
 		Trc_MM_SchedulingDelegate_measureConsumptionForPartialGC_consumptionRate(env->getLanguageVMThread(), regionsConsumed, _previousReclaimableRegions, currentReclaimableRegions, _regionConsumptionRate);
@@ -860,7 +878,7 @@ MM_SchedulingDelegate::measureConsumptionForPartialGC(MM_EnvironmentVLHGC *env, 
 		Trc_MM_SchedulingDelegate_measureConsumptionForPartialGC_noPreviousData(env->getLanguageVMThread());
 	} else {
 		/* Use a signed number. The PGC may have negative consumption if it recovered more than an Eden-worth of memory, or if the estimates are a bit off */
-		IDATA defragmentRegionsConsumed = (IDATA)_previousDefragmentReclaimableRegions - (IDATA)currentDefragmentReclaimableRegions;
+		intptr_t defragmentRegionsConsumed = (intptr_t)_previousDefragmentReclaimableRegions - (intptr_t)currentDefragmentReclaimableRegions;
 		const double historicWeight = 0.80; /* arbitrarily give 80% weight to historical result, 20% to newest result */
 		_defragmentRegionConsumptionRate = (_defragmentRegionConsumptionRate * historicWeight) + (defragmentRegionsConsumed * (1.0 - historicWeight));
 		Trc_MM_SchedulingDelegate_measureConsumptionForPartialGC_defragmentConsumptionRate(env->getLanguageVMThread(), defragmentRegionsConsumed, _previousDefragmentReclaimableRegions, currentDefragmentReclaimableRegions, _defragmentRegionConsumptionRate);
