@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2004, 2014 IBM Corp. and others
+ * Copyright (c) 2004, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,12 +19,12 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-
 package com.ibm.j9ddr.corereaders;
 
-
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 
@@ -39,26 +39,29 @@ public abstract class AbstractCoreReader implements ICore
 {
 
 	protected ImageInputStream _fileReader;
-	protected Collection<? extends IMemorySource> _memoryRanges = new ArrayList<IMemorySource>();
-
-	private ShutdownHook _fileTracker = new ShutdownHook();
+	protected Collection<? extends IMemorySource> _memoryRanges;
 	protected File coreFile;
+
+	protected AbstractCoreReader() {
+		super();
+		this._memoryRanges = new ArrayList<>();
+	}
 
 	@Override
 	public boolean equals(Object obj) {
-		if((obj == null) || !(obj instanceof AbstractCoreReader)) {
+		if ((obj == null) || !(obj instanceof AbstractCoreReader)) {
 			return false;
 		}
 		AbstractCoreReader reader = (AbstractCoreReader) obj;
-		if(coreFile == null) {
-			//this reader is working from a stream
-			if(reader.coreFile != null) {
+		if (coreFile == null) {
+			// this reader is working from a stream
+			if (reader.coreFile != null) {
 				return false;
 			}
 			return _fileReader.equals(reader._fileReader);
 		} else {
-			//this reader is working from a file
-			if(reader.coreFile == null) {
+			// this reader is working from a file
+			if (reader.coreFile == null) {
 				return false;
 			}
 			return coreFile.equals(reader.coreFile);
@@ -67,27 +70,26 @@ public abstract class AbstractCoreReader implements ICore
 
 	@Override
 	public int hashCode() {
-		if(coreFile == null) {
+		if (coreFile == null) {
 			return super.hashCode();
 		}
 		return coreFile.hashCode();
 	}
-	
+
 	/**
 	 * This sets the reader to use to retrieve the underlying bytes to process.
 	 * The reader may perform buffering or other operations before making the
 	 * data available.
-	 * 
+	 *
 	 * Subclasses should override this method if additional actions need to be
 	 * performed when the reader is set, typically this will be things such as
 	 * an initial read of the data.
-	 * 
+	 *
 	 * @param reader
 	 */
 	public void setReader(ImageInputStream reader) throws IOException
 	{
 		_fileReader = reader;
-		_fileTracker.addFile(reader);
 	}
 
 	public long readLong() throws IOException
@@ -115,9 +117,6 @@ public abstract class AbstractCoreReader implements ICore
 		_fileReader.seek(pos);
 	}
 
-	// this method has been ported from the ClosingFileReader so that this class
-	// can accept a
-	// generic ImageInputStream
 	public byte[] readBytes(int len) throws IOException
 	{
 		byte[] buffer = new byte[len];
@@ -153,13 +152,15 @@ public abstract class AbstractCoreReader implements ICore
 
 	protected String readString() throws IOException
 	{
-		StringBuffer buffer = new StringBuffer();
-		byte b = readByte();
-		while (0 != b) {
-			buffer.append(new String(new byte[] { b }, "ASCII"));
-			b = readByte();
+		for (ByteArrayOutputStream buffer = new ByteArrayOutputStream();;) {
+			byte b = readByte();
+
+			if (b != 0) {
+				buffer.write(b);
+			} else {
+				return new String(buffer.toByteArray(), StandardCharsets.US_ASCII);
+			}
 		}
-		return buffer.toString();
 	}
 
 	public static String format(int i)
@@ -191,10 +192,11 @@ public abstract class AbstractCoreReader implements ICore
 				| (0x0000FF00 & ((data[start + 2]) << 8))
 				| (0x000000FF & (data[start + 3]));
 	}
-	
+
 	public void close() throws IOException {
-		if(_fileReader != null) {
+		if (_fileReader != null) {
 			_fileReader.close();
 		}
 	}
+
 }
