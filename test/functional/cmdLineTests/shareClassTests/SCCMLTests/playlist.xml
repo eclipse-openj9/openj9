@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <!--
-  Copyright (c) 2016, 2021 IBM Corp. and others
+  Copyright (c) 2016, 2022 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -49,7 +49,9 @@
 		<impls>
 			<impl>ibm</impl>
 		</impls>
-		<aot>explicit</aot>
+		<features>
+			<feature>AOT:explicit</feature>
+		</features>
 	</test>
 	<test>
 		<testCaseName>testSCCMLTests1_openj9</testCaseName>
@@ -79,7 +81,9 @@
 		<impls>
 			<impl>openj9</impl>
 		</impls>
-		<aot>explicit</aot>
+		<features>
+			<feature>AOT:explicit</feature>
+		</features>
 	</test>
 	<test>
 		<testCaseName>testSCCMLTests2</testCaseName>
@@ -105,7 +109,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<aot>explicit</aot>
+		<features>
+			<feature>AOT:explicit</feature>
+		</features>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
@@ -150,7 +156,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<aot>explicit</aot>
+		<features>
+			<feature>AOT:explicit</feature>
+		</features>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
@@ -181,7 +189,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<aot>explicit</aot>
+		<features>
+			<feature>AOT:explicit</feature>
+		</features>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
@@ -212,7 +222,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<aot>explicit</aot>
+		<features>
+			<feature>AOT:explicit</feature>
+		</features>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
@@ -240,7 +252,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<aot>explicit</aot>
+		<features>
+			<feature>AOT:explicit</feature>
+		</features>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
@@ -267,7 +281,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<aot>explicit</aot>
+		<features>
+			<feature>AOT:explicit</feature>
+		</features>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
@@ -298,7 +314,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<aot>explicit</aot>
+		<features>
+			<feature>AOT:explicit</feature>
+		</features>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
@@ -325,7 +343,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<aot>explicit</aot>
+		<features>
+			<feature>AOT:explicit</feature>
+		</features>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
@@ -358,7 +378,9 @@
 		<versions>
 			<version>9+</version>
 		</versions>
-		<aot>explicit</aot>
+		<features>
+			<feature>AOT:explicit</feature>
+		</features>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
@@ -393,7 +415,9 @@
 		<impls>
 			<impl>openj9</impl>
 		</impls>
-		<aot>explicit</aot>
+		<features>
+			<feature>AOT:explicit</feature>
+		</features>
 	</test>
 	<test>
 		<testCaseName>ShareClassesCML</testCaseName>
@@ -425,6 +449,8 @@
 			<impl>openj9</impl>
 			<impl>ibm</impl>
 		</impls>
-		<aot>explicit</aot>
+		<features>
+			<feature>AOT:explicit</feature>
+		</features>
 	</test>
 </playlist>
