@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
 
 <!--
-  Copyright (c) 2001, 2021 IBM Corp. and others
+  Copyright (c) 2001, 2022 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -330,43 +330,6 @@
   <output regex="no" type="success">&lt;/verbosegc&gt;</output>
  </test>
 
-<!--
- <test id="GC rotating verbose log file name contains %s">
-  <exec command="rm foo*.*" />
-  <exec command="$EXE$ $XINT$ -verbose:gc -Xms8m -Xmx8m -Xverbosegclog:foo%s%s%s%s%s%s,5,1 $CP$ com.ibm.tests.garbagecollector.SpinAllocate 1" />
-  <!-- check a file with name foo%s%s%s%s%s%s.005 is created
-  <command>cat foo%s%s%s%s%s%s.005</command>
-  <output regex="no" type="failure">No such file or directory</output>
-  <output regex="no" type="success">&lt;/verbosegc&gt;</output>
- </test>
-
- <test id="GC rotating verbose log file name contains %s and other random symbols">
-  <exec command="rm foo*.*" />
-  <exec command="$EXE$ $XINT$ -verbose:gc -Xms8m -Xmx8m -Xverbosegclog:foo%s%s%s%s%s%s1234567%s%s%s%s%s%s!@%^*%s%s%s%s%s%sabcdef.#,5,1 $CP$ com.ibm.tests.garbagecollector.SpinAllocate 1" />
-  <!-- check a file with name foo%s%s%s%s%s%s1234567%s%s%s%s%s%s!@%^*%s%s%s%s%s%sabcdef.005 is created
-  <command>cat foo%s%s%s%s%s%s1234567%s%s%s%s%s%s!@%^*%s%s%s%s%s%sabcdef.005</command>
-  <output regex="no" type="failure">No such file or directory</output>
-  <output regex="no" type="success">&lt;/verbosegc&gt;</output>
- </test>
-
- <test id="GC rotating verbose log file name contains %s %c %i">
-  <exec command="rm foo*.*" />
-  <exec command="$EXE$ $XINT$ -verbose:gc -Xms8m -Xmx8m -Xverbosegclog:foo%s%s%s%s%s%s%c%c%c%c%c%i%i%i%i%i,5,1 $CP$ com.ibm.tests.garbagecollector.SpinAllocate 1" />
-  <!-- check a file with name foo%s%s%s%s%s%s%c%c%c%c%c%i%i%i%i%i.005 is created
-  <command>cat foo%s%s%s%s%s%s%c%c%c%c%c%i%i%i%i%i.005</command>
-  <output regex="no" type="failure">No such file or directory</output>
-  <output regex="no" type="success">&lt;/verbosegc&gt;</output>
- </test>
-
- <test id="GC rotating verbose log file name contains %s %c %i and other random symbols">
-  <exec command="rm foo*.*" />
-  <exec command="$EXE$ $XINT$ -verbose:gc -Xms8m -Xmx8m -Xverbosegclog:foo%s%s%s%s%s%s%c%c%c%c%c%i%i%i%i%i1234567!@%^*%s%s%s%s%s%s%c%c%c%c%c%i%i%i%i%isabcdef.#,5,1 $CP$ com.ibm.tests.garbagecollector.SpinAllocate 1" />
-  <!-- check a file with name foo%s%s%s%s%s%s1234567%s%s%s%s%s%s!@%^*%s%s%s%s%s%sabcdef.005 is created
-  <command>cat foo%s%s%s%s%s%s%c%c%c%c%c%i%i%i%i%i1234567!@%^*%s%s%s%s%s%s%c%c%c%c%c%i%i%i%i%isabcdef.005</command>
-  <output regex="no" type="failure">No such file or directory</output>
-  <output regex="no" type="success">&lt;/verbosegc&gt;</output>
- </test>
- -->
  <!-- CMVC 178000 - disable until a new version of the test can be added after the GC promotes
  <test id="-verbose:gc -Xverbosegclog:<invalid> - use a file name in a directory that doesn't exist">
   <exec command="rm foo.*.log" />
