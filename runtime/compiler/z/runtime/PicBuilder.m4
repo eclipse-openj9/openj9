@@ -4,7 +4,7 @@ define(`ZZ',`**')
 define(`ZZ',`##')
 ')dnl
 
-ZZ Copyright (c) 2000, 2020 IBM Corp. and others
+ZZ Copyright (c) 2000, 2022 IBM Corp. and others
 ZZ
 ZZ This program and the accompanying materials are made
 ZZ available under the terms of the Eclipse Public License 2.0
@@ -1949,24 +1949,33 @@ ZZ  R1-3 have been saved. just need to save r0, r4-15 here.
 
 ZZ  Now start to call fast_jitInstanceOf as a C function
     ST_GPR  J9SP,J9TR_VMThread_sp(r13)
+
 ifdef({J9ZOS390},{dnl
-    L_GPR   rSSP,eq_vmThrSSP(r13)
-    XC      eq_vmThrSSP(PTR_SIZE,r13),eq_vmThrSSP(r13)
+
+RestoreSSP
+
+LOAD_ADDR_FROM_TOC(r6,TR_instanceOf)
+
 ifdef({TR_HOST_64BIT},{dnl
-ZZ 64 bit zOS. Do nothing.
+
+ZZ 64 bit zOS
+   BASR r7,r6              # call instanceOf
+   LR   r0,r0
+
 },{dnl
+
 ZZ 31 bit zOS. See definition of J9TR_CAA_SAVE_OFFSET
-    L_GPR  r12,2080(rSSP)
-})dnl
+   L_GPR  r12,J9TR_CAA_save_offset(rSSP)
+   BASR r7,r6              # call instanceOf
+   DC   X'4700',Y((LCALLDESCPICREG-(*-8))/8)   * nop desc
 
 })dnl
+SaveSSP
+},{dnl
 
+ZZ zLinux case
 LOAD_ADDR_FROM_TOC(r14,TR_instanceOf)
-
     BASR    r14,r14        # call instanceOf
-
-ifdef({J9ZOS390},{dnl
-    ST_GPR   rSSP,eq_vmThrSSP(r13)
 })dnl
 
     L_GPR   J9SP,J9TR_VMThread_sp(r13)
