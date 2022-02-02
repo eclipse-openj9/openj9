@@ -37,12 +37,6 @@
 	-config $(Q)$(TEST_RESROOT)$(D)gcchecktests.xml$(Q) -explainExcludes \
 	-xids all,$(PLATFORM),$(VARIATION) -plats all,$(PLATFORM),$(VARIATION) -xlist $(Q)$(TEST_RESROOT)$(D)gcchecktests_excludes.xml$(Q) -nonZeroExitWhenError; \
 	${TEST_STATUS}</command>
-		<disables>
-			<disable>
-				<comment>https://github.com/eclipse-openj9/openj9/issues/14387</comment>
-				<platform>aarch64_mac.*</platform>
-			</disable>
-		</disables>
 		<levels>
 			<level>sanity</level>
 		</levels>
