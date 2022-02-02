@@ -251,23 +251,6 @@ TR_J9VMBase::createResolvedMethodWithSignature(TR_Memory * trMemory, TR_OpaqueMe
    return result;
    }
 
-static J9UTF8 *str2utf8(char *string, int32_t length, TR_Memory *trMemory, TR_AllocationKind allocKind)
-   {
-   J9UTF8 *utf8 = (J9UTF8 *) trMemory->allocateMemory(length+sizeof(J9UTF8), allocKind); // This allocates more memory than it needs.
-   J9UTF8_SET_LENGTH(utf8, length);
-   memcpy(J9UTF8_DATA(utf8), string, length);
-   return utf8;
-   }
-
-static char *utf82str(J9UTF8 *utf8, TR_Memory *trMemory, TR_AllocationKind allocKind)
-   {
-   uint16_t length = J9UTF8_LENGTH(utf8);
-   char *string = (char *) trMemory->allocateMemory(length+1, allocKind);
-   memcpy(string, J9UTF8_DATA(utf8), length);
-   string[length] = 0;
-   return string;
-   }
-
 bool TR_ResolvedJ9Method::isMethodInValidLibrary()
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *)_fe;

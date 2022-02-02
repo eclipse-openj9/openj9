@@ -702,14 +702,6 @@ TR_J9ServerVM::isThunkArchetype(J9Method * method)
    return std::get<0>(stream->read<bool>());
    }
 
-static J9UTF8 *str2utf8(char *string, int32_t length, TR_Memory *trMemory, TR_AllocationKind allocKind)
-   {
-   J9UTF8 *utf8 = (J9UTF8 *) trMemory->allocateMemory(length, allocKind);
-   J9UTF8_SET_LENGTH(utf8, length);
-   memcpy(J9UTF8_DATA(utf8), string, length);
-   return utf8;
-   }
-
 int32_t
 TR_J9ServerVM::printTruncatedSignature(char *sigBuf, int32_t bufLen, TR_OpaqueMethodBlock *method)
    {

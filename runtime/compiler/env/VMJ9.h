@@ -1563,6 +1563,14 @@ static inline char * utf8Data(J9UTF8 * name, int32_t & len)
    return (char *)J9UTF8_DATA(name);
    }
 
+static inline J9UTF8 *str2utf8(const char *string, int32_t length, TR_Memory *trMemory, TR_AllocationKind allocKind)
+   {
+   J9UTF8 *utf8 = (J9UTF8 *)trMemory->allocateMemory(length + sizeof(J9UTF8), allocKind);
+   J9UTF8_SET_LENGTH(utf8, length);
+   memcpy(J9UTF8_DATA(utf8), string, length);
+   return utf8;
+   }
+
 inline bool isValidVmStateIndex(uint32_t &index)
    {
    // basic bounds checking
