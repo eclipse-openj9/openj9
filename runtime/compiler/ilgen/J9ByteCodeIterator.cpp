@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -283,7 +283,7 @@ TR_J9ByteCodeIterator::printByteCode()
       case J9BCgetstatic: case J9BCgetfield: case J9BCputstatic: case J9BCputfield:
       case J9BCcheckcast: case J9BCinstanceof:
       case J9BCnew: case J9BCanewarray:
-      case J9BCdefaultvalue: case J9BCwithfield:
+      case J9BCaconst_init: case J9BCwithfield:
          printCPIndex(next2Bytes());
          break;
 
@@ -372,7 +372,7 @@ const TR_J9ByteCode TR_J9ByteCodeIterator::_opCodeToByteCodeEnum[] =
    /* 198 */ J9BCifnull, J9BCifnonnull,
    /* 200 */ J9BCgotow, J9BCunknown,
    /* 202 */ J9BCbreakpoint,
-   /* 203 */ J9BCdefaultvalue,
+   /* 203 */ J9BCaconst_init,
    /* 204 */ J9BCwithfield,
    /* 205 */ J9BCunknown, J9BCunknown, J9BCunknown, J9BCunknown,
    /* 209 */ J9BCunknown, J9BCunknown, J9BCunknown, J9BCunknown,
@@ -611,7 +611,7 @@ const uint8_t TR_J9ByteCodeIterator::_byteCodeFlags[] =
                              0x01, // J9BCmonitorexit
                              0x00, // J9BCwide
                              0x01, // J9BCasyncCheck --- TODO: Is this the right size?
-                             0x03, // J9BCdefaultvalue
+                             0x03, // J9BCaconst_init
                              0x03, // J9BCwithfield
                              0x01, // J9BCbreakpoint --- TODO: Is this the right size?
                              0x01, // BCunknown
@@ -835,7 +835,7 @@ const uint8_t TR_J9ByteCodeIterator::_estimatedCodeSize[] =
   25, // J9BCmonitorexit
    0, // J9BCwide
    0, // J9BCasyncCheck
-   1, // J9BCdefaultvalue
+   1, // J9BCaconst_init
    1, // J9BCwithfield
    0, // J9BCunknown
    };
