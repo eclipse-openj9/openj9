@@ -88,16 +88,11 @@ void *operator new(size_t size)
    return malloc(size);
    }
 
-// Avoid -Wimplicit-exception-spec-mismatch error on platforms that specify the global delete operator with throw()
-#ifndef _NOEXCEPT
-#define _NOEXCEPT 
-#endif
-
 /**
  * Since we are using arena allocation, heap deletions must be a no-op, and
  * can't be used by JIT code, so we inject an assertion here.
  */
-void operator delete(void *) _NOEXCEPT
+void operator delete(void *) noexcept
    {
    TR_ASSERT(0, "Invalid use of global operator delete");
    }
