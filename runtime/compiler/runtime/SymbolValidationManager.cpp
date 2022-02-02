@@ -89,13 +89,13 @@ TR::SymbolValidationManager::SymbolValidationManager(TR::Region &region, TR_Reso
    assertionsAreFatal(); // Acknowledge the env var whether or not assertions fail
 
 #if defined(J9VM_OPT_JITSERVER)
-   auto stream = TR::CompilationInfo::getStream();
+   auto stream = _comp->getStream();
    if (stream && _fej9->sharedCache())
       // because a different VM is used here, a new Shared Cache object was created, so
       // need to update stream
       // JITServer TODO: we update stream in multiple places, better to change it to only one
-      ((TR_J9JITServerSharedCache *) _fej9->sharedCache())->setStream(stream);
-#endif
+      ((TR_J9JITServerSharedCache *)_fej9->sharedCache())->setStream(stream);
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
    defineGuaranteedID(NULL, TR::SymbolType::typeOpaque);
    defineGuaranteedID(_rootClass, TR::SymbolType::typeClass);
