@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <!--
-  Copyright (c) 2016, 2021 IBM Corp. and others
+  Copyright (c) 2016, 2022 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -111,7 +111,7 @@
 			<variation>NoOptions</variation>
 			<variation>Mode195</variation>
 		</variations>
-		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+		<command>$(JAVA_COMMAND) $(JAVA_SECURITY_MANAGER) $(JVM_OPTIONS) \
 	--add-opens=java.base/java.lang=ALL-UNNAMED \
 	-Djava.security.policy=$(Q)$(TEST_RESROOT)$(D)java.policy$(Q) \
 	-cp $(Q)$(TEST_RESROOT)$(D)jsr292test.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
@@ -200,7 +200,7 @@
 		<variations>
 			<variation>-Xjit:count=0</variation>
 		</variations>
-		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+		<command>$(JAVA_COMMAND) $(JAVA_SECURITY_MANAGER) $(JVM_OPTIONS) \
 	--add-opens=java.base/java.lang=ALL-UNNAMED \
 	-Djava.security.policy=$(Q)$(TEST_RESROOT)$(D)java.policy$(Q) \
 	-cp $(Q)$(TEST_RESROOT)$(D)jsr292test.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
@@ -257,7 +257,7 @@
 		<variations>
 			<variation>NoOptions</variation>
 		</variations>
-		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+		<command>$(JAVA_COMMAND) $(JAVA_SECURITY_MANAGER) $(JVM_OPTIONS) \
 	--add-opens=java.base/java.lang=ALL-UNNAMED --add-exports java.base/jdk.internal.reflect=ALL-UNNAMED \
 	-Xbootclasspath/a:$(Q)$(TEST_RESROOT)$(D)jsr292bootstrap.jar$(Q) \
 	-cp $(Q)$(TEST_RESROOT)$(D)jsr292test.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(Q) \
@@ -281,7 +281,7 @@
 		<variations>
 			<variation>Mode195</variation>
 		</variations>
-		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+		<command>$(JAVA_COMMAND) $(JAVA_SECURITY_MANAGER) $(JVM_OPTIONS) \
 	--add-opens=java.base/java.lang=ALL-UNNAMED --add-exports java.base/jdk.internal.reflect=ALL-UNNAMED \
 	-Xbootclasspath/a:$(Q)$(TEST_RESROOT)$(D)jsr292bootstrap.jar$(Q) \
 	-cp $(Q)$(TEST_RESROOT)$(D)jsr292test.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(Q) \
