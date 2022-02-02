@@ -53,6 +53,26 @@ TR_ResolvedJ9JITServerMethodInfoStruct
    J9ClassLoader *classLoader;
    bool isLambdaFormGeneratedMethod;
    bool isForceInline;
+
+   bool operator==(const TR_ResolvedJ9JITServerMethodInfoStruct& other) const
+      {
+      return
+         literals == other.literals &&
+         ramClass == other.ramClass &&
+         methodIndex == other.methodIndex &&
+         jniProperties == other.jniProperties &&
+         jniTargetAddress == other.jniTargetAddress &&
+         isInterpreted == other.isInterpreted &&
+         isJNINative == other.isJNINative &&
+         isMethodInValidLibrary == other.isMethodInValidLibrary &&
+         mandatoryRm == other.mandatoryRm &&
+         rm == other.rm &&
+         virtualMethodIsOverridden == other.virtualMethodIsOverridden &&
+         addressContainingIsOverriddenBit == other.addressContainingIsOverriddenBit &&
+         classLoader == other.classLoader &&
+         isLambdaFormGeneratedMethod == other.isLambdaFormGeneratedMethod &&
+         isForceInline == other.isForceInline;
+      }
    };
 
 
@@ -125,6 +145,7 @@ TR_ResolvedMethodCacheEntry
    TR_PersistentMethodInfo *persistentMethodInfo;
    TR_ContiguousIPMethodHashTableEntry *IPMethodInfo;
    int32_t ttlForUnresolved;
+   TR_YesNoMaybe unresolvedInCP; // TR_maybe indicates that unresolvedInCP wasn't passed at the moment of caching. Should be avoided
    };
 
 using TR_ResolvedMethodInfoCache = UnorderedMap<TR_ResolvedMethodKey, TR_ResolvedMethodCacheEntry>;
@@ -227,6 +248,7 @@ public:
    int32_t collectImplementorsCapped(TR_OpaqueClassBlock *topClass, int32_t maxCount, int32_t cpIndexOrOffset, TR_YesNoMaybe useGetResolvedInterfaceMethod, TR_ResolvedMethod **implArray);
    bool isLambdaFormGeneratedMethod() { return _isLambdaFormGeneratedMethod; }
    static void packMethodInfo(TR_ResolvedJ9JITServerMethodInfo &methodInfo, TR_ResolvedJ9Method *resolvedMethod, TR_FrontEnd *fe);
+   bool verifyCachedResolvedMethod(TR_ResolvedJ9JITServerMethodInfo clientMethodInfo, TR_ResolvedJ9JITServerMethodInfo cachedMethodInfo, TR_YesNoMaybe unresolvedInCache = TR_no, TR_YesNoMaybe unresolvedOnClient = TR_no);
 
 protected:
    JITServer::ServerStream *_stream;
