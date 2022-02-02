@@ -1118,6 +1118,11 @@ public static void setSecurityManager(final SecurityManager s) {
 	@SuppressWarnings("removal")
 	final SecurityManager currentSecurity = security;
 
+	if ((currentSecurity == null) && (s == null)) {
+		/* Return if the input argument is null and no security manager has been established. */
+		return;
+	}
+
 	/*[IF JAVA_SPEC_VERSION > 11]*/
 	if (throwUOEFromSetSM) {
 		/*[MSG "K0B00", "The Security Manager is deprecated and will be removed in a future release"]*/
