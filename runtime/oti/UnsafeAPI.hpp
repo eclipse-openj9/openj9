@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -378,7 +378,7 @@ public:
 
 	static VMINLINE I_32 arrayIndexScale(J9ArrayClass *arrayClass)
 	{
-		return (UDATA)1 << ((J9ROMArrayClass*)arrayClass->romClass)->arrayShape;
+		return (I_32)J9ARRAYCLASS_GET_STRIDE((J9Class*)arrayClass);
 	}
 
 	static VMINLINE I_32 addressSize()
