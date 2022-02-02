@@ -708,13 +708,13 @@ TR_J9ServerVM::printTruncatedSignature(char *sigBuf, int32_t bufLen, TR_OpaqueMe
    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    stream->write(JITServer::MessageType::VM_printTruncatedSignature, method);
    auto recv = stream->read<std::string, std::string, std::string>();
-   const std::string classNameStr = std::get<0>(recv);
-   const std::string nameStr = std::get<1>(recv);
-   const std::string signatureStr = std::get<2>(recv);
+   auto &classNameStr = std::get<0>(recv);
+   auto &nameStr = std::get<1>(recv);
+   auto &signatureStr = std::get<2>(recv);
    TR_Memory *trMemory = _compInfoPT->getCompilation()->trMemory();
-   J9UTF8 * className = str2utf8((char*)&classNameStr[0], classNameStr.length(), trMemory, heapAlloc);
-   J9UTF8 * name = str2utf8((char*)&nameStr[0], nameStr.length(), trMemory, heapAlloc);
-   J9UTF8 * signature = str2utf8((char*)&signatureStr[0], signatureStr.length(), trMemory, heapAlloc);
+   J9UTF8 *className = str2utf8(classNameStr.data(), classNameStr.length(), trMemory, heapAlloc);
+   J9UTF8 *name = str2utf8(nameStr.data(), nameStr.length(), trMemory, heapAlloc);
+   J9UTF8 *signature = str2utf8(signatureStr.data(), signatureStr.length(), trMemory, heapAlloc);
    return TR_J9VMBase::printTruncatedSignature(sigBuf, bufLen, className, name, signature);
    }
 
@@ -1521,13 +1521,14 @@ TR_J9ServerVM::getReferenceSlotsInClass(TR::Compilation *comp, TR_OpaqueClassBlo
    {
    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    stream->write(JITServer::MessageType::VM_getReferenceSlotsInClass, clazz);
-   std::string slotsStr = std::get<0>(stream->read<std::string>());
-   if (slotsStr == "")
+   auto recv = stream->read<std::string>();
+   auto &slotsStr = std::get<0>(recv);
+   if (slotsStr.empty())
       return NULL;
    int32_t *refSlots = (int32_t *)comp->trHeapMemory().allocate(slotsStr.size());
    if (!refSlots)
       throw std::bad_alloc();
-   memcpy(refSlots, &slotsStr[0], slotsStr.size());
+   memcpy(refSlots, slotsStr.data(), slotsStr.size());
    return refSlots;
    }
 
@@ -1750,7 +1751,7 @@ TR_J9ServerVM::createMethodHandleArchetypeSpecimen(TR_Memory *trMemory, uintptr_
                  owningMethod ? static_cast<TR_ResolvedJ9JITServerMethod *>(owningMethod)->getRemoteMirror() : NULL);
    auto recv = stream->read<TR_OpaqueMethodBlock*, std::string, TR_ResolvedJ9JITServerMethodInfo>();
    TR_OpaqueMethodBlock *archetype = std::get<0>(recv);
-   std::string thunkableSignature = std::get<1>(recv);
+   auto &thunkableSignature = std::get<1>(recv);
    auto &methodInfo = std::get<2>(recv);
    if (!archetype)
       return NULL;
@@ -1759,7 +1760,7 @@ TR_J9ServerVM::createMethodHandleArchetypeSpecimen(TR_Memory *trMemory, uintptr_
       trMemory,
       archetype,
       NULL,
-      &thunkableSignature[0],
+      (char *)thunkableSignature.data(),
       thunkableSignature.length(),
       owningMethod,
       methodInfo);
