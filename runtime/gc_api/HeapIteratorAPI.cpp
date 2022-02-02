@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -565,7 +565,7 @@ initializeRegionDescriptor(MM_GCExtensionsBase* extensions, J9MM_IterateRegionDe
 		objectAlignment = 0;
 		objectMinimumSize = 0;
 		break;
-#if defined(J9VM_GC_SEGREGATED_HEAP)
+#if defined(OMR_GC_SEGREGATED_HEAP)
 	case MM_HeapRegionDescriptor::SEGREGATED_SMALL:
 		regionName = HEAPITERATORAPI_REGION_NAME_SEGREGATED_SMALL;
 		objectMinimumSize = ((MM_HeapRegionDescriptorSegregated *)region)->getCellSize();
@@ -574,7 +574,7 @@ initializeRegionDescriptor(MM_GCExtensionsBase* extensions, J9MM_IterateRegionDe
 		regionName = HEAPITERATORAPI_REGION_NAME_SEGREGATED_LARGE;
 		objectMinimumSize = region->getSize();
 		break;
-#endif /* J9VM_GC_SEGREGATED_HEAP */
+#endif /* OMR_GC_SEGREGATED_HEAP */
 	case MM_HeapRegionDescriptor::ADDRESS_ORDERED:
 	case MM_HeapRegionDescriptor::BUMP_ALLOCATED:
 		if (extensions->isVLHGC()) {
@@ -642,7 +642,7 @@ initializeObjectDescriptor(
 {
 	j9mm_initialize_object_descriptor(javaVM, descriptor, object);
 
-#if defined(J9VM_GC_SEGREGATED_HEAP)
+#if defined(OMR_GC_SEGREGATED_HEAP)
 	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(javaVM->omrVM);
 
 	if (extensions->isSegregatedHeap()) {
@@ -651,7 +651,7 @@ initializeObjectDescriptor(
 			descriptor->size = regionDesc->objectMinimumSize;
 		}
 	}
-#endif /* J9VM_GC_SEGREGATED_HEAP */
+#endif /* OMR_GC_SEGREGATED_HEAP */
 }
 
 static jvmtiIterationControl

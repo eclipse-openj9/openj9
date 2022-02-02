@@ -54,9 +54,9 @@ private:
 #endif /* J9VM_GC_BATCH_CLEAR_TLH */
 	const uintptr_t _objectAlignmentInBytes;
 
-#if defined (J9VM_GC_SEGREGATED_HEAP)
+#if defined (OMR_GC_SEGREGATED_HEAP)
 	const J9VMGCSizeClasses *_sizeClasses;
-#endif /* J9VM_GC_SEGREGATED_HEAP */
+#endif /* OMR_GC_SEGREGATED_HEAP */
 
 	VMINLINE void
 	initializeIndexableSlots(bool initializeSlots, uintptr_t dataSize, void *dataAddr)
@@ -133,7 +133,7 @@ private:
 	{
 		j9object_t instance = NULL;
 
-#if defined(J9VM_GC_THREAD_LOCAL_HEAP) || defined(J9VM_GC_SEGREGATED_HEAP)
+#if defined(J9VM_GC_THREAD_LOCAL_HEAP) || defined(OMR_GC_SEGREGATED_HEAP)
 		if (0 != size) {
 			/* Contiguous Array */
 
@@ -179,7 +179,7 @@ private:
 					break;
 #endif /* J9VM_GC_THREAD_LOCAL_HEAP */
 
-#if defined(J9VM_GC_SEGREGATED_HEAP)
+#if defined(OMR_GC_SEGREGATED_HEAP)
 
 				case OMR_GC_ALLOCATION_TYPE_SEGREGATED:
 					/* Metronome requires that slots are always initialized */
@@ -209,7 +209,7 @@ private:
 						return NULL;
 					}
 					break;
-#endif /* J9VM_GC_SEGREGATED_HEAP */
+#endif /* OMR_GC_SEGREGATED_HEAP */
 
 				default:
 					/* Inline allocation not supported */
@@ -258,7 +258,7 @@ private:
 				break;
 #endif /* J9VM_GC_THREAD_LOCAL_HEAP */
 
-#if defined(J9VM_GC_SEGREGATED_HEAP)
+#if defined(OMR_GC_SEGREGATED_HEAP)
 			case OMR_GC_ALLOCATION_TYPE_SEGREGATED:
 				/* ensure the allocation will fit in a small size */
 				if (allocateSize <= J9VMGC_SIZECLASSES_MAX_SMALL_SIZE_BYTES) {
@@ -283,7 +283,7 @@ private:
 					return NULL;
 				}
 				break;
-#endif /* J9VM_GC_SEGREGATED_HEAP */
+#endif /* OMR_GC_SEGREGATED_HEAP */
 
 			default:
 				return NULL;
@@ -298,7 +298,7 @@ private:
 			}
 			instance = objectHeader;
 
-#endif /* defined(J9VM_GC_THREAD_LOCAL_HEAP) || defined(J9VM_GC_SEGREGATED_HEAP) */
+#endif /* defined(J9VM_GC_THREAD_LOCAL_HEAP) || defined(OMR_GC_SEGREGATED_HEAP) */
 
 		}
 
@@ -317,16 +317,16 @@ public:
 		, _initializeSlotsOnTLHAllocate(currentThread->javaVM->initializeSlotsOnTLHAllocate)
 #endif /* J9VM_GC_BATCH_CLEAR_TLH */
 		, _objectAlignmentInBytes(currentThread->omrVMThread->_vm->_objectAlignmentInBytes)
-#if defined (J9VM_GC_SEGREGATED_HEAP)
+#if defined (OMR_GC_SEGREGATED_HEAP)
 		, _sizeClasses(currentThread->javaVM->realtimeSizeClasses)
-#endif /* J9VM_GC_SEGREGATED_HEAP */
+#endif /* OMR_GC_SEGREGATED_HEAP */
 	{}
 
 	VMINLINE j9object_t
 	inlineAllocateObject(J9VMThread *currentThread, J9Class *clazz, bool initializeSlots = true, bool memoryBarrier = true)
 	{
 		j9object_t instance = NULL;
-#if defined(J9VM_GC_THREAD_LOCAL_HEAP) || defined(J9VM_GC_SEGREGATED_HEAP)
+#if defined(J9VM_GC_THREAD_LOCAL_HEAP) || defined(OMR_GC_SEGREGATED_HEAP)
 		/* Calculate the size of the object */
 		uintptr_t const headerSize = J9VMTHREAD_OBJECT_HEADER_SIZE(currentThread);
 		uintptr_t dataSize = clazz->totalInstanceSize;
@@ -357,7 +357,7 @@ public:
 			break;
 #endif /* J9VM_GC_THREAD_LOCAL_HEAP */
 
-#if defined(J9VM_GC_SEGREGATED_HEAP)
+#if defined(OMR_GC_SEGREGATED_HEAP)
 		case OMR_GC_ALLOCATION_TYPE_SEGREGATED:
 			/* ensure the allocation will fit in a small size */
 			if (allocateSize <= J9VMGC_SIZECLASSES_MAX_SMALL_SIZE_BYTES) {
@@ -384,7 +384,7 @@ public:
 				return NULL;
 			}
 			break;
-#endif /* J9VM_GC_SEGREGATED_HEAP */
+#endif /* OMR_GC_SEGREGATED_HEAP */
 
 		default:
 			return NULL;
@@ -426,7 +426,7 @@ public:
 		if (memoryBarrier) {
 			VM_AtomicSupport::writeBarrier();
 		}
-#endif /* J9VM_GC_THREAD_LOCAL_HEAP || J9VM_GC_SEGREGATED_HEAP */
+#endif /* J9VM_GC_THREAD_LOCAL_HEAP || OMR_GC_SEGREGATED_HEAP */
 		return instance;
 	}
 

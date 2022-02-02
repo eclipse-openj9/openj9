@@ -1731,7 +1731,7 @@ combinationMemoryParameterVerification(J9JavaVM *javaVM, IDATA* memoryParameters
 			if (extensions->isSegregatedHeap() || extensions->isMetronomeGC()) {
 				/* TODO aryoung: eventually segregated heaps will allow heap expansion, although metronome
 				 * itself will still require a fully expanded heap on startup */
-#if defined(J9VM_GC_REALTIME) || defined(J9VM_GC_SEGREGATED_HEAP)
+#if defined(J9VM_GC_REALTIME) || defined(OMR_GC_SEGREGATED_HEAP)
 				if (extensions->initialMemorySize != extensions->memoryMax) {
 					/* Ignore the specified -Xms value.
 					 *  Override it too, so that verbose:sizes displays correctly the actual value.
@@ -1743,7 +1743,7 @@ combinationMemoryParameterVerification(J9JavaVM *javaVM, IDATA* memoryParameters
 					goto _subSpaceNotEqualError;
 					*/
 				}
-#endif /* defined(J9VM_GC_REALTIME) || defined(J9VM_GC_SEGREGATED_HEAP) */
+#endif /* defined(J9VM_GC_REALTIME) || defined(OMR_GC_SEGREGATED_HEAP) */
 			}
 
 			extensions->oldSpaceSize = extensions->initialMemorySize;
