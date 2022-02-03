@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2021 IBM Corp. and others
+ * Copyright (c) 2015, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1099,9 +1099,18 @@ trcModulesAddReadsModule(J9VMThread *currentThread, jobject toModule, J9Module *
 		currentThread, j9FromMod->moduleName, J9_STR_NULL_TERMINATE_RESULT, "", 0, fromModuleNameBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH, NULL);
 	char *toModuleNameUTF = NULL;
 
-	if (NULL != toModule) {
-		toModuleNameUTF = vmFuncs->copyStringToUTF8WithMemAlloc(
-			currentThread, j9ToMod->moduleName, J9_STR_NULL_TERMINATE_RESULT, "", 0, toModuleNameBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH, NULL);
+	if (NULL != j9ToMod) {
+		if (NULL != j9ToMod->moduleName) {
+			toModuleNameUTF = vmFuncs->copyStringToUTF8WithMemAlloc(
+				currentThread, j9ToMod->moduleName, J9_STR_NULL_TERMINATE_RESULT, "", 0, toModuleNameBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH, NULL);
+		} else {
+#define UNNAMED_MODULE   "unnamed "
+			PORT_ACCESS_FROM_VMC(currentThread);
+			Assert_SC_true(J9VM_PACKAGE_NAME_BUFFER_LENGTH > sizeof(UNNAMED_MODULE));
+			memcpy(toModuleNameBuf, UNNAMED_MODULE, sizeof(UNNAMED_MODULE));
+			toModuleNameUTF = toModuleNameBuf;
+#undef UNNAMED_MODULE
+		}
 	} else {
 #define LOOSE_MODULE   "loose "
 		PORT_ACCESS_FROM_VMC(currentThread);
