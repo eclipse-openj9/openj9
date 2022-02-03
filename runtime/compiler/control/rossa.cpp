@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1424,6 +1424,9 @@ onLoadInternal(
    codeCacheConfig._largeCodePageFlags = jitConfig->largeCodePageFlags;
    codeCacheConfig._maxNumberOfCodeCaches = maxNumberOfCodeCaches;
    codeCacheConfig._canChangeNumCodeCaches = (TR::Options::getCmdLineOptions()->getNumCodeCachesToCreateAtStartup() <= 0);
+
+   UDATA totalCacheBytes = codeCacheConfig._codeCacheTotalKB << 10;
+   codeCacheConfig._highCodeCacheOccupancyThresholdInBytes = TR::Options::_highCodeCacheOccupancyPercentage * (totalCacheBytes / 100);
 
    static char * segmentCarving = feGetEnv("TR_CodeCacheConsolidation");
    bool useConsolidatedCodeCache = segmentCarving != NULL ||

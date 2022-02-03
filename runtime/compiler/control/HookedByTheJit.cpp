@@ -371,6 +371,8 @@ static uint32_t initializeSendTargetHelperFuncHashValueForSpreading(J9Method* me
    return hashValue;
    }
 
+static bool highCodeCacheOccupancyThresholdReached = false;
+
 static void jitHookInitializeSendTarget(J9HookInterface * * hook, UDATA eventNum, void * eventData, void * userData)
    {
    J9VMInitializeSendTargetEvent * event = (J9VMInitializeSendTargetEvent *)eventData;
@@ -442,6 +444,12 @@ static void jitHookInitializeSendTarget(J9HookInterface * * hook, UDATA eventNum
           )
          {
          count = 0;
+         }
+      else if (highCodeCacheOccupancyThresholdReached && !countInOptionSet && !TR::Options::getCountsAreProvidedByUser())
+         {
+         count = J9ROMMETHOD_HAS_BACKWARDS_BRANCHES(romMethod) ?
+                     TR::Options::getHighCodeCacheOccupancyBCount() :
+                     TR::Options::getHighCodeCacheOccupancyCount();
          }
       else if (TR::Options::sharedClassCache())
          {
@@ -6234,6 +6242,27 @@ static int32_t J9THREAD_PROC samplerThreadProc(void * entryarg)
 
             // compute jit state
             jitStateLogic(jitConfig, compInfo, diffTime); // Update JIT state before going to sleep
+
+            // detect high code cache occupancy
+            TR::CodeCacheManager *manager = TR::CodeCacheManager::instance();
+            size_t usedCacheSize = manager->getCurrTotalUsedInBytes();
+            size_t threshold = manager->codeCacheConfig().highCodeCacheOccupancyThresholdInBytes();
+            if ((usedCacheSize > threshold) && !highCodeCacheOccupancyThresholdReached)
+               {
+               highCodeCacheOccupancyThresholdReached = true;
+               if (TR::Options::getCmdLineOptions()->isAnyVerboseOptionSet(TR_VerbosePerformance))
+                  {
+                  TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "t=%6u JIT entered high code cache occupancy state", (uint32_t)crtTime);
+                  }
+               }
+            else if ((usedCacheSize <= threshold) && highCodeCacheOccupancyThresholdReached)
+               {
+               highCodeCacheOccupancyThresholdReached = false;
+               if (TR::Options::getCmdLineOptions()->isAnyVerboseOptionSet(TR_VerbosePerformance))
+                  {
+                  TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "t=%6u JIT exited high code cache occupancy state", (uint32_t)crtTime);
+                  }
+               }
 
 #if defined(J9VM_INTERP_PROFILING_BYTECODES)
             // iProfilerActivationLogic must stay after classLoadPhaseLogic and jitStateLogic
