@@ -1875,6 +1875,8 @@ MM_WriteOnceCompactor::recycleFreeRegionsAndFixFreeLists(MM_EnvironmentVLHGC *en
 				region->getSubSpace()->recycleRegion(env, region);
 				/* mark bits will be cleared during the rebuilding phase */
 			} else {
+				static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._compactStats._survivorRegionCount += 1;
+
 				if (NULL != region->_compactData._previousContext) {
 					/* we migrated this region into a new context so ask its previous owner to migrate the contexts' views of the region's ownership to make the meta-structures consistent */
 					region->_compactData._previousContext->migrateRegionToAllocationContext(region, region->_allocateData._owningContext);
