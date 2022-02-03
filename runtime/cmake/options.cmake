@@ -153,6 +153,6 @@ option(J9VM_OPT_ZLIB_SUPPORT "Controls if the VM includes the zlib compression l
 
 option(J9VM_PORT_RUNTIME_INSTRUMENTATION "Controls whether runtime instrumentation support exists on this platform.")
 
-option(J9VM_USE_RDYNAMIC "Link using the -rdynamic option (Linux only)" ON)
+option(J9VM_USE_RDYNAMIC "Link using the -rdynamic option (Linux only)" OFF)
 
 option(J9VM_ZOS_3164_INTEROPERABILITY "Enables support for 64-bit zOS to interoperate with 31-bit JNI native targets.")
