@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -478,8 +478,8 @@ j9localmap_LocalBitsForPC(J9PortLibrary * portLib, J9ROMClass * romClass, J9ROMM
 
 	mapAllLocals(portLib, romMethod, (PARALLEL_TYPE *) scratch, pc, resultArrayBase);
 
-	/* Ensure that the receiver is marked for empty j.l.Object.<init>()V */
-	if (J9ROMMETHOD_IS_OBJECT_CONSTRUCTOR(romMethod) && J9ROMMETHOD_IS_EMPTY(romMethod)) {
+	/* Ensure that the receiver is marked for all <init>()V methods */
+	if ((J9_ARE_NO_BITS_SET(romMethod->modifiers, J9AccStatic)) && ('<' == J9UTF8_DATA(J9ROMMETHOD_NAME(romMethod))[0])) {
 		*resultArrayBase |= 1;
 	}
 
