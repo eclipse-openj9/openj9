@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2021 IBM Corp. and others
+ * Copyright (c) 2001, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1313,7 +1313,7 @@ public class VmArgumentTests {
 							":/opt/IBM/WebSphere/AppServer80/lib/urlprotocols.jar:/opt/IBM/WebSphere/AppServer80/deploytool/itp/batchboot.jar:/opt/IBM/WebSphere/AppServer80/deploytool/itp/batch2.jar" +
 							":/opt/IBM/WebSphere/AppServer80/java/lib/tools.jar"+":"+CLASSPATH;
 
-			String[] initalCmdLineArgs = {"-Declipse.security",
+			String[] initialCmdLineArgs = {"-Declipse.security",
 					"-Dosgi.install.area=/opt/IBM/WebSphere/AppServer80",
 					"-Dosgi.configuration.area=/opt/IBM/WebSphere/AppServer80/profiles/AppSrv01/servers/server1/configuration",
 					"-Djava.awt.headless=true",
@@ -1339,10 +1339,9 @@ public class VmArgumentTests {
 					"-Dcom.ibm.security.jgss.debug=off",
 					"-Dcom.ibm.security.krb5.Krb5Debug=off",
 					"-Djava.library.path=/opt/IBM/WebSphere/AppServer80/lib/native/linux/x86_64/:/opt/IBM/WebSphere/AppServer80/java/jre/lib/amd64/default:/opt/IBM/WebSphere/AppServer80/java/jre/lib/amd64:/opt/IBM/WebSphere/AppServer80/lib/native/linux/x86_64/:/opt/IBM/WebSphere/AppServer80/bin:.:/usr/lib:",
-					"-Djava.security.auth.login.config=/opt/IBM/WebSphere/AppServer80/profiles/AppSrv01/properties/wsjaas.conf",
-			"-Djava.security.policy=/opt/IBM/WebSphere/AppServer80/profiles/AppSrv01/properties/server.policy"};
+					"-Djava.security.auth.login.config=/opt/IBM/WebSphere/AppServer80/profiles/AppSrv01/properties/wsjaas.conf"};
 
-			String[] initalExpectedArgs = {"-Declipse.security",
+			String[] initialExpectedArgs = {"-Declipse.security",
 					"-Dosgi.install.area=/opt/IBM/WebSphere/AppServer80",
 					"-Dosgi.configuration.area=/opt/IBM/WebSphere/AppServer80/profiles/AppSrv01/servers/server1/configuration",
 					"-Djava.awt.headless=true",
@@ -1367,27 +1366,41 @@ public class VmArgumentTests {
 					"-Dcom.ibm.security.jgss.debug=off",
 					"-Dcom.ibm.security.krb5.Krb5Debug=off",
 					"-Djava.library.path=/opt/IBM/WebSphere/AppServer80/lib/native/linux/x86_64/:/opt/IBM/WebSphere/AppServer80/java/jre/lib/amd64/default:/opt/IBM/WebSphere/AppServer80/java/jre/lib/amd64:/opt/IBM/WebSphere/AppServer80/lib/native/linux/x86_64/:/opt/IBM/WebSphere/AppServer80/bin:.:/usr/lib:",
-					"-Djava.security.auth.login.config=/opt/IBM/WebSphere/AppServer80/profiles/AppSrv01/properties/wsjaas.conf",
-			"-Djava.security.policy=/opt/IBM/WebSphere/AppServer80/profiles/AppSrv01/properties/server.policy"};
+					"-Djava.security.auth.login.config=/opt/IBM/WebSphere/AppServer80/profiles/AppSrv01/properties/wsjaas.conf"};
 
-
-			/*
-			 * This test should only run for Java 1.8.0. For Java
-			 * 1.9.0 and above, we do not support java.ext.dirs property.
-			 */
 			String[] cmdLineArgs;
 			String[] expectedArgs;
-			if (isJava8) {
-				cmdLineArgs = new String[initalCmdLineArgs.length + 1];
-				System.arraycopy(initalCmdLineArgs, 0, cmdLineArgs, 0, initalCmdLineArgs.length);
-				cmdLineArgs[initalCmdLineArgs.length] = "-Djava.ext.dirs=/opt/IBM/WebSphere/AppServer80/tivoli/tam:/opt/IBM/WebSphere/AppServer80/java/jre/lib/ext";
+			if (VersionCheck.major() < 19) {
+				final String policy = "-Djava.security.policy=/opt/IBM/WebSphere/AppServer80/profiles/AppSrv01/properties/server.policy";
+				if (isJava8) {
+					/*
+					 * This test should only run for Java 1.8.0. For Java
+					 * 1.9.0 and above, we do not support java.ext.dirs property.
+					 */
+					final String dirs = "-Djava.ext.dirs=/opt/IBM/WebSphere/AppServer80/tivoli/tam:/opt/IBM/WebSphere/AppServer80/java/jre/lib/ext";
 
-				expectedArgs = new String[initalExpectedArgs.length + 1];
-				System.arraycopy(initalExpectedArgs, 0, expectedArgs, 0, initalExpectedArgs.length);
-				expectedArgs[initalExpectedArgs.length] = "-Djava.ext.dirs=/opt/IBM/WebSphere/AppServer80/tivoli/tam:/opt/IBM/WebSphere/AppServer80/java/jre/lib/ext";
+					cmdLineArgs = new String[initialCmdLineArgs.length + 2];
+					System.arraycopy(initialCmdLineArgs, 0, cmdLineArgs, 0, initialCmdLineArgs.length);
+					cmdLineArgs[initialCmdLineArgs.length] = policy;
+					cmdLineArgs[initialCmdLineArgs.length + 1] = dirs;
+
+					expectedArgs = new String[initialExpectedArgs.length + 2];
+					System.arraycopy(initialExpectedArgs, 0, expectedArgs, 0, initialExpectedArgs.length);
+					expectedArgs[initialExpectedArgs.length] = policy;
+					expectedArgs[initialExpectedArgs.length + 1] = dirs;
+				} else {
+					cmdLineArgs = new String[initialCmdLineArgs.length + 1];
+					System.arraycopy(initialCmdLineArgs, 0, cmdLineArgs, 0, initialCmdLineArgs.length);
+					cmdLineArgs[initialCmdLineArgs.length] = policy;
+
+					expectedArgs = new String[initialExpectedArgs.length + 1];
+					System.arraycopy(initialExpectedArgs, 0, expectedArgs, 0, initialExpectedArgs.length);
+					expectedArgs[initialExpectedArgs.length] = policy;
+				}
 			} else {
-				cmdLineArgs = initalCmdLineArgs.clone();
-				expectedArgs = initalExpectedArgs.clone();
+				/* SecurityManager and related classes have been removed. */
+				cmdLineArgs = initialCmdLineArgs.clone();
+				expectedArgs = initialExpectedArgs.clone();
 			}
 
 			try {
