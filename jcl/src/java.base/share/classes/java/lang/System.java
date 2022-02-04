@@ -31,6 +31,7 @@ import java.util.Properties;
 import java.util.PropertyPermission;
 import java.security.*;
 import java.lang.reflect.Method;
+import java.lang.reflect.Constructor;
 
 /*[IF Sidecar19-SE]*/
 import jdk.internal.misc.Unsafe;
@@ -90,6 +91,14 @@ public final class System {
 	// Show only one setSecurityManager() warning message for each caller
 	private static Map<Class<?>, Object> setSMCallers;
 	/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
+
+	/*[IF JAVA_SPEC_VERSION > 11] */
+	/**
+	 * setSecurityManager() should throw UnsupportedOperationException
+	 * if throwUOEFromSetSM is set to true.
+	 */
+	private static boolean throwUOEFromSetSM;
+	/*[ENDIF] JAVA_SPEC_VERSION > 11 */
 
 	//Get a ref to the Runtime instance for faster lookup
 	private static final Runtime RUNTIME = Runtime.getRuntime();
@@ -1051,6 +1060,39 @@ public static void setProperties(Properties p) {
 	}
 }
 
+static void initSecurityManager(ClassLoader applicationClassLoader) {
+	String javaSecurityManager = internalGetProperties().getProperty("java.security.manager"); //$NON-NLS-1$
+	/*[IF JAVA_SPEC_VERSION > 11]*/
+	if ("allow".equals(javaSecurityManager)) {
+		/* Do nothing. */
+	} else if ("disallow".equals(javaSecurityManager) //$NON-NLS-1$
+		/*[IF JAVA_SPEC_VERSION >= 18]*/
+		|| (null == javaSecurityManager)
+		/*[ENDIF] JAVA_SPEC_VERSION >= 18 */
+	) {
+		throwUOEFromSetSM = true;
+	} else
+	/*[ENDIF] JAVA_SPEC_VERSION > 11 */
+	if (null != javaSecurityManager) {
+		/*[IF JAVA_SPEC_VERSION >= 17]*/
+		initialErr.println("WARNING: A command line option has enabled the Security Manager"); //$NON-NLS-1$
+		initialErr.println("WARNING: The Security Manager is deprecated and will be removed in a future release"); //$NON-NLS-1$
+		/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
+		if (javaSecurityManager.isEmpty() || "default".equals(javaSecurityManager)) { //$NON-NLS-1$
+			setSecurityManager(new SecurityManager());
+		} else {
+			try {
+				Constructor<?> constructor = Class.forName(javaSecurityManager, true, applicationClassLoader).getConstructor();
+				constructor.setAccessible(true);
+				setSecurityManager((SecurityManager)constructor.newInstance());
+			} catch (Throwable e) {
+				/*[MSG "K0631", "JVM can't set custom SecurityManager due to {0}"]*/
+				throw new Error(com.ibm.oti.util.Msg.getString("K0631", e.toString()), e); //$NON-NLS-1$
+			}
+		}
+	}
+}
+
 /**
  * Sets the active security manager. Note that once
  * the security manager has been set, it can not be
@@ -1076,12 +1118,17 @@ public static void setSecurityManager(final SecurityManager s) {
 	@SuppressWarnings("removal")
 	final SecurityManager currentSecurity = security;
 
-	/*[IF JAVA_SPEC_VERSION >= 12]*/
-	if ("disallow".equals(systemProperties.getProperty("java.security.manager"))) { //$NON-NLS-1$ //$NON-NLS-2$
+	if ((currentSecurity == null) && (s == null)) {
+		/* Return if the input argument is null and no security manager has been established. */
+		return;
+	}
+
+	/*[IF JAVA_SPEC_VERSION > 11]*/
+	if (throwUOEFromSetSM) {
 		/*[MSG "K0B00", "The Security Manager is deprecated and will be removed in a future release"]*/
 		throw new UnsupportedOperationException(com.ibm.oti.util.Msg.getString("K0B00")); //$NON-NLS-1$
 	}
-	/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
+	/*[ENDIF] JAVA_SPEC_VERSION > 11 */
 
 	/*[IF JAVA_SPEC_VERSION >= 17] */
 	Class<?> callerClz = getCallerClass();
