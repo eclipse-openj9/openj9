@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <!--
-  Copyright (c) 2016, 2021 IBM Corp. and others
+  Copyright (c) 2016, 2022 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,6 +27,10 @@
 			<disable>
 				<comment>https://github.com/eclipse-openj9/openj9/issues/3562</comment>
 				<platform>.*aix.*</platform>
+			</disable>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/14387</comment>
+				<platform>aarch64_mac.*</platform>
 			</disable>
 		</disables>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
