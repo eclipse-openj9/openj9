@@ -7375,7 +7375,7 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
           TR::Options::canJITCompile())
          {
          bool forcedLocal = false;
-         bool doLocalCompilation = cannotDoRemoteCompilation || preferLocalComp(entry);
+         bool doLocalCompilation = entry->isAotLoad() || cannotDoRemoteCompilation || preferLocalComp(entry);
 
          // If this is a remote sync compilation, change it to a local sync compilation.
          // After the local compilation is completed successfully, a remote async compilation
