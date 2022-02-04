@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -606,7 +606,7 @@ void J9::X86::I386::PrivateLinkage::buildIPIC(
    if (useLastITableCache)
       {
       if (breakBeforeIPICUsingLastITable)
-         generateInstruction(TR::InstOpCode::bad, site.getCallNode(), cg());
+         generateInstruction(TR::InstOpCode::INT3, site.getCallNode(), cg());
       if (numIPicSlotsBeforeLastITable)
          numIPicSlots = atoi(numIPicSlotsBeforeLastITable);
    }
