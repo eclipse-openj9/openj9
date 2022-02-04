@@ -1,5 +1,5 @@
 ##############################################################################
-#  Copyright (c) 2018, 2022 IBM Corp. and others
+#  Copyright (c) 2022, 2022 IBM Corp. and others
 #
 #  This program and the accompanying materials are made available under
 #  the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,9 +20,11 @@
 #  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
 ##############################################################################
 
-include $(TEST_ROOT)$(D)functional$(D)variables.mk
-
-XMLSUFFIX=
-ifeq ($(JDK_VERSION), 8)
-	XMLSUFFIX=_8
+# In JDK18+, java.security.manager == null behaves as -Djava.security.manager=disallow.
+# In JDK17-, java.security.manager == null behaves as -Djava.security.manager=allow.
+# For OpenJ9 tests to work as expected, -Djava.security.manager=allow behaviour is
+# needed in JDK18+.
+JAVA_SECURITY_MANAGER=
+ifeq ($(filter 8 9 10 11 12 13 14 15 16 17, $(JDK_VERSION)),)
+	JAVA_SECURITY_MANAGER=-Djava.security.manager=allow
 endif

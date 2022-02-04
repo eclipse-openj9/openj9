@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <!--
-  Copyright (c) 2016, 2021 IBM Corp. and others
+  Copyright (c) 2016, 2022 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,6 +21,7 @@
   SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 <playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../TKG/playlist.xsd">
+	<include>$(TEST_ROOT)$(D)functional$(D)variables.mk</include>
 	<test>
 		<testCaseName>JLM_Tests_interface_SE80</testCaseName>
 		<variations>
@@ -64,7 +65,7 @@
 			<variation>NoOptions</variation>
 			<variation>-XX:+HeapManagementMXBeanCompatibility</variation>
 		</variations>
-		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+		<command>$(JAVA_COMMAND) $(JAVA_SECURITY_MANAGER) $(JVM_OPTIONS) \
 	--add-exports=jdk.management/com.ibm.lang.management.internal=ALL-UNNAMED --add-exports=java.management/com.ibm.java.lang.management.internal=ALL-UNNAMED \
 	-XX:SharedCacheHardLimit=16m -Xscmx1m -Xshareclasses:name=testJLM,reset \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jlm_tests.jar$(Q) \
@@ -190,7 +191,7 @@
 			<variation>NoOptions</variation>
 			<variation>-XX:+HeapManagementMXBeanCompatibility</variation>
 		</variations>
-		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+		<command>$(JAVA_COMMAND) $(JAVA_SECURITY_MANAGER) $(JVM_OPTIONS) \
 	--add-exports=jdk.management/com.ibm.lang.management.internal=ALL-UNNAMED --add-exports=java.management/com.ibm.java.lang.management.internal=ALL-UNNAMED \
 	-XX:SharedCacheHardLimit=16m -Xscmx1m -Xshareclasses:name=testJLM,reset \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jlm_tests.jar$(Q) \
