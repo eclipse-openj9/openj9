@@ -358,3 +358,5 @@ _IF([JAVA_SPEC_VERSION >= 18],
 	[_X(JVM_IsFinalizationEnabled, JNICALL, false, jboolean, JNIEnv *env)])
 _IF([JAVA_SPEC_VERSION >= 18],
 	[_X(JVM_ReportFinalizationComplete, JNICALL, false, void, JNIEnv *env, jobject obj)])
+_IF([JAVA_SPEC_VERSION >= 19],
+	[_X(JVM_LoadZipLibrary, JNICALL, false, void, void)])
