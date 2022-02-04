@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2021 IBM Corp. and others
+ * Copyright (c) 2018, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -191,5 +191,13 @@ JNIEXPORT void JNICALL
 JVM_ReportFinalizationComplete(JNIEnv *env, jobject obj)
 {
 	assert(!"JVM_ReportFinalizationComplete unimplemented");
+}
+#endif /* JAVA_SPEC_VERSION >= 18 */
+
+#if JAVA_SPEC_VERSION >= 19
+JNIEXPORT void JNICALL
+JVM_LoadZipLibrary(void)
+{
+	assert(!"JVM_LoadZipLibrary unimplemented");
 }
 #endif /* JAVA_SPEC_VERSION >= 18 */
