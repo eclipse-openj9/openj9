@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2020, 2021 IBM Corp. and others
+ * Copyright (c) 2020, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -39,6 +39,9 @@
 #include "runtime/JITServerIProfiler.hpp"
 #include "runtime/JITServerStatisticsThread.hpp"
 #include "runtime/Listener.hpp"
+#if defined(LINUX)
+#include <malloc.h> // for malloc_stats() (Linux glibc only)
+#endif /* defined(LINUX) */
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
 
@@ -325,6 +328,12 @@ runJitdump(char *label, J9RASdumpContext *context, J9RASdumpAgent *agent)
             if (auto deserializer = compInfo->getJITServerAOTDeserializer())
                deserializer->printStats(stderr);
             }
+
+#if defined(LINUX)
+         static char *isPrintJITServerMallocStats = feGetEnv("TR_PrintJITServerMallocStats");
+         if (isPrintJITServerMallocStats)
+            malloc_stats();
+#endif /* defined(LINUX) */
          }
       }
 #endif /* defined(J9VM_OPT_JITSERVER) */
