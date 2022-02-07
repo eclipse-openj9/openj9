@@ -24,7 +24,8 @@
 # In JDK17-, java.security.manager == null behaves as -Djava.security.manager=allow.
 # For OpenJ9 tests to work as expected, -Djava.security.manager=allow behaviour is
 # needed in JDK18+.
-JAVA_SECURITY_MANAGER=
 ifeq ($(filter 8 9 10 11 12 13 14 15 16 17, $(JDK_VERSION)),)
-	JAVA_SECURITY_MANAGER=-Djava.security.manager=allow
+  JAVA_SECURITY_MANAGER = -Djava.security.manager=allow
+else
+  JAVA_SECURITY_MANAGER =
 endif
