@@ -1104,17 +1104,17 @@ trcModulesAddReadsModule(J9VMThread *currentThread, jobject toModule, J9Module *
 			toModuleNameUTF = vmFuncs->copyStringToUTF8WithMemAlloc(
 				currentThread, j9ToMod->moduleName, J9_STR_NULL_TERMINATE_RESULT, "", 0, toModuleNameBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH, NULL);
 		} else {
-#define UNNAMED_MODULE   "unnamed "
+#define UNNAMED_MODULE "unnamed "
 			PORT_ACCESS_FROM_VMC(currentThread);
-			Assert_SC_true(J9VM_PACKAGE_NAME_BUFFER_LENGTH > sizeof(UNNAMED_MODULE));
+			Assert_SC_true(J9VM_PACKAGE_NAME_BUFFER_LENGTH >= sizeof(UNNAMED_MODULE));
 			memcpy(toModuleNameBuf, UNNAMED_MODULE, sizeof(UNNAMED_MODULE));
 			toModuleNameUTF = toModuleNameBuf;
 #undef UNNAMED_MODULE
 		}
 	} else {
-#define LOOSE_MODULE   "loose "
+#define LOOSE_MODULE "loose "
 		PORT_ACCESS_FROM_VMC(currentThread);
-		Assert_SC_true(J9VM_PACKAGE_NAME_BUFFER_LENGTH > sizeof(LOOSE_MODULE));
+		Assert_SC_true(J9VM_PACKAGE_NAME_BUFFER_LENGTH >= sizeof(LOOSE_MODULE));
 		memcpy(toModuleNameBuf, LOOSE_MODULE, sizeof(LOOSE_MODULE));
 		toModuleNameUTF = toModuleNameBuf;
 #undef LOOSE_MODULE
