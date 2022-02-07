@@ -1118,13 +1118,15 @@ public static void setSecurityManager(final SecurityManager s) {
 	@SuppressWarnings("removal")
 	final SecurityManager currentSecurity = security;
 
-	if ((currentSecurity == null) && (s == null)) {
-		/* Return if the input argument is null and no security manager has been established. */
-		return;
-	}
-
 	/*[IF JAVA_SPEC_VERSION > 11]*/
 	if (throwUOEFromSetSM) {
+		/* The security manager is not allowed to be set dynamically. Return if the
+		 * argument is null. UnsupportedOperationException should only be thrown for
+		 * a non-null argument.
+		 */
+		if (s == null) {
+			return;
+		}
 		/*[MSG "K0B00", "The Security Manager is deprecated and will be removed in a future release"]*/
 		throw new UnsupportedOperationException(com.ibm.oti.util.Msg.getString("K0B00")); //$NON-NLS-1$
 	}
