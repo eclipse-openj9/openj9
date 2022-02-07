@@ -217,7 +217,7 @@ static TR_OutlinedInstructions *generateArrayletReference(
    static char *forceArrayletInt = feGetEnv("TR_forceArrayletInt");
    if (forceArrayletInt)
       {
-      generateInstruction(TR::InstOpCode::bad, node, cg);
+      generateInstruction(TR::InstOpCode::INT3, node, cg);
       }
 
    // -----------------------------------------------------------------------------------
@@ -4418,7 +4418,7 @@ void J9::X86::TreeEvaluator::asyncGCMapCheckPatching(TR::Node *node, TR::CodeGen
       //
       static char *d = feGetEnv("TR_GCOnAsyncBREAK");
       if (d)
-         generateInstruction(TR::InstOpCode::bad, node, cg);
+         generateInstruction(TR::InstOpCode::INT3, node, cg);
 
       generateMemImmInstruction(TR::InstOpCode::S8MemImm4, node, generateX86MemoryReference(cg->getVMThreadRegister(), offsetof(J9VMThread, stackOverflowMark), cg), -1, cg);
       generateRegImmInstruction(TR::InstOpCode::MOV8RegImm4, node, tempReg, 1 << comp->getPersistentInfo()->getGCMapCheckEventHandle(), cg);
@@ -4513,7 +4513,7 @@ void J9::X86::TreeEvaluator::asyncGCMapCheckPatching(TR::Node *node, TR::CodeGen
 
       static char *d = feGetEnv("TR_GCOnAsyncBREAK");
       if (d)
-         generateInstruction(TR::InstOpCode::bad, node, cg);
+         generateInstruction(TR::InstOpCode::INT3, node, cg);
 
       //Populate the existing inline code
       //
@@ -5933,7 +5933,7 @@ static void genHeapAlloc(
       UDATA sizeClass = fej9->getObjectSizeClass(allocationSizeOrDataOffset);
 
       if (comp->getOption(TR_BreakOnNew))
-         generateInstruction(TR::InstOpCode::bad, node, cg);
+         generateInstruction(TR::InstOpCode::INT3, node, cg);
 
       // heap allocation, so proceed
       if (sizeReg)
@@ -10511,7 +10511,7 @@ void J9::X86::TreeEvaluator::VMwrtbarRealTimeWithoutStoreEvaluator(
 
    if (comp->getOption(TR_BreakOnWriteBarrier))
       {
-      generateInstruction(TR::InstOpCode::bad, node, cg);
+      generateInstruction(TR::InstOpCode::INT3, node, cg);
       }
 
    TR::SymbolReference *wrtBarSymRef = NULL;
@@ -10842,7 +10842,7 @@ void J9::X86::TreeEvaluator::VMwrtbarWithoutStoreEvaluator(
 
    if (comp->getOption(TR_BreakOnWriteBarrier))
       {
-      generateInstruction(TR::InstOpCode::bad, node, cg);
+      generateInstruction(TR::InstOpCode::INT3, node, cg);
       }
 
    TR::MemoryReference *fragmentParentMR = generateX86MemoryReference(cg->getVMThreadRegister(), fej9->thisThreadRememberedSetFragmentOffset() + fej9->getFragmentParentOffset(), cg);
