@@ -682,6 +682,14 @@ size_t J9::ARM64::JNILinkage::buildJNIArgs(TR::Node *callNode, TR::RegisterDepen
          }
       }
 
+   /* Spills all vector registers */
+   if (killsVectorRegisters())
+      {
+      TR::Register *tmpReg = cg()->allocateRegister();
+      dependencies->addPostCondition(tmpReg, TR::RealRegister::KillVectorRegs);
+      cg()->stopUsingRegister(tmpReg);
+      }
+
    if (numMemArgs > 0)
       {
       TR::RealRegister *sp = cg()->machine()->getRealRegister(properties.getStackPointerRegister());
@@ -980,10 +988,13 @@ TR::Register *J9::ARM64::JNILinkage::buildDirectDispatch(TR::Node *callNode)
    cg()->machine()->setLinkRegisterKilled(true);
 
    const int maxRegisters = getProperties()._numAllocatableIntegerRegisters + getProperties()._numAllocatableFloatRegisters;
+   // Extra post dependency for killing vector registers (see KillVectorRegs)
+   const int extraPostReg = killsVectorRegisters() ? 1 : 0;
 #ifdef J9VM_INTERP_ATOMIC_FREE_JNI
-   const int maxPostRegisters = maxRegisters + 1;
+   // Extra post dependency for xzr
+   const int maxPostRegisters = maxRegisters + extraPostReg + 1;
 #else
-   const int maxPostRegisters = maxRegisters;
+   const int maxPostRegisters = maxRegisters + extraPostReg;
 #endif
    TR::RegisterDependencyConditions *deps = new (trHeapMemory()) TR::RegisterDependencyConditions(maxRegisters, maxPostRegisters, trMemory());
 
