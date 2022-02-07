@@ -22,7 +22,8 @@
 
 include $(TEST_ROOT)$(D)functional$(D)variables.mk
 
-XMLSUFFIX=
 ifeq ($(JDK_VERSION), 8)
-	XMLSUFFIX=_8
+  XMLSUFFIX = _8
+else
+  XMLSUFFIX =
 endif
