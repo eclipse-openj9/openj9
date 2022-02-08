@@ -180,6 +180,13 @@
 	</test>
 	<test>
 		<testCaseName>jit_compareAndBranch</testCaseName>
+		<disables>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/14459#issuecomment-1033015284</comment>
+				<variation>-Xjit:count=1,limit={*testAddressCompare*},optlevel=hot,disableCFGSimplification,disableGRA,disableAsyncCompilation</variation>
+				<testflag>aot</testflag>
+			</disable>
+		</disables>
 		<variations>
 			<variation>-Xjit:count=1,limit={*testAddressCompare*},optlevel=hot,disableCFGSimplification,disableGRA,disableAsyncCompilation</variation>
 		</variations>
