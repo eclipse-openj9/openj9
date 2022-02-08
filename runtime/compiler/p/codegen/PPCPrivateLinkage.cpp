@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2686,10 +2686,7 @@ void J9::Power::PrivateLinkage::buildDirectCall(TR::Node *callNode,
    if (callSymRef->getReferenceNumber() >= TR_PPCnumRuntimeHelpers)
       fej9->reserveTrampolineIfNecessary(comp(), callSymRef, false);
 
-   bool forceUnresolvedDispatch = fej9->forceUnresolvedDispatch();
-   if (comp()->getOption(TR_UseSymbolValidationManager))
-      forceUnresolvedDispatch = false;
-
+   bool forceUnresolvedDispatch = !fej9->isResolvedDirectDispatchGuaranteed(comp());
    if ((callSymbol->isJITInternalNative() ||
         (!callSymRef->isUnresolved() && !callSymbol->isInterpreted() && ((forceUnresolvedDispatch && callSymbol->isHelper()) || !forceUnresolvedDispatch))))
       {

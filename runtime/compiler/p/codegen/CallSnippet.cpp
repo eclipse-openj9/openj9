@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -282,10 +282,7 @@ TR_RuntimeHelper TR::PPCCallSnippet::getInterpretedDispatchHelper(
       isJitInduceOSRCall = true;
       }
 
-   bool forceUnresolvedDispatch = fej9->forceUnresolvedDispatch();
-   if (comp->getOption(TR_UseSymbolValidationManager))
-      forceUnresolvedDispatch = false;
-
+   bool forceUnresolvedDispatch = !fej9->isResolvedDirectDispatchGuaranteed(comp);
    if (methodSymRef->isUnresolved() || forceUnresolvedDispatch)
       {
       TR_ASSERT(!isJitInduceOSRCall || !forceUnresolvedDispatch, "calling jitInduceOSR is not supported yet under AOT\n");
@@ -398,9 +395,7 @@ uint8_t *TR::PPCCallSnippet::emitSnippetBody()
    //continue execution in interpreted mode. Therefore, it doesn't need the method pointer.
    if (!glueRef->isOSRInductionHelper())
       {
-      bool forceUnresolvedDispatch = fej9->forceUnresolvedDispatch();
-      if (comp->getOption(TR_UseSymbolValidationManager))
-         forceUnresolvedDispatch = false;
+      bool forceUnresolvedDispatch = !fej9->isResolvedDirectDispatchGuaranteed(comp);
 
       // Store the method pointer: it is NULL for unresolved
       if (methodSymRef->isUnresolved() || forceUnresolvedDispatch)
@@ -1243,10 +1238,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::PPCCallSnippet * snippet)
    const char          *labelString = NULL;
    bool                 isNativeStatic = false;
 
-   bool forceUnresolvedDispatch = fej9->forceUnresolvedDispatch();
-   if (comp->getOption(TR_UseSymbolValidationManager))
-      forceUnresolvedDispatch = false;
-
+   bool forceUnresolvedDispatch = !fej9->isResolvedDirectDispatchGuaranteed(comp);
    if (methodSymbol->isHelper() &&
        methodSymRef->isOSRInductionHelper())
       {
