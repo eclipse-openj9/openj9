@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -49,7 +49,7 @@ bool TR::X86PicDataSnippet::shouldEmitJ2IThunkPointer()
       return unresolvedDispatch(); // invokevirtual could be private
 
    // invokeinterface
-   if (forceUnresolvedDispatch())
+   if (cg()->comp()->compileRelocatableCode())
       return true; // forced to assume it could be private/Object
 
    // Since interface method symrefs are always unresolved, check to see
@@ -508,7 +508,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::X86PicDataSnippet *snippet)
       printLabelInstruction(pOutFile, "jmp", snippet->getDoneLabel());
       bufferPos += 5;
 
-      if (methodSymRef->isUnresolved() || fej9->forceUnresolvedDispatch())
+      if (methodSymRef->isUnresolved())
          {
          const char *op = (sizeof(uintptr_t) == 4) ? "DD" : "DQ";
 
@@ -813,10 +813,7 @@ uint8_t *TR::X86CallSnippet::emitSnippetBody()
          }
       }
 
-   bool forceUnresolvedDispatch = fej9->forceUnresolvedDispatch();
-   if (comp->getOption(TR_UseSymbolValidationManager))
-      forceUnresolvedDispatch = false;
-
+   bool forceUnresolvedDispatch = !fej9->isResolvedDirectDispatchGuaranteed(comp);
    if (methodSymRef->isUnresolved() || forceUnresolvedDispatch)
       {
       // Unresolved interpreted dispatch snippet shape:
@@ -1033,10 +1030,7 @@ uint32_t TR::X86CallSnippet::getLength(int32_t estimatedSnippetStart)
       length += codeSize;
       }
 
-   bool forceUnresolvedDispatch = fej9->forceUnresolvedDispatch();
-   if (comp->getOption(TR_UseSymbolValidationManager))
-      forceUnresolvedDispatch = false;
-
+   bool forceUnresolvedDispatch = !fej9->isResolvedDirectDispatchGuaranteed(comp);
    if (methodSymRef->isUnresolved() || forceUnresolvedDispatch)
       {
       // +7 accounts for maximum length alignment padding.

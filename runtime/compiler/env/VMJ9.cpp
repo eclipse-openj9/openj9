@@ -528,6 +528,32 @@ TR_J9SharedCacheVM::shouldDelayAotLoad()
    return isAOT_DEPRECATED_DO_NOT_USE();
    }
 
+bool
+TR_J9SharedCacheVM::isResolvedDirectDispatchGuaranteed(TR::Compilation *comp)
+   {
+   return isAotResolvedDirectDispatchGuaranteed(comp);
+   }
+
+bool
+TR_J9VMBase::isAotResolvedDirectDispatchGuaranteed(TR::Compilation *comp)
+   {
+   return comp->getOption(TR_UseSymbolValidationManager)
+      && comp->cg()->guaranteesResolvedDirectDispatchForSVM();
+   }
+
+bool
+TR_J9SharedCacheVM::isResolvedVirtualDispatchGuaranteed(TR::Compilation *comp)
+   {
+   return isAotResolvedVirtualDispatchGuaranteed(comp);
+   }
+
+bool
+TR_J9VMBase::isAotResolvedVirtualDispatchGuaranteed(TR::Compilation *comp)
+   {
+   return comp->getOption(TR_UseSymbolValidationManager)
+      && comp->cg()->guaranteesResolvedVirtualDispatchForSVM();
+   }
+
 J9Class *
 TR_J9VMBase::matchRAMclassFromROMclass(J9ROMClass * clazz, TR::Compilation * comp)
    {
