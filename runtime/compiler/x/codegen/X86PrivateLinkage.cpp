@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -596,7 +596,7 @@ void J9::X86::PrivateLinkage::createPrologue(TR::Instruction *cursor)
          //
          cursor = new (trHeapMemory()) TR::X86PaddingInstruction(cursor, minInstructionSize, TR_AtomicNoOpPadding, cg());
          }
-      cursor = new (trHeapMemory()) TR::Instruction(TR::InstOpCode::bad, cursor, cg());
+      cursor = new (trHeapMemory()) TR::Instruction(TR::InstOpCode::INT3, cursor, cg());
       }
 
    // Compute the nature of the preserved regs
@@ -1090,7 +1090,7 @@ J9::X86::PrivateLinkage::buildDirectDispatch(
          {
          if (TR::SimpleRegex::matchIgnoringLocale(r, name))
             {
-            generateInstruction(TR::InstOpCode::bad, callNode, cg());
+            generateInstruction(TR::InstOpCode::INT3, callNode, cg());
             }
          }
       }
@@ -2563,7 +2563,7 @@ void J9::X86::PrivateLinkage::buildInterfaceDispatchUsingLastITable (TR::X86Call
    //
    generateLabelInstruction(TR::InstOpCode::label, callNode, lastITableTestLabel, cg());
    if (breakBeforeInterfaceDispatchUsingLastITable)
-      generateInstruction(TR::InstOpCode::bad, callNode, cg());
+      generateInstruction(TR::InstOpCode::INT3, callNode, cg());
    generateRegMemInstruction(TR::InstOpCode::LRegMem(), callNode, scratchReg, generateX86MemoryReference(vftReg, (int32_t)fej9->getOffsetOfLastITableFromClassField(), cg()), cg());
    bool use32BitInterfacePointers = comp()->target().is32Bit();
    if (comp()->useCompressedPointers() /* actually compressed object headers */)
