@@ -99,19 +99,19 @@ final class J9VMInternals {
 			Runnable runnable = () -> {
 				CleanerShutdown.shutdownCleaner();
 				ThreadGroup threadGroup = Thread.currentThread().group; // the system ThreadGroup
-				/*[IF OJDKTHREAD_SUPPORT]*/
+				/*[IF OPENJDK_THREAD_SUPPORT]*/
 				ThreadGroup threadGroups[] = new ThreadGroup[threadGroup.ngroups];
-				/*[ELSE] OJDKTHREAD_SUPPORT
+				/*[ELSE] OPENJDK_THREAD_SUPPORT
 				ThreadGroup threadGroups[] = new ThreadGroup[threadGroup.numGroups];
-				/*[ENDIF] OJDKTHREAD_SUPPORT */
+				/*[ENDIF] OPENJDK_THREAD_SUPPORT */
 				threadGroup.enumerate(threadGroups, false); /* non-recursive enumeration */
 				for (ThreadGroup tg : threadGroups) {
 					if ("InnocuousThreadGroup".equals(tg.getName())) { //$NON-NLS-1$
-						/*[IF OJDKTHREAD_SUPPORT]*/
+						/*[IF OPENJDK_THREAD_SUPPORT]*/
 						Thread threads[] = new Thread[tg.nthreads];
-						/*[ELSE] OJDKTHREAD_SUPPORT
+						/*[ELSE] OPENJDK_THREAD_SUPPORT
 						Thread threads[] = new Thread[tg.numThreads];
-						/*[ENDIF] OJDKTHREAD_SUPPORT */
+						/*[ENDIF] OPENJDK_THREAD_SUPPORT */
 						tg.enumerate(threads, false);
 						for (Thread t : threads) {
 							if (t.getName().equals("Common-Cleaner")) { //$NON-NLS-1$
@@ -326,16 +326,15 @@ final class J9VMInternals {
 		/*[PR 106323] -- remove might throw an exception, so make sure we finish the cleanup*/
 		try {
 			// Leave the ThreadGroup. This is why remove can't be private
-			/*[IF OJDKTHREAD_SUPPORT]*/
+			/*[IF OPENJDK_THREAD_SUPPORT]*/
 			thread.group.threadTerminated(thread);
-			/*[ELSE] OJDKTHREAD_SUPPORT*/
+			/*[ELSE] OPENJDK_THREAD_SUPPORT */
 			thread.group.remove(thread);
-			/*[ENDIF] OJDKTHREAD_SUPPORT */
-		}
-		finally {
+			/*[ENDIF] OPENJDK_THREAD_SUPPORT */
+		} finally {
 			thread.cleanup();
 
-			synchronized(thread) {
+			synchronized (thread) {
 				thread.notifyAll();
 			}
 		}

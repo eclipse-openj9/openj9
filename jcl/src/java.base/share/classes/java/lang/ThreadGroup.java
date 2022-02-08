@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar18-SE & !OJDKTHREAD_SUPPORT]*/
+/*[INCLUDE-IF Sidecar18-SE & !OPENJDK_THREAD_SUPPORT]*/
 /*******************************************************************************
  * Copyright (c) 1998, 2022 IBM Corp. and others
  *
