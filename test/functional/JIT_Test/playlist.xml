@@ -438,7 +438,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<aot>nonapplicable</aot>
+		<features>
+			<feature>AOT:nonapplicable</feature>
+		</features>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
@@ -463,7 +465,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<aot>nonapplicable</aot>
+		<features>
+			<feature>AOT:nonapplicable</feature>
+		</features>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
@@ -488,7 +492,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<aot>nonapplicable</aot>
+		<features>
+			<feature>AOT:nonapplicable</feature>
+		</features>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
@@ -513,7 +519,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<aot>nonapplicable</aot>
+		<features>
+			<feature>AOT:nonapplicable</feature>
+		</features>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
@@ -538,7 +546,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<aot>nonapplicable</aot>
+		<features>
+			<feature>AOT:nonapplicable</feature>
+		</features>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
@@ -571,7 +581,9 @@
 			<impl>openj9</impl>
 			<impl>ibm</impl>
 		</impls>
-		<aot>nonapplicable</aot>
+		<features>
+			<feature>AOT:nonapplicable</feature>
+		</features>
 	</test>
 	<test>
 		<testCaseName>jit_hwWarm</testCaseName>
