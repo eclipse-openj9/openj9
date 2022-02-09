@@ -1209,19 +1209,23 @@ int32_t J9::ARM64::PrivateLinkage::buildPrivateLinkageArgs(TR::Node *callNode,
       TR::addDependency(dependencies, NULL, (TR::RealRegister::RegNum)getProperties().getFloatReturnRegister(), TR_FPR, cg());
       }
 
-   for (int32_t i = TR::RealRegister::FirstFPR; i <= TR::RealRegister::LastFPR; ++i)
+   // Helper linkage preserves all registers that are not argument registers, so we don't need to spill them.
+   if (linkage != TR_Helper)
       {
-      TR::RealRegister::RegNum realReg = (TR::RealRegister::RegNum)i;
-      if (properties.getPreserved(realReg))
-         continue;
-      if (!dependencies->searchPreConditionRegister(realReg))
+      for (int32_t i = TR::RealRegister::FirstFPR; i <= TR::RealRegister::LastFPR; ++i)
          {
-         TR::addDependency(dependencies, NULL, realReg, TR_FPR, cg());
+         TR::RealRegister::RegNum realReg = (TR::RealRegister::RegNum)i;
+         if (properties.getPreserved(realReg))
+            continue;
+         if (!dependencies->searchPreConditionRegister(realReg))
+            {
+            TR::addDependency(dependencies, NULL, realReg, TR_FPR, cg());
+            }
          }
       }
 
    /* Spills all vector registers */
-   if (killsVectorRegisters())
+   if ((linkage != TR_Helper) && killsVectorRegisters())
       {
       TR::Register *tmpReg = cg()->allocateRegister();
       dependencies->addPostCondition(tmpReg, TR::RealRegister::KillVectorRegs);
