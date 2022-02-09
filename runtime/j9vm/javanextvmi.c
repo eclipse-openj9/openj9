@@ -181,7 +181,7 @@ JVM_IsFinalizationEnabled(JNIEnv *env)
 {
 	jboolean isFinalizationEnabled = JNI_TRUE;
 	J9VMThread *currentThread = (J9VMThread*)env;
-	if (J9_ARE_ANY_BITS_SET(currentThread->javaVM->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_DISABLE_FINALIZATION)) {
+	if (J9_ARE_ANY_BITS_SET(currentThread->javaVM->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_DISABLE_FINALIZATION)) {
 		isFinalizationEnabled = JNI_FALSE;
 	}
 	return isFinalizationEnabled;

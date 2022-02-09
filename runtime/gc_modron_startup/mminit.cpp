@@ -566,7 +566,7 @@ gcStartupHeapManagement(J9JavaVM *javaVM)
 
 #if defined(J9VM_GC_FINALIZATION)
 #if JAVA_SPEC_VERSION >= 18
-	if (J9_ARE_ANY_BITS_SET(javaVM->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_DISABLE_FINALIZATION)) {
+	if (J9_ARE_ANY_BITS_SET(javaVM->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_DISABLE_FINALIZATION)) {
 		/* Finalization is disabled */
 	} else
 #endif /* JAVA_SPEC_VERSION >= 18 */

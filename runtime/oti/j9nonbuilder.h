@@ -5854,7 +5854,7 @@ typedef struct J9CInterpreterStackFrame {
 	 *
 	 * Stack must be 16-byte aligned.
 	 */
-	U_8 jitFPRs[6 * 64]; /* zmm0-5 512-bit OR xmm0-7 64-bit */
+	U_8 jitFPRs[6 * 16]; /* xmm0-5 128-bit OR xmm0-7 64-bit */
 	U_8 preservedFPRs[10 * 16]; /* xmm6-15 128-bit */
 	UDATA align[1];
 	/* r15,r14,r13,r12,rdi,rsi,rbx,rbp,return address
@@ -5865,7 +5865,7 @@ typedef struct J9CInterpreterStackFrame {
 	 *
 	 * Stack must be 16-byte aligned.
 	 */
-	U_8 jitFPRs[32 * 64]; /* zmm0-31 512-bit OR xmm0-7 64-bit */
+	U_8 jitFPRs[16 * 16]; /* xmm0-15 128-bit OR xmm0-7 64-bit */
 	UDATA align[1];
 	/* r15,r14,r13,r12,rbx,rbp,return address
 	 * RSP is 16-byte aligned at this point
@@ -5890,7 +5890,7 @@ typedef struct J9CInterpreterStackFrame {
 		} named;
 	} jitGPRs;
 	UDATA align1[2];
-	U_8 jitFPRs[8 * 64]; /* zmm0-7 512-bit */
+	U_8 jitFPRs[8 * 16]; /* xmm0-7 128-bit */
 	UDATA align2[1];
 	/* ebx,edi,esi
 	 * ESP is forcibly 16-byte aligned at this point
