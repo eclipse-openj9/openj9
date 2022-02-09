@@ -24,19 +24,41 @@
 #define HANDLERECOMPILATINOOPS_INCL
 
 #include <stdint.h>
+#include "infra/Cfg.hpp"
+#include "infra/CfgEdge.hpp"
+#include "infra/CfgNode.hpp"
 #include "optimizer/Optimization.hpp"
 #include "optimizer/OptimizationManager.hpp"
 
+/**
+ * The \c TR_HandleRecompilationOps optimization is an IL generation
+ * optimization whose purpose is to detect situations in which IL generation
+ * is unable to generate trees that correctly represent the semantics of
+ * a particular operation.  In such cases, the optimization will generate an
+ * OSR requesting recompilation.  This relies on voluntary OSR and
+ * recompilation both being enabled, as well as being possible at the point
+ * in the trees where the operation under consideration was encountered.
+ * If the optimization is unable to induce OSR at that point, it will abort
+ * the compilation.
+ *
+ * The optimization is currently needed for some value type operations
+ * involving unresolved types or unresolved fields whose types are of value
+ * types.
+ */
 class TR_HandleRecompilationOps : public TR::Optimization
    {
    private:
 
    TR::ResolvedMethodSymbol *_methodSymbol;
+   bool _enableTransform;
 
    TR_HandleRecompilationOps(TR::OptimizationManager *manager) : TR::Optimization(manager)
       {
       _methodSymbol = comp()->getOwningMethodSymbol(comp()->getCurrentMethod());
       }
+
+   bool resolveCHKGuardsValueTypeOperation(TR::TreeTop *currTree, TR::Node *node);
+   bool visitTree(TR::TreeTop *currTree);
 
    public:
 

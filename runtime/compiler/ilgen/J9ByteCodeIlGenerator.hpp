@@ -146,11 +146,13 @@ private:
 
    bool         runMacro(TR::SymbolReference *);
    bool         runFEMacro(TR::SymbolReference *);
+
    TR::Node *    genInvoke(TR::SymbolReference *, TR::Node *indirectCallFirstChild, TR::Node *invokedynamicReceiver = NULL);
 
    TR::Node *    genInvokeDirect(TR::SymbolReference *symRef){ return genInvoke(symRef, NULL); }
    TR::Node *    genInvokeWithVFTChild(TR::SymbolReference *);
    TR::Node *    getReceiverFor(TR::SymbolReference *);
+   void          prepareUnresolvedValueTypeOSRPoint(const char *bytecodeName, const char* refType);
    void          stashArgumentsForOSR(TR_J9ByteCode byteCode);
    /** \brief
     *    Tell if the current bytecode is at start of a basic block
@@ -248,7 +250,7 @@ private:
    void         genMonitorExit(bool);
    TR_OpaqueClassBlock *loadValueClass(int32_t classCpIndex);
    void         genDefaultValue(uint16_t classCpIndex);
-   void         genDefaultValue(TR_OpaqueClassBlock *valueTypeClass);
+   void         genDefaultValue(TR::SymbolReference *valueClassSymRef);
    void         genWithField(uint16_t fieldCpIndex);
    void         genWithField(TR::SymbolReference *, TR_OpaqueClassBlock *);
    void         genFlattenableWithField(uint16_t, TR_OpaqueClassBlock *);

@@ -176,6 +176,13 @@ class OMR_EXTENSIBLE Compilation : public OMR::CompilationConnector
 
    bool pendingPushLivenessDuringIlgen();
 
+   /**
+    * Check whether OSR can be induced and recompilation requested
+    * for operations for which the JIT does not yet have enough
+    * information to generate correct code.
+    */
+   bool isOSRAllowedForOperationsRequiringRecompilation();
+
    TR::list<TR_ExternalValueProfileInfo*> &getExternalVPInfos() { return _externalVPInfoList; }
 
    TR_ValueProfileInfoManager *getValueProfileInfoManager()             { return _vpInfoManager;}

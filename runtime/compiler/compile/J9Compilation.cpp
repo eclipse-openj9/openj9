@@ -1499,6 +1499,15 @@ J9::Compilation::pendingPushLivenessDuringIlgen()
    }
 
 bool
+J9::Compilation::isOSRAllowedForOperationsRequiringRecompilation()
+   {
+   return !self()->isDisabled(OMR::handleRecompilationOps)
+          && self()->getOption(TR_EnableOSR) && (self()->getOSRMode() == TR::voluntaryOSR)
+          && self()->supportsInduceOSR() && self()->allowRecompilation()
+          && !self()->isPeekingMethod() && self()->isOSRTransitionTarget(TR::postExecutionOSR);
+   }
+
+bool
 J9::Compilation::supportsQuadOptimization()
    {
    if (self()->isDLT() || self()->getOption(TR_FullSpeedDebug))

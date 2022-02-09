@@ -3662,6 +3662,44 @@ TR_J9ByteCodeIlGenerator::genInvokeWithVFTChild(TR::SymbolReference *symRef)
    }
 
 
+/**
+ * \brief Prepare to induce OSR for an operation involving an unresolved value type class or field
+ *
+ * Save values on the stack and for pending pushes if voluntary OSR is enabled in
+ * order to prepare for OSR induction for a value type operation involving an unresolved
+ * value type class (also known as a primitive class or an inline class) or a field whose type
+ * is a value type.
+ *
+ * @param bytecodeName is the name of the unhandled bytecode instruction
+ * @param refType is the type of unresolved reference (e.g. field, class, etc.)
+ */
+void
+TR_J9ByteCodeIlGenerator::prepareUnresolvedValueTypeOSRPoint(const char* bytecodeName, const char* refType)
+   {
+   TR_ASSERT_FATAL(TR::Compiler->om.areValueTypesEnabled(), "Value types should be enabled if the JIT is trying to induce OSR for a value type operation");
+
+   TR::Node* osrPointHelperCall = TR::Node::createPotentialOSRPointHelperCallInILGen(NULL, 0);
+
+   // Only save stack and pending pushes if voluntary OSR can be induced
+   // Otherwise, abort the compilation
+   if (comp()->isOSRAllowedForOperationsRequiringRecompilation()
+       && !_methodSymbol->cannotAttemptOSRAt(osrPointHelperCall->getByteCodeInfo(), NULL, comp())
+       && !_cannotAttemptOSR)
+      {
+      saveStack(-1);
+      stashPendingPushLivenessForOSR();
+      _block->append(TR::TreeTop::create(comp(), TR::Node::create(TR::treetop, 1, osrPointHelperCall)));
+      }
+   else
+      {
+      if (comp()->getOption(TR_TraceILGen))
+         {
+         TR_ByteCodeInfo bci = osrPointHelperCall->getByteCodeInfo();
+         traceMsg(comp(), "   areValueTypesEnabled == %d; isOSRAllowedForOperationsRequiringRecompilation == %d; cannotAttempOSRAt([%d,%d,%d]) == %d; _cannotAttemptOSR == %d\n", TR::Compiler->om.areValueTypesEnabled(), comp()->isOSRAllowedForOperationsRequiringRecompilation(), bci.getCallerIndex(), bci.getByteCodeIndex(), comp()->getLineNumber(osrPointHelperCall), _methodSymbol->cannotAttemptOSRAt(osrPointHelperCall->getByteCodeInfo(), NULL, comp()), _cannotAttemptOSR);
+         }
+      abortForUnresolvedValueTypeOp(bytecodeName, refType);
+      }
+   }
 
 
 TR::Node*
@@ -5096,11 +5134,18 @@ TR_J9ByteCodeIlGenerator::loadInstance(int32_t cpIndex)
       comp()->failCompilation<J9::AOTNoSupportForAOTFailure>("NO support for AOT in field watch");
 
    TR_ResolvedJ9Method * owningMethod = static_cast<TR_ResolvedJ9Method*>(_methodSymbol->getResolvedMethod());
+
    if (TR::Compiler->om.areValueTypesEnabled() && owningMethod->isFieldQType(cpIndex))
       {
       if (!isFieldResolved(comp(), owningMethod, cpIndex, false))
          {
-         abortForUnresolvedValueTypeOp("getfield", "field");
+         // If the field is of a value type, but is unresolved, prepare to induce OSR at this
+         // point, and then proceed to generate IL for the load.  The load will be recognized
+         // by HandleRecompilationOps, and replaced with the required OSR induction, if possible -
+         // otherwise, the compilation will be aborted during HandleRecompilationOps.  The reason
+         // this is needed is that the JIT cannot know whether the field will have been flattened.
+         //
+         prepareUnresolvedValueTypeOSRPoint("getfield", "field");
          }
       else if (owningMethod->isFieldFlattened(comp(), cpIndex, _methodSymbol->isStatic()))
          {
@@ -5657,6 +5702,7 @@ TR_J9ByteCodeIlGenerator::loadSymbol(TR::ILOpCodes loadop, TR::SymbolReference *
    push(node);
    return node;
    }
+
 
 void
 TR_J9ByteCodeIlGenerator::loadClassObject(int32_t cpIndex)
@@ -6340,10 +6386,7 @@ TR_J9ByteCodeIlGenerator::genWithField(uint16_t fieldCpIndex)
    const int32_t bcIndex = currentByteCodeIndex();
    int32_t classCpIndex = method()->classCPIndexOfFieldOrStatic(fieldCpIndex);
    TR_OpaqueClassBlock *valueClass = method()->getClassFromConstantPool(comp(), classCpIndex, true);
-   if (!valueClass)
-      {
-      abortForUnresolvedValueTypeOp("withfield", "class");
-      }
+   TR::SymbolReference *valueClassSymRef = symRefTab()->findOrCreateClassSymbol(_methodSymbol, classCpIndex, valueClass);
 
    TR_ResolvedJ9Method * owningMethod = static_cast<TR_ResolvedJ9Method*>(_methodSymbol->getResolvedMethod());
    if (owningMethod->isFieldQType(fieldCpIndex) && owningMethod->isFieldFlattened(comp(), fieldCpIndex, _methodSymbol->isStatic()))
@@ -6353,14 +6396,80 @@ TR_J9ByteCodeIlGenerator::genWithField(uint16_t fieldCpIndex)
                genFlattenableWithField(fieldCpIndex, valueClass);
       }
 
-   bool isStore = false;
-   TR::SymbolReference * symRef = symRefTab()->findOrCreateShadowSymbol(_methodSymbol, fieldCpIndex, isStore);
-   if (symRef->isUnresolved())
+   const bool isStore = false;
+   TR::SymbolReference * withFieldSymRef = symRefTab()->findOrCreateShadowSymbol(_methodSymbol, fieldCpIndex, isStore);
+
+   if (valueClassSymRef->isUnresolved() || withFieldSymRef->isUnresolved())
       {
-      abortForUnresolvedValueTypeOp("withfield", "field");
+      TR::Node *newFieldValue = _stack->top();
+      TR::Node *originalObject = _stack->element(_stack->topIndex() - 1);
+
+      if (comp()->getOption(TR_TraceILGen))
+         {
+         if (withFieldSymRef->isUnresolved())
+            {
+            traceMsg(comp(), "Handling unresolved field reference for withfield\n");
+            }
+         if (valueClassSymRef->isUnresolved())
+            {
+            traceMsg(comp(), "Handling unresolved value type class for withfield\n");
+            }
+         }
+
+      // If the value type class or a field of the value type is unresolved, prepare to induce
+      // OSR at this point.
+      //
+      // In the case of an unresolved field, proceed to generate a fake load of the field from
+      // the original value that is then used on a newvalue operation to pseudo-reconstitute the
+      // value using that single loaded field value.  The load of the unresolved type will be
+      // recognized by HandleRecompilationOps, and replaced with the required OSR induction, if
+      // possible - otherwise, the compilation will be aborted during HandleRecompilationOps.
+      //
+      // For both an unresolved value type class or an unresolved field, a fake newvalue operation
+      // is also created, using the new field value alone.  The newvalue on an unresolved type
+      // will be recognized by HandleRecompilationOps, and replaced with the required OSR
+      // induction, if possible - otherwise, the compilation will be aborted during
+      // HandleRecompilationOps.
+      //
+      prepareUnresolvedValueTypeOSRPoint("withfield", valueClassSymRef->isUnresolved() ? "class" : "field");
+
+      loadSymbol(TR::loadaddr, valueClassSymRef);
+      TR::Node *classAddrNode = pop();
+
+      genTreeTop(classAddrNode);
+
+      if (withFieldSymRef->isUnresolved())
+         {
+
+         TR::DataType type = newFieldValue->getDataType();
+         TR::ILOpCodes op = comp()->il.opCodeForIndirectLoad(type);
+         TR::Node *fakeFieldLoad = TR::Node::createWithSymRef(op, 1, 1, originalObject, withFieldSymRef);
+         genTreeTop(genResolveCheck(fakeFieldLoad));
+         TR::Node *reconstitutedValue = TR::Node::createWithSymRef(TR::newvalue, 2, 2, classAddrNode, fakeFieldLoad, symRefTab()->findOrCreateNewValueSymbolRef(_methodSymbol));
+         reconstitutedValue->setIdentityless(true);
+
+         genTreeTop(reconstitutedValue);
+         }
+
+      // Finish up handling of unresolved cases with a fake newvalue operation that supplies only
+      // the address of the value type class and the supplied new field value that was on the stack.
+      // This will be cleaned up during HandleRecompilationOps.
+      //
+      TR::Node *newValueNode = TR::Node::createWithSymRef(TR::newvalue, 2, 2, classAddrNode, newFieldValue, symRefTab()->findOrCreateNewValueSymbolRef(_methodSymbol));
+
+      pop();  // field
+      pop();  // original object
+
+      newValueNode->setIdentityless(true);
+      genTreeTop(newValueNode);
+
+      push(newValueNode);
+
+      genFlush(0);
+      return;
       }
 
-   genWithField(symRef, valueClass);
+   genWithField(withFieldSymRef, valueClass);
    }
 
 void
@@ -6406,6 +6515,7 @@ TR_J9ByteCodeIlGenerator::genWithField(TR::SymbolReference * symRef, TR_OpaqueCl
    newValueNode->setIdentityless(true);
    genTreeTop(newValueNode);
    push(newValueNode);
+
    genFlush(0);
    }
 
@@ -6588,39 +6698,27 @@ TR_J9ByteCodeIlGenerator::genFlattenableWithField(uint16_t fieldCpIndex, TR_Opaq
 void
 TR_J9ByteCodeIlGenerator::genDefaultValue(uint16_t cpIndex)
    {
-   TR_OpaqueClassBlock *valueTypeClass = method()->getClassFromConstantPool(comp(), cpIndex);
-   genDefaultValue(valueTypeClass);
+   bool aotOK = !comp()->compileRelocatableCode();
+   void *classObject = method()->getClassFromConstantPool(comp(), cpIndex, aotOK);
+   TR::SymbolReference *valueClassSymRef = symRefTab()->findOrCreateClassSymbol(_methodSymbol, cpIndex, classObject);
+   genDefaultValue(valueClassSymRef);
    }
 
 void
-TR_J9ByteCodeIlGenerator::genDefaultValue(TR_OpaqueClassBlock *valueTypeClass)
+TR_J9ByteCodeIlGenerator::genDefaultValue(TR::SymbolReference *valueClassSymRef)
    {
-   // valueTypeClass will be NULL if it is unresolved.  Abort the compilation and
-   // track the failure with a static debug counter
-   if (valueTypeClass == NULL)
-      {
-      abortForUnresolvedValueTypeOp("defaultvalue", "class");
-      }
-
-   TR::SymbolReference *valueClassSymRef = symRefTab()->findOrCreateClassSymbol(_methodSymbol, 0, valueTypeClass);
-
    if (comp()->getOption(TR_TraceILGen))
       {
       traceMsg(comp(), "Handling defaultvalue for valueClass %s\n", comp()->getDebug()->getName(valueClassSymRef));
       }
 
-   loadSymbol(TR::loadaddr, valueClassSymRef);
-
    TR::Node *newValueNode = NULL;
 
-   if (valueClassSymRef->isUnresolved())
+   if (!valueClassSymRef->isUnresolved())
       {
-      // IL generation for defaultvalue is currently only able to handle value type classes that have been resolved.
-      // If the class is still unresolved, abort the compilation and track the failure with a static debug counter.
-      abortForUnresolvedValueTypeOp("defaultvalue", "class");
-      }
-   else
-      {
+      TR::Node *classAddrNode = loadSymbol(TR::loadaddr, valueClassSymRef);
+
+      TR_OpaqueClassBlock *valueTypeClass = (TR_OpaqueClassBlock *) valueClassSymRef->getSymbol()->getStaticSymbol()->getStaticAddress();
       const TR::TypeLayout *typeLayout = comp()->typeLayout(valueTypeClass);
       size_t fieldCount = typeLayout->count();
 
@@ -6686,7 +6784,7 @@ TR_J9ByteCodeIlGenerator::genDefaultValue(TR_OpaqueClassBlock *valueTypeClass)
                   {
                   TR_OpaqueClassBlock *fieldClass = fej9()->getClassFromSignature(fieldSignature, (int32_t)strlen(fieldSignature),
                                                                                   comp()->getCurrentMethod());
-                  genDefaultValue(fieldClass);
+                  genDefaultValue(comp()->getSymRefTab()->findOrCreateClassSymbol(_methodSymbol, 0, fieldClass));
                   }
                else if (comp()->target().is64Bit())
                   {
@@ -6705,12 +6803,27 @@ TR_J9ByteCodeIlGenerator::genDefaultValue(TR_OpaqueClassBlock *valueTypeClass)
             }
          }
 
-         newValueNode = genNodeAndPopChildren(TR::newvalue, fieldCount+1, symRefTab()->findOrCreateNewValueSymbolRef(_methodSymbol));
-         newValueNode->setIdentityless(true);
+      newValueNode = genNodeAndPopChildren(TR::newvalue, fieldCount+1, symRefTab()->findOrCreateNewValueSymbolRef(_methodSymbol));
       }
+   else
+      {
+      TR::Node *classAddrNode = loadSymbol(TR::loadaddr, valueClassSymRef);
+
+      // If the value type class is unresolved, prepare to induce OSR at this point, and then
+      // proceed to generate a fake newvalue operation.  The newvalue on an unresolved type will
+      // be recognized by HandleRecompilationOps, and replaced with the required OSR induction,
+      // if possible.
+      //
+      prepareUnresolvedValueTypeOSRPoint("defaultvalue", "class");
+
+      newValueNode = genNodeAndPopChildren(TR::newvalue, 1, symRefTab()->findOrCreateNewValueSymbolRef(_methodSymbol));
+      }
+
+   newValueNode->setIdentityless(true);
 
    genTreeTop(newValueNode);
    push(newValueNode);
+
    genFlush(0);
    }
 
@@ -7041,11 +7154,18 @@ TR_J9ByteCodeIlGenerator::storeInstance(int32_t cpIndex)
       comp()->failCompilation<J9::AOTNoSupportForAOTFailure>("NO support for AOT in field watch");
 
    TR_ResolvedJ9Method * owningMethod = static_cast<TR_ResolvedJ9Method*>(_methodSymbol->getResolvedMethod());
+
    if (TR::Compiler->om.areValueTypesEnabled() && owningMethod->isFieldQType(cpIndex))
       {
       if (!isFieldResolved(comp(), owningMethod, cpIndex, true))
          {
-         abortForUnresolvedValueTypeOp("putfield", "field");
+         // If the field is of a value type, but is unresolved, prepare to induce OSR at this
+         // point, and then proceed to generate IL for the store.  The store will be recognized by
+         // HandleRecompilationOps, and replaced with the required OSR induction, if possible -
+         // otherwise, the compilation will be aborted during HandleRecompilationOps.  The reason
+         // this is needed is that the JIT cannot know whether the field will have been flattened.
+         //
+         prepareUnresolvedValueTypeOSRPoint("putfield", "field");
          }
       else if (owningMethod->isFieldFlattened(comp(), cpIndex, _methodSymbol->isStatic()))
          {
