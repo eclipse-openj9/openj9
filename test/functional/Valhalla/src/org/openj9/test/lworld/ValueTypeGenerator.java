@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2021 IBM Corp. and others
+ * Copyright (c) 2018, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -42,6 +42,7 @@ public class ValueTypeGenerator extends ClassLoader {
 	public static final int DEFAULTVALUE = 203;
 	public static final int WITHFIELD = 204;
 	private static final int ACC_VALUE_TYPE = 0x100;
+	private static final int ACC_PRIMITIVE = 0x800;
 	public static final int ACC_ATOMIC = 0x40;
 	
 	static {
@@ -195,11 +196,11 @@ public class ValueTypeGenerator extends ClassLoader {
 		String[] fields = config.getFields();
 		int extraClassFlags = config.getExtraClassFlags();
 		/**
-		 * Currently value type is built on JDK17, so use java file major version 61 for now.
-		 * After moving to JDK18, this needs to be incremented to 62. The check in j9bcutil_readClassFileBytes()
-		 * against BCT_JavaMajorVersionShifted(17) needs to be updated as well.
+		 * Currently value type is built on JDK19, so use java file major version 63 for now.
+		 * If moved to JDK20, this needs to be incremented to 64. The check in j9bcutil_readClassFileBytes()
+		 * against BCT_JavaMajorVersionShifted(19) needs to be updated as well.
 		 */
-		int classFileVersion = 61;
+		int classFileVersion = 63;
 
 		String nestHost = config.getNestHost();
 
@@ -223,7 +224,7 @@ public class ValueTypeGenerator extends ClassLoader {
 		if (isRef) {
 			cw.visit(classFileVersion, ACC_PUBLIC + ACC_FINAL + ACC_SUPER + extraClassFlags, className, null, superName, null);
 		} else {
-			cw.visit(classFileVersion, ACC_PUBLIC + ACC_FINAL + ACC_SUPER + ACC_VALUE_TYPE + extraClassFlags, className, null, superName, null);
+			cw.visit(classFileVersion, ACC_PUBLIC + ACC_FINAL + ACC_SUPER + ACC_VALUE_TYPE + ACC_PRIMITIVE + extraClassFlags, className, null, superName, null);
 		}
 
 		cw.visitSource(className + ".java", null);
