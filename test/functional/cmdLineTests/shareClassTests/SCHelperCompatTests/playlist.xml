@@ -24,6 +24,12 @@
 	<include>variables.mk</include>
 	<test>
 		<testCaseName>cmdLineTester_SCHelperCompatTests_win</testCaseName>
+		<disables>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/6053</comment>
+				<testflag>aot</testflag>
+			</disable>
+		</disables>
 		<variations>
 			<variation>Mode110</variation>
 			<variation>Mode610</variation>
@@ -48,9 +54,6 @@
 			<impl>openj9</impl>
 			<impl>ibm</impl>
 		</impls>
-		<features>
-			<feature>AOT:nonapplicable</feature>
-		</features>
 	</test>
 	<test>
 		<testCaseName>cmdLineTester_SCHelperCompatTests_unix</testCaseName>

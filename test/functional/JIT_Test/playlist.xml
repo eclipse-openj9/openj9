@@ -557,6 +557,12 @@
 	<!-- jit.test.hw tests start here -->
 	<test>
 		<testCaseName>jit_hw</testCaseName>
+		<disables>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/13064</comment>
+				<testflag>aot</testflag>
+			</disable>
+		</disables>
 		<variations>
 			<variation>-Xdump:java -Xgcpolicy:gencon -Xjit:count=0,optLevel=hot</variation>
 			<variation>-Xdump:java -Xgcpolicy:optavgpause -Xjit:count=0</variation>
@@ -581,9 +587,6 @@
 			<impl>openj9</impl>
 			<impl>ibm</impl>
 		</impls>
-		<features>
-			<feature>AOT:nonapplicable</feature>
-		</features>
 	</test>
 	<test>
 		<testCaseName>jit_hwWarm</testCaseName>
