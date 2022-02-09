@@ -53,7 +53,9 @@
 		<versions>
 			<version>8</version>
 		</versions>
-		<aot>explicit</aot>
+		<features>
+			<feature>AOT:explicit</feature>
+		</features>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
@@ -91,7 +93,9 @@
 		<versions>
 			<version>9+</version>
 		</versions>
-		<aot>explicit</aot>
+		<features>
+			<feature>AOT:explicit</feature>
+		</features>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
@@ -120,7 +124,9 @@
 		<versions>
 			<version>8</version>
 		</versions>
-		<aot>explicit</aot>
+		<features>
+			<feature>AOT:explicit</feature>
+		</features>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
@@ -150,7 +156,9 @@
 		<versions>
 			<version>9+</version>
 		</versions>
-		<aot>explicit</aot>
+		<features>
+			<feature>AOT:explicit</feature>
+		</features>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
@@ -179,7 +187,9 @@
 		<versions>
 			<version>8</version>
 		</versions>
-		<aot>explicit</aot>
+		<features>
+			<feature>AOT:explicit</feature>
+		</features>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
@@ -209,7 +219,9 @@
 		<versions>
 			<version>9+</version>
 		</versions>
-		<aot>explicit</aot>
+		<features>
+			<feature>AOT:explicit</feature>
+		</features>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
