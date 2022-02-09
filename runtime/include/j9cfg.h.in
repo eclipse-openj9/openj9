@@ -233,8 +233,8 @@ extern "C" {
 #cmakedefine J9VM_OPT_NEW_ROM_CLASS_BUILDER
 #cmakedefine J9VM_OPT_NO_CLASSLOADERS
 #cmakedefine J9VM_OPT_NRR
-#cmakedefine J9VM_OPT_OJDK_THREAD_SUPPORT
 #cmakedefine J9VM_OPT_OPENJDK_METHODHANDLE
+#cmakedefine J9VM_OPT_OPENJDK_THREAD_SUPPORT
 #cmakedefine J9VM_OPT_PACKED
 #cmakedefine J9VM_OPT_PANAMA
 #cmakedefine J9VM_OPT_PHP_SUPPORT

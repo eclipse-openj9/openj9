@@ -107,7 +107,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<flag id="module_verutil" value="true"/>
 		<flag id="module_vm" value="true"/>
 		<flag id="opt_criuSupport" value="false"/>
-		<flag id="opt_ojdkThreadSupport" value="false"/>
 		<flag id="opt_fragmentRamClasses" value="true"/>
 		<flag id="opt_inlineJsrs" value="true"/>
 		<flag id="opt_jitserver" value="false"/>
@@ -116,8 +115,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<flag id="opt_module" value="true"/>
 		<flag id="opt_newObjectHash" value="true"/>
 		<flag id="opt_newRomClassBuilder" value="true"/>
-		<flag id="opt_openjdkMethodhandle" value="false"/>
 		<flag id="opt_openjdkFfi" value="true"/>
+		<flag id="opt_openjdkMethodhandle" value="false"/>
+		<flag id="opt_openjdkThreadSupport" value="false"/>
 		<flag id="opt_phpSupport" value="false"/>
 		<flag id="opt_romImageSupport" value="true"/>
 		<flag id="opt_useOmrDdr" value="false"/>
