@@ -3796,7 +3796,7 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 			GET_OPTION_VALUE(argIndex, '=', &optionArg);
 			if (NULL != optionArg) {
 				if (strcmp(optionArg, "disabled") == 0) {
-					vm->extendedRuntimeFlags |= J9_EXTENDED_RUNTIME_DISABLE_FINALIZATION;
+					vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_DISABLE_FINALIZATION;
 				} else if (strcmp(optionArg, "enabled") == 0) {
 					/* do nothing as finalization is enabled by default */
 				} else {
