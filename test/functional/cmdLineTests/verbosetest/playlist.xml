@@ -23,6 +23,12 @@
 <playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../TKG/playlist.xsd">
 	<test>
 		<testCaseName>cmdLineTester_verbosetest</testCaseName>
+		<disables>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/13065</comment>
+				<testflag>aot</testflag>
+			</disable>
+		</disables>
 		<variations>
 			<variation>NoOptions</variation>
 			<variation>Mode501</variation>
@@ -46,9 +52,6 @@
 			<impl>openj9</impl>
 			<impl>ibm</impl>
 		</impls>
-		<features>
-			<feature>AOT:nonapplicable</feature>
-		</features>
 	</test>
 	<test>
 		<testCaseName>cmdLineTester_verbosetest_11</testCaseName>
