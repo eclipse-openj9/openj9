@@ -2609,7 +2609,7 @@ MM_CopyForwardScheme::scanClassLoaderObjectSlots(MM_EnvironmentVLHGC *env, MM_Al
 					modulePtr = (J9Module**)hashTableNextDo(&walkState);
 				}
 
-				if (classLoader == _javaVM->systemClassLoader) {
+				if (success && (classLoader == _javaVM->systemClassLoader)) {
 					success = copyAndForward(env, reservingContext, classLoaderObject, (J9Object **)&(_javaVM->unamedModuleForSystemLoader->moduleObject));
 				}
 			}
@@ -4293,7 +4293,7 @@ MM_CopyForwardScheme::scanRoots(MM_EnvironmentVLHGC* env)
 										modulePtr = (J9Module**)hashTableNextDo(&walkState);
 									}
 
-									if (classLoader == _javaVM->systemClassLoader) {
+									if (success && (classLoader == _javaVM->systemClassLoader)) {
 										success = copyAndForward(env, getContextForHeapAddress(_javaVM->unamedModuleForSystemLoader->moduleObject), (J9Object **)&(_javaVM->unamedModuleForSystemLoader->moduleObject));
 									}
 								}
