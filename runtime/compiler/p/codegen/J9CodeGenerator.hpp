@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -111,6 +111,9 @@ public:
     * \brief Determines whether the code generator supports stack allocations
     */
    bool supportsStackAllocations() { return true; }
+
+   // See J9::CodeGenerator::guaranteesResolvedDirectDispatchForSVM
+   bool guaranteesResolvedDirectDispatchForSVM() { return true; }
    };
 
 }

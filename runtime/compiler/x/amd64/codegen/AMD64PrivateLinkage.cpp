@@ -1343,7 +1343,9 @@ void J9::X86::AMD64::PrivateLinkage::buildVirtualOrComputedCall(TR::X86CallSite 
       {
       traceMsg(comp(), "buildVirtualOrComputedCall(%p), isComputed=%d\n", site.getCallNode(), methodSymRef->getSymbol()->castToMethodSymbol()->isComputed());
       }
-   bool evaluateVftEarly = methodSymRef->isUnresolved() || fej9->forceUnresolvedDispatch();
+
+   bool evaluateVftEarly = methodSymRef->isUnresolved()
+      || !fej9->isResolvedVirtualDispatchGuaranteed(comp());
 
    if (methodSymRef->getSymbol()->castToMethodSymbol()->isComputed())
       {
