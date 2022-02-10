@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2021 IBM Corp. and others
+ * Copyright (c) 2018, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -212,7 +212,8 @@ int openConnection(const std::string &address, uint32_t port, uint32_t timeoutMs
    return sockfd;
    }
 
-BIO *openSSLConnection(SSL_CTX *ctx, int connfd)
+static BIO *
+openSSLConnection(SSL_CTX *ctx, int connfd)
    {
    if (!ctx)
       return NULL;
@@ -225,7 +226,7 @@ BIO *openSSLConnection(SSL_CTX *ctx, int connfd)
       }
 
    SSL *ssl = NULL;
-   if ((*OBIO_ctrl)(bio, BIO_C_GET_SSL, false, (char *) &ssl) != 1) // BIO_get_ssl(bio, &ssl)
+   if ((*OBIO_ctrl)(bio, BIO_C_GET_SSL, false, (char *)&ssl) != 1) // BIO_get_ssl(bio, &ssl)
       {
       (*OERR_print_errors_fp)(stderr);
       (*OBIO_free_all)(bio);
@@ -246,7 +247,7 @@ BIO *openSSLConnection(SSL_CTX *ctx, int connfd)
       throw JITServer::StreamFailure("Failed to SSL_connect");
       }
 
-   X509* cert = (*OSSL_get_peer_certificate)(ssl);
+   X509 *cert = (*OSSL_get_peer_certificate)(ssl);
    if (!cert)
       {
       (*OERR_print_errors_fp)(stderr);
@@ -258,12 +259,13 @@ BIO *openSSLConnection(SSL_CTX *ctx, int connfd)
    if (X509_V_OK != (*OSSL_get_verify_result)(ssl))
       {
       (*OERR_print_errors_fp)(stderr);
+      (*OBIO_free_all)(bio);
       throw JITServer::StreamFailure("Server certificate verification failed");
       }
 
    if (TR::Options::getVerboseOption(TR_VerboseJITServer))
       TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "SSL connection on socket 0x%x, Version: %s, Cipher: %s\n",
-                                                      connfd, (*OSSL_get_version)(ssl), (*OSSL_get_cipher)(ssl));
+                                     connfd, (*OSSL_get_version)(ssl), (*OSSL_get_cipher)(ssl));
    return bio;
    }
 
