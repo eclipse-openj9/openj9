@@ -4074,7 +4074,7 @@ TR::CompilationInfoPerThread::processEntries()
             {
             setCompilationThreadState(COMPTHREAD_SIGNAL_SUSPEND);
             compInfo->decNumCompThreadsActive();
-            if (TR::Options::getVerboseOption(TR_VerboseCompilationThreads) || TR::Options::getVerboseOption(TR_VerbosePerformance))
+            if (TR::Options::isAnyVerboseOptionSet(TR_VerboseCompilationThreads, TR_VerbosePerformance))
                {
                TR_VerboseLog::writeLineLocked(TR_Vlog_PERF,"t=%6u Suspending compilation thread %d due to insufficient resources",
                   (uint32_t)compInfo->getPersistentInfo()->getElapsedTime(), getCompThreadId());
@@ -4088,9 +4088,7 @@ TR::CompilationInfoPerThread::processEntries()
           * Memory is hopelessly fragmented: stop all compilations
           */
          compInfo->getPersistentInfo()->setDisableFurtherCompilation(true);
-         if (TR::Options::getVerboseOption(TR_VerboseCompilationThreads) ||
-             TR::Options::getVerboseOption(TR_VerbosePerformance) ||
-             TR::Options::getVerboseOption(TR_VerboseCompFailure))
+         if (TR::Options::isAnyVerboseOptionSet(TR_VerboseCompilationThreads, TR_VerbosePerformance, TR_VerboseCompFailure))
             {
             TR_VerboseLog::writeLineLocked(TR_Vlog_PERF,"t=%6u Disable further compilation due to OOM while processing compile entries", (uint32_t)compInfo->getPersistentInfo()->getElapsedTime());
             }
@@ -7604,10 +7602,13 @@ TR::CompilationInfoPerThreadBase::postCompilationTasks(J9VMThread * vmThread,
       if (!metaData && !entry->_oldStartPC && // First time compilation failed
          !entry->isOutOfProcessCompReq())
          {
-         if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompFailure))
+         // If we didn't compile the method because filters disallowed it,
+         // then do not consider this compilation a failure
+         TR_VlogTag vlogTag = (entry->_compErrCode == compilationRestrictedMethod) ? TR_Vlog_INFO : TR_Vlog_FAILURE;
+         if (TR::Options::isAnyVerboseOptionSet(TR_VerboseCompFailure, TR_VerbosePerformance))
             {
             TR_VerboseLog::CriticalSection vlogLock;
-            TR_VerboseLog::write(TR_Vlog_COMP, "Method ");
+            TR_VerboseLog::write(vlogTag, "Method ");
             CompilationInfo::printMethodNameToVlog(method);
             TR_VerboseLog::writeLine(" will continue as interpreted");
             }
@@ -8052,9 +8053,10 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
          // Optimization to disable future first time compilations from reaching the queue
          that->getCompilationInfo()->getPersistentInfo()->setDisableFurtherCompilation(true);
 
-         if (TR::Options::isAnyVerboseOptionSet(TR_VerboseCompileEnd, TR_VerboseCompFailure))
+         if (TR::Options::isAnyVerboseOptionSet(TR_VerboseCompileEnd, TR_VerboseCompFailure, TR_VerbosePerformance))
             {
-            TR_VerboseLog::writeLineLocked(TR_Vlog_INFO,"<WARNING: JIT CACHES FULL> Disable further compilation");
+            TR_VerboseLog::writeLineLocked(TR_Vlog_PERF,"t=%6u <WARNING: JIT CACHES FULL> Disable further compilation",
+               (uint32_t)that->getCompilationInfo()->getPersistentInfo()->getElapsedTime());
             }
          if (jitConfig->runtimeFlags & J9JIT_CODE_CACHE_FULL)
             Trc_JIT_cacheFull(vmThread);
