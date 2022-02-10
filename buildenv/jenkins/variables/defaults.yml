@@ -414,7 +414,7 @@ x86-64_mac:
 # Mac M1 Aarch64
 #========================================#
 aarch64_mac:
-  extends: ['boot_jdk_default']
+  extends: ['boot_jdk_default', 'openssl', 'openssl_bundle']
   boot_jdk:
     arch: 'aarch64'
     os: 'mac'
