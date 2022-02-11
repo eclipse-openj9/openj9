@@ -2677,11 +2677,14 @@ J9::ValuePropagation::innerConstrainAcall(TR::Node *node)
          method->getRecognizedMethod() == TR::jdk_internal_vm_vector_VectorSupport_broadcastCoerced;
          bool isVectorSupportUnaryOp =
          method->getRecognizedMethod() == TR::jdk_internal_vm_vector_VectorSupport_unaryOp;
+         bool isVectorSupportTernaryOp =
+         method->getRecognizedMethod() == TR::jdk_internal_vm_vector_VectorSupport_ternaryOp;
 
          if (isVectorSupportLoad ||
              isVectorSupportBinaryOp ||
              isVectorSupportBroadcastCoerced ||
-             isVectorSupportUnaryOp)
+             isVectorSupportUnaryOp ||
+             isVectorSupportTernaryOp)
             {
             bool isGlobal; // dummy
             int typeChildIndex = (isVectorSupportLoad || isVectorSupportBroadcastCoerced) ? 0 : 1;

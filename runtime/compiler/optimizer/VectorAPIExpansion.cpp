@@ -1113,7 +1113,7 @@ TR::Node *TR_VectorAPIExpansion::addHandler(TR_VectorAPIExpansion *opt, TR::Tree
 
    TR::ILOpCodes scalarOpCode = ILOpcodeFromVectorAPIOpcode(VECTOR_OP_ADD, elementType);
 
-   return transformNary(opt, treeTop, node, elementType, vectorLength, mode, scalarOpCode, 0, 2);
+   return transformNary(opt, treeTop, node, elementType, vectorLength, mode, scalarOpCode, 0, 2, false);
 }
 
 
@@ -1295,30 +1295,56 @@ TR::Node *TR_VectorAPIExpansion::binaryIntrinsicHandler(TR_VectorAPIExpansion *o
    return naryIntrinsicHandler(opt, treeTop, node, elementType, vectorLength, mode, 2);
    }
 
+TR::Node *TR_VectorAPIExpansion::ternaryIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node,
+                                                        TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode)
+   {
+   return naryIntrinsicHandler(opt, treeTop, node, elementType, vectorLength, mode, 3);
+   }
+
+bool TR_VectorAPIExpansion::useVcallForVectorAPIOpcode(TR::Compilation *comp, int32_t vectorAPIOpcode, vec_sz_t vectorLength)
+   {
+   // Check for opcodes that will use vcall temporarily.
+   // Add other specific opcodes here that you would like to prototype using vcall
+   // This is meant for prototyping only. Please do not enable when merging.
+#if 0
+   if ((vectorAPIOpcode == VECTOR_OP_FMA
+        || vectorAPIOpcode == VECTOR_OP_ADD) &&
+        comp->target().cpu.isPower() && vectorLength == 128)
+        return true;
+#endif
+
+   return false;
+   }
 
 TR::Node *TR_VectorAPIExpansion::naryIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node,
                                                       TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode,
                                                       int32_t numChildren)
    {
    TR::Compilation *comp = opt->comp();
-
-   TR::ILOpCodes scalarOpCode = TR::BadILOp;
    TR::Node *opcodeNode = node->getFirstChild();
 
-   if (opcodeNode->getOpCode().isLoadConst())
+   if (!opcodeNode->getOpCode().isLoadConst())
       {
-      int32_t vectorAPIOpcode = opcodeNode->get32bitIntegralValue();
-      TR::DataType opType = elementType;
+      if (opt->_trace) traceMsg(comp, "Unknown opcode in node %p\n", node);
+      return NULL;
+      }
 
-      // Byte and Short are promoted after being loaded from array
-      // and all operations should be done in Int
-      if (elementType == TR::Int8 || elementType == TR::Int16)
-         opType = TR::Int32;
+   bool useVcall = false;
+   int32_t vectorAPIOpcode = opcodeNode->get32bitIntegralValue();
+   TR::DataType opType = elementType;
 
-      scalarOpCode = ILOpcodeFromVectorAPIOpcode(vectorAPIOpcode, opType);
-      if (scalarOpCode == TR::BadILOp)
-         if (opt->_trace)
-            traceMsg(comp, "Unknown or unsupported opcode in node %p\n", node);
+   // Byte and Short are promoted after being loaded from array
+   // and all operations should be done in Int
+   if (elementType == TR::Int8 || elementType == TR::Int16)
+      opType = TR::Int32;
+
+   TR::ILOpCodes scalarOpCode = ILOpcodeFromVectorAPIOpcode(vectorAPIOpcode, opType);
+   if (scalarOpCode == TR::BadILOp)
+      if (opt->_trace) traceMsg(comp, "Unsupported opcode in node %p\n", node);
+
+   if (mode == checkVectorization || mode == doVectorization)
+      {
+      useVcall = useVcallForVectorAPIOpcode(comp, vectorAPIOpcode, vectorLength);
       }
 
    if (mode == checkScalarization)
@@ -1327,6 +1353,8 @@ TR::Node *TR_VectorAPIExpansion::naryIntrinsicHandler(TR_VectorAPIExpansion *opt
    if (mode == checkVectorization)
       {
       if (!supportedOnPlatform(comp, vectorLength)) return NULL;
+
+      if (useVcall) return node;
 
       TR::ILOpCodes vectorOpCode = TR::ILOpCode::convertScalarToVector(scalarOpCode);
 
@@ -1339,7 +1367,8 @@ TR::Node *TR_VectorAPIExpansion::naryIntrinsicHandler(TR_VectorAPIExpansion *opt
       return node;
       }
 
-   return transformNary(opt, treeTop, node, elementType, vectorLength, mode, scalarOpCode, 5/*first operand*/, numChildren);
+   return transformNary(opt, treeTop, node, elementType, vectorLength, mode, scalarOpCode,
+                        5/*first operand*/, numChildren, useVcall);
    }
 
 
@@ -1461,7 +1490,8 @@ TR::ILOpCodes TR_VectorAPIExpansion::ILOpcodeFromVectorAPIOpcode(int32_t vectorO
 
 TR::Node *TR_VectorAPIExpansion::transformNary(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node,
                                                TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode,
-                                               TR::ILOpCodes scalarOpCode, int32_t firstOperand, int32_t numOperands)
+                                               TR::ILOpCodes scalarOpCode, int32_t firstOperand, int32_t numOperands,
+                                               bool useVcall)
    {
    TR::Compilation *comp = opt->comp();
 
@@ -1517,10 +1547,14 @@ TR::Node *TR_VectorAPIExpansion::transformNary(TR_VectorAPIExpansion *opt, TR::T
 
       TR::ILOpCodes vectorOpCode = TR::ILOpCode::convertScalarToVector(scalarOpCode);
 
-      static bool useVcall = (feGetEnv("TR_UseVcall") != NULL);
-
-      if (vectorOpCode != TR::BadILOp && !useVcall)
+      if (useVcall)
          {
+         TR::Node::recreate(node, TR::vcall);
+         }
+      else
+         {
+         TR_ASSERT_FATAL(vectorOpCode != TR::BadILOp, "Vector opcode should exist for node %p\n", node);
+
          anchorOldChildren(opt, treeTop, node);
          for (int32_t i = 0; i < numOperands; i++)
             {
@@ -1528,10 +1562,6 @@ TR::Node *TR_VectorAPIExpansion::transformNary(TR_VectorAPIExpansion *opt, TR::T
             }
          node->setNumChildren(numOperands);
          TR::Node::recreate(node, vectorOpCode);
-         }
-      else
-         {
-         TR::Node::recreate(node, TR::vcall);
          }
       }
 
@@ -1547,6 +1577,7 @@ TR_VectorAPIExpansion::methodTable[] =
    {storeIntrinsicHandler, TR::NoType, Unknown, {Unknown, elementType, numLanes, Unknown, Unknown, Vector}}, // jdk_internal_vm_vector_VectorSupport_store
    {binaryIntrinsicHandler,TR::NoType, Vector,  {Unknown, Unknown, Unknown, elementType, numLanes, Vector, Vector}},  // jdk_internal_vm_vector_VectorSupport_binaryOp
    {broadcastCoercedIntrinsicHandler,TR::NoType, Vector, {Unknown, elementType, numLanes, Unknown, Unknown, Unknown}},  // jdk_internal_vm_vector_VectorSupport_broadcastCoerced
+   {ternaryIntrinsicHandler,TR::NoType, Vector,  {Unknown, Unknown, Unknown, elementType, numLanes, Vector, Vector}},  // jdk_internal_vm_vector_VectorSupport_ternaryOp
    {unaryIntrinsicHandler,TR::NoType, Vector,  {Unknown, Unknown, Unknown, elementType, numLanes, Vector}},  // jdk_internal_vm_vector_VectorSupport_unaryOp
 
    {unsupportedHandler /*fromArrayHandler*/,      TR::Float,  Vector,  {Species}}, // jdk_incubator_vector_FloatVector_fromArray,
