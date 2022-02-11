@@ -970,7 +970,7 @@ checkBytecodeStructure (J9CfrClassFile * classfile, UDATA methodIndex, UDATA len
 			break;
 
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-		case CFR_BC_defaultvalue:
+		case CFR_BC_aconst_init:
 			/* fall through */
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 		case CFR_BC_new:

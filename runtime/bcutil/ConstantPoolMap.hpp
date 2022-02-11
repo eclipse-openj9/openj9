@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2021 IBM Corp. and others
+ * Copyright (c) 2001, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -282,7 +282,7 @@ public:
 	void markClassAsUsedByANewArray(U_16 classCfrCPIndex)      { mark(classCfrCPIndex, ANEW_ARRAY); }
 	void markClassAsUsedByNew(U_16 classCfrCPIndex)            { mark(classCfrCPIndex, NEW); }
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-	void markClassAsUsedByDefaultValue(U_16 classCfrCPIndex)    { mark(classCfrCPIndex, DEFAULT_VALUE); }
+	void markClassAsUsedByAconst_init(U_16 classCfrCPIndex)    { mark(classCfrCPIndex, ACONST_INIT); }
 	void markFieldRefAsUsedByWithField(U_16 fieldRefCfrCPIndex) { mark(fieldRefCfrCPIndex, WITH_FIELD); }
 #endif
 
@@ -390,7 +390,7 @@ public:
 		PUT_FIELD = SPLIT1,
 		GET_FIELD = SPLIT1,
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-		DEFAULT_VALUE = SPLIT1,
+		ACONST_INIT = SPLIT1,
 		WITH_FIELD = SPLIT1,
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 		NEW = SPLIT1,

@@ -596,7 +596,7 @@ getPendingStackHeight(J9VMThread *currentThread, U_8 *interpreterPC, J9Method *r
 			case JBgetfield:
 				pendingStackHeight -= 1;
 				break;
-			default: /* JBnew/JBdefaultValue - no stacked parameters*/
+			default: /* JBnew/JBaconst_init - no stacked parameters*/
 				break;
 			}
 		}

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -227,7 +227,7 @@ const char * const JavaBCNames[] = {
 "JBgotow" /* 200 */,
 "JBunimplemented" /* 201 */,
 "JBbreakpoint" /* 202 */,
-"JBdefaultvalue" /* 203 */,
+"JBaconst_init" /* 203 */,
 "JBwithfield" /* 204 */,
 "JBunimplemented" /* 205 */,
 "JBunimplemented" /* 206 */,
@@ -487,7 +487,7 @@ const char * const sunJavaBCNames[] = {
 "JBjsrw" /* 201 */,
 "JBbreakpoint" /* 202 */,
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-"JBdefaultvalue" /* 203 */,
+"JBaconst_init" /* 203 */,
 "JBwithfield" /* 204 */,
 #else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 "JBunimplemented" /* 203 */,

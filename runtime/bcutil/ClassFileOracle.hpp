@@ -1219,7 +1219,7 @@ private:
 	VMINLINE void markClassAsUsedByNew(U_16 classCPIndex);
 
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-	VMINLINE void markClassAsUsedByDefaultValue(U_16 classCPIndex);
+	VMINLINE void markClassAsUsedByAconst_init(U_16 classCPIndex);
 	VMINLINE void markFieldRefAsUsedByWithField(U_16 fieldRefCPIndex);
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 

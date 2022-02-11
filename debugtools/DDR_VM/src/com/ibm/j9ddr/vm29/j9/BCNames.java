@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2018 IBM Corp. and others
+ * Copyright (c) 2009, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -230,7 +230,7 @@ public class BCNames {
 	public static final int JBifnonnull = 199;
 	public static final int JBgotow = 200;
 	public static final int JBbreakpoint = 202;
-	public static final int JBdefaultvalue;
+	public static final int JBaconst_init;
 	public static final int JBwithfield;
 	public static final int JBiincw;
 	public static final int JBaload0getfield;
@@ -270,7 +270,7 @@ public class BCNames {
 	static {
 		switch (AlgorithmVersion.getVersionOf(AlgorithmVersion.BYTECODE_VERSION).getAlgorithmVersion()) {
 		case 0:
-			JBdefaultvalue = 224;
+			JBaconst_init = 224;
 			JBwithfield = 226;
 			JBiloadw = 203;
 			JBlloadw = 204;
@@ -306,7 +306,7 @@ public class BCNames {
 			JBreturnFromJ2I = 251;
 			break;
 		case 1:
-			JBdefaultvalue = 203;
+			JBaconst_init = 203;
 			JBwithfield = 204;
 			JBiincw = 213;
 			JBaload0getfield = 215;

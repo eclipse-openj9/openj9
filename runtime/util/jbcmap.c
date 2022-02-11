@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -225,7 +225,7 @@ const unsigned char sunJavaInstructionSizeTable[] = {
 0x05 /* JBgotow = 200 = 0xC8 */,
 0x05 /* JBjsrw = 201 = 0xC9 */,
 0x01 /* JBbreakpoint = 202 = 0xCA */,
-0x03 /* JBdefaultvalue = 203 = 0xCB */ ,
+0x03 /* JBaconst_init = 203 = 0xCB */ ,
 0x03 /* JBwithfield = 204 = 0xCC */ ,
 0x00 /* JBunimplemented = 205 = 0xCD */,
 0x00 /* JBunimplemented = 206 = 0xCE */,

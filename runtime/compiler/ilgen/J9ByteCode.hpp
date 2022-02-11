@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -110,7 +110,7 @@ enum TR_J9ByteCode
    J9BCmonitorenter, J9BCmonitorexit,
    J9BCwide,
    J9BCasyncCheck,
-   J9BCdefaultvalue,
+   J9BCaconst_init,
    J9BCwithfield,
    J9BCbreakpoint,
    J9BCunknown
