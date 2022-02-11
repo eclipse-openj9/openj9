@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -12100,16 +12100,16 @@ TR::Register *J9::Power::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::
    else if (callee->getRecognizedMethod() == TR::jdk_internal_vm_vector_VectorSupport_binaryOp &&
        node->getOpCodeValue() == TR::vcall) // was vectorized
       {
-      // The following code is temporary and is only enabled under TR_UseVcall
+      // The following code is temporary and can only be enabled for specific opcodes in VectorAPIExpansion.
       // It's an example of how development of vector evaluators can proceed until vector IL opcodes
       // are implemented. Eventually, all recognition of Vector API methods will be removed from this
       // evaluator
       //
-      int firstOperandIndex = 4;
-      int secondOperandIndex = 5;
+      int firstOperandIndex = 5;
+      int secondOperandIndex = 6;
       TR::Node *opcodeNode = node->getChild(0);
-      TR::Node *dataTypeNode = node->getChild(2);
-      TR::Node *numLanesNode = node->getChild(3);
+      TR::Node *dataTypeNode = node->getChild(3);
+      TR::Node *numLanesNode = node->getChild(4);
       TR::Node *firstOperandNode = node->getChild(firstOperandIndex);
       TR::Node *secondOperandNode = node->getChild(secondOperandIndex);
 
@@ -12142,6 +12142,12 @@ TR::Register *J9::Power::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::
       node->setNumChildren(2);
       TR::Node::recreate(node, TR::vadd);
       return vaddEvaluator(node, cg);
+      }
+   else if (callee->getRecognizedMethod() >= TR::FirstVectorMethod &&
+            callee->getRecognizedMethod() <= TR::LastVectorMethod &&
+            node->getOpCodeValue() == TR::vcall) // was vectorized
+      {
+      TR_ASSERT_FATAL_WITH_NODE(node, false, "vcall is not supported for this Vector API method yet\n");
       }
 
 
