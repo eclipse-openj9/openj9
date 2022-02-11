@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2021 IBM Corp. and others
+ * Copyright (c) 2018, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -39,7 +39,7 @@ public class ValueTypeGenerator extends ClassLoader {
 	private static boolean DEBUG = false;
 	
 	/* workaround till the new ASM is released */
-	public static final int DEFAULTVALUE = 203;
+	public static final int ACONST_INIT = 203;
 	public static final int WITHFIELD = 204;
 	private static final int ACC_VALUE_TYPE = 0x100;
 	public static final int ACC_ATOMIC = 0x40;
@@ -165,7 +165,7 @@ public class ValueTypeGenerator extends ClassLoader {
 		 * This method specifies a value type class that will be used in code generated
 		 * for the {@code testUnresolvedValueTypeDefaultValue} and
 		 * {@code testUnresolvedValueTypeWithField} methods of the current class.
-		 * The former will conditionally perform a {@code DEFAULTVALUE} operation on the
+		 * The former will conditionally perform a {@code ACONST_INIT} operation on the
 		 * value type and the latter will conditionally perform a series of
 		 * {@code WITHFIELD} operations on the fields of an instance of the value type.
 		 * The instance should be passed to {@code testUnresolvedValueTypeWithField} via an
@@ -452,7 +452,7 @@ public class ValueTypeGenerator extends ClassLoader {
 		boolean doubleDetected = false;
 		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC + ACC_STATIC, "makeValue", "(" + makeValueSig + ")" + getSigFromSimpleName(valueName, false), null, null);
 		mv.visitCode();
-		mv.visitTypeInsn(DEFAULTVALUE, getSigFromSimpleName(valueName, false));
+		mv.visitTypeInsn(ACONST_INIT, getSigFromSimpleName(valueName, false));
 		for (int i = 0, count = 0; i <  fields.length; i++) {
 			String nameAndSig[] = fields[i].split(":");
 			if ((nameAndSig.length < 3) ||  !(nameAndSig[2].equals("static"))) {
@@ -496,7 +496,7 @@ public class ValueTypeGenerator extends ClassLoader {
 	private static void makeValueTypeDefaultValue(ClassWriter cw, String valueName, String makeValueSig, String[] fields, int makeMaxLocal, boolean isRef) {
 		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC  + ACC_STATIC, "makeValueTypeDefaultValue", "()Ljava/lang/Object;", null, null);
 		mv.visitCode();
-		mv.visitTypeInsn(DEFAULTVALUE, getSigFromSimpleName(valueName, isRef));
+		mv.visitTypeInsn(ACONST_INIT, getSigFromSimpleName(valueName, isRef));
 		mv.visitInsn(ARETURN);
 		mv.visitMaxs(1, 0);
 		mv.visitEnd();
@@ -505,7 +505,7 @@ public class ValueTypeGenerator extends ClassLoader {
 	private static void testCheckCastValueTypeOnNonNullType(ClassWriter cw, String className, String[] fields) {
 		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC  + ACC_STATIC, "testCheckCastValueTypeOnNonNullType", "()Ljava/lang/Object;", null, null);
 		mv.visitCode();
-		mv.visitTypeInsn(DEFAULTVALUE, getSigFromSimpleName(className, false));
+		mv.visitTypeInsn(ACONST_INIT, getSigFromSimpleName(className, false));
 		mv.visitTypeInsn(CHECKCAST, className);
 		mv.visitInsn(ARETURN);
 		mv.visitMaxs(1, 2);
@@ -559,7 +559,7 @@ public class ValueTypeGenerator extends ClassLoader {
 		Label falseLabel = new Label();
 		Label endLabel = new Label();
 		mv.visitJumpInsn(IFEQ, falseLabel);
-		mv.visitTypeInsn(DEFAULTVALUE, getSigFromSimpleName(valueUsedInCode, false));
+		mv.visitTypeInsn(ACONST_INIT, getSigFromSimpleName(valueUsedInCode, false));
 		mv.visitJumpInsn(GOTO, endLabel);
 		mv.visitLabel(falseLabel);
 		mv.visitInsn(ACONST_NULL);

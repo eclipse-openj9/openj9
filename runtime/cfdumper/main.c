@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1799,7 +1799,7 @@ static void printDisassembledMethod(J9CfrClassFile* classfile, J9CfrMethod* meth
 				case CFR_BC_checkcast:
 				case CFR_BC_instanceof:
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-				case CFR_BC_defaultvalue:
+				case CFR_BC_aconst_init:
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 					NEXT_U16_ENDIAN(bigEndian, index, bcIndex);
 					info = classfile->constantPool[index];
@@ -6674,7 +6674,7 @@ static void j9_formatBytecodes(J9ROMClass* romClass, J9ROMMethod* method, U_8* b
 				case JBcheckcast:
 				case JBinstanceof:
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-				case JBdefaultvalue:
+				case JBaconst_init:
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 					j9_formatBytecode(romClass, method, bytecodes, bcIndex, bc, 3, CFR_DECODE_J9_CLASSREF, formatString, stringLength, flags);
 					pc += 2;

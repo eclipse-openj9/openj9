@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2018 IBM Corp. and others
+ * Copyright (c) 2009, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -495,8 +495,8 @@ public class VrfyTbl
 		0x0E81 /* JBgotow - 200 */,
 		0x1700 /* JBunimplemented - 201 */,
 		0x1700 /* JBbreakpoint - 202 */,
-		0x1200 /* JBdefaultvalue = 203 */ ,
-		0x1000 /* JBwithfield = 204 */ ,
+		0x1200 /* JBaconst_init = 203 */,
+		0x1000 /* JBwithfield = 204 */,
 		0x1700 /* JBunimplemented - 205 */,
 		0x1700 /* JBunimplemented - 206 */,
 		0x1700 /* JBunimplemented - 207 */,

@@ -2695,9 +2695,9 @@ public class ValueTypeTests {
 	}
 	
 	/*
-	 * Test use of DEFAULTVALUE for a value type class that has not been resolved.
-	 * The method is first called so that the DEFAULTVALUE will not be executed,
-	 * and the class not resolved, and then called so that the DEFAULTVALUE
+	 * Test use of ACONST_INIT for a value type class that has not been resolved.
+	 * The method is first called so that the ACONST_INIT will not be executed,
+	 * and the class not resolved, and then called so that the ACONST_INIT
 	 * and class resolution is triggered.
 	 */
 	@Test(priority=1)
@@ -2714,10 +2714,10 @@ public class ValueTypeTests {
 		 *
 		 * public class UsingUnresolvedA {
 		 *     public Object testUnresolvedValueTypeDefaultValue(int doDefaultValue) {
-		 *         // Passing in non-zero triggers execution of DEFAULTVALUE and
+		 *         // Passing in non-zero triggers execution of ACONST_INIT and
 		 *         // resolution of UnresolvedA class
 		 *         //
-		 *         return (doDefaultValue != 0) ? (DEFAULTVALUE UnresolvedA) : null;
+		 *         return (doDefaultValue != 0) ? (ACONST_INIT UnresolvedA) : null;
 		 *     }
 		 * }
 		 */
@@ -2730,7 +2730,7 @@ public class ValueTypeTests {
 
 		for (int i = 0; i < 10; i++) {
 			/*
-			 * Pass zero to avoid execution of DEFAULTVALUE and resolution of value type class
+			 * Pass zero to avoid execution of ACONST_INIT and resolution of value type class
 			 */
 			assertNull(defaultValueUnresolved.invoke(0));
 		}
@@ -2740,7 +2740,7 @@ public class ValueTypeTests {
 
 		for (int i = 0; i < 10; i++) {
 			/*
-			 * Pass one to force execution of DEFAULTVALUE and resolution of value type class
+			 * Pass one to force execution of ACONST_INIT and resolution of value type class
 			 */
 			Object defaultValue = defaultValueUnresolved.invoke(1);
 			assertNotNull(defaultValue);
