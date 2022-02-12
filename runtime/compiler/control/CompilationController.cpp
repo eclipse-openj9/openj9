@@ -904,7 +904,7 @@ TR::DefaultCompilationStrategy::processJittedSample(TR_MethodEvent *event)
                   nextOptLevel = hot;
                   // Decide whether to deny optimizer to switch to profiling on the fly
                   if (globalSamplesInHotWindow > TR::Options::_sampleDontSwitchToProfilingThreshold &&
-                     !TR::Options::getCmdLineOptions()->getOption(TR_AggressiveOpts))
+                     !TR::Options::getCmdLineOptions()->getOption(TR_AggressiveSwitchingToProfiling))
                      dontSwitchToProfiling = true;
                   recompile = true;
                   compInfo->_stats._methodsSelectedToRecompile++;
