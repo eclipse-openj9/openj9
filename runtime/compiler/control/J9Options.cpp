@@ -2185,9 +2185,6 @@ J9::Options::fePreProcess(void * base)
       self()->setOption(TR_DisableTraps);
    #endif
 
-   if (self()->getOption(TR_AggressiveOpts))
-      self()->setOption(TR_DontDowngradeToCold, true);
-
    if (forceSuffixLogs)
       self()->setOption(TR_EnablePIDExtension);
 
