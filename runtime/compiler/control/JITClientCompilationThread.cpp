@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2021 IBM Corp. and others
+ * Copyright (c) 2019, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -384,10 +384,10 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(response, fe->getInitialLockword(clazz));
          }
          break;
-      case MessageType::VM_isString1:
+      case MessageType::VM_JavaStringObject:
          {
-         TR_OpaqueClassBlock *clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
-         client->write(response, fe->isString(clazz));
+         client->getRecvData<JITServer::Void>();
+         client->write(response, (TR_OpaqueClassBlock *)J9VMJAVALANGSTRING(vmThread->javaVM));
          }
          break;
       case MessageType::VM_getMethods:
@@ -512,6 +512,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          vmInfo._staticObjectAllocateFlags = fe->getStaticObjectFlags();
          vmInfo._referenceArrayCopyHelperAddress = fe->getReferenceArrayCopyHelperAddress();
          vmInfo._JavaLangObject = (TR_OpaqueClassBlock*)J9VMJAVALANGOBJECT(vmThread->javaVM);
+         vmInfo._JavaStringObject = (TR_OpaqueClassBlock*)J9VMJAVALANGSTRING(vmThread->javaVM);
 
          vmInfo._useAOTCache = comp->getPersistentInfo()->getJITServerUseAOTCache();
          if (vmInfo._useAOTCache)
