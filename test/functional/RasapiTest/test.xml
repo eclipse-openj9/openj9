@@ -46,13 +46,13 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 				fork="true"
 				failonerror="true"
 				dir="${basedir}"
-				timeout="900000"
+				timeout="1800000"
 				taskname="test">
 			<classpath>
 				<pathelement location="${ant.home}/lib/ant-launcher.jar" />
 			</classpath>
 			<jvmarg value="-showversion" />
-			<jvmarg value="-Xmx512M" />
+			<jvmarg value="-Xmx128M" />
 			<arg value="-buildfile" />
 			<arg file="${ant.file}" />
 			<arg value="test" />
@@ -64,7 +64,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<echo message="Running com.ibm.jvm.ras.tests.DumpAPIBasicTests" />
 		<junit fork="yes" showoutput="true" haltonfailure="true">
 			<jvmarg value="-showversion" />
-			<jvmarg value="-Xmx512M" />
+			<jvmarg value="-Xgcpolicy:optthruput" />
+			<jvmarg value="-Xms1200M" />
+			<jvmarg value="-Xmx1200M" />
 			<classpath>
 				<pathelement location="junit4.jar" />
 				<pathelement location="com.ibm.jvm.ras.tests.jar" />
@@ -75,7 +77,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<echo message="Running com.ibm.jvm.ras.tests.DumpAPITriggerTests" />
 		<junit fork="yes" showoutput="true" haltonfailure="true">
 			<jvmarg value="-showversion" />
-			<jvmarg value="-Xmx512M" />
+			<jvmarg value="-Xgcpolicy:optthruput" />
+			<jvmarg value="-Xms1200M" />
+			<jvmarg value="-Xmx1200M" />
 			<classpath>
 				<pathelement location="junit4.jar" />
 				<pathelement location="com.ibm.jvm.ras.tests.jar" />
@@ -86,7 +90,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<echo message="Running com.ibm.jvm.ras.tests.DumpAPIQuerySetReset" />
 		<junit fork="yes" showoutput="true" haltonfailure="true">
 			<jvmarg value="-showversion" />
-			<jvmarg value="-Xmx512M" />
+			<jvmarg value="-Xgcpolicy:optthruput" />
+			<jvmarg value="-Xms1200M" />
+			<jvmarg value="-Xmx1200M" />
 			<classpath>
 				<pathelement location="junit4.jar" />
 				<pathelement location="com.ibm.jvm.ras.tests.jar" />
@@ -97,7 +103,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<echo message="Running com.ibm.jvm.ras.tests.DumpAPITokensTests" />
 		<junit fork="yes" showoutput="true" haltonfailure="true">
 			<jvmarg value="-showversion" />
-			<jvmarg value="-Xmx512M" />
+			<jvmarg value="-Xgcpolicy:optthruput" />
+			<jvmarg value="-Xms1200M" />
+			<jvmarg value="-Xmx1200M" />
 			<classpath>
 				<pathelement location="junit4.jar" />
 				<pathelement location="com.ibm.jvm.ras.tests.jar" />
@@ -108,7 +116,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<echo message="Running com.ibm.jvm.ras.tests.DumpAPISetTestXdumpdynamic with Xdump:dynamic" />
 		<junit fork="yes" showoutput="true" haltonfailure="true">
 			<jvmarg value="-showversion" />
-			<jvmarg value="-Xmx512M" />
+			<jvmarg value="-Xgcpolicy:optthruput" />
+			<jvmarg value="-Xms1200M" />
+			<jvmarg value="-Xmx1200M" />
 			<jvmarg value="-Xdump:dynamic" />
 			<classpath>
 				<pathelement location="junit4.jar" />
