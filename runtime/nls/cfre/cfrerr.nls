@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2021 IBM Corp. and others
+# Copyright (c) 2000, 2022 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1589,4 +1589,11 @@ J9NLS_CFR_ERR_OUTER_CLASS_BAD_ARRAY_CLASS.explanation=The outer class of an Inne
 J9NLS_CFR_ERR_OUTER_CLASS_BAD_ARRAY_CLASS.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_OUTER_CLASS_BAD_ARRAY_CLASS.user_response=Contact the provider of the classfile for a corrected version.
 
+# END NON-TRANSLATABLE
+
+J9NLS_CFR_ERR_VALUE_FLAG_MISSING_ON_PRIMITIVE_CLASS=Access flag ACC_VALUE is missing on the primitive class.
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_VALUE_FLAG_MISSING_ON_PRIMITIVE_CLASS.explanation=Primitive class requires both ACC_PRIMITIVE and ACC_VALUE to be set.
+J9NLS_CFR_ERR_VALUE_FLAG_MISSING_ON_PRIMITIVE_CLASS.system_action=The JVM will throw a verification or class loading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_VALUE_FLAG_MISSING_ON_PRIMITIVE_CLASS.user_response=Contact the provider of the class file for a corrected version.
 # END NON-TRANSLATABLE

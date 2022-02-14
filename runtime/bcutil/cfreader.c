@@ -2881,9 +2881,9 @@ j9bcutil_readClassFileBytes(J9PortLibrary *portLib,
 	}
 
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-	/* Currently value type is built on JDK17, so compare with JDK17 for now. Eventually it needs to compare to JDK18. */
-	if ((flags & BCT_MajorClassFileVersionMask) < BCT_JavaMajorVersionShifted(17)) {
-		classfile->accessFlags &= ~(CFR_ACC_VALUE_TYPE | CFR_ACC_ATOMIC);
+	/* Currently value type is built on JDK19, so compare with JDK19 for now. Eventually it may need to compare to JDK20. */
+	if ((flags & BCT_MajorClassFileVersionMask) < BCT_JavaMajorVersionShifted(19)) {
+		classfile->accessFlags &= ~(CFR_ACC_VALUE_TYPE | CFR_ACC_PRIMITIVE_VALUE_TYPE | CFR_ACC_ATOMIC);
 	}
 	/*
 	 * TODO This behaviour is based on the LW2 spec http://cr.openjdk.java.net/~fparain/L-world/LW2-JVMS-draft-20181009.pdf.
@@ -2894,13 +2894,21 @@ j9bcutil_readClassFileBytes(J9PortLibrary *portLib,
 	 * to this will be required.
 	 */
 
-	/* class files with the ACC_VALUE_TYPE can only be loaded if -XX:+EnableValhalla is set, which is on by default. */
-	if (J9_ARE_ANY_BITS_SET(classfile->accessFlags, CFR_ACC_VALUE_TYPE | CFR_ACC_ATOMIC)
-		&& J9_ARE_NO_BITS_SET(flags, BCT_ValueTypesEnabled)
-	) {
-		errorCode = J9NLS_CFR_ERR_VALUE_TYPES_IS_NOT_SUPPORTED_V1__ID;
-		offset = index - data - 2;
-		goto _errorFound;
+	/* class files with the ACC_VALUE_TYPE, CFR_ACC_PRIMITIVE_VALUE_TYPE, CFR_ACC_ATOMIC can only be loaded if -XX:+EnableValhalla is set, which is on by default. */
+	if (J9_ARE_NO_BITS_SET(flags, BCT_ValueTypesEnabled)) {
+		if (J9_ARE_ANY_BITS_SET(classfile->accessFlags, CFR_ACC_VALUE_TYPE | CFR_ACC_PRIMITIVE_VALUE_TYPE | CFR_ACC_ATOMIC)) {
+			errorCode = J9NLS_CFR_ERR_VALUE_TYPES_IS_NOT_SUPPORTED_V1__ID;
+			offset = index - data - 2;
+			goto _errorFound;
+		}
+	} else {
+		if (J9_ARE_ALL_BITS_SET(classfile->accessFlags, CFR_ACC_PRIMITIVE_VALUE_TYPE)
+			&& J9_ARE_NO_BITS_SET(classfile->accessFlags, CFR_ACC_VALUE_TYPE)
+		) {
+			errorCode = J9NLS_CFR_ERR_VALUE_FLAG_MISSING_ON_PRIMITIVE_CLASS__ID;
+			offset = index - data - 2;
+			goto _errorFound;
+		}
 	}
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 

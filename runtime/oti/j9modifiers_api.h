@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2021 IBM Corp. and others
+ * Copyright (c) 2009, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -82,8 +82,12 @@
 #define J9ROMCLASS_IS_CONTENDED(romClass)	_J9ROMCLASS_J9MODIFIER_IS_SET((romClass), J9AccClassIsContended)
 
 #ifdef J9VM_OPT_VALHALLA_VALUE_TYPES
-/* Will need to modify this if ValObject/RefObject proposal goes through */
+/*
+ * TODO: Will need to modify this if ValObject/RefObject proposal goes through.
+ * Some exiting places using J9ROMCLASS_IS_VALUE() may need to check J9ROMCLASS_IS_PRIMITIVE_VALUE_TYPE().
+ */
 #define J9ROMCLASS_IS_VALUE(romClass)	_J9ROMCLASS_SUNMODIFIER_IS_SET((romClass), J9AccValueType)
+#define J9ROMCLASS_IS_PRIMITIVE_VALUE_TYPE(romClass)	_J9ROMCLASS_SUNMODIFIER_IS_SET((romClass), J9AccPrimitiveValueType)
 #define J9ROMCLASS_IS_ATOMIC(romClass)	_J9ROMCLASS_SUNMODIFIER_IS_SET((romClass), J9AccAtomic)
 #endif/* #ifdef J9VM_OPT_VALHALLA_VALUE_TYPES */
 
