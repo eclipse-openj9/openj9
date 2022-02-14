@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2020 IBM Corp. and others
+ * Copyright (c) 2001, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,6 +22,7 @@
 
 import java.util.*;
 import java.io.*;
+import java.nio.charset.Charset;
 
 public class SysPropTest 
 {
@@ -57,7 +58,7 @@ public class SysPropTest
 				if ((argEncoding.equals("UTF-8") || argEncoding.equals("ISO-8859-1"))) {
 					strTestProp = new String(B,argEncoding);
 				} else {
-					strTestProp = new String(B);
+					strTestProp = new String(B, System.getProperty("native.encoding", Charset.defaultCharset().name()));
 				}
 			}
 			
