@@ -928,13 +928,19 @@ TR::Instruction *J9::ARM64::JNILinkage::generateMethodDispatch(TR::Node *callNod
          reloType = TR_NoRelocation;
          TR_ASSERT(0, "JNI relocation not supported.");
          }
-      cg()->addExternalRelocation(new (trHeapMemory()) TR::BeforeBinaryEncodingExternalRelocation(
-                                                            firstInstruction,
-                                                            reinterpret_cast<uint8_t *>(callNode->getSymbolReference()),
-                                                            reinterpret_cast<uint8_t *>(callNode->getInlinedSiteIndex()),
-                                                            reloType, cg()),
-                                                          __FILE__,__LINE__, callNode);
 
+      TR_RelocationRecordInformation *info = new (comp()->trHeapMemory()) TR_RelocationRecordInformation();
+      info->data1 = 0;
+      info->data2 = reinterpret_cast<uintptr_t>(callNode->getSymbolReference());
+      info->data3 = static_cast<uintptr_t>(callNode->getInlinedSiteIndex());
+
+      cg()->addExternalRelocation(
+         new (trHeapMemory()) TR::BeforeBinaryEncodingExternalRelocation(
+            firstInstruction,
+            reinterpret_cast<uint8_t *>(info),
+            reloType,
+            cg()),
+         __FILE__,__LINE__, callNode);
       }
 
    // Add the first instruction of address materialization sequence to JNI call sites
