@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2004, 2017 IBM Corp. and others
+ * Copyright (c) 2004, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -50,9 +50,9 @@ public class ImageProcess implements com.ibm.dtfj.image.ImageProcess
 	private long _faultingNativeID = 0;		//the ID of the native thread which caused the GPF (if there was one)
 	private int _signalNumber = 0;
 	private Exception _runtimeCheckFailure;
-	private static final String JAVA_COMMAND_LINE_ENVIRONMENT_VARIABLE = "IBM_JAVA_COMMAND_LINE";
-	
-	
+	private static final String JAVA_COMMAND_LINE_ENVIRONMENT_VARIABLE = "OPENJ9_JAVA_COMMAND_LINE";
+	private static final String LEGACY_JAVA_COMMAND_LINE_ENVIRONMENT_VARIABLE = "IBM_JAVA_COMMAND_LINE";
+
 	public ImageProcess(String pid, String commandLine, Properties environment, ImageThread currentThread, Iterator threads, ImageModule executable, Iterator libraries, int pointerSize)
 	{
 		_id = pid;
@@ -77,10 +77,17 @@ public class ImageProcess implements com.ibm.dtfj.image.ImageProcess
 		// all platforms we now try that first, with the core reader as a fallback.
 		Properties environment = getEnvironment();
 		String javaCommandLine = environment.getProperty(JAVA_COMMAND_LINE_ENVIRONMENT_VARIABLE);
-		
+
 		if (javaCommandLine != null) {
 			return javaCommandLine;
 		}
+
+		javaCommandLine = environment.getProperty(LEGACY_JAVA_COMMAND_LINE_ENVIRONMENT_VARIABLE);
+
+		if (javaCommandLine != null) {
+			return javaCommandLine;
+		}
+
 		if (_commandLine == null) {
 			throw new DataUnavailable("Command line unavailable from core dump");
 		}
