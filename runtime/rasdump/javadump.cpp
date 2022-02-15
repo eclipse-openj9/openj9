@@ -1138,9 +1138,8 @@ JavaCoreDumpWriter::writeEnvironmentSection(void)
 
 	/* Write the command line data */
 	char commandLineBuffer[_MaximumCommandLineLength];
-	IDATA result = 0;
+	IDATA result = j9sysinfo_get_env("IBM_JAVA_COMMAND_LINE", commandLineBuffer, _MaximumCommandLineLength);
 
-	result = j9sysinfo_get_env("IBM_JAVA_COMMAND_LINE", commandLineBuffer, _MaximumCommandLineLength);
 	if (0 == result) {
 		/* Ensure null-terminated */
 		commandLineBuffer[_MaximumCommandLineLength - 1] = '\0';
@@ -1149,19 +1148,20 @@ JavaCoreDumpWriter::writeEnvironmentSection(void)
 		_OutputStream.writeCharacters(commandLineBuffer);
 		_OutputStream.writeCharacters("\n");
 	} else if (result > 0) {
-		/* Long command line - need malloc'd buffer */
-		char *commandLineBuffer = (char*)j9mem_allocate_memory(result, OMRMEM_CATEGORY_VM);
-		if (NULL != commandLineBuffer) {
-			if (j9sysinfo_get_env("IBM_JAVA_COMMAND_LINE", commandLineBuffer, result) == 0) {
-				commandLineBuffer[result-1] = '\0';
+		/* long command line - need malloc'd buffer */
+		char *longCommandLineBuffer = (char *)j9mem_allocate_memory(result, OMRMEM_CATEGORY_VM);
+
+		if (NULL != longCommandLineBuffer) {
+			if (j9sysinfo_get_env("IBM_JAVA_COMMAND_LINE", longCommandLineBuffer, result) == 0) {
+				longCommandLineBuffer[result - 1] = '\0';
 				_OutputStream.writeCharacters("1CICMDLINE     ");
-				_OutputStream.writeCharacters(commandLineBuffer);
+				_OutputStream.writeCharacters(longCommandLineBuffer);
 				_OutputStream.writeCharacters("\n");
 			} else {
 				_OutputStream.writeCharacters("1CICMDLINE     [error]\n");
 			}
 
-			j9mem_free_memory(commandLineBuffer);
+			j9mem_free_memory(longCommandLineBuffer);
 		} else {
 			_OutputStream.writeCharacters("1CICMDLINE     [not enough space]\n");
 		}
