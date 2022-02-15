@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -345,6 +345,28 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
       case TR_JNIVirtualTargetAddress:
       case TR_JNIStaticTargetAddress:
       case TR_JNISpecialTargetAddress:
+         {
+         TR_RelocationRecordDirectJNICall *djnicRecord = reinterpret_cast<TR_RelocationRecordDirectJNICall *>(reloRecord);
+         TR_RelocationRecordInformation *recordInfo = reinterpret_cast<TR_RelocationRecordInformation*>(relocation->getTargetAddress());
+
+         uintptr_t offsetToReloLocation = recordInfo->data1;
+         TR_ASSERT_FATAL((offsetToReloLocation & ~0xFF) == 0,
+                         "offsetToReloLocation %" OMR_PRIuPTR " cannot fit in a uint8_t",
+                         offsetToReloLocation);
+
+         TR::SymbolReference *symRef = reinterpret_cast<TR::SymbolReference *>(recordInfo->data2);
+         uintptr_t inlinedSiteIndex = recordInfo->data3;
+
+         void *constantPool = symRef->getOwningMethod(comp)->constantPool();
+         inlinedSiteIndex = self()->findCorrectInlinedSiteIndex(constantPool, inlinedSiteIndex);
+
+         djnicRecord->setInlinedSiteIndex(reloTarget, inlinedSiteIndex);
+         djnicRecord->setConstantPool(reloTarget, reinterpret_cast<uintptr_t>(constantPool));
+         djnicRecord->setCpIndex(reloTarget, symRef->getCPIndex());
+         djnicRecord->setOffsetToReloLocation(reloTarget, static_cast<uint8_t>(offsetToReloLocation));
+         }
+         break;
+
       case TR_StaticRamMethodConst:
       case TR_SpecialRamMethodConst:
       case TR_VirtualRamMethodConst:
@@ -1388,6 +1410,22 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
       case TR_JNIVirtualTargetAddress:
       case TR_JNIStaticTargetAddress:
       case TR_JNISpecialTargetAddress:
+         {
+         TR_RelocationRecordDirectJNICall *djnicRecord = reinterpret_cast<TR_RelocationRecordDirectJNICall *>(reloRecord);
+
+         self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
+         if (isVerbose)
+            {
+            traceMsg(self()->comp(), "\n Direct to JNI Relocation (%s): inlinedIndex = %d, constantPool = %p, CPI = %d, offsetToReloLocation = %d",
+                                     getNameForMethodRelocation(kind),
+                                     djnicRecord->inlinedSiteIndex(reloTarget),
+                                     djnicRecord->constantPool(reloTarget),
+                                     djnicRecord->cpIndex(reloTarget),
+                                     djnicRecord->offsetToReloLocation(reloTarget));
+            }
+         }
+         break;
+
       case TR_StaticRamMethodConst:
       case TR_SpecialRamMethodConst:
       case TR_VirtualRamMethodConst:
@@ -1644,7 +1682,7 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
                                      vtpRecord->constantPool(reloTarget),
                                      vtpRecord->getOffsetToJ2IVirtualThunkPointer(reloTarget));
             }
-         } 
+         }
          break;
 
       case TR_ValidateClassByName:
