@@ -2365,15 +2365,16 @@ J9::Options::setupJITServerOptions()
 
    if (TR::Options::getVerboseOption(TR_VerboseJITServer))
       {
-      JITServer::CommunicationStream::printJITServerVersion();
       TR::PersistentInfo *persistentInfo = compInfo->getPersistentInfo();
       if (persistentInfo->getRemoteCompilationMode() == JITServer::SERVER)
          {
+         JITServer::CommunicationStream::printJITServerVersion();
          TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "JITServer Server Mode. Port: %d. Connection Timeout %ums",
                persistentInfo->getJITServerPort(), persistentInfo->getSocketTimeout());
          }
       else if (persistentInfo->getRemoteCompilationMode() == JITServer::CLIENT)
          {
+         JITServer::CommunicationStream::printJITServerVersion();
          TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "JITServer Client Mode. Server address: %s port: %d. Connection Timeout %ums",
                persistentInfo->getJITServerAddress().c_str(), persistentInfo->getJITServerPort(),
                persistentInfo->getSocketTimeout());
