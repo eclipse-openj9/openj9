@@ -1,27 +1,25 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
-
 <!--
-  Copyright (c) 2016, 2022 IBM Corp. and others
+Copyright (c) 2016, 2022 IBM Corp. and others
 
-  This program and the accompanying materials are made available under
-  the terms of the Eclipse Public License 2.0 which accompanies this
-  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
-  or the Apache License, Version 2.0 which accompanies this distribution and
-  is available at https://www.apache.org/licenses/LICENSE-2.0.
+This program and the accompanying materials are made available under
+the terms of the Eclipse Public License 2.0 which accompanies this
+distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+or the Apache License, Version 2.0 which accompanies this distribution and
+is available at https://www.apache.org/licenses/LICENSE-2.0.
 
-  This Source Code may also be made available under the following
-  Secondary Licenses when the conditions for such availability set
-  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
-  General Public License, version 2 with the GNU Classpath
-  Exception [1] and GNU General Public License, version 2 with the
-  OpenJDK Assembly Exception [2].
+This Source Code may also be made available under the following
+Secondary Licenses when the conditions for such availability set
+forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+General Public License, version 2 with the GNU Classpath
+Exception [1] and GNU General Public License, version 2 with the
+OpenJDK Assembly Exception [2].
 
-  [1] https://www.gnu.org/software/classpath/license.html
-  [2] http://openjdk.java.net/legal/assembly-exception.html
+[1] https://www.gnu.org/software/classpath/license.html
+[2] http://openjdk.java.net/legal/assembly-exception.html
 
-  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
-
 <project name="Launcher script for com.ibm.jvm.ras.tests" default="help" basedir=".">
 	<target name="help">
 		<echo>Ant script to run the tests for the com.ibm.jvm.Dump API.
@@ -42,53 +40,59 @@
 			(Luckily the ant manual gives the java task you need to launch ant:
 			http://ant.apache.org/manual/running.html#viajava )
 		-->
-		
+
 		<java jvm="${test.java.home}/bin/java"
-			classname="org.apache.tools.ant.launch.Launcher"
-			fork="true"
-			failonerror="true"
-			dir="${basedir}"
-			timeout="900000"
-			taskname="test">
+				classname="org.apache.tools.ant.launch.Launcher"
+				fork="true"
+				failonerror="true"
+				dir="${basedir}"
+				timeout="1800000"
+				taskname="test">
 			<classpath>
-				<pathelement location="${ant.home}/lib/ant-launcher.jar"/>
+				<pathelement location="${ant.home}/lib/ant-launcher.jar" />
 			</classpath>
-			<jvmarg value="-showversion"/>
-			<jvmarg value="-Xmx512M"/>
-			<arg value="-buildfile"/>
-			<arg file="${ant.file}"/>
-			<arg value="test"/>
+			<jvmarg value="-showversion" />
+			<jvmarg value="-Xmx128M" />
+			<arg value="-buildfile" />
+			<arg file="${ant.file}" />
+			<arg value="test" />
 		</java>
 	</target>
 
 	<target name="test">
 		<!-- Run most tests with security disabled. -->
-		<echo message="Running com.ibm.jvm.ras.tests.DumpAPIBasicTests"/>
-		<junit fork="yes" showoutput="true" haltonfailure="true">
-			<jvmarg value="-showversion"/>
-			<jvmarg value="-Xmx512M"/>
-			<classpath>
-				<pathelement location="junit4.jar"/>
-				<pathelement location="com.ibm.jvm.ras.tests.jar"/>
-			</classpath>
-			<formatter type="plain" usefile="false" />
-			<test name="com.ibm.jvm.ras.tests.DumpAPIBasicTests"/>
-		</junit>
-		<echo message="Running com.ibm.jvm.ras.tests.DumpAPITriggerTests"/>
-		<junit fork="yes" showoutput="true" haltonfailure="true">
-			<jvmarg value="-showversion"/>
-			<jvmarg value="-Xmx512M"/>
-			<classpath>
-				<pathelement location="junit4.jar"/>
-				<pathelement location="com.ibm.jvm.ras.tests.jar"/>
-			</classpath>
-			<formatter type="plain" usefile="false" />
-			<test name="com.ibm.jvm.ras.tests.DumpAPITriggerTests"/>
-		</junit>
-		<echo message="Running com.ibm.jvm.ras.tests.DumpAPIQuerySetReset"/>
+		<echo message="Running com.ibm.jvm.ras.tests.DumpAPIBasicTests" />
 		<junit fork="yes" showoutput="true" haltonfailure="true">
 			<jvmarg value="-showversion" />
-			<jvmarg value="-Xmx512M"/>
+			<jvmarg value="-Xgcpolicy:optthruput" />
+			<jvmarg value="-Xms1200M" />
+			<jvmarg value="-Xmx1200M" />
+			<classpath>
+				<pathelement location="junit4.jar" />
+				<pathelement location="com.ibm.jvm.ras.tests.jar" />
+			</classpath>
+			<formatter type="plain" usefile="false" />
+			<test name="com.ibm.jvm.ras.tests.DumpAPIBasicTests" />
+		</junit>
+		<echo message="Running com.ibm.jvm.ras.tests.DumpAPITriggerTests" />
+		<junit fork="yes" showoutput="true" haltonfailure="true">
+			<jvmarg value="-showversion" />
+			<jvmarg value="-Xgcpolicy:optthruput" />
+			<jvmarg value="-Xms1200M" />
+			<jvmarg value="-Xmx1200M" />
+			<classpath>
+				<pathelement location="junit4.jar" />
+				<pathelement location="com.ibm.jvm.ras.tests.jar" />
+			</classpath>
+			<formatter type="plain" usefile="false" />
+			<test name="com.ibm.jvm.ras.tests.DumpAPITriggerTests" />
+		</junit>
+		<echo message="Running com.ibm.jvm.ras.tests.DumpAPIQuerySetReset" />
+		<junit fork="yes" showoutput="true" haltonfailure="true">
+			<jvmarg value="-showversion" />
+			<jvmarg value="-Xgcpolicy:optthruput" />
+			<jvmarg value="-Xms1200M" />
+			<jvmarg value="-Xmx1200M" />
 			<classpath>
 				<pathelement location="junit4.jar" />
 				<pathelement location="com.ibm.jvm.ras.tests.jar" />
@@ -98,63 +102,67 @@
 		</junit>
 		<echo message="Running com.ibm.jvm.ras.tests.DumpAPITokensTests" />
 		<junit fork="yes" showoutput="true" haltonfailure="true">
-			<jvmarg value="-showversion"/>
-			<jvmarg value="-Xmx512M"/>
+			<jvmarg value="-showversion" />
+			<jvmarg value="-Xgcpolicy:optthruput" />
+			<jvmarg value="-Xms1200M" />
+			<jvmarg value="-Xmx1200M" />
 			<classpath>
-				<pathelement location="junit4.jar"/>
-				<pathelement location="com.ibm.jvm.ras.tests.jar"/>
+				<pathelement location="junit4.jar" />
+				<pathelement location="com.ibm.jvm.ras.tests.jar" />
 			</classpath>
 			<formatter type="plain" usefile="false" />
-			<test name="com.ibm.jvm.ras.tests.DumpAPITokensTests"/>
+			<test name="com.ibm.jvm.ras.tests.DumpAPITokensTests" />
 		</junit>
-		<echo message="Running com.ibm.jvm.ras.tests.DumpAPISetTestXdumpdynamic with Xdump:dynamic"/>
+		<echo message="Running com.ibm.jvm.ras.tests.DumpAPISetTestXdumpdynamic with Xdump:dynamic" />
 		<junit fork="yes" showoutput="true" haltonfailure="true">
-				<jvmarg value="-showversion" />
-				<jvmarg value="-Xmx512M"/>
-				<jvmarg value="-Xdump:dynamic" />
-				<classpath>
-					<pathelement location="junit4.jar" />
-					<pathelement location="com.ibm.jvm.ras.tests.jar" />
-				</classpath>
-				<formatter type="plain" usefile="false" />
-				<test name="com.ibm.jvm.ras.tests.DumpAPISetTestXdumpdynamic" />
+			<jvmarg value="-showversion" />
+			<jvmarg value="-Xgcpolicy:optthruput" />
+			<jvmarg value="-Xms1200M" />
+			<jvmarg value="-Xmx1200M" />
+			<jvmarg value="-Xdump:dynamic" />
+			<classpath>
+				<pathelement location="junit4.jar" />
+				<pathelement location="com.ibm.jvm.ras.tests.jar" />
+			</classpath>
+			<formatter type="plain" usefile="false" />
+			<test name="com.ibm.jvm.ras.tests.DumpAPISetTestXdumpdynamic" />
 		</junit>
 		<!-- Run security tests (that assume dumping will fail) with security enabled. -->
 		<!-- These need to be run with fork="no" to preserve the security settings -->
-		<echo message="Running com.ibm.jvm.ras.tests.[Dump|Log|Trace]APISecurityTests"/>
+		<echo message="Running com.ibm.jvm.ras.tests.[Dump|Log|Trace]APISecurityTests" />
 		<junit fork="no" showoutput="true" haltonfailure="true">
 			<permissions>
 				<!--Turn on security, remove the dump permissions. -->
-				<grant class="java.security.AllPermission"/>
-				<revoke class="com.ibm.jvm.DumpPermission"/>
-				<revoke class="com.ibm.jvm.LogPermission"/>
-				<revoke class="com.ibm.jvm.ToolDumpPermission"/>
-				<revoke class="com.ibm.jvm.TracePermission"/>
+				<grant class="java.security.AllPermission" />
+				<revoke class="com.ibm.jvm.DumpPermission" />
+				<revoke class="com.ibm.jvm.LogPermission" />
+				<revoke class="com.ibm.jvm.ToolDumpPermission" />
+				<revoke class="com.ibm.jvm.TracePermission" />
 			</permissions>
 			<classpath>
-				<pathelement location="junit4.jar"/>
-				<pathelement location="com.ibm.jvm.ras.tests.jar"/>
+				<pathelement location="junit4.jar" />
+				<pathelement location="com.ibm.jvm.ras.tests.jar" />
 			</classpath>
 			<formatter type="plain" usefile="false" />
-			<test name="com.ibm.jvm.ras.tests.DumpAPISecurityTests"/>
-			<test name="com.ibm.jvm.ras.tests.LogAPISecurityTests"/>
-			<test name="com.ibm.jvm.ras.tests.TraceAPISecurityTests"/>
+			<test name="com.ibm.jvm.ras.tests.DumpAPISecurityTests" />
+			<test name="com.ibm.jvm.ras.tests.LogAPISecurityTests" />
+			<test name="com.ibm.jvm.ras.tests.TraceAPISecurityTests" />
 		</junit>
 		<!-- Run tool dump security test and one normal test with DumpPermission but without ToolDumpPermission -->
-		<echo message="Running com.ibm.jvm.ras.tests.DumpAPIToolSecuritySuite"/>
+		<echo message="Running com.ibm.jvm.ras.tests.DumpAPIToolSecuritySuite" />
 		<junit fork="no" showoutput="true" haltonfailure="true">
 			<permissions>
 				<!--Turn on security, remove the tool dump permission. -->
-				<grant class="java.security.AllPermission"/>
-				<revoke class="com.ibm.jvm.ToolDumpPermission"/>
+				<grant class="java.security.AllPermission" />
+				<revoke class="com.ibm.jvm.ToolDumpPermission" />
 			</permissions>
 			<classpath>
-				<pathelement location="junit4.jar"/>
-				<pathelement location="com.ibm.jvm.ras.tests.jar"/>
+				<pathelement location="junit4.jar" />
+				<pathelement location="com.ibm.jvm.ras.tests.jar" />
 			</classpath>
 			<formatter type="plain" usefile="false" />
-			<test name="com.ibm.jvm.ras.tests.DumpAPIToolSecuritySuite"/>
+			<test name="com.ibm.jvm.ras.tests.DumpAPIToolSecuritySuite" />
 		</junit>
-		<echo message="ALL TESTS PASSED"/>
+		<echo message="ALL TESTS PASSED" />
 	</target>
 </project>
