@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -323,7 +323,7 @@ jitGetExceptionCatcher(J9VMThread *currentThread, void *handlerPC, J9JITExceptio
 	 * because jitGetMapsFromPC is expecting a return address, so it subtracts 1.  The value passed in is
 	 * the start address of the compiled exception handler.
 	 */
-	jitGetMapsFromPC(currentThread, metaData, (UDATA)handlerPC + 1, &stackMap, &inlineMap);
+	jitGetMapsFromPC(currentThread, currentThread->javaVM, metaData, (UDATA)handlerPC + 1, &stackMap, &inlineMap);
 	Assert_CodertVM_false(NULL == inlineMap);
 	if (NULL != getJitInlinedCallInfo(metaData)) {
 		inlinedCallSite = getFirstInlinedCallSite(metaData, inlineMap);
