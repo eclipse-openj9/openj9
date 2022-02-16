@@ -711,9 +711,8 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
             // insert a dynamic debug counter
             //
             _valueTypesHelperCallsToBeFolded.add(
-                  new (trStackMemory()) ValueTypesHelperCallTransform(_curTree, node,
-                                              ValueTypesHelperCallTransform::IsRefCompare
-                                              | ValueTypesHelperCallTransform::InsertDebugCounter));
+                  new (trStackMemory()) ObjectComparisonHelperCallTransform(_curTree, node,
+                                              ValueTypesHelperCallTransform::InsertDebugCounter));
 
             // Replace the non-helper equality/inequality comparison with an address comparison
             TR::Node::recreate(node, acmpOp.getOpCodeValue());
@@ -849,9 +848,51 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
           || canTransformUnflattenedVTArrayElementLoadStore
           || canTransformIdentityLoadStore)
          {
-         ValueTypesHelperCallTransform *callToTransform = NULL;
-         flags8_t flagsForTransform(isLoadFlattenableArrayElement ? ValueTypesHelperCallTransform::IsArrayLoad
-                                                                  : ValueTypesHelperCallTransform::IsArrayStore);
+         ArrayOperationHelperCallTransform *callToTransform = NULL;
+         flags8_t flagsForTransform(0);
+
+         // Determine whether the arraylength is known and whether a BNDCHK is required
+         //
+         bool isBoundCheckRequired = true;
+         int32_t arrayLength = -1;
+
+         if (owningMethodDoesNotContainBoundChecks(this, node))
+            {
+            isBoundCheckRequired = false;
+            }
+         else if (arrayConstraint != NULL)
+            {
+            int32_t lowerBoundLimit;
+            int32_t upperBoundLimit;
+            int32_t elementSize;
+            bool isKnownObj;
+
+            getArrayLengthLimits(arrayConstraint, lowerBoundLimit, upperBoundLimit, elementSize, isKnownObj);
+
+            if (lowerBoundLimit == upperBoundLimit)
+               {
+               arrayLength = lowerBoundLimit;
+               }
+
+            TR::VPConstraint *indexConstraint = getConstraint(indexNode, arrayRefGlobal);
+            if (indexConstraint != NULL)
+               {
+               // Suppose the index lies somewhere in the range [A,B] and the array length lies
+               // somewhere in the range [C,D].  If A is known to be non-negative, and B is less
+               // than C, a BNDCHK operation on the index and array length could never throw an
+               // AIOOBE - hence no bound check is required.
+               //
+               if (indexConstraint->getLowInt() >= 0 && indexConstraint->getHighInt() < lowerBoundLimit)
+                  {
+                  isBoundCheckRequired = false;
+                  }
+               }
+            }
+
+         if (isBoundCheckRequired)
+            {
+            flagsForTransform.set(ValueTypesHelperCallTransform::RequiresBoundCheck);
+            }
 
          if (canTransformFlattenedArrayElementLoadStore)
             {
@@ -863,8 +904,20 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
                flagsForTransform.set(ValueTypesHelperCallTransform::RequiresNullValueCheck);
                }
 
-            callToTransform =
-                  new (trStackMemory()) ValueTypesHelperCallTransform(_curTree, node, flagsForTransform, arrayConstraint->getClass());
+            if (isStoreFlattenableArrayElement)
+               {
+               ArrayElementStoreHelperCallTransform *storeCallToTransform =
+                     new (trStackMemory()) ArrayElementStoreHelperCallTransform(_curTree, node, flagsForTransform,
+                                                 arrayLength, arrayConstraint->getClass());
+               callToTransform = storeCallToTransform->castToArrayOperationHelperCallTransform();
+               }
+            else
+               {
+               ArrayElementLoadHelperCallTransform *loadCallToTransform =
+                     new (trStackMemory()) ArrayElementLoadHelperCallTransform(_curTree, node, flagsForTransform,
+                                                 arrayLength, arrayConstraint->getClass());
+               callToTransform = loadCallToTransform->castToArrayOperationHelperCallTransform();
+               }
             }
          else // if (canTransformUnflattenedVTArrayElementLoadStore || canTransformIdentityLoadStore)
             {
@@ -934,58 +987,18 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
                   }
                }
 
-            callToTransform =
-                  new (trStackMemory()) ValueTypesHelperCallTransform(_curTree, node, flagsForTransform, NULL,
-                                              storeClassForCheck, componentClassForCheck);
-            }
-
-         // Determine whether the arraylength is known and whether a BNDCHK is required
-         //
-         bool isBoundCheckRequired = true;
-         int32_t arrayLength = -1;
-
-         if (owningMethodDoesNotContainBoundChecks(this, node))
-            {
-            isBoundCheckRequired = false;
-            }
-         else if (arrayConstraint != NULL)
-            {
-            int32_t lowerBoundLimit;
-            int32_t upperBoundLimit;
-            int32_t elementSize;
-            bool isKnownObj;
-
-            getArrayLengthLimits(arrayConstraint, lowerBoundLimit, upperBoundLimit, elementSize, isKnownObj);
-
-            if (lowerBoundLimit == upperBoundLimit)
+            if (isStoreFlattenableArrayElement)
                {
-               arrayLength = lowerBoundLimit;
+               ArrayElementStoreHelperCallTransform *storeCallToTransform =
+                     new (trStackMemory()) ArrayElementStoreHelperCallTransform(_curTree, node, flagsForTransform, arrayLength, NULL,
+                                                 storeClassForCheck, componentClassForCheck);
+               callToTransform = storeCallToTransform->castToArrayOperationHelperCallTransform();
                }
-
-            TR::VPConstraint *indexConstraint = getConstraint(indexNode, arrayRefGlobal);
-            if (indexConstraint != NULL)
+            else
                {
-               // Suppose the index lies somewhere in the range [A,B] and the array length lies
-               // somewhere in the range [C,D].  If A is known to be non-negative, and B is less
-               // than C, a BNDCHK operation on the index and array length could never throw an
-               // AIOOBE - hence no bound check is required.
-               //
-               if (indexConstraint->getLowInt() >= 0 && indexConstraint->getHighInt() < lowerBoundLimit)
-                  {
-                  isBoundCheckRequired = false;
-                  }
-               }
-            }
-
-         if (isBoundCheckRequired)
-            {
-            callToTransform->_flags.set(ValueTypesHelperCallTransform::RequiresBoundCheck);
-
-            // The arrayLength is only interesting if a BNDCHK will be required
-            //
-            if (arrayLength >= 0)
-               {
-               callToTransform->_arrayLength = arrayLength;
+               ArrayElementLoadHelperCallTransform *loadCallToTransform =
+                     new (trStackMemory()) ArrayElementLoadHelperCallTransform(_curTree, node, flagsForTransform, arrayLength);
+               callToTransform = loadCallToTransform->castToArrayOperationHelperCallTransform();
                }
             }
 
@@ -2222,9 +2235,10 @@ J9::ValuePropagation::doDelayedTransformations()
       TR::TreeTop *callTree = callToTransform->_tree;
       TR::Node *callNode = callToTransform->_callNode;
 
-      const bool isLoad = callToTransform->_flags.testAny(ValueTypesHelperCallTransform::IsArrayLoad);
-      const bool isStore = callToTransform->_flags.testAny(ValueTypesHelperCallTransform::IsArrayStore);
-      const bool isCompare = callToTransform->_flags.testAny(ValueTypesHelperCallTransform::IsRefCompare);
+      const bool isLoad = callToTransform->isArrayElementLoadHelperCallTransform();
+      const bool isStore = callToTransform->isArrayElementStoreHelperCallTransform();
+      const bool isCompare = callToTransform->isObjectComparisonHelperCallTransform();
+
       const bool needsStoreCheck = callToTransform->_flags.testAny(ValueTypesHelperCallTransform::RequiresStoreCheck);
       const bool needsNullValueCheck = callToTransform->_flags.testAny(ValueTypesHelperCallTransform::RequiresNullValueCheck);
       const bool needsBoundCheck = callToTransform->_flags.testAny(ValueTypesHelperCallTransform::RequiresBoundCheck);
@@ -2260,6 +2274,8 @@ J9::ValuePropagation::doDelayedTransformations()
 
       TR_ASSERT_FATAL_WITH_NODE(callNode, !comp()->requiresSpineChecks(), "Cannot handle VP yet for jit{Load|Store}FlattenableArrayElement if SpineCHKs are required\n");
 
+      ArrayOperationHelperCallTransform *arrayOpCallToTransform = callToTransform->castToArrayOperationHelperCallTransform();
+
       int opIndex = 0;
 
       TR::Node *valueNode = isLoad ? NULL : callNode->getChild(opIndex++);
@@ -2273,13 +2289,13 @@ J9::ValuePropagation::doDelayedTransformations()
 
          TR::Node *arrayLengthNode = NULL;
 
-         if (callToTransform->_arrayLength < 0)
+         if (arrayOpCallToTransform->_arrayLength < 0)
             {
             arrayLengthNode = TR::Node::create(callNode, TR::arraylength, 1, arrayRefNode);
             }
          else
             {
-            arrayLengthNode = TR::Node::iconst(callToTransform->_arrayLength);
+            arrayLengthNode = TR::Node::iconst(arrayOpCallToTransform->_arrayLength);
             }
 
          arrayLengthNode->setArrayStride(width);
@@ -2330,13 +2346,15 @@ J9::ValuePropagation::doDelayedTransformations()
             storeCheckNode->setByteCodeInfo(elementStoreNode->getByteCodeInfo());
             callTree->setNode(storeCheckNode);
 
-            if (callToTransform->_storeClassForArrayStoreCHK != NULL)
+            ArrayElementStoreHelperCallTransform *arrayStoreCallToTransform = callToTransform->castToArrayElementStoreHelperCallTransform();
+
+            if (arrayStoreCallToTransform->_storeClassForArrayStoreCHK != NULL)
                {
-               storeCheckNode->setArrayStoreClassInNode(callToTransform->_storeClassForArrayStoreCHK);
+               storeCheckNode->setArrayStoreClassInNode(arrayStoreCallToTransform->_storeClassForArrayStoreCHK);
                }
-            else if (callToTransform->_componentClassForArrayStoreCHK != NULL)
+            else if (arrayStoreCallToTransform->_componentClassForArrayStoreCHK != NULL)
                {
-               storeCheckNode->setArrayStoreClassInNode(callToTransform->_componentClassForArrayStoreCHK);
+               storeCheckNode->setArrayStoreClassInNode(arrayStoreCallToTransform->_componentClassForArrayStoreCHK);
                }
 
             // This might be the first time the various checking symbol references are used
@@ -2371,12 +2389,12 @@ J9::ValuePropagation::doDelayedTransformations()
          }
       else if (isLoad && isFlattenedElement)
          {
-         transformFlattenedArrayElementLoad(callToTransform->_arrayClass, callNode);
+         transformFlattenedArrayElementLoad(arrayOpCallToTransform->_arrayClass, callNode);
          }
       else
          {
          TR_ASSERT_FATAL(isStore && isFlattenedElement, "Missing flags: isLoad %d isStore %d isFlattenedElement %d for call tree n%dn\n", isLoad, isStore, isFlattenedElement, callTree->getNode()->getGlobalIndex());
-         isCallTreeRemoved = transformFlattenedArrayElementStore(callToTransform->_arrayClass, callTree, callNode, needsNullValueCheck);
+         isCallTreeRemoved = transformFlattenedArrayElementStore(arrayOpCallToTransform->_arrayClass, callTree, callNode, needsNullValueCheck);
          }
 
       if (!isCallTreeRemoved)
