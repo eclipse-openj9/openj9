@@ -317,6 +317,7 @@ public:
       bool _useAOTCache;
       TR_AOTHeader _aotHeader;
       TR_OpaqueClassBlock *_JavaLangObject;
+      TR_OpaqueClassBlock *_JavaStringObject;
       }; // struct VMInfo
 
    /**
