@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -224,16 +224,15 @@ static VMINLINE TR_StackMapTable * initializeMapTable(J9JavaVM * javaVM, J9TR_Me
    return mapTable;
    }
 
-static VMINLINE TR_StackMapTable * findOrCreateMapTable(J9VMThread * currentThread, J9TR_MethodMetaData * metaData, UDATA fourByteOffsets)
+static VMINLINE TR_StackMapTable * findOrCreateMapTable(J9VMThread * currentThread, J9JavaVM * javaVM, J9TR_MethodMetaData * metaData, UDATA fourByteOffsets)
    {
    TR_StackMapTable * mapTablePtr = 0;
    assert(metaData);
 
    // In a signal handler, do not use or create the map tables. The tables may be in an inconsistent
    // state when interrupted by the signal, and malloc must not be called from a signal handler.
-   if (J9_ARE_NO_BITS_SET(currentThread->privateFlags2, J9_PRIVATE_FLAGS2_ASYNC_GET_CALL_TRACE))
+   if ((NULL != currentThread) && J9_ARE_NO_BITS_SET(currentThread->privateFlags2, J9_PRIVATE_FLAGS2_ASYNC_GET_CALL_TRACE))
       {
-      J9JavaVM * javaVM = currentThread->javaVM;
       if (metaData->bodyInfo &&
           (javaVM->phase == J9VM_PHASE_NOT_STARTUP || 0 == (javaVM->jitConfig->runtimeFlags & J9JIT_QUICKSTART))) // save footprint during startup in Xquickstart mode
          {
@@ -404,7 +403,7 @@ static void fastwalkDebug(J9TR_MethodMetaData * methodMetaData, UDATA offsetPC, 
    }
 #endif /* defined(DEBUG) */
 
-void jitGetMapsFromPC(J9VMThread * currentThread, J9TR_MethodMetaData * methodMetaData, UDATA jitPC, void * * stackMap, void * * inlineMap)
+void jitGetMapsFromPC(J9VMThread * currentThread, J9JavaVM * vm, J9TR_MethodMetaData * methodMetaData, UDATA jitPC, void * * stackMap, void * * inlineMap)
    {
    TR_MapIterator i;
    TR_StackMapTable * stackMapTable = 0;
@@ -435,7 +434,7 @@ void jitGetMapsFromPC(J9VMThread * currentThread, J9TR_MethodMetaData * methodMe
 
 #ifdef FASTWALK
 
-   stackMapTable = findOrCreateMapTable(currentThread, methodMetaData, fourByteOffsets);
+   stackMapTable = findOrCreateMapTable(currentThread, vm, methodMetaData, fourByteOffsets);
 
    if (stackMapTable)
       {
@@ -525,17 +524,17 @@ void jitGetMapsFromPC(J9VMThread * currentThread, J9TR_MethodMetaData * methodMe
       }
    }
 
-void * jitGetInlinerMapFromPC(J9VMThread * currentThread, J9TR_MethodMetaData * methodMetaData, UDATA jitPC)
+void * jitGetInlinerMapFromPC(J9VMThread * currentThread, J9JavaVM * vm, J9TR_MethodMetaData * methodMetaData, UDATA jitPC)
    {
    void * stackMap, * inlineMap;
-   jitGetMapsFromPC(currentThread, methodMetaData, jitPC, &stackMap, &inlineMap);
+   jitGetMapsFromPC(currentThread, vm, methodMetaData, jitPC, &stackMap, &inlineMap);
    return inlineMap;
    }
 
-void * getStackMapFromJitPC(J9VMThread * currentThread, J9TR_MethodMetaData * methodMetaData, UDATA jitPC)
+void * getStackMapFromJitPC(J9VMThread * currentThread, J9JavaVM * vm, J9TR_MethodMetaData * methodMetaData, UDATA jitPC)
    {
    void * stackMap, * inlineMap;
-   jitGetMapsFromPC(currentThread, methodMetaData, jitPC, &stackMap, &inlineMap);
+   jitGetMapsFromPC(currentThread, vm, methodMetaData, jitPC, &stackMap, &inlineMap);
    return stackMap;
    }
 
@@ -551,7 +550,7 @@ void * getStackAllocMapFromJitPC(J9VMThread * currentThread, J9TR_MethodMetaData
    if (curStackMap)
       stackMap = curStackMap;
    else
-      stackMap = getStackMapFromJitPC(currentThread, methodMetaData, jitPC);
+      stackMap = getStackMapFromJitPC(currentThread, currentThread->javaVM, methodMetaData, jitPC);
 
    stackAllocMap = (void **)((J9JITStackAtlas *) methodMetaData->gcStackAtlas)->stackAllocMap;
    if (stackAllocMap)
@@ -2447,7 +2446,7 @@ void* preOSR(J9VMThread* currentThread, J9JITExceptionTable *metaData, void *pc)
    assert(metaData);
    assert(metaData->osrInfo);
 
-   jitGetMapsFromPC(currentThread, metaData, (UDATA) pc, &stackMap, &inlineMap);
+   jitGetMapsFromPC(currentThread, currentThread->javaVM, metaData, (UDATA) pc, &stackMap, &inlineMap);
    bcInfo = (TR_ByteCodeInfo*) getByteCodeInfoFromStackMap(metaData, inlineMap);
 /*
    printf("offset=%08X bytecode.caller=%d bytecode.index=%x\n",
