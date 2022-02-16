@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -63,7 +63,8 @@ import com.ibm.j9ddr.view.dtfj.image.J9RASImageDataFactory.ProcessData;
  */
 public class J9DDRImageProcess implements ImageProcess {
 
-	private static final String JAVA_COMMAND_LINE_ENVIRONMENT_VARIABLE = "IBM_JAVA_COMMAND_LINE";
+	private static final String JAVA_COMMAND_LINE_ENVIRONMENT_VARIABLE = "OPENJ9_JAVA_COMMAND_LINE";
+	private static final String LEGACY_JAVA_COMMAND_LINE_ENVIRONMENT_VARIABLE = "IBM_JAVA_COMMAND_LINE";
 	private final IProcess process;
 	private boolean processDataSet = false;
 	private ProcessData j9rasProcessData;
@@ -149,10 +150,17 @@ public class J9DDRImageProcess implements ImageProcess {
 		try {
 			Properties environment = getEnvironment();
 			String javaCommandLine = environment.getProperty(JAVA_COMMAND_LINE_ENVIRONMENT_VARIABLE);
-			
+
 			if (javaCommandLine != null) {
 				return javaCommandLine;
 			}
+
+			javaCommandLine = environment.getProperty(LEGACY_JAVA_COMMAND_LINE_ENVIRONMENT_VARIABLE);
+
+			if (javaCommandLine != null) {
+				return javaCommandLine;
+			}
+
 			return process.getCommandLine();
 		} catch (com.ibm.j9ddr.CorruptDataException e) {
 			throw new DTFJCorruptDataException(process,e);

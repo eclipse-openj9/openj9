@@ -68,6 +68,10 @@
 #include "jitserver_error.h"
 #endif /* J9VM_OPT_JITSERVER */
 
+#if defined(WIN32)
+#include <processenv.h>
+#include <stdlib.h>
+#endif /* defined(WIN32) */
 
 /* Must include this after j9vm_internal.h */
 #include <string.h>
@@ -451,6 +455,72 @@ static const J9SignalMapping signalMap[] = {
 #endif /* defined(SIGPOLL) */
 	{NULL, J9_SIG_ERR}
 };
+
+static void
+captureCommandLine(void)
+{
+#if defined(WIN32)
+#define ENV_VAR_NAME L"OPENJ9_JAVA_COMMAND_LINE"
+#else /* defined(WIN32) */
+#define ENV_VAR_NAME "OPENJ9_JAVA_COMMAND_LINE"
+#endif /* defined(WIN32) */
+
+#if defined(LINUX)
+	int fd = open("/proc/self/cmdline", O_RDONLY, 0);
+
+	if (fd >= 0) {
+		char *buffer = NULL;
+		size_t length = 0;
+		for (;;) {
+			char small_buffer[512];
+			ssize_t count = read(fd, small_buffer, sizeof(small_buffer));
+			if (count <= 0) {
+				break;
+			}
+			length += (size_t)count;
+		}
+		if (length < 2) {
+			goto done;
+		}
+		/* final NUL is already included in length */
+		buffer = malloc(length);
+		if (NULL == buffer) {
+			goto done;
+		}
+		if ((off_t)-1 == lseek(fd, 0, SEEK_SET)) {
+			goto done;
+		}
+		if (read(fd, buffer, length) != length) {
+			goto done;
+		}
+		/* replace the internal NULs with spaces */
+		for (length -= 2;; length -= 1) {
+			if (0 == length) {
+				break;
+			}
+			if ('\0' == buffer[length]) {
+				buffer[length] = ' ';
+			}
+		}
+		/* it's not fatal if setenv() fails, so don't bother checking */
+		setenv(ENV_VAR_NAME, buffer, 1 /* overwrite */);
+done:
+		if (NULL != buffer) {
+			free(buffer);
+		}
+		close(fd);
+	}
+#elif defined(WIN32) /* defined(LINUX) */
+	const wchar_t *commandLine = GetCommandLineW();
+
+	if (NULL != commandLine) {
+		/* it's not fatal if _wputenv_s() fails, so don't bother checking */
+		_wputenv_s(ENV_VAR_NAME, commandLine);
+	}
+#endif /* defined(LINUX) */
+
+#undef ENV_VAR_NAME
+}
 
 static void freeGlobals(void)
 {
@@ -1657,6 +1727,7 @@ JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITSer
         return JNI_ERR;
     }
 #endif /* defined(J9ZTPF) */
+	captureCommandLine();
 	/*
 	 * Linux uses LD_LIBRARY_PATH
 	 * z/OS uses LIBPATH
