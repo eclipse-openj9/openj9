@@ -68,6 +68,12 @@
 #include "jitserver_error.h"
 #endif /* J9VM_OPT_JITSERVER */
 
+#if defined(AIXPPC)
+#include <procinfo.h>
+#include <sys/types.h>
+#include <unistd.h>
+#endif /* defined(AIXPPC) */
+
 #if defined(WIN32)
 #include <processenv.h>
 #include <stdlib.h>
@@ -465,7 +471,44 @@ captureCommandLine(void)
 #define ENV_VAR_NAME "OPENJ9_JAVA_COMMAND_LINE"
 #endif /* defined(WIN32) */
 
-#if defined(LINUX)
+#if defined(AIXPPC)
+	long int bufferSize = sysconf(_SC_ARG_MAX);
+
+	if (bufferSize > 0) {
+		char *buffer = malloc(bufferSize);
+
+		if (NULL != buffer) {
+#if defined(J9VM_ENV_DATA64)
+			struct procsinfo64 info;
+#else /* defined(J9VM_ENV_DATA64) */
+			struct procsinfo info;
+#endif /* defined(J9VM_ENV_DATA64) */
+
+			memset(&info, '\0', sizeof(info));
+			info.pi_pid = getpid();
+
+			if (0 == getargs(&info, sizeof(info), buffer, bufferSize)) {
+				char *cursor = buffer;
+
+				/* replace the internal NULs with spaces */
+				for (;; ++cursor) {
+					if ('\0' == *cursor) {
+						if ('\0' == cursor[1]) {
+							/* the list ends with two NUL characters */
+							break;
+						}
+						*cursor = ' ';
+					}
+				}
+
+				/* it's not fatal if setenv() fails, so don't bother checking */
+				setenv(ENV_VAR_NAME, buffer, 1 /* overwrite */);
+			}
+
+			free(buffer);
+		}
+	}
+#elif defined(LINUX) /* defined(AIXPPC) */
 	int fd = open("/proc/self/cmdline", O_RDONLY, 0);
 
 	if (fd >= 0) {
@@ -510,14 +553,14 @@ done:
 		}
 		close(fd);
 	}
-#elif defined(WIN32) /* defined(LINUX) */
+#elif defined(WIN32) /* defined(AIXPPC) */
 	const wchar_t *commandLine = GetCommandLineW();
 
 	if (NULL != commandLine) {
 		/* it's not fatal if _wputenv_s() fails, so don't bother checking */
 		_wputenv_s(ENV_VAR_NAME, commandLine);
 	}
-#endif /* defined(LINUX) */
+#endif /* defined(AIXPPC) */
 
 #undef ENV_VAR_NAME
 }
