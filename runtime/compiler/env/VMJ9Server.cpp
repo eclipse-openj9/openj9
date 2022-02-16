@@ -838,8 +838,15 @@ bool
 TR_J9ServerVM::isString(TR_OpaqueClassBlock * clazz)
    {
    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITServer::MessageType::VM_isString1, clazz);
-   return std::get<0>(stream->read<bool>());
+   auto *vmInfo = _compInfoPT->getClientData()->getOrCacheVMInfo(stream);
+   TR_OpaqueClassBlock *javaStringObject = vmInfo->_JavaStringObject;
+   if (NULL == javaStringObject)
+      {
+      stream->write(JITServer::MessageType::VM_JavaStringObject, JITServer::Void());
+      javaStringObject = std::get<0>(stream->read<TR_OpaqueClassBlock *>());
+      vmInfo->_JavaStringObject = javaStringObject;
+      }
+   return clazz == javaStringObject;
    }
 
 bool
