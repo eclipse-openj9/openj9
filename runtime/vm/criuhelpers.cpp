@@ -45,7 +45,6 @@ static void initializeCriuHooks(J9JavaVM *vm);
 static BOOLEAN juRandomReseed(J9JavaVM *vm, void *userData);
 static jvmtiIterationControl objectIteratorCallback(J9JavaVM *vm, J9MM_IterateObjectDescriptor *objectDesc, void *userData);
 
-
 BOOLEAN
 jvmCheckpointHooks(J9VMThread *currentThread)
 {
@@ -137,7 +136,7 @@ addInternalJVMCheckpointHook(J9VMThread *currentThread, BOOLEAN isRestore, J9Cla
 		newHook->instanceType = instanceType;
 		newHook->includeSubClass = includeSubClass;
 		newHook->hookFunc = hookFunc;
-		/* newHook->instanceObjects is to be lazy initialized */
+		/* newHook->instanceObjects is to be lazily initialized */
 	}
 }
 
@@ -165,7 +164,7 @@ juRandomReseed(J9JavaVM *vm, void *userData)
 	J9VMThread *currentThread = vm->mainThread;
 	MM_ObjectAccessBarrierAPI objectAccessBarrier = MM_ObjectAccessBarrierAPI(currentThread);
 
-	/* Assuming this hook record is to re-seed java.util.Random.seed.value */
+	/* Assuming this hook record is to re-seed java.util.Random.seed.value. */
 	IDATA seedOffset = findinstanceFieldOffsetHelper(currentThread, hookRecord->instanceType, "seed", "Ljava/util/concurrent/atomic/AtomicLong;");
 	if (-1 != seedOffset) {
 #define JUCA_ATOMICLONG "java/util/concurrent/atomic/AtomicLong"
@@ -182,7 +181,7 @@ juRandomReseed(J9JavaVM *vm, void *userData)
 					j9object_t seedObject = objectAccessBarrier.inlineMixedObjectReadObject(currentThread, object, seedOffset, FALSE);
 					I_64 valueLong = objectAccessBarrier.inlineMixedObjectReadI64(currentThread, seedObject, valueOffset, TRUE);
 
-					/* Algorithm used in Random.seedUniquifier() */
+					/* Algorithm used in Random.seedUniquifier(). */
 					valueLong *= 1181783497276652981;
 					valueLong ^= j9time_nano_time();
 					objectAccessBarrier.inlineMixedObjectStoreI64(currentThread, seedObject, valueOffset, valueLong, TRUE);
@@ -227,7 +226,7 @@ cleanupCriuHooks(J9JavaVM *vm)
 		}
 
 		if (vm->checkpointState.isNonPortableRestoreMode) {
-			/* No more checkpoint, cleanup hook records */
+			/* No more checkpoint, cleanup hook records. */
 			pool_kill(vm->checkpointState.hookRecords);
 			vm->checkpointState.hookRecords = NULL;
 		}
@@ -256,7 +255,7 @@ initializeCriuHooks(J9JavaVM *vm)
 		}
 	}
 	if (NULL != vm->checkpointState.hookRecords) {
-		/* Add restore hook to re-seed java.uti.Random.seed.value */
+		/* Add restore hook to re-seed java.uti.Random.seed.value. */
 #define JAVA_UTIL_RANDOM "java/util/Random"
 		J9Class *juRandomClass = hashClassTableAt(vm->systemClassLoader, (U_8 *)JAVA_UTIL_RANDOM, LITERAL_STRLEN(JAVA_UTIL_RANDOM));
 #undef JAVA_UTIL_RANDOM
@@ -268,7 +267,7 @@ initializeCriuHooks(J9JavaVM *vm)
 }
 
 /**
- * After initializeCriuHooks() and before invoking JVM criu hooks, j9mm_iterate_all_objects iterates the heap,
+ * After initializeCriuHooks() and before invoking JVM CRIU hooks, j9mm_iterate_all_objects iterates the heap,
  * for each object discovered, this will be called to iterate CRIU internal hook records, and fills in all instances of
  * instanceType and its subclasses if specified.
  *
@@ -335,7 +334,7 @@ runInternalJVMCheckpointHooks(J9JavaVM *vm)
 	Trc_VM_criu_runCheckpointHooks_Entry(currentThread);
 
 	initializeCriuHooks(vm);
-	/* Iterate heap objects to prepare internal hooks at checkpoint */
+	/* Iterate heap objects to prepare internal hooks at checkpoint. */
 	vm->memoryManagerFunctions->j9mm_iterate_all_objects(vm, vm->portLibrary, 0, objectIteratorCallback, vm->checkpointState.hookRecords);
 
 	J9InternalHookRecord *hookRecord = (J9InternalHookRecord*)pool_startDo(hookRecords, &walkState);
@@ -373,7 +372,7 @@ runInternalJVMRestoreHooks(J9JavaVM *vm)
 		hookRecord = (J9InternalHookRecord*)pool_nextDo(&walkState);
 	}
 
-	/* Cleanup at restore */
+	/* Cleanup at restore. */
 	cleanupCriuHooks(vm);
 	Trc_VM_criu_runRestoreHooks_Exit(currentThread);
 
