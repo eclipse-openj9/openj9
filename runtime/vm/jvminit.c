@@ -904,6 +904,14 @@ freeJavaVM(J9JavaVM * vm)
 		vm->realtimeSizeClasses = NULL;
 	}
 
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+	J9Pool *hookRecords = vm->checkpointState.hookRecords;
+	if (NULL != hookRecords) {
+		pool_kill(hookRecords);
+		vm->checkpointState.hookRecords = NULL;
+	}
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+
 	j9mem_free_memory(vm);
 
 	if (NULL != tmpLib->self_handle) {

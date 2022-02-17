@@ -1,4 +1,4 @@
-// Copyright (c) 2006, 2021 IBM Corp. and others
+// Copyright (c) 2006, 2022 IBM Corp. and others
 //
 // This program and the accompanying materials are made available under
 // the terms of the Eclipse Public License 2.0 which accompanies this
@@ -884,3 +884,13 @@ TraceEvent=Trc_VM_classLoaderRegisterLibrary_newNativeLibrary Overhead=1 Level=5
 
 TraceEntry=Trc_VM_WalkStackFrames_Entry Overhead=1 Level=1 Template="WalkStackFrames - walkThread=%p flags=%p sp=%p a0=%p pc=%p literals=%p els=%p j2i=%p"
 TraceExit=Trc_VM_WalkStackFrames_Exit Overhead=1 Level=1 Template="WalkStackFrames - walkThread=%p, rc=%d"
+
+TraceEntry=Trc_VM_criu_initHooks_Entry Overhead=1 Level=5 Template="initializeCriuHooks"
+TraceExit=Trc_VM_criu_initHooks_Exit Overhead=1 Level=5 Template="initializeCriuHooks - checkpointState.hookRecords (%p)"
+TraceException=Trc_VM_criu_jur_invalid_seedOffset Overhead=1 Level=3 Template="juRandomReseed instanceType (%p) - invalid seedOffset"
+TraceException=Trc_VM_criu_jur_AtomicLong_CNF Overhead=1 Level=3 Template="juRandomReseed java.util.concurrent.atomic.AtomicLong not found"
+TraceException=Trc_VM_criu_jur_invalid_valueOffset Overhead=1 Level=3 Template="juRandomReseed jucaAtomicLongClass (%p) - invalid valueOffset"
+TraceEntry=Trc_VM_criu_runCheckpointHooks_Entry Overhead=1 Level=2 Template="runInternalJVMCheckpointHooks"
+TraceExit=Trc_VM_criu_runCheckpointHooks_Exit Overhead=1 Level=2 Template="runInternalJVMCheckpointHooks"
+TraceEntry=Trc_VM_criu_runRestoreHooks_Entry Overhead=1 Level=2 Template="runInternalJVMRestoreHooks"
+TraceExit=Trc_VM_criu_runRestoreHooks_Exit Overhead=1 Level=2 Template="runInternalJVMRestoreHooks"
