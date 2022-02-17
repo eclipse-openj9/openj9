@@ -408,6 +408,7 @@ J9InternalVMFunctions J9InternalFunctions = {
 	isCheckpointAllowed,
 	runInternalJVMCheckpointHooks,
 	runInternalJVMRestoreHooks,
+	runDelayedLockRelatedOperations,
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 	getClassNameString,
 };

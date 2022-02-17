@@ -570,7 +570,7 @@ public final class CRIUSupport {
 	 * @throws RestoreException              if an error occurred during or after
 	 *                                       restore
 	 */
-	public void checkpointJVM() {
+	public synchronized void checkpointJVM() {
 		/* Add env variables restore hook */
 		registerRestoreEnvVariables();
 

@@ -46,6 +46,9 @@
 #include "ArrayCopyHelpers.hpp"
 #include "AtomicSupport.hpp"
 #include "BytecodeAction.hpp"
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+#include "CRIUHelpers.hpp"
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 #if defined(J9VM_OPT_METHOD_HANDLE)
 #include "MHInterpreter.hpp"
 #endif /* defined(J9VM_OPT_METHOD_HANDLE) */
@@ -2681,16 +2684,30 @@ done:
 		j9object_t receiver = ((j9object_t*)_sp)[0];
 		omrthread_monitor_t monitorPtr = NULL;
 
-		if (VM_ObjectMonitor::getMonitorForNotify(_currentThread, receiver, &monitorPtr, true)) {
-			if (0 != notifyFunction(monitorPtr)) {
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+		if (VM_CRIUHelpers::isJVMInSingleThreadMode(_vm)) {
+			UDATA operation = J9_SINGLE_THREAD_MODE_OP_NOTIFY;
+			if (omrthread_monitor_notify_all == notifyFunction) {
+				operation = J9_SINGLE_THREAD_MODE_OP_NOTIFY_ALL;
+			}
+			if (!VM_CRIUHelpers::delayedLockingOperation(_currentThread, receiver, operation)) {
+				rc = GOTO_THROW_CURRENT_EXCEPTION;
+				goto done;
+			}
+		} else
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+		{
+			if (VM_ObjectMonitor::getMonitorForNotify(_currentThread, receiver, &monitorPtr, true)) {
+				if (0 != notifyFunction(monitorPtr)) {
+					buildInternalNativeStackFrame(REGISTER_ARGS);
+					rc = THROW_ILLEGAL_MONITOR_STATE;
+					goto done;
+				}
+			} else if (NULL != monitorPtr) {
 				buildInternalNativeStackFrame(REGISTER_ARGS);
 				rc = THROW_ILLEGAL_MONITOR_STATE;
 				goto done;
 			}
-		} else if (NULL != monitorPtr) {
-			buildInternalNativeStackFrame(REGISTER_ARGS);
-			rc = THROW_ILLEGAL_MONITOR_STATE;
-			goto done;
 		}
 
 		returnVoidFromINL(REGISTER_ARGS, 1);
