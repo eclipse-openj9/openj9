@@ -74,6 +74,11 @@
 #include <unistd.h>
 #endif /* defined(AIXPPC) */
 
+#if defined(OSX)
+#include <sys/types.h>
+#include <sys/sysctl.h>
+#endif /* defined(OSX) */
+
 #if defined(WIN32)
 #include <processenv.h>
 #include <stdlib.h>
@@ -552,6 +557,73 @@ done:
 			free(buffer);
 		}
 		close(fd);
+	}
+#elif defined(OSX) /* defined(AIXPPC) */
+	int argmax = 0;
+	size_t length = 0;
+	int mib[3];
+
+	/* query the argument space limit */
+	mib[0] = CTL_KERN;
+	mib[1] = KERN_ARGMAX;
+	length = sizeof(argmax);
+	if (0 == sysctl(mib, 2, &argmax, &length, NULL, 0)) {
+		char *buffer = malloc(argmax);
+
+		if (NULL != buffer) {
+			int argc = 0;
+			int pid = getpid();
+
+			/* query the argument count */
+			mib[0] = CTL_KERN;
+			mib[1] = KERN_PROCARGS2;
+			mib[2] = pid;
+			length = argmax;
+			if ((argmax >= sizeof(argc)) && (0 == sysctl(mib, 3, buffer, &length, NULL, 0))) {
+				memcpy(&argc, buffer, sizeof(argc));
+
+				/* retrieve the arguments */
+				mib[0] = CTL_KERN;
+				mib[1] = KERN_PROCARGS;
+				mib[2] = pid;
+				length = argmax;
+				if (0 == sysctl(mib, 3, buffer, &length, NULL, 0)) {
+					char *cursor = buffer;
+					char *start = NULL;
+					char *limit = buffer + length;
+
+					for (; (cursor < limit) && ('\0' != *cursor); ++cursor) {
+						/* skip past the program path */
+					}
+
+					for (; (cursor < limit) && ('\0' == *cursor); ++cursor) {
+						/* skip past the padding after the program path */
+					}
+
+					/*
+					 * remember the start of the first argument (this is the beginning
+					 * of argv[0] which is often the same as the path we skipped above)
+					 */
+					start = cursor;
+
+					/* replace the internal NULs with spaces */
+					for (; cursor < limit; ++cursor) {
+						if ('\0' == *cursor) {
+							argc -= 1;
+							if (0 == argc) {
+								break;
+							}
+							*cursor = ' ';
+						}
+					}
+
+					/* it's not fatal if setenv() fails, so don't bother checking */
+					setenv(ENV_VAR_NAME, start, 1 /* overwrite */);
+				}
+			}
+
+			free(buffer);
+		}
 	}
 #elif defined(WIN32) /* defined(AIXPPC) */
 	const wchar_t *commandLine = GetCommandLineW();
