@@ -502,16 +502,16 @@ J9NLS_JCL_CRIU_FAILED_TO_CLOSE_WORK_DIR.user_response=Ensure the specified direc
 
 J9NLS_JCL_CRIU_FAILED_TO_RUN_INTERNAL_CHECKPOINT_HOOKS=Could not run internal checkpoint hooks, errno=%li
 # START NON-TRANSLATABLE
-J9NLS_JCL_CRIU_FAILED_TO_CLOSE_WORK_DIR.sample_input_1=1
-J9NLS_JCL_CRIU_FAILED_TO_CLOSE_WORK_DIR.explanation=An error occured when the JVM attempted to run internal checkpoint hooks.
-J9NLS_JCL_CRIU_FAILED_TO_CLOSE_WORK_DIR.system_action=The JVM will throw a SystemCheckpointException.
-J9NLS_JCL_CRIU_FAILED_TO_CLOSE_WORK_DIR.user_response=View CRIU documentation to determine how to resolve the error.
+J9NLS_JCL_CRIU_FAILED_TO_RUN_INTERNAL_CHECKPOINT_HOOKS.sample_input_1=1
+J9NLS_JCL_CRIU_FAILED_TO_RUN_INTERNAL_CHECKPOINT_HOOKS.explanation=An error occured when the JVM attempted to run internal checkpoint hooks.
+J9NLS_JCL_CRIU_FAILED_TO_RUN_INTERNAL_CHECKPOINT_HOOKS.system_action=The JVM will throw a SystemCheckpointException.
+J9NLS_JCL_CRIU_FAILED_TO_RUN_INTERNAL_CHECKPOINT_HOOKS.user_response=View CRIU documentation to determine how to resolve the error.
 # END NON-TRANSLATABLE
 
 J9NLS_JCL_CRIU_FAILED_TO_RUN_INTERNAL_RESTORE_HOOKS=Could not run internal restore hooks, errno=%li
 # START NON-TRANSLATABLE
-J9NLS_JCL_CRIU_FAILED_TO_CLOSE_WORK_DIR.sample_input_1=1
-J9NLS_JCL_CRIU_FAILED_TO_CLOSE_WORK_DIR.explanation=An error occured when the JVM attempted to run internal restore hooks.
-J9NLS_JCL_CRIU_FAILED_TO_CLOSE_WORK_DIR.system_action=The JVM will throw a RestoreException.
-J9NLS_JCL_CRIU_FAILED_TO_CLOSE_WORK_DIR.user_response=View CRIU documentation to determine how to resolve the error.
+J9NLS_JCL_CRIU_FAILED_TO_RUN_INTERNAL_RESTORE_HOOKS.sample_input_1=1
+J9NLS_JCL_CRIU_FAILED_TO_RUN_INTERNAL_RESTORE_HOOKS.explanation=An error occured when the JVM attempted to run internal restore hooks.
+J9NLS_JCL_CRIU_FAILED_TO_RUN_INTERNAL_RESTORE_HOOKS.system_action=The JVM will throw a RestoreException.
+J9NLS_JCL_CRIU_FAILED_TO_RUN_INTERNAL_RESTORE_HOOKS.user_response=View CRIU documentation to determine how to resolve the error.
 # END NON-TRANSLATABLE

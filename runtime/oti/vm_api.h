@@ -534,9 +534,9 @@ jvmRestoreHooks(J9VMThread *currentThread);
 
 /**
  * @brief This iterates heap objects first, then goes through hook records,
- * and run the checkpoint hook function.
- * ExclusiveVMAccess is required since J9InternalHookRecord hold live object references
- * and GC are not allowed while running these hook functions.
+ * and runs the checkpoint hook function.
+ * ExclusiveVMAccess is required since J9InternalHookRecord holds live object references
+ * and GC is not allowed while running these hook functions.
  *
  * @param vm J9JavaVM
  * @return BOOLEAN TRUE if no error, otherwise FALSE
