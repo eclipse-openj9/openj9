@@ -4059,6 +4059,24 @@ typedef struct J9JITConfig {
 #endif /* J9VM_OPT_JITSERVER */
 } J9JITConfig;
 
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+typedef BOOLEAN (*hookFunc)(struct J9JavaVM *vm, void *userData);
+typedef struct J9InternalHookRecord {
+	BOOLEAN isRestore;
+	J9Class *instanceType;
+	BOOLEAN includeSubClass;
+	hookFunc hookFunc;
+	struct J9Pool *instanceObjects;
+} J9InternalHookRecord;
+
+typedef struct J9CRIUCheckpointState {
+	BOOLEAN isCheckPointEnabled;
+	BOOLEAN isCheckPointAllowed;
+	BOOLEAN isNonPortableRestoreMode;
+	struct J9Pool *hookRecords;
+} J9CRIUCheckpointState;
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+
 #define J9JIT_GROW_CACHES  0x100000
 #define J9JIT_CG_OPT_LEVEL_HIGH  16
 #define J9JIT_PATCHING_FENCE_REQUIRED  0x4000000
@@ -4820,6 +4838,8 @@ typedef struct J9InternalVMFunctions {
 	BOOLEAN (*jvmRestoreHooks)(struct J9VMThread *currentThread);
 	BOOLEAN (*isCRIUSupportEnabled)(struct J9VMThread *currentThread);
 	BOOLEAN (*isCheckpointAllowed)(struct J9VMThread *currentThread);
+	BOOLEAN (*runInternalJVMCheckpointHooks)(struct J9JavaVM *vm);
+	BOOLEAN (*runInternalJVMRestoreHooks)(struct J9JavaVM *vm);
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 	j9object_t (*getClassNameString)(struct J9VMThread *currentThread, j9object_t classObject, jboolean internAndAssign);
 } J9InternalVMFunctions;
@@ -5121,12 +5141,6 @@ typedef struct J9VMThread {
 #define J9VMTHREAD_OBJECT_HEADER_SIZE(vmThread) (J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread) ? sizeof(J9ObjectCompressed) : sizeof(J9ObjectFull))
 #define J9VMTHREAD_CONTIGUOUS_HEADER_SIZE(vmThread) (J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread) ? sizeof(J9IndexableObjectContiguousCompressed) : sizeof(J9IndexableObjectContiguousFull))
 #define J9VMTHREAD_DISCONTIGUOUS_HEADER_SIZE(vmThread) (J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread) ? sizeof(J9IndexableObjectDiscontiguousCompressed) : sizeof(J9IndexableObjectDiscontiguousFull))
-
-typedef struct J9CRIUCheckpointState {
-	BOOLEAN isCheckPointEnabled;
-	BOOLEAN isCheckPointAllowed;
-	BOOLEAN isNonPortableRestoreMode;
-} J9CRIUCheckpointState;
 
 typedef struct J9ReflectFunctionTable {
 	jobject  ( *idToReflectMethod)(struct J9VMThread* vmThread, jmethodID methodID) ;
