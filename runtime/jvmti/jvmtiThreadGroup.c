@@ -223,7 +223,7 @@ jvmtiGetThreadGroupChildren(jvmtiEnv* env,
 			childrenThreadsLock = (j9object_t)vmFuncs->objectMonitorEnter(currentThread, childrenThreadsLock);
 			/* The threadGroupObject has to be reobtained as it might have been GC'ed while waiting for the lock */
 			threadGroupObject = *((j9object_t*)group);
-			if (J9_OBJECT_MONITOR_ENTER_FAILED((UDATA)childrenGroupsLock)) {
+			if (J9_OBJECT_MONITOR_ENTER_FAILED((UDATA)childrenThreadsLock)) {
 #endif /* defined(J9VM_OPT_OPENJDK_THREAD_SUPPORT) */
 				rc = JVMTI_ERROR_OUT_OF_MEMORY;
 				j9mem_free_memory(groups);
