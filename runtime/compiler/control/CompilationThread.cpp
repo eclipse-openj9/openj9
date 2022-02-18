@@ -2449,13 +2449,8 @@ void TR::CompilationInfoPerThread::suspendCompilationThread()
 // This method may be called when we want all JIT activity to stop temporarily
 // It is called normally by a java thread
 //----------------------------------------------------------------------------
-void TR::CompilationInfo::suspendCompilationThread()
+void TR::CompilationInfo::suspendCompilationThread(bool purgeCompQueue)
    {
-   // if we compile on application thread, there is no compilation
-   // request queue and there is no compilation thread
-   // There can only be one request that is in progress. All the others
-   // will see the SUSPENDED state when they get the application monitor
-
    TR_ASSERT(_compilationMonitor, "Must have a compilation queue monitor\n");
    J9JavaVM   *vm       = _jitConfig->javaVM;
    J9VMThread *vmThread = vm->internalVMFunctions->currentVMThread(vm);
@@ -2484,7 +2479,7 @@ void TR::CompilationInfo::suspendCompilationThread()
             }
          }
       }
-   if (stoppedOneCompilationThread)
+   if (stoppedOneCompilationThread && purgeCompQueue)
       purgeMethodQueue(compilationSuspended);
    TR_ASSERT(_numCompThreadsActive == 0, "We must have all compilation threads suspended at this point\n");
    releaseCompMonitor(vmThread);
@@ -2617,6 +2612,93 @@ void TR::CompilationInfo::resumeCompilationThread()
    releaseCompMonitor(vmThread);
    }
 
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+void TR::CompilationInfo::prepareForCheckpoint()
+   {
+   J9JavaVM   *vm       = _jitConfig->javaVM;
+   J9VMThread *vmThread = vm->internalVMFunctions->currentVMThread(vm);
+
+   {
+   OMR::CriticalSection suspendCompThreadsForCheckpoint(getCompilationMonitor());
+
+   if (shouldCheckpointBeInterrupted())
+      return;
+
+   TR_ASSERT_FATAL(!isCheckpointInProgress(), "Checkpoint already in progress!\n");
+
+   /* Set the checkpoint in progress status. */
+   setCheckpointInProgress();
+
+   /* Inform compilation threads to suspend themselves. The compilation
+    * threads will complete any in-progress compilations first.
+    */
+   bool purgeMethodQueue = false;
+   suspendCompilationThread(purgeMethodQueue);
+
+   /* Wait until all compilation threads are suspended. */
+   for (int32_t i = 0; i < getNumTotalCompilationThreads(); i++)
+      {
+      TR::CompilationInfoPerThread *curCompThreadInfoPT = _arrayOfCompilationInfoPerThread[i];
+      if (!curCompThreadInfoPT->isDiagnosticThread())
+         {
+         do
+            {
+            /* Determine whether to wait on the CR Monitor.
+             *
+             * IMPORTANT: There should be no return, or C++ exception thrown, after
+             *            releasing the Comp Monitor below until it is re-acquired.
+             *            The Comp Monitor was acquired in an OMR::CriticalSection
+             *            object; a return, or thrown exception, will destruct this
+             *            object as part leaving the scope, or stack unwinding, which
+             *            will attempt to release the monitor in its destructor.
+             */
+            if (!shouldCheckpointBeInterrupted()
+                && curCompThreadInfoPT->getCompilationThreadState() != COMPTHREAD_SUSPENDED)
+               {
+               /* Acquire the CR monitor */
+               acquireCRMonitor();
+
+               /* Release the Comp Monitor before waiting */
+               releaseCompMonitor(vmThread);
+
+               /* Wait until notified */
+               waitOnCRMonitor();
+
+               /* Release CR Monitor and re-acquire the Comp Monitor */
+               releaseCRMonitor();
+               acquireCompMonitor(vmThread);
+               }
+            else
+               {
+               break;
+               }
+            }
+         while(true);
+         }
+
+      /* Stop cycling through the threads if checkpointing should be interrupted. */
+      if (shouldCheckpointBeInterrupted())
+         break;
+      }
+   }
+
+   }
+
+void TR::CompilationInfo::prepareForRestore()
+   {
+
+   {
+   OMR::CriticalSection resumeCompThreadsForRestore(getCompilationMonitor());
+
+   /* Reset the checkpoint in progress flag. */
+   resetCheckpointInProgress();
+
+   /* Resume suspended compilation threads. */
+   resumeCompilationThread();
+   }
+
+   }
+#endif // #if defined(J9VM_OPT_CRIU_SUPPORT)
 
 int TR::CompilationInfo::computeCompilationThreadPriority(J9JavaVM *vm)
    {
@@ -3428,6 +3510,18 @@ void TR::CompilationInfo::stopCompilationThreads()
 #endif
    acquireCompMonitor(vmThread);
 
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+   // Interrupt any checkpoint in progress and notify
+   // the thread waiting in the checkpoint hook.
+   if (isCheckpointInProgress())
+      {
+      interruptCheckpoint();
+      acquireCRMonitor();
+      getCRMonitor()->notifyAll();
+      releaseCRMonitor();
+      }
+#endif
+
    // Cycle through all non-diagnostic threads and stop them
    for (int32_t i = 0; i < getNumTotalCompilationThreads(); i++)
       {
@@ -3893,13 +3987,34 @@ TR::CompilationInfoPerThread::doSuspend()
    {
    _compInfo.setSuspendThreadDueToLowPhysicalMemory(false);
    getCompThreadMonitor()->enter();
+
+   // Set the new state
    setCompilationThreadState(COMPTHREAD_SUSPENDED);
-   _compInfo.releaseCompMonitor(getCompilationThread());   // release the queue monitor before waiting
+
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+   // Notify the thread waiting in the checkpoint hook.
+   if (_compInfo.isCheckpointInProgress())
+      {
+      _compInfo.acquireCRMonitor();
+      _compInfo.getCRMonitor()->notifyAll();
+      _compInfo.releaseCRMonitor();
+      }
+#endif
+
+   // release the queue monitor before waiting
+   _compInfo.releaseCompMonitor(getCompilationThread());
+
    setLastTimeThreadWasSuspended(_compInfo.getPersistentInfo()->getElapsedTime());
    setVMThreadNameWithFlag(getCompilationThread(), getCompilationThread(), getSuspendedThreadName(), 1);
-   getCompThreadMonitor()->wait(); // wait here until someone notifies us
+
+   // wait here until someone notifies us
+   getCompThreadMonitor()->wait();
+
    setVMThreadNameWithFlag(getCompilationThread(), getCompilationThread(), getActiveThreadName(), 1);
+
    getCompThreadMonitor()->exit();
+
+   // reacquire the queue monitor
    _compInfo.acquireCompMonitor(getCompilationThread());
    }
 

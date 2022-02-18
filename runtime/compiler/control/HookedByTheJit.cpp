@@ -1812,6 +1812,13 @@ static void jitHookThreadDestroy(J9HookInterface * * hookInterface, UDATA eventN
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 static void jitHookPrepareCheckpoint(J9HookInterface * * hookInterface, UDATA eventNum, void * eventData, void * userData)
    {
+   J9VMClassesUnloadEvent * restoreEvent = (J9VMClassesUnloadEvent *)eventData;
+   J9VMThread * vmThread = restoreEvent->currentThread;
+   J9JavaVM * javaVM = vmThread->javaVM;
+   J9JITConfig * jitConfig = javaVM->jitConfig;
+
+   TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
+   compInfo->prepareForCheckpoint();
    }
 
 static void jitHookPrepareRestore(J9HookInterface * * hookInterface, UDATA eventNum, void * eventData, void * userData)
@@ -1819,6 +1826,7 @@ static void jitHookPrepareRestore(J9HookInterface * * hookInterface, UDATA event
    J9VMClassesUnloadEvent * restoreEvent = (J9VMClassesUnloadEvent *)eventData;
    J9VMThread * vmThread = restoreEvent->currentThread;
    J9JavaVM * javaVM = vmThread->javaVM;
+   J9JITConfig * jitConfig = javaVM->jitConfig;
 
    /* If the restored run does not allow further checkpoints, then
     * remove the portability restrictions on the target CPU (used
@@ -1829,6 +1837,9 @@ static void jitHookPrepareRestore(J9HookInterface * * hookInterface, UDATA event
       TR::Compiler->target.cpu = TR::CPU::detect(TR::Compiler->omrPortLib);
       jitConfig->targetProcessor = TR::Compiler->target.cpu.getProcessorDescription();
       }
+
+   TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
+   compInfo->prepareForRestore();
    }
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
