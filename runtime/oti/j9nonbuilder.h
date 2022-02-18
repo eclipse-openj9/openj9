@@ -2461,7 +2461,6 @@ typedef struct J9I2JState {
 typedef struct J9StackWalkState {
 	struct J9StackWalkState* previous;
 	struct J9VMThread* walkThread;
-	struct J9JavaVM* javaVM;
 	UDATA flags;
 	UDATA* bp;
 	UDATA* unwindSP;
@@ -2517,7 +2516,7 @@ typedef struct J9StackWalkState {
 	/* The size of J9StackWalkState must be a multiple of 8 because it is inlined into
 	 * J9VMThread where alignment assumotions are being made.
 	 */
-#if 0 && !defined(J9VM_ENV_DATA64) /* Change to 0 or 1 based on number of fields above */
+#if 1 && !defined(J9VM_ENV_DATA64) /* Change to 0 or 1 based on number of fields above */
 	U_32 padTo8;
 #endif /* !J9VM_ENV_DATA64 */
 } J9StackWalkState;
@@ -3917,11 +3916,11 @@ typedef struct J9JITConfig {
 	UDATA codeCacheTotalKB;
 	UDATA dataCacheTotalKB;
 	struct J9JITExceptionTable*  ( *jitGetExceptionTableFromPC)(struct J9VMThread * vmThread, UDATA jitPC) ;
-	void*  ( *jitGetStackMapFromPC)(struct J9VMThread * currentThread, struct J9JavaVM * vm, struct J9JITExceptionTable * exceptionTable, UDATA jitPC) ;
-	void*  ( *jitGetInlinerMapFromPC)(struct J9VMThread * currentThread, struct J9JavaVM * vm, struct J9JITExceptionTable * exceptionTable, UDATA jitPC) ;
+	void*  ( *jitGetStackMapFromPC)(struct J9VMThread * currentThread, struct J9JITExceptionTable * exceptionTable, UDATA jitPC) ;
+	void*  ( *jitGetInlinerMapFromPC)(struct J9VMThread * currentThread, struct J9JITExceptionTable * exceptionTable, UDATA jitPC) ;
 	UDATA  ( *getJitInlineDepthFromCallSite)(struct J9JITExceptionTable *metaData, void *inlinedCallSite) ;
 	void*  ( *getJitInlinedCallInfo)(struct J9JITExceptionTable * md) ;
-	void*  ( *getStackMapFromJitPC)(struct J9VMThread * currentThread, struct J9JavaVM * vm, struct J9JITExceptionTable * exceptionTable, UDATA jitPC) ;
+	void*  ( *getStackMapFromJitPC)(struct J9VMThread * currentThread, struct J9JITExceptionTable * exceptionTable, UDATA jitPC) ;
 	void*  ( *getFirstInlinedCallSite)(struct J9JITExceptionTable * metaData, void * stackMap) ;
 	void*  ( *getNextInlinedCallSite)(struct J9JITExceptionTable * metaData, void * inlinedCallSite) ;
 	UDATA  ( *hasMoreInlinedMethods)(void * inlinedCallSite) ;
