@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2022 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1377,8 +1377,8 @@ extern J9_CFUNC UDATA  hasMoreInlinedMethods (void * inlinedCallSite);
 extern J9_CFUNC UDATA  getByteCodeIndex (void * inlinedCallSite);
 extern J9_CFUNC void  jitReportDynamicCodeLoadEvents (J9VMThread * currentThread);
 extern J9_CFUNC UDATA  getJitInlineDepthFromCallSite (J9JITExceptionTable *metaData, void *inlinedCallSite);
-extern J9_CFUNC void*  jitGetInlinerMapFromPC (J9VMThread * currentThread, J9JavaVM * vm, J9JITExceptionTable * exceptionTable, UDATA jitPC);
-extern J9_CFUNC void*  getStackMapFromJitPC (J9VMThread * currentThread, J9JavaVM * vm, struct J9JITExceptionTable * exceptionTable, UDATA jitPC);
+extern J9_CFUNC void*  jitGetInlinerMapFromPC (J9VMThread * currentThread, J9JITExceptionTable * exceptionTable, UDATA jitPC);
+extern J9_CFUNC void*  getStackMapFromJitPC (J9VMThread * currentThread, struct J9JITExceptionTable * exceptionTable, UDATA jitPC);
 extern J9_CFUNC UDATA  getCurrentByteCodeIndexAndIsSameReceiver (J9JITExceptionTable *metaData, void *stackMap, void *currentInlinedCallSite, UDATA * isSameReceiver);
 extern J9_CFUNC void  clearFPStack (void);
 extern J9_CFUNC void  jitExclusiveVMShutdownPending (J9VMThread *vmThread);

@@ -125,7 +125,6 @@ UDATA  walkStackFrames(J9VMThread *currentThread, J9StackWalkState *walkState)
 		currentThread->activeWalkState = walkState;
 	}
 
-	walkState->javaVM = walkState->walkThread->javaVM;
 	walkState->currentThread = currentThread;
 	walkState->cache = NULL;
 	walkState->framesWalked = 0;
