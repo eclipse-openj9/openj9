@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2005, 2020 IBM Corp. and others
+ * Copyright (c) 2005, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -174,10 +174,12 @@ public class TestRuntimeMXBean {
 			AssertJUnit.assertNotNull(mbs.getAttribute(objName, "SystemProperties"));
 			AssertJUnit.assertTrue(mbs.getAttribute(objName, "SystemProperties") instanceof TabularData);
 			AssertJUnit.assertTrue(((TabularData)(mbs.getAttribute(objName, "SystemProperties"))).size() > 0);
-			if (System.getSecurityManager() == null) {
+			try {
 				AssertJUnit.assertTrue(((TabularData)(mbs.getAttribute(objName, "SystemProperties"))).size() ==
 						System.getProperties().size());
-			} // end if no security manager
+			} catch (SecurityException e) {
+				/* Security Manager was set; ignore */
+			}
 
 			AssertJUnit.assertNotNull(mbs.getAttribute(objName, "Uptime"));
 			AssertJUnit.assertTrue(mbs.getAttribute(objName, "Uptime") instanceof Long);
@@ -332,8 +334,10 @@ public class TestRuntimeMXBean {
 		AssertJUnit.assertTrue(props instanceof Map);
 		AssertJUnit.assertTrue(props.size() > 0);
 
-		if (System.getSecurityManager() == null) {
+		try {
 			AssertJUnit.assertTrue(props.size() == System.getProperties().size());
+		} catch (SecurityException e) {
+			/* Security Manager was set; ignore */
 		}
 	}
 
@@ -506,7 +510,7 @@ public class TestRuntimeMXBean {
 						// the SystemProperties.
 						TabularData td = (TabularData)value;
 						AssertJUnit.assertTrue(td.size() > 0);
-						if (System.getSecurityManager() == null) {
+						try {
 							Properties props = System.getProperties();
 							AssertJUnit.assertTrue(td.size() == props.size());
 							Enumeration<?> propNames = props.propertyNames();
@@ -515,7 +519,9 @@ public class TestRuntimeMXBean {
 								String propVal = props.getProperty(property);
 								AssertJUnit.assertEquals(propVal, td.get(new String[] { property }).get("value"));
 							} // end while
-						} // end if no security manager
+						} catch (SecurityException e) {
+							/* Security Manager was set; ignore */
+						}
 					} // end else a String array expected
 				} // end if a known attribute
 				else {

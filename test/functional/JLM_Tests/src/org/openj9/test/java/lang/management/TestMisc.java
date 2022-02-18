@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2005, 2018 IBM Corp. and others
+ * Copyright (c) 2005, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -51,7 +51,7 @@ public class TestMisc {
 
 	@Test
 	public void testVerboseSetting() {
-		if (System.getSecurityManager() == null) {
+		try {
 			String val1 = System.getProperty("com.ibm.lang.management.verbose");
 
 			if (val1 != null) {
@@ -59,6 +59,8 @@ public class TestMisc {
 			} else {
 				AssertJUnit.assertFalse(ManagementUtils.VERBOSE_MODE);
 			} // end else com.ibm.lang.management.verbose was already set
+		} catch (SecurityException e) {
+			/* Security Manager was set; ignore */
 		}
 	}
 

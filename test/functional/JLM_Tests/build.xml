@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 
 <!--
-  Copyright (c) 2016, 2021 IBM Corp. and others
+  Copyright (c) 2016, 2022 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -81,18 +81,30 @@
 					</else>
 				</if>
 				<property name="TestUtilitiesExports" value="--add-exports java.base/openj9.internal.tools.attach.target=ALL-UNNAMED" />
-				<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
-					<src path="${src}" />
-					<src path="${src_90}" />
-					<src path="${transformerListener}" />
-					<src path="${TestUtilities}" />
-					<compilerarg line='${addExports} ${TestUtilitiesExports}' />
-					<classpath>
-						<pathelement location="${LIB_DIR}/testng.jar" />
-						<pathelement location="${LIB_DIR}/jcommander.jar" />
-						<pathelement location="${LIB_DIR}/commons-exec.jar" />
-					</classpath>
-				</javac>
+				<property name="srcpath" location="${src}:${src_90}:${transformerListener}:${TestUtilities}" />
+				<path id="build.cp">
+					<fileset dir="${LIB_DIR}/" includes="testng.jar"/>
+					<fileset dir="${LIB_DIR}/" includes="jcommander.jar"/>
+					<fileset dir="${LIB_DIR}/" includes="commons-exec.jar"/>
+				</path>
+				<if>
+					<matches string="${JDK_VERSION}" pattern="^(9|(1[0-8]))$$" />
+					<then>
+						<!-- Java 9-18 -->
+						<javac srcdir="${srcpath}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" classpathref="build.cp">
+							<compilerarg line='${addExports} ${TestUtilitiesExports}' />
+						</javac>
+					</then>
+					<else>
+						<!-- Java 19+ (SecurityManager removed) -->
+						<javac srcdir="${srcpath}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" classpathref="build.cp">
+							<compilerarg line='${addExports} ${TestUtilitiesExports}' />
+							<!-- exclude tests that depend on SecurityManager -->
+							<exclude name="org/openj9/test/java/lang/management/TestSharedClassMemoryMXBean_SM.java" />
+							<exclude name="org/openj9/test/java/lang/management/TestRegression_SM.java" />
+						</javac>
+					</else>
+				</if>
 			</else>
 		</if>
 	</target>

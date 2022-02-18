@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2005, 2018 IBM Corp. and others
+ * Copyright (c) 2005, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,14 +24,11 @@ package org.openj9.test.java.lang.management;
 
 import org.testng.annotations.Test;
 import org.testng.log4testng.Logger;
-import org.testng.Assert;
-import org.testng.AssertJUnit;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
 
-import javax.management.MBeanServer;
 import javax.management.MBeanServerConnection;
 
 /**
@@ -77,21 +74,6 @@ public class TestRegression {
 				logger.debug("Lock Owner ID = " + threadData.getLockOwnerId());
 			}
 			logger.debug("\n");
-		}
-	}
-
-	@Test
-	public final void testBug93006() {
-		MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
-
-		System.setSecurityManager(new SecurityManager());
-		AssertJUnit.assertNotNull(System.getSecurityManager());
-
-		try {
-			MBeanServer mbs2 = ManagementFactory.getPlatformMBeanServer();
-			Assert.fail("Should have thrown a SecurityException");
-		} catch (Exception e) {
-			AssertJUnit.assertTrue(e instanceof SecurityException);
 		}
 	}
 }

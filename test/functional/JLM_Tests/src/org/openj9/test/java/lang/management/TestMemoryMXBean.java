@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2005, 2020 IBM Corp. and others
+ * Copyright (c) 2005, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -62,7 +62,6 @@ import javax.management.openmbean.CompositeData;
 import com.ibm.lang.management.MemoryMXBean;
 
 import org.openj9.test.util.VersionCheck;
-import org.openj9.test.util.process.Task;
 
 // These classes are not public API.
 import com.ibm.java.lang.management.internal.MemoryNotificationInfoUtil;
@@ -145,20 +144,6 @@ public class TestMemoryMXBean {
 		MemoryMXBean bean = (MemoryMXBean)ManagementFactory.getMemoryMXBean();
 		if (bean.isSetMaxHeapSizeSupported()) {
 			bean.setMaxHeapSize(bean.getMaxHeapSizeLimit());
-		}
-	}
-
-	static class ClassForTestMaxHeapSize implements Task {
-		@Override
-		public void run() throws Exception {
-			System.setSecurityManager(new SecurityManager());
-			MemoryMXBean bean = (MemoryMXBean)ManagementFactory.getMemoryMXBean();
-			Thread.sleep(2000);
-			long size = bean.getMinHeapSize();
-			bean.setMaxHeapSize(size + 1024);
-			if (size + 1024 != bean.getMaxHeapSize()) {
-				throw new RuntimeException("not equal");
-			}
 		}
 	}
 

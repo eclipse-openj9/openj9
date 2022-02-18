@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2005, 2018 IBM Corp. and others
+ * Copyright (c) 2005, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,13 +29,8 @@ import org.testng.annotations.BeforeClass;
 import org.testng.Assert;
 import org.testng.AssertJUnit;
 import java.lang.management.ManagementFactory;
-import java.security.AccessControlException;
 
 import com.ibm.lang.management.MemoryMXBean;
-
-import org.openj9.test.util.process.ProcessRunner;
-import org.openj9.test.util.process.Task;
-
 
 @Test(groups = { "level.sanity" })
 public class TestSharedClassMemoryMXBean {
@@ -51,66 +46,6 @@ public class TestSharedClassMemoryMXBean {
 
 	@AfterClass
 	protected void tearDown() throws Exception {
-	}
-
-	static class ClassForTestSharedClassSoftmx implements Task {
-		@Override
-		public void run() throws Exception {
-			System.setSecurityManager(new SecurityManager());
-			MemoryMXBean bean = (MemoryMXBean)ManagementFactory.getMemoryMXBean();
-			long size = 10 * 1024 * 1024;
-
-			bean.setSharedClassCacheSoftmxBytes(size);
-			AssertJUnit.assertTrue(size == bean.getSharedClassCacheSoftmxBytes());
-		}
-	}
-
-	static class ClassForTestSharedClassMaxAotBytes implements Task {
-		@Override
-		public void run() throws Exception {
-			System.setSecurityManager(new SecurityManager());
-			MemoryMXBean bean = (MemoryMXBean)ManagementFactory.getMemoryMXBean();
-			long size = 1024 * 1024;
-
-			bean.setSharedClassCacheMaxAotBytes(size);
-			AssertJUnit.assertTrue(size == bean.getSharedClassCacheMaxAotBytes());
-		}
-	}
-
-	static class ClassForTestSharedClassMinAotBytes implements Task {
-		@Override
-		public void run() throws Exception {
-			System.setSecurityManager(new SecurityManager());
-			MemoryMXBean bean = (MemoryMXBean)ManagementFactory.getMemoryMXBean();
-			long size = 1024 * 1024;
-
-			bean.setSharedClassCacheMinAotBytes(size);
-			AssertJUnit.assertTrue(size == bean.getSharedClassCacheMinAotBytes());
-		}
-	}
-
-	static class ClassForTestSharedClassMaxJitDataBytes implements Task {
-		@Override
-		public void run() throws Exception {
-			System.setSecurityManager(new SecurityManager());
-			MemoryMXBean bean = (MemoryMXBean)ManagementFactory.getMemoryMXBean();
-			long size = 1024 * 1024;
-
-			bean.setSharedClassCacheMaxJitDataBytes(size);
-			AssertJUnit.assertTrue(size == bean.getSharedClassCacheMaxJitDataBytes());
-		}
-	}
-
-	static class ClassForTestSharedClassMinJitDataBytes implements Task {
-		@Override
-		public void run() throws Exception {
-			System.setSecurityManager(new SecurityManager());
-			MemoryMXBean bean = (MemoryMXBean)ManagementFactory.getMemoryMXBean();
-			long size = 1024 * 1024;
-
-			bean.setSharedClassCacheMinJitDataBytes(size);
-			AssertJUnit.assertTrue(size == bean.getSharedClassCacheMinJitDataBytes());
-		}
 	}
 
 	@Test
@@ -157,24 +92,6 @@ public class TestSharedClassMemoryMXBean {
 	}
 
 	@Test
-	public void testSeSharedClassSoftmxSizeWithSecurityManager() throws Exception {
-		try {
-			if (!System.getProperty("os.name").toLowerCase().contains("aix")) {
-				/*
-				 * It hangs on AIX 64 bit at line: socket = serverSock.accept() in ProcessRunner.initializeCommunication()
-				 */
-				new ProcessRunner(new ClassForTestSharedClassSoftmx()).run();
-				Assert.fail(
-						"testSeSharedClassSoftmxSizeWithSecurityManager: should throw java.security.AccessControlException: "
-								+ "Access denied (\"java.lang.management.ManagementPermission\" \"control\")");
-			}
-		} catch (AccessControlException e) {
-			AssertJUnit.assertTrue(e.getMessage().contains("ManagementPermission"));
-			logger.debug(e);
-		}
-	}
-
-	@Test
 	public void testSharedClassMaxAotBytes() {
 		try {
 			long val = mb.getSharedClassCacheMaxAotBytes();
@@ -199,24 +116,6 @@ public class TestSharedClassMemoryMXBean {
 
 		} catch (Throwable e) {
 			Assert.fail("Caught unexpected exception : " + e.getMessage());
-		}
-	}
-
-	@Test
-	public void testSeSharedClassMaxAotWithSecurityManager() throws Exception {
-		try {
-			if (!System.getProperty("os.name").toLowerCase().contains("aix")) {
-				/*
-				 * It hangs on AIX 64 bit at line: socket = serverSock.accept() in ProcessRunner.initializeCommunication()
-				 */
-				new ProcessRunner(new ClassForTestSharedClassMaxAotBytes()).run();
-				Assert.fail(
-						"testSeSharedClassMaxAotWithSecurityManager: should throw java.security.AccessControlException: "
-								+ "Access denied (\"java.lang.management.ManagementPermission\" \"control\")");
-			}
-		} catch (AccessControlException e) {
-			AssertJUnit.assertTrue(e.getMessage().contains("ManagementPermission"));
-			logger.debug(e);
 		}
 	}
 
@@ -249,24 +148,6 @@ public class TestSharedClassMemoryMXBean {
 	}
 
 	@Test
-	public void testSeSharedClassMinAotWithSecurityManager() throws Exception {
-		try {
-			if (!System.getProperty("os.name").toLowerCase().contains("aix")) {
-				/*
-				 * It hangs on AIX 64 bit at line: socket = serverSock.accept() in ProcessRunner.initializeCommunication()
-				 */
-				new ProcessRunner(new ClassForTestSharedClassMinAotBytes()).run();
-				Assert.fail(
-						"testSeSharedClassMinAotWithSecurityManager: should throw java.security.AccessControlException: "
-								+ "Access denied (\"java.lang.management.ManagementPermission\" \"control\")");
-			}
-		} catch (AccessControlException e) {
-			AssertJUnit.assertTrue(e.getMessage().contains("ManagementPermission"));
-			logger.debug(e);
-		}
-	}
-
-	@Test
 	public void testSharedClassMaxJitDataBytes() {
 		try {
 			long val = mb.getSharedClassCacheMaxJitDataBytes();
@@ -294,24 +175,6 @@ public class TestSharedClassMemoryMXBean {
 	}
 
 	@Test
-	public void testSeSharedClassMaxJitDataWithSecurityManager() throws Exception {
-		try {
-			if (!System.getProperty("os.name").toLowerCase().contains("aix")) {
-				/*
-				 * It hangs on AIX 64 bit at line: socket = serverSock.accept() in ProcessRunner.initializeCommunication()
-				 */
-				new ProcessRunner(new ClassForTestSharedClassMaxJitDataBytes()).run();
-				Assert.fail(
-						"testSeSharedClassMaxJitDataWithSecurityManager: should throw java.security.AccessControlException: "
-								+ "Access denied (\"java.lang.management.ManagementPermission\" \"control\")");
-			}
-		} catch (AccessControlException e) {
-			AssertJUnit.assertTrue(e.getMessage().contains("ManagementPermission"));
-			logger.debug(e);
-		}
-	}
-
-	@Test
 	public void testSharedClassMinJitDataBytes() {
 		try {
 			long val = mb.getSharedClassCacheMinJitDataBytes();
@@ -335,24 +198,6 @@ public class TestSharedClassMemoryMXBean {
 			}
 		} catch (Throwable e) {
 			Assert.fail("Caught unexpected exception : " + e.getMessage());
-		}
-	}
-
-	@Test
-	public void testSeSharedClassMinJitDataWithSecurityManager() throws Exception {
-		try {
-			if (!System.getProperty("os.name").toLowerCase().contains("aix")) {
-				/*
-				 * It on hangs on AIX 64 bit at line: socket = serverSock.accept() in ProcessRunner.initializeCommunication()
-				 */
-				new ProcessRunner(new ClassForTestSharedClassMinJitDataBytes()).run();
-				Assert.fail(
-						"testSeSharedClassMinJitDataWithSecurityManager: should throw java.security.AccessControlException: "
-								+ "Access denied (\"java.lang.management.ManagementPermission\" \"control\")");
-			}
-		} catch (AccessControlException e) {
-			AssertJUnit.assertTrue(e.getMessage().contains("ManagementPermission"));
-			logger.debug(e);
 		}
 	}
 
