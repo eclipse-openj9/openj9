@@ -6554,18 +6554,20 @@ public final class Unsafe {
 
 	/*[IF INLINE-TYPES]*/
 	/**
-	 * Retrieves the primitive type in the obj parameter referenced by offset.
+	 * Retrieves the value of the primitive type in the obj parameter referenced by offset.
+	 * The primitive type in obj at the given offset must be flattened.
 	 * This is a non-volatile operation.
 	 *
 	 * @param obj object from which to retrieve the primitive type
 	 * @param offset position of the primitive type in obj
 	 * @param clz the class of primitive type to return
-	 * @return primitive type stored in obj
+	 * @return the value of the primitive type stored in obj at the given offset
 	 */
 	public native <V> V getValue(Object obj, long offset, Class<?> clz);
 
 	/**
 	 * Sets the value of the primitive type in the obj parameter at memory offset.
+	 * Both the new value and the primitive type in obj at the given offset must be flattened.
 	 * This is a non-volatile operation.
 	 *
 	 * @param obj object into which to store the primitive type
