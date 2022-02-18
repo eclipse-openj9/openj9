@@ -1,4 +1,4 @@
-!! Copyright (c) 2000, 2021 IBM Corp. and others
+!! Copyright (c) 2000, 2022 IBM Corp. and others
 !!
 !! This program and the accompanying materials are made available under
 !! the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2645,7 +2645,7 @@ _interfaceSlotsUnavailable:
         bne     .L.callHelper
         ! lastITable is a match
         laddr   r12, 4*ALen(r11)                                ! Load the itable offset from the snippet
-        andis.  r11,r12,J9TR_J9_ITABLE_OFFSET_TAG_BITS          ! Call the helper if the itable offset is tagged
+        andi.   r0, r12, J9TR_J9_ITABLE_OFFSET_TAG_BITS         ! Call the helper if the itable offset is tagged
         bne     .L.callHelper
         laddrx  r12, r9, r12                                    ! Load the interpreter vft offset
         neg     r12, r12
