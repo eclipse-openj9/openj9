@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2016, 2020 IBM Corp. and others
+# Copyright (c) 2016, 2022 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -57,6 +57,39 @@ ifeq (linux_390-64, $(SPEC))
 endif
 
 ifeq (linux_390, $(SPEC))
+	CONFIGURE_ARGS += \
+		--enable-OMRTHREAD_LIB_UNIX \
+		--enable-OMR_ARCH_S390 \
+		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS \
+		OMR_GC_POINTER_MODE=full
+endif
+
+# zArtemis platforms
+ifeq (linux_390-64_cmprssptrs_zt, $(SPEC))
+	CONFIGURE_ARGS += \
+		--enable-OMRTHREAD_LIB_UNIX \
+		--enable-OMR_ARCH_S390 \
+		--enable-OMR_ENV_DATA64 \
+		--enable-OMR_GC_DOUBLE_MAP_ARRAYLETS \
+		--enable-OMR_GC_CONCURRENT_SCAVENGER \
+		--enable-OMR_GC_IDLE_HEAP_MANAGER \
+		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS \
+		OMR_GC_POINTER_MODE=compressed
+endif
+
+ifeq (linux_390-64_zt, $(SPEC))
+	CONFIGURE_ARGS += \
+		--enable-OMRTHREAD_LIB_UNIX \
+		--enable-OMR_ARCH_S390 \
+		--enable-OMR_ENV_DATA64 \
+		--enable-OMR_GC_DOUBLE_MAP_ARRAYLETS \
+		--enable-OMR_GC_CONCURRENT_SCAVENGER \
+		--enable-OMR_GC_IDLE_HEAP_MANAGER \
+		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS \
+		OMR_GC_POINTER_MODE=full
+endif
+
+ifeq (linux_390_zt, $(SPEC))
 	CONFIGURE_ARGS += \
 		--enable-OMRTHREAD_LIB_UNIX \
 		--enable-OMR_ARCH_S390 \
