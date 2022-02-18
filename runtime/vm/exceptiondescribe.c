@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -279,7 +279,7 @@ iterateStackTrace(J9VMThread * vmThread, j9object_t* exception, callback_func_t 
 			if (jitConfig) {
 				metaData = jitConfig->jitGetExceptionTableFromPC(vmThread, methodPC);
 				if (metaData) {
-					inlineMap = jitConfig->jitGetInlinerMapFromPC(vmThread, metaData, methodPC);
+					inlineMap = jitConfig->jitGetInlinerMapFromPC(vmThread, vm, metaData, methodPC);
 					if (inlineMap) {
 						inlinedCallSite = jitConfig->getFirstInlinedCallSite(metaData, inlineMap);
 						if (inlinedCallSite) {
