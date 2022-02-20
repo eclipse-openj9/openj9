@@ -3969,58 +3969,79 @@ inline void generateInlinedCheckCastForDynamicCastClass(TR::Node* node, TR::Code
    cg->decReferenceCount(node->getSecondChild());
    }
 
-inline void generateInlinedCheckCastOrInstanceOfForInterface(TR::Node* node, TR_OpaqueClassBlock* clazz, TR::CodeGenerator* cg, bool isCheckCast)
+
+/**
+ * @brief Generate instructions to perform an interface table walk to search
+ *        for a given cast class.  Handles both checkcast and instanceof.
+ *
+ * @param[in] node : \c TR::Node of the current check node
+ * @param[in] cg : \c TR::CodeGenerator object
+ * @param[in] iTableLookUpFailLabel : \c TR::LabelSymbol to handle the case where the cast class
+ *               is not found during the itable walk
+ * @param[in] castClass : \c J9::Class cast class address
+ * @param[in] castClassReg : \c TR::Register scratch register to hold large cast class address,
+ *               if necessary.  NULL means a scratch register is not required for the cast class.
+ * @param[in] itableReg : \c TR::Register to use during itable walk
+ */
+static void inlineInterfaceLookup(
+      TR::Node *node,
+      TR::CodeGenerator *cg,
+      TR::LabelSymbol *iTableLookUpFailLabel,
+      TR_OpaqueClassBlock *castClass,
+      TR::Register *castClassReg,
+      TR::Register *itableReg)
+   {
+   TR::LabelSymbol *iTableLoopLabel = generateLabelSymbol(cg);
+
+   if (castClassReg)
+      {
+      generateRegImm64Instruction(TR::InstOpCode::MOV8RegImm64, node, castClassReg, reinterpret_cast<uintptr_t>(castClass), cg, TR_ClassAddress);
+      }
+
+   // Loop through I-Table
+   generateLabelInstruction(TR::InstOpCode::label, node, iTableLoopLabel, cg);
+   generateRegRegInstruction(TR::InstOpCode::TESTRegReg(), node, itableReg, itableReg, cg);
+   generateLabelInstruction(TR::InstOpCode::JE4, node, iTableLookUpFailLabel, cg);
+   auto interfaceMR = generateX86MemoryReference(itableReg, offsetof(J9ITable, interfaceClass), cg);
+   if (castClassReg)
+      {
+      generateMemRegInstruction(TR::InstOpCode::CMP8MemReg, node, interfaceMR, castClassReg, cg);
+      }
+   else
+      {
+      generateMemImmSymInstruction(TR::InstOpCode::CMP4MemImm4, node, interfaceMR, reinterpret_cast<uintptr_t>(castClass), node->getChild(1)->getSymbolReference(), cg);
+      }
+   generateRegMemInstruction(TR::InstOpCode::LRegMem(), node, itableReg, generateX86MemoryReference(itableReg, offsetof(J9ITable, next), cg), cg);
+   generateLabelInstruction(TR::InstOpCode::JNE4, node, iTableLoopLabel, cg);
+
+   // If the loop does not iterate then a match was found
+   }
+
+
+inline void generateInlinedCheckCastOrInstanceOfForInterface(
+      TR::Node *node,
+      TR_OpaqueClassBlock *castClass,
+      TR::CodeGenerator *cg,
+      bool isCheckCast)
    {
    TR::Compilation *comp = cg->comp();
-   TR_ASSERT(clazz && TR::Compiler->cls.isInterfaceClass(comp, clazz), "Not a compile-time known Interface.");
+   TR_ASSERT(castClass && TR::Compiler->cls.isInterfaceClass(comp, castClass), "Not a compile-time known Interface.");
 
-   auto use64BitClasses = comp->target().is64Bit() &&
+   bool use64BitClasses = comp->target().is64Bit() &&
                              (!TR::Compiler->om.generateCompressedObjectHeaders() ||
                               (comp->compileRelocatableCode() && comp->getOption(TR_UseSymbolValidationManager)));
 
-   // When running 64 bit compressed refs, if clazz is an address above the 2G boundary then we can't use
+   // When running 64 bit compressed refs, if castClass is an address above the 2G boundary then we can't use
    // a push 32bit immediate instruction to pass it on the stack to the jitThrowClassCastException helper
    // as the address gets sign extended. It needs to be stored in a temp register and then push the
    // register to the stack.
-   auto highClass = (comp->target().is64Bit() && ((uintptr_t)clazz) > INT_MAX) ? true : false;
+   bool highClass = (comp->target().is64Bit() && ((uintptr_t)castClass) > INT_MAX);
 
-   auto j9class = cg->allocateRegister();
-   auto tmp     = (use64BitClasses || highClass) ? cg->allocateRegister() : NULL;
-
-   auto deps = generateRegisterDependencyConditions((uint8_t)2, (uint8_t)2, cg);
-   deps->addPreCondition(j9class, TR::RealRegister::NoReg, cg);
-   deps->addPostCondition(j9class, TR::RealRegister::NoReg, cg);
-   if (tmp)
-      {
-      deps->addPreCondition(tmp, TR::RealRegister::NoReg, cg);
-      deps->addPostCondition(tmp, TR::RealRegister::NoReg, cg);
-      }
-   deps->stopAddingConditions();
-
-   auto begLabel = generateLabelSymbol(cg);
-   auto endLabel = generateLabelSymbol(cg);
-   begLabel->setStartInternalControlFlow();
-   endLabel->setEndInternalControlFlow();
-
-   auto iTableLookUpPathLabel = generateLabelSymbol(cg);
-   auto iTableLookUpFailLabel = generateLabelSymbol(cg);
-   auto iTableLoopLabel       = generateLabelSymbol(cg);
-
-   generateRegRegInstruction(TR::InstOpCode::MOVRegReg(), node, j9class, node->getChild(0)->getRegister(), cg);
-   generateLabelInstruction(TR::InstOpCode::label, node, begLabel, cg);
-
-   // Null test
-   if (!node->getChild(0)->isNonNull() && node->getOpCodeValue() != TR::checkcastAndNULLCHK)
-      {
-      // j9class contains the object at this point, reusing the register as object is no longer used after this point.
-      generateRegRegInstruction(TR::InstOpCode::TESTRegReg(), node, j9class, j9class, cg);
-      generateLabelInstruction(TR::InstOpCode::JE4, node, endLabel, cg);
-      }
-
-   // Load J9Class
-   generateLoadJ9Class(node, j9class, j9class, cg);
+   TR::Register *instanceClassReg = cg->allocateRegister();
+   TR::Register *castClassReg = (use64BitClasses || highClass) ? cg->allocateRegister() : NULL;
 
    // Profiled call site cache
+   uint8_t numSuccessfulClassChecks = 0;
    uintptr_t guessClass = 0;
    if (!comp->compileRelocatableCode())
       {
@@ -4029,99 +4050,244 @@ inline void generateInlinedCheckCastOrInstanceOfForInterface(TR::Node* node, TR_
       auto fej9 = static_cast<TR_J9VMBase *>(comp->fe());
       for (uint8_t i = 0; i < num_PICs; i++)
          {
-         if (fej9->instanceOfOrCheckCastNoCacheUpdate((J9Class*)guessClassArray[i], (J9Class*)clazz))
+         if (fej9->instanceOfOrCheckCastNoCacheUpdate((J9Class*)guessClassArray[i], (J9Class*)castClass))
             {
             guessClass = reinterpret_cast<uintptr_t>(guessClassArray[i]);
+            numSuccessfulClassChecks++;
             }
          }
       }
 
-   // Call site cache
-   auto cache = sizeof(J9Class*) == 4 ? cg->create4ByteData(node, (uint32_t)guessClass) : cg->create8ByteData(node, (uint64_t)guessClass);
-   cache->setClassAddress(true);
-   generateRegMemInstruction(TR::InstOpCode::CMPRegMem(use64BitClasses), node, j9class, generateX86MemoryReference(cache, cg), cg);
-   generateLabelInstruction(TR::InstOpCode::JNE4, node, iTableLookUpPathLabel, cg);
+   /**
+    * Only cache the last successful check if profiling strongly suggests this check
+    * is monomorphic.  If profiling has seen more than one successful class check then
+    * using a cache could cause performance problems as multiple threads compete to
+    * update the single cached class.  If no successful class checks have been seen
+    * before then do not speculate that a cache would be helpful.
+    */
+   bool doClassCache = (numSuccessfulClassChecks == 1) ? true : false;
 
-   // I-Table lookup
+   static bool disableInterfaceCastCache = feGetEnv("TR_forceDisableInterfaceCastCache") != NULL;
+   static bool enableInterfaceCastCache = feGetEnv("TR_forceEnableInterfaceCastCache") != NULL;
+
+   TR_ASSERT_FATAL(!(disableInterfaceCastCache && enableInterfaceCastCache),
+      "checkcast interface cast cache cannot be both explicitly enabled and disabled");
+
+   doClassCache = !disableInterfaceCastCache && (enableInterfaceCastCache || doClassCache);
+
+   /**
+    * A scratch register is required for ClassCastException throws when
+    * a cache is not being used for checkcasts.
+    */
+   TR::Register *scratchReg = (!doClassCache && isCheckCast) ? cg->allocateRegister() : NULL;
+
+   uint8_t numDeps = 1 + (castClassReg != NULL) + (scratchReg != NULL);
+   auto deps = generateRegisterDependencyConditions(numDeps, numDeps, cg);
+   deps->addPreCondition(instanceClassReg, TR::RealRegister::NoReg, cg);
+   deps->addPostCondition(instanceClassReg, TR::RealRegister::NoReg, cg);
+   if (castClassReg)
       {
-      TR_OutlinedInstructionsGenerator og(iTableLookUpPathLabel, node, cg);
-      auto itable = j9class; // re-use the j9class register to perform itable lookup
+      deps->addPreCondition(castClassReg, TR::RealRegister::NoReg, cg);
+      deps->addPostCondition(castClassReg, TR::RealRegister::NoReg, cg);
+      }
+   if (scratchReg)
+      {
+      deps->addPreCondition(scratchReg, TR::RealRegister::NoReg, cg);
+      deps->addPostCondition(scratchReg, TR::RealRegister::NoReg, cg);
+      }
+   deps->stopAddingConditions();
 
-      generateRegInstruction(TR::InstOpCode::PUSHReg, node, j9class, cg);
+   TR::LabelSymbol *begLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *endLabel = generateLabelSymbol(cg);
+   begLabel->setStartInternalControlFlow();
+   endLabel->setEndInternalControlFlow();
 
-      // Save VFP
-      auto vfp = generateVFPSaveInstruction(node, cg);
+   TR::LabelSymbol *iTableLookUpPathLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *iTableLookUpFailLabel = generateLabelSymbol(cg);
 
-      // Obtain I-Table
-      generateRegMemInstruction(TR::InstOpCode::LRegMem(), node, itable, generateX86MemoryReference(j9class, offsetof(J9Class, iTable), cg), cg);
-      if (tmp)
+   generateRegRegInstruction(TR::InstOpCode::MOVRegReg(), node, instanceClassReg, node->getChild(0)->getRegister(), cg);
+   generateLabelInstruction(TR::InstOpCode::label, node, begLabel, cg);
+
+   // Null test
+   if (!node->getChild(0)->isNonNull() && node->getOpCodeValue() != TR::checkcastAndNULLCHK)
+      {
+      // instanceClassReg contains the object at this point, reusing the register as object is no longer used after this point.
+      generateRegRegInstruction(TR::InstOpCode::TESTRegReg(), node, instanceClassReg, instanceClassReg, cg);
+      generateLabelInstruction(TR::InstOpCode::JE4, node, endLabel, cg);
+      }
+
+   // Load J9Class
+   generateLoadJ9Class(node, instanceClassReg, instanceClassReg, cg);
+
+   if (doClassCache)
+      {
+      // Call site cache
+      auto cache = sizeof(J9Class*) == 4 ? cg->create4ByteData(node, (uint32_t)guessClass) : cg->create8ByteData(node, (uint64_t)guessClass);
+      cache->setClassAddress(true);
+      generateRegMemInstruction(TR::InstOpCode::CMPRegMem(use64BitClasses), node, instanceClassReg, generateX86MemoryReference(cache, cg), cg);
+      generateLabelInstruction(TR::InstOpCode::JNE4, node, iTableLookUpPathLabel, cg);
+
+      // I-Table lookup out-of-line
          {
-         generateRegImm64Instruction(TR::InstOpCode::MOV8RegImm64, node, tmp, (uintptr_t)clazz, cg, TR_ClassAddress);
+         TR_OutlinedInstructionsGenerator og(iTableLookUpPathLabel, node, cg);
+
+         // Preserve the instance class before the register is reused
+         generateRegInstruction(TR::InstOpCode::PUSHReg, node, instanceClassReg, cg);
+
+         // Save VFP
+         auto vfp = generateVFPSaveInstruction(node, cg);
+
+         // Obtain I-Table
+         // Re-use the instanceClassReg register to perform itable lookup
+         generateRegMemInstruction(
+            TR::InstOpCode::LRegMem(),
+            node,
+            instanceClassReg,
+            generateX86MemoryReference(instanceClassReg, offsetof(J9Class, iTable), cg),
+            cg);
+
+         inlineInterfaceLookup(
+            node,
+            cg,
+            iTableLookUpFailLabel,
+            castClass,
+            castClassReg,
+            instanceClassReg);
+
+         // Found from I-Table
+
+         /**
+          * The original implementation of this interface cast cache operated as
+          * an LRU cache.  This is suboptimal in the presence of multiple threads
+          * executing this code with unique instance classes as it will lead to
+          * significant thrashing on the processor caches to maintain coherency.
+          * Disable behaving as an LRU cache by default, but leave an environment
+          * variable to enable the original behaviour.
+          */
+         static bool updateCacheSlot = feGetEnv("TR_updateInterfaceCheckCastCacheSlot") != NULL;
+         if (updateCacheSlot)
+            {
+            generateMemInstruction(TR::InstOpCode::POPMem, node, generateX86MemoryReference(cache, cg), cg); // j9class
+            }
+         else
+            {
+            generateRegInstruction(TR::InstOpCode::POPReg, node, instanceClassReg, cg); // j9class
+            }
+
+         if (!isCheckCast)
+            {
+            generateInstruction(TR::InstOpCode::STC, node, cg);
+            }
+         generateLabelInstruction(TR::InstOpCode::JMP4, node, endLabel, cg);
+
+         // Not found
+         generateVFPRestoreInstruction(vfp, node, cg);
+
+         generateLabelInstruction(TR::InstOpCode::label, node, iTableLookUpFailLabel, cg);
+
+         if (isCheckCast)
+            {
+            if (castClassReg)
+               {
+               generateRegInstruction(TR::InstOpCode::PUSHReg, node, castClassReg, cg);
+               }
+            else
+               {
+               generateImmInstruction(TR::InstOpCode::PUSHImm4, node, static_cast<int32_t>(reinterpret_cast<uintptr_t>(castClass)), cg);
+               }
+            auto call = generateHelperCallInstruction(node, TR_throwClassCastException, NULL, cg);
+            call->setNeedsGCMap(0xFF00FFFF);
+            call->setAdjustsFramePointerBy(-2*(int32_t)sizeof(J9Class*));
+            }
+         else
+            {
+            generateRegInstruction(TR::InstOpCode::POPReg, node, instanceClassReg, cg);
+            generateLabelInstruction(TR::InstOpCode::JMP4, node, endLabel, cg);
+            }
+
+         og.endOutlinedInstructionSequence();
          }
 
-      // Loop through I-Table
-      generateLabelInstruction(TR::InstOpCode::label, node, iTableLoopLabel, cg);
-      generateRegRegInstruction(TR::InstOpCode::TESTRegReg(), node, itable, itable, cg);
-      generateLabelInstruction(TR::InstOpCode::JE4, node, iTableLookUpFailLabel, cg);
-      auto interfaceMR = generateX86MemoryReference(itable, offsetof(J9ITable, interfaceClass), cg);
-      if (tmp)
-         {
-         generateMemRegInstruction(TR::InstOpCode::CMP8MemReg, node, interfaceMR, tmp, cg);
-         }
-      else
-         {
-         generateMemImmSymInstruction(TR::InstOpCode::CMP4MemImm4, node, interfaceMR, (uintptr_t)clazz, node->getChild(1)->getSymbolReference(), cg);
-         }
-      generateRegMemInstruction(TR::InstOpCode::LRegMem(), node, itable, generateX86MemoryReference(itable, offsetof(J9ITable, next), cg), cg);
-      generateLabelInstruction(TR::InstOpCode::JNE4, node, iTableLoopLabel, cg);
-
-      // Found from I-Table
-      generateMemInstruction(TR::InstOpCode::POPMem, node, generateX86MemoryReference(cache, cg), cg); // j9class
+      // Succeed
       if (!isCheckCast)
          {
          generateInstruction(TR::InstOpCode::STC, node, cg);
          }
-      generateLabelInstruction(TR::InstOpCode::JMP4, node, endLabel, cg);
+      }
+   else
+      {
+      /**
+       * Do not use a cache.  Generate the interface lookup inline and the fail
+       * path out-of-line.
+       */
 
-      // Not found
-      generateVFPRestoreInstruction(vfp, node, cg);
-      generateLabelInstruction(TR::InstOpCode::label, node, iTableLookUpFailLabel, cg);
-      if (isCheckCast)
+      /**
+       * Use the scratch register if it is available.  Otherwise, re-use the
+       * instanceClassReg register to perform itable lookup
+       */
+      TR::Register *itableReg = scratchReg ? scratchReg : instanceClassReg;
+
+      // Obtain I-Table
+      generateRegMemInstruction(
+         TR::InstOpCode::LRegMem(),
+         node,
+         itableReg,
+         generateX86MemoryReference(instanceClassReg, offsetof(J9Class, iTable), cg),
+         cg);
+
+      inlineInterfaceLookup(
+         node,
+         cg,
+         isCheckCast ? iTableLookUpFailLabel : endLabel,
+         castClass,
+         castClassReg,
+         itableReg);
+
+      if (!isCheckCast)
          {
-         if (tmp)
+         // Class found in itable
+         generateInstruction(TR::InstOpCode::STC, node, cg);
+
+         // Fall through to endLabel
+         }
+      else
+         {
+         // CheckCast iTable fail lookup out-of-line
+         TR_OutlinedInstructionsGenerator og(iTableLookUpFailLabel, node, cg);
+
+         generateRegInstruction(TR::InstOpCode::PUSHReg, node, instanceClassReg, cg);
+
+         if (castClassReg)
             {
-            generateRegInstruction(TR::InstOpCode::PUSHReg, node, tmp, cg);
+            generateRegInstruction(TR::InstOpCode::PUSHReg, node, castClassReg, cg);
             }
          else
             {
-            generateImmInstruction(TR::InstOpCode::PUSHImm4, node, (int32_t)(uintptr_t)clazz, cg);
+            generateImmInstruction(TR::InstOpCode::PUSHImm4, node, static_cast<int32_t>(reinterpret_cast<uintptr_t>(castClass)), cg);
             }
          auto call = generateHelperCallInstruction(node, TR_throwClassCastException, NULL, cg);
          call->setNeedsGCMap(0xFF00FFFF);
          call->setAdjustsFramePointerBy(-2*(int32_t)sizeof(J9Class*));
-         }
-      else
-         {
-         generateRegInstruction(TR::InstOpCode::POPReg, node, j9class, cg);
-         generateLabelInstruction(TR::InstOpCode::JMP4, node, endLabel, cg);
-         }
 
-      og.endOutlinedInstructionSequence();
+         og.endOutlinedInstructionSequence();
+         }
       }
 
-   // Succeed
-   if (!isCheckCast)
-      {
-      generateInstruction(TR::InstOpCode::STC, node, cg);
-      }
    generateLabelInstruction(TR::InstOpCode::label, node, endLabel, deps, cg);
 
-   cg->stopUsingRegister(j9class);
-   if (tmp)
+   cg->stopUsingRegister(instanceClassReg);
+
+   if (castClassReg)
       {
-      cg->stopUsingRegister(tmp);
+      cg->stopUsingRegister(castClassReg);
+      }
+
+   if (scratchReg)
+      {
+      cg->stopUsingRegister(scratchReg);
       }
    }
+
 
 inline void generateInlinedCheckCastOrInstanceOfForClass(TR::Node* node, TR_OpaqueClassBlock* clazz, TR::CodeGenerator* cg, bool isCheckCast)
    {
