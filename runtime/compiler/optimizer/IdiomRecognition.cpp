@@ -133,15 +133,15 @@ TR_CISCNode::initializeMembers(uint32_t opc, uint16_t id, int16_t dagId, uint16_
 bool
 TR_CISCNode::isEqualOpc(TR_CISCNode *t)
    {
-   //TR_ASSERT((int)TR::NumIlOps == TR_variable, "assumption for reducing compilation time");
-   static_assert((int)TR::NumIlOps == TR_variable,
+   //TR_ASSERT((int)OMR::ILOpCode::NumAllIlOps == TR_variable, "assumption for reducing compilation time");
+   static_assert((int)OMR::ILOpCode::NumAllIlOps == TR_variable,
                  "assumption for reducing compilation time");
 
    int32_t pOpc = _opcode;
    int32_t tOpc = t->_opcode;
 
    if (pOpc == tOpc) return true;
-   else if (pOpc > TR::NumIlOps) // Please see the above assumption
+   else if (pOpc > OMR::ILOpCode::NumAllIlOps) // Please see the above assumption
       {
       switch(pOpc)
          {
@@ -195,7 +195,7 @@ TR_CISCNode::isEqualOpc(TR_CISCNode *t)
 const char *
 TR_CISCNode::getName(TR_CISCOps op, TR::Compilation * comp)
    {
-   if (op < (TR_CISCOps)TR::NumIlOps)
+   if (op < (TR_CISCOps)OMR::ILOpCode::NumAllIlOps)
       {
       TR::ILOpCode opCode;
       opCode.setOpCodeValue((enum TR::ILOpCodes)op);
@@ -765,7 +765,7 @@ TR_CISCNode::checkParentsNonRec(TR_CISCNode *p, TR_CISCNode *t, int8_t level, TR
 void
 TR_CISCNode::reverseBranchOpCodes()
    {
-   TR_ASSERT(_opcode < TR::NumIlOps && _ilOpCode.isIf(), "error: not isIf");
+   TR_ASSERT(_opcode < OMR::ILOpCode::NumAllIlOps && _ilOpCode.isIf(), "error: not isIf");
    TR_ASSERT(_numSuccs == 2, "error: _numSuccs != 2");
    TR_CISCNode *swap = _succs[0];
    _succs[0] = _succs[1];
@@ -972,7 +972,7 @@ TR_CISCGraphAspectsWithCounts::setAspectsByOpcode(int opc)
          set(iadd);
          break;
       default:
-         if (opc < TR::NumIlOps)
+         if (opc < OMR::ILOpCode::NumAllIlOps)
             {
             TR::ILOpCode opCode;
             opCode.setOpCodeValue((enum TR::ILOpCodes)opc);
@@ -7735,7 +7735,7 @@ TR_CISCTransformer::embeddingHasConflictingBranches()
          uint32_t op = pn->getOpcode();
          bool isIf =
             op == (uint32_t)TR_ifcmpall
-            || (op < (uint32_t)TR::NumIlOps && pn->getIlOpCode().isIf());
+            || (op < (uint32_t)OMR::ILOpCode::NumAllIlOps && pn->getIlOpCode().isIf());
 
          if (!isIf)
             continue;

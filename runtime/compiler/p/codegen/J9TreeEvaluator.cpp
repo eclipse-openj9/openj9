@@ -310,7 +310,7 @@ static int32_t numberOfRegisterCandidate(TR::CodeGenerator *cg, TR::Node *depNod
  */
 extern void TEMPORARY_initJ9PPCTreeEvaluatorTable(TR::CodeGenerator *cg)
    {
-   TR_TreeEvaluatorFunctionPointer *tet = cg->getTreeEvaluatorTable();
+   OMR::TreeEvaluatorFunctionPointerTable tet = cg->getTreeEvaluatorTable();
 
    tet[TR::awrtbar] = TR::TreeEvaluator::awrtbarEvaluator;
    tet[TR::awrtbari] = TR::TreeEvaluator::awrtbariEvaluator;
@@ -12109,65 +12109,12 @@ TR::Register *J9::Power::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::
    TR::Linkage      *linkage;
    TR::Register        *returnRegister;
 
-   if (callee->getRecognizedMethod() == TR::jdk_incubator_vector_FloatVector_add &&
+   if (callee->getRecognizedMethod() >= TR::FirstVectorMethod &&
+       callee->getRecognizedMethod() <= TR::LastVectorMethod &&
        node->getOpCodeValue() == TR::vcall) // was vectorized
       {
-      TR::Node::recreate(node, TR::vadd);
-      return vaddEvaluator(node, cg);
+      TR_ASSERT_FATAL_WITH_NODE(node, false, "vcall is not supported for this Vector API method\n");
       }
-   else if (callee->getRecognizedMethod() == TR::jdk_internal_vm_vector_VectorSupport_binaryOp &&
-       node->getOpCodeValue() == TR::vcall) // was vectorized
-      {
-      // The following code is temporary and can only be enabled for specific opcodes in VectorAPIExpansion.
-      // It's an example of how development of vector evaluators can proceed until vector IL opcodes
-      // are implemented. Eventually, all recognition of Vector API methods will be removed from this
-      // evaluator
-      //
-      int firstOperandIndex = 5;
-      int secondOperandIndex = 6;
-      TR::Node *opcodeNode = node->getChild(0);
-      TR::Node *dataTypeNode = node->getChild(3);
-      TR::Node *numLanesNode = node->getChild(4);
-      TR::Node *firstOperandNode = node->getChild(firstOperandIndex);
-      TR::Node *secondOperandNode = node->getChild(secondOperandIndex);
-
-      TR::DataType dataType = TR_VectorAPIExpansion::getDataTypeFromClassNode(cg->comp(), dataTypeNode);
-      bool supported = true;
-      if (dataType != TR::Float)
-         supported = false;
-      if (!opcodeNode->getOpCode().isLoadConst() ||
-          opcodeNode->getInt() != TR_VectorAPIExpansion::VECTOR_OP_ADD)
-         supported = false;
-      if (!numLanesNode->getOpCode().isLoadConst() ||
-          numLanesNode->getInt() != 4)
-         supported = false;
-
-      TR_ASSERT_FATAL_WITH_NODE(node, supported, "Vector API opcode, type, and number of lanes should be supported\n");
-
-      // evaluate unused children
-      for (int i = 0; i < node->getNumChildren(); i++)
-         {
-         TR::Node *child = node->getChild(i);
-         if (i != firstOperandIndex && i != secondOperandIndex)
-            {
-            cg->evaluate(child);
-            cg->recursivelyDecReferenceCount(child);
-            }
-         }
-
-      node->setChild(0, firstOperandNode);
-      node->setChild(1, secondOperandNode);
-      node->setNumChildren(2);
-      TR::Node::recreate(node, TR::vadd);
-      return vaddEvaluator(node, cg);
-      }
-   else if (callee->getRecognizedMethod() >= TR::FirstVectorMethod &&
-            callee->getRecognizedMethod() <= TR::LastVectorMethod &&
-            node->getOpCodeValue() == TR::vcall) // was vectorized
-      {
-      TR_ASSERT_FATAL_WITH_NODE(node, false, "vcall is not supported for this Vector API method yet\n");
-      }
-
 
    if (!cg->inlineDirectCall(node, returnRegister))
       {

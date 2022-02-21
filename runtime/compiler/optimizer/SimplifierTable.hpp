@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,9 +30,10 @@ namespace TR { class Simplifier; }
 #include "optimizer/OMRSimplifierHandlers.hpp"
 #include "optimizer/J9SimplifierHandlers.hpp"
 
-typedef TR::Node *(* SimplifierPtr)(TR::Node *node, TR::Block *block, TR::Simplifier *s);
 
-const SimplifierPtr simplifierOpts[TR::NumIlOps] =
+const SimplifierPtrTable simplifierOpts;
+
+const SimplifierPtr SimplifierPtrTable::table[] =
    {
    #include "optimizer/J9SimplifierTable.enum"
    };

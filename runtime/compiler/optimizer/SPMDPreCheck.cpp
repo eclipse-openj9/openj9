@@ -72,7 +72,7 @@ bool SPMDPreCheck::isSPMDCandidate(TR::Compilation *comp, TR_RegionStructure *lo
 
           if (opcode.isStore())
              {
-             TR::ILOpCodes vectorOp = TR::ILOpCode::convertScalarToVector(opcode.getOpCodeValue());
+             TR::ILOpCodes vectorOp = TR::ILOpCode::convertScalarToVector(opcode.getOpCodeValue(), VECTOR_LENGTH);
              if (vectorOp == TR::BadILOp)
                 {
                 if (trace)
