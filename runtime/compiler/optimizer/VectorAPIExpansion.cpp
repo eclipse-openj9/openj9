@@ -1407,10 +1407,10 @@ TR::Node *TR_VectorAPIExpansion::broadcastCoercedIntrinsicHandler(TR_VectorAPIEx
           newNode = TR::Node::create(node, TR::lbits2d, 1, valueToBroadcast);
           break;
       case TR::Int8:
-         newNode = TR::Node::create(node, doScalarization ? TR::l2i : TR::l2b, 1, valueToBroadcast);
+          newNode = TR::Node::create(node, mode == doScalarization ? TR::l2i : TR::l2b, 1, valueToBroadcast);
           break;
       case TR::Int16:
-         newNode = TR::Node::create(node, doScalarization ? TR::l2i : TR::l2s, 1, valueToBroadcast);
+          newNode = TR::Node::create(node, mode == doScalarization ? TR::l2i : TR::l2s, 1, valueToBroadcast);
           break;
       case TR::Int32:
           newNode = TR::Node::create(node, TR::l2i, 1, valueToBroadcast);
