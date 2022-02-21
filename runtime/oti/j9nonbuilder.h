@@ -4061,7 +4061,7 @@ typedef struct J9JITConfig {
 } J9JITConfig;
 
 #if defined(J9VM_OPT_CRIU_SUPPORT)
-typedef BOOLEAN (*hookFunc)(struct J9JavaVM *vm, void *userData);
+typedef BOOLEAN (*hookFunc)(struct J9VMThread *currentThread, void *userData);
 typedef struct J9InternalHookRecord {
 	BOOLEAN isRestore;
 	J9Class *instanceType;
@@ -4839,8 +4839,8 @@ typedef struct J9InternalVMFunctions {
 	BOOLEAN (*jvmRestoreHooks)(struct J9VMThread *currentThread);
 	BOOLEAN (*isCRIUSupportEnabled)(struct J9VMThread *currentThread);
 	BOOLEAN (*isCheckpointAllowed)(struct J9VMThread *currentThread);
-	BOOLEAN (*runInternalJVMCheckpointHooks)(struct J9JavaVM *vm);
-	BOOLEAN (*runInternalJVMRestoreHooks)(struct J9JavaVM *vm);
+	BOOLEAN (*runInternalJVMCheckpointHooks)(struct J9VMThread *currentThread);
+	BOOLEAN (*runInternalJVMRestoreHooks)(struct J9VMThread *currentThread);
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 	j9object_t (*getClassNameString)(struct J9VMThread *currentThread, j9object_t classObject, jboolean internAndAssign);
 } J9InternalVMFunctions;

@@ -381,7 +381,7 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 		vmFuncs->acquireExclusiveVMAccess(currentThread);
 
 		/* Run internal checkpoint hooks, after iterating heap objects */
-		if (FALSE == vmFuncs->runInternalJVMCheckpointHooks(vm)) {
+		if (FALSE == vmFuncs->runInternalJVMCheckpointHooks(currentThread)) {
 			currentExceptionClass = vm->criuSystemCheckpointExceptionClass;
 			nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
 				J9NLS_JCL_CRIU_FAILED_TO_RUN_INTERNAL_CHECKPOINT_HOOKS, NULL);
@@ -401,7 +401,7 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 		isAfterCheckpoint = TRUE;
 
 		/* Run internal restore hooks, and cleanup */
-		if (FALSE == vmFuncs->runInternalJVMRestoreHooks(vm)) {
+		if (FALSE == vmFuncs->runInternalJVMRestoreHooks(currentThread)) {
 			currentExceptionClass = vm->criuRestoreExceptionClass;
 			nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
 				J9NLS_JCL_CRIU_FAILED_TO_RUN_INTERNAL_RESTORE_HOOKS, NULL);
