@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 1998, 2021 IBM Corp. and others
+ * Copyright (c) 1998, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -498,11 +498,20 @@ private static AccessControlContext getContextHelper(boolean forDoPrivilegedWith
 	AccessControlContext accLower = null;
 	for (int j = 0; j < frameNbr; ++j) {
 		AccessControlContext acc = (AccessControlContext) domains[j * OBJS_ARRAY_SIZE];
-		/*[PR JAZZ 66930] j.s.AccessControlContext.checkPermission() invoke untrusted ProtectionDomain.implies */
-		// the actual ProtectionDomain element starts at index 1
-		ProtectionDomain[] pDomains = generatePDarray(activeDC, acc, (Object[]) domains[j * OBJS_ARRAY_SIZE + OBJS_INDEX_PDS], false, 1);
+		ProtectionDomain[] pDomains;
 		AccessControlContext accTmp;
-		int newAuthorizedState = getNewAuthorizedState(acc, (ProtectionDomain)((Object[]) domains[j * OBJS_ARRAY_SIZE + OBJS_INDEX_PDS])[0]);
+		int newAuthorizedState;
+		// for limited doPrivilegedWithCombiner frames, the second element is a single ProtectionDomain instead of an array
+		// see Java_java_security_AccessController_getAccSnapshot function comments
+		if (forDoPrivilegedWithCombiner && j > 0) {
+			pDomains = generatePDarray(activeDC, acc, new Object[]{ domains[j * OBJS_ARRAY_SIZE + OBJS_INDEX_PDS] }, false, 0);
+			newAuthorizedState = getNewAuthorizedState(acc, (ProtectionDomain)domains[j * OBJS_ARRAY_SIZE + OBJS_INDEX_PDS]);
+		} else {
+			/*[PR JAZZ 66930] j.s.AccessControlContext.checkPermission() invoke untrusted ProtectionDomain.implies */
+			// the actual ProtectionDomain element starts at index 1
+			pDomains = generatePDarray(activeDC, acc, (Object[]) domains[j * OBJS_ARRAY_SIZE + OBJS_INDEX_PDS], false, 1);
+			newAuthorizedState = getNewAuthorizedState(acc, (ProtectionDomain)((Object[]) domains[j * OBJS_ARRAY_SIZE + OBJS_INDEX_PDS])[0]);
+		}
 		if (((null != acc) && acc.isLimitedContext) || (1 < frameNbr)) {
 			// there is a limited doPrivilege frame
 			accTmp = new AccessControlContext(acc, pDomains, newAuthorizedState);
@@ -931,7 +940,13 @@ public static <T> T doPrivilegedWithCombiner(PrivilegedAction<T> action,
 	checkPermsNPE(perms);
 	ProtectionDomain domain = getCallerPD(1);
 	ProtectionDomain[] pdArray = (domain == null) ? null : new ProtectionDomain[] { domain };
-	return doPrivileged(action, new AccessControlContext(context, pdArray, getNewAuthorizedState(context, domain)), perms);
+	AccessControlContext fixedContext = new AccessControlContext(context, pdArray, getNewAuthorizedState(context, domain));
+	if (null == context) {
+		AccessControlContext parentContext = getContextHelper(true);
+		fixedContext.domainCombiner = parentContext.domainCombiner;
+		fixedContext.nextStackAcc = parentContext;
+	}
+	return doPrivileged(action, fixedContext, perms);
 }
 
 /**
@@ -1008,7 +1023,13 @@ public static <T> T doPrivilegedWithCombiner(PrivilegedExceptionAction<T> action
 	checkPermsNPE(perms);
 	ProtectionDomain domain = getCallerPD(1);
 	ProtectionDomain[] pdArray = (domain == null) ? null : new ProtectionDomain[] { domain };
-	return doPrivileged(action, new AccessControlContext(context, pdArray, getNewAuthorizedState(context, domain)), perms);
+	AccessControlContext fixedContext = new AccessControlContext(context, pdArray, getNewAuthorizedState(context, domain));
+	if (null == context) {
+		AccessControlContext parentContext = getContextHelper(true);
+		fixedContext.domainCombiner = parentContext.domainCombiner;
+		fixedContext.nextStackAcc = parentContext;
+	}
+	return doPrivileged(action, fixedContext, perms);
 }
 
 }
