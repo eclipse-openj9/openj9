@@ -221,6 +221,9 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
    static int32_t _scratchSpaceFactorWhenJSR292Workload;
    static int32_t getScratchSpaceFactorWhenJSR292Workload() { return _scratchSpaceFactorWhenJSR292Workload; }
 
+   static size_t _scratchSpaceLimitForHotCompilations; // Only used under -Xtune:throughput
+   static size_t getScratchSpaceLimitForHotCompilations() { return _scratchSpaceLimitForHotCompilations; }
+
 #if defined(J9VM_OPT_JITSERVER)
    static int32_t _scratchSpaceFactorWhenJITServerWorkload;
    static int32_t getScratchSpaceFactorWhenJITServerWorkload() { return _scratchSpaceFactorWhenJITServerWorkload; }
