@@ -1,6 +1,6 @@
-/*[INCLUDE-IF Sidecar18-SE]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 /*******************************************************************************
- * Copyright (c) 2009, 2021 IBM Corp. and others
+ * Copyright (c) 2009, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -214,10 +214,8 @@ public class AttachHandler extends Thread {
 			setVmId(myId); /* may need to tweak the ID */
 			setDisplayName(newDisplayName);
 			CommonDirectory.openSemaphore();
-			CommonDirectory.obtainAttachLock("AttachHandler.createFiles(" + newDisplayName + ")_3"); //$NON-NLS-1$ //$NON-NLS-2$
 			Advertisement.createAdvertisementFile(getVmId(), newDisplayName);
 		} finally {
-			CommonDirectory.releaseAttachLock("AttachHandler.createFiles(" + newDisplayName + ")_4"); //$NON-NLS-1$ //$NON-NLS-2$
 			CommonDirectory.releaseControllerLock("AttachHandler.createFiles(" + newDisplayName + ")"); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 		return true;
@@ -345,7 +343,7 @@ public class AttachHandler extends Thread {
 
 			IPC.logMessage(notificationCount+" connectToAttacher reply on port ", portNumber); //$NON-NLS-1$
 			if (portNumber >= 0) {
-				at = new Attachment(mainHandler, attacherReply);
+				at = new Attachment(mainHandler, attacherReply.getPortNumber(), attacherReply.getKey());
 				addAttachment(at);
 				at.start();
 			}
@@ -353,6 +351,19 @@ public class AttachHandler extends Thread {
 			IPC.logMessage("connectToAttacher ", notificationCount, " waitForNotification no reply file"); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 		return at;
+	}
+
+	/**
+	 * This is called from tryAttachTarget() when a VM attaching to itself.
+	 *
+	 * @param portNumber port on which to attach self
+	 * @param key        Security key to validate transaction
+	 */
+	public void attachSelf(int portNumber, String key) {
+		IPC.logMessage(notificationCount + " attachSelf on port ", portNumber); //$NON-NLS-1$
+		Attachment at = new Attachment(mainHandler, portNumber, key);
+		addAttachment(at);
+		at.start();
 	}
 
 	/**

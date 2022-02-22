@@ -1,6 +1,6 @@
-/*[INCLUDE-IF Sidecar18-SE]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 /*******************************************************************************
- * Copyright (c) 2009, 2021 IBM Corp. and others
+ * Copyright (c) 2009, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -155,7 +155,7 @@ public final class OpenJ9VirtualMachine extends VirtualMachine implements Respon
 		}
 		AttachNotSupportedException lastException = null;
 		/*[PR CMVC 182802 ]*/
-		int timeout = 500; /* start small in case there is a rogue process which is eating semaphores, grow big in case of system load. */
+		int timeout = 100; /* start small in case there is a rogue process which is eating semaphores, grow big in case of system load. */
 		while (timeout < MAXIMUM_ATTACH_TIMEOUT) {
 			lastException = null;
 			try {
@@ -167,6 +167,12 @@ public final class OpenJ9VirtualMachine extends VirtualMachine implements Respon
 			}
 			if (null == lastException) {
 				break;
+			}
+			try {
+				// give another attacher a chance to run
+				Thread.sleep(timeout);
+			} catch (InterruptedException e) {
+				// ignore
 			}
 		}
 		if (null != lastException) {
@@ -443,7 +449,12 @@ public final class OpenJ9VirtualMachine extends VirtualMachine implements Respon
 				}
 
 				targetServer = new ServerSocket(0); /* select a free port */
-				portNumber = Integer.valueOf(targetServer.getLocalPort());
+				int thePort = targetServer.getLocalPort();
+				if (thePort < 0) {
+					IPC.logMessage("OpenJ9VirtualMachine.tryAttachTarget() ServerSocket is not bound yet, port: ", thePort); //$NON-NLS-1$
+					return;
+				}
+				portNumber = Integer.valueOf(thePort);
 				String key = IPC.getRandomString();
 				replyFile = new Reply(portNumber, key, TargetDirectory.getTargetDirectoryPath(descriptor.id()), descriptor.getUid());
 				try {
@@ -469,7 +480,7 @@ public final class OpenJ9VirtualMachine extends VirtualMachine implements Respon
 					}
 					/* I am connecting to myself: bypass the notification and launch the attachment thread directly */
 					if (AttachHandler.isAttachApiInitialized()) {
-						AttachHandler.getMainHandler().connectToAttacher();
+						AttachHandler.getMainHandler().attachSelf(thePort, key);
 					} else {
 						/*[MSG "K0558", "Attach API initialization failed"]*/
 						throw new AttachNotSupportedException(getString("K0558")); //$NON-NLS-1$
@@ -521,7 +532,7 @@ public final class OpenJ9VirtualMachine extends VirtualMachine implements Respon
 
 					if (numberOfTargets > 2) {
 						try {
-							int delayTime = 100 * ((numberOfTargets > 10) ? 10
+							int delayTime = 50 * ((numberOfTargets > 10) ? 10
 									: numberOfTargets);
 							IPC.logMessage("attachTarget sleep for ", delayTime); //$NON-NLS-1$
 							Thread.sleep(delayTime);

@@ -1,6 +1,6 @@
-/*[INCLUDE-IF Sidecar18-SE]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 /*******************************************************************************
- * Copyright (c) 2010, 2021 IBM Corp. and others
+ * Copyright (c) 2010, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -81,7 +81,7 @@ public final class FileLock {
 		
 		if (!locked && blocking) { /* try again, this time with a blocking lock and a timeout */
 			FileLockWatchdogTask wdog = new FileLockWatchdogTask();
-			IPC.logMessage("lock failed, trying blocking lock"); //$NON-NLS-1$
+			IPC.logMessage("lock failed, trying blocking lock, fileDescriptor = " + fileDescriptor); //$NON-NLS-1$
 			synchronized (shutdownSync) { /* shutdown is called from a different thread */
 				/*[PR Jazz 30075] inlined createFileLockWatchdogTimer*/
 				if (!terminated && (null == fileLockWatchdogTimer)) {
@@ -113,8 +113,8 @@ public final class FileLock {
 				IPC.logMessage("FileLock.lockFile() blocking lock succeeded"); //$NON-NLS-1$
 				locked = true;
 			} catch (IOException e) {
-				locked = false;
-				IPC.logMessage("FileLock.lockFile() blocking lock failed with lockFilepath = " + lockFilepath); //$NON-NLS-1$
+				unlockFile("lockFile_IOException"); //$NON-NLS-1$
+				IPC.logMessage("FileLock.lockFile() blocking lock failed with lockFilepath = " + lockFilepath + ", exception message: " + e.getMessage()); //$NON-NLS-1$ //$NON-NLS-2$
 			}
 			synchronized (shutdownSync) { 
 				if (null != fileLockWatchdogTimer) { 
@@ -122,23 +122,33 @@ public final class FileLock {
 				}
 			}
 		} else {
-			IPC.logMessage("FileLock.lockFile() locking file succeeded, locked = " + locked); //$NON-NLS-1$
+			IPC.logMessage("FileLock.lockFile() locking file succeeded, locked = " + locked + ", fileDescriptor = " + fileDescriptor); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 
 		return locked;
 	}
-	
+
 	/**
 	 * Release the lock on a file.
+	 *
 	 * @param callSite caller info
 	 */
 	public void unlockFile(String callSite) {
-		IPC.logMessage(callSite + "_unlockFile() ", lockFilepath);  //$NON-NLS-1$
+		IPC.logMessage(callSite + "_unlockFile() ", lockFilepath); //$NON-NLS-1$
+		// unlockFileImpl(fileDescriptor) is placed before FileLock.release()/RandomAccessFile.close() to avoid the chance
+		// that the portlibrary api might affect OpenJDK release/close.
+		// There is only one lock/unlock path, either portlibrary or OpenJDK methods, so technically order is not important.
+		if (locked && (fileDescriptor >= 0)) {
+			IPC.logMessage(callSite + "_unlockFile : unlockFileImpl fileDescriptor " + fileDescriptor); //$NON-NLS-1$
+			unlockFileImpl(fileDescriptor);
+			fileDescriptor = -1;
+		}
 		java.nio.channels.FileLock lockObjectCopy = lockObject;
 		if (null != lockObjectCopy) {
-			IPC.logMessage("FileLock.unlockFile closing lockObjectCopy ", lockFilepath);  //$NON-NLS-1$
+			IPC.logMessage("FileLock.unlockFile closing lockObjectCopy ", lockFilepath); //$NON-NLS-1$
 			try {
 				lockObjectCopy.release();
+				lockObject = null;
 			} catch (IOException e) {
 				IPC.logMessage("IOException at lockObjectCopy.release() with lockFilepath = " + lockFilepath, e); //$NON-NLS-1$
 			}
@@ -146,16 +156,13 @@ public final class FileLock {
 
 		RandomAccessFile lockFileRAFCopy = lockFileRAF;
 		if (lockFileRAFCopy != null) {
-			IPC.logMessage("FileLock.unlockFile closing lockFileRAFCopy ", lockFilepath);  //$NON-NLS-1$
+			IPC.logMessage("FileLock.unlockFile closing lockFileRAFCopy ", lockFilepath); //$NON-NLS-1$
 			try {
 				lockFileRAFCopy.close();
+				lockFileRAF = null;
 			} catch (IOException e) {
 				IPC.logMessage("IOException at lockFileRAFCopy.close() with lockFilepath = " + lockFilepath, e); //$NON-NLS-1$
 			}
-		}
-		if (locked && (fileDescriptor >= 0)) {
-			IPC.logMessage(callSite + "_unlockFile : unlockFileImpl fileDescriptor " + fileDescriptor); //$NON-NLS-1$
-			unlockFileImpl(fileDescriptor);
 		}
 		locked = false;
 	}
