@@ -68,6 +68,21 @@
 #include "jitserver_error.h"
 #endif /* J9VM_OPT_JITSERVER */
 
+#if defined(AIXPPC)
+#include <procinfo.h>
+#include <sys/types.h>
+#include <unistd.h>
+#endif /* defined(AIXPPC) */
+
+#if defined(OSX)
+#include <sys/types.h>
+#include <sys/sysctl.h>
+#endif /* defined(OSX) */
+
+#if defined(WIN32)
+#include <processenv.h>
+#include <stdlib.h>
+#endif /* defined(WIN32) */
 
 /* Must include this after j9vm_internal.h */
 #include <string.h>
@@ -451,6 +466,176 @@ static const J9SignalMapping signalMap[] = {
 #endif /* defined(SIGPOLL) */
 	{NULL, J9_SIG_ERR}
 };
+
+static void
+captureCommandLine(void)
+{
+#if defined(WIN32)
+#define ENV_VAR_NAME L"OPENJ9_JAVA_COMMAND_LINE"
+#else /* defined(WIN32) */
+#define ENV_VAR_NAME "OPENJ9_JAVA_COMMAND_LINE"
+#endif /* defined(WIN32) */
+
+#if defined(AIXPPC)
+	long int bufferSize = sysconf(_SC_ARG_MAX);
+
+	if (bufferSize > 0) {
+		char *buffer = malloc(bufferSize);
+
+		if (NULL != buffer) {
+#if defined(J9VM_ENV_DATA64)
+			struct procsinfo64 info;
+#else /* defined(J9VM_ENV_DATA64) */
+			struct procsinfo info;
+#endif /* defined(J9VM_ENV_DATA64) */
+
+			memset(&info, '\0', sizeof(info));
+			info.pi_pid = getpid();
+
+			if (0 == getargs(&info, sizeof(info), buffer, bufferSize)) {
+				char *cursor = buffer;
+
+				/* replace the internal NULs with spaces */
+				for (;; ++cursor) {
+					if ('\0' == *cursor) {
+						if ('\0' == cursor[1]) {
+							/* the list ends with two NUL characters */
+							break;
+						}
+						*cursor = ' ';
+					}
+				}
+
+				/* it's not fatal if setenv() fails, so don't bother checking */
+				setenv(ENV_VAR_NAME, buffer, 1 /* overwrite */);
+			}
+
+			free(buffer);
+		}
+	}
+#elif defined(LINUX) /* defined(AIXPPC) */
+	int fd = open("/proc/self/cmdline", O_RDONLY, 0);
+
+	if (fd >= 0) {
+		char *buffer = NULL;
+		size_t length = 0;
+		for (;;) {
+			char small_buffer[512];
+			ssize_t count = read(fd, small_buffer, sizeof(small_buffer));
+			if (count <= 0) {
+				break;
+			}
+			length += (size_t)count;
+		}
+		if (length < 2) {
+			goto done;
+		}
+		/* final NUL is already included in length */
+		buffer = malloc(length);
+		if (NULL == buffer) {
+			goto done;
+		}
+		if ((off_t)-1 == lseek(fd, 0, SEEK_SET)) {
+			goto done;
+		}
+		if (read(fd, buffer, length) != length) {
+			goto done;
+		}
+		/* replace the internal NULs with spaces */
+		for (length -= 2;; length -= 1) {
+			if (0 == length) {
+				break;
+			}
+			if ('\0' == buffer[length]) {
+				buffer[length] = ' ';
+			}
+		}
+		/* it's not fatal if setenv() fails, so don't bother checking */
+		setenv(ENV_VAR_NAME, buffer, 1 /* overwrite */);
+done:
+		if (NULL != buffer) {
+			free(buffer);
+		}
+		close(fd);
+	}
+#elif defined(OSX) /* defined(AIXPPC) */
+	int argmax = 0;
+	size_t length = 0;
+	int mib[3];
+
+	/* query the argument space limit */
+	mib[0] = CTL_KERN;
+	mib[1] = KERN_ARGMAX;
+	length = sizeof(argmax);
+	if (0 == sysctl(mib, 2, &argmax, &length, NULL, 0)) {
+		char *buffer = malloc(argmax);
+
+		if (NULL != buffer) {
+			int argc = 0;
+			int pid = getpid();
+
+			/* query the argument count */
+			mib[0] = CTL_KERN;
+			mib[1] = KERN_PROCARGS2;
+			mib[2] = pid;
+			length = argmax;
+			if ((argmax >= sizeof(argc)) && (0 == sysctl(mib, 3, buffer, &length, NULL, 0))) {
+				memcpy(&argc, buffer, sizeof(argc));
+
+				/* retrieve the arguments */
+				mib[0] = CTL_KERN;
+				mib[1] = KERN_PROCARGS;
+				mib[2] = pid;
+				length = argmax;
+				if (0 == sysctl(mib, 3, buffer, &length, NULL, 0)) {
+					char *cursor = buffer;
+					char *start = NULL;
+					char *limit = buffer + length;
+
+					for (; (cursor < limit) && ('\0' != *cursor); ++cursor) {
+						/* skip past the program path */
+					}
+
+					for (; (cursor < limit) && ('\0' == *cursor); ++cursor) {
+						/* skip past the padding after the program path */
+					}
+
+					/*
+					 * remember the start of the first argument (this is the beginning
+					 * of argv[0] which is often the same as the path we skipped above)
+					 */
+					start = cursor;
+
+					/* replace the internal NULs with spaces */
+					for (; cursor < limit; ++cursor) {
+						if ('\0' == *cursor) {
+							argc -= 1;
+							if (0 == argc) {
+								break;
+							}
+							*cursor = ' ';
+						}
+					}
+
+					/* it's not fatal if setenv() fails, so don't bother checking */
+					setenv(ENV_VAR_NAME, start, 1 /* overwrite */);
+				}
+			}
+
+			free(buffer);
+		}
+	}
+#elif defined(WIN32) /* defined(AIXPPC) */
+	const wchar_t *commandLine = GetCommandLineW();
+
+	if (NULL != commandLine) {
+		/* it's not fatal if _wputenv_s() fails, so don't bother checking */
+		_wputenv_s(ENV_VAR_NAME, commandLine);
+	}
+#endif /* defined(AIXPPC) */
+
+#undef ENV_VAR_NAME
+}
 
 static void freeGlobals(void)
 {
@@ -1657,6 +1842,7 @@ JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITSer
         return JNI_ERR;
     }
 #endif /* defined(J9ZTPF) */
+	captureCommandLine();
 	/*
 	 * Linux uses LD_LIBRARY_PATH
 	 * z/OS uses LIBPATH

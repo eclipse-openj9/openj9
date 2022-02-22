@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2004, 2020 IBM Corp. and others
+ * Copyright (c) 2004, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1493,7 +1493,10 @@ public class NewElfDump extends CoreReaderSupport {
 		Properties environment = getEnvironmentVariables(builder);
 		String alternateCommandLine = ""; //$NON-NLS-1$
 		if (null != environment) {
-			alternateCommandLine = environment.getProperty("IBM_JAVA_COMMAND_LINE", ""); //$NON-NLS-1$ //$NON-NLS-2$
+			alternateCommandLine = environment.getProperty("OPENJ9_JAVA_COMMAND_LINE", null); //$NON-NLS-1$
+			if (null == alternateCommandLine) {
+				alternateCommandLine = environment.getProperty("IBM_JAVA_COMMAND_LINE", ""); //$NON-NLS-1$ //$NON-NLS-2$
+			}
 		}
 
 		String commandLine = dumpCommandLine.length() >= alternateCommandLine.length() ? dumpCommandLine : alternateCommandLine;
@@ -1583,7 +1586,8 @@ public class NewElfDump extends CoreReaderSupport {
 		} else {
 			// Use override for the executable name. This supports the jextract -f <executable> option, for
 			// cases where the launcher path+name is truncated by the 80 character OS limit, AND it was a
-			// custom launcher, so the alternative IBM_JAVA_COMMAND_LINE property was not set.
+			// custom launcher, so the alternative property OPENJ9_JAVA_COMMAND_LINE (or IBM_JAVA_COMMAND_LINE)
+			// was not set.
 			file = _findFileInPath(builder, overrideExecutableName, classPath);
 		}
 

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2014 IBM Corp. and others
+ * Copyright (c) 2009, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -80,39 +80,41 @@ public class WindowsProcessAddressSpace extends ProcessAddressSpace
 	}
 
 	/**
-	 * This method tries to get environment variables by iterating through modules. 
-	 * It returns the one with environment var "IBM_JAVA_COMMAND_LINE"
-	 * If there is no module with IBM_JAVA_COMMAND_LINE, then it returns the last one.  
-	 * 
-	 * @return Properties instance of environment variables.
+	 * This method tries to get environment variables by iterating through modules.
+	 * It returns the one with environment variable "OPENJ9_JAVA_COMMAND_LINE" or
+	 * "IBM_JAVA_COMMAND_LINE". If no module has either, then it returns the last one.
+	 *
+	 * @return Properties instance of environment variables
 	 * @throws DataUnavailableException
 	 * @throws CorruptDataException
 	 */
 	public Properties getEnvironmentVariables() throws DataUnavailableException, CorruptDataException
 	{
 		if (null == environment) {
-			LinkedList<ISymbol> environSymbols = getEnvironmentSymbols();
-			ISymbol environ = null;
-			
-			if (0 == environSymbols.size()) {
+			List<ISymbol> environSymbols = getEnvironmentSymbols();
+
+			if (environSymbols.isEmpty()) {
 				throw new DataUnavailableException("Couldn't find environment symbol");
 			}
-			
-			/* There might be more than one module with environment variables. Use the one that has IBM_JAVA_COMMAND_LINE */
-			for (int i = 0; i < environSymbols.size(); i++ ) {
-				environ = environSymbols.get(i);
+
+			/*
+			 * There might be more than one module with environment variables.
+			 * Use the one that has OPENJ9_JAVA_COMMAND_LINE or IBM_JAVA_COMMAND_LINE.
+			 */
+			for (ISymbol environ : environSymbols) {
 				long environPointer = getPointerAt(environ.getAddress());
-				environment = EnvironmentUtils.readEnvironment(this,environPointer);
-				if (environment.containsKey("IBM_JAVA_COMMAND_LINE")) {
+				environment = EnvironmentUtils.readEnvironment(this, environPointer);
+				if (environment.containsKey("OPENJ9_JAVA_COMMAND_LINE")
+				||  environment.containsKey("IBM_JAVA_COMMAND_LINE")
+				) {
 					break;
 				}
 			}
 		}
-	
+
 		return environment;
 	}
 
-	
 	/**
 	 *  This method returns a list of symbols with the name "_environ"
 	 *  
