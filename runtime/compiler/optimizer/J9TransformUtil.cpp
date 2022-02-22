@@ -696,7 +696,7 @@ bool J9::TransformUtil::foldFinalFieldsIn(TR_OpaqueClassBlock *clazz, const char
       return false;
 
    static char *enableJCLFolding = feGetEnv("TR_EnableJCLStaticFinalFieldFolding");
-   if ((enableJCLFolding || comp->getOption(TR_AggressiveOpts))
+   if (enableJCLFolding
        && isStatic
        && comp->fej9()->isClassLibraryClass(clazz)
        && comp->fej9()->isClassInitialized(clazz))
