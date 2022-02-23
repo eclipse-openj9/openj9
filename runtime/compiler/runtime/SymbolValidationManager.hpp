@@ -723,18 +723,18 @@ public:
       SymOptional
       };
 
-   void* getSymbolFromID(uint16_t id, TR::SymbolType type, Presence presence = SymRequired);
+   void* getValueFromSymbolID(uint16_t id, TR::SymbolType type, Presence presence = SymRequired);
    TR_OpaqueClassBlock *getClassFromID(uint16_t id, Presence presence = SymRequired);
    J9Class *getJ9ClassFromID(uint16_t id, Presence presence = SymRequired);
    TR_OpaqueMethodBlock *getMethodFromID(uint16_t id, Presence presence = SymRequired);
    J9Method *getJ9MethodFromID(uint16_t id, Presence presence = SymRequired);
 
-   uint16_t tryGetIDFromSymbol(void *symbol);
+   uint16_t tryGetSymbolIDFromValue(void *value);
    uint16_t getIDFromSymbol(void *symbol);
 
    bool isAlreadyValidated(void *symbol)
       {
-      return inHeuristicRegion() || tryGetIDFromSymbol(symbol) != NO_ID;
+      return inHeuristicRegion() || tryGetSymbolIDFromValue(symbol) != NO_ID;
       }
 
    bool addClassByNameRecord(TR_OpaqueClassBlock *clazz, TR_OpaqueClassBlock *beholder);

@@ -462,7 +462,7 @@ TR::SymbolValidationManager::getNewSymbolID()
    }
 
 void *
-TR::SymbolValidationManager::getSymbolFromID(uint16_t id, TR::SymbolType type, Presence presence)
+TR::SymbolValidationManager::getValueFromSymbolID(uint16_t id, TR::SymbolType type, Presence presence)
    {
    TypedValue *entry = NULL;
    if (id < _symbolToValueTable.size())
@@ -481,34 +481,34 @@ TR_OpaqueClassBlock *
 TR::SymbolValidationManager::getClassFromID(uint16_t id, Presence presence)
    {
    return static_cast<TR_OpaqueClassBlock*>(
-      getSymbolFromID(id, TR::SymbolType::typeClass, presence));
+      getValueFromSymbolID(id, TR::SymbolType::typeClass, presence));
    }
 
 J9Class *
 TR::SymbolValidationManager::getJ9ClassFromID(uint16_t id, Presence presence)
    {
    return static_cast<J9Class*>(
-      getSymbolFromID(id, TR::SymbolType::typeClass, presence));
+      getValueFromSymbolID(id, TR::SymbolType::typeClass, presence));
    }
 
 TR_OpaqueMethodBlock *
 TR::SymbolValidationManager::getMethodFromID(uint16_t id, Presence presence)
    {
    return static_cast<TR_OpaqueMethodBlock*>(
-      getSymbolFromID(id, TR::SymbolType::typeMethod, presence));
+      getValueFromSymbolID(id, TR::SymbolType::typeMethod, presence));
    }
 
 J9Method *
 TR::SymbolValidationManager::getJ9MethodFromID(uint16_t id, Presence presence)
    {
    return static_cast<J9Method*>(
-      getSymbolFromID(id, TR::SymbolType::typeMethod, presence));
+      getValueFromSymbolID(id, TR::SymbolType::typeMethod, presence));
    }
 
 uint16_t
-TR::SymbolValidationManager::tryGetIDFromSymbol(void *symbol)
+TR::SymbolValidationManager::tryGetSymbolIDFromValue(void *value)
    {
-   ValueToSymbolMap::iterator it = _valueToSymbolMap.find(symbol);
+   ValueToSymbolMap::iterator it = _valueToSymbolMap.find(value);
    if (it == _valueToSymbolMap.end())
       return NO_ID;
    else
@@ -518,7 +518,7 @@ TR::SymbolValidationManager::tryGetIDFromSymbol(void *symbol)
 uint16_t
 TR::SymbolValidationManager::getIDFromSymbol(void *symbol)
    {
-   uint16_t id = tryGetIDFromSymbol(symbol);
+   uint16_t id = tryGetSymbolIDFromValue(symbol);
    SVM_ASSERT(id != NO_ID, "Unknown symbol %p\n", symbol);
    return id;
    }
