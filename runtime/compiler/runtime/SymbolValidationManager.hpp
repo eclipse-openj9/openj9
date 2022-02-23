@@ -842,8 +842,8 @@ public:
    static int getSystemClassesNotWorthRememberingCount();
 
 #if defined(J9VM_OPT_JITSERVER)
-   std::string serializeSymbolToIDMap();
-   void deserializeSymbolToIDMap(const std::string &symbolToIdStr);
+   std::string serializeValueToSymbolMap();
+   void deserializeValueToSymbolMap(const std::string &valueToSymbolStr);
    static void populateSystemClassesNotWorthRemembering(ClientSessionData *clientData);
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
@@ -939,9 +939,9 @@ private:
    typedef std::set<SymbolValidationRecord*, LessSymbolValidationRecord, RecordPtrAlloc> RecordSet;
    RecordSet _alreadyGeneratedRecords;
 
-   typedef TR::typed_allocator<std::pair<void* const, uint16_t>, TR::Region&> SymbolToIdAllocator;
-   typedef std::less<void*> SymbolToIdComparator;
-   typedef std::map<void*, uint16_t, SymbolToIdComparator, SymbolToIdAllocator> SymbolToIdMap;
+   typedef TR::typed_allocator<std::pair<void* const, uint16_t>, TR::Region&> ValueToSymbolAllocator;
+   typedef std::less<void*> ValueToSymbolComparator;
+   typedef std::map<void*, uint16_t, ValueToSymbolComparator, ValueToSymbolAllocator> ValueToSymbolMap;
 
    struct TypedValue
       {
@@ -958,7 +958,7 @@ private:
    typedef std::set<void*, SeenSymbolsComparator, SeenSymbolsAlloc> SeenSymbolsSet;
 
    /* Used for AOT Compile */
-   SymbolToIdMap _symbolToIdMap;
+   ValueToSymbolMap _valueToSymbolMap;
 
    /* Used for AOT Load */
    IdToSymbolTable _idToSymbolTable;

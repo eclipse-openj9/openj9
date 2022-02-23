@@ -80,7 +80,7 @@ TR::SymbolValidationManager::SymbolValidationManager(TR::Region &region, TR_Reso
      _symbolValidationRecords(_region),
      _alreadyGeneratedRecords(LessSymbolValidationRecord(), _region),
      _classesFromAnyCPIndex(LessClassFromAnyCPIndex(), _region),
-     _symbolToIdMap((SymbolToIdComparator()), _region),
+     _valueToSymbolMap((ValueToSymbolComparator()), _region),
      _idToSymbolTable(_region),
      _seenSymbolsSet((SeenSymbolsComparator()), _region),
      _wellKnownClasses(_region),
@@ -138,7 +138,7 @@ void
 TR::SymbolValidationManager::defineGuaranteedID(void *symbol, TR::SymbolType type)
    {
    uint16_t id = getNewSymbolID();
-   _symbolToIdMap.insert(std::make_pair(symbol, id));
+   _valueToSymbolMap.insert(std::make_pair(symbol, id));
    setSymbolOfID(id, symbol, type);
    _seenSymbolsSet.insert(symbol);
    }
@@ -508,8 +508,8 @@ TR::SymbolValidationManager::getJ9MethodFromID(uint16_t id, Presence presence)
 uint16_t
 TR::SymbolValidationManager::tryGetIDFromSymbol(void *symbol)
    {
-   SymbolToIdMap::iterator it = _symbolToIdMap.find(symbol);
-   if (it == _symbolToIdMap.end())
+   ValueToSymbolMap::iterator it = _valueToSymbolMap.find(symbol);
+   if (it == _valueToSymbolMap.end())
       return NO_ID;
    else
       return it->second;
@@ -570,7 +570,7 @@ TR::SymbolValidationManager::appendNewRecord(void *symbol, TR::SymbolValidationR
 
    if (!isAlreadyValidated(symbol))
       {
-      _symbolToIdMap.insert(std::make_pair(symbol, getNewSymbolID()));
+      _valueToSymbolMap.insert(std::make_pair(symbol, getNewSymbolID()));
       }
    _symbolValidationRecords.push_front(record);
    _alreadyGeneratedRecords.insert(record);
@@ -1593,35 +1593,35 @@ static void printClass(TR_OpaqueClassBlock *clazz)
 
 #if defined(J9VM_OPT_JITSERVER)
 std::string
-TR::SymbolValidationManager::serializeSymbolToIDMap()
+TR::SymbolValidationManager::serializeValueToSymbolMap()
    {
-   int32_t entrySize = sizeof(SymbolToIdMap::key_type) + sizeof(SymbolToIdMap::mapped_type);
-   std::string symbolToIdStr(entrySize * _symbolToIdMap.size(), '\0');
+   int32_t entrySize = sizeof(ValueToSymbolMap::key_type) + sizeof(ValueToSymbolMap::mapped_type);
+   std::string valueToSymbolStr(entrySize * _valueToSymbolMap.size(), '\0');
    uint16_t idx = 0;
-   for (auto it : _symbolToIdMap)
+   for (auto it : _valueToSymbolMap)
       {
-      SymbolToIdMap::key_type symbol = it.first;
-      SymbolToIdMap::mapped_type id = it.second;
-      memcpy(&symbolToIdStr[idx * entrySize], &symbol, sizeof(symbol));
-      memcpy(&symbolToIdStr[idx * entrySize + sizeof(symbol)], &id, sizeof(id));
+      ValueToSymbolMap::key_type symbol = it.first;
+      ValueToSymbolMap::mapped_type id = it.second;
+      memcpy(&valueToSymbolStr[idx * entrySize], &symbol, sizeof(symbol));
+      memcpy(&valueToSymbolStr[idx * entrySize + sizeof(symbol)], &id, sizeof(id));
       ++idx;
       }
-   return symbolToIdStr;
+   return valueToSymbolStr;
    }
 
 void
-TR::SymbolValidationManager::deserializeSymbolToIDMap(const std::string &symbolToIdStr)
+TR::SymbolValidationManager::deserializeValueToSymbolMap(const std::string &valueToSymbolStr)
    {
-   _symbolToIdMap.clear();
+   _valueToSymbolMap.clear();
 
-   int32_t entrySize = sizeof(SymbolToIdMap::key_type) + sizeof(SymbolToIdMap::mapped_type);
-   int32_t numEntries = symbolToIdStr.length() / entrySize;
+   int32_t entrySize = sizeof(ValueToSymbolMap::key_type) + sizeof(ValueToSymbolMap::mapped_type);
+   int32_t numEntries = valueToSymbolStr.length() / entrySize;
    for (int32_t idx = 0; idx < numEntries; idx++)
       {
-      SymbolToIdMap::key_type symbol;
-      memcpy(&symbol, &symbolToIdStr[idx * entrySize], sizeof(symbol));
-      SymbolToIdMap::mapped_type id = (uint16_t) symbolToIdStr[idx * entrySize + sizeof(symbol)];
-      _symbolToIdMap.insert(std::make_pair(symbol, id));
+      ValueToSymbolMap::key_type symbol;
+      memcpy(&symbol, &valueToSymbolStr[idx * entrySize], sizeof(symbol));
+      ValueToSymbolMap::mapped_type id = (uint16_t) valueToSymbolStr[idx * entrySize + sizeof(symbol)];
+      _valueToSymbolMap.insert(std::make_pair(symbol, id));
       }
    }
 #endif /* defined(J9VM_OPT_JITSERVER) */

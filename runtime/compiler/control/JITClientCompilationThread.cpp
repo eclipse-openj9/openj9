@@ -3189,7 +3189,7 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
    CHTableCommitData chTableData;
    std::vector<TR_OpaqueClassBlock *> classesThatShouldNotBeNewlyExtended;
    std::string logFileStr;
-   std::string svmSymbolToIdStr;
+   std::string svmValueToSymbolStr;
    std::vector<TR_ResolvedJ9Method *> resolvedMirrorMethodsPersistIPInfo;
    TR_OptimizationPlan modifiedOptPlan;
    std::vector<SerializedRuntimeAssumption> serializedRuntimeAssumptions;
@@ -3239,7 +3239,7 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
          chTableData = std::get<2>(recv);
          classesThatShouldNotBeNewlyExtended = std::get<3>(recv);
          logFileStr = std::get<4>(recv);
-         svmSymbolToIdStr = std::get<5>(recv);
+         svmValueToSymbolStr = std::get<5>(recv);
          resolvedMirrorMethodsPersistIPInfo = std::get<6>(recv);
          modifiedOptPlan = std::get<7>(recv);
          serializedRuntimeAssumptions = std::get<8>(recv);
@@ -3476,7 +3476,7 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
             // so need to exit heuristic region.
             compiler->exitHeuristicRegion();
             // Populate symbol to id map
-            compiler->getSymbolValidationManager()->deserializeSymbolToIDMap(svmSymbolToIdStr);
+            compiler->getSymbolValidationManager()->deserializeValueToSymbolMap(svmValueToSymbolStr);
             }
 
          TR_ASSERT(codeCacheStr.size(), "must have code cache");
