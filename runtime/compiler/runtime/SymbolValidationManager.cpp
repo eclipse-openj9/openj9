@@ -563,31 +563,31 @@ TR::SymbolValidationManager::anyClassFromCPRecordExists(
    }
 
 void
-TR::SymbolValidationManager::appendNewRecord(void *symbol, TR::SymbolValidationRecord *record)
+TR::SymbolValidationManager::appendNewRecord(void *value, TR::SymbolValidationRecord *record)
    {
    SVM_ASSERT(!inHeuristicRegion(), "Attempted to appendNewRecord in a heuristic region");
    TR_ASSERT(!recordExists(record), "record is not new");
 
-   if (!isAlreadyValidated(symbol))
+   if (!isAlreadyValidated(value))
       {
-      _valueToSymbolMap.insert(std::make_pair(symbol, getNewSymbolID()));
+      _valueToSymbolMap.insert(std::make_pair(value, getNewSymbolID()));
       }
    _symbolValidationRecords.push_front(record);
    _alreadyGeneratedRecords.insert(record);
 
    record->printFields();
    traceMsg(_comp, "\tkind=%d\n", record->_kind);
-   traceMsg(_comp, "\tid=%d\n", (uint32_t)getSymbolIDFromValue(symbol));
+   traceMsg(_comp, "\tid=%d\n", (uint32_t)getSymbolIDFromValue(value));
    traceMsg(_comp, "\n");
    }
 
 void
-TR::SymbolValidationManager::appendRecordIfNew(void *symbol, TR::SymbolValidationRecord *record)
+TR::SymbolValidationManager::appendRecordIfNew(void *value, TR::SymbolValidationRecord *record)
    {
    if (recordExists(record))
       _region.deallocate(record);
    else
-      appendNewRecord(symbol, record);
+      appendNewRecord(value, record);
    }
 
 bool

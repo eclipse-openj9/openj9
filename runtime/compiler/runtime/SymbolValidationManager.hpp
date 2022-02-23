@@ -863,8 +863,8 @@ private:
 
    bool recordExists(TR::SymbolValidationRecord *record);
    bool anyClassFromCPRecordExists(TR_OpaqueClassBlock *clazz, TR_OpaqueClassBlock *beholder);
-   void appendNewRecord(void *symbol, TR::SymbolValidationRecord *record);
-   void appendRecordIfNew(void *symbol, TR::SymbolValidationRecord *record);
+   void appendNewRecord(void *value, TR::SymbolValidationRecord *record);
+   void appendRecordIfNew(void *value, TR::SymbolValidationRecord *record);
 
    struct ClassChainInfo
       {
