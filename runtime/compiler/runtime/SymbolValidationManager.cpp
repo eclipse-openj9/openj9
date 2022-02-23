@@ -67,7 +67,7 @@ TR::SymbolValidationManager::SymbolValidationManager(TR::Region &region, TR_Reso
         _vmThread->javaVM->jitConfig,
         _vmThread,
 #if defined(J9VM_OPT_JITSERVER)
-        TR::CompilationInfo::get()->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER ? TR_J9VMBase::J9_SERVER_VM : 
+        TR::CompilationInfo::get()->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER ? TR_J9VMBase::J9_SERVER_VM :
 #endif /* defined(J9VM_OPT_JITSERVER) */
         TR_J9VMBase::DEFAULT_VM)),
      _trMemory(_comp->trMemory()),
@@ -444,12 +444,12 @@ TR::SymbolValidationManager::setSymbolOfID(uint16_t id, void *symbol, TR::Symbol
    {
    if (id >= _idToSymbolTable.size())
       {
-      TypedSymbol unused = { NULL, typeOpaque, false };
+      TypedValue unused = { NULL, typeOpaque, false };
       _idToSymbolTable.resize(id + 1, unused);
       }
 
    SVM_ASSERT(!_idToSymbolTable[id]._hasValue, "multiple definitions of ID %d", id);
-   _idToSymbolTable[id]._symbol = symbol;
+   _idToSymbolTable[id]._value = symbol;
    _idToSymbolTable[id]._type = type;
    _idToSymbolTable[id]._hasValue = true;
    }
@@ -464,17 +464,17 @@ TR::SymbolValidationManager::getNewSymbolID()
 void *
 TR::SymbolValidationManager::getSymbolFromID(uint16_t id, TR::SymbolType type, Presence presence)
    {
-   TypedSymbol *entry = NULL;
+   TypedValue *entry = NULL;
    if (id < _idToSymbolTable.size())
       entry = &_idToSymbolTable[id];
 
    SVM_ASSERT(entry != NULL && entry->_hasValue, "Unknown ID %d", id);
-   if (entry->_symbol == NULL)
+   if (entry->_value == NULL)
       SVM_ASSERT(presence != SymRequired, "ID must not map to null");
    else
       SVM_ASSERT(entry->_type == type, "ID has type %d when %d was expected", entry->_type, type);
 
-   return entry->_symbol;
+   return entry->_value;
    }
 
 TR_OpaqueClassBlock *
@@ -1130,7 +1130,7 @@ bool
 TR::SymbolValidationManager::validateSymbol(uint16_t idToBeValidated, void *validSymbol, TR::SymbolType type)
    {
    bool valid = false;
-   TypedSymbol *entry = NULL;
+   TypedValue *entry = NULL;
    if (idToBeValidated < _idToSymbolTable.size())
       entry = &_idToSymbolTable[idToBeValidated];
 
@@ -1154,7 +1154,7 @@ TR::SymbolValidationManager::validateSymbol(uint16_t idToBeValidated, void *vali
       }
    else
       {
-      valid = validSymbol == entry->_symbol
+      valid = validSymbol == entry->_value
          && (validSymbol == NULL || entry->_type == type);
       }
 

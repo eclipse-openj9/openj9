@@ -943,15 +943,15 @@ private:
    typedef std::less<void*> SymbolToIdComparator;
    typedef std::map<void*, uint16_t, SymbolToIdComparator, SymbolToIdAllocator> SymbolToIdMap;
 
-   struct TypedSymbol
+   struct TypedValue
       {
-      void *_symbol;
+      void *_value;
       TR::SymbolType _type;
       bool _hasValue;
       };
 
-   typedef TR::typed_allocator<TypedSymbol, TR::Region&> IdToSymbolAllocator;
-   typedef std::vector<TypedSymbol, IdToSymbolAllocator> IdToSymbolTable;
+   typedef TR::typed_allocator<TypedValue, TR::Region&> IdToSymbolAllocator;
+   typedef std::vector<TypedValue, IdToSymbolAllocator> IdToSymbolTable;
 
    typedef TR::typed_allocator<void*, TR::Region&> SeenSymbolsAlloc;
    typedef std::less<void*> SeenSymbolsComparator;
