@@ -135,12 +135,12 @@ TR::SymbolValidationManager::populateSystemClassesNotWorthRemembering(ClientSess
 #endif
 
 void
-TR::SymbolValidationManager::defineGuaranteedID(void *symbol, TR::SymbolType type)
+TR::SymbolValidationManager::defineGuaranteedID(void *value, TR::SymbolType type)
    {
    uint16_t id = getNewSymbolID();
-   _valueToSymbolMap.insert(std::make_pair(symbol, id));
-   setSymbolOfID(id, symbol, type);
-   _seenValuesSet.insert(symbol);
+   _valueToSymbolMap.insert(std::make_pair(value, id));
+   setValueOfSymbolID(id, value, type);
+   _seenValuesSet.insert(value);
    }
 
 bool
@@ -370,7 +370,7 @@ TR::SymbolValidationManager::validateWellKnownClasses(const uintptr_t *wellKnown
          {
          _wellKnownClasses.push_back(clazz);
          if (clazz != _rootClass)
-            setSymbolOfID(getNewSymbolID(), clazz, TR::SymbolType::typeClass);
+            setValueOfSymbolID(getNewSymbolID(), clazz, TR::SymbolType::typeClass);
          }
       }
 
@@ -440,7 +440,7 @@ TR::SymbolValidationManager::isDefinedID(uint16_t id)
    }
 
 void
-TR::SymbolValidationManager::setSymbolOfID(uint16_t id, void *symbol, TR::SymbolType type)
+TR::SymbolValidationManager::setValueOfSymbolID(uint16_t id, void *value, TR::SymbolType type)
    {
    if (id >= _symbolToValueTable.size())
       {
@@ -449,7 +449,7 @@ TR::SymbolValidationManager::setSymbolOfID(uint16_t id, void *symbol, TR::Symbol
       }
 
    SVM_ASSERT(!_symbolToValueTable[id]._hasValue, "multiple definitions of ID %d", id);
-   _symbolToValueTable[id]._value = symbol;
+   _symbolToValueTable[id]._value = value;
    _symbolToValueTable[id]._type = type;
    _symbolToValueTable[id]._hasValue = true;
    }
@@ -654,12 +654,12 @@ TR::SymbolValidationManager::appendClassChainInfoRecords(
    }
 
 bool
-TR::SymbolValidationManager::addVanillaRecord(void *symbol, TR::SymbolValidationRecord *record)
+TR::SymbolValidationManager::addVanillaRecord(void *value, TR::SymbolValidationRecord *record)
    {
-   if (shouldNotDefineSymbol(symbol))
+   if (shouldNotDefineSymbol(value))
       return abandonRecord(record);
 
-   appendRecordIfNew(symbol, record);
+   appendRecordIfNew(value, record);
    return true;
    }
 
@@ -1127,7 +1127,7 @@ TR::SymbolValidationManager::addJ2IThunkFromMethodRecord(void *thunk, TR_OpaqueM
 
 
 bool
-TR::SymbolValidationManager::validateSymbol(uint16_t idToBeValidated, void *validSymbol, TR::SymbolType type)
+TR::SymbolValidationManager::validateSymbol(uint16_t idToBeValidated, void *validValue, TR::SymbolType type)
    {
    bool valid = false;
    TypedValue *entry = NULL;
@@ -1136,26 +1136,26 @@ TR::SymbolValidationManager::validateSymbol(uint16_t idToBeValidated, void *vali
 
    if (entry == NULL || !entry->_hasValue)
       {
-      if (_seenValuesSet.find(validSymbol) == _seenValuesSet.end())
+      if (_seenValuesSet.find(validValue) == _seenValuesSet.end())
          {
          valid = true;
          if (type == TR::SymbolType::typeClass)
             {
             valid = classCanSeeWellKnownClasses(
-               reinterpret_cast<TR_OpaqueClassBlock*>(validSymbol));
+               reinterpret_cast<TR_OpaqueClassBlock*>(validValue));
             }
 
          if (valid)
             {
-            setSymbolOfID(idToBeValidated, validSymbol, type);
-            _seenValuesSet.insert(validSymbol);
+            setValueOfSymbolID(idToBeValidated, validValue, type);
+            _seenValuesSet.insert(validValue);
             }
          }
       }
    else
       {
-      valid = validSymbol == entry->_value
-         && (validSymbol == NULL || entry->_type == type);
+      valid = validValue == entry->_value
+         && (validValue == NULL || entry->_type == type);
       }
 
    return valid;

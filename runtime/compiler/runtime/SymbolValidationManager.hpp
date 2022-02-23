@@ -887,22 +887,22 @@ private:
    bool getClassChainInfo(TR_OpaqueClassBlock *clazz, TR::SymbolValidationRecord *record, ClassChainInfo &info);
    void appendClassChainInfoRecords(TR_OpaqueClassBlock *clazz, const ClassChainInfo &info);
 
-   bool addVanillaRecord(void *symbol, TR::SymbolValidationRecord *record);
+   bool addVanillaRecord(void *value, TR::SymbolValidationRecord *record);
    bool addClassRecord(TR_OpaqueClassBlock *clazz, TR::ClassValidationRecord *record);
    bool addClassRecordWithChain(TR::ClassValidationRecordWithChain *record);
    void addMultipleArrayRecords(TR_OpaqueClassBlock *clazz, int arrayDims);
    bool addMethodRecord(TR::MethodValidationRecord *record);
    bool skipFieldRefClassRecord(TR_OpaqueClassBlock *definingClass, TR_OpaqueClassBlock *beholder, uint32_t cpIndex);
 
-   bool validateSymbol(uint16_t idToBeValidated, void *validSymbol, TR::SymbolType type);
+   bool validateSymbol(uint16_t idToBeValidated, void *validValue, TR::SymbolType type);
    bool validateSymbol(uint16_t idToBeValidated, TR_OpaqueClassBlock *clazz);
    bool validateSymbol(uint16_t idToBeValidated, J9Class *clazz);
    bool validateSymbol(uint16_t methodID, uint16_t definingClassID, TR_OpaqueMethodBlock *method);
    bool validateSymbol(uint16_t methodID, uint16_t definingClassID, J9Method *method);
 
    bool isDefinedID(uint16_t id);
-   void setSymbolOfID(uint16_t id, void *symbol, TR::SymbolType type);
-   void defineGuaranteedID(void *symbol, TR::SymbolType type);
+   void setValueOfSymbolID(uint16_t id, void *value, TR::SymbolType type);
+   void defineGuaranteedID(void *value, TR::SymbolType type);
 
    /**
     * @brief Heuristic to determine whether a class is worth remembering (and hence
