@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,7 +23,6 @@ package com.ibm.j9.jsr292;
 
 import org.testng.annotations.Test;
 import org.testng.AssertJUnit;
-import java.io.*;
 import java.lang.invoke.MethodType;
 import java.util.ArrayList;
 import java.util.List;
@@ -568,31 +567,5 @@ public class MethodTypeTests {
 		mType = MethodType.fromMethodDescriptorString( "(II)I", null );
 		mType = mType.wrap();
 		AssertJUnit.assertFalse( mType.hasPrimitives() );
-	}
-	
-	/**
-	 * Ensure that MethodTypes serialization works. Runs with the SecurityManager enabled.
-	 */
-	@Test(groups = { "level.extended" })
-	public void test_SerializeGenericMethodType() throws IOException, ClassNotFoundException {
-		Class<?> returnType = String.class;
-		Class<?> paramType = Class.class;
-		MethodType mt = MethodType.methodType(returnType, paramType);
-		ByteArrayOutputStream baos = new ByteArrayOutputStream();
-		ObjectOutputStream oos = new ObjectOutputStream(baos);
-		oos.writeObject(mt);
-		oos.close();
-		ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(baos.toByteArray()));
-		System.setSecurityManager(new SecurityManager());
-		try {
-			MethodType newMT = (MethodType) ois.readObject();
-			
-			// Validate MethodType constructed from serialized data
-			AssertJUnit.assertEquals(returnType, newMT.returnType());
-			AssertJUnit.assertEquals(paramType, newMT.parameterType(0));
-		} finally {
-			ois.close();
-			System.setSecurityManager(null);
-		}
 	}
 }
