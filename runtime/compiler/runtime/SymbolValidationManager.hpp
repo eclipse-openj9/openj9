@@ -732,9 +732,9 @@ public:
    uint16_t tryGetSymbolIDFromValue(void *value);
    uint16_t getSymbolIDFromValue(void *value);
 
-   bool isAlreadyValidated(void *symbol)
+   bool isAlreadyValidated(void *value)
       {
-      return inHeuristicRegion() || tryGetSymbolIDFromValue(symbol) != NO_ID;
+      return inHeuristicRegion() || tryGetSymbolIDFromValue(value) != NO_ID;
       }
 
    bool addClassByNameRecord(TR_OpaqueClassBlock *clazz, TR_OpaqueClassBlock *beholder);
@@ -858,7 +858,7 @@ private:
 
    uint16_t getNewSymbolID();
 
-   bool shouldNotDefineSymbol(void *symbol) { return symbol == NULL || inHeuristicRegion(); }
+   bool shouldNotDefineSymbol(void *value) { return value == NULL || inHeuristicRegion(); }
    bool abandonRecord(TR::SymbolValidationRecord *record);
 
    bool recordExists(TR::SymbolValidationRecord *record);
