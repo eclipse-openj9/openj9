@@ -76,18 +76,18 @@ class AOTCacheWellKnownClassesRecord;
 #define SVM_ASSERT_NONFATAL(condition, format, ...) \
    SVM_ASSERT_IMPL("SVM_ASSERT_NONFATAL", true, condition, #condition, format, ##__VA_ARGS__)
 
-#define SVM_ASSERT_ALREADY_VALIDATED(svm, symbol)        \
+#define SVM_ASSERT_ALREADY_VALIDATED(svm, value)        \
    do                                                    \
       {                                                  \
-      void *_0symbol = (symbol);                         \
+      void *_0value = (value);                         \
       SVM_ASSERT_IMPL(                                   \
          "SVM_ASSERT_ALREADY_VALIDATED",                 \
          false,                                          \
-         (svm)->isAlreadyValidated(_0symbol),            \
-         "isAlreadyValidated(" #symbol ")",              \
+         (svm)->isAlreadyValidated(_0value),            \
+         "isAlreadyValidated(" #value ")",              \
          "%s %p should have already been validated",     \
-         #symbol,                                        \
-         _0symbol);                                      \
+         #value,                                        \
+         _0value);                                      \
       }                                                  \
    while (false)
 
