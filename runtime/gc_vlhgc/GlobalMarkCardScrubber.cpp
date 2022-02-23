@@ -255,7 +255,9 @@ MM_GlobalMarkCardScrubber::scrubClassLoaderObject(MM_EnvironmentVLHGC *env, J9Ob
 
 			if (classLoader == javaVM->systemClassLoader) {
 				Assert_MM_true(NULL != javaVM->unamedModuleForSystemLoader->moduleObject);
-				doScrub = mayScrubReference(env, classLoaderObject, javaVM->unamedModuleForSystemLoader->moduleObject);
+				if (doScrub) {
+					doScrub = mayScrubReference(env, classLoaderObject, javaVM->unamedModuleForSystemLoader->moduleObject);
+				}
 			}
 		}
 	}
