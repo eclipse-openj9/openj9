@@ -953,9 +953,9 @@ private:
    typedef TR::typed_allocator<TypedValue, TR::Region&> SymbolToValueAllocator;
    typedef std::vector<TypedValue, SymbolToValueAllocator> SymbolToValueTable;
 
-   typedef TR::typed_allocator<void*, TR::Region&> SeenSymbolsAlloc;
-   typedef std::less<void*> SeenSymbolsComparator;
-   typedef std::set<void*, SeenSymbolsComparator, SeenSymbolsAlloc> SeenSymbolsSet;
+   typedef TR::typed_allocator<void*, TR::Region&> SeenValuesAlloc;
+   typedef std::less<void*> SeenValuesComparator;
+   typedef std::set<void*, SeenValuesComparator, SeenValuesAlloc> SeenValuesSet;
 
    /* Used for AOT Compile */
    ValueToSymbolMap _valueToSymbolMap;
@@ -963,7 +963,7 @@ private:
    /* Used for AOT Load */
    SymbolToValueTable _symbolToValueTable;
 
-   SeenSymbolsSet _seenSymbolsSet;
+   SeenValuesSet _seenValuesSet;
 
    typedef TR::typed_allocator<TR_OpaqueClassBlock*, TR::Region&> ClassAllocator;
    typedef std::vector<TR_OpaqueClassBlock*, ClassAllocator> ClassVector;

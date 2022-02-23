@@ -82,7 +82,7 @@ TR::SymbolValidationManager::SymbolValidationManager(TR::Region &region, TR_Reso
      _classesFromAnyCPIndex(LessClassFromAnyCPIndex(), _region),
      _valueToSymbolMap((ValueToSymbolComparator()), _region),
      _symbolToValueTable(_region),
-     _seenSymbolsSet((SeenSymbolsComparator()), _region),
+     _seenValuesSet((SeenValuesComparator()), _region),
      _wellKnownClasses(_region),
      _loadersOkForWellKnownClasses(_region)
    {
@@ -140,7 +140,7 @@ TR::SymbolValidationManager::defineGuaranteedID(void *symbol, TR::SymbolType typ
    uint16_t id = getNewSymbolID();
    _valueToSymbolMap.insert(std::make_pair(symbol, id));
    setSymbolOfID(id, symbol, type);
-   _seenSymbolsSet.insert(symbol);
+   _seenValuesSet.insert(symbol);
    }
 
 bool
@@ -365,7 +365,7 @@ TR::SymbolValidationManager::validateWellKnownClasses(const uintptr_t *wellKnown
       if (!_fej9->sharedCache()->classMatchesCachedVersion(clazz, classChain))
          return false;
 
-      _seenSymbolsSet.insert(clazz);
+      _seenValuesSet.insert(clazz);
       if (assignNewIDs)
          {
          _wellKnownClasses.push_back(clazz);
@@ -1136,7 +1136,7 @@ TR::SymbolValidationManager::validateSymbol(uint16_t idToBeValidated, void *vali
 
    if (entry == NULL || !entry->_hasValue)
       {
-      if (_seenSymbolsSet.find(validSymbol) == _seenSymbolsSet.end())
+      if (_seenValuesSet.find(validSymbol) == _seenValuesSet.end())
          {
          valid = true;
          if (type == TR::SymbolType::typeClass)
@@ -1148,7 +1148,7 @@ TR::SymbolValidationManager::validateSymbol(uint16_t idToBeValidated, void *vali
          if (valid)
             {
             setSymbolOfID(idToBeValidated, validSymbol, type);
-            _seenSymbolsSet.insert(validSymbol);
+            _seenValuesSet.insert(validSymbol);
             }
          }
       }
