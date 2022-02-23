@@ -1884,6 +1884,7 @@ J9::Z::TreeEvaluator::pd2zdVectorEvaluatorHelper(TR::Node * node, TR::CodeGenera
              "valueChild should evaluate to Vector register.");
 
    TR::MemoryReference *targetMR = generateS390LeftAlignedMemoryReference(node, targetStorageReference, cg, sizeOfZonedValue, false);
+   TR::RegisterPair *zonedDecimalRegPair = NULL;
 
    if (!targetStorageReference->isTemporaryBased())
       {
@@ -1900,6 +1901,7 @@ J9::Z::TreeEvaluator::pd2zdVectorEvaluatorHelper(TR::Node * node, TR::CodeGenera
       {
       TR::Register *zonedDecimalHigh = cg->allocateRegister(TR_VRF);
       TR::Register *zonedDecimalLow = cg->allocateRegister(TR_VRF);
+      zonedDecimalRegPair = cg->allocateRegisterPair(zonedDecimalLow, zonedDecimalHigh);
 
       // 0 we store 1 byte, 15 we store 16 bytes.
       // 15 - lengthToStore = index from which to start.
@@ -1912,12 +1914,12 @@ J9::Z::TreeEvaluator::pd2zdVectorEvaluatorHelper(TR::Node * node, TR::CodeGenera
          {
          generateVRRkInstruction(cg, TR::InstOpCode::VUPKZH, node, zonedDecimalHigh, valueRegister, M3);
          lengthToStore = precision - TR_VECTOR_REGISTER_SIZE;
-         generateVSIInstruction(cg, TR::InstOpCode::VSTRL, node, zonedDecimalHigh, zonedDecimalMR, lengthToStore - 1);
+         generateVSIInstruction(cg, TR::InstOpCode::VSTRL, node, zonedDecimalRegPair->getHighOrder(), zonedDecimalMR, lengthToStore - 1);
          zonedDecimalMR = generateS390MemoryReference(*targetMR, lengthToStore, cg);
          lengthToStore = TR_VECTOR_REGISTER_SIZE - 1;
          }
 
-      generateVSIInstruction(cg, TR::InstOpCode::VSTRL, node, zonedDecimalLow, zonedDecimalMR, lengthToStore);
+      generateVSIInstruction(cg, TR::InstOpCode::VSTRL, node, zonedDecimalRegPair->getLowOrder(), zonedDecimalMR, lengthToStore);
       }
    else
       {
