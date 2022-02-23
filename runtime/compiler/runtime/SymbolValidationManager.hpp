@@ -950,8 +950,8 @@ private:
       bool _hasValue;
       };
 
-   typedef TR::typed_allocator<TypedValue, TR::Region&> IdToSymbolAllocator;
-   typedef std::vector<TypedValue, IdToSymbolAllocator> IdToSymbolTable;
+   typedef TR::typed_allocator<TypedValue, TR::Region&> SymbolToValueAllocator;
+   typedef std::vector<TypedValue, SymbolToValueAllocator> SymbolToValueTable;
 
    typedef TR::typed_allocator<void*, TR::Region&> SeenSymbolsAlloc;
    typedef std::less<void*> SeenSymbolsComparator;
@@ -961,7 +961,7 @@ private:
    ValueToSymbolMap _valueToSymbolMap;
 
    /* Used for AOT Load */
-   IdToSymbolTable _idToSymbolTable;
+   SymbolToValueTable _symbolToValueTable;
 
    SeenSymbolsSet _seenSymbolsSet;
 

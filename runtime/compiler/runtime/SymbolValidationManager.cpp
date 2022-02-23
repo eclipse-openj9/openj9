@@ -81,7 +81,7 @@ TR::SymbolValidationManager::SymbolValidationManager(TR::Region &region, TR_Reso
      _alreadyGeneratedRecords(LessSymbolValidationRecord(), _region),
      _classesFromAnyCPIndex(LessClassFromAnyCPIndex(), _region),
      _valueToSymbolMap((ValueToSymbolComparator()), _region),
-     _idToSymbolTable(_region),
+     _symbolToValueTable(_region),
      _seenSymbolsSet((SeenSymbolsComparator()), _region),
      _wellKnownClasses(_region),
      _loadersOkForWellKnownClasses(_region)
@@ -436,22 +436,22 @@ TR::SymbolValidationManager::classCanSeeWellKnownClasses(TR_OpaqueClassBlock *be
 bool
 TR::SymbolValidationManager::isDefinedID(uint16_t id)
    {
-   return id < _idToSymbolTable.size() && _idToSymbolTable[id]._hasValue;
+   return id < _symbolToValueTable.size() && _symbolToValueTable[id]._hasValue;
    }
 
 void
 TR::SymbolValidationManager::setSymbolOfID(uint16_t id, void *symbol, TR::SymbolType type)
    {
-   if (id >= _idToSymbolTable.size())
+   if (id >= _symbolToValueTable.size())
       {
       TypedValue unused = { NULL, typeOpaque, false };
-      _idToSymbolTable.resize(id + 1, unused);
+      _symbolToValueTable.resize(id + 1, unused);
       }
 
-   SVM_ASSERT(!_idToSymbolTable[id]._hasValue, "multiple definitions of ID %d", id);
-   _idToSymbolTable[id]._value = symbol;
-   _idToSymbolTable[id]._type = type;
-   _idToSymbolTable[id]._hasValue = true;
+   SVM_ASSERT(!_symbolToValueTable[id]._hasValue, "multiple definitions of ID %d", id);
+   _symbolToValueTable[id]._value = symbol;
+   _symbolToValueTable[id]._type = type;
+   _symbolToValueTable[id]._hasValue = true;
    }
 
 uint16_t
@@ -465,8 +465,8 @@ void *
 TR::SymbolValidationManager::getSymbolFromID(uint16_t id, TR::SymbolType type, Presence presence)
    {
    TypedValue *entry = NULL;
-   if (id < _idToSymbolTable.size())
-      entry = &_idToSymbolTable[id];
+   if (id < _symbolToValueTable.size())
+      entry = &_symbolToValueTable[id];
 
    SVM_ASSERT(entry != NULL && entry->_hasValue, "Unknown ID %d", id);
    if (entry->_value == NULL)
@@ -1131,8 +1131,8 @@ TR::SymbolValidationManager::validateSymbol(uint16_t idToBeValidated, void *vali
    {
    bool valid = false;
    TypedValue *entry = NULL;
-   if (idToBeValidated < _idToSymbolTable.size())
-      entry = &_idToSymbolTable[idToBeValidated];
+   if (idToBeValidated < _symbolToValueTable.size())
+      entry = &_symbolToValueTable[idToBeValidated];
 
    if (entry == NULL || !entry->_hasValue)
       {
