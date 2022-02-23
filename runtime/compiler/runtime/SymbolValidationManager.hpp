@@ -730,7 +730,7 @@ public:
    J9Method *getJ9MethodFromID(uint16_t id, Presence presence = SymRequired);
 
    uint16_t tryGetSymbolIDFromValue(void *value);
-   uint16_t getIDFromSymbol(void *symbol);
+   uint16_t getSymbolIDFromValue(void *value);
 
    bool isAlreadyValidated(void *symbol)
       {

@@ -516,10 +516,10 @@ TR::SymbolValidationManager::tryGetSymbolIDFromValue(void *value)
    }
 
 uint16_t
-TR::SymbolValidationManager::getIDFromSymbol(void *symbol)
+TR::SymbolValidationManager::getSymbolIDFromValue(void *value)
    {
-   uint16_t id = tryGetSymbolIDFromValue(symbol);
-   SVM_ASSERT(id != NO_ID, "Unknown symbol %p\n", symbol);
+   uint16_t id = tryGetSymbolIDFromValue(value);
+   SVM_ASSERT(id != NO_ID, "Unknown value %p\n", value);
    return id;
    }
 
@@ -577,7 +577,7 @@ TR::SymbolValidationManager::appendNewRecord(void *symbol, TR::SymbolValidationR
 
    record->printFields();
    traceMsg(_comp, "\tkind=%d\n", record->_kind);
-   traceMsg(_comp, "\tid=%d\n", (uint32_t)getIDFromSymbol(symbol));
+   traceMsg(_comp, "\tid=%d\n", (uint32_t)getSymbolIDFromValue(symbol));
    traceMsg(_comp, "\n");
    }
 
