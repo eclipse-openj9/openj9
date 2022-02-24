@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2020 IBM Corp. and others
+ * Copyright (c) 2001, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,21 +22,24 @@
 
 import java.util.*;
 import java.io.*;
+import java.nio.charset.Charset;
+import org.openj9.test.util.VersionCheck;
 
-public class SysPropTest 
+public class SysPropTest
 {
-	/* TestVa&#187;lue&#161; */	
-	static final byte[] B = { (byte)0x54, (byte)0x65, (byte)0x73, (byte)0x74,  (byte)0x56, (byte)0x61,(byte) 187, (byte)0x6C, (byte)0x75, (byte)0x65, (byte) 161};	
+	/* TestVa&#187;lue&#161; */
+	static final byte[] inputBytes = { (byte)'T', (byte)'e', (byte)'s', (byte)'t', (byte)'V', (byte)'a', (byte)187, (byte)'l', (byte)'u', (byte)'e', (byte)161};
+	static final byte[] inputBytesUtf8 = { (byte)'T', (byte)'e', (byte)'s', (byte)'t', (byte)'V', (byte)'a', (byte)0xC2, (byte)187, (byte)'l', (byte)'u', (byte)'e', (byte)0xC2, (byte)161};
 
 	public static void main(String args[])
 	{
 		boolean isWindows = false;
-		if ( args.length == 0) {
-			System.out.println("test failed"); 
+		if (args.length == 0) {
+			System.out.println("test failed");
 			return;
 		}
 		String argEncoding = args[0];
-		/* check -Dtestkey=Test?Va?lue?  */
+		/* check -Dtestkey=TestVa?lue? */
 		try {
 			String osEncoding = "";
 			String strTestProp;
@@ -44,44 +47,52 @@ public class SysPropTest
 				isWindows = true;
 			}
 
+			/* On jdk18+ with JEP 400 UTF-8 by default, the non-ascii characters in the testkey property
+			 * are converted to UTF8 by the test (not the JVM).
+			 */
+			final byte[] expectedBytes = ((VersionCheck.major() >= 18) && !isWindows) ? inputBytesUtf8 : inputBytes;
+
 			if (argEncoding.equals("DEFAULT")) {
 				osEncoding = System.getProperty("os.encoding");
 			}
 
 			/* Windows converts from the platform default to UTF8 internally to the VM and
-			   sets os.encoding to UTF8. To replicate this behavior, on Windows use the default encoding
-			   and not the os.encoding. */
-			if (osEncoding != null && osEncoding.length() != 0 && isWindows == false) {  
-				strTestProp = new String(B,osEncoding);
+			 * sets os.encoding to UTF8. To replicate this behavior, on Windows use the default encoding
+			 * and not the os.encoding.
+			 */
+			if (osEncoding != null && osEncoding.length() != 0 && isWindows == false) {
+				strTestProp = new String(expectedBytes, osEncoding);
 			} else {
 				if ((argEncoding.equals("UTF-8") || argEncoding.equals("ISO-8859-1"))) {
-					strTestProp = new String(B,argEncoding);
+					strTestProp = new String(expectedBytes, argEncoding);
 				} else {
-					strTestProp = new String(B);
+					strTestProp = new String(expectedBytes, System.getProperty("native.encoding", Charset.defaultCharset().name()));
 				}
 			}
-			
-			String strProp = System.getProperty("testkey"); 
+
+			String strProp = System.getProperty("testkey");
 			if (strProp == null || strTestProp.compareTo(strProp) != 0) {
-				System.out.println("test failed"); 
-				System.out.println("os.encoding: " + System.getProperty("os.encoding"));	
-				System.out.println("file.encoding: " + System.getProperty("file.encoding"));				
+				System.out.println("test failed");
+				System.out.println("os.encoding: " + System.getProperty("os.encoding"));
+				System.out.println("native.encoding: " + System.getProperty("native.encoding"));
+				System.out.println("defaultCharset(): " + Charset.defaultCharset().name());
+				System.out.println("file.encoding: " + System.getProperty("file.encoding"));
 				System.out.print("strProp    : ");
-				for (int i=0; i < strProp.length(); i++) {
+				for (int i = 0; i < strProp.length(); i++) {
 					System.out.print(Integer.toHexString(strProp.charAt(i)) + " ");
 				}
 				System.out.println();
 				System.out.print("strTestProp: ");
-				for (int i=0; i < strTestProp.length(); i++) {
+				for (int i = 0; i < strTestProp.length(); i++) {
 					System.out.print(Integer.toHexString(strTestProp.charAt(i)) + " ");
 				}
-				System.out.println();				
-				
+				System.out.println();
+
 			} else {
-				System.out.println("test succeeded"); 
+				System.out.println("test succeeded");
 			}
-		} catch(UnsupportedEncodingException e) {
-			System.out.println("test failed"); 
+		} catch (UnsupportedEncodingException e) {
+			System.out.println("test failed");
 			e.printStackTrace();
 		}
 	}
