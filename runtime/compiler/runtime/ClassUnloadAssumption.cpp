@@ -1185,7 +1185,13 @@ void TR_RedefinedClassPicSite::compensate(TR_FrontEnd *, bool isSMP, void *newKe
 #elif defined(TR_HOST_ARM)
    *(int32_t *)_picLocation = (uintptr_t)newKey;
 #elif defined(TR_HOST_ARM64)
+#if defined(OSX)
+   pthread_jit_write_protect_np(0);
+#endif
    *(int64_t *)_picLocation = (uintptr_t)newKey;
+#if defined(OSX)
+   pthread_jit_write_protect_np(1);
+#endif
 #else
    //   TR_ASSERT(0, "redefined class PIC patching is not implemented on this platform yet");
 #endif
