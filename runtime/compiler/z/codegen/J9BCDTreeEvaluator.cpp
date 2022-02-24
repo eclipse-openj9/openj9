@@ -1602,10 +1602,14 @@ J9::Z::TreeEvaluator::zd2pdVectorEvaluatorHelper(TR::Node * node, TR::CodeGenera
 void
 J9::Z::TreeEvaluator::pd2zdSignFixup(TR::Node *node,
                                              TR::MemoryReference *destMR,
-                                             TR::CodeGenerator * cg)
+                                             TR::CodeGenerator * cg,
+                                             TR::RegisterPair *zonedDecimalRegPair)
    {
    TR::Register* signCode     = cg->allocateRegister();
    TR::Register* signCode4Bit = cg->allocateRegister();
+   TR::Register* zonedDecimalLow = NULL;
+   if (zonedDecimalRegPair)
+      zonedDecimalLow = zonedDecimalRegPair->getLowOrder();
 
    TR::LabelSymbol * processSign     = generateLabelSymbol(cg);
    TR::LabelSymbol * processSignEnd  = generateLabelSymbol(cg);
@@ -1615,10 +1619,15 @@ J9::Z::TreeEvaluator::pd2zdSignFixup(TR::Node *node,
    generateS390LabelInstruction(cg, TR::InstOpCode::label, node, processSign);
    processSign->setStartInternalControlFlow();
 
-   TR::MemoryReference* signByteMR = generateS390LeftAlignedMemoryReference(*destMR, node, 0, cg, 1);
-
-   // Load the sign byte of the Zoned Decimal from memory
-   generateRXInstruction(cg, TR::InstOpCode::LLC, node, signCode, signByteMR);
+   TR::MemoryReference* signByteMR;
+   if (zonedDecimalLow)
+      generateVRScInstruction(cg, TR::InstOpCode::VLGV, node, signCode, zonedDecimalLow, generateS390MemoryReference(15, cg), 0);
+   else
+      {
+      signByteMR = generateS390LeftAlignedMemoryReference(*destMR, node, 0, cg, 1);
+      // Load the sign byte of the Zoned Decimal from memory
+      generateRXInstruction(cg, TR::InstOpCode::LLC, node, signCode, signByteMR);
+      }
 
    generateRRInstruction(cg, TR::InstOpCode::LR, node, signCode4Bit, signCode);
 
@@ -1656,19 +1665,30 @@ J9::Z::TreeEvaluator::pd2zdSignFixup(TR::Node *node,
 
    generateS390LabelInstruction(cg, TR::InstOpCode::label, node, processSignEnd);
 
-   generateRXInstruction(cg, TR::InstOpCode::STC, node, signCode, generateS390MemoryReference(*signByteMR, 0, cg));
-
    // Set up the proper register dependencies
-   TR::RegisterDependencyConditions* dependencies = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 2, cg);
+   TR::RegisterDependencyConditions* dependencies = NULL;
+   if (zonedDecimalLow)
+      {
+      generateVRSbInstruction(cg, TR::InstOpCode::VLVG, node, zonedDecimalLow, signCode, generateS390MemoryReference(15, cg), 0);
+
+      dependencies = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 3, cg);
+      dependencies->addPostCondition(zonedDecimalLow, TR::RealRegister::AssignAny);
+      }
+   else
+      {
+      generateRXInstruction(cg, TR::InstOpCode::STC, node, signCode, generateS390MemoryReference(*signByteMR, 0, cg));
+
+      dependencies = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 2, cg);
+
+      if (destMR->getIndexRegister())
+         dependencies->addPostCondition(destMR->getIndexRegister(), TR::RealRegister::AssignAny);
+
+      if (destMR->getBaseRegister())
+         dependencies->addPostCondition(destMR->getBaseRegister(), TR::RealRegister::AssignAny);
+      }
 
    dependencies->addPostCondition(signCode,     TR::RealRegister::AssignAny);
    dependencies->addPostCondition(signCode4Bit, TR::RealRegister::AssignAny);
-
-   if (destMR->getIndexRegister())
-      dependencies->addPostCondition(destMR->getIndexRegister(), TR::RealRegister::AssignAny);
-
-   if (destMR->getBaseRegister())
-      dependencies->addPostCondition(destMR->getBaseRegister(), TR::RealRegister::AssignAny);
 
    generateS390LabelInstruction(cg, TR::InstOpCode::label, node, cFlowRegionEnd, dependencies);
    cFlowRegionEnd->setEndInternalControlFlow();
@@ -1919,6 +1939,7 @@ J9::Z::TreeEvaluator::pd2zdVectorEvaluatorHelper(TR::Node * node, TR::CodeGenera
          lengthToStore = TR_VECTOR_REGISTER_SIZE - 1;
          }
 
+      // pd2zdSignFixup(node, targetMR, cg, zonedDecimalLow); // Uncomment to verify
       generateVSIInstruction(cg, TR::InstOpCode::VSTRL, node, zonedDecimalRegPair->getLowOrder(), zonedDecimalMR, lengthToStore);
       }
    else
@@ -1932,7 +1953,7 @@ J9::Z::TreeEvaluator::pd2zdVectorEvaluatorHelper(TR::Node * node, TR::CodeGenera
       }
 
    // Fix pd2zd signs. VUPKZ and its non-vector counterpart don't validate digits nor signs.
-   pd2zdSignFixup(node, targetMR, cg);
+   pd2zdSignFixup(node, targetMR, cg, zonedDecimalRegPair);
 
    node->setRegister(targetReg);
    cg->decReferenceCount(child);
