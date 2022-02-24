@@ -38,6 +38,10 @@
 #include "il/SymbolReference.hpp"
 #include "infra/Assert.hpp"
 
+#if defined(OSX)
+#include "env/j9method.h"
+#endif
+
 J9::ARM64::JNILinkage::JNILinkage(TR::CodeGenerator *cg)
    : J9::ARM64::PrivateLinkage(cg)
    {
@@ -385,6 +389,15 @@ size_t J9::ARM64::JNILinkage::buildJNIArgs(TR::Node *callNode, TR::RegisterDepen
    TR::DataType childType;
    TR::DataType resType = callNode->getType();
 
+#if defined(OSX)
+   TR::SymbolReference *methodSymRef = callNode->getSymbolReference();
+   TR::MethodSymbol *methodSymbol = methodSymRef->getSymbol()->castToMethodSymbol();
+   TR::Method *method = methodSymbol->getMethod();
+   const char *sig = method->signatureChars();
+   int32_t sigLen = method->signatureLength();
+   char *sigCursor = (char *)sig;
+#endif
+
    uint32_t firstArgumentChild = callNode->getFirstArgumentIndex();
    if (passThread)
       {
@@ -417,15 +430,13 @@ size_t J9::ARM64::JNILinkage::buildJNIArgs(TR::Node *callNode, TR::RegisterDepen
 #if defined(LINUX)
                totalSize += 8;
 #elif defined(OSX)
-               if (childType == TR::Address || childType == TR::Int64)
+               TR::DataType nativeType = OMR::Symbol::convertSigCharToType(*sigCursor);
+               int32_t nativeTypeSize = TR::DataType::getSize(nativeType);
+               if (nativeTypeSize > 1)
                   {
-                  totalSize = (totalSize + 7) & ~7; // adjust to 8-byte boundary
-                  totalSize += 8;
+                  totalSize = (totalSize + nativeTypeSize - 1) & ~(nativeTypeSize - 1);
                   }
-               else
-                  {
-                  totalSize += 4;
-                  }
+               totalSize += nativeTypeSize;
 #else
 #error Unsupported platform
 #endif
@@ -460,6 +471,10 @@ size_t J9::ARM64::JNILinkage::buildJNIArgs(TR::Node *callNode, TR::RegisterDepen
          default:
             TR_ASSERT(false, "Argument type %s is not supported\n", childType.toString());
          }
+
+#if defined(OSX)
+         sigCursor = nextSignatureArgument(sigCursor);
+#endif
       }
 
    // From here, down, any new stack allocations will expire / die when the function returns
@@ -483,6 +498,10 @@ size_t J9::ARM64::JNILinkage::buildJNIArgs(TR::Node *callNode, TR::RegisterDepen
       // first argument is JNIenv
       numIntegerArgs += 1;
       }
+
+#if defined(OSX)
+   sigCursor = (char *)sig;
+#endif
 
    for (i = firstArgumentChild; i < callNode->getNumChildren(); i++)
       {
@@ -542,25 +561,36 @@ size_t J9::ARM64::JNILinkage::buildJNIArgs(TR::Node *callNode, TR::RegisterDepen
                {
                // numIntegerArgs >= properties.getNumIntArgRegs()
                int offsetInc;
-               if (childType == TR::Address || childType == TR::Int64)
-                  {
-                  op = TR::InstOpCode::strimmx;
-                  offsetInc = 8;
-#if defined(OSX)
-                  argOffset = (argOffset + 7) & ~7; // adjust to 8-byte boundary
-#endif
-                  }
-               else
-                  {
-                  op = TR::InstOpCode::strimmw;
 #if defined(LINUX)
-                  offsetInc = 8;
+               offsetInc = 8; // always 8-byte aligned
+               op = (childType == TR::Address || childType == TR::Int64) ?
+                    TR::InstOpCode::strimmx : TR::InstOpCode::strimmw;
 #elif defined(OSX)
-                  offsetInc = 4;
+               TR::DataType nativeType = OMR::Symbol::convertSigCharToType(*sigCursor);
+               int32_t nativeTypeSize = TR::DataType::getSize(nativeType);
+               offsetInc = nativeTypeSize;
+               if (nativeTypeSize > 1)
+                  {
+                  argOffset = (argOffset + nativeTypeSize - 1) & ~(nativeTypeSize - 1);
+                  }
+               switch (nativeTypeSize)
+                  {
+                  case 8:
+                     op = TR::InstOpCode::strimmx;
+                     break;
+                  case 4:
+                     op = TR::InstOpCode::strimmw;
+                     break;
+                  case 2:
+                     op = TR::InstOpCode::strhimm;
+                     break;
+                  case 1:
+                     op = TR::InstOpCode::strbimm;
+                     break;
+                  }
 #else
 #error Unsupported platform
 #endif
-                  }
                getOutgoingArgumentMemRef(argMemReg, argOffset, argRegister, op, pushToMemory[argIndex++]);
                argOffset += offsetInc;
                }
@@ -628,6 +658,10 @@ size_t J9::ARM64::JNILinkage::buildJNIArgs(TR::Node *callNode, TR::RegisterDepen
             numFloatArgs++;
             break;
          } // end of switch
+
+#if defined(OSX)
+         sigCursor = nextSignatureArgument(sigCursor);
+#endif
       } // end of for
 
    for (int32_t i = TR::RealRegister::FirstGPR; i <= TR::RealRegister::LastGPR; ++i)
