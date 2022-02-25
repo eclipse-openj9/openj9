@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2019 IBM Corp. and others
+ * Copyright (c) 2010, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -116,7 +116,14 @@ public abstract class TestOptionsBase extends TestOptionsNonpersistent {
 	public void testVerboseData() { TestVerboseData.main(null); }
 	public void testVerboseHelper() { TestVerboseHelper.main(null); }
 	public void testVerboseAOT() { TestVerboseAOT.main(null); }
-	public void testSharedCacheJvmtiAPI() { TestSharedCacheJvmtiAPI.main(null); }
+	public void testSharedCacheJvmtiAPI() {
+		// JVMTI does not fully work on AArch64 macOS yet
+		// See https://github.com/eclipse-openj9/openj9/issues/14390
+		String spec = System.getenv("SPEC");
+		if (!spec.contains("osx_aarch64")) {
+			TestSharedCacheJvmtiAPI.main(null);
+		}
+	}
 	public void testSharedCacheJavaAPI() { TestSharedCacheJavaAPI.main(null); }
 	public void testDestroyCache() { TestDestroyCache.main(null); }
 	public void testExpireDestroyOnCorruptCache() { TestExpireDestroyOnCorruptCache.main(null); }
