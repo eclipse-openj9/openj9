@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 2019, 2019 IBM Corp. and others
+ * Copyright (c) 2019, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -42,6 +42,7 @@ jboolean JNICALL Java_JniArgTests_nativeIZrZ(JNIEnv *p_env, jobject p_this, jint
 	return value;   /* return the value as a boolean */
 }
 
+// Argument types are declared as jint on purpose
 jboolean JNICALL Java_JniArgTests_nativeZIZIZIZIZIrZ(JNIEnv *p_env, jobject p_this, jint arg1, jint arg2, jint arg3, jint arg4, jint arg5, jint arg6, jint arg7, jint arg8, jint arg9, jint arg10)
 {
 	J9JavaVM *javaVM = getJ9JavaVM(p_env);
@@ -124,6 +125,7 @@ jboolean JNICALL Java_JniArgTests_nativeIZIZIZIZIZrZ(JNIEnv *p_env, jobject p_th
 	return (JNI_FALSE == test_jboolean[0]);
 }
 
+// Argument types are declared as jint on purpose
 jboolean JNICALL Java_JniArgTests_nativeZZZZZZZZZZrZ(JNIEnv *p_env, jobject p_this, jint arg1, jint arg2, jint arg3, jint arg4, jint arg5, jint arg6, jint arg7, jint arg8, jint arg9, jint arg10)
 {
 	J9JavaVM *javaVM = getJ9JavaVM(p_env);
