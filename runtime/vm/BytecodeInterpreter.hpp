@@ -2312,7 +2312,16 @@ done:
 	getFFIType(U_8 j9ntc) {
 		static const ffi_type * const J9NtcToFFI[] = {
 				&ffi_type_void,		/* J9NtcVoid */
+#if defined(OSX) && defined(J9AARCH64)
+				/*
+				 * No extension from boolean to uint32 on AArch64 macOS
+				 * because its native ABI aligns arguments smaller than
+				 * 8 bytes at their natural boundaries on the stack
+				 */
+				&ffi_type_uint8,	/* J9NtcBoolean */
+#else
 				&ffi_type_uint32,	/* J9NtcBoolean */
+#endif /* defined(OSX) && defined(J9AARCH64) */
 				&ffi_type_sint8,	/* J9NtcByte */
 				&ffi_type_uint16,	/* J9NtcChar */
 				&ffi_type_sint16,	/* J9NtcShort */
