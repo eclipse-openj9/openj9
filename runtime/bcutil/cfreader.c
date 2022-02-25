@@ -2883,7 +2883,7 @@ j9bcutil_readClassFileBytes(J9PortLibrary *portLib,
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 	/* Currently value type is built on JDK19, so compare with JDK19 for now. Eventually it may need to compare to JDK20. */
 	if ((flags & BCT_MajorClassFileVersionMask) < BCT_JavaMajorVersionShifted(19)) {
-		classfile->accessFlags &= ~(CFR_ACC_VALUE_TYPE | CFR_ACC_PRIMITIVE_VALUE_TYPE | CFR_ACC_ATOMIC);
+		classfile->accessFlags &= ~(CFR_ACC_VALUE_TYPE | CFR_ACC_PRIMITIVE_VALUE_TYPE | CFR_ACC_PERMITS_VALUE);
 	}
 	/*
 	 * TODO This behaviour is based on the LW2 spec http://cr.openjdk.java.net/~fparain/L-world/LW2-JVMS-draft-20181009.pdf.

@@ -68,9 +68,6 @@ public class ValueTypeTests {
 	/* line2D */
 	static Class line2DClass = null;
 	static MethodHandle makeLine2D = null;
-	/* AtomicFlattenedLine2D */
-	static Class atomicFlattenedLine2DClass = null;
-	static MethodHandle makeAtomicFlattenedLine2D = null;
 	/* flattenedLine2D */
 	static Class flattenedLine2DClass = null;
 	static MethodHandle makeFlattenedLine2D = null;
@@ -1487,20 +1484,15 @@ public class ValueTypeTests {
 	 *  volatile Point2D vpoint;   <--- volatile 8 bytes, will be flattened.
 	 *  flattened Line2D 1ine;     <--- 16 bytes, will be flattened.
 	 *  volatile Line2D vline;     <--- volatile 16 bytes, will not be flattened.
-	 *  AtomicFlattenedLine2D aline;<--- will not be flattened.
 	 * }
 	 */
 	@Test(priority=3)
 	static public Object createValueTypeWithVolatileFields() throws Throwable {
-		String fieldsAtomicFlattenedLine2D[] = {"st:QPoint2D;:value", "en:QPoint2D;:value"};
-		atomicFlattenedLine2DClass = ValueTypeGenerator.generateValueClass("AtomicFlattenedLine2D", "java/lang/Object", fieldsAtomicFlattenedLine2D, ValueTypeGenerator.ACC_ATOMIC);
-		makeAtomicFlattenedLine2D = lookup.findStatic(atomicFlattenedLine2DClass, "makeValueGeneric", MethodType.methodType(Object.class, Object.class, Object.class));
-		
 		String fields[] = {"i:QValueInt;:value", "i2:QValueInt;:value", "point:QPoint2D;:value", "vpoint:QPoint2D;:volatile",
-				"line:QFlattenedLine2D;:value", "vline:QFlattenedLine2D;:volatile", "aline:QAtomicFlattenedLine2D;:value"};
+				"line:QFlattenedLine2D;:value", "vline:QFlattenedLine2D;:volatile"};
 		Class ValueTypeWithVolatileFieldsClass = ValueTypeGenerator.generateValueClass("ValueTypeWithVolatileFields", fields);
 		MethodHandle valueWithVolatile = lookup.findStatic(ValueTypeWithVolatileFieldsClass, "makeValueGeneric", MethodType.methodType(Object.class, Object.class, Object.class, Object.class,
-				Object.class, Object.class, Object.class, Object.class));
+				Object.class, Object.class, Object.class));
 		MethodHandle[][] getterAndWither = generateGenericGetterAndWither(ValueTypeWithVolatileFieldsClass, fields);
 		Object valueWithVolatileObj = createAssorted(valueWithVolatile, fields);
 		checkFieldAccessMHOfAssortedType(getterAndWither, valueWithVolatileObj, fields, true);
@@ -3338,11 +3330,6 @@ public class ValueTypeTests {
 		return makeFlattenedLine2D.invoke(makePoint2D.invoke(positions[0][0], positions[0][1]),
 				makePoint2D.invoke(positions[1][0], positions[1][1]));
 	}
-	
-	static Object createAtomicFlattenedLine2D(int[][] positions) throws Throwable {
-		return makeAtomicFlattenedLine2D.invoke(makePoint2D.invoke(positions[0][0], positions[0][1]),
-				makePoint2D.invoke(positions[1][0], positions[1][1]));
-	}
 
 	static Object createTriangle2D(int[][][] positions) throws Throwable {
 		return makeTriangle2D.invoke(
@@ -3387,9 +3374,6 @@ public class ValueTypeTests {
 				break;
 			case "QFlattenedLine2D;":
 				args[i] = createFlattenedLine2D(useInitFields ? (int[][])initFields[i] : defaultLinePositions1);
-				break;
-			case "QAtomicFlattenedLine2D;":
-				args[i] = createAtomicFlattenedLine2D(useInitFields ? (int[][])initFields[i] : defaultLinePositions1);
 				break;
 			case "QTriangle2D;":
 				args[i] = createTriangle2D(useInitFields ? (int[][][])initFields[i] : defaultTrianglePositions);

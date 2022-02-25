@@ -407,8 +407,7 @@ public class ObjectFieldInfo {
 								if (valueTypeHelper.classRequires4BytePrePadding(fieldClass)) {
 									instanceSize = instanceSize.sub(U32.SIZEOF);
 								}
-								forceDoubleAlignment = (modifiers.allBitsIn(J9JavaAccessFlags.J9AccVolatile) || valueTypeHelper.isRomClassAtomic(fieldClass.romClass()))
-										&& instanceSize.eq(doubleSize);
+								forceDoubleAlignment = (modifiers.allBitsIn(J9JavaAccessFlags.J9AccVolatile) && instanceSize.eq(doubleSize));
 							} else {
 								forceDoubleAlignment = true;
 							}
