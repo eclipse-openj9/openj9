@@ -1138,7 +1138,18 @@ JavaCoreDumpWriter::writeEnvironmentSection(void)
 
 	/* Write the command line data */
 	char commandLineBuffer[_MaximumCommandLineLength];
-	IDATA result = j9sysinfo_get_env("OPENJ9_JAVA_COMMAND_LINE", commandLineBuffer, _MaximumCommandLineLength);
+	const char *envVarName = "OPENJ9_JAVA_COMMAND_LINE";
+	IDATA result = j9sysinfo_get_env(envVarName, commandLineBuffer, _MaximumCommandLineLength);
+
+#if defined(J9ZOS390)
+	/* captureCommandLine() in jvm.c does not yet support z/OS;
+	 * use IBM_JAVA_COMMAND_LINE if OPENJ9_JAVA_COMMAND_LINE is not defined
+	 */
+	if (result < 0) {
+		envVarName = "IBM_JAVA_COMMAND_LINE";
+		result = j9sysinfo_get_env(envVarName, commandLineBuffer, _MaximumCommandLineLength);
+	}
+#endif /* defined(J9ZOS390) */
 
 	if (0 == result) {
 		/* Ensure null-terminated */
@@ -1152,7 +1163,7 @@ JavaCoreDumpWriter::writeEnvironmentSection(void)
 		char *longCommandLineBuffer = (char *)j9mem_allocate_memory(result, OMRMEM_CATEGORY_VM);
 
 		if (NULL != longCommandLineBuffer) {
-			if (j9sysinfo_get_env("OPENJ9_JAVA_COMMAND_LINE", longCommandLineBuffer, result) == 0) {
+			if (j9sysinfo_get_env(envVarName, longCommandLineBuffer, result) == 0) {
 				longCommandLineBuffer[result - 1] = '\0';
 				_OutputStream.writeCharacters("1CICMDLINE     ");
 				_OutputStream.writeCharacters(longCommandLineBuffer);
