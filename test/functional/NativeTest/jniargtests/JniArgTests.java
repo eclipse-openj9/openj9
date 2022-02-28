@@ -2781,16 +2781,9 @@ public class JniArgTests {
 		}
 		
 		
-		// AArch64 macOS does not extend boolean to uint32
-		String osArch = System.getProperty("os.arch");
-		String osName = System.getProperty("os.name");
-		boolean isAArch64macOS = (osArch.startsWith("aarch64") && osName.startsWith("Mac OS X"));
-		
-		if (!isAArch64macOS) {
-			retval_boolean = nativeZIZIZIZIZIrZ(test_jboolean[0], test_jint[1], test_jboolean[1], test_jint[2], test_jboolean[0], test_jint[3], test_jboolean[1], test_jint[4], test_jboolean[0], test_jint[5]);
-			if (retval_boolean != test_jboolean[0]) {
-				logRetValError("Return value error:  nativeZIZIZIZIZIrZ got: " + retval_boolean + " expected: " + test_jboolean[0]);
-			}
+		retval_boolean = nativeZIZIZIZIZIrZ(test_jboolean[0], test_jint[1], test_jboolean[1], test_jint[2], test_jboolean[0], test_jint[3], test_jboolean[1], test_jint[4], test_jboolean[0], test_jint[5]);
+		if (retval_boolean != test_jboolean[0]) {
+			logRetValError("Return value error:  nativeZIZIZIZIZIrZ got: " + retval_boolean + " expected: " + test_jboolean[0]);
 		}
 		
 		retval_boolean = nativeIZIZIZIZIZrZ(test_jint[1], test_jboolean[1], test_jint[2], test_jboolean[0], test_jint[3], test_jboolean[1], test_jint[4], test_jboolean[0], test_jint[5], test_jboolean[1]);
@@ -2798,11 +2791,9 @@ public class JniArgTests {
 			logRetValError("Return value error:  nativeIZIZIZIZIZrZ got: " + retval_boolean + " expected: " + test_jboolean[1]);
 		}
 		
-		if (!isAArch64macOS) {
-			retval_boolean = nativeZZZZZZZZZZrZ(test_jboolean[1], test_jboolean[0], test_jboolean[1], test_jboolean[0], test_jboolean[1], test_jboolean[0], test_jboolean[1], test_jboolean[0], test_jboolean[1], test_jboolean[0]);
-			if (retval_boolean != test_jboolean[0]) {
-				logRetValError("Return value error:  nativeZZZZZZZZZZrZ got: " + retval_boolean + " expected: " + test_jboolean[0]);
-			}
+		retval_boolean = nativeZZZZZZZZZZrZ(test_jboolean[1], test_jboolean[0], test_jboolean[1], test_jboolean[0], test_jboolean[1], test_jboolean[0], test_jboolean[1], test_jboolean[0], test_jboolean[1], test_jboolean[0]);
+		if (retval_boolean != test_jboolean[0]) {
+			logRetValError("Return value error:  nativeZZZZZZZZZZrZ got: " + retval_boolean + " expected: " + test_jboolean[0]);
 		}
 		
 		retval_boolean = nativeIIIIIZZZZZrZ(test_jint[1], test_jint[2], test_jint[3], test_jint[4], test_jint[5], test_jboolean[0], test_jboolean[1], test_jboolean[0], test_jboolean[1], test_jboolean[0]);
