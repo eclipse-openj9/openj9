@@ -431,7 +431,9 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
             if (testJobName.contains("functional")) {
                 PARALLEL = "Dynamic"
                 NUM_MACHINES = "2"
-                DYNAMIC_COMPILE = true
+                if (!SPEC.contains("valhalla")) {
+                    DYNAMIC_COMPILE = true
+                }
             } else if (testJobName.contains("sanity.system") || testJobName.contains("extended.system")) {
                 PARALLEL = "Dynamic"
                 NUM_MACHINES = "3"
