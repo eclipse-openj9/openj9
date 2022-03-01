@@ -510,7 +510,7 @@ jlong JNICALL Java_JniArgTests_nativeDFDFDFDFDFDFrJ( JNIEnv *p_env, jobject p_th
 jlong JNICALL Java_JniArgTests_nativeBBSSIJFDIFDFDFDBBSSIJFDrJ( JNIEnv *p_env, jobject p_this, jbyte arg1, jbyte arg2, jshort arg3, jshort arg4, jint arg5, jlong arg6, jfloat arg7, jdouble arg8, jint arg9, jfloat arg10, jdouble arg11, jfloat arg12, jdouble arg13, jfloat arg14, jdouble arg15, jbyte arg16, jbyte arg17, jshort arg18, jshort arg19, jint arg20, jlong arg21, jfloat arg22, jdouble arg23 );
 
 jboolean JNICALL Java_JniArgTests_nativeIZrZ(JNIEnv *p_env, jobject p_this, jint value, jbooleanArray backChannel);
-jboolean JNICALL Java_JniArgTests_nativeZIZIZIZIZIrZ(JNIEnv *p_env, jobject p_this, jint arg1, jint arg2, jint arg3, jint arg4, jint arg5, jint arg6, jint arg7, jint arg8, jint arg9, jint arg10); /* declared as jint on purpose */
+jboolean JNICALL Java_JniArgTests_nativeZIZIZIZIZIrZ(JNIEnv *p_env, jobject p_this, jboolean arg1, jint arg2, jboolean arg3, jint arg4, jboolean arg5, jint arg6, jboolean arg7, jint arg8, jboolean arg9, jint arg10);
 jboolean JNICALL Java_JniArgTests_nativeIZIZIZIZIZrZ(JNIEnv *p_env, jobject p_this, jint arg1, jboolean arg2, jint arg3, jboolean arg4, jint arg5, jboolean arg6, jint arg7, jboolean arg8, jint arg9, jboolean arg10);
-jboolean JNICALL Java_JniArgTests_nativeZZZZZZZZZZrZ(JNIEnv *p_env, jobject p_this, jint arg1, jint arg2, jint arg3, jint arg4, jint arg5, jint arg6, jint arg7, jint arg8, jint arg9, jint arg10); /* declared as jint on purpose */
+jboolean JNICALL Java_JniArgTests_nativeZZZZZZZZZZrZ(JNIEnv *p_env, jobject p_this, jboolean arg1, jboolean arg2, jboolean arg3, jboolean arg4, jboolean arg5, jboolean arg6, jboolean arg7, jboolean arg8, jboolean arg9, jboolean arg10);
 jboolean JNICALL Java_JniArgTests_nativeIIIIIZZZZZrZ(JNIEnv *p_env, jobject p_this, jint arg1, jint arg2, jint arg3, jint arg4, jint arg5, jboolean arg6, jboolean arg7, jboolean arg8, jboolean arg9, jboolean arg10);

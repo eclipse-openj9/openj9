@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -396,15 +396,7 @@ foundITable:
 	{
 		switch (returnType) {
 		case J9NtcBoolean:
-		{
-			U_32 returnValue = (U_32)*returnStorage;
-			U_8 * returnAddress = (U_8 *)&returnValue;
-#ifdef J9VM_ENV_LITTLE_ENDIAN
-			*returnStorage = (UDATA)(0 != returnAddress[0]);
-#else
-			*returnStorage = (UDATA)(0 != returnAddress[3]);
-#endif /*J9VM_ENV_LITTLE_ENDIAN */
-		}
+			*returnStorage = (UDATA)(U_8)*returnStorage;
 			break;
 		case J9NtcByte:
 			*returnStorage = (UDATA)(IDATA)(I_8)*returnStorage;
