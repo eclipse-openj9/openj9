@@ -538,23 +538,23 @@ jvmRestoreHooks(J9VMThread *currentThread);
  * ExclusiveVMAccess is required since J9InternalHookRecord holds live object references
  * and GC is not allowed while running these hook functions.
  *
- * @param vm J9JavaVM
+ * @param currentThread vmthread token
  * @return BOOLEAN TRUE if no error, otherwise FALSE
  */
 BOOLEAN
-runInternalJVMCheckpointHooks(J9JavaVM *vm);
+runInternalJVMCheckpointHooks(J9VMThread *currentThread);
 
 /**
  * @brief This runs the restore hook function, and cleanup.
  * ExclusiveVMAccess is required since J9InternalHookRecord hold live object references
  * and GC are not allowed while running these hook functions.
  *
- * @param vm J9JavaVM
+ * @param currentThread vmthread token
  * @param isRestore If FALSE, run the hook specified for checkpoint, otherwise run the hook specified for restore
  * @return BOOLEAN TRUE if no error, otherwise FALSE
  */
 BOOLEAN
-runInternalJVMRestoreHooks(J9JavaVM *vm);
+runInternalJVMRestoreHooks(J9VMThread *currentThread);
 
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
