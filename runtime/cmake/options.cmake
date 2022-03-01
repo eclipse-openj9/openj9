@@ -134,6 +134,7 @@ option(J9VM_OPT_FRAGMENT_RAM_CLASSES "Transitional flag for the GC during the sw
 option(J9VM_OPT_JVMTI "Support for the JVMTI interface")
 option(J9VM_OPT_JXE_LOAD_SUPPORT "Controls if main will allow -jxe: and relocate the disk image for you.")
 
+option(J9VM_OPT_LOOM "Enables support for Project Loom features such as Virtual Threads")
 option(J9VM_OPT_METHOD_HANDLE "Enables support for OpenJ9 MethodHandles. J9VM_OPT_OPENJDK_METHODHANDLE should be disabled.")
 option(J9VM_OPT_METHOD_HANDLE_COMMON "Enables common dependencies between OpenJ9 and OpenJDK MethodHandles.")
 option(J9VM_OPT_MODULE "Turns on module support")

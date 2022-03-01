@@ -1772,6 +1772,10 @@ Only available on zOS</description>
 			<require flag="opt_romImageSupport"/>
 		</requires>
 	</flag>
+	<flag id="opt_loom">
+		<description>Enables support for Project Loom features such as Virtual Threads</description>
+		<ifRemoved>No support for Project Loom features such as Virtual Threads</ifRemoved>
+	</flag>
 	<flag id="opt_memoryCheckSupport">
 		<description>Include support for memory error checking (via the -Xcheck:memory cmdline opt).</description>
 		<ifRemoved>No -Xcheck:memory support</ifRemoved>
