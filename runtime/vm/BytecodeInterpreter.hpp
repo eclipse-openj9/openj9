@@ -4023,7 +4023,7 @@ done:
 			J9Class *clzJ9Class = J9VM_J9CLASS_FROM_HEAPCLASS(_currentThread, clz);
 
 			if (J9_IS_J9CLASS_VALUETYPE(clzJ9Class)) {
-				result = VM_ValueTypeHelpers::getFlattenableFieldAtOffset(
+				result = VM_ValueTypeHelpers::getFlattenedFieldAtOffset(
 					_currentThread,
 					_objectAccessBarrier,
 					_objectAllocate,
@@ -4033,7 +4033,9 @@ done:
 					true);
 
 				if (NULL == result) {
-					result = VM_ValueTypeHelpers::getFlattenableFieldAtOffset(
+					buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
+					updateVMStruct(REGISTER_ARGS);
+					result = VM_ValueTypeHelpers::getFlattenedFieldAtOffset(
 						_currentThread,
 						_objectAccessBarrier,
 						_objectAllocate,
@@ -4041,6 +4043,8 @@ done:
 						obj,
 						offset,
 						false);
+					VMStructHasBeenUpdated(REGISTER_ARGS);
+					restoreGenericSpecialStackFrame(REGISTER_ARGS);
 				}
 			}
 		} else {
@@ -4067,7 +4071,7 @@ done:
 			J9Class *clzJ9Class = J9VM_J9CLASS_FROM_HEAPCLASS(_currentThread, clz);
 
 			if (J9_IS_J9CLASS_VALUETYPE(clzJ9Class)) {
-				VM_ValueTypeHelpers::putFlattenableFieldAtOffset(_currentThread,
+				VM_ValueTypeHelpers::putFlattenedFieldAtOffset(_currentThread,
 					_objectAccessBarrier,
 					clzJ9Class,
 					value,

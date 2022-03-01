@@ -55,7 +55,7 @@ public:
 	 * Function members
 	 */
 private:
-	/*
+	/**
 	* Determine if the two valueTypes are substitutable when rhs.class equals lhs.class
 	* and rhs and lhs are not null
 	*
@@ -237,7 +237,7 @@ public:
 		return acmpResult;
 	}
 
-	/*
+	/**
 	* Determines if a name or a signature pointed by a J9UTF8 pointer is a Qtype.
 	*
 	* @param[in] utfWrapper J9UTF8 pointer that points to the name or the signature
@@ -262,7 +262,7 @@ public:
 		return rc;
 	}
 
-	/*
+	/**
 	* Determines if the classref c=signature is a Qtype. There is no validation performed
 	* to ensure that the cpIndex points at a classref.
 	*
@@ -306,7 +306,7 @@ public:
 			J9FlattenedClassCacheEntry *cache = (J9FlattenedClassCacheEntry *) cpEntry->valueOffset;
 			J9Class *flattenedFieldClass = J9_VM_FCC_CLASS_FROM_ENTRY(cache);
 
-			returnObjectRef = getFlattenableFieldAtOffset(
+			returnObjectRef = getFlattenedFieldAtOffset(
 				currentThread,
 				objectAccessBarrier,
 				objectAllocate,
@@ -324,7 +324,23 @@ public:
 	}
 
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-	static VMINLINE j9object_t getFlattenableFieldAtOffset(J9VMThread *currentThread, MM_ObjectAccessBarrierAPI objectAccessBarrier, MM_ObjectAllocationAPI objectAllocate, J9Class *returnObjectClass, j9object_t srcObject, UDATA srcOffset, bool fastPath) {
+	/**
+	 * Performs a getfield operation on an object given an offset in bytes. Only Handles flattened cases.
+	 *
+	 * @param currentThread thread token
+	 * @param objectAccessBarrier access barrier
+	 * @param objectAllocate allocator
+	 * @param returnObjectClass the class of the field being retrieved
+	 * @param srcObject the object that the field is being retrieved from
+	 * @param srcOffset where in srcObject the field is located (in bytes)
+	 * @param fastPath performs fastpath allocation, no GC. If this is false
+	 * 			frame must be built before calling as GC may occur
+	 *
+	 * @return NULL if allocation fails, valuetype otherwise
+	 */
+	static VMINLINE j9object_t
+	getFlattenedFieldAtOffset(J9VMThread *currentThread, MM_ObjectAccessBarrierAPI objectAccessBarrier, MM_ObjectAllocationAPI objectAllocate, J9Class *returnObjectClass, j9object_t srcObject, UDATA srcOffset, bool fastPath)
+	{
 		j9object_t returnObjectRef = NULL;
 
 		if (fastPath) {
@@ -355,7 +371,19 @@ public:
 		return returnObjectRef;
 	}
 
-	static VMINLINE void putFlattenableFieldAtOffset(J9VMThread *currentThread, MM_ObjectAccessBarrierAPI objectAccessBarrier, J9Class *destObjectClass, j9object_t srcObject, j9object_t destObject, UDATA destOffset) {
+	/**
+	 * Stores a valuetype at a specified offset in a specified object. Only Handles flattened cases.
+	 *
+	 * @param currentThread thread token
+	 * @param objectAccessBarrier access barrier
+	 * @param destObjectClass the class of srcObject
+	 * @param srcObject the object being stored
+	 * @param destObject the object that srcObject is being stored in
+	 * @param destOffset where in destObject to store srcObject (in bytes)
+	 */
+	static VMINLINE void
+	putFlattenedFieldAtOffset(J9VMThread *currentThread, MM_ObjectAccessBarrierAPI objectAccessBarrier, J9Class *destObjectClass, j9object_t srcObject, j9object_t destObject, UDATA destOffset)
+	{
 		UDATA sourceObjectOffset = 0;
 		if (J9CLASS_HAS_4BYTE_PREPADDING(destObjectClass)) {
 			sourceObjectOffset += sizeof(U_32);

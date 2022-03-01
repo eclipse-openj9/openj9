@@ -44,8 +44,8 @@ public class ValueTypeUnsafeTestClasses {
 	}
 
 	static class IntWrapper {
-		IntWrapper(int i) { this.i = i; }
-		final int i;
+		IntWrapper(int i) { this.vti = new ValueTypeInt(i); }
+		final ValueTypeInt vti;
 	}
 
 	static class Point2D {
