@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -765,6 +765,7 @@ public:
 
    static void setEssentialNodes(TR_CISCGraph*);
    static void makePreparedCISCGraphs(TR::Compilation *c);
+   static void initializeGraphs(TR::Compilation *c);
 
    TR_CISCGraph(TR_Memory * m, const char *title = 0, int32_t numHashTrNode = 31, int32_t numHashOpc = 17)
       : _titleOfCISC(title), _entryNode(0), _exitNode(0), _numNodes(0), _numDagIds(0),
