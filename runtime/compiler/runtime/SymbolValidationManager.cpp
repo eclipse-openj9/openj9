@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1083,6 +1083,47 @@ TR::SymbolValidationManager::addClassInfoIsInitializedRecord(TR_OpaqueClassBlock
    return addVanillaRecord(clazz, new (_region) ClassInfoIsInitialized(clazz, isInitialized));
    }
 
+// This method doesn't return success/failure because it must succeed.
+// Otherwise, it's not necessarily possible to codegen a resolved virtual call,
+// since the call might not have originated as a regular invokevirtual.
+void
+TR::SymbolValidationManager::addJ2IThunkFromMethodRecord(void *thunk, TR_OpaqueMethodBlock *method)
+   {
+   SVM_ASSERT(thunk != NULL, "addJ2IThunkFromMethodRecord: no thunk");
+   SVM_ASSERT_ALREADY_VALIDATED(this, method);
+   if (isAlreadyValidated(thunk))
+      {
+      // We've already seen this thunk defined by an earlier J2IThunkFromMethod
+      // record given some previous method M. Call the `method` currently under
+      // consideration N. Then the signatures of M and N are compatible for the
+      // purposes of J2I thunk sharing.
+      //
+      // If we reach this point in the validation at load time, there are
+      // corresponding methods M' and N' with signatures identical to those of
+      // M and N, respectively. In particular, M' and N' will share a single
+      // J2I thunk. Furthermore, that J2I thunk is already guaranteed to exist
+      // because it has been ensured for M' by the earlier J2IThunkFromMethod
+      // record. Therefore, there is no need for a second record.
+      //
+      // Well either that or we're in a heuristic region, but in that case we
+      // should still return without creating any new records.
+      //
+      return;
+      }
+
+   TR::SymbolValidationRecord *record =
+      new (_region) J2IThunkFromMethodRecord(thunk, method);
+
+   SVM_ASSERT(
+      !recordExists(record),
+      "J2IThunkFromMethod record (thunk %p, method %p) already exists, "
+      "but the thunk has not been assigned an ID",
+      thunk,
+      method);
+
+   appendNewRecord(thunk, record);
+   }
+
 
 
 bool
@@ -1520,6 +1561,12 @@ TR::SymbolValidationManager::validateClassInfoIsInitializedRecord(uint16_t class
 
    bool valid = (!wasInitialized || initialized);
    return valid;
+   }
+
+bool
+TR::SymbolValidationManager::validateJ2IThunkFromMethodRecord(uint16_t thunkID, void *thunk)
+   {
+   return validateSymbol(thunkID, thunk, TR::SymbolType::typeOpaque);
    }
 
 bool
@@ -2097,4 +2144,19 @@ void TR::ImproperInterfaceMethodFromCPRecord::printFields()
    traceMsg(TR::comp(), "\t_beholder=0x%p\n", _beholder);
    printClass(_beholder);
    traceMsg(TR::comp(), "\t_cpIndex=%d\n", _cpIndex);
+   }
+
+bool TR::J2IThunkFromMethodRecord::isLessThanWithinKind(
+   SymbolValidationRecord *other)
+   {
+   TR::J2IThunkFromMethodRecord *rhs = downcast(this, other);
+   return LexicalOrder::by(_thunk, rhs->_thunk)
+      .thenBy(_method, rhs->_method).less();
+   }
+
+void TR::J2IThunkFromMethodRecord::printFields()
+   {
+   traceMsg(TR::comp(), "J2IThunkFromMethodRecord\n");
+   traceMsg(TR::comp(), "\t_thunk=0x%p\n", _thunk);
+   traceMsg(TR::comp(), "\t_method=0x%p\n", _method);
    }

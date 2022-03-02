@@ -708,6 +708,8 @@ void J9::X86::I386::PrivateLinkage::buildVirtualOrComputedCall(
       }
    else if (resolvedSite && site.resolvedVirtualShouldUseVFTCall())
       {
+      // There are no J2I thunks on x86-32, so no J2I thunk validation is needed
+
       if (entryLabel)
          generateLabelInstruction(TR::InstOpCode::label, site.getCallNode(), entryLabel, cg());
 

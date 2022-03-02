@@ -98,6 +98,9 @@ public:
 
    // See J9::CodeGenerator::guaranteesResolvedDirectDispatchForSVM
    bool guaranteesResolvedDirectDispatchForSVM() { return true; }
+
+   // See J9::CodeGenerator::guaranteesResolvedVirtualDispatchForSVM
+   bool guaranteesResolvedVirtualDispatchForSVM() { return true; }
    };
 
 }
