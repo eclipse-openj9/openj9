@@ -1283,6 +1283,15 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          }
          break;
 
+      case TR_ValidateJ2IThunkFromMethod:
+         {
+         auto *thunkRecord = reinterpret_cast<TR_RelocationRecordValidateJ2IThunkFromMethod *>(reloRecord);
+         auto *svmRecord = reinterpret_cast<TR::J2IThunkFromMethodRecord *>(relocation->getTargetAddress());
+         thunkRecord->setThunkID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_thunk));
+         thunkRecord->setMethodID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_method));
+         }
+         break;
+
       default:
          TR_ASSERT(false, "Unknown relo type %d!\n", kind);
          comp->failCompilation<J9::AOTRelocationRecordGenerationFailure>("Unknown relo type %d!\n", kind);
@@ -2167,6 +2176,22 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
             traceMsg(self()->comp(), "\n Breakpoint Guard: Inlined site index = %d, destinationAddress = %p",
                      bpgRecord->inlinedSiteIndex(reloTarget),
                      bpgRecord->destinationAddress(reloTarget));
+            }
+         }
+         break;
+
+      case TR_ValidateJ2IThunkFromMethod:
+         {
+         auto *thunkRecord = reinterpret_cast<TR_RelocationRecordValidateJ2IThunkFromMethod *>(reloRecord);
+
+         self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
+         if (isVerbose)
+            {
+            traceMsg(
+               self()->comp(),
+               "\n Validate J2I Thunk From Method: thunkID=%d, methodID=%d",
+               thunkRecord->thunkID(reloTarget),
+               thunkRecord->methodID(reloTarget));
             }
          }
          break;

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -676,6 +676,21 @@ struct ImproperInterfaceMethodFromCPRecord : public MethodValidationRecord
    int32_t _cpIndex;
    };
 
+struct J2IThunkFromMethodRecord : public SymbolValidationRecord
+   {
+   J2IThunkFromMethodRecord(void *thunk, TR_OpaqueMethodBlock *method)
+      : SymbolValidationRecord(TR_ValidateJ2IThunkFromMethod),
+        _thunk(thunk),
+        _method(method)
+      {}
+
+   virtual bool isLessThanWithinKind(SymbolValidationRecord *other);
+   virtual void printFields();
+
+   void *_thunk;
+   TR_OpaqueMethodBlock *_method;
+   };
+
 class SymbolValidationManager
    {
 public:
@@ -759,6 +774,7 @@ public:
 
    bool addStackWalkerMaySkipFramesRecord(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *methodClass, bool skipFrames);
    bool addClassInfoIsInitializedRecord(TR_OpaqueClassBlock *clazz, bool isInitialized);
+   void addJ2IThunkFromMethodRecord(void *thunk, TR_OpaqueMethodBlock *method);
 
 
 
@@ -804,6 +820,11 @@ public:
 
    bool validateStackWalkerMaySkipFramesRecord(uint16_t methodID, uint16_t methodClassID, bool couldSkipFrames);
    bool validateClassInfoIsInitializedRecord(uint16_t classID, bool wasInitialized);
+
+   // For J2IThunkFromMethod records, the actual thunk is loaded if necessary
+   // in TR_RelocationRecordValidateJ2IThunkFromMethod::applyRelocation() so
+   // that the thunk loading logic can be confined to RelocationRecord.cpp.
+   bool validateJ2IThunkFromMethodRecord(uint16_t thunkID, void *thunk);
 
 
    TR_OpaqueClassBlock *getBaseComponentClass(TR_OpaqueClassBlock *clazz, int32_t & numDims);
