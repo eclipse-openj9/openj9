@@ -241,8 +241,54 @@ J9::ARM64::PrivateLinkage::entryPointFromInterpretedMethod()
    return reinterpret_cast<intptr_t>(getInterpretedMethodEntryPoint()->getBinaryEncoding());
    }
 
+void J9::ARM64::PrivateLinkage::alignLocalReferences(uint32_t &stackIndex)
+   {
+   TR::Compilation *comp = self()->comp();
+   TR::GCStackAtlas *atlas = self()->cg()->getStackAtlas();
+   const int32_t localObjectAlignment = TR::Compiler->om.getObjectAlignmentInBytes();
+   const uint8_t pointerSize = TR::Compiler->om.sizeofReferenceAddress();
+
+   if (comp->useCompressedPointers())
+      {
+      if (comp->getOption(TR_TraceCG))
+         {
+         traceMsg(comp,"\nLOCAL OBJECT ALIGNMENT: stack offset before alignment: %d,", stackIndex);
+         }
+
+      // stackIndex in mapCompactedStack is calculated using only local reference sizes and does not include the padding
+      stackIndex -= pointerSize * atlas->getNumberOfPaddingSlots();
+
+      if (comp->getOption(TR_TraceCG))
+         {
+         traceMsg(comp," with padding: %d,", stackIndex);
+         }
+      // If there are any local objects we have to make sure they are aligned properly
+      // when compressed pointers are used.  Otherwise, pointer compression may clobber
+      // part of the pointer.
+      //
+      // Each auto's GC index will have already been aligned, so just the starting stack
+      // offset needs to be aligned.
+      //
+      uint32_t unalignedStackIndex = stackIndex;
+      stackIndex &= ~(localObjectAlignment - 1);
+      uint32_t paddingBytes = unalignedStackIndex - stackIndex;
+      if (paddingBytes > 0)
+         {
+         TR_ASSERT_FATAL((paddingBytes & (pointerSize - 1)) == 0, "Padding bytes should be a multiple of the slot/pointer size");
+         uint32_t paddingSlots = paddingBytes / pointerSize;
+         atlas->setNumberOfSlotsMapped(atlas->getNumberOfSlotsMapped() + paddingSlots);
+         }
+      }
+   }
+
 void J9::ARM64::PrivateLinkage::mapStack(TR::ResolvedMethodSymbol *method)
    {
+   if (self()->cg()->getLocalsIG() && self()->cg()->getSupportsCompactedLocals())
+      {
+      mapCompactedStack(method);
+      return;
+      }
+
    const TR::ARM64LinkageProperties& linkageProperties = getProperties();
    int32_t firstLocalOffset = linkageProperties.getOffsetToFirstLocal();
    uint32_t stackIndex = firstLocalOffset;
@@ -332,38 +378,30 @@ void J9::ARM64::PrivateLinkage::mapStack(TR::ResolvedMethodSymbol *method)
 
    method->setLocalMappingCursor(stackIndex);
 
-   // Map the parameters
-   //
-   ListIterator<TR::ParameterSymbol> parameterIterator(&method->getParameterList());
-   TR::ParameterSymbol *parmCursor = parameterIterator.getFirst();
-
-   int32_t offsetToFirstParm = getOffsetToFirstParm();
-   uint32_t sizeOfParameterArea = method->getNumParameterSlots() * TR::Compiler->om.sizeofReferenceAddress();
-
-   while (parmCursor != NULL)
-      {
-      uint32_t parmSize = (parmCursor->getDataType() != TR::Address) ? parmCursor->getSize()*2 : parmCursor->getSize();
-
-      parmCursor->setParameterOffset(sizeOfParameterArea -
-                                     parmCursor->getParameterOffset() -
-                                     parmSize +
-                                     offsetToFirstParm);
-
-      parmCursor = parameterIterator.getNext();
-      }
+   mapIncomingParms(method);
 
    atlas->setLocalBaseOffset(lowGCOffset - firstLocalOffset);
-   atlas->setParmBaseOffset(atlas->getParmBaseOffset() + offsetToFirstParm - firstLocalOffset);
+   atlas->setParmBaseOffset(atlas->getParmBaseOffset() + getOffsetToFirstParm() - firstLocalOffset);
    }
 
 void J9::ARM64::PrivateLinkage::mapSingleAutomatic(TR::AutomaticSymbol *p, uint32_t &stackIndex)
    {
-   int32_t roundup = (comp()->useCompressedPointers() && p->isLocalObject() ? TR::Compiler->om.getObjectAlignmentInBytes() : TR::Compiler->om.sizeofReferenceAddress()) - 1;
-   int32_t roundedSize = (p->getSize() + roundup) & (~roundup);
-   if (roundedSize == 0)
-      roundedSize = 4;
+   mapSingleAutomatic(p, p->getRoundedSize(), stackIndex);
+   }
 
-   p->setOffset(stackIndex -= roundedSize);
+void J9::ARM64::PrivateLinkage::mapSingleAutomatic(TR::AutomaticSymbol *p, uint32_t size, uint32_t &stackIndex)
+   {
+   /*
+    * Align stack-allocated objects that don't have GC map index > 0.
+    */
+   if (comp()->useCompressedPointers() && p->isLocalObject() && (p->getGCMapIndex() == -1))
+      {
+      int32_t roundup = TR::Compiler->om.getObjectAlignmentInBytes() - 1;
+
+      size = (size  + roundup) & (~roundup);
+      }
+
+   p->setOffset(stackIndex -= size);
    }
 
 static void lockRegister(TR::RealRegister *regToAssign)
