@@ -333,6 +333,7 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
    static TR::Register *pd2udVectorEvaluatorHelper(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *pd2zdEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *pd2zdVectorEvaluatorHelper(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *pd2zdVector2VectorEvaluatorHelper(TR::Node *node, TR::CodeGenerator *cg);
 
    /*   PD <- UD/ZD   */
    static TR::Register *ud2pdEvaluator(TR::Node *node, TR::CodeGenerator *cg);

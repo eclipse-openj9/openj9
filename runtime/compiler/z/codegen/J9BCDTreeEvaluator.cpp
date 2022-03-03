@@ -1932,16 +1932,56 @@ J9::Z::TreeEvaluator::pd2zdVectorEvaluatorHelper(TR::Node * node, TR::CodeGenera
    }
 
 TR::Register *
+J9::Z::TreeEvaluator::pd2zdVector2VectorEvaluatorHelper(TR::Node * node, TR::CodeGenerator * cg)
+   {
+   TR::Compilation* comp = cg->comp();
+   if (comp->getOption(TR_TraceCG))
+      traceMsg(comp, "DAA: Entering pd2zdVector2VectorEvaluatorHelper %d\n", __LINE__);
+
+   TR::Node *child = node->getFirstChild();
+   TR::Register *valueRegister = cg->evaluate(child);
+   TR_ASSERT((valueRegister->getKind() == TR_VRF || valueRegister->getKind() == TR_FPR),
+      "valueChild(pdload) should evaluate to Vector register.");
+
+   TR::Register *zonedDecimalHigh = cg->allocateRegister(TR_VRF);
+   TR::Register *zonedDecimalLow = cg->allocateRegister(TR_VRF);
+   TR::RegisterPair *zonedRegPair = cg->allocateRegisterPair(zonedDecimalLow, zonedDecimalHigh);
+
+   int32_t precision = node->getDecimalPrecision();
+   uint8_t M3 = 0x8; // Disable sign validation.
+   generateVRRkInstruction(cg, TR::InstOpCode::VUPKZL, node, zonedDecimalLow, valueRegister, M3); // Also copies the sign bit.
+
+   if (precision > TR_VECTOR_REGISTER_SIZE)
+      generateVRRkInstruction(cg, TR::InstOpCode::VUPKZH, node, zonedDecimalHigh, valueRegister, M3);
+
+   pd2zdSignFixup(node, NULL, cg, zonedRegPair);
+
+   node->setRegister(zonedRegPair);
+   cg->decReferenceCount(child);
+   // zonedRegPair->setIsInitialized();
+   traceMsg(comp, "DAA: Leave pd2zdVectorEvaluatorHelper\n");
+   return zonedRegPair;
+   }
+
+TR::Register *
 J9::Z::TreeEvaluator::pd2zdEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
    cg->traceBCDEntry("pd2zd",node);
    TR::Register* targetReg = NULL;
    cg->generateDebugCounter("PD-Op/pd2zd", 1, TR::DebugCounter::Cheap);
 
-   static char* isVectorBCDEnv = feGetEnv("TR_enableVectorBCD");
-   if(cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL) &&
-           !cg->comp()->getOption(TR_DisableVectorBCD) ||
-           isVectorBCDEnv)
+   static bool disablePdVector2ZdMemoryBCD = feGetEnv("TR_disablePdVector2ZdMemoryBCD") != NULL;
+   static bool disablePdVector2ZdVectorBCD = feGetEnv("TR_disablePdVector2ZdVectorBCD") != NULL;
+
+   if (cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL_ENHANCEMENT_FACILITY_2)
+      && !disablePdVector2ZdVectorBCD
+      && !cg->comp()->getOption(TR_DisableVectorBCD))
+      {
+      targetReg = pd2zdVector2VectorEvaluatorHelper(node, cg);
+      }
+   else if(cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL)
+      && !disablePdVector2ZdMemoryBCD
+      && !cg->comp()->getOption(TR_DisableVectorBCD))
       {
       targetReg = pd2zdVectorEvaluatorHelper(node, cg);
       }
