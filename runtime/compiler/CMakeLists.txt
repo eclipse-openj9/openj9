@@ -337,6 +337,11 @@ create_omr_compiler_library(NAME j9jit
 	FILTER ${REMOVED_OMR_FILES}
 )
 
+if(OMR_OS_ZOS)
+	# Workaround a compile problem on z/OS by appending "-O" (to override "-O3").
+	set_property(SOURCE "optimizer/VectorAPIExpansion.cpp" APPEND PROPERTY COMPILE_FLAGS "-O")
+endif()
+
 add_dependencies(j9jit
 	omrgc_hookgen
 	j9jit_tracegen
