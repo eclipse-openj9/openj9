@@ -1879,9 +1879,9 @@ J9::Z::TreeEvaluator::pd2zdVectorEvaluatorHelper(TR::Node * node, TR::CodeGenera
    {
    TR::Compilation* comp = cg->comp();
    traceMsg(comp, "DAA: Enter pd2zdVectorEvaluatorHelper\n");
+   TR_PseudoRegister *targetReg = cg->allocatePseudoRegister(node->getDataType());
 
-   int32_t precision = node->getDecimalPrecision();
-   // pd2zd (Vector to Memory conversion) we need to create storagerefence and save this value to the memoryreference
+   // pd2zd we need to create storagerefence and save this value to the memoryreference
    // associated to that storagereference.
    // To do this, we need to
    //
@@ -1892,60 +1892,37 @@ J9::Z::TreeEvaluator::pd2zdVectorEvaluatorHelper(TR::Node * node, TR::CodeGenera
    // return the allocate PseudoRegister associate the storage reference to the Pseudo register
    // return this pseudoregister/
    //
+   TR_StorageReference *hint = node->getStorageReferenceHint();
+   int32_t sizeOfZonedValue = node->getSize(); //for zoned node, precision and the size must be the same.
+   int32_t precision = node->getDecimalPrecision();
+   TR_StorageReference* targetStorageReference = hint ? hint : TR_StorageReference::createTemporaryBasedStorageReference(sizeOfZonedValue, comp);
 
+   targetReg->setStorageReference(targetStorageReference, node);
    TR::Node *child = node->getFirstChild(); //This child will evaluate to Vector Register
    TR::Register *valueRegister = cg->evaluate(child);
    TR_ASSERT((valueRegister->getKind() == TR_VRF || valueRegister->getKind() == TR_FPR),
              "valueChild should evaluate to Vector register.");
 
-   TR::MemoryReference *targetMR = NULL;
-   TR::RegisterPair *zonedDecimalRegPair = NULL;
-   TR_PseudoRegister *targetReg = NULL;
+   TR::MemoryReference *targetMR = generateS390LeftAlignedMemoryReference(node, targetStorageReference, cg, sizeOfZonedValue, false);
 
-   static bool disablePdVector2ZdVectorBCD = feGetEnv("TR_disablezdsle2zdVectorBCD") != NULL;
-   if (!disablePdVector2ZdVectorBCD
-      && cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL_ENHANCEMENT_FACILITY_2))
-      { // Vector Reg to Vector Reg(s)
-      TR::Register *zonedDecimalHigh = cg->allocateRegister(TR_VRF);
-      TR::Register *zonedDecimalLow = cg->allocateRegister(TR_VRF);
-      zonedDecimalRegPair = cg->allocateRegisterPair(zonedDecimalLow, zonedDecimalHigh);
-
-      uint8_t M3 = 0x8; // Disable sign validation.
-      generateVRRkInstruction(cg, TR::InstOpCode::VUPKZL, node, zonedDecimalLow, valueRegister, M3); // Also copies the sign bit.
-
-      if (precision > TR_VECTOR_REGISTER_SIZE)
-         generateVRRkInstruction(cg, TR::InstOpCode::VUPKZH, node, zonedDecimalHigh, valueRegister, M3);
-      }
-   else
-      { // Vector Reg to Memory
-
-      targetReg = cg->allocatePseudoRegister(node->getDataType());
-      TR_StorageReference *hint = node->getStorageReferenceHint();
-      int32_t sizeOfZonedValue = node->getSize(); //for zoned node, precision and the size must be the same.
-      TR_StorageReference* targetStorageReference = hint ? hint : TR_StorageReference::createTemporaryBasedStorageReference(sizeOfZonedValue, comp);
-
-      targetReg->setStorageReference(targetStorageReference, node);
-      targetMR = generateS390LeftAlignedMemoryReference(node, targetStorageReference, cg, sizeOfZonedValue, false);
-
-      if (!targetStorageReference->isTemporaryBased())
+   if (!targetStorageReference->isTemporaryBased())
+      {
+      TR::SymbolReference *memSymRef = targetStorageReference->getNode()->getSymbolReference();
+      if (memSymRef)
          {
-         TR::SymbolReference *memSymRef = targetStorageReference->getNode()->getSymbolReference();
-         if (memSymRef)
-            {
-            targetMR->setListingSymbolReference(memSymRef);
-            }
+         targetMR->setListingSymbolReference(memSymRef);
          }
-
-      if(cg->traceBCDCodeGen())
-         {
-         traceMsg(comp, "gen VUPKZ, sizeOfZonedValue=%d, precision=%d\n", sizeOfZonedValue, precision);
-         }
-
-      generateVSIInstruction(cg, TR::InstOpCode::VUPKZ, node, valueRegister, targetMR, sizeOfZonedValue - 1);
       }
+
+   if(cg->traceBCDCodeGen())
+      {
+      traceMsg(comp, "gen VUKPZ, sizeOfZonedValue=%d, precision=%d\n", sizeOfZonedValue, precision);
+      }
+
+   generateVSIInstruction(cg, TR::InstOpCode::VUPKZ, node, valueRegister, targetMR, sizeOfZonedValue - 1);
 
    // Fix pd2zd signs. VUPKZ and its non-vector counterpart don't validate digits nor signs.
-   pd2zdSignFixup(node, targetMR, cg, zonedDecimalRegPair);
+   pd2zdSignFixup(node, targetMR, cg);
 
    node->setRegister(targetReg);
    cg->decReferenceCount(child);
