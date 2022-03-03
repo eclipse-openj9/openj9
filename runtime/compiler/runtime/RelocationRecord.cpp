@@ -2350,6 +2350,9 @@ static int32_t relocateAndRegisterThunk(
       // the old cache (which is not switched) will fail
       U_8 *thunkStart = TR::CodeCacheManager::instance()->allocateCodeMemory(firstDescriptor.length, 0, &codeCache, &coldCode, true);
       U_8 *thunkAddress;
+#if defined(OSX) && defined(AARCH64)
+      pthread_jit_write_protect_np(0);
+#endif
       if (thunkStart)
          {
          // Relocate the thunk
