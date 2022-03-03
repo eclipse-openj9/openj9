@@ -397,11 +397,6 @@ enum INIT_STAGE {
 #define VMOPT_XXDISABLE3164INTEROPERABILITY "-XX:-Enable3164Interoperability"
 #endif /* defined(J9VM_ZOS_3164_INTEROPERABILITY) */
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-#define VMOPT_XXENABLEVALHALLA "-XX:+EnableValhalla"
-#define VMOPT_XXDISABLEVALHALLA "-XX:-EnableValhalla"
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
-
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 #define VMOPT_XXENABLECRIU "-XX:+EnableCRIUSupport"
 #define VMOPT_XXDISABLECRIU "-XX:-EnableCRIUSupport"

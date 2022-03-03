@@ -110,8 +110,11 @@ J9::ObjectModel::areValueTypesEnabled()
 #if defined(J9VM_OPT_JITSERVER)
    if (auto stream = TR::CompilationInfo::getStream())
       {
-      auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(stream);
-      return J9_ARE_ALL_BITS_SET(vmInfo->_extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_VALHALLA);
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+      return true;
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+      return false;
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
       }
 #endif /* defined(J9VM_OPT_JITSERVER) */
 

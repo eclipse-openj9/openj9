@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2021 IBM Corp. and others
+ * Copyright (c) 2019, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -243,7 +243,11 @@ areValueBasedMonitorChecksEnabled(J9JavaVM *vm)
 BOOLEAN
 areValueTypesEnabled(J9JavaVM *vm)
 {
-	return J9_ARE_ALL_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_VALHALLA);
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	return TRUE;
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+	return FALSE;
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 }
 
 } /* extern "C" */
