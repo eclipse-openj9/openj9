@@ -468,14 +468,14 @@ jobject getPropertyList(JNIEnv *env)
 
 #undef USERNAME_LENGTH
 
-#if defined(OPENJ9_BUILD)
+#if defined(OPENJ9_BUILD) && JAVA_SPEC_VERSION == 8
 	/* Set the maximum direct byte buffer allocation property if it has not been set manually */
 	if ((UDATA) -1 == javaVM->directByteBufferMemoryMax) {
 		UDATA heapSize = javaVM->memoryManagerFunctions->j9gc_get_maximum_heap_size(javaVM);
 		/* allow up to 7/8 of the heap to be direct byte buffers */
 		javaVM->directByteBufferMemoryMax = heapSize - (heapSize / 8);
 	}
-#endif /* defined(OPENJ9_BUILD) */
+#endif /* defined(OPENJ9_BUILD) && JAVA_SPEC_VERSION == 8 */
 	if ((UDATA) -1 != javaVM->directByteBufferMemoryMax) {
 		/* buffer to hold the size of the maximum direct byte buffer allocations */
 		char maxDirectMemBuff[24];
