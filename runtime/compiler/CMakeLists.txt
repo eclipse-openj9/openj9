@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2021 IBM Corp. and others
+# Copyright (c) 2017, 2022 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,7 +29,7 @@ include(CheckCXXCompilerFlag)
 # Longer term, this will of course have to collapse into the VM builds.
 
 if(OMR_ARCH_X86)
-	# On windows, the proper binary format is not auto detected
+	# On Windows, the proper binary format is not auto detected.
 	if(OMR_OS_WINDOWS)
 		if(OMR_ENV_DATA64)
 			set(CMAKE_ASM_NASM_OBJECT_FORMAT win64)
@@ -38,7 +38,7 @@ if(OMR_ARCH_X86)
 		endif()
 	endif()
 	enable_language(ASM_NASM)
-	# We have to manually append "/" to the paths as NASM versions older than v2.14 requires trailing / in the directory paths
+	# We have to manually append "/" to the paths as NASM versions older than v2.14 requires trailing / in the directory paths.
 	set(asm_inc_dirs
 		"-I${j9vm_SOURCE_DIR}/oti/"
 		"-I${j9vm_BINARY_DIR}/oti/"
@@ -58,12 +58,11 @@ if(OMR_ARCH_X86)
 			CMAKE_ASM_NASM_COMPILE_OBJECT
 			"${CMAKE_ASM_NASM_COMPILE_OBJECT}"
 		)
-
 	endif()
 endif()
 
-# Using the linker option -static-libgcc results in an error on OSX. The option -static-libstdc++ is unused. Therefore
-# these options have been excluded from OSX
+# Using the linker option -static-libgcc results in an error on OSX. The option -static-libstdc++ is unused.
+# Therefore these options have been excluded from OSX.
 if((OMR_TOOLCONFIG STREQUAL "gnu") AND (NOT OMR_OS_OSX))
 	check_cxx_compiler_flag("-static-libstdc++" ALLOWS_STATIC_LIBCPP)
 endif()
@@ -74,21 +73,22 @@ endif()
 # does not yet exist (and as such can't have dependencies addded to it).
 add_custom_target(j9jit_generate)
 
-# On windows exceptions are controlled via a the preprocessor define _HAS_EXCEPTIONS
-# We need to enable it again, after omr platform config removed it.
+# On Windows, exceptions are controlled via the preprocessor define _HAS_EXCEPTIONS.
+# We need to enable it again, after OMR platform config removed it.
 get_directory_property(compile_defs COMPILE_DEFINITIONS)
 list(REMOVE_ITEM compile_defs "_HAS_EXCEPTIONS=0")
 set_property(DIRECTORY PROPERTY COMPILE_DEFINITIONS ${compile_defs})
 
 omr_add_tracegen(env/j9jit.tdf)
 
-# this is a workaround because the jit code includes the tracegen header as <env/ut_j9jit.h>
+# this is a workaround because the JIT code includes the tracegen header as <env/ut_j9jit.h>
 add_custom_command(
 	OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/env/ut_j9jit.h
 	DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/ut_j9jit.h
 	COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_CURRENT_BINARY_DIR}/ut_j9jit.h" "${CMAKE_CURRENT_BINARY_DIR}/env/ut_j9jit.h"
 	VERBATIM
 )
+
 add_custom_target(j9jit_tracegen DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/env/ut_j9jit.h)
 
 # J9VM_OPT_JITSERVER
@@ -106,18 +106,17 @@ if(J9VM_OPT_JITSERVER)
 	include_directories(${OPENSSL_INCLUDE_DIR})
 endif()
 
-#TODO We should get rid of this, but its still required by the compiler_support module in omr
-set(J9SRC  ${j9vm_SOURCE_DIR})
+# TODO We should get rid of this, but it's still required by the compiler_support module in OMR.
+set(J9SRC ${j9vm_SOURCE_DIR})
 
-
-#include compiler support module from OMR
+# include compiler support module from OMR
 include(OmrCompilerSupport)
 
 # Override masm2gas with J9JIT version until we've
 # resolved the divergence.
-set(masm2gas_path  build/scripts/masm2gas.pl )
+set(masm2gas_path build/scripts/masm2gas.pl )
 get_filename_component(masm2gas_path ${masm2gas_path} ABSOLUTE)
-set(MASM2GAS_PATH  ${masm2gas_path} CACHE INTERNAL "MASM2GAS PATH")
+set(MASM2GAS_PATH ${masm2gas_path} CACHE INTERNAL "MASM2GAS PATH")
 
 # The list of files that are added to the compiler in addition
 # To the defaults provided by create_omr_compiler_library
@@ -130,7 +129,8 @@ macro(j9jit_files)
 endmacro(j9jit_files)
 
 j9jit_files(${CMAKE_CURRENT_BINARY_DIR}/ut_j9jit.c)
-# Add our subdirs.
+
+# Add our subdirectories.
 add_subdirectory(codegen)
 add_subdirectory(compile)
 add_subdirectory(control)
@@ -155,7 +155,7 @@ if(NOT TR_TARGET_ARCH STREQUAL TR_HOST_ARCH AND IS_DIRECTORY "${CMAKE_CURRENT_SO
 endif()
 
 # Some files in OMR provide duplicate or extra functionality not needed
-# in J9, so we need to remove them
+# in J9, so we need to remove them.
 set(REMOVED_OMR_FILES
 	${omr_SOURCE_DIR}/compiler/codegen/CCData.cpp
 	${omr_SOURCE_DIR}/compiler/control/CompileMethod.cpp
@@ -187,9 +187,8 @@ set(REMOVED_OMR_FILES
 	${omr_SOURCE_DIR}/compiler/ilgen/OMRVirtualMachineState.cpp
 )
 
-
 get_target_property(compiler_defines j9vm_compiler_defines INTERFACE_COMPILE_DEFINITIONS)
-# Extra defines not provided by the create_omr_compiler_library call
+# Extra defines not provided by the create_omr_compiler_library call.
 set(TARGET_DEFINES
 	J9_PROJECT_SPECIFIC
 	${compiler_defines}
@@ -200,14 +199,14 @@ set(TARGET_DEFINES
 # though that would also involve teaching MASM2GAS and
 # PASM2ASM about target includes.
 #
-# In the mean time, like the makefiles, this is using
-# the includes from the SDK
+# In the meantime, like the makefiles, this is using
+# the includes from the SDK.
 set(J9_INCLUDES
 	# From jitinclude.mk
 	${omr_SOURCE_DIR}/thread
 	${omr_SOURCE_DIR}/gc/include
 	# endjitinclude.mk
-	../ # Frustratingly there are some #include "frob/baz.hpp" refs in the compiler which require this.
+	../ # Frustratingly there are some #include "frob/baz.hpp" references in the compiler which require this.
 	${j9vm_SOURCE_DIR}/codert_vm
 	${j9vm_SOURCE_DIR}/gc_include
 	${j9vm_SOURCE_DIR}/gc_glue_java
@@ -222,8 +221,7 @@ set(J9_INCLUDES
 	${CMAKE_CURRENT_BINARY_DIR}
 )
 
-# Platform specific list of flags, derived directly from the
-# Makefiles
+# Platform-specific lists of flags, derived directly from the makefiles.
 set(J9_SHAREDFLAGS
 	${OMR_PLATFORM_COMPILE_OPTIONS}
 )
@@ -233,6 +231,7 @@ set(J9_CFLAGS
 set(J9_CXXFLAGS
 	${OMR_PLATFORM_CXX_COMPILE_OPTIONS}
 )
+
 if(OMR_OS_LINUX OR OMR_OS_OSX)
 	list(APPEND J9_SHAREDFLAGS
 		-fno-strict-aliasing
@@ -245,8 +244,7 @@ if(OMR_OS_LINUX OR OMR_OS_OSX)
 		-pthread
 	)
 
-	# Platform specific CXX flags, also derived from the
-	# Makefiles
+	# Platform-specific CXX flags, also derived from the makefiles.
 	list(APPEND J9_CXXFLAGS
 		-fno-threadsafe-statics
 		-Wno-invalid-offsetof
@@ -274,7 +272,7 @@ elseif(OMR_OS_AIX)
 	if(OMR_ENV_DATA64)
 		list(APPEND J9_SHAREDFLAGS -q64)
 		if(OMR_TOOLCONFIG STREQUAL "xlc")
-			# Modify the arch tuning value we inherit from omr
+			# Modify the arch tuning value we inherit from OMR.
 			list(REMOVE_ITEM TR_COMPILE_OPTIONS "-qarch=pwr7")
 			list(APPEND TR_COMPILE_OPTIONS "-qarch=ppc64grsq")
 
@@ -301,7 +299,7 @@ if(OMR_ARCH_S390)
 	list(APPEND TARGET_DEFINES COMPRESS_AOT_DATA)
 endif()
 
-# Add optional user-specified compiler flags that only apply to the JIT
+# Add optional user-specified compiler flags that only apply to the JIT.
 list(APPEND J9_CFLAGS ${J9JIT_EXTRA_CFLAGS})
 list(APPEND J9_CXXFLAGS ${J9JIT_EXTRA_CXXFLAGS})
 
@@ -318,7 +316,7 @@ omr_stringify(J9_CXXFLAGS_STR ${J9_SHAREDFLAGS} ${J9_CXXFLAGS})
 
 # Note: This is explicitly overriding what's provided by
 #       the VM CMakeLists, as they pass -fno-exceptions
-#       right now, and the JIT needs exceptions
+#       right now, and the JIT needs exceptions.
 set(CMAKE_CXX_FLAGS "${J9_CXXFLAGS_STR}")
 set(CMAKE_C_FLAGS "${J9_CFLAGS_STR}")
 
@@ -362,7 +360,7 @@ target_link_libraries(j9jit
 )
 
 # This is a bit hokey, but cmake can't track the fact that files are generated across directories.
-# Note: while these are only needed on z, setting the properties unconditionally has no ill-effect.
+# Note: while these are only needed on Z, setting the properties unconditionally has no ill-effect.
 set_source_files_properties(
 	${CMAKE_CURRENT_BINARY_DIR}/z/runtime/Math.s
 	${CMAKE_CURRENT_BINARY_DIR}/z/runtime/PicBuilder.s
@@ -374,7 +372,7 @@ set_source_files_properties(
 
 if(OMR_OS_LINUX)
 	set_property(TARGET j9jit APPEND_STRING PROPERTY
-		LINK_FLAGS "  -Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/build/scripts/j9jit.linux.exp")
+		LINK_FLAGS " -Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/build/scripts/j9jit.linux.exp")
 	target_link_libraries(j9jit PRIVATE m)
 elseif(OMR_OS_WINDOWS)
 	target_sources(j9jit PRIVATE build/scripts/j9jit.def)
@@ -382,9 +380,10 @@ elseif(OMR_OS_AIX)
 	set_property(TARGET j9jit APPEND_STRING PROPERTY
 		LINK_FLAGS " -Wl,-bE:${CMAKE_CURRENT_SOURCE_DIR}/build/scripts/j9jit.aix.exp")
 endif()
+
 if((OMR_TOOLCONFIG STREQUAL "gnu") AND ALLOWS_STATIC_LIBCPP)
 	# We assume that if the compiler allows -static-libstdc++
-	# it will also allow -static-libgcc
+	# it will also allow -static-libgcc.
 	set_property(TARGET j9jit APPEND_STRING PROPERTY
 		LINK_FLAGS " -static-libgcc -static-libstdc++")
 endif()
@@ -400,20 +399,22 @@ endif()
 
 set_property(TARGET j9jit PROPERTY LINKER_LANGUAGE CXX)
 
-# Note ddrgen can't handle the templated symbols used in the jit
+# Note: ddrgen can't handle the templates used in the JIT.
 target_enable_ddr(j9jit NO_DEBUG_INFO)
+
 file(GLOB_RECURSE headers
-	${CMAKE_CURRENT_SOURCE_DIR}/runtime/*.hpp
 	${CMAKE_CURRENT_SOURCE_DIR}/runtime/*.h
+	${CMAKE_CURRENT_SOURCE_DIR}/runtime/*.hpp
 )
+
 ddr_add_headers(j9jit
 	${headers}
 )
+
 ddr_set_add_targets(omrddr j9jit)
 
-
 if(OMR_OS_ZOS)
-	# Make sure that -Wc,EXPORTALL is applied
+	# Make sure that -Wc,EXPORTALL is applied.
 	omr_process_exports(j9jit)
 endif()
 
