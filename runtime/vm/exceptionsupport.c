@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1291,3 +1291,28 @@ setIllegalAccessErrorFinalFieldSet(J9VMThread *currentThread, UDATA isStatic, J9
 	setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALACCESSERROR, msg);
 	j9mem_free_memory(msg);
 }
+
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+void
+setCRIUSingleThreadModeJVMCRIUException(J9VMThread *vmThread, U_32 moduleName, U_32 messageNumber)
+{
+	PORT_ACCESS_FROM_VMC(vmThread);
+	const char *msg = NULL;
+
+	/* If no custom NLS message was specified, use the generic one */
+	if ((0 == moduleName) && (0 == messageNumber)) {
+		moduleName = J9NLS_VM_CRIU_SINGLETHREADMODE_JVMCRIUEXCEPTION__MODULE;
+		messageNumber = J9NLS_VM_CRIU_SINGLETHREADMODE_JVMCRIUEXCEPTION__ID;
+	}
+	msg = OMRPORT_FROM_J9PORT(PORTLIB)->nls_lookup_message(OMRPORT_FROM_J9PORT(PORTLIB), J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, moduleName, messageNumber, NULL);
+
+	/* set org.eclipse.openj9.criu.JVMCheckpointException or RestoreException */
+	if (0 == vmThread->javaVM->checkpointState.checkpointRestoreTimeDelta) {
+		/* throw JVMCheckpointException at checkpoint */
+		setCurrentExceptionUTF(vmThread, J9VMCONSTANTPOOL_ORGECLIPSEOPENJ9CRIUJVMCHECKPOINTEXCEPTION, msg);
+	} else {
+		/* throw RestoreException at restore */
+		setCurrentExceptionUTF(vmThread, J9VMCONSTANTPOOL_ORGECLIPSEOPENJ9CRIURESTOREEXCEPTION, msg);
+	}
+}
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */

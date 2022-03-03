@@ -67,7 +67,7 @@ Fast_java_lang_Thread_interruptedImpl(J9VMThread *currentThread)
 	/* Synchronize on the thread lock around interrupted() on windows */
 	j9object_t threadLock = J9VMJAVALANGTHREAD_LOCK(currentThread, currentThread->threadObject);
 	threadLock = (j9object_t)objectMonitorEnter(currentThread, threadLock);
-	if (NULL == threadLock) {
+	if (J9_OBJECT_MONITOR_ENTER_FAILED(threadLock)) {
 		setNativeOutOfMemoryError(currentThread, J9NLS_VM_FAILED_TO_ALLOCATE_MONITOR);
 		goto done;
 	}

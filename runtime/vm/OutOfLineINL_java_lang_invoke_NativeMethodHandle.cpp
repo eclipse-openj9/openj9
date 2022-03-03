@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2020 IBM Corp. and others
+ * Copyright (c) 2017, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -171,8 +171,15 @@ OutOfLineINL_java_lang_invoke_NativeMethodHandle_freeJ9NativeCalloutDataRef(J9VM
 
 	/* Manually synchronize methodHandle since declaring the method as synchronized in Java will have no effect (for all INLs). */
 	j9object_t methodHandleLock = (j9object_t)objectMonitorEnter(currentThread, methodHandle);
-	if (NULL == methodHandleLock) {
-		setNativeOutOfMemoryError(currentThread, J9NLS_VM_FAILED_TO_ALLOCATE_MONITOR);
+	if (J9_OBJECT_MONITOR_ENTER_FAILED(methodHandleLock)) {
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+		if (J9_OBJECT_MONITOR_CRIU_SINGLE_THREAD_MODE_THROW == (UDATA)methodHandleLock) {
+			setCRIUSingleThreadModeJVMCRIUException(currentThread, 0, 0);
+		} else
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+		if (J9_OBJECT_MONITOR_OOM == (UDATA)methodHandleLock) {
+			setNativeOutOfMemoryError(currentThread, J9NLS_VM_FAILED_TO_ALLOCATE_MONITOR);
+		}
 		goto done;
 	}
 
