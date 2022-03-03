@@ -91,7 +91,7 @@ SPECS = ['ppc64_aix' : CURRENT_RELEASES,
          'x86-64_windows' : CURRENT_RELEASES,
          'aarch64_linux' : CURRENT_RELEASES,
          'aarch64_linux_criu': CURRENT_RELEASES,
-         'aarch64_mac' : CURRENT_RELEASES,
+         'aarch64_mac' : CURRENT_RELEASES - '8',
          'ppc64_aix_ojdk292' : ['8', '11'],
          'ppc64le_linux_ojdk292' : ['8', '11'],
          's390x_linux_ojdk292' : ['8', '11'],
@@ -122,7 +122,7 @@ SPECS = ['ppc64_aix' : CURRENT_RELEASES,
 
 // SHORT_NAMES is used for PullRequest triggers
 // TODO Combine SHORT_NAMES and SPECS
-SHORT_NAMES = ['all' : ['ppc64le_linux','s390x_linux','x86-64_linux','ppc64_aix','x86-64_windows','x86-32_windows','x86-64_mac', 'aarch64_linux'],
+SHORT_NAMES = ['all' : ['ppc64le_linux','s390x_linux','x86-64_linux','ppc64_aix','x86-64_windows','x86-32_windows','x86-64_mac', 'aarch64_linux', 'aarch64_mac'],
             'aix' : ['ppc64_aix'],
             'zlinux' : ['s390x_linux'],
             'zlinuxcriu' : ['s390x_linux_criu'],
