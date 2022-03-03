@@ -73,6 +73,7 @@
 #define OPT_NUMA_NONE "-Xnuma:none"
 #define OPT_XXMAXRAMPERCENT "-XX:MaxRAMPercentage="
 #define OPT_XXINITIALRAMPERCENT "-XX:InitialRAMPercentage="
+#define OPT_XCMCR "-Xcmcr"
 
 /**
  * @}
@@ -1171,6 +1172,16 @@ gcParseSovereignArguments(J9JavaVM *vm)
 			goto _error;
 			break;
 		}	
+	}
+
+	result =  option_set_to_opt_percent(vm, OPT_XCMCR, &index, EXACT_MEMORY_MATCH, &extensions->minimumContractionRatio);
+	if (OPTION_OK != result) {
+		if (OPTION_MALFORMED == result) {
+			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_MUST_BE_NUMBER, OPT_XCMCR);
+		} else {
+			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_PERCENT_OUT_OF_RANGE, OPT_XCMCR, 0.0, 1.0);
+		}
+		goto _error;
 	}
 	
 #endif /* J9VM_GC_LARGE_OBJECT_AREA) */
