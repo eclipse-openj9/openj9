@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2019 IBM Corp. and others
+ * Copyright (c) 1998, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -212,31 +212,6 @@ public class Test_ThreadGroup {
 		} catch (InterruptedException e) {
 		}
 		AssertJUnit.assertTrue("group not destroyed", tg.isDestroyed());
-	}
-
-	/**
-	 * @tests java.lang.ThreadGroup#checkAccess()
-	 */
-	@Test
-	public void test_checkAccess() {
-		final ThreadGroup originalCurrent = getInitialThreadGroup();
-		ThreadGroup testRoot = new ThreadGroup(originalCurrent, "Test group");
-
-		SecurityManager currentManager = System.getSecurityManager();
-		boolean passed = true;
-
-		try {
-			if (currentManager != null)
-				testRoot.checkAccess();
-		} catch (SecurityException se) {
-			passed = false;
-		}
-		;
-
-		AssertJUnit.assertTrue("CheckAccess is no-op with no Securitymanager", passed);
-
-		testRoot.destroy();
-
 	}
 
 	/**
@@ -467,58 +442,6 @@ public class Test_ThreadGroup {
 
 	}
 
-	static ThreadGroup checkAccessGroup = null;
-
-	/**
-	 * @tests java.lang.ThreadGroup#getParent()
-	 */
-	@Test
-	public void test_getParent() {
-		final ThreadGroup originalCurrent = getInitialThreadGroup();
-		ThreadGroup testRoot = new ThreadGroup(originalCurrent, "Test group");
-
-		AssertJUnit.assertTrue("Parent is wrong", testRoot.getParent() == originalCurrent);
-
-		// Create some groups, nested some levels.
-		final int TOTAL_DEPTH = 5;
-		ThreadGroup current = testRoot;
-		Vector groups = new Vector();
-		// To maintain the invariant that a thread in the Vector is parent
-		// of the next one in the collection (and child of the previous one)
-		groups.addElement(testRoot);
-
-		for (int i = 0; i < TOTAL_DEPTH; i++) {
-			current = new ThreadGroup(current, "level " + i);
-			groups.addElement(current);
-		}
-
-		// Now we walk the levels down, checking if parent is ok
-		for (int i = 1; i < groups.size(); i++) {
-			current = (ThreadGroup)groups.elementAt(i);
-			ThreadGroup previous = (ThreadGroup)groups.elementAt(i - 1);
-			AssertJUnit.assertTrue("Parent is wrong", current.getParent() == previous);
-		}
-
-		/* [PR 97314] ThreadGroup.getParent() should call parent.checkAccess() */
-		SecurityManager m = new SecurityManager() {
-			public void checkAccess(ThreadGroup group) {
-				checkAccessGroup = group;
-			}
-		};
-		ThreadGroup parent;
-		try {
-			System.setSecurityManager(m); // To see if it checks Thread creation
-			// with our SecurityManager
-			parent = testRoot.getParent();
-		} finally {
-			System.setSecurityManager(null); // restore original, no
-			// side-effects
-		}
-		AssertJUnit.assertTrue("checkAccess with incorrect group", checkAccessGroup == parent);
-
-		testRoot.destroy();
-	}
-
 	/**
 	 * @tests java.lang.ThreadGroup#isDaemon()
 	 */
@@ -573,36 +496,6 @@ public class Test_ThreadGroup {
 			System.setOut(originalOut);
 		}
 
-	}
-
-	/**
-	 * @tests java.lang.ThreadGroup#parentOf(java.lang.ThreadGroup)
-	 */
-	@Test
-	public void test_parentOf() {
-		final ThreadGroup originalCurrent = getInitialThreadGroup();
-		final ThreadGroup testRoot = new ThreadGroup(originalCurrent, "Test group");
-		final int DEPTH = 4;
-		buildRandomTreeUnder(testRoot, DEPTH);
-
-		final ThreadGroup[] allChildren = allGroups(testRoot);
-		for (int i = 0; i < allChildren.length; i++) {
-			AssertJUnit.assertTrue("Have to be parentOf all children", testRoot.parentOf((ThreadGroup)allChildren[i]));
-		}
-
-		AssertJUnit.assertTrue("Have to be parentOf itself", testRoot.parentOf(testRoot));
-
-		testRoot.destroy();
-		AssertJUnit.assertTrue("Parent can't have test group as subgroup anymore",
-				!arrayIncludes(groups(testRoot.getParent()), testRoot));
-
-		/* [PR 97314] ThreadGroup.getParent() should call parent.checkAccess() */
-		try {
-			System.setSecurityManager(new SecurityManager());
-			AssertJUnit.assertTrue("Should not be parent", !testRoot.parentOf(originalCurrent));
-		} finally {
-			System.setSecurityManager(null);
-		}
 	}
 
 	/**
@@ -725,134 +618,6 @@ public class Test_ThreadGroup {
 		} catch (InterruptedException e) {
 		}
 		AssertJUnit.assertTrue("daemon not destroyed", daemonGroup.isDestroyed());
-	}
-
-	/**
-	 * @tests java.lang.ThreadGroup#setMaxPriority(int)
-	 */
-	@Test
-	public void test_setMaxPriority() {
-		final ThreadGroup originalCurrent = getInitialThreadGroup();
-		ThreadGroup testRoot = new ThreadGroup(originalCurrent, "Test group");
-
-		boolean passed;
-
-		// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-		/*
-		 * [PR 1FJ9S51] If new priority is greater than the current maximum, the
-		 * maximum remains unchanged
-		 */
-		int currentMax = testRoot.getMaxPriority();
-		testRoot.setMaxPriority(Thread.MAX_PRIORITY + 1);
-		passed = testRoot.getMaxPriority() == currentMax;
-		AssertJUnit.assertTrue("setMaxPriority: Any value higher than the current one is ignored. Before: " + currentMax
-				+ " , after: " + testRoot.getMaxPriority(), passed);
-
-		// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-		/*[PR CMVC 177870] Java7:JCK:java_lang/ThreadGroup/setMaxPriority fails in all platform */
-		currentMax = testRoot.getMaxPriority();
-		testRoot.setMaxPriority(Thread.MIN_PRIORITY - 1);
-		passed = testRoot.getMaxPriority() == currentMax;
-		AssertJUnit.assertTrue("setMaxPriority: Any value smaller than MIN_PRIORITY is ignored. Before: " + currentMax
-				+ " , after: " + testRoot.getMaxPriority(), passed);
-
-		// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-		/*
-		 * [PR 1FJ9S51] The test above now has side-effect, so we destroy and
-		 * create a new one
-		 */
-		testRoot.destroy();
-		testRoot = new ThreadGroup(originalCurrent, "Test group");
-
-		// Create some groups, nested some levels. Each level will have maxPrio
-		// 1 unit smaller
-		// than the parent's. However, there can't be a group with priority <
-		// Thread.MIN_PRIORITY
-		final int TOTAL_DEPTH = testRoot.getMaxPriority() - Thread.MIN_PRIORITY - 2;
-		ThreadGroup current = testRoot;
-		for (int i = 0; i < TOTAL_DEPTH; i++) {
-			current = new ThreadGroup(current, "level " + i);
-		}
-
-		// Now we walk the levels down, changing the maxPrio and later verifying
-		// that the value
-		// is indeed 1 unit smaller than the parent's maxPrio.
-		int maxPrio, parentMaxPrio;
-		current = testRoot;
-
-		// To maintain the invariant that when we are to modify a child,
-		// its maxPriority is always 1 unit smaller than its parent's.
-		// We have to set it for the root manually, and the loop does the rest
-		// for all
-		// the other sub-levels
-		current.setMaxPriority(current.getParent().getMaxPriority() - 1);
-
-		for (int i = 0; i < TOTAL_DEPTH; i++) {
-			maxPrio = current.getMaxPriority();
-			parentMaxPrio = current.getParent().getMaxPriority();
-
-			ThreadGroup[] children = groups(current);
-			AssertJUnit.assertTrue("Can only have 1 subgroup", children.length == 1);
-			current = children[0];
-			AssertJUnit.assertTrue(
-					"Had to be 1 unit smaller than parent's priority in iteration=" + i + " checking->" + current,
-					maxPrio == parentMaxPrio - 1);
-			current.setMaxPriority(maxPrio - 1);
-
-			// The next test is sort of redundant, since in next iteration it
-			// will be the
-			// parent tGroup, so the test will be done.
-			AssertJUnit.assertTrue("Had to be possible to change max priority",
-					current.getMaxPriority() == maxPrio - 1);
-		}
-
-		AssertJUnit.assertTrue("Priority of leaf child group has to be much smaller than original root group",
-				current.getMaxPriority() == testRoot.getMaxPriority() - TOTAL_DEPTH);
-
-		testRoot.destroy();
-
-		// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-		passed = true;
-		testRoot = new ThreadGroup(originalCurrent, "Test group");
-		try {
-			testRoot.setMaxPriority(Thread.MAX_PRIORITY);
-		} catch (IllegalArgumentException iae) {
-			passed = false;
-		}
-		AssertJUnit.assertTrue(
-				"Max Priority = Thread.MAX_PRIORITY should be possible if the test is run with default system ThreadGroup as root",
-				passed);
-		testRoot.destroy();
-
-		// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-		passed = true;
-		testRoot = new ThreadGroup(originalCurrent, "Test group");
-		System.setSecurityManager(new SecurityManager());
-		try {
-			try {
-				testRoot.setMaxPriority(Thread.MIN_PRIORITY);
-			} catch (IllegalArgumentException iae) {
-				passed = false;
-			}
-		} finally {
-			System.setSecurityManager(null);
-		}
-		AssertJUnit.assertTrue("Min Priority = Thread.MIN_PRIORITY should be possible, always", passed);
-		testRoot.destroy();
-
-		/* [PR 97314] ThreadGroup.getParent() should call parent.checkAccess() */
-		try {
-			System.setSecurityManager(new SecurityManager());
-			/* [PR 97314] Should not cause a SecurityException */
-			originalCurrent.setMaxPriority(Thread.MAX_PRIORITY);
-		} finally {
-			System.setSecurityManager(null);
-		}
 	}
 
 	/**

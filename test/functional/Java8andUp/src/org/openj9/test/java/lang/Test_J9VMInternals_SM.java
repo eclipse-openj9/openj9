@@ -1,7 +1,5 @@
-package org.openj9.test.support;
-
 /*******************************************************************************
- * Copyright (c) 2010, 2022 IBM Corp. and others
+ * Copyright (c) 2022, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,30 +19,21 @@ package org.openj9.test.support;
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
+package org.openj9.test.java.lang;
 
-public class Support_ExtendedTestEnvironment {
-	private static Support_ExtendedTestEnvironment environment;
+import org.testng.annotations.Test;
 
-	public void execute(Runnable toRun) {
-		toRun.run();
+@Test(groups = { "level.sanity" })
+public class Test_J9VMInternals_SM {
+/*
+ * TestNG parses the test file, which interferes with the classloading under test.
+ * Put the test implementation in a separate file to prevent this interference.
+ */
+
+	@Test
+	public void test_checkPackageAccess() throws Throwable {
+		Test_J9VMInternalsImpl_SM testObject = new Test_J9VMInternalsImpl_SM();
+		testObject.test_checkPackageAccess();
 	}
 
-	public Thread getThread(Runnable r, String name) {
-		Thread t;
-		t = new Thread(r, name);
-		return t;
-	}
-
-	public Thread getThread(Runnable r) {
-		Thread t;
-		t = new Thread(r);
-		return t;
-	}
-
-	public static Support_ExtendedTestEnvironment getInstance() {
-		if (environment == null) {
-			environment = new Support_ExtendedTestEnvironment();
-		}
-		return environment;
-	}
 }

@@ -1,7 +1,7 @@
 package org.openj9.test.java.lang;
 
 /*******************************************************************************
- * Copyright (c) 1998, 2021 IBM Corp. and others
+ * Copyright (c) 1998, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -233,15 +233,6 @@ public class Test_System {
 	}
 
 	/**
-	 * @tests java.lang.System#getSecurityManager()
-	 */
-	@Test
-	public void test_getSecurityManager() {
-		AssertJUnit.assertTrue("Returned incorrect SecurityManager", System
-				.getSecurityManager() == null);
-	}
-
-	/**
 	 * @tests java.lang.System#identityHashCode(java.lang.Object)
 	 */
 	@Test
@@ -306,104 +297,6 @@ public class Test_System {
 		}
 	}
 
-	/**
-	 * @tests java.lang.System#setSecurityManager(java.lang.SecurityManager)
-	 */
-	@Test
-	public void test_setSecurityManager() {
-		/* [PR 97686, 123113] Improve System.setSecurityManager() initialization */
-		class MySecurityManager extends SecurityManager {
-			public void preloadClasses(Permission perm) {
-				if (!(perm instanceof RuntimePermission)
-						|| !perm.getName().toLowerCase().equals(
-								"setsecuritymanager")) {
-					// do nothing, required classes are now loaded
-				}
-			}
-
-			public void checkPermission(Permission perm) {
-				if (!(perm instanceof RuntimePermission)
-						|| !perm.getName().toLowerCase().equals(
-								"setsecuritymanager")) {
-					super.checkPermission(perm);
-				}
-			}
-		}
-
-		MySecurityManager newManager = new MySecurityManager();
-		// preload the required classes without calling implies()
-		try {
-			newManager.preloadClasses(new RuntimePermission("anything"));
-		} catch (SecurityException e) {
-		}
-		try {
-					System.setSecurityManager(new SecurityManager());
-			System.getProperty("someProperty");
-			Assert.fail("should cause SecurityException");
-		} catch (SecurityException e) {
-			// expected
-		} finally {
-					System.setSecurityManager(null);
-		}
-	}
-
-	/**
-	 * @tests java.lang.System#setSecurityManager(java.lang.SecurityManager)
-	 */
-	@Test
-	public void test_setSecurityManager2() {
-		try {
-			String helperName = "org.openj9.test.java.lang.Test_System$TestSecurityManager";
-			String output = Support_Exec.execJava(new String[] {
-					"-Djava.security.manager=" + helperName, helperName },
-					null, true);
-			AssertJUnit.assertTrue("not correct SecurityManager: " + output, output
-					.startsWith(helperName));
-		} catch (Exception e) {
-			Assert.fail("Unexpected: " + e);
-		}
-	}
-
-	/**
-	 * @tests java.lang.System#setSecurityManager(java.lang.SecurityManager)
-	 */
-	public static class TestSecurityManager extends SecurityManager {
-		public static void main(String[] args) {
-			System.out
-					.println(System.getSecurityManager().getClass().getName());
-		}
-	}
-
-	/**
-	 * @tests java.lang.System#setSecurityManager(java.lang.SecurityManager)
-	 */
-	@Test
-	public void test_setSecurityManager3() {
-		/* https://github.com/eclipse-openj9/openj9/issues/6661 */
-		try {
-			String helperName = "org.openj9.test.java.lang.Test_System$TestSecurityManagerNonPublicConstructor";
-			String output = Support_Exec.execJava(new String[] { "-Djava.security.manager=" + helperName, helperName },
-					null, true,
-					"java.lang.NoSuchMethodException: org.openj9.test.java.lang.Test_System$TestSecurityManagerNonPublicConstructor.<init>()");
-			// if the expected error string was not found, Assert.fail() will be invoked
-			// within Support_Exec.execJava() above.
-		} catch (Exception e) {
-			Assert.fail("Unexpected: " + e);
-		}
-	}
-
-	/**
-	 * @tests java.lang.System#setSecurityManager(java.lang.SecurityManager)
-	 */
-	public static class TestSecurityManagerNonPublicConstructor extends SecurityManager {
-		TestSecurityManagerNonPublicConstructor() {
-		}
-
-		public static void main(String[] args) {
-			System.out.println(System.getSecurityManager().getClass().getName());
-		}
-	}
-	
 	/**
 	 * Sets up the fixture, for example, open a network connection. This method
 	 * is called before a test is executed.
