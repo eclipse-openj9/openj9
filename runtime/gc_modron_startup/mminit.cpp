@@ -2067,7 +2067,7 @@ combinationMemoryParameterVerification(J9JavaVM *javaVM, IDATA* memoryParameters
 				 * space to Xmos
 				 */
 				if ((candidateXmosValue + candidateXmnsValue) > maximumXmsValue) {
-					candidateXmnsValue = newSpaceSizeMinimum;
+					candidateXmnsValue = OMR_MAX(newSpaceSizeMinimum, maximumXmsValue - candidateXmosValue);
 					candidateXmosValue = maximumXmsValue - candidateXmnsValue;
 
 					/* Verify not too large */
