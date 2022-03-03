@@ -74,6 +74,65 @@
 #include <unistd.h>
 #endif /* defined(AIXPPC) */
 
+#if defined(J9ZOS390)
+#include <stdlib.h>
+
+/*
+ * These offsets and constants are found in "Language Environment Vendor Interfaces", downloaded from
+ * https://www.ibm.com/servers/resourcelink/svc00100.nsf/pages/zosV2R4SA380688/$file/ceev100_v2r4.pdf
+ */
+#if defined(J9VM_ENV_DATA64)
+#define OFFSET_CAA_CEDB 0x348
+#define OFFSET_CEDB_LANG 0x18
+#else /* defined(J9VM_ENV_DATA64) */
+#define OFFSET_CAA_CEDB 0x218
+#define OFFSET_CEDB_LANG 0x10
+#endif /* defined(J9VM_ENV_DATA64) */
+
+/* An enclave data block should begin with this eye-catcher. */
+#pragma convlit(suspend)
+static const char cedb_eye[4] = "CEDB";
+#pragma convlit(resume)
+
+/*
+ * Determine whether the mainline language is C/C++.
+ */
+static BOOLEAN
+mainlineLanguageIsC(void)
+{
+	BOOLEAN result = FALSE;
+	/* Locate the common anchor area. */
+	const char *caa = (const char *)_gtca();
+	/* Fetch the pointer to the C/C++ environment data block. */
+	const char *cedb = *(const char * const *)(caa + OFFSET_CAA_CEDB);
+
+	/* Do some basic checking of the cedb pointer. */
+	if ((NULL != cedb) && (0 == memcmp(cedb, cedb_eye, sizeof(cedb_eye)))) {
+		int16_t language = *(const int16_t *)(cedb + OFFSET_CEDB_LANG);
+
+		/* The code for C/C++ is 3. */
+		if (3 == language) {
+			result = TRUE;
+		}
+	}
+
+	return result;
+}
+
+struct arg_string
+{
+	uint32_t length; /* length of value, including NUL terminator */
+	char value[];
+};
+
+struct arg_list
+{
+	uint32_t argc; /* number of command-line arguments */
+	uint32_t env_size; /* number of environment variables */
+	const struct arg_string *string[];
+};
+#endif /* defined(J9ZOS390) */
+
 #if defined(OSX)
 #include <sys/types.h>
 #include <sys/sysctl.h>
@@ -513,6 +572,51 @@ captureCommandLine(void)
 			free(buffer);
 		}
 	}
+#elif defined(J9ZOS390) /* defined(AIXPPC) */
+#pragma convlit(suspend)
+	/*
+	 * First, make sure the mainline language is C/C++ which uses parameter passing
+	 * style 3 as described by [1]; other mainlines may use different styles.
+	 *
+	 * [1] https://www.ibm.com/docs/en/zos/2.4.0?topic=formats-c-c-parameter-passing-considerations
+	 */
+	if (mainlineLanguageIsC()) {
+		void *plist = __osplist;
+		if (NULL != plist) {
+			const struct arg_list *args = *(const struct arg_list **)plist;
+			uint32_t argc = args->argc;
+			uint32_t i = 0;
+			size_t length = 0;
+			char *buffer = NULL;
+
+			for (i = 0; i < argc; ++i) {
+				length += args->string[i]->length;
+			}
+
+			buffer = malloc(length);
+			if (NULL != buffer) {
+				char *cursor = buffer;
+
+				for (i = 0; i < argc; ++i) {
+					const struct arg_string *arg = args->string[i];
+					if (0 != i) {
+						*cursor = ' ';
+						cursor += 1;
+					}
+					memcpy(cursor, arg->value, arg->length - 1);
+					cursor += arg->length - 1;
+				}
+
+				*cursor = '\0';
+
+				/* it's not fatal if setenv() fails, so don't bother checking */
+				setenv(ENV_VAR_NAME, buffer, 1 /* overwrite */);
+
+				free(buffer);
+			}
+		}
+	}
+#pragma convlit(resume)
 #elif defined(LINUX) /* defined(AIXPPC) */
 	int fd = open("/proc/self/cmdline", O_RDONLY, 0);
 
