@@ -3728,13 +3728,20 @@ J9::Z::TreeEvaluator::pdstoreEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    cg->generateDebugCounter(TR::DebugCounter::debugCounterName(cg->comp(), "PD-Op/%s", node->getOpCode().getName()),
                             1, TR::DebugCounter::Cheap);
 
-   static bool disablePdstoreVectorEvaluator = (feGetEnv("TR_DisablePdstoreVectorEvaluator") != NULL);
+   static bool disablePdstoreVectorEvaluator = feGetEnv("TR_DisablePdstoreVectorEvaluator") != NULL;
+   static bool disableZdstoreVectorEvaluator = feGetEnv("TR_DisableZdstoreVectorEvaluator") != NULL;
 
    if (!cg->comp()->getOption(TR_DisableVectorBCD) && !disablePdstoreVectorEvaluator
       && cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL)
       && (node->getOpCodeValue() == TR::pdstore || node->getOpCodeValue() == TR::pdstorei))
       {
       pdstoreVectorEvaluatorHelper(node, cg);
+      }
+   else if (!cg->comp()->getOption(TR_DisableVectorBCD) && !disableZdstoreVectorEvaluator
+         && cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL_ENHANCEMENT_FACILITY_2)
+         && node->getOpCodeValue() == TR::zdstorei)
+      {
+      zdstoreiVectorEvaluatorHelper(node, cg);
       }
    else
       {
@@ -4635,6 +4642,84 @@ J9::Z::TreeEvaluator::pdstoreVectorEvaluatorHelper(TR::Node *node, TR::CodeGener
    cg->decReferenceCount(addressNode);
 
    traceMsg(comp, "DAA: Exiting pdstoreVectorEvaluator %d\n", __LINE__);
+   return NULL;
+   }
+
+TR::Register*
+J9::Z::TreeEvaluator::zdstoreiVectorEvaluatorHelper(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   if (cg->comp()->getOption(TR_TraceCG))
+      traceMsg(cg->comp(), "DAA: Entering zdstoreiVectorEvaluator %d\n", __LINE__);
+
+   TR::Node* pd2zdNode = node->getValueChild();
+   TR::Node* addressNode = node->getChild(0);
+
+   /* TODO:
+    *   - evaluateBCDNode removes storage hit. on zNext we can't call evaluateBCDNode because
+    *     it returns TR_PseudoRegister and we need RegisterPairs. So at some point we need to see
+    *     if the extra stuff evaluateBCDNode does needs to be moved to a separate function.
+    */
+   // evaluate pd2zdNode (which is assumed by the OMR layer to be the second child) to Vector register.
+   // for this "pdStore" we assume if we evaluate value node we get Vector Register
+   TR::Register* zdValueReg = cg->evaluate(pd2zdNode);
+   TR::RegisterPair* zdValueRegPair = zdValueReg->getRegisterPair();
+
+   // QUESTION: what is shared node in reference to storage refernce?
+   // node->getStorageReferenceHint()->removeSharedNode(node);
+
+    TR_ASSERT_FATAL_WITH_NODE(node,
+      (zdValueRegPair->getLowOrder()->getKind() == TR_VRF &&
+         (!zdValueRegPair->getHighOrder() ||
+            (zdValueRegPair->getHighOrder() && zdValueRegPair->getHighOrder()->getKind() == TR_VRF))),
+      "vectorized zdstore is expecting the zoned decimal to be in vector registers.");
+
+   TR_StorageReference *hint = pd2zdNode->getStorageReferenceHint();
+   int32_t sizeOfZonedValue = pd2zdNode->getSize(); //for zoned node, precision and the size must be the same.
+   int32_t precision = pd2zdNode->getDecimalPrecision();
+   TR_StorageReference* targetStorageReference = hint ? hint : TR_StorageReference::createTemporaryBasedStorageReference(sizeOfZonedValue, cg->comp());
+
+   // For TR_OpaquePseudoRegister register.
+   // targetReg->setStorageReference(targetStorageReference, node);
+
+   TR::MemoryReference *targetMR = generateS390LeftAlignedMemoryReference(node, targetStorageReference, cg, sizeOfZonedValue, false);
+
+   if (!targetStorageReference->isTemporaryBased())
+      {
+      TR::SymbolReference *memSymRef = targetStorageReference->getNode()->getSymbolReference();
+      if (memSymRef)
+         {
+         targetMR->setListingSymbolReference(memSymRef);
+         }
+      }
+
+   if(cg->traceBCDCodeGen())
+      {
+      traceMsg(cg->comp(), "About to store BCD node to memory.\n");
+      }
+
+   TR::Register *zonedDecimalHigh = zdValueRegPair->getHighOrder();
+   TR::Register *zonedDecimalLow = zdValueRegPair->getLowOrder();
+
+   // 0 we store 1 byte, 15 we store 16 bytes.
+   // 15 - lengthToStore = index from which to start.
+   uint8_t lengthToStore = precision - 1;
+   uint8_t M3 = 0x8; // Disable sign validation.
+   TR::MemoryReference * zonedDecimalMR = targetMR;
+
+   if (precision > TR_VECTOR_REGISTER_SIZE)
+      {
+      lengthToStore = precision - TR_VECTOR_REGISTER_SIZE;
+      generateVSIInstruction(cg, TR::InstOpCode::VSTRL, node, zonedDecimalHigh, zonedDecimalMR, lengthToStore - 1);
+      zonedDecimalMR = generateS390MemoryReference(*targetMR, lengthToStore, cg);
+      lengthToStore = TR_VECTOR_REGISTER_SIZE - 1;
+      }
+
+   generateVSIInstruction(cg, TR::InstOpCode::VSTRL, node, zonedDecimalLow, zonedDecimalMR, lengthToStore);
+
+   // Where should we be freeing these registers?
+   cg->stopUsingRegister(zonedDecimalHigh);
+   cg->stopUsingRegister(zonedDecimalLow);
+
    return NULL;
    }
 

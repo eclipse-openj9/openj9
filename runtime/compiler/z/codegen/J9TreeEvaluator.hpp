@@ -466,6 +466,7 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
    static TR::Register *pdstoreEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *pdstoreEvaluatorHelper(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *pdstoreVectorEvaluatorHelper(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *zdstoreiVectorEvaluatorHelper(TR::Node *node, TR::CodeGenerator *cg);
    static TR_OpaquePseudoRegister *evaluateValueModifyingOperand(TR::Node * node, bool initTarget, TR::MemoryReference *sourceMR, TR::CodeGenerator * cg, bool trackSignState=false, int32_t srcSize=0, bool alwaysLegalToCleanSign=false);
    static TR_PseudoRegister *evaluateBCDValueModifyingOperand(TR::Node * node, bool initTarget, TR::MemoryReference *sourceMR, TR::CodeGenerator * cg, bool trackSignState=false, int32_t srcSize=0, bool alwaysLegalToCleanSign=false);
    static TR_OpaquePseudoRegister *evaluateSignModifyingOperand(TR::Node *node, bool isEffectiveNop, bool isNondestructiveNop, bool initTarget, TR::MemoryReference *sourceMR, TR::CodeGenerator *cg);
