@@ -2762,6 +2762,7 @@ void TR_ResolvedJ9Method::construct()
       {x(TR::java_lang_String_decompressedArrayCopy_BICII,              "decompressedArrayCopy",              "([BI[CII)V")},
       {x(TR::java_lang_String_decompressedArrayCopy_CIBII,              "decompressedArrayCopy",              "([CI[BII)V")},
       {x(TR::java_lang_String_decompressedArrayCopy_CICII,              "decompressedArrayCopy",              "([CI[CII)V")},
+      {x(TR::java_lang_String_encodeASCII,         "encodeASCII",        "(B[B)[B")},
       {x(TR::java_lang_String_equals,              "equals",              "(Ljava/lang/Object;)Z")},
       {x(TR::java_lang_String_indexOf_String,      "indexOf",             "(Ljava/lang/String;)I")},
       {x(TR::java_lang_String_indexOf_String_int,  "indexOf",             "(Ljava/lang/String;I)I")},
