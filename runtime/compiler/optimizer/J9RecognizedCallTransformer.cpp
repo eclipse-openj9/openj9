@@ -1030,6 +1030,7 @@ bool J9::RecognizedCallTransformer::isInlineable(TR::TreeTop* treetop)
          case TR::java_lang_Long_reverseBytes:
             return comp()->cg()->supportsByteswap();
          case TR::java_lang_StringCoding_encodeASCII:
+         case TR::java_lang_String_encodeASCII:
             return comp()->cg()->getSupportsInlineEncodeASCII();
          default:
             return false;
@@ -1146,6 +1147,7 @@ void J9::RecognizedCallTransformer::transform(TR::TreeTop* treetop)
             process_java_lang_StringUTF16_toBytes(treetop, node);
             break;
          case TR::java_lang_StringCoding_encodeASCII:
+         case TR::java_lang_String_encodeASCII:
             process_java_lang_StringCoding_encodeASCII(treetop, node);
             break;
          case TR::java_lang_StrictMath_sqrt:
