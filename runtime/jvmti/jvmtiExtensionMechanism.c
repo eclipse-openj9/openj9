@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -59,42 +59,42 @@ static jvmtiError copyString (jvmtiEnv* env, char** dest, const char* source);
 static void freeExtensionFunctionInfo (jvmtiEnv* env, jvmtiExtensionFunctionInfo* info);
 static jvmtiError copyParam (jvmtiEnv* env, jvmtiParamInfo* dest, const jvmtiParamInfo* source);
 static jvmtiError copyParams (jvmtiEnv* env, jvmtiParamInfo** dest, const jvmtiParamInfo* source, jint count);
-static jvmtiError JNICALL jvmtiJlmDump (jvmtiEnv* env, void ** dump_info,...);
+static jvmtiError JNICALL jvmtiJlmDump (jvmtiEnv* env, ...);
 static jvmtiError JNICALL jvmtiDumpSet (jvmtiEnv* jvmti_env, ...);
 static jvmtiError JNICALL jvmtiTraceSet (jvmtiEnv* jvmti_env, ...);
 static jvmtiError JNICALL jvmtiResetVmDump (jvmtiEnv* jvmti_env, ...);
-static jvmtiError JNICALL jvmtiQueryVmDump(jvmtiEnv* jvmti_env, jint buffer_size, void* options_buffer, jint* data_size_ptr, ...);
+static jvmtiError JNICALL jvmtiQueryVmDump(jvmtiEnv* jvmti_env, ...);
 static jvmtiError copyExtensionFunctionInfo (jvmtiEnv* env, jvmtiExtensionFunctionInfo* dest, const J9JVMTIExtensionFunctionInfo* source);
-static jvmtiError JNICALL jvmtiJlmSet (jvmtiEnv* env, jint option, ...);
+static jvmtiError JNICALL jvmtiJlmSet (jvmtiEnv* env, ...);
 static jvmtiError copyExtensionEventInfo (jvmtiEnv* env, jvmtiExtensionEventInfo* dest, const J9JVMTIExtensionEventInfo* source);
 static void freeExtensionEventInfo (jvmtiEnv* env, jvmtiExtensionEventInfo* info);
 static jvmtiError JNICALL jvmtiTriggerVmDump (jvmtiEnv* jvmti_env, ...);
-static jvmtiError JNICALL jvmtiGetOSThreadID(jvmtiEnv* jvmti_env, jthread thread, jlong * threadid_ptr, ...);
+static jvmtiError JNICALL jvmtiGetOSThreadID(jvmtiEnv* jvmti_env, ...);
 
-static jvmtiError JNICALL jvmtiGetStackTraceExtended(jvmtiEnv* env, jint type, jthread thread, jint start_depth, jint max_frame_count, void* frame_buffer, jint* count_ptr, ...);
-static jvmtiError JNICALL jvmtiGetAllStackTracesExtended(jvmtiEnv* env, jint type, jint max_frame_count, void** stack_info_ptr, jint* thread_count_ptr, ...);
-static jvmtiError JNICALL jvmtiGetThreadListStackTracesExtended(jvmtiEnv* env, jint type, jint thread_count, const jthread* thread_list, jint max_frame_count, void** stack_info_ptr, ...);
+static jvmtiError JNICALL jvmtiGetStackTraceExtended(jvmtiEnv* env, ...);
+static jvmtiError JNICALL jvmtiGetAllStackTracesExtended(jvmtiEnv* env, ...);
+static jvmtiError JNICALL jvmtiGetThreadListStackTracesExtended(jvmtiEnv* env, ...);
 static jvmtiError jvmtiInternalGetStackTraceExtended(jvmtiEnv* env, J9JVMTIStackTraceType type, J9VMThread * currentThread, J9VMThread * targetThread, jint start_depth, UDATA max_frame_count, jvmtiFrameInfo* frame_buffer, jint* count_ptr);
 static UDATA jvmtiInternalGetStackTraceIteratorExtended(J9VMThread * currentThread, J9StackWalkState * walkState);
 
-static jvmtiError JNICALL jvmtiGetHeapFreeMemory(jvmtiEnv* jvmti_env, jlong* heapFree_ptr, ...);
-static jvmtiError JNICALL jvmtiGetHeapTotalMemory(jvmtiEnv* jvmti_env, jlong* heapTotal_ptr, ...);
+static jvmtiError JNICALL jvmtiGetHeapFreeMemory(jvmtiEnv* jvmti_env, ...);
+static jvmtiError JNICALL jvmtiGetHeapTotalMemory(jvmtiEnv* jvmti_env, ...);
 
-static jvmtiError JNICALL jvmtiIterateSharedCaches(jvmtiEnv* env, jint version, const char *cacheDir, jint flags, jboolean useCommandLineValues, jvmtiIterateSharedCachesCallback callback, void *user_data, ...);
-static jvmtiError JNICALL jvmtiDestroySharedCache(jvmtiEnv *env, const char *cacheDir, const char *name, jint cacheType, jboolean useCommandLineValues, jint *internalErrorCode, ...);
+static jvmtiError JNICALL jvmtiIterateSharedCaches(jvmtiEnv* env, ...);
+static jvmtiError JNICALL jvmtiDestroySharedCache(jvmtiEnv *env, ...);
 
 static jvmtiError JNICALL jvmtiRemoveAllTags(jvmtiEnv* env, ...);
 
-static jvmtiError JNICALL jvmtiRegisterTraceSubscriber(jvmtiEnv *env, char *description, jvmtiTraceSubscriber subscriber, jvmtiTraceAlarm alarm, void *userData, void **subscriptionID, ...);
-static jvmtiError JNICALL jvmtiDeregisterTraceSubscriber(jvmtiEnv *env, void *subscriberID, ...);
+static jvmtiError JNICALL jvmtiRegisterTraceSubscriber(jvmtiEnv *env, ...);
+static jvmtiError JNICALL jvmtiDeregisterTraceSubscriber(jvmtiEnv *env, ...);
 static jvmtiError JNICALL jvmtiFlushTraceData(jvmtiEnv *env, ...);
-static jvmtiError JNICALL jvmtiGetTraceMetadata(jvmtiEnv *env, void **data, jint *length, ...);
-static jvmtiError JNICALL jvmtiGetMethodAndClassNames(jvmtiEnv *env, void * ramMethods, jint ramMethodCount, jvmtiExtensionRamMethodData * ramMethodDataDescriptors, jchar * ramMethodStrings, jint * ramMethodStringsSize, ...);
+static jvmtiError JNICALL jvmtiGetTraceMetadata(jvmtiEnv *env, ...);
+static jvmtiError JNICALL jvmtiGetMethodAndClassNames(jvmtiEnv *env, ...);
 
-static jvmtiError JNICALL jvmtiQueryVmLogOptions(jvmtiEnv* jvmti_env, jint buffer_size, void* options_buffer, jint* data_size, ...);
-static jvmtiError JNICALL jvmtiSetVmLogOptions(jvmtiEnv* jvmti_env, char* options_buffer, ...);
+static jvmtiError JNICALL jvmtiQueryVmLogOptions(jvmtiEnv* jvmti_env, ...);
+static jvmtiError JNICALL jvmtiSetVmLogOptions(jvmtiEnv* jvmti_env, ...);
 
-static jvmtiError JNICALL jvmtiJlmDumpStats (jvmtiEnv* env, void ** dump_info, jint dump_format, ...);
+static jvmtiError JNICALL jvmtiJlmDumpStats (jvmtiEnv* env, ...);
 static jvmtiError jvmtiJlmDumpHelper(jvmtiEnv* env, void ** dump_info, jint dump_format);
 
 static U_32 indexFromCategoryCode( UDATA categories_mapping_size, U_32 cc );
@@ -103,16 +103,16 @@ static UDATA jvmtiCountMemoryCategoriesCallback (U_32 categoryCode, const char *
 static UDATA jvmtiCalculateSlotsForCategoriesMappingCallback(U_32 categoryCode, const char *categoryName, UDATA liveBytes, UDATA liveAllocations, BOOLEAN isRoot, U_32 parentCategoryCode, OMRMemCategoryWalkState *state);
 static void fillInChildAndSiblingCategories(jvmtiMemoryCategory * categories_buffer, jint written_count);
 static void fillInCategoryDeepCounters(jvmtiMemoryCategory * category);
-static jvmtiError JNICALL jvmtiGetMemoryCategories(jvmtiEnv* env, jint version, jint max_categories, jvmtiMemoryCategory * categories_buffer, jint * written_count_ptr, jint * total_categories_ptr, ...);
+static jvmtiError JNICALL jvmtiGetMemoryCategories(jvmtiEnv* env, ...);
 
-static jvmtiError JNICALL jvmtiRegisterVerboseGCSubscriber(jvmtiEnv *env, char *description, jvmtiVerboseGCSubscriber subscriber, jvmtiVerboseGCAlarm alarm, void *userData, void **subscriptionID, ...);
-static jvmtiError JNICALL jvmtiDeregisterVerboseGCSubscriber(jvmtiEnv *env, void *subscriberID, ...);
+static jvmtiError JNICALL jvmtiRegisterVerboseGCSubscriber(jvmtiEnv *env, ...);
+static jvmtiError JNICALL jvmtiDeregisterVerboseGCSubscriber(jvmtiEnv *env, ...);
 
-static jvmtiError JNICALL jvmtiGetJ9vmThread(jvmtiEnv *env, jthread thread, void **vmThreadPtr, ...);
-static jvmtiError JNICALL jvmtiGetJ9method(jvmtiEnv *env, jmethodID mid, void **j9MethodPtr, ...);
+static jvmtiError JNICALL jvmtiGetJ9vmThread(jvmtiEnv *env, ...);
+static jvmtiError JNICALL jvmtiGetJ9method(jvmtiEnv *env, ...);
 
-static jvmtiError JNICALL jvmtiRegisterTracePointSubscriber(jvmtiEnv *env, char *description, jvmtiTraceSubscriber subscriber, jvmtiTraceAlarm alarm, void *userData, void **subscriptionID, ...);
-static jvmtiError JNICALL jvmtiDeregisterTracePointSubscriber(jvmtiEnv *env, void *subscriptionID, ...);
+static jvmtiError JNICALL jvmtiRegisterTracePointSubscriber(jvmtiEnv *env, ...);
+static jvmtiError JNICALL jvmtiDeregisterTracePointSubscriber(jvmtiEnv *env, ...);
 
 /*
  * Struct to encapsulate the details of a verbose GC subscriber
@@ -1250,11 +1250,21 @@ done:
  *	JVMTI_ERROR_INTERNAL
  */
 static jvmtiError JNICALL
-jvmtiQueryVmDump(jvmtiEnv* jvmti_env, jint buffer_size, void* options_buffer, jint* data_size_ptr, ...)
+jvmtiQueryVmDump(jvmtiEnv* jvmti_env, ...)
 {
 	J9JavaVM * vm = JAVAVM_FROM_ENV(jvmti_env);
 	jvmtiError rc = JVMTI_ERROR_NOT_AVAILABLE;
 	omr_error_t result = OMR_ERROR_NONE;
+
+	jint buffer_size;
+	void * options_buffer;
+	jint * data_size_ptr;
+	va_list args;
+	va_start(args, jvmti_env);
+	buffer_size = va_arg(args, jint);
+	options_buffer = va_arg(args, void *);
+	data_size_ptr = va_arg(args, jint *);
+	va_end(args);
 
 	Trc_JVMTI_jvmtiQueryVmDump_Entry(jvmti_env);
 
@@ -1288,13 +1298,19 @@ done:
 }
 
 static jvmtiError JNICALL
-jvmtiJlmSet(jvmtiEnv* env, jint option, ...)
+jvmtiJlmSet(jvmtiEnv* env, ...)
 {
 	J9JavaVM * vm = JAVAVM_FROM_ENV(env);
 	jvmtiError rc = JVMTI_ERROR_NOT_AVAILABLE;
 #if defined(OMR_THR_JLM)	
 	J9VMThread * currentThread;
 #endif	
+
+	jint option;
+	va_list args;
+	va_start(args, env);
+	option = va_arg(args, jint);
+	va_end(args);
 
 	Trc_JVMTI_jvmtiJlmSet_Entry(env, option);
 	ENSURE_PHASE_ONLOAD_OR_LIVE(env);
@@ -1363,9 +1379,15 @@ done:
 
 
 static jvmtiError JNICALL
-jvmtiJlmDump(jvmtiEnv* env, void ** dump_info,...)
+jvmtiJlmDump(jvmtiEnv* env, ...)
 {
 	jvmtiError rc = JVMTI_ERROR_NOT_AVAILABLE;
+
+	void ** dump_info;
+	va_list args;
+	va_start(args, env);
+	dump_info = va_arg(args, void **);
+	va_end(args);
 
 	Trc_JVMTI_jvmtiJlmDump_Entry(env, dump_info);
 	ENSURE_PHASE_LIVE(env);
@@ -1417,12 +1439,20 @@ done:
 }
 
 static jvmtiError JNICALL
-jvmtiGetOSThreadID(jvmtiEnv* jvmti_env, jthread thread, jlong * threadid_ptr, ...)
+jvmtiGetOSThreadID(jvmtiEnv* jvmti_env, ...)
 {
 	J9JavaVM * vm = JAVAVM_FROM_ENV(jvmti_env);
 	jvmtiError rc;
 	J9VMThread * currentThread;
 	jlong rv_threadid = 0;
+
+	jthread thread;
+	jlong * threadid_ptr;
+	va_list args;
+	va_start(args, jvmti_env);
+	thread = va_arg(args, jthread);
+	threadid_ptr = va_arg(args, jlong *);
+	va_end(args);
 
 	Trc_JVMTI_jvmtiGetOSThreadID_Entry(jvmti_env);
 
@@ -1451,18 +1481,28 @@ done:
 }
 
 static jvmtiError JNICALL
-jvmtiGetStackTraceExtended(jvmtiEnv* env,
-	jint type,
-	jthread thread,
-	jint start_depth,
-	jint max_frame_count,
-	void* frame_buffer,
-	jint* count_ptr, ...)
+jvmtiGetStackTraceExtended(jvmtiEnv* env, ...)
 {
 	J9JavaVM * vm = JAVAVM_FROM_ENV(env);
 	jvmtiError rc;
 	J9VMThread * currentThread;
 	jint rv_count = 0;
+
+	jint type;
+	jthread thread;
+	jint start_depth;
+	jint max_frame_count;
+	void * frame_buffer;
+	jint * count_ptr;
+	va_list args;
+	va_start(args, env);
+	type = va_arg(args, jint);
+	thread = va_arg(args, jthread);
+	start_depth = va_arg(args, jint);
+	max_frame_count = va_arg(args, jint);
+	frame_buffer = va_arg(args, void *);
+	count_ptr = va_arg(args, jint *);
+	va_end(args);
 
 	Trc_JVMTI_jvmtiGetStackTraceExtended_Entry(env);
 
@@ -1499,11 +1539,7 @@ done:
 
 
 static jvmtiError JNICALL
-jvmtiGetAllStackTracesExtended(jvmtiEnv* env,
-	jint type,
-	jint max_frame_count,
-	void** stack_info_ptr,
-	jint* thread_count_ptr, ...)
+jvmtiGetAllStackTracesExtended(jvmtiEnv* env, ...)
 {
 	J9JavaVM * vm = JAVAVM_FROM_ENV(env);
 	jvmtiError rc;
@@ -1511,6 +1547,18 @@ jvmtiGetAllStackTracesExtended(jvmtiEnv* env,
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	void *rv_stack_info = NULL;
 	jint rv_thread_count = 0;
+
+	jint type;
+	jint max_frame_count;
+	void ** stack_info_ptr;
+	jint * thread_count_ptr;
+	va_list args;
+	va_start(args, env);
+	type = va_arg(args, jint);
+	max_frame_count = va_arg(args, jint);
+	stack_info_ptr = va_arg(args, void **);
+	thread_count_ptr = va_arg(args, jint *);
+	va_end(args);
 
 	Trc_JVMTI_jvmtiGetAllStackTracesExtended_Entry(env);
 
@@ -1581,18 +1629,27 @@ done:
 
 
 static jvmtiError JNICALL
-jvmtiGetThreadListStackTracesExtended(jvmtiEnv* env,
-	jint type,
-	jint thread_count,
-	const jthread* thread_list,
-	jint max_frame_count,
-	void** stack_info_ptr, ...)
+jvmtiGetThreadListStackTracesExtended(jvmtiEnv* env, ...)
 {
 	J9JavaVM * vm = JAVAVM_FROM_ENV(env);
 	jvmtiError rc;
 	J9VMThread * currentThread;
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	void *rv_stack_info = NULL;
+
+	jint type;
+	jint thread_count;
+	const jthread * thread_list;
+	jint max_frame_count;
+	void ** stack_info_ptr;
+	va_list args;
+	va_start(args, env);
+	type = va_arg(args, jint);
+	thread_count = va_arg(args, jint);
+	thread_list = va_arg(args, jthread *);
+	max_frame_count = va_arg(args, jint);
+	stack_info_ptr = va_arg(args, void **);
+	va_end(args);
 
 	Trc_JVMTI_jvmtiGetThreadListStackTracesExtended_Entry(env);
 
@@ -1812,11 +1869,17 @@ jvmtiInternalGetStackTraceIteratorExtended(J9VMThread * currentThread, J9StackWa
 }
 
 static jvmtiError JNICALL
-jvmtiGetHeapFreeMemory(jvmtiEnv* jvmti_env, jlong* heapFree_ptr, ...)
+jvmtiGetHeapFreeMemory(jvmtiEnv* jvmti_env, ...)
 {
 	J9JavaVM * vm = JAVAVM_FROM_ENV(jvmti_env);
 	jvmtiError rc;
 	jlong rv_heapFree = 0;
+
+	jlong * heapFree_ptr;
+	va_list args;
+	va_start(args, jvmti_env);
+	heapFree_ptr = va_arg(args, jlong *);
+	va_end(args);
 
 	Trc_JVMTI_jvmtiGetHeapFreeMemory_Entry(jvmti_env);
 
@@ -1833,11 +1896,17 @@ done:
 }
 
 static jvmtiError JNICALL
-jvmtiGetHeapTotalMemory(jvmtiEnv* jvmti_env, jlong* heapTotal_ptr, ...)
+jvmtiGetHeapTotalMemory(jvmtiEnv* jvmti_env, ...)
 {
 	J9JavaVM * vm = JAVAVM_FROM_ENV(jvmti_env);
 	jvmtiError rc;
 	jlong rv_heapTotal = 0;
+
+	jlong * heapTotal_ptr;
+	va_list args;
+	va_start(args, jvmti_env);
+	heapTotal_ptr = va_arg(args, jlong *);
+	va_end(args);
 
 	Trc_JVMTI_jvmtiGetHeapTotalMemory_Entry(jvmti_env);
 
@@ -1911,22 +1980,32 @@ iterateSharedCachesCallback(J9JavaVM *vm, J9SharedCacheInfo *event_data, void *u
  * user_data - opaque user-supplied pointer which will be passed to their callback.
  */ 
 static jvmtiError JNICALL
-jvmtiIterateSharedCaches(jvmtiEnv *env,
-	jint version,
-	const char *cacheDir,
-	jint flags,
-	jboolean useCommandLineValues,
-	jvmtiIterateSharedCachesCallback callback,
-	void *user_data, ...)
+jvmtiIterateSharedCaches(jvmtiEnv *env, ...)
 {
 	J9JavaVM *vm = JAVAVM_FROM_ENV(env);
 	jvmtiError rc = JVMTI_ERROR_NOT_AVAILABLE;
 #if defined(J9VM_OPT_SHARED_CLASSES)
 	struct IterateSharedCacheUserdata userdata;
 #endif
-	
+
+	jint version;
+	const char *cacheDir;
+	jint flags;
+	jboolean useCommandLineValues;
+	jvmtiIterateSharedCachesCallback callback;
+	void *user_data;
+	va_list args;
+	va_start(args, env);
+	version = va_arg(args, jint);
+	cacheDir = va_arg(args, char *);
+	flags = va_arg(args, jint);
+	useCommandLineValues = (jboolean)va_arg(args, int); /* jboolean is promoted to int */
+	callback = va_arg(args, jvmtiIterateSharedCachesCallback);
+	user_data = va_arg(args, void *);
+	va_end(args);
+
 	Trc_JVMTI_jvmtiIterateSharedCaches_Entry(env, callback, user_data);
-	
+
 	if ((COM_IBM_ITERATE_SHARED_CACHES_VERSION_1 > version)
 		|| (COM_IBM_ITERATE_SHARED_CACHES_VERSION_5 < version)
 	) {
@@ -1970,18 +2049,27 @@ done:
  * name - the name of the cache to delete
  */ 
 static jvmtiError JNICALL
-jvmtiDestroySharedCache(jvmtiEnv *env,
-	const char *cacheDir,
-	const char *name,
-	jint cacheType,
-	jboolean useCommandLineValues,
-	jint *internalErrorCode, ...)
+jvmtiDestroySharedCache(jvmtiEnv *env, ...)
 {
 	J9JavaVM *vm = JAVAVM_FROM_ENV(env);
 	jvmtiError rc = JVMTI_ERROR_NOT_AVAILABLE;
 	IDATA sharedCacheRC = 0;
 	jint rv_internalErrorCode = 0;
-	
+
+	const char *cacheDir;
+	const char *name;
+	jint cacheType;
+	jboolean useCommandLineValues;
+	jint *internalErrorCode;
+	va_list args;
+	va_start(args, env);
+	cacheDir = va_arg(args, char *);
+	name = va_arg(args, char *);
+	cacheType = va_arg(args, jint);
+	useCommandLineValues = (jboolean)va_arg(args, int); /* jboolean is promoted to int */
+	internalErrorCode = va_arg(args, jint *);
+	va_end(args);
+
 	Trc_JVMTI_jvmtiDestroySharedCache_Entry(env, name);
 
 #if defined(J9VM_OPT_SHARED_CLASSES)
@@ -2123,7 +2211,7 @@ void alarmWrapper(UtSubscription *sub) {
  * J9JVMTIExtensionFunctionInfo.id = "com.ibm.RegisterTraceSubscriber"
  */
 static jvmtiError JNICALL
-jvmtiRegisterTraceSubscriber(jvmtiEnv* env, char *description, jvmtiTraceSubscriber subscriber, jvmtiTraceAlarm alarm, void *userData, void **subscriptionID, ...)
+jvmtiRegisterTraceSubscriber(jvmtiEnv* env, ...)
 {
 	J9JavaVM * vm = JAVAVM_FROM_ENV(env);
 	jvmtiError rc = JVMTI_ERROR_INVALID_ENVIRONMENT;
@@ -2132,6 +2220,20 @@ jvmtiRegisterTraceSubscriber(jvmtiEnv* env, char *description, jvmtiTraceSubscri
 
 	RasGlobalStorage *j9ras;
 	UtInterface *uteInterface;
+
+	char *description;
+	jvmtiTraceSubscriber subscriber;
+	jvmtiTraceAlarm alarm;
+	void *userData;
+	void **subscriptionID;
+	va_list args;
+	va_start(args, env);
+	description = va_arg(args, char *);
+	subscriber = va_arg(args, jvmtiTraceSubscriber);
+	alarm = va_arg(args, jvmtiTraceAlarm);
+	userData = va_arg(args, void *);
+	subscriptionID = va_arg(args, void **);
+	va_end(args);
 
 	Trc_JVMTI_jvmtiRegisterTraceSubscriber_Entry(env, description, subscriber, alarm, userData, subscriptionID);
 
@@ -2213,7 +2315,7 @@ done:
  * J9JVMTIExtensionFunctionInfo.id = "com.ibm.DeregisterTraceSubscriber"
  */
 static jvmtiError JNICALL
-jvmtiDeregisterTraceSubscriber(jvmtiEnv* env, void *subscriberID, ...)
+jvmtiDeregisterTraceSubscriber(jvmtiEnv* env, ...)
 {
 	J9JavaVM * vm = JAVAVM_FROM_ENV(env);
 	jvmtiError rc = JVMTI_ERROR_INVALID_ENVIRONMENT;
@@ -2221,6 +2323,12 @@ jvmtiDeregisterTraceSubscriber(jvmtiEnv* env, void *subscriberID, ...)
 
 	RasGlobalStorage *j9ras;
 	UtInterface *uteInterface;
+
+	void *subscriberID;
+	va_list args;
+	va_start(args, env);
+	subscriberID = va_arg(args, void *);
+	va_end(args);
 
 	Trc_JVMTI_jvmtiDeregisterTraceSubscriber_Entry(env, subscriberID);
 	
@@ -2340,14 +2448,22 @@ jvmtiFlushTraceData(jvmtiEnv* env, ...)
  * J9JVMTIExtensionFunctionInfo.id = "com.ibm.FlushTraceData"
  */
 static jvmtiError JNICALL
-jvmtiGetTraceMetadata(jvmtiEnv *env, void **data, jint *length, ...)
+jvmtiGetTraceMetadata(jvmtiEnv *env, ...)
 {
 	J9JavaVM * vm = JAVAVM_FROM_ENV(env);
 	jvmtiError rc = JVMTI_ERROR_INVALID_ENVIRONMENT;
 	J9VMThread * currentThread;
 	void *rv_data = NULL;
 	jint rv_length = 0;
-	
+
+	void ** data;
+	jint * length;
+	va_list args;
+	va_start(args, env);
+	data = va_arg(args, void **);
+	length = va_arg(args, jint *);
+	va_end(args);
+
 	RasGlobalStorage *j9ras;
 	UtInterface *uteInterface;
 	
@@ -2511,9 +2627,7 @@ jvmtiGetMethodAndClassNames_verifyRamMethod(J9JavaVM * vm, J9Method * ramMethod)
  *
  * */
 static jvmtiError JNICALL
-jvmtiGetMethodAndClassNames(jvmtiEnv *jvmti_env,  void * ramMethods, jint ramMethodCount, 
-					  		jvmtiExtensionRamMethodData * ramMethodDataDescriptors, 
-					   		jchar * ramMethodStrings, jint * ramMethodStringsSize, ...)
+jvmtiGetMethodAndClassNames(jvmtiEnv *jvmti_env, ...)
 {
 	J9JavaVM * vm = JAVAVM_FROM_ENV(jvmti_env);
 	jvmtiError rc = JVMTI_ERROR_NONE;
@@ -2522,6 +2636,20 @@ jvmtiGetMethodAndClassNames(jvmtiEnv *jvmti_env,  void * ramMethods, jint ramMet
 	UDATA stringsSize;
 	char * stringsPtr;
 	UDATA index;
+
+	void * ramMethods;
+	jint ramMethodCount;
+	jvmtiExtensionRamMethodData * ramMethodDataDescriptors;
+	jchar * ramMethodStrings;
+	jint * ramMethodStringsSize;
+	va_list args;
+	va_start(args, jvmti_env);
+	ramMethods = va_arg(args, void *);
+	ramMethodCount = va_arg(args, jint);
+	ramMethodDataDescriptors = va_arg(args, jvmtiExtensionRamMethodData *);
+	ramMethodStrings = va_arg(args, jchar *);
+	ramMethodStringsSize = va_arg(args, jint *);
+	va_end(args);
 
 	Trc_JVMTI_jvmtiGetMethodAndClassNames_Entry(jvmti_env, ramMethods, ramMethodCount);
 
@@ -2644,10 +2772,20 @@ done:
  *	JVMTI_ERROR_INTERNAL
  */
 static jvmtiError JNICALL
-jvmtiQueryVmLogOptions(jvmtiEnv *jvmti_env, jint buffer_size, void *options, jint *data_size_ptr, ...) {
+jvmtiQueryVmLogOptions(jvmtiEnv *jvmti_env, ...) {
 	J9JavaVM * vm = JAVAVM_FROM_ENV(jvmti_env);
 	jvmtiError rc = JVMTI_ERROR_NOT_AVAILABLE;
 	jint rv_data_size = 0;
+
+	jint buffer_size;
+	void *options;
+	jint *data_size_ptr;
+	va_list args;
+	va_start(args, jvmti_env);
+	buffer_size = va_arg(args, jint);
+	options = va_arg(args, void *);
+	data_size_ptr = va_arg(args, jint *);
+	va_end(args);
 
 	Trc_JVMTI_jvmtiQueryVmLogOptions_Entry(jvmti_env);
 
@@ -2680,9 +2818,15 @@ done:
  *	JVMTI_ERROR_INTERNAL
  */
 static jvmtiError
-JNICALL jvmtiSetVmLogOptions(jvmtiEnv *jvmti_env, char *options_buffer, ...) {
+JNICALL jvmtiSetVmLogOptions(jvmtiEnv *jvmti_env, ...) {
 	J9JavaVM * vm = JAVAVM_FROM_ENV(jvmti_env);
 	jvmtiError rc = JVMTI_ERROR_NOT_AVAILABLE;
+
+	char *options_buffer;
+	va_list args;
+	va_start(args, jvmti_env);
+	options_buffer = va_arg(args, char *);
+	va_end(args);
 
 	Trc_JVMTI_jvmtiSetVmLogOptions_Entry(jvmti_env);
 
@@ -2699,10 +2843,18 @@ done:
  * New JLM Dump interface, with the dump_format option
  */
 static jvmtiError JNICALL
-jvmtiJlmDumpStats(jvmtiEnv* env, void ** dump_info, jint dump_format, ...)
+jvmtiJlmDumpStats(jvmtiEnv* env, ...)
 {
 	jvmtiError rc = JVMTI_ERROR_NOT_AVAILABLE;
 	void *rv_dump_info = NULL;
+
+	void ** dump_info;
+	jint dump_format;
+	va_list args;
+	va_start(args, env);
+	dump_info = va_arg(args, void **);
+	dump_format = va_arg(args, jint);
+	va_end(args);
 
 	Trc_JVMTI_jvmtiJlmDumpStats_Entry(env);
 	ENSURE_PHASE_LIVE(env);
@@ -2930,7 +3082,7 @@ static void fillInCategoryDeepCounters(jvmtiMemoryCategory * category)
   *
   */
 static jvmtiError JNICALL
-jvmtiGetMemoryCategories(jvmtiEnv* env, jint version, jint max_categories, jvmtiMemoryCategory * categories_buffer, jint * written_count_ptr, jint * total_categories_ptr, ...)
+jvmtiGetMemoryCategories(jvmtiEnv* env, ...)
 {
 	jvmtiError rc = JVMTI_ERROR_NOT_AVAILABLE;
 	J9JavaVM * vm = JAVAVM_FROM_ENV(env);
@@ -2939,6 +3091,20 @@ jvmtiGetMemoryCategories(jvmtiEnv* env, jint version, jint max_categories, jvmti
 	struct jvmtiGetMemoryCategoriesState userData;
 	jint rv_written_count = 0;
 	jint rv_total_categories = 0;
+
+	jint version;
+	jint max_categories;
+	jvmtiMemoryCategory * categories_buffer;
+	jint * written_count_ptr;
+	jint * total_categories_ptr;
+	va_list args;
+	va_start(args, env);
+	version = va_arg(args, jint);
+	max_categories = va_arg(args, jint);
+	categories_buffer = va_arg(args, jvmtiMemoryCategory *);
+	written_count_ptr = va_arg(args, jint *);
+	total_categories_ptr = va_arg(args, jint *);
+	va_end(args);
 
 	Trc_JVMTI_jvmtiGetMemoryCategories_Entry(env, version, max_categories, categories_buffer, written_count_ptr, total_categories_ptr);
 
@@ -3125,7 +3291,7 @@ hookVerboseGCOutput(J9HookInterface **hook, UDATA eventNum, void *eventData, voi
  * @return JVMTI_ERROR_NONE on success, or a JVMTI error on failure
  */
 jvmtiError JNICALL 
-jvmtiRegisterVerboseGCSubscriber(jvmtiEnv *env, char *description, jvmtiVerboseGCSubscriber subscriber, jvmtiVerboseGCAlarm alarm, void *userData, void **subscriptionID, ...)
+jvmtiRegisterVerboseGCSubscriber(jvmtiEnv *env, ...)
 {
 	J9JavaVM * vm = JAVAVM_FROM_ENV(env);
 	J9JVMTIEnv * j9env = (J9JVMTIEnv *) env;
@@ -3136,6 +3302,20 @@ jvmtiRegisterVerboseGCSubscriber(jvmtiEnv *env, char *description, jvmtiVerboseG
 	VerboseGCSubscriberData* subscriberData;
 	IDATA hookRC;
 	void *rv_subscriptionID = NULL;
+
+	char *description;
+	jvmtiVerboseGCSubscriber subscriber;
+	jvmtiVerboseGCAlarm alarm;
+	void *userData;
+	void **subscriptionID;
+	va_list args;
+	va_start(args, env);
+	description = va_arg(args, char *);
+	subscriber = va_arg(args, jvmtiVerboseGCSubscriber);
+	alarm = va_arg(args, jvmtiVerboseGCAlarm);
+	userData = va_arg(args, void *);
+	subscriptionID = va_arg(args, void **);
+	va_end(args);
 
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
@@ -3211,12 +3391,18 @@ done:
  * @return JVMTI_ERROR_NONE on success, or a JVMTI error on failure
  */
 jvmtiError JNICALL 
-jvmtiDeregisterVerboseGCSubscriber(jvmtiEnv *env, void *subscriberID, ...)
+jvmtiDeregisterVerboseGCSubscriber(jvmtiEnv *env, ...)
 {
 	J9JavaVM * vm = JAVAVM_FROM_ENV(env);
 	jvmtiError rc = JVMTI_ERROR_INVALID_ENVIRONMENT;
 	J9VMThread * currentThread;
 	VerboseGCSubscriberData* subscriberData;
+
+	void *subscriberID;
+	va_list args;
+	va_start(args, env);
+	subscriberID = va_arg(args, void *);
+	va_end(args);
 
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	
@@ -3239,12 +3425,20 @@ done:
 }
 
 static jvmtiError JNICALL
-jvmtiGetJ9vmThread(jvmtiEnv *env, jthread thread, void **vmThreadPtr, ...)
+jvmtiGetJ9vmThread(jvmtiEnv *env, ...)
 {
 	J9JavaVM *vm = JAVAVM_FROM_ENV(env);
 	jvmtiError rc;
 	J9VMThread *currentThread;
 	void *rv_vmThread = NULL;
+
+	jthread thread;
+	void **vmThreadPtr;
+	va_list args;
+	va_start(args, env);
+	thread = va_arg(args, jthread);
+	vmThreadPtr = va_arg(args, void **);
+	va_end(args);
 
 	Trc_JVMTI_jvmtiGetJ9vmThread_Entry(env);
 
@@ -3274,10 +3468,18 @@ done:
 }
 
 static jvmtiError JNICALL
-jvmtiGetJ9method(jvmtiEnv *env, jmethodID mid, void **j9MethodPtr, ...)
+jvmtiGetJ9method(jvmtiEnv *env, ...)
 {
 	jvmtiError rc = JVMTI_ERROR_NONE;
 	void *rv_j9Method = NULL;
+
+	jmethodID mid;
+	void **j9MethodPtr;
+	va_list args;
+	va_start(args, env);
+	mid = va_arg(args, jmethodID);
+	j9MethodPtr = va_arg(args, void **);
+	va_end(args);
 
 	Trc_JVMTI_jvmtiGetJ9method_Entry(env);
 
@@ -3314,13 +3516,27 @@ done:
  * J9JVMTIExtensionFunctionInfo.id = "com.ibm.RegisterTracePointSubscriber"
  */
 static jvmtiError JNICALL
-jvmtiRegisterTracePointSubscriber(jvmtiEnv* env, char *description, jvmtiTraceSubscriber subscriber, jvmtiTraceAlarm alarm, void *userData, void **subscriptionID, ...)
+jvmtiRegisterTracePointSubscriber(jvmtiEnv* env, ...)
 {
 	J9JavaVM * vm = JAVAVM_FROM_ENV(env);
 	jvmtiError rc = JVMTI_ERROR_INVALID_ENVIRONMENT;
 	J9VMThread * currentThread = NULL;
 	RasGlobalStorage *rasGlobal = NULL;
 	UtInterface *traceInterface = NULL;
+
+	char *description;
+	jvmtiTraceSubscriber subscriber;
+	jvmtiTraceAlarm alarm;
+	void *userData;
+	void **subscriptionID;
+	va_list args;
+	va_start(args, env);
+	description = va_arg(args, char *);
+	subscriber = va_arg(args, jvmtiTraceSubscriber);
+	alarm = va_arg(args, jvmtiTraceAlarm);
+	userData = va_arg(args, void *);
+	subscriptionID = va_arg(args, void **);
+	va_end(args);
 
 	Trc_JVMTI_jvmtiRegisterTracePointSubscriber_Entry(env, description, subscriber, alarm, userData, subscriptionID);
 
@@ -3398,13 +3614,19 @@ jvmtiRegisterTracePointSubscriber(jvmtiEnv* env, char *description, jvmtiTraceSu
  * J9JVMTIExtensionFunctionInfo.id = "com.ibm.DeregisterTracePointSubscriber"
  */
 static jvmtiError JNICALL
-jvmtiDeregisterTracePointSubscriber(jvmtiEnv* env, void *subscriberID, ...)
+jvmtiDeregisterTracePointSubscriber(jvmtiEnv* env, ...)
 {
 	J9JavaVM * vm = JAVAVM_FROM_ENV(env);
 	jvmtiError rc = JVMTI_ERROR_INVALID_ENVIRONMENT;
 	J9VMThread * currentThread = NULL;
 	RasGlobalStorage *rasGlobal = NULL;
 	UtInterface *traceInterface = NULL;
+
+	void *subscriberID;
+	va_list args;
+	va_start(args, env);
+	subscriberID = va_arg(args, void *);
+	va_end(args);
 
 	Trc_JVMTI_jvmtiDeregisterTracePointSubscriber_Entry(env, subscriberID);
 
