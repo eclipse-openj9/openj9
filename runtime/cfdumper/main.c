@@ -2385,7 +2385,6 @@ static U_32 buildFlags(void)
 	 * check in j9bcutil_readClassFileBytes.
 	 */
 	flags |= BCT_JavaMaxMajorVersionShifted;
-	flags |= BCT_ValueTypesEnabled;
 	flags |= BCT_AnyPreviewVersion;
 
 	if(options.options & OPTION_stripDebugAttributes) flags |= CFR_StripDebugAttributes;
