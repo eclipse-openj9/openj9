@@ -89,12 +89,6 @@
 	-explainExcludes -xids all,$(PLATFORM) -xlist $(Q)$(TEST_RESROOT)$(D)jvmtitests_excludes_$(JDK_VERSION).xml$(Q) -nonZeroExitWhenError; \
 	${TEST_STATUS}</command>
 		<platformRequirements>^arch.390</platformRequirements>
-		<disables>
-			<disable>
-				<comment>https://github.com/eclipse-openj9/openj9/issues/14390</comment>
-				<platform>aarch64.*mac.*</platform>
-			</disable>
-		</disables>
 		<levels>
 			<level>sanity</level>
 		</levels>
@@ -138,12 +132,6 @@
 	-explainExcludes -xids all,$(PLATFORM) -xlist $(Q)$(TEST_RESROOT)$(D)jvmtitests_excludes_$(JDK_VERSION).xml$(Q) -nonZeroExitWhenError; \
 	${TEST_STATUS}</command>
 		<platformRequirements>^arch.390</platformRequirements>
-		<disables>
-			<disable>
-				<comment>https://github.com/eclipse-openj9/openj9/issues/14390</comment>
-				<platform>aarch64.*mac.*</platform>
-			</disable>
-		</disables>
 		<levels>
 			<level>sanity</level>
 		</levels>
@@ -187,12 +175,6 @@
 	-explainExcludes -xids all,$(PLATFORM) -xlist $(Q)$(TEST_RESROOT)$(D)jvmtitests_excludes_$(JDK_VERSION).xml$(Q) -nonZeroExitWhenError; \
 	${TEST_STATUS}</command>
 		<platformRequirements>^arch.390</platformRequirements>
-		<disables>
-			<disable>
-				<comment>https://github.com/eclipse-openj9/openj9/issues/14390</comment>
-				<platform>aarch64.*mac.*</platform>
-			</disable>
-		</disables>
 		<levels>
 			<level>sanity</level>
 		</levels>
@@ -235,12 +217,6 @@
 	-explainExcludes -xids all,$(PLATFORM) -xlist $(Q)$(TEST_RESROOT)$(D)jvmtitests_excludes_$(JDK_VERSION).xml$(Q) -nonZeroExitWhenError; \
 	${TEST_STATUS}</command>
 		<platformRequirements>^arch.390</platformRequirements>
-		<disables>
-			<disable>
-				<comment>https://github.com/eclipse-openj9/openj9/issues/14390</comment>
-				<platform>aarch64.*mac.*</platform>
-			</disable>
-		</disables>
 		<levels>
 			<level>sanity</level>
 		</levels>
@@ -281,12 +257,6 @@
 	-explainExcludes -xids all,$(PLATFORM) -xlist $(Q)$(TEST_RESROOT)$(D)jvmtitests_excludes_$(JDK_VERSION).xml$(Q) -nonZeroExitWhenError; \
 	${TEST_STATUS}</command>
 		<platformRequirements>^arch.390</platformRequirements>
-		<disables>
-			<disable>
-				<comment>https://github.com/eclipse-openj9/openj9/issues/14390</comment>
-				<platform>aarch64.*mac.*</platform>
-			</disable>
-		</disables>
 		<levels>
 			<level>sanity</level>
 		</levels>
@@ -325,12 +295,6 @@
 	-xids all,$(PLATFORM),$(JCL_VERSION) -xlist $(Q)$(TEST_RESROOT)$(D)jvmtitests_excludes_$(JDK_VERSION).xml$(Q) -nonZeroExitWhenError; \
 	${TEST_STATUS}</command>
 		<platformRequirements>arch.390</platformRequirements>
-		<disables>
-			<disable>
-				<comment>https://github.com/eclipse-openj9/openj9/issues/14390</comment>
-				<platform>aarch64.*mac.*</platform>
-			</disable>
-		</disables>
 		<levels>
 			<level>extended</level>
 		</levels>
