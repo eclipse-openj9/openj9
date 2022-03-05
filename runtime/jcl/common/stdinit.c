@@ -195,11 +195,11 @@ standardInit( J9JavaVM *vm, char *dllName)
 				if (NULL == clz) {
 					goto _fail;
 				}
-#if JAVA_SPEC_VERSION >= 17
+#if (17 <= JAVA_SPEC_VERSION) && (JAVA_SPEC_VERSION <= 18)
 				mid = (*env)->GetStaticMethodID(env, clz, "load", "(Ljdk/internal/loader/NativeLibraries$NativeLibraryImpl;Ljava/lang/String;ZZZ)Z");
-#else /* JAVA_SPEC_VERSION >= 17 */
+#else /* (17 <= JAVA_SPEC_VERSION) && (JAVA_SPEC_VERSION <= 18) */
 				mid = (*env)->GetStaticMethodID(env, clz, "load", "(Ljdk/internal/loader/NativeLibraries$NativeLibraryImpl;Ljava/lang/String;ZZ)Z");
-#endif /* JAVA_SPEC_VERSION >= 17 */
+#endif /* (17 <= JAVA_SPEC_VERSION) && (JAVA_SPEC_VERSION <= 18) */
 				if (NULL == mid) {
 					goto _fail;
 				}
