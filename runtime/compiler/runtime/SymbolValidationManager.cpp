@@ -67,7 +67,7 @@ TR::SymbolValidationManager::SymbolValidationManager(TR::Region &region, TR_Reso
         _vmThread->javaVM->jitConfig,
         _vmThread,
 #if defined(J9VM_OPT_JITSERVER)
-        TR::CompilationInfo::get()->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER ? TR_J9VMBase::J9_SERVER_VM : 
+        TR::CompilationInfo::get()->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER ? TR_J9VMBase::J9_SERVER_VM :
 #endif /* defined(J9VM_OPT_JITSERVER) */
         TR_J9VMBase::DEFAULT_VM)),
      _trMemory(_comp->trMemory()),
@@ -80,9 +80,9 @@ TR::SymbolValidationManager::SymbolValidationManager(TR::Region &region, TR_Reso
      _symbolValidationRecords(_region),
      _alreadyGeneratedRecords(LessSymbolValidationRecord(), _region),
      _classesFromAnyCPIndex(LessClassFromAnyCPIndex(), _region),
-     _symbolToIdMap((SymbolToIdComparator()), _region),
-     _idToSymbolTable(_region),
-     _seenSymbolsSet((SeenSymbolsComparator()), _region),
+     _valueToSymbolMap((ValueToSymbolComparator()), _region),
+     _symbolToValueTable(_region),
+     _seenValuesSet((SeenValuesComparator()), _region),
      _wellKnownClasses(_region),
      _loadersOkForWellKnownClasses(_region)
    {
@@ -135,12 +135,12 @@ TR::SymbolValidationManager::populateSystemClassesNotWorthRemembering(ClientSess
 #endif
 
 void
-TR::SymbolValidationManager::defineGuaranteedID(void *symbol, TR::SymbolType type)
+TR::SymbolValidationManager::defineGuaranteedID(void *value, TR::SymbolType type)
    {
    uint16_t id = getNewSymbolID();
-   _symbolToIdMap.insert(std::make_pair(symbol, id));
-   setSymbolOfID(id, symbol, type);
-   _seenSymbolsSet.insert(symbol);
+   _valueToSymbolMap.insert(std::make_pair(value, id));
+   setValueOfSymbolID(id, value, type);
+   _seenValuesSet.insert(value);
    }
 
 bool
@@ -365,12 +365,12 @@ TR::SymbolValidationManager::validateWellKnownClasses(const uintptr_t *wellKnown
       if (!_fej9->sharedCache()->classMatchesCachedVersion(clazz, classChain))
          return false;
 
-      _seenSymbolsSet.insert(clazz);
+      _seenValuesSet.insert(clazz);
       if (assignNewIDs)
          {
          _wellKnownClasses.push_back(clazz);
          if (clazz != _rootClass)
-            setSymbolOfID(getNewSymbolID(), clazz, TR::SymbolType::typeClass);
+            setValueOfSymbolID(getNewSymbolID(), clazz, TR::SymbolType::typeClass);
          }
       }
 
@@ -436,22 +436,22 @@ TR::SymbolValidationManager::classCanSeeWellKnownClasses(TR_OpaqueClassBlock *be
 bool
 TR::SymbolValidationManager::isDefinedID(uint16_t id)
    {
-   return id < _idToSymbolTable.size() && _idToSymbolTable[id]._hasValue;
+   return id < _symbolToValueTable.size() && _symbolToValueTable[id]._hasValue;
    }
 
 void
-TR::SymbolValidationManager::setSymbolOfID(uint16_t id, void *symbol, TR::SymbolType type)
+TR::SymbolValidationManager::setValueOfSymbolID(uint16_t id, void *value, TR::SymbolType type)
    {
-   if (id >= _idToSymbolTable.size())
+   if (id >= _symbolToValueTable.size())
       {
-      TypedSymbol unused = { NULL, typeOpaque, false };
-      _idToSymbolTable.resize(id + 1, unused);
+      TypedValue unused = { NULL, typeOpaque, false };
+      _symbolToValueTable.resize(id + 1, unused);
       }
 
-   SVM_ASSERT(!_idToSymbolTable[id]._hasValue, "multiple definitions of ID %d", id);
-   _idToSymbolTable[id]._symbol = symbol;
-   _idToSymbolTable[id]._type = type;
-   _idToSymbolTable[id]._hasValue = true;
+   SVM_ASSERT(!_symbolToValueTable[id]._hasValue, "multiple definitions of ID %d", id);
+   _symbolToValueTable[id]._value = value;
+   _symbolToValueTable[id]._type = type;
+   _symbolToValueTable[id]._hasValue = true;
    }
 
 uint16_t
@@ -462,64 +462,64 @@ TR::SymbolValidationManager::getNewSymbolID()
    }
 
 void *
-TR::SymbolValidationManager::getSymbolFromID(uint16_t id, TR::SymbolType type, Presence presence)
+TR::SymbolValidationManager::getValueFromSymbolID(uint16_t id, TR::SymbolType type, Presence presence)
    {
-   TypedSymbol *entry = NULL;
-   if (id < _idToSymbolTable.size())
-      entry = &_idToSymbolTable[id];
+   TypedValue *entry = NULL;
+   if (id < _symbolToValueTable.size())
+      entry = &_symbolToValueTable[id];
 
    SVM_ASSERT(entry != NULL && entry->_hasValue, "Unknown ID %d", id);
-   if (entry->_symbol == NULL)
+   if (entry->_value == NULL)
       SVM_ASSERT(presence != SymRequired, "ID must not map to null");
    else
       SVM_ASSERT(entry->_type == type, "ID has type %d when %d was expected", entry->_type, type);
 
-   return entry->_symbol;
+   return entry->_value;
    }
 
 TR_OpaqueClassBlock *
 TR::SymbolValidationManager::getClassFromID(uint16_t id, Presence presence)
    {
    return static_cast<TR_OpaqueClassBlock*>(
-      getSymbolFromID(id, TR::SymbolType::typeClass, presence));
+      getValueFromSymbolID(id, TR::SymbolType::typeClass, presence));
    }
 
 J9Class *
 TR::SymbolValidationManager::getJ9ClassFromID(uint16_t id, Presence presence)
    {
    return static_cast<J9Class*>(
-      getSymbolFromID(id, TR::SymbolType::typeClass, presence));
+      getValueFromSymbolID(id, TR::SymbolType::typeClass, presence));
    }
 
 TR_OpaqueMethodBlock *
 TR::SymbolValidationManager::getMethodFromID(uint16_t id, Presence presence)
    {
    return static_cast<TR_OpaqueMethodBlock*>(
-      getSymbolFromID(id, TR::SymbolType::typeMethod, presence));
+      getValueFromSymbolID(id, TR::SymbolType::typeMethod, presence));
    }
 
 J9Method *
 TR::SymbolValidationManager::getJ9MethodFromID(uint16_t id, Presence presence)
    {
    return static_cast<J9Method*>(
-      getSymbolFromID(id, TR::SymbolType::typeMethod, presence));
+      getValueFromSymbolID(id, TR::SymbolType::typeMethod, presence));
    }
 
 uint16_t
-TR::SymbolValidationManager::tryGetIDFromSymbol(void *symbol)
+TR::SymbolValidationManager::tryGetSymbolIDFromValue(void *value)
    {
-   SymbolToIdMap::iterator it = _symbolToIdMap.find(symbol);
-   if (it == _symbolToIdMap.end())
+   ValueToSymbolMap::iterator it = _valueToSymbolMap.find(value);
+   if (it == _valueToSymbolMap.end())
       return NO_ID;
    else
       return it->second;
    }
 
 uint16_t
-TR::SymbolValidationManager::getIDFromSymbol(void *symbol)
+TR::SymbolValidationManager::getSymbolIDFromValue(void *value)
    {
-   uint16_t id = tryGetIDFromSymbol(symbol);
-   SVM_ASSERT(id != NO_ID, "Unknown symbol %p\n", symbol);
+   uint16_t id = tryGetSymbolIDFromValue(value);
+   SVM_ASSERT(id != NO_ID, "Unknown value %p\n", value);
    return id;
    }
 
@@ -563,31 +563,31 @@ TR::SymbolValidationManager::anyClassFromCPRecordExists(
    }
 
 void
-TR::SymbolValidationManager::appendNewRecord(void *symbol, TR::SymbolValidationRecord *record)
+TR::SymbolValidationManager::appendNewRecord(void *value, TR::SymbolValidationRecord *record)
    {
    SVM_ASSERT(!inHeuristicRegion(), "Attempted to appendNewRecord in a heuristic region");
    TR_ASSERT(!recordExists(record), "record is not new");
 
-   if (!isAlreadyValidated(symbol))
+   if (!isAlreadyValidated(value))
       {
-      _symbolToIdMap.insert(std::make_pair(symbol, getNewSymbolID()));
+      _valueToSymbolMap.insert(std::make_pair(value, getNewSymbolID()));
       }
    _symbolValidationRecords.push_front(record);
    _alreadyGeneratedRecords.insert(record);
 
    record->printFields();
    traceMsg(_comp, "\tkind=%d\n", record->_kind);
-   traceMsg(_comp, "\tid=%d\n", (uint32_t)getIDFromSymbol(symbol));
+   traceMsg(_comp, "\tid=%d\n", (uint32_t)getSymbolIDFromValue(value));
    traceMsg(_comp, "\n");
    }
 
 void
-TR::SymbolValidationManager::appendRecordIfNew(void *symbol, TR::SymbolValidationRecord *record)
+TR::SymbolValidationManager::appendRecordIfNew(void *value, TR::SymbolValidationRecord *record)
    {
    if (recordExists(record))
       _region.deallocate(record);
    else
-      appendNewRecord(symbol, record);
+      appendNewRecord(value, record);
    }
 
 bool
@@ -654,12 +654,12 @@ TR::SymbolValidationManager::appendClassChainInfoRecords(
    }
 
 bool
-TR::SymbolValidationManager::addVanillaRecord(void *symbol, TR::SymbolValidationRecord *record)
+TR::SymbolValidationManager::addVanillaRecord(void *value, TR::SymbolValidationRecord *record)
    {
-   if (shouldNotDefineSymbol(symbol))
+   if (shouldNotDefineSymbol(value))
       return abandonRecord(record);
 
-   appendRecordIfNew(symbol, record);
+   appendRecordIfNew(value, record);
    return true;
    }
 
@@ -1127,35 +1127,35 @@ TR::SymbolValidationManager::addJ2IThunkFromMethodRecord(void *thunk, TR_OpaqueM
 
 
 bool
-TR::SymbolValidationManager::validateSymbol(uint16_t idToBeValidated, void *validSymbol, TR::SymbolType type)
+TR::SymbolValidationManager::validateSymbol(uint16_t idToBeValidated, void *validValue, TR::SymbolType type)
    {
    bool valid = false;
-   TypedSymbol *entry = NULL;
-   if (idToBeValidated < _idToSymbolTable.size())
-      entry = &_idToSymbolTable[idToBeValidated];
+   TypedValue *entry = NULL;
+   if (idToBeValidated < _symbolToValueTable.size())
+      entry = &_symbolToValueTable[idToBeValidated];
 
    if (entry == NULL || !entry->_hasValue)
       {
-      if (_seenSymbolsSet.find(validSymbol) == _seenSymbolsSet.end())
+      if (_seenValuesSet.find(validValue) == _seenValuesSet.end())
          {
          valid = true;
          if (type == TR::SymbolType::typeClass)
             {
             valid = classCanSeeWellKnownClasses(
-               reinterpret_cast<TR_OpaqueClassBlock*>(validSymbol));
+               reinterpret_cast<TR_OpaqueClassBlock*>(validValue));
             }
 
          if (valid)
             {
-            setSymbolOfID(idToBeValidated, validSymbol, type);
-            _seenSymbolsSet.insert(validSymbol);
+            setValueOfSymbolID(idToBeValidated, validValue, type);
+            _seenValuesSet.insert(validValue);
             }
          }
       }
    else
       {
-      valid = validSymbol == entry->_symbol
-         && (validSymbol == NULL || entry->_type == type);
+      valid = validValue == entry->_value
+         && (validValue == NULL || entry->_type == type);
       }
 
    return valid;
@@ -1593,35 +1593,35 @@ static void printClass(TR_OpaqueClassBlock *clazz)
 
 #if defined(J9VM_OPT_JITSERVER)
 std::string
-TR::SymbolValidationManager::serializeSymbolToIDMap()
+TR::SymbolValidationManager::serializeValueToSymbolMap()
    {
-   int32_t entrySize = sizeof(SymbolToIdMap::key_type) + sizeof(SymbolToIdMap::mapped_type);
-   std::string symbolToIdStr(entrySize * _symbolToIdMap.size(), '\0');
+   int32_t entrySize = sizeof(ValueToSymbolMap::key_type) + sizeof(ValueToSymbolMap::mapped_type);
+   std::string valueToSymbolStr(entrySize * _valueToSymbolMap.size(), '\0');
    uint16_t idx = 0;
-   for (auto it : _symbolToIdMap)
+   for (auto it : _valueToSymbolMap)
       {
-      SymbolToIdMap::key_type symbol = it.first;
-      SymbolToIdMap::mapped_type id = it.second;
-      memcpy(&symbolToIdStr[idx * entrySize], &symbol, sizeof(symbol));
-      memcpy(&symbolToIdStr[idx * entrySize + sizeof(symbol)], &id, sizeof(id));
+      ValueToSymbolMap::key_type symbol = it.first;
+      ValueToSymbolMap::mapped_type id = it.second;
+      memcpy(&valueToSymbolStr[idx * entrySize], &symbol, sizeof(symbol));
+      memcpy(&valueToSymbolStr[idx * entrySize + sizeof(symbol)], &id, sizeof(id));
       ++idx;
       }
-   return symbolToIdStr;
+   return valueToSymbolStr;
    }
 
 void
-TR::SymbolValidationManager::deserializeSymbolToIDMap(const std::string &symbolToIdStr)
+TR::SymbolValidationManager::deserializeValueToSymbolMap(const std::string &valueToSymbolStr)
    {
-   _symbolToIdMap.clear();
+   _valueToSymbolMap.clear();
 
-   int32_t entrySize = sizeof(SymbolToIdMap::key_type) + sizeof(SymbolToIdMap::mapped_type);
-   int32_t numEntries = symbolToIdStr.length() / entrySize;
+   int32_t entrySize = sizeof(ValueToSymbolMap::key_type) + sizeof(ValueToSymbolMap::mapped_type);
+   int32_t numEntries = valueToSymbolStr.length() / entrySize;
    for (int32_t idx = 0; idx < numEntries; idx++)
       {
-      SymbolToIdMap::key_type symbol;
-      memcpy(&symbol, &symbolToIdStr[idx * entrySize], sizeof(symbol));
-      SymbolToIdMap::mapped_type id = (uint16_t) symbolToIdStr[idx * entrySize + sizeof(symbol)];
-      _symbolToIdMap.insert(std::make_pair(symbol, id));
+      ValueToSymbolMap::key_type symbol;
+      memcpy(&symbol, &valueToSymbolStr[idx * entrySize], sizeof(symbol));
+      ValueToSymbolMap::mapped_type id = (uint16_t) valueToSymbolStr[idx * entrySize + sizeof(symbol)];
+      _valueToSymbolMap.insert(std::make_pair(symbol, id));
       }
    }
 #endif /* defined(J9VM_OPT_JITSERVER) */

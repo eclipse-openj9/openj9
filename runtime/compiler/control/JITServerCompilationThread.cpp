@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2021 IBM Corp. and others
+ * Copyright (c) 2018, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -57,7 +57,7 @@ computeServerMemoryState(TR::CompilationInfo *compInfo)
    uint64_t veryLowMemoryThreshold = TR::Options::getSafeReservePhysicalMemoryValue() + 4 * TR::Options::getScratchSpaceLowerBound();
 
    uint64_t freePhysicalMemorySizeB = compInfo->getCachedFreePhysicalMemoryB();
-   
+
    // If the last measurement was LOW or VERY_LOW, sample memory at a higher rate to
    // get more up-to-date information
    JITServer::ServerMemoryState memoryState = JITServer::ServerMemoryState::NORMAL;
@@ -146,10 +146,10 @@ outOfProcessCompilationEnd(TR_MethodToBeCompiled *entry, TR::Compilation *comp)
    // Pack log file to send to client
    std::string logFileStr = TR::Options::packLogFile(comp->getOutFile());
 
-   std::string svmSymbolToIdStr;
+   std::string svmValueToSymbolStr;
    if (comp->getOption(TR_UseSymbolValidationManager))
       {
-      svmSymbolToIdStr = comp->getSymbolValidationManager()->serializeSymbolToIDMap();
+      svmValueToSymbolStr = comp->getSymbolValidationManager()->serializeValueToSymbolMap();
       }
 
    // Send runtime assumptions created during compilation to the client
@@ -182,7 +182,7 @@ outOfProcessCompilationEnd(TR_MethodToBeCompiled *entry, TR::Compilation *comp)
    entry->_stream->finishCompilation(
       codeCacheStr, dataCacheStr, chTableData,
       std::vector<TR_OpaqueClassBlock*>(classesThatShouldNotBeNewlyExtended->begin(), classesThatShouldNotBeNewlyExtended->end()),
-      logFileStr, svmSymbolToIdStr,
+      logFileStr, svmValueToSymbolStr,
       resolvedMirrorMethodsPersistIPInfo
          ? std::vector<TR_ResolvedJ9Method*>(resolvedMirrorMethodsPersistIPInfo->begin(), resolvedMirrorMethodsPersistIPInfo->end())
          : std::vector<TR_ResolvedJ9Method*>(),
@@ -238,15 +238,15 @@ TR::CompilationInfoPerThreadRemote::CompilationInfoPerThreadRemote(TR::Compilati
    {}
 
 /**
- * @brief Method executed by JITServer to dequeue and notify all waiting threads 
- *        that the condition they were waiting for has been fulfilled. 
+ * @brief Method executed by JITServer to dequeue and notify all waiting threads
+ *        that the condition they were waiting for has been fulfilled.
  *        Needs to be executed with clientSession->getSequencingMonitor() in hand.
  */
 void
 TR::CompilationInfoPerThreadRemote::notifyAndDetachWaitingRequests(ClientSessionData *clientSession)
    {
    TR_MethodToBeCompiled *nextEntry = clientSession->getOOSequenceEntryList();
-   // I need to keep notifying until the first request that is blocked 
+   // I need to keep notifying until the first request that is blocked
    // because the request it depends on hasn't been processed yet.
    while (nextEntry)
       {
@@ -368,7 +368,7 @@ TR::CompilationInfoPerThreadRemote::waitForMyTurn(ClientSessionData *clientSessi
             clientSession->setLastProcessedCriticalSeqNo(criticalSeqNo);// Allow myself to go through
             notifyAndDetachWaitingRequests(clientSession);
             // Mark the next request that it should not try to clear the caches,
-            // but rather to sleep again waiting for my notification. 
+            // but rather to sleep again waiting for my notification.
             // We only need to do this for the head entry in the waiting list
             // due to the check `&entry == clientSession->getOOSequenceEntryList()` above
             TR_MethodToBeCompiled *nextWaitingEntry = clientSession->getOOSequenceEntryList();
@@ -578,7 +578,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
      if (TR::Options::getVerboseOption(TR_VerboseJITServer))
          TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
             "compThreadID=%d %s clientSessionData=%p for clientUID=%llu seqNo=%u (isCritical=%d) (criticalSeqNo=%u lastProcessedCriticalReq=%u)",
-            getCompThreadId(), sessionDataWasEmpty ? "created" : "found", clientSession, (unsigned long long)clientId, seqNo, 
+            getCompThreadId(), sessionDataWasEmpty ? "created" : "found", clientSession, (unsigned long long)clientId, seqNo,
             isCriticalRequest, criticalSeqNo, clientSession->getLastProcessedCriticalSeqNo());
 
       Trc_JITServerClientSessionData1(compThread, getCompThreadId(), sessionDataWasEmpty ? "created" : "found",
@@ -604,13 +604,13 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
             TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "compThreadID=%d out-of-sequence msg=%u detected for clientUID=%llu criticalSeqNo=%u > lastCriticalSeqNo=%u. Parking this thread (entry=%p)",
             getCompThreadId(), seqNo, (unsigned long long)clientId, criticalSeqNo, clientSession->getLastProcessedCriticalSeqNo(), &entry);
 
-         Trc_JITServerOutOfSequenceMsg1(compThread, getCompThreadId(), clientSession, (unsigned long long)clientId, &entry, seqNo, 
+         Trc_JITServerOutOfSequenceMsg1(compThread, getCompThreadId(), clientSession, (unsigned long long)clientId, &entry, seqNo,
             clientSession->getLastProcessedCriticalSeqNo(), clientSession->getNumActiveThreads(), clientSession->getLastProcessedCriticalSeqNo());
 
          waitForMyTurn(clientSession, entry);
          }
 
-      TR_ASSERT_FATAL(criticalSeqNo <= clientSession->getLastProcessedCriticalSeqNo(), 
+      TR_ASSERT_FATAL(criticalSeqNo <= clientSession->getLastProcessedCriticalSeqNo(),
          "Critical requests must be processed in order: compThreadID=%d seqNo=%u criticalSeqNo=%u > lastProcessedCriticalSeqNo=%u clientUID=%llu",
          getCompThreadId(), seqNo, criticalSeqNo, clientSession->getLastProcessedCriticalSeqNo(), (unsigned long long)clientId);
 
@@ -623,9 +623,9 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
          // Request 0 will be aborted (retried at te client) while request 1 will ask about entire CHTable
          // because CHTable is empty at the server
          if (isCriticalRequest)
-            {      
+            {
             if (TR::Options::isAnyVerboseOptionSet(TR_VerboseCompFailure, TR_VerboseJITServer, TR_VerbosePerformance))
-               TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, 
+               TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
                   "compThreadID=%d discarding older msg for clientUID=%llu seqNo=%u criticalSeqNo=%u < lastProcessedCriticalSeqNo=%u",
                   getCompThreadId(), (unsigned long long)clientId, seqNo, criticalSeqNo, clientSession->getLastProcessedCriticalSeqNo());
 
@@ -729,7 +729,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
             "compThreadID=%d clientSessionData=%p clientUID=%llu seqNo=%u, criticalSeqNo=%u != lastProcessedCriticalSeqNo=%u, numActiveThreads=%d",
             getCompThreadId(), clientSession, (unsigned long long)clientId, seqNo, criticalSeqNo,
             clientSession->getLastProcessedCriticalSeqNo(), clientSession->getNumActiveThreads());
-      
+
          clientSession->setLastProcessedCriticalSeqNo(seqNo);
          hasUpdatedSeqNo = true;
          Trc_JITServerUpdateSeqNo(getCompilationThread(), getCompThreadId(), clientSession,
@@ -841,7 +841,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       }
    catch (const JITServer::StreamFailure &e)
       {
-      // This could happen because the client disconnected on purpose, in which case there is no harm done, 
+      // This could happen because the client disconnected on purpose, in which case there is no harm done,
       // or if there was a network problem. In the latter case, if the request was critical, the server
       // will observe a missing seqNo and after a timeout, it will clear the caches and start over
       if (TR::Options::getVerboseOption(TR_VerboseJITServer))
@@ -895,7 +895,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
 
       abortCompilation = true;
       deleteStream = true;
-      
+
       deleteClientSessionData(e.getClientId(), compInfo, compThread);
       }
    catch (const JITServer::StreamInterrupted &e)
@@ -925,7 +925,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
             notifyAndDetachWaitingRequests(clientSession);
             }
          clientSession->getSequencingMonitor()->exit();
-         }      
+         }
       }
    catch (const JITServer::StreamOOO &e)
       {

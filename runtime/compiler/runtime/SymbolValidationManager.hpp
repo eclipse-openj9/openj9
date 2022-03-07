@@ -76,18 +76,18 @@ class AOTCacheWellKnownClassesRecord;
 #define SVM_ASSERT_NONFATAL(condition, format, ...) \
    SVM_ASSERT_IMPL("SVM_ASSERT_NONFATAL", true, condition, #condition, format, ##__VA_ARGS__)
 
-#define SVM_ASSERT_ALREADY_VALIDATED(svm, symbol)        \
+#define SVM_ASSERT_ALREADY_VALIDATED(svm, value)        \
    do                                                    \
       {                                                  \
-      void *_0symbol = (symbol);                         \
+      void *_0value = (value);                         \
       SVM_ASSERT_IMPL(                                   \
          "SVM_ASSERT_ALREADY_VALIDATED",                 \
          false,                                          \
-         (svm)->isAlreadyValidated(_0symbol),            \
-         "isAlreadyValidated(" #symbol ")",              \
+         (svm)->isAlreadyValidated(_0value),            \
+         "isAlreadyValidated(" #value ")",              \
          "%s %p should have already been validated",     \
-         #symbol,                                        \
-         _0symbol);                                      \
+         #value,                                        \
+         _0value);                                      \
       }                                                  \
    while (false)
 
@@ -723,18 +723,18 @@ public:
       SymOptional
       };
 
-   void* getSymbolFromID(uint16_t id, TR::SymbolType type, Presence presence = SymRequired);
+   void* getValueFromSymbolID(uint16_t id, TR::SymbolType type, Presence presence = SymRequired);
    TR_OpaqueClassBlock *getClassFromID(uint16_t id, Presence presence = SymRequired);
    J9Class *getJ9ClassFromID(uint16_t id, Presence presence = SymRequired);
    TR_OpaqueMethodBlock *getMethodFromID(uint16_t id, Presence presence = SymRequired);
    J9Method *getJ9MethodFromID(uint16_t id, Presence presence = SymRequired);
 
-   uint16_t tryGetIDFromSymbol(void *symbol);
-   uint16_t getIDFromSymbol(void *symbol);
+   uint16_t tryGetSymbolIDFromValue(void *value);
+   uint16_t getSymbolIDFromValue(void *value);
 
-   bool isAlreadyValidated(void *symbol)
+   bool isAlreadyValidated(void *value)
       {
-      return inHeuristicRegion() || tryGetIDFromSymbol(symbol) != NO_ID;
+      return inHeuristicRegion() || tryGetSymbolIDFromValue(value) != NO_ID;
       }
 
    bool addClassByNameRecord(TR_OpaqueClassBlock *clazz, TR_OpaqueClassBlock *beholder);
@@ -842,8 +842,8 @@ public:
    static int getSystemClassesNotWorthRememberingCount();
 
 #if defined(J9VM_OPT_JITSERVER)
-   std::string serializeSymbolToIDMap();
-   void deserializeSymbolToIDMap(const std::string &symbolToIdStr);
+   std::string serializeValueToSymbolMap();
+   void deserializeValueToSymbolMap(const std::string &valueToSymbolStr);
    static void populateSystemClassesNotWorthRemembering(ClientSessionData *clientData);
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
@@ -858,13 +858,13 @@ private:
 
    uint16_t getNewSymbolID();
 
-   bool shouldNotDefineSymbol(void *symbol) { return symbol == NULL || inHeuristicRegion(); }
+   bool shouldNotDefineSymbol(void *value) { return value == NULL || inHeuristicRegion(); }
    bool abandonRecord(TR::SymbolValidationRecord *record);
 
    bool recordExists(TR::SymbolValidationRecord *record);
    bool anyClassFromCPRecordExists(TR_OpaqueClassBlock *clazz, TR_OpaqueClassBlock *beholder);
-   void appendNewRecord(void *symbol, TR::SymbolValidationRecord *record);
-   void appendRecordIfNew(void *symbol, TR::SymbolValidationRecord *record);
+   void appendNewRecord(void *value, TR::SymbolValidationRecord *record);
+   void appendRecordIfNew(void *value, TR::SymbolValidationRecord *record);
 
    struct ClassChainInfo
       {
@@ -887,22 +887,22 @@ private:
    bool getClassChainInfo(TR_OpaqueClassBlock *clazz, TR::SymbolValidationRecord *record, ClassChainInfo &info);
    void appendClassChainInfoRecords(TR_OpaqueClassBlock *clazz, const ClassChainInfo &info);
 
-   bool addVanillaRecord(void *symbol, TR::SymbolValidationRecord *record);
+   bool addVanillaRecord(void *value, TR::SymbolValidationRecord *record);
    bool addClassRecord(TR_OpaqueClassBlock *clazz, TR::ClassValidationRecord *record);
    bool addClassRecordWithChain(TR::ClassValidationRecordWithChain *record);
    void addMultipleArrayRecords(TR_OpaqueClassBlock *clazz, int arrayDims);
    bool addMethodRecord(TR::MethodValidationRecord *record);
    bool skipFieldRefClassRecord(TR_OpaqueClassBlock *definingClass, TR_OpaqueClassBlock *beholder, uint32_t cpIndex);
 
-   bool validateSymbol(uint16_t idToBeValidated, void *validSymbol, TR::SymbolType type);
+   bool validateSymbol(uint16_t idToBeValidated, void *validValue, TR::SymbolType type);
    bool validateSymbol(uint16_t idToBeValidated, TR_OpaqueClassBlock *clazz);
    bool validateSymbol(uint16_t idToBeValidated, J9Class *clazz);
    bool validateSymbol(uint16_t methodID, uint16_t definingClassID, TR_OpaqueMethodBlock *method);
    bool validateSymbol(uint16_t methodID, uint16_t definingClassID, J9Method *method);
 
    bool isDefinedID(uint16_t id);
-   void setSymbolOfID(uint16_t id, void *symbol, TR::SymbolType type);
-   void defineGuaranteedID(void *symbol, TR::SymbolType type);
+   void setValueOfSymbolID(uint16_t id, void *value, TR::SymbolType type);
+   void defineGuaranteedID(void *value, TR::SymbolType type);
 
    /**
     * @brief Heuristic to determine whether a class is worth remembering (and hence
@@ -939,31 +939,31 @@ private:
    typedef std::set<SymbolValidationRecord*, LessSymbolValidationRecord, RecordPtrAlloc> RecordSet;
    RecordSet _alreadyGeneratedRecords;
 
-   typedef TR::typed_allocator<std::pair<void* const, uint16_t>, TR::Region&> SymbolToIdAllocator;
-   typedef std::less<void*> SymbolToIdComparator;
-   typedef std::map<void*, uint16_t, SymbolToIdComparator, SymbolToIdAllocator> SymbolToIdMap;
+   typedef TR::typed_allocator<std::pair<void* const, uint16_t>, TR::Region&> ValueToSymbolAllocator;
+   typedef std::less<void*> ValueToSymbolComparator;
+   typedef std::map<void*, uint16_t, ValueToSymbolComparator, ValueToSymbolAllocator> ValueToSymbolMap;
 
-   struct TypedSymbol
+   struct TypedValue
       {
-      void *_symbol;
+      void *_value;
       TR::SymbolType _type;
       bool _hasValue;
       };
 
-   typedef TR::typed_allocator<TypedSymbol, TR::Region&> IdToSymbolAllocator;
-   typedef std::vector<TypedSymbol, IdToSymbolAllocator> IdToSymbolTable;
+   typedef TR::typed_allocator<TypedValue, TR::Region&> SymbolToValueAllocator;
+   typedef std::vector<TypedValue, SymbolToValueAllocator> SymbolToValueTable;
 
-   typedef TR::typed_allocator<void*, TR::Region&> SeenSymbolsAlloc;
-   typedef std::less<void*> SeenSymbolsComparator;
-   typedef std::set<void*, SeenSymbolsComparator, SeenSymbolsAlloc> SeenSymbolsSet;
+   typedef TR::typed_allocator<void*, TR::Region&> SeenValuesAlloc;
+   typedef std::less<void*> SeenValuesComparator;
+   typedef std::set<void*, SeenValuesComparator, SeenValuesAlloc> SeenValuesSet;
 
    /* Used for AOT Compile */
-   SymbolToIdMap _symbolToIdMap;
+   ValueToSymbolMap _valueToSymbolMap;
 
    /* Used for AOT Load */
-   IdToSymbolTable _idToSymbolTable;
+   SymbolToValueTable _symbolToValueTable;
 
-   SeenSymbolsSet _seenSymbolsSet;
+   SeenValuesSet _seenValuesSet;
 
    typedef TR::typed_allocator<TR_OpaqueClassBlock*, TR::Region&> ClassAllocator;
    typedef std::vector<TR_OpaqueClassBlock*, ClassAllocator> ClassVector;
