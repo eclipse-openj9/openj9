@@ -1004,6 +1004,7 @@ J9::Z::TreeEvaluator::zdsls2zdEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       sign = signCodeNode->get32bitIntegralValue();
       }
 
+   // QUESTION: Will the zoned decimal ever have higher precision than zdsls decimal?
    bool isSrcTrailingSign = (srcNode->getDataType() == TR::ZonedDecimalSignTrailingSeparate);
    int32_t sourceOffset = 0;
    bool isTruncation = false;
@@ -1171,6 +1172,13 @@ J9::Z::TreeEvaluator::zdsle2zdEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    else if (node->getDecimalPrecision() > srcReg->getDecimalPrecision())
       digitsToClear = node->getDecimalPrecision()-srcReg->getDecimalPrecision();
 
+   /* node: zd2zdsle
+    * isTruncation:
+    *    - [ ] Where is percision of srcReg set? is it possible to have percision mismatch?
+    * srcReg: TR_PseudoRegister after evaluating pd2zd node
+    * isSetSign: From zd2zdsle node
+    * sign: also from node.
+    */
    bool isEffectiveNop = isZonedOperationAnEffectiveNop(node, 0, isTruncation, srcReg, isSetSign, sign, cg);
    bool isNondestructiveNop = isEffectiveNop && !isTruncation;
    bool doWidening = true;
@@ -2001,9 +2009,22 @@ J9::Z::TreeEvaluator::pd2zdEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    return targetReg;
    }
 
+/**
+ * The operation can be a noOp only if either, the sign is expected to be
+ * leading embedded or trailing embedded, and the percision is 1. It
+ * would be a noOp because for percision = 1, sign leading embedded is the
+ * same as sign trailing embedded.
+ */
 bool
 J9::Z::TreeEvaluator::isZonedOperationAnEffectiveNop(TR::Node * node, int32_t shiftAmount, bool isTruncation, TR_PseudoRegister *srcReg, bool isSetSign, int32_t signToSet, TR::CodeGenerator * cg)
    {
+   /* Questions:
+      - [ ] How is information about zone sign populated in TR_PseudoRegister *srcReg
+      - Percision is the same for both packed decimal and zoned decimal nodes. (sourc: runtime/compiler/optimizer/DataAccessAccelerator.cpp#L2612).
+        So we can just use node for to get decimal percision.
+      - Percision field in srcReg is populated only when we go through non vector helper (/runtime/compiler/z/codegen/J9BCDTreeEvaluator.cpp#L1711).
+         - [ ] What does srcReg look like when we take the vectorized path?
+    */
    bool isEffectiveNop = false;
    int32_t zone = TR::DataType::getZonedValue();
    // For skipLeadingSignReset to be correct the node refCount must be 1 otherwise a commoned reference may be exposed to an incorrect
@@ -3741,7 +3762,15 @@ J9::Z::TreeEvaluator::pdstoreEvaluator(TR::Node *node, TR::CodeGenerator *cg)
          && cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL_ENHANCEMENT_FACILITY_2)
          && node->getOpCodeValue() == TR::zdstorei)
       {
+      // TODO: do we need to check if ref count is greater than 1?
+      //       We might need to update other evaluators to handle
+      //       vector registers
       zdstoreiVectorEvaluatorHelper(node, cg);
+      /* We could all other version of zdstorei here.
+         Need to figure out the logic need to move the
+         sign. or
+         Accelerate just the conversion opcode.
+       */
       }
    else
       {
@@ -4638,6 +4667,7 @@ J9::Z::TreeEvaluator::pdstoreVectorEvaluatorHelper(TR::Node *node, TR::CodeGener
       }
 
    generateVSIInstruction(cg, TR::InstOpCode::VSTRL, node, pdValueReg, targetMR, lengthToStore);
+   traceMsg(comp, "Reference count of addressNode before decrementing: %d.\n", addressNode->getReferenceCount());
    cg->decReferenceCount(valueChild);
    cg->decReferenceCount(addressNode);
 
