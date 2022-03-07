@@ -1,5 +1,5 @@
 //*******************************************************************************
-// Copyright (c) 2006, 2021 IBM Corp. and others
+// Copyright (c) 2006, 2022 IBM Corp. and others
 //
 // This program and the accompanying materials are made available under
 // the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2991,3 +2991,4 @@ TraceEvent=Trc_SHR_API_j9shr_classStoreTransaction_start_cacheSoftFull_Event Ove
 TraceExit-Exception=Trc_SHR_CMI_Update_Exit5 Overhead=1 Level=2 Template="CMI Update: StoreIdentified failed to acquire _identifiedMutex. Returning -1."
 TraceExit-Exception=Trc_SHR_CMI_validate_Exit_IdentifiedMutex_Failed Overhead=1 Level=2 Template="CMI validate: Failed to acquire _identifiedMutex. Returning -1."
 TraceException=Trc_SHR_CC_changePartialPageProtection_NotDone_V1 Overhead=1 Level=1 Template="CC changePartialPageProtection: Returning without changing page protection for address %p to %s"
+TraceEvent=Trc_SHR_CC_freeBlockBytes_info NoEnv Overhead=1 Level=10 Template="CC getFreeBlockBytes: case %d, retVal %d, freeBytes %d, minAOT %d, aotBytes %d, minJIT %d, jitBytes %d"

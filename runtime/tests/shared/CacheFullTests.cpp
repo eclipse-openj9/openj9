@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2445,13 +2445,14 @@ IDATA test8(J9JavaVM* vm) {
 	cc = (SH_CompositeCacheImpl *)cacheMap->getCompositeCacheAPI();
 	ca = cc->getCacheHeaderAddress();
 
+	cc->enterWriteMutex(vm->mainThread, false, testName);
+
 	oldFreeBlockBytes = cc->getFreeBlockBytes();
 
 	/* Add enough metadata to the cache to mark it as full */
 	itemLen = (U_32) (oldFreeBlockBytes - (J9SHR_MIN_GAP_BEFORE_METADATA + ONE_K_BYTES) - (sizeof(ShcItem) + sizeof(ShcItemHdr)));
 	cc->initBlockData(&itemPtr, itemLen, TYPE_UNINDEXED_BYTE_DATA);
 
-	cc->enterWriteMutex(vm->mainThread, false, testName);
 	result = cc->allocateBlock(vm->mainThread, &item, SHC_WORDALIGN, 0);
 	if (NULL == result) {
 		ERRPRINTF1("Error: Did not expect allocateBlock to fail but it returned result=%p", result);
