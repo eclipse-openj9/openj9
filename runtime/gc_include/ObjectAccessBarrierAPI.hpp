@@ -170,7 +170,7 @@ public:
 
 	/**
 	 * Call after storing an object reference for barrier type
-	 * j9gc_modron_wrtbar_cardmark_and_oldcheck
+	 * gc_modron_wrtbar_cardmark_and_oldcheck
 	 *
 	 * @param object the object being stored into
 	 * @param value the object reference being stored
@@ -209,7 +209,7 @@ public:
 
 	/**
 	 * Call after storing an object reference for barrier type
-	 * j9gc_modron_wrtbar_cardmark
+	 * gc_modron_wrtbar_cardmark
 	 *
 	 * @param object the object being stored into
 	 * @param value the object reference being stored
@@ -240,7 +240,7 @@ public:
 
 	/**
 	 * Call after storing an object reference for barrier type
-	 * j9gc_modron_wrtbar_cardmark_incremental
+	 * gc_modron_wrtbar_cardmark_incremental
 	 *
 	 * @param object the object being stored into
 	 * @param value the object reference being stored
@@ -268,7 +268,7 @@ public:
 
 	/**
 	 * Call after storing an object reference for barrier type
-	 * j9gc_modron_wrtbar_oldcheck
+	 * gc_modron_wrtbar_oldcheck
 	 *
 	 * @param object the object being stored into
 	 * @param value the object reference being stored
@@ -301,7 +301,7 @@ public:
 
 	/**
 	 * Call after storing an object reference for barrier type
-	 * j9gc_modron_wrtbar_oldcheck
+	 * gc_modron_wrtbar_oldcheck
 	 *
 	 * @param object the object being stored into
 	 * @param value the object reference being stored
@@ -433,7 +433,7 @@ public:
 		vmThread->javaVM->memoryManagerFunctions->j9gc_objaccess_copyObjectFields(vmThread, objectClass, srcObject, srcOffset, destObject, destOffset, objectMapFunction, objectMapData, initializeLockWord);
 #else /* defined(J9VM_GC_ALWAYS_CALL_OBJECT_ACCESS_BARRIER) */
 		bool hasReferences = J9CLASS_HAS_REFERENCES(objectClass);
-		if (hasReferences && ((NULL != objectMapFunction) || (j9gc_modron_readbar_none != _readBarrierType) || (j9gc_modron_wrtbar_always == _writeBarrierType))) {
+		if (hasReferences && ((NULL != objectMapFunction) || (j9gc_modron_readbar_none != _readBarrierType) || (gc_modron_wrtbar_always == _writeBarrierType) || isSATBBarrierEnabled())) {
 			vmThread->javaVM->memoryManagerFunctions->j9gc_objaccess_copyObjectFields(vmThread, objectClass, srcObject, srcOffset, destObject, destOffset, objectMapFunction, objectMapData, initializeLockWord);
 		} else {
 			UDATA offset = 0;
@@ -512,7 +512,7 @@ public:
 #if defined(J9VM_GC_ALWAYS_CALL_OBJECT_ACCESS_BARRIER)
 		vmThread->javaVM->memoryManagerFunctions->j9gc_objaccess_mixedObjectStoreObject(vmThread, srcObject, srcOffset, value, isVolatile);
 #elif defined(J9VM_GC_COMBINATION_SPEC) 
-		if (j9gc_modron_wrtbar_always == _writeBarrierType) {
+		if (gc_modron_wrtbar_always == _writeBarrierType) {
 			vmThread->javaVM->memoryManagerFunctions->j9gc_objaccess_mixedObjectStoreObject(vmThread, srcObject, srcOffset, value, isVolatile);
 		} else {
 			fj9object_t *actualAddress = J9OAB_MIXEDOBJECT_EA(srcObject, srcOffset, fj9object_t);
@@ -552,7 +552,7 @@ public:
 #if defined(J9VM_GC_ALWAYS_CALL_OBJECT_ACCESS_BARRIER)
 		return (1 == vmThread->javaVM->memoryManagerFunctions->j9gc_objaccess_compareAndSwapObject(vmThread, destObject, (J9Object **)destAddress, compareObject, swapObject));
 #elif defined(J9VM_GC_COMBINATION_SPEC) 
-		if (j9gc_modron_wrtbar_always == _writeBarrierType) {
+		if (gc_modron_wrtbar_always == _writeBarrierType) {
 			return (1 == vmThread->javaVM->memoryManagerFunctions->j9gc_objaccess_compareAndSwapObject(vmThread, destObject, (J9Object **)destAddress, compareObject, swapObject));
 		} else {
 			preMixedObjectReadObject(vmThread, destObject, destAddress);
@@ -594,7 +594,7 @@ public:
 #if defined(J9VM_GC_ALWAYS_CALL_OBJECT_ACCESS_BARRIER)
 		return vmThread->javaVM->memoryManagerFunctions->j9gc_objaccess_compareAndExchangeObject(vmThread, destObject, (J9Object **)destAddress, compareObject, swapObject);
 #elif defined(J9VM_GC_COMBINATION_SPEC)
-		if (j9gc_modron_wrtbar_always == _writeBarrierType) {
+		if (gc_modron_wrtbar_always == _writeBarrierType) {
 			return vmThread->javaVM->memoryManagerFunctions->j9gc_objaccess_compareAndExchangeObject(vmThread, destObject, (J9Object **)destAddress, compareObject, swapObject);
 		} else {
 			preMixedObjectReadObject(vmThread, destObject, destAddress);
@@ -1002,7 +1002,7 @@ public:
 #if defined(J9VM_GC_ALWAYS_CALL_OBJECT_ACCESS_BARRIER)
 		vmThread->javaVM->memoryManagerFunctions->j9gc_objaccess_staticStoreObject(vmThread, clazz, srcAddress, value, isVolatile);
 #elif defined(J9VM_GC_COMBINATION_SPEC) 
-		if (j9gc_modron_wrtbar_always == _writeBarrierType) {
+		if (gc_modron_wrtbar_always == _writeBarrierType) {
 			vmThread->javaVM->memoryManagerFunctions->j9gc_objaccess_staticStoreObject(vmThread, clazz, srcAddress, value, isVolatile);
 		} else {
 			j9object_t classObject = J9VM_J9CLASS_TO_HEAPCLASS(clazz);
@@ -1040,7 +1040,7 @@ public:
 #if defined(J9VM_GC_ALWAYS_CALL_OBJECT_ACCESS_BARRIER)
 		return (1 == vmThread->javaVM->memoryManagerFunctions->j9gc_objaccess_staticCompareAndSwapObject(vmThread, clazz, destAddress, compareObject, swapObject));
 #elif defined(J9VM_GC_COMBINATION_SPEC) 
-		if (j9gc_modron_wrtbar_always == _writeBarrierType) {
+		if (gc_modron_wrtbar_always == _writeBarrierType) {
 			return (1 == vmThread->javaVM->memoryManagerFunctions->j9gc_objaccess_staticCompareAndSwapObject(vmThread, clazz, destAddress, compareObject, swapObject));
 		} else {
 			j9object_t classObject = J9VM_J9CLASS_TO_HEAPCLASS(clazz);
@@ -1082,7 +1082,7 @@ public:
 #if defined(J9VM_GC_ALWAYS_CALL_OBJECT_ACCESS_BARRIER)
 		return vmThread->javaVM->memoryManagerFunctions->j9gc_objaccess_staticCompareAndExchangeObject(vmThread, clazz, destAddress, compareObject, swapObject);
 #elif defined(J9VM_GC_COMBINATION_SPEC)
-		if (j9gc_modron_wrtbar_always == _writeBarrierType) {
+		if (gc_modron_wrtbar_always == _writeBarrierType) {
 			return vmThread->javaVM->memoryManagerFunctions->j9gc_objaccess_staticCompareAndExchangeObject(vmThread, clazz, destAddress, compareObject, swapObject);
 		} else {
 			j9object_t classObject = J9VM_J9CLASS_TO_HEAPCLASS(clazz);
@@ -1923,7 +1923,7 @@ public:
 #if defined(J9VM_GC_ALWAYS_CALL_OBJECT_ACCESS_BARRIER)
 		vmThread->javaVM->memoryManagerFunctions->j9gc_objaccess_indexableStoreObject(vmThread, (J9IndexableObject *)srcArray, (I_32)srcIndex, value, isVolatile);
 #elif defined(J9VM_GC_COMBINATION_SPEC) 
-		if (j9gc_modron_wrtbar_always == _writeBarrierType) {
+		if (gc_modron_wrtbar_always == _writeBarrierType) {
 			vmThread->javaVM->memoryManagerFunctions->j9gc_objaccess_indexableStoreObject(vmThread, (J9IndexableObject *)srcArray, (I_32)srcIndex, value, isVolatile);
 		} else {
 			fj9object_t *actualAddress = NULL;
@@ -1973,7 +1973,7 @@ public:
 #if defined(J9VM_GC_ALWAYS_CALL_OBJECT_ACCESS_BARRIER)
 		return (1 == vmThread->javaVM->memoryManagerFunctions->j9gc_objaccess_compareAndSwapObject(vmThread, destArray, (J9Object **)actualAddress, compareObject, swapObject));
 #elif defined(J9VM_GC_COMBINATION_SPEC) 
-		if (j9gc_modron_wrtbar_always == _writeBarrierType) {
+		if (gc_modron_wrtbar_always == _writeBarrierType) {
 			return (1 == vmThread->javaVM->memoryManagerFunctions->j9gc_objaccess_compareAndSwapObject(vmThread, destArray, (J9Object **)actualAddress, compareObject, swapObject));
 		} else {
 			preIndexableObjectReadObject(vmThread, destArray, actualAddress);
@@ -2020,7 +2020,7 @@ public:
 #if defined(J9VM_GC_ALWAYS_CALL_OBJECT_ACCESS_BARRIER)
 		return vmThread->javaVM->memoryManagerFunctions->j9gc_objaccess_compareAndExchangeObject(vmThread, destArray, (J9Object **)actualAddress, compareObject, swapObject);
 #elif defined(J9VM_GC_COMBINATION_SPEC)
-		if (j9gc_modron_wrtbar_always == _writeBarrierType) {
+		if (gc_modron_wrtbar_always == _writeBarrierType) {
 			return vmThread->javaVM->memoryManagerFunctions->j9gc_objaccess_compareAndExchangeObject(vmThread, destArray, (J9Object **)actualAddress, compareObject, swapObject);
 		} else {
 			preIndexableObjectReadObject(vmThread, destArray, actualAddress);
@@ -2063,10 +2063,10 @@ public:
 	}
 
 	VMINLINE bool
-	isSATBBarrierEnabled(J9VMThread *vmThread) const
+	isSATBBarrierActive(J9VMThread *vmThread) const
 	{
 #if defined(J9VM_GC_REALTIME)
-		if (usingSATB()) {
+		if (isSATBBarrierEnabled()) {
 			MM_GCRememberedSetFragment *fragment =  &vmThread->sATBBarrierRememberedSetFragment;
 			MM_GCRememberedSet *parent = fragment->fragmentParent;
 			return (0 != parent->globalFragmentIndex);
@@ -2078,10 +2078,10 @@ public:
 	}
 
 	VMINLINE bool
-	isSATBDoubleBarrierEnabled(J9VMThread *vmThread) const
+	isSATBDoubleBarrierActive(J9VMThread *vmThread) const
 	{
 #if defined(J9VM_GC_REALTIME)
-		if (usingSATB()) {
+		if (isSATBBarrierEnabled()) {
 			MM_GCRememberedSetFragment *fragment =  &vmThread->sATBBarrierRememberedSetFragment;
 			return (0 == fragment->localFragmentIndex);
 		} else
@@ -2728,8 +2728,24 @@ private:
 	VMINLINE void
 	internalPreStoreObject(J9VMThread *vmThread, j9object_t object, fj9object_t *destAddress, j9object_t value)
 	{
-		if (usingSATB()) {
+		switch(_writeBarrierType) {
+		case gc_modron_wrtbar_none:
+		case gc_modron_wrtbar_oldcheck:
+		case gc_modron_wrtbar_cardmark:
+		case gc_modron_wrtbar_cardmark_and_oldcheck:
+		case gc_modron_wrtbar_cardmark_incremental:
+			break;
+		case gc_modron_wrtbar_satb_and_oldcheck:
+			internalPreStoreObjectSATBandGenerational(vmThread, object, destAddress, value);
+			break;
+		case gc_modron_wrtbar_satb:
 			internalPreStoreObjectSATB(vmThread, object, destAddress, value);
+			break;
+		default:
+			/* Should assert as all real types are handled.  Should never get here
+			 * with always or illegal
+			 */
+			break;
 		}
 	}
 
@@ -2747,8 +2763,24 @@ private:
 	VMINLINE void
 	internalStaticPreStoreObject(J9VMThread *vmThread, j9object_t dstClassObject, j9object_t *destAddress, j9object_t value)
 	{
-		if (usingSATB()) {
+		switch(_writeBarrierType) {
+		case gc_modron_wrtbar_none:
+		case gc_modron_wrtbar_oldcheck:
+		case gc_modron_wrtbar_cardmark:
+		case gc_modron_wrtbar_cardmark_and_oldcheck:
+		case gc_modron_wrtbar_cardmark_incremental:
+			break;
+		case gc_modron_wrtbar_satb_and_oldcheck:
+			internalStaticPreStoreObjectSATBandGenerational(vmThread, dstClassObject, destAddress, value);
+			break;
+		case gc_modron_wrtbar_satb:
 			internalStaticPreStoreObjectSATB(vmThread, dstClassObject, destAddress, value);
+			break;
+		default:
+			/* Should assert as all real types are handled.  Should never get here
+			 * with always or illegal
+			 */
+			break;
 		}
 	}
 
@@ -2764,16 +2796,90 @@ private:
 	internalPreStoreObjectSATB(J9VMThread *vmThread, j9object_t object, fj9object_t *destAddress, j9object_t value)
 	{
 #if defined(J9VM_GC_REALTIME)
-		/* Check if the barrier is enabled.  No work if barrier is not enabled */
-		if (isSATBBarrierEnabled(vmThread)) {
+		/* Check if the Concurrent barrier is active.  No work if barrier is not active */
+		if (isSATBBarrierActive(vmThread)) {
 			/* if the double barrier is enabled call OOL */
-			if (isSATBDoubleBarrierEnabled(vmThread)) {
+			if (isSATBDoubleBarrierActive(vmThread)) {
 				vmThread->javaVM->memoryManagerFunctions->J9WriteBarrierPre(vmThread, object, destAddress, value);
 			} else {
-				j9object_t oldObject = readObjectImpl(vmThread, destAddress, false);
-				if (NULL != oldObject) {
-					if (!isMarked(vmThread, oldObject)) {
+				j9object_t prevObject = readObjectImpl(vmThread, destAddress, false);
+				if (NULL != prevObject) {
+					if (!isMarked(vmThread, prevObject)) {
 						vmThread->javaVM->memoryManagerFunctions->J9WriteBarrierPre(vmThread, object, destAddress, value);
+					}
+				}
+			}
+		}
+#endif /* J9VM_GC_REALTIME */
+	}
+
+	/**
+	 * Perform the preStore and generational barrier for WRT
+	 *
+	 * @param object this is the class object being stored into
+	 * @param destAddress the address being stored at
+	 * @param value the value being stored
+	 *
+	 */
+	VMINLINE void
+	internalPreStoreObjectSATBandGenerational(J9VMThread *vmThread, j9object_t object, fj9object_t *destAddress, j9object_t value)
+	{
+		/* Values required to compute object generation (old/new) and determine which barriers must be executed
+		 *
+		 * if ((object - vmThread->omrVMThread->heapBaseForBarrierRange0) < vmThread->omrVMThread->heapSizeForBarrierRange0) then old
+		 */
+		UDATA base = (UDATA)vmThread->omrVMThread->heapBaseForBarrierRange0;
+		UDATA size = vmThread->omrVMThread->heapSizeForBarrierRange0;
+		UDATA objectDelta = 0;
+
+#if defined(J9VM_GC_REALTIME)
+		/* Check if Concurrent barrier is Active. */
+		if (isSATBBarrierActive(vmThread)) {
+			j9object_t prevObject = readObjectImpl(vmThread, destAddress, false);
+			if (NULL != prevObject) {
+				/* SATB barrier is only required if prevObject is old and not marked. */
+				objectDelta = (UDATA)prevObject - base;
+				if ((objectDelta < size) && !isMarked(vmThread, prevObject)) {
+					vmThread->javaVM->memoryManagerFunctions->J9WriteBarrierPre(vmThread, object, destAddress, value);
+				}
+			}
+		}
+#endif /* J9VM_GC_REALTIME */
+
+		/* if the value being stored is NULL generational barrier is not required */
+		if (NULL != value) {
+			UDATA valueDelta = (UDATA)value - base;
+			objectDelta = (UDATA)object - base;
+
+			/* generational barrier is needed if object is old and value is new */
+			if ((objectDelta < size) && (valueDelta >= size)) {
+				rememberObject(vmThread, object);
+			}
+		}
+	}
+
+	/**
+	 * Perform the static preStore barrier for WRT
+	 *
+	 * @param dstClassObject this is the class object being stored into
+	 * @param destAddress the address being stored at
+	 * @param value the value being stored
+	 *
+	 */
+	VMINLINE void
+	internalStaticPreStoreObjectSATB(J9VMThread *vmThread, j9object_t dstClassObject, j9object_t *destAddress, j9object_t value)
+	{
+#if defined(J9VM_GC_REALTIME)
+		/* Check if the Concurrent barrier is active.  No work if barrier is not active */
+		if (isSATBBarrierActive(vmThread)) {
+			/* if the double barrier is enabled call OOL */
+			if (isSATBDoubleBarrierActive(vmThread)) {
+				vmThread->javaVM->memoryManagerFunctions->J9WriteBarrierPreClass(vmThread, dstClassObject, destAddress, value);
+			} else {
+				j9object_t prevObject = *destAddress;
+				if (NULL != prevObject) {
+					if (!isMarked(vmThread, prevObject)) {
+						vmThread->javaVM->memoryManagerFunctions->J9WriteBarrierPreClass(vmThread, dstClassObject, destAddress, value);
 					}
 				}
 			}
@@ -2790,24 +2896,40 @@ private:
 	 *
 	 */
 	VMINLINE void
-	internalStaticPreStoreObjectSATB(J9VMThread *vmThread, j9object_t dstClassObject, j9object_t *destAddress, j9object_t value)
+	internalStaticPreStoreObjectSATBandGenerational(J9VMThread *vmThread, j9object_t dstClassObject, j9object_t *destAddress, j9object_t value)
 	{
+		/* Values required to compute object generation (old/new) and determine which barriers must be executed
+		 *
+		 * if ((object - vmThread->omrVMThread->heapBaseForBarrierRange0) < vmThread->omrVMThread->heapSizeForBarrierRange0) then old
+		 */
+		UDATA base = (UDATA)vmThread->omrVMThread->heapBaseForBarrierRange0;
+		UDATA size = vmThread->omrVMThread->heapSizeForBarrierRange0;
+		UDATA objectDelta = 0;
+
 #if defined(J9VM_GC_REALTIME)
-		/* Check if the barrier is enabled.  No work if barrier is not enabled */
-		if (isSATBBarrierEnabled(vmThread)) {
-			/* if the double barrier is enabled call OOL */
-			if (isSATBDoubleBarrierEnabled(vmThread)) {
-				vmThread->javaVM->memoryManagerFunctions->J9WriteBarrierPreClass(vmThread, dstClassObject, destAddress, value);
-			} else {
-				j9object_t oldObject = *destAddress;
-				if (NULL != oldObject) {
-					if (!isMarked(vmThread, oldObject)) {
-						vmThread->javaVM->memoryManagerFunctions->J9WriteBarrierPreClass(vmThread, dstClassObject, destAddress, value);
-					}
+		/* Check if Concurrent barrier is Active. */
+		if (isSATBBarrierActive(vmThread)) {
+			j9object_t prevObject = *destAddress;
+			if (NULL != prevObject) {
+				/* SATB barrier is only required if prevObject is old and not marked. */
+				objectDelta = (UDATA)prevObject - base;
+				if ((objectDelta < size) && !isMarked(vmThread, prevObject)) {
+					vmThread->javaVM->memoryManagerFunctions->J9WriteBarrierPreClass(vmThread, dstClassObject, destAddress, value);
 				}
 			}
 		}
 #endif /* J9VM_GC_REALTIME */
+
+		/* if the value being stored is NULL generational barrier is not required */
+		if (NULL != value) {
+			UDATA valueDelta = (UDATA)value - base;
+			objectDelta = (UDATA)dstClassObject - base;
+
+			/* generational barrier is needed if dstClassObject is old and value is new */
+			if ((objectDelta < size) && (valueDelta >= size)) {
+				rememberObject(vmThread, dstClassObject);
+			}
+		}
 	}
 
 #if defined(J9VM_GC_REALTIME)
@@ -2855,22 +2977,21 @@ private:
 	internalPostStoreObject(J9VMThread *vmThread, j9object_t object, j9object_t value)
 	{
 		switch(_writeBarrierType) {
-		case j9gc_modron_wrtbar_cardmark_and_oldcheck:
+		case gc_modron_wrtbar_cardmark_and_oldcheck:
 			internalPostObjectStoreCardTableAndGenerational(vmThread, object, value);
 			break;
-		case j9gc_modron_wrtbar_oldcheck:
+		case gc_modron_wrtbar_oldcheck:
 			internalPostObjectStoreGenerational(vmThread, object, value);
 			break;
-		case j9gc_modron_wrtbar_cardmark_incremental:
+		case gc_modron_wrtbar_cardmark_incremental:
 			internalPostObjectStoreCardTableIncremental(vmThread, object, value);
 			break;
-		case j9gc_modron_wrtbar_cardmark:
+		case gc_modron_wrtbar_cardmark:
 			internalPostObjectStoreCardTable(vmThread, object, value);
 			break;
-		case j9gc_modron_wrtbar_none:
-		case j9gc_modron_wrtbar_satb:
-		case j9gc_modron_wrtbar_satb_and_oldcheck:
-			//TODO SATB change to handle gencon, decide where to do it in pre/post store
+		case gc_modron_wrtbar_none:
+		case gc_modron_wrtbar_satb:
+		case gc_modron_wrtbar_satb_and_oldcheck:
 			break;
 		default:
 			/* Should assert as all real types are handled.  Should never get here
@@ -2884,21 +3005,21 @@ private:
 	internalPostBatchStoreObject(J9VMThread *vmThread, j9object_t object)
 	{
 		switch(_writeBarrierType) {
-		case j9gc_modron_wrtbar_cardmark_and_oldcheck:
+		case gc_modron_wrtbar_cardmark_and_oldcheck:
 			internalPostBatchStoreObjectCardTableAndGenerational(vmThread, object);
 			break;
-		case j9gc_modron_wrtbar_oldcheck:
+		case gc_modron_wrtbar_oldcheck:
+		case gc_modron_wrtbar_satb_and_oldcheck:
 			internalPostBatchStoreObjectGenerational(vmThread, object);
 			break;
-		case j9gc_modron_wrtbar_cardmark_incremental:
+		case gc_modron_wrtbar_cardmark_incremental:
 			internalPostBatchStoreObjectCardTableIncremental(vmThread, object);
 			break;
-		case j9gc_modron_wrtbar_cardmark:
+		case gc_modron_wrtbar_cardmark:
 			internalPostBatchStoreObjectCardTable(vmThread, object);
 			break;
-		case j9gc_modron_wrtbar_none:
-		case j9gc_modron_wrtbar_satb:
-		case j9gc_modron_wrtbar_satb_and_oldcheck:
+		case gc_modron_wrtbar_none:
+		case gc_modron_wrtbar_satb:
 			break;
 		default:
 			/* Should assert as all real types are handled.  Should never get here
@@ -3015,9 +3136,9 @@ private:
 #endif /* J9VM_GC_GENERATIONAL */
 
 	VMINLINE bool
-	usingSATB() const
+	isSATBBarrierEnabled() const
 	{
-		return ((j9gc_modron_wrtbar_satb == _writeBarrierType) || (j9gc_modron_wrtbar_satb_and_oldcheck == _writeBarrierType));
+		return ((gc_modron_wrtbar_satb == _writeBarrierType) || (gc_modron_wrtbar_satb_and_oldcheck == _writeBarrierType));
 	}
 
 

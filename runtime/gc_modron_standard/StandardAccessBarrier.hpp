@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -49,6 +49,8 @@ class MM_StandardAccessBarrier : public MM_ObjectAccessBarrier
 private:
 #if defined(J9VM_GC_GENERATIONAL)
 	MM_GenerationalAccessBarrierComponent _generationalAccessBarrierComponent;	/**< Generational Component of Access Barrier */
+	bool _generationalBarrierAsPre;
+	bool _generationalBarrierAsPost;
 #endif /* J9VM_GC_GENERATIONAL */
 	MM_MarkingScheme *_markingScheme;
 
@@ -70,6 +72,8 @@ public:
 
 	MM_StandardAccessBarrier(MM_EnvironmentBase *env, MM_MarkingScheme *markingScheme) :
 		MM_ObjectAccessBarrier(env)
+		, _generationalBarrierAsPre(false)
+		, _generationalBarrierAsPost(false)
 		, _markingScheme(markingScheme)
 	{
 		_typeId = __FUNCTION__;
@@ -107,8 +111,9 @@ public:
 #endif	
 
 	bool preObjectStoreImpl(J9VMThread *vmThread, J9Object *destObject, fj9object_t *destAddress, J9Object *value, bool isVolatile);
-	bool preObjectStoreImpl(J9VMThread *vmThread, J9Object **destAddress, J9Object *value, bool isVolatile);
+	bool preObjectStoreImpl(J9VMThread *vmThread, J9Object *destObject, J9Object **destAddress, J9Object *value, bool isVolatile);
 
+	void rememberObjectToRescanWithCheck(J9VMThread *vmThread, J9Object *object);
 	void rememberObjectToRescan(MM_EnvironmentBase *env, J9Object *object);
 
 	MMINLINE bool isIncrementalUpdateBarrierActive(J9VMThread *vmThread)

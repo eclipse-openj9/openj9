@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -86,14 +86,14 @@ MM_GenerationalAccessBarrierComponent::tearDown(MM_EnvironmentBase *env)
  * @note Any object that contains a new reference MUST have its REMEMBERED bit set.
  */
 void
-MM_GenerationalAccessBarrierComponent::postObjectStore(J9VMThread *vmThread, J9Object *dstObject, J9Object *srcObject)
+MM_GenerationalAccessBarrierComponent::objectStore(J9VMThread *vmThread, J9Object *dstObject, J9Object *srcObject)
 {
 	MM_EnvironmentBase *env = MM_EnvironmentBase::getEnvironment(vmThread->omrVMThread);
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
 
 	/* If the source object is NULL, there is no need for a write barrier. */
 	/* If scavenger not enabled then no need to add to remembered set */	
-	if ((NULL != srcObject) && extensions->scavengerEnabled) {
+	if ((NULL != srcObject)) {
 		if (extensions->isOld(dstObject) && !extensions->isOld(srcObject)) {
 			if (extensions->objectModel.atomicSetRememberedState(dstObject, STATE_REMEMBERED)) {
 				/* Successfully set the remembered bit in the object.  Now allocate an entry from the
@@ -133,7 +133,7 @@ MM_GenerationalAccessBarrierComponent::postObjectStore(J9VMThread *vmThread, J9O
  * to optimistically add an object to the remembered set without checking too hard.
  */
 void 
-MM_GenerationalAccessBarrierComponent::postBatchObjectStore(J9VMThread *vmThread, J9Object *dstObject)
+MM_GenerationalAccessBarrierComponent::batchObjectStore(J9VMThread *vmThread, J9Object *dstObject)
 {
 	MM_EnvironmentBase *env = MM_EnvironmentBase::getEnvironment(vmThread->omrVMThread);
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);

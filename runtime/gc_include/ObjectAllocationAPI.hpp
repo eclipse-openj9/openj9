@@ -177,7 +177,7 @@ private:
 						initializeSlots = initializeSlots && _initializeSlotsOnTLHAllocate;
 #endif /* J9VM_GC_BATCH_CLEAR_TLH */
 #if defined(J9VM_GC_REALTIME)
-						initializeSlots = initializeSlots || _objectAccessBarrierAPI.isSATBBarrierEnabled(currentThread);
+						initializeSlots = initializeSlots || _objectAccessBarrierAPI.isSATBBarrierActive(currentThread);
 #endif /* J9VM_GC_REALTIME */
 					} else {
 						return NULL;
@@ -359,7 +359,7 @@ public:
 				initializeSlots = initializeSlots && _initializeSlotsOnTLHAllocate;
 #endif /* J9VM_GC_BATCH_CLEAR_TLH */
 #if defined(J9VM_GC_REALTIME)
-				initializeSlots = initializeSlots || _objectAccessBarrierAPI.isSATBBarrierEnabled(currentThread);
+				initializeSlots = initializeSlots || _objectAccessBarrierAPI.isSATBBarrierActive(currentThread);
 #endif /* J9VM_GC_REALTIME */
 			} else {
 				return NULL;
