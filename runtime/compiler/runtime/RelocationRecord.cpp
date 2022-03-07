@@ -5407,7 +5407,7 @@ TR_RelocationRecordSymbolFromManager::preparePrivateData(TR_RelocationRuntime *r
    uint16_t symbolID = this->symbolID(reloTarget);
    TR::SymbolType symbolType = this->symbolType(reloTarget);
 
-   reloPrivateData->_symbol = reloRuntime->comp()->getSymbolValidationManager()->getSymbolFromID(symbolID, symbolType);
+   reloPrivateData->_symbol = reloRuntime->comp()->getSymbolValidationManager()->getValueFromSymbolID(symbolID, symbolType);
    reloPrivateData->_symbolType = symbolType;
    }
 

@@ -414,7 +414,7 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          if (comp->getOption(TR_UseSymbolValidationManager))
             {
             TR_OpaqueClassBlock *classOfMethod = reinterpret_cast<TR_OpaqueClassBlock *>(recordInfo->data5);
-            uint16_t classID = symValManager->getIDFromSymbol(static_cast<void *>(classOfMethod));
+            uint16_t classID = symValManager->getSymbolIDFromValue(static_cast<void *>(classOfMethod));
             allocRecord->setCpIndex(reloTarget, static_cast<uintptr_t>(classID));
             }
          else
@@ -443,7 +443,7 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          if (comp->getOption(TR_UseSymbolValidationManager))
             {
             TR_OpaqueClassBlock *classOfMethod = reinterpret_cast<TR_OpaqueClassBlock *>(recordInfo->data5);
-            uint16_t classID = symValManager->getIDFromSymbol(static_cast<void *>(classOfMethod));
+            uint16_t classID = symValManager->getSymbolIDFromValue(static_cast<void *>(classOfMethod));
             allocRecord->setCpIndex(reloTarget, static_cast<uintptr_t>(classID));
             }
          else
@@ -516,8 +516,8 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          if (comp->getOption(TR_UseSymbolValidationManager))
             {
             TR_OpaqueMethodBlock *method = resolvedMethod->getPersistentIdentifier();
-            uint16_t methodID = symValManager->getIDFromSymbol(static_cast<void *>(method));
-            uint16_t receiverClassID = symValManager->getIDFromSymbol(static_cast<void *>(thisClass));
+            uint16_t methodID = symValManager->getSymbolIDFromValue(static_cast<void *>(method));
+            uint16_t receiverClassID = symValManager->getSymbolIDFromValue(static_cast<void *>(thisClass));
 
             cpIndexOrData = (((uintptr_t)receiverClassID << 16) | (uintptr_t)methodID);
             }
@@ -613,7 +613,7 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          uintptr_t cpIndexOrData = 0;
          if (comp->getOption(TR_UseSymbolValidationManager))
             {
-            uint16_t inlinedCodeClassID = symValManager->getIDFromSymbol(static_cast<void *>(inlinedCodeClass));
+            uint16_t inlinedCodeClassID = symValManager->getSymbolIDFromValue(static_cast<void *>(inlinedCodeClass));
             cpIndexOrData = static_cast<uintptr_t>(inlinedCodeClassID);
             }
          else
@@ -739,8 +739,8 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
 
          uintptr_t classChainOffsetInSharedCache = self()->offsetInSharedCacheFromPointer(sharedCache, svmRecord->_classChain);
 
-         cbnRecord->setClassID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_class));
-         cbnRecord->setBeholderID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_beholder));
+         cbnRecord->setClassID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_class));
+         cbnRecord->setBeholderID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_beholder));
          cbnRecord->setClassChainOffset(reloTarget, classChainOffsetInSharedCache,
                                         self(), svmRecord->getAOTCacheClassChainRecord());
          }
@@ -761,7 +761,7 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          //store the classchain's offset for the class that needs to be validated in the second run
          uintptr_t classChainOffsetInSharedCache = self()->offsetInSharedCacheFromPointer(sharedCache, classChainForClassToValidate);
 
-         pcRecord->setClassID(reloTarget, symValManager->getIDFromSymbol(classToValidate));
+         pcRecord->setClassID(reloTarget, symValManager->getSymbolIDFromValue(classToValidate));
          pcRecord->setClassChainOffset(reloTarget, classChainOffsetInSharedCache,
                                        self(), svmRecord->getAOTCacheClassChainRecord());
          pcRecord->setClassChainOffsetForClassLoader(reloTarget, classChainOffsetInSharedCacheForCL,
@@ -775,8 +775,8 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
 
          TR::ClassFromCPRecord *svmRecord = reinterpret_cast<TR::ClassFromCPRecord *>(relocation->getTargetAddress());
 
-         cpRecord->setClassID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_class));
-         cpRecord->setBeholderID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_beholder));
+         cpRecord->setClassID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_class));
+         cpRecord->setBeholderID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_beholder));
          cpRecord->setCpIndex(reloTarget, svmRecord->_cpIndex);
          }
          break;
@@ -788,8 +788,8 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          TR::DefiningClassFromCPRecord *svmRecord = reinterpret_cast<TR::DefiningClassFromCPRecord *>(relocation->getTargetAddress());
 
          dcpRecord->setIsStatic(reloTarget, svmRecord->_isStatic);
-         dcpRecord->setClassID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_class));
-         dcpRecord->setBeholderID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_beholder));
+         dcpRecord->setClassID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_class));
+         dcpRecord->setBeholderID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_beholder));
          dcpRecord->setCpIndex(reloTarget, svmRecord->_cpIndex);
          }
          break;
@@ -800,8 +800,8 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
 
          TR::StaticClassFromCPRecord *svmRecord = reinterpret_cast<TR::StaticClassFromCPRecord *>(relocation->getTargetAddress());
 
-         scpRecord->setClassID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_class));
-         scpRecord->setBeholderID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_beholder));
+         scpRecord->setClassID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_class));
+         scpRecord->setBeholderID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_beholder));
          scpRecord->setCpIndex(reloTarget, svmRecord->_cpIndex);
          }
          break;
@@ -812,8 +812,8 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
 
          TR::ArrayClassFromComponentClassRecord *svmRecord = reinterpret_cast<TR::ArrayClassFromComponentClassRecord *>(relocation->getTargetAddress());
 
-         acRecord->setArrayClassID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_arrayClass));
-         acRecord->setComponentClassID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_componentClass));
+         acRecord->setArrayClassID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_arrayClass));
+         acRecord->setComponentClassID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_componentClass));
          }
          break;
 
@@ -823,8 +823,8 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
 
          TR::SuperClassFromClassRecord *svmRecord = reinterpret_cast<TR::SuperClassFromClassRecord *>(relocation->getTargetAddress());
 
-         scRecord->setSuperClassID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_superClass));
-         scRecord->setChildClassID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_childClass));
+         scRecord->setSuperClassID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_superClass));
+         scRecord->setChildClassID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_childClass));
          }
          break;
 
@@ -837,8 +837,8 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          cicRecord->setObjectTypeIsFixed(reloTarget, svmRecord->_objectTypeIsFixed);
          cicRecord->setCastTypeIsFixed(reloTarget, svmRecord->_castTypeIsFixed);
          cicRecord->setIsInstanceOf(reloTarget, svmRecord->_isInstanceOf);
-         cicRecord->setClassOneID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_classOne));
-         cicRecord->setClassTwoID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_classTwo));
+         cicRecord->setClassOneID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_classOne));
+         cicRecord->setClassTwoID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_classTwo));
          }
          break;
 
@@ -855,7 +855,7 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          // this record eliminates the need for a separate class chain validation.
          uintptr_t classChainOffsetInSharedCache = self()->offsetInSharedCacheFromPointer(sharedCache, classChainForClassToValidate);
 
-         scmRecord->setSystemClassID(reloTarget, symValManager->getIDFromSymbol(classToValidate));
+         scmRecord->setSystemClassID(reloTarget, symValManager->getSymbolIDFromValue(classToValidate));
          scmRecord->setClassChainOffset(reloTarget, classChainOffsetInSharedCache,
                                         self(), svmRecord->getAOTCacheClassChainRecord());
          }
@@ -867,8 +867,8 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
 
          TR::ClassFromITableIndexCPRecord *svmRecord = reinterpret_cast<TR::ClassFromITableIndexCPRecord *>(relocation->getTargetAddress());
 
-         cfitRecord->setClassID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_class));
-         cfitRecord->setBeholderID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_beholder));
+         cfitRecord->setClassID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_class));
+         cfitRecord->setBeholderID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_beholder));
          cfitRecord->setCpIndex(reloTarget, svmRecord->_cpIndex);
          }
          break;
@@ -879,8 +879,8 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
 
          TR::DeclaringClassFromFieldOrStaticRecord *svmRecord = reinterpret_cast<TR::DeclaringClassFromFieldOrStaticRecord *>(relocation->getTargetAddress());
 
-         dcfsRecord->setClassID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_class));
-         dcfsRecord->setBeholderID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_beholder));
+         dcfsRecord->setClassID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_class));
+         dcfsRecord->setBeholderID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_beholder));
          dcfsRecord->setCpIndex(reloTarget, svmRecord->_cpIndex);
          }
          break;
@@ -891,8 +891,8 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
 
          TR::ConcreteSubClassFromClassRecord *svmRecord = reinterpret_cast<TR::ConcreteSubClassFromClassRecord *>(relocation->getTargetAddress());
 
-         csccRecord->setSuperClassID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_superClass));
-         csccRecord->setChildClassID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_childClass));
+         csccRecord->setSuperClassID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_superClass));
+         csccRecord->setChildClassID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_childClass));
          }
          break;
 
@@ -909,7 +909,7 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          // this record eliminates the need for a separate class chain validation.
          uintptr_t classChainOffsetInSharedCache = self()->offsetInSharedCacheFromPointer(sharedCache, classChainForClassToValidate);
 
-         ccRecord->setClassID(reloTarget, symValManager->getIDFromSymbol(classToValidate));
+         ccRecord->setClassID(reloTarget, symValManager->getSymbolIDFromValue(classToValidate));
          ccRecord->setClassChainOffset(reloTarget, classChainOffsetInSharedCache,
                                        self(), svmRecord->getAOTCacheClassChainRecord());
          }
@@ -921,8 +921,8 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
 
          TR::MethodFromClassRecord *svmRecord = reinterpret_cast<TR::MethodFromClassRecord *>(relocation->getTargetAddress());
 
-         mfcRecord->setMethodID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_method));
-         mfcRecord->setBeholderID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_beholder));
+         mfcRecord->setMethodID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_method));
+         mfcRecord->setBeholderID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_beholder));
          mfcRecord->setIndex(reloTarget, svmRecord->_index);
          }
          break;
@@ -940,9 +940,9 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          if ((svmRecord->_cpIndex & J9_STATIC_SPLIT_TABLE_INDEX_FLAG) != 0)
             smfcpRecord->setReloFlags(reloTarget, TR_VALIDATE_STATIC_OR_SPECIAL_METHOD_FROM_CP_IS_SPLIT);
 
-         smfcpRecord->setMethodID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_method));
-         smfcpRecord->setDefiningClassID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_definingClass));
-         smfcpRecord->setBeholderID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_beholder));
+         smfcpRecord->setMethodID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_method));
+         smfcpRecord->setDefiningClassID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_definingClass));
+         smfcpRecord->setBeholderID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_beholder));
          smfcpRecord->setCpIndex(reloTarget, static_cast<uint16_t>(svmRecord->_cpIndex & J9_SPLIT_TABLE_INDEX_MASK));
          }
          break;
@@ -960,9 +960,9 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          if ((svmRecord->_cpIndex & J9_SPECIAL_SPLIT_TABLE_INDEX_FLAG) != 0)
             smfcpRecord->setReloFlags(reloTarget, TR_VALIDATE_STATIC_OR_SPECIAL_METHOD_FROM_CP_IS_SPLIT);
 
-         smfcpRecord->setMethodID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_method));
-         smfcpRecord->setDefiningClassID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_definingClass));
-         smfcpRecord->setBeholderID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_beholder));
+         smfcpRecord->setMethodID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_method));
+         smfcpRecord->setDefiningClassID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_definingClass));
+         smfcpRecord->setBeholderID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_beholder));
          smfcpRecord->setCpIndex(reloTarget, static_cast<uint16_t>(svmRecord->_cpIndex & J9_SPLIT_TABLE_INDEX_MASK));
          }
          break;
@@ -973,9 +973,9 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
 
          TR::VirtualMethodFromCPRecord *svmRecord = reinterpret_cast<TR::VirtualMethodFromCPRecord *>(relocation->getTargetAddress());
 
-         vmfcpRecord->setMethodID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_method));
-         vmfcpRecord->setDefiningClassID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_definingClass));
-         vmfcpRecord->setBeholderID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_beholder));
+         vmfcpRecord->setMethodID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_method));
+         vmfcpRecord->setDefiningClassID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_definingClass));
+         vmfcpRecord->setBeholderID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_beholder));
          vmfcpRecord->setCpIndex(reloTarget, static_cast<uint16_t>(svmRecord->_cpIndex));
          }
          break;
@@ -994,9 +994,9 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          uint16_t ignoreRtResolve = static_cast<uint16_t>(svmRecord->_ignoreRtResolve);
          uint16_t virtualCallOffset = static_cast<uint16_t>(svmRecord->_virtualCallOffset);
 
-         vmfoRecord->setMethodID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_method));
-         vmfoRecord->setDefiningClassID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_definingClass));
-         vmfoRecord->setBeholderID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_beholder));
+         vmfoRecord->setMethodID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_method));
+         vmfoRecord->setDefiningClassID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_definingClass));
+         vmfoRecord->setBeholderID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_beholder));
          vmfoRecord->setVirtualCallOffsetAndIgnoreRtResolve(reloTarget, (virtualCallOffset | ignoreRtResolve));
          }
          break;
@@ -1007,10 +1007,10 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
 
          TR::InterfaceMethodFromCPRecord *svmRecord = reinterpret_cast<TR::InterfaceMethodFromCPRecord *>(relocation->getTargetAddress());
 
-         imfcpRecord->setMethodID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_method));
-         imfcpRecord->setDefiningClassID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_definingClass));
-         imfcpRecord->setBeholderID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_beholder));
-         imfcpRecord->setLookupID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_lookup));
+         imfcpRecord->setMethodID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_method));
+         imfcpRecord->setDefiningClassID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_definingClass));
+         imfcpRecord->setBeholderID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_beholder));
+         imfcpRecord->setLookupID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_lookup));
          imfcpRecord->setCpIndex(reloTarget, static_cast<uint16_t>(svmRecord->_cpIndex));
          }
          break;
@@ -1021,9 +1021,9 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
 
          TR::ImproperInterfaceMethodFromCPRecord *svmRecord = reinterpret_cast<TR::ImproperInterfaceMethodFromCPRecord *>(relocation->getTargetAddress());
 
-         iimfcpRecord->setMethodID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_method));
-         iimfcpRecord->setDefiningClassID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_definingClass));
-         iimfcpRecord->setBeholderID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_beholder));
+         iimfcpRecord->setMethodID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_method));
+         iimfcpRecord->setDefiningClassID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_definingClass));
+         iimfcpRecord->setBeholderID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_beholder));
          iimfcpRecord->setCpIndex(reloTarget, static_cast<uint16_t>(svmRecord->_cpIndex));
          }
          break;
@@ -1039,10 +1039,10 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          J9ROMMethod *romMethod = static_cast<TR_J9VM *>(fej9)->getROMMethodFromRAMMethod(methodToValidate);
          uintptr_t romMethodOffsetInSharedCache = self()->offsetInSharedCacheFromROMMethod(sharedCache, romMethod);
 
-         mfcsRecord->setMethodID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_method));
-         mfcsRecord->setDefiningClassID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_definingClass));
-         mfcsRecord->setBeholderID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_beholder));
-         mfcsRecord->setLookupClassID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_lookupClass));
+         mfcsRecord->setMethodID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_method));
+         mfcsRecord->setDefiningClassID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_definingClass));
+         mfcsRecord->setBeholderID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_beholder));
+         mfcsRecord->setLookupClassID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_lookupClass));
          mfcsRecord->setRomMethodOffsetInSCC(reloTarget, romMethodOffsetInSharedCache, self(),
                                              methodToValidate, svmRecord->_definingClass);
          }
@@ -1054,8 +1054,8 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
 
          TR::StackWalkerMaySkipFramesRecord *svmRecord = reinterpret_cast<TR::StackWalkerMaySkipFramesRecord *>(relocation->getTargetAddress());
 
-         swmsfRecord->setMethodID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_method));
-         swmsfRecord->setMethodClassID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_methodClass));
+         swmsfRecord->setMethodID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_method));
+         swmsfRecord->setMethodClassID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_methodClass));
          swmsfRecord->setSkipFrames(reloTarget, svmRecord->_skipFrames);
          }
          break;
@@ -1066,7 +1066,7 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
 
          TR::ClassInfoIsInitialized *svmRecord = reinterpret_cast<TR::ClassInfoIsInitialized *>(relocation->getTargetAddress());
 
-         ciiiRecord->setClassID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_class));
+         ciiiRecord->setClassID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_class));
          ciiiRecord->setIsInitialized(reloTarget, svmRecord->_isInitialized);
          }
          break;
@@ -1077,11 +1077,11 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
 
          TR::MethodFromSingleImplementer *svmRecord = reinterpret_cast<TR::MethodFromSingleImplementer *>(relocation->getTargetAddress());
 
-         mfsiRecord->setMethodID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_method));
-         mfsiRecord->setDefiningClassID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_definingClass));
-         mfsiRecord->setThisClassID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_thisClass));
+         mfsiRecord->setMethodID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_method));
+         mfsiRecord->setDefiningClassID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_definingClass));
+         mfsiRecord->setThisClassID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_thisClass));
          mfsiRecord->setCpIndexOrVftSlot(reloTarget, svmRecord->_cpIndexOrVftSlot);
-         mfsiRecord->setCallerMethodID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_callerMethod));
+         mfsiRecord->setCallerMethodID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_callerMethod));
          mfsiRecord->setUseGetResolvedInterfaceMethod(reloTarget, svmRecord->_useGetResolvedInterfaceMethod);
          }
          break;
@@ -1092,10 +1092,10 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
 
          TR::MethodFromSingleInterfaceImplementer *svmRecord = reinterpret_cast<TR::MethodFromSingleInterfaceImplementer *>(relocation->getTargetAddress());
 
-         mfsiiRecord->setMethodID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_method));
-         mfsiiRecord->setDefiningClassID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_definingClass));
-         mfsiiRecord->setThisClassID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_thisClass));
-         mfsiiRecord->setCallerMethodID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_callerMethod));
+         mfsiiRecord->setMethodID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_method));
+         mfsiiRecord->setDefiningClassID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_definingClass));
+         mfsiiRecord->setThisClassID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_thisClass));
+         mfsiiRecord->setCallerMethodID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_callerMethod));
          mfsiiRecord->setCpIndex(reloTarget, static_cast<uint16_t>(svmRecord->_cpIndex));
          }
          break;
@@ -1106,10 +1106,10 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
 
          TR::MethodFromSingleAbstractImplementer *svmRecord = reinterpret_cast<TR::MethodFromSingleAbstractImplementer *>(relocation->getTargetAddress());
 
-         mfsaiRecord->setMethodID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_method));
-         mfsaiRecord->setDefiningClassID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_definingClass));
-         mfsaiRecord->setThisClassID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_thisClass));
-         mfsaiRecord->setCallerMethodID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_callerMethod));
+         mfsaiRecord->setMethodID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_method));
+         mfsaiRecord->setDefiningClassID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_definingClass));
+         mfsaiRecord->setThisClassID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_thisClass));
+         mfsaiRecord->setCallerMethodID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_callerMethod));
          mfsaiRecord->setVftSlot(reloTarget, svmRecord->_vftSlot);
          }
          break;
@@ -1119,7 +1119,7 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          TR_RelocationRecordSymbolFromManager *sfmRecord = reinterpret_cast<TR_RelocationRecordSymbolFromManager *>(reloRecord);
 
          uint8_t *symbol = relocation->getTargetAddress();
-         uint16_t symbolID = comp->getSymbolValidationManager()->getIDFromSymbol(static_cast<void *>(symbol));
+         uint16_t symbolID = comp->getSymbolValidationManager()->getSymbolIDFromValue(static_cast<void *>(symbol));
 
          uint16_t symbolType = (uint16_t)(uintptr_t)relocation->getTargetAddress2();
 
@@ -1133,7 +1133,7 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          TR_RelocationRecordResolvedTrampolines *rtRecord = reinterpret_cast<TR_RelocationRecordResolvedTrampolines *>(reloRecord);
 
          uint8_t *symbol = relocation->getTargetAddress();
-         uint16_t symbolID = comp->getSymbolValidationManager()->getIDFromSymbol(static_cast<void *>(symbol));
+         uint16_t symbolID = comp->getSymbolValidationManager()->getSymbolIDFromValue(static_cast<void *>(symbol));
 
          rtRecord->setSymbolID(reloTarget, symbolID);
          }
@@ -1287,8 +1287,8 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          {
          auto *thunkRecord = reinterpret_cast<TR_RelocationRecordValidateJ2IThunkFromMethod *>(reloRecord);
          auto *svmRecord = reinterpret_cast<TR::J2IThunkFromMethodRecord *>(relocation->getTargetAddress());
-         thunkRecord->setThunkID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_thunk));
-         thunkRecord->setMethodID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_method));
+         thunkRecord->setThunkID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_thunk));
+         thunkRecord->setMethodID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_method));
          }
          break;
 
