@@ -421,6 +421,10 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
             def extraTestLabels = target['extraTestLabels']
             def keepReportDir = target['keepReportDir']
             def buildList = target['buildList']
+
+            if (SPEC.contains("_criu")) {
+                extraTestLabels = extraTestLabels ? extraTestLabels + "&&ci.role.test.criu" : "ci.role.test.criu"
+            }
             echo "Test:'${id}' testFlag:'${testFlag}' extraTestLabels:'${extraTestLabels}', keepReportDir:'${keepReportDir}'"
 
             def testJobName = get_test_job_name(id, SPEC, SDK_VERSION, BUILD_IDENTIFIER)
