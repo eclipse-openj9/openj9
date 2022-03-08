@@ -195,6 +195,7 @@
    java_lang_String_regionMatches_bool,
    java_lang_String_regionMatchesInternal,
    java_lang_String_equalsIgnoreCase,
+   java_lang_String_encodeASCII,
    java_lang_String_compareToIgnoreCase,
    java_lang_String_compress,
    java_lang_String_andOR,
