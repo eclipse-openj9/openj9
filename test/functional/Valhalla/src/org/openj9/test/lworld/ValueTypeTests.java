@@ -3113,12 +3113,14 @@ public class ValueTypeTests {
 		valueTypeIdentityObjectTestHelper("testValueTypeSubClassLightAbstract", superClassName, 0);
 	}
 
-	@Test(priority=1, expectedExceptions=VerifyError.class)
+	@Test(priority=1, expectedExceptions=ClassFormatError.class)
+	/* RI throws ClassFormatError for this case. */
 	static public void testInterfaceValueType() throws Throwable {
 		valueTypeIdentityObjectTestHelper("testInterfaceValueType", "java/lang/Object", ACC_INTERFACE | ACC_ABSTRACT);
 	}
 
-	@Test(priority=1, expectedExceptions=VerifyError.class)
+	@Test(priority=1, expectedExceptions=ClassFormatError.class)
+	/* RI throws ClassFormatError for this case. */
 	static public void testAbstractValueType() throws Throwable {
 		valueTypeIdentityObjectTestHelper("testAbstractValueType", "java/lang/Object", ACC_ABSTRACT);
 	}
