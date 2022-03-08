@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2020, 2022 IBM Corp. and others
+Copyright (c) 2022, 2022 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,12 +20,12 @@ OpenJDK Assembly Exception [2].
 SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 
-Building OpenJDK Version 17 with OpenJ9
+Building OpenJDK Version 18 with OpenJ9
 =======================================
 
-Building OpenJDK 17 with OpenJ9 will be familiar to anyone who has already built OpenJDK. The easiest method
+Building OpenJDK 18 with OpenJ9 will be familiar to anyone who has already built OpenJDK. The easiest method
 involves the use of Docker and Dockerfiles to create a build environment that contains everything
-you need to produce a Linux binary of OpenJDK V17 with the Eclipse OpenJ9 virtual machine. If this method
+you need to produce a Linux binary of OpenJDK V18 with the Eclipse OpenJ9 virtual machine. If this method
 sounds ideal for you, go straight to the [Linux :penguin:](#linux) section.
 
 Build instructions are available for the following platforms:
@@ -45,7 +45,7 @@ documentation for the next release of OpenJ9 can be found [here](https://eclipse
 
 ## Linux
 :penguin:
-This build process provides detailed instructions for building a Linux x86-64 binary of **OpenJDK V17** with OpenJ9 on Ubuntu 18. The binary can be built directly on your system, in a virtual machine, or in a Docker container :whale:.
+This build process provides detailed instructions for building a Linux x86-64 binary of **OpenJDK V18** with OpenJ9 on Ubuntu 18. The binary can be built directly on your system, in a virtual machine, or in a Docker container :whale:.
 
 If you are using a different Linux distribution, you might have to review the list of libraries that are bundled with your distribution and/or modify the instructions to use equivalent commands to the Advanced Packaging Tool (APT). For example, for Centos, substitute the `apt-get` command with `yum`.
 
@@ -72,7 +72,7 @@ wget https://raw.githubusercontent.com/eclipse-openj9/openj9/master/buildenv/doc
 
 3. Next, run the following command to build a Docker image, called **openj9**:
 ```
-bash mkdocker.sh --tag=openj9 --dist=ubuntu --version=18 --gitcache=no --jdk=17 --build
+bash mkdocker.sh --tag=openj9 --dist=ubuntu --version=18 --gitcache=no --jdk=18 --build
 ```
 
 4. Start a Docker container from the **openj9** image with the following command, where `-v` maps any directory, `<host_directory>`,
@@ -90,7 +90,7 @@ Now that you have the Docker image running, you are ready to move to the next st
 If you don't want to user Docker, you can still build directly on your Ubuntu system or in a Ubuntu virtual machine. Use the output of the following command like a recipe card to determine the software dependencies that must be installed on the system, plus a few configuration steps.
 
 ```
-bash mkdocker.sh --tag=openj9 --dist=ubuntu --version=18 --gitcache=no --jdk=17 --print
+bash mkdocker.sh --tag=openj9 --dist=ubuntu --version=18 --gitcache=no --jdk=18 --print
 ```
 
 1. Install the list of dependencies that can be obtained with the `apt-get` command from the following section of the Dockerfile:
@@ -120,11 +120,11 @@ mv $(ls | grep -i jdk-17) bootjdk17
 :penguin:
 First you need to clone the Extensions for OpenJDK for OpenJ9 project. This repository is a git mirror of OpenJDK without the HotSpot JVM, but with an **openj9** branch that contains a few necessary patches. Run the following command:
 ```
-git clone https://github.com/ibmruntimes/openj9-openjdk-jdk17.git
+git clone https://github.com/ibmruntimes/openj9-openjdk-jdk18.git
 ```
 Cloning this repository can take a while because OpenJDK is a large project! When the process is complete, change directory into the cloned repository:
 ```
-cd openj9-openjdk-jdk17
+cd openj9-openjdk-jdk18
 ```
 Now fetch additional sources from the Eclipse OpenJ9 project and its clone of Eclipse OMR:
 ```
@@ -167,7 +167,7 @@ Mixed references is the default to build when no options are specified. _Note th
 
 ### 4. Build
 :penguin:
-Now you're ready to build **OpenJDK V17** with OpenJ9:
+Now you're ready to build **OpenJDK V18** with OpenJ9:
 ```
 make all
 ```
@@ -199,12 +199,12 @@ Run:
 Here is some sample output:
 
 ```
-openjdk version "17-internal" 2021-09-14
-OpenJDK Runtime Environment (build 17-internal+0-adhoc.userid.jdk17)
-Eclipse OpenJ9 VM (build v0.28.0-release-58b3fc7e628, JRE 17 Linux amd64-64-Bit Compressed References 20210907_17 (JIT enabled, AOT enabled)
-OpenJ9   - 58b3fc7e628
-OMR      - 6b8136da4f3
-JCL      - b6c1a570c77 based on jdk-17+35)
+openjdk version "18-internal" 2022-03-22
+OpenJDK Runtime Environment (build 18-internal+0-adhoc.userid.jdk18)
+Eclipse OpenJ9 VM (build v0.31.0-release-2aeb2385d94, JRE 18 Linux amd64-64-Bit Compressed References 20220305_5 (JIT enabled, AOT enabled)
+OpenJ9   - 2aeb2385d94
+OMR      - 3792851d0ea
+JCL      - 11f91a25688 based on jdk-18+37)
 ```
 
 :pencil: **OpenSSL support:** If you built an OpenJDK with OpenJ9 that includes OpenSSL support, the following acknowledgements apply in accordance with the license terms:
@@ -219,7 +219,7 @@ JCL      - b6c1a570c77 based on jdk-17+35)
 ## AIX
 :blue_book:
 
-The following instructions guide you through the process of building an **OpenJDK V17** binary that contains Eclipse OpenJ9 on AIX 7.2.
+The following instructions guide you through the process of building an **OpenJDK V18** binary that contains Eclipse OpenJ9 on AIX 7.2.
 
 ### 1. Prepare your system
 :blue_book:
@@ -231,7 +231,7 @@ You must also install the boot JDK: [Java17_AIX_PPC64](https://api.adoptopenjdk.
 
 A number of RPM packages are also required. The easiest method for installing these packages is to use `yum`, because `yum` takes care of any additional dependent packages for you.
 
-Download the following file: [yum_install_aix-ppc64.txt](../../buildenv/aix/jdk17/yum_install_aix-ppc64.txt)
+Download the following file: [yum_install_aix-ppc64.txt](../../buildenv/aix/jdk18/yum_install_aix-ppc64.txt)
 
 This file contains a list of required RPM packages that you can install by specifying the following command:
 ```
@@ -253,11 +253,11 @@ rm -f freemarker.tgz
 :blue_book:
 First you need to clone the Extensions for OpenJDK for OpenJ9 project. This repository is a git mirror of OpenJDK without the HotSpot JVM, but with an **openj9** branch that contains a few necessary patches. Run the following command:
 ```
-git clone https://github.com/ibmruntimes/openj9-openjdk-jdk17.git
+git clone https://github.com/ibmruntimes/openj9-openjdk-jdk18.git
 ```
 Cloning this repository can take a while because OpenJDK is a large project! When the process is complete, change directory into the cloned repository:
 ```
-cd openj9-openjdk-jdk17
+cd openj9-openjdk-jdk18
 ```
 Now fetch additional sources from the Eclipse OpenJ9 project and its clone of Eclipse OMR:
 
@@ -332,12 +332,12 @@ Run:
 Here is some sample output:
 
 ```
-openjdk version "17-internal" 2021-09-14
-OpenJDK Runtime Environment (build 17-internal+0-adhoc.userid.jdk17)
-Eclipse OpenJ9 VM (build v0.28.0-release-58b3fc7e628, JRE 17 AIX ppc64-64-Bit Compressed References 20210907_17 (JIT enabled, AOT enabled)
-OpenJ9   - 58b3fc7e628
-OMR      - 6b8136da4f3
-JCL      - b6c1a570c77 based on jdk-17+35)
+openjdk version "18-internal" 2022-03-22
+OpenJDK Runtime Environment (build 18-internal+0-adhoc.userid.jdk18)
+Eclipse OpenJ9 VM (build v0.31.0-release-2aeb2385d94, JRE 18 AIX ppc64-64-Bit Compressed References 20220305_5 (JIT enabled, AOT enabled)
+OpenJ9   - 2aeb2385d94
+OMR      - 3792851d0ea
+JCL      - 11f91a25688 based on jdk-18+37)
 ```
 
 :pencil: **OpenSSL support:** If you built an OpenJDK with OpenJ9 that includes OpenSSL support, the following acknowledgements apply in accordance with the license terms:
@@ -352,7 +352,7 @@ JCL      - b6c1a570c77 based on jdk-17+35)
 ## Windows
 :ledger:
 
-The following instructions guide you through the process of building a Windows **OpenJDK V17** binary that contains Eclipse OpenJ9. This process can be used to build binaries for Windows.
+The following instructions guide you through the process of building a Windows **OpenJDK V18** binary that contains Eclipse OpenJ9. This process can be used to build binaries for Windows.
 
 ### 1. Prepare your system
 :ledger:
@@ -360,7 +360,7 @@ You must install a number of software dependencies to create a suitable build en
 
 - [Cygwin](https://cygwin.com/install.html), which provides a Unix-style command line interface. Install all packages in the `Devel` category. In the `Archive` category, install the packages `zip` and `unzip`. In the `Utils` category, install the `cpio` package. Install any further package dependencies that are identified by the installer. More information about using Cygwin can be found [here](https://cygwin.com/docs.html).
 - [Windows JDK 17](https://api.adoptopenjdk.net/v3/binary/latest/17/ga/windows/x64/jdk/openj9/normal/adoptopenjdk), which is used as the boot JDK.
-- [Microsoft Visual Studio 2019](https://aka.ms/vs/16/release/vs_community.exe), which is the default compiler level used by OpenJDK17.
+- [Microsoft Visual Studio 2019](https://aka.ms/vs/16/release/vs_community.exe), which is the default compiler level used by OpenJDK18.
 - [Freemarker V2.3.8](https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download) - only when building with `--with-cmake=no`
 - [LLVM/Clang](http://releases.llvm.org/7.0.0/LLVM-7.0.0-win64.exe)
 - [NASM Assembler v2.13.03 or newer](https://www.nasm.us/pub/nasm/releasebuilds/?C=M;O=D)
@@ -416,11 +416,11 @@ First you need to clone the Extensions for OpenJDK for OpenJ9 project. This repo
 
 Run the following command in the Cygwin terminal:
 ```
-git clone https://github.com/ibmruntimes/openj9-openjdk-jdk17.git
+git clone https://github.com/ibmruntimes/openj9-openjdk-jdk18.git
 ```
 Cloning this repository can take a while because OpenJDK is a large project! When the process is complete, change directory into the cloned repository:
 ```
-cd openj9-openjdk-jdk17
+cd openj9-openjdk-jdk18
 ```
 Now fetch additional sources from the Eclipse OpenJ9 project and its clone of Eclipse OMR:
 
@@ -497,12 +497,12 @@ Run:
 Here is some sample output:
 
 ```
-openjdk version "17-internal" 2021-09-14
-OpenJDK Runtime Environment (build 17-internal+0-adhoc.userid.jdk17)
-Eclipse OpenJ9 VM (build v0.28.0-release-58b3fc7e628, JRE 17 Windows Server 2016 amd64-64-Bit Compressed References 20210907_17 (JIT enabled, AOT enabled)
-OpenJ9   - 58b3fc7e628
-OMR      - 6b8136da4f3
-JCL      - b6c1a570c77 based on jdk-17+35)
+openjdk version "18-internal" 2022-03-22
+OpenJDK Runtime Environment (build 18-internal+0-adhoc.userid.jdk18)
+Eclipse OpenJ9 VM (build v0.31.0-release-2aeb2385d94, JRE 18 Windows Server 2016 amd64-64-Bit Compressed References 20220305_5 (JIT enabled, AOT enabled)
+OpenJ9   - 2aeb2385d94
+OMR      - 3792851d0ea
+JCL      - 11f91a25688 based on jdk-17+35)
 ```
 
 :pencil: **OpenSSL support:** If you built an OpenJDK with OpenJ9 that includes OpenSSL support, the following acknowledgements apply in accordance with the license terms:
@@ -516,7 +516,7 @@ JCL      - b6c1a570c77 based on jdk-17+35)
 
 ## macOS
 :apple:
-The following instructions guide you through the process of building a macOS **OpenJDK V17** binary that contains Eclipse OpenJ9. This process can be used to build binaries for macOS 10.
+The following instructions guide you through the process of building a macOS **OpenJDK V18** binary that contains Eclipse OpenJ9. This process can be used to build binaries for macOS 10.
 
 ### 1. Prepare your system
 :apple:
@@ -565,11 +565,11 @@ First you need to clone the Extensions for OpenJDK for OpenJ9 project. This repo
 
 Run the following command:
 ```
-git clone https://github.com/ibmruntimes/openj9-openjdk-jdk17.git
+git clone https://github.com/ibmruntimes/openj9-openjdk-jdk18.git
 ```
 Cloning this repository can take a while because OpenJDK is a large project! When the process is complete, change directory into the cloned repository:
 ```
-cd openj9-openjdk-jdk17
+cd openj9-openjdk-jdk18
 ```
 Now fetch additional sources from the Eclipse OpenJ9 project and its clone of Eclipse OMR:
 
@@ -638,12 +638,12 @@ Run:
 Here is some sample output:
 
 ```
-openjdk version "17-internal" 2021-09-14
-OpenJDK Runtime Environment (build 17-internal+0-adhoc.userid.jdk17)
-Eclipse OpenJ9 VM (build v0.28.0-release-58b3fc7e628, JRE 17 Mac OS X amd64-64-Bit Compressed References 20210907_17 (JIT enabled, AOT enabled)
-OpenJ9   - 58b3fc7e628
-OMR      - 6b8136da4f3
-JCL      - b6c1a570c77 based on jdk-17+35)
+openjdk version "18-internal" 2022-03-22
+OpenJDK Runtime Environment (build 18-internal+0-adhoc.userid.jdk18)
+Eclipse OpenJ9 VM (build v0.31.0-release-2aeb2385d94, JRE 18 Mac OS X amd64-64-Bit Compressed References 20220305_5 (JIT enabled, AOT enabled)
+OpenJ9   - 2aeb2385d94
+OMR      - 3792851d0ea
+JCL      - 11f91a25688 based on jdk-18+37)
 ```
 
 :pencil: **OpenSSL support:** If you built an OpenJDK with OpenJ9 that includes OpenSSL support, the following acknowledgements apply in accordance with the license terms:
@@ -658,7 +658,7 @@ JCL      - b6c1a570c77 based on jdk-17+35)
 ## AArch64
 
 :penguin:
-The following instructions guide you through the process of building an **OpenJDK V17** binary that contains Eclipse OpenJ9 for AArch64 (ARMv8 64-bit) Linux.
+The following instructions guide you through the process of building an **OpenJDK V18** binary that contains Eclipse OpenJ9 for AArch64 (ARMv8 64-bit) Linux.
 
 ### 1. Prepare your system
 
@@ -668,11 +668,11 @@ The binary can be built on your AArch64 Linux system, or in a Docker container :
 :penguin:
 First you need to clone the Extensions for OpenJDK for OpenJ9 project. This repository is a git mirror of OpenJDK without the HotSpot JVM, but with an **openj9** branch that contains a few necessary patches. Run the following command:
 ```
-git clone https://github.com/ibmruntimes/openj9-openjdk-jdk17.git
+git clone https://github.com/ibmruntimes/openj9-openjdk-jdk18.git
 ```
 Cloning this repository can take a while because OpenJDK is a large project! When the process is complete, change directory into the cloned repository:
 ```
-cd openj9-openjdk-jdk17
+cd openj9-openjdk-jdk18
 ```
 Now fetch additional sources from the Eclipse OpenJ9 project and its clone of Eclipse OMR:
 
@@ -698,14 +698,14 @@ cd openj9/buildenv/docker/aarch64-linux_CC
 docker build -t openj9aarch64 -f Dockerfile .
 ```
 
-Start a Docker container from the **openj9aarch64** image with the following command, where `<host_directory>` is the directory that contains `openj9-openjdk-jdk17` in your local system:
+Start a Docker container from the **openj9aarch64** image with the following command, where `<host_directory>` is the directory that contains `openj9-openjdk-jdk18` in your local system:
 ```
-docker run -v <host_directory>/openj9-openjdk-jdk17:/root/openj9-openjdk-jdk17 -it openj9aarch64
+docker run -v <host_directory>/openj9-openjdk-jdk18:/root/openj9-openjdk-jdk18 -it openj9aarch64
 ```
 
-Then go to the `openj9-openjdk-jdk17` directory:
+Then go to the `openj9-openjdk-jdk18` directory:
 ```
-cd /root/openj9-openjdk-jdk17
+cd /root/openj9-openjdk-jdk18
 ```
 
 ### 5. Configure
@@ -792,12 +792,12 @@ Run:
 Here is some sample output:
 
 ```
-openjdk version "17-internal" 2021-09-14
-OpenJDK Runtime Environment (build 17-internal+0-adhoc.userid.jdk17)
-Eclipse OpenJ9 VM (build v0.28.0-release-58b3fc7e628, JRE 17 Linux aarch64-64-Bit Compressed References 20210907_17 (JIT enabled, AOT enabled)
-OpenJ9   - 58b3fc7e628
-OMR      - 6b8136da4f3
-JCL      - b6c1a570c77 based on jdk-17+35)
+openjdk version "18-internal" 2022-03-22
+OpenJDK Runtime Environment (build 18-internal+0-adhoc.userid.jdk18)
+Eclipse OpenJ9 VM (build v0.31.0-release-2aeb2385d94, JRE 18 Linux aarch64-64-Bit Compressed References 20220305_5 (JIT enabled, AOT enabled)
+OpenJ9   - 2aeb2385d94
+OMR      - 3792851d0ea
+JCL      - 11f91a25688 based on jdk-18+37)
 ```
 
 :pencil: **OpenSSL support:** If you built an OpenJDK with OpenJ9 that includes OpenSSL v1.1.1 support, the following acknowledgements apply in accordance with the license terms:

@@ -2,7 +2,7 @@
 
 print_license() {
 cat <<- EOF
-# Copyright (c) 2019, 2021 IBM Corp. and others
+# Copyright (c) 2019, 2022 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -200,7 +200,7 @@ validate_options() {
     esac
   fi
 
-  all_versions="8 11 17 next"
+  all_versions="8 11 17 18 next"
   local -A known_version
   local version
   for version in $all_versions ; do
@@ -606,7 +606,7 @@ bootjdk_dirs() {
 bootjdk_url() {
   local jdk_arch=${arch/x86_64/x64}
   local jdk_version=$1
-  if [ $jdk_version -lt 17 ] ; then
+  if [ $jdk_version -lt 18 ] ; then
     echo https://api.adoptopenjdk.net/v3/binary/latest/$jdk_version/ga/linux/$jdk_arch/jdk/openj9/normal/adoptopenjdk
   else
     echo https://api.adoptium.net/v3/binary/latest/$jdk_version/ga/linux/$jdk_arch/jdk/hotspot/normal/eclipse
@@ -619,6 +619,8 @@ install_bootjdks() {
   local -A wanted
   for version in $jdk_versions ; do
     if [ $version = next ] ; then
+      wanted[17]=yes
+    elif [ $version = 18 ] ; then
       wanted[17]=yes
     else
       wanted[$version]=yes
