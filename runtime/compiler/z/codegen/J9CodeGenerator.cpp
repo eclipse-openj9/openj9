@@ -117,6 +117,12 @@ J9::Z::CodeGenerator::initialize()
       cg->resetSupportsArrayTranslateTRxx();
       }
 
+   static char *disableInlineEncodeASCII = feGetEnv("TR_disableInlineEncodeASCII");
+   if (comp->fej9()->isStringCompressionEnabledVM() && cg->getSupportsVectorRegisters() && !TR::Compiler->om.canGenerateArraylets() && !disableInlineEncodeASCII)
+      {
+      cg->setSupportsInlineEncodeASCII();
+      }
+
    // Let's turn this on.  There is more work needed in the opt
    // to catch the case where the BNDSCHK is inserted after
    //
@@ -3750,7 +3756,13 @@ J9::Z::CodeGenerator::inlineDirectCall(
    // If the method to be called is marked as an inline method, see if it can
    // actually be generated inline.
    //
-   if (comp->getSymRefTab()->isNonHelper(node->getSymbolReference(), TR::SymbolReferenceTable::currentTimeMaxPrecisionSymbol))
+
+   if (comp->getSymRefTab()->isNonHelper(node->getSymbolReference(), TR::SymbolReferenceTable::encodeASCIISymbol))
+      {
+      TR::TreeEvaluator::inlineEncodeASCII(node, cg);
+      return true;
+      }
+   else if (comp->getSymRefTab()->isNonHelper(node->getSymbolReference(), TR::SymbolReferenceTable::currentTimeMaxPrecisionSymbol))
       {
       resultReg = TR::TreeEvaluator::inlineCurrentTimeMaxPrecision(cg, node);
       return true;
