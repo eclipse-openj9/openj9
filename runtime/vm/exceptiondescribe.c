@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -233,7 +233,7 @@ printStackTraceEntry(J9VMThread * vmThread, void * voidUserData, UDATA bytecodeO
  * @note Assumes VM access
  **/
 UDATA
-iterateStackTrace(J9VMThread * vmThread, j9object_t* exception, callback_func_t callback, void * userData, UDATA pruneConstructors)
+iterateStackTrace(J9VMThread * vmThread, j9object_t* exception, callback_func_t callback, void * userData, UDATA pruneConstructors, UDATA skipHiddenFrames)
 {
 	J9JavaVM * vm = vmThread->javaVM;
 	UDATA totalEntries = 0;
@@ -247,7 +247,6 @@ iterateStackTrace(J9VMThread * vmThread, j9object_t* exception, callback_func_t 
 		U_32 arraySize = J9INDEXABLEOBJECT_SIZE(vmThread, walkback);
 		U_32 currentElement = 0;
 		UDATA callbackResult = TRUE;
-
 #ifndef J9VM_INTERP_NATIVE_SUPPORT
 		pruneConstructors = FALSE;
 #endif
@@ -293,7 +292,7 @@ iterateStackTrace(J9VMThread * vmThread, j9object_t* exception, callback_func_t 
 
 			++currentElement; /* can't increment in J9JAVAARRAYOFUDATA_LOAD macro, so must increment here. */
 			++totalEntries;
-			if ((callback != NULL) || pruneConstructors) {
+			if ((callback != NULL) || pruneConstructors || skipHiddenFrames) {
 #ifdef J9VM_INTERP_NATIVE_SUPPORT
 				if (metaData) {
 					J9Method *ramMethod;
@@ -391,7 +390,13 @@ foundROMMethod: ;
 #ifdef J9VM_INTERP_NATIVE_SUPPORT
 				}
 #endif
-
+				if (skipHiddenFrames && (NULL != romMethod)) {
+					/* Skip Hidden methods and methods from Hidden or Anonymous classes */
+					if (J9ROMCLASS_IS_ANON_OR_HIDDEN(romClass) || J9_ARE_ANY_BITS_SET(romMethod->modifiers, J9AccMethodFrameIteratorSkip)) {
+						--totalEntries;
+						goto nextInline;
+					}
+				}
 #ifdef J9VM_OPT_DEBUG_INFO_SERVER
 				if (romMethod != NULL) {
 					lineNumber = getLineNumberForROMClassFromROMMethod(vm, romMethod, romClass, classLoader, methodPC);
@@ -503,13 +508,16 @@ internalExceptionDescribe(J9VMThread * vmThread)
 		}
 
 		do {
+			/* If -XX:+ShowHiddenFrames option has not been set, skip hidden method frames */
+			UDATA skipHiddenFrames = J9_ARE_NO_BITS_SET(vm->runtimeFlags, J9_RUNTIME_SHOW_HIDDEN_FRAMES);
+
 			/* Print the exception class name and detail message */
 
 			printExceptionMessage(vmThread, exception);
 
 			/* Print the stack trace entries */
 
-			iterateStackTrace(vmThread, &exception, printStackTraceEntry, NULL, TRUE);
+			iterateStackTrace(vmThread, &exception, printStackTraceEntry, NULL, TRUE, skipHiddenFrames);
 
 			/* If the exception is an instance of ExceptionInInitializerError, print the wrapped exception */
 
