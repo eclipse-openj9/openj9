@@ -80,7 +80,7 @@ setupJNIFieldIDs(JNIEnv *env)
 }
 
 jboolean JNICALL
-Java_org_eclipse_openj9_criu_CRIUSupport_isCRIUSupportEnabledImpl(JNIEnv *env, jclass unused)
+Java_openj9_internal_criu_InternalCRIUSupport_isCRIUSupportEnabledImpl(JNIEnv *env, jclass unused)
 {
 	J9VMThread *currentThread = (J9VMThread *) env;
 	J9JavaVM *vm = currentThread->javaVM;
@@ -100,7 +100,7 @@ Java_org_eclipse_openj9_criu_CRIUSupport_isCRIUSupportEnabledImpl(JNIEnv *env, j
 }
 
 jboolean JNICALL
-Java_org_eclipse_openj9_criu_CRIUSupport_isCheckpointAllowed(JNIEnv *env, jclass unused)
+Java_openj9_internal_criu_InternalCRIUSupport_isCheckpointAllowedImpl(JNIEnv *env, jclass unused)
 {
 	J9VMThread *currentThread = (J9VMThread *) env;
 	jboolean res = JNI_FALSE;
