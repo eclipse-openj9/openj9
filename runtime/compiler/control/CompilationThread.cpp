@@ -8693,6 +8693,13 @@ TR::CompilationInfoPerThreadBase::initializeCompiler(CompilationInfoPerThreadBas
          compiler->getOptions()->setBigCalleeScorchingOptThreshold(1024);
 #endif
          }
+      // Under -Xtune:throughput, increase the scratch space limit for hot/scorching compilations
+      else if (TR::Options::getAggressivityLevel() ==  TR::Options::TR_AggresivenessLevel::AGGRESSIVE_THROUGHPUT &&
+               compiler->getOptions()->getOptLevel() > warm &&
+               TR::Options::getScratchSpaceLimitForHotCompilations() > proposedScratchMemoryLimit) // Make sure we don't decrease the value proposed so far
+         {
+         proposedScratchMemoryLimit = TR::Options::getScratchSpaceLimitForHotCompilations();
+         }
 #if defined(J9VM_OPT_JITSERVER)
       else if (compiler->isOutOfProcessCompilation())
          {
@@ -9398,15 +9405,6 @@ TR::CompilationInfoPerThreadBase::initializeOutOfProcessComp(CompilationInfoPerT
    }
 
 bool
-TR::CompilationInfoPerThreadBase::isOutOfProcessCompReq(TR::CompilationInfoPerThreadBase *compilationInfo)
-   {
-#if defined(J9VM_OPT_JITSERVER)
-   return compilationInfo->_methodBeingCompiled->isOutOfProcessCompReq();
-#endif /* defined(J9VM_OPT_JITSERVER) */
-   return false;
-   }
-
-bool
 TR::CompilationInfoPerThreadBase::isCodeOrDataCacheFull(TR::CompilationInfoPerThreadBase *compilationInfo, CompileParameters *compileParameters)
    {
    J9JITConfig *jitConfig = compilationInfo->_jitConfig;
@@ -9434,7 +9432,7 @@ TR::CompilationInfoPerThreadBase::isCodeOrDataCacheFull(TR::CompilationInfoPerTh
    }
 
 bool
-TR::CompilationInfoPerThreadBase::isRestrictedMethod(TR::CompilationInfoPerThreadBase *compilationInfo, TR_ResolvedMethod *compilee, CompileParameters *compileParameters, TR_FilterBST *&filterInfo)
+TR::CompilationInfoPerThreadBase::isRestrictedMethod(TR::CompilationInfoPerThreadBase *compilationInfo, TR_ResolvedMethod *compilee, CompileParameters *compileParameters, TR_FilterBST *&filterInfo, TR_OpaqueMethodBlock *method)
    {
    TR_J9VMBase *vm = compileParameters->_vm;
    J9VMThread *vmThread = compileParameters->_vmThread;
@@ -9453,7 +9451,8 @@ TR::CompilationInfoPerThreadBase::isRestrictedMethod(TR::CompilationInfoPerThrea
       options = TR::Options::getAOTCmdLineOptions();
    if (options->getVerboseOption(TR_VerboseCompileExclude))
       {
-      TR_VerboseLog::writeLineLocked(TR_Vlog_COMPFAIL, "%s cannot be translated", compilee->signature(compileParameters->trMemory()));
+      TR_VerboseLog::writeLineLocked(TR_Vlog_COMPFAIL, "%s j9m=%p cannot be translated compThreadID=%d",
+                                     compilee->signature(compileParameters->trMemory()), method, compilationInfo->getCompThreadId());
       }
    Trc_JIT_noAttemptToJit(vmThread, compilee->signature(compileParameters->trMemory()));
 
@@ -9505,7 +9504,7 @@ TR::CompilationInfoPerThreadBase::createCompilee(TR::CompilationInfoPerThreadBas
 
    // See if this method can be compiled and check it against the method
    // filters to see if compilation is to be suppressed.
-   if (isRestrictedMethod(compilationInfo, compilee, compileParameters, filterInfo) ||
+   if (isRestrictedMethod(compilationInfo, compilee, compileParameters, filterInfo, method) ||
        isCodeOrDataCacheFull(compilationInfo, compileParameters))
       {
       compilee = 0;
@@ -9560,7 +9559,12 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
 
          TR_ASSERT(compileParameters->_optimizationPlan, "Must have an optimization plan");
 
-         if (isOutOfProcessCompReq(compilationInfo))
+         bool isOutOfProcessCompReq = false;
+#if defined(J9VM_OPT_JITSERVER)
+         isOutOfProcessCompReq = compilationInfo->_methodBeingCompiled->isOutOfProcessCompReq();
+#endif /* defined(J9VM_OPT_JITSERVER) */
+
+         if (isOutOfProcessCompReq)
             initializeOutOfProcessComp(compilationInfo, compileParameters, vm, options);
          else
             initializeNonOutOfProcessComp(compilationInfo, compilee, compileParameters, filterInfo, details, options, reducedWarm, vm);
