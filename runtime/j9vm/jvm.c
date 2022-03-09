@@ -526,14 +526,45 @@ static const J9SignalMapping signalMap[] = {
 	{NULL, J9_SIG_ERR}
 };
 
+/*
+ * Attempt to update or remove the value of OPENJ9_JAVA_COMMAND_LINE in the
+ * environment. Passing NULL is equivalent to providing an empty string which
+ * indicates that the environment variable should be removed. The function
+ * returns whether the change was successfully applied.
+ *
+ * @param value the value to be stored; "" or NULL if the variable should be removed
+ *
+ * @return TRUE if successful, FALSE otherwise
+ */
+#if defined(WIN32)
+static BOOLEAN
+storeCommandLine(const wchar_t *value)
+{
+	return 0 == _wputenv_s(L"OPENJ9_JAVA_COMMAND_LINE", (NULL != value) ? value : L"");
+}
+#else /* defined(WIN32) */
+static BOOLEAN
+storeCommandLine(const char *value)
+{
+#if defined(J9ZOS390)
+#pragma convlit(suspend)
+#endif /* defined(J9ZOS390) */
+	return 0 == setenv("OPENJ9_JAVA_COMMAND_LINE", (NULL != value) ? value : "", 1 /* overwrite */);
+#if defined(J9ZOS390)
+#pragma convlit(resume)
+#endif /* defined(J9ZOS390) */
+}
+#endif /* defined(WIN32) */
+
+/*
+ * Attempt to capture the command line of this process in the environment
+ * variable 'OPENJ9_JAVA_COMMAND_LINE'. If the command line is not available,
+ * try to remove that variable to avoid possibly incorrect information.
+ */
 static void
 captureCommandLine(void)
 {
-#if defined(WIN32)
-#define ENV_VAR_NAME L"OPENJ9_JAVA_COMMAND_LINE"
-#else /* defined(WIN32) */
-#define ENV_VAR_NAME "OPENJ9_JAVA_COMMAND_LINE"
-#endif /* defined(WIN32) */
+	BOOLEAN captured = FALSE;
 
 #if defined(AIXPPC)
 	long int bufferSize = sysconf(_SC_ARG_MAX);
@@ -565,8 +596,7 @@ captureCommandLine(void)
 					}
 				}
 
-				/* it's not fatal if setenv() fails, so don't bother checking */
-				setenv(ENV_VAR_NAME, buffer, 1 /* overwrite */);
+				captured = storeCommandLine(buffer);
 			}
 
 			free(buffer);
@@ -609,9 +639,7 @@ captureCommandLine(void)
 
 				*cursor = '\0';
 
-				/* it's not fatal if setenv() fails, so don't bother checking */
-				setenv(ENV_VAR_NAME, buffer, 1 /* overwrite */);
-
+				captured = storeCommandLine(buffer);
 				free(buffer);
 			}
 		}
@@ -654,8 +682,7 @@ captureCommandLine(void)
 				buffer[length] = ' ';
 			}
 		}
-		/* it's not fatal if setenv() fails, so don't bother checking */
-		setenv(ENV_VAR_NAME, buffer, 1 /* overwrite */);
+		captured = storeCommandLine(buffer);
 done:
 		if (NULL != buffer) {
 			free(buffer);
@@ -721,8 +748,7 @@ done:
 						}
 					}
 
-					/* it's not fatal if setenv() fails, so don't bother checking */
-					setenv(ENV_VAR_NAME, start, 1 /* overwrite */);
+					captured = storeCommandLine(buffer);
 				}
 			}
 
@@ -733,12 +759,19 @@ done:
 	const wchar_t *commandLine = GetCommandLineW();
 
 	if (NULL != commandLine) {
-		/* it's not fatal if _wputenv_s() fails, so don't bother checking */
-		_wputenv_s(ENV_VAR_NAME, commandLine);
+		captured = storeCommandLine(commandLine);
 	}
 #endif /* defined(AIXPPC) */
 
-#undef ENV_VAR_NAME
+	if (!captured) {
+		/*
+		 * If we were unable to find the command line or store it in the
+		 * environment, try to remove any existing value (which is unlikely
+		 * to be correct). It's not fatal if this fails, so don't bother
+		 * checking.
+		 */
+		storeCommandLine(NULL);
+	}
 }
 
 static void freeGlobals(void)
