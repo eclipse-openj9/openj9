@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -674,6 +674,108 @@ static TR_ResolvedMethod * findSingleImplementer(
 
 bool TR_J9InterfaceCallSite::findCallSiteTarget (TR_CallStack *callStack, TR_InlinerBase* inliner)
    {
+   bool result = findCallSiteTargetImpl(callStack, inliner);
+
+   // A passing vgnop-based interface guard can guarantee the receiver type is
+   // as expected by the inlined body, but only if we already know before the
+   // guard that the receiver implements the expected interface. Here, an
+   // interface type bound is insufficient to know that, because bytecode
+   // verification does not guarantee any particular receiver type at
+   // invokeinterface.
+   //
+   // As such, in the absence of a class (i.e. non-interface) type bound on the
+   // receiver, all targets must use profiled guard. Additionally, the profiled
+   // guard must ensure on the hot side that the receiver is an instance of the
+   // interface expected at this call site.
+   //
+   // These requirements could be relaxed in the future by generating a type
+   // check against the interface type at the beginning of the inlined body
+   // (taking care to ensure that the exception successors are the same as
+   // those of the call, rather than those of the first block of the callee).
+   //
+   //    ZEROCHK jitThrowIncompatibleClassChangeError
+   //      instanceof
+   //        <receiver>
+   //        loadaddr <interface>
+   //
+   // In particular, such a type check would allow the following cases:
+   //
+   // - A default method inlined using a nonoverridden guard. Currently,
+   //   default methods are never inlined (at interface call sites) because
+   //   TR_ResolvedJ9Method::getResolvedInterfaceMethod() does not return them.
+   //
+   // - A profiled guard with method test for a method defined by a class that
+   //   does not implement the expected interface. Subtypes may still implement
+   //   the interface.
+   //
+   // If/when we want to start inlining in one or both of these cases, the
+   // assertions below can be relaxed accordingly. However, testing instanceof
+   // against the interface will be expensive, so there would have to be a
+   // considerable benefit to the inlining to motivate such a change.
+   //
+   TR_OpaqueClassBlock *iface = getClassFromMethod();
+   if (_receiverClass != NULL
+       && !TR::Compiler->cls.isInterfaceClass(comp(), _receiverClass))
+      {
+      TR_ASSERT_FATAL(
+         fe()->isInstanceOf(_receiverClass, iface, true, true, true) == TR_yes,
+         "interface call site %p receiver type %p "
+         "does not implement the expected interface %p",
+         this,
+         _receiverClass,
+         iface);
+
+      heuristicTrace(
+         inliner->tracer(),
+         "Interface call site %p has receiver class bound %p; nop guards ok",
+         this,
+         _receiverClass);
+      }
+   else
+      {
+      TR_Debug *debug = comp()->getDebug();
+      for (int32_t i = 0; i < numTargets(); i++)
+         {
+         TR_CallTarget *tgt = getTarget(i);
+         TR_VirtualGuardKind kind = tgt->_guard->_kind;
+         TR_ASSERT_FATAL(
+            kind == TR_ProfiledGuard,
+            "interface call site %p requires profiled guard (kind %d), "
+            "but target %d [%p] uses %s (kind %d)",
+            this,
+            (int)TR_ProfiledGuard,
+            i,
+            tgt,
+            debug == NULL ? "<unknown name>" : debug->getVirtualGuardKindName(kind),
+            (int)kind);
+
+         // Bound on the receiver types that pass the profiled guard
+         TR_OpaqueClassBlock *passClass = NULL;
+         TR_ResolvedMethod *callee = tgt->_calleeMethod;
+         if (tgt->_guard->_type == TR_VftTest)
+            passClass = tgt->_guard->_thisClass;
+         else
+            passClass = callee->containingClass();
+
+         TR_ASSERT_FATAL(
+            fe()->isInstanceOf(passClass, iface, true, true, true) == TR_yes,
+            "interface call site %p target %d [%p] (J9Method %p) "
+            "accepts receivers of type %p, "
+            "which does not implement the expected interface %p",
+            this,
+            i,
+            tgt,
+            callee->getPersistentIdentifier(),
+            passClass,
+            iface);
+         }
+      }
+
+   return result;
+   }
+
+bool TR_J9InterfaceCallSite::findCallSiteTargetImpl(TR_CallStack *callStack, TR_InlinerBase* inliner)
+   {
    static char *minimizedInlineJIT = feGetEnv("TR_JITInlineMinimized");
 
    if (minimizedInlineJIT)
@@ -721,10 +823,30 @@ bool TR_J9InterfaceCallSite::findCallSiteTarget (TR_CallStack *callStack, TR_Inl
 
    if (calleeResolvedMethod && !calleeResolvedMethod->virtualMethodIsOverridden())
       {
-      TR_VirtualGuardSelection * guard = new (comp()->trHeapMemory()) TR_VirtualGuardSelection(TR_InterfaceGuard, TR_MethodTest);
-      addTarget(comp()->trMemory(),inliner,guard,calleeResolvedMethod,_receiverClass,heapAlloc);
-      heuristicTrace(inliner->tracer(),"Call is an Interface with a Single Implementer guard %p\n", guard);
-      return true;
+      TR_VirtualGuardKind kind = TR_ProfiledGuard;
+      if (_receiverClass != NULL
+          && !TR::Compiler->cls.isInterfaceClass(comp(), _receiverClass))
+         {
+         kind = TR_InterfaceGuard;
+         }
+      else
+         {
+         // Profiled guard with method test must test for a method defined by a
+         // class that implements the expected interface. See the comment in
+         // TR_J9InterfaceCallSite::findCallSiteTarget().
+         TR_OpaqueClassBlock *defClass = calleeResolvedMethod->containingClass();
+         TR_OpaqueClassBlock *iface = getClassFromMethod();
+         if (fe()->isInstanceOf(defClass, iface, true, true, true) != TR_yes)
+            calleeResolvedMethod = NULL; // hope to get a VFT test from profiling
+         }
+
+      if (calleeResolvedMethod != NULL)
+         {
+         TR_VirtualGuardSelection * guard = new (comp()->trHeapMemory()) TR_VirtualGuardSelection(kind, TR_MethodTest);
+         addTarget(comp()->trMemory(),inliner,guard,calleeResolvedMethod,_receiverClass,heapAlloc);
+         heuristicTrace(inliner->tracer(),"Call is an Interface with a Single Implementer guard %p\n", guard);
+         return true;
+         }
       }
 
    return findProfiledCallTargets(callStack, inliner);
@@ -1040,7 +1162,16 @@ void TR_ProfileableCallSite::findSingleProfiledReceiver(ListIterator<TR_ExtraAdd
             continue;
             }
 
-         //origMethod
+         if (preferMethodTest && isInterface())
+            {
+            // For interface call sites, the profiled guard must allow only
+            // receivers that are instances of the expected interface. See the
+            // comment in TR_J9InterfaceCallSite::findCallSiteTarget().
+            TR_OpaqueClassBlock *defClass = targetMethod->containingClass();
+            TR_OpaqueClassBlock *iface = getClassFromMethod();
+            if (fe()->isInstanceOf(defClass, iface, true, true, true) != TR_yes)
+               preferMethodTest = false;
+            }
 
          TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp()->fe());
          // need to be able to store class chains for these methods
