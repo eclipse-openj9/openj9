@@ -670,10 +670,11 @@ internalExceptionDescribe(J9VMThread *vmThread);
 * @param ramClass)
 * @param userData
 * @param pruneConstructors
+* @param skipHiddenFrames
 * @return UDATA
 */
 UDATA
-iterateStackTrace(J9VMThread * vmThread, j9object_t* exception,  UDATA  (*callback) (J9VMThread * vmThread, void * userData, UDATA bytecodeOffset, J9ROMClass * romClass, J9ROMMethod * romMethod, J9UTF8 * fileName, UDATA lineNumber, J9ClassLoader* classLoader, J9Class* ramClass), void * userData, UDATA pruneConstructors);
+iterateStackTrace(J9VMThread * vmThread, j9object_t* exception,  UDATA  (*callback) (J9VMThread * vmThread, void * userData, UDATA bytecodeOffset, J9ROMClass * romClass, J9ROMMethod * romMethod, J9UTF8 * fileName, UDATA lineNumber, J9ClassLoader* classLoader, J9Class* ramClass), void * userData, UDATA pruneConstructors, UDATA skipHiddenFrames);
 
 
 /* ---------------- exceptionsupport.c ---------------- */

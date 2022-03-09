@@ -5660,7 +5660,7 @@ protectedIterateStackTrace(struct J9PortLibrary *portLibrary, void *args)
 	J9VMThread* vmThread = (J9VMThread*) parameters[0];
 	closure->jcw->_VirtualMachine->internalVMFunctions->iterateStackTrace(vmThread, (j9object_t*) parameters[1],
 										writeExceptionFrameCallBack, (J9StackWalkState*)parameters[2],
-										FALSE);
+										FALSE, FALSE);
 
 	return 0;
 }

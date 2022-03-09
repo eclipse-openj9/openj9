@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2021 IBM Corp. and others
+ * Copyright (c) 1998, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -312,6 +312,8 @@ getStackTrace(J9VMThread * vmThread, j9object_t * exceptionAddr, UDATA pruneCons
 	J9Class * arrayClass;
 	J9GetStackTraceUserData userData;
 	J9IndexableObject * result;
+	/* If -XX:+ShowHiddenFrames option has not been set, skip hidden method frames */
+	UDATA skipHiddenFrames = J9_ARE_NO_BITS_SET(vm->runtimeFlags, J9_RUNTIME_SHOW_HIDDEN_FRAMES);
 
 	/* Note that exceptionAddr might be a pointer into the current thread's stack, so no java code is allowed to run
 	   (nothing which could cause the stack to grow).
@@ -321,7 +323,7 @@ retry:
 
 	/* Get the total number of entries in the trace */
 
-	numberOfFrames = vmFuncs->iterateStackTrace(vmThread, exceptionAddr, NULL, NULL, pruneConstructors);
+	numberOfFrames = vmFuncs->iterateStackTrace(vmThread, exceptionAddr, NULL, NULL, pruneConstructors, skipHiddenFrames);
 
 	/* Create the result array */
 
@@ -351,7 +353,7 @@ retry:
 	userData.maxFrames = numberOfFrames;
 	userData.previousFileName = NULL;
 	PUSH_OBJECT_IN_SPECIAL_FRAME(vmThread, (j9object_t) result);
-	vmFuncs->iterateStackTrace(vmThread, exceptionAddr, getStackTraceIterator, &userData, pruneConstructors);
+	vmFuncs->iterateStackTrace(vmThread, exceptionAddr, getStackTraceIterator, &userData, pruneConstructors, skipHiddenFrames);
 	result = (j9array_t) POP_OBJECT_IN_SPECIAL_FRAME(vmThread);
 
 	/* If the stack trace sizes are inconsistent between pass 1 and 2, start again */
