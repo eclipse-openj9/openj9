@@ -34,6 +34,7 @@ uses com.ibm.sharedclasses.spi.SharedClassProvider;
 uses com.ibm.gpu.spi.GPUAssist.Provider;
 exports com.ibm.gpu.spi to openj9.gpu;
 /*[IF CRIU_SUPPORT]*/
+exports openj9.internal.criu to openj9.criu;
 exports jdk.internal.misc to openj9.criu;
 opens jdk.internal.misc to openj9.criu;
 opens java.lang to openj9.criu;
