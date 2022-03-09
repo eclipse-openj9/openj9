@@ -5211,15 +5211,28 @@ JavaCoreDumpWriter::getOwnedObjectMonitors(J9VMThread* vmThread, J9ObjectMonitor
  * @param vmThread[in] the thread to query (not the current thread)
  */
 void
-JavaCoreDumpWriter::writeJavaLangThreadInfo (J9VMThread* vmThread)
+JavaCoreDumpWriter::writeJavaLangThreadInfo(J9VMThread *vmThread)
 {
 	I_64 threadID = J9VMJAVALANGTHREAD_TID(vmThread, vmThread->threadObject);
 
 	_OutputStream.writeCharacters("3XMJAVALTHREAD            (java/lang/Thread getId:");
 	_OutputStream.writeInteger64(threadID);
 	_OutputStream.writeCharacters(", isDaemon:");
-	_OutputStream.writeCharacters(J9VMJAVALANGTHREAD_ISDAEMON(vmThread, vmThread->threadObject)?"true":"false");
+	_OutputStream.writeCharacters(J9VMJAVALANGTHREAD_ISDAEMON(vmThread, vmThread->threadObject) ? "true" : "false");
 	_OutputStream.writeCharacters(")\n");
+
+	j9object_t contextClassLoader = J9VMJAVALANGTHREAD_CONTEXTCLASSLOADER(vmThread, vmThread->threadObject);
+
+	_OutputStream.writeCharacters("3XMJAVALTHRCCL            ");
+	if (NULL == contextClassLoader) {
+		_OutputStream.writeCharacters("No Java context classloader associated with this thread");
+	} else {
+		_OutputStream.writeCharacters(J9ROMCLASS_CLASSNAME(J9OBJECT_CLAZZ_VM(_VirtualMachine, contextClassLoader)->romClass));
+		_OutputStream.writeCharacters("(");
+		_OutputStream.writePointer(contextClassLoader);
+		_OutputStream.writeCharacters(")");
+	}
+	_OutputStream.writeCharacters("\n");
 }
 
 void
