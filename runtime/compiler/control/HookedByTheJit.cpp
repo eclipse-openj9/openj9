@@ -1336,8 +1336,17 @@ static void jitMethodSampleInterrupt(J9VMThread* vmThread, IDATA handlerKey, voi
          }
 
 #if defined(J9VM_JIT_DYNAMIC_LOOP_TRANSFER)
-      if (!TR::Options::getCmdLineOptions()->getOption(TR_MimicInterpreterFrameShape) &&
-          !compInfo->getPersistentInfo()->getDisableFurtherCompilation())
+      if (!TR::Options::getCmdLineOptions()->getOption(TR_MimicInterpreterFrameShape)
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+          /* It's ok to not acquire the comp monitor here. Even if at this
+           * point a checkpoint isn't in progress but later it does, a
+           * compilation won't be started because of other places where the
+           * flag is checked with the monitor in hand. This is more of an
+           * optimization that statistically should be useful.
+           */
+          && !compInfo->isCheckpointInProgress()
+#endif
+          && !compInfo->getPersistentInfo()->getDisableFurtherCompilation())
          {
          static char *enableDebugDLT = feGetEnv("TR_DebugDLT");
          static J9Method *skipDLTMethod = NULL;
@@ -1382,8 +1391,17 @@ static void jitMethodSampleInterrupt(J9VMThread* vmThread, IDATA handlerKey, voi
             TR::Recompilation::sampleMethod(vmThread, vm, startPC, codeSize, walkState.pc, walkState.method, jitConfig->samplingTickCount);
          }
 #else // !J9VM_JIT_DYNAMIC_LOOP_TRANSFER
-      if (!TR::Options::getCmdLineOptions()->getOption(TR_MimicInterpreterFrameShape) &&
-          !compInfo->getPersistentInfo()->getDisableFurtherCompilation())
+      if (!TR::Options::getCmdLineOptions()->getOption(TR_MimicInterpreterFrameShape)
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+          /* It's ok to not acquire the comp monitor here. Even if at this
+           * point a checkpoint isn't in progress but later it does, a
+           * compilation won't be started because of other places where the
+           * flag is checked with the monitor in hand. This is more of an
+           * optimization that statistically should be useful.
+           */
+          && !compInfo->isCheckpointInProgress()
+#endif
+          && !compInfo->getPersistentInfo()->getDisableFurtherCompilation())
          {
          TR::Recompilation::sampleMethod(vmThread, vm, startPC, codeSize, walkState.pc, walkState.method, jitConfig->samplingTickCount);
          }
@@ -1812,6 +1830,13 @@ static void jitHookThreadDestroy(J9HookInterface * * hookInterface, UDATA eventN
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 static void jitHookPrepareCheckpoint(J9HookInterface * * hookInterface, UDATA eventNum, void * eventData, void * userData)
    {
+   J9VMClassesUnloadEvent * restoreEvent = (J9VMClassesUnloadEvent *)eventData;
+   J9VMThread * vmThread = restoreEvent->currentThread;
+   J9JavaVM * javaVM = vmThread->javaVM;
+   J9JITConfig * jitConfig = javaVM->jitConfig;
+
+   TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
+   compInfo->prepareForCheckpoint();
    }
 
 static void jitHookPrepareRestore(J9HookInterface * * hookInterface, UDATA eventNum, void * eventData, void * userData)
@@ -1819,6 +1844,7 @@ static void jitHookPrepareRestore(J9HookInterface * * hookInterface, UDATA event
    J9VMClassesUnloadEvent * restoreEvent = (J9VMClassesUnloadEvent *)eventData;
    J9VMThread * vmThread = restoreEvent->currentThread;
    J9JavaVM * javaVM = vmThread->javaVM;
+   J9JITConfig * jitConfig = javaVM->jitConfig;
 
    /* If the restored run does not allow further checkpoints, then
     * remove the portability restrictions on the target CPU (used
@@ -1829,6 +1855,9 @@ static void jitHookPrepareRestore(J9HookInterface * * hookInterface, UDATA event
       TR::Compiler->target.cpu = TR::CPU::detect(TR::Compiler->omrPortLib);
       jitConfig->targetProcessor = TR::Compiler->target.cpu.getProcessorDescription();
       }
+
+   TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
+   compInfo->prepareForRestore();
    }
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
