@@ -155,7 +155,11 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
    static TR::Register *zdsleStoreiEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *zdslsStoreiEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *zdstsStoreiEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+
    static TR::Register *zd2zdsleEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *zd2zdsleEvaluatorHelper(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *zd2zdsleVectorEvaluatorHelper(TR::Node *node, TR::CodeGenerator *cg);
+
    static TR::Register *zd2zdstsEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *zdsle2pdEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *zdsts2pdEvaluator(TR::Node *node, TR::CodeGenerator *cg);

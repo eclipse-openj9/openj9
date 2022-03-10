@@ -1147,6 +1147,71 @@ TR::Register *
 J9::Z::TreeEvaluator::zdsle2zdEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
    cg->traceBCDEntry("zdsle2zd",node);
+   TR::Register* targetReg = NULL;
+
+   static bool disablePdVector2ZdVectorBCD = feGetEnv("TR_disablezdsle2zdVectorBCD") != NULL;
+   if(cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL)
+      && !disablePdVector2ZdVectorBCD
+      && !cg->comp()->getOption(TR_DisableVectorBCD)
+      && node->getOpCodeValue() == TR::zd2zdsle)
+      {
+      targetReg = zd2zdsleVectorEvaluatorHelper(node, cg);
+      }
+   else
+      {
+      targetReg = zd2zdsleEvaluatorHelper(node, cg);
+      }
+
+   return targetReg;
+   }
+
+TR::Register *
+J9::Z::TreeEvaluator::zd2zdsleVectorEvaluatorHelper(TR::Node * node, TR::CodeGenerator * cg)
+   {
+   TR::Node *srcNode = node->getFirstChild();
+   TR::RegisterPair *srcReg = (cg->evaluate(srcNode))->getRegisterPair(); // pd2zd returns vector register pair
+   TR::Register *zonedDecimalHigh = srcReg->getHighOrder();
+   TR::Register *zonedDecimalLow = srcReg->getLowOrder();
+
+   TR::Register *firstDigitSrc = zonedDecimalLow;
+   TR::Register *firstDigit = cg->allocateRegister(); // new sign location
+   TR::Register *lastDigit = cg->allocateRegister(); // old sign location
+   TR::Register *lastDigitCopy = cg->allocateRegister();
+   int32_t precision = node->getDecimalPrecision(); // pd2zd node
+
+   if (precision > 1)
+      {
+      // This works because zoned decimals are right aligned
+      uint8_t firstDigitIndex = TR_VECTOR_REGISTER_SIZE - precision;
+
+      if (precision > TR_VECTOR_REGISTER_SIZE)
+         { // There were more than 16 zoned decimals
+         firstDigitIndex = TR_VECTOR_REGISTER_SIZE*2 - precision;
+         firstDigitSrc = zonedDecimalHigh;
+         }
+
+      // Read first and last digits from the vector regs.
+      generateVRScInstruction(cg, TR::InstOpCode::VLGV, node, firstDigit, firstDigitSrc, generateS390MemoryReference(firstDigitIndex, cg), 0);
+      generateVRScInstruction(cg, TR::InstOpCode::VLGV, node, lastDigit, zonedDecimalLow, generateS390MemoryReference(15, cg), 0);
+      // firstDigit = F</digit>, lastDigit = </sign></digit>
+
+      // Replace sign of the first digit
+      generateRRInstruction(cg, TR::InstOpCode::LR, node, lastDigitCopy, lastDigit);
+      generateRIInstruction(cg, TR::InstOpCode::OILL, node, lastDigitCopy, 0x000F); // After execution, lastDigitCopy = </sign>F
+      generateRRInstruction(cg, TR::InstOpCode::NR, node, firstDigit, lastDigitCopy); // After execution, firstDigit = </sign></digit>
+
+      // Replace sign of the last digit
+      generateRIInstruction(cg, TR::InstOpCode::OILL, node, lastDigit, 0x00F0); // After execution, lastDigit = F</digit>
+
+      // Write the updated signs back to the vector reg
+      generateVRSbInstruction(cg, TR::InstOpCode::VLVG, node, zonedDecimalLow, lastDigit, generateS390MemoryReference(15, cg), 0);
+      generateVRSbInstruction(cg, TR::InstOpCode::VLVG, node, firstDigitSrc, firstDigit, generateS390MemoryReference(firstDigitIndex, cg), 0);
+      }
+   return srcReg;
+   }
+TR::Register *
+J9::Z::TreeEvaluator::zd2zdsleEvaluatorHelper(TR::Node * node, TR::CodeGenerator * cg)
+   {
    TR::Node *srcNode = node->getFirstChild();
    TR_PseudoRegister *srcReg = cg->evaluateBCDNode(srcNode);
 
@@ -3760,7 +3825,7 @@ J9::Z::TreeEvaluator::pdstoreEvaluator(TR::Node *node, TR::CodeGenerator *cg)
       }
    else if (!cg->comp()->getOption(TR_DisableVectorBCD) && !disableZdstoreVectorEvaluator
          && cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL_ENHANCEMENT_FACILITY_2)
-         && node->getOpCodeValue() == TR::zdstorei)
+         && (node->getOpCodeValue() == TR::zdstorei || node->getOpCodeValue() == TR::zdsleStorei))
       {
       // TODO: do we need to check if ref count is greater than 1?
       //       We might need to update other evaluators to handle
