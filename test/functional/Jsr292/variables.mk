@@ -20,8 +20,6 @@
 #  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
 ##############################################################################
 
-include $(TEST_ROOT)$(D)functional$(D)variables.mk
-
 ifeq ($(JDK_VERSION), 8)
   XMLSUFFIX = _8
 else

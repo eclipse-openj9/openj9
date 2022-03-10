@@ -20,8 +20,6 @@
 #  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
 ##############################################################################
 
-include $(TEST_ROOT)$(D)functional$(D)variables.mk
-
 ADD_MODULE_JAVA_SE_EE=
 # java.se.ee should only used for jdk 9 and 10
 # if JDK_VERSION is 9 10
