@@ -3517,15 +3517,18 @@ void TR::CompilationInfo::stopCompilationThreads()
    acquireCompMonitor(vmThread);
 
 #if defined(J9VM_OPT_CRIU_SUPPORT)
-   // Interrupt any checkpoint in progress and notify
-   // the thread waiting in the checkpoint hook.
-   if (isCheckpointInProgress())
-      {
-      interruptCheckpoint();
-      acquireCRMonitor();
-      getCRMonitor()->notifyAll();
-      releaseCRMonitor();
-      }
+   // Set the checkpoint status to interrupted regardless
+   // of whether currently there is a checkpoint in progess.
+   // If a checkpoint is in progress then the thread waiting
+   // on the CR monitor will abort and return from the hook;
+   // otherwise, the thread could (or is en route to) be
+   // blocked on the Comp Monitor and so will abort before
+   // incorrectly attempting to suspend stopping or stopped
+   // compilation threads.
+   interruptCheckpoint();
+   acquireCRMonitor();
+   getCRMonitor()->notifyAll();
+   releaseCRMonitor();
 #endif
 
    // Cycle through all non-diagnostic threads and stop them
