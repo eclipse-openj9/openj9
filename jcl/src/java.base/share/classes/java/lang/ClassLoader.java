@@ -1216,16 +1216,15 @@ public final Module getUnnamedModule()
  * @exception	ClassNotFoundException
  *					If the class could not be found.
  */
-public Class<?> loadClass (String className) throws ClassNotFoundException {
-/*[IF Sidecar19-SE]*/
+public Class<?> loadClass(String className) throws ClassNotFoundException {
+/*[IF JAVA_SPEC_VERSION > 8]*/
 	if ((bootstrapClassLoader == null) || (this == bootstrapClassLoader)) {
 		Class<?> cls = VMAccess.findClassOrNull(className, bootstrapClassLoader);
-		if (cls == null) {
-			throw new ClassNotFoundException(className);
+		if (cls != null) {
+			return cls;
 		}
-		return cls;
 	}
-/*[ENDIF] Sidecar19-SE */	
+/*[ENDIF] JAVA_SPEC_VERSION > 8 */
 	return loadClass(className, false);
 }
 
