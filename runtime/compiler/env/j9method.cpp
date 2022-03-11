@@ -2135,18 +2135,6 @@ void TR_ResolvedJ9Method::construct()
       {  TR::unknownMethod}
       };
 
-   static X TreeMapMethods[] =
-      {
-      {x(TR::java_util_TreeMap_rbInsert,     "rbInsert",           "(Ljava/lang/Object;)Ljava/util/TreeMap$Entry;")},
-      {  TR::unknownMethod}
-      };
-
-   static X TreeMapUnboundedValueIteratorMethods[] =
-      {
-      {x(TR::java_util_TreeMapUnboundedValueIterator_next,   "next",      "()Ljava/lang/Object;")},
-      {  TR::unknownMethod}
-      };
-
    static X HashMapMethods[] =
       {
       {x(TR::java_util_HashMap_rehash,                "rehash",           "()V")},
@@ -3354,13 +3342,6 @@ void TR_ResolvedJ9Method::construct()
       { TR::unknownMethod}
       };
 
-   static X SubMapMethods[] =
-      {
-      {x(TR::java_util_TreeMapSubMap_setLastKey,      "setLastKey",      "()V")},
-      {x(TR::java_util_TreeMapSubMap_setFirstKey,     "setFirstKey",     "()V")},
-      {  TR::unknownMethod}
-      };
-
    static X VMInternalsMethods[] =
       {
       {x(TR::java_lang_Class_newInstanceImpl,      "newInstanceImpl",      "(Ljava/lang/Class;)Ljava/lang/Object;")},
@@ -3999,7 +3980,6 @@ void TR_ResolvedJ9Method::construct()
       { "com/ibm/oti/vm/VM", otivmMethods },
       { "java/lang/Integer", IntegerMethods },
       { "java/lang/Boolean", BooleanMethods },
-      { "java/util/TreeMap", TreeMapMethods },
       { "java/util/HashMap", HashMapMethods },
       { 0 }
       };
@@ -4066,7 +4046,6 @@ void TR_ResolvedJ9Method::construct()
    static Y class24[] =
       {
       { "java/lang/reflect/Method", MethodMethods },
-      { "java/util/TreeMap$SubMap", SubMapMethods },
       { "sun/nio/cs/UTF_8$Decoder", EncodeMethods },
       { "sun/nio/cs/UTF_8$Encoder", EncodeMethods },
       { "sun/nio/cs/UTF16_Encoder", EncodeMethods },
@@ -4208,7 +4187,6 @@ void TR_ResolvedJ9Method::construct()
 
    static Y class40[] =
       {
-      { "java/util/TreeMap$UnboundedValueIterator", TreeMapUnboundedValueIteratorMethods },
       { "com/ibm/dataaccess/ByteArrayUnmarshaller", DataAccessByteArrayUnmarshallerMethods },
       { "com/ibm/jit/crypto/JITFullHardwareDigest", CryptoDigestMethods },
       { "com/ibm/jit/crypto/JITAESCryptInHardware", XPCryptoMethods },
