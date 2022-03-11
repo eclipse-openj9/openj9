@@ -3815,6 +3815,16 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 		}
 	}
 
+	{
+		IDATA dynamicHeapification = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXDYNAMICHEAPIFICATION, NULL);
+		IDATA noDynamicHeapification = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXNODYNAMICHEAPIFICATION, NULL);
+		if (dynamicHeapification > noDynamicHeapification) {
+			vm->runtimeFlags |= J9_RUNTIME_DYNAMIC_HEAPIFICATION;
+		} else if (dynamicHeapification < noDynamicHeapification) {
+			vm->runtimeFlags &= ~(UDATA)J9_RUNTIME_DYNAMIC_HEAPIFICATION;
+		}
+	}
+
 	return JNI_OK;
 }
 

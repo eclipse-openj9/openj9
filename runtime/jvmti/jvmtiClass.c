@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1163,6 +1163,13 @@ redefineClassesCommon(jvmtiEnv* env,
 		vm->internalVMFunctions->acquireSafePointVMAccess(currentThread);	
 	} else {
 		vm->internalVMFunctions->acquireExclusiveVMAccess(currentThread);
+	}
+
+	if (J9_ARE_ANY_BITS_SET(vm->runtimeFlags, J9_RUNTIME_DYNAMIC_HEAPIFICATION)) {
+		rc = heapifyStackAllocatedObjects(currentThread, safePoint);
+		if (JVMTI_ERROR_NONE != rc) {
+			goto failedWithVMAccess;
+		}
 	}
 
 	/* Determine all ROM classes which need a new RAM class, and pair them with their current RAM class */

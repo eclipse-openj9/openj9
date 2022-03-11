@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2020 IBM Corp. and others
+# Copyright (c) 2017, 2022 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,6 +24,7 @@ omr_add_tracegen(j9jvmti.tdf)
 
 j9vm_add_library(j9jvmti SHARED
 	OUTPUT_NAME j9jvmti${J9VM_VERSION_SUFFIX}
+	heapify.cpp
 	jvmtiBreakpoint.c
 	jvmtiCapability.c
 	jvmtiClass.c
@@ -56,7 +57,15 @@ j9vm_add_library(j9jvmti SHARED
 
 	${CMAKE_CURRENT_BINARY_DIR}/ut_j9jvmti.c
 )
-target_include_directories(j9jvmti PRIVATE  ${CMAKE_CURRENT_BINARY_DIR})
+
+target_include_directories(j9jvmti
+	PRIVATE
+		.
+		${CMAKE_CURRENT_BINARY_DIR}
+		${j9vm_SOURCE_DIR}/gc_include
+		${omr_SOURCE_DIR}/gc/include
+		${j9vm_SOURCE_DIR}/compiler/runtime/
+)
 
 target_link_libraries(j9jvmti
 	PRIVATE

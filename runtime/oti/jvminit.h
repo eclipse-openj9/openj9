@@ -508,6 +508,9 @@ enum INIT_STAGE {
 #define VMOPT_XXCLASSRELATIONSHIPVERIFIER "-XX:+ClassRelationshipVerifier"
 #define VMOPT_XXNOCLASSRELATIONSHIPVERIFIER "-XX:-ClassRelationshipVerifier"
 
+#define VMOPT_XXDYNAMICHEAPIFICATION "-XX:+DynamicHeapification"
+#define VMOPT_XXNODYNAMICHEAPIFICATION "-XX:-DynamicHeapification"
+
 #define MAPOPT_AGENTLIB_JDWP_EQUALS "-agentlib:jdwp="
 
 #define MAPOPT_XCOMP "-Xcomp"

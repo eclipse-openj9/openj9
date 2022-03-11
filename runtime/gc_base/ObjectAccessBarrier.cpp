@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1481,9 +1481,11 @@ MM_ObjectAccessBarrier::structuralCompareFlattenedObjects(J9VMThread *vmThread, 
  * @param srcOffset The offset of the value class instance fields in srcObject.
  * @param destValue The object containing the value class instance fields being copied to.
  * @param destOffset The offset of the value class instance fields in destObject.
+ * @param objectMapFunction Function to allow replacement of object fields
+ * @param objectMapData Data to pass to objectMapFunction
  */
 void
-MM_ObjectAccessBarrier::copyObjectFields(J9VMThread *vmThread, J9Class *objectClass, J9Object *srcObject, UDATA srcOffset, J9Object *destObject, UDATA destOffset)
+MM_ObjectAccessBarrier::copyObjectFields(J9VMThread *vmThread, J9Class *objectClass, J9Object *srcObject, UDATA srcOffset, J9Object *destObject, UDATA destOffset, MM_objectMapFunction objectMapFunction, void *objectMapData)
 {
 	/* For valueTypes we currently do not make a distinction between values that only contain
 	 * primitives and values that may contain a reference (ie. value vs mixed-value
@@ -1528,6 +1530,9 @@ MM_ObjectAccessBarrier::copyObjectFields(J9VMThread *vmThread, J9Class *objectCl
 			/* Determine if the slot contains an object pointer or not */
 			if (descriptionBits & 1) {
 				J9Object *objectPtr = mixedObjectReadObject(vmThread, srcObject, srcOffset + offset, false);
+				if (NULL != objectMapFunction) {
+					objectPtr = objectMapFunction(vmThread, objectPtr, objectMapData);
+				}
 				mixedObjectStoreObject(vmThread, destObject, destOffset + offset, objectPtr, false);
 			} else {
 				UDATA srcAddress = (UDATA)srcObject + srcOffset + offset;
