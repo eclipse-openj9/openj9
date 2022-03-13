@@ -613,10 +613,10 @@ j9gc_objaccess_structuralCompareFlattenedObjects(J9VMThread *vmThread, J9Class *
  * Called by certain specs to copy objects
  */
 void
-j9gc_objaccess_copyObjectFields(J9VMThread *vmThread, J9Class *valueClass, J9Object *srcObject, UDATA srcOffset, J9Object *destObject, UDATA destOffset, MM_objectMapFunction objectMapFunction, void *objectMapData)
+j9gc_objaccess_copyObjectFields(J9VMThread *vmThread, J9Class *valueClass, J9Object *srcObject, UDATA srcOffset, J9Object *destObject, UDATA destOffset, MM_objectMapFunction objectMapFunction, void *objectMapData, UDATA initializeLockWord)
 {
 	MM_ObjectAccessBarrier *barrier = MM_GCExtensions::getExtensions(vmThread)->accessBarrier;
-	return barrier->copyObjectFields(vmThread, valueClass, srcObject, srcOffset, destObject, destOffset, objectMapFunction, objectMapData);
+	return barrier->copyObjectFields(vmThread, valueClass, srcObject, srcOffset, destObject, destOffset, objectMapFunction, objectMapData, FALSE != initializeLockWord);
 }
 
 /**
@@ -643,10 +643,10 @@ j9gc_objaccess_copyObjectFieldsFromFlattenedArrayElement(J9VMThread *vmThread, J
  * Called by certain specs to clone objects. See J9VMObjectAccessBarrier#cloneArray:into:sizeInElements:class:
  */
 void
-j9gc_objaccess_cloneIndexableObject(J9VMThread *vmThread, J9IndexableObject *srcObject, J9IndexableObject *destObject)
+j9gc_objaccess_cloneIndexableObject(J9VMThread *vmThread, J9IndexableObject *srcObject, J9IndexableObject *destObject, MM_objectMapFunction objectMapFunction, void *objectMapData)
 {
 	MM_ObjectAccessBarrier *barrier = MM_GCExtensions::getExtensions(vmThread)->accessBarrier;
-	return barrier->cloneIndexableObject(vmThread, srcObject, destObject);
+	return barrier->cloneIndexableObject(vmThread, srcObject, destObject, objectMapFunction, objectMapData);
 }
 
 /**

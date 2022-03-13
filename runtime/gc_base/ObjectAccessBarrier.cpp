@@ -1483,9 +1483,10 @@ MM_ObjectAccessBarrier::structuralCompareFlattenedObjects(J9VMThread *vmThread, 
  * @param destOffset The offset of the value class instance fields in destObject.
  * @param objectMapFunction Function to allow replacement of object fields
  * @param objectMapData Data to pass to objectMapFunction
+ * @param initializeLockWord true to initialize inline lockword, false to copy it
  */
 void
-MM_ObjectAccessBarrier::copyObjectFields(J9VMThread *vmThread, J9Class *objectClass, J9Object *srcObject, UDATA srcOffset, J9Object *destObject, UDATA destOffset, MM_objectMapFunction objectMapFunction, void *objectMapData)
+MM_ObjectAccessBarrier::copyObjectFields(J9VMThread *vmThread, J9Class *objectClass, J9Object *srcObject, UDATA srcOffset, J9Object *destObject, UDATA destOffset, MM_objectMapFunction objectMapFunction, void *objectMapData, bool initializeLockWord)
 {
 	/* For valueTypes we currently do not make a distinction between values that only contain
 	 * primitives and values that may contain a reference (ie. value vs mixed-value
@@ -1606,11 +1607,13 @@ MM_ObjectAccessBarrier::copyObjectFields(J9VMThread *vmThread, J9Class *objectCl
 			}
 		}
 
-		/* initialize lockword, if present */
-		lockwordAddress = getLockwordAddress(vmThread, destObject);
-		if (NULL != lockwordAddress) {
-			j9objectmonitor_t lwValue = VM_ObjectMonitor::getInitialLockword(vmThread->javaVM, objectClass);
-			J9_STORE_LOCKWORD(vmThread, lockwordAddress, lwValue);
+		if (initializeLockWord) {
+			/* initialize lockword, if present */
+			lockwordAddress = getLockwordAddress(vmThread, destObject);
+			if (NULL != lockwordAddress) {
+				j9objectmonitor_t lwValue = VM_ObjectMonitor::getInitialLockword(vmThread->javaVM, objectClass);
+				J9_STORE_LOCKWORD(vmThread, lockwordAddress, lwValue);
+			}
 		}
 	}
 }
@@ -1621,9 +1624,8 @@ MM_ObjectAccessBarrier::copyObjectFields(J9VMThread *vmThread, J9Class *objectCl
  * @TODO This does not currently check if the fields that it is reading are volatile.
  */
 void 
-MM_ObjectAccessBarrier::cloneIndexableObject(J9VMThread *vmThread, J9IndexableObject *srcObject, J9IndexableObject *destObject)
+MM_ObjectAccessBarrier::cloneIndexableObject(J9VMThread *vmThread, J9IndexableObject *srcObject, J9IndexableObject *destObject, MM_objectMapFunction objectMapFunction, void *objectMapData)
 {
-	j9objectmonitor_t *lockwordAddress = NULL;
 	bool isObjectArray = _extensions->objectModel.isObjectArray(srcObject);
 
 	if (_extensions->objectModel.hasBeenHashed((J9Object*)destObject)) {
@@ -1635,21 +1637,15 @@ MM_ObjectAccessBarrier::cloneIndexableObject(J9VMThread *vmThread, J9IndexableOb
 		I_32 size = (I_32)_extensions->indexableObjectModel.getSizeInElements(srcObject);
 		for (I_32 i = 0; i < size; i++) {
 			J9Object *objectPtr = J9JAVAARRAYOFOBJECT_LOAD(vmThread, srcObject, i);
+			if (NULL != objectMapFunction) {
+				objectPtr = objectMapFunction(vmThread, objectPtr, objectMapData);
+			}
 			J9JAVAARRAYOFOBJECT_STORE(vmThread, destObject, i, objectPtr);
 		}
 	} else {
 		_extensions->indexableObjectModel.memcpyArray(destObject, srcObject);
 	}
 
-	/* initialize lockword, if present */
-	J9Class *objectClass = J9GC_J9OBJECT_CLAZZ_THREAD(destObject, vmThread);
-	lockwordAddress = getLockwordAddress(vmThread, (J9Object*) destObject);
-	if (NULL != lockwordAddress) {
-		j9objectmonitor_t lwValue = VM_ObjectMonitor::getInitialLockword(vmThread->javaVM, objectClass);
-		J9_STORE_LOCKWORD(vmThread, lockwordAddress, lwValue);
-	}
-
-	return;
 }
 
 
