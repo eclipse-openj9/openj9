@@ -3516,6 +3516,8 @@ void TR::CompilationInfo::stopCompilationThreads()
 #endif
    acquireCompMonitor(vmThread);
 
+   setIsInShutdownMode();
+
 #if defined(J9VM_OPT_CRIU_SUPPORT)
    // Set the checkpoint status to interrupted regardless
    // of whether currently there is a checkpoint in progess.
@@ -5065,8 +5067,22 @@ TR::CompilationInfo::addMethodToBeCompiled(TR::IlGeneratorMethodDetails & detail
          {
          // Must find one that is SUSPENDED/SUSPENDING otherwise the logic in shouldActivateNewCompThread is incorrect
          TR::CompilationInfoPerThread *compInfoPT = getFirstSuspendedCompilationThread();
-
-         TR_ASSERT_FATAL(compInfoPT != NULL, "Could not find a suspended/suspending compilation thread");
+         if (compInfoPT == NULL)
+            {
+            if (isInShutdownMode())
+               {
+               fprintf(stderr, "Compilation is in shutdown mode");
+               }
+            fprintf(stderr, "Number of active compilation threads: %d", getNumCompThreadsActive());
+            fprintf(stderr, "Number of usable compilation threads: %d", getNumUsableCompilationThreads());
+            for (int32_t i = 0; i < getNumUsableCompilationThreads(); i++)
+               {
+               TR::CompilationInfoPerThread *curCompThreadInfoPT = _arrayOfCompilationInfoPerThread[i];
+               CompilationThreadState currentState = curCompThreadInfoPT->getCompilationThreadState();
+               fprintf(stderr, "CompThread %d has state %d\n", i, currentState);
+               }
+            TR_ASSERT_FATAL(false, "Could not find a suspended/suspending compilation thread");
+            }
 
          compInfoPT->resumeCompilationThread();
          if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompilationThreads))

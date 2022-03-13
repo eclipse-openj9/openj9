@@ -1013,6 +1013,9 @@ public:
    bool              isInZOSSupervisorState() {return _flags.testAny(IsInZOSSupervisorState);}
    void              setIsInZOSSupervisorState() { _flags.set(IsInZOSSupervisorState);}
 
+   bool              isInShutdownMode() {return _isInShutdownMode;}
+   void              setIsInShutdownMode() {_isInShutdownMode = true;}
+
    TR_LinkHead0<TR_ClassHolder> *getListOfClassesToCompile() { return &_classesToCompileList; }
    int32_t getCompilationLag();
    int32_t getCompilationLagUnlocked() { return getCompilationLag(); } // will go away
@@ -1412,6 +1415,7 @@ private:
 #ifdef DEBUG
    bool                   _traceCompiling;
 #endif
+   bool                   _isInShutdownMode;
    int32_t                _numCompThreads; // Number of usable compilation threads that does not include the diagnostic thread
    int32_t                _numDiagnosticThreads;
    int32_t                _iprofilerMaxCount;
