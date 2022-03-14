@@ -1,4 +1,4 @@
-dnl Copyright (c) 2017, 2018 IBM Corp. and others
+dnl Copyright (c) 2017, 2022 IBM Corp. and others
 dnl
 dnl This program and the accompanying materials are made available under
 dnl the terms of the Eclipse Public License 2.0 which accompanies this
@@ -78,7 +78,7 @@ define({C_EPILOGUE},{
 	ret
 })
 
-},{	dnl WIN32
+},{ dnl WIN32
 
 dnl Linux 64
 
@@ -106,9 +106,9 @@ define({C_EPILOGUE},{
 	ret
 })
 
-})	dnl WIN32
+}) dnl WIN32
 
-},{	dnl ASM_J9VM_ENV_DATA64
+},{ dnl ASM_J9VM_ENV_DATA64
 
 dnl Windows and Linux 32
 
@@ -151,9 +151,9 @@ START_PROC(setFS0)
 	ret
 END_PROC(setFS0)
 
-})	dnl WIN32
+}) dnl WIN32
 
-})	dnl ASM_J9VM_ENV_DATA64
+}) dnl ASM_J9VM_ENV_DATA64
 
 START_PROC(c_cInterpreter)
 	C_PROLOGUE

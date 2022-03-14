@@ -1,4 +1,4 @@
-dnl Copyright (c) 2017, 2017 IBM Corp. and others
+dnl Copyright (c) 2017, 2022 IBM Corp. and others
 dnl
 dnl This program and the accompanying materials are made available under
 dnl the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,7 +30,7 @@ START_PROC(c_cInterpreter)
 	add r3,r13,{#}FPR_SAVE_OFFSET(0)
 	vstmia.64 r3,{{ D8-D15 }}
 	mov J9VMTHREAD,r0
-	ldr r4,[J9VMTHREAD,{#}J9TR_VMThread_entryLocalStorage]	
+	ldr r4,[J9VMTHREAD,{#}J9TR_VMThread_entryLocalStorage]
 	add r3,r13,{#}JIT_GPR_SAVE_OFFSET(0)
 	str r3,[r4,{#}J9TR_ELS_jitGlobalStorageBase]
 	add r3,r13,{#}JIT_FPR_SAVE_OFFSET(0)

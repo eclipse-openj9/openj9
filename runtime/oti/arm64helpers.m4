@@ -44,7 +44,6 @@ define({DECLARE_PUBLIC},{
 })
 }) dnl ifdef(OSX)
 
-
 define({DECLARE_EXTERN},{.extern $1})
 
 define({START_PROC},{
@@ -59,7 +58,7 @@ define({END_PROC})
 },{
 dnl LINUX
 define({END_PROC},{
-	.size	FUNC_LABEL($1), .-FUNC_LABEL($1)
+	.size FUNC_LABEL($1), .-FUNC_LABEL($1)
 })
 })
 

@@ -5,14 +5,14 @@ dnl the terms of the Eclipse Public License 2.0 which accompanies this
 dnl distribution and is available at https://www.eclipse.org/legal/epl-2.0/
 dnl or the Apache License, Version 2.0 which accompanies this distribution and
 dnl is available at https://www.apache.org/licenses/LICENSE-2.0.
-dnl 
+dnl
 dnl This Source Code may also be made available under the following
 dnl Secondary Licenses when the conditions for such availability set
 dnl forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
 dnl General Public License, version 2 with the GNU Classpath
 dnl Exception [1] and GNU General Public License, version 2 with the
 dnl OpenJDK Assembly Exception [2].
-dnl 
+dnl
 dnl [1] https://www.gnu.org/software/classpath/license.html
 dnl [2] http://openjdk.java.net/legal/assembly-exception.html
 dnl
@@ -27,16 +27,14 @@ dnl $3 = ending value
 dnl $4 = expression
 define({forloop},
 	{define({$1}, {$2})$4
-    ifelse({$2}, {$3}, {},{$0({$1}, incr({$2}), {$3}, {$4})})})
+	ifelse({$2}, {$3}, {},{$0({$1}, incr({$2}), {$3}, {$4})})})
 define({SYM_COUNT},0)
 define({INC_SYM_COUNT},{define({SYM_COUNT},incr(SYM_COUNT))})
-
 
 J9CONST({CINTERP_STACK_SIZE},J9TR_cframe_sizeof)
 
 dnl Work arround for older versions of MASM which don't support AVX-512
 ifdef({WIN32},{
-
 
 	dnl Generate instruction of format OP <reg>, [<disp32> + rsp]
 	dnl $1 - prefix
@@ -50,7 +48,7 @@ ifdef({WIN32},{
 		dnl opcode
 		BYTE $2
 		dnl modR/M byte
-		BYTE 084h OR (($3 AND 7) SHL 3 )
+		BYTE 084h OR (($3 AND 7) SHL 3)
 		dnl SIB byte
 		BYTE 024h
 		dnl displacement
@@ -103,7 +101,7 @@ define({FILE_START},{
 	_TEXT SEGMENT 'CODE'
 })
 
-},{	dnl ASM_J9VM_ENV_DATA64
+},{ dnl ASM_J9VM_ENV_DATA64
 
 define({FILE_START},{
 	.686p
@@ -113,7 +111,7 @@ define({FILE_START},{
 	_TEXT SEGMENT PARA USE32 PUBLIC 'CODE'
 })
 
-})	dnl ASM_J9VM_ENV_DATA64
+}) dnl ASM_J9VM_ENV_DATA64
 
 define({FILE_END},{
 	_TEXT ends
@@ -138,9 +136,9 @@ define({C_FUNCTION_SYMBOL},$1)
 
 define({GLOBAL_SYMBOL},$1)
 
-},{	dnl WIN32
+},{ dnl WIN32
 
-ifdef({OSX},{ 
+ifdef({OSX},{
 
 dnl OSX
 
@@ -155,7 +153,7 @@ define({C_FUNCTION_SYMBOL},_$1)
 
 define({GLOBAL_SYMBOL},_$1)
 
-},{	dnl OSX
+},{ dnl OSX
 
 dnl LINUX
 
@@ -170,7 +168,7 @@ define({C_FUNCTION_SYMBOL},$1)
 
 define({GLOBAL_SYMBOL},$1)
 
-})	dnl OSX
+}) dnl OSX
 
 dnl LINUX and OSX
 
@@ -186,9 +184,9 @@ define({END_PROC},{
 END_$1:
 ifdef({OSX},{
 
-},{	dnl OSX
+},{ dnl OSX
 	.size $1,END_$1 - $1
-})	dnl OSX
+}) dnl OSX
 })
 
 define({DECLARE_PUBLIC},{.global GLOBAL_SYMBOL($1)})
@@ -197,19 +195,19 @@ define({DECLARE_EXTERN},{.extern C_FUNCTION_SYMBOL($1)})
 
 ifdef({OSX},{
 define({LABEL},$1)
-},{	dnl OSX
+},{ dnl OSX
 define({LABEL},.$1)
-})	dnl OSX
+}) dnl OSX
 
-})	dnl WIN32
+}) dnl WIN32
 
 ifdef({ASM_J9VM_ENV_DATA64},{
 	dnl 64-bit
 
 dnl JIT linkage:
-dnl	register save order in memory: RAX RBX RCX RDX RDI RSI RBP RSP R8-R15 XMM0-15
-dnl	argument GPRs: RAX RSI RDX RCX
-dnl	preserved: RBX R9-R15
+dnl register save order in memory: RAX RBX RCX RDX RDI RSI RBP RSP R8-R15 XMM0-15
+dnl argument GPRs: RAX RSI RDX RCX
+dnl preserved: RBX R9-R15
 
 define({_rax},{rax})
 define({_rbx},{rbx})
@@ -224,8 +222,8 @@ define({uword},{qword})
 ifdef({WIN32},{
 
 dnl C linkage for windows:
-dnl	argument GPRs: RCX RDX R8 R9
-dnl	preserved: RBX RDI RSI R12-R15 XMM6-15
+dnl argument GPRs: RCX RDX R8 R9
+dnl preserved: RBX RDI RSI R12-R15 XMM6-15
 
 define({PARM_REG},{ifelse($1,1,_rcx,$1,2,_rdx,$1,3,r8,$1,4,r9,{ERROR})})
 
@@ -242,11 +240,11 @@ define({FASTCALL_C_WITH_VMTHREAD},{
 
 define({CALL_C_WITH_VMTHREAD},{FASTCALL_C_WITH_VMTHREAD($1,$2)})
 
-},{	dnl WIN32
+},{ dnl WIN32
 
 dnl C linkage for linux:
-dnl	argument GPRs: RDI RSI RDX RCX R8 R9
-dnl	preserved: RBX R12-R15, no XMM
+dnl argument GPRs: RDI RSI RDX RCX R8 R9
+dnl preserved: RBX R12-R15, no XMM
 
 define({PARM_REG},{ifelse($1,1,_rdi,$1,2,_rsi,$1,3,_rdx,$1,4,_rcx,$1,5,r8,$1,6,r9,{ERROR})})
 
@@ -261,18 +259,18 @@ define({FASTCALL_C_WITH_VMTHREAD},{
 
 define({CALL_C_WITH_VMTHREAD},{FASTCALL_C_WITH_VMTHREAD($1,$2)})
 
-})	dnl WIN32
+}) dnl WIN32
 
-},{	dnl ASM_J9VM_ENV_DATA64
+},{ dnl ASM_J9VM_ENV_DATA64
 	dnl 32-bit
 
 dnl JIT linkage:
-dnl	register save order in memory: EAX EBX ECX EDX EDI ESI EBP ESP XMM0-7
-dnl	argument GPRs: none
-dnl	preserved: EBX ECX ESI, no XMM
+dnl register save order in memory: EAX EBX ECX EDX EDI ESI EBP ESP XMM0-7
+dnl argument GPRs: none
+dnl preserved: EBX ECX ESI, no XMM
 dnl C linkage (windows and linux)
-dnl	argument GPRs: none (stdcall) / ECX EDX (fastcall)
-dnl	preserved: EBX EDI ESI, no XMM
+dnl argument GPRs: none (stdcall) / ECX EDX (fastcall)
+dnl preserved: EBX EDI ESI, no XMM
 
 define({PARM_REG},{ifelse($1,1,_rcx,$1,2,_rdx,{ERROR})})
 
@@ -296,11 +294,11 @@ define({FASTCALL_EXTERN},{extern PASCAL FASTCALL_SYMBOL($1,$2):near})
 
 define({FASTCALL_CLEAN_STACK},{ifelse(FASTCALL_STACK_PARM_SLOTS($1),0,{},{add _rsp,4*FASTCALL_STACK_PARM_SLOTS($1)})})
 
-},{	dnl WIN32
+},{ dnl WIN32
 
 define({FASTCALL_CLEAN_STACK},{})
 
-})	dnl WIN32
+}) dnl WIN32
 
 define({FASTCALL_C},{
 	call FASTCALL_SYMBOL($1,$2)
@@ -327,7 +325,7 @@ dnl maintain 16-byte stack alignment
 	add esp,16
 })
 
-})	dnl ASM_J9VM_ENV_DATA64
+}) dnl ASM_J9VM_ENV_DATA64
 
 define({SWITCH_TO_C_STACK},{
 	mov uword ptr J9TR_VMThread_sp[_rbp],_rsp
@@ -459,7 +457,6 @@ ifdef({METHOD_INVOCATION},{
 	forloop({REG_CTR}, 0, 7, {RESTORE_MASK_64(REG_CTR, J9TR_cframe_maskRegisters+(REG_CTR*8))})
 	jmp LABEL(L_restore_volatile_done{}SYM_COUNT)
 
-
 	dnl restore XMM registers
 	LABEL(L_xmm_restore{}SYM_COUNT):
 	movdqa xmm0,J9TR_cframe_jitFPRs+(0*16)[_rsp]
@@ -515,7 +512,7 @@ define({RESTORE_C_NONVOLATILE_REGS},{
 	mov r15,qword ptr J9TR_cframe_r15[_rsp]
 })
 
-},{	dnl WIN32
+},{ dnl WIN32
 
 define({SAVE_C_VOLATILE_REGS},{
 	mov qword ptr J9TR_cframe_rax[_rsp],rax
@@ -676,7 +673,7 @@ define({RESTORE_C_NONVOLATILE_REGS},{
 	mov r15,qword ptr J9TR_cframe_r15[_rsp]
 })
 
-})	dnl WIN32
+}) dnl WIN32
 
 define({SAVE_PRESERVED_REGS},{
 	mov qword ptr J9TR_cframe_rbx[_rsp],rbx
@@ -705,14 +702,14 @@ define({STORE_VIRTUAL_REGISTERS},{
 	mov uword ptr J9TR_VMThread_tempSlot[_rbp],r8
 })
 
-},{	dnl ASM_J9VM_ENV_DATA64
+},{ dnl ASM_J9VM_ENV_DATA64
 
 define({END_HELPER},{
 	ret J9TR_pointerSize*$2
 	END_PROC($1)
 })
 
-dnl	preserved: EBX EDI ESI, no XMM
+dnl preserved: EBX EDI ESI, no XMM
 
 define({SAVE_C_VOLATILE_REGS},{
 	mov dword ptr J9TR_cframe_rax[_rsp],eax
@@ -838,10 +835,10 @@ define({STORE_VIRTUAL_REGISTERS},{
 	mov uword ptr J9TR_VMThread_tempSlot[_rbp],_rdx
 })
 
-})	dnl ASM_J9VM_ENV_DATA64
+}) dnl ASM_J9VM_ENV_DATA64
 
 ifdef({OSX},{
-	
+
 define({FASTCALL_SYMBOL},{_$1})
 
 define({FASTCALL_EXTERN},{DECLARE_EXTERN($1)})

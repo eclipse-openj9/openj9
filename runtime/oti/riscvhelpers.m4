@@ -25,7 +25,6 @@ ifelse(eval(CINTERP_STACK_SIZE % 16),0,,{ERROR stack size CINTERP_STACK_SIZE is 
 
 define({M},{$2{(}$1{)}})
 
-
 define({ALen},{8})
 
 dnl
@@ -214,7 +213,7 @@ define({SAVE_C_VOLATILE_REGS},{
     sd  a5,  JIT_GPR_SAVE_SLOT(a5)
     sd  a6,  JIT_GPR_SAVE_SLOT(a6)
     sd  a7,  JIT_GPR_SAVE_SLOT(a7)
-    
+
     sd  t3,  JIT_GPR_SAVE_SLOT(t3)
     sd  t4,  JIT_GPR_SAVE_SLOT(t4)
     sd  t5,  JIT_GPR_SAVE_SLOT(t5)
@@ -259,7 +258,7 @@ define({RESTORE_C_VOLATILE_REGS},{
     ld  a5,  JIT_GPR_SAVE_SLOT(a5)
     ld  a6,  JIT_GPR_SAVE_SLOT(a6)
     ld  a7,  JIT_GPR_SAVE_SLOT(a7)
-    
+
     ld  t3,  JIT_GPR_SAVE_SLOT(t3)
     ld  t4,  JIT_GPR_SAVE_SLOT(t4)
     ld  t5,  JIT_GPR_SAVE_SLOT(t5)
@@ -336,7 +335,7 @@ define({RESTORE_ALL_REGS},{
     RESTORE_C_NONVOLATILE_REGS
 })
 
-dnl Note, that s10 (vmthread) & s11 (java sp) are not 
+dnl Note, that s10 (vmthread) & s11 (java sp) are not
 dnl saved / restored
 
 define({SAVE_PRESERVED_REGS},{
