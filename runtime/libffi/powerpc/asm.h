@@ -23,6 +23,12 @@
    OTHER DEALINGS IN THE SOFTWARE.
    ----------------------------------------------------------------------- */
 
+/*
+ * ===========================================================================
+ * Copyright (c) 2022, 2022 IBM Corp. and others
+ * ===========================================================================
+ */
+
 #define ASM_GLOBAL_DIRECTIVE .globl
 
 
@@ -74,6 +80,9 @@
 #define CALL_MCOUNT		/* Do nothing.  */
 #endif /* PROF */
 
+/* Replace @function with %function as suggested by the bug document of
+ * the XLC compiler at https://www.ibm.com/support/pages/apar/LI73704.
+ */
 #define	ENTRY(name)							      \
   ASM_GLOBAL_DIRECTIVE C_SYMBOL_NAME(name);				      \
   ASM_TYPE_DIRECTIVE (C_SYMBOL_NAME(name),%function)			      \
@@ -93,7 +102,10 @@
 /* EALIGN is like ENTRY, but does alignment to 'words'*4 bytes
    past a 2^align boundary.  */
 #ifdef PROF
-#define EALIGN(name, alignt, words)					      \
+/* Replace @function with %function as suggested by the bug document of
+ * the XLC compiler at https://www.ibm.com/support/pages/apar/LI73704.
+ */
+#define EFFI_ALIGN(name, alignt, words)					      \
   ASM_GLOBAL_DIRECTIVE C_SYMBOL_NAME(name);				      \
   ASM_TYPE_DIRECTIVE (C_SYMBOL_NAME(name),%function)			      \
   .align ALIGNARG(2);							      \
@@ -104,7 +116,10 @@
   EALIGN_W_##words;							      \
   0:
 #else /* PROF */
-#define EALIGN(name, alignt, words)					      \
+/* Replace @function with %function as suggested by the bug document of
+ * the XLC compiler at https://www.ibm.com/support/pages/apar/LI73704.
+ */
+#define EFFI_ALIGN(name, alignt, words)					      \
   ASM_GLOBAL_DIRECTIVE C_SYMBOL_NAME(name);				      \
   ASM_TYPE_DIRECTIVE (C_SYMBOL_NAME(name),%function)			      \
   .align ALIGNARG(alignt);						      \
