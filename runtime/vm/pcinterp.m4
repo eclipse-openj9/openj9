@@ -1,4 +1,4 @@
-dnl Copyright (c) 2017, 2021 IBM Corp. and others
+dnl Copyright (c) 2017, 2022 IBM Corp. and others
 dnl
 dnl This program and the accompanying materials are made available under
 dnl the terms of the Eclipse Public License 2.0 which accompanies this
@@ -76,7 +76,7 @@ ifdef({SAVE_R13},{
 	SAVE_FPR(29)
 	SAVE_FPR(30)
 	SAVE_FPR(31)
- 	mr J9VMTHREAD,r3
+	mr J9VMTHREAD,r3
 	laddr r4,J9TR_VMThread_entryLocalStorage(J9VMTHREAD)
 	addi r0,r1,JIT_GPR_SAVE_OFFSET(0)
 	staddr r0,J9TR_ELS_jitGlobalStorageBase(r4)

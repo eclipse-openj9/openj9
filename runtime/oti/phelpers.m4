@@ -1,18 +1,18 @@
-dnl Copyright (c) 1991, 2021 IBM Corp. and others
+dnl Copyright (c) 1991, 2022 IBM Corp. and others
 dnl
 dnl This program and the accompanying materials are made available under
 dnl the terms of the Eclipse Public License 2.0 which accompanies this
 dnl distribution and is available at https://www.eclipse.org/legal/epl-2.0/
 dnl or the Apache License, Version 2.0 which accompanies this distribution and
 dnl is available at https://www.apache.org/licenses/LICENSE-2.0.
-dnl 
+dnl
 dnl This Source Code may also be made available under the following
 dnl Secondary Licenses when the conditions for such availability set
 dnl forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
 dnl General Public License, version 2 with the GNU Classpath
 dnl Exception [1] and GNU General Public License, version 2 with the
 dnl OpenJDK Assembly Exception [2].
-dnl 
+dnl
 dnl [1] https://www.gnu.org/software/classpath/license.html
 dnl [2] http://openjdk.java.net/legal/assembly-exception.html
 dnl
@@ -152,7 +152,7 @@ dnl inline version of _ptrgl follows
 define({FUNC_LABEL},{.$1})
 
 define({BRANCH_SYMBOL},{FUNC_LABEL($1)[pr]})
-	
+
 define({DECLARE_PUBLIC},{
 	.globl .$1[pr]
 	.globl $1[ds]
@@ -616,7 +616,7 @@ ifdef({MUST_PRESERVE_VR},{
 ifdef({MUST_PRESERVE_FPR},{
 	b CONCAT(.L_save_done_,SYM_COUNT)
 }) dnl MUST_PRESERVE_FPR
-CONCAT(.L_no_VR_save_,SYM_COUNT):	
+CONCAT(.L_no_VR_save_,SYM_COUNT):
 }) dnl MUST_PRESERVE_VR
 ifdef({MUST_PRESERVE_FPR},{
 	stfd fp8,JIT_FPR_SAVE_SLOT(8)
@@ -626,7 +626,7 @@ ifdef({MUST_PRESERVE_FPR},{
 	stfd fp12,JIT_FPR_SAVE_SLOT(12)
 	stfd fp13,JIT_FPR_SAVE_SLOT(13)
 }) dnl MUST_PRESERVE_FPR
-CONCAT(.L_save_done_,SYM_COUNT):	
+CONCAT(.L_save_done_,SYM_COUNT):
 })
 
 define({RESTORE_C_VOLATILE_REGS},{
@@ -740,7 +740,7 @@ ifdef({MUST_PRESERVE_VR},{
 	addi r12,r12,16
 	lxvd2x 51,0,r12
 	b CONCAT(.L_restore_done_,SYM_COUNT)
-CONCAT(.L_no_VR_restore_,SYM_COUNT):	
+CONCAT(.L_no_VR_restore_,SYM_COUNT):
 }) dnl MUST_PRESERVE_VR
 	lfd fp0,JIT_FPR_SAVE_SLOT(0)
 	lfd fp1,JIT_FPR_SAVE_SLOT(1)
@@ -758,7 +758,7 @@ ifdef({MUST_PRESERVE_FPR},{
 	lfd fp12,JIT_FPR_SAVE_SLOT(12)
 	lfd fp13,JIT_FPR_SAVE_SLOT(13)
 }) dnl MUST_PRESERVE_FPR
-CONCAT(.L_restore_done_,SYM_COUNT):	
+CONCAT(.L_restore_done_,SYM_COUNT):
 	RESTORE_CR
 	RESTORE_R2_FOR_ALL
 	laddr r3,JIT_GPR_SAVE_SLOT(3)
