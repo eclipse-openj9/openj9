@@ -1,18 +1,18 @@
-dnl Copyright (c) 1991, 2019 IBM Corp. and others
+dnl Copyright (c) 1991, 2022 IBM Corp. and others
 dnl
 dnl This program and the accompanying materials are made available under
 dnl the terms of the Eclipse Public License 2.0 which accompanies this
 dnl distribution and is available at https://www.eclipse.org/legal/epl-2.0/
 dnl or the Apache License, Version 2.0 which accompanies this distribution and
 dnl is available at https://www.apache.org/licenses/LICENSE-2.0.
-dnl 
+dnl
 dnl This Source Code may also be made available under the following
 dnl Secondary Licenses when the conditions for such availability set
 dnl forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
 dnl General Public License, version 2 with the GNU Classpath
 dnl Exception [1] and GNU General Public License, version 2 with the
 dnl OpenJDK Assembly Exception [2].
-dnl 
+dnl
 dnl [1] https://www.gnu.org/software/classpath/license.html
 dnl [2] http://openjdk.java.net/legal/assembly-exception.html
 dnl
@@ -207,21 +207,21 @@ Z$2  AMODE 64
 define({END_FUNC},{
 CODELZ$2      EQU *-Z$2
 PPAZ$2      DS    0F
-        DC    B'00000010'    
-        DC    X'CE'         
-        DC    XL2'0FFF'        
-        DC    AL4(PPA2-PPAZ$2)       
-        DC    B'10000000'       
-        DC    B'00000000'  
-        DC    B'00000000'     
-        DC    B'00000001'     
-        DC    AL2(0)                
-        DC    AL1(0)               
-        DC    XL.4'0',AL.4(0)    
-        DC    AL4(CODELZ$2)     
-        DC    H'$3'       
-        DC    CL$3'Z$1'  
-        DC    AL4(Z$2-PPAZ$2) 
+        DC    B'00000010'
+        DC    X'CE'
+        DC    XL2'0FFF'
+        DC    AL4(PPA2-PPAZ$2)
+        DC    B'10000000'
+        DC    B'00000000'
+        DC    B'00000000'
+        DC    B'00000001'
+        DC    AL2(0)
+        DC    AL1(0)
+        DC    XL.4'0',AL.4(0)
+        DC    AL4(CODELZ$2)
+        DC    H'$3'
+        DC    CL$3'Z$1'
+        DC    AL4(Z$2-PPAZ$2)
 })
 define({J9_AMODE},64)
 
@@ -426,7 +426,7 @@ define({VSTM},{VECTOR_LOADSTORE($1,$2,$3,$4,62)})
 
 dnl Encodes the Branch Indirect On Condition (BIC) instruction with the
 dnl following format:
-dnl 
+dnl
 dnl BIC M1,D2(X2,B2)
 dnl
 dnl Where:
@@ -446,7 +446,7 @@ define({ENCODE_BIC},{
 
 dnl Encodes the Add Immediate (AGSI) instruction with the following
 dnl format:
-dnl 
+dnl
 dnl AGSI D1(B2),I2
 dnl
 dnl Where:
@@ -465,7 +465,7 @@ define({ENCODE_AGSI},{
 
 dnl Encodes the Rotate Then Insert Selected Bits (RISBGN) instruction
 dnl with the following format:
-dnl 
+dnl
 dnl RISBGN R1,R2,I3,I4,I5
 dnl
 dnl Where:

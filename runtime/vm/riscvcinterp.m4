@@ -1,4 +1,4 @@
-dnl Copyright (c) 2021, 2021 IBM Corp. and others
+dnl Copyright (c) 2021, 2022 IBM Corp. and others
 dnl
 dnl This program and the accompanying materials are made available under
 dnl the terms of the Eclipse Public License 2.0 which accompanies this
@@ -100,7 +100,6 @@ cInterpreter:
     fld fs9, FPR_SAVE_SLOT(fs9)
     fld fs10,FPR_SAVE_SLOT(fs10)
     fld fs11,FPR_SAVE_SLOT(fs11)
-
 
     addi sp, sp, CINTERP_STACK_SIZE
     ret
