@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -367,18 +367,24 @@ J9::Z::UnresolvedDataSnippet::emitSnippetBody()
          *(int16_t *) cursor = 0x0014;
          cursor += sizeof(int16_t);
 
-         *(int32_t *) cursor = 0xb90800e0;                       // 64Bit: AGR R14, Rbase
-         TR::RealRegister::setRegisterField((uint32_t*)cursor, 0, base);
-         cursor += sizeof(int32_t);
+         if (base != TR::RealRegister::NoReg)
+            {
+            *(int32_t *) cursor = 0xb90800e0;                    // 64Bit: AGR R14, Rbase
+            TR::RealRegister::setRegisterField((uint32_t*)cursor, 0, base);
+            cursor += sizeof(int32_t);
+            }
          }
       else
          {
          *(int32_t *) cursor = 0x58e0e000;                       // 31Bit: L   R14,6(R14)
          cursor += sizeof(int32_t);
 
-         *(uint32_t *) cursor = (int32_t)0x1ae00000;             // 31Bit: AR  R14, Rbase
-         TR::RealRegister::setRegisterField((uint32_t*)cursor, 4, base);
-         cursor += sizeof(int16_t);
+         if (base != TR::RealRegister::NoReg)
+            {
+            *(uint32_t *) cursor = (int32_t)0x1ae00000;          // 31Bit: AR  R14, Rbase
+            TR::RealRegister::setRegisterField((uint32_t*)cursor, 4, base);
+            cursor += sizeof(int16_t);
+            }
          }
 
       uint8_t*  returnAddress = (getBranchInstruction()->getNext())->getBinaryEncoding();
