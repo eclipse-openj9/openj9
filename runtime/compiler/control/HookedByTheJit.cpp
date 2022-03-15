@@ -5922,6 +5922,13 @@ static int32_t J9THREAD_PROC samplerThreadProc(void * entryarg)
             javacoreData->numAotDataEntries,
             javacoreData->numJitHints,
             javacoreData->numJitProfiles);
+#if defined(OMR_GC_COMPRESSED_POINTERS)
+         const TR_AOTHeader *hdrInCache = TR_SharedCacheRelocationRuntime::getStoredAOTHeaderWithConfig(vm->sharedClassConfig, samplerThread);
+         if (NULL != hdrInCache)
+            {
+            TR_VerboseLog::writeLine(TR_Vlog_INFO, "\tAOT header compressedRefs shiftAmount=%u", hdrInCache->compressedPointerShift);
+            }
+#endif /* OMR_GC_COMPRESSED_POINTERS */
          }
 #endif
       if (TR::Options::isAnyVerboseOptionSet(TR_VerboseHWProfiler))
