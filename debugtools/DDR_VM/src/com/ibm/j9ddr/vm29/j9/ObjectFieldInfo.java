@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2021 IBM Corp. and others
+ * Copyright (c) 2015, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -407,8 +407,7 @@ public class ObjectFieldInfo {
 								if (valueTypeHelper.classRequires4BytePrePadding(fieldClass)) {
 									instanceSize = instanceSize.sub(U32.SIZEOF);
 								}
-								forceDoubleAlignment = (modifiers.allBitsIn(J9JavaAccessFlags.J9AccVolatile) || valueTypeHelper.isRomClassAtomic(fieldClass.romClass()))
-										&& instanceSize.eq(doubleSize);
+								forceDoubleAlignment = (modifiers.allBitsIn(J9JavaAccessFlags.J9AccVolatile) && instanceSize.eq(doubleSize));
 							} else {
 								forceDoubleAlignment = true;
 							}
