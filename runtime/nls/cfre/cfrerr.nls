@@ -1597,3 +1597,37 @@ J9NLS_CFR_ERR_VALUE_FLAG_MISSING_ON_PRIMITIVE_CLASS.explanation=Primitive class 
 J9NLS_CFR_ERR_VALUE_FLAG_MISSING_ON_PRIMITIVE_CLASS.system_action=The JVM will throw a verification or class loading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_VALUE_FLAG_MISSING_ON_PRIMITIVE_CLASS.user_response=Contact the provider of the class file for a corrected version.
 # END NON-TRANSLATABLE
+
+J9NLS_CFR_ERR_FINAL_FLAG_MISSING_ON_VALUE_CLASS=Access flag ACC_FINAL is missing on the value class.
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_FINAL_FLAG_MISSING_ON_VALUE_CLASS.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
+J9NLS_CFR_ERR_FINAL_FLAG_MISSING_ON_VALUE_CLASS.system_action=The JVM will throw a verification or class loading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_FINAL_FLAG_MISSING_ON_VALUE_CLASS.user_response=Contact the provider of the class file for a corrected version.
+# END NON-TRANSLATABLE
+
+J9NLS_CFR_ERR_INCORRECT_FLAG_FOUND_ON_VALUE_CLASS=Incorrect access flag found on the value class.
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_INCORRECT_FLAG_FOUND_ON_VALUE_CLASS.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
+J9NLS_CFR_ERR_INCORRECT_FLAG_FOUND_ON_VALUE_CLASS.system_action=The JVM will throw a verification or class loading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_INCORRECT_FLAG_FOUND_ON_VALUE_CLASS.user_response=Contact the provider of the class file for a corrected version.
+# END NON-TRANSLATABLE
+
+J9NLS_CFR_ERR_PERMITS_VALUE_ON_FINAL_CLASS=class has both ACC_FINAL and ACC_PERMITS_VALUE set
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_PERMITS_VALUE_ON_FINAL_CLASS.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
+J9NLS_CFR_ERR_PERMITS_VALUE_ON_FINAL_CLASS.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_PERMITS_VALUE_ON_FINAL_CLASS.user_response=Contact the provider of the classfile for a corrected version.
+
+J9NLS_CFR_ERR_PERMITS_VALUE_ON_NON_ABSTRACT_CLASS=Access flag ACC_PERMITS_VALUE should not be set on a non-abstract class.
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_PERMITS_VALUE_ON_NON_ABSTRACT_CLASS.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
+J9NLS_CFR_ERR_PERMITS_VALUE_ON_NON_ABSTRACT_CLASS.system_action=The JVM will throw a verification or class loading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_PERMITS_VALUE_ON_NON_ABSTRACT_CLASS.user_response=Contact the provider of the class file for a corrected version.
+# END NON-TRANSLATABLE
+
+J9NLS_CFR_ERR_PERMITS_VALUE_ON_INTERFACE__ID=Access flag ACC_PERMITS_VALUE should not be set on an interface.
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_PERMITS_VALUE_ON_INTERFACE__ID.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
+J9NLS_CFR_ERR_PERMITS_VALUE_ON_INTERFACE__ID.system_action=The JVM will throw a verification or class loading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_PERMITS_VALUE_ON_INTERFACE__ID.user_response=Contact the provider of the class file for a corrected version.
+# END NON-TRANSLATABLE

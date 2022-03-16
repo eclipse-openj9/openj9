@@ -822,6 +822,11 @@ ClassFileOracle::checkAndRecordIsIdentityInterfaceNeeded()
 			}
 		}
 	}
+	if (J9_ARE_ALL_BITS_SET(_classFile->accessFlags, CFR_ACC_PERMITS_VALUE)) {
+		if (_hasIdentityInterface || _isIdentityInterfaceNeeded) {
+			_buildResult = InvalidValueType;
+		}
+	}
 }
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 

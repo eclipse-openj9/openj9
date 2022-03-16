@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1122,11 +1122,10 @@ fieldOffsetsFindNext(J9ROMFieldOffsetWalkState *state, J9ROMFieldShape *field)
 								bool forceDoubleAlignment = false;
 								if (sizeof(U_32) == referenceSize) {
 									/** 
-									 * Flattened volatile or atomic valueType that is 8 bytes should be put at 8-byte aligned address. Currently flattening is disabled
+									 * Flattened volatile valueType that is 8 bytes should be put at 8-byte aligned address. Currently flattening is disabled
 									 * for such valueType > 8 bytes.
 									 */
-									forceDoubleAlignment = (J9_ARE_ALL_BITS_SET(field->modifiers, J9AccVolatile) || (J9ROMCLASS_IS_ATOMIC(fieldClass->romClass)))
-											&& (sizeof(U_64) == J9CLASS_UNPADDED_INSTANCE_SIZE(fieldClass));
+									forceDoubleAlignment = (J9_ARE_ALL_BITS_SET(field->modifiers, J9AccVolatile) && (sizeof(U_64) == J9CLASS_UNPADDED_INSTANCE_SIZE(fieldClass)));
 								} else {
 									/* copyObjectFields() uses U_64 load/store. Put all nested fields at 8-byte aligned address. */
 									forceDoubleAlignment = true;

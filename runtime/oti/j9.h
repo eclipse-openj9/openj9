@@ -335,7 +335,6 @@ static const struct { \
 #define J9_IS_J9CLASS_FLATTENED(clazz) J9_ARE_ALL_BITS_SET((clazz)->classFlags, J9ClassIsFlattened)
 /**
  * Disable flattening of volatile field that is > 8 bytes for now, as the current implementation of copyObjectFields() will tear this field.
- * Flattening of atomic valueType that is > 8 bytes is also disabled. J9ClassIsFlattened is not set on such valueTypes.
  */
 #define J9_IS_FIELD_FLATTENED(fieldClazz, romFieldShape) \
 	(J9_IS_J9CLASS_FLATTENED(fieldClazz) && \
