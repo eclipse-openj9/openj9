@@ -121,6 +121,20 @@ class ValuePropagation : public OMR::ValuePropagation
     */
    bool transformFlattenedArrayElementStore(TR_OpaqueClassBlock *arrayClass, TR::TreeTop *callTree, TR::Node *callNode, bool needsNullValueCheck);
 
+   /**
+    * Determine the bounds and element size for an array constraint
+    *
+    * \param[in] arrayConstraint A \ref TR::VPConstraint for an array reference
+    * \param[out] lowerBoundLimit The lower bound on the size of the array
+    * \param[out] upperBoundLimit The upper bound on the size of the array
+    * \param[out] elementSize The size of an element of the array; zero if not known
+    * \param[out] isKnownObj Set to \c true if this constraint represents a known object;\n
+    *             \c false otherwise.
+    */
+   virtual void getArrayLengthLimits(TR::VPConstraint *arrayConstraint, int32_t &lowerBoundLimit, int32_t &upperBoundLimit,
+                   int32_t &elementSize, bool &isKnownObj);
+
+
    virtual void getParmValues();
 
    /**
@@ -186,28 +200,262 @@ class ValuePropagation : public OMR::ValuePropagation
    TR::VP_BCDSign **_bcdSignConstraints;
    List<TreeNodeResultPair> _callsToBeFoldedToNode;
 
-   struct ValueTypesHelperCallTransform {
+   struct ValueTypesHelperCallTransform;
+   struct ObjectComparisonHelperCallTransform;
+   struct ArrayOperationHelperCallTransform;
+   struct ArrayElementLoadHelperCallTransform;
+   struct ArrayElementStoreHelperCallTransform;
+
+   /**
+    * \brief Base class for tracking delayed transformations of value types helper calls
+    */
+   struct ValueTypesHelperCallTransform
+      {
       TR_ALLOC(TR_Memory::ValuePropagation)
+
       TR::TreeTop *_tree;
       TR::Node *_callNode;
       flags8_t _flags;
-      TR_OpaqueClassBlock *_arrayClass;
-
-      ValueTypesHelperCallTransform(TR::TreeTop *tree, TR::Node *callNode, flags8_t flags, TR_OpaqueClassBlock *arrayClass)
-         : _tree(tree), _callNode(callNode), _flags(flags), _arrayClass(arrayClass) {}
 
       enum // flag bits
          {
-         IsArrayLoad               = 0x01,
-         IsArrayStore              = 0x02,
-         IsRefCompare              = 0x04,
+         unused1                   = 0x01,
+         unused2                   = 0x02,
+         unused3                   = 0x04,
          InsertDebugCounter        = 0x08,
          RequiresBoundCheck        = 0x10,
          RequiresStoreCheck        = 0x20,
          RequiresNullValueCheck    = 0x40,
          IsFlattenedElement        = 0x80, // Indicates whether or not the array elements are flattened in array load or array store.
          };
-   };
+
+      ValueTypesHelperCallTransform(TR::TreeTop *tree, TR::Node *callNode, flags8_t flags)
+         : _tree(tree), _callNode(callNode), _flags(flags) {}
+
+      /**
+       * \brief Indicates whether this represents a delayed transformation for a call to
+       *        the value types <objectEqualityCompare> or <objectInequalityCompare> helper
+       *
+       * \return \c true if and only if this represents a delayed transformation for a
+       *        a call to the <objectEqualityCompare> or <objectInequalityCompare> helper
+       */
+      virtual bool isObjectComparisonHelperCallTransform()
+         {
+         return false;
+         }
+
+      /**
+       * \brief Indicates whether this represents a delayed transformation for a call to the value
+       *        types <jitLoadFlattenableArrayElement> or <jitStoreFlattenableArrayElement> helper
+       *
+       * \return \c true if and only if this represents a delayed transformation for a
+       *        a call to the <jitLoadFlattenableArrayElement> or <jitStoreFlattenableArrayElement>
+       *        helper
+       */
+      virtual bool isArrayOperationHelperCallTransform()
+         {
+         return false;
+         }
+
+      /**
+       * \brief Indicates whether this represents a delayed transformation for a
+       *        call to the value types <jitLoadFlattenableArrayElement> helper
+       *
+       * \return \c true if and only if this represents a delayed transformation for a
+       *        a call to the <jitLoadFlattenableArrayElement>
+       */
+      virtual bool isArrayElementLoadHelperCallTransform()
+         {
+         return false;
+         }
+
+      /**
+       * \brief Indicates whether this represents a delayed transformation for
+       * a call to the value types <jitStoreFlattenableArrayElement> helper
+       *
+       * \return \c true if and only if this represents a delayed transformation for a
+       *        a call to the <jitStoreFlattenableArrayElement>
+       */
+      virtual bool isArrayElementStoreHelperCallTransform()
+         {
+         return false;
+         }
+
+      /**
+       * \brief Casts this object to a pointer to \ref ObjectComparisonHelperCallTransform,
+       * if possible; otherwise, reports a fatal assertion failure.
+       */
+      virtual ObjectComparisonHelperCallTransform *castToObjectComparisonHelperCallTransform()
+         {
+         TR_ASSERT_FATAL(false, "ValueTypesHelperCallTransform is not an ObjectComparisonHelperCallTransform\n");
+         }
+
+      /**
+       * \brief Casts this object to a pointer to \ref ArrayOperationHelperCallTransform,
+       * if possible; otherwise, reports a fatal assertion failure.
+       */
+      virtual ArrayOperationHelperCallTransform *castToArrayOperationHelperCallTransform()
+         {
+         TR_ASSERT_FATAL(false, "ValueTypesHelperCallTransform is not an ArrayOperationHelperCallTransform\n");
+         }
+
+      /**
+       * \brief Casts this object to a pointer to \ref ArrayElementLoadHelperCallTransform,
+       * if possible; otherwise, reports a fatal assertion failure.
+       */
+      virtual ArrayElementLoadHelperCallTransform *castToArrayElementLoadHelperCallTransform()
+         {
+         TR_ASSERT_FATAL(false, "ValueTypesHelperCallTransform is not an ArrayElementLoadHelperCallTransform\n");
+         }
+
+      /**
+       * \brief Casts this object to a pointer to \ref ArrayElementStoreHelperCallTransform,
+       * if possible; otherwise, reports a fatal assertion failure.
+       */
+      virtual ArrayElementStoreHelperCallTransform *castToArrayElementStoreHelperCallTransform()
+         {
+         TR_ASSERT_FATAL(false, "ValueTypesHelperCallTransform is not an ArrayElementStoreHelperCallTransform\n");
+         }
+      };
+
+   /**
+    * \brief Base class for tracking delayed transformations of value types
+    * helper call <objectEqualityCompare> and <objectInequalityCompare>
+    */
+   struct ObjectComparisonHelperCallTransform : ValueTypesHelperCallTransform
+      {
+      ObjectComparisonHelperCallTransform(TR::TreeTop *tree, TR::Node *callNode, flags8_t flags)
+         : ValueTypesHelperCallTransform(/* ComparisonHelper, */ tree, callNode, flags) {}
+
+      /**
+       * \brief Indicates whether this represents a delayed transformation for a call to
+       *        the value types <objectEqualityCompare> or <objectInequalityCompare> helper
+       *
+       * \return \c true if and only if this represents a delayed transformation for a
+       *        a call to the <objectEqualityCompare> or <objectInequalityCompare> helper
+       */
+      virtual bool isObjectComparisonHelperCallTransform()
+         {
+         return true;
+         }
+
+      /**
+       * \brief Casts this object to a pointer to \ref ObjectComparisonHelperCallTransform,
+       * if possible; otherwise, reports a fatal assertion failure.
+       */
+      virtual ObjectComparisonHelperCallTransform *castToObjectComparisonHelperCallTransform()
+         {
+         return static_cast<ObjectComparisonHelperCallTransform *>(this);
+         }
+      };
+
+   /**
+    * \brief Class for tracking delayed transformations of value types
+    * helper calls <jitLoadFlattenableArrayElement> and
+    * <jitStoreFlattenableArrayElement>
+    */
+   struct ArrayOperationHelperCallTransform : ValueTypesHelperCallTransform
+      {
+      TR_OpaqueClassBlock *_arrayClass;
+      int32_t _arrayLength;
+
+      ArrayOperationHelperCallTransform(TR::TreeTop *tree, TR::Node *callNode, flags8_t flags, int32_t arrayLength,
+                                        TR_OpaqueClassBlock *arrayClass = NULL)
+         : ValueTypesHelperCallTransform(tree, callNode, flags), _arrayClass(arrayClass), _arrayLength(arrayLength) {}
+
+
+      /**
+       * \brief Indicates whether this represents a delayed transformation for a call to the value
+       *        types <jitLoadFlattenableArrayElement> or <jitStoreFlattenableArrayElement> helper
+       *
+       * \return \c true if and only if this represents a delayed transformation for a
+       *        a call to the <jitLoadFlattenableArrayElement> or <jitStoreFlattenableArrayElement>
+       *        helper
+       */
+      virtual bool isArrayOperationHelperCallTransform()
+         {
+         return true;
+         }
+
+      /**
+       * \brief Casts this object to a pointer to \ref ArrayOperationHelperCallTransform,
+       * if possible; otherwise, reports a fatal assertion failure.
+       */
+      virtual ArrayOperationHelperCallTransform *castToArrayOperationHelperCallTransform()
+         {
+         return static_cast<ArrayOperationHelperCallTransform *>(this);
+         }
+      };
+
+   /**
+    * \brief Class for tracking delayed transformations of value types
+    * helper calls <jitLoadFlattenableArrayElement>
+    */
+   struct ArrayElementLoadHelperCallTransform : ArrayOperationHelperCallTransform
+      {
+      ArrayElementLoadHelperCallTransform(TR::TreeTop *tree, TR::Node *callNode, flags8_t flags, int32_t arrayLength,
+                                          TR_OpaqueClassBlock *arrayClass = NULL)
+         : ArrayOperationHelperCallTransform(tree, callNode, flags, arrayLength, arrayClass) {}
+
+      /**
+       * \brief Indicates whether this represents a delayed transformation for a
+       *        call to the value types <jitLoadFlattenableArrayElement> helper
+       *
+       * \return \c true if and only if this represents a delayed transformation for a
+       *        a call to the <jitLoadFlattenableArrayElement>
+       */
+      virtual bool isArrayElementLoadHelperCallTransform()
+         {
+         return true;
+         }
+
+      /**
+       * \brief Casts this object to a pointer to \ref ArrayElementLoadHelperCallTransform,
+       * if possible; otherwise, reports a fatal assertion failure.
+       */
+      virtual ArrayElementLoadHelperCallTransform *castToArrayElementLoadHelperCallTransform()
+         {
+         return static_cast<ArrayElementLoadHelperCallTransform *>(this);
+         }
+      };
+
+   /**
+    * \brief Class for tracking delayed transformations of value types
+    * helper calls <jitStoreFlattenableArrayElement>
+    */
+   struct ArrayElementStoreHelperCallTransform : ArrayOperationHelperCallTransform
+      {
+      TR_OpaqueClassBlock *_storeClassForArrayStoreCHK;
+      TR_OpaqueClassBlock *_componentClassForArrayStoreCHK;
+
+      ArrayElementStoreHelperCallTransform(TR::TreeTop *tree, TR::Node *callNode, flags8_t flags, int32_t arrayLength,
+                                           TR_OpaqueClassBlock *arrayClass = NULL, TR_OpaqueClassBlock *storeClassForCheck = NULL,
+                                           TR_OpaqueClassBlock *componentClassForCheck = NULL)
+         : ArrayOperationHelperCallTransform(tree, callNode, flags, arrayLength, arrayClass),
+                     _storeClassForArrayStoreCHK(storeClassForCheck), _componentClassForArrayStoreCHK(componentClassForCheck) {}
+
+
+      /**
+       * \brief Indicates whether this represents a delayed transformation for
+       * a call to the value types <jitStoreFlattenableArrayElement> helper
+       *
+       * \return \c true if and only if this represents a delayed transformation for a
+       *        a call to the <jitStoreFlattenableArrayElement>
+       */
+      virtual bool isArrayElementStoreHelperCallTransform()
+         {
+         return true;
+         }
+
+      /**
+       * \brief Casts this object to a pointer to \ref ArrayElementStoreHelperCallTransform,
+       * if possible; otherwise, reports a fatal assertion failure.
+       */
+      virtual ArrayElementStoreHelperCallTransform *castToArrayElementStoreHelperCallTransform()
+         {
+         return static_cast<ArrayElementStoreHelperCallTransform *>(this);
+         }
+      };
 
    List<ValueTypesHelperCallTransform> _valueTypesHelperCallsToBeFolded;
    };
