@@ -173,6 +173,11 @@ private:
 						/* Do not zero the TLH if it is already zero's */
 						initializeSlots = initializeSlots && _initializeSlotsOnTLHAllocate;
 #endif /* J9VM_GC_BATCH_CLEAR_TLH */
+#if defined(J9VM_GC_REALTIME)
+						MM_GCRememberedSetFragment *fragment =  &currentThread->sATBBarrierRememberedSetFragment;
+						MM_GCRememberedSet *parent = fragment->fragmentParent;
+						initializeSlots = initializeSlots || (0 != parent->globalFragmentIndex);
+#endif /* J9VM_GC_REALTIME */
 					} else {
 						return NULL;
 					}
@@ -351,6 +356,11 @@ public:
 				/* Do not zero the TLH if it is already zero'd */
 				initializeSlots = initializeSlots && _initializeSlotsOnTLHAllocate;
 #endif /* J9VM_GC_BATCH_CLEAR_TLH */
+#if defined(J9VM_GC_REALTIME)
+				MM_GCRememberedSetFragment *fragment =  &currentThread->sATBBarrierRememberedSetFragment;
+				MM_GCRememberedSet *parent = fragment->fragmentParent;
+				initializeSlots = initializeSlots || (0 != parent->globalFragmentIndex);
+#endif /* J9VM_GC_REALTIME */
 			} else {
 				return NULL;
 			}
