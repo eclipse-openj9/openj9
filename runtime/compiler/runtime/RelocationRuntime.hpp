@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -352,6 +352,7 @@ public:
          _sharedCacheIsFull(false), TR_RelocationRuntime(jitCfg) {}
 
       virtual bool storeAOTHeader(TR_FrontEnd *fe, J9VMThread *curThread);
+      static const TR_AOTHeader *getStoredAOTHeaderWithConfig(J9SharedClassConfig *sharedClassConfig, J9VMThread *curThread);
       virtual const TR_AOTHeader *getStoredAOTHeader(J9VMThread *curThread);
       virtual TR_AOTHeader *createAOTHeader(TR_FrontEnd *fe);
       virtual bool validateAOTHeader(TR_FrontEnd *fe, J9VMThread *curThread);

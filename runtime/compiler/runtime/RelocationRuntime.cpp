@@ -1126,13 +1126,19 @@ TR_SharedCacheRelocationRuntime::validateAOTHeader(TR_FrontEnd *fe, J9VMThread *
    }
 
 const TR_AOTHeader *
-TR_SharedCacheRelocationRuntime::getStoredAOTHeader(J9VMThread *curThread)
+TR_SharedCacheRelocationRuntime::getStoredAOTHeaderWithConfig(J9SharedClassConfig *sharedClassConfig, J9VMThread *curThread)
    {
    J9SharedDataDescriptor firstDescriptor;
    firstDescriptor.address = NULL;
-   javaVM()->sharedClassConfig->findSharedData(curThread, aotHeaderKey, aotHeaderKeyLength,
-                                               J9SHR_DATA_TYPE_AOTHEADER, FALSE, &firstDescriptor, NULL);
+   sharedClassConfig->findSharedData(curThread, aotHeaderKey, aotHeaderKeyLength,
+                                     J9SHR_DATA_TYPE_AOTHEADER, FALSE, &firstDescriptor, NULL);
    return (const TR_AOTHeader *)firstDescriptor.address;
+   }
+
+const TR_AOTHeader *
+TR_SharedCacheRelocationRuntime::getStoredAOTHeader(J9VMThread *curThread)
+   {
+   return getStoredAOTHeaderWithConfig(javaVM()->sharedClassConfig, curThread);
    }
 
 TR_AOTHeader *
