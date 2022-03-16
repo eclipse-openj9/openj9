@@ -181,16 +181,12 @@ _syscall5(int, _llseek, uint, fd, ulong, hi, ulong, lo, loff_t *, res, uint, wh)
 /* DIR_SEPARATOR is defined in j9comp.h */
 #define jclSeparator DIR_SEPARATOR
 
-#define CALL_BUNDLED_FUNCTIONS_DIRECTLY 0
-
-#if !CALL_BUNDLED_FUNCTIONS_DIRECTLY
 #define CREATE_JAVA_VM_ENTRYPOINT "J9_CreateJavaVM"
 #define GET_JAVA_VMS_ENTRYPOINT "J9_GetCreatedJavaVMs"
 
 typedef jint (JNICALL *CreateVM)(JavaVM ** p_vm, void ** p_env, J9CreateJavaVMParams *createparams);
 typedef jint (JNICALL *GetVMs)(JavaVM**, jsize, jsize*);
 typedef jint (JNICALL *DetachThread)(JavaVM *);
-#endif /* !CALL_BUNDLED_FUNCTIONS_DIRECTLY */
 
 typedef jint (JNICALL *DestroyVM)(JavaVM *);
 typedef int (*SigAction) (int signum, const struct sigaction *act, struct sigaction *oldact);
@@ -202,7 +198,6 @@ typedef jint (JNICALL *pNewStringPlatform)(JNIEnv*, const char*, jstring *, cons
 typedef jint (JNICALL *p_a2e_vsprintf)(char *, const char *, va_list);
 #endif
 
-#if !CALL_BUNDLED_FUNCTIONS_DIRECTLY
 typedef UDATA* (*ThreadGlobal)(const char* name);
 typedef IDATA (*ThreadAttachEx)(omrthread_t *handle, omrthread_attr_t *attr);
 typedef void (*ThreadDetach)(omrthread_t thread);
@@ -223,7 +218,6 @@ typedef UDATA (*PortGetSize)(struct J9PortLibraryVersion *version);
 typedef I_32 (*PortGetVersion)(struct J9PortLibrary *portLibrary, struct J9PortLibraryVersion *version);
 
 typedef void* (*J9GetInterface)(J9_INTERFACE_SELECTOR interfaceSelector, J9PortLibrary* portLib, void *userData);
-#endif /* !CALL_BUNDLED_FUNCTIONS_DIRECTLY */
 
 #if defined(J9ZOS390)
 #define ZOS_THR_WEIGHT_NOT_FOUND   ((UDATA) 0U)
@@ -251,12 +245,10 @@ static J9StringBuffer * j9libvmBuffer = NULL;
 static J9StringBuffer * j9Buffer = NULL;
 static BOOLEAN jvmInSubdir=TRUE;
 
-#if !CALL_BUNDLED_FUNCTIONS_DIRECTLY
 static CreateVM globalCreateVM;
 static GetVMs globalGetVMs;
 
-static 	J9GetInterface f_j9_GetInterface = NULL;
-#endif /* !CALL_BUNDLED_FUNCTIONS_DIRECTLY */
+static J9GetInterface f_j9_GetInterface = NULL;
 
 static DestroyVM globalDestroyVM;
 
@@ -267,7 +259,6 @@ static pNewStringPlatform globalNewStringPlatform;
 static p_a2e_vsprintf global_a2e_vsprintf;
 #endif
 
-#if !CALL_BUNDLED_FUNCTIONS_DIRECTLY
 static ThreadGlobal f_threadGlobal;
 static ThreadAttachEx f_threadAttachEx;
 static ThreadDetach f_threadDetach;
@@ -285,7 +276,6 @@ static PortGetVersion portGetVersionFn;
 static ThreadLibControl f_threadLibControl;
 static SetCategory f_setCategory;
 static LibEnableCPUMonitor f_libEnableCPUMonitor;
-#endif /* !CALL_BUNDLED_FUNCTIONS_DIRECTLY */
 
 static UDATA monitor = 0;
 static J9InternalVMFunctions globalInvokeInterface;
@@ -879,11 +869,9 @@ jint JNICALL DestroyJavaVM(JavaVM * javaVM)
 static BOOLEAN
 librariesLoaded(void)
 {
-#if !CALL_BUNDLED_FUNCTIONS_DIRECTLY
-	if ((globalCreateVM  == NULL)||(globalGetVMs == NULL)) {
+	if ((NULL == globalCreateVM) || (NULL == globalGetVMs)) {
 		return FALSE;
 	}
-#endif
 	return TRUE;
 }
 
@@ -988,7 +976,6 @@ preloadLibraries(void)
 	DBG_MSG(("j9libvmBuffer = <%s>\n", jvmBufferData(j9libvmBuffer)));
 	DBG_MSG(("j9Buffer      = <%s>\n", jvmBufferData(j9Buffer)));
 
-#if !CALL_BUNDLED_FUNCTIONS_DIRECTLY
 	vmDLL = (HINSTANCE) preloadLibrary(vmDllName, TRUE);
 	preloadLibrary(J9_HOOKABLE_DLL_NAME, TRUE);
 
@@ -1043,7 +1030,6 @@ preloadLibraries(void)
 	}
 	preloadLibrary(J9_ZIP_DLL_NAME, TRUE);
 
-#endif /* !CALL_BUNDLED_FUNCTIONS_DIRECTLY */
 	/* CMVC 152702: with other JVM on the path this library can get loaded from the wrong
 	 * location if not preloaded. */
 	return TRUE;
@@ -1967,17 +1953,17 @@ JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITSer
 	specialArgs.ibmMallocTraceSet = &ibmMallocTraceSet;
 #ifdef J9ZTPF
 
-    result = tpf_eownrc(TPF_SET_EOWNR, "IBMRT4J                        ");
+	result = tpf_eownrc(TPF_SET_EOWNR, "IBMRT4J                        ");
 
-    if (result < 0)  {
-        fprintf(stderr, "Failed to issue tpf_eownrc.");
-        return JNI_ERR;
-    }
-    result = tmslc(TMSLC_ENABLE+TMSLC_HOLD, "IBMRT4J");
-    if (result < 0)  {
-        fprintf(stderr, "Failed to start time slicing.");
-        return JNI_ERR;
-    }
+	if (result < 0)  {
+		fprintf(stderr, "Failed to issue tpf_eownrc.");
+		return JNI_ERR;
+	}
+	result = tmslc(TMSLC_ENABLE+TMSLC_HOLD, "IBMRT4J");
+	if (result < 0)  {
+		fprintf(stderr, "Failed to start time slicing.");
+		return JNI_ERR;
+	}
 #endif /* defined(J9ZTPF) */
 	captureCommandLine();
 	/*
@@ -2099,24 +2085,14 @@ JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITSer
 	printf("cwd = %s\n", cwd);
 #endif
 
-#if CALL_BUNDLED_FUNCTIONS_DIRECTLY
-	if (0 != omrthread_attach_ex(&attachedThread, J9THREAD_ATTR_DEFAULT)) {
-		result = JNI_ERR;
-	}
-#else /* CALL_BUNDLED_FUNCTIONS_DIRECTLY */
 	if (0 != f_threadAttachEx(&attachedThread, J9THREAD_ATTR_DEFAULT)) {
 		result = JNI_ERR;
 	}
-#endif /* CALL_BUNDLED_FUNCTIONS_DIRECTLY */
 	if (JNI_OK != result) {
 		goto exit;
 	}
 
-#if CALL_BUNDLED_FUNCTIONS_DIRECTLY
-	omrthread_lib_enable_cpu_monitor(attachedThread);
-#else /* CALL_BUNDLED_FUNCTIONS_DIRECTLY */
 	f_libEnableCPUMonitor(attachedThread);
-#endif /* CALL_BUNDLED_FUNCTIONS_DIRECTLY */
 
 #if defined(J9ZOS390)
 	/*
@@ -2138,33 +2114,21 @@ JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITSer
 	J9PORT_SET_VERSION(&portLibraryVersion, J9PORT_CAPABILITY_MASK);
 
 	expectedLibrarySize = sizeof(J9PortLibrary);
-#if CALL_BUNDLED_FUNCTIONS_DIRECTLY
-	portLibraryInitStatus = j9port_init_library(&j9portLibrary, &portLibraryVersion, expectedLibrarySize);
-#else
 	portLibraryInitStatus = portInitLibrary(&j9portLibrary, &portLibraryVersion, expectedLibrarySize);
-#endif /* CALL_BUNDLED_FUNCTIONS_DIRECTLY */
 
 	if (0 != portLibraryInitStatus) {
 		J9PortLibraryVersion actualVersion;
 		/* port lib init failure */
 		switch (portLibraryInitStatus) {
 		case J9PORT_ERROR_INIT_WRONG_MAJOR_VERSION: {
-#if CALL_BUNDLED_FUNCTIONS_DIRECTLY
-			j9port_getVersion(&j9portLibrary, &actualVersion);
-#else
 			portGetVersionFn(&j9portLibrary, &actualVersion);
-#endif /* CALL_BUNDLED_FUNCTIONS_DIRECTLY */
 
 			fprintf(stderr,"Error: Port Library failed to initialize: expected major version %u, actual version is %u\n",
 					portLibraryVersion.majorVersionNumber, actualVersion.majorVersionNumber);
 			break;
 		}
 		case J9PORT_ERROR_INIT_WRONG_SIZE: {
-#if CALL_BUNDLED_FUNCTIONS_DIRECTLY
-			UDATA actualSize = j9port_getSize(&portLibraryVersion);
-#else
 			UDATA actualSize = portGetSizeFn(&portLibraryVersion);
-#endif /* CALL_BUNDLED_FUNCTIONS_DIRECTLY */
 			fprintf(stderr,"Error: Port Library failed to initialize: expected library size %" OMR_PRIuPTR ", actual size is %" OMR_PRIuPTR "\n",
 					expectedLibrarySize, actualSize);
 			break;
@@ -2190,11 +2154,7 @@ JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITSer
 
 	/* Get the thread library memory categories */
 	{
-#if CALL_BUNDLED_FUNCTIONS_DIRECTLY
-		IDATA threadCategoryResult = omrthread_lib_control(J9THREAD_LIB_CONTROL_GET_MEM_CATEGORIES, (UDATA)&j9MainMemCategorySet);
-#else
 		IDATA threadCategoryResult = f_threadLibControl(J9THREAD_LIB_CONTROL_GET_MEM_CATEGORIES, (UDATA)&j9MainMemCategorySet);
-#endif /* CALL_BUNDLED_FUNCTIONS_DIRECTLY */
 
 		if (threadCategoryResult) {
 			fprintf(stderr,"Error: Couldn't get memory categories from thread library.\n");
@@ -2265,7 +2225,6 @@ JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITSer
 		vmArgumentsList.head = NULL;
 		vmArgumentsList.tail = NULL;
 		if (NULL != specialArgs.executableJarPath) {
-#if !CALL_BUNDLED_FUNCTIONS_DIRECTLY
 			if (NULL == f_j9_GetInterface) {
 #ifdef WIN32
 				f_j9_GetInterface = (J9GetInterface) GetProcAddress (j9vm_dllHandle, (LPCSTR) "J9_GetInterface");
@@ -2275,9 +2234,6 @@ JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITSer
 			}
 			/* j9binBuffer->data is null terminated */
 			zipFuncs = (J9ZipFunctionTable*) f_j9_GetInterface(IF_ZIPSUP, &j9portLibrary, j9binBuffer->data);
-#else /* CALL_BUNDLED_FUNCTIONS_DIRECTLY */
-			zipFuncs = (J9ZipFunctionTable*) J9_GetInterface(IF_ZIPSUP, &j9portLibrary, j9binBuffer);
-#endif /* CALL_BUNDLED_FUNCTIONS_DIRECTLY */
 #if defined(WIN32)
 			{
 				BOOLEAN conversionSucceed = FALSE;
@@ -2390,11 +2346,7 @@ JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITSer
 	}
 	createParams.vm_args = j9ArgList;
 
-#if CALL_BUNDLED_FUNCTIONS_DIRECTLY
-	result = J9_CreateJavaVM((JavaVM**)&BFUjavaVM, penv, &createParams);
-#else
 	result = globalCreateVM((JavaVM**)&BFUjavaVM, penv, &createParams);
-#endif /* CALL_BUNDLED_FUNCTIONS_DIRECTLY  */
 
 #ifdef DEBUG
 	fprintf(stdout,"Finished, result %d, env %llx\n", result, (long long)*penv);
@@ -2464,23 +2416,13 @@ JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITSer
 		J9JavaVM *env = (J9JavaVM *) BFUjavaVM;
 		J9VMThread *currentThread = env->mainThread;
 		omrthread_t thread = currentThread->osThread;
-#if CALL_BUNDLED_FUNCTIONS_DIRECTLY
-		omrthread_set_category(thread, J9THREAD_CATEGORY_APPLICATION_THREAD, J9THREAD_TYPE_SET_MODIFY);
-#else
 		f_setCategory(thread, J9THREAD_CATEGORY_APPLICATION_THREAD, J9THREAD_TYPE_SET_MODIFY);
-#endif /* CALL_BUNDLED_FUNCTIONS_DIRECTLY */
 	}
 
 exit:
-#if CALL_BUNDLED_FUNCTIONS_DIRECTLY
-	if (NULL != attachedThread) {
-		omrthread_detach(attachedThread);
-	}
-#else /* CALL_BUNDLED_FUNCTIONS_DIRECTLY */
 	if (NULL != attachedThread) {
 		f_threadDetach(attachedThread);
 	}
-#endif /* CALL_BUNDLED_FUNCTIONS_DIRECTLY */
 #if defined(WIN32)
 	if (NULL != executableJarPath) {
 		PORT_ACCESS_FROM_PORT(&j9portLibrary);
@@ -2524,12 +2466,8 @@ JNI_GetCreatedJavaVMs(JavaVM **vmBuf, jsize bufLen, jsize *nVMs)
 	 * However, if the libraries have not already been preloaded then we know that no vms have been created and
 	 * can return the right answer
 	 */
-	if(librariesLoaded()){
-#if CALL_BUNDLED_FUNCTIONS_DIRECTLY
-		result = J9_GetCreatedJavaVMs(vmBuf, bufLen, nVMs);
-#else
+	if (librariesLoaded()) {
 		result = globalGetVMs(vmBuf, bufLen, nVMs);
-#endif /* CALL_BUNDLED_FUNCTIONS_DIRECTLY */
 	} else {
 		/* simply return that there have been no JVMs created */
 		result = JNI_OK;
@@ -2795,36 +2733,23 @@ int findDirUplevelToDirContainingFile(J9StringBuffer **result, char *pathEnvar, 
 			truncatePath(jvmBufferData(*result));
 		}
 	}
-   return rc;
+	return rc;
 }
 
 
 void
 exitHook(J9JavaVM *vm)
 {
-#if CALL_BUNDLED_FUNCTIONS_DIRECTLY
-	while (omrthread_monitor_enter(vm->vmThreadListMutex), vm->sidecarExitFunctions)
-#else
-	while (f_monitorEnter(vm->vmThreadListMutex), vm->sidecarExitFunctions)
-#endif /* CALL_BUNDLED_FUNCTIONS_DIRECTLY */
-	{
+	while (f_monitorEnter(vm->vmThreadListMutex), vm->sidecarExitFunctions) {
 		J9SidecarExitFunction * current = vm->sidecarExitFunctions;
 
 		vm->sidecarExitFunctions = current->next;
-#if CALL_BUNDLED_FUNCTIONS_DIRECTLY
-		omrthread_monitor_exit(vm->vmThreadListMutex);
-#else
 		f_monitorExit(vm->vmThreadListMutex);
-#endif /* CALL_BUNDLED_FUNCTIONS_DIRECTLY */
 		current->func();
 		free(current);
 	}
 
-#if CALL_BUNDLED_FUNCTIONS_DIRECTLY
-	omrthread_monitor_exit(vm->vmThreadListMutex);
-#else
 	f_monitorExit(vm->vmThreadListMutex);
-#endif /* CALL_BUNDLED_FUNCTIONS_DIRECTLY */
 }
 
 static void*
@@ -3849,20 +3774,12 @@ JVM_OnExit(void (*func)(void))
 	if (newFunc) {
 		newFunc->func = func;
 
-#if CALL_BUNDLED_FUNCTIONS_DIRECTLY
-		omrthread_monitor_enter(BFUjavaVM->vmThreadListMutex);
-#else
 		f_monitorEnter(BFUjavaVM->vmThreadListMutex);
-#endif /* CALL_BUNDLED_FUNCTIONS_DIRECTLY */
 
 		newFunc->next = BFUjavaVM->sidecarExitFunctions;
 		BFUjavaVM->sidecarExitFunctions = newFunc;
 
-#if CALL_BUNDLED_FUNCTIONS_DIRECTLY
-		omrthread_monitor_exit(BFUjavaVM->vmThreadListMutex);
-#else
 		f_monitorExit(BFUjavaVM->vmThreadListMutex);
-#endif /* CALL_BUNDLED_FUNCTIONS_DIRECTLY */
 
 		BFUjavaVM->sidecarExitHook = &exitHook;
 	} else {
@@ -4486,9 +4403,9 @@ JVM_Open(const char* filename, jint flags, jint mode)
 
 	doUnlink = (flags & O_TEMPORARY);
 #if !defined(J9ZTPF)
-    flags &= (O_CREAT | O_APPEND | O_RDONLY | O_RDWR | O_TRUNC | O_WRONLY | O_EXCL | O_NOCTTY | O_NONBLOCK | O_NDELAY | O_SYNC | O_DSYNC);
+	flags &= (O_CREAT | O_APPEND | O_RDONLY | O_RDWR | O_TRUNC | O_WRONLY | O_EXCL | O_NOCTTY | O_NONBLOCK | O_NDELAY | O_SYNC | O_DSYNC);
 #else /* !defined(J9ZTPF) */
-    flags &= (O_CREAT | O_APPEND | O_RDONLY | O_RDWR | O_TRUNC | O_WRONLY | O_EXCL | O_NOCTTY | O_NONBLOCK | O_SYNC | O_DSYNC);
+	flags &= (O_CREAT | O_APPEND | O_RDONLY | O_RDWR | O_TRUNC | O_WRONLY | O_EXCL | O_NOCTTY | O_NONBLOCK | O_SYNC | O_DSYNC);
 #endif /* !defined(J9ZTPF) */
 #endif /* defined(J9UNIX) || defined(J9ZOS390) */
 
@@ -5107,14 +5024,9 @@ JVM_TraceMethodCalls(jboolean on)
 void JNICALL
 JVM_RawMonitorDestroy(void* mon)
 {
-
 	Trc_SC_RawMonitorDestroy_Entry(mon);
 
-#if CALL_BUNDLED_FUNCTIONS_DIRECTLY
-	omrthread_monitor_destroy((omrthread_monitor_t) mon);
-#else
 	f_monitorDestroy((omrthread_monitor_t) mon);
-#endif /* CALL_BUNDLED_FUNCTIONS_DIRECTLY */
 
 	Trc_SC_RawMonitorDestroy_Exit();
 }
@@ -5131,11 +5043,7 @@ JVM_RawMonitorEnter(void* mon)
 {
 	Trc_SC_RawMonitorEnter_Entry(mon);
 
-#if CALL_BUNDLED_FUNCTIONS_DIRECTLY
-	omrthread_monitor_enter((omrthread_monitor_t)mon);
-#else
 	f_monitorEnter((omrthread_monitor_t)mon);
-#endif /* CALL_BUNDLED_FUNCTIONS_DIRECTLY */
 
 	Trc_SC_RawMonitorEnter_Exit();
 
@@ -5148,15 +5056,12 @@ JVM_RawMonitorEnter(void* mon)
  *
  * @param mon pointer of the monitor
  */
-void JNICALL JVM_RawMonitorExit(void* mon) {
-
+void JNICALL
+JVM_RawMonitorExit(void* mon)
+{
 	Trc_SC_RawMonitorExit_Entry(mon);
 
-#if CALL_BUNDLED_FUNCTIONS_DIRECTLY
-	omrthread_monitor_exit((omrthread_monitor_t)mon);
-#else
 	f_monitorExit((omrthread_monitor_t)mon);
-#endif /* CALL_BUNDLED_FUNCTIONS_DIRECTLY */
 
 	Trc_SC_RawMonitorExit_Exit();
 }
@@ -5174,12 +5079,7 @@ JVM_RawMonitorCreate(void)
 
 	Trc_SC_RawMonitorCreate_Entry();
 
-#if CALL_BUNDLED_FUNCTIONS_DIRECTLY
-	if(omrthread_monitor_init_with_name(&newMonitor, 0, "JVM_RawMonitor"))
-#else
-	if(f_monitorInit(&newMonitor, 0, "JVM_RawMonitor"))
-#endif /* CALL_BUNDLED_FUNCTIONS_DIRECTLY */
-	{
+	if (f_monitorInit(&newMonitor, 0, "JVM_RawMonitor")) {
 		Trc_SC_RawMonitorCreate_Error();
 		printf("error initializing raw monitor\n");
 		exit(1);
@@ -5603,11 +5503,11 @@ JVM_Timeout(jint descriptor, jint timeout)
 #if defined(WIN32)
 	result = select(0, &fdset, 0, 0, &tval);
 #elif defined(J9ZTPF) /* defined(WIN32) */
-        if (-1 == timeout)  {
-                result = select(0, &fdset, 0, 0, NULL);
-        } else  {
-                result = select(0, &fdset, 0, 0, &tval);
-        }
+	if (-1 == timeout)  {
+		result = select(0, &fdset, 0, 0, NULL);
+	} else  {
+		result = select(0, &fdset, 0, 0, &tval);
+	}
 #elif defined(J9UNIX) || defined(J9ZOS390) /* defined(WIN32) */
 	do {
 		crazyCntr--;
@@ -6406,23 +6306,11 @@ setZOSThrWeight(void)
 
 	if (ZOS_THR_WEIGHT_NOT_FOUND != jvmZOSTW) {
 		omrthread_t thandle = NULL;
-		IDATA trc = 0;
-
 		/* Attach so that we can use omrthread_global() below */
-#if CALL_BUNDLED_FUNCTIONS_DIRECTLY
-		trc = omrthread_attach_ex(&thandle, J9THREAD_ATTR_DEFAULT);
-#else
-		trc = f_threadAttachEx(&thandle, J9THREAD_ATTR_DEFAULT);
-#endif /* CALL_BUNDLED_FUNCTIONS_DIRECTLY */
+		IDATA trc = f_threadAttachEx(&thandle, J9THREAD_ATTR_DEFAULT);
 
 		if (0 == trc) {
-			UDATA * gtw = NULL;
-
-#if CALL_BUNDLED_FUNCTIONS_DIRECTLY
-			gtw = omrthread_global("thread_weight");
-#else
-			gtw = f_threadGlobal("thread_weight");
-#endif /* CALL_BUNDLED_FUNCTIONS_DIRECTLY */
+			UDATA *gtw = f_threadGlobal("thread_weight");
 
 			if (NULL != gtw) {
 				if (ZOS_THR_WEIGHT_HEAVY == jvmZOSTW) {
@@ -6433,11 +6321,7 @@ setZOSThrWeight(void)
 				success = TRUE;
 			}
 
-#if CALL_BUNDLED_FUNCTIONS_DIRECTLY
-			omrthread_detach(thandle);
-#else
 			f_threadDetach(thandle);
-#endif /* CALL_BUNDLED_FUNCTIONS_DIRECTLY */
 		}
 	} else {
 		success = TRUE;
