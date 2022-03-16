@@ -435,7 +435,7 @@ public:
 	 * @param objectMapData Data to pass to objectMapFunction
 	 */
 	VMINLINE void
-	copyObjectFields(J9VMThread *vmThread, J9Class *objectClass, j9object_t srcObject, UDATA srcOffset, j9object_t destObject, UDATA destOffset, MM_objectMapFunction objectMapFunction, void *objectMapData)
+	copyObjectFields(J9VMThread *vmThread, J9Class *objectClass, j9object_t srcObject, UDATA srcOffset, j9object_t destObject, UDATA destOffset, MM_objectMapFunction objectMapFunction = NULL, void *objectMapData = NULL)
 	{
 #if defined(J9VM_GC_ALWAYS_CALL_OBJECT_ACCESS_BARRIER)
 		vmThread->javaVM->memoryManagerFunctions->j9gc_objaccess_copyObjectFields(vmThread, objectClass, srcObject, srcOffset, destObject, destOffset, objectMapFunction, objectMapData);
