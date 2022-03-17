@@ -201,31 +201,13 @@ allocateHeapObject(J9VMThread *currentThread, j9object_t object)
 {
 	j9object_t heapObject = NULL;
 	J9Class *objectClass = J9OBJECT_CLAZZ(currentThread, object);
-	UDATA classFlags = J9CLASS_FLAGS(objectClass);
 	J9MemoryManagerFunctions const * const mmFuncs = currentThread->javaVM->memoryManagerFunctions;
-#if 0
-	j9objectmonitor_t *lockEA = NULL;
-
-	if (LN_HAS_LOCKWORD(currentThread, object)) {
-		lockEA = J9OBJECT_MONITOR_EA(currentThread, object);
-	} else {
-		J9ObjectMonitor *objectMonitor = monitorTableAt(currentThread, object);
-		// Should probably just assert this is NULL
-		if (NULL != objectMonitor) {
-			lockEA = &(objectMonitor->alternateLockword);
-		}
-	}
-	if (NULL != lockEA) {
-		Assert_JVMTI_true(NULL == J9_LOAD_LOCKWORD(currentThread, lockEA));
-	}
-#endif
-	if (J9_ARE_ANY_BITS_SET(classFlags, J9AccClassArray)) {
+	if (J9_ARE_ANY_BITS_SET(J9CLASS_FLAGS(objectClass), J9AccClassArray)) {
 		U_32 size = J9INDEXABLEOBJECT_SIZE(currentThread, object);
 		heapObject = mmFuncs->J9AllocateIndexableObject(currentThread, objectClass, size, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
 	} else {
 		heapObject = mmFuncs->J9AllocateObject(currentThread, objectClass, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
 	}
-
 	return heapObject;
 }
 
@@ -295,7 +277,7 @@ objectMapFunction(J9VMThread *currentThread, j9object_t obj, void *objectMapData
 
 /**
  * Copy stack-allocated object contents to the heap equivalent, replacing pointers to stack-allocated
- * objects with their heap equivalents.
+ * objects with their heap equivalents. If there is an inline lockword in the object, it will be copied.
  *
  * @param currentThread - the current thread
  * @param entry - object map entry
@@ -309,10 +291,13 @@ copyObjectContents(J9VMThread *currentThread, J9JVMTIObjectMap *entry, J9HashTab
 	J9VMThread *stackObjectThread = entry->stackObject.vmThread;
 	j9object_t heapObject = entry->heapObject;
 	J9Class *objectClass = J9OBJECT_CLAZZ(currentThread, stackObject);
-	/* Do not allow stack allocated arrays */
-	Assert_JVMTI_false(J9_ARE_ANY_BITS_SET(objectClass->classFlags, J9AccClassArray));
 	J9JVMTIObjectMapData objectMapData = { stackObjectThread, objectMap };
-	objectAccessBarrierAPI.cloneObject(currentThread, stackObject, heapObject, objectClass, objectMapFunction, (void*)&objectMapData);
+	if (J9_ARE_ANY_BITS_SET(J9CLASS_FLAGS(objectClass), J9AccClassArray)) {
+		U_32 size = J9INDEXABLEOBJECT_SIZE(currentThread, stackObject);
+		objectAccessBarrierAPI.cloneArray(currentThread, stackObject, heapObject, objectClass, size, objectMapFunction, (void*)&objectMapData, false);
+	} else {
+		objectAccessBarrierAPI.cloneObject(currentThread, stackObject, heapObject, objectClass, objectMapFunction, (void*)&objectMapData, false);
+	}
 }
 
 /**

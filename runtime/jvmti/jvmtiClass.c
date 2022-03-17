@@ -1166,9 +1166,12 @@ redefineClassesCommon(jvmtiEnv* env,
 	}
 
 	if (J9_ARE_ANY_BITS_SET(vm->runtimeFlags, J9_RUNTIME_DYNAMIC_HEAPIFICATION)) {
-		rc = heapifyStackAllocatedObjects(currentThread, safePoint);
-		if (JVMTI_ERROR_NONE != rc) {
-			goto failedWithVMAccess;
+		/* Look for stack-allocated objects only if the JIT is enabled and not running in FSD mode */
+		if ((NULL != vm->jitConfig) && !J9_FSD_ENABLED(vm)) {
+			rc = heapifyStackAllocatedObjects(currentThread, safePoint);
+			if (JVMTI_ERROR_NONE != rc) {
+				goto failedWithVMAccess;
+			}
 		}
 	}
 
