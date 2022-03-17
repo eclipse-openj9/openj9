@@ -34,16 +34,12 @@ and loaded to and from the local array. Below are the mappings for
 the supported architectures.
 
 # AMD64
-
-- rsp: The stack extent of the computation stack pointer.
-- r10: The computation stack pointer.
-- r11: Temporary register for storing:
-- - The accumulator
-- - A pointer to an object
-- r12: Temporary register for storing:
-- - Any value which will act on the accumulator
-- - The value to be written to an object field
-- - The value read from an object field
-- r13: Holds addresses for absolute addressing
-- r14: The pointer to the start of the local array
-- r15: Values loaded from memory for storing on the stack or in the local array
+| Register | Description                                                                                      |
+|:--------:|:------------------------------------------------------------------------------------------------:|
+| rsp      | The stack extent of the computation stack pointer                                                |
+| r10      | The computation stack pointer                                                                    |
+| r11      | Storing the accumulator or pointer to an object                                                  |
+| r12      | Storing values that act on the accumulator, are to be written to, or have been read from a field |
+| r13      | Holds addresses for absolute addressing                                                          |
+| r14      | The pointer to the start of the local array                                                      |
+| r15      | Values loaded from memory for storing on the stack or in the local array                         |
