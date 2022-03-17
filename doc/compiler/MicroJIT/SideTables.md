@@ -32,20 +32,20 @@ in each register used by TR's Linkage. This allows for MicroJIT
 to quickly calculate stack offsets for interpreter arguments
 on the fly.
 
-- RegisterStack:
-- - useRAX
-- - useRSI
-- - useRDX
-- - useRCX
-- - useXMM0
-- - useXMM1
-- - useXMM2
-- - useXMM3
-- - useXMM4
-- - useXMM5
-- - useXMM6
-- - useXMM7
-- - stackSlotsUsed
+RegisterStack:
+- useRAX
+- useRSI
+- useRDX
+- useRCX
+- useXMM0
+- useXMM1
+- useXMM2
+- useXMM3
+- useXMM4
+- useXMM5
+- useXMM6
+- useXMM7
+- stackSlotsUsed
 
 # ParamTableEntry and LocalTableEntry
 
@@ -54,12 +54,14 @@ to copy parameters from their linkage locations to their local
 array slots, map their locations into GCMaps, and get the size of
 their data without storing their data types.
 
-- ParamTableEntry:
-- - offset         //Offset into stack for loading from stack
-- - regNo          //Register containing parameter when called by interpreter
-- - gcMapOffset    //Offset used for lookup by GCMap
-- - slots          //Number of slots used by this variable when storing in local array
-- - size           //Number of bytes used by this variable when stored on the stack
-- - isReference    //Is this variable an object reference
-- - onStack        //Is this variable currently on the stack
-- - notInitialized //Is this entry uninitialized by MicroJIT 
+ParamTableEntry:
+| Field          | Description                                                       |
+|:--------------:|:-----------------------------------------------------------------:|
+| offset         | Offset into stack for loading from stack                          |
+| regNo          | Register containing parameter when called by interpreter          |
+| gcMapOffset    | Offset used for lookup by GCMap                                   |
+| slots          | Number of slots used by this variable when storing in local array |
+| size           | Number of bytes used by this variable when stored on the stack    |
+| isReference    | Is this variable an object reference                              |
+| onStack        | Is this variable currently on the stack                           |
+| notInitialized | Is this entry uninitialized by MicroJIT                           |
