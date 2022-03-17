@@ -22,9 +22,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 
 # List of currently supported platforms
 
-AMD64 (a.k.a. x86-64)
+- AMD64 (a.k.a. x86-64)
 
 # List of expected future platforms
 
-RISC-V
-aarch64
+- RISC-V
+- aarch64

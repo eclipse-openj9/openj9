@@ -30,31 +30,31 @@ while also keeping their own footprint small.
 # Current Macros
 
 The current existing DSL macros are:
-    pop_single_slot
-        add the size of 1 stack slots from the computation stack pointer
-    pop_dual_slot
-        add the size of 2 stack slots from the computation stack pointer
-    push_single_slot
-        subtract the size of 1 stack slots from the computation stack pointer
-    push_dual_slot
-        subtract the size of 2 stack slots from the computation stack pointer
-    _32bit_local_to_rXX_PATCH
-        Move a 32 bit value to a r11d-r15d register from a local array slot
-    _64bit_local_to_rXX_PATCH
-        Move a 64 bit value to a 64-bit register from a local array slot
-    _32bit_local_from_rXX_PATCH
-        Move a 32 bit value from a r11d-r15d register to a local array slot
-    _64bit_local_from_rXX_PATCH
-        Move a 64 bit value from a 64-bit register to a local array slot
-    _32bit_slot_stack_to_rXX
-        Move a 64 bit value to an r11-r15 register from the computation stack
-    _32bit_slot_stack_to_eXX
-        Move a 32 bit value to an eax-edx register from the computation stack
-    _64bit_slot_stack_to_rXX
-        Move a 64 bit value to a 64 bit register from the computation stack
-    _32bit_slot_stack_from_rXX
-        Move a 64 bit value from an r11d-r15d register to the computation stack
-    _32bit_slot_stack_from_eXX
-        Move a 32 bit value from an eax-edx register to the computation stack
-    _64bit_slot_stack_from_rXX
-        Move a 64 bit value from a 64 bit register to the computation stack
+- pop_single_slot
+- - add the size of 1 stack slots from the computation stack pointer
+- pop_dual_slot
+- - add the size of 2 stack slots from the computation stack pointer
+- push_single_slot
+- - subtract the size of 1 stack slots from the computation stack pointer
+- push_dual_slot
+- - subtract the size of 2 stack slots from the computation stack pointer
+- _32bit_local_to_rXX_PATCH
+- - Move a 32 bit value to a r11d-r15d register from a local array slot
+- _64bit_local_to_rXX_PATCH
+- - Move a 64 bit value to a 64-bit register from a local array slot
+- _32bit_local_from_rXX_PATCH
+- - Move a 32 bit value from a r11d-r15d register to a local array slot
+- _64bit_local_from_rXX_PATCH
+- - Move a 64 bit value from a 64-bit register to a local array slot
+- _32bit_slot_stack_to_rXX
+- - Move a 64 bit value to an r11-r15 register from the computation stack
+- _32bit_slot_stack_to_eXX
+- - Move a 32 bit value to an eax-edx register from the computation stack
+- _64bit_slot_stack_to_rXX
+- - Move a 64 bit value to a 64 bit register from the computation stack
+- _32bit_slot_stack_from_rXX
+- - Move a 64 bit value from an r11d-r15d register to the computation stack
+- _32bit_slot_stack_from_eXX
+- - Move a 32 bit value from an eax-edx register to the computation stack
+- _64bit_slot_stack_from_rXX
+- - Move a 64 bit value from a 64 bit register to the computation stack

@@ -65,10 +65,10 @@ documentation.
 
 # Topics
 
-[MicroJIT Compile Stages](Stages.md)
-[Supported Platforms](Platforms.md)
-[vISA](vISA.md)
-[Supporting Side Tables](SideTables.md)
-[Domain Specific Language](DSL.md)
-[Supported Compilations](support.md)
+- [MicroJIT Compile Stages](Stages.md)
+- [Supported Platforms](Platforms.md)
+- [vISA](vISA.md)
+- [Supporting Side Tables](SideTables.md)
+- [Domain Specific Language](DSL.md)
+- [Supported Compilations](support.md)
 <hr/>
