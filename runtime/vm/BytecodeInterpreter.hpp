@@ -4181,6 +4181,37 @@ done:
 
 		return rc;
 	}
+
+	VMINLINE VM_BytecodeAction
+	inlUnsafeIsFieldAtOffsetFlattened(REGISTER_ARGS_LIST)
+	{
+		I_64 offset = *(I_64*)_sp;
+		j9object_t clz = *(j9object_t*)(_sp + 2);
+
+		I_32 isFlattened = (I_32)FALSE;
+
+		if (NULL != clz) {
+			J9Class *clzJ9Class = J9VM_J9CLASS_FROM_HEAPCLASS(_currentThread, clz);
+			if ((!J9CLASS_IS_ARRAY(clzJ9Class)) && (NULL != clzJ9Class->flattenedClassCache)) {
+
+				/* caller provided offset will include header size but entry->offset does not */
+				offset -= (I_64)J9VMTHREAD_OBJECT_HEADER_SIZE(_currentThread);
+
+				UDATA numberOfFlattenedFields = clzJ9Class->flattenedClassCache->numberOfEntries;
+				for (UDATA i = 0; i < numberOfFlattenedFields; i++) {
+					J9FlattenedClassCacheEntry *entry = J9_VM_FCC_ENTRY_FROM_CLASS(clzJ9Class, i);
+					if (((I_64)entry->offset == offset) && J9_IS_FIELD_FLATTENED(entry->clazz, entry->field)) {
+						isFlattened = (I_32)TRUE;
+						break;
+					}
+				}
+
+			}
+		}
+
+		returnSingleFromINL(REGISTER_ARGS, isFlattened, 4);
+		return EXECUTE_BYTECODE;
+	}
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 
 	/* java.lang.J9VMInternals: private native static void prepareClassImpl(Class clazz); */
@@ -9783,6 +9814,7 @@ public:
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_ISFLATTENEDARRAY),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_ISFLATTENED),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_GETOBJECTSIZE),
+		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_ISFIELDATOFFSETFLATTENED),
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_INTERNALS_GET_INTERFACES),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_ARRAY_NEW_ARRAY_IMPL),
@@ -10358,6 +10390,8 @@ runMethod: {
 		PERFORM_ACTION(inlUnsafeIsFlattened(REGISTER_ARGS));
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_GETOBJECTSIZE):
 		PERFORM_ACTION(inlUnsafeGetObjectSize(REGISTER_ARGS));
+	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_ISFIELDATOFFSETFLATTENED):
+		PERFORM_ACTION(inlUnsafeIsFieldAtOffsetFlattened(REGISTER_ARGS));
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_INTERNALS_GET_INTERFACES):
 		PERFORM_ACTION(inlInternalsGetInterfaces(REGISTER_ARGS));
