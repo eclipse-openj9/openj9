@@ -290,7 +290,7 @@ jvm_add_exports(jvm
 	JVM_BeforeHalt
 )
 
-if(JAVA_SPEC_VERSION LESS 17)
+if(JAVA_SPEC_VERSION LESS 11)
 	jvm_add_exports(jvm _JVM_LoadLibrary@4)
 else()
 	jvm_add_exports(jvm _JVM_LoadLibrary@8)

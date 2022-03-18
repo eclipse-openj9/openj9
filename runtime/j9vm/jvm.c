@@ -3870,10 +3870,10 @@ JVM_LoadSystemLibrary(const char *libName)
 }
 
 /**
- * Prior to jdk17:
+ * Prior to jdk11:
  *   void * JNICALL JVM_LoadLibrary(char *libName)
  *
- * Beginning in jdk17:
+ * Beginning in jdk11:
  *   void * JNICALL JVM_LoadLibrary(char *libName, jboolean throwOnFailure)
  *
  * Attempts to load the shared library specified by libName.
@@ -3892,11 +3892,11 @@ JVM_LoadSystemLibrary(const char *libName)
  * It is only invoked by jdk.internal.loader.BootLoader.loadLibrary().
  */
 void * JNICALL
-#if JAVA_SPEC_VERSION < 17
+#if JAVA_SPEC_VERSION < 11
 JVM_LoadLibrary(const char *libName)
-#else /* JAVA_SPEC_VERSION < 17 */
+#else /* JAVA_SPEC_VERSION < 11 */
 JVM_LoadLibrary(const char *libName, jboolean throwOnFailure)
-#endif /* JAVA_SPEC_VERSION < 17 */
+#endif /* JAVA_SPEC_VERSION < 11 */
 {
 	void *result = NULL;
 	J9JavaVM *javaVM = (J9JavaVM *)BFUjavaVM;
