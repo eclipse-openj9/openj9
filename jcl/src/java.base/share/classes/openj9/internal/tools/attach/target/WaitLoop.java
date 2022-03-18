@@ -1,6 +1,6 @@
-/*[INCLUDE-IF Sidecar18-SE]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 /*******************************************************************************
- * Copyright (c) 2017, 2021 IBM Corp. and others
+ * Copyright (c) 2017, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -146,7 +146,7 @@ final class WaitLoop extends Thread {
 		try {
 			/*[PR Jazz 33224 Throttle the loop in to prevent the loop from occupying the semaphore ]*/
 			IPC.logMessage("WaitLoop.checkReplyAndCreateAttachment before sleep"); //$NON-NLS-1$
-			Thread.sleep(1000);
+			Thread.sleep(300);
 		} catch (InterruptedException e) { /* the attach handler thread is interrupted on shutdown */
 			IPC.logMessage("WaitLoop.checkReplyAndCreateAttachment Interrupted"); //$NON-NLS-1$
 			return at;
