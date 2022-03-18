@@ -4476,6 +4476,7 @@ typedef struct J9MemoryManagerFunctions {
 	UDATA ( *j9gc_stringHashFn)(void *key, void *userData);
 	BOOLEAN ( *j9gc_stringHashEqualFn)(void *leftKey, void *rightKey, void *userData);
 	void  ( *j9gc_ensureLockedSynchronizersIntegrity)(struct J9VMThread *vmThread) ;
+	void  ( *j9gc_objaccess_zeroObjectContents)(struct J9JavaVM *javaVM, j9object_t obj) ;
 } J9MemoryManagerFunctions;
 
 typedef struct J9InternalVMFunctions {

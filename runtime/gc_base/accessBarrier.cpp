@@ -835,5 +835,36 @@ j9gc_objaccess_jniDeleteGlobalReference(J9VMThread *vmThread, J9Object *referenc
 	barrier->jniDeleteGlobalReference(vmThread, reference);
 }
 
+
+/**
+ * Zero the contents of an object, including the inline lockword and
+ * identity hash code, if present. Does not modify the object header.
+ *
+ * @param javaVM the J9JavaVM
+ * @param obj the object being zeroed
+ */
+void
+j9gc_objaccess_zeroObjectContents(J9JavaVM *javaVM, j9object_t obj)
+{
+	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(javaVM);
+	UDATA headerSize = extensions->objectModel.getHeaderSize(obj);
+	UDATA dataSize = extensions->objectModel.getConsumedSizeInBytesWithHeader(obj) - headerSize;
+	UDATA data = (UDATA)obj + headerSize;
+	/* Zero the contents atomically wrt the size of object to object references to prevent tearing */
+	if (extensions->compressObjectReferences()) {
+		while (0 != dataSize) {
+			*(U_32*)data = 0;
+			data += sizeof(U_32);
+			dataSize -= sizeof(U_32);
+		}
+	} else {
+		while (0 != dataSize) {
+			*(UDATA*)data = 0;
+			data += sizeof(UDATA);
+			dataSize -= sizeof(UDATA);
+		}
+	}
+}
+
 } /* extern "C" */
 
