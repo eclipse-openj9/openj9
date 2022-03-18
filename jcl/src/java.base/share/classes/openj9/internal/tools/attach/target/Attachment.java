@@ -1,6 +1,6 @@
-/*[INCLUDE-IF Sidecar18-SE]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 /*******************************************************************************
- * Copyright (c) 2009, 2019 IBM Corp. and others
+ * Copyright (c) 2009, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -118,15 +118,14 @@ final class Attachment extends Thread implements Response {
 	}
 
 	/**
-	 * @param attachHandler
-	 *            main handler object for this VM
-	 * @param rc
-	 *            information to connect to attacher
+	 * @param attachHandler main handler object for this VM
+	 * @param portNumber    port on which to attach
+	 * @param key           Security key to validate transaction
 	 */
-	Attachment(AttachHandler attachHandler, Reply rc) {
-		setName("Attachment " + rc.getPortNumber()); //$NON-NLS-1$
-		portNumber = rc.getPortNumber();
-		this.key = rc.getKey();
+	Attachment(AttachHandler attachHandler, int portNumber, String key) {
+		setName("Attachment portNumber: " + portNumber); //$NON-NLS-1$
+		this.portNumber = portNumber;
+		this.key = key;
 		this.handler = attachHandler;
 		setDaemon(true);
 	}
