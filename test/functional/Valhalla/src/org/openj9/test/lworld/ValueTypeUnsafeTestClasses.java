@@ -85,4 +85,9 @@ public class ValueTypeUnsafeTestClasses {
 			z = new ZeroSizeValueType();
 		}
 	}
+
+	static primitive class ValueTypeInt2 {
+		ValueTypeInt2(int i) { this.i = i; }
+		final int i;
+	}
 }
