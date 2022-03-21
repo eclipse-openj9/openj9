@@ -186,7 +186,7 @@ set(main_sources
 
 if(J9VM_OPT_CRIU_SUPPORT)
 	list(APPEND main_sources
-		criuhelpers.cpp
+		CRIUHelpers.cpp
 	)
 endif()
 

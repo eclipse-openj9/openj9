@@ -4071,11 +4071,24 @@ typedef struct J9InternalHookRecord {
 	struct J9Pool *instanceObjects;
 } J9InternalHookRecord;
 
+typedef struct J9DelayedLockingOpertionsRecord {
+	jobject globalObjectRef;
+	UDATA operation;
+	struct J9DelayedLockingOpertionsRecord *linkNext;
+	struct J9DelayedLockingOpertionsRecord *linkPrevious;
+} J9DelayedLockingOpertionsRecord;
+
+#define J9_SINGLE_THREAD_MODE_OP_NOTIFY 0x1
+#define J9_SINGLE_THREAD_MODE_OP_NOTIFY_ALL 0x2
+
 typedef struct J9CRIUCheckpointState {
 	BOOLEAN isCheckPointEnabled;
 	BOOLEAN isCheckPointAllowed;
 	BOOLEAN isNonPortableRestoreMode;
+	struct J9DelayedLockingOpertionsRecord *delayedLockingOperationsRoot;
 	struct J9Pool *hookRecords;
+	struct J9Pool *delayedLockingOperationsRecords;
+	struct J9VMThread *checkpointThread;
 } J9CRIUCheckpointState;
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
@@ -4842,6 +4855,7 @@ typedef struct J9InternalVMFunctions {
 	BOOLEAN (*isCheckpointAllowed)(struct J9VMThread *currentThread);
 	BOOLEAN (*runInternalJVMCheckpointHooks)(struct J9VMThread *currentThread);
 	BOOLEAN (*runInternalJVMRestoreHooks)(struct J9VMThread *currentThread);
+	BOOLEAN (*runDelayedLockRelatedOperations)(struct J9VMThread *currentThread);
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 	j9object_t (*getClassNameString)(struct J9VMThread *currentThread, j9object_t classObject, jboolean internAndAssign);
 } J9InternalVMFunctions;

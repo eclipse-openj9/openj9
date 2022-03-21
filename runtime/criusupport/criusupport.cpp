@@ -258,6 +258,8 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 	IDATA systemReturnCode = 0;
 	PORT_ACCESS_FROM_VMC(currentThread);
 
+	vm->checkpointState.checkpointThread = currentThread;
+
 	Trc_CRIU_checkpointJVMImpl_Entry(currentThread);
 	if (vmFuncs->isCheckpointAllowed(currentThread)) {
 #if defined(LINUX)
@@ -371,6 +373,8 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 
 		toggleSuspendOnJavaThreads(currentThread, TRUE);
 
+		vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_CRIU_SINGLE_THREAD_MODE;
+
 		vmFuncs->releaseExclusiveVMAccess(currentThread);
 
 		if (FALSE == vmFuncs->jvmCheckpointHooks(currentThread)) {
@@ -415,10 +419,20 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 			goto wakeJavaThreads;
 		}
 
+		if (FALSE == vmFuncs->runDelayedLockRelatedOperations(currentThread)) {
+			currentExceptionClass = vm->criuRestoreExceptionClass;
+			systemReturnCode = 0;
+			nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
+					J9NLS_JCL_CRIU_FAILED_DELAY_LOCK_RELATED_OPS, NULL);
+		}
+
 wakeJavaThreads:
 		vmFuncs->acquireExclusiveVMAccess(currentThread);
 
 wakeJavaThreadsWithExclusiveVMAccess:
+
+		vm->extendedRuntimeFlags2 &= ~J9_EXTENDED_RUNTIME2_CRIU_SINGLE_THREAD_MODE;
+
 		toggleSuspendOnJavaThreads(currentThread, FALSE);
 
 		vmFuncs->releaseExclusiveVMAccess(currentThread);
@@ -489,6 +503,8 @@ freeDir:
 			j9mem_free_memory(exceptionMsg);
 		}
 	}
+
+	vm->checkpointState.checkpointThread = NULL;
 
 	Trc_CRIU_checkpointJVMImpl_Exit(currentThread);
 }
