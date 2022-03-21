@@ -33,6 +33,7 @@
 #include "runtime/J9Profiler.hpp"
 #if defined(J9VM_OPT_JITSERVER)
 #include "runtime/Listener.hpp"
+#include "runtime/MetricsServer.hpp"
 #endif /* J9VM_OPT_JITSERVER */
 #include "runtime/codertinit.hpp"
 #include "rossa.h"
@@ -597,7 +598,13 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void * reserved)
                         {
                         listener->stop();
                         }
+                     MetricsServer *metricsServer = ((TR_JitPrivateConfig*)(vm->jitConfig->privateConfig))->metricsServer;
+                     if (metricsServer)
+                        {
+                        metricsServer->stop();
+                        }
                      }
+
 #endif /* defined(J9VM_OPT_JITSERVER) */
                   trvm->_compInfo->stopCompilationThreads();
                   }
