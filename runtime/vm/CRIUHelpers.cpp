@@ -25,6 +25,7 @@
 #include "ut_j9vm.h"
 #include "vm_api.h"
 
+#include "CRIUHelpers.hpp"
 #include "HeapIteratorAPI.h"
 #include "ObjectAccessBarrierAPI.hpp"
 #include "VMHelpers.hpp"
@@ -261,17 +262,29 @@ initializeCriuHooks(J9VMThread *currentThread)
 		vm->checkpointState.hookRecords = pool_new(sizeof(J9InternalHookRecord), 0, 0, 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(vm->portLibrary));
 		if (NULL == vm->checkpointState.hookRecords) {
 			setNativeOutOfMemoryError(currentThread, 0, 0);
+			goto done;
 		}
 	}
-	if (NULL != vm->checkpointState.hookRecords) {
-		/* Add restore hook to re-seed java.uti.Random.seed.value. */
+
+	if (NULL == vm->checkpointState.delayedLockingOperationsRecords) {
+		vm->checkpointState.delayedLockingOperationsRecords = pool_new(sizeof(J9DelayedLockingOpertionsRecord), 0, 0, 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(vm->portLibrary));
+		if (NULL == vm->checkpointState.delayedLockingOperationsRecords) {
+			setNativeOutOfMemoryError(currentThread, 0, 0);
+			goto done;
+		}
+	}
+
+	{
+		/* Add restore hook to re-seed java.uti.Random.seed.value */
 #define JAVA_UTIL_RANDOM "java/util/Random"
-		J9Class *juRandomClass = hashClassTableAt(vm->systemClassLoader, (U_8 *)JAVA_UTIL_RANDOM, LITERAL_STRLEN(JAVA_UTIL_RANDOM));
+		J9Class *juRandomClass = peekClassHashTable(currentThread, vm->systemClassLoader, (U_8 *)JAVA_UTIL_RANDOM, LITERAL_STRLEN(JAVA_UTIL_RANDOM));
 #undef JAVA_UTIL_RANDOM
 		if (NULL != juRandomClass) {
 			addInternalJVMCheckpointHook(currentThread, TRUE, juRandomClass, FALSE, juRandomReseed);
 		}
 	}
+
+done:
 	Trc_VM_criu_initHooks_Exit(currentThread, vm->checkpointState.hookRecords);
 }
 
@@ -387,6 +400,80 @@ runInternalJVMRestoreHooks(J9VMThread *currentThread)
 	Trc_VM_criu_runRestoreHooks_Exit(currentThread);
 
 	return result;
+}
+
+BOOLEAN
+runDelayedLockRelatedOperations(J9VMThread *currentThread)
+{
+	J9JavaVM *vm = currentThread->javaVM;
+	J9InternalVMFunctions* vmFuncs = vm->internalVMFunctions;
+	J9DelayedLockingOpertionsRecord *delayedLockingOperation = static_cast<J9DelayedLockingOpertionsRecord*>(J9_LINKED_LIST_START_DO(vm->checkpointState.delayedLockingOperationsRoot));
+	BOOLEAN rc = TRUE;
+
+	Assert_VM_true(vm->checkpointState.checkpointThread == currentThread);
+
+	while (NULL != delayedLockingOperation) {
+		omrthread_monitor_t monitorPtr = NULL;
+		j9object_t instance = J9_JNI_UNWRAP_REFERENCE(delayedLockingOperation->globalObjectRef);
+		if (!VM_ObjectMonitor::inlineFastObjectMonitorEnter(currentThread, instance)) {
+			rc = objectMonitorEnterNonBlocking(currentThread, instance);
+			if (J9_OBJECT_MONITOR_BLOCKING == rc) {
+				/* owned by another thread */
+				Trc_VM_criu_runDelayedLockRelatedOperations_contendedMonitorEnter(currentThread, instance);
+				rc = FALSE;
+				goto done;
+			} else if (J9_OBJECT_MONITOR_ENTER_FAILED(rc)) {
+				/* not possible if the the application was able to call notify earlier */
+				Assert_VM_unreachable();
+			}
+		}
+		if (!VM_ObjectMonitor::getMonitorForNotify(currentThread, instance, &monitorPtr, true)) {
+			if (NULL != monitorPtr) {
+				/* another thread owns the lock, shouldn't be possible */
+				Trc_VM_criu_runDelayedLockRelatedOperations_contendedMonitorEnter2(currentThread, monitorPtr);
+				rc = FALSE;
+				goto done;
+			} else {
+				/* no waiters */
+				goto next;
+			}
+		}
+
+		Trc_VM_criu_runDelayedLockRelatedOperations_runDelayedOperation(currentThread, delayedLockingOperation->operation, instance, monitorPtr);
+
+		switch(delayedLockingOperation->operation) {
+		case J9_SINGLE_THREAD_MODE_OP_NOTIFY:
+			rc = 0 == omrthread_monitor_notify(monitorPtr);
+			break;
+		case J9_SINGLE_THREAD_MODE_OP_NOTIFY_ALL:
+			rc = 0 == omrthread_monitor_notify_all(monitorPtr);
+			break;
+		default:
+			Assert_VM_unreachable();
+			break;
+		}
+
+		if (!rc) {
+			goto done;
+		}
+
+next:
+		if (!VM_ObjectMonitor::inlineFastObjectMonitorExit(currentThread, instance)) {
+			if (0 != objectMonitorExit(currentThread, instance)) {
+				Assert_VM_unreachable();
+			}
+		}
+
+		vmFuncs->j9jni_deleteGlobalRef((JNIEnv*) currentThread, delayedLockingOperation->globalObjectRef, JNI_FALSE);
+		J9DelayedLockingOpertionsRecord *lastOperation = delayedLockingOperation;
+		delayedLockingOperation = J9_LINKED_LIST_NEXT_DO(vm->checkpointState.delayedLockingOperationsRoot, delayedLockingOperation);
+		pool_removeElement(vm->checkpointState.delayedLockingOperationsRecords, lastOperation);
+	}
+
+done:
+	vm->checkpointState.delayedLockingOperationsRoot = NULL;
+
+	return rc;
 }
 
 } /* extern "C" */

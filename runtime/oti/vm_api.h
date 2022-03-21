@@ -490,7 +490,7 @@ internalCreateRAMClassFromROMClass(J9VMThread *vmThread, J9ClassLoader *classLoa
 
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 
-/* ---------------- criuhelpers.cpp ---------------- */
+/* ---------------- CRIUHelpers.cpp ---------------- */
 /**
  * @brief Queries if CRIU support is enabled. By default support
  * is not enabled, it can be enabled with `-XX:+EnableCRIUSupport`
@@ -556,6 +556,15 @@ runInternalJVMCheckpointHooks(J9VMThread *currentThread);
 BOOLEAN
 runInternalJVMRestoreHooks(J9VMThread *currentThread);
 
+/**
+ * @brief This function runs the identity operations that were delayed
+ * during the Java checkpoint and restore hooks.
+ *
+ * @param currentThread thread token
+ * @return BOOLEAN TRUE if no error, otherwise FALSE
+ */
+BOOLEAN
+runDelayedLockRelatedOperations(J9VMThread *currentThread);
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
 /* ---------------- classloadersearch.c ---------------- */
