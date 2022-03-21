@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2021 IBM Corp. and others
+ * Copyright (c) 2001, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -143,6 +143,9 @@ VM_MHInterpreter::dispatchLoop(j9object_t methodHandle)
 		}
 		case J9_METHOD_HANDLE_KIND_STATIC: {
 			methodHandle = initializeClassIfNeeded(methodHandle);
+			if (VM_VMHelpers::exceptionPending(_currentThread)) {
+				goto throwCurrentException;
+			}
 			/* fall through */
 		}
 		case J9_METHOD_HANDLE_KIND_SPECIAL: {
@@ -379,6 +382,9 @@ VM_MHInterpreter::dispatchLoop(j9object_t methodHandle)
 		}
 		case J9_METHOD_HANDLE_KIND_CONSTRUCTOR: {
 			methodHandle = initializeClassIfNeeded(methodHandle);
+			if (VM_VMHelpers::exceptionPending(_currentThread)) {
+				goto throwCurrentException;
+			}
 			j9object_t type = getMethodHandleMethodType(methodHandle);
 			U_32 slotCount = getMethodTypeArgSlots(type);
 			J9Class *allocateClass = J9VM_J9CLASS_FROM_HEAPCLASS(
@@ -473,6 +479,9 @@ VM_MHInterpreter::dispatchLoop(j9object_t methodHandle)
 		}
 		case J9_METHOD_HANDLE_KIND_GET_STATIC_FIELD: {
 			methodHandle = initializeClassIfNeeded(methodHandle);
+			if (VM_VMHelpers::exceptionPending(_currentThread)) {
+				goto throwCurrentException;
+			}
 			J9Class* defc = getPrimitiveHandleDefc(methodHandle);
 			UDATA srcAddress = getVMSlot(methodHandle);
 			srcAddress &= ~J9_SUN_FIELD_OFFSET_MASK;
@@ -500,6 +509,9 @@ VM_MHInterpreter::dispatchLoop(j9object_t methodHandle)
 		}
 		case J9_METHOD_HANDLE_KIND_PUT_STATIC_FIELD: {
 			methodHandle = initializeClassIfNeeded(methodHandle);
+			if (VM_VMHelpers::exceptionPending(_currentThread)) {
+				goto throwCurrentException;
+			}
 			j9object_t type = getMethodHandleMethodType(methodHandle);
 			J9Class* defc = getPrimitiveHandleDefc(methodHandle);
 			UDATA srcAddress = getVMSlot(methodHandle);
