@@ -234,7 +234,7 @@ createExceptionTable(
 static void
 createMJITExceptionTable(
       TR_MethodMetaData * data,
-      MJIT_ExceptionTableEntryIterator & exceptionIterator,
+      MJIT::ExceptionTableEntryIterator & exceptionIterator,
       bool fourByteOffsets,
       TR::Compilation *comp)
    {
@@ -1139,7 +1139,7 @@ static int32_t calculateExceptionsSize(
 #if defined(J9VM_OPT_MICROJIT)
 static int32_t calculateMJITExceptionsSize(
    TR::Compilation* comp,
-   MJIT_ExceptionTableEntryIterator& exceptionIterator,
+   MJIT::ExceptionTableEntryIterator& exceptionIterator,
    bool& fourByteExceptionTableEntries,
    uint32_t& numberOfExceptionRangesWithBits)
    {
@@ -1857,7 +1857,7 @@ createMJITMethodMetaData(
    //   GC maps, Exceptions, inlining calls, stack atlas,
    //   GPU optimizations and internal pointer table
    TR_J9VMBase * vm = &vmArg;
-   MJIT_ExceptionTableEntryIterator exceptionIterator(comp);
+   MJIT::ExceptionTableEntryIterator exceptionIterator(comp);
    TR::ResolvedMethodSymbol * methodSymbol = comp->getJittedMethodSymbol();
    TR::CodeGenerator * cg = comp->cg();
    TR::GCStackAtlas * trStackAtlas = cg->getStackAtlas();

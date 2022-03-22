@@ -35,9 +35,11 @@ namespace TR { class Block; }
 namespace TR { class Compilation; }
 template <class T> class TR_Array;
 
-struct MJIT_ExceptionTableEntryIterator
+namespace MJIT {
+
+struct ExceptionTableEntryIterator
    {
-   MJIT_ExceptionTableEntryIterator(TR::Compilation *comp);
+   ExceptionTableEntryIterator(TR::Compilation *comp);
 
    TR_ExceptionTableEntry * getFirst();
    TR_ExceptionTableEntry * getNext();
@@ -52,5 +54,7 @@ private:
    int32_t                                   _inlineDepth;
    uint32_t                                  _handlerIndex;
    };
+
+}
 
 #endif /* MJIT_EXCEPTIONTABLE_INCL */

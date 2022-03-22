@@ -36,7 +36,7 @@
 class TR_ResolvedMethod;
 
 //TODO: This Should create an Exception table using only information MicroJIT has.
-MJIT_ExceptionTableEntryIterator::MJIT_ExceptionTableEntryIterator(TR::Compilation *comp)
+MJIT::ExceptionTableEntryIterator::ExceptionTableEntryIterator(TR::Compilation *comp)
    : _compilation(comp)
    {
    int32_t i = 1;
@@ -54,7 +54,7 @@ MJIT_ExceptionTableEntryIterator::MJIT_ExceptionTableEntryIterator(TR::Compilati
 
 //TODO: This Should create an Exception table entry using only information MicroJIT has.
 void
-MJIT_ExceptionTableEntryIterator::addSnippetRanges(
+MJIT::ExceptionTableEntryIterator::addSnippetRanges(
    List<TR_ExceptionTableEntry> & tableEntries, TR::Block * snippetBlock, TR::Block * catchBlock, uint32_t catchType,
    TR_ResolvedMethod * method, TR::Compilation *comp)
    {
@@ -62,19 +62,19 @@ MJIT_ExceptionTableEntryIterator::addSnippetRanges(
    }
 
 TR_ExceptionTableEntry *
-MJIT_ExceptionTableEntryIterator::getFirst()
+MJIT::ExceptionTableEntryIterator::getFirst()
    {
       return NULL;
    }
 
 TR_ExceptionTableEntry *
-MJIT_ExceptionTableEntryIterator::getNext()
+MJIT::ExceptionTableEntryIterator::getNext()
    {
       return NULL;
    }
 
 uint32_t
-MJIT_ExceptionTableEntryIterator::size()
+MJIT::ExceptionTableEntryIterator::size()
    {
       return 0;
    }
