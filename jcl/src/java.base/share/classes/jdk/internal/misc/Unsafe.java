@@ -187,7 +187,8 @@ public final class Unsafe {
 	private static final long BYTE_OFFSET_MASK = 0b11L;
 
 	/*[IF INLINE-TYPES]*/
-	private static final Object inlineTypesLock = new Object() {};
+	private static final class InlineTypesLock { InlineTypesLock() {} }
+	private static final InlineTypesLock inlineTypesLock = new InlineTypesLock();
 	/*[ENDIF] INLINE-TYPES */
 
 	static {
