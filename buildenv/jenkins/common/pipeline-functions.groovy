@@ -246,10 +246,12 @@ def test(JOB_NAME, UPSTREAM_JOB_NAME, UPSTREAM_JOB_NUMBER, NODE, OPENJ9_REPO, OP
             booleanParam(name: 'DYNAMIC_COMPILE', value: DYNAMIC_COMPILE)])
         if (ARTIFACTORY_CREDS) {
             testParams.addAll([string(name: 'CUSTOMIZED_SDK_URL', value: CUSTOMIZED_SDK_URL),
+                string(name: 'SDK_RESOURCE', value: 'customized'),
                 string(name: 'CUSTOMIZED_SDK_URL_CREDENTIAL_ID', value: ARTIFACTORY_CREDS)])
         } else {
             testParams.addAll([string(name: 'UPSTREAM_JOB_NAME', value: UPSTREAM_JOB_NAME),
-            string(name: 'UPSTREAM_JOB_NUMBER', value: "${UPSTREAM_JOB_NUMBER}")])
+                string(name: 'SDK_RESOURCE', value: 'upstream'),
+                string(name: 'UPSTREAM_JOB_NUMBER', value: "${UPSTREAM_JOB_NUMBER}")])
         }
         // If BUILD_LIST is set, pass it, otherwise don't pass it in order to pickup the default in the test job config.
         if (buildList) {
