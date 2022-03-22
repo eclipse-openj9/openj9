@@ -2019,6 +2019,12 @@ aboutToBootstrap(J9JavaVM * javaVM, J9JITConfig * jitConfig)
             }
 #endif /* defined(J9VM_OPT_JITSERVER) */
          }
+
+      if (javaVM->sharedClassConfig->runtimeFlags & J9SHR_RUNTIMEFLAG_ENABLE_READONLY)
+         {
+         TR::Options::getAOTCmdLineOptions()->setOption(TR_NoStoreAOT);
+         TR_J9SharedCache::setSharedCacheDisabledReason(TR_J9SharedCache::AOT_DISABLED);
+         }
       }
 #endif /* defined(J9VM_OPT_SHARED_CLASSES) */
 
