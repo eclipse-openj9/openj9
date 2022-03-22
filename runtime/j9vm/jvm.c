@@ -1540,6 +1540,7 @@ typedef struct J9SpecialArguments {
 	UDATA *argEncoding;
 	IDATA *ibmMallocTraceSet;
 	const char *executableJarPath;
+	BOOLEAN captureCommandLine;
 } J9SpecialArguments;
 /**
  * Look for special options:
@@ -1585,6 +1586,10 @@ initialArgumentScan(JavaVMInitArgs *args, J9SpecialArguments *specialArgs)
 			*(specialArgs->argEncoding) = ARG_ENCODING_UTF;
 		} else if (0 == strcmp(args->options[argCursor].optionString, VMOPT_XARGENCODINGLATIN)) {
 			*(specialArgs->argEncoding) = ARG_ENCODING_LATIN;
+		} else if (0 == strcmp(args->options[argCursor].optionString, VMOPT_XXOPENJ9COMMANDLINEENV)) {
+			specialArgs->captureCommandLine = TRUE;
+		} else if (0 == strcmp(args->options[argCursor].optionString, VMOPT_XXNOOPENJ9COMMANDLINEENV)) {
+			specialArgs->captureCommandLine = FALSE;
 		}
 	}
 
@@ -1951,6 +1956,14 @@ JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITSer
 	specialArgs.argEncoding = &argEncoding;
 	specialArgs.executableJarPath = NULL;
 	specialArgs.ibmMallocTraceSet = &ibmMallocTraceSet;
+	specialArgs.captureCommandLine = TRUE;
+#if defined(J9ZOS390)
+	/*
+	 * Temporarily disable capturing the command line on z/OS.
+	 * See the discussion in https://github.com/eclipse-openj9/openj9/pull/14634.
+	 */
+	specialArgs.captureCommandLine = FALSE;
+#endif /* defined(J9ZOS390) */
 #ifdef J9ZTPF
 
 	result = tpf_eownrc(TPF_SET_EOWNR, "IBMRT4J                        ");
@@ -1965,15 +1978,6 @@ JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITSer
 		return JNI_ERR;
 	}
 #endif /* defined(J9ZTPF) */
-
-#if !defined(J9ZOS390)
-	/*
-	 * Temporarily disable capturing the command line on z/OS.
-	 * See the discussion in https://github.com/eclipse-openj9/openj9/pull/14634.
-	 */
-	captureCommandLine();
-#endif /* !defined(J9ZOS390) */
-
 	/*
 	 * Linux uses LD_LIBRARY_PATH
 	 * z/OS uses LIBPATH
@@ -2201,6 +2205,13 @@ JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITSer
 
 	if (VERBOSE_INIT == localVerboseLevel) {
 		createParams.flags |= J9_CREATEJAVAVM_VERBOSE_INIT;
+	}
+
+	/* [RTC 147146] Allow a Java option to disable capturing command line
+	 * in the OPENJ9_JAVA_COMMAND_LINE environment variable.
+	 */
+	if (specialArgs.captureCommandLine) {
+		captureCommandLine();
 	}
 #if defined(J9VM_OPT_JITSERVER)
 	if (isJITServer) {
