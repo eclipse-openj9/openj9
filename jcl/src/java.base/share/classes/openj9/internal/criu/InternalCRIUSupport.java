@@ -1,4 +1,4 @@
-/*[INCLUDE-IF CRIU_SUPPORT]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 /*******************************************************************************
  * Copyright (c) 2022, 2022 IBM Corp. and others
  *
@@ -22,8 +22,10 @@
  *******************************************************************************/
 package openj9.internal.criu;
 
+/*[IF CRIU_SUPPORT]*/
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+/*[ENDIF] CRIU_SUPPORT */
 
 /**
  * Internal CRIU Support API
@@ -32,13 +34,12 @@ import java.security.PrivilegedAction;
 @SuppressWarnings({ "deprecation", "removal" })
 /*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 public final class InternalCRIUSupport {
-
+	/*[IF CRIU_SUPPORT]*/
 	private static boolean criuSupportEnabled;
 	private static boolean nativeLoaded;
 	private static boolean initComplete;
 
 	private static native boolean isCRIUSupportEnabledImpl();
-
 	private static native boolean isCheckpointAllowedImpl();
 
 	private static void init() {
@@ -48,40 +49,6 @@ public final class InternalCRIUSupport {
 			}
 			initComplete = true;
 		}
-	}
-
-	/**
-	 * Queries if CRIU support is enabled.
-	 *
-	 * @return true is support is enabled, false otherwise
-	 */
-	public synchronized static boolean isCRIUSupportEnabled() {
-		if (!initComplete) {
-			init();
-		}
-
-		return criuSupportEnabled;
-	}
-
-	/**
-	 * Returns an error message describing why isCRIUSupportEnabled() returns false,
-	 * and what can be done to remediate the issue.
-	 *
-	 * @return null if isCRIUSupportEnabled() returns true. Otherwise the error
-	 *         message
-	 */
-	public static String getErrorMessage() {
-		String s = null;
-		if (!isCRIUSupportEnabled()) {
-			if (nativeLoaded) {
-				s = "To enable criu support, please run java with the `-XX:+EnableCRIUSupport` option.";
-			} else {
-				s = "There was a problem loaded the criu native library.\n"
-						+ "Please check that criu is installed on the machine by running `criu check`.\n"
-						+ "Also, please ensure that the JDK is criu enabled by contacting your JDK provider.";
-			}
-		}
-		return s;
 	}
 
 	private static boolean loadNativeLibrary() {
@@ -101,6 +68,48 @@ public final class InternalCRIUSupport {
 
 		return nativeLoaded;
 	}
+	/*[ENDIF] CRIU_SUPPORT */
+
+	/**
+	 * Queries if CRIU support is enabled.
+	 *
+	 * @return true is support is enabled, false otherwise
+	 */
+	public synchronized static boolean isCRIUSupportEnabled() {
+		/*[IF CRIU_SUPPORT]*/
+		if (!initComplete) {
+			init();
+		}
+		return criuSupportEnabled;
+		/*[ELSE] CRIU_SUPPORT
+		return false;
+		/*[ENDIF] CRIU_SUPPORT */
+	}
+
+	/**
+	 * Returns an error message describing why isCRIUSupportEnabled() returns false,
+	 * and what can be done to remediate the issue.
+	 *
+	 * @return null if isCRIUSupportEnabled() returns true. Otherwise the error
+	 *         message
+	 */
+	public static String getErrorMessage() {
+		String s = null;
+		/*[IF CRIU_SUPPORT]*/
+		if (!isCRIUSupportEnabled()) {
+			if (nativeLoaded) {
+				s = "To enable criu support, please run java with the `-XX:+EnableCRIUSupport` option."; //$NON-NLS-1$
+			} else {
+				s = "There was a problem loaded the criu native library.\n" //$NON-NLS-1$
+						+ "Please check that criu is installed on the machine by running `criu check`.\n" //$NON-NLS-1$
+						+ "Also, please ensure that the JDK is criu enabled by contacting your JDK provider."; //$NON-NLS-1$
+			}
+		}
+		/*[ELSE] CRIU_SUPPORT */
+		s = "Please ensure that the JDK is criu enabled by contacting your JDK provider."; //$NON-NLS-1$
+		/*[ENDIF] CRIU_SUPPORT */
+		return s;
+	}
 
 	/**
 	 * Queries if CRIU Checkpoint is allowed. isCRIUSupportEnabled() is invoked
@@ -109,11 +118,14 @@ public final class InternalCRIUSupport {
 	 * @return true if Checkpoint is allowed, otherwise false
 	 */
 	public static boolean isCheckpointAllowed() {
+		/*[IF CRIU_SUPPORT]*/
 		boolean checkpointAllowed = false;
 		if (isCRIUSupportEnabled()) {
 			checkpointAllowed = isCheckpointAllowedImpl();
 		}
-
 		return checkpointAllowed;
+		/*[ELSE] CRIU_SUPPORT
+		return false;
+		/*[ENDIF] CRIU_SUPPORT */
 	}
 }
