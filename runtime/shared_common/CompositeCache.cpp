@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2021 IBM Corp. and others
+ * Copyright (c) 2001, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -255,24 +255,28 @@ SH_CompositeCacheImpl::getFreeBlockBytes(void)
 		*	then free block bytes = freeBytes as calculated above
 		*/
 		retVal = freeBytes;
+		Trc_SHR_CC_freeBlockBytes_info(1, retVal, freeBytes, minAOT, aotBytes, minJIT, jitBytes);
 	} else if (minJIT > jitBytes && ((-1 == minAOT) || (minAOT <= aotBytes))) {
 		/*if jitBytes within the reserved space for JIT but no reserved space for AOT
 		 * or aotBytes is  equal to or crossed reserved space for AOT
 		 * then free block bytes =  freebytes - bytes not yet used in reserved space of JIT
 		*/
 		retVal = freeBytes - (minJIT - jitBytes) ;
+		Trc_SHR_CC_freeBlockBytes_info(2, retVal, freeBytes, minAOT, aotBytes, minJIT, jitBytes);
 	} else if ((minAOT > aotBytes) && ((-1 == minJIT) || minJIT <= jitBytes)) {
 		/*if aotBytes within the reserved space for AOT but no reserved space for JIT
 		 * or jitBytes is  equal to or crossed reserved space for JIT
 		 * then free block bytes =  freebytes - bytes not yet used in reserved space of AOT
 		*/
 		retVal = freeBytes - (minAOT - aotBytes) ;
+		Trc_SHR_CC_freeBlockBytes_info(3, retVal, freeBytes, minAOT, aotBytes, minJIT, jitBytes);
 	} else	{
 		 /* We are here if both jitBytes and aotBytes are within the their respective reserved space
 		 *  free block bytes = freebytes - bytes not yet used in reserved space of AOT -
 		 *       						   bytes not yet used in reserved space of JIT
 		 */
 		retVal = freeBytes - (minJIT - jitBytes) - (minAOT - aotBytes);
+		Trc_SHR_CC_freeBlockBytes_info(4, retVal, freeBytes, minAOT, aotBytes, minJIT, jitBytes);
 	}
 	/* When creating the cache with -Xscminaot/-Xscminjit > real cache size, minAOT/minJIT will be set to the same size to the real cache size by ensureCorrectCacheSizes(),
 	 * retVal calculated here can be < 0 in this case.

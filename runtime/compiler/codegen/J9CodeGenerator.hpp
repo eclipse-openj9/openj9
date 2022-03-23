@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -520,6 +520,16 @@ public:
    */
    void setSupportsInlineConcurrentLinkedQueue() { _j9Flags.set(SupportsInlineConcurrentLinkedQueue); }
 
+   /** \brief
+	*   Determines whether the code generator supports inlining of java/lang/StringCoding.encodeASCII
+	*/
+   bool getSupportsInlineEncodeASCII() { return _j9Flags.testAny(SupportsInlineEncodeASCII); }
+
+   /** \brief
+	*   The code generator supports inlining of java/lang/StringCoding.encodeASCII
+	*/
+   void setSupportsInlineEncodeASCII() { _j9Flags.set(SupportsInlineEncodeASCII); }
+
    /**
     * \brief
     *    The number of nodes between a monext and the next monent before
@@ -605,6 +615,52 @@ public:
     */
    bool isProfiledClassAndCallSiteCompatible(TR_OpaqueClassBlock *profiledClass, TR_OpaqueClassBlock *callSiteMethodClass);
 
+   /** \brief
+   *    Determines whether the code generator supports inlining of java/lang/Integer.stringSize() or java/lang/Long.stringSize()
+   */
+   bool getSupportsIntegerStringSize() { return _j9Flags.testAny(SupportsIntegerStringSize); }
+
+   /** \brief
+   *    The code generator supports inlining of java/lang/Integer.stringSize() or java/lang/Long.stringSize()
+   */
+   void setSupportsIntegerStringSize() {_j9Flags.set(SupportsIntegerStringSize); }
+
+   /** \brief
+   *    Determines whether the code generator supports inlining of
+   *       - Integer.getChars,
+   *       - Long.getChars,
+   *       - StringUTF16.getChars(JI[B)I,
+   *       - StringUTF16.getChars(II[B)I
+   */
+   bool getSupportsIntegerToChars() { return _j9Flags.testAny(SupportsIntegerToChars); }
+
+   /** \brief
+   *    The code generator supports inlining of
+   *       - Integer.getChars,
+   *       - Long.getChars,
+   *       - StringUTF16.getChars(JI[B)I,
+   *       - StringUTF16.getChars(II[B)I
+   */
+   void setSupportsIntegerToChars() {_j9Flags.set(SupportsIntegerToChars); }
+
+   /**
+    * \brief Determine whether this code generator guarantees resolved direct
+    * dispatch under AOT with SVM.
+    *
+    * \return true if resolved direct dispatch is guaranteed, false otherwise
+    * \see TR_J9VMBase::isResolvedDirectDispatchGuaranteed
+    */
+   bool guaranteesResolvedDirectDispatchForSVM() { return false; } // safe default
+
+   /**
+    * \brief Determine whether this code generator guarantees resolved virtual
+    * dispatch under AOT with SVM.
+    *
+    * \return true if resolved virtual dispatch is guaranteed, false otherwise
+    * \see TR_J9VMBase::isResolvedVirtualDispatchGuaranteed
+    */
+   bool guaranteesResolvedVirtualDispatchForSVM() { return false; } // safe default
+
 private:
 
    enum // Flags
@@ -617,6 +673,9 @@ private:
       SupportsInlineConcurrentLinkedQueue                 = 0x00000020,
       SupportsBigDecimalLongLookasideVersioning           = 0x00000040,
       SupportsInlineStringLatin1Inflate                   = 0x00000080, /*! codegen inlining of Java StringLatin1.inflate */
+      SupportsIntegerStringSize                           = 0x00000100,
+      SupportsIntegerToChars                              = 0x00000200,
+      SupportsInlineEncodeASCII                           = 0x00000400,
       };
 
    flags32_t _j9Flags;

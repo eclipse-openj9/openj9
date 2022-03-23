@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -472,7 +472,7 @@ IDATA j9bcutil_dumpBytecodes(J9PortLibrary * portLib, J9ROMClass * romClass,
 		case JBcheckcast:
 		case JBinstanceof:
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-		case JBdefaultvalue:
+		case JBaconst_init:
 #endif
 			_GETNEXT_U16(index, bcIndex);
 			info = &constantPool[index];

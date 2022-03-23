@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -37,6 +37,10 @@
 #include "pcstack.h"
 #include "VMHelpers.hpp"
 #include "OMR/Bytes.hpp"
+
+#if defined(OSX) && defined(AARCH64)
+#include <pthread.h> // for pthread_jit_write_protect_np
+#endif
 
 extern "C" {
 
@@ -258,6 +262,10 @@ jitResetAllMethods(J9VMThread *currentThread)
 		J9Method *method = clazz->ramMethods;
 		U_32 methodCount = clazz->romClass->romMethodCount;
 
+#if defined(OSX) && defined(AARCH64)
+		pthread_jit_write_protect_np(0);
+#endif
+
 		while (methodCount != 0) {
 			UDATA extra = (UDATA)method->extra;
 			if (0 == (extra & J9_STARTPC_NOT_TRANSLATED)) {
@@ -277,6 +285,11 @@ jitResetAllMethods(J9VMThread *currentThread)
 			method += 1;
 			methodCount -= 1;
 		}
+
+#if defined(OSX) && defined(AARCH64)
+		pthread_jit_write_protect_np(1);
+#endif
+
 		clazz = vmFuncs->allClassesNextDo(&state);
 	}
 	vmFuncs->allClassesEndDo(&state);
@@ -583,7 +596,7 @@ getPendingStackHeight(J9VMThread *currentThread, U_8 *interpreterPC, J9Method *r
 			case JBgetfield:
 				pendingStackHeight -= 1;
 				break;
-			default: /* JBnew/JBdefaultValue - no stacked parameters*/
+			default: /* JBnew/JBaconst_init - no stacked parameters*/
 				break;
 			}
 		}
@@ -1239,7 +1252,7 @@ c_jitDecompileAtExceptionCatch(J9VMThread * currentThread)
 	 * because jitGetMapsFromPC is expecting a return address, so it subtracts 1.  The value stored in the
 	 * decomp record is the start address of the compiled exception handler.
 	 */
-	jitGetMapsFromPC(currentThread, metaData, (UDATA)jitPC + 1, &stackMap, &inlineMap);
+	jitGetMapsFromPC(currentThread, vm, metaData, (UDATA)jitPC + 1, &stackMap, &inlineMap);
 	Assert_CodertVM_false(NULL == inlineMap);
 	if (NULL != getJitInlinedCallInfo(metaData)) {
 		inlinedCallSite = getFirstInlinedCallSite(metaData, inlineMap);
@@ -1840,7 +1853,7 @@ osrAllFramesSize(J9VMThread *currentThread, J9JITExceptionTable *metaData, void 
 	void * inlineMap = NULL;
 
 	/* Count the inlined methods */
-	jitGetMapsFromPC(currentThread, metaData, (UDATA)jitPC, &stackMap, &inlineMap);
+	jitGetMapsFromPC(currentThread, currentThread->javaVM, metaData, (UDATA)jitPC, &stackMap, &inlineMap);
 	Assert_CodertVM_false(NULL == inlineMap);
 	if (NULL != getJitInlinedCallInfo(metaData)) {
 		void *inlinedCallSite = getFirstInlinedCallSite(metaData, inlineMap);
@@ -2177,7 +2190,7 @@ initializeOSRBuffer(J9VMThread *currentThread, J9OSRBuffer *osrBuffer, J9OSRData
 	U_16 numberOfMapBits = 0;
 
 	/* Get the stack map, inline map and live monitor metadata */
-	jitGetMapsFromPC(currentThread, metaData, (UDATA)jitPC, &stackMap, &inlineMap);
+	jitGetMapsFromPC(currentThread, currentThread->javaVM, metaData, (UDATA)jitPC, &stackMap, &inlineMap);
 	liveMonitorMap = getJitLiveMonitors(metaData, stackMap);
 	gcStackAtlas = (J9JITStackAtlas *)getJitGCStackAtlas(metaData);
 	numberOfMapBits = getJitNumberOfMapBytes(gcStackAtlas) << 3;

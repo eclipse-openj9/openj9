@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2020, 2021 IBM Corp. and others
+ * Copyright (c) 2020, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,9 +26,12 @@ import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.util.Scanner;
 import java.util.ArrayList;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.FileNotFoundException;
+import java.net.Socket;
 
 import org.testng.AssertJUnit;
 import org.testng.SkipException;
@@ -133,8 +136,59 @@ public class JITServerTest {
 		// The only way to avoid most of the races is to have the server choose a random port (and retry if it is busy) and for us read the port
 		// from the server log. We still need to worry about tests where we stop and restart the server, because we need to keep using the same
 		// port but someone may grab it in the interim.
-		final int randomPort = EPHEMERAL_PORTS_START + new Random().nextInt(EPHEMERAL_PORTS_LAST - EPHEMERAL_PORTS_START + 1);
+		int randomPort = EPHEMERAL_PORTS_START + new Random().nextInt(EPHEMERAL_PORTS_LAST - EPHEMERAL_PORTS_START + 1);
+		while (!isPortOpen(randomPort)) {
+			String[] portInfo = infoOfProcessUsingPort(randomPort);
+			if (0 != portInfo.length) {
+				logger.info("Port " + randomPort + " is busy. Process info:");
+				for (int i = 0; i < portInfo.length; ++i) {
+					logger.info(portInfo[i]);
+				}
+			} else {
+				logger.info("Port " + randomPort + " is busy");
+			}
+
+			randomPort = EPHEMERAL_PORTS_START + new Random().nextInt(EPHEMERAL_PORTS_LAST - EPHEMERAL_PORTS_START + 1);
+		}
 		return String.format(JITSERVER_PORT_OPTION_FORMAT_STRING, randomPort);
+	}
+
+	private static boolean isPortOpen(int port) {
+		Socket s = null;
+		try {
+			// Connect to the port as a client. If this succeeds, then something else is using that port.
+			s = new Socket((String)null, port);
+			s.close();
+			return false;
+		} catch (IOException e) {
+			// A client connection could not be established, so nothing is using the port.
+			return true;
+		} catch (SecurityException e) {
+			// Access to the port is forbidden.
+			return false;
+		}
+	}
+
+	private static String[] infoOfProcessUsingPort(int port) {
+		String[] output = {};
+		if (System.getProperty("os.name").toLowerCase().contains("linux")) {
+			try {
+				Process proc = new ProcessBuilder("lsof", "-i", ":" + port).start();
+				proc.waitFor();
+				if (proc.exitValue() == 0) {
+					BufferedReader stdOutput = new BufferedReader(new InputStreamReader(proc.getInputStream()));
+					ArrayList<String> al = new ArrayList<String>();
+					String line = null;
+					while ((line = stdOutput.readLine()) != null) {
+						al.add(line);
+					}
+					output = al.toArray(new String[0]);
+				}
+			} catch (IOException|InterruptedException e) {
+				// Do nothing.
+			}
+		}
+		return output;
 	}
 
 	private static String[] stripQuotesFromEachArg(String[] args) {

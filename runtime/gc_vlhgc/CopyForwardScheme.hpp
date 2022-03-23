@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -524,7 +524,7 @@ private:
 	 * @param listLock[out] Returns the lock associated with the returned memory
 	 * @return a pointer to the storage reserved for allocation, or NULL on failure.
 	 */
-	void *reserveMemoryForObject(MM_EnvironmentVLHGC *env, UDATA compactGroup, UDATA objectSize, MM_LightweightNonReentrantLock** listLock);
+	void *reserveMemoryForObject(MM_EnvironmentVLHGC *env, uintptr_t compactGroup, uintptr_t objectSize, MM_LightweightNonReentrantLock** listLock);
 
 	/**
 	 * Reserve memory for a general cache to be used as the copy destination of a survivor space.
@@ -536,7 +536,7 @@ private:
 	 * @param listLock[out] Returns the lock associated with the returned memory
 	 * @return true if the cache was allocated, false otherwise.
 	 */
-	bool reserveMemoryForCache(MM_EnvironmentVLHGC *env, UDATA compactGroup, UDATA maxCacheSize, void **addrBase, void **addrTop, MM_LightweightNonReentrantLock** listLock);
+	bool reserveMemoryForCache(MM_EnvironmentVLHGC *env, uintptr_t compactGroup, uintptr_t maxCacheSize, void **addrBase, void **addrTop, MM_LightweightNonReentrantLock** listLock);
 
 	/**
 	 * Creates a new chunk of scan caches by using heap memory and attaches them to the free cache list.
@@ -553,7 +553,7 @@ private:
 	 * @param objectReserveSizeInBytes Amount of bytes to be reserved (can be greater than the original object size) for copying.
 	 * @return a CopyScanCache which contains the reserved memory or NULL if the reserve was not successful.
 	 */
-	MMINLINE MM_CopyScanCacheVLHGC *reserveMemoryForCopy(MM_EnvironmentVLHGC *env, J9Object *objectToEvacuate, MM_AllocationContextTarok *reservingContext, UDATA objectReserveSizeInBytes);
+	MMINLINE MM_CopyScanCacheVLHGC *reserveMemoryForCopy(MM_EnvironmentVLHGC *env, J9Object *objectToEvacuate, MM_AllocationContextTarok *reservingContext, uintptr_t objectReserveSizeInBytes);
 
 	void flushCaches(MM_CopyScanCacheVLHGC *cache);
 	
@@ -1123,11 +1123,8 @@ public:
 		return false;
 	}
 
-	void abandonTLHRemainder(MM_EnvironmentVLHGC *env, bool preserveRemainders = false);
+	void abandonTLHRemainders(MM_EnvironmentVLHGC *env);
 
-	/* after Global GC or before first PGC after GMP, we need to reset all of TLHRemainders */
-	void resetAllTLHRemainders(MM_EnvironmentVLHGC *env);
-	MMINLINE void discardHeapChunk(MM_CopyForwardCompactGroup *compactGroupForMarkData, void *base, void *top);
 	friend class MM_CopyForwardGMPCardCleaner;
 	friend class MM_CopyForwardNoGMPCardCleaner;
 	friend class MM_CopyForwardSchemeTask;

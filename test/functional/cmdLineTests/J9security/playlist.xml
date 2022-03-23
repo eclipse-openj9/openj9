@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <!--
-  Copyright (c) 2016, 2021 IBM Corp. and others
+  Copyright (c) 2016, 2022 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -55,7 +55,7 @@
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump \
 		-DMODULE_ADDEXPORTS_OPTION=$(Q)--add-exports$(Q) -DMODULE_ADDEXPORTS_VALUE=$(Q)java.base/jdk.internal.org.objectweb.asm=ALL-UNNAMED$(Q) \
 		-DTESTJ9SECURITYJARPATH=$(Q)$(TEST_RESROOT)$(D)$(Q) -DRESJAR=$(CMDLINETESTER_RESJAR) \
-		-DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump$(SQ) -jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)j9SecurityTest.xml$(Q) \
+		-DEXE=$(SQ)$(JAVA_COMMAND) $(JAVA_SECURITY_MANAGER) $(JVM_OPTIONS) -Xdump$(SQ) -jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)j9SecurityTest.xml$(Q) \
 		-explainExcludes -nonZeroExitWhenError; \
 		$(TEST_STATUS)</command>
 		<levels>

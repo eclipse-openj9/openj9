@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2021 IBM Corp. and others
+ * Copyright (c) 2019, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -109,7 +109,7 @@ J9::ARM64::AheadOfTimeCompile::initializePlatformSpecificAOTRelocationHeader(TR:
          TR_RelocationRecordDiscontiguousSymbolFromManager *dsfmRecord = reinterpret_cast<TR_RelocationRecordDiscontiguousSymbolFromManager *>(reloRecord);
 
          uint8_t *symbol = (uint8_t *)relocation->getTargetAddress();
-         uint16_t symbolID = self()->comp()->getSymbolValidationManager()->getIDFromSymbol(static_cast<void *>(symbol));
+         uint16_t symbolID = self()->comp()->getSymbolValidationManager()->getSymbolIDFromValue(static_cast<void *>(symbol));
 
          uint16_t symbolType = (uint16_t)(uintptr_t)relocation->getTargetAddress2();
 

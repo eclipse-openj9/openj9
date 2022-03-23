@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -4945,7 +4945,7 @@ TR::Register *J9::Power::TreeEvaluator::VMmonexitEvaluator(TR::Node *node, TR::C
 
          generateTrg1Src1Instruction(cg, TR::InstOpCode::mr, node, lookupOffsetReg, objReg);
 
-         int32_t t = trailingZeroes(TR::Compiler->om.objectAlignmentInBytes());
+         int32_t t = trailingZeroes(TR::Compiler->om.getObjectAlignmentInBytes());
 
          if (comp->target().is64Bit())
          generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::sradi, node, lookupOffsetReg, lookupOffsetReg, t);
@@ -5387,7 +5387,7 @@ static void genHeapAlloc(TR::Node *node, TR::Instruction *&iCursor, TR_OpaqueCla
                TR::LabelSymbol *nonZeroLengthLabel = generateLabelSymbol(cg);
                iCursor = generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, nonZeroLengthLabel, condReg, iCursor);
 
-               int32_t zeroLenArraySize = (TR::Compiler->om.discontiguousArrayHeaderSizeInBytes() + TR::Compiler->om.objectAlignmentInBytes() - 1) & (-TR::Compiler->om.objectAlignmentInBytes());
+               int32_t zeroLenArraySize = (TR::Compiler->om.discontiguousArrayHeaderSizeInBytes() + TR::Compiler->om.getObjectAlignmentInBytes() - 1) & (-TR::Compiler->om.getObjectAlignmentInBytes());
                TR_ASSERT(zeroLenArraySize >= J9_GC_MINIMUM_OBJECT_SIZE, "Zero-length array size must be bigger than MIN_OBJECT_SIZE");
                TR_ASSERT(zeroLenArraySize <= maxSafeSize, "Zero-length array size must be smaller than maxSafeSize");
                // Load TLH heapAlloc and heapTop values.
@@ -5604,8 +5604,8 @@ static void genHeapAlloc(TR::Node *node, TR::Instruction *&iCursor, TR_OpaqueCla
                   }
 
                int32_t round; // zero indicates no rounding is necessary
-               round = (elementSize >= TR::Compiler->om.objectAlignmentInBytes()) ? 0 : TR::Compiler->om.objectAlignmentInBytes();
-               bool headerAligned = allocSize % TR::Compiler->om.objectAlignmentInBytes() ? 0 : 1;
+               round = (elementSize >= TR::Compiler->om.getObjectAlignmentInBytes()) ? 0 : TR::Compiler->om.getObjectAlignmentInBytes();
+               bool headerAligned = allocSize % TR::Compiler->om.getObjectAlignmentInBytes() ? 0 : 1;
 
                //TODO: The code below pads up the object allocation size so that zero init code later
                //will have multiples of wordsize to work with. For now leaving this code as is, but
@@ -5713,8 +5713,8 @@ static void genHeapAlloc(TR::Node *node, TR::Instruction *&iCursor, TR_OpaqueCla
          //
          if (generateArraylets && (node->getOpCodeValue() == TR::anewarray || node->getOpCodeValue() == TR::newarray))
             {
-            iCursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, temp2Reg, temp2Reg, TR::Compiler->om.objectAlignmentInBytes() - 1, iCursor);
-            iCursor = generateTrg1Src1Imm2Instruction(cg, comp->target().is64Bit() ? TR::InstOpCode::rldicr : TR::InstOpCode::rlwinm, node, temp2Reg, temp2Reg, 0, int64_t(-TR::Compiler->om.objectAlignmentInBytes()), iCursor);
+            iCursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, temp2Reg, temp2Reg, TR::Compiler->om.getObjectAlignmentInBytes() - 1, iCursor);
+            iCursor = generateTrg1Src1Imm2Instruction(cg, comp->target().is64Bit() ? TR::InstOpCode::rldicr : TR::InstOpCode::rlwinm, node, temp2Reg, temp2Reg, 0, int64_t(-TR::Compiler->om.getObjectAlignmentInBytes()), iCursor);
             static const char *p = feGetEnv("TR_TarokAlignHeapTopBreak");
             if (p)
                iCursor = generateInstruction(cg, TR::InstOpCode::bad, node, iCursor);
@@ -6314,7 +6314,7 @@ TR::Register *J9::Power::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeG
 
    if (!isVariableLen)
       {
-      allocateSize = (allocateSize + TR::Compiler->om.objectAlignmentInBytes() - 1) & (-TR::Compiler->om.objectAlignmentInBytes());
+      allocateSize = (allocateSize + TR::Compiler->om.getObjectAlignmentInBytes() - 1) & (-TR::Compiler->om.getObjectAlignmentInBytes());
       }
 
    if (comp->compileRelocatableCode())
@@ -7429,7 +7429,7 @@ TR::Register *J9::Power::TreeEvaluator::VMmonentEvaluator(TR::Node *node, TR::Co
 
          generateTrg1Src1Instruction(cg, TR::InstOpCode::mr, node, lookupOffsetReg, objReg);
 
-         int32_t t = trailingZeroes(TR::Compiler->om.objectAlignmentInBytes());
+         int32_t t = trailingZeroes(TR::Compiler->om.getObjectAlignmentInBytes());
 
          if (comp->target().is64Bit())
             generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::sradi, node, lookupOffsetReg, lookupOffsetReg, t);
@@ -11935,7 +11935,7 @@ TR::Instruction *loadAddressRAM32(TR::CodeGenerator *cg, TR::Node * node, int32_
          TR_ASSERT(0,"JNI relocation not supported.");
          }
       if(isAOT)
-         cg->addExternalRelocation(new (cg->trHeapMemory()) TR::ExternalRelocation((uint8_t *)cursor, (uint8_t *) node->getSymbolReference(),
+         cg->addExternalRelocation(new (cg->trHeapMemory()) TR::BeforeBinaryEncodingExternalRelocation(cursor, (uint8_t *) node->getSymbolReference(),
                node ? (uint8_t *)(intptr_t)node->getInlinedSiteIndex() : (uint8_t *)-1,
                   reloType, cg),
                   __FILE__, __LINE__, node);
@@ -11977,7 +11977,7 @@ TR::Instruction *loadAddressRAM(TR::CodeGenerator *cg, TR::Node * node, intptr_t
          TR_ASSERT(0,"JNI relocation not supported.");
          }
       if(isAOT)
-         cg->addExternalRelocation(new (cg->trHeapMemory()) TR::ExternalRelocation((uint8_t *)cursor, (uint8_t *) node->getSymbolReference(),
+         cg->addExternalRelocation(new (cg->trHeapMemory()) TR::BeforeBinaryEncodingExternalRelocation(cursor, (uint8_t *) node->getSymbolReference(),
                node ? (uint8_t *)(intptr_t)node->getInlinedSiteIndex() : (uint8_t *)-1,
                   reloType, cg),
                   __FILE__,__LINE__, node);
@@ -12008,7 +12008,7 @@ TR::Instruction *loadAddressJNI32(TR::CodeGenerator *cg, TR::Node * node, int32_
 
    cursor = generateTrg1ImmInstruction(cg, TR::InstOpCode::lis, node, trgReg, isAOT ? 0 : value>>16, cursor);
 
-   if (value != 0x0)
+   if (isAOT && value != 0x0)
       {
       TR_ExternalRelocationTargetKind reloType;
       if (node->getSymbol()->castToResolvedMethodSymbol()->isSpecial())
@@ -12022,11 +12022,20 @@ TR::Instruction *loadAddressJNI32(TR::CodeGenerator *cg, TR::Node * node, int32_
          reloType = TR_NoRelocation;
          TR_ASSERT(0,"JNI relocation not supported.");
          }
-      if(isAOT)
-         cg->addExternalRelocation(new (cg->trHeapMemory()) TR::ExternalRelocation((uint8_t *)cursor, (uint8_t *) node->getSymbolReference(),
-               node ? (uint8_t *)(intptr_t)node->getInlinedSiteIndex() : (uint8_t *)-1,
-                  reloType, cg),
-                  __FILE__, __LINE__, node);
+
+      TR_RelocationRecordInformation *info = new (comp->trHeapMemory()) TR_RelocationRecordInformation();
+      info->data1 = 0;
+      info->data2 = reinterpret_cast<uintptr_t>(node->getSymbolReference());
+      int16_t inlinedSiteIndex = node ? node->getInlinedSiteIndex() : -1;
+      info->data3 = static_cast<uintptr_t>(inlinedSiteIndex);
+
+      cg->addExternalRelocation(
+         new (cg->trHeapMemory()) TR::BeforeBinaryEncodingExternalRelocation(
+            cursor,
+            reinterpret_cast<uint8_t *>(info),
+            reloType,
+            cg),
+         __FILE__, __LINE__, node);
       }
 
    cursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::ori, node, trgReg, trgReg, isAOT ? 0 : value&0x0000ffff, cursor);
@@ -12050,7 +12059,7 @@ TR::Instruction *loadAddressJNI(TR::CodeGenerator *cg, TR::Node * node, intptr_t
 
    // lis trgReg, upper 16-bits
    cursor = generateTrg1ImmInstruction(cg, TR::InstOpCode::lis, node, trgReg, isAOT? 0: (value>>48) , cursor);
-   if (value != 0x0)
+   if (isAOT && value != 0x0)
       {
       TR_ExternalRelocationTargetKind reloType;
       if (node->getSymbol()->castToResolvedMethodSymbol()->isSpecial())
@@ -12064,11 +12073,20 @@ TR::Instruction *loadAddressJNI(TR::CodeGenerator *cg, TR::Node * node, intptr_t
          reloType = TR_NoRelocation;
          TR_ASSERT(0,"JNI relocation not supported.");
          }
-      if(isAOT)
-         cg->addExternalRelocation(new (cg->trHeapMemory()) TR::ExternalRelocation((uint8_t *)cursor, (uint8_t *) node->getSymbolReference(),
-               node ? (uint8_t *)(intptr_t)node->getInlinedSiteIndex() : (uint8_t *)-1,
-                  reloType, cg),
-                  __FILE__,__LINE__, node);
+
+      TR_RelocationRecordInformation *info = new (comp->trHeapMemory()) TR_RelocationRecordInformation();
+      info->data1 = 0;
+      info->data2 = reinterpret_cast<uintptr_t>(node->getSymbolReference());
+      int16_t inlinedSiteIndex = node ? node->getInlinedSiteIndex() : -1;
+      info->data3 = static_cast<uintptr_t>(inlinedSiteIndex);
+
+      cg->addExternalRelocation(
+         new (cg->trHeapMemory()) TR::BeforeBinaryEncodingExternalRelocation(
+            cursor,
+            reinterpret_cast<uint8_t *>(info),
+            reloType,
+            cg),
+         __FILE__, __LINE__, node);
       }
    // ori trgReg, trgReg, next 16-bits
    cursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::ori, node, trgReg, trgReg, isAOT ? 0 : ((value>>32) & 0x0000ffff), cursor);
@@ -12100,16 +12118,16 @@ TR::Register *J9::Power::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::
    else if (callee->getRecognizedMethod() == TR::jdk_internal_vm_vector_VectorSupport_binaryOp &&
        node->getOpCodeValue() == TR::vcall) // was vectorized
       {
-      // The following code is temporary and is only enabled under TR_UseVcall
+      // The following code is temporary and can only be enabled for specific opcodes in VectorAPIExpansion.
       // It's an example of how development of vector evaluators can proceed until vector IL opcodes
       // are implemented. Eventually, all recognition of Vector API methods will be removed from this
       // evaluator
       //
-      int firstOperandIndex = 4;
-      int secondOperandIndex = 5;
+      int firstOperandIndex = 5;
+      int secondOperandIndex = 6;
       TR::Node *opcodeNode = node->getChild(0);
-      TR::Node *dataTypeNode = node->getChild(2);
-      TR::Node *numLanesNode = node->getChild(3);
+      TR::Node *dataTypeNode = node->getChild(3);
+      TR::Node *numLanesNode = node->getChild(4);
       TR::Node *firstOperandNode = node->getChild(firstOperandIndex);
       TR::Node *secondOperandNode = node->getChild(secondOperandIndex);
 
@@ -12142,6 +12160,12 @@ TR::Register *J9::Power::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::
       node->setNumChildren(2);
       TR::Node::recreate(node, TR::vadd);
       return vaddEvaluator(node, cg);
+      }
+   else if (callee->getRecognizedMethod() >= TR::FirstVectorMethod &&
+            callee->getRecognizedMethod() <= TR::LastVectorMethod &&
+            node->getOpCodeValue() == TR::vcall) // was vectorized
+      {
+      TR_ASSERT_FATAL_WITH_NODE(node, false, "vcall is not supported for this Vector API method yet\n");
       }
 
 

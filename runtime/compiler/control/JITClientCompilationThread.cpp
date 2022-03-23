@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2021 IBM Corp. and others
+ * Copyright (c) 2019, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -384,10 +384,10 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(response, fe->getInitialLockword(clazz));
          }
          break;
-      case MessageType::VM_isString1:
+      case MessageType::VM_JavaStringObject:
          {
-         TR_OpaqueClassBlock *clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
-         client->write(response, fe->isString(clazz));
+         client->getRecvData<JITServer::Void>();
+         client->write(response, (TR_OpaqueClassBlock *)J9VMJAVALANGSTRING(vmThread->javaVM));
          }
          break;
       case MessageType::VM_getMethods:
@@ -506,12 +506,13 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          vmInfo._isHotReferenceFieldRequired = TR::Compiler->om.isHotReferenceFieldRequired();
          vmInfo._osrGlobalBufferSize = javaVM->osrGlobalBufferSize;
          vmInfo._needsMethodTrampolines = TR::CodeCacheManager::instance()->codeCacheConfig().needsMethodTrampolines();
-         vmInfo._objectAlignmentInBytes = TR::Compiler->om.objectAlignmentInBytes();
+         vmInfo._objectAlignmentInBytes = TR::Compiler->om.getObjectAlignmentInBytes();
          vmInfo._isGetImplInliningSupported = fe->isGetImplInliningSupported();
          vmInfo._isAllocateZeroedTLHPagesEnabled = fe->tlhHasBeenCleared();
          vmInfo._staticObjectAllocateFlags = fe->getStaticObjectFlags();
          vmInfo._referenceArrayCopyHelperAddress = fe->getReferenceArrayCopyHelperAddress();
          vmInfo._JavaLangObject = (TR_OpaqueClassBlock*)J9VMJAVALANGOBJECT(vmThread->javaVM);
+         vmInfo._JavaStringObject = (TR_OpaqueClassBlock*)J9VMJAVALANGSTRING(vmThread->javaVM);
 
          vmInfo._useAOTCache = comp->getPersistentInfo()->getJITServerUseAOTCache();
          if (vmInfo._useAOTCache)
@@ -3188,7 +3189,7 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
    CHTableCommitData chTableData;
    std::vector<TR_OpaqueClassBlock *> classesThatShouldNotBeNewlyExtended;
    std::string logFileStr;
-   std::string svmSymbolToIdStr;
+   std::string svmValueToSymbolStr;
    std::vector<TR_ResolvedJ9Method *> resolvedMirrorMethodsPersistIPInfo;
    TR_OptimizationPlan modifiedOptPlan;
    std::vector<SerializedRuntimeAssumption> serializedRuntimeAssumptions;
@@ -3238,7 +3239,7 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
          chTableData = std::get<2>(recv);
          classesThatShouldNotBeNewlyExtended = std::get<3>(recv);
          logFileStr = std::get<4>(recv);
-         svmSymbolToIdStr = std::get<5>(recv);
+         svmValueToSymbolStr = std::get<5>(recv);
          resolvedMirrorMethodsPersistIPInfo = std::get<6>(recv);
          modifiedOptPlan = std::get<7>(recv);
          serializedRuntimeAssumptions = std::get<8>(recv);
@@ -3475,7 +3476,7 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
             // so need to exit heuristic region.
             compiler->exitHeuristicRegion();
             // Populate symbol to id map
-            compiler->getSymbolValidationManager()->deserializeSymbolToIDMap(svmSymbolToIdStr);
+            compiler->getSymbolValidationManager()->deserializeValueToSymbolMap(svmValueToSymbolStr);
             }
 
          TR_ASSERT(codeCacheStr.size(), "must have code cache");

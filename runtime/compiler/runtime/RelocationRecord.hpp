@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -547,6 +547,10 @@ class TR_RelocationRecordDirectJNICall : public TR_RelocationRecordConstantPoolW
    TR_RelocationRecordDirectJNICall() {}
    TR_RelocationRecordDirectJNICall(TR_RelocationRuntime *reloRuntime, TR_RelocationRecordBinaryTemplate *record) : TR_RelocationRecordConstantPoolWithIndex(reloRuntime, record) {}
    virtual char *name();
+
+   void setOffsetToReloLocation(TR_RelocationTarget *reloTarget, uint8_t offsetToReloLocation);
+   uint8_t offsetToReloLocation(TR_RelocationTarget *reloTarget);
+
    virtual int32_t applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation);
 
    private:
@@ -1077,7 +1081,7 @@ class TR_RelocationRecordValidateInstanceField : public TR_RelocationRecordValid
    public:
       TR_RelocationRecordValidateInstanceField() {}
       TR_RelocationRecordValidateInstanceField(TR_RelocationRuntime *reloRuntime, TR_RelocationRecordBinaryTemplate *record) : TR_RelocationRecordValidateClass(reloRuntime, record) {}
-      virtual char *name();      
+      virtual char *name();
 
    protected:
       virtual TR_OpaqueClassBlock *getClassFromCP(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, void *void_cp);
@@ -1890,6 +1894,25 @@ class TR_RelocationRecordBreakpointGuard : public TR_RelocationRecordWithInlined
 
       void setDestinationAddress(TR_RelocationTarget *reloTarget, uintptr_t destinationAddress);
       uintptr_t destinationAddress(TR_RelocationTarget *reloTarget);
+   };
+
+class TR_RelocationRecordValidateJ2IThunkFromMethod : public TR_RelocationRecord
+   {
+   public:
+      TR_RelocationRecordValidateJ2IThunkFromMethod() {}
+      TR_RelocationRecordValidateJ2IThunkFromMethod(TR_RelocationRuntime *reloRuntime, TR_RelocationRecordBinaryTemplate *record) : TR_RelocationRecord(reloRuntime, record) {}
+      virtual bool isValidationRecord() { return true; }
+      virtual char *name() { return "TR_RelocationRecordValidateJ2IThunkFromMethod"; }
+      virtual void preparePrivateData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget) {}
+      virtual int32_t applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation);
+
+      virtual void print(TR_RelocationRuntime *reloRuntime);
+
+      void setThunkID(TR_RelocationTarget *reloTarget, uint16_t methodClassID);
+      uint16_t thunkID(TR_RelocationTarget *reloTarget);
+
+      void setMethodID(TR_RelocationTarget *reloTarget, uint16_t methodID);
+      uint16_t methodID(TR_RelocationTarget *reloTarget);
    };
 
 #endif   // RELOCATION_RECORD_INCL

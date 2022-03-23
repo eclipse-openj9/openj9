@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 1998, 2021 IBM Corp. and others
+ * Copyright (c) 1998, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -67,6 +67,10 @@ import sun.reflect.CallerSensitive;
 import jdk.internal.loader.NativeLibraries;
 import jdk.internal.loader.NativeLibrary;
 /*[ENDIF] JAVA_SPEC_VERSION >= 15 */
+
+/*[IF JAVA_SPEC_VERSION >= 18]*/
+import jdk.internal.reflect.CallerSensitiveAdapter;
+/*[ENDIF] JAVA_SPEC_VERSION >= 18 */
 
 /**
  * ClassLoaders are used to dynamically load, link and install
@@ -282,31 +286,7 @@ public abstract class ClassLoader {
 		}
 		/*[ENDIF] JAVA_SPEC_VERSION >= 10 */
 		jdk.internal.misc.VM.initLevel(2);
-		String javaSecurityManager = System.internalGetProperties().getProperty("java.security.manager"); //$NON-NLS-1$
-		if ((javaSecurityManager != null) 
-		/*[IF JAVA_SPEC_VERSION >= 12]*/
-			/* See the SecurityManager javadoc for details about special tokens. */
-			&& !javaSecurityManager.equals("disallow") //$NON-NLS-1$ /* special token to disallow SecurityManager */
-			&& !javaSecurityManager.equals("allow") //$NON-NLS-1$ /* special token to allow SecurityManager */
-			/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
-		) {
-			/*[IF JAVA_SPEC_VERSION >= 17]*/
-			System.initialErr.println("WARNING: A command line option has enabled the Security Manager"); //$NON-NLS-1$
-			System.initialErr.println("WARNING: The Security Manager is deprecated and will be removed in a future release"); //$NON-NLS-1$
-			/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
-			if (javaSecurityManager.isEmpty() || "default".equals(javaSecurityManager)) { //$NON-NLS-1$
-				System.setSecurityManager(new SecurityManager());
-			} else {
-				try {
-					Constructor<?> constructor = Class.forName(javaSecurityManager, true, applicationClassLoader).getConstructor();
-					constructor.setAccessible(true);
-					System.setSecurityManager((SecurityManager)constructor.newInstance());
-				} catch (Throwable e) {
-					/*[MSG "K0631", "JVM can't set custom SecurityManager due to {0}"]*/
-					throw new Error(com.ibm.oti.util.Msg.getString("K0631", e.toString()), e); //$NON-NLS-1$
-				}
-			}
-		}
+		System.initSecurityManager(applicationClassLoader);
 		jdk.internal.misc.VM.initLevel(3);
 		/*[ELSE]*/
 		applicationClassLoader = sun.misc.Launcher.getLauncher().getClassLoader();
@@ -392,56 +372,53 @@ private ClassLoader(Void staticMethodHolder, String classLoaderName, ClassLoader
 	// This assumes that DelegatingClassLoader is constructed via ClassLoader(parentLoader)
 	isDelegatingCL = DELEGATING_CL.equals(this.getClass().getName());
 
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION > 8]*/
 	if ((classLoaderName != null) && classLoaderName.isEmpty()) {
 		/*[MSG "K0645", "The given class loader name can't be empty."]*/
 		throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K0645")); //$NON-NLS-1$
 	}
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION > 8 */
 
 	if (parallelCapableCollection.containsKey(this.getClass())) {
 		isParallelCapable = true;
 	}
-	
+
 	// VM Critical: must set parent before calling initializeInternal()
 	parent = parentLoader;
-/*[IF !Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION == 8]*/
 	specialLoaderInited = (bootstrapClassLoader != null);
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION == 8 */
 	if (specialLoaderInited) {
 		if (!lazyClassLoaderInit) {
 			VM.initializeClassLoader(this, VM.J9_CLASSLOADER_TYPE_OTHERS, isParallelCapable);
 		}
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION > 8]*/
 		unnamedModule = new Module(this);
-/*[IF JAVA_SPEC_VERSION >= 15]*/
-		this.nativelibs = NativeLibraries.jniNativeLibraries(this);
-/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
-/*[ENDIF]*/
-	} 
-/*[IF Sidecar19-SE]*/	
+/*[ENDIF] JAVA_SPEC_VERSION > 8 */
+	}
+/*[IF JAVA_SPEC_VERSION > 8]*/
 	else {
 		if (bootstrapClassLoader == null) {
 			// BootstrapClassLoader.unnamedModule is set by JVM_SetBootLoaderUnnamedModule
 			unnamedModule = null;
 			bootstrapClassLoader = this;
 			VM.initializeClassLoader(bootstrapClassLoader, VM.J9_CLASSLOADER_TYPE_BOOT, false);
-/*[IF JAVA_SPEC_VERSION >= 15]*/
-			this.nativelibs = NativeLibraries.jniNativeLibraries(null);
-/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 		} else {
 			// Assuming the second classloader initialized is platform classloader
 			VM.initializeClassLoader(this, VM.J9_CLASSLOADER_TYPE_PLATFORM, false);
 			specialLoaderInited = true;
 			unnamedModule = new Module(this);
-/*[IF JAVA_SPEC_VERSION >= 15]*/
-			this.nativelibs = NativeLibraries.jniNativeLibraries(this);
-/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 		}
 	}
 	this.classLoaderName = classLoaderName;
-/*[ENDIF]*/	
-	
+/*[ENDIF] JAVA_SPEC_VERSION > 8 */
+
+/*[IF JAVA_SPEC_VERSION >= 19]*/
+	this.nativelibs = NativeLibraries.newInstance((this == bootstrapClassLoader) ? null : this);
+/*[ELSEIF JAVA_SPEC_VERSION >= 17] */
+	this.nativelibs = NativeLibraries.jniNativeLibraries((this == bootstrapClassLoader) ? null : this);
+/*[ENDIF] JAVA_SPEC_VERSION >= 19 */
+
 	if (isAssertOptionFound) {
 		initializeClassLoaderAssertStatus();
 	}
@@ -1239,16 +1216,15 @@ public final Module getUnnamedModule()
  * @exception	ClassNotFoundException
  *					If the class could not be found.
  */
-public Class<?> loadClass (String className) throws ClassNotFoundException {
-/*[IF Sidecar19-SE]*/
+public Class<?> loadClass(String className) throws ClassNotFoundException {
+/*[IF JAVA_SPEC_VERSION > 8]*/
 	if ((bootstrapClassLoader == null) || (this == bootstrapClassLoader)) {
 		Class<?> cls = VMAccess.findClassOrNull(className, bootstrapClassLoader);
-		if (cls == null) {
-			throw new ClassNotFoundException(className);
+		if (cls != null) {
+			return cls;
 		}
-		return cls;
 	}
-/*[ENDIF] Sidecar19-SE */	
+/*[ENDIF] JAVA_SPEC_VERSION > 8 */
 	return loadClass(className, false);
 }
 
@@ -1400,6 +1376,27 @@ Class<?> loadClassHelper(final String className, boolean resolveClass, boolean d
 protected static boolean registerAsParallelCapable() {
 	final Class<?> callerCls = System.getCallerClass();
 	
+/*[IF JAVA_SPEC_VERSION >= 18]*/
+	return registerAsParallelCapable(callerCls);
+/*[ELSE] JAVA_SPEC_VERSION >= 18
+	if (parallelCapableCollection.containsKey(callerCls)) {
+		return true;
+	}
+
+	Class<?> superCls = callerCls.getSuperclass();
+
+	if (superCls == ClassLoader.class || parallelCapableCollection.containsKey(superCls)) {
+		parallelCapableCollection.put(callerCls, null);
+		return true;
+	}
+
+	return false;
+/*[ENDIF] JAVA_SPEC_VERSION >= 18 */
+}
+
+/*[IF JAVA_SPEC_VERSION >= 18]*/
+@CallerSensitiveAdapter
+private static boolean registerAsParallelCapable(Class<?> callerCls) {
 	if (parallelCapableCollection.containsKey(callerCls)) {
 		return true;
 	}
@@ -1413,6 +1410,7 @@ protected static boolean registerAsParallelCapable() {
 	
 	return false;
 }
+/*[ENDIF] JAVA_SPEC_VERSION >= 18 */
 
 /**
  * Answers the lock object for class loading in parallel. 

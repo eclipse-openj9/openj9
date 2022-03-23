@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -237,7 +237,7 @@ extern J9_CDATA char * const sunJavaBCNames[];
 #define JBifnonnull 199
 #define JBgotow 200
 #define JBbreakpoint 202
-#define JBdefaultvalue 203
+#define JBaconst_init 203
 #define JBwithfield 204
 #define JBiincw 213
 #define JBaload0getfield 215

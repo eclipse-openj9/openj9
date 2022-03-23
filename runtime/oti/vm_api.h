@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -490,7 +490,7 @@ internalCreateRAMClassFromROMClass(J9VMThread *vmThread, J9ClassLoader *classLoa
 
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 
-/* ---------------- criuhelpers.cpp ---------------- */
+/* ---------------- CRIUHelpers.cpp ---------------- */
 /**
  * @brief Queries if CRIU support is enabled. By default support
  * is not enabled, it can be enabled with `-XX:+EnableCRIUSupport`
@@ -532,6 +532,39 @@ jvmCheckpointHooks(J9VMThread *currentThread);
 BOOLEAN
 jvmRestoreHooks(J9VMThread *currentThread);
 
+/**
+ * @brief This iterates heap objects first, then goes through hook records,
+ * and runs the checkpoint hook function.
+ * ExclusiveVMAccess is required since J9InternalHookRecord holds live object references
+ * and GC is not allowed while running these hook functions.
+ *
+ * @param currentThread vmthread token
+ * @return BOOLEAN TRUE if no error, otherwise FALSE
+ */
+BOOLEAN
+runInternalJVMCheckpointHooks(J9VMThread *currentThread);
+
+/**
+ * @brief This runs the restore hook function, and cleanup.
+ * ExclusiveVMAccess is required since J9InternalHookRecord hold live object references
+ * and GC are not allowed while running these hook functions.
+ *
+ * @param currentThread vmthread token
+ * @param isRestore If FALSE, run the hook specified for checkpoint, otherwise run the hook specified for restore
+ * @return BOOLEAN TRUE if no error, otherwise FALSE
+ */
+BOOLEAN
+runInternalJVMRestoreHooks(J9VMThread *currentThread);
+
+/**
+ * @brief This function runs the identity operations that were delayed
+ * during the Java checkpoint and restore hooks.
+ *
+ * @param currentThread thread token
+ * @return BOOLEAN TRUE if no error, otherwise FALSE
+ */
+BOOLEAN
+runDelayedLockRelatedOperations(J9VMThread *currentThread);
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
 /* ---------------- classloadersearch.c ---------------- */
@@ -646,10 +679,11 @@ internalExceptionDescribe(J9VMThread *vmThread);
 * @param ramClass)
 * @param userData
 * @param pruneConstructors
+* @param skipHiddenFrames
 * @return UDATA
 */
 UDATA
-iterateStackTrace(J9VMThread * vmThread, j9object_t* exception,  UDATA  (*callback) (J9VMThread * vmThread, void * userData, UDATA bytecodeOffset, J9ROMClass * romClass, J9ROMMethod * romMethod, J9UTF8 * fileName, UDATA lineNumber, J9ClassLoader* classLoader, J9Class* ramClass), void * userData, UDATA pruneConstructors);
+iterateStackTrace(J9VMThread * vmThread, j9object_t* exception,  UDATA  (*callback) (J9VMThread * vmThread, void * userData, UDATA bytecodeOffset, J9ROMClass * romClass, J9ROMMethod * romMethod, J9UTF8 * fileName, UDATA lineNumber, J9ClassLoader* classLoader, J9Class* ramClass), void * userData, UDATA pruneConstructors, UDATA skipHiddenFrames);
 
 
 /* ---------------- exceptionsupport.c ---------------- */

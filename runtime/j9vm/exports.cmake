@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2019, 2021 IBM Corp. and others
+# Copyright (c) 2019, 2022 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,11 +20,11 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ################################################################################
 
-# Wrapper areround omr_add_exports which strips windows name mangling (except on 32bit windows)
+# Wrapper around omr_add_exports which strips windows name mangling (except on 32-bit windows).
 function(jvm_add_exports tgt)
 	set(filtered_exports)
 	if(OMR_OS_WINDOWS AND OMR_ENV_DATA32)
-		# we keep mangled names on 32 bit windows
+		# we keep mangled names on 32-bit windows
 		set(filtered_exports ${ARGN})
 	else()
 		# for each symbol name of the form '_foo@1234' replace with 'foo'
@@ -290,14 +290,13 @@ jvm_add_exports(jvm
 	JVM_BeforeHalt
 )
 
-if(JAVA_SPEC_VERSION LESS 18)
+if(JAVA_SPEC_VERSION LESS 11)
 	jvm_add_exports(jvm _JVM_LoadLibrary@4)
 else()
 	jvm_add_exports(jvm _JVM_LoadLibrary@8)
 endif()
 
 if(JAVA_SPEC_VERSION LESS 11)
-	# i.e. JAVA_SPEC_VERSION < 11
 	jvm_add_exports(jvm _JVM_GetCallerClass@8)
 else()
 	jvm_add_exports(jvm
@@ -347,14 +346,12 @@ endif()
 
 if(NOT JAVA_SPEC_VERSION LESS 14)
 	jvm_add_exports(jvm
-		# Additions for Java 14 (General)
 		JVM_GetExtendedNPEMessage
 	)
 endif()
 
 if(NOT JAVA_SPEC_VERSION LESS 15)
 	jvm_add_exports(jvm
-		# Additions for Java 15 (General)
 		JVM_RegisterLambdaProxyClassForArchiving
 		JVM_LookupLambdaProxyClassFromArchive
 		JVM_IsCDSDumpingEnabled
@@ -363,7 +360,6 @@ endif()
 
 if(NOT JAVA_SPEC_VERSION LESS 16)
 	jvm_add_exports(jvm
-		# Additions for Java 16 (General)
 		JVM_DefineArchivedModules
 		JVM_GetRandomSeedForDumping
 		JVM_IsSharingEnabled
@@ -385,7 +381,6 @@ endif()
 
 if(NOT JAVA_SPEC_VERSION LESS 17)
 	jvm_add_exports(jvm
-		# Additions for Java 17 (General)
 		JVM_DumpClassListToFile
 		JVM_DumpDynamicArchive
 	)
@@ -393,9 +388,14 @@ endif()
 
 if(NOT JAVA_SPEC_VERSION LESS 18)
 	jvm_add_exports(jvm
-		# Additions for Java 18 (General)
 		JVM_IsFinalizationEnabled
 		JVM_ReportFinalizationComplete
+	)
+endif()
+
+if(NOT JAVA_SPEC_VERSION LESS 19)
+	jvm_add_exports(jvm
+		JVM_LoadZipLibrary
 	)
 endif()
 

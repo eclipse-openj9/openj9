@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2021 IBM Corp. and others
+ * Copyright (c) 2015, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -88,12 +88,9 @@ static BOOLEAN isModuleNameGood(j9object_t moduleName);
 static UDATA allowReadAccessToModule(J9VMThread * currentThread, J9Module * fromModule, J9Module * toModule);
 static void trcModulesAddReadsModule(J9VMThread *currentThread, jobject toModule, J9Module *j9FromMod, J9Module *j9ToMod);
 
-
-#if !defined(CALL_BUNDLED_FUNCTIONS_DIRECTLY)
 /* These come from jvm.c */
 extern IDATA (*f_monitorEnter)(omrthread_monitor_t monitor);
 extern IDATA (*f_monitorExit)(omrthread_monitor_t monitor);
-#endif /* !defined(CALL_BUNDLED_FUNCTIONS_DIRECTLY) */
 
 static UDATA
 hashTableAtPut(J9HashTable * table, void * value, BOOLEAN collisionIsFailure)
@@ -744,11 +741,7 @@ JVM_DefineModule(JNIEnv * env, jobject module, jboolean isOpen, jstring version,
 #endif /* JAVA_SPEC_VERSION >= 15 */
 
 	vmFuncs->internalEnterVMFromJNI(currentThread);
-#if defined(CALL_BUNDLED_FUNCTIONS_DIRECTLY)
-	omrthread_monitor_enter(vm->classLoaderModuleAndLocationMutex);
-#else
 	f_monitorEnter(vm->classLoaderModuleAndLocationMutex);
-#endif /* defined(CALL_BUNDLED_FUNCTIONS_DIRECTLY) */
 
 #if JAVA_SPEC_VERSION >= 15
 	if (NULL != packageArray) {
@@ -917,11 +910,7 @@ done:
 	}
 #endif /* JAVA_SPEC_VERSION >= 15 */
 
-#if defined(CALL_BUNDLED_FUNCTIONS_DIRECTLY)
-	omrthread_monitor_exit(vm->classLoaderModuleAndLocationMutex);
-#else
 	f_monitorExit(vm->classLoaderModuleAndLocationMutex);
-#endif /* defined(CALL_BUNDLED_FUNCTIONS_DIRECTLY) */
 	vmFuncs->internalExitVMToJNI(currentThread);
 
 	return module;
@@ -956,11 +945,7 @@ JVM_AddModuleExports(JNIEnv * env, jobject fromModule, const char *package, jobj
 #endif /* JAVA_SPEC_VERSION >= 15 */
 
 	vmFuncs->internalEnterVMFromJNI(currentThread);
-#if defined(CALL_BUNDLED_FUNCTIONS_DIRECTLY)
-	omrthread_monitor_enter(vm->classLoaderModuleAndLocationMutex);
-#else
 	f_monitorEnter(vm->classLoaderModuleAndLocationMutex);
-#endif /* defined(CALL_BUNDLED_FUNCTIONS_DIRECTLY) */
 
 #if JAVA_SPEC_VERSION >= 15
 	if (NULL != packageObj) {
@@ -1004,11 +989,7 @@ done:
 	}
 #endif /* JAVA_SPEC_VERSION >= 15 */
 
-#if defined(CALL_BUNDLED_FUNCTIONS_DIRECTLY)
-	omrthread_monitor_exit(vm->classLoaderModuleAndLocationMutex);
-#else
 	f_monitorExit(vm->classLoaderModuleAndLocationMutex);
-#endif /* defined(CALL_BUNDLED_FUNCTIONS_DIRECTLY) */
 	vmFuncs->internalExitVMToJNI(currentThread);
 }
 
@@ -1038,11 +1019,7 @@ JVM_AddModuleExportsToAll(JNIEnv * env, jobject fromModule, const char *package)
 #endif /* JAVA_SPEC_VERSION >= 15 */
 
 	vmFuncs->internalEnterVMFromJNI(currentThread);
-#if defined(CALL_BUNDLED_FUNCTIONS_DIRECTLY)
-	omrthread_monitor_enter(vm->classLoaderModuleAndLocationMutex);
-#else
 	f_monitorEnter(vm->classLoaderModuleAndLocationMutex);
-#endif /* defined(CALL_BUNDLED_FUNCTIONS_DIRECTLY) */
 
 #if JAVA_SPEC_VERSION >= 15
 	if (NULL != packageObj) {
@@ -1080,11 +1057,7 @@ done:
 	}
 #endif /* JAVA_SPEC_VERSION >= 15 */
 
-#if defined(CALL_BUNDLED_FUNCTIONS_DIRECTLY)
-	omrthread_monitor_exit(vm->classLoaderModuleAndLocationMutex);
-#else
 	f_monitorExit(vm->classLoaderModuleAndLocationMutex);
-#endif /* defined(CALL_BUNDLED_FUNCTIONS_DIRECTLY) */
 	vmFuncs->internalExitVMToJNI(currentThread);
 }
 
@@ -1099,13 +1072,22 @@ trcModulesAddReadsModule(J9VMThread *currentThread, jobject toModule, J9Module *
 		currentThread, j9FromMod->moduleName, J9_STR_NULL_TERMINATE_RESULT, "", 0, fromModuleNameBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH, NULL);
 	char *toModuleNameUTF = NULL;
 
-	if (NULL != toModule) {
-		toModuleNameUTF = vmFuncs->copyStringToUTF8WithMemAlloc(
-			currentThread, j9ToMod->moduleName, J9_STR_NULL_TERMINATE_RESULT, "", 0, toModuleNameBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH, NULL);
+	if (NULL != j9ToMod) {
+		if (NULL != j9ToMod->moduleName) {
+			toModuleNameUTF = vmFuncs->copyStringToUTF8WithMemAlloc(
+				currentThread, j9ToMod->moduleName, J9_STR_NULL_TERMINATE_RESULT, "", 0, toModuleNameBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH, NULL);
+		} else {
+#define UNNAMED_MODULE "unnamed "
+			PORT_ACCESS_FROM_VMC(currentThread);
+			Assert_SC_true(J9VM_PACKAGE_NAME_BUFFER_LENGTH >= sizeof(UNNAMED_MODULE));
+			memcpy(toModuleNameBuf, UNNAMED_MODULE, sizeof(UNNAMED_MODULE));
+			toModuleNameUTF = toModuleNameBuf;
+#undef UNNAMED_MODULE
+		}
 	} else {
-#define LOOSE_MODULE   "loose "
+#define LOOSE_MODULE "loose "
 		PORT_ACCESS_FROM_VMC(currentThread);
-		Assert_SC_true(J9VM_PACKAGE_NAME_BUFFER_LENGTH > sizeof(LOOSE_MODULE));
+		Assert_SC_true(J9VM_PACKAGE_NAME_BUFFER_LENGTH >= sizeof(LOOSE_MODULE));
 		memcpy(toModuleNameBuf, LOOSE_MODULE, sizeof(LOOSE_MODULE));
 		toModuleNameUTF = toModuleNameBuf;
 #undef LOOSE_MODULE
@@ -1137,11 +1119,7 @@ JVM_AddReadsModule(JNIEnv * env, jobject fromModule, jobject toModule)
 		J9InternalVMFunctions const * const vmFuncs = vm->internalVMFunctions;
 
 		vmFuncs->internalEnterVMFromJNI(currentThread);
-#if defined(CALL_BUNDLED_FUNCTIONS_DIRECTLY)
-		omrthread_monitor_enter(vm->classLoaderModuleAndLocationMutex);
-#else
 		f_monitorEnter(vm->classLoaderModuleAndLocationMutex);
-#endif /* defined(CALL_BUNDLED_FUNCTIONS_DIRECTLY) */
 		{
 			UDATA rc = ERRCODE_GENERAL_FAILURE;
 
@@ -1161,11 +1139,7 @@ JVM_AddReadsModule(JNIEnv * env, jobject fromModule, jobject toModule)
 				}
 			}
 		}
-#if defined(CALL_BUNDLED_FUNCTIONS_DIRECTLY)
-		omrthread_monitor_exit(vm->classLoaderModuleAndLocationMutex);
-#else
 		f_monitorExit(vm->classLoaderModuleAndLocationMutex);
-#endif /* defined(CALL_BUNDLED_FUNCTIONS_DIRECTLY) */
 		vmFuncs->internalExitVMToJNI(currentThread);
 	}
 }
@@ -1192,11 +1166,7 @@ JVM_CanReadModule(JNIEnv * env, jobject askModule, jobject srcModule)
 		canRead = TRUE;
 	} else {
 		vmFuncs->internalEnterVMFromJNI(currentThread);
-#if defined(CALL_BUNDLED_FUNCTIONS_DIRECTLY)
-		omrthread_monitor_enter(vm->classLoaderModuleAndLocationMutex);
-#else
 		f_monitorEnter(vm->classLoaderModuleAndLocationMutex);
-#endif /* defined(CALL_BUNDLED_FUNCTIONS_DIRECTLY) */
 		{
 			UDATA rc = ERRCODE_GENERAL_FAILURE;
 
@@ -1209,11 +1179,7 @@ JVM_CanReadModule(JNIEnv * env, jobject askModule, jobject srcModule)
 				throwExceptionHelper(currentThread, rc);
 			}
 		}
-#if defined(CALL_BUNDLED_FUNCTIONS_DIRECTLY)
-		omrthread_monitor_exit(vm->classLoaderModuleAndLocationMutex);
-#else
 		f_monitorExit(vm->classLoaderModuleAndLocationMutex);
-#endif /* defined(CALL_BUNDLED_FUNCTIONS_DIRECTLY) */
 		vmFuncs->internalExitVMToJNI(currentThread);
 	}
 
@@ -1252,11 +1218,7 @@ JVM_AddModulePackage(JNIEnv * env, jobject module, const char *package)
 	J9InternalVMFunctions const * const vmFuncs = vm->internalVMFunctions;
 
 	vmFuncs->internalEnterVMFromJNI(currentThread);
-#if defined(CALL_BUNDLED_FUNCTIONS_DIRECTLY)
-	omrthread_monitor_enter(vm->classLoaderModuleAndLocationMutex);
-#else
 	f_monitorEnter(vm->classLoaderModuleAndLocationMutex);
-#endif /* defined(CALL_BUNDLED_FUNCTIONS_DIRECTLY) */
 	{
 		J9Module * const j9mod = getJ9Module(currentThread, module);
 		UDATA rc = addPackageDefinition(currentThread, j9mod, package);
@@ -1268,11 +1230,7 @@ JVM_AddModulePackage(JNIEnv * env, jobject module, const char *package)
 			}
 		}
 	}
-#if defined(CALL_BUNDLED_FUNCTIONS_DIRECTLY)
-	omrthread_monitor_exit(vm->classLoaderModuleAndLocationMutex);
-#else
 	f_monitorExit(vm->classLoaderModuleAndLocationMutex);
-#endif /* defined(CALL_BUNDLED_FUNCTIONS_DIRECTLY) */
 	vmFuncs->internalExitVMToJNI(currentThread);
 }
 
@@ -1302,11 +1260,7 @@ JVM_AddModuleExportsToAllUnnamed(JNIEnv * env, jobject fromModule, const char *p
 #endif /* JAVA_SPEC_VERSION >= 15 */
 
 	vmFuncs->internalEnterVMFromJNI(currentThread);
-#if defined(CALL_BUNDLED_FUNCTIONS_DIRECTLY)
-	omrthread_monitor_enter(vm->classLoaderModuleAndLocationMutex);
-#else
 	f_monitorEnter(vm->classLoaderModuleAndLocationMutex);
-#endif /* defined(CALL_BUNDLED_FUNCTIONS_DIRECTLY) */
 
 #if JAVA_SPEC_VERSION >= 15
 	if (NULL != packageObj) {
@@ -1344,11 +1298,7 @@ done:
 	}
 #endif /* JAVA_SPEC_VERSION >= 15 */
 
-#if defined(CALL_BUNDLED_FUNCTIONS_DIRECTLY)
-	omrthread_monitor_exit(vm->classLoaderModuleAndLocationMutex);
-#else
 	f_monitorExit(vm->classLoaderModuleAndLocationMutex);
-#endif /* defined(CALL_BUNDLED_FUNCTIONS_DIRECTLY) */
 	vmFuncs->internalExitVMToJNI(currentThread);
 }
 
@@ -1580,11 +1530,7 @@ JVM_GetModuleByPackageName(JNIEnv *env, jobject classLoader, jstring packageName
 	jobject module = NULL;
 
 	vmFuncs->internalEnterVMFromJNI(currentThread);
-#if defined(CALL_BUNDLED_FUNCTIONS_DIRECTLY)
-	omrthread_monitor_enter(vm->classLoaderModuleAndLocationMutex);
-#else
 	f_monitorEnter(vm->classLoaderModuleAndLocationMutex);
-#endif /* defined(CALL_BUNDLED_FUNCTIONS_DIRECTLY) */
 	if (NULL == packageName) {
 		vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, "package name is null");
 	} else {
@@ -1645,11 +1591,7 @@ JVM_GetModuleByPackageName(JNIEnv *env, jobject classLoader, jstring packageName
 		}
 	}
 exit:
-#if defined(CALL_BUNDLED_FUNCTIONS_DIRECTLY)
-	omrthread_monitor_exit(vm->classLoaderModuleAndLocationMutex);
-#else
 	f_monitorExit(vm->classLoaderModuleAndLocationMutex);
-#endif /* defined(CALL_BUNDLED_FUNCTIONS_DIRECTLY) */
 	vmFuncs->internalExitVMToJNI(currentThread);
 
 	return module;

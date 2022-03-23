@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2021 IBM Corp. and others
+# Copyright (c) 2017, 2022 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -53,13 +53,19 @@ include(cmake/J9vmTargetSupport.cmake)
 include(OmrTracegen)
 include(OmrDDRSupport)
 include(cmake/build_tags.cmake)
-include(cmake/compiler_config.cmake)
 include(cmake/J9vmGenAsm.cmake)
 
 ###
 ### Various configuration
 ### all configuration that does not need to proceed J9vmPlatform
 ###
+
+# Set up an interface library to keep track of the various compiler defines
+# used by the jit components.
+# TODO should probably rename to j9vm_jit_defines for less ambiguity
+
+j9vm_add_library(j9vm_compiler_defines INTERFACE)
+target_compile_definitions(j9vm_compiler_defines INTERFACE ${TR_COMPILE_DEFINITIONS})
 
 # Build everything with -fPIC (or equivalent).
 # We do this to ensure that our static libraries get built with -fPIC
@@ -567,7 +573,7 @@ endif()
 if(J9VM_MODULE_THREAD)
 	add_subdirectory(thread)
 endif()
-if(J9VM_INTERP_NATIVE_SUPPORT AND NOT (OMR_ARCH_AARCH64 AND OMR_OS_OSX))
+if(J9VM_INTERP_NATIVE_SUPPORT AND NOT OMR_ARCH_RISCV)
 	add_subdirectory(compiler)
 endif()
 if(J9VM_MODULE_UTIL)

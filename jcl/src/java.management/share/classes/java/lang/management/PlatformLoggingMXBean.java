@@ -1,6 +1,7 @@
-/*[INCLUDE-IF Sidecar17]*/
-/*******************************************************************************
- * Copyright (c) 2005, 2021 IBM Corp. and others
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
+/*
+ *******************************************************************************
+ * Copyright (c) 2005, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -44,11 +45,19 @@ import java.util.List;
  * 
  * @since 1.5
  */
+/*[IF JAVA_SPEC_VERSION >= 17]*/
+@SuppressWarnings("doclint:reference")
+/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 public interface PlatformLoggingMXBean extends PlatformManagedObject{
 
 	/**
-	 * Returns the string name of the specified {@link java.util.logging.Logger} instance's
-	 * current log level.
+	 * Returns the string name of the specified
+	/*[IF JAVA_SPEC_VERSION >= 17]
+	 * {@link java.logging/java.util.logging.Logger}
+	/*[ELSE] JAVA_SPEC_VERSION >= 17
+	 * {@link java.util.logging.Logger}
+	/*[ENDIF] JAVA_SPEC_VERSION >= 17
+	 * instance's current log level.
 	 * 
 	 * @param loggerName
 	 *            the name of a particular <code>Logger</code> instance
@@ -71,8 +80,13 @@ public interface PlatformLoggingMXBean extends PlatformManagedObject{
 	public List<String> getLoggerNames();
 
 	/**
-	 * Returns the name of the parent {@link java.util.logging.Logger} of the specified registered
-	 * <code>Logger</code>,<code>loggerName</code>.
+	 * Returns the name of the parent
+	/*[IF JAVA_SPEC_VERSION >= 17]
+	 * {@link java.logging/java.util.logging.Logger}
+	/*[ELSE] JAVA_SPEC_VERSION >= 17
+	 * {@link java.util.logging.Logger}
+	/*[ENDIF] JAVA_SPEC_VERSION >= 17
+	 * of the specified registered <code>Logger</code>,<code>loggerName</code>.
 	 * 
 	 * @param loggerName
 	 *            the name of a particular <code>Logger</code> instance
@@ -88,8 +102,13 @@ public interface PlatformLoggingMXBean extends PlatformManagedObject{
 	public String getParentLoggerName(String loggerName);
 
 	/**
-	 * Attempts to update the log level of the {@link java.util.logging.Logger} with name 
-	 * <code>loggerName</code> to <code>levelName</code>.
+	 * Attempts to update the log level of the
+	/*[IF JAVA_SPEC_VERSION >= 17]
+	 * {@link java.logging/java.util.logging.Logger}
+	/*[ELSE] JAVA_SPEC_VERSION >= 17
+	 * {@link java.util.logging.Logger}
+	/*[ENDIF] JAVA_SPEC_VERSION >= 17
+	 * with name <code>loggerName</code> to <code>levelName</code>.
 	 * <p>
 	 * If <code>levelName</code> is <code>null</code> then the <code>Logger</code>
 	 * instance's log level is set to be <code>null</code> with the result that 
@@ -104,7 +123,13 @@ public interface PlatformLoggingMXBean extends PlatformManagedObject{
 	 * with the name <code>loggerName</code>. Also may be thrown if 
 	 * <code>loggerName</code> is not a known log level name.
 	 * @throws SecurityException if there is a security manager active and 
-	 * the caller does not have {@link java.util.logging.LoggingPermission} of &quot;control&quot;.
+	 * the caller does not have
+	/*[IF JAVA_SPEC_VERSION >= 17]
+	 * {@link java.logging/java.util.logging.LoggingPermission}
+	/*[ELSE] JAVA_SPEC_VERSION >= 17
+	 * {@link java.util.logging.LoggingPermission}
+	/*[ENDIF] JAVA_SPEC_VERSION >= 17
+	 * of &quot;control&quot;.
 	 */
 	public void setLoggerLevel(String loggerName, String levelName);
 

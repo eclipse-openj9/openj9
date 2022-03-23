@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2021 IBM Corp. and others
+ * Copyright (c) 2019, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -105,6 +105,11 @@ class PrivateLinkage : public J9::PrivateLinkage
    virtual uint32_t getRightToLeft();
 
    /**
+    * @brief Adjust stack index so that local references are aligned properly
+    * @param[in/out] stackIndex : index on stack
+    */
+   virtual void alignLocalReferences(uint32_t &stackIndex);
+   /**
     * @brief Maps symbols to locations on stack
     * @param[in] method : method for which symbols are mapped on stack
     */
@@ -115,6 +120,13 @@ class PrivateLinkage : public J9::PrivateLinkage
     * @param[in/out] stackIndex : index on stack
     */
    virtual void mapSingleAutomatic(TR::AutomaticSymbol *p, uint32_t &stackIndex);
+   /**
+    * @brief Maps an automatic symbol to an index on stack
+    * @param[in] p : automatic symbol
+    * @param[in] size : size
+    * @param[in/out] stackIndex : index on stack
+    */
+   virtual void mapSingleAutomatic(TR::AutomaticSymbol *p, uint32_t size, uint32_t &stackIndex);
 
    /**
     * @brief Initializes ARM64 RealRegister linkage

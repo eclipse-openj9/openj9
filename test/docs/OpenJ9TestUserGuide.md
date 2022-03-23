@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2016, 2021 IBM Corp. and others
+Copyright (c) 2016, 2022 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,7 +30,7 @@ section below.
 
 ```
 cd openj9/test
-git clone https://github.com/AdoptOpenJDK/TKG.git
+git clone https://github.com/adoptium/TKG.git
 cd TKG
 export TEST_JDK_HOME=<path to JDK directory that you wish to test>
 export BUILD_LIST=functional

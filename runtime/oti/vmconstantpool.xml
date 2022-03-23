@@ -190,8 +190,8 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<fieldref class="java/lang/StackTraceElement" name="fileName" signature="Ljava/lang/String;"/>
 	<fieldref class="java/lang/StackTraceElement" name="lineNumber" signature="I"/>
 	<fieldref class="java/lang/StackTraceElement" name="source" signature="Ljava/lang/Object;"/>
-	<fieldref class="java/lang/Thread" name="threadRef" signature="J" cast="struct J9VMThread *" flags="!opt_ojdkThreadSupport">
-		<fieldalias name="eetop" signature="J" cast="struct J9VMThread *" flags="opt_ojdkThreadSupport"/>
+	<fieldref class="java/lang/Thread" name="threadRef" signature="J" cast="struct J9VMThread *" flags="!opt_openjdkThreadSupport">
+		<fieldalias name="eetop" signature="J" cast="struct J9VMThread *" flags="opt_openjdkThreadSupport"/>
 	</fieldref>
 	<fieldref class="java/lang/Thread" name="stackSize" signature="J"/>
 	<fieldref class="java/lang/Thread" name="tid" signature="J"/>
@@ -211,15 +211,15 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<fieldref class="java/lang/StackWalker$StackFrameImpl" name="frameModule" signature="Ljava/lang/Module;" versions="9-"/>
 
 	<fieldref class="java/lang/Thread" name="priority" signature="I"/>
-	<fieldref class="java/lang/Thread" name="isDaemon" signature="Z" flags="!opt_ojdkThreadSupport">
-		<fieldalias name="daemon" signature="Z" flags="opt_ojdkThreadSupport"/>
+	<fieldref class="java/lang/Thread" name="isDaemon" signature="Z" flags="!opt_openjdkThreadSupport">
+		<fieldalias name="daemon" signature="Z" flags="opt_openjdkThreadSupport"/>
 	</fieldref>
 	<fieldref class="java/lang/Thread" name="group" signature="Ljava/lang/ThreadGroup;"/>
 	<fieldref class="java/lang/Thread" name="stopCalled" signature="Z"/>
 	<fieldref class="java/lang/Thread" name="contextClassLoader" signature="Ljava/lang/ClassLoader;"/>
 	<fieldref class="java/lang/Thread" name="inheritedAccessControlContext" signature="Ljava/security/AccessControlContext;"/>
-	<fieldref class="java/lang/Thread" name="lock" signature="Ljava/lang/Object;" flags="!opt_ojdkThreadSupport">
-		<fieldalias name="blockerLock" signature="Ljava/lang/Object;" flags="opt_ojdkThreadSupport"/>
+	<fieldref class="java/lang/Thread" name="lock" signature="Ljava/lang/Object;" flags="!opt_openjdkThreadSupport">
+		<fieldalias name="blockerLock" signature="Ljava/lang/Object;" flags="opt_openjdkThreadSupport"/>
 	</fieldref>
 	<fieldref class="java/lang/Thread" name="parkBlocker" signature="Ljava/lang/Object;"/>
 	<fieldref class="java/lang/Throwable" name="cause" signature="Ljava/lang/Throwable;"/>
@@ -273,23 +273,23 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<fieldref class="java/lang/ThreadGroup" name="name" signature="Ljava/lang/String;"/>
 	<fieldref class="java/lang/ThreadGroup" name="maxPriority" signature="I"/>
 	<fieldref class="java/lang/ThreadGroup" name="parent" signature="Ljava/lang/ThreadGroup;"/>
-	<fieldref class="java/lang/ThreadGroup" name="numThreads" signature="I" flags="!opt_ojdkThreadSupport">
-		<fieldalias name="nthreads" signature="I" flags="opt_ojdkThreadSupport"/>
+	<fieldref class="java/lang/ThreadGroup" name="numThreads" signature="I" flags="!opt_openjdkThreadSupport">
+		<fieldalias name="nthreads" signature="I" flags="opt_openjdkThreadSupport"/>
 	</fieldref>
-	<fieldref class="java/lang/ThreadGroup" name="numGroups" signature="I" flags="!opt_ojdkThreadSupport">
-		<fieldalias name="ngroups" signature="I" flags="opt_ojdkThreadSupport"/>
+	<fieldref class="java/lang/ThreadGroup" name="numGroups" signature="I" flags="!opt_openjdkThreadSupport">
+		<fieldalias name="ngroups" signature="I" flags="opt_openjdkThreadSupport"/>
 	</fieldref>
-	<fieldref class="java/lang/ThreadGroup" name="childrenThreads" signature="[Ljava/lang/Thread;" flags="!opt_ojdkThreadSupport">
-		<fieldalias name="threads" signature="[Ljava/lang/Thread;" flags="opt_ojdkThreadSupport"/>
+	<fieldref class="java/lang/ThreadGroup" name="childrenThreads" signature="[Ljava/lang/Thread;" flags="!opt_openjdkThreadSupport">
+		<fieldalias name="threads" signature="[Ljava/lang/Thread;" flags="opt_openjdkThreadSupport"/>
 	</fieldref>
-	<fieldref class="java/lang/ThreadGroup" name="childrenGroups" signature="[Ljava/lang/ThreadGroup;" flags="!opt_ojdkThreadSupport">
-		<fieldalias name="groups" signature="[Ljava/lang/ThreadGroup;" flags="opt_ojdkThreadSupport"/>
+	<fieldref class="java/lang/ThreadGroup" name="childrenGroups" signature="[Ljava/lang/ThreadGroup;" flags="!opt_openjdkThreadSupport">
+		<fieldalias name="groups" signature="[Ljava/lang/ThreadGroup;" flags="opt_openjdkThreadSupport"/>
 	</fieldref>
-	<fieldref class="java/lang/ThreadGroup" name="isDaemon" signature="Z" flags="!opt_ojdkThreadSupport">
-		<fieldalias name="daemon" signature="Z" flags="opt_ojdkThreadSupport"/>
+	<fieldref class="java/lang/ThreadGroup" name="isDaemon" signature="Z" flags="!opt_openjdkThreadSupport">
+		<fieldalias name="daemon" signature="Z" flags="opt_openjdkThreadSupport"/>
 	</fieldref>
-	<fieldref class="java/lang/ThreadGroup" name="childrenGroupsLock" signature="Ljava/lang/Object;" flags="!opt_ojdkThreadSupport"/>
-	<fieldref class="java/lang/ThreadGroup" name="childrenThreadsLock" signature="Ljava/lang/Object;" flags="!opt_ojdkThreadSupport"/>
+	<fieldref class="java/lang/ThreadGroup" name="childrenGroupsLock" signature="Ljava/lang/Object;" flags="!opt_openjdkThreadSupport"/>
+	<fieldref class="java/lang/ThreadGroup" name="childrenThreadsLock" signature="Ljava/lang/Object;" flags="!opt_openjdkThreadSupport"/>
 	<fieldref class="java/lang/ref/Reference" name="referent" signature="Ljava/lang/Object;"/>
 	<fieldref class="java/lang/ref/Reference" name="queue" signature="Ljava/lang/ref/ReferenceQueue;"/>
 	<fieldref class="java/lang/ref/Reference" name="state" signature="I"/>
@@ -422,9 +422,8 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<!-- Static method references needed to support OpenJDK MethodHandles. -->
 	<staticmethodref class="java/lang/invoke/MethodHandleResolver" name="linkCallerMethod" signature="(Ljava/lang/Class;ILjava/lang/Class;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/Object;" flags="opt_openjdkMethodhandle"/>
 
-	<staticmethodref class="jdk/internal/loader/NativeLibraries" name="load" signature="(Ljdk/internal/loader/NativeLibraries$NativeLibraryImpl;Ljava/lang/String;ZZ)Z" versions="15-17">
-		<methodalias name="load" signature="(Ljdk/internal/loader/NativeLibraries$NativeLibraryImpl;Ljava/lang/String;ZZZ)Z" versions="18-"/>
-	</staticmethodref>
+	<staticmethodref class="jdk/internal/loader/NativeLibraries" name="load" signature="(Ljdk/internal/loader/NativeLibraries$NativeLibraryImpl;Ljava/lang/String;ZZZ)Z" versions="15-18"/>
+	<staticmethodref class="jdk/internal/loader/NativeLibraries" name="load" signature="(Ljdk/internal/loader/NativeLibraries$NativeLibraryImpl;Ljava/lang/String;ZZ)Z" versions="19-"/>
 
 	<!-- Security manager check -->
 	<staticfieldref class="java/lang/System" name="security" signature="Ljava/lang/SecurityManager;"/>

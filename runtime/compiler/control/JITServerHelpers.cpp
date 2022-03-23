@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2021 IBM Corp. and others
+ * Copyright (c) 2019, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -37,7 +37,7 @@
 
 
 uint32_t     JITServerHelpers::serverMsgTypeCount[] = {};
-uint64_t     JITServerHelpers::_waitTimeMs = 1000;
+uint64_t     JITServerHelpers::_waitTimeMs = 0;
 bool         JITServerHelpers::_serverAvailable = true;
 uint64_t     JITServerHelpers::_nextConnectionRetryTime = 0;
 TR::Monitor *JITServerHelpers::_clientStreamMonitor = NULL;
@@ -607,6 +607,7 @@ JITServerHelpers::cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Cl
    classInfoStruct._classChainOffsetIdentifyingLoader = std::get<20>(classInfoTuple);
    auto &origROMMethods = std::get<21>(classInfoTuple);
    classInfoStruct._classNameIdentifyingLoader = std::get<22>(classInfoTuple);
+   classInfoStruct._arrayElementSize = std::get<23>(classInfoTuple);
 
    auto result = clientSessionData->getROMClassMap().insert({ clazz, classInfoStruct });
 
@@ -693,12 +694,14 @@ JITServerHelpers::packRemoteROMClassInfo(J9Class *clazz, J9VMThread *vmThread, T
       packedROMClassStr = std::string((const char *)packedROMClass, packedSize);
       }
 
+   int32_t arrayElementSize = vmThread->javaVM->internalVMFunctions->arrayElementSize((J9ArrayClass*)clazz);
+
    return std::make_tuple(
       packedROMClassStr, methodsOfClass, baseClass, numDims, parentClass,
       TR::Compiler->cls.getITable((TR_OpaqueClassBlock *)clazz), methodTracingInfo,
       classHasFinalFields, classDepthAndFlags, classInitialized, byteOffsetToLockword, leafComponentClass,
       classLoader, hostClass, componentClass, arrayClass, totalInstanceSize, clazz->romClass,
-      cp, classFlags, classChainOffsetIdentifyingLoader, origROMMethods, classNameIdentifyingLoader
+      cp, classFlags, classChainOffsetIdentifyingLoader, origROMMethods, classNameIdentifyingLoader, arrayElementSize
    );
    }
 
@@ -868,6 +871,9 @@ JITServerHelpers::getROMClassData(const ClientSessionData::ClassInfo &classInfo,
       case CLASSINFO_CLASS_CHAIN_OFFSET_IDENTIFYING_LOADER:
          *(uintptr_t *)data = classInfo._classChainOffsetIdentifyingLoader;
          break;
+      case CLASSINFO_ARRAY_ELEMENT_SIZE:
+         *(int32_t *)data = classInfo._arrayElementSize;
+         break;
       default:
          TR_ASSERT(false, "Class Info not supported %u\n", dataType);
          break;
@@ -916,18 +922,18 @@ JITServerHelpers::postStreamFailure(OMRPortLibrary *portLibrary, TR::Compilation
 
    OMRPORT_ACCESS_FROM_OMRPORT(portLibrary);
    uint64_t current_time = omrtime_current_time_millis();
+   if (!_waitTimeMs)
+      _waitTimeMs = TR::Options::_reconnectWaitTimeMs;
    if (current_time >= _nextConnectionRetryTime)
-      {
       _waitTimeMs *= 2; // Exponential backoff
-      }
    _nextConnectionRetryTime = current_time + _waitTimeMs;
 
    if (_serverAvailable && TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseJITServerConns))
       {
       TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
                                      "t=%6u Lost connection to the server (serverUID=%llu)",
-                                     (uint32_t) compInfo->getPersistentInfo()->getElapsedTime(),
-                                     compInfo->getPersistentInfo()->getServerUID());
+                                     (uint32_t)compInfo->getPersistentInfo()->getElapsedTime(),
+                                     (unsigned long long)compInfo->getPersistentInfo()->getServerUID());
       compInfo->getPersistentInfo()->setServerUID(0);
       }
 
@@ -937,11 +943,11 @@ JITServerHelpers::postStreamFailure(OMRPortLibrary *portLibrary, TR::Compilation
    // and client compiles locally or connects to a new server
    compInfo->setCompThreadActivationPolicy(JITServer::CompThreadActivationPolicy::AGGRESSIVE);
    if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompilationThreads) ||
-        TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseJITServer))
+       TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseJITServer))
       {
       TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
                                      "t=%6u client has lost connection, resetting activation policy to AGGRESSIVE",
-                                     (uint32_t) compInfo->getPersistentInfo()->getElapsedTime());
+                                     (uint32_t)compInfo->getPersistentInfo()->getElapsedTime());
       }
    }
 
@@ -949,7 +955,7 @@ void
 JITServerHelpers::postStreamConnectionSuccess()
    {
    _serverAvailable = true;
-   _waitTimeMs = 1000;
+   _waitTimeMs = TR::Options::_reconnectWaitTimeMs;
    }
 
 bool

@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2021, 2021 IBM Corp. and others
+# Copyright (c) 2021, 2022 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,11 +33,12 @@ set(CMAKE_CXX_COMPILE_OBJECT "<CMAKE_CXX_COMPILER> <DEFINES> <FLAGS> <INCLUDES> 
 if(JAVA_SPEC_VERSION EQUAL 8)
 	set(OMR_ZOS_COMPILE_TARGET "zOSV1R13" CACHE STRING "")
 	set(OMR_ZOS_COMPILE_ARCHITECTURE 7 CACHE STRING "")
+	set(OMR_ZOS_COMPILE_TUNE 10 CACHE STRING "")
 else()
 	set(OMR_ZOS_COMPILE_TARGET "zOSV2R3" CACHE STRING "")
 	set(OMR_ZOS_COMPILE_ARCHITECTURE 10 CACHE STRING "")
+	set(OMR_ZOS_COMPILE_TUNE 12 CACHE STRING "")
 endif()
-set(OMR_ZOS_COMPILE_TUNE 10 CACHE STRING "")
 set(OMR_ZOS_LINK_COMPAT ${OMR_ZOS_COMPILE_TARGET} CACHE STRING "")
 
 set(OMR_GC_CONCURRENT_SCAVENGER ON CACHE BOOL "")

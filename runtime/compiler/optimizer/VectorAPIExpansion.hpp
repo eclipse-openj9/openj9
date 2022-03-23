@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2021, 2021 IBM Corp. and others
+ * Copyright (c) 2021, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -116,6 +116,14 @@ class TR_VectorAPIExpansion : public TR::Optimization
 
    static int32_t const VECTOR_OP_CAST        = 17;
    static int32_t const VECTOR_OP_REINTERPRET = 18;
+
+   // Compare
+   static int32_t const BT_eq = 0;
+   static int32_t const BT_ne = 4;
+   static int32_t const BT_le = 5;
+   static int32_t const BT_ge = 7;
+   static int32_t const BT_lt = 3;
+   static int32_t const BT_gt = 1;
 
   /** \brief
    *  Is passed to methods handlers during analysis and transforamtion phases
@@ -441,7 +449,7 @@ class TR_VectorAPIExpansion : public TR::Optimization
 
 
   /** \brief
-   *     Maps Vector API opcode enum into TR::ILOpCodes
+   *     Maps Vector API opcode enum into scalar or vector TR::ILOpCodes
    *
    *  \param vectorOpCode
    *     Vector API opcode enum
@@ -449,10 +457,16 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *  \param elementType
    *     Element type
    *
+   *  \param scalar
+   *     return scalar opcode
+   *
+   *  \param compare
+   *     true if it's compare opcode
+   *
    *  \return
-   *     TR::IL opcode
+   *     scalar TR::IL opcode if scalar is true, otherwise vector opcode
    */
-   static TR::ILOpCodes ILOpcodeFromVectorAPIOpcode(int32_t vectorOpCode, TR::DataType elementType);
+   static TR::ILOpCodes ILOpcodeFromVectorAPIOpcode(int32_t vectorOpCode, TR::DataType elementType, bool scalar, bool compare = false);
 
   /** \brief
    *    For the node's symbol reference, creates and records(if it does not exist yet)
@@ -712,6 +726,36 @@ class TR_VectorAPIExpansion : public TR::Optimization
 
 
   /** \brief
+   *    Scalarizes or vectorizes a node that is a call to \c VectorSupport.ternaryOp() intrinsic.
+   *    In both cases, the node is modified in place.
+   *    In the case of scalarization, extra nodes are created(number of lanes minus one)
+   *
+   *   \param opt
+   *      This optimization object
+   *
+   *   \param treeTop
+   *      Tree top of the \c node
+   *
+   *   \param node
+   *      Node to transform
+   *
+   *   \param elementType
+   *      Element type
+   *
+   *   \param vectorLength
+   *      Full vector length in bits (e.g. 128 for Float128Vector)
+   *
+   *   \param mode
+   *      Handler mode
+   *
+   *   \return
+   *      Transformed node
+   *
+   */
+   static TR::Node *ternaryIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode);
+
+
+  /** \brief
    *    Scalarizes or vectorizes a node that is a call to \c VectorSupport.unaryOp(),binaryOp(), etc. intrinsic.
    *    In both cases, the node is modified in place.
    *    In the case of scalarization, extra nodes are created(number of lanes minus one)
@@ -742,6 +786,33 @@ class TR_VectorAPIExpansion : public TR::Optimization
    */
    static TR::Node *naryIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode, int32_t numChidren);
 
+  /** \brief
+   *    Scalarizes or vectorizes a node that is a call to \c VectorSupport.blend() intrinsic.
+   *    In both cases, the node is modified in place.
+   *    In the case of scalarization, extra nodes are created(number of lanes minus one)
+   *
+   *   \param opt
+   *      This optimization object
+   *
+   *   \param treeTop
+   *      Tree top of the \c node
+   *
+   *   \param node
+   *      Node to transform
+   *
+   *   \param elementType
+   *      Element type
+   *
+   *   \param vectorLength
+   *      Full vector length in bits (e.g. 128 for Float128Vector)
+   *
+   *   \param mode
+   *      Handler mode
+   *
+   *   \return
+   *      Transformed node
+   */
+   static TR::Node *blendIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode);
 
   /** \brief
    *    Scalarizes or vectorizes a node that is a call to \c VectorSupport.broadcastCoerced() intrinsic.
@@ -770,6 +841,34 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *      Transformed node
    */
    static TR::Node *broadcastCoercedIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode);
+
+  /** \brief
+   *    Scalarizes or vectorizes a node that is a call to \c VectorSupport.compare() intrinsic.
+   *    In both cases, the node is modified in place.
+   *    In the case of scalarization, extra nodes are created(number of lanes minus one)
+   *
+   *   \param opt
+   *      This optimization object
+   *
+   *   \param treeTop
+   *      Tree top of the \c node
+   *
+   *   \param node
+   *      Node to transform
+   *
+   *   \param elementType
+   *      Element type
+   *
+   *   \param vectorLength
+   *      Full vector length in bits (e.g. 128 for Float128Vector)
+   *
+   *   \param mode
+   *      Handler mode
+   *
+   *   \return
+   *      Transformed node
+   */
+   static TR::Node *compareIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode);
 
 
   /** \brief
@@ -953,8 +1052,11 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *   \param mode
    *      Handler mode
    *
-   *   \param opcode
-   *      Opcode
+   *   \param scalarOpCode
+   *      Scalar Opcode
+   *
+   *   \param vectorOpCode
+   *      Vector Opcode
    *
    *   \param firstOperand
    *      Child index of the first operand
@@ -962,10 +1064,30 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *   \param numOperands
    *      Number of operands
    *
+   *   \param useVcall
+   *      use vcall for vectorization
+   *
    *   \return
    *      Transformed node
    */
-   static TR::Node *transformNary(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode, TR::ILOpCodes opcode, int32_t firstOperand, int32_t numOperands);
+   static TR::Node *transformNary(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode, TR::ILOpCodes scalarOpCode, TR::ILOpCodes vectorOpCode, int32_t firstOperand, int32_t numOperands, bool useVcall);
 
+
+  /** \brief
+   *    Helper method to decide to use vcall or not
+   *
+   *   \param comp
+   *     Compilation
+   *
+   *   \param vectorAPIOpcode
+   *     Vector API opcode
+   *
+   *   \param vectorLength
+   *     Full vector length in bits
+   *
+   *   \return
+   *      true to use vcall, false otherwise
+   */
+   static bool useVcallForVectorAPIOpcode(TR::Compilation *comp, int32_t vectorAPIOpcode, vec_sz_t vectorLength);
    };
 #endif /* VECTORAPIEXPANSION_INCL */

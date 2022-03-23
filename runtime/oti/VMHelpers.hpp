@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -75,6 +75,7 @@ typedef enum {
 	J9_BCLOOP_SEND_TARGET_INL_CLASS_IS_PRIMITIVE,
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 	J9_BCLOOP_SEND_TARGET_INL_CLASS_IS_PRIMITIVE_CLASS,
+	J9_BCLOOP_SEND_TARGET_INL_CLASS_IS_VALUE,
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 	J9_BCLOOP_SEND_TARGET_INL_CLASS_GET_MODIFIERS_IMPL,
 	J9_BCLOOP_SEND_TARGET_INL_CLASS_GET_COMPONENT_TYPE,
@@ -156,6 +157,8 @@ typedef enum {
 	J9_BCLOOP_SEND_TARGET_INL_UNSAFE_VALUEHEADERSIZE,
 	J9_BCLOOP_SEND_TARGET_INL_UNSAFE_ISFLATTENEDARRAY,
 	J9_BCLOOP_SEND_TARGET_INL_UNSAFE_ISFLATTENED,
+	J9_BCLOOP_SEND_TARGET_INL_UNSAFE_GETOBJECTSIZE,
+	J9_BCLOOP_SEND_TARGET_INL_UNSAFE_ISFIELDATOFFSETFLATTENED,
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 	J9_BCLOOP_SEND_TARGET_INL_INTERNALS_GET_INTERFACES,
 	J9_BCLOOP_SEND_TARGET_INL_ARRAY_NEW_ARRAY_IMPL,
@@ -245,6 +248,13 @@ typedef enum {
 #define J9_BCLOOP_ENCODE_SEND_TARGET(num) ((void *)(num))
 #define J9_VH_ENCODE_ACCESS_MODE(num) ((void *)((num << 1) + 1))
 #define J9_VH_DECODE_ACCESS_MODE(mra) ((UDATA)(mra) >> 1)
+
+#if JAVA_SPEC_VERSION >= 16
+#if defined(J9VM_ARCH_AARCH64)
+#define ROUNDING_GRANULARITY	8
+#define ROUNDED_FOOTER_OFFSET(number)	(((number) + (ROUNDING_GRANULARITY - 1) + sizeof(J9MemTag)) & ~(uintptr_t)(ROUNDING_GRANULARITY - 1))
+#endif /* J9VM_ARCH_AARCH64 */
+#endif /* JAVA_SPEC_VERSION >= 16 */
 
 class VM_VMHelpers
 {
@@ -1537,15 +1547,7 @@ exit:
 			}
 			break;
 		case J9NtcBoolean:
-		{
-			U_32 returnValue = (U_32)*returnStorage;
-			U_8 * returnAddress = (U_8 *)&returnValue;
-#ifdef J9VM_ENV_LITTLE_ENDIAN
-			*returnStorage = (UDATA)(0 != returnAddress[0]);
-#else
-			*returnStorage = (UDATA)(0 != returnAddress[3]);
-#endif /*J9VM_ENV_LITTLE_ENDIAN */
-		}
+			*returnStorage = ((UDATA)(U_8)(0 != *returnStorage));
 			break;
 		case J9NtcByte:
 			*returnStorage = (UDATA)(IDATA)(I_8)*returnStorage;
@@ -1573,6 +1575,7 @@ exit:
 		}
 	}
 
+#if JAVA_SPEC_VERSION >= 16
 	/**
 	 * @brief Converts the type of the return value to the return type intended for JEP389/419 FFI downcall/upcall
 	 * @param currentThread[in] The pointer to the current J9VMThread
@@ -1580,7 +1583,7 @@ exit:
 	 * @param returnStorage[in] The pointer to the return value
 	 */
 	static VMINLINE void
-	convertFFIReturnValue(J9VMThread* currentThread, U_8 returnType, UDATA* returnStorage)
+	convertFFIReturnValue(J9VMThread* currentThread, U_8 returnType, UDATA returnTypeSize, UDATA* returnStorage)
 	{
 		switch (returnType) {
 		case J9NtcVoid:
@@ -1601,6 +1604,26 @@ exit:
 		case J9NtcFloat:
 			currentThread->returnValue = (UDATA)*(U_32*)returnStorage;
 			break;
+		case J9NtcStruct:
+		{
+#if defined(J9VM_ARCH_AARCH64)
+			/* Restore the preset padding bytes (0xDD J9MEMTAG_PADDING_BYTE) of the allocated memory
+			 * for the returned struct on arrch64 as ffi_call intentionally sets zero to the rest of
+			 * byte slots except the return value of the allocated memory for the purposed of alignment,
+			 * which undoubtedly undermines the integrity check when releasing the returned memory
+			 * segment via Unsafe.
+			 */
+			U_8 *padding = (U_8 *)returnStorage + returnTypeSize;
+			UDATA paddingSize = ROUNDED_FOOTER_OFFSET(returnTypeSize) - sizeof(J9MemTag) - returnTypeSize;
+			for (UDATA byteIndex = 0; byteIndex < paddingSize; byteIndex++) {
+				padding[byteIndex] = J9MEMTAG_PADDING_BYTE;
+			}
+#endif /* J9VM_ARCH_AARCH64 */
+			/* returnStorage is not the address of _currentThread->returnValue any more
+			 * given it stores the address of allocated struct memory.
+			 */
+			currentThread->returnValue = (UDATA)returnStorage;
+		}
 		case J9NtcLong:
 			/* Fall through is intentional */
 		case J9NtcDouble:
@@ -1609,6 +1632,7 @@ exit:
 			break;
 		}
 	}
+#endif /* JAVA_SPEC_VERSION >= 16 */
 
 	/**
 	 * @brief Notify JIT upon the first modification of a final field, a stack frame should be build before calling this method to make the stack walkable

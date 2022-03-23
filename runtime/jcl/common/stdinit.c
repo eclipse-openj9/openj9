@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2021 IBM Corp. and others
+ * Copyright (c) 1998, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -195,11 +195,11 @@ standardInit( J9JavaVM *vm, char *dllName)
 				if (NULL == clz) {
 					goto _fail;
 				}
-#if JAVA_SPEC_VERSION >= 18
+#if (17 <= JAVA_SPEC_VERSION) && (JAVA_SPEC_VERSION <= 18)
 				mid = (*env)->GetStaticMethodID(env, clz, "load", "(Ljdk/internal/loader/NativeLibraries$NativeLibraryImpl;Ljava/lang/String;ZZZ)Z");
-#else /* JAVA_SPEC_VERSION >= 18 */
+#else /* (17 <= JAVA_SPEC_VERSION) && (JAVA_SPEC_VERSION <= 18) */
 				mid = (*env)->GetStaticMethodID(env, clz, "load", "(Ljdk/internal/loader/NativeLibraries$NativeLibraryImpl;Ljava/lang/String;ZZ)Z");
-#endif /* JAVA_SPEC_VERSION >= 18 */
+#endif /* (17 <= JAVA_SPEC_VERSION) && (JAVA_SPEC_VERSION <= 18) */
 				if (NULL == mid) {
 					goto _fail;
 				}

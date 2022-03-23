@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 
 <!--
-  Copyright (c) 2016, 2021 IBM Corp. and others
+  Copyright (c) 2016, 2022 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -36,6 +36,7 @@
 	<property name="build" location="./bin"/>
 	<property name="transformerListener" location="${TEST_ROOT}/Utils/src"/>
 	<property name="TestUtilities" location="../TestUtilities/src"/>
+	<property name="TestUtilitiesJ9" location="../TestUtilitiesJ9/src" />
 	<property name="LIB" value="testng,jcommander"/>
 	<import file="${TEST_ROOT}/TKG/scripts/getDependencies.xml"/>
 
@@ -55,6 +56,7 @@
 				<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
 					<src path="${src}"/>
 					<src path="${TestUtilities}" />
+					<src path="${TestUtilitiesJ9}" />
 					<src path="${transformerListener}" />
 					<compilerarg line="--add-exports java.base/jdk.internal.reflect=ALL-UNNAMED --add-exports java.base/openj9.internal.tools.attach.target=ALL-UNNAMED" />
 					<classpath>

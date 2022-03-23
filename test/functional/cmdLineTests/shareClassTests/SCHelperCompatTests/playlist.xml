@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <!--
-  Copyright (c) 2016, 2021 IBM Corp. and others
+  Copyright (c) 2016, 2022 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,6 +24,12 @@
 	<include>variables.mk</include>
 	<test>
 		<testCaseName>cmdLineTester_SCHelperCompatTests_win</testCaseName>
+		<disables>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/6053</comment>
+				<testflag>aot</testflag>
+			</disable>
+		</disables>
 		<variations>
 			<variation>Mode110</variation>
 			<variation>Mode610</variation>
@@ -48,7 +54,6 @@
 			<impl>openj9</impl>
 			<impl>ibm</impl>
 		</impls>
-		<aot>nonapplicable</aot>
 	</test>
 	<test>
 		<testCaseName>cmdLineTester_SCHelperCompatTests_unix</testCaseName>
@@ -73,7 +78,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<aot>explicit</aot>
+		<features>
+			<feature>AOT:explicit</feature>
+		</features>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>

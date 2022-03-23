@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1301,6 +1301,15 @@ MM_WriteOnceCompactor::fixupClassLoaderObject(MM_EnvironmentVLHGC* env, J9Object
 
 				modulePtr = (J9Module**)hashTableNextDo(&walkState);
 			}
+
+			if (classLoader == _javaVM->systemClassLoader) {
+				slotPtr = &_javaVM->unamedModuleForSystemLoader->moduleObject;
+
+				originalObject = *slotPtr;
+				J9Object* forwardedObject = getForwardWrapper(env, originalObject, cache);
+				*slotPtr = forwardedObject;
+				_interRegionRememberedSet->rememberReferenceForCompact(env, classLoaderObject, forwardedObject);
+			}
 		}
 
 		/* We can't fixup remembered set for defined and referenced classes here since we 
@@ -1866,6 +1875,8 @@ MM_WriteOnceCompactor::recycleFreeRegionsAndFixFreeLists(MM_EnvironmentVLHGC *en
 				region->getSubSpace()->recycleRegion(env, region);
 				/* mark bits will be cleared during the rebuilding phase */
 			} else {
+				static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._compactStats._survivorRegionCount += 1;
+
 				if (NULL != region->_compactData._previousContext) {
 					/* we migrated this region into a new context so ask its previous owner to migrate the contexts' views of the region's ownership to make the meta-structures consistent */
 					region->_compactData._previousContext->migrateRegionToAllocationContext(region, region->_allocateData._owningContext);
@@ -1877,7 +1888,7 @@ MM_WriteOnceCompactor::recycleFreeRegionsAndFixFreeLists(MM_EnvironmentVLHGC *en
 
 				regionPool->reset(MM_MemoryPool::forCompact);
 				if (currentFreeSize > regionPool->getMinimumFreeEntrySize()) {
-					regionPool->recycleHeapChunk(currentFreeBase, byteAfterFreeEntry);
+					regionPool->recycleHeapChunk(env, currentFreeBase, byteAfterFreeEntry);
 					regionPool->updateMemoryPoolStatistics(env, currentFreeSize, 1, currentFreeSize);
 				} else {
 					regionPool->abandonHeapChunk(currentFreeBase, byteAfterFreeEntry);

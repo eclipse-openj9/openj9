@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -759,11 +759,11 @@ static const char * const excludeArray[] = {
    "java/security/AccessController.doPrivileged(Ljava/security/PrivilegedAction;Ljava/security/AccessControlContext;[Ljava/security/Permission;)Ljava/lang/Object;",
    "java/security/AccessController.doPrivileged(Ljava/security/PrivilegedExceptionAction;Ljava/security/AccessControlContext;[Ljava/security/Permission;)Ljava/lang/Object;",
    "java/lang/NullPointerException.fillInStackTrace()Ljava/lang/Throwable;",
-#if JAVA_SPEC_VERSION >= 18
+#if (17 <= JAVA_SPEC_VERSION) && (JAVA_SPEC_VERSION <= 18)
    "jdk/internal/loader/NativeLibraries.load(Ljdk/internal/loader/NativeLibraries$NativeLibraryImpl;Ljava/lang/String;ZZZ)Z",
-#else /* JAVA_SPEC_VERSION >= 18 */
+#elif JAVA_SPEC_VERSION >= 15 /* (17 <= JAVA_SPEC_VERSION) && (JAVA_SPEC_VERSION <= 18) */
    "jdk/internal/loader/NativeLibraries.load(Ljdk/internal/loader/NativeLibraries$NativeLibraryImpl;Ljava/lang/String;ZZ)Z",
-#endif /* JAVA_SPEC_VERSION >= 18 */
+#endif /* (17 <= JAVA_SPEC_VERSION) && (JAVA_SPEC_VERSION <= 18) */
 };
 
 bool
@@ -1312,13 +1312,22 @@ TR_ResolvedRelocatableJ9Method::getResolvedPossiblyPrivateVirtualMethod(
          ignoreRtResolve,
          unresolvedInCP);
 
-   if (comp->getOption(TR_UseSymbolValidationManager))
+   return aotMaskResolvedPossiblyPrivateVirtualMethod(comp, method);
+   }
+
+TR_ResolvedMethod *
+TR_ResolvedJ9Method::aotMaskResolvedPossiblyPrivateVirtualMethod(
+   TR::Compilation *comp, TR_ResolvedMethod *method)
+   {
+   if (method == NULL
+       || !method->isPrivate()
+       || comp->fej9()->isResolvedDirectDispatchGuaranteed(comp))
       return method;
 
-   // For now leave private invokevirtual unresolved in AOT. If we resolve it,
-   // we may forceUnresolvedDispatch in codegen, in which case the generated
-   // code would attempt to resolve the wrong kind of constant pool entry.
-   return (method == NULL || method->isPrivate()) ? NULL : method;
+   // Leave private invokevirtual unresolved. If we resolve it, we may not
+   // necessarily have resolved dispatch in codegen, and the generated code
+   // could attempt to resolve the wrong kind of constant pool entry.
+   return NULL;
    }
 
 bool
@@ -1793,13 +1802,29 @@ TR_ResolvedRelocatableJ9Method::getResolvedImproperInterfaceMethod(
    TR::Compilation * comp,
    I_32 cpIndex)
    {
-   if (comp->getOption(TR_UseSymbolValidationManager))
-      return TR_ResolvedJ9Method::getResolvedImproperInterfaceMethod(comp, cpIndex);
+   return aotMaskResolvedImproperInterfaceMethod(
+      comp, TR_ResolvedJ9Method::getResolvedImproperInterfaceMethod(comp, cpIndex));
+   }
 
-   // For now leave private and Object invokeinterface unresolved in AOT. If we
-   // resolve it, we may forceUnresolvedDispatch in codegen, in which case the
-   // generated code would attempt to resolve the wrong kind of constant pool
-   // entry.
+TR_ResolvedMethod *
+TR_ResolvedJ9Method::aotMaskResolvedImproperInterfaceMethod(
+   TR::Compilation *comp, TR_ResolvedMethod *method)
+   {
+   if (method == NULL)
+      return NULL;
+
+   bool resolvedDispatch = false;
+   if (method->isPrivate() || method->convertToMethod()->isFinalInObject())
+      resolvedDispatch = comp->fej9()->isResolvedDirectDispatchGuaranteed(comp);
+   else
+      resolvedDispatch = comp->fej9()->isResolvedVirtualDispatchGuaranteed(comp);
+
+   if (resolvedDispatch)
+      return method;
+
+   // Leave this method unresolved. If we resolve it, we may not necessarily
+   // have resolved dispatch in codegen, and the generated code could attempt
+   // to resolve the wrong kind of constant pool entry.
    return NULL;
    }
 
@@ -2107,18 +2132,6 @@ void TR_ResolvedJ9Method::construct()
       {x(TR::java_util_Hashtable_getEntry,   "getEntry",      "(Ljava/lang/Object;)Ljava/util/HashMapEntry;")},
       {x(TR::java_util_Hashtable_getEnumeration,   "getEnumeration",      "(I)Ljava/util/Enumeration;")},
       {x(TR::java_util_Hashtable_elements,   "elements",      "()Ljava/util/Enumeration;")},
-      {  TR::unknownMethod}
-      };
-
-   static X TreeMapMethods[] =
-      {
-      {x(TR::java_util_TreeMap_rbInsert,     "rbInsert",           "(Ljava/lang/Object;)Ljava/util/TreeMap$Entry;")},
-      {  TR::unknownMethod}
-      };
-
-   static X TreeMapUnboundedValueIteratorMethods[] =
-      {
-      {x(TR::java_util_TreeMapUnboundedValueIterator_next,   "next",      "()Ljava/lang/Object;")},
       {  TR::unknownMethod}
       };
 
@@ -2737,6 +2750,7 @@ void TR_ResolvedJ9Method::construct()
       {x(TR::java_lang_String_decompressedArrayCopy_BICII,              "decompressedArrayCopy",              "([BI[CII)V")},
       {x(TR::java_lang_String_decompressedArrayCopy_CIBII,              "decompressedArrayCopy",              "([CI[BII)V")},
       {x(TR::java_lang_String_decompressedArrayCopy_CICII,              "decompressedArrayCopy",              "([CI[CII)V")},
+      {x(TR::java_lang_String_encodeASCII,         "encodeASCII",        "(B[B)[B")},
       {x(TR::java_lang_String_equals,              "equals",              "(Ljava/lang/Object;)Z")},
       {x(TR::java_lang_String_indexOf_String,      "indexOf",             "(Ljava/lang/String;)I")},
       {x(TR::java_lang_String_indexOf_String_int,  "indexOf",             "(Ljava/lang/String;I)I")},
@@ -2998,28 +3012,30 @@ void TR_ResolvedJ9Method::construct()
       {  TR::unknownMethod}
       };
 
+#if JAVA_SPEC_VERSION >= 15
    static X NativeLibrariesMethods[] =
       {
-#if JAVA_SPEC_VERSION >= 18
+#if (17 <= JAVA_SPEC_VERSION) && (JAVA_SPEC_VERSION <= 18)
       {x(TR::jdk_internal_loader_NativeLibraries_load, "load", "(Ljdk/internal/loader/NativeLibraries$NativeLibraryImpl;Ljava/lang/String;ZZZ)Z")},
-#else /* JAVA_SPEC_VERSION >= 18 */
+#else /* (17 <= JAVA_SPEC_VERSION) && (JAVA_SPEC_VERSION <= 18) */
       {x(TR::jdk_internal_loader_NativeLibraries_load, "load", "(Ljdk/internal/loader/NativeLibraries$NativeLibraryImpl;Ljava/lang/String;ZZ)Z")},
-#endif /* JAVA_SPEC_VERSION >= 18 */
+#endif /* (17 <= JAVA_SPEC_VERSION) && (JAVA_SPEC_VERSION <= 18) */
       {  TR::unknownMethod}
       };
-
+#endif /* JAVA_SPEC_VERSION >= 15 */
 
    static X VectorSupportMethods[] =
       {
-      {x(TR::jdk_internal_vm_vector_VectorSupport_load, "load", "(Ljava/lang/Class;Ljava/lang/Class;ILjava/lang/Object;JLjava/lang/Object;ILjdk/internal/vm/vector/VectorSupport$VectorSpecies;Ljdk/internal/vm/vector/VectorSupport$LoadOperation;)Ljava/lang/Object;")},
-      {x(TR::jdk_internal_vm_vector_VectorSupport_binaryOp, "binaryOp",  "(ILjava/lang/Class;Ljava/lang/Class;ILjava/lang/Object;Ljava/lang/Object;Ljava/util/function/BiFunction;)Ljava/lang/Object;")},
-      {x(TR::jdk_internal_vm_vector_VectorSupport_broadcastCoerced, "broadcastCoerced", "(Ljava/lang/Class;Ljava/lang/Class;IJLjdk/internal/vm/vector/VectorSupport$VectorSpecies;Ljdk/internal/vm/vector/VectorSupport$BroadcastOperation;)Ljava/lang/Object;")},
-      {x(TR::jdk_internal_vm_vector_VectorSupport_unaryOp, "unaryOp", "(ILjava/lang/Class;Ljava/lang/Class;ILjava/lang/Object;Ljava/util/function/Function;)Ljava/lang/Object;")},
+      {x(TR::jdk_internal_vm_vector_VectorSupport_load, "load", "(Ljava/lang/Class;Ljava/lang/Class;ILjava/lang/Object;JLjava/lang/Object;ILjdk/internal/vm/vector/VectorSupport$VectorSpecies;Ljdk/internal/vm/vector/VectorSupport$LoadOperation;)Ljdk/internal/vm/vector/VectorSupport$VectorPayload;")},
+      {x(TR::jdk_internal_vm_vector_VectorSupport_binaryOp, "binaryOp", "(ILjava/lang/Class;Ljava/lang/Class;Ljava/lang/Class;ILjdk/internal/vm/vector/VectorSupport$VectorPayload;Ljdk/internal/vm/vector/VectorSupport$VectorPayload;Ljdk/internal/vm/vector/VectorSupport$VectorMask;Ljdk/internal/vm/vector/VectorSupport$BinaryOperation;)Ljdk/internal/vm/vector/VectorSupport$VectorPayload;" )},
+      {x(TR::jdk_internal_vm_vector_VectorSupport_blend, "blend", "(Ljava/lang/Class;Ljava/lang/Class;Ljava/lang/Class;ILjdk/internal/vm/vector/VectorSupport$Vector;Ljdk/internal/vm/vector/VectorSupport$Vector;Ljdk/internal/vm/vector/VectorSupport$VectorMask;Ljdk/internal/vm/vector/VectorSupport$VectorBlendOp;)Ljdk/internal/vm/vector/VectorSupport$Vector;")},
+      {x(TR::jdk_internal_vm_vector_VectorSupport_broadcastCoerced, "broadcastCoerced", "(Ljava/lang/Class;Ljava/lang/Class;IJLjdk/internal/vm/vector/VectorSupport$VectorSpecies;Ljdk/internal/vm/vector/VectorSupport$BroadcastOperation;)Ljdk/internal/vm/vector/VectorSupport$VectorPayload;")},
+      {x(TR::jdk_internal_vm_vector_VectorSupport_compare, "compare", "(ILjava/lang/Class;Ljava/lang/Class;Ljava/lang/Class;ILjdk/internal/vm/vector/VectorSupport$Vector;Ljdk/internal/vm/vector/VectorSupport$Vector;Ljdk/internal/vm/vector/VectorSupport$VectorMask;Ljdk/internal/vm/vector/VectorSupport$VectorCompareOp;)Ljdk/internal/vm/vector/VectorSupport$VectorMask;")},
+      {x(TR::jdk_internal_vm_vector_VectorSupport_ternaryOp, "ternaryOp", "(ILjava/lang/Class;Ljava/lang/Class;Ljava/lang/Class;ILjdk/internal/vm/vector/VectorSupport$Vector;Ljdk/internal/vm/vector/VectorSupport$Vector;Ljdk/internal/vm/vector/VectorSupport$Vector;Ljdk/internal/vm/vector/VectorSupport$VectorMask;Ljdk/internal/vm/vector/VectorSupport$TernaryOperation;)Ljdk/internal/vm/vector/VectorSupport$Vector;")},
+      {x(TR::jdk_internal_vm_vector_VectorSupport_unaryOp, "unaryOp", "(ILjava/lang/Class;Ljava/lang/Class;Ljava/lang/Class;ILjdk/internal/vm/vector/VectorSupport$Vector;Ljdk/internal/vm/vector/VectorSupport$VectorMask;Ljdk/internal/vm/vector/VectorSupport$UnaryOperation;)Ljdk/internal/vm/vector/VectorSupport$Vector;")},
       {x(TR::jdk_internal_vm_vector_VectorSupport_store, "store", "(Ljava/lang/Class;Ljava/lang/Class;ILjava/lang/Object;JLjdk/internal/vm/vector/VectorSupport$Vector;Ljava/lang/Object;ILjdk/internal/vm/vector/VectorSupport$StoreVectorOperation;)V")},
-
       {  TR::unknownMethod}
       };
-
 
    static X ArrayMethods[] =
       {
@@ -3199,6 +3215,8 @@ void TR_ResolvedJ9Method::construct()
       { x(TR::java_lang_StringUTF16_newBytesFor,                              "newBytesFor",        "(I)[B")},
       { x(TR::java_lang_StringUTF16_putChar,                                  "putChar",            "([BII)V")},
       { x(TR::java_lang_StringUTF16_toBytes,                                  "toBytes",            "([CII)[B")},
+      { x(TR::java_lang_StringUTF16_getChars_Integer,                         "getChars",            "(II[B)I")},
+      { x(TR::java_lang_StringUTF16_getChars_Long,                            "getChars",            "(JI[B)I")},
       { TR::unknownMethod }
       };
 
@@ -3234,6 +3252,10 @@ void TR_ResolvedJ9Method::construct()
       {x(TR::java_lang_Integer_valueOf,                 "valueOf",               "(I)Ljava/lang/Integer;")},
       {  TR::java_lang_Integer_init,              6,    "<init>", (int16_t)-1,    "*"},
       {x(TR::java_lang_Integer_toUnsignedLong,          "toUnsignedLong",         "(I)J")},
+      {x(TR::java_lang_Integer_stringSize,              "stringSize",         "(I)I")},
+      {x(TR::java_lang_Integer_toString,                "toString",         "(I)Ljava/lang/String;")},
+      {x(TR::java_lang_Integer_getChars,                "getChars",        "(II[B)I")},
+      {x(TR::java_lang_Integer_getChars_charBuffer,     "getChars",        "(II[C)V")},
       {  TR::unknownMethod}
       };
 
@@ -3248,6 +3270,10 @@ void TR_ResolvedJ9Method::construct()
       {x(TR::java_lang_Long_rotateLeft,                 "rotateLeft",            "(JI)J")},
       {x(TR::java_lang_Long_rotateRight,                "rotateRight",           "(JI)J")},
       {  TR::java_lang_Long_init,                  6,    "<init>", (int16_t)-1,    "*"},
+      {x(TR::java_lang_Long_stringSize,                 "stringSize",            "(J)I") },
+      {x(TR::java_lang_Long_toString,                   "toString",            "(J)Ljava/lang/String;") },
+      {x(TR::java_lang_Long_getChars,                   "getChars",        "(JI[B)I")},
+      {x(TR::java_lang_Long_getChars_charBuffer,        "getChars",        "(JI[C)V")},
       {  TR::unknownMethod}
       };
 
@@ -3314,13 +3340,6 @@ void TR_ResolvedJ9Method::construct()
       {x(TR::x10JITHelpers_checkLowBounds, "checkLowBound", "(II)I")},
       {x(TR::x10JITHelpers_checkHighBounds, "checkHighBound", "(II)I")},
       { TR::unknownMethod}
-      };
-
-   static X SubMapMethods[] =
-      {
-      {x(TR::java_util_TreeMapSubMap_setLastKey,      "setLastKey",      "()V")},
-      {x(TR::java_util_TreeMapSubMap_setFirstKey,     "setFirstKey",     "()V")},
-      {  TR::unknownMethod}
       };
 
    static X VMInternalsMethods[] =
@@ -3961,7 +3980,6 @@ void TR_ResolvedJ9Method::construct()
       { "com/ibm/oti/vm/VM", otivmMethods },
       { "java/lang/Integer", IntegerMethods },
       { "java/lang/Boolean", BooleanMethods },
-      { "java/util/TreeMap", TreeMapMethods },
       { "java/util/HashMap", HashMapMethods },
       { 0 }
       };
@@ -4028,7 +4046,6 @@ void TR_ResolvedJ9Method::construct()
    static Y class24[] =
       {
       { "java/lang/reflect/Method", MethodMethods },
-      { "java/util/TreeMap$SubMap", SubMapMethods },
       { "sun/nio/cs/UTF_8$Decoder", EncodeMethods },
       { "sun/nio/cs/UTF_8$Encoder", EncodeMethods },
       { "sun/nio/cs/UTF16_Encoder", EncodeMethods },
@@ -4129,7 +4146,9 @@ void TR_ResolvedJ9Method::construct()
    static Y class35[] =
       {
       { "java/lang/invoke/ExplicitCastHandle", ExplicitCastHandleMethods },
+#if JAVA_SPEC_VERSION >= 15
       { "jdk/internal/loader/NativeLibraries", NativeLibrariesMethods },
+#endif /* JAVA_SPEC_VERSION >= 15 */
       { "java/lang/invoke/DirectMethodHandle", DirectMethodHandleMethods },
       { 0 }
       };
@@ -4168,7 +4187,6 @@ void TR_ResolvedJ9Method::construct()
 
    static Y class40[] =
       {
-      { "java/util/TreeMap$UnboundedValueIterator", TreeMapUnboundedValueIteratorMethods },
       { "com/ibm/dataaccess/ByteArrayUnmarshaller", DataAccessByteArrayUnmarshallerMethods },
       { "com/ibm/jit/crypto/JITFullHardwareDigest", CryptoDigestMethods },
       { "com/ibm/jit/crypto/JITAESCryptInHardware", XPCryptoMethods },

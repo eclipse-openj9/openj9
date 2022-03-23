@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2021 IBM Corp. and others
+ * Copyright (c) 2019, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -54,6 +54,7 @@ public:
       CLASSINFO_METHODS_OF_CLASS,
       CLASSINFO_CONSTANT_POOL,
       CLASSINFO_CLASS_CHAIN_OFFSET_IDENTIFYING_LOADER,
+      CLASSINFO_ARRAY_ELEMENT_SIZE,
       };
 
    // NOTE: when adding new elements to this tuple, add them to the end,
@@ -82,7 +83,8 @@ public:
       uintptr_t,                         // 19: _classFlags
       uintptr_t,                         // 20: _classChainOffsetIdentifyingLoader
       std::vector<J9ROMMethod *>,        // 21: _origROMMethods
-      std::string                        // 22: _classNameIdentifyingLoader
+      std::string,                       // 22: _classNameIdentifyingLoader
+      int32_t                            // 23: _arrayElementSize
       >;
 
    // Packs a ROMClass to be transferred to the server.

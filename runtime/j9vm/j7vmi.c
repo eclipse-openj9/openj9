@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2002, 2021 IBM Corp. and others
+ * Copyright (c) 2002, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1366,9 +1366,11 @@ JVM_GetStackTraceDepth(JNIEnv* env, jobject throwable)
 	J9InternalVMFunctions * vmfns = vm->internalVMFunctions;
 	jint numberOfFrames;
 	UDATA pruneConstructors = 0;
+	/* If -XX:+ShowHiddenFrames option has not been set, skip hidden method frames */
+	UDATA skipHiddenFrames = J9_ARE_NO_BITS_SET(vm->runtimeFlags, J9_RUNTIME_SHOW_HIDDEN_FRAMES);
 
 	vmfns->internalEnterVMFromJNI(currentThread);
-	numberOfFrames = (jint)vmfns->iterateStackTrace(currentThread, (j9object_t*)throwable, NULL, NULL, pruneConstructors);
+	numberOfFrames = (jint)vmfns->iterateStackTrace(currentThread, (j9object_t*)throwable, NULL, NULL, pruneConstructors, skipHiddenFrames);
 	vmfns->internalExitVMToJNI(currentThread);
 
 	return numberOfFrames;
@@ -1457,12 +1459,14 @@ JVM_GetStackTraceElement(JNIEnv* env, jobject throwable, jint index)
 	jobject methodName = NULL;
 	jobject fileName = NULL;
 	jint lineNumber = -1;
+	/* If -XX:+ShowHiddenFrames option has not been set, skip hidden method frames */
+	UDATA skipHiddenFrames = J9_ARE_NO_BITS_SET(vm->runtimeFlags, J9_RUNTIME_SHOW_HIDDEN_FRAMES);
 
 	memset(&userData,0, sizeof(userData));
 	userData.seekFrameIndex = index;
 
 	vmfns->internalEnterVMFromJNI(currentThread);
-	vmfns->iterateStackTrace(currentThread, (j9object_t*)throwable, getStackTraceElementIterator, &userData, pruneConstructors);
+	vmfns->iterateStackTrace(currentThread, (j9object_t*)throwable, getStackTraceElementIterator, &userData, pruneConstructors, skipHiddenFrames);
 	vmfns->internalExitVMToJNI(currentThread);
 
 	/* Bail if we couldn't find the frame */

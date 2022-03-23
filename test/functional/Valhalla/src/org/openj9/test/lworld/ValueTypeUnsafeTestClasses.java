@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2021, 2021 IBM Corp. and others
+ * Copyright (c) 2021, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,6 +29,10 @@ public class ValueTypeUnsafeTestClasses {
 		final int i;
 	}
 
+	static primitive class ValueTypeLong {
+		ValueTypeLong(long l) {this.l = l;}
+		final long l;
+	}
 
 	static primitive class ValueTypePoint2D {
 		final ValueTypeInt x, y;
@@ -39,6 +43,10 @@ public class ValueTypeUnsafeTestClasses {
 		}
 	}
 
+	static class IntWrapper {
+		IntWrapper(int i) { this.vti = new ValueTypeInt(i); }
+		final ValueTypeInt vti;
+	}
 
 	static class Point2D {
 		final int x, y;
@@ -47,5 +55,39 @@ public class ValueTypeUnsafeTestClasses {
 			this.x = x;
 			this.y = y;
 		}
+	}
+
+	static primitive class ValueTypeWithLongField {
+		final ValueTypeLong l;
+
+		ValueTypeWithLongField() {
+			l = new ValueTypeLong(1);
+		}
+	}
+
+	static primitive class ValueTypeLongPoint2D {
+		final ValueTypeLong x, y;
+
+		ValueTypeLongPoint2D(long x, long y) {
+			this.x = new ValueTypeLong(x);
+			this.y = new ValueTypeLong(y);
+		}
+	}
+
+	static primitive class ZeroSizeValueType {
+		ZeroSizeValueType() {}
+	}
+
+	static primitive class ZeroSizeValueTypeWrapper {
+		final ZeroSizeValueType z;
+
+		ZeroSizeValueTypeWrapper() {
+			z = new ZeroSizeValueType();
+		}
+	}
+
+	static primitive class ValueTypeInt2 {
+		ValueTypeInt2(int i) { this.i = i; }
+		final int i;
 	}
 }

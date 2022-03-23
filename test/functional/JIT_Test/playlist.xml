@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <!--
-	Copyright (c) 2016, 2021 IBM Corp. and others
+	Copyright (c) 2016, 2022 IBM Corp. and others
 
 	This program and the accompanying materials are made available under
 	the terms of the Eclipse Public License 2.0 which accompanies this
@@ -161,6 +161,12 @@
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
 		<platformRequirements>bits.64,^vm.xl</platformRequirements>
+		<disables>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/13767</comment>
+				<platform>aarch64_mac.*</platform>
+			</disable>
+		</disables>
 		<levels>
 			<level>sanity</level>
 		</levels>
@@ -425,7 +431,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<aot>nonapplicable</aot>
+		<features>
+			<feature>AOT:nonapplicable</feature>
+		</features>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
@@ -450,7 +458,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<aot>nonapplicable</aot>
+		<features>
+			<feature>AOT:nonapplicable</feature>
+		</features>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
@@ -475,7 +485,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<aot>nonapplicable</aot>
+		<features>
+			<feature>AOT:nonapplicable</feature>
+		</features>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
@@ -500,7 +512,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<aot>nonapplicable</aot>
+		<features>
+			<feature>AOT:nonapplicable</feature>
+		</features>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
@@ -525,7 +539,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<aot>nonapplicable</aot>
+		<features>
+			<feature>AOT:nonapplicable</feature>
+		</features>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
@@ -534,6 +550,12 @@
 	<!-- jit.test.hw tests start here -->
 	<test>
 		<testCaseName>jit_hw</testCaseName>
+		<disables>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/13064</comment>
+				<testflag>aot</testflag>
+			</disable>
+		</disables>
 		<variations>
 			<variation>-Xdump:java -Xgcpolicy:gencon -Xjit:count=0,optLevel=hot</variation>
 			<variation>-Xdump:java -Xgcpolicy:optavgpause -Xjit:count=0</variation>
@@ -558,7 +580,6 @@
 			<impl>openj9</impl>
 			<impl>ibm</impl>
 		</impls>
-		<aot>nonapplicable</aot>
 	</test>
 	<test>
 		<testCaseName>jit_hwWarm</testCaseName>
@@ -664,9 +685,12 @@
 		<testCaseName>jit_recognizedMethod</testCaseName>
 		<variations>
 			<variation>-Xint</variation>
+			<variation>-Xjit:count=0</variation>
 			<variation>-Xjit:count=1,disableAsyncCompilation</variation>
 			<variation>-Xjit:count=1,disableAsyncCompilation -XX:+CompactStrings</variation>
 			<variation>-Xjit:count=1,disableAsyncCompilation -XX:+CompactStrings -Xnoaot</variation>
+			<variation>-XX:+CompactStrings</variation>
+			<variation>-XX:+CompactStrings -Xnoaot</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jitt.jar$(Q) \

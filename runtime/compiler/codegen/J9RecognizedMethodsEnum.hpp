@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -195,6 +195,7 @@
    java_lang_String_regionMatches_bool,
    java_lang_String_regionMatchesInternal,
    java_lang_String_equalsIgnoreCase,
+   java_lang_String_encodeASCII,
    java_lang_String_compareToIgnoreCase,
    java_lang_String_compress,
    java_lang_String_andOR,
@@ -223,6 +224,8 @@
    java_lang_StringUTF16_newBytesFor,
    java_lang_StringUTF16_putChar,
    java_lang_StringUTF16_toBytes,
+   java_lang_StringUTF16_getChars_Integer,
+   java_lang_StringUTF16_getChars_Long,
 
    java_lang_StringBuffer_append,
    java_lang_StringBuffer_capacityInternal,
@@ -318,15 +321,11 @@
    java_util_Vector_addElement,
    java_util_Vector_contains,
    java_util_Vector_subList,
-   java_util_TreeMap_rbInsert,
    java_util_TreeMap_all,
    java_util_EnumMap_put, // put and putAll
    java_util_EnumMap_typeCheck,
    java_util_EnumMap__init_, // <init> constructors
    java_util_EnumMap__nec_, // other methods
-   java_util_TreeMapUnboundedValueIterator_next,
-   java_util_TreeMapSubMap_setLastKey,
-   java_util_TreeMapSubMap_setFirstKey,
    java_util_HashMap_rehash,
    java_util_HashMap_analyzeMap,
    java_util_HashMap_calculateCapacity,
@@ -450,7 +449,10 @@
    jdk_internal_vm_vector_VectorSupport_load = FirstVectorMethod,
    jdk_internal_vm_vector_VectorSupport_store,
    jdk_internal_vm_vector_VectorSupport_binaryOp,
+   jdk_internal_vm_vector_VectorSupport_blend,
    jdk_internal_vm_vector_VectorSupport_broadcastCoerced,
+   jdk_internal_vm_vector_VectorSupport_compare,
+   jdk_internal_vm_vector_VectorSupport_ternaryOp,
    jdk_internal_vm_vector_VectorSupport_unaryOp,
    LastVectorIntrinsicMethod = jdk_internal_vm_vector_VectorSupport_unaryOp,
    jdk_incubator_vector_FloatVector_fromArray,
@@ -496,6 +498,13 @@
    java_lang_Integer_rotateRight,
    java_lang_Integer_valueOf,
    java_lang_Integer_toUnsignedLong,
+   java_lang_Integer_stringSize,
+   java_lang_Integer_getChars,
+   java_lang_Integer_getChars_charBuffer,
+   java_lang_Integer_toString,
+
+   java_lang_Long_getChars,
+   java_lang_Long_getChars_charBuffer,
    java_lang_Long_bitCount,
    java_lang_Long_lowestOneBit,
    java_lang_Long_highestOneBit,
@@ -505,6 +514,8 @@
    java_lang_Long_rotateLeft,
    java_lang_Long_rotateRight,
    java_lang_Short_reverseBytes,
+   java_lang_Long_stringSize,
+   java_lang_Long_toString,
 
    java_math_BigDecimal_add,
    java_math_BigDecimal_clone,

@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2020, 2021 IBM Corp. and others
+Copyright (c) 2020, 2022 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -107,13 +107,13 @@ version used in the build.
 export CC=gcc-7 CXX=g++-7
 ```
 
-3. Download and setup the boot JDK using the latest AdoptOpenJDK v16 build.
+3. Download and setup the boot JDK using the latest AdoptOpenJDK v17 build.
 ```
 cd <my_home_dir>
-wget -O bootjdk16.tar.gz "https://api.adoptopenjdk.net/v3/binary/latest/16/ga/linux/x64/jdk/openj9/normal/adoptopenjdk"
-tar -xzf bootjdk16.tar.gz
-rm -f bootjdk16.tar.gz
-mv $(ls | grep -i jdk-16) bootjdk16
+wget -O bootjdk17.tar.gz "https://api.adoptopenjdk.net/v3/binary/latest/17/ga/linux/x64/jdk/openj9/normal/adoptopenjdk"
+tar -xzf bootjdk17.tar.gz
+rm -f bootjdk17.tar.gz
+mv $(ls | grep -i jdk-17) bootjdk17
 ```
 
 ### 2. Get the source
@@ -137,9 +137,9 @@ bash get_source.sh
 :penguin:
 When you have all the source files that you need, run the configure script, which detects how to build in the current build environment.
 ```
-bash configure --with-boot-jdk=/home/jenkins/bootjdks/jdk16
+bash configure --with-boot-jdk=/home/jenkins/bootjdks/jdk17
 ```
-:warning: The path in the example `--with-boot-jdk= option` is appropriate for the Docker installation. If you're not using the Docker environment, set the path that's appropriate for your setup, such as `<my_home_dir>/bootjdk16`.
+:warning: The path in the example `--with-boot-jdk=` option is appropriate for the Docker installation. If you're not using the Docker environment, set the path that's appropriate for your setup, such as `<my_home_dir>/bootjdk17`.
 
 :pencil: **Mixed and compressed references support:** Different types of 64-bit builds can be created:
 - [compressed references](https://www.eclipse.org/openj9/docs/gc_overview/#compressed-references) (only)
@@ -227,7 +227,7 @@ You must install the following AIX Licensed Program Products (LPPs):
 - [xlc/C++ 16](https://www.ibm.com/developerworks/downloads/r/xlcplusaix/)
 - x11.adt.ext
 
-You must also install the boot JDK: [Java16_AIX_PPC64](https://api.adoptopenjdk.net/v3/binary/latest/16/ga/aix/ppc64/jdk/openj9/normal/adoptopenjdk).
+You must also install the boot JDK: [Java17_AIX_PPC64](https://api.adoptopenjdk.net/v3/binary/latest/17/ga/aix/ppc64/jdk/openj9/normal/adoptopenjdk).
 
 A number of RPM packages are also required. The easiest method for installing these packages is to use `yum`, because `yum` takes care of any additional dependent packages for you.
 
@@ -272,7 +272,7 @@ bash get_source.sh
 When you have all the source files that you need, run the configure script, which detects how to build in the current build environment.
 ```
 bash configure \
-    --with-boot-jdk=<path_to_boot_JDK16> \
+    --with-boot-jdk=<path_to_boot_JDK17> \
     --with-cups-include=<cups_include_path> \
     --disable-warnings-as-errors
 ```
@@ -359,7 +359,7 @@ The following instructions guide you through the process of building a Windows *
 You must install a number of software dependencies to create a suitable build environment on your system:
 
 - [Cygwin](https://cygwin.com/install.html), which provides a Unix-style command line interface. Install all packages in the `Devel` category. In the `Archive` category, install the packages `zip` and `unzip`. In the `Utils` category, install the `cpio` package. Install any further package dependencies that are identified by the installer. More information about using Cygwin can be found [here](https://cygwin.com/docs.html).
-- [Windows JDK 16](https://api.adoptopenjdk.net/v3/binary/latest/16/ga/windows/x64/jdk/openj9/normal/adoptopenjdk), which is used as the boot JDK.
+- [Windows JDK 17](https://api.adoptopenjdk.net/v3/binary/latest/17/ga/windows/x64/jdk/openj9/normal/adoptopenjdk), which is used as the boot JDK.
 - [Microsoft Visual Studio 2019](https://aka.ms/vs/16/release/vs_community.exe), which is the default compiler level used by OpenJDK17.
 - [Freemarker V2.3.8](https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download) - only when building with `--with-cmake=no`
 - [LLVM/Clang](http://releases.llvm.org/7.0.0/LLVM-7.0.0-win64.exe)
@@ -431,14 +431,14 @@ bash get_source.sh
 
 :pencil: Create the directory that is going to contain the OpenJDK clone by using the `mkdir` command in the Cygwin bash shell and not using Windows Explorer. This ensures that it will have proper Cygwin attributes, and that its children will inherit those attributes.
 
-:pencil: **OpenSSL support:** If you want to build an OpenJDK with OpenJ9 binary with OpenSSL support and you do not have a built version of OpenSSL v1.0.2 or v1.1.1 available locally, you must obtain a prebuilt OpenSSL binary.
+:pencil: **OpenSSL support:** If you want to build an OpenJDK with OpenJ9 binary with OpenSSL support and you do not have a built version of OpenSSL v1.1.x available locally, you must specify `--openssl-version=<version>` where `<version>` is an OpenSSL level like 1.1.0 or 1.1.1. If the specified version of OpenSSL is already available in the standard location (SRC_DIR/openssl), `get_source.sh` uses it. Otherwise, the script deletes the content and downloads the specified version of OpenSSL source to the standard location and builds it. If you already have the version of OpenSSL in the standard location but you want a fresh copy, you must delete your current copy.
 
 ### 3. Configure
 :ledger:
 When you have all the source files that you need, run the configure script, which detects how to build in the current build environment.
 ```
 bash configure \
-    --with-boot-jdk=<path_to_boot_JDK16> \
+    --with-boot-jdk=<path_to_boot_JDK17> \
     --disable-warnings-as-errors
 ```
 Note: If you have multiple versions of Visual Studio installed, you can enforce a specific version to be used by setting `--with-toolchain-version`, i.e., by including `--with-toolchain-version=2019` option in the configure command.
@@ -455,7 +455,15 @@ Mixed references is the default to build when no options are specified. _Note th
 - `--with-mixedrefs=static` (this is the default) create a mixed references build which avoids runtime checks by compiling source twice
 - `--with-noncompressedrefs` create a build supporting non-compressed references only
 
-:pencil: **OpenSSL support:** If you want to build an OpenJDK that includes OpenSSL, you must specify `--with-openssl=path_to_library`, where `path_to_library` specifies the path to the prebuilt OpenSSL library that you obtained in **2. Get the source**. If you want to include the OpenSSL cryptographic library in the OpenJDK binary, you must also include `--enable-openssl-bundling`.
+:pencil: **OpenSSL support:** If you want to build an OpenJDK that includes OpenSSL, you must specify `--with-openssl={fetched|system|path_to_library}`
+
+  where:
+
+  - `fetched` uses the OpenSSL source downloaded by `get-source.sh` in step **2. Get the source**.
+  - `system` uses the package installed OpenSSL library in the system.
+  - `path_to_library` uses a custom OpenSSL library that's already built.
+
+  If you want to include the OpenSSL cryptographic library in the OpenJDK binary, you must include `--enable-openssl-bundling`.
 
 :pencil: When building using `--with-cmake=no`, you must specify `freemarker.jar` with an absolute path, such as `--with-freemarker-jar=/cygdrive/c/temp/freemarker.jar`.
 
@@ -515,7 +523,7 @@ The following instructions guide you through the process of building a macOS **O
 You must install a number of software dependencies to create a suitable build environment on your system (the specified versions are minimums):
 
 - [Xcode 10.3, use >= 11.4.1 to support code signing](https://developer.apple.com/download/more/) (requires an Apple account to log in).
-- [macOS JDK 16](https://api.adoptopenjdk.net/v3/binary/latest/16/ga/mac/x64/jdk/openj9/normal/adoptopenjdk), which is used as the boot JDK.
+- [macOS JDK 17](https://api.adoptopenjdk.net/v3/binary/latest/17/ga/mac/x64/jdk/openj9/normal/adoptopenjdk), which is used as the boot JDK.
 
 The following dependencies can be installed by using [Homebrew](https://brew.sh/) (the specified versions are minimums):
 
@@ -576,7 +584,7 @@ bash get_source.sh
 When you have all the source files that you need, run the configure script, which detects how to build in the current build environment.
 
 ```
-bash configure --with-boot-jdk=<path_to_boot_JDK16>
+bash configure --with-boot-jdk=<path_to_boot_JDK17>
 ```
 
 :pencil: Modify the path for the macOS boot JDK that you installed in step 1. If `configure` is unable to detect Freetype, add the option `--with-freetype=<path to freetype>`, where `<path to freetype>` is typically `/usr/local/Cellar/freetype/2.9.1/`.
@@ -677,7 +685,7 @@ bash get_source.sh
 You must install a number of software dependencies to create a suitable build environment on your AArch64 Linux system:
 
 - GNU C/C++ compiler (The Docker image uses GCC 7.5)
-- [AArch64 Linux JDK](https://api.adoptopenjdk.net/v3/binary/latest/16/ga/linux/aarch64/jdk/openj9/normal/adoptopenjdk), which is used as the boot JDK.
+- [AArch64 Linux JDK](https://api.adoptopenjdk.net/v3/binary/latest/17/ga/linux/aarch64/jdk/openj9/normal/adoptopenjdk), which is used as the boot JDK.
 - [Freemarker V2.3.8](https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download) - Only when building with `--with-cmake=no`
 
 See [Setting up your build environment without Docker](#setting-up-your-build-environment-without-docker) in [Linux section](#linux) for other dependencies to be installed.
@@ -717,8 +725,8 @@ bash configure --openjdk-target=${OPENJ9_CC_PREFIX} \
                --with-freetype-include=${OPENJ9_CC_DIR}/${OPENJ9_CC_PREFIX}/libc/usr/include/freetype2 \
                --with-freetype-lib=${OPENJ9_CC_DIR}/${OPENJ9_CC_PREFIX}/libc/usr/lib \
                --with-freemarker-jar=/root/freemarker.jar \
-               --with-boot-jdk=/root/bootjdk11 \
-               --with-build-jdk=/root/bootjdk11 \
+               --with-boot-jdk=/root/bootjdk17 \
+               --with-build-jdk=/root/bootjdk17 \
                --with-cmake=no \
                --disable-warnings-as-errors \
                --disable-ddr

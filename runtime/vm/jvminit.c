@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -41,6 +41,9 @@
 #include <ctype.h>
 #include <limits.h>
 #include "util_api.h"
+#if JAVA_SPEC_VERSION >= 16
+#include "vm_internal.h"
+#endif /* JAVA_SPEC_VERSION >= 16 */
 
 #if !defined(stdout)
 #define stdout NULL
@@ -171,15 +174,12 @@ static const struct J9VMIgnoredOption ignoredOptionTable[] = {
 	{ VMOPT_VFPRINTF, EXACT_MATCH },
 	{ VMOPT_EXIT, EXACT_MATCH },
 	{ VMOPT_ABORT, EXACT_MATCH },
-	{ VMOPT_XQUICKSTART, EXACT_MATCH }, /* sorta bogus... j9c now uses this option in the romclass.c which can be run with a Micro JIT, which does not take this option */
-													/* also note we had this inside the #if defined(J9VM_OPT_SIDECAR) before the j9c thing because sov launchers specify with JIT off (sigh) */
-	{ VMOPT_XNOQUICKSTART, EXACT_MATCH }, /* since we eat -Xquickstart, we should eat -Xnoquickstart for the same reason. */
+	{ VMOPT_XNOQUICKSTART, EXACT_MATCH },
 	{ VMOPT_XJ9, EXACT_MATCH },
 	{ VMOPT_XMXCL, STARTSWITH_MATCH },
 	/* extra-extended options start with -XX. Ignore any not explicitly processed. */
 #if defined(J9VM_OPT_SIDECAR)
 	{ VMOPT_XJVM, STARTSWITH_MATCH },
-	{ VMOPT_CLIENT, EXACT_MATCH },
 	{ VMOPT_SERVER, EXACT_MATCH },
 	{ VMOPT_X142BOOSTGCTHRPRIO, EXACT_MATCH },
 
@@ -630,18 +630,15 @@ freeJavaVM(J9JavaVM * vm)
 #endif /* !defined(WIN32) */
 
 #if JAVA_SPEC_VERSION >= 16
-	if (NULL != vm->cifNativeCalloutDataCacheMutex) {
-		omrthread_monitor_destroy(vm->cifNativeCalloutDataCacheMutex);
-		vm->cifNativeCalloutDataCacheMutex = NULL;
-	}
 	if (NULL != vm->cifNativeCalloutDataCache) {
+		pool_state poolState;
+		void *cifNode = pool_startDo(vm->cifNativeCalloutDataCache, &poolState);
+		while (NULL != cifNode) {
+			freeAllStructFFITypes(currentThread, cifNode);
+			cifNode = pool_nextDo(&poolState);
+		}
 		pool_kill(vm->cifNativeCalloutDataCache);
 		vm->cifNativeCalloutDataCache = NULL;
-	}
-
-	if (NULL != vm->cifArgumentTypesCacheMutex) {
-		omrthread_monitor_destroy(vm->cifArgumentTypesCacheMutex);
-		vm->cifArgumentTypesCacheMutex = NULL;
 	}
 
 	if (NULL != vm->cifArgumentTypesCache) {
@@ -906,6 +903,16 @@ freeJavaVM(J9JavaVM * vm)
 		j9mem_free_memory(vm->realtimeSizeClasses);
 		vm->realtimeSizeClasses = NULL;
 	}
+
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+	{
+		J9Pool *hookRecords = vm->checkpointState.hookRecords;
+		if (NULL != hookRecords) {
+			pool_kill(hookRecords);
+			vm->checkpointState.hookRecords = NULL;
+		}
+	}
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
 	j9mem_free_memory(vm);
 
@@ -1962,9 +1969,9 @@ VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved)
 			}
 #endif
 
-			if (FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XDFPBD, NULL) >= 0) {
-				vm->runtimeFlags |= J9_RUNTIME_DFPBD;
-			}
+			/* The -Xdfpbd option is used by JIT, consuming it here to allow VM to continue */
+			FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XDFPBD, NULL);
+
 			if (FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XAGGRESSIVE, NULL) >= 0) {
 				vm->runtimeFlags |= J9_RUNTIME_AGGRESSIVE;
 			}
@@ -1994,9 +2001,34 @@ VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved)
 			}
 #endif
 
+			IDATA xtuneQuickstartIndex = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_TUNE_QUICKSTART, NULL);
+			IDATA xquickstartIndex = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XQUICKSTART, NULL);
+			IDATA clientIndex = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_CLIENT, NULL);
+			/* VMOPT_TUNE_QUICKSTART, VMOPT_XQUICKSTART and VMOPT_CLIENT are
+			 * aliases, so take the largest index of these 3 */
+			if (xtuneQuickstartIndex < xquickstartIndex) {
+				xtuneQuickstartIndex = xquickstartIndex;
+			}
+			if (xtuneQuickstartIndex < clientIndex) {
+				xtuneQuickstartIndex = clientIndex;
+			}
 			/* -Xtune:virtualized was added so that consumers could start adding it to their command lines */
-			if (FIND_AND_CONSUME_ARG(EXACT_MATCH,VMOPT_TUNE_VIRTUALIZED, NULL) >= 0) {
-				vm->runtimeFlags |= J9_RUNTIME_TUNE_VIRTUALIZED;
+			IDATA xtuneVirtualizedIndex = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_TUNE_VIRTUALIZED, NULL);
+			IDATA xtuneThroughputIndex = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_TUNE_THROUGHPUT, NULL);
+
+			/* Only the last appearance of any of VMOPT_TUNE_VIRTUALIZED, VMOPT_TUNE_THROUGHPUT, VMOPT_TUNE_QUICKSTART will take effect */
+			if (xtuneVirtualizedIndex > xtuneThroughputIndex) {
+				if (xtuneVirtualizedIndex > xtuneQuickstartIndex) {
+					vm->runtimeFlags |= J9_RUNTIME_TUNE_VIRTUALIZED;
+				} else {
+					vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_TUNE_QUICKSTART;
+				}
+			} else {
+				if (xtuneThroughputIndex > xtuneQuickstartIndex) {
+					vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_TUNE_THROUGHPUT;
+				} else if (xtuneQuickstartIndex >= 0) {
+					vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_TUNE_QUICKSTART;
+				}
 			}
 
 			argIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, VMOPT_XXNODISCLAIMVIRTUALMEMORY, NULL);
@@ -3094,7 +3126,7 @@ modifyDllLoadTable(J9JavaVM * vm, J9Pool* loadTable, J9VMInitArgs* j9vm_args)
 	}
 
 	/* Temporarily disable JIT/AOT until it is fully implemented */
-#if defined(RISCV64) || (defined(J9AARCH64) && defined(OSX))
+#if defined(RISCV64)
 	xint = TRUE;
 	xjit = FALSE;
 	xaot = FALSE;
@@ -3628,18 +3660,6 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 			vm->extendedRuntimeFlags &= ~(UDATA)J9_EXTENDED_RUNTIME_JIT_INLINE_WATCHES;
 		}
 	}
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-	{
-		IDATA enableValueTypes = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXENABLEVALHALLA, NULL);
-		IDATA disableValueTypes = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXDISABLEVALHALLA, NULL);
-		if (enableValueTypes < disableValueTypes) {
-			vm->extendedRuntimeFlags2 &= ~J9_EXTENDED_RUNTIME2_ENABLE_VALHALLA;
-		} else {
-			/* -XX:+EnableValhalla is on by default. */
-			vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_ENABLE_VALHALLA;
-		}
-	}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 	{
@@ -3774,7 +3794,7 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 			GET_OPTION_VALUE(argIndex, '=', &optionArg);
 			if (NULL != optionArg) {
 				if (strcmp(optionArg, "disabled") == 0) {
-					vm->extendedRuntimeFlags |= J9_EXTENDED_RUNTIME_DISABLE_FINALIZATION;
+					vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_DISABLE_FINALIZATION;
 				} else if (strcmp(optionArg, "enabled") == 0) {
 					/* do nothing as finalization is enabled by default */
 				} else {
@@ -3786,6 +3806,24 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 		}
 	}
 #endif /* JAVA_SPEC_VERSION >= 18 */
+
+	{
+		IDATA showHiddenFrames = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXSHOWHIDDENFRAMES, NULL);
+		IDATA noshowHiddenFrames = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXNOSHOWHIDDENFRAMES, NULL);
+		if (showHiddenFrames > noshowHiddenFrames) {
+			vm->runtimeFlags |= J9_RUNTIME_SHOW_HIDDEN_FRAMES;
+		}
+	}
+
+	{
+		IDATA dynamicHeapification = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXDYNAMICHEAPIFICATION, NULL);
+		IDATA noDynamicHeapification = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXNODYNAMICHEAPIFICATION, NULL);
+		if (dynamicHeapification > noDynamicHeapification) {
+			vm->runtimeFlags |= J9_RUNTIME_DYNAMIC_HEAPIFICATION;
+		} else if (dynamicHeapification < noDynamicHeapification) {
+			vm->runtimeFlags &= ~(UDATA)J9_RUNTIME_DYNAMIC_HEAPIFICATION;
+		}
+	}
 
 	return JNI_OK;
 }
@@ -6613,11 +6651,6 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 	/* ffi_cif should be allocated on demand */
 	vm->cifNativeCalloutDataCache = NULL;
 	vm->cifArgumentTypesCache = NULL;
-	if ((0 != omrthread_monitor_init_with_name(&vm->cifNativeCalloutDataCacheMutex, 0, "CIF cache mutex"))
-	|| (0 != omrthread_monitor_init_with_name(&vm->cifArgumentTypesCacheMutex, 0, "CIF argument types mutex"))
-	) {
-		goto error;
-	}
 #endif /* JAVA_SPEC_VERSION >= 16 */
 
 #if defined(J9X86) || defined(J9HAMMER)

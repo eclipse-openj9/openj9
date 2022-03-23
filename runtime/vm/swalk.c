@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -125,6 +125,7 @@ UDATA  walkStackFrames(J9VMThread *currentThread, J9StackWalkState *walkState)
 		currentThread->activeWalkState = walkState;
 	}
 
+	walkState->javaVM = walkState->walkThread->javaVM;
 	walkState->currentThread = currentThread;
 	walkState->cache = NULL;
 	walkState->framesWalked = 0;
@@ -164,6 +165,7 @@ UDATA  walkStackFrames(J9VMThread *currentThread, J9StackWalkState *walkState)
 	if (walkState->flags & J9_STACKWALK_START_AT_JIT_FRAME) swPrintf(walkState, 2, "\tSTART_AT_JIT_FRAME\n");
 	if (walkState->flags & J9_STACKWALK_CACHE_CPS) swPrintf(walkState, 2, "\tCACHE_CPS\n");
 	if (walkState->flags & J9_STACKWALK_CACHE_PCS) swPrintf(walkState, 2, "\tCACHE_PCS\n");
+	if (walkState->flags & J9_STACKWALK_SKIP_HIDDEN_FRAMES) swPrintf(walkState, 2, "\tSKIP_HIDDEN_FRAME\n");
 	if (walkState->flags & J9_STACKWALK_COUNT_SPECIFIED) swPrintf(walkState, 2, "\tCOUNT_SPECIFIED\n");
 	if (walkState->flags & J9_STACKWALK_INCLUDE_ARRAYLET_LEAVES) swPrintf(walkState, 2, "\tINCLUDE_ARRAYLET_LEAVES\n");
 	if (walkState->flags & J9_STACKWALK_INCLUDE_NATIVES) swPrintf(walkState, 2, "\tINCLUDE_NATIVES\n");
@@ -422,6 +424,15 @@ UDATA walkFrame(J9StackWalkState * walkState)
 #ifdef J9VM_INTERP_NATIVE_SUPPORT
 		}
 #endif
+
+		/* Process hidden method frames */
+		if (J9_ARE_ALL_BITS_SET(walkState->flags, J9_STACKWALK_SKIP_HIDDEN_FRAMES)
+		&& (NULL != walkState->method)
+		&& (J9ROMCLASS_IS_ANON_OR_HIDDEN(J9_CLASS_FROM_METHOD(walkState->method)->romClass)
+			|| J9_ARE_ANY_BITS_SET(J9_ROM_METHOD_FROM_RAM_METHOD(walkState->method)->modifiers, J9AccMethodFrameIteratorSkip)
+		)) {
+			return J9_STACKWALK_KEEP_ITERATING;
+		}
 
 		if (walkState->skipCount) {
 			--walkState->skipCount;

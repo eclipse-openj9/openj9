@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -506,7 +506,7 @@ void J9::Power::PrivateLinkage::mapStack(TR::ResolvedMethodSymbol *method)
       // Each auto's GC index will have already been aligned, we just need to make sure
       // we align the starting stack offset.
       uint32_t unalignedStackIndex = stackIndex;
-      stackIndex &= ~(TR::Compiler->om.objectAlignmentInBytes() - 1);
+      stackIndex &= ~(TR::Compiler->om.getObjectAlignmentInBytes() - 1);
       uint32_t paddingBytes = unalignedStackIndex - stackIndex;
       if (paddingBytes > 0)
          {
@@ -595,7 +595,7 @@ void J9::Power::PrivateLinkage::mapStack(TR::ResolvedMethodSymbol *method)
 
 void J9::Power::PrivateLinkage::mapSingleAutomatic(TR::AutomaticSymbol *p, uint32_t &stackIndex)
    {
-   int32_t roundup = (comp()->useCompressedPointers() && p->isLocalObject() ? TR::Compiler->om.objectAlignmentInBytes() : TR::Compiler->om.sizeofReferenceAddress()) - 1;
+   int32_t roundup = (comp()->useCompressedPointers() && p->isLocalObject() ? TR::Compiler->om.getObjectAlignmentInBytes() : TR::Compiler->om.sizeofReferenceAddress()) - 1;
    int32_t roundedSize = (p->getSize() + roundup) & (~roundup);
    if (roundedSize == 0)
       roundedSize = 4;
@@ -1276,7 +1276,7 @@ void J9::Power::PrivateLinkage::createPrologue(TR::Instruction *cursor)
       TR_ASSERT(!comp()->useCompressedPointers() ||
                 !localCursor->isLocalObject() ||
                 !localCursor->isCollectedReference() ||
-                (localCursor->getOffset() & (TR::Compiler->om.objectAlignmentInBytes() - 1)) == 0,
+                (localCursor->getOffset() & (TR::Compiler->om.getObjectAlignmentInBytes() - 1)) == 0,
                 "Stack allocated object not aligned to minimum required alignment");
       localCursor->setOffset(localCursor->getOffset() + size);
       localCursor = automaticIterator.getNext();
@@ -2686,10 +2686,7 @@ void J9::Power::PrivateLinkage::buildDirectCall(TR::Node *callNode,
    if (callSymRef->getReferenceNumber() >= TR_PPCnumRuntimeHelpers)
       fej9->reserveTrampolineIfNecessary(comp(), callSymRef, false);
 
-   bool forceUnresolvedDispatch = fej9->forceUnresolvedDispatch();
-   if (comp()->getOption(TR_UseSymbolValidationManager))
-      forceUnresolvedDispatch = false;
-
+   bool forceUnresolvedDispatch = !fej9->isResolvedDirectDispatchGuaranteed(comp());
    if ((callSymbol->isJITInternalNative() ||
         (!callSymRef->isUnresolved() && !callSymbol->isInterpreted() && ((forceUnresolvedDispatch && callSymbol->isHelper()) || !forceUnresolvedDispatch))))
       {

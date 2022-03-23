@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2021 IBM Corp. and others
+ * Copyright (c) 2001, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -84,7 +84,7 @@ import static com.ibm.j9ddr.vm29.j9.BCNames.JBlookupswitch;
 import static com.ibm.j9ddr.vm29.j9.BCNames.JBlstore;
 import static com.ibm.j9ddr.vm29.j9.BCNames.JBlstorew;
 import static com.ibm.j9ddr.vm29.j9.BCNames.JBmultianewarray;
-import static com.ibm.j9ddr.vm29.j9.BCNames.JBdefaultvalue;
+import static com.ibm.j9ddr.vm29.j9.BCNames.JBaconst_init;
 import static com.ibm.j9ddr.vm29.j9.BCNames.JBnew;
 import static com.ibm.j9ddr.vm29.j9.BCNames.JBnewdup;
 import static com.ibm.j9ddr.vm29.j9.BCNames.JBnewarray;
@@ -481,7 +481,7 @@ public class ByteCodeDumper {
 				pc = pc.add(2);
 			} else if ((bcIntVal == JBnew)
 				|| (bcIntVal == JBnewdup)
-				|| (bcIntVal == JBdefaultvalue)
+				|| (bcIntVal == JBaconst_init)
 				|| (bcIntVal == JBanewarray)
 				|| (bcIntVal == JBcheckcast)
 				|| (bcIntVal == JBinstanceof)

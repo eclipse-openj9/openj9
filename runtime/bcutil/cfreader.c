@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1359,16 +1359,6 @@ readPool(J9CfrClassFile* classfile, U_8* data, U_8* dataEnd, U_8* segment, U_8* 
 				offset = (U_32)(index - data - 1);
 				goto _errorFound;
 			}
-
-			if (!J9_ARE_ALL_BITS_SET(classfile->accessFlags, CFR_ACC_MODULE)) {
-				if (J9_ARE_ALL_BITS_SET(info->tag, CFR_CONSTANT_Module)) {
-					errorCode = J9NLS_CFR_ERR_CONSTANT_MODULE_OUTSIDE_MODULE__ID;
-				} else {
-					errorCode = J9NLS_CFR_ERR_CONSTANT_PACKAGE_OUTSIDE_MODULE__ID;
-				}
-				offset = (U_32)(index - data - 1);
-				goto _errorFound;
-			}
 			CHECK_EOF(2);
 			NEXT_U16(info->slot1, index);
 			i++;
@@ -1586,10 +1576,20 @@ checkPool(J9CfrClassFile* classfile, U_8* segment, U_8* poolStart, I_32 *maxBoot
 			index += 5;
 			break;
 
+			/* According to the VM Spec, a CONSTANT_Module_info or CONSTANT_Package_info structure
+			 * is permitted only in the constant pool of a class file where the access_flags item
+			 * has the ACC_MODULE flag set, which means any other class with a CONSTANT_Module_info
+			 * or CONSTANT_Package_info structure is illegal.
+			 * Note: a class with ACC_MODULE set is checked and rejected in j9bcutil_readClassFileBytes()
+			 * prior to checkPool().
+			 */
 		case CFR_CONSTANT_Module:
+			errorCode = J9NLS_CFR_ERR_CONSTANT_MODULE_OUTSIDE_MODULE__ID;
+			goto _errorFound;
+
 		case CFR_CONSTANT_Package:
-			index += 3;
-			break;
+			errorCode = J9NLS_CFR_ERR_CONSTANT_PACKAGE_OUTSIDE_MODULE__ID;
+			goto _errorFound;
 
 		default:
 			errorCode = J9NLS_CFR_ERR_UNKNOWN_CONSTANT__ID;
@@ -2885,26 +2885,40 @@ j9bcutil_readClassFileBytes(J9PortLibrary *portLib,
 	}
 
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-	/* Currently value type is built on JDK17, so compare with JDK17 for now. Eventually it needs to compare to JDK18. */
-	if ((flags & BCT_MajorClassFileVersionMask) < BCT_JavaMajorVersionShifted(17)) {
-		classfile->accessFlags &= ~(CFR_ACC_VALUE_TYPE | CFR_ACC_ATOMIC);
+	/* Currently value type is built on JDK19, so compare with JDK19 for now. Eventually it may need to compare to JDK20. */
+	if ((flags & BCT_MajorClassFileVersionMask) < BCT_JavaMajorVersionShifted(19)) {
+		classfile->accessFlags &= ~(CFR_ACC_VALUE_TYPE | CFR_ACC_PRIMITIVE_VALUE_TYPE | CFR_ACC_PERMITS_VALUE);
 	}
-	/*
-	 * TODO This behaviour is based on the LW2 spec http://cr.openjdk.java.net/~fparain/L-world/LW2-JVMS-draft-20181009.pdf.
-	 * In the future the CFR_ACC_VALUE_TYPE class access bit will be replaced by a ValObject subtyping relationship. We will
-	 * likely keep the bit in the romClass class, but it will no longer appear in .class files.
-	 *
-	 * The LW10 prototype will likely still be enabled with a -XX:+EnableValhalla flag so a check and error message similar
-	 * to this will be required.
-	 */
-
-	/* class files with the ACC_VALUE_TYPE can only be loaded if -XX:+EnableValhalla is set, which is on by default. */
-	if (J9_ARE_ANY_BITS_SET(classfile->accessFlags, CFR_ACC_VALUE_TYPE | CFR_ACC_ATOMIC)
-		&& J9_ARE_NO_BITS_SET(flags, BCT_ValueTypesEnabled)
-	) {
-		errorCode = J9NLS_CFR_ERR_VALUE_TYPES_IS_NOT_SUPPORTED_V1__ID;
-		offset = index - data - 2;
-		goto _errorFound;
+	if (J9_ARE_ALL_BITS_SET(classfile->accessFlags, CFR_ACC_PRIMITIVE_VALUE_TYPE)) {
+		if (J9_ARE_NO_BITS_SET(classfile->accessFlags, CFR_ACC_VALUE_TYPE)) {
+			errorCode = J9NLS_CFR_ERR_VALUE_FLAG_MISSING_ON_PRIMITIVE_CLASS__ID;
+			offset = index - data - 2;
+			goto _errorFound;
+		}
+	}
+	if (J9_ARE_ALL_BITS_SET(classfile->accessFlags, CFR_ACC_VALUE_TYPE)) {
+		if (J9_ARE_NO_BITS_SET(classfile->accessFlags, CFR_ACC_FINAL)) {
+			errorCode = J9NLS_CFR_ERR_FINAL_FLAG_MISSING_ON_VALUE_CLASS__ID;
+			offset = index - data - 2;
+			goto _errorFound;
+		}
+		if (J9_ARE_ANY_BITS_SET(classfile->accessFlags, CFR_ACC_ABSTRACT | CFR_ACC_PERMITS_VALUE | CFR_ACC_ENUM | CFR_ACC_INTERFACE | CFR_ACC_MODULE)) {
+			errorCode = J9NLS_CFR_ERR_INCORRECT_FLAG_FOUND_ON_VALUE_CLASS__ID;
+			offset = index - data - 2;
+			goto _errorFound;
+		}
+	}
+	if (J9_ARE_ALL_BITS_SET(classfile->accessFlags, CFR_ACC_PERMITS_VALUE)) {
+		if (J9_ARE_NO_BITS_SET(classfile->accessFlags, CFR_ACC_ABSTRACT)) {
+			errorCode = J9NLS_CFR_ERR_PERMITS_VALUE_ON_NON_ABSTRACT_CLASS__ID;
+			offset = index - data - 2;
+			goto _errorFound;
+		}
+		if (J9_ARE_ALL_BITS_SET(classfile->accessFlags, CFR_ACC_FINAL)) {
+			errorCode = J9NLS_CFR_ERR_PERMITS_VALUE_ON_FINAL_CLASS__ID;
+			offset = index - data - 2;
+			goto _errorFound;
+		}
 	}
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 

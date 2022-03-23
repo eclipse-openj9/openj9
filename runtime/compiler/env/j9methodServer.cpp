@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2021 IBM Corp. and others
+ * Copyright (c) 2018, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1005,34 +1005,6 @@ TR_ResolvedJ9JITServerMethod::getResolvedVirtualMethod(TR::Compilation * comp, T
    if (resolvedMethod)
       compInfoPT->cacheResolvedMethod(compInfoPT->getResolvedMethodKey(TR_ResolvedMethodType::VirtualFromOffset, clazz, virtualCallOffset, classObject), ramMethod, 0, methodInfo);
    return resolvedMethod;
-   }
-
-char *
-TR_ResolvedJ9JITServerMethod::fieldOrStaticName(I_32 cpIndex, int32_t &len, TR_Memory *trMemory, TR_AllocationKind kind)
-   {
-   if (cpIndex == -1)
-      return "<internal name>";
-
-   J9ROMFieldRef *ref = (J9ROMFieldRef *)&romCPBase()[cpIndex];
-   J9ROMNameAndSignature *nameAndSignature = J9ROMFIELDREF_NAMEANDSIGNATURE(ref);
-   const J9ROMClass *romClass = romClassPtr();
-   TR_ASSERT_FATAL(JITServerHelpers::isAddressInROMClass(nameAndSignature, romClass), "Address outside of ROMClass");
-
-   J9UTF8 *declName = J9ROMCLASSREF_NAME((J9ROMClassRef *)&romCPBase()[ref->classRefCPIndex]);
-   J9UTF8 *name = J9ROMNAMEANDSIGNATURE_NAME(nameAndSignature);
-   J9UTF8 *signature = J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSignature);
-
-   TR_ASSERT_FATAL(JITServerHelpers::isAddressInROMClass(declName, romClass), "Address outside of ROMClass");
-   TR_ASSERT_FATAL(JITServerHelpers::isAddressInROMClass(name, romClass), "Address outside of ROMClass");
-   TR_ASSERT_FATAL(JITServerHelpers::isAddressInROMClass(signature, romClass), "Address outside of ROMClass");
-
-   len = J9UTF8_LENGTH(declName) + J9UTF8_LENGTH(name) + J9UTF8_LENGTH(signature) + 3;
-   char *s = (char *)trMemory->allocateMemory(len, kind);
-   sprintf(s, "%.*s.%.*s %.*s",
-           J9UTF8_LENGTH(declName), utf8Data(declName),
-           J9UTF8_LENGTH(name), utf8Data(name),
-           J9UTF8_LENGTH(signature), utf8Data(signature));
-   return s;
    }
 
 void *
@@ -2245,14 +2217,9 @@ TR_ResolvedRelocatableJ9JITServerMethod::getResolvedImproperInterfaceMethod(
    TR::Compilation * comp,
    I_32 cpIndex)
    {
-   if (comp->getOption(TR_UseSymbolValidationManager))
-      return TR_ResolvedJ9JITServerMethod::getResolvedImproperInterfaceMethod(comp, cpIndex);
-
-   // For now leave private and Object invokeinterface unresolved in AOT. If we
-   // resolve it, we may forceUnresolvedDispatch in codegen, in which case the
-   // generated code would attempt to resolve the wrong kind of constant pool
-   // entry.
-   return NULL;
+   return aotMaskResolvedImproperInterfaceMethod(
+      comp,
+      TR_ResolvedJ9JITServerMethod::getResolvedImproperInterfaceMethod(comp, cpIndex));
    }
 
 void *
@@ -2418,13 +2385,7 @@ TR_ResolvedRelocatableJ9JITServerMethod::getResolvedPossiblyPrivateVirtualMethod
          ignoreRtResolve,
          unresolvedInCP);
 
-   if (comp->getOption(TR_UseSymbolValidationManager))
-      return method;
-
-   // For now leave private invokevirtual unresolved in AOT. If we resolve it,
-   // we may forceUnresolvedDispatch in codegen, in which case the generated
-   // code would attempt to resolve the wrong kind of constant pool entry.
-   return (method == NULL || method->isPrivate()) ? NULL : method;
+   return aotMaskResolvedPossiblyPrivateVirtualMethod(comp, method);
    }
 
 bool

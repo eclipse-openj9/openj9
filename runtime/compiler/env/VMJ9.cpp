@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -172,6 +172,26 @@ extern "C" J9Method * getNewInstancePrototype(J9VMThread *context);
 // psuedo-call to asm function
 extern "C" void _getSTFLEBits(int numDoubleWords, uint64_t * bits);  /* 390 asm stub */
 extern "C" bool _isPSWInProblemState();  /* 390 asm stub */
+
+TR::FILE *fileOpen(TR::Options *options, J9JITConfig *jitConfig, char *name, char *permission, bool b1)
+   {
+   PORT_ACCESS_FROM_ENV(jitConfig->javaVM);
+   char tmp[1025];
+   char *formattedTmp = NULL;
+   if (!options->getOption(TR_EnablePIDExtension))
+      {
+      formattedTmp = TR_J9VMBase::getJ9FormattedName(jitConfig, PORTLIB, tmp, sizeof(tmp), name, NULL, false);
+      }
+   else
+      {
+      formattedTmp = TR_J9VMBase::getJ9FormattedName(jitConfig, PORTLIB, tmp, sizeof(tmp), name, options->getSuffixLogsFormat(), true);
+      }
+   if (NULL != formattedTmp)
+      {
+      return j9jit_fopen(formattedTmp, permission, b1);
+      }
+   return NULL;
+   }
 
 // Returns -1 if given vmThread is not a compilation thread
 int32_t
@@ -506,6 +526,32 @@ bool
 TR_J9SharedCacheVM::shouldDelayAotLoad()
    {
    return isAOT_DEPRECATED_DO_NOT_USE();
+   }
+
+bool
+TR_J9SharedCacheVM::isResolvedDirectDispatchGuaranteed(TR::Compilation *comp)
+   {
+   return isAotResolvedDirectDispatchGuaranteed(comp);
+   }
+
+bool
+TR_J9VMBase::isAotResolvedDirectDispatchGuaranteed(TR::Compilation *comp)
+   {
+   return comp->getOption(TR_UseSymbolValidationManager)
+      && comp->cg()->guaranteesResolvedDirectDispatchForSVM();
+   }
+
+bool
+TR_J9SharedCacheVM::isResolvedVirtualDispatchGuaranteed(TR::Compilation *comp)
+   {
+   return isAotResolvedVirtualDispatchGuaranteed(comp);
+   }
+
+bool
+TR_J9VMBase::isAotResolvedVirtualDispatchGuaranteed(TR::Compilation *comp)
+   {
+   return comp->getOption(TR_UseSymbolValidationManager)
+      && comp->cg()->guaranteesResolvedVirtualDispatchForSVM();
    }
 
 J9Class *
@@ -2489,10 +2535,10 @@ TR_J9VMBase::markClassForTenuredAlignment(TR::Compilation *comp, TR_OpaqueClassB
       J9Class *clazz = TR::Compiler->cls.convertClassOffsetToClassPtr(opclazz);
       UDATA hotFieldsWordValue = 0x1; // mark for alignment
 
-      TR_ASSERT(0==(alignFromStart % TR::Compiler->om.objectAlignmentInBytes()), "alignment undershot should be multiple of %d bytes", TR::Compiler->om.objectAlignmentInBytes());
+      TR_ASSERT(0==(alignFromStart % TR::Compiler->om.getObjectAlignmentInBytes()), "alignment undershot should be multiple of %d bytes", TR::Compiler->om.getObjectAlignmentInBytes());
       TR_ASSERT((alignFromStart < 128), "alignment undershot should be less than 128 (124 max)");
 
-      hotFieldsWordValue |= (((alignFromStart & 0x7f)/TR::Compiler->om.objectAlignmentInBytes()) << 1);
+      hotFieldsWordValue |= (((alignFromStart & 0x7f)/TR::Compiler->om.getObjectAlignmentInBytes()) << 1);
 
       //printf("Class %p, hotFieldsWordValue %p\n", opclazz,  hotFieldsWordValue);
 
@@ -2964,6 +3010,31 @@ bool TR_J9VMBase::supressInliningRecognizedInitialCallee(TR_CallSite* callsite, 
                {
                dontInlineRecognizedMethod = true;
                }
+         case TR::java_lang_Integer_stringSize:
+         case TR::java_lang_Long_stringSize:
+            if (comp->cg()->getSupportsIntegerStringSize())
+               {
+               dontInlineRecognizedMethod = true;
+               }
+            break;
+         case TR::java_lang_Integer_getChars: // For compressed strings
+         case TR::java_lang_Long_getChars: // For compressed strings
+         case TR::java_lang_StringUTF16_getChars_Long: // For uncompressed strings
+         case TR::java_lang_StringUTF16_getChars_Integer: // For uncompressed strings
+         case TR::java_lang_Integer_getChars_charBuffer: // For uncompressed strings in Java 8
+         case TR::java_lang_Long_getChars_charBuffer: // For uncompressed strings in Java 8
+            if (comp->cg()->getSupportsIntegerToChars())
+               {
+               dontInlineRecognizedMethod = true;
+               }
+            break;
+         case TR::java_lang_StringCoding_encodeASCII:
+         case TR::java_lang_String_encodeASCII:
+            if (comp->cg()->getSupportsInlineEncodeASCII())
+               {
+               dontInlineRecognizedMethod = true;
+               }
+            break;
          default:
             break;
          }
@@ -4917,24 +4988,97 @@ TR_J9VMBase::targetMethodFromMethodHandle(TR::Compilation* comp, TR::KnownObject
        knot &&
        !knot->isNull(objIndex))
       {
-      TR::VMAccessCriticalSection getTarget(this);
-      uintptr_t object = knot->getPointer(objIndex);
-      return targetMethodFromMethodHandle(object);
-      }
-   return NULL;
-   }
+      const char *mhClassName = "java/lang/invoke/MethodHandle";
+      int32_t mhClassNameLen = strlen(mhClassName);
+      TR_OpaqueClassBlock *mhClass =
+         getSystemClassFromClassName(mhClassName, mhClassNameLen);
 
-TR_OpaqueMethodBlock*
-TR_J9VMBase::targetMethodFromMethodHandle(uintptr_t methodHandle)
-   {
-   TR_ASSERT(haveAccess(), "targetFromMethodHandle requires VM access");
-   uintptr_t form = getReferenceField(
-      methodHandle,
-      "form",             "Ljava/lang/invoke/LambdaForm;");
-   uintptr_t vmentry = getReferenceField(
-      form,
-      "vmentry",             "Ljava/lang/invoke/MemberName;");
-   return targetMethodFromMemberName(vmentry);
+      if (mhClass == NULL)
+         {
+         if (comp->getOption(TR_TraceOptDetails))
+            traceMsg(comp, "targetMethodFromMethodHandle: MethodHandle is not loaded\n");
+
+         return NULL;
+         }
+
+      TR::VMAccessCriticalSection getTarget(this);
+
+      uintptr_t handle = knot->getPointer(objIndex);
+      TR_OpaqueClassBlock *objClass = getObjectClass(handle);
+      if (isInstanceOf(objClass, mhClass, true, true) != TR_yes)
+         {
+         if (comp->getOption(TR_TraceOptDetails))
+            {
+            traceMsg(
+               comp,
+               "targetMethodFromMethodHandle: Cannot load ((MethodHandle)obj%d).form "
+               "because obj%d is not a MethodHandle\n",
+               objIndex,
+               objIndex);
+            }
+
+         return NULL;
+         }
+
+      J9JavaVM *javaVM = _jitConfig->javaVM;
+      uint32_t keepAliveOffset = javaVM->jitVMEntryKeepAliveOffset;
+      uint32_t keepAliveOffsetNoHeader = keepAliveOffset - getObjectHeaderSizeInBytes();
+      uintptr_t vmentry = getVolatileReferenceFieldAt(handle, keepAliveOffsetNoHeader);
+      if (vmentry == 0)
+         {
+         uintptr_t form = getReferenceField(
+            handle, "form", "Ljava/lang/invoke/LambdaForm;");
+
+         if (form == 0)
+            {
+            if (comp->getOption(TR_TraceOptDetails))
+               {
+               traceMsg(
+                  comp,
+                  "targetMethodFromMethodHandle: null ((MethodHandle)obj%d).form\n",
+                  objIndex);
+               }
+
+            return NULL;
+            }
+
+         vmentry = getReferenceField(
+            form, "vmentry", "Ljava/lang/invoke/MemberName;");
+
+         if (vmentry == 0)
+            {
+            if (comp->getOption(TR_TraceOptDetails))
+               {
+               traceMsg(
+                  comp,
+                  "targetMethodFromMethodHandle: null ((MethodHandle)obj%d).form.vmentry\n",
+                  objIndex);
+               }
+
+            return NULL;
+            }
+
+         // This should be fj9object_t*, but j9gc_objaccess_compareAndSwapObject
+         // still expects J9Object** in its signature.
+         auto **keepAliveAddr = (J9Object**)(handle + keepAliveOffset);
+         UDATA success = javaVM->memoryManagerFunctions->j9gc_objaccess_compareAndSwapObject(
+            vmThread(), (J9Object*)handle, keepAliveAddr, NULL, (J9Object*)vmentry);
+
+         if (success == 0)
+            {
+            vmentry = getVolatileReferenceFieldAt(handle, keepAliveOffsetNoHeader);
+            TR_ASSERT_FATAL(
+               vmentry != 0,
+               "((MethodHandle)obj%d).jitVMEntryKeepAlive is still null "
+               "after failing compare and swap",
+               objIndex);
+            }
+         }
+
+      return targetMethodFromMemberName(vmentry);
+      }
+
+   return NULL;
    }
 
 J9JNIMethodID*
@@ -5465,13 +5609,6 @@ bool
 TR_J9VMBase::isString(TR_OpaqueClassBlock *clazz)
    {
    return (J9Class*)clazz == J9VMJAVALANGSTRING(jitConfig->javaVM);
-   }
-
-bool
-TR_J9VMBase::isString(uintptr_t objectPointer)
-   {
-   TR_ASSERT(haveAccess(), "isString requires VM access");
-   return isString(getObjectClass(objectPointer));
    }
 
 int32_t

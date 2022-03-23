@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -904,7 +904,7 @@ TR::DefaultCompilationStrategy::processJittedSample(TR_MethodEvent *event)
                   nextOptLevel = hot;
                   // Decide whether to deny optimizer to switch to profiling on the fly
                   if (globalSamplesInHotWindow > TR::Options::_sampleDontSwitchToProfilingThreshold &&
-                     !TR::Options::getCmdLineOptions()->getOption(TR_AggressiveOpts))
+                     !TR::Options::getCmdLineOptions()->getOption(TR_AggressiveSwitchingToProfiling))
                      dontSwitchToProfiling = true;
                   recompile = true;
                   compInfo->_stats._methodsSelectedToRecompile++;
@@ -1143,11 +1143,10 @@ TR::DefaultCompilationStrategy::processJittedSample(TR_MethodEvent *event)
       bool bufferOverflow = ((curMsg - msg) >= MSG_SZ); // check for overflow at runtime
       if (fe->isLogSamplingSet())
          {
-         TR_VerboseLog::vlogAcquire();
+         TR_VerboseLog::CriticalSection vlogLock;
          TR_VerboseLog::writeLine(TR_Vlog_SAMPLING,"%s", msg);
          if (bufferOverflow)
             TR_VerboseLog::writeLine(TR_Vlog_SAMPLING,"Sampling line is too big: %d characters", curMsg-msg);
-         TR_VerboseLog::vlogRelease();
          }
       Trc_JIT_Sampling_Detail(getJ9VMThreadFromTR_VM(fe), msg);
       if (bufferOverflow)

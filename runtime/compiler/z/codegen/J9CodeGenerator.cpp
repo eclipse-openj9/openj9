@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -117,6 +117,12 @@ J9::Z::CodeGenerator::initialize()
       cg->resetSupportsArrayTranslateTRxx();
       }
 
+   static char *disableInlineEncodeASCII = feGetEnv("TR_disableInlineEncodeASCII");
+   if (comp->fej9()->isStringCompressionEnabledVM() && cg->getSupportsVectorRegisters() && !TR::Compiler->om.canGenerateArraylets() && !disableInlineEncodeASCII)
+      {
+      cg->setSupportsInlineEncodeASCII();
+      }
+
    // Let's turn this on.  There is more work needed in the opt
    // to catch the case where the BNDSCHK is inserted after
    //
@@ -201,6 +207,13 @@ J9::Z::CodeGenerator::initialize()
    if (comp->fej9()->hasFixedFrameC_CallingConvention())
       {
       cg->setHasFixedFrameC_CallingConvention();
+      }
+
+   static bool disableIntegerToChars = (feGetEnv("TR_DisableIntegerToChars") != NULL);
+   if (cg->getSupportsVectorRegisters() && !TR::Compiler->om.canGenerateArraylets() && !disableIntegerToChars && comp->target().cpu.isAtLeast(OMR_PROCESSOR_S390_ZNEXT))
+      {
+      cg->setSupportsIntegerToChars();
+      cg->setSupportsIntegerStringSize();
       }
 
    cg->setIgnoreDecimalOverflowException(false);
@@ -3743,7 +3756,13 @@ J9::Z::CodeGenerator::inlineDirectCall(
    // If the method to be called is marked as an inline method, see if it can
    // actually be generated inline.
    //
-   if (comp->getSymRefTab()->isNonHelper(node->getSymbolReference(), TR::SymbolReferenceTable::currentTimeMaxPrecisionSymbol))
+
+   if (comp->getSymRefTab()->isNonHelper(node->getSymbolReference(), TR::SymbolReferenceTable::encodeASCIISymbol))
+      {
+      TR::TreeEvaluator::inlineEncodeASCII(node, cg);
+      return true;
+      }
+   else if (comp->getSymRefTab()->isNonHelper(node->getSymbolReference(), TR::SymbolReferenceTable::currentTimeMaxPrecisionSymbol))
       {
       resultReg = TR::TreeEvaluator::inlineCurrentTimeMaxPrecision(cg, node);
       return true;
@@ -3918,6 +3937,32 @@ J9::Z::CodeGenerator::inlineDirectCall(
       case TR::com_ibm_jit_JITHelpers_transformedEncodeUTF16Big:
          return resultReg = comp->getOption(TR_DisableUTF16BEEncoder) ? TR::TreeEvaluator::inlineUTF16BEEncodeSIMD(node, cg)
                                                                       : TR::TreeEvaluator::inlineUTF16BEEncode    (node, cg);
+         break;
+      case TR::java_lang_Integer_stringSize:
+      case TR::java_lang_Long_stringSize:
+         if (cg->getSupportsIntegerStringSize())
+            {
+            resultReg = TR::TreeEvaluator::inlineIntegerStringSize(node, cg);
+            return resultReg != NULL;
+            }
+         break;
+      case TR::java_lang_Integer_getChars:
+      case TR::java_lang_Long_getChars:
+         if (cg->getSupportsIntegerToChars())
+            {
+            resultReg = TR::TreeEvaluator::inlineIntegerToCharsForLatin1Strings(node, cg);
+            return resultReg != NULL;
+            }
+         break;
+      case TR::java_lang_StringUTF16_getChars_Integer:
+      case TR::java_lang_StringUTF16_getChars_Long:
+      case TR::java_lang_Integer_getChars_charBuffer:
+      case TR::java_lang_Long_getChars_charBuffer:
+         if (cg->getSupportsIntegerToChars())
+            {
+            resultReg = TR::TreeEvaluator::inlineIntegerToCharsForUTF16Strings(node, cg);
+            return resultReg != NULL;
+            }
          break;
 
       default:

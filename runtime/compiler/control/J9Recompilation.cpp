@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -393,10 +393,8 @@ J9::Recompilation::switchToProfiling(uint32_t f, uint32_t c)
       return false;
       }
 
-   if (_compilation->isOptServer() && !TR::Options::getCmdLineOptions()->getOption(TR_AggressiveOpts))
+   if (_compilation->isOptServer() && !_compilation->getOption(TR_AggressiveSwitchingToProfiling))
       {
-      // can afford to switch to profiling under aggressive; needed for BigDecimal opt
-      //
       return false;
       }
 

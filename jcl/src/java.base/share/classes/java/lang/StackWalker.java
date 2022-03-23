@@ -1,6 +1,6 @@
 /*[INCLUDE-IF JAVA_SPEC_VERSION > 8]*/
 /*******************************************************************************
- * Copyright (c) 2016, 2021 IBM Corp. and others
+ * Copyright (c) 2016, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -384,7 +384,7 @@ public final class StackWalker {
 		public StackTraceElement toStackTraceElement() {
 			String moduleName = null;
 			String moduleVersion = null;
-			if (null != frameModule) {
+			if (null != frameModule && frameModule.isNamed()) {
 				ModuleDescriptor desc = frameModule.getDescriptor();
 				moduleName = desc.name();
 				Optional<Version> versionInfo = desc.version();

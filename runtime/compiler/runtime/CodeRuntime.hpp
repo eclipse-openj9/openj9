@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,6 +24,7 @@
 #define CODERUNTIME_HPP
 
 namespace TR { class CodeGenerator; }
+namespace TR { class CompilationInfoPerThread; }
 
 namespace TR {
 
@@ -34,6 +35,11 @@ extern uint32_t getCCPreLoadedCodeSize();
 
 struct J9JITConfig;
 void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP);
+
+void rtlogPrint(J9JITConfig *jitConfig, TR::CompilationInfoPerThread *compInfoPT, const char *buffer, bool lock = false);
+void rtlogPrintLocked(J9JITConfig *jitConfig, TR::CompilationInfoPerThread *compInfoPT, const char *buffer);
+void rtlogPrintf(J9JITConfig *jitConfig, TR::CompilationInfoPerThread *compInfoPT, const char *format, ...);
+void rtlogPrintfLocked(J9JITConfig *jitConfig, TR::CompilationInfoPerThread *compInfoPT, const char *format, ...);
 
 // Uses of these next three (the JITRT_PRINTF looks a bit weird, but not completely awful):
 //   JITRT_LOCK_LOG(jitConfig);

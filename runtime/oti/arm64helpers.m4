@@ -1,4 +1,4 @@
-dnl Copyright (c) 2019, 2021 IBM Corp. and others
+dnl Copyright (c) 2019, 2022 IBM Corp. and others
 dnl
 dnl This program and the accompanying materials are made available under
 dnl the terms of the Eclipse Public License 2.0 which accompanies this
@@ -44,7 +44,6 @@ define({DECLARE_PUBLIC},{
 })
 }) dnl ifdef(OSX)
 
-
 define({DECLARE_EXTERN},{.extern $1})
 
 define({START_PROC},{
@@ -59,7 +58,7 @@ define({END_PROC})
 },{
 dnl LINUX
 define({END_PROC},{
-	.size	FUNC_LABEL($1), .-FUNC_LABEL($1)
+	.size FUNC_LABEL($1), .-FUNC_LABEL($1)
 })
 })
 
@@ -107,35 +106,41 @@ define({SAVE_C_VOLATILE_REGS},{
 	stp x14,x15,JIT_GPR_SAVE_SLOT(14)
 	stp x16,x17,JIT_GPR_SAVE_SLOT(16)
 	str x18,JIT_GPR_SAVE_SLOT(18)
+ifdef({METHOD_INVOCATION},{
 	stp d0,d1,JIT_FPR_SAVE_SLOT(0)
 	stp d2,d3,JIT_FPR_SAVE_SLOT(2)
 	stp d4,d5,JIT_FPR_SAVE_SLOT(4)
 	stp d6,d7,JIT_FPR_SAVE_SLOT(6)
-	add x15, sp, JIT_FPR_SAVE_OFFSET(16)
-	stp d16,d17,[x15,#0]
-	stp d18,d19,[x15,#16]
-	stp d20,d21,[x15,#32]
-	stp d22,d23,[x15,#48]
-	stp d24,d25,[x15,#64]
-	stp d26,d27,[x15,#80]
-	stp d28,d29,[x15,#96]
-	stp d30,d31,[x15,#112]
+},{ dnl METHOD_INVOCATION
+	add x15, sp, JIT_FPR_SAVE_OFFSET(0)
+	st1 {{v0.4s, v1.4s, v2.4s, v3.4s}}, [x15], #64
+	st1 {{v4.4s, v5.4s, v6.4s, v7.4s}}, [x15], #64
+	st1 {{v8.4s, v9.4s, v10.4s, v11.4s}}, [x15], #64
+	st1 {{v12.4s, v13.4s, v14.4s, v15.4s}}, [x15], #64
+	st1 {{v16.4s, v17.4s, v18.4s, v19.4s}}, [x15], #64
+	st1 {{v20.4s, v21.4s, v22.4s, v23.4s}}, [x15], #64
+	st1 {{v24.4s, v25.4s, v26.4s, v27.4s}}, [x15], #64
+	st1 {{v28.4s, v29.4s, v30.4s, v31.4s}}, [x15]
+}) dnl METHOD_INVOCATION
 })
 
 define({RESTORE_C_VOLATILE_REGS},{
+ifdef({METHOD_INVOCATION},{
 	ldp d0,d1,JIT_FPR_SAVE_SLOT(0)
 	ldp d2,d3,JIT_FPR_SAVE_SLOT(2)
 	ldp d4,d5,JIT_FPR_SAVE_SLOT(4)
 	ldp d6,d7,JIT_FPR_SAVE_SLOT(6)
-	add x15, sp, JIT_FPR_SAVE_OFFSET(16)
-	ldp d16,d17,[x15,#0]
-	ldp d18,d19,[x15,#16]
-	ldp d20,d21,[x15,#32]
-	ldp d22,d23,[x15,#48]
-	ldp d24,d25,[x15,#64]
-	ldp d26,d27,[x15,#80]
-	ldp d28,d29,[x15,#96]
-	ldp d30,d31,[x15,#112]
+},{ dnl METHOD_INVOCATION
+	add x15, sp, JIT_FPR_SAVE_OFFSET(0)
+	ld1 {{v0.4s, v1.4s, v2.4s, v3.4s}}, [x15], #64
+	ld1 {{v4.4s, v5.4s, v6.4s, v7.4s}}, [x15], #64
+	ld1 {{v8.4s, v9.4s, v10.4s, v11.4s}}, [x15], #64
+	ld1 {{v12.4s, v13.4s, v14.4s, v15.4s}}, [x15], #64
+	ld1 {{v16.4s, v17.4s, v18.4s, v19.4s}}, [x15], #64
+	ld1 {{v20.4s, v21.4s, v22.4s, v23.4s}}, [x15], #64
+	ld1 {{v24.4s, v25.4s, v26.4s, v27.4s}}, [x15], #64
+	ld1 {{v28.4s, v29.4s, v30.4s, v31.4s}}, [x15]
+}) dnl METHOD_INVOCATION
 	ldp x0,x1,JIT_GPR_SAVE_SLOT(0)
 	ldp x2,x3,JIT_GPR_SAVE_SLOT(2)
 	ldp x4,x5,JIT_GPR_SAVE_SLOT(4)

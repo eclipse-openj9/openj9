@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2021 IBM Corp. and others
+ * Copyright (c) 2018, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -588,9 +588,10 @@ TR_J9ServerVM::classHasBeenExtended(TR_OpaqueClassBlock *clazz)
    if (bClassHasBeenExtended)
       return true;
 
+   bool cachedAndNotInCHTable = false;
       {
       OMR::CriticalSection getRemoteROMClass(clientSessionData->getROMMapMonitor());
-      auto it = clientSessionData->getROMClassMap().find((J9Class*)clazz);
+      auto it = clientSessionData->getROMClassMap().find((J9Class *)clazz);
       if (it != clientSessionData->getROMClassMap().end())
          {
          if ((it->second._classDepthAndFlags & J9AccClassHasBeenOverridden) != 0)
@@ -601,32 +602,39 @@ TR_J9ServerVM::classHasBeenExtended(TR_OpaqueClassBlock *clazz)
             // The flag is neither set in the CHTable nor the class data cache.
             return false;
             }
-         else
-            {
-            // The class info does not exist in the CHTable but it's cached in
-            // the class data cache and the flag is not set.
-            stream->write(JITServer::MessageType::VM_classHasBeenExtended, clazz);
-            bool result = std::get<0>(stream->read<bool>());
-            if (result)
-               {
-               it->second._classDepthAndFlags |= J9AccClassHasBeenOverridden;
-               }
-            return result;
-            }
+
+         cachedAndNotInCHTable = true;
          }
+      }
+
+   if (cachedAndNotInCHTable)
+      {
+      // The class info does not exist in the CHTable but it's cached in
+      // the class data cache and the flag is not set.
+      stream->write(JITServer::MessageType::VM_classHasBeenExtended, clazz);
+      bool result = std::get<0>(stream->read<bool>());
+      if (result)
+         {
+         OMR::CriticalSection cs(clientSessionData->getROMMapMonitor());
+         auto it = clientSessionData->getROMClassMap().find((J9Class *)clazz);
+         TR_ASSERT(it != clientSessionData->getROMClassMap().end(), "Class %p must be cached", clazz);
+         it->second._classDepthAndFlags |= J9AccClassHasBeenOverridden;
+         }
+      return result;
       }
 
    if (bIsClassInfoInCHTable)
       {
       // The class data exists in the CHTable but it's not cached in the ROMClass cache.
+      TR_ASSERT(!bClassHasBeenExtended, "Must not be extended");
       return false;
       }
-   else
-      {
-      // The class data does not exist in the CHTable and is not cached. Retrieve ClassInfo from the client.
-      uintptr_t classDepthAndFlags = JITServerHelpers::getRemoteClassDepthAndFlagsWhenROMClassNotCached((J9Class *)clazz, clientSessionData, stream);
-      return ((classDepthAndFlags & J9AccClassHasBeenOverridden) != 0);
-      }
+
+   // The class data does not exist in the CHTable and is not cached. Retrieve ClassInfo from the client.
+   uintptr_t classDepthAndFlags = JITServerHelpers::getRemoteClassDepthAndFlagsWhenROMClassNotCached(
+      (J9Class *)clazz, clientSessionData, stream
+   );
+   return (classDepthAndFlags & J9AccClassHasBeenOverridden) != 0;
    }
 
 bool
@@ -830,8 +838,15 @@ bool
 TR_J9ServerVM::isString(TR_OpaqueClassBlock * clazz)
    {
    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITServer::MessageType::VM_isString1, clazz);
-   return std::get<0>(stream->read<bool>());
+   auto *vmInfo = _compInfoPT->getClientData()->getOrCacheVMInfo(stream);
+   TR_OpaqueClassBlock *javaStringObject = vmInfo->_JavaStringObject;
+   if (NULL == javaStringObject)
+      {
+      stream->write(JITServer::MessageType::VM_JavaStringObject, JITServer::Void());
+      javaStringObject = std::get<0>(stream->read<TR_OpaqueClassBlock *>());
+      vmInfo->_JavaStringObject = javaStringObject;
+      }
+   return clazz == javaStringObject;
    }
 
 bool
@@ -2166,13 +2181,6 @@ TR_J9ServerVM::targetMethodFromMethodHandle(TR::Compilation* comp, TR::KnownObje
    return NULL;
    }
 
-TR_OpaqueMethodBlock*
-TR_J9ServerVM::targetMethodFromMethodHandle(uintptr_t methodHandle)
-   {
-   TR_ASSERT_FATAL(false, "targetMethodFromMethodHandle must not be called on JITServer");
-   return NULL;
-   }
-
 TR::KnownObjectTable::Index
 TR_J9ServerVM::getKnotIndexOfInvokeCacheArrayAppendixElement(TR::Compilation *comp, uintptr_t *invokeCacheArray)
    {
@@ -3151,4 +3159,16 @@ TR_J9SharedCacheServerVM::getResolvedInterfaceMethod(TR_OpaqueMethodBlock *inter
          }
       }
    return ramMethod;
+   }
+
+bool
+TR_J9SharedCacheServerVM::isResolvedDirectDispatchGuaranteed(TR::Compilation *comp)
+   {
+   return isAotResolvedDirectDispatchGuaranteed(comp);
+   }
+
+bool
+TR_J9SharedCacheServerVM::isResolvedVirtualDispatchGuaranteed(TR::Compilation *comp)
+   {
+   return isAotResolvedVirtualDispatchGuaranteed(comp);
    }

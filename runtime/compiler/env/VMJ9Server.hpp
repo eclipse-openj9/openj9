@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2021 IBM Corp. and others
+ * Copyright (c) 2018, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -226,7 +226,6 @@ public:
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
    virtual TR_OpaqueMethodBlock* targetMethodFromMemberName(uintptr_t memberName) override;
    virtual TR_OpaqueMethodBlock* targetMethodFromMemberName(TR::Compilation* comp, TR::KnownObjectTable::Index objIndex) override;
-   virtual TR_OpaqueMethodBlock* targetMethodFromMethodHandle(uintptr_t methodHandle) override;
    virtual TR_OpaqueMethodBlock* targetMethodFromMethodHandle(TR::Compilation* comp, TR::KnownObjectTable::Index objIndex) override;
    virtual TR_ResolvedMethod *targetMethodFromInvokeCacheArrayMemberNameObj(TR::Compilation *comp, TR_ResolvedMethod *owningMethod, uintptr_t *invokeCacheArray) override;
    virtual TR::KnownObjectTable::Index getKnotIndexOfInvokeCacheArrayAppendixElement(TR::Compilation *comp, uintptr_t *invokeCacheArray) override;
@@ -286,7 +285,6 @@ public:
    virtual bool       needRelocationsForLookupEvaluationData() override        { return true; }
    virtual bool       needRelocationsForBodyInfoData() override                { return true; }
    virtual bool       needRelocationsForPersistentInfoData() override          { return true; }
-   virtual bool       forceUnresolvedDispatch() override                       { return true; }
    virtual bool       nopsAlsoProcessedByRelocations() override                { return true; }
    virtual bool       supportsGuardMerging() override                          { return false; }
    virtual bool       canDevirtualizeDispatch() override                       { return false; }
@@ -297,6 +295,9 @@ public:
    virtual bool       supportsJitMethodEntryAlignment() override               { return false; }
    virtual bool       isBenefitInliningCheckIfFinalizeObject() override        { return true; }
    virtual bool       needsContiguousCodeAndDataCacheAllocation() override     { return true; }
+
+   virtual bool       isResolvedDirectDispatchGuaranteed(TR::Compilation *comp) override;
+   virtual bool       isResolvedVirtualDispatchGuaranteed(TR::Compilation *comp) override;
 
    virtual bool shouldDelayAotLoad() override                                  { return true; }
    virtual bool isStable(int cpIndex, TR_ResolvedMethod *owningMethod, TR::Compilation *comp) override { return false; }

@@ -1,4 +1,4 @@
-# Copyright (c) 2000, 2020 IBM Corp. and others
+# Copyright (c) 2000, 2022 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,14 +33,15 @@ EXESUFF=
 LIBPREFIX=lib
 DEPSUFF=.depend.mk
 ifeq ($(VERSION_MAJOR),8)
-	ARCHLEVEL=7
-	TGTLEVEL=zOSV1R13
+    ARCHLEVEL=7
+    TGTLEVEL=zOSV1R13
+    TUNELEVEL?=10
 else
-	ARCHLEVEL=10
-	TGTLEVEL=zOSV2R3
+    ARCHLEVEL=10
+    TGTLEVEL=zOSV2R3
+    TUNELEVEL?=12
 endif
 
-TUNELEVEL?=10
 #
 # Paths for default programs on the platform
 # Most rules will use these default programs, but they can be overwritten individually if,

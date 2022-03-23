@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -565,11 +565,18 @@ gcStartupHeapManagement(J9JavaVM *javaVM)
 	int result = 0;
 
 #if defined(J9VM_GC_FINALIZATION)
-	result = j9gc_finalizer_startup(javaVM);
-	if (JNI_OK != result) {
-		PORT_ACCESS_FROM_JAVAVM(javaVM);
-		j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_FAILED_TO_INITIALIZE_FINALIZE_SUPPORT);
-		return result;
+#if JAVA_SPEC_VERSION >= 18
+	if (J9_ARE_ANY_BITS_SET(javaVM->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_DISABLE_FINALIZATION)) {
+		/* Finalization is disabled */
+	} else
+#endif /* JAVA_SPEC_VERSION >= 18 */
+	{
+		result = j9gc_finalizer_startup(javaVM);
+		if (JNI_OK != result) {
+			PORT_ACCESS_FROM_JAVAVM(javaVM);
+			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_FAILED_TO_INITIALIZE_FINALIZE_SUPPORT);
+			return result;
+		}
 	}
 #endif /* J9VM_GC_FINALIZATION */
 
@@ -795,11 +802,19 @@ gcInitializeCalculatedValues(J9JavaVM *javaVM, IDATA* memoryParameters)
 	 * This used to be for free, calculations based on Xmx, now it is a manual check
 	 * in setConfigurationSpecificMemoryParameters
 	 */
-	/* TODO aryoung: eventually segregated heaps will allow heap expansion, although metronome
-	 * itself will still require a fully expanded heap on startup */
-	const bool shouldMaximizeInitialHeap = (extensions->isSegregatedHeap() || extensions->isMetronomeGC());
-	const UDATA initialXmsValueMax = shouldMaximizeInitialHeap ? J9_MEMORY_MAX : (8 * 1024 * 1024);
-	const UDATA initialXmsValueMin = shouldMaximizeInitialHeap ? UDATA_MAX     : (8 * 1024 * 1024);
+	UDATA initialXmsValueMax = 8 * 1024 * 1024;
+	UDATA initialXmsValueMin = 8 * 1024 * 1024;
+	if (extensions->isSegregatedHeap() || extensions->isMetronomeGC()) {
+		/* TODO aryoung: eventually segregated heaps will allow heap expansion, although metronome
+		 * itself will still require a fully expanded heap on startup
+		 */
+		initialXmsValueMax = J9_MEMORY_MAX;
+		initialXmsValueMin = UDATA_MAX;
+	} else if (J9_ARE_ANY_BITS_SET(javaVM->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_TUNE_THROUGHPUT)) {
+		/* For -Xtune:throughput we want to set Xms=Xmx */
+		initialXmsValueMax = extensions->memoryMax;
+		initialXmsValueMin = extensions->memoryMax;
+	}
 
 	/**
 	 * GC memory parameters to be store in GCExtensions
@@ -2052,7 +2067,7 @@ combinationMemoryParameterVerification(J9JavaVM *javaVM, IDATA* memoryParameters
 				 * space to Xmos
 				 */
 				if ((candidateXmosValue + candidateXmnsValue) > maximumXmsValue) {
-					candidateXmnsValue = newSpaceSizeMinimum;
+					candidateXmnsValue = OMR_MAX(newSpaceSizeMinimum, maximumXmsValue - candidateXmosValue);
 					candidateXmosValue = maximumXmsValue - candidateXmnsValue;
 
 					/* Verify not too large */
@@ -2951,7 +2966,6 @@ gcInitializeDefaults(J9JavaVM* vm)
 
 	extensions->trackMutatorThreadCategory = J9_ARE_NO_BITS_SET(vm->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_REDUCE_CPU_MONITOR_OVERHEAD);
 
-
 	if (!gcParseTGCCommandLine(vm)) {
 		loadInfo->fatalErrorStr = (char *)j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_GC_FAILED_TO_INITIALIZE_PARSING_COMMAND_LINE, "Failed to initialize, parsing command line.");
 		goto error;
@@ -3011,7 +3025,6 @@ gcInitializeDefaults(J9JavaVM* vm)
 		MM_LargeObjectAllocateStats::initializeFreeMemoryProfileMaxSizeClasses(&env, extensions->largeObjectAllocationProfilingVeryLargeObjectThreshold,
 				(float)extensions->largeObjectAllocationProfilingSizeClassRatio / (float)100.0, extensions->heap->getMaximumMemorySize());
 	}
-
 	warnIfPageSizeNotSatisfied(vm,extensions);
 	j9mem_free_memory(memoryParameterTable);
 	return J9VMDLLMAIN_OK;

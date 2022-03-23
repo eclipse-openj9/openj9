@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2021 IBM Corp. and others
+ * Copyright (c) 1998, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -106,10 +106,8 @@ jstring JNICALL
 Java_java_lang_System_getSysPropBeforePropertiesInitialized(JNIEnv *env, jclass clazz, jint sysPropID)
 {
 	const char *sysPropValue = NULL;
-#if !defined(OSX) || (JAVA_SPEC_VERSION < 18)
 	/* The sysPropValue points to following property which has to be declared at top level. */
 	char property[128] = {0};
-#endif /* !defined(OSX) || (JAVA_SPEC_VERSION < 18) */
 	jstring result = NULL;
 	PORT_ACCESS_FROM_ENV(env);
 
@@ -140,11 +138,15 @@ Java_java_lang_System_getSysPropBeforePropertiesInitialized(JNIEnv *env, jclass 
 	case 2: /* file.encoding */
 		sysPropValue = getDefinedEncoding(env, "-Dfile.encoding=");
 		if (NULL == sysPropValue) {
-#if JAVA_SPEC_VERSION >= 18
-			sysPropValue = "UTF-8";
-#else /* JAVA_SPEC_VERSION >= 18 */
+#if JAVA_SPEC_VERSION < 18
 			sysPropValue = getPlatformFileEncoding(env, property, sizeof(property), sysPropID);
-#endif /* JAVA_SPEC_VERSION >= 18 */
+#else /* JAVA_SPEC_VERSION < 18 */
+			sysPropValue = "UTF-8";
+		} else {
+			if (0 == strcmp("COMPAT", sysPropValue)) {
+				sysPropValue = getPlatformFileEncoding(env, property, sizeof(property), sysPropID);
+			}
+#endif /* JAVA_SPEC_VERSION < 18 */
 		}
 #if defined(J9ZOS390)
 		if (__CSNameType(sysPropValue) == _CSTYPE_ASCII) {
@@ -161,7 +163,7 @@ Java_java_lang_System_getSysPropBeforePropertiesInitialized(JNIEnv *env, jclass 
 #if defined(J9ZOS390) || defined(J9ZTPF)
 			sysPropValue = "ISO8859_1";
 #elif defined(WIN32) /* defined(J9ZOS390) || defined(J9ZTPF) */
-			sysPropValue = "UTF8";
+			sysPropValue = "UTF-8";
 #endif /* defined(J9ZOS390) || defined(J9ZTPF) */
 		}
 		break;
@@ -331,23 +333,25 @@ jobject getPropertyList(JNIEnv *env)
 {
 	PORT_ACCESS_FROM_ENV(env);
 	int propIndex = 0;
-	jobject propertyList;
+	jobject propertyList = NULL;
 #define PROPERTY_COUNT 137
-	char *propertyKey= NULL;
-	const char * language;
-	const char * region;
-	const char * variant;
+	char *propertyKey = NULL;
+	const char * language = NULL;
+	const char * region = NULL;
+	const char * variant = NULL;
 	const char *strings[PROPERTY_COUNT];
 #define USERNAME_LENGTH 128
 	char username[USERNAME_LENGTH];
 	char *usernameAlloc = NULL;
-	IDATA result;
+	/* buffer to hold the size of the maximum direct byte buffer allocations */
+	char maxDirectMemBuff[24];
+	IDATA result = 0;
 
 	J9JavaVM *javaVM = ((J9VMThread *) env)->javaVM;
 	OMR_VM *omrVM = javaVM->omrVM;
 
-	/* Change the allocation value PROPERTY_COUNT above as you add/remove properties, 
-	 * then follow the propIndex++ convention and consume 2 * slots for each property. 2 * number of property keys is the 
+	/* Change the allocation value PROPERTY_COUNT above as you add/remove properties,
+	 * then follow the propIndex++ convention and consume 2 * slots for each property. 2 * number of property keys is the
 	 * correct allocation.
 	 * Also note the call to addSystemProperties below, which may add some configuration-specific properties.  Be sure to leave
 	 * enough room in the property list for all possibilities.
@@ -424,7 +428,6 @@ jobject getPropertyList(JNIEnv *env)
 
 	/*[PR 95709]*/
 
-
 	/* Get the language, region and variant */
 	language = j9nls_get_language();	
 	region = j9nls_get_region();
@@ -466,17 +469,15 @@ jobject getPropertyList(JNIEnv *env)
 
 #undef USERNAME_LENGTH
 
-#if defined(OPENJ9_BUILD)
+#if defined(OPENJ9_BUILD) && JAVA_SPEC_VERSION == 8
 	/* Set the maximum direct byte buffer allocation property if it has not been set manually */
 	if ((UDATA) -1 == javaVM->directByteBufferMemoryMax) {
 		UDATA heapSize = javaVM->memoryManagerFunctions->j9gc_get_maximum_heap_size(javaVM);
 		/* allow up to 7/8 of the heap to be direct byte buffers */
 		javaVM->directByteBufferMemoryMax = heapSize - (heapSize / 8);
 	}
-#endif /* defined(OPENJ9_BUILD) */
+#endif /* defined(OPENJ9_BUILD) && JAVA_SPEC_VERSION == 8 */
 	if ((UDATA) -1 != javaVM->directByteBufferMemoryMax) {
-		/* buffer to hold the size of the maximum direct byte buffer allocations */
-		char maxDirectMemBuff[24];
 		strings[propIndex] = "sun.nio.MaxDirectMemorySize";
 		propIndex += 1;
 		j9str_printf(PORTLIB, maxDirectMemBuff, sizeof(maxDirectMemBuff), "%zu", javaVM->directByteBufferMemoryMax);

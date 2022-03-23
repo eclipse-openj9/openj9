@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -36,19 +36,19 @@ import com.ibm.j9ddr.vm29.pointer.generated.J9JavaStackPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9VMThreadPointer;
 import com.ibm.j9ddr.vm29.types.UDATA;
 
-public class FindStackValueCommand extends Command 
+public class FindStackValueCommand extends Command
 {
 	public FindStackValueCommand()
 	{
 		addCommand("findstackvalue", "<stackvalue>", "search stacks for a specific value");
 	}
-	
-	private void printUsage(PrintStream out){
+
+	private void printUsage(PrintStream out) {
 		out.println("\tUSAGE: ");
 		out.println("\t!findstackvalue <stackvalue>");
 	}
-	
-	public void run(String command, String[] args, Context context, PrintStream out) throws DDRInteractiveCommandException 
+
+	public void run(String command, String[] args, Context context, PrintStream out) throws DDRInteractiveCommandException
 	{
 		if (0 == args.length) {
 			out.println("Usage error: Missing stackvalue to search for. See usage.");
@@ -59,31 +59,26 @@ public class FindStackValueCommand extends Command
 			printUsage(out);
 			return;
 		}
-		
+
 		try {
-			
 			long address = CommandUtils.parsePointer(args[0], J9BuildFlags.env_data64);
-
-			UDATAPointer value = UDATAPointer.cast(address);
-
+			UDATA value = new UDATA(address);
 			GCVMThreadListIterator gcvmThreadListIterator = GCVMThreadListIterator.from();
+
 			while (gcvmThreadListIterator.hasNext()) {
 				J9VMThreadPointer vmThreadPointer = gcvmThreadListIterator.next();
 				J9JavaStackPointer javaStackPointer = vmThreadPointer.stackObject();
 				J9JavaStackIterator javaStackIterator = J9JavaStackIterator.fromJ9JavaStack(javaStackPointer);
-
 				boolean found = false;
-
 				UDATA relativeSP = new UDATA(javaStackPointer.end().sub(vmThreadPointer.sp()));
 
 				while (javaStackIterator.hasNext()) {
 					J9JavaStackPointer stack = javaStackIterator.next();
-
-					UDATAPointer localEnd = stack.end().sub(1).add(1);
+					UDATAPointer localEnd = stack.end();
 					UDATAPointer search = localEnd.sub(relativeSP);
 
 					while (!search.eq(localEnd)) {
-						if (search.at(0).longValue() == value.longValue()) {
+						if (value.eq(search.at(0))) {
 							if (!found) {
 								out.append(String.format("!j9vmthread %s\n", Long.toHexString(vmThreadPointer.getAddress())));
 								found = true;
@@ -93,7 +88,6 @@ public class FindStackValueCommand extends Command
 						search = search.add(1);
 					}
 				}
-
 			}
 		} catch (CorruptDataException e) {
 			throw new DDRInteractiveCommandException(e);

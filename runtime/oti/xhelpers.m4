@@ -1,18 +1,18 @@
-dnl Copyright (c) 1991, 2021 IBM Corp. and others
+dnl Copyright (c) 1991, 2022 IBM Corp. and others
 dnl
 dnl This program and the accompanying materials are made available under
 dnl the terms of the Eclipse Public License 2.0 which accompanies this
 dnl distribution and is available at https://www.eclipse.org/legal/epl-2.0/
 dnl or the Apache License, Version 2.0 which accompanies this distribution and
 dnl is available at https://www.apache.org/licenses/LICENSE-2.0.
-dnl 
+dnl
 dnl This Source Code may also be made available under the following
 dnl Secondary Licenses when the conditions for such availability set
 dnl forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
 dnl General Public License, version 2 with the GNU Classpath
 dnl Exception [1] and GNU General Public License, version 2 with the
 dnl OpenJDK Assembly Exception [2].
-dnl 
+dnl
 dnl [1] https://www.gnu.org/software/classpath/license.html
 dnl [2] http://openjdk.java.net/legal/assembly-exception.html
 dnl
@@ -20,8 +20,76 @@ dnl SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exc
 
 include(jilvalues.m4)
 
+dnl for(<symbol>=<start>; <symbol> < <end>; ++<symbol>) { <expr> }
+dnl $1 = symbol name
+dnl $2 = starting value
+dnl $3 = ending value
+dnl $4 = expression
+define({forloop},
+	{define({$1}, {$2})$4
+	ifelse({$2}, {$3}, {},{$0({$1}, incr({$2}), {$3}, {$4})})})
+define({SYM_COUNT},0)
+define({INC_SYM_COUNT},{define({SYM_COUNT},incr(SYM_COUNT))})
+
 J9CONST({CINTERP_STACK_SIZE},J9TR_cframe_sizeof)
 
+dnl Work arround for older versions of MASM which don't support AVX-512
+ifdef({WIN32},{
+
+	dnl Generate instruction of format OP <reg>, [<disp32> + rsp]
+	dnl $1 - prefix
+	dnl $2 - opcode
+	dnl $3 - reg number
+	dnl $4 - offset
+	dnl low 3 bits of register number are stored in modR/M[5:3]
+	define({INSTRUCTION}, {
+		dnl prefix
+		$1
+		dnl opcode
+		BYTE $2
+		dnl modR/M byte
+		BYTE 084h OR (($3 AND 7) SHL 3)
+		dnl SIB byte
+		BYTE 024h
+		dnl displacement
+		DWORD $4
+	})
+
+	dnl 2 byte VEX prefix
+	define({VEX2},{BYTE 0c5h, 0f8h})
+
+	dnl 3 byte VEX prefix with W bit set
+	define({VEX3},{BYTE 0c4h, 0e1h, 0f8h})
+
+	dnl EVEX prefix
+	dnl $1 - register number
+	dnl bits 3 and 4 of the register number are stored inverted in bits 7 and 4 in the second byte of the EVEX prefix
+	define({EVEX},{
+		BYTE 062h
+		BYTE 061h OR ((NOT $1 AND 8) SHL 4) OR (NOT $1 AND 010h)
+		BYTE 0feh, 048h
+	})
+
+	dnl $1 = register number
+	dnl $2 = stack displacment
+	define({SAVE_MASK_16},    {INSTRUCTION({VEX2}, 090h, {$1}, {$2})})
+	define({RESTORE_MASK_16}, {INSTRUCTION({VEX2}, 091h, {$1}, {$2})})
+	define({SAVE_MASK_64},    {INSTRUCTION({VEX3}, 090h, {$1}, {$2})})
+	define({RESTORE_MASK_64}, {INSTRUCTION({VEX3}, 091h, {$1}, {$2})})
+	define({SAVE_ZMM_REG},    {INSTRUCTION({EVEX({$1})}, 07fh, {$1}, {$2})})
+	define({RESTORE_ZMM_REG}, {INSTRUCTION({EVEX({$1})}, 06fh, {$1}, {$2})})
+
+},{ dnl WIN32
+	dnl $1 = register number
+	dnl $2 = stack displacment
+	define({SAVE_MASK_16},    {kmovw word ptr $2[_rsp],k{}$1})
+	define({RESTORE_MASK_16}, {kmovw k{}$1,word ptr $2[_rsp]})
+	define({SAVE_MASK_64},    {kmovq qword ptr $2[_rsp],k{}$1})
+	define({RESTORE_MASK_64}, {kmovq k{}$1,qword ptr $2[_rsp]})
+	define({SAVE_ZMM_REG}, {vmovdqu64 zmmword ptr $2[_rsp],zmm{}$1})
+	define({RESTORE_ZMM_REG}, {vmovdqu64 zmm{}$1,zmmword ptr $2[_rsp]})
+
+}) dnl WIN32
 ifdef({WIN32},{
 
 define({SHORT_JMP},{short})
@@ -33,7 +101,7 @@ define({FILE_START},{
 	_TEXT SEGMENT 'CODE'
 })
 
-},{	dnl ASM_J9VM_ENV_DATA64
+},{ dnl ASM_J9VM_ENV_DATA64
 
 define({FILE_START},{
 	.686p
@@ -43,7 +111,7 @@ define({FILE_START},{
 	_TEXT SEGMENT PARA USE32 PUBLIC 'CODE'
 })
 
-})	dnl ASM_J9VM_ENV_DATA64
+}) dnl ASM_J9VM_ENV_DATA64
 
 define({FILE_END},{
 	_TEXT ends
@@ -68,9 +136,9 @@ define({C_FUNCTION_SYMBOL},$1)
 
 define({GLOBAL_SYMBOL},$1)
 
-},{	dnl WIN32
+},{ dnl WIN32
 
-ifdef({OSX},{ 
+ifdef({OSX},{
 
 dnl OSX
 
@@ -85,7 +153,7 @@ define({C_FUNCTION_SYMBOL},_$1)
 
 define({GLOBAL_SYMBOL},_$1)
 
-},{	dnl OSX
+},{ dnl OSX
 
 dnl LINUX
 
@@ -93,7 +161,6 @@ define({SHORT_JMP},{short})
 
 define({FILE_START},{
 	.intel_syntax noprefix
-	.arch pentium4
 	.text
 })
 
@@ -101,7 +168,7 @@ define({C_FUNCTION_SYMBOL},$1)
 
 define({GLOBAL_SYMBOL},$1)
 
-})	dnl OSX
+}) dnl OSX
 
 dnl LINUX and OSX
 
@@ -117,9 +184,9 @@ define({END_PROC},{
 END_$1:
 ifdef({OSX},{
 
-},{	dnl OSX
+},{ dnl OSX
 	.size $1,END_$1 - $1
-})	dnl OSX
+}) dnl OSX
 })
 
 define({DECLARE_PUBLIC},{.global GLOBAL_SYMBOL($1)})
@@ -128,19 +195,19 @@ define({DECLARE_EXTERN},{.extern C_FUNCTION_SYMBOL($1)})
 
 ifdef({OSX},{
 define({LABEL},$1)
-},{	dnl OSX
+},{ dnl OSX
 define({LABEL},.$1)
-})	dnl OSX
+}) dnl OSX
 
-})	dnl WIN32
+}) dnl WIN32
 
 ifdef({ASM_J9VM_ENV_DATA64},{
 	dnl 64-bit
 
 dnl JIT linkage:
-dnl	register save order in memory: RAX RBX RCX RDX RDI RSI RBP RSP R8-R15 XMM0-15
-dnl	argument GPRs: RAX RSI RDX RCX
-dnl	preserved: RBX R9-R15
+dnl register save order in memory: RAX RBX RCX RDX RDI RSI RBP RSP R8-R15 XMM0-15
+dnl argument GPRs: RAX RSI RDX RCX
+dnl preserved: RBX R9-R15
 
 define({_rax},{rax})
 define({_rbx},{rbx})
@@ -155,8 +222,8 @@ define({uword},{qword})
 ifdef({WIN32},{
 
 dnl C linkage for windows:
-dnl	argument GPRs: RCX RDX R8 R9
-dnl	preserved: RBX RDI RSI R12-R15 XMM6-15
+dnl argument GPRs: RCX RDX R8 R9
+dnl preserved: RBX RDI RSI R12-R15 XMM6-15
 
 define({PARM_REG},{ifelse($1,1,_rcx,$1,2,_rdx,$1,3,r8,$1,4,r9,{ERROR})})
 
@@ -173,11 +240,11 @@ define({FASTCALL_C_WITH_VMTHREAD},{
 
 define({CALL_C_WITH_VMTHREAD},{FASTCALL_C_WITH_VMTHREAD($1,$2)})
 
-},{	dnl WIN32
+},{ dnl WIN32
 
 dnl C linkage for linux:
-dnl	argument GPRs: RDI RSI RDX RCX R8 R9
-dnl	preserved: RBX R12-R15, no XMM
+dnl argument GPRs: RDI RSI RDX RCX R8 R9
+dnl preserved: RBX R12-R15, no XMM
 
 define({PARM_REG},{ifelse($1,1,_rdi,$1,2,_rsi,$1,3,_rdx,$1,4,_rcx,$1,5,r8,$1,6,r9,{ERROR})})
 
@@ -192,18 +259,18 @@ define({FASTCALL_C_WITH_VMTHREAD},{
 
 define({CALL_C_WITH_VMTHREAD},{FASTCALL_C_WITH_VMTHREAD($1,$2)})
 
-})	dnl WIN32
+}) dnl WIN32
 
-},{	dnl ASM_J9VM_ENV_DATA64
+},{ dnl ASM_J9VM_ENV_DATA64
 	dnl 32-bit
 
 dnl JIT linkage:
-dnl	register save order in memory: EAX EBX ECX EDX EDI ESI EBP ESP XMM0-7
-dnl	argument GPRs: none
-dnl	preserved: EBX ECX ESI, no XMM
+dnl register save order in memory: EAX EBX ECX EDX EDI ESI EBP ESP XMM0-7
+dnl argument GPRs: none
+dnl preserved: EBX ECX ESI, no XMM
 dnl C linkage (windows and linux)
-dnl	argument GPRs: none (stdcall) / ECX EDX (fastcall)
-dnl	preserved: EBX EDI ESI, no XMM
+dnl argument GPRs: none (stdcall) / ECX EDX (fastcall)
+dnl preserved: EBX EDI ESI, no XMM
 
 define({PARM_REG},{ifelse($1,1,_rcx,$1,2,_rdx,{ERROR})})
 
@@ -227,11 +294,11 @@ define({FASTCALL_EXTERN},{extern PASCAL FASTCALL_SYMBOL($1,$2):near})
 
 define({FASTCALL_CLEAN_STACK},{ifelse(FASTCALL_STACK_PARM_SLOTS($1),0,{},{add _rsp,4*FASTCALL_STACK_PARM_SLOTS($1)})})
 
-},{	dnl WIN32
+},{ dnl WIN32
 
 define({FASTCALL_CLEAN_STACK},{})
 
-})	dnl WIN32
+}) dnl WIN32
 
 define({FASTCALL_C},{
 	call FASTCALL_SYMBOL($1,$2)
@@ -258,7 +325,7 @@ dnl maintain 16-byte stack alignment
 	add esp,16
 })
 
-})	dnl ASM_J9VM_ENV_DATA64
+}) dnl ASM_J9VM_ENV_DATA64
 
 define({SWITCH_TO_C_STACK},{
 	mov uword ptr J9TR_VMThread_sp[_rbp],_rsp
@@ -316,23 +383,45 @@ ifdef({METHOD_INVOCATION},{
 	movq qword ptr J9TR_cframe_jitFPRs+(4*8)[_rsp],xmm4
 	movq qword ptr J9TR_cframe_jitFPRs+(5*8)[_rsp],xmm5
 },{ dnl METHOD_INVOCATION
+	mov r8,J9TR_VMThread_javaVM[J9VMTHREAD]
+	mov r8d,J9TR_JavaVM_extendedRuntimeFlags[r8]
+	test r8d,J9TR_J9_EXTENDED_RUNTIME_USE_EXTENDED_VECTOR_REGISTERS
+	jnz LABEL(L_zmm_save{}SYM_COUNT)
+	test r8d,J9TR_J9_EXTENDED_RUNTIME_USE_VECTOR_REGISTERS
+	jz LABEL(L_xmm_save{}SYM_COUNT)
+
+	dnl save YMM registers
+	forloop({REG_CTR}, 0, 5, {vmovdqu ymmword ptr J9TR_cframe_jitFPRs+(REG_CTR*32)[_rsp],ymm{}REG_CTR})
+	jmp LABEL(L_save_volatile_done{}SYM_COUNT)
+
+	dnl save ZMM registers
+	LABEL(L_zmm_save{}SYM_COUNT):
+	forloop({REG_CTR}, 0, 5, {SAVE_ZMM_REG(REG_CTR, J9TR_cframe_jitFPRs+(REG_CTR*64))})
+	test r8d,J9TR_J9_EXTENDED_RUNTIME_USE_VECTOR_REGISTERS
+	jnz LABEL(L_avx_512bw_save{}SYM_COUNT)
+
+	forloop({REG_CTR}, 0, 7, {SAVE_MASK_16(REG_CTR, J9TR_cframe_maskRegisters+(REG_CTR*2))})
+	jmp LABEL(L_save_volatile_done{}SYM_COUNT)
+
+	LABEL(L_avx_512bw_save{}SYM_COUNT):
+	forloop({REG_CTR}, 0, 7, {SAVE_MASK_64(REG_CTR, J9TR_cframe_maskRegisters+(REG_CTR*8))})
+	jmp LABEL(L_save_volatile_done{}SYM_COUNT)
+
+	dnl save XMM registers
+	LABEL(L_xmm_save{}SYM_COUNT):
 	movdqa J9TR_cframe_jitFPRs+(0*16)[_rsp],xmm0
 	movdqa J9TR_cframe_jitFPRs+(1*16)[_rsp],xmm1
 	movdqa J9TR_cframe_jitFPRs+(2*16)[_rsp],xmm2
 	movdqa J9TR_cframe_jitFPRs+(3*16)[_rsp],xmm3
 	movdqa J9TR_cframe_jitFPRs+(4*16)[_rsp],xmm4
 	movdqa J9TR_cframe_jitFPRs+(5*16)[_rsp],xmm5
+
+	LABEL(L_save_volatile_done{}SYM_COUNT):
+	INC_SYM_COUNT()
 }) dnl METHOD_INVOCATION
 })
 
 define({RESTORE_C_VOLATILE_REGS},{
-	mov rax,qword ptr J9TR_cframe_rax[_rsp]
-	mov rcx,qword ptr J9TR_cframe_rcx[_rsp]
-	mov rdx,qword ptr J9TR_cframe_rdx[_rsp]
-	mov r8,qword ptr J9TR_cframe_r8[_rsp]
-	mov r9,qword ptr J9TR_cframe_r9[_rsp]
-	mov r10,qword ptr J9TR_cframe_r10[_rsp]
-	mov r11,qword ptr J9TR_cframe_r11[_rsp]
 ifdef({METHOD_INVOCATION},{
 	movq xmm0,qword ptr J9TR_cframe_jitFPRs+(0*8)[_rsp]
 	movq xmm1,qword ptr J9TR_cframe_jitFPRs+(1*8)[_rsp]
@@ -341,13 +430,51 @@ ifdef({METHOD_INVOCATION},{
 	movq xmm4,qword ptr J9TR_cframe_jitFPRs+(4*8)[_rsp]
 	movq xmm5,qword ptr J9TR_cframe_jitFPRs+(5*8)[_rsp]
 },{ dnl METHOD_INVOCATION
+	dnl J9TR_J9_EXTENDED_RUNTIME_USE_VECTOR_REGISTERS marks if we are using AVX-2 (eg YMM)
+	dnl J9TR_J9_EXTENDED_RUNTIME_USE_EXTENDED_VECTOR_REGISTERS marks if we are using AVX-512 (eg ZMM)
+	dnl No flags means normal SSE registers (XMM)
+	mov r8,J9TR_VMThread_javaVM[J9VMTHREAD]
+	mov r8d,J9TR_JavaVM_extendedRuntimeFlags[r8]
+	test r8d,J9TR_J9_EXTENDED_RUNTIME_USE_EXTENDED_VECTOR_REGISTERS
+	jnz LABEL(L_zmm_restore{}SYM_COUNT)
+	test r8d,J9TR_J9_EXTENDED_RUNTIME_USE_VECTOR_REGISTERS
+	jz LABEL(L_xmm_restore{}SYM_COUNT)
+
+	dnl restore YMM registers
+	forloop({REG_CTR}, 0, 5, {vmovdqu ymm{}REG_CTR,ymmword ptr J9TR_cframe_jitFPRs+(REG_CTR*32)[_rsp]})
+	jmp LABEL(L_restore_volatile_done{}SYM_COUNT)
+
+	dnl restore ZMM registers
+	LABEL(L_zmm_restore{}SYM_COUNT):
+	forloop({REG_CTR}, 0, 5, {RESTORE_ZMM_REG(REG_CTR, J9TR_cframe_jitFPRs+(REG_CTR*64))})
+	test r8d,J9TR_J9_EXTENDED_RUNTIME_USE_VECTOR_REGISTERS
+	jnz LABEL(L_avx_512bw_restore{}SYM_COUNT)
+
+	forloop({REG_CTR}, 0, 7, {RESTORE_MASK_16(REG_CTR, J9TR_cframe_maskRegisters+(REG_CTR*2))})
+	jmp LABEL(L_restore_volatile_done{}SYM_COUNT)
+
+	LABEL(L_avx_512bw_restore{}SYM_COUNT):
+	forloop({REG_CTR}, 0, 7, {RESTORE_MASK_64(REG_CTR, J9TR_cframe_maskRegisters+(REG_CTR*8))})
+	jmp LABEL(L_restore_volatile_done{}SYM_COUNT)
+
+	dnl restore XMM registers
+	LABEL(L_xmm_restore{}SYM_COUNT):
 	movdqa xmm0,J9TR_cframe_jitFPRs+(0*16)[_rsp]
 	movdqa xmm1,J9TR_cframe_jitFPRs+(1*16)[_rsp]
 	movdqa xmm2,J9TR_cframe_jitFPRs+(2*16)[_rsp]
 	movdqa xmm3,J9TR_cframe_jitFPRs+(3*16)[_rsp]
 	movdqa xmm4,J9TR_cframe_jitFPRs+(4*16)[_rsp]
 	movdqa xmm5,J9TR_cframe_jitFPRs+(5*16)[_rsp]
+	LABEL(L_restore_volatile_done{}SYM_COUNT):
+	INC_SYM_COUNT()
 }) dnl METHOD_INVOCATION
+	mov rax,qword ptr J9TR_cframe_rax[_rsp]
+	mov rcx,qword ptr J9TR_cframe_rcx[_rsp]
+	mov rdx,qword ptr J9TR_cframe_rdx[_rsp]
+	mov r8,qword ptr J9TR_cframe_r8[_rsp]
+	mov r9,qword ptr J9TR_cframe_r9[_rsp]
+	mov r10,qword ptr J9TR_cframe_r10[_rsp]
+	mov r11,qword ptr J9TR_cframe_r11[_rsp]
 })
 
 dnl No need to save/restore xmm8-15 - the stack walker will never need to read
@@ -385,7 +512,7 @@ define({RESTORE_C_NONVOLATILE_REGS},{
 	mov r15,qword ptr J9TR_cframe_r15[_rsp]
 })
 
-},{	dnl WIN32
+},{ dnl WIN32
 
 define({SAVE_C_VOLATILE_REGS},{
 	mov qword ptr J9TR_cframe_rax[_rsp],rax
@@ -407,6 +534,35 @@ ifdef({METHOD_INVOCATION},{
 	movq qword ptr J9TR_cframe_jitFPRs+(6*8)[_rsp],xmm6
 	movq qword ptr J9TR_cframe_jitFPRs+(7*8)[_rsp],xmm7
 },{ dnl METHOD_INVOCATION
+	dnl J9TR_J9_EXTENDED_RUNTIME_USE_VECTOR_REGISTERS marks if we are using AVX-2 (eg YMM)
+	dnl J9TR_J9_EXTENDED_RUNTIME_USE_EXTENDED_VECTOR_REGISTERS marks if we are using AVX-512 (eg ZMM)
+	dnl No flags means normal SSE registers (XMM)
+	mov r8,J9TR_VMThread_javaVM[J9VMTHREAD]
+	mov r8d,J9TR_JavaVM_extendedRuntimeFlags[r8]
+	test r8d,J9TR_J9_EXTENDED_RUNTIME_USE_EXTENDED_VECTOR_REGISTERS
+	jnz LABEL(L_zmm_save{}SYM_COUNT)
+	test r8d,J9TR_J9_EXTENDED_RUNTIME_USE_VECTOR_REGISTERS
+	jz LABEL(L_xmm_save{}SYM_COUNT)
+
+	dnl save YMM registers
+	forloop({REG_CTR}, 0, 15, {vmovdqu ymmword ptr J9TR_cframe_jitFPRs+(REG_CTR*32)[_rsp],ymm{}REG_CTR})
+	jmp LABEL(L_save_volatile_done{}SYM_COUNT)
+
+	dnl save ZMM registers
+	LABEL(L_zmm_save{}SYM_COUNT):
+	forloop({REG_CTR}, 0, 31, {SAVE_ZMM_REG(REG_CTR, J9TR_cframe_jitFPRs+(REG_CTR*64))})
+	test r8d,J9TR_J9_EXTENDED_RUNTIME_USE_VECTOR_REGISTERS
+	jnz LABEL(L_avx_512bw_save{}SYM_COUNT)
+
+	forloop({REG_CTR}, 0, 7, {SAVE_MASK_16(REG_CTR, J9TR_cframe_maskRegisters+(REG_CTR*2))})
+	jmp LABEL(L_save_volatile_done{}SYM_COUNT)
+
+	LABEL(L_avx_512bw_save{}SYM_COUNT):
+	forloop({REG_CTR}, 0, 7, {SAVE_MASK_64(REG_CTR, J9TR_cframe_maskRegisters+(REG_CTR*8))})
+	jmp LABEL(L_save_volatile_done{}SYM_COUNT)
+
+	dnl save XMM registers
+	LABEL(L_xmm_save{}SYM_COUNT):
 	movdqa J9TR_cframe_jitFPRs+(0*16)[_rsp],xmm0
 	movdqa J9TR_cframe_jitFPRs+(1*16)[_rsp],xmm1
 	movdqa J9TR_cframe_jitFPRs+(2*16)[_rsp],xmm2
@@ -423,19 +579,13 @@ ifdef({METHOD_INVOCATION},{
 	movdqa J9TR_cframe_jitFPRs+(13*16)[_rsp],xmm13
 	movdqa J9TR_cframe_jitFPRs+(14*16)[_rsp],xmm14
 	movdqa J9TR_cframe_jitFPRs+(15*16)[_rsp],xmm15
+
+	LABEL(L_save_volatile_done{}SYM_COUNT):
+	INC_SYM_COUNT()
 }) dnl METHOD_INVOCATION
 })
 
 define({RESTORE_C_VOLATILE_REGS},{
-	mov rax,qword ptr J9TR_cframe_rax[_rsp]
-	mov rcx,qword ptr J9TR_cframe_rcx[_rsp]
-	mov rdx,qword ptr J9TR_cframe_rdx[_rsp]
-	mov rdi,qword ptr J9TR_cframe_rdi[_rsp]
-	mov rsi,qword ptr J9TR_cframe_rsi[_rsp]
-	mov r8,qword ptr J9TR_cframe_r8[_rsp]
-	mov r9,qword ptr J9TR_cframe_r9[_rsp]
-	mov r10,qword ptr J9TR_cframe_r10[_rsp]
-	mov r11,qword ptr J9TR_cframe_r11[_rsp]
 ifdef({METHOD_INVOCATION},{
 	movq xmm0,qword ptr J9TR_cframe_jitFPRs+(0*8)[_rsp]
 	movq xmm1,qword ptr J9TR_cframe_jitFPRs+(1*8)[_rsp]
@@ -446,6 +596,36 @@ ifdef({METHOD_INVOCATION},{
 	movq xmm6,qword ptr J9TR_cframe_jitFPRs+(6*8)[_rsp]
 	movq xmm7,qword ptr J9TR_cframe_jitFPRs+(7*8)[_rsp]
 },{ dnl METHOD_INVOCATION
+
+	dnl J9TR_J9_EXTENDED_RUNTIME_USE_VECTOR_REGISTERS marks if we are using AVX-2 (eg YMM)
+	dnl J9TR_J9_EXTENDED_RUNTIME_USE_EXTENDED_VECTOR_REGISTERS marks if we are using AVX-512 (eg ZMM)
+	dnl No flags means normal SSE registers (XMM)
+	mov r8,J9TR_VMThread_javaVM[J9VMTHREAD]
+	mov r8d,J9TR_JavaVM_extendedRuntimeFlags[r8]
+	test r8d,J9TR_J9_EXTENDED_RUNTIME_USE_EXTENDED_VECTOR_REGISTERS
+	jnz LABEL(L_zmm_restore{}SYM_COUNT)
+	test r8d,J9TR_J9_EXTENDED_RUNTIME_USE_VECTOR_REGISTERS
+	jz LABEL(L_xmm_restore{}SYM_COUNT)
+
+	dnl restore YMM registers
+	forloop({REG_CTR}, 0, 15, {vmovdqu ymm{}REG_CTR,ymmword ptr J9TR_cframe_jitFPRs+(REG_CTR*32)[_rsp]})
+	jmp LABEL(L_restore_volatile_done{}SYM_COUNT)
+
+	dnl restore ZMM registers
+	LABEL(L_zmm_restore{}SYM_COUNT):
+	forloop({REG_CTR}, 0, 31, {RESTORE_ZMM_REG(REG_CTR, J9TR_cframe_jitFPRs+(REG_CTR*64))})
+	test r8d,J9TR_J9_EXTENDED_RUNTIME_USE_VECTOR_REGISTERS
+	jnz LABEL(L_avx_512bw_restore{}SYM_COUNT)
+
+	forloop({REG_CTR}, 0, 7, {RESTORE_MASK_16(REG_CTR, J9TR_cframe_maskRegisters+(REG_CTR*2))})
+	jmp LABEL(L_restore_volatile_done{}SYM_COUNT)
+
+	LABEL(L_avx_512bw_restore{}SYM_COUNT):
+	forloop({REG_CTR}, 0, 7, {RESTORE_MASK_64(REG_CTR, J9TR_cframe_maskRegisters+(REG_CTR*8))})
+	jmp LABEL(L_restore_volatile_done{}SYM_COUNT)
+
+	dnl restore XMM registers
+	LABEL(L_xmm_restore{}SYM_COUNT):
 	movdqa xmm0,J9TR_cframe_jitFPRs+(0*16)[_rsp]
 	movdqa xmm1,J9TR_cframe_jitFPRs+(1*16)[_rsp]
 	movdqa xmm2,J9TR_cframe_jitFPRs+(2*16)[_rsp]
@@ -462,7 +642,19 @@ ifdef({METHOD_INVOCATION},{
 	movdqa xmm13,J9TR_cframe_jitFPRs+(13*16)[_rsp]
 	movdqa xmm14,J9TR_cframe_jitFPRs+(14*16)[_rsp]
 	movdqa xmm15,J9TR_cframe_jitFPRs+(15*16)[_rsp]
+
+	LABEL(L_restore_volatile_done{}SYM_COUNT):
+	INC_SYM_COUNT()
 }) dnl METHOD_INVOCATION
+	mov rax,qword ptr J9TR_cframe_rax[_rsp]
+	mov rcx,qword ptr J9TR_cframe_rcx[_rsp]
+	mov rdx,qword ptr J9TR_cframe_rdx[_rsp]
+	mov rdi,qword ptr J9TR_cframe_rdi[_rsp]
+	mov rsi,qword ptr J9TR_cframe_rsi[_rsp]
+	mov r8,qword ptr J9TR_cframe_r8[_rsp]
+	mov r9,qword ptr J9TR_cframe_r9[_rsp]
+	mov r10,qword ptr J9TR_cframe_r10[_rsp]
+	mov r11,qword ptr J9TR_cframe_r11[_rsp]
 })
 
 define({SAVE_C_NONVOLATILE_REGS},{
@@ -481,7 +673,7 @@ define({RESTORE_C_NONVOLATILE_REGS},{
 	mov r15,qword ptr J9TR_cframe_r15[_rsp]
 })
 
-})	dnl WIN32
+}) dnl WIN32
 
 define({SAVE_PRESERVED_REGS},{
 	mov qword ptr J9TR_cframe_rbx[_rsp],rbx
@@ -510,14 +702,14 @@ define({STORE_VIRTUAL_REGISTERS},{
 	mov uword ptr J9TR_VMThread_tempSlot[_rbp],r8
 })
 
-},{	dnl ASM_J9VM_ENV_DATA64
+},{ dnl ASM_J9VM_ENV_DATA64
 
 define({END_HELPER},{
 	ret J9TR_pointerSize*$2
 	END_PROC($1)
 })
 
-dnl	preserved: EBX EDI ESI, no XMM
+dnl preserved: EBX EDI ESI, no XMM
 
 define({SAVE_C_VOLATILE_REGS},{
 	mov dword ptr J9TR_cframe_rax[_rsp],eax
@@ -526,6 +718,32 @@ define({SAVE_C_VOLATILE_REGS},{
 ifdef({METHOD_INVOCATION},{
 dnl No FP parameter registers
 },{ dnl METHOD_INVOCATION
+	mov eax,dword ptr J9TR_VMThread_javaVM[J9VMTHREAD]
+	mov eax,dword ptr J9TR_JavaVM_extendedRuntimeFlags[eax]
+	test eax,J9TR_J9_EXTENDED_RUNTIME_USE_EXTENDED_VECTOR_REGISTERS
+	jnz LABEL(L_zmm_save{}SYM_COUNT)
+	test eax,J9TR_J9_EXTENDED_RUNTIME_USE_VECTOR_REGISTERS
+	jz LABEL(L_xmm_save{}SYM_COUNT)
+
+	dnl save YMM registers
+	forloop({REG_CTR}, 0, 7, {vmovdqu ymmword ptr J9TR_cframe_jitFPRs+(REG_CTR*32)[_rsp],ymm{}REG_CTR})
+	jmp LABEL(L_save_volatile_done{}SYM_COUNT)
+
+	dnl save ZMM registers
+	LABEL(L_zmm_save{}SYM_COUNT):
+	forloop({REG_CTR}, 0, 7, {SAVE_ZMM_REG(REG_CTR, J9TR_cframe_jitFPRs+(REG_CTR*64))})
+	test eax,J9TR_J9_EXTENDED_RUNTIME_USE_VECTOR_REGISTERS
+	jnz LABEL(L_avx_512bw_save{}SYM_COUNT)
+
+	forloop({REG_CTR}, 0, 7, {SAVE_MASK_16(REG_CTR, J9TR_cframe_maskRegisters+(REG_CTR*2))})
+	jmp LABEL(L_save_volatile_done{}SYM_COUNT)
+
+	LABEL(L_avx_512bw_save{}SYM_COUNT):
+	forloop({REG_CTR}, 0, 7, {SAVE_MASK_64(REG_CTR, J9TR_cframe_maskRegisters+(REG_CTR*8))})
+	jmp LABEL(L_save_volatile_done{}SYM_COUNT)
+
+	dnl save XMM registers
+	LABEL(L_xmm_save{}SYM_COUNT):
 	movdqa J9TR_cframe_jitFPRs+(0*16)[_rsp],xmm0
 	movdqa J9TR_cframe_jitFPRs+(1*16)[_rsp],xmm1
 	movdqa J9TR_cframe_jitFPRs+(2*16)[_rsp],xmm2
@@ -534,16 +752,43 @@ dnl No FP parameter registers
 	movdqa J9TR_cframe_jitFPRs+(5*16)[_rsp],xmm5
 	movdqa J9TR_cframe_jitFPRs+(6*16)[_rsp],xmm6
 	movdqa J9TR_cframe_jitFPRs+(7*16)[_rsp],xmm7
+
+	LABEL(L_save_volatile_done{}SYM_COUNT):
+	INC_SYM_COUNT()
+
+	mov eax,dword ptr J9TR_cframe_rax[_rsp]
 }) dnl METHOD_INVOCATION
 })
 
 define({RESTORE_C_VOLATILE_REGS},{
-	mov eax,dword ptr J9TR_cframe_rax[_rsp]
-	mov ecx,dword ptr J9TR_cframe_rcx[_rsp]
-	mov edx,dword ptr J9TR_cframe_rdx[_rsp]
 ifdef({METHOD_INVOCATION},{
 dnl No FP parameter registers
 },{ dnl METHOD_INVOCATION
+	mov eax,dword ptr J9TR_VMThread_javaVM[J9VMTHREAD]
+	mov eax,dword ptr J9TR_JavaVM_extendedRuntimeFlags[eax]
+	test eax,J9TR_J9_EXTENDED_RUNTIME_USE_EXTENDED_VECTOR_REGISTERS
+	jnz LABEL(L_zmm_restore{}SYM_COUNT)
+	test eax,J9TR_J9_EXTENDED_RUNTIME_USE_VECTOR_REGISTERS
+	jz LABEL(L_xmm_restore{}SYM_COUNT)
+
+	dnl restore YMM registers
+	forloop({REG_CTR}, 0, 7, {vmovdqu ymm{}REG_CTR,ymmword ptr J9TR_cframe_jitFPRs+(REG_CTR*32)[_rsp]})
+	jmp LABEL(L_restore_volatile_done{}SYM_COUNT)
+
+	dnl restore ZMM registers
+	LABEL(L_zmm_restore{}SYM_COUNT):
+	forloop({REG_CTR}, 0, 7, {RESTORE_ZMM_REG(REG_CTR, J9TR_cframe_jitFPRs+(REG_CTR*64))})
+	test eax,J9TR_J9_EXTENDED_RUNTIME_USE_VECTOR_REGISTERS
+	jnz LABEL(L_avx_512bw_restore{}SYM_COUNT)
+
+	forloop({REG_CTR}, 0, 7, {RESTORE_MASK_16(REG_CTR, J9TR_cframe_maskRegisters+(REG_CTR*2))})
+	jmp LABEL(L_restore_volatile_done{}SYM_COUNT)
+
+	LABEL(L_avx_512bw_restore{}SYM_COUNT):
+	forloop({REG_CTR}, 0, 7, {RESTORE_MASK_64(REG_CTR, J9TR_cframe_maskRegisters+(REG_CTR*8))})
+	jmp LABEL(L_restore_volatile_done{}SYM_COUNT)
+
+	LABEL(L_xmm_restore{}SYM_COUNT):
 	movdqa xmm0,J9TR_cframe_jitFPRs+(0*16)[_rsp]
 	movdqa xmm1,J9TR_cframe_jitFPRs+(1*16)[_rsp]
 	movdqa xmm2,J9TR_cframe_jitFPRs+(2*16)[_rsp]
@@ -552,7 +797,13 @@ dnl No FP parameter registers
 	movdqa xmm5,J9TR_cframe_jitFPRs+(5*16)[_rsp]
 	movdqa xmm6,J9TR_cframe_jitFPRs+(6*16)[_rsp]
 	movdqa xmm7,J9TR_cframe_jitFPRs+(7*16)[_rsp]
+
+	LABEL(L_restore_volatile_done{}SYM_COUNT):
+	INC_SYM_COUNT()
 }) dnl METHOD_INVOCATION
+	mov eax,dword ptr J9TR_cframe_rax[_rsp]
+	mov ecx,dword ptr J9TR_cframe_rcx[_rsp]
+	mov edx,dword ptr J9TR_cframe_rdx[_rsp]
 })
 
 define({SAVE_C_NONVOLATILE_REGS},{
@@ -584,10 +835,10 @@ define({STORE_VIRTUAL_REGISTERS},{
 	mov uword ptr J9TR_VMThread_tempSlot[_rbp],_rdx
 })
 
-})	dnl ASM_J9VM_ENV_DATA64
+}) dnl ASM_J9VM_ENV_DATA64
 
 ifdef({OSX},{
-	
+
 define({FASTCALL_SYMBOL},{_$1})
 
 define({FASTCALL_EXTERN},{DECLARE_EXTERN($1)})

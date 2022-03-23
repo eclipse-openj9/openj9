@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -807,7 +807,7 @@ typedef struct J9CfrMethod {
 #define CFR_BC_goto_w 200
 #define CFR_BC_jsr_w 201
 #define CFR_BC_breakpoint 202  			/* Reserved opcodes */
-#define CFR_BC_defaultvalue 203
+#define CFR_BC_aconst_init 203
 #define CFR_BC_withfield 204
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 #define CFR_BC_MaxDefined CFR_BC_withfield
@@ -856,7 +856,7 @@ typedef struct J9CfrClassFile {
 #define CFR_ACC_SYNCHRONIZED  				0x00000020
 #define CFR_ACC_BRIDGE  					0x00000040
 #define CFR_ACC_VOLATILE  					0x00000040
-#define CFR_ACC_ATOMIC  					0x00000040
+#define CFR_ACC_PERMITS_VALUE  					0x00000040
 #define CFR_ACC_TRANSIENT  					0x00000080
 #define CFR_ACC_VALUE_TYPE					0x00000100
 #define CFR_ACC_VARARGS  					0x00000080
@@ -864,6 +864,7 @@ typedef struct J9CfrClassFile {
 #define CFR_ACC_INTERFACE  					0x00000200
 #define CFR_ACC_ABSTRACT  					0x00000400
 #define CFR_ACC_STRICT  					0x00000800
+#define CFR_ACC_PRIMITIVE_VALUE_TYPE  		0x00000800
 #define CFR_ACC_SYNTHETIC  					0x00001000
 #define CFR_ACC_ANNOTATION 					0x00002000
 #define CFR_ACC_ENUM  						0x00004000
@@ -891,11 +892,13 @@ typedef struct J9CfrClassFile {
 #define CFR_MINOR_VERSION  3
 #define CFR_PUBLIC_PRIVATE_PROTECTED_MASK	(CFR_ACC_PUBLIC | CFR_ACC_PRIVATE | CFR_ACC_PROTECTED)
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-#define CFR_CLASS_ACCESS_MASK					(CFR_ACC_PUBLIC | CFR_ACC_FINAL | CFR_ACC_SUPER | CFR_ACC_INTERFACE | CFR_ACC_ABSTRACT | CFR_ACC_SYNTHETIC | CFR_ACC_ANNOTATION | CFR_ACC_ENUM | CFR_ACC_VALUE_TYPE | CFR_ACC_ATOMIC)
+#define CFR_CLASS_ACCESS_MASK					(CFR_ACC_PUBLIC | CFR_ACC_FINAL | CFR_ACC_SUPER | CFR_ACC_INTERFACE | CFR_ACC_ABSTRACT | CFR_ACC_SYNTHETIC | CFR_ACC_ANNOTATION | CFR_ACC_ENUM | CFR_ACC_VALUE_TYPE | CFR_ACC_PRIMITIVE_VALUE_TYPE | CFR_ACC_PERMITS_VALUE)
 #define J9_IS_CLASSFILE_VALUETYPE(classfile)     J9_ARE_ALL_BITS_SET((classfile)->accessFlags, CFR_ACC_VALUE_TYPE)
+#define J9_IS_CLASSFILE_PRIMITIVE_VALUETYPE(classfile)     J9_ARE_ALL_BITS_SET((classfile)->accessFlags, CFR_ACC_PRIMITIVE_VALUE_TYPE)
 #else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 #define CFR_CLASS_ACCESS_MASK					(CFR_ACC_PUBLIC | CFR_ACC_FINAL | CFR_ACC_SUPER | CFR_ACC_INTERFACE | CFR_ACC_ABSTRACT | CFR_ACC_SYNTHETIC | CFR_ACC_ANNOTATION | CFR_ACC_ENUM)
 #define J9_IS_CLASSFILE_VALUETYPE(classfile)     FALSE
+#define J9_IS_CLASSFILE_PRIMITIVE_VALUETYPE(classfile) FALSE
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 #define CFR_INTERFACE_CLASS_ACCESS_MASK			(CFR_ACC_PUBLIC | CFR_ACC_INTERFACE | CFR_ACC_ABSTRACT | CFR_ACC_SYNTHETIC | CFR_ACC_ANNOTATION)
 #define CFR_FIELD_ACCESS_MASK  					(CFR_ACC_PUBLIC | CFR_ACC_PRIVATE | CFR_ACC_PROTECTED | CFR_ACC_STATIC | CFR_ACC_FINAL | CFR_ACC_VOLATILE | CFR_ACC_TRANSIENT | CFR_ACC_SYNTHETIC | CFR_ACC_ENUM)

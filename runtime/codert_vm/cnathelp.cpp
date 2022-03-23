@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,6 +34,10 @@
 #include "ObjectAccessBarrierAPI.hpp"
 #include "MethodMetaData.h"
 #include "ut_j9codertvm.h"
+
+#if defined(OSX) && defined(AARCH64)
+#include <pthread.h> // for pthread_jit_write_protect_np
+#endif
 
 #undef DEBUG
 
@@ -1714,7 +1718,7 @@ slow_jitMonitorEnterImpl(J9VMThread *currentThread, bool forMethod)
 			J9JavaVM *vm = currentThread->javaVM;
 			J9JITExceptionTable *metaData = vm->jitConfig->jitGetExceptionTableFromPC(currentThread, (UDATA)oldPC);
 			Assert_CodertVM_false(NULL == metaData);
-			jitGetMapsFromPC(currentThread, metaData, (UDATA)oldPC, &stackMap, &inlineMap);
+			jitGetMapsFromPC(currentThread, vm, metaData, (UDATA)oldPC, &stackMap, &inlineMap);
 			Assert_CodertVM_false(NULL == inlineMap);
 			if ((NULL == getJitInlinedCallInfo(metaData)) || (NULL == getFirstInlinedCallSite(metaData, inlineMap))) {
 				J9SFJITResolveFrame *resolveFrame = (J9SFJITResolveFrame*)currentThread->sp;
@@ -2218,6 +2222,9 @@ retry:
 		}
 		goto retry;
 	} else {
+#if defined(OSX) && defined(AARCH64)
+		pthread_jit_write_protect_np(0);
+#endif
 		indexAndLiteralsEA[2] = (UDATA)interfaceClass;
 		UDATA methodIndex = methodIndexAndArgCount >> J9_ITABLE_INDEX_SHIFT;
 		UDATA iTableOffset = 0;
@@ -2236,6 +2243,9 @@ retry:
 			iTableOffset = (methodIndex * sizeof(UDATA)) + sizeof(J9ITable);
 		}
 		indexAndLiteralsEA[3] = iTableOffset;
+#if defined(OSX) && defined(AARCH64)
+		pthread_jit_write_protect_np(1);
+#endif
 		JIT_RETURN_UDATA(1);
 	}
 done:

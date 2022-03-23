@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -247,8 +247,8 @@ private:
    void         genMonitorEnter();
    void         genMonitorExit(bool);
    TR_OpaqueClassBlock *loadValueClass(int32_t classCpIndex);
-   void         genDefaultValue(uint16_t classCpIndex);
-   void         genDefaultValue(TR_OpaqueClassBlock *valueTypeClass);
+   void         genAconst_init(uint16_t classCpIndex);
+   void         genAconst_init(TR_OpaqueClassBlock *valueTypeClass);
    void         genWithField(uint16_t fieldCpIndex);
    void         genWithField(TR::SymbolReference *, TR_OpaqueClassBlock *);
    void         genFlattenableWithField(uint16_t, TR_OpaqueClassBlock *);

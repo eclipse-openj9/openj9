@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -140,6 +140,7 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
    static int32_t _profilerStackSize;
    static int32_t _smallMethodBytecodeSizeThreshold; // used on setting invocation counts
    static int32_t _smallMethodBytecodeSizeThresholdForCold; // used in GCR filtering
+   static int32_t _smallMethodBytecodeSizeThresholdForJITServerAOTCache; // for determining which methods to convert to AOT done remotely
 
    static int32_t _countForMethodsCompiledDuringStartup;
    static int32_t getCountForMethodsCompiledDuringStartup() { return _countForMethodsCompiledDuringStartup; }
@@ -220,9 +221,13 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
    static int32_t _scratchSpaceFactorWhenJSR292Workload;
    static int32_t getScratchSpaceFactorWhenJSR292Workload() { return _scratchSpaceFactorWhenJSR292Workload; }
 
+   static size_t _scratchSpaceLimitForHotCompilations; // Only used under -Xtune:throughput
+   static size_t getScratchSpaceLimitForHotCompilations() { return _scratchSpaceLimitForHotCompilations; }
+
 #if defined(J9VM_OPT_JITSERVER)
-   static int32_t getScratchSpaceFactorWhenJITServerWorkload() { return 2; }
-#endif
+   static int32_t _scratchSpaceFactorWhenJITServerWorkload;
+   static int32_t getScratchSpaceFactorWhenJITServerWorkload() { return _scratchSpaceFactorWhenJITServerWorkload; }
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
    static int32_t _lowVirtualMemoryMBThreshold;
    static int32_t getLowVirtualMemoryMBThreshold() { return _lowVirtualMemoryMBThreshold; }
@@ -264,14 +269,16 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
    static int32_t _TLHPrefetchBoundaryLineCount;
    static int32_t _TLHPrefetchTLHEndLineCount;
    static int32_t _numFirstTimeCompilationsToExitIdleMode; // use large number to disable the feature
+
 #if defined(J9VM_OPT_JITSERVER)
    static int64_t _oldAge;
    static int64_t _oldAgeUnderLowMemory;
    static int64_t _timeBetweenPurges;
    static bool _shareROMClasses;
    static int32_t _sharedROMClassCacheNumPartitions;
-   const static uint32_t DEFAULT_JITCLIENT_TIMEOUT = 10000; // ms
-   const static uint32_t DEFAULT_JITSERVER_TIMEOUT = 30000; // ms
+   static int32_t _reconnectWaitTimeMs;
+   static const uint32_t DEFAULT_JITCLIENT_TIMEOUT = 10000; // ms
+   static const uint32_t DEFAULT_JITSERVER_TIMEOUT = 30000; // ms
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
    static int32_t _waitTimeToEnterIdleMode;

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -166,6 +166,11 @@ struct TR_RelocationRecordConstantPoolWithIndexBinaryTemplate : public TR_Reloca
 struct TR_RelocationRecordJ2IVirtualThunkPointerBinaryTemplate : public TR_RelocationRecordConstantPoolBinaryTemplate
    {
    IDATA _offsetToJ2IVirtualThunkPointer;
+   };
+
+struct TR_RelocationRecordDirectToJNIBinaryTemplate : public TR_RelocationRecordConstantPoolWithIndexBinaryTemplate
+   {
+   uint8_t _offsetToReloLocation;
    };
 
 struct TR_RelocationRecordInlinedAllocationBinaryTemplate : public TR_RelocationRecordConstantPoolWithIndexBinaryTemplate
@@ -417,6 +422,12 @@ struct TR_RelocationRecordBlockFrequencyBinaryTemplate: public TR_RelocationReco
 struct TR_RelocationRecordBreapointGuardBinaryTemplate : public TR_RelocationRecordWithInlinedSiteIndexBinaryTemplate
    {
    UDATA _destinationAddress;
+   };
+
+struct TR_RelocationRecordValidateJ2IThunkFromMethodBinaryTemplate : public TR_RelocationRecordBinaryTemplate
+   {
+   uint16_t _thunkID;
+   uint16_t _methodID;
    };
 
 // END OF BINARY TEMPLATES
@@ -834,6 +845,9 @@ TR_RelocationRecord::create(TR_RelocationRecord *storage, TR_RelocationRuntime *
       case TR_Breakpoint:
          reloRecord = new (storage) TR_RelocationRecordBreakpointGuard(reloRuntime, record);
          break;
+      case TR_ValidateJ2IThunkFromMethod:
+         reloRecord = new (storage) TR_RelocationRecordValidateJ2IThunkFromMethod(reloRuntime, record);
+         break;
       default:
          // TODO: error condition
          printf("Unexpected relo record: %d\n", reloType);fflush(stdout);
@@ -1010,7 +1024,13 @@ TR_RelocationRecord::applyRelocationAtAllOffsets(TR_RelocationRuntime *reloRunti
             uint8_t *reloLocationHigh = reloOrigin + offsetHigh + 2; // Add 2 to skip the first 16 bits of instruction
             uint8_t *reloLocationLow = reloOrigin + offsetLow + 2; // Add 2 to skip the first 16 bits of instruction
             RELO_LOG(reloRuntime->reloLogger(), 6, "\treloLocation: from %p high %p low %p (offsetHigh %x offsetLow %x)\n", offsetPtr, reloLocationHigh, reloLocationLow, offsetHigh, offsetLow);
+#if defined(OSX) && defined(AARCH64)
+            pthread_jit_write_protect_np(0);
+#endif
             int32_t rc = applyRelocation(reloRuntime, reloTarget, reloLocationHigh, reloLocationLow);
+#if defined(OSX) && defined(AARCH64)
+            pthread_jit_write_protect_np(1);
+#endif
             if (rc != 0)
                {
                RELO_LOG(reloRuntime->reloLogger(), 6, "\tapplyRelocationAtAllOffsets: rc = %d\n", rc);
@@ -1029,7 +1049,13 @@ TR_RelocationRecord::applyRelocationAtAllOffsets(TR_RelocationRuntime *reloRunti
             uint8_t *reloLocationHigh = reloOrigin + offsetHigh + 2; // Add 2 to skip the first 16 bits of instruction
             uint8_t *reloLocationLow = reloOrigin + offsetLow + 2; // Add 2 to skip the first 16 bits of instruction
             RELO_LOG(reloRuntime->reloLogger(), 6, "\treloLocation: from %p high %p low %p (offsetHigh %x offsetLow %x)\n", offsetPtr, reloLocationHigh, reloLocationLow, offsetHigh, offsetLow);
+#if defined(OSX) && defined(AARCH64)
+            pthread_jit_write_protect_np(0);
+#endif
             int32_t rc = applyRelocation(reloRuntime, reloTarget, reloLocationHigh, reloLocationLow);
+#if defined(OSX) && defined(AARCH64)
+            pthread_jit_write_protect_np(1);
+#endif
             if (rc != 0)
                {
                RELO_LOG(reloRuntime->reloLogger(), 6, "\tapplyRelocationAtAllOffsets: rc = %d\n", rc);
@@ -1049,7 +1075,13 @@ TR_RelocationRecord::applyRelocationAtAllOffsets(TR_RelocationRuntime *reloRunti
             int32_t offset = *offsetPtr;
             uint8_t *reloLocation = reloOrigin + offset;
             RELO_LOG(reloRuntime->reloLogger(), 6, "\treloLocation: from %p at %p (offset %x)\n", offsetPtr, reloLocation, offset);
+#if defined(OSX) && defined(AARCH64)
+            pthread_jit_write_protect_np(0);
+#endif
             int32_t rc = applyRelocation(reloRuntime, reloTarget, reloLocation);
+#if defined(OSX) && defined(AARCH64)
+            pthread_jit_write_protect_np(1);
+#endif
             if (rc != 0)
                {
                RELO_LOG(reloRuntime->reloLogger(), 6, "\tapplyRelocationAtAllOffsets: rc = %d\n", rc);
@@ -1066,7 +1098,13 @@ TR_RelocationRecord::applyRelocationAtAllOffsets(TR_RelocationRuntime *reloRunti
             int16_t offset = *offsetPtr;
             uint8_t *reloLocation = reloOrigin + offset;
             RELO_LOG(reloRuntime->reloLogger(), 6, "\treloLocation: from %p at %p (offset %x)\n", offsetPtr, reloLocation, offset);
+#if defined(OSX) && defined(AARCH64)
+            pthread_jit_write_protect_np(0);
+#endif
             int32_t rc = applyRelocation(reloRuntime, reloTarget, reloLocation);
+#if defined(OSX) && defined(AARCH64)
+            pthread_jit_write_protect_np(1);
+#endif
             if (rc != 0)
                {
                RELO_LOG(reloRuntime->reloLogger(), 6, "\tapplyRelocationAtAllOffsets: rc = %d\n", rc);
@@ -1126,6 +1164,7 @@ TR_RelocationRecordWithOffset::applyRelocation(TR_RelocationRuntime *reloRuntime
    {
    TR_RelocationRecordWithOffsetPrivateData *reloPrivateData = &(privateData()->offset);
    reloTarget->storeAddress(reloPrivateData->_addressToPatch, reloLocationHigh, reloLocationLow, reloFlags(reloTarget));
+
    return 0;
    }
 
@@ -1940,7 +1979,48 @@ TR_RelocationRecordDirectJNIVirtualMethodCall::getMethodFromCP(TR_RelocationRunt
    return getVirtualMethodFromCP(reloRuntime, void_cp, cpIndex);
    }
 
-int32_t TR_RelocationRecordRamMethodConst::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation)
+void
+TR_RelocationRecordDirectJNICall::setOffsetToReloLocation(TR_RelocationTarget *reloTarget, uint8_t offsetToReloLocation)
+   {
+   reloTarget->storeUnsigned8b(offsetToReloLocation, &((TR_RelocationRecordDirectToJNIBinaryTemplate *)_record)->_offsetToReloLocation);
+   }
+
+uint8_t
+TR_RelocationRecordDirectJNICall::offsetToReloLocation(TR_RelocationTarget *reloTarget)
+   {
+   return reloTarget->loadUnsigned8b(&((TR_RelocationRecordDirectToJNIBinaryTemplate *)_record)->_offsetToReloLocation);
+   }
+
+int32_t
+TR_RelocationRecordDirectJNICall::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation)
+   {
+   void *addressForAssumption = reloLocation;
+   reloLocation = reloLocation + offsetToReloLocation(reloTarget);
+
+   TR_RelocationRuntimeLogger *reloLogger = reloRuntime->reloLogger();
+   J9ConstantPool * newConstantPool =(J9ConstantPool *) computeNewConstantPool(reloRuntime, reloTarget, constantPool(reloTarget));
+   TR_OpaqueMethodBlock *ramMethod = getMethodFromCP(reloRuntime, newConstantPool, cpIndex(reloTarget));
+
+   if (!ramMethod) return compilationAotClassReloFailure;
+
+   TR_ResolvedMethod *callerResolvedMethod = reloRuntime->fej9()->createResolvedMethod(reloRuntime->comp()->trMemory(), ramMethod, NULL);
+   void * newAddress = NULL;
+   if (callerResolvedMethod->isJNINative())
+      newAddress = callerResolvedMethod->startAddressForJNIMethod(reloRuntime->comp());
+
+   if (!newAddress) return compilationAotClassReloFailure;
+
+   RELO_LOG(reloLogger, 6, "\tJNI call relocation: found JNI target address %p\n", newAddress);
+
+   createJNICallSite((void *)ramMethod, addressForAssumption, getMetadataAssumptionList(reloRuntime->exceptionTable()));
+   RELO_LOG(reloRuntime->reloLogger(), 6, "\t\tapplyRelocation: registered JNI Call redefinition site\n");
+
+   reloTarget->storeRelativeAddressSequence((uint8_t *)newAddress, reloLocation, fixedSequence1);
+   return 0;
+   }
+
+int32_t
+TR_RelocationRecordRamMethodConst::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation)
    {
    TR_RelocationRuntimeLogger *reloLogger = reloRuntime->reloLogger();
    J9ConstantPool * newConstantPool =(J9ConstantPool *) computeNewConstantPool(reloRuntime, reloTarget, constantPool(reloTarget));
@@ -1955,35 +2035,6 @@ int32_t TR_RelocationRecordRamMethodConst::applyRelocation(TR_RelocationRuntime 
    return 0;
    }
 
-int32_t
-TR_RelocationRecordDirectJNICall::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation)
-   {
-   uintptr_t oldAddress = (uintptr_t) reloTarget->loadAddress(reloLocation);
-
-   TR_RelocationRuntimeLogger *reloLogger = reloRuntime->reloLogger();
-   J9ConstantPool * newConstantPool =(J9ConstantPool *) computeNewConstantPool(reloRuntime, reloTarget, constantPool(reloTarget));
-   TR_OpaqueMethodBlock *ramMethod = getMethodFromCP(reloRuntime, newConstantPool, cpIndex(reloTarget));
-
-   if (!ramMethod) return compilationAotClassReloFailure;
-
-
-   TR_ResolvedMethod *callerResolvedMethod = reloRuntime->fej9()->createResolvedMethod(reloRuntime->comp()->trMemory(), ramMethod, NULL);
-   void * newAddress = NULL;
-   if (callerResolvedMethod->isJNINative())
-      newAddress = callerResolvedMethod->startAddressForJNIMethod(reloRuntime->comp());
-
-
-   if (!newAddress) return compilationAotClassReloFailure;
-
-   RELO_LOG(reloLogger, 6, "\tJNI call relocation: found JNI target address %p\n", newAddress);
-
-   createJNICallSite((void *)ramMethod, (void *)reloLocation,getMetadataAssumptionList(reloRuntime->exceptionTable()));
-   RELO_LOG(reloRuntime->reloLogger(), 6, "\t\tapplyRelocation: registered JNI Call redefinition site\n");
-
-   reloTarget->storeRelativeAddressSequence((uint8_t *)newAddress, reloLocation, fixedSequence1);
-   return 0;
-
-   }
 
 
 // Data Address Relocations
@@ -2244,38 +2295,31 @@ TR_RelocationRecordThunks::applyRelocation(TR_RelocationRuntime *reloRuntime, TR
    return relocateAndRegisterThunk(reloRuntime, reloTarget, newConstantPool, cpIndex, reloLocation);
    }
 
-int32_t
-TR_RelocationRecordThunks::relocateAndRegisterThunk(
+// Returns 0 for success, or a TR_CompilationErrorCode value on failure.
+// On success, the address of the J2I thunk is stored into *outThunkAddress.
+static int32_t relocateAndRegisterThunk(
    TR_RelocationRuntime *reloRuntime,
    TR_RelocationTarget *reloTarget,
-   uintptr_t cp,
-   uintptr_t cpIndex,
-   uint8_t *reloLocation)
+   int32_t signatureLength,
+   char *signatureString,
+   void **outThunkAddress)
    {
+   *outThunkAddress = NULL;
+
    J9JITConfig *jitConfig = reloRuntime->jitConfig();
    J9JavaVM *javaVM = reloRuntime->jitConfig()->javaVM;
-   J9ConstantPool *constantPool = (J9ConstantPool *)cp;
 
-   J9ROMClass * romClass = J9_CLASS_FROM_CP(constantPool)->romClass;
-   J9ROMMethodRef *romMethodRef = &J9ROM_CP_BASE(romClass, J9ROMMethodRef)[cpIndex];
-   J9ROMNameAndSignature * nameAndSignature = J9ROMMETHODREF_NAMEANDSIGNATURE(romMethodRef);
-
-   bool matchFound = false;
-
-   int32_t signatureLength = J9UTF8_LENGTH(J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSignature));
-   char *signatureString = (char *) J9UTF8_DATA(J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSignature));
-
-   RELO_LOG(reloRuntime->reloLogger(), 6, "\t\trelocateAndRegisterThunk: %.*s%.*s\n", J9UTF8_LENGTH(J9ROMNAMEANDSIGNATURE_NAME(nameAndSignature)), J9UTF8_DATA(J9ROMNAMEANDSIGNATURE_NAME(nameAndSignature)),  signatureLength, signatureString);
+   RELO_LOG(reloRuntime->reloLogger(), 6, "\t\trelocateAndRegisterThunk: %.*s\n", signatureLength, signatureString);
 
    // Everything below is run with VM Access in hand
    TR::VMAccessCriticalSection relocateAndRegisterThunkCriticalSection(reloRuntime->fej9());
 
-   void *existingThunk = j9ThunkLookupNameAndSig(jitConfig, nameAndSignature);
+   void *existingThunk = j9ThunkLookupSignature(jitConfig, signatureLength, signatureString);
    if (existingThunk != NULL)
       {
       /* Matching thunk found */
-      RELO_LOG(reloRuntime->reloLogger(), 6, "\t\t\trelocateAndRegisterThunk:found matching thunk %p\n", existingThunk);
-      relocateJ2IVirtualThunkPointer(reloTarget, reloLocation, existingThunk);
+      RELO_LOG(reloRuntime->reloLogger(), 6, "\t\t\trelocateAndRegisterThunk: found matching thunk %p\n", existingThunk);
+      *outThunkAddress = existingThunk;
       return 0; // return successful
       }
 
@@ -2306,6 +2350,9 @@ TR_RelocationRecordThunks::relocateAndRegisterThunk(
       // the old cache (which is not switched) will fail
       U_8 *thunkStart = TR::CodeCacheManager::instance()->allocateCodeMemory(firstDescriptor.length, 0, &codeCache, &coldCode, true);
       U_8 *thunkAddress;
+#if defined(OSX) && defined(AARCH64)
+      pthread_jit_write_protect_np(0);
+#endif
       if (thunkStart)
          {
          // Relocate the thunk
@@ -2320,12 +2367,12 @@ TR_RelocationRecordThunks::relocateAndRegisterThunk(
          RELO_LOG(reloRuntime->reloLogger(), 7, "\t\t\trelocateAndRegisterThunk: vmHelper %p\n", vmHelper);
          reloTarget->performThunkRelocation(thunkAddress, (UDATA)vmHelper);
 
-         j9ThunkNewNameAndSig(jitConfig, nameAndSignature, thunkAddress);
+         j9ThunkNewSignature(jitConfig, signatureLength, signatureString, thunkAddress);
 
          if (J9_EVENT_IS_HOOKED(javaVM->hookInterface, J9HOOK_VM_DYNAMIC_CODE_LOAD))
             ALWAYS_TRIGGER_J9HOOK_VM_DYNAMIC_CODE_LOAD(javaVM->hookInterface, javaVM->internalVMFunctions->currentVMThread(javaVM), NULL, (void *) thunkAddress, *((uint32_t *)thunkAddress - 2), "JIT virtual thunk", NULL);
 
-         relocateJ2IVirtualThunkPointer(reloTarget, reloLocation, thunkAddress);
+         *outThunkAddress = thunkAddress;
          }
       else
          {
@@ -2333,15 +2380,39 @@ TR_RelocationRecordThunks::relocateAndRegisterThunk(
          // return error
          return compilationAotCacheFullReloFailure;
          }
-
       }
-    else
+   else
       {
       // return error
       return compilationAotThunkReloFailure;
       }
 
    return 0;
+   }
+
+int32_t
+TR_RelocationRecordThunks::relocateAndRegisterThunk(
+   TR_RelocationRuntime *reloRuntime,
+   TR_RelocationTarget *reloTarget,
+   uintptr_t cp,
+   uintptr_t cpIndex,
+   uint8_t *reloLocation)
+   {
+   J9ConstantPool *constantPool = (J9ConstantPool *)cp;
+   J9ROMClass * romClass = J9_CLASS_FROM_CP(constantPool)->romClass;
+   J9ROMMethodRef *romMethodRef = &J9ROM_CP_BASE(romClass, J9ROMMethodRef)[cpIndex];
+   J9ROMNameAndSignature * nameAndSignature = J9ROMMETHODREF_NAMEANDSIGNATURE(romMethodRef);
+   int32_t signatureLength = J9UTF8_LENGTH(J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSignature));
+   char *signatureString = (char *) J9UTF8_DATA(J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSignature));
+
+   void *thunkAddress;
+   int32_t err = ::relocateAndRegisterThunk(
+      reloRuntime, reloTarget, signatureLength, signatureString, &thunkAddress);
+
+   if (err == 0)
+      relocateJ2IVirtualThunkPointer(reloTarget, reloLocation, thunkAddress);
+
+   return err;
    }
 
 // TR_J2IVirtualThunkPointer Relocation
@@ -3694,7 +3765,7 @@ TR_RelocationRecordValidateStaticField::getClass(TR_RelocationRuntime *reloRunti
    TR_OpaqueClassBlock *definingClass = NULL;
    if (void_cp)
       {
-      definingClass = TR_ResolvedJ9Method::definingClassFromCPFieldRef(reloRuntime->comp(), (J9ConstantPool *) void_cp, cpIndex(reloTarget), true); 
+      definingClass = TR_ResolvedJ9Method::definingClassFromCPFieldRef(reloRuntime->comp(), (J9ConstantPool *) void_cp, cpIndex(reloTarget), true);
       }
 
    return definingClass;
@@ -5336,7 +5407,7 @@ TR_RelocationRecordSymbolFromManager::preparePrivateData(TR_RelocationRuntime *r
    uint16_t symbolID = this->symbolID(reloTarget);
    TR::SymbolType symbolType = this->symbolType(reloTarget);
 
-   reloPrivateData->_symbol = reloRuntime->comp()->getSymbolValidationManager()->getSymbolFromID(symbolID, symbolType);
+   reloPrivateData->_symbol = reloRuntime->comp()->getSymbolValidationManager()->getValueFromSymbolID(symbolID, symbolType);
    reloPrivateData->_symbolType = symbolType;
    }
 
@@ -6232,6 +6303,65 @@ TR_RelocationRecordBreakpointGuard::applyRelocation(TR_RelocationRuntime *reloRu
    return 0;
    }
 
+int32_t
+TR_RelocationRecordValidateJ2IThunkFromMethod::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation)
+   {
+   uint16_t thunkID = this->thunkID(reloTarget);
+   uint16_t methodID = this->methodID(reloTarget);
+
+   TR::SymbolValidationManager *svm = reloRuntime->comp()->getSymbolValidationManager();
+   J9Method *method = svm->getJ9MethodFromID(methodID);
+   J9UTF8 *sigUTF8 = J9ROMMETHOD_SIGNATURE(J9_ROM_METHOD_FROM_RAM_METHOD(method));
+   int32_t sigLen = J9UTF8_LENGTH(sigUTF8);
+   char *sig = (char*)J9UTF8_DATA(sigUTF8);
+
+   void *thunkAddress;
+   int32_t err = ::relocateAndRegisterThunk(
+      reloRuntime, reloTarget, sigLen, sig, &thunkAddress);
+
+   if (err != 0)
+      return err;
+
+   if (svm->validateJ2IThunkFromMethodRecord(thunkID, thunkAddress))
+      return 0;
+   else
+      return compilationAotClassReloFailure;
+   }
+
+void
+TR_RelocationRecordValidateJ2IThunkFromMethod::print(TR_RelocationRuntime *reloRuntime)
+   {
+   TR_RelocationTarget *reloTarget = reloRuntime->reloTarget();
+   TR_RelocationRuntimeLogger *reloLogger = reloRuntime->reloLogger();
+   TR_RelocationRecord::print(reloRuntime);
+   reloLogger->printf("\tmethodID %d\n", methodID(reloTarget));
+   reloLogger->printf("\tthunkID %d\n", thunkID(reloTarget));
+   }
+
+void
+TR_RelocationRecordValidateJ2IThunkFromMethod::setThunkID(TR_RelocationTarget *reloTarget, uint16_t thunkID)
+   {
+   reloTarget->storeUnsigned16b(thunkID, (uint8_t *) &((TR_RelocationRecordValidateJ2IThunkFromMethodBinaryTemplate *)_record)->_thunkID);
+   }
+
+uint16_t
+TR_RelocationRecordValidateJ2IThunkFromMethod::thunkID(TR_RelocationTarget *reloTarget)
+   {
+   return reloTarget->loadUnsigned16b((uint8_t *) &((TR_RelocationRecordValidateJ2IThunkFromMethodBinaryTemplate *)_record)->_thunkID);
+   }
+
+void
+TR_RelocationRecordValidateJ2IThunkFromMethod::setMethodID(TR_RelocationTarget *reloTarget, uint16_t methodID)
+   {
+   reloTarget->storeUnsigned16b(methodID, (uint8_t *) &((TR_RelocationRecordValidateJ2IThunkFromMethodBinaryTemplate *)_record)->_methodID);
+   }
+
+uint16_t
+TR_RelocationRecordValidateJ2IThunkFromMethod::methodID(TR_RelocationTarget *reloTarget)
+   {
+   return reloTarget->loadUnsigned16b((uint8_t *) &((TR_RelocationRecordValidateJ2IThunkFromMethodBinaryTemplate *)_record)->_methodID);
+   }
+
 uint32_t TR_RelocationRecord::_relocationRecordHeaderSizeTable[TR_NumExternalRelocationKinds] =
    {
    sizeof(TR_RelocationRecordConstantPoolBinaryTemplate),                            // TR_ConstantPool                                 = 0
@@ -6245,8 +6375,8 @@ uint32_t TR_RelocationRecord::_relocationRecordHeaderSizeTable[TR_NumExternalRel
    sizeof(TR_RelocationRecordHelperAddressBinaryTemplate),                           // TR_AbsoluteHelperAddress                        = 8
    sizeof(TR_RelocationRecordWithOffsetBinaryTemplate),                              // TR_FixedSeqAddress                              = 9
    sizeof(TR_RelocationRecordWithOffsetBinaryTemplate),                              // TR_FixedSeq2Address                             = 10
-   sizeof(TR_RelocationRecordConstantPoolWithIndexBinaryTemplate),                   // TR_JNIVirtualTargetAddress                      = 11
-   sizeof(TR_RelocationRecordConstantPoolWithIndexBinaryTemplate),                   // TR_JNIStaticTargetAddress                       = 12
+   sizeof(TR_RelocationRecordDirectToJNIBinaryTemplate),                             // TR_JNIVirtualTargetAddress                      = 11
+   sizeof(TR_RelocationRecordDirectToJNIBinaryTemplate),                             // TR_JNIStaticTargetAddress                       = 12
    sizeof(TR_RelocationRecordBinaryTemplate),                                        // TR_ArrayCopyHelper                              = 13
    sizeof(TR_RelocationRecordBinaryTemplate),                                        // TR_ArrayCopyToc                                 = 14
    sizeof(TR_RelocationRecordBinaryTemplate),                                        // TR_BodyInfoAddress                              = 15
@@ -6286,7 +6416,7 @@ uint32_t TR_RelocationRecord::_relocationRecordHeaderSizeTable[TR_NumExternalRel
    sizeof(TR_RelocationRecordMethodTracingCheckBinaryTemplate),                      // TR_CheckMethodExit                              = 49
    sizeof(TR_RelocationRecordValidateArbitraryClassBinaryTemplate),                  // TR_ValidateArbitraryClass                       = 50
    sizeof(TR_RelocationRecordEmitClassBinaryTemplate),                               // TR_EmitClass                                    = 51
-   sizeof(TR_RelocationRecordConstantPoolWithIndexBinaryTemplate),                   // TR_JNISpecialTargetAddress                      = 52
+   sizeof(TR_RelocationRecordDirectToJNIBinaryTemplate),                             // TR_JNISpecialTargetAddress                      = 52
    sizeof(TR_RelocationRecordConstantPoolWithIndexBinaryTemplate),                   // TR_VirtualRamMethodConst                        = 53
    sizeof(TR_RelocationRecordInlinedMethodBinaryTemplate),                           // TR_InlinedInterfaceMethod                       = 54
    sizeof(TR_RelocationRecordInlinedMethodBinaryTemplate),                           // TR_InlinedVirtualMethod                         = 55
@@ -6343,4 +6473,6 @@ uint32_t TR_RelocationRecord::_relocationRecordHeaderSizeTable[TR_NumExternalRel
    sizeof(TR_RelocationRecordInlinedMethodBinaryTemplate),                           // TR_InlinedAbstractMethod                        = 106
    sizeof(TR_RelocationRecordBreapointGuardBinaryTemplate),                          // TR_Breakpoint                                   = 107
    sizeof(TR_RelocationRecordWithInlinedSiteIndexBinaryTemplate),                    // TR_InlinedMethodPointer                         = 108
+   0,                                                                                // TR_VMINLMethod                                  = 109
+   sizeof(TR_RelocationRecordValidateJ2IThunkFromMethodBinaryTemplate),              // TR_ValidateJ2IThunkFromMethod                   = 110
    };

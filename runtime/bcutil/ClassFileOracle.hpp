@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2021 IBM Corp. and others
+ * Copyright (c) 2001, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1053,6 +1053,9 @@ private:
 		FRAMEITERATORSKIP_ANNOTATION,
 		SUN_REFLECT_CALLERSENSITIVE_ANNOTATION,
 		JDK_INTERNAL_REFLECT_CALLERSENSITIVE_ANNOTATION,
+#if JAVA_SPEC_VERSION >= 18
+		JDK_INTERNAL_REFLECT_CALLERSENSITIVEADAPTER_ANNOTATION,
+#endif /* JAVA_SPEC_VERSION >= 18*/
 		JAVA8_CONTENDED_ANNOTATION,
 		CONTENDED_ANNOTATION,
 		UNMODIFIABLE_ANNOTATION,
@@ -1216,7 +1219,7 @@ private:
 	VMINLINE void markClassAsUsedByNew(U_16 classCPIndex);
 
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-	VMINLINE void markClassAsUsedByDefaultValue(U_16 classCPIndex);
+	VMINLINE void markClassAsUsedByAconst_init(U_16 classCPIndex);
 	VMINLINE void markFieldRefAsUsedByWithField(U_16 fieldRefCPIndex);
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 

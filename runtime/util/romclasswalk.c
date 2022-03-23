@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -539,8 +539,8 @@ static void allSlotsInBytecodesDo(J9ROMClass* romClass, J9ROMMethod* method, J9R
 			case JBinvokeinterface:
 			case JBnew:
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-			case JBdefaultvalue:
-#endif
+			case JBaconst_init:
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 			case JBnewdup:
 			case JBanewarray:
 			case JBcheckcast:

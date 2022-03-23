@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1258,7 +1258,7 @@ void J9::X86::AMD64::PrivateLinkage::buildIPIC(TR::X86CallSite &site, TR::LabelS
          // let's just lay it down.  It's likely not worth the effort to get
          // this exactly right in all cases.
          //
-         generateInstruction(TR::InstOpCode::bad, site.getCallNode(), cg());
+         generateInstruction(TR::InstOpCode::INT3, site.getCallNode(), cg());
          }
       }
 
@@ -1343,7 +1343,9 @@ void J9::X86::AMD64::PrivateLinkage::buildVirtualOrComputedCall(TR::X86CallSite 
       {
       traceMsg(comp(), "buildVirtualOrComputedCall(%p), isComputed=%d\n", site.getCallNode(), methodSymRef->getSymbol()->castToMethodSymbol()->isComputed());
       }
-   bool evaluateVftEarly = methodSymRef->isUnresolved() || fej9->forceUnresolvedDispatch();
+
+   bool evaluateVftEarly = methodSymRef->isUnresolved()
+      || !fej9->isResolvedVirtualDispatchGuaranteed(comp());
 
    if (methodSymRef->getSymbol()->castToMethodSymbol()->isComputed())
       {
@@ -1358,6 +1360,26 @@ void J9::X86::AMD64::PrivateLinkage::buildVirtualOrComputedCall(TR::X86CallSite 
       {
       // Call through VFT
       //
+      if (comp()->compileRelocatableCode())
+         {
+         // Non-SVM AOT still has to force unresolved virtual dispatch, which
+         // works there because it won't transform other things into virtual
+         // calls, e.g. invokeinterface of an Object method.
+         TR_ASSERT_FATAL(
+            comp()->getOption(TR_UseSymbolValidationManager),
+            "resolved virtual dispatch in AOT requires SVM");
+
+         void *thunk = site.getThunkAddress();
+         TR_OpaqueMethodBlock *method = methodSymRef
+            ->getSymbol()
+            ->castToResolvedMethodSymbol()
+            ->getResolvedMethod()
+            ->getPersistentIdentifier();
+
+         comp()->getSymbolValidationManager()
+            ->addJ2IThunkFromMethodRecord(thunk, method);
+         }
+
       buildVFTCall(site, TR::InstOpCode::CALLMem, NULL, generateX86MemoryReference(site.evaluateVFT(), methodSymRef->getOffset(), cg()));
       }
    else

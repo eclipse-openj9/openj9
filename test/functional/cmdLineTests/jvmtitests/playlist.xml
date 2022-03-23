@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <!--
-  Copyright (c) 2016, 2021 IBM Corp. and others
+  Copyright (c) 2016, 2022 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -55,7 +55,9 @@
 		<types>
 			<type>native</type>
 		</types>
-		<aot>explicit</aot>
+		<features>
+			<feature>AOT:explicit</feature>
+		</features>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
@@ -302,7 +304,9 @@
 		<types>
 			<type>native</type>
 		</types>
-		<aot>explicit</aot>
+		<features>
+			<feature>AOT:explicit</feature>
+		</features>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
@@ -326,6 +330,12 @@
 	${TEST_STATUS}</command>
 		<!-- Option -XX:+JitInlineWatches is currently unsupported on arm -->
 		<platformRequirements>^arch.arm</platformRequirements>
+		<disables>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/14502</comment>
+				<platform>aarch64.*mac.*</platform>
+			</disable>
+		</disables>
 		<levels>
 			<level>extended</level>
 		</levels>
@@ -658,7 +668,9 @@
 		<versions>
 			<version>11+</version>
 		</versions>
-		<aot>explicit</aot>
+		<features>
+			<feature>AOT:explicit</feature>
+		</features>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>

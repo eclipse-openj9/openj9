@@ -21,10 +21,6 @@
  *******************************************************************************/
 
 /* Includes */
-#if defined(J9ZOS390)
-#define _LARGE_TIME_API
-#endif /* defined(J9ZOS390) */
-#include <time.h>
 #if defined(AIXPPC)
 #include <sys/time.h>
 #endif /* defined(AIXPPC) */
@@ -654,48 +650,11 @@ JavaCoreDumpWriter::writeTitleSection(void)
 	_OutputStream.writeInteger(now % 1000, ":%03d"); /* add the milliseconds */
 	_OutputStream.writeCharacters("\n");
 
-	bool zoneAvailable = false;
 	int32_t zoneSecondsEast = 0;
-	const char *zoneName = NULL;
-
-#if defined(WIN32)
-	/* until a reliable mechanism is found, don't report timezone */
-#elif defined(J9ZOS390) /* defined(WIN32) */
-	time64_t timeNow = time64(NULL);
-	struct tm utc;
-	struct tm local;
-
-	if ((NULL != gmtime64_r(&timeNow, &utc)) && (NULL != localtime64_r(&timeNow, &local))) {
-		zoneAvailable = true;
-		zoneSecondsEast = (int32_t)difftime64(timeNow, mktime64(&utc));
-		if (0 == local.tm_isdst) {
-			zoneName = tzname[0];
-		} else if (local.tm_isdst > 0) {
-			zoneName = tzname[1];
-			/* compensate for DST because difftime64() doesn't appear to do so */
-			zoneSecondsEast += 60 * 60;
-		}
-	}
-#else /* defined(WIN32) */
-	time_t timeNow = time(NULL);
-	struct tm utc;
-	struct tm local;
-
-	if ((NULL != gmtime_r(&timeNow, &utc)) && (NULL != localtime_r(&timeNow, &local))) {
-		zoneAvailable = true;
-		zoneSecondsEast = (int32_t)difftime(timeNow, mktime(&utc));
-		if (0 == local.tm_isdst) {
-			zoneName = tzname[0];
-		} else if (local.tm_isdst > 0) {
-			zoneName = tzname[1];
-			/* compensate for DST because difftime() doesn't appear to do so */
-			zoneSecondsEast += 60 * 60;
-		}
-	}
-#endif /* defined(WIN32) */
+	char zoneName[32];
 
 	_OutputStream.writeCharacters("1TITIMEZONE    Timezone: ");
-	if (!zoneAvailable) {
+	if (0 != omrstr_current_time_zone(&zoneSecondsEast, zoneName, sizeof(zoneName))) {
 		_OutputStream.writeCharacters("(unavailable)");
 	} else {
 		_OutputStream.writeCharacters("UTC");
@@ -710,7 +669,7 @@ JavaCoreDumpWriter::writeTitleSection(void)
 				_OutputStream.writeInteger(minutes, ":%02d");
 			}
 		}
-		if ((NULL != zoneName) && ('\0' != *zoneName)) {
+		if ('\0' != *zoneName) {
 			_OutputStream.writeCharacters(" (");
 			_OutputStream.writeCharacters(zoneName);
 			_OutputStream.writeCharacters(")");
@@ -1179,9 +1138,9 @@ JavaCoreDumpWriter::writeEnvironmentSection(void)
 
 	/* Write the command line data */
 	char commandLineBuffer[_MaximumCommandLineLength];
-	IDATA result = 0;
+	const char *envVarName = "OPENJ9_JAVA_COMMAND_LINE";
+	IDATA result = j9sysinfo_get_env(envVarName, commandLineBuffer, _MaximumCommandLineLength);
 
-	result = j9sysinfo_get_env("IBM_JAVA_COMMAND_LINE", commandLineBuffer, _MaximumCommandLineLength);
 	if (0 == result) {
 		/* Ensure null-terminated */
 		commandLineBuffer[_MaximumCommandLineLength - 1] = '\0';
@@ -1190,19 +1149,20 @@ JavaCoreDumpWriter::writeEnvironmentSection(void)
 		_OutputStream.writeCharacters(commandLineBuffer);
 		_OutputStream.writeCharacters("\n");
 	} else if (result > 0) {
-		/* Long command line - need malloc'd buffer */
-		char *commandLineBuffer = (char*)j9mem_allocate_memory(result, OMRMEM_CATEGORY_VM);
-		if (NULL != commandLineBuffer) {
-			if (j9sysinfo_get_env("IBM_JAVA_COMMAND_LINE", commandLineBuffer, result) == 0) {
-				commandLineBuffer[result-1] = '\0';
+		/* long command line - need malloc'd buffer */
+		char *longCommandLineBuffer = (char *)j9mem_allocate_memory(result, OMRMEM_CATEGORY_VM);
+
+		if (NULL != longCommandLineBuffer) {
+			if (j9sysinfo_get_env(envVarName, longCommandLineBuffer, result) == 0) {
+				longCommandLineBuffer[result - 1] = '\0';
 				_OutputStream.writeCharacters("1CICMDLINE     ");
-				_OutputStream.writeCharacters(commandLineBuffer);
+				_OutputStream.writeCharacters(longCommandLineBuffer);
 				_OutputStream.writeCharacters("\n");
 			} else {
 				_OutputStream.writeCharacters("1CICMDLINE     [error]\n");
 			}
 
-			j9mem_free_memory(commandLineBuffer);
+			j9mem_free_memory(longCommandLineBuffer);
 		} else {
 			_OutputStream.writeCharacters("1CICMDLINE     [not enough space]\n");
 		}
@@ -5251,15 +5211,28 @@ JavaCoreDumpWriter::getOwnedObjectMonitors(J9VMThread* vmThread, J9ObjectMonitor
  * @param vmThread[in] the thread to query (not the current thread)
  */
 void
-JavaCoreDumpWriter::writeJavaLangThreadInfo (J9VMThread* vmThread)
+JavaCoreDumpWriter::writeJavaLangThreadInfo(J9VMThread *vmThread)
 {
 	I_64 threadID = J9VMJAVALANGTHREAD_TID(vmThread, vmThread->threadObject);
 
 	_OutputStream.writeCharacters("3XMJAVALTHREAD            (java/lang/Thread getId:");
 	_OutputStream.writeInteger64(threadID);
 	_OutputStream.writeCharacters(", isDaemon:");
-	_OutputStream.writeCharacters(J9VMJAVALANGTHREAD_ISDAEMON(vmThread, vmThread->threadObject)?"true":"false");
+	_OutputStream.writeCharacters(J9VMJAVALANGTHREAD_ISDAEMON(vmThread, vmThread->threadObject) ? "true" : "false");
 	_OutputStream.writeCharacters(")\n");
+
+	j9object_t contextClassLoader = J9VMJAVALANGTHREAD_CONTEXTCLASSLOADER(vmThread, vmThread->threadObject);
+
+	_OutputStream.writeCharacters("3XMJAVALTHRCCL            ");
+	if (NULL == contextClassLoader) {
+		_OutputStream.writeCharacters("No Java context classloader associated with this thread");
+	} else {
+		_OutputStream.writeCharacters(J9ROMCLASS_CLASSNAME(J9OBJECT_CLAZZ_VM(_VirtualMachine, contextClassLoader)->romClass));
+		_OutputStream.writeCharacters("(");
+		_OutputStream.writePointer(contextClassLoader);
+		_OutputStream.writeCharacters(")");
+	}
+	_OutputStream.writeCharacters("\n");
 }
 
 void
@@ -5677,7 +5650,7 @@ protectedIterateStackTrace(struct J9PortLibrary *portLibrary, void *args)
 	J9VMThread* vmThread = (J9VMThread*) parameters[0];
 	closure->jcw->_VirtualMachine->internalVMFunctions->iterateStackTrace(vmThread, (j9object_t*) parameters[1],
 										writeExceptionFrameCallBack, (J9StackWalkState*)parameters[2],
-										FALSE);
+										FALSE, FALSE);
 
 	return 0;
 }

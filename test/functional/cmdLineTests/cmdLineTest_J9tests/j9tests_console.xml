@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
 
 <!--
-  Copyright (c) 2021, 2021 IBM Corp. and others
+  Copyright (c) 2021, 2022 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,16 +35,6 @@
   <!-- Use an encoding supported by Java 8 and in the jdk.charsets module -->
   <variable name="ENCODING2" value="Cp948" />
 
-  <test id="$DEFAULT_ENCODING_PROP$ System.out $ENCODING1$">
-    <command>$EXE$ $OPENS$ $CP$ -D$DEFAULT_ENCODING_PROP$=$ENCODING1$ $TARGET$ out $ENCODING1$</command>
-    <return type="success" value="0" />
-  </test>
-
-  <test id="$DEFAULT_ENCODING_PROP$ System.err $ENCODING1$">
-    <command>$EXE$ $OPENS$ $CP$ -D$DEFAULT_ENCODING_PROP$=$ENCODING1$ $TARGET$ err $ENCODING1$</command>
-    <return type="success" value="0" />
-  </test>
-
   <test id="sun.stdout.encoding $ENCODING1$">
     <command>$EXE$ $OPENS$ $CP$ -D$DEFAULT_ENCODING_PROP$=$ENCODING2$ -Dsun.stdout.encoding=$ENCODING1$ $TARGET$ out $ENCODING1$</command>
     <return type="success" value="0" />
@@ -52,16 +42,6 @@
 
   <test id="sun.stderr.encoding $ENCODING1$">
     <command>$EXE$ $OPENS$ $CP$ -D$DEFAULT_ENCODING_PROP$=$ENCODING2$ -Dsun.stderr.encoding=$ENCODING1$ $TARGET$ err $ENCODING1$</command>
-    <return type="success" value="0" />
-  </test>
-
-  <test id="$DEFAULT_ENCODING_PROP$ System.out $ENCODING2$">
-    <command>$EXE$ $OPENS$ $CP$ -D$DEFAULT_ENCODING_PROP$=$ENCODING2$ $TARGET$ out $ENCODING2$</command>
-    <return type="success" value="0" />
-  </test>
-
-  <test id="$DEFAULT_ENCODING_PROP$ System.err $ENCODING2$">
-    <command>$EXE$ $OPENS$ $CP$ -D$DEFAULT_ENCODING_PROP$=$ENCODING2$ $TARGET$ err $ENCODING2$</command>
     <return type="success" value="0" />
   </test>
 

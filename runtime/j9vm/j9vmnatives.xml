@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2007, 2021 IBM Corp. and others
+Copyright (c) 2007, 2022 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -99,10 +99,10 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<export name="_JVM_LatestUserDefinedLoader@4" />
 		<export name="_JVM_Listen@8" />
 		<export name="_JVM_LoadLibrary@4">
-			<exclude-if condition="spec.java18"/>
+			<exclude-if condition="spec.java11"/>
 		</export>
 		<export name="_JVM_LoadLibrary@8">
-			<include-if condition="spec.java18"/>
+			<include-if condition="spec.java11"/>
 		</export>
 		<export name="_JVM_LoadSystemLibrary@4" />
 		<export name="_JVM_Lseek@16" />
@@ -389,6 +389,11 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<!-- Additions for Java 18 (General) -->
 		<export name="JVM_IsFinalizationEnabled"/>
 		<export name="JVM_ReportFinalizationComplete"/>
+	</exports>
+
+	<exports group="jdk19">
+		<!-- Additions for Java 19 (General) -->
+		<export name="JVM_LoadZipLibrary"/>
 	</exports>
 
 </exportlists>

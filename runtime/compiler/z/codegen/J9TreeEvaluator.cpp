@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -91,6 +91,185 @@ extern void updateReferenceNode(TR::Node * node, TR::Register * reg);
 extern void killRegisterIfNotLocked(TR::CodeGenerator * cg, TR::RealRegister::RegNum reg, TR::Instruction * instr , TR::RegisterDependencyConditions * deps = NULL);
 extern TR::Register * iDivRemGenericEvaluator(TR::Node * node, TR::CodeGenerator * cg, bool isDivision, TR::MemoryReference * divchkDivisorMR);
 extern TR::Instruction * generateS390CompareOps(TR::Node * node, TR::CodeGenerator * cg, TR::InstOpCode::S390BranchCondition fBranchOpCond, TR::InstOpCode::S390BranchCondition rBranchOpCond, TR::LabelSymbol * targetLabel);
+
+void
+J9::Z::TreeEvaluator::inlineEncodeASCII(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   // tree looks as follows:
+   // encodeASCIISymbol
+   //    input ptr
+   //    output ptr
+   //    input length (in elements)
+   //
+   // The original Java loop that this IL is inlining is found in StringCoding.encodeASCII:
+   /* if (coder == LATIN1) {
+            byte[] dst = new byte[val.length];
+            for (int i = 0; i < val.length; i++) {
+                if (val[i] < 0) {
+                    dst[i] = '?';
+                } else {
+                    dst[i] = val[i];
+                }
+            }
+            return dst;
+        }
+   */
+   // Get the children
+   TR::Register *inputPtrReg = cg->gprClobberEvaluate(node->getChild(0));
+   TR::Register *outputPtrReg = cg->gprClobberEvaluate(node->getChild(1));
+   TR::Register *inputLengthRegister = cg->evaluate(node->getChild(2));
+
+   TR::LabelSymbol *processMultiple16CharsStart = generateLabelSymbol(cg);
+   TR::LabelSymbol *processMultiple16CharsEnd = generateLabelSymbol(cg);
+
+   TR::LabelSymbol *processSaturatedInput1 = generateLabelSymbol(cg);
+
+   TR::LabelSymbol *cFlowRegionEnd = generateLabelSymbol(cg);
+
+   TR::Register *vInput1 = cg->allocateRegister(TR_VRF);
+   TR::Register *vRange = cg->allocateRegister(TR_VRF);
+   TR::Register *vRangeControl = cg->allocateRegister(TR_VRF);
+   TR::Register *numCharsLeftToProcess = cg->allocateRegister();
+   TR::Register *firstSaturatedCharacter = cg->allocateRegister(TR_VRF);
+
+   uint32_t saturatedRange = 127;
+   uint8_t saturatedRangeControl = 0x20; // > comparison
+
+   // Replicate the limit character and comparison controller into vector registers
+   generateVRIaInstruction(cg, TR::InstOpCode::VREPI, node, vRange, saturatedRange, 0);
+   generateVRIaInstruction(cg, TR::InstOpCode::VREPI, node, vRangeControl, saturatedRangeControl, 0);
+
+   // Copy length into numCharsLeftToProcess
+   generateRRInstruction(cg, TR::InstOpCode::LR, node, numCharsLeftToProcess, inputLengthRegister);
+
+   // Branch to the end of this section if there are less than 16 chars left to process
+   generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::C, node, numCharsLeftToProcess, 16, TR::InstOpCode::COND_BL, processMultiple16CharsEnd, false, false);
+
+   generateS390LabelInstruction(cg, TR::InstOpCode::label, node, processMultiple16CharsStart);
+   processMultiple16CharsStart->setStartInternalControlFlow();
+
+   generateVRXInstruction(cg, TR::InstOpCode::VL, node, vInput1, generateS390MemoryReference(inputPtrReg, 0, cg));
+   // Check for vector saturation and branch to copy the unsaturated bytes
+   // VSTRC here will do an unsigned comparison and set the CC if any byte in the input vector is above 127.
+   // If all numbers are below 128, then we can do a straight copy of the 16 bytes. If not, then we branch to
+   // processSaturatedInput1 label that corrects the first 'bad' character and stores all characters up to and including the 'bad' character
+   // in the output destination. Then we branch back to this mainline loop and continue processing the rest of the array.
+   // The penalty for encountering 1 or more bad characters in a row can be big, but we bet that such cases are not
+   // common.
+   generateVRRdInstruction(cg, TR::InstOpCode::VSTRC, node, firstSaturatedCharacter, vInput1, vRange, vRangeControl, 0x1, 0);
+   // If atleast one bad character was found, CC=1. So branch to handle this case.
+   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC1, node, processSaturatedInput1);
+
+   // If we didn't take the branch above, then all 16 bytes can be copied directly over.
+   generateVRXInstruction(cg, TR::InstOpCode::VST, node, vInput1, generateS390MemoryReference(outputPtrReg, 0, cg));
+
+   // Update the counters
+   generateRXInstruction(cg, TR::InstOpCode::getLoadAddressOpCode(), node, outputPtrReg, generateS390MemoryReference(outputPtrReg, 16, cg));
+   generateRXInstruction(cg, TR::InstOpCode::getLoadAddressOpCode(), node, inputPtrReg, generateS390MemoryReference(inputPtrReg, 16, cg));
+   generateRILInstruction(cg, TR::InstOpCode::SLFI, node, numCharsLeftToProcess, 16);
+
+   // Branch back up if we still have more than 16 characters to process.
+   generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::C, node, numCharsLeftToProcess, 15, TR::InstOpCode::COND_BH, processMultiple16CharsStart, false, false);
+
+   generateS390LabelInstruction(cg, TR::InstOpCode::label, node, processMultiple16CharsEnd);
+
+   // start of sequence to process under 16 characters
+
+   // numCharsLeftToProcess holds length of final load.
+   // Branch to the end if there is no residue
+   generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::C, node, numCharsLeftToProcess, 0, TR::InstOpCode::COND_BE, cFlowRegionEnd, false, false);
+
+   // Zero out the input register to avoid invalid VSTRC result
+   generateVRIaInstruction(cg, TR::InstOpCode::VGBM, node, vInput1, 0, 0 /*unused*/);
+
+   // VLL and VSTL work on indices so we must subtract 1
+   TR::Register *numCharsLeftToProcessMinus1 = cg->allocateRegister();
+   // Due to the check above, the value in numCharsLeftToProcessMinus1 is guaranteed to be 0 or higher.
+   generateRIEInstruction(cg, TR::InstOpCode::AHIK, node, numCharsLeftToProcessMinus1, numCharsLeftToProcess, -1);
+   // Load residue bytes and check for saturation
+   generateVRSbInstruction(cg, TR::InstOpCode::VLL, node, vInput1, numCharsLeftToProcessMinus1, generateS390MemoryReference(inputPtrReg, 0, cg));
+
+   // Check for vector saturation and branch to copy the unsaturated bytes
+   generateVRRdInstruction(cg, TR::InstOpCode::VSTRC, node, firstSaturatedCharacter, vInput1, vRange, vRangeControl, 0x1, 0);
+   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC1, node, processSaturatedInput1);
+
+   // If no bad characters found, the store with length.
+   generateVRSbInstruction(cg, TR::InstOpCode::VSTL, node, vInput1, numCharsLeftToProcessMinus1, generateS390MemoryReference(outputPtrReg, 0, cg), 0);
+   // Branch to end.
+   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, cFlowRegionEnd);
+
+   // Encountered an out of range character via the VSTRC instruction. Find it, replace it with '?', then jump back to mainline
+   // to continue processing. This sequence is not the most efficient and hitting it one or more times can be expensive,
+   // but we bet that this won't happen often for the targeted workload.
+   // Algorithm works as follows:
+   // First store upto and not including the bad character.
+   // Then store '?' in place for the bad character.
+   // Then, update the counters with the number of characters we have processed.
+   // Then go back to mainline code. Where we jump to depends on how many characters are left to process.
+   generateS390LabelInstruction(cg, TR::InstOpCode::label, node, processSaturatedInput1);
+
+   TR::Register *firstSaturatedCharacterGR = cg->allocateRegister();
+   // Extract the index of the first saturated char in the 2nd vector register
+   generateVRScInstruction(cg, TR::InstOpCode::VLGV, node, firstSaturatedCharacterGR, firstSaturatedCharacter, generateS390MemoryReference(7, cg), 0);
+
+   // Needed as VSTL operate on 0-based index.
+   TR::Register *firstSaturatedCharacterMinus1GR = cg->allocateRegister();
+
+   generateRIEInstruction(cg, TR::InstOpCode::AHIK, node, firstSaturatedCharacterMinus1GR, firstSaturatedCharacterGR, -1);
+
+   // If the result is less than 0, then it means the first character is saturated. So skip storing any good characters and jump to fixing the bad
+   // character.
+   TR::LabelSymbol *fixReplacementCharacter = generateLabelSymbol(cg);
+   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC1, node, fixReplacementCharacter);
+
+   // Copy only the unsaturated results using the index we calculated earlier
+   generateVRSbInstruction(cg, TR::InstOpCode::VSTL, node, vInput1, firstSaturatedCharacterMinus1GR, generateS390MemoryReference(outputPtrReg, 0, cg), 0);
+   generateRRInstruction(cg, cg->comp()->target().is64Bit() ? TR::InstOpCode::AGFR : TR::InstOpCode::AR, node, outputPtrReg, firstSaturatedCharacterGR);
+
+   generateS390LabelInstruction(cg, TR::InstOpCode::label, node, fixReplacementCharacter);
+   const uint32_t replacementCharacter = 63;
+   generateSIInstruction(cg, TR::InstOpCode::MVI, node, generateS390MemoryReference(outputPtrReg, 0, cg), replacementCharacter);
+
+   generateRILInstruction(cg, cg->comp()->target().is64Bit() ? TR::InstOpCode::AGFI : TR::InstOpCode::AFI, node, outputPtrReg, 1);
+
+   // Now update the counters
+   generateRXInstruction(cg, TR::InstOpCode::getLoadAddressOpCode(), node, inputPtrReg, generateS390MemoryReference(inputPtrReg, firstSaturatedCharacterGR, 1, cg));
+   generateRILInstruction(cg, TR::InstOpCode::AFI, node, numCharsLeftToProcess, -1);
+   generateRRInstruction(cg, TR::InstOpCode::SR, node, numCharsLeftToProcess, firstSaturatedCharacterGR);
+
+   // Counters have been updated. Now branch back to mainline. Where we branch depends on how many chars are left.
+   generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::C, node, numCharsLeftToProcess, 15, TR::InstOpCode::COND_BH, processMultiple16CharsStart, false, false);
+   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, processMultiple16CharsEnd);
+
+   TR::RegisterDependencyConditions* dependencies = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 11, cg);
+   dependencies->addPostConditionIfNotAlreadyInserted(vInput1, TR::RealRegister::AssignAny);
+   dependencies->addPostConditionIfNotAlreadyInserted(firstSaturatedCharacter, TR::RealRegister::AssignAny);
+   dependencies->addPostConditionIfNotAlreadyInserted(vRange, TR::RealRegister::AssignAny);
+   dependencies->addPostConditionIfNotAlreadyInserted(vRangeControl, TR::RealRegister::AssignAny);
+   dependencies->addPostConditionIfNotAlreadyInserted(outputPtrReg, TR::RealRegister::AssignAny);
+   dependencies->addPostConditionIfNotAlreadyInserted(inputPtrReg, TR::RealRegister::AssignAny);
+   dependencies->addPostConditionIfNotAlreadyInserted(numCharsLeftToProcess, TR::RealRegister::AssignAny);
+   dependencies->addPostConditionIfNotAlreadyInserted(numCharsLeftToProcessMinus1, TR::RealRegister::AssignAny);
+   dependencies->addPostConditionIfNotAlreadyInserted(inputLengthRegister, TR::RealRegister::AssignAny);
+   dependencies->addPostConditionIfNotAlreadyInserted(firstSaturatedCharacterGR, TR::RealRegister::AssignAny);
+   dependencies->addPostConditionIfNotAlreadyInserted(firstSaturatedCharacterMinus1GR, TR::RealRegister::AssignAny);
+
+   generateS390LabelInstruction(cg, TR::InstOpCode::label, node, cFlowRegionEnd, dependencies);
+   cFlowRegionEnd->setEndInternalControlFlow();
+
+   cg->decReferenceCount(node->getChild(0));
+   cg->decReferenceCount(node->getChild(1));
+   cg->decReferenceCount(node->getChild(2));
+
+   cg->stopUsingRegister(vInput1);
+   cg->stopUsingRegister(firstSaturatedCharacter);
+   cg->stopUsingRegister(vRange);
+   cg->stopUsingRegister(vRangeControl);
+   cg->stopUsingRegister(numCharsLeftToProcess);
+   cg->stopUsingRegister(numCharsLeftToProcessMinus1);
+   cg->stopUsingRegister(firstSaturatedCharacterGR);
+   cg->stopUsingRegister(firstSaturatedCharacterMinus1GR);
+   }
 
 TR::Register*
 J9::Z::TreeEvaluator::inlineStringLatin1Inflate(TR::Node *node, TR::CodeGenerator *cg)
@@ -4078,7 +4257,7 @@ J9::Z::TreeEvaluator::multianewArrayEvaluator(TR::Node * node, TR::CodeGenerator
    generateRXInstruction(cg, TR::InstOpCode::LG, node, targetReg, generateS390MemoryReference(vmThreadReg, offsetof(J9VMThread, heapAlloc), cg));
 
    // Take into account alignment requirements for the size of the zero-length array header
-   int32_t zeroArraySizeAligned = OMR::align(TR::Compiler->om.discontiguousArrayHeaderSizeInBytes(), TR::Compiler->om.objectAlignmentInBytes());
+   int32_t zeroArraySizeAligned = OMR::align(TR::Compiler->om.discontiguousArrayHeaderSizeInBytes(), TR::Compiler->om.getObjectAlignmentInBytes());
 
    // Branch to OOL if there's not enough space for an array of size 0.
    TR::Register *temp1Reg = cg->allocateRegister();
@@ -4121,7 +4300,7 @@ J9::Z::TreeEvaluator::multianewArrayEvaluator(TR::Node * node, TR::CodeGenerator
    iComment("Jump to oolJumpLabel if 1st dim len > the num of elements a block can fit.");
 
    // Now check to see if we have enough space to do the allocation. If not then jump to OOL code.
-   int32_t elementSizeAligned = OMR::align(elementSize, TR::Compiler->om.objectAlignmentInBytes());
+   int32_t elementSizeAligned = OMR::align(elementSize, TR::Compiler->om.getObjectAlignmentInBytes());
    int32_t alignmentCompensation = (elementSize == elementSizeAligned) ? 0 : elementSizeAligned - 1;
    static const uint8_t multiplierToStrideMap[] = {0, 0, 1, 0, 2, 0, 0, 0, 3};
    TR_ASSERT_FATAL(elementSize <= 8, "multianewArrayEvaluator - elementSize cannot be greater than 8!");
@@ -8412,7 +8591,7 @@ J9::Z::TreeEvaluator::VMmonentEvaluator(TR::Node * node, TR::CodeGenerator * cg)
          OOLConditions->addPostCondition(lookupOffsetReg, TR::RealRegister::AssignAny);
 
          int32_t offsetOfMonitorLookupCache = offsetof(J9VMThread, objectMonitorLookupCache);
-         int32_t t = trailingZeroes(TR::Compiler->om.objectAlignmentInBytes());
+         int32_t t = trailingZeroes(TR::Compiler->om.getObjectAlignmentInBytes());
          int32_t shiftAmount = trailingZeroes((int32_t) TR::Compiler->om.sizeofReferenceField()) - t;
          int32_t end = 63 - trailingZeroes((int32_t) TR::Compiler->om.sizeofReferenceField());
          int32_t start = end - trailingZeroes(J9VMTHREAD_OBJECT_MONITOR_CACHE_SIZE) + 1;
@@ -8829,7 +9008,7 @@ J9::Z::TreeEvaluator::VMmonexitEvaluator(TR::Node * node, TR::CodeGenerator * cg
 
 
          int32_t offsetOfMonitorLookupCache = offsetof(J9VMThread, objectMonitorLookupCache);
-         int32_t t = trailingZeroes(TR::Compiler->om.objectAlignmentInBytes());
+         int32_t t = trailingZeroes(TR::Compiler->om.getObjectAlignmentInBytes());
          int32_t shiftAmount = trailingZeroes((int32_t) TR::Compiler->om.sizeofReferenceField()) - t;
          int32_t end = 63 - trailingZeroes((int32_t) TR::Compiler->om.sizeofReferenceField());
          int32_t start = end - trailingZeroes(J9VMTHREAD_OBJECT_MONITOR_CACHE_SIZE) + 1;
@@ -9088,7 +9267,7 @@ roundArrayLengthToObjectAlignment(TR::CodeGenerator* cg, TR::Node* node, TR::Ins
       TR::RegisterDependencyConditions* conditions, TR::Register *litPoolBaseReg, int32_t allocSize, int32_t elementSize, TR::Register* sizeReg, TR::LabelSymbol * exitOOLLabel = NULL)
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
-   int32_t alignmentConstant = TR::Compiler->om.objectAlignmentInBytes();
+   int32_t alignmentConstant = TR::Compiler->om.getObjectAlignmentInBytes();
    if (exitOOLLabel)
       {
       TR_Debug * debugObj = cg->getDebug();
@@ -9138,7 +9317,7 @@ genHeapAlloc(TR::Node * node, TR::Instruction *& iCursor, bool isVariableLen, TR
 
       // bool sizeInReg = (isVariableLen || (allocSize > MAX_IMMEDIATE_VAL));
 
-      int alignmentConstant = TR::Compiler->om.objectAlignmentInBytes();
+      int alignmentConstant = TR::Compiler->om.getObjectAlignmentInBytes();
 
       if (isVariableLen)
          {
@@ -9819,7 +9998,7 @@ J9::Z::TreeEvaluator::VMnewEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       // if variable-length array   - dataSizeReg will contain the (calculated) size
       // if outlined                - tmpReg will contain the value of
       // otherwise                  - size is in (int) allocateSize
-      int alignmentConstant = TR::Compiler->om.objectAlignmentInBytes();
+      int alignmentConstant = TR::Compiler->om.getObjectAlignmentInBytes();
 
       if (isVariableLen)
          allocateSize += dataBegin;
@@ -13188,4 +13367,455 @@ J9::Z::TreeEvaluator::generateLoadAndStoreForArrayCopy(TR::Node *node, TR::CodeG
       {
       OMR::TreeEvaluatorConnector::generateLoadAndStoreForArrayCopy(node, cg, srcMemRef, dstMemRef, srm, elenmentType, needsGuardedLoad, deps);
       }
+   }
+
+TR::Register*
+J9::Z::TreeEvaluator::inlineIntegerToCharsForLatin1Strings(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   TR::Compilation *comp = cg->comp();
+
+   TR_ResolvedMethod *candidateToStringMethod = NULL;
+   if (node->getInlinedSiteIndex() != -1)
+      {
+      candidateToStringMethod = comp->getInlinedResolvedMethod(node->getInlinedSiteIndex());
+      }
+   else
+      {
+      candidateToStringMethod = comp->getCurrentMethod();
+      }
+   // If method caller of Integer.stringSize or Long.stringSize is not Integer.toString(I) or Long.toString(J), then we don't inline
+   if (candidateToStringMethod->getRecognizedMethod() != TR::java_lang_Long_toString &&
+            candidateToStringMethod->getRecognizedMethod() != TR::java_lang_Integer_toString)
+      {
+      return NULL;
+      }
+
+   if (comp->getOption(TR_TraceCG))
+      {
+      traceMsg(comp, "inlineIntegerToCharsForLatin1Strings (compressed strings)\n");
+      }
+   TR::Node *inputValueNode = node->getChild(0);
+   TR::Node *stringSizeNode = node->getChild(1);
+   TR::Node *byteArrayNode = node->getChild(2);
+
+   TR::Register *inputValueReg = cg->evaluate(inputValueNode);
+   TR::Register *stringSizeReg = cg->gprClobberEvaluate(stringSizeNode, true);
+   TR::Register *byteArrayReg = cg->gprClobberEvaluate(byteArrayNode, true);
+
+   bool inputIs64Bit = inputValueNode->getDataType() == TR::Int64;
+
+   TR::MemoryReference *destinationArrayMemRef = generateS390MemoryReference(byteArrayReg, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg);
+
+   TR::LabelSymbol *cFlowRegionStart = generateLabelSymbol(cg);
+   cFlowRegionStart->setStartInternalControlFlow();
+   TR::LabelSymbol *cFlowRegionEnd = generateLabelSymbol(cg);
+   cFlowRegionEnd->setEndInternalControlFlow();
+
+   generateS390LabelInstruction(cg, TR::InstOpCode::label, node, cFlowRegionStart);
+
+   // If input is 0, then do the work in GPRs and exit.
+   // TODO: Measure performance of [1,9] here vs vanilla Java code to see what's faster. If vanilla java, then we should bail from here accordingly.
+   // (See https://github.ibm.com/runtimes/openj9/pull/385#discussion_r5004355 for discussion)
+   TR::Register *numCharsRemainingReg = cg->allocateRegister(); // this is also the index of the position of the first char after we have populated the buffer
+   TR::LabelSymbol *nonZeroInputLabel = generateLabelSymbol(cg);
+   generateS390CompareAndBranchInstruction(cg, inputIs64Bit ? TR::InstOpCode::CG : TR::InstOpCode::C, node, inputValueReg, 0, TR::InstOpCode::COND_BNE, nonZeroInputLabel, false);
+   generateSIInstruction(cg, TR::InstOpCode::MVI, node, generateS390MemoryReference(*destinationArrayMemRef, 0, cg), 48);
+   generateRILInstruction(cg, TR::InstOpCode::IILF, node, numCharsRemainingReg, 0);
+   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, cFlowRegionEnd);
+
+   generateS390LabelInstruction(cg, TR::InstOpCode::label, node, nonZeroInputLabel);
+
+   TR::LabelSymbol *handleDigitsLabel = generateLabelSymbol(cg);
+   // First handle negative sign if needed. Then proceed to handleDigitsLabel to process the digits.
+   generateS390CompareAndBranchInstruction(cg, inputIs64Bit ? TR::InstOpCode::CG : TR::InstOpCode::C, node, inputValueReg, 0, TR::InstOpCode::COND_BNL, handleDigitsLabel, false);
+   generateRILInstruction(cg, TR::InstOpCode::SLFI, node, stringSizeReg, 1);
+   generateSIInstruction(cg, TR::InstOpCode::MVI, node, generateS390MemoryReference(*destinationArrayMemRef, 0, cg), 45);
+   generateRILInstruction(cg, TR::InstOpCode::getAddImmOpCode(), node, byteArrayReg, 1);
+
+   generateS390LabelInstruction(cg, TR::InstOpCode::label, node, handleDigitsLabel);
+   TR::Register *intToPDReg = cg->allocateRegister(TR_VRF);
+   // Load all digits into packed decimal format.
+   generateVRIiInstruction(cg, inputIs64Bit ? TR::InstOpCode::VCVDG : TR::InstOpCode::VCVD, node, intToPDReg, inputValueReg, inputIs64Bit ? 19 : 10, 0x1);
+   TR::Register *maskReg = cg->allocateRegister(TR_VRF);
+   TR::Register *zonedDecimalReg1 = cg->allocateRegister(TR_VRF);
+   TR::Register *zonedDecimalReg2 = NULL;
+
+   TR::RegisterDependencyConditions *dependencies = NULL;
+
+   if (inputIs64Bit)
+      {
+      // if the long input value is greater than 16 digits in length, then we need two vector registers to do the conversion. so jump to lengthgreaterthan16label
+      // to handle that case.
+      TR::LabelSymbol *lengthGreaterThan16Label = generateLabelSymbol(cg);
+      generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::C, node, stringSizeReg, 16, TR::InstOpCode::COND_BH, lengthGreaterThan16Label, false);
+      // this instruction unpacks the packed decimal in inttppdreg to zoned decimal format. it will do this for the rightmost 16 digits.
+      // it populates the higher 4 bits of each byte with the "zone" bits and the bottom 4 bits with each digit from the packed decimal sequence.
+      generateVRRkInstruction(cg, TR::InstOpCode::VUPKZL, node, zonedDecimalReg1, intToPDReg, 0 /*m3*/);
+      // now we zero out the zone bits because we don't need them.
+      generateVRIbInstruction(cg, TR::InstOpCode::VGM, node, maskReg, 4, 7, 0);
+      generateVRRcInstruction(cg, TR::InstOpCode::VN, node, zonedDecimalReg1, zonedDecimalReg1, maskReg, 0, 0, 0);
+      // now the rightmost 10 bytes should hold the entire integer in packed decimal format. so let's add 48 to each byte to convert each digit to ascii.
+      generateVRIaInstruction(cg, TR::InstOpCode::VREPI, node, maskReg, 48, 0);
+      generateVRRcInstruction(cg, TR::InstOpCode::VA, node, zonedDecimalReg1, zonedDecimalReg1, maskReg, 0);
+      // for the purposes of this evaluator, stringsizereg contains the length of the resulting string. ex if input is 2147483647, stringsizereg will be 10.
+      // when storing using vstrl, the index register specifying the first byte to store is 0 based. meanwhile
+      // stringsizereg is 1 based. so we must first subtract 1 from stringsizereg so the calculation is done correctly by the instruction.
+      // ex. if  we specify 10 in vstrl, the instruction will do 15-10=5 to figure out that it needs to store bytes 5 to 15 instead of 6 to 15.
+      generateRILInstruction(cg, TR::InstOpCode::SLFI, node, stringSizeReg, 1);
+      // the memory reference should already be pointing to where the most significant digit is to be stored. so we just have to create the vstrl instruction now.
+      generateVRSdInstruction(cg, TR::InstOpCode::VSTRLR, node, stringSizeReg, zonedDecimalReg1, generateS390MemoryReference(*destinationArrayMemRef, 0, cg));
+      generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, cFlowRegionEnd);
+
+      // if we end up here, then there are more than 16 digits in the input value. this instruction sequence is similar to the one above, except that
+      // we handle the 1 to 3 of the most significant digits in a separate register. we then store the value in this register before storing the remainder of the digits.
+      generateS390LabelInstruction(cg, TR::InstOpCode::label, node, lengthGreaterThan16Label);
+      zonedDecimalReg2 = cg->allocateRegister(TR_VRF); // holds the most significant digits. can be anywhere from 1-3 digits.
+      generateVRRkInstruction(cg, TR::InstOpCode::VUPKZL, node, zonedDecimalReg1, intToPDReg, 0 /*m3*/);
+      generateVRRkInstruction(cg, TR::InstOpCode::VUPKZH, node, zonedDecimalReg2, intToPDReg, 0 /*m3*/);
+      // now we zero out the zone bits because we don't need them.
+      generateVRIbInstruction(cg, TR::InstOpCode::VGM, node, maskReg, 4, 7, 0);
+      generateVRRcInstruction(cg, TR::InstOpCode::VN, node, zonedDecimalReg1, zonedDecimalReg1, maskReg, 0, 0, 0);
+      generateVRRcInstruction(cg, TR::InstOpCode::VN, node, zonedDecimalReg2, zonedDecimalReg2, maskReg, 0, 0, 0);
+      // now add 48 to each byte.
+      generateVRIaInstruction(cg, TR::InstOpCode::VREPI, node, maskReg, 48, 0);
+      generateVRRcInstruction(cg, TR::InstOpCode::VA, node, zonedDecimalReg1, zonedDecimalReg1, maskReg, 0);
+      generateVRRcInstruction(cg, TR::InstOpCode::VA, node, zonedDecimalReg2, zonedDecimalReg2, maskReg, 0);
+      // now calculate how many digits are in the top half of the zoned decimal (i.e. zoneddecimalreg2) --> (stringsizereg - 16) - 1 = stringsizereg - 17
+      generateRILInstruction(cg, TR::InstOpCode::SLFI, node, stringSizeReg, 17);
+      // the memory reference should already be pointing to where the most significant digit is to be stored. so we just have to create the vstrl instruction now.
+      generateVRSdInstruction(cg, TR::InstOpCode::VSTRLR, node, stringSizeReg, zonedDecimalReg2, generateS390MemoryReference(*destinationArrayMemRef, 0, cg));
+      // increment bytearrayreg by stringsizereg+1 to move buffer pointer forward so we can write remaining bytes.
+      generateRILInstruction(cg, TR::InstOpCode::AFI, node, stringSizeReg, 1);
+      generateRRInstruction(cg, TR::InstOpCode::getAddRegWidenOpCode(), node, byteArrayReg, stringSizeReg);
+      generateVSIInstruction(cg, TR::InstOpCode::VSTRL, node, zonedDecimalReg1, generateS390MemoryReference(*destinationArrayMemRef, 0, cg), 15);
+
+      dependencies = generateRegisterDependencyConditions(0, 8, cg);
+      dependencies->addPostCondition(zonedDecimalReg2, TR::RealRegister::AssignAny);
+      }
+   else
+      {
+      // This instruction unpacks the packed decimal in intTpPDReg to zoned decimal format. It will do this for the rightmost 16 digits.
+      // It populates the higher 4 bits of each byte with the "zone" bits and the bottom 4 bits with each digit from the packed decimal sequence.
+      generateVRRkInstruction(cg, TR::InstOpCode::VUPKZL, node, zonedDecimalReg1, intToPDReg, 0 /*M3*/);
+      // Now we zero out the zone bits because we don't need them.
+      generateVRIbInstruction(cg, TR::InstOpCode::VGM, node, maskReg, 4, 7, 0);
+      generateVRRcInstruction(cg, TR::InstOpCode::VN, node, zonedDecimalReg1, zonedDecimalReg1, maskReg, 0, 0, 0);
+      // Now the rightmost 10 bytes should hold the entire integer value in packed decimal form. So let's add 48 to each byte to convert each digit to ASCII.
+      generateVRIaInstruction(cg, TR::InstOpCode::VREPI, node, maskReg, 48, 0);
+      generateVRRcInstruction(cg, TR::InstOpCode::VA, node, zonedDecimalReg1, zonedDecimalReg1, maskReg, 0);
+
+      // For the purposes of this evaluator, stringSizeReg contains the length of the resulting string. Ex if input is 2147483647, stringSizeReg will be 10.
+      // When storing using VSTRL, the index register specifying the first byte to store is 0 based. Meanwhile
+      // stringSizeReg is 1 based. So we must first subtract 1 from stringSizeReg so the calculation is done correctly by the instruction.
+      // ex. if  we specify 10 in VSTRL, the instruction will do 15-10=5 to figure out that it needs to store bytes 5 to 15 instead of 6 to 15.
+      generateRILInstruction(cg, TR::InstOpCode::SLFI, node, stringSizeReg, 1);
+      // The memory reference should already be pointing to where the most significant digit is to be stored. So we just have to create the VSTRL instruction now.
+      generateVRSdInstruction(cg, TR::InstOpCode::VSTRLR, node, stringSizeReg, zonedDecimalReg1, generateS390MemoryReference(*destinationArrayMemRef, 0, cg));
+
+      dependencies = generateRegisterDependencyConditions(0, 7, cg);
+      }
+
+   dependencies->addPostCondition(inputValueReg, TR::RealRegister::AssignAny);
+   dependencies->addPostCondition(byteArrayReg, TR::RealRegister::AssignAny);
+   dependencies->addPostCondition(stringSizeReg, TR::RealRegister::AssignAny);
+   dependencies->addPostCondition(numCharsRemainingReg, TR::RealRegister::AssignAny);
+   dependencies->addPostCondition(intToPDReg, TR::RealRegister::AssignAny);
+   dependencies->addPostCondition(maskReg, TR::RealRegister::AssignAny);
+   dependencies->addPostCondition(zonedDecimalReg1, TR::RealRegister::AssignAny);
+
+   // For the purposes of inlining Integer.toString and Long.toString, the return value of the getChars API will always be 0. So we load it here manually.
+   generateRILInstruction(cg, TR::InstOpCode::IILF, node, numCharsRemainingReg, 0);
+
+   generateS390LabelInstruction(cg, TR::InstOpCode::label, node, cFlowRegionEnd, dependencies);
+
+   cg->decReferenceCount(inputValueNode);
+   cg->decReferenceCount(stringSizeNode);
+   cg->decReferenceCount(byteArrayNode);
+
+   cg->stopUsingRegister(intToPDReg);
+   cg->stopUsingRegister(maskReg);
+   cg->stopUsingRegister(zonedDecimalReg1);
+
+   cg->stopUsingRegister(byteArrayReg);
+   cg->stopUsingRegister(stringSizeReg);
+   cg->stopUsingRegister(zonedDecimalReg2);
+
+   return node->setRegister(numCharsRemainingReg);
+   }
+
+TR::Register*
+J9::Z::TreeEvaluator::inlineIntegerToCharsForUTF16Strings(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   TR::Compilation *comp = cg->comp();
+
+   TR_ResolvedMethod *candidateToStringMethod = NULL;
+   if (node->getInlinedSiteIndex() != -1)
+      {
+      candidateToStringMethod = comp->getInlinedResolvedMethod(node->getInlinedSiteIndex());
+      }
+   else
+      {
+      candidateToStringMethod = comp->getCurrentMethod();
+      }
+   // If method caller of Integer.stringSize or Long.stringSize is not Integer.toString(I) or Long.toString(J), then we don't inline
+   if (candidateToStringMethod->getRecognizedMethod() != TR::java_lang_Long_toString &&
+            candidateToStringMethod->getRecognizedMethod() != TR::java_lang_Integer_toString)
+      {
+      return NULL;
+      }
+
+   if (comp->getOption(TR_TraceCG))
+      {
+      traceMsg(comp, "inlineIntegerToCharsForUTF16Strings (decompressed strings)\n");
+      }
+   TR::Node *inputValueNode = node->getChild(0);
+   TR::Node *stringSizeNode = node->getChild(1);
+   TR::Node *byteArrayNode = node->getChild(2);
+
+   TR::Register *inputValueReg = cg->evaluate(inputValueNode);
+   TR::Register *stringSizeReg = cg->gprClobberEvaluate(stringSizeNode, true);
+   TR::Register *byteArrayReg = cg->gprClobberEvaluate(byteArrayNode, true);
+
+   bool inputIs64Bit = inputValueNode->getDataType() == TR::Int64;
+
+   TR::LabelSymbol *cFlowRegionStart = generateLabelSymbol(cg);
+   cFlowRegionStart->setStartInternalControlFlow();
+   TR::LabelSymbol *cFlowRegionEnd = generateLabelSymbol(cg);
+   cFlowRegionEnd->setEndInternalControlFlow();
+
+   generateS390LabelInstruction(cg, TR::InstOpCode::label, node, cFlowRegionStart);
+
+   // If input is 0, just do the work in GPRs and exit.
+   TR::Register *numCharsRemainingReg = cg->allocateRegister(); // this is also the index of the position of the first char after we have populated the buffer
+   TR::LabelSymbol *nonZeroInputLabel = generateLabelSymbol(cg);
+   generateS390CompareAndBranchInstruction(cg, inputIs64Bit ? TR::InstOpCode::CG : TR::InstOpCode::C, node, inputValueReg, 0, TR::InstOpCode::COND_BNE, nonZeroInputLabel, false);
+   TR::MemoryReference *destinationArrayMemRef = generateS390MemoryReference(byteArrayReg, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg);
+   generateSILInstruction(cg, TR::InstOpCode::MVHHI, node, destinationArrayMemRef, 48);
+   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, cFlowRegionEnd);
+
+   generateS390LabelInstruction(cg, TR::InstOpCode::label, node, nonZeroInputLabel);
+
+   TR::LabelSymbol *handleDigitsLabel = generateLabelSymbol(cg);
+   // Handle negative sign first.
+   generateS390CompareAndBranchInstruction(cg, inputIs64Bit ? TR::InstOpCode::CG : TR::InstOpCode::C, node, inputValueReg, 0, TR::InstOpCode::COND_BNL, handleDigitsLabel, false);
+   generateRILInstruction(cg, TR::InstOpCode::SLFI, node, stringSizeReg, 1);
+   generateSILInstruction(cg, TR::InstOpCode::MVHHI, node, generateS390MemoryReference(*destinationArrayMemRef, 0, cg), 45);
+   generateRILInstruction(cg, TR::InstOpCode::getAddImmOpCode(), node, byteArrayReg, 2);
+
+   generateS390LabelInstruction(cg, TR::InstOpCode::label, node, handleDigitsLabel);
+
+   TR::Register *intToPDReg = cg->allocateRegister(TR_VRF);
+   // Load all digits into packed decimal format.
+   generateVRIiInstruction(cg, inputIs64Bit ? TR::InstOpCode::VCVDG : TR::InstOpCode::VCVD, node, intToPDReg, inputValueReg, inputIs64Bit ? 19 : 10, 0x1);
+   TR::Register *maskReg = cg->allocateRegister(TR_VRF);
+   TR::Register *asciiOffset = cg->allocateRegister(TR_VRF);
+   generateVRIbInstruction(cg, TR::InstOpCode::VGM, node, maskReg, 4, 7, 0);
+   generateVRIaInstruction(cg, TR::InstOpCode::VREPI, node, asciiOffset, 48, 0);
+   TR::Register *zonedDecimalRegLower = cg->allocateRegister(TR_VRF);
+
+   TR::LabelSymbol *moreThan9DigitsLabel = generateLabelSymbol(cg);
+   // Depending on the length of the resulting string, we will need different amounts of vector registers to do the conversion. We test for that
+   // here and then branch to a handcrafted routine for each scenario. This creates some redundancy in the code generated (hence increasing footprint),
+   // however it reduces checks/branches during runtime preventing bottlenecks.
+   generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::C, node, stringSizeReg, 8, TR::InstOpCode::COND_BH, moreThan9DigitsLabel, false);
+
+   // In this scenario we only need one vector register to do the conversion as there are less than 9 digits to process
+   // If we are here, then 0 =< stringSizeReg <= 8
+   // Unpack packed decimal into zoned decimal. This should take a maximum of 8 bytes.
+   generateVRRkInstruction(cg, TR::InstOpCode::VUPKZL, node, zonedDecimalRegLower, intToPDReg, 0 /*M3*/);
+   // Remove the zone bits
+   generateVRRcInstruction(cg, TR::InstOpCode::VN, node, zonedDecimalRegLower, zonedDecimalRegLower, maskReg, 0, 0, 0);
+   // Now the rightmost 10 bytes should hold the entire integer we care about. So let's add 48 to each byte.
+   generateVRRcInstruction(cg, TR::InstOpCode::VA, node, zonedDecimalRegLower, zonedDecimalRegLower, asciiOffset, 0);
+
+   // For the purposes of this evaluator, stringSizeReg contains the length of the resulting string. Ex if input is 2147483647, stringSizeReg will be 10.
+   // When storing using VSTRL, the index register specifying the first byte to store is 0 based. Meanwhile
+   // stringSizeReg is 1 based. So we must first subtract 1 from stringSizeReg so the calculation is done correctly by the instruction.
+   // ex. if  we specify 10 in VSTRL, the instruction will do 15-10=5 to figure out that it needs to store bytes 5 to 15 instead of 6 to 15.
+   // Since each character is 2 bytes in length, we must first multiply by 2.
+   generateRSInstruction(cg, TR::InstOpCode::SLA, node, stringSizeReg, 1);
+   generateRILInstruction(cg, TR::InstOpCode::SLFI, node, stringSizeReg, 1);
+   // Finally, unpack the data in zonedDecimalReg1 using VUPL. The result should take no more than 16 bytes.
+   generateVRRaInstruction(cg, TR::InstOpCode::VUPLL, node, zonedDecimalRegLower, zonedDecimalRegLower, 0, 0, 0);
+   // The memory reference should already be pointing to where the most significant digit is to be stored. So we just have to create the VSTRL instruction now.
+   generateVRSdInstruction(cg, TR::InstOpCode::VSTRLR, node, stringSizeReg, zonedDecimalRegLower, generateS390MemoryReference(*destinationArrayMemRef, 0, cg));
+   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, cFlowRegionEnd);
+
+   generateS390LabelInstruction(cg, TR::InstOpCode::label, node, moreThan9DigitsLabel);
+   TR::LabelSymbol *moreThan16DigitsLabel = generateLabelSymbol(cg);
+   generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::C, node, stringSizeReg, 16, TR::InstOpCode::COND_BH, moreThan16DigitsLabel, false);
+   // Need two intermediate vector registers to process input values that are greater than 8 digits and less than 17.
+   // For Integers between the length of 8 and 16, we must do as above but also use VUPLH to load the higher order digits. Note that the result
+   // of converting packed decimal to zoned decimal will fit in 16 bytes, so we only need to use VUPKZL still.
+   generateVRRkInstruction(cg, TR::InstOpCode::VUPKZL, node, zonedDecimalRegLower, intToPDReg, 0 /*M3*/);
+   // Remove the zone bits
+   generateVRRcInstruction(cg, TR::InstOpCode::VN, node, zonedDecimalRegLower, zonedDecimalRegLower, maskReg, 0, 0, 0);
+   // Now the rightmost 16 bytes should hold the entire intege we care about. So let's add 48 to each byte.
+   generateVRRcInstruction(cg, TR::InstOpCode::VA, node, zonedDecimalRegLower, zonedDecimalRegLower, asciiOffset, 0);
+   // We know zonedDecimalRegLower will be full when we unpack. So we store all bytes in it. But we don't know if
+   // zonedDecimalRegLowerUpperHalf will be full. So we must calculate "stringSize-8" to figure out how many extra digits remain.
+   // ex if stringSize = 10, then 10-8 = 2 digits in upper half. 15 - 2*2-1 = 12 --> 12,13,14,15 are the bytes stored to memory.
+   generateRILInstruction(cg, TR::InstOpCode::SLFI, node, stringSizeReg, 8);
+   generateRSInstruction(cg, TR::InstOpCode::SLA, node, stringSizeReg, 1);
+   generateRILInstruction(cg, TR::InstOpCode::SLFI, node, stringSizeReg, 1);
+   // now stringSize will have position of byte in upper half.
+   // Finally, unpack the higher 8 bytes in zonedDecimalReg1 using VUPLH.
+   TR::Register *zonedDecimalRegLowerUpperHalf = cg->allocateRegister(TR_VRF);
+   generateVRRaInstruction(cg, TR::InstOpCode::VUPLH, node, zonedDecimalRegLowerUpperHalf, zonedDecimalRegLower, 0, 0, 0);
+   // And unpack the lower 8 bytes using VUPLL
+   generateVRRaInstruction(cg, TR::InstOpCode::VUPLL, node, zonedDecimalRegLower, zonedDecimalRegLower, 0, 0, 0);
+   // Store the higher half first as it holds the most significant digits.
+   generateVRSdInstruction(cg, TR::InstOpCode::VSTRLR, node, stringSizeReg, zonedDecimalRegLowerUpperHalf, generateS390MemoryReference(*destinationArrayMemRef, 0, cg));
+
+   // Advance the memoryReference pointer then store the bottom half
+   generateRILInstruction(cg, TR::InstOpCode::AFI, node, stringSizeReg, 1);
+   generateRRInstruction(cg, TR::InstOpCode::getAddRegWidenOpCode(), node, byteArrayReg, stringSizeReg);
+   generateVSIInstruction(cg, TR::InstOpCode::VSTRL, node, zonedDecimalRegLower, generateS390MemoryReference(*destinationArrayMemRef, 0, cg), 15);
+   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, cFlowRegionEnd);
+
+   generateS390LabelInstruction(cg, TR::InstOpCode::label, node, moreThan16DigitsLabel);
+   // In this scenario we have between 17 and 19 digits. The logic is similar to before, except we use VUPKZH to unpack the most significant digits (could be anywhere from 1 to 3 digits).
+   // We first unpack into lower and upper zoned decimal halves.
+   generateVRRkInstruction(cg, TR::InstOpCode::VUPKZL, node, zonedDecimalRegLower, intToPDReg, 0 /*M3*/);
+   TR::Register *zonedDecimalRegHigher = cg->allocateRegister(TR_VRF);
+   generateVRRkInstruction(cg, TR::InstOpCode::VUPKZH, node, zonedDecimalRegHigher, intToPDReg, 0 /*M3*/);
+   // Now remove the zone bits in both
+   generateVRRcInstruction(cg, TR::InstOpCode::VN, node, zonedDecimalRegLower, zonedDecimalRegLower, maskReg, 0, 0, 0);
+   generateVRRcInstruction(cg, TR::InstOpCode::VN, node, zonedDecimalRegHigher, zonedDecimalRegHigher, maskReg, 0, 0, 0);
+   // And add 0x30 to all
+   generateVRRcInstruction(cg, TR::InstOpCode::VA, node, zonedDecimalRegLower, zonedDecimalRegLower, asciiOffset, 0);
+   generateVRRcInstruction(cg, TR::InstOpCode::VA, node, zonedDecimalRegHigher, zonedDecimalRegHigher, asciiOffset, 0);
+   // Now unpack the higher half --> i.e. process the most significant digits (anywhere from 1 to 3 digits)
+   generateVRRaInstruction(cg, TR::InstOpCode::VUPLL, node, zonedDecimalRegHigher, zonedDecimalRegHigher, 0, 0, 0);
+   // Calculate how many digits we need to store in this higher half.
+   generateRILInstruction(cg, TR::InstOpCode::SLFI, node, stringSizeReg, 16);
+   generateRSInstruction(cg, TR::InstOpCode::SLA, node, stringSizeReg, 1);
+   generateRILInstruction(cg, TR::InstOpCode::SLFI, node, stringSizeReg, 1);
+   // Store that many bytes from this register
+   generateVRSdInstruction(cg, TR::InstOpCode::VSTRLR, node, stringSizeReg, zonedDecimalRegHigher, generateS390MemoryReference(*destinationArrayMemRef, 0, cg));
+   // Advance buffer pointer
+   generateRILInstruction(cg, TR::InstOpCode::AFI, node, stringSizeReg, 1);
+   generateRRInstruction(cg, TR::InstOpCode::getAddRegWidenOpCode(), node, byteArrayReg, stringSizeReg);
+   // unpack zonedDecimalRegLower into upper and lower halves --> i.e. we now process the least significant 16 digits.
+   generateVRRaInstruction(cg, TR::InstOpCode::VUPLH, node, zonedDecimalRegLowerUpperHalf, zonedDecimalRegLower, 0, 0, 0);
+   generateVRRaInstruction(cg, TR::InstOpCode::VUPLL, node, zonedDecimalRegLower, zonedDecimalRegLower, 0, 0, 0);
+   generateVSIInstruction(cg, TR::InstOpCode::VSTRL, node, zonedDecimalRegLowerUpperHalf, generateS390MemoryReference(*destinationArrayMemRef, 0, cg), 15);
+   // Advance Pointer then store again.
+   generateRILInstruction(cg, TR::InstOpCode::getAddImmOpCode(), node, byteArrayReg, 16);
+   generateVSIInstruction(cg, TR::InstOpCode::VSTRL, node, zonedDecimalRegLower, generateS390MemoryReference(*destinationArrayMemRef, 0, cg), 15);
+
+   TR::RegisterDependencyConditions *dependencies = generateRegisterDependencyConditions(0, 10, cg);
+   dependencies->addPostCondition(inputValueReg, TR::RealRegister::AssignAny);
+   dependencies->addPostCondition(byteArrayReg, TR::RealRegister::AssignAny);
+   dependencies->addPostCondition(stringSizeReg, TR::RealRegister::AssignAny);
+   dependencies->addPostCondition(numCharsRemainingReg, TR::RealRegister::AssignAny);
+   dependencies->addPostCondition(intToPDReg, TR::RealRegister::AssignAny);
+   dependencies->addPostCondition(maskReg, TR::RealRegister::AssignAny);
+   dependencies->addPostCondition(asciiOffset, TR::RealRegister::AssignAny);
+   dependencies->addPostCondition(zonedDecimalRegLower, TR::RealRegister::AssignAny);
+   dependencies->addPostCondition(zonedDecimalRegLowerUpperHalf, TR::RealRegister::AssignAny);
+   dependencies->addPostCondition(zonedDecimalRegHigher, TR::RealRegister::AssignAny);
+
+   generateS390LabelInstruction(cg, TR::InstOpCode::label, node, cFlowRegionEnd, dependencies);
+
+   // For the purposes of inlining Integer.toString and Long.toString, the return value of the getChars API will always be 0. So we load it here manually.
+   generateRILInstruction(cg, TR::InstOpCode::IILF, node, numCharsRemainingReg, 0);
+
+   cg->decReferenceCount(inputValueNode);
+   cg->decReferenceCount(stringSizeNode);
+   cg->decReferenceCount(byteArrayNode);
+
+   cg->stopUsingRegister(intToPDReg);
+   cg->stopUsingRegister(maskReg);
+   cg->stopUsingRegister(asciiOffset);
+   cg->stopUsingRegister(zonedDecimalRegLower);
+
+   cg->stopUsingRegister(byteArrayReg);
+   cg->stopUsingRegister(stringSizeReg);
+
+   cg->stopUsingRegister(zonedDecimalRegLowerUpperHalf);
+   cg->stopUsingRegister(zonedDecimalRegHigher);
+
+   return node->setRegister(numCharsRemainingReg);
+   }
+
+ /*
+  * This method inlines calls to Integer.stringSize and Long.stringSize using the VCLZDP instruction on zNext
+  */
+TR::Register*
+J9::Z::TreeEvaluator::inlineIntegerStringSize(TR::Node* node, TR::CodeGenerator* cg)
+   {
+   TR::Compilation *comp = cg->comp();
+   static const bool disableIntegerStringSizeBranch = feGetEnv("TR_disableStringSizeBranch") != NULL;
+   TR::Node *inputValueNode = node->getChild(0);
+   bool inputIs64Bit = inputValueNode->getDataType() == TR::Int64;
+   TR::Register *inputValueReg = cg->evaluate(inputValueNode);
+
+   TR::LabelSymbol *cFlowRegionStart = generateLabelSymbol(cg);
+   cFlowRegionStart->setStartInternalControlFlow();
+   TR::LabelSymbol *cFlowRegionEnd = generateLabelSymbol(cg);
+   cFlowRegionEnd->setEndInternalControlFlow();
+   TR::LabelSymbol *inputValueZeroLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *countNumDigitsLabel = generateLabelSymbol(cg);
+
+   generateS390LabelInstruction(cg, TR::InstOpCode::label, node, cFlowRegionStart);
+   TR::Register *lengthReg = cg->allocateRegister();
+   // If value is 0, we branch to end as string is "0"
+   generateRIInstruction(cg, TR::InstOpCode::LHI, node, lengthReg, 1);
+   generateS390CompareAndBranchInstruction(cg, inputIs64Bit ? TR::InstOpCode::CG : TR::InstOpCode::C, node, inputValueReg, 0, TR::InstOpCode::COND_BE, cFlowRegionEnd, false);
+
+   generateS390LabelInstruction(cg, TR::InstOpCode::label, node, countNumDigitsLabel);
+   TR::Register *intToPDReg = cg->allocateRegister(TR_VRF);
+   TR::Register *maxNumDigitsReg = cg->allocateRegister(TR_VRF);
+   TR::Register *lengthVectorReg = cg->allocateRegister(TR_VRF);
+   TR::Register *signBitConstant = disableIntegerStringSizeBranch ? cg->allocateRegister(TR_VRF) : NULL;
+   if (disableIntegerStringSizeBranch)
+      {
+      generateVRIaInstruction(cg, TR::InstOpCode::VLEIB, node, signBitConstant, 1, 15);
+      }
+   generateVRIaInstruction(cg, TR::InstOpCode::VLEIB, node, maxNumDigitsReg, 31, 7);
+   generateVRIiInstruction(cg, inputIs64Bit ? TR::InstOpCode::VCVDG : TR::InstOpCode::VCVD, node, intToPDReg, inputValueReg, inputIs64Bit ? 19 : 10, 0x1);
+   TR::Register *leadingZerosReg = cg->allocateRegister(TR_VRF);
+   generateVRRkInstruction(cg, TR::InstOpCode::VCLZDP, node, leadingZerosReg, intToPDReg, 0 /*M3*/);
+   // Now subtract to get length of string
+   generateVRRcInstruction(cg, TR::InstOpCode::VS, node, lengthVectorReg, maxNumDigitsReg, leadingZerosReg, 0);
+
+   if (disableIntegerStringSizeBranch)
+      {
+      generateVRRcInstruction(cg, TR::InstOpCode::VN, node, intToPDReg, intToPDReg, signBitConstant, 0, 0, 0);
+      generateVRRcInstruction(cg, TR::InstOpCode::VA, node, lengthVectorReg, lengthVectorReg, intToPDReg, 0);
+      }
+   else
+      {
+      generateVRScInstruction(cg, TR::InstOpCode::VLGV, node, lengthReg, lengthVectorReg, generateS390MemoryReference(7, cg), 0);
+      // If value is greater than 0, we branch to end. Otherwise we add 1 to lengthReg to account for '-' sign.
+      generateS390CompareAndBranchInstruction(cg, inputIs64Bit ? TR::InstOpCode::CG : TR::InstOpCode::C, node, inputValueReg, 0, TR::InstOpCode::COND_BNL, cFlowRegionEnd, false);
+      generateRILInstruction(cg, TR::InstOpCode::AFI, node, lengthReg, 1);
+      }
+
+   TR::RegisterDependencyConditions *dependencies = generateRegisterDependencyConditions(0, disableIntegerStringSizeBranch ? 7 : 6, cg);
+   dependencies->addPostCondition(inputValueReg, TR::RealRegister::AssignAny);
+   dependencies->addPostCondition(intToPDReg, TR::RealRegister::AssignAny);
+   dependencies->addPostCondition(leadingZerosReg, TR::RealRegister::AssignAny);
+   dependencies->addPostCondition(lengthReg, TR::RealRegister::AssignAny);
+   dependencies->addPostCondition(maxNumDigitsReg, TR::RealRegister::AssignAny);
+   dependencies->addPostCondition(lengthVectorReg, TR::RealRegister::AssignAny);
+   if (disableIntegerStringSizeBranch)
+      {
+      dependencies->addPostCondition(signBitConstant, TR::RealRegister::AssignAny);
+      }
+
+   generateS390LabelInstruction(cg, TR::InstOpCode::label, node, cFlowRegionEnd, dependencies);
+
+   cg->decReferenceCount(inputValueNode);
+   cg->stopUsingRegister(intToPDReg);
+   cg->stopUsingRegister(leadingZerosReg);
+   cg->stopUsingRegister(maxNumDigitsReg);
+   cg->stopUsingRegister(lengthVectorReg);
+   if (disableIntegerStringSizeBranch)
+      {
+      cg->stopUsingRegister(signBitConstant);
+      }
+
+   return node->setRegister(lengthReg);
    }

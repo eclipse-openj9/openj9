@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  Copyright (c) 2022, 2022 IBM Corp. and others
+
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] http://openjdk.java.net/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+-->
+
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+<suite name="Java8andUp SecurityManager suite" parallel="none" verbose="2">
+	<test name="JCL_TEST_Test-TypeAnnotation">
+		<classes>
+			<class name="org.openj9.test.typeAnnotation.IbmTypeAnnotationsApiTest"/>
+			<class name="org.openj9.test.typeAnnotation.TypeAnnotatedTestClassTest"/>
+		</classes>
+	</test>
+	<test name="JCL_TEST_Test-Annotation">
+		<classes>
+			<class name="org.openj9.test.annotation.Test_Annotation"/>
+		</classes>
+	</test>
+	<test name="JCL_TEST_Java-Lang_ClassLoader">
+		<classes>
+			<class name="org.openj9.test.java.lang.Test_ClassLoader"/>
+		</classes>
+	</test>
+	<test name="JCL_TEST_Java-Lang_ClassLoader_SM">
+		<!-- Tests that depend on SecurityManager -->
+		<classes>
+			<class name="org.openj9.test.java.lang.Test_ClassLoader_SM"/>
+		</classes>
+	</test>
+	<test name="JCL_TEST_Java-Lang_ClassLoader_Native">
+		<classes>
+			<class name="org.openj9.test.java.lang.Test_ClassLoader_Native"/>
+		</classes>
+	</test>
+	<test name="JCL_TEST_Test-Annotation-ClassLoader">
+		<classes>
+			<class name="org.openj9.test.annotationClassLoader.Test_ClassLoader"/>
+		</classes>
+	</test>
+	<test name="JCL_TEST_Test-Annotation-Identity">
+		<classes>
+			<class name="org.openj9.test.annotationIdentity.Test_Annotations"/>
+		</classes>
+	</test>
+	<test name="JCL_TEST_Test-Annotation-Package">
+		<classes>
+			<class name="org.openj9.test.annotationPackage.Test_PackageAnnotation"/>
+			<class name="org.openj9.test.annotationPackage.Test_PackageAnnotation2"/>
+		</classes>
+	</test>
+	<test name="JCL_TEST_Java-Lang">
+		<classes>
+			<class name="org.openj9.test.java.lang.Test_Class"/>
+			<class name="org.openj9.test.java.lang.Test_ClassCastException"/>
+			<class name="org.openj9.test.java.lang.Test_Compiler"/>
+			<class name="org.openj9.test.java.lang.Test_InstantiationError"/>
+			<class name="org.openj9.test.java.lang.Test_InstantiationException"/>
+			<class name="org.openj9.test.java.lang.Test_Math"/>
+			<class name="org.openj9.test.java.lang.Test_Object"/>
+			<class name="org.openj9.test.java.lang.Test_RuntimePermission"/>
+			<class name="org.openj9.test.java.lang.Test_String"/>
+			<class name="org.openj9.test.java.lang.Test_StringBuffer"/>
+			<class name="org.openj9.test.java.lang.Test_StringBuilder"/>
+			<class name="org.openj9.test.java.lang.Test_System"/>
+			<class name="org.openj9.test.java.lang.Test_Thread"/>
+			<class name="org.openj9.test.java.lang.Test_Thread_Extra"/>
+			<class name="org.openj9.test.java.lang.Test_ThreadGroup"/>
+			<class name="org.openj9.test.java.lang.Test_Throwable"/>
+			<class name="org.openj9.test.java.lang.Test_VMAccess"/>
+		</classes>
+	</test>
+	<test name="JCL_TEST_Java-Lang_SM">
+		<!-- Tests that depend on SecurityManager -->
+		<classes>
+			<class name="org.openj9.test.java.lang.Test_Class_SM"/>
+			<class name="org.openj9.test.java.lang.Test_System_SM"/>
+			<class name="org.openj9.test.java.lang.Test_Thread_SM"/>
+			<class name="org.openj9.test.java.lang.Test_ThreadGroup_SM"/>
+		</classes>
+	</test>
+	<test name="JCL_TEST_Java-Lang_OutOfMemoryError">
+		<classes>
+			<class name="org.openj9.test.java.lang.Test_OutOfMemoryError"/>
+		</classes>
+	</test>
+	<test name="JCL_TEST_Java-Internals">
+		<classes>
+			<class name="org.openj9.test.java.lang.Test_J9VMInternals"/>
+		</classes>
+	</test>
+	<test name="JCL_TEST_Java-Internals_SM">
+		<!-- Tests that depend on SecurityManager -->
+		<classes>
+			<class name="org.openj9.test.java.lang.Test_J9VMInternals_SM"/>
+		</classes>
+	</test>
+	<test name="JCL_TEST_Java-Lang-Package">
+		<classes>
+			<class name="org.openj9.test.java.lang.Test_Package"/>
+		</classes>
+	</test>
+	<test name="JCL_TEST_Java-Lang-Invoke">
+		<classes>
+			<class name="org.openj9.test.java.lang.invoke.Test_AdaptorTests"/>
+			<class name="org.openj9.test.java.lang.invoke.Test_MethodHandleInfo"/>
+		</classes>
+	</test>
+	<test name="JCL_TEST_Java-Lang-Invoke_SM">
+		<!-- Tests that depend on SecurityManager -->
+		<classes>
+			<class name="org.openj9.test.java.lang.invoke.Test_MethodHandleInfo_SM"/>
+		</classes>
+	</test>
+	<test name="JCL_TEST_Java-Lang-Ref">
+		<classes>
+			<class name="org.openj9.test.java.lang.ref.Test_PhantomReference"/>
+			<class name="org.openj9.test.java.lang.ref.Test_Reference"/>
+			<class name="org.openj9.test.java.lang.ref.Test_ReferenceQueue"/>
+			<class name="org.openj9.test.java.lang.ref.Test_SoftReference"/>
+			<class name="org.openj9.test.java.lang.ref.Test_WeakReference"/>
+		</classes>
+	</test>
+	<test name="JCL_TEST_Java-Lang-Reflect">
+		<classes>
+			<class name="org.openj9.test.java.lang.reflect.Test_Array"/>
+			<class name="org.openj9.test.java.lang.reflect.Test_Executable"/>
+		</classes>
+	</test>
+	<test name="JCL_TEST_Java-Math">
+		<classes>
+			<class name="org.openj9.test.java.math.Test_BigDecimal"/>
+		</classes>
+	</test>
+	<test name="JCL_TEST_Java-Security">
+		<classes>
+			<class name="org.openj9.test.java.security.Test_MHLoaderConstraints"/>
+			<class name="org.openj9.test.java.security.DigestLoop"/>
+			<class name="org.openj9.test.java.security.OpenSSLInvalidCBCKeySizeTest"/>
+			<class name="org.openj9.test.java.security.OpenSSLInvalidGCMKeySizeTest"/>
+		</classes>
+	</test>
+	<test name="JCL_TEST_Java-Security_SM">
+		<!-- Tests that depend on SecurityManager -->
+		<classes>
+			<class name="org.openj9.test.java.security.Test_AccessController"/>
+			<class name="org.openj9.test.java.security.Test_AccessControlContext"/>
+		</classes>
+	</test>
+	<test name="JCL_TEST_IBM-VM">
+		<classes>
+			<class name="org.openj9.test.vm.Test_MsgHelp"/>
+		</classes>
+	</test>
+	<test name="JCL_TEST_IBM-VM_SM">
+		<!-- Tests that depend on SecurityManager -->
+		<classes>
+			<class name="org.openj9.test.vm.Test_VM"/>
+		</classes>
+	</test>
+	<test name="JCL_TEST_JITHelpers">
+		<classes>
+			<class name="org.openj9.test.com.ibm.jit.Test_JITHelpers"/>
+		</classes>
+	</test>
+	<test name="JCL_TEST_MathMethods">
+		<classes>
+			<class name="org.openj9.test.java.lang.Test_Math"/>
+		</classes>
+	</test>
+	<test name="JCL_TEST_Test-UnsafeFence">
+		<classes>
+			<class name="org.openj9.test.unsafe.fence.Test_UnsafeFence"/>
+		</classes>
+	</test>
+	<test name="JCL_TEST_Test-Defects">
+		<classes>
+			<class name="org.openj9.test.pmr.failures.Tests"/>
+		</classes>
+	</test>
+	<test name="JCL_TEST_Test-RunLast"> <!-- pass on 829 but fail on 929 -->
+		<classes>
+			<class name="org.openj9.test.runlast.Test_JavaNetWithSideEffectsShouldRunLast"/>
+		</classes>
+	</test>
+</suite>
+<!-- Suite -->

@@ -38,6 +38,10 @@
 #include "il/SymbolReference.hpp"
 #include "infra/Assert.hpp"
 
+#if defined(OSX)
+#include "env/j9method.h"
+#endif
+
 J9::ARM64::JNILinkage::JNILinkage(TR::CodeGenerator *cg)
    : J9::ARM64::PrivateLinkage(cg)
    {
@@ -375,15 +379,24 @@ size_t J9::ARM64::JNILinkage::buildJNIArgs(TR::Node *callNode, TR::RegisterDepen
    TR::Register *tempReg;
    int32_t argIndex = 0;
    int32_t numMemArgs = 0;
-   int32_t argSize = 0;
+   int32_t argOffset = 0;
    int32_t numIntegerArgs = 0;
    int32_t numFloatArgs = 0;
-   int32_t totalSize;
+   int32_t totalSize = 0;
    int32_t i;
 
    TR::Node *child;
    TR::DataType childType;
    TR::DataType resType = callNode->getType();
+
+#if defined(OSX)
+   TR::SymbolReference *methodSymRef = callNode->getSymbolReference();
+   TR::MethodSymbol *methodSymbol = methodSymRef->getSymbol()->castToMethodSymbol();
+   TR::Method *method = methodSymbol->getMethod();
+   const char *sig = method->signatureChars();
+   int32_t sigLen = method->signatureLength();
+   char *sigCursor = (char *)sig;
+#endif
 
    uint32_t firstArgumentChild = callNode->getFirstArgumentIndex();
    if (passThread)
@@ -412,20 +425,56 @@ size_t J9::ARM64::JNILinkage::buildJNIArgs(TR::Node *callNode, TR::RegisterDepen
          case TR::Int64:
          case TR::Address:
             if (numIntegerArgs >= properties.getNumIntArgRegs())
+               {
                numMemArgs++;
+#if defined(LINUX)
+               totalSize += 8;
+#elif defined(OSX)
+               TR::DataType nativeType = OMR::Symbol::convertSigCharToType(*sigCursor);
+               int32_t nativeTypeSize = TR::DataType::getSize(nativeType);
+               if (nativeTypeSize > 1)
+                  {
+                  totalSize = (totalSize + nativeTypeSize - 1) & ~(nativeTypeSize - 1);
+                  }
+               totalSize += nativeTypeSize;
+#else
+#error Unsupported platform
+#endif
+               }
             numIntegerArgs++;
             break;
 
          case TR::Float:
          case TR::Double:
             if (numFloatArgs >= properties.getNumFloatArgRegs())
-                  numMemArgs++;
+               {
+               numMemArgs++;
+#if defined(LINUX)
+               totalSize += 8;
+#elif defined(OSX)
+               if (childType == TR::Double)
+                  {
+                  totalSize = (totalSize + 7) & ~7; // adjust to 8-byte boundary
+                  totalSize += 8;
+                  }
+               else
+                  {
+                  totalSize += 4;
+                  }
+#else
+#error Unsupported platform
+#endif
+               }
             numFloatArgs++;
             break;
 
          default:
             TR_ASSERT(false, "Argument type %s is not supported\n", childType.toString());
          }
+
+#if defined(OSX)
+         sigCursor = nextSignatureArgument(sigCursor);
+#endif
       }
 
    // From here, down, any new stack allocations will expire / die when the function returns
@@ -438,7 +487,6 @@ size_t J9::ARM64::JNILinkage::buildJNIArgs(TR::Node *callNode, TR::RegisterDepen
       argMemReg = cg()->allocateRegister();
       }
 
-   totalSize = numMemArgs * 8;
    // align to 16-byte boundary
    totalSize = (totalSize + 15) & (~15);
 
@@ -451,9 +499,12 @@ size_t J9::ARM64::JNILinkage::buildJNIArgs(TR::Node *callNode, TR::RegisterDepen
       numIntegerArgs += 1;
       }
 
+#if defined(OSX)
+   sigCursor = (char *)sig;
+#endif
+
    for (i = firstArgumentChild; i < callNode->getNumChildren(); i++)
       {
-      TR::MemoryReference *mref = NULL;
       TR::Register *argRegister;
       TR::InstOpCode::Mnemonic op;
       bool           checkSplit = true;
@@ -509,16 +560,39 @@ size_t J9::ARM64::JNILinkage::buildJNIArgs(TR::Node *callNode, TR::RegisterDepen
             else
                {
                // numIntegerArgs >= properties.getNumIntArgRegs()
-               if (childType == TR::Address || childType == TR::Int64)
+               int offsetInc;
+#if defined(LINUX)
+               offsetInc = 8; // always 8-byte aligned
+               op = (childType == TR::Address || childType == TR::Int64) ?
+                    TR::InstOpCode::strimmx : TR::InstOpCode::strimmw;
+#elif defined(OSX)
+               TR::DataType nativeType = OMR::Symbol::convertSigCharToType(*sigCursor);
+               int32_t nativeTypeSize = TR::DataType::getSize(nativeType);
+               offsetInc = nativeTypeSize;
+               if (nativeTypeSize > 1)
                   {
-                  op = TR::InstOpCode::strpostx;
+                  argOffset = (argOffset + nativeTypeSize - 1) & ~(nativeTypeSize - 1);
                   }
-               else
+               switch (nativeTypeSize)
                   {
-                  op = TR::InstOpCode::strpostw;
+                  case 8:
+                     op = TR::InstOpCode::strimmx;
+                     break;
+                  case 4:
+                     op = TR::InstOpCode::strimmw;
+                     break;
+                  case 2:
+                     op = TR::InstOpCode::strhimm;
+                     break;
+                  case 1:
+                     op = TR::InstOpCode::strbimm;
+                     break;
                   }
-               mref = getOutgoingArgumentMemRef(argMemReg, argRegister, op, pushToMemory[argIndex++]);
-               argSize += 8; // always 8-byte aligned
+#else
+#error Unsupported platform
+#endif
+               getOutgoingArgumentMemRef(argMemReg, argOffset, argRegister, op, pushToMemory[argIndex++]);
+               argOffset += offsetInc;
                }
             numIntegerArgs++;
             break;
@@ -558,20 +632,36 @@ size_t J9::ARM64::JNILinkage::buildJNIArgs(TR::Node *callNode, TR::RegisterDepen
             else
                {
                // numFloatArgs >= properties.getNumFloatArgRegs()
+               int offsetInc;
                if (childType == TR::Double)
                   {
-                  op = TR::InstOpCode::vstrpostd;
+                  op = TR::InstOpCode::vstrimmd;
+                  offsetInc = 8;
+#if defined(OSX)
+                  argOffset = (argOffset + 7) & ~7; // adjust to 8-byte boundary
+#endif
                   }
                else
                   {
-                  op = TR::InstOpCode::vstrposts;
+                  op = TR::InstOpCode::vstrimms;
+#if defined(LINUX)
+                  offsetInc = 8;
+#elif defined(OSX)
+                  offsetInc = 4;
+#else
+#error Unsupported platform
+#endif
                   }
-               mref = getOutgoingArgumentMemRef(argMemReg, argRegister, op, pushToMemory[argIndex++]);
-               argSize += 8; // always 8-byte aligned
+               getOutgoingArgumentMemRef(argMemReg, argOffset, argRegister, op, pushToMemory[argIndex++]);
+               argOffset += offsetInc;
                }
             numFloatArgs++;
             break;
          } // end of switch
+
+#if defined(OSX)
+         sigCursor = nextSignatureArgument(sigCursor);
+#endif
       } // end of for
 
    for (int32_t i = TR::RealRegister::FirstGPR; i <= TR::RealRegister::LastGPR; ++i)
@@ -624,6 +714,14 @@ size_t J9::ARM64::JNILinkage::buildJNIArgs(TR::Node *callNode, TR::RegisterDepen
          // NULL dependency for non-preserved regs
          TR::addDependency(dependencies, NULL, (TR::RealRegister::RegNum)i, TR_FPR, cg());
          }
+      }
+
+   /* Spills all vector registers */
+   if (killsVectorRegisters())
+      {
+      TR::Register *tmpReg = cg()->allocateRegister();
+      dependencies->addPostCondition(tmpReg, TR::RealRegister::KillVectorRegs);
+      cg()->stopUsingRegister(tmpReg);
       }
 
    if (numMemArgs > 0)
@@ -864,13 +962,19 @@ TR::Instruction *J9::ARM64::JNILinkage::generateMethodDispatch(TR::Node *callNod
          reloType = TR_NoRelocation;
          TR_ASSERT(0, "JNI relocation not supported.");
          }
-      cg()->addExternalRelocation(new (trHeapMemory()) TR::BeforeBinaryEncodingExternalRelocation(
-                                                            firstInstruction,
-                                                            reinterpret_cast<uint8_t *>(callNode->getSymbolReference()),
-                                                            reinterpret_cast<uint8_t *>(callNode->getInlinedSiteIndex()),
-                                                            reloType, cg()),
-                                                          __FILE__,__LINE__, callNode);
 
+      TR_RelocationRecordInformation *info = new (comp()->trHeapMemory()) TR_RelocationRecordInformation();
+      info->data1 = 0;
+      info->data2 = reinterpret_cast<uintptr_t>(callNode->getSymbolReference());
+      info->data3 = static_cast<uintptr_t>(callNode->getInlinedSiteIndex());
+
+      cg()->addExternalRelocation(
+         new (trHeapMemory()) TR::BeforeBinaryEncodingExternalRelocation(
+            firstInstruction,
+            reinterpret_cast<uint8_t *>(info),
+            reloType,
+            cg()),
+         __FILE__,__LINE__, callNode);
       }
 
    // Add the first instruction of address materialization sequence to JNI call sites
@@ -924,10 +1028,13 @@ TR::Register *J9::ARM64::JNILinkage::buildDirectDispatch(TR::Node *callNode)
    cg()->machine()->setLinkRegisterKilled(true);
 
    const int maxRegisters = getProperties()._numAllocatableIntegerRegisters + getProperties()._numAllocatableFloatRegisters;
+   // Extra post dependency for killing vector registers (see KillVectorRegs)
+   const int extraPostReg = killsVectorRegisters() ? 1 : 0;
 #ifdef J9VM_INTERP_ATOMIC_FREE_JNI
-   const int maxPostRegisters = maxRegisters + 1;
+   // Extra post dependency for xzr
+   const int maxPostRegisters = maxRegisters + extraPostReg + 1;
 #else
-   const int maxPostRegisters = maxRegisters;
+   const int maxPostRegisters = maxRegisters + extraPostReg;
 #endif
    TR::RegisterDependencyConditions *deps = new (trHeapMemory()) TR::RegisterDependencyConditions(maxRegisters, maxPostRegisters, trMemory());
 

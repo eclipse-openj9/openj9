@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -209,7 +209,7 @@ static void reportHook(J9VMThread *curThread, char *name, char *format=NULL, ...
    if (  TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseHooks)
       || TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseHookDetails))
       {
-      TR_VerboseLog::vlogAcquire();
+      TR_VerboseLog::CriticalSection vlogLock;
       TR_VerboseLog::write(TR_Vlog_HK,"vmThread=%p hook %s ", curThread, name);
       if (format)
          {
@@ -219,7 +219,6 @@ static void reportHook(J9VMThread *curThread, char *name, char *format=NULL, ...
          va_end(args);
          }
       TR_VerboseLog::writeLine("");
-      TR_VerboseLog::vlogRelease();
       }
    }
 
@@ -229,7 +228,7 @@ static void reportHookFinished(J9VMThread *curThread, char *name, char *format=N
    TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
    if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseHookDetails))
       {
-      TR_VerboseLog::vlogAcquire();
+      TR_VerboseLog::CriticalSection vlogLock;
       TR_VerboseLog::writeLine(TR_Vlog_HD,"vmThread=%p hook %s finished ", curThread, name);
       if (format)
          {
@@ -238,7 +237,6 @@ static void reportHookFinished(J9VMThread *curThread, char *name, char *format=N
          j9jit_vprintf(jitConfig, format, args);
          va_end(args);
          }
-      TR_VerboseLog::vlogRelease();
       }
    }
 
@@ -248,13 +246,12 @@ static void reportHookDetail(J9VMThread *curThread, char *name, char *format, ..
    TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
    if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseHookDetails))
       {
-      TR_VerboseLog::vlogAcquire();
+      TR_VerboseLog::CriticalSection vlogLock;
       TR_VerboseLog::writeLine(TR_Vlog_HD,"vmThread=%p hook %s detail ", curThread, name);
       va_list args;
       va_start(args, format);
       j9jit_vprintf(jitConfig, format, args);
       va_end(args);
-      TR_VerboseLog::vlogRelease();
       }
    }
 
@@ -374,6 +371,8 @@ static uint32_t initializeSendTargetHelperFuncHashValueForSpreading(J9Method* me
    return hashValue;
    }
 
+static bool highCodeCacheOccupancyThresholdReached = false;
+
 static void jitHookInitializeSendTarget(J9HookInterface * * hook, UDATA eventNum, void * eventData, void * userData)
    {
    J9VMInitializeSendTargetEvent * event = (J9VMInitializeSendTargetEvent *)eventData;
@@ -445,6 +444,12 @@ static void jitHookInitializeSendTarget(J9HookInterface * * hook, UDATA eventNum
           )
          {
          count = 0;
+         }
+      else if (highCodeCacheOccupancyThresholdReached && !countInOptionSet && !TR::Options::getCountsAreProvidedByUser())
+         {
+         count = J9ROMMETHOD_HAS_BACKWARDS_BRANCHES(romMethod) ?
+                     TR::Options::getHighCodeCacheOccupancyBCount() :
+                     TR::Options::getHighCodeCacheOccupancyCount();
          }
       else if (TR::Options::sharedClassCache())
          {
@@ -1331,8 +1336,17 @@ static void jitMethodSampleInterrupt(J9VMThread* vmThread, IDATA handlerKey, voi
          }
 
 #if defined(J9VM_JIT_DYNAMIC_LOOP_TRANSFER)
-      if (!TR::Options::getCmdLineOptions()->getOption(TR_MimicInterpreterFrameShape) &&
-          !compInfo->getPersistentInfo()->getDisableFurtherCompilation())
+      if (!TR::Options::getCmdLineOptions()->getOption(TR_MimicInterpreterFrameShape)
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+          /* It's ok to not acquire the comp monitor here. Even if at this
+           * point a checkpoint isn't in progress but later it does, a
+           * compilation won't be started because of other places where the
+           * flag is checked with the monitor in hand. This is more of an
+           * optimization that statistically should be useful.
+           */
+          && !compInfo->isCheckpointInProgress()
+#endif
+          && !compInfo->getPersistentInfo()->getDisableFurtherCompilation())
          {
          static char *enableDebugDLT = feGetEnv("TR_DebugDLT");
          static J9Method *skipDLTMethod = NULL;
@@ -1377,8 +1391,17 @@ static void jitMethodSampleInterrupt(J9VMThread* vmThread, IDATA handlerKey, voi
             TR::Recompilation::sampleMethod(vmThread, vm, startPC, codeSize, walkState.pc, walkState.method, jitConfig->samplingTickCount);
          }
 #else // !J9VM_JIT_DYNAMIC_LOOP_TRANSFER
-      if (!TR::Options::getCmdLineOptions()->getOption(TR_MimicInterpreterFrameShape) &&
-          !compInfo->getPersistentInfo()->getDisableFurtherCompilation())
+      if (!TR::Options::getCmdLineOptions()->getOption(TR_MimicInterpreterFrameShape)
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+          /* It's ok to not acquire the comp monitor here. Even if at this
+           * point a checkpoint isn't in progress but later it does, a
+           * compilation won't be started because of other places where the
+           * flag is checked with the monitor in hand. This is more of an
+           * optimization that statistically should be useful.
+           */
+          && !compInfo->isCheckpointInProgress()
+#endif
+          && !compInfo->getPersistentInfo()->getDisableFurtherCompilation())
          {
          TR::Recompilation::sampleMethod(vmThread, vm, startPC, codeSize, walkState.pc, walkState.method, jitConfig->samplingTickCount);
          }
@@ -1807,6 +1830,13 @@ static void jitHookThreadDestroy(J9HookInterface * * hookInterface, UDATA eventN
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 static void jitHookPrepareCheckpoint(J9HookInterface * * hookInterface, UDATA eventNum, void * eventData, void * userData)
    {
+   J9VMClassesUnloadEvent * restoreEvent = (J9VMClassesUnloadEvent *)eventData;
+   J9VMThread * vmThread = restoreEvent->currentThread;
+   J9JavaVM * javaVM = vmThread->javaVM;
+   J9JITConfig * jitConfig = javaVM->jitConfig;
+
+   TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
+   compInfo->prepareForCheckpoint();
    }
 
 static void jitHookPrepareRestore(J9HookInterface * * hookInterface, UDATA eventNum, void * eventData, void * userData)
@@ -1814,6 +1844,7 @@ static void jitHookPrepareRestore(J9HookInterface * * hookInterface, UDATA event
    J9VMClassesUnloadEvent * restoreEvent = (J9VMClassesUnloadEvent *)eventData;
    J9VMThread * vmThread = restoreEvent->currentThread;
    J9JavaVM * javaVM = vmThread->javaVM;
+   J9JITConfig * jitConfig = javaVM->jitConfig;
 
    /* If the restored run does not allow further checkpoints, then
     * remove the portability restrictions on the target CPU (used
@@ -1824,6 +1855,9 @@ static void jitHookPrepareRestore(J9HookInterface * * hookInterface, UDATA event
       TR::Compiler->target.cpu = TR::CPU::detect(TR::Compiler->omrPortLib);
       jitConfig->targetProcessor = TR::Compiler->target.cpu.getProcessorDescription();
       }
+
+   TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
+   compInfo->prepareForRestore();
    }
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
@@ -4383,7 +4417,7 @@ static void samplingObservationsLogic(J9JITConfig * jitConfig, TR::CompilationIn
    {
    if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseHeartbeat))
       {
-      TR_VerboseLog::vlogAcquire();
+      TR_VerboseLog::CriticalSection vlogLock;
       TR_VerboseLog::writeLine(TR_Vlog_INFO,"<samplewindow intervalTicks=%u interpretedMethodSamples=%u",
                    jitConfig->samplingTickCount + 1 - compInfo->_stats._windowStartTick, compInfo->_stats._interpretedMethodSamples);
       TR_VerboseLog::writeLine(TR_Vlog_INFO,"  compiledMethodSamples=%u compiledMethodSamplesIgnored=%u",
@@ -4392,7 +4426,6 @@ static void samplingObservationsLogic(J9JITConfig * jitConfig, TR::CompilationIn
                    compInfo->_stats._sampleMessagesSent, compInfo->_stats._sampleMessagesReceived, compInfo->_stats._ticksInIdleMode);
       TR_VerboseLog::writeLine(TR_Vlog_INFO,"  methodsCompiledOnCount=%u methodsReachingSampleInterval=%u",
                    compInfo->_stats._methodsCompiledOnCount, compInfo->_stats._methodsReachingSampleInterval);
-      TR_VerboseLog::vlogRelease();
       }
 
    // sample tick is about to be incremented for the samples we're about to take
@@ -4423,6 +4456,7 @@ static int32_t startupPhaseId = 0;
 static bool firstIdleStateAfterStartup = false;
 static uint64_t timeToAllocateTrackingHT = 0xffffffffffffffff; // never
 
+#define GCR_HYSTERESIS 100
 
 static void jitStateLogic(J9JITConfig * jitConfig, TR::CompilationInfo * compInfo, uint32_t diffTime)
    {
@@ -4554,7 +4588,6 @@ static void jitStateLogic(J9JITConfig * jitConfig, TR::CompilationInfo * compInf
    //t= 98186 oldState=3 newState=2 cSamples=125 iSamples= 11 comp=239 recomp=  4, Q_SZ=114
 
    static uint64_t lastTimeInStartupMode = 0;
-   #define GCR_HYSTERESIS 100
 
    // current JPQ implementation does not use this, but it may need to be re-animated shortly so leaving commented out for now
    /*static char *disableJProfilingRecomp = feGetEnv("TR_DisableJProfilingRecomp");
@@ -5153,7 +5186,7 @@ static void DoCalculateOverallCompCPUUtilization(TR::CompilationInfo *compInfo, 
    // Print the overall comp CPU utilization if the right verbose option is specified
    if (TR::Options::isAnyVerboseOptionSet(TR_VerboseCompilationThreads, TR_VerboseCompilationThreadsDetails))
       {
-      TR_VerboseLog::vlogAcquire();
+      TR_VerboseLog::CriticalSection vlogLock;
       TR_VerboseLog::write(TR_Vlog_INFO, "t=%6u TotalCompCpuUtil=%3d%%.", static_cast<uint32_t>(crtTime), totalCompCPUUtilization);
       TR::CompilationInfoPerThread * const *arrayOfCompInfoPT = compInfo->getArrayOfCompilationInfoPerThread();
       for (int32_t i = 0; i < compInfo->getNumUsableCompilationThreads(); i++)
@@ -5167,7 +5200,6 @@ static void DoCalculateOverallCompCPUUtilization(TR::CompilationInfo *compInfo, 
                cpuUtil.getLowResolutionClockAtLastUpdate());
          }
       TR_VerboseLog::writeLine("");
-      TR_VerboseLog::vlogRelease();
       }
    }
 
@@ -5862,7 +5894,7 @@ static int32_t J9THREAD_PROC samplerThreadProc(void * entryarg)
       char timestamp[32];
       bool incomplete;
       omrstr_ftime_ex(timestamp, sizeof(timestamp), "%b %d %H:%M:%S %Y", persistentInfo->getStartTime(), OMRSTR_FTIME_FLAG_LOCAL);
-      TR_VerboseLog::vlogAcquire();
+      TR_VerboseLog::CriticalSection vlogLock;
       TR_VerboseLog::writeLine(TR_Vlog_INFO, "StartTime: %s", timestamp);
       uint64_t phMemAvail = compInfo->computeAndCacheFreePhysicalMemory(incomplete);
       if (phMemAvail != OMRPORT_MEMINFO_NOT_AVAILABLE)
@@ -5890,6 +5922,13 @@ static int32_t J9THREAD_PROC samplerThreadProc(void * entryarg)
             javacoreData->numAotDataEntries,
             javacoreData->numJitHints,
             javacoreData->numJitProfiles);
+#if defined(OMR_GC_COMPRESSED_POINTERS)
+         const TR_AOTHeader *hdrInCache = TR_SharedCacheRelocationRuntime::getStoredAOTHeaderWithConfig(vm->sharedClassConfig, samplerThread);
+         if (NULL != hdrInCache)
+            {
+            TR_VerboseLog::writeLine(TR_Vlog_INFO, "\tAOT header compressedRefs shiftAmount=%u", hdrInCache->compressedPointerShift);
+            }
+#endif /* OMR_GC_COMPRESSED_POINTERS */
          }
 #endif
       if (TR::Options::isAnyVerboseOptionSet(TR_VerboseHWProfiler))
@@ -5920,7 +5959,6 @@ static int32_t J9THREAD_PROC samplerThreadProc(void * entryarg)
          {
          TR_VerboseLog::writeLine(TR_Vlog_INFO, "CPU entitlement = %3.2f", compInfo->getJvmCpuEntitlement());
          }
-      TR_VerboseLog::vlogRelease();
       } // if (TR::Options::isAnyVerboseOptionSet())
 
    if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableScorchingSampleThresholdScalingBasedOnNumProc))
@@ -6129,7 +6167,7 @@ static int32_t J9THREAD_PROC samplerThreadProc(void * entryarg)
                {
                bool incomplete;
                TR_PersistentMemory *persistentMemory = compInfo->persistentMemory();
-               TR_VerboseLog::vlogAcquire();
+               TR_VerboseLog::CriticalSection vlogLock;
                uint64_t phMemAvail = compInfo->computeAndCacheFreePhysicalMemory(incomplete);
                if (phMemAvail != OMRPORT_MEMINFO_NOT_AVAILABLE)
                   TR_VerboseLog::writeLine(TR_Vlog_INFO, "Free Physical Memory: %lld MB %s", phMemAvail >> 20, incomplete ? "estimated" : "");
@@ -6144,7 +6182,6 @@ static int32_t J9THREAD_PROC samplerThreadProc(void * entryarg)
                TR_RuntimeAssumptionTable * rat = persistentInfo->getRuntimeAssumptionTable();
                for (int32_t i=0; i < LastAssumptionKind; i++)
                   TR_VerboseLog::writeLine(TR_Vlog_MEMORY,"\tAssumptionType=%d allocated=%d reclaimed=%d", i, rat->getAssumptionCount(i), rat->getReclaimedAssumptionCount(i));
-               TR_VerboseLog::vlogRelease();
                }
 #if defined(WINDOWS) && defined(TR_TARGET_32BIT)
             if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseVMemAvailable))
@@ -6187,6 +6224,23 @@ static int32_t J9THREAD_PROC samplerThreadProc(void * entryarg)
                compInfo->getCpuUtil()->updateCpuUsageCircularBuffer(jitConfig);
             }
 
+         // Determine if we need to turn GCR counting off. GCR counting is known to have high overhead.
+         // If more than a certain number of GCR induced compilations is queued, turn off counting.
+         if (persistentInfo->_countForRecompile) // No need to check if GCR is disabled
+            {
+            if (TR::Options::getAOTCmdLineOptions()->getOption(TR_EnableMultipleGCRPeriods) ||
+                TR::Options::getJITCmdLineOptions()->getOption(TR_EnableMultipleGCRPeriods))
+               {
+               if (compInfo->getNumGCRRequestsQueued() > TR::Options::_GCRQueuedThresholdForCounting + GCR_HYSTERESIS)
+                  {
+                  persistentInfo->_countForRecompile = 0; // disable counting
+                  // write a message in the vlog
+                  if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJitState, TR_VerbosePerformance))
+                     TR_VerboseLog::writeLineLocked(TR_Vlog_INFO,"t=%6u GCR disabled; GCR queued=%d", (uint32_t)crtTime, compInfo->getNumGCRRequestsQueued());
+                  }
+               }
+            }
+
          // sample every _classLoadingPhaseInterval (i.e. 500 ms)
          static uint64_t lastTimeClassLoadPhaseAnalyzed = 0;
          uint32_t diffTime = (uint32_t)(crtTime - lastTimeClassLoadPhaseAnalyzed);
@@ -6224,6 +6278,27 @@ static int32_t J9THREAD_PROC samplerThreadProc(void * entryarg)
 
             // compute jit state
             jitStateLogic(jitConfig, compInfo, diffTime); // Update JIT state before going to sleep
+
+            // detect high code cache occupancy
+            TR::CodeCacheManager *manager = TR::CodeCacheManager::instance();
+            size_t usedCacheSize = manager->getCurrTotalUsedInBytes();
+            size_t threshold = manager->codeCacheConfig().highCodeCacheOccupancyThresholdInBytes();
+            if ((usedCacheSize > threshold) && !highCodeCacheOccupancyThresholdReached)
+               {
+               highCodeCacheOccupancyThresholdReached = true;
+               if (TR::Options::getCmdLineOptions()->isAnyVerboseOptionSet(TR_VerbosePerformance))
+                  {
+                  TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "t=%6u JIT entered high code cache occupancy state", (uint32_t)crtTime);
+                  }
+               }
+            else if ((usedCacheSize <= threshold) && highCodeCacheOccupancyThresholdReached)
+               {
+               highCodeCacheOccupancyThresholdReached = false;
+               if (TR::Options::getCmdLineOptions()->isAnyVerboseOptionSet(TR_VerbosePerformance))
+                  {
+                  TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "t=%6u JIT exited high code cache occupancy state", (uint32_t)crtTime);
+                  }
+               }
 
 #if defined(J9VM_INTERP_PROFILING_BYTECODES)
             // iProfilerActivationLogic must stay after classLoadPhaseLogic and jitStateLogic

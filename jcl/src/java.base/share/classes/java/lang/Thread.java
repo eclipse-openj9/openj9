@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar18-SE & !OJDKTHREAD_SUPPORT]*/
+/*[INCLUDE-IF Sidecar18-SE & !OPENJDK_THREAD_SUPPORT]*/
 /*******************************************************************************
  * Copyright (c) 1998, 2022 IBM Corp. and others
  *
@@ -38,6 +38,8 @@ import jdk.internal.reflect.CallerSensitive;
 /*[ELSE] JAVA_SPEC_VERSION >= 11 */
 import sun.reflect.CallerSensitive;
 /*[ENDIF] JAVA_SPEC_VERSION >= 11 */
+import java.lang.reflect.Method;
+import sun.nio.ch.Interruptible;
 
 /**
  *	A Thread is a unit of concurrent execution in Java. It has its own call stack
@@ -111,7 +113,7 @@ public class Thread implements Runnable {
 	private Object lock = new ThreadLock();
 
 	ThreadLocal.ThreadLocalMap inheritableThreadLocals;
-	private volatile sun.nio.ch.Interruptible blockOn;
+	private volatile Interruptible blockOn;
 
 	int threadLocalsIndex;
 	int inheritableThreadLocalsIndex;
@@ -133,8 +135,10 @@ public class Thread implements Runnable {
 	int threadLocalRandomProbe;
 	int threadLocalRandomSecondarySeed;
 
+	private static final StackTraceElement[] EMPTY_STACK_TRACE = new StackTraceElement[0];
+
 /**
- * 	Constructs a new Thread with no runnable object and a newly generated name.
+ * Constructs a new Thread with no runnable object and a newly generated name.
  * The new Thread will belong to the same ThreadGroup as the Thread calling
  * this constructor.
  *
@@ -187,7 +191,7 @@ private Thread(String vmName, Object vmThreadGroup, int vmPriority, boolean vmIs
 	/*[PR 1FEVFSU] The rest of the configuration/initialization is shared between this constructor and the public one */
 	initialize(booting, threadGroup, null, null, true);	// no parent Thread
 	/*[PR 115667, CMVC 94448] In 1.5 and CDC/Foundation 1.1, thread is added to ThreadGroup when started */
- 	this.group.add(this);
+	this.group.add(this);
 
 	/*[PR 100718] Initialize System.in after the main thread */
 	if (booting) {
@@ -250,7 +254,7 @@ void completeInitialization() {
 }
 
 /**
- * 	Constructs a new Thread with a runnable object and a newly generated name.
+ * Constructs a new Thread with a runnable object and a newly generated name.
  * The new Thread will belong to the same ThreadGroup as the Thread calling
  * this constructor.
  *
@@ -300,7 +304,7 @@ public Thread(Runnable runnable, String threadName) {
 
 
 /**
- * 	Constructs a new Thread with no runnable object and the name provided.
+ * Constructs a new Thread with no runnable object and the name provided.
  * The new Thread will belong to the same ThreadGroup as the Thread calling
  * this constructor.
  *
@@ -314,7 +318,7 @@ public Thread(String threadName) {
 }
 
 /**
- * 	Constructs a new Thread with a runnable object and a newly generated name.
+ * Constructs a new Thread with a runnable object and a newly generated name.
  * The new Thread will belong to the ThreadGroup passed as parameter.
  *
  * @param		group			ThreadGroup to which the new Thread will belong
@@ -335,7 +339,7 @@ public Thread(ThreadGroup group, Runnable runnable) {
 }
 
 /**
- * 	Constructs a new Thread with a runnable object, the given name and
+ * Constructs a new Thread with a runnable object, the given name and
  * belonging to the ThreadGroup passed as parameter.
  *
  * @param		group			ThreadGroup to which the new Thread will belong
@@ -385,7 +389,7 @@ public Thread(ThreadGroup group, Runnable runnable, String threadName, long stac
 /*[ENDIF]*/
 
 /**
- * 	Constructs a new Thread with a runnable object, the given name and
+ * Constructs a new Thread with a runnable object, the given name and
  * belonging to the ThreadGroup passed as parameter.
  *
  * @param		group			ThreadGroup to which the new Thread will belong
@@ -419,7 +423,7 @@ private Thread(ThreadGroup group, Runnable runnable, String threadName, AccessCo
 	if (threadName==null) throw new NullPointerException();
 	this.name = threadName;		// We avoid the public API 'setName', since it does redundant work (checkAccess)
 	this.runnable = runnable;	// No API available here, so just direct access to inst. var.
-	Thread currentThread  = currentThread();
+	Thread currentThread = currentThread();
 
 	this.isDaemon = currentThread.isDaemon(); // We avoid the public API 'setDaemon', since it does redundant work (checkAccess)
 
@@ -445,7 +449,7 @@ private Thread(ThreadGroup group, Runnable runnable, String threadName, AccessCo
 }
 
 /**
- * 	Initialize the thread according to its parent Thread and the ThreadGroup
+ * Initialize the thread according to its parent Thread and the ThreadGroup
  * where it should be added.
  *
  * @param		booting					Indicates if the JVM is booting up, i.e. if the main thread is being attached
@@ -478,20 +482,21 @@ private void initialize(boolean booting, ThreadGroup threadGroup, Thread parentT
 		/*[PR CMVC 90230] enableContextClassLoaderOverride check added in 1.5 */
 		@SuppressWarnings("removal")
 		final SecurityManager sm = System.getSecurityManager();
-		final Class implClass = getClass();
-		final Class thisClass = Thread.class;
-		if (sm != null && implClass != thisClass) {
-			boolean override = ((Boolean)AccessController.doPrivileged(new PrivilegedAction() {
-				public Object run() {
+		final Class<?> implClass = getClass();
+		final Class<?> thisClass = Thread.class;
+		if ((sm != null) && (implClass != thisClass)) {
+			boolean override = AccessController.doPrivileged(new PrivilegedAction<Boolean>() {
+				@Override
+				public Boolean run() {
 					try {
-						java.lang.reflect.Method method = implClass.getMethod("getContextClassLoader", new Class[0]); //$NON-NLS-1$
+						Method method = implClass.getMethod("getContextClassLoader"); //$NON-NLS-1$
 						if (method.getDeclaringClass() != thisClass) {
 							return Boolean.TRUE;
 						}
 					} catch (NoSuchMethodException e) {
 					}
 					try {
-						java.lang.reflect.Method method = implClass.getDeclaredMethod("setContextClassLoader", new Class[]{ClassLoader.class}); //$NON-NLS-1$
+						Method method = implClass.getDeclaredMethod("setContextClassLoader", ClassLoader.class); //$NON-NLS-1$
 						if (method.getDeclaringClass() != thisClass) {
 							return Boolean.TRUE;
 						}
@@ -499,7 +504,7 @@ private void initialize(boolean booting, ThreadGroup threadGroup, Thread parentT
 					}
 					return Boolean.FALSE;
 				}
-			})).booleanValue();
+			}).booleanValue();
 			if (override) {
 				sm.checkPermission(com.ibm.oti.util.RuntimePermissions.permissionEnableContextClassLoaderOverride);
 			}
@@ -534,7 +539,7 @@ private void initialize(boolean booting, ThreadGroup threadGroup, Thread parentT
 }
 
 /**
- * 	Constructs a new Thread with no runnable object, the given name and
+ * Constructs a new Thread with no runnable object, the given name and
  * belonging to the ThreadGroup passed as parameter.
  *
  * @param		group			ThreadGroup to which the new Thread will belong
@@ -584,7 +589,7 @@ public final void checkAccess() {
 }
 
 /**
- * 	Returns the number of stack frames in this thread.
+ * Returns the number of stack frames in this thread.
  *
  * @return		Number of stack frames
  *
@@ -617,7 +622,7 @@ public static native Thread currentThread();
 
 /*[IF JAVA_SPEC_VERSION < 11]*/
 /**
- * 	Destroys the receiver without any monitor cleanup. Not implemented.
+ * Destroys the receiver without any monitor cleanup. Not implemented.
  *
  * @deprecated May cause deadlocks.
  */
@@ -633,14 +638,14 @@ public void destroy() {
 /*[ENDIF] JAVA_SPEC_VERSION < 11 */
 
 /**
- * 	Prints a text representation of the stack for this Thread.
+ * Prints a text representation of the stack for this Thread.
  */
 public static void dumpStack() {
 	new Throwable().printStackTrace();
 }
 
 /**
- * 	Copies an array with all Threads which are in the same ThreadGroup as
+ * Copies an array with all Threads which are in the same ThreadGroup as
  * the receiver - and subgroups - into the array <code>threads</code>
  * passed as parameter. If the array passed as parameter is too small no
  * exception is thrown - the extra elements are simply not copied.
@@ -661,7 +666,7 @@ public static int enumerate(Thread[] threads) {
 
 
 /**
- * 	Returns the context ClassLoader for the receiver.
+ * Returns the context ClassLoader for the receiver.
  *
  * @return		ClassLoader		The context ClassLoader
  *
@@ -740,9 +745,9 @@ public void interrupt() {
 		}
 	}
 
-	synchronized(lock) {
+	synchronized (lock) {
 		interruptImpl();
-		sun.nio.ch.Interruptible localBlockOn = blockOn;
+		Interruptible localBlockOn = blockOn;
 		if (localBlockOn != null) {
 			localBlockOn.interrupt(this);
 		}
@@ -787,7 +792,7 @@ private native void interruptImpl();
  * @see			Thread#start
  */
 public final boolean isAlive() {
-	synchronized(lock) {
+	synchronized (lock) {
 		/*[PR CMVC 88976] the Thread is alive until cleanup() is called */
 		return threadRef != NO_REF;
 	}
@@ -994,7 +999,7 @@ public void run() {
 }
 
 /**
- * 	Set the context ClassLoader for the receiver.
+ * Set the context ClassLoader for the receiver.
  *
  * @param		cl		The context ClassLoader
  *
@@ -1172,26 +1177,23 @@ public synchronized void start() {
 	 *
 	 * Release the lock before calling threadgroup's remove method for this thread.
 	/*[ENDIF]*/
+	if (started) {
+		/*[MSG "K0341", "Thread is already started"]*/
+		throw new IllegalThreadStateException(com.ibm.oti.util.Msg.getString("K0341")); //$NON-NLS-1$
+	}
+	/*[PR 115667, CMVC 94448] In 1.5, thread is added to ThreadGroup when started */
+	group.add(this);
 
 	try {
-		synchronized(lock) {
-			if (started) {
-				/*[MSG "K0341", "Thread is already started"]*/
-				throw new IllegalThreadStateException(com.ibm.oti.util.Msg.getString("K0341")); //$NON-NLS-1$
-			}
-
-			/*[PR 115667, CMVC 94448] In 1.5, thread is added to ThreadGroup when started */
-			group.add(this);
-
+		synchronized (lock) {
 			startImpl();
-
 			success = true;
 		}
- 	} finally {
- 		if (!success && !started) {
- 	 		group.remove(this);
- 		}
- 	}
+	} finally {
+		if (!success) {
+			group.remove(this);
+		}
+	}
 }
 
 private native void startImpl();
@@ -1206,7 +1208,9 @@ private native void startImpl();
  *
  * @deprecated
  */
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 18]*/
+@Deprecated(forRemoval=true, since="1.2")
+/*[ELSEIF JAVA_SPEC_VERSION >= 9]*/
 @Deprecated(forRemoval=false, since="1.2")
 /*[ELSE]*/
 @Deprecated
@@ -1240,16 +1244,17 @@ public final void stop(Throwable throwable) {
 private final synchronized void stopWithThrowable(Throwable throwable) {
 	checkAccess();
 	/*[PR 95390]*/
-	if (currentThread() != this || !(throwable instanceof ThreadDeath)) {
+	if ((currentThread() != this) || !(throwable instanceof ThreadDeath)) {
+		@SuppressWarnings("removal")
 		SecurityManager currentManager = System.getSecurityManager();
-		if (currentManager != null)	{
+		if (currentManager != null) {
 			currentManager.checkPermission(SecurityConstants.STOP_THREAD_PERMISSION);
 		}
 	}
 
-	synchronized(lock) {
-		if (throwable != null){
-			if (!started){
+	synchronized (lock) {
+		if (throwable != null) {
+			if (!started) {
 				/* [PR CMVC 179978] Java7:JCK:java_lang.Thread fails in all plat*/
 				/*
 				 * if the thread has not yet been simply store the fact that stop has been called
@@ -1260,8 +1265,9 @@ private final synchronized void stopWithThrowable(Throwable throwable) {
 				/* thread was started so do the full stop */
 				stopImpl(throwable);
 			}
+		} else {
+			throw new NullPointerException();
 		}
-		else throw new NullPointerException();
 	}
 }
 
@@ -1297,9 +1303,10 @@ private native void stopImpl(Throwable throwable);
 public final void suspend() {
 	checkAccess();
 	/*[PR 106321]*/
-	if (currentThread() == this) suspendImpl();
-	else {
-		synchronized( lock ) {
+	if (currentThread() == this) {
+		suspendImpl();
+	} else {
+		synchronized (lock) {
 			suspendImpl();
 		}
 	}
@@ -1350,14 +1357,14 @@ public static native boolean holdsLock(Object object);
 /*[IF JAVA_SPEC_VERSION >= 11]*/
 static
 /*[ENDIF] JAVA_SPEC_VERSION >= 11 */
-void blockedOn(sun.nio.ch.Interruptible interruptible) {
+void blockedOn(Interruptible interruptible) {
 	Thread currentThread;
 	/*[IF JAVA_SPEC_VERSION >= 11]*/
 	currentThread = currentThread();
 	/*[ELSE] JAVA_SPEC_VERSION >= 11
 	currentThread = this;
 	/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
-	synchronized(currentThread.lock) {
+	synchronized (currentThread.lock) {
 		currentThread.blockOn = interruptible;
 	}
 }
@@ -1379,14 +1386,15 @@ public StackTraceElement[] getStackTrace() {
 	if (Thread.currentThread() != this) {
 		@SuppressWarnings("removal")
 		SecurityManager security = System.getSecurityManager();
-		if (security != null)
+		if (security != null) {
 			security.checkPermission(SecurityConstants.GET_STACK_TRACE_PERMISSION); //$NON-NLS-1$
+		}
 	}
 	Throwable t;
 
-	synchronized(lock) {
+	synchronized (lock) {
 		if (!isAlive()) {
-			return new StackTraceElement[0];
+			return EMPTY_STACK_TRACE;
 		}
 		t = getStackTraceImpl();
 	}
@@ -1400,7 +1408,7 @@ public StackTraceElement[] getStackTrace() {
  * @return an array of StackTraceElement
  *
  * @throws SecurityException if the RuntimePermission "getStackTrace" is not allowed, or the
- * 		RuntimePermission "modifyThreadGroup" is not allowed
+ *      RuntimePermission "modifyThreadGroup" is not allowed
  *
  * @see #getStackTrace()
  */
@@ -1415,8 +1423,8 @@ public static Map<Thread, StackTraceElement[]> getAllStackTraces() {
 	int count = systemThreadGroup.activeCount() + 20;
 	Thread[] threads = new Thread[count];
 	count = systemThreadGroup.enumerate(threads);
-	java.util.Map result = new java.util.HashMap(count*4/3);
-	for (int i=0; i<count; i++) {
+	Map<Thread, StackTraceElement[]> result = new java.util.HashMap<>(count);
+	for (int i = 0; i < count; i++) {
 		result.put(threads[i], threads[i].getStackTrace());
 	}
 	return result;
@@ -1481,7 +1489,7 @@ public static UncaughtExceptionHandler getDefaultUncaughtExceptionHandler() {
 }
 
 /**
- * Set the UncaughtExceptionHandler used for new  Threads.
+ * Set the UncaughtExceptionHandler used for new Threads.
  *
  * @param handler the UncaughtExceptionHandler to set
  *

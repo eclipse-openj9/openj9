@@ -159,10 +159,10 @@ jvmtiGetThreadGroupChildren(jvmtiEnv* env,
 		rc = getCurrentVMThread(vm, &currentThread);
 		if (JVMTI_ERROR_NONE == rc) {
 			j9object_t threadGroupObject = NULL;
-#if !defined(J9VM_OPT_OJDK_THREAD_SUPPORT)
+#if !defined(J9VM_OPT_OPENJDK_THREAD_SUPPORT)
 			j9object_t childrenThreadsLock = NULL;
 			j9object_t childrenGroupsLock = NULL;
-#endif /* !defined(J9VM_OPT_OJDK_THREAD_SUPPORT) */
+#endif /* !defined(J9VM_OPT_OPENJDK_THREAD_SUPPORT) */
 			jthreadGroup *groups = NULL;
 			jint numGroups = 0;
 			jthread *threads = NULL;
@@ -178,16 +178,16 @@ jvmtiGetThreadGroupChildren(jvmtiEnv* env,
 			
 			/* Construct the Children Groups array under a lock */
 			threadGroupObject = *((j9object_t*)group);
-#if defined(J9VM_OPT_OJDK_THREAD_SUPPORT)
+#if defined(J9VM_OPT_OPENJDK_THREAD_SUPPORT)
 			threadGroupObject = (j9object_t)vmFuncs->objectMonitorEnter(currentThread, threadGroupObject);
 			if (J9_OBJECT_MONITOR_ENTER_FAILED((UDATA)threadGroupObject)) {
-#else /* defined(J9VM_OPT_OJDK_THREAD_SUPPORT) */
+#else /* defined(J9VM_OPT_OPENJDK_THREAD_SUPPORT) */
 			childrenGroupsLock = J9VMJAVALANGTHREADGROUP_CHILDRENGROUPSLOCK(currentThread, threadGroupObject);
 			childrenGroupsLock = (j9object_t)vmFuncs->objectMonitorEnter(currentThread, childrenGroupsLock);
 			/* The threadGroupObject has to be reobtained as it might have been GC'ed while waiting for the lock */
 			threadGroupObject = *((j9object_t*)group);
 			if (J9_OBJECT_MONITOR_ENTER_FAILED((UDATA)childrenGroupsLock)) {
-#endif /* defined(J9VM_OPT_OJDK_THREAD_SUPPORT) */
+#endif /* defined(J9VM_OPT_OPENJDK_THREAD_SUPPORT) */
 				rc = JVMTI_ERROR_OUT_OF_MEMORY;
 				goto done;
 			}
@@ -207,24 +207,24 @@ jvmtiGetThreadGroupChildren(jvmtiEnv* env,
 				}
 			}
 
-#if defined(J9VM_OPT_OJDK_THREAD_SUPPORT)
+#if defined(J9VM_OPT_OPENJDK_THREAD_SUPPORT)
 			vmFuncs->objectMonitorExit(currentThread, threadGroupObject);
-#else /* defined(J9VM_OPT_OJDK_THREAD_SUPPORT) */
+#else /* defined(J9VM_OPT_OPENJDK_THREAD_SUPPORT) */
 			vmFuncs->objectMonitorExit(currentThread, childrenGroupsLock);
-#endif /* defined(J9VM_OPT_OJDK_THREAD_SUPPORT) */
+#endif /* defined(J9VM_OPT_OPENJDK_THREAD_SUPPORT) */
 
 			/* Construct the Children Threads array under a lock */
 			threadGroupObject = *((j9object_t*)group);
-#if defined(J9VM_OPT_OJDK_THREAD_SUPPORT)
+#if defined(J9VM_OPT_OPENJDK_THREAD_SUPPORT)
 			threadGroupObject = (j9object_t)vmFuncs->objectMonitorEnter(currentThread, threadGroupObject);
 			if (J9_OBJECT_MONITOR_ENTER_FAILED((UDATA)threadGroupObject)) {
-#else /* defined(J9VM_OPT_OJDK_THREAD_SUPPORT) */
+#else /* defined(J9VM_OPT_OPENJDK_THREAD_SUPPORT) */
 			childrenThreadsLock = J9VMJAVALANGTHREADGROUP_CHILDRENTHREADSLOCK(currentThread, threadGroupObject);
 			childrenThreadsLock = (j9object_t)vmFuncs->objectMonitorEnter(currentThread, childrenThreadsLock);
 			/* The threadGroupObject has to be reobtained as it might have been GC'ed while waiting for the lock */
 			threadGroupObject = *((j9object_t*)group);
-			if (J9_OBJECT_MONITOR_ENTER_FAILED((UDATA)childrenGroupsLock)) {
-#endif /* defined(J9VM_OPT_OJDK_THREAD_SUPPORT) */
+			if (J9_OBJECT_MONITOR_ENTER_FAILED((UDATA)childrenThreadsLock)) {
+#endif /* defined(J9VM_OPT_OPENJDK_THREAD_SUPPORT) */
 				rc = JVMTI_ERROR_OUT_OF_MEMORY;
 				j9mem_free_memory(groups);
 				goto done;
@@ -258,11 +258,11 @@ jvmtiGetThreadGroupChildren(jvmtiEnv* env,
 				rv_groups = groups; 
 			}
 
-#if defined(J9VM_OPT_OJDK_THREAD_SUPPORT)
+#if defined(J9VM_OPT_OPENJDK_THREAD_SUPPORT)
 			vmFuncs->objectMonitorExit(currentThread, threadGroupObject);
-#else /* defined(J9VM_OPT_OJDK_THREAD_SUPPORT) */
+#else /* defined(J9VM_OPT_OPENJDK_THREAD_SUPPORT) */
 			vmFuncs->objectMonitorExit(currentThread, childrenThreadsLock);
-#endif /* defined(J9VM_OPT_OJDK_THREAD_SUPPORT) */
+#endif /* defined(J9VM_OPT_OPENJDK_THREAD_SUPPORT) */
 
 done:
 			vmFuncs->internalExitVMToJNI(currentThread);
@@ -283,6 +283,3 @@ done:
 	}
 	TRACE_JVMTI_RETURN(jvmtiGetThreadGroupChildren);
 }
-
-
-

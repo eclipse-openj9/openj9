@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -398,7 +398,7 @@ UDATA jitX86Handler(J9VMThread* vmThread, U_32 sigType, void* sigInfo)
 					}
 				}
 
-				stackMap = jitConfig->jitGetStackMapFromPC(vmThread, exceptionTable, (UDATA) (eip + 1));
+				stackMap = jitConfig->jitGetStackMapFromPC(vmThread, vmThread->javaVM, exceptionTable, (UDATA) (eip + 1));
 				if (stackMap ) {
 					registerMap = jitConfig->getJitRegisterMap(exceptionTable, stackMap);
 					*espPtr += (((registerMap >> 16) & 0xFF) * sizeof(UDATA));

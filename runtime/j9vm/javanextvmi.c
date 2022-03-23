@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2021 IBM Corp. and others
+ * Copyright (c) 2018, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -114,11 +114,13 @@ JVM_GetExtendedNPEMessage(JNIEnv *env, jthrowable throwableObj)
 		J9InternalVMFunctions const * const vmFuncs = vm->internalVMFunctions;
 		char *npeMsg = NULL;
 		GetStackTraceElementUserData userData = {0};
+		/* If -XX:+ShowHiddenFrames option has not been set, skip hidden method frames */
+		UDATA skipHiddenFrames = J9_ARE_NO_BITS_SET(vm->runtimeFlags, J9_RUNTIME_SHOW_HIDDEN_FRAMES);
 
 		Trc_SC_GetExtendedNPEMessage_Entry2(vmThread, throwableObj);
 		vmFuncs->internalEnterVMFromJNI(vmThread);
 		userData.bytecodeOffset = UDATA_MAX;
-		vmFuncs->iterateStackTrace(vmThread, (j9object_t*)throwableObj, getStackTraceElementIterator, &userData, TRUE);
+		vmFuncs->iterateStackTrace(vmThread, (j9object_t*)throwableObj, getStackTraceElementIterator, &userData, TRUE, skipHiddenFrames);
 		if ((NULL != userData.romClass)
 			&& (NULL != userData.romMethod)
 			&& (UDATA_MAX != userData.bytecodeOffset)
@@ -181,7 +183,7 @@ JVM_IsFinalizationEnabled(JNIEnv *env)
 {
 	jboolean isFinalizationEnabled = JNI_TRUE;
 	J9VMThread *currentThread = (J9VMThread*)env;
-	if (J9_ARE_ANY_BITS_SET(currentThread->javaVM->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_DISABLE_FINALIZATION)) {
+	if (J9_ARE_ANY_BITS_SET(currentThread->javaVM->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_DISABLE_FINALIZATION)) {
 		isFinalizationEnabled = JNI_FALSE;
 	}
 	return isFinalizationEnabled;
@@ -191,5 +193,13 @@ JNIEXPORT void JNICALL
 JVM_ReportFinalizationComplete(JNIEnv *env, jobject obj)
 {
 	assert(!"JVM_ReportFinalizationComplete unimplemented");
+}
+#endif /* JAVA_SPEC_VERSION >= 18 */
+
+#if JAVA_SPEC_VERSION >= 19
+JNIEXPORT void JNICALL
+JVM_LoadZipLibrary(void)
+{
+	assert(!"JVM_LoadZipLibrary unimplemented");
 }
 #endif /* JAVA_SPEC_VERSION >= 18 */

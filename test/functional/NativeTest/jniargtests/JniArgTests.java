@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2004, 2019 IBM Corp. and others
+ * Copyright (c) 2004, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2786,12 +2786,10 @@ public class JniArgTests {
 			logRetValError("Return value error:  nativeZIZIZIZIZIrZ got: " + retval_boolean + " expected: " + test_jboolean[0]);
 		}
 		
-		
 		retval_boolean = nativeIZIZIZIZIZrZ(test_jint[1], test_jboolean[1], test_jint[2], test_jboolean[0], test_jint[3], test_jboolean[1], test_jint[4], test_jboolean[0], test_jint[5], test_jboolean[1]);
 		if (retval_boolean != test_jboolean[1]) {
 			logRetValError("Return value error:  nativeIZIZIZIZIZrZ got: " + retval_boolean + " expected: " + test_jboolean[1]);
 		}
-
 		
 		retval_boolean = nativeZZZZZZZZZZrZ(test_jboolean[1], test_jboolean[0], test_jboolean[1], test_jboolean[0], test_jboolean[1], test_jboolean[0], test_jboolean[1], test_jboolean[0], test_jboolean[1], test_jboolean[0]);
 		if (retval_boolean != test_jboolean[0]) {

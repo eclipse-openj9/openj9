@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2021 IBM Corp. and others
+ * Copyright (c) 2009, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -496,38 +496,43 @@ public class LibraryResolverFactory
 			File withDirectories = new File(coreDirectory,canonicalName);
 			final String fileNameWithCase = withDirectories.getName();
 
-			File[] pathsToCheck = new File[] {withDirectories, withoutDirectories};
-			for( final File checkPath : pathsToCheck) {
-				if (checkPath.getParentFile() != null && checkPath.getParentFile().isDirectory())  {
-					logger.logp(FINER,"LibraryResolverFactory$NextToCoreResolver","getLibrary","Trying {0}.", withoutDirectories);
-					// Make this case sensitive. This should return the original name which will
-					// still possess mixed case on Windows.
-					File[] matches = checkPath.getParentFile().listFiles(new FilenameFilter() {
-
-						public boolean accept(File dir, String name) {
-							if( name.equals( fileNameWithCase ) ) {
-								File f = new File(dir, name);
-								if( f.isFile() ) {
-								return true;
-							}
-							}
-							if( name.equalsIgnoreCase( fileNameWithCase ) ) {
-								logger.logp(SEVERE,"LibraryResolverFactory$NextToCoreResolver","getLibrary","Found {0} but not {1} in {2}. Case sensitive files may been copied to a case insensitive file system causing {1} to be lost or overwritten by {0}.", new String[] {name, fileNameWithCase, checkPath.getParent()});
-							}
-							return false;
-						}
-					});
-					if( matches.length == 1 ) {
-						// Matches should only have one element if successful.
-						logger.logp(FINER,"LibraryResolverFactory$NextToCoreResolver","getLibrary","Found {0}.", checkPath);
-						return new LibraryDataSource(matches[0]);
+			File[] pathsToCheck = new File[] { withDirectories, withoutDirectories };
+			for (final File checkPath : pathsToCheck) {
+				File parent = checkPath.getParentFile();
+				if ((parent == null) || !parent.isDirectory()) {
+					continue;
+				}
+				logger.logp(FINER, "LibraryResolverFactory$NextToCoreResolver", "getLibrary", "Trying {0}.", checkPath);
+				String[] names = parent.list(new FilenameFilter() {
+					@Override
+					public boolean accept(File dir, String name) {
+						// also collect case-insensitive matches - we'll refine the result below
+						return name.equalsIgnoreCase(fileNameWithCase) && new File(dir, name).isFile();
 					}
-				} 
+				});
+				if ((names == null) || (names.length == 0)) {
+					continue;
+				}
+				String otherName = null;
+				for (String name : names) {
+					if (name.equals(fileNameWithCase)) {
+						File match = new File(parent, name);
+						logger.logp(FINER, "LibraryResolverFactory$NextToCoreResolver", "getLibrary", "Found {0}.", match);
+						return new LibraryDataSource(match);
+					} else if (name.equalsIgnoreCase(fileNameWithCase)) {
+						otherName = name;
+					}
+				}
+				if (otherName != null) {
+					logger.logp(SEVERE, "LibraryResolverFactory$NextToCoreResolver", "getLibrary",
+							"Found {0} but not {1} in {2}. Case sensitive files may been copied to a case insensitive file system causing {1} to be lost or overwritten by {0}.",
+							new String[] { otherName, fileNameWithCase, checkPath.getParent() });
+				}
 			}
 			throw new FileNotFoundException("Can't find " + strippedModuleName + " in directory " + coreDirectory.getAbsolutePath());
 		}
 	}
-	
+
 	/**
 	 * Looks for the library on disk where the core file says it is. Will only work on the machine
 	 * that took the dump unless a mapping path has been set to map the paths correctly.

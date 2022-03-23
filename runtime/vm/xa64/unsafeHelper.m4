@@ -1,4 +1,4 @@
-dnl Copyright (c) 1991, 2019 IBM Corp. and others
+dnl Copyright (c) 1991, 2022 IBM Corp. and others
 dnl
 dnl This program and the accompanying materials are made available under
 dnl the terms of the Eclipse Public License 2.0 which accompanies this
@@ -120,4 +120,3 @@ START_PROC(unsafeGet8)
 END_PROC(unsafeGet8)
 
 	FILE_END
-

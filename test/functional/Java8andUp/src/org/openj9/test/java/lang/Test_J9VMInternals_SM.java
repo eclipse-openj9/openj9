@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2004, 2014 IBM Corp. and others
+ * Copyright (c) 2022, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,46 +19,21 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-package com.ibm.j9ddr.corereaders;
+package org.openj9.test.java.lang;
 
-import java.io.IOException;
-import java.lang.ref.WeakReference;
-import java.util.ArrayList;
-import java.util.List;
+import org.testng.annotations.Test;
 
-import javax.imageio.stream.ImageInputStream;
+@Test(groups = { "level.sanity" })
+public class Test_J9VMInternals_SM {
+/*
+ * TestNG parses the test file, which interferes with the classloading under test.
+ * Put the test implementation in a separate file to prevent this interference.
+ */
 
-public class ShutdownHook extends Thread
-{
-	List<WeakReference<ImageInputStream>> _openFiles = null;
-
-	public ShutdownHook()
-	{
-		_openFiles = new ArrayList<WeakReference<ImageInputStream>>();
-	}
-
-	public void addFile(ImageInputStream file)
-	{
-		_openFiles.add(new WeakReference<ImageInputStream>(file));
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see java.lang.Thread#run()
-	 */
-	public void run()
-	{
-		for (WeakReference<ImageInputStream> reference : _openFiles) {
-			ImageInputStream reader = reference.get();
-			if (null != reader) {
-				try {
-					reader.close();
-				} catch (IOException e) {
-					// we are shutting down so just ignore this
-				}
-			}
-		}
+	@Test
+	public void test_checkPackageAccess() throws Throwable {
+		Test_J9VMInternalsImpl_SM testObject = new Test_J9VMInternalsImpl_SM();
+		testObject.test_checkPackageAccess();
 	}
 
 }

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -54,7 +54,8 @@ public:
       _arrayLetLeafSize(0),
       _arrayLetLeafLogSize(0),
       _readBarrierType(gc_modron_readbar_none),
-      _writeBarrierType(gc_modron_wrtbar_none)
+      _writeBarrierType(gc_modron_wrtbar_none),
+      _objectAlignmentInBytes(0)
    {}
 
    void initialize();
@@ -138,6 +139,8 @@ public:
    */
    bool compressObjectReferences();
 
+   int32_t getObjectAlignmentInBytes();
+
 private:
 
    bool                  _compressObjectReferences;
@@ -146,6 +149,7 @@ private:
    int32_t               _arrayLetLeafLogSize;
    MM_GCReadBarrierType  _readBarrierType;
    MM_GCWriteBarrierType _writeBarrierType;
+   int32_t               _objectAlignmentInBytes;
    };
 
 }

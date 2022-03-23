@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2019 IBM Corp. and others
+ * Copyright (c) 1998, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -413,115 +413,6 @@ public class Test_ClassLoader {
 		System.out.println(lock2);
 		if (!lock1.equals(lock2)) {
 			Assert.fail("FAILED: getClassLoadingLock() returns differernt lock objects for same class name!");
-		}
-	}
-
-	/**
-	 * [PR Jazz103 76960]
-	 * 
-	 * @tests java.lang.ClassLoader#getParent() Test the case when in
-	 *        getParent() the callerClassLoader is same as child of this
-	 *        classloader. getParent() should throw SecurityException in such
-	 *        case.
-	 */
-	@Test
-	public void test_getParent1() {
-		ClassLoader cl = this.getClass().getClassLoader();
-		ClassLoader parentCl = cl.getParent();
-
-		SecurityManager manager = new SecurityManager();
-		System.setSecurityManager(manager);
-		try {
-			parentCl.getParent();
-			Assert.fail("expected the above call to getParent() to throw SecurityException");
-		} catch (SecurityException e) {
-			/* expected exception */
-		} finally {
-			System.setSecurityManager(null);
-		}
-	}
-
-	/**
-	 * [PR Jazz103 76960]
-	 * 
-	 * @tests java.lang.ClassLoader#getParent() Test the case when in
-	 *        getParent() the callerClassLoader is same as this classloader.
-	 *        getParent() should throw SecurityException in such case.
-	 */
-	@Test
-	public void test_getParent2() {
-		ClassLoader cl = this.getClass().getClassLoader();
-		SecurityManager manager = new SecurityManager();
-
-		System.setSecurityManager(manager);
-		try {
-			cl.getParent();
-			Assert.fail("expected the above call to getParent() to throw SecurityException");
-		} catch (SecurityException e) {
-			/* expected exception */
-		} finally {
-			System.setSecurityManager(null);
-		}
-	}
-
-	/**
-	 * @tests java.lang.ClassLoader#getParent() Test the case when in
-	 *        getParent() the callerClassLoader is same as parent of this
-	 *        classloader. This should cause the condition (callerClassLoader !=
-	 *        requested) in ClassLoader.needsClassLoaderPermissionCheck() to
-	 *        fail, thus preventing any security checks in getParent().
-	 */
-	@Test
-	public void test_getParent3() {
-		class ChildClassLoader extends ClassLoader {
-			public ChildClassLoader(ClassLoader parent) {
-				super(parent);
-			}
-		}
-
-		ClassLoader cl = this.getClass().getClassLoader();
-		ChildClassLoader childCL = new ChildClassLoader(cl);
-
-		SecurityManager manager = new SecurityManager();
-		System.setSecurityManager(manager);
-		try {
-			childCL.getParent();
-		} catch (SecurityException e) {
-			Assert.fail("unexpected exception: " + e);
-		} finally {
-			System.setSecurityManager(null);
-		}
-	}
-
-	/**
-	 * @tests java.lang.ClassLoader#getParent() Test the case when in
-	 *        getParent() the callerClassLoader is same as grand parent of this
-	 *        classloader (that is an ancestor of the parent of this
-	 *        classloader) This should cause the condition
-	 *        !callerClassLoader.isAncestorOf(requested) in
-	 *        ClassLoader.needsClassLoaderPermissionCheck() to fail, thus
-	 *        preventing any security checks in getParent().
-	 */
-	@Test
-	public void test_getParent4() {
-		class ChildClassLoader extends ClassLoader {
-			public ChildClassLoader(ClassLoader parent) {
-				super(parent);
-			}
-		}
-
-		ClassLoader cl = this.getClass().getClassLoader();
-		ChildClassLoader child = new ChildClassLoader(cl);
-		ChildClassLoader grandChild = new ChildClassLoader(child);
-
-		SecurityManager manager = new SecurityManager();
-		System.setSecurityManager(manager);
-		try {
-			grandChild.getParent();
-		} catch (SecurityException e) {
-			Assert.fail("unexpected exception: " + e);
-		} finally {
-			System.setSecurityManager(null);
 		}
 	}
 

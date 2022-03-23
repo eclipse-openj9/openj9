@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!--
-Copyright (c) 2016, 2021 IBM Corp. and others
+Copyright (c) 2016, 2022 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,11 +33,13 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<property name="src" location="src" />
 	<property name="src_80" location="src_80" />
 	<property name="src_90" location="src_90" />
+	<property name="src_110_up" location="src_110_up" />
 	<property name="scr_DupClassNameTest" location="scr_DupClassNameTest" />
 	<property name="build" location="bin" />
 	<property name="build_resource" location="resource" />
 	<property name="transformerListener" location="${TEST_ROOT}/Utils/src" />
 	<property name="TestUtilities" location="../TestUtilities/src" />
+	<property name="TestUtilitiesJ9" location="../TestUtilitiesJ9/src" />
 	<if>
 		<equals arg1="${JCL_VERSION}" arg2="current" />
 		<then>
@@ -183,6 +185,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 					<src path="${src_80}" />
 					<src path="${src_access}" />
 					<src path="${TestUtilities}" />
+					<src path="${TestUtilitiesJ9}" />
 					<src path="${transformerListener}" />
 					<exclude name="**/Cmvc194280.java" />
 					<exclude name="**/resources/**" />
@@ -209,6 +212,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 						<src path="${src_90_jcl}" />
 						<src path="${src_access}" />
 						<src path="${TestUtilities}" />
+						<src path="${TestUtilitiesJ9}" />
 						<src path="${transformerListener}" />
 						<compilerarg line='${addExports}' />
 						<compilerarg line='${addExports_90_jcl}' />
@@ -261,32 +265,46 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 
 				<property name="addExports" value="--add-exports java.base/com.ibm.oti.vm=ALL-UNNAMED --add-exports java.base/com.ibm.oti.util=ALL-UNNAMED --add-exports java.base/jdk.internal.vm.annotation=ALL-UNNAMED --add-exports java.base/jdk.internal.misc=ALL-UNNAMED --add-exports java.base/jdk.internal.reflect=ALL-UNNAMED --add-exports java.base/com.ibm.jit.crypto=ALL-UNNAMED --add-exports java.base/com.ibm.jit=ALL-UNNAMED --add-exports java.base/com.ibm.oti.reflect=ALL-UNNAMED --add-exports java.base/openj9.internal.tools.attach.target=ALL-UNNAMED --add-exports jdk.jcmd/openj9.tools.attach.diagnostics.info=ALL-UNNAMED --add-exports jdk.attach/com.ibm.tools.attach.attacher=ALL-UNNAMED" />
 				<echo>===addExports:        ${addExports}</echo>
-				<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
-					<src path="${src}" />
-					<src path="src_110_up" />
-					<src path="${src_version}" />
-					<src path="${src_90_jcl}" />
-					<src path="${src_access}" />
-					<src path="${TestUtilities}" />
-					<src path="${transformerListener}" />
-					<compilerarg line='${addExports}' />
-					<compilerarg line='${addExports_90_jcl}' />
-					<compilerarg line='${addExports_version}' />
-					<compilerarg line='--add-modules openj9.sharedclasses' />
-					<!-- PR117298 -->
-					<exclude name="**/Cmvc194280.java" />
-					<exclude name="**/resources/**" />
-					<!-- requires special compilation methods -->
-					<exclude name="**/NoSuchMethod/**" />
-					<classpath>
-						<pathelement location="${LIB_DIR}/asm-all.jar" />
-						<pathelement location="${LIB_DIR}/testng.jar" />
-						<pathelement location="${LIB_DIR}/jcommander.jar" />
-						<pathelement location="${LIB_DIR}/commons-cli.jar" />
-						<pathelement location="${LIB_DIR}/javassist.jar" />
-						<pathelement location="${LIB_DIR}/jaxb-api.jar" />
-					</classpath>
-				</javac>
+
+				<property name="srcpath" location="${src}:${src_110_up}:${src_version}:${src_90_jcl}:${src_access}:${TestUtilities}:${TestUtilitiesJ9}:${transformerListener}" />
+				<!-- first two excludes are from PR117298, third exclude requires special compilation methods -->
+				<property name="commonExcludes" value="**/Cmvc194280.java,**/resources/**,**/NoSuchMethod/**" />
+				<path id="build.cp">
+					<fileset dir="${LIB_DIR}/" includes="asm-all.jar"/>
+					<fileset dir="${LIB_DIR}/" includes="testng.jar"/>
+					<fileset dir="${LIB_DIR}/" includes="jcommander.jar"/>
+					<fileset dir="${LIB_DIR}/" includes="commons-cli.jar"/>
+					<fileset dir="${LIB_DIR}/" includes="javassist.jar"/>
+					<fileset dir="${LIB_DIR}/" includes="jaxb-api.jar"/>
+				</path>
+				<property name="commonArgs" value="${addExports} ${addExports_90_jcl} ${addExports_version} --add-modules openj9.sharedclasses" />
+				<if>
+					<matches string="${JDK_VERSION}" pattern="^(1[1-8])$$" />
+					<then>
+						<!-- Java 11-18 -->
+						<javac srcdir="${srcpath}" excludes="${commonExcludes}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" classpathref="build.cp">
+							<compilerarg line='${commonArgs}' />
+						</javac>
+					</then>
+					<else>
+						<!-- Java 19+ (SecurityManager removed) -->
+						<javac srcdir="${srcpath}" excludes="${commonExcludes}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" classpathref="build.cp">
+							<compilerarg line='${commonArgs}' />
+							<!-- exclude tests that depend on SecurityManager -->
+							<exclude name="org/openj9/test/java/security/Test_AccessController.java" />
+							<exclude name="org/openj9/test/java/security/Test_AccessControlContext.java" />
+							<exclude name="org/openj9/test/java/lang/Test_Class_SM.java" />
+							<exclude name="org/openj9/test/java/lang/Test_System_SM.java" />
+							<exclude name="org/openj9/test/java/lang/Test_Thread_SM.java" />
+							<exclude name="org/openj9/test/java/lang/Test_ThreadGroup_SM.java" />
+							<exclude name="org/openj9/test/java/lang/invoke/Test_MethodHandleInfo_SM.java" />
+							<exclude name="org/openj9/test/java/lang/Test_ClassLoader_SM.java" />
+							<exclude name="org/openj9/test/java/lang/Test_J9VMInternals_SM.java" />
+							<exclude name="org/openj9/test/java/lang/Test_J9VMInternalsImpl_SM.java" />
+							<exclude name="org/openj9/test/vm/Test_VM.java" />
+						</javac>
+					</else>
+				</if>
 			</else>
 		</if>
 	</target>

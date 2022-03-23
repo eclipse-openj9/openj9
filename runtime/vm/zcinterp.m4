@@ -1,4 +1,4 @@
-dnl Copyright (c) 2017, 2021 IBM Corp. and others
+dnl Copyright (c) 2017, 2022 IBM Corp. and others
 dnl
 dnl This program and the accompanying materials are made available under
 dnl the terms of the Eclipse Public License 2.0 which accompanies this
@@ -165,7 +165,7 @@ dnl
 dnl 1. TX was a non-constrained transaction:
 dnl    If this was the case do not execute the read barrier and simply return to
 dnl    the fallback transaction abort JIT code to handle it by forcing condition
-dnl    code to be 2 with the below CL(G)FI instruction indicating a transient 
+dnl    code to be 2 with the below CL(G)FI instruction indicating a transient
 dnl    transaction abort.
 dnl
 dnl 2. TX was a constrained transaction:

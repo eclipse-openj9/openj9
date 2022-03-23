@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1730,7 +1730,12 @@ loadSuperClassAndInterfaces(J9VMThread *vmThread, J9ClassLoader *classLoader, J9
 				setCurrentExceptionForBadClass(vmThread, superclassName, J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR, J9NLS_VM_CLASS_LOADING_ERROR_SUPERCLASS_IS_INTERFACE);
 				return FALSE;
 			}
-
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+			/**
+			 * TODO: From the latest spec, for a value class or an abstract class with ACC_PERMITS_VALUE, its direct super class must have ACC_PERMITS_VALUE set,
+			 * otherwise throw IncompatibleClassChangeError. OpenJDK Valhalla implementation is not complete on this yet. We are seeing bootstrap classes in violation of this.
+			 */
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 			/* JEP 360 sealed classes: if superclass is sealed it must contain the romClass's name in its PermittedSubclasses attribute */
 			if (! isClassPermittedBySealedSuper(superclass->romClass, J9UTF8_DATA(className), J9UTF8_LENGTH(className))) {
 				Trc_VM_CreateRAMClassFromROMClass_classIsNotPermittedBySealedSuperclass(vmThread, superclass, J9UTF8_LENGTH(className), J9UTF8_DATA(className));
@@ -3337,6 +3342,7 @@ fail:
 					}
 					J9ARRAYCLASS_SET_STRIDE(ramClass, (((UDATA) 1) << (((J9ROMArrayClass*)romClass)->arrayShape & 0x0000FFFF)));
 				}
+				Assert_VM_true(J9ARRAYCLASS_GET_STRIDE(ramClass) <= I_32_MAX);
 			} else if (J9ROMCLASS_IS_PRIMITIVE_TYPE(ramClass->romClass)) {
 				ramClass->module = module;
 			} else {
@@ -3589,25 +3595,8 @@ retry:
 			if ((instanceSize <= javaVM->valueFlatteningThreshold)
 				&& !J9ROMCLASS_IS_CONTENDED(romClass)
 			) {
-				bool flatten = false;
-				if (J9ROMCLASS_IS_ATOMIC(romClass)) {
-					UDATA unpaddedInstanceSize = instanceSize;
-					if (J9_ARE_ALL_BITS_SET(valueTypeFlags, J9ClassRequiresPrePadding)) {
-						unpaddedInstanceSize = instanceSize - sizeof(U_32);
-					}
-					/**
-					 * Flattening of atomic VT class that is > 8 bytes is disabled for now.
-					 */
-					if (unpaddedInstanceSize <= sizeof(U_64)) {
-						flatten = true;
-					}
-				} else {
-					flatten = true;
-				}
-				if (flatten) {
-					Trc_VM_CreateRAMClassFromROMClass_valueTypeIsFlattened(vmThread, J9UTF8_LENGTH(className), J9UTF8_DATA(className), result);
-					classFlags |= J9ClassIsFlattened;
-				}
+				Trc_VM_CreateRAMClassFromROMClass_valueTypeIsFlattened(vmThread, J9UTF8_LENGTH(className), J9UTF8_DATA(className), result);
+				classFlags |= J9ClassIsFlattened;
 			}
 			if (J9_ARE_ALL_BITS_SET(valueTypeFlags, J9ClassCanSupportFastSubstitutability)) {
 				classFlags |= J9ClassCanSupportFastSubstitutability;

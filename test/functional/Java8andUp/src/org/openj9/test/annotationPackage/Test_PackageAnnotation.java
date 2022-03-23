@@ -7,7 +7,7 @@ import org.testng.Assert;
 import org.testng.AssertJUnit;
 
 /*******************************************************************************
- * Copyright (c) 2010, 2018 IBM Corp. and others
+ * Copyright (c) 2010, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,8 +29,6 @@ import org.testng.AssertJUnit;
  *******************************************************************************/
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
 import javax.xml.bind.annotation.XmlSchema;
 
 @Test(groups = { "level.sanity" })
@@ -123,16 +121,12 @@ public class Test_PackageAnnotation {
 	}
 
 	private static ClassLoader getClassLoader(final Class<?> clazz) {
-		return AccessController.doPrivileged(new PrivilegedAction<ClassLoader>() {
-			public ClassLoader run() {
-				ClassLoader cl = null;
-				try {
-					cl = clazz.getClassLoader();
-				} catch (SecurityException ex) {
-				}
-				return cl;
-			}
-		});
+		ClassLoader cl = null;
+		try {
+			cl = clazz.getClassLoader();
+		} catch (SecurityException ex) {
+		}
+		return cl;
 	}
 
 }

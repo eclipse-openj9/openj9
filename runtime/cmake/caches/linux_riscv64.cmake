@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2020 IBM Corp. and others
+# Copyright (c) 2021, 2022 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,28 +20,19 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ################################################################################
 
-# Set up an interface library to keep track of the various compiler defines
-# used by the jit components.
+set(J9VM_ARCH_RISCV ON CACHE BOOL "")
+set(J9VM_ENV_HAS_FPU ON CACHE BOOL "")
+set(J9VM_ENV_LITTLE_ENDIAN ON CACHE BOOL "")
+set(J9VM_ENV_DATA64 ON CACHE BOOL "")
 
-# TODO should probably rename to j9vm_jit_defines for less ambiguity
-j9vm_add_library(j9vm_compiler_defines INTERFACE)
+set(J9VM_GC_ENABLE_DOUBLE_MAP OFF CACHE BOOL "")
+set(J9VM_INTERP_SIG_QUIT_THREAD_USES_SEMAPHORES OFF CACHE BOOL "")
 
-if(OMR_ENV_DATA64)
-	target_compile_definitions(j9vm_compiler_defines INTERFACE TR_64bit TR_HOST_64BIT TR_TARGET_64BIT)
-else()
-	target_compile_definitions(j9vm_compiler_defines INTERFACE TR_HOST_32BIT TR_TARGET_32BIT)
-endif()
+set(J9VM_MODULE_CODERT_VM OFF CACHE BOOL "")
+set(J9VM_MODULE_J9JIT_VM OFF CACHE BOOL "")
 
-if(OMR_ARCH_X86)
-	target_compile_definitions(j9vm_compiler_defines INTERFACE TR_TARGET_X86 TR_HOST_X86)
-elseif(OMR_ARCH_POWER)
-	target_compile_definitions(j9vm_compiler_defines INTERFACE TR_TARGET_POWER TR_HOST_POWER)
-elseif(OMR_ARCH_S390)
-	target_compile_definitions(j9vm_compiler_defines INTERFACE TR_TARGET_S390 TR_HOST_S390)
-elseif(OMR_ARCH_ARM)
-	target_compile_definitions(j9vm_compiler_defines INTERFACE TR_TARGET_ARM TR_HOST_ARM)
-elseif(OMR_ARCH_AARCH64)
-	target_compile_definitions(j9vm_compiler_defines INTERFACE TR_TARGET_ARM64 TR_HOST_ARM64)
-else()
-	message(FATAL_ERROR "Unsupported architecture")
-endif() #TODO OTHER PLATFORMS
+set(OMR_GC_CONCURRENT_SCAVENGER ON CACHE BOOL "")
+set(OMR_GC_IDLE_HEAP_MANAGER ON CACHE BOOL "")
+
+include("${CMAKE_CURRENT_LIST_DIR}/linux.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/common.cmake")

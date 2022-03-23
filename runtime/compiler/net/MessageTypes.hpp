@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2020, 2021 IBM Corp. and others
+ * Copyright (c) 2020, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -120,7 +120,7 @@ enum MessageType : uint16_t
    VM_isClassInitialized,
    VM_getOSRFrameSizeInBytes,
    VM_getInitialLockword,
-   VM_isString1,
+   VM_JavaStringObject,
    VM_getMethods,
    VM_getObjectClass,
    VM_getObjectClassAt,

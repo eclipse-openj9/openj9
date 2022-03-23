@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+
+<!--
+  Copyright (c) 2022, 2022 IBM Corp. and others
+
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] http://openjdk.java.net/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+-->
+<!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
+
+<suite id="J9 Command-Line Option Tests" timeout="180">
+  <variable name="CP" value="-cp $Q$$JARPATH$$Q$" />
+  <variable name="TARGET" value="GetConsoleCharset" />
+  <variable name="OPENS" value="--add-opens=java.base/java.io=ALL-UNNAMED"/>
+  <if testVariable="JDK_VERSION" testValue="8" resultVariable="OPENS" resultValue=" "/>
+  <variable name="DEFAULT_ENCODING_PROP" value="file.encoding" />
+  <variable name="DEFAULT_ENCODING_PROP" value="ibm.system.encoding" platforms="zos.*" />
+  <!-- Use an encoding supported by Java 8 and in the java.base module -->
+  <variable name="ENCODING1" value="ISO8859_2" />
+  <!-- Use an encoding supported by Java 8 and in the jdk.charsets module -->
+  <variable name="ENCODING2" value="Cp948" />
+
+  <test id="$DEFAULT_ENCODING_PROP$ System.out $ENCODING1$">
+    <command>$EXE$ $OPENS$ $CP$ -D$DEFAULT_ENCODING_PROP$=$ENCODING1$ $TARGET$ out $ENCODING1$</command>
+    <return type="success" value="0" />
+  </test>
+
+  <test id="$DEFAULT_ENCODING_PROP$ System.err $ENCODING1$">
+    <command>$EXE$ $OPENS$ $CP$ -D$DEFAULT_ENCODING_PROP$=$ENCODING1$ $TARGET$ err $ENCODING1$</command>
+    <return type="success" value="0" />
+  </test>
+
+  <test id="$DEFAULT_ENCODING_PROP$ System.out $ENCODING2$">
+    <command>$EXE$ $OPENS$ $CP$ -D$DEFAULT_ENCODING_PROP$=$ENCODING2$ $TARGET$ out $ENCODING2$</command>
+    <return type="success" value="0" />
+  </test>
+
+  <test id="$DEFAULT_ENCODING_PROP$ System.err $ENCODING2$">
+    <command>$EXE$ $OPENS$ $CP$ -D$DEFAULT_ENCODING_PROP$=$ENCODING2$ $TARGET$ err $ENCODING2$</command>
+    <return type="success" value="0" />
+  </test>
+</suite>
