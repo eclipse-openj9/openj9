@@ -6591,7 +6591,7 @@ TR_ResolvedJ9Method::handleUnresolvedVirtualMethodInCP(int32_t cpIndex, bool * u
    }
 
 TR_ResolvedMethod *
-TR_ResolvedJ9Method::getResolvedDynamicMethod(TR::Compilation * comp, I_32 callSiteIndex, bool * unresolvedInCP)
+TR_ResolvedJ9Method::getResolvedDynamicMethod(TR::Compilation * comp, I_32 callSiteIndex, bool * unresolvedInCP, bool * isInvokeCacheAppendixNull)
    {
    TR_ASSERT(callSiteIndex != -1, "callSiteIndex shouldn't be -1");
 
@@ -6626,6 +6626,9 @@ TR_ResolvedJ9Method::getResolvedDynamicMethod(TR::Compilation * comp, I_32 callS
    J9UTF8                *signature    = J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSig);
 
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+   if (isInvokeCacheAppendixNull)
+      *isInvokeCacheAppendixNull = false;
+
    if (!isUnresolvedEntry)
       {
       TR_OpaqueMethodBlock * targetJ9MethodBlock = NULL;
@@ -6633,6 +6636,10 @@ TR_ResolvedJ9Method::getResolvedDynamicMethod(TR::Compilation * comp, I_32 callS
          {
          TR::VMAccessCriticalSection getResolvedDynamicMethod(fej9());
          targetJ9MethodBlock = fej9()->targetMethodFromMemberName((uintptr_t) fej9()->getReferenceElement(*invokeCacheArray, JSR292_invokeCacheArrayMemberNameIndex)); // this will not work in AOT or JITServer
+         // if the callSite table entry is resolved, we can check if the appendix object is null,
+         // in which case the appendix object must not be pushed to stack
+         uintptr_t appendixObject = (uintptr_t) fej9()->getReferenceElement(*invokeCacheArray, JSR292_invokeCacheArrayAppendixIndex);
+         if (isInvokeCacheAppendixNull && !appendixObject) *isInvokeCacheAppendixNull = true;
          }
       result = fej9()->createResolvedMethod(comp->trMemory(), targetJ9MethodBlock, this);
       }
@@ -6656,7 +6663,7 @@ TR_ResolvedJ9Method::getResolvedDynamicMethod(TR::Compilation * comp, I_32 callS
    }
 
 TR_ResolvedMethod *
-TR_ResolvedJ9Method::getResolvedHandleMethod(TR::Compilation * comp, I_32 cpIndex, bool * unresolvedInCP)
+TR_ResolvedJ9Method::getResolvedHandleMethod(TR::Compilation * comp, I_32 cpIndex, bool * unresolvedInCP, bool * isInvokeCacheAppendixNull)
    {
    TR_ASSERT(cpIndex != -1, "cpIndex shouldn't be -1");
 
@@ -6684,6 +6691,9 @@ TR_ResolvedJ9Method::getResolvedHandleMethod(TR::Compilation * comp, I_32 cpInde
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
    J9UTF8                *signature    = J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSig);
 
+   if (isInvokeCacheAppendixNull)
+      *isInvokeCacheAppendixNull = false;
+
    if (!isUnresolvedEntry)
       {
       uintptr_t * invokeCacheArray = (uintptr_t *) methodTypeTableEntryAddress(cpIndex);
@@ -6691,6 +6701,8 @@ TR_ResolvedJ9Method::getResolvedHandleMethod(TR::Compilation * comp, I_32 cpInde
          {
          TR::VMAccessCriticalSection getResolvedHandleMethod(fej9());
          targetJ9MethodBlock = fej9()->targetMethodFromMemberName((uintptr_t) fej9()->getReferenceElement(*invokeCacheArray, JSR292_invokeCacheArrayMemberNameIndex)); // this will not work in AOT or JITServer
+         uintptr_t appendixObject = (uintptr_t) fej9()->getReferenceElement(*invokeCacheArray, JSR292_invokeCacheArrayAppendixIndex);
+         if (isInvokeCacheAppendixNull && !appendixObject) *isInvokeCacheAppendixNull = true;
          }
       result = fej9()->createResolvedMethod(comp->trMemory(), targetJ9MethodBlock, this);
       }

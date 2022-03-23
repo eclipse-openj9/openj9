@@ -1565,8 +1565,9 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          auto recv = client->getRecvData<TR_ResolvedJ9Method*, int32_t>();
          auto *owningMethod = std::get<0>(recv);
          int32_t cpIndex = std::get<1>(recv);
-         bool isUnresolvedInCP;
-         auto *handleMethod = static_cast<TR_ResolvedJ9Method *>(owningMethod->getResolvedHandleMethod(comp, cpIndex, &isUnresolvedInCP));
+         bool isUnresolvedInCP = false;
+         bool isInvokeCacheAppendixNull = false;
+         auto *handleMethod = static_cast<TR_ResolvedJ9Method *>(owningMethod->getResolvedHandleMethod(comp, cpIndex, &isUnresolvedInCP, &isInvokeCacheAppendixNull));
          TR_ResolvedJ9JITServerMethodInfo methodInfo;
          TR_ResolvedJ9JITServerMethod::packMethodInfo(methodInfo, handleMethod, fe);
          std::string signature(utf8Data(handleMethod->_signature), J9UTF8_LENGTH(handleMethod->_signature));
@@ -1576,7 +1577,8 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
             handleMethod->getPersistentIdentifier(),
             methodInfo,
             signature,
-            isUnresolvedInCP
+            isUnresolvedInCP,
+            isInvokeCacheAppendixNull
             );
          }
          break;
@@ -1636,8 +1638,9 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          TR_ResolvedJ9Method *owningMethod = std::get<0>(recv);
          int32_t callSiteIndex = std::get<1>(recv);
 
-         bool isUnresolvedInCP;
-         auto *dynamicMethod = static_cast<TR_ResolvedJ9Method *>(owningMethod->getResolvedDynamicMethod(comp, callSiteIndex, &isUnresolvedInCP));
+         bool isUnresolvedInCP = false;
+         bool isInvokeCacheAppendixNull = false;
+         auto *dynamicMethod = static_cast<TR_ResolvedJ9Method *>(owningMethod->getResolvedDynamicMethod(comp, callSiteIndex, &isUnresolvedInCP, &isInvokeCacheAppendixNull));
          TR_ResolvedJ9JITServerMethodInfo methodInfo;
          TR_ResolvedJ9JITServerMethod::packMethodInfo(methodInfo, (TR_ResolvedJ9Method *) dynamicMethod, fe);
 
@@ -1646,7 +1649,8 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
             dynamicMethod->getPersistentIdentifier(),
             methodInfo,
             std::string(utf8Data(dynamicMethod->_signature), J9UTF8_LENGTH(dynamicMethod->_signature)),
-            isUnresolvedInCP
+            isUnresolvedInCP,
+            isInvokeCacheAppendixNull
             );
          }
          break;
