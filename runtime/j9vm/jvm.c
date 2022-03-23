@@ -1965,7 +1965,15 @@ JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITSer
 		return JNI_ERR;
 	}
 #endif /* defined(J9ZTPF) */
+
+#if !defined(J9ZOS390)
+	/*
+	 * Temporarily disable capturing the command line on z/OS.
+	 * See the discussion in https://github.com/eclipse-openj9/openj9/pull/14634.
+	 */
 	captureCommandLine();
+#endif /* !defined(J9ZOS390) */
+
 	/*
 	 * Linux uses LD_LIBRARY_PATH
 	 * z/OS uses LIBPATH
