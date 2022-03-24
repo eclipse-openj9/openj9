@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2021 IBM Corp. and others
+ * Copyright (c) 2017, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -460,6 +460,16 @@ public:
 	 */
 	void calculateObjectDetailsForCopy(MM_EnvironmentBase *env, MM_ForwardedHeader *forwardedHeader, uintptr_t *objectCopySizeInBytes, uintptr_t *objectReserveSizeInBytes, uintptr_t *hotFieldAlignmentDescriptor);
 #endif /* defined(OMR_GC_MODRON_SCAVENGER) */
+
+	/**
+	 * Initialize an object of minimal object size at given addr. Specifically, java/lang/object is used.
+	 *
+	 * There is an assumption that the object is not visible (referred) by anyone, so the minimum initialization can be done.
+	 *
+	 * @param[in] env The environment for the calling thread.
+	 * @param[in] allocAddr address at which the object is created.
+	 */
+	void initializeMinimumSizeObject(MM_EnvironmentBase *env, void *allocAddr);
 
 	/**
 	 * Constructor receives a copy of OMR's object flags mask, normalized to low order byte. Delegate

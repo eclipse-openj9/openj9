@@ -2062,8 +2062,36 @@ public:
 		return vmThread->javaVM->memoryManagerFunctions->j9gc_objaccess_asConstantPoolObject(vmThread, toConvert, allocateFlags);
 	}
 
-protected:
+	VMINLINE bool
+	isSATBBarrierEnabled(J9VMThread *vmThread) const
+	{
+#if defined(J9VM_GC_REALTIME)
+		if (usingSATB()) {
+			MM_GCRememberedSetFragment *fragment =  &vmThread->sATBBarrierRememberedSetFragment;
+			MM_GCRememberedSet *parent = fragment->fragmentParent;
+			return (0 != parent->globalFragmentIndex);
+		} else
+#endif /* J9VM_GC_REALTIME */
+		{
+			return false;
+		}
+	}
 
+	VMINLINE bool
+	isSATBDoubleBarrierEnabled(J9VMThread *vmThread) const
+	{
+#if defined(J9VM_GC_REALTIME)
+		if (usingSATB()) {
+			MM_GCRememberedSetFragment *fragment =  &vmThread->sATBBarrierRememberedSetFragment;
+			return (0 == fragment->localFragmentIndex);
+		} else
+#endif /* J9VM_GC_REALTIME */
+		{
+			return false;
+		}
+	}
+
+protected:
 	/**
 	 * Called before object references are stored into mixed objects to perform an prebarrier work.
 	 *
@@ -2700,8 +2728,7 @@ private:
 	VMINLINE void
 	internalPreStoreObject(J9VMThread *vmThread, j9object_t object, fj9object_t *destAddress, j9object_t value)
 	{
-		if ((j9gc_modron_wrtbar_satb == _writeBarrierType) ||
-				(j9gc_modron_wrtbar_satb_and_oldcheck == _writeBarrierType)) {
+		if (usingSATB()) {
 			internalPreStoreObjectSATB(vmThread, object, destAddress, value);
 		}
 	}
@@ -2720,8 +2747,7 @@ private:
 	VMINLINE void
 	internalStaticPreStoreObject(J9VMThread *vmThread, j9object_t dstClassObject, j9object_t *destAddress, j9object_t value)
 	{
-		if ((j9gc_modron_wrtbar_satb == _writeBarrierType) ||
-				(j9gc_modron_wrtbar_satb_and_oldcheck == _writeBarrierType)) {
+		if (usingSATB()) {
 			internalStaticPreStoreObjectSATB(vmThread, dstClassObject, destAddress, value);
 		}
 	}
@@ -2738,12 +2764,10 @@ private:
 	internalPreStoreObjectSATB(J9VMThread *vmThread, j9object_t object, fj9object_t *destAddress, j9object_t value)
 	{
 #if defined(J9VM_GC_REALTIME)
-		MM_GCRememberedSetFragment *fragment =  &vmThread->sATBBarrierRememberedSetFragment;
-		MM_GCRememberedSet *parent = fragment->fragmentParent;
 		/* Check if the barrier is enabled.  No work if barrier is not enabled */
-		if (0 != parent->globalFragmentIndex) {
+		if (isSATBBarrierEnabled(vmThread)) {
 			/* if the double barrier is enabled call OOL */
-			if (0 == fragment->localFragmentIndex) {
+			if (isSATBDoubleBarrierEnabled(vmThread)) {
 				vmThread->javaVM->memoryManagerFunctions->J9WriteBarrierPre(vmThread, object, destAddress, value);
 			} else {
 				j9object_t oldObject = readObjectImpl(vmThread, destAddress, false);
@@ -2769,12 +2793,10 @@ private:
 	internalStaticPreStoreObjectSATB(J9VMThread *vmThread, j9object_t dstClassObject, j9object_t *destAddress, j9object_t value)
 	{
 #if defined(J9VM_GC_REALTIME)
-		MM_GCRememberedSetFragment *fragment =  &vmThread->sATBBarrierRememberedSetFragment;
-		MM_GCRememberedSet *parent = fragment->fragmentParent;
 		/* Check if the barrier is enabled.  No work if barrier is not enabled */
-		if (0 != parent->globalFragmentIndex) {
+		if (isSATBBarrierEnabled(vmThread)) {
 			/* if the double barrier is enabled call OOL */
-			if (0 == fragment->localFragmentIndex) {
+			if (isSATBDoubleBarrierEnabled(vmThread)) {
 				vmThread->javaVM->memoryManagerFunctions->J9WriteBarrierPreClass(vmThread, dstClassObject, destAddress, value);
 			} else {
 				j9object_t oldObject = *destAddress;
@@ -2991,6 +3013,12 @@ private:
 		return result;
 	}
 #endif /* J9VM_GC_GENERATIONAL */
+
+	VMINLINE bool
+	usingSATB() const
+	{
+		return ((j9gc_modron_wrtbar_satb == _writeBarrierType) || (j9gc_modron_wrtbar_satb_and_oldcheck == _writeBarrierType));
+	}
 
 
 };
