@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2020 IBM Corp. and others
+ * Copyright (c) 2001, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -124,11 +124,12 @@ getOwnedObjectMonitorsIterator(J9VMThread *currentThread, J9StackWalkState *walk
 	J9JavaVM* javaVM = walkState->walkThread->javaVM;
 #ifdef J9VM_INTERP_NATIVE_SUPPORT
 	if (walkState->jitInfo) {
-		/* The jit walk may increment the stack depth */
+		/* The jit walk may increment/decrement the stack depth */
 		rc = javaVM->jitGetOwnedObjectMonitors(walkState);
 	} else
 #endif
 	{
+		/* The walk function may decrement the stack depth if a hidden frame is skipped */
 		rc = walkFrameMonitorEnterRecords(currentThread, walkState);
 	}
 	
@@ -148,6 +149,17 @@ walkFrameMonitorEnterRecords(J9VMThread *currentThread, J9StackWalkState *walkSt
 	UDATA *frameID;
 	IDATA monitorCount = (IDATA)walkState->userData2;
 	J9VMThread *targetThread = walkState->walkThread;
+
+	/* If -XX:+ShowHiddenFrames option has not been set, skip checking monitors from hidden method frames */
+	if (J9_ARE_NO_BITS_SET(currentThread->javaVM->runtimeFlags, J9_RUNTIME_SHOW_HIDDEN_FRAMES)
+	&& (NULL != walkState->method)
+	&& (J9ROMCLASS_IS_ANON_OR_HIDDEN(J9_CLASS_FROM_METHOD(walkState->method)->romClass)
+		|| J9_ARE_ANY_BITS_SET(J9_ROM_METHOD_FROM_RAM_METHOD(walkState->method)->modifiers, J9AccMethodFrameIteratorSkip)
+	)) {
+		/* Decrease the stack depth when skipping hidden frame */
+		walkState->userData4 = (void *)(((UDATA)walkState->userData4) - 1);
+		return J9_STACKWALK_KEEP_ITERATING;
+	}
 
 	/*
 	 * Walk the monitor enter records from this frame and
