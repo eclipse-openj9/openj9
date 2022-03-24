@@ -2417,22 +2417,42 @@ J9::Z::TreeEvaluator::inlineMathFma(TR::Node *node, TR::CodeGenerator *cg)
    TR_ASSERT_FATAL(node->getNumChildren() == 3,
    "In function inlineMathFma, the node at address %p should have exactly 3 children, but got %u instead", node, node->getNumChildren());
 
-   TR::Register      * targetRegister      = cg->allocateRegister(TR_FPR);
+   TR::Register * a      = cg->evaluate(node->getFirstChild());
+   TR::Register * b      = cg->evaluate(node->getSecondChild());
+   TR::Register * target = NULL;
 
-   TR::Register      * v1      = cg->evaluate(node->getFirstChild());
-   TR::Register      * v2      = cg->evaluate(node->getSecondChild());
-   TR::Register      * v3      = cg->evaluate(node->getThirdChild());
+   if (cg->getSupportsVectorRegisters() &&
+         (!node->getOpCode().isFloat() ||
+           cg->comp()->target().cpu.getSupportsVectorFacilityEnhancement1()))
+      {
+      // target = a*b + c
+      TR::Register * c = cg->evaluate(node->getThirdChild());
+      target = cg->allocateRegister(TR_FPR);
+      uint8_t mask6 = getVectorElementSizeMask(TR::DataType::getSize(node->getDataType()));
+      generateVRReInstruction(cg, TR::InstOpCode::VFMA, node, target, a, b, c, mask6, 0);
+      }
+   else
+      {
+      // target = c
+      // target += a*b
+      target = cg->fprClobberEvaluate(node->getThirdChild());
+      if (node->getDataType() == TR::Double)
+         {
+         generateRRDInstruction(cg, TR::InstOpCode::MADBR, node, target, a, b);
+         }
+      else
+         {
+         generateRRDInstruction(cg, TR::InstOpCode::MAEBR, node, target, a, b);
+         }
+      }
 
-   uint8_t mask6 = getVectorElementSizeMask(TR::DataType::getSize(node->getDataType()));
-   generateVRReInstruction(cg, TR::InstOpCode::VFMA, node, targetRegister, v1, v2, v3, mask6, 0);
-
-   node->setRegister(targetRegister);
+   node->setRegister(target);
 
    cg->decReferenceCount(node->getFirstChild());
    cg->decReferenceCount(node->getSecondChild());
    cg->decReferenceCount(node->getThirdChild());
 
-   return targetRegister;
+   return target;
    }
 
 /*
