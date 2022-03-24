@@ -150,12 +150,8 @@ walkFrameMonitorEnterRecords(J9VMThread *currentThread, J9StackWalkState *walkSt
 	IDATA monitorCount = (IDATA)walkState->userData2;
 	J9VMThread *targetThread = walkState->walkThread;
 
-	/* If -XX:+ShowHiddenFrames option has not been set, skip checking monitors from hidden method frames */
-	if (J9_ARE_NO_BITS_SET(currentThread->javaVM->runtimeFlags, J9_RUNTIME_SHOW_HIDDEN_FRAMES)
-	&& (NULL != walkState->method)
-	&& (J9ROMCLASS_IS_ANON_OR_HIDDEN(J9_CLASS_FROM_METHOD(walkState->method)->romClass)
-		|| J9_ARE_ANY_BITS_SET(J9_ROM_METHOD_FROM_RAM_METHOD(walkState->method)->modifiers, J9AccMethodFrameIteratorSkip)
-	)) {
+	/* check if hidden method frame should be skipped */
+	if (J9_ARE_NO_BITS_SET(walkState->javaVM->runtimeFlags, J9_RUNTIME_SHOW_HIDDEN_FRAMES) && J9_IS_HIDDEN_METHOD(walkState->method)) {
 		/* Decrease the stack depth when skipping hidden frame */
 		walkState->userData4 = (void *)(((UDATA)walkState->userData4) - 1);
 		return J9_STACKWALK_KEEP_ITERATING;
