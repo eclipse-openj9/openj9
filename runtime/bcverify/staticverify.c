@@ -1746,6 +1746,10 @@ j9bcv_verifyClassStructure (J9PortLibrary * portLib, J9CfrClassFile * classfile,
 			/* No static constraints defined (so far) on slot1 */
 		case CFR_CONSTANT_Methodref:
 		case CFR_CONSTANT_InterfaceMethodref:
+		{
+#if JAVA_SPEC_VERSION >= 18
+			BOOLEAN isConstantInvokeDynamic = (CFR_CONSTANT_InvokeDynamic == info->tag);
+#endif /* JAVA_SPEC_VERSION >= 18 */
 			nameAndSig = &classfile->constantPool[info->slot2];
 			utf8 = &classfile->constantPool[nameAndSig->slot1];
 			isInit = bcvCheckMethodName(utf8);
@@ -1758,7 +1762,11 @@ j9bcv_verifyClassStructure (J9PortLibrary * portLib, J9CfrClassFile * classfile,
 				errorType = J9NLS_CFR_ERR_BC_METHOD_INVALID_SIG__ID;
 				goto _formatError;
 			}
-			if (isInit) {
+			if (isInit
+#if JAVA_SPEC_VERSION >= 18
+			&& !isConstantInvokeDynamic
+#endif /* JAVA_SPEC_VERSION >= 18 */
+			) {
 				U_16 returnChar = getReturnTypeFromSignature(info->bytes, info->slot1, NULL);
 				if ((info->bytes[info->slot1 - 1] != 'V') && !IS_QTYPE(returnChar)) {
 					errorType = J9NLS_CFR_ERR_BC_METHOD_INVALID_SIG__ID;
@@ -1771,7 +1779,7 @@ j9bcv_verifyClassStructure (J9PortLibrary * portLib, J9CfrClassFile * classfile,
 				goto _formatError;
 			}
 			break;
-
+		}
 		case CFR_CONSTANT_MethodType:
 			if (j9bcv_checkMethodSignature(&classfile->constantPool[info->slot1], FALSE) < 0) {
 				errorType = J9NLS_CFR_ERR_METHODTYPE_INVALID_SIG__ID;
