@@ -79,7 +79,7 @@ TraceEvent=Trc_VM_hookRegistration Overhead=1 Level=1 Template="hook registratio
 TraceEvent=Trc_VM_NativeSignature_BadChar Overhead=1 Level=1 Template="bad char: %d at: %d"
 TraceEvent=Trc_VM_NativeSignature_BadSig Overhead=1 Level=1 Template="bad V at: %d"
 
-TraceEntry=Trc_VM_growJavaStack_Entry  Overhead=1 Level=1 Template="Attempt to change stack size from %d bytes to %d bytes. SP=%p, SOM=%p, SOM2=%p"
+TraceEntry=Trc_VM_growJavaStack_Entry Overhead=1 Level=1 Template="Attempt to change stack size from %d bytes to %d bytes. SP=%p, SOM=%p, SOM2=%p"
 TraceException=Trc_VM_growJavaStack_TooSmall Overhead=1 Level=1 Template="New stack size is too small for existing frames (%zu > %zu)"
 TraceException=Trc_VM_growJavaStack_AllocFailed Overhead=1 Level=1 Template="Unable to allocate new stack"
 TraceEvent=Trc_VM_growJavaStack_Delta Overhead=1 Level=1 Template="Old stack = %p, new stack = %p, delta = %p slots"
@@ -92,11 +92,11 @@ TraceException=Trc_VM_growJavaStack_NewStackWalkFailed Overhead=1 Level=1 Templa
 TraceEvent=Trc_VM_growJavaStack_KeepingOldStack Overhead=1 Level=1 Template="Old stack first has references in frame %p"
 TraceEvent=Trc_VM_growJavaStack_FreeingOldStack Overhead=1 Level=1 Template="Old stack has no references in any frame - freeing %p"
 TraceEvent=Trc_VM_growJavaStack_Success Overhead=1 Level=1 Template="Stack copied successfully"
-TraceExit=Trc_VM_growJavaStack_Exit  Overhead=1 Level=1 Template="Done growing stack"
+TraceExit=Trc_VM_growJavaStack_Exit Overhead=1 Level=1 Template="Done growing stack"
 
-TraceEntry=Trc_VM_freeStacks_Entry  Overhead=1 Level=1 Template="Free stacks"
+TraceEntry=Trc_VM_freeStacks_Entry Overhead=1 Level=1 Template="Free stacks"
 TraceEvent=Trc_VM_freeStacks_Free Overhead=1 Level=1 Template="Freeing stack %p (size %zu)"
-TraceExit=Trc_VM_freeStacks_Exit  Overhead=1 Level=1 Template="Free stacks"
+TraceExit=Trc_VM_freeStacks_Exit Overhead=1 Level=1 Template="Free stacks"
 
 TraceEvent=Trc_VM_growSlotIterator_Object Overhead=1 Level=1 Template="Stack object: [%p] = %p -> %p"
 
@@ -110,12 +110,12 @@ TraceExit=Trc_VM_growFrameIterator_JNIExit Overhead=1 Level=1 Template="JNI fram
 TraceEvent=Trc_VM_growFrameIterator_UpdateArg0EA Overhead=1 Level=3 Template="Update arg0EA at %p from %p to %p"
 TraceEvent=Trc_VM_growFrameIterator_LeaveArg0EA Overhead=1 Level=1 Template="Leaving arg0EA at %p as %p"
 
-TraceEvent=Trc_VM_jniArrayCache_missUsed Overhead=1 Level=3 Template="jniArrayAllocateMemoryFromThread missed:  %d already in use"
-TraceEvent=Trc_VM_jniArrayCache_missBigger Overhead=1 Level=3 Template="jniArrayAllocateMemoryFromThread missed:  %d bigger than maxSize"
-TraceEvent=Trc_VM_jniArrayCache_hit Overhead=1 Level=3 Template="jniArrayAllocateMemoryFromThread hit:  %d"
+TraceEvent=Trc_VM_jniArrayCache_missUsed Overhead=1 Level=3 Template="jniArrayAllocateMemoryFromThread missed: %d already in use"
+TraceEvent=Trc_VM_jniArrayCache_missBigger Overhead=1 Level=3 Template="jniArrayAllocateMemoryFromThread missed: %d bigger than maxSize"
+TraceEvent=Trc_VM_jniArrayCache_hit Overhead=1 Level=3 Template="jniArrayAllocateMemoryFromThread hit: %d"
 
 TraceEvent=Trc_VM_CreateRAMClassFromROMClass_className Overhead=1 Level=2 Template="ROM class %p is named %.*s"
-TraceException=Trc_VM_CreateRAMClassFromROMClass_classLoadingStackOOM  Overhead=1 Level=1 Template="Out of memory pushing element onto class loading stack. Throw OutOfMemoryError"
+TraceException=Trc_VM_CreateRAMClassFromROMClass_classLoadingStackOOM Overhead=1 Level=1 Template="Out of memory pushing element onto class loading stack. Throw OutOfMemoryError"
 TraceException=Trc_VM_CreateRAMClassFromROMClass_circularity Overhead=1 Level=1 Template="Class loading circularity detected"
 TraceException=Trc_VM_CreateRAMClassFromROMClass_overflow Overhead=1 Level=1 Template="Too many simultaneous class loads (%d). Throw StackOverFlowError"
 TraceEvent=Trc_VM_CreateRAMClassFromROMClass_loadedSuperclass Overhead=1 Level=3 Template="Loaded superclass %.*s (RAM class=%p)"
@@ -186,11 +186,11 @@ TraceEvent=Trc_VM_ensureLocalCapacity_growExistingFrame Overhead=1 Level=3 Templ
 TraceException=Trc_VM_ensureLocalCapacity_growFailed Overhead=1 Level=1 Template="frame grow failed"
 TraceExit=Trc_VM_ensureLocalCapacity_Exit Overhead=1 Level=3 Template="ensureLocalCapacity --> result=%d"
 
-TraceEntry=Trc_VM_jniPopFrame_Entry  Overhead=1 Level=1 Template="jniPopFrame(type=%zx)"
-TraceExit=Trc_VM_jniPopFrame_Exit  Overhead=1 Level=1 Template="jniPopFrame"
+TraceEntry=Trc_VM_jniPopFrame_Entry Overhead=1 Level=1 Template="jniPopFrame(type=%zx)"
+TraceExit=Trc_VM_jniPopFrame_Exit Overhead=1 Level=1 Template="jniPopFrame"
 
-TraceEntry=Trc_VM_jniPushFrame_Entry  Overhead=1 Level=3 Template="jniPushFrame(type=%zx, capacity=%zu)"
-TraceExit=Trc_VM_jniPushFrame_Exit  Overhead=1 Level=3 Template="jniPushFrame --> result=%d"
+TraceEntry=Trc_VM_jniPushFrame_Entry Overhead=1 Level=3 Template="jniPushFrame(type=%zx, capacity=%zu)"
+TraceExit=Trc_VM_jniPushFrame_Exit Overhead=1 Level=3 Template="jniPushFrame --> result=%d"
 
 TraceEntry=Trc_VM_resolveClassRef_Entry Overhead=1 Level=3 Template="resolveClassRef(ramCP=%p, cpIndex=%zu, flags=%zx)"
 TraceEvent=Trc_VM_resolveClassRef_lookup Overhead=1 Level=3 Template="looking up class %.*s"
@@ -375,8 +375,8 @@ TraceExit=Trc_VM_cleanUpClassLoaders_Exit Overhead=1 Level=4 Template="cleanUpCl
 TraceExit=Trc_VM_callLoadClass_foundClass_Null Overhead=1 Level=1 Template="foundClass returned null"
 //Redefine Trc_VM_j9RegisterJXE_Entry to add new parameter
 TraceEntry=Trc_VM_j9RegisterJXE_Entry NoEnv Overhead=1 Level=1 Template="j9RegisterJXE vm=%p imageHeader=%p jxePointer=%p jxeAlloc=%p sharedLibraryDescriptor=%x classLoader=%p filename=%s flags=%x beforeBootstrap=%d"
-TraceException=Trc_VM_classsupport_contendThreadsRecordMissing Overhead=1 Level=1 Template="contendingThreads missing entry for class %.*s  loader %p"
-TraceException=Trc_VM_classsupport_contendThreadsAddFail Overhead=1 Level=1 Template="contendingThreads: could not add class %.*s  loader %p"
+TraceException=Trc_VM_classsupport_contendThreadsRecordMissing Overhead=1 Level=1 Template="contendingThreads missing entry for class %.*s loader %p"
+TraceException=Trc_VM_classsupport_contendThreadsAddFail Overhead=1 Level=1 Template="contendingThreads: could not add class %.*s loader %p"
 
 TraceException=Trc_VM_j9RegisterJXE_OOM1 NoEnv Overhead=1 Level=1 Template="j9RegisterJXE Out of Memory trying to register jxe pointer %p"
 TraceException=Trc_VM_j9RegisterJXE_OOM2 NoEnv Overhead=1 Level=1 Template="j9RegisterJXE Out of Memory trying to register jxe pointer %p"
@@ -455,9 +455,9 @@ TraceEvent=Trc_VM_startJavaThread_gcAndRetry Overhead=1 Level=1 Template="startJ
 
 TraceEvent=Trc_VM_internalFindClass_gcAndRetry Overhead=1 Level=1 Template="native memory exhausted attempting to load class - performing aggressive GC and retrying"
 
-TraceEntry=Trc_VM_internalFindClass_attemptDynamicClassLoad_entry  Overhead=1 Level=2  Template="loader %p class %.*s attemptDynamicClassLoad entry"
-TraceEvent=Trc_VM_internalFindClass_attemptDynamicClassLoadCheckMemory Overhead=1 Level=4  Template="attemptDynamicClassLoad check memory"
-TraceExit=Trc_VM_internalFindClass_attemptDynamicClassLoad_exit  Overhead=1 Level=2  Template="loader %p class 0X%p attemptDynamicClassLoad exit"
+TraceEntry=Trc_VM_internalFindClass_attemptDynamicClassLoad_entry Overhead=1 Level=2 Template="loader %p class %.*s attemptDynamicClassLoad entry"
+TraceEvent=Trc_VM_internalFindClass_attemptDynamicClassLoadCheckMemory Overhead=1 Level=4 Template="attemptDynamicClassLoad check memory"
+TraceExit=Trc_VM_internalFindClass_attemptDynamicClassLoad_exit Overhead=1 Level=2 Template="loader %p class 0X%p attemptDynamicClassLoad exit"
 
 TraceEntry=Trc_VM_createJavaLangString_Entry Obsolete Overhead=1 Level=4 Template="createJavaLangString entry data %.*s stringFlags 0x%0x"
 TraceExit=Trc_VM_createJavaLangString_Exit Obsolete Overhead=1 Level=4 Template="createJavaLangString exit result 0x%0x"
@@ -716,7 +716,7 @@ TraceAssert=Assert_VM_equal noEnv Overhead=1 Level=1 Assert="(P1) == (P2)"
 TraceAssert=Assert_VM_unequal noEnv Overhead=1 Level=1 Assert="(P1) != (P2)"
 TraceException=Trc_VM_contendedLinesizeFailed NoEnv Overhead=1 Level=1 Template="Cannot get DCache line size for contended fields. error=%d"
 
-TraceEntry=Trc_VM_freeClassLoaderEntries_Entry Overhead=1 Level=5 Template="freeClassLoaderEntries - entries=%p  count=%u"
+TraceEntry=Trc_VM_freeClassLoaderEntries_Entry Overhead=1 Level=5 Template="freeClassLoaderEntries - entries=%p count=%u"
 TraceExit=Trc_VM_freeClassLoaderEntries_Exit Overhead=1 Level=5 Template="freeClassLoaderEntries"
 TraceEntry=Trc_VM_freeSharedCacheCLEntries_Entry Overhead=1 Level=5 Template="freeSharedCacheCLEntries - classloader=%p"
 TraceExit=Trc_VM_freeSharedCacheCLEntries_Exit Overhead=1 Level=5 Template="freeSharedCacheCLEntries"
@@ -846,7 +846,7 @@ TraceExit=Trc_VM_GetMsgWithAllocation_Exit Overhead=1 Level=3 Template="GetMsgWi
 TraceEntry=Trc_VM_GetFullyQualifiedMethodName_Entry Overhead=1 Level=3 Template="GetFullyQualifiedMethodName bc (0x%x) index (%u) bcIndex (%p)"
 TraceExit=Trc_VM_GetFullyQualifiedMethodName_Exit Overhead=1 Level=3 Template="GetFullyQualifiedMethodName index (%u) info (%p) className (%s) methodSig (%s) result (%s)"
 TraceEvent=Trc_VM_GetLocalsName_LocalVar Overhead=1 Level=3 Template="getLocalsName localVar (%u) temps[localVar] (%zu)"
-TraceExit=Trc_VM_GetLocalsName_Exit Overhead=1 Level=3 Template="GetLocalsName result (%s) localVar (%d)  bcIndex (%u) temps (%p) methodInfo (%p)"
+TraceExit=Trc_VM_GetLocalsName_Exit Overhead=1 Level=3 Template="GetLocalsName result (%s) localVar (%d) bcIndex (%u) temps (%p) methodInfo (%p)"
 TraceExit=Trc_VM_PushViaSiganature_Exit Overhead=1 Level=4 Template="PushViaSiganature *signature (%c) stackTop (%p) bcPos (%zu)"
 TraceEvent=Trc_VM_CopyToTargetStack_Copy Overhead=1 Level=3 Template="copyToTargetStack npeMsgData->unwalkedQueueTail (%zu) bytecodeMap[%zu] (0x%x)"
 TraceEvent=Trc_VM_CopyToTargetStack_BranchTarget Overhead=1 Level=3 Template="copyToTargetStack BranchTarget at liveStackBaseIndexTemp (%zu) liveStack: (%zu) targetStack: (%zu)"
@@ -896,5 +896,5 @@ TraceEntry=Trc_VM_criu_runRestoreHooks_Entry Overhead=1 Level=2 Template="runInt
 TraceExit=Trc_VM_criu_runRestoreHooks_Exit Overhead=1 Level=2 Template="runInternalJVMRestoreHooks"
 TraceException=Trc_VM_criu_runDelayedLockRelatedOperations_contendedMonitorEnter Overhead=1 Level=2 Template="Object monitor should be free to acquire obj=%p"
 TraceException=Trc_VM_criu_runDelayedLockRelatedOperations_contendedMonitorEnter2 Overhead=1 Level=2 Template="Object monitor should be free to acquire monitor=%p"
-TraceEvent=Trc_VM_criu_runDelayedLockRelatedOperations_runDelayedOperation Overhead=1 Level=3 Template="Checkpoint thread calling delayed  lock-related op=%zu on instance=%p monitor=%p"
+TraceEvent=Trc_VM_criu_runDelayedLockRelatedOperations_runDelayedOperation Overhead=1 Level=3 Template="Checkpoint thread calling delayed lock-related op=%zu on instance=%p monitor=%p"
 TraceEvent=Trc_VM_criu_delayedLockingOperation_delayOperation Overhead=1 Level=3 Template="Checkpoint thread calling lock-related op=%zu on instance=%p"

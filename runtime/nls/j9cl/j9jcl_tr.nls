@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2021 IBM Corp. and others
+# Copyright (c) 2000, 2022 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,7 +32,7 @@
 #
 # Every NLS message needs to have the following information provided:
 #
-# J9NLS_VM_SAMPLE_MESSAGE=This is a sample message that takes two parameters parameter 1 is a string  %1$s  parameter 2 is a number  %2$d
+# J9NLS_VM_SAMPLE_MESSAGE=This is a sample message that takes two parameters parameter 1 is a string %1$s parameter 2 is a number %2$d
 # J9NLS_VM_SAMPLE_MESSAGE.sample_input_1=string parameter
 # J9NLS_VM_SAMPLE_MESSAGE.sample_input_2=2
 # J9NLS_VM_SAMPLE_MESSAGE.explanation=Explanation for what the message means
@@ -375,7 +375,7 @@ J9NLS_JCL_METHODTYPE_CLASS_LOADING_CONSTRAINT.sample_input_1=SomeClassloader
 J9NLS_JCL_METHODTYPE_CLASS_LOADING_CONSTRAINT.sample_input_2=2
 J9NLS_JCL_METHODTYPE_CLASS_LOADING_CONSTRAINT.sample_input_3=SomeClassloader2
 J9NLS_JCL_METHODTYPE_CLASS_LOADING_CONSTRAINT.sample_input_4=4
-J9NLS_JCL_METHODTYPE_CLASS_LOADING_CONSTRAINT.explanation=A class loading constraint has been violated.  The two class loader's have different classes for one of the class names in the signature.
+J9NLS_JCL_METHODTYPE_CLASS_LOADING_CONSTRAINT.explanation=A class loading constraint has been violated. The two class loader's have different classes for one of the class names in the signature.
 J9NLS_JCL_METHODTYPE_CLASS_LOADING_CONSTRAINT.system_action=A java/lang/LinkageError will be thrown
 J9NLS_JCL_METHODTYPE_CLASS_LOADING_CONSTRAINT.user_response=Check the Classes supplied to the MethodType to determine why a cross-class loader constraint has been violated.
 # END NON-TRANSLATABLE
