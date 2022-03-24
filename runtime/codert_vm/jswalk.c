@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1674,6 +1674,9 @@ jitGetOwnedObjectMonitors(J9StackWalkState *walkState)
 	void *inlineMap;
 	U_8 *liveMonitorMap;
 	U_16 numberOfMapBits;
+	UDATA rc = J9_STACKWALK_KEEP_ITERATING;
+	/* If -XX:+ShowHiddenFrames option has not been set, skip hidden method frames */
+	UDATA skipHiddenFrames = J9_ARE_NO_BITS_SET(walkState->javaVM->runtimeFlags, J9_RUNTIME_SHOW_HIDDEN_FRAMES);
 
 	if (NULL == walkState->userData1) {
 		return countOwnedObjectMonitors(walkState);
@@ -1700,23 +1703,42 @@ jitGetOwnedObjectMonitors(J9StackWalkState *walkState)
 			inlinedCallSite = getNextInlinedCallSite(walkState->jitInfo, inlinedCallSite)
 			) {
 
-			if (liveMonitorMap) {
-				U_8 *inlineMonitorMask = getMonitorMask(gcStackAtlas, inlinedCallSite);
-				if (NULL != inlineMonitorMask) {
-					walkLiveMonitorSlots(walkState, gcStackAtlas, liveMonitorMap, inlineMonitorMask, numberOfMapBits);
+			J9Method *ramMethod = getInlinedMethod(inlinedCallSite);
+			/* if skipHiddenFrames flag set,  skip checking monitors from hidden method frames */
+			if (!(skipHiddenFrames && (NULL != ramMethod)
+			&& (J9ROMCLASS_IS_ANON_OR_HIDDEN(J9_CLASS_FROM_METHOD(ramMethod)->romClass)
+				|| J9_ARE_ANY_BITS_SET(J9_ROM_METHOD_FROM_RAM_METHOD(ramMethod)->modifiers, J9AccMethodFrameIteratorSkip)
+			))) {
+				if (liveMonitorMap) {
+					U_8 *inlineMonitorMask = getMonitorMask(gcStackAtlas, inlinedCallSite);
+					if (NULL != inlineMonitorMask) {
+						rc = walkLiveMonitorSlots(walkState, gcStackAtlas, liveMonitorMap, inlineMonitorMask, numberOfMapBits);
+						if (J9_STACKWALK_STOP_ITERATING == rc) {
+							return rc;
+						}
+					}
 				}
+				/* increment stack depth */
+				walkState->userData4 = (void *)(((UDATA)walkState->userData4) + 1);
 			}
-			/* increment stack depth */
-			walkState->userData4 = (void *)(((UDATA)walkState->userData4) + 1);
 		}
 	}
 
-	/* Get the live monitors for the outer frame */
-	if (liveMonitorMap) {
-		walkLiveMonitorSlots(walkState, gcStackAtlas, liveMonitorMap, getMonitorMask(gcStackAtlas, NULL), numberOfMapBits);
+	/* Check if outer frame is a hidden method frame */
+	if (skipHiddenFrames && (NULL != walkState->method)
+	&& (J9ROMCLASS_IS_ANON_OR_HIDDEN(J9_CLASS_FROM_METHOD(walkState->method)->romClass)
+		|| J9_ARE_ANY_BITS_SET(J9_ROM_METHOD_FROM_RAM_METHOD(walkState->method)->modifiers, J9AccMethodFrameIteratorSkip)
+	)) {
+		/* Decrease the stack depth when skipping hidden frame */
+		walkState->userData4 = (void *)(((UDATA)walkState->userData4) - 1);
+	} else {
+		/* Get the live monitors for the outer frame */
+		if (liveMonitorMap) {
+			rc = walkLiveMonitorSlots(walkState, gcStackAtlas, liveMonitorMap, getMonitorMask(gcStackAtlas, NULL), numberOfMapBits);
+		}
 	}
 
-	return J9_STACKWALK_KEEP_ITERATING;
+	return rc;
 }
 
 /*
@@ -1730,6 +1752,8 @@ countOwnedObjectMonitors(J9StackWalkState *walkState)
 	void *inlineMap;
 	U_8 *liveMonitorMap;
 	U_16 numberOfMapBits;
+	/* If -XX:+ShowHiddenFrames option has not been set, skip hidden method frames */
+	UDATA skipHiddenFrames = J9_ARE_NO_BITS_SET(walkState->javaVM->runtimeFlags, J9_RUNTIME_SHOW_HIDDEN_FRAMES);
 
 	/* get the stackmap and inline map for the given pc (this is a single walk of jit metadata) */
 	jitGetMapsFromPC(walkState->currentThread, walkState->jitInfo, (UDATA)walkState->pc, &stackMap, &inlineMap);
@@ -1752,18 +1776,31 @@ countOwnedObjectMonitors(J9StackWalkState *walkState)
 			inlinedCallSite = getNextInlinedCallSite(walkState->jitInfo, inlinedCallSite)
 			) {
 
-			if (liveMonitorMap) {
-				U_8 *inlineMonitorMask = getMonitorMask(gcStackAtlas, inlinedCallSite);
-				if (NULL != inlineMonitorMask) {
-					countLiveMonitorSlots(walkState, gcStackAtlas, liveMonitorMap, inlineMonitorMask, numberOfMapBits);
+			J9Method *ramMethod = getInlinedMethod(inlinedCallSite);
+			/* if skipHiddenFrames flag set, skip checking monitors from hidden method frames */
+			if (!(skipHiddenFrames && (NULL != ramMethod)
+			&& (J9ROMCLASS_IS_ANON_OR_HIDDEN(J9_CLASS_FROM_METHOD(ramMethod)->romClass)
+				|| J9_ARE_ANY_BITS_SET(J9_ROM_METHOD_FROM_RAM_METHOD(ramMethod)->modifiers, J9AccMethodFrameIteratorSkip)
+			))) {
+				if (liveMonitorMap) {
+					U_8 *inlineMonitorMask = getMonitorMask(gcStackAtlas, inlinedCallSite);
+					if (NULL != inlineMonitorMask) {
+						countLiveMonitorSlots(walkState, gcStackAtlas, liveMonitorMap, inlineMonitorMask, numberOfMapBits);
+					}
 				}
 			}
 		}
 	}
 
-	/* Get the live monitors for the outer frame */
-	if (liveMonitorMap) {
-		countLiveMonitorSlots(walkState, gcStackAtlas, liveMonitorMap, getMonitorMask(gcStackAtlas, 0), numberOfMapBits);
+	/* Check if outer frame is a hidden method frame */
+	if (!(skipHiddenFrames && (NULL != walkState->method)
+	&& (J9ROMCLASS_IS_ANON_OR_HIDDEN(J9_CLASS_FROM_METHOD(walkState->method)->romClass)
+		|| J9_ARE_ANY_BITS_SET(J9_ROM_METHOD_FROM_RAM_METHOD(walkState->method)->modifiers, J9AccMethodFrameIteratorSkip)
+	))) {
+		/* Get the live monitors for the outer frame */
+		if (liveMonitorMap) {
+			countLiveMonitorSlots(walkState, gcStackAtlas, liveMonitorMap, getMonitorMask(gcStackAtlas, 0), numberOfMapBits);
+		}
 	}
 	return J9_STACKWALK_KEEP_ITERATING;
 }
