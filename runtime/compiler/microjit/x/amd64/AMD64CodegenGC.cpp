@@ -19,10 +19,9 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-#include "microjit/x/amd64/AMD64CodegenGC.hpp"
-
 #include <stdint.h>
 #include <string.h>
+#include "microjit/x/amd64/AMD64CodegenGC.hpp"
 #include "env/StackMemoryRegion.hpp"
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/CodeGenerator_inlines.hpp"
@@ -52,12 +51,11 @@
 #include "microjit/utils.hpp"
 #include "ras/Debug.hpp"
 
-
 MJIT::CodeGenGC::CodeGenGC(TR::FilePointer *logFileFP)
-   :_logFileFP(logFileFP)
-{}
+   : _logFileFP(logFileFP)
+   {}
 
-TR::GCStackAtlas*
+TR::GCStackAtlas *
 MJIT::CodeGenGC::createStackAtlas(TR::Compilation *comp, MJIT::ParamTable *paramTable, MJIT::LocalTable *localTable)
    {
 
@@ -71,34 +69,41 @@ MJIT::CodeGenGC::createStackAtlas(TR::Compilation *comp, MJIT::ParamTable *param
 
    int32_t firstMappedParmOffsetInBytes = -1;
    MJIT::ParamTableEntry entry;
-   for(int i=0; i<paramCount;){
+   for (int i=0; i<paramCount;)
+      {
       MJIT_ASSERT(_logFileFP, paramTable->getEntry(i, &entry), "Bad index for table entry");
-      if(entry.notInitialized) {
+      if (entry.notInitialized)
+         {
          i++;
          continue;
-      }
-      if(!entry.notInitialized && entry.isReference){
+         }
+      if (!entry.notInitialized && entry.isReference)
+         {
          firstMappedParmOffsetInBytes = entry.gcMapOffset;
          break;
-      }
+         }
       i += entry.slots;
-   }
+      }
 
-   for(int i=0; i<paramCount;){
+   for (int i=0; i<paramCount;)
+      {
       MJIT_ASSERT(_logFileFP, paramTable->getEntry(i, &entry), "Bad index for table entry");
-      if(entry.notInitialized) {
+      if (entry.notInitialized)
+         {
          i++;
          continue;
-      }
-      if(!entry.notInitialized && entry.isReference){
+         }
+      if (!entry.notInitialized && entry.isReference)
+         {
          int32_t entryOffsetInBytes = entry.gcMapOffset;
          parameterMap->setBit(((entryOffsetInBytes-firstMappedParmOffsetInBytes)/stackSlotSize));
-         if(!entry.onStack){
+         if (!entry.onStack)
+            {
             parameterMap->setRegisterBits(TR::RealRegister::gprMask((TR::RealRegister::RegNum)entry.regNo));
+            }
          }
-      }
       i += entry.slots;
-   }
+      }
 
    // --------------------------------------------------------------------------------
    // Construct the local map for mapped reference locals.
@@ -109,21 +114,25 @@ MJIT::CodeGenGC::createStackAtlas(TR::Compilation *comp, MJIT::ParamTable *param
    U_16 localCount = localTable->getLocalCount();
    TR_GCStackMap *localMap = new (comp->trHeapMemory(), localCount) TR_GCStackMap(localCount);
    localMap->copy(parameterMap);
-   for(int i=paramCount; i<localCount;){
+   for (int i=paramCount; i<localCount;)
+      {
       MJIT_ASSERT(_logFileFP, localTable->getEntry(i, &entry), "Bad index for table entry");
-      if(entry.notInitialized) {
+      if (entry.notInitialized)
+         {
          i++;
          continue;
-      }
-      if(!entry.notInitialized && entry.offset == -1 && entry.isReference){
+         }
+      if (!entry.notInitialized && entry.offset == -1 && entry.isReference)
+         {
          int32_t entryOffsetInBytes = entry.gcMapOffset;
          localMap->setBit(((entryOffsetInBytes-firstMappedParmOffsetInBytes)/stackSlotSize));
-         if(!entry.onStack){
+         if (!entry.onStack)
+            {
             localMap->setRegisterBits(TR::RealRegister::gprMask((TR::RealRegister::RegNum)entry.regNo));
+            }
          }
-      }
       i += entry.slots;
-   }
+      }
 
    // --------------------------------------------------------------------------
    // Now create the stack atlas

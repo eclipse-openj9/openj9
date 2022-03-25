@@ -676,11 +676,11 @@ public:
 #endif /* defined(J9VM_OPT_JITSERVER) */
 #if defined(J9VM_OPT_MICROJIT)
       TR::Options *options = TR::Options::getJITCmdLineOptions();
-      if(options->_mjitEnabled && value)
+      if (options->_mjitEnabled && value)
          {
-            return;
+         return;
          }
-         else
+      else
 #endif
          {
          value = (value << 1) | J9_STARTPC_NOT_TRANSLATED;
@@ -693,7 +693,7 @@ public:
 #if defined(J9VM_OPT_MICROJIT)
    static void setInitialMJITCountUnsynchronized(J9Method *method, int32_t mjitThreshold)
       {
-      if(TR::Options::getJITCmdLineOptions()->_mjitEnabled)
+      if (TR::Options::getJITCmdLineOptions()->_mjitEnabled)
          {
          intptr_t value = (intptr_t)((mjitThreshold << 1) | J9_STARTPC_NOT_TRANSLATED);
          method->extra = reinterpret_cast<void *>(static_cast<intptr_t>(value));

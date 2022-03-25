@@ -23,7 +23,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 # Overview
 
 This document contains information on the compilation stages of MicroJIT
-from where to diverges from TR.
+from where it diverges from TR.
 
 # MetaData
 
@@ -40,26 +40,26 @@ steps begin.
 
 # Pre-prologue
 
-The pre-prologue is generated first. This contains many useful code snippits, jump points,
+The pre-prologue is generated first. This contains many useful code snippets, jump points,
 and small bits of meta-data used throughout the JVM that are relative to an individual
 compilation of a method.
 
 # Prologue
 
-The prologue is then generated. Copying paramters into the appropreate places and updating
+The prologue is then generated, copying parameters into appropriate places and updating
 tables as needed. Once these tables are created, the structures used by the JVM are created,
-namely the `GCStackAtlas` and its initial GC Maps. At this point, the required size of the
-stack is known, the required size of the local array is known, and the code generator can
+namely the `GCStackAtlas` and its initial GC Maps. At this point, the required sizes of the
+stack and local array are known. Hence, the code generator can
 generate the code for allocating the stack space needed, moving the parameters into their
 local array slots, and setting the Computation Stack and Local Array pointers (See [vISA](vISA.md)).
 
 # Body
 
-The code generator then itterates in a tight loop over the bytecode intruction stream,
+The code generator then iterates in a tight loop over the bytecode instruction stream,
 generating the required template for each bytecode, one at a time, and patching them as
-needed. In this phase, if a bytecode that is unsupported (See [supported](support.md)
+needed. During this phase, if a bytecode that is unsupported (See [supported](support.md))
 is reached, the code generator bubbles the error up to the top level and compilation
-is marked as a failure. The method is set to not be attempted with MicroJIT again, and
+is marked as a failure. The method is set not to be attempted with MicroJIT again, and
 its compilation threshold is set to the default TR threshold.
 
 # Cold Area

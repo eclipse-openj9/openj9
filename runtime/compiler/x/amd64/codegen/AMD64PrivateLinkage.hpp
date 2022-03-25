@@ -39,6 +39,7 @@ namespace X86
 namespace AMD64
 {
 void setProperties(TR::CodeGenerator *cg,TR::X86LinkageProperties *properties);
+
 class PrivateLinkage : public J9::X86::PrivateLinkage
    {
    public:

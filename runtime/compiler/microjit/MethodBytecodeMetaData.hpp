@@ -26,44 +26,45 @@
 #include "microjit/ByteCodeIterator.hpp"
 #include "microjit/SideTables.hpp"
 
-
-namespace MJIT {
+namespace MJIT
+{
 
 #if defined(J9VM_OPT_MJIT_Standalone)
-class InternalMetaData{
-public:
-    MJIT::LocalTable _localTable;
-    InternalMetaData(MJIT::LocalTable table)
-        :_localTable(table)
-    {}
-};
+class InternalMetaData
+   {
+   public:
+      MJIT::LocalTable _localTable;
+      InternalMetaData(MJIT::LocalTable table)
+         :_localTable(table)
+         {}
+   };
 #else
-class InternalMetaData{
-public:
-    MJIT::LocalTable _localTable;
-    TR::CFG *_cfg;
-    uint16_t _maxCalleeArgSize;
-    InternalMetaData(MJIT::LocalTable table, TR::CFG *cfg, uint16_t maxCalleeArgSize)
-        :_localTable(table)
-        ,_cfg(cfg)
-        ,_maxCalleeArgSize(maxCalleeArgSize)
-        {}
-};
+class InternalMetaData
+   {
+   public:
+      MJIT::LocalTable _localTable;
+      TR::CFG *_cfg;
+      uint16_t _maxCalleeArgSize;
+      InternalMetaData(MJIT::LocalTable table, TR::CFG *cfg, uint16_t maxCalleeArgSize)
+         :_localTable(table)
+         ,_cfg(cfg)
+         ,_maxCalleeArgSize(maxCalleeArgSize)
+         {}
+   };
 #endif
 
 MJIT::InternalMetaData
 createInternalMethodMetadata(
-    MJIT::ByteCodeIterator *bci,
-    MJIT::LocalTableEntry *localTableEntries,
-    U_16 entries,
-    int32_t offsetToFirstLocal,
-    TR_ResolvedMethod *compilee,
-    TR::Compilation *comp,
-    ParamTable* paramTable,
-    uint8_t pointerSize,
-    bool *resolvedAllCallees
-);
+   MJIT::ByteCodeIterator *bci,
+   MJIT::LocalTableEntry *localTableEntries,
+   U_16 entries,
+   int32_t offsetToFirstLocal,
+   TR_ResolvedMethod *compilee,
+   TR::Compilation *comp,
+   ParamTable* paramTable,
+   uint8_t pointerSize,
+   bool *resolvedAllCallees);
 
-}
+} // namespace MJIT
 
 #endif /* MJIT_METHOD_BYTECODE_META_DATA */

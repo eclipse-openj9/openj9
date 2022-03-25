@@ -22,12 +22,12 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 
 # Overview
 
-MicroJIT uses a stack-based vISA. This means values are pushed onto
+MicroJIT uses a stack-based virtual ISA. This means values are pushed onto
 the computation stack, popped off the computation stack, saved and
 loaded from a local array, and that operands for a given instruction
 are either in the instruction stream, or on the computation stack.
 
-MicroJIT is implemented on register based architectures, and makes use
+MicroJIT is implemented on register-based architectures, and makes use
 of those registers as pointers onto the stack and temporary holding
 cells for values either being used by an operation, or being saved
 and loaded to and from the local array. Below are the mappings for

@@ -87,8 +87,8 @@ enum
 J9::X86::AMD64::PrivateLinkage::PrivateLinkage(TR::CodeGenerator *cg)
    : J9::X86::PrivateLinkage(cg)
    {
-      setOffsetToFirstParm(RETURN_ADDRESS_SIZE);
-      setProperties(cg,&_properties);
+   setOffsetToFirstParm(RETURN_ADDRESS_SIZE);
+   setProperties(cg,&_properties);
    }
 
 void J9::X86::AMD64::setProperties(

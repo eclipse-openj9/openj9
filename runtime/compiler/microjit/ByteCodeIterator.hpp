@@ -20,39 +20,42 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-
 #ifndef MJIT_BYTECODEITERATOR_INCL
 #define MJIT_BYTECODEITERATOR_INCL
 #include "ilgen/J9ByteCodeIterator.hpp"
 
-namespace MJIT {
-    class ByteCodeIterator : public TR_J9ByteCodeIterator
-    {
+namespace MJIT
+{
 
-    public:
-        ByteCodeIterator(TR::ResolvedMethodSymbol *methodSymbol, TR_ResolvedJ9Method *method, TR_J9VMBase * fe, TR::Compilation * comp) :
-        TR_J9ByteCodeIterator(methodSymbol, method, fe, comp)
-        {};
+class ByteCodeIterator : public TR_J9ByteCodeIterator
+   {
 
-        void printByteCodes()
-          {
-          this->printByteCodePrologue();
-          for (TR_J9ByteCode bc = this->first(); bc != J9BCunknown; bc = this->next())
-          {
+   public:
+      ByteCodeIterator(TR::ResolvedMethodSymbol *methodSymbol, TR_ResolvedJ9Method *method, TR_J9VMBase *fe, TR::Compilation *comp)
+         : TR_J9ByteCodeIterator(methodSymbol, method, fe, comp)
+         {};
+
+      void printByteCodes()
+         {
+         this->printByteCodePrologue();
+         for (TR_J9ByteCode bc = this->first(); bc != J9BCunknown; bc = this->next())
+            {
             this->printByteCode();
-          }
-          this->printByteCodeEpilogue();
-        }
+            }
+         this->printByteCodeEpilogue();
+         }
 
-        const char * currentMnemonic() {
-          uint8_t opcode = nextByte(0);
-          return  ((TR_J9VMBase *)fe())->getByteCodeName(opcode);
-        }
+      const char *currentMnemonic()
+         {
+         uint8_t opcode = nextByte(0);
+         return  ((TR_J9VMBase *)fe())->getByteCodeName(opcode);
+         }
 
-        uint8_t currentOpcode() {
-          return nextByte(0);
-        }
+      uint8_t currentOpcode()
+         {
+         return nextByte(0);
+         }
+   };
 
-    };
-}
+} // namespace MJIT
 #endif /* MJIT_BYTECODEITERATOR_INCL */

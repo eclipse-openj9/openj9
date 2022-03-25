@@ -20,7 +20,6 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 #include "AMD64Linkage.hpp"
-#include <cstring>
 
 /*
 | Architecture | Endian | Return address | Argument registers |
@@ -31,8 +30,8 @@
 */
 
 MJIT::Linkage::Linkage(TR::CodeGenerator *cg)
-{
+    {
     // TODO: MicroJIT: Use the method setOffsetToFirstParm(RETURN_ADDRESS_SIZE);
     _properties._offsetToFirstParm = RETURN_ADDRESS_SIZE;
     setProperties(cg,&_properties);
-}
+    }

@@ -30,7 +30,7 @@ TR's first compile (where CPU resources are not a constraint).
 MicroJIT's entry point is at the `wrapped compile` stage of TR's compile process.
 When building with a `--enable-microjit` configuration, the VM checks whether
 a method should be compiled with MicroJIT or TR before handing off the method to
-code generation ([MicroJIT Compile Stages](Stages.md))
+code generation ([MicroJIT Compile Stages](Stages.md)).
 
 Being template-based, MicroJIT does not build an intermediate language (IL) the
 way that TR does. It instead performs a tight loop over the bytecodes and generates
@@ -38,9 +38,9 @@ the patchable assembly for each instance of a JVM Bytecode. This means that port
 MicroJIT to a new platform requires rewriting much of the code generator in that
 target platform. The current list of available platforms is available [here](Platforms.md).
 
-MicroJIT uses a stack based [vISA](vISA.md) for its internal model of how to execute Bytecodes.
+MicroJIT uses a stack-based [vISA](vISA.md) for its internal model of how to execute bytecodes.
 This maps cleanly onto the JVM Bytecode, so MicroJIT uses the number of stack slots
-for JVM data types that the JVM spec requires where ever the target architecture allows.
+for JVM data types that the JVM specification requires wherever the target architecture allows.
 
 To keep track of the location of parameters and locals, as well as for creating the
 required GCStackAtlas, MicroJIT makes use of [side tables](SideTables.md). These
@@ -50,12 +50,12 @@ in these tables on the stack rather than the heap, helping MicroJIT compile fast
 
 The templates MicroJIT uses for its code generation are written in a mix of the
 target architecture's assembly (for the NASM assembler) and assembler macros used to
-abstract some of the vISA operations away into a domain specific language ([DSL](DSL.md)).
+abstract some of the vISA operations away into a domain-specific language ([DSL](DSL.md)).
 
 To try MicroJIT, first build your JVM with a configuration using the `--enable-microjit`
 option (see the openj9-openjdk-jdk8 project). Then, once built, use the
 `-Xjit:mjitEnabled=1,mjitCount=20` options. You can use other values for `mjitCount` than
-20, but peer-reviewed researh shows that this value is a good estimation of the best
+20, but peer-reviewed research shows that this value is a good estimation of the best
 count for similar template-based JITs on JVM benchmarks.
 
 MicroJIT is an experimental feature. It currently does not compile all methods, and will
@@ -69,6 +69,6 @@ documentation.
 - [Supported Platforms](Platforms.md)
 - [vISA](vISA.md)
 - [Supporting Side Tables](SideTables.md)
-- [Domain Specific Language](DSL.md)
+- [Domain-Specific Language](DSL.md)
 - [Supported Compilations](support.md)
 <hr/>

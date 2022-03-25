@@ -18,9 +18,8 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-#include "microjit/ExceptionTable.hpp"
-
 #include <stdint.h>
+#include "microjit/ExceptionTable.hpp"
 #include "compile/Compilation.hpp"
 #include "env/TRMemory.hpp"
 #include "env/jittypes.h"
@@ -35,7 +34,7 @@
 
 class TR_ResolvedMethod;
 
-//TODO: This Should create an Exception table using only information MicroJIT has.
+// TODO: This Should create an Exception table using only information MicroJIT has.
 MJIT::ExceptionTableEntryIterator::ExceptionTableEntryIterator(TR::Compilation *comp)
    : _compilation(comp)
    {
@@ -48,33 +47,37 @@ MJIT::ExceptionTableEntryIterator::ExceptionTableEntryIterator(TR::Compilation *
    //
 
    // for each exception block:
-      // create exception ranges from the list of exception predecessors
-      //
+   //    create exception ranges from the list of exception predecessors
+
    }
 
-//TODO: This Should create an Exception table entry using only information MicroJIT has.
+// TODO: This Should create an Exception table entry using only information MicroJIT has.
 void
 MJIT::ExceptionTableEntryIterator::addSnippetRanges(
-   List<TR_ExceptionTableEntry> & tableEntries, TR::Block * snippetBlock, TR::Block * catchBlock, uint32_t catchType,
-   TR_ResolvedMethod * method, TR::Compilation *comp)
+      List<TR_ExceptionTableEntry> & tableEntries,
+      TR::Block *snippetBlock,
+      TR::Block *catchBlock,
+      uint32_t catchType,
+      TR_ResolvedMethod *method,
+      TR::Compilation *comp)
    {
-      //TODO: create a snippet for each exception and add it to the correct place.
+   // TODO: create a snippet for each exception and add it to the correct place.
    }
 
 TR_ExceptionTableEntry *
 MJIT::ExceptionTableEntryIterator::getFirst()
    {
-      return NULL;
+   return NULL;
    }
 
 TR_ExceptionTableEntry *
 MJIT::ExceptionTableEntryIterator::getNext()
    {
-      return NULL;
+   return NULL;
    }
 
 uint32_t
 MJIT::ExceptionTableEntryIterator::size()
    {
-      return 0;
+   return 0;
    }

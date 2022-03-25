@@ -28,7 +28,7 @@ generate code while limiting heap allocations.
 # Register Stack
 
 The register stack contains the number of stack slots contained
-in each register used by TR's Linkage. This allows for MicroJIT
+in each register used by TR's linkage. This allows for MicroJIT
 to quickly calculate stack offsets for interpreter arguments
 on the fly.
 

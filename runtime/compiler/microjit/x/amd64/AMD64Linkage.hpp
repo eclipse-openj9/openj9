@@ -22,7 +22,6 @@
 #ifndef AMD64LINKAGE_HPP
 #define AMD64LINKAGE_HPP
 
-#include <cstdint>
 #include "codegen/AMD64PrivateLinkage.hpp"
 #include "codegen/OMRLinkage_inlines.hpp"
 
@@ -34,18 +33,21 @@
 | EAX (32-bit) RAX (64-bit) XMM0 (float/double) | RBX R9 RSP     		| R8 (receiver in RAX) 	|
 */
 
-namespace MJIT {
+namespace MJIT
+{
 
 enum
    {
    RETURN_ADDRESS_SIZE=8,
    };
 
-class Linkage {
+class Linkage
+{
+
 public:
-	struct TR::X86LinkageProperties _properties;
-    Linkage() = delete;
-	Linkage(TR::CodeGenerator*);
+   struct TR::X86LinkageProperties _properties;
+   Linkage() = delete;
+   Linkage(TR::CodeGenerator*);
 };
 
 } // namespace MJIT

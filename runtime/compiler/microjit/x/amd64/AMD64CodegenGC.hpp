@@ -25,13 +25,19 @@
 #include "microjit/SideTables.hpp"
 #include "env/IO.hpp"
 
-namespace MJIT {
-    class CodeGenGC {
-        private:
-            TR::FilePointer *_logFileFP;
-        public:
-            CodeGenGC(TR::FilePointer *logFileFP);
-            TR::GCStackAtlas *createStackAtlas(TR::Compilation*, MJIT::ParamTable*, MJIT::LocalTable*);
+namespace MJIT
+{
+
+class CodeGenGC
+    {
+
+    private:
+        TR::FilePointer *_logFileFP;
+
+    public:
+        CodeGenGC(TR::FilePointer *logFileFP);
+        TR::GCStackAtlas *createStackAtlas(TR::Compilation*, MJIT::ParamTable*, MJIT::LocalTable*);
     };
-}
+
+} // namespace MJIT
 #endif /* MJIT_AMD64_CODEGENGC_HPP */

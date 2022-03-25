@@ -22,9 +22,8 @@
 #ifndef MJIT_EXCEPTIONTABLE_INCL
 #define MJIT_EXCEPTIONTABLE_INCL
 
-#include "infra/Array.hpp"
-
 #include <stdint.h>
+#include "infra/Array.hpp"
 #include "env/TRMemory.hpp"
 #include "env/jittypes.h"
 #include "infra/List.hpp"
@@ -35,26 +34,28 @@ namespace TR { class Block; }
 namespace TR { class Compilation; }
 template <class T> class TR_Array;
 
-namespace MJIT {
+namespace MJIT
+{
 
 struct ExceptionTableEntryIterator
    {
    ExceptionTableEntryIterator(TR::Compilation *comp);
 
-   TR_ExceptionTableEntry * getFirst();
-   TR_ExceptionTableEntry * getNext();
+   TR_ExceptionTableEntry *getFirst();
+   TR_ExceptionTableEntry *getNext();
 
-   uint32_t                 size();
-private:
-   void                     addSnippetRanges(List<TR_ExceptionTableEntry> &, TR::Block *, TR::Block *, uint32_t, TR_ResolvedMethod *, TR::Compilation *);
+   uint32_t size();
 
-   TR::Compilation *                          _compilation;
+   private:
+      void addSnippetRanges(List<TR_ExceptionTableEntry> &, TR::Block *, TR::Block *, uint32_t, TR_ResolvedMethod *, TR::Compilation *);
+
+   TR::Compilation *                         _compilation;
    TR_Array<List<TR_ExceptionTableEntry> > * _tableEntries;
    ListIterator<TR_ExceptionTableEntry>      _entryIterator;
    int32_t                                   _inlineDepth;
    uint32_t                                  _handlerIndex;
    };
 
-}
+} // namespace MJIT
 
 #endif /* MJIT_EXCEPTIONTABLE_INCL */

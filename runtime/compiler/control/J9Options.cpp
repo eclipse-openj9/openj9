@@ -925,9 +925,9 @@ TR::OptionTable OMR::Options::_feOptions[] = {
    {"minSuperclassArraySize=", "I<nnn>\t set the size of the minimum superclass array size",
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_minimumSuperclassArraySize, 0, "F%d", NOT_IN_SUBSET},
 #if defined(J9VM_OPT_MICROJIT)
-   {"mjitCount=",             "C<nnn>\tnumber of invocations before MicroJIT compiles methods without loops",
+   {"mjitCount=", "C<nnn>\tnumber of invocations before MicroJIT compiles methods without loops",
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_mjitInitialCount, 0, "F%d"},
-   {"mjitEnabled=",           "C<n>\tenable Microjit (set to 1 to enable, default=0)",
+   {"mjitEnabled=", "C<n>\tenable MicroJIT (set to 1 to enable, default=0)",
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_mjitEnabled, 0, "F%d"},
 #endif
    {"noregmap",           0, RESET_JITCONFIG_RUNTIME_FLAG(J9JIT_CG_REGISTER_MAPS) },

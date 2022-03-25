@@ -92,7 +92,7 @@ static const OptimizationStrategy J9MicroJITOpts[] =
    { OMR::jProfilingBlock,                  OMR::MustBeDone },
    { OMR::endOpts }
    };
-#endif
+#endif /* J9VM_OPT_MICROJIT */
 
 static const OptimizationStrategy J9EarlyGlobalOpts[] =
    {

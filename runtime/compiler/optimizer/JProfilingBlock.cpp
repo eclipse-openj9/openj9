@@ -596,10 +596,10 @@ void TR_JProfilingBlock::computeMinimumSpanningTree(BlockParents &parent, BlockP
    BlockWeights weights(cfg->getNextNodeNumber(), stackMemoryRegion);
    TR::BlockChecklist inMST(comp());
 
-   char* classname = comp()->getMethodBeingCompiled()->classNameChars();
+   char *classname = comp()->getMethodBeingCompiled()->classNameChars();
    uint16_t classnamelength = comp()->getMethodBeingCompiled()->classNameLength();
 
-   char* name = comp()->getMethodBeingCompiled()->nameChars();
+   char *name = comp()->getMethodBeingCompiled()->nameChars();
    uint16_t namelength = comp()->getMethodBeingCompiled()->nameLength();
 
    // Prim's init
@@ -940,7 +940,6 @@ void TR_JProfilingBlock::addRecompilationTests(TR_BlockFrequencyInfo *blockFrequ
  */
 int32_t TR_JProfilingBlock::perform() 
    {
-   // Can we perform these tests before the perform call?
    if (comp()->getOption(TR_EnableJProfiling))
       {
       if (trace())
@@ -981,14 +980,15 @@ int32_t TR_JProfilingBlock::perform()
    if (trace())
       parent.dump(comp());
 
-//TODO: Remove this when ready to implement counter insertion.
+// TODO: Remove this when ready to implement counter insertion.
 #if defined(J9VM_OPT_MICROJIT)
    J9Method *method = static_cast<TR_ResolvedJ9Method *>(comp()->getMethodBeingCompiled())->ramMethod();
    U_8 *extendedFlags = reinterpret_cast<TR_J9VMBase *>(fe())->fetchMethodExtendedFlagsPointer(method);
-   if( ((*extendedFlags & 0x10) != 0x10) && (uintptr_t)(method->extra) == 0x1 ){
+   if (((*extendedFlags & 0x10) != 0x10) && (uintptr_t)(method->extra) == 0x1)
+      {
       comp()->setSkippedJProfilingBlock();
       return 0;
-   }
+      }
 #endif
 
    TR::BlockChecklist countedBlocks(comp());

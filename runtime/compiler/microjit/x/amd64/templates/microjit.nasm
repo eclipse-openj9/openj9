@@ -86,7 +86,7 @@ mov dword [r10 + %2], %1d
 %endmacro
 
 %macro _32bit_slot_stack_from_eXX 2
-mov  dword [r10 + %2], e%1
+mov dword [r10 + %2], e%1
 %endmacro
 
 %macro _64bit_slot_stack_from_rXX 2

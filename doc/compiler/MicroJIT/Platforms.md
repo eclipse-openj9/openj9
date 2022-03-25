@@ -27,4 +27,4 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 # List of expected future platforms
 
 - RISC-V
-- aarch64
+- AArch64

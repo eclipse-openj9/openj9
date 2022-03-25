@@ -61,7 +61,7 @@
 #include "il/TreeTop_inlines.hpp"
 #if defined(J9VM_OPT_MICROJIT)
 #include "microjit/ExceptionTable.hpp"
-#endif
+#endif /* J9VM_OPT_MICROJIT */
 #include "runtime/ArtifactManager.hpp"
 #include "runtime/CodeCache.hpp"
 #include "runtime/MethodMetaData.h"
@@ -233,14 +233,14 @@ createExceptionTable(
 #if defined(J9VM_OPT_MICROJIT)
 static void
 createMJITExceptionTable(
-      TR_MethodMetaData * data,
+      TR_MethodMetaData *data,
       MJIT::ExceptionTableEntryIterator & exceptionIterator,
       bool fourByteOffsets,
       TR::Compilation *comp)
    {
-   uint8_t * cursor = (uint8_t *)data + sizeof(TR_MethodMetaData);
+   uint8_t *cursor = (uint8_t *)data + sizeof(TR_MethodMetaData);
 
-   for (TR_ExceptionTableEntry * e = exceptionIterator.getFirst(); e; e = exceptionIterator.getNext())
+   for (TR_ExceptionTableEntry *e = exceptionIterator.getFirst(); e; e = exceptionIterator.getNext())
       {
       if (fourByteOffsets)
          {
@@ -1137,11 +1137,12 @@ static int32_t calculateExceptionsSize(
    }
 
 #if defined(J9VM_OPT_MICROJIT)
-static int32_t calculateMJITExceptionsSize(
-   TR::Compilation* comp,
-   MJIT::ExceptionTableEntryIterator& exceptionIterator,
-   bool& fourByteExceptionTableEntries,
-   uint32_t& numberOfExceptionRangesWithBits)
+static int32_t
+calculateMJITExceptionsSize(
+      TR::Compilation *comp,
+      MJIT::ExceptionTableEntryIterator& exceptionIterator,
+      bool& fourByteExceptionTableEntries,
+      uint32_t& numberOfExceptionRangesWithBits)
    {
    uint32_t exceptionsSize = 0;
    uint32_t numberOfExceptionRanges = exceptionIterator.size();
@@ -1152,9 +1153,12 @@ static int32_t calculateMJITExceptionsSize(
          return -1; // our meta data representation only has 14 bits for the number of exception ranges
 
       if (!fourByteExceptionTableEntries)
-         for (TR_ExceptionTableEntry * e = exceptionIterator.getFirst(); e; e = exceptionIterator.getNext())
+         for (TR_ExceptionTableEntry *e = exceptionIterator.getFirst(); e; e = exceptionIterator.getNext())
             if (e->_catchType > 0xFFFF || !e->_method->isSameMethod(comp->getCurrentMethod()))
-               { fourByteExceptionTableEntries = true; break; }
+               {
+               fourByteExceptionTableEntries = true;
+               break;
+               }
 
       int32_t entrySize;
       if (fourByteExceptionTableEntries)
@@ -1847,24 +1851,23 @@ createMethodMetaData(
 //
 TR_MethodMetaData *
 createMJITMethodMetaData(
-   TR_J9VMBase & vmArg,
-   TR_ResolvedMethod *vmMethod,
-   TR::Compilation *comp
-   )
+      TR_J9VMBase & vmArg,
+      TR_ResolvedMethod *vmMethod,
+      TR::Compilation *comp)
    {
-   //---------------------------------------------------------------------------
-   //This function needs to create the meta-data structures for:
+   // ---------------------------------------------------------------------------
+   // This function needs to create the meta-data structures for:
    //   GC maps, Exceptions, inlining calls, stack atlas,
    //   GPU optimizations and internal pointer table
-   TR_J9VMBase * vm = &vmArg;
+   TR_J9VMBase *vm = &vmArg;
    MJIT::ExceptionTableEntryIterator exceptionIterator(comp);
-   TR::ResolvedMethodSymbol * methodSymbol = comp->getJittedMethodSymbol();
-   TR::CodeGenerator * cg = comp->cg();
-   TR::GCStackAtlas * trStackAtlas = cg->getStackAtlas();
+   TR::ResolvedMethodSymbol *methodSymbol = comp->getJittedMethodSymbol();
+   TR::CodeGenerator *cg = comp->cg();
+   TR::GCStackAtlas *trStackAtlas = cg->getStackAtlas();
 
    // --------------------------------------------------------------------------
    // Find unmergeable GC maps
-   //TODO: Create mechanism like treetop to support this at a MicroJIT level.
+   // TODO: MicroJIT: Create mechanism like treetop to support this at a MicroJIT level.
    GCStackMapSet nonmergeableBCI(std::less<TR_GCStackMap*>(), cg->trMemory()->heapMemoryRegion());
    //   if (comp->getOptions()->getReportByteCodeInfoAtCatchBlock())
    //      {
@@ -1899,11 +1902,7 @@ createMJITMethodMetaData(
    //
    bool fourByteExceptionTableEntries = fourByteOffsets;
    uint32_t numberOfExceptionRangesWithBits = 0;
-   int32_t exceptionsSize = calculateMJITExceptionsSize(
-         comp,
-         exceptionIterator,
-         fourByteExceptionTableEntries,
-         numberOfExceptionRangesWithBits);
+   int32_t exceptionsSize = calculateMJITExceptionsSize(comp, exceptionIterator, fourByteExceptionTableEntries, numberOfExceptionRangesWithBits);
 
    if (exceptionsSize == -1)
       {
@@ -1911,7 +1910,7 @@ createMJITMethodMetaData(
       }
    // TODO: once exception support is added to MicroJIT uncomment this line.
    // tableSize += exceptionsSize;
-   uint32_t exceptionTableSize = tableSize; //Size of the meta data header and exception entries
+   uint32_t exceptionTableSize = tableSize; // Size of the meta data header and exception entries
 
    // --------------------------------------------------------------------------
    // Computing the size of the inlinedCall
@@ -1922,14 +1921,7 @@ createMJITMethodMetaData(
 
    // Add size of stack atlas to allocate
    //
-   int32_t sizeOfStackAtlasInBytes = calculateSizeOfStackAtlas(
-         vm,
-         cg,
-         fourByteOffsets,
-         numberOfSlotsMapped,
-         numberOfMapBytes,
-         comp,
-         nonmergeableBCI);
+   int32_t sizeOfStackAtlasInBytes = calculateSizeOfStackAtlas(vm, cg, fourByteOffsets, numberOfSlotsMapped, numberOfMapBytes, comp, nonmergeableBCI);
 
    tableSize += sizeOfStackAtlasInBytes;
 
@@ -1939,7 +1931,7 @@ createMJITMethodMetaData(
 
    // Escape analysis change for compressed pointers
    //
-   TR_GCStackAllocMap * stackAllocMap = trStackAtlas->getStackAllocMap();
+   TR_GCStackAllocMap *stackAllocMap = trStackAtlas->getStackAllocMap();
    if (stackAllocMap)
       {
       tableSize += numberOfMapBytes + sizeof(uintptr_t);
@@ -1960,7 +1952,7 @@ createMJITMethodMetaData(
       internal pointer map
    */
 
-   TR_MethodMetaData * data = (TR_MethodMetaData*) vmMethod->allocateException(tableSize, comp);
+   TR_MethodMetaData *data = (TR_MethodMetaData*) vmMethod->allocateException(tableSize, comp);
 
    populateBodyInfo(comp, vm, data);
 
@@ -1981,16 +1973,7 @@ createMJITMethodMetaData(
    data->tempOffset = comp->cg()->getStackAtlas()->getNumberOfPendingPushSlots();
    data->size = tableSize;
 
-   data->gcStackAtlas = createStackAtlas(
-         vm,
-         comp->cg(),
-         fourByteOffsets,
-         numberOfSlotsMapped,
-         numberOfMapBytes,
-         comp,
-         ((uint8_t *)data + exceptionTableSize + inlinedCallSize),
-         sizeOfStackAtlasInBytes,
-         nonmergeableBCI);
+   data->gcStackAtlas = createStackAtlas(vm, comp->cg(), fourByteOffsets, numberOfSlotsMapped, numberOfMapBytes, comp, ((uint8_t *)data + exceptionTableSize + inlinedCallSize), sizeOfStackAtlasInBytes, nonmergeableBCI);
 
    createMJITExceptionTable(data, exceptionIterator, fourByteExceptionTableEntries, comp);
 
@@ -2008,7 +1991,7 @@ createMJITMethodMetaData(
          {
          // Insert trace point here for insertion failure
          }
-      if (vm->isAnonymousClass( ((TR_ResolvedJ9Method*)vmMethod)->romClassPtr()))
+      if (vm->isAnonymousClass(((TR_ResolvedJ9Method*)vmMethod)->romClassPtr()))
          {
          J9Class *j9clazz = ((TR_ResolvedJ9Method*)vmMethod)->constantPoolHdr();
          J9CLASS_EXTENDED_FLAGS_SET(j9clazz, J9ClassContainsJittedMethods);
@@ -2020,7 +2003,7 @@ createMJITMethodMetaData(
          }
       else
          {
-         J9ClassLoader * classLoader = ((TR_ResolvedJ9Method*)vmMethod)->getClassLoader();
+         J9ClassLoader *classLoader = ((TR_ResolvedJ9Method*)vmMethod)->getClassLoader();
          classLoader->flags |= J9CLASSLOADER_CONTAINS_JITTED_METHODS;
          data->prevMethod = NULL;
          data->nextMethod = classLoader->jitMetaDataList;

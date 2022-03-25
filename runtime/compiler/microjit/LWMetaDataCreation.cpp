@@ -22,7 +22,7 @@
 #include "microjit/MethodBytecodeMetaData.hpp"
 
 #if defined(J9VM_OPT_MJIT_Standalone)
-//TODO: Complete this section so that MicroJIT can be used in a future case where MicroJIT won't deploy with TR.
+// TODO: Complete this section so that MicroJIT can be used in a future case where MicroJIT won't deploy with TR.
 #else
 /* do nothing */
 #endif /* TR_MJIT_Interop */
