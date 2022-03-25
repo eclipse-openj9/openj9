@@ -868,10 +868,10 @@ J9::ClassEnv::classHasIdentity(TR_OpaqueClassBlock *clazz)
 bool
 J9::ClassEnv::classSupportsDirectMemoryComparison(TR_OpaqueClassBlock *clazz)
    {
+   uintptr_t classFlags = 0;
 #if defined(J9VM_OPT_JITSERVER)
    if (auto stream = TR::CompilationInfo::getStream())
       {
-      uintptr_t classFlags = 0;
       JITServerHelpers::getAndCacheRAMClassInfo((J9Class *)clazz, TR::compInfoPT->getClientData(), stream, JITServerHelpers::CLASSINFO_CLASS_FLAGS, (void *)&classFlags);
 #ifdef DEBUG
       stream->write(JITServer::MessageType::ClassEnv_classFlagsValue, clazz);
@@ -881,11 +881,19 @@ J9::ClassEnv::classSupportsDirectMemoryComparison(TR_OpaqueClassBlock *clazz)
       classFlagsRemote = classFlagsRemote & J9ClassCanSupportFastSubstitutability;
       TR_ASSERT_FATAL(classFlags == classFlagsRemote, "remote call class flags is not equal to cached class flags");
 #endif
-      return J9_ARE_ANY_BITS_SET(classFlags, J9ClassCanSupportFastSubstitutability);
       }
+   else
 #endif /* defined(J9VM_OPT_JITSERVER) */
-   J9Class *j9class = reinterpret_cast<J9Class*>(clazz);
-   return J9_ARE_ANY_BITS_SET(j9class->classFlags, J9ClassCanSupportFastSubstitutability);
+      {
+      J9Class *j9class = reinterpret_cast<J9Class*>(clazz);
+      classFlags = j9class->classFlags;
+      }
+
+   // If the value type has reference fields and the GC policy is concurrent scavenge, direct
+   // memory comparison cannot be supported.
+   return J9_ARE_ANY_BITS_SET(classFlags, J9ClassCanSupportFastSubstitutability) &&
+            (J9_ARE_NO_BITS_SET(classFlags, J9ClassHasReferences) ||
+             (TR::Compiler->om.readBarrierType() != gc_modron_readbar_none));
    }
 
 bool
