@@ -564,7 +564,7 @@ private:
    that we can access client session data without going through the hashtable.
    Accesss to this hashtable must be protected by the compilation monitor.
    Compilation threads may purge old entries periodically at the beginning of a
-   compilation. The StatistcisThread can also perform purging duties.
+   compilation. The StatisticsThread can also perform purging duties.
    Entried with inUse > 0 must not be purged.
  */
 class ClientSessionHT
