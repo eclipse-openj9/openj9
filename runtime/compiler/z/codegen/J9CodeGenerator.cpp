@@ -3675,19 +3675,13 @@ J9::Z::CodeGenerator::suppressInliningOfRecognizedMethod(TR::RecognizedMethod me
    if (self()->isMethodInAtomicLongGroup(method))
       return true;
 
-   if (self()->getSupportsVectorRegisters()){
-      if (method == TR::java_lang_Math_fma_D ||
-          method == TR::java_lang_StrictMath_fma_D)
-         {
-         return true;
-         }
-      if (comp->target().cpu.supportsFeature(OMR_FEATURE_S390_VECTOR_FACILITY_ENHANCEMENT_1) &&
-            (method == TR::java_lang_Math_fma_F ||
-             method == TR::java_lang_StrictMath_fma_F))
-         {
-         return true;
-         }
-   }
+   if (method == TR::java_lang_Math_fma_D ||
+       method == TR::java_lang_StrictMath_fma_D ||
+       method == TR::java_lang_Math_fma_F ||
+       method == TR::java_lang_StrictMath_fma_F)
+      {
+      return true;
+      }
 
    if (method == TR::java_lang_Integer_highestOneBit ||
        method == TR::java_lang_Integer_numberOfLeadingZeros ||
@@ -4045,41 +4039,33 @@ J9::Z::CodeGenerator::inlineDirectCall(
          }
       }
 
-      if (!comp->getOption(TR_DisableSIMDDoubleMaxMin) && cg->getSupportsVectorRegisters())
+   if (!comp->getOption(TR_DisableSIMDDoubleMaxMin) && cg->getSupportsVectorRegisters())
+      {
+      switch (methodSymbol->getRecognizedMethod())
          {
-         switch (methodSymbol->getRecognizedMethod())
-            {
-            case TR::java_lang_Math_max_D:
-               resultReg = TR::TreeEvaluator::inlineDoubleMax(node, cg);
-               return true;
-            case TR::java_lang_Math_min_D:
-               resultReg = TR::TreeEvaluator::inlineDoubleMin(node, cg);
-               return true;
-            default:
-               break;
-            }
+         case TR::java_lang_Math_max_D:
+            resultReg = TR::TreeEvaluator::inlineDoubleMax(node, cg);
+            return true;
+         case TR::java_lang_Math_min_D:
+            resultReg = TR::TreeEvaluator::inlineDoubleMin(node, cg);
+            return true;
+         default:
+            break;
          }
-      if (cg->getSupportsVectorRegisters())
-         {
-         switch (methodSymbol->getRecognizedMethod())
-            {
-            case TR::java_lang_Math_fma_D:
-            case TR::java_lang_StrictMath_fma_D:
-               resultReg = TR::TreeEvaluator::inlineMathFma(node, cg);
-               return true;
+      }
 
-            case TR::java_lang_Math_fma_F:
-            case TR::java_lang_StrictMath_fma_F:
-               if (comp->target().cpu.supportsFeature(OMR_FEATURE_S390_VECTOR_FACILITY_ENHANCEMENT_1))
-                  {
-                  resultReg = TR::TreeEvaluator::inlineMathFma(node, cg);
-                  return true;
-                  }
-               break;
-            default:
-               break;
-            }
-         }
+   switch (methodSymbol->getRecognizedMethod())
+      {
+      case TR::java_lang_Math_fma_D:
+      case TR::java_lang_StrictMath_fma_D:
+      case TR::java_lang_Math_fma_F:
+      case TR::java_lang_StrictMath_fma_F:
+         resultReg = TR::TreeEvaluator::inlineMathFma(node, cg);
+         return true;
+
+      default:
+         break;
+      }
 
    TR::MethodSymbol * symbol = node->getSymbol()->castToMethodSymbol();
    if ((symbol->isVMInternalNative() || symbol->isJITInternalNative()) || isKnownMethod(methodSymbol))
