@@ -84,6 +84,7 @@
 #include "runtime/JITServerIProfiler.hpp"
 #include "runtime/JITServerStatisticsThread.hpp"
 #include "runtime/Listener.hpp"
+#include "runtime/MetricsServer.hpp"
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
 extern "C" {
@@ -6913,6 +6914,13 @@ int32_t startJITServer(J9JITConfig *jitConfig)
 
    if (TR::Options::getVerboseOption(TR_VerboseJITServer))
       TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Started JITServer listener thread: %p ", listener->getListenerThread());
+
+
+   MetricsServer *metricsServer = ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->metricsServer;
+   if (metricsServer)
+      {
+      metricsServer->startMetricsThread(javaVM);
+      }
 
    if (jitConfig->samplingFrequency != 0)
       {
