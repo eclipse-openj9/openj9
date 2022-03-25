@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -44,7 +44,8 @@ J9::X86::CPU::detectRelocatable(OMRPortLibrary * const omrPortLib)
    const uint32_t customFeatures [] = {OMR_FEATURE_X86_FPU, OMR_FEATURE_X86_CX8, OMR_FEATURE_X86_CMOV,
                                        OMR_FEATURE_X86_MMX, OMR_FEATURE_X86_SSE, OMR_FEATURE_X86_SSE2,
                                        OMR_FEATURE_X86_SSSE3, OMR_FEATURE_X86_SSE4_1, OMR_FEATURE_X86_POPCNT,
-                                       OMR_FEATURE_X86_SSE3, OMR_FEATURE_X86_AESNI, OMR_FEATURE_X86_AVX};
+                                       OMR_FEATURE_X86_SSE3, OMR_FEATURE_X86_AESNI, OMR_FEATURE_X86_AVX,
+                                       OMR_FEATURE_X86_AVX512F};
 
    OMRPORT_ACCESS_FROM_OMRPORT(omrPortLib);
    OMRProcessorDesc customProcessorDescription;
@@ -80,7 +81,7 @@ J9::X86::CPU::enableFeatureMasks()
                                         OMR_FEATURE_X86_SSSE3, OMR_FEATURE_X86_SSE4_1, OMR_FEATURE_X86_POPCNT,
                                         OMR_FEATURE_X86_AESNI, OMR_FEATURE_X86_OSXSAVE, OMR_FEATURE_X86_AVX,
                                         OMR_FEATURE_X86_FMA, OMR_FEATURE_X86_HLE, OMR_FEATURE_X86_RTM,
-                                        OMR_FEATURE_X86_SSE3};
+                                        OMR_FEATURE_X86_SSE3, OMR_FEATURE_X86_AVX512F};
 
    memset(_supportedFeatureMasks.features, 0, OMRPORT_SYSINFO_FEATURES_SIZE*sizeof(uint32_t));
    OMRPORT_ACCESS_FROM_OMRPORT(TR::Compiler->omrPortLib);
@@ -339,6 +340,7 @@ J9::X86::CPU::supports_feature_test(uint32_t feature)
       case OMR_FEATURE_X86_TM:
          return TR::CodeGenerator::getX86ProcessorInfo().hasThermalMonitor() == ans;
       case OMR_FEATURE_X86_AVX:
+      case OMR_FEATURE_X86_AVX512F:
          return true;
       default:
          return false;
