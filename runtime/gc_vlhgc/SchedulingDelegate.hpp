@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -374,10 +374,12 @@ private:
 	void updatePgcTimePrediction(MM_EnvironmentVLHGC *env);
 
 	/**
-	 * Called after a copy forward rate to update the averageCopyForwardRate
+	 * Calculate copy forward rate in this PGC cycle
+	 * Order of magnitude is 1000 Bytes/microsec (10MB copied for 10ms), but it will depend a lot on machine.
+	 * Also, very short PGCs might have some more extreme values.
 	 * @param env[in] the main GC thread
 	 */
-	double calculateAverageCopyForwardRate(MM_EnvironmentVLHGC *env);
+	double calculateCurrentCopyForwardRate(MM_EnvironmentVLHGC *env);
 
 	/**
 	 * Estimate total free memory
