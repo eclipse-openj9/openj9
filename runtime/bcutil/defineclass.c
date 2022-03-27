@@ -542,6 +542,12 @@ internalLoadROMClass(J9VMThread * vmThread, J9LoadROMClassData *loadData, J9Tran
 	if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_PREVIEW)) {
 		translationFlags |= BCT_EnablePreview;
 	}
+#if (JAVA_SPEC_VERSION == 8) && defined(J9ZOS390) && defined(J9VM_ENV_DATA64)
+	/* This code duplication is intentional, it works around a JDK8 z/OS 64bit (non-compressedrefs) compiler issue, RTC 147197. */
+	if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_PREVIEW)) {
+		translationFlags |= BCT_EnablePreview;
+	}
+#endif
 	/* Determine allowed class file version */
 #ifdef J9VM_OPT_SIDECAR
 	{
