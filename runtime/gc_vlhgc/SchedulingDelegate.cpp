@@ -1223,7 +1223,6 @@ MM_SchedulingDelegate::copyForwardCompleted(MM_EnvironmentVLHGC *env)
 	uintptr_t bytesScanned = copyForwardStats->_scanBytesTotal;
 	uintptr_t bytesCompacted = copyForwardStats->_externalCompactBytes;
 	uintptr_t regionSize = _regionManager->getRegionSize();
-	double copyForwardRate = calculateAverageCopyForwardRate(env);
 	
 	const double historicWeight = 0.50; /* arbitrarily give 50% weight to historical result, 50% to newest result */
 	_averageCopyForwardBytesCopied = (_averageCopyForwardBytesCopied * historicWeight) + ((double)bytesCopied * (1.0 - historicWeight));
@@ -1235,7 +1234,12 @@ MM_SchedulingDelegate::copyForwardCompleted(MM_EnvironmentVLHGC *env)
 	uintptr_t survivorSetRegionCount = env->_cycleState->_pgcData._survivorSetRegionCount + failedEvacuateRegionCount + compactSetSurvivorRegionCount;
 	
 	_averageSurvivorSetRegionCount = (_averageSurvivorSetRegionCount * historicWeight) + ((double)survivorSetRegionCount * (1.0 - historicWeight));
-	_averageCopyForwardRate = (_averageCopyForwardRate * historicWeight) + (copyForwardRate * (1.0 - historicWeight));
+
+	double copyForwardRate = 0.0;
+	if (bytesCopied > 0) {
+		copyForwardRate = calculateCurrentCopyForwardRate(env);
+		_averageCopyForwardRate = (_averageCopyForwardRate * historicWeight) + (copyForwardRate * (1.0 - historicWeight));
+	}
 
 	Trc_MM_SchedulingDelegate_copyForwardCompleted_efficiency(
 		env->getLanguageVMThread(),
@@ -1255,7 +1259,7 @@ MM_SchedulingDelegate::copyForwardCompleted(MM_EnvironmentVLHGC *env)
 }
 
 double
-MM_SchedulingDelegate::calculateAverageCopyForwardRate(MM_EnvironmentVLHGC *env)
+MM_SchedulingDelegate::calculateCurrentCopyForwardRate(MM_EnvironmentVLHGC *env)
 {
 	PORT_ACCESS_FROM_ENVIRONMENT(env);
 	MM_CopyForwardStats * copyForwardStats = &(static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._copyForwardStats);

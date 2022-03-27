@@ -2002,6 +2002,29 @@ bool J9::Options::preProcessJitServer(J9JavaVM *vm, J9JITConfig *jitConfig)
          // It can be overridden with -XX:JITServerTimeout= option in JITServerParseCommonOptions().
          compInfo->getPersistentInfo()->setSocketTimeout(DEFAULT_JITSERVER_TIMEOUT);
 
+         // Check if we should open the port for the MetricsServer
+         const char *xxEnableMetricsServer  = "-XX:+JITServerMetrics";
+         const char *xxDisableMetricsServer = "-XX:-JITServerMetrics";
+         int32_t xxEnableMetricsServerArgIndex  = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxEnableMetricsServer, 0);
+         int32_t xxDisableMetricsServerArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxDisableMetricsServer, 0);
+         if (xxEnableMetricsServerArgIndex > xxDisableMetricsServerArgIndex)
+            {
+            // Default port is already set at 38500; see if the user wants to change that
+            const char *xxJITServerMetricsPortOption = "-XX:JITServerMetricsPort=";
+            int32_t xxJITServerMetricsPortArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxJITServerMetricsPortOption, 0);
+            if (xxJITServerMetricsPortArgIndex >= 0)
+               {
+               uint32_t port = 0;
+               IDATA ret = GET_INTEGER_VALUE(xxJITServerMetricsPortArgIndex, xxJITServerMetricsPortOption, port);
+               if (ret == OPTION_OK)
+                  compInfo->getPersistentInfo()->setJITServerMetricsPort(port);
+               }
+            }
+         else
+            {
+            compInfo->getPersistentInfo()->setJITServerMetricsPort(0); // This means don't use MetricsServer
+            }
+
          // Check if cached ROM classes should be shared between clients
          const char *xxJITServerShareROMClassesOption = "-XX:+JITServerShareROMClasses";
          const char *xxDisableJITServerShareROMClassesOption = "-XX:-JITServerShareROMClasses";
@@ -2017,7 +2040,7 @@ bool J9::Options::preProcessJitServer(J9JavaVM *vm, J9JITConfig *jitConfig)
             disabledShareROMClasses = true;
             }
          }
-      else
+      else // Client mode (possibly)
          {
          // Check option -XX:+UseJITServer
          // -XX:-UseJITServer disables JITServer at the client

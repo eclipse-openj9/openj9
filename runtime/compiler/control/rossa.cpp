@@ -122,6 +122,7 @@
 #include "runtime/JITServerSharedROMClassCache.hpp"
 #include "runtime/JITServerStatisticsThread.hpp"
 #include "runtime/Listener.hpp"
+#include "runtime/MetricsServer.hpp"
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
 extern "C" int32_t encodeCount(int32_t count);
@@ -654,6 +655,11 @@ jitExclusiveVMShutdownPending(J9VMThread * vmThread)
       if (listener)
          {
          listener->stop();
+         }
+      MetricsServer *metricsServer = ((TR_JitPrivateConfig*)(javaVM->jitConfig->privateConfig))->metricsServer;
+      if (metricsServer)
+         {
+         metricsServer->stop();
          }
       }
 #endif /* defined(J9VM_OPT_JITSERVER) */
@@ -1744,6 +1750,19 @@ onLoadInternal(
          j9tty_printf(PORTLIB, "JITServer Listener not allocated, abort.\n");
          return -1;
          }
+
+      // If we are allowed to use a metrics port, allocate the MetricsServer now
+      if (compInfo->getPersistentInfo()->getJITServerMetricsPort() != 0)
+         {
+         ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->metricsServer = MetricsServer::allocate();
+         if (!((TR_JitPrivateConfig*)(jitConfig->privateConfig))->metricsServer)
+            {
+            // warn that MetricsServer was not allocated
+            j9tty_printf(PORTLIB, "JITServer MetricsServer not allocated, abort.\n");
+            return -1;
+            }
+         }
+
       if (jitConfig->samplingFrequency != 0)
          {
          ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->statisticsThreadObject = JITServerStatisticsThread::allocate();

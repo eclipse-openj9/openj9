@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -40,7 +40,7 @@ namespace J9 { typedef J9::PersistentInfo PersistentInfoConnector; }
 
 class TR_FrontEnd;
 class TR_PersistentMemory;
-class TR_PersistentCHTable; 
+class TR_PersistentCHTable;
 class TR_PersistentClassLoaderTable;
 class TR_J2IThunkTable;
 namespace J9 { class Options; }
@@ -163,6 +163,7 @@ class PersistentInfo : public OMR::PersistentInfoConnector
          _JITServerPort(38400),
          _socketTimeoutMs(2000),
          _clientUID(0),
+         _JITServerMetricsPort(38500),
          _JITServerUseAOTCache(false),
          _requireJITServer(false),
          _localSyncCompiles(false),
@@ -342,6 +343,8 @@ class PersistentInfo : public OMR::PersistentInfoConnector
    void setClientUID(uint64_t val) { _clientUID = val; }
    uint64_t getServerUID() const { return _serverUID; }
    void setServerUID(uint64_t val) { _serverUID = val; }
+   uint32_t getJITServerMetricsPort() const { return _JITServerMetricsPort; }
+   void setJITServerMetricsPort(uint32_t port) { _JITServerMetricsPort = port; }
    bool getRequireJITServer() const { return _requireJITServer; }
    void setRequireJITServer(bool requireJITServer) { _requireJITServer = requireJITServer; }
    bool isLocalSyncCompiles() const { return _localSyncCompiles; }
@@ -438,6 +441,7 @@ class PersistentInfo : public OMR::PersistentInfoConnector
    uint32_t    _socketTimeoutMs; // timeout for communication sockets used in out-of-process JIT compilation
    uint64_t    _clientUID;
    uint64_t    _serverUID; // At the client, this represents the UID of the server the client is connected to
+   uint32_t    _JITServerMetricsPort; // Port for receiving http metrics requests from Prometheus; only used at server
    bool        _requireJITServer;
    bool        _localSyncCompiles;
    bool        _JITServerUseAOTCache;

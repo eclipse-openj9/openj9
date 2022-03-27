@@ -1,4 +1,4 @@
-# Copyright (c) 2000, 2021 IBM Corp. and others
+# Copyright (c) 2000, 2022 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -413,7 +413,8 @@ JIT_PRODUCT_SOURCE_FILES+=\
     compiler/runtime/JITServerROMClassHash.cpp \
     compiler/runtime/JITServerSharedROMClassCache.cpp \
     compiler/runtime/JITServerStatisticsThread.cpp \
-    compiler/runtime/Listener.cpp
+    compiler/runtime/Listener.cpp \
+    compiler/runtime/MetricsServer.cpp
 endif
 
 -include $(JIT_MAKE_DIR)/files/extra.mk

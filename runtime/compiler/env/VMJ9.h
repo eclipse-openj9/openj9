@@ -65,6 +65,7 @@ class TR_PersistentClassInfo;
 #if defined(J9VM_OPT_JITSERVER)
 class TR_Listener;
 class JITServerStatisticsThread;
+class MetricsServer;
 #endif /* defined(J9VM_OPT_JITSERVER) */
 struct TR_CallSite;
 struct TR_CallTarget;
@@ -127,6 +128,7 @@ typedef struct TR_JitPrivateConfig
 #if defined(J9VM_OPT_JITSERVER)
    TR_Listener   *listener;
    JITServerStatisticsThread   *statisticsThreadObject;
+   MetricsServer *metricsServer;
 #endif /* defined(J9VM_OPT_JITSERVER) */
    TR::CodeCacheManager *codeCacheManager; // reachable from JitPrivateConfig for kca's benefit
    TR_DataCacheManager *dcManager;  // reachable from JitPrivateConfig for kca's benefit

@@ -223,6 +223,18 @@ make _testList TESTLIST=jit_jitt,jit_recognizedMethod,testSCCMLTests2_1
 
 For example, adding a `<versions><version>8</version></versions>` block into the [target definition of TestExample](https://github.com/eclipse-openj9/openj9/blob/master/test/functional/TestExample/playlist.xml#L26-L49) would mean that test would only get run against jdk8 and would be skipped for other JDK versions.  If `<versions>` or `<impls>` are not included in the target definition, then it is assumed that ALL versions and implementations are valid for that test target.
 
+#### Run tests against specific feature
+
+`<feature>` elements are used to annotate tests in playlist.xml, so that the test can be specially treated based on the JDK feature. There are four options (i.e., applicable, nonapplicable, required and explicit) to choose for one feature. Different features can be enclosed in one `<features>`. The following is an example for AOT feature. For other features, just replace AOT with the feature name defined in TEST_FLAG. 
+
+```
+<features>
+           <feature>AOT:applicable</feature> ------ This is the default option. The test will run whether or not TEST_FLAG contains AOT (Special treatment will be applied when TEST_FLAG contains AOT, it will be run multiple times and special JVM option will be applied)
+           <feature>AOT:nonapplicable</feature> ------ The test will NOT run when TEST_FLAG contains AOT
+           <feature>AOT:explicit</feature> ------ The test will run whether or not TEST_FLAG contains AOT (No special treatment will be applied when TEST_FLAG contains AOT, the test will run as-is) Currently, this option is only meaningful for AOT.
+           <feature>AOT:required</feature> ------ the test will run ONLY when TEST_FLAG contains AOT (Special treatment will be applied)
+</features>
+```
 
 #### Rerun the failed tests from the last run
 ```
