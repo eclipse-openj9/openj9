@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2021 IBM Corp. and others
+ * Copyright (c) 2018, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -47,8 +47,10 @@ if ("${OS}" == "centos6") {
         BUILD_OPTS = "--dist=centos --version=6 --cuda"
     }
 } else if ("${OS}" == "centos7") {
-    if ("${ARCH}" == "ppc64le" || "${ARCH}" == "x86") {
+    if ("${ARCH}" == "ppc64le") {
         BUILD_OPTS = "--dist=centos --version=7"
+    } else if ("${ARCH}" == "x86") {
+        BUILD_OPTS = "--dist=centos --version=7 --criu"
     }
 } else if ("${OS}" == "ubuntu16") {
     BUILD_OPTS = "--dist=ubuntu --version=16.04"
@@ -56,6 +58,10 @@ if ("${OS}" == "centos6") {
     BUILD_OPTS = "--dist=ubuntu --version=18.04"
 } else if ("${OS}" == "ubuntu20") {
     BUILD_OPTS = "--dist=ubuntu --version=20.04"
+}
+//Ref: https://github.com/eclipse-openj9/openj9/issues/14486
+if ("${OS}".contains("ubuntu") && ("${ARCH}" == "x86")) {
+    BUILD_OPTS += " --criu"
 }
 if ("${BUILD_OPTS}" == "") {
     error("Invalid Parameters. OS:'${OS}' is not supported on ${ARCH}")

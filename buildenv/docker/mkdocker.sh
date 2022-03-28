@@ -32,6 +32,7 @@ usage() {
   echo "  --help|-h             print this help, then exit"
   echo "  --arch=...            specify the processor architecture (default: host architecture)"
   echo "  --build               build the docker image (overrides '--print')"
+  echo "  --criu                include CRIU"
   echo "  --cuda                include CUDA header files"
   echo "  --dist=...            specify the Linux distribution (e.g. centos, ubuntu)"
   echo "  --freemarker          include freemarker.jar"
@@ -60,6 +61,7 @@ fi
 action=print
 all_versions=
 arch=
+criu=no
 cuda=no
 dist=unspecified
 freemarker=no
@@ -85,6 +87,9 @@ parse_options() {
         ;;
       --build)
         action=build
+        ;;
+      --criu)
+        criu=3.16.1
         ;;
       --cuda)
         cuda=9.0
@@ -188,6 +193,26 @@ validate_options() {
       ;;
   esac
 
+  # If CRIU is requested, validate the architecture.
+  if [ $criu != no ] ; then
+    case "$arch" in
+      x86_64)
+        if [ $dist = centos ] ; then
+          # overwrite CRIU version
+          criu=3.12
+          if [ $version = 6 ] ; then
+            echo "CRIU is not supported on CentOS version: '$version'" >&2
+            exit 1
+          fi
+        fi
+        ;;
+      *)
+        echo "CRIU is not supported on architecture: '$arch'" >&2
+        exit 1
+        ;;
+    esac
+  fi
+
   # If CUDA is requested, validate the architecture.
   if [ $cuda != no ] ; then
     case "$arch" in
@@ -257,7 +282,7 @@ if [ $cuda != no ] ; then
   echo "FROM nvidia/cuda:${cuda}-devel-ubuntu16.04 AS cuda-dev"
   echo ""
 fi
-  echo "FROM $dist:$version"
+  echo "FROM $dist:$version AS base"
 }
 
 install_centos_packages() {
@@ -329,6 +354,15 @@ fi
   echo "    xz \\"
   echo "    zip \\"
   echo "    zlib-devel \\" # required by git, python
+if [ $criu != no ] ; then
+  echo "    iproute \\"
+  echo "    libbsd \\"
+  echo "    libnet \\"
+  echo "    libnl3 \\"
+  echo "    protobuf-c \\"
+  echo "    protobuf-python \\"
+  echo "    python-ipaddress \\"
+fi
   echo " && yum clean all"
   echo ""
   local autoconf_version=2.69
@@ -502,6 +536,22 @@ fi
   echo "    xvfb \\"
   echo "    zip \\"
   echo "    zlib1g-dev \\"
+if [ $criu != no ] ; then
+if [ $version = 18.04 ] ; then
+  echo "    libcap2-bin \\"
+fi
+  echo "    libnet1 \\"
+  echo "    libnl-3-200 \\"
+if [ $version = 20.04 ] ; then
+  echo "    libnftables1 \\"
+fi
+  echo "    libprotobuf-c1 \\"
+if [ $version != 16.04 ] ; then
+  echo "    python3-protobuf \\"
+else
+  echo "    python-protobuf \\"
+fi
+fi
   echo " && rm -rf /var/lib/apt/lists/*"
 }
 
@@ -644,6 +694,64 @@ done
   echo " && rm -f jdk*.tar.gz"
 }
 
+install_criu() {
+  echo ""
+  local criu_name=criu-${criu}
+  echo "# Install prerequisites for CRIU build."
+  echo "FROM base AS criu-builder"
+if [ $dist = centos ] ; then
+  echo "RUN yum -y install \\"
+  echo "    gnutls-devel \\"
+  echo "    iptables \\"
+  echo "    libbsd-devel \\"
+  echo "    libcap-devel \\"
+  echo "    libnet-devel \\"
+  echo "    libnl3-devel \\"
+  echo "    pkgconfig \\"
+  echo "    protobuf-c-devel \\"
+  echo "    protobuf-devel"
+else
+  echo "RUN apt-get update \\"
+  echo " && apt-get install -qq -y --no-install-recommends \\"
+  echo "    iptables \\"
+  echo "    libbsd-dev \\"
+  echo "    libcap-dev \\"
+  echo "    libnet1-dev \\"
+  echo "    libgnutls28-dev \\"
+  echo "    libgnutls30 \\"
+if [ $version = 20.04 ] ; then
+  echo "    libnftables-dev \\"
+fi
+  echo "    libnl-3-dev \\"
+  echo "    libprotobuf-c-dev \\"
+  echo "    libprotobuf-dev \\"
+if [ $version != 16.04 ] ; then
+  echo "    python3-distutils \\"
+fi
+  echo "    protobuf-c-compiler \\"
+  echo "    protobuf-compiler"
+fi
+  echo "# Build CRIU from source."
+  echo "RUN cd /tmp \\"
+  echo " && $wget_O criu.tar.gz https://github.com/checkpoint-restore/criu/archive/refs/tags/v${criu}.tar.gz \\"
+  echo " && tar -xzf criu.tar.gz \\"
+  echo " && mv $criu_name criu-build \\"
+  echo " && cd criu-build \\"
+  echo " && make \\"
+  echo " && make DESTDIR=/tmp/$criu_name install-lib install-criu \\"
+  echo " && cd .. \\"
+  echo " && rm -fr criu.tar.gz criu-build"
+  echo "# Install CRIU."
+  echo "FROM base"
+  echo "COPY --from=criu-builder /tmp/$criu_name/usr/local /usr/local"
+  echo "# Set CRIU capabilities."
+if [ $dist = centos ] ; then
+  echo "RUN setcap cap_chown,cap_dac_override,cap_dac_read_search,cap_fowner,cap_fsetid,cap_kill,cap_setgid,cap_setuid,cap_setpcap,cap_net_bind_service,cap_net_broadcast,cap_net_admin,cap_ipc_lock,cap_ipc_owner,cap_sys_module,cap_sys_rawio,cap_sys_chroot,cap_sys_ptrace,cap_sys_pacct,cap_sys_admin,cap_sys_resource,cap_sys_time,cap_lease,cap_audit_control,cap_setfcap,cap_syslog=eip /usr/local/sbin/criu"
+else
+  echo "RUN setcap cap_chown,cap_dac_override,cap_dac_read_search,cap_fowner,cap_fsetid,cap_kill,cap_setgid,cap_setuid,cap_setpcap,cap_net_admin,cap_sys_chroot,cap_sys_ptrace,cap_sys_admin,cap_sys_resource,cap_sys_time,cap_audit_control=eip /usr/local/sbin/criu"
+fi
+}
+
 install_cuda() {
   echo ""
   echo "# Copy header files necessary to build a VM with CUDA support."
@@ -671,7 +779,7 @@ install_python() {
 adjust_ldconfig() {
   echo ""
   echo "# Run ldconfig to discover newly installed shared libraries."
-  echo "RUN for dir in lib lib64 ; do echo /usr/local/\$dir ; done > /etc/ld.so.conf.d/usr-local.conf \\"
+  echo "RUN for dir in lib lib64 lib/x86_64-linux-gnu ; do echo /usr/local/\$dir ; done > /etc/ld.so.conf.d/usr-local.conf \\"
   echo " && ldconfig"
 }
 
@@ -734,6 +842,9 @@ print_dockerfile() {
   print_license
   preamble
   install_packages
+if [ $criu != no ] ; then
+  install_criu
+fi
   create_user
 if [ $cuda != no ] ; then
   install_cuda
