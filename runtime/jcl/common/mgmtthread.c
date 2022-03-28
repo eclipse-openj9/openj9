@@ -54,7 +54,6 @@
 #include "HeapIteratorAPI.h"
 
 #define J9OBJECT_FROM_JOBJECT(jobj) (*(j9object_t*) (jobj))
-#define J9_THREADINFO_MAX_STACK_DEPTH (0x7fffffff) /* Integer.MAX_VALUE */
 
 typedef union FlexObjectRef {
 	j9object_t unsafe;
@@ -122,10 +121,10 @@ static jlong getCurrentThreadUserTime(omrthread_t self);
 
 static jint initIDCache(JNIEnv *env);
 
-static ThreadInfo *getArrayOfThreadInfo(JNIEnv *env, jlong *threadIDs, jint numThreads, jint maxStackDepth, jboolean getLockedMonitors, jboolean getLockedSynchronizers);
-static IDATA getThreadInfo(J9VMThread *currentThread, J9VMThread *targetThread, ThreadInfo *info, jint maxStackDepth, jboolean getLockedMonitors);
+static ThreadInfo *getArrayOfThreadInfo(JNIEnv *env, jlong *threadIDs, jint numThreads, jboolean getLockedMonitors, jboolean getLockedSynchronizers);
+static IDATA getThreadInfo(J9VMThread *currentThread, J9VMThread *targetThread, ThreadInfo *info, jboolean getLockedMonitors);
 static void getContentionStats(J9VMThread *currentThread, J9VMThread *vmThread, ThreadInfo *tinfo);
-static IDATA getStackFramePCs(J9VMThread *currentThread, J9VMThread *targetThread, ThreadInfo *tinfo, jint maxStackDepth);
+static IDATA getStackFramePCs(J9VMThread *currentThread, J9VMThread *targetThread, ThreadInfo *tinfo);
 static IDATA getMonitors(J9VMThread *currentThread, J9VMThread *targetThread, ThreadInfo *tinfo, UDATA stackLen);
 static UDATA getSynchronizers(J9VMThread *currentThread, ThreadInfo *allinfo, UDATA allinfolen);
 static jvmtiIterationControl getSynchronizersHeapIterator(J9VMThread *vmThread, J9MM_IterateObjectDescriptor *objectDesc, void *userData);
@@ -592,7 +591,7 @@ Java_com_ibm_java_lang_management_internal_ThreadMXBeanImpl_getThreadInfoImpl(JN
 	Trc_JCL_threadmxbean_getThreadInfoImpl6_Entry(env, id, 
 			maxStackDepth, getLockedMonitors, getLockedSynchronizers);
 
-	allinfo = getArrayOfThreadInfo(env, &id, 1, maxStackDepth, getLockedMonitors, getLockedSynchronizers);
+	allinfo = getArrayOfThreadInfo(env, &id, 1, getLockedMonitors, getLockedSynchronizers);
 	if (allinfo) {
 		if (allinfo[0].thread) {
 			result = createThreadInfo(env, &allinfo[0], maxStackDepth);
@@ -637,7 +636,6 @@ Java_com_ibm_java_lang_management_internal_ThreadMXBeanImpl_getMultiThreadInfoIm
 		}
 
 		allinfo = getArrayOfThreadInfo(env, threadIDs, numThreads,
-				maxStackDepth,
 				getLockedMonitors, getLockedSynchronizers);
 
 		(*env)->ReleaseLongArrayElements(env, ids, threadIDs, JNI_ABORT);
@@ -708,8 +706,7 @@ Java_openj9_internal_tools_attach_target_DiagnosticUtils_dumpAllThreadsImpl(JNIE
 			if (vmThread->threadObject && (J9VMJAVALANGTHREAD_THREADREF(currentThread, vmThread->threadObject) == vmThread)) {
 				{
 					++numThreads;
-					exc = getThreadInfo(currentThread, vmThread, info,
-							(jsize)J9_THREADINFO_MAX_STACK_DEPTH, getLockedMonitors);
+					exc = getThreadInfo(currentThread, vmThread, info, getLockedMonitors);
 					if (exc > 0) {
 						freeThreadInfos(currentThread, allinfo, numThreads);
 						goto dumpAll_failWithExclusive;
@@ -786,10 +783,6 @@ Java_com_ibm_java_lang_management_internal_ThreadMXBeanImpl_dumpAllThreadsImpl
  * @param[in] env
  * @param[in] threadIDs Array of thread IDs. May include dead threads.
  * @param[in] numThreads Length of threadIDs[].
- * @param[in] maxStackDepth A guideline for capping the maximum number of
- * stack frames that need to be walked. The actual number of frames returned 
- * may be greater. The caller must prune the returned stack trace if an 
- * exact maximum is required.
  * @param[in] getLockedMonitors Whether locked monitors should be discovered.
  * @param[in] getLockedSynchronizers Whether locked synchronizers should be discovered.
  * 
@@ -798,8 +791,7 @@ Java_com_ibm_java_lang_management_internal_ThreadMXBeanImpl_dumpAllThreadsImpl
  * @retval NULL error, an exception is set
  */
 static ThreadInfo *
-getArrayOfThreadInfo(JNIEnv *env, 
-	jlong *threadIDs, jint numThreads, jint maxStackDepth,
+getArrayOfThreadInfo(JNIEnv *env, jlong *threadIDs, jint numThreads,
 	jboolean getLockedMonitors, jboolean getLockedSynchronizers)
 {
 	J9VMThread *currentThread = (J9VMThread *)env;
@@ -809,14 +801,6 @@ getArrayOfThreadInfo(JNIEnv *env,
 	ThreadInfo *allinfo = NULL;
 	IDATA exc = 0;
 	UDATA i;
-
-	if (JNI_TRUE == getLockedMonitors) {
-		/* we need the full stack trace to build the locked monitors info */
-		maxStackDepth = J9_THREADINFO_MAX_STACK_DEPTH;
-	} else if (0 == maxStackDepth) {
-		/* we need a stack frame to test whether the thread is in a native */
-		maxStackDepth = 1;
-	}
 
 	if (initIDCache(env) != JNI_OK) {
 		return NULL;
@@ -859,7 +843,7 @@ getArrayOfThreadInfo(JNIEnv *env,
 
 			if (threadIDs[i]) {
 				exc = getThreadInfo(currentThread, (J9VMThread *)(UDATA)threadIDs[i],
-						&allinfo[i], maxStackDepth, getLockedMonitors);
+						&allinfo[i], getLockedMonitors);
 				if (exc > 0) {
 					freeThreadInfos(currentThread, allinfo, numThreads);
 					goto getArray_failWithExclusive;
@@ -1315,8 +1299,6 @@ freeThreadInfos(J9VMThread *currentThread, ThreadInfo *allinfo, UDATA allinfolen
  * @param[in] currentThread
  * @param[in] targetThread The thread to be examined.
  * @param[out] info The ThreadInfo element to be populated. Must be non-NULL.
- * @param[in] maxStackDepth A guideline for limiting the number of stack frames walked.
- * The returned stack trace may have more frames.
  * @param[in] getLockedMonitors Whether locked monitors should be discovered.
  * 
  * @return error status
@@ -1325,7 +1307,7 @@ freeThreadInfos(J9VMThread *currentThread, ThreadInfo *allinfo, UDATA allinfolen
  */
 static IDATA
 getThreadInfo(J9VMThread *currentThread, J9VMThread *targetThread, ThreadInfo *info,
-		jint maxStackDepth, jboolean getLockedMonitors)
+		jboolean getLockedMonitors)
 {
 	J9JavaVM *vm = currentThread->javaVM;
 	J9InternalVMFunctions *vmfns = vm->internalVMFunctions;
@@ -1363,7 +1345,7 @@ getThreadInfo(J9VMThread *currentThread, J9VMThread *targetThread, ThreadInfo *i
 	/* this may block on vm->managementDataLock */
 	getContentionStats(currentThread, targetThread, info);
 
-	exc = getStackFramePCs(currentThread, targetThread, info, maxStackDepth);
+	exc = getStackFramePCs(currentThread, targetThread, info);
 	if (exc > 0) {
 		Trc_JCL_threadmxbean_getThreadInfo_Exit(currentThread, exc);
 		return exc;
@@ -1435,13 +1417,12 @@ getContentionStats(J9VMThread *currentThread, J9VMThread *vmThread, ThreadInfo *
  * @param[in] currentThread
  * @param[in] targetThread The thread to be examined.
  * @param[out] tinfo Where stack trace should be stored. Must be non-NULL.
- * @param[in] maxStackDepth Guideline for limiting the number of frames walked.
  * @return error status
  * @retval 0 success
  * @retval >0 error, the index of a known exception
  */
 static IDATA
-getStackFramePCs(J9VMThread *currentThread, J9VMThread *targetThread, ThreadInfo *tinfo, jint maxStackDepth)
+getStackFramePCs(J9VMThread *currentThread, J9VMThread *targetThread, ThreadInfo *tinfo)
 {
 	IDATA exc = 0;
 	UDATA rc;
