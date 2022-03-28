@@ -477,10 +477,18 @@ jobject getPropertyList(JNIEnv *env)
 		javaVM->directByteBufferMemoryMax = heapSize - (heapSize / 8);
 	}
 #endif /* defined(OPENJ9_BUILD) && JAVA_SPEC_VERSION == 8 */
-	if ((UDATA) -1 != javaVM->directByteBufferMemoryMax) {
+#if !defined(OPENJ9_BUILD)
+	/* Don't set a default value for IBM Java 8. */
+	if ((UDATA) -1 != javaVM->directByteBufferMemoryMax)
+#endif /* !defined(OPENJ9_BUILD) */
+	{
 		strings[propIndex] = "sun.nio.MaxDirectMemorySize";
 		propIndex += 1;
-		j9str_printf(PORTLIB, maxDirectMemBuff, sizeof(maxDirectMemBuff), "%zu", javaVM->directByteBufferMemoryMax);
+		if ((UDATA) -1 == javaVM->directByteBufferMemoryMax) {
+			strcpy(maxDirectMemBuff, "-1");
+		} else {
+			j9str_printf(PORTLIB, maxDirectMemBuff, sizeof(maxDirectMemBuff), "%zu", javaVM->directByteBufferMemoryMax);
+		}
 		strings[propIndex] = maxDirectMemBuff;
 		propIndex += 1;
 	}
