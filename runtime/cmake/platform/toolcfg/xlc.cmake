@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2020, 2021 IBM Corp. and others
+# Copyright (c) 2020, 2022 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,8 +24,9 @@ list(APPEND OMR_PLATFORM_COMPILE_OPTIONS -O3)
 
 list(APPEND OMR_PLATFORM_CXX_COMPILE_OPTIONS -qnortti)
 
+list(APPEND OMR_PLATFORM_COMPILE_OPTIONS -qstackprotect)
+
 if(NOT OMR_OS_ZOS)
-	list(APPEND OMR_PLATFORM_COMPILE_OPTIONS -qstackprotect)
 	list(APPEND OMR_PLATFORM_CXX_COMPILE_OPTIONS -qsuppress=1540-1087:1540-1088:1540-1090)
 endif()
 
