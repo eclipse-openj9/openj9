@@ -2969,6 +2969,10 @@ consumeVMArgs(J9JavaVM* vm, J9VMInitArgs* j9vm_args)
 	findArgInVMArgs( PORTLIB, j9vm_args, STARTSWITH_MATCH, VMOPT_XLP_CODECACHE, NULL, TRUE);
 	findArgInVMArgs( PORTLIB, j9vm_args, EXACT_MATCH, VMOPT_XTLHPREFETCH, NULL, TRUE);
 
+	/* consume options for capturing command line in environment variable, handled earlier in initialArgumentScan */
+	findArgInVMArgs( PORTLIB, j9vm_args, EXACT_MATCH, VMOPT_XXOPENJ9COMMANDLINEENV, NULL, TRUE);
+	findArgInVMArgs( PORTLIB, j9vm_args, EXACT_MATCH, VMOPT_XXNOOPENJ9COMMANDLINEENV, NULL, TRUE);
+
 	/* Consume these without asking questions for now. Ultimately, if/when we use these, we will need logic
 		so that the VM knows that -ea = -enableassertions. */
 	assertOptionFound = findArgInVMArgs( PORTLIB, j9vm_args, OPTIONAL_LIST_MATCH, VMOPT_EA, NULL, TRUE) >= 0;
