@@ -29,7 +29,7 @@
 /* do nothing */
 #else
 
-void
+static void
 setupNode(
       TR::Node *node,
       uint32_t bcIndex,
@@ -42,7 +42,7 @@ setupNode(
    node->setMethod(feMethod->getPersistentIdentifier());
    }
 
-TR::Block *
+static TR::Block *
 makeBlock(
       TR::Compilation *comp,
       TR_ResolvedMethod *feMethod,
@@ -62,7 +62,7 @@ makeBlock(
    return block;
    }
 
-void
+static void
 join(
       TR::CFG &cfg,
       TR::Block *src,
@@ -499,7 +499,7 @@ class CFGCreator
          }
    };
 
-TR::Optimizer *createOptimizer(TR::Compilation *comp, TR::ResolvedMethodSymbol *methodSymbol)
+static TR::Optimizer *createOptimizer(TR::Compilation *comp, TR::ResolvedMethodSymbol *methodSymbol)
    {
    return new (comp->trHeapMemory()) TR::Optimizer(comp, methodSymbol, true, J9::Optimizer::microJITOptimizationStrategy(comp));
    }
