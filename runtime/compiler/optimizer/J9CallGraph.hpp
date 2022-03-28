@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -87,6 +87,7 @@ class TR_J9InterfaceCallSite : public TR_ProfileableCallSite
    public:
       TR_CALLSITE_TR_ALLOC_AND_INHERIT_EMPTY_CONSTRUCTOR(TR_J9InterfaceCallSite, TR_ProfileableCallSite)
       virtual bool findCallSiteTarget (TR_CallStack *callStack, TR_InlinerBase* inliner);
+      bool findCallSiteTargetImpl (TR_CallStack *callStack, TR_InlinerBase* inliner);
       virtual TR_OpaqueClassBlock* getClassFromMethod ();
 		virtual const char*  name () { return "TR_J9InterfaceCallSite"; }
    protected:
