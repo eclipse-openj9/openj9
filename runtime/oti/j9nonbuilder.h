@@ -86,6 +86,7 @@
 #define J9ClassIsValueBased 0x40000
 #define J9ClassHasIdentity 0x80000
 #define J9ClassEnsureHashed 0x100000
+#define J9ClassHasOffloadAllowSubtasksNatives 0x200000
 
 /* @ddr_namespace: map_to_type=J9FieldFlags */
 
@@ -5411,10 +5412,13 @@ typedef struct J9JavaVM {
 #if defined(J9VM_OPT_JAVA_OFFLOAD_SUPPORT)
 	void  ( *javaOffloadSwitchOnFunc)(omrthread_t thr) ;
 	void  ( *javaOffloadSwitchOffFunc)(omrthread_t thr) ;
-	void  ( *javaOffloadSwitchOnWithMethodFunc)(struct J9VMThread *vmThread, struct J9Method *methodWraper) ;
+	void  ( *javaOffloadSwitchOnWithMethodFunc)(struct J9VMThread *vmThread, struct J9Method *methodWraper, BOOLEAN disableOffloadWithSubtasks) ;
 	void  ( *javaOffloadSwitchOffWithMethodFunc)(struct J9VMThread *vmThread, struct J9Method *methodWraper) ;
 	void  ( *javaOffloadSwitchJDBCWithMethodFunc)(struct J9VMThread *vmThread, struct J9Method *methodWraper) ;
+	void  ( *javaOffloadSwitchOnAllowSubtasksWithMethodFunc)(struct J9VMThread *vmThread, struct J9Method *methodWraper) ;
 	void  ( *javaOffloadSwitchOnWithReasonFunc)(struct J9VMThread *vmThread, UDATA reason) ;
+	void  ( *javaOffloadSwitchOnAllowSubtasksWithReasonFunc)(struct J9VMThread *vmThread, UDATA reason) ;
+	void  ( *javaOffloadSwitchOnDisableSubtasksWithReasonFunc)(struct J9VMThread *vmThread, UDATA reason) ;
 	void  ( *javaOffloadSwitchOffWithReasonFunc)(struct J9VMThread *vmThread, UDATA reason) ;
 	void  ( *javaOffloadSwitchOnNoEnvWithReasonFunc)(struct J9JavaVM *vm, omrthread_t thr, UDATA reason) ;
 	void  ( *javaOffloadSwitchOffNoEnvWithReasonFunc)(struct J9JavaVM *vm, omrthread_t thr, UDATA reason) ;

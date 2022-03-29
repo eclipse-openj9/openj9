@@ -1322,13 +1322,19 @@ done:
 			J9SFJNINativeMethodFrame *nativeMethodFrame = (J9SFJNINativeMethodFrame*)((UDATA)currentThread->sp + (UDATA)currentThread->literals);
 			J9Method *method = nativeMethodFrame->method;
 			if (J9_ARE_ANY_BITS_SET((UDATA)method->constantPool, J9_STARTPC_NATIVE_REQUIRES_SWITCHING)) {
-				/* zero the state and switch java offload mode OFF */
-				currentThread->javaOffloadState = 0;
-				/* check if the class requires lazy switching (for JDBC) or normal switching */
+				/* check if the class requires lazy switching (for JDBC), allow subtasks, or normal switching */
 				J9Class *methodClass = J9_CLASS_FROM_METHOD(method);
 				if (J9_ARE_ANY_BITS_SET(J9CLASS_FLAGS(methodClass), J9AccClassHasJDBCNatives)) {
+					/* zero the state and switch java offload mode OFF */
+					currentThread->javaOffloadState = 0;
 					vm->javaOffloadSwitchJDBCWithMethodFunc(currentThread, method);
+				} else if (J9_ARE_ANY_BITS_SET(J9CLASS_EXTENDED_FLAGS(methodClass), J9ClassHasOffloadAllowSubtasksNatives)) {
+					currentThread->javaOffloadState |= J9_JNI_OFFLOAD_WITH_SUBTASKS_FLAG;
+					/* allow created subtasks to offload */
+					vm->javaOffloadSwitchOnAllowSubtasksWithMethodFunc(currentThread, method);
 				} else {
+					/* zero the state and switch java offload mode OFF */
+					currentThread->javaOffloadState = 0;
 					vm->javaOffloadSwitchOffWithMethodFunc(currentThread, method);
 				}
 			}
@@ -1351,15 +1357,16 @@ done:
 		J9VMEntryLocalStorage *els = currentThread->entryLocalStorage;
 		/* check if java offload mode is enabled */
 		if (NULL != vm->javaOffloadSwitchOnWithMethodFunc) {
-			/* check if we need to change state */
-			if (0 == currentThread->javaOffloadState) {
-				if (0 != els->savedJavaOffloadState) {
-					/* if yes, call the offload switch ON and restore our state from ELS */
-					J9SFJNINativeMethodFrame *nativeMethodFrame = (J9SFJNINativeMethodFrame*)((UDATA)currentThread->sp + (UDATA)currentThread->literals);
-					J9Method *method = nativeMethodFrame->method;
-					vm->javaOffloadSwitchOnWithMethodFunc(currentThread, method);
-					currentThread->javaOffloadState = els->savedJavaOffloadState;
-				}
+			/* check if we need to switch on */
+			bool switchOn = (0 == currentThread->javaOffloadState) && (0 != els->savedJavaOffloadState);
+			bool allowingSubtasks = J9_ARE_ANY_BITS_SET(currentThread->javaOffloadState, J9_JNI_OFFLOAD_WITH_SUBTASKS_FLAG);
+			bool oldStateAllowsSubtasks = J9_ARE_ANY_BITS_SET(els->savedJavaOffloadState, J9_JNI_OFFLOAD_WITH_SUBTASKS_FLAG);
+			bool disableAllowSubtasks = allowingSubtasks && !oldStateAllowsSubtasks;
+			if (switchOn || disableAllowSubtasks) {
+				J9SFJNINativeMethodFrame *nativeMethodFrame = (J9SFJNINativeMethodFrame *)((UDATA)currentThread->sp + (UDATA)currentThread->literals);
+				/* enable offload, or keep offload enabled but turn off allowing created subtasks to offload */
+				vm->javaOffloadSwitchOnWithMethodFunc(currentThread, nativeMethodFrame->method, disableAllowSubtasks ? TRUE : FALSE);
+				currentThread->javaOffloadState = els->savedJavaOffloadState;
 			}
 		}
 #endif /* J9VM_OPT_JAVA_OFFLOAD_SUPPORT */
