@@ -42,13 +42,14 @@ typedef unsigned short ush;
 typedef ush FAR ushf;
 typedef unsigned long  ulg;
 
+/* Source is modified from the original zlib version in order to compile on AIX 32-bit. */
 #if !defined(Z_U8) && !defined(Z_SOLO) && defined(STDC)
 #  include <limits.h>
-#  if (ULONG_MAX == 0xffffffffffffffff)
+#  if (ULONG_MAX == 0xffffffffffffffffULL)
 #    define Z_U8 unsigned long
-#  elif (ULLONG_MAX == 0xffffffffffffffff)
+#  elif (ULLONG_MAX == 0xffffffffffffffffULL)
 #    define Z_U8 unsigned long long
-#  elif (UINT_MAX == 0xffffffffffffffff)
+#  elif (UINT_MAX == 0xffffffffffffffffULL)
 #    define Z_U8 unsigned
 #  endif
 #endif
