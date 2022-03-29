@@ -43,22 +43,22 @@ template_start debugBreakpoint
    int3           ; trigger hardware interrupt
 template_end debugBreakpoint
 
-; All integer loads require adding stack space of 8 bytes
-; and the moving of values from a stack slot to a temp register
+; All reference loads require adding stack space of 8 bytes
+; and moving values from a stack slot to a temp register
 template_start aloadTemplatePrologue
    push_single_slot
    _64bit_local_to_rXX_PATCH r15
 template_end aloadTemplatePrologue
 
 ; All integer loads require adding stack space of 8 bytes
-; and the moving of values from a stack slot to a temp register
+; and moving values from a stack slot to a temp register
 template_start iloadTemplatePrologue
    push_single_slot
    _32bit_local_to_rXX_PATCH r15
 template_end iloadTemplatePrologue
 
 ; All long loads require adding 2 stack spaces of 8 bytes (16 total)
-; and the moving of values from a stack slot to a temp register
+; and moving values from a stack slot to a temp register
 template_start lloadTemplatePrologue
    push_dual_slot
    _64bit_local_to_rXX_PATCH r15

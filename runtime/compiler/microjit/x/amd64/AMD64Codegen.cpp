@@ -1518,7 +1518,7 @@ MJIT::CodeGenerator::generatePrologue(
    /*
    * MJIT stack frames must conform to TR stack frame shapes. However, so long as we are able to have our frames walked, we should be
    * free to allocate more things on the stack before the required data which is used for walking. The following is the general shape of the
-   * initial MJIT stack frame
+   * initial MJIT stack frame:
    * +-----------------------------+
    * |             ...             |
    * | Paramaters passed by caller | <-- The space for saving params passed in registers is also here

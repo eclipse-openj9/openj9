@@ -170,16 +170,16 @@ static bool
 shouldCompileWithMicroJIT(J9Method *method, J9JITConfig *jitConfig, J9VMThread *vmThread)
    {
    // If MicroJIT is disabled, return early and avoid overhead
-   bool compileWithMicroJIT = TR::Options::getJITCmdLineOptions()->_mjitEnabled
+   bool compileWithMicroJIT = TR::Options::getJITCmdLineOptions()->_mjitEnabled;
    if (!compileWithMicroJIT)
       return false;
 
    TR_J9VMBase *fe = TR_J9VMBase::get(jitConfig, vmThread);
    UDATA extra = (UDATA)method->extra;
    U_8 *extendedFlags = fe->fetchMethodExtendedFlagsPointer(method);
-   return (J9_ARE_ALL_BITS_SET(extra, J9_STARTPC_NOT_TRANSLATED) &&     //MicroJIT is not a target for recompilation
-   !(J9_ROM_METHOD_FROM_RAM_METHOD(method)->modifiers & J9AccNative) && //MicroJIT does not compile native methods
-   !((*extendedFlags) & J9_MJIT_FAILED_COMPILE));                       //MicroJIT failed to compile this mehtod already
+   return (J9_ARE_ALL_BITS_SET(extra, J9_STARTPC_NOT_TRANSLATED) &&     // MicroJIT is not a target for recompilation
+   !(J9_ROM_METHOD_FROM_RAM_METHOD(method)->modifiers & J9AccNative) && // MicroJIT does not compile native methods
+   !((*extendedFlags) & J9_MJIT_FAILED_COMPILE));                       // MicroJIT failed to compile this method already
    }
 #endif
 
@@ -9339,19 +9339,18 @@ TR::CompilationInfoPerThreadBase::performAOTLoad(
    }
 
 #if defined(J9VM_OPT_MICROJIT)
-// MicroJIT returns a code size of 0 when it encournters a compilation error
+// MicroJIT returns a code size of 0 when it encounters a compilation error
 // We must use this to set the correct values and fail compilation, this is
-// the same no matter which phase of compilation fails. 
+// the same no matter which phase of compilation fails.
 // This function will bubble the exception up to the caller after clean up.
 static void
 testMicroJITCompilationForErrors(
-   uintptr_t code_size,
-   J9Method *method,
-   J9ROMMethod *romMethod,
-   J9JITConfig *jitConfig,
-   J9VMThread *vmThread,
-   TR::Compilation *compiler
-   )
+      uintptr_t code_size,
+      J9Method *method,
+      J9ROMMethod *romMethod,
+      J9JITConfig *jitConfig,
+      J9VMThread *vmThread,
+      TR::Compilation *compiler)
    {
    if (0 == code_size)
       {
@@ -9582,9 +9581,9 @@ TR::CompilationInfoPerThreadBase::mjit(
 
          // TODO: after adding profiling support, uncomment this.
          // if (bodyInfo && bodyInfo->getProfileInfo())
-         //   {
-         //   bodyInfo->getProfileInfo()->setActive();
-         //   }
+         //    {
+         //    bodyInfo->getProfileInfo()->setActive();
+         //    }
 
          // Put a metaData pointer into the Code Cache Header(s).
          //

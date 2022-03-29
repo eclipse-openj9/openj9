@@ -26,11 +26,11 @@
 #include "codegen/OMRLinkage_inlines.hpp"
 
 /*
-| Architecture 	| Endian | Return address 	| Argument registers
-| x86-64 		| Little | Stack 			| RAX RSI RDX RCX
+| Architecture 	| Endian | Return address 	| Argument registers |
+| x86-64 		   | Little | Stack 			   | RAX RSI RDX RCX    |
 
-| Return value registers 						| Preserved registers 	| vTable index 			|
-| EAX (32-bit) RAX (64-bit) XMM0 (float/double) | RBX R9 RSP     		| R8 (receiver in RAX) 	|
+| Return value registers 						      | Preserved registers 	| vTable index 			|
+| EAX (32-bit) RAX (64-bit) XMM0 (float/double) | RBX R9 RSP     		   | R8 (receiver in RAX) 	|
 */
 
 namespace MJIT
