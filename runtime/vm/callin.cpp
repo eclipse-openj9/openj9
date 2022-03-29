@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2021 IBM Corp. and others
+ * Copyright (c) 2012, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -253,22 +253,30 @@ foundITable:
 	return method;
 }
 
-static VMINLINE void
+static VMINLINE UDATA
 javaOffloadSwitchOn(J9VMThread *currentThread)
 {
 #if defined(J9VM_OPT_JAVA_OFFLOAD_SUPPORT)
 	J9JavaVM *vm = currentThread->javaVM;
 	if (NULL != vm->javaOffloadSwitchOnWithReasonFunc) {
-		if (0 == currentThread->javaOffloadState) {
+		bool isOffloadWithSubtasks = J9_ARE_ANY_BITS_SET(currentThread->javaOffloadState, J9_JNI_OFFLOAD_WITH_SUBTASKS_FLAG);
+		if (isOffloadWithSubtasks) {
+			/* keep offload enabled but turn off allowing created subtasks to offload */
+			vm->javaOffloadSwitchOnDisableSubtasksWithReasonFunc(currentThread, J9_JNI_OFFLOAD_SWITCH_INTERPRETER);
+			currentThread->javaOffloadState &= ~J9_JNI_OFFLOAD_WITH_SUBTASKS_FLAG;
+		} else if (0 == currentThread->javaOffloadState) {
 			vm->javaOffloadSwitchOnWithReasonFunc(currentThread, J9_JNI_OFFLOAD_SWITCH_INTERPRETER);
 		}
+		Assert_VM_unequal(currentThread->javaOffloadState & J9_JNI_OFFLOAD_MAX_VALUE, J9_JNI_OFFLOAD_MAX_VALUE);
 		currentThread->javaOffloadState += 1;
+		return isOffloadWithSubtasks ? J9_SSF_JNI_OFFLOAD_WAS_WITH_SUBTASKS : 0;
 	}
 #endif /* J9VM_OPT_JAVA_OFFLOAD_SUPPORT */
+	return 0;
 }
 
 static VMINLINE void
-javaOffloadSwitchOff(J9VMThread *currentThread)
+javaOffloadSwitchOff(J9VMThread *currentThread, UDATA frameFlags)
 {
 #if defined(J9VM_OPT_JAVA_OFFLOAD_SUPPORT)
 	J9JavaVM *vm = currentThread->javaVM;
@@ -276,6 +284,10 @@ javaOffloadSwitchOff(J9VMThread *currentThread)
 		currentThread->javaOffloadState -= 1;
 		if (0 == currentThread->javaOffloadState) {
 			vm->javaOffloadSwitchOffWithReasonFunc(currentThread, J9_JNI_OFFLOAD_SWITCH_INTERPRETER);
+		} else if (J9_ARE_ANY_BITS_SET(frameFlags, J9_SSF_JNI_OFFLOAD_WAS_WITH_SUBTASKS)) {
+			/* allow created subtasks to offload */
+			vm->javaOffloadSwitchOnAllowSubtasksWithReasonFunc(currentThread, J9_JNI_OFFLOAD_SWITCH_INTERPRETER);
+			currentThread->javaOffloadState |= J9_JNI_OFFLOAD_WITH_SUBTASKS_FLAG;
 		}
 	}
 #endif /* J9VM_OPT_JAVA_OFFLOAD_SUPPORT */
@@ -287,9 +299,8 @@ buildCallInStackFrame(J9VMThread *currentThread, J9VMEntryLocalStorage *newELS, 
 	Assert_VM_mustHaveVMAccess(currentThread);
 	bool success = true;
 	J9VMEntryLocalStorage *oldELS = currentThread->entryLocalStorage;
-	UDATA flags = 0;
 	J9SFJNICallInFrame *frame = ((J9SFJNICallInFrame*)currentThread->sp) - 1;
-	javaOffloadSwitchOn(currentThread);
+	UDATA flags = javaOffloadSwitchOn(currentThread);
 	if (NULL != oldELS) {
 		/* Assuming oldELS > newELS, bytes used is (oldELS - newELS) */
 		UDATA freeBytes = currentThread->currentOSStackFree;
@@ -304,7 +315,7 @@ buildCallInStackFrame(J9VMThread *currentThread, J9VMEntryLocalStorage *newELS, 
 				setCurrentExceptionNLS(currentThread, J9VMCONSTANTPOOL_JAVALANGSTACKOVERFLOWERROR, J9NLS_VM_OS_STACK_OVERFLOW);
 				currentThread->currentOSStackFree += usedBytes;
 				success = false;
-				javaOffloadSwitchOff(currentThread);
+				javaOffloadSwitchOff(currentThread, flags);
 				goto done;
 			}
 		}
@@ -397,7 +408,7 @@ restoreCallInFrame(J9VMThread *currentThread)
 	}
 #endif /* J9VM_PORT_ZOS_CEEHDLRSUPPORT */
 	currentThread->entryLocalStorage = oldELS;
-	javaOffloadSwitchOff(currentThread);
+	javaOffloadSwitchOff(currentThread, flags);
 }
 
 void JNICALL

@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2020, 2021 IBM Corp. and others
+Copyright (c) 2020, 2022 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -56,6 +56,7 @@ method already exists in the SCC and loads that instead.
 7. [Symbol Validation Manager](SymbolValidationManager.md)
 8. [Inlined Methods](InlinedMethods.md)
 9. [Adding New Relocation Records](AddingNewRelocation.md)
+10. [Diagnostics](Diagnostics.md)
 
 <hr/>
 
