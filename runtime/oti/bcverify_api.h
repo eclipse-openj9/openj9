@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -149,7 +149,7 @@ bcvCheckMethodName (J9CfrConstantPoolInfo * info);
 * @return IDATA
 */
 I_32
-bcvIsInitOrClinit (J9CfrConstantPoolInfo * info);
+bcvIsInitOrClinitOrNew (J9CfrConstantPoolInfo * info);
 
 /* ---------------- clconstraints.c ---------------- */
 
