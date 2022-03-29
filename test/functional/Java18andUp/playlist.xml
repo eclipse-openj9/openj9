@@ -23,6 +23,13 @@
 <playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../TestConfig/playlist.xsd">
 	<test>
 		<testCaseName>Jep419Tests_testClinkerFfi_DownCall</testCaseName>
+		<disables>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/14483#issuecomment-1039546787</comment>
+				<variation>--enable-preview</variation>
+				<testflag>aot</testflag>
+			</disable>
+		</disables>
 		<variations>
 			<variation>--enable-preview</variation>
 		</variations>
@@ -36,7 +43,7 @@
 			-excludegroups $(DEFAULT_EXCLUDE); \
 			$(TEST_STATUS)
 		</command>
-		<platformRequirements>bits.64,^arch.ppc,^arch.390,^arch.arm,^arch.riscv,^os.zos,^os.sunos,^os.osx</platformRequirements>
+		<platformRequirements>bits.64,^arch.arm,^arch.riscv,^os.zos,^os.sunos,^os.osx</platformRequirements>
 		<levels>
 			<level>sanity</level>
 		</levels>
