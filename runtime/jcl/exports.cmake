@@ -645,3 +645,11 @@ if(J9VM_OPT_OPENJDK_METHODHANDLE OR J9VM_OPT_METHOD_HANDLE)
 		Java_java_lang_invoke_MethodHandle_invokeExact
 	)
 endif()
+
+# J9VM_OPT_CRIU_SUPPORT
+if(J9VM_OPT_CRIU_SUPPORT)
+	omr_add_exports(jclse
+		Java_openj9_internal_criu_InternalCRIUSupport_isCheckpointAllowedImpl
+		Java_openj9_internal_criu_InternalCRIUSupport_isCRIUSupportEnabledImpl
+	)
+endif()
