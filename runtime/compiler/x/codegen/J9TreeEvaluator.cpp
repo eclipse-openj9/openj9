@@ -11945,9 +11945,9 @@ J9::X86::TreeEvaluator::inlineStringLatin1Inflate(TR::Node *node, TR::CodeGenera
    TR::Register *destOffsetReg = cg->gprClobberEvaluate(node->getChild(3), TR::InstOpCode::MOV4RegReg);
    TR::Register *lengthReg = cg->gprClobberEvaluate(node->getChild(4), TR::InstOpCode::MOV4RegReg);
 
-   TR::Register *xmmHighReg = cg->allocateRegister(TR_FPR);
-   TR::Register *xmmLowReg = cg->allocateRegister(TR_FPR);
-   TR::Register *zeroReg = cg->allocateRegister(TR_FPR);
+   TR::Register *xmmHighReg = cg->allocateRegister(TR_VRF);
+   TR::Register *xmmLowReg = cg->allocateRegister(TR_VRF);
+   TR::Register *zeroReg = cg->allocateRegister(TR_VRF);
    TR::Register *scratchReg = cg->allocateRegister(TR_GPR);
 
    int depCount = 9;
