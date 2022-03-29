@@ -237,7 +237,7 @@ class ValuePropagation : public OMR::ValuePropagation
        *        the value types <objectEqualityCompare> or <objectInequalityCompare> helper
        *
        * \return \c true if and only if this represents a delayed transformation for a
-       *        a call to the <objectEqualityCompare> or <objectInequalityCompare> helper
+       *        call to the <objectEqualityCompare> or <objectInequalityCompare> helper
        */
       virtual bool isObjectComparisonHelperCallTransform()
          {
@@ -249,7 +249,7 @@ class ValuePropagation : public OMR::ValuePropagation
        *        types <jitLoadFlattenableArrayElement> or <jitStoreFlattenableArrayElement> helper
        *
        * \return \c true if and only if this represents a delayed transformation for a
-       *        a call to the <jitLoadFlattenableArrayElement> or <jitStoreFlattenableArrayElement>
+       *        call to the <jitLoadFlattenableArrayElement> or <jitStoreFlattenableArrayElement>
        *        helper
        */
       virtual bool isArrayOperationHelperCallTransform()
@@ -262,7 +262,7 @@ class ValuePropagation : public OMR::ValuePropagation
        *        call to the value types <jitLoadFlattenableArrayElement> helper
        *
        * \return \c true if and only if this represents a delayed transformation for a
-       *        a call to the <jitLoadFlattenableArrayElement>
+       *        call to the <jitLoadFlattenableArrayElement>
        */
       virtual bool isArrayElementLoadHelperCallTransform()
          {
@@ -274,7 +274,7 @@ class ValuePropagation : public OMR::ValuePropagation
        * a call to the value types <jitStoreFlattenableArrayElement> helper
        *
        * \return \c true if and only if this represents a delayed transformation for a
-       *        a call to the <jitStoreFlattenableArrayElement>
+       *        call to the <jitStoreFlattenableArrayElement>
        */
       virtual bool isArrayElementStoreHelperCallTransform()
          {
@@ -285,36 +285,40 @@ class ValuePropagation : public OMR::ValuePropagation
        * \brief Casts this object to a pointer to \ref ObjectComparisonHelperCallTransform,
        * if possible; otherwise, reports a fatal assertion failure.
        */
-      virtual ObjectComparisonHelperCallTransform *castToObjectComparisonHelperCallTransform()
+      ObjectComparisonHelperCallTransform *castToObjectComparisonHelperCallTransform()
          {
-         TR_ASSERT_FATAL(false, "ValueTypesHelperCallTransform is not an ObjectComparisonHelperCallTransform\n");
+         TR_ASSERT_FATAL(isObjectComparisonHelperCallTransform(), "ValueTypesHelperCallTransform is not an ObjectComparisonHelperCallTransform\n");
+         return static_cast<ObjectComparisonHelperCallTransform *>(this);
          }
 
       /**
        * \brief Casts this object to a pointer to \ref ArrayOperationHelperCallTransform,
        * if possible; otherwise, reports a fatal assertion failure.
        */
-      virtual ArrayOperationHelperCallTransform *castToArrayOperationHelperCallTransform()
+      ArrayOperationHelperCallTransform *castToArrayOperationHelperCallTransform()
          {
-         TR_ASSERT_FATAL(false, "ValueTypesHelperCallTransform is not an ArrayOperationHelperCallTransform\n");
+         TR_ASSERT_FATAL(isArrayOperationHelperCallTransform(), "ValueTypesHelperCallTransform is not an ArrayOperationHelperCallTransform\n");
+         return static_cast<ArrayOperationHelperCallTransform *>(this);
          }
 
       /**
        * \brief Casts this object to a pointer to \ref ArrayElementLoadHelperCallTransform,
        * if possible; otherwise, reports a fatal assertion failure.
        */
-      virtual ArrayElementLoadHelperCallTransform *castToArrayElementLoadHelperCallTransform()
+      ArrayElementLoadHelperCallTransform *castToArrayElementLoadHelperCallTransform()
          {
-         TR_ASSERT_FATAL(false, "ValueTypesHelperCallTransform is not an ArrayElementLoadHelperCallTransform\n");
+         TR_ASSERT_FATAL(isArrayElementLoadHelperCallTransform(), "ValueTypesHelperCallTransform is not an ArrayElementLoadHelperCallTransform\n");
+         return static_cast<ArrayElementLoadHelperCallTransform *>(this);
          }
 
       /**
        * \brief Casts this object to a pointer to \ref ArrayElementStoreHelperCallTransform,
        * if possible; otherwise, reports a fatal assertion failure.
        */
-      virtual ArrayElementStoreHelperCallTransform *castToArrayElementStoreHelperCallTransform()
+      ArrayElementStoreHelperCallTransform *castToArrayElementStoreHelperCallTransform()
          {
-         TR_ASSERT_FATAL(false, "ValueTypesHelperCallTransform is not an ArrayElementStoreHelperCallTransform\n");
+         TR_ASSERT_FATAL(isArrayElementStoreHelperCallTransform(), "ValueTypesHelperCallTransform is not an ArrayElementStoreHelperCallTransform\n");
+         return static_cast<ArrayElementStoreHelperCallTransform *>(this);
          }
       };
 
@@ -332,20 +336,11 @@ class ValuePropagation : public OMR::ValuePropagation
        *        the value types <objectEqualityCompare> or <objectInequalityCompare> helper
        *
        * \return \c true if and only if this represents a delayed transformation for a
-       *        a call to the <objectEqualityCompare> or <objectInequalityCompare> helper
+       *        call to the <objectEqualityCompare> or <objectInequalityCompare> helper
        */
       virtual bool isObjectComparisonHelperCallTransform()
          {
          return true;
-         }
-
-      /**
-       * \brief Casts this object to a pointer to \ref ObjectComparisonHelperCallTransform,
-       * if possible; otherwise, reports a fatal assertion failure.
-       */
-      virtual ObjectComparisonHelperCallTransform *castToObjectComparisonHelperCallTransform()
-         {
-         return static_cast<ObjectComparisonHelperCallTransform *>(this);
          }
       };
 
@@ -369,21 +364,12 @@ class ValuePropagation : public OMR::ValuePropagation
        *        types <jitLoadFlattenableArrayElement> or <jitStoreFlattenableArrayElement> helper
        *
        * \return \c true if and only if this represents a delayed transformation for a
-       *        a call to the <jitLoadFlattenableArrayElement> or <jitStoreFlattenableArrayElement>
+       *        call to the <jitLoadFlattenableArrayElement> or <jitStoreFlattenableArrayElement>
        *        helper
        */
       virtual bool isArrayOperationHelperCallTransform()
          {
          return true;
-         }
-
-      /**
-       * \brief Casts this object to a pointer to \ref ArrayOperationHelperCallTransform,
-       * if possible; otherwise, reports a fatal assertion failure.
-       */
-      virtual ArrayOperationHelperCallTransform *castToArrayOperationHelperCallTransform()
-         {
-         return static_cast<ArrayOperationHelperCallTransform *>(this);
          }
       };
 
@@ -402,20 +388,11 @@ class ValuePropagation : public OMR::ValuePropagation
        *        call to the value types <jitLoadFlattenableArrayElement> helper
        *
        * \return \c true if and only if this represents a delayed transformation for a
-       *        a call to the <jitLoadFlattenableArrayElement>
+       *        call to the <jitLoadFlattenableArrayElement>
        */
       virtual bool isArrayElementLoadHelperCallTransform()
          {
          return true;
-         }
-
-      /**
-       * \brief Casts this object to a pointer to \ref ArrayElementLoadHelperCallTransform,
-       * if possible; otherwise, reports a fatal assertion failure.
-       */
-      virtual ArrayElementLoadHelperCallTransform *castToArrayElementLoadHelperCallTransform()
-         {
-         return static_cast<ArrayElementLoadHelperCallTransform *>(this);
          }
       };
 
@@ -440,20 +417,11 @@ class ValuePropagation : public OMR::ValuePropagation
        * a call to the value types <jitStoreFlattenableArrayElement> helper
        *
        * \return \c true if and only if this represents a delayed transformation for a
-       *        a call to the <jitStoreFlattenableArrayElement>
+       *        call to the <jitStoreFlattenableArrayElement>
        */
       virtual bool isArrayElementStoreHelperCallTransform()
          {
          return true;
-         }
-
-      /**
-       * \brief Casts this object to a pointer to \ref ArrayElementStoreHelperCallTransform,
-       * if possible; otherwise, reports a fatal assertion failure.
-       */
-      virtual ArrayElementStoreHelperCallTransform *castToArrayElementStoreHelperCallTransform()
-         {
-         return static_cast<ArrayElementStoreHelperCallTransform *>(this);
          }
       };
 

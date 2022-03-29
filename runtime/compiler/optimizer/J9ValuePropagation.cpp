@@ -906,17 +906,15 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
 
             if (isStoreFlattenableArrayElement)
                {
-               ArrayElementStoreHelperCallTransform *storeCallToTransform =
+               callToTransform =
                      new (trStackMemory()) ArrayElementStoreHelperCallTransform(_curTree, node, flagsForTransform,
                                                  arrayLength, arrayConstraint->getClass());
-               callToTransform = storeCallToTransform->castToArrayOperationHelperCallTransform();
                }
             else
                {
-               ArrayElementLoadHelperCallTransform *loadCallToTransform =
+               callToTransform =
                      new (trStackMemory()) ArrayElementLoadHelperCallTransform(_curTree, node, flagsForTransform,
                                                  arrayLength, arrayConstraint->getClass());
-               callToTransform = loadCallToTransform->castToArrayOperationHelperCallTransform();
                }
             }
          else // if (canTransformUnflattenedVTArrayElementLoadStore || canTransformIdentityLoadStore)
@@ -989,16 +987,14 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
 
             if (isStoreFlattenableArrayElement)
                {
-               ArrayElementStoreHelperCallTransform *storeCallToTransform =
+               callToTransform =
                      new (trStackMemory()) ArrayElementStoreHelperCallTransform(_curTree, node, flagsForTransform, arrayLength, NULL,
                                                  storeClassForCheck, componentClassForCheck);
-               callToTransform = storeCallToTransform->castToArrayOperationHelperCallTransform();
                }
             else
                {
-               ArrayElementLoadHelperCallTransform *loadCallToTransform =
+               callToTransform =
                      new (trStackMemory()) ArrayElementLoadHelperCallTransform(_curTree, node, flagsForTransform, arrayLength);
-               callToTransform = loadCallToTransform->castToArrayOperationHelperCallTransform();
                }
             }
 
