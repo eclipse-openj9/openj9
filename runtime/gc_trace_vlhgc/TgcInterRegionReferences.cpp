@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -111,9 +111,6 @@ tgcHookReportInterRegionReferenceCounting(J9HookInterface** hookInterface, UDATA
 
 					GC_MixedObjectIterator mixedObjectIterator(javaVM->omrVM, object);
 					GC_SlotObject *slotObject = NULL;
-					UDATA thisObjectIn = 0;
-					UDATA thisObjectOut = 0;
-					UDATA thisObjectBeyond = 0;
 					bool doesPointOut = false;
 					bool doesPointBeyond = false;
 
@@ -123,17 +120,14 @@ tgcHookReportInterRegionReferenceCounting(J9HookInterface** hookInterface, UDATA
 							MM_HeapRegionDescriptorVLHGC *dest = (MM_HeapRegionDescriptorVLHGC *)regionManager->tableDescriptorForAddress(target);
 							if (dest == region) {
 								inSlotCount += 1;
-								thisObjectIn += 1;
 							} else if (MM_CompactGroupManager::getCompactGroupNumber(env, dest) == regionCompactGroup) {
 								doesPointOut = true;
 								cardDoesPointOut = true;
 								outSlotCount += 1;
-								thisObjectOut += 1;
 							} else {
 								doesPointBeyond = true;
 								cardDoesPointOut = true;
 								beyondSlotCount += 1;
-								thisObjectBeyond += 1;
 							}
 						}
 					}
@@ -152,9 +146,6 @@ tgcHookReportInterRegionReferenceCounting(J9HookInterface** hookInterface, UDATA
 
 					GC_PointerArrayIterator pointerArrayIterator(javaVM, object);
 					GC_SlotObject *slotObject = NULL;
-					UDATA thisObjectIn = 0;
-					UDATA thisObjectOut = 0;
-					UDATA thisObjectBeyond = 0;
 					bool doesPointOut = false;
 					bool doesPointBeyond = false;
 
@@ -164,17 +155,14 @@ tgcHookReportInterRegionReferenceCounting(J9HookInterface** hookInterface, UDATA
 							MM_HeapRegionDescriptorVLHGC *dest = (MM_HeapRegionDescriptorVLHGC *)regionManager->tableDescriptorForAddress(target);
 							if (dest == region) {
 								inSlotCount += 1;
-								thisObjectIn += 1;
 							} else if (MM_CompactGroupManager::getCompactGroupNumber(env, dest) == regionCompactGroup) {
 								doesPointOut = true;
 								cardDoesPointOut = true;
 								outSlotCount += 1;
-								thisObjectOut += 1;
 							} else {
 								doesPointBeyond = true;
 								cardDoesPointOut = true;
 								beyondSlotCount += 1;
-								thisObjectBeyond += 1;
 							}
 						}
 					}

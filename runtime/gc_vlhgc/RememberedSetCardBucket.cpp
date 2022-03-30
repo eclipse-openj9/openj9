@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -128,12 +128,9 @@ MM_RememberedSetCardBucket::addToNewBuffer(MM_EnvironmentVLHGC *env, UDATA card)
 bool
 MM_RememberedSetCardBucket::isRemembered(MM_EnvironmentVLHGC *env, UDATA card)
 {
-	UDATA bufferCount = 0;
 	MM_CardBufferControlBlock *currentCardBufferControlBlock = _cardBufferControlBlockHead;
 	bool const compressed = env->compressObjectReferences();
 	while (NULL != currentCardBufferControlBlock) {
-		bufferCount += 1;
-
 		MM_RememberedSetCard *bufferCardList = currentCardBufferControlBlock->_card;
 
 		/* find top index for this buffer */
