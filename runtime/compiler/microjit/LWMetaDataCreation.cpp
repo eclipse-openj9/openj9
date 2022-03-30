@@ -21,6 +21,12 @@
 
 #include "microjit/MethodBytecodeMetaData.hpp"
 
+/* HWMetaDataCreation is for heavyweight and
+   LWMetaDataCreation is for lightweight.
+   Lightweight is meant to be for low-memory environments
+   where TR would use too many resources (e.g. embedded).
+ */
+
 #if defined(J9VM_OPT_MJIT_Standalone)
 // TODO: Complete this section so that MicroJIT can be used in a future case where MicroJIT won't deploy with TR.
 #else

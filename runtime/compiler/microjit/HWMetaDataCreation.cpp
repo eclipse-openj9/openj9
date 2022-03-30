@@ -29,6 +29,9 @@
 /* do nothing */
 #else
 
+namespace MJIT
+{
+
 static void
 setupNode(
       TR::Node *node,
@@ -505,7 +508,7 @@ static TR::Optimizer *createOptimizer(TR::Compilation *comp, TR::ResolvedMethodS
    }
 
 MJIT::InternalMetaData
-MJIT::createInternalMethodMetadata(
+createInternalMethodMetadata(
       MJIT::ByteCodeIterator *bci,
       MJIT::LocalTableEntry *localTableEntries,
       U_16 entries,
@@ -709,4 +712,6 @@ MJIT::createInternalMethodMetadata(
    MJIT::InternalMetaData internalMetaData(localTable, cfg, maxCalleeArgsSize);
    return internalMetaData;
    }
+
+} // namespace MJIT
 #endif /* TR_MJIT_Interop */
