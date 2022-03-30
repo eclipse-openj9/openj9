@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -489,6 +489,7 @@ int32_t TR_UnsafeFastPath::perform()
          switch (symbol->getRecognizedMethod())
             {
             case TR::java_lang_StringUTF16_getChar:
+            case TR::java_lang_StringUTF16_putChar:
                objectChild = 0;
                offsetChild = 1;
                break;
@@ -650,6 +651,11 @@ int32_t TR_UnsafeFastPath::perform()
                value = node->getChild(3);
                type = TR::Int16;
                break;
+            case TR::java_lang_StringUTF16_putChar:
+               isByIndex = true;
+               value = node->getChild(2);
+               type = TR::Int16;
+               break;
             case TR::com_ibm_jit_JITHelpers_putCharInArrayVolatile:
                isVolatile = true;
             case TR::com_ibm_jit_JITHelpers_putCharInArray:
@@ -740,6 +746,7 @@ int32_t TR_UnsafeFastPath::perform()
             switch (calleeMethod)
                {
                case TR::java_lang_StringUTF16_getChar:
+               case TR::java_lang_StringUTF16_putChar:
                   unsafeSymRef = comp()->getSymRefTab()->findOrCreateArrayShadowSymbolRef(TR::Int8);
                   break;
 
