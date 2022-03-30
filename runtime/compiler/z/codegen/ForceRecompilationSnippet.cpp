@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -90,7 +90,6 @@ TR::S390ForceRecompilationSnippet::emitSnippetBody()
 
    *(int32_t *) cursor = (int32_t)((destAddr - (intptr_t)(cursor - 2)) / 2);
 
-   AOTcgDiag1(comp, "add TR_HelperAddress cursor=%x\n", cursor);
    cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, (uint8_t*) glueRef, TR_HelperAddress, cg()),
                              __FILE__, __LINE__, getNode());
 
@@ -145,7 +144,6 @@ TR::S390ForceRecompilationDataSnippet::emitSnippetBody()
    {
    TR::Compilation *comp = cg()->comp();
    uint8_t * cursor = cg()->getBinaryBufferCursor();
-   AOTcgDiag1(comp, "TR::S390ForceRecompilationDataSnippet::emitSnippetBody cursor=%x\n", cursor);
    getSnippetLabel()->setCodeLocation(cursor);
 
    /** IMPORTANT **/
@@ -155,14 +153,12 @@ TR::S390ForceRecompilationDataSnippet::emitSnippetBody()
 
    // Return Address
    *(intptr_t *) cursor = (intptr_t)getRestartLabel()->getCodeLocation();
-   AOTcgDiag1(comp, "add TR_AbsoluteMethodAddress cursor=%x\n", cursor);
    cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, NULL, TR_AbsoluteMethodAddress, cg()),
                              __FILE__, __LINE__, getNode());
    cursor += sizeof(intptr_t);
 
    // Start PC
    *(intptr_t *) cursor = (intptr_t)cg()->getCodeStart();
-   AOTcgDiag1(comp, "add TR_AbsoluteMethodAddress cursor=%x\n", cursor);
    cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, NULL, TR_AbsoluteMethodAddress, cg()),
                              __FILE__, __LINE__, getNode());
    cursor += sizeof(intptr_t);
