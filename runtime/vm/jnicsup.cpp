@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2541,13 +2541,13 @@ defineClass(JNIEnv *env, const char *name, jobject loader, const jbyte *buf, jsi
 	} else {
 #define JAVA_PACKAGE_NAME_LENGTH 5 /* Number of characters in "java/" */
 		J9JavaVM * vm = currentThread->javaVM;
-		J9ClassLoader * classLoader;
-		J9TranslationBufferSet *dynamicLoadBuffers;
-		UDATA classNameLength;
-		U_8 * className;
-		U_8 check;
-		U_8 c;
-		U_8 * checkPtr;
+		J9ClassLoader * classLoader = NULL;
+		J9TranslationBufferSet *dynamicLoadBuffers = NULL;
+		UDATA classNameLength = 0;
+		U_8 * className = NULL;
+		U_8 check = 0;
+		U_8 c = 0;
+		U_8 * checkPtr = NULL;
 		J9Class * clazz = NULL;
 		BOOLEAN errorOccurred = FALSE;
 
@@ -2575,7 +2575,7 @@ defineClass(JNIEnv *env, const char *name, jobject loader, const jbyte *buf, jsi
 			classNameLength += 1;
 		}
 		className = (U_8 *) name;
-		if (c & 0x80) {
+		if (0 != (check & 0x80)) {
 			className = compressUTF8(currentThread, className, classNameLength, &classNameLength);
 			if (className == NULL) {
 				/* Exception already set */
