@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -253,8 +253,6 @@ TR::S390StackCheckFailureSnippet::emitSnippetBody()
    this->setSnippetDestAddr(destAddr);
 
    *(int32_t *) cursor = (int32_t)((destAddr - (intptr_t)(cursor - 2)) / 2);
-   AOTcgDiag5(comp, "cursor=%x destAddr=%x TR_HelperAddress=%x cg=%x %x\n",
-   cursor, getDestination()->getSymbol(), TR_HelperAddress, cg(), *((int*) cursor) );
    cg()->addProjectSpecializedRelocation(cursor, (uint8_t*) getDestination(), NULL, TR_HelperAddress,
                              __FILE__, __LINE__, getNode());
 
