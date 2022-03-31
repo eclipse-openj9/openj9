@@ -992,7 +992,8 @@ void TR_VectorAPIExpansion::aloadHandler(TR_VectorAPIExpansion *opt, TR::TreeTop
       }
    else if (mode == doVectorization)
       {
-      TR::DataType vectorType = OMR::DataType(elementType).scalarToVector();
+      TR::VectorLength lengthEnum = supportedOnPlatform(comp, vectorLength);
+      TR::DataType vectorType = OMR::DataType(elementType).scalarToVector(lengthEnum);
       vectorizeLoadOrStore(opt, node, vectorType);
       }
 
@@ -1034,7 +1035,8 @@ void TR_VectorAPIExpansion::astoreHandler(TR_VectorAPIExpansion *opt, TR::TreeTo
       }
    else if (mode == doVectorization)
       {
-      TR::DataType vectorType = OMR::DataType(elementType).scalarToVector();
+      TR::VectorLength lengthEnum = supportedOnPlatform(comp, vectorLength);
+      TR::DataType vectorType = OMR::DataType(elementType).scalarToVector(lengthEnum);
       vectorizeLoadOrStore(opt, node, vectorType);
       if (rhs->getOpCodeValue() == TR::aload) vectorizeLoadOrStore(opt, rhs, vectorType);
       }
@@ -1059,7 +1061,7 @@ TR::Node *TR_VectorAPIExpansion::fromArrayHandler(TR_VectorAPIExpansion *opt, TR
 
    if (mode == checkScalarization) return node;
    if (mode == checkVectorization)
-      return supportedOnPlatform(comp, vectorLength) ? node : NULL;
+      return supportedOnPlatform(comp, vectorLength) != TR::NoVectorLength ? node : NULL;
 
    if (opt->_trace)
       traceMsg(comp, "fromArrayHandler for node %p\n", node);
@@ -1080,7 +1082,7 @@ TR::Node *TR_VectorAPIExpansion::intoArrayHandler(TR_VectorAPIExpansion *opt, TR
 
    if (mode == checkScalarization) return node;
    if (mode == checkVectorization)
-      return supportedOnPlatform(comp, vectorLength) ? node : NULL;
+      return supportedOnPlatform(comp, vectorLength) != TR::NoVectorLength ? node : NULL;
 
    if (opt->_trace)
       traceMsg(comp, "intoArrayHandler for node %p\n", node);
@@ -1104,7 +1106,7 @@ TR::Node *TR_VectorAPIExpansion::addHandler(TR_VectorAPIExpansion *opt, TR::Tree
 
    if (mode == checkScalarization) return node;
    if (mode == checkVectorization)
-      return supportedOnPlatform(comp, vectorLength) ? node : NULL;
+      return supportedOnPlatform(comp, vectorLength) != TR::NoVectorLength ? node : NULL;
 
    // TODO: The above does not check the actual opcode and type
 
@@ -1126,7 +1128,7 @@ TR::Node *TR_VectorAPIExpansion::loadIntrinsicHandler(TR_VectorAPIExpansion *opt
 
    if (mode == checkScalarization) return node;
    if (mode == checkVectorization)
-      return supportedOnPlatform(comp, vectorLength) ? node : NULL;
+      return supportedOnPlatform(comp, vectorLength) != TR::NoVectorLength ? node : NULL;
 
    if (opt->_trace)
       traceMsg(comp, "loadIntrinsicHandler for node %p\n", node);
@@ -1183,7 +1185,8 @@ TR::Node *TR_VectorAPIExpansion::transformLoadFromArray(TR_VectorAPIExpansion *o
       }
    else if (mode == doVectorization)
       {
-      TR::DataType vectorType = OMR::DataType(elementType).scalarToVector();
+      TR::VectorLength lengthEnum = supportedOnPlatform(comp, vectorLength);
+      TR::DataType vectorType = OMR::DataType(elementType).scalarToVector(lengthEnum);
       TR::SymbolReference *vecShadow = comp->getSymRefTab()->findOrCreateArrayShadowSymbolRef(vectorType, NULL);
       TR::Node::recreate(node, TR::vloadi);
       node->setSymbolReference(vecShadow);
@@ -1200,7 +1203,7 @@ TR::Node *TR_VectorAPIExpansion::storeIntrinsicHandler(TR_VectorAPIExpansion *op
 
    if (mode == checkScalarization) return node;
    if (mode == checkVectorization)
-      return supportedOnPlatform(comp, vectorLength) ? node : NULL;
+      return supportedOnPlatform(comp, vectorLength) != TR::NoVectorLength ? node : NULL;
 
    if (opt->_trace)
       traceMsg(comp, "storeIntrinsicHandler for node %p\n", node);
@@ -1271,7 +1274,8 @@ TR::Node *TR_VectorAPIExpansion::transformStoreToArray(TR_VectorAPIExpansion *op
    else if (mode == doVectorization)
       {
       // vectorization(will be enabled later)
-      TR::DataType vectorType = OMR::DataType(elementType).scalarToVector();
+      TR::VectorLength lengthEnum = supportedOnPlatform(comp, vectorLength);
+      TR::DataType vectorType = OMR::DataType(elementType).scalarToVector(lengthEnum);
       TR::SymbolReference *vecShadow = comp->getSymRefTab()->findOrCreateArrayShadowSymbolRef(vectorType, NULL);
 
       if (valueToWrite->getOpCodeValue() == TR::aload) vectorizeLoadOrStore(opt, valueToWrite, vectorType);
@@ -1355,7 +1359,7 @@ TR::Node *TR_VectorAPIExpansion::naryIntrinsicHandler(TR_VectorAPIExpansion *opt
 
    if (mode == checkVectorization)
       {
-      if (!supportedOnPlatform(comp, vectorLength)) return NULL;
+      if (supportedOnPlatform(comp, vectorLength) == TR::NoVectorLength) return NULL;
 
       if (useVcall) return node;
 
@@ -1363,7 +1367,7 @@ TR::Node *TR_VectorAPIExpansion::naryIntrinsicHandler(TR_VectorAPIExpansion *opt
       if (vectorOpCode == TR::BadILOp)
           return NULL;
 
-      if (!comp->cg()->getSupportsOpCodeForAutoSIMD(vectorOpCode, elementType))
+      if (!comp->cg()->getSupportsOpCodeForAutoSIMD(vectorOpCode, elementType, OMR::DataType::bitsToVectorLength(vectorLength)))
          return NULL;
 
       return node;
@@ -1391,7 +1395,7 @@ TR::Node *TR_VectorAPIExpansion::blendIntrinsicHandler(TR_VectorAPIExpansion *op
       {
       if (!supportedOnPlatform(comp, vectorLength)) return NULL;
 
-      if (!comp->cg()->getSupportsOpCodeForAutoSIMD(vectorOpCode, elementType))
+      if (!comp->cg()->getSupportsOpCodeForAutoSIMD(vectorOpCode, elementType, OMR::DataType::bitsToVectorLength(vectorLength)))
          return NULL;
 
       return node;
@@ -1411,7 +1415,7 @@ TR::Node *TR_VectorAPIExpansion::broadcastCoercedIntrinsicHandler(TR_VectorAPIEx
 
    if (mode == checkVectorization)
       {
-      if (!comp->cg()->getSupportsOpCodeForAutoSIMD(TR::vsplats, elementType))
+      if (!comp->cg()->getSupportsOpCodeForAutoSIMD(TR::vsplats, elementType, OMR::DataType::bitsToVectorLength(vectorLength)))
          return NULL;
       else
          return node;
@@ -1525,7 +1529,7 @@ TR::Node *TR_VectorAPIExpansion::compareIntrinsicHandler(TR_VectorAPIExpansion *
       if (vectorOpCode == TR::BadILOp)
           return NULL;
 
-      if (!comp->cg()->getSupportsOpCodeForAutoSIMD(vectorOpCode, elementType))
+      if (!comp->cg()->getSupportsOpCodeForAutoSIMD(vectorOpCode, elementType, OMR::DataType::bitsToVectorLength(vectorLength)))
          return NULL;
 
       return node;
@@ -1625,7 +1629,8 @@ TR::Node *TR_VectorAPIExpansion::transformNary(TR_VectorAPIExpansion *opt, TR::T
       }
    else if (mode == doVectorization)
       {
-      TR::DataType vectorType = OMR::DataType(elementType).scalarToVector();
+      TR::VectorLength lengthEnum = supportedOnPlatform(comp, vectorLength);
+      TR::DataType vectorType = OMR::DataType(elementType).scalarToVector(lengthEnum);
 
       for (int32_t i = 0; i < numOperands; i++)
          {

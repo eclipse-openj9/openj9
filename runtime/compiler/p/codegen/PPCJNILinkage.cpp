@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -938,9 +938,6 @@ int32_t J9::Power::JNILinkage::buildJNIArgs(TR::Node *callNode,
                }
             numFloatArgs++;
             break;
-         case TR::VectorDouble:
-            TR_ASSERT(false, "JNI dispatch: VectorDouble argument not expected");
-            break;
          case TR::Aggregate:
             {
             size_t size = child->getSymbolReference()->getSymbol()->getSize();
@@ -955,6 +952,13 @@ int32_t J9::Power::JNILinkage::buildJNIArgs(TR::Node *callNode,
             }
             break;
          default:
+            if (child->getDataType().isVector() &&
+                child->getDataType().getVectorElementType() == TR::Double)
+               {
+               TR_ASSERT(false, "JNI dispatch: VectorDouble argument not expected");
+               break;
+               }
+
             TR_ASSERT(false, "Argument type %s is not supported\n", child->getDataType().toString());
          }
       }
@@ -1315,9 +1319,13 @@ int32_t J9::Power::JNILinkage::buildJNIArgs(TR::Node *callNode,
 
             }    // end of for loop
             break;
-         case TR::VectorDouble:
-            TR_ASSERT(false, "JNI dispatch: VectorDouble argument not expected");
-            break;
+
+         default:
+            if (childType.isVector() && childType.getVectorElementType() == TR::Double)
+               {
+               TR_ASSERT(false, "JNI dispatch: VectorDouble argument not expected");
+               break;
+               }
          }
       }
 

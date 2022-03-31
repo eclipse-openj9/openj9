@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,7 +32,7 @@ namespace J9 {
 
 #define TR_Bad TR::BadILOp
 
-static TR::ILOpCodes conversionMapOMR2TR[TR::NumOMRTypes][TR::NumTypes-TR::NumOMRTypes] =
+static TR::ILOpCodes conversionMapOMR2TR[TR::NumOMRTypes][TR::NumScalarTypes-TR::NumOMRTypes] =
 //                   PackedDec ZonedDec ZDecSLE ZDecSLS ZDecSTS UniDec  UniDecSL UniDecST
    {
 /* NoType */       { TR_Bad,   TR_Bad,  TR_Bad, TR_Bad, TR_Bad, TR_Bad, TR_Bad,  TR_Bad },  // NoType
@@ -43,28 +43,22 @@ static TR::ILOpCodes conversionMapOMR2TR[TR::NumOMRTypes][TR::NumTypes-TR::NumOM
 /* Float */        { TR::f2pd, TR_Bad,  TR_Bad, TR_Bad, TR_Bad, TR_Bad, TR_Bad,  TR_Bad },  // Float
 /* Double */       { TR::d2pd, TR_Bad,  TR_Bad, TR_Bad, TR_Bad, TR_Bad, TR_Bad,  TR_Bad },  // Double
 /* Address */      { TR_Bad,   TR_Bad,  TR_Bad, TR_Bad, TR_Bad, TR_Bad, TR_Bad,  TR_Bad },  // Address
-/* VectorInt8 */   { TR_Bad,   TR_Bad,  TR_Bad, TR_Bad, TR_Bad, TR_Bad, TR_Bad,  TR_Bad },  // VectorInt8
-/* VectorInt16*/   { TR_Bad,   TR_Bad,  TR_Bad, TR_Bad, TR_Bad, TR_Bad, TR_Bad,  TR_Bad },  // VectorInt16
-/* VectorInt32*/   { TR_Bad,   TR_Bad,  TR_Bad, TR_Bad, TR_Bad, TR_Bad, TR_Bad,  TR_Bad },  // VectorInt32
-/* VectorInt64*/   { TR_Bad,   TR_Bad,  TR_Bad, TR_Bad, TR_Bad, TR_Bad, TR_Bad,  TR_Bad },  // VectorInt64
-/* VectorFloat*/   { TR_Bad,   TR_Bad,  TR_Bad, TR_Bad, TR_Bad, TR_Bad, TR_Bad,  TR_Bad },  // VectorFloat
-/* VectorDouble*/  { TR_Bad,   TR_Bad,  TR_Bad, TR_Bad, TR_Bad, TR_Bad, TR_Bad,  TR_Bad }   // VectorDouble
    };
 
-static TR::ILOpCodes conversionMapTR2OMR[TR::NumTypes-TR::NumOMRTypes][TR::NumOMRTypes] =
-//                                       No      Int8     Int16    Int32     Int64   Float     Double    Addr     VectorInt8 VectorInt16 VectorInt32 VectorInt64 VectorFloat VectorDouble
+static TR::ILOpCodes conversionMapTR2OMR[TR::NumScalarTypes-TR::NumOMRTypes][TR::NumOMRTypes] =
+//                                           No      Int8     Int16    Int32    Int64   Float     Double    Addr
    {
-/* PackedDecimal */                    { TR_Bad, TR_Bad,  TR_Bad,  TR::pd2i,TR::pd2l,TR::pd2f, TR::pd2d, TR_Bad,  TR_Bad,    TR_Bad,     TR_Bad,     TR_Bad,     TR_Bad,     TR_Bad },  // PackedDecima
-/* ZonedDecimal */                     { TR_Bad, TR_Bad,  TR_Bad,  TR_Bad,  TR_Bad,  TR_Bad,   TR_Bad,   TR_Bad,  TR_Bad,    TR_Bad,     TR_Bad,     TR_Bad,     TR_Bad,     TR_Bad },  // ZonedDecimal
-/* ZonedDecimalSignLeadingEmbedded */  { TR_Bad, TR_Bad,  TR_Bad,  TR_Bad,  TR_Bad,  TR_Bad,   TR_Bad,   TR_Bad,  TR_Bad,    TR_Bad,     TR_Bad,     TR_Bad,     TR_Bad,     TR_Bad },  // ZonedDecimal
-/* ZonedDecimalSignLeadingSeparate*/   { TR_Bad, TR_Bad,  TR_Bad,  TR_Bad,  TR_Bad,  TR_Bad,   TR_Bad,   TR_Bad,  TR_Bad,    TR_Bad,     TR_Bad,     TR_Bad,     TR_Bad,     TR_Bad },  // ZonedDecimal
-/* ZonedDecimalSignTrailingSeparate*/  { TR_Bad, TR_Bad,  TR_Bad,  TR_Bad,  TR_Bad,  TR_Bad,   TR_Bad,   TR_Bad,  TR_Bad,    TR_Bad,     TR_Bad,     TR_Bad,     TR_Bad,     TR_Bad },  // ZonedDecimal
-/* UnicodeDecimal */                   { TR_Bad, TR_Bad,  TR_Bad,  TR_Bad,  TR_Bad,  TR_Bad,   TR_Bad,   TR_Bad,  TR_Bad,    TR_Bad,     TR_Bad,     TR_Bad,     TR_Bad,     TR_Bad },  // UnicodeDecim
-/* UnicodeDecimalSignLeading */        { TR_Bad, TR_Bad,  TR_Bad,  TR_Bad,  TR_Bad,  TR_Bad,   TR_Bad,   TR_Bad,  TR_Bad,    TR_Bad,     TR_Bad,     TR_Bad,     TR_Bad,     TR_Bad },  // UnicodeDecim
-/* UnicodeDecimalSignTrailing */       { TR_Bad, TR_Bad,  TR_Bad,  TR_Bad,  TR_Bad,  TR_Bad,   TR_Bad,   TR_Bad,  TR_Bad,    TR_Bad,     TR_Bad,     TR_Bad,     TR_Bad,     TR_Bad }   // UnicodeDecim
+   /* PackedDecimal */                    { TR_Bad, TR_Bad,  TR_Bad,  TR::pd2i,TR::pd2l,TR::pd2f, TR::pd2d, TR_Bad },  // PackedDecima
+   /* ZonedDecimal */                     { TR_Bad, TR_Bad,  TR_Bad,  TR_Bad,  TR_Bad,  TR_Bad,   TR_Bad,   TR_Bad },  // ZonedDecimal
+   /* ZonedDecimalSignLeadingEmbedded */  { TR_Bad, TR_Bad,  TR_Bad,  TR_Bad,  TR_Bad,  TR_Bad,   TR_Bad,   TR_Bad },  // ZonedDecimal
+   /* ZonedDecimalSignLeadingSeparate*/   { TR_Bad, TR_Bad,  TR_Bad,  TR_Bad,  TR_Bad,  TR_Bad,   TR_Bad,   TR_Bad },  // ZonedDecimal
+   /* ZonedDecimalSignTrailingSeparate*/  { TR_Bad, TR_Bad,  TR_Bad,  TR_Bad,  TR_Bad,  TR_Bad,   TR_Bad,   TR_Bad },  // ZonedDecimal
+   /* UnicodeDecimal */                   { TR_Bad, TR_Bad,  TR_Bad,  TR_Bad,  TR_Bad,  TR_Bad,   TR_Bad,   TR_Bad },  // UnicodeDecim
+   /* UnicodeDecimalSignLeading */        { TR_Bad, TR_Bad,  TR_Bad,  TR_Bad,  TR_Bad,  TR_Bad,   TR_Bad,   TR_Bad },  // UnicodeDecim
+   /* UnicodeDecimalSignTrailing */       { TR_Bad, TR_Bad,  TR_Bad,  TR_Bad,  TR_Bad,  TR_Bad,   TR_Bad,   TR_Bad }   // UnicodeDecim
    };
 
-static TR::ILOpCodes conversionMapTR2TR[TR::NumTypes-TR::NumOMRTypes][TR::NumTypes-TR::NumOMRTypes] =
+static TR::ILOpCodes conversionMapTR2TR[TR::NumScalarTypes-TR::NumOMRTypes][TR::NumScalarTypes-TR::NumOMRTypes] =
 //                                       PackedDec    ZonedDec     ZDecSLE      ZDecSLS      ZDecSTS      UniDec      UniDecSL    UniDecST
    {
 /* PackedDecimal */                    { TR_Bad,      TR::pd2zd,   TR_Bad,      TR::pd2zdsls,TR::pd2zdsts,TR::pd2ud,  TR::pd2udsl,TR::pd2udst },
@@ -182,8 +176,12 @@ char *J9::DataType::_TR_BCDSignCodeNames[num_bcd_sign_codes] =
 TR::ILOpCodes
 J9::DataType::getDataTypeConversion(TR::DataType t1, TR::DataType t2)
    {
-   TR_ASSERT(t1 < TR::NumTypes, "conversion opcode from unexpected datatype %s requested", t1.toString());
-   TR_ASSERT(t2 < TR::NumTypes, "conversion opcode to unexpected data type %s requested", t2.toString());
+   TR_ASSERT(t1 < TR::NumAllTypes, "conversion opcode from unexpected datatype %s requested", t1.toString());
+   TR_ASSERT(t2 < TR::NumAllTypes, "conversion opcode to unexpected data type %s requested", t2.toString());
+
+   if (t1.isVector() && t2.isVector()) return TR::v2v;
+   if (t1.isVector() || t2.isVector()) return TR::BadILOp;
+
    if (t1 < TR::NumOMRTypes)
       {
       if (t2 < TR::NumOMRTypes)
@@ -217,8 +215,8 @@ static_assert(TR::LastJ9Type - TR::FirstJ9Type + 1 == (sizeof(J9DataTypeSizes) /
 const int32_t
 J9::DataType::getSize(TR::DataType dt)
    {
-   TR_ASSERT(dt < TR::NumTypes, "dataTypeSizeMap called on unrecognized data type");
-   if (dt < TR::FirstJ9Type)
+   TR_ASSERT(dt < TR::NumAllTypes, "dataTypeSizeMap called on unrecognized data type");
+   if (dt.isOMRDataType())
       return OMR::DataType::getSize(dt);
    else
       return J9DataTypeSizes[dt - TR::FirstJ9Type];
@@ -227,8 +225,8 @@ J9::DataType::getSize(TR::DataType dt)
 void
 J9::DataType::setSize(TR::DataType dt, int32_t newSize)
    {
-   TR_ASSERT(dt < TR::NumTypes, "setDataTypeSizeInMap called on unrecognized data type");
-   if (dt < TR::FirstJ9Type)
+   TR_ASSERT(dt < TR::NumAllTypes, "setDataTypeSizeInMap called on unrecognized data type");
+   if (dt.isOMRDataType())
       OMR::DataType::setSize(dt, newSize);
    else
       J9DataTypeSizes[dt - TR::FirstJ9Type] = newSize;
@@ -252,38 +250,12 @@ static_assert(TR::LastJ9Type - TR::FirstJ9Type + 1 == (sizeof(J9DataTypeNames) /
 const char *
 J9::DataType::getName(TR::DataType dt)
    {
-   TR_ASSERT(dt < TR::NumTypes, "Name requested for unknown datatype");
-   if (dt < TR::FirstJ9Type)
+   TR_ASSERT(dt < TR::NumAllTypes, "Name requested for unknown datatype");
+   if (dt.isOMRDataType())
       return OMR::DataType::getName(dt);
    else
       return J9DataTypeNames[dt - TR::FirstJ9Type];
    }
-
-
-static const char *J9DataTypePrefixes[] =
-   {
-   "PD",    // TR::PackedDecimal
-   "ZD",    // TR::ZonedDecimal
-   "ZDSLE", // TR::ZonedDecimalSignLeadingEmbedded
-   "ZDSLS", // TR::ZonedDecimalSignLeadingSeparate
-   "ZDSTS", // TR::ZonedDecimalSignTrailingSeparate
-   "UD",    // TR::UnicodeDecimal
-   "UDSL",  // TR::UnicodeDecimalSignLeading
-   "UDST"   // TR::UnicodeDecimalSignTrailing"
-   };
-
-static_assert(TR::LastJ9Type - TR::FirstJ9Type + 1 == (sizeof(J9DataTypePrefixes) / sizeof(J9DataTypePrefixes[0])), "J9DataTypePrefixes is not the correct size");
-
-const char *
-J9::DataType::getPrefix(TR::DataType dt)
-   {
-   TR_ASSERT(dt < TR::NumTypes, "Prefix requested for unknown datatype");
-   if (dt < TR::FirstJ9Type)
-      return OMR::DataType::getPrefix(dt);
-   else
-      return J9DataTypePrefixes[dt - TR::FirstJ9Type];
-   }
-
 
 bool
 J9::DataType::isValidZonedDigit(uint8_t data)
@@ -597,8 +569,8 @@ J9::DataType::getSignCodeSize(TR::DataType dt)
          size = UnknownSignCodeSize;
          break;
       default:
-         TR_ASSERT_FATAL(false, "Unknown sign code BCD type"); 
-         break; 
+         TR_ASSERT_FATAL(false, "Unknown sign code BCD type");
+         break;
       }
    return size;
    }
@@ -846,7 +818,7 @@ J9::DataType::encodedToPrintableSign(uint32_t encodedSign, TR::DataType dt)
          break;
       default:
          TR_ASSERT(false,"unknown bcd type %s\n",dt.toString());
-         break; 
+         break;
       }
    return printableSign;
    }

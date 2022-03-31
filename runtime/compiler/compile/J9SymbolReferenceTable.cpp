@@ -2146,13 +2146,13 @@ J9::SymbolReferenceTable::findOrCreateUnsafeSymbolRef(TR::DataType type, bool ja
       if (javaStaticReference)
          {
          if (_unsafeJavaStaticVolatileSymRefs == NULL)
-            _unsafeJavaStaticVolatileSymRefs = new (trHeapMemory()) TR_Array<TR::SymbolReference *>(comp()->trMemory(), TR::NumTypes);
+            _unsafeJavaStaticVolatileSymRefs = new (trHeapMemory()) TR_Array<TR::SymbolReference *>(comp()->trMemory(), TR::NumAllTypes);
          unsafeSymRefs = _unsafeJavaStaticVolatileSymRefs;
          }
       else
          {
          if (_unsafeVolatileSymRefs == NULL)
-            _unsafeVolatileSymRefs = new (trHeapMemory()) TR_Array<TR::SymbolReference *>(comp()->trMemory(), TR::NumTypes);
+            _unsafeVolatileSymRefs = new (trHeapMemory()) TR_Array<TR::SymbolReference *>(comp()->trMemory(), TR::NumAllTypes);
          unsafeSymRefs = _unsafeVolatileSymRefs;
          }
       }
@@ -2161,13 +2161,13 @@ J9::SymbolReferenceTable::findOrCreateUnsafeSymbolRef(TR::DataType type, bool ja
       if (javaStaticReference)
          {
          if (_unsafeJavaStaticSymRefs == NULL)
-            _unsafeJavaStaticSymRefs = new (trHeapMemory()) TR_Array<TR::SymbolReference *>(comp()->trMemory(), TR::NumTypes);
+            _unsafeJavaStaticSymRefs = new (trHeapMemory()) TR_Array<TR::SymbolReference *>(comp()->trMemory(), TR::NumAllTypes);
          unsafeSymRefs = _unsafeJavaStaticSymRefs;
          }
       else
          {
          if (_unsafeSymRefs == NULL)
-            _unsafeSymRefs = new (trHeapMemory()) TR_Array<TR::SymbolReference *>(comp()->trMemory(), TR::NumTypes);
+            _unsafeSymRefs = new (trHeapMemory()) TR_Array<TR::SymbolReference *>(comp()->trMemory(), TR::NumAllTypes);
          unsafeSymRefs = _unsafeSymRefs;
          }
       }

@@ -2257,18 +2257,8 @@ TR_J9ByteCodeIlGenerator::calculateArrayElementAddress(TR::DataType dataType, bo
 
    if (comp()->getOption(TR_EnableSIMDLibrary))
        {
-       if (dataType == TR::VectorInt8)
-         dataType = TR::Int8;
-       else if (dataType == TR::VectorInt16)
-         dataType = TR::Int16;
-       else if (dataType == TR::VectorInt32)
-         dataType = TR::Int32;
-       else if (dataType == TR::VectorInt64)
-         dataType = TR::Int64;
-       if (dataType == TR::VectorFloat)
-         dataType = TR::Float;
-       else if (dataType == TR::VectorDouble)
-         dataType = TR::Double;
+       if (dataType.isVector())
+          dataType = dataType.getVectorElementType();
        }
 
    int32_t width = TR::Symbol::convertTypeToSize(dataType);
