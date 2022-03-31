@@ -155,12 +155,12 @@ SH_OSCachesysv::startup(J9JavaVM* vm, const char* ctrlDirName, UDATA cacheDirPer
 #if defined(J9VM_ENV_DATA64)
 #if defined(OPENJ9_BUILD)
 	defaultCacheSize = J9_SHARED_CLASS_CACHE_DEFAULT_SIZE_64BIT_PLATFORM;
-#else /* OPENJ9_BUILD */
+#else /* defined(OPENJ9_BUILD) */
 	if (J2SE_VERSION(vm) >= J2SE_V11) {
 		defaultCacheSize = J9_SHARED_CLASS_CACHE_DEFAULT_SIZE_64BIT_PLATFORM;
 	}
-#endif /* OPENJ9_BUILD */
-#endif /* J9VM_ENV_DATA64 */
+#endif /* defined(OPENJ9_BUILD) */
+#endif /* defined(J9VM_ENV_DATA64) */
 	PORT_ACCESS_FROM_PORT(_portLibrary);
 
 	Trc_SHR_OSC_startup_Entry(cacheName, (piconfig!= NULL)? piconfig->sharedClassCacheSize : defaultCacheSize, create);
@@ -190,7 +190,7 @@ SH_OSCachesysv::startup(J9JavaVM* vm, const char* ctrlDirName, UDATA cacheDirPer
 
 #if defined(WIN32)
 	_semFileName = _cacheNameWithVGen;
-#else
+#else /* defined(WIN32) */
 	semLength = strlen(_cacheNameWithVGen) + (strlen(J9SH_SEMAPHORE_ID) - strlen(J9SH_MEMORY_ID)) + 1;
 	/* Unfortunate case is that Java5 and early Java6 caches did not have _G append on the semaphore file,
 	 * so to connect with a generation 1 or 2 cache (Java5 was only ever G01), remove the _G01 from the semaphore file name
@@ -204,7 +204,7 @@ SH_OSCachesysv::startup(J9JavaVM* vm, const char* ctrlDirName, UDATA cacheDirPer
 		return false;
 	}
 	getCacheVersionAndGen(PORTLIB, vm, _semFileName, semLength, cacheName, versionData, _activeGeneration, false, _layer);
-#endif
+#endif /* defined(WIN32) */
 
 	while (retryCount>0) {
 		IDATA rc;
@@ -225,7 +225,7 @@ SH_OSCachesysv::startup(J9JavaVM* vm, const char* ctrlDirName, UDATA cacheDirPer
 		} else {
 #if !defined(WIN32)
 			shsemrc = OpenSysVSemaphoreHelper(versionData, &lastErrorInfo);
-#else
+#else /* !defined(WIN32) */
 			/* Currently on windows, "flags" passed to j9shsem_deprecated_open() are not used, but its better to pass correct flags */
 			UDATA flags = J9SHSEM_NO_FLAGS;
 			if (J9SH_OSCACHE_OPEXIST_STATS == _createFlags) {
@@ -238,7 +238,7 @@ SH_OSCachesysv::startup(J9JavaVM* vm, const char* ctrlDirName, UDATA cacheDirPer
 			shsemrc = j9shsem_deprecated_open(_cacheDirName, _groupPerm, &_semhandle, _semFileName, (int)_totalNumSems, 0, flags, NULL);
 			lastErrorInfo.lastErrorCode = j9error_last_error_number();
 			lastErrorInfo.lastErrorMsg = j9error_last_error_message();
-#endif
+#endif /* !defined(WIN32) */
 		}
 
 		if (shsemrc == J9PORT_INFO_SHSEM_PARTIAL) {
@@ -700,7 +700,7 @@ SH_OSCachesysv::openCache(const char* cacheDirName, J9PortShcVersion* versionDat
 			} else if (0 != (_openMode & J9OSCACHE_OPEN_MODE_DO_READONLY)) {
 				OSC_TRACE(J9NLS_SHRC_OSCACHE_CONTROL_FILE_RECREATE_PROHIBITED_RUNNING_READ_ONLY);
 			}
-#endif
+#endif /* !defined(WIN32) */
 			Trc_SHR_OSC_openCache_Exit3();
 			result = OSCACHESYSV_FAILURE;
 		}
@@ -842,7 +842,7 @@ SH_OSCachesysv::cleanup(void)
 		j9mem_free_memory(_semFileName);
 	} 
 	
-#endif
+#endif /* !defined(WIN32) */
 	Trc_SHR_OSC_cleanup_Exit();
 
 }
@@ -1070,22 +1070,20 @@ SH_OSCachesysv::destroy(bool suppressVerbose, bool isReset)
 		getCorruptionContext(&corruptionCode, NULL);
 		if (CACHE_SEMAPHORE_MISMATCH == corruptionCode) {
 			if (_semhandle != NULL) {
-#if !defined(WIN32)
 				rc = DestroySysVSemHelper();
-#endif
 			}
 		}
 		goto _done;
 	}
-#endif
+#endif /* !defined(WIN32) */
 
 	/* Now try to remove the shared memory region */
 	if (_shmhandle != NULL) {
 #if !defined(WIN32)
 		rc = DestroySysVMemoryHelper();
-#else
+#else /* !defined(WIN32) */
 		rc = j9shmem_destroy(_cacheDirName, _groupPerm, &_shmhandle);
-#endif
+#endif /* !defined(WIN32) */
 		if (rc != 0) {
 			OSC_ERR_TRACE1(J9NLS_SHRC_OSCACHE_SHARED_CACHE_MEMORY_REMOVE_FAILED, _cacheName);
 			goto _done;
@@ -1095,9 +1093,9 @@ SH_OSCachesysv::destroy(bool suppressVerbose, bool isReset)
 	if (_semhandle != NULL) {
 #if !defined(WIN32)
 		rc = DestroySysVSemHelper();
-#else
+#else /* !defined(WIN32) */
 		rc = j9shsem_deprecated_destroy(&_semhandle);
-#endif
+#endif /* !defined(WIN32) */
 		if (rc!=0) {
 			OSC_ERR_TRACE1(J9NLS_SHRC_OSCACHE_SHARED_CACHE_SEMAPHORE_REMOVE_FAILED, _cacheName);
 			goto _done;
@@ -1206,9 +1204,9 @@ SH_OSCachesysv::acquireWriteLock(UDATA lockID)
 		if ( ((I_32)(myerror | 0xFFFF0000)) != J9PORT_ERROR_SYSV_IPC_ERRNO_EINTR) {
 #if !defined(WIN32)
 			OSC_ERR_TRACE2(J9NLS_SHRC_CC_SYSV_ACQUIRE_LOCK_FAILED_ENTER_MUTEX, j9shsem_deprecated_getid(_semhandle), myerror);
-#else
+#else /* !defined(WIN32) */
 			OSC_ERR_TRACE1(J9NLS_SHRC_CC_ACQUIRE_LOCK_FAILED_ENTER_MUTEX, myerror);
-#endif
+#endif /* !defined(WIN32) */
 			Trc_SHR_OSC_enterMutex_Exit3(myerror);
 			Trc_SHR_Assert_ShouldNeverHappen();
 			return -1;
@@ -1353,11 +1351,11 @@ SH_OSCachesysv::printErrorMessage(LastErrorInfo *lastErrorInfo)
 		case J9PORT_ERROR_SYSV_IPC_ERRNO_E2BIG:
 #if defined(J9ZOS390)
 			OSC_ERR_TRACE(J9NLS_SHRC_OSCACHE_ERROR_SHMEM_TOOBIG_ZOS);
-#elif defined(AIXPPC)
+#elif defined(AIXPPC) /* defined(J9ZOS390) */
 			OSC_ERR_TRACE(J9NLS_SHRC_OSCACHE_ERROR_SHMEM_TOOBIG_AIX);
-#else
+#else /* defined(AIXPPC) */
 			OSC_ERR_TRACE(J9NLS_SHRC_OSCACHE_ERROR_SHMEM_TOOBIG);
-#endif
+#endif /* defined(J9ZOS390) */
 			break;
 		case J9PORT_ERROR_FILE_NAMETOOLONG:
 			OSC_ERR_TRACE(J9NLS_SHRC_OSCACHE_ERROR_FILE_NAMETOOLONG);
@@ -1420,7 +1418,7 @@ SH_OSCachesysv::cleanupSysvResources(void)
 		}
 		return;
 	}
-#endif
+#endif /* !defined(WIN32) */
 
 	if ((NULL != _semhandle) && (J9SH_SEM_ACCESS_ALLOWED == _semAccess)) {
 #if defined(WIN32)
@@ -1434,7 +1432,7 @@ SH_OSCachesysv::cleanupSysvResources(void)
 			Trc_SHR_Assert_True(errormsg != NULL);
 			OSC_ERR_TRACE1(J9NLS_SHRC_OSCACHE_PORT_ERROR_MESSAGE_SYSV_ERR_RECOVER, errormsg);
 		}
-#else
+#else /* defined(WIN32) */
 		I_32 semid = j9shsem_deprecated_getid(_semhandle);
 
 		if (j9shsem_deprecated_destroy(&_semhandle) == 0) {
@@ -1454,7 +1452,7 @@ SH_OSCachesysv::cleanupSysvResources(void)
 				OSC_ERR_TRACE1(J9NLS_SHRC_OSCACHE_PORT_ERROR_MESSAGE_SYSV_ERR_RECOVER, errormsg);
 			}
 		}
-#endif
+#endif /* defined(WIN32) */
 	}
 
 	if ((NULL != _shmhandle) && (J9SH_SHM_ACCESS_ALLOWED == _shmAccess)) {
@@ -1469,7 +1467,7 @@ SH_OSCachesysv::cleanupSysvResources(void)
 			Trc_SHR_Assert_True(errormsg != NULL);
 			OSC_ERR_TRACE1(J9NLS_SHRC_OSCACHE_PORT_ERROR_MESSAGE_SYSV_ERR_RECOVER, errormsg);
 		}
-#else
+#else /* defined(WIN32) */
 		I_32 shmid = j9shmem_getid(_shmhandle);
 
 		if (j9shmem_destroy(_cacheDirName, _groupPerm, &_shmhandle) == 0) {
@@ -1489,7 +1487,7 @@ SH_OSCachesysv::cleanupSysvResources(void)
 				OSC_ERR_TRACE1(J9NLS_SHRC_OSCACHE_PORT_ERROR_MESSAGE_SYSV_ERR_RECOVER, errormsg);
 			}
 		}
-#endif
+#endif /* defined(WIN32) */
 	}
 }
 
@@ -1536,10 +1534,13 @@ SH_OSCachesysv::shmemOpenWrapper(const char *cacheName, LastErrorInfo *lastError
 	IDATA rc = 0;
 	U_32 perm = (_openMode & J9OSCACHE_OPEN_MODE_DO_READONLY) ? J9SH_SHMEM_PERM_READ : J9SH_SHMEM_PERM_READ_WRITE;
 	LastErrorInfo localLastErrorInfo;
+#if defined(WIN32)
 	UDATA flags = J9SHMEM_NO_FLAGS;
+#endif /* defined(WIN32) */
 
 	Trc_SHR_OSC_shmemOpenWrapper_Entry(cacheName);
 
+#if defined(WIN32)
 	if (J9_ARE_ANY_BITS_SET(_createFlags, J9SH_OSCACHE_OPEXIST_STATS)) {
 		flags |= J9SHMEM_OPEN_FOR_STATS;
 	} else if (J9_ARE_ANY_BITS_SET(_createFlags, J9SH_OSCACHE_OPEXIST_DESTROY)) {
@@ -1547,14 +1548,15 @@ SH_OSCachesysv::shmemOpenWrapper(const char *cacheName, LastErrorInfo *lastError
 	} else if (J9_ARE_ANY_BITS_SET(_createFlags, J9SH_OSCACHE_OPEXIST_DO_NOT_CREATE)) {
 		flags |= J9SHMEM_OPEN_DO_NOT_CREATE;
 	}
+#endif /* defined(WIN32) */
 
 #if !defined(WIN32)
 	rc = OpenSysVMemoryHelper(cacheName, perm, &localLastErrorInfo);
-#else
+#else /* !defined(WIN32) */
 	rc = j9shmem_open(_cacheDirName, _groupPerm, &_shmhandle, cacheName, _cacheSize, perm, J9MEM_CATEGORY_CLASSES_SHC_CACHE, flags, NULL);
 	localLastErrorInfo.lastErrorCode = j9error_last_error_number();
 	localLastErrorInfo.lastErrorMsg = j9error_last_error_message();
-#endif
+#endif /* !defined(WIN32) */
 
 #if defined(J9ZOS390)
 	if (J9PORT_ERROR_SHMEM_ZOS_STORAGE_KEY_READONLY == rc) {
@@ -1563,12 +1565,12 @@ SH_OSCachesysv::shmemOpenWrapper(const char *cacheName, LastErrorInfo *lastError
 		perm = J9SH_SHMEM_PERM_READ;
 		rc = OpenSysVMemoryHelper(cacheName, perm, &localLastErrorInfo);
 	}
-#endif
+#endif /* defined(J9ZOS390) */
 
 	if (J9PORT_ERROR_SHMEM_OPFAILED == rc) {
 #if !defined(WIN32)
 		if (_activeGeneration >= 7) {
-#endif
+#endif /* !defined(WIN32) */
 			if (_openMode & J9OSCACHE_OPEN_MODE_TRY_READONLY_ON_FAIL) {
 				_openMode |= J9OSCACHE_OPEN_MODE_DO_READONLY;
 				perm = J9SH_SHMEM_PERM_READ;
@@ -1579,7 +1581,7 @@ SH_OSCachesysv::shmemOpenWrapper(const char *cacheName, LastErrorInfo *lastError
 			}
 #if !defined(WIN32)
 		}
-#endif
+#endif /* !defined(WIN32) */
 	}
 	if (((rc == J9PORT_INFO_SHMEM_OPENED) || (rc == J9PORT_INFO_SHMEM_OPENED_STALE)) && (perm == J9SH_SHMEM_PERM_READ)) {
 		Trc_SHR_OSC_Event_OpenReadOnly();
@@ -1598,7 +1600,7 @@ SH_OSCachesysv::runExitCode(void)
 	/* No action required */
 }
 
-#if defined (J9SHR_MSYNC_SUPPORT)
+#if defined(J9SHR_MSYNC_SUPPORT)
 /**
  * Synchronise cache updates to disk
  *
@@ -1611,7 +1613,7 @@ SH_OSCachesysv::syncUpdates(void* start, UDATA length, U_32 flags)
 {
 	return -1;
 }
-#endif
+#endif /* defined(J9SHR_MSYNC_SUPPORT) */
 
 /**
  * Return the locking capabilities of this shared classes cache implementation
@@ -1717,9 +1719,9 @@ SH_OSCachesysv::getCacheStatsHelper(J9JavaVM* vm, const char* cacheDirName, UDAT
 
 #if defined(WIN32)
 	versionLen = J9SH_VERSION_STRING_LEN;
-#else
+#else /* defined(WIN32) */
 	versionLen = J9SH_VERSION_STRING_LEN + strlen(J9SH_MEMORY_ID) - 1;
-#endif
+#endif /* defined(WIN32) */
 
 	if (removeCacheVersionAndGen(cacheInfo->name, CACHE_ROOT_MAXLEN, versionLen, cacheNameWithVGen) != 0) {
 		Trc_SHR_OSC_Sysv_getCacheStatsHelper_removeCacheVersionAndGenFailed();
@@ -1727,9 +1729,9 @@ SH_OSCachesysv::getCacheStatsHelper(J9JavaVM* vm, const char* cacheDirName, UDAT
 	}
 #if !defined(WIN32)
 	statrc = SH_OSCachesysv::StatSysVMemoryHelper(PORTLIB, cacheDirName, groupPerm, cacheNameWithVGen, &statbuf);
-#else
+#else /* !defined(WIN32) */
 	statrc = j9shmem_stat(cacheDirName, groupPerm, cacheNameWithVGen, &statbuf);
-#endif
+#endif /* !defined(WIN32) */
 
 	if (statrc == 0) {
 #if defined(J9ZOS390)
@@ -2359,7 +2361,6 @@ SH_OSCachesysv::DestroySysVSemHelper()
 	}
 
 	if (-1 == rc) {
-#if !defined(WIN32)
 		I_32 errorno = j9error_last_error_number();
 		I_32 lastError = errorno | J9PORT_ERROR_SYSTEM_CALL_ERRNO_MASK;
 		I_32 lastSysCall = errorno - lastError;
@@ -2374,15 +2375,6 @@ SH_OSCachesysv::DestroySysVSemHelper()
 			Trc_SHR_Assert_True(errormsg != NULL);
 			OSC_ERR_TRACE1(J9NLS_SHRC_OSCACHE_PORT_ERROR_MESSAGE_SYSV_ERR, errormsg);
 		}
-#else /* !defined(WIN32) */
-		I_32 errorno = j9error_last_error_number();
-		const char * errormsg = j9error_last_error_message();
-
-		OSC_ERR_TRACE(J9NLS_SHRC_OSCACHE_DESTROYSEM_ERROR);
-		OSC_ERR_TRACE1(J9NLS_SHRC_OSCACHE_PORT_ERROR_NUMBER_SYSV_ERR, errorno);
-		Trc_SHR_Assert_True(errormsg != NULL);
-		OSC_ERR_TRACE1(J9NLS_SHRC_OSCACHE_PORT_ERROR_MESSAGE_SYSV_ERR, errormsg);
-#endif /* !defined(WIN32) */
 	}
 
 done:
@@ -2432,7 +2424,7 @@ SH_OSCachesysv::OpenSysVMemoryHelper(const char* cacheName, U_32 perm, LastError
 				flags |= _storageKeyTesting << J9SHMEM_STORAGE_KEY_TESTING_SHIFT;
 			}
 			flags |= J9SHMEM_PRINT_STORAGE_KEY_WARNING;
-#endif
+#endif /* defined(J9ZOS390) */
 			rc = j9shmem_open(_cacheDirName, _groupPerm, &_shmhandle, cacheName, _cacheSize, perm, J9MEM_CATEGORY_CLASSES, flags, &_controlFileStatus);
 			break;
 		case J9SH_SYSV_OLDER_EMPTY_CONTROL_FILE:
@@ -2535,7 +2527,6 @@ SH_OSCachesysv::DestroySysVMemoryHelper()
 	}
 
 	if (-1 == rc) {
-#if !defined(WIN32)
 		I_32 errorno = j9error_last_error_number();
 		I_32 lastError = errorno | J9PORT_ERROR_SYSTEM_CALL_ERRNO_MASK;
 		I_32 lastSysCall = errorno - lastError;
@@ -2549,14 +2540,6 @@ SH_OSCachesysv::DestroySysVMemoryHelper()
 			Trc_SHR_Assert_True(errormsg != NULL);
 			OSC_ERR_TRACE1(J9NLS_SHRC_OSCACHE_PORT_ERROR_MESSAGE_SYSV_ERR, errormsg);
 		}
-#else /* !defined(WIN32) */
-		I_32 errorno = j9error_last_error_number();
-		const char * errormsg = j9error_last_error_message();
-		OSC_ERR_TRACE(J9NLS_SHRC_OSCACHE_DESTROYSHM_ERROR);
-		OSC_ERR_TRACE1(J9NLS_SHRC_OSCACHE_PORT_ERROR_NUMBER_SYSV_ERR, errorno);
-		Trc_SHR_Assert_True(errormsg != NULL);
-		OSC_ERR_TRACE1(J9NLS_SHRC_OSCACHE_PORT_ERROR_MESSAGE_SYSV_ERR, errormsg);
-#endif /* !defined(WIN32) */
 	}
 
 done:
@@ -2686,7 +2669,7 @@ SH_OSCachesysv::getControlFilePerm(char *cacheDirName, char *filename, bool *isN
 	return rc;
 }
 
-#endif
+#endif /* !defined(WIN32) */
 
 void *
 SH_OSCachesysv::getAttachedMemory()
