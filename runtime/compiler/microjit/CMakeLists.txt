@@ -22,12 +22,14 @@
 if(J9VM_OPT_MJIT_Standalone)
 j9jit_files(
 	microjit/ExceptionTable.cpp
+	microjit/CompilationInfoPerThreadBase.cpp
 	microjit/assembly/utils.nasm
 	microjit/LWMetaDataCreation.cpp
 )
 else()
 j9jit_files(
 	microjit/ExceptionTable.cpp
+	microjit/CompilationInfoPerThreadBase.cpp
 	microjit/assembly/utils.nasm
 	microjit/HWMetaDataCreation.cpp
 )

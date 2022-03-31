@@ -420,6 +420,7 @@ endif
 ifneq ($(J9VM_OPT_MICROJIT),)
 JIT_PRODUCT_SOURCE_FILES+=\
     compiler/microjit/ExceptionTable.cpp
+    compiler/microjit/CompilationInfoPerThreadBase.cpp
 endif
 
 -include $(JIT_MAKE_DIR)/files/extra.mk
