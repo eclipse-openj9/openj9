@@ -676,6 +676,12 @@ public:
 #endif /* defined(J9VM_OPT_JITSERVER) */
 #if defined(J9VM_OPT_MICROJIT)
       TR::Options *options = TR::Options::getJITCmdLineOptions();
+      /* Setting MicroJIT invocation count to 0
+         causes some methods to not get compiled.
+         Hence we generally set it to a non-zero value.
+         20 has been proven to be a good estimate for count value
+         for similar template-based JITs.
+       */
       if (options->_mjitEnabled && value)
          {
          return;

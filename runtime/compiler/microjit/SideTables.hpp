@@ -27,14 +27,14 @@
 #include "microjit/utils.hpp"
 
 /*
-| Architecture 	| Endian | Return address | vTable index         |
-| x86-64 		   | Little | Stack 		     | R8 (receiver in RAX) |
+| Architecture    | Endian | Return address | vTable index         |
+| x86-64          | Little | Stack          | R8 (receiver in RAX) |
 
 | Integer Return value registers    | Integer Preserved registers   | Integer Argument registers |
 | EAX (32-bit) RAX (64-bit)         | RBX R9                        | RAX RSI RDX RCX            |
 
 | Float Return value registers  | Float Preserved registers | Float Argument registers           |
-| XMM0                          | XMM8-XMM15        		   | XMM0-XMM7                          |
+| XMM0                          | XMM8-XMM15                | XMM0-XMM7                          |
 */
 
 namespace MJIT

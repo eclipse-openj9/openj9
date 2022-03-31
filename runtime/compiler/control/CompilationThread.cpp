@@ -2363,6 +2363,9 @@ bool TR::CompilationInfo::shouldRetryCompilation(TR_MethodToBeCompiled *entry, T
                break;
 #if defined(J9VM_OPT_MICROJIT)
             case mjitCompilationFailure:
+               /* MicroJIT generates this failure when it fails to compile.
+                  The next time this method is queued for compilation,
+                  it will be compiled by the regular JIT compiler, Testarossa. */
                tryCompilingAgain = true;
                break;
 #endif
