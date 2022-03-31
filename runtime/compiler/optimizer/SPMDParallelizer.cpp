@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -82,6 +82,7 @@
 
 #define INVALID_STRIDE INT_MAX
 #define VECTOR_SIZE 16
+#define VECTOR_LENGTH TR::VectorLength128
 #define INVALID_ADDR  (TR::Node *)-1
 
 namespace TR { class OptimizationManager; }
@@ -339,14 +340,15 @@ bool TR_SPMDKernelParallelizer::visitTreeTopToSIMDize(TR::TreeTop *tt, TR_SPMDKe
 
          TR_ASSERT(vectorOpCode != TR::BadILOp, "BAD IL Opcode to be assigned during transformation");
 
-         if (isCheckMode && !comp->cg()->getSupportsOpCodeForAutoSIMD(vectorOpCode, node->getDataType()))
+         if (isCheckMode && !comp->cg()->getSupportsOpCodeForAutoSIMD(vectorOpCode, node->getDataType(), VECTOR_LENGTH))
             return false;
 
          if (!isCheckMode)
             {
             // just convert the original scalar store into vector store
             TR::Node::recreate(node, vectorOpCode);
-            vecSymRef = comp->getSymRefTab()->findOrCreateArrayShadowSymbolRef(node->getDataType().scalarToVector(), NULL);
+            // TODO: use best vector length available
+            vecSymRef = comp->getSymRefTab()->findOrCreateArrayShadowSymbolRef(node->getDataType().scalarToVector(TR::VectorLength128), NULL);
             node->setSymbolReference(vecSymRef);
             }
          else if (loop->isExprInvariant(node->getFirstChild()))
@@ -421,7 +423,7 @@ bool TR_SPMDKernelParallelizer::visitTreeTopToSIMDize(TR::TreeTop *tt, TR_SPMDKe
                   TR::SymbolReference *vecSymRef = pSPMDInfo->getVectorSymRef(symRef);
                   if (vecSymRef == NULL)
                      {
-                     vecSymRef = comp->cg()->allocateLocalTemp(node->getDataType().scalarToVector()); // need to handle alignment?
+                     vecSymRef = comp->cg()->allocateLocalTemp(node->getDataType().scalarToVector(TR::VectorLength128)); // need to handle alignment?
                      pSPMDInfo->addVectorSymRef(symRef, vecSymRef);
 
                      if (trace)
@@ -555,7 +557,7 @@ bool TR_SPMDKernelParallelizer::visitTreeTopToSIMDize(TR::TreeTop *tt, TR_SPMDKe
 
          TR_ASSERT_FATAL(vectorOpCode != TR::BadILOp, "BAD IL Opcode to be assigned during transformation");
 
-         if (isCheckMode && !comp->cg()->getSupportsOpCodeForAutoSIMD(vectorOpCode, node->getDataType()))
+         if (isCheckMode && !comp->cg()->getSupportsOpCodeForAutoSIMD(vectorOpCode, node->getDataType(), VECTOR_LENGTH))
             return false;
 
          if (!isCheckMode)
@@ -563,7 +565,7 @@ bool TR_SPMDKernelParallelizer::visitTreeTopToSIMDize(TR::TreeTop *tt, TR_SPMDKe
             bool createdNewVecSym = false;
             if (vecSymRef == NULL)
                {
-               vecSymRef = comp->cg()->allocateLocalTemp(node->getDataType().scalarToVector()); // need to handle alignment?
+               vecSymRef = comp->cg()->allocateLocalTemp(node->getDataType().scalarToVector(TR::VectorLength128)); // need to handle alignment?
                pSPMDInfo->addVectorSymRef(symRef, vecSymRef);
                createdNewVecSym = true;
 
@@ -697,7 +699,7 @@ bool TR_SPMDKernelParallelizer::visitNodeToSIMDize(TR::Node *parent, int32_t chi
    TR_ASSERT(vectorOpCode != TR::BadILOp, "BAD IL Opcode to be assigned during transformation");
 
 
-   if (isCheckMode && !comp->cg()->getSupportsOpCodeForAutoSIMD(vectorOpCode, node->getDataType()))
+   if (isCheckMode && !comp->cg()->getSupportsOpCodeForAutoSIMD(vectorOpCode, node->getDataType(), VECTOR_LENGTH))
       {
       if (trace)
          {
@@ -728,10 +730,10 @@ bool TR_SPMDKernelParallelizer::visitNodeToSIMDize(TR::Node *parent, int32_t chi
             if (loadInductionVar)
                {
                // confirm platform supports vectorizing PIV uses
-               bool platformSupport = comp->cg()->getSupportsOpCodeForAutoSIMD(TR::vstore, node->getDataType());
-               platformSupport = platformSupport && comp->cg()->getSupportsOpCodeForAutoSIMD(TR::vsetelem, node->getDataType());
-               platformSupport = platformSupport && comp->cg()->getSupportsOpCodeForAutoSIMD(TR::vadd,     node->getDataType());
-               platformSupport = platformSupport && comp->cg()->getSupportsOpCodeForAutoSIMD(TR::vsplats,  node->getDataType());
+               bool platformSupport = comp->cg()->getSupportsOpCodeForAutoSIMD(TR::vstore, node->getDataType(), VECTOR_LENGTH);
+               platformSupport = platformSupport && comp->cg()->getSupportsOpCodeForAutoSIMD(TR::vsetelem, node->getDataType(), VECTOR_LENGTH);
+               platformSupport = platformSupport && comp->cg()->getSupportsOpCodeForAutoSIMD(TR::vadd,     node->getDataType(), VECTOR_LENGTH);
+               platformSupport = platformSupport && comp->cg()->getSupportsOpCodeForAutoSIMD(TR::vsplats,  node->getDataType(), VECTOR_LENGTH);
 
                if (trace && platformSupport)
 		  traceMsg(comp, "   Found use of induction variable at node [%p]\n", node);
@@ -759,9 +761,10 @@ bool TR_SPMDKernelParallelizer::visitNodeToSIMDize(TR::Node *parent, int32_t chi
 
          if (!vecSymRef)
             {
+            // TODO: use best vector length available
             vecSymRef = scalarOp.isLoadIndirect() ?
-                           comp->getSymRefTab()->findOrCreateArrayShadowSymbolRef(node->getDataType().scalarToVector(), NULL)
-                           : vecSymRef = comp->cg()->allocateLocalTemp(node->getDataType().scalarToVector()); // need to handle alignment?
+                           comp->getSymRefTab()->findOrCreateArrayShadowSymbolRef(node->getDataType().scalarToVector(TR::VectorLength128), NULL)
+               : vecSymRef = comp->cg()->allocateLocalTemp(node->getDataType().scalarToVector(TR::VectorLength128)); // need to handle alignment?
             pSPMDInfo->addVectorSymRef(symRef, vecSymRef);
             createdNewVecSym = true;
 
@@ -996,25 +999,25 @@ bool TR_SPMDKernelParallelizer::autoSIMDReductionSupported(TR::Compilation *comp
       }
 
    //These checks are to make sure vector opcodes uses for reduction are supported
-   if (!comp->cg()->getSupportsOpCodeForAutoSIMD(TR::vsplats, node->getDataType()))
+   if (!comp->cg()->getSupportsOpCodeForAutoSIMD(TR::vsplats, node->getDataType(), VECTOR_LENGTH))
       {
       if (trace) traceMsg(comp, "   autoSIMDReductionSupported: vsplats is not supported for dataType: %s\n", node->getDataType().toString());
       return false;
       }
 
-   if (!comp->cg()->getSupportsOpCodeForAutoSIMD(TR::vstore, node->getDataType()))
+   if (!comp->cg()->getSupportsOpCodeForAutoSIMD(TR::vstore, node->getDataType(), VECTOR_LENGTH))
       {
       if (trace) traceMsg(comp, "   autoSIMDReductionSupported: vstore is not supported for dataType: %s\n", node->getDataType().toString());
       return false;
       }
 
-   if (!comp->cg()->getSupportsOpCodeForAutoSIMD(TR::vload, node->getDataType()))
+   if (!comp->cg()->getSupportsOpCodeForAutoSIMD(TR::vload, node->getDataType(), VECTOR_LENGTH))
       {
       if (trace) traceMsg(comp, "   autoSIMDReductionSupported: vload is not supported for dataType: %s\n", node->getDataType().toString());
       return false;
       }
 
-   if (!comp->cg()->getSupportsOpCodeForAutoSIMD(TR::getvelem, node->getDataType()))
+   if (!comp->cg()->getSupportsOpCodeForAutoSIMD(TR::getvelem, node->getDataType(), VECTOR_LENGTH))
       {
       if (trace) traceMsg(comp, "   autoSIMDReductionSupported: getvelem is not supported for dataType: %s\n", node->getDataType().toString());
       return false;

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -306,7 +306,7 @@ J9::IL::opCodeForConst(TR::DataType dt)
       return TR::iconst;
       }
 
-   if (dt < TR::FirstJ9Type)
+   if (dt.isOMRDataType())
       {
       return OMR::IL::opCodeForConst(dt);
       }
@@ -334,7 +334,7 @@ J9::IL::opCodeForDirectLoad(TR::DataType dt)
       return TR::iload;
       }
 
-   if (dt < TR::FirstJ9Type)
+   if (dt.isOMRDataType())
       {
       return OMR::IL::opCodeForDirectLoad(dt);
       }
@@ -350,7 +350,7 @@ J9::IL::opCodeForDirectStore(TR::DataType dt)
       return TR::istore;
       }
 
-   if (dt < TR::FirstJ9Type)
+   if (dt.isOMRDataType())
       {
       return OMR::IL::opCodeForDirectStore(dt);
       }
@@ -388,7 +388,7 @@ J9::IL::opCodeForIndirectLoad(TR::DataType dt)
       return TR::iloadi;
       }
 
-   if (dt < TR::FirstJ9Type)
+   if (dt.isOMRDataType())
       {
       return OMR::IL::opCodeForIndirectLoad(dt);
       }
@@ -404,7 +404,7 @@ J9::IL::opCodeForIndirectStore(TR::DataType dt)
       return TR::istorei;
       }
 
-   if (dt < TR::FirstJ9Type)
+   if (dt.isOMRDataType())
       {
       return OMR::IL::opCodeForIndirectStore(dt);
       }
@@ -427,7 +427,7 @@ J9::IL::opCodeForIndirectWriteBarrier(TR::DataType dt)
 TR::ILOpCodes
 J9::IL::opCodeForIndirectArrayLoad(TR::DataType dt)
    {
-   if (dt < TR::FirstJ9Type)
+   if (dt.isOMRDataType())
       {
       return OMR::IL::opCodeForIndirectArrayLoad(dt);
       }
@@ -438,7 +438,7 @@ J9::IL::opCodeForIndirectArrayLoad(TR::DataType dt)
 TR::ILOpCodes
 J9::IL::opCodeForIndirectArrayStore(TR::DataType dt)
    {
-   if (dt < TR::FirstJ9Type)
+   if (dt.isOMRDataType())
       {
       return OMR::IL::opCodeForIndirectArrayStore(dt);
       }
@@ -449,7 +449,7 @@ J9::IL::opCodeForIndirectArrayStore(TR::DataType dt)
 TR::ILOpCodes
 J9::IL::opCodeForRegisterLoad(TR::DataType dt)
    {
-   if (dt < TR::FirstJ9Type)
+   if (dt.isOMRDataType())
       {
       return OMR::IL::opCodeForRegisterLoad(dt);
       }
@@ -460,7 +460,7 @@ J9::IL::opCodeForRegisterLoad(TR::DataType dt)
 TR::ILOpCodes
 J9::IL::opCodeForRegisterStore(TR::DataType dt)
    {
-   if (dt < TR::FirstJ9Type)
+   if (dt.isOMRDataType())
       {
       return OMR::IL::opCodeForRegisterStore(dt);
       }
@@ -476,7 +476,7 @@ J9::IL::opCodeForCompareEquals(TR::DataType dt)
       return TR::icmpeq;
       }
 
-   if (dt < TR::FirstJ9Type)
+   if (dt.isOMRDataType())
       {
       return OMR::IL::opCodeForCompareEquals(dt);
       }
@@ -492,7 +492,7 @@ J9::IL::opCodeForCompareNotEquals(TR::DataType dt)
       return TR::icmpne;
       }
 
-   if (dt < TR::FirstJ9Type)
+   if (dt.isOMRDataType())
       {
       return OMR::IL::opCodeForCompareNotEquals(dt);
       }
