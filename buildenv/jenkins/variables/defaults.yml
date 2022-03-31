@@ -479,6 +479,10 @@ aarch64_linux_ojdk292:
 #========================================#
 aot:
   test_flags: 'AOT'
+aarch64_linux_aot:
+  extends: ['aarch64_linux', 'aot']
+aarch64_mac_aot:
+  extends: ['aarch64_mac', 'aot']
 ppc64_aix_aot:
   extends: ['ppc64_aix', 'aot']
 ppc64le_linux_aot:
