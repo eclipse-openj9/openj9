@@ -44,8 +44,6 @@ class AOTCacheClassChainRecord;
 
 #define TR_VALIDATE_STATIC_OR_SPECIAL_METHOD_FROM_CP_IS_SPLIT 0x01
 
-extern char* AOTcgDiagOn;
-
 class TR_RelocationRecordGroup
    {
    public:

@@ -6351,8 +6351,6 @@ VMarrayStoreCHKEvaluator(
          if (cg->needClassAndMethodPointerRelocations())
             {
             targetsnippet->setReloType(TR_ClassPointer);
-            AOTcgDiag4(comp, "generateRegLitRefInstruction constantDataSnippet=%x symbolReference=%x symbol=%x reloType=%x\n",
-                  targetsnippet, targetsnippet->getSymbolReference(), targetsnippet->getSymbolReference()->getSymbol(), TR_ClassPointer);
             }
          }
       else

@@ -256,8 +256,6 @@ extern "C" int32_t setUpHooks(J9JavaVM * javaVM, J9JITConfig * jitConfig, TR_Fro
 extern "C" int32_t startJITServer(J9JITConfig *jitConfig);
 extern "C" int32_t waitJITServerTermination(J9JITConfig *jitConfig);
 
-char *AOTcgDiagOn="1";
-
 
 
 // -----------------------------------------------------------------------------

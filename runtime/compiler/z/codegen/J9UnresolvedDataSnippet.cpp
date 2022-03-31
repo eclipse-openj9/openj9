@@ -263,14 +263,12 @@ J9::Z::UnresolvedDataSnippet::emitSnippetBody()
 
    // PicBuilder function address
    *(uintptr_t *) cursor = (uintptr_t) glueRef->getMethodAddress();
-   AOTcgDiag1(comp, "add TR_AbsoluteHelperAddress cursor=%x\n", cursor);
    cg()->addProjectSpecializedRelocation(cursor, (uint8_t *)glueRef, NULL, TR_AbsoluteHelperAddress,
                              __FILE__, __LINE__, getNode());
    cursor += sizeof(uintptr_t);
 
    // code cache RA
    *(uintptr_t *) cursor = (uintptr_t) (getBranchInstruction()->getNext())->getBinaryEncoding();
-   AOTcgDiag1(comp, "add TR_AbsoluteMethodAddress cursor=%x\n", cursor);
    cg()->addProjectSpecializedRelocation(cursor, NULL, NULL, TR_AbsoluteMethodAddress,
                              __FILE__, __LINE__, getNode());
    cursor += sizeof(uintptr_t);
@@ -293,7 +291,6 @@ J9::Z::UnresolvedDataSnippet::emitSnippetBody()
 
    // address of constant pool
    *(uintptr_t *) cursor = (uintptr_t) getDataSymbolReference()->getOwningMethod(comp)->constantPool();
-   AOTcgDiag1(comp, "add TR_ConstantPool cursor=%x\n", cursor);
    cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, *(uint8_t **)cursor, getNode() ? (uint8_t *)(intptr_t)getNode()->getInlinedSiteIndex() : (uint8_t *)-1, TR_ConstantPool, cg()),
                              __FILE__, __LINE__, getNode());
    cursor += sizeof(uintptr_t);
@@ -307,7 +304,6 @@ J9::Z::UnresolvedDataSnippet::emitSnippetBody()
       {
       *(uintptr_t *) cursor = (uintptr_t) (getBranchInstruction()->getNext())->getBinaryEncoding();
       }
-   AOTcgDiag1(comp, "add TR_AbsoluteMethodAddress cursor=%x\n", cursor);
    cg()->addProjectSpecializedRelocation(cursor, NULL, NULL, TR_AbsoluteMethodAddress,
                              __FILE__, __LINE__, getNode());
    cursor += sizeof(uintptr_t);
@@ -315,7 +311,6 @@ J9::Z::UnresolvedDataSnippet::emitSnippetBody()
    // Literal Pool Address to patch.
    *(uintptr_t *) cursor = 0x0;
    setLiteralPoolPatchAddress(cursor);
-   AOTcgDiag1(comp, "add TR_AbsoluteMethodAddress cursor=%x\n", cursor);
    cg()->addProjectSpecializedRelocation(cursor, NULL, NULL, TR_AbsoluteMethodAddress,
                              __FILE__, __LINE__, getNode());
    cursor += sizeof(uintptr_t);
@@ -403,7 +398,6 @@ J9::Z::UnresolvedDataSnippet::emitSnippetBody()
       // Store pointer to resolved offset slot
       // code cache RA
       *(uintptr_t *) offsetMarker = (uintptr_t) cursor;
-      AOTcgDiag1(comp, "add TR_AbsoluteMethodAddress offsetMarker=%x\n", offsetMarker);
       cg()->addProjectSpecializedRelocation(offsetMarker, NULL, NULL, TR_AbsoluteMethodAddress,
                                 __FILE__, __LINE__, getNode());
 
