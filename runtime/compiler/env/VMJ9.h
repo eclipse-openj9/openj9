@@ -755,7 +755,6 @@ public:
    virtual bool isQueuedForVeryHotOrScorching(TR_ResolvedMethod *calleeMethod, TR::Compilation *comp);
 
    //getSymbolAndFindInlineTarget queries
-   virtual bool supressInliningRecognizedInitialCallee(TR_CallSite* callsite, TR::Compilation* comp);
    virtual int checkInlineableWithoutInitialCalleeSymbol (TR_CallSite* callsite, TR::Compilation* comp);
 
 #ifdef J9VM_OPT_JAVA_CRYPTO_ACCELERATION
