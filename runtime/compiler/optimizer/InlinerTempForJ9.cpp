@@ -4790,30 +4790,30 @@ TR_J9InlinerPolicy::supressInliningRecognizedInitialCallee(TR_CallSite* callsite
          callNode);
       }
 
-   if (initialCalleeMethod)
-      {
-      switch (initialCalleeMethod->getRecognizedMethod())
-         {
-         /*
-          * Inline this group of methods when the compiling method is shared method handle thunk.
-          * Otherwise, they can be folded away by VP and should not be inlined here.
-          */
-         case TR::java_lang_invoke_DirectHandle_nullCheckIfRequired:
-         case TR::java_lang_invoke_PrimitiveHandle_initializeClassIfRequired:
-         case TR::java_lang_invoke_MethodHandle_invokeExactTargetAddress:
-            {
-            TR::IlGeneratorMethodDetails & details = comp->ilGenRequest().details();
-            if (details.isMethodHandleThunk())
-               {
-               J9::MethodHandleThunkDetails & thunkDetails = static_cast<J9::MethodHandleThunkDetails &>(details);
-                  return thunkDetails.isCustom();
-               }
-            return true;
-            }
+   if (initialCalleeMethod == NULL)
+      return false;
 
-         default:
-            break;
+   switch (initialCalleeMethod->getRecognizedMethod())
+      {
+      /*
+       * Inline this group of methods when the compiling method is shared method handle thunk.
+       * Otherwise, they can be folded away by VP and should not be inlined here.
+       */
+      case TR::java_lang_invoke_DirectHandle_nullCheckIfRequired:
+      case TR::java_lang_invoke_PrimitiveHandle_initializeClassIfRequired:
+      case TR::java_lang_invoke_MethodHandle_invokeExactTargetAddress:
+         {
+         TR::IlGeneratorMethodDetails & details = comp->ilGenRequest().details();
+         if (details.isMethodHandleThunk())
+            {
+            J9::MethodHandleThunkDetails & thunkDetails = static_cast<J9::MethodHandleThunkDetails &>(details);
+               return thunkDetails.isCustom();
+            }
+         return true;
          }
+
+      default:
+         break;
       }
 
    if (callNode == NULL)
