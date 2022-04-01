@@ -4821,7 +4821,6 @@ TR_J9InlinerPolicy::supressInliningRecognizedInitialCallee(TR_CallSite* callsite
 
    TR::TreeTop *callNodeTreeTop  = callsite->_callNodeTreeTop;
 
-   bool dontInlineRecognizedMethod = false;
    if (callNode->getSymbol()->getResolvedMethodSymbol())
       {
       // Methods we may prefer not to inline, for heuristic reasons.
@@ -4855,7 +4854,7 @@ TR_J9InlinerPolicy::supressInliningRecognizedInitialCallee(TR_CallSite* callsite
          case TR::com_ibm_dataaccess_ByteArrayUnmarshaller_readFloat_:
          case TR::com_ibm_dataaccess_ByteArrayUnmarshaller_readDouble_:
           if (!comp->getOption(TR_DisableMarshallingIntrinsics))
-             dontInlineRecognizedMethod = true;
+             return true;
           break;
 
          // DAA Packed Decimal arithmetic methods
@@ -4906,7 +4905,7 @@ TR_J9InlinerPolicy::supressInliningRecognizedInitialCallee(TR_CallSite* callsite
          case TR::java_math_BigDecimal_slowAddAddMulSetScale:
          case TR::java_math_BigDecimal_slowMulSetScale:
             if (comp->cg()->getSupportsBDLLHardwareOverflowCheck())
-               dontInlineRecognizedMethod = true;
+               return true;
             break;
          case TR::java_util_concurrent_atomic_AtomicIntegerFieldUpdater_getAndDecrement:
          case TR::java_util_concurrent_atomic_AtomicIntegerFieldUpdater_getAndIncrement:
@@ -4915,7 +4914,7 @@ TR_J9InlinerPolicy::supressInliningRecognizedInitialCallee(TR_CallSite* callsite
          case TR::java_util_concurrent_atomic_AtomicIntegerFieldUpdater_incrementAndGet:
          case TR::java_util_concurrent_atomic_AtomicIntegerFieldUpdater_addAndGet:
             if (comp->cg()->getSupportsAtomicLoadAndAdd())
-               dontInlineRecognizedMethod = true;
+               return true;
             break;
          case TR::java_math_BigDecimal_valueOf:
          case TR::java_math_BigDecimal_add:
@@ -4923,8 +4922,7 @@ TR_J9InlinerPolicy::supressInliningRecognizedInitialCallee(TR_CallSite* callsite
          case TR::java_math_BigDecimal_multiply:
             if (comp->isProfilingCompilation())
                {
-               dontInlineRecognizedMethod = true;
-               break;
+               return true;
                }
             // fall through
          case TR::java_math_BigInteger_add:
@@ -4960,14 +4958,14 @@ TR_J9InlinerPolicy::supressInliningRecognizedInitialCallee(TR_CallSite* callsite
 
                if (dontInline &&
                      performTransformation(comp, "%sNot inlining dead BigDecimal/BigInteger call node [" POINTER_PRINTF_FORMAT "]\n", OPT_DETAILS, callNode))
-                  dontInlineRecognizedMethod = true;
+                  return true;
                }
             break;
          case TR::com_ibm_ws_webcontainer_channel_WCCByteBufferOutputStream_printUnencoded:
             if (comp->isServerInlining())
                {
                // Prefer arrayTranslate to kick in as often as possible
-               dontInlineRecognizedMethod = true;
+               return true;
                }
             break;
          case TR::com_ibm_jit_JITHelpers_toUpperIntrinsicLatin1:
@@ -4976,7 +4974,7 @@ TR_J9InlinerPolicy::supressInliningRecognizedInitialCallee(TR_CallSite* callsite
          case TR::com_ibm_jit_JITHelpers_toLowerIntrinsicUTF16:
             if(comp->cg()->getSupportsInlineStringCaseConversion())
                {
-               dontInlineRecognizedMethod = true;
+               return true;
                }
             break;
          case TR::java_lang_StringLatin1_indexOf:
@@ -4987,21 +4985,20 @@ TR_J9InlinerPolicy::supressInliningRecognizedInitialCallee(TR_CallSite* callsite
          case TR::com_ibm_jit_JITHelpers_intrinsicIndexOfUTF16:
             if (comp->cg()->getSupportsInlineStringIndexOf())
                {
-               dontInlineRecognizedMethod = true;
+               return true;
                }
             break;
          case TR::java_lang_Math_max_D:
          case TR::java_lang_Math_min_D:
             if(comp->cg()->getSupportsVectorRegisters() && !comp->getOption(TR_DisableSIMDDoubleMaxMin))
                {
-               dontInlineRecognizedMethod = true;
+               return true;
                }
             break;
          case TR::sun_misc_Unsafe_allocateInstance:
             // VP transforms this into a plain new if it can get a non-null
             // known object java/lang/Class representing an initialized class
-            dontInlineRecognizedMethod = true;
-            break;
+            return true;
          case TR::java_lang_String_hashCodeImplDecompressed:
             /*
              * X86 and z want to avoid inlining both java_lang_String_hashCodeImplDecompressed and java_lang_String_hashCodeImplCompressed
@@ -5014,27 +5011,26 @@ TR_J9InlinerPolicy::supressInliningRecognizedInitialCallee(TR_CallSite* callsite
             if (!TR::Compiler->om.canGenerateArraylets() &&
                 comp->target().cpu.isPower() && comp->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P8) && comp->target().cpu.supportsFeature(OMR_FEATURE_PPC_HAS_VSX) && !comp->compileRelocatableCode())
                   {
-                  dontInlineRecognizedMethod = true;
-                  break;
+                  return true;
                   }
             // Intentional fallthrough here.
          case TR::java_lang_String_hashCodeImplCompressed:
             if (comp->cg()->getSupportsInlineStringHashCode())
                {
-               dontInlineRecognizedMethod = true;
+               return true;
                }
             break;
          case TR::java_lang_StringLatin1_inflate:
             if (comp->cg()->getSupportsInlineStringLatin1Inflate())
                {
-               dontInlineRecognizedMethod = true;
+               return true;
                }
             break;
          case TR::java_lang_Integer_stringSize:
          case TR::java_lang_Long_stringSize:
             if (comp->cg()->getSupportsIntegerStringSize())
                {
-               dontInlineRecognizedMethod = true;
+               return true;
                }
             break;
          case TR::java_lang_Integer_getChars: // For compressed strings
@@ -5045,14 +5041,14 @@ TR_J9InlinerPolicy::supressInliningRecognizedInitialCallee(TR_CallSite* callsite
          case TR::java_lang_Long_getChars_charBuffer: // For uncompressed strings in Java 8
             if (comp->cg()->getSupportsIntegerToChars())
                {
-               dontInlineRecognizedMethod = true;
+               return true;
                }
             break;
          case TR::java_lang_StringCoding_encodeASCII:
          case TR::java_lang_String_encodeASCII:
             if (comp->cg()->getSupportsInlineEncodeASCII())
                {
-               dontInlineRecognizedMethod = true;
+               return true;
                }
             break;
          default:
@@ -5066,18 +5062,10 @@ TR_J9InlinerPolicy::supressInliningRecognizedInitialCallee(TR_CallSite* callsite
          case TR::java_nio_Bits_keepAlive: // This is an empty method whose only purpose is to serve as an anchored use of a given object, so it doesn't get collected
          case TR::java_lang_ref_Reference_reachabilityFence: // This is an empty method whose only purpose is to serve as an anchored use of a given object, so it doesn't get collected
          case TR::java_lang_Object_newInstancePrototype:
-         //case TR::java_lang_String_init_String:
-            dontInlineRecognizedMethod = true;
-            break;
+            return true;
          default:
             break;
          }
-
-      }
-
-   if (dontInlineRecognizedMethod)
-      {
-      return true;
       }
 
    return false;
