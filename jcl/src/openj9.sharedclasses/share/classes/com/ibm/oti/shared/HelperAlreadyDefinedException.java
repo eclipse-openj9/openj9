@@ -1,8 +1,6 @@
 /*[INCLUDE-IF SharedClasses]*/
-package com.ibm.oti.shared;
-
 /*******************************************************************************
- * Copyright (c) 1998, 2021 IBM Corp. and others
+ * Copyright (c) 1998, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,18 +20,18 @@ package com.ibm.oti.shared;
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
+package com.ibm.oti.shared;
 
 /**
  * Exception thrown if a factory is asked to get multiple helpers for a ClassLoader.
  */
 public class HelperAlreadyDefinedException extends Exception {
 	private static final long serialVersionUID = -356665797623954170L;
-	
+
 	/**
-	 * Creates a new HelperAlreadyDefinedException
-	 * <p>
-	 * @param 		msg String.
-	 * 					Message to report
+	 * Creates a new HelperAlreadyDefinedException.
+	 *
+	 * @param msg message to report
 	 */
 	public HelperAlreadyDefinedException(String msg) {
 		super(msg);

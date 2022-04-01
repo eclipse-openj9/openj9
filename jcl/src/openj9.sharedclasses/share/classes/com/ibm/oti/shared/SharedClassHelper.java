@@ -1,6 +1,6 @@
 /*[INCLUDE-IF SharedClasses]*/
 /*******************************************************************************
- * Copyright (c) 1998, 2020 IBM Corp. and others
+ * Copyright (c) 1998, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,20 +35,22 @@ public interface SharedClassHelper extends SharedHelper {
 	/**
 	 * Applies the sharing filter to the SharedClassHelper.
 	 *
-	 * If a SecurityManager is installed, this method can only be called
+	 * <p>If a SecurityManager is installed, this method can only be called
 	 * by an object whose caller ClassLoader has shared
-	 * class "read,write" permissions.<br>
-	 * If a SharedClassFilter is already set, it is replaced by the new filter.<br>
-	 * Passing null as the argument removes the sharing filter.
+	 * class "read,write" permissions.
 	 *
-	 * @param filter The SharedClassFilter instance or null.
+	 * <p>If a SharedClassFilter is already set, it is replaced by the new filter.
+	 *
+	 * <p>Passing null as the argument removes the sharing filter.
+	 *
+	 * @param filter the SharedClassFilter instance or null
 	 */
 	public void setSharingFilter(SharedClassFilter filter);
 
 	/**
 	 * Returns the sharing filter associated with this helper.
-	 * <p>
-	 * @return The filter instance, or null if none is associated.
+	 *
+	 * @return the filter instance, or null if none is associated
 	 */
 	public SharedClassFilter getSharingFilter();
 

@@ -1,10 +1,6 @@
 /*[INCLUDE-IF SharedClasses]*/
-package com.ibm.oti.shared;
-
-import java.security.AccessControlException;
-
 /*******************************************************************************
- * Copyright (c) 1998, 2021 IBM Corp. and others
+ * Copyright (c) 1998, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,30 +20,27 @@ import java.security.AccessControlException;
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
+package com.ibm.oti.shared;
+
+import java.security.AccessControlException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * SharedAbstractHelperFactory is an abstract superclass for helper factory subclasses.
  */
 public abstract class SharedAbstractHelperFactory {
 
-	private static int idCount;		/* Single id count shared by all factories */
-	static Object monitor;
+	/*
+	 * single id count shared by all factories
+	 * (bootstrap loader is 0)
+	 */
+	private static final AtomicInteger idCount = new AtomicInteger(1);
 
-	/*[PR 122459] LIR646 - Remove use of generic object for synchronization */
-	private static final class Monitor {
-		Monitor() { super(); }
-	}
-	
-	static {
-		idCount = 1;			/* bootstrap loader is 0 */
-		monitor = new Monitor();		/* anything which changes idCount must synchronize on the monitor */ 
-	}
-	
+	@SuppressWarnings("removal")
 	static boolean checkPermission(ClassLoader loader, String type) {
 		boolean result = true;
-		@SuppressWarnings("removal")
 		SecurityManager sm = System.getSecurityManager();
-		if (sm!=null) {
+		if (sm != null) {
 			try {
 				sm.checkPermission(new SharedClassPermission(loader, type));
 			} catch (AccessControlException e) {
@@ -64,10 +57,15 @@ public abstract class SharedAbstractHelperFactory {
 	static boolean canStore(ClassLoader loader) {
 		return checkPermission(loader, "write"); //$NON-NLS-1$
 	}
-	
+
 	static int getNewID() {
-		synchronized(monitor) {
-			return idCount++;
-		}
+		return idCount.getAndIncrement();
+	}
+
+	/**
+	 * Constructs a new instance of this class.
+	 */
+	public SharedAbstractHelperFactory() {
+		super();
 	}
 }

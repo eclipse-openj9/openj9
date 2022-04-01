@@ -1,13 +1,6 @@
 /*[INCLUDE-IF SharedClasses]*/
-package com.ibm.oti.shared;
-
-import java.security.Permission;
-import java.security.PermissionCollection;
-import java.util.Enumeration;
-import java.util.Hashtable;
-
 /*******************************************************************************
- * Copyright (c) 1998, 2021 IBM Corp. and others
+ * Copyright (c) 1998, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,9 +20,15 @@ import java.util.Hashtable;
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
+package com.ibm.oti.shared;
+
+import java.security.Permission;
+import java.security.PermissionCollection;
+import java.util.Enumeration;
+import java.util.Hashtable;
 
 /**
- * SharedClassPermissionCollection provides permission collection to support SharedClassPermission
+ * SharedClassPermissionCollection provides permission collection to support SharedClassPermission.
  *
  * @see SharedClassPermission
  */
@@ -39,27 +38,44 @@ public class SharedClassPermissionCollection extends PermissionCollection {
 
 	private Hashtable<String, Permission> permissions = new Hashtable<>(10);
 
+	/*[IF]*/
+	/*
+	 * This explicit constructor is equivalent to the one implicitly defined
+	 * in earlier versions. It was probably never intended to be public nor
+	 * was it likely intended to be used, but rather than break any existing
+	 * uses, we simply mark it deprecated.
+	 */
+	/*[ENDIF]*/
 	/**
-	 * Adds a permission to this collection
-	 * <p>
-	 * @param		perm java.security.Permission.
-	 *					The Permission object to add
+	 * Constructs a new instance of this class.
+	 */
+	@Deprecated
+	public SharedClassPermissionCollection() {
+		super();
+	}
+
+	/**
+	 * Adds a permission to this collection.
+	 *
+	 * @param perm Permission the permission object to add
 	 */
 	@Override
 	public void add(Permission perm) {
 		if (!isReadOnly()) {
 			Permission previous = permissions.put(perm.getName(), perm);
 			// if the permission already existed but with only "read" or "write" set, then replace with both set
-			if (previous != null && !previous.getActions().equals(perm.getActions()))
+			if (previous != null && !previous.getActions().equals(perm.getActions())) {
 				permissions.put(perm.getName(), new SharedClassPermission(perm.getName(), "read,write")); //$NON-NLS-1$
-		} else throw new IllegalStateException();
+			}
+		} else {
+			throw new IllegalStateException();
+		}
 	}
 
 	/**
-	 * Returns permissions as an enumeration
-	 * <p>
-	 * @return		java.util.Enumeration.
-	 * 					The Permissions as an enumeration
+	 * Returns permissions as an enumeration.
+	 *
+	 * @return Enumeration the permissions as an enumeration
 	 */
 	@Override
 	public Enumeration<Permission> elements() {
@@ -68,19 +84,20 @@ public class SharedClassPermissionCollection extends PermissionCollection {
 
 	/**
 	 * Returns <code>true</code> if the permission given is implied by any of the
-	 * permissions in the collection
-	 * <p>
-	 * @param		perm java.security.Permission.
-	 * 					The permission to check
-	 * @return		java.util.Enumeration.
-	 * 					The Permissions as an enumeration
+	 * permissions in the collection.
+	 *
+	 * @param perm Permission the permission to check
+	 * @return boolean whether the given permission is implied by any of the
+	 * permissions in this collection
 	 */
 	@Override
 	public boolean implies(Permission perm) {
 		Enumeration<Permission> elemEnum = elements();
-		while (elemEnum.hasMoreElements())
-			if (elemEnum.nextElement().implies(perm))
+		while (elemEnum.hasMoreElements()) {
+			if (elemEnum.nextElement().implies(perm)) {
 				return true;
+			}
+		}
 		return false;
 	}
 

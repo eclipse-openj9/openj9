@@ -1,8 +1,6 @@
 /*[INCLUDE-IF SharedClasses]*/
-package com.ibm.oti.shared;
-
 /*******************************************************************************
- * Copyright (c) 1998, 2021 IBM Corp. and others
+ * Copyright (c) 1998, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,6 +20,7 @@ package com.ibm.oti.shared;
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
+package com.ibm.oti.shared;
 
 import java.nio.ByteBuffer;
 
@@ -31,7 +30,7 @@ import java.nio.ByteBuffer;
  * <p>A SharedDataHelper is obtained by calling getSharedDataHelper(ClassLoader) on a SharedDataHelperFactory.</p>
  * <p>The SharedDataHelper allows byte data to be written into the shared class cache and shared with other VMs.</p>
  * <p>Byte data to be stored in the cache should exist in a java.nio.ByteBuffer which is copied to the cache when
- * storeSharedData() is called. The function returns a read-only java.nio.ByteBuffer which is the shared copy of the data. 
+ * storeSharedData() is called. The function returns a read-only java.nio.ByteBuffer which is the shared copy of the data.
  * Any subsequent changes to the ByteBuffer are therefore not reflected in the cache unless it is re-stored.</p>
  * <p>Byte data is found in the cache by calling findSharedData() which returns a read-only java.nio.ByteBuffer which
  * maps to the byte data that exists in the cache.</p>
@@ -43,9 +42,9 @@ import java.nio.ByteBuffer;
  * <p>Since the shared cache is persistent beyond the lifetime of a JVM, data in the shared cache may become out-of-date (<q>stale</q>).
  * Using this helper, it is entirely the responsibility of the application to ensure that cache entries are kept up-to-date.
  * Tokens have no meaning to the cache, so effectively turn it into a dictionary of classes.</p>
- * <p>Eg. A token may be the location where the class was found, combined with some type of versioning data.</p>
+ * <p>E.g. A token may be the location where the class was found, combined with some type of versioning data.</p>
  * <p>If an application stores multiple versions of the same data using the same token, only the most recent will be returned by findSharedData.</p>
- * 
+ *
  * @see SharedHelper
  * @see SharedDataHelperFactory
  * @see SharedClassPermission
@@ -58,12 +57,10 @@ public interface SharedDataHelper extends SharedHelper {
 	 * The ByteBuffer returned is read-only and cannot be modified.<br>
 	 * If a SecurityManager is installed, findSharedData can only be called by code whose caller-classloader
 	 * has been granted <q>read</q> permissions to the shared class cache.
-	 * <p>
-	 * @param 		token String.
-	 * 					A String token to be used as a key
 	 *
-	 * @return		ByteBuffer.
-	 * 					A read-only ByteBuffer containing the cached data, or null.
+	 * @param token a token to be used as a key
+	 *
+	 * @return ByteBuffer a read-only ByteBuffer containing the cached data, or null
 	 */
 	public ByteBuffer findSharedData(String token);
 
@@ -72,18 +69,13 @@ public interface SharedDataHelper extends SharedHelper {
 	 * If the data is stored successfully, the shared read-only copy of the data is returned. Otherwise, null is returned.<br>
 	 * If data already exists for the token specified, the old data is marked <q>stale</q> in the cache and is replaced by the new data.<br>
 	 * If the exact same data already exists in the cache under the same token, the data is not duplicated and the cached version is returned.<br>
-	 * If null is passed as the data argument, the data currently stored against that token is marked "stale" and null is returned.<br>
+	 * If null is passed as the data argument, the data currently stored against that token is marked <q>stale</q> and null is returned.<br>
 	 * If a SecurityManager is installed, storeSharedData can only be called by code whose caller-classloader
 	 * has been granted <q>write</q> permissions to the shared class cache.
-	 * <p>
-	 * @param 		token String.
-	 * 					A String token to be used as a key
-	 * 
-	 * @param 		data ByteBuffer.
-	 * 					A ByteBuffer of data to copy to the cache
-
-	 * @return		ByteBuffer.
-	 * 					A read-only ByteBuffer containing the cached data, or null.
+	 *
+	 * @param token a token to be used as a key
+	 * @param data a ByteBuffer of data to copy to the cache
+	 * @return ByteBuffer a read-only ByteBuffer containing the cached data, or null
 	 */
 	public ByteBuffer storeSharedData(String token, ByteBuffer data);
 

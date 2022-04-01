@@ -30,28 +30,27 @@ import java.io.File;
 public class SharedClassStatistics {
 
 	/**
-	 * Returns the size of the shared cache that the JVM is currently connected to
-	 * <p>
-	 * @return The total size in bytes
+	 * Returns the size of the shared cache that the JVM is currently connected to.
+	 *
+	 * @return the total size in bytes
 	 */
 	public static long maxSizeBytes() {
 		return maxSizeBytesImpl();
 	}
 
 	/**
-	 * Returns the free space of the shared cache that the JVM is currently connected to
-	 * <p>
-	 * @return The free space in bytes
+	 * Returns the free space of the shared cache that the JVM is currently connected to.
+	 *
+	 * @return the free space in bytes
 	 */
 	public static long freeSpaceBytes() {
 		return freeSpaceBytesImpl();
 	}
 
 	/**
-	 * Returns the soft limit in bytes for the available space of the cache that the JVM is currently connected to
-	 * <p>
+	 * Returns the soft limit in bytes for the available space of the cache that the JVM is currently connected to.
 	 *
-	 * @return the soft max size or cache size in bytes if it is not set.
+	 * @return the soft max size or cache size in bytes if it is not set
 	 */
 	public static long softmxBytes() {
 		return softmxBytesImpl();
@@ -61,7 +60,7 @@ public class SharedClassStatistics {
 	 * Returns the minimum space reserved for AOT data of the cache that the JVM is currently
 	 * connected to.
 	 *
-	 * @return the minimum shared classes cache space reserved for AOT data in bytes or -1 if it is not set.
+	 * @return the minimum shared classes cache space reserved for AOT data in bytes or -1 if it is not set
 	 */
 	public static long minAotBytes() {
 		return minAotBytesImpl();
@@ -71,7 +70,7 @@ public class SharedClassStatistics {
 	 * Returns the maximum space allowed for AOT data of the cache that the JVM is currently
 	 * connected to.
 	 *
-	 * @return the maximum shared classes cache space allowed for AOT data in bytes or -1 if it is not set.
+	 * @return the maximum shared classes cache space allowed for AOT data in bytes or -1 if it is not set
 	 */
 	public static long maxAotBytes() {
 		return maxAotBytesImpl();
@@ -81,7 +80,7 @@ public class SharedClassStatistics {
 	 * Returns the minimum space reserved for JIT data of the cache that the JVM is currently
 	 * connected to.
 	 *
-	 * @return the minimum shared classes cache space reserved for JIT data in bytes or -1 if it is not set.
+	 * @return the minimum shared classes cache space reserved for JIT data in bytes or -1 if it is not set
 	 */
 	public static long minJitDataBytes() {
 		return minJitDataBytesImpl();
@@ -91,7 +90,7 @@ public class SharedClassStatistics {
 	 * Returns the maximum space allowed for JIT data of the cache that the JVM is currently
 	 * connected to.
 	 *
-	 * @return the maximum shared classes cache space allowed for JIT data in bytes  or -1 if it is not set.
+	 * @return the maximum shared classes cache space allowed for JIT data in bytes  or -1 if it is not set
 	 */
 	public static long maxJitDataBytes() {
 		return maxJitDataBytesImpl();
@@ -99,10 +98,11 @@ public class SharedClassStatistics {
 
 	/**
 	 * Returns the SysV shmem nattch value for a non-persistent top level cache.
-	 * On Windows or for persistent caches, -1 is returned. Depending on the platform
+	 *
+	 * <p>On Windows or for persistent caches, -1 is returned. Depending on the platform
 	 * and OS, such as z/OS, the value indicates the number of JVMs attached to the cache.
 	 *
-	 * @return the SysV shmem nattch value for a top level non-persistent cache, or -1 if it cannot be determined.
+	 * @return the SysV shmem nattch value for a top level non-persistent cache, or -1 if it cannot be determined
 	 */
 	public static long numberAttached() {
 		return numberAttachedImpl();
@@ -111,16 +111,16 @@ public class SharedClassStatistics {
 	/**
 	 * Returns the full cache path.
 	 *
-	 * @return the full cache path, or NULL if it cannot be determined.
+	 * @return the full cache path, or NULL if it cannot be determined
 	 */
 	public static String cachePath() {
 		return cachePathImpl();
 	}
-	
+
 	/**
 	 * Returns the cache name.
 	 *
-	 * @return the cache name, or NULL if it cannot be determined.
+	 * @return the cache name, or NULL if it cannot be determined
 	 */
 	public static String cacheName() {
 		String cachePath = cachePathImpl();
@@ -144,9 +144,9 @@ public class SharedClassStatistics {
 	}
 
 	/**
-	 * Returns the cache dir.
+	 * Returns the cache directory.
 	 *
-	 * @return the cache dir, or NULL if it cannot be determined.
+	 * @return the cache directory, or NULL if it cannot be determined
 	 */
 	public static String cacheDir() {
 		String cachePath = cachePathImpl();
@@ -165,5 +165,21 @@ public class SharedClassStatistics {
 	private static native long minJitDataBytesImpl();
 	private static native long numberAttachedImpl();
 	private static native long softmxBytesImpl();
-	
+
+	/*[IF]*/
+	/*
+	 * This explicit constructor is equivalent to the one implicitly defined
+	 * in earlier versions. It was probably never intended to be public nor
+	 * was it likely intended to be used, but rather than break any existing
+	 * uses, we simply mark it deprecated.
+	 */
+	/*[ENDIF]*/
+	/**
+	 * Constructs a new instance of this class.
+	 */
+	@Deprecated
+	public SharedClassStatistics() {
+		super();
+	}
+
 }

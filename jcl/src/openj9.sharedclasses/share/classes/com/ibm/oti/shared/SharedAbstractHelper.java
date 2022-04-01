@@ -1,13 +1,6 @@
 /*[INCLUDE-IF SharedClasses]*/
-package com.ibm.oti.shared;
-
-import java.lang.ref.WeakReference;
-import java.security.AccessControlException;
-
-import com.ibm.oti.util.Msg;
-
 /*******************************************************************************
- * Copyright (c) 1998, 2021 IBM Corp. and others
+ * Copyright (c) 1998, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,6 +20,12 @@ import com.ibm.oti.util.Msg;
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
+package com.ibm.oti.shared;
+
+import java.lang.ref.WeakReference;
+import java.security.AccessControlException;
+
+import com.ibm.oti.util.Msg;
 
 /**
  * SharedAbstractHelper provides common functions and data to helper subclasses.
@@ -37,10 +36,19 @@ import com.ibm.oti.util.Msg;
 public abstract class SharedAbstractHelper implements SharedHelper {
 	private Boolean verbose;
 	private WeakReference<ClassLoader> loaderRef;
-	private SharedClassPermission readPerm, writePerm;
+	private SharedClassPermission readPerm;
+	private SharedClassPermission writePerm;
 
-	boolean canFind, canStore;
+	boolean canFind;
+	boolean canStore;
 	int id;
+
+	/**
+	 * Constructs a new instance of this class.
+	 */
+	public SharedAbstractHelper() {
+		super();
+	}
 
 	void initialize(ClassLoader loader, int loaderId, boolean canLoaderFind, boolean canLoaderStore) {
 		this.id = loaderId;
@@ -53,9 +61,10 @@ public abstract class SharedAbstractHelper implements SharedHelper {
 
 	/**
 	 * Utility function. Returns the ClassLoader that owns this SharedHelper.
+	 *
 	 * Will return null if the Helper's ClassLoader has been garbage collected.
-	 * <p>
-	 * @return 		The ClassLoader owning this helper, or null if the ClassLoader has been garbage collected.
+	 *
+	 * @return the ClassLoader owning this helper, or null if the ClassLoader has been garbage collected
 	 */
 	@Override
 	public ClassLoader getClassLoader() {
@@ -65,6 +74,7 @@ public abstract class SharedAbstractHelper implements SharedHelper {
 	private native boolean getIsVerboseImpl();
 
 	/* Do not cache the permission objects, else classloader references will prevent class GC */
+	@SuppressWarnings("removal")
 	private static boolean checkPermission(SecurityManager sm, ClassLoader loader, String type) {
 		boolean result = false;
 		try {
@@ -79,23 +89,23 @@ public abstract class SharedAbstractHelper implements SharedHelper {
 	static boolean checkReadPermission(ClassLoader loader) {
 		@SuppressWarnings("removal")
 		SecurityManager sm = System.getSecurityManager();
-		if (sm!=null) {
+		if (sm != null) {
 			return checkPermission(sm, loader, "read"); //$NON-NLS-1$
 		}
 		return true; // no security manager means the check is successful
 	}
-	
+
 	static boolean checkWritePermission(ClassLoader loader) {
 		@SuppressWarnings("removal")
 		SecurityManager sm = System.getSecurityManager();
-		if (sm!=null) {
+		if (sm != null) {
 			return checkPermission(sm, loader, "write"); //$NON-NLS-1$
 		}
 		return true; // no security manager means the check is successful
 	}
-	
+
 	private boolean isVerbose() {
-		if (verbose==null) {
+		if (verbose == null) {
 			boolean verboseSet = getIsVerboseImpl();
 			verbose = Boolean.valueOf(verboseSet);
 			if (verboseSet) {
@@ -119,6 +129,6 @@ public abstract class SharedAbstractHelper implements SharedHelper {
 			System.err.println(Msg.getString("K0594", getHelperType(), Integer.toString(id), message)); //$NON-NLS-1$
 		}
 	}
-	
+
 	abstract String getHelperType();
 }
