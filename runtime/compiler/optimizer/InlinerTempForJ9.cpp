@@ -4769,6 +4769,10 @@ TR_J9InlinerPolicy::validateArguments(TR_CallTarget *calltarget, TR_LinkHead<TR_
 bool
 TR_J9InlinerPolicy::supressInliningRecognizedInitialCallee(TR_CallSite* callsite, TR::Compilation* comp)
    {
+   TR::ResolvedMethodSymbol *initialCalleeSymbol = callsite->_initialCalleeSymbol;
+   if (initialCalleeSymbol != NULL && initialCalleeSymbol->canReplaceWithHWInstr())
+      return true;
+
    TR_ResolvedMethod * initialCalleeMethod = callsite->_initialCalleeMethod;
 
    if (initialCalleeMethod)
@@ -4803,7 +4807,7 @@ TR_J9InlinerPolicy::supressInliningRecognizedInitialCallee(TR_CallSite* callsite
 
    TR::TreeTop *callNodeTreeTop  = callsite->_callNodeTreeTop;
 
-   bool dontInlineRecognizedMethod = callsite->_initialCalleeSymbol->canReplaceWithHWInstr();
+   bool dontInlineRecognizedMethod = false;
    if (callNode->getSymbol()->getResolvedMethodSymbol())
       {
       // Methods we may prefer not to inline, for heuristic reasons.
