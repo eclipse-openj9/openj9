@@ -4774,6 +4774,21 @@ TR_J9InlinerPolicy::supressInliningRecognizedInitialCallee(TR_CallSite* callsite
       return true;
 
    TR_ResolvedMethod * initialCalleeMethod = callsite->_initialCalleeMethod;
+   TR::Node *callNode = callsite->_callNode;
+   if (callNode != NULL)
+      {
+      TR::ResolvedMethodSymbol *callResolvedMethodSym =
+         callNode->getSymbol()->getResolvedMethodSymbol();
+
+      TR_ASSERT_FATAL(
+         callResolvedMethodSym == NULL
+            || initialCalleeMethod == callResolvedMethodSym->getResolvedMethod(),
+         "call site %p _initialCalleeMethod %p should match %p from _callNode %p",
+         callsite,
+         initialCalleeMethod,
+         callResolvedMethodSym->getResolvedMethod(),
+         callNode);
+      }
 
    if (initialCalleeMethod)
       {
@@ -4801,7 +4816,6 @@ TR_J9InlinerPolicy::supressInliningRecognizedInitialCallee(TR_CallSite* callsite
          }
       }
 
-   TR::Node *callNode = callsite->_callNode;
    if (callNode == NULL)
       return false;
 
