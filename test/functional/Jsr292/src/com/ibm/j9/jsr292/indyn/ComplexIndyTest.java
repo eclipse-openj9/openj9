@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2020 IBM Corp. and others
+ * Copyright (c) 2001, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -39,7 +39,11 @@ public class ComplexIndyTest{
 	@Test(groups = { "level.extended" })
 	public void test_gwtTest_Object() {
 		String s = com.ibm.j9.jsr292.indyn.ComplexIndy.gwtTest(new Object());
-		if (!s.equals("DoesNotUnderStand: class java.lang.Object message: double")) Assert.fail("Wrong string returned'" + s +"'");
+		if (!s.equals("DoesNotUnderStand: class java.lang.Object message: double")
+			&& !s.equals("DoesNotUnderStand: class java.lang.Identity message: double")
+		) {
+			Assert.fail("Wrong string returned'" + s +"'");
+		}
 	}
 
 	@Test(groups = { "level.extended" })

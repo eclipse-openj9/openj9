@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -44,7 +44,7 @@ public class TestDeadlockCase2 extends DDRExtTesterBase
 		assertTrue(validate(output, Constants.DEADLOCK_THREAD, 3));
 		assertTrue(validate(output, Constants.DEADLOCK_BLOCKING_ON, 2));
 		assertTrue(validate(output, Constants.DEADLOCK_OWNED_BY, 2));
-		assertTrue(validate(output, Constants.DEADLOCK_JAVA_OBJ, 1));
+		assertTrue(validate(output, Constants.DEADLOCK_JAVA_OBJ, 1) || validate(output, Constants.DEADLOCK_JAVA_IDENTITY, 1));
 		assertTrue(validate(output, Constants.DEADLOCK_FIRST_MON, 1));
 	}
 
