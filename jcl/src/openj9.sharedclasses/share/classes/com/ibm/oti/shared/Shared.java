@@ -1,8 +1,6 @@
 /*[INCLUDE-IF SharedClasses]*/
-package com.ibm.oti.shared;
-
 /*******************************************************************************
- * Copyright (c) 1998, 2021 IBM Corp. and others
+ * Copyright (c) 1998, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,6 +20,7 @@ package com.ibm.oti.shared;
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
+package com.ibm.oti.shared;
 
 /**
  * Global class that provides SharedClassHelperFactory, SharedDataHelperFactory and sharing status.
@@ -30,30 +29,32 @@ package com.ibm.oti.shared;
  * @see SharedDataHelperFactory
  */
 public class Shared {
-	
+
 	private static final String ENABLED_PROPERTY_NAME = "com.ibm.oti.shared.enabled"; //$NON-NLS-1$
-	private static Object monitor;
+	private static final Object monitor;
 	private static SharedClassHelperFactory shcHelperFactory;
 	private static SharedDataHelperFactory shdHelperFactory;
-	private static boolean nonBootSharingEnabled;
+	private static final boolean nonBootSharingEnabled;
 
 	/*[PR 122459] LIR646 - Remove use of generic object for synchronization */
 	private static final class Monitor {
-		Monitor() { super(); }
+		Monitor() {
+			super();
+		}
 	}
 
 	static {
 		monitor = new Monitor();
-		/* Bootstrap class sharing is enabled by default in OpenJ9 Java 11 and up */
+		/* Bootstrap class sharing is enabled by default in OpenJ9 Java 11 and up. */
 		nonBootSharingEnabled = isNonBootSharingEnabledImpl();
 	}
-	
+
 	private static native boolean isNonBootSharingEnabledImpl();
 
 	/**
 	 * Checks if sharing is enabled for this JVM.
-	 * <p>
-	 * @return true if using -Xshareclasses on the command-line, false otherwise.
+	 *
+	 * @return true if using -Xshareclasses on the command-line, false otherwise
 	 */
 	public static boolean isSharingEnabled() {
 		return nonBootSharingEnabled;
@@ -61,12 +62,12 @@ public class Shared {
 
 	/**
 	 * If sharing is enabled, returns a SharedClassHelperFactory, otherwise returns null.
-	 * <p>
-	 * @return		SharedClassHelperFactory
+	 *
+	 * @return SharedClassHelperFactory
 	 */
 	public static SharedClassHelperFactory getSharedClassHelperFactory() {
-		synchronized(monitor) {
-			if (shcHelperFactory==null && isSharingEnabled()) {
+		synchronized (monitor) {
+			if (shcHelperFactory == null && isSharingEnabled()) {
 				shcHelperFactory = new SharedClassHelperFactoryImpl();
 			}
 			return shcHelperFactory;
@@ -75,15 +76,32 @@ public class Shared {
 
 	/**
 	 * If sharing is enabled, returns a SharedDataHelperFactory, otherwise returns null.
-	 * <p>
-	 * @return		SharedDataHelperFactory
+	 *
+	 * @return SharedDataHelperFactory
 	 */
 	public static SharedDataHelperFactory getSharedDataHelperFactory() {
-		synchronized(monitor) {
-			if (shdHelperFactory==null && isSharingEnabled()) {
+		synchronized (monitor) {
+			if (shdHelperFactory == null && isSharingEnabled()) {
 				shdHelperFactory = new SharedDataHelperFactoryImpl();
 			}
 			return shdHelperFactory;
 		}
 	}
+
+	/*[IF]*/
+	/*
+	 * This explicit constructor is equivalent to the one implicitly defined
+	 * in earlier versions. It was probably never intended to be public nor
+	 * was it likely intended to be used, but rather than break any existing
+	 * uses, we simply mark it deprecated.
+	 */
+	/*[ENDIF]*/
+	/**
+	 * Constructs a new instance of this class.
+	 */
+	@Deprecated
+	public Shared() {
+		super();
+	}
+
 }
