@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2021 IBM Corp. and others
+ * Copyright (c) 2001, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -136,7 +136,7 @@ jboolean JNICALL
 Fast_java_lang_Class_isPrimitiveClass(J9VMThread *currentThread, j9object_t classObject)
 {
 	J9Class *receiverClazz = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, classObject);
-	bool isPrimitiveClass = J9_IS_J9CLASS_VALUETYPE(receiverClazz);
+	bool isPrimitiveClass = J9_IS_J9CLASS_PRIMITIVE_VALUETYPE(receiverClazz);
 	return isPrimitiveClass ? JNI_TRUE : JNI_FALSE;
 }
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */

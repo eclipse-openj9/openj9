@@ -1545,14 +1545,12 @@ checkMethodStructure (J9PortLibrary * portLib, J9CfrClassFile * classfile, UDATA
 	/* Throw a class format error if we are given a static <init> method (otherwise later we will throw a verify error due to back stack shape) */
 	info = &(classfile->constantPool[method->nameIndex]);
 	if (method->accessFlags & CFR_ACC_STATIC) {
-		U_16 returnChar = getReturnTypeFromSignature(classfile->constantPool[method->descriptorIndex].bytes, classfile->constantPool[method->descriptorIndex].slot1, NULL);
-		if ((CFR_CONSTANT_Utf8 == info->tag)
-			&& J9UTF8_DATA_EQUALS("<init>", 6, info->bytes, info->slot1)
-			&& ((J9_IS_CLASSFILE_VALUETYPE(classfile) && !IS_QTYPE(returnChar))
-				|| (!J9_IS_CLASSFILE_VALUETYPE(classfile) && IS_QTYPE(returnChar)))
-		) {
-			errorType = J9NLS_CFR_ERR_ILLEGAL_METHOD_MODIFIERS__ID;
-			goto _formatError;
+		if (CFR_CONSTANT_Utf8 == info->tag) {
+			if (J9UTF8_DATA_EQUALS("<init>", 6, info->bytes, info->slot1)) {
+				/* The error code here is for modifiers, return type check is done in j9bcv_verifyClassStructure(). */
+				errorType = J9NLS_CFR_ERR_ILLEGAL_METHOD_MODIFIERS__ID;
+				goto _formatError;
+			}
 		}
 	}
 
@@ -1767,8 +1765,26 @@ j9bcv_verifyClassStructure (J9PortLibrary * portLib, J9CfrClassFile * classfile,
 			&& !isConstantInvokeDynamic
 #endif /* JAVA_SPEC_VERSION >= 18 */
 			) {
-				U_16 returnChar = getReturnTypeFromSignature(info->bytes, info->slot1, NULL);
-				if ((info->bytes[info->slot1 - 1] != 'V') && !IS_QTYPE(returnChar)) {
+				BOOLEAN invalidRetType = FALSE;
+				if ((CFR_METHOD_NAME_INIT == isInit) /* Check return type of <init> on VTs for now. It is drafted to be changed to <new>. */
+					&& J9_IS_CLASSFILE_VALUETYPE(classfile)
+				) {
+					U_16 returnChar = getReturnTypeFromSignature(info->bytes, info->slot1, NULL);
+					if (J9_IS_CLASSFILE_PRIMITIVE_VALUETYPE(classfile)) {
+						if (!IS_QTYPE(returnChar)) {
+							invalidRetType = TRUE;
+						}
+					} else {
+						if (!IS_LTYPE(returnChar)) {
+							invalidRetType = TRUE;
+						}
+					}
+				} else {
+					if (info->bytes[info->slot1 - 1] != 'V') {
+						invalidRetType = TRUE;
+					}
+				}
+				if (invalidRetType) {
 					errorType = J9NLS_CFR_ERR_BC_METHOD_INVALID_SIG__ID;
 					goto _formatError;
 				}
@@ -1876,10 +1892,26 @@ j9bcv_verifyClassStructure (J9PortLibrary * portLib, J9CfrClassFile * classfile,
 			}
 		}
 		if (isInit) {
-			U_16 returnChar = getReturnTypeFromSignature(info->bytes, info->slot1, NULL);
-			if ((J9_IS_CLASSFILE_VALUETYPE(classfile) && !IS_QTYPE(returnChar))
-				|| (!J9_IS_CLASSFILE_VALUETYPE(classfile) && (info->bytes[info->slot1 - 1] != 'V'))
+			BOOLEAN invalidRetType = FALSE;
+			if ((CFR_METHOD_NAME_INIT == isInit) /* Check return type of <init> on VTs, it will eventually be changed to <new>. */
+				&& J9_IS_CLASSFILE_VALUETYPE(classfile)
 			) {
+				U_16 returnChar = getReturnTypeFromSignature(info->bytes, info->slot1, NULL);
+				if (J9_IS_CLASSFILE_PRIMITIVE_VALUETYPE(classfile)) {
+					if (!IS_QTYPE(returnChar)) {
+						invalidRetType = TRUE;
+					}
+				} else {
+					if (!IS_LTYPE(returnChar)) {
+						invalidRetType = TRUE;
+					}
+				}
+			} else {
+				if (info->bytes[info->slot1 - 1] != 'V') {
+					invalidRetType = TRUE;
+				}
+			}
+			if (invalidRetType) {
 				Trc_STV_j9bcv_verifyClassStructure_MethodError(J9NLS_CFR_ERR_BC_METHOD_INVALID_SIG__ID, i);
 				buildMethodError((J9CfrError *)segment, errorType, CFR_ThrowClassFormatError, (I_32) i, 0, method, classfile->constantPool);
 				result = -1;

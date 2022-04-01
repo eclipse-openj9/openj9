@@ -87,6 +87,7 @@
 #define J9ClassHasIdentity 0x80000
 #define J9ClassEnsureHashed 0x100000
 #define J9ClassHasOffloadAllowSubtasksNatives 0x200000
+#define J9ClassIsPrimitiveValueType 0x400000
 
 /* @ddr_namespace: map_to_type=J9FieldFlags */
 

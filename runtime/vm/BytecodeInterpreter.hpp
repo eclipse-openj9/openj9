@@ -2764,7 +2764,7 @@ done:
 	inlClassIsPrimitiveClass(REGISTER_ARGS_LIST)
 	{
 		J9Class *receiverClazz = J9VM_J9CLASS_FROM_HEAPCLASS(_currentThread, *(j9object_t*)_sp);
-		bool isPrimitiveClass = J9ROMCLASS_IS_PRIMITIVE_VALUE_TYPE(receiverClazz->romClass);
+		bool isPrimitiveClass = J9_IS_J9CLASS_PRIMITIVE_VALUETYPE(receiverClazz);
 		returnSingleFromINL(REGISTER_ARGS, (isPrimitiveClass ? 1 : 0), 1);
 		return EXECUTE_BYTECODE;
 	}
@@ -4026,7 +4026,7 @@ done:
 		if (NULL != obj && NULL != clz) {
 			J9Class *clzJ9Class = J9VM_J9CLASS_FROM_HEAPCLASS(_currentThread, clz);
 
-			if (J9_IS_J9CLASS_VALUETYPE(clzJ9Class)) {
+			if (J9_IS_J9CLASS_PRIMITIVE_VALUETYPE(clzJ9Class)) {
 				result = VM_ValueTypeHelpers::getFlattenedFieldAtOffset(
 					_currentThread,
 					_objectAccessBarrier,
@@ -4074,7 +4074,7 @@ done:
 		if ((NULL != obj) && (NULL != clz) && (NULL != value)) {
 			J9Class *clzJ9Class = J9VM_J9CLASS_FROM_HEAPCLASS(_currentThread, clz);
 
-			if (J9_IS_J9CLASS_VALUETYPE(clzJ9Class)) {
+			if (J9_IS_J9CLASS_PRIMITIVE_VALUETYPE(clzJ9Class)) {
 				VM_ValueTypeHelpers::putFlattenedFieldAtOffset(_currentThread,
 					_objectAccessBarrier,
 					clzJ9Class,
@@ -4100,7 +4100,8 @@ done:
 		/* TODO (#14073): update this function to have the same behavior as OpenJDK when cls is null or not a vlauetype (currently OpenJDK segfaults in both those scenarios) */
 		if (NULL != cls) {
 			J9Class *j9clazz = J9VM_J9CLASS_FROM_HEAPCLASS(_currentThread, cls);
-			if (J9_IS_J9CLASS_VALUETYPE(j9clazz)) {
+			if (J9_IS_J9CLASS_PRIMITIVE_VALUETYPE(j9clazz)) {
+				/* It is defaultValue for primitive value type, NULL for value class. */
 				result = j9clazz->flattenedClassCache->defaultValue;
 			}
 		}
@@ -6389,7 +6390,7 @@ done:
 				} else {
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 					J9ArrayClass *arrayrefClass = (J9ArrayClass *) J9OBJECT_CLAZZ(_currentThread, arrayref);
-					if (J9_IS_J9CLASS_VALUETYPE(arrayrefClass->componentType) && (NULL == value)) {
+					if (J9_IS_J9CLASS_PRIMITIVE_VALUETYPE(arrayrefClass->componentType) && (NULL == value)) {
 						rc = THROW_NPE;
 						goto done;
 					}
