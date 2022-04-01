@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -140,6 +140,9 @@ isInitOrClinitImpl (J9CfrConstantPoolInfo * info)
 	U_8 *name = info->bytes;
 
 	/* Handle <init>/<clinit> cases */
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	/* TODO <new> is drafted to be introduced for Value Types. */
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	if (*name == '<') {
 		if (J9UTF8_DATA_EQUALS("<init>", 6, name, info->slot1)) {
 			return CFR_METHOD_NAME_INIT;

@@ -1957,7 +1957,7 @@ loadFlattenableFieldValueClasses(J9VMThread *currentThread, J9ClassLoader *class
 				} else {
 					J9ROMClass *valueROMClass = valueClass->romClass;
 
-					if (J9_ARE_NO_BITS_SET(valueROMClass->modifiers, J9AccValueType)) {
+					if (!J9ROMCLASS_IS_PRIMITIVE_VALUE_TYPE(valueROMClass)) {
 						J9UTF8 *badClass = NNSRP_GET(valueROMClass->className, J9UTF8*);
 						setCurrentExceptionNLSWithArgs(currentThread, J9NLS_VM_ERROR_QTYPE_NOT_VALUE_TYPE, J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR, J9UTF8_LENGTH(badClass), J9UTF8_DATA(badClass));
 						result = FALSE;
@@ -2831,7 +2831,7 @@ fail:
 			/* flattened classes cache */
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 			UDATA flattenedClassCacheAllocSize = 0;
-			if (J9_ARE_ALL_BITS_SET(romClass->modifiers, J9AccValueType) || (flattenedClassCache->numberOfEntries > 0)) {
+			if (J9ROMCLASS_IS_VALUE(romClass) || (flattenedClassCache->numberOfEntries > 0)) {
 				flattenedClassCacheAllocSize = sizeof(J9FlattenedClassCache) + (sizeof(J9FlattenedClassCacheEntry) * flattenedClassCache->numberOfEntries);
 			}
 			allocationRequests[RAM_CLASS_FLATTENED_CLASS_CACHE].prefixSize = 0;
@@ -3062,7 +3062,7 @@ fail:
 			 *
 			 *              + J9ClassEnsureHashed (inherited)
 			 *             + J9ClassHasOffloadAllowSubtasksNatives
-			 *            + Unused
+			 *            + J9ClassIsPrimitiveValueType
 			 *           + Unused
 			 *
 			 *         + Unused
@@ -3337,7 +3337,7 @@ fail:
 						J9ARRAYCLASS_SET_STRIDE(ramClass, J9_VALUETYPE_FLATTENED_SIZE(elementClass));
 					}
 				} else {
-					if (J9_IS_J9CLASS_VALUETYPE(elementClass)) {
+					if (J9_IS_J9CLASS_PRIMITIVE_VALUETYPE(elementClass)) {
 						ramArrayClass->classFlags |= J9ClassContainsUnflattenedFlattenables;
 					}
 					J9ARRAYCLASS_SET_STRIDE(ramClass, (((UDATA) 1) << (((J9ROMArrayClass*)romClass)->arrayShape & 0x0000FFFF)));
@@ -3589,26 +3589,28 @@ retry:
 			}
 		}
 		
-		if (J9_ARE_ALL_BITS_SET(romClass->modifiers, J9AccValueType)) {
-			UDATA instanceSize = result->totalInstanceSize;
+		if (J9ROMCLASS_IS_VALUE(romClass)) {
 			classFlags |= J9ClassIsValueType;
-			if ((instanceSize <= javaVM->valueFlatteningThreshold)
-				&& !J9ROMCLASS_IS_CONTENDED(romClass)
-			) {
-				Trc_VM_CreateRAMClassFromROMClass_valueTypeIsFlattened(vmThread, J9UTF8_LENGTH(className), J9UTF8_DATA(className), result);
-				classFlags |= J9ClassIsFlattened;
-			}
-			if (J9_ARE_ALL_BITS_SET(valueTypeFlags, J9ClassCanSupportFastSubstitutability)) {
-				classFlags |= J9ClassCanSupportFastSubstitutability;
-			}
-
-			if (J9_ARE_ALL_BITS_SET(valueTypeFlags, J9ClassLargestAlignmentConstraintDouble)) {
-				classFlags |= J9ClassLargestAlignmentConstraintDouble;
-			} else if (J9_ARE_ALL_BITS_SET(valueTypeFlags, J9ClassLargestAlignmentConstraintReference)) {
-				classFlags |= J9ClassLargestAlignmentConstraintReference;
-			}
-			if (J9_ARE_ALL_BITS_SET(valueTypeFlags, J9ClassRequiresPrePadding)) {
-				classFlags |= J9ClassRequiresPrePadding;
+			if (J9ROMCLASS_IS_PRIMITIVE_VALUE_TYPE(romClass)) {
+				UDATA instanceSize = result->totalInstanceSize;
+				classFlags |= J9ClassIsPrimitiveValueType;
+				if ((instanceSize <= javaVM->valueFlatteningThreshold)
+					&& !J9ROMCLASS_IS_CONTENDED(romClass)
+				) {
+					Trc_VM_CreateRAMClassFromROMClass_valueTypeIsFlattened(vmThread, J9UTF8_LENGTH(className), J9UTF8_DATA(className), result);
+					classFlags |= J9ClassIsFlattened;
+				}
+				if (J9_ARE_ALL_BITS_SET(valueTypeFlags, J9ClassCanSupportFastSubstitutability)) {
+					classFlags |= J9ClassCanSupportFastSubstitutability;
+				}
+				if (J9_ARE_ALL_BITS_SET(valueTypeFlags, J9ClassLargestAlignmentConstraintDouble)) {
+					classFlags |= J9ClassLargestAlignmentConstraintDouble;
+				} else if (J9_ARE_ALL_BITS_SET(valueTypeFlags, J9ClassLargestAlignmentConstraintReference)) {
+					classFlags |= J9ClassLargestAlignmentConstraintReference;
+				}
+				if (J9_ARE_ALL_BITS_SET(valueTypeFlags, J9ClassRequiresPrePadding)) {
+					classFlags |= J9ClassRequiresPrePadding;
+				}
 			}
 		}
 		if (J9_ARE_ALL_BITS_SET(valueTypeFlags, J9ClassContainsUnflattenedFlattenables)) {

@@ -332,6 +332,7 @@ static const struct { \
 #ifdef J9VM_OPT_VALHALLA_VALUE_TYPES
 #define J9CLASS_UNPADDED_INSTANCE_SIZE(clazz) J9_VALUETYPE_FLATTENED_SIZE(clazz)
 #define J9_IS_J9CLASS_VALUETYPE(clazz) J9_ARE_ALL_BITS_SET((clazz)->classFlags, J9ClassIsValueType)
+#define J9_IS_J9CLASS_PRIMITIVE_VALUETYPE(clazz) J9_ARE_ALL_BITS_SET((clazz)->classFlags, J9ClassIsPrimitiveValueType)
 #define J9_IS_J9CLASS_FLATTENED(clazz) J9_ARE_ALL_BITS_SET((clazz)->classFlags, J9ClassIsFlattened)
 /**
  * Disable flattening of volatile field that is > 8 bytes for now, as the current implementation of copyObjectFields() will tear this field.
@@ -345,16 +346,21 @@ static const struct { \
 #else /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 #define J9CLASS_UNPADDED_INSTANCE_SIZE(clazz) ((clazz)->totalInstanceSize)
 #define J9_IS_J9CLASS_VALUETYPE(clazz) FALSE
+#define J9_IS_J9CLASS_PRIMITIVE_VALUETYPE(clazz) FALSE
 #define J9_IS_J9CLASS_FLATTENED(clazz) FALSE
 #define J9_IS_FIELD_FLATTENED(fieldClazz, romFieldShape) FALSE
 #define J9_VALUETYPE_FLATTENED_SIZE(clazz)((UDATA) 0) /* It is not possible for this macro to be used since we always check J9_IS_J9CLASS_FLATTENED before ever using it. */
 #define IS_REF_OR_VAL_SIGNATURE(firstChar) ('L' == (firstChar))
 #define IS_QTYPE(firstChar) FALSE
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#define IS_LTYPE(firstChar) ('L' == (firstChar))
 
 #define J9_IS_STRING_DESCRIPTOR(str, strLen) (((strLen) > 2) && (IS_REF_OR_VAL_SIGNATURE(*(str))) && (';' == *((str) + (strLen) - 1)))
 
 #define J9_IS_SINGLE_THREAD_MODE(vm) (J9_ARE_ALL_BITS_SET((vm)->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_CRIU_SINGLE_THREAD_MODE))
+
+#define J9_IS_HIDDEN_METHOD(method) \
+	((NULL != (method)) && (J9ROMCLASS_IS_ANON_OR_HIDDEN(J9_CLASS_FROM_METHOD((method))->romClass) || J9_ARE_ANY_BITS_SET(J9_ROM_METHOD_FROM_RAM_METHOD((method))->modifiers, J9AccMethodFrameIteratorSkip)))
 
 #if defined(OPENJ9_BUILD)
 #define J9_SHARED_CACHE_DEFAULT_BOOT_SHARING(vm) TRUE

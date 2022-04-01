@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -211,7 +211,7 @@ internalCreateArrayClass(J9VMThread* vmThread, J9ROMArrayClass* romClass, J9Clas
 	 * instance of the array. Element class init must be done before the arrayClass is created so that in the case
 	 * of an init failure the arrayClass is not temporarily exposed.
 	 */
-	if (J9_IS_J9CLASS_VALUETYPE(elementClass)) {
+	if (J9_IS_J9CLASS_PRIMITIVE_VALUETYPE(elementClass)) {
 		UDATA initStatus = elementClass->initializeStatus;
 		if ((J9ClassInitSucceeded != initStatus) && ((UDATA)vmThread != initStatus)) {
 			initializeClass(vmThread, elementClass);
