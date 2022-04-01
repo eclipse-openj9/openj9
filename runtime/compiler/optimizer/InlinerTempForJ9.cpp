@@ -4793,6 +4793,9 @@ TR_J9InlinerPolicy::supressInliningRecognizedInitialCallee(TR_CallSite* callsite
    if (initialCalleeMethod == NULL)
       return false;
 
+   // Methods we may prefer not to inline, for heuristic reasons.
+   // (Methods we must not inline for correctness don't go in the next switch below.)
+   //
    switch (initialCalleeMethod->getRecognizedMethod())
       {
       /*
@@ -4812,264 +4815,248 @@ TR_J9InlinerPolicy::supressInliningRecognizedInitialCallee(TR_CallSite* callsite
          return true;
          }
 
+      // ByteArray Marshalling methods
+      case TR::com_ibm_dataaccess_ByteArrayMarshaller_writeShort_:
+      case TR::com_ibm_dataaccess_ByteArrayMarshaller_writeShortLength_:
+
+      case TR::com_ibm_dataaccess_ByteArrayMarshaller_writeInt_:
+      case TR::com_ibm_dataaccess_ByteArrayMarshaller_writeIntLength_:
+
+      case TR::com_ibm_dataaccess_ByteArrayMarshaller_writeLong_:
+      case TR::com_ibm_dataaccess_ByteArrayMarshaller_writeLongLength_:
+
+      case TR::com_ibm_dataaccess_ByteArrayMarshaller_writeFloat_:
+      case TR::com_ibm_dataaccess_ByteArrayMarshaller_writeDouble_:
+
+      // ByteArray Unmarshalling methods
+      case TR::com_ibm_dataaccess_ByteArrayUnmarshaller_readShort_:
+      case TR::com_ibm_dataaccess_ByteArrayUnmarshaller_readShortLength_:
+
+      case TR::com_ibm_dataaccess_ByteArrayUnmarshaller_readInt_:
+      case TR::com_ibm_dataaccess_ByteArrayUnmarshaller_readIntLength_:
+
+      case TR::com_ibm_dataaccess_ByteArrayUnmarshaller_readLong_:
+      case TR::com_ibm_dataaccess_ByteArrayUnmarshaller_readLongLength_:
+
+      case TR::com_ibm_dataaccess_ByteArrayUnmarshaller_readFloat_:
+      case TR::com_ibm_dataaccess_ByteArrayUnmarshaller_readDouble_:
+       if (!comp->getOption(TR_DisableMarshallingIntrinsics))
+          return true;
+       break;
+
+      // DAA Packed Decimal arithmetic methods
+      case TR::com_ibm_dataaccess_PackedDecimal_addPackedDecimal_:
+      case TR::com_ibm_dataaccess_PackedDecimal_subtractPackedDecimal_:
+      case TR::com_ibm_dataaccess_PackedDecimal_multiplyPackedDecimal_:
+      case TR::com_ibm_dataaccess_PackedDecimal_dividePackedDecimal_:
+      case TR::com_ibm_dataaccess_PackedDecimal_remainderPackedDecimal_:
+
+      // DAA Packed Decimal comparison methods
+      case TR::com_ibm_dataaccess_PackedDecimal_lessThanPackedDecimal_:
+      case TR::com_ibm_dataaccess_PackedDecimal_lessThanOrEqualsPackedDecimal_:
+      case TR::com_ibm_dataaccess_PackedDecimal_greaterThanPackedDecimal_:
+      case TR::com_ibm_dataaccess_PackedDecimal_greaterThanOrEqualsPackedDecimal_:
+      case TR::com_ibm_dataaccess_PackedDecimal_equalsPackedDecimal_:
+      case TR::com_ibm_dataaccess_PackedDecimal_notEqualsPackedDecimal_:
+
+      // DAA Packed Decimal shift methods
+      case TR::com_ibm_dataaccess_PackedDecimal_shiftLeftPackedDecimal_:
+      case TR::com_ibm_dataaccess_PackedDecimal_shiftRightPackedDecimal_:
+
+      // DAA Packed Decimal check method
+      case TR::com_ibm_dataaccess_PackedDecimal_checkPackedDecimal_:
+
+      // DAA Packed Decimal <-> Integer
+      case TR::com_ibm_dataaccess_DecimalData_convertPackedDecimalToInteger_:
+      case TR::com_ibm_dataaccess_DecimalData_convertPackedDecimalToInteger_ByteBuffer_:
+      case TR::com_ibm_dataaccess_DecimalData_convertIntegerToPackedDecimal_:
+      case TR::com_ibm_dataaccess_DecimalData_convertIntegerToPackedDecimal_ByteBuffer_:
+
+      // DAA Packed Decimal <-> Long
+      case TR::com_ibm_dataaccess_DecimalData_convertPackedDecimalToLong_:
+      case TR::com_ibm_dataaccess_DecimalData_convertPackedDecimalToLong_ByteBuffer_:
+      case TR::com_ibm_dataaccess_DecimalData_convertLongToPackedDecimal_:
+      case TR::com_ibm_dataaccess_DecimalData_convertLongToPackedDecimal_ByteBuffer_:
+
+         // DAA Packed Decimal <-> External Decimal
+      case TR::com_ibm_dataaccess_DecimalData_convertPackedDecimalToExternalDecimal_:
+      case TR::com_ibm_dataaccess_DecimalData_convertExternalDecimalToPackedDecimal_:
+
+      // DAA Packed Decimal <-> Unicode Decimal
+      case TR::com_ibm_dataaccess_DecimalData_convertPackedDecimalToUnicodeDecimal_:
+      case TR::com_ibm_dataaccess_DecimalData_convertUnicodeDecimalToPackedDecimal_:
+
+      case TR::java_math_BigDecimal_noLLOverflowAdd:
+      case TR::java_math_BigDecimal_noLLOverflowMul:
+      case TR::java_math_BigDecimal_slowSubMulSetScale:
+      case TR::java_math_BigDecimal_slowAddAddMulSetScale:
+      case TR::java_math_BigDecimal_slowMulSetScale:
+         if (comp->cg()->getSupportsBDLLHardwareOverflowCheck())
+            return true;
+         break;
+      case TR::java_util_concurrent_atomic_AtomicIntegerFieldUpdater_getAndDecrement:
+      case TR::java_util_concurrent_atomic_AtomicIntegerFieldUpdater_getAndIncrement:
+      case TR::java_util_concurrent_atomic_AtomicIntegerFieldUpdater_getAndAdd:
+      case TR::java_util_concurrent_atomic_AtomicIntegerFieldUpdater_decrementAndGet:
+      case TR::java_util_concurrent_atomic_AtomicIntegerFieldUpdater_incrementAndGet:
+      case TR::java_util_concurrent_atomic_AtomicIntegerFieldUpdater_addAndGet:
+         if (comp->cg()->getSupportsAtomicLoadAndAdd())
+            return true;
+         break;
+      case TR::java_math_BigDecimal_valueOf:
+      case TR::java_math_BigDecimal_add:
+      case TR::java_math_BigDecimal_subtract:
+      case TR::java_math_BigDecimal_multiply:
+         if (comp->isProfilingCompilation())
+            {
+            return true;
+            }
+         // fall through
+      case TR::java_math_BigInteger_add:
+      case TR::java_math_BigInteger_subtract:
+      case TR::java_math_BigInteger_multiply:
+         if (callNode != NULL && callNode->getOpCode().isCallDirect())
+            {
+            bool dontInline = false;
+            if (callNode->getReferenceCount() == 1)
+               dontInline = true;
+            else if (callNode->getReferenceCount() == 2)
+               {
+               TR::TreeTop *callNodeTreeTop = callsite->_callNodeTreeTop;
+               TR::TreeTop *cursor = callNodeTreeTop->getNextTreeTop();
+               while (cursor)
+                  {
+                  TR::Node *cursorNode = cursor->getNode();
+
+                  if (cursorNode->getOpCodeValue() == TR::BBEnd)
+                     break;
+
+                  if (cursorNode->getOpCodeValue() == TR::treetop)
+                     {
+                     if (cursorNode->getFirstChild() == callNode)
+                        {
+                        dontInline = true;
+                        break;
+                        }
+                     }
+
+                  cursor = cursor->getNextTreeTop();
+                  }
+               }
+
+            if (dontInline &&
+                  performTransformation(comp, "%sNot inlining dead BigDecimal/BigInteger call node [" POINTER_PRINTF_FORMAT "]\n", OPT_DETAILS, callNode))
+               return true;
+            }
+         break;
+      case TR::com_ibm_ws_webcontainer_channel_WCCByteBufferOutputStream_printUnencoded:
+         if (comp->isServerInlining())
+            {
+            // Prefer arrayTranslate to kick in as often as possible
+            return true;
+            }
+         break;
+      case TR::com_ibm_jit_JITHelpers_toUpperIntrinsicLatin1:
+      case TR::com_ibm_jit_JITHelpers_toLowerIntrinsicLatin1:
+      case TR::com_ibm_jit_JITHelpers_toUpperIntrinsicUTF16:
+      case TR::com_ibm_jit_JITHelpers_toLowerIntrinsicUTF16:
+         if(comp->cg()->getSupportsInlineStringCaseConversion())
+            {
+            return true;
+            }
+         break;
+      case TR::java_lang_StringLatin1_indexOf:
+      case TR::java_lang_StringUTF16_indexOf:
+      case TR::com_ibm_jit_JITHelpers_intrinsicIndexOfStringLatin1:
+      case TR::com_ibm_jit_JITHelpers_intrinsicIndexOfStringUTF16:
+      case TR::com_ibm_jit_JITHelpers_intrinsicIndexOfLatin1:
+      case TR::com_ibm_jit_JITHelpers_intrinsicIndexOfUTF16:
+         if (comp->cg()->getSupportsInlineStringIndexOf())
+            {
+            return true;
+            }
+         break;
+      case TR::java_lang_Math_max_D:
+      case TR::java_lang_Math_min_D:
+         if(comp->cg()->getSupportsVectorRegisters() && !comp->getOption(TR_DisableSIMDDoubleMaxMin))
+            {
+            return true;
+            }
+         break;
+      case TR::sun_misc_Unsafe_allocateInstance:
+         // VP transforms this into a plain new if it can get a non-null
+         // known object java/lang/Class representing an initialized class
+         return true;
+      case TR::java_lang_String_hashCodeImplDecompressed:
+         /*
+          * X86 and z want to avoid inlining both java_lang_String_hashCodeImplDecompressed and java_lang_String_hashCodeImplCompressed
+          * so they can be recognized and replaced with a custom fast implementation.
+          * Power currently only has the custom fast implementation for java_lang_String_hashCodeImplDecompressed.
+          * As a result, Power only wants to prevent inlining of java_lang_String_hashCodeImplDecompressed.
+          * When Power gets a fast implementation of TR::java_lang_String_hashCodeImplCompressed, this case can be merged into the case
+          * for java_lang_String_hashCodeImplCompressed instead of using a fallthrough.
+          */
+         if (!TR::Compiler->om.canGenerateArraylets() &&
+             comp->target().cpu.isPower() && comp->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P8) && comp->target().cpu.supportsFeature(OMR_FEATURE_PPC_HAS_VSX) && !comp->compileRelocatableCode())
+               {
+               return true;
+               }
+         // Intentional fallthrough here.
+      case TR::java_lang_String_hashCodeImplCompressed:
+         if (comp->cg()->getSupportsInlineStringHashCode())
+            {
+            return true;
+            }
+         break;
+      case TR::java_lang_StringLatin1_inflate:
+         if (comp->cg()->getSupportsInlineStringLatin1Inflate())
+            {
+            return true;
+            }
+         break;
+      case TR::java_lang_Integer_stringSize:
+      case TR::java_lang_Long_stringSize:
+         if (comp->cg()->getSupportsIntegerStringSize())
+            {
+            return true;
+            }
+         break;
+      case TR::java_lang_Integer_getChars: // For compressed strings
+      case TR::java_lang_Long_getChars: // For compressed strings
+      case TR::java_lang_StringUTF16_getChars_Long: // For uncompressed strings
+      case TR::java_lang_StringUTF16_getChars_Integer: // For uncompressed strings
+      case TR::java_lang_Integer_getChars_charBuffer: // For uncompressed strings in Java 8
+      case TR::java_lang_Long_getChars_charBuffer: // For uncompressed strings in Java 8
+         if (comp->cg()->getSupportsIntegerToChars())
+            {
+            return true;
+            }
+         break;
+      case TR::java_lang_StringCoding_encodeASCII:
+      case TR::java_lang_String_encodeASCII:
+         if (comp->cg()->getSupportsInlineEncodeASCII())
+            {
+            return true;
+            }
+         break;
       default:
          break;
       }
 
-   if (callNode == NULL)
-      return false;
-
-   TR::TreeTop *callNodeTreeTop  = callsite->_callNodeTreeTop;
-
-   if (callNode->getSymbol()->getResolvedMethodSymbol())
+   // Methods we must not inline for correctness
+   //
+   switch (initialCalleeMethod->convertToMethod()->getMandatoryRecognizedMethod())
       {
-      // Methods we may prefer not to inline, for heuristic reasons.
-      // (Methods we must not inline for correctness don't go in the next switch below.)
-      //
-      switch (callNode->getSymbol()->getResolvedMethodSymbol()->getRecognizedMethod())
-         {
-         // ByteArray Marshalling methods
-         case TR::com_ibm_dataaccess_ByteArrayMarshaller_writeShort_:
-         case TR::com_ibm_dataaccess_ByteArrayMarshaller_writeShortLength_:
-
-         case TR::com_ibm_dataaccess_ByteArrayMarshaller_writeInt_:
-         case TR::com_ibm_dataaccess_ByteArrayMarshaller_writeIntLength_:
-
-         case TR::com_ibm_dataaccess_ByteArrayMarshaller_writeLong_:
-         case TR::com_ibm_dataaccess_ByteArrayMarshaller_writeLongLength_:
-
-         case TR::com_ibm_dataaccess_ByteArrayMarshaller_writeFloat_:
-         case TR::com_ibm_dataaccess_ByteArrayMarshaller_writeDouble_:
-
-         // ByteArray Unmarshalling methods
-         case TR::com_ibm_dataaccess_ByteArrayUnmarshaller_readShort_:
-         case TR::com_ibm_dataaccess_ByteArrayUnmarshaller_readShortLength_:
-
-         case TR::com_ibm_dataaccess_ByteArrayUnmarshaller_readInt_:
-         case TR::com_ibm_dataaccess_ByteArrayUnmarshaller_readIntLength_:
-
-         case TR::com_ibm_dataaccess_ByteArrayUnmarshaller_readLong_:
-         case TR::com_ibm_dataaccess_ByteArrayUnmarshaller_readLongLength_:
-
-         case TR::com_ibm_dataaccess_ByteArrayUnmarshaller_readFloat_:
-         case TR::com_ibm_dataaccess_ByteArrayUnmarshaller_readDouble_:
-          if (!comp->getOption(TR_DisableMarshallingIntrinsics))
-             return true;
-          break;
-
-         // DAA Packed Decimal arithmetic methods
-         case TR::com_ibm_dataaccess_PackedDecimal_addPackedDecimal_:
-         case TR::com_ibm_dataaccess_PackedDecimal_subtractPackedDecimal_:
-         case TR::com_ibm_dataaccess_PackedDecimal_multiplyPackedDecimal_:
-         case TR::com_ibm_dataaccess_PackedDecimal_dividePackedDecimal_:
-         case TR::com_ibm_dataaccess_PackedDecimal_remainderPackedDecimal_:
-
-         // DAA Packed Decimal comparison methods
-         case TR::com_ibm_dataaccess_PackedDecimal_lessThanPackedDecimal_:
-         case TR::com_ibm_dataaccess_PackedDecimal_lessThanOrEqualsPackedDecimal_:
-         case TR::com_ibm_dataaccess_PackedDecimal_greaterThanPackedDecimal_:
-         case TR::com_ibm_dataaccess_PackedDecimal_greaterThanOrEqualsPackedDecimal_:
-         case TR::com_ibm_dataaccess_PackedDecimal_equalsPackedDecimal_:
-         case TR::com_ibm_dataaccess_PackedDecimal_notEqualsPackedDecimal_:
-
-         // DAA Packed Decimal shift methods
-         case TR::com_ibm_dataaccess_PackedDecimal_shiftLeftPackedDecimal_:
-         case TR::com_ibm_dataaccess_PackedDecimal_shiftRightPackedDecimal_:
-
-         // DAA Packed Decimal check method
-         case TR::com_ibm_dataaccess_PackedDecimal_checkPackedDecimal_:
-
-         // DAA Packed Decimal <-> Integer
-         case TR::com_ibm_dataaccess_DecimalData_convertPackedDecimalToInteger_:
-         case TR::com_ibm_dataaccess_DecimalData_convertPackedDecimalToInteger_ByteBuffer_:
-         case TR::com_ibm_dataaccess_DecimalData_convertIntegerToPackedDecimal_:
-         case TR::com_ibm_dataaccess_DecimalData_convertIntegerToPackedDecimal_ByteBuffer_:
-
-         // DAA Packed Decimal <-> Long
-         case TR::com_ibm_dataaccess_DecimalData_convertPackedDecimalToLong_:
-         case TR::com_ibm_dataaccess_DecimalData_convertPackedDecimalToLong_ByteBuffer_:
-         case TR::com_ibm_dataaccess_DecimalData_convertLongToPackedDecimal_:
-         case TR::com_ibm_dataaccess_DecimalData_convertLongToPackedDecimal_ByteBuffer_:
-
-            // DAA Packed Decimal <-> External Decimal
-         case TR::com_ibm_dataaccess_DecimalData_convertPackedDecimalToExternalDecimal_:
-         case TR::com_ibm_dataaccess_DecimalData_convertExternalDecimalToPackedDecimal_:
-
-         // DAA Packed Decimal <-> Unicode Decimal
-         case TR::com_ibm_dataaccess_DecimalData_convertPackedDecimalToUnicodeDecimal_:
-         case TR::com_ibm_dataaccess_DecimalData_convertUnicodeDecimalToPackedDecimal_:
-
-         case TR::java_math_BigDecimal_noLLOverflowAdd:
-         case TR::java_math_BigDecimal_noLLOverflowMul:
-         case TR::java_math_BigDecimal_slowSubMulSetScale:
-         case TR::java_math_BigDecimal_slowAddAddMulSetScale:
-         case TR::java_math_BigDecimal_slowMulSetScale:
-            if (comp->cg()->getSupportsBDLLHardwareOverflowCheck())
-               return true;
-            break;
-         case TR::java_util_concurrent_atomic_AtomicIntegerFieldUpdater_getAndDecrement:
-         case TR::java_util_concurrent_atomic_AtomicIntegerFieldUpdater_getAndIncrement:
-         case TR::java_util_concurrent_atomic_AtomicIntegerFieldUpdater_getAndAdd:
-         case TR::java_util_concurrent_atomic_AtomicIntegerFieldUpdater_decrementAndGet:
-         case TR::java_util_concurrent_atomic_AtomicIntegerFieldUpdater_incrementAndGet:
-         case TR::java_util_concurrent_atomic_AtomicIntegerFieldUpdater_addAndGet:
-            if (comp->cg()->getSupportsAtomicLoadAndAdd())
-               return true;
-            break;
-         case TR::java_math_BigDecimal_valueOf:
-         case TR::java_math_BigDecimal_add:
-         case TR::java_math_BigDecimal_subtract:
-         case TR::java_math_BigDecimal_multiply:
-            if (comp->isProfilingCompilation())
-               {
-               return true;
-               }
-            // fall through
-         case TR::java_math_BigInteger_add:
-         case TR::java_math_BigInteger_subtract:
-         case TR::java_math_BigInteger_multiply:
-            if (callNode->getOpCode().isCallDirect())
-               {
-               bool dontInline = false;
-               if (callNode->getReferenceCount() == 1)
-                  dontInline = true;
-               else if (callNode->getReferenceCount() == 2)
-                  {
-                  TR::TreeTop *cursor = callNodeTreeTop->getNextTreeTop();
-                  while (cursor)
-                     {
-                     TR::Node *cursorNode = cursor->getNode();
-
-                     if (cursorNode->getOpCodeValue() == TR::BBEnd)
-                        break;
-
-                     if (cursorNode->getOpCodeValue() == TR::treetop)
-                        {
-                        if (cursorNode->getFirstChild() == callNode)
-                           {
-                           dontInline = true;
-                           break;
-                           }
-                        }
-
-                     cursor = cursor->getNextTreeTop();
-                     }
-                  }
-
-               if (dontInline &&
-                     performTransformation(comp, "%sNot inlining dead BigDecimal/BigInteger call node [" POINTER_PRINTF_FORMAT "]\n", OPT_DETAILS, callNode))
-                  return true;
-               }
-            break;
-         case TR::com_ibm_ws_webcontainer_channel_WCCByteBufferOutputStream_printUnencoded:
-            if (comp->isServerInlining())
-               {
-               // Prefer arrayTranslate to kick in as often as possible
-               return true;
-               }
-            break;
-         case TR::com_ibm_jit_JITHelpers_toUpperIntrinsicLatin1:
-         case TR::com_ibm_jit_JITHelpers_toLowerIntrinsicLatin1:
-         case TR::com_ibm_jit_JITHelpers_toUpperIntrinsicUTF16:
-         case TR::com_ibm_jit_JITHelpers_toLowerIntrinsicUTF16:
-            if(comp->cg()->getSupportsInlineStringCaseConversion())
-               {
-               return true;
-               }
-            break;
-         case TR::java_lang_StringLatin1_indexOf:
-         case TR::java_lang_StringUTF16_indexOf:
-         case TR::com_ibm_jit_JITHelpers_intrinsicIndexOfStringLatin1:
-         case TR::com_ibm_jit_JITHelpers_intrinsicIndexOfStringUTF16:
-         case TR::com_ibm_jit_JITHelpers_intrinsicIndexOfLatin1:
-         case TR::com_ibm_jit_JITHelpers_intrinsicIndexOfUTF16:
-            if (comp->cg()->getSupportsInlineStringIndexOf())
-               {
-               return true;
-               }
-            break;
-         case TR::java_lang_Math_max_D:
-         case TR::java_lang_Math_min_D:
-            if(comp->cg()->getSupportsVectorRegisters() && !comp->getOption(TR_DisableSIMDDoubleMaxMin))
-               {
-               return true;
-               }
-            break;
-         case TR::sun_misc_Unsafe_allocateInstance:
-            // VP transforms this into a plain new if it can get a non-null
-            // known object java/lang/Class representing an initialized class
-            return true;
-         case TR::java_lang_String_hashCodeImplDecompressed:
-            /*
-             * X86 and z want to avoid inlining both java_lang_String_hashCodeImplDecompressed and java_lang_String_hashCodeImplCompressed
-             * so they can be recognized and replaced with a custom fast implementation.
-             * Power currently only has the custom fast implementation for java_lang_String_hashCodeImplDecompressed.
-             * As a result, Power only wants to prevent inlining of java_lang_String_hashCodeImplDecompressed.
-             * When Power gets a fast implementation of TR::java_lang_String_hashCodeImplCompressed, this case can be merged into the case
-             * for java_lang_String_hashCodeImplCompressed instead of using a fallthrough.
-             */
-            if (!TR::Compiler->om.canGenerateArraylets() &&
-                comp->target().cpu.isPower() && comp->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P8) && comp->target().cpu.supportsFeature(OMR_FEATURE_PPC_HAS_VSX) && !comp->compileRelocatableCode())
-                  {
-                  return true;
-                  }
-            // Intentional fallthrough here.
-         case TR::java_lang_String_hashCodeImplCompressed:
-            if (comp->cg()->getSupportsInlineStringHashCode())
-               {
-               return true;
-               }
-            break;
-         case TR::java_lang_StringLatin1_inflate:
-            if (comp->cg()->getSupportsInlineStringLatin1Inflate())
-               {
-               return true;
-               }
-            break;
-         case TR::java_lang_Integer_stringSize:
-         case TR::java_lang_Long_stringSize:
-            if (comp->cg()->getSupportsIntegerStringSize())
-               {
-               return true;
-               }
-            break;
-         case TR::java_lang_Integer_getChars: // For compressed strings
-         case TR::java_lang_Long_getChars: // For compressed strings
-         case TR::java_lang_StringUTF16_getChars_Long: // For uncompressed strings
-         case TR::java_lang_StringUTF16_getChars_Integer: // For uncompressed strings
-         case TR::java_lang_Integer_getChars_charBuffer: // For uncompressed strings in Java 8
-         case TR::java_lang_Long_getChars_charBuffer: // For uncompressed strings in Java 8
-            if (comp->cg()->getSupportsIntegerToChars())
-               {
-               return true;
-               }
-            break;
-         case TR::java_lang_StringCoding_encodeASCII:
-         case TR::java_lang_String_encodeASCII:
-            if (comp->cg()->getSupportsInlineEncodeASCII())
-               {
-               return true;
-               }
-            break;
-         default:
-            break;
-         }
-
-      // Methods we must not inline for correctness
-      //
-      switch (callNode->getSymbol()->getResolvedMethodSymbol()->getMandatoryRecognizedMethod())
-         {
-         case TR::java_nio_Bits_keepAlive: // This is an empty method whose only purpose is to serve as an anchored use of a given object, so it doesn't get collected
-         case TR::java_lang_ref_Reference_reachabilityFence: // This is an empty method whose only purpose is to serve as an anchored use of a given object, so it doesn't get collected
-         case TR::java_lang_Object_newInstancePrototype:
-            return true;
-         default:
-            break;
-         }
+      case TR::java_nio_Bits_keepAlive: // This is an empty method whose only purpose is to serve as an anchored use of a given object, so it doesn't get collected
+      case TR::java_lang_ref_Reference_reachabilityFence: // This is an empty method whose only purpose is to serve as an anchored use of a given object, so it doesn't get collected
+      case TR::java_lang_Object_newInstancePrototype:
+         return true;
+      default:
+         break;
       }
 
    return false;
-}
+   }
 
 static bool
 isDecimalFormatPattern(TR::Compilation *comp, TR_ResolvedMethod *method)
