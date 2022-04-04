@@ -23,7 +23,7 @@
 #include <fcntl.h>
 #include <netdb.h>
 #include <netinet/in.h>
-#include <netinet/tcp.h>	/* for TCP_NODELAY option */
+#include <netinet/tcp.h>	/* For TCP_NODELAY option. */
 #include <openssl/err.h>
 #include <poll.h>
 #include <sys/types.h>
