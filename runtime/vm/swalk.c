@@ -426,11 +426,7 @@ UDATA walkFrame(J9StackWalkState * walkState)
 #endif
 
 		/* Process hidden method frames */
-		if (J9_ARE_ALL_BITS_SET(walkState->flags, J9_STACKWALK_SKIP_HIDDEN_FRAMES)
-		&& (NULL != walkState->method)
-		&& (J9ROMCLASS_IS_ANON_OR_HIDDEN(J9_CLASS_FROM_METHOD(walkState->method)->romClass)
-			|| J9_ARE_ANY_BITS_SET(J9_ROM_METHOD_FROM_RAM_METHOD(walkState->method)->modifiers, J9AccMethodFrameIteratorSkip)
-		)) {
+		if (J9_ARE_ALL_BITS_SET(walkState->flags, J9_STACKWALK_SKIP_HIDDEN_FRAMES) && J9_IS_HIDDEN_METHOD(walkState->method)) {
 			return J9_STACKWALK_KEEP_ITERATING;
 		}
 
