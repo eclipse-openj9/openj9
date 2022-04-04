@@ -28,12 +28,6 @@
 
 #include "j9cfg.h"
 #include "j9comp.h"
-#if defined(J9ZOS390)
-/* This is the contents of the old zvarmaps.h - delete this once the builder symbols are gone */
-#pragma variable( native2JITExitBCTable, NORENT )
-#pragma variable( returnFromJ2IBytecodes, NORENT )
-#endif /* J9ZOS390 */
-
 #include "j9port.h"
 #include "j9argscan.h"
 #include "omrthread.h"
