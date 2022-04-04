@@ -204,7 +204,7 @@ HttpGetRequest::parseHttpGetRequest()
    if (strncmp(_buf+pos, HTTP_VERSION_HEADER_STRING, HTTP_VERSION_HEADER_STRING_SIZE))
       return INVALID_HTTP_PROTOCOL;
    memcpy(_httpVersion, _buf+pos+HTTP_VERSION_HEADER_STRING_SIZE, protocolLength-HTTP_VERSION_HEADER_STRING_SIZE);
-   _httpVersion[protocolLength] = 0; // null terminator
+   _httpVersion[protocolLength-HTTP_VERSION_HEADER_STRING_SIZE] = 0; // null terminator
 
    pos += protocolLength;
    // Find the "\r\n" sequence which ends the Request Line
