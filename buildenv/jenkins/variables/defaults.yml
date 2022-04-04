@@ -545,3 +545,39 @@ s390x_linux_criu:
   extends: ['s390x_linux', 'criu']
 aarch64_linux_criu:
   extends: ['aarch64_linux', 'criu']
+#========================================#
+# Linux x86 64bits compiled with GCC 10
+#========================================#
+x86-64_linux_gcc10:
+  extends: ['x86-64_linux']
+  build_env:
+    cmd:
+      all: 'source /home/jenkins/set_gcc_10.3.0_env'
+    vars: 'OPENJ9_JAVA_OPTIONS=-Xdump:system+java:events=systhrow,filter=java/lang/ClassCastException,request=exclusive+prepwalk+preempt'
+#========================================#
+# Linux PPCLE 64bits compiled with GCC 10
+#========================================#
+ppc64le_linux_gcc10:
+  extends: ['ppc64le_linux']
+  build_env:
+    cmd:
+      all: 'source /home/jenkins/set_gcc_10.3.0_env'
+#========================================#
+# Linux s390x 64bits compiled with GCC 10
+#========================================#
+s390x_linux_gcc10:
+  extends: ['s390x_linux']
+  build_env:
+    cmd:
+      all: 'source /home/jenkins/set_gcc_10.3.0_env'
+#========================================#
+# Linux Aarch 64bits compiled with GCC 10
+#========================================#
+aarch64_linux_gcc10:
+  extends: ['aarch64_linux']
+  node_labels:
+    build: 'ci.role.build && hw.arch.aarch64 && sw.tool.docker'
+    docker_image: 'adoptopenjdk/centos7_build_image@sha256:29d743c44245d788d674867c8ff24226f3a4dce3e4d82754d75d5e9ce33a3c69'
+  build_env:
+    vars:
+      all: 'CC=/usr/local/gcc10/bin/gcc-10.3 CXX=/usr/local/gcc10/bin/g++-10.3'
