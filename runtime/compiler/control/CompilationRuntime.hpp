@@ -697,11 +697,18 @@ public:
       }
 
 #if defined(J9VM_OPT_MICROJIT)
-   static void setInitialMJITCountUnsynchronized(J9Method *method, int32_t mjitThreshold)
+   static void setInitialMJITCountUnsynchronized(J9Method *method, int32_t mjitThreshold, int32_t trCount, J9JITConfig *jitConfig, J9VMThread *vmThread)
       {
       if (TR::Options::getJITCmdLineOptions()->_mjitEnabled)
          {
          intptr_t value = (intptr_t)((mjitThreshold << 1) | J9_STARTPC_NOT_TRANSLATED);
+         if (trCount < value)
+            {
+            value = trCount;
+            TR_J9VMBase *fe = TR_J9VMBase::get(jitConfig, vmThread);
+            U_8 *extendedFlags = fe->fetchMethodExtendedFlagsPointer(method);
+            *extendedFlags = (*extendedFlags) | J9_MJIT_FAILED_COMPILE;
+            }
          method->extra = reinterpret_cast<void *>(static_cast<intptr_t>(value));
          }
       }

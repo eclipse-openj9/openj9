@@ -614,8 +614,8 @@ static void jitHookInitializeSendTarget(J9HookInterface * * hook, UDATA eventNum
    if (optionsJIT->_mjitEnabled)
       {
       int32_t mjitCount = optionsJIT->_mjitInitialCount;
-      if (count)
-         TR::CompilationInfo::setInitialMJITCountUnsynchronized(method, mjitCount);
+      if (mjitCount && !(TR::Options::sharedClassCache() && jitConfig->javaVM->sharedClassConfig->existsCachedCodeForROMMethod(vmThread, romMethod)))
+         TR::CompilationInfo::setInitialMJITCountUnsynchronized(method, mjitCount, count, jitConfig, vmThread);
       }
 #endif
 
