@@ -47,8 +47,8 @@ else()
 	# xlc/xlc++ options
 	if(OMR_OS_ZOS)
 		# Specifying -g on z/OS inhibits compiler optimizations.
-		# Instead we use these flags to info required for DDR without hindering the optimizer.
-		list(APPEND OMR_PLATFORM_COMPILE_OPTIONS -qdebug=nohook -qxplink=noback)
+		# Instead we use these flags to get info required for DDR without hindering the optimizer.
+		list(APPEND OMR_PLATFORM_COMPILE_OPTIONS -qdebug=nohook -qnogonumber -qxplink=noback)
 	else()
 		list(APPEND OMR_PLATFORM_COMPILE_OPTIONS -g)
 	endif()
