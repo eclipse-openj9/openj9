@@ -84,6 +84,7 @@ typedef enum {
    compilationAotBlockFrequencyReloFailure         = 58,
    compilationAotRecompQueuedFlagReloFailure       = 59,
    compilationAOTValidateOSRFailure                = 60,
+   compilationRelocationFailure                    = 61,
 #if defined(J9VM_OPT_JITSERVER)
    compilationFirstJITServerFailure,
    compilationStreamFailure                        = compilationFirstJITServerFailure, // 61

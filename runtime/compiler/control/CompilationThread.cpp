@@ -2163,6 +2163,7 @@ bool TR::CompilationInfo::shouldRetryCompilation(TR_MethodToBeCompiled *entry, T
             case compilationAotBlockFrequencyReloFailure:
             case compilationAotRecompQueuedFlagReloFailure:
             case compilationAOTValidateOSRFailure:
+            case compilationRelocationFailure:
                // switch to JIT for these cases (we don't want to relocate again)
                entry->_doNotUseAotCodeFromSharedCache = true;
                tryCompilingAgain = true;
@@ -6786,6 +6787,7 @@ TR::CompilationInfoPerThreadBase::installAotCachedMethod(
             case compilationAotValidateFieldFailure:
             case compilationAotStaticFieldReloFailure:
             case compilationAotClassReloFailure:
+            case compilationRelocationFailure:
                if ((options->getInitialBCount() != 0) &&
                    (options->getInitialCount() != 0))
                   {
