@@ -80,6 +80,73 @@
 
 #include "exceptions/AOTFailure.hpp"
 
+char *TR_RelocationRuntime::_reloErrorCodeNames[] =
+   {
+   "relocationOK",                                     // 0
+
+   "outOfMemory",                                      // 1
+   "reloActionFailCompile",                            // 2
+   "unknownRelocation",                                // 3
+   "unknownReloAction",                                // 4
+   "invalidRelocation",                                // 5
+   "exceptionThrown"                                   // 6
+
+   "methodEnterValidationFailure",                     // 7
+   "methodExitValidationFailure",                      // 8
+   "exceptionHookValidationFailure",                   // 9
+   "stringCompressionValidationFailure",               // 10
+   "tmValidationFailure",                              // 11
+   "osrValidationFailure",                             // 12
+   "instanceFieldValidationFailure",                   // 13
+   "staticFieldValidationFailure",                     // 14
+   "classValidationFailure",                           // 15
+   "arbitraryClassValidationFailure",                  // 16
+   "classByNameValidationFailure",                     // 17
+   "profiledClassValidationFailure",                   // 18
+   "classFromCPValidationFailure",                     // 19
+   "definingClassFromCPValidationFailure",             // 20
+   "staticClassFromCPValidationFailure",               // 21
+   "arrayClassFromComponentClassValidationFailure",    // 22
+   "superClassFromClassValidationFailure",             // 23
+   "classInstanceOfClassValidationFailure",            // 24
+   "systemClassByNameValidationFailure",               // 25
+   "classFromITableIndexCPValidationFailure",          // 26
+   "declaringClassFromFieldOrStaticValidationFailure", // 27
+   "concreteSubclassFromClassValidationFailure",       // 28
+   "classChainValidationFailure",                      // 29
+   "methodFromClassValidationFailure",                 // 30
+   "staticMethodFromCPValidationFailure",              // 31
+   "specialMethodFromCPValidationFailure",             // 32
+   "virtualMethodFromCPValidationFailure",             // 33
+   "virtualMethodFromOffsetValidationFailure",         // 34
+   "interfaceMethodFromCPValidationFailure",           // 35
+   "improperInterfaceMethodFromCPValidationFailure",   // 36
+   "methodFromClassAndSigValidationFailure",           // 37
+   "stackWalkerMaySkipFramesValidationFailure",        // 38
+   "classInfoIsInitializedValidationFailure",          // 39
+   "methodFromSingleImplValidationFailure",            // 40
+   "methodFromSingleInterfaceImplValidationFailure",   // 41
+   "methodFromSingleAbstractImplValidationFailure",    // 42
+   "j2iThunkFromMethodValidationFailure",              // 43
+   "svmValidationFailure",                             // 44
+   "wkcValidationFailure",                             // 45
+
+   "classAddressRelocationFailure",                    // 46
+   "inlinedMethodRelocationFailure",                   // 47
+   "symbolFromManagerRelocationFailure",               // 48
+   "thunkRelocationFailure",                           // 49
+   "trampolineRelocationFailure",                      // 50
+   "picTrampolineRelocationFailure",                   // 51
+   "cacheFullRelocationFailure",                       // 52
+   "blockFrequencyRelocationFailure",                  // 53
+   "recompQueuedFlagRelocationFailure",                // 54
+   "debugCounterRelocationFailure",                    // 55
+   "directJNICallRelocationFailure",                   // 56
+   "ramMethodConstRelocationFailure",                  // 57
+
+   "maxRelocationError"                                // 58
+   };
+
 TR_RelocationRuntime::TR_RelocationRuntime(J9JITConfig *jitCfg)
    {
    _method = NULL;
@@ -182,6 +249,7 @@ TR_RelocationRuntime::prepareRelocateAOTCodeAndData(J9VMThread* vmThread,
    _relocationStatus = RelocationNoError;
    _haveReservedCodeCache = false; // MCT
    _returnCode = 0;
+   _reloErrorCode = TR_RelocationErrorCode::relocationOK;
 
    _comp = comp;
    _trMemory = comp->trMemory();
