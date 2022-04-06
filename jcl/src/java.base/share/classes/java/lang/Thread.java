@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar18-SE & !OPENJDK_THREAD_SUPPORT]*/
+/*[INCLUDE-IF (JAVA_SPEC_VERSION >= 8) & !OPENJDK_THREAD_SUPPORT]*/
 /*******************************************************************************
  * Copyright (c) 1998, 2022 IBM Corp. and others
  *
@@ -31,8 +31,6 @@ import jdk.internal.misc.TerminatingThreadLocal;
 /*[ENDIF] Sidecar18-SE-OpenJ9 */
 import sun.security.util.SecurityConstants;
 /*[IF JAVA_SPEC_VERSION >= 11]*/
-import java.io.FileDescriptor;
-import java.nio.charset.Charset;
 import java.util.Properties;
 import jdk.internal.reflect.CallerSensitive;
 /*[ELSE] JAVA_SPEC_VERSION >= 11 */
@@ -207,50 +205,6 @@ private Thread(String vmName, Object vmThreadGroup, int vmPriority, boolean vmIs
 		/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 		System.completeInitialization();
 	}
-}
-
-/*
- * Called after everything else is initialized.
- */
-void completeInitialization() {
-	// Get the java.system.class.loader
-	/*[PR CMVC 99755] Implement -Djava.system.class.loader option */
-	contextClassLoader = ClassLoader.getSystemClassLoader();
-	/*[IF Sidecar19-SE]*/
-	jdk.internal.misc.VM.initLevel(4);
-	/*[ELSE]*/ // Sidecar19-SE
-	sun.misc.VM.booted();
-	/*[ENDIF]*/ // Sidecar19-SE
-	/*[IF Sidecar19-SE|Sidecar18-SE-OpenJ9]*/
-	System.startSNMPAgent();
-	/*[ENDIF]*/ // Sidecar19-SE|Sidecar18-SE-OpenJ9
-
-	/*[IF JAVA_SPEC_VERSION >= 11] */
-	/* Although file.encoding is used to set the default Charset, some Charset's are not available
-	 * in the java.base module and so are not used at startup. There are additional Charset's in the
-	 * jdk.charsets module, which is only loaded later. This means the default Charset may not be the
-	 * same as file.encoding. Now that all modules and Charset's are available, check if the desired
-	 * encodings can be used for System.err and System.out.
-	 */
-	Properties props = System.internalGetProperties();
-	// If the sun.stderr.encoding was already set in System, don't change the encoding
-	if (!System.hasSetErrEncoding()) {
-		Charset stderrCharset = System.getCharset(props.getProperty("sun.stderr.encoding"), true); //$NON-NLS-1$
-		if (stderrCharset != null) {
-			System.err.flush();
-			System.setErr(System.createConsole(FileDescriptor.err, stderrCharset));
-		}
-	}
-
-	// If the sun.stdout.encoding was already set in System, don't change the encoding
-	if (!System.hasSetOutEncoding()) {
-		Charset stdoutCharset = System.getCharset(props.getProperty("sun.stdout.encoding"), true); //$NON-NLS-1$
-		if (stdoutCharset != null) {
-			System.out.flush();
-			System.setOut(System.createConsole(FileDescriptor.out, stdoutCharset));
-		}
-	}
-	/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 }
 
 /**
@@ -1015,6 +969,10 @@ public void setContextClassLoader(ClassLoader cl) {
 		// then check permission
 		currentManager.checkPermission(com.ibm.oti.util.RuntimePermissions.permissionSetContextClassLoader);
 	}
+	contextClassLoader = cl;
+}
+
+void internalSetContextClassLoader(ClassLoader cl) {
 	contextClassLoader = cl;
 }
 
