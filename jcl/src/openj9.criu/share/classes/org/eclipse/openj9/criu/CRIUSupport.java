@@ -67,7 +67,8 @@ public final class CRIUSupport {
 			String workDir,
 			boolean tcpEstablished,
 			boolean autoDedup,
-			boolean trackMemory);
+			boolean trackMemory,
+			boolean unprivileged);
 
 	static {
 		AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
@@ -157,6 +158,7 @@ public final class CRIUSupport {
 	private boolean tcpEstablished;
 	private boolean autoDedup;
 	private boolean trackMemory;
+	private boolean unprivileged;
 	private Path envFile;
 
 	/**
@@ -347,6 +349,19 @@ public final class CRIUSupport {
 	}
 
 	/**
+	 * Controls whether CRIU will be invoked in privileged or unprivileged mode.
+	 * <p>
+	 * Default: false
+	 *
+	 * @param unprivileged
+	 * @return this
+	 */
+	public CRIUSupport setUnprivileged(boolean unprivileged) {
+		this.unprivileged = unprivileged;
+		return this;
+	}
+
+	/**
 	 * Append new environment variables to the set returned by ProcessEnvironment.getenv(...) upon
 	 * restore. All pre-existing (environment variables from checkpoint run) env
 	 * vars are retained. All environment variables specified in the envFile are
@@ -521,7 +536,7 @@ public final class CRIUSupport {
 
 		if (InternalCRIUSupport.isCheckpointAllowed()) {
 			checkpointJVMImpl(imageDir, leaveRunning, shellJob, extUnixSupport, logLevel, logFile, fileLocks, workDir,
-					tcpEstablished, autoDedup, trackMemory);
+					tcpEstablished, autoDedup, trackMemory, unprivileged);
 		} else {
 			if (InternalCRIUSupport.isCRIUSupportEnabled()) {
 				throw new UnsupportedOperationException(
