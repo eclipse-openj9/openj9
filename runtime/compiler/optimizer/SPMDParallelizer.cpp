@@ -340,7 +340,7 @@ bool TR_SPMDKernelParallelizer::visitTreeTopToSIMDize(TR::TreeTop *tt, TR_SPMDKe
 
          TR_ASSERT(vectorOpCode != TR::BadILOp, "BAD IL Opcode to be assigned during transformation");
 
-         if (isCheckMode && !comp->cg()->getSupportsOpCodeForAutoSIMD(vectorOpCode, node->getDataType(), VECTOR_LENGTH))
+         if (isCheckMode && !comp->cg()->getSupportsOpCodeForAutoSIMD(vectorOpCode, node->getDataType()))
             return false;
 
          if (!isCheckMode)
@@ -557,7 +557,7 @@ bool TR_SPMDKernelParallelizer::visitTreeTopToSIMDize(TR::TreeTop *tt, TR_SPMDKe
 
          TR_ASSERT_FATAL(vectorOpCode != TR::BadILOp, "BAD IL Opcode to be assigned during transformation");
 
-         if (isCheckMode && !comp->cg()->getSupportsOpCodeForAutoSIMD(vectorOpCode, node->getDataType(), VECTOR_LENGTH))
+         if (isCheckMode && !comp->cg()->getSupportsOpCodeForAutoSIMD(vectorOpCode, node->getDataType()))
             return false;
 
          if (!isCheckMode)
@@ -699,7 +699,7 @@ bool TR_SPMDKernelParallelizer::visitNodeToSIMDize(TR::Node *parent, int32_t chi
    TR_ASSERT(vectorOpCode != TR::BadILOp, "BAD IL Opcode to be assigned during transformation");
 
 
-   if (isCheckMode && !comp->cg()->getSupportsOpCodeForAutoSIMD(vectorOpCode, node->getDataType(), VECTOR_LENGTH))
+   if (isCheckMode && !comp->cg()->getSupportsOpCodeForAutoSIMD(vectorOpCode, node->getDataType()))
       {
       if (trace)
          {
@@ -730,13 +730,13 @@ bool TR_SPMDKernelParallelizer::visitNodeToSIMDize(TR::Node *parent, int32_t chi
             if (loadInductionVar)
                {
                // confirm platform supports vectorizing PIV uses
-               bool platformSupport = comp->cg()->getSupportsOpCodeForAutoSIMD(TR::vstore, node->getDataType(), VECTOR_LENGTH);
-               platformSupport = platformSupport && comp->cg()->getSupportsOpCodeForAutoSIMD(TR::vsetelem, node->getDataType(), VECTOR_LENGTH);
+               bool platformSupport = comp->cg()->getSupportsOpCodeForAutoSIMD(TR::vstore, node->getDataType());
+               platformSupport = platformSupport && comp->cg()->getSupportsOpCodeForAutoSIMD(TR::vsetelem, node->getDataType());
 
                TR::ILOpCodes vectorAddOpCode = TR::ILOpCode::createVectorOpCode(OMR::vadd, TR::DataType::createVectorType((TR::DataTypes)node->getDataType().getDataType(), VECTOR_LENGTH)).getOpCodeValue();
 
-               platformSupport = platformSupport && comp->cg()->getSupportsOpCodeForAutoSIMD(vectorAddOpCode, node->getDataType(), VECTOR_LENGTH);
-               platformSupport = platformSupport && comp->cg()->getSupportsOpCodeForAutoSIMD(TR::vsplats, node->getDataType(), VECTOR_LENGTH);
+               platformSupport = platformSupport && comp->cg()->getSupportsOpCodeForAutoSIMD(vectorAddOpCode, node->getDataType());
+               platformSupport = platformSupport && comp->cg()->getSupportsOpCodeForAutoSIMD(TR::vsplats, node->getDataType());
 
                if (trace && platformSupport)
 		  traceMsg(comp, "   Found use of induction variable at node [%p]\n", node);
@@ -1004,25 +1004,25 @@ bool TR_SPMDKernelParallelizer::autoSIMDReductionSupported(TR::Compilation *comp
       }
 
    //These checks are to make sure vector opcodes uses for reduction are supported
-   if (!comp->cg()->getSupportsOpCodeForAutoSIMD(TR::vsplats, node->getDataType(), VECTOR_LENGTH))
+   if (!comp->cg()->getSupportsOpCodeForAutoSIMD(TR::vsplats, node->getDataType()))
       {
       if (trace) traceMsg(comp, "   autoSIMDReductionSupported: vsplats is not supported for dataType: %s\n", node->getDataType().toString());
       return false;
       }
 
-   if (!comp->cg()->getSupportsOpCodeForAutoSIMD(TR::vstore, node->getDataType(), VECTOR_LENGTH))
+   if (!comp->cg()->getSupportsOpCodeForAutoSIMD(TR::vstore, node->getDataType()))
       {
       if (trace) traceMsg(comp, "   autoSIMDReductionSupported: vstore is not supported for dataType: %s\n", node->getDataType().toString());
       return false;
       }
 
-   if (!comp->cg()->getSupportsOpCodeForAutoSIMD(TR::vload, node->getDataType(), VECTOR_LENGTH))
+   if (!comp->cg()->getSupportsOpCodeForAutoSIMD(TR::vload, node->getDataType()))
       {
       if (trace) traceMsg(comp, "   autoSIMDReductionSupported: vload is not supported for dataType: %s\n", node->getDataType().toString());
       return false;
       }
 
-   if (!comp->cg()->getSupportsOpCodeForAutoSIMD(TR::getvelem, node->getDataType(), VECTOR_LENGTH))
+   if (!comp->cg()->getSupportsOpCodeForAutoSIMD(TR::getvelem, node->getDataType()))
       {
       if (trace) traceMsg(comp, "   autoSIMDReductionSupported: getvelem is not supported for dataType: %s\n", node->getDataType().toString());
       return false;

@@ -1367,7 +1367,7 @@ TR::Node *TR_VectorAPIExpansion::naryIntrinsicHandler(TR_VectorAPIExpansion *opt
       if (vectorOpCode == TR::BadILOp)
           return NULL;
 
-      if (!comp->cg()->getSupportsOpCodeForAutoSIMD(vectorOpCode, elementType, OMR::DataType::bitsToVectorLength(vectorLength)))
+      if (!comp->cg()->getSupportsOpCodeForAutoSIMD(vectorOpCode, elementType))
          return NULL;
 
       return node;
@@ -1395,7 +1395,7 @@ TR::Node *TR_VectorAPIExpansion::blendIntrinsicHandler(TR_VectorAPIExpansion *op
       {
       if (!supportedOnPlatform(comp, vectorLength)) return NULL;
 
-      if (!comp->cg()->getSupportsOpCodeForAutoSIMD(vectorOpCode, elementType, OMR::DataType::bitsToVectorLength(vectorLength)))
+      if (!comp->cg()->getSupportsOpCodeForAutoSIMD(vectorOpCode, elementType))
          return NULL;
 
       return node;
@@ -1415,7 +1415,7 @@ TR::Node *TR_VectorAPIExpansion::broadcastCoercedIntrinsicHandler(TR_VectorAPIEx
 
    if (mode == checkVectorization)
       {
-      if (!comp->cg()->getSupportsOpCodeForAutoSIMD(TR::vsplats, elementType, OMR::DataType::bitsToVectorLength(vectorLength)))
+      if (!comp->cg()->getSupportsOpCodeForAutoSIMD(TR::vsplats, elementType))
          return NULL;
       else
          return node;
@@ -1529,7 +1529,7 @@ TR::Node *TR_VectorAPIExpansion::compareIntrinsicHandler(TR_VectorAPIExpansion *
       if (vectorOpCode == TR::BadILOp)
           return NULL;
 
-      if (!comp->cg()->getSupportsOpCodeForAutoSIMD(vectorOpCode, elementType, OMR::DataType::bitsToVectorLength(vectorLength)))
+      if (!comp->cg()->getSupportsOpCodeForAutoSIMD(vectorOpCode, elementType))
          return NULL;
 
       return node;
