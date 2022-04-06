@@ -6668,6 +6668,7 @@ TR::CompilationInfoPerThreadBase::installAotCachedMethod(
 
    TR_MethodMetaData *metaData;
    int32_t returnCode = 0;
+   TR_RelocationErrorCode reloErrorCode = TR_RelocationErrorCode::relocationOK;
 
    if (_compInfo.getPersistentInfo()->isRuntimeInstrumentationEnabled())
       {
@@ -6686,11 +6687,12 @@ TR::CompilationInfoPerThreadBase::installAotCachedMethod(
                                                            compilee);
    setMetadata(metaData);
    returnCode = reloRuntime()->returnCode();
+   reloErrorCode = reloRuntime()->getReloErrorCode();
 
    if (TR::Options::getVerboseOption(TR_VerboseCompilationDispatch))
       TR_VerboseLog::writeLineLocked(TR_Vlog_DISPATCH,
-         "prepareRelocateAOTCodeAndData results: j9method=%p metaData=%p returnCode=%d method=%s",
-         method, metaData, returnCode, compiler->signature());
+         "prepareRelocateAOTCodeAndData results: j9method=%p metaData=%p returnCode=%d reloErrorCode=%s method=%s",
+         method, metaData, returnCode, reloRuntime()->getReloErrorCodeName(reloErrorCode), compiler->signature());
 
    if (_compInfo.getPersistentInfo()->isRuntimeInstrumentationEnabled())
       {
@@ -6782,19 +6784,14 @@ TR::CompilationInfoPerThreadBase::installAotCachedMethod(
          // fact that AOT methods are loaded at a lower count than when they were compiled so the JVM is given less opportunity to resolve things.
          // The new hint tells us that a previous relocation failed a validation so specify a higher scount for the next run to give it more chance
          // to resolve things.
-         switch (returnCode)
+         if (reloRuntime()->isValidationError(reloErrorCode))
             {
-            case compilationAotValidateFieldFailure:
-            case compilationAotStaticFieldReloFailure:
-            case compilationAotClassReloFailure:
-            case compilationRelocationFailure:
-               if ((options->getInitialBCount() != 0) &&
-                   (options->getInitialCount() != 0))
-                  {
-                  TR_J9SharedCache *sc = (TR_J9SharedCache *) (compiler->fej9()->sharedCache());
-                  sc->addHint(method, TR_HintFailedValidation);
-                  }
-                break;
+            if ((options->getInitialBCount() != 0) &&
+                (options->getInitialCount() != 0))
+               {
+               TR_J9SharedCache *sc = (TR_J9SharedCache *) (compiler->fej9()->sharedCache());
+               sc->addHint(method, TR_HintFailedValidation);
+               }
             }
          }
       }
