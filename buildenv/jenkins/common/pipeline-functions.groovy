@@ -806,7 +806,7 @@ def move_spec_suffix_to_id(spec, id) {
     def spec_id = [:]
     spec_id['spec'] = spec
     spec_id['id'] = id
-    for (suffix in ['aot', 'cm', 'jit', 'valhalla', 'uma', 'ojdk292', 'vt_standard']) {
+    for (suffix in ['aot', 'cm', 'criu', 'jit', 'ojdk292', 'uma', 'valhalla', 'vt_standard']) {
         if (spec.contains("_${suffix}")) {
             spec_id['spec'] = spec - "_${suffix}"
             spec_id['id'] = "${suffix}_" + id
