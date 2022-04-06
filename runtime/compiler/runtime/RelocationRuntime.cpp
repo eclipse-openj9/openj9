@@ -78,6 +78,8 @@
 #include "control/CompilationThread.hpp"
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
+#include "exceptions/AOTFailure.hpp"
+
 TR_RelocationRuntime::TR_RelocationRuntime(J9JITConfig *jitCfg)
    {
    _method = NULL;
@@ -512,14 +514,23 @@ TR_RelocationRuntime::relocateAOTCodeAndData(U_8 *tempDataStart,
 
          try
             {
-            _returnCode = reloGroup.applyRelocations(this, reloTarget(), newMethodCodeStart() + codeCacheDelta());
+            int32_t returnCode = reloGroup.applyRelocations(this, reloTarget(), newMethodCodeStart() + codeCacheDelta());
+            setReturnCode(returnCode);
+            }
+         catch (const std::bad_alloc &e)
+            {
+            setReturnCode(compilationHeapLimitExceeded);
+            }
+         catch (const J9::AOTSymbolValidationManagerFailure &e)
+            {
+            setReturnCode(compilationSymbolValidationManagerFailure);
             }
          catch (...)
             {
-            _returnCode = compilationAotClassReloFailure;
+            setReturnCode(compilationAotClassReloFailure);
             }
 
-         RELO_LOG(reloLogger(), 6, "relocateAOTCodeAndData: return code %d\n", _returnCode);
+         RELO_LOG(reloLogger(), 6, "relocateAOTCodeAndData: return code %d\n", returnCode());
 
 #if defined(DEBUG) || defined(PROD_WITH_ASSUMES)
          // Detect some potential incorrectness that could otherwise be missed
@@ -543,7 +554,7 @@ TR_RelocationRuntime::relocateAOTCodeAndData(U_8 *tempDataStart,
             }
 #endif
 
-         if (_returnCode != 0)
+         if (returnCode() != 0)
             {
             //clean up code cache
             _relocationStatus = RelocationFailure;
