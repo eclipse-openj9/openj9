@@ -1,6 +1,6 @@
 /*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 /*******************************************************************************
- * Copyright (c) 1998, 2021 IBM Corp. and others
+ * Copyright (c) 1998, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -36,7 +36,6 @@
  * DESCRIPTION: Trace class for JVM trace facility manipulation
  * ===========================================================================
  */
-
 package com.ibm.jvm;
 
 import java.util.*;
@@ -54,7 +53,7 @@ import java.util.*;
  * <p>
  * The {@code trace(int handle, int traceId, ...)} methods are used take the application
  * trace points registered by {@code registerApplication(name, formats)}. The handle
- * value is the integer returned by the  {@code registerApplication(name, formats)}.
+ * value is the integer returned by the {@code registerApplication(name, formats)}.
  * The traceId is an index into the formats array and the {@code trace(int handle, int traceId, ...)}
  * method called must match the types required by the format String {@code formats[traceId]}.
  * <p>
@@ -81,23 +80,23 @@ public final class Trace {
 		initTraceImpl();
 	}
 
-	/** Don't let anyone instantiate this class. */
+	/** Don't let anyone else instantiate this class. */
 	private Trace() {
 		super();
 	}
 
 	/**
 	 * This method does nothing.
-	 * 
+	 *
 	 * @deprecated this method does nothing
 	 */
-	/*[IF Sidecar19-SE]
+	/*[IF JAVA_SPEC_VERSION >= 9]
 	@Deprecated(forRemoval = true, since = "1.8")
-	/*[ELSE] Sidecar19-SE */
+	/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 	@Deprecated
-	/*[ENDIF] Sidecar19-SE */
+	/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 	public static void initializeTrace() {
-		// initialization has already been done 
+		// initialization has already been done
 	}
 
 	/*
@@ -124,11 +123,11 @@ public final class Trace {
 	 * A security manager check will be made only if the system property
 	 * com.ibm.jvm.enableLegacyTraceSecurity is set to "true" in which case a
 	 * check will be made for com.ibm.jvm.TracePermission
-	 * 
+	 *
 	 * @param cmd
 	 *            the trace options string to set
 	 * @return 0 on success, non-zero otherwise
-	 * 
+	 *
 	 * @throws SecurityException
 	 *             if there is a security manager and it doesn't allow the
 	 *             checks required to change the dump settings
@@ -139,42 +138,42 @@ public final class Trace {
 	}
 
 	/**
-     * Trigger a snap dump. The snap dump format is not human-readable
-     * and must be processed using the trace formatting tool supplied
-     * with the IBM JVM.
-	 * 
+	 * Trigger a snap dump. The snap dump format is not human-readable
+	 * and must be processed using the trace formatting tool supplied
+	 * with the IBM JVM.
+	 *
 	 * A security manager check will be made only if the system property
 	 * com.ibm.jvm.enableLegacyTraceSecurity is set to "true" in which case
 	 * a check will be made for com.ibm.jvm.TracePermission
-	 * 
+	 *
 	 * @throws SecurityException if there is a security manager and it doesn't allow the checks required to take this dump
 	 */
 	public static void snap() {
 		checkLegacySecurityPermssion();
 		snapImpl();
 	}
-	
+
 	/**
 	 * Suspends tracing for all the threads in the JVM.
-	 * 
+	 *
 	 * A security manager check will be made only if the system property
 	 * com.ibm.jvm.enableLegacyTraceSecurity is set to "true" in which case
 	 * a check will be made for com.ibm.jvm.TracePermission
-	 * 
+	 *
 	 * @throws SecurityException if there is a security manager and it doesn't allow the checks required to take this dump
 	 */
 	public static void suspend() {
 		checkLegacySecurityPermssion();
-		suspendImpl();	
+		suspendImpl();
 	}
 
 	/**
 	 * Resumes tracing for all the threads in the JVM.
-	 * 
+	 *
 	 * A security manager check will be made only if the system property
 	 * com.ibm.jvm.enableLegacyTraceSecurity is set to "true" in which case
 	 * a check will be made for com.ibm.jvm.TracePermission
-	 * 
+	 *
 	 * @throws SecurityException if there is a security manager and it doesn't allow the checks required to take this dump
 	 */
 	public static void resume() {
@@ -185,11 +184,11 @@ public final class Trace {
 	/**
 	 * Decrements the suspend and resume count for the current thread and suspends
 	 * tracing the thread if the result is negative.
-	 * 
+	 *
 	 * A security manager check will be made only if the system property
 	 * com.ibm.jvm.enableLegacyTraceSecurity is set to "true" in which case
 	 * a check will be made for com.ibm.jvm.TracePermission
-	 * 
+	 *
 	 * @throws SecurityException if there is a security manager and it doesn't allow the checks required to take this dump
 	 */
 	public static void suspendThis() {
@@ -200,11 +199,11 @@ public final class Trace {
 	/**
 	 * Increments the suspend and resume count for the current thread and resumes
 	 * tracing the thread if the result is not negative.
-	 * 
+	 *
 	 * A security manager check will be made only if the system property
 	 * com.ibm.jvm.enableLegacyTraceSecurity is set to "true" in which case
 	 * a check will be made for com.ibm.jvm.TracePermission
-	 * 
+	 *
 	 * @throws SecurityException if there is a security manager and it doesn't allow the checks required to take this dump
 	 */
 	public static void resumeThis() {
@@ -226,24 +225,24 @@ public final class Trace {
 	 * When enabling or disabling trace points registered for this application
 	 * either on the command line or using Trace.set() the trace point id's will
 	 * be the application name and the index in the template array.
-	 * 
+	 *
 	 * For example if you register an application called HelloWorld with three
 	 * Strings in the template array the trace id's will be HelloWorld.0,
 	 * HelloWorld.1 and HelloWorld.2
-	 * 
+	 *
 	 * To start printing the third trace point you could call Trace.set() like
 	 * this: {@code Trace.set("print=HelloWorld.2"); }
 	 * <p>
 	 * A security manager check will be made only if the system property
 	 * com.ibm.jvm.enableLegacyTraceSecurity is set to "true" in which case a
 	 * check will be made for com.ibm.jvm.TracePermission
-	 * 
+	 *
 	 * @param name
 	 *            the name of the application you want to trace
 	 * @param templates
 	 *            an array of format strings like the strings used by the C
 	 *            printf method
-	 * 
+	 *
 	 * @throws SecurityException
 	 *             if there is a security manager and it doesn't allow the
 	 *             checks required to take this dump
@@ -272,7 +271,7 @@ public final class Trace {
 	private static native void resumeThisImpl();
 
 	// Application trace registration method
-	private synchronized static native int registerApplicationImpl(String name,
+	private static native int registerApplicationImpl(String name,
 			String[] templates); /* ibm@94077 */
 
 	/**
@@ -281,14 +280,14 @@ public final class Trace {
 	 * directly.
 	 * @throws SecurityException
 	 */
-    private static void checkLegacySecurityPermssion() throws SecurityException {
-    	if (!("false".equalsIgnoreCase(com.ibm.oti.vm.VM.getVMLangAccess()	//$NON-NLS-1$
-    		.internalGetProperties().getProperty(LEGACY_TRACE_PERMISSION_PROPERTY)))) {
-    		checkTraceSecurityPermssion();
-    	}
-    }
-	
-    private static void checkTraceSecurityPermssion() throws SecurityException {
+	private static void checkLegacySecurityPermssion() throws SecurityException {
+		if (!("false".equalsIgnoreCase(com.ibm.oti.vm.VM.getVMLangAccess() //$NON-NLS-1$
+				.internalGetProperties().getProperty(LEGACY_TRACE_PERMISSION_PROPERTY)))) {
+			checkTraceSecurityPermssion();
+		}
+	}
+
+	private static void checkTraceSecurityPermssion() throws SecurityException {
 		/* Check the caller has TracePermission. */
 		@SuppressWarnings("removal")
 		SecurityManager manager = System.getSecurityManager();
@@ -718,7 +717,7 @@ public final class Trace {
 	 * is running on. In particular the time may not exactly match the time
 	 * returned by the system clock, so times from this method should only be
 	 * compared with other times returned from this method.
-	 * 
+	 *
 	 * @deprecated Use {@code System.nanoTime()} instead as this provides as
 	 *             good or better resolution and is more portable.
 	 * @return the current time in microseconds or 0 if a high-resolution timer
