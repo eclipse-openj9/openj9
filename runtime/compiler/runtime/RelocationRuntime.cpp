@@ -276,21 +276,24 @@ TR_RelocationRuntime::prepareRelocateAOTCodeAndData(J9VMThread* vmThread,
       &&
        (_aotMethodHeaderEntry->flags & TR_AOTMethodHeader_IsNotCapableOfMethodExitTracing))
       {
-      setReturnCode(compilationAotValidateMethodExitFailure);
+      setReloErrorCode(TR_RelocationErrorCode::methodExitValidationFailure);
+      setReturnCode(compilationRelocationFailure);
       return NULL; // fail
       }
    if ((fej9->isMethodTracingEnabled((TR_OpaqueMethodBlock*)theMethod) || fej9->canMethodEnterEventBeHooked())
       &&
        (_aotMethodHeaderEntry->flags & TR_AOTMethodHeader_IsNotCapableOfMethodEnterTracing))
       {
-      setReturnCode(compilationAotValidateMethodEnterFailure);
+      setReloErrorCode(TR_RelocationErrorCode::methodEnterValidationFailure);
+      setReturnCode(compilationRelocationFailure);
       return NULL; // fail
       }
 
    if (fej9->canExceptionEventBeHooked()
        && (_aotMethodHeaderEntry->flags & TR_AOTMethodHeader_IsNotCapableOfExceptionHook))
       {
-      setReturnCode(compilationAotValidateExceptionHookFailure);
+      setReloErrorCode(TR_RelocationErrorCode::exceptionHookValidationFailure);
+      setReturnCode(compilationRelocationFailure);
       return NULL;
       }
 
@@ -314,7 +317,8 @@ TR_RelocationRuntime::prepareRelocateAOTCodeAndData(J9VMThread* vmThread,
          }
       if (conflict)
          {
-         setReturnCode(compilationAotValidateStringCompressionFailure);
+         setReloErrorCode(TR_RelocationErrorCode::stringCompressionValidationFailure);
+         setReturnCode(compilationRelocationFailure);
          return NULL;
          }
       }
@@ -325,7 +329,8 @@ TR_RelocationRuntime::prepareRelocateAOTCodeAndData(J9VMThread* vmThread,
 
    if ((_aotMethodHeaderEntry->flags & TR_AOTMethodHeader_TMDisabled) && !comp->getOption(TR_DisableTM))
       {
-      setReturnCode(compilationAOTValidateTMFailure);
+      setReloErrorCode(TR_RelocationErrorCode::tmValidationFailure);
+      setReturnCode(compilationRelocationFailure);
       return NULL;
       }
 
@@ -338,7 +343,8 @@ TR_RelocationRuntime::prepareRelocateAOTCodeAndData(J9VMThread* vmThread,
                                      _aotMethodHeaderEntry->_osrBufferInfo._scratchBufferSizeInBytes,
                                      _aotMethodHeaderEntry->_osrBufferInfo._stackFrameSizeInBytes))
          {
-         setReturnCode(compilationAOTValidateOSRFailure);
+         setReloErrorCode(TR_RelocationErrorCode::osrValidationFailure);
+         setReturnCode(compilationRelocationFailure);
          return NULL;
          }
       }
@@ -582,20 +588,40 @@ TR_RelocationRuntime::relocateAOTCodeAndData(U_8 *tempDataStart,
 
          try
             {
-            int32_t returnCode = reloGroup.applyRelocations(this, reloTarget(), newMethodCodeStart() + codeCacheDelta());
-            setReturnCode(returnCode);
+            TR_RelocationErrorCode errorCode = reloGroup.applyRelocations(this, reloTarget(), newMethodCodeStart() + codeCacheDelta());
+            setReloErrorCode(errorCode);
+            switch (errorCode)
+               {
+               case TR_RelocationErrorCode::relocationOK:
+                  setReturnCode(compilationOK);
+                  break;
+               case TR_RelocationErrorCode::trampolineRelocationFailure:
+                  setReturnCode(compilationAotTrampolineReloFailure);
+                  break;
+               case TR_RelocationErrorCode::picTrampolineRelocationFailure:
+                  setReturnCode(compilationAotPicTrampolineReloFailure);
+                  break;
+               case TR_RelocationErrorCode::cacheFullRelocationFailure:
+                  setReturnCode(compilationAotCacheFullReloFailure);
+                  break;
+               default:
+                  setReturnCode(compilationRelocationFailure);
+               }
             }
          catch (const std::bad_alloc &e)
             {
+            setReloErrorCode(TR_RelocationErrorCode::outOfMemory);
             setReturnCode(compilationHeapLimitExceeded);
             }
          catch (const J9::AOTSymbolValidationManagerFailure &e)
             {
+            setReloErrorCode(TR_RelocationErrorCode::svmValidationFailure);
             setReturnCode(compilationSymbolValidationManagerFailure);
             }
          catch (...)
             {
-            setReturnCode(compilationAotClassReloFailure);
+            setReloErrorCode(TR_RelocationErrorCode::exceptionThrown);
+            setReturnCode(compilationRelocationFailure);
             }
 
          RELO_LOG(reloLogger(), 6, "relocateAOTCodeAndData: return code %d\n", returnCode());
@@ -622,7 +648,7 @@ TR_RelocationRuntime::relocateAOTCodeAndData(U_8 *tempDataStart,
             }
 #endif
 
-         if (returnCode() != 0)
+         if (getReloErrorCode() != TR_RelocationErrorCode::relocationOK)
             {
             //clean up code cache
             _relocationStatus = RelocationFailure;
