@@ -22,6 +22,8 @@
  *******************************************************************************/
 package java.lang;
 
+import com.ibm.oti.util.Msg;
+
 import java.io.*;
 /*[IF Sidecar18-SE-OpenJ9 | JAVA_SPEC_VERSION >= 11]*/
 import java.nio.charset.Charset;
@@ -980,7 +982,7 @@ public static void load(String pathName) {
 		ClassLoader.loadLibrary(getCallerClass(), fileName);
 	} else {
 		/*[MSG "K0648", "Not an absolute path: {0}"]*/
-		throw new UnsatisfiedLinkError(com.ibm.oti.util.Msg.getString("K0648", pathName));//$NON-NLS-1$
+		throw new UnsatisfiedLinkError(Msg.getString("K0648", pathName));//$NON-NLS-1$
 	}
 /*[ELSE]
 	ClassLoader.loadLibraryWithPath(pathName, ClassLoader.callerClassLoader(), null);
@@ -997,6 +999,17 @@ public static void load(String pathName) {
  */
 @CallerSensitive
 public static void loadLibrary(String libName) {
+	if (libName.indexOf(File.pathSeparator) >= 0) {
+		/*[MSG "K0B01", "Library name must not contain a file path: {0}"]*/
+		throw new UnsatisfiedLinkError(Msg.getString("K0B01", libName)); //$NON-NLS-1$
+	}
+	if (internalGetProperties().getProperty("os.name").startsWith("Windows")) { //$NON-NLS-1$ //$NON-NLS-2$
+		if ((libName.indexOf('/') >= 0) || ((libName.length() > 1) && (libName.charAt(1) == ':'))) {
+			/*[MSG "K0B01", "Library name must not contain a file path: {0}"]*/
+			throw new UnsatisfiedLinkError(Msg.getString("K0B01", libName)); //$NON-NLS-1$
+		}
+	}
+
 	@SuppressWarnings("removal")
 	SecurityManager smngr = System.getSecurityManager();
 	if (smngr != null) {
@@ -1087,7 +1100,7 @@ static void initSecurityManager(ClassLoader applicationClassLoader) {
 				setSecurityManager((SecurityManager)constructor.newInstance());
 			} catch (Throwable e) {
 				/*[MSG "K0631", "JVM can't set custom SecurityManager due to {0}"]*/
-				throw new Error(com.ibm.oti.util.Msg.getString("K0631", e.toString()), e); //$NON-NLS-1$
+				throw new Error(Msg.getString("K0631", e.toString()), e); //$NON-NLS-1$
 			}
 		}
 	}
@@ -1128,7 +1141,7 @@ public static void setSecurityManager(final SecurityManager s) {
 			return;
 		}
 		/*[MSG "K0B00", "The Security Manager is deprecated and will be removed in a future release"]*/
-		throw new UnsupportedOperationException(com.ibm.oti.util.Msg.getString("K0B00")); //$NON-NLS-1$
+		throw new UnsupportedOperationException(Msg.getString("K0B00")); //$NON-NLS-1$
 	}
 	/*[ENDIF] JAVA_SPEC_VERSION > 11 */
 
@@ -1167,7 +1180,7 @@ public static void setSecurityManager(final SecurityManager s) {
 					if (currentSecurity == null) {
 						// initialize external messages and
 						// also load security sensitive classes
-						com.ibm.oti.util.Msg.getString("K002c"); //$NON-NLS-1$
+						Msg.getString("K002c"); //$NON-NLS-1$
 					}
 					ProtectionDomain pd = s.getClass().getPDImpl();
 					if (pd != null) {
