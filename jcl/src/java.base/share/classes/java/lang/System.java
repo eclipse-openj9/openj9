@@ -997,6 +997,17 @@ public static void load(String pathName) {
  */
 @CallerSensitive
 public static void loadLibrary(String libName) {
+	if (libName.indexOf(File.pathSeparator) >= 0) {
+		/*[MSG "K0B01", "Library name must not contain a file path: {0}"]*/
+		throw new UnsatisfiedLinkError(com.ibm.oti.util.Msg.getString("K0B01", libName)); //$NON-NLS-1$
+	}
+	if (internalGetProperties().getProperty("os.name").startsWith("Windows")) { //$NON-NLS-1$ //$NON-NLS-2$
+		if ((libName.indexOf('/') >= 0) || ((libName.length() > 1) && (libName.charAt(1) == ':'))) {
+			/*[MSG "K0B01", "Library name must not contain a file path: {0}"]*/
+			throw new UnsatisfiedLinkError(com.ibm.oti.util.Msg.getString("K0B01", libName)); //$NON-NLS-1$
+		}
+	}
+
 	@SuppressWarnings("removal")
 	SecurityManager smngr = System.getSecurityManager();
 	if (smngr != null) {
