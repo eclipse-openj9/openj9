@@ -287,7 +287,7 @@ uint8_t *TR::ARM64CallSnippet::emitSnippetBody()
             {
             cg()->jitAddPicToPatchOnClassRedefinition((void *)methodSymbol->getMethodAddress(), (void *)cursor);
             cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, (uint8_t *)methodSymRef,
-                                                                                    getNode() ? (uint8_t *)getNode()->getInlinedSiteIndex() : (uint8_t *)-1,
+                                                                                    getNode() ? (uint8_t *)(intptr_t)getNode()->getInlinedSiteIndex() : (uint8_t *)-1,
                                                                                     TR_MethodObject, cg()),
                                        __FILE__, __LINE__, callNode);
             }
@@ -487,7 +487,7 @@ uint8_t *TR::ARM64UnresolvedCallSnippet::emitSnippetBody()
    cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(
                                cursor,
                                *(uint8_t **)cursor,
-                               getNode() ? (uint8_t *)getNode()->getInlinedSiteIndex() : (uint8_t *)-1,
+                               getNode() ? (uint8_t *)(intptr_t)getNode()->getInlinedSiteIndex() : (uint8_t *)-1,
                                TR_Trampolines, cg()),
                                __FILE__, __LINE__, getNode());
    cursor += 8;
@@ -605,7 +605,7 @@ uint8_t *TR::ARM64VirtualUnresolvedSnippet::emitSnippetBody()
    cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(
                                cursor,
                                *(uint8_t **)cursor,
-                               getNode() ? (uint8_t *)getNode()->getInlinedSiteIndex() : (uint8_t *)-1,
+                               getNode() ? (uint8_t *)(intptr_t)getNode()->getInlinedSiteIndex() : (uint8_t *)-1,
                                TR_Thunks, cg()),
                                __FILE__, __LINE__, getNode());
    cursor += sizeof(intptr_t);
