@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -559,8 +559,13 @@ done:
 }
 
 
-/* sysinfo_set_limit and sysinfo_get_limit tests will not work on windows */
+/* sysinfo_set_limit and sysinfo_get_limit tests will not work on Windows */
 #if !(defined(WIN32) || defined(WIN64))
+
+/* sysinfo_set_limit with PORT_RESOURCE_ADDRESS_SPACE doesn't work on macOS 12.
+ * The limit can't be lowered, it results in EINVAL.
+ */
+#if !defined(OSX)
 
 /**
  *
@@ -657,6 +662,8 @@ int j9sysinfo_test_sysinfo_set_limit_ADDRESS_SPACE(J9PortLibrary* portLibrary) {
 
 	return reportTestExit(portLibrary, testName);
 }
+
+#endif /* !defined(OSX) */
 
 /**
  *
@@ -2293,10 +2300,10 @@ j9sysinfo_runTests(struct J9PortLibrary *portLibrary, char *argv0)
 	rc |= j9sysinfo_test_sysinfo_env_iterator(portLibrary);
 	rc |= j9sysinfo_test_sysinfo_get_processor_description(portLibrary);
 #if !(defined(WIN32) || defined(WIN64))
-#if !(defined(AIXPPC) || defined(J9ZOS390))
-	/* unable to set RLIMIT_AS on AIX and z/OS */
+#if !(defined(AIXPPC) || defined(J9ZOS390) || defined(OSX))
+	/* unable to set RLIMIT_AS on AIX, z/OS, OSX */
 	rc |= j9sysinfo_test_sysinfo_set_limit_ADDRESS_SPACE(portLibrary);
-#endif /* !(defined(AIXPPC) || defined(J9ZOS390)) */
+#endif /* !(defined(AIXPPC) || defined(J9ZOS390) || defined(OSX)) */
 	rc |= j9sysinfo_test_sysinfo_set_limit_CORE_FILE(portLibrary);
 #endif /* !(defined(WIN32) || defined(WIN64)) */
 
