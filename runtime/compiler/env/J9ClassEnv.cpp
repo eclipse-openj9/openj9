@@ -345,6 +345,12 @@ J9::ClassEnv::isClassInitialized(TR::Compilation *comp, TR_OpaqueClassBlock *cla
    }
 
 bool
+J9::ClassEnv::isClassVisible(TR::Compilation *comp, TR_OpaqueClassBlock *sourceClass, TR_OpaqueClassBlock *destClass)
+   {
+   return comp->fej9()->isClassVisible(sourceClass, destClass);
+   }
+
+bool
 J9::ClassEnv::classHasIllegalStaticFinalFieldModification(TR_OpaqueClassBlock * clazzPointer)
    {
    J9Class* j9clazz = TR::Compiler->cls.convertClassOffsetToClassPtr(clazzPointer);
@@ -857,6 +863,29 @@ J9::ClassEnv::classHasIdentity(TR_OpaqueClassBlock *clazz)
 #endif /* defined(J9VM_OPT_JITSERVER) */
    J9Class *j9class = reinterpret_cast<J9Class*>(clazz);
    return J9_ARE_ANY_BITS_SET(j9class->classFlags, J9ClassHasIdentity);
+   }
+
+bool
+J9::ClassEnv::classSupportsDirectMemoryComparison(TR_OpaqueClassBlock *clazz)
+   {
+#if defined(J9VM_OPT_JITSERVER)
+   if (auto stream = TR::CompilationInfo::getStream())
+      {
+      uintptr_t classFlags = 0;
+      JITServerHelpers::getAndCacheRAMClassInfo((J9Class *)clazz, TR::compInfoPT->getClientData(), stream, JITServerHelpers::CLASSINFO_CLASS_FLAGS, (void *)&classFlags);
+#ifdef DEBUG
+      stream->write(JITServer::MessageType::ClassEnv_classFlagsValue, clazz);
+      uintptr_t classFlagsRemote = std::get<0>(stream->read<uintptr_t>());
+      // Check that class flags from remote call is equal to the cached ones
+      classFlags = classFlags & J9ClassCanSupportFastSubstitutability;
+      classFlagsRemote = classFlagsRemote & J9ClassCanSupportFastSubstitutability;
+      TR_ASSERT_FATAL(classFlags == classFlagsRemote, "remote call class flags is not equal to cached class flags");
+#endif
+      return J9_ARE_ANY_BITS_SET(classFlags, J9ClassCanSupportFastSubstitutability);
+      }
+#endif /* defined(J9VM_OPT_JITSERVER) */
+   J9Class *j9class = reinterpret_cast<J9Class*>(clazz);
+   return J9_ARE_ANY_BITS_SET(j9class->classFlags, J9ClassCanSupportFastSubstitutability);
    }
 
 bool
