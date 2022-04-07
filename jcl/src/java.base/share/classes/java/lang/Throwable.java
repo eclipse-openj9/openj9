@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 1998, 2021 IBM Corp. and others
+ * Copyright (c) 1998, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -382,11 +382,11 @@ public String toString () {
 public synchronized Throwable initCause(Throwable throwable) {
 	if (cause != this) {
 		/*[MSG "K05c9", "Cause already initialized"]*/
-		throw new IllegalStateException(Msg.getString("K05c9")); //$NON-NLS-1$
+		throw new IllegalStateException(Msg.getString("K05c9"), this); //$NON-NLS-1$
 	}
 	if (throwable == this) {
 		/*[MSG "K05c8", "Cause cannot be the receiver"]*/
-		throw new IllegalArgumentException(Msg.getString("K05c8")); //$NON-NLS-1$
+		throw new IllegalArgumentException(Msg.getString("K05c8"), this); //$NON-NLS-1$
 	}
 	return setCause(throwable);
 }
