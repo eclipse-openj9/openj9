@@ -10186,10 +10186,11 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
                      if (TR::Options::isAnyVerboseOptionSet(TR_VerboseCompileEnd, TR_VerbosePerformance, TR_VerboseCompFailure))
                         {
                         TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE,
-                                                          "Failure while relocating for %s, return code = %d [%s]\n",
+                                                          "Failure while relocating for %s, return code = %d [%s], relo error code = %s\n",
                                                           comp->signature(),
                                                           returnCode,
-                                                          (returnCode >= 0) && (returnCode < compilationMaxError) ? compilationErrorNames[returnCode] : "unknown error");
+                                                          (returnCode >= 0) && (returnCode < compilationMaxError) ? compilationErrorNames[returnCode] : "unknown error",
+                                                          comp->reloRuntime()->getReloErrorCodeName(comp->reloRuntime()->getReloErrorCode()));
                         }
                      }
                   }
@@ -11154,7 +11155,7 @@ TR::CompilationInfoPerThreadBase::processExceptionCommonTasks(
             }
          else
             {
-            TR_VerboseLog::write(TR_Vlog_COMPFAIL, "(%s%s) %s Q_SZ=%d Q_SZI=%d QW=%d j9m=%p time=%dus %s memLimit=%zu KB",
+            TR_VerboseLog::write(TR_Vlog_COMPFAIL, "(%s%s) %s Q_SZ=%d Q_SZI=%d QW=%d j9m=%p time=%dus %s",
                                  compilationTypeString,
                                  hotnessString,
                                  compiler->signature(),
@@ -11163,8 +11164,15 @@ TR::CompilationInfoPerThreadBase::processExceptionCommonTasks(
                                  _compInfo.getQueueWeight(),
                                  _methodBeingCompiled->getMethodDetails().getMethod(),
                                  translationTime,
-                                 compilationErrorNames[_methodBeingCompiled->_compErrCode],
-                                 scratchSegmentProvider.allocationLimit() >> 10);
+                                 compilationErrorNames[_methodBeingCompiled->_compErrCode]);
+            if (entry->isAotLoad())
+               {
+               TR_RelocationRuntime *reloRuntime = compiler->reloRuntime();
+               if (reloRuntime)
+                  TR_VerboseLog::write(" (%s)", reloRuntime->getReloErrorCodeName(reloRuntime->getReloErrorCode()));
+               }
+            TR_VerboseLog::write(" memLimit=%zu KB", scratchSegmentProvider.allocationLimit() >> 10);
+
             if (TR::Options::getVerboseOption(TR_VerbosePerformance))
                {
                bool incomplete;
