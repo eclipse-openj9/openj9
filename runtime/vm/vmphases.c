@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013, 2019 IBM Corp. and others
+ * Copyright (c) 2013, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,6 +27,16 @@
 
 void jvmPhaseChange(J9JavaVM* vm, UDATA phase) {
 	J9VMThread *currentThread = currentVMThread(vm);
+
+	if (phase == J9VM_PHASE_LATE_SCC_DISCLAIM)
+		{
+		if (NULL != vm->sharedClassConfig)
+			{
+			vm->sharedClassConfig->jvmPhaseChange(currentThread, phase);
+			}
+		return;
+		}
+
 	vm->phase = phase;
 	Trc_VM_VMPhases_JVMPhaseChange(phase);
 	
