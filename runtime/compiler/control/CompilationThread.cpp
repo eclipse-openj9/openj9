@@ -11113,7 +11113,7 @@ TR::CompilationInfoPerThreadBase::processException(
       }
 
    if (shouldProcessExceptionCommonTasks)
-      processExceptionCommonTasks(vmThread, scratchSegmentProvider, compiler, exceptionName);
+      processExceptionCommonTasks(vmThread, scratchSegmentProvider, compiler, exceptionName, _methodBeingCompiled);
 
    TR::IlGeneratorMethodDetails & details = _methodBeingCompiled->getMethodDetails();
    J9Method *method = details.getMethod();
@@ -11125,7 +11125,8 @@ TR::CompilationInfoPerThreadBase::processExceptionCommonTasks(
    J9VMThread *vmThread,
    TR::SegmentAllocator const &scratchSegmentProvider,
    TR::Compilation * compiler,
-   const char *exceptionName
+   const char *exceptionName,
+   TR_MethodToBeCompiled *entry
    )
    {
    PORT_ACCESS_FROM_JITCONFIG(_jitConfig);
@@ -11135,11 +11136,13 @@ TR::CompilationInfoPerThreadBase::processExceptionCommonTasks(
       uintptr_t translationTime = j9time_usec_clock() - getTimeWhenCompStarted(); //get the time it took to fail the compilation
 
       char compilationTypeString[15] = { 0 };
+      bool isProfiledComp = compiler->isProfilingCompilation();
+      bool isAOTComp = compiler->compileRelocatableCode() || entry->isAotLoad();
       TR::snprintfNoTrunc(compilationTypeString, sizeof(compilationTypeString), "%s%s",
-         compiler->fej9()->isAOT_DEPRECATED_DO_NOT_USE() ? "AOT " : "",
-         compiler->isProfilingCompilation() ? "profiled " : "");
+         isAOTComp ? "AOT " : "",
+         isProfiledComp ? "profiled " : "");
 
-      const char *hotnessString = compiler->getHotnessName(compiler->getMethodHotness());
+      const char *hotnessString = entry->isAotLoad() ? "load" : compiler->getHotnessName(compiler->getMethodHotness());
 
       TR_VerboseLog::CriticalSection vlogLock;
       if (_methodBeingCompiled->_compErrCode != compilationFailure)

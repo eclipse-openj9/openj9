@@ -429,7 +429,8 @@ private:
       J9VMThread *vmThread,
       TR::SegmentAllocator const &scratchSegmentProvider,
       TR::Compilation * compiler,
-      const char *exceptionName);
+      const char *exceptionName,
+      TR_MethodToBeCompiled *entry);
 
 #if defined(TR_HOST_S390)
    void outputVerboseMMapEntry(
