@@ -627,8 +627,5 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<impl>openj9</impl>
 			<impl>ibm</impl>
 		</impls>
-		<versions>
-			<version>8+</version>
-		</versions>
 	</test>
 </playlist>
