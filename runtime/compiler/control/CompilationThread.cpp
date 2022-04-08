@@ -2143,32 +2143,19 @@ bool TR::CompilationInfo::shouldRetryCompilation(TR_MethodToBeCompiled *entry, T
          TR_PersistentJittedBodyInfo *bodyInfo;
          switch (entry->_compErrCode)
             {
-            case compilationAotValidateFieldFailure:
-            case compilationAotStaticFieldReloFailure:
-            case compilationAotClassReloFailure:
-            case compilationAotThunkReloFailure:
             case compilationAotHasInvokehandle:
             case compilationAotHasInvokeVarHandle:
             case compilationAotPatchedCPConstant:
             case compilationAotHasInvokeSpecialInterface:
-            case compilationAotValidateMethodExitFailure:
-            case compilationAotValidateMethodEnterFailure:
             case compilationAotClassChainPersistenceFailure:
-            case compilationAotValidateStringCompressionFailure:
             case compilationSymbolValidationManagerFailure:
             case compilationAOTNoSupportForAOTFailure:
-            case compilationAOTValidateTMFailure:
             case compilationAOTRelocationRecordGenerationFailure:
-            case compilationAotValidateExceptionHookFailure:
-            case compilationAotBlockFrequencyReloFailure:
-            case compilationAotRecompQueuedFlagReloFailure:
-            case compilationAOTValidateOSRFailure:
             case compilationRelocationFailure:
                // switch to JIT for these cases (we don't want to relocate again)
                entry->_doNotUseAotCodeFromSharedCache = true;
                tryCompilingAgain = true;
                break;
-            //case compilationAotRelocationFailure:
             case compilationAotTrampolineReloFailure:
             case compilationAotPicTrampolineReloFailure:
             case compilationAotCacheFullReloFailure:
