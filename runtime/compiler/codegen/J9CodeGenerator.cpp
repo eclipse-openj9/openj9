@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -836,6 +836,50 @@ J9::CodeGenerator::lowerTreeIfNeeded(
             floatTemp1StoreNode->setByteCodeIndex(node->getByteCodeIndex());
             TR::TreeTop::create(self()->comp(), tt->getPrevTreeTop(), floatTemp1StoreNode);
             }
+         }
+      }
+
+   if (node->getOpCode().isCall() &&
+         node->getSymbol()->getMethodSymbol()->isNative() &&
+         self()->comp()->canTransformUnsafeCopyToArrayCopy())
+      {
+      TR::RecognizedMethod rm = node->getSymbol()->castToMethodSymbol()->getRecognizedMethod();
+
+      if ((rm == TR::sun_misc_Unsafe_copyMemory || rm == TR::jdk_internal_misc_Unsafe_copyMemory0) &&
+            performTransformation(self()->comp(), "O^O Call arraycopy instead of Unsafe.copyMemory: %s\n", self()->getDebug()->getName(node)))
+         {
+         TR::Node *src = node->getChild(1);
+         TR::Node *srcOffset = node->getChild(2);
+         TR::Node *dest = node->getChild(3);
+         TR::Node *destOffset = node->getChild(4);
+         TR::Node *len = node->getChild(5);
+
+         if (self()->comp()->target().is32Bit())
+            {
+            srcOffset = TR::Node::create(TR::l2i, 1, srcOffset);
+            destOffset = TR::Node::create(TR::l2i, 1, destOffset);
+            len = TR::Node::create(TR::l2i, 1, len);
+            src = TR::Node::create(TR::aiadd, 2, src, srcOffset);
+            dest = TR::Node::create(TR::aiadd, 2, dest, destOffset);
+            }
+         else
+            {
+            src = TR::Node::create(TR::aladd, 2, src, srcOffset);
+            dest = TR::Node::create(TR::aladd, 2, dest, destOffset);
+            }
+
+         TR::Node *arraycopyNode = TR::Node::createArraycopy(src, dest, len);
+         TR::TreeTop *arrayCopyTT = TR::TreeTop::create(self()->comp(), arraycopyNode, tt->getNextTreeTop(), tt->getPrevTreeTop());
+
+         tt->getPrevTreeTop()->setNextTreeTop(arrayCopyTT);
+         tt->getNextTreeTop()->setPrevTreeTop(arrayCopyTT);
+
+         for (int i = 0; i <= 5; i++)
+            {
+            node->getChild(i)->decReferenceCount();
+            }
+
+         return;
          }
       }
 
