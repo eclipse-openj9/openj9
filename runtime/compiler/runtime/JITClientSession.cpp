@@ -201,7 +201,7 @@ ClientSessionData::processUnloadedClasses(const std::vector<TR_OpaqueClassBlock*
             }
          else
             {
-            if (TR::Compiler->om.areValueTypesEnabled() && TR::Compiler->cls.isValueTypeClass(clazz))
+            if (TR::Compiler->om.areValueTypesEnabled() && TR::Compiler->cls.isPrimitiveValueTypeClass(clazz))
                sigStr[0] = 'Q';
             else
                sigStr[0] = 'L';

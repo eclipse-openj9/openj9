@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2021, 2021 IBM Corp. and others
+ * Copyright (c) 2021, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -696,7 +696,7 @@ NonNullableArrayNullStoreCheckTransformer::lower(TR::Node* const node, TR::TreeT
    //   |       aloadi <componentClass>  |         |
    //   |         aloadi <vft-symbol>    |         |
    //   |           ==><array-reference> |         |
-   //   |     iconst J9ClassIsValueType  |         |
+   //   |     iconst J9ClassIsPrimitiveValueType   |
    //   |   iconst 0                     |         |
    //   | BBEnd                          |         |
    //   +--------------------------------+         |
@@ -731,7 +731,7 @@ NonNullableArrayNullStoreCheckTransformer::lower(TR::Node* const node, TR::TreeT
       tt->getPrevTreeTop()->join(nextTT);
       TR::Block *nextBlock = prevBlock->splitPostGRA(nextTT, cfg);
 
-      TR::Node *ifNode = comp()->fej9()->checkArrayCompClassValueType(destChild, TR::ificmpeq);
+      TR::Node *ifNode = comp()->fej9()->checkArrayCompClassPrimitiveValueType(destChild, TR::ificmpeq);
 
       ifNode->setBranchDestination(nextBlock->getEntry());
 
@@ -741,7 +741,7 @@ NonNullableArrayNullStoreCheckTransformer::lower(TR::Node* const node, TR::TreeT
       //
       copyRegisterDependency(prevBlock->getExit()->getNode(), ifNode);
 
-      TR::TreeTop *ifArrayCompClassValueTypeTT = prevBlock->append(TR::TreeTop::create(comp(), ifNode));
+      TR::TreeTop *ifArrayCompClassPrimitiveValueTypeTT = prevBlock->append(TR::TreeTop::create(comp(), ifNode));
 
       bool enableTrace = trace();
       auto* const nullConst = TR::Node::aconst(0);
@@ -753,14 +753,14 @@ NonNullableArrayNullStoreCheckTransformer::lower(TR::Node* const node, TR::TreeT
       //
       copyRegisterDependency(prevBlock->getExit()->getNode(), checkValueNull);
 
-      TR::TreeTop *checkValueNullTT = ifArrayCompClassValueTypeTT->insertBefore(TR::TreeTop::create(comp(), checkValueNull));
+      TR::TreeTop *checkValueNullTT = ifArrayCompClassPrimitiveValueTypeTT->insertBefore(TR::TreeTop::create(comp(), checkValueNull));
 
       if (enableTrace)
          {
          traceMsg(comp(),"checkValueNull n%dn is inserted before  n%dn in prevBlock %d\n", checkValueNull->getGlobalIndex(), ifNode->getGlobalIndex(), prevBlock->getNumber());
          }
 
-      TR::Block *compTypeTestBlock = prevBlock->split(ifArrayCompClassValueTypeTT, cfg);
+      TR::Block *compTypeTestBlock = prevBlock->split(ifArrayCompClassPrimitiveValueTypeTT, cfg);
       compTypeTestBlock->setIsExtensionOfPreviousBlock(true);
 
       cfg->addEdge(prevBlock, nextBlock);
@@ -887,7 +887,7 @@ static bool skipBoundChecks(TR::Compilation *comp, TR::Node *node)
  * LoadArrayElementTransformer transforms the block that contains the jitLoadFlattenableArrayElement helper call into three blocks:
  *   1. The merge block (blockAfterHelperCall) that contains the tree tops after the helper call
  *   2. The helper call block (helperCallBlock) that contains the helper call and is moved to the end of the tree top list
- *   3. The new non-VT array load block (arrayElementLoadBlock) which is an extended block of the original block
+ *   3. The new non-primitive VT array load block (arrayElementLoadBlock) which is an extended block of the original block
  *
  *      originalBlock----------+
  *      arrayElementLoadBlock  |
@@ -919,7 +919,7 @@ static bool skipBoundChecks(TR::Compilation *comp, TR::Node *node)
  |   iand                                   |           |
  |      iloadi  <isClassFlags>              |           |
  |      ...                                 |           |
- |      iconst 1024                         |           |
+ |      iconst J9ClassIsPrimitiveValueType  |           |
  |   iconst 0                               |           |
  |   GlRegDeps ()                           |           |
  |      ==>aRegLoad                         |           |
@@ -1008,7 +1008,7 @@ LoadArrayElementTransformer::lower(TR::Node* const node, TR::TreeTop* const tt)
    // 1. Anchor helper call node after the helper call
    //    Anchor elementIndex and arrayBaseAddress before the helper call
 
-   // Anchoring the helper call ensures that the return value from the helper call or from the non-VT array element load
+   // Anchoring the helper call ensures that the return value from the helper call or from the non-primitive VT array element load
    // will be saved to a register or a temp.
    TR::TreeTop *anchoredCallTT = TR::TreeTop::create(comp, tt, TR::Node::create(TR::treetop, 1, node));
    TR::TreeTop *anchoredElementIndexTT = TR::TreeTop::create(comp, tt->getPrevTreeTop(), TR::Node::create(TR::treetop, 1, elementIndexNode));
@@ -1121,7 +1121,7 @@ LoadArrayElementTransformer::lower(TR::Node* const node, TR::TreeTop* const tt)
    // 9. Create ificmpne node that checks classFlags
 
    // The branch destination will be set up later
-   TR::Node *ifNode = comp->fej9()->checkArrayCompClassValueType(anchoredArrayBaseAddressNode, TR::ificmpne);
+   TR::Node *ifNode = comp->fej9()->checkArrayCompClassPrimitiveValueType(anchoredArrayBaseAddressNode, TR::ificmpne);
 
    // Copy register dependency to the ificmpne node that's being appended to the current block
    copyRegisterDependency(arrayElementLoadBlock->getExit()->getNode(), ifNode);
@@ -1213,7 +1213,7 @@ static bool skipArrayStoreChecks(TR::Compilation *comp, TR::Node *node)
  * StoreArrayElementTransformer transforms the block that contains the jitStoreFlattenableArrayElement helper call into three blocks:
  *   1. The merge block that contains the tree tops after the helper call
  *   2. The helper call block that contains the helper call and is moved to the end of the tree top list
- *   3. The new non-VT array store block which is an extended block of the original block
+ *   3. The new non-primitive VT array store block which is an extended block of the original block
  *
  *      originalBlock ----------+
  *      arrayElementStoreBlock  |
@@ -1247,7 +1247,7 @@ static bool skipArrayStoreChecks(TR::Compilation *comp, TR::Node *node)
  |   iand                                    |               |
  |      iloadi  <isClassFlags>               |               |
  |      ...                                  |               |
- |      iconst 1024                          |               |
+ |      iconst J9ClassIsPrimitiveValueType   |               |
  |   iconst 0                                |               |
  |   GlRegDeps ()                            |               |
  |      PassThrough rcx                      |               |
@@ -1298,9 +1298,6 @@ static bool skipArrayStoreChecks(TR::Compilation *comp, TR::Node *node)
  |      aRegLoad ecx                         |     |
  |      aRegLoad r8d                         |     |
  |      iRegLoad edi                         |     |
- |NULLCHK                                    |     |
- |   PassThrough                             |     |
- |      ==>aload                             |     |
  |treetop                                    |     |
  |   acall  jitStoreFlattenableArrayElement  |     |
  |      ==>aRegLoad                          |     |
@@ -1378,18 +1375,11 @@ StoreArrayElementTransformer::lower(TR::Node* const node, TR::TreeTop* const tt)
 
 
    ///////////////////////////////////////
-   // 5. Split (2) at the helper call node including the nullchk on the value reference into its own helperCallBlock
+   // 5. Split (2) at the helper call node into its own helperCallBlock
 
-   // Insert NULLCHK for VT
+   // Insert NULLCHK for Primitive VT
    TR::Node *anchoredValueNode = anchoredValueTT->getNode()->getFirstChild();
    TR::TreeTop *ttForHelperCallBlock = tt;
-
-   if (!anchoredValueNode->isNonNull())
-      {
-      TR::Node *passThru  = TR::Node::create(node, TR::PassThrough, 1, anchoredValueNode);
-      TR::Node *nullCheck = TR::Node::createWithSymRef(node, TR::NULLCHK, 1, passThru, comp->getSymRefTab()->findOrCreateNullCheckSymbolRef(comp->getMethodSymbol()));
-      ttForHelperCallBlock = tt->insertBefore(TR::TreeTop::create(comp, nullCheck));
-      }
 
    TR::Block *helperCallBlock = originalBlock->splitPostGRA(ttForHelperCallBlock, cfg, true, NULL);
 
@@ -1487,7 +1477,7 @@ StoreArrayElementTransformer::lower(TR::Node* const node, TR::TreeTop* const tt)
    // 8. Create the ificmpne node that checks classFlags
 
    // The branch destination will be set up later
-   TR::Node *ifNode = comp->fej9()->checkArrayCompClassValueType(anchoredArrayBaseAddressNode, TR::ificmpne);
+   TR::Node *ifNode = comp->fej9()->checkArrayCompClassPrimitiveValueType(anchoredArrayBaseAddressNode, TR::ificmpne);
 
    // Copy register dependency to the ificmpne node that's being appended to the current block
    copyRegisterDependency(arrayElementStoreBlock->getExit()->getNode(), ifNode);

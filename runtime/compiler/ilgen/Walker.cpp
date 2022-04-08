@@ -2394,8 +2394,8 @@ TR_J9ByteCodeIlGenerator::genCheckCast()
  *
  * If the class specified in the bytecode is unresolved, this leaves out the
  * ResolveCHK since it has to be conditional on a non-null object.
- * If the class specified in the bytecode is a value type, it has to be resolved
- * unconditionally, regardless of whether the value is null.
+ * If the class specified in the bytecode is a primitive value type, it has to
+ * be resolved unconditionally, regardless of whether the value is null.
  *
  * @param cpIndex The constant pool entry of the class given in the bytecode
  *
@@ -2405,7 +2405,8 @@ TR_J9ByteCodeIlGenerator::genCheckCast()
 void
 TR_J9ByteCodeIlGenerator::genCheckCast(int32_t cpIndex)
    {
-   if (TR::Compiler->om.areValueTypesEnabled() && TR::Compiler->cls.isClassRefValueType(comp(), method()->classOfMethod(), cpIndex))
+   if (TR::Compiler->om.areValueTypesEnabled()
+       && TR::Compiler->cls.isClassRefPrimitiveValueType(comp(), method()->classOfMethod(), cpIndex))
       {
       TR::Node * objNode = _stack->top();
 

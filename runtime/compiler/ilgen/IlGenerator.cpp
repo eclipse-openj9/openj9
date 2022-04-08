@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -556,9 +556,10 @@ TR_J9ByteCodeIlGenerator::genILFromByteCodes()
       if (currNode->getOpCodeValue() == TR::checkcast
           && currNode->getSecondChild()->getOpCodeValue() == TR::loadaddr
           && currNode->getSecondChild()->getSymbolReference()->isUnresolved()
-          && // check whether the checkcast class is valuetype. Expansion is only needed for checkcast to reference type.
+          && // check whether the checkcast class is primitive valuetype. Expansion is only needed for checkcast to reference type.
             (!TR::Compiler->om.areValueTypesEnabled()
-            || !TR::Compiler->cls.isClassRefValueType(comp(), method()->classOfMethod(), currNode->getSecondChild()->getSymbolReference()->getCPIndex())))
+            || !TR::Compiler->cls.isClassRefPrimitiveValueType(comp(), method()->classOfMethod(),
+                                        currNode->getSecondChild()->getSymbolReference()->getCPIndex())))
           {
           unresolvedCheckcastTopsNeedingNullGuard.add(currTree);
           }
