@@ -1074,30 +1074,9 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *   \param numOperands
    *      Number of operands
    *
-   *   \param useVcall
-   *      use vcall for vectorization
-   *
    *   \return
    *      Transformed node
    */
-   static TR::Node *transformNary(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode, TR::ILOpCodes scalarOpCode, TR::ILOpCodes vectorOpCode, int32_t firstOperand, int32_t numOperands, bool useVcall);
-
-
-  /** \brief
-   *    Helper method to decide to use vcall or not
-   *
-   *   \param comp
-   *     Compilation
-   *
-   *   \param vectorAPIOpcode
-   *     Vector API opcode
-   *
-   *   \param vectorLength
-   *     Full vector length in bits
-   *
-   *   \return
-   *      true to use vcall, false otherwise
-   */
-   static bool useVcallForVectorAPIOpcode(TR::Compilation *comp, int32_t vectorAPIOpcode, vec_sz_t vectorLength);
+   static TR::Node *transformNary(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode, TR::ILOpCodes scalarOpCode, TR::ILOpCodes vectorOpCode, int32_t firstOperand, int32_t numOperands);
    };
 #endif /* VECTORAPIEXPANSION_INCL */
