@@ -80,17 +80,16 @@
 		</impls>
 	</test>
 	<test>
-		<testCaseName>jsr292Test_jdk9_jdk10</testCaseName>
+		<testCaseName>jsr292Test_jdk8_sm</testCaseName>
 		<variations>
 			<variation>NoOptions</variation>
 			<variation>Mode195</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
-	--add-opens=java.base/java.lang=ALL-UNNAMED \
 	-Djava.security.policy=$(Q)$(TEST_RESROOT)$(D)java.policy$(Q) \
 	-cp $(Q)$(TEST_RESROOT)$(D)jsr292test.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
-	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
-	-testnames jsr292Test,jsr292Test_optional \
+	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng_8.xml$(Q) \
+	-testnames jsr292Test_SM \
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
@@ -101,9 +100,12 @@
 			<group>functional</group>
 		</groups>
 		<versions>
-			<version>9</version>
-			<version>10</version>
+			<version>8</version>
 		</versions>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 	<test>
 		<testCaseName>jsr292Test</testCaseName>
@@ -130,6 +132,40 @@
 			<version>11+</version>
 		</versions>
 		<!-- 
+			TODO: Further investigation is needed for running against non-openj9 sdk
+		-->
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
+	</test>
+	<test>
+		<testCaseName>jsr292Test_SM</testCaseName>
+		<variations>
+			<variation>NoOptions</variation>
+			<variation>Mode195</variation>
+		</variations>
+		<command>$(JAVA_COMMAND) $(JAVA_SECURITY_MANAGER) $(JVM_OPTIONS) \
+	--add-opens=java.base/java.lang=ALL-UNNAMED \
+	-Djava.security.policy=$(Q)$(TEST_RESROOT)$(D)java.policy$(Q) \
+	-cp $(Q)$(TEST_RESROOT)$(D)jsr292test.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
+	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng_sm.xml$(Q) \
+	-testnames jsr292Test_SM \
+	-groups $(TEST_GROUP) \
+	-excludegroups $(DEFAULT_EXCLUDE); \
+	$(TEST_STATUS)</command>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<versions>
+			<version>11</version>
+			<version>17</version>
+			<version>18</version>
+		</versions>
+		<!--
 			TODO: Further investigation is needed for running against non-openj9 sdk
 		-->
 		<impls>
@@ -176,7 +212,7 @@
 	-Djava.security.policy=$(Q)$(TEST_RESROOT)$(D)java.policy$(Q) \
 	-cp $(Q)$(TEST_RESROOT)$(D)jsr292test.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng_8.xml$(Q) \
-	-testnames jsr292Test \
+	-testnames jsr292Test,jsr292Test_SM \
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
@@ -218,6 +254,37 @@
 		</groups>
 		<versions>
 			<version>9+</version>
+		</versions>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
+	</test>
+	<test>
+		<testCaseName>jsr292Test_JitCount0_SM</testCaseName>
+		<variations>
+			<variation>-Xjit:count=0</variation>
+		</variations>
+		<command>$(JAVA_COMMAND) $(JAVA_SECURITY_MANAGER) $(JVM_OPTIONS) \
+	--add-opens=java.base/java.lang=ALL-UNNAMED \
+	-Djava.security.policy=$(Q)$(TEST_RESROOT)$(D)java.policy$(Q) \
+	-cp $(Q)$(TEST_RESROOT)$(D)jsr292test.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
+	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng_sm.xml$(Q) \
+	-testnames jsr292Test_SM \
+	-groups $(TEST_GROUP) \
+	-excludegroups $(DEFAULT_EXCLUDE); \
+	$(TEST_STATUS)</command>
+		<platformRequirements>^arch.arm</platformRequirements>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<versions>
+			<version>11</version>
+			<version>17</version>
+			<version>18</version>
 		</versions>
 		<impls>
 			<impl>openj9</impl>
