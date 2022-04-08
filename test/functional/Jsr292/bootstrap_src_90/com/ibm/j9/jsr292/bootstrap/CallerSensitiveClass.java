@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014, 2018 IBM Corp. and others
+ * Copyright (c) 2014, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,7 +21,7 @@
  *******************************************************************************/
 package com.ibm.j9.jsr292.bootstrap;
 
-public class CallerSensitiveClass extends SecurityManager {
+public class CallerSensitiveClass {
 	@jdk.internal.reflect.CallerSensitive
 	public void callerSensitiveMethod() {
 		Class<?> c = jdk.internal.reflect.Reflection.getCallerClass();

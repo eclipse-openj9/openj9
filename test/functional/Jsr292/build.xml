@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 
 <!--
-  Copyright (c) 2016, 2021 IBM Corp. and others
+  Copyright (c) 2016, 2022 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -189,25 +189,31 @@
 				</javac>
 			</then>
 			<else>
-				<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
-					<src path="${src}" />
-					<src path="${transformerListener}" />
-					<src path="${TestUtilities}" /> 
-					<!-- exclude non test files for indyn test -->
-					<exclude name="**/indyn/BootstrapMethods.java" />
-					<exclude name="**/indyn/ComplexIndyGenerator.java" />
-					<exclude name="**/indyn/Helper.java" />
-					<exclude name="**/indyn/SimpleIndyGenerator.java" />
-					<exclude name="**/CrossPackageHelper.java"/>
-					<exclude name="**/attachAPI/**" />
-					<classpath>
-						<pathelement location="${bootstrapBuild}"/>
-						<pathelement location="${LIB_DIR}/asm-all.jar" />
-						<pathelement location="${LIB_DIR}/junit4.jar" />
-						<pathelement location="${LIB_DIR}/testng.jar"/>
-						<pathelement location="${LIB_DIR}/jcommander.jar"/>
-					</classpath>
-				</javac>
+				<property name="srcpath" location="${src}:${transformerListener}:${TestUtilities}" />
+				<!-- exclude non test files for indyn test -->
+				<property name="commonExcludes" value="**/indyn/BootstrapMethods.java,**/indyn/ComplexIndyGenerator.java,**/indyn/Helper.java,**/indyn/SimpleIndyGenerator.java,**/CrossPackageHelper.java,**/attachAPI/**" />
+				<path id="build.cp">
+					<pathelement location="${bootstrapBuild}/"/>
+					<fileset dir="${LIB_DIR}/" includes="asm-all.jar"/>
+					<fileset dir="${LIB_DIR}/" includes="junit4.jar"/>
+					<fileset dir="${LIB_DIR}/" includes="testng.jar"/>
+					<fileset dir="${LIB_DIR}/" includes="jcommander.jar"/>
+				</path>
+				<if>
+					<matches string="${JDK_VERSION}" pattern="^(9|(1[0-8]))$$" />
+					<then>
+						<!-- Java 9-18 -->
+						<javac srcdir="${srcpath}" excludes="${commonExcludes}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" classpathref="build.cp">
+						</javac>
+					</then>
+					<else>
+						<!-- Java 19+ (SecurityManager removed) -->
+						<javac srcdir="${srcpath}" excludes="${commonExcludes}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" classpathref="build.cp">
+							<!-- exclude tests that depend on SecurityManager -->
+							<exclude name="com/ibm/j9/jsr292/MethodTypeTests_SM.java"/>
+						</javac>
+					</else>
+				</if>
 			</else>
 		</if>
 	</target>
