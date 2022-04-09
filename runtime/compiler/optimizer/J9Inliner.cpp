@@ -625,7 +625,19 @@ bool TR_J9VirtualCallSite::findCallSiteTarget(TR_CallStack *callStack, TR_Inline
                _isCallingObjectMethod = TR_yes;
             else
                {
-               TR_ASSERT_FATAL(fe()->isInstanceOf(callSiteClass, _receiverClass, true, true, true) == TR_yes , "CallSiteClass is incompatible with the receiverClass.");
+               // Verify subtyping against the defining interface rather than
+               // _receiverClass, since the latter could have been refined to a
+               // more specific interface.
+               TR_OpaqueClassBlock *defInterface = getClassFromMethod();
+               TR_YesNoMaybe callSiteClassOk = fe()->isInstanceOf(
+                  callSiteClass, defInterface, true, true, true);
+
+               TR_ASSERT_FATAL(
+                  callSiteClassOk == TR_yes,
+                  "class %p inherits a method from interface %p without implementing it",
+                  callSiteClass,
+                  defInterface);
+
                _isCallingObjectMethod = TR_no;
                if (comp()->trace(OMR::inlining))
                   {
