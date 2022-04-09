@@ -1421,10 +1421,12 @@ TR::Node *TR_VectorAPIExpansion::broadcastCoercedIntrinsicHandler(TR_VectorAPIEx
 
    if (mode == checkVectorization)
       {
+      if (!supportedOnPlatform(comp, vectorLength)) return NULL;
+
       if (!comp->cg()->getSupportsOpCodeForAutoSIMD(TR::vsplats, elementType))
          return NULL;
-      else
-         return node;
+
+      return node;
       }
 
    if (opt->_trace)

@@ -133,7 +133,6 @@ TR_CISCNode::initializeMembers(uint32_t opc, uint16_t id, int16_t dagId, uint16_
 bool
 TR_CISCNode::isEqualOpc(TR_CISCNode *t)
    {
-   //TR_ASSERT((int)OMR::ILOpCode::NumAllIlOps == TR_variable, "assumption for reducing compilation time");
    static_assert((int)OMR::ILOpCode::NumAllIlOps == TR_variable,
                  "assumption for reducing compilation time");
 
