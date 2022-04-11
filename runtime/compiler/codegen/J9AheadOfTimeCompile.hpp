@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -250,8 +250,13 @@ protected:
     * @param kind the TR_ExternalRelocationTargetKind enum value
     */
    void initializeCommonAOTRelocationHeader(TR::IteratedExternalRelocation *relocation, TR_RelocationTarget *reloTarget, TR_RelocationRecord *reloRecord, uint8_t kind);
+
+   /**
+    * @brief Common relocation processing for AOT
+    */
+   void processRelocations();
    };
 
 }
 
-#endif // TR_J9AHEADOFTIMECOMPILE_HPP
+#endif // J9_AHEADOFTIMECOMPILE_HPP
