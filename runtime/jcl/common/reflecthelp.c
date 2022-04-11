@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2021 IBM Corp. and others
+ * Copyright (c) 2001, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -63,7 +63,13 @@ static UDATA
 isConstructor(J9Method *ramMethod)
 {
 	J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(ramMethod);
-	return (0 == (romMethod->modifiers & J9AccStatic)) && ('<' == J9UTF8_DATA(J9ROMMETHOD_NAME(romMethod))[0]);
+	UDATA rc = (!J9ROMMETHOD_IS_STATIC(romMethod)) && ('<' == J9UTF8_DATA(J9ROMMETHOD_NAME(romMethod))[0]);
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	if (!rc) {
+		rc = J9ROMMETHOD_IS_UNNAMED_FACTORY(romMethod);
+	}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+	return rc;
 }
 
 /*
