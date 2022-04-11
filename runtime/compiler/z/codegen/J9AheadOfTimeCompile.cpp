@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -59,70 +59,14 @@ J9::Z::AheadOfTimeCompile::AheadOfTimeCompile(TR::CodeGenerator *cg)
 
 void J9::Z::AheadOfTimeCompile::processRelocations()
    {
-   TR::Compilation *comp = self()->comp();
-   TR_J9VMBase *fej9 = (TR_J9VMBase *)(_cg->fe());
-   TR::IteratedExternalRelocation  *r;
-
    for (auto iterator = self()->getRelocationList().begin();
         iterator != self()->getRelocationList().end();
         ++iterator)
       {
-	   (*iterator)->mapRelocation(_cg);
+      (*iterator)->mapRelocation(_cg);
       }
 
-   for (auto aotIterator = _cg->getExternalRelocationList().begin(); aotIterator != _cg->getExternalRelocationList().end(); ++aotIterator)
-	  (*aotIterator)->addExternalRelocation(_cg);
-
-   for (r = self()->getAOTRelocationTargets().getFirst();
-        r != NULL;
-        r = r->getNext())
-      {
-      self()->addToSizeOfAOTRelocations(r->getSizeOfRelocationData());
-      }
-
-   // now allocate the memory  size of all iterated relocations + the header (total length field)
-
-   // Note that when using the SymbolValidationManager, the well-known classes
-   // must be checked even if no explicit records were generated, since they
-   // might be responsible for the lack of records.
-   bool useSVM = comp->getOption(TR_UseSymbolValidationManager);
-   if (self()->getSizeOfAOTRelocations() != 0 || useSVM)
-      {
-      // It would be more straightforward to put the well-known classes offset
-      // in the AOT method header, but that would use space for AOT bodies that
-      // don't use the SVM. TODO: Move it once SVM takes over?
-      int wellKnownClassesOffsetSize = useSVM ? SIZEPOINTER : 0;
-      uintptr_t reloBufferSize =
-         self()->getSizeOfAOTRelocations() + SIZEPOINTER + wellKnownClassesOffsetSize;
-      uint8_t *relocationDataCursor = self()->setRelocationData(
-         fej9->allocateRelocationData(comp, reloBufferSize));
-      // set up the size for the region
-      *(uintptr_t *)relocationDataCursor = reloBufferSize;
-      relocationDataCursor += SIZEPOINTER;
-
-      if (useSVM)
-         {
-         TR::SymbolValidationManager *svm = comp->getSymbolValidationManager();
-         void *offsets = const_cast<void *>(svm->wellKnownClassChainOffsets());
-         uintptr_t *wkcOffsetAddr = (uintptr_t *)relocationDataCursor;
-         *wkcOffsetAddr = self()->offsetInSharedCacheFromPointer(fej9->sharedCache(), offsets);
-#if defined(J9VM_OPT_JITSERVER)
-         self()->addWellKnownClassesSerializationRecord(svm->aotCacheWellKnownClassesRecord(), wkcOffsetAddr);
-#endif /* defined(J9VM_OPT_JITSERVER) */
-         relocationDataCursor += SIZEPOINTER;
-         }
-
-      // set up pointers for each iterated relocation and initialize header
-      TR::IteratedExternalRelocation *s;
-      for (s = self()->getAOTRelocationTargets().getFirst();
-           s != NULL;
-           s = s->getNext())
-         {
-         s->setRelocationData(relocationDataCursor);
-         s->initializeRelocation(_cg);
-         relocationDataCursor += s->getSizeOfRelocationData();
-         }
-      }
+   J9::AheadOfTimeCompile::processRelocations();
    }
 
 bool
