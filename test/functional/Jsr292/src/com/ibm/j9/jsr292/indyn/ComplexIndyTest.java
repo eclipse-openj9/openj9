@@ -39,8 +39,8 @@ public class ComplexIndyTest{
 	@Test(groups = { "level.extended" })
 	public void test_gwtTest_Object() {
 		String s = com.ibm.j9.jsr292.indyn.ComplexIndy.gwtTest(new Object());
-		if (!s.equals("DoesNotUnderStand: class java.lang.Object message: double")
-			&& !s.equals("DoesNotUnderStand: class java.lang.Identity message: double")
+		if (!s.equals("DoesNotUnderstand: class java.lang.Object message: double")
+		&&  !s.equals("DoesNotUnderstand: class java.lang.Identity message: double")
 		) {
 			Assert.fail("Wrong string returned'" + s +"'");
 		}
