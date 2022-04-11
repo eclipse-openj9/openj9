@@ -25,6 +25,7 @@
 
 /* @ddr_namespace: default */
 #include "j9cfg.h"
+#include "j9.h"
 
 #define _J9ROMCLASS_J9MODIFIER_IS_SET(romClass,j9Modifiers) \
 				J9_ARE_ALL_BITS_SET((romClass)->extraModifiers, j9Modifiers)
@@ -114,6 +115,15 @@
 #define J9ROMMETHOD_HAS_EXTENDED_MODIFIERS(romMethod)	_J9ROMMETHOD_J9MODIFIER_IS_SET((romMethod), J9AccMethodHasExtendedModifiers)
 #define J9ROMMETHOD_IS_OBJECT_CONSTRUCTOR(romMethod)	_J9ROMMETHOD_J9MODIFIER_IS_SET((romMethod), J9AccMethodObjectConstructor)
 #define J9ROMMETHOD_IS_CALLER_SENSITIVE(romMethod)	_J9ROMMETHOD_J9MODIFIER_IS_SET((romMethod), J9AccMethodCallerSensitive)
+#define J9ROMMETHOD_IS_STATIC(romMethod)	_J9ROMMETHOD_J9MODIFIER_IS_SET((romMethod), J9AccStatic)
+
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+/* Currently value type's constructor is static <init>, it will be changed to static <new>. The check for <init> can be removed once OpenJDK is updated on this. */
+#define J9ROMMETHOD_IS_UNNAMED_FACTORY(romMethod) \
+	(J9ROMMETHOD_IS_STATIC((romMethod)) \
+	&& (J9UTF8_LITERAL_EQUALS(J9UTF8_DATA(J9ROMMETHOD_NAME((romMethod))), J9UTF8_LENGTH(J9ROMMETHOD_NAME((romMethod))), "<new>")  \
+			|| J9UTF8_LITERAL_EQUALS(J9UTF8_DATA(J9ROMMETHOD_NAME((romMethod))), J9UTF8_LENGTH(J9ROMMETHOD_NAME((romMethod))), "<init>")))
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 
 #define J9ROMFIELD_IS_CONTENDED(romField)	J9_ARE_ALL_BITS_SET((romField)->modifiers, J9FieldFlagIsContended)
 

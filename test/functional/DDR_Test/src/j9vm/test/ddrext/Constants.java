@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2021 IBM Corp. and others
+ * Copyright (c) 2001, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -634,6 +634,7 @@ public class Constants {
 	public static final String DEADLOCK_FIRST_MON = "First Monitor lock";
 	public static final String DEADLOCK_SECOND_MON = "Second Monitor lock";
 	public static final String DEADLOCK_JAVA_OBJ = "java/lang/Object";
+	public static final String DEADLOCK_JAVA_IDENTITY = "java/lang/Identity";
 	public static final String DEADLOCK_CMD = "deadlock";
 
 	/* Constants related to testing of runtime type resolution */

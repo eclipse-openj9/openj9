@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2021 IBM Corp. and others
+ * Copyright (c) 1998, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -403,11 +403,11 @@ Java_java_lang_Class_getGenericSignature(JNIEnv *env, jobject recv)
 }
 
 /**
- * Determines if a method is a normal method (not <clinit> or <init>).
+ * Determines if a method is a normal method (not <clinit>, <init>, or <new>).
  *
  * @param romMethod[in] the ROM method
  *
- * @returns true if the method is <init> or <clinit>, false if not
+ * @returns true if the method is <init>, <clinit> or <new>, false if not
  */
 static VMINLINE bool
 isSpecialMethod(J9ROMMethod *romMethod)
@@ -425,7 +425,13 @@ isSpecialMethod(J9ROMMethod *romMethod)
 static VMINLINE bool
 isConstructor(J9ROMMethod *romMethod)
 {
-	return (J9_ARE_NO_BITS_SET(romMethod->modifiers, J9AccStatic)) && isSpecialMethod(romMethod);
+	bool rc = (!J9ROMMETHOD_IS_STATIC(romMethod)) && isSpecialMethod(romMethod);
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	if (!rc) {
+		rc = J9ROMMETHOD_IS_UNNAMED_FACTORY(romMethod);
+	}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+	return rc;
 }
 
 /**
@@ -433,7 +439,7 @@ isConstructor(J9ROMMethod *romMethod)
  *
  * @param romMethod[in] the ROM method
  *
- * @returns true if this is public, static and not <clinit>, false if not
+ * @returns true if this is public, static and not <clinit> or <new>, false if not
  */
 static VMINLINE bool
 isNormalStaticMethod(J9ROMMethod *romMethod)
