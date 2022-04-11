@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2021 IBM Corp. and others
+ * Copyright (c) 2001, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -213,7 +213,7 @@ public class CheckReporterTTY extends CheckReporter
 		boolean isHole = false; 
 		boolean isIndexable = false;
 		try {
-			isHole = ObjectModel.isDeadObject(object);
+			isHole = ObjectModel.isHoleObject(object);
 			if(!isHole) {
 				isIndexable = ObjectModel.isIndexable(object);
 			}

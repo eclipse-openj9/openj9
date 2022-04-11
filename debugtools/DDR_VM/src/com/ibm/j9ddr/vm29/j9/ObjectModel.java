@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -85,7 +85,7 @@ public final class ObjectModel
 	
 	/**
 	 * Returns the shape of an object.
-	 * @param objectPtr Pointer to object whose shape is required.
+	 * @param object Pointer to object whose shape is required.
 	 * @return The shape of the object
 	 * @throws CorruptDataException 
 	 */
@@ -107,7 +107,7 @@ public final class ObjectModel
 
 	/**
 	 * Returns TRUE if an object is indexable, FALSE otherwise.
-	 * @param objectPtr Pointer to an object
+	 * @param object Pointer to an object
 	 * @return TRUE if an object is indexable, FALSE otherwise
 	 * @throws CorruptDataException 
 	 */
@@ -128,62 +128,73 @@ public final class ObjectModel
 	}
 
 	/**
-	 * Returns TRUE if an object is dead, FALSE otherwise.
-	 * @param objectPtr Pointer to an object
-	 * @return TRUE if an object is dead, FALSE otherwise
+	 * Returns TRUE if an object is a hole, FALSE otherwise.
+	 * @param object Pointer to an object
+	 * @return TRUE if an object is a hole, FALSE otherwise
 	 * @throws CorruptDataException 
 	 */
-	public static boolean isDeadObject(J9ObjectPointer object) throws CorruptDataException
+	public static boolean isHoleObject(J9ObjectPointer object) throws CorruptDataException
 	{
-		return gcObjectModel.isDeadObject(object);
+		return gcObjectModel.isHoleObject(object);
 	}
 
 	/**
-	 * Returns TRUE if an object is a dead single slot object, FALSE otherwise.
-	 * @param objectPtr Pointer to an object
-	 * @return TRUE if an object is a dead single slot object, FALSE otherwise
+	 * Returns TRUE if an object is a single slot hole object, FALSE otherwise.
+	 * @param object Pointer to an object
+	 * @return TRUE if an object is a single slot hole object, FALSE otherwise
 	 * @throws CorruptDataException 
 	 */
-	public static boolean isSingleSlotDeadObject(J9ObjectPointer object) throws CorruptDataException
+	public static boolean isSingleSlotHoleObject(J9ObjectPointer object) throws CorruptDataException
 	{
-		return gcObjectModel.isSingleSlotDeadObject(object);
+		return gcObjectModel.isSingleSlotHoleObject(object);
 	}
 
 	/**
-	 * Returns the size, in bytes, of a multi-slot dead object.
-	 * @param objectPtr Pointer to an object
-	 * @return The size, in bytes, of a multi-slot dead object
+	 * Returns the size, in bytes, of a multi-slot hole object.
+	 * @param object Pointer to an object
+	 * @return The size, in bytes, of a multi-slot hole object
 	 * @throws CorruptDataException 
 	 */
-	public static UDATA getSizeInBytesMultiSlotDeadObject(J9ObjectPointer object) throws CorruptDataException
+	public static UDATA getSizeInBytesMultiSlotHoleObject(J9ObjectPointer object) throws CorruptDataException
 	{
-		return gcObjectModel.getSizeInBytesMultiSlotDeadObject(object);
+		return gcObjectModel.getSizeInBytesMultiSlotHoleObject(object);
 	}
 
 	/**
-	 * Returns the size, in bytes, of a single slot dead object.
-	 * @param objectPtr Pointer to an object
-	 * @return The size, in bytes, of a single slot dead object
+	 * Returns the size, in bytes, of a single slot hole object.
+	 * @param object Pointer to an object
+	 * @return The size, in bytes, of a single slot hole object
 	 */
-	public static UDATA getSizeInBytesSingleSlotDeadObject(J9ObjectPointer object)
+	public static UDATA getSizeInBytesSingleSlotHoleObject(J9ObjectPointer object)
 	{
-		return gcObjectModel.getSizeInBytesSingleSlotDeadObject(object);
+		return gcObjectModel.getSizeInBytesSingleSlotHoleObject(object);
 	}
 
 	/**
-	 * Returns the size in bytes of a dead object.
-	 * @param objectPtr Pointer to an object
-	 * @return The size in bytes of a dead object
+	 * Returns the size in bytes of a hole object.
+	 * @param object Pointer to an object
+	 * @return The size in bytes of a hole object
 	 * @throws CorruptDataException 
 	 */
-	public static UDATA getSizeInBytesDeadObject(J9ObjectPointer object) throws CorruptDataException
+	public static UDATA getSizeInBytesHoleObject(J9ObjectPointer object) throws CorruptDataException
 	{
-		return gcObjectModel.getSizeInBytesDeadObject(object);
+		return gcObjectModel.getSizeInBytesHoleObject(object);
+	}
+
+	/**
+	 * Returns TRUE if an object is dark matter, FALSE otherwise.
+	 * @param object Pointer to an object
+	 * @return TRUE if an object is dark matter, FALSE otherwise
+	 * @throws CorruptDataException
+	 */
+	public static boolean isDarkMatterObject(J9ObjectPointer object) throws CorruptDataException
+	{
+		return gcObjectModel.isDarkMatterObject(object);
 	}
 
 	/**
 	 * Returns the size of an object, in bytes, including the header.
-	 * @param objectPtr Pointer to an object
+	 * @param object Pointer to an object
 	 * @return The size of an object, in bytes, including the header
 	 * @throws CorruptDataException 
 	 */
@@ -209,7 +220,7 @@ public final class ObjectModel
 	 * Same as getSizeInBytesWithHeader,
 	 * except it takes into account
 	 * object alignment and minimum object size
-	 * @param objectPtr Pointer to an object
+	 * @param object Pointer to an object
 	 * @return The consumed heap size of an object, in bytes, including the header
 	 * @throws CorruptDataException 
 	 */
@@ -220,7 +231,7 @@ public final class ObjectModel
 
 	/**
 	 * Returns the size of an object, in slots, including the header.
-	 * @param objectPtr Pointer to an object
+	 * @param object Pointer to an object
 	 * @return The size of an object, in slots, including the header
 	 * @throws CorruptDataException 
 	 */
@@ -233,7 +244,7 @@ public final class ObjectModel
 	 * Same as getSizeInSlotsWithHeader,
 	 * except it takes into account
 	 * object alignment and minimum object size
-	 * @param objectPtr Pointer to an object
+	 * @param object Pointer to an object
 	 * @return The consumed heap size of an object, in slots, including the header
 	 * @throws CorruptDataException 
 	 */
@@ -244,7 +255,7 @@ public final class ObjectModel
 	
 	/**
 	 * Returns the age of an object.
-	 * @param objectPtr Pointer to an object
+	 * @param object Pointer to an object
 	 * @return The age of the object
 	 * @throws CorruptDataException 
 	 */
@@ -256,7 +267,7 @@ public final class ObjectModel
 
 	/**
 	 * Returns TRUE if an object is remembered, FALSE otherwise.
-	 * @param objectPtr Pointer to an object
+	 * @param object Pointer to an object
 	 * @return TRUE if an object is remembered, FALSE otherwise
 	 * @throws CorruptDataException 
 	 */
@@ -267,7 +278,7 @@ public final class ObjectModel
 
 	/**
 	 * Returns the collector bits from object's header.
-	 * @param objectPtr Pointer to an object
+	 * @param object Pointer to an object
 	 * @return collector bits
 	 */
 	public static UDATA getRememberedBits(J9ObjectPointer object) throws CorruptDataException
@@ -277,7 +288,7 @@ public final class ObjectModel
 	
 	/**
 	 * Returns TRUE if an object is old, FALSE otherwise.
-	 * @param objectPtr Pointer to an object
+	 * @param object Pointer to an object
 	 * @return TRUE if an object is in the old area, FALSE otherwise
 	 * @throws CorruptDataException 
 	 */
@@ -306,7 +317,7 @@ public final class ObjectModel
 	
 	/**
 	 * Returns TRUE if an object has been hashed, FALSE otherwise.
-	 * @param objectPtr Pointer to an object
+	 * @param object Pointer to an object
 	 * @return TRUE if an object has been hashed, FALSE otherwise
 	 * @throws CorruptDataException 
 	 */
@@ -317,7 +328,7 @@ public final class ObjectModel
 	
 	/**
 	 * Returns TRUE if an object has been moved after being hashed, FALSE otherwise.
-	 * @param objectPtr Pointer to an object
+	 * @param object Pointer to an object
 	 * @return TRUE if an object has been moved after being hashed, FALSE otherwise
 	 * @throws CorruptDataException 
 	 */
@@ -357,7 +368,7 @@ public final class ObjectModel
 	/**
 	 * Returns the size of an object header, in bytes.
 	 * <p>
-	 * @param objectPtr Pointer to an object
+	 * @param object Pointer to an object
 	 * @return The size of an object header, in bytes.
 	 */
 	public static UDATA getHeaderSize(J9ObjectPointer object) throws CorruptDataException
