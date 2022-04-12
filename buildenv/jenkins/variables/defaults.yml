@@ -533,12 +533,12 @@ x86-64_linux_criu:
   extends: ['x86-64_linux', 'criu']
   node_labels:
     build:
-      11: 'ci.role.build && hw.arch.x86 && sw.os.cent.7'
+      all: 'ci.role.build && hw.arch.x86 && sw.os.cent.7'
     docker_image:
-      11: ''
+      all: ''
   build_env:
     cmd:
-      11: 'source /home/jenkins/set_gcc7.5.0_env'
+      all: 'source /home/jenkins/set_gcc7.5.0_env'
 ppc64le_linux_criu:
   extends: ['ppc64le_linux', 'criu']
 s390x_linux_criu:
