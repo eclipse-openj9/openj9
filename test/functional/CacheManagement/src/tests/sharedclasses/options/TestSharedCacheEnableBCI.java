@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2019 IBM Corp. and others
+ * Copyright (c) 2010, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -84,7 +84,7 @@ public class TestSharedCacheEnableBCI extends TestUtils {
 		 * CMVC 186357 : This is to provide some leeway for number of ROMClasses
 		 * stored in shared cache by different invocations of JVM.
 		 */
-		int romClassNumberMargin = 10;
+		int romClassNumberMargin = 15;
 
 		if (isMVS() == false) {
 			/* Create a cache without an agent and with disableBCI option. */
