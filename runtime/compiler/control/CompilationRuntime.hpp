@@ -701,13 +701,17 @@ public:
       {
       if (TR::Options::getJITCmdLineOptions()->_mjitEnabled)
          {
-         intptr_t value = (intptr_t)((mjitThreshold << 1) | J9_STARTPC_NOT_TRANSLATED);
-         if (trCount < value)
+         intptr_t value;
+         if (trCount < mjitThreshold)
             {
-            value = trCount;
+            value = (intptr_t)((trCount << 1) | J9_STARTPC_NOT_TRANSLATED);
             TR_J9VMBase *fe = TR_J9VMBase::get(jitConfig, vmThread);
-            U_8 *extendedFlags = fe->fetchMethodExtendedFlagsPointer(method);
+            uint8_t *extendedFlags = fe->fetchMethodExtendedFlagsPointer(method);
             *extendedFlags = (*extendedFlags) | J9_MJIT_FAILED_COMPILE;
+            }
+         else
+            {
+            value = (intptr_t)((mjitThreshold << 1) | J9_STARTPC_NOT_TRANSLATED);
             }
          method->extra = reinterpret_cast<void *>(static_cast<intptr_t>(value));
          }

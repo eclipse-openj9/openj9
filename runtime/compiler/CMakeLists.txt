@@ -123,8 +123,8 @@ if(J9VM_OPT_MICROJIT)
 	message(STATUS "MicroJIT is enabled")
 endif()
 
-#TODO We should get rid of this, but its still required by the compiler_support module in omr
-set(J9SRC  ${j9vm_SOURCE_DIR})
+# TODO We should get rid of this, but it's still required by the compiler_support module in OMR.
+set(J9SRC ${j9vm_SOURCE_DIR})
 
 # include compiler support module from OMR
 include(OmrCompilerSupport)

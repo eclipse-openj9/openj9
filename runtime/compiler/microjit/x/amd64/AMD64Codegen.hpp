@@ -174,9 +174,9 @@ class CodeGenerator
       */
       buffer_size_t
       generateArgumentMoveForStaticMethod(
-         char* buffer,
-         TR_ResolvedMethod* staticMethod,
-         char* typeString,
+         char *buffer,
+         TR_ResolvedMethod *staticMethod,
+         char *typeString,
          U_16 typeStringLength,
          U_16 slotCount,
          struct TR::X86LinkageProperties *properties);
@@ -190,8 +190,8 @@ class CodeGenerator
       */
       buffer_size_t
       generateInvokeStatic(
-         char* buffer,
-         MJIT::ByteCodeIterator* bci,
+         char *buffer,
+         MJIT::ByteCodeIterator *bci,
          struct TR::X86LinkageProperties *properties);
 
       /**
@@ -203,8 +203,8 @@ class CodeGenerator
       */
       buffer_size_t
       generateGetField(
-         char* buffer,
-         MJIT::ByteCodeIterator* bci);
+         char *buffer,
+         MJIT::ByteCodeIterator *bci);
 
       /**
       * Generates a putField instruction based on the type.
@@ -215,8 +215,8 @@ class CodeGenerator
       */
       buffer_size_t
       generatePutField(
-         char* buffer,
-         MJIT::ByteCodeIterator* bci);
+         char *buffer,
+         MJIT::ByteCodeIterator *bci);
 
       /**
       * Generates a putStatic instruction based on the type.
@@ -334,7 +334,7 @@ class CodeGenerator
          char *first2BytesPatchLocation,
          char *samplingRecompileCallLocation,
          char** firstInstLocation,
-         MJIT::ByteCodeIterator* bci);
+         MJIT::ByteCodeIterator *bci);
 
       /**
       * Generates the cold area used for helpers, such as the jit stack overflow checker.

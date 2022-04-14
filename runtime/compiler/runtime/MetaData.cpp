@@ -1845,10 +1845,9 @@ createMethodMetaData(
    }
 
 #if defined(J9VM_OPT_MICROJIT)
-//
-//the routine that sequences the creation of the meta-data for
+// ---------------------------------------------------------------------------
+// The routine that sequences the creation of the meta-data for
 //   a method compiled for MJIT
-//
 TR_MethodMetaData *
 createMJITMethodMetaData(
       TR_J9VMBase & vmArg,
@@ -1865,7 +1864,7 @@ createMJITMethodMetaData(
    TR::CodeGenerator *cg = comp->cg();
    TR::GCStackAtlas *trStackAtlas = cg->getStackAtlas();
 
-   // --------------------------------------------------------------------------
+   // ---------------------------------------------------------------------------
    // Find unmergeable GC maps
    // TODO: MicroJIT: Create mechanism like treetop to support this at a MicroJIT level.
    GCStackMapSet nonmergeableBCI(std::less<TR_GCStackMap*>(), cg->trMemory()->heapMemoryRegion());

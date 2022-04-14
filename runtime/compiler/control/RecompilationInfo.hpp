@@ -339,8 +339,8 @@ class TR_PersistentJittedBodyInfo
 
    bool getHasLoops()               { return _flags.testAny(HasLoops); }
 #if defined(J9VM_OPT_MICROJIT)
-   bool isMJITCompiledMethod() { return _flags.testAny(IsMJITCompiled); }
-   void setIsMJITCompiledMethod(bool b) { _flags.set(IsMJITCompiled, b); }
+   bool isMJITCompiledMethod()      { return _flags.testAny(IsMJITCompiled); }
+   void setIsMJITCompiledMethod(bool b){ _flags.set(IsMJITCompiled, b); }
 #endif /* defined(J9VM_OPT_MICROJIT) */
    bool getUsesPreexistence()       { return _flags.testAny(UsesPreexistence); }
    bool getDisableSampling()        { return _flags.testAny(DisableSampling);  }

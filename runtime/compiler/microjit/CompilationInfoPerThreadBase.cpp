@@ -57,7 +57,7 @@ testMicroJITCompilationForErrors(
       intptr_t trCountFromMJIT = J9ROMMETHOD_HAS_BACKWARDS_BRANCHES(romMethod) ? TR_DEFAULT_INITIAL_BCOUNT : TR_DEFAULT_INITIAL_COUNT;
       trCountFromMJIT = (trCountFromMJIT << 1) | 1;
       TR_J9VMBase *fe = TR_J9VMBase::get(jitConfig, vmThread);
-      U_8 *extendedFlags = fe->fetchMethodExtendedFlagsPointer(method);
+      uint8_t *extendedFlags = fe->fetchMethodExtendedFlagsPointer(method);
       *extendedFlags = (*extendedFlags) | J9_MJIT_FAILED_COMPILE;
       method->extra = reinterpret_cast<void *>(trCountFromMJIT);
       compiler->failCompilation<MJIT::MJITCompilationFailure>("Cannot compile with MicroJIT.");
@@ -103,7 +103,7 @@ TR::CompilationInfoPerThreadBase::mjit(
       method = details.getMethod();
 
       TR_J9VMBase *fe = TR_J9VMBase::get(jitConfig, vmThread); // TODO: fe can be replaced by vm and removed from here.
-      U_8 *extendedFlags = fe->fetchMethodExtendedFlagsPointer(method);
+      uint8_t *extendedFlags = fe->fetchMethodExtendedFlagsPointer(method);
       const char* signature = compilee->signature(compiler->trMemory());
 
       TRIGGER_J9HOOK_JIT_COMPILING_START(_jitConfig->hookInterface, vmThread, method);
