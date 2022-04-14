@@ -20,7 +20,6 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 #
 
-
 # Externalised messages for the VM components of the JCL module.
 # New messages MUST be added at the end of this file.
 #
@@ -443,4 +442,84 @@ J9NLS_JCL_DUPLICATE_CLASS_DEFINITION.sample_input_2=Foo
 J9NLS_JCL_DUPLICATE_CLASS_DEFINITION.explanation=A duplicated class definition is found.
 J9NLS_JCL_DUPLICATE_CLASS_DEFINITION.system_action=The JVM will throw a LinkageError.
 J9NLS_JCL_DUPLICATE_CLASS_DEFINITION.user_response=Ensure there is no duplicate definition for the class in the message and try again.
+# END NON-TRANSLATABLE
+
+J9NLS_JCL_CRIU_FAILED_TO_OPEN_DIR=Denetim noktas\u0131 veri dizini a\u00e7\u0131lamad\u0131, errno=%li
+# START NON-TRANSLATABLE
+J9NLS_JCL_CRIU_FAILED_TO_OPEN_DIR.sample_input_1=1
+J9NLS_JCL_CRIU_FAILED_TO_OPEN_DIR.explanation=An error occured when the JVM attempted to open the specified directory.
+J9NLS_JCL_CRIU_FAILED_TO_OPEN_DIR.system_action=The JVM will throw a JVMCheckpointException.
+J9NLS_JCL_CRIU_FAILED_TO_OPEN_DIR.user_response=Ensure the specified directory is accessible.
+# END NON-TRANSLATABLE
+
+J9NLS_JCL_CRIU_INIT_FAILED=CRIU se\u00e7enekleri ba\u015flat\u0131lamad\u0131, err=%li
+# START NON-TRANSLATABLE
+J9NLS_JCL_CRIU_INIT_FAILED.sample_input_1=1
+J9NLS_JCL_CRIU_INIT_FAILED.explanation=An error occured when the JVM attempted to initialize CRIU options.
+J9NLS_JCL_CRIU_INIT_FAILED.system_action=The JVM will throw a SystemCheckpointException.
+J9NLS_JCL_CRIU_INIT_FAILED.user_response=View CRIU documentation to determine how to resolve the error.
+# END NON-TRANSLATABLE
+
+J9NLS_JCL_CRIU_DUMP_FAILED=JVM s\u00fcreci d\u00f6k\u00fcm\u00fc olu\u015fturulamad\u0131, err=%li
+# START NON-TRANSLATABLE
+J9NLS_JCL_CRIU_DUMP_FAILED.sample_input_1=1
+J9NLS_JCL_CRIU_DUMP_FAILED.explanation=An error occured when the JVM attempted to dump the process via criu_dump.
+J9NLS_JCL_CRIU_DUMP_FAILED.system_action=The JVM will throw a SystemCheckpointException.
+J9NLS_JCL_CRIU_DUMP_FAILED.user_response=View CRIU documentation to determine how to resolve the error.
+# END NON-TRANSLATABLE
+
+J9NLS_JCL_CRIU_FAILED_TO_CLOSE_DIR=Denetim noktas\u0131 veri dizini kapat\u0131lamad\u0131, errno=%li
+# START NON-TRANSLATABLE
+J9NLS_JCL_CRIU_FAILED_TO_CLOSE_DIR.sample_input_1=1
+J9NLS_JCL_CRIU_FAILED_TO_CLOSE_DIR.explanation=An error occured when the JVM attempted to close the specified directory.
+J9NLS_JCL_CRIU_FAILED_TO_CLOSE_DIR.system_action=The JVM will throw a RestoreException or SystemCheckpointException.
+J9NLS_JCL_CRIU_FAILED_TO_CLOSE_DIR.user_response=Ensure the specified directory is accessible.
+# END NON-TRANSLATABLE
+
+J9NLS_JCL_CRIU_FAILED_TO_CONVERT_JAVA_STRING=Java dizgisi yerli kodlamaya d\u00f6n\u00fc\u015ft\u00fcr\u00fclemedi, err=%li
+# START NON-TRANSLATABLE
+J9NLS_JCL_CRIU_FAILED_TO_CONVERT_JAVA_STRING.sample_input_1=1
+J9NLS_JCL_CRIU_FAILED_TO_CONVERT_JAVA_STRING.explanation=An error occured when the JVM attempted to convert a java string to native encoding.
+J9NLS_JCL_CRIU_FAILED_TO_CONVERT_JAVA_STRING.system_action=The JVM will throw a JVMCheckpointException.
+J9NLS_JCL_CRIU_FAILED_TO_CONVERT_JAVA_STRING.user_response=Ensure the specified input strings are valid.
+# END NON-TRANSLATABLE
+
+J9NLS_JCL_CRIU_FAILED_TO_OPEN_WORK_DIR=\u00c7al\u0131\u015fma dizini a\u00e7\u0131lamad\u0131, errno=%li
+# START NON-TRANSLATABLE
+J9NLS_JCL_CRIU_FAILED_TO_OPEN_WORK_DIR.sample_input_1=1
+J9NLS_JCL_CRIU_FAILED_TO_OPEN_WORK_DIR.explanation=An error occured when the JVM attempted to open the specified directory.
+J9NLS_JCL_CRIU_FAILED_TO_OPEN_WORK_DIR.system_action=The JVM will throw a JVMCheckpointException.
+J9NLS_JCL_CRIU_FAILED_TO_OPEN_WORK_DIR.user_response=Ensure the specified directory is accessible.
+# END NON-TRANSLATABLE
+
+J9NLS_JCL_CRIU_FAILED_TO_CLOSE_WORK_DIR=\u00c7al\u0131\u015fma dizini kapat\u0131lamad\u0131, errno=%li
+# START NON-TRANSLATABLE
+J9NLS_JCL_CRIU_FAILED_TO_CLOSE_WORK_DIR.sample_input_1=1
+J9NLS_JCL_CRIU_FAILED_TO_CLOSE_WORK_DIR.explanation=An error occured when the JVM attempted to close the specified directory.
+J9NLS_JCL_CRIU_FAILED_TO_CLOSE_WORK_DIR.system_action=The JVM will throw a RestoreException or SystemCheckpointException.
+J9NLS_JCL_CRIU_FAILED_TO_CLOSE_WORK_DIR.user_response=Ensure the specified directory is accessible.
+# END NON-TRANSLATABLE
+
+J9NLS_JCL_CRIU_FAILED_TO_RUN_INTERNAL_CHECKPOINT_HOOKS=\u0130\u00e7 denetim noktas\u0131 kancalar\u0131 \u00e7al\u0131\u015ft\u0131r\u0131lamad\u0131, errno=%li
+# START NON-TRANSLATABLE
+J9NLS_JCL_CRIU_FAILED_TO_RUN_INTERNAL_CHECKPOINT_HOOKS.sample_input_1=1
+J9NLS_JCL_CRIU_FAILED_TO_RUN_INTERNAL_CHECKPOINT_HOOKS.explanation=An error occured when the JVM attempted to run internal checkpoint hooks.
+J9NLS_JCL_CRIU_FAILED_TO_RUN_INTERNAL_CHECKPOINT_HOOKS.system_action=The JVM will throw a SystemCheckpointException.
+J9NLS_JCL_CRIU_FAILED_TO_RUN_INTERNAL_CHECKPOINT_HOOKS.user_response=View CRIU documentation to determine how to resolve the error.
+# END NON-TRANSLATABLE
+
+J9NLS_JCL_CRIU_FAILED_TO_RUN_INTERNAL_RESTORE_HOOKS=\u0130\u00e7 geri y\u00fckleme kancalar\u0131 \u00e7al\u0131\u015ft\u0131r\u0131lamad\u0131, errno=%li
+# START NON-TRANSLATABLE
+J9NLS_JCL_CRIU_FAILED_TO_RUN_INTERNAL_RESTORE_HOOKS.sample_input_1=1
+J9NLS_JCL_CRIU_FAILED_TO_RUN_INTERNAL_RESTORE_HOOKS.explanation=An error occured when the JVM attempted to run internal restore hooks.
+J9NLS_JCL_CRIU_FAILED_TO_RUN_INTERNAL_RESTORE_HOOKS.system_action=The JVM will throw a RestoreException.
+J9NLS_JCL_CRIU_FAILED_TO_RUN_INTERNAL_RESTORE_HOOKS.user_response=View CRIU documentation to determine how to resolve the error.
+# END NON-TRANSLATABLE
+
+J9NLS_JCL_CRIU_FAILED_DELAY_LOCK_RELATED_OPS=Kilitle ilgili gecikmeli i\u015flemler ba\u015far\u0131yla \u00e7al\u0131\u015ft\u0131r\u0131lamad\u0131, errno=%li
+# START NON-TRANSLATABLE
+J9NLS_JCL_CRIU_FAILED_DELAY_LOCK_RELATED_OPS.sample_input_1=1
+J9NLS_JCL_CRIU_FAILED_DELAY_LOCK_RELATED_OPS.explanation=An error occured when the JVM attempted to run delayed identity operations.
+J9NLS_JCL_CRIU_FAILED_DELAY_LOCK_RELATED_OPS.system_action=The JVM will throw a RestoreException.
+J9NLS_JCL_CRIU_FAILED_DELAY_LOCK_RELATED_OPS.user_response=View CRIU documentation to determine how to resolve the error.
 # END NON-TRANSLATABLE
