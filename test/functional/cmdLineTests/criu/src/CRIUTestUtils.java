@@ -1,4 +1,3 @@
-
 /*******************************************************************************
  * Copyright (c) 2022, 2022 IBM Corp. and others
  *
@@ -22,51 +21,54 @@
  *******************************************************************************/
 import java.nio.file.Paths;
 import java.nio.file.Path;
+import java.nio.file.Files;
+import java.nio.file.attribute.PosixFilePermissions;
+import java.io.File;
+import java.io.IOException;
 
-public class CRIUSimpleTest {
+import org.eclipse.openj9.criu.*;
 
-	public static void main(String args[]) {
-		String test = args[0];
+public class CRIUTestUtils {
+	public static void deleteCheckpointDirectory(Path path) {
+		try {
+			if (path.toFile().exists()) {
+				Files.walk(path)
+				.map(Path::toFile)
+				.forEach(File::delete);
 
-		switch(test) {
-		case "SingleCheckpoint":
-			singleCheckpoint();
-			break;
-		case "TwoCheckpoints":
-			twoCheckpoints();
-			break;
-		case "ThreeCheckpoints":
-			threeCheckpoints();
-			break;
-		default:
-			throw new RuntimeException("incorrect parameters");
+				Files.deleteIfExists(path);
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 	}
 
-	public static void singleCheckpoint() {
-		Path path = Paths.get("cpData");
-		System.out.println("Single checkpoint:\nPre-checkpoint");
-		CRIUTestUtils.checkPointJVM(path);
-		System.out.println("Post-checkpoint");
+	public static void createCheckpointDirectory(Path path) {
+		try {
+			path.toFile().mkdir();
+			Files.setPosixFilePermissions(path, PosixFilePermissions.fromString("rwxrwxrwx"));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
-	public static void twoCheckpoints() {
-		Path path = Paths.get("cpData");
-		System.out.println("Two checkpoints:\nPre-checkpoint");
-		CRIUTestUtils.checkPointJVM(path);
-		System.out.println("Post-checkpoint 1");
-		CRIUTestUtils.checkPointJVM(path);
-		System.out.println("Post-checkpoint 2");
-	}
+	public static void checkPointJVM(Path path) {
+		if (CRIUSupport.isCRIUSupportEnabled()) {
+			deleteCheckpointDirectory(path);
+			createCheckpointDirectory(path);
+			try {
+				new CRIUSupport(path)
+				.setLeaveRunning(false)
+				.setShellJob(true)
+				.setFileLocks(true)
+				.checkpointJVM();
+			} catch (RestoreException e) {
+				e.printStackTrace();
+			}
 
-	public static void threeCheckpoints() {
-		Path path = Paths.get("cpData");
-		System.out.println("Three checkpoints:\nPre-checkpoint");
-		CRIUTestUtils.checkPointJVM(path);
-		System.out.println("Post-checkpoint 1");
-		CRIUTestUtils.checkPointJVM(path);
-		System.out.println("Post-checkpoint 2");
-		CRIUTestUtils.checkPointJVM(path);
-		System.out.println("Post-checkpoint 3");
+			deleteCheckpointDirectory(path);
+		} else {
+			System.err.println("CRIU is not enabled");
+		}
 	}
 }
