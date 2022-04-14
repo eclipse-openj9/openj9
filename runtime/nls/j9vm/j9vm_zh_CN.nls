@@ -279,8 +279,7 @@ J9NLS_VM_CHECK_JAVA_HOME.user_response=Check that JAVA_HOME environment variable
 # This message will be followed by the exception's class name and
 # (if non-null) the exception's detail message
 # e.g. Exception in thread "main" java/lang/StackOverflowError: An overflow occurred
-J9NLS_VM_STACK_TRACE_EXCEPTION_IN=\u7ebf\u7a0b\u201c%.*s\u201d\u4e2d\u53d1\u751f\u5f02\u5e38
-
+J9NLS_VM_STACK_TRACE_EXCEPTION_IN=\u7ebf\u7a0b\u201c%.*s\u201d\u4e2d\u53d1\u751f\u5f02\u5e38\u0020
 # START NON-TRANSLATABLE
 J9NLS_VM_STACK_TRACE_EXCEPTION_IN.sample_input_1=57
 J9NLS_VM_STACK_TRACE_EXCEPTION_IN.sample_input_2=\"main\" java/lang/StackOverflowError: An overflow occurred
@@ -516,7 +515,7 @@ J9NLS_VM_JLM_HOLD_TIMES_NOT_SUPPORTED.user_response=
 
 # argument is the unrecognized command line option
 # this occurs if you pass an unrecognized option to -Xjni. e.g. ./j9 -Xjni:foo
-J9NLS_VM_UNRECOGNIZED_XJNI_OPTION=-Xjni\uff1a\u65e0\u6cd5\u8bc6\u522b\u7684\u9009\u9879 --> \'%s\'
+J9NLS_VM_UNRECOGNIZED_XJNI_OPTION=-Xjni\uff1a\u65e0\u6cd5\u8bc6\u522b\u7684\u9009\u9879 --> '%s'
 # START NON-TRANSLATABLE
 J9NLS_VM_UNRECOGNIZED_XJNI_OPTION.sample_input_1=someoption
 J9NLS_VM_UNRECOGNIZED_XJNI_OPTION.explanation=The option specified with the -Xjni: command line parameter is unrecognized.
@@ -532,7 +531,7 @@ J9NLS_VM_XJNI_OPTIONS_1.system_action=
 J9NLS_VM_XJNI_OPTIONS_1.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_VM_XJNI_OPTIONS_2=\   -Xjni:arrayCacheMax=[<x>|unlimited] \u8bbe\u7f6e JNI \u9ad8\u901f\u7f13\u5b58\u6570\u7ec4\u7684\u6700\u5927\u5927\u5c0f\n
+J9NLS_VM_XJNI_OPTIONS_2=\ \ \ -Xjni:arrayCacheMax=[<x>|unlimited] \u8bbe\u7f6e JNI \u9ad8\u901f\u7f13\u5b58\u6570\u7ec4\u7684\u6700\u5927\u5927\u5c0f\n
 # START NON-TRANSLATABLE
 J9NLS_VM_XJNI_OPTIONS_2.explanation=NOTAG
 J9NLS_VM_XJNI_OPTIONS_2.system_action=
@@ -751,7 +750,6 @@ J9NLS_VM_ILLEGAL_ACCESS_DETAIL.user_response=
 # END NON-TRANSLATABLE
 
 J9NLS_VM_ILLEGAL_ACCESS_CLASS=\u7c7b %2$.*1$s \u975e\u6cd5\u8bbf\u95ee %3$s \u7c7b %5$.*4$s
-
 # START NON-TRANSLATABLE
 J9NLS_VM_ILLEGAL_ACCESS_CLASS.sample_input_1=3
 J9NLS_VM_ILLEGAL_ACCESS_CLASS.sample_input_2=foo
@@ -981,7 +979,7 @@ J9NLS_VM_XLOG_HELP01.user_response=
 # END NON-TRANSLATABLE
 
 # -Xsyslog:help is not translatable
-J9NLS_VM_XLOG_HELP02=  -Xsyslog:help              \u663e\u793a JVM -Xsyslog \u5e2e\u52a9\u3002
+J9NLS_VM_XLOG_HELP02= -Xsyslog:help              \u663e\u793a JVM -Xsyslog \u5e2e\u52a9\u3002
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP02.explanation=NOTAG
 J9NLS_VM_XLOG_HELP02.system_action=
@@ -989,7 +987,7 @@ J9NLS_VM_XLOG_HELP02.user_response=
 # END NON-TRANSLATABLE
 
 # -Xsyslog:none is not translatable
-J9NLS_VM_XLOG_HELP03=  -Xsyslog:none              \u7981\u7528\u5148\u524d\u6307\u5b9a\u7684 JVM \u65e5\u5fd7\u9009\u9879\uff0c\u5305\u62ec\u7f3a\u7701\u9009\u9879\u3002
+J9NLS_VM_XLOG_HELP03= -Xsyslog:none              \u7981\u7528\u5148\u524d\u6307\u5b9a\u7684 JVM \u65e5\u5fd7\u9009\u9879\uff0c\u5305\u62ec\u7f3a\u7701\u9009\u9879\u3002
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP03.explanation=NOTAG
 J9NLS_VM_XLOG_HELP03.system_action=
@@ -997,7 +995,7 @@ J9NLS_VM_XLOG_HELP03.user_response=
 # END NON-TRANSLATABLE
 
 # -Xsyslog:all is not translatable
-J9NLS_VM_XLOG_HELP04=  -Xsyslog:all               \u8bb0\u5f55\u6240\u6709 JVM \u6d88\u606f\u3002
+J9NLS_VM_XLOG_HELP04= -Xsyslog:all               \u8bb0\u5f55\u6240\u6709 JVM \u6d88\u606f\u3002
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP04.explanation=NOTAG
 J9NLS_VM_XLOG_HELP04.system_action=
@@ -1005,7 +1003,7 @@ J9NLS_VM_XLOG_HELP04.user_response=
 # END NON-TRANSLATABLE
 
 # -Xsyslog:info is not translatable
-J9NLS_VM_XLOG_HELP05=  -Xsyslog:info              \u8bb0\u5f55 JVM \u53c2\u8003\u6d88\u606f\u3002
+J9NLS_VM_XLOG_HELP05= -Xsyslog:info              \u8bb0\u5f55 JVM \u53c2\u8003\u6d88\u606f\u3002
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP05.explanation=NOTAG
 J9NLS_VM_XLOG_HELP05.system_action=
@@ -1013,7 +1011,7 @@ J9NLS_VM_XLOG_HELP05.user_response=
 # END NON-TRANSLATABLE
 
 # -Xsyslog:warn is not translatable
-J9NLS_VM_XLOG_HELP06=  -Xsyslog:warn              \u8bb0\u5f55 JVM \u8b66\u544a\u6d88\u606f\u3002
+J9NLS_VM_XLOG_HELP06= -Xsyslog:warn              \u8bb0\u5f55 JVM \u8b66\u544a\u6d88\u606f\u3002
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP06.explanation=NOTAG
 J9NLS_VM_XLOG_HELP06.system_action=
@@ -1021,7 +1019,7 @@ J9NLS_VM_XLOG_HELP06.user_response=
 # END NON-TRANSLATABLE
 
 # -Xsyslog:error is not translatable
-J9NLS_VM_XLOG_HELP07=  -Xsyslog:error             \u8bb0\u5f55 JVM \u9519\u8bef\u6d88\u606f\u3002\u7f3a\u7701\u60c5\u51b5\u4e0b\u4f1a\u6253\u5f00\u6b64\u53c2\u6570\u3002
+J9NLS_VM_XLOG_HELP07= -Xsyslog:error             \u8bb0\u5f55 JVM \u9519\u8bef\u6d88\u606f\u3002\u7f3a\u7701\u60c5\u51b5\u4e0b\u4f1a\u6253\u5f00\u6b64\u53c2\u6570\u3002
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP07.explanation=NOTAG
 J9NLS_VM_XLOG_HELP07.system_action=
@@ -1029,7 +1027,7 @@ J9NLS_VM_XLOG_HELP07.user_response=
 # END NON-TRANSLATABLE
 
 # -Xsyslog:vital is not translatable
-J9NLS_VM_XLOG_HELP08=  -Xsyslog:vital         C    \u8bb0\u5f55 JVM \u91cd\u8981\u6d88\u606f\u3002\u7f3a\u7701\u60c5\u51b5\u4e0b\u4f1a\u6253\u5f00\u6b64\u53c2\u6570\u3002
+J9NLS_VM_XLOG_HELP08= -Xsyslog:vital         C    \u8bb0\u5f55 JVM \u91cd\u8981\u6d88\u606f\u3002\u7f3a\u7701\u60c5\u51b5\u4e0b\u4f1a\u6253\u5f00\u6b64\u53c2\u6570\u3002
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP08.explanation=NOTAG
 J9NLS_VM_XLOG_HELP08.system_action=
@@ -1037,7 +1035,7 @@ J9NLS_VM_XLOG_HELP08.user_response=
 # END NON-TRANSLATABLE
 
 # -Xsyslog:config is not translatable
-J9NLS_VM_XLOG_HELP09=  -Xsyslog:config            \u8bb0\u5f55 JVM \u914d\u7f6e\u6d88\u606f\u3002\n
+J9NLS_VM_XLOG_HELP09= -Xsyslog:config            \u8bb0\u5f55 JVM \u914d\u7f6e\u6d88\u606f\u3002\n
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP09.explanation=NOTAG
 J9NLS_VM_XLOG_HELP09.system_action=
@@ -1053,7 +1051,7 @@ J9NLS_VM_XLOG_HELP10.user_response=
 # END NON-TRANSLATABLE
 
 # -Xsyslog:error,warn is not translatable
-J9NLS_VM_XLOG_HELP11=  -Xsyslog:error,warn
+J9NLS_VM_XLOG_HELP11= -Xsyslog:error,warn
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP11.explanation=NOTAG
 J9NLS_VM_XLOG_HELP11.system_action=
@@ -1061,7 +1059,7 @@ J9NLS_VM_XLOG_HELP11.user_response=
 # END NON-TRANSLATABLE
 
 # -Xsyslog:info,warn,error is not translatable
-J9NLS_VM_XLOG_HELP12=  -Xsyslog:info,warn,error\n
+J9NLS_VM_XLOG_HELP12= -Xsyslog:info,warn,error\n
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP12.explanation=NOTAG
 J9NLS_VM_XLOG_HELP12.system_action=
@@ -1108,7 +1106,7 @@ J9NLS_LOCKNURSERY_CONFIG_WHAT_HEADER2.system_action=The JVM prints this message 
 J9NLS_LOCKNURSERY_CONFIG_WHAT_HEADER2.user_response=None, this is an information message that is displayed when the -Xlockword:what is on the command line.
 # END NON-TRANSLATABLE
 
-J9NLS_LOCKNURSERY_CONFIG_WHAT_MODE=  Lockword \u65b9\u5f0f=%s
+J9NLS_LOCKNURSERY_CONFIG_WHAT_MODE= Lockword \u65b9\u5f0f=%s
 # START NON-TRANSLATABLE
 J9NLS_LOCKNURSERY_CONFIG_WHAT_MODE.explanation=This is an information message that is displayed when the -Xlockword:what is on the command line.
 J9NLS_LOCKNURSERY_CONFIG_WHAT_MODE.system_action=The JVM prints this message including the current lockword mode when the JVM is started and runs with the lockword configuration displayed.
@@ -1116,7 +1114,7 @@ J9NLS_LOCKNURSERY_CONFIG_WHAT_MODE.user_response=None, this is an information me
 J9NLS_LOCKNURSERY_CONFIG_WHAT_MODE.sample_input_1=default
 # END NON-TRANSLATABLE
 
-J9NLS_LOCKNURSERY_CONFIG_WHAT_HAS_LOCKWORD=  lockword\uff1a%.*s
+J9NLS_LOCKNURSERY_CONFIG_WHAT_HAS_LOCKWORD= lockword\uff1a%.*s
 # START NON-TRANSLATABLE
 J9NLS_LOCKNURSERY_CONFIG_WHAT_HAS_LOCKWORD.explanation=This is an information message that is displayed when the -Xlockword:what is on the command line.
 J9NLS_LOCKNURSERY_CONFIG_WHAT_HAS_LOCKWORD.system_action=The JVM prints this message for each class that has been specifically assigned a lockword when the JVM is started and runs with the lockword configuration displayed.
@@ -1125,7 +1123,7 @@ J9NLS_LOCKNURSERY_CONFIG_WHAT_HAS_LOCKWORD.sample_input_1=16
 J9NLS_LOCKNURSERY_CONFIG_WHAT_HAS_LOCKWORD.sample_input_2=java/lang/String
 # END NON-TRANSLATABLE
 
-J9NLS_LOCKNURSERY_CONFIG_WHAT_DOES_NOT_HAVE_LOCKWORD=  noLockword\uff1a%.*s
+J9NLS_LOCKNURSERY_CONFIG_WHAT_DOES_NOT_HAVE_LOCKWORD= noLockword\uff1a%.*s
 # START NON-TRANSLATABLE
 J9NLS_LOCKNURSERY_CONFIG_WHAT_DOES_NOT_HAVE_LOCKWORD.explanation=This is an information message that is displayed when the -Xlockword:what is on the command line.
 J9NLS_LOCKNURSERY_CONFIG_WHAT_DOES_NOT_HAVE_LOCKWORD.system_action=The JVM prints this message for each class that has been specifically not assigned a lockword when the JVM is started and runs with the lockword configuration displayed.
@@ -1184,7 +1182,7 @@ J9NLS_VM_PPC32_HARDWARE_NOT_SUPPORTED.system_action=The JVM will terminate.
 J9NLS_VM_PPC32_HARDWARE_NOT_SUPPORTED.user_response=See the 'Supported Environments' information in the IBM Java User Guide to determine the minimum system requirements.
 # END NON-TRANSLATABLE
 
-J9NLS_VM_EXCEPTION_DEFINECLASS_IN_PROTECTED_SYSTEM_PACKAGE=  \u65e0\u6cd5\u5b9a\u4e49\u7c7b %.*s -\u201c%.*s\u201d\u662f\u53d7\u4fdd\u62a4\u7684\u7cfb\u7edf\u5305
+J9NLS_VM_EXCEPTION_DEFINECLASS_IN_PROTECTED_SYSTEM_PACKAGE= \u65e0\u6cd5\u5b9a\u4e49\u7c7b %.*s -\u201c%.*s\u201d\u662f\u53d7\u4fdd\u62a4\u7684\u7cfb\u7edf\u5305
 # START NON-TRANSLATABLE
 J9NLS_VM_EXCEPTION_DEFINECLASS_IN_PROTECTED_SYSTEM_PACKAGE.explanation=This is an error message that is associated with a java/lang/SecurityException when the user attempts to define a class in a protected package via JNI.
 J9NLS_VM_EXCEPTION_DEFINECLASS_IN_PROTECTED_SYSTEM_PACKAGE.system_action=The JVM throws a java/lang/SecurityException with this as its message.
@@ -2057,4 +2055,45 @@ J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_PACKAGE.sample_input_2=Fo
 J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_PACKAGE.explanation=The specified non-public class must be in the same package as its sealed super class/interface.
 J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_PACKAGE.system_action=The JVM will throw an IncompatibleClassChangeError.
 J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_PACKAGE.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+# Message for IncompatibleClassChangeError due to default method conflict during MemberName resolution
+J9NLS_VM_DEFAULT_METHOD_CONFLICT_GENERIC=\u5728 MethodHandle \u8c03\u7528\u671f\u95f4\u53d1\u73b0\u7f3a\u7701\u65b9\u6cd5\u51b2\u7a81\u3002
+# START NON-TRANSLATABLE
+J9NLS_VM_DEFAULT_METHOD_CONFLICT_GENERIC.explanation=Default method conflict raised from MemberName resolution.
+J9NLS_VM_DEFAULT_METHOD_CONFLICT_GENERIC.system_action=The JVM will throw an IncompatibleClassChangeError.
+J9NLS_VM_DEFAULT_METHOD_CONFLICT_GENERIC.user_response=Investigate the source of the exception.
+# END NON-TRANSLATABLE
+
+#Message used when JVM detects a value type that has an illegal super class
+# argument 1 is the length of value type name
+# argument 2 is the string of value type name
+# argument 3 is the length of super class name
+# argument 4 is the string of super class name
+J9NLS_VM_VALUETYPE_HAS_WRONG_SUPERCLASS=\u503c\u7c7b\u578b\u7c7b %2$.*1$s \u5177\u6709\u65e0\u6548\u7684\u8d85\u7c7b %4$.*3$s
+# START NON-TRANSLATABLE
+J9NLS_VM_VALUETYPE_HAS_WRONG_SUPERCLASS.sample_input_1=3
+J9NLS_VM_VALUETYPE_HAS_WRONG_SUPERCLASS.sample_input_2=Foo
+J9NLS_VM_VALUETYPE_HAS_WRONG_SUPERCLASS.sample_input_3=3
+J9NLS_VM_VALUETYPE_HAS_WRONG_SUPERCLASS.sample_input_4=Var
+
+J9NLS_VM_VALUETYPE_HAS_WRONG_SUPERCLASS.explanation=The specified class cannot be a super class of a value type.
+J9NLS_VM_VALUETYPE_HAS_WRONG_SUPERCLASS.system_action=The JVM will throw IncompatibleClassChangeError.
+J9NLS_VM_VALUETYPE_HAS_WRONG_SUPERCLASS.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+# Messages related to parsing the ensureHashed configuration
+J9NLS_VM_INVALID_EMPTY_OPTION=\u4e0d\u5141\u8bb8\u5411\u9009\u9879\u201c%s\u201d\u4f20\u9012\u7a7a\u5b57\u7b26\u4e32
+# START NON-TRANSLATABLE
+J9NLS_VM_INVALID_EMPTY_OPTION.sample_input_1=-XX:+EnsureHashed:
+J9NLS_VM_INVALID_EMPTY_OPTION.explanation=The options cannot be empty.
+J9NLS_VM_INVALID_EMPTY_OPTION.system_action=The JVM prints this message and terminates.
+J9NLS_VM_INVALID_EMPTY_OPTION.user_response=Provide non-empty options.
+# END NON-TRANSLATABLE
+
+J9NLS_ENSUREHASHED_CONFIG_OUT_OF_MEM=\u65e0\u6cd5\u4e3a\u6563\u5217\u7684\u7c7b\u8868\u5206\u914d\u5185\u5b58\u3002
+# START NON-TRANSLATABLE
+J9NLS_ENSUREHASHED_CONFIG_OUT_OF_MEM.explanation=There was a failure to allocate native memory to store the hashed classes options.
+J9NLS_ENSUREHASHED_CONFIG_OUT_OF_MEM.system_action=The JVM prints this message and terminates.
+J9NLS_ENSUREHASHED_CONFIG_OUT_OF_MEM.user_response=Check the system memory configuration.
 # END NON-TRANSLATABLE
