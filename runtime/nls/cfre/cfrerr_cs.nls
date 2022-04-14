@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2021 IBM Corp. and others
+# Copyright (c) 2000, 2022 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1558,4 +1558,76 @@ J9NLS_CFR_ERR_VALUE_TYPES_IS_NOT_SUPPORTED_V1=Funkce ValueTypes je s volbou -XX:
 J9NLS_CFR_ERR_VALUE_TYPES_IS_NOT_SUPPORTED_V1.explanation=ValueTypes is an experimental feature and is disabled by -XX:-EnableValhalla
 J9NLS_CFR_ERR_VALUE_TYPES_IS_NOT_SUPPORTED_V1.system_action=The JVM will throw a verification or class loading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_VALUE_TYPES_IS_NOT_SUPPORTED_V1.user_response=Contact the provider of the class file for a corrected version, or remove the -XX:+EnableValhalla option and retry.
+# END NON-TRANSLATABLE
+
+J9NLS_CFR_ERR_BC_JUMP_RECURSIVE=Instrukce jsr nep\u0159\u00edpustn\u011b odkazuje na sv\u016fj vlastn\u00ed index bajtov\u00e9ho k\u00f3du
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_BC_JUMP_RECURSIVE.explanation=The JVM is unable to flatten the code block for a jsr instruction that refers to its own bytecode index.
+J9NLS_CFR_ERR_BC_JUMP_RECURSIVE.system_action=The JVM will throw a verification or class loading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_BC_JUMP_RECURSIVE.user_response=Contact the provider of the class file for a corrected version.
+# END NON-TRANSLATABLE
+
+J9NLS_CFR_ERR_OUTER_CLASS_NAME_NOT_UTF8=N\u00e1zev vn\u011bj\u0161\u00ed t\u0159\u00eddy mus\u00ed b\u00fdt \u0159et\u011bzec
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_OUTER_CLASS_NAME_NOT_UTF8.explanation=The outer class name of an InnerClasses attribute must be a string in the case of a non-zero outer class info index.
+J9NLS_CFR_ERR_OUTER_CLASS_NAME_NOT_UTF8.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_OUTER_CLASS_NAME_NOT_UTF8.user_response=Contact the provider of the classfile for a corrected version.
+
+# END NON-TRANSLATABLE
+
+J9NLS_CFR_ERR_OUTER_CLASS_UTF8_ZERO_LENGTH=D\u00e9lka n\u00e1zvu vn\u011bj\u0161\u00ed t\u0159\u00eddy je nula v atributu InnerClasses
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_OUTER_CLASS_UTF8_ZERO_LENGTH.explanation=The outer class name of an InnerClasses attribute must be a non-zero UTF8 string.
+J9NLS_CFR_ERR_OUTER_CLASS_UTF8_ZERO_LENGTH.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_OUTER_CLASS_UTF8_ZERO_LENGTH.user_response=Contact the provider of the classfile for a corrected version.
+
+# END NON-TRANSLATABLE
+
+J9NLS_CFR_ERR_OUTER_CLASS_BAD_ARRAY_CLASS=Vn\u011bj\u0161\u00ed t\u0159\u00edda je t\u0159\u00edda pole v atributu InnerClasses
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_OUTER_CLASS_BAD_ARRAY_CLASS.explanation=The outer class of an InnerClasses attribute must be a non-array class.
+J9NLS_CFR_ERR_OUTER_CLASS_BAD_ARRAY_CLASS.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_OUTER_CLASS_BAD_ARRAY_CLASS.user_response=Contact the provider of the classfile for a corrected version.
+
+# END NON-TRANSLATABLE
+
+J9NLS_CFR_ERR_VALUE_FLAG_MISSING_ON_PRIMITIVE_CLASS=P\u0159\u00edznak p\u0159\u00edstupu ACC_VALUE chyb\u00ed v primitivn\u00ed t\u0159\u00edd\u011b.
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_VALUE_FLAG_MISSING_ON_PRIMITIVE_CLASS.explanation=Primitive class requires both ACC_PRIMITIVE and ACC_VALUE to be set.
+J9NLS_CFR_ERR_VALUE_FLAG_MISSING_ON_PRIMITIVE_CLASS.system_action=The JVM will throw a verification or class loading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_VALUE_FLAG_MISSING_ON_PRIMITIVE_CLASS.user_response=Contact the provider of the class file for a corrected version.
+# END NON-TRANSLATABLE
+
+J9NLS_CFR_ERR_FINAL_FLAG_MISSING_ON_VALUE_CLASS=P\u0159\u00edznak p\u0159\u00edstupu ACC_FINAL chyb\u00ed ve t\u0159\u00edd\u011b hodnoty.
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_FINAL_FLAG_MISSING_ON_VALUE_CLASS.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
+J9NLS_CFR_ERR_FINAL_FLAG_MISSING_ON_VALUE_CLASS.system_action=The JVM will throw a verification or class loading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_FINAL_FLAG_MISSING_ON_VALUE_CLASS.user_response=Contact the provider of the class file for a corrected version.
+# END NON-TRANSLATABLE
+
+J9NLS_CFR_ERR_INCORRECT_FLAG_FOUND_ON_VALUE_CLASS=Ve t\u0159\u00edd\u011b hodnoty byl nalezen nespr\u00e1vn\u00fd p\u0159\u00edznak p\u0159\u00edstupu.
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_INCORRECT_FLAG_FOUND_ON_VALUE_CLASS.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
+J9NLS_CFR_ERR_INCORRECT_FLAG_FOUND_ON_VALUE_CLASS.system_action=The JVM will throw a verification or class loading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_INCORRECT_FLAG_FOUND_ON_VALUE_CLASS.user_response=Contact the provider of the class file for a corrected version.
+# END NON-TRANSLATABLE
+
+J9NLS_CFR_ERR_PERMITS_VALUE_ON_FINAL_CLASS=t\u0159\u00edda m\u00e1 nastaveny parametry ACC_FINAL i ACC_PERMITS_VALUE
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_PERMITS_VALUE_ON_FINAL_CLASS.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
+J9NLS_CFR_ERR_PERMITS_VALUE_ON_FINAL_CLASS.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_PERMITS_VALUE_ON_FINAL_CLASS.user_response=Contact the provider of the classfile for a corrected version.
+
+J9NLS_CFR_ERR_PERMITS_VALUE_ON_NON_ABSTRACT_CLASS=Access flag ACC_PERMITS_VALUE should not be set on a non-abstract class.
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_PERMITS_VALUE_ON_NON_ABSTRACT_CLASS.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
+J9NLS_CFR_ERR_PERMITS_VALUE_ON_NON_ABSTRACT_CLASS.system_action=The JVM will throw a verification or class loading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_PERMITS_VALUE_ON_NON_ABSTRACT_CLASS.user_response=Contact the provider of the class file for a corrected version.
+# END NON-TRANSLATABLE
+
+J9NLS_CFR_ERR_PERMITS_VALUE_ON_INTERFACE__ID=P\u0159\u00edznak p\u0159\u00edstupu ACC_PERMITS_VALUE by nem\u011bl b\u00fdt nastaven na rozhran\u00ed.
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_PERMITS_VALUE_ON_INTERFACE__ID.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
+J9NLS_CFR_ERR_PERMITS_VALUE_ON_INTERFACE__ID.system_action=The JVM will throw a verification or class loading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_PERMITS_VALUE_ON_INTERFACE__ID.user_response=Contact the provider of the class file for a corrected version.
 # END NON-TRANSLATABLE
