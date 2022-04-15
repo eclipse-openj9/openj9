@@ -109,10 +109,10 @@ public:
    int32_t flattenedArrayElementSize(TR::Compilation *comp, TR_OpaqueClassBlock *arrayClass);
 
    /** \brief
-    *	    Checks whether a class implements `IdentityObject`/`IdentityInterface`
+    *    Checks whether a class implements `IdentityObject`/`IdentityInterface`
     *
     *  \param clazz
-    *     The class that is to be checked
+    *    The class that is to be checked
     *
     *  \return
     *    `true` if the class implements `IdentityObject`/`IdentityInterface`;
@@ -120,6 +120,22 @@ public:
     *    or some abstract class, interface, or java/lang/Object)
     */
    bool classHasIdentity(TR_OpaqueClassBlock *clazz);
+
+   /** \brief
+    *    Checks whether a class supports direct memory comparison if its fields meet
+    *    the criteria that NO field is of
+    *    - type double (D) or float (F)
+    *    - nullable-class/interface type (L)
+    *    - null-free class type (Q) that are not both flattened and recursively
+    *      compatible for direct memory comparison
+    *
+    *  \param clazz
+    *    The class that is to be checked
+    *
+    *  \return
+    *    `true` if the class supports direct memory comparison. `false` otherwise.
+    */
+   bool classSupportsDirectMemoryComparison(TR_OpaqueClassBlock *clazz);
 
    /**
     * \brief
@@ -147,6 +163,20 @@ public:
    bool isClassFinal(TR::Compilation *comp, TR_OpaqueClassBlock *);
    bool hasFinalizer(TR::Compilation *comp, TR_OpaqueClassBlock *classPointer);
    bool isClassInitialized(TR::Compilation *comp, TR_OpaqueClassBlock *);
+   /**
+    *  \brief
+    *    Checks whether a class is visible to another class
+    *
+    *  \param sourceClass
+    *    The source class that is to be checked
+    *
+    *  \param destClass
+    *    The destination class that is to be checked
+    *
+    *  \return
+    *    `true` if `destClass` is visible to `sourceClass`. `false` otherwise.
+    */
+   bool isClassVisible(TR::Compilation *comp, TR_OpaqueClassBlock *sourceClass, TR_OpaqueClassBlock *destClass);
    bool hasFinalFieldsInClass(TR::Compilation *comp, TR_OpaqueClassBlock *classPointer);
    bool sameClassLoaders(TR::Compilation *comp, TR_OpaqueClassBlock *, TR_OpaqueClassBlock *);
    bool isString(TR::Compilation *comp, TR_OpaqueClassBlock *clazz);
