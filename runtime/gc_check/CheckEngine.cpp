@@ -91,36 +91,6 @@ static bool isPointerInRegion(void *pointer, J9MM_IterateRegionDescriptor *regio
 #define J9MODRON_GCCHK_J9CLASS_EYECATCHER (UDATA)0x99669966
 
 /**
- * Clear the counts of OwnableSynchronizerObjects
- */
-void
-GC_CheckEngine::clearCountsForOwnableSynchronizerObjects()
-{
-	_ownableSynchronizerObjectCountOnList = UNINITIALIZED_SIZE_FOR_OWNABLESYNCHRONIER;
-	_ownableSynchronizerObjectCountOnHeap = UNINITIALIZED_SIZE_FOR_OWNABLESYNCHRONIER;
-}
-
-/**
- *
- */
-bool
-GC_CheckEngine::verifyOwnableSynchronizerObjectCounts()
-{
-	bool ret = true;
-
-	if ((UNINITIALIZED_SIZE_FOR_OWNABLESYNCHRONIER != _ownableSynchronizerObjectCountOnList) && (UNINITIALIZED_SIZE_FOR_OWNABLESYNCHRONIER != _ownableSynchronizerObjectCountOnHeap)) {
-		if (_ownableSynchronizerObjectCountOnList != _ownableSynchronizerObjectCountOnHeap) {
-			PORT_ACCESS_FROM_PORT(_portLibrary);
-			j9tty_printf(PORTLIB, "  <gc check: found count=%zu of OwnableSynchronizerObjects on Heap doesn't match count=%zu on lists>\n", _ownableSynchronizerObjectCountOnHeap, _ownableSynchronizerObjectCountOnList);
-			ret = false;
-		}
-	}
-
-	return ret;
-}
-
-
-/**
  * Clear the cache of previously visited objects.
  */
 void
@@ -1080,16 +1050,6 @@ GC_CheckEngine::checkObjectHeap(J9JavaVM *javaVM, J9MM_IterateObjectDescriptor *
 		result = userData.result;
 	}
 
-	/* check Ownable Synchronizer Object consistency */
-	if ((OBJECT_HEADER_SHAPE_MIXED == J9GC_CLASS_SHAPE(clazz)) && (0 != (J9CLASS_FLAGS(clazz) & J9AccClassOwnableSynchronizer))) {
-		if (NULL == extensions->accessBarrier->isObjectInOwnableSynchronizerList(objectDesc->object)) {
-			PORT_ACCESS_FROM_PORT(_portLibrary);
-			j9tty_printf(PORTLIB, "  <gc check: found Ownable SynchronizerObject %p is not on the list >\n", objectDesc->object);
-		} else {
-			_ownableSynchronizerObjectCountOnHeap += 1;
-		}
-	}
-
 	if (J9MODRON_SLOT_ITERATOR_OK == result) {
 		/* this heap object is OK. Record it in the cache in case we find a pointer to it soon */
 		UDATA cacheIndex = ((UDATA)objectDesc->object) % OBJECT_CACHE_SIZE;
@@ -1258,39 +1218,6 @@ GC_CheckEngine::checkSlotUnfinalizedList(J9JavaVM *javaVM, J9Object **objectIndi
 	return J9MODRON_SLOT_ITERATOR_OK;
 }
 
-UDATA
-GC_CheckEngine::checkSlotOwnableSynchronizerList(J9JavaVM *javaVM, J9Object **objectIndirect, MM_OwnableSynchronizerObjectList *currentList)
-{
-	J9Object *objectPtr = *objectIndirect;
-	UDATA rc = J9MODRON_SLOT_ITERATOR_OK;
-
-	_ownableSynchronizerObjectCountOnList += 1;
-
-	UDATA result = checkObjectIndirect(javaVM, objectPtr);
-	if (J9MODRON_GCCHK_RC_OK != result) {
-		GC_CheckError error(currentList, objectIndirect, _cycle, _currentCheck, result, _cycle->nextErrorCount());
-		_reporter->report(&error);
-	} else {
-		J9Class *instanceClass = J9GC_J9OBJECT_CLAZZ_VM(objectPtr, javaVM);
-		if (0 == (J9CLASS_FLAGS(instanceClass) & J9AccClassOwnableSynchronizer)) {
-			GC_CheckError error(currentList, objectIndirect, _cycle, _currentCheck, J9MODRON_GCCHK_RC_INVALID_FLAGS, _cycle->nextErrorCount());
-			_reporter->report(&error);
-		}
-		J9VMThread* currentThread = javaVM->internalVMFunctions->currentVMThread(javaVM);
-		J9ClassLoader* classLoader = instanceClass->classLoader;
-		const char* aosClassName = "java/util/concurrent/locks/AbstractOwnableSynchronizer";
-
-		J9Class* castClass = javaVM->internalVMFunctions->internalFindClassUTF8(currentThread, (U_8*) aosClassName, strlen(aosClassName), classLoader, J9_FINDCLASS_FLAG_EXISTING_ONLY);
-		if (NULL != castClass) {
-			if (0 == instanceOfOrCheckCast(instanceClass, castClass)) {
-				GC_CheckError error(currentList, objectIndirect, _cycle, _currentCheck, J9MODRON_GCCHK_RC_OWNABLE_SYNCHRONIZER_INVALID_CLASS, _cycle->nextErrorCount());
-				_reporter->report(&error);
-			}
-		}
-	}
-	return rc;
-}
-
 /**
  * Verify a finalized object queue slot.
  *
@@ -1331,8 +1258,6 @@ GC_CheckEngine::startCheckCycle(J9JavaVM *javaVM, GC_CheckCycle *checkCycle)
 	clearPreviousObjects();
 	clearRegionDescription(&_regionDesc);
 	clearCheckedCache();
-
-	clearCountsForOwnableSynchronizerObjects();
 
 	/* Flush any VM level changes to prepare for a safe slot walk */
 	TRIGGER_J9HOOK_MM_PRIVATE_WALK_HEAP_START(MM_GCExtensions::getExtensions(javaVM)->privateHookInterface, javaVM->omrVM);

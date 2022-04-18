@@ -57,10 +57,6 @@ public:
 	uintptr_t _unfinalizedCandidates;  /**< unfinalized objects that are candidates to be finalized visited this cycle */
 	uintptr_t _unfinalizedEnqueued;  /**< unfinalized objects that are enqueued during this cycle (MUST be less than or equal _unfinalizedCandidates) */
 
-	uintptr_t _ownableSynchronizerCandidates;  /**< number of ownable synchronizer objects visited this cycle, used by both MarkingScheme */
-	uintptr_t _ownableSynchronizerSurvived;  /**< number of ownable synchronizer objects survived this cycle, used only by PMS */
-	uintptr_t _ownableSynchronizerCleared;  /**< number of ownable synchronizer objects cleared this cycle, used only by GMP */
-
 	uintptr_t _continuationCandidates;  /**< number of continuation objects visited this cycle, used by both MarkingScheme */
 	uintptr_t _continuationCleared;  /**< number of continuation objects cleared this cycle, used only by GMP */
 
@@ -101,10 +97,6 @@ public:
 		_unfinalizedCandidates = 0;
 		_unfinalizedEnqueued = 0;
 
-		_ownableSynchronizerCandidates = 0;
-		_ownableSynchronizerSurvived = 0;
-		_ownableSynchronizerCleared = 0;
-
 		_continuationCandidates = 0;
 		_continuationCleared = 0;
 
@@ -143,10 +135,6 @@ public:
 		_unfinalizedCandidates += statsToMerge->_unfinalizedCandidates;
 		_unfinalizedEnqueued += statsToMerge->_unfinalizedEnqueued;
 
-		_ownableSynchronizerCandidates += statsToMerge->_ownableSynchronizerCandidates;
-		_ownableSynchronizerSurvived += statsToMerge->_ownableSynchronizerSurvived;
-		_ownableSynchronizerCleared += statsToMerge->_ownableSynchronizerCleared;
-
 		_continuationCandidates += statsToMerge->_continuationCandidates;
 		_continuationCleared += statsToMerge->_continuationCleared;
 
@@ -183,9 +171,6 @@ public:
 		MM_MarkVLHGCStatsCore()
 		,_unfinalizedCandidates(0)
 		,_unfinalizedEnqueued(0)
-		,_ownableSynchronizerCandidates(0)
-		,_ownableSynchronizerSurvived(0)
-		,_ownableSynchronizerCleared(0)
 		,_continuationCandidates(0)
 		,_continuationCleared(0)
 		,_weakReferenceStats()

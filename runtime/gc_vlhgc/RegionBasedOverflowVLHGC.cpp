@@ -215,21 +215,6 @@ MM_RegionBasedOverflowVLHGC::overflowItemInternal(MM_EnvironmentBase *env, void 
 					J9GC_J9VMJAVALANGREFERENCE_STATE(envVLHGC, objectPtr) = GC_ObjectModel::REF_STATE_CLEARED;
 				}
 			}
-		} else if ((OMR_GC_CYCLE_TYPE_VLHGC_PARTIAL_GARBAGE_COLLECT == envVLHGC->_cycleState->_type) && (GC_ObjectModel::SCAN_OWNABLESYNCHRONIZER_OBJECT == scantype)) {
-			/* JAZZ 63834 handle new ownableSynchronizer processing in overflowed case
-		 	 * new processing currently only for CopyForwardScheme collector
-		 	 */
-			if (isEvacuateRegion(region) && (NULL != _extensions->accessBarrier->isObjectInOwnableSynchronizerList(objectPtr))) {
-				/* To avoid adding duplication item (abort case the object need to be rescan and interregions remembered objects) 
-				 * To avoid adding constructing object 
-				 */
-				envVLHGC->getGCEnvironment()->_ownableSynchronizerObjectBuffer->add(envVLHGC, objectPtr);
-				if (MM_CycleState::CT_PARTIAL_GARBAGE_COLLECTION == envVLHGC->_cycleState->_collectionType) {
-					envVLHGC->_copyForwardStats._ownableSynchronizerSurvived += 1;
-				} else {
-					envVLHGC->_markVLHGCStats._ownableSynchronizerSurvived += 1;
-				}
-			}
 		}
 	}
 }

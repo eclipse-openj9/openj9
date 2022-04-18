@@ -26,9 +26,6 @@
 MM_ScavengerJavaStats::MM_ScavengerJavaStats() :
 	_unfinalizedCandidates(0)
 	,_unfinalizedEnqueued(0)
-	,_ownableSynchronizerCandidates(0)
-	,_ownableSynchronizerTotalSurvived(0)
-	,_ownableSynchronizerNurserySurvived(0)
 	,_continuationCandidates(0)
 	,_continuationCleared(0)
 	,_weakReferenceStats()
@@ -45,10 +42,6 @@ MM_ScavengerJavaStats::clear()
 	_unfinalizedCandidates = 0;
 	_unfinalizedEnqueued = 0;
 
-	_ownableSynchronizerCandidates = 0;
-	_ownableSynchronizerTotalSurvived = 0;
-	_ownableSynchronizerNurserySurvived = 0;
-
 	_continuationCandidates = 0;
 	_continuationCleared = 0;
 
@@ -59,23 +52,6 @@ MM_ScavengerJavaStats::clear()
 	_monitorReferenceCleared = 0;
 	_monitorReferenceCandidates = 0;
 };
-
-
-void
-MM_ScavengerJavaStats::clearOwnableSynchronizerCounts()
-{
-	_ownableSynchronizerCandidates = 0;
-	_ownableSynchronizerTotalSurvived = 0;
-	_ownableSynchronizerNurserySurvived = 0;
-}
-
-void
-MM_ScavengerJavaStats::mergeOwnableSynchronizerCounts(MM_ScavengerJavaStats *statsToMerge)
-{
-	_ownableSynchronizerCandidates += statsToMerge->_ownableSynchronizerCandidates;
-	_ownableSynchronizerTotalSurvived += statsToMerge->_ownableSynchronizerTotalSurvived;
-	_ownableSynchronizerNurserySurvived += statsToMerge->_ownableSynchronizerNurserySurvived;
-}
 
 void
 MM_ScavengerJavaStats::clearContinuationCounts()

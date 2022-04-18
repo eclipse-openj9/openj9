@@ -502,19 +502,9 @@ private:
 
 	void fixupObject(MM_EnvironmentVLHGC *env, J9Object *objectPtr, J9MM_FixupCache *cache);
 
-	/**
-	 * Called whenever a ownable synchronizer object is fixed up during compact. Places the object on the thread-specific buffer of gc work thread.
-	 * @param env -- current thread environment
-	 * @param object -- The object of type or subclass of java.util.concurrent.locks.AbstractOwnableSynchronizer.
-	 */
-	MMINLINE void addOwnableSynchronizerObjectInList(MM_EnvironmentVLHGC *env, J9Object *objectPtr)
+	MMINLINE void addContinuationObjectInList(MM_EnvironmentVLHGC *env, J9Object *objectPtr)
 	{
-		/* if isObjectInOwnableSynchronizerList() return NULL, it means the object isn't in OwnableSynchronizerList,
-		 * it could be the constructing object which would be added in the list after the construction finish later. ignore the object to avoid duplicated reference in the list. 
-		 */
-		if (NULL != _extensions->accessBarrier->isObjectInOwnableSynchronizerList(objectPtr)) {
-			((MM_OwnableSynchronizerObjectBufferVLHGC*) env->getGCEnvironment()->_ownableSynchronizerObjectBuffer)->addForOnlyCompactedRegion(env, objectPtr);
-		}
+		((MM_ContinuationObjectBufferVLHGC*) env->getGCEnvironment()->_continuationObjectBuffer)->addForOnlyCompactedRegion(env, objectPtr);
 	}
 
 #if defined(J9VM_GC_FINALIZATION)

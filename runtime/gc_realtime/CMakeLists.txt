@@ -33,7 +33,6 @@ set(gc_realtime_sources
 	MetronomeAlarm.cpp
 	MetronomeAlarmThread.cpp
 	OSInterface.cpp
-	OwnableSynchronizerObjectBufferRealtime.cpp
 	ProcessorInfo.cpp
 	RealtimeAccessBarrier.cpp
 	RealtimeGC.cpp

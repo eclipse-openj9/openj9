@@ -92,10 +92,6 @@ public:
 	}
 #endif /* J9VM_GC_FINALIZATION */
 
-	virtual void scanOwnableSynchronizerObjects(MM_EnvironmentBase *env) {
-		/* empty, move ownable synchronizer processing in fixupObject */
-	}
-
 	virtual void scanContinuationObjects(MM_EnvironmentBase *env) {
 		/* allow the compact scheme to handle this */
 		reportScanningStarted(RootScannerEntity_ContinuationObjects);

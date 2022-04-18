@@ -134,12 +134,6 @@ abstract class SimpleRootScanner extends AddressAwareRootScanner
 	}
 	
 	@Override
-	protected void doOwnableSynchronizerObject(J9ObjectPointer slot, VoidPointer address)
-	{
-		doSlot(slot, address);
-	}
-
-	@Override
 	protected void doVMClassSlot(J9ClassPointer slot, VoidPointer address)
 	{
 		doClassSlot(slot, address);

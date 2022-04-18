@@ -164,8 +164,6 @@ GC_CheckReporterTTY::report(GC_CheckError *error)
 				slotValue = *((UDATA*)slot);
 			}  else if(error->_objectType == check_type_finalizable) {
 				slotValue = *((UDATA*)slot);
-			} else if(error->_objectType == check_type_ownable_synchronizer) {
-				slotValue = *((UDATA*)slot);
 			} else {
 				slotValue = *((UDATA*)slot);
 			}

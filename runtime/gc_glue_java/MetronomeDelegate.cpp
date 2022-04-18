@@ -45,8 +45,6 @@
 #include "HeapRegionDescriptorRealtime.hpp"
 #include "MetronomeAlarmThread.hpp"
 #include "JNICriticalRegion.hpp"
-#include "OwnableSynchronizerObjectList.hpp"
-#include "OwnableSynchronizerObjectBufferRealtime.hpp"
 #include "ContinuationObjectList.hpp"
 #include "ContinuationObjectBufferRealtime.hpp"
 #include "VMHelpers.hpp"
@@ -177,11 +175,6 @@ MM_MetronomeDelegate::initialize(MM_EnvironmentBase *env)
 		return false;
 	}
 
-	/* allocate and initialize the global ownable synchronizer object lists */
-	if (!allocateAndInitializeOwnableSynchronizerObjectLists(env)) {
-		return false;
-	}
-
 	/* allocate and initialize the global continuation object lists */
 	if (!allocateAndInitializeContinuationObjectLists(env)) {
 		return false;
@@ -250,30 +243,6 @@ MM_MetronomeDelegate::allocateAndInitializeUnfinalizedObjectLists(MM_Environment
 }
 
 bool
-MM_MetronomeDelegate::allocateAndInitializeOwnableSynchronizerObjectLists(MM_EnvironmentBase *env)
-{
-	const UDATA listCount = getOwnableSynchronizerObjectListCount(env);
-	Assert_MM_true(0 < listCount);
-	MM_OwnableSynchronizerObjectList *ownableSynchronizerObjectLists = (MM_OwnableSynchronizerObjectList *)env->getForge()->allocate((sizeof(MM_OwnableSynchronizerObjectList) *listCount), MM_AllocationCategory::FIXED, J9_GET_CALLSITE());
-	if (NULL == ownableSynchronizerObjectLists) {
-		return false;
-	}
-	for (UDATA index = 0; index < listCount; index++) {
-		new(&ownableSynchronizerObjectLists[index]) MM_OwnableSynchronizerObjectList();
-		/* add each list to the global list. we need to maintain the doubly linked list
-		 * to ensure uniformity with SE/Balanced.
-		 */
-		MM_OwnableSynchronizerObjectList *previousOwnableSynchronizerObjectList = (0 == index) ? NULL : &ownableSynchronizerObjectLists[index - 1];
-		MM_OwnableSynchronizerObjectList *nextOwnableSynchronizerObjectList = ((listCount - 1) == index) ? NULL : &ownableSynchronizerObjectLists[index + 1];
-
-		ownableSynchronizerObjectLists[index].setNextList(nextOwnableSynchronizerObjectList);
-		ownableSynchronizerObjectLists[index].setPreviousList(previousOwnableSynchronizerObjectList);
-	}
-	_extensions->setOwnableSynchronizerObjectLists(ownableSynchronizerObjectLists);
-	return true;
-}
-
-bool
 MM_MetronomeDelegate::allocateAndInitializeContinuationObjectLists(MM_EnvironmentBase *env)
 {
 	const UDATA listCount = getContinuationObjectListCount(env);
@@ -308,11 +277,6 @@ MM_MetronomeDelegate::tearDown(MM_EnvironmentBase *env)
 	if (NULL != _extensions->unfinalizedObjectLists) {
 		env->getForge()->free(_extensions->unfinalizedObjectLists);
 		_extensions->unfinalizedObjectLists = NULL;
-	}
-
-	if (NULL != _extensions->getOwnableSynchronizerObjectLists()) {
-		env->getForge()->free(_extensions->getOwnableSynchronizerObjectLists());
-		_extensions->setOwnableSynchronizerObjectLists(NULL);
 	}
 	
 	if (NULL != _extensions->getContinuationObjectLists()) {
@@ -1264,59 +1228,6 @@ MM_MetronomeDelegate::scanUnfinalizedObjects(MM_EnvironmentRealtime *env)
 	gcEnv->_unfinalizedObjectBuffer->flush(env);
 }
 #endif /* J9VM_GC_FINALIZATION */
-
-void
-MM_MetronomeDelegate::scanOwnableSynchronizerObjects(MM_EnvironmentRealtime *env)
-{
-	const UDATA maxIndex = getOwnableSynchronizerObjectListCount(env);
-
-	/* first we need to move the current list to the prior list and process the prior list,
-	 * because if object has been marked, we have to re-insert it back to the current list.
-	 */
-	if (env->_currentTask->synchronizeGCThreadsAndReleaseMain(env, UNIQUE_ID)) {
-		GC_OMRVMInterface::flushNonAllocationCaches(env);
-		UDATA listIndex;
-		for (listIndex = 0; listIndex < maxIndex; ++listIndex) {
-			MM_OwnableSynchronizerObjectList *ownableSynchronizerObjectList = &_extensions->getOwnableSynchronizerObjectLists()[listIndex];
-			ownableSynchronizerObjectList->startOwnableSynchronizerProcessing();
-		}
-		env->_currentTask->releaseSynchronizedGCThreads(env);
-	}
-
-	GC_Environment *gcEnv = env->getGCEnvironment();
-	MM_OwnableSynchronizerObjectBuffer *buffer = gcEnv->_ownableSynchronizerObjectBuffer;
-	UDATA listIndex;
-	for (listIndex = 0; listIndex < maxIndex; ++listIndex) {
-		MM_OwnableSynchronizerObjectList *list = &_extensions->getOwnableSynchronizerObjectLists()[listIndex];
-		if (!list->wasEmpty()) {
-			if (J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
-				J9Object *object = list->getPriorList();
-				UDATA objectsVisited = 0;
-				while (NULL != object) {
-					objectsVisited += 1;
-					gcEnv->_markJavaStats._ownableSynchronizerCandidates += 1;
-
-					/* Get next before adding it to the buffer, as buffer modifies OwnableSynchronizerLink */
-					J9Object* next = _extensions->accessBarrier->getOwnableSynchronizerLink(object);
-					if (_markingScheme->isMarked(object)) {
-						buffer->add(env, object);
-					} else {
-						gcEnv->_markJavaStats._ownableSynchronizerCleared += 1;
-					}
-					object = next;
-
-					if (OWNABLE_SYNCHRONIZER_OBJECT_YIELD_CHECK_INTERVAL == objectsVisited ) {
-						_scheduler->condYieldFromGC(env);
-						objectsVisited = 0;
-					}
-				}
-				_scheduler->condYieldFromGC(env);
-			}
-		}
-	}
-	/* restore everything to a flushed state before exiting */
-	buffer->flush(env);
-}
 
 void
 MM_MetronomeDelegate::scanContinuationObjects(MM_EnvironmentRealtime *env)

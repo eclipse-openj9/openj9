@@ -397,12 +397,11 @@ j9mm_iterate_object_slots(
 	jvmtiIterationControl returnCode = JVMTI_ITERATION_CONTINUE;
 	J9Object *objectPtr = (J9Object *)(object->id);
 	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(javaVM->omrVM);
-	
+
 	switch(extensions->objectModel.getScanType(objectPtr)) {
 	case GC_ObjectModel::SCAN_MIXED_OBJECT_LINKED:
 	case GC_ObjectModel::SCAN_ATOMIC_MARKABLE_REFERENCE_OBJECT:
 	case GC_ObjectModel::SCAN_MIXED_OBJECT:
-	case GC_ObjectModel::SCAN_OWNABLESYNCHRONIZER_OBJECT:
 	case GC_ObjectModel::SCAN_CONTINUATION_OBJECT:
 	case GC_ObjectModel::SCAN_CLASS_OBJECT:
 	case GC_ObjectModel::SCAN_CLASSLOADER_OBJECT:
@@ -497,34 +496,31 @@ j9mm_iterate_all_ownable_synchronizer_objects(J9VMThread *vmThread, J9PortLibrar
 	J9JavaVM *javaVM = vmThread->javaVM;
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(javaVM->omrVM);
 	MM_ObjectAccessBarrier *barrier = extensions->accessBarrier;
-	MM_OwnableSynchronizerObjectList *ownableSynchronizerObjectList = extensions->getOwnableSynchronizerObjectListsExternal(vmThread);
 
+	MM_OwnableSynchronizerObjectList* ownableSynchronizerObjectList = extensions->getOwnableSynchronizerObjectListExternal();
 	Assert_MM_true(NULL != ownableSynchronizerObjectList);
 
 	J9MM_IterateObjectDescriptor objectDescriptor;
 	J9MM_IterateRegionDescriptor regionDesc;
 	jvmtiIterationControl returnCode = JVMTI_ITERATION_CONTINUE;
 
-	while (NULL != ownableSynchronizerObjectList) {
-		J9Object *objectPtr = ownableSynchronizerObjectList->getHeadOfList();
-		while (NULL != objectPtr) {
-			UDATA regionFound = j9mm_find_region_for_pointer(javaVM, objectPtr, &regionDesc);
-			if (0 != regionFound) {
-				initializeObjectDescriptor(javaVM, &objectDescriptor, &regionDesc, objectPtr);
-				returnCode = func(vmThread, &objectDescriptor, userData);
-				if (JVMTI_ITERATION_ABORT == returnCode) {
-					return returnCode;
-				}
-			} else {
-				Assert_MM_unreachable();
+	J9Object *objectPtr = ownableSynchronizerObjectList->getHeadOfList(MM_EnvironmentBase::getEnvironment(vmThread->omrVMThread));
+	while (NULL != objectPtr) {
+		UDATA regionFound = j9mm_find_region_for_pointer(javaVM, objectPtr, &regionDesc);
+		if (0 != regionFound) {
+			initializeObjectDescriptor(javaVM, &objectDescriptor, &regionDesc, objectPtr);
+			returnCode = func(vmThread, &objectDescriptor, userData);
+			if (JVMTI_ITERATION_ABORT == returnCode) {
+				return returnCode;
 			}
-			objectPtr = barrier->getOwnableSynchronizerLink(objectPtr);
+		} else {
+			Assert_MM_unreachable();
 		}
-		ownableSynchronizerObjectList = ownableSynchronizerObjectList->getNextList();
+		objectPtr = barrier->getOwnableSynchronizerLink(objectPtr);
 	}
+
 	return returnCode;
 }
-
 /**
  * Walk all continuation objects, call user provided function.
  * @param flags The flags describing the walk (unused currently)
@@ -563,6 +559,7 @@ j9mm_iterate_all_continuation_objects(J9VMThread *vmThread, J9PortLibrary *portL
 		}
 		continuationObjectList = continuationObjectList->getNextList();
 	}
+
 	return returnCode;
 }
 

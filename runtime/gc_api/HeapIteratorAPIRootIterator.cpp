@@ -90,13 +90,6 @@ HeapIteratorAPI_RootIterator::scanAllSlots()
 		}
 	}
 #endif /* J9VM_OPT_JVMTI */
-
-	if (_flags & SCAN_OWNABLE_SYNCHRONIZER) {
-		scanOwnableSynchronizerObjects();
-	}
-	if (_flags & SCAN_CONTINUATION) {
-		scanContinuationObjects();
-	}
 }
 
 

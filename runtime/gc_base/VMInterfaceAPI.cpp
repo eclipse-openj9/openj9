@@ -103,13 +103,12 @@ j9gc_ensureLockedSynchronizersIntegrity(J9VMThread *vmThread)
 	Assert_MM_true(vmThread->omrVMThread->exclusiveCount > 0);
 
 	MM_EnvironmentBase *env = MM_EnvironmentBase::getEnvironment(vmThread->omrVMThread);
-	MM_GCExtensionsBase *extensions = env->getExtensions();
+	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
 
 	/* GC is only concerned when we're in the middle of a CS cycle, we must complete the
 	 * cycle to ensure integrity of the Ownable Sync list*/
-	if (extensions->isConcurrentScavengerInProgress()) {
-		((MM_MemorySpace *)vmThread->omrVMThread->memorySpace)->localGarbageCollect(env, J9MMCONSTANT_IMPLICIT_GC_COMPLETE_CONCURRENT);
-	}
+	/* rebuild OwnableSynchronizerObjectList, rebuild the list require ensureHeapWalkable(global GC), so it would end CS cycle */
+	extensions->rebuildOwnableSynchronizerObjectList(env);
 }
 
 } /* Extern C */

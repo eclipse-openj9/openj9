@@ -138,13 +138,6 @@ MM_GlobalCollectorDelegate::mainThreadGarbageCollectStarted(MM_EnvironmentBase *
 	_criticalSectionCount = MM_StandardAccessBarrier::getJNICriticalRegionCount(_extensions);
 #endif /* J9VM_GC_MODRON_COMPACTION */
 
-#if defined(J9VM_GC_MODRON_SCAVENGER)
-	if (_extensions->scavengerEnabled) {
-		/* clear scavenger stats for correcting the ownableSynchronizerObjects stats, only in generational gc */
-		_extensions->scavengerJavaStats.clearOwnableSynchronizerCounts();
-	}
-#endif /* defined(J9VM_GC_MODRON_SCAVENGER) */
-
 #if defined(J9VM_GC_FINALIZATION)
 	/* this should not be set by the GC since it is used by components in order to record that they performed some operation which will require that we do some finalization */
 	_finalizationRequired = false;

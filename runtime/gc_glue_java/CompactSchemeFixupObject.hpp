@@ -84,12 +84,6 @@ private:
 
 	void fixupContinuationNativeSlots(MM_EnvironmentStandard *env, omrobjectptr_t objectPtr);
 	void fixupContinuationObject(MM_EnvironmentStandard *env, omrobjectptr_t objectPtr);
-	/**
-	 * Called whenever a ownable synchronizer object is fixed up during compact. Places the object on the thread-specific buffer of gc work thread.
-	 * @param env -- current thread environment
-	 * @param object -- The object of type or subclass of java.util.concurrent.locks.AbstractOwnableSynchronizer.
-	 */
-	MMINLINE void addOwnableSynchronizerObjectInList(MM_EnvironmentBase *env, omrobjectptr_t objectPtr);
 
 	/**
 	 * Determine whether the object pointer is found within the heap proper.

@@ -33,7 +33,6 @@
 #include "EnvironmentStandard.hpp"
 #include "FinalizeListManager.hpp"
 #include "GCExtensions.hpp"
-#include "OwnableSynchronizerObjectBuffer.hpp"
 #include "ParallelTask.hpp"
 #include "ReferenceObjectBuffer.hpp"
 #include "RootScanner.hpp"
@@ -252,8 +251,6 @@ public:
 	void
 	flush(MM_EnvironmentStandard *env)
 	{
-		/* flush ownable synchronizer object buffer after rebuild the ownableSynchronizerObjectList during main scan phase */
-		env->getGCEnvironment()->_ownableSynchronizerObjectBuffer->flush(env);
 	}
 
 

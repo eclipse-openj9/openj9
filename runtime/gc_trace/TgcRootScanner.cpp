@@ -48,7 +48,6 @@ const static char *attributeNames[] = {
 	"threads", /* RootScannerEntity_Threads */
 	"finalizableobjects", /* RootScannerEntity_FinalizableObjects */
 	"unfinalizedobjects", /* RootScannerEntity_UnfinalizedObjects */
-	"ownablesynchronizerobjects", /* RootScannerEntity_OwnableSynchronizerObjects */
 	"continuationobjects", /* RootScannerEntity_ContinuationObjects */
 	"stringtable", /* RootScannerEntity_StringTable */
 	"jniglobalrefs", /* RootScannerEntity_JNIGlobalReferences */
@@ -69,7 +68,6 @@ const static char *attributeNames[] = {
 	"softrefscomplete", /* RootScannerEntity_SoftReferenceObjectsComplete */
 	"phantomrefscomplete", /* RootScannerEntity_PhantomReferenceObjectsComplete */
 	"unfinalizedobjectscomplete", /* RootScannerEntity_UnfinalizedObjectsComplete */
-	"ownablesynchronizerobjectscomplete", /* RootScannerEntity_OwnableSynchronizerObjectsComplete */
 	"continuationobjectscomplete", /* RootScannerEntity_ContinuationObjectsComplete */
 	"monitorlookupcaches", /* RootScannerEntity_MonitorLookupCaches */
 	"monitorlookupcachescomplete", /* RootScannerEntity_MonitorLookupCachesComplete */

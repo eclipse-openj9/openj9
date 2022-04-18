@@ -994,7 +994,6 @@ MM_GlobalMarkingScheme::scanObject(MM_EnvironmentVLHGC *env, J9Object *objectPtr
 			case GC_ObjectModel::SCAN_MIXED_OBJECT_LINKED:
 			case GC_ObjectModel::SCAN_ATOMIC_MARKABLE_REFERENCE_OBJECT:
 			case GC_ObjectModel::SCAN_MIXED_OBJECT:
-			case GC_ObjectModel::SCAN_OWNABLESYNCHRONIZER_OBJECT:
 				scanMixedObject(env, objectPtr, reason);
 				break;
 			case GC_ObjectModel::SCAN_CONTINUATION_OBJECT:
@@ -1105,39 +1104,6 @@ MM_GlobalMarkingScheme::scanUnfinalizedObjects(MM_EnvironmentVLHGC *env)
 	env->getGCEnvironment()->_unfinalizedObjectBuffer->flush(env);
 }
 #endif /* J9VM_GC_FINALIZATION */
-
-void
-MM_GlobalMarkingScheme::scanOwnableSynchronizerObjects(MM_EnvironmentVLHGC *env)
-{
-	env->_currentTask->synchronizeGCThreads(env, UNIQUE_ID);
-
-	MM_HeapRegionDescriptorVLHGC *region = NULL;
-	GC_HeapRegionIteratorVLHGC regionIterator(_heapRegionManager);
-	while (NULL != (region = regionIterator.nextRegion())) {
-		if (region->containsObjects()) {
-			if (!region->getOwnableSynchronizerObjectList()->wasEmpty()) {
-				if (J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
-					J9Object *object = region->getOwnableSynchronizerObjectList()->getPriorList();
-					while (NULL != object) {
-						Assert_MM_true(region->isAddressInRegion(object));
-						env->_markVLHGCStats._ownableSynchronizerCandidates += 1;
-
-						/* read the next link before we add it to the buffer */
-						J9Object* next = _extensions->accessBarrier->getOwnableSynchronizerLink(object);
-						if (isMarked(object)) {
-							env->getGCEnvironment()->_ownableSynchronizerObjectBuffer->add(env, object);
-						} else {
-							env->_markVLHGCStats._ownableSynchronizerCleared += 1;
-						}
-						object = next;
-					}
-				}
-			}
-		}
-	}
-	/* restore everything to a flushed state before exiting */
-	env->getGCEnvironment()->_ownableSynchronizerObjectBuffer->flush(env);
-}
 
 void
 MM_GlobalMarkingScheme::scanContinuationObjects(MM_EnvironmentVLHGC *env)
@@ -1352,13 +1318,6 @@ private:
 		return complete_phase_OK;
 	}
 #endif /* J9VM_GC_FINALIZATION */
-
-	virtual void scanOwnableSynchronizerObjects(MM_EnvironmentBase *env) {
-		/* allow the marking scheme to handle this, since it knows which regions are interesting */
-		reportScanningStarted(RootScannerEntity_OwnableSynchronizerObjects);
-		_markingScheme->scanOwnableSynchronizerObjects(MM_EnvironmentVLHGC::getEnvironment(env));
-		reportScanningEnded(RootScannerEntity_OwnableSynchronizerObjects);
-	}
 
 	virtual void scanContinuationObjects(MM_EnvironmentBase *env) {
 		/* allow the marking scheme to handle this, since it knows which regions are interesting */
@@ -1646,7 +1605,6 @@ MM_GlobalMarkingScheme::markLiveObjectsComplete(MM_EnvironmentVLHGC *env)
 				region->getReferenceObjectList()->startSoftReferenceProcessing();
 				region->getReferenceObjectList()->startWeakReferenceProcessing();
 				region->getUnfinalizedObjectList()->startUnfinalizedProcessing();
-				region->getOwnableSynchronizerObjectList()->startOwnableSynchronizerProcessing();
 				region->getContinuationObjectList()->startProcessing();
 			}
 		}

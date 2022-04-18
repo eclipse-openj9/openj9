@@ -29,8 +29,8 @@
 #include "HeapRegionDescriptorStandard.hpp"
 #include "HeapRegionIteratorStandard.hpp"
 #include "MarkMap.hpp"
-#include "OwnableSynchronizerObjectBuffer.hpp"
-#include "OwnableSynchronizerObjectList.hpp"
+#include "ContinuationObjectBuffer.hpp"
+#include "ContinuationObjectList.hpp"
 #include "PointerContiguousArrayIterator.hpp"
 
 #if defined(OMR_GC_MODRON_COMPACTION)
@@ -81,7 +81,6 @@ MM_CompactDelegate::verifyHeap(MM_EnvironmentBase *env, MM_MarkMap *markMap)
 			case GC_ObjectModel::SCAN_MIXED_OBJECT_LINKED:
 			case GC_ObjectModel::SCAN_ATOMIC_MARKABLE_REFERENCE_OBJECT:
 			case GC_ObjectModel::SCAN_MIXED_OBJECT:
-			case GC_ObjectModel::SCAN_OWNABLESYNCHRONIZER_OBJECT:
 			case GC_ObjectModel::SCAN_CONTINUATION_OBJECT:
 			case GC_ObjectModel::SCAN_CLASS_OBJECT:
 			case GC_ObjectModel::SCAN_CLASSLOADER_OBJECT:
@@ -128,8 +127,8 @@ MM_CompactDelegate::fixupRoots(MM_EnvironmentBase *env, MM_CompactScheme *compac
 void
 MM_CompactDelegate::workerCleanupAfterGC(MM_EnvironmentBase *env)
 {
-	/* flush ownable synchronizer object buffer after rebuild the ownableSynchronizerObjectList during fixupObjects */
-	env->getGCEnvironment()->_ownableSynchronizerObjectBuffer->flush(env);
+	/* flush continuation object buffer after rebuild the continuationObjectList during fixupObjects */
+	env->getGCEnvironment()->_continuationObjectBuffer->flush(env);
 }
 
 void
@@ -141,7 +140,7 @@ MM_CompactDelegate::mainSetupForGC(MM_EnvironmentBase *env)
 	while (NULL != (region = regionIterator.nextRegion())) {
 		MM_HeapRegionDescriptorStandardExtension *regionExtension = MM_ConfigurationDelegate::getHeapRegionDescriptorStandardExtension(env, region);
 		for (uintptr_t i = 0; i < regionExtension->_maxListIndex; i++) {
-			regionExtension->_ownableSynchronizerObjectLists[i].startOwnableSynchronizerProcessing();
+			regionExtension->_continuationObjectLists[i].startProcessing();
 		}
 	}
 }

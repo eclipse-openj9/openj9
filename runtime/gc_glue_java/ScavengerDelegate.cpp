@@ -86,8 +86,6 @@
 #include "ObjectAccessBarrier.hpp"
 #include "ObjectAllocationInterface.hpp"
 #include "OMRVMInterface.hpp"
-#include "OwnableSynchronizerObjectBuffer.hpp"
-#include "OwnableSynchronizerObjectList.hpp"
 #include "ContinuationObjectBuffer.hpp"
 #include "ContinuationObjectList.hpp"
 #include "VMHelpers.hpp"
@@ -164,21 +162,8 @@ void
 MM_ScavengerDelegate::mainSetupForGC(MM_EnvironmentBase * envBase)
 {
 	_extensions->continuationStats.clear();
-	/* Remember the candidates of OwnableSynchronizerObject before
-	 * clearing scavenger statistics
-	 */
-	/* = survived ownableSynchronizerObjects in nursery space during previous scavenger
-	 * + the new OwnableSynchronizerObject allocations
-	 */
-	uintptr_t ownableSynchronizerCandidates = 0;
-	ownableSynchronizerCandidates += _extensions->scavengerJavaStats._ownableSynchronizerNurserySurvived;
-	ownableSynchronizerCandidates += _extensions->allocationStats._ownableSynchronizerObjectCount;
-
 	/* Clear the global java-only gc statistics */
 	_extensions->scavengerJavaStats.clear();
-
-	/* set the candidates of ownableSynchronizerObject for gc verbose report */
-	_extensions->scavengerJavaStats._ownableSynchronizerCandidates = ownableSynchronizerCandidates;
 
 	/* correspondent lists will be build this scavenge */
 	_shouldScavengeSoftReferenceObjects = false;
@@ -188,8 +173,6 @@ MM_ScavengerDelegate::mainSetupForGC(MM_EnvironmentBase * envBase)
 	/* Record whether finalizable processing is required in this scavenge */
 	_shouldScavengeFinalizableObjects = _extensions->finalizeListManager->isFinalizableObjectProcessingRequired();
 	_shouldScavengeUnfinalizedObjects = false;
-
-	private_setupForOwnableSynchronizerProcessing(MM_EnvironmentStandard::getEnvironment(envBase));
 
 	_shouldScavengeContinuationObjects = false;
 	_shouldIterateContinuationObjects = false;
@@ -213,17 +196,6 @@ MM_ScavengerDelegate::workerSetupForGC_clearEnvironmentLangStats(MM_EnvironmentB
 void
 MM_ScavengerDelegate::reportScavengeEnd(MM_EnvironmentBase * envBase, bool scavengeSuccessful)
 {
-	/* This assert is not valid for concurrent scavenger - given mutator allocation during concurrent phase, it's possible to have more total survived than candidates*/
-	Assert_GC_true_with_message2(envBase, _extensions->isConcurrentScavengerEnabled() || _extensions->scavengerJavaStats._ownableSynchronizerCandidates >= _extensions->scavengerJavaStats._ownableSynchronizerTotalSurvived,
-			"[MM_ScavengerDelegate::reportScavengeEnd]: _extensions->scavengerJavaStats: _ownableSynchronizerCandidates=%zu < _ownableSynchronizerTotalSurvived=%zu\n",
-			_extensions->scavengerJavaStats._ownableSynchronizerCandidates, _extensions->scavengerJavaStats._ownableSynchronizerTotalSurvived);
-
-	if (!scavengeSuccessful) {
-		/* for backout case, the ownableSynchronizerObject lists is restored before scavenge, so all of candidates are survived */
-		_extensions->scavengerJavaStats._ownableSynchronizerTotalSurvived = _extensions->scavengerJavaStats._ownableSynchronizerCandidates;
-
-		_extensions->scavengerJavaStats._ownableSynchronizerNurserySurvived = _extensions->scavengerJavaStats._ownableSynchronizerCandidates;
-	}
 }
 
 void
@@ -238,10 +210,6 @@ MM_ScavengerDelegate::mergeGCStats_mergeLangStats(MM_EnvironmentBase * envBase)
 	finalGCJavaStats->_unfinalizedEnqueued += scavJavaStats->_unfinalizedEnqueued;
 
 	_extensions->continuationStats.merge(&env->getGCEnvironment()->_continuationStats);
-
-	finalGCJavaStats->_ownableSynchronizerCandidates += scavJavaStats->_ownableSynchronizerCandidates;
-	finalGCJavaStats->_ownableSynchronizerTotalSurvived += scavJavaStats->_ownableSynchronizerTotalSurvived;
-	finalGCJavaStats->_ownableSynchronizerNurserySurvived += scavJavaStats->_ownableSynchronizerNurserySurvived;
 
 	finalGCJavaStats->_continuationCandidates += scavJavaStats->_continuationCandidates;
 	finalGCJavaStats->_continuationCleared += scavJavaStats->_continuationCleared;
@@ -490,12 +458,6 @@ MM_ScavengerDelegate::getObjectScanner(MM_EnvironmentStandard *env, omrobjectptr
 			objectScanner = GC_MixedObjectScanner::newInstance(env, objectPtr, allocSpace, flags);
 		}
 		break;
-	case GC_ObjectModel::SCAN_OWNABLESYNCHRONIZER_OBJECT:
-		if (GC_ObjectScanner::isHeapScan(flags)) {
-			private_addOwnableSynchronizerObjectInList(env, objectPtr);
-		}
-		objectScanner = GC_MixedObjectScanner::newInstance(env, objectPtr, allocSpace, flags);
-		break;
 	case GC_ObjectModel::SCAN_CONTINUATION_OBJECT:
 		*shouldRemember = scanContinuationNativeSlots(env, objectPtr, reason);
 		objectScanner = GC_MixedObjectScanner::newInstance(env, objectPtr, allocSpace, flags);
@@ -739,44 +701,6 @@ MM_ScavengerDelegate::fixupDestroyedSlot(MM_EnvironmentBase *env, MM_ForwardedHe
 	}
 }
 #endif /* defined (OMR_GC_COMPRESSED_POINTERS) */
-
-void
-MM_ScavengerDelegate::private_addOwnableSynchronizerObjectInList(MM_EnvironmentStandard *env, omrobjectptr_t object)
-{
-	omrobjectptr_t link = MM_GCExtensions::getExtensions(_extensions)->accessBarrier->isObjectInOwnableSynchronizerList(object);
-	/* if isObjectInOwnableSynchronizerList() return NULL, it means the object isn't in OwnableSynchronizerList,
-	 * it could be the constructing object which would be added in the list after the construction finish later. ignore the object to avoid duplicated reference in the list.
-	 * For concurrent scavenger, an object that doesn't finish constructing before the start of the STW phase will be added to the list after. As a result, the object may already
-	 * be added to the list (non NULL link) when we scan it during the concurrent phase. We must not add it again here, so check link before proceeding */
-	if ((NULL != link) && (!_extensions->isConcurrentScavengerEnabled() || (_extensions->isConcurrentScavengerEnabled() && _extensions->scavenger->isObjectInEvacuateMemory(link)))) {
-		/* this method expects the caller (scanObject) never pass the same object twice, which could cause circular loop when walk through the list.
-		 * the assertion partially could detect duplication case */
-		Assert_MM_true(_extensions->scavenger->isObjectInEvacuateMemory(link));
-		env->getGCEnvironment()->_ownableSynchronizerObjectBuffer->add(env, object);
-		env->getGCEnvironment()->_scavengerJavaStats._ownableSynchronizerTotalSurvived += 1;
-		if (_extensions->scavenger->isObjectInNewSpace(object)) {
-			env->getGCEnvironment()->_scavengerJavaStats._ownableSynchronizerNurserySurvived += 1;
-		}
-	}
-}
-
-void
-MM_ScavengerDelegate::private_setupForOwnableSynchronizerProcessing(MM_EnvironmentStandard *env)
-{
-	MM_HeapRegionDescriptorStandard *region = NULL;
-	GC_HeapRegionIteratorStandard regionIterator(_extensions->heapRegionManager);
-	while (NULL != (region = regionIterator.nextRegion())) {
-		MM_HeapRegionDescriptorStandardExtension *regionExtension = MM_ConfigurationDelegate::getHeapRegionDescriptorStandardExtension(env, region);
-		for (uintptr_t i = 0; i < regionExtension->_maxListIndex; i++) {
-			MM_OwnableSynchronizerObjectList *list = &regionExtension->_ownableSynchronizerObjectLists[i];
-			if ((MEMORY_TYPE_NEW == (region->getTypeFlags() & MEMORY_TYPE_NEW))) {
-				list->startOwnableSynchronizerProcessing();
-			} else {
-				list->backupList();
-			}
-		}
-	}
-}
 
 bool
 MM_ScavengerDelegate::private_shouldPercolateGarbageCollect_classUnloading(MM_EnvironmentBase *envBase)

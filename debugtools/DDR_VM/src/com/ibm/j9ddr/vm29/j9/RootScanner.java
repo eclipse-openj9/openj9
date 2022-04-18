@@ -35,7 +35,6 @@ import com.ibm.j9ddr.vm29.j9.gc.GCJVMTIObjectTagTableListIterator;
 import com.ibm.j9ddr.vm29.j9.gc.GCMonitorReferenceIterator;
 import com.ibm.j9ddr.vm29.j9.gc.GCObjectHeapIterator;
 import com.ibm.j9ddr.vm29.j9.gc.GCObjectIterator;
-import com.ibm.j9ddr.vm29.j9.gc.GCOwnableSynchronizerObjectListIterator;
 import com.ibm.j9ddr.vm29.j9.gc.GCRememberedSetIterator;
 import com.ibm.j9ddr.vm29.j9.gc.GCRememberedSetSlotIterator;
 import com.ibm.j9ddr.vm29.j9.gc.GCSegmentIterator;
@@ -219,7 +218,6 @@ public abstract class RootScanner
 
 	protected abstract void doFinalizableObject(J9ObjectPointer slot);
 	protected abstract void doUnfinalizedObject(J9ObjectPointer slot);
-	protected abstract void doOwnableSynchronizerObject(J9ObjectPointer slot);
 
 	protected abstract void doMonitorReference(J9ObjectMonitorPointer objectMonitor);
 	protected abstract void doMonitorLookupCacheSlot(J9ObjectMonitorPointer slot);
@@ -406,8 +404,6 @@ public abstract class RootScanner
 		if (J9BuildFlags.J9VM_OPT_JVMTI) {
 			scanJVMTIObjectTagTables();
 		}
-
-		scanOwnableSynchronizerObjects();
 	}
 
 	/**
@@ -479,8 +475,6 @@ public abstract class RootScanner
 		if (!_stringTableAsRoot && (!_nurseryReferencesOnly && !_nurseryReferencesPossibly)) {
 			scanStringTable();
 		}
-
-		scanOwnableSynchronizerObjects();
 
 		if (J9BuildFlags.J9VM_GC_MODRON_SCAVENGER) {
 			/* Remembered set is clearable in a generational system -- if an object in old
@@ -599,18 +593,6 @@ public abstract class RootScanner
 		GCUnfinalizedObjectListIterator unfinalizedObjectListIterator = GCUnfinalizedObjectListIterator.from();
 		while (unfinalizedObjectListIterator.hasNext()) {
 			doUnfinalizedObject(unfinalizedObjectListIterator.next());
-		}
-	}
-
-	protected void scanOwnableSynchronizerObjects() throws CorruptDataException
-	{
-		setReachability(Reachability.WEAK);
-
-		GCOwnableSynchronizerObjectListIterator ownableSynchronizerObjectListIterator = GCOwnableSynchronizerObjectListIterator.from();
-
-		while (ownableSynchronizerObjectListIterator.hasNext()) {
-			J9ObjectPointer ownableSynchronizerObject = ownableSynchronizerObjectListIterator.next();
-			doOwnableSynchronizerObject(ownableSynchronizerObject);
 		}
 	}
 
