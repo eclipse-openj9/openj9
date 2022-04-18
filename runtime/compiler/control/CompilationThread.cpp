@@ -4962,7 +4962,11 @@ TR::CompilationInfo::addMethodToBeCompiled(TR::IlGeneratorMethodDetails & detail
          _intervalStats._numFirstTimeCompilationsInInterval++;
          _numQueuedFirstTimeCompilations++;
          }
-      cur->_entryTime = getPersistentInfo()->getElapsedTime(); // cheaper version
+      if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
+         {
+         PORT_ACCESS_FROM_JITCONFIG(_jitConfig);
+         cur->_entryTime = j9time_usec_clock();
+         }
 #if defined(J9VM_INTERP_AOT_RUNTIME_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64))
       cur->_methodIsInSharedCache = methodIsInSharedCache;
 #endif
@@ -6698,12 +6702,14 @@ TR::CompilationInfoPerThreadBase::installAotCachedMethod(
 
    if (metaData)
       {
-      UDATA reloTime = 0;
+      uintptr_t currentTime = 0;
+      uintptr_t reloTime = 0;
 
       if (TrcEnabled_Trc_JIT_AotLoadEnd)
          {
          PORT_ACCESS_FROM_JITCONFIG(_jitConfig);
-         reloTime = j9time_usec_clock() - reloRuntime()->reloStartTime();
+         currentTime = j9time_usec_clock();
+         reloTime = currentTime - reloRuntime()->reloStartTime();
 
          Trc_JIT_AotLoadEnd(vmThread, compiler->signature(),
               metaData->startPC, metaData->endWarmPC, metaData->startColdPC, metaData->endPC,
@@ -6717,22 +6723,24 @@ TR::CompilationInfoPerThreadBase::installAotCachedMethod(
          if (reloTime == 0)
             {
             PORT_ACCESS_FROM_JITCONFIG(_jitConfig);
-            reloTime = j9time_usec_clock() - reloRuntime()->reloStartTime();
+            currentTime = j9time_usec_clock();
+            reloTime = currentTime - reloRuntime()->reloStartTime();
             }
 
          TR_VerboseLog::CriticalSection vlogLock;
          TR_VerboseLog::write(TR_Vlog_COMP, "(AOT load) ");
          CompilationInfo::printMethodNameToVlog(method);
          TR_VerboseLog::write(" @ " POINTER_PRINTF_FORMAT "-" POINTER_PRINTF_FORMAT, metaData->startPC, metaData->endWarmPC);
-         TR_VerboseLog::write(" Q_SZ=%d Q_SZI=%d QW=%d j9m=%p bcsz=%u", _compInfo.getMethodQueueSize(), _compInfo.getNumQueuedFirstTimeCompilations(),
-                                _compInfo.getQueueWeight(), method, _compInfo.getMethodBytecodeSize(method));
+         TR_VerboseLog::write(" Q_SZ=%d Q_SZI=%d QW=%d j9m=%p bcsz=%u",
+                              _compInfo.getMethodQueueSize(), _compInfo.getNumQueuedFirstTimeCompilations(),
+                              _compInfo.getQueueWeight(), method, _compInfo.getMethodBytecodeSize(method));
 
          if (TR::Options::getVerboseOption(TR_VerbosePerformance))
-            {
-            TR_VerboseLog::write(" time=%dus", (uint32_t)reloTime);
-            }
+            TR_VerboseLog::write(" time=%zuus", reloTime);
          if (entry)
             TR_VerboseLog::write(" compThreadID=%d", getCompThreadId());
+         if (TR::Options::getVerboseOption(TR_VerbosePerformance))
+            TR_VerboseLog::write(" queueTime=%zuus", currentTime - entry->_entryTime);
 
          TR_VerboseLog::writeLine("");
          }
@@ -6896,7 +6904,11 @@ void TR::CompilationInfo::queueForcedAOTUpgrade(TR_MethodToBeCompiled *originalE
    methodInfo->setReasonForRecompilation(TR_PersistentMethodInfo::RecompDueToForcedAOTUpgrade);
    _statNumForcedAotUpgrades++;
 
-   cur->_entryTime = getPersistentInfo()->getElapsedTime(); // cheaper version
+   if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
+      {
+      PORT_ACCESS_FROM_JITCONFIG(_jitConfig);
+      cur->_entryTime = j9time_usec_clock();
+      }
    incrementMethodQueueSize(); // one more method added to the queue
    // No need to increment _numQueuedFirstTimeCompilations because this is a recompilation
 
@@ -10488,8 +10500,9 @@ void TR::CompilationInfoPerThreadBase::logCompilationSuccess(
          }
 
       PORT_ACCESS_FROM_JITCONFIG(_jitConfig);
-      UDATA translationTime = j9time_usec_clock() - getTimeWhenCompStarted();
-      if (TR::Options::_largeTranslationTime > 0 && translationTime > (UDATA)(TR::Options::_largeTranslationTime))
+      uintptr_t currentTime = j9time_usec_clock();
+      uintptr_t translationTime = currentTime - getTimeWhenCompStarted();
+      if (TR::Options::_largeTranslationTime > 0 && translationTime > (uintptr_t)TR::Options::_largeTranslationTime)
          {
          if (compiler->getOutFile() != NULL)
             trfprintf(compiler->getOutFile(), "Compilation took %d usec\n", (int32_t)translationTime);
@@ -10497,12 +10510,12 @@ void TR::CompilationInfoPerThreadBase::logCompilationSuccess(
          }
       if (_onSeparateThread)
          {
-         TR::CompilationInfoPerThread *cipt = (TR::CompilationInfoPerThread*)this;
+         TR::CompilationInfoPerThread *cipt = (TR::CompilationInfoPerThread *)this;
          cipt->setLastCompilationDuration(translationTime / 1000);
          }
 
-      UDATA gcDataBytes = _jitConfig->lastGCDataAllocSize;
-      UDATA atlasBytes = _jitConfig->lastExceptionTableAllocSize;
+      uintptr_t gcDataBytes = _jitConfig->lastGCDataAllocSize;
+      uintptr_t atlasBytes = _jitConfig->lastExceptionTableAllocSize;
 
       // Statistics for number of aoted methods that were recompiled
       //
@@ -10748,20 +10761,22 @@ void TR::CompilationInfoPerThreadBase::logCompilationSuccess(
             if (cpuUtil->isFunctional())
                {
                TR_VerboseLog::write(" CpuLoad=%d%%(%d%%avg) JvmCpu=%d%%",
-               cpuUtil->getCpuUsage(),
-               cpuUtil->getAvgCpuUsage(),
-               cpuUtil->getVmCpuUsage());
+                                    cpuUtil->getCpuUsage(), cpuUtil->getAvgCpuUsage(), cpuUtil->getVmCpuUsage());
                }
 
             if (TR::Options::getVerboseOption(TR_VerboseCompilationThreads) && _onSeparateThread)
                {
                // CPU spent in comp thread is quite coarse (updated every 0.5 sec)
                // We could use getCpuTimeNow() if we wanted to be more accurate
-               TR::CompilationInfoPerThread *cipt = (TR::CompilationInfoPerThread*)this;
+               TR::CompilationInfoPerThread *cipt = (TR::CompilationInfoPerThread *)this;
                int32_t cpuUtil = cipt->getCompThreadCPU().getThreadLastCpuUtil();
                if (cpuUtil >= 0)
                   TR_VerboseLog::write(" compCPU=%d%%", cpuUtil);
                }
+
+            // Print total compilation request latency (including queuing time and failed attempts)
+            if (TR::Options::getVerboseOption(TR_VerbosePerformance))
+               TR_VerboseLog::write(" queueTime=%zuus", currentTime - _methodBeingCompiled->_entryTime);
 
             TR_VerboseLog::writeLine("");
             }
@@ -12770,7 +12785,11 @@ TR::CompilationInfo::addOutOfProcessMethodToBeCompiled(JITServer::ServerStream *
       // Initialize the entry with defaults (some, like methodDetails, are bogus)
       TR::IlGeneratorMethodDetails details;
       entry->initialize(details, NULL, CP_SYNC_NORMAL, NULL);
-      entry->_entryTime = getPersistentInfo()->getElapsedTime(); // Cheaper version
+      if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
+         {
+         PORT_ACCESS_FROM_JITCONFIG(_jitConfig);
+         entry->_entryTime = j9time_usec_clock();
+         }
       entry->_stream = stream; // Add the stream to the entry
       incrementMethodQueueSize(); // One more method added to the queue
       _numQueuedFirstTimeCompilations++; // Otherwise an assert triggers when we dequeue

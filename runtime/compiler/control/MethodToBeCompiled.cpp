@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -52,48 +52,52 @@ TR_MethodToBeCompiled *TR_MethodToBeCompiled::allocate(J9JITConfig *jitConfig)
    return entry;
    }
 
-void TR_MethodToBeCompiled::initialize(TR::IlGeneratorMethodDetails & details, void *oldStartPC, CompilationPriority p, TR_OptimizationPlan *optimizationPlan)
+void TR_MethodToBeCompiled::initialize(TR::IlGeneratorMethodDetails &details, void *oldStartPC,
+                                       CompilationPriority priority, TR_OptimizationPlan *optimizationPlan)
    {
-   _methodDetails = TR::IlGeneratorMethodDetails::clone(_methodDetailsStorage, details);
-   _optimizationPlan = optimizationPlan;
    _next = NULL;
+   _methodDetails = TR::IlGeneratorMethodDetails::clone(_methodDetailsStorage, details);
    _oldStartPC = oldStartPC;
    _newStartPC = NULL;
-   _priority = p;
+   _optimizationPlan = optimizationPlan;
+   if (_optimizationPlan)
+      _optimizationPlan->setIsAotLoad(false);
+   _entryTime = 0;
+   _compInfoPT = NULL;
+   _aotCodeToBeRelocated = NULL;
+
+   _priority = priority;
    _numThreadsWaiting = 0;
+   _compilationAttemptsLeft = TR::Options::canJITCompile() ? MAX_COMPILE_ATTEMPTS : 1;
    _compErrCode = compilationOK;
-   _compilationAttemptsLeft = (TR::Options::canJITCompile()) ? MAX_COMPILE_ATTEMPTS : 1;
+   _methodIsInSharedCache = TR_maybe;
+   _reqFromSecondaryQueue = TR_MethodToBeCompiled::REASON_NONE;
+
+   _reqFromJProfilingQueue = false;
    _unloadedMethod = false;
    _doAotLoad = false;
    _useAotCompilation = false;
    _doNotUseAotCodeFromSharedCache = false;
    _tryCompilingAgain = false;
-   _compInfoPT = NULL;
-   _aotCodeToBeRelocated = NULL;
-   if (_optimizationPlan)
-      _optimizationPlan->setIsAotLoad(false);
    _async = false;
-   _reqFromSecondaryQueue = TR_MethodToBeCompiled::REASON_NONE;
-   _reqFromJProfilingQueue = false;
    _changedFromAsyncToSync = false;
    _entryShouldBeDeallocated = false;
-   _hasIncrementedNumCompThreadsCompilingHotterMethods = false;
-   _weight = 0;
-   _jitStateWhenQueued = UNDEFINED_STATE;
    _entryIsCountedAsInvRequest = false;
    _GCRrequest = false;
+   _hasIncrementedNumCompThreadsCompilingHotterMethods = false;
 
-   _methodIsInSharedCache = TR_maybe;
+   _weight = 0;
+   _jitStateWhenQueued = UNDEFINED_STATE;
+
 #if defined(J9VM_OPT_JITSERVER)
    _remoteCompReq = false;
-   _stream = NULL;
-   _origOptLevel = unknownHotness;
    _shouldUpgradeOutOfProcessCompilation = false;
    _doNotLoadFromJITServerAOTCache = false;
+   _origOptLevel = unknownHotness;
+   _stream = NULL;
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
    TR_ASSERT_FATAL(_freeTag & ENTRY_IN_POOL_FREE, "initializing an entry which is not free");
-
    _freeTag = ENTRY_INITIALIZED;
    }
 
