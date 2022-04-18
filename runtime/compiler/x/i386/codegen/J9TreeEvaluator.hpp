@@ -54,6 +54,7 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::X86::TreeEvaluator
    static TR::Register *dwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *dwrtbariEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *integerPairDivEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *integerPairRemEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    };
 
 } // namespace I386

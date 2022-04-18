@@ -13354,6 +13354,112 @@ TR::Register *J9::X86::I386::TreeEvaluator::integerPairDivEvaluator(TR::Node *no
 
    return targetRegister;
    }
+
+TR::Register *J9::X86::I386::TreeEvaluator::integerPairRemEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   // TODO: Consider combining with integerPairDivEvaluator
+   TR::Node     *firstChild   = node->getFirstChild();
+   TR::Node     *secondChild  = node->getSecondChild();
+   TR::Register *lowRegister  = cg->allocateRegister();
+   TR::Register *highRegister = cg->allocateRegister();
+
+   TR::Register *firstRegister = cg->evaluate(firstChild);
+   TR::Register *secondRegister = cg->evaluate(secondChild);
+
+   TR::Register *firstHigh = firstRegister->getHighOrder();
+   TR::Register *secondHigh = secondRegister->getHighOrder();
+
+   TR::Instruction  *divInstr = NULL;
+
+   TR::RegisterDependencyConditions  *idivDependencies = generateRegisterDependencyConditions((uint8_t)6, 6, cg);
+   idivDependencies->addPreCondition(lowRegister, TR::RealRegister::eax, cg);
+   idivDependencies->addPreCondition(highRegister, TR::RealRegister::edx, cg);
+   idivDependencies->addPostCondition(lowRegister, TR::RealRegister::eax, cg);
+   idivDependencies->addPostCondition(highRegister, TR::RealRegister::edx, cg);
+   idivDependencies->addPreCondition(firstHigh, TR::RealRegister::NoReg, cg);
+   idivDependencies->addPreCondition(secondHigh, TR::RealRegister::NoReg, cg);
+   idivDependencies->addPostCondition(firstHigh, TR::RealRegister::NoReg, cg);
+   idivDependencies->addPostCondition(secondHigh, TR::RealRegister::NoReg, cg);
+   idivDependencies->addPreCondition(firstRegister->getLowOrder(), TR::RealRegister::NoReg, cg);
+   idivDependencies->addPreCondition(secondRegister->getLowOrder(), TR::RealRegister::NoReg, cg);
+   idivDependencies->addPostCondition(firstRegister->getLowOrder(), TR::RealRegister::NoReg, cg);
+   idivDependencies->addPostCondition(secondRegister->getLowOrder(), TR::RealRegister::NoReg, cg);
+
+   TR::LabelSymbol *startLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+   TR::LabelSymbol *doneLabel  = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+   TR::LabelSymbol *callLabel  = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+
+   startLabel->setStartInternalControlFlow();
+   doneLabel->setEndInternalControlFlow();
+
+   generateLabelInstruction(TR::InstOpCode::label, node, startLabel, cg);
+
+   generateRegRegInstruction(TR::InstOpCode::MOV4RegReg, node, highRegister, secondHigh, cg);
+   generateRegRegInstruction(TR::InstOpCode::OR4RegReg, node, highRegister, firstHigh, cg);
+   // it doesn't need the test instruction, OR will set the flags properly
+   //generateRegRegInstruction(TR::InstOpCode::TEST4RegReg, node, highRegister, highRegister, cg);
+   generateLabelInstruction(TR::InstOpCode::JNE4, node, callLabel, cg);
+
+   generateRegRegInstruction(TR::InstOpCode::MOV4RegReg, node, lowRegister, firstRegister->getLowOrder(), cg);
+   divInstr = generateRegRegInstruction(TR::InstOpCode::DIV4AccReg, node, lowRegister, secondRegister->getLowOrder(), idivDependencies, cg);
+
+   cg->setImplicitExceptionPoint(divInstr);
+   divInstr->setNeedsGCMap(0xFF00FFF6);
+
+   generateRegRegInstruction(TR::InstOpCode::MOV4RegReg, node, lowRegister, highRegister, cg);
+
+   generateRegRegInstruction(TR::InstOpCode::XOR4RegReg, node, highRegister, highRegister, cg);
+   generateLabelInstruction(TR::InstOpCode::JMP4, node, doneLabel, cg);
+
+   generateLabelInstruction(TR::InstOpCode::label, node, callLabel, cg);
+
+   TR::RegisterDependencyConditions  *dependencies = generateRegisterDependencyConditions((uint8_t)4, 6, cg);
+
+   dependencies->addPostCondition(lowRegister, TR::RealRegister::eax, cg);
+   dependencies->addPostCondition(highRegister, TR::RealRegister::edx, cg);
+   dependencies->addPreCondition(firstHigh, TR::RealRegister::NoReg, cg);
+   dependencies->addPreCondition(secondHigh, TR::RealRegister::NoReg, cg);
+   dependencies->addPostCondition(firstHigh, TR::RealRegister::NoReg, cg);
+   dependencies->addPostCondition(secondHigh, TR::RealRegister::NoReg, cg);
+   dependencies->addPreCondition(firstRegister->getLowOrder(), TR::RealRegister::NoReg, cg);
+   dependencies->addPreCondition(secondRegister->getLowOrder(), TR::RealRegister::NoReg, cg);
+   dependencies->addPostCondition(firstRegister->getLowOrder(), TR::RealRegister::NoReg, cg);
+   dependencies->addPostCondition(secondRegister->getLowOrder(), TR::RealRegister::NoReg, cg);
+
+   J9::IA32PrivateLinkage *linkage = static_cast<J9::IA32PrivateLinkage *>(cg->getLinkage(TR_Private));
+   TR::IA32LinkageUtils::pushLongArg(secondChild, cg);
+   TR::IA32LinkageUtils::pushLongArg(firstChild, cg);
+   TR::X86ImmSymInstruction *instr = generateHelperCallInstruction(node, TR_IA32longRemainder, dependencies, cg);
+   if (!linkage->getProperties().getCallerCleanup())
+      {
+      instr->setAdjustsFramePointerBy(-16);  // 2 long args
+      }
+
+   // Don't preserve eax and edx
+   //
+   instr->setNeedsGCMap(0xFF00FFF6);
+
+   TR::RegisterDependencyConditions *movDependencies = generateRegisterDependencyConditions((uint8_t)6, 6, cg);
+   movDependencies->addPreCondition(lowRegister, TR::RealRegister::eax, cg);
+   movDependencies->addPreCondition(highRegister, TR::RealRegister::edx, cg);
+   movDependencies->addPostCondition(lowRegister, TR::RealRegister::eax, cg);
+   movDependencies->addPostCondition(highRegister, TR::RealRegister::edx, cg);
+   movDependencies->addPreCondition(firstHigh, TR::RealRegister::NoReg, cg);
+   movDependencies->addPreCondition(secondHigh, TR::RealRegister::NoReg, cg);
+   movDependencies->addPostCondition(firstHigh, TR::RealRegister::NoReg, cg);
+   movDependencies->addPostCondition(secondHigh, TR::RealRegister::NoReg, cg);
+   movDependencies->addPreCondition(firstRegister->getLowOrder(), TR::RealRegister::NoReg, cg);
+   movDependencies->addPreCondition(secondRegister->getLowOrder(), TR::RealRegister::NoReg, cg);
+   movDependencies->addPostCondition(firstRegister->getLowOrder(), TR::RealRegister::NoReg, cg);
+   movDependencies->addPostCondition(secondRegister->getLowOrder(), TR::RealRegister::NoReg, cg);
+
+   generateLabelInstruction(TR::InstOpCode::label, node, doneLabel, movDependencies, cg);
+
+   TR::Register *targetRegister = cg->allocateRegisterPair(lowRegister, highRegister);
+   node->setRegister(targetRegister);
+
+   return targetRegister;
+   }
 #endif
 
 #ifdef TR_TARGET_64BIT
