@@ -209,5 +209,5 @@ In the end code generators perform binary encoding to write the appropriate bits
 
 * <details><summary><b>14. Miscellaneous</b></summary>
 
-  * [Compiler Best Practices (OpenJ9)](BestPractices.md)
+  * [Compiler Best Practices (OpenJ9)](misc/BestPractices.md)
 </details>
