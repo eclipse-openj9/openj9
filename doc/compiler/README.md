@@ -179,7 +179,7 @@ In the end code generators perform binary encoding to write the appropriate bits
     * [Extensible Classes (YouTube)](https://youtu.be/MtsOdx_1hug)
   * [Mainline and Out of Line Code (OMR)](https://github.com/eclipse/omr/blob/master/doc/compiler/il/MainlineAndOutOfLineCode.md)
   * [Regular Expression (OMR)](https://github.com/eclipse/omr/blob/master/doc/compiler/regular_expression/Regular_Expression.md)
-  * [JIT Write Barriers (OpenJ9)](JitWriteBarriers.md)
+  * [JIT Write Barriers (OpenJ9)](concepts/JitWriteBarriers.md)
 </details>
 
 * <details><summary><b>12. Debug</b></summary>
