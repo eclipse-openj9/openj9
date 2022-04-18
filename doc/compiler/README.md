@@ -75,6 +75,7 @@ In the end code generators perform binary encoding to write the appropriate bits
 * <details><summary><b>1. Fundamental Data Structures JIT Operates on</b></summary>
 
   * OpenJ9 Object Model
+    * [Object Lock Word](../features/ObjectLockword.md)
   * C vs Java Stack
   * Heap and Thread Local Storage
 </details>
