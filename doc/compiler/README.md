@@ -136,7 +136,7 @@ In the end code generators perform binary encoding to write the appropriate bits
 
 * <details><summary><b>5. Compilation Control</b></summary>
 
-  * Overview of Compilation Strategy
+  * [Overview of Compilation Control](control/CompilationControl.md)
 </details>
 
 * <details><summary><b>6. Profiling</b></summary>
