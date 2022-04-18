@@ -55,6 +55,8 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::X86::TreeEvaluator
    static TR::Register *dwrtbariEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *integerPairDivEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *integerPairRemEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static bool lstoreEvaluatorIsNodeVolatile(TR::Node *node, TR::CodeGenerator *cg);
+   static void lStoreEvaluatorSetHighLowMRIfNeeded(TR::Node *node, TR::MemoryReference *lowMR, TR::MemoryReference *highMR, TR::CodeGenerator *cg);
    };
 
 } // namespace I386

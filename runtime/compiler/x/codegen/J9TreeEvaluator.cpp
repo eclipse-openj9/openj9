@@ -13460,6 +13460,52 @@ TR::Register *J9::X86::I386::TreeEvaluator::integerPairRemEvaluator(TR::Node *no
 
    return targetRegister;
    }
+
+bool J9::X86::I386::TreeEvaluator::lstoreEvaluatorIsNodeVolatile(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   TR::Compilation *comp = cg->comp();
+   TR::SymbolReference *symRef = node->getSymbolReference();
+   bool isVolatile = false;
+
+   if (symRef && !symRef->isUnresolved())
+      {
+      TR::Symbol *symbol = symRef->getSymbol();
+      isVolatile = symbol->isVolatile();
+      TR_OpaqueMethodBlock *caller = node->getOwningMethod();
+      if (isVolatile && caller)
+         {
+         TR_ResolvedMethod *m = comp->fe()->createResolvedMethod(cg->trMemory(), caller, node->getSymbolReference()->getOwningMethod(comp));
+         if (m->getRecognizedMethod() == TR::java_util_concurrent_atomic_AtomicLong_lazySet)
+            {
+            isVolatile = false;
+            }
+         }
+      }
+
+   return isVolatile;
+   }
+
+void J9::X86::I386::TreeEvaluator::lStoreEvaluatorSetHighLowMRIfNeeded(TR::Node *node,
+                                                                       TR::MemoryReference *lowMR,
+                                                                       TR::MemoryReference *highMR,
+                                                                       TR::CodeGenerator *cg)
+   {
+   if (node->getSymbolReference()->getSymbol()->isVolatile())
+      {
+      TR_OpaqueMethodBlock *caller = node->getOwningMethod();
+      if ((lowMR || highMR) && caller)
+         {
+         TR_ResolvedMethod *m = cg->comp()->fe()->createResolvedMethod(cg->trMemory(), caller, node->getSymbolReference()->getOwningMethod(cg->comp()));
+         if (m->getRecognizedMethod() == TR::java_util_concurrent_atomic_AtomicLong_lazySet)
+            {
+            if (lowMR)
+               lowMR->setIgnoreVolatile();
+            if (highMR)
+               highMR->setIgnoreVolatile();
+            }
+         }
+      }
+   }
 #endif
 
 #ifdef TR_TARGET_64BIT
