@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -295,18 +295,18 @@ TR_Structure* fakeRegion(TR::Compilation *comp)
    {
    TR::CFG* cfg = comp->getFlowGraph();
    // This is the memory region into which we allocate structure nodes
-   TR::Region &structureRegion = cfg->structureRegion();
+   TR::Region &structureMemoryRegion = cfg->structureMemoryRegion();
    TR::CFGNode *cfgNode;
 
    TR_Array<TR_StructureSubGraphNode*> *blocks =  new (comp->trStackMemory()) TR_Array<TR_StructureSubGraphNode*>(comp->trMemory(), cfg->getNumberOfNodes(), false, stackAlloc);
 
    // This region is the CFG node grouping we are building to facilitate dataflow analysis
    // it is allocated into the memory region for structure nodes
-   TR_RegionStructure *region = new (structureRegion) TR_RegionStructure(comp, 0);
+   TR_RegionStructure *region = new (structureMemoryRegion) TR_RegionStructure(comp, 0);
    for (cfgNode = cfg->getFirstNode(); cfgNode; cfgNode = cfgNode->getNext())
       {
       TR::Block *block = toBlock(cfgNode);
-      (*blocks)[block->getNumber()] = new (structureRegion) TR_StructureSubGraphNode(new (structureRegion) TR_BlockStructure(comp, block->getNumber(), block));
+      (*blocks)[block->getNumber()] = new (structureMemoryRegion) TR_StructureSubGraphNode(new (structureMemoryRegion) TR_BlockStructure(comp, block->getNumber(), block));
       region->addSubNode((*blocks)[block->getNumber()]);
       }
 
