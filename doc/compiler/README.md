@@ -90,7 +90,7 @@ In the end code generators perform binary encoding to write the appropriate bits
     * [Global Register Dependency (OMR)](https://github.com/eclipse/omr/blob/master/doc/compiler/il/GlRegDeps.md)
   * [Node Transmutation (OMR)](https://github.com/eclipse/omr/blob/master/doc/compiler/il/Node.md)
   * [Things to Consider When Adding a New IL Opcode (OMR)](https://github.com/eclipse/omr/blob/master/doc/compiler/il/ExtendingTrees.md)
-  * [IL FAQs (OpenJ9)](https://github.com/eclipse-openj9/openj9/blob/master/doc/compiler/il/IL_FAQ.md)
+  * [IL FAQs (OpenJ9)](il/IL_FAQ.md)
   * [Tril (OMR)](https://github.com/eclipse/omr/tree/master/doc/compiler/tril)
 </details>
 
@@ -107,14 +107,14 @@ In the end code generators perform binary encoding to write the appropriate bits
   * Inlining
     * [Overview of Inlining (OMR)](https://github.com/eclipse/omr/blob/master/doc/compiler/optimizer/Inliner.md)
     * [BenefitInliner (OMR)](https://github.com/eclipse/omr/blob/master/doc/compiler/optimizer/BenefitInliner.md)
-    * [Inline Fast Path Locations (OpenJ9)](https://github.com/eclipse-openj9/openj9/blob/master/doc/compiler/optimizer/inlineFastPathLocations.md)
+    * [Inline Fast Path Locations (OpenJ9)](optimizer/inlineFastPathLocations.md)
   * Loop Optimizations
     * [Introduction on Loop Optimizations (OMR)](https://github.com/eclipse/omr/blob/master/doc/compiler/optimizer/IntroLoopOptimizations.md)
   * Value Propagation
     * [Value Propagation (OMR)](https://github.com/eclipse/omr/blob/master/doc/compiler/optimizer/ValuePropagation.md)
     * [Overview of Value Propagation Compiler Optimization (YouTube)](https://youtu.be/694S8Tblfcg)
   * Hot Code Replacement (HCR)
-    * [Next Gen HCR (OpenJ9)](https://github.com/eclipse-openj9/openj9/blob/master/doc/compiler/hcr/NextGenHCR.md)
+    * [Next Gen HCR (OpenJ9)](hcr/NextGenHCR.md)
   * On Stack Replacement (OSR)
     * [OSR Helpers (OMR)](https://github.com/eclipse/omr/blob/master/doc/compiler/osr/OSR.md)
     * [Improved JVM Debug Mode Based on OSR (OpenJ9)](https://blog.openj9.org/2019/04/30/introduction-to-full-speed-debug-base-on-osr/)
@@ -142,7 +142,7 @@ In the end code generators perform binary encoding to write the appropriate bits
 * <details><summary><b>6. Profiling</b></summary>
 
   * JProfiling
-    * [JProfiling (OpenJ9)](https://github.com/eclipse-openj9/openj9/blob/master/doc/compiler/jprofiling/JProfiling.md)
+    * [JProfiling (OpenJ9)](jprofiling/JProfiling.md)
     * [JProfiling (YouTube)](https://youtu.be/SSlLZlOErvc)
   * [IProfiler (OpenJ9)](https://github.com/eclipse-openj9/openj9/issues/12509)
 </details>
@@ -151,12 +151,12 @@ In the end code generators perform binary encoding to write the appropriate bits
 
   * Overview of Runtime
   * [Code Metadata and Code Metadata Manager (OMR)](https://github.com/eclipse/omr/blob/master/doc/compiler/runtime/CodeMetaData.md)
-  * [Code Cache Reclamation (OpenJ9)](https://github.com/eclipse-openj9/openj9/blob/master/doc/compiler/runtime/CodeCacheReclamation.md)
-  * [Metadata Reclamation (OpenJ9)](https://github.com/eclipse-openj9/openj9/blob/master/doc/compiler/runtime/MetadataReclamation.md)
-  * [JIT Hooks (OpenJ9)](https://github.com/eclipse-openj9/openj9/blob/master/doc/compiler/runtime/JITHooks.md)
-  * [Recompilation (OpenJ9)](https://github.com/eclipse-openj9/openj9/blob/master/doc/compiler/runtime/Recompilation.md)
-  * [Exception Handling (OpenJ9)](https://github.com/eclipse-openj9/openj9/blob/master/doc/compiler/runtime/ExceptionHandling.md)
-  * [Runtime Assumption (OpenJ9)](https://github.com/eclipse-openj9/openj9/blob/master/doc/compiler/runtime/RuntimeAssumption.md)
+  * [Code Cache Reclamation (OpenJ9)](runtime/CodeCacheReclamation.md)
+  * [Metadata Reclamation (OpenJ9)](runtime/MetadataReclamation.md)
+  * [JIT Hooks (OpenJ9)](runtime/JITHooks.md)
+  * [Recompilation (OpenJ9)](runtime/Recompilation.md)
+  * [Exception Handling (OpenJ9)](runtime/ExceptionHandling.md)
+  * [Runtime Assumption (OpenJ9)](runtime/RuntimeAssumption.md)
   * [ELF Generator (OMR)](https://github.com/eclipse/omr/blob/master/doc/compiler/runtime/ELFGenerator.md#elfgenerator)
   * [Dynamic Loop Transfer (DLT) (OpenJ9)](https://github.com/eclipse-openj9/openj9/issues/12505)
   * Stack Walker
@@ -165,12 +165,12 @@ In the end code generators perform binary encoding to write the appropriate bits
 * <details><summary><b>8. Memory</b></summary>
 
   * [OMR Compiler Memory Manager (OMR)](https://github.com/eclipse/omr/blob/master/doc/compiler/memory/MemoryManager.md)
-  * [OpenJ9 Compiler Memory Manager (OpenJ9)](https://github.com/eclipse-openj9/openj9/blob/master/doc/compiler/memory/MemoryManager.md)
+  * [OpenJ9 Compiler Memory Manager (OpenJ9)](memory/MemoryManager.md)
   * [Allocating Memory in the Compiler (OpenJ9)](https://blog.openj9.org/2018/06/28/allocating-memory-in-the-compiler/)
 </details>
 
-* <b>9. [AOT](https://github.com/eclipse-openj9/openj9/tree/master/doc/compiler/aot)</b>
-* <b>10. [JITServer](https://github.com/eclipse-openj9/openj9/tree/master/doc/compiler/jitserver)</b>
+* <b>9. [AOT](aot)</b>
+* <b>10. [JITServer](jitserver)</b>
 
 * <details><summary><b>11. Concepts</b></summary>
 
@@ -179,7 +179,7 @@ In the end code generators perform binary encoding to write the appropriate bits
     * [Extensible Classes (YouTube)](https://youtu.be/MtsOdx_1hug)
   * [Mainline and Out of Line Code (OMR)](https://github.com/eclipse/omr/blob/master/doc/compiler/il/MainlineAndOutOfLineCode.md)
   * [Regular Expression (OMR)](https://github.com/eclipse/omr/blob/master/doc/compiler/regular_expression/Regular_Expression.md)
-  * [JIT Write Barriers (OpenJ9)](https://github.com/eclipse-openj9/openj9/blob/master/doc/compiler/JitWriteBarriers.md)
+  * [JIT Write Barriers (OpenJ9)](JitWriteBarriers.md)
 </details>
 
 * <details><summary><b>12. Debug</b></summary>
@@ -209,5 +209,5 @@ In the end code generators perform binary encoding to write the appropriate bits
 
 * <details><summary><b>14. Miscellaneous</b></summary>
 
-  * [Compiler Best Practices (OpenJ9)](https://github.com/eclipse-openj9/openj9/blob/master/doc/compiler/BestPractices.md)
+  * [Compiler Best Practices (OpenJ9)](BestPractices.md)
 </details>
