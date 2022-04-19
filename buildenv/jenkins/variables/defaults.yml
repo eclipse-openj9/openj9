@@ -359,10 +359,13 @@ x86-64_windows:
     11: '--with-toolchain-version=2017'
     17: '--with-toolchain-version=2019'
     18: '--with-toolchain-version=2019'
-    19: '--with-toolchain-version=2019'
-    next: '--with-toolchain-version=2019'
+    19: '--with-toolchain-version=2022'
+    next: '--with-toolchain-version=2022'
   node_labels:
-    build: 'ci.role.build && hw.arch.x86 && sw.os.windows'
+    build:
+      all: 'ci.role.build && hw.arch.x86 && sw.os.windows'
+      19: 'ci.role.build && hw.arch.x86 && sw.os.windows.2019'
+      next: 'ci.role.build && hw.arch.x86 && sw.os.windows.2019'
   build_env:
     vars: 'PATH+TOOLS=/cygdrive/c/openjdk/LLVM64/bin:/cygdrive/c/openjdk/nasm-2.13.03'
 #========================================#
