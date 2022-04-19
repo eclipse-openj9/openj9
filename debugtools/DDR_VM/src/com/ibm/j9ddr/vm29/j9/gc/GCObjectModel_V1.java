@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -66,7 +66,7 @@ class GCObjectModel_V1 extends GCObjectModel
 	 * so we need hard coded value for object alignment 
 	 */
 	private static final long OBSOLETE_OBJECT_ALIGNMENT_IN_BYTES = 8;
-	
+
 	static
 	{
 		OBJECT_HEADER_REMEMBERED_BITS = OBJECT_HEADER_AGE_MASK & ~J9_GC_ARRAYLET_LAYOUT_MASK;
@@ -112,22 +112,22 @@ class GCObjectModel_V1 extends GCObjectModel
 	}
 
 	@Override
-	public UDATA getSizeInBytesDeadObject(J9ObjectPointer object) throws CorruptDataException 
+	public UDATA getSizeInBytesHoleObject(J9ObjectPointer object) throws CorruptDataException
 	{
-		if (isSingleSlotDeadObject(object)) {
-			return getSizeInBytesSingleSlotDeadObject(object);
+		if (isSingleSlotHoleObject(object)) {
+			return getSizeInBytesSingleSlotHoleObject(object);
 		}
-		return getSizeInBytesMultiSlotDeadObject(object);
+		return getSizeInBytesMultiSlotHoleObject(object);
 	}
 
 	@Override
-	public UDATA getSizeInBytesMultiSlotDeadObject(J9ObjectPointer object) throws CorruptDataException 
+	public UDATA getSizeInBytesMultiSlotHoleObject(J9ObjectPointer object) throws CorruptDataException
 	{
 		return GCHeapLinkedFreeHeader.fromJ9Object(object).getSize();
 	}
 
 	@Override
-	public UDATA getSizeInBytesSingleSlotDeadObject(J9ObjectPointer object) 
+	public UDATA getSizeInBytesSingleSlotHoleObject(J9ObjectPointer object)
 	{
 		// TODO : this is sort of bogus
 		return new UDATA(UDATA.SIZEOF);
@@ -160,7 +160,7 @@ class GCObjectModel_V1 extends GCObjectModel
 		return result;
 	}
 
-@Override
+	@Override
 	public UDATA getSizeInBytesWithHeader(J9ObjectPointer object) throws CorruptDataException 
 	{
 		if (isIndexable(object)) {
@@ -170,19 +170,37 @@ class GCObjectModel_V1 extends GCObjectModel
 		}
 	}
 
-@Override
-public UDATA getTotalFootprintInBytesWithHeader(J9ObjectPointer object) throws CorruptDataException {
-	if (isIndexable(object)) {
-		return adjustSizeInBytes(indexableObjectModel.getTotalFootprintInBytesWithHeader(J9IndexableObjectPointer.cast(object)));
-	} else {
-		return adjustSizeInBytes(mixedObjectModel.getSizeInBytesWithHeader(object));
+	@Override
+	public UDATA getTotalFootprintInBytesWithHeader(J9ObjectPointer object) throws CorruptDataException {
+		if (isIndexable(object)) {
+			return adjustSizeInBytes(indexableObjectModel.getTotalFootprintInBytesWithHeader(J9IndexableObjectPointer.cast(object)));
+		} else {
+			return adjustSizeInBytes(mixedObjectModel.getSizeInBytesWithHeader(object));
+		}
 	}
-}
 
-@Override
-	public boolean isDeadObject(J9ObjectPointer object) throws CorruptDataException 
+	@Override
+	public boolean isHoleObject(J9ObjectPointer object) throws CorruptDataException
 	{
 		return J9ObjectHelper.flags(object).allBitsIn(J9_GC_OBJ_HEAP_HOLE);
+	}
+
+	@Override
+	public boolean isDarkMatterObject(J9ObjectPointer object) throws CorruptDataException {
+		try {
+			if (J9ObjectHelper.clazz(object).classDepthAndFlags().anyBitsIn(J9AccClassDying)) {
+				// If an object's class's classDepthAndFlags includes J9AccClassDying,
+				// then the class has been unloaded and this object is left as dark matter
+				// for potential future clean up, so we can treat it as dead.
+				// See https://github.com/eclipse-openj9/openj9/issues/10537
+				return true;
+			}
+		} catch (CorruptDataException e) {
+			// If there was something wrong checking the object's class, then just
+			// treat it as a non-dark matter object which can then be further
+			// reviewed by the user if needed.
+		}
+		return false;
 	}
 
 	@Override
@@ -212,7 +230,7 @@ public UDATA getTotalFootprintInBytesWithHeader(J9ObjectPointer object) throws C
 	}
 
 	@Override
-	public boolean isSingleSlotDeadObject(J9ObjectPointer object) throws CorruptDataException 
+	public boolean isSingleSlotHoleObject(J9ObjectPointer object) throws CorruptDataException
 	{
 		return J9ObjectHelper.flags(object).bitAnd(J9_GC_OBJ_HEAP_HOLE_MASK).eq(J9_GC_SINGLE_SLOT_HOLE);
 	}

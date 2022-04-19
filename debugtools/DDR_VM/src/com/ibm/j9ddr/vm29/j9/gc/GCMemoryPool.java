@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2015 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -121,8 +121,8 @@ public abstract class GCMemoryPool {
 			throw new CorruptFreeEntryException("freeEntryCorrupt", freeListEntryAddress);
 		}
 		
-		/* Make sure its a multi-slot dead object */
-		if (!(ObjectModel.isDeadObject(freeListEntry.getObject()) && !ObjectModel.isSingleSlotDeadObject(freeListEntry.getObject()))) {
+		/* Make sure its a multi-slot hole object */
+		if (!(ObjectModel.isHoleObject(freeListEntry.getObject()) && !ObjectModel.isSingleSlotHoleObject(freeListEntry.getObject()))) {
 			throw new CorruptFreeEntryException("freeEntryCorrupt", freeListEntryAddress);
 		}
 		

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -65,8 +65,8 @@ class GCObjectHeapIteratorAddressOrderedList_V1 extends GCObjectHeapIterator
 		ArrayList<U8Pointer[]> excludedRangeList = new ArrayList<U8Pointer[]>();
 		GCVMThreadListIterator threadIterator = new GCVMThreadListIterator();
 		boolean scavengerEnabled = false;
-		if(J9BuildFlags.gc_modronScavenger) {
-			if(getExtensions().scavengerEnabled()) {
+		if (J9BuildFlags.gc_modronScavenger) {
+			if (getExtensions().scavengerEnabled()) {
 				scavengerEnabled = true;
 			}
 		}
@@ -76,9 +76,9 @@ class GCObjectHeapIteratorAddressOrderedList_V1 extends GCObjectHeapIterator
 			/* Check for TLHes */
 			if (J9BuildFlags.gc_inlinedAllocFields) {
 				U8Pointer heapTop = adjustedToRange(vmThread.heapTop(), base, top);
-				if(heapTop.notNull()) {
+				if (heapTop.notNull()) {
 					U8Pointer heapAlloc = adjustedToRange(vmThread.heapAlloc(), base, top);
-					if(isSomethingToAdd(heapAlloc, heapTop)) {
+					if (isSomethingToAdd(heapAlloc, heapTop)) {
 						excludedRangeList.add(new U8Pointer[] {heapAlloc, heapTop});
 					} else {
 						/* Might be an instrumented VM */
@@ -86,7 +86,7 @@ class GCObjectHeapIteratorAddressOrderedList_V1 extends GCObjectHeapIterator
 						U8Pointer realHeapAlloc = adjustedToRange(getRealHeapAlloc(vmThread.allocateThreadLocalHeap(), heapAlloc), base, top);
 						/* realHeapTop = heapTop in V1, = allocateThreadLocalHeap.realHeapTop in V2 */
 						U8Pointer realHeapTop = adjustedToRange(getRealHeapTop(vmThread.allocateThreadLocalHeap(), heapTop), base, top);
-						if(realHeapAlloc.notNull() && realHeapTop.notNull() && isSomethingToAdd(realHeapAlloc, realHeapTop)) {
+						if (realHeapAlloc.notNull() && realHeapTop.notNull() && isSomethingToAdd(realHeapAlloc, realHeapTop)) {
 							excludedRangeList.add(new U8Pointer[] {realHeapAlloc, realHeapTop});
 						}
 					}
@@ -95,15 +95,15 @@ class GCObjectHeapIteratorAddressOrderedList_V1 extends GCObjectHeapIterator
 				/* Check non-zeroed TLH as well if it is enabled */
 				if (J9BuildFlags.gc_nonZeroTLH) {
 					heapTop = adjustedToRange(vmThread.nonZeroHeapTop(), base, top);
-					if(heapTop.notNull()) {
+					if (heapTop.notNull()) {
 						U8Pointer heapAlloc = adjustedToRange(vmThread.nonZeroHeapAlloc(), base, top);
-						if(isSomethingToAdd(heapAlloc, heapTop)) {
+						if (isSomethingToAdd(heapAlloc, heapTop)) {
 							excludedRangeList.add(new U8Pointer[] {heapAlloc, heapTop});
 						} else {
 							/* Might be an instrumented VM */
 							U8Pointer realHeapAlloc = adjustedToRange(getRealHeapAlloc(vmThread.nonZeroAllocateThreadLocalHeap(), heapAlloc), base, top);
 							U8Pointer realHeapTop = adjustedToRange(getRealHeapTop(vmThread.nonZeroAllocateThreadLocalHeap(), heapTop), base, top);
-							if(realHeapAlloc.notNull() && realHeapTop.notNull() && isSomethingToAdd(realHeapAlloc, realHeapTop)) {
+							if (realHeapAlloc.notNull() && realHeapTop.notNull() && isSomethingToAdd(realHeapAlloc, realHeapTop)) {
 								excludedRangeList.add(new U8Pointer[] {realHeapAlloc, realHeapTop});
 							}
 						}
@@ -114,11 +114,11 @@ class GCObjectHeapIteratorAddressOrderedList_V1 extends GCObjectHeapIterator
 			}
 			
 			/* If we're in the middle of a scavenge, record the CopyScanCache data */
-			if(scavengerEnabled) {
+			if (scavengerEnabled) {
 				MM_EnvironmentStandardPointer env = MM_EnvironmentStandardPointer.cast(vmThread.gcExtensions());
 
 				MM_CopyScanCachePointer survivorCache = env._survivorCopyScanCache();
-				if(survivorCache.notNull()) {
+				if (survivorCache.notNull()) {
 					U8Pointer cacheAlloc = adjustedToRange(U8Pointer.cast(survivorCache.cacheAlloc()), base, top);
 					U8Pointer cacheTop = adjustedToRange(U8Pointer.cast(survivorCache.cacheTop()), base, top);
 					if (isSomethingToAdd(cacheAlloc, cacheTop)) {
@@ -127,7 +127,7 @@ class GCObjectHeapIteratorAddressOrderedList_V1 extends GCObjectHeapIterator
 				}
 
 				MM_CopyScanCachePointer tenureCache = env._tenureCopyScanCache();
-				if(tenureCache.notNull()) {
+				if (tenureCache.notNull()) {
 					U8Pointer cacheAlloc = adjustedToRange(U8Pointer.cast(tenureCache.cacheAlloc()), base, top);
 					U8Pointer cacheTop = adjustedToRange(U8Pointer.cast(tenureCache.cacheTop()), base, top);
 					if (isSomethingToAdd(cacheAlloc, cacheTop)) {
@@ -194,16 +194,16 @@ class GCObjectHeapIteratorAddressOrderedList_V1 extends GCObjectHeapIterator
 	protected void advanceScanPointer()
 	{
 		try {
-			while(scanPtr.lt(scanPtrTop)) {
+			while (scanPtr.lt(scanPtrTop)) {
 				// If there is a current object, advance past it
-				if(null != currentObject) {
-					if(ObjectModel.isDeadObject(currentObject)) {
-						UDATA deadObjectSize = ObjectModel.getSizeInBytesDeadObject(currentObject);
-						if (deadObjectSize.eq(0)) {
+				if (null != currentObject) {
+					if (ObjectModel.isHoleObject(currentObject)) {
+						UDATA holeObjectSize = ObjectModel.getSizeInBytesHoleObject(currentObject);
+						if (holeObjectSize.eq(0)) {
 							/* The size of a hole should not be 0 */
-							throw new CorruptDataException("Dead object at " + currentObject.getHexAddress() + " has an invalid size of 0");
+							throw new CorruptDataException("Hole object at " + currentObject.getHexAddress() + " has an invalid size of 0");
 						}
-						scanPtr = scanPtr.add(deadObjectSize);
+						scanPtr = scanPtr.add(holeObjectSize);
 					} else {
 						scanPtr = scanPtr.add(ObjectModel.getConsumedSizeInBytesWithHeader(currentObject));
 					}		
@@ -213,15 +213,15 @@ class GCObjectHeapIteratorAddressOrderedList_V1 extends GCObjectHeapIterator
 				// Make sure that pointer is not set too high
 				// taken size can be bogus because of data corruption
 				// so we need to skip check for ranges in this case
-				if(scanPtr.gte(scanPtrTop)) {
+				if (scanPtr.gte(scanPtrTop)) {
 					return;
 				}
 				
 				// Move past any TLH regions.
-				while(scanPtr.gt(excludedRanges[currentExcludedRange][1])) {
+				while (scanPtr.gt(excludedRanges[currentExcludedRange][1])) {
 					currentExcludedRange++;
 				}
-				if(scanPtr.gte(excludedRanges[currentExcludedRange][0])) {
+				if (scanPtr.gte(excludedRanges[currentExcludedRange][0])) {
 					// We're in an unused TLH region. 
 					// TODO : this should report as a hole
 					scanPtr = U8Pointer.cast(excludedRanges[currentExcludedRange][1]);
@@ -230,19 +230,19 @@ class GCObjectHeapIteratorAddressOrderedList_V1 extends GCObjectHeapIterator
 				}
 			
 				// Make sure we haven't run past the end
-				if(scanPtr.gte(scanPtrTop)) {
+				if (scanPtr.gte(scanPtrTop)) {
 					return;
 				}
 				
 				// Found a candidate entity. 
 				currentObject = J9ObjectPointer.cast(scanPtr);
-				if(!(includeLiveObjects && includeDeadObjects)) {
+				if (!(includeLiveObjects && includeDeadObjects)) {
 					// If we're filtering by type make sure this one is suitable.
-					boolean isDead = ObjectModel.isDeadObject(currentObject);
-					if(!includeLiveObjects && !isDead) {
+					boolean isDead = ObjectModel.isHoleObject(currentObject) || ObjectModel.isDarkMatterObject(currentObject);
+					if (!includeLiveObjects && !isDead) {
 						continue;
 					}
-					if(!includeDeadObjects && isDead) {
+					if (!includeDeadObjects && isDead) {
 						continue;
 					}
 				}
@@ -257,7 +257,7 @@ class GCObjectHeapIteratorAddressOrderedList_V1 extends GCObjectHeapIterator
 
 	public boolean hasNext()
 	{
-		if(null == currentObject) {
+		if (null == currentObject) {
 			advanceScanPointer();
 		}
 		return (null != currentObject);

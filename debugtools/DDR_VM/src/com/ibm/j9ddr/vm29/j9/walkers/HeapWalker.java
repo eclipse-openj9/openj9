@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -83,7 +83,7 @@ public class HeapWalker implements IEventListener {
 		heapIterator = GCObjectHeapIterator.fromHeapRegionDescriptor(region, true, true);
 		
 		//Checks whether we should populate the flatLockedMonitor list on this walk
-		if (! flatLockedMonitorsByRegion.containsKey(region)) {
+		if (!flatLockedMonitorsByRegion.containsKey(region)) {
 			localFlatLockedMonitors = new HashSet<ObjectMonitor>(256);
 		}
 	}
@@ -102,7 +102,7 @@ public class HeapWalker implements IEventListener {
 		boolean result = heapIterator.hasNext();
 		
 		if (!result) { // iteration ended, store the monitors		
-			if (localFlatLockedMonitors != null && ! flatLockedMonitorsByRegion.containsKey(region)) {
+			if (localFlatLockedMonitors != null && !flatLockedMonitorsByRegion.containsKey(region)) {
 				flatLockedMonitorsByRegion.put(region, localFlatLockedMonitors);
 				localFlatLockedMonitors = null;
 			}
@@ -113,11 +113,11 @@ public class HeapWalker implements IEventListener {
 	public void walk() {
 		register(this);
 		try {
-			if(hasNextNoHandler()) {
+			if (hasNextNoHandler()) {
 				try {
 					J9ObjectPointer object = heapIterator.next();
 					doState(object);
-					if(!hasNextNoHandler()) {
+					if (!hasNextNoHandler()) {
 						state = STATE_FINISHED;
 						doState(object);	
 					}
@@ -133,12 +133,16 @@ public class HeapWalker implements IEventListener {
 			unregister(this);
 		}
 	}
+
+	private static boolean isDeadObject(J9ObjectPointer object) throws CorruptDataException {
+		return ObjectModel.isHoleObject(object) || ObjectModel.isDarkMatterObject(object);
+	}
 	
 	private void doState(J9ObjectPointer object) throws CorruptDataException {
-		switch(state) {
+		switch (state) {
 			case STATE_INIT : 
 				log.fine("Scanning Region @ 0x" + Long.toHexString(region.getHeapRegionDescriptorPointer().getAddress()));
-				if(!ObjectModel.isDeadObject(object)) {
+				if (!isDeadObject(object)) {
 					state = STATE_OBJECT_LIVE;
 					doState(object);
 				} else {
@@ -172,7 +176,7 @@ public class HeapWalker implements IEventListener {
 				events.doDeadObject(object);
 				break;
 			case STATE_SCANNING_LIVE :
-				if(ObjectModel.isDeadObject(object)) {
+				if (isDeadObject(object)) {
 					state = STATE_OBJECT_DEAD;
 					doState(object);
 				} else {
@@ -185,7 +189,7 @@ public class HeapWalker implements IEventListener {
 				}
 				break;
 			case STATE_SCANNING_DEAD :
-				if(!ObjectModel.isDeadObject(object)) {
+				if (!isDeadObject(object)) {
 					state = STATE_OBJECT_LIVE;
 					doState(object);
 				} else {
@@ -194,7 +198,9 @@ public class HeapWalker implements IEventListener {
 				break;
 			case STATE_FINISHED :
 				long address = object.getAddress();
-				if(!ObjectModel.isDeadObject(object)) {
+				if (ObjectModel.isHoleObject(object)) {
+					address += ObjectModel.getSizeInBytesHoleObject(object).longValue();
+				} else {
 					address += ObjectModel.getSizeInBytesWithHeader(object).longValue();
 				}
 				log.fine(String.format(" end=0x%08x object count = %d\n",
@@ -251,7 +257,7 @@ public class HeapWalker implements IEventListener {
 		while (regions.hasNext()) {
 			GCHeapRegionDescriptor region = regions.next();
 			
-			if (! flatLockedMonitorsByRegion.containsKey(region)) {
+			if (!flatLockedMonitorsByRegion.containsKey(region)) {
 				runFlatLockMonitorRegionWalk(vm, region);
 			}
 		
@@ -273,7 +279,7 @@ public class HeapWalker implements IEventListener {
 
 	public void corruptData(String message, CorruptDataException e,
 			boolean fatal) {
-		if( !lastObjectCorrupt ) {
+		if (!lastObjectCorrupt) {
 			lastObjectCorrupt = true;
 			events.doCorruptData(e);
 		}
