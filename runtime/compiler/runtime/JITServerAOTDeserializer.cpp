@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2021, 2021 IBM Corp. and others
+ * Copyright (c) 2021, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -862,6 +862,14 @@ JITServerAOTDeserializer::updateSCCOffsets(SerializedAOTMethod *method, TR::Comp
       TR_ASSERT_FATAL((ptr >= start + sizeof(uintptr_t)/*skip the size word*/) && (ptr < end),
                       "Out-of-bounds relocation data offset %zu in serialized method %s",
                       serializedOffset.reloDataOffset(), comp->signature());
+#if defined(DEBUG)
+      if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+            "Updating SCC offset %zu -> %zu for record type %u ID %zu at relo data offset %zu in serialized method %s",
+            *(uintptr_t *)ptr, sccOffset, serializedOffset.recordType(), serializedOffset.recordId(),
+            serializedOffset.reloDataOffset(), comp->signature()
+         );
+#endif /* defined(DEBUG) */
       *(uintptr_t *)ptr = sccOffset;
       }
 
