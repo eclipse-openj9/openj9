@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2021 IBM Corp. and others
+ * Copyright (c) 2001, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -166,7 +166,7 @@ class CheckEngine
 	
 	public void reportForwardedObject(J9ObjectPointer object, J9ObjectPointer forwardedObject)
 	{
-		if((_cycle.getMiscFlags() & J9MODRON_GCCHK_VERBOSE) != 0) {
+		if ((_cycle.getMiscFlags() & J9MODRON_GCCHK_VERBOSE) != 0) {
 			_reporter.reportForwardedObject(object, forwardedObject);
 		}
 	}
@@ -180,7 +180,7 @@ class CheckEngine
 		J9ClassPointer clazz = null;
 		
 		try {
-			if(ObjectModel.isDeadObject(object)) {
+			if (ObjectModel.isHoleObject(object)) {
 				/* this is a hole */
 				result = checkJ9LinkedFreeHeader(GCHeapLinkedFreeHeader.fromJ9Object(object), regionDesc, _cycle.getCheckFlags());
 				if (J9MODRON_GCCHK_RC_OK != result) {
@@ -280,7 +280,7 @@ class CheckEngine
 	
 	public int checkSlotObjectHeap(J9ObjectPointer object, ObjectReferencePointer objectIndirect, GCHeapRegionDescriptor regionDesc, J9ObjectPointer objectIndirectBase)
 	{
-		if(object.isNull()) {
+		if (object.isNull()) {
 			return J9MODRON_SLOT_ITERATOR_OK;
 		}
 		
@@ -328,14 +328,14 @@ class CheckEngine
 			return J9MODRON_SLOT_ITERATOR_OK;
 		}
 		
-		if(J9BuildFlags.gc_generational) {
-			if(scavengerEnabled) {
+		if (J9BuildFlags.gc_generational) {
+			if (scavengerEnabled) {
 				GCHeapRegionDescriptor objectRegion = ObjectModel.findRegionForPointer(_javaVM, _hrm, object, regionDesc);
-				if(objectRegion == null) {
+				if (objectRegion == null) {
 					/* should be impossible, since checkObjectIndirect() already verified that the object exists */
 					return J9MODRON_GCCHK_RC_NOT_FOUND;
 				}
-				if(object.notNull()) {
+				if (object.notNull()) {
 					UDATA regionType;
 					UDATA objectRegionType;
 					boolean isRemembered;
@@ -353,7 +353,7 @@ class CheckEngine
 					}
 					
 					/* Old objects that point to new objects should have remembered bit ON */
-					if(regionType.allBitsIn(MEMORY_TYPE_OLD) && objectRegionType.allBitsIn(MEMORY_TYPE_NEW) && !isRemembered) {
+					if (regionType.allBitsIn(MEMORY_TYPE_OLD) && objectRegionType.allBitsIn(MEMORY_TYPE_NEW) && !isRemembered) {
 						String elementName = isIndexable ? "IObject " : "Object ";
 						CheckError error = new CheckError(objectIndirectBase, objectIndirect, _cycle, _currentCheck, elementName, J9MODRON_GCCHK_RC_NEW_POINTER_NOT_REMEMBERED, _cycle.nextErrorCount());
 						_reporter.report(error);
@@ -361,7 +361,7 @@ class CheckEngine
 					}
 					
 					/* Old objects that point to objects with old bit OFF should have remembered bit ON */
-					if(regionType.allBitsIn(MEMORY_TYPE_OLD) && !isOld && !isRemembered) {
+					if (regionType.allBitsIn(MEMORY_TYPE_OLD) && !isOld && !isRemembered) {
 						String elementName = isIndexable ? "IObject " : "Object ";
 						CheckError error = new CheckError(objectIndirectBase, objectIndirect, _cycle, _currentCheck, elementName, J9MODRON_GCCHK_RC_REMEMBERED_SET_OLD_OBJECT, _cycle.nextErrorCount());
 						_reporter.report(error);
@@ -376,7 +376,7 @@ class CheckEngine
 
 	private int checkObjectIndirect(J9ObjectPointer object)
 	{
-		if(object.isNull()) {
+		if (object.isNull()) {
 			return J9MODRON_GCCHK_RC_OK;
 		}
 		
@@ -413,15 +413,15 @@ class CheckEngine
 	{
 		newObject[0] = object;
 		
-		if(object.isNull()) {
+		if (object.isNull()) {
 			return J9MODRON_GCCHK_RC_OK;
 		}
 		
 		regionDesc[0] = ObjectModel.findRegionForPointer(_javaVM, _hrm, object, regionDesc[0]);
-		if(regionDesc[0] == null) {
+		if (regionDesc[0] == null) {
 			/* Is the object on the stack? */
 			GCVMThreadListIterator threadListIterator = GCVMThreadListIterator.from();
-			while(threadListIterator.hasNext()) {
+			while (threadListIterator.hasNext()) {
 				J9VMThreadPointer vmThread = threadListIterator.next();
 				if (isObjectOnStack(object, vmThread.stackObject())) {
 					return J9MODRON_GCCHK_RC_STACK_OBJECT;
@@ -438,7 +438,7 @@ class CheckEngine
 		
 		// Can't do this check verbatim  
 		//	if (0 == regionDesc->objectAlignment) {
-		if(!regionDesc[0].containsObjects()) {
+		if (!regionDesc[0].containsObjects()) {
 			/* this is a heap region, but it's not intended for objects (could be free or an arraylet leaf) */
 			return J9MODRON_GCCHK_RC_NOT_IN_OBJECT_REGION;
 		}
@@ -446,16 +446,16 @@ class CheckEngine
 		/* Now we know object is not on stack we can check that it's correctly aligned
 		 * for a J9Object.
 		 */
-		if(object.anyBitsIn(J9MODRON_GCCHK_J9OBJECT_ALIGNMENT_MASK)) {
+		if (object.anyBitsIn(J9MODRON_GCCHK_J9OBJECT_ALIGNMENT_MASK)) {
 			return J9MODRON_GCCHK_RC_UNALIGNED;
 		}
 		
-		if(isMidscavengeFlagSet()) {
-			if(GCExtensions.isVLHGC() || (regionDesc[0].getTypeFlags().allBitsIn(MEMORY_TYPE_NEW))) {
+		if (isMidscavengeFlagSet()) {
+			if (GCExtensions.isVLHGC() || (regionDesc[0].getTypeFlags().allBitsIn(MEMORY_TYPE_NEW))) {
 				// TODO: ideally, we should only check this in the evacuate segment
 				// TODO: do some safety checks first -- is there enough room in the segment?
 				GCScavengerForwardedHeader scavengerForwardedHeader = GCScavengerForwardedHeader.fromJ9Object(object);
-				if(scavengerForwardedHeader.isForwardedPointer()) {
+				if (scavengerForwardedHeader.isForwardedPointer()) {
 					newObject[0] = scavengerForwardedHeader.getForwardedObject();
 					
 					reportForwardedObject(object, newObject[0]);
@@ -464,10 +464,10 @@ class CheckEngine
 					object = newObject[0];
 
 					regionDesc[0] = ObjectModel.findRegionForPointer(_javaVM, _hrm, object, regionDesc[0]);
-					if(regionDesc[0] == null) {
+					if (regionDesc[0] == null) {
 						/* Is the object on the stack? */
 						GCVMThreadListIterator threadListIterator = GCVMThreadListIterator.from();
-						while(threadListIterator.hasNext()) {
+						while (threadListIterator.hasNext()) {
 							J9VMThreadPointer vmThread = threadListIterator.next();
 							if (isObjectOnStack(object, vmThread.stackObject())) {
 								return J9MODRON_GCCHK_RC_STACK_OBJECT;
@@ -478,22 +478,22 @@ class CheckEngine
 					
 					// Can't do this check verbatim  
 					//	if (0 == regionDesc->objectAlignment) {
-					if(!regionDesc[0].containsObjects()) {
+					if (!regionDesc[0].containsObjects()) {
 						/* this is a heap region, but it's not intended for objects (could be free or an arraylet leaf) */
 						return J9MODRON_GCCHK_RC_NOT_IN_OBJECT_REGION;
 					}
 					
 					/* make sure the forwarded pointer is also aligned */
-					if(object.anyBitsIn(J9MODRON_GCCHK_J9OBJECT_ALIGNMENT_MASK)) {
+					if (object.anyBitsIn(J9MODRON_GCCHK_J9OBJECT_ALIGNMENT_MASK)) {
 						return J9MODRON_GCCHK_RC_UNALIGNED;
 					}
 				}
 			}
 		}
 		
-		if(isScavengerBackoutFlagSet()) {
+		if (isScavengerBackoutFlagSet()) {
 			GCScavengerForwardedHeader scavengerForwardedHeader = GCScavengerForwardedHeader.fromJ9Object(object);
-			if(scavengerForwardedHeader.isReverseForwardedPointer()) {
+			if (scavengerForwardedHeader.isReverseForwardedPointer()) {
 				newObject[0] = scavengerForwardedHeader.getReverseForwardedPointer();
 				
 				reportForwardedObject(object, newObject[0]);
@@ -502,22 +502,22 @@ class CheckEngine
 				object = newObject[0];
 
 				regionDesc[0] = ObjectModel.findRegionForPointer(_javaVM, _hrm, object, regionDesc[0]);
-				if(regionDesc[0] == null) {
+				if (regionDesc[0] == null) {
 					return J9MODRON_GCCHK_RC_NOT_FOUND;
 				}
 				
-				if(!regionDesc[0].containsObjects()) {
+				if (!regionDesc[0].containsObjects()) {
 					/* this is a heap region, but it's not intended for objects (could be free or an arraylet leaf) */
 					return J9MODRON_GCCHK_RC_NOT_IN_OBJECT_REGION;
 				}
 
-				if(!regionDesc[0].getTypeFlags().allBitsIn(MEMORY_TYPE_NEW)) {
+				if (!regionDesc[0].getTypeFlags().allBitsIn(MEMORY_TYPE_NEW)) {
 					/* reversed forwarded should point to Evacuate */
 					return J9MODRON_GCCHK_RC_REVERSED_FORWARDED_OUTSIDE_EVACUATE;
 				}
 				
 				/* make sure the forwarded pointer is also aligned */
-				if(object.anyBitsIn(J9MODRON_GCCHK_J9OBJECT_ALIGNMENT_MASK)) {
+				if (object.anyBitsIn(J9MODRON_GCCHK_J9OBJECT_ALIGNMENT_MASK)) {
 					return J9MODRON_GCCHK_RC_UNALIGNED;
 				}
 			}
@@ -536,7 +536,7 @@ class CheckEngine
 		} catch(CorruptDataException cde) {
 			/* don't bother to report an error yet -- a later step will catch this. */
 		}
-		if(classShape == OBJECT_HEADER_SHAPE_DOUBLES) {
+		if (classShape == OBJECT_HEADER_SHAPE_DOUBLES) {
 			J9IndexableObjectPointer array = J9IndexableObjectPointer.cast(object);
 			int size = 0;
 			VoidPointer elementPtr = VoidPointer.NULL;
@@ -553,14 +553,14 @@ class CheckEngine
 				// doesn't -- we'll catch it later
 			}
 			
-			if(0 != size) {
+			if (0 != size) {
 				elementPtr = ObjectModel.getElementAddress(array, 0, U64.SIZEOF);
-				if(elementPtr.anyBitsIn(U64.SIZEOF - 1)) {
+				if (elementPtr.anyBitsIn(U64.SIZEOF - 1)) {
 					return J9MODRON_GCCHK_RC_DOUBLE_ARRAY_UNALIGNED;
 				}
 				
 				elementPtr = ObjectModel.getElementAddress(array, size - 1, U64.SIZEOF);
-				if(elementPtr.anyBitsIn(U64.SIZEOF - 1)) {
+				if (elementPtr.anyBitsIn(U64.SIZEOF - 1)) {
 					return J9MODRON_GCCHK_RC_DOUBLE_ARRAY_UNALIGNED;
 				}
 			}
@@ -575,7 +575,7 @@ class CheckEngine
 		try {
 			object = J9ObjectPointer.cast(objectIndirect.at(0));
 			int result = checkObjectIndirect(object);
-			if(J9MODRON_GCCHK_RC_OK != result) {
+			if (J9MODRON_GCCHK_RC_OK != result) {
 				CheckError error = new CheckError(objectIndirectBase, objectIndirect, _cycle, _currentCheck, result, _cycle.nextErrorCount(), objectType);
 				_reporter.report(error);
 			}
@@ -596,7 +596,7 @@ class CheckEngine
 			if ((GCVMThreadIterator.state_monitor_records == iteratorState) && (J9MODRON_GCCHK_RC_STACK_OBJECT == result)) {
 				result = checkStackObject(object);
 			}
-			if(J9MODRON_GCCHK_RC_OK != result) {
+			if (J9MODRON_GCCHK_RC_OK != result) {
 				CheckError error = new CheckError(objectIndirectBase, objectIndirect, _cycle, _currentCheck, result, _cycle.nextErrorCount(), objectType);
 				_reporter.report(error);
 			}
@@ -617,7 +617,7 @@ class CheckEngine
 			if (J9MODRON_GCCHK_RC_STACK_OBJECT == result) {
 				result = checkStackObject(object);
 			}
-			if(J9MODRON_GCCHK_RC_OK != result) {
+			if (J9MODRON_GCCHK_RC_OK != result) {
 				CheckError error = new CheckError(vmThread, objectIndirect, stackLocation, _cycle, _currentCheck, result, _cycle.nextErrorCount());
 				_reporter.report(error);
 				return J9MODRON_SLOT_ITERATOR_RECOVERABLE_ERROR;
@@ -633,15 +633,15 @@ class CheckEngine
 	
 	private int checkStackObject(J9ObjectPointer object)
 	{
-		if(object.isNull()) {
+		if (object.isNull()) {
 			return J9MODRON_GCCHK_RC_OK;
 		}
 		
-		if(object.anyBitsIn(J9MODRON_GCCHK_ONSTACK_ALIGNMENT_MASK)) {
+		if (object.anyBitsIn(J9MODRON_GCCHK_ONSTACK_ALIGNMENT_MASK)) {
 			return J9MODRON_GCCHK_RC_UNALIGNED;
 		}
 		
-		if((_cycle.getCheckFlags() & J9MODRON_GCCHK_VERIFY_CLASS_SLOT) != 0) {
+		if ((_cycle.getCheckFlags() & J9MODRON_GCCHK_VERIFY_CLASS_SLOT) != 0) {
 			/* Check that the class pointer points to the class heap, etc. */
 			try {
 				int ret = checkJ9ClassPointer(J9ObjectHelper.clazz(object));
@@ -654,10 +654,10 @@ class CheckEngine
 			
 		}
 		
-		if((_cycle.getCheckFlags() & J9MODRON_GCCHK_VERIFY_FLAGS) != 0) {
+		if ((_cycle.getCheckFlags() & J9MODRON_GCCHK_VERIFY_FLAGS) != 0) {
 
 			try {
-				if(!checkIndexableFlag(object)) {
+				if (!checkIndexableFlag(object)) {
 					return J9MODRON_GCCHK_RC_INVALID_FLAGS;
 				}
 			} catch (CorruptDataException e) {
@@ -674,22 +674,22 @@ class CheckEngine
 		try {
 			object = J9ObjectPointer.cast(objectIndirect.at(0));
 			
-			if(isMidscavengeFlagSet()) {
+			if (isMidscavengeFlagSet()) {
 				/* during a scavenge, some RS entries may be tagged -- remove the tag */
-				if(object.anyBitsIn(DEFERRED_RS_REMOVE_FLAG )) {
+				if (object.anyBitsIn(DEFERRED_RS_REMOVE_FLAG )) {
 					object = object.untag(DEFERRED_RS_REMOVE_FLAG);
 				}
 			}
 			
 			int result = checkObjectIndirect(object);
-			if(J9MODRON_GCCHK_RC_OK != result) {
+			if (J9MODRON_GCCHK_RC_OK != result) {
 				CheckError error = new CheckError(puddle, objectIndirect, _cycle, _currentCheck, result, _cycle.nextErrorCount());
 				_reporter.report(error);
 				return J9MODRON_SLOT_ITERATOR_OK;
 			}
 			
 			/* Additional checks for the remembered set */
-			if(object.notNull()) {
+			if (object.notNull()) {
 				GCHeapRegionDescriptor objectRegion = ObjectModel.findRegionForPointer(_javaVM, _hrm, object, null);
 				
 				if (objectRegion == null) {
@@ -700,7 +700,7 @@ class CheckEngine
 				}
 
 				/* we shouldn't have newspace references in the remembered set */
-				if(objectRegion.getTypeFlags().allBitsIn(MEMORY_TYPE_NEW)) {
+				if (objectRegion.getTypeFlags().allBitsIn(MEMORY_TYPE_NEW)) {
 					CheckError error = new CheckError(puddle, objectIndirect, _cycle, _currentCheck, J9MODRON_GCCHK_RC_REMEMBERED_SET_WRONG_SEGMENT, _cycle.nextErrorCount());
 					_reporter.report(error);
 					return J9MODRON_SLOT_ITERATOR_OK;
@@ -708,7 +708,7 @@ class CheckEngine
 
 				boolean skipObject = false;
 
-				if(isScavengerBackoutFlagSet()) {
+				if (isScavengerBackoutFlagSet()) {
 					GCScavengerForwardedHeader scavengerForwardedHeader = GCScavengerForwardedHeader.fromJ9Object(object);
 					if(scavengerForwardedHeader.isReverseForwardedPointer()) {
 						/* There is no reason to check object - is gone */
@@ -716,7 +716,7 @@ class CheckEngine
 					}
 				}
 				
-				if(!skipObject) {
+				if (!skipObject) {
 					/* content of Remembered Set should be Old and Remembered */
 					if (!ObjectModel.isOld(object) || !ObjectModel.isRemembered(object)) {
 						CheckError error = new CheckError(puddle, objectIndirect, _cycle, _currentCheck, J9MODRON_GCCHK_RC_REMEMBERED_SET_FLAGS, _cycle.nextErrorCount());
@@ -741,7 +741,7 @@ class CheckEngine
 		try {
 			object = J9ObjectPointer.cast(objectIndirect.at(0));
 			int result = checkObjectIndirect(object);
-			if(J9MODRON_GCCHK_RC_OK != result) {
+			if (J9MODRON_GCCHK_RC_OK != result) {
 				CheckError error = new CheckError(objectIndirectBase, objectIndirect, _cycle, _currentCheck, result, _cycle.nextErrorCount(), CheckError.check_type_other);
 				_reporter.report(error);
 			}
@@ -771,7 +771,7 @@ class CheckEngine
 			 * Process object slots in the class
 			 */
 			GCClassIterator classIterator = GCClassIterator.fromJ9Class(clazz);
-			while(classIterator.hasNext()) {
+			while (classIterator.hasNext()) {
 				PointerPointer slotPtr = PointerPointer.cast(classIterator.nextAddress());
 				J9ObjectPointer object = J9ObjectPointer.cast(slotPtr.at(0));
 				
@@ -779,7 +779,7 @@ class CheckEngine
 				if (J9MODRON_GCCHK_RC_OK != result) {
 					String elementName = "";
 					
-					switch(classIterator.getState()) {
+					switch (classIterator.getState()) {
 					case GCClassIterator.state_statics:
 						elementName = "static ";
 						break;
@@ -795,10 +795,10 @@ class CheckEngine
 					return J9MODRON_SLOT_ITERATOR_OK;
 				}
 				
-				if(GCExtensions.isStandardGC()) {
+				if (GCExtensions.isStandardGC()) {
 					/* If the slot has its old bit OFF, the class's remembered bit should be ON */
-					if(object.notNull() && !ObjectModel.isOld(object)) {
-						if(!ObjectModel.isRemembered(clazz.classObject())) {
+					if (object.notNull() && !ObjectModel.isOld(object)) {
+						if (!ObjectModel.isRemembered(clazz.classObject())) {
 							CheckError error = new CheckError(clazz, slotPtr, _cycle, _currentCheck, "Class ", J9MODRON_GCCHK_RC_REMEMBERED_SET_OLD_OBJECT, _cycle.nextErrorCount());
 							_reporter.report(error);
 							return J9MODRON_SLOT_ITERATOR_OK;
@@ -825,13 +825,13 @@ class CheckEngine
 			 * Process class slots in the class
 			 */
 			GCClassIteratorClassSlots classIteratorClassSlots = GCClassIteratorClassSlots.fromJ9Class(clazz);
-			while(classIteratorClassSlots.hasNext()) {
+			while (classIteratorClassSlots.hasNext()) {
 				PointerPointer classSlotPtr = PointerPointer.cast(classIteratorClassSlots.nextAddress());
 				J9ClassPointer classSlot = J9ClassPointer.cast(classSlotPtr.at(0));
 				String elementName = "";
 				result = J9MODRON_GCCHK_RC_OK;
 				
-				switch(classIteratorClassSlots.getState()) {
+				switch (classIteratorClassSlots.getState()) {
 				case GCClassIteratorClassSlots.state_constant_pool:
 					/* may be NULL */
 					if (classSlot.notNull()) {
@@ -883,7 +883,7 @@ class CheckEngine
 		try {
 			boolean validationRequired = true;
 			
-			if(J9ClassHelper.isSwappedOut(clazz)) {
+			if (J9ClassHelper.isSwappedOut(clazz)) {
 				/* if class has been hot swapped (J9AccClassHotSwappedOut bit is set) in Fast HCR,
 				 * the ramStatics of the existing class may be reused.  The J9ClassReusedStatics
 				 * bit in J9Class->extendedClassFlags will be set if that's the case.
@@ -891,7 +891,7 @@ class CheckEngine
 				 * NOTE: If class is hot swapped and the value in ramStatics is NULL it is valid 
 				 * to have the correspondent ROM Class value in objectStaticCount field greater then 0
 				 */
-				if(J9ClassHelper.isArrayClass(clazz)) {
+				if (J9ClassHelper.isArrayClass(clazz)) {
 					/* j9arrayclass should not be hot swapped */
 					result = J9MODRON_GCCHK_RC_CLASS_HOT_SWAPPED_FOR_ARRAY;
 					CheckError error = new CheckError(clazz, _cycle, _currentCheck, "Class ", result, _cycle.nextErrorCount());
@@ -899,9 +899,9 @@ class CheckEngine
 					return result;
 				}
 				
-				if(J9ClassHelper.areExtensionsEnabled()) {
+				if (J9ClassHelper.areExtensionsEnabled()) {
 					/* This is Extended HSR mode so hot swapped class might have NULL in ramStatics field */
-					if(clazz.ramStatics().isNull()) {
+					if (clazz.ramStatics().isNull()) {
 						validationRequired = false;
 					}
 				}
@@ -945,7 +945,7 @@ class CheckEngine
 					PointerPointer address = sectionStart.addOffset(fieldOffset.getOffsetOrAddress());
 					
 					/* an address must be in gc scan range */
-					if(!(address.gte(sectionStart) && address.lt(sectionEnd))) {
+					if (!(address.gte(sectionStart) && address.lt(sectionEnd))) {
 						result = J9MODRON_GCCHK_RC_CLASS_STATICS_REFERENCE_IS_NOT_IN_SCANNING_RANGE;
 						CheckError error = new CheckError(clazz, address, _cycle, _currentCheck, "Class ", result, _cycle.nextErrorCount());
 						_reporter.report(error);
@@ -980,7 +980,7 @@ class CheckEngine
 
 	private int checkJ9Class(J9ClassPointer clazz, J9MemorySegmentPointer segment, int checkFlags) throws CorruptDataException
 	{
-		if(clazz.isNull()) {
+		if (clazz.isNull()) {
 			return J9MODRON_GCCHK_RC_OK;
 		}
 		
@@ -1000,7 +1000,7 @@ class CheckEngine
 			return ret;
 		}
 		
-		if((checkFlags & J9MODRON_GCCHK_VERIFY_RANGE) != J9MODRON_GCCHK_VERIFY_RANGE) {
+		if ((checkFlags & J9MODRON_GCCHK_VERIFY_RANGE) != J9MODRON_GCCHK_VERIFY_RANGE) {
 			UDATA delta = UDATA.cast(segment.heapAlloc()).sub(UDATA.cast(clazz));
 			
 			/* Basic check that there is enough room for the object header */
@@ -1020,45 +1020,45 @@ class CheckEngine
 	public int checkJ9ClassPointer(J9ClassPointer clazz, boolean allowUndead) throws CorruptDataException
 	{
 		// Java-ism. Need to check this first before doing compares etc.
-		if(clazz == null || clazz.isNull()) {
+		if (clazz == null || clazz.isNull()) {
 			return J9MODRON_GCCHK_RC_NULL_CLASS_POINTER;
 		}
 		
 		// Short circuit if we've recently checked this class. 
 		int cacheIndex = (int) (clazz.longValue() % CLASS_CACHE_SIZE);
-		if(allowUndead && clazz.eq(_checkedClassCacheAllowUndead[cacheIndex])) {
+		if (allowUndead && clazz.eq(_checkedClassCacheAllowUndead[cacheIndex])) {
 			return J9MODRON_GCCHK_RC_OK;
-		} else if(clazz.eq(_checkedClassCache[cacheIndex])) {
+		} else if (clazz.eq(_checkedClassCache[cacheIndex])) {
 			return J9MODRON_GCCHK_RC_OK;
 		}
 		
-		if(UDATA.cast(clazz).anyBitsIn(J9MODRON_GCCHK_J9CLASS_ALIGNMENT_MASK)) {
+		if (UDATA.cast(clazz).anyBitsIn(J9MODRON_GCCHK_J9CLASS_ALIGNMENT_MASK)) {
 			return J9MODRON_GCCHK_RC_CLASS_POINTER_UNALIGNED;
 		}
 		
 		J9MemorySegmentPointer segment = findSegmentForClass(clazz);
-		if(segment == null) {
+		if (segment == null) {
 			return J9MODRON_GCCHK_RC_CLASS_NOT_FOUND;
 		}
-		if(!allowUndead) {
-			if((segment.type().longValue() & MEMORY_TYPE_UNDEAD_CLASS) != 0) {
+		if (!allowUndead) {
+			if ((segment.type().longValue() & MEMORY_TYPE_UNDEAD_CLASS) != 0) {
 				return J9MODRON_GCCHK_RC_CLASS_IS_UNDEAD;
 			}
 		}
 		
 		/* Check to ensure J9Class header has the correct eyecatcher. */
 		int result = checkJ9ClassHeader(clazz);
-		if ( J9MODRON_GCCHK_RC_OK != result) {
+		if (J9MODRON_GCCHK_RC_OK != result) {
 			return result;
 		}
 		
 		/* Check to ensure J9Class is not unloaded */
 		result = checkJ9ClassIsNotUnloaded(clazz);
-		if ( J9MODRON_GCCHK_RC_OK != result) {
+		if (J9MODRON_GCCHK_RC_OK != result) {
 			return result;
 		}
 		
-		if((_cycle.getCheckFlags() & J9MODRON_GCCHK_VERIFY_RANGE) != 0) {
+		if ((_cycle.getCheckFlags() & J9MODRON_GCCHK_VERIFY_RANGE) != 0) {
 			IDATA delta = segment.heapAlloc().sub(U8Pointer.cast(clazz));
 
 			/* Basic check that there is enough room for the class header */
@@ -1077,7 +1077,7 @@ class CheckEngine
 
 	private int checkJ9ClassHeader(J9ClassPointer clazz) throws CorruptDataException
 	{
-		if(!clazz.eyecatcher().eq(J9MODRON_GCCHK_J9CLASS_EYECATCHER)) {
+		if (!clazz.eyecatcher().eq(J9MODRON_GCCHK_J9CLASS_EYECATCHER)) {
 			return J9MODRON_GCCHK_RC_J9CLASS_HEADER_INVALID;
 		}
 		return J9MODRON_GCCHK_RC_OK;
@@ -1085,7 +1085,7 @@ class CheckEngine
 	
 	private int checkJ9ClassIsNotUnloaded(J9ClassPointer clazz) throws CorruptDataException
 	{
-		if(!clazz.classDepthAndFlags().bitAnd(J9AccClassDying).eq(0)) {
+		if (!clazz.classDepthAndFlags().bitAnd(J9AccClassDying).eq(0)) {
 			return J9MODRON_GCCHK_RC_CLASS_IS_UNLOADED;
 		}
 		return J9MODRON_GCCHK_RC_OK;
@@ -1108,7 +1108,7 @@ class CheckEngine
 	{
 		J9ObjectPointer object = hole.getObject();
 		
-		if(ObjectModel.isSingleSlotDeadObject(object)) {
+		if (ObjectModel.isSingleSlotHoleObject(object)) {
 			/* Nothing to check for single slot hole */
 			/* TODO: we can add warning here if header of single slot hole is not standard (0s or fs) */
 			return J9MODRON_GCCHK_RC_OK;
@@ -1116,12 +1116,12 @@ class CheckEngine
 		
 		UDATA holeSize = hole.getSize();
 		/* Hole size can not be 0 */
-		if(holeSize.eq(0)) {
+		if (holeSize.eq(0)) {
 			return J9MODRON_GCCHK_RC_DEAD_OBJECT_SIZE;
 		}
 
 		/* Hole size must be aligned */
-		if(holeSize.anyBitsIn(J9MODRON_GCCHK_J9OBJECT_ALIGNMENT_MASK)) {
+		if (holeSize.anyBitsIn(J9MODRON_GCCHK_J9OBJECT_ALIGNMENT_MASK)) {
 			return J9MODRON_GCCHK_RC_DEAD_OBJECT_SIZE_NOT_ALIGNED;
 		}
 		
@@ -1130,26 +1130,26 @@ class CheckEngine
 		UDATA delta = regionEnd.sub(UDATA.cast(object));
 		
 		/* Hole does not fit region */
-		if(delta.lt(holeSize)) {
+		if (delta.lt(holeSize)) {
 			return J9MODRON_GCCHK_RC_INVALID_RANGE;
 		}
 		
 		GCHeapLinkedFreeHeader nextHole = hole.getNext();
 		J9ObjectPointer nextObject = nextHole.getObject();
 
-		if(!nextObject.isNull()) {
+		if (!nextObject.isNull()) {
 			/* Next must be a hole */
-			if (!ObjectModel.isDeadObject(nextObject)) {
+			if (!ObjectModel.isHoleObject(nextObject)) {
 				return J9MODRON_GCCHK_RC_DEAD_OBJECT_NEXT_IS_NOT_HOLE;
 			}
 			
 			/* Next should point to the same region */
-			if(regionStart.gt(UDATA.cast(nextObject)) || regionEnd.lte(UDATA.cast(nextObject))) {
+			if (regionStart.gt(UDATA.cast(nextObject)) || regionEnd.lte(UDATA.cast(nextObject))) {
 				return J9MODRON_GCCHK_RC_DEAD_OBJECT_NEXT_IS_NOT_IN_REGION;
 			}
 	
 			/* next should not point to inside the hole */
-			if(holeSize.add(UDATA.cast(object)).gt(UDATA.cast(nextObject)) && object.lt(nextObject)) {
+			if (holeSize.add(UDATA.cast(object)).gt(UDATA.cast(nextObject)) && object.lt(nextObject)) {
 				return J9MODRON_GCCHK_RC_DEAD_OBJECT_NEXT_IS_POINTED_INSIDE;
 			}
 		}
@@ -1160,7 +1160,7 @@ class CheckEngine
 	 * Verify the integrity of an object on the heap.
 	 * Checks various aspects of object integrity based on the checkFlags.
 	 *
-	 * @param objectPtr Pointer to the object
+	 * @param object Pointer to the object
 	 * @param segment The segment containing the pointer
 	 * @param checkFlags Type/level of verification
 	 *
@@ -1171,22 +1171,22 @@ class CheckEngine
 	 */
 	private int checkJ9Object(J9ObjectPointer object, GCHeapRegionDescriptor regionDesc, int checkFlags) throws CorruptDataException
 	{
-		if(object.isNull()) {
+		if (object.isNull()) {
 			return J9MODRON_GCCHK_RC_OK; 
 		}
 		
 		// Can't do this check verbatim  
 		//	if (0 == regionDesc->objectAlignment) {
-		if(!regionDesc.containsObjects()) {
+		if (!regionDesc.containsObjects()) {
 			/* this is a heap region, but it's not intended for objects (could be free or an arraylet leaf) */
 			return J9MODRON_GCCHK_RC_NOT_IN_OBJECT_REGION;
 		}
 		
-		if(object.anyBitsIn(J9MODRON_GCCHK_J9OBJECT_ALIGNMENT_MASK)) {
+		if (object.anyBitsIn(J9MODRON_GCCHK_J9OBJECT_ALIGNMENT_MASK)) {
 			return J9MODRON_GCCHK_RC_UNALIGNED;
 		}
 		
-		if((checkFlags & J9MODRON_GCCHK_VERIFY_CLASS_SLOT) != 0) {
+		if ((checkFlags & J9MODRON_GCCHK_VERIFY_CLASS_SLOT) != 0) {
 			/* Check that the class pointer points to the class heap, etc. */
 			int ret = checkJ9ClassPointer(J9ObjectHelper.clazz(object), true);
 
@@ -1219,7 +1219,7 @@ class CheckEngine
 			}
 		}
 		
-		if((checkFlags & J9MODRON_GCCHK_VERIFY_RANGE) != 0) {
+		if ((checkFlags & J9MODRON_GCCHK_VERIFY_RANGE) != 0) {
 			UDATA regionEnd = UDATA.cast(regionDesc.getLowAddress()).add(regionDesc.getSize());
 			long delta = regionEnd.sub(UDATA.cast(object)).longValue();
 			
@@ -1237,23 +1237,23 @@ class CheckEngine
 				return J9MODRON_GCCHK_RC_INVALID_RANGE;
 			}
 
-			if((checkFlags & J9MODRON_GCCHK_VERIFY_FLAGS) != 0) {
+			if ((checkFlags & J9MODRON_GCCHK_VERIFY_FLAGS) != 0) {
 				// TODO : fix this test
 				if (!checkIndexableFlag(object)) {
 					return J9MODRON_GCCHK_RC_INVALID_FLAGS;
 				}
 
-				if(GCExtensions.isStandardGC()) {
+				if (GCExtensions.isStandardGC()) {
 					UDATA regionFlags = regionDesc.getTypeFlags();
-					if(regionFlags.allBitsIn(MEMORY_TYPE_OLD)) {
+					if (regionFlags.allBitsIn(MEMORY_TYPE_OLD)) {
 						/* All objects in an old segment must have old bit set */
 						if (!ObjectModel.isOld(object)) {
 							return J9MODRON_GCCHK_RC_OLD_SEGMENT_INVALID_FLAGS;
 						}
 					} else {
-						if(regionFlags.allBitsIn(MEMORY_TYPE_NEW)) {
+						if (regionFlags.allBitsIn(MEMORY_TYPE_NEW)) {
 				 			/* Object in a new segment can't have old bit or remembered bit set */
-							if(ObjectModel.isOld(object)) {
+							if (ObjectModel.isOld(object)) {
 								return J9MODRON_GCCHK_RC_NEW_SEGMENT_INVALID_FLAGS;
 							}
 						}
@@ -1268,19 +1268,19 @@ class CheckEngine
 	{
 		UDATA classShape = ObjectModel.getClassShape(J9ObjectHelper.clazz(object));
 		boolean isIndexable = ObjectModel.isIndexable(object);
-		if(classShape.eq(OBJECT_HEADER_SHAPE_POINTERS)) {
+		if (classShape.eq(OBJECT_HEADER_SHAPE_POINTERS)) {
 			return isIndexable; 
 		}
-		if(classShape.eq(OBJECT_HEADER_SHAPE_BYTES)) {
+		if (classShape.eq(OBJECT_HEADER_SHAPE_BYTES)) {
 			return isIndexable; 
 		}
-		if(classShape.eq(OBJECT_HEADER_SHAPE_WORDS)) {
+		if (classShape.eq(OBJECT_HEADER_SHAPE_WORDS)) {
 			return isIndexable; 
 		}
-		if(classShape.eq(OBJECT_HEADER_SHAPE_LONGS)) {
+		if (classShape.eq(OBJECT_HEADER_SHAPE_LONGS)) {
 			return isIndexable; 
 		}
-		if(classShape.eq(OBJECT_HEADER_SHAPE_DOUBLES)) {
+		if (classShape.eq(OBJECT_HEADER_SHAPE_DOUBLES)) {
 			return isIndexable; 
 		}
 		return !isIndexable;
@@ -1379,12 +1379,12 @@ class CheckEngine
 	private J9MemorySegmentPointer findSegmentForClass(J9ClassPointer clazz)
 	{
 		J9MemorySegmentPointer segment = _classSegmentsTree.findSegment(clazz);
-		if(segment != null) {
-			if(!isPointerInSegment(clazz, segment)) {
+		if (segment != null) {
+			if (!isPointerInSegment(clazz, segment)) {
 				return null;
 			}
 			try {
-				if(segment.type().anyBitsIn(J9MemorySegment.MEMORY_TYPE_RAM_CLASS | J9MemorySegment.MEMORY_TYPE_UNDEAD_CLASS)) {
+				if (segment.type().anyBitsIn(J9MemorySegment.MEMORY_TYPE_RAM_CLASS | J9MemorySegment.MEMORY_TYPE_UNDEAD_CLASS)) {
 					return segment;
 				}
 			} catch (CorruptDataException e) {
@@ -1397,7 +1397,7 @@ class CheckEngine
 	public int checkSlotUnfinalizedList(J9ObjectPointer object, MM_UnfinalizedObjectListPointer currentList)
 	{
 		int result = checkObjectIndirect(object);
-		if(J9MODRON_GCCHK_RC_OK != result) {
+		if (J9MODRON_GCCHK_RC_OK != result) {
 			CheckError error = new CheckError(currentList, object, _cycle, _currentCheck, result, _cycle.nextErrorCount());
 			_reporter.report(error);
 		}
@@ -1411,7 +1411,7 @@ class CheckEngine
 		}
 		try {
 			int result = checkObjectIndirect(object);
-			if(J9MODRON_GCCHK_RC_OK != result) {
+			if (J9MODRON_GCCHK_RC_OK != result) {
 				CheckError error = new CheckError(currentList, object, _cycle, _currentCheck, result, _cycle.nextErrorCount());
 				_reporter.report(error);
 				_reporter.reportHeapWalkError(error, _lastHeapObject1, _lastHeapObject2, _lastHeapObject3);
