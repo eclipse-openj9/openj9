@@ -4963,8 +4963,6 @@ typedef struct J9VMThread {
 	U_32 osrFrameIndex;
 	void* codertTOC;
 	U_8* cardTableVirtualStart;
-	j9object_t allocateObjectSavePrivate1; /* deprecated -- use OMRVMThread::savedObject1 */
-	j9object_t allocateObjectSavePrivate2; /* deprecated -- use OMRVMThread::savedObject2 */
 	j9object_t stopThrowable;
 	j9object_t outOfMemoryError;
 	UDATA* jniCurrentReference;
