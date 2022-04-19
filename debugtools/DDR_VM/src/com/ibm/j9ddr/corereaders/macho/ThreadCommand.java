@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2021 IBM Corp. and others
+ * Copyright (c) 2019, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -52,55 +52,21 @@ import javax.imageio.stream.ImageInputStream;
 public class ThreadCommand extends LoadCommand
 {
 
-	// thread flavor values from <mach/i386/thread_status.h>
-	public static final int x86_THREAD_STATE32 = 1;
-	public static final int x86_FLOAT_STATE32 = 2;
-	public static final int x86_EXCEPTION_STATE32 = 3;
-	public static final int x86_THREAD_STATE64 = 4;
-	public static final int x86_FLOAT_STATE64 = 5;
-	public static final int x86_EXCEPTION_STATE64 = 6;
-	public static final int x86_THREAD_STATE = 7;
-	public static final int x86_FLOAT_STATE = 8;
-	public static final int x86_EXCEPTION_STATE = 9;
-	public static final int x86_DEBUG_STATE32 = 10;
-	public static final int x86_DEBUG_STATE64 = 11;
-	public static final int x86_DEBUG_STATE = 12;
-	public static final int THREAD_STATE_NONE = 13;
-	public static final int x86_AVX_STATE32 = 16;
-	public static final int x86_AVX_STATE64 = (x86_AVX_STATE32 + 1);
-	public static final int x86_AVX_STATE = (x86_AVX_STATE32 + 2);
-	public static final int x86_AVX512_STATE32 = 19;
-	public static final int x86_AVX512_STATE64 = (x86_AVX512_STATE32 + 1);
-	public static final int x86_AVX512_STATE =(x86_AVX512_STATE32 + 2);
-
-	public static class ThreadState
+	public abstract static class ThreadState
 	{
-		int flavor;
-		int sizeInUInts;
-		byte stateBytes[];
-		ByteOrder endianness;
-		Map<String, Number> registers;
+		final int flavor;
+		final int sizeInUInts;
+		final byte[] stateBytes;
+		final ByteOrder endianness;
+		final Map<String, Number> registers;
 
-		//  thread state structure contents (ie registers) defined in <mach/i386/_structs.h>
-		public ThreadState(int flavor, int size, byte state[], ByteOrder endian)
+		public ThreadState(int flavor, int size, byte[] state, ByteOrder endian)
 		{
 			this.flavor = flavor;
 			this.sizeInUInts = size;
 			this.stateBytes = state;
 			this.endianness = endian;
 			registers = new TreeMap<>();
-			switch (flavor) {
-				case x86_THREAD_STATE:
-				case x86_THREAD_STATE64:
-					fillX86ThreadRegisters();
-					break;
-				case x86_EXCEPTION_STATE:
-				case x86_EXCEPTION_STATE64:
-					fillX86ExceptionData();
-					break;
-				default:
-					break;
-			}
 		}
 
 		public long readLong(int start)
@@ -132,7 +98,51 @@ public class ThreadCommand extends LoadCommand
 			return (endianness == ByteOrder.LITTLE_ENDIAN) ? ret : Short.reverseBytes(ret);
 		}
 
-		public void fillX86ThreadRegisters()
+		public abstract void fillThreadRegisters();
+		public abstract void fillExceptionData();
+
+	}
+
+	public static final class OSXAMD64ThreadState extends ThreadState
+	{
+		// thread flavor values from <mach/i386/thread_status.h>
+		public static final int x86_THREAD_STATE32 = 1;
+		public static final int x86_FLOAT_STATE32 = 2;
+		public static final int x86_EXCEPTION_STATE32 = 3;
+		public static final int x86_THREAD_STATE64 = 4;
+		public static final int x86_FLOAT_STATE64 = 5;
+		public static final int x86_EXCEPTION_STATE64 = 6;
+		public static final int x86_THREAD_STATE = 7;
+		public static final int x86_FLOAT_STATE = 8;
+		public static final int x86_EXCEPTION_STATE = 9;
+		public static final int x86_DEBUG_STATE32 = 10;
+		public static final int x86_DEBUG_STATE64 = 11;
+		public static final int x86_DEBUG_STATE = 12;
+		public static final int THREAD_STATE_NONE = 13;
+		public static final int x86_AVX_STATE32 = 16;
+		public static final int x86_AVX_STATE64 = (x86_AVX_STATE32 + 1);
+		public static final int x86_AVX_STATE = (x86_AVX_STATE32 + 2);
+		public static final int x86_AVX512_STATE32 = 19;
+		public static final int x86_AVX512_STATE64 = (x86_AVX512_STATE32 + 1);
+		public static final int x86_AVX512_STATE =(x86_AVX512_STATE32 + 2);
+
+		// thread state structure contents (ie registers) defined in <mach/i386/_structs.h>
+		public OSXAMD64ThreadState(int flavor, int size, byte[] state, ByteOrder endian)
+		{
+			super(flavor, size, state, endian);
+			switch (flavor) {
+			case x86_THREAD_STATE64:
+				fillThreadRegisters();
+				break;
+			case x86_EXCEPTION_STATE64:
+				fillExceptionData();
+				break;
+			default:
+				break;
+			}
+		}
+
+		public void fillThreadRegisters()
 		{
 			registers.put("rax", readLong(0));
 			registers.put("rbx", readLong(8));
@@ -157,7 +167,7 @@ public class ThreadCommand extends LoadCommand
 			registers.put("gs", readLong(160));
 		}
 
-		public void fillX86ExceptionData()
+		public void fillExceptionData()
 		{
 			registers.put("trapno", readShort(0));
 			registers.put("cpu", readShort(2));
@@ -166,17 +176,58 @@ public class ThreadCommand extends LoadCommand
 		}
 	}
 
-	public List<ThreadState> states;
-
-	public ThreadCommand()
+	public static final class OSXAArch64ThreadState extends ThreadState
 	{
-		states = new ArrayList<>();
+		// thread flavor values from <mach/arm/thread_status.h>
+		public static final int THREAD_STATE_NONE = 5;
+		public static final int ARM_THREAD_STATE64 = 6;
+		public static final int ARM_EXCEPTION_STATE64 = 7;
+		public static final int ARM_NEON_STATE64 = 17;
+
+		// thread state structure contents (ie registers) defined in <mach/arm/_structs.h>
+		public OSXAArch64ThreadState(int flavor, int size, byte[] state, ByteOrder endian)
+		{
+			super(flavor, size, state, endian);
+			switch (flavor) {
+			case ARM_THREAD_STATE64:
+				fillThreadRegisters();
+				break;
+			case ARM_EXCEPTION_STATE64:
+				fillExceptionData();
+				break;
+			default:
+				break;
+			}
+		}
+
+		public void fillThreadRegisters()
+		{
+			for (int i = 0; i < 29; i++) {
+				registers.put("x" + i, readLong(i * 8));
+			}
+			registers.put("fp", readLong(232));
+			registers.put("lr", readLong(240));
+			registers.put("sp", readLong(248));
+			registers.put("pc", readLong(256));
+			registers.put("cpsr", readInt(264));
+		}
+
+		public void fillExceptionData()
+		{
+			registers.put("faultaddr", readLong(0));
+			registers.put("esr", readInt(8));
+			registers.put("exception", readInt(12));
+		}
 	}
 
-	public ThreadCommand(int type, long size, long offset)
+	private final int cpuType;
+
+	final List<ThreadState> states;
+
+	public ThreadCommand(int cpuType)
 	{
-		super(type, size, offset);
 		states = new ArrayList<>();
+		this.cpuType = cpuType;
 	}
 
 	public ThreadCommand readCommand(ImageInputStream stream, long streamSegmentOffset) throws IOException
@@ -186,9 +237,19 @@ public class ThreadCommand extends LoadCommand
 		while (structOffset < cmdSize) {
 			int flavor = stream.readInt();
 			int size = stream.readInt();
-			byte data[] = new byte[size * 4];
+			byte[] data = new byte[size * 4];
 			stream.readFully(data);
-			states.add(new ThreadCommand.ThreadState(flavor, size, data, stream.getByteOrder()));
+			switch (cpuType) {
+			case MachoDumpReader.CPU_TYPE_X86_64:
+				states.add(new OSXAMD64ThreadState(flavor, size, data, stream.getByteOrder()));
+				break;
+			case MachoDumpReader.CPU_TYPE_AARCH64:
+				states.add(new OSXAArch64ThreadState(flavor, size, data, stream.getByteOrder()));
+				break;
+			default:
+				// just ignore
+				break;
+			}
 			structOffset += size * 4 + 8;
 		}
 		return this;
