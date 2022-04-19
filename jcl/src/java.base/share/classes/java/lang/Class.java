@@ -3686,8 +3686,14 @@ Map<String, T> enumConstantDirectory() {
 			/*[MSG "K0564", "{0} is not an Enum"]*/			
 			throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K0564", getName())); //$NON-NLS-1$
 		}
-		map = new HashMap<>(enums.length * 4 / 3);
-		for (int i = 0; i < enums.length; i++) {
+		int enumsLength = enums.length;
+		/*[IF JAVA_SPEC_VERSION >= 19]
+		map = HashMap.newHashMap(enumsLength);
+		/*[ELSE] JAVA_SPEC_VERSION >= 19 */
+		// HashMap.DEFAULT_LOAD_FACTOR is 0.75
+		map = new HashMap<>(enumsLength * 4 / 3);
+		/*[ENDIF] JAVA_SPEC_VERSION >= 19 */
+		for (int i = 0; i < enumsLength; i++) {
 			map.put(((Enum<?>) enums[i]).name(), enums[i]);
 		}
 		

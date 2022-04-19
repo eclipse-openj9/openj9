@@ -22,6 +22,7 @@
  *******************************************************************************/
 package java.lang;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.security.AccessControlContext;
 import java.security.AccessController;
@@ -1381,7 +1382,13 @@ public static Map<Thread, StackTraceElement[]> getAllStackTraces() {
 	int count = systemThreadGroup.activeCount() + 20;
 	Thread[] threads = new Thread[count];
 	count = systemThreadGroup.enumerate(threads);
-	Map<Thread, StackTraceElement[]> result = new java.util.HashMap<>(count);
+	/*[IF JAVA_SPEC_VERSION >= 19]
+	Map<Thread, StackTraceElement[]> result = HashMap.newHashMap(count);
+	/*[ELSE] JAVA_SPEC_VERSION >= 19 */
+	// HashMap.DEFAULT_LOAD_FACTOR is 0.75
+	Map<Thread, StackTraceElement[]> result = new HashMap<>(count * 4 / 3);
+	/*[ENDIF] JAVA_SPEC_VERSION >= 19 */
+
 	for (int i = 0; i < count; i++) {
 		result.put(threads[i], threads[i].getStackTrace());
 	}
