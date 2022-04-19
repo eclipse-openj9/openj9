@@ -1,7 +1,7 @@
 package org.openj9.test.java.lang.ref;
 
 /*******************************************************************************
- * Copyright (c) 1998, 2018 IBM Corp. and others
+ * Copyright (c) 1998, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,7 +33,6 @@ import java.lang.ref.WeakReference;
 public class Test_Reference {
 	Object tmpA, tmpB, obj;
 	volatile WeakReference wr;
-	final boolean isJava8 = System.getProperty("java.specification.version").equals("1.8");
 	final boolean disableClearBeforeEnqueue =
             Boolean.getBoolean("jdk.lang.ref.disableClearBeforeEnqueue");
 
@@ -67,7 +66,7 @@ public class Test_Reference {
 		obj = new Object();
 		Reference ref = new SoftReference(obj, rq);
 		AssertJUnit.assertTrue("Enqueue failed.", (!ref.isEnqueued()) && ((ref.enqueue()) && (ref.isEnqueued())));
-		if (isJava8 || disableClearBeforeEnqueue) {
+		if (disableClearBeforeEnqueue) {
 			AssertJUnit.assertTrue("Not properly enqueued.", rq.poll().get() == obj);
 		} else {
 			AssertJUnit.assertTrue("Not properly enqueued.", rq.poll().get() == null);
@@ -80,7 +79,7 @@ public class Test_Reference {
 		obj = new Object();
 		ref = new WeakReference(obj, rq);
 		AssertJUnit.assertTrue("Enqueue failed2.", (!ref.isEnqueued()) && ((ref.enqueue()) && (ref.isEnqueued())));
-		if (isJava8 || disableClearBeforeEnqueue) {
+		if (disableClearBeforeEnqueue) {
 			AssertJUnit.assertTrue("Not properly enqueued2.", rq.poll().get() == obj);
 		} else {
 			AssertJUnit.assertTrue("Not properly enqueued2.", rq.poll().get() == null);
