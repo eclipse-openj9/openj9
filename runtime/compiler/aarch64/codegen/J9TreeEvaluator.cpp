@@ -53,7 +53,7 @@
  */
 extern void TEMPORARY_initJ9ARM64TreeEvaluatorTable(TR::CodeGenerator *cg)
    {
-   TR_TreeEvaluatorFunctionPointer *tet = cg->getTreeEvaluatorTable();
+   OMR::TreeEvaluatorFunctionPointerTable tet = cg->getTreeEvaluatorTable();
 
    tet[TR::awrtbar] = TR::TreeEvaluator::awrtbarEvaluator;
    tet[TR::awrtbari] = TR::TreeEvaluator::awrtbariEvaluator;
