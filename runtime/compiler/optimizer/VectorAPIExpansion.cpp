@@ -194,18 +194,26 @@ TR_VectorAPIExpansion::visitNodeToBuildVectorAliases(TR::Node *node)
 
       for (int32_t i = 0; i < numChildren; i++)
          {
-         if (!isVectorAPIMethod(methodSymbol) || isArgType(methodSymbol, i, Vector))
+         if (!isVectorAPIMethod(methodSymbol) ||
+             isArgType(methodSymbol, i, Vector) ||
+             isArgType(methodSymbol, i, Mask))
             {
             TR::Node *child = node->getChild(i);
-            if (child->getOpCode().hasSymbolReference())
+            bool hasSymbolReference = child->getOpCode().hasSymbolReference();
+            bool isMask = isVectorAPIMethod(methodSymbol) && isArgType(methodSymbol, i, Mask);
+            bool isNullMask = isMask && child->isConstZeroValue();
+
+            if (hasSymbolReference)
                {
                alias(node, child);
                }
-            else
+
+            // not supporting masks, except for non-null ones, right now
+            if ((!hasSymbolReference || isMask) && !isNullMask)
                {
                if (_trace)
-                  traceMsg(comp(), "Invalidating #%d due to child %p in node %p\n",
-                           node->getSymbolReference()->getReferenceNumber(), child, node);
+                  traceMsg(comp(), "Invalidating #%d due to child %d (%p) in node %p\n",
+                           node->getSymbolReference()->getReferenceNumber(), i, child, node);
                invalidateSymRef(node->getSymbolReference());
                }
             }
@@ -1663,12 +1671,12 @@ TR_VectorAPIExpansion::methodTable[] =
    {
    {loadIntrinsicHandler,  TR::NoType, Vector,  {Unknown, elementType, numLanes}},                           // jdk_internal_vm_vector_VectorSupport_load
    {storeIntrinsicHandler, TR::NoType, Unknown, {Unknown, elementType, numLanes, Unknown, Unknown, Vector}}, // jdk_internal_vm_vector_VectorSupport_store
-   {binaryIntrinsicHandler, TR::NoType, Vector,  {Unknown, Unknown, Unknown, elementType, numLanes, Vector, Vector}},  // jdk_internal_vm_vector_VectorSupport_binaryOp
+   {binaryIntrinsicHandler, TR::NoType, Vector,  {Unknown, Unknown, Unknown, elementType, numLanes, Vector, Vector, Mask}},  // jdk_internal_vm_vector_VectorSupport_binaryOp
    {blendIntrinsicHandler, TR::NoType, Vector, {Unknown, Unknown, elementType, numLanes, Vector, Vector, Vector, Unknown}}, // jdk_internal_vm_vector_VectorSupport_blend
    {broadcastCoercedIntrinsicHandler, TR::NoType, Vector, {Unknown, elementType, numLanes, Unknown, Unknown, Unknown}},  // jdk_internal_vm_vector_VectorSupport_broadcastCoerced
-   {compareIntrinsicHandler, TR::NoType, Vector, {Unknown, Unknown, Unknown, elementType, numLanes, Vector, Vector, Unknown}}, // jdk_internal_vm_vector_VectorSupport_compare
-   {ternaryIntrinsicHandler, TR::NoType, Vector,  {Unknown, Unknown, Unknown, elementType, numLanes, Vector, Vector}},  // jdk_internal_vm_vector_VectorSupport_ternaryOp
-   {unaryIntrinsicHandler, TR::NoType, Vector,  {Unknown, Unknown, Unknown, elementType, numLanes, Vector}},  // jdk_internal_vm_vector_VectorSupport_unaryOp
+   {compareIntrinsicHandler, TR::NoType, Vector, {Unknown, Unknown, Unknown, elementType, numLanes, Vector, Vector, Mask}}, // jdk_internal_vm_vector_VectorSupport_compare
+   {ternaryIntrinsicHandler, TR::NoType, Vector,  {Unknown, Unknown, Unknown, elementType, numLanes, Vector, Vector, Mask}},  // jdk_internal_vm_vector_VectorSupport_ternaryOp
+   {unaryIntrinsicHandler, TR::NoType, Vector,  {Unknown, Unknown, Unknown, elementType, numLanes, Vector, Mask}},  // jdk_internal_vm_vector_VectorSupport_unaryOp
 
    {unsupportedHandler /*fromArrayHandler*/,      TR::Float,  Vector,  {Species}}, // jdk_incubator_vector_FloatVector_fromArray,
    {unsupportedHandler /*intoArrayHandler*/,      TR::Float,  Unknown, {Vector}},  // jdk_incubator_vector_FloatVector_intoArray,
