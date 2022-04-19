@@ -561,7 +561,7 @@ getSignatureForComputedCall(
 void J9::RecognizedCallTransformer::process_java_lang_invoke_MethodHandle_invokeBasic(TR::TreeTop * treetop, TR::Node* node)
    {
    TR_J9VMBase* fej9 = static_cast<TR_J9VMBase*>(comp()->fe());
-   TR::TransformUtil::separateNullCheck(comp(), treetop, true);
+   TR::TransformUtil::separateNullCheck(comp(), treetop, trace());
    TR::Node * inlCallNode = node->duplicateTree(false);
    TR::list<TR::SymbolReference *>* argsList = new (comp()->trStackMemory()) TR::list<TR::SymbolReference*>(getTypedAllocator<TR::SymbolReference*>(comp()->allocator()));
    for (int i = 0; i < node->getNumChildren(); i++)
@@ -616,7 +616,7 @@ void J9::RecognizedCallTransformer::process_java_lang_invoke_MethodHandle_invoke
 void J9::RecognizedCallTransformer::process_java_lang_invoke_MethodHandle_linkToStaticSpecial(TR::TreeTop* treetop, TR::Node* node)
    {
    TR_J9VMBase* fej9 = static_cast<TR_J9VMBase*>(comp()->fe());
-   TR::TransformUtil::separateNullCheck(comp(), treetop, true);
+   TR::TransformUtil::separateNullCheck(comp(), treetop, trace());
    TR::Node * inlCallNode = node->duplicateTree(false);
    TR::list<TR::SymbolReference *>* argsList = new (comp()->trStackMemory()) TR::list<TR::SymbolReference*>(getTypedAllocator<TR::SymbolReference*>(comp()->allocator()));
    for (int i = 0; i < node->getNumChildren(); i++)
