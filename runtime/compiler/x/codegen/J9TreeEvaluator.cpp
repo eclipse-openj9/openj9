@@ -11905,8 +11905,8 @@ J9::X86::TreeEvaluator::inlineStringLatin1Inflate(TR::Node *node, TR::CodeGenera
    TR::Register *zeroReg = cg->allocateRegister(TR_VRF);
    TR::Register *scratchReg = cg->allocateRegister(TR_GPR);
 
-   int depCount = 9;
-   TR::RegisterDependencyConditions *deps = generateRegisterDependencyConditions((uint8_t)0, depCount, cg);
+   int maxDepCount = 10;
+   TR::RegisterDependencyConditions *deps = generateRegisterDependencyConditions(0, maxDepCount, cg);
    deps->addPostCondition(xmmHighReg, TR::RealRegister::NoReg, cg);
    deps->addPostCondition(xmmLowReg, TR::RealRegister::NoReg, cg);
    deps->addPostCondition(zeroReg, TR::RealRegister::NoReg, cg);
@@ -11916,7 +11916,6 @@ J9::X86::TreeEvaluator::inlineStringLatin1Inflate(TR::Node *node, TR::CodeGenera
    deps->addPostCondition(scratchReg, TR::RealRegister::eax, cg);
    deps->addPostCondition(srcOffsetReg, TR::RealRegister::ecx, cg);
    deps->addPostCondition(destOffsetReg, TR::RealRegister::edx, cg);
-   deps->stopAddingConditions();
 
    TR::LabelSymbol *doneLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *copyResidueLabel = generateLabelSymbol(cg);
@@ -12004,7 +12003,15 @@ J9::X86::TreeEvaluator::inlineStringLatin1Inflate(TR::Node *node, TR::CodeGenera
 
    bool is64bit = cg->comp()->target().is64Bit();
    // calculate address to jump too
-   generateRegMemInstruction(TR::InstOpCode::LEARegMem(is64bit), node, scratchReg, generateX86MemoryReference(copyResidueLabel, cg), cg);
+
+   TR::MemoryReference *residueLabelMR = generateX86MemoryReference(copyResidueLabel, cg);
+
+   if (cg->comp()->target().is64Bit() && residueLabelMR->getAddressRegister())
+      {
+      deps->addPostCondition(residueLabelMR->getAddressRegister(), TR::RealRegister::NoReg, cg);
+      }
+
+   generateRegMemInstruction(TR::InstOpCode::LEARegMem(is64bit), node, scratchReg, residueLabelMR, cg);
    generateRegRegInstruction(TR::InstOpCode::ADDRegReg(is64bit), node, lengthReg, scratchReg, cg);
 
    generateRegMemInstruction(TR::InstOpCode::LEARegMem(is64bit), node, srcOffsetReg, generateX86MemoryReference(srcBufferReg, srcOffsetReg, 0, 0, cg), cg);
@@ -12020,6 +12027,7 @@ J9::X86::TreeEvaluator::inlineStringLatin1Inflate(TR::Node *node, TR::CodeGenera
       generateMemRegInstruction(TR::InstOpCode::S2MemReg, node, generateX86MemoryReference(destOffsetReg, headerOffsetConst + 2 * (6 - i), cg), scratchReg, cg);
       }
 
+   deps->stopAddingConditions();
    generateLabelInstruction(TR::InstOpCode::label, node, doneLabel, deps, cg);
    doneLabel->setEndInternalControlFlow();
 
