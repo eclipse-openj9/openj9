@@ -72,14 +72,14 @@ bool SPMDPreCheck::isSPMDCandidate(TR::Compilation *comp, TR_RegionStructure *lo
 
           if (opcode.isStore())
              {
-             TR::ILOpCodes vectorOp = TR::ILOpCode::convertScalarToVector(opcode.getOpCodeValue());
+             TR::ILOpCodes vectorOp = TR::ILOpCode::convertScalarToVector(opcode.getOpCodeValue(), VECTOR_LENGTH);
              if (vectorOp == TR::BadILOp)
                 {
                 if (trace)
                   traceMsg(comp, "SPMD PRE-CHECK FAILURE: store op code %s does not have a vector equivalent - skipping consideration of loop %d\n", comp->getDebug()->getName(opcode.getOpCodeValue()), loop->getNumber());
                 return false;
                 }
-             if (!comp->cg()->getSupportsOpCodeForAutoSIMD(vectorOp, node->getDataType(), VECTOR_LENGTH))
+             if (!comp->cg()->getSupportsOpCodeForAutoSIMD(vectorOp, node->getDataType()))
                 {
                 if (trace)
                   traceMsg(comp, "SPMD PRE-CHECK FAILURE: vector op code %s is not supported on the current platform - skipping consideration of loop %d\n", comp->getDebug()->getName(vectorOp), loop->getNumber());

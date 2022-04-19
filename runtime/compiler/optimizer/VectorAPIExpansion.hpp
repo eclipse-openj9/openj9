@@ -467,8 +467,8 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *  \param elementType
    *     Element type
    *
-   *  \param scalar
-   *     return scalar opcode
+   *  \param vectorLength
+   *     return scalar opcode if vectorLength == 0 and vector opcode otherwise
    *
    *  \param compare
    *     true if it's compare opcode
@@ -476,7 +476,7 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *  \return
    *     scalar TR::IL opcode if scalar is true, otherwise vector opcode
    */
-   static TR::ILOpCodes ILOpcodeFromVectorAPIOpcode(int32_t vectorOpCode, TR::DataType elementType, bool scalar, bool compare = false);
+   static TR::ILOpCodes ILOpcodeFromVectorAPIOpcode(int32_t vectorOpCode, TR::DataType elementType, vec_sz_t vectorLength, bool compare = false);
 
   /** \brief
    *    For the node's symbol reference, creates and records(if it does not exist yet)
@@ -1074,30 +1074,9 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *   \param numOperands
    *      Number of operands
    *
-   *   \param useVcall
-   *      use vcall for vectorization
-   *
    *   \return
    *      Transformed node
    */
-   static TR::Node *transformNary(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode, TR::ILOpCodes scalarOpCode, TR::ILOpCodes vectorOpCode, int32_t firstOperand, int32_t numOperands, bool useVcall);
-
-
-  /** \brief
-   *    Helper method to decide to use vcall or not
-   *
-   *   \param comp
-   *     Compilation
-   *
-   *   \param vectorAPIOpcode
-   *     Vector API opcode
-   *
-   *   \param vectorLength
-   *     Full vector length in bits
-   *
-   *   \return
-   *      true to use vcall, false otherwise
-   */
-   static bool useVcallForVectorAPIOpcode(TR::Compilation *comp, int32_t vectorAPIOpcode, vec_sz_t vectorLength);
+   static TR::Node *transformNary(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode, TR::ILOpCodes scalarOpCode, TR::ILOpCodes vectorOpCode, int32_t firstOperand, int32_t numOperands);
    };
 #endif /* VECTORAPIEXPANSION_INCL */

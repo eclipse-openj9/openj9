@@ -859,7 +859,8 @@ TR::Register *J9::X86::TreeEvaluator::d2lEvaluator(TR::Node *node, TR::CodeGener
  */
 extern void TEMPORARY_initJ9X86TreeEvaluatorTable(TR::CodeGenerator *cg)
    {
-   TR_TreeEvaluatorFunctionPointer *tet = cg->getTreeEvaluatorTable();
+   OMR::TreeEvaluatorFunctionPointerTable tet = cg->getTreeEvaluatorTable();
+
    tet[TR::f2i] =                   TR::TreeEvaluator::f2iEvaluator;
    tet[TR::f2iu] =                  TR::TreeEvaluator::f2iEvaluator;
    tet[TR::f2l] =                   TR::TreeEvaluator::f2iEvaluator;
