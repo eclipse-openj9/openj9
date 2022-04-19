@@ -116,9 +116,9 @@ private:
 
    void readBlocking(char *data, size_t size)
       {
+      size_t totalBytesRead = 0;
       if (_ssl)
          {
-         int32_t totalBytesRead = 0;
          while (totalBytesRead < size)
             {
             int bytesRead = (*OBIO_read)(_ssl, data + totalBytesRead, size - totalBytesRead);
@@ -132,13 +132,13 @@ private:
          }
       else
          {
-         int32_t totalBytesRead = 0;
          while (totalBytesRead < size)
             {
-            int32_t bytesRead = read(_connfd, data + totalBytesRead, size - totalBytesRead);
+            ssize_t bytesRead = read(_connfd, data + totalBytesRead, size - totalBytesRead);
             if (bytesRead <= 0)
                {
-               throw JITServer::StreamFailure("JITServer I/O error: read error");
+               throw JITServer::StreamFailure("JITServer I/O error: read error: " +
+                                              (bytesRead ? std::string(strerror(errno)) : "connection closed by peer"));
                }
             totalBytesRead += bytesRead;
             }
@@ -151,19 +151,20 @@ private:
       if (_ssl)
          {
          bytesRead = (*OBIO_read)(_ssl, data, size);
+         if (bytesRead <= 0)
+            {
+            (*OERR_print_errors_fp)(stderr);
+            throw JITServer::StreamFailure("JITServer I/O error: read error");
+            }
          }
       else
          {
          bytesRead = read(_connfd, data, size);
-         }
-
-      if (bytesRead <= 0)
-         {
-         if (_ssl)
+         if (bytesRead <= 0)
             {
-            (*OERR_print_errors_fp)(stderr);
+            throw JITServer::StreamFailure("JITServer I/O error: read error: " +
+                                           (bytesRead ? std::string(strerror(errno)) : "connection closed by peer"));
             }
-         throw JITServer::StreamFailure("JITServer I/O error: read error");
          }
       return bytesRead;
       }
@@ -175,14 +176,14 @@ private:
       writeBlocking(&val, sizeof(T));
       }
 
-   void writeBlocking(const char* data, size_t size)
+   void writeBlocking(const char *data, size_t size)
       {
+      size_t totalBytesWritten = 0;
       if (_ssl)
          {
-         int32_t totalBytesWritten = 0;
          while (totalBytesWritten < size)
             {
-            int32_t bytesWritten = (*OBIO_write)(_ssl, data + totalBytesWritten, size - totalBytesWritten);
+            int bytesWritten = (*OBIO_write)(_ssl, data + totalBytesWritten, size - totalBytesWritten);
             if (bytesWritten <= 0)
                {
                (*OERR_print_errors_fp)(stderr);
@@ -193,13 +194,12 @@ private:
          }
       else
          {
-         int32_t totalBytesWritten = 0;
          while (totalBytesWritten < size)
             {
-            int32_t bytesWritten = write(_connfd, data + totalBytesWritten, size - totalBytesWritten);
+            ssize_t bytesWritten = write(_connfd, data + totalBytesWritten, size - totalBytesWritten);
             if (bytesWritten <= 0)
                {
-               throw JITServer::StreamFailure("JITServer I/O error: write error");
+               throw JITServer::StreamFailure("JITServer I/O error: write error: " + std::string(strerror(errno)));
                }
             totalBytesWritten += bytesWritten;
             }

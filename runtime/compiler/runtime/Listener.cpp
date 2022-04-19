@@ -203,19 +203,19 @@ TR_Listener::serveRemoteCompilationRequests(BaseCompileDispatcher *compiler)
 
    // see `man 7 socket` for option explanations
    int flag = true;
-   if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, (void *)&flag, sizeof(flag)) < 0)
+   if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &flag, sizeof(flag)) < 0)
       {
       perror("Can't set SO_REUSEADDR");
       exit(1);
       }
-   if (setsockopt(sockfd, SOL_SOCKET, SO_KEEPALIVE, (void *)&flag, sizeof(flag)) < 0)
+   if (setsockopt(sockfd, SOL_SOCKET, SO_KEEPALIVE, &flag, sizeof(flag)) < 0)
       {
       perror("Can't set SO_KEEPALIVE");
       exit(1);
       }
 
    struct sockaddr_in serv_addr;
-   memset((char *)&serv_addr, 0, sizeof(serv_addr));
+   memset(&serv_addr, 0, sizeof(serv_addr));
    serv_addr.sin_family = AF_INET;
    serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
    serv_addr.sin_port = htons(port);
@@ -277,19 +277,20 @@ TR_Listener::serveRemoteCompilationRequests(BaseCompileDispatcher *compiler)
                {
                if (TR::Options::getVerboseOption(TR_VerboseJITServer))
                   {
-                  TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Error accepting connection: errno=%d", errno);
+                  TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Error accepting connection: errno=%d: %s",
+                                                 errno, strerror(errno));
                   }
                }
             }
          else
             {
-            struct timeval timeoutMsForConnection = {(timeoutMs / 1000), ((timeoutMs % 1000) * 1000)};
-            if (setsockopt(connfd, SOL_SOCKET, SO_RCVTIMEO, (void *)&timeoutMsForConnection, sizeof(timeoutMsForConnection)) < 0)
+            struct timeval timeout = { timeoutMs / 1000, (timeoutMs % 1000) * 1000 };
+            if (setsockopt(connfd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) < 0)
                {
                perror("Can't set option SO_RCVTIMEO on connfd socket");
                exit(1);
                }
-            if (setsockopt(connfd, SOL_SOCKET, SO_SNDTIMEO, (void *)&timeoutMsForConnection, sizeof(timeoutMsForConnection)) < 0)
+            if (setsockopt(connfd, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout)) < 0)
                {
                perror("Can't set option SO_SNDTIMEO on connfd socket");
                exit(1);
