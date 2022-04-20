@@ -43,8 +43,10 @@ public:
    static bool useSSL();
    static void initSSL();
 
+   static uint32_t _msgTypeCount[MessageType::MessageType_MAXTYPE];
+   static uint64_t _totalMsgSize;
 #if defined(MESSAGE_SIZE_STATS)
-   static TR_Stats msgSizeStats[JITServer::MessageType_MAXTYPE];
+   static TR_Stats _msgSizeStats[MessageType::MessageType_MAXTYPE];
 #endif /* defined(MESSAGE_SIZE_STATS) */
 
    static void initConfigurationFlags();
@@ -86,9 +88,6 @@ protected:
    // Build a message sent by a remote party by reading from the socket
    // as much as possible (up to internal buffer capacity)
    void readMessage(Message &msg);
-   // Build a message sent by a remote party by first reading the message
-   // size and then reading the rest of the message
-   void readMessage2(Message &msg);
    void writeMessage(Message &msg);
 
    int getConnFD() const { return _connfd; }
@@ -104,16 +103,6 @@ protected:
    static uint32_t CONFIGURATION_FLAGS;
 
 private:
-   // readBlocking and writeBlocking are functions that directly read/write
-   // passed object from/to the socket. For the object to be correctly written,
-   // it needs to be contiguous.
-   template <typename T>
-   void readBlocking(T &val)
-      {
-      static_assert(std::is_trivially_copyable<T>::value == true, "T must be trivially copyable.");
-      readBlocking((char*)&val, sizeof(T));
-      }
-
    void readBlocking(char *data, size_t size)
       {
       size_t totalBytesRead = 0;
@@ -167,13 +156,6 @@ private:
             }
          }
       return bytesRead;
-      }
-
-   template <typename T>
-   void writeBlocking(const T &val)
-      {
-      static_assert(std::is_trivially_copyable<T>::value == true, "T must be trivially copyable.");
-      writeBlocking(&val, sizeof(T));
       }
 
    void writeBlocking(const char *data, size_t size)
