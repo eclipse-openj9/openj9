@@ -41,6 +41,7 @@ target_link_libraries(j9criu
 		j9vm_interface
 		j9util
 		j9thr
+		criu
 		dl
 )
 
