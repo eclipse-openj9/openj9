@@ -51,6 +51,8 @@ setupJNIFieldIDs(JNIEnv *env)
 	jclass criuSystemCheckpointExceptionClass = NULL;
 	jclass criuRestoreExceptionClass = NULL;
 
+	UT_MODULE_LOADED(J9_UTINTERFACE_FROM_VM(vm));
+
 	criuJVMCheckpointExceptionClass = env->FindClass("org/eclipse/openj9/criu/JVMCheckpointException");
 	Assert_CRIU_notNull(criuJVMCheckpointExceptionClass);
 	vm->criuJVMCheckpointExceptionClass = (jclass) env->NewGlobalRef(criuJVMCheckpointExceptionClass);
@@ -80,34 +82,6 @@ setupJNIFieldIDs(JNIEnv *env)
 		vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
 		vmFuncs->internalExitVMToJNI(currentThread);
 	}
-}
-
-jboolean JNICALL
-Java_openj9_internal_criu_InternalCRIUSupport_isCRIUSupportEnabledImpl(JNIEnv *env, jclass unused)
-{
-	J9VMThread *currentThread = (J9VMThread *) env;
-	J9JavaVM *vm = currentThread->javaVM;
-	jboolean res = JNI_FALSE;
-
-	UT_MODULE_LOADED(J9_UTINTERFACE_FROM_VM(vm));
-	if (vm->internalVMFunctions->isCRIUSupportEnabled(currentThread)) {
-		res = JNI_TRUE;
-	}
-
-	return res;
-}
-
-jboolean JNICALL
-Java_openj9_internal_criu_InternalCRIUSupport_isCheckpointAllowedImpl(JNIEnv *env, jclass unused)
-{
-	J9VMThread *currentThread = (J9VMThread *) env;
-	jboolean res = JNI_FALSE;
-
-	if (currentThread->javaVM->internalVMFunctions->isCheckpointAllowed(currentThread)) {
-		res = JNI_TRUE;
-	}
-
-	return res;
 }
 
 #define J9_NATIVE_STRING_NO_ERROR 0
