@@ -74,7 +74,7 @@ class PrometheusMetric
 class CPUUtilMetric : public PrometheusMetric
    {
 public:
-   CPUUtilMetric() : PrometheusMetric("cpu_utilization", "Cpu utilization of the JITServer")
+   CPUUtilMetric() : PrometheusMetric("jitserver_cpu_utilization", "Cpu utilization of the JITServer")
       {}
    virtual double computeValue(TR::CompilationInfo *compInfo);
    }; // class CPUUtilMetric
@@ -85,7 +85,7 @@ public:
 class AvailableMemoryMetric : public PrometheusMetric
    {
 public:
-   AvailableMemoryMetric() : PrometheusMetric("available_memory", "Available memory for JITServer")
+   AvailableMemoryMetric() : PrometheusMetric("jitserver_available_memory", "Available memory for JITServer")
       {}
    virtual double computeValue(TR::CompilationInfo *compInfo);
    }; // class AvailableMemoryMetric
@@ -96,7 +96,7 @@ public:
 class ConnectedClientsMetric : public PrometheusMetric
    {
 public:
-   ConnectedClientsMetric() : PrometheusMetric("connected_clients", "Number of connected clients")
+   ConnectedClientsMetric() : PrometheusMetric("jitserver_connected_clients", "Number of connected clients")
       {}
    virtual double computeValue(TR::CompilationInfo *compInfo);
    }; // class ConnectedClientsMetric
@@ -107,7 +107,7 @@ public:
 class ActiveThreadsMetric : public PrometheusMetric
    {
 public:
-   ActiveThreadsMetric() : PrometheusMetric("active_threads", "Number of active compilation threads")
+   ActiveThreadsMetric() : PrometheusMetric("jitserver_active_threads", "Number of active compilation threads")
       {}
    virtual double computeValue(TR::CompilationInfo *compInfo);
    }; // class ActiveThreadsMetric
