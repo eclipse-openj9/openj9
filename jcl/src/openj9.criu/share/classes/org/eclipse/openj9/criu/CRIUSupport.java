@@ -36,6 +36,7 @@ import sun.misc.Unsafe;
 import jdk.internal.misc.Unsafe;
 /*[ENDIF] JAVA_SPEC_VERSION == 8 */
 import java.util.Objects;
+import java.util.Properties;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -56,6 +57,8 @@ public final class CRIUSupport {
 	@SuppressWarnings("restriction")
 	private static Unsafe unsafe;
 	private static final CRIUDumpPermission CRIU_DUMP_PERMISSION = new CRIUDumpPermission();
+	private static boolean nativeLoaded;
+	private static boolean initComplete;
 
 	private static native void checkpointJVMImpl(String imageDir,
 			boolean leaveRunning,
@@ -82,6 +85,32 @@ public final class CRIUSupport {
 			}
 			return null;
 		});
+	}
+
+	private static boolean loadNativeLibrary() {
+		if (!nativeLoaded) {
+			try {
+				AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
+					System.loadLibrary("j9criu29"); //$NON-NLS-1$
+					nativeLoaded = true;
+					return null;
+				});
+			} catch (UnsatisfiedLinkError e) {
+				Properties internalProperties = com.ibm.oti.vm.VM.getVMLangAccess().internalGetProperties();
+				if (internalProperties.getProperty("enable.j9internal.checkpoint.hook.api.debug") != null) { //$NON-NLS-1$
+					e.printStackTrace();
+				}
+			}
+		}
+
+		return nativeLoaded;
+	}
+
+	private static void init() {
+		if (!initComplete) {
+			loadNativeLibrary();
+			initComplete = true;
+		}
 	}
 
 	/**
@@ -132,13 +161,33 @@ public final class CRIUSupport {
 	}
 
 	/**
+	 * Queries if CRIU Checkpoint is allowed.
+	 *
+	 * @return true if Checkpoint is allowed, otherwise false
+	 */
+	public static boolean isCheckpointAllowed() {
+		return InternalCRIUSupport.isCheckpointAllowed();
+	}
+
+	/**
 	 * Returns an error message describing why isCRIUSupportEnabled()
 	 * returns false, and what can be done to remediate the issue.
 	 *
-	 * @return NULL if isCRIUSupportEnabled() returns true. Otherwise the error message
+	 * @return NULL if isCRIUSupportEnabled() returns true and nativeLoaded is true as well, otherwise the error message.
 	 */
 	public static String getErrorMessage() {
-		return InternalCRIUSupport.getErrorMessage();
+		String s = null;
+		if (isCRIUSupportEnabled()) {
+			if (!nativeLoaded) {
+				s = "There was a problem loaded the criu native library.\n" //$NON-NLS-1$
+						+ "Please check that criu is installed on the machine by running `criu check`.\n" //$NON-NLS-1$
+						+ "Also, please ensure that the JDK is criu enabled by contacting your JDK provider."; //$NON-NLS-1$
+			}
+		} else {
+			s = "To enable criu support, please run java with the `-XX:+EnableCRIUSupport` option."; //$NON-NLS-1$
+		}
+
+		return s;
 	}
 
 	/* Higher priority hooks are run last in pre-checkoint hooks, and are run
@@ -172,9 +221,9 @@ public final class CRIUSupport {
 	 * @throws IllegalArgumentException if imageDir is not a valid directory
 	 */
 	public CRIUSupport setImageDir(Path imageDir) {
-		Objects.requireNonNull(imageDir, "Image directory cannot be null");
+		Objects.requireNonNull(imageDir, "Image directory cannot be null"); //$NON-NLS-1$
 		if (!Files.isDirectory(imageDir)) {
-			throw new IllegalArgumentException("imageDir is not a valid directory");
+			throw new IllegalArgumentException("imageDir is not a valid directory"); //$NON-NLS-1$
 		}
 		String dir = imageDir.toAbsolutePath().toString();
 
@@ -245,7 +294,7 @@ public final class CRIUSupport {
 		if (logLevel > 0 && logLevel <= 4) {
 			this.logLevel = logLevel;
 		} else {
-			throw new IllegalArgumentException("Log level must be 1 to 4 inclusive");
+			throw new IllegalArgumentException("Log level must be 1 to 4 inclusive"); //$NON-NLS-1$
 		}
 		return this;
 	}
@@ -264,7 +313,7 @@ public final class CRIUSupport {
 		if (logFile != null && !logFile.contains(File.separator)) {
 			this.logFile = logFile;
 		} else {
-			throw new IllegalArgumentException("Log file must not be null and not be a path");
+			throw new IllegalArgumentException("Log file must not be null and not be a path"); //$NON-NLS-1$
 		}
 		return this;
 	}
@@ -333,9 +382,9 @@ public final class CRIUSupport {
 	 * @throws IllegalArgumentException if workDir is not a valid directory
 	 */
 	public CRIUSupport setWorkDir(Path workDir) {
-		Objects.requireNonNull(workDir, "Work directory cannot be null");
+		Objects.requireNonNull(workDir, "Work directory cannot be null"); //$NON-NLS-1$
 		if (!Files.isDirectory(workDir)) {
-			throw new IllegalArgumentException("workDir is not a valid directory");
+			throw new IllegalArgumentException("workDir is not a valid directory"); //$NON-NLS-1$
 		}
 		String dir = workDir.toAbsolutePath().toString();
 
@@ -398,7 +447,7 @@ public final class CRIUSupport {
 				try {
 					hook.run();
 				} catch (Throwable t) {
-					throw new RestoreException("Exception thrown when running user post-restore hook", 0, t);
+					throw new RestoreException("Exception thrown when running user post-restore hook", 0, t); //$NON-NLS-1$
 				}
 			});
 		}
@@ -424,7 +473,7 @@ public final class CRIUSupport {
 				try {
 					hook.run();
 				} catch (Throwable t) {
-					throw new JVMCheckpointException("Exception thrown when running user pre-checkpoint hook", 0, t);
+					throw new JVMCheckpointException("Exception thrown when running user pre-checkpoint hook", 0, t); //$NON-NLS-1$
 				}
 			});
 		}
@@ -441,7 +490,7 @@ public final class CRIUSupport {
 				"Restore environment variables via env file: " + envFile, () -> { //$NON-NLS-1$
 					if (!Files.exists(this.envFile)) {
 						throw throwSetEnvException(new IllegalArgumentException(
-								"Restore environment variable file " + envFile + " does not exist."));
+								"Restore environment variable file " + envFile + " does not exist.")); //$NON-NLS-1$ //$NON-NLS-2$
 					}
 
 					String file = envFile.toAbsolutePath().toString();
@@ -498,7 +547,7 @@ public final class CRIUSupport {
 						}
 
 						if (!illegalKeys.isEmpty()) {
-							throw new IllegalArgumentException(String.format("Env file entry cannot modifiy pre-existing environment keys: %s", String.valueOf(illegalKeys)));
+							throw new IllegalArgumentException(String.format("Env file entry cannot modifiy pre-existing environment keys: %s", String.valueOf(illegalKeys))); //$NON-NLS-1$
 						}
 
 						@SuppressWarnings("unchecked")
@@ -514,7 +563,7 @@ public final class CRIUSupport {
 	}
 
 	private static RestoreException throwSetEnvException(Throwable cause) {
-		throw new RestoreException("Failed to setup new environment variables", 0, cause);
+		throw new RestoreException("Failed to setup new environment variables", 0, cause); //$NON-NLS-1$
 	}
 
 	/**
@@ -535,6 +584,7 @@ public final class CRIUSupport {
 		registerRestoreEnvVariables();
 
 		if (InternalCRIUSupport.isCheckpointAllowed()) {
+			init();
 			checkpointJVMImpl(imageDir, leaveRunning, shellJob, extUnixSupport, logLevel, logFile, fileLocks, workDir,
 					tcpEstablished, autoDedup, trackMemory, unprivileged);
 		} else {

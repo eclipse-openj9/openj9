@@ -1,4 +1,3 @@
-/*[INCLUDE-IF (JAVA_SPEC_VERSION >= 8) & CRIU_SUPPORT]*/
 /*******************************************************************************
  * Copyright (c) 2022, 2022 IBM Corp. and others
  *
@@ -20,41 +19,43 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-package openj9.internal.criu;
 
-/**
- * Internal CRIU Support API
- */
-/*[IF JAVA_SPEC_VERSION >= 17]*/
-@SuppressWarnings({ "deprecation", "removal" })
-/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
-public final class InternalCRIUSupport {
-	private static boolean criuSupportEnabled = isCRIUSupportEnabledImpl();
+#include "jni.h"
+#include "jcl.h"
+#include "jclglob.h"
+#include "jclprots.h"
+#include "jcl_internal.h"
 
-	private static native boolean isCRIUSupportEnabledImpl();
-	private static native boolean isCheckpointAllowedImpl();
+extern "C" {
 
-	/**
-	 * Queries if CRIU support is enabled.
-	 *
-	 * @return true if CRIU support is enabled, false otherwise
-	 */
-	public synchronized static boolean isCRIUSupportEnabled() {
-		return criuSupportEnabled;
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+
+jboolean JNICALL
+Java_openj9_internal_criu_InternalCRIUSupport_isCheckpointAllowedImpl(JNIEnv *env, jclass unused)
+{
+	J9VMThread *currentThread = (J9VMThread *)env;
+	jboolean res = JNI_FALSE;
+
+	if (currentThread->javaVM->internalVMFunctions->isCheckpointAllowed(currentThread)) {
+		res = JNI_TRUE;
 	}
 
-	/**
-	 * Queries if CRIU Checkpoint is allowed.
-	 * isCRIUSupportEnabled() is invoked first to check if CRIU support is enabled,
-	 * and j9criu29 is to be lazily loaded at CRIUSupport.checkpointJVM().
-	 *
-	 * @return true if Checkpoint is allowed, otherwise false
-	 */
-	public static boolean isCheckpointAllowed() {
-		boolean checkpointAllowed = false;
-		if (criuSupportEnabled) {
-			checkpointAllowed = isCheckpointAllowedImpl();
-		}
-		return checkpointAllowed;
+	return res;
+}
+
+jboolean JNICALL
+Java_openj9_internal_criu_InternalCRIUSupport_isCRIUSupportEnabledImpl(JNIEnv *env, jclass unused)
+{
+	J9VMThread *currentThread = (J9VMThread *)env;
+	jboolean res = JNI_FALSE;
+
+	if (currentThread->javaVM->internalVMFunctions->isCRIUSupportEnabled(currentThread)) {
+		res = JNI_TRUE;
 	}
+
+	return res;
+}
+
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+
 }

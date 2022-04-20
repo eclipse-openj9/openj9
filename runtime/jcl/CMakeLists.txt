@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2021 IBM Corp. and others
+# Copyright (c) 2017, 2022 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -115,6 +115,7 @@ target_sources(jclse
 		${CMAKE_CURRENT_SOURCE_DIR}/common/com_ibm_jvm_Stats.c
 		${CMAKE_CURRENT_SOURCE_DIR}/common/com_ibm_oti_vm_VM.c
 		${CMAKE_CURRENT_SOURCE_DIR}/common/compiler.c
+		${CMAKE_CURRENT_SOURCE_DIR}/common/criu.cpp
 		${CMAKE_CURRENT_SOURCE_DIR}/common/dump.c
 		${CMAKE_CURRENT_SOURCE_DIR}/common/exhelp
 		${CMAKE_CURRENT_SOURCE_DIR}/common/extendedosmbean.c
