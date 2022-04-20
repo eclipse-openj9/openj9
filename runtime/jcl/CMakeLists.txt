@@ -115,7 +115,6 @@ target_sources(jclse
 		${CMAKE_CURRENT_SOURCE_DIR}/common/com_ibm_jvm_Stats.c
 		${CMAKE_CURRENT_SOURCE_DIR}/common/com_ibm_oti_vm_VM.c
 		${CMAKE_CURRENT_SOURCE_DIR}/common/compiler.c
-		${CMAKE_CURRENT_SOURCE_DIR}/common/criu.cpp
 		${CMAKE_CURRENT_SOURCE_DIR}/common/dump.c
 		${CMAKE_CURRENT_SOURCE_DIR}/common/exhelp
 		${CMAKE_CURRENT_SOURCE_DIR}/common/extendedosmbean.c
@@ -184,6 +183,13 @@ if(J9VM_OPT_OPENJDK_METHODHANDLE OR J9VM_OPT_METHOD_HANDLE)
 	target_sources(jclse
 		PRIVATE
 			${CMAKE_CURRENT_SOURCE_DIR}/common/java_lang_invoke_MethodHandleNatives.cpp
+	)
+endif()
+
+if(J9VM_OPT_CRIU_SUPPORT)
+	target_sources(jclse
+		PRIVATE
+			${CMAKE_CURRENT_SOURCE_DIR}/common/criu.cpp
 	)
 endif()
 
