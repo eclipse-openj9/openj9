@@ -122,6 +122,24 @@ class ValuePropagation : public OMR::ValuePropagation
    bool transformFlattenedArrayElementStore(TR_OpaqueClassBlock *arrayClass, TR::TreeTop *callTree, TR::Node *callNode, bool needsNullValueCheck);
 
    /**
+    * \brief
+    *    Transforms object{Inequality|Equality}Comparison helper call if
+    *    (1) field count is 0, fold the helper call into a constant
+    *    (2) field count is 1 and the field is integral or identity class reference,
+    *        transform the helper call to field comparison
+    *    (3) field count > 1 and all fields meet direct memory comparison,
+    *        transform the helper call to arraycmp
+    *
+    * \param containingClass
+    *    The class that contains the fields
+    *
+    * \param callNode
+    *    The call node for object{Inequality|Equality}Comparison
+    *
+    */
+   void transformVTObjectEqNeCompare(TR_OpaqueClassBlock *containingClass, TR::Node *callNode);
+
+   /**
     * Determine the bounds and element size for an array constraint
     *
     * \param[in] arrayConstraint A \ref TR::VPConstraint for an array reference
@@ -221,7 +239,7 @@ class ValuePropagation : public OMR::ValuePropagation
          {
          unused1                   = 0x01,
          unused2                   = 0x02,
-         unused3                   = 0x04,
+         InlineVTCompare           = 0x04,
          InsertDebugCounter        = 0x08,
          RequiresBoundCheck        = 0x10,
          RequiresStoreCheck        = 0x20,
@@ -328,8 +346,10 @@ class ValuePropagation : public OMR::ValuePropagation
     */
    struct ObjectComparisonHelperCallTransform : ValueTypesHelperCallTransform
       {
-      ObjectComparisonHelperCallTransform(TR::TreeTop *tree, TR::Node *callNode, flags8_t flags)
-         : ValueTypesHelperCallTransform(/* ComparisonHelper, */ tree, callNode, flags) {}
+      TR_OpaqueClassBlock *_containingClass;
+
+      ObjectComparisonHelperCallTransform(TR::TreeTop *tree, TR::Node *callNode, flags8_t flags, TR_OpaqueClassBlock * containingClass = NULL)
+         : ValueTypesHelperCallTransform(/* ComparisonHelper, */ tree, callNode, flags), _containingClass(containingClass) {}
 
       /**
        * \brief Indicates whether this represents a delayed transformation for a call to
