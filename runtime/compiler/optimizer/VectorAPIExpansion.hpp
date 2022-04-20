@@ -149,7 +149,8 @@ class TR_VectorAPIExpansion : public TR::Optimization
       Vector,
       Species,
       elementType,
-      numLanes
+      numLanes,
+      Mask
       };
 
 
