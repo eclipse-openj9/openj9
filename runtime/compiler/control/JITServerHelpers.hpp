@@ -127,8 +127,6 @@ public:
    static void printJITServerCHTableStats(J9JITConfig *, TR::CompilationInfo *);
    static void printJITServerCacheStats(J9JITConfig *, TR::CompilationInfo *);
 
-   static uint32_t serverMsgTypeCount[JITServer::MessageType_MAXTYPE];
-
    static bool isAddressInROMClass(const void *address, const J9ROMClass *romClass);
 
    static uintptr_t walkReferenceChainWithOffsets(TR_J9VM *fe, const std::vector<uintptr_t> &listOfOffsets, uintptr_t receiver);

@@ -180,9 +180,6 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
    // Acquire VM access and check for possible class unloading
    acquireVMAccessNoSuspend(vmThread);
 
-   // Update statistics for server message type
-   JITServerHelpers::serverMsgTypeCount[response] += 1;
-
    // If JVM has unloaded classes inform the server to abort this compilation
    uint8_t interruptReason = compInfoPT->compilationShouldBeInterrupted();
    if (interruptReason && response != MessageType::jitDumpPrintIL)
