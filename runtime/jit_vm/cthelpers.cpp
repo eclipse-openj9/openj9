@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -250,6 +250,35 @@ jitIsMethodTaggedWithIntrinsicCandidate(J9VMThread *currentThread, J9Method *met
 #else /* JAVA_SPEC_VERSION >= 16 */
 	return FALSE;
 #endif /* JAVA_SPEC_VERSION >= 16 */
+}
+
+/**
+ * Queries if the method contains a specified annotation
+ *
+ * @param currentThread currentThread
+ * @param method the queried method
+ * @param annotation the annotation to query
+ * @return true if method contains the annotation, false otherwise
+ */
+BOOLEAN
+jitIsMethodTaggedWithAnnotation(J9VMThread *currentThread, J9Method *method, J9UTF8 *annotation)
+{
+	return FALSE != methodContainsRuntimeAnnotation(currentThread, method, annotation);
+}
+
+/**
+ * Queries if the fieldref at the specified cpIndex contains the specified annotation.
+ * Field ref must be resolved.
+ *
+ * @param clazz J9Class
+ * @param cpIndex fieldref cp index
+ * @param annotation the annotation to query
+ * @return true if fieldref contains the aannotation, false otherwise
+ */
+BOOLEAN
+jitIsFieldTaggedWithAnnotaion(J9VMThread *currentThread, J9Class *clazz, UDATA cpIndex, J9UTF8 *annotation)
+{
+	return FALSE != fieldContainsRuntimeAnnotation(currentThread, clazz, cpIndex, annotation);
 }
 
 }
