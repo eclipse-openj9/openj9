@@ -2143,31 +2143,19 @@ bool TR::CompilationInfo::shouldRetryCompilation(TR_MethodToBeCompiled *entry, T
          TR_PersistentJittedBodyInfo *bodyInfo;
          switch (entry->_compErrCode)
             {
-            case compilationAotValidateFieldFailure:
-            case compilationAotStaticFieldReloFailure:
-            case compilationAotClassReloFailure:
-            case compilationAotThunkReloFailure:
             case compilationAotHasInvokehandle:
             case compilationAotHasInvokeVarHandle:
             case compilationAotPatchedCPConstant:
             case compilationAotHasInvokeSpecialInterface:
-            case compilationAotValidateMethodExitFailure:
-            case compilationAotValidateMethodEnterFailure:
             case compilationAotClassChainPersistenceFailure:
-            case compilationAotValidateStringCompressionFailure:
             case compilationSymbolValidationManagerFailure:
             case compilationAOTNoSupportForAOTFailure:
-            case compilationAOTValidateTMFailure:
             case compilationAOTRelocationRecordGenerationFailure:
-            case compilationAotValidateExceptionHookFailure:
-            case compilationAotBlockFrequencyReloFailure:
-            case compilationAotRecompQueuedFlagReloFailure:
-            case compilationAOTValidateOSRFailure:
+            case compilationRelocationFailure:
                // switch to JIT for these cases (we don't want to relocate again)
                entry->_doNotUseAotCodeFromSharedCache = true;
                tryCompilingAgain = true;
                break;
-            //case compilationAotRelocationFailure:
             case compilationAotTrampolineReloFailure:
             case compilationAotPicTrampolineReloFailure:
             case compilationAotCacheFullReloFailure:
@@ -6673,6 +6661,7 @@ TR::CompilationInfoPerThreadBase::installAotCachedMethod(
 
    TR_MethodMetaData *metaData;
    int32_t returnCode = 0;
+   TR_RelocationErrorCode reloErrorCode = TR_RelocationErrorCode::relocationOK;
 
    if (_compInfo.getPersistentInfo()->isRuntimeInstrumentationEnabled())
       {
@@ -6691,11 +6680,12 @@ TR::CompilationInfoPerThreadBase::installAotCachedMethod(
                                                            compilee);
    setMetadata(metaData);
    returnCode = reloRuntime()->returnCode();
+   reloErrorCode = reloRuntime()->getReloErrorCode();
 
    if (TR::Options::getVerboseOption(TR_VerboseCompilationDispatch))
       TR_VerboseLog::writeLineLocked(TR_Vlog_DISPATCH,
-         "prepareRelocateAOTCodeAndData results: j9method=%p metaData=%p returnCode=%d method=%s",
-         method, metaData, returnCode, compiler->signature());
+         "prepareRelocateAOTCodeAndData results: j9method=%p metaData=%p returnCode=%d reloErrorCode=%s method=%s",
+         method, metaData, returnCode, reloRuntime()->getReloErrorCodeName(reloErrorCode), compiler->signature());
 
    if (_compInfo.getPersistentInfo()->isRuntimeInstrumentationEnabled())
       {
@@ -6791,18 +6781,14 @@ TR::CompilationInfoPerThreadBase::installAotCachedMethod(
          // fact that AOT methods are loaded at a lower count than when they were compiled so the JVM is given less opportunity to resolve things.
          // The new hint tells us that a previous relocation failed a validation so specify a higher scount for the next run to give it more chance
          // to resolve things.
-         switch (returnCode)
+         if (reloRuntime()->isValidationError(reloErrorCode))
             {
-            case compilationAotValidateFieldFailure:
-            case compilationAotStaticFieldReloFailure:
-            case compilationAotClassReloFailure:
-               if ((options->getInitialBCount() != 0) &&
-                   (options->getInitialCount() != 0))
-                  {
-                  TR_J9SharedCache *sc = (TR_J9SharedCache *) (compiler->fej9()->sharedCache());
-                  sc->addHint(method, TR_HintFailedValidation);
-                  }
-                break;
+            if ((options->getInitialBCount() != 0) &&
+                (options->getInitialCount() != 0))
+               {
+               TR_J9SharedCache *sc = (TR_J9SharedCache *) (compiler->fej9()->sharedCache());
+               sc->addHint(method, TR_HintFailedValidation);
+               }
             }
          }
       }
@@ -10201,10 +10187,11 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
                      if (TR::Options::isAnyVerboseOptionSet(TR_VerboseCompileEnd, TR_VerbosePerformance, TR_VerboseCompFailure))
                         {
                         TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE,
-                                                          "Failure while relocating for %s, return code = %d [%s]\n",
+                                                          "Failure while relocating for %s, return code = %d [%s], relo error code = %s\n",
                                                           comp->signature(),
                                                           returnCode,
-                                                          (returnCode >= 0) && (returnCode < compilationMaxError) ? compilationErrorNames[returnCode] : "unknown error");
+                                                          (returnCode >= 0) && (returnCode < compilationMaxError) ? compilationErrorNames[returnCode] : "unknown error",
+                                                          comp->reloRuntime()->getReloErrorCodeName(comp->reloRuntime()->getReloErrorCode()));
                         }
                      }
                   }
@@ -11131,7 +11118,7 @@ TR::CompilationInfoPerThreadBase::processException(
       }
 
    if (shouldProcessExceptionCommonTasks)
-      processExceptionCommonTasks(vmThread, scratchSegmentProvider, compiler, exceptionName);
+      processExceptionCommonTasks(vmThread, scratchSegmentProvider, compiler, exceptionName, _methodBeingCompiled);
 
    TR::IlGeneratorMethodDetails & details = _methodBeingCompiled->getMethodDetails();
    J9Method *method = details.getMethod();
@@ -11143,7 +11130,8 @@ TR::CompilationInfoPerThreadBase::processExceptionCommonTasks(
    J9VMThread *vmThread,
    TR::SegmentAllocator const &scratchSegmentProvider,
    TR::Compilation * compiler,
-   const char *exceptionName
+   const char *exceptionName,
+   TR_MethodToBeCompiled *entry
    )
    {
    PORT_ACCESS_FROM_JITCONFIG(_jitConfig);
@@ -11153,11 +11141,13 @@ TR::CompilationInfoPerThreadBase::processExceptionCommonTasks(
       uintptr_t translationTime = j9time_usec_clock() - getTimeWhenCompStarted(); //get the time it took to fail the compilation
 
       char compilationTypeString[15] = { 0 };
+      bool isProfiledComp = compiler->isProfilingCompilation();
+      bool isAOTComp = compiler->compileRelocatableCode() || entry->isAotLoad();
       TR::snprintfNoTrunc(compilationTypeString, sizeof(compilationTypeString), "%s%s",
-         compiler->fej9()->isAOT_DEPRECATED_DO_NOT_USE() ? "AOT " : "",
-         compiler->isProfilingCompilation() ? "profiled " : "");
+         isAOTComp ? "AOT " : "",
+         isProfiledComp ? "profiled " : "");
 
-      const char *hotnessString = compiler->getHotnessName(compiler->getMethodHotness());
+      const char *hotnessString = entry->isAotLoad() ? "load" : compiler->getHotnessName(compiler->getMethodHotness());
 
       TR_VerboseLog::CriticalSection vlogLock;
       if (_methodBeingCompiled->_compErrCode != compilationFailure)
@@ -11169,7 +11159,7 @@ TR::CompilationInfoPerThreadBase::processExceptionCommonTasks(
             }
          else
             {
-            TR_VerboseLog::write(TR_Vlog_COMPFAIL, "(%s%s) %s Q_SZ=%d Q_SZI=%d QW=%d j9m=%p time=%dus %s memLimit=%zu KB",
+            TR_VerboseLog::write(TR_Vlog_COMPFAIL, "(%s%s) %s Q_SZ=%d Q_SZI=%d QW=%d j9m=%p time=%dus %s",
                                  compilationTypeString,
                                  hotnessString,
                                  compiler->signature(),
@@ -11178,8 +11168,15 @@ TR::CompilationInfoPerThreadBase::processExceptionCommonTasks(
                                  _compInfo.getQueueWeight(),
                                  _methodBeingCompiled->getMethodDetails().getMethod(),
                                  translationTime,
-                                 compilationErrorNames[_methodBeingCompiled->_compErrCode],
-                                 scratchSegmentProvider.allocationLimit() >> 10);
+                                 compilationErrorNames[_methodBeingCompiled->_compErrCode]);
+            if (entry->isAotLoad())
+               {
+               TR_RelocationRuntime *reloRuntime = compiler->reloRuntime();
+               if (reloRuntime)
+                  TR_VerboseLog::write(" (%s)", reloRuntime->getReloErrorCodeName(reloRuntime->getReloErrorCode()));
+               }
+            TR_VerboseLog::write(" memLimit=%zu KB", scratchSegmentProvider.allocationLimit() >> 10);
+
             if (TR::Options::getVerboseOption(TR_VerbosePerformance))
                {
                bool incomplete;

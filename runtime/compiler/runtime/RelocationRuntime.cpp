@@ -78,6 +78,75 @@
 #include "control/CompilationThread.hpp"
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
+#include "exceptions/AOTFailure.hpp"
+
+char *TR_RelocationRuntime::_reloErrorCodeNames[] =
+   {
+   "relocationOK",                                     // 0
+
+   "outOfMemory",                                      // 1
+   "reloActionFailCompile",                            // 2
+   "unknownRelocation",                                // 3
+   "unknownReloAction",                                // 4
+   "invalidRelocation",                                // 5
+   "exceptionThrown"                                   // 6
+
+   "methodEnterValidationFailure",                     // 7
+   "methodExitValidationFailure",                      // 8
+   "exceptionHookValidationFailure",                   // 9
+   "stringCompressionValidationFailure",               // 10
+   "tmValidationFailure",                              // 11
+   "osrValidationFailure",                             // 12
+   "instanceFieldValidationFailure",                   // 13
+   "staticFieldValidationFailure",                     // 14
+   "classValidationFailure",                           // 15
+   "arbitraryClassValidationFailure",                  // 16
+   "classByNameValidationFailure",                     // 17
+   "profiledClassValidationFailure",                   // 18
+   "classFromCPValidationFailure",                     // 19
+   "definingClassFromCPValidationFailure",             // 20
+   "staticClassFromCPValidationFailure",               // 21
+   "arrayClassFromComponentClassValidationFailure",    // 22
+   "superClassFromClassValidationFailure",             // 23
+   "classInstanceOfClassValidationFailure",            // 24
+   "systemClassByNameValidationFailure",               // 25
+   "classFromITableIndexCPValidationFailure",          // 26
+   "declaringClassFromFieldOrStaticValidationFailure", // 27
+   "concreteSubclassFromClassValidationFailure",       // 28
+   "classChainValidationFailure",                      // 29
+   "methodFromClassValidationFailure",                 // 30
+   "staticMethodFromCPValidationFailure",              // 31
+   "specialMethodFromCPValidationFailure",             // 32
+   "virtualMethodFromCPValidationFailure",             // 33
+   "virtualMethodFromOffsetValidationFailure",         // 34
+   "interfaceMethodFromCPValidationFailure",           // 35
+   "improperInterfaceMethodFromCPValidationFailure",   // 36
+   "methodFromClassAndSigValidationFailure",           // 37
+   "stackWalkerMaySkipFramesValidationFailure",        // 38
+   "classInfoIsInitializedValidationFailure",          // 39
+   "methodFromSingleImplValidationFailure",            // 40
+   "methodFromSingleInterfaceImplValidationFailure",   // 41
+   "methodFromSingleAbstractImplValidationFailure",    // 42
+   "j2iThunkFromMethodValidationFailure",              // 43
+   "svmValidationFailure",                             // 44
+   "wkcValidationFailure",                             // 45
+
+   "classAddressRelocationFailure",                    // 46
+   "inlinedMethodRelocationFailure",                   // 47
+   "symbolFromManagerRelocationFailure",               // 48
+   "thunkRelocationFailure",                           // 49
+   "trampolineRelocationFailure",                      // 50
+   "picTrampolineRelocationFailure",                   // 51
+   "cacheFullRelocationFailure",                       // 52
+   "blockFrequencyRelocationFailure",                  // 53
+   "recompQueuedFlagRelocationFailure",                // 54
+   "debugCounterRelocationFailure",                    // 55
+   "directJNICallRelocationFailure",                   // 56
+   "ramMethodConstRelocationFailure",                  // 57
+
+   "maxRelocationError"                                // 58
+   };
+
 TR_RelocationRuntime::TR_RelocationRuntime(J9JITConfig *jitCfg)
    {
    _method = NULL;
@@ -180,6 +249,7 @@ TR_RelocationRuntime::prepareRelocateAOTCodeAndData(J9VMThread* vmThread,
    _relocationStatus = RelocationNoError;
    _haveReservedCodeCache = false; // MCT
    _returnCode = 0;
+   _reloErrorCode = TR_RelocationErrorCode::relocationOK;
 
    _comp = comp;
    _trMemory = comp->trMemory();
@@ -206,21 +276,24 @@ TR_RelocationRuntime::prepareRelocateAOTCodeAndData(J9VMThread* vmThread,
       &&
        (_aotMethodHeaderEntry->flags & TR_AOTMethodHeader_IsNotCapableOfMethodExitTracing))
       {
-      setReturnCode(compilationAotValidateMethodExitFailure);
+      setReloErrorCode(TR_RelocationErrorCode::methodExitValidationFailure);
+      setReturnCode(compilationRelocationFailure);
       return NULL; // fail
       }
    if ((fej9->isMethodTracingEnabled((TR_OpaqueMethodBlock*)theMethod) || fej9->canMethodEnterEventBeHooked())
       &&
        (_aotMethodHeaderEntry->flags & TR_AOTMethodHeader_IsNotCapableOfMethodEnterTracing))
       {
-      setReturnCode(compilationAotValidateMethodEnterFailure);
+      setReloErrorCode(TR_RelocationErrorCode::methodEnterValidationFailure);
+      setReturnCode(compilationRelocationFailure);
       return NULL; // fail
       }
 
    if (fej9->canExceptionEventBeHooked()
        && (_aotMethodHeaderEntry->flags & TR_AOTMethodHeader_IsNotCapableOfExceptionHook))
       {
-      setReturnCode(compilationAotValidateExceptionHookFailure);
+      setReloErrorCode(TR_RelocationErrorCode::exceptionHookValidationFailure);
+      setReturnCode(compilationRelocationFailure);
       return NULL;
       }
 
@@ -244,7 +317,8 @@ TR_RelocationRuntime::prepareRelocateAOTCodeAndData(J9VMThread* vmThread,
          }
       if (conflict)
          {
-         setReturnCode(compilationAotValidateStringCompressionFailure);
+         setReloErrorCode(TR_RelocationErrorCode::stringCompressionValidationFailure);
+         setReturnCode(compilationRelocationFailure);
          return NULL;
          }
       }
@@ -255,7 +329,8 @@ TR_RelocationRuntime::prepareRelocateAOTCodeAndData(J9VMThread* vmThread,
 
    if ((_aotMethodHeaderEntry->flags & TR_AOTMethodHeader_TMDisabled) && !comp->getOption(TR_DisableTM))
       {
-      setReturnCode(compilationAOTValidateTMFailure);
+      setReloErrorCode(TR_RelocationErrorCode::tmValidationFailure);
+      setReturnCode(compilationRelocationFailure);
       return NULL;
       }
 
@@ -268,7 +343,8 @@ TR_RelocationRuntime::prepareRelocateAOTCodeAndData(J9VMThread* vmThread,
                                      _aotMethodHeaderEntry->_osrBufferInfo._scratchBufferSizeInBytes,
                                      _aotMethodHeaderEntry->_osrBufferInfo._stackFrameSizeInBytes))
          {
-         setReturnCode(compilationAOTValidateOSRFailure);
+         setReloErrorCode(TR_RelocationErrorCode::osrValidationFailure);
+         setReturnCode(compilationRelocationFailure);
          return NULL;
          }
       }
@@ -512,14 +588,43 @@ TR_RelocationRuntime::relocateAOTCodeAndData(U_8 *tempDataStart,
 
          try
             {
-            _returnCode = reloGroup.applyRelocations(this, reloTarget(), newMethodCodeStart() + codeCacheDelta());
+            TR_RelocationErrorCode errorCode = reloGroup.applyRelocations(this, reloTarget(), newMethodCodeStart() + codeCacheDelta());
+            setReloErrorCode(errorCode);
+            switch (errorCode)
+               {
+               case TR_RelocationErrorCode::relocationOK:
+                  setReturnCode(compilationOK);
+                  break;
+               case TR_RelocationErrorCode::trampolineRelocationFailure:
+                  setReturnCode(compilationAotTrampolineReloFailure);
+                  break;
+               case TR_RelocationErrorCode::picTrampolineRelocationFailure:
+                  setReturnCode(compilationAotPicTrampolineReloFailure);
+                  break;
+               case TR_RelocationErrorCode::cacheFullRelocationFailure:
+                  setReturnCode(compilationAotCacheFullReloFailure);
+                  break;
+               default:
+                  setReturnCode(compilationRelocationFailure);
+               }
+            }
+         catch (const std::bad_alloc &e)
+            {
+            setReloErrorCode(TR_RelocationErrorCode::outOfMemory);
+            setReturnCode(compilationHeapLimitExceeded);
+            }
+         catch (const J9::AOTSymbolValidationManagerFailure &e)
+            {
+            setReloErrorCode(TR_RelocationErrorCode::svmValidationFailure);
+            setReturnCode(compilationSymbolValidationManagerFailure);
             }
          catch (...)
             {
-            _returnCode = compilationAotClassReloFailure;
+            setReloErrorCode(TR_RelocationErrorCode::exceptionThrown);
+            setReturnCode(compilationRelocationFailure);
             }
 
-         RELO_LOG(reloLogger(), 6, "relocateAOTCodeAndData: return code %d\n", _returnCode);
+         RELO_LOG(reloLogger(), 6, "relocateAOTCodeAndData: return code %d\n", returnCode());
 
 #if defined(DEBUG) || defined(PROD_WITH_ASSUMES)
          // Detect some potential incorrectness that could otherwise be missed
@@ -543,7 +648,7 @@ TR_RelocationRuntime::relocateAOTCodeAndData(U_8 *tempDataStart,
             }
 #endif
 
-         if (_returnCode != 0)
+         if (getReloErrorCode() != TR_RelocationErrorCode::relocationOK)
             {
             //clean up code cache
             _relocationStatus = RelocationFailure;
