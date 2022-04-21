@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,79 +23,69 @@
 #ifndef __ROSSA_H
 #define __ROSSA_H
 
+/* Please insert new codes before compilationMaxError and ensure the
+ * corresponding names are added in compilationErrorNames in rossa.cpp */
 typedef enum {
-   compilationOK                                   = 0,
-   compilationFailure                              = 1,  /* catch all error */
-   compilationRestrictionILNodes                   = 2,  /* Unused */
-   compilationRestrictionRecDepth                  = 3,  /* Unused */
-   compilationRestrictedMethod                     = 4,  /* filters, JNI, abstract */
-   compilationExcessiveComplexity                  = 5,
-   compilationNotNeeded                            = 6,
-   compilationSuspended                            = 7,
-   compilationExcessiveSize                        = 8,  /* full caches */
-   compilationInterrupted                          = 9,  /* GC wants to unload classes */
-   compilationMetaDataFailure                      = 10, /* cannot create metadata */
-   compilationInProgress                           = 11, /* for async compilations */
-   compilationCHTableCommitFailure                 = 12,
-   compilationMaxCallerIndexExceeded               = 13,
-   compilationKilledByClassReplacement             = 14,
-   compilationHeapLimitExceeded                    = 15,
-   compilationNeededAtHigherLevel                  = 16, /*rtj */
-   compilationAotValidateFieldFailure              = 17, /* aot failures */
-   compilationAotStaticFieldReloFailure            = 18,
-   compilationAotClassReloFailure                  = 19,
-   compilationAotThunkReloFailure                  = 20,
-   compilationAotTrampolineReloFailure             = 21,
-   compilationAotPicTrampolineReloFailure          = 22,
-   compilationAotCacheFullReloFailure              = 23, /* end of aot failures */
-   compilationAotUnknownReloTypeFailure            = 24,
-   compilationCodeReservationFailure               = 25,
-   compilationAotHasInvokehandle                   = 26,
-   compilationTrampolineFailure                    = 27,
-   compilationRecoverableTrampolineFailure         = 28, /* we should retry these */
-   compilationILGenFailure                         = 29,
-   compilationIllegalCodeCacheSwitch               = 30,
-   compilationNullSubstituteCodeCache              = 31,
-   compilationCodeMemoryExhausted                  = 32,
-   compilationGCRPatchFailure                      = 33,
-   compilationAotValidateMethodExitFailure         = 34,
-   compilationAotValidateMethodEnterFailure        = 35,
-   compilationLambdaEnforceScorching               = 37,
-   compilationInternalPointerExceedLimit           = 38,
-   compilationAotRelocationInterrupted             = 39,
-   compilationAotClassChainPersistenceFailure      = 40,
-   compilationLowPhysicalMemory                    = 41,
-   compilationDataCacheError                       = 42,
-   compilationCodeCacheError                       = 43,
-   compilationRecoverableCodeCacheError            = 44,
-   compilationAotHasInvokeVarHandle                = 45,
-   compilationAotValidateStringCompressionFailure  = 46,
-   compilationFSDHasInvokeHandle                   = 47,
-   compilationVirtualAddressExhaustion             = 48,
-   compilationEnforceProfiling                     = 49,
-   compilationSymbolValidationManagerFailure       = 50,
-   compilationAOTNoSupportForAOTFailure            = 51,
-   compilationAOTValidateTMFailure                 = 52,
-   compilationILGenUnsupportedValueTypeOperationFailure = 53,
-   compilationAOTRelocationRecordGenerationFailure = 54,
-   compilationAotPatchedCPConstant                 = 55,
-   compilationAotHasInvokeSpecialInterface         = 56,
-   compilationAotValidateExceptionHookFailure      = 57,
-   compilationAotBlockFrequencyReloFailure         = 58,
-   compilationAotRecompQueuedFlagReloFailure       = 59,
-   compilationAOTValidateOSRFailure                = 60,
+   compilationOK                                        = 0,
+   compilationFailure                                   = 1,  /* catch all error */
+   compilationRestrictionILNodes                        = 2,  /* Unused */
+   compilationRestrictionRecDepth                       = 3,  /* Unused */
+   compilationRestrictedMethod                          = 4,  /* filters, JNI, abstract */
+   compilationExcessiveComplexity                       = 5,
+   compilationNotNeeded                                 = 6,
+   compilationSuspended                                 = 7,
+   compilationExcessiveSize                             = 8,  /* full caches */
+   compilationInterrupted                               = 9,  /* GC wants to unload classes */
+   compilationMetaDataFailure                           = 10, /* cannot create metadata */
+   compilationInProgress                                = 11, /* for async compilations */
+   compilationCHTableCommitFailure                      = 12,
+   compilationMaxCallerIndexExceeded                    = 13,
+   compilationKilledByClassReplacement                  = 14,
+   compilationHeapLimitExceeded                         = 15,
+   compilationNeededAtHigherLevel                       = 16, /*rtj */
+   compilationAotTrampolineReloFailure                  = 17,
+   compilationAotPicTrampolineReloFailure               = 18,
+   compilationAotCacheFullReloFailure                   = 19,
+   compilationCodeReservationFailure                    = 20,
+   compilationAotHasInvokehandle                        = 21,
+   compilationTrampolineFailure                         = 22,
+   compilationRecoverableTrampolineFailure              = 23, /* we should retry these */
+   compilationILGenFailure                              = 24,
+   compilationIllegalCodeCacheSwitch                    = 25,
+   compilationNullSubstituteCodeCache                   = 26,
+   compilationCodeMemoryExhausted                       = 27,
+   compilationGCRPatchFailure                           = 28,
+   compilationLambdaEnforceScorching                    = 29,
+   compilationInternalPointerExceedLimit                = 30,
+   compilationAotRelocationInterrupted                  = 31,
+   compilationAotClassChainPersistenceFailure           = 32,
+   compilationLowPhysicalMemory                         = 33,
+   compilationDataCacheError                            = 34,
+   compilationCodeCacheError                            = 35,
+   compilationRecoverableCodeCacheError                 = 36,
+   compilationAotHasInvokeVarHandle                     = 37,
+   compilationFSDHasInvokeHandle                        = 38,
+   compilationVirtualAddressExhaustion                  = 39,
+   compilationEnforceProfiling                          = 40,
+   compilationSymbolValidationManagerFailure            = 41,
+   compilationAOTNoSupportForAOTFailure                 = 42,
+   compilationILGenUnsupportedValueTypeOperationFailure = 43,
+   compilationAOTRelocationRecordGenerationFailure      = 44,
+   compilationAotPatchedCPConstant                      = 45,
+   compilationAotHasInvokeSpecialInterface              = 46,
+   compilationRelocationFailure                         = 47,
 #if defined(J9VM_OPT_JITSERVER)
    compilationFirstJITServerFailure,
-   compilationStreamFailure                        = compilationFirstJITServerFailure, // 61
-   compilationStreamLostMessage                    = compilationFirstJITServerFailure + 1, // 62
-   compilationStreamMessageTypeMismatch            = compilationFirstJITServerFailure + 2, // 63
-   compilationStreamVersionIncompatible            = compilationFirstJITServerFailure + 3, // 64
-   compilationStreamInterrupted                    = compilationFirstJITServerFailure + 4, // 65
-   aotCacheDeserializationFailure                  = compilationFirstJITServerFailure + 5, // 66
+   compilationStreamFailure                             = compilationFirstJITServerFailure,     // 48
+   compilationStreamLostMessage                         = compilationFirstJITServerFailure + 1, // 49
+   compilationStreamMessageTypeMismatch                 = compilationFirstJITServerFailure + 2, // 50
+   compilationStreamVersionIncompatible                 = compilationFirstJITServerFailure + 3, // 51
+   compilationStreamInterrupted                         = compilationFirstJITServerFailure + 4, // 52
+   aotCacheDeserializationFailure                       = compilationFirstJITServerFailure + 5, // 53
 #endif /* defined(J9VM_OPT_JITSERVER) */
-   /* please insert new codes before compilationMaxError which is used in jar2jxe to test the error codes range */
-   /* If new codes are added then add the corresponding names in compilationErrorNames table in rossa.cpp */
-   compilationMaxError /* must be the last one */
+
+   /* must be the last one */
+   compilationMaxError
 } TR_CompilationErrorCode;
 
 #ifdef __cplusplus
