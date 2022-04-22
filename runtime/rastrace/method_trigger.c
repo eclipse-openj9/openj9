@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014, 2020 IBM Corp. and others
+ * Copyright (c) 2014, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -187,15 +187,10 @@ rasTriggerMethod(J9VMThread *thr, J9Method *method, I_32 entry, const TriggerPha
 							}
 						} while(compareAndSwapU32((U_32*)&rule->match,(U_32)oldMatch,(U_32)(oldMatch-1)) != oldMatch);
 
-						if (oldMatch != 0) {
-							const struct RasTriggerAction *action;
+						if (0 != oldMatch) {
+							const struct RasTriggerAction *action = (0 != entry) ? rule->entryAction : rule->exitAction;
 
-							if (entry) {
-								action = rule->entryAction;
-							} else {
-								action = rule->exitAction;
-							}
-							if (action) {
+							if (NULL != action) {
 								action->fn(thr->omrVMThread);
 							}
 						}
@@ -886,14 +881,15 @@ err:
 void
 doTriggerActionJstacktrace(OMR_VMThread *omrThr)
 {
-	J9VMThread *thr = (J9VMThread*)omrThr->_language_vmthread;
+	J9VMThread *thr = (J9VMThread *)omrThr->_language_vmthread;
 	J9JavaVM *vm = thr->javaVM;
 	J9StackWalkState stackWalkState;
 	IDATA framesRemaining = RAS_GLOBAL(stackdepth);
+	UtThreadData **uttd = UT_THREAD_FROM_OMRVM_THREAD(omrThr);
 
 	Trc_JavaStackStart(thr);
 
-	if (!thr->threadObject) {
+	if (NULL == thr->threadObject) {
 		Trc_MethodStackFrame(thr, "(thread has no thread object)");
 		return;
 	}
@@ -902,7 +898,12 @@ doTriggerActionJstacktrace(OMR_VMThread *omrThr)
 	stackWalkState.flags = J9_STACKWALK_ITERATE_FRAMES | J9_STACKWALK_INCLUDE_NATIVES | J9_STACKWALK_VISIBLE_ONLY | J9_STACKWALK_RECORD_BYTECODE_PC_OFFSET;
 	stackWalkState.skipCount = 0;
 	stackWalkState.userData1 = NULL;
-	stackWalkState.userData2 = (void *) framesRemaining;
+	stackWalkState.userData2 = (void *)framesRemaining;
+	/*
+	 * Save the current output mask so it can be restored in traceFrameCallBack()
+	 * to avoid interactions with tracepoints in walkStackFrames().
+	 */
+	stackWalkState.userData3 = (void *)(UDATA)(((NULL != uttd) && (NULL != *uttd)) ? (*uttd)->currentOutputMask : 0);
 	stackWalkState.frameWalkFunction = traceFrameCallBack;
 
 	vm->walkStackFrames(thr, &stackWalkState);
@@ -919,28 +920,29 @@ traceFrameCallBack(J9VMThread *vmThread, J9StackWalkState *state)
 	IDATA framesRemaining = (IDATA) state->userData2;
 	J9Method *method = state->method;
 	J9JavaVM *vm = vmThread->javaVM;
-	J9ROMMethod *romMethod;
-	J9Class *methodClass;
-	J9UTF8 *methodName;
+	J9ROMMethod *romMethod = NULL;
+	J9Class *methodClass = NULL;
+	J9UTF8 *methodName = NULL;
 	J9UTF8 *sourceFile = NULL;
-	J9UTF8 *className;
+	J9UTF8 *className = NULL;
 	UDATA offsetPC = 0;
 	UDATA lineNumber = -1;
 	StackFrameMethodType frameType = INTERPRETED_METHOD;
 	const unsigned int stackCompressionLevel = ((RasGlobalStorage *)vmThread->javaVM->j9rasGlobalStorage)->stackCompressionLevel;
-	StackTraceFormattingFunction stackTraceFormatter;
+	StackTraceFormattingFunction stackTraceFormatter = NULL;
 	UDATA frameCount = (UDATA)state->userData1 + 1;
+	UtThreadData **uttd = UT_THREAD_FROM_OMRVM_THREAD(vmThread->omrVMThread);
 
-	if (framesRemaining == 0) {
+	if (0 == framesRemaining) {
 		return J9_STACKWALK_STOP_ITERATING;
 	}
 
 	stackTraceFormatter = stackTraceFormattingFunctions[stackCompressionLevel];
 
 	/* Store frame count in userData1 - used for next call to traceFrameCallBack and to signal that we found a frame */
-	state->userData1 = (void*) frameCount;
+	state->userData1 = (void *)frameCount;
 
-	if (!method) {
+	if (NULL == method) {
 		Trc_MissingJavaStackFrame(vmThread);
 		goto out;
 	}
@@ -968,6 +970,14 @@ traceFrameCallBack(J9VMThread *vmThread, J9StackWalkState *state)
 			frameType = COMPILED_METHOD;
 		}
 #endif
+	}
+
+	/*
+	 * Restore the current output mask, captured in doTriggerActionJstacktrace(),
+	 * in case it has been disturbed by tracepoints within walkStackFrames().
+	 */
+	if ((NULL != uttd) && (NULL != *uttd)) {
+		(*uttd)->currentOutputMask = (unsigned char)(UDATA)(state->userData3);
 	}
 
 	stackTraceFormatter(vmThread,
