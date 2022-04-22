@@ -36,7 +36,7 @@ public:
    ILOpCode(TR::ILOpCodes opCode)
       : J9::ILOpCode(opCode)
       {
-      TR_ASSERT(opCode < NumAllILOps, "assertion failure");
+      TR_ASSERT(opCode < NumAllIlOps, "assertion failure");
       }
 
 
