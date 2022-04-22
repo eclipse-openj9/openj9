@@ -1800,7 +1800,6 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
 
          if (!performGuardedDevirtualization &&
              !comp()->getOption(TR_DisableInterpreterProfiling) &&
-             comp()->getOption(TR_enableProfiledDevirtualization) &&
              TR_ValueProfileInfoManager::get(comp()) && resolvedMethod
              )
             {
@@ -1832,7 +1831,7 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
                {
                TR_ResolvedMethod *profiledVirtualMethod = methodSymRef->getOwningMethod(comp())->getResolvedVirtualMethod(comp(),
                           (TR_OpaqueClassBlock *)topValue, methodSymRef->getOffset());
-               if (profiledVirtualMethod)
+               if (profiledVirtualMethod && !profiledVirtualMethod->isInterpreted())
                   {
                   if (comp()->getOption(TR_TraceCG))
                      {
