@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -209,8 +209,7 @@ bool TR_DynamicLiteralPool::visitTreeTop(TR::TreeTop * tt, TR::Node *grandParent
          }
       else if (opCode.hasSymbolReference() &&
                node->getSymbol()->isStatic() &&
-               !node->getSymbolReference()->isLiteralPoolAddress() &&
-               (node->getSymbolReference() != comp()->getSymRefTab()->findThisRangeExtensionSymRef()))
+               !node->getSymbolReference()->isLiteralPoolAddress())
          {
          dumpOptDetails(comp(), "looking at the static symref for node %p (%s)\n", node, opCode.getName());
          transformStaticSymRefToIndirectLoad(tt, parent, node);

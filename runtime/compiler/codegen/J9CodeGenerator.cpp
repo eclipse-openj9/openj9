@@ -668,13 +668,6 @@ J9::CodeGenerator::lowerTreesPreChildrenVisit(TR::Node *parent, TR::TreeTop *tre
 
    // J9
    //
-   if (parent->getOpCode().hasSymbolReference() &&
-       (parent->getSymbolReference() == self()->comp()->getSymRefTab()->findThisRangeExtensionSymRef()))
-      TR::Node::recreate(parent, TR::treetop);
-
-
-   // J9
-   //
    if (parent->getOpCode().isCall() &&
        !parent->getSymbolReference()->isUnresolved() &&
        parent->getSymbolReference()->getSymbol()->getMethodSymbol() &&
