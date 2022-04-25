@@ -109,7 +109,7 @@ TR::CompilationInfoPerThreadBase::mjit(
       TRIGGER_J9HOOK_JIT_COMPILING_START(_jitConfig->hookInterface, vmThread, method);
 
       // BEGIN MICROJIT
-      TR::FilePointer *logFileFP = this->getCompilation()->getOutFile();
+      TR::FilePointer *logFileFP = getCompilation()->getOutFile();
       MJIT::ByteCodeIterator bcIterator(0, static_cast<TR_ResolvedJ9Method *> (compilee), static_cast<TR_J9VMBase *> (&vm), comp());
 
       if (TR::Options::canJITCompile())
@@ -236,8 +236,8 @@ TR::CompilationInfoPerThreadBase::mjit(
          // GENERATE BODY
          bcIterator.setIndex(0);
 
-         TR_Debug dbg(this->getCompilation());
-         this->getCompilation()->setDebug(&dbg);
+         TR_Debug dbg(getCompilation());
+         getCompilation()->setDebug(&dbg);
 
          if (compiler->getOption(TR_TraceCG))
             trfprintf(logFileFP, "\n%s\n", signature);

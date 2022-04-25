@@ -285,11 +285,11 @@ class BlockList
       inline void insertAfter(BlockList *bl)
          {
          MJIT_ASSERT_NO_MSG(bl);
-         bl->_next = this->_next;
+         bl->_next = _next;
          bl->_prev = this;
-         if (this->_next)
-            this->_next->_prev = bl;
-         this->_next = bl;
+         if (_next)
+            _next->_prev = bl;
+         _next = bl;
          if (this == *_tail)
             *_tail = bl;
          }
@@ -347,7 +347,7 @@ class BlockList
          // The target isn't before this block, isn't this block, isn't in this block, and there is no more list to search.
          // Time to make a new block and add it to the list
          BlockList *target = new (_cfg.getInternalRegion()) BlockList(_cfg, index, _tail);
-         this->insertAfter(target);
+         insertAfter(target);
          return target;
          }
 
