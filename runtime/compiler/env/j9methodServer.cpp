@@ -1062,19 +1062,21 @@ TR_ResolvedJ9JITServerMethod::isSubjectToPhaseChange(TR::Compilation *comp)
    }
 
 TR_ResolvedMethod *
-TR_ResolvedJ9JITServerMethod::getResolvedHandleMethod(TR::Compilation * comp, I_32 cpIndex, bool * unresolvedInCP)
+TR_ResolvedJ9JITServerMethod::getResolvedHandleMethod(TR::Compilation * comp, I_32 cpIndex, bool * unresolvedInCP, bool * isInvokeCacheAppendixNull)
    {
    TR_ASSERT(cpIndex != -1, "cpIndex shouldn't be -1");
 #if TURN_OFF_INLINING
    return 0;
 #else
    _stream->write(JITServer::MessageType::ResolvedMethod_getResolvedHandleMethod, _remoteMirror, cpIndex);
-   auto recv = _stream->read<TR_OpaqueMethodBlock *, TR_ResolvedJ9JITServerMethodInfo, std::string, bool>();
+   auto recv = _stream->read<TR_OpaqueMethodBlock *, TR_ResolvedJ9JITServerMethodInfo, std::string, bool, bool>();
    TR_OpaqueMethodBlock *ramMethod = std::get<0>(recv);
    auto methodInfo = std::get<1>(recv);
    std::string &signature = std::get<2>(recv);
    if (unresolvedInCP)
       *unresolvedInCP = std::get<3>(recv);
+   if (isInvokeCacheAppendixNull)
+      *isInvokeCacheAppendixNull = std::get<4>(recv);
 
 
    return static_cast<TR_J9ServerVM *>(_fe)->createResolvedMethodWithSignature(
@@ -1134,7 +1136,7 @@ TR_ResolvedJ9JITServerMethod::varHandleMethodTypeTableEntryAddress(int32_t cpInd
 #endif /* defined(J9VM_OPT_METHOD_HANDLE) */
 
 TR_ResolvedMethod *
-TR_ResolvedJ9JITServerMethod::getResolvedDynamicMethod(TR::Compilation * comp, I_32 callSiteIndex, bool * unresolvedInCP)
+TR_ResolvedJ9JITServerMethod::getResolvedDynamicMethod(TR::Compilation * comp, I_32 callSiteIndex, bool * unresolvedInCP, bool * isInvokeCacheAppendixNull)
    {
    TR_ASSERT(callSiteIndex != -1, "callSiteIndex shouldn't be -1");
 
@@ -1142,12 +1144,14 @@ TR_ResolvedJ9JITServerMethod::getResolvedDynamicMethod(TR::Compilation * comp, I
    return 0;
 #else
    _stream->write(JITServer::MessageType::ResolvedMethod_getResolvedDynamicMethod, _remoteMirror, callSiteIndex);
-   auto recv = _stream->read<TR_OpaqueMethodBlock*, TR_ResolvedJ9JITServerMethodInfo, std::string, bool>();
+   auto recv = _stream->read<TR_OpaqueMethodBlock*, TR_ResolvedJ9JITServerMethodInfo, std::string, bool, bool>();
    TR_OpaqueMethodBlock *ramMethod = std::get<0>(recv);
    auto &methodInfo = std::get<1>(recv);
    std::string signature = std::get<2>(recv);
    if (unresolvedInCP)
       *unresolvedInCP = std::get<3>(recv);
+   if (isInvokeCacheAppendixNull)
+      *isInvokeCacheAppendixNull = std::get<4>(recv);
 
    return static_cast<TR_J9ServerVM *>(_fe)->createResolvedMethodWithSignature(
       comp->trMemory(),

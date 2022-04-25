@@ -1615,6 +1615,8 @@ TR_J9ByteCodeIlGenerator::stashArgumentsForOSR(TR_J9ByteCode byteCode)
    TR::SymbolReference *symRef;
    // Check if cp entry is resolved, used by invokedynamic and invokehandle in OpenJDK MethodHandle implementation
    bool unresolvedInCP = false;
+   // Also for OpenJDK MH implementation - if the cp entry is resolved, whether the appendix object is null
+   bool isInvokeCacheAppendixNull = false;
    switch (byteCode)
       {
       case J9BCinvokevirtual:
@@ -1633,11 +1635,11 @@ TR_J9ByteCodeIlGenerator::stashArgumentsForOSR(TR_J9ByteCode byteCode)
          symRef = symRefTab()->findOrCreateInterfaceMethodSymbol(_methodSymbol, next2Bytes(3));
          break;
       case J9BCinvokedynamic:
-         symRef = symRefTab()->findOrCreateDynamicMethodSymbol(_methodSymbol, next2Bytes(), &unresolvedInCP);
+         symRef = symRefTab()->findOrCreateDynamicMethodSymbol(_methodSymbol, next2Bytes(), &unresolvedInCP, &isInvokeCacheAppendixNull);
          break;
       case J9BCinvokehandle:
       case J9BCinvokehandlegeneric:
-         symRef = symRefTab()->findOrCreateHandleMethodSymbol(_methodSymbol, next2Bytes(), &unresolvedInCP);
+         symRef = symRefTab()->findOrCreateHandleMethodSymbol(_methodSymbol, next2Bytes(), &unresolvedInCP, &isInvokeCacheAppendixNull);
          break;
       case J9BCinvokestaticsplit:
          symRef = symRefTab()->findOrCreateStaticMethodSymbol(_methodSymbol, next2Bytes() | J9_STATIC_SPLIT_TABLE_INDEX_FLAG);
@@ -1651,6 +1653,9 @@ TR_J9ByteCodeIlGenerator::stashArgumentsForOSR(TR_J9ByteCode byteCode)
 
    TR::MethodSymbol *symbol = symRef->getSymbol()->castToMethodSymbol();
    int32_t numArgs = symbol->getMethod()->numberOfExplicitParameters() + (symbol->isStatic() ? 0 : 1);
+   // For OpenJDK MH implementation, some args for invokedynamic/invokehandle (details below)
+   // that are already pushed to stack must not be stashed
+   int32_t numArgsToNotStash = 0;
 
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
    // If the transition target is invokehandle/invokedynamic, the arguments to be
@@ -1666,16 +1671,23 @@ TR_J9ByteCodeIlGenerator::stashArgumentsForOSR(TR_J9ByteCode byteCode)
    //
    // The method to call is determined by the MemberName object from the side table.
    // In the resolved case, one implicit object is passed as the last argument to the
-   // call, it is the appendixObject from side table.
+   // call, it is the appendixObject from side table. An exception to this is
+   // when the appendix object is null, which we can check at compile time for the
+   // resolved case and must skip pushing the appendix object as the last argument.
    //
    // When the side table entry is unresolved, this object is unknown, thus, the JIT
    // doesn't know what method to call at compile time. To represent the unresolved
    // case, the JIT uses MethodHandle.linkToStatic to represent the call.
    // In addtion to the appendixObject, the MemberName object is also needed, thus
-   // the call requires two more arguments that what's on the stack.
+   // the call requires two more arguments that what's on the stack. Whether the
+   // appendix object is null or not, we push the it to stack and rely on the
+   // VM linkToStatic implementation to check if the appendix object is NULL before
+   // calling the target method.
    //
    // Resolved case:
    // adapter(arg1, arg2, ..., argN, appendixObject)
+   // Resolved case with null appendix object:
+   // adapter(arg1, arg2, ..., argN)
    // Unresolved case:
    // MethodHandle.linkToStatic(arg1, arg2, ..., argN, appendixObject, MemberName)
    //
@@ -1685,15 +1697,20 @@ TR_J9ByteCodeIlGenerator::stashArgumentsForOSR(TR_J9ByteCode byteCode)
    if (byteCode == J9BCinvokedynamic ||
        byteCode == J9BCinvokehandle)
       {
-      numArgs -= 1;
-      if (unresolvedInCP)
-         numArgs -= 1;
+      if (!isInvokeCacheAppendixNull)
+         {
+         numArgsToNotStash += 1; // appendix
+         if (unresolvedInCP)
+            numArgsToNotStash += 1; // MemberName
+         }
 
       if (trace())
-         traceMsg(comp(), "Num args %d for invokedynamic/handle, stack size %d\n", numArgs, _stack->size());
+         traceMsg(comp(), "Original num args for invokedynamic/handle: %d, num args to not stash for OSR: %d, stack size: %d\n", numArgs, numArgsToNotStash, _stack->size());
       }
 #endif
-
+   numArgs -= numArgsToNotStash;
+   // For OpenJDK MethodHandle implementation, there may be items on stack that we need to exclude
+   int32_t adjustedStackSize = _stack->size() - numArgsToNotStash;
    TR_OSRMethodData *osrMethodData =
       comp()->getOSRCompilationData()->findOrCreateOSRMethodData(comp()->getCurrentInlinedSiteIndex(), _methodSymbol);
    osrMethodData->ensureArgInfoAt(_bcIndex, numArgs);
@@ -1702,10 +1719,10 @@ TR_J9ByteCodeIlGenerator::stashArgumentsForOSR(TR_J9ByteCode byteCode)
    // It is necessary to walk the whole stack to determine the slot numbers
    int32_t slot = 0;
    int arg = 0;
-   for (int32_t i = 0; i < _stack->size(); ++i)
+   for (int32_t i = 0; i < adjustedStackSize; ++i)
       {
       TR::Node * n = _stack->element(i);
-      if (_stack->size() - numArgs <= i)
+      if (adjustedStackSize - numArgs <= i)
          {
          TR::SymbolReference * symRef = symRefTab()->findOrCreatePendingPushTemporary(_methodSymbol, slot, getDataType(n));
          osrMethodData->addArgInfo(_bcIndex, arg, symRef->getReferenceNumber());
@@ -3297,7 +3314,16 @@ TR_J9ByteCodeIlGenerator::genInvokeDynamic(int32_t callSiteIndex)
    //    arg0
    //    arg1
    //    ...
+   //    argN
    //    aloadi <appendix object>
+   // ------------------------------------------------------
+   // Call generated when call site table entry is resolved and appendix object is null:
+   // -----------------------------------------------------
+   // call <target method obtained from memberName object>
+   //    arg0
+   //    arg1
+   //    ...
+   //    argN
    // ------------------------------------------------------
    // Call generated when call site table entry is unresolved:
    // ------------------------------------------------------
@@ -3314,17 +3340,21 @@ TR_J9ByteCodeIlGenerator::genInvokeDynamic(int32_t callSiteIndex)
    //       arg0
    //       arg1
    //       ...
+   //       argN
    //       aloadi <appendix object>
    //       aloadi <memberName object>
    // ------------------------------------------------------
-   bool isUnresolved;
-   TR::SymbolReference * targetMethodSymRef = symRefTab()->findOrCreateDynamicMethodSymbol(_methodSymbol, callSiteIndex, &isUnresolved);
+   bool isUnresolved = false;
+   bool isInvokeCacheAppendixNull = false;
+   TR::SymbolReference * targetMethodSymRef = symRefTab()->findOrCreateDynamicMethodSymbol(_methodSymbol, callSiteIndex, &isUnresolved, &isInvokeCacheAppendixNull);
    if (isUnresolved)
       targetMethodSymRef->getSymbol()->setDummyResolvedMethod(); // linkToStatic is a dummy TR_ResolvedMethod
    TR::SymbolReference *callSiteTableEntrySymRef = symRefTab()->findOrCreateCallSiteTableEntrySymbol(_methodSymbol, callSiteIndex);
    TR_ResolvedJ9Method* owningMethod = static_cast<TR_ResolvedJ9Method *>(_methodSymbol->getResolvedMethod());
    uintptr_t * invokeCacheArray = (uintptr_t *) owningMethod->callSiteTableEntryAddress(callSiteIndex);
-   loadInvokeCacheArrayElements(callSiteTableEntrySymRef, invokeCacheArray, isUnresolved);
+
+   if (!isInvokeCacheAppendixNull)
+      loadInvokeCacheArrayElements(callSiteTableEntrySymRef, invokeCacheArray, isUnresolved);
 
    if (comp()->getOption(TR_TraceILGen))
       printStack(comp(), _stack, "(Stack after load from callsite table)");
@@ -3380,8 +3410,18 @@ TR_J9ByteCodeIlGenerator::genInvokeHandle(int32_t cpIndex)
    //    arg0
    //    arg1
    //    ...
+   //    argN
    //    aloadi <appendix object>
    // ------------------------------------------------------
+   // Call generated when methodType table entry is resolved and appendix object is null:
+   // -----------------------------------------------------
+   // call <target method obtained from memberName object>
+   //    aload  <Ljava/lang/invoke/MethodHandle;>
+   //    arg0
+   //    arg1
+   //    ...
+   //    argN
+   // -----------------------------------------------------
    // Call generated when methodType table entry is unresolved:
    // ------------------------------------------------------
    // ResolveCHK
@@ -3398,17 +3438,21 @@ TR_J9ByteCodeIlGenerator::genInvokeHandle(int32_t cpIndex)
    //       arg0
    //       arg1
    //       ...
+   //       argN
    //       aloadi <appendix object>
    //       aloadi <memberName object>
    // ------------------------------------------------------
-   bool isUnresolved;
-   TR::SymbolReference * targetMethodSymRef = symRefTab()->findOrCreateHandleMethodSymbol(_methodSymbol, cpIndex, &isUnresolved);
+   bool isUnresolved = false;
+   bool isInvokeCacheAppendixNull = false;
+   TR::SymbolReference * targetMethodSymRef = symRefTab()->findOrCreateHandleMethodSymbol(_methodSymbol, cpIndex, &isUnresolved, &isInvokeCacheAppendixNull);
    if (isUnresolved)
       targetMethodSymRef->getSymbol()->setDummyResolvedMethod(); // linkToStatic is a dummy TR_ResolvedMethod
    TR::SymbolReference *methodTypeTableEntrySymRef = symRefTab()->findOrCreateMethodTypeTableEntrySymbol(_methodSymbol, cpIndex);
    TR_ResolvedJ9Method* owningMethod = static_cast<TR_ResolvedJ9Method *>(_methodSymbol->getResolvedMethod());
    uintptr_t * invokeCacheArray = (uintptr_t *) owningMethod->methodTypeTableEntryAddress(cpIndex);
-   loadInvokeCacheArrayElements(methodTypeTableEntrySymRef, invokeCacheArray, isUnresolved);
+
+   if (!isInvokeCacheAppendixNull)
+      loadInvokeCacheArrayElements(methodTypeTableEntrySymRef, invokeCacheArray, isUnresolved);
 
    if (comp()->getOption(TR_TraceILGen))
       printStack(comp(), _stack, "(Stack after load from method type table)");
