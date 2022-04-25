@@ -433,10 +433,10 @@ J9::SymbolReferenceTable::findOrCreateInterfaceMethodSymbol(TR::ResolvedMethodSy
 
 
 TR::SymbolReference *
-J9::SymbolReferenceTable::findOrCreateDynamicMethodSymbol(TR::ResolvedMethodSymbol * owningMethodSymbol, int32_t callSiteIndex, bool * unresolvedInCP)
+J9::SymbolReferenceTable::findOrCreateDynamicMethodSymbol(TR::ResolvedMethodSymbol * owningMethodSymbol, int32_t callSiteIndex, bool * unresolvedInCP, bool * isInvokeCacheAppendixNull)
    {
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
-   TR_ResolvedMethod  * method = owningMethodSymbol->getResolvedMethod()->getResolvedDynamicMethod(comp(), callSiteIndex, unresolvedInCP);
+   TR_ResolvedMethod  * method = owningMethodSymbol->getResolvedMethod()->getResolvedDynamicMethod(comp(), callSiteIndex, unresolvedInCP, isInvokeCacheAppendixNull);
    if (method)
       owningMethodSymbol->setMayHaveInlineableCall(true);
 
@@ -470,17 +470,17 @@ J9::SymbolReferenceTable::findOrCreateHandleMethodSymbol(TR::ResolvedMethodSymbo
 
 
 TR::SymbolReference *
-J9::SymbolReferenceTable::findOrCreateHandleMethodSymbol(TR::ResolvedMethodSymbol * owningMethodSymbol, int32_t cpIndex, bool * unresolvedInCP)
+J9::SymbolReferenceTable::findOrCreateHandleMethodSymbol(TR::ResolvedMethodSymbol * owningMethodSymbol, int32_t cpIndex, bool * unresolvedInCP, bool * isInvokeCacheAppendixNull)
    {
-   TR_ResolvedMethod  * method = owningMethodSymbol->getResolvedMethod()->getResolvedHandleMethod(comp(), cpIndex, unresolvedInCP);
-   if (method)
-      owningMethodSymbol->setMayHaveInlineableCall(true);
-
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+   TR_ResolvedMethod  * method = owningMethodSymbol->getResolvedMethod()->getResolvedHandleMethod(comp(), cpIndex, unresolvedInCP, isInvokeCacheAppendixNull);
    TR::SymbolReference * symRef = findOrCreateMethodSymbol(owningMethodSymbol->getResolvedMethodIndex(), cpIndex, method, TR::MethodSymbol::Static);
 #else
+   TR_ResolvedMethod  * method = owningMethodSymbol->getResolvedMethod()->getResolvedHandleMethod(comp(), cpIndex, unresolvedInCP);
    TR::SymbolReference * symRef = findOrCreateMethodSymbol(owningMethodSymbol->getResolvedMethodIndex(), cpIndex, method, TR::MethodSymbol::ComputedVirtual);
 #endif /* J9VM_OPT_OPENJDK_METHODHANDLE */
+   if (method)
+      owningMethodSymbol->setMayHaveInlineableCall(true);
    return symRef;
    }
 

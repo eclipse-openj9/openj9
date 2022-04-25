@@ -457,8 +457,8 @@ public:
    virtual TR_ResolvedMethod *     getResolvedPossiblyPrivateVirtualMethod( TR::Compilation *, int32_t cpIndex, bool ignoreRtResolve, bool * unresolvedInCP);
    virtual TR_OpaqueClassBlock *   getResolvedInterfaceMethod(int32_t cpIndex, uintptr_t * pITableIndex);
 
-   virtual TR_ResolvedMethod *     getResolvedDynamicMethod( TR::Compilation *, int32_t cpIndex, bool * unresolvedInCP);
-   virtual TR_ResolvedMethod *     getResolvedHandleMethod( TR::Compilation *, int32_t cpIndex, bool * unresolvedInCP);
+   virtual TR_ResolvedMethod *     getResolvedDynamicMethod( TR::Compilation *, int32_t cpIndex, bool * unresolvedInCP, bool * isInvokeCacheAppendixNull = 0);
+   virtual TR_ResolvedMethod *     getResolvedHandleMethod( TR::Compilation *, int32_t cpIndex, bool * unresolvedInCP, bool * isInvokeCacheAppendixNull = 0);
    virtual TR_ResolvedMethod *     getResolvedHandleMethodWithSignature( TR::Compilation *, int32_t cpIndex, char *signature);
 
    virtual uint32_t                getResolvedInterfaceMethodOffset(TR_OpaqueClassBlock * classObject, int32_t cpIndex);
