@@ -179,7 +179,7 @@ shouldCompileWithMicroJIT(J9Method *method, J9JITConfig *jitConfig, J9VMThread *
    uint8_t *extendedFlags = fe->fetchMethodExtendedFlagsPointer(method);
    return (J9_ARE_ALL_BITS_SET(extra, J9_STARTPC_NOT_TRANSLATED)           // MicroJIT is not a target for recompilation
    && !(J9_ROM_METHOD_FROM_RAM_METHOD(method)->modifiers & J9AccNative)    // MicroJIT does not compile native methods
-   && !((*extendedFlags) & J9_MJIT_FAILED_COMPILE));                       // MicroJIT failed to compile this method already
+   && !(*extendedFlags & J9_MJIT_FAILED_COMPILE));                       // MicroJIT failed to compile this method already
    }
 #endif
 

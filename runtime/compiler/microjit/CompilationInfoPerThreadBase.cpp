@@ -58,7 +58,7 @@ testMicroJITCompilationForErrors(
       trCountFromMJIT = (trCountFromMJIT << 1) | 1;
       TR_J9VMBase *fe = TR_J9VMBase::get(jitConfig, vmThread);
       uint8_t *extendedFlags = fe->fetchMethodExtendedFlagsPointer(method);
-      *extendedFlags = (*extendedFlags) | J9_MJIT_FAILED_COMPILE;
+      *extendedFlags = *extendedFlags | J9_MJIT_FAILED_COMPILE;
       method->extra = reinterpret_cast<void *>(trCountFromMJIT);
       compiler->failCompilation<MJIT::MJITCompilationFailure>("Cannot compile with MicroJIT.");
       }

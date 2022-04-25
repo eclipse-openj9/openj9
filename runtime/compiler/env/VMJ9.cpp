@@ -6680,6 +6680,15 @@ TR_J9VMBase::isGetImplInliningSupported()
    return jvm->memoryManagerFunctions->j9gc_modron_isFeatureSupported(jvm, j9gc_modron_feature_inline_reference_get) != 0;
    }
 
+#if defined(J9VM_OPT_MICROJIT)
+bool
+TR_J9VMBase::isMJITExtendedFlagsMethod(J9Method *method)
+   {
+   uint8_t *extendedFlags = fetchMethodExtendedFlagsPointer(method);
+   return ((*extendedFlags & J9_MJIT_FAILED_COMPILE) != J9_MJIT_FAILED_COMPILE);
+   }
+#endif
+
 /** \brief
  *     Get the raw modifier from the class pointer.
  *

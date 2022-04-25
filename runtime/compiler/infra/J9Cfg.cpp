@@ -1715,8 +1715,7 @@ J9::CFG::propagateFrequencyInfoFromExternalProfiler(TR_ExternalProfiler *profile
    _externalProfiler = profiler;
 #if defined(J9VM_OPT_MICROJIT)
    J9Method *method = static_cast<TR_ResolvedJ9Method *>(comp()->getMethodBeingCompiled())->ramMethod();
-   uint8_t *extendedFlags = comp()->fej9()->fetchMethodExtendedFlagsPointer(method);
-   if (TR::Options::getJITCmdLineOptions()->_mjitEnabled && ((*extendedFlags & 0x10) != 0x10) && (uintptr_t)(method->extra) == 0x1)
+   if (TR::Options::getJITCmdLineOptions()->_mjitEnabled && comp()->fej9()->isMJITExtendedFlagsMethod(method) && comp()->getMethodBeingCompiled()->isInterpreted())
       {
       if (!profiler)
          return;

@@ -707,7 +707,7 @@ public:
             value = (intptr_t)((trCount << 1) | J9_STARTPC_NOT_TRANSLATED);
             TR_J9VMBase *fe = TR_J9VMBase::get(jitConfig, vmThread);
             uint8_t *extendedFlags = fe->fetchMethodExtendedFlagsPointer(method);
-            *extendedFlags = (*extendedFlags) | J9_MJIT_FAILED_COMPILE;
+            *extendedFlags = *extendedFlags | J9_MJIT_FAILED_COMPILE;
             }
          else
             {

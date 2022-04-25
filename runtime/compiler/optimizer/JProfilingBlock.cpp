@@ -983,8 +983,7 @@ int32_t TR_JProfilingBlock::perform()
 // TODO: Remove this when ready to implement counter insertion.
 #if defined(J9VM_OPT_MICROJIT)
    J9Method *method = static_cast<TR_ResolvedJ9Method *>(comp()->getMethodBeingCompiled())->ramMethod();
-   uint8_t *extendedFlags = comp()->fej9()->fetchMethodExtendedFlagsPointer(method);
-   if (TR::Options::getJITCmdLineOptions()->_mjitEnabled && ((*extendedFlags & 0x10) != 0x10) && (uintptr_t)(method->extra) == 0x1)
+   if (TR::Options::getJITCmdLineOptions()->_mjitEnabled && comp()->fej9()->isMJITExtendedFlagsMethod(method) && comp()->getMethodBeingCompiled()->isInterpreted())
       {
       comp()->setSkippedJProfilingBlock();
       return 0;

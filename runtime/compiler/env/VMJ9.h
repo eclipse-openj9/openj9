@@ -252,6 +252,9 @@ public:
    virtual bool canAllowDifferingNumberOrTypesOfArgsAndParmsInInliner();
 /////
    virtual bool isGetImplInliningSupported();
+#if defined(J9VM_OPT_MICROJIT)
+   virtual bool isMJITExtendedFlagsMethod(J9Method *);
+#endif
 
    virtual uintptr_t getClassDepthAndFlagsValue(TR_OpaqueClassBlock * classPointer);
    virtual uintptr_t getClassFlagsValue(TR_OpaqueClassBlock * classPointer);
