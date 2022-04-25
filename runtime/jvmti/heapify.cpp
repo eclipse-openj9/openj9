@@ -64,19 +64,6 @@ objectIsStackAllocated(J9VMThread *vmThread, j9object_t obj)
 }
 
 /**
- * Determine if a thread can possibly have stack-allocated objects
- *
- * @param targetThread - thread to query
- *
- * @return true if the thread can have stack-allocated objects, false if not
- */
-static VMINLINE bool
-threadCanHaveStackAllocatedObjects(J9VMThread *targetThread)
-{
-	return J9_ARE_ANY_BITS_SET(omrthread_get_category(targetThread->osThread), J9THREAD_CATEGORY_RESOURCE_MONITOR_THREAD | J9THREAD_CATEGORY_APPLICATION_THREAD);
-}
-
-/**
  * Initialize an object map exemplar for a stack-allocated object
  *
  * @param objectThread - thread containing stack-allocated object
@@ -346,7 +333,7 @@ heapifyStackAllocatedObjects(J9VMThread *currentThread, UDATA safePoint)
 		walkState.userData2 = (void*)JVMTI_ERROR_NONE;
 		walkState.objectSlotWalkFunction = addStackAllocatedObjectsIterator;
 		do {
-			if (threadCanHaveStackAllocatedObjects(walkThread)) {
+			if (VM_VMHelpers::threadCanRunJavaCode(walkThread)) {
 				VM_VMAccess::setPublicFlags(walkThread, J9_PUBLIC_FLAGS_HALT_THREAD_HCR);
 				walkState.walkThread = walkThread;
 				vm->walkStackFrames(currentThread, &walkState);
@@ -385,7 +372,7 @@ heapifyStackAllocatedObjects(J9VMThread *currentThread, UDATA safePoint)
 unmarkThreads:
 		walkState.objectSlotWalkFunction = replaceStackAllocatedObjectsIterator;
 		do {
-			if (threadCanHaveStackAllocatedObjects(walkThread)) {
+			if (VM_VMHelpers::threadCanRunJavaCode(walkThread)) {
 				VM_VMAccess::clearPublicFlags(walkThread, J9_PUBLIC_FLAGS_HALT_THREAD_HCR);
 				if (JVMTI_ERROR_NONE == rc) {
 					walkState.walkThread = walkThread;
