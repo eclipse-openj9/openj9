@@ -9543,7 +9543,11 @@ retry:
 		J9RAMClassRef * const ramCPEntry = ((J9RAMClassRef*)ramConstantPool) + index;
 		J9Class * volatile resolvedClass = ramCPEntry->value;
 
-		if ((NULL != resolvedClass) && J9_IS_J9CLASS_VALUETYPE(resolvedClass) && !VM_VMHelpers::classRequiresInitialization(_currentThread, resolvedClass)) {
+		if ((NULL != resolvedClass)
+			&& (J9_IS_J9CLASS_VALUETYPE(resolvedClass))
+			&& (!J9_IS_J9CLASS_GENERATED_VT_LTYPE(resolvedClass))
+			&& (!VM_VMHelpers::classRequiresInitialization(_currentThread, resolvedClass))
+		) {
 			_pc += 3;
 			*(j9object_t*)--_sp = resolvedClass->flattenedClassCache->defaultValue;
 			goto done;
@@ -9554,7 +9558,10 @@ retry:
 
 		if (NULL == resolvedClass) {
 			resolveClassRef(_currentThread, ramConstantPool, index, J9_RESOLVE_FLAG_RUNTIME_RESOLVE | J9_RESOLVE_FLAG_INIT_CLASS);
-		} else if (!J9_IS_J9CLASS_VALUETYPE(resolvedClass)) {
+		} else if (
+				(!J9_IS_J9CLASS_VALUETYPE(resolvedClass))
+				|| (J9_IS_J9CLASS_GENERATED_VT_LTYPE(resolvedClass))
+		) {
 			J9UTF8 *badClassName = J9ROMCLASS_CLASSNAME(resolvedClass->romClass);
 			setCurrentExceptionNLSWithArgs(_currentThread, J9NLS_VM_ERROR_BYTECODE_CLASSREF_MUST_BE_VALUE_TYPE, J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR, J9UTF8_LENGTH(badClassName), J9UTF8_DATA(badClassName));
 		} else if (VM_VMHelpers::classRequiresInitialization(_currentThread, resolvedClass)) {

@@ -747,6 +747,12 @@ callLoadClass(J9VMThread* vmThread, U_8* className, UDATA classNameLength, J9Cla
 				/* force failure */
 				foundClass = NULL;
 			} else {
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+				BOOLEAN isPrimitiveVT = J9ROMCLASS_IS_PRIMITIVE_VALUE_TYPE(foundClass->romClass);
+				if (isPrimitiveVT) {
+					Assert_VM_true(J9_IS_J9CLASS_PRIMITIVE_VALUETYPE(foundClass));
+				}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 				/* See if a class of this name is already in the table - if not, add it */
 
 				ramClass = hashClassTableAt(classLoader, className, classNameLength);
@@ -799,6 +805,11 @@ callLoadClass(J9VMThread* vmThread, U_8* className, UDATA classNameLength, J9Cla
 						foundClass = NULL;
 					}
 				}
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+				if (NULL != foundClass && isPrimitiveVT) {
+					Assert_VM_true(J9_IS_J9CLASS_PRIMITIVE_VALUETYPE(foundClass));
+				}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 			}
 			omrthread_monitor_exit(vm->classTableMutex);
  		}
@@ -975,7 +986,11 @@ loadNonArrayClass(J9VMThread* vmThread, J9Module *j9module, U_8* className, UDAT
 	BOOLEAN loaderMonitorLocked = FALSE;
 
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-	if (J9_IS_STRING_DESCRIPTOR(className, classNameLength)) {
+	BOOLEAN isDesciptor = J9_IS_STRING_DESCRIPTOR(className, classNameLength);
+	if (isDesciptor) {
+		if (IS_QTYPE(*className)) {
+			options |= J9_FINDCLASS_FLAG_QTYPE;
+		}
 		className += 1; /* 1 for 'L' or 'Q' */
 		classNameLength -= 2; /* 2 for 'L'/'Q' and ';' */
 	}
@@ -1011,6 +1026,24 @@ loadNonArrayClass(J9VMThread* vmThread, J9Module *j9module, U_8* className, UDAT
 	}
 
 	foundClass = hashClassTableAt(classLoader, className, classNameLength);
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	if (NULL != foundClass) {
+		if (!isDesciptor) {
+			if (J9ROMCLASS_IS_PRIMITIVE_VALUE_TYPE(foundClass->romClass)) {
+				/* Treat plain class name for primitive value type as Qtype, which is the existing behaviour of RI. */
+				options |= J9_FINDCLASS_FLAG_QTYPE;
+			}
+		}
+		if (J9_IS_J9CLASS_PRIMITIVE_VALUETYPE(foundClass)) {
+			if (J9_ARE_NO_BITS_SET(options, J9_FINDCLASS_FLAG_QTYPE)) {
+				foundClass = foundClass->Ltype;
+				if (NULL != foundClass) {
+					Assert_VM_true(J9_IS_J9CLASS_VALUETYPE(foundClass));
+				}
+			}
+		}
+	}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	if (NULL != foundClass) {
 		if (!fastMode) {
 			omrthread_monitor_exit(vm->classTableMutex);
@@ -1035,6 +1068,24 @@ loadNonArrayClass(J9VMThread* vmThread, J9Module *j9module, U_8* className, UDAT
 
 				/* check again if somebody else already loaded the class */
 				foundClass = hashClassTableAt(classLoader, className, classNameLength);
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+				if (NULL != foundClass) {
+					if (!isDesciptor) {
+						if (J9ROMCLASS_IS_PRIMITIVE_VALUE_TYPE(foundClass->romClass)) {
+							/* Treat plain class name for primitive value type as Qtype, which is the existing behaviour of RI. */
+							options |= J9_FINDCLASS_FLAG_QTYPE;
+						}
+					}
+					if (J9_IS_J9CLASS_PRIMITIVE_VALUETYPE(foundClass)) {
+						if (J9_ARE_NO_BITS_SET(options, J9_FINDCLASS_FLAG_QTYPE)) {
+							foundClass = foundClass->Ltype;
+							if (NULL != foundClass) {
+								Assert_VM_true(J9_IS_J9CLASS_VALUETYPE(foundClass));
+							}
+						}
+					}
+				}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 				if (NULL != foundClass) {
 					omrthread_monitor_exit(vm->classTableMutex);
 					goto done;
@@ -1103,7 +1154,24 @@ primitiveClass:
 				foundClass = arbitratedLoadClass(vmThread, className, classNameLength, classLoader, exception);
 				omrthread_monitor_exit(vm->classTableMutex);
 			}
-			/* class table mutex is now unlocked */
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+			if (NULL != foundClass) {
+				if (!isDesciptor) {
+					if (J9ROMCLASS_IS_PRIMITIVE_VALUE_TYPE(foundClass->romClass)) {
+						/* Treat plain class name for primitive value type as Qtype, which is the existing behaviour of RI. */
+						options |= J9_FINDCLASS_FLAG_QTYPE;
+					}
+				}
+				if (J9_ARE_ALL_BITS_SET(options, J9_FINDCLASS_FLAG_QTYPE)) {
+					Assert_VM_true(J9_IS_J9CLASS_PRIMITIVE_VALUETYPE(foundClass));
+				} else {
+					if (J9ROMCLASS_IS_PRIMITIVE_VALUE_TYPE(foundClass->romClass)) {
+						foundClass = foundClass->Ltype;
+						Assert_VM_true(J9_IS_J9CLASS_VALUETYPE(foundClass));
+					}
+				}
+			}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 		}
 	}
 	/* class table mutex is now unlocked */

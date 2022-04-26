@@ -66,13 +66,7 @@ static void classInitStateMachine(J9VMThread *currentThread, J9Class *clazz, J9C
 static BOOLEAN
 compareRAMClasses(void *item, J9StackElement *currentElement)
 {
-	BOOLEAN rc = FALSE;
-
-	if (currentElement->element == item) {
-		rc = TRUE;
-	}
-
-	return rc;
+	return J9_ARE_J9CLASSES_EQUIVALENT((J9Class*)item, currentElement->element);
 }
 
 static BOOLEAN
@@ -317,7 +311,12 @@ setInitStatus(J9VMThread *currentThread, J9Class *clazz, UDATA status, j9object_
 	Assert_VM_false(J9_OBJECT_MONITOR_ENTER_FAILED(initializationLock));
 	clazz = VM_VMHelpers::currentClass(clazz);
 	do {
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		clazz->Qtype->initializeStatus = status;
+		clazz->Ltype->initializeStatus = status;
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 		clazz->initializeStatus = status;
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 		clazz = clazz->replacedClass;
 	} while (NULL != clazz);
 	omrthread_monitor_t monitor = NULL;
@@ -352,6 +351,9 @@ static void
 classInitStateMachine(J9VMThread *currentThread, J9Class *clazz, J9ClassInitState desiredState)
 {
 	J9JavaVM *vm = currentThread->javaVM;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	clazz = clazz->Qtype;
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	Assert_VM_true(clazz == VM_VMHelpers::currentClass(clazz));
 	j9object_t classObject = J9VM_J9CLASS_TO_HEAPCLASS(clazz);
 	j9object_t initializationLock = J9VMJAVALANGCLASS_INITIALIZATIONLOCK(currentThread, classObject);
@@ -391,6 +393,9 @@ classInitStateMachine(J9VMThread *currentThread, J9Class *clazz, J9ClassInitStat
 				/* Mark this class as verifying in this thread */
 				Trc_VM_classInitStateMachine_markVerificationInProgress(currentThread);
 				clazz->initializeStatus = (UDATA)currentThread | J9ClassInitUnverified;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+				clazz->Ltype->initializeStatus = clazz->initializeStatus;
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TPES) */
 				VM_ObjectMonitor::exitObjectMonitor(currentThread, initializationLock);
 doVerify:
 				/* Verify the superclass */
@@ -425,7 +430,7 @@ doVerify:
 							U_8 *signatureChars = J9UTF8_DATA(signature);
 
 							PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, initializationLock);
-							J9Class *valueClass = internalFindClassUTF8(currentThread, signatureChars + 1, J9UTF8_LENGTH(signature) - 2, clazz->classLoader, J9_FINDCLASS_FLAG_THROW_ON_FAIL);
+							J9Class *valueClass = internalFindClassUTF8(currentThread, signatureChars, J9UTF8_LENGTH(signature), clazz->classLoader, J9_FINDCLASS_FLAG_THROW_ON_FAIL);
 							initializationLock = POP_OBJECT_IN_SPECIAL_FRAME(currentThread);
 							clazz = VM_VMHelpers::currentClass(clazz);
 							if (NULL == valueClass) {
@@ -518,7 +523,9 @@ doVerify:
 				}
 				clazz = VM_VMHelpers::currentClass(clazz);
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-				if (J9_IS_J9CLASS_VALUETYPE(clazz)) {
+				if (J9_IS_J9CLASS_VALUETYPE(clazz)
+					&& (!J9_IS_J9CLASS_GENERATED_VT_LTYPE(clazz))
+				) {
 					PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, initializationLock);
 					/* Preparation is the earliest point where the defaultValue would needed. 
 					* I.e pre-filling static fields. Therefore, the defaultValue must be allocated at 
@@ -606,6 +613,7 @@ doVerify:
 							}
 							clazz = VM_VMHelpers::currentClass(clazz);
 							clazz->initializeStatus = (UDATA)currentThread | J9ClassInitUnprepared;
+							clazz->Ltype->initializeStatus = clazz->initializeStatus;
 							VM_ObjectMonitor::exitObjectMonitor(currentThread, initializationLock);
 						}
 
@@ -625,6 +633,7 @@ doVerify:
 							}
 							clazz = VM_VMHelpers::currentClass(clazz);
 							clazz->initializeStatus = J9ClassInitUnprepared;
+							clazz->Ltype->initializeStatus = clazz->initializeStatus;
 							VM_ObjectMonitor::exitObjectMonitor(currentThread, initializationLock);
 							exception = POP_OBJECT_IN_SPECIAL_FRAME(currentThread);
 						}
@@ -690,6 +699,9 @@ doVerify:
 				/* Mark this class as initializing in this thread */
 				Trc_VM_classInitStateMachine_markInitializationInProgress(currentThread);
 				clazz->initializeStatus = (UDATA)currentThread | J9ClassInitNotInitialized;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+				clazz->Ltype->initializeStatus = clazz->initializeStatus;
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 				VM_ObjectMonitor::exitObjectMonitor(currentThread, initializationLock);
 				/* Initialize the superclass */
 				J9Class *superclazz = VM_VMHelpers::getSuperclass(clazz);

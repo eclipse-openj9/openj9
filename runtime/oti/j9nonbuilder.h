@@ -88,6 +88,7 @@
 #define J9ClassEnsureHashed 0x100000
 #define J9ClassHasOffloadAllowSubtasksNatives 0x200000
 #define J9ClassIsPrimitiveValueType 0x400000
+#define J9ClassGenerated 0x800000
 
 /* @ddr_namespace: map_to_type=J9FieldFlags */
 
@@ -3294,6 +3295,10 @@ typedef struct J9Class {
 #endif /* JAVA_SPEC_VERSION >= 11 */
 	struct J9FlattenedClassCache* flattenedClassCache;
 	struct J9ClassHotFieldsInfo* hotFieldsInfo;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	struct J9Class* Ltype; /* For primitive VTs, points to Ltype J9Class. For other classes, points to itself. */
+	struct J9Class* Qtype; /* For primitive VTs, points to Qtype J9Class. For other classes, points to itself. */
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 } J9Class;
 
 /* Interface classes can never be instantiated, so the following fields in J9Class will not be used:
@@ -3386,6 +3391,10 @@ typedef struct J9ArrayClass {
 	/* Added temporarily for consistency */
 	UDATA flattenedElementSize;
 	struct J9ClassHotFieldsInfo* hotFieldsInfo;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	struct J9Class* Ltype;
+	struct J9Class* Qtype;
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 } J9ArrayClass;
 
 

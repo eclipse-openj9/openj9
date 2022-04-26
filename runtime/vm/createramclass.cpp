@@ -73,6 +73,7 @@ enum J9ClassFragments {
 	RAM_SPECIAL_SPLIT_TABLE_FRAGMENT,
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 	RAM_CLASS_FLATTENED_CLASS_CACHE,
+	RAM_CLASS_GENERATED_HEADER_FRAGMENT,
 #endif /* J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES */
 	RAM_CLASS_FRAGMENT_COUNT
 };
@@ -1953,7 +1954,7 @@ loadFlattenableFieldValueClasses(J9VMThread *currentThread, J9ClassLoader *class
 			switch (signatureChars[0]) {
 			case 'Q':
 			{
-				J9Class *valueClass = internalFindClassUTF8(currentThread, signatureChars + 1, J9UTF8_LENGTH(signature) - 2, classLoader, classPreloadFlags);
+				J9Class *valueClass = internalFindClassUTF8(currentThread, signatureChars + 1, J9UTF8_LENGTH(signature) - 2, classLoader, classPreloadFlags | J9_FINDCLASS_FLAG_QTYPE);
 				if (NULL == valueClass) {
 					result = FALSE;
 					goto done;
@@ -2049,7 +2050,7 @@ checkFlattenableFieldValueClasses(J9VMThread *currentThread, J9ClassLoader *clas
 		U_8 *signatureChars = J9UTF8_DATA(signature);
 		if (J9_ARE_NO_BITS_SET(modifiers, J9AccStatic)) {
 			if ('Q' == signatureChars[0]) {
-				J9Class *valueClass = internalFindClassUTF8(currentThread, signatureChars + 1, J9UTF8_LENGTH(signature) - 2, classLoader, J9_FINDCLASS_FLAG_EXISTING_ONLY);
+				J9Class *valueClass = internalFindClassUTF8(currentThread, signatureChars + 1, J9UTF8_LENGTH(signature) - 2, classLoader, J9_FINDCLASS_FLAG_EXISTING_ONLY | J9_FINDCLASS_FLAG_QTYPE);
 				Assert_VM_notNull(valueClass);
 				J9ROMClass *valueROMClass = valueClass->romClass;
 				bool classIsPublic = J9_ARE_ALL_BITS_SET(valueROMClass->modifiers, J9AccPublic);
@@ -2229,6 +2230,7 @@ nativeOOM:
 
 		/* Update the classFlags field if necessary */
 		U_32 classFlags = state->ramClass->classFlags;
+		U_32 flagsToSet = 0;
 		if (NULL != superclass) {
 			/**
 			 * watched fields tag and exemption from validation are inherited from the superclass.
@@ -2238,7 +2240,7 @@ nativeOOM:
 			 * to be hashed as well.
 			 */
 			const U_32 inheritedFlags = J9ClassHasWatchedFields | J9ClassIsExemptFromValidation | J9ClassHasIdentity | J9ClassEnsureHashed;
-			classFlags |= (superclass->classFlags & inheritedFlags);
+			flagsToSet |= (superclass->classFlags & inheritedFlags);
 		}
 		if (J9_ARE_ALL_BITS_SET(options, J9_FINDCLASS_FLAG_ANON)) {
 			/* if anonClass replace classLoader with hostClassLoader, no one can know about anonClassLoader */
@@ -2247,29 +2249,29 @@ nativeOOM:
 				/* no object is created when doing hotswapping */
 				J9VMJAVALANGCLASS_SET_CLASSLOADER(vmThread, state->ramClass->classObject, hostClassLoader->classLoaderObject);
 			}
-			classFlags |= J9ClassIsAnonymous;
+			flagsToSet |= J9ClassIsAnonymous;
 		}
-		if (J9_ARE_NO_BITS_SET(classFlags, J9ClassIsExemptFromValidation)) {
+		if (J9_ARE_NO_BITS_SET(classFlags | flagsToSet, J9ClassIsExemptFromValidation)) {
 			J9UTF8 *className = J9ROMCLASS_CLASSNAME(romClass);
 
 			if (J9UTF8_LITERAL_EQUALS(J9UTF8_DATA(className), J9UTF8_LENGTH(className), MAGIC_ACCESSOR_IMPL)) {
-				classFlags |= J9ClassIsExemptFromValidation;
+				flagsToSet |= J9ClassIsExemptFromValidation;
 			}
 		}
 		if (J9ROMCLASS_IS_VALUEBASED(romClass)) {
-			classFlags |= J9ClassIsValueBased;
+			flagsToSet |= J9ClassIsValueBased;
 		}
 		if (NULL != javaVM->ensureHashedClasses) {
 			J9UTF8 *className = J9ROMCLASS_CLASSNAME(romClass);
 			J9UTF8 **entry = (J9UTF8 **)hashTableFind(javaVM->ensureHashedClasses, &className);
 
 			if (NULL != entry) {
-				classFlags |= J9ClassEnsureHashed;
+				flagsToSet |= J9ClassEnsureHashed;
 			}
 		}
 
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-		if (J9_ARE_ALL_BITS_SET(classFlags, J9ClassHasIdentity)) {
+		if (J9_ARE_ALL_BITS_SET(classFlags | flagsToSet, J9ClassHasIdentity)) {
 			if (J9ROMCLASS_IS_VALUE(romClass)) {
 				J9UTF8* className = J9ROMCLASS_CLASSNAME(romClass);
 				J9UTF8 *superclassName = J9ROMCLASS_SUPERCLASSNAME(romClass);
@@ -2279,48 +2281,47 @@ nativeOOM:
 			}
 		} else {
 			if (J9ROMCLASS_HAS_IDENTITY(romClass)) {
-				classFlags |= J9ClassHasIdentity;
+				flagsToSet |= J9ClassHasIdentity;
 			}
 		}
-
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+		if (J9_ARE_ALL_BITS_SET(state->valueTypeFlags, J9ClassContainsUnflattenedFlattenables)) {
+			flagsToSet |= J9ClassContainsUnflattenedFlattenables;
+		}
+		if (J9_ARE_ALL_BITS_SET(state->valueTypeFlags, J9ClassHasReferences)) {
+			flagsToSet |= J9ClassHasReferences;
+		}
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 		if (J9ROMCLASS_IS_VALUE(romClass)) {
-			classFlags |= J9ClassIsValueType;
+			flagsToSet |= J9ClassIsValueType;
+			J9CLASS_EXTENDED_FLAGS_SET(state->ramClass->Ltype, flagsToSet);
+			/* The following flags are for primitive VTs which is Qtype, not for the Ltype. */
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 			if (J9ROMCLASS_IS_PRIMITIVE_VALUE_TYPE(romClass)) {
 				UDATA instanceSize = state->ramClass->totalInstanceSize;
-				classFlags |= J9ClassIsPrimitiveValueType;
+				flagsToSet |= J9ClassIsPrimitiveValueType;
 				if ((instanceSize <= javaVM->valueFlatteningThreshold)
 					&& !J9ROMCLASS_IS_CONTENDED(romClass)
 				) {
 					Trc_VM_CreateRAMClassFromROMClass_valueTypeIsFlattened(vmThread, J9UTF8_LENGTH(className), J9UTF8_DATA(className), state->ramClass);
-					classFlags |= J9ClassIsFlattened;
+					flagsToSet |= J9ClassIsFlattened;
 				}
 				if (J9_ARE_ALL_BITS_SET(state->valueTypeFlags, J9ClassCanSupportFastSubstitutability)) {
-					classFlags |= J9ClassCanSupportFastSubstitutability;
+					flagsToSet |= J9ClassCanSupportFastSubstitutability;
 				}
 				if (J9_ARE_ALL_BITS_SET(state->valueTypeFlags, J9ClassLargestAlignmentConstraintDouble)) {
-					classFlags |= J9ClassLargestAlignmentConstraintDouble;
+					flagsToSet |= J9ClassLargestAlignmentConstraintDouble;
 				} else if (J9_ARE_ALL_BITS_SET(state->valueTypeFlags, J9ClassLargestAlignmentConstraintReference)) {
-					classFlags |= J9ClassLargestAlignmentConstraintReference;
+					flagsToSet |= J9ClassLargestAlignmentConstraintReference;
 				}
 				if (J9_ARE_ALL_BITS_SET(state->valueTypeFlags, J9ClassRequiresPrePadding)) {
-					classFlags |= J9ClassRequiresPrePadding;
+					flagsToSet |= J9ClassRequiresPrePadding;
 				}
 			}
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 		}
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-		if (J9_ARE_ALL_BITS_SET(state->valueTypeFlags, J9ClassContainsUnflattenedFlattenables)) {
-			classFlags |= J9ClassContainsUnflattenedFlattenables;
-		}
-		if (J9_ARE_ALL_BITS_SET(state->valueTypeFlags, J9ClassHasReferences)) {
-			classFlags |= J9ClassHasReferences;
-
-		}
-#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
-
-		state->ramClass->classFlags = classFlags;
+		J9CLASS_EXTENDED_FLAGS_SET(state->ramClass, flagsToSet);
 
 		/* Ensure all previous writes have completed before making the new class visible. */
 		VM_AtomicSupport::writeBarrier();
@@ -2377,6 +2378,9 @@ nativeOOM:
 			packageID = hashPkgTableIDFor(vmThread, hostClassLoader, romClass, state->entryIndex, state->locationType);
 		}
 		state->ramClass->packageID = packageID;
+		if (state->ramClass->Ltype != state->ramClass) {
+			state->ramClass->Ltype->packageID = packageID;
+		}
 	}
 
 	omrthread_monitor_exit(javaVM->classTableMutex);
@@ -2502,15 +2506,15 @@ internalCreateRAMClassFromROMClassImpl(J9VMThread *vmThread, J9ClassLoader *clas
 	UDATA vTableSlots = 0;
 	UDATA jitVTableSlots = 0;
 	UDATA *vTable = NULL;
-	UDATA classSize;
-	UDATA result;
-	J9Class *interfaceHead;
+	UDATA classSize = 0;
+	UDATA result = 0;
+	J9Class *interfaceHead = NULL;
 	BOOLEAN foundCloneable = FALSE;
 	UDATA extendedMethodBlockSize = 0;
-	UDATA totalStaticSlots;
+	UDATA totalStaticSlots = 0;
 	UDATA interfaceCount = 0;
 	J9ROMFieldOffsetWalkState romWalkState = {0};
-	J9ROMFieldOffsetWalkResult *romWalkResult;
+	J9ROMFieldOffsetWalkResult *romWalkResult = NULL;
 	BOOLEAN hotswapping = (0 != (options & J9_FINDCLASS_FLAG_NO_DEBUG_EVENTS));
 	BOOLEAN fastHCR = (0 != (options & J9_FINDCLASS_FLAG_FAST_HCR));
 	UDATA *iTable = NULL;
@@ -2522,6 +2526,11 @@ internalCreateRAMClassFromROMClassImpl(J9VMThread *vmThread, J9ClassLoader *clas
 	UDATA defaultConflictCount = 0;
 	J9OverrideErrorData errorData = {0};
 	J9MemorySegment *segment = NULL;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	bool generateVTLtype = J9ROMCLASS_IS_PRIMITIVE_VALUE_TYPE(romClass);
+#else
+	bool generateVTLtype = false;
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	PORT_ACCESS_FROM_JAVAVM(javaVM);
 
 	state->retry = FALSE;
@@ -2617,6 +2626,9 @@ fail:
 	/* computeRAMSizeForROMClass */
 	{
 		classSize = sizeof(J9Class) / sizeof(void *);
+		if (generateVTLtype) {
+			classSize += sizeof(J9Class) / sizeof(void *);
+		}
 
 		/* add in size of method trace array  if extended method block active */
 		if ((javaVM->runtimeFlags & J9_RUNTIME_EXTENDED_METHOD_BLOCK) == J9_RUNTIME_EXTENDED_METHOD_BLOCK) {
@@ -2740,7 +2752,10 @@ fail:
 #endif
 		/* commit the number of vTable slots */
 		classSize += vTableSlots;
-
+		if (generateVTLtype) {
+			/* Primitive VT Ltype does not need a vTable since no new method invocations should be done through them. */
+			classSize += 1; /* size slot only */
+		}
 		/* Compute space required for all local iTables.
 		 * All array classes share the same iTable.  If this is an array class and [Z (the first
 		 * allocated array class) has been filled in, no iTable is generated for this class.
@@ -2936,8 +2951,15 @@ fail:
 			allocationRequests[RAM_CLASS_FLATTENED_CLASS_CACHE].alignment = OMR_MAX(sizeof(J9Class *), sizeof(UDATA));
 			allocationRequests[RAM_CLASS_FLATTENED_CLASS_CACHE].alignedSize = flattenedClassCacheAllocSize;
 			allocationRequests[RAM_CLASS_FLATTENED_CLASS_CACHE].address = NULL;
+			UDATA allocSize = 0;
+			if (generateVTLtype) {
+				allocSize = sizeof(J9Class) + sizeof(UDATA); /* add sizeof(UDATA) for vTable size slot */
+			}
+			allocationRequests[RAM_CLASS_GENERATED_HEADER_FRAGMENT].prefixSize = 0;
+			allocationRequests[RAM_CLASS_GENERATED_HEADER_FRAGMENT].alignment = J9_REQUIRED_CLASS_ALIGNMENT;
+			allocationRequests[RAM_CLASS_GENERATED_HEADER_FRAGMENT].alignedSize = allocSize;
+			allocationRequests[RAM_CLASS_GENERATED_HEADER_FRAGMENT].address = NULL;
 #endif /* J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES */
-
 			if (fastHCR) {
 				/* For shared fragments, set alignedSize and prefixSize to 0 to make internalAllocateRAMClass() ignore them. */
 				allocationRequests[RAM_SUPERCLASSES_FRAGMENT].address = (UDATA *) classBeingRedefined->superclasses;
@@ -2997,6 +3019,9 @@ fail:
 				if (0 != flattenedClassCacheAllocSize) {
 					memcpy(ramClass->flattenedClassCache, flattenedClassCache, flattenedClassCacheAllocSize);
 				}
+				if (generateVTLtype) {
+					ramClass->Ltype = (J9Class*)allocationRequests[RAM_CLASS_GENERATED_HEADER_FRAGMENT].address;
+				}
 #endif /* J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES */
 			}
 		}
@@ -3047,7 +3072,6 @@ fail:
 			} else {
 				ramClass->hostClass = ramClass;
 			}
-
 			/* Fill in the package ID. The final packageID may differ in value from this one,
 			 * but it will certainly represent the same package, so this ID is valid for
 			 * as long as the classTableMutex is held.
@@ -3161,7 +3185,7 @@ fail:
 			 *              + J9ClassEnsureHashed (inherited)
 			 *             + J9ClassHasOffloadAllowSubtasksNatives
 			 *            + J9ClassIsPrimitiveValueType
-			 *           + Unused
+			 *           + J9ClassGenerated
 			 *
 			 *         + Unused
 			 *        + Unused
@@ -3292,6 +3316,7 @@ fail:
 				}
 			}
 
+
 			/* run pre-init (requires vTable to be in place) */
 			internalRunPreInitInstructions(ramClass, vmThread);
 
@@ -3307,6 +3332,19 @@ fail:
 				J9INTERFACECLASS_SET_ITABLEMETHODCOUNT(ramClass, iTableMethodCount);
 				J9INTERFACECLASS_SET_METHODORDERING(ramClass, NULL);
 			}
+
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+			if (J9ROMCLASS_IS_PRIMITIVE_VALUE_TYPE(romClass)) {
+				ramClass->Qtype = ramClass;
+				if (NULL != ramClass->Ltype) {
+					memcpy(ramClass->Ltype, ramClass, sizeof(J9Class));
+				}
+			} else {
+				/* Ltype and Qtype point to itself for other classes.  */
+				ramClass->Ltype = ramClass;
+				ramClass->Qtype = ramClass;
+			}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 			Trc_VM_initializeRAMClass_End(vmThread, J9UTF8_LENGTH(className), J9UTF8_DATA(className), classSize, classLoader);
 		}
