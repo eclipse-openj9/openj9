@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -71,7 +71,10 @@ public:
 		switch(_state) {
 		case valuetypesiterator_state_default_value:
 			_state = valuetypesiterator_state_end;
-			if (J9_IS_J9CLASS_VALUETYPE(_clazzPtr) && (!J9CLASS_IS_ARRAY(_clazzPtr))) {
+			if (J9_IS_J9CLASS_VALUETYPE(_clazzPtr)
+				&& (!J9CLASS_IS_ARRAY(_clazzPtr))
+				&& (!J9_IS_J9CLASS_GENERATED_VT_LTYPE(_clazzPtr))
+			) {
 				return &(_clazzPtr->flattenedClassCache->defaultValue);
 			}
 			break;

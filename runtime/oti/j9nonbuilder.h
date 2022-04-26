@@ -88,6 +88,7 @@
 #define J9ClassEnsureHashed 0x100000
 #define J9ClassHasOffloadAllowSubtasksNatives 0x200000
 #define J9ClassIsPrimitiveValueType 0x400000
+#define J9ClassGenerated 0x800000
 
 /* @ddr_namespace: map_to_type=J9FieldFlags */
 
@@ -3212,6 +3213,10 @@ typedef struct J9Class {
 #endif /* JAVA_SPEC_VERSION >= 11 */
 	struct J9FlattenedClassCache* flattenedClassCache;
 	struct J9ClassHotFieldsInfo* hotFieldsInfo;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	struct J9Class* Ltype; /* For primitive VTs, points to Qtype J9Class. For other classes, points to itself. */
+	struct J9Class* Qtype; /* For primitive VTs, points to Ltype J9Class. For other classes, points to itself. */
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 } J9Class;
 
 /* Interface classes can never be instantiated, so the following fields in J9Class will not be used:
@@ -3304,6 +3309,10 @@ typedef struct J9ArrayClass {
 	/* Added temporarily for consistency */
 	UDATA flattenedElementSize;
 	struct J9ClassHotFieldsInfo* hotFieldsInfo;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	struct J9Class* Ltype;
+	struct J9Class* Qtype;
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 } J9ArrayClass;
 
 
@@ -4511,8 +4520,14 @@ typedef struct J9InternalVMFunctions {
 	struct J9Class*  ( *internalFindClassInModule)(struct J9VMThread *currentThread, struct J9Module *j9module, U_8 *className, UDATA classNameLength, struct J9ClassLoader *classLoader, UDATA options) ;
 	struct J9Class*  ( *internalFindClassString)(struct J9VMThread* currentThread, j9object_t moduleName, j9object_t className, struct J9ClassLoader* classLoader, UDATA options, UDATA allowedBitsForClassName) ;
 	struct J9Class*  ( *hashClassTableAt)(struct J9ClassLoader *classLoader, U_8 *className, UDATA classNameLength) ;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	struct J9Class*  ( *hashClassTableAtWithFlags)(struct J9ClassLoader *classLoader, U_8 *className, UDATA classNameLength, UDATA flags) ;
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	UDATA  ( *hashClassTableAtPut)(struct J9VMThread *vmThread, struct J9ClassLoader *classLoader, U_8 *className, UDATA classNameLength, struct J9Class *value) ;
 	UDATA  ( *hashClassTableDelete)(struct J9ClassLoader *classLoader, U_8 *className, UDATA classNameLength) ;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	UDATA  ( *hashClassTableDeleteWithFlags)(struct J9ClassLoader *classLoader, U_8 *className, UDATA classNameLength, UDATA flags) ;
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	void  ( *hashClassTableReplace)(struct J9VMThread* vmThread, struct J9ClassLoader *classLoader, struct J9Class *originalClass, struct J9Class *replacementClass) ;
 	struct J9ObjectMonitor *  ( *monitorTableAt)(struct J9VMThread* vmStruct, j9object_t object) ;
 	struct J9VMThread*  ( *allocateVMThread)(struct J9JavaVM * vm, omrthread_t osThread, UDATA privateFlags, void * memorySpace, J9Object * threadObject) ;
@@ -4638,6 +4653,10 @@ typedef struct J9InternalVMFunctions {
 	struct J9Class*  ( *allClassesStartDo)(struct J9ClassWalkState* state, struct J9JavaVM* vm, struct J9ClassLoader* classLoader) ;
 	struct J9Class*  ( *allClassesNextDo)(struct J9ClassWalkState* state) ;
 	void  ( *allClassesEndDo)(struct J9ClassWalkState* state) ;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	struct J9Class*  ( *allClassesStartDoWithFlags)(struct J9ClassWalkState* state, struct J9JavaVM* vm, struct J9ClassLoader* classLoader, UDATA flags) ;
+	struct J9Class*  ( *allClassesNextDoWithFlags)(struct J9ClassWalkState* state, UDATA flags) ;
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	struct J9Class*  ( *allLiveClassesStartDo)(struct J9ClassWalkState* state, struct J9JavaVM* vm, struct J9ClassLoader* classLoader) ;
 	struct J9Class*  ( *allLiveClassesNextDo)(struct J9ClassWalkState* state) ;
 	void  ( *allLiveClassesEndDo)(struct J9ClassWalkState* state) ;

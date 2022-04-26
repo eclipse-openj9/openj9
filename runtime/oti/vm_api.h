@@ -1884,6 +1884,16 @@ setExceptionForErroredRomClass( J9ROMClass *romClass, J9VMThread *vmThread );
  * to control whether to skip special classes, like hidden classes, in the hash table iteration.
  */
 #define J9_HASH_TABLE_STATE_FLAG_SKIP_HIDDEN 1
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#define J9_HASH_TABLE_STATE_FLAG_SKIP_VT_LTYPE 2
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+/* Flag used by hashClassTableAtWithFlags()/hashClassTableDeleteWithFlags() to indicate whether this
+ * operation is on a Q type J9Class.
+ */
+#define J9_HASH_TABLE_QUERY_FLAG_GENERATED_VT_LTYPE 1
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 /**
 * Searches classLoader for any loaded classes in a specific package
@@ -1914,6 +1924,19 @@ hashClassTableFree(J9ClassLoader* classLoader);
 */
 J9Class *
 hashClassTableAt(J9ClassLoader *classLoader, U_8 *className, UDATA classNameLength);
+
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+/**
+* @brief
+* @param *classLoader
+* @param *className
+* @param classNameLength
+* @param flags
+* @return J9Class *
+*/
+J9Class *
+hashClassTableAtWithFlags(J9ClassLoader *classLoader, U_8 *className, UDATA classNameLength, UDATA flags);
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 
 /**
@@ -1947,6 +1970,20 @@ hashClassTableAtPut(J9VMThread *vmThread, J9ClassLoader *classLoader, U_8 *class
 */
 UDATA
 hashClassTableDelete(J9ClassLoader *classLoader, U_8 *className, UDATA classNameLength);
+
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+/**
+* @brief
+* @param *classLoader
+* @param *className
+* @param classNameLength
+* @param *value
+* @param flags
+* @return UDATA
+*/
+UDATA
+hashClassTableDeleteWithFlags(J9ClassLoader *classLoader, U_8 *className, UDATA classNameLength, UDATA flags);
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 /**
 * @brief
@@ -3022,7 +3059,33 @@ allClassesNextDo(J9ClassWalkState* state);
 */
 J9Class*
 allClassesStartDo(J9ClassWalkState* state, J9JavaVM* vm, J9ClassLoader* classLoader);
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+/**
+ * Flags used by allClassesNextDo(J9ClassWalkState* state, UDATA flags) and
+ * allClassesStartDo(J9ClassWalkState* state, J9JavaVM* vm, J9ClassLoader* classLoader, UDATA flags)
+ */
+#define J9CLASS_WALK_FLAG_SKIP_VT_LTYPE 1
+/**
+* Iterate J9Class in the class segment
+* @param state J9ClassWalkState
+* @param flags Flags controlling the behaviour of the class walk.
+* 				J9CLASS_WALK_FLAG_SKIP_VT_LTYPE skips the J9Class representing the Ltype of a Primitive VT.
+* @return J9Class found in the class segment
+*/
+J9Class*
+allClassesNextDoWithFlags(J9ClassWalkState* state, UDATA flags);
 
+
+/**
+* Start the iteration of J9Class in the class segment
+* @param state J9ClassWalkState
+* @param flags Flags controlling the behaviour of the class walk.
+* 				J9CLASS_WALK_FLAG_SKIP_VT_LTYPE skips the J9Class representing the Ltype of a Primitive VT.
+* @return J9Class found in the class segment
+*/
+J9Class*
+allClassesStartDoWithFlags(J9ClassWalkState* state, J9JavaVM* vm, J9ClassLoader* classLoader, UDATA flags);
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 /**
 * @brief
 * @param state

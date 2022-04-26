@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -51,7 +51,10 @@ public:
         _numberOfFlattenedFields(0),
         _index(0)
 	{
-        if (J9_ARE_NO_BITS_SET(J9CLASS_FLAGS(clazz), J9AccClassArray) && (NULL != clazz->flattenedClassCache))  {
+        if (J9_ARE_NO_BITS_SET(J9CLASS_FLAGS(clazz), J9AccClassArray)
+			&& (NULL != clazz->flattenedClassCache)
+			&& !J9_IS_J9CLASS_GENERATED_VT_LTYPE(clazz)
+        )  {
             _numberOfFlattenedFields = clazz->flattenedClassCache->numberOfEntries;
         }
     };

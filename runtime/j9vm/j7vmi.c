@@ -2639,8 +2639,8 @@ retry:
 																			LOAD_LOCATION_UNKNOWN,
 																			NULL,
 																			NULL);
-			/* Done if a class was found or and exception is pending, otherwise try to define the bytes */
-			if ((clazz != NULL) || (currentThread->currentException != NULL)) {
+			/* Done if a class was found or an exception is pending, otherwise try to define the bytes */
+			if ((NULL != clazz) || (NULL != currentThread->currentException)) {
 				goto done;
 			} else {
 				loadedClass = NULL;

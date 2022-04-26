@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1066,8 +1066,11 @@ fixITables(J9VMThread * currentThread, J9HashTable * classPairs)
 		}
 		classPair = hashTableNextDo(&hashTableState);
 	}
-
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	clazz = vmFuncs->allClassesStartDoWithFlags(&classWalkState, vm, NULL, J9CLASS_WALK_FLAG_SKIP_VT_LTYPE );
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	clazz = vmFuncs->allClassesStartDo(&classWalkState, vm, NULL);
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	while (clazz != NULL) {
 		if (anyInterfaces) {
 			J9ITable *iTable = (J9ITable *)clazz->iTable;
@@ -1080,8 +1083,11 @@ fixITables(J9VMThread * currentThread, J9HashTable * classPairs)
 		if (J9_IS_CLASS_OBSOLETE(clazz)) {
 			fixClassSlot(currentThread, &clazz->arrayClass, classPairs);
 		}
-
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		clazz = vmFuncs->allClassesNextDoWithFlags(&classWalkState, J9CLASS_WALK_FLAG_SKIP_VT_LTYPE);
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 		clazz = vmFuncs->allClassesNextDo(&classWalkState);
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	}
 	vmFuncs->allClassesEndDo(&classWalkState);
 
@@ -1168,12 +1174,20 @@ fixITables(J9VMThread * currentThread, J9HashTable * classPairs)
 	   of the whole redefined hierarchy fixing up itables of all obsolete classes using the reverse
 	   obsolete class chain */
 
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	clazz = vmFuncs->allClassesStartDoWithFlags(&classWalkState, vm, NULL, J9CLASS_WALK_FLAG_SKIP_VT_LTYPE );
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	clazz = vmFuncs->allClassesStartDo(&classWalkState, vm, NULL);
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	while (clazz != NULL) {
 		if (J9_IS_CLASS_OBSOLETE(clazz)) {
 			clazz->iTable = J9_CURRENT_CLASS(clazz)->iTable;
 		}
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		clazz = vmFuncs->allClassesNextDoWithFlags(&classWalkState, J9CLASS_WALK_FLAG_SKIP_VT_LTYPE);
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 		clazz = vmFuncs->allClassesNextDo(&classWalkState);
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	}
 	vmFuncs->allClassesEndDo(&classWalkState);
 
@@ -2028,7 +2042,11 @@ fixConstantPoolsForFastHCR(J9VMThread *currentThread, J9HashTable *classPairs, J
 	J9ClassWalkState state;
 	J9JavaVM *vm = currentThread->javaVM;
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	J9Class *clazz = vmFuncs->allClassesStartDoWithFlags(&state, vm, NULL, J9CLASS_WALK_FLAG_SKIP_VT_LTYPE);
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	J9Class *clazz = vmFuncs->allClassesStartDo(&state, vm, NULL);
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	J9Class *objectClass = J9VMJAVALANGOBJECT_OR_NULL(currentThread->javaVM);
 
 	while (NULL != clazz) {
@@ -2040,8 +2058,11 @@ fixConstantPoolsForFastHCR(J9VMThread *currentThread, J9HashTable *classPairs, J
 		}
 
 		fixRAMSplitTablesForFastHCR(clazz, methodPairs);
-
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		clazz = vmFuncs->allClassesNextDoWithFlags(&state, J9CLASS_WALK_FLAG_SKIP_VT_LTYPE);
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 		clazz = vmFuncs->allClassesNextDo(&state);
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	}
 	vmFuncs->allClassesEndDo(&state);
 
@@ -2055,15 +2076,14 @@ unresolveAllClasses(J9VMThread * currentThread, J9HashTable * classPairs, J9Hash
 	J9JavaVM * vm = currentThread->javaVM;
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 	J9ClassWalkState state;
-	J9Class * clazz;
-
-
-
-	clazz = vmFuncs->allClassesStartDo(&state, vm, NULL);
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	J9Class *clazz = vmFuncs->allClassesStartDoWithFlags(&state, vm, NULL, J9CLASS_WALK_FLAG_SKIP_VT_LTYPE);
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+	J9Class *clazz = vmFuncs->allClassesStartDo(&state, vm, NULL);
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 	while (clazz != NULL) {
 		U_16 i = 0;
-
 		if (extensionsUsed) {
 
 			/* Zero the constant pool and then run the pre-init instructions.
@@ -2093,7 +2113,11 @@ unresolveAllClasses(J9VMThread * currentThread, J9HashTable * classPairs, J9Hash
 			}
 		}
 
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		clazz = vmFuncs->allClassesNextDoWithFlags(&state, J9CLASS_WALK_FLAG_SKIP_VT_LTYPE);
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 		clazz = vmFuncs->allClassesNextDo(&state);
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	}
 
 	vmFuncs->allClassesEndDo(&state);
@@ -2227,7 +2251,21 @@ copyPreservedValues(J9VMThread * currentThread, J9HashTable * classPairs, UDATA 
 			replacementRAMClass->classObject = originalRAMClass->classObject;
 			replacementRAMClass->module = originalRAMClass->module;
 			J9VMJAVALANGCLASS_SET_VMREF(currentThread, replacementRAMClass->classObject, replacementRAMClass);
-
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+			if (J9_IS_J9CLASS_PRIMITIVE_VALUETYPE(originalRAMClass)) {
+				Assert_hshelp_true(J9_IS_J9CLASS_PRIMITIVE_VALUETYPE(replacementRAMClass));
+				Assert_hshelp_true(originalRAMClass->Ltype != originalRAMClass);
+				Assert_hshelp_true(replacementRAMClass->Ltype != replacementRAMClass);
+				replacementRAMClass->Ltype->initializeStatus = originalRAMClass->Ltype->initializeStatus;
+				replacementRAMClass->Ltype->classObject = originalRAMClass->Ltype->classObject;
+				replacementRAMClass->Ltype->module = originalRAMClass->Ltype->module;
+				arrayClass = originalRAMClass->Ltype->arrayClass;
+				replacementRAMClass->Ltype->arrayClass = arrayClass;
+				originalRAMClass->Ltype->arrayClass = replacementRAMClass->Ltype;
+				originalRAMClass->Ltype->classDepthAndFlags |= J9AccClassHotSwappedOut;
+				J9VMJAVALANGCLASS_SET_VMREF(currentThread, replacementRAMClass->Ltype->classObject, replacementRAMClass->Ltype);
+			}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 			/* Copy static fields */
 			if (extensionsUsed) {
@@ -2330,8 +2368,15 @@ replaceInAllClassLoaders(J9VMThread * currentThread, J9Class * originalRAMClass,
 	while (NULL != classLoader) {
 
 		fixLoadingConstraints(vm, originalRAMClass, replacementRAMClass);
-		vmFuncs->hashClassTableReplace(currentThread, classLoader,
-			originalRAMClass, replacementRAMClass);
+		vmFuncs->hashClassTableReplace(currentThread, classLoader, originalRAMClass, replacementRAMClass);
+#if	defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		if (J9_IS_J9CLASS_PRIMITIVE_VALUETYPE(originalRAMClass)) {
+			Assert_hshelp_true(J9_IS_J9CLASS_PRIMITIVE_VALUETYPE(replacementRAMClass));
+			Assert_hshelp_true(originalRAMClass->Ltype != originalRAMClass);
+			Assert_hshelp_true(replacementRAMClass->Ltype != replacementRAMClass);
+			vmFuncs->hashClassTableReplace(currentThread, classLoader, originalRAMClass->Ltype, replacementRAMClass->Ltype);
+		}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 		classLoader = vmFuncs->allClassLoadersNextDo(&walkState);
 	}
@@ -2479,6 +2524,21 @@ swapClassesForFastHCR(J9Class *originalClass, J9Class *obsoleteClass)
 	J9CLASS_EXTENDED_FLAGS_SET(obsoleteClass, J9ClassReusedStatics);
 	Assert_hshelp_true(0 == (J9CLASS_EXTENDED_FLAGS(originalClass) & J9ClassReusedStatics));
 
+#if	defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	if (J9_IS_J9CLASS_PRIMITIVE_VALUETYPE(originalClass)) {
+		Assert_hshelp_false(J9_IS_J9CLASS_PRIMITIVE_VALUETYPE(originalClass->Ltype));
+		Assert_hshelp_false(J9_IS_J9CLASS_PRIMITIVE_VALUETYPE(obsoleteClass->Ltype));
+		Assert_hshelp_true(J9_IS_J9CLASS_PRIMITIVE_VALUETYPE(originalClass));
+		obsoleteClass->Ltype->initializeStatus = obsoleteClass->initializeStatus;
+		obsoleteClass->Ltype->classObject = originalClass->Ltype->classObject;
+		obsoleteClass->Ltype->module = originalClass->Ltype->module;
+		obsoleteClass->Ltype->arrayClass = originalClass->Ltype;
+		obsoleteClass->Ltype->classDepthAndFlags |= J9AccClassHotSwappedOut;
+		SWAP_MEMBER(romClass, J9ROMClass *, originalClass->Ltype, obsoleteClass->Ltype);
+		SWAP_MEMBER(replacedClass, J9Class *, originalClass->Ltype, obsoleteClass->Ltype);
+	}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+
 	#undef SWAP_MEMBER
 }
 
@@ -2535,6 +2595,12 @@ recreateRAMClasses(J9VMThread * currentThread, J9HashTable * classHashTable, J9H
 		/* Delete original class from defining loader's class table */
 		if (!fastHCR) {
 			vmFuncs->hashClassTableDelete(classLoader, J9UTF8_DATA(className), J9UTF8_LENGTH(className));
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+			if (J9_IS_J9CLASS_PRIMITIVE_VALUETYPE(originalRAMClass)) {
+				/* delete the generated Ltype from the hashtable */
+				vmFuncs->hashClassTableDeleteWithFlags(classLoader, J9UTF8_DATA(className), J9UTF8_LENGTH(className), J9_HASH_TABLE_QUERY_FLAG_GENERATED_VT_LTYPE);
+			}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 		}
 
 		/* Create new RAM class */
@@ -2628,6 +2694,14 @@ outOfMemory:
 
 		/* Make the new class version keep track of its direct predecessor */
 		replacementRAMClass->replacedClass = originalRAMClass;
+#if	defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		if (J9_IS_J9CLASS_PRIMITIVE_VALUETYPE(originalRAMClass)) {
+			Assert_hshelp_true(J9_IS_J9CLASS_PRIMITIVE_VALUETYPE(replacementRAMClass));
+			Assert_hshelp_true(originalRAMClass->Ltype != originalRAMClass);
+			Assert_hshelp_true(replacementRAMClass->Ltype != replacementRAMClass);
+			replacementRAMClass->Ltype->replacedClass = originalRAMClass->Ltype;
+		}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 		/* Preserve externally set class flag (by the jit) */
 		if (J9CLASS_FLAGS(originalRAMClass) & J9AccClassHasBeenOverridden) {
@@ -2760,7 +2834,11 @@ addClassesRequiringNewITables(J9JavaVM *vm, J9HashTable *classHashTable, UDATA *
 
 	*addedMethodCountPtr = 0;
 	*addedClassCountPtr = 0;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	clazz = vmFuncs->allClassesStartDoWithFlags(&classWalkState, vm, NULL, J9CLASS_WALK_FLAG_SKIP_VT_LTYPE);
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	clazz = vmFuncs->allClassesStartDo(&classWalkState, vm, NULL);
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	while (NULL != clazz) {
 
 		if (!J9_IS_CLASS_OBSOLETE(clazz)) {
@@ -2837,8 +2915,11 @@ addClassesRequiringNewITables(J9JavaVM *vm, J9HashTable *classHashTable, UDATA *
 				iTable = iTable->next;
 			}
 		}
-
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		clazz = vmFuncs->allClassesNextDoWithFlags(&classWalkState, J9CLASS_WALK_FLAG_SKIP_VT_LTYPE);
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 		clazz = vmFuncs->allClassesNextDo(&classWalkState);
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	}
 	vmFuncs->allClassesEndDo(&classWalkState);
 	*addedMethodCountPtr = addedMethodCount;
@@ -3562,6 +3643,10 @@ reloadROMClasses(J9VMThread * currentThread, jint class_count, const jvmtiClassD
 	for (i = 0; i < class_count; ++i) {
 		const jvmtiClassDefinition * currentDefinition = &(class_definitions[i]);
 		J9Class * originalRAMClass = J9VM_J9CLASS_FROM_JCLASS(currentThread, currentDefinition->klass);
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		/* Qtype points to originalRAMClass itself on non-primitive VT. On primitive VT, it points to the value type (Qtype), which has all the methods. */
+		originalRAMClass = originalRAMClass->Qtype;
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 		J9UTF8 * className = J9ROMCLASS_CLASSNAME(originalRAMClass->romClass);
 		UDATA loadRC;
 		J9LoadROMClassData loadData;
@@ -3786,6 +3871,16 @@ notifyGCOfClassReplacement(J9VMThread * currentThread, J9HashTable * classPairs,
 	while (classPair != NULL) {
 		if (J9_ARE_ALL_BITS_SET(classPair->flags, J9JVMTI_CLASS_PAIR_FLAG_REDEFINED)) {
 			mmFunctions->j9gc_notifyGCOfClassReplacement(currentThread, classPair->originalRAMClass, classPair->replacementClass.ramClass, isFastHCR);
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+			if (J9_IS_J9CLASS_PRIMITIVE_VALUETYPE(classPair->originalRAMClass)) {
+				J9Class* orginalClass = classPair->originalRAMClass;
+				J9Class* replacementClass = classPair->replacementClass.ramClass;
+				Assert_hshelp_true(J9_IS_J9CLASS_PRIMITIVE_VALUETYPE(replacementClass));
+				Assert_hshelp_true(orginalClass->Ltype != orginalClass);
+				Assert_hshelp_true(replacementClass->Ltype != replacementClass);
+				mmFunctions->j9gc_notifyGCOfClassReplacement(currentThread, orginalClass->Ltype, replacementClass->Ltype, isFastHCR);
+			}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 		}
 		classPair = hashTableNextDo(&hashTableState);
 	}

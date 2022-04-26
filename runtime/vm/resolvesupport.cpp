@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -330,16 +330,6 @@ tryAgain:
 		}
 		goto done;
 	}
-
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-	if ((';' == *(char *)(classNameData + (classNameLength - 1)))
-		&& ('Q' == *(char *)classNameData)
-	) {
-		/* we are dealing with signature envelope, extract the name from it */
-		classNameData += 1;
-		classNameLength -= 2;
-	}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 	resolvedClass = internalFindClassUTF8(vmStruct, classNameData, classNameLength,
 			classLoader, findClassFlags);

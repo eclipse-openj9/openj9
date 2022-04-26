@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2003, 2019 IBM Corp. and others
+ * Copyright (c) 2003, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -48,6 +48,14 @@ static jvmtiIterationControl binaryHeapDumpObjectReferenceIteratorWriterCallback
 
 #define allClassesNextDo(vm, state) \
 	vm->internalVMFunctions->allClassesNextDo(state)
+
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#define allClassesStartDoWithFlags(vm, state, loader, flags) \
+	vm->internalVMFunctions->allClassesStartDoWithFlags(state, vm, loader, flags)
+
+#define allClassesNextDoWithFlags(vm, state, flags) \
+	vm->internalVMFunctions->allClassesNextDoWithFlags(state, flags)
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 #define allClassesEndDo(vm, state) \
 	vm->internalVMFunctions->allClassesEndDo(state)
@@ -1337,7 +1345,11 @@ BinaryHeapDumpWriter::writeDumpFileTrailer(void)
 	J9Class *clazz;
 	
 	/* Iterate through the classes writing them */
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	clazz = allClassesStartDoWithFlags(_VirtualMachine, &state, NULL, J9CLASS_WALK_FLAG_SKIP_VT_LTYPE);
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	clazz = allClassesStartDo(_VirtualMachine, &state, NULL);
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	while (clazz) {
 		writeClassRecord(clazz);
 		if (_Error) {
@@ -1345,7 +1357,11 @@ BinaryHeapDumpWriter::writeDumpFileTrailer(void)
 			allClassesEndDo(_VirtualMachine, &state);
 			return;
 		}
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		clazz = allClassesNextDoWithFlags(_VirtualMachine, &state, J9CLASS_WALK_FLAG_SKIP_VT_LTYPE);
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 		clazz = allClassesNextDo(_VirtualMachine, &state);
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	}
 	allClassesEndDo(_VirtualMachine, &state);
 

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -58,15 +58,21 @@ checkJ9MethodSanity(J9JavaVM *vm)
 	J9Class *clazz;
 
 	vmchkPrintf(vm, "  %s Checking methods>\n", VMCHECK_PREFIX);
-
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	clazz = vm->internalVMFunctions->allClassesStartDoWithFlags(&walkState, vm, NULL, J9CLASS_WALK_FLAG_SKIP_VT_LTYPE);
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	clazz = vm->internalVMFunctions->allClassesStartDo(&walkState, vm, NULL);
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	while (NULL != clazz) {
 
 		if (!J9_IS_CLASS_OBSOLETE(clazz)) {
 			count += verifyClassMethods(vm, clazz);
 		}
-
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		clazz = vm->internalVMFunctions->allClassesNextDoWithFlags(&walkState, J9CLASS_WALK_FLAG_SKIP_VT_LTYPE);
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 		clazz = vm->internalVMFunctions->allClassesNextDo(&walkState);
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	}
 	vm->internalVMFunctions->allClassesEndDo(&walkState);
 

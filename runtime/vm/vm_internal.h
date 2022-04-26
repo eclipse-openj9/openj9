@@ -52,6 +52,7 @@ extern "C" {
  *
  * xx000 RAM class
  * xxx01 ROM class
+ * xxx10 QTYPE RAM class (used by J9VM_OPT_VALHALLA_VALUE_TYPES only)
  * xxx11 Generated class
  *
  * Note - TAG_GENERATED_PACKAGE is only set with TAG_ROM_CLASS
@@ -60,7 +61,7 @@ extern "C" {
  *
  *  xx100 Query
  *  00100 Class UTF query
- *  01100 Packed query
+ *  01100 Q type query (used by J9VM_OPT_VALHALLA_VALUE_TYPES only)
  *  10100 Unicode query
  *  11100 Package UTF query
  */
@@ -68,13 +69,15 @@ extern "C" {
 #define TAG_RAM_CLASS			0
 #define	MASK_ROM_CLASS			3
 #define	TAG_ROM_CLASS			1
-#define MASK_PACKED				3
-#define	TAG_PACKED_YES			3
+#define MASK_QTYPE_RAM_CLASS	3
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#define	TAG_GENERATED_VT_LTYPE_RAM_QUERY		2 /* safe to use 2 as TAG_GENERATED_PACKAGE cannot be set alone */
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 #define TAG_GENERATED_PACKAGE		2
 #define MASK_QUERY 				31
 #define TAG_UTF_QUERY			4
 #define TAG_PACKAGE_UTF_QUERY	28
-#define TAG_PACKED_QUERY 		12
+#define TAG_QTYPE_RAM_QUERY 	12
 #define TAG_UNICODE_QUERY 		20
 
 /* ---------------- resolvefield.c ---------------- */

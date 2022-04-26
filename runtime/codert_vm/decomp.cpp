@@ -256,8 +256,12 @@ jitResetAllMethods(J9VMThread *currentThread)
 	J9ClassWalkState state;
 
 	/* First mark every compiled method for retranslation and invalidate the translation */
-
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	clazz = vmFuncs->allClassesStartDoWithFlags(&state, vm, NULL, J9CLASS_WALK_FLAG_SKIP_VT_LTYPE);
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	clazz = vmFuncs->allClassesStartDo(&state, vm, NULL);
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+
 	while (clazz != NULL) {
 		J9Method *method = clazz->ramMethods;
 		U_32 methodCount = clazz->romClass->romMethodCount;
@@ -289,14 +293,20 @@ jitResetAllMethods(J9VMThread *currentThread)
 #if defined(OSX) && defined(AARCH64)
 		pthread_jit_write_protect_np(1);
 #endif
-
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		clazz = vmFuncs->allClassesNextDoWithFlags(&state, J9CLASS_WALK_FLAG_SKIP_VT_LTYPE);
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 		clazz = vmFuncs->allClassesNextDo(&state);
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	}
 	vmFuncs->allClassesEndDo(&state);
 
 	/* Now fix all the JIT vTables */
-
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	clazz = vmFuncs->allClassesStartDoWithFlags(&state, vm, NULL, J9CLASS_WALK_FLAG_SKIP_VT_LTYPE);
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	clazz = vmFuncs->allClassesStartDo(&state, vm, NULL);
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	while (clazz != NULL) {
 		/* Interface classes do not have vTables, so skip them */
 		if (!J9ROMCLASS_IS_INTERFACE(clazz->romClass)) {
@@ -323,7 +333,11 @@ jitResetAllMethods(J9VMThread *currentThread)
 				}
 			}
 		}
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		clazz = vmFuncs->allClassesNextDoWithFlags(&state, J9CLASS_WALK_FLAG_SKIP_VT_LTYPE);
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 		clazz = vmFuncs->allClassesNextDo(&state);
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	}
 	vmFuncs->allClassesEndDo(&state);
 }

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -194,7 +194,10 @@ verifyJ9ClassHeader(J9JavaVM *vm, J9Class *clazz, J9Class *javaLangObjectClass)
 		passed = FALSE;
 	}
 
-	if ((NULL != romClass) && (0 != romClass->ramConstantPoolCount)) {
+	if ((NULL != romClass)
+		&& (0 != romClass->ramConstantPoolCount)
+		&& !J9_IS_J9CLASS_GENERATED_VT_LTYPE(clazz)
+	) {
 		J9ConstantPool *constantPool = clazz->ramConstantPool;
 		J9Class *cpClass = constantPool->ramClass;
 

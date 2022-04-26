@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,6 +26,10 @@
 #include "j9protos.h"
 #include "vm_internal.h"
 #include "ut_j9vm.h"
+
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#define TYPE_GENERATED_VT_LTYPE_RAM_CLASS ((UDATA)1)
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 #define TYPE_CLASS ((UDATA)0)
 #define TYPE_PACKAGEID ((UDATA)-1)
@@ -85,9 +89,18 @@ classHashGetName(KeyHashTableClassEntry *entry, const U_8 **name, UDATA *nameLen
 
 	if (TAG_RAM_CLASS == (tag & MASK_RAM_CLASS)) {
 		J9UTF8 *className = J9ROMCLASS_CLASSNAME(entry->ramClass->romClass);
-
 		*name = J9UTF8_DATA(className);
 		*nameLength = J9UTF8_LENGTH(className);
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		if (J9_IS_J9CLASS_GENERATED_VT_LTYPE(entry->ramClass)) {
+			type = TYPE_GENERATED_VT_LTYPE_RAM_CLASS;
+		}
+	} else if (TAG_GENERATED_VT_LTYPE_RAM_QUERY == (tag & MASK_QUERY)) {
+		KeyHashTableClassQueryEntry *queryEntry = (KeyHashTableClassQueryEntry *)entry;
+		*name = queryEntry->charData;
+		*nameLength = queryEntry->length;
+		type = TYPE_GENERATED_VT_LTYPE_RAM_CLASS;
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	} else if ((TAG_UTF_QUERY == (tag & MASK_QUERY))
 		|| (TAG_PACKAGE_UTF_QUERY == (tag & MASK_QUERY))
 	) {
@@ -300,7 +313,11 @@ classHashFn(void *key, void *userData)
 	if (TYPE_PACKAGEID == type) {
 		hash = hash ^ (U_32)type;
 	}
-
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	if (TYPE_GENERATED_VT_LTYPE_RAM_CLASS == type) {
+		hash = hash + type;
+	}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	return hash;
 }
 
@@ -317,6 +334,40 @@ hashClassTableNew(J9JavaVM *javaVM, U_32 initialSize)
 	return hashTableNew(OMRPORT_FROM_J9PORT(javaVM->portLibrary), J9_GET_CALLSITE(), initialSize, sizeof(KeyHashTableClassEntry), sizeof(char *), flags, J9MEM_CATEGORY_CLASSES, classHashFn, classHashEqualFn, NULL, javaVM);
 }
 
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+J9Class *
+hashClassTableAt(J9ClassLoader *classLoader, U_8 *className, UDATA classNameLength)
+{
+	return hashClassTableAtWithFlags(classLoader, className, classNameLength, 0);
+}
+
+J9Class *
+hashClassTableAtWithFlags(J9ClassLoader *classLoader, U_8 *className, UDATA classNameLength, UDATA flags)
+{
+	J9HashTable *table = classLoader->classHashTable;
+	KeyHashTableClassQueryEntry key;
+	KeyHashTableClassEntry *result = NULL;
+
+	if (J9_ARE_ALL_BITS_SET(flags, J9_HASH_TABLE_QUERY_FLAG_GENERATED_VT_LTYPE)) {
+		key.entry.tag = TAG_GENERATED_VT_LTYPE_RAM_QUERY;
+	} else {
+		key.entry.tag = TAG_UTF_QUERY;
+	}
+	key.charData = className;
+	key.length = classNameLength;
+	result = hashTableFind(table, &key);
+	if (NULL != result) {
+		J9Class *clazz = result->ramClass;
+		checkClassAlignment(clazz, "hashClassTableAtWithFlags");
+		if (J9ROMCLASS_IS_HIDDEN(clazz->romClass)) {
+			return NULL;
+		}
+		return clazz;
+	} else {
+		return NULL;
+	}
+}
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 J9Class *
 hashClassTableAt(J9ClassLoader *classLoader, U_8 *className, UDATA classNameLength)
 {
@@ -339,6 +390,7 @@ hashClassTableAt(J9ClassLoader *classLoader, U_8 *className, UDATA classNameLeng
 		return NULL;
 	}
 }
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 BOOLEAN
 isAnyClassLoadedFromPackage(J9ClassLoader *classLoader, U_8 *pkgName, UDATA pkgNameLength)
@@ -427,6 +479,29 @@ hashClassTableAtPut(J9VMThread *vmThread, J9ClassLoader *classLoader, U_8 *class
 	return 0;
 }
 
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+UDATA
+hashClassTableDeleteWithFlags(J9ClassLoader *classLoader, U_8 *className, UDATA classNameLength, UDATA flags)
+{
+	J9HashTable *table = classLoader->classHashTable;
+	KeyHashTableClassQueryEntry key;
+
+	if (J9_ARE_ALL_BITS_SET(flags, J9_HASH_TABLE_QUERY_FLAG_GENERATED_VT_LTYPE)) {
+		key.entry.tag = TAG_GENERATED_VT_LTYPE_RAM_QUERY;
+	} else {
+		key.entry.tag = TAG_UTF_QUERY;
+	}
+	key.charData = className;
+	key.length = classNameLength;
+	return hashTableRemove(table, &key);
+}
+
+UDATA
+hashClassTableDelete(J9ClassLoader *classLoader, U_8 *className, UDATA classNameLength)
+{
+	return hashClassTableDeleteWithFlags(classLoader, className, classNameLength, 0);
+}
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 UDATA
 hashClassTableDelete(J9ClassLoader *classLoader, U_8 *className, UDATA classNameLength)
 {
@@ -438,6 +513,7 @@ hashClassTableDelete(J9ClassLoader *classLoader, U_8 *className, UDATA className
 	key.length = classNameLength;
 	return hashTableRemove(table, &key);
 }
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 void
 hashClassTableReplace(J9VMThread *vmThread, J9ClassLoader *classLoader, J9Class *originalClass, J9Class *replacementClass)
@@ -445,6 +521,14 @@ hashClassTableReplace(J9VMThread *vmThread, J9ClassLoader *classLoader, J9Class 
 	J9HashTable *table = classLoader->classHashTable;
 	KeyHashTableClassEntry *result = NULL;
 	KeyHashTableClassQueryEntry original;
+
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	if (J9_IS_J9CLASS_GENERATED_VT_LTYPE(originalClass)) {
+		original.entry.tag = TAG_GENERATED_VT_LTYPE_RAM_QUERY;
+	} else {
+		original.entry.tag = TAG_UTF_QUERY;
+	}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 	original.entry.ramClass = originalClass;
 
@@ -460,6 +544,9 @@ J9Class *
 hashClassTableStartDo(J9ClassLoader *classLoader, J9HashTableState *walkState, UDATA flags)
 {
 	BOOLEAN skipHidden = J9_ARE_ALL_BITS_SET(flags, J9_HASH_TABLE_STATE_FLAG_SKIP_HIDDEN);
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	BOOLEAN skipVTLtype = J9_ARE_ALL_BITS_SET(flags, J9_HASH_TABLE_STATE_FLAG_SKIP_VT_LTYPE);
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	BOOLEAN continueToNext = FALSE;
 	KeyHashTableClassEntry *first = hashTableStartDo(classLoader->classHashTable, walkState);
 
@@ -470,6 +557,10 @@ hashClassTableStartDo(J9ClassLoader *classLoader, J9HashTableState *walkState, U
 		} else {
 			if (skipHidden && J9ROMCLASS_IS_HIDDEN(first->ramClass->romClass)) {
 				continueToNext = TRUE;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+			} else if (skipVTLtype && J9_IS_J9CLASS_GENERATED_VT_LTYPE(first->ramClass)) {
+				continueToNext = TRUE;
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 			} else {
 				continueToNext = FALSE;
 			}
@@ -488,6 +579,10 @@ hashClassTableStartDo(J9ClassLoader *classLoader, J9HashTableState *walkState, U
 			} else {
 				if (skipHidden && J9ROMCLASS_IS_HIDDEN(first->ramClass->romClass)) {
 					continueToNext = TRUE;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+				} else if (skipVTLtype && J9_IS_J9CLASS_GENERATED_VT_LTYPE(first->ramClass)) {
+					continueToNext = TRUE;
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 				} else {
 					continueToNext = FALSE;
 				}
@@ -504,6 +599,9 @@ J9Class *
 hashClassTableNextDo(J9HashTableState *walkState)
 {
 	BOOLEAN skipHidden = J9_ARE_ALL_BITS_SET(walkState->flags, J9_HASH_TABLE_STATE_FLAG_SKIP_HIDDEN);
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	BOOLEAN skipVTLtype = J9_ARE_ALL_BITS_SET(walkState->flags, J9_HASH_TABLE_STATE_FLAG_SKIP_VT_LTYPE);
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	BOOLEAN continueToNext = FALSE;
 	KeyHashTableClassEntry *next = hashTableNextDo(walkState);
 
@@ -514,6 +612,10 @@ hashClassTableNextDo(J9HashTableState *walkState)
 		} else {
 			if (skipHidden && J9ROMCLASS_IS_HIDDEN(next->ramClass->romClass)) {
 				continueToNext = TRUE;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+			} else if (skipVTLtype && J9_IS_J9CLASS_GENERATED_VT_LTYPE(next->ramClass)) {
+				continueToNext = TRUE;
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 			} else {
 				continueToNext = FALSE;
 			}
@@ -531,6 +633,10 @@ hashClassTableNextDo(J9HashTableState *walkState)
 			} else {
 				if (skipHidden && J9ROMCLASS_IS_HIDDEN(next->ramClass->romClass)) {
 					continueToNext = TRUE;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+				} else if (skipVTLtype && J9_IS_J9CLASS_GENERATED_VT_LTYPE(next->ramClass)) {
+					continueToNext = TRUE;
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 				} else {
 					continueToNext = FALSE;
 				}

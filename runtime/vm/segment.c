@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -517,6 +517,43 @@ allClassesNextDo(J9ClassWalkState* state)
 
 	return clazzPtr;
 }
+
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+J9Class*
+allClassesStartDoWithFlags(J9ClassWalkState* state, J9JavaVM* vm, J9ClassLoader* classLoader, UDATA flags)
+{
+#if defined(J9VM_THR_PREEMPTIVE)
+	omrthread_monitor_enter(vm->classTableMutex);
+#endif
+
+	prepareClassWalkState(state, vm, classLoader);
+
+	return allClassesNextDoWithFlags(state, flags);
+}
+
+J9Class*
+allClassesNextDoWithFlags(J9ClassWalkState* state, UDATA flags)
+{
+	J9Class* clazzPtr = NULL;
+	J9Class* clazzPtrCandidate = NULL;
+	BOOLEAN skipVTLtype = J9_ARE_ALL_BITS_SET(flags, J9CLASS_WALK_FLAG_SKIP_VT_LTYPE);
+
+	do {
+		clazzPtrCandidate = allClassesNextDo(state);
+		if (clazzPtrCandidate != NULL) {
+			if (skipVTLtype
+				&& J9_IS_J9CLASS_GENERATED_VT_LTYPE(clazzPtrCandidate)
+			) {
+				continue;
+			} else {
+				clazzPtr = clazzPtrCandidate;
+			}
+		}
+	} while ((clazzPtr == NULL) && (clazzPtrCandidate != NULL));
+
+	return clazzPtr;
+}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 void allClassesEndDo(J9ClassWalkState* state)
 {

@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -78,7 +78,7 @@ protected:
 public:
 
 	GC_ClassIteratorClassSlots(J9JavaVM *vm, J9Class *clazz) :
-		_shouldScanInterfaces(!GC_ClassModel::usesSharedITable(vm, clazz)),
+		_shouldScanInterfaces(!GC_ClassModel::usesSharedITable(vm, clazz) && !J9_IS_J9CLASS_GENERATED_VT_LTYPE(clazz)),
 		_clazzPtr(clazz),
 		_state(classiteratorclassslots_state_start),
 		_constantPoolClassSlotIterator(clazz),

@@ -2553,7 +2553,14 @@ jvmtiGetMethodAndClassNames_verifyRamMethod(J9JavaVM * vm, J9Method * ramMethod)
 	walkState.heapPtr = NULL;
 	walkState.classLoader = NULL;
 
-	while (((clazz = vm->internalVMFunctions->allClassesNextDo(&walkState)) != NULL) && (walkState.nextSegment == segment)) {
+	while (
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+			((clazz = vm->internalVMFunctions->allClassesNextDoWithFlags(&walkState, J9CLASS_WALK_FLAG_SKIP_VT_LTYPE)) != NULL)
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+			((clazz = vm->internalVMFunctions->allClassesNextDo(&walkState)) != NULL)
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+			&& (walkState.nextSegment == segment)
+	) {
 		UDATA methodCount = clazz->romClass->romMethodCount;
 
 		/* Check if the ramMethod falls within the ramMethods array for clazz */
@@ -2571,7 +2578,13 @@ jvmtiGetMethodAndClassNames_verifyRamMethod(J9JavaVM * vm, J9Method * ramMethod)
 	walkState.heapPtr = NULL;
 	walkState.classLoader = segment->classLoader;
 
-	while ((clazz = vm->internalVMFunctions->allClassesNextDo(&walkState)) != NULL) {
+	while (
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		(clazz = vm->internalVMFunctions->allClassesNextDoWithFlags(&walkState, J9CLASS_WALK_FLAG_SKIP_VT_LTYPE)) != NULL
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+		(clazz = vm->internalVMFunctions->allClassesNextDo(&walkState)) != NULL
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+	) {
 		UDATA methodCount = clazz->romClass->romMethodCount;
 
 		/* Check if the ramMethod falls within the ramMethods array for clazz */

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -53,6 +53,14 @@ typedef struct J9RASHeapdumpContext {
 
 #define allClassesNextDo(vm, state) \
 	vm->internalVMFunctions->allClassesNextDo(state)
+
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#define allClassesStartDoWithFlags(vm, state, loader, flags) \
+	vm->internalVMFunctions->allClassesStartDoWithFlags(state, vm, loader, flags)
+
+#define allClassesNextDoWithFlags(vm, state, flags) \
+	vm->internalVMFunctions->allClassesNextDoWithFlags(state, flags)
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 #define allClassesEndDo(vm, state) \
 	vm->internalVMFunctions->allClassesEndDo(state)
@@ -284,9 +292,12 @@ writeClasses(J9RASHeapdumpContext *ctx)
 	
 	J9ClassWalkState state;
 	PORT_ACCESS_FROM_JAVAVM(vm);
-	
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	J9Class *clazz = allClassesStartDoWithFlags(vm, &state, NULL, J9CLASS_WALK_FLAG_SKIP_VT_LTYPE);
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	J9Class *clazz = allClassesStartDo(vm, &state, NULL);
-	
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+
 	while (clazz) {
 		/* Ignore redefined and dying classes */
 		if (!(J9CLASS_FLAGS(clazz) & J9AccClassHotSwappedOut)
@@ -299,8 +310,6 @@ writeClasses(J9RASHeapdumpContext *ctx)
 				int staticReferenceCount = clazz->romClass->objectStaticCount;
 				int j = 0;
 				BOOLEAN writeClass = TRUE;
-
-
 
 				if (writeClass) {
 					writeObject(ctx, currentObject);
@@ -315,7 +324,11 @@ writeClasses(J9RASHeapdumpContext *ctx)
 				}
 			}
 		}
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		clazz = allClassesNextDoWithFlags(vm, &state, J9CLASS_WALK_FLAG_SKIP_VT_LTYPE);
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 		clazz = allClassesNextDo(vm, &state);
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	}
 	allClassesEndDo(vm, &state);
 }

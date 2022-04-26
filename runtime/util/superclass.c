@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,11 +29,15 @@
 UDATA 
 isSameOrSuperClassOf(J9Class *superClass, J9Class *baseClass)
 {
-	UDATA superClassDepth = J9RAMCLASS_DEPTH(superClass);
-	
-	return ((baseClass == superClass)
-					|| ((J9RAMCLASS_DEPTH(baseClass) > superClassDepth)
-					   && ((J9RAMCLASS_SUPERCLASSES(baseClass)[superClassDepth]) == superClass)));
+	UDATA ret = TRUE;
+
+	if (!J9_ARE_J9CLASSES_SAME(baseClass, superClass)) {
+		UDATA superClassDepth = J9RAMCLASS_DEPTH(superClass);
+		ret = ((J9RAMCLASS_DEPTH(baseClass) > superClassDepth)
+				&& ((J9RAMCLASS_SUPERCLASSES(baseClass)[superClassDepth]) == superClass));
+	}
+
+	return ret;
 }
 
 

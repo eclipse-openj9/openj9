@@ -53,8 +53,14 @@ J9InternalVMFunctions J9InternalFunctions = {
 	internalFindClassInModule,
 	internalFindClassString,
 	hashClassTableAt,
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	hashClassTableAtWithFlags,
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	hashClassTableAtPut,
 	hashClassTableDelete,
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	hashClassTableDeleteWithFlags,
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	hashClassTableReplace,
 	monitorTableAt,
 	allocateVMThread,
@@ -180,6 +186,10 @@ J9InternalVMFunctions J9InternalFunctions = {
 	allClassesStartDo,
 	allClassesNextDo,
 	allClassesEndDo,
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	allClassesStartDoWithFlags,
+	allClassesNextDoWithFlags,
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	allLiveClassesStartDo,
 	allLiveClassesNextDo,
 	allLiveClassesEndDo,

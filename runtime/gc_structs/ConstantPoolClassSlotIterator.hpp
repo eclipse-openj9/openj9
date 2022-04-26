@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -53,7 +53,7 @@ class GC_ConstantPoolClassSlotIterator
 public:
 	GC_ConstantPoolClassSlotIterator(J9Class *clazz) :
 		_cpEntry((J9Object **)J9_CP_FROM_CLASS(clazz)),
-		_cpEntryCount(clazz->romClass->ramConstantPoolCount)
+		_cpEntryCount(J9_IS_J9CLASS_GENERATED_VT_LTYPE(clazz) ? 0 : clazz->romClass->ramConstantPoolCount)
 	{
 		_cpEntryTotal = _cpEntryCount;
 		if(_cpEntryCount) {
