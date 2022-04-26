@@ -22,10 +22,20 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 #
 
-echo "start running script"
-rm -rf ./cpData
-mkdir cpData
-$2 $3 -XX:+EnableCRIUSupport -cp "$1/criu.jar" CRIUSimpleTest >foo 2>&1
-criu restore -D ./cpData --shell-job
-cat foo
-echo "finished script"
+echo "start running script";
+$2 -XX:+EnableCRIUSupport $3 -cp "$1/criu.jar" CRIUSimpleTest $4 >testOutput 2>&1;
+sleep 2;
+criu restore -D ./cpData --shell-job;
+if [ "$4" == "TwoCheckpoints" ] || [ "$4" == "ThreeCheckpoints" ]
+then
+sleep 2;
+criu restore -D ./cpData --shell-job;
+fi
+if [ "$4" == "ThreeCheckpoints" ]
+then
+sleep 2;
+criu restore -D ./cpData --shell-job;
+fi
+cat testOutput;
+rm -rf testOutput
+echo "finished script";

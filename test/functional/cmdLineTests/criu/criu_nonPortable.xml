@@ -27,7 +27,7 @@
 <suite id="J9 Criu Command-Line Option Tests" timeout="300">
 
   <test id="Create and Restore Criu Checkpoint Image once">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ $JVM_OPTIONS$ "SingleCheckpoint"</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" "SingleCheckpoint"</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
     <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
     <output type="required" caseSensitive="yes" regex="no">Post-checkpoint</output>
@@ -37,26 +37,15 @@
   </test>
 
   <test id="Create and Restore Criu Checkpoint Image twice">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ $JVM_OPTIONS$ TwoCheckpoints</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" TwoCheckpoints</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
     <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
     <output type="required" caseSensitive="yes" regex="no">Post-checkpoint 1</output>
-    <output type="required" caseSensitive="yes" regex="no">Post-checkpoint 2</output>
+    <output type="required" caseSensitive="yes" regex="no">only one checkpoint is allowed</output>
     <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
     <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
-    <output type="failure" caseSensitive="yes" regex="no">ERR</output>
-  </test>
-
-    <test id="Create and Restore Criu Checkpoint Image three times">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ $JVM_OPTIONS$ ThreeCheckpoints</command>
-    <output type="success" caseSensitive="no" regex="no">Killed</output>
-    <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
-    <output type="required" caseSensitive="yes" regex="no">Post-checkpoint 1</output>
-    <output type="required" caseSensitive="yes" regex="no">Post-checkpoint 2</output>
-    <output type="required" caseSensitive="yes" regex="no">Post-checkpoint 3</output>
-    <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
-    <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
-    <output type="failure" caseSensitive="yes" regex="no">ERR</output>
+    <output type="failure" caseSensitive="yes" regex="no">Post-checkpoint 2</output>
+    <output type="required" caseSensitive="yes" regex="no">Error</output>
   </test>
 
 </suite>
