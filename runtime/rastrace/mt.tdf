@@ -1,5 +1,5 @@
 //*******************************************************************************
-// Copyright (c) 2006, 2017 IBM Corp. and others
+// Copyright (c) 2006, 2022 IBM Corp. and others
 //
 // This program and the accompanying materials are made available under
 // the terms of the Eclipse Public License 2.0 which accompanies this
@@ -47,7 +47,7 @@ TraceExit=Trc_MethodExitNXS_Obsolete Obsolete Overhead=1 Level=5 Group=nativeMet
 TraceEvent=Trc_MethodArguments Overhead=1 Level=5 Group=methodArguments Template="this: %.*s@%p method arguments: (%s)"
 TraceEvent=Trc_MethodArgumentsS Overhead=1 Level=5 Group=methodArguments Template="method arguments: (%s)"
 
-TraceEvent=Trc_MethodStackStart Overhead=1 Level=5 Template="jstacktrace:"
+TraceEvent=Trc_MethodStackStart Obsolete Overhead=1 Level=5 Template="jstacktrace:"
 TraceEvent=Trc_MethodStackFrame Overhead=1 Level=5 Template="%s"
 
 TraceExit-Exception=Trc_MethodExitX   Overhead=1 Level=5 Group=throw,bytecodeMethods                 Template="%.*s.%.*s%.*s bytecode method, exception thrown"
