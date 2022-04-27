@@ -1981,6 +1981,28 @@ exit:
 		return classNameObject;
 	}
 
+	/**
+	 * Determine if thread is capable of running java code.
+	 *
+	 * @param[in] vmThread the J9VMThread to query
+	 * @return true if the thread can run java code, false if not
+	 */
+	static VMINLINE bool
+	threadCanRunJavaCode(J9VMThread *vmThread)
+	{
+		/*
+		 * Can't use J9THREAD_CATEGORY_APPLICATION_THREAD | J9THREAD_CATEGORY_RESOURCE_MONITOR_THREAD
+		 * to find all threads that can run java code because some system threads like the common
+		 * cleaner thread and attach API thread are not tagged with these categories, they are only tagged
+		 * as system threads.
+		 *
+		 * To get around this a negative test is used. The approach is to find all j9vmthreads that can't run java code
+		 * (ie. GC and JIT threads) and exclude those.
+		 */
+		UDATA const nonJavaThreads = (J9THREAD_CATEGORY_SYSTEM_GC_THREAD | J9THREAD_CATEGORY_SYSTEM_JIT_THREAD) & ~J9THREAD_CATEGORY_SYSTEM_THREAD;
+		return J9_ARE_NO_BITS_SET(omrthread_get_category(vmThread->osThread), nonJavaThreads);
+	}
+
 };
 
 #endif /* VMHELPERS_HPP_ */

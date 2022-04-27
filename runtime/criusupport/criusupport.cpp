@@ -35,6 +35,8 @@
 #include "omrlinkedlist.h"
 #include "omrthread.h"
 
+#include "VMHelpers.hpp"
+
 extern "C" {
 
 typedef void (*criuSetUnprivilegedFunctionPointerType)(bool unprivileged);
@@ -189,22 +191,12 @@ toggleSuspendOnJavaThreads(J9VMThread *currentThread, BOOLEAN suspend)
 {
 	J9JavaVM *vm = currentThread->javaVM;
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
-	/*
-	 * Can't use J9THREAD_CATEGORY_APPLICATION_THREAD | J9THREAD_CATEGORY_RESOURCE_MONITOR_THREAD
-	 * to find all threads that can run java code because some system threads like the common
-	 * cleaner thread and attach API thread are not tagged with these categories, they are only tagged
-	 * as system threads.
-	 *
-	 * To get around this a negative test is used. The approach is to find all j9vmthreads that can't run java code
-	 * (ie. GC and JIT threads) and exclude those.
-	 */
-	UDATA nonJavaThreads = (J9THREAD_CATEGORY_SYSTEM_GC_THREAD | J9THREAD_CATEGORY_SYSTEM_JIT_THREAD) & ~J9THREAD_CATEGORY_SYSTEM_THREAD;
-	J9VMThread *walkThread = J9_LINKED_LIST_START_DO(vm->mainThread);
 
 	Assert_CRIU_true(J9_XACCESS_EXCLUSIVE == vm->exclusiveAccessState);
 
+	J9VMThread *walkThread = J9_LINKED_LIST_START_DO(vm->mainThread);
 	while (NULL != walkThread) {
-		if (J9_ARE_NO_BITS_SET(nonJavaThreads, omrthread_get_category(walkThread->osThread))
+		if (VM_VMHelpers::threadCanRunJavaCode(walkThread)
 		&& (currentThread != walkThread)
 		) {
 			if (suspend) {
