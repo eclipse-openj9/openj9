@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2005, 2020 IBM Corp. and others
+ * Copyright (c) 2005, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,7 +25,6 @@ package com.ibm.lang.management.internal;
 import java.lang.management.MemoryManagerMXBean;
 import java.lang.management.MemoryNotificationInfo;
 import java.lang.management.MemoryUsage;
-import java.security.AccessController;
 import java.security.PrivilegedAction;
 
 import javax.management.Notification;
@@ -155,7 +154,10 @@ final class MemoryNotificationThread implements Runnable {
 	 */
 	private native void processNotificationLoop();
 
-	private boolean registerShutdownHandler() {
+	/*[IF JAVA_SPEC_VERSION >= 17]*/
+	@SuppressWarnings("removal")
+	/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
+	private static boolean registerShutdownHandler() {
 		Thread notifier = new MemoryNotificationThreadShutdown(Thread.currentThread());
 		PrivilegedAction<Boolean> action = () -> {
 			try {
@@ -171,7 +173,7 @@ final class MemoryNotificationThread implements Runnable {
 			}
 		};
 
-		return AccessController.doPrivileged(action).booleanValue();
+		return java.security.AccessController.doPrivileged(action).booleanValue();
 	}
 
 	/**

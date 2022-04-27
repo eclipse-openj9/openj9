@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2005, 2019 IBM Corp. and others
+ * Copyright (c) 2005, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,7 +25,6 @@ package com.ibm.lang.management.internal;
 import com.ibm.java.lang.management.internal.RuntimeMXBeanImpl;
 import com.ibm.lang.management.RuntimeMXBean;
 import openj9.internal.tools.attach.target.AttachHandler;
-
 
 /**
  * Runtime type for {@link com.ibm.lang.management.RuntimeMXBean}.
@@ -66,6 +65,10 @@ public final class ExtendedRuntimeMXBeanImpl extends RuntimeMXBeanImpl implement
 	/**
 	 * {@inheritDoc}
 	 */
+	/*[IF JAVA_SPEC_VERSION >= 10]*/
+	@Deprecated(forRemoval = true, since = "10")
+	@SuppressWarnings("removal")
+	/*[ENDIF] JAVA_SPEC_VERSION >= 10 */
 	@Override
 	public long getProcessID() {
 		return getProcessIDImpl();

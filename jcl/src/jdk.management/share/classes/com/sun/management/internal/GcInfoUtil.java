@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2016, 2019 IBM Corp. and others
+ * Copyright (c) 2016, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,7 +24,6 @@ package com.sun.management.internal;
 
 import java.lang.management.MemoryUsage;
 import java.lang.reflect.Constructor;
-import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.Map;
 
@@ -47,9 +46,13 @@ public final class GcInfoUtil {
 	private static CompositeType compositeType;
 
 	private static Constructor<GcInfo> gcInfoPrivateConstructor = null;
+
+	/*[IF JAVA_SPEC_VERSION >= 17]*/
+	@SuppressWarnings("removal")
+	/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 	private static Constructor<GcInfo> getGcInfoPrivateConstructor() {
 		if (null == gcInfoPrivateConstructor) {
-			gcInfoPrivateConstructor = AccessController.doPrivileged(new PrivilegedAction<Constructor<GcInfo>>() {
+			gcInfoPrivateConstructor = java.security.AccessController.doPrivileged(new PrivilegedAction<Constructor<GcInfo>>() {
 				@Override
 				public Constructor<GcInfo> run() {
 					try {

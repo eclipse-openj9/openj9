@@ -1,6 +1,6 @@
 /*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 /*******************************************************************************
- * Copyright (c) 2018, 2021 IBM Corp. and others
+ * Copyright (c) 2018, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,7 +27,6 @@ import javax.management.ObjectName;
 /*[IF Sidecar19-SE]*/
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.Optional;
 /*[ELSE]*/
@@ -68,8 +67,11 @@ public final class OpenJ9DiagnosticsMXBeanImpl implements OpenJ9DiagnosticsMXBea
 	private final Method dump_triggerDump;
 	/*[ENDIF]*/
 
+	/*[IF JAVA_SPEC_VERSION >= 17]*/
+	@SuppressWarnings("removal")
+	/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 	private static OpenJ9DiagnosticsMXBean createInstance() {
-		/*[IF Sidecar19-SE]*/
+		/*[IF JAVA_SPEC_VERSION > 8]*/
 		// TODO remove the dependency on the openj9.jvm module
 		final Optional<Module> openj9_jvm = ModuleLayer.boot().findModule("openj9.jvm"); //$NON-NLS-1$
 
@@ -88,10 +90,10 @@ public final class OpenJ9DiagnosticsMXBeanImpl implements OpenJ9DiagnosticsMXBea
 			}
 		};
 
-		return AccessController.doPrivileged(action);
-		/*[ELSE]
+		return java.security.AccessController.doPrivileged(action);
+		/*[ELSE] JAVA_SPEC_VERSION > 8
 		return new OpenJ9DiagnosticsMXBeanImpl();
-		/*[ENDIF]*/
+		/*[ENDIF] JAVA_SPEC_VERSION > 8 */
 	}
 
 	/**

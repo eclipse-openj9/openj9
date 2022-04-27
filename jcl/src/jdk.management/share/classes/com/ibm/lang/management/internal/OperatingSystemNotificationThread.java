@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2005, 2020 IBM Corp. and others
+ * Copyright (c) 2005, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,7 +22,6 @@
  *******************************************************************************/
 package com.ibm.lang.management.internal;
 
-import java.security.AccessController;
 import java.security.PrivilegedAction;
 import javax.management.Notification;
 
@@ -50,11 +49,15 @@ final class OperatingSystemNotificationThread implements Runnable {
 	 * then enter the native that services an internal notification queue.
 	 */
 	@Override
+	/*[IF JAVA_SPEC_VERSION >= 17]*/
+	@SuppressWarnings("removal")
+	/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 	public void run() {
 		Thread myShutdownNotifier = new OperatingSystemNotificationThreadShutdown(Thread.currentThread());
 
 		try {
-			AccessController.doPrivileged(new PrivilegedAction<Void>() {
+			java.security.AccessController.doPrivileged(new PrivilegedAction<Void>() {
+				@Override
 				public Void run() {
 					Runtime.getRuntime().addShutdownHook(myShutdownNotifier);
 					return null;
