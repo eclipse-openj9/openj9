@@ -378,7 +378,7 @@ final class J9VMInternals {
 			thread.group.remove(thread);
 			/*[ENDIF] OPENJDK_THREAD_SUPPORT */
 		} finally {
-			thread.cleanup();
+			thread.exit();
 
 			synchronized (thread) {
 				thread.notifyAll();

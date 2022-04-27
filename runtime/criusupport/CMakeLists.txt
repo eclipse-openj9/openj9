@@ -39,6 +39,7 @@ add_dependencies(j9vm_interface j9vm_m4gen)
 target_link_libraries(j9criu
 	PRIVATE
 		j9vm_interface
+		j9vm_gc_includes
 		j9util
 		j9thr
 		criu

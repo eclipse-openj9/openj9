@@ -239,7 +239,7 @@ public Thread(Runnable runnable) {
  * @see			java.lang.Runnable
  */
 Thread(Runnable runnable, AccessControlContext acc) {
-	this(null, runnable, newName(), acc, true);
+	this(null, runnable, newName(), acc, false);
 }
 
 /**
@@ -1543,7 +1543,7 @@ void uncaughtException(Throwable e) {
  *
  * @see J9VMInternals#threadCleanup()
  */
-void cleanup() {
+void exit() {
 /*[IF JAVA_SPEC_VERSION >= 14]*/
 	/* Refresh deadInterrupt value so it is accurate when thread reference is removed. */
 	deadInterrupt = interrupted();
