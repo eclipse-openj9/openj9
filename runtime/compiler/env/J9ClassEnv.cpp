@@ -978,12 +978,12 @@ J9::ClassEnv::containsZeroOrOneConcreteClass(TR::Compilation *comp, List<TR_Pers
    }
 
 bool
-J9::ClassEnv::isClassRefValueType(TR::Compilation *comp, TR_OpaqueClassBlock *cpContextClass, int32_t cpIndex)
+J9::ClassEnv::isClassRefPrimitiveValueType(TR::Compilation *comp, TR_OpaqueClassBlock *cpContextClass, int32_t cpIndex)
    {
 #if defined(J9VM_OPT_JITSERVER)
    if (auto stream = TR::CompilationInfo::getStream())
       {
-      stream->write(JITServer::MessageType::ClassEnv_isClassRefValueType, cpContextClass, cpIndex);
+      stream->write(JITServer::MessageType::ClassEnv_isClassRefPrimitiveValueType, cpContextClass, cpIndex);
       return std::get<0>(stream->read<bool>());
       }
    else // non-jitserver
@@ -1009,7 +1009,7 @@ J9::ClassEnv::classNameToSignature(const char *name, int32_t &len, TR::Compilati
       {
       len += 2;
       sig = (char *)comp->trMemory()->allocateMemory(len+1, allocKind);
-      if (clazz && TR::Compiler->om.areValueTypesEnabled() && self()->isValueTypeClass(clazz))
+      if (clazz && TR::Compiler->om.areValueTypesEnabled() && self()->isPrimitiveValueTypeClass(clazz))
          sig[0] = 'Q';
       else
          sig[0] = 'L';

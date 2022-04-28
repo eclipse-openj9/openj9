@@ -1188,7 +1188,7 @@ public:
 
    /**
     * \brief Load class flags field of the specified class and test whether the value type
-    *        field is set.
+    *        flag is set.
     * \param j9ClassRefNode A node representing a reference to a \ref J9Class
     * \return \ref TR::Node that evaluates to a non-zero integer if the class is a value type,
     *         or zero if the class is an identity type
@@ -1196,12 +1196,38 @@ public:
    TR::Node * testIsClassValueType(TR::Node *j9ClassRefNode);
 
    /**
+    * \brief Load class flags field of the specified class and test whether the primitive value type
+    *        flag is set.
+    * \param j9ClassRefNode A node representing a reference to a \ref J9Class
+    * \return \ref TR::Node that evaluates to a non-zero integer if the class is a primitive value type,
+    *         or zero otherwise
+    */
+   TR::Node * testIsClassPrimitiveValueType(TR::Node *j9ClassRefNode);
+
+   /**
+    * \brief Test whether any of the specified flags is set on the array's component class
+    * \param arrayBaseAddressNode A node representing a reference to the array base address
+    * \param ifCmpOp If comparison opCode such as ificmpeq or ificmpne
+    * \param flagsToTest The class field flags that are to be checked
+    * \return \ref TR::Node that compares the masked array component class flags to a zero integer
+    */
+   TR::Node * checkSomeArrayCompClassFlags(TR::Node *arrayBaseAddressNode, TR::ILOpCodes ifCmpOp, uint32_t flagsToTest);
+
+   /**
     * \brief Check whether or not the array component class is value type
     * \param arrayBaseAddressNode A node representing a reference to the array base address
-    * \param ifCmpOp If comparison opCode such as ifcmpeq or ificmpne
+    * \param ifCmpOp If comparison opCode such as ificmpeq or ificmpne
     * \return \ref TR::Node that compares the array component class J9ClassIsValueType flag to a zero integer
     */
    TR::Node * checkArrayCompClassValueType(TR::Node *arrayBaseAddressNode, TR::ILOpCodes ifCmpOp);
+
+   /**
+    * \brief Check whether or not the array component class is a primitive value type
+    * \param arrayBaseAddressNode A node representing a reference to the array base address
+    * \param ifCmpOp If comparison opCode such as ificmpeq or ificmpne
+    * \return \ref TR::Node that compares the array component class J9ClassIsPrimitiveValueType flag to a zero integer
+    */
+   TR::Node * checkArrayCompClassPrimitiveValueType(TR::Node *arrayBaseAddressNode, TR::ILOpCodes ifCmpOp);
 
    virtual J9JITConfig *getJ9JITConfig() { return _jitConfig; }
 

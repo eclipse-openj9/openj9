@@ -209,7 +209,7 @@ const char *messageNames[] =
    "ClassEnv_iTableRomClass",
    "ClassEnv_getITable",
    "ClassEnv_enumerateFields",
-   "ClassEnv_isClassRefValueType",
+   "ClassEnv_isClassRefPrimitiveValueType",
    "ClassEnv_flattenedArrayElementSize",
    "SharedCache_getClassChainOffsetIdentifyingLoader",
    "SharedCache_rememberClass",

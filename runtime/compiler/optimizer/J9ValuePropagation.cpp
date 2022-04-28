@@ -562,7 +562,11 @@ bool J9::ValuePropagation::transformUnsafeCopyMemoryCall(TR::Node *arraycopyNode
    }
 
 /**
- * Determine whether the type is, or might be, a value type.
+ * Determine whether the type is, or might be, a value type.  Note that
+ * a null reference can be cast to a value type that is not a primitive
+ * value type, but for the purposes of this method, a null reference is
+ * not considered to be a value type.
+ *
  * @param[IN] constraint The \ref TR::VPConstraint type constraint for a node
  * @param[OUT] clazz The \ref TR_OpaqueClassBlock type class of the constraint
  * @return \c TR_yes if the type is definitely a value type;\n
@@ -846,7 +850,7 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
       TR::Node *indexNode = node->getChild(elementIndexOpIndex);
       TR::Node *arrayRefNode = node->getChild(arrayRefOpIndex);
       TR::VPConstraint *arrayConstraint = getConstraint(arrayRefNode, arrayRefGlobal);
-      TR_YesNoMaybe isCompTypeVT = isArrayCompTypeValueType(arrayConstraint);
+      TR_YesNoMaybe isCompTypePrimVT = isArrayCompTypePrimitiveValueType(arrayConstraint);
 
       TR::Node *storeValueNode = NULL;
       TR::VPConstraint *storeValueConstraint = NULL;
@@ -889,20 +893,21 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
             }
          }
 
-      // If the array is known to be of a value type that is not flattened, transform the helper call to regular aaload and aastore.
+      // If the array is known to be of a primitive value type that is not flattened,
+      // transform the helper call to regular aaload and aastore.
       bool canTransformUnflattenedVTArrayElementLoadStore = false;
       if (arrayConstraint &&
-          (isCompTypeVT == TR_yes) &&
+          (isCompTypePrimVT == TR_yes) &&
           (TR::Compiler->cls.isValueTypeClassFlattened(arrayConstraint->getClass()) == TR_no))
          {
          canTransformUnflattenedVTArrayElementLoadStore = true;
          }
 
-      // If the array is known to have a component type that is not a value type or
+      // If the array is known to have a component type that is not a primitive value type or
       // the value being stored is known not to be a value type, transform the helper
       // call to a regular aaload or aastore
       bool canTransformIdentityLoadStore = false;
-      if ((arrayConstraint != NULL && isCompTypeVT == TR_no)
+      if ((arrayConstraint != NULL && isCompTypePrimVT == TR_no)
           || (isStoreFlattenableArrayElement && isStoreValueVT == TR_no))
          {
          canTransformIdentityLoadStore = true;
@@ -1030,8 +1035,8 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
                //
                if (storeValueBaseNode == NULL || getValueNumber(storeValueBaseNode) != getValueNumber(arrayRefNode))
                   {
-                  // If storing to an array whose component type is or might be a value type
-                  // and the value that's being assigned is or might be null, both a run-time
+                  // If storing to an array whose component type is or might be a primitive value
+                  // type and the value that's being assigned is or might be null, both a run-time
                   // NULLCHK of the value is required (guarded by a check of whether the
                   // component type is a value type) and an ArrayStoreCHK are required;
                   // otherwise, only the ArrayStoreCHK is required.
@@ -1042,7 +1047,7 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
                      flagsForTransform.set(ValueTypesHelperCallTransform::RequiresStoreCheck);
                      }
 
-                  if ((isCompTypeVT != TR_no) && (storeValueConstraint == NULL || !storeValueConstraint->isNonNullObject()))
+                  if ((isCompTypePrimVT != TR_no) && (storeValueConstraint == NULL || !storeValueConstraint->isNonNullObject()))
                      {
                      flagsForTransform.set(ValueTypesHelperCallTransform::RequiresNullValueCheck);
                      }
@@ -1076,11 +1081,11 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
             {
             reason = "no-array-constraint";
             }
-         else if (isCompTypeVT == TR_yes)
+         else if (isCompTypePrimVT == TR_yes)
             {
             reason = "comp-type-is-vt";
             }
-         else if (isCompTypeVT == TR_maybe)
+         else if (isCompTypePrimVT == TR_maybe)
             {
             reason = "comp-type-may-be-vt";
             }
@@ -2133,9 +2138,9 @@ J9::ValuePropagation::isArrayElementFlattened(TR::VPConstraint *arrayConstraint)
       return TR_no;
       }
 
-   TR_YesNoMaybe isCompTypeVT = isArrayCompTypeValueType(arrayConstraint);
+   TR_YesNoMaybe isCompTypePrimVT = isArrayCompTypePrimitiveValueType(arrayConstraint);
 
-   if (isCompTypeVT == TR_yes)
+   if (isCompTypePrimVT == TR_yes)
       {
       TR_OpaqueClassBlock *arrayClass = arrayConstraint->getClass();
       if (TR::Compiler->cls.isValueTypeClassFlattened(arrayClass))
@@ -2149,11 +2154,11 @@ J9::ValuePropagation::isArrayElementFlattened(TR::VPConstraint *arrayConstraint)
       }
 
    // Return TR_maybe or TR_no
-   return isCompTypeVT;
+   return isCompTypePrimVT;
    }
 
 TR_YesNoMaybe
-J9::ValuePropagation::isArrayCompTypeValueType(TR::VPConstraint *arrayConstraint)
+J9::ValuePropagation::isArrayCompTypePrimitiveValueType(TR::VPConstraint *arrayConstraint)
    {
    if (!TR::Compiler->om.areValueTypesEnabled())
       {
@@ -2163,7 +2168,7 @@ J9::ValuePropagation::isArrayCompTypeValueType(TR::VPConstraint *arrayConstraint
    // If there's no constraint for the array operand, or no information
    // is available about the class of the array, or the operand is not
    // even definitely known to be an array, VP has to assume that it might
-   // have a component type that is a value type
+   // have a component type that is a primitive value type
    //
    if (!(arrayConstraint && arrayConstraint->getClass()
               && arrayConstraint->getClassType()->isArray() == TR_yes))
@@ -2176,9 +2181,10 @@ J9::ValuePropagation::isArrayCompTypeValueType(TR::VPConstraint *arrayConstraint
    // Cases to consider:
    //
    //   - Is no information available about the component type of the array?
-   //     If not, assume it might be a value type.
+   //     If not, assume it might be a primitive value type.
    //   - Is the component type definitely a identity type?
-   //   - Is the component type definitely a value type?
+   //   - Is the component type definitely a primitive value type?
+   //   - Is the component type definitely a value type, but not primitive?
    //   - Is the component type either an abstract class or an interface
    //     (i.e., not a concrete class)?  If so, it might be a value type.
    //   - Is the array an array of java/lang/Object?  See below.
@@ -2196,9 +2202,14 @@ J9::ValuePropagation::isArrayCompTypeValueType(TR::VPConstraint *arrayConstraint
       return TR_no;
       }
 
-   if (TR::Compiler->cls.isValueTypeClass(arrayComponentClass))
+   if (TR::Compiler->cls.isPrimitiveValueTypeClass(arrayComponentClass))
       {
       return TR_yes;
+      }
+
+   if (TR::Compiler->cls.isValueTypeClass(arrayComponentClass))
+      {
+      return TR_no;
       }
 
    if (!TR::Compiler->cls.isConcreteClass(comp(), arrayComponentClass))

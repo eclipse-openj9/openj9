@@ -141,9 +141,9 @@ public:
     * \brief
     *    Checks whether instances of the specified class can be trivially initialized by
     *    "zeroing" their fields.
-    *    In the case of OpenJ9, this tests whether any field is of a value type that has not been
-    *    "flattened" (that is, had the value type's fields inlined into this class).  Such a value
-    *    type field must be initialized with the default value of the type.
+    *    In the case of OpenJ9, this tests whether any field is of a primitive value type that
+    *    has not been "flattened" (that is, had the value type's fields inlined into this class).
+    *    Such a value type field must be initialized with the default value of the type.
     *
     * \param clazz
     *    The class that is to be checked
@@ -184,7 +184,7 @@ public:
    bool jitFieldsAreSame(TR::Compilation *comp, TR_ResolvedMethod * method1, int32_t cpIndex1, TR_ResolvedMethod * method2, int32_t cpIndex2, int32_t isStatic);
    /*
     * \brief
-    *    Tells whether a class reference entry in the constant pool represents a value type class.
+    *    Tells whether a class reference entry in the constant pool represents a primitive value type class.
     *
     * \param cpContextClass
     *    The class whose constant pool contains the class reference entry being looked at. In another words,
@@ -196,7 +196,7 @@ public:
     * \note
     *    The class reference entry doesn't need to be resolved because the information is encoded in class name string
     */
-   bool isClassRefValueType(TR::Compilation *comp, TR_OpaqueClassBlock *cpContextClass, int32_t cpIndex);
+   bool isClassRefPrimitiveValueType(TR::Compilation *comp, TR_OpaqueClassBlock *cpContextClass, int32_t cpIndex);
 
    /** \brief
     *	    Populates a TypeLayout object.
