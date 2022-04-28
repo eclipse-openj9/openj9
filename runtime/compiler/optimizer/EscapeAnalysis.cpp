@@ -1076,7 +1076,7 @@ int32_t TR_EscapeAnalysis::performAnalysisOnce()
                traceMsg(comp(), "   Make [%p] non-local because we can't have locking when candidate escapes in cold blocks\n", candidate->_node);
             }
 
-         // Value type fields of objects created with a NEW bytecode must be initialized
+         // Primitive value type fields of objects created with a NEW bytecode must be initialized
          // with their default values.  EA is not yet set up to perform such iniitialization
          // if the value type's own fields have not been inlined into the class that
          // has a field of that type, so remove the candidate from consideration.
@@ -1087,7 +1087,7 @@ int32_t TR_EscapeAnalysis::performAnalysisOnce()
             if (!TR::Compiler->cls.isZeroInitializable(clazz))
                {
                if (trace())
-                  traceMsg(comp(), "   Fail [%p] because the candidate is not zero initializable (that is, it has a field of a value type whose fields have not been inlined into this candidate's class)\n", candidate->_node);
+                  traceMsg(comp(), "   Fail [%p] because the candidate is not zero initializable (that is, it has a field of a primitive value type whose fields have not been inlined into this candidate's class)\n", candidate->_node);
                rememoize(candidate);
                _candidates.remove(candidate);
                continue;
@@ -1174,7 +1174,7 @@ int32_t TR_EscapeAnalysis::performAnalysisOnce()
          {
          // Array Candidates for contiguous allocation that have unresolved
          // base classes must be rejected, since we cannot initialize the array
-         // header.  If the component type is a value type, reject the array
+         // header.  If the component type is a primitive value type, reject the array
          // as we can't initialize the elements to the default value yet.
          //
          if (candidate->isContiguousAllocation())
@@ -1192,10 +1192,10 @@ int32_t TR_EscapeAnalysis::performAnalysisOnce()
                {
                TR_OpaqueClassBlock *clazz = (TR_OpaqueClassBlock*)classNode->getSymbol()->castToStaticSymbol()->getStaticAddress();
 
-               if (TR::Compiler->cls.isValueTypeClass(clazz))
+               if (TR::Compiler->cls.isPrimitiveValueTypeClass(clazz))
                   {
                   if (trace())
-                     traceMsg(comp(), "   Fail [%p] because array has value type elements\n", candidate->_node);
+                     traceMsg(comp(), "   Fail [%p] because array has primitive value type elements\n", candidate->_node);
                   rememoize(candidate);
                   _candidates.remove(candidate);
                   }

@@ -222,7 +222,7 @@ enum MessageType : uint16_t
    ClassEnv_iTableRomClass,
    ClassEnv_getITable,
    ClassEnv_enumerateFields,
-   ClassEnv_isClassRefValueType,
+   ClassEnv_isClassRefPrimitiveValueType,
    ClassEnv_flattenedArrayElementSize,
 
    // For TR_J9SharedCache

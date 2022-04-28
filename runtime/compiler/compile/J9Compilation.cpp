@@ -727,10 +727,10 @@ J9::Compilation::canAllocateInline(TR::Node* node, TR_OpaqueClassBlock* &classIn
       if (clazz == NULL)
          return -1;
 
-      // Arrays of value type classes must have all their elements initialized with the
+      // Arrays of primitive value type classes must have all their elements initialized with the
       // default value of the component type.  For now, prevent inline allocation of them.
       //
-      if (areValueTypesEnabled && TR::Compiler->cls.isValueTypeClass(reinterpret_cast<TR_OpaqueClassBlock*>(clazz)))
+      if (areValueTypesEnabled && TR::Compiler->cls.isPrimitiveValueTypeClass(reinterpret_cast<TR_OpaqueClassBlock*>(clazz)))
          {
          return -1;
          }

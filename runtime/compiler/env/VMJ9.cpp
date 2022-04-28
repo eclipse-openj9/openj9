@@ -2566,7 +2566,7 @@ TR_J9VMBase::getClassSignature_DEPRECATED(TR_OpaqueClassBlock * clazz, int32_t &
       sig[i] = '[';
    if (* name != '[')
       {
-      if (TR::Compiler->om.areValueTypesEnabled() && TR::Compiler->cls.isValueTypeClass(myClass))
+      if (TR::Compiler->om.areValueTypesEnabled() && TR::Compiler->cls.isPrimitiveValueTypeClass(myClass))
          sig[i++] = 'Q';
       else
          sig[i++] = 'L';
@@ -2599,7 +2599,7 @@ TR_J9VMBase::getClassSignature(TR_OpaqueClassBlock * clazz, TR_Memory * trMemory
       sig[i] = '[';
    if (* name != '[')
       {
-      if (TR::Compiler->om.areValueTypesEnabled() && TR::Compiler->cls.isValueTypeClass(myClass))
+      if (TR::Compiler->om.areValueTypesEnabled() && TR::Compiler->cls.isPrimitiveValueTypeClass(myClass))
          sig[i++] = 'Q';
       else
          sig[i++] = 'L';
@@ -3139,9 +3139,9 @@ TR_J9VMBase::testAreSomeClassFlagsSet(TR::Node *j9ClassRefNode, uint32_t flagsTo
    TR::SymbolReference *classFlagsSymRef = TR::comp()->getSymRefTab()->findOrCreateClassFlagsSymbolRef();
 
    TR::Node *loadClassFlags = TR::Node::createWithSymRef(TR::iloadi, 1, 1, j9ClassRefNode, classFlagsSymRef);
-   TR::Node *isValueTypeNode = TR::Node::create(TR::iand, 2, loadClassFlags, TR::Node::iconst(j9ClassRefNode, flagsToTest));
+   TR::Node *maskedFlags = TR::Node::create(TR::iand, 2, loadClassFlags, TR::Node::iconst(j9ClassRefNode, flagsToTest));
 
-   return isValueTypeNode;
+   return maskedFlags;
    }
 
 TR::Node *
@@ -3151,17 +3151,35 @@ TR_J9VMBase::testIsClassValueType(TR::Node *j9ClassRefNode)
    }
 
 TR::Node *
-TR_J9VMBase::checkArrayCompClassValueType(TR::Node *arrayBaseAddressNode, TR::ILOpCodes ifCmpOp)
+TR_J9VMBase::testIsClassPrimitiveValueType(TR::Node *j9ClassRefNode)
+   {
+   return testAreSomeClassFlagsSet(j9ClassRefNode, J9ClassIsPrimitiveValueType);
+   }
+
+TR::Node *
+TR_J9VMBase::checkSomeArrayCompClassFlags(TR::Node *arrayBaseAddressNode, TR::ILOpCodes ifCmpOp, uint32_t flagsToTest)
    {
    TR::SymbolReference *vftSymRef = TR::comp()->getSymRefTab()->findOrCreateVftSymbolRef();
    TR::SymbolReference *arrayCompSymRef = TR::comp()->getSymRefTab()->findOrCreateArrayComponentTypeSymbolRef();
 
    TR::Node *vft = TR::Node::createWithSymRef(TR::aloadi, 1, 1, arrayBaseAddressNode, vftSymRef);
    TR::Node *arrayCompClass = TR::Node::createWithSymRef(TR::aloadi, 1, 1, vft, arrayCompSymRef);
-   TR::Node *testIsValueTypeNode = testIsClassValueType(arrayCompClass);
-   TR::Node *ifNode = TR::Node::createif(ifCmpOp, testIsValueTypeNode, TR::Node::iconst(arrayBaseAddressNode, 0));
+   TR::Node *maskedFlagsNode = testAreSomeClassFlagsSet(arrayCompClass, flagsToTest);
+   TR::Node *ifNode = TR::Node::createif(ifCmpOp, maskedFlagsNode, TR::Node::iconst(arrayBaseAddressNode, 0));
 
    return ifNode;
+   }
+
+TR::Node *
+TR_J9VMBase::checkArrayCompClassPrimitiveValueType(TR::Node *arrayBaseAddressNode, TR::ILOpCodes ifCmpOp)
+   {
+   return checkSomeArrayCompClassFlags(arrayBaseAddressNode, ifCmpOp, J9ClassIsPrimitiveValueType);
+   }
+
+TR::Node *
+TR_J9VMBase::checkArrayCompClassValueType(TR::Node *arrayBaseAddressNode, TR::ILOpCodes ifCmpOp)
+   {
+   return checkSomeArrayCompClassFlags(arrayBaseAddressNode, ifCmpOp, J9ClassIsValueType);
    }
 
 TR::TreeTop *
@@ -6427,9 +6445,10 @@ TR_J9VMBase::canAllocateInlineClass(TR_OpaqueClassBlock *clazzOffset)
    if (clazz->initializeStatus != 1)
       return false;
 
-   // Can not inline the allocation if the class is an interface, abstract,
-   // or if it is a class with identityless fields that aren't flattened because
-   // they have to be made to refer to their type's default values
+   // Cannot inline the allocation if the class is an interface, abstract,
+   // or if it is a class with identityless primitive value type fields that
+   // aren't flattened, because they have to be made to refer to their type's
+   // default values
    if ((clazz->romClass->modifiers & (J9AccAbstract | J9AccInterface))
        || (clazz->classFlags & J9ClassContainsUnflattenedFlattenables))
       return false;

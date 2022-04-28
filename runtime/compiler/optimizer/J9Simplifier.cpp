@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -291,7 +291,7 @@ J9::Simplifier::simplifyiCallMethods(TR::Node * node, TR::Block * block)
             && rhs->getConstValue() == 0;
 
          // If either operand is null, no need to use the equality/inequality comparison
-         // helper, as value types cannot have null references.  Also, if both operands
+         // helper, as direct comparison of the two references will suffice.  Also, if both operands
          // are the same node, no need to use the comparison helper - the references must be
          // equal.  Fold both cases to use acmpeq or acmpne which might be further simplified
          //
