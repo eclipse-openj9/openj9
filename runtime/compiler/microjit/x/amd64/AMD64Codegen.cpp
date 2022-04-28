@@ -1437,7 +1437,7 @@ MJIT::CodeGenerator::generatePrologue(
       char *first2BytesPatchLocation,
       char *samplingRecompileCallLocation,
       char **firstInstLocation,
-      MJIT::ByteCodeIterator *bci)
+      TR_J9ByteCodeIterator *bci)
    {
    buffer_size_t prologueSize = 0;
    uintptr_t prologueStart = (uintptr_t)buffer;
@@ -1673,7 +1673,7 @@ MJIT::CodeGenerator::generateEpologue(char *buffer)
       }
 
 buffer_size_t
-MJIT::CodeGenerator::generateBody(char *buffer, MJIT::ByteCodeIterator *bci)
+MJIT::CodeGenerator::generateBody(char *buffer, TR_J9ByteCodeIterator *bci)
    {
    buffer_size_t codeGenSize = 0;
    buffer_size_t calledCGSize = 0;
@@ -2379,7 +2379,7 @@ MJIT::CodeGenerator::generateReturn(char *buffer, TR::DataType dt, struct TR::X8
    }
 
 buffer_size_t
-MJIT::CodeGenerator::generateLoad(char *buffer, TR_J9ByteCode bc, MJIT::ByteCodeIterator *bci)
+MJIT::CodeGenerator::generateLoad(char *buffer, TR_J9ByteCode bc, TR_J9ByteCodeIterator *bci)
    {
    char *signature = _compilee->signatureChars();
    int index = -1;
@@ -2463,7 +2463,7 @@ MJIT::CodeGenerator::generateLoad(char *buffer, TR_J9ByteCode bc, MJIT::ByteCode
    }
 
 buffer_size_t
-MJIT::CodeGenerator::generateStore(char *buffer, TR_J9ByteCode bc, MJIT::ByteCodeIterator *bci)
+MJIT::CodeGenerator::generateStore(char *buffer, TR_J9ByteCode bc, TR_J9ByteCodeIterator *bci)
    {
    char *signature = _compilee->signatureChars();
    int index = -1;
@@ -2702,7 +2702,7 @@ MJIT::CodeGenerator::generateArgumentMoveForStaticMethod(
    }
 
 buffer_size_t
-MJIT::CodeGenerator::generateInvokeStatic(char *buffer, MJIT::ByteCodeIterator *bci, struct TR::X86LinkageProperties *properties)
+MJIT::CodeGenerator::generateInvokeStatic(char *buffer, TR_J9ByteCodeIterator *bci, struct TR::X86LinkageProperties *properties)
    {
    buffer_size_t invokeStaticSize = 0;
    int32_t cpIndex = (int32_t)bci->next2Bytes();
@@ -2838,7 +2838,7 @@ MJIT::CodeGenerator::generateInvokeStatic(char *buffer, MJIT::ByteCodeIterator *
    }
 
 buffer_size_t
-MJIT::CodeGenerator::generateGetField(char *buffer, MJIT::ByteCodeIterator *bci)
+MJIT::CodeGenerator::generateGetField(char *buffer, TR_J9ByteCodeIterator *bci)
    {
    buffer_size_t getFieldSize = 0;
    int32_t cpIndex = (int32_t)bci->next2Bytes();
@@ -2905,7 +2905,7 @@ MJIT::CodeGenerator::generateGetField(char *buffer, MJIT::ByteCodeIterator *bci)
    }
 
 buffer_size_t
-MJIT::CodeGenerator::generatePutField(char *buffer, MJIT::ByteCodeIterator *bci)
+MJIT::CodeGenerator::generatePutField(char *buffer, TR_J9ByteCodeIterator *bci)
    {
    buffer_size_t putFieldSize = 0;
    int32_t cpIndex = (int32_t)bci->next2Bytes();
@@ -2972,7 +2972,7 @@ MJIT::CodeGenerator::generatePutField(char *buffer, MJIT::ByteCodeIterator *bci)
    }
 
 buffer_size_t
-MJIT::CodeGenerator::generateGetStatic(char *buffer, MJIT::ByteCodeIterator *bci)
+MJIT::CodeGenerator::generateGetStatic(char *buffer, TR_J9ByteCodeIterator *bci)
    {
    buffer_size_t getStaticSize = 0;
    int32_t cpIndex = (int32_t)bci->next2Bytes();
@@ -3044,7 +3044,7 @@ MJIT::CodeGenerator::generateGetStatic(char *buffer, MJIT::ByteCodeIterator *bci
    }
 
 buffer_size_t
-MJIT::CodeGenerator::generatePutStatic(char *buffer, MJIT::ByteCodeIterator *bci)
+MJIT::CodeGenerator::generatePutStatic(char *buffer, TR_J9ByteCodeIterator *bci)
    {
    buffer_size_t putStaticSize = 0;
    int32_t cpIndex = (int32_t)bci->next2Bytes();

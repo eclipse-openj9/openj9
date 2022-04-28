@@ -158,6 +158,9 @@ protected:
 
    void printByteCodePrologue();
    void printByteCode();
+   void printByteCodes();
+   const char *currentMnemonic();
+   uint8_t currentOpcode();
    void printByteCodeEpilogue();
 
    TR_J9VMBase *fe()             { return _fe; }

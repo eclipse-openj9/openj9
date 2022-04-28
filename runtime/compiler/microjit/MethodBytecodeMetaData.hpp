@@ -23,7 +23,6 @@
 #define MJIT_METHOD_BYTECODE_META_DATA
 
 #include "ilgen/J9ByteCodeIterator.hpp"
-#include "microjit/ByteCodeIterator.hpp"
 #include "microjit/SideTables.hpp"
 
 namespace MJIT
@@ -55,7 +54,7 @@ class InternalMetaData
 
 MJIT::InternalMetaData
 createInternalMethodMetadata(
-   MJIT::ByteCodeIterator *bci,
+   TR_J9ByteCodeIterator *bci,
    MJIT::LocalTableEntry *localTableEntries,
    U_16 entries,
    int32_t offsetToFirstLocal,

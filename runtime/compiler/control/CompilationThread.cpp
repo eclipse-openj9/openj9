@@ -99,7 +99,6 @@
 #if defined(J9VM_OPT_MICROJIT)
 #include "microjit/x/amd64/AMD64Codegen.hpp"
 #include "microjit/x/amd64/AMD64CodegenGC.hpp"
-#include "microjit/ByteCodeIterator.hpp"
 #include "microjit/SideTables.hpp"
 #include "microjit/utils.hpp"
 #include "codegen/OMRLinkage_inlines.hpp"

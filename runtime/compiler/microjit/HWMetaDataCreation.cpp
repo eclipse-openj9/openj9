@@ -509,7 +509,7 @@ static TR::Optimizer *createOptimizer(TR::Compilation *comp, TR::ResolvedMethodS
 
 MJIT::InternalMetaData
 createInternalMethodMetadata(
-      MJIT::ByteCodeIterator *bci,
+      TR_J9ByteCodeIterator *bci,
       MJIT::LocalTableEntry *localTableEntries,
       U_16 entries,
       int32_t offsetToFirstLocal,

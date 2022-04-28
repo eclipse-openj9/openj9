@@ -27,7 +27,6 @@
 #include "microjit/utils.hpp"
 #include "microjit/x/amd64/AMD64Linkage.hpp"
 #include "microjit/x/amd64/AMD64CodegenGC.hpp"
-#include "microjit/ByteCodeIterator.hpp"
 #include "control/RecompilationInfo.hpp"
 #include "env/IO.hpp"
 #include "env/TRMemory.hpp"
@@ -147,7 +146,7 @@ class CodeGenerator
       generateLoad(
          char *buffer,
          TR_J9ByteCode bc,
-         MJIT::ByteCodeIterator *bci);
+         TR_J9ByteCodeIterator *bci);
 
       /**
       * Generates a store instruction based on the type.
@@ -161,7 +160,7 @@ class CodeGenerator
       generateStore(
          char *buffer,
          TR_J9ByteCode bc,
-         MJIT::ByteCodeIterator *bci);
+         TR_J9ByteCodeIterator *bci);
 
       /**
       * Generates argument moves for static method invocation.
@@ -191,7 +190,7 @@ class CodeGenerator
       buffer_size_t
       generateInvokeStatic(
          char *buffer,
-         MJIT::ByteCodeIterator *bci,
+         TR_J9ByteCodeIterator *bci,
          struct TR::X86LinkageProperties *properties);
 
       /**
@@ -204,7 +203,7 @@ class CodeGenerator
       buffer_size_t
       generateGetField(
          char *buffer,
-         MJIT::ByteCodeIterator *bci);
+         TR_J9ByteCodeIterator *bci);
 
       /**
       * Generates a putField instruction based on the type.
@@ -216,7 +215,7 @@ class CodeGenerator
       buffer_size_t
       generatePutField(
          char *buffer,
-         MJIT::ByteCodeIterator *bci);
+         TR_J9ByteCodeIterator *bci);
 
       /**
       * Generates a putStatic instruction based on the type.
@@ -228,7 +227,7 @@ class CodeGenerator
       buffer_size_t
       generatePutStatic(
          char *buffer,
-         MJIT::ByteCodeIterator *bci);
+         TR_J9ByteCodeIterator *bci);
 
       /**
       * Generates a getStatic instruction based on the type.
@@ -240,7 +239,7 @@ class CodeGenerator
       buffer_size_t
       generateGetStatic(
          char *buffer,
-         MJIT::ByteCodeIterator *bci);
+         TR_J9ByteCodeIterator *bci);
 
       /**
       * Generates a return instruction based on the type.
@@ -334,7 +333,7 @@ class CodeGenerator
          char *first2BytesPatchLocation,
          char *samplingRecompileCallLocation,
          char** firstInstLocation,
-         MJIT::ByteCodeIterator *bci);
+         TR_J9ByteCodeIterator *bci);
 
       /**
       * Generates the cold area used for helpers, such as the jit stack overflow checker.
@@ -360,7 +359,7 @@ class CodeGenerator
       buffer_size_t
       generateBody(
          char *buffer,
-         MJIT::ByteCodeIterator *bci);
+         TR_J9ByteCodeIterator *bci);
 
       /**
       * Generates a profiling counter for an edge.

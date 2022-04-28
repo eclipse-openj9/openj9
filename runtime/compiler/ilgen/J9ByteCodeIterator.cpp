@@ -310,6 +310,30 @@ TR_J9ByteCodeIterator::printByteCode()
       }
    }
 
+void
+TR_J9ByteCodeIterator::printByteCodes()
+   {
+   printByteCodePrologue();
+   for (TR_J9ByteCode bc = first(); bc != J9BCunknown; bc = next())
+      {
+      printByteCode();
+      }
+   printByteCodeEpilogue();
+   }
+
+const char *
+TR_J9ByteCodeIterator::currentMnemonic()
+   {
+   uint8_t opcode = nextByte(0);
+   return fe()->getByteCodeName(opcode);
+   }
+
+uint8_t
+TR_J9ByteCodeIterator::currentOpcode()
+   {
+   return nextByte(0);
+   }
+
 const TR_J9ByteCode TR_J9ByteCodeIterator::_opCodeToByteCodeEnum[] =
    {
    /* 0   */ J9BCnop,

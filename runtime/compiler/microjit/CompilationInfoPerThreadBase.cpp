@@ -110,7 +110,7 @@ TR::CompilationInfoPerThreadBase::mjit(
 
       // BEGIN MICROJIT
       TR::FilePointer *logFileFP = getCompilation()->getOutFile();
-      MJIT::ByteCodeIterator bcIterator(0, static_cast<TR_ResolvedJ9Method *> (compilee), static_cast<TR_J9VMBase *> (&vm), comp());
+      TR_J9ByteCodeIterator bcIterator(0, static_cast<TR_ResolvedJ9Method *> (compilee), static_cast<TR_J9VMBase *> (&vm), comp());
 
       if (TR::Options::canJITCompile())
          {
