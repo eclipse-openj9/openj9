@@ -49,7 +49,8 @@ testMicroJITCompilationForErrors(
       J9Method *method,
       J9JITConfig *jitConfig,
       J9VMThread *vmThread,
-      TR::Compilation *compiler)
+      TR::Compilation *compiler,
+      const char *reason)
    {
    if (0 == code_size)
       {
@@ -60,7 +61,7 @@ testMicroJITCompilationForErrors(
       uint8_t *extendedFlags = fe->fetchMethodExtendedFlagsPointer(method);
       *extendedFlags = *extendedFlags | J9_MJIT_FAILED_COMPILE;
       method->extra = reinterpret_cast<void *>(trCountFromMJIT);
-      compiler->failCompilation<MJIT::MJITCompilationFailure>("Cannot compile with MicroJIT.");
+      compiler->failCompilation<MJIT::MJITCompilationFailure>("Cannot compile with MicroJIT because %s.", reason);
       }
    }
 
@@ -89,7 +90,7 @@ TR::CompilationInfoPerThreadBase::mjit(
       ++_compInfo._numAsyncCompilations;
 
    if (_methodBeingCompiled->isDLTCompile())
-      testMicroJITCompilationForErrors(0, method, jitConfig, vmThread, compiler);
+      testMicroJITCompilationForErrors(0, method, jitConfig, vmThread, compiler, "MicroJIT does not support DLT compilations");
 
    bool volatile haveLockedClassUnloadMonitor = false; // used for compilation without VM access
    int32_t estimated_size = 0;
@@ -102,8 +103,7 @@ TR::CompilationInfoPerThreadBase::mjit(
       TR::IlGeneratorMethodDetails & details = _methodBeingCompiled->getMethodDetails();
       method = details.getMethod();
 
-      TR_J9VMBase *fe = TR_J9VMBase::get(jitConfig, vmThread); // TODO: fe can be replaced by vm and removed from here.
-      uint8_t *extendedFlags = fe->fetchMethodExtendedFlagsPointer(method);
+      uint8_t *extendedFlags = static_cast<TR_J9VMBase *> (&vm)->fetchMethodExtendedFlagsPointer(method);
       const char* signature = compilee->signature(compiler->trMemory());
 
       TRIGGER_J9HOOK_JIT_COMPILING_START(_jitConfig->hookInterface, vmThread, method);
@@ -121,7 +121,7 @@ TR::CompilationInfoPerThreadBase::mjit(
          if (compiler->getOption(TR_TraceCG))
             trfprintf(logFileFP, "\n------------------------------\nMicroJIT Compiling %s...\n------------------------------\n", signature);
          if ((compilee->isConstructor()))
-            testMicroJITCompilationForErrors(0, method, jitConfig, vmThread, compiler); // "MicroJIT does not currently compile constructors"
+            testMicroJITCompilationForErrors(0, method, jitConfig, vmThread, compiler, "MicroJIT does not currently compile constructors");
 
          bool isStaticMethod = compilee->isStatic();   // To know if the method we are compiling is static or not
          if (!isStaticMethod)
@@ -153,7 +153,7 @@ TR::CompilationInfoPerThreadBase::mjit(
          int error_code = 0;
          MJIT::RegisterStack stack = MJIT::mapIncomingParams(typeString, maxLength, &error_code, paramTableEntries, actualParamCount, logFileFP);
          if (error_code)
-            testMicroJITCompilationForErrors(0, method, jitConfig, vmThread, compiler);
+            testMicroJITCompilationForErrors(0, method, jitConfig, vmThread, compiler, "mapping parameters failed");
 
          MJIT::ParamTable paramTable(paramTableEntries, paramCount, actualParamCount, &stack);
 #define MAX_INSTRUCTION_SIZE 15
@@ -170,7 +170,7 @@ TR::CompilationInfoPerThreadBase::mjit(
          MJIT::CodeGenerator mjit_cg(_jitConfig, vmThread, logFileFP, vm, &paramTable, compiler, &mjitCGGC, comp()->getPersistentInfo(), trMemory, compilee);
          estimated_size = MAX_BUFFER_SIZE(maxBCI);
          buffer = (char*)mjit_cg.allocateCodeCache(estimated_size, &vm, vmThread);
-         testMicroJITCompilationForErrors((uintptr_t)buffer, method, jitConfig, vmThread, compiler); // MicroJIT cannot compile if allocation fails.
+         testMicroJITCompilationForErrors((uintptr_t)buffer, method, jitConfig, vmThread, compiler, "code cache allocation failed");
          codeCache = mjit_cg.getCodeCache();
 
          // provide enough space for CodeCacheMethodHeader
@@ -180,8 +180,7 @@ TR::CompilationInfoPerThreadBase::mjit(
 
          char *magicWordLocation, *first2BytesPatchLocation, *samplingRecompileCallLocation;
          buffer_size_t code_size = mjit_cg.generatePrePrologue(cursor, method, &magicWordLocation, &first2BytesPatchLocation, &samplingRecompileCallLocation);
-
-         testMicroJITCompilationForErrors((uintptr_t)code_size, method, jitConfig, vmThread, compiler);
+         testMicroJITCompilationForErrors((uintptr_t)code_size, method, jitConfig, vmThread, compiler, "generatePrePrologue failed");
 
          compiler->cg()->setPrePrologueSize(code_size);
          buffer_size += code_size;
@@ -212,7 +211,7 @@ TR::CompilationInfoPerThreadBase::mjit(
          char *firstInstructionLocation = NULL;
 
          code_size = mjit_cg.generatePrologue(cursor, method, &jitStackOverflowPatchLocation, magicWordLocation, first2BytesPatchLocation, samplingRecompileCallLocation, &firstInstructionLocation, &bcIterator);
-         testMicroJITCompilationForErrors((uintptr_t)code_size, method, jitConfig, vmThread, compiler);
+         testMicroJITCompilationForErrors((uintptr_t)code_size, method, jitConfig, vmThread, compiler, "generatePrologue failed");
 
          TR::GCStackAtlas *atlas = mjit_cg.getStackAtlas();
          compiler->cg()->setStackAtlas(atlas);
@@ -243,8 +242,7 @@ TR::CompilationInfoPerThreadBase::mjit(
             trfprintf(logFileFP, "\n%s\n", signature);
 
          code_size = mjit_cg.generateBody(cursor, &bcIterator);
-
-         testMicroJITCompilationForErrors((uintptr_t)code_size, method, jitConfig, vmThread, compiler);
+         testMicroJITCompilationForErrors((uintptr_t)code_size, method, jitConfig, vmThread, compiler, "generateBody failed");
 
          buffer_size += code_size;
          MJIT_ASSERT(logFileFP, buffer_size < MAX_BUFFER_SIZE(maxBCI), "Buffer overflow after body");
@@ -260,8 +258,8 @@ TR::CompilationInfoPerThreadBase::mjit(
 
          // GENERATE COLD AREA
          code_size = mjit_cg.generateColdArea(cursor, method, jitStackOverflowPatchLocation);
+         testMicroJITCompilationForErrors((uintptr_t)code_size, method, jitConfig, vmThread, compiler, "generateColdArea failed");
 
-         testMicroJITCompilationForErrors((uintptr_t)code_size, method, jitConfig, vmThread, compiler);
          buffer_size += code_size;
          MJIT_ASSERT(logFileFP, buffer_size < MAX_BUFFER_SIZE(maxBCI), "Buffer overflow after cold-area");
 
@@ -302,7 +300,7 @@ TR::CompilationInfoPerThreadBase::mjit(
             TR_VerboseLog::writeLineLocked(TR_Vlog_DISPATCH, "Successfully created metadata [" POINTER_PRINTF_FORMAT "] for %s @ %s", metaData, compiler->signature(), compiler->getHotnessName());
          setMetadata(metaData);
          uint8_t *warmMethodHeader = compiler->cg()->getBinaryBufferStart() - sizeof(OMR::CodeCacheMethodHeader);
-         memcpy(warmMethodHeader + offsetof(OMR::CodeCacheMethodHeader, _metaData), &metaData, sizeof(metaData));
+         reinterpret_cast<OMR::CodeCacheMethodHeader *>(warmMethodHeader)->_metaData = metaData;
          // FAR: should we do postpone this copying until after CHTable commit?
          metaData->runtimeAssumptionList = *(compiler->getMetadataAssumptionList());
          TR::ClassTableCriticalSection chTableCommit(&vm);
