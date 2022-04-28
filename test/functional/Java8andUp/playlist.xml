@@ -1,24 +1,24 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <!--
-  Copyright (c) 2016, 2022 IBM Corp. and others
+Copyright (c) 2016, 2022 IBM Corp. and others
 
-  This program and the accompanying materials are made available under
-  the terms of the Eclipse Public License 2.0 which accompanies this
-  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
-  or the Apache License, Version 2.0 which accompanies this distribution and
-  is available at https://www.apache.org/licenses/LICENSE-2.0.
+This program and the accompanying materials are made available under
+the terms of the Eclipse Public License 2.0 which accompanies this
+distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+or the Apache License, Version 2.0 which accompanies this distribution and
+is available at https://www.apache.org/licenses/LICENSE-2.0.
 
-  This Source Code may also be made available under the following
-  Secondary Licenses when the conditions for such availability set
-  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
-  General Public License, version 2 with the GNU Classpath
-  Exception [1] and GNU General Public License, version 2 with the
-  OpenJDK Assembly Exception [2].
+This Source Code may also be made available under the following
+Secondary Licenses when the conditions for such availability set
+forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+General Public License, version 2 with the GNU Classpath
+Exception [1] and GNU General Public License, version 2 with the
+OpenJDK Assembly Exception [2].
 
-  [1] https://www.gnu.org/software/classpath/license.html
-  [2] http://openjdk.java.net/legal/assembly-exception.html
+[1] https://www.gnu.org/software/classpath/license.html
+[2] http://openjdk.java.net/legal/assembly-exception.html
 
-  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 <playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../TKG/playlist.xsd">
 	<include>java8andUpSettings.mk</include>
@@ -552,7 +552,6 @@
 	-Dcom.ibm.tools.attach.enable=yes \
 	-Djdk.attach.allowAttachSelf=true \
 	-Dcom.ibm.tools.attach.timeout=15000 \
-	--add-exports jdk.jcmd/openj9.tools.attach.diagnostics.info=ALL-UNNAMED \
 	--add-exports java.base/openj9.internal.tools.attach.target=ALL-UNNAMED \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames TestJstack \
 	-groups $(TEST_GROUP) \
@@ -603,7 +602,6 @@
 	-Dcom.ibm.tools.attach.enable=yes \
 	-Djdk.attach.allowAttachSelf=true \
 	-Dcom.ibm.tools.attach.timeout=15000 \
-	--add-exports jdk.jcmd/openj9.tools.attach.diagnostics.info=ALL-UNNAMED \
 	--add-exports jdk.attach/com.ibm.tools.attach.attacher=ALL-UNNAMED \
 	--add-exports java.base/openj9.internal.tools.attach.target=ALL-UNNAMED \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames TestJmap \
@@ -964,7 +962,7 @@
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) $(JAVA_COMMAND) $(JVM_OPTIONS) \
 		--add-exports=java.base/com.ibm.oti.vm=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.math=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.base/java.lang.ref=ALL-UNNAMED --add-exports=java.base/jdk.internal.vm.annotation=ALL-UNNAMED \
 		-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(P)$(JVM_TEST_ROOT)$(D)InstrumentationAgent$(D)instrumentation.jar$(Q) \
-		 -javaagent:$(Q)$(JVM_TEST_ROOT)$(D)functional$(D)InstrumentationAgent$(D)instrumentation.jar$(Q) \
+		-javaagent:$(Q)$(JVM_TEST_ROOT)$(D)functional$(D)InstrumentationAgent$(D)instrumentation.jar$(Q) \
 		org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
 		-testnames ContendedFieldsTests \
 		-groups $(TEST_GROUP) \
@@ -1701,7 +1699,7 @@
 	<test>
 		<testCaseName>JCL_Test_JITHelpers</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
-	--add-opens=java.base/java.lang=ALL-UNNAMED  \
+	--add-opens=java.base/java.lang=ALL-UNNAMED \
 	--add-exports=java.base/com.ibm.jit=ALL-UNNAMED \
 	--add-opens=java.base/com.ibm.jit=ALL-UNNAMED -Xbootclasspath/a:$(Q)$(TEST_RESROOT)$(D)TestResources.jar$(Q) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
@@ -2137,7 +2135,7 @@
 			<variation>Mode610</variation>
 		</variations>
 		<!-- OpenJ9 issue 1421, failed on zos:
-		z/OS documentation indicates the destructor supplied 
+		z/OS documentation indicates the destructor supplied
 		with pthread_key_create() may not be run on thread exit.
 		-->
 		<platformRequirements>^arch.arm,^os.zos</platformRequirements>
