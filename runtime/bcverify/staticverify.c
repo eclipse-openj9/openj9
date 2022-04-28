@@ -997,6 +997,17 @@ checkBytecodeStructure (J9CfrClassFile * classfile, UDATA methodIndex, UDATA len
 				errorDataIndex = index;
 				goto _verifyError;
 			}
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+			info = &(classfile->constantPool[classfile->constantPool[index].slot1]);
+			if ((CFR_BC_new == bc) && bcvIsReferenceTypeDescriptor(info)) {
+				errorType = J9NLS_CFR_ERR_NEW_INVALID_REFERENCETYPE_DESCRIPTOR__ID;
+				goto _verifyError;
+			}
+			if ((CFR_BC_aconst_init == bc) && ('[' == *info->bytes)) {
+				errorType = J9NLS_CFR_ERR_ACONST_INIT_INVALID_ARRAY__ID;
+				goto _verifyError;
+			}
+#endif /* #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 			break;
 
 		case CFR_BC_newarray:
@@ -1676,6 +1687,9 @@ j9bcv_verifyClassStructure (J9PortLibrary * portLib, J9CfrClassFile * classfile,
 				end = utf8->slot1;
 
 				switch (utf8->bytes[arity]) {
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+				case 'Q':		/* fall through */
+#endif /* #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 				case 'L':		/* object array */
 					if (utf8->bytes[--end] != ';') {
 						errorType = J9NLS_CFR_ERR_BAD_CLASS_NAME__ID;
@@ -1802,10 +1816,13 @@ j9bcv_verifyClassStructure (J9PortLibrary * portLib, J9CfrClassFile * classfile,
 							invalidRetType = TRUE;
 						}
 					}
+/* This #if !defined check should be removed (along with all other code that references J9VM_OPT_VALHALLA_NEW_FACTORY_METHOD) once the <vnew> method is introduced */
+#if !defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 				} else {
 					if (info->bytes[info->slot1 - 1] != 'V') {
 						invalidRetType = TRUE;
 					}
+#endif /* #if !defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 				}
 				if (invalidRetType) {
 					errorType = J9NLS_CFR_ERR_BC_METHOD_INVALID_SIG__ID;
