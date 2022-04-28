@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -78,6 +78,11 @@
 
 #define	CFR_METHOD_NAME_INIT	1
 #define	CFR_METHOD_NAME_CLINIT	2
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_NEW_FACTORY_METHOD)
+#define	CFR_METHOD_NAME_NEW		3
+#endif /* #if defined(J9VM_OPT_VALHALLA_NEW_FACTORY_METHOD) */
+#endif /* #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 #define	CFR_METHOD_NAME_INVALID	-1
 
 /* Macros. */

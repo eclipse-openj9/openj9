@@ -1635,6 +1635,22 @@ checkFields(J9PortLibrary* portLib, J9CfrClassFile * classfile, U_8 * segment, U
 			}
 		}
 
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		if (J9_ARE_ALL_BITS_SET(classfile->accessFlags, CFR_ACC_VALUE_TYPE)) {
+			if (J9_ARE_NO_BITS_SET(value, CFR_ACC_STATIC | CFR_ACC_FINAL)) {
+				errorCode = J9NLS_CFR_ERR_VALUE_CLASS_FIELD_NOT_STATIC_OR_FINAL__ID;
+				goto _errorFound;
+			}
+		}
+		if (J9_ARE_ALL_BITS_SET(classfile->accessFlags, CFR_ACC_PERMITS_VALUE)) {
+			/* if CFR_ACC_PERMITS_VALUE is set, we already know that CFR_ACC_ABSTRACT must be set as well */
+			if (J9_ARE_NO_BITS_SET(value, CFR_ACC_STATIC)) {
+				errorCode = J9NLS_CFR_ERR_MISSING_ACC_STATIC_ON_ABSTRACT_CLASS_FIELD__ID;
+				goto _errorFound;
+			}
+		}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+
 		maskedValue = value & CFR_PUBLIC_PRIVATE_PROTECTED_MASK;
 		/* Check none or only one of the access flags set - result is 0 if no bits or only 1 bit is set */
 		if (maskedValue & (maskedValue - 1)) {
@@ -1783,11 +1799,23 @@ checkMethods(J9PortLibrary* portLib, J9CfrClassFile* classfile, U_8* segment, U_
 		} 
 
 		if (nameIndexOK && utf8Equal(&classfile->constantPool[method->nameIndex], "<init>", 6)) {
+			BOOLEAN classfileIsValuetype = J9_IS_CLASSFILE_VALUETYPE(classfile);
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_NEW_FACTORY_METHOD)
+			if (classfileIsValuetype) {
+				errorCode = J9NLS_CFR_ERR_INIT_ON_VALUE_CLASS__ID;
+				goto _errorFound;
+			}
+#else /* #if defined(J9VM_OPT_VALHALLA_NEW_FACTORY_METHOD) */
+			if (classfileIsValuetype && (value & ~CFR_INIT_VT_METHOD_ACCESS_MASK)) {
+				errorCode = J9NLS_CFR_ERR_INIT_METHOD__ID;
+				goto _errorFound;
+			}
+#endif /* #if defined(J9VM_OPT_VALHALLA_NEW_FACTORY_METHOD) */
+#endif /* #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 			/* check no invalid flags set */
-			if ((J9_IS_CLASSFILE_VALUETYPE(classfile) && (value & ~CFR_INIT_VT_METHOD_ACCESS_MASK))
-				||  (!J9_IS_CLASSFILE_VALUETYPE(classfile) && (value & ~CFR_INIT_METHOD_ACCESS_MASK))
-			) {
+			if ((!classfileIsValuetype) && (value & ~CFR_INIT_METHOD_ACCESS_MASK)) {
 				errorCode = J9NLS_CFR_ERR_INIT_METHOD__ID;
 				goto _errorFound;
 			}
@@ -1803,6 +1831,21 @@ checkMethods(J9PortLibrary* portLib, J9CfrClassFile* classfile, U_8* segment, U_
 				}
 			}
 		}
+
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_NEW_FACTORY_METHOD)
+		if (nameIndexOK && utf8Equal(&classfile->constantPool[method->nameIndex], "<new>", 5)) {
+			if (J9_ARE_NO_BITS_SET(value, CFR_ACC_STATIC)) {
+				errorCode = J9NLS_CFR_ERR_INVALID_FLAGS_ON_NEW__ID;
+				goto _errorFound;
+			}
+			if (J9_ARE_ANY_BITS_SET(value, ~CFR_INIT_VT_METHOD_ACCESS_MASK)) {
+				errorCode = J9NLS_CFR_ERR_INVALID_FLAGS_ON_NEW__ID;
+				goto _errorFound;
+			}
+		}
+#endif /* #if defined(J9VM_OPT_VALHALLA_NEW_FACTORY_METHOD) */
+#endif /* #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 		/* Check interface-method-only access flag constraints. */
 		if (classfile->accessFlags & CFR_ACC_INTERFACE) {
@@ -1857,6 +1900,19 @@ checkMethods(J9PortLibrary* portLib, J9CfrClassFile* classfile, U_8* segment, U_
 			errorCode = J9NLS_CFR_ERR_ACCESS_CONFLICT_METHOD__ID;
 			goto _errorFound;
 		}
+
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		if (J9_ARE_ALL_BITS_SET(classfile->accessFlags, CFR_ACC_VALUE_TYPE) ||
+			J9_ARE_ALL_BITS_SET(classfile->accessFlags, CFR_ACC_PERMITS_VALUE))
+		{
+			if (J9_ARE_ALL_BITS_SET(value, CFR_ACC_SYNCHRONIZED)) {
+				if (J9_ARE_NO_BITS_SET(value, CFR_ACC_STATIC)) {
+					errorCode = J9NLS_CFR_ERR_NON_STATIC_SYNCHRONIZED_VALUE_TYPE_METHOD__ID;
+					goto _errorFound;
+				}
+			}
+		}
+#endif /* #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 		
 _nameCheck:
 
@@ -2912,6 +2968,11 @@ j9bcutil_readClassFileBytes(J9PortLibrary *portLib,
 		}
 		if (J9_ARE_ALL_BITS_SET(classfile->accessFlags, CFR_ACC_FINAL)) {
 			errorCode = J9NLS_CFR_ERR_PERMITS_VALUE_ON_FINAL_CLASS__ID;
+			offset = index - data - 2;
+			goto _errorFound;
+		}
+		if (J9_ARE_ALL_BITS_SET(classfile->accessFlags, CFR_ACC_INTERFACE)) {
+			errorCode = J9NLS_CFR_ERR_PERMITS_VALUE_ON_INTERFACE__ID;
 			offset = index - data - 2;
 			goto _errorFound;
 		}
