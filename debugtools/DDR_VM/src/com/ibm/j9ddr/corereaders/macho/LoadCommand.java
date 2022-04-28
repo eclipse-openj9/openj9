@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2019 IBM Corp. and others
+ * Copyright (c) 2019, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -116,7 +116,7 @@ public class LoadCommand
 			long currentOffset = stream.getStreamPosition();
 			stream.seek(absoluteOffset + offset);
 			int stringSize = (int) (cmdSize - offset);
-			byte stringBytes[] = new byte[stringSize];
+			byte[] stringBytes = new byte[stringSize];
 			stream.readFully(stringBytes);
 			value = getStringFromAsciiChars(stringBytes);
 			stream.seek(currentOffset);
@@ -166,7 +166,7 @@ public class LoadCommand
 		return this;
 	}
 
-	public static LoadCommand readFullCommand(ImageInputStream stream, long streamOffset, long segmentOffset) throws IOException
+	public static LoadCommand readFullCommand(ImageInputStream stream, long streamOffset, long segmentOffset, int cpuType) throws IOException
 	{
 		LoadCommand command;
 		stream.seek(streamOffset);
@@ -197,7 +197,7 @@ public class LoadCommand
 				break;
 			case LC_THREAD:
 			case LC_UNIXTHREAD:
-				command = new ThreadCommand();
+				command = new ThreadCommand(cpuType);
 				break;
 			case LC_ROUTINES_64:
 				command = new RoutinesCommand64();
