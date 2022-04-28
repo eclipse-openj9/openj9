@@ -859,9 +859,9 @@ TR_VectorAPIExpansion::vectorizeLoadOrStore(TR_VectorAPIExpansion *opt, TR::Node
 
       }
    if (node->getOpCode().isStore())
-      TR::Node::recreate(node, TR::vstore);
+      TR::Node::recreate(node, TR::ILOpCode::createVectorOpCode(OMR::vstore, type));
    else
-      TR::Node::recreate(node, TR::vload);
+      TR::Node::recreate(node, TR::ILOpCode::createVectorOpCode(OMR::vload, type));
 
    node->setSymbolReference(vecSymRef);
    }
@@ -1196,7 +1196,7 @@ TR::Node *TR_VectorAPIExpansion::transformLoadFromArray(TR_VectorAPIExpansion *o
       TR::VectorLength lengthEnum = supportedOnPlatform(comp, vectorLength);
       TR::DataType vectorType = OMR::DataType(elementType).scalarToVector(lengthEnum);
       TR::SymbolReference *vecShadow = comp->getSymRefTab()->findOrCreateArrayShadowSymbolRef(vectorType, NULL);
-      TR::Node::recreate(node, TR::vloadi);
+      TR::Node::recreate(node, TR::ILOpCode::createVectorOpCode(OMR::vloadi, vectorType));
       node->setSymbolReference(vecShadow);
       }
 
@@ -1288,7 +1288,7 @@ TR::Node *TR_VectorAPIExpansion::transformStoreToArray(TR_VectorAPIExpansion *op
 
       if (valueToWrite->getOpCodeValue() == TR::aload) vectorizeLoadOrStore(opt, valueToWrite, vectorType);
 
-      TR::Node::recreate(node, TR::vstorei);
+      TR::Node::recreate(node, TR::ILOpCode::createVectorOpCode(OMR::vstorei, vectorType));
       node->setSymbolReference(vecShadow);
       }
 
@@ -1431,7 +1431,9 @@ TR::Node *TR_VectorAPIExpansion::broadcastCoercedIntrinsicHandler(TR_VectorAPIEx
       {
       if (!supportedOnPlatform(comp, vectorLength)) return NULL;
 
-      if (!comp->cg()->getSupportsOpCodeForAutoSIMD(TR::vsplats, elementType))
+      TR::ILOpCodes splatsOpCode = TR::ILOpCode::createVectorOpCode(OMR::vsplats, elementType.scalarToVector(OMR::DataType::bitsToVectorLength(vectorLength)));
+
+      if (!comp->cg()->getSupportsOpCodeForAutoSIMD(splatsOpCode, elementType))
          return NULL;
 
       return node;
@@ -1491,7 +1493,9 @@ TR::Node *TR_VectorAPIExpansion::broadcastCoercedIntrinsicHandler(TR_VectorAPIEx
       {
       node->setAndIncChild(0, newNode);
       node->setNumChildren(1);
-      TR::Node::recreate(node, TR::vsplats);
+      TR::ILOpCodes splatsOpCode = TR::ILOpCode::createVectorOpCode(OMR::vsplats, elementType.scalarToVector(OMR::DataType::bitsToVectorLength(vectorLength)));
+
+      TR::Node::recreate(node, splatsOpCode);
       }
 
    return node;
@@ -1567,23 +1571,23 @@ TR::ILOpCodes TR_VectorAPIExpansion::ILOpcodeFromVectorAPIOpcode(int32_t vectorA
       }
 
    TR::VectorLength vectorLength = OMR::DataType::bitsToVectorLength(bitsLength);
+   TR::DataType vectorType = scalar ? TR::NoType : TR::DataType::createVectorType(elementType.getDataType(), vectorLength);
 
    switch (vectorAPIOpCode)
       {
       case VECTOR_OP_ABS: return scalar ? TR::ILOpCode::absOpCode(elementType) : TR::BadILOp;
-      case VECTOR_OP_NEG: return scalar ? TR::ILOpCode::negateOpCode(elementType) : TR::vneg;
+      case VECTOR_OP_NEG: return scalar ? TR::ILOpCode::negateOpCode(elementType) : TR::ILOpCode::createVectorOpCode(OMR::vneg, vectorType);
       case VECTOR_OP_SQRT:return TR::BadILOp;
-      case VECTOR_OP_ADD: return scalar ? TR::ILOpCode::addOpCode(elementType, true)
-         : TR::ILOpCode::createVectorOpCode(OMR::vadd, TR::DataType::createVectorType(elementType.getDataType(), vectorLength)).getOpCodeValue();
-      case VECTOR_OP_SUB: return scalar ? TR::ILOpCode::subtractOpCode(elementType) : TR::vsub;
-      case VECTOR_OP_MUL: return scalar ? TR::ILOpCode::multiplyOpCode(elementType) : TR::vmul;
-      case VECTOR_OP_DIV: return scalar ? TR::ILOpCode::divideOpCode(elementType) : TR::vdiv;
+      case VECTOR_OP_ADD: return scalar ? TR::ILOpCode::addOpCode(elementType, true) : TR::ILOpCode::createVectorOpCode(OMR::vadd, vectorType);
+      case VECTOR_OP_SUB: return scalar ? TR::ILOpCode::subtractOpCode(elementType) : TR::ILOpCode::createVectorOpCode(OMR::vsub, vectorType);
+      case VECTOR_OP_MUL: return scalar ? TR::ILOpCode::multiplyOpCode(elementType) : TR::ILOpCode::createVectorOpCode(OMR::vmul, vectorType);
+      case VECTOR_OP_DIV: return scalar ? TR::ILOpCode::divideOpCode(elementType) : TR::ILOpCode::createVectorOpCode(OMR::vdiv, vectorType);
       case VECTOR_OP_MIN: return TR::BadILOp;
       case VECTOR_OP_MAX: return TR::BadILOp;
-      case VECTOR_OP_AND: return scalar ? TR::ILOpCode::andOpCode(elementType) : TR::vand;
-      case VECTOR_OP_OR:  return scalar ? TR::ILOpCode::orOpCode(elementType)  : TR::vor;
-      case VECTOR_OP_XOR: return scalar ? TR::ILOpCode::xorOpCode(elementType) : TR::vxor;
-      case VECTOR_OP_FMA: return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(OMR::vfma, TR::DataType::createVectorType(elementType.getDataType(), vectorLength)).getOpCodeValue();
+      case VECTOR_OP_AND: return scalar ? TR::ILOpCode::andOpCode(elementType) : TR::ILOpCode::createVectorOpCode(OMR::vand, vectorType);
+      case VECTOR_OP_OR:  return scalar ? TR::ILOpCode::orOpCode(elementType)  : TR::ILOpCode::createVectorOpCode(OMR::vor, vectorType);
+      case VECTOR_OP_XOR: return scalar ? TR::ILOpCode::xorOpCode(elementType) : TR::ILOpCode::createVectorOpCode(OMR::vxor, vectorType);
+      case VECTOR_OP_FMA: return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(OMR::vfma, vectorType);
       default:
          return TR::BadILOp;
       // shiftLeftOpCode
