@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2021 IBM Corp. and others
+ * Copyright (c) 2019, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,6 +30,7 @@
 
 #define OPENSSL_VERSION_1_0 "OpenSSL 1.0."
 #define OPENSSL_VERSION_1_1 "OpenSSL 1.1."
+#define OPENSSL_VERSION_3_X "OpenSSL 3."
 
 OOpenSSL_version_t * OOpenSSL_version = NULL;
 
@@ -209,9 +210,10 @@ void *loadLibssl()
    {
    void *result = NULL;
 
-   // Library names for OpenSSL 1.1.1, 1.1.0, 1.0.2 and symbolic links
+   // Library names for OpenSSL 3, 1.1.1, 1.1.0, 1.0.2 and symbolic links
    static const char * const libNames[] =
       {
+      "libssl.so.3",     // 3.x library name
       "libssl.so.1.1",   // 1.1.x library name
       "libssl.so.1.0.0", // 1.0.x library name
       "libssl.so.10",    // 1.0.x library name on RHEL
@@ -255,6 +257,10 @@ int findLibsslVersion(void *handle)
       if (0 == strncmp(openssl_version, OPENSSL_VERSION_1_1, strlen(OPENSSL_VERSION_1_1)))
          {
          ossl_ver = 1;
+         }
+      else if (0 == strncmp(openssl_version, OPENSSL_VERSION_3_X, strlen(OPENSSL_VERSION_3_X)))
+         {
+         ossl_ver = 3;
          }
       }
    else
@@ -418,6 +424,14 @@ bool loadLibsslAndFindSymbols()
       Osk_X509_INFO_value = &Osk110_X509_INFO_value;
       Osk_X509_INFO_pop_free = &Osk110_X509_INFO_pop_free;
       }
+   if (3 == ossl_ver)
+      {
+      OSSL_get_peer_certificate = (OSSL_get_peer_certificate_t *)findLibsslSymbol(handle, "SSL_get1_peer_certificate");
+      }
+   else
+      {
+      OSSL_get_peer_certificate = (OSSL_get_peer_certificate_t *)findLibsslSymbol(handle, "SSL_get_peer_certificate");
+      }
 
    OSSL_CTX_ctrl = (OSSL_CTX_ctrl_t *)findLibsslSymbol(handle, "SSL_CTX_ctrl");
    OBIO_ctrl = (OBIO_ctrl_t *)findLibsslSymbol(handle, "BIO_ctrl");
@@ -435,7 +449,6 @@ bool loadLibsslAndFindSymbols()
    OSSL_get_version = (OSSL_get_version_t *)findLibsslSymbol(handle, "SSL_get_version");
    OSSL_accept = (OSSL_accept_t *)findLibsslSymbol(handle, "SSL_accept");
    OSSL_connect = (OSSL_connect_t *)findLibsslSymbol(handle, "SSL_connect");
-   OSSL_get_peer_certificate = (OSSL_get_peer_certificate_t *)findLibsslSymbol(handle, "SSL_get_peer_certificate");
    OSSL_get_verify_result = (OSSL_get_verify_result_t *)findLibsslSymbol(handle, "SSL_get_verify_result");
 
    OSSL_CTX_new = (OSSL_CTX_new_t *)findLibsslSymbol(handle, "SSL_CTX_new");
