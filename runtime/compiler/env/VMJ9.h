@@ -495,8 +495,6 @@ public:
 
    virtual TR::TreeTop *lowerTree(TR::Compilation *, TR::Node *, TR::TreeTop *);
 
-   virtual bool canRelocateDirectNativeCalls() {return true; }
-
    virtual bool storeOffsetToArgumentsInVirtualIndirectThunks() { return false; }
 
 
@@ -1434,7 +1432,6 @@ public:
    // replacing calls to isAOT
    virtual bool               canUseSymbolValidationManager() { return true; }
    virtual bool               supportsCodeCacheSnippets()                     { return false; }
-   virtual bool               canRelocateDirectNativeCalls()                  { return false; }
    virtual bool               needClassAndMethodPointerRelocations()          { return true; }
    virtual bool               inlinedAllocationsMustBeVerified()              { return true; }
    virtual bool               needRelocationsForHelpers()                     { return true; }
