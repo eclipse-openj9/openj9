@@ -111,6 +111,7 @@ public:
     * \brief Determines whether the code generator supports stack allocations
     */
    bool supportsStackAllocations() { return true; }
+   bool supportsDirectJNICallsForAOT() { return true; }
 
    // See J9::CodeGenerator::guaranteesResolvedDirectDispatchForSVM
    bool guaranteesResolvedDirectDispatchForSVM() { return true; }
