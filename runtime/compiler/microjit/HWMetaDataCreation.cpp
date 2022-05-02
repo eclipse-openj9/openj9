@@ -74,7 +74,7 @@ join(
    {
    TR::CFGEdge *e = cfg.addEdge(src, dst);
 
-   // TODO: add case for switch
+   // TODO: MicroJIT: add case for switch
    if (isBranchDest)
       {
       src->getExit()->getNode()->setBranchDestination(dst->getEntry());
@@ -167,7 +167,7 @@ class BytecodeIndexList
       TR::CFG &_cfg;
 
    public:
-      TR_ALLOC(TR_Memory::UnknownType); //MicroJIT TODO: create a memory object type for this and get it added to OMR
+      TR_ALLOC(TR_Memory::UnknownType); // TODO: MicroJIT: create a memory object type for this and get it added to OMR
       uint32_t _index;
       BytecodeIndexList(uint32_t index, BytecodeIndexList *prev, BytecodeIndexList *next, TR::CFG &cfg)
          :_index(index)
@@ -466,7 +466,7 @@ class CFGCreator
             }
          else
             { // Still working on current block
-              // TODO: determine if there are any edge cases that need to be filled in here.
+              // TODO: MicroJIT: determine if there are any edge cases that need to be filled in here
             }
          _current->addBCIndex(bci->currentByteCodeIndex());
          }
@@ -529,7 +529,7 @@ createInternalMethodMetadata(
 
    uint16_t maxCalleeArgsSize = 0;
 
-   // TODO: Create the CFG before here and pass reference
+   // TODO: MicroJIT: Create the CFG before here and pass reference
    bool profilingCompilation = comp->getOption(TR_EnableJProfiling) || comp->getProfilingMode() == JProfiling;
 
    TR::CFG *cfg;
@@ -558,7 +558,7 @@ createInternalMethodMetadata(
       * on how many times a local is stored/loaded during a method.
       * This may be worth doing later, but requires some research first.
       *
-      * TODO: Arguments are not guaranteed to be used in the bytecode of a method
+      * TODO: MicroJIT: Arguments are not guaranteed to be used in the bytecode of a method
       * e.g. class MyClass { public int ret3() {return 3;} }
       * The above method is not a static method (arg 0 is an object reference) but the BC
       * will be [iconst_3, return].
@@ -689,8 +689,8 @@ createInternalMethodMetadata(
                }
             J9Method *ramMethod = static_cast<TR_ResolvedJ9Method*>(resolved)->ramMethod();
             J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(ramMethod);
-            // TODO replace this with a more accurate count. This is a clear upper bound;
-            uint16_t calleeArgsSize = romMethod->argCount * pointerSize * 2; // assume 2 slot for now
+            // TODO: MicroJIT: replace this with a more accurate count; this is a clear upper bound
+            uint16_t calleeArgsSize = romMethod->argCount * pointerSize * 2; // assume 2 slots for now
             maxCalleeArgsSize = (calleeArgsSize > maxCalleeArgsSize) ? calleeArgsSize : maxCalleeArgsSize;
             }
          default:

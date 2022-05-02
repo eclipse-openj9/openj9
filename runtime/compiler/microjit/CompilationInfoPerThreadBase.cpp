@@ -216,7 +216,7 @@ TR::CompilationInfoPerThreadBase::mjit(
          TR::GCStackAtlas *atlas = mjit_cg.getStackAtlas();
          compiler->cg()->setStackAtlas(atlas);
          compiler->cg()->setMethodStackMap(atlas->getLocalMap());
-         // TODO: Find out why setting this correctly causes the startPC to report the jitToJit startPC and not the interpreter entry point
+         // TODO: MicroJIT: Find out why setting this correctly causes the startPC to report the jitToJit startPC and not the interpreter entry point
          // compiler->cg()->setJitMethodEntryPaddingSize((uint32_t)(firstInstructionLocation-cursor));
          compiler->cg()->setJitMethodEntryPaddingSize((uint32_t)(0));
 
@@ -277,7 +277,7 @@ TR::CompilationInfoPerThreadBase::mjit(
 
          // As the body is finished, mark its profile info as active so that the JProfiler thread will inspect it
 
-         // TODO: after adding profiling support, uncomment this.
+         // TODO: MicroJIT: after adding profiling support, uncomment this.
          // if (bodyInfo && bodyInfo->getProfileInfo())
          //    {
          //    bodyInfo->getProfileInfo()->setActive();

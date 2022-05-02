@@ -1866,7 +1866,7 @@ createMJITMethodMetaData(
 
    // ---------------------------------------------------------------------------
    // Find unmergeable GC maps
-   // TODO: MicroJIT: Create mechanism like treetop to support this at a MicroJIT level.
+   // TODO: MicroJIT: Create mechanism like treetop to support this at a MicroJIT level
    GCStackMapSet nonmergeableBCI(std::less<TR_GCStackMap*>(), cg->trMemory()->heapMemoryRegion());
    //   if (comp->getOptions()->getReportByteCodeInfoAtCatchBlock())
    //      {
@@ -1907,7 +1907,7 @@ createMJITMethodMetaData(
       {
       return NULL;
       }
-   // TODO: once exception support is added to MicroJIT uncomment this line.
+   // TODO: MicroJIT: once exception support is added to MicroJIT uncomment this line
    // tableSize += exceptionsSize;
    uint32_t exceptionTableSize = tableSize; // Size of the meta data header and exception entries
 
@@ -1915,7 +1915,7 @@ createMJITMethodMetaData(
    // Computing the size of the inlinedCall
    //
 
-   // TODO: Do we care about inline calls?
+   // TODO: MicroJIT: Do we care about inline calls?
    uint32_t inlinedCallSize = 0;
 
    // Add size of stack atlas to allocate

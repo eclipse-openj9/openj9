@@ -34,7 +34,7 @@
 
 class TR_ResolvedMethod;
 
-// TODO: This Should create an Exception table using only information MicroJIT has.
+// TODO: MicroJIT: This should create an exception table using only information MicroJIT has
 MJIT::ExceptionTableEntryIterator::ExceptionTableEntryIterator(TR::Compilation *comp)
    : _compilation(comp)
    {
@@ -51,7 +51,7 @@ MJIT::ExceptionTableEntryIterator::ExceptionTableEntryIterator(TR::Compilation *
 
    }
 
-// TODO: This Should create an Exception table entry using only information MicroJIT has.
+// TODO: MicroJIT: This should create an exception table entry using only information MicroJIT has
 void
 MJIT::ExceptionTableEntryIterator::addSnippetRanges(
       List<TR_ExceptionTableEntry> & tableEntries,
@@ -61,7 +61,7 @@ MJIT::ExceptionTableEntryIterator::addSnippetRanges(
       TR_ResolvedMethod *method,
       TR::Compilation *comp)
    {
-   // TODO: create a snippet for each exception and add it to the correct place.
+   // TODO: MicroJIT: Create a snippet for each exception and add it to the correct place
    }
 
 TR_ExceptionTableEntry *

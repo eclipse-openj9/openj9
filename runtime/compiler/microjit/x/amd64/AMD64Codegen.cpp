@@ -83,7 +83,7 @@ extern J9_CDATA char * const JavaBCNames[];
          patchImm1(buffer, (U_32)(relativeAddress & 0x00000000000000ff)); \
    } while (0)
 
-// TODO: Find out how to jump to trampolines for far calls
+// TODO: MicroJIT: Find out how to jump to trampolines for far calls
 #define PATCH_RELATIVE_ADDR_32_BIT(buffer, absAddress) \
    do { \
          intptr_t relativeAddress = (intptr_t)(buffer); \
@@ -1338,7 +1338,7 @@ MJIT::CodeGenerator::generatePrePrologue(
    // Make sure the startPC at least 4-byte aligned. This is important, since the VM
    // depends on the alignment (it uses the low order bits as tag bits).
    //
-   // TODO: `mustGenerateSwitchToInterpreterPrePrologue` checks that the code generator's compilation is not:
+   // TODO: MicroJIT: `mustGenerateSwitchToInterpreterPrePrologue` checks that the code generator's compilation is not:
    //         `usesPreexistence`,
    //         `getOption(TR_EnableHCR)`,
    //         `!fej9()->isAsyncCompilation`,
@@ -1346,7 +1346,7 @@ MJIT::CodeGenerator::generatePrePrologue(
    //
    if (GENERATE_SWITCH_TO_INTERP_PREPROLOGUE)
       {
-      // TODO: Replace with a check that performs the above checks.
+      // TODO: MicroJIT: Replace with a check that performs the above checks
       // generateSwitchToInterpPrePrologue will align data for use
       char *old_buff = buffer;
       preprologueSize += generateSwitchToInterpPrePrologue(buffer, method, alignmentBoundary, alignmentMargin, typeString, maxLength);
@@ -1558,7 +1558,7 @@ MJIT::CodeGenerator::generatePrologue(
    patchImm4(buffer, (U_32)(mjitRegisterSize));
    COPY_TEMPLATE(buffer, addR10Imm4, prologueSize);
    patchImm4(buffer, (U_32)(romMethod->maxStack*8));
-   // TODO: Find a way to cleanly preserve this value before overriding it in the _stackAllocSize
+   // TODO: MicroJIT: Find a way to cleanly preserve this value before overriding it in the _stackAllocSize
 
    // Set up MJIT local array
    COPY_TEMPLATE(buffer, movR10R14, prologueSize);
@@ -2296,7 +2296,7 @@ buffer_size_t
 MJIT::CodeGenerator::generateEdgeCounter(char *buffer, TR_J9ByteCodeIterator *bci)
    {
    buffer_size_t returnSize = 0;
-   // TODO: Get the pointer to the profiling counter
+   // TODO: MicroJIT: Get the pointer to the profiling counter
    uint32_t *profilingCounterLocation = NULL;
 
    COPY_TEMPLATE(buffer, loadCounter, returnSize);
@@ -2543,7 +2543,7 @@ MJIT::CodeGenerator::generateStore(char *buffer, TR_J9ByteCode bc, TR_J9ByteCode
    return storeSize;
    }
 
-// TODO: see ::emitSnippitCode and redo this to use snippits.
+// TODO: MicroJIT: see ::emitSnippitCode and redo this to use snippits
 buffer_size_t
 MJIT::CodeGenerator::generateArgumentMoveForStaticMethod(
       char *buffer,
@@ -2558,7 +2558,7 @@ MJIT::CodeGenerator::generateArgumentMoveForStaticMethod(
    // Pull out parameters and find their place for calling
    U_16 paramCount = MJIT::getParamCount(typeString, typeStringLength);
    U_16 actualParamCount = MJIT::getActualParamCount(typeString, typeStringLength);
-   // TODO: Implement passing arguments on stack when surpassing register count.
+   // TODO: MicroJIT: Implement passing arguments on stack when surpassing register count
    if (actualParamCount > 4)
       return 0;
 
@@ -2690,7 +2690,7 @@ MJIT::CodeGenerator::generateArgumentMoveForStaticMethod(
             break;
             }
          default:
-            // TODO: Add stack argument passing here.
+            // TODO: MicroJIT: Add stack argument passing here
             break;
          }
       actualParamCount--;
@@ -2712,7 +2712,7 @@ MJIT::CodeGenerator::generateInvokeStatic(char *buffer, TR_J9ByteCodeIterator *b
    // These are all from TR and likely have implications on how we use this address. However, we do not know that as of yet.
    bool isUnresolvedInCP;
    TR_ResolvedMethod *resolved = _compilee->getResolvedStaticMethod(_comp, cpIndex, &isUnresolvedInCP);
-   // TODO: Split this into generateInvokeStaticJava and generateInvokeStaticNative
+   // TODO: MicroJIT: Split this into generateInvokeStaticJava and generateInvokeStaticNative
    // and call the correct one with required args. Do not turn this method into a mess.
    if (!resolved || resolved->isNative())
       return 0;
@@ -2725,9 +2725,9 @@ MJIT::CodeGenerator::generateInvokeStatic(char *buffer, TR_J9ByteCodeIterator *b
    if (MJIT::nativeSignature(ramMethod, typeString))
       return 0;
 
-   // TODO: Find the maximum size that will need to be saved
-   //       for calling a method and reserve it in the prologue.
-   //       This could be done during the meta-data gathering phase.
+   // TODO: MicroJIT: Find the maximum size that will need to be saved
+   //                 for calling a method and reserve it in the prologue.
+   //                 This could be done during the meta-data gathering phase.
    U_16 slotCount = MJIT::getMJITStackSlotCount(typeString, maxLength);
 
    // Generate template and instantiate immediate values

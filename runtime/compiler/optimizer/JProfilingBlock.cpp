@@ -980,7 +980,7 @@ int32_t TR_JProfilingBlock::perform()
    if (trace())
       parent.dump(comp());
 
-// TODO: Remove this when ready to implement counter insertion.
+// TODO: MicroJIT: Remove this when ready to implement counter insertion
 #if defined(J9VM_OPT_MICROJIT)
    J9Method *method = static_cast<TR_ResolvedJ9Method *>(comp()->getMethodBeingCompiled())->ramMethod();
    if (TR::Options::getJITCmdLineOptions()->_mjitEnabled && comp()->fej9()->isMJITExtendedFlagsMethod(method) && comp()->getMethodBeingCompiled()->isInterpreted())
