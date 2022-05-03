@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2021 IBM Corp. and others
+ * Copyright (c) 2017, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -184,7 +184,13 @@ MM_EnvironmentDelegate::inNative()
 bool
 MM_EnvironmentDelegate::isExclusiveAccessRequestWaiting()
 {
-	return (J9_PUBLIC_FLAGS_HALT_THREAD_EXCLUSIVE == (_vmThread->publicFlags & J9_PUBLIC_FLAGS_HALT_THREAD_EXCLUSIVE));
+	return J9_ARE_ANY_BITS_SET(_vmThread->publicFlags, J9_PUBLIC_FLAGS_HALT_THREAD_EXCLUSIVE);
+}
+
+bool
+MM_EnvironmentDelegate::isAnyHaltRequestWaiting()
+{
+	return J9_ARE_ANY_BITS_SET(_vmThread->publicFlags, J9_PUBLIC_FLAGS_HALT_THREAD_ANY);
 }
 
 /**
@@ -211,7 +217,7 @@ MM_EnvironmentDelegate::relinquishExclusiveVMAccess()
 {
 	uintptr_t savedExclusiveCount = _vmThread->omrVMThread->exclusiveCount;
 
-	Assert_MM_true(J9_PUBLIC_FLAGS_VM_ACCESS == (_vmThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS));
+	Assert_MM_true(J9_ARE_ANY_BITS_SET(_vmThread->publicFlags, J9_PUBLIC_FLAGS_VM_ACCESS));
 	Assert_MM_true(0 < savedExclusiveCount);
 
 	_vmThread->omrVMThread->exclusiveCount = 0;
@@ -224,7 +230,7 @@ void
 MM_EnvironmentDelegate::assumeExclusiveVMAccess(uintptr_t exclusiveCount)
 {
 	Assert_MM_true(exclusiveCount >= 1);
-	Assert_MM_true(0 == (_vmThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS));
+	Assert_MM_true(J9_ARE_NO_BITS_SET(_vmThread->publicFlags, J9_PUBLIC_FLAGS_VM_ACCESS));
 	Assert_MM_true(0 == _vmThread->omrVMThread->exclusiveCount);
 
 	_vmThread->omrVMThread->exclusiveCount = exclusiveCount;
