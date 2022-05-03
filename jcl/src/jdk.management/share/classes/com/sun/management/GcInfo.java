@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2016, 2021 IBM Corp. and others
+ * Copyright (c) 2016, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -90,6 +90,7 @@ public class GcInfo implements CompositeData, CompositeDataView {
 	private void setCompositeData(CompositeData cd) {
 		cdata = cd;
 	}
+
 	/**
 	 * Creates a new <code>GcInfo</code> instance.
 	 *
@@ -258,7 +259,8 @@ public class GcInfo implements CompositeData, CompositeDataView {
 	private static Map<String, MemoryUsage> convertTabularDataToMemoryUsageMap(TabularData td) {
 		Map<String, MemoryUsage> result = new HashMap<>();
 
-		for (CompositeData row : (Collection<CompositeData>) td.values()) {
+		for (Object value : (Collection<?>) td.values()) {
+			CompositeData row = (CompositeData) value;
 			String keyVal = (String) row.get("key"); //$NON-NLS-1$
 			MemoryUsage usageVal = MemoryUsage.from((CompositeData) row.get("value")); //$NON-NLS-1$
 			result.put(keyVal, usageVal);

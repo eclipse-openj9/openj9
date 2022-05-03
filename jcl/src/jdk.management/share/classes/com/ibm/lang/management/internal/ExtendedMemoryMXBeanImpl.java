@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2016, 2020 IBM Corp. and others
+ * Copyright (c) 2016, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,7 +25,6 @@ package com.ibm.lang.management.internal;
 import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.MemoryPoolMXBean;
 import java.lang.management.MemoryType;
-import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -39,6 +38,9 @@ import com.ibm.oti.vm.VM;
 /**
  * Runtime type for {@link com.ibm.lang.management.MemoryMXBean}.
  */
+/*[IF JAVA_SPEC_VERSION >= 11]*/
+@SuppressWarnings("removal")
+/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 public final class ExtendedMemoryMXBeanImpl extends MemoryMXBeanImpl implements MemoryMXBean {
 
 	private static final ExtendedMemoryMXBeanImpl instance = new ExtendedMemoryMXBeanImpl();
@@ -84,7 +86,7 @@ public final class ExtendedMemoryMXBeanImpl extends MemoryMXBeanImpl implements 
 				return thread;
 			};
 
-			Thread notifier = AccessController.doPrivileged(createThread);
+			Thread notifier = java.security.AccessController.doPrivileged(createThread);
 			notifier.start();
 		}
 	}
@@ -92,22 +94,33 @@ public final class ExtendedMemoryMXBeanImpl extends MemoryMXBeanImpl implements 
 	/**
 	 * Deprecated. Use getTotalPhysicalMemorySize().
 	 */
-	/*[IF Sidecar19-SE]
+	/*[IF JAVA_SPEC_VERSION > 8]*/
 	@Deprecated(forRemoval = true, since = "1.8")
-	/*[ELSE]*/
+	/*[ELSE] JAVA_SPEC_VERSION > 8 */
 	@Deprecated
-	/*[ENDIF]*/
+	/*[ENDIF] JAVA_SPEC_VERSION > 8 */
 	public long getTotalPhysicalMemory() {
+		/*[IF JAVA_SPEC_VERSION >= 14]*/
+		return osinstance.getTotalMemorySize();
+		/*[ELSE] JAVA_SPEC_VERSION >= 14 */
 		return osinstance.getTotalPhysicalMemorySize();
+		/*[ENDIF] JAVA_SPEC_VERSION >= 14 */
 	}
 
+	/*[IF JAVA_SPEC_VERSION > 8]*/
+	@Deprecated(forRemoval = true, since = "19")
+	/*[ENDIF] JAVA_SPEC_VERSION > 8 */
 	public long getTotalPhysicalMemorySize() {
+		/*[IF JAVA_SPEC_VERSION >= 14]*/
+		return osinstance.getTotalMemorySize();
+		/*[ELSE] JAVA_SPEC_VERSION >= 14 */
 		return osinstance.getTotalPhysicalMemorySize();
+		/*[ENDIF] JAVA_SPEC_VERSION >= 14 */
 	}
 
-	/**
-	 * TODO Was this intended to be exposed in com.ibm.lang.management.MemoryMXBean?
-	 */
+	/*[IF JAVA_SPEC_VERSION > 8]*/
+	@Deprecated(forRemoval = true, since = "19")
+	/*[ENDIF] JAVA_SPEC_VERSION > 8 */
 	public long getUsedPhysicalMemory() {
 		return osinstance.getTotalPhysicalMemorySize() - osinstance.getFreePhysicalMemorySize();
 	}

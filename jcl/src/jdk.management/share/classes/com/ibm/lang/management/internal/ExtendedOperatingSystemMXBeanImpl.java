@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2012, 2020 IBM Corp. and others
+ * Copyright (c) 2012, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,7 +22,6 @@
  *******************************************************************************/
 package com.ibm.lang.management.internal;
 
-import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.Objects;
 
@@ -120,7 +119,10 @@ public class ExtendedOperatingSystemMXBeanImpl extends OperatingSystemMXBeanImpl
 				return thread;
 			};
 
-			Thread thread = AccessController.doPrivileged(createThread);
+			/*[IF JAVA_SPEC_VERSION >= 17]*/
+			@SuppressWarnings("removal")
+			/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
+			Thread thread = java.security.AccessController.doPrivileged(createThread);
 			thread.start();
 		}
 	}
@@ -153,6 +155,7 @@ public class ExtendedOperatingSystemMXBeanImpl extends OperatingSystemMXBeanImpl
 		return Math.min(processTimeDelta / (getOnlineProcessorsImpl() * timestampDelta), 1.0);
 	}
 
+	/*[IF JAVA_SPEC_VERSION < 14] - inherit the default method in Java 14+ */
 	/**
 	 * {@inheritDoc}
 	 */
@@ -160,6 +163,7 @@ public class ExtendedOperatingSystemMXBeanImpl extends OperatingSystemMXBeanImpl
 	public final long getFreePhysicalMemorySize() {
 		return this.getFreePhysicalMemorySizeImpl();
 	}
+	/*[ENDIF] JAVA_SPEC_VERSION < 14 */
 
 	/**
 	 * Returns the amount of free physical memory at current instance on the
@@ -176,7 +180,7 @@ public class ExtendedOperatingSystemMXBeanImpl extends OperatingSystemMXBeanImpl
 	 */
 	@Override
 	public final double getCpuLoad() {
-		return this.getSystemCpuLoad();
+		return getSystemCpuLoadImpl();
 	}
 
 	/**
@@ -250,7 +254,11 @@ public class ExtendedOperatingSystemMXBeanImpl extends OperatingSystemMXBeanImpl
 
 		/* Get the process CPU time and also, the sampling timestamp. */
 		latestTime = System.nanoTime();
-		latestCpuTime = getProcessCpuTimeByNS();
+		/*[IF JAVA_SPEC_VERSION > 8]*/
+		@SuppressWarnings("removal")
+		/*[ENDIF] JAVA_SPEC_VERSION > 8 */
+		long cpuTime = getProcessCpuTimeByNS();
+		latestCpuTime = cpuTime;
 
 		/* First call to this method should -1, since we don't have any previous
 		 * CPU times (or timestamp) to compute CPU load against.
@@ -317,11 +325,12 @@ public class ExtendedOperatingSystemMXBeanImpl extends OperatingSystemMXBeanImpl
 	/**
 	 * Deprecated. Use getProcessCpuTime()
 	 */
-	/*[IF Sidecar19-SE]
+	/*[IF JAVA_SPEC_VERSION > 8]
 	@Deprecated(forRemoval = true, since = "1.8")
-	/*[ELSE]*/
+	@SuppressWarnings("removal")
+	/*[ELSE] JAVA_SPEC_VERSION > 8 */
 	@Deprecated
-	/*[ENDIF]*/
+	/*[ENDIF] JAVA_SPEC_VERSION > 8 */
 	@Override
 	public final long getProcessCpuTimeByNS() {
 		long cpuTimeNS = this.getProcessCpuTime();
@@ -405,11 +414,12 @@ public class ExtendedOperatingSystemMXBeanImpl extends OperatingSystemMXBeanImpl
 	/**
 	 * Deprecated: use getCommittedVirtualMemorySize()
 	 */
-	/*[IF Sidecar19-SE]
+	/*[IF JAVA_SPEC_VERSION > 8]*/
 	@Deprecated(forRemoval = true, since = "1.8")
-	/*[ELSE]*/
+	@SuppressWarnings("removal")
+	/*[ELSE] JAVA_SPEC_VERSION > 8 */
 	@Deprecated
-	/*[ENDIF]*/
+	/*[ENDIF] JAVA_SPEC_VERSION > 8 */
 	@Override
 	public final long getProcessVirtualMemorySize() {
 		return this.getProcessVirtualMemorySizeImpl();
@@ -425,6 +435,7 @@ public class ExtendedOperatingSystemMXBeanImpl extends OperatingSystemMXBeanImpl
 	 */
 	private native long getProcessVirtualMemorySizeImpl();
 
+	/*[IF JAVA_SPEC_VERSION < 14] - inherit the default method in Java 14+ */
 	/**
 	 * {@inheritDoc}
 	 */
@@ -432,9 +443,11 @@ public class ExtendedOperatingSystemMXBeanImpl extends OperatingSystemMXBeanImpl
 	public final double getSystemCpuLoad() {
 		return this.getSystemCpuLoadImpl();
 	}
+	/*[ENDIF] JAVA_SPEC_VERSION < 14 */
 
 	private native double getSystemCpuLoadImpl();
 
+	/*[IF JAVA_SPEC_VERSION < 14] - inherit the default method in Java 14+ */
 	/**
 	 * {@inheritDoc}
 	 */
@@ -442,15 +455,17 @@ public class ExtendedOperatingSystemMXBeanImpl extends OperatingSystemMXBeanImpl
 	public long getTotalPhysicalMemorySize() {
 		return this.getTotalPhysicalMemoryImpl();
 	}
+	/*[ENDIF] JAVA_SPEC_VERSION < 14 */
 
 	/**
 	 * Deprecated: use getTotalPhysicalMemorySize()
 	 */
-	/*[IF Sidecar19-SE]
+	/*[IF JAVA_SPEC_VERSION > 8]*/
 	@Deprecated(forRemoval = true, since = "1.8")
-	/*[ELSE]*/
+	@SuppressWarnings("removal")
+	/*[ELSE] JAVA_SPEC_VERSION > 8 */
 	@Deprecated
-	/*[ENDIF]*/
+	/*[ENDIF] JAVA_SPEC_VERSION > 8 */
 	@Override
 	public final long getTotalPhysicalMemory() {
 		return this.getTotalPhysicalMemoryImpl();
