@@ -25,7 +25,6 @@
 #include "compile/Compilation.hpp"
 #include "codegen/OMRCodeGenerator.hpp"
 #include "env/VerboseLog.hpp"
-#include "env/ClassTableCriticalSection.hpp"
 #include "runtime/CodeCacheTypes.hpp"
 #include "runtime/CodeCache.hpp"
 #include "runtime/CodeCacheManager.hpp"
@@ -303,9 +302,9 @@ TR::CompilationInfoPerThreadBase::mjit(
          reinterpret_cast<OMR::CodeCacheMethodHeader *>(warmMethodHeader)->_metaData = metaData;
          // FAR: should we do postpone this copying until after CHTable commit?
          metaData->runtimeAssumptionList = *(compiler->getMetadataAssumptionList());
-         TR::ClassTableCriticalSection chTableCommit(&vm);
-         TR_ASSERT(!chTableCommit.acquiredVMAccess(), "We should have already acquired VM access at this point.");
+
          TR_CHTable *chTable = compiler->getCHTable();
+         TR_ASSERT_FATAL(!chTable || chTable->canSkipCommit(compiler), "MicroJIT should not use CHTable");
 
          if (prologue_address && compiler->getOption(TR_TraceCG))
             trfprintf(logFileFP, "\nMJIT:%s\n", compilee->signature(compiler->trMemory()));
