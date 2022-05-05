@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2021 IBM Corp. and others
+ * Copyright (c) 2017, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -410,7 +410,7 @@ def archive_sdk() {
                     env.CUSTOMIZED_SDK_URL += " " + TEST_LIB_URL
                 }
                 if (fileExists("${DEBUG_IMAGE_FILENAME}")) {
-                    DEBUG_IMAGE_LIB_URL = "${ARTIFACTORY_CONFIG[ARTIFACTORY_CONFIG['defaultGeo']]['url']}/${ARTIFACTORY_CONFIG['uploadDir']}/${DEBUG_IMAGE_FILENAME}"
+                    DEBUG_IMAGE_LIB_URL = "${ARTIFACTORY_CONFIG[ARTIFACTORY_CONFIG['defaultGeo']]['url']}/${ARTIFACTORY_CONFIG['uploadDir']}${DEBUG_IMAGE_FILENAME}"
                     currentBuild.description += "<br><a href=${DEBUG_IMAGE_LIB_URL}>${DEBUG_IMAGE_FILENAME}</a>"
                 }
                 if (params.ARCHIVE_JAVADOC) {
