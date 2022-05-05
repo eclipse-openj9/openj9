@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2021 IBM Corp. and others
+# Copyright (c) 2017, 2022 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -40,9 +40,8 @@ endif()
 set(SPEC_LEVEL 7 CACHE STRING "")
 set(CMAKE_JAVA_COMPILE_FLAGS -nowarn -source ${SPEC_LEVEL} -target ${SPEC_LEVEL})
 
-# Note add_jar isn't as good at tracking target dependencies as regular cmake
+# Note add_jar isn't as good at tracking target dependencies as regular cmake.
 # In particular it will not let you link against a target which will be defined later.
-add_subdirectory(com.ibm.jpp.preprocessor)
 add_subdirectory(objectmodel)
 add_subdirectory(j9constantpool)
 add_subdirectory(j9nls)
