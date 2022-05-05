@@ -311,13 +311,11 @@ TR::CompilationInfoPerThreadBase::mjit(
 
          compiler->cg()->getCodeCache()->trimCodeMemoryAllocation(buffer, (cursor-buffer));
 
-         // END MICROJIT
          if (compiler->getOption(TR_TraceCG))
             trfprintf(logFileFP, "\n------------------------------\nMicroJIT Compiled %s Successfully!\n------------------------------\n", signature);
-
+         logCompilationSuccess(vmThread, vm, method, scratchSegmentProvider, compilee, compiler, metaData, optimizationPlan);
          }
-
-      logCompilationSuccess(vmThread, vm, method, scratchSegmentProvider, compilee, compiler, metaData, optimizationPlan);
+      // END MICROJIT
 
       TRIGGER_J9HOOK_JIT_COMPILING_END(_jitConfig->hookInterface, vmThread, method);
       }
