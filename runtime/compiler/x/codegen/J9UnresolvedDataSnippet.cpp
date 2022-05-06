@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -155,7 +155,7 @@ J9::X86::UnresolvedDataSnippet::emitResolveHelperCall(uint8_t *cursor)
    //
    const intptr_t rip = (intptr_t)(cursor+5);
    if ((cg()->needRelocationsForHelpers() && cg()->comp()->target().is64Bit()) ||
-       NEEDS_TRAMPOLINE(glueAddress, rip, cg()))
+       cg()->directCallRequiresTrampoline(glueAddress, reinterpret_cast<intptr_t>(cursor)))
       {
       TR_ASSERT(cg()->comp()->target().is64Bit(), "should not require a trampoline on 32-bit");
       glueAddress = TR::CodeCacheManager::instance()->findHelperTrampoline(_glueSymRef->getReferenceNumber(), (void *)cursor);

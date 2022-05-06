@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -149,10 +149,10 @@ uint8_t *TR::X86CheckFailureSnippet::emitCheckFailureSnippetBody(uint8_t *buffer
       *buffer++ = 0xd8;
       }
 
-   *buffer++ = 0xe8; // CallImm4
+   *buffer = 0xe8; // CallImm4
    intptr_t destinationAddress = (intptr_t)getDestination()->getMethodAddress();
 
-   if (NEEDS_TRAMPOLINE(destinationAddress, buffer+4, cg()))
+   if (cg()->directCallRequiresTrampoline(destinationAddress, reinterpret_cast<intptr_t>(buffer++)))
       {
       destinationAddress = TR::CodeCacheManager::instance()->findHelperTrampoline(getDestination()->getReferenceNumber(), (void *)buffer);
       TR_ASSERT(IS_32BIT_RIP(destinationAddress, buffer+4), "Local helper trampoline should be reachable directly.\n");
@@ -313,11 +313,12 @@ uint8_t *TR::X86CheckFailureSnippetWithResolve::emitSnippetBody()
 
    // Call the glue routine
    //
-   *buffer++ = 0xe8;                      // call  Imm4 glue routine
+   *buffer = 0xe8;                      // call  Imm4 glue routine
 
    TR::SymbolReference * glueSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(getHelper());
    intptr_t glueAddress = (intptr_t)glueSymRef->getMethodAddress();
-   if (NEEDS_TRAMPOLINE(glueAddress, buffer+4, cg()))
+
+   if (cg()->directCallRequiresTrampoline(glueAddress, reinterpret_cast<intptr_t>(buffer++)))
       {
       glueAddress = TR::CodeCacheManager::instance()->findHelperTrampoline(glueSymRef->getReferenceNumber(), (void *)buffer);
       TR_ASSERT(IS_32BIT_RIP(glueAddress, buffer+4), "Local helper trampoline should be reachable directly.\n");
@@ -340,10 +341,11 @@ uint8_t *TR::X86CheckFailureSnippetWithResolve::emitSnippetBody()
       *buffer++ = 0xd8;
       }
 
-   *buffer++ = 0xe8; // CallImm4
+   *buffer = 0xe8; // CallImm4
 
    intptr_t destinationAddress = (intptr_t)getDestination()->getMethodAddress();
-   if (NEEDS_TRAMPOLINE(destinationAddress, buffer+4, cg()))
+
+   if (cg()->directCallRequiresTrampoline(destinationAddress, reinterpret_cast<intptr_t>(buffer++)))
       {
       destinationAddress = TR::CodeCacheManager::instance()->findHelperTrampoline(getDestination()->getReferenceNumber(), (void *)buffer);
       TR_ASSERT(IS_32BIT_RIP(destinationAddress, buffer+4), "Local helper trampoline should be reachable directly.\n");
