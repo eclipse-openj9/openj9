@@ -476,6 +476,8 @@ TR_YesNoMaybe TR::CompilationInfo::shouldActivateNewCompThread()
    if (isCheckpointInProgress())
       return TR_no;
 #endif
+   if (isInShutdownMode())
+      return TR_no;
 
    // If further compilations have been disabled we could be in a dire situation, for example virtual memory could be
    // really low, there could be failures when attempting to allocate persistent memory, a compilation thread could
@@ -3505,6 +3507,7 @@ void TR::CompilationInfo::stopCompilationThreads()
    acquireCompMonitor(vmThread);
 
    setIsInShutdownMode();
+   getPersistentInfo()->setDisableFurtherCompilation(true);
 
 #if defined(J9VM_OPT_CRIU_SUPPORT)
    // Set the checkpoint status to interrupted regardless
