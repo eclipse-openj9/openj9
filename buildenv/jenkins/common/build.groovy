@@ -155,8 +155,21 @@ def checkout_pullrequest() {
 
         // Setup PR_IDs for dependent changes
         for (DEPEND in DEPENDS_ARRAY) {
-            String REPO = DEPEND.substring(DEPEND.indexOf("/") + 1, DEPEND.indexOf("#"));
-            String PR_ID = DEPEND.substring(DEPEND.indexOf("#") + 1, DEPEND.length());
+            String REPO = ''
+            String PR_ID = ''
+            switch (DEPEND) {
+                case ~/https:\/\/github\.(ibm\.)?com\/[^\s\/]+\/[^\s\/]+\/pull\/[0-9]+/:
+                    def urlList = DEPEND.tokenize('/')
+                    REPO = urlList[3]
+                    PR_ID = urlList[5]
+                    break
+                case ~/[^\s\/#]+\/[^\s\/#]+#[0-9]+/:
+                    REPO = DEPEND.substring(DEPEND.indexOf("/") + 1, DEPEND.indexOf("#"));
+                    PR_ID = DEPEND.substring(DEPEND.indexOf("#") + 1, DEPEND.length());
+                    break
+                default:
+                    error "Cannot parse dependent change: '${DEPEND}'"
+            }
             switch (REPO) {
                 case "omr":
                 case "openj9-omr":
