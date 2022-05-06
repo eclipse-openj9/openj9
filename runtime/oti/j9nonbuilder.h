@@ -530,8 +530,21 @@ typedef struct J9JITExceptionTable {
 	UDATA endWarmPC;
 	UDATA startColdPC;
 	UDATA endPC;
+
+	/**
+	 * @brief Size of the frame for this method in number of address-sized slots. This includes:
+	 *
+	 *  - save area for preserved registers (used by this method)
+	 *  - local variables
+	 *  - outgoing parameters (for calls made by this method)
+	 */
 	UDATA totalFrameSize;
+
+	/**
+	 * @brief Number of address-sized slots on the stack reserved for the incoming parameters.
+	 */
 	I_16 slots;
+
 	I_16 scalarTempSlots;
 	I_16 objectTempSlots;
 	U_16 prologuePushes;
@@ -539,7 +552,16 @@ typedef struct J9JITExceptionTable {
 	U_16 numExcptionRanges;
 	I_32 size;
 	UDATA flags;
+
+	/**
+	 * @brief Bitmask that describes the preserved registers that are actually saved in the prologue of
+	 * a method and an offset from (java) stack pointer where they're saved.
+	 *
+	 * The exact encoding differs depending architecture. See corresponding prologue-creation code
+	 * ?PrivateLinkage.cpp and jitAddSpilledRegisters() in MethodMetaData.c (both must be kept in sync).
+	 */
 	UDATA registerSaveDescription;
+
 	void* gcStackAtlas;
 	void* inlinedCalls;
 	void* bodyInfo;
