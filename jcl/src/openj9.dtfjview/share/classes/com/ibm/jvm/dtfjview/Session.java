@@ -1,6 +1,6 @@
-/*[INCLUDE-IF Sidecar18-SE]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 /*******************************************************************************
- * Copyright (c) 2004, 2019 IBM Corp. and others
+ * Copyright (c) 2004, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -584,41 +584,43 @@ public class Session implements ISession {
 			return null;
 		}
 	}
-	
+
 	/**
 	 * Creates a DTFJ image from the supplied core or zip file
 	 */
 	private void imageFromCommandLine() {
-		// if -version, output the version and exit
+		// If -version, output the version and exit.
 		if (hasFlagBeenSet(ARG_VERSION)) {
 			ctxroot.execute("open", out.getPrintStream());
 			exit(null, 0);
-		}		
+		}
 
-	    String coreFilePath = null;
+		String coreFilePath = null;
 		if (hasFlagBeenSet(ARG_VERBOSE)) {
 			// If we are using DDR this will enable warnings.
 			// (If not it's irrelevant.)
 			Logger.getLogger("j9ddr.view.dtfj").setLevel(Level.WARNING);
 		}
-		//at this point the existence of either -core or -zip has been checked
-		long current = System.currentTimeMillis();
-		if(args.containsKey(ARG_CORE)) {
-			if(args.containsKey(ARG_ZIP)) {
+		// At this point the existence of either -core or -zip has been checked.
+		final long current = System.nanoTime();
+		if (args.containsKey(ARG_CORE)) {
+			if (args.containsKey(ARG_ZIP)) {
 				exit(ARG_ZIP + " and " + ARG_CORE + " cannot be specified at the same time", JDMPVIEW_SYNTAX_ERROR);
 			} else {
 				coreFilePath = args.get(ARG_CORE);
-				ctxroot.execute("open " + coreFilePath , out.getPrintStream());
+				ctxroot.execute("open " + coreFilePath, out.getPrintStream());
 			}
 		} else {
-			coreFilePath = args.get(ARG_ZIP);	//if -core has been set it is handled in the first part of this if statement
-			ctxroot.execute("open " + coreFilePath , out.getPrintStream());
+			// If -core has been set it is handled in the first part of this if statement.
+			coreFilePath = args.get(ARG_ZIP);
+			ctxroot.execute("open " + coreFilePath, out.getPrintStream());
 		}
-		logger.fine(String.format("Time taken to load image %d ms", System.currentTimeMillis() - current));
-		//Store the core file/zip file path in the variables. We need it for creating default filenames for heapdumps
+		final long duration = System.nanoTime() - current;
+		logger.fine(String.format("Time taken to load image %d ns", duration));
+		// Store the core file/zip file path in the variables. We need it for creating default filenames for heapdumps.
 		variables.put(CORE_FILE_PATH_PROPERTY, coreFilePath);
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see com.ibm.jvm.dtfjview.spi.ISession#findAndSetContextWithJVM()
 	 */
