@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -96,7 +96,7 @@ TR::S390HeapAllocSnippet::emitSnippetBody()
    if (comp->getOption(TR_EnableRMODE64))
 #endif
       {
-      if (NEEDS_TRAMPOLINE(destAddr, buffer, cg()))
+      if (cg()->directCallRequiresTrampoline(destAddr, reinterpret_cast<intptr_t>(buffer)))
          {
          uint32_t rEP = (uint32_t) cg()->getEntryPointRegister() - 1;
          // Destination is beyond our reachable jump distance, we'll find the

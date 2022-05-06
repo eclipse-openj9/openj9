@@ -222,7 +222,7 @@ TR::S390J9CallSnippet::generateInvokeExactJ2IThunk(TR::Node * callNode, int32_t 
       if (comp->getOption(TR_EnableRMODE64))
 #endif
          {
-         if (NEEDS_TRAMPOLINE(destAddr, cursor, cg))
+         if (cg->directCallRequiresTrampoline(destAddr, reinterpret_cast<intptr_t>(cursor)))
             destAddr = TR::CodeCacheManager::instance()->findHelperTrampoline(helper->getReferenceNumber(), (void *)cursor);
          }
 #endif
@@ -878,7 +878,7 @@ TR::S390InterfaceCallSnippet::emitSnippetBody()
    if (comp->getOption(TR_EnableRMODE64))
 #endif
       {
-      if (NEEDS_TRAMPOLINE(destAddr, cursor, cg()))
+      if (cg()->directCallRequiresTrampoline(destAddr, reinterpret_cast<intptr_t>(cursor)))
          {
          // Destination is beyond our reachable jump distance, we'll find the
          // trampoline.
