@@ -178,7 +178,7 @@ set(main_sources
 	vmprops.c
 	vmruntimestate.c
 	vmthinit.c
-	vmthread.cpp
+	vmthread.c
 	xcheck.c
 
 	${CMAKE_CURRENT_BINARY_DIR}/ut_j9vm.c
