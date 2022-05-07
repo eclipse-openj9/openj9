@@ -4087,7 +4087,7 @@ void
 terminateVMThreading(J9JavaVM *vm);
 
 
-/* ---------------- vmthread.c ---------------- */
+/* ---------------- vmthread.cpp ---------------- */
 
 /*
  * Perform thread setup before any java code is run on the thread.
