@@ -7095,7 +7095,7 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 		 *
 		 * This code path is only executed by the Main Thread because the Main Thread
 		 * is attached to the VM before the JIT has been initialized. All other threads
-		 * will get initialized in vmthread.c::threadAboutToStart
+		 * will get initialized in vmthread.cpp::threadAboutToStart
 		 */
 		if (vm->memoryManagerFunctions->j9gc_concurrent_scavenger_enabled(vm)) {
 			if (0 == j9gs_initializeThread(env)) {
