@@ -319,6 +319,10 @@ To exclude the 2nd variation listed which is assigned suffix_1 ```-Xmx1024m``` a
 
 ```auto exclude test jdk_test_1 impl=openj9 vendor=adoptopenjdk ver=8 plat=.*windows.*```
 
+To exclude multiple tests with different criteria:
+
+```auto exclude test jdk_test1 plat=.*linux.*; jdk_test2 ver=8; jdk_test3 impl=openj9```
+
 After the comment is left, there will be a auto PR created with the exclude change in the playlist.xml. The PR will be linked to issue. If the testName can not be found in the repo, no PR will be created and there will be a comment left in the issue linking to the failed workflow run for more details. In the case where the parameter contains space separated values, use single quotes to group the parameter.
 
 #### Manually exclude a test target
