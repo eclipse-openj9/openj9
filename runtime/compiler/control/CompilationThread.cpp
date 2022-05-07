@@ -3771,7 +3771,7 @@ IDATA J9THREAD_PROC compilationThreadProc(void *entryarg)
 #if defined(J9VM_PORT_SIGNAL_SUPPORT)
    if (!TR_NoStructuredHandler)
       {
-      /* copied the flags from vmthread.cpp: note that for the JIT we are not really
+      /* copied the flags from vmthread.c: note that for the JIT we are not really
          interested in continuing.  We are installing the handler merely to get
          support for crash dumps */
       U_32 flags = J9PORT_SIG_FLAG_SIGALLSYNC | J9PORT_SIG_FLAG_MAY_CONTINUE_EXECUTION;
