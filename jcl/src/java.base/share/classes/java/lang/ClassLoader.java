@@ -1223,6 +1223,7 @@ public Class<?> loadClass(String className) throws ClassNotFoundException {
 		if (cls != null) {
 			return cls;
 		}
+		throw new ClassNotFoundException(className);
 	}
 /*[ENDIF] JAVA_SPEC_VERSION > 8 */
 	return loadClass(className, false);
