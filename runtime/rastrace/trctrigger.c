@@ -246,9 +246,9 @@ setSleepTime(UtThreadData **thr, const char * str, BOOLEAN atRuntime)
 
 	if (*suffix != '\0') {
 		/* A suffix has been specified, parse it */
-		if (j9_cmdla_stricmp((char *)suffix, "s") == 0) {
+		if (j9_cmdla_stricmp(suffix, "s") == 0) {
 			unitsSeconds = TRUE;
-		} else if (j9_cmdla_stricmp((char *)suffix, "ms") == 0) {
+		} else if (j9_cmdla_stricmp(suffix, "ms") == 0) {
 			/* Do nothing - milliseconds is the default */
 		} else {
 			/* Unrecognised suffix */
@@ -362,12 +362,12 @@ decimalString2Int(const char *decString, int32_t signedAllowed, omr_error_t *rc,
 static uint32_t
 parseTriggerIndex(OMR_VMThread *thr, const char * name, BOOLEAN atRuntime)
 {
-	int i;
+	int i = 0;
 
 	for (i = 0; i < numTriggerActions; i++) {
 		const struct RasTriggerAction *action = &rasTriggerActions[i];
 
-		if (j9_cmdla_stricmp((char *)name, (char *)action->name) == 0) {
+		if (j9_cmdla_stricmp(name, action->name) == 0) {
 			return i;
 		}
 	}
@@ -847,35 +847,35 @@ processTriggerClause(OMR_VMThread *thr, const char *clause, BOOLEAN atRuntime)
 {
 	OMRPORT_ACCESS_FROM_OMRVMTHREAD(thr);
 	uintptr_t clauseLength = strlen(clause);
-	int i;
+	int i = 0;
 	BOOLEAN disableSet = FALSE;
 
-	if (clauseLength == 0) {
+	if (0 == clauseLength) {
 		reportCommandLineError(atRuntime, "Zero length clause in trigger statement.");
 		return OMR_ERROR_INTERNAL;
 	}
 
-	if (clause[clauseLength - 1] != '}') {
+	if ('}' != clause[clauseLength - 1]) {
 		reportCommandLineError(atRuntime, "Trigger clause must end with '}'");
 		return OMR_ERROR_INTERNAL;
 	}
 
-	if (*clause == '!') {
-		clause++;
+	if ('!' == *clause) {
+		clause += 1;
 		disableSet = TRUE;
 	}
 
 	for (i = 0; i < numTriggerTypes; i++) {
 		const struct RasTriggerType *type = &rasTriggerTypes[i];
+		uintptr_t typeLength = strlen(type->name);
 
-		if (j9_cmdla_strnicmp((char *)clause, (char *)type->name, strlen(type->name)) == 0) {
-			uintptr_t typeLength = strlen(type->name);
-			uintptr_t subClauseLength;
-			char *subClause;
-			int rc;
+		if (0 == j9_cmdla_strnicmp(clause, type->name, typeLength)) {
+			uintptr_t subClauseLength = 0;
+			char *subClause = NULL;
+			int rc = 0;
 
 			if (atRuntime && !type->runtimeModifiable) {
-				UT_DBGOUT(1, ("<UT> Trigger clause %s cannot be modified at run time\n",type->name));
+				UT_DBGOUT(1, ("<UT> Trigger clause %s cannot be modified at run time\n", type->name));
 				return OMR_ERROR_INTERNAL;
 			}
 
@@ -896,10 +896,9 @@ processTriggerClause(OMR_VMThread *thr, const char *clause, BOOLEAN atRuntime)
 				return OMR_ERROR_INTERNAL;
 			}
 
-			subClauseLength = clauseLength - typeLength - 2;
-
+			subClauseLength = clauseLength - typeLength - 2; /* 2 for { and } */
 			subClause = omrmem_allocate_memory(subClauseLength + 1, OMRMEM_CATEGORY_TRACE);
-			if (!subClause) {
+			if (NULL == subClause) {
 				UT_DBGOUT(1, ("<UT> Out of memory processing trigger property.\n"));
 				return OMR_ERROR_OUT_OF_NATIVE_MEMORY;
 			}
@@ -1242,7 +1241,6 @@ checkTriggerGroupsForTpid(OMR_VMThread *thr, char *compName, int traceId, const 
 static void
 checkTriggerTpidForTpid(OMR_VMThread *thr, char *compName, unsigned int traceId, const TriggerPhase phase, BOOLEAN actionArray[])
 {
-	size_t compNameLen = strlen(compName);
 	uintptr_t *refCountPtr = (uintptr_t *)&UT_GLOBAL(triggerOnTpidsReferenceCount);
 	RasTriggerTpidRange *ptr = NULL;
 	uint32_t oldDelay = 0;
@@ -1287,7 +1285,7 @@ checkTriggerTpidForTpid(OMR_VMThread *thr, char *compName, unsigned int traceId,
 			continue;
 		}
 
-		if (0 != j9_cmdla_strnicmp(compName, ptr->compName, compNameLen)) {
+		if (0 != j9_cmdla_stricmp(compName, ptr->compName)) {
 			/* wrong component name */
 			continue;
 		}
