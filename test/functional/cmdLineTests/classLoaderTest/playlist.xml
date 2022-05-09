@@ -59,6 +59,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<versions>
+			<version>11+</version>
+		</versions>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
