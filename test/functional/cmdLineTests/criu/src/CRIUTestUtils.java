@@ -53,6 +53,10 @@ public class CRIUTestUtils {
 	}
 
 	public static void checkPointJVM(Path path) {
+		checkPointJVM(path, true);
+	}
+
+	public static void checkPointJVM(Path path, boolean deleteDir) {
 		if (CRIUSupport.isCRIUSupportEnabled()) {
 			deleteCheckpointDirectory(path);
 			createCheckpointDirectory(path);
@@ -65,8 +69,9 @@ public class CRIUTestUtils {
 			} catch (RestoreException e) {
 				e.printStackTrace();
 			}
-
-			deleteCheckpointDirectory(path);
+			if (deleteDir) {
+				deleteCheckpointDirectory(path);
+			}
 		} else {
 			System.err.println("CRIU is not enabled");
 		}
