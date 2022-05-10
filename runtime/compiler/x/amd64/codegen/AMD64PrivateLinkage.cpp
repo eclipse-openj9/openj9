@@ -273,7 +273,7 @@ static uint8_t *flushArgument(
       TR::CodeGenerator *cg)
    {
    /* TODO:AMD64: Share code with the other flushArgument */
-   cursor = TR::InstOpCode(op).binary(cursor);
+   cursor = TR::InstOpCode(op).binary(cursor, OMR::X86::Default);
 
    // Mod | Reg | R/M
    //
@@ -307,7 +307,7 @@ static int32_t flushArgumentSize(
       TR::InstOpCode::Mnemonic op,
       int32_t offset)
    {
-   int32_t size = TR::InstOpCode(op).length() + 1;   // length including ModRM + 1 SIB
+   int32_t size = TR::InstOpCode(op).length(OMR::X86::Default) + 1;   // length including ModRM + 1 SIB
    return size + (((offset >= -128 && offset <= 127)) ? 1 : 4);
    }
 

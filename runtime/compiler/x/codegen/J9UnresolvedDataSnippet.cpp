@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -109,7 +109,7 @@ J9::X86::UnresolvedDataSnippet::emitSnippetBody()
 
    if (!stackMapInstr)
       {
-      return TR::InstOpCode(TR::InstOpCode::bad).binary(cursor);
+      return TR::InstOpCode(TR::InstOpCode::bad).binary(cursor, OMR::X86::Default);
       }
 
    _glueSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(getHelper());
