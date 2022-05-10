@@ -129,7 +129,7 @@ public class RecordFinalFieldTests {
         unsafe.objectFieldOffset(finalRecordField);
     }
 
-    /* Check that Unsafe.staticFieldBase supports records. */
+    /* Check that Unsafe.staticFieldOffset supports records. */
     @Test
     public void test_jdkInternalMiscUnsafe_staticFieldOffset() throws Throwable {
         Field finalRecordField = TestRecord.class.getDeclaredField("finalField");

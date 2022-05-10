@@ -36,4 +36,14 @@
             <class name="org.openj9.test.records.RecordFinalFieldTests"/>
         </classes>
     </test>
+    <test name="Jep371Tests">
+        <classes>
+            <class name="org.openj9.test.hiddenclasses.HiddenClassFinalFieldTests"/>
+        </classes>
+    </test>
+    <test name="RegularClassAndInterfaceFinalFieldTests">
+        <classes>
+            <class name="org.openj9.test.regularclassesandinterfaces.RegularClassAndInterfaceFinalFieldTests"/>
+        </classes>
+    </test>
 </suite>
