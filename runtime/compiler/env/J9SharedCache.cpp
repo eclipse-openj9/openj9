@@ -885,7 +885,15 @@ TR_J9SharedCache::rememberClass(J9Class *clazz, const AOTCacheClassChainRecord *
    chainData = findChainForClass(clazz, key, keyLength);
    if (chainData != NULL)
       {
-      LOG(1, "\tchain exists (%p) so nothing to store\n", chainData);
+      if (classMatchesCachedVersion(clazz, chainData))
+         {
+         LOG(1, "\tcurrent class and class chain found (%p) are identical; returning the class chain\n", chainData);
+         }
+      else
+         {
+         LOG(1, "\tcurrent class and class chain found (%p) do not match, so cannot use class chain; returning NULL\n", chainData);
+         chainData = NULL;
+         }
       return chainData;
       }
 
