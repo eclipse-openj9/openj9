@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -50,8 +50,8 @@ uint8_t *TR::X86ForceRecompilationSnippet::emitSnippetBody()
 
    TR::SymbolReference *helper = cg()->symRefTab()->findOrCreateRuntimeHelper(cg()->comp()->target().is64Bit()? TR_AMD64induceRecompilation : TR_IA32induceRecompilation);
    intptr_t helperAddress = (intptr_t)helper->getMethodAddress();
-   *buffer++ = 0xe8; // CallImm4
-   if (NEEDS_TRAMPOLINE(helperAddress, buffer+4, cg()))
+   *buffer = 0xe8; // CallImm4
+   if (cg()->directCallRequiresTrampoline(helperAddress, reinterpret_cast<intptr_t>(buffer++)))
       {
       helperAddress = TR::CodeCacheManager::instance()->findHelperTrampoline(helper->getReferenceNumber(), (void *)buffer);
       TR_ASSERT(IS_32BIT_RIP(helperAddress, buffer+4), "Local helper trampoline should be reachable directly.\n");

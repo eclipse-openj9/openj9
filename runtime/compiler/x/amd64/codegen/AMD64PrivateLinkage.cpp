@@ -673,10 +673,10 @@ TR_J2IThunk *J9::X86::AMD64::PrivateLinkage::generateInvokeExactJ2IThunk(TR::Nod
       {
       // JMPImm4 helper
       //
-      *(uint8_t *)cursor++ = 0xe9;
+      *(uint8_t *)cursor = 0xe9;
       TR::SymbolReference *helper = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_methodHandleJ2IGlue);
-      int32_t disp32 = cg()->branchDisplacementToHelperOrTrampoline(cursor+4, helper);
-      *(int32_t *)cursor = disp32;
+      int32_t disp32 = cg()->branchDisplacementToHelperOrTrampoline(cursor, helper);
+      *(int32_t *)(++cursor) = disp32;
       cursor += 4;
       }
    else

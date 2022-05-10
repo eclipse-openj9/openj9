@@ -182,9 +182,9 @@ uint8_t *TR::X86PicDataSnippet::emitSnippetBody()
       //
       _dispatchSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_X86IPicLookupDispatch);
 
-      *cursor++ = 0xe8;  // CALL
-      disp32 = cg()->branchDisplacementToHelperOrTrampoline(cursor+4, _dispatchSymRef);
-      *(int32_t *)cursor = disp32;
+      *cursor = 0xe8;  // CALL
+      disp32 = cg()->branchDisplacementToHelperOrTrampoline(cursor, _dispatchSymRef);
+      *(int32_t *)(++cursor) = disp32;
 
       cg()->addExternalRelocation(new (cg()->trHeapMemory())
          TR::ExternalRelocation(cursor,
@@ -358,9 +358,9 @@ uint8_t *TR::X86PicDataSnippet::emitSnippetBody()
                  "Mis-aligned VPIC snippet");
          }
 
-      *cursor++ = 0xe8;  // CALL
-      disp32 = cg()->branchDisplacementToHelperOrTrampoline(cursor+4, _dispatchSymRef);
-      *(int32_t *)cursor = disp32;
+      *cursor = 0xe8;  // CALL
+      disp32 = cg()->branchDisplacementToHelperOrTrampoline(cursor, _dispatchSymRef);
+      *(int32_t *)(++cursor) = disp32;
 
       cg()->addExternalRelocation(new (cg()->trHeapMemory())
          TR::ExternalRelocation(cursor,
@@ -422,9 +422,9 @@ uint8_t *TR::X86PicDataSnippet::emitSnippetBody()
 
       // Patch first slot test with call to resolution helper.
       //
-      *picSlotCursor++ = 0xe8;    // CALL
-      disp32 = cg()->branchDisplacementToHelperOrTrampoline(picSlotCursor+4, resolveSlotHelperSymRef);
-      *(int32_t *)picSlotCursor = disp32;
+      *picSlotCursor = 0xe8;    // CALL
+      disp32 = cg()->branchDisplacementToHelperOrTrampoline(picSlotCursor, resolveSlotHelperSymRef);
+      *(int32_t *)(++picSlotCursor) = disp32;
 
       cg()->addExternalRelocation(new (cg()->trHeapMemory())
          TR::ExternalRelocation(picSlotCursor,
@@ -438,9 +438,9 @@ uint8_t *TR::X86PicDataSnippet::emitSnippetBody()
          //
          while (--numPicSlots)
             {
-            *picSlotCursor++ = 0xe8;    // CALL
-            disp32 = cg()->branchDisplacementToHelperOrTrampoline(picSlotCursor+4, populateSlotHelperSymRef);
-            *(int32_t *)picSlotCursor = disp32;
+            *picSlotCursor = 0xe8;    // CALL
+            disp32 = cg()->branchDisplacementToHelperOrTrampoline(picSlotCursor, populateSlotHelperSymRef);
+            *(int32_t *)(++picSlotCursor) = disp32;
 
             cg()->addExternalRelocation(new (cg()->trHeapMemory())
                TR::ExternalRelocation(picSlotCursor,
@@ -860,8 +860,9 @@ uint8_t *TR::X86CallSnippet::emitSnippetBody()
 
       TR::SymbolReference *helperSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(resolutionHelper);
 
-      *cursor++ = 0xe8;    // CALL
-      *(int32_t *)cursor = cg()->branchDisplacementToHelperOrTrampoline(cursor + 4, helperSymRef);
+      *cursor = 0xe8;    // CALL
+      int32_t disp32 = cg()->branchDisplacementToHelperOrTrampoline(cursor, helperSymRef);
+      *(int32_t *)(++cursor) = disp32;
 
       cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
                                                                                     (uint8_t *)helperSymRef,
@@ -889,8 +890,9 @@ uint8_t *TR::X86CallSnippet::emitSnippetBody()
       //
       helperSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_X86interpreterStaticAndSpecialGlue);
 
-      *cursor++ = 0xe9;    // JMP
-      *(int32_t *)cursor = cg()->branchDisplacementToHelperOrTrampoline(cursor + 4, helperSymRef);
+      *cursor = 0xe9;    // JMP
+      disp32 = cg()->branchDisplacementToHelperOrTrampoline(cursor, helperSymRef);
+      *(int32_t *)(++cursor) = disp32;
 
       cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
                                                                                     (uint8_t*)helperSymRef,
@@ -992,13 +994,14 @@ uint8_t *TR::X86CallSnippet::emitSnippetBody()
 
       // JMP interpreterStaticAndSpecialGlue
       //
-      *cursor++ = 0xe9;
+      *cursor = 0xe9;
 
       TR::SymbolReference* dispatchSymRef =
           methodSymbol->isHelper() && methodSymRef->isOSRInductionHelper() ? methodSymRef :
                                                                              cg()->symRefTab()->findOrCreateRuntimeHelper(TR_X86interpreterStaticAndSpecialGlue);
 
-      *(int32_t *)cursor = cg()->branchDisplacementToHelperOrTrampoline(cursor + 4, dispatchSymRef);
+      int32_t disp32 = cg()->branchDisplacementToHelperOrTrampoline(cursor, dispatchSymRef);
+      *(int32_t *)(++cursor) = disp32;
 
       cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
                                                                                     (uint8_t *)dispatchSymRef,
