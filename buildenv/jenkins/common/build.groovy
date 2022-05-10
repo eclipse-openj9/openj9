@@ -311,6 +311,7 @@ def archive_sdk() {
         def buildDir = "build/${RELEASE}/images/"
         def debugImageDir = "${buildDir}debug-image/"
         def testDir = "test"
+        def makeDir = "make"
 
         dir(OPENJDK_CLONE_DIR) {
             // Code coverage files archive for report
@@ -392,6 +393,15 @@ def archive_sdk() {
                                 "target": "${ARTIFACTORY_CONFIG['uploadDir']}",
                                 "props": "build.buildIdentifier=${BUILD_IDENTIFIER}"]
                 specs.add(debugImageSpec)
+                // Extract obfuscation change log files to Artifactory
+                def findZelixOut = sh(script: "find ${makeDir} -name 'ObfuscateLog*.txt' -type f", returnStdout: true).trim()
+                def zelixFiles = findZelixOut.tokenize('\n');
+                for (String zelixFile in zelixFiles) {
+                    def zelixSpec = ["pattern": "${zelixFile}",
+                                     "target": "${ARTIFACTORY_CONFIG['uploadDir']}",
+                                     "props": "build.buildIdentifier=${BUILD_IDENTIFIER}"]
+                    specs.add(zelixSpec)
+                }
                 if (params.ARCHIVE_JAVADOC) {
                     def javadocSpec = ["pattern": "${OPENJDK_CLONE_DIR}/${JAVADOC_FILENAME}",
                                        "target": "${ARTIFACTORY_CONFIG['uploadDir']}",
@@ -417,6 +427,11 @@ def archive_sdk() {
                 env.CUSTOMIZED_SDK_URL = "${ARTIFACTORY_CONFIG[ARTIFACTORY_CONFIG['defaultGeo']]['url']}/${ARTIFACTORY_CONFIG['uploadDir']}${SDK_FILENAME}"
                 currentBuild.description += "<br><a href=${CUSTOMIZED_SDK_URL}>${SDK_FILENAME}</a>"
 
+                for (String zelixFile in zelixFiles) {
+                    def zelixFileStripped = zelixFile.substring(zelixFile.lastIndexOf("/") + 1)
+                    ZELIX_URL = "${ARTIFACTORY_CONFIG[ARTIFACTORY_CONFIG['defaultGeo']]['url']}/${ARTIFACTORY_CONFIG['uploadDir']}${zelixFileStripped}"
+                    currentBuild.description += "<br><a href=${ZELIX_URL}>${zelixFileStripped}</a>"
+                }
                 if (fileExists("${TEST_FILENAME}")) {
                     TEST_LIB_URL = "${ARTIFACTORY_CONFIG[ARTIFACTORY_CONFIG['defaultGeo']]['url']}/${ARTIFACTORY_CONFIG['uploadDir']}${TEST_FILENAME}"
                     currentBuild.description += "<br><a href=${TEST_LIB_URL}>${TEST_FILENAME}</a>"
