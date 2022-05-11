@@ -3725,6 +3725,7 @@ typedef struct J9ClassCastParms {
 
 typedef struct J9JITConfig {
 	IDATA  ( *entryPoint)(struct J9JITConfig *jitConfig, struct J9VMThread *vmStruct, J9Method *method, void *oldStartPC) ;
+   	TR::CompilationInfo compilationRuntime;
 	void *old_fast_jitNewObject;
 	void *old_slow_jitNewObject;
 	void *old_fast_jitNewObjectNoZeroInit;

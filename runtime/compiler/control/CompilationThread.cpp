@@ -760,7 +760,6 @@ bool TR::CompilationInfo::shouldDowngradeCompReq(TR_MethodToBeCompiled *entry)
 bool
 TR::CompilationInfo::createCompilationInfo(J9JITConfig * jitConfig)
    {
-      J9JITConfig::compilationRuntime = *_compilationRuntime;
    TR_ASSERT(!_compilationRuntime, "The global compilation info has already been allocated");
    try
       {
@@ -771,7 +770,7 @@ TR::CompilationInfo::createCompilationInfo(J9JITConfig * jitConfig)
          that we do memset this object to 0 */
       memset(alloc, 0, sizeof(TR::CompilationInfo));
       _compilationRuntime = new (alloc) TR::CompilationInfo(jitConfig);
-
+      J9JITConfig::compilationRuntime = *_compilationRuntime;
       #ifdef DEBUG
          if (debug("traceThreadCompile"))
             _compilationRuntime->_traceCompiling = true;
