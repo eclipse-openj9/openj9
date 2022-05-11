@@ -3725,7 +3725,6 @@ typedef struct J9ClassCastParms {
 
 typedef struct J9JITConfig {
 	IDATA  ( *entryPoint)(struct J9JITConfig *jitConfig, struct J9VMThread *vmStruct, J9Method *method, void *oldStartPC) ;
-   	TR::CompilationInfo compilationRuntime;
 	void *old_fast_jitNewObject;
 	void *old_slow_jitNewObject;
 	void *old_fast_jitNewObjectNoZeroInit;
@@ -4048,6 +4047,7 @@ typedef struct J9JITConfig {
 	void ( *jitMethodBreakpointed)(struct J9VMThread *currentThread, struct J9Method *method) ;
 	void ( *jitMethodUnbreakpointed)(struct J9VMThread *currentThread, struct J9Method *method) ;
 	void ( *jitIllegalFinalFieldModification)(struct J9VMThread *currentThread, struct J9Class *fieldClass);
+	void *compilationRuntime;
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
 	void ( *jitSetMutableCallSiteTarget)(struct J9VMThread *vmThread, j9object_t mcs, j9object_t newTarget) ;
 #endif /* J9VM_OPT_OPENJDK_METHODHANDLE */
