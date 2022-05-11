@@ -393,7 +393,7 @@ public:
    enum TR_CheckpointStatus
       {
       NO_CHECKPOINT_IN_PROGRESS,
-      CHECKPOINT_IN_PROGRESS,
+      SUSPEND_THREADS_FOR_CHECKPOINT,
       INTERRUPT_CHECKPOINT
       };
 #endif
@@ -711,11 +711,12 @@ public:
    void waitOnCRMonitor();
 
    /* The following APIs should only be invoked with the Comp Monitor in hand. */
-   bool isCheckpointInProgress()        { return _checkpointStatus != TR_CheckpointStatus::NO_CHECKPOINT_IN_PROGRESS; }
-   void setCheckpointInProgress()       {        _checkpointStatus  = TR_CheckpointStatus::CHECKPOINT_IN_PROGRESS;    }
-   void resetCheckpointInProgress()     {        _checkpointStatus  = TR_CheckpointStatus::NO_CHECKPOINT_IN_PROGRESS; }
-   bool shouldCheckpointBeInterrupted() { return _checkpointStatus == TR_CheckpointStatus::INTERRUPT_CHECKPOINT;      }
-   void interruptCheckpoint()           {        _checkpointStatus  = TR_CheckpointStatus::INTERRUPT_CHECKPOINT;      }
+   bool shouldSuspendThreadsForCheckpoint() { return _checkpointStatus == TR_CheckpointStatus::SUSPEND_THREADS_FOR_CHECKPOINT; }
+   void setSuspendThreadsForCheckpoint()    {        _checkpointStatus  = TR_CheckpointStatus::SUSPEND_THREADS_FOR_CHECKPOINT; }
+   bool isCheckpointInProgress()            { return _checkpointStatus != TR_CheckpointStatus::NO_CHECKPOINT_IN_PROGRESS;      }
+   void resetCheckpointInProgress()         {        _checkpointStatus  = TR_CheckpointStatus::NO_CHECKPOINT_IN_PROGRESS;      }
+   bool shouldCheckpointBeInterrupted()     { return _checkpointStatus == TR_CheckpointStatus::INTERRUPT_CHECKPOINT;           }
+   void interruptCheckpoint()               {        _checkpointStatus  = TR_CheckpointStatus::INTERRUPT_CHECKPOINT;           }
 #endif
 
    TR_PersistentMemory *     persistentMemory() { return _persistentMemory; }

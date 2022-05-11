@@ -476,8 +476,8 @@ int32_t TR::CompilationInfo::computeDynamicDumbInlinerBytecodeSizeCutoff(TR::Opt
 TR_YesNoMaybe TR::CompilationInfo::shouldActivateNewCompThread()
    {
 #if defined(J9VM_OPT_CRIU_SUPPORT)
-   // If a checkpoint is in progress, don't activate any threads until the restore.
-   if (isCheckpointInProgress())
+   // Don't activate any threads until the restore if the threads should be suspended for checkpoint
+   if (shouldSuspendThreadsForCheckpoint())
       return TR_no;
 #endif
    if (isInShutdownMode())
@@ -2668,8 +2668,8 @@ void TR::CompilationInfo::prepareForCheckpoint()
 
    TR_ASSERT_FATAL(!isCheckpointInProgress(), "Checkpoint already in progress!\n");
 
-   /* Set the checkpoint in progress status. */
-   setCheckpointInProgress();
+   /* Indicate to compilation threads that they should suspend for checkpoint/restore */
+   setSuspendThreadsForCheckpoint();
 
    /* Inform compilation threads to suspend themselves. The compilation
     * threads will complete any in-progress compilations first.
@@ -4053,7 +4053,7 @@ TR::CompilationInfoPerThread::doSuspend()
 
 #if defined(J9VM_OPT_CRIU_SUPPORT)
    // Notify the thread waiting in the checkpoint hook.
-   if (_compInfo.isCheckpointInProgress())
+   if (_compInfo.shouldSuspendThreadsForCheckpoint())
       {
       _compInfo.acquireCRMonitor();
       _compInfo.getCRMonitor()->notifyAll();
@@ -6023,7 +6023,7 @@ void *TR::CompilationInfo::compileOnSeparateThread(J9VMThread * vmThread, TR::Il
    // thread. Note that the diagnostic thread is not counted towards `getNumCompThreadsActive` count.
    if ((getNumCompThreadsActive() == 0
 #if defined(J9VM_OPT_CRIU_SUPPORT)
-        || isCheckpointInProgress()
+        || shouldSuspendThreadsForCheckpoint()
 #endif
         || getPersistentInfo()->getDisableFurtherCompilation())
        && !details.isJitDumpMethod())
