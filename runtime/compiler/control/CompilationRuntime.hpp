@@ -47,7 +47,10 @@
 
 extern "C" {
 struct J9Method;
-struct J9JITConfig;
+struct J9JITConfig
+{
+   TR::CompilationInfo compilationRuntime;
+};
 struct J9VMThread;
 struct J9ROMMethod;
 struct J9ClassLoader;

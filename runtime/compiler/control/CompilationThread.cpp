@@ -760,6 +760,7 @@ bool TR::CompilationInfo::shouldDowngradeCompReq(TR_MethodToBeCompiled *entry)
 bool
 TR::CompilationInfo::createCompilationInfo(J9JITConfig * jitConfig)
    {
+      J9JITConfig::compilationRuntime = *_compilationRuntime;
    TR_ASSERT(!_compilationRuntime, "The global compilation info has already been allocated");
    try
       {
