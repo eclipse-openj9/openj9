@@ -106,7 +106,7 @@ public class HiddenClassFinalFieldTests {
         unsafe.staticFieldBase(finalHiddenClassField);
     }
 
-    /* VarHandle.set is not supported for records. */
+    /* VarHandle.set is not supported for hidden classes. */
     @Test(expectedExceptions = java.lang.UnsupportedOperationException.class)
     public void test_javaLangInvokeMethodHandles_unreflectVarHandle_static() throws Throwable {
         Class<?> c = makeHiddenClass();

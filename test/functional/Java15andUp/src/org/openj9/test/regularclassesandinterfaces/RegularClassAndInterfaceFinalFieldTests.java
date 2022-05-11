@@ -39,7 +39,7 @@ public class RegularClassAndInterfaceFinalFieldTests {
     }
 
     private interface TestInterface {
-        String finalField = "old";
+        static final String finalField = "old";
     }
 
     /* Final static fields in regular classes are not modifiable through reflection. */
