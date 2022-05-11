@@ -26,6 +26,7 @@
 #include <string.h>
 #include <ctype.h>
 #include "il/DataTypes.hpp"
+#include "il/ILOps.hpp"
 #include "infra/Assert.hpp"
 
 namespace J9 {
@@ -179,7 +180,9 @@ J9::DataType::getDataTypeConversion(TR::DataType t1, TR::DataType t2)
    TR_ASSERT(t1 < TR::NumAllTypes, "conversion opcode from unexpected datatype %s requested", t1.toString());
    TR_ASSERT(t2 < TR::NumAllTypes, "conversion opcode to unexpected data type %s requested", t2.toString());
 
-   if (t1.isVector() && t2.isVector()) return TR::v2v;
+
+   if (t1.isVector() && t2.isVector()) return TR::ILOpCode::createVectorOpCode(OMR::vcast, t1, t2);
+
    if (t1.isVector() || t2.isVector()) return TR::BadILOp;
 
    if (t1 < TR::NumOMRTypes)

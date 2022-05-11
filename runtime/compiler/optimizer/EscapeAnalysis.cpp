@@ -6393,9 +6393,7 @@ bool TR_EscapeAnalysis::fixupFieldAccessForNonContiguousAllocation(TR::Node *nod
          if (autoSymRefDataType.isVector() &&
              !node->getDataType().isVector())
             {
-            TR::Node::recreate(node,
-                               (autoSymRefDataType.getVectorElementType() == TR::Double)
-                               ? TR::vdgetelem : TR::vigetelem);
+            TR::Node::recreate(node, TR::ILOpCode::createVectorOpCode(OMR::vgetelem, autoSymRefDataType));
             node->setAndIncChild(0, TR::Node::create(node, TR::ILOpCode::createVectorOpCode(OMR::vload, autoSymRefDataType), 0));
             node->setNumChildren(2);
             node->getFirstChild()->setSymbolReference(autoSymRef);
@@ -6445,9 +6443,7 @@ bool TR_EscapeAnalysis::fixupFieldAccessForNonContiguousAllocation(TR::Node *nod
             {
             TR::Node::recreate(node, TR::ILOpCode::createVectorOpCode(OMR::vstore, autoSymRefDataType));
             TR::Node *value = node->getFirstChild();
-            TR::Node *newValue = TR::Node::create(node,
-                                                  (node->getDataType().getVectorElementType() == TR::Double)
-                                                  ? TR::vdsetelem : TR::visetelem, 3);
+            TR::Node *newValue = TR::Node::create(node, TR::ILOpCode::createVectorOpCode(OMR::vsetelem, autoSymRefDataType), 3);
             newValue->setAndIncChild(0, TR::Node::create(node, TR::ILOpCode::createVectorOpCode(OMR::vload, autoSymRefDataType), 0));
             newValue->getFirstChild()->setSymbolReference(autoSymRef);
             newValue->setChild(1, value);

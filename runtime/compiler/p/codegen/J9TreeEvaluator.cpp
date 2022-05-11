@@ -349,7 +349,7 @@ extern void TEMPORARY_initJ9PPCTreeEvaluatorTable(TR::CodeGenerator *cg)
    tet[TR::dcall]  = TR::TreeEvaluator::directCallEvaluator;
    tet[TR::acall]  = TR::TreeEvaluator::directCallEvaluator;
    tet[TR::call]   = TR::TreeEvaluator::directCallEvaluator;
-   tet[TR::vcall]  = TR::TreeEvaluator::directCallEvaluator;
+   tet[OMR::vcall] = TR::TreeEvaluator::directCallEvaluator;
 
    tet[TR::tstart] = TR::TreeEvaluator::tstartEvaluator;
    tet[TR::tfinish] = TR::TreeEvaluator::tfinishEvaluator;
@@ -12067,7 +12067,7 @@ TR::Register *J9::Power::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::
 
    if (callee->getRecognizedMethod() >= TR::FirstVectorMethod &&
        callee->getRecognizedMethod() <= TR::LastVectorMethod &&
-       node->getOpCodeValue() == TR::vcall) // was vectorized
+       node->getOpCode().isVectorOpCode()) // was vectorized
       {
       TR_ASSERT_FATAL_WITH_NODE(node, false, "vcall is not supported for this Vector API method\n");
       }

@@ -1376,7 +1376,7 @@ TR::Node *TR_VectorAPIExpansion::naryIntrinsicHandler(TR_VectorAPIExpansion *opt
          vectorOpCode = ILOpcodeFromVectorAPIOpcode(vectorAPIOpcode, opType, vectorLength);
 
          if (vectorOpCode == TR::BadILOp ||
-             !comp->cg()->getSupportsOpCodeForAutoSIMD(vectorOpCode, elementType))
+             !comp->cg()->getSupportsOpCodeForAutoSIMD(vectorOpCode))
             {
             if (opt->_trace) traceMsg(comp, "Unsupported vector opcode in node %p\n", node);
             return NULL;
@@ -1414,7 +1414,8 @@ TR::Node *TR_VectorAPIExpansion::blendIntrinsicHandler(TR_VectorAPIExpansion *op
       traceMsg(comp, "blendIntrinsicHandler for node %p\n", node);
 
    TR::ILOpCodes scalarOpCode = TR::BadILOp;
-   TR::ILOpCodes vectorOpCode = TR::vselect;
+   // TODO: check if vbitselect can beused vs vselect
+   TR::ILOpCodes vectorOpCode = TR::ILOpCode::createVectorOpCode(OMR::vbitselect, elementType.scalarToVector(OMR::DataType::bitsToVectorLength(vectorLength)));
 
    if (mode == checkScalarization)
       return NULL;
@@ -1423,7 +1424,7 @@ TR::Node *TR_VectorAPIExpansion::blendIntrinsicHandler(TR_VectorAPIExpansion *op
       {
       if (!supportedOnPlatform(comp, vectorLength)) return NULL;
 
-      if (!comp->cg()->getSupportsOpCodeForAutoSIMD(vectorOpCode, elementType))
+      if (!comp->cg()->getSupportsOpCodeForAutoSIMD(vectorOpCode))
          return NULL;
 
       return node;
@@ -1447,7 +1448,7 @@ TR::Node *TR_VectorAPIExpansion::broadcastCoercedIntrinsicHandler(TR_VectorAPIEx
 
       TR::ILOpCodes splatsOpCode = TR::ILOpCode::createVectorOpCode(OMR::vsplats, elementType.scalarToVector(OMR::DataType::bitsToVectorLength(vectorLength)));
 
-      if (!comp->cg()->getSupportsOpCodeForAutoSIMD(splatsOpCode, elementType))
+      if (!comp->cg()->getSupportsOpCodeForAutoSIMD(splatsOpCode))
          return NULL;
 
       return node;
@@ -1567,7 +1568,7 @@ TR::Node *TR_VectorAPIExpansion::compareIntrinsicHandler(TR_VectorAPIExpansion *
       if (vectorOpCode == TR::BadILOp)
           return NULL;
 
-      if (!comp->cg()->getSupportsOpCodeForAutoSIMD(vectorOpCode, elementType))
+      if (!comp->cg()->getSupportsOpCodeForAutoSIMD(vectorOpCode))
          return NULL;
 
       return node;
@@ -1581,23 +1582,23 @@ TR::ILOpCodes TR_VectorAPIExpansion::ILOpcodeFromVectorAPIOpcode(int32_t vectorA
    {
    bool scalar = (bitsLength == 0);
 
+   TR::VectorLength vectorLength = OMR::DataType::bitsToVectorLength(bitsLength);
+   TR::DataType vectorType = scalar ? TR::NoType : TR::DataType::createVectorType(elementType.getDataType(), vectorLength);
+
    if (compare)
       {
       switch (vectorAPIOpCode)
          {
-         case BT_eq: return scalar ? TR::ILOpCode::cmpeqOpCode(elementType) : TR::vcmpeq;
-         case BT_ne: return scalar ? TR::BadILOp : TR::vcmpne;
-         case BT_le: return scalar ? TR::BadILOp : TR::vcmple;
-         case BT_ge: return scalar ? TR::BadILOp : TR::vcmpge;
-         case BT_lt: return scalar ? TR::BadILOp : TR::vcmplt;
-         case BT_gt: return scalar ? TR::BadILOp : TR::vcmpgt;
+         case BT_eq: return scalar ? TR::ILOpCode::cmpeqOpCode(elementType) : TR::ILOpCode::createVectorOpCode(OMR::vcmpeq, vectorType);
+         case BT_ne: return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(OMR::vcmpne, vectorType);
+         case BT_le: return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(OMR::vcmple, vectorType);
+         case BT_ge: return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(OMR::vcmpge, vectorType);
+         case BT_lt: return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(OMR::vcmplt, vectorType);
+         case BT_gt: return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(OMR::vcmpgt, vectorType);
          default:
             return TR::BadILOp;
          }
       }
-
-   TR::VectorLength vectorLength = OMR::DataType::bitsToVectorLength(bitsLength);
-   TR::DataType vectorType = scalar ? TR::NoType : TR::DataType::createVectorType(elementType.getDataType(), vectorLength);
 
    switch (vectorAPIOpCode)
       {
