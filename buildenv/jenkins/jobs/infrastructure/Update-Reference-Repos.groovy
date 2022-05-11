@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2021 IBM Corp. and others
+ * Copyright (c) 2019, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -68,6 +68,7 @@ timeout(time: 6, unit: 'HOURS') {
                 def todoNodes = []
                 def setupNodesNames = []
                 def buildNodesNames = []
+                def builtInLabel = 'master || built-in' //"master" label could be removed after built-in-node-migration
 
                 if (UPDATE_SETUP_NODES) {
                     // update openj9 repo cache on nodes that have SETUP_LABEL
@@ -79,8 +80,8 @@ timeout(time: 6, unit: 'HOURS') {
                     }
 
                     //add Jenkins Manager node if todoNodes does not contain it already
-                    if (todoNodes.intersect(jenkins.model.Jenkins.instance.getLabel('master').getNodes()).isEmpty()) {
-                        todoNodes.addAll(jenkins.model.Jenkins.instance.getLabel('master').getNodes())
+                    if (todoNodes.intersect(jenkins.model.Jenkins.instance.getLabel(builtInLabel).getNodes()).isEmpty()) {
+                        todoNodes.addAll(jenkins.model.Jenkins.instance.getLabel(builtInLabel).getNodes())
                     }
 
                     for (sNode in todoNodes) {
@@ -90,8 +91,8 @@ timeout(time: 6, unit: 'HOURS') {
                         }
 
                         def sNodeName = sNode.getDisplayName()
-                        if (sNodeName == 'Jenkins') {
-                            sNodeName = 'master'
+                        if (!sNode.toComputer().name) {
+                            sNodeName = builtInLabel
                         }
                         setupNodesNames.add(sNodeName)
 
