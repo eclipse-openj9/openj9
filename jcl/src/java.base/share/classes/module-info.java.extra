@@ -63,10 +63,12 @@ exports com.ibm.gpu.spi to
 /*[IF CRIU_SUPPORT]*/
 exports openj9.internal.criu to
     openj9.criu;
+exports openj9.internal.criu.security to
+    openj9.criu;
 exports jdk.internal.misc to
     openj9.criu;
 opens jdk.internal.misc to
     openj9.criu;
 opens java.lang to
     openj9.criu;
-/*[ENDIF]*/
+/*[ENDIF] CRIU_SUPPORT */
