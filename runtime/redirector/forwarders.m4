@@ -21,7 +21,8 @@ dnl
 dnl        (name,cc, decorate, ret, args..)
 _X(jio_vfprintf,,false,int,FILE *stream, const char *format, va_list args)
 _X(jio_vsnprintf,,false,int,char *str, int n, const char *format, va_list args)
-_X(JNI_a2e_vsprintf,,false,jint,char *target, const char *format, va_list args)
+_IF([defined(J9ZOS390)],
+	[_X(JNI_a2e_vsprintf,,false,jint,char *target, const char *format, va_list args)])
 _X(JVM_Accept,JNICALL,true,jint,jint descriptor, struct sockaddr *address, int *length)
 _X(JVM_ActiveProcessorCount,JNICALL,true,jint,void)
 _X(JVM_AllocateNewArray,JNICALL,true,jobject,JNIEnv *env, jclass caller, jclass current, jint length)
@@ -124,7 +125,8 @@ _X(JVM_TraceInstructions,JNICALL,true,void,jboolean on)
 _X(JVM_TraceMethodCalls,JNICALL,true,void,jboolean on)
 _X(JVM_UcsOpen,JNICALL,true,jint,const jchar *filename, jint flags, jint mode)
 _X(JVM_Write,JNICALL,true,jint,jint descriptor, const char *buffer, jint length)
-_X(NewStringPlatform,,false,jint,JNIEnv *env, const char *instr, jstring *outstr, const char *encoding)
+_IF([defined(J9ZOS390)],
+	[_X(NewStringPlatform,,false,jint,JNIEnv *env, const char *instr, jstring *outstr, const char *encoding)])
 _X(post_block,,false,int,void)
 _X(pre_block,,false,int,pre_block_t buf)
 _X(JVM_ZipHook,JNICALL,true,void,JNIEnv *env, const char *filename, jint newState)
@@ -231,8 +233,10 @@ _X(JVM_GetMethodIxNameUTF,JNICALL,true,jobject,jint arg0, jint arg1, jint arg2)
 _X(JVM_GetMethodIxSignatureUTF,JNICALL,true,jobject,jint arg0, jint arg1, jint arg2)
 _X(JVM_GetMethodIxExceptionsCount,JNICALL,true,jobject,jint arg0, jint arg1, jint arg2)
 _X(JVM_ReleaseUTF,JNICALL,true,jobject,jint arg0)
-_X(GetStringPlatform,,false,jint,JNIEnv *env, jstring instr, char *outstr, jint outlen, const char *encoding)
-_X(GetStringPlatformLength,,false,jint,JNIEnv *env, jstring instr, jint *outlen, const char *encoding)
+_IF([defined(J9ZOS390)],
+	[_X(GetStringPlatform,,false,jint,JNIEnv *env, jstring instr, char *outstr, jint outlen, const char *encoding)])
+_IF([defined(J9ZOS390)],
+	[_X(GetStringPlatformLength,,false,jint,JNIEnv *env, jstring instr, jint *outlen, const char *encoding)])
 _X(JVM_ExtendBootClassPath,JNICALL,true,void,JNIEnv *env, const char *path)
 _X(JVM_Bind,JNICALL,true,jobject,jint arg0, jint arg1, jint arg2)
 _IF([JAVA_SPEC_VERSION < 17],
@@ -289,34 +293,54 @@ _IF([(9 <= JAVA_SPEC_VERSION) && (JAVA_SPEC_VERSION < 15)],
 	[_X(JVM_AddModuleExportsToAll,JNICALL,false,void,JNIEnv *env, jobject arg1, const char *arg2)])
 _IF([JAVA_SPEC_VERSION >= 15],
 	[_X(JVM_AddModuleExportsToAll,JNICALL,false,void,JNIEnv *env, jobject arg1, jstring arg2)])
-_X(JVM_AddReadsModule,JNICALL,false,void,JNIEnv *env, jobject arg1, jobject arg2)
-_X(JVM_CanReadModule,JNICALL,false,jboolean,JNIEnv *env, jobject arg1, jobject arg2)
+_IF([JAVA_SPEC_VERSION >= 11],
+	[_X(JVM_AddReadsModule,JNICALL,false,void,JNIEnv *env, jobject arg1, jobject arg2)])
+_IF([JAVA_SPEC_VERSION >= 11],
+	[_X(JVM_CanReadModule,JNICALL,false,jboolean,JNIEnv *env, jobject arg1, jobject arg2)])
 _IF([JAVA_SPEC_VERSION >= 9],
 	[_X(JVM_AddModulePackage,JNICALL,false,void,JNIEnv *env, jobject arg1, const char *arg2)])
 _IF([(9 <= JAVA_SPEC_VERSION) && (JAVA_SPEC_VERSION < 15)],
 	[_X(JVM_AddModuleExportsToAllUnnamed,JNICALL,false,void,JNIEnv *env, jobject arg1, const char *arg2)])
 _IF([JAVA_SPEC_VERSION >= 15],
 	[_X(JVM_AddModuleExportsToAllUnnamed,JNICALL,false,void,JNIEnv *env, jobject arg1, jstring arg2)])
-_X(JVM_GetSimpleBinaryName,JNICALL,false,jstring,JNIEnv *env, jclass arg1)
-_X(JVM_SetMethodInfo,JNICALL,false,void,JNIEnv *env, jobject arg1)
-_X(JVM_ConstantPoolGetNameAndTypeRefIndexAt,JNICALL,false,jint,JNIEnv *env, jobject arg1, jobject arg2, jint arg3)
-_X(JVM_MoreStackWalk,JNICALL,false,jint,JNIEnv *env, jobject arg1, jlong arg2, jlong arg3, jint arg4, jint arg5, jobjectArray arg6, jobjectArray arg7)
-_X(JVM_ConstantPoolGetClassRefIndexAt,JNICALL,false,jint,JNIEnv *env, jobject arg1, jlong arg2, jint arg3)
-_X(JVM_GetVmArguments,JNICALL,false,jobjectArray,JNIEnv *env)
-_X(JVM_FillStackFrames,JNICALL,false,void,JNIEnv *env, jclass arg1, jint arg2, jobjectArray arg3, jint arg4, jint arg5)
-_X(JVM_FindClassFromCaller,JNICALL,false,jclass,JNIEnv *env, const char *arg1, jboolean arg2, jobject arg3, jclass arg4)
-_X(JVM_ConstantPoolGetNameAndTypeRefInfoAt,JNICALL,false,jobjectArray,JNIEnv *env, jobject arg1, jobject arg2, jint arg3)
-_X(JVM_ConstantPoolGetTagAt,JNICALL,false,jbyte,JNIEnv *env, jobject arg1, jobject arg2, jint arg3)
-_X(JVM_CallStackWalk,JNICALL,false,jobject,JNIEnv *env, jobject arg1, jlong arg2, jint arg3, jint arg4, jint arg5, jobjectArray arg6, jobjectArray arg7)
-_X(JVM_SetBootLoaderUnnamedModule,JNICALL,false,void,JNIEnv *env, jobject arg1)
-_X(JVM_GetModuleByPackageName,JNICALL,false,jobject,JNIEnv *env, jobject classLoader, jstring packageName)
-_X(JVM_ToStackTraceElement,JNICALL,false,void,JNIEnv *env, jobject arg1, jobject arg2)
-_X(JVM_GetStackTraceElements,JNICALL,false,void,JNIEnv *env, jobject arg1, jobjectArray arg2)
-_X(JVM_InitStackTraceElementArray,JNICALL,false,void,JNIEnv *env, jobjectArray arg1, jobject arg2)
-_X(JVM_InitStackTraceElement,JNICALL,false,void,JNIEnv *env, jobject arg1, jobject arg2)
-_X(JVM_GetAndClearReferencePendingList,JNICALL,false,jobject,JNIEnv *env)
-_X(JVM_HasReferencePendingList,JNICALL,false,jboolean,JNIEnv *env)
-_X(JVM_WaitForReferencePendingList,JNICALL,false,void,JNIEnv *env)
+_IF([JAVA_SPEC_VERSION >= 11],
+	[_X(JVM_GetSimpleBinaryName,JNICALL,false,jstring,JNIEnv *env, jclass arg1)])
+_IF([JAVA_SPEC_VERSION >= 11],
+	[_X(JVM_SetMethodInfo,JNICALL,false,void,JNIEnv *env, jobject arg1)])
+_IF([JAVA_SPEC_VERSION >= 11],
+	[_X(JVM_ConstantPoolGetNameAndTypeRefIndexAt,JNICALL,false,jint,JNIEnv *env, jobject arg1, jobject arg2, jint arg3)])
+_IF([JAVA_SPEC_VERSION >= 11],
+	[_X(JVM_MoreStackWalk,JNICALL,false,jint,JNIEnv *env, jobject arg1, jlong arg2, jlong arg3, jint arg4, jint arg5, jobjectArray arg6, jobjectArray arg7)])
+_IF([JAVA_SPEC_VERSION >= 11],
+	[_X(JVM_ConstantPoolGetClassRefIndexAt,JNICALL,false,jint,JNIEnv *env, jobject arg1, jlong arg2, jint arg3)])
+_IF([JAVA_SPEC_VERSION >= 11],
+	[_X(JVM_GetVmArguments,JNICALL,false,jobjectArray,JNIEnv *env)])
+_IF([JAVA_SPEC_VERSION >= 11],
+	[_X(JVM_FillStackFrames,JNICALL,false,void,JNIEnv *env, jclass arg1, jint arg2, jobjectArray arg3, jint arg4, jint arg5)])
+_IF([JAVA_SPEC_VERSION >= 11],
+	[_X(JVM_FindClassFromCaller,JNICALL,false,jclass,JNIEnv *env, const char *arg1, jboolean arg2, jobject arg3, jclass arg4)])
+_IF([JAVA_SPEC_VERSION >= 11],
+	[_X(JVM_ConstantPoolGetNameAndTypeRefInfoAt,JNICALL,false,jobjectArray,JNIEnv *env, jobject arg1, jobject arg2, jint arg3)])
+_IF([JAVA_SPEC_VERSION >= 11],
+	[_X(JVM_ConstantPoolGetTagAt,JNICALL,false,jbyte,JNIEnv *env, jobject arg1, jobject arg2, jint arg3)])
+_IF([JAVA_SPEC_VERSION >= 11],
+	[_X(JVM_CallStackWalk,JNICALL,false,jobject,JNIEnv *env, jobject arg1, jlong arg2, jint arg3, jint arg4, jint arg5, jobjectArray arg6, jobjectArray arg7)])
+_IF([JAVA_SPEC_VERSION >= 11],
+	[_X(JVM_SetBootLoaderUnnamedModule,JNICALL,false,void,JNIEnv *env, jobject arg1)])
+_IF([JAVA_SPEC_VERSION >= 11],
+	[_X(JVM_ToStackTraceElement,JNICALL,false,void,JNIEnv *env, jobject arg1, jobject arg2)])
+_IF([JAVA_SPEC_VERSION >= 11],
+	[_X(JVM_GetStackTraceElements,JNICALL,false,void,JNIEnv *env, jobject arg1, jobjectArray arg2)])
+_IF([JAVA_SPEC_VERSION >= 11],
+	[_X(JVM_InitStackTraceElementArray,JNICALL,false,void,JNIEnv *env, jobjectArray arg1, jobject arg2)])
+_IF([JAVA_SPEC_VERSION >= 11],
+	[_X(JVM_InitStackTraceElement,JNICALL,false,void,JNIEnv *env, jobject arg1, jobject arg2)])
+_IF([JAVA_SPEC_VERSION >= 11],
+	[_X(JVM_GetAndClearReferencePendingList,JNICALL,false,jobject,JNIEnv *env)])
+_IF([JAVA_SPEC_VERSION >= 11],
+	[_X(JVM_HasReferencePendingList,JNICALL,false,jboolean,JNIEnv *env)])
+_IF([JAVA_SPEC_VERSION >= 11],
+	[_X(JVM_WaitForReferencePendingList,JNICALL,false,void,JNIEnv *env)])
 _X(JVM_BeforeHalt,JNICALL,false,void,void)
 _IF([JAVA_SPEC_VERSION >= 9],
 	[_X(JVM_GetNanoTimeAdjustment,JNICALL,true,jlong,JNIEnv *env, jclass clazz, jlong offsetSeconds)])
