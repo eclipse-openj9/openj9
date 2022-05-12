@@ -291,16 +291,15 @@ jvm_add_exports(jvm
 )
 
 if(JAVA_SPEC_VERSION LESS 11)
-	jvm_add_exports(jvm _JVM_LoadLibrary@4)
-else()
-	jvm_add_exports(jvm _JVM_LoadLibrary@8)
-endif()
-
-if(JAVA_SPEC_VERSION LESS 11)
-	jvm_add_exports(jvm _JVM_GetCallerClass@8)
+	jvm_add_exports(jvm
+		_JVM_GetCallerClass@8
+		_JVM_GetClassName@8
+		_JVM_LoadLibrary@4
+	)
 else()
 	jvm_add_exports(jvm
 		_JVM_GetCallerClass@4
+		_JVM_LoadLibrary@8
 		# Additions for Java 9 (Modularity)
 		JVM_DefineModule
 		JVM_AddModuleExports
@@ -310,7 +309,6 @@ else()
 		JVM_AddModulePackage
 		JVM_AddModuleExportsToAllUnnamed
 		JVM_SetBootLoaderUnnamedModule
-		JVM_GetModuleByPackageName
 
 		# Additions for Java 9 RAW
 		JVM_GetSimpleBinaryName
