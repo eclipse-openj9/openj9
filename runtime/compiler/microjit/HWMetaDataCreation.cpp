@@ -182,7 +182,7 @@ class BytecodeIndexList
             return this;
          if (_next)
             return _next->appendBCI(i);
-         BytecodeIndexList *newIndex = new (_cfg.getInternalRegion()) BytecodeIndexList(i, this, _next, _cfg);
+         BytecodeIndexList *newIndex = new (_cfg.getInternalMemoryRegion()) BytecodeIndexList(i, this, _next, _cfg);
          _next = newIndex;
          return newIndex;
          }
@@ -202,7 +202,7 @@ class BytecodeIndexList
             }
          else
             {
-            BytecodeIndexList *newIndex = new (_cfg.getInternalRegion()) BytecodeIndexList(i, this, _next, _cfg);
+            BytecodeIndexList *newIndex = new (_cfg.getInternalMemoryRegion()) BytecodeIndexList(i, this, _next, _cfg);
             return newIndex;
             }
          }
@@ -258,7 +258,7 @@ class BlockList
          ,_range(start)
          ,_block(NULL)
          {
-         _bcListHead = new (_cfg.getInternalRegion()) BytecodeIndexList(start, NULL, NULL, _cfg);
+         _bcListHead = new (_cfg.getInternalMemoryRegion()) BytecodeIndexList(start, NULL, NULL, _cfg);
          _bcListCurrent = _bcListHead;
          }
 
@@ -296,7 +296,7 @@ class BlockList
 
       inline void addSuccessor(BytecodeRange *successor)
          {
-         BytecodeRangeList *brl = new (_cfg.getInternalRegion()) BytecodeRangeList(successor);
+         BytecodeRangeList *brl = new (_cfg.getInternalMemoryRegion()) BytecodeRangeList(successor);
          if (_successorList)
             _successorList = _successorList->insert(brl);
          else
@@ -346,14 +346,14 @@ class BlockList
 
          // The target isn't before this block, isn't this block, isn't in this block, and there is no more list to search.
          // Time to make a new block and add it to the list
-         BlockList *target = new (_cfg.getInternalRegion()) BlockList(_cfg, index, _tail);
+         BlockList *target = new (_cfg.getInternalMemoryRegion()) BlockList(_cfg, index, _tail);
          insertAfter(target);
          return target;
          }
 
       BlockList *splitBlockListOnIndex(uint32_t index)
          {
-         BlockList *target = new (_cfg.getInternalRegion()) BlockList(_cfg, index, _tail);
+         BlockList *target = new (_cfg.getInternalMemoryRegion()) BlockList(_cfg, index, _tail);
          insertAfter(target);
 
          BytecodeIndexList *splitPoint = _bcListHead->getBCIListEntry(index);
@@ -425,7 +425,7 @@ class CFGCreator
          // Just started parsing, make the block list.
          if (!_head)
             {
-            _head = new (_cfg.getInternalRegion()) BlockList(_cfg, bci->currentByteCodeIndex(), &_tail);
+            _head = new (_cfg.getInternalMemoryRegion()) BlockList(_cfg, bci->currentByteCodeIndex(), &_tail);
             _tail = _head;
             _current = _head;
             }
@@ -447,7 +447,7 @@ class CFGCreator
 
          if (_newBlock)
             { // Current block has ended in a branch, this is a new block now
-            nextBlock = new (_cfg.getInternalRegion()) BlockList(_cfg, bci->currentByteCodeIndex(), &_tail);
+            nextBlock = new (_cfg.getInternalMemoryRegion()) BlockList(_cfg, bci->currentByteCodeIndex(), &_tail);
             _current->insertAfter(nextBlock);
             if(_fallThrough)
                _current->addSuccessor(&(nextBlock->_range));
