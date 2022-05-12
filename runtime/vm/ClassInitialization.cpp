@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -76,10 +76,10 @@ compareRAMClasses(void *item, J9StackElement *currentElement)
 }
 
 static BOOLEAN
-checkForCyclicalVerification(J9VMThread *currentThread, J9ClassLoader *classLoader, J9Class *ramClass)
+isCyclePresentInVerification(J9VMThread *currentThread, J9ClassLoader *classLoader, J9Class *ramClass)
 {
 	J9JavaVM *javaVM = currentThread->javaVM;
-	return verifyLoadingOrLinkingStack(currentThread, classLoader, ramClass, &currentThread->verificationStack, &compareRAMClasses, javaVM->verificationMaxStack, javaVM->valueTypeVerificationStackPool, FALSE, FALSE);
+	return !verifyLoadingOrLinkingStack(currentThread, classLoader, ramClass, &currentThread->verificationStack, &compareRAMClasses, javaVM->verificationMaxStack, javaVM->valueTypeVerificationStackPool, FALSE, FALSE);
 }
 
 static void
@@ -450,7 +450,7 @@ doVerify:
 
 						if (isStatic) {
 							omrthread_monitor_enter(vm->valueTypeVerificationMutex);
-							BOOLEAN cycleDetected = checkForCyclicalVerification(currentThread, entryClazz->classLoader, entryClazz);
+							BOOLEAN cycleDetected = isCyclePresentInVerification(currentThread, entryClazz->classLoader, entryClazz);
 							omrthread_monitor_exit(vm->valueTypeVerificationMutex);
 
 							/* It is legal for verification cycles to occur when verifying static flattenable fields
