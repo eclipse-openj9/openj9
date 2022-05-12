@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <!--
-  Copyright (c) 2020, 2021 IBM Corp. and others
+  Copyright (c) 2020, 2022 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -51,6 +51,48 @@
             -excludegroups $(DEFAULT_EXCLUDE); \
             $(TEST_STATUS)
         </command>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<versions>
+			<version>15+</version>
+		</versions>
+	</test>
+	<test>
+		<testCaseName>Jep371Tests</testCaseName>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+			--add-exports=java.base/jdk.internal.misc=ALL-UNNAMED \
+			-cp $(Q)$(LIB_DIR)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
+			-cp $(Q)$(LIB_DIR)$(D)asm.jar$(P)$(LIB_DIR)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
+			org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames Jep371Tests \
+			-groups $(TEST_GROUP) \
+			-excludegroups $(DEFAULT_EXCLUDE); \
+			$(TEST_STATUS)
+		</command>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<versions>
+			<version>15+</version>
+		</versions>
+	</test>
+	<test>
+		<testCaseName>RegularClassAndInterfaceFinalFieldTests</testCaseName>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+			--add-exports=java.base/jdk.internal.misc=ALL-UNNAMED \
+			-cp $(Q)$(LIB_DIR)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
+			-cp $(Q)$(LIB_DIR)$(D)asm.jar$(P)$(LIB_DIR)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
+			org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames RegularClassAndInterfaceFinalFieldTests \
+			-groups $(TEST_GROUP) \
+			-excludegroups $(DEFAULT_EXCLUDE); \
+			$(TEST_STATUS)
+		</command>
 		<levels>
 			<level>sanity</level>
 		</levels>
