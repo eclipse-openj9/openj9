@@ -1,7 +1,7 @@
 package org.openj9.test.records;
 
 /*******************************************************************************
- * Copyright (c) 2020, 2020 IBM Corp. and others
+ * Copyright (c) 2020, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -129,7 +129,7 @@ public class RecordFinalFieldTests {
         unsafe.objectFieldOffset(finalRecordField);
     }
 
-    /* Check that Unsafe.staticFieldBase supports records. */
+    /* Check that Unsafe.staticFieldOffset supports records. */
     @Test
     public void test_jdkInternalMiscUnsafe_staticFieldOffset() throws Throwable {
         Field finalRecordField = TestRecord.class.getDeclaredField("finalField");
