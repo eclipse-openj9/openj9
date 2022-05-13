@@ -5658,6 +5658,9 @@ typedef struct J9JavaVM {
 	omrthread_monitor_t jniCryptoLibLock;
 	void* jniCryptoFunctions;
 	UDATA jniCryptoLibrary;
+	omrthread_monitor_t jniHikmCryptoLibLock;
+	void* jniHikmCryptoFunctions;
+	UDATA jniHikmCryptoLibrary;
 	UDATA jniCriticalResponseCount;
 	struct J9SharedInvariantInternTable* sharedInvariantInternTable;
 	struct J9SharedCacheAPI* sharedCacheAPI;

@@ -4585,6 +4585,12 @@ closeAllDLLs(J9JavaVM* vm)
 		j9mem_free_memory(vm->jniCryptoFunctions);
 		vm->jniCryptoFunctions = NULL;
 	}
+	if (NULL != vm->jniHikmCryptoFunctions) {
+		j9sl_close_shared_library(vm->jniHikmCryptoLibrary);
+		JVMINIT_VERBOSE_INIT_VM_TRACE1(vm, "Closing library %s\n", (char*)"HIKM");
+		j9mem_free_memory(vm->jniHikmCryptoFunctions);
+		vm->jniHikmCryptoFunctions = NULL;
+	}
 }
 
 
