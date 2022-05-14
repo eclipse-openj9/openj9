@@ -770,7 +770,7 @@ TR::CompilationInfo::createCompilationInfo(J9JITConfig * jitConfig)
          that we do memset this object to 0 */
       memset(alloc, 0, sizeof(TR::CompilationInfo));
       _compilationRuntime = new (alloc) TR::CompilationInfo(jitConfig);
-
+      jitConfig->compilationRuntime = (void*)_compilationRuntime;
       #ifdef DEBUG
          if (debug("traceThreadCompile"))
             _compilationRuntime->_traceCompiling = true;
