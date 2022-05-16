@@ -231,9 +231,6 @@ s390x_linux:
     build: 'ci.role.build && hw.arch.s390x && sw.os.rhel.7'
   build_env:
     cmd: 'source /home/jenkins/set_gcc7.5.0_env'
-  excluded_tests:
-    8:
-      - special.system
 #========================================#
 # Linux S390 64bits /w JITSERVER
 #========================================#
@@ -268,9 +265,6 @@ ppc64_aix:
       17: 'PATH+XLC=/opt/IBM/xlC/16.1.0/bin:/opt/IBM/xlc/16.1.0/bin CC=xlclang CXX=xlclang++'
       18: 'PATH+XLC=/opt/IBM/xlC/16.1.0/bin:/opt/IBM/xlc/16.1.0/bin CC=xlclang CXX=xlclang++'
       next: 'PATH+XLC=/opt/IBM/xlC/16.1.0/bin:/opt/IBM/xlc/16.1.0/bin CC=xlclang CXX=xlclang++'
-  excluded_tests:
-    8:
-      - special.system
 #========================================#
 # Linux x86 64bits
 #========================================#
@@ -303,9 +297,6 @@ x86-64_linux:
     17: '!sw.os.cent.6'
     18: '!sw.os.cent.6'
     next: '!sw.os.cent.6'
-  excluded_tests:
-    11:
-      - special.system
 #========================================#
 # Linux x86 64bits /w JITSERVER
 #========================================#
@@ -354,11 +345,6 @@ x86-64_windows:
     build: 'ci.role.build && hw.arch.x86 && sw.os.windows'
   build_env:
     vars: 'PATH+TOOLS=/cygdrive/c/openjdk/LLVM64/bin:/cygdrive/c/openjdk/nasm-2.13.03'
-  excluded_tests:
-    8:
-      - special.system
-    11:
-      - special.system
 #========================================#
 # Windows x86 32bits
 #========================================#
@@ -380,9 +366,6 @@ x86-32_windows:
   build_env:
     vars:
       8: 'PATH+TOOLS=/cygdrive/c/openjdk/LLVM32/bin:/cygdrive/c/openjdk/nasm-2.13.03'
-  excluded_tests:
-    8:
-      - special.system
 #========================================#
 # OSX x86 64bits
 #========================================#
@@ -405,11 +388,6 @@ x86-64_mac:
     build: 'ci.role.build && hw.arch.x86 && sw.os.mac.10_14'
   build_env:
     vars: 'OPENJ9_JAVA_OPTIONS=-Xdump:system+java:events=systhrow,filter=java/lang/ClassCastException,request=exclusive+prepwalk+preempt'
-  excluded_tests:
-    8:
-      - special.system
-    11:
-      - special.system
 #========================================#
 # Mac M1 Aarch64
 #========================================#
@@ -429,11 +407,6 @@ aarch64_mac:
   openjdk_reference_repo: '/Users/jenkins/openjdk_cache'
   node_labels:
     build: 'ci.role.build && hw.arch.aarch64 && sw.os.mac'
-  excluded_tests:
-    8:
-      - special.system
-    11:
-      - special.system
 #========================================#
 # Linux PPCLE 64bits /w OpenJDK JSR292
 #========================================#
