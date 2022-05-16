@@ -141,6 +141,7 @@ final class J9VMInternals {
 		/*[IF Sidecar19-SE]*/
 		System.initGPUAssist();
 
+		/*[IF JAVA_SPEC_VERSION < 19]*/
 		if (Boolean.getBoolean("ibm.java9.forceCommonCleanerShutdown")) { //$NON-NLS-1$
 			Runnable runnable = () -> {
 				CleanerShutdown.shutdownCleaner();
@@ -185,6 +186,7 @@ final class J9VMInternals {
 			};
 			Runtime.getRuntime().addShutdownHook(new Thread(runnable, "CommonCleanerShutdown", true, false, false, null)); //$NON-NLS-1$
 		}
+		/*[ENDIF] JAVA_SPEC_VERSION < 19 */
 		/*[ENDIF] Sidecar19-SE */
 	}
 
@@ -372,11 +374,9 @@ final class J9VMInternals {
 		/*[PR 106323] -- remove might throw an exception, so make sure we finish the cleanup*/
 		try {
 			// Leave the ThreadGroup. This is why remove can't be private
-			/*[IF OPENJDK_THREAD_SUPPORT]*/
-			thread.group.threadTerminated(thread);
-			/*[ELSE] OPENJDK_THREAD_SUPPORT */
+			/*[IF JAVA_SPEC_VERSION < 19]*/
 			thread.group.remove(thread);
-			/*[ENDIF] OPENJDK_THREAD_SUPPORT */
+			/*[ENDIF] JAVA_SPEC_VERSION < 19 */
 		} finally {
 			thread.exit();
 

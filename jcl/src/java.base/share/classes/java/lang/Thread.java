@@ -1,4 +1,4 @@
-/*[INCLUDE-IF (JAVA_SPEC_VERSION >= 8) & !OPENJDK_THREAD_SUPPORT]*/
+/*[INCLUDE-IF (JAVA_SPEC_VERSION >= 8) & (JAVA_SPEC_VERSION < 19)]*/
 /*******************************************************************************
  * Copyright (c) 1998, 2022 IBM Corp. and others
  *
