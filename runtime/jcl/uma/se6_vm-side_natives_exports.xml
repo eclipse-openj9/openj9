@@ -254,7 +254,7 @@
 	<export name="Java_java_lang_Thread_getStateImpl" />
 	<export name="Java_java_lang_Thread_setPriorityNoVMAccessImpl" />
 	<export name="Java_java_lang_Thread_setNameImpl" />
-	<export name="Java_java_lang_Thread_yield" />
+	<export name="Java_java_lang_Thread_yield0" />
 	<export name="Java_java_security_AccessController_initializeInternal" />
 	<export name="Java_java_lang_Class_allocateAndFillArray" />
 	<export name="Java_java_lang_Class_getConstructorImpl" />

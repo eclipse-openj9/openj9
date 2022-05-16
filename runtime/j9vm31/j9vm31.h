@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2021, 2021 IBM Corp. and others
+ * Copyright (c) 2021, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -336,6 +336,9 @@ jobjectRefType JNICALL GetObjectRefType(JNIEnv* env, jobject obj);
 #if JAVA_SPEC_VERSION >= 9
 jobject JNICALL GetModule(JNIEnv *env, jclass clazz);
 #endif /* JAVA_SPEC_VERSION >= 9 */
+#if JAVA_SPEC_VERSION >= 19
+jboolean JNICALL IsVirtualThread(JNIEnv *env, jobject obj);
+#endif /* JAVA_SPEC_VERSION >= 19 */
 
 /* The JNI convert functions that the shim library will implement. */
 jint JNICALL GetStringPlatform(JNIEnv* env, jstring instr, char* outstr, jint outlen, const char* encoding);

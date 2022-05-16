@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2021, 2021 IBM Corp. and others
+# Copyright (c) 2021, 2022 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -262,4 +262,8 @@ omr_add_exports(jvm31
 
 if(NOT JAVA_SPEC_VERSION LESS 11)
 	omr_add_exports(jvm31 GetModule)
+endif()
+
+if(NOT JAVA_SPEC_VERSION LESS 19)
+	omr_add_exports(jvm31 IsVirtualThread)
 endif()

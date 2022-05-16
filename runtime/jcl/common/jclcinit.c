@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2021 IBM Corp. and others
+ * Copyright (c) 1998, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -593,6 +593,9 @@ initializeRequiredClasses(J9VMThread *vmThread, char* dllName)
 #if JAVA_SPEC_VERSION >= 18
 			J9VMCONSTANTPOOL_JAVALANGINVOKEMETHODHANDLENATIVES,
 #endif /* JAVA_SPEC_VERSION >= 18 */
+#if JAVA_SPEC_VERSION >= 19
+			J9VMCONSTANTPOOL_JAVALANGTHREADFIELDHOLDER,
+#endif /* JAVA_SPEC_VERSION >= 19 */
 	};
 
 	/* Determine java/lang/String.value signature before any required class is initialized */

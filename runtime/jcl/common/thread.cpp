@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2020 IBM Corp. and others
+ * Copyright (c) 1998, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,6 +26,7 @@
 #include "j9protos.h"
 #include "omrthread.h"
 #include "jclprots.h"
+#include "jcl_internal.h"
 #include "ut_j9jcl.h"
 #include "j9jclnls.h"
 
@@ -156,7 +157,7 @@ Java_java_lang_Thread_setNameImpl(JNIEnv *env, jobject thread, jlong threadRef, 
 }
 
 void JNICALL
-Java_java_lang_Thread_yield(JNIEnv *env, jclass threadClass)
+Java_java_lang_Thread_yield0(JNIEnv *env, jclass threadClass)
 {
 	J9VMThread *currentThread = (J9VMThread*)env;
 	/* Check whether Thread.Stop has been called */
@@ -358,12 +359,23 @@ Java_java_lang_Thread_startImpl(JNIEnv *env, jobject rcv, jlong millis, jint nan
 	if (J9VMJAVALANGTHREAD_STARTED(currentThread, receiverObject)) {
 		vmFuncs->setCurrentExceptionNLS(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALTHREADSTATEEXCEPTION, J9NLS_JCL_THREAD_ALREADY_STARTED);
 	} else {
+#if JAVA_SPEC_VERSION >= 19
+		UDATA priority = 0;
+		UDATA isDaemon = 0;
+		j9object_t threadHolder = J9VMJAVALANGTHREAD_HOLDER(currentThread, receiverObject);
+		if (NULL != threadHolder) {
+			priority = J9VMJAVALANGTHREADFIELDHOLDER_PRIORITY(currentThread, threadHolder);
+			isDaemon = J9VMJAVALANGTHREADFIELDHOLDER_DAEMON(currentThread, threadHolder);
+		}
+#else /* JAVA_SPEC_VERSION >= 19 */
 		UDATA priority = J9VMJAVALANGTHREAD_PRIORITY(currentThread, receiverObject);
+		UDATA isDaemon = J9VMJAVALANGTHREAD_ISDAEMON(currentThread, receiverObject);
+#endif /* JAVA_SPEC_VERSION >= 19 */
 		if (vm->runtimeFlags & J9_RUNTIME_NO_PRIORITIES) {
 			priority = J9THREAD_PRIORITY_NORMAL;
 		}
 		UDATA privateFlags = 0;
-		if (J9VMJAVALANGTHREAD_ISDAEMON(currentThread, receiverObject)) {
+		if (isDaemon) {
 			privateFlags |= J9_PRIVATE_FLAGS_DAEMON_THREAD;
 		}
 		UDATA startRC = vmFuncs->startJavaThread(currentThread, receiverObject, privateFlags, vm->defaultOSStackSize, priority, (omrthread_entrypoint_t)vmFuncs->javaThreadProc, (void*)vm, NULL);
@@ -384,5 +396,115 @@ Java_java_lang_Thread_startImpl(JNIEnv *env, jobject rcv, jlong millis, jint nan
 	}
 	vmFuncs->internalExitVMToJNI(currentThread);
 }
+
+#if JAVA_SPEC_VERSION >= 19
+/* static native Thread currentCarrierThread(); */
+jobject JNICALL
+Java_java_lang_Thread_currentCarrierThread(JNIEnv *env, jclass clazz)
+{
+	J9VMThread *currentThread = (J9VMThread*)env;
+	J9JavaVM *vm = currentThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+
+	vmFuncs->internalEnterVMFromJNI(currentThread);
+	jobject result = vmFuncs->j9jni_createLocalRef(env, currentThread->threadObject);
+	vmFuncs->internalExitVMToJNI(currentThread);
+
+	return result;
+}
+
+/* native void setCurrentThread(Thread thread); */
+void JNICALL
+Java_java_lang_Thread_setCurrentThread(JNIEnv *env, jclass clazz, jobject thread)
+{
+	Assert_JCL_unimplemented();
+}
+
+/* static native Object[] extentLocalCache(); */
+jobject JNICALL
+Java_java_lang_Thread_extentLocalCache(JNIEnv *env, jclass clazz)
+{
+	Assert_JCL_unimplemented();
+	return NULL;
+}
+
+/* static native void setExtentLocalCache(Object[] cache); */
+void JNICALL
+Java_java_lang_Thread_setExtentLocalCache(JNIEnv *env, jclass clazz, jobjectArray cache)
+{
+	Assert_JCL_unimplemented();
+}
+
+/* private static native StackTraceElement[][] dumpThreads(Thread[] threads); */
+jobjectArray JNICALL
+Java_java_lang_Thread_dumpThreads(JNIEnv *env, jclass clazz, jobjectArray threads)
+{
+	Assert_JCL_unimplemented();
+	return NULL;
+}
+
+/* private static native Thread[] getThreads(); */
+jobjectArray JNICALL
+Java_java_lang_Thread_getThreads(JNIEnv *env, jclass clazz)
+{
+	J9VMThread *currentThread = (J9VMThread*)env;
+	J9JavaVM *vm = currentThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+	jobjectArray result = NULL;
+	PORT_ACCESS_FROM_JAVAVM(vm);
+
+	vmFuncs->internalEnterVMFromJNI(currentThread);
+	vmFuncs->acquireExclusiveVMAccess(currentThread);
+
+	j9object_t *threads = (j9object_t*)j9mem_allocate_memory(sizeof(j9object_t) * vm->totalThreadCount, J9MEM_CATEGORY_VM_JCL);
+	if (NULL == threads) {
+		vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
+	} else {
+		j9object_t *currentThreadPtr = threads;
+		J9VMThread *targetThread = vm->mainThread;
+		UDATA threadCount = 0;
+
+		do {
+			j9object_t threadObject = targetThread->threadObject;
+
+			/* Only count live threads */
+			if (NULL != threadObject) {
+				if (J9VMJAVALANGTHREAD_STARTED(currentThread, threadObject) && (NULL != J9VMJAVALANGTHREAD_THREADREF(currentThread, threadObject))) {
+					*currentThreadPtr++ = threadObject;
+					threadCount += 1;
+				}
+			}
+			targetThread = targetThread->linkNext;
+		} while (targetThread != vm->mainThread);
+
+		J9Class *arrayClass = fetchArrayClass(currentThread, J9VMJAVALANGTHREAD_OR_NULL(vm));
+		if (NULL != arrayClass) {
+			j9object_t arrayObject = vm->memoryManagerFunctions->J9AllocateIndexableObject(currentThread, arrayClass, (U_32)threadCount, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
+			if (NULL != arrayObject) {
+				for (UDATA i = 0; i < threadCount; i++) {
+					J9JAVAARRAYOFOBJECT_STORE(currentThread, arrayObject, i, threads[i]);
+				}
+				result = (jobjectArray)vmFuncs->j9jni_createLocalRef(env, arrayObject);
+			} else {
+				vmFuncs->setHeapOutOfMemoryError(currentThread);
+			}
+		}
+
+		j9mem_free_memory(threads);
+	}
+	vmFuncs->releaseExclusiveVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
+
+	return result;
+}
+
+/* private static native long getNextThreadIdOffset(); */
+jlong JNICALL
+Java_java_lang_Thread_getNextThreadIdOffset(JNIEnv *env, jclass clazz)
+{
+	J9JavaVM *vm = ((J9VMThread *)env)->javaVM;
+	return (U_64)(uintptr_t)&(vm->nextTID);
+}
+#endif /* JAVA_SPEC_VERSION >= 19 */
 
 }

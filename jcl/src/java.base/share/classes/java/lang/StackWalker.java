@@ -39,6 +39,10 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+/*[IF JAVA_SPEC_VERSION >= 19]*/
+import jdk.internal.vm.Continuation;
+import jdk.internal.vm.ContinuationScope;
+/*[ENDIF] JAVA_SPEC_VERSION >= 19 */
 
 /**
  * This provides a facility for iterating over the call stack of the current
@@ -79,6 +83,11 @@ public final class StackWalker {
 		flags = 0;
 		if (walkerOptions.contains(Option.RETAIN_CLASS_REFERENCE)) {
 			flags |= J9_RETAIN_CLASS_REFERENCE;
+		/*[IF JAVA_SPEC_VERSION >= 19]*/
+			retainClassRef = true;
+		} else {
+			retainClassRef = false;
+		/*[ENDIF] JAVA_SPEC_VERSION >= 19 */
 		}
 		if (walkerOptions.contains(Option.SHOW_REFLECT_FRAMES)) {
 			flags |= J9_SHOW_REFLECT_FRAMES;
@@ -225,6 +234,25 @@ public final class StackWalker {
 	public <T> T walk(Function<? super Stream<StackFrame>, ? extends T> function) {
 		return walkWrapperImpl(flags, "walk", function); //$NON-NLS-1$
 	}
+
+	/*[IF JAVA_SPEC_VERSION >= 19]*/
+	final boolean retainClassRef;
+
+	static StackWalker newInstance(Set<Option> options, ExtendedOption extendedOption) {
+		return newInstance(options, extendedOption, null, null);
+	}
+
+	static StackWalker newInstance(Set<Option> options, ExtendedOption extendedOption, ContinuationScope contScope) {
+		return newInstance(options, extendedOption, contScope, null);
+	}
+	static StackWalker newInstance(Set<Option> options, ExtendedOption extendedOption, ContinuationScope contScope, Continuation continuation) {
+		return getInstance(options);
+	}
+
+	enum ExtendedOption {
+		LOCALS_AND_OPERANDS;
+	}
+	/*[ENDIF] JAVA_SPEC_VERSION >= 19 */
 
 	/**
 	 * Selects what type of stack and method information is provided by the
