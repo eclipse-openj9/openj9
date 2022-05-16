@@ -99,16 +99,17 @@ In the end code generators perform binary encoding to write the appropriate bits
   * Overview of Optimizer
   * Analyses
     * [Data Flow Analysis (YouTube)](https://youtu.be/YCCdJ1Qphao)
-  * Local Optimizations
-  * Global Optimizations
+  * [Local Optimizations](optimizer/LocalOptimizationsSummary.md)
+  * [Global Optimizations](optimizer/GlobalOptimizationsSummary.md)
     * Escape Analysis
       * [Escape Analysis Optimization in OpenJ9 (YouTube)](https://youtu.be/694S8Tblfcg)
     * [Data-Flow Engine (OMR)](https://github.com/eclipse/omr/blob/master/doc/compiler/optimizer/DataFlowEngine.md)
+  * [Control Flow Optimizations](optimizer/ControlFlowOptimizationsSummary.md)
   * Inlining
     * [Overview of Inlining (OMR)](https://github.com/eclipse/omr/blob/master/doc/compiler/optimizer/Inliner.md)
     * [BenefitInliner (OMR)](https://github.com/eclipse/omr/blob/master/doc/compiler/optimizer/BenefitInliner.md)
     * [Inline Fast Path Locations (OpenJ9)](optimizer/inlineFastPathLocations.md)
-  * Loop Optimizations
+  * [Loop Optimizations](optimizer/LoopOptimizationSummary.md)
     * [Introduction on Loop Optimizations (OMR)](https://github.com/eclipse/omr/blob/master/doc/compiler/optimizer/IntroLoopOptimizations.md)
   * Value Propagation
     * [Value Propagation (OMR)](https://github.com/eclipse/omr/blob/master/doc/compiler/optimizer/ValuePropagation.md)
