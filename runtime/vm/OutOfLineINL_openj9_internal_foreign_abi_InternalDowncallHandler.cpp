@@ -31,22 +31,19 @@
 extern "C" {
 
 #if JAVA_SPEC_VERSION >= 16
-/* jdk.internal.foreign.abi.ProgrammableInvoker: private static synchronized native void resolveRequiredFields(); */
+/* openj9.internal.foreign.abi.InternalDowncallHandler: private static synchronized native void resolveRequiredFields(); */
 VM_BytecodeAction
-OutOfLineINL_jdk_internal_foreign_abi_ProgrammableInvoker_resolveRequiredFields(J9VMThread *currentThread, J9Method *method)
+OutOfLineINL_openj9_internal_foreign_abi_InternalDowncallHandler_resolveRequiredFields(J9VMThread *currentThread, J9Method *method)
 {
 	VM_BytecodeAction rc = EXECUTE_BYTECODE;
 	J9JavaVM *vm = currentThread->javaVM;
 	J9ConstantPool *jclConstantPool = (J9ConstantPool *)vm->jclConstantPool;
 	const int cpEntryNum = 2;
 	U_16 cpIndex[cpEntryNum] = {
-				J9VMCONSTANTPOOL_JDKINTERNALFOREIGNABIPROGRAMMABLEINVOKER_CIFNATIVETHUNKADDR,
-				J9VMCONSTANTPOOL_JDKINTERNALFOREIGNABIPROGRAMMABLEINVOKER_ARGTYPESADDR
+				J9VMCONSTANTPOOL_OPENJ9INTERNALFOREIGNABIINTERNALDOWNCALLHANDLER_CIFNATIVETHUNKADDR,
+				J9VMCONSTANTPOOL_OPENJ9INTERNALFOREIGNABIINTERNALDOWNCALLHANDLER_ARGTYPESADDR
 			};
 
-#if JAVA_SPEC_VERSION >= 19
-	currentThread->callOutCount += 1;
-#endif /* JAVA_SPEC_VERSION >= 19 */
 	VM_OutOfLineINL_Helpers::buildInternalNativeStackFrame(currentThread, method);
 	for (int i = 0; i < cpEntryNum; i++) {
 		J9RAMFieldRef *cpFieldRef = ((J9RAMFieldRef*)jclConstantPool) + cpIndex[i];
@@ -64,15 +61,12 @@ OutOfLineINL_jdk_internal_foreign_abi_ProgrammableInvoker_resolveRequiredFields(
 	VM_OutOfLineINL_Helpers::restoreInternalNativeStackFrame(currentThread);
 
 done:
-#if JAVA_SPEC_VERSION >= 19
-	currentThread->callOutCount -= 1;
-#endif /* JAVA_SPEC_VERSION >= 19 */
 	VM_OutOfLineINL_Helpers::returnVoid(currentThread, 0);
 	return rc;
 }
 
 /**
- * jdk.internal.foreign.abi.ProgrammableInvoker: private native void initCifNativeThunkData(String[] argLayouts, String retLayout, boolean newArgTypes);
+ * openj9.internal.foreign.abi.InternalDowncallHandler: private native void initCifNativeThunkData(String[] argLayouts, String retLayout, boolean newArgTypes);
  *
  * @brief Prepare the prep_cif for the native function specified by the arguments/return layouts
  * @param argLayouts[in] A c string array describing the argument layouts
@@ -81,7 +75,7 @@ done:
  * @return void
  */
 VM_BytecodeAction
-OutOfLineINL_jdk_internal_foreign_abi_ProgrammableInvoker_initCifNativeThunkData(J9VMThread *currentThread, J9Method *method)
+OutOfLineINL_openj9_internal_foreign_abi_InternalDowncallHandler_initCifNativeThunkData(J9VMThread *currentThread, J9Method *method)
 {
 	VM_BytecodeAction rc = EXECUTE_BYTECODE;
 	J9JavaVM *vm = currentThread->javaVM;
@@ -116,9 +110,9 @@ OutOfLineINL_jdk_internal_foreign_abi_ProgrammableInvoker_initCifNativeThunkData
 	}
 
 	if (!newArgTypes) {
-		argTypes = (ffi_type **)(UDATA)J9VMJDKINTERNALFOREIGNABIPROGRAMMABLEINVOKER_ARGTYPESADDR(currentThread, nativeInvoker);
+		argTypes = (ffi_type **)(UDATA)J9VMOPENJ9INTERNALFOREIGNABIINTERNALDOWNCALLHANDLER_ARGTYPESADDR(currentThread, nativeInvoker);
 	} else {
-		argTypes = (ffi_type **)j9mem_allocate_memory(sizeof(ffi_type *) * (argTypesCount + 1), OMRMEM_CATEGORY_VM);
+		argTypes = (ffi_type **)j9mem_allocate_memory(sizeof(ffi_type *) * (argTypesCount + 1), J9MEM_CATEGORY_VM_FFI);
 		if (NULL == argTypes) {
 			rc = GOTO_THROW_CURRENT_EXCEPTION;
 			setNativeOutOfMemoryError(currentThread, 0, 0);
@@ -146,7 +140,7 @@ OutOfLineINL_jdk_internal_foreign_abi_ProgrammableInvoker_initCifNativeThunkData
 	}
 
 	if (NULL == vm->cifNativeCalloutDataCache) {
-		vm->cifNativeCalloutDataCache = pool_new(sizeof(ffi_cif), 0, 0, 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(PORTLIB));
+		vm->cifNativeCalloutDataCache = pool_new(sizeof(ffi_cif), 0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_VM_FFI, POOL_FOR_PORT(PORTLIB));
 		if (NULL == vm->cifNativeCalloutDataCache) {
 			rc = GOTO_THROW_CURRENT_EXCEPTION;
 			setNativeOutOfMemoryError(currentThread, 0, 0);
@@ -171,7 +165,7 @@ OutOfLineINL_jdk_internal_foreign_abi_ProgrammableInvoker_initCifNativeThunkData
 
 	if (newArgTypes) {
 		if (NULL == vm->cifArgumentTypesCache) {
-			vm->cifArgumentTypesCache = pool_new(sizeof(J9CifArgumentTypes), 0, 0, 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(PORTLIB));
+			vm->cifArgumentTypesCache = pool_new(sizeof(J9CifArgumentTypes), 0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_VM_FFI, POOL_FOR_PORT(PORTLIB));
 			if (NULL == vm->cifArgumentTypesCache) {
 				rc = GOTO_THROW_CURRENT_EXCEPTION;
 				setNativeOutOfMemoryError(currentThread, 0, 0);
@@ -190,11 +184,11 @@ OutOfLineINL_jdk_internal_foreign_abi_ProgrammableInvoker_initCifNativeThunkData
 		cifArgTypesNode->argumentTypes = (void **)argTypes;
 
 		VM_AtomicSupport::writeBarrier();
-		J9VMJDKINTERNALFOREIGNABIPROGRAMMABLEINVOKER_SET_ARGTYPESADDR(currentThread, nativeInvoker, (intptr_t)argTypes);
+		J9VMOPENJ9INTERNALFOREIGNABIINTERNALDOWNCALLHANDLER_SET_ARGTYPESADDR(currentThread, nativeInvoker, (intptr_t)argTypes);
 	}
 
 	VM_AtomicSupport::writeBarrier();
-	J9VMJDKINTERNALFOREIGNABIPROGRAMMABLEINVOKER_SET_CIFNATIVETHUNKADDR(currentThread, nativeInvoker, (intptr_t)cif);
+	J9VMOPENJ9INTERNALFOREIGNABIINTERNALDOWNCALLHANDLER_SET_CIFNATIVETHUNKADDR(currentThread, nativeInvoker, (intptr_t)cif);
 
 done:
 	VM_OutOfLineINL_Helpers::returnVoid(currentThread, 4);
@@ -211,7 +205,6 @@ freeAllMemoryThenExit:
 	ffiTypeHelpers.freeStructFFIType(returnType);
 	goto done;
 }
-
 #endif /* JAVA_SPEC_VERSION >= 16 */
 
 } /* extern "C" */

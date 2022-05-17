@@ -1265,6 +1265,9 @@ extern J9_CFUNC j9object_t resolveMethodHandleRefInto(J9VMThread *vmThread, J9Co
 extern J9_CFUNC j9object_t resolveOpenJDKInvokeHandle (J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cpIndex, UDATA resolveFlags);
 extern J9_CFUNC j9object_t resolveInvokeDynamic (J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cpIndex, UDATA resolveFlags);
 extern J9_CFUNC j9object_t resolveConstantDynamic (J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cpIndex, UDATA resolveFlags);
+#if JAVA_SPEC_VERSION >= 16
+extern J9_CFUNC void resolveUpcallInvokeHandle(J9VMThread *vmThread, J9UpcallMetaData *data);
+#endif /* JAVA_SPEC_VERSION >= 16 */
 #endif /* _J9VMRESOLVESUPPORT_ */
 
 /* J9VMRomImageSupport*/
@@ -1362,6 +1365,9 @@ extern J9_CFUNC void  JNICALL sendResolveConstantDynamic (J9VMThread *vmThread, 
 extern J9_CFUNC void  JNICALL sendResolveInvokeDynamic (J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA callSiteIndex, J9ROMNameAndSignature* nameAndSig, U_16* bsmData);
 extern J9_CFUNC void  JNICALL jitFillOSRBuffer (struct J9VMThread *vmContext, void *osrBlock);
 extern J9_CFUNC void  JNICALL sendRunThread(J9VMThread *vmContext, j9object_t tenantContext);
+#if JAVA_SPEC_VERSION >= 16
+extern J9_CFUNC void JNICALL sendResolveUpcallInvokeHandle (J9VMThread *currentThread, J9UpcallMetaData *data);
+#endif /* JAVA_SPEC_VERSION >= 16 */
 #endif /* _J9VMJAVAINTERPRETERSTARTUP_ */
 
 /* J9VMNativeHelpersLarge*/

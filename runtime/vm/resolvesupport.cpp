@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2280,3 +2280,34 @@ resolveInvokeDynamic(J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA callSite
 	Trc_VM_resolveInvokeDynamic_Exit(vmThread, result);
 	return result;
 }
+
+#if JAVA_SPEC_VERSION >= 16
+/**
+ * @brief The function calls into the interpreter via sendResolveUpcallInvokeHandle()
+ * to fetch the MemberName object plus appendix intended for the upcall method.
+ *
+ * @param vmThread the pointer to J9VMThread
+ * @param data the pointer to J9UpcallMetaData
+ * @return void
+ */
+void
+resolveUpcallInvokeHandle(J9VMThread *vmThread, J9UpcallMetaData *data)
+{
+	j9object_t invokeCache = NULL;
+	Trc_VM_resolveUpcallInvokeHandle_Entry(vmThread);
+
+	sendResolveUpcallInvokeHandle(vmThread, data);
+	invokeCache = (j9object_t)vmThread->returnValue;
+	if (VM_VMHelpers::exceptionPending(vmThread)) {
+		/* Already a pending exception */
+		invokeCache = NULL;
+	} else if (NULL == invokeCache) {
+		setCurrentExceptionUTF(vmThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, NULL);
+	} else {
+		j9object_t mhMetaData = J9_JNI_UNWRAP_REFERENCE(data->mhMetaData);
+		J9VMOPENJ9INTERNALFOREIGNABIUPCALLMHMETADATA_SET_INVOKECACHE(vmThread, mhMetaData, invokeCache);
+	}
+
+	Trc_VM_resolveUpcallInvokeHandle_Exit(vmThread, invokeCache);
+}
+#endif /* JAVA_SPEC_VERSION >= 16 */

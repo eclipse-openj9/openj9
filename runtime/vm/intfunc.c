@@ -418,4 +418,18 @@ J9InternalVMFunctions J9InternalFunctions = {
 #if JAVA_SPEC_VERSION >= 19
 	createContinuation,
 #endif /* JAVA_SPEC_VERSION >= 19 */
+#if JAVA_SPEC_VERSION >= 16
+/*
+	createUpcallThunk,
+	getArgPointer,
+	allocateUpcallThunkMemory,
+	doneUpcallThunkGeneration,
+	native2InterpJavaUpcall0,
+	native2InterpJavaUpcall1,
+	native2InterpJavaUpcallJ,
+	native2InterpJavaUpcallF,
+	native2InterpJavaUpcallD,
+	native2InterpJavaUpcallStruct,
+*/
+#endif /* JAVA_SPEC_VERSION >= 16 */
 };
