@@ -928,6 +928,9 @@ jobject JNICALL Java_sun_misc_Perf_createLong(JNIEnv *env, jobject perf, jstring
 jobject JNICALL Java_sun_misc_Perf_createByteArray(JNIEnv *env, jobject perf, jstring name, jint variability, jint units, jarray value, jint maxLength);
 jlong JNICALL Java_sun_misc_Perf_highResCounter(JNIEnv *env, jobject perf);
 jlong JNICALL Java_sun_misc_Perf_highResFrequency(JNIEnv *env, jobject perf);
+#if JAVA_SPEC_VERSION >= 19
+jobject JNICALL Java_jdk_internal_perf_Perf_attach0(JNIEnv *env, jobject perf, jint lvmid);
+#endif /* JAVA_SPEC_VERSION >= 19 */
 void JNICALL Java_jdk_internal_perf_Perf_registerNatives(JNIEnv *env, jclass clazz);
 
 /* Used by both OpenJ9 & OJDK MH impl */
