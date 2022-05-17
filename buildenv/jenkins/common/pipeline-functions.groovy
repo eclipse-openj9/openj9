@@ -448,9 +448,12 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
                 NUM_MACHINES = "5"
             } else if (testJobName.contains("external")) {
                 DYNAMIC_COMPILE = true
-            } else if (testJobName.contains("jck_s390x_zos")) {
+            } else if (testJobName.contains("sanity.jck")) {
                 PARALLEL = "Dynamic"
                 NUM_MACHINES = "4"
+            } else if (testJobName.contains("extended.jck")) {
+                PARALLEL = "Dynamic"
+                NUM_MACHINES = "8"
             }
 
             // generate child test jobs
