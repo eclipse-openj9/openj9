@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2021 IBM Corp. and others
+ * Copyright (c) 1998, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -107,6 +107,11 @@
 #elif defined(J9VM_ENV_DATA64) && defined(J9VM_ARCH_POWER)
 /* increase stack space on PPC64 (AIX & Linux) since we are now preserving the
  * 32 128-bit Vector (VSCR) registers.
+ */
+#define J9_OS_STACK_SIZE (512 * 1024)
+#elif defined(J9HAMMER) && (JAVA_SPEC_VERSION >= 17)
+/* Increase default stack space on JDK17 as ymm/zmm registers are being preserved
+ * for vector API support
  */
 #define J9_OS_STACK_SIZE (512 * 1024)
 #else /* defined(J9VM_ENV_DATA64) && defined(J9ZOS390) */
