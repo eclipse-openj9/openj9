@@ -915,7 +915,9 @@ JNI_GetDefaultJavaVMInitArgs(void *vm_args)
 
 		switch (jniVersion) {
 		case JNI_VERSION_1_1:
+#if defined(OPENJ9_BUILD)
 			((JDK1_1InitArgs *)vm_args)->javaStackSize = J9_OS_STACK_SIZE;
+#endif /* defined(OPENJ9_BUILD) */
 			break;
 		case JNI_VERSION_1_2:
 		case JNI_VERSION_1_4:
