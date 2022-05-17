@@ -243,8 +243,6 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
    static int32_t _numDLTBufferMatchesToEagerlyIssueCompReq;
    static int32_t _dltPostponeThreshold;
 
-
-
    static int32_t _minSamplingPeriod;
    int32_t getMinSamplingPeriod() {return _minSamplingPeriod;}
    static int32_t _compilationBudget;

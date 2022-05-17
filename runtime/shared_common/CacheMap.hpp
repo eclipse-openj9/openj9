@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2020 IBM Corp. and others
+ * Copyright (c) 2001, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -38,6 +38,8 @@
 #define CM_READ_CACHE_FAILED -1
 #define CM_CACHE_CORRUPT -2
 #define CM_CACHE_STORE_PREREQ_ID_FAILED -3
+
+#define CM_CACHE_MAX_METADATA_RELEASES 2
 
 /*
  * The maximum width of the hexadecimal representation of a value of type 'T'.
@@ -320,7 +322,7 @@ private:
 	UDATA _bytesRead;
 	U_32 _actualSize;
 	J9Pool* _ccPool;
-	bool _metadataReleased;
+	int32_t _metadataReleaseCounter;
 
 	bool _isAssertEnabled; /* flag to turn on/off assertion before acquiring local mutex */
 	

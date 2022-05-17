@@ -261,7 +261,6 @@ int32_t J9::Options::_dataCacheMinQuanta = 2;
 
 int32_t J9::Options::_updateFreeMemoryMinPeriod = 500;  // 500 ms
 
-
 size_t J9::Options::_scratchSpaceLimitKBWhenLowVirtualMemory = 64*1024; // 64MB; currently, only used on 32 bit Windows
 
 int32_t J9::Options::_scratchSpaceFactorWhenJSR292Workload = JSR292_SCRATCH_SPACE_FACTOR;
@@ -2175,6 +2174,7 @@ J9::Options::fePreProcess(void * base)
    {
    J9JITConfig * jitConfig = (J9JITConfig*)base;
    J9JavaVM * vm = jitConfig->javaVM;
+   TR::CompilationInfo * compInfo = getCompilationInfo(jitConfig);
 
    PORT_ACCESS_FROM_JAVAVM(vm);
    OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
@@ -2185,6 +2185,17 @@ J9::Options::fePreProcess(void * base)
       bool forceSuffixLogs = true;
    #endif
 
+   const char *xxLateSCCDisclaimTimeOption = "-XX:LateSCCDisclaimTime=";
+   int32_t xxLateSCCDisclaimTime = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxLateSCCDisclaimTimeOption, 0);
+   if (xxLateSCCDisclaimTime >= 0)
+      {
+      uint32_t disclaimMs = 0;
+      IDATA ret = GET_INTEGER_VALUE(xxLateSCCDisclaimTime, xxLateSCCDisclaimTimeOption, disclaimMs);
+      if (ret == OPTION_OK)
+         {
+         compInfo->getPersistentInfo()->setLateSCCDisclaimTime(((uint64_t) disclaimMs) * 1000000);
+         }
+      }
 
   /* Using traps on z/OS for NullPointerException and ArrayIndexOutOfBound checks instead of the
    * old way of using explicit compare and branching off to a helper is causing several issues on z/OS:
@@ -2220,7 +2231,6 @@ J9::Options::fePreProcess(void * base)
    jitConfig->tLogFile     = -1;
    jitConfig->tLogFileTemp = -1;
 
-   TR::CompilationInfo * compInfo = getCompilationInfo(jitConfig);
    uint32_t numProc = compInfo->getNumTargetCPUs();
    TR::Compiler->host.setNumberOfProcessors(numProc);
    TR::Compiler->target.setNumberOfProcessors(numProc);

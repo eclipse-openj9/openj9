@@ -146,6 +146,7 @@ class PersistentInfo : public OMR::PersistentInfoConnector
          _jitSampleCountWhenStartupStateExited(0),
          _vmTotalCpuTimeWhenStartupStateEntered(0),
          _vmTotalCpuTimeWhenStartupStateExited(0),
+         _lateSCCDisclaimTime(300000000000), // 300s
          _inliningAggressiveness(100),
          _lastTimeSamplerThreadEnteredIdle(0),
          _lastTimeSamplerThreadEnteredDeepIdle(0),
@@ -250,6 +251,9 @@ class PersistentInfo : public OMR::PersistentInfoConnector
 
    void setVmTotalCpuTimeWhenStartupStateExited(int64_t n) { _vmTotalCpuTimeWhenStartupStateExited = n; }
    int64_t getVmTotalCpuTimeWhenStartupStateExited() const { return _vmTotalCpuTimeWhenStartupStateExited; }
+
+   void setLateSCCDisclaimTime(int64_t t) { _lateSCCDisclaimTime = t; }
+   int64_t getLateSCCDisclaimTime() const { return _lateSCCDisclaimTime; }
 
    void setInliningAggressiveness(int32_t n) { _inliningAggressiveness = n; }
    int32_t getInliningAggressiveness() const { return _inliningAggressiveness; }
@@ -403,6 +407,8 @@ class PersistentInfo : public OMR::PersistentInfoConnector
    int64_t _vmTotalCpuTimeWhenStartupStateEntered; // set when we enter STARTUP from another state
 
    int64_t _vmTotalCpuTimeWhenStartupStateExited;  // set when we exit STARTUP state
+
+   int64_t _lateSCCDisclaimTime; // CPU time in ns
 
    int32_t _inliningAggressiveness;
 
