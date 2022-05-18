@@ -41,13 +41,14 @@ public final class SecurityProviders {
 	private SecurityProviders() {}
 
 	/**
-	 * Resets the security digests during checkpoint.
+	 * Resets all cryptographic state within the CRIUSEC provider that
+	 * was accumulated during checkpoint.
 	 */
-	public static void registerResetDigests() {
+	public static void registerResetCRIUState() {
 		J9InternalCheckpointHookAPI.registerPreCheckpointHook(
-				CRIUSupport.RESET_DIGESTS_PRIORITY,
+				CRIUSupport.RESET_CRIUSEC_PRIORITY,
 				"Reset the digests", //$NON-NLS-1$
-				() -> openj9.internal.criu.CRIUSECProvider.resetDigests()
+				() -> openj9.internal.criu.CRIUSECProvider.resetCRIUSEC()
 		);
 	}
 
