@@ -4861,6 +4861,9 @@ typedef struct J9InternalVMFunctions {
 	BOOLEAN (*runDelayedLockRelatedOperations)(struct J9VMThread *currentThread);
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 	j9object_t (*getClassNameString)(struct J9VMThread *currentThread, j9object_t classObject, jboolean internAndAssign);
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	j9object_t* (*getDefaultValueSlotAddress)(struct J9Class *clazz);
+#endif /* #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 } J9InternalVMFunctions;
 
 /* Jazz 99339: define a new structure to replace JavaVM so as to pass J9NativeLibrary to JVMTIEnv  */
