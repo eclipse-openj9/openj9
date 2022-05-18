@@ -411,4 +411,7 @@ J9InternalVMFunctions J9InternalFunctions = {
 	runDelayedLockRelatedOperations,
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 	getClassNameString,
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	getDefaultValueSlotAddress,
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 };
