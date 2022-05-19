@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2019, 2020 IBM Corp. and others
+# Copyright (c) 2019, 2022 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -43,6 +43,7 @@ target_include_directories(j9ddr_misc
 		${j9vm_SOURCE_DIR}/bcutil
 		${j9vm_BINARY_DIR}/bcutil
 		${j9vm_SOURCE_DIR}/shared_common/include
+		${j9vm_SOURCE_DIR}/compiler
 		${omr_SOURCE_DIR}/compiler
 )
 
