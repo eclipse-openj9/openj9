@@ -38,7 +38,7 @@
 			--enable-native-access=ALL-UNNAMED \
 			-Dforeign.restricted=permit \
 			-cp $(Q)$(LIB_DIR)$(D)asm.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
-			org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testClinkerFfi.xml$(Q) -testnames Jep389Tests_testClinkerFfi_DownCall \
+			org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng_170.xml$(Q) -testnames Jep389Tests_testClinkerFfi_DownCall \
 			-groups $(TEST_GROUP) \
 			-excludegroups $(DEFAULT_EXCLUDE); \
 			$(TEST_STATUS)
@@ -67,7 +67,7 @@
 			--enable-native-access=ALL-UNNAMED \
 			-Dforeign.restricted=permit \
 			-cp $(Q)$(LIB_DIR)$(D)asm.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
-			org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testClinkerFfi.xml$(Q) -testnames Jep389Tests_testClinkerFfi_VaList \
+			org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng_170.xml$(Q) -testnames Jep389Tests_testClinkerFfi_VaList \
 			-groups $(TEST_GROUP) \
 			-excludegroups $(DEFAULT_EXCLUDE); \
 			$(TEST_STATUS)
@@ -82,6 +82,37 @@
 		<impls>
 			<impl>openj9</impl>
 		</impls>
+		<versions>
+			<version>17</version>
+		</versions>
+	</test>
+
+	<test>
+		<testCaseName>CloseScope0Tests</testCaseName>
+		<disables>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/14028#issuecomment-988225623</comment>
+				<impl>hotspot</impl>
+			</disable>
+		</disables>
+		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) $(JAVA_COMMAND) $(JVM_OPTIONS) \
+			--add-opens jdk.incubator.foreign/jdk.internal.foreign=ALL-UNNAMED \
+			--add-opens java.base/jdk.internal.misc=ALL-UNNAMED \
+			--add-opens java.base/java.lang=ALL-UNNAMED \
+			--add-modules jdk.incubator.foreign \
+			-cp $(Q)$(LIB_DIR)$(D)asm.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
+			org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng_170.xml$(Q) \
+			-testnames CloseScope0Tests \
+			-groups $(TEST_GROUP) \
+			-excludegroups $(DEFAULT_EXCLUDE); \
+			$(TEST_STATUS)
+		</command>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
 		<versions>
 			<version>17</version>
 		</versions>

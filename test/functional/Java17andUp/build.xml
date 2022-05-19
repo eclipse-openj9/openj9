@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!--
-Copyright (c) 2021, 2021 IBM Corp. and others
+Copyright (c) 2021, 2022 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,6 +34,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<property name="build" location="bin" />
 	<property name="LIB" value="asm,testng,jcommander" />
 	<import file="${TEST_ROOT}/TKG/scripts/getDependencies.xml" />
+	<property name="TestUtilities" location="../TestUtilities/src"/>
 
 	<if>
 		<equals arg1="${JDK_VERSION}" arg2="17" />
@@ -59,18 +60,38 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<echo>===debug:                        on</echo>
 		<echo>===destdir:                      ${DEST}</echo>
 
-		<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
-			<src path="${src}" />
-			<src path="${src_170}" />
-			<compilerarg line='--add-modules jdk.incubator.foreign' />
-			<compilerarg line='--add-opens jdk.incubator.foreign/jdk.internal.foreign=ALL-UNNAMED' />
-			<classpath>
-				<pathelement location="${LIB_DIR}/testng.jar" />
-				<pathelement location="${LIB_DIR}/jcommander.jar" />
-				<pathelement location="${LIB_DIR}/asm.jar" />
-				<pathelement location="${build}" />
-			</classpath>
-		</javac>
+		<if>
+			<equals arg1="${JDK_VERSION}" arg2="17"/>
+			<then>
+				<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
+					<src path="${src}" />
+					<src path="${src_170}" />
+					<src path="${TestUtilities}" />
+					<compilerarg line='--enable-preview --source ${JDK_VERSION}' />
+					<compilerarg line='--add-modules jdk.incubator.foreign' />
+					<compilerarg line='--add-opens jdk.incubator.foreign/jdk.internal.foreign=ALL-UNNAMED' />
+					<compilerarg line='--add-exports java.base/jdk.internal.misc=ALL-UNNAMED' />
+					<compilerarg line='--add-opens java.base/jdk.internal.misc=ALL-UNNAMED' />
+					<classpath>
+						<pathelement location="${LIB_DIR}/testng.jar" />
+						<pathelement location="${LIB_DIR}/jcommander.jar" />
+						<pathelement location="${LIB_DIR}/asm.jar" />
+						<pathelement location="${build}" />
+					</classpath>
+				</javac>
+			</then>
+			<else>
+				<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
+					<src path="${src}" />
+					<classpath>
+						<pathelement location="${LIB_DIR}/testng.jar" />
+						<pathelement location="${LIB_DIR}/jcommander.jar" />
+						<pathelement location="${LIB_DIR}/asm.jar" />
+						<pathelement location="${build}" />
+					</classpath>
+				</javac>
+			</else>
+		</if>
 	</target>
 
 	<target name="dist" depends="compile" description="generate the distribution">
