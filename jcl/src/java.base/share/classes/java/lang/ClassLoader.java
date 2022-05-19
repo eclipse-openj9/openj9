@@ -826,6 +826,9 @@ protected final Class<?> findSystemClass (String className) throws ClassNotFound
  */
 @CallerSensitive
 public final ClassLoader getParent() {
+	if (parent == null) {
+		return null;
+	}
 	@SuppressWarnings("removal")
 	SecurityManager security = System.getSecurityManager();
 	if (security != null) {	
