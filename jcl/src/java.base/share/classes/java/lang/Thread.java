@@ -632,6 +632,9 @@ public static int enumerate(Thread[] threads) {
 public ClassLoader getContextClassLoader() {
 /*[PR 1FCA807]*/
 /*[PR 1FDTAMT] use callerClassLoader()*/
+	if (contextClassLoader == null) {
+		return null;
+	}
 	@SuppressWarnings("removal")
 	SecurityManager currentManager = System.getSecurityManager();
 	 // if there is a security manager...
