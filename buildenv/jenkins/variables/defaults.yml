@@ -207,7 +207,10 @@ ppc64le_linux:
   extra_configure_options:
     all: '--enable-jitserver'
   build_env:
-    cmd: 'source /home/jenkins/set_gcc7.5.0_env'
+    cmd:
+      all: 'source /home/jenkins/set_gcc_10.3.0_env'
+      8: 'source /home/jenkins/set_gcc7.5.0_env'
+      11: 'source /home/jenkins/set_gcc7.5.0_env'
 #========================================#
 # Linux PPCLE 64bits /w JITSERVER
 #========================================#
@@ -230,7 +233,10 @@ s390x_linux:
   node_labels:
     build: 'ci.role.build && hw.arch.s390x && sw.os.rhel.7'
   build_env:
-    cmd: 'source /home/jenkins/set_gcc7.5.0_env'
+    cmd:
+      all: 'source /home/jenkins/set_gcc_10.3.0_env'
+      8: 'source /home/jenkins/set_gcc7.5.0_env'
+      11: 'source /home/jenkins/set_gcc7.5.0_env'
 #========================================#
 # Linux S390 64bits /w JITSERVER
 #========================================#
@@ -289,9 +295,10 @@ x86-64_linux:
     all: '--enable-jitserver'
   build_env:
     cmd:
-      17: 'source /home/jenkins/set_gcc7.5.0_env'
-      18: 'source /home/jenkins/set_gcc7.5.0_env'
-      next: 'source /home/jenkins/set_gcc7.5.0_env'
+      all: 'source /home/jenkins/set_gcc_10.3.0_env'
+      8: ''
+      11: ''
+      # use default gcc for 8, 11 (v7.5)
     vars: 'OPENJ9_JAVA_OPTIONS=-Xdump:system+java:events=systhrow,filter=java/lang/ClassCastException,request=exclusive+prepwalk+preempt'
   extra_test_labels:
     17: '!sw.os.cent.6'
@@ -316,9 +323,12 @@ aarch64_linux:
     11: 'linux-aarch64-normal-server-release'
   node_labels:
     build: 'ci.role.build && hw.arch.aarch64 && sw.tool.docker'
-    docker_image: 'adoptopenjdk/centos7_build_image@sha256:b2cc072a5c6196461a0993c6817d7540b8c8fcbce40f63cd5bb49eb6d7d61d89'
+    docker_image: 'adoptopenjdk/centos7_build_image@sha256:29d743c44245d788d674867c8ff24226f3a4dce3e4d82754d75d5e9ce33a3c69'
   build_env:
-    vars: 'CC=/usr/local/gcc/bin/gcc-7.5 CXX=/usr/local/gcc/bin/g++-7.5'
+    vars:
+      all: 'CC=/usr/local/gcc10/bin/gcc-10.3 CXX=/usr/local/gcc10/bin/g++-10.3'
+      8: 'CC=/usr/local/gcc/bin/gcc-7.5 CXX=/usr/local/gcc/bin/g++-7.5'
+      11: 'CC=/usr/local/gcc/bin/gcc-7.5 CXX=/usr/local/gcc/bin/g++-7.5'
 #========================================#
 # Windows x86 64bits
 #========================================#
@@ -506,60 +516,21 @@ x86-64_linux_criu:
   extends: ['x86-64_linux', 'criu']
   node_labels:
     build:
-      11: 'ci.role.build && hw.arch.x86 && sw.os.cent.7'
-      17: 'ci.role.build && hw.arch.x86 && sw.os.cent.7'
-      18: 'ci.role.build && hw.arch.x86 && sw.os.cent.7'
-      next: 'ci.role.build && hw.arch.x86 && sw.os.cent.7'
+      all: 'ci.role.build && hw.arch.x86 && sw.os.cent.7'
     docker_image:
+      8: ''
       11: ''
   build_env:
     cmd:
+      all: 'source /home/jenkins/set_gcc_10.3.0_env'
+      8: 'source /home/jenkins/set_gcc7.5.0_env'
       11: 'source /home/jenkins/set_gcc7.5.0_env'
-      17: 'source /home/jenkins/set_gcc7.5.0_env'
-      18: 'source /home/jenkins/set_gcc7.5.0_env'
-      next: 'source /home/jenkins/set_gcc7.5.0_env'
 ppc64le_linux_criu:
   extends: ['ppc64le_linux', 'criu']
 s390x_linux_criu:
   extends: ['s390x_linux', 'criu']
 aarch64_linux_criu:
   extends: ['aarch64_linux', 'criu']
-#========================================#
-# Linux x86 64bits compiled with GCC 10
-#========================================#
-x86-64_linux_gcc10:
-  extends: ['x86-64_linux']
-  build_env:
-    cmd:
-      all: 'source /home/jenkins/set_gcc_10.3.0_env'
-    vars: 'OPENJ9_JAVA_OPTIONS=-Xdump:system+java:events=systhrow,filter=java/lang/ClassCastException,request=exclusive+prepwalk+preempt'
-#========================================#
-# Linux PPCLE 64bits compiled with GCC 10
-#========================================#
-ppc64le_linux_gcc10:
-  extends: ['ppc64le_linux']
-  build_env:
-    cmd:
-      all: 'source /home/jenkins/set_gcc_10.3.0_env'
-#========================================#
-# Linux s390x 64bits compiled with GCC 10
-#========================================#
-s390x_linux_gcc10:
-  extends: ['s390x_linux']
-  build_env:
-    cmd:
-      all: 'source /home/jenkins/set_gcc_10.3.0_env'
-#========================================#
-# Linux Aarch 64bits compiled with GCC 10
-#========================================#
-aarch64_linux_gcc10:
-  extends: ['aarch64_linux']
-  node_labels:
-    build: 'ci.role.build && hw.arch.aarch64 && sw.tool.docker'
-    docker_image: 'adoptopenjdk/centos7_build_image@sha256:29d743c44245d788d674867c8ff24226f3a4dce3e4d82754d75d5e9ce33a3c69'
-  build_env:
-    vars:
-      all: 'CC=/usr/local/gcc10/bin/gcc-10.3 CXX=/usr/local/gcc10/bin/g++-10.3'
 #========================================#
 # Linux x86 64bits compiled with GCC 11
 #========================================#
