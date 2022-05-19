@@ -8269,6 +8269,12 @@ TR_J9VMBase::isStringCompressionEnabledVM()
    return IS_STRING_COMPRESSION_ENABLED_VM(getJ9JITConfig()->javaVM);
    }
 
+bool
+TR_J9VMBase::isPortableSCCEnabled()
+   {
+   return (J9_ARE_ANY_BITS_SET(getJ9JITConfig()->javaVM->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_PORTABLE_SHARED_CACHE));
+   }
+
 void *
 TR_J9VMBase::getInvokeExactThunkHelperAddress(TR::Compilation *comp, TR::SymbolReference *glueSymRef, TR::DataType dataType)
    {

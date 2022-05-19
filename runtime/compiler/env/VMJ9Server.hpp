@@ -55,6 +55,7 @@ public:
    virtual bool needRelocationsForPersistentInfoData() override          { return true; }
    virtual bool needRelocationsForLookupEvaluationData() override        { return true; }
    virtual bool needRelocationsForCurrentMethodPC() override                     { return true; }
+   virtual bool isPortableSCCEnabled() override;
    virtual void markHotField(TR::Compilation *, TR::SymbolReference *, TR_OpaqueClassBlock *, bool) override { return; }
    virtual bool isClassLibraryMethod(TR_OpaqueMethodBlock *method, bool vettedForAOT) override;
    virtual bool isClassLibraryClass(TR_OpaqueClassBlock *clazz) override;
