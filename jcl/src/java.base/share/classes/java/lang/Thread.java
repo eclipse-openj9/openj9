@@ -22,23 +22,24 @@
  *******************************************************************************/
 package java.lang;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.lang.reflect.Method;
 import java.security.AccessControlContext;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+import java.util.concurrent.TimeUnit;
+import java.util.HashMap;
+import java.util.Map;
 /*[IF Sidecar18-SE-OpenJ9]*/
 import jdk.internal.misc.TerminatingThreadLocal;
 /*[ENDIF] Sidecar18-SE-OpenJ9 */
-import sun.security.util.SecurityConstants;
 /*[IF JAVA_SPEC_VERSION >= 11]*/
 import java.util.Properties;
 import jdk.internal.reflect.CallerSensitive;
 /*[ELSE] JAVA_SPEC_VERSION >= 11 */
 import sun.reflect.CallerSensitive;
 /*[ENDIF] JAVA_SPEC_VERSION >= 11 */
-import java.lang.reflect.Method;
 import sun.nio.ch.Interruptible;
+import sun.security.util.SecurityConstants;
 
 /**
  *	A Thread is a unit of concurrent execution in Java. It has its own call stack
@@ -104,7 +105,7 @@ public class Thread implements Runnable {
 /*[PR 1FENTZW]*/
 	private ClassLoader contextClassLoader;	// Used to find classes and resources in this Thread
 	ThreadLocal.ThreadLocalMap threadLocals;
-	private java.security.AccessControlContext inheritedAccessControlContext;
+	private AccessControlContext inheritedAccessControlContext;
 
 	/*[PR 96127]*/
 	/*[PR 122459] LIR646 - Remove use of generic object for synchronization */
@@ -819,9 +820,7 @@ private native boolean isInterruptedImpl();
  * @see			java.lang.ThreadDeath
  */
 public final synchronized void join() throws InterruptedException {
-	if (started)
-		while (!isDead())
-			wait(0);
+	join(0, 0);
 }
 
 /**
@@ -858,37 +857,39 @@ public final void join(long timeoutInMilliseconds) throws InterruptedException {
  * @see			java.lang.ThreadDeath
  */
 public final synchronized void join(long timeoutInMilliseconds, int nanos) throws InterruptedException {
-	if (timeoutInMilliseconds < 0 || nanos < 0 || nanos > NANOS_MAX)
+	if ((timeoutInMilliseconds < 0) || (nanos < 0) || (nanos > NANOS_MAX)) {
 		throw new IllegalArgumentException();
+	}
+	if (!started || isDead()) {
+		return;
+	}
+	if ((timeoutInMilliseconds == 0) && (nanos == 0)) {
+		while (!isDead()) {
+			wait(0);
+		}
+		return;
+	}
 
-	if (!started || isDead()) return;
-
-	// No nanosecond precision for now, we would need something like 'currentTimenanos'
-
-	long totalWaited = 0;
-	long toWait = timeoutInMilliseconds;
-	boolean timedOut = false;
-
-	/*[PR 1PQM757] Even though we do not have nano precision, we cannot wait(0) when any one of the parameters is not zero */
-	if (timeoutInMilliseconds == 0 & nanos > 0) {
-		// We either round up (1 millisecond) or down (no need to wait, just return)
-		if (nanos < 500000)
-			timedOut = true;
-		else
-			toWait = 1;
+	long toWaitNano = TimeUnit.MILLISECONDS.toNanos(timeoutInMilliseconds);
+	if ((Long.MAX_VALUE - toWaitNano) >= nanos) {
+		toWaitNano += nanos;
+	} else {
+		// Unlikely just for technical correctness.
+		toWaitNano = Long.MAX_VALUE;
 	}
 	/*[PR 1FJMO7Q] A Thread can be !isAlive() and still be in its ThreadGroup. Use isDead() */
-	while (!timedOut && !isDead()) {
-		long start = System.currentTimeMillis();
-		wait(toWait);
-		long waited = System.currentTimeMillis() - start;
-		totalWaited+= waited;
-		toWait -= waited;
+	while (!isDead()) {
+		final long start = System.nanoTime();
+		TimeUnit.NANOSECONDS.timedWait(this, toWaitNano);
+		final long waited = System.nanoTime() - start;
 		// Anyone could do a synchronized/notify on this thread, so if we wait
 		// less than the timeout, we must check if the thread really died
-		timedOut = (totalWaited >= timeoutInMilliseconds);
+		if (waited >= toWaitNano) {
+			break;
+		} else {
+			toWaitNano -= waited;
+		}
 	}
-
 }
 
 /**

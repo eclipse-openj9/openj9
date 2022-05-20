@@ -31,10 +31,9 @@ public class Test_ClassLoader_SM {
 	/**
 	 * [PR Jazz103 76960]
 	 *
-	 * @tests java.lang.ClassLoader#getParent() Test the case when in
-	 *        getParent() the callerClassLoader is same as child of this
-	 *        classloader. getParent() should throw SecurityException in such
-	 *        case.
+	 * @tests java.lang.ClassLoader#getParent() Test the case when
+	 *        getParent() returns null. getParent() should not throw
+	 *        SecurityException in this case.
 	 */
 	@Test
 	public void test_getParent1() {
@@ -44,10 +43,9 @@ public class Test_ClassLoader_SM {
 		SecurityManager manager = new SecurityManager();
 		System.setSecurityManager(manager);
 		try {
-			parentCl.getParent();
-			Assert.fail("expected the above call to getParent() to throw SecurityException");
+			Assert.assertNull(parentCl.getParent(), "parent is not null");
 		} catch (SecurityException e) {
-			/* expected exception */
+			Assert.fail("expected the call to getParent() not to throw SecurityException");
 		} finally {
 			System.setSecurityManager(null);
 		}
