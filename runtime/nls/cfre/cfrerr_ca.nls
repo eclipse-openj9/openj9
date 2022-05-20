@@ -1625,9 +1625,46 @@ J9NLS_CFR_ERR_PERMITS_VALUE_ON_NON_ABSTRACT_CLASS.system_action=The JVM will thr
 J9NLS_CFR_ERR_PERMITS_VALUE_ON_NON_ABSTRACT_CLASS.user_response=Contact the provider of the class file for a corrected version.
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_PERMITS_VALUE_ON_INTERFACE__ID=El senyalador d'acc\u00e9s ACC_PERMITS_VALUE no es pot definir en una interf\u00edcie.
+J9NLS_CFR_ERR_PERMITS_VALUE_ON_INTERFACE=El senyalador d'acc\u00e9s ACC_PERMITS_VALUE no es pot definir en una interf\u00edcie.
 # START NON-TRANSLATABLE
-J9NLS_CFR_ERR_PERMITS_VALUE_ON_INTERFACE__ID.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
-J9NLS_CFR_ERR_PERMITS_VALUE_ON_INTERFACE__ID.system_action=The JVM will throw a verification or class loading-related exception such as java.lang.ClassFormatError.
-J9NLS_CFR_ERR_PERMITS_VALUE_ON_INTERFACE__ID.user_response=Contact the provider of the class file for a corrected version.
+J9NLS_CFR_ERR_PERMITS_VALUE_ON_INTERFACE.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
+J9NLS_CFR_ERR_PERMITS_VALUE_ON_INTERFACE.system_action=The JVM will throw a verification or class loading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_PERMITS_VALUE_ON_INTERFACE.user_response=Contact the provider of the class file for a corrected version.
+# END NON-TRANSLATABLE
+
+J9NLS_CFR_ERR_VALUE_CLASS_FIELD_NOT_STATIC_OR_FINAL=Els camps de les classes de valor han de tenir definit el senyalador ACC_STATIC o ACC_FINAL.
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_VALUE_CLASS_FIELD_NOT_STATIC_OR_FINAL.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
+J9NLS_CFR_ERR_VALUE_CLASS_FIELD_NOT_STATIC_OR_FINAL.system_action=The JVM will throw a verification or class loading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_VALUE_CLASS_FIELD_NOT_STATIC_OR_FINAL.user_response=Contact the provider of the class file for a corrected version.
+# END NON-TRANSLATABLE
+
+J9NLS_CFR_ERR_MISSING_ACC_STATIC_ON_ABSTRACT_CLASS_FIELD=En una classe abstracta amb el senyalador ACC_PERMITS_VALUE, cada camp ha de declarar-se est\u00e0tic.
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_MISSING_ACC_STATIC_ON_ABSTRACT_CLASS_FIELD.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
+J9NLS_CFR_ERR_MISSING_ACC_STATIC_ON_ABSTRACT_CLASS_FIELD.system_action=The JVM will throw a verification or class loading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_MISSING_ACC_STATIC_ON_ABSTRACT_CLASS_FIELD.user_response=Contact the provider of the class file for a corrected version.
+# END NON-TRANSLATABLE
+
+J9NLS_CFR_ERR_NON_STATIC_SYNCHRONIZED_VALUE_TYPE_METHOD=En classes de valor i en classes abstractes amb el senyalador ACC_PERMITS_VALUE, un m\u00e8tode sincronitzat ha de ser est\u00e0tic
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_NON_STATIC_SYNCHRONIZED_VALUE_TYPE_METHOD.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
+J9NLS_CFR_ERR_NON_STATIC_SYNCHRONIZED_VALUE_TYPE_METHOD.system_action=The JVM will throw a verification or class loading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_NON_STATIC_SYNCHRONIZED_VALUE_TYPE_METHOD.user_response=Contact the provider of the class file for a corrected version.
+# END NON-TRANSLATABLE
+
+# <new> is not translatable
+J9NLS_CFR_ERR_INVALID_FLAGS_ON_NEW=Els m\u00e8todes anomenats <new> han de ser est\u00e0tics i no poden ser finals, sincronitzats, nadius ni abstractes
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_INVALID_FLAGS_ON_NEW.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
+J9NLS_CFR_ERR_INVALID_FLAGS_ON_NEW.system_action=The JVM will throw a verification or class loading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_INVALID_FLAGS_ON_NEW.user_response=Contact the provider of the class file for a corrected version.
+# END NON-TRANSLATABLE
+
+# <init> is not translatable
+J9NLS_CFR_ERR_INIT_ON_VALUE_CLASS=Els m\u00e8todes de classe de valor no poden anomenarse <init>
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_INIT_ON_VALUE_CLASS.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
+J9NLS_CFR_ERR_INIT_ON_VALUE_CLASS.system_action=The JVM will throw a verification or class loading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_INIT_ON_VALUE_CLASS.user_response=Contact the provider of the class file for a corrected version.
 # END NON-TRANSLATABLE
