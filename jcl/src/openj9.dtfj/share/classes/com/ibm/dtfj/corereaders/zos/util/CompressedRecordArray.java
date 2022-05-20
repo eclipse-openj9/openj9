@@ -1,6 +1,6 @@
-/*[INCLUDE-IF Sidecar18-SE]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 /*******************************************************************************
- * Copyright (c) 2006, 2017 IBM Corp. and others
+ * Copyright (c) 2006, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -461,7 +461,7 @@ public final class CompressedRecordArray implements Serializable {
         int[] record = new int[8];
         for (int blockSizeLog2 = 0; blockSizeLog2 < 10; blockSizeLog2++) {
             dis.reset();
-            long then = System.currentTimeMillis();
+            final long then = System.nanoTime();
             CompressedRecordArray ra = new CompressedRecordArray(blockSizeLog2, 8);
             boolean eof = false;
             for (int r = 0;; r++) {
@@ -494,8 +494,8 @@ public final class CompressedRecordArray implements Serializable {
                 }
                 if (eof) break;
             }
-            long now = System.currentTimeMillis();
-            System.out.println("block size " + (1 << blockSizeLog2) + " uses " + ra.memoryUsage() + " took " + (now - then) + " ms");
+            final long duration = System.nanoTime() - then;
+            System.out.println("block size " + (1 << blockSizeLog2) + " uses " + ra.memoryUsage() + " took " + duration + " ns");
         }
     }
 }

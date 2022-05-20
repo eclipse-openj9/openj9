@@ -1,6 +1,6 @@
-/*[INCLUDE-IF Sidecar19-SE]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION > 8]*/
 /*******************************************************************************
- * Copyright (c) 2010, 2021 IBM Corp. and others
+ * Copyright (c) 2010, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -36,6 +36,7 @@ import java.io.UnsupportedEncodingException;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.util.concurrent.TimeUnit;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -198,7 +199,7 @@ public class TraceFormat
 		/* read in the blocks from the various files and sort them */
 		long recordsInData = 0;
 		long lostCountByException = 0;
-		long start = System.currentTimeMillis();
+		final long start = System.nanoTime();
 		long end = 0;
 		long startBlock = start;
 		long recordsProcessed = 0;
@@ -355,21 +356,24 @@ public class TraceFormat
 				thread = current;
 				output.println(formatted.toString());
 			}
-			
+
 			/* print percentage */
 			if (context.getTotalRecords() != recordsProcessed) {
 				recordsProcessed = context.getTotalRecords();
-				float processedMbytes = ((float) (context.getTotalRecords() * context.getRecordSize())) / (1024 * 1024);
+				long bytesProcessed = recordsProcessed * context.getRecordSize();
+				float processedMbytes = bytesProcessed / (1024.0f * 1024.0f);
 				if (processedMbytes % 10 == 0) {
-					int percent = (int) ((processedMbytes * 100) / (totalBytes/(1024*1024)));
+					int percent = (int) ((100 * bytesProcessed) / totalBytes);
 					if (verbose.booleanValue()) {
-						end = System.currentTimeMillis();
-						float MbpsBlock = (float) 10.0 / (float) ((end - startBlock) / 1000.0);
-						float Mbps = (float) (processedMbytes) / (float) (((float) (end - start) / 1000.0));
-						startBlock = System.currentTimeMillis();
-						context.message(context, "Processed " + processedMbytes + "Mb ("+percent+"%), burst speed: "+MbpsBlock+"Mb/s, average: "+Mbps+"Mb/s");
+						end = System.nanoTime();
+						final long SECOND_SCALE = 1000 * 1000 * 1000;
+						float MbpsBlock = 10.0f * SECOND_SCALE / (end - startBlock);
+						float Mbps = processedMbytes * SECOND_SCALE / (end - start);
+						startBlock = System.nanoTime();
+						context.message(context, "Processed " + processedMbytes + "Mb (" + percent + "%), burst speed: "
+								+ MbpsBlock + "Mb/s, average: " + Mbps + "Mb/s");
 					} else {
-						context.message(context, "Processed " + processedMbytes + "Mb ("+percent+"%)");
+						context.message(context, "Processed " + processedMbytes + "Mb (" + percent + "%)");
 					}
 				}
 			}
@@ -383,9 +387,9 @@ public class TraceFormat
 
 		context.message(context, "Completed processing of " + context.getTotalTracePoints() + " tracepoints with " + context.getWarningCount() + " warnings and " + context.getErrorCount() + " errors");
 		if (verbose.booleanValue()) {
-			end = System.currentTimeMillis();
-			float Mbps = (float) (recordsInData * context.getRecordSize()) / (float) (((float) (end - start) / 1000) * (1024 * 1024));
-			context.message(context, "Total processing time " + (end - start) + "ms (" + Mbps + "Mb/s)");
+			end = System.nanoTime();
+			float Mbps = (recordsInData * context.getRecordSize()) / (1024.0f * 1024.0f * TimeUnit.NANOSECONDS.toSeconds(end - start));
+			context.message(context, "Total processing time " + TimeUnit.NANOSECONDS.toMillis(end - start) + "ms (" + Mbps + "Mb/s)");
 		}
 		
 		if (statistics) {
