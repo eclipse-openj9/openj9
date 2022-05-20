@@ -30,9 +30,24 @@ package openj9.internal.criu;
 /*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 public final class InternalCRIUSupport {
 	private static boolean criuSupportEnabled = isCRIUSupportEnabledImpl();
+	private static long checkpointRestoreNanoTimeDelta;
 
 	private static native boolean isCRIUSupportEnabledImpl();
 	private static native boolean isCheckpointAllowedImpl();
+	private static native long getCheckpointRestoreNanoTimeDeltaImpl();
+
+	/**
+	 * Retrieve the elapsed time between Checkpoint and Restore.
+	 * Only support one Checkpoint.
+	 *
+	 * @return the time in nanoseconds.
+	 */
+	public static long getCheckpointRestoreNanoTimeDelta() {
+		if (checkpointRestoreNanoTimeDelta == 0) {
+			checkpointRestoreNanoTimeDelta = getCheckpointRestoreNanoTimeDeltaImpl();
+		}
+		return checkpointRestoreNanoTimeDelta;
+	}
 
 	/**
 	 * Queries if CRIU support is enabled.
