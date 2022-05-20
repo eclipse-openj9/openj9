@@ -1625,9 +1625,46 @@ J9NLS_CFR_ERR_PERMITS_VALUE_ON_NON_ABSTRACT_CLASS.system_action=The JVM will thr
 J9NLS_CFR_ERR_PERMITS_VALUE_ON_NON_ABSTRACT_CLASS.user_response=Contact the provider of the class file for a corrected version.
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_PERMITS_VALUE_ON_INTERFACE__ID=Az ACC_PERMITS_VALUE hozz\u00e1f\u00e9r\u00e9si kapcsol\u00f3t a fel\u00fcleten nem lehet be\u00e1ll\u00edtani.
+J9NLS_CFR_ERR_PERMITS_VALUE_ON_INTERFACE=Az ACC_PERMITS_VALUE hozz\u00e1f\u00e9r\u00e9si kapcsol\u00f3t a fel\u00fcleten nem lehet be\u00e1ll\u00edtani.
 # START NON-TRANSLATABLE
-J9NLS_CFR_ERR_PERMITS_VALUE_ON_INTERFACE__ID.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
-J9NLS_CFR_ERR_PERMITS_VALUE_ON_INTERFACE__ID.system_action=The JVM will throw a verification or class loading-related exception such as java.lang.ClassFormatError.
-J9NLS_CFR_ERR_PERMITS_VALUE_ON_INTERFACE__ID.user_response=Contact the provider of the class file for a corrected version.
+J9NLS_CFR_ERR_PERMITS_VALUE_ON_INTERFACE.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
+J9NLS_CFR_ERR_PERMITS_VALUE_ON_INTERFACE.system_action=The JVM will throw a verification or class loading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_PERMITS_VALUE_ON_INTERFACE.user_response=Contact the provider of the class file for a corrected version.
+# END NON-TRANSLATABLE
+
+J9NLS_CFR_ERR_VALUE_CLASS_FIELD_NOT_STATIC_OR_FINAL=Az \u00e9rt\u00e9koszt\u00e1lyok mez\u0151in\u00e9l az ACC_STATIC vagy az ACC_FINAL jel\u00f6l\u0151nek be\u00e1ll\u00edtva kell lennie.
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_VALUE_CLASS_FIELD_NOT_STATIC_OR_FINAL.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
+J9NLS_CFR_ERR_VALUE_CLASS_FIELD_NOT_STATIC_OR_FINAL.system_action=The JVM will throw a verification or class loading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_VALUE_CLASS_FIELD_NOT_STATIC_OR_FINAL.user_response=Contact the provider of the class file for a corrected version.
+# END NON-TRANSLATABLE
+
+J9NLS_CFR_ERR_MISSING_ACC_STATIC_ON_ABSTRACT_CLASS_FIELD=ACC_PERMITS_VALUE jel\u00f6l\u0151vel rendelkez\u0151 absztrakt oszt\u00e1lyban minden mez\u0151t statikusk\u00e9nt kell deklar\u00e1lni.
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_MISSING_ACC_STATIC_ON_ABSTRACT_CLASS_FIELD.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
+J9NLS_CFR_ERR_MISSING_ACC_STATIC_ON_ABSTRACT_CLASS_FIELD.system_action=The JVM will throw a verification or class loading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_MISSING_ACC_STATIC_ON_ABSTRACT_CLASS_FIELD.user_response=Contact the provider of the class file for a corrected version.
+# END NON-TRANSLATABLE
+
+J9NLS_CFR_ERR_NON_STATIC_SYNCHRONIZED_VALUE_TYPE_METHOD=Az ACC_PERMITS_VALUE jel\u00f6l\u0151vel rendelkez\u0151 \u00e9rt\u00e9koszt\u00e1lyokban \u00e9s absztrakt oszt\u00e1lyokban a szinkroniz\u00e1lt met\u00f3dusoknak statikusnak kell lenni\u00fck
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_NON_STATIC_SYNCHRONIZED_VALUE_TYPE_METHOD.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
+J9NLS_CFR_ERR_NON_STATIC_SYNCHRONIZED_VALUE_TYPE_METHOD.system_action=The JVM will throw a verification or class loading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_NON_STATIC_SYNCHRONIZED_VALUE_TYPE_METHOD.user_response=Contact the provider of the class file for a corrected version.
+# END NON-TRANSLATABLE
+
+# <new> is not translatable
+J9NLS_CFR_ERR_INVALID_FLAGS_ON_NEW=A(z) <new> nev\u0171 met\u00f3dusok csak statikusak lehetnek, \u00e9s nem lehetnek v\u00e9glegesek, szinkroniz\u00e1ltak, nat\u00edvak vagy absztraktak.
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_INVALID_FLAGS_ON_NEW.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
+J9NLS_CFR_ERR_INVALID_FLAGS_ON_NEW.system_action=The JVM will throw a verification or class loading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_INVALID_FLAGS_ON_NEW.user_response=Contact the provider of the class file for a corrected version.
+# END NON-TRANSLATABLE
+
+# <init> is not translatable
+J9NLS_CFR_ERR_INIT_ON_VALUE_CLASS=Az \u00e9rt\u00e9koszt\u00e1lyok met\u00f3dusai nem lehetnek <init> nev\u0171ek.
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_INIT_ON_VALUE_CLASS.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
+J9NLS_CFR_ERR_INIT_ON_VALUE_CLASS.system_action=The JVM will throw a verification or class loading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_INIT_ON_VALUE_CLASS.user_response=Contact the provider of the class file for a corrected version.
 # END NON-TRANSLATABLE
