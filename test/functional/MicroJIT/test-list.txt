@@ -1,0 +1,191 @@
+################################################################################
+# Copyright (c) 2022, 2022 IBM Corp. and others
+#
+# This program and the accompanying materials are made available under
+# the terms of the Eclipse Public License 2.0 which accompanies this
+# distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+# or the Apache License, Version 2.0 which accompanies this distribution and
+# is available at https://www.apache.org/licenses/LICENSE-2.0.
+#
+# This Source Code may also be made available under the following
+# Secondary Licenses when the conditions for such availability set
+# forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+# General Public License, version 2 with the GNU Classpath
+# Exception [1] and GNU General Public License, version 2 with the
+# OpenJDK Assembly Exception [2].
+#
+# [1] https://www.gnu.org/software/classpath/license.html
+# [2] http://openjdk.java.net/legal/assembly-exception.html
+#
+# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+################################################################################
+
+# Format is method_signature
+
+# If the test you are adding is dependent on another method being compiled by MicroJIT,
+# the dependency array must be added to the test invocation.
+
+# From Table 4.3-A of JVM:
+#
+#   | FieldType term | Type                                        |
+#   |----------------|---------------------------------------------|
+#   | B              | byte                                        |
+#   | C              | char                                        |
+#   | D              | double                                      |
+#   | F              | float                                       |
+#   | I              | int                                         |
+#   | J              | long                                        |
+#   | L ClassName ;  | reference -> an instance of class ClassName |
+#   | S              | short                                       |
+#   | Z              | boolean                                     |
+#   | [              | reference -> one array dimension            |
+
+IntTests.add<II>I
+IntTests.add<III>I
+IntTests.add<IIII>I
+IntTests.sub<II>I
+IntTests.mul<II>I
+IntTests.div<II>I
+IntTests.rem<II>I
+IntTests.inc<I>I
+IntTests.neg<I>I
+IntTests.shl<II>I
+IntTests.shr<II>I
+IntTests.ushr<II>I
+IntTests.and<II>I
+IntTests.or<II>I
+IntTests.xor<II>I
+IntTests.iconst_m1<>I
+IntTests.iconst_0<>I
+IntTests.iconst_1<>I
+IntTests.iconst_2<>I
+IntTests.iconst_3<>I
+IntTests.iconst_4<>I
+IntTests.iconst_5<>I
+IntTests.bipush_m32<>I
+IntTests.bipush_31<>I
+IntTests.sipush_32767<>I
+IntTests.sipush_m32768<>I
+LongTests.add<JJ>J
+LongTests.add<JJJ>J
+LongTests.add<JII>J
+LongTests.add<IJI>J
+LongTests.add<IIJ>J
+LongTests.add<IJ>J
+LongTests.add_<JII>I
+LongTests.sub<JJ>J
+LongTests.mul<JJ>J
+LongTests.div<JJ>J
+LongTests.rem<JJ>J
+LongTests.neg<J>J
+LongTests.shl<JI>J
+LongTests.shr<JI>J
+LongTests.ushr<JI>J
+LongTests.lconst_0<>J
+LongTests.lconst_1<>J
+LongTests.and<JJ>J
+LongTests.and<JJJ>J
+LongTests.or<JJ>J
+LongTests.xor<JJ>J
+LongTests.lcmp<JJ>I: [ lcmp.lcmp<JJ>I ]
+GetPutStaticTests.add<>I: [ GetPutStaticTests.setInts<II>V ]
+GetPutStaticTests.sub<>I: [ GetPutStaticTests.setInts<II>V ]
+GetPutStaticTests.mul<>I: [ GetPutStaticTests.setInts<II>V ]
+GetPutStaticTests.div<>I: [ GetPutStaticTests.setInts<II>V ]
+GetPutStaticTests.and<>I: [ GetPutStaticTests.setInts<II>V ]
+GetPutStaticTests.or<>I: [ GetPutStaticTests.setInts<II>V ]
+GetPutStaticTests.xor<>I: [ GetPutStaticTests.setInts<II>V ]
+GetPutStaticTests.addLong<>J: [ GetPutStaticTests.setLongs<JJ>V ]
+GetPutStaticTests.addFloat<>F: [ GetPutStaticTests.setFloats<FF>V ]
+GetPutStaticTests.addDouble<>D: [ GetPutStaticTests.setDoubles<DD>V ]
+GetPutFieldTests.getField<>I: [ GetPutFieldTests.putField<I>V ]
+GetPutFieldTests.add<>I: [ GetPutFieldTests.setInts<II>V ]
+GetPutFieldTests.getFieldL<>J: [ GetPutFieldTests.putFieldL<J>V ]
+GetPutFieldTests.addL<>J: [ GetPutFieldTests.setLongs<JJ>V ]
+GetPutFieldTests.getFieldF<>F: [ GetPutFieldTests.putFieldF<F>V ]
+GetPutFieldTests.addF<>F: [ GetPutFieldTests.setFloats<FF>V ]
+GetPutFieldTests.getFieldD<>D: [ GetPutFieldTests.putFieldD<D>V ]
+GetPutFieldTests.addD<>D: [ GetPutFieldTests.setDoubles<DD>V ]
+BranchTests.gotoTest<I>I
+BranchTests.ifeqTest<I>I
+BranchTests.ifneTest<I>I
+BranchTests.ifltTest<I>I
+BranchTests.ifleTest<I>I
+BranchTests.ifgtTest<I>I
+BranchTests.ifgeTest<I>I
+BranchTests.if_icmpneTest<I>I
+BranchTests.if_icmpeqTest<I>I
+BranchTests.if_icmpltTest<I>I
+BranchTests.if_icmpleTest<I>I
+BranchTests.if_icmpgtTest<I>I
+BranchTests.if_icmpgeTest<I>I
+ConversionTests.i2l<I>J
+ConversionTests.l2i<J>I
+ConversionTests.i2b<I>B
+ConversionTests.i2s<I>S
+ConversionTests.i2c<I>C
+ConversionTests.i2d<I>D
+ConversionTests.l2d<J>D
+ConversionTests.d2i<D>I
+ConversionTests.d2l<D>J
+ConversionTests.i2f<I>F
+ConversionTests.f2i<F>I
+ConversionTests.l2f<J>F
+ConversionTests.f2l<F>J
+ConversionTests.d2f<D>F
+ConversionTests.f2d<F>D
+InvokeTests.indirectAdd<II>I: [ IntTests.add<II>I ]
+InvokeTests.indirectSub<II>I: [ IntTests.sub<II>I ]
+InvokeTests.indirectMul<II>I: [ IntTests.mul<II>I ]
+InvokeTests.indirectDiv<II>I: [ IntTests.div<II>I ]
+InvokeTests.indirectLAdd<JJ>J: [ LongTests.add<JJ>J ]
+InvokeTests.indirectFAdd<FF>F: [ FloatTests.add<FF>F ]
+InvokeTests.indirectDAdd<DD>D: [ DoubleTests.add<DD>D ]
+InvokeTests.indirectAdd<IIII>I: [ IntTests.add<IIII>I ]
+InvokeTests.indirectAdd<III>I: [ IntTests.add<III>I ]
+InvokeTests.indirectAdd<IIJ>J: [ LongTests.add<IIJ>J ]
+InvokeTests.indirectAdd<JII>J: [ LongTests.add<JII>J ]
+InvokeTests.indirectAdd_<JII>I: [ LongTests.add_<JII>I ]
+InvokeTests.indirectAdd<IJ>J: [ LongTests.add<IJ>J ]
+FloatTests.add<FF>F
+FloatTests.add<FII>F
+# Tests fail when the argument count exceeds the limit that can be
+# handled by registers and have to be stored in stack instead.
+# IntTests.add<IIIII>I                 -> Fails with MicroJIT
+# FloatTests.add<FFFFFFFFFF>F          -> Fails with MicroJIT
+# FloatTests.add<FFIIDDJJFFIIDDJJ>F    -> Fails with MicroJIT
+FloatTests.sub<FF>F
+FloatTests.mul<FF>F
+FloatTests.div<FF>F
+FloatTests.rem<FF>F
+FloatTests.neg<F>F
+FloatTests.fconst_0<>F
+FloatTests.fconst_1<>F
+FloatTests.fconst_2<>F
+FloatTests.fcmpl<FF>I: [ fcmp.fcmpl<FF>I ]
+FloatTests.fcmpg<FF>I: [ fcmp.fcmpg<FF>I ]
+DoubleTests.add<DD>D
+DoubleTests.sub<DD>D
+DoubleTests.mul<DD>D
+DoubleTests.div<DD>D
+DoubleTests.rem<DD>D
+DoubleTests.neg<D>D
+DoubleTests.dconst_0<>D
+DoubleTests.dconst_1<>D
+StackTests.pop<I>V
+StackTests.pop2<J>V
+StackTests.swap<III>I: [ Swap.swap<III>I ]
+StackTests.dup<II>I
+StackTests.dup2Form1<II>I: [ Dup.dup2Form1<II>I ]
+StackTests.dup2Form2<JJ>J
+StackTests.dup_x1<II>I: [ Dup.dup_x1<II>I ]
+StackTests.dup_x2Form1<III>I: [ Dup.dup_x2Form1<III>I ]
+StackTests.dup_x2Form2<JI>I: [ Dup.dup_x2Form2<JI>I ]
+StackTests.dup2_x1Form1<III>I: [ Dup.dup2_x1Form1<III>I ]
+StackTests.dup2_x1Form2<IJ>J: [ Dup.dup2_x1Form2<IJ>J ]
+StackTests.dup2_x2Form1<IIII>I: [ Dup.dup2_x2Form1<IIII>I ]
+StackTests.dup2_x2Form2<IIJ>J: [ Dup.dup2_x2Form2<IIJ>J ]
+StackTests.dup2_x2Form3<JII>I: [ Dup.dup2_x2Form3<JII>I ]
+StackTests.dup2_x2Form4<JJ>J: [ Dup.dup2_x2Form4<JJ>J ]
+DoubleTests.dcmpl<DD>I: [ dcmp.dcmpl<DD>I ]
+DoubleTests.dcmpg<DD>I: [ dcmp.dcmpg<DD>I ]
