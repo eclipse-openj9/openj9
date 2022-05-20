@@ -301,12 +301,10 @@ public final class System {
 		if (null == com.ibm.oti.vm.VM.getVMLangAccess()) {
 			com.ibm.oti.vm.VM.setVMLangAccess(new VMAccess());
 		}
+		SharedSecrets.setJavaLangAccess(new Access());
 
 		// Fill in the properties from the VM information.
 		ensureProperties(true);
-
-		/*[PR CMVC 150472] sun.misc.SharedSecrets needs access to java.lang. */
-		SharedSecrets.setJavaLangAccess(new Access());
 
 		/*[IF JAVA_SPEC_VERSION >= 11]*/
 		initJCLPlatformEncoding();
