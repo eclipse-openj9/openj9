@@ -1,4 +1,3 @@
-
 /*******************************************************************************
  * Copyright (c) 2022, 2022 IBM Corp. and others
  *
@@ -20,53 +19,31 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
+package org.openj9.criu;
+
 import java.nio.file.Paths;
 import java.nio.file.Path;
 
-public class CRIUSimpleTest {
+public class TimeChangeTest {
+
+	// The elapsed time is expected less than 2 second.
+	private static long MAX_ELAPSED_TIME = 2000 * 1000 * 1000;
+	private static Path imagePath = Paths.get("cpData");
 
 	public static void main(String args[]) {
-		String test = args[0];
+		new TimeChangeTest().testSystemNanoTime();
+	}
 
-		switch(test) {
-		case "SingleCheckpoint":
-			singleCheckpoint();
-			break;
-		case "TwoCheckpoints":
-			twoCheckpoints();
-			break;
-		case "ThreeCheckpoints":
-			threeCheckpoints();
-			break;
-		default:
-			throw new RuntimeException("incorrect parameters");
+	public void testSystemNanoTime() {
+		final long beforeCheckpoint = System.nanoTime();
+		System.out.println("System.nanoTime() before CRIU checkpoint: " + beforeCheckpoint);
+		CRIUTestUtils.checkPointJVM(imagePath);
+		final long afterRestore = System.nanoTime();
+		final long elapsedTime = afterRestore - beforeCheckpoint;
+		if (elapsedTime < MAX_ELAPSED_TIME) {
+			System.out.println("PASSED: System.nanoTime() after CRIU restore: " + afterRestore + ", the elapse time is: " + elapsedTime);
+		} else {
+			System.out.println("FAILED: System.nanoTime() after CRIU restore: " + afterRestore + ", the elapse time is: " + elapsedTime);
 		}
-	}
-
-	public static void singleCheckpoint() {
-		Path path = Paths.get("cpData");
-		System.out.println("Single checkpoint:\nPre-checkpoint");
-		CRIUTestUtils.checkPointJVM(path);
-		System.out.println("Post-checkpoint");
-	}
-
-	public static void twoCheckpoints() {
-		Path path = Paths.get("cpData");
-		System.out.println("Two checkpoints:\nPre-checkpoint");
-		CRIUTestUtils.checkPointJVM(path);
-		System.out.println("Post-checkpoint 1");
-		CRIUTestUtils.checkPointJVM(path);
-		System.out.println("Post-checkpoint 2");
-	}
-
-	public static void threeCheckpoints() {
-		Path path = Paths.get("cpData");
-		System.out.println("Three checkpoints:\nPre-checkpoint");
-		CRIUTestUtils.checkPointJVM(path);
-		System.out.println("Post-checkpoint 1");
-		CRIUTestUtils.checkPointJVM(path);
-		System.out.println("Post-checkpoint 2");
-		CRIUTestUtils.checkPointJVM(path);
-		System.out.println("Post-checkpoint 3");
 	}
 }

@@ -31,7 +31,7 @@ echo "start running script"
 if [ "$4" = "Checkpoint" ]
 then
     # append to the file to capture the output before checkpoint and after both restores
-    $2 $3 -XX:+EnableCRIUSupport -cp $1/criu.jar CRIURandomTest >>testOutput 2>&1
+    $2 $3 -XX:+EnableCRIUSupport -cp $1/criu.jar org.openj9.criu.CRIURandomTest >>testOutput 2>&1
 fi
 if [ "$4" = "FirstRestore" ] || [ "$4" = "SecondRestore" ]
 then
