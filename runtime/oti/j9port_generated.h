@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -387,6 +387,13 @@ typedef struct J9PortLibrary {
 #endif /* OMR_GC_CONCURRENT_SCAVENGER */
 	/** see @ref j9portcontrol.c::j9port_control "j9port_control"*/
 	int32_t (*port_control)(struct J9PortLibrary *portLibrary, const char *key, uintptr_t value) ;
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+	/* The delta between Checkpoint and Restore of j9time_nano_time() return values.
+	 * It is initialized to 0 before Checkpoint, and set after restore.
+	 * Only supports one Checkpoint, could be restored multiple times.
+	 */
+	int64_t checkpointRestoreTimeDelta;
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 } J9PortLibrary;
 
 #if defined(OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS)
@@ -467,7 +474,12 @@ extern J9_CFUNC int32_t j9port_isCompatible(struct J9PortLibraryVersion *expecte
 #define j9time_usec_clock() OMRPORT_FROM_J9PORT(privatePortLibrary)->time_usec_clock(OMRPORT_FROM_J9PORT(privatePortLibrary))
 #define j9time_current_time_nanos(param1) OMRPORT_FROM_J9PORT(privatePortLibrary)->time_current_time_nanos(OMRPORT_FROM_J9PORT(privatePortLibrary),param1)
 #define j9time_current_time_millis() OMRPORT_FROM_J9PORT(privatePortLibrary)->time_current_time_millis(OMRPORT_FROM_J9PORT(privatePortLibrary))
-#define j9time_nano_time() OMRPORT_FROM_J9PORT(privatePortLibrary)->time_nano_time(OMRPORT_FROM_J9PORT(privatePortLibrary))
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+#define NANO_TIME_ADJUSTMENT privatePortLibrary->checkpointRestoreTimeDelta
+#else /* defined(J9VM_OPT_CRIU_SUPPORT) */
+#define NANO_TIME_ADJUSTMENT 0
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+#define j9time_nano_time() (OMRPORT_FROM_J9PORT(privatePortLibrary)->time_nano_time(OMRPORT_FROM_J9PORT(privatePortLibrary)) - NANO_TIME_ADJUSTMENT)
 #define j9time_hires_clock() OMRPORT_FROM_J9PORT(privatePortLibrary)->time_hires_clock(OMRPORT_FROM_J9PORT(privatePortLibrary))
 #define j9time_hires_frequency() OMRPORT_FROM_J9PORT(privatePortLibrary)->time_hires_frequency(OMRPORT_FROM_J9PORT(privatePortLibrary))
 #define j9time_hires_delta(param1,param2,param3) OMRPORT_FROM_J9PORT(privatePortLibrary)->time_hires_delta(OMRPORT_FROM_J9PORT(privatePortLibrary),param1,param2,param3)

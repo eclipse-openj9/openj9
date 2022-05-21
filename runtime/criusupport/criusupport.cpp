@@ -259,6 +259,8 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 		char workDirBuf[STRING_BUFFER_SIZE];
 		char *workDirChars = workDirBuf;
 		BOOLEAN isAfterCheckpoint = FALSE;
+		I_64 beforeCheckpoint = 0;
+		I_64 afterRestore = 0;
 
 		vmFuncs->internalEnterVMFromJNI(currentThread);
 
@@ -399,9 +401,13 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 			goto wakeJavaThreadsWithExclusiveVMAccess;
 		}
 
-		Trc_CRIU_before_checkpoint(currentThread);
+		vm->portLibrary->checkpointRestoreTimeDelta = 0;
+		beforeCheckpoint = j9time_nano_time();
+		Trc_CRIU_before_checkpoint(currentThread, beforeCheckpoint);
 		systemReturnCode = criu_dump();
-		Trc_CRIU_after_checkpoint(currentThread);
+		afterRestore = j9time_nano_time();
+		vm->portLibrary->checkpointRestoreTimeDelta = afterRestore - beforeCheckpoint;
+		Trc_CRIU_after_checkpoint(currentThread, afterRestore, vm->portLibrary->checkpointRestoreTimeDelta);
 		if (systemReturnCode < 0) {
 			currentExceptionClass = vm->criuSystemCheckpointExceptionClass;
 			nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_JCL_CRIU_DUMP_FAILED, NULL);
