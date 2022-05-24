@@ -32,6 +32,10 @@
 #include "runtime/J9Runtime.hpp"
 #include "control/CompilationRuntime.hpp"
 
+#if defined(OSX) && defined(AARCH64)
+#include <pthread.h> // for pthread_jit_write_protect_np
+#endif
+
 #define PPC_INSTRUCTION_LENGTH 4
 
 #if defined(TR_TARGET_POWER)

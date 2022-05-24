@@ -55,6 +55,10 @@
 #include "env/VerboseLog.hpp"
 #include "omrformatconsts.h"
 
+#if defined(OSX) && defined(AARCH64)
+#include <pthread.h> // for pthread_jit_write_protect_np
+#endif
+
 OMR::CodeCacheMethodHeader *getCodeCacheMethodHeader(char *p, int searchLimit, J9JITExceptionTable * metaData);
 
 #define addFreeBlock2(start, end) addFreeBlock2WithCallSite((start), (end), __FILE__, __LINE__)

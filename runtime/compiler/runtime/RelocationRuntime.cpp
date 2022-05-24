@@ -80,6 +80,10 @@
 
 #include "exceptions/AOTFailure.hpp"
 
+#if defined(OSX) && defined(AARCH64)
+#include <pthread.h> // for pthread_jit_write_protect_np
+#endif
+
 char *TR_RelocationRuntime::_reloErrorCodeNames[] =
    {
    "relocationOK",                                     // 0
