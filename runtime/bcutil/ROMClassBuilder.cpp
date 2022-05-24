@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2021 IBM Corp. and others
+ * Copyright (c) 2001, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -254,14 +254,11 @@ BuildResult
 ROMClassBuilder::injectInterfaces(ClassFileOracle *classFileOracle)
 {
 	U_32 numOfInterfaces = 0;
-	if (classFileOracle->needsIdentityInterface()) {
-		J9_DECLARE_CONSTANT_UTF8(identityInterface, IDENTITY_OBJECT_NAME);
-		_interfaceInjectionInfo.interfaces[numOfInterfaces++] = (J9UTF8 *) &identityInterface;
-	}
 	_interfaceInjectionInfo.numOfInterfaces = numOfInterfaces;
 	return OK;
 }
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+
 BuildResult
 ROMClassBuilder::handleAnonClassName(J9CfrClassFile *classfile, bool *isLambda, ROMClassCreationContext *context)
 {
@@ -542,7 +539,6 @@ ROMClassBuilder::prepareAndLaydown( BufferManager *bufferManager, ClassFileParse
 #else /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 	SRPKeyProducer srpKeyProducer(&classFileOracle);
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
-
 	/*
 	 * The ROMClassWriter must be constructed before the SRPOffsetTable because it generates additional SRP keys.
 	 * There must be no SRP keys generated after the SRPOffsetTable is initialized.
@@ -1175,7 +1171,7 @@ ROMClassBuilder::finishPrepareAndLaydown(
  *                                    + UNUSED
  *
  *                                  + UNUSED
- *                                 + J9AccClassHasIdentity
+ *                                 + UNUSED
  *                                + J9AccClassIsValueBased
  *                              + J9AccClassHiddenOptionNestmate
  *
@@ -1262,14 +1258,6 @@ ROMClassBuilder::computeExtraModifiers(ClassFileOracle *classFileOracle, ROMClas
 	if (classFileOracle->isValueBased()) {
 		modifiers |= J9AccClassIsValueBased;
 	}
-
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-	if (classFileOracle->hasIdentityInterface()
-		|| classFileOracle->needsIdentityInterface()
-	) {
-		modifiers |= J9AccClassHasIdentity;
-	}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 	U_32 classNameindex = classFileOracle->getClassNameIndex();
 

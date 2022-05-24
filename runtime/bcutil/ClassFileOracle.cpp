@@ -37,7 +37,8 @@
 #include "j9protos.h"
 
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-#define VALUE_TYPES_MAJOR_VERSION 55
+/* major version 63 is Java 19 */
+#define VALUE_TYPES_MAJOR_VERSION 63
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 
 /* The array entries must be in same order as the enums in ClassFileOracle.hpp */
@@ -212,8 +213,8 @@ ClassFileOracle::ClassFileOracle(BufferManager *bufferManager, J9CfrClassFile *c
 	_needsStaticConstantInit(false),
 	_isRecord(false),
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-	_hasIdentityInterface(false),
-	_isIdentityInterfaceNeeded(false),
+	_hasIdentityFlagSet(false),
+	_isIdentityFlagNeeded(false),
 	_isValueType(false),
 	_hasNonStaticSynchronizedMethod(false),
 	_hasNonStaticFields(false),
@@ -260,6 +261,17 @@ ClassFileOracle::ClassFileOracle(BufferManager *bufferManager, J9CfrClassFile *c
 		 */ 
 		_hasNonEmptyConstructor = true;
 	}
+
+	if (J9_ARE_ALL_BITS_SET(_classFile->accessFlags, CFR_ACC_VALUE_TYPE | CFR_ACC_IDENTITY)) {
+		_buildResult = InvalidValueType;
+	} else {
+		if (J9_ARE_ALL_BITS_SET(_classFile->accessFlags, CFR_ACC_VALUE_TYPE)) {
+			_isValueType = true;
+		}
+		if (J9_ARE_ALL_BITS_SET(_classFile->accessFlags, CFR_ACC_IDENTITY)) {
+			_hasIdentityFlagSet = true;
+		}
+	}
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 	/* analyze class file */
@@ -290,7 +302,7 @@ ClassFileOracle::ClassFileOracle(BufferManager *bufferManager, J9CfrClassFile *c
 	
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 	if (OK == _buildResult) {
-		checkAndRecordIsIdentityInterfaceNeeded();
+		checkAndRecordIsIdentityFlagNeeded();
 	}
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	if (OK == _buildResult) {
@@ -723,9 +735,6 @@ public:
 	InterfaceVisitor(ClassFileOracle *classFileOracle, ConstantPoolMap *constantPoolMap) :
 		_classFileOracle(classFileOracle),
 		_constantPoolMap(constantPoolMap),
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-		_wasIdentityInterfaceSeen(false),
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 		_wasCloneableSeen(false),
 		_wasSerializableSeen(false)
 	{
@@ -745,28 +754,16 @@ public:
 			_wasSerializableSeen = true;
 		}
 #undef SERIALIZABLE_NAME
-
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-		if( _classFileOracle->isUTF8AtIndexEqualToString(cpIndex, IDENTITY_OBJECT_NAME, sizeof(IDENTITY_OBJECT_NAME)) ) {
-			_wasIdentityInterfaceSeen = true;
-		}
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 	}
 
 	bool wasCloneableSeen() const { return _wasCloneableSeen; }
 	bool wasSerializableSeen() const { return _wasSerializableSeen; }
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-	bool wasIdentityInterfaceSeen() const { return _wasIdentityInterfaceSeen; }
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 
 private:
 	ClassFileOracle *_classFileOracle;
 	ConstantPoolMap *_constantPoolMap;
 	bool _wasCloneableSeen;
 	bool _wasSerializableSeen;
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-	bool _wasIdentityInterfaceSeen;
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 };
 
 void
@@ -782,32 +779,23 @@ ClassFileOracle::walkInterfaces()
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 	_isCloneable = interfaceVisitor.wasCloneableSeen();
 	_isSerializable = interfaceVisitor.wasSerializableSeen();
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-	if (J9_ARE_ALL_BITS_SET(_classFile->accessFlags, CFR_ACC_VALUE_TYPE)) {
-		_isValueType = true;
-	}
-	_hasIdentityInterface = interfaceVisitor.wasIdentityInterfaceSeen();
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 }
 
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 void
-ClassFileOracle::checkAndRecordIsIdentityInterfaceNeeded()
+ClassFileOracle::checkAndRecordIsIdentityFlagNeeded()
 {
 	if (isValueType()) {
-		if (_hasIdentityInterface
-			|| J9_ARE_ANY_BITS_SET(_classFile->accessFlags, CFR_ACC_ABSTRACT | CFR_ACC_INTERFACE)
-			|| _hasNonStaticSynchronizedMethod
-		) {
+		if (_hasNonStaticSynchronizedMethod) {
 			_buildResult = InvalidValueType;
 		}
 	} else {
-		if (!_hasIdentityInterface
+		if (!_hasIdentityFlagSet
 			&& (getSuperClassNameIndex() != 0) /* j.l.Object has no superClass */
 		) {
 			if (J9_ARE_NO_BITS_SET(_classFile->accessFlags, CFR_ACC_ABSTRACT | CFR_ACC_INTERFACE)) {
 				/* For concrete classes, IdentityInterface is needed.  */
-				_isIdentityInterfaceNeeded = true;
+				_isIdentityFlagNeeded = true;
 			} else {
 				/**
 				 * For abstract classes, IdentityInterface is needed only when it has non-static fields,
@@ -817,14 +805,12 @@ ClassFileOracle::checkAndRecordIsIdentityInterfaceNeeded()
 					|| (_hasNonStaticSynchronizedMethod)
 					|| (_hasNonEmptyConstructor)
 				) {
-					_isIdentityInterfaceNeeded = true;
+					_isIdentityFlagNeeded = true;
 				}
 			}
-		}
-	}
-	if (J9_ARE_ALL_BITS_SET(_classFile->accessFlags, CFR_ACC_PERMITS_VALUE)) {
-		if (_hasIdentityInterface || _isIdentityInterfaceNeeded) {
-			_buildResult = InvalidValueType;
+			if (_isIdentityFlagNeeded) {
+				_classFile->accessFlags |= CFR_ACC_IDENTITY;
+			}
 		}
 	}
 }

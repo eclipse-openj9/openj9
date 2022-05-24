@@ -3023,12 +3023,14 @@ public class ValueTypeTests {
 	static public void testIdentityObjectOnValueType() throws Throwable {
 		String fields[] = {"longField:J"};
 		Class valueClass = ValueTypeGenerator.generateValueClass("testIdentityObjectOnValueType", fields);
-		assertFalse(Arrays.asList(valueClass.getInterfaces()).contains(IdentityObject.class));
+		assertTrue(valueClass.isPrimitiveClass());
+		assertTrue(valueClass.isValue());
 	}
 
 	@Test(priority=1)
 	static public void testIdentityObjectOnHeavyAbstract() throws Throwable {
-		assertTrue(Arrays.asList(HeavyAbstractClass.class.getInterfaces()).contains(IdentityObject.class));
+		assertFalse(HeavyAbstractClass.class.isValue());
+		assertFalse(HeavyAbstractClass.class.isPrimitiveClass());
 	}
 	public static abstract class HeavyAbstractClass {
 		/* Abstract class that has fields */
@@ -3064,10 +3066,6 @@ public class ValueTypeTests {
 	public static abstract class LightAbstractClass {
 		
 	}
-	
-	public static abstract class AbstractClassImplIdentityObject implements IdentityObject {
-		
-	}
 
 	private static abstract class InvisibleLightAbstractClass {
 		
@@ -3080,7 +3078,6 @@ public class ValueTypeTests {
 		}
 		Class valueClass = ValueTypeGenerator.generateValueClass(testName, superClassName, fields, extraClassFlags);
 		assertTrue(valueClass.isPrimitiveClass());
-		assertFalse(Arrays.asList(valueClass.getInterfaces()).contains(IdentityObject.class));
 	}
 
 	@Test(priority=1, expectedExceptions=IncompatibleClassChangeError.class)
@@ -3125,12 +3122,6 @@ public class ValueTypeTests {
 		valueTypeIdentityObjectTestHelper("testAbstractValueType", "java/lang/Object", ACC_ABSTRACT);
 	}
 
-	@Test(priority=1, expectedExceptions=IncompatibleClassChangeError.class)
-	static public void testValueTypeSubClassAbstractClassImplIdentityObject() throws Throwable {
-		String superClassName = AbstractClassImplIdentityObject.class.getName().replace('.', '/');
-		valueTypeIdentityObjectTestHelper("testValueTypeSubClassAbstractClassImplIdentityObject", superClassName, 0);
-	}
-	
 	@Test(priority=1, expectedExceptions=IllegalAccessError.class)
 	static public void testValueTypeSubClassInvisibleLightAbstractClass() throws Throwable {
 		String superClassName = InvisibleLightAbstractClass.class.getName().replace('.', '/');
@@ -3145,14 +3136,14 @@ public class ValueTypeTests {
 
 	@Test(priority = 1)
 	static public void testIdentityObjectOnJLObject() throws Throwable {
-		assertFalse(Arrays.asList(Object.class.getInterfaces()).contains(IdentityObject.class));
+		assertFalse(Object.class.isValue());
 	}
 
 	@Test(priority = 1)
 	static public void testIdentityObjectOnRef() throws Throwable {
 		String fields[] = {"longField:J"};
 		Class refClass = ValueTypeGenerator.generateRefClass("testIdentityObjectOnRef", fields);
-		assertTrue(Arrays.asList(refClass.getInterfaces()).contains(IdentityObject.class));
+		assertFalse(refClass.isValue());
 	}
 
 	@Test(priority=1)

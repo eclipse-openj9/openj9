@@ -1014,8 +1014,8 @@ class RecordComponentIterator
 	U_16 getPermittedSubclassesClassCount() const { return _isSealed ? _permittedSubclassesAttribute->numberOfClasses : 0; }
 	bool isValueBased() const { return _isClassValueBased; }
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-	bool needsIdentityInterface() const { return _isIdentityInterfaceNeeded; }
-	bool hasIdentityInterface() const { return _hasIdentityInterface; }
+	bool needsIdentityFlag() const { return _isIdentityFlagNeeded; }
+	bool hasIdentityFlagSet() const { return _hasIdentityFlagSet; }
 	bool isValueType() const { return _isValueType; }
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 
@@ -1119,8 +1119,8 @@ private:
 	bool _isSealed;
 	bool _isClassValueBased;
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-	bool _hasIdentityInterface;
-	bool _isIdentityInterfaceNeeded;
+	bool _hasIdentityFlagSet;
+	bool _isIdentityFlagNeeded;
 	bool _isValueType;
 	bool _hasNonStaticSynchronizedMethod;
 	bool _hasNonStaticFields;
@@ -1150,7 +1150,7 @@ private:
 	void checkHiddenClass();
 	void walkInterfaces();
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-	void checkAndRecordIsIdentityInterfaceNeeded();
+	void checkAndRecordIsIdentityFlagNeeded();
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	void walkMethods();
 	void walkRecordComponents(J9CfrAttributeRecord *attrib);
