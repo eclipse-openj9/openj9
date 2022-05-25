@@ -62,6 +62,9 @@
 #include "control/MethodToBeCompiled.hpp"
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
+#if defined(OSX) && defined(AARCH64)
+#include <pthread.h> // for pthread_jit_write_protect_np
+#endif
 
 // TODO: move this someplace common for RuntimeAssumptions.cpp and here
 #if defined(__IBMCPP__) && !defined(AIXPPC) && !defined(LINUXPPC)
