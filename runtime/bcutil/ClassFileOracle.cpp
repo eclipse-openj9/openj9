@@ -2622,14 +2622,14 @@ ClassFileOracle::shouldConvertInvokeVirtualToMethodHandleBytecodeForMethodRef(U_
 		}
 	}
 
-#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+#if (defined(J9VM_OPT_OPENJDK_METHODHANDLE) && (JAVA_SPEC_VERSION >= 11))
 	/* Invoking against java.lang.invoke.VarHandle. */
 	if (J9UTF8_LITERAL_EQUALS(targetClassName->bytes, targetClassName->slot1, "java/lang/invoke/VarHandle")
 	&& VM_VMHelpers::isPolymorphicVarHandleMethod((const U_8 *)name->bytes, name->slot1)
 	) {
 		result = CFR_BC_invokehandle;
 	}
-#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
+#endif /* (defined(J9VM_OPT_OPENJDK_METHODHANDLE) && (JAVA_SPEC_VERSION >= 11)) */
 
 	return result;
 }

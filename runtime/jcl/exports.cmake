@@ -631,11 +631,18 @@ if(J9VM_OPT_OPENJDK_METHODHANDLE)
 		Java_java_lang_invoke_MethodHandleNatives_getMemberVMInfo
 		Java_java_lang_invoke_MethodHandleNatives_setCallSiteTargetNormal
 		Java_java_lang_invoke_MethodHandleNatives_setCallSiteTargetVolatile
-		Java_java_lang_invoke_MethodHandleNatives_copyOutBootstrapArguments
-		Java_java_lang_invoke_MethodHandleNatives_clearCallSiteContext
 		Java_java_lang_invoke_MethodHandleNatives_getNamedCon
 		Java_java_lang_invoke_MethodHandleNatives_registerNatives
 	)
+	if(JAVA_SPEC_VERSION EQUAL 8)
+		omr_add_exports(jclse Java_java_lang_invoke_MethodHandleNatives_getConstant)
+	endif()
+	if(JAVA_SPEC_VERSION GREATER_EQUAL 11)
+		omr_add_exports(jclse
+			Java_java_lang_invoke_MethodHandleNatives_copyOutBootstrapArguments
+			Java_java_lang_invoke_MethodHandleNatives_clearCallSiteContext
+		)
+	endif()
 endif()
 
 # Shared by OpenJ9 & OpenJDK MethodHandle impl

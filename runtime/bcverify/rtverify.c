@@ -1538,7 +1538,7 @@ _illegalPrimitiveReturn:
 				type = POP;
 				/* Receiver compatible with MethodHandle? */
 				rc = isClassCompatibleByName(verifyData, type, (U_8 *)"java/lang/invoke/MethodHandle", sizeof("java/lang/invoke/MethodHandle") - 1, &reasonCode);
-#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+#if (defined(J9VM_OPT_OPENJDK_METHODHANDLE) && (JAVA_SPEC_VERSION >= 11))
 				if ((JBinvokehandle == bc) && (FALSE == rc)) {
 					if (BCV_ERR_INSUFFICIENT_MEMORY == reasonCode) {
 						goto _outOfMemoryError;
@@ -1546,7 +1546,7 @@ _illegalPrimitiveReturn:
 					/* Receiver compatible with VarHandle? */
 					rc = isClassCompatibleByName(verifyData, type, (U_8 *)"java/lang/invoke/VarHandle", sizeof("java/lang/invoke/VarHandle") - 1, &reasonCode);
 				}
-#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
+#endif /* (defined(J9VM_OPT_OPENJDK_METHODHANDLE) && (JAVA_SPEC_VERSION >= 11)) */
 				if (FALSE == rc) {
 					if (BCV_ERR_INSUFFICIENT_MEMORY == reasonCode) {
 						goto _outOfMemoryError;
