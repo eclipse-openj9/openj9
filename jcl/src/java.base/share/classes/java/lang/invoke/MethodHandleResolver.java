@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2020, 2021 IBM Corp. and others
+ * Copyright (c) 2020, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -230,9 +230,18 @@ final class MethodHandleResolver {
 		Object internalConstantPool = access.getInternalConstantPoolFromJ9Class(j9class);
 		Class<?> classObject = getClassFromJ9Class(j9class);
 
-		MethodType type = MethodTypeHelper.vmResolveFromMethodDescriptorString(methodDescriptor, access.getClassloader(classObject), null);
+		MethodType type;
+/*[IF JAVA_SPEC_VERSION >= 11]*/
+		type = MethodTypeHelper.vmResolveFromMethodDescriptorString(methodDescriptor, access.getClassloader(classObject), null);
 		final MethodHandles.Lookup lookup = new MethodHandles.Lookup(classObject);
 		inaccessibleTypeCheck(lookup, type);
+/*[ELSE] JAVA_SPEC_VERSION >= 11*/
+		try {
+			type = MethodTypeHelper.vmResolveFromMethodDescriptorString(methodDescriptor, access.getClassloader(classObject), null);
+		} catch(Throwable e) {
+			throw new BootstrapMethodError(e);
+		}
+/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 
 		int bsmIndex = UNSAFE.getShort(bsmData);
 		int bsmArgCount = UNSAFE.getShort(bsmData + BSM_ARGUMENT_COUNT_OFFSET);
@@ -261,9 +270,10 @@ final class MethodHandleResolver {
 		 * interpreter since result[0] will always be a MemberName. This will improve performance.
 		 */
 		result[0] = MethodHandleNatives.linkCallSite(classObject,
-				/*[IF JAVA_SPEC_VERSION < 18] The second formal parameter was removed in Java 18 by 8272614. */
+				/* The second parameter is not used in Java 8 and Java 18+ (JDK bug: 8272614). */
+				/*[IF (JAVA_SPEC_VERSION > 8) & (JAVA_SPEC_VERSION < 18)]*/
 				0,
-				/*[ENDIF] JAVA_SPEC_VERSION < 18 */
+				/*[ENDIF] (JAVA_SPEC_VERSION > 8) & (JAVA_SPEC_VERSION < 18) */
 				bsm, name, type, (Object)staticArgs, appendixResult);
 
 		/* result[1] stores a MethodHandle object, which is used as the last argument to the caller method. */
@@ -362,7 +372,7 @@ final class MethodHandleResolver {
 /*[ENDIF] OPENJDK_METHODHANDLES*/
 	}
 
-/*[IF OPENJDK_METHODHANDLES]*/
+/*[IF OPENJDK_METHODHANDLES & (JAVA_SPEC_VERSION >= 11)]*/
 	/**
 	 * Check access to the parameter and return classes within incoming MethodType.
 	 * 
@@ -390,7 +400,7 @@ final class MethodHandleResolver {
 			}
 		}
 	}
-/*[ENDIF] OPENJDK_METHODHANDLES*/
+/*[ENDIF] OPENJDK_METHODHANDLES & (JAVA_SPEC_VERSION >= 11)*/
 
 	@SuppressWarnings("unused")
 	@VMCONSTANTPOOL_METHOD
@@ -425,9 +435,11 @@ final class MethodHandleResolver {
 			throw new InternalError(com.ibm.oti.util.Msg.getString("K0686", cpRefKind)); //$NON-NLS-1$
 		}
 
+/*[IF JAVA_SPEC_VERSION >= 11]*/
 		final MethodHandles.Lookup lookup = new MethodHandles.Lookup(currentClass);
 		inaccessibleTypeCheck(lookup, mt);
-		
+/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
+
 		return MethodHandleNatives.linkMethodHandleConstant(currentClass, cpRefKind, referenceClazz, name, type);
 /*[ELSE] OPENJDK_METHODHANDLES*/
 		MethodType type = null;
