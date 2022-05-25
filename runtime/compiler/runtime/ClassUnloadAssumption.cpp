@@ -40,6 +40,10 @@
 #endif
 #include "omrformatconsts.h"
 
+#if defined(OSX) && defined(AARCH64)
+#include <pthread.h> // for pthread_jit_write_protect_np
+#endif
+
 extern TR::Monitor *assumptionTableMutex;
 
 bool

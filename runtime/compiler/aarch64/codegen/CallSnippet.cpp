@@ -35,6 +35,10 @@
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
 
+#if defined(OSX)
+#include <pthread.h> // for pthread_jit_write_protect_np
+#endif
+
 static uint8_t *storeArgumentItem(TR::InstOpCode::Mnemonic op, uint8_t *buffer, TR::RealRegister *reg, int32_t offset, TR::CodeGenerator *cg)
    {
    TR::RealRegister *stackPtr = cg->getStackPointerRegister();

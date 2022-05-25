@@ -144,6 +144,10 @@ static void printCompFailureInfo(TR::Compilation * comp, const char * reason);
 #include "runtime/IProfiler.hpp"
 #endif
 
+#if defined(OSX) && defined(AARCH64)
+#include <pthread.h> // for pthread_jit_write_protect_np
+#endif
+
 IDATA J9THREAD_PROC compilationThreadProc(void *jitconfig);
 IDATA J9THREAD_PROC protectedCompilationThreadProc(J9PortLibrary *portLib, TR::CompilationInfoPerThread*compInfoPT/*void *vmthread*/);
 

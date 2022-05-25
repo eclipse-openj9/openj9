@@ -29,6 +29,10 @@
 #include "runtime/CodeCacheManager.hpp"
 #include "runtime/J9Runtime.hpp"
 
+#if defined(OSX)
+#include <pthread.h> // for pthread_jit_write_protect_np
+#endif
+
 extern void arm64CodeSync(uint8_t *, uint32_t);
 
 #define DEBUG_ARM64_RECOMP false
