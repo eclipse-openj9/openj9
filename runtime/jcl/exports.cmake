@@ -636,8 +636,7 @@ if(J9VM_OPT_OPENJDK_METHODHANDLE)
 	)
 	if(JAVA_SPEC_VERSION EQUAL 8)
 		omr_add_exports(jclse Java_java_lang_invoke_MethodHandleNatives_getConstant)
-	endif()
-	if(JAVA_SPEC_VERSION GREATER_EQUAL 11)
+	else()
 		omr_add_exports(jclse
 			Java_java_lang_invoke_MethodHandleNatives_copyOutBootstrapArguments
 			Java_java_lang_invoke_MethodHandleNatives_clearCallSiteContext
