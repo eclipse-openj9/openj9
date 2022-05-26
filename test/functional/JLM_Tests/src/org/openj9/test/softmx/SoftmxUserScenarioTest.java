@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -49,7 +49,7 @@ public class SoftmxUserScenarioTest {
 	@Test
 	public void testSoftmxUserScenario() {
 		try {
-			long totalPhysicalMemory = ibmOSMBean.getTotalPhysicalMemory() / ( 1024 * 1024 ) ; // get the value in MB
+			long totalPhysicalMemory = ibmOSMBean.getTotalPhysicalMemorySize() / ( 1024 * 1024 ) ; // get the value in MB
 			long totalSwapSpace = ibmOSMBean.getTotalSwapSpaceSize() / (1024 * 1024 ); // get the value in MB
 
 			logger.debug( "Total physical memory : " + totalPhysicalMemory );
