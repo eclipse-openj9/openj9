@@ -37,6 +37,7 @@
 #include "ilgen/IlGenRequest.hpp"
 #include "ilgen/IlGeneratorMethodDetails.hpp"
 #include "ilgen/IlGeneratorMethodDetails_inlines.hpp"
+#include "infra/String.hpp"
 #include "optimizer/CallInfo.hpp"
 #include "optimizer/IdiomRecognitionUtils.hpp"
 #include "optimizer/Structure.hpp"
@@ -544,7 +545,7 @@ getSignatureForComputedCall(
    const char * const returnTypeEnd = nextSignatureArgument(returnType);
 
    // Put together the new signature.
-   snprintf(
+   TR::snprintfNoTrunc(
       computedCallSignature,
       signatureAllocSize,
       "(%s%.*s%s)%.*s",
