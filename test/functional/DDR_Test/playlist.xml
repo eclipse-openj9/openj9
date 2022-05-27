@@ -28,12 +28,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	-DTEST_RESROOT=$(TEST_RESROOT) -DRESOURCES_DIR=${RESOURCES_DIR} -DREPORTDIR=${REPORTDIR} -DOS=${OS} -DBITS=$(BITS) -DLIB_DIR=${LIB_DIR} \
 	-Dtest.list=$(Q)TestDDRExtensionGeneral$(Q) -DADDITIONALEXPORTS=$(ADDEXPORTS_JDKASM_UNNAMED) -f $(Q)$(REPORTDIR)$(D)tck_ddrext.xml$(Q); \
 	$(TEST_STATUS)</command>
-		<disables>
-			<disable>
-				<comment>https://github.com/eclipse-openj9/openj9/issues/14387</comment>
-				<platform>aarch64_mac.*</platform>
-			</disable>
-		</disables>
 		<levels>
 			<level>extended</level>
 		</levels>
@@ -51,12 +45,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	-DTEST_RESROOT=$(TEST_RESROOT) -DRESOURCES_DIR=${RESOURCES_DIR} -DREPORTDIR=${REPORTDIR} -DOS=${OS} -DBITS=$(BITS) -DLIB_DIR=${LIB_DIR} \
 	-Dtest.list=$(Q)TestClassExt$(Q) -DADDITIONALEXPORTS=$(ADDEXPORTS_JDKASM_UNNAMED) -f $(Q)$(REPORTDIR)$(D)tck_ddrext.xml$(Q); \
 	$(TEST_STATUS)</command>
-		<disables>
-			<disable>
-				<comment>https://github.com/eclipse-openj9/openj9/issues/14387</comment>
-				<platform>aarch64_mac.*</platform>
-			</disable>
-		</disables>
 		<levels>
 			<level>extended</level>
 		</levels>
@@ -74,12 +62,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	-DTEST_RESROOT=$(TEST_RESROOT) -DRESOURCES_DIR=${RESOURCES_DIR} -DREPORTDIR=${REPORTDIR} -DOS=${OS} -DBITS=$(BITS) -DLIB_DIR=${LIB_DIR} \
 	-Dtest.list=$(Q)TestCallsites$(Q) -DADDITIONALEXPORTS=$(ADDEXPORTS_JDKASM_UNNAMED) -f $(Q)$(REPORTDIR)$(D)tck_ddrext.xml$(Q); \
 	$(TEST_STATUS)</command>
-		<disables>
-			<disable>
-				<comment>https://github.com/eclipse-openj9/openj9/issues/14387</comment>
-				<platform>aarch64_mac.*</platform>
-			</disable>
-		</disables>
 		<levels>
 			<level>extended</level>
 		</levels>
@@ -97,12 +79,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	-DTEST_RESROOT=$(TEST_RESROOT) -DRESOURCES_DIR=${RESOURCES_DIR} -DREPORTDIR=${REPORTDIR} -DOS=${OS} -DBITS=$(BITS) -DLIB_DIR=${LIB_DIR} \
 	-Dtest.list=$(Q)TestJITExt$(Q) -DADDITIONALEXPORTS=$(ADDEXPORTS_JDKASM_UNNAMED) -DEXTRADUMPOPT=$(Q)-Xjit:count=0$(Q) -f $(Q)$(REPORTDIR)$(D)tck_ddrext.xml$(Q); \
 	$(TEST_STATUS)</command>
-		<disables>
-			<disable>
-				<comment>https://github.com/eclipse-openj9/openj9/issues/14387</comment>
-				<platform>aarch64_mac.*</platform>
-			</disable>
-		</disables>
 		<levels>
 			<level>extended</level>
 		</levels>
@@ -120,12 +96,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	-DTEST_RESROOT=$(TEST_RESROOT) -DRESOURCES_DIR=${RESOURCES_DIR} -DREPORTDIR=${REPORTDIR} -DOS=${OS} -DBITS=$(BITS) -DLIB_DIR=${LIB_DIR} \
 	-Dtest.list=$(Q)TestSharedClassesExt$(Q) -DADDITIONALEXPORTS=$(ADDEXPORTS_JDKASM_UNNAMED) -f $(Q)$(REPORTDIR)$(D)tck_ddrext.xml$(Q); \
 	$(TEST_STATUS)</command>
-		<disables>
-			<disable>
-				<comment>https://github.com/eclipse-openj9/openj9/issues/14387</comment>
-				<platform>aarch64_mac.*</platform>
-			</disable>
-		</disables>
 		<levels>
 			<level>extended</level>
 		</levels>
@@ -143,12 +113,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	-DTEST_RESROOT=$(TEST_RESROOT) -DRESOURCES_DIR=${RESOURCES_DIR} -DREPORTDIR=${REPORTDIR} -DOS=${OS} -DBITS=$(BITS) -DLIB_DIR=${LIB_DIR} \
 	-Dtest.list=$(Q)TestCollisionResilientHashtable$(Q) -DEXTRADUMPOPT=$(Q)-XX:stringTableListToTreeThreshold=64$(Q) -DADDITIONALEXPORTS=$(ADDEXPORTS_JDKASM_UNNAMED) -f $(Q)$(REPORTDIR)$(D)tck_ddrext.xml$(Q); \
 	$(TEST_STATUS)</command>
-		<disables>
-			<disable>
-				<comment>https://github.com/eclipse-openj9/openj9/issues/14387</comment>
-				<platform>aarch64_mac.*</platform>
-			</disable>
-		</disables>
 		<levels>
 			<level>extended</level>
 		</levels>
@@ -166,12 +130,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	-DTEST_RESROOT=$(TEST_RESROOT) -DRESOURCES_DIR=${RESOURCES_DIR} -DREPORTDIR=${REPORTDIR} -DOS=${OS} -DBITS=$(BITS) -DLIB_DIR=${LIB_DIR} \
 	-Dtest.list=$(Q)TestStackMap$(Q) -DEXTRADUMPOPT=$(Q)-Xdump:system:events=throw,filter=*HelperExceptionForCoreGeneration*$(Q) -DADDITIONALEXPORTS=$(ADDEXPORTS_JDKASM_UNNAMED) -f $(Q)$(REPORTDIR)$(D)tck_ddrext.xml$(Q); \
 	$(TEST_STATUS)</command>
-		<disables>
-			<disable>
-				<comment>https://github.com/eclipse-openj9/openj9/issues/14387</comment>
-				<platform>aarch64_mac.*</platform>
-			</disable>
-		</disables>
 		<levels>
 			<level>extended</level>
 		</levels>
@@ -194,12 +152,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	-DTEST_RESROOT=$(TEST_RESROOT) -DRESOURCES_DIR=${RESOURCES_DIR} -DREPORTDIR=${REPORTDIR} -DOS=${OS} -DBITS=$(BITS) -DLIB_DIR=${LIB_DIR} \
 	-Dtest.list=$(Q)TestDeadlockCase1$(Q) -DEXTRADUMPOPT=$(Q)-Xdump:system:events=throw,filter=*HelperExceptionForCoreGeneration*,request=exclusive$(Q) -DADDITIONALEXPORTS=$(ADDEXPORTS_JDKASM_UNNAMED) -f $(Q)$(REPORTDIR)$(D)tck_ddrext.xml$(Q); \
 	$(TEST_STATUS)</command>
-		<disables>
-			<disable>
-				<comment>https://github.com/eclipse-openj9/openj9/issues/14387</comment>
-				<platform>aarch64_mac.*</platform>
-			</disable>
-		</disables>
 		<levels>
 			<level>extended</level>
 		</levels>
@@ -225,12 +177,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	-DTEST_RESROOT=$(TEST_RESROOT) -DRESOURCES_DIR=${RESOURCES_DIR} -DREPORTDIR=${REPORTDIR} -DOS=${OS} -DBITS=$(BITS) -DLIB_DIR=${LIB_DIR} \
 	-Dtest.list=$(Q)TestDeadlockCase2$(Q) -DEXTRADUMPOPT=$(Q)-Xdump:system:events=throw,filter=*HelperExceptionForCoreGeneration*,request=exclusive$(Q) -DADDITIONALEXPORTS=$(ADDEXPORTS_JDKASM_UNNAMED) -f $(Q)$(REPORTDIR)$(D)tck_ddrext.xml$(Q); \
 	$(TEST_STATUS)</command>
-		<disables>
-			<disable>
-				<comment>https://github.com/eclipse-openj9/openj9/issues/14387</comment>
-				<platform>aarch64_mac.*</platform>
-			</disable>
-		</disables>
 		<levels>
 			<level>extended</level>
 		</levels>
@@ -256,12 +202,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	-DTEST_RESROOT=$(TEST_RESROOT) -DRESOURCES_DIR=${RESOURCES_DIR} -DREPORTDIR=${REPORTDIR} -DOS=${OS} -DBITS=$(BITS) -DLIB_DIR=${LIB_DIR} \
 	-Dtest.list=$(Q)TestDeadlockCase3$(Q) -DEXTRADUMPOPT=$(Q)-Xdump:system:events=throw,filter=*HelperExceptionForCoreGeneration*,request=exclusive$(Q) -DADDITIONALEXPORTS=$(ADDEXPORTS_JDKASM_UNNAMED) -f $(Q)$(REPORTDIR)$(D)tck_ddrext.xml$(Q); \
 	$(TEST_STATUS)</command>
-		<disables>
-			<disable>
-				<comment>https://github.com/eclipse-openj9/openj9/issues/14387</comment>
-				<platform>aarch64_mac.*</platform>
-			</disable>
-		</disables>
 		<levels>
 			<level>extended</level>
 		</levels>
@@ -287,12 +227,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	-DTEST_RESROOT=$(TEST_RESROOT) -DRESOURCES_DIR=${RESOURCES_DIR} -DREPORTDIR=${REPORTDIR} -DOS=${OS} -DBITS=$(BITS) -DLIB_DIR=${LIB_DIR} \
 	-Dtest.list=$(Q)TestDeadlockCase4$(Q) -DEXTRADUMPOPT=$(Q)-Xdump:system:events=throw,filter=*HelperExceptionForCoreGeneration*,request=exclusive$(Q) -DADDITIONALEXPORTS=$(ADDEXPORTS_JDKASM_UNNAMED) -f $(Q)$(REPORTDIR)$(D)tck_ddrext.xml$(Q); \
 	$(TEST_STATUS)</command>
-		<disables>
-			<disable>
-				<comment>https://github.com/eclipse-openj9/openj9/issues/14387</comment>
-				<platform>aarch64_mac.*</platform>
-			</disable>
-		</disables>
 		<levels>
 			<level>extended</level>
 		</levels>
@@ -318,12 +252,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	-DTEST_RESROOT=$(TEST_RESROOT) -DRESOURCES_DIR=${RESOURCES_DIR} -DREPORTDIR=${REPORTDIR} -DOS=${OS} -DBITS=$(BITS) -DLIB_DIR=${LIB_DIR} \
 	-Dtest.list=$(Q)TestDeadlockCase5$(Q) -DEXTRADUMPOPT=$(Q)-Xdump:system:events=throw,filter=*HelperExceptionForCoreGeneration*,request=exclusive$(Q) -DADDITIONALEXPORTS=$(ADDEXPORTS_JDKASM_UNNAMED) -f $(Q)$(REPORTDIR)$(D)tck_ddrext.xml$(Q); \
 	$(TEST_STATUS)</command>
-		<disables>
-			<disable>
-				<comment>https://github.com/eclipse-openj9/openj9/issues/14387</comment>
-				<platform>aarch64_mac.*</platform>
-			</disable>
-		</disables>
 		<levels>
 			<level>extended</level>
 		</levels>
@@ -349,12 +277,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	-DTEST_RESROOT=$(TEST_RESROOT) -DRESOURCES_DIR=${RESOURCES_DIR} -DREPORTDIR=${REPORTDIR} -DOS=${OS} -DBITS=$(BITS) -DLIB_DIR=${LIB_DIR} \
 	-Dtest.list=$(Q)TestDeadlockCase6$(Q) -DEXTRADUMPOPT=$(Q)-Xdump:system:events=throw,filter=*HelperExceptionForCoreGeneration*,request=exclusive$(Q) -DADDITIONALEXPORTS=$(ADDEXPORTS_JDKASM_UNNAMED) -f $(Q)$(REPORTDIR)$(D)tck_ddrext.xml$(Q); \
 	$(TEST_STATUS)</command>
-		<disables>
-			<disable>
-				<comment>https://github.com/eclipse-openj9/openj9/issues/14387</comment>
-				<platform>aarch64_mac.*</platform>
-			</disable>
-		</disables>
 		<levels>
 			<level>extended</level>
 		</levels>
@@ -375,12 +297,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	-DTEST_RESROOT=$(TEST_RESROOT) -DRESOURCES_DIR=${RESOURCES_DIR} -DREPORTDIR=${REPORTDIR} -DOS=${OS} -DBITS=$(BITS) -DLIB_DIR=${LIB_DIR} \
 	-Dtest.list=$(Q)TestFindExt$(Q) -DADDITIONALEXPORTS=$(ADDEXPORTS_JDKASM_UNNAMED) -f $(Q)$(REPORTDIR)$(D)tck_ddrext.xml$(Q); \
 	$(TEST_STATUS)</command>
-		<disables>
-			<disable>
-				<comment>https://github.com/eclipse-openj9/openj9/issues/14387</comment>
-				<platform>aarch64_mac.*</platform>
-			</disable>
-		</disables>
 		<levels>
 			<level>extended</level>
 		</levels>
