@@ -163,7 +163,7 @@ def checkout_pullrequest() {
                     REPO = urlList[3]
                     PR_ID = urlList[5]
                     break
-                case ~/[^\s\/#]+\/[^\s\/#]+#[0-9]+/:
+                case ~/[^\s\/#]+\/[^\s\/#]+#[^\s\/#]+/:
                     REPO = DEPEND.substring(DEPEND.indexOf("/") + 1, DEPEND.indexOf("#"));
                     PR_ID = DEPEND.substring(DEPEND.indexOf("#") + 1, DEPEND.length());
                     break
