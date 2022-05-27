@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -887,14 +887,13 @@ vmSignalHandler(struct J9PortLibrary* portLibrary, U_32 gpType, void* gpInfo, vo
 static void
 generateSystemDump(struct J9PortLibrary* portLibrary, void* gpInfo)
 {
-	char dumpName[EsMaxPath];
-	UDATA dumpCreateReturnCode;
-	IDATA getEnvForDumpReturnCode;
 	PORT_ACCESS_FROM_PORT(portLibrary);
+	IDATA getEnvForDumpReturnCode = j9sysinfo_get_env(J9DO_NOT_WRITE_DUMP, NULL, 0);
 
-	getEnvForDumpReturnCode = j9sysinfo_get_env(J9DO_NOT_WRITE_DUMP, NULL, 0);
-	if (getEnvForDumpReturnCode != 0) {
+	if (-1 == getEnvForDumpReturnCode) {
 		/* failed to find the env var, so write the dump */
+		char dumpName[EsMaxPath];
+		UDATA dumpCreateReturnCode = 0;
 		*dumpName = '\0';
 #ifdef LINUX
 		/* Ensure that userdata argument is NULL on Linux. */
