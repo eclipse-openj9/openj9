@@ -3908,7 +3908,6 @@ getVMHookInterface(J9JavaVM* vm);
 IDATA
 initializeVMHookInterface(J9JavaVM* vm);
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 /**
  * @brief Retrieves the address of the default value slot for a value class
  * @param clazz The class to retrieve the default address value for. Must be an initialized value class.
@@ -3916,7 +3915,6 @@ initializeVMHookInterface(J9JavaVM* vm);
  */
 j9object_t*
 getDefaultValueSlotAddress(J9Class* clazz);
-#endif /* #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 /**
 * @brief
