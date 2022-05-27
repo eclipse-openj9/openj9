@@ -51,7 +51,6 @@ typedef struct stru_NestedByteArray_Byte stru_NestedByteArray_Byte;
 typedef struct stru_Byte_NestedByteArray stru_Byte_NestedByteArray;
 typedef struct stru_NestedStruArray_Byte stru_NestedStruArray_Byte;
 typedef struct stru_Byte_NestedStruArray stru_Byte_NestedStruArray;
-typedef struct stru_Byte_Byte_Byte stru_Byte_Byte_Byte;
 
 typedef struct stru_Char_Char stru_Char_Char;
 typedef struct stru_Char_Char_Char stru_Char_Char_Char;
