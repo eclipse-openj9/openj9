@@ -636,9 +636,14 @@ public class TestRuntimeMXBean {
 		MBeanAttributeInfo[] attributes = mbi.getAttributes();
 		AssertJUnit.assertNotNull(attributes);
 		int attrNbr;
-		if (org.openj9.test.util.VersionCheck.major() >= 10) {
+		int verMajor = org.openj9.test.util.VersionCheck.major();
+		if (verMajor >= 10) {
 			// Pid added in Java 10
 			attrNbr = 26;
+			if (verMajor >= 19) {
+				// deprecated APIs are removed in 19
+				attrNbr -= 1;
+			}
 		} else {
 			// Java 8 - 9
 			attrNbr = 25;

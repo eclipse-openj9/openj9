@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2019 IBM Corp. and others
+ * Copyright (c) 1998, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -67,6 +67,7 @@ Java_com_ibm_java_lang_management_internal_RuntimeMXBeanImpl_isBootClassPathSupp
 	}
 }
 
+#if JAVA_SPEC_VERSION < 19
 /**
  * This is a static function.
  * @return process ID of the caller.
@@ -81,6 +82,7 @@ Java_com_ibm_lang_management_internal_ExtendedRuntimeMXBeanImpl_getProcessIDImpl
 	pid =  (jlong) j9sysinfo_get_pid();
 	return pid;
 }
+#endif /* JAVA_SPEC_VERSION < 19 */
 
 /**
  * @return vm idle state of the JVM

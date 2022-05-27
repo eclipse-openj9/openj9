@@ -62,6 +62,7 @@ public final class ExtendedRuntimeMXBeanImpl extends RuntimeMXBeanImpl implement
 		return os.getSystemLoadAverage();
 	}
 
+/*[IF JAVA_SPEC_VERSION < 19]*/
 	/**
 	 * {@inheritDoc}
 	 */
@@ -75,6 +76,7 @@ public final class ExtendedRuntimeMXBeanImpl extends RuntimeMXBeanImpl implement
 	}
 
 	private native long getProcessIDImpl();
+/*[ENDIF] JAVA_SPEC_VERSION < 19*/
 
 	/**
 	 * {@inheritDoc}
