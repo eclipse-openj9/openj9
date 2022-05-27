@@ -82,8 +82,13 @@ package com.ibm.lang.management;
  */
 public interface OperatingSystemMXBean extends com.sun.management.OperatingSystemMXBean {
 
+/*[IF JAVA_SPEC_VERSION < 19]*/
 	/**
+/*[IF JAVA_SPEC_VERSION >= 14]
 	 * Deprecated: use getTotalMemorySize()
+/*[ELSE] IF JAVA_SPEC_VERSION >= 14
+	 * Deprecated: use getTotalPhysicalMemorySize()
+/*[ENDIF] IF JAVA_SPEC_VERSION >= 14
 	 *
 	 * @return the total available physical memory on the system in bytes.
 	 */
@@ -93,6 +98,7 @@ public interface OperatingSystemMXBean extends com.sun.management.OperatingSyste
 	@Deprecated
 	/*[ENDIF] JAVA_SPEC_VERSION > 8 */
 	public long getTotalPhysicalMemory();
+/*[ENDIF] JAVA_SPEC_VERSION < 19 */
 
 	/**
 	 * Returns the collective capacity of the virtual processors in
@@ -119,6 +125,7 @@ public interface OperatingSystemMXBean extends com.sun.management.OperatingSyste
 	 */
 	public long getProcessCpuTime();
 
+/*[IF JAVA_SPEC_VERSION < 19]*/
 	/**
 	 * Deprecated. Use getProcessCpuTime()
 	 */
@@ -128,6 +135,7 @@ public interface OperatingSystemMXBean extends com.sun.management.OperatingSyste
 	@Deprecated
 	/*[ENDIF]*/
 	public long getProcessCpuTimeByNS();
+/*[ENDIF] JAVA_SPEC_VERSION < 19 */
 
 	/**
 	 * Returns the amount of virtual memory used by the process in bytes.
@@ -143,6 +151,7 @@ public interface OperatingSystemMXBean extends com.sun.management.OperatingSyste
 	@Override
 	public long getCommittedVirtualMemorySize();
 
+/*[IF JAVA_SPEC_VERSION < 19]*/
 	/**
 	 * Deprecated.  Use getCommittedVirtualMemorySize()
 	 */
@@ -152,6 +161,7 @@ public interface OperatingSystemMXBean extends com.sun.management.OperatingSyste
 	@Deprecated
 	/*[ENDIF]*/
 	public long getProcessVirtualMemorySize();
+/*[ENDIF] JAVA_SPEC_VERSION < 19 */
 
 	/**
 	 * Returns the amount of private memory used by the process in bytes.

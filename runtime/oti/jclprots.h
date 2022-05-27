@@ -114,8 +114,12 @@ extern J9_CFUNC jboolean JNICALL
 Java_com_ibm_java_lang_management_internal_RuntimeMXBeanImpl_isBootClassPathSupportedImpl (JNIEnv *env, jobject beanInstance);
 extern J9_CFUNC jobject JNICALL
 Java_com_ibm_java_lang_management_internal_RuntimeMXBeanImpl_getNameImpl (JNIEnv *env, jobject beanInstance);
+
+#if JAVA_SPEC_VERSION < 19
 extern J9_CFUNC jlong JNICALL
 Java_com_ibm_lang_management_internal_ExtendedRuntimeMXBeanImpl_getProcessIDImpl(JNIEnv *env, jclass clazz);
+#endif /* JAVA_SPEC_VERSION < 19 */
+
 extern J9_CFUNC jint JNICALL
 Java_com_ibm_lang_management_internal_ExtendedRuntimeMXBeanImpl_getVMIdleStateImpl(JNIEnv *env, jclass clazz);
 

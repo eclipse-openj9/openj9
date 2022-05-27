@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2012, 2020 IBM Corp. and others
+ * Copyright (c) 2012, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -84,6 +84,7 @@ public interface RuntimeMXBean extends java.lang.management.RuntimeMXBean {
 	 */
 	public double getCPULoad();
 
+/*[IF JAVA_SPEC_VERSION < 19]*/
 	/**
 	 * Returns the native process identifier that identifies the current
 	 * Java process to the operating system. The value is prone to being 
@@ -102,6 +103,7 @@ public interface RuntimeMXBean extends java.lang.management.RuntimeMXBean {
 	 */
 	/*[ENDIF] JAVA_SPEC_VERSION >= 10 */
 	public long getProcessID();
+/*[ENDIF] JAVA_SPEC_VERSION < 19*/
 
 	/**
 	 * Returns a system load average calculated over the minute preceding 

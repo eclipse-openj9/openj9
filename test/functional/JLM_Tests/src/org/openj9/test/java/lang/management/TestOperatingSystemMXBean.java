@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2005, 2020 IBM Corp. and others
+ * Copyright (c) 2005, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -189,20 +189,22 @@ public class TestOperatingSystemMXBean {
 			AssertJUnit.assertTrue(mbs.getAttribute(objName, "SystemLoadAverage") instanceof Double);
 
 			// The good IBM attributes ...
-			AssertJUnit.assertTrue(mbs.getAttribute(objName, "TotalPhysicalMemory") instanceof Long);
 			AssertJUnit.assertTrue(mbs.getAttribute(objName, "ProcessingCapacity") instanceof Integer);
 			AssertJUnit.assertTrue(mbs.getAttribute(objName, "ProcessCpuTime") instanceof Long);
 			AssertJUnit.assertTrue(mbs.getAttribute(objName, "FreePhysicalMemorySize") instanceof Long);
-			AssertJUnit.assertTrue(mbs.getAttribute(objName, "ProcessVirtualMemorySize") instanceof Long);
 			AssertJUnit.assertTrue(mbs.getAttribute(objName, "ProcessPrivateMemorySize") instanceof Long);
 			AssertJUnit.assertTrue(mbs.getAttribute(objName, "ProcessPhysicalMemorySize") instanceof Long);
 			AssertJUnit.assertTrue(mbs.getAttribute(objName, "TotalPhysicalMemorySize") instanceof Long);
-			AssertJUnit.assertTrue(mbs.getAttribute(objName, "ProcessCpuTimeByNS") instanceof Long);
 			AssertJUnit.assertTrue(mbs.getAttribute(objName, "SystemCpuLoad") instanceof Double);
 			AssertJUnit.assertTrue(mbs.getAttribute(objName, "CommittedVirtualMemorySize") instanceof Long);
 			AssertJUnit.assertTrue(mbs.getAttribute(objName, "TotalSwapSpaceSize") instanceof Long);
 			AssertJUnit.assertTrue(mbs.getAttribute(objName, "FreeSwapSpaceSize") instanceof Long);
 			AssertJUnit.assertTrue(mbs.getAttribute(objName, "ProcessCpuLoad") instanceof Double);
+			if (verMajor < 19) {
+				AssertJUnit.assertTrue(mbs.getAttribute(objName, "TotalPhysicalMemory") instanceof Long);
+				AssertJUnit.assertTrue(mbs.getAttribute(objName, "ProcessCpuTimeByNS") instanceof Long);
+				AssertJUnit.assertTrue(mbs.getAttribute(objName, "ProcessVirtualMemorySize") instanceof Long);
+			}
 			if (verMajor >= 14) {
 				AssertJUnit.assertTrue(mbs.getAttribute(objName, "CpuLoad") instanceof Double);
 				AssertJUnit.assertTrue(mbs.getAttribute(objName, "FreeMemorySize") instanceof Long);
@@ -287,14 +289,6 @@ public class TestOperatingSystemMXBean {
 		} catch (Exception e1) {
 			// expected
 		}
-	}
-
-	/**
-	 * IBM attribute
-	 */
-	@Test
-	public void testGetTotalPhysicalMemory() {
-		AssertJUnit.assertTrue(osb.getTotalPhysicalMemory() > 0);
 	}
 
 	/**
@@ -579,6 +573,10 @@ public class TestOperatingSystemMXBean {
 				attrNbr = 27;
 			} else {
 				attrNbr = 25;
+			}
+			if (verMajor >= 19) {
+				// deprecated APIs are removed in 19
+				attrNbr -= 3;
 			}
 		} else {
 			// Java 8 - 13

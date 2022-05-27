@@ -91,8 +91,13 @@ public final class ExtendedMemoryMXBeanImpl extends MemoryMXBeanImpl implements 
 		}
 	}
 
+/*[IF JAVA_SPEC_VERSION < 19]*/
 	/**
-	 * Deprecated. Use getTotalPhysicalMemorySize().
+/*[IF JAVA_SPEC_VERSION >= 14]
+	 * Deprecated. Use com.sun.management.OperatingSystemMXBean.getTotalMemorySize().
+/*[ELSE] JAVA_SPEC_VERSION >= 14
+	 * Deprecated. Use com.sun.management.OperatingSystemMXBean.getTotalPhysicalMemorySize().
+/*[ENDIF] JAVA_SPEC_VERSION >= 14
 	 */
 	/*[IF JAVA_SPEC_VERSION > 8]*/
 	@Deprecated(forRemoval = true, since = "1.8")
@@ -106,7 +111,9 @@ public final class ExtendedMemoryMXBeanImpl extends MemoryMXBeanImpl implements 
 		return osinstance.getTotalPhysicalMemorySize();
 		/*[ENDIF] JAVA_SPEC_VERSION >= 14 */
 	}
+/*[ENDIF] JAVA_SPEC_VERSION < 19 */
 
+/*[IF JAVA_SPEC_VERSION < 20]*/
 	/*[IF JAVA_SPEC_VERSION > 8]*/
 	@Deprecated(forRemoval = true, since = "19")
 	/*[ENDIF] JAVA_SPEC_VERSION > 8 */
@@ -124,6 +131,7 @@ public final class ExtendedMemoryMXBeanImpl extends MemoryMXBeanImpl implements 
 	public long getUsedPhysicalMemory() {
 		return osinstance.getTotalPhysicalMemorySize() - osinstance.getFreePhysicalMemorySize();
 	}
+/*[ENDIF] JAVA_SPEC_VERSION < 20 */
 
 	/**
 	 * {@inheritDoc}

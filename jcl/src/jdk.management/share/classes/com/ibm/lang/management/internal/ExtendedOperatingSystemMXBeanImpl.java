@@ -257,7 +257,10 @@ public class ExtendedOperatingSystemMXBeanImpl extends OperatingSystemMXBeanImpl
 		/*[IF JAVA_SPEC_VERSION > 8]*/
 		@SuppressWarnings("removal")
 		/*[ENDIF] JAVA_SPEC_VERSION > 8 */
-		long cpuTime = getProcessCpuTimeByNS();
+		long cpuTime = getProcessCpuTime();
+		if (CpuTimePrecisionHolder.precision == CpuTimePrecisionHolder.NO_SCALE_FACTOR) {
+			cpuTime *= CpuTimePrecisionHolder.NS_SCALE_FACTOR;
+		}
 		latestCpuTime = cpuTime;
 
 		/* First call to this method should -1, since we don't have any previous
@@ -322,8 +325,9 @@ public class ExtendedOperatingSystemMXBeanImpl extends OperatingSystemMXBeanImpl
 		return this.getProcessCpuTimeImpl() * CpuTimePrecisionHolder.precision;
 	}
 
+/*[IF JAVA_SPEC_VERSION < 19]*/
 	/**
-	 * Deprecated. Use getProcessCpuTime()
+	 * {@inheritDoc}
 	 */
 	/*[IF JAVA_SPEC_VERSION > 8]
 	@Deprecated(forRemoval = true, since = "1.8")
@@ -339,6 +343,7 @@ public class ExtendedOperatingSystemMXBeanImpl extends OperatingSystemMXBeanImpl
 		}
 		return cpuTimeNS;
 	}
+/*[ENDIF] JAVA_SPEC_VERSION < 19 */
 
 	/**
 	 * Returns total amount of time the process has been scheduled or
@@ -411,8 +416,9 @@ public class ExtendedOperatingSystemMXBeanImpl extends OperatingSystemMXBeanImpl
 		return this.getProcessVirtualMemorySizeImpl();
 	}
 
+/*[IF JAVA_SPEC_VERSION < 19]*/
 	/**
-	 * Deprecated: use getCommittedVirtualMemorySize()
+	 * {@inheritDoc}
 	 */
 	/*[IF JAVA_SPEC_VERSION > 8]*/
 	@Deprecated(forRemoval = true, since = "1.8")
@@ -424,6 +430,7 @@ public class ExtendedOperatingSystemMXBeanImpl extends OperatingSystemMXBeanImpl
 	public final long getProcessVirtualMemorySize() {
 		return this.getProcessVirtualMemorySizeImpl();
 	}
+/*[ENDIF] JAVA_SPEC_VERSION < 19 */
 
 	/**
 	 * Returns the amount of virtual memory used by the process in bytes,
@@ -457,8 +464,9 @@ public class ExtendedOperatingSystemMXBeanImpl extends OperatingSystemMXBeanImpl
 	}
 	/*[ENDIF] JAVA_SPEC_VERSION < 14 */
 
+/*[IF JAVA_SPEC_VERSION < 19]*/
 	/**
-	 * Deprecated: use getTotalPhysicalMemorySize()
+	 * {@inheritDoc}
 	 */
 	/*[IF JAVA_SPEC_VERSION > 8]*/
 	@Deprecated(forRemoval = true, since = "1.8")
@@ -470,6 +478,7 @@ public class ExtendedOperatingSystemMXBeanImpl extends OperatingSystemMXBeanImpl
 	public final long getTotalPhysicalMemory() {
 		return this.getTotalPhysicalMemoryImpl();
 	}
+/*[ENDIF] JAVA_SPEC_VERSION < 19 */
 
 	/**
 	 * @return the number of bytes used for physical memory
