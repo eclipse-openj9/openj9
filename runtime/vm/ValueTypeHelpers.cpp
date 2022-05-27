@@ -250,16 +250,18 @@ areValueTypesEnabled(J9JavaVM *vm)
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 }
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 j9object_t*
 getDefaultValueSlotAddress(J9Class* clazz)
 {
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 	Assert_VM_true(J9_IS_J9CLASS_VALUETYPE(clazz));
 	Assert_VM_true(J9ClassInitSucceeded == clazz->initializeStatus); /* make sure class has been initialized (otherwise defaultValue won't exist) */
 	j9object_t* result = &clazz->flattenedClassCache->defaultValue;
 	Assert_VM_notNull(*result);
 	return result;
-}
+#else /* #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+	return NULL;
 #endif /* #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+}
 
 } /* extern "C" */
