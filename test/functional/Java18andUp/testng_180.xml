@@ -23,7 +23,7 @@
 -->
 
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
-<suite name="Java18andUp test suite" parallel="none" verbose="2">
+<suite name="Java18 test suite" parallel="none" verbose="2">
 	<test name="Jep419Tests_testClinkerFfi_DownCall">
 		<classes>
 			<class name="org.openj9.test.jep419.downcall.InvalidDownCallTests"/>
@@ -41,6 +41,11 @@
 	<test name="Jep419Tests_testClinkerFfi_VaList">
 		<classes>
 			<class name="org.openj9.test.jep419.valist.VaListTests"/>
+		</classes>
+	</test>
+	<test name="CloseScope0Tests">
+		<classes>
+			<class name="org.openj9.test.foreignMemoryAccess.TestCloseScope0"/>
 		</classes>
 	</test>
 </suite>

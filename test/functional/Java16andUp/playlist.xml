@@ -153,7 +153,7 @@
 			--add-opens java.base/java.lang=ALL-UNNAMED \
 			--add-modules jdk.incubator.foreign \
 			-cp $(Q)$(LIB_DIR)$(D)asm.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
-			org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
+			org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng_160.xml$(Q) \
 			-testnames CloseScope0Tests \
 			-groups $(TEST_GROUP) \
 			-excludegroups $(DEFAULT_EXCLUDE); \
@@ -166,7 +166,7 @@
 			<group>functional</group>
 		</groups>
 		<versions>
-			<version>16+</version>
+			<version>16</version>
 		</versions>
 	</test>
 
