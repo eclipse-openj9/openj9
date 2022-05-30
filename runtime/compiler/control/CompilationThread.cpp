@@ -8361,6 +8361,7 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
                options->setOption(TR_DisableEDO);
                options->setDisabled(OMR::invariantArgumentPreexistence, true);
                options->setOption(TR_DisableHierarchyInlining);
+               options->setOption(TR_DisableKnownObjectTable);
                if (options->getInitialBCount() == 0 || options->getInitialCount() == 0)
                   options->setOption(TR_DisableDelayRelocationForAOTCompilations, true);
 
