@@ -1617,8 +1617,9 @@ J9NLS_CFR_ERR_PERMITS_VALUE_ON_FINAL_CLASS=Az oszt\u00e1ly ACC_FINAL \u00e9s ACC
 J9NLS_CFR_ERR_PERMITS_VALUE_ON_FINAL_CLASS.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_PERMITS_VALUE_ON_FINAL_CLASS.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_PERMITS_VALUE_ON_FINAL_CLASS.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_PERMITS_VALUE_ON_NON_ABSTRACT_CLASS=Access flag ACC_PERMITS_VALUE should not be set on a non-abstract class.
+J9NLS_CFR_ERR_PERMITS_VALUE_ON_NON_ABSTRACT_CLASS=Az ACC_PERMITS_VALUE hozz\u00e1f\u00e9r\u00e9s jelz\u0151t nem szabad be\u00e1ll\u00edtani nem-absztrakt oszt\u00e1lyon.
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_PERMITS_VALUE_ON_NON_ABSTRACT_CLASS.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_PERMITS_VALUE_ON_NON_ABSTRACT_CLASS.system_action=The JVM will throw a verification or class loading-related exception such as java.lang.ClassFormatError.
