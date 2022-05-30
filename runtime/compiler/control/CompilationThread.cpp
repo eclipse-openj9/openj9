@@ -2667,33 +2667,8 @@ void TR::CompilationInfo::releaseCompMonitorUntilNotifiedOnCRMonitor(J9VMThread 
    acquireCompMonitor(vmThread);
    }
 
-void TR::CompilationInfo::prepareForCheckpoint()
+bool TR::CompilationInfo::suspendCompThreadsForCheckpoint(J9VMThread *vmThread)
    {
-   J9JavaVM   *vm       = _jitConfig->javaVM;
-   J9VMThread *vmThread = vm->internalVMFunctions->currentVMThread(vm);
-
-   if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCheckpointRestore))
-      TR_VerboseLog::writeLineLocked(TR_Vlog_CHECKPOINT_RESTORE, "Preparing for checkpoint");
-
-   {
-   ReleaseVMAccessAndAcquireMonitor suspendCompThreadsForCheckpoint(vmThread, getCompilationMonitor());
-
-   if (TR::Options::_sleepMsBeforeCheckpoint)
-      {
-      if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCheckpointRestore))
-         TR_VerboseLog::writeLineLocked(TR_Vlog_CHECKPOINT_RESTORE, "Sleeping for %d ms", TR::Options::_sleepMsBeforeCheckpoint);
-
-      releaseCompMonitor(vmThread);
-      j9thread_sleep(static_cast<int64_t>(TR::Options::_sleepMsBeforeCheckpoint));
-      acquireCompMonitor(vmThread);
-      }
-
-
-   if (shouldCheckpointBeInterrupted())
-      return;
-
-   TR_ASSERT_FATAL(!isCheckpointInProgress(), "Checkpoint already in progress!\n");
-
    /* Indicate to compilation threads that they should suspend for checkpoint/restore */
    setSuspendThreadsForCheckpoint();
 
@@ -2712,29 +2687,54 @@ void TR::CompilationInfo::prepareForCheckpoint()
       TR::CompilationInfoPerThread *curCompThreadInfoPT = _arrayOfCompilationInfoPerThread[i];
       if (!curCompThreadInfoPT->isDiagnosticThread())
          {
-         do
-            {
-            /* Determine whether to wait on the CR Monitor. */
-            if (!shouldCheckpointBeInterrupted()
+         /* Determine whether to wait on the CR Monitor. */
+         while (!shouldCheckpointBeInterrupted()
                 && curCompThreadInfoPT->getCompilationThreadState() != COMPTHREAD_SUSPENDED)
-               {
-               releaseCompMonitorUntilNotifiedOnCRMonitor(vmThread);
-               }
-            else
-               {
-               break;
-               }
+            {
+            releaseCompMonitorUntilNotifiedOnCRMonitor(vmThread);
             }
-         while(true);
          }
 
       /* Stop cycling through the threads if checkpointing should be interrupted. */
       if (shouldCheckpointBeInterrupted())
-         break;
+         return false;
       }
 
-   if (!shouldCheckpointBeInterrupted())
-      setReadyForCheckpointRestore();
+   return true;
+   }
+
+void TR::CompilationInfo::prepareForCheckpoint()
+   {
+   J9JavaVM   *vm       = _jitConfig->javaVM;
+   J9VMThread *vmThread = vm->internalVMFunctions->currentVMThread(vm);
+
+   if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCheckpointRestore))
+      TR_VerboseLog::writeLineLocked(TR_Vlog_CHECKPOINT_RESTORE, "Preparing for checkpoint");
+
+   {
+   ReleaseVMAccessAndAcquireMonitor suspendCompThreadsForCheckpointCriticalSection(vmThread, getCompilationMonitor());
+
+   if (TR::Options::_sleepMsBeforeCheckpoint)
+      {
+      if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCheckpointRestore))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_CHECKPOINT_RESTORE, "Sleeping for %d ms", TR::Options::_sleepMsBeforeCheckpoint);
+
+      releaseCompMonitor(vmThread);
+      j9thread_sleep(static_cast<int64_t>(TR::Options::_sleepMsBeforeCheckpoint));
+      acquireCompMonitor(vmThread);
+      }
+
+   /* Check if the checkpoint is interrupted */
+   if (shouldCheckpointBeInterrupted())
+      return;
+
+   TR_ASSERT_FATAL(!isCheckpointInProgress(), "Checkpoint already in progress!\n");
+
+   /* Suspend compilation threads for checkpoint */
+   if (!suspendCompThreadsForCheckpoint(vmThread))
+      return;
+
+   setReadyForCheckpointRestore();
    }
 
    if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCheckpointRestore))
@@ -2747,7 +2747,7 @@ void TR::CompilationInfo::prepareForRestore()
       TR_VerboseLog::writeLineLocked(TR_Vlog_CHECKPOINT_RESTORE, "Preparing for restore");
 
    {
-   OMR::CriticalSection resumeCompThreadsForRestore(getCompilationMonitor());
+   OMR::CriticalSection resumeCompThreadsCriticalSection(getCompilationMonitor());
 
    TR_ASSERT_FATAL(readyForCheckpointRestore(), "Not ready for Checkpoint Restore\n");
 

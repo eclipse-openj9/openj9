@@ -1501,6 +1501,17 @@ private:
     * @param vmThread The J9VMThread
     */
    void releaseCompMonitorUntilNotifiedOnCRMonitor(J9VMThread *vmThread) throw();
+
+   /**
+    * @brief Suspend compilation threads for checkpoint.
+    *
+    * IMPORTANT: Must be called with the comp monitor in hand.
+    *
+    * @param vmThread The J9VMThread
+    *
+    * @return false false if the checkpoint is interrupted, true otherwise.
+    */
+   bool suspendCompThreadsForCheckpoint(J9VMThread *vmThread);
 #endif
    }; // CompilationInfo
 }
