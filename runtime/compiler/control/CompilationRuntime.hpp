@@ -1485,6 +1485,23 @@ private:
    JITServerAOTCacheMap *_JITServerAOTCacheMap;
    JITServerAOTDeserializer *_JITServerAOTDeserializer;
 #endif /* defined(J9VM_OPT_JITSERVER) */
+
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+   /**
+    * @brief Release the comp monitor in order to wait on the CR Monitor;
+    *        release the CR Monitor and reacquire the comp monitor once notified.
+    *
+    * IMPORTANT: There should be no return, or C++ exception thrown, after
+    *            releasing the Comp Monitor until it is re-acquired.
+    *            The Comp Monitor may be acquired in an OMR::CriticalSection
+    *            object; a return, or thrown exception, will destruct this
+    *            object as part leaving the scope, or stack unwinding, which
+    *            will attempt to release the monitor in its destructor.
+    *
+    * @param vmThread The J9VMThread
+    */
+   void releaseCompMonitorUntilNotifiedOnCRMonitor(J9VMThread *vmThread) throw();
+#endif
    }; // CompilationInfo
 }
 

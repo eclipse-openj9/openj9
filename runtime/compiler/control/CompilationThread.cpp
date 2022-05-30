@@ -2641,6 +2641,32 @@ class ReleaseVMAccessAndAcquireMonitor
    TR::Monitor *_monitor;
    };
 
+/* IMPORTANT: There should be no return, or C++ exception thrown, after
+ *            releasing the Comp Monitor below until it is re-acquired.
+ *            The Comp Monitor may be acquired in an OMR::CriticalSection
+ *            object; a return, or thrown exception, will destruct this
+ *            object as part leaving the scope, or stack unwinding, which
+ *            will attempt to release the monitor in its destructor.
+ */
+void TR::CompilationInfo::releaseCompMonitorUntilNotifiedOnCRMonitor(J9VMThread *vmThread) throw()
+   {
+   TR_ASSERT_FATAL(getCompilationMonitor()->owned_by_self(),
+                   "releaseCompMonitorUntilNotifiedOnCRMonitor should not be called without the Comp Monitor!\n");
+
+   /* Acquire the CR monitor */
+   acquireCRMonitor();
+
+   /* Release the Comp Monitor before waiting */
+   releaseCompMonitor(vmThread);
+
+   /* Wait until notified */
+   waitOnCRMonitor();
+
+   /* Release CR Monitor and re-acquire the Comp Monitor */
+   releaseCRMonitor();
+   acquireCompMonitor(vmThread);
+   }
+
 void TR::CompilationInfo::prepareForCheckpoint()
    {
    J9JavaVM   *vm       = _jitConfig->javaVM;
@@ -2688,30 +2714,11 @@ void TR::CompilationInfo::prepareForCheckpoint()
          {
          do
             {
-            /* Determine whether to wait on the CR Monitor.
-             *
-             * IMPORTANT: There should be no return, or C++ exception thrown, after
-             *            releasing the Comp Monitor below until it is re-acquired.
-             *            The Comp Monitor was acquired in an OMR::CriticalSection
-             *            object; a return, or thrown exception, will destruct this
-             *            object as part leaving the scope, or stack unwinding, which
-             *            will attempt to release the monitor in its destructor.
-             */
+            /* Determine whether to wait on the CR Monitor. */
             if (!shouldCheckpointBeInterrupted()
                 && curCompThreadInfoPT->getCompilationThreadState() != COMPTHREAD_SUSPENDED)
                {
-               /* Acquire the CR monitor */
-               acquireCRMonitor();
-
-               /* Release the Comp Monitor before waiting */
-               releaseCompMonitor(vmThread);
-
-               /* Wait until notified */
-               waitOnCRMonitor();
-
-               /* Release CR Monitor and re-acquire the Comp Monitor */
-               releaseCRMonitor();
-               acquireCompMonitor(vmThread);
+               releaseCompMonitorUntilNotifiedOnCRMonitor(vmThread);
                }
             else
                {
