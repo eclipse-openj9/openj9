@@ -45,6 +45,9 @@
 #include "codegen/Instruction.hpp"
 #include "codegen/PrivateLinkage.hpp"
 #include "compile/CompilationTypes.hpp"
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+#include "control/CompileBeforeCheckpoint.hpp"
+#endif
 #include "compile/ResolvedMethod.hpp"
 #include "control/JitDump.hpp"
 #include "control/Recompilation.hpp"
@@ -2667,6 +2670,59 @@ void TR::CompilationInfo::releaseCompMonitorUntilNotifiedOnCRMonitor(J9VMThread 
    acquireCompMonitor(vmThread);
    }
 
+bool TR::CompilationInfo::compileMethodsForCheckpoint(J9VMThread *vmThread)
+   {
+   if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCheckpointRestore))
+      TR_VerboseLog::writeLineLocked(TR_Vlog_CHECKPOINT_RESTORE, "Preparing to compile methods for checkpoint");
+
+   /* Indicate to compilation threads that they should compile methods for checkpoint/restore */
+   setCompileMethodsForCheckpoint();
+
+   /* Queue compilation of interpreted methods */
+   try
+      {
+      TR_J9VMBase *fej9 = TR_J9VMBase::get(vmThread->javaVM->jitConfig, vmThread);
+
+      TR::RawAllocator rawAllocator(_jitConfig->javaVM);
+      J9::SegmentAllocator segmentAllocator(MEMORY_TYPE_JIT_SCRATCH_SPACE | MEMORY_TYPE_VIRTUAL, *_jitConfig->javaVM);
+      J9::SystemSegmentProvider regionSegmentProvider(
+         1 << 20,
+         1 << 20,
+         TR::Options::getScratchSpaceLimit(),
+         segmentAllocator,
+         rawAllocator
+         );
+      TR::Region compForCheckpointRegion(regionSegmentProvider, rawAllocator);
+
+      TR::CompileBeforeCheckpoint compileBeforeCheckpoint(compForCheckpointRegion, vmThread, fej9, this);
+      compileBeforeCheckpoint.collectAndCompileMethodsBeforeCheckpoint();
+      }
+   catch (const std::exception &e)
+      {
+      if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCheckpointRestore))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_CHECKPOINT_RESTORE, "Failed to collect methods for compilation before checkpoint");
+      }
+
+   /* Determine whether to wait on the CR Monitor. */
+   while (getMethodQueueSize() && !shouldCheckpointBeInterrupted())
+      {
+      releaseCompMonitorUntilNotifiedOnCRMonitor(vmThread);
+      }
+
+   /* Abort if checkpoint should be interrupted. */
+   if (shouldCheckpointBeInterrupted())
+      {
+      if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCheckpointRestore))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_CHECKPOINT_RESTORE, "Aborting; checkpoint is interrupted");
+      return false;
+      }
+
+   if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCheckpointRestore))
+      TR_VerboseLog::writeLineLocked(TR_Vlog_CHECKPOINT_RESTORE, "Done compiling methods for checkpoint");
+
+   return true;
+   }
+
 bool TR::CompilationInfo::suspendCompThreadsForCheckpoint(J9VMThread *vmThread)
    {
    if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCheckpointRestore))
@@ -2739,6 +2795,11 @@ void TR::CompilationInfo::prepareForCheckpoint()
       return;
 
    TR_ASSERT_FATAL(!isCheckpointInProgress(), "Checkpoint already in progress!\n");
+
+   /* Compile methods for checkpoint */
+   if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableCompilationBeforeCheckpoint))
+      if (!compileMethodsForCheckpoint(vmThread))
+         return;
 
    /* Suspend compilation threads for checkpoint */
    if (!suspendCompThreadsForCheckpoint(vmThread))
@@ -4044,14 +4105,24 @@ TR::CompilationInfoPerThread::run()
 void
 TR::CompilationInfoPerThread::waitForWork()
    {
-   TR::CompilationInfo * compInfo = getCompilationInfo();
    J9VMThread  * compThread = getCompilationThread();
-   compInfo->debugPrint(compThread, "\tcompilation thread waiting for work\n");
-   compInfo->debugPrint(compThread, "wait-CM\n");
-   compInfo->incNumCompThreadsJobless();
-   setLastTimeThreadWentToSleep(compInfo->getPersistentInfo()->getElapsedTime());
+   _compInfo.debugPrint(compThread, "\tcompilation thread waiting for work\n");
+   _compInfo.debugPrint(compThread, "wait-CM\n");
+   _compInfo.incNumCompThreadsJobless();
+   setLastTimeThreadWentToSleep(_compInfo.getPersistentInfo()->getElapsedTime());
    setCompilationThreadState(COMPTHREAD_WAITING);
-   compInfo->waitOnCompMonitor(compThread);
+
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+   // Notify the thread waiting in the checkpoint hook.
+   if (_compInfo.shouldCompileMethodsForCheckpoint() && (0 == _compInfo.getMethodQueueSize()))
+      {
+      _compInfo.acquireCRMonitor();
+      _compInfo.getCRMonitor()->notifyAll();
+      _compInfo.releaseCRMonitor();
+      }
+#endif
+
+   _compInfo.waitOnCompMonitor(compThread);
    if (getCompilationThreadState() == COMPTHREAD_WAITING)
       {
       /*
@@ -4060,8 +4131,8 @@ TR::CompilationInfoPerThread::waitForWork()
        */
       setCompilationThreadState(COMPTHREAD_ACTIVE);
       }
-   compInfo->decNumCompThreadsJobless();
-   compInfo->debugPrint(compThread, "+CM\n");
+   _compInfo.decNumCompThreadsJobless();
+   _compInfo.debugPrint(compThread, "+CM\n");
    }
 
 void
@@ -7537,8 +7608,17 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
             && !_jitConfig->inlineFieldWatches;
          }
 
-      bool sharedClassTest = eligibleForRelocatableCompile &&
-                             !TR::Options::getAOTCmdLineOptions()->getOption(TR_NoStoreAOT);
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+      _compInfo.acquireCompMonitor(vmThread);
+      bool checkpointInProgress = _compInfo.isCheckpointInProgress();
+      _compInfo.releaseCompMonitor(vmThread);
+#endif
+
+      bool sharedClassTest = eligibleForRelocatableCompile
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+                             && !checkpointInProgress
+#endif
+                             && !TR::Options::getAOTCmdLineOptions()->getOption(TR_NoStoreAOT);
 
       bool isSecondAOTRun =
          !TR::Options::getAOTCmdLineOptions()->getOption(TR_NoAotSecondRunDetection) &&
