@@ -133,6 +133,7 @@ int32_t J9::Options::_sharedROMClassCacheNumPartitions = 16;
 int32_t J9::Options::_reconnectWaitTimeMs = 1000;
 int32_t J9::Options::_highActiveThreadThreshold = -1;
 int32_t J9::Options::_veryHighActiveThreadThreshold = -1;
+bool J9::Options::_remoteAOTRelocateImmediately = false;
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
 int32_t J9::Options::_interpreterSamplingThreshold = 300;
@@ -948,6 +949,10 @@ TR::OptionTable OMR::Options::_feOptions[] = {
    {"regmap",             0, SET_JITCONFIG_RUNTIME_FLAG(J9JIT_CG_REGISTER_MAPS) },
    {"relaxedCompilationLimitsSampleThreshold=", "R<nnn>\tGlobal samples below this threshold means we can use higher compilation limits",
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_relaxedCompilationLimitsSampleThreshold, 0, "F%d", NOT_IN_SUBSET },
+#if defined(J9VM_OPT_JITSERVER)
+   {"remoteAOTRelocateImmediately", " \tRelocate AOT methods received from JITServer immediately when disableDelayRelocationForAOTCompilations is set",
+        TR::Options::setStaticBool, (intptr_t)&TR::Options::_remoteAOTRelocateImmediately, 1, "F", NOT_IN_SUBSET},
+#endif /* defined(J9VM_OPT_JITSERVER) */
    {"resetCountThreshold=", "R<nnn>\tThe number of global samples which if exceed during a method's sampling interval will cause the method's sampling counter to be incremented by the number of samples in a sampling interval",
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_resetCountThreshold, 0, "F%d", NOT_IN_SUBSET},
    {"rtlog=",             "L<filename>\twrite verbose run-time output to filename",

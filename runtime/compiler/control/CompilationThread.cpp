@@ -11544,10 +11544,15 @@ TR::CompilationInfo::replenishInvocationCount(J9Method *method, TR::Compilation 
       {
       int32_t count;
 #if defined(J9VM_OPT_JITSERVER)
+      // Delay relocation of AOT methods received from JITServer until the next interpreted invocation,
+      // unless the option remoteAOTRelocateImmediately is set; see CompilationInfo::canRelocateMethod().
+      if (comp->isRemoteCompilation() && comp->getOption(TR_DisableDelayRelocationForAOTCompilations) &&
+          !TR::Options::_remoteAOTRelocateImmediately)
+         count = 0;
       // Even if the option to disable AOT relocation delay was specified, we need to delay relocation of deserialized
       // AOT methods using SVM received from the JITServer AOT cache until the next interpreted invocation. Such methods
       // cannot be immediately relocated in the current implementation; see CompilationInfo::canRelocateMethod().
-      if (comp->isDeserializedAOTMethodUsingSVM() && comp->getOption(TR_DisableDelayRelocationForAOTCompilations))
+      else if (comp->isDeserializedAOTMethodUsingSVM() && comp->getOption(TR_DisableDelayRelocationForAOTCompilations))
          count = 0;
       else
 #endif /* defined(J9VM_OPT_JITSERVER) */
@@ -12760,6 +12765,11 @@ TR::CompilationInfo::canRelocateMethod(TR::Compilation *comp)
       return false;
 
 #if defined(J9VM_OPT_JITSERVER)
+   // Do not relocate AOT methods received from JITServer immediately by default, unless this option is set.
+   // This is a workaround for a rare segfault in JITServer-compiled code when the option
+   // disableDelayRelocationForAOTCompilations is set (see https://github.com/eclipse-openj9/openj9/issues/15146).
+   if (comp->isRemoteCompilation() && !TR::Options::_remoteAOTRelocateImmediately)
+      return false;
    // Delay relocation if this is a deserialized AOT method using SVM received from the JITServer AOT cache.
    // Such methods cannot be immediately relocated in the current implementation. An immediate AOT+SVM load
    // uses the ID-symbol mapping created during compilation. This mapping is missing when the client receives
