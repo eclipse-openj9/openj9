@@ -2725,6 +2725,9 @@ void TR::CompilationInfo::prepareForCheckpoint()
       if (shouldCheckpointBeInterrupted())
          break;
       }
+
+   if (!shouldCheckpointBeInterrupted())
+      setReadyForCheckpointRestore();
    }
 
    if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCheckpointRestore))
@@ -2738,6 +2741,8 @@ void TR::CompilationInfo::prepareForRestore()
 
    {
    OMR::CriticalSection resumeCompThreadsForRestore(getCompilationMonitor());
+
+   TR_ASSERT_FATAL(readyForCheckpointRestore(), "Not ready for Checkpoint Restore\n");
 
    /* Reset the checkpoint in progress flag. */
    resetCheckpointInProgress();
