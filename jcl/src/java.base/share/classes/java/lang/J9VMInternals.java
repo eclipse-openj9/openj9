@@ -101,30 +101,7 @@ final class J9VMInternals {
 		/*[ENDIF] Sidecar18-SE-OpenJ9 | (JAVA_SPEC_VERSION > 8) */
 
 		/*[IF JAVA_SPEC_VERSION >= 11] */
-		/* Although file.encoding is used to set the default Charset, some Charset's are not available
-		 * in the java.base module and so are not used at startup. There are additional Charset's in the
-		 * jdk.charsets module, which is only loaded later. This means the default Charset may not be the
-		 * same as file.encoding. Now that all modules and Charset's are available, check if the desired
-		 * encodings can be used for System.err and System.out.
-		 */
-		Properties props = System.internalGetProperties();
-		// If the sun.stderr.encoding was already set in System, don't change the encoding
-		if (!System.hasSetErrEncoding()) {
-			Charset stderrCharset = System.getCharset(props.getProperty("sun.stderr.encoding"), true); //$NON-NLS-1$
-			if (stderrCharset != null) {
-				System.err.flush();
-				System.setErr(System.createConsole(FileDescriptor.err, stderrCharset));
-			}
-		}
-
-		// If the sun.stdout.encoding was already set in System, don't change the encoding
-		if (!System.hasSetOutEncoding()) {
-			Charset stdoutCharset = System.getCharset(props.getProperty("sun.stdout.encoding"), true); //$NON-NLS-1$
-			if (stdoutCharset != null) {
-				System.out.flush();
-				System.setOut(System.createConsole(FileDescriptor.out, stdoutCharset));
-			}
-		}
+		System.finalizeConsoleEncoding();
 		/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 	}
 
