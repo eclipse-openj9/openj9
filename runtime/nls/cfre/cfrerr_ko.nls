@@ -1617,8 +1617,9 @@ J9NLS_CFR_ERR_PERMITS_VALUE_ON_FINAL_CLASS=\ud074\ub798\uc2a4\uc5d0\ub294 ACC_FI
 J9NLS_CFR_ERR_PERMITS_VALUE_ON_FINAL_CLASS.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_PERMITS_VALUE_ON_FINAL_CLASS.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_PERMITS_VALUE_ON_FINAL_CLASS.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_PERMITS_VALUE_ON_NON_ABSTRACT_CLASS=Access flag ACC_PERMITS_VALUE should not be set on a non-abstract class.
+J9NLS_CFR_ERR_PERMITS_VALUE_ON_NON_ABSTRACT_CLASS=\uc561\uc138\uc2a4 \ud50c\ub798\uadf8 ACC_PERMITS_VALUE\ub294 \ucd94\uc0c1\uc774 \uc544\ub2cc \ud074\ub798\uc2a4\uc5d0 \uc124\uc815\ub418\uba74 \uc548\ub429\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_PERMITS_VALUE_ON_NON_ABSTRACT_CLASS.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_PERMITS_VALUE_ON_NON_ABSTRACT_CLASS.system_action=The JVM will throw a verification or class loading-related exception such as java.lang.ClassFormatError.
