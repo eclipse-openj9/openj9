@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -79,6 +79,70 @@ getJ9CfrErrorBsmMessage(J9PortLibrary* portLib, J9CfrError* error, const U_8* cl
 }
 
 const char*
+getJ9CfrErrorMajorVersionMessage(J9PortLibrary* portLib, J9CfrError* error, const U_8* className, UDATA classNameLength)
+{
+	PORT_ACCESS_FROM_PORT(portLib);
+	const char *template = j9nls_lookup_message(J9NLS_ERROR | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_CFR_ERR_MAJOR_VERSION2, NULL);
+	UDATA allocSize = strlen(template) + classNameLength + (MAX_INT_SIZE * 4) + 1;
+	char *errorString = j9mem_allocate_memory(allocSize, OMRMEM_CATEGORY_VM);
+
+	if (NULL != errorString) {
+		j9str_printf(PORTLIB, errorString, allocSize, template,
+			error->errorMajorVersion, error->errorMinorVersion, classNameLength, className, error->errorMaxMajorVersion, error->errorOffset);
+	}
+
+	return errorString;
+}
+
+const char*
+getJ9CfrErrorMinorVersionMessage(J9PortLibrary* portLib, J9CfrError* error, const U_8* className, UDATA classNameLength)
+{
+	PORT_ACCESS_FROM_PORT(portLib);
+	const char *template = j9nls_lookup_message(J9NLS_ERROR | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_CFR_ERR_MINOR_VERSION2, NULL);
+	UDATA allocSize = strlen(template) + classNameLength + (MAX_INT_SIZE * 3) + 1;
+	char *errorString = j9mem_allocate_memory(allocSize, OMRMEM_CATEGORY_VM);
+
+	if (NULL != errorString) {
+		j9str_printf(PORTLIB, errorString, allocSize, template,
+			classNameLength, className, error->errorMinorVersion, error->errorMajorVersion, error->errorOffset);
+	}
+
+	return errorString;
+}
+
+const char*
+getJ9CfrErrorPreviewVersionMessage(J9PortLibrary* portLib, J9CfrError* error, const U_8* className, UDATA classNameLength)
+{
+	PORT_ACCESS_FROM_PORT(portLib);
+	const char *template = j9nls_lookup_message(J9NLS_ERROR | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_CFR_ERR_PREVIEW_VERSION2, NULL);
+	UDATA allocSize = strlen(template) + classNameLength + (MAX_INT_SIZE * 4) + 1;
+	char *errorString = j9mem_allocate_memory(allocSize, OMRMEM_CATEGORY_VM);
+
+	if (NULL != errorString) {
+		j9str_printf(PORTLIB, errorString, allocSize, template,
+			error->errorMajorVersion, error->errorMinorVersion, classNameLength, className, error->errorMaxMajorVersion, error->errorOffset);
+	}
+
+	return errorString;
+}
+
+const char*
+getJ9CfrErrorPreviewVersionNotEnabledMessage(J9PortLibrary* portLib, J9CfrError* error, const U_8* className, UDATA classNameLength)
+{
+	PORT_ACCESS_FROM_PORT(portLib);
+	const char *template = j9nls_lookup_message(J9NLS_ERROR | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_CFR_ERR_PREVIEW_VERSION_NOT_ENABLED, NULL);
+	UDATA allocSize = strlen(template) + classNameLength + (MAX_INT_SIZE * 3) + 1;
+	char *errorString = j9mem_allocate_memory(allocSize, OMRMEM_CATEGORY_VM);
+
+	if (NULL != errorString) {
+		j9str_printf(PORTLIB, errorString, allocSize, template,
+			error->errorMajorVersion, error->errorMinorVersion, classNameLength, className, error->errorOffset);
+	}
+
+	return errorString;
+}
+
+const char*
 getJ9CfrErrorDetailMessageNoMethod(J9PortLibrary* portLib, J9CfrError* error, const U_8* className, UDATA classNameLength)
 {
 	const char *errorString = NULL;
@@ -86,6 +150,18 @@ getJ9CfrErrorDetailMessageNoMethod(J9PortLibrary* portLib, J9CfrError* error, co
 	switch (error->errorCode) {
 	case J9NLS_CFR_ERR_BAD_BOOTSTRAP_ARGUMENT_ENTRY__ID:
 		errorString = getJ9CfrErrorBsmMessage(portLib, error, className, classNameLength);
+		break;
+	case J9NLS_CFR_ERR_MAJOR_VERSION2__ID:
+		errorString = getJ9CfrErrorMajorVersionMessage(portLib, error, className, classNameLength);
+		break;
+	case J9NLS_CFR_ERR_MINOR_VERSION2__ID:
+		errorString = getJ9CfrErrorMinorVersionMessage(portLib, error, className, classNameLength);
+		break;
+	case J9NLS_CFR_ERR_PREVIEW_VERSION2__ID:
+		errorString = getJ9CfrErrorPreviewVersionMessage(portLib, error, className, classNameLength);
+		break;
+	case J9NLS_CFR_ERR_PREVIEW_VERSION_NOT_ENABLED__ID:
+		errorString = getJ9CfrErrorPreviewVersionNotEnabledMessage(portLib, error, className, classNameLength);
 		break;
 	default:
 		errorString = getJ9CfrErrorNormalMessage(portLib, error, className, classNameLength);
@@ -146,7 +222,7 @@ buildError(J9CfrError * errorStruct, UDATA code, UDATA action, UDATA offset)
 	errorStruct->errorPC = 0;
 	errorStruct->errorMember = NULL;
 	errorStruct->constantPool = NULL;
-	
+
 	/* Jazz 82615: Initialize with default values if detailed error message is not required */
 	errorStruct->verboseErrorType = 0;
 	errorStruct->errorDataIndex = 0;
@@ -156,6 +232,10 @@ buildError(J9CfrError * errorStruct, UDATA code, UDATA action, UDATA offset)
 	errorStruct->errorBsmIndex = -1;
 	errorStruct->errorBsmArgsIndex = 0;
 	errorStruct->errorCPType = 0;
+
+	errorStruct->errorMaxMajorVersion = 0;
+	errorStruct->errorMajorVersion = 0;
+	errorStruct->errorMinorVersion = 0;
 }
 
 void
