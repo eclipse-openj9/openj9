@@ -52,6 +52,8 @@
 #define J9ROMCLASS_IS_SYNTHETIC(romClass)		_J9ROMCLASS_SUNMODIFIER_IS_SET((romClass), J9AccSynthetic)
 #define J9ROMCLASS_IS_ARRAY(romClass)			_J9ROMCLASS_SUNMODIFIER_IS_SET((romClass), J9AccClassArray)
 #define J9ROMCLASS_IS_PRIMITIVE_TYPE(romClass)	_J9ROMCLASS_SUNMODIFIER_IS_SET((romClass), J9AccClassInternalPrimitiveType)
+#define J9ROMCLASS_HAS_IDENTITY(romClass)			_J9ROMCLASS_SUNMODIFIER_IS_SET((romClass), J9AccClassHasIdentity)
+
 #define J9ROMCLASS_IS_INTERMEDIATE_DATA_A_CLASSFILE(romClass)		_J9ROMCLASS_J9MODIFIER_IS_SET((romClass), J9AccClassIntermediateDataIsClassfile)
 #define J9ROMCLASS_IS_UNSAFE(romClass)			_J9ROMCLASS_J9MODIFIER_IS_SET((romClass), J9AccClassUnsafe)
 #define J9ROMCLASS_IS_HIDDEN(romClass)			_J9ROMCLASS_J9MODIFIER_IS_SET((romClass), J9AccClassHidden)
@@ -73,7 +75,6 @@
 #define J9ROMCLASS_IS_RECORD(romClass)			(_J9ROMCLASS_J9MODIFIER_IS_SET((romClass), J9AccRecord) && J9ROMCLASS_IS_FINAL(romClass) && !J9ROMCLASS_IS_ABSTRACT(romClass))
 #define J9ROMCLASS_IS_SEALED(romClass)			_J9ROMCLASS_J9MODIFIER_IS_SET((romClass), J9AccSealed)
 #define J9ROMCLASS_IS_VALUEBASED(romClass)			_J9ROMCLASS_J9MODIFIER_IS_SET((romClass), J9AccClassIsValueBased)
-#define J9ROMCLASS_HAS_IDENTITY(romClass)			_J9ROMCLASS_J9MODIFIER_IS_SET((romClass), J9AccClassHasIdentity)
 
 /* 
  * Note that resolvefield ignores this flag if the cache line size cannot be determined.

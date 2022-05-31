@@ -41,9 +41,9 @@ public class ValueTypeGenerator extends ClassLoader {
 	/* workaround till the new ASM is released */
 	public static final int ACONST_INIT = 203;
 	public static final int WITHFIELD = 204;
-	private static final int ACC_VALUE_TYPE = 0x100;
+	public static final int ACC_IDENTITY = 0x20;
+	private static final int ACC_VALUE_TYPE = 0x040;
 	private static final int ACC_PRIMITIVE = 0x800;
-	public static final int ACC_PERMITS_VALUE = 0x40;
 	
 	static {
 		generator = new ValueTypeGenerator();
@@ -222,9 +222,9 @@ public class ValueTypeGenerator extends ClassLoader {
 		String classFileName = className + ".class";
 
 		if (isRef) {
-			cw.visit(classFileVersion, ACC_PUBLIC + ACC_FINAL + ACC_SUPER + extraClassFlags, className, null, superName, null);
+			cw.visit(classFileVersion, ACC_PUBLIC + ACC_FINAL + extraClassFlags, className, null, superName, null);
 		} else {
-			cw.visit(classFileVersion, ACC_PUBLIC + ACC_FINAL + ACC_SUPER + ACC_VALUE_TYPE + ACC_PRIMITIVE + extraClassFlags, className, null, superName, null);
+			cw.visit(classFileVersion, ACC_PUBLIC + ACC_FINAL + ACC_VALUE_TYPE + ACC_PRIMITIVE + extraClassFlags, className, null, superName, null);
 		}
 
 		cw.visitSource(className + ".java", null);

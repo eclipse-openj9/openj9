@@ -3541,7 +3541,12 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 		}
 	}
 
+#if !defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 	{
+		/**
+		 * From the spec, the ACC_SUPER semantics became mandatory. The bit CFR_ACC_SUPER is reused as CFR_ACC_IDENTITY in Valhalla.
+		 * This means -XX:+AllowNonVirtualCalls is not supported in Valhalla.
+		 */
 		IDATA allowNonVirtualCalls = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXALLOWNONVIRTUALCALLS, NULL);
 		IDATA noAllowNonVirtualCalls = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXDONTALLOWNONVIRTUALCALLS, NULL);
 		if (allowNonVirtualCalls > noAllowNonVirtualCalls) {
@@ -3550,6 +3555,7 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 			vm->extendedRuntimeFlags &= ~(UDATA)J9_EXTENDED_RUNTIME_ALLOW_NON_VIRTUAL_CALLS;
 		}
 	}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 	{
 		IDATA debugInterpreter = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXDEBUGINTERPRETER, NULL);
