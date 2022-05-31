@@ -331,6 +331,7 @@ public:
    virtual bool supportsGuardMerging()        { return true; }
    virtual bool canDevirtualizeDispatch()     { return true; }
    virtual bool doStringPeepholing()          { return true; }
+   virtual bool isPortableSCCEnabled();
 
    /**
     * \brief Determine whether resolved direct dispatch is guaranteed.
