@@ -346,7 +346,7 @@ x86-64_windows:
   freemarker: '/cygdrive/c/openjdk/freemarker.jar'
   extra_configure_options:
     all: '--disable-ccache --with-cuda="C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v9.0"'
-    8: '--with-toolchain-version=2013 --with-freetype-src=/cygdrive/c/openjdk/freetype-2.5.3'
+    8: '--with-toolchain-version=2017 --with-freetype-src=/cygdrive/c/openjdk/freetype-2.5.3'
     11: '--with-toolchain-version=2017'
     17: '--with-toolchain-version=2019'
     18: '--with-toolchain-version=2019'
@@ -368,7 +368,7 @@ x86-32_windows:
   release:
     8: 'windows-x86-normal-server-release'
   extra_configure_options:
-    8: '--with-toolchain-version=2013 --with-freetype-src=/cygdrive/c/openjdk/freetype-2.5.3 --with-target-bits=32 --disable-ccache'
+    8: '--with-toolchain-version=2017 --with-freetype-src=/cygdrive/c/openjdk/freetype-2.5.3 --with-target-bits=32 --disable-ccache'
   freemarker: '/cygdrive/c/openjdk/freemarker.jar'
   node_labels:
     build:
