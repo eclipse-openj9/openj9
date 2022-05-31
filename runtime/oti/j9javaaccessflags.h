@@ -119,10 +119,9 @@
 #define J9AccSynchronized 0x20
 #define J9AccSynthetic 0x1000
 #define J9AccTransient 0x80
-#define J9AccValueType 0x100
 #define J9AccVarArgs 0x80
 #define J9AccVolatile 0x40
-#define J9AccPermitsValue 0x40
+#define J9AccValueType 0x40
 #define J9AccRecord 0x400
 #define J9AccSealed 0x200
 #define J9AccPrimitiveValueType 0x800

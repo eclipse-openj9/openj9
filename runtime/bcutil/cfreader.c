@@ -1637,16 +1637,16 @@ checkFields(J9PortLibrary* portLib, J9CfrClassFile * classfile, U_8 * segment, U
 
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 		if (J9_ARE_ALL_BITS_SET(classfile->accessFlags, CFR_ACC_VALUE_TYPE)) {
-			if (J9_ARE_NO_BITS_SET(value, CFR_ACC_STATIC | CFR_ACC_FINAL)) {
-				errorCode = J9NLS_CFR_ERR_VALUE_CLASS_FIELD_NOT_STATIC_OR_FINAL__ID;
-				goto _errorFound;
-			}
-		}
-		if (J9_ARE_ALL_BITS_SET(classfile->accessFlags, CFR_ACC_PERMITS_VALUE)) {
-			/* if CFR_ACC_PERMITS_VALUE is set, we already know that CFR_ACC_ABSTRACT must be set as well */
-			if (J9_ARE_NO_BITS_SET(value, CFR_ACC_STATIC)) {
-				errorCode = J9NLS_CFR_ERR_MISSING_ACC_STATIC_ON_ABSTRACT_CLASS_FIELD__ID;
-				goto _errorFound;
+			if (J9_ARE_ALL_BITS_SET(classfile->accessFlags, CFR_ACC_ABSTRACT)) {
+				if (J9_ARE_NO_BITS_SET(value, CFR_ACC_STATIC)) {
+					errorCode = J9NLS_CFR_ERR_MISSING_ACC_STATIC_ON_ABSTRACT_IDENTITYLESS_CLASS_FIELD__ID;
+					goto _errorFound;
+				}
+			} else {
+				if (J9_ARE_NO_BITS_SET(value, CFR_ACC_STATIC | CFR_ACC_FINAL)) {
+					errorCode = J9NLS_CFR_ERR_VALUE_CLASS_FIELD_NOT_STATIC_OR_FINAL__ID;
+					goto _errorFound;
+				}
 			}
 		}
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
@@ -1902,12 +1902,10 @@ checkMethods(J9PortLibrary* portLib, J9CfrClassFile* classfile, U_8* segment, U_
 		}
 
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-		if (J9_ARE_ALL_BITS_SET(classfile->accessFlags, CFR_ACC_VALUE_TYPE) ||
-			J9_ARE_ALL_BITS_SET(classfile->accessFlags, CFR_ACC_PERMITS_VALUE))
-		{
+		if (J9_ARE_ALL_BITS_SET(classfile->accessFlags, CFR_ACC_VALUE_TYPE)) {
 			if (J9_ARE_ALL_BITS_SET(value, CFR_ACC_SYNCHRONIZED)) {
 				if (J9_ARE_NO_BITS_SET(value, CFR_ACC_STATIC)) {
-					errorCode = J9NLS_CFR_ERR_NON_STATIC_SYNCHRONIZED_VALUE_TYPE_METHOD__ID;
+					errorCode = J9NLS_CFR_ERR_NON_STATIC_SYNCHRONIZED_VALUE_TYPE_METHOD_V1__ID;
 					goto _errorFound;
 				}
 			}
@@ -2939,7 +2937,7 @@ j9bcutil_readClassFileBytes(J9PortLibrary *portLib,
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 	/* Currently value type is built on JDK19, so compare with JDK19 for now. Eventually it may need to compare to JDK20. */
 	if ((flags & BCT_MajorClassFileVersionMask) < BCT_JavaMajorVersionShifted(19)) {
-		classfile->accessFlags &= ~(CFR_ACC_VALUE_TYPE | CFR_ACC_PRIMITIVE_VALUE_TYPE | CFR_ACC_PERMITS_VALUE);
+		classfile->accessFlags &= ~(CFR_ACC_VALUE_TYPE | CFR_ACC_PRIMITIVE_VALUE_TYPE | CFR_ACC_IDENTITY);
 	}
 	if (J9_ARE_ALL_BITS_SET(classfile->accessFlags, CFR_ACC_PRIMITIVE_VALUE_TYPE)) {
 		if (J9_ARE_NO_BITS_SET(classfile->accessFlags, CFR_ACC_VALUE_TYPE)) {
@@ -2949,30 +2947,20 @@ j9bcutil_readClassFileBytes(J9PortLibrary *portLib,
 		}
 	}
 	if (J9_ARE_ALL_BITS_SET(classfile->accessFlags, CFR_ACC_VALUE_TYPE)) {
-		if (J9_ARE_NO_BITS_SET(classfile->accessFlags, CFR_ACC_FINAL)) {
-			errorCode = J9NLS_CFR_ERR_FINAL_FLAG_MISSING_ON_VALUE_CLASS__ID;
+		if (J9_ARE_NO_BITS_SET(classfile->accessFlags, CFR_ACC_ABSTRACT | CFR_ACC_FINAL)) {
+			errorCode = J9NLS_CFR_ERR_FINAL_ABSTRACT_FLAG_MISSING_ON_VALUE_CLASS__ID;
 			offset = index - data - 2;
 			goto _errorFound;
 		}
-		if (J9_ARE_ANY_BITS_SET(classfile->accessFlags, CFR_ACC_ABSTRACT | CFR_ACC_PERMITS_VALUE | CFR_ACC_ENUM | CFR_ACC_INTERFACE | CFR_ACC_MODULE)) {
+		if (J9_ARE_ANY_BITS_SET(classfile->accessFlags, CFR_ACC_IDENTITY | CFR_ACC_ENUM | CFR_ACC_MODULE)) {
 			errorCode = J9NLS_CFR_ERR_INCORRECT_FLAG_FOUND_ON_VALUE_CLASS__ID;
 			offset = index - data - 2;
 			goto _errorFound;
 		}
 	}
-	if (J9_ARE_ALL_BITS_SET(classfile->accessFlags, CFR_ACC_PERMITS_VALUE)) {
-		if (J9_ARE_NO_BITS_SET(classfile->accessFlags, CFR_ACC_ABSTRACT)) {
-			errorCode = J9NLS_CFR_ERR_PERMITS_VALUE_ON_NON_ABSTRACT_CLASS__ID;
-			offset = index - data - 2;
-			goto _errorFound;
-		}
-		if (J9_ARE_ALL_BITS_SET(classfile->accessFlags, CFR_ACC_FINAL)) {
-			errorCode = J9NLS_CFR_ERR_PERMITS_VALUE_ON_FINAL_CLASS__ID;
-			offset = index - data - 2;
-			goto _errorFound;
-		}
-		if (J9_ARE_ALL_BITS_SET(classfile->accessFlags, CFR_ACC_INTERFACE)) {
-			errorCode = J9NLS_CFR_ERR_PERMITS_VALUE_ON_INTERFACE__ID;
+	if (J9_IS_CLASSFILE_PRIMITIVE_VALUETYPE(classfile)) {
+		if (J9_ARE_ANY_BITS_SET(classfile->accessFlags, CFR_ACC_ABSTRACT | CFR_ACC_INTERFACE)) {
+			errorCode = J9NLS_CFR_ERR_INCORRECT_FLAG_FOUND_ON_PRMITIVE_VALUE_CLASS__ID;
 			offset = index - data - 2;
 			goto _errorFound;
 		}
