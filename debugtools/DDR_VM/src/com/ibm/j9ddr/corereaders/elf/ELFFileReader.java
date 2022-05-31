@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2004, 2020 IBM Corp. and others
+ * Copyright (c) 2004, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -746,32 +746,6 @@ public abstract class ELFFileReader {
 		} catch (Exception e) {
 			return null;
 		}
-	}
-
-	/**
-	 * Get the base address of an executable or library, given the ELF file.
-	 * This is the lowest virtual address of the Program Header Table entries of type PT_LOAD, which
-	 * is probably the first but we search them all just in case.
-	 * The following is summarised from the System V Application Binary Interface,
-	 * gabi41.pdf, section Base Address
-	 *
-	 *    "... to compute the base address, one determines the memory address associated with
-	 *    the lowest p_vaddr value for a PT_LOAD segment. This address is truncated ..."
-	 *
-	 * The truncation is to do with page sizes and in practice not found to be needed.
-	 *
-	 * @return base address for the executable or library
-	 */
-	public long getBaseAddress() {
-		long lowestVirtualAddressSoFar = Long.MAX_VALUE;
-		for (ProgramHeaderEntry entry : getProgramHeaderEntries()) {
-			if (entry.isLoadable()) {
-				if (entry.virtualAddress < lowestVirtualAddressSoFar) {
-					lowestVirtualAddressSoFar = entry.virtualAddress;
-				}
-			}
-		}
-		return lowestVirtualAddressSoFar;
 	}
 
 	/**
