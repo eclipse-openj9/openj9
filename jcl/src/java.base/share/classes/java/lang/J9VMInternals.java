@@ -141,52 +141,47 @@ final class J9VMInternals {
 		/*[IF Sidecar19-SE]*/
 		System.initGPUAssist();
 
-		/*[IF JAVA_SPEC_VERSION < 19]*/
 		if (Boolean.getBoolean("ibm.java9.forceCommonCleanerShutdown")) { //$NON-NLS-1$
 			Runnable runnable = () -> {
 				CleanerShutdown.shutdownCleaner();
+				Thread threads[] = null;
+				/*[IF JAVA_SPEC_VERSION < 19]*/
 				ThreadGroup threadGroup = Thread.currentThread().group; // the system ThreadGroup
-				/*[IF OPENJDK_THREAD_SUPPORT]*/
-				ThreadGroup threadGroups[] = new ThreadGroup[threadGroup.ngroups];
-				/*[ELSE] OPENJDK_THREAD_SUPPORT
 				ThreadGroup threadGroups[] = new ThreadGroup[threadGroup.numGroups];
-				/*[ENDIF] OPENJDK_THREAD_SUPPORT */
 				threadGroup.enumerate(threadGroups, false); /* non-recursive enumeration */
 				for (ThreadGroup tg : threadGroups) {
 					if ("InnocuousThreadGroup".equals(tg.getName())) { //$NON-NLS-1$
-						/*[IF OPENJDK_THREAD_SUPPORT]*/
-						Thread threads[] = new Thread[tg.nthreads];
-						/*[ELSE] OPENJDK_THREAD_SUPPORT
-						Thread threads[] = new Thread[tg.numThreads];
-						/*[ENDIF] OPENJDK_THREAD_SUPPORT */
+						threads = new Thread[tg.numThreads];
 						tg.enumerate(threads, false);
-						for (Thread t : threads) {
-							if (t.getName().equals("Common-Cleaner")) { //$NON-NLS-1$
-								t.interrupt();
-								try {
-									/* Need to wait for the Common-Cleaner thread to die before
-									 * continuing. If not this will result in a race condition where
-									 * the VM might attempt to shutdown before Common-Cleaner has a
-									 * chance to stop properly. This will result in an unsuccessful
-									 * shutdown and we will not release vm resources.
-									 */
-									t.join(3000);
-									/* giving this a 3sec timeout. If it works it should work fairly
-									 * quickly, 3 seconds should be more than enough time. If it doesn't
-									 * work it may block indefinitely. Turning on -verbose:shutdown will
-									 * let us know if it worked or not
-									 */
-								} catch (Throwable e) {
-									/* empty block */
-								}
-							}
+					}
+				}
+				/*[ELSE] JAVA_SPEC_VERSION < 19 */
+				threads = Thread.getAllThreads();
+				/*[ENDIF] JAVA_SPEC_VERSION < 19 */
+				for (Thread t : threads) {
+					if (t.getName().equals("Common-Cleaner")) { //$NON-NLS-1$
+						t.interrupt();
+						try {
+							/* Need to wait for the Common-Cleaner thread to die before
+								* continuing. If not this will result in a race condition where
+								* the VM might attempt to shutdown before Common-Cleaner has a
+								* chance to stop properly. This will result in an unsuccessful
+								* shutdown and we will not release vm resources.
+								*/
+							t.join(3000);
+							/* giving this a 3sec timeout. If it works it should work fairly
+								* quickly, 3 seconds should be more than enough time. If it doesn't
+								* work it may block indefinitely. Turning on -verbose:shutdown will
+								* let us know if it worked or not
+								*/
+						} catch (Throwable e) {
+							/* empty block */
 						}
 					}
 				}
 			};
 			Runtime.getRuntime().addShutdownHook(new Thread(runnable, "CommonCleanerShutdown", true, false, false, null)); //$NON-NLS-1$
 		}
-		/*[ENDIF] JAVA_SPEC_VERSION < 19 */
 		/*[ENDIF] Sidecar19-SE */
 	}
 
