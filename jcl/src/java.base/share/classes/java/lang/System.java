@@ -346,10 +346,10 @@ public final class System {
 		Properties props = internalGetProperties();
 		/*[IF JAVA_SPEC_VERSION >= 11]*/
 		/*[IF JAVA_SPEC_VERSION >= 18]*/
-		consoleDefaultCharset = Charset.forName(props.getProperty("native.encoding"), sun.nio.cs.US_ASCII.INSTANCE);
+		consoleDefaultEncoding = props.getProperty("native.encoding"); //$NON-NLS-1$
+		consoleDefaultCharset = Charset.forName(consoleDefaultEncoding, sun.nio.cs.US_ASCII.INSTANCE);
 		/*[ELSE] JAVA_SPEC_VERSION >= 18 */
 		consoleDefaultCharset = Charset.defaultCharset();
-		/*[ENDIF] JAVA_SPEC_VERSION >= 18 */
 		/*[IF PLATFORM-mz31|PLATFORM-mz64]*/
 		try {
 			consoleDefaultEncoding = props.getProperty("console.encoding"); //$NON-NLS-1$
@@ -361,12 +361,9 @@ public final class System {
 			// use the defaultCharset()
 		}
 		/*[ELSE] PLATFORM-mz31|PLATFORM-mz64 */
-		/*[IF JAVA_SPEC_VERSION >= 18]*/
-		consoleDefaultEncoding = props.getProperty("native.encoding"); //$NON-NLS-1$
-		/*[ELSE] JAVA_SPEC_VERSION >= 18 */
 		consoleDefaultEncoding = props.getProperty("file.encoding"); //$NON-NLS-1$
-		/*[ENDIF] JAVA_SPEC_VERSION >= 18 */
 		/*[ENDIF] PLATFORM-mz31|PLATFORM-mz64 */
+		/*[ENDIF] JAVA_SPEC_VERSION >= 18 */
 		/* consoleDefaultCharset must be initialized before calling getCharset() */
 		Charset stdoutCharset = getCharset(props.getProperty("sun.stdout.encoding"), false); //$NON-NLS-1$
 		Charset stderrCharset = getCharset(props.getProperty("sun.stderr.encoding"), false); //$NON-NLS-1$
