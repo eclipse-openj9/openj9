@@ -678,6 +678,16 @@ bool TR_SPMDKernelParallelizer::visitNodeToSIMDize(TR::Node *parent, int32_t chi
 
    if (loop->isExprInvariant(node))
       {
+      TR::DataType vt = node->getDataType().scalarToVector(VECTOR_LENGTH);
+      if (isCheckMode && !comp->cg()->getSupportsOpCodeForAutoSIMD(TR::ILOpCode::createVectorOpCode(OMR::vsplats, vt), vt))
+         {
+         if (trace)
+            {
+            traceMsg(comp,"   [%p]: vsplats Opcode and data type are not supported by this platform\n", node);
+            }
+         return false;
+         }
+
       if (!isCheckMode)
          genVectorAccessForScalar(parent, childIndex, node);
 
@@ -699,7 +709,6 @@ bool TR_SPMDKernelParallelizer::visitNodeToSIMDize(TR::Node *parent, int32_t chi
       }
 
    TR_ASSERT(vectorOpCode != TR::BadILOp, "BAD IL Opcode to be assigned during transformation");
-
 
    if (isCheckMode && !comp->cg()->getSupportsOpCodeForAutoSIMD(vectorOpCode, node->getDataType()))
       {
