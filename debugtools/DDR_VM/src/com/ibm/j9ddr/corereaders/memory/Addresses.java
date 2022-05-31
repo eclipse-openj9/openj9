@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2014 IBM Corp. and others
+ * Copyright (c) 2009, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,61 +23,57 @@ package com.ibm.j9ddr.corereaders.memory;
 
 /**
  * Contains static helpers for working with addresses as long.
- * 
- * Encapsulates 64bit unsigned maths using 64 bit signed longs
- * 
- * @see http://www.javamex.com/java_equivalents/unsigned_arithmetic.shtml
- * 
- * @author andhall
  *
+ * Encapsulates 64-bit unsigned comparisons using 64-bit signed longs.
+ *
+ * @see http://www.javamex.com/java_equivalents/unsigned_arithmetic.shtml
+ *
+ * @author andhall
  */
-public class Addresses 
-{
+public class Addresses {
 
 	/**
-	 * 
+	 * Compare two addresses, returning true if the first is greater than the second.
+	 *
 	 * @param a
 	 * @param b
-	 * @return True is a is > b
+	 * @return true if a > b
 	 */
-	public static boolean greaterThan(long a, long b)
-	{
-		if (signBitsSame(a, b)) {
-			return  a > b;
-		} else {
-			return a < b;
-		}
+	public static boolean greaterThan(long a, long b) {
+		return Long.compareUnsigned(a, b) > 0;
 	}
-	
-	public static boolean greaterThanOrEqual(long a, long b) {
-		return greaterThan(a,b) || a == b;
-	}
-	
+
 	/**
-	 * 
+	 * Compare two addresses, returning true if the first is greater than or equal to the second.
+	 *
+	 * @param a
+	 * @param b
+	 * @return true if a >= b
+	 */
+	public static boolean greaterThanOrEqual(long a, long b) {
+		return Long.compareUnsigned(a, b) >= 0;
+	}
+
+	/**
+	 * Compare two addresses, returning true if the first is less than the second.
+	 *
 	 * @param a
 	 * @param b
 	 * @return True if a is < b
 	 */
-	public static boolean lessThan(long a, long b)
-	{
-		if (signBitsSame(a, b)) {
-			return  a < b;
-		} else {
-			return a > b;
-		}
+	public static boolean lessThan(long a, long b) {
+		return Long.compareUnsigned(a, b) < 0;
 	}
-	
+
+	/**
+	 * Compare two addresses, returning true if the first is less than or equal to the second.
+	 *
+	 * @param a
+	 * @param b
+	 * @return true if a is <= b
+	 */
 	public static boolean lessThanOrEqual(long a, long b) {
-		return lessThan(a,b) || a == b;
-	}
-	
-	private static boolean signBitsSame(long a, long b)
-	{
-		boolean aSigned = a < 0;
-		boolean bSigned = b < 0;
-		
-		return !(aSigned ^ bSigned);
+		return Long.compareUnsigned(a, b) <= 0;
 	}
 
 }
