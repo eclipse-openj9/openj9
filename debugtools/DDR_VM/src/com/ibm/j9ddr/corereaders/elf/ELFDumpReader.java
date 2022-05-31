@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2021 IBM Corp. and others
+ * Copyright (c) 2009, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -457,9 +457,8 @@ public abstract class ELFDumpReader implements ILibraryDependentCore {
 		 * section header table from that (as well as the symbols as those sections may not be loaded either).
 		 */
 		List<IModule> allModules = new LinkedList<>();
-		long executableBaseAddress = executableELF.getBaseAddress();
 
-		Map<Long, ELFFileReader> inCoreReaders = getElfReadersForModulesWithinCoreFile(executableELF, executableName);
+		Map<Long, ELFFileReader> inCoreReaders = getElfReadersForModulesWithinCoreFile(executableName);
 		Map<Long, String> libraryNamesFromDebugData = readLibraryNamesFromDebugData(executableELF, inCoreReaders,
 				executableELF);
 
@@ -497,7 +496,7 @@ public abstract class ELFDumpReader implements ILibraryDependentCore {
 		// TODO - Sort modules. For the sake of tidiness.
 		_modules.addAll(allModules);
 		ELFFileReader readerForExectuableOnDiskOrAppended = getReaderForModuleOnDiskOrAppended(executableName);
-		_executable = createModuleFromElfReader(executableBaseAddress, executableName, executableELF,
+		_executable = createModuleFromElfReader(0, executableName, executableELF,
 				readerForExectuableOnDiskOrAppended);
 	}
 
@@ -531,20 +530,19 @@ public abstract class ELFDumpReader implements ILibraryDependentCore {
 	 *
 	 * @return map BaseAddress -> ELFFileReader
 	 */
-	private TreeMap<Long, ELFFileReader> getElfReadersForModulesWithinCoreFile(ELFFileReader executableELF,
-			String executableName) {
+	private TreeMap<Long, ELFFileReader> getElfReadersForModulesWithinCoreFile(String executableName) {
 		TreeMap<Long, ELFFileReader> moduleReadersByBaseAddress = new TreeMap<>();
 		// System.out.println("dumping program header table");
 		// for (ProgramHeaderEntry entry : _reader.getProgramHeaderEntries()) {
-		//     System.out.printf("offset %x address %x, type %d\n",entry.fileOffset,entry.virtualAddress, entry._type);
+		//     System.out.printf("offset %x address %x, type %d\n", entry.fileOffset, entry.virtualAddress, entry._type);
 		// }
 
 		for (ProgramHeaderEntry entry : _reader.getProgramHeaderEntries()) {
-			if (!entry.isLoadable() || entry.fileSize == 0) {
+			if (entry.fileSize == 0 || !entry.isLoadable()) {
 				continue;
 			}
 			try {
-				// System.err.printf("Getting internal reader for %s, virtual address 0x%x, file offset 0x%x\n", executableName, entry.virtualAddress, entry.fileOffset );
+				// System.err.printf("Getting internal reader for %s, virtual address 0x%x, file offset 0x%x\n", executableName, entry.virtualAddress, entry.fileOffset);
 				ELFFileReader loadedElf = getReaderForSegment(_reader.getStream(), entry);
 				if (loadedElf != null) {
 					moduleReadersByBaseAddress.put(entry.virtualAddress, loadedElf);
@@ -728,12 +726,12 @@ public abstract class ELFDumpReader implements ILibraryDependentCore {
 	 * and construct a Module object. The ELF reader may point to a segment within the core file
 	 * or may point to a copy of the module on disk or appended to the core file.
 	 *
-	 * @param loadedBaseAddress of the module
+	 * @param loadedBaseAddress of the module or 0 for a non-loaded module
 	 * @param name of the module
-	 * @param elfReader to the module
+	 * @param inCoreReader to the module
+	 * @param diskReader to the module
 	 *
 	 * @return IModule
-	 * @throws IOException
 	 */
 	private IModule createModuleFromElfReader(final long loadedBaseAddress, String name, ELFFileReader inCoreReader,
 			ELFFileReader diskReader) {
@@ -743,9 +741,9 @@ public abstract class ELFDumpReader implements ILibraryDependentCore {
 		if (inCoreReader == null) {
 			return new MissingFileModule(_process, name, Collections.<IMemoryRange>emptyList());
 		}
-		List<? extends ISymbol> symbols = null;
-		Map<Long, String> sectionHeaderStringTable = null;
-		List<SectionHeaderEntry> sectionHeaderEntries = null;
+		List<? extends ISymbol> symbols;
+		Map<Long, String> sectionHeaderStringTable;
+		List<SectionHeaderEntry> sectionHeaderEntries;
 		Properties properties;
 		Collection<? extends IMemorySource> declaredRanges;
 
@@ -805,66 +803,72 @@ public abstract class ELFDumpReader implements ILibraryDependentCore {
 			return null;
 		}
 
-		// Of the declared memory ranges, some will already be in core (i.e. .data) others will have been declared
-		// in the core, but not backed.
-		List<IMemoryRange> ranges = new ArrayList<>(declaredRanges.size());
+		List<IMemoryRange> ranges;
 
-		for (IMemorySource source : declaredRanges) {
-			IMemorySource coreSource = _process.getRangeForAddress(source.getBaseAddress());
+		if (loadedBaseAddress == 0) {
+			ranges = new ArrayList<>(declaredRanges);
+		} else {
+			ranges = new ArrayList<>(declaredRanges.size());
 
-			/**
-			 * The following test skips sections that originally had an address of 0
-			 * the section header table.
-			 *
-			 * Explanation follows - see also the example section header table at the top
-			 * of SectionHeaderEntry.java
-			 *
-			 * Some of the later sections in the section header table have an address field
-			 * 0. That is a relative address, relative to the base address of the module.
-			 * They are usually the sections from .comment onwards.
-			 *
-			 * When the entry is constructed the code that creates the entry creates it with
-			 * address (base address of the module) + (address field in the SHT) hence those
-			 * that had an address of 0 will have an address == base address of the module.
-			 * These entries are precisely those that are often not in the core file so it is
-			 * not safe to create them as sections - they were there in the on-disk version of
-			 * the library but often not in memory. The code above that called elfReader.getMemoryRanges
-			 * may have been reading the version of the module from disk (which is good, it means
-			 * you get a good section header string table so you get good names for all the
-			 * sections) but not all the sections exist in memory. The danger of adding them
-			 * as memory ranges is that they start to overlay the segments in the core file
-			 * that come immediately afterwards; that is, they cause jdmpview, for example, to
-			 * believe that the contents of these later areas of memory are backed by the
-			 * contents of the library on disk when they are not.
-			 * See CMVC 185753
-			 *
-			 * So, don't add sections that originally had address 0.
-			 *
-			 */
-			if (source.getBaseAddress() == loadedBaseAddress) { // must have originally had address 0 in the section header table
-				continue;
-			}
+			// Of the declared memory ranges, some will already be in core (i.e. .data),
+			// others will have been declared in the core, but not backed.
+			for (IMemorySource source : declaredRanges) {
+				IMemorySource coreSource = _process.getRangeForAddress(source.getBaseAddress());
 
-			if (null != coreSource) {
-				if (coreSource.isBacked()) {
-					// Range already exists
+				/**
+				 * The following test skips sections that originally had an address of 0
+				 * the section header table.
+				 *
+				 * Explanation follows - see also the example section header table at the top
+				 * of SectionHeaderEntry.java
+				 *
+				 * Some of the later sections in the section header table have an address field
+				 * 0. That is a relative address, relative to the base address of the module.
+				 * They are usually the sections from .comment onwards.
+				 *
+				 * When the entry is constructed the code that creates the entry creates it with
+				 * address (base address of the module) + (address field in the SHT) hence those
+				 * that had an address of 0 will have an address == base address of the module.
+				 * These entries are precisely those that are often not in the core file so it is
+				 * not safe to create them as sections - they were there in the on-disk version of
+				 * the library but often not in memory. The code above that called elfReader.getMemoryRanges
+				 * may have been reading the version of the module from disk (which is good, it means
+				 * you get a good section header string table so you get good names for all the
+				 * sections) but not all the sections exist in memory. The danger of adding them
+				 * as memory ranges is that they start to overlay the segments in the core file
+				 * that come immediately afterwards; that is, they cause jdmpview, for example, to
+				 * believe that the contents of these later areas of memory are backed by the
+				 * contents of the library on disk when they are not.
+				 * See CMVC 185753
+				 *
+				 * So, don't add sections that originally had address 0.
+				 *
+				 */
+				if (source.getBaseAddress() == loadedBaseAddress) { // must have originally had address 0 in the section header table
+					continue;
+				}
+
+				if (null != coreSource) {
+					if (coreSource.isBacked()) {
+						// Range already exists
+					} else {
+						// The range exists but isn't backed. We need to replace the in-core memory range with the one
+						// from the library
+						if (source.getSize() > 0) {
+							_process.removeMemorySource(coreSource);
+							_process.addMemorySource(source);
+						}
+					}
 				} else {
-					// The range exists but isn't backed. We need to replace the in-core memory range with the one
-					// from the library
 					if (source.getSize() > 0) {
-						_process.removeMemorySource(coreSource);
 						_process.addMemorySource(source);
 					}
 				}
-			} else {
-				if (source.getSize() > 0) {
-					_process.addMemorySource(source);
-				}
+				ranges.add(source);
 			}
-			ranges.add(source);
 		}
-		return new Module(_process, name, symbols, ranges, loadedBaseAddress, properties);
 
+		return new Module(_process, name, symbols, ranges, loadedBaseAddress, properties);
 	}
 
 	private boolean isValidAddress(long address) {
