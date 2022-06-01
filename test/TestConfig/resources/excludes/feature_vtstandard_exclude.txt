@@ -21,5 +21,3 @@
 ##############################################################################
 
 # Exclude tests temporarily
-org.openj9.test.javaagenttest.GCRetransformTest.testGCRetransform https://github.com/eclipse-openj9/openj9/issues/12878 generic-all
-org.openj9.test.javaagenttest.RefreshGCCache_ExtendedHCR_Test.test_EXTENDED_HCR https://github.com/eclipse-openj9/openj9/issues/12878 generic-all
