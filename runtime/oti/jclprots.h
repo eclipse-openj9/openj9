@@ -1251,7 +1251,11 @@ void JNICALL
 Java_jdk_internal_misc_ScopedMemoryAccess_registerNatives(JNIEnv *env, jclass clazz);
 
 jboolean JNICALL
+#if JAVA_SPEC_VERSION >= 19
+Java_jdk_internal_misc_ScopedMemoryAccess_closeScope0(JNIEnv *env, jobject instance, jobject scope);
+#else /* JAVA_SPEC_VERSION >= 19 */
 Java_jdk_internal_misc_ScopedMemoryAccess_closeScope0(JNIEnv *env, jobject instance, jobject scope, jobject exception);
+#endif /* JAVA_SPEC_VERSION >= 19 */
 #endif /* JAVA_SPEC_VERSION >= 16 */
 
 #ifdef __cplusplus

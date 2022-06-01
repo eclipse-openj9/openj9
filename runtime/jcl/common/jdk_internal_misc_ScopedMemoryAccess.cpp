@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2020, 2021 IBM Corp. and others
+ * Copyright (c) 2020, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -69,7 +69,11 @@ closeScope0OSlotWalkFunction(J9VMThread *vmThread, J9StackWalkState *walkState, 
  * method is accessing the memory segment associated with the scope and thus closing the scope will fail.
  */
 jboolean JNICALL
+#if JAVA_SPEC_VERSION >= 19
+Java_jdk_internal_misc_ScopedMemoryAccess_closeScope0(JNIEnv *env, jobject instance, jobject scope)
+#else /* JAVA_SPEC_VERSION >= 19 */
 Java_jdk_internal_misc_ScopedMemoryAccess_closeScope0(JNIEnv *env, jobject instance, jobject scope, jobject exception)
+#endif /* JAVA_SPEC_VERSION >= 19 */
 {
 	J9VMThread *currentThread = (J9VMThread *)env;
 	J9JavaVM *vm = currentThread->javaVM;
@@ -77,11 +81,11 @@ Java_jdk_internal_misc_ScopedMemoryAccess_closeScope0(JNIEnv *env, jobject insta
 	jboolean scopeNotFound = JNI_TRUE;
 
 	vmFuncs->internalEnterVMFromJNI(currentThread);
-	vmFuncs->acquireExclusiveVMAccess(currentThread);
 
 	if (NULL == scope) {
 		vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, NULL);
 	} else {
+		vmFuncs->acquireExclusiveVMAccess(currentThread);
 		J9VMThread *walkThread = J9_LINKED_LIST_START_DO(vm->mainThread);
 		while (NULL != walkThread) {
 			J9StackWalkState walkState;
@@ -101,9 +105,9 @@ Java_jdk_internal_misc_ScopedMemoryAccess_closeScope0(JNIEnv *env, jobject insta
 
 			walkThread = J9_LINKED_LIST_NEXT_DO(vm->mainThread, walkThread);
 		}
+		vmFuncs->releaseExclusiveVMAccess(currentThread);
 	}
 
-	vmFuncs->releaseExclusiveVMAccess(currentThread);
 	vmFuncs->internalExitVMToJNI(currentThread);
 	return scopeNotFound;
 }
