@@ -21,8 +21,11 @@
  *******************************************************************************/
 
 def FAIL = false
+Boolean KEEP_WORKSPACE = params.KEEP_WORKSPACE ?: false
+String NODE_LABEL = params.NODE_LABEL ?: 'worker'
 String SRC_HOST = params.SRC_HOST ?: 'https://github.com/'
 String SRC_REPO = "${SRC_HOST}${ghprbGhRepository}.git"
+String GIT_CREDENTIALS_ID = params.GIT_CREDENTIALS_ID ?: ''
 def HASHES = '###################################'
 def COMMITS = []
 def BAD_COMMITS = []
@@ -30,8 +33,15 @@ def BAD_COMMITS = []
 timeout(time: 6, unit: 'HOURS') {
     stage('SignedOffBy Check') {
         timestamps {
-            node ('worker') {
+            node (NODE_LABEL) {
                 try {
+                    def remoteConfigParameters = [refspec: "+refs/pull/${ghprbPullId}/*:refs/remotes/origin/pr/${ghprbPullId}/* +refs/heads/${ghprbTargetBranch}:refs/remotes/origin/${ghprbTargetBranch}",
+                                                      url: SRC_REPO]
+                    if (GIT_CREDENTIALS_ID) {
+                        remoteConfigParameters.put("credentialsId", "${GIT_CREDENTIALS_ID}")
+                    }
+                    String REPO_CACHE_DIR = params.REPO_CACHE_DIR ?: "${env.HOME}/openjdk_cache"
+
                     checkout changelog: false, poll: false,
                         scm: [$class: 'GitSCM',
                             branches: [[name: ghprbActualCommit]],
@@ -39,16 +49,18 @@ timeout(time: 6, unit: 'HOURS') {
                             extensions: [[$class: 'CloneOption',
                                             depth: 0,
                                             noTags: false,
-                                            reference: '/home/jenkins/openjdk_cache',
+                                            reference: "${REPO_CACHE_DIR}",
                                             shallow: false]],
                             submoduleCfg: [],
-                            userRemoteConfigs: [[refspec: "+refs/pull/${ghprbPullId}/*:refs/remotes/origin/pr/${ghprbPullId}/* +refs/heads/${ghprbTargetBranch}:refs/remotes/origin/${ghprbTargetBranch}",
-                                                    url: SRC_REPO]]]
+                            userRemoteConfigs: [remoteConfigParameters]]
 
-                    COMMITS = sh(
-                         script : "git log origin/${ghprbTargetBranch}..HEAD",
-                         returnStdout: true
-                         ).trim()
+                    if (GIT_CREDENTIALS_ID) {
+                        sshagent(credentials:["${GIT_CREDENTIALS_ID}"]) {
+                            COMMITS = get_commits()
+                        }
+                    } else {
+                        COMMITS = get_commits()
+                    }
                     if (COMMITS == "") {
                         echo "There are no commits to check for signoffby message"
                     } else {
@@ -94,9 +106,18 @@ timeout(time: 6, unit: 'HOURS') {
                         }
                     }
                 } finally {
-                    cleanWs()
+                    if (!KEEP_WORKSPACE) {
+                        cleanWs()
+                    }
                 }
             }
         }
     }
+}
+
+def get_commits() {
+    return sh(
+        script : "git log origin/${ghprbTargetBranch}..HEAD",
+        returnStdout: true
+        ).trim()
 }
