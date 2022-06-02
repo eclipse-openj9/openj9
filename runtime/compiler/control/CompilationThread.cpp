@@ -2635,6 +2635,9 @@ void TR::CompilationInfo::prepareForCheckpoint()
    bool purgeMethodQueue = false;
    suspendCompilationThread(purgeMethodQueue);
 
+   /* With the thread state now updated, notify any active comp threads waiting for work */
+   getCompilationMonitor()->notifyAll();
+
    /* Wait until all compilation threads are suspended. */
    for (int32_t i = 0; i < getNumTotalCompilationThreads(); i++)
       {
