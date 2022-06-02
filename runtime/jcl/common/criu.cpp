@@ -30,6 +30,14 @@ extern "C" {
 
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 
+jlong JNICALL
+Java_openj9_internal_criu_InternalCRIUSupport_getCheckpointRestoreNanoTimeDeltaImpl(JNIEnv *env, jclass unused)
+{
+	PORT_ACCESS_FROM_ENV(env);
+
+	return PORTLIB->checkpointRestoreTimeDelta;
+}
+
 jboolean JNICALL
 Java_openj9_internal_criu_InternalCRIUSupport_isCheckpointAllowedImpl(JNIEnv *env, jclass unused)
 {
