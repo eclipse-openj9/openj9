@@ -326,6 +326,9 @@ TR_J9VM::initializeProcessorType()
       {
       OMRProcessorDesc processorDescription = TR::Compiler->target.cpu.getProcessorDescription();
       TR::Compiler->target.cpu = TR::CPU::customize(processorDescription);
+      J9JavaVM *javaVM = _jitConfig->javaVM;
+      if (!J9_ARE_ANY_BITS_SET(javaVM->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_PORTABLE_SHARED_CACHE))
+         TR::Compiler->relocatableTarget.cpu = TR::CPU::customize(processorDescription);
       }
    else if (TR::Compiler->target.cpu.isX86())
       {
