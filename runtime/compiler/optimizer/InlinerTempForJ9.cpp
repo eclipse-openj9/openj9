@@ -4987,6 +4987,8 @@ TR_J9InlinerPolicy::supressInliningRecognizedInitialCallee(TR_CallSite* callsite
          // VP transforms this into a plain new if it can get a non-null
          // known object java/lang/Class representing an initialized class
          return true;
+      case TR::java_lang_Class_cast:
+         return true; // Call will be transformed into checkcast
       case TR::java_lang_String_hashCodeImplDecompressed:
          /*
           * X86 and z want to avoid inlining both java_lang_String_hashCodeImplDecompressed and java_lang_String_hashCodeImplCompressed

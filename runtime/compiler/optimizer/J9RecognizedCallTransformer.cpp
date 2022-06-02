@@ -37,6 +37,7 @@
 #include "ilgen/IlGenRequest.hpp"
 #include "ilgen/IlGeneratorMethodDetails.hpp"
 #include "ilgen/IlGeneratorMethodDetails_inlines.hpp"
+#include "infra/ILWalk.hpp"
 #include "infra/String.hpp"
 #include "optimizer/CallInfo.hpp"
 #include "optimizer/IdiomRecognitionUtils.hpp"
@@ -77,6 +78,94 @@ void J9::RecognizedCallTransformer::process_java_lang_Class_IsAssignableFrom(TR:
 
    toClass->recursivelyDecReferenceCount();
    fromClass->recursivelyDecReferenceCount();
+   }
+
+static void substituteNode(
+   TR::NodeChecklist &visited, TR::Node *subOld, TR::Node *subNew, TR::Node *node)
+   {
+   if (visited.contains(node))
+      return;
+
+   visited.add(node);
+
+   TR_ASSERT_FATAL(node != subOld, "unexpected occurrence of old node");
+
+   for (int32_t i = 0; i < node->getNumChildren(); i++)
+      {
+      TR::Node *child = node->getChild(i);
+      if (child == subOld)
+         {
+         // subOld occurs at least at its point of evaluation and here, so it
+         // won't hit refcount 0.
+         TR_ASSERT_FATAL_WITH_NODE(
+            subOld,
+            subOld->getReferenceCount() >= 2,
+            "expected node to be referenced elsewhere");
+
+         subOld->decReferenceCount();
+         node->setAndIncChild(i, subNew);
+         }
+      else
+         {
+         substituteNode(visited, subOld, subNew, child);
+         }
+      }
+   }
+
+void J9::RecognizedCallTransformer::process_java_lang_Class_cast(
+   TR::TreeTop* treetop, TR::Node* node)
+   {
+   // See the comment in isInlineable().
+   TR_ASSERT_FATAL_WITH_NODE(
+      node,
+      comp()->getOSRMode() != TR::involuntaryOSR,
+      "unexpectedly transforming Class.cast with involuntary OSR");
+
+   // These don't need to be anchored because they will both occur beneath
+   // checkcast in the same treetop.
+   TR::Node *jlClass = node->getArgument(0);
+   TR::Node *object = node->getArgument(1);
+
+   TR::TransformUtil::separateNullCheck(comp(), treetop, trace());
+
+   TR::SymbolReferenceTable *srTab = comp()->getSymRefTab();
+
+   TR::SymbolReference *classFromJavaLangClassSR =
+      srTab->findOrCreateClassFromJavaLangClassSymbolRef();
+
+   TR::SymbolReference *checkcastSR =
+      srTab->findOrCreateCheckCastSymbolRef(comp()->getMethodSymbol());
+
+   TR::Node *j9class = TR::Node::createWithSymRef(
+      TR::aloadi, 1, 1, jlClass, classFromJavaLangClassSR);
+
+   TR::Node *cast = TR::Node::createWithSymRef(
+      node, TR::checkcast, 2, checkcastSR);
+
+   cast->setAndIncChild(0, object);
+   cast->setAndIncChild(1, j9class);
+
+   if (node->getReferenceCount() > 1)
+      {
+      TR::NodeChecklist visited(comp());
+      TR::TreeTop *entry = treetop->getEnclosingBlock()->getEntry();
+      TR::TreeTop *start = treetop->getNextTreeTop();
+      TR::TreeTop *end = entry->getExtendedBlockExitTreeTop();
+      for (TR::TreeTopIterator it(start, comp()); it != end; ++it)
+         {
+         substituteNode(visited, node, object, it.currentNode());
+         if (node->getReferenceCount() == 1)
+            break;
+         }
+      }
+
+   TR_ASSERT_FATAL_WITH_NODE(
+      node,
+      node->getReferenceCount() == 1,
+      "expected exactly one occurrence to remain");
+
+   treetop->setNode(cast);
+   node->recursivelyDecReferenceCount();
    }
 
 // This methods inlines a call node that calls StringCoding.encodeASCII into an if-diamond. The forward path of the
@@ -1004,6 +1093,21 @@ bool J9::RecognizedCallTransformer::isInlineable(TR::TreeTop* treetop)
                cg()->supportsNonHelper(TR::SymbolReferenceTable::atomicSwapSymbol);
          case TR::java_lang_Class_isAssignableFrom:
             return cg()->supportsInliningOfIsAssignableFrom();
+         case TR::java_lang_Class_cast:
+            {
+            static const bool disable =
+               feGetEnv("TR_disableClassCastToCheckcast") != NULL;
+
+            if (disable)
+               return false;
+
+            // Do not transform in involuntary OSR, since the resulting
+            // checkcast will still be an OSR point, but it won't be the call
+            // that is expected to correspond to the bytecode instruction. (It
+            // might turn out that there's a safe way to transform anyway, but
+            // it isn't obvious.)
+            return comp()->getOSRMode() != TR::involuntaryOSR;
+            }
          case TR::java_lang_Integer_rotateLeft:
          case TR::java_lang_Integer_rotateRight:
             return comp()->target().cpu.getSupportsHardware32bitRotate();
@@ -1091,6 +1195,9 @@ void J9::RecognizedCallTransformer::transform(TR::TreeTop* treetop)
             break;
          case TR::java_lang_Class_isAssignableFrom:
             process_java_lang_Class_IsAssignableFrom(treetop, node);
+            break;
+         case TR::java_lang_Class_cast:
+            process_java_lang_Class_cast(treetop, node);
             break;
          case TR::java_lang_Integer_rotateLeft:
             processIntrinsicFunction(treetop, node, TR::irol);

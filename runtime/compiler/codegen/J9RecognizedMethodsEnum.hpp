@@ -64,6 +64,7 @@
    java_lang_Class_isAssignableFrom,
    java_lang_Class_isInstance,
    java_lang_Class_isInterface,
+   java_lang_Class_cast,
    java_lang_ClassLoader_callerClassLoader,
    java_lang_ClassLoader_getCallerClassLoader,
    java_lang_ClassLoader_getStackClassLoader,

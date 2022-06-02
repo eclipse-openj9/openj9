@@ -1254,6 +1254,13 @@ jboolean JNICALL
 Java_jdk_internal_misc_ScopedMemoryAccess_closeScope0(JNIEnv *env, jobject instance, jobject scope, jobject exception);
 #endif /* JAVA_SPEC_VERSION >= 16 */
 
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+/* criu.cpp */
+jlong JNICALL Java_openj9_internal_criu_InternalCRIUSupport_getCheckpointRestoreNanoTimeDeltaImpl(JNIEnv *env, jclass unused);
+jboolean JNICALL Java_openj9_internal_criu_InternalCRIUSupport_isCheckpointAllowedImpl(JNIEnv *env, jclass unused);
+jboolean JNICALL Java_openj9_internal_criu_InternalCRIUSupport_isCRIUSupportEnabledImpl(JNIEnv *env, jclass unused);
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif
