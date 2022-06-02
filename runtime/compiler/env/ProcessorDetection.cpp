@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -331,7 +331,8 @@ TR_J9VM::initializeProcessorType()
       {
       OMRProcessorDesc processorDescription = TR::Compiler->target.cpu.getProcessorDescription();
       OMRPORT_ACCESS_FROM_OMRPORT(TR::Compiler->omrPortLib);
-      if (feGetEnv("TR_DisableAVX"))
+      static const bool disableAVX = feGetEnv("TR_DisableAVX") != NULL;
+      if (disableAVX)
          {
          omrsysinfo_processor_set_feature(&processorDescription, OMR_FEATURE_X86_OSXSAVE, FALSE);
          }
