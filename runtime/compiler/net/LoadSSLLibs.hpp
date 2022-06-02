@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2021 IBM Corp. and others
+ * Copyright (c) 2019, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -65,6 +65,7 @@ typedef int OSSL_accept_t(SSL *ssl);
 typedef int OSSL_connect_t(SSL *ssl);
 typedef X509 * OSSL_get_peer_certificate_t(const SSL *ssl);
 typedef long OSSL_get_verify_result_t(const SSL *ssl);
+typedef int OSSL_get_error_t(const SSL *ssl, int ret);
 
 typedef SSL_CTX * OSSL_CTX_new_t(const SSL_METHOD *method);
 typedef int OSSL_CTX_set_session_id_context_t(SSL_CTX *ctx, const unsigned char *sid_ctx, unsigned int sid_ctx_len);
@@ -80,6 +81,10 @@ typedef void OBIO_free_all_t(BIO *a);
 typedef BIO * OBIO_new_ssl_t(SSL_CTX *ctx, int client);
 typedef int OBIO_write_t(BIO *b, const void *data, int dlen);
 typedef int OBIO_read_t(BIO *b, void *data, int dlen);
+typedef int OBIO_test_flags_t(const BIO *b, int flags);
+typedef int OBIO_should_retry_t(BIO *b);
+typedef int OBIO_should_read_t(BIO *b);
+typedef int OBIO_should_write_t(BIO *b);
 
 typedef EVP_PKEY * OPEM_read_bio_PrivateKey_t(BIO *bp, EVP_PKEY **x, pem_password_cb *cb, void *u);
 typedef X509 * OPEM_read_bio_X509_t(BIO *bp, X509 **x, pem_password_cb *cb, void *u);
@@ -129,6 +134,7 @@ extern "C" OSSL_accept_t * OSSL_accept;
 extern "C" OSSL_connect_t * OSSL_connect;
 extern "C" OSSL_get_peer_certificate_t * OSSL_get_peer_certificate;
 extern "C" OSSL_get_verify_result_t * OSSL_get_verify_result;
+extern "C" OSSL_get_error_t * OSSL_get_error;
 
 extern "C" OSSLv23_server_method_t * OSSLv23_server_method;
 extern "C" OSSLv23_client_method_t * OSSLv23_client_method;
@@ -147,6 +153,10 @@ extern "C" OBIO_free_all_t * OBIO_free_all;
 extern "C" OBIO_new_ssl_t * OBIO_new_ssl;
 extern "C" OBIO_write_t * OBIO_write;
 extern "C" OBIO_read_t * OBIO_read;
+extern "C" OBIO_test_flags_t * OBIO_test_flags;
+extern "C" OBIO_should_retry_t * OBIO_should_retry;
+extern "C" OBIO_should_read_t * OBIO_should_read;
+extern "C" OBIO_should_write_t * OBIO_should_write;
 
 extern "C" OPEM_read_bio_PrivateKey_t * OPEM_read_bio_PrivateKey;
 extern "C" OPEM_read_bio_X509_t * OPEM_read_bio_X509;

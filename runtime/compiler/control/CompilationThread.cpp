@@ -1105,6 +1105,8 @@ TR::CompilationInfo::CompilationInfo(J9JITConfig *jitConfig) :
 #if defined(J9VM_OPT_JITSERVER)
    _sslKeys(decltype(_sslKeys)::allocator_type(TR::Compiler->persistentAllocator())),
    _sslCerts(decltype(_sslCerts)::allocator_type(TR::Compiler->persistentAllocator())),
+   _metricsSslKeys(decltype(_metricsSslKeys)::allocator_type(TR::Compiler->persistentAllocator())),
+   _metricsSslCerts(decltype(_metricsSslCerts)::allocator_type(TR::Compiler->persistentAllocator())),
    _classesCachedAtServer(decltype(_classesCachedAtServer)::allocator_type(TR::Compiler->persistentAllocator())),
 #endif /* defined(J9VM_OPT_JITSERVER) */
    _persistentMemory(pointer_cast<TR_PersistentMemory *>(jitConfig->scratchSegment)),

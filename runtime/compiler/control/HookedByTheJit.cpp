@@ -4358,6 +4358,11 @@ void JitShutdown(J9JITConfig * jitConfig)
       {
       statsThreadObj->stopStatisticsThread(jitConfig);
       }
+
+   if (compInfo->useSSL())
+      {
+      (*OEVP_cleanup)();
+      }
 #endif
 
    TR_DebuggingCounters::report();
@@ -6926,6 +6931,12 @@ int32_t startJITServer(J9JITConfig *jitConfig)
    PORT_ACCESS_FROM_JAVAVM(javaVM);
 
    TR_ASSERT(compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER, "startJITServer cannot be called in non-server mode\n");
+
+   if (compInfo->useSSL())
+      {
+      (*OSSL_load_error_strings)();
+      (*OSSL_library_init)();
+      }
 
    listener->startListenerThread(javaVM);
 
