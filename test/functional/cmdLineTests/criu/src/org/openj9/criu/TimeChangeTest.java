@@ -21,29 +21,196 @@
  *******************************************************************************/
 package org.openj9.criu;
 
-import java.nio.file.Paths;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Date;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class TimeChangeTest {
 
-	// The elapsed time is expected less than 2 second.
-	private static long MAX_ELAPSED_TIME = 2000 * 1000 * 1000;
-	private static Path imagePath = Paths.get("cpData");
+	// maximum tardiness - 4 second
+	private final static long MAX_TARDINESS_MS = 4000;
+	private final static long MAX_TARDINESS_NS = MAX_TARDINESS_MS * 1000 * 1000;
+	// delay 100 millisecond
+	private final static long MILLIS_DELAY_BEFORECHECKPOINTDONE = 100;
+	// delay 5000 millisecond
+	private final static long MILLIS_DELAY_AFTERCHECKPOINTDONE = 5000;
+	private final long startNanoTime = System.nanoTime();
+	private final long currentTimeMillis = System.currentTimeMillis();
+	private final static Path imagePath = Paths.get("cpData");
 
-	public static void main(String args[]) {
-		new TimeChangeTest().testSystemNanoTime();
+	public static void main(String args[]) throws InterruptedException {
+		if (args.length == 0) {
+			throw new RuntimeException("Test name required");
+		} else {
+			String testName = args[0];
+			TimeChangeTest tct = new TimeChangeTest();
+			if ("testSystemNanoTime".equalsIgnoreCase(testName)) {
+				tct.testSystemNanoTime();
+			} else {
+				tct.test(testName);
+			}
+		}
+	}
+
+	private void test(String testName) throws InterruptedException {
+		System.out.println("Start test name: " + testName);
+		showThreadCurrentTime("Before starting " + testName);
+		Timer timer = new Timer();
+		switch (testName) {
+		case "testMillisDelayBeforeCheckpointDone":
+			testMillisDelayBeforeCheckpointDone(timer);
+			break;
+		case "testMillisDelayAfterCheckpointDone":
+			testMillisDelayAfterCheckpointDone(timer);
+			break;
+		case "testDateScheduledBeforeCheckpointDone":
+			testDateScheduledBeforeCheckpointDone(timer);
+			break;
+		case "testDateScheduledAfterCheckpointDone":
+			testDateScheduledAfterCheckpointDone(timer);
+			break;
+		default:
+			throw new RuntimeException("Unrecognized test name: " + testName);
+		}
+		CRIUTestUtils.checkPointJVM(imagePath, false);
+		// maximum test running time is 12s
+		Thread.sleep(12000);
+		showThreadCurrentTime("End " + testName);
+		timer.cancel();
 	}
 
 	public void testSystemNanoTime() {
 		final long beforeCheckpoint = System.nanoTime();
 		System.out.println("System.nanoTime() before CRIU checkpoint: " + beforeCheckpoint);
-		CRIUTestUtils.checkPointJVM(imagePath);
+		CRIUTestUtils.checkPointJVM(imagePath, false);
 		final long afterRestore = System.nanoTime();
 		final long elapsedTime = afterRestore - beforeCheckpoint;
-		if (elapsedTime < MAX_ELAPSED_TIME) {
-			System.out.println("PASSED: System.nanoTime() after CRIU restore: " + afterRestore + ", the elapse time is: " + elapsedTime);
+		if (elapsedTime < MAX_TARDINESS_NS) {
+			System.out.println("PASSED: System.nanoTime() after CRIU restore: " + afterRestore
+					+ ", the elapse time is: " + elapsedTime + " ns");
 		} else {
-			System.out.println("FAILED: System.nanoTime() after CRIU restore: " + afterRestore + ", the elapse time is: " + elapsedTime);
+			System.out.println("FAILED: System.nanoTime() after CRIU restore: " + afterRestore
+					+ ", the elapse time is: " + elapsedTime + " ns, w/ MAX_TARDINESS_NS : " + MAX_TARDINESS_NS);
 		}
+	}
+
+	private final TimerTask taskMillisDelayBeforeCheckpointDone = new TimerTask() {
+		public void run() {
+			final long endNanoTime = System.nanoTime();
+			final long elapsedTime = (endNanoTime - startNanoTime) / 1000000;
+			boolean pass = false;
+			if ((elapsedTime >= MILLIS_DELAY_BEFORECHECKPOINTDONE)
+					&& (elapsedTime < (MILLIS_DELAY_BEFORECHECKPOINTDONE + MAX_TARDINESS_MS))) {
+				pass = true;
+			}
+			showThreadCurrentTime("taskMillisDelayBeforeCheckpointDone");
+			if (pass) {
+				System.out.println(
+						"PASSED: expected MILLIS_DELAY_BEFORECHECKPOINTDONE " + MILLIS_DELAY_BEFORECHECKPOINTDONE
+								+ " ms, the actual elapsed time is: " + elapsedTime + " ms");
+			} else {
+				System.out.println(
+						"FAILED: expected MILLIS_DELAY_BEFORECHECKPOINTDONE " + MILLIS_DELAY_BEFORECHECKPOINTDONE
+								+ " ms, but the actual elapsed time is: " + elapsedTime + " ms");
+			}
+		}
+	};
+
+	// Timer.schedule(TimerTask task, long delay)
+	private void testMillisDelayBeforeCheckpointDone(Timer timerMillisDelay) throws InterruptedException {
+		timerMillisDelay.schedule(taskMillisDelayBeforeCheckpointDone, MILLIS_DELAY_BEFORECHECKPOINTDONE);
+	}
+
+	private final TimerTask taskMillisDelayAfterCheckpointDone = new TimerTask() {
+		public void run() {
+			final long endNanoTime = System.nanoTime();
+			final long elapsedTime = (endNanoTime - startNanoTime) / 1000000;
+			boolean pass = false;
+			if ((elapsedTime >= MILLIS_DELAY_AFTERCHECKPOINTDONE)
+					&& (elapsedTime < (MILLIS_DELAY_AFTERCHECKPOINTDONE + MAX_TARDINESS_MS))) {
+				pass = true;
+			}
+			showThreadCurrentTime("taskMillisDelayAfterCheckpointDone");
+			if (pass) {
+				System.out.println("PASSED: expected MILLIS_DELAY_AFTERCHECKPOINTDONE "
+						+ MILLIS_DELAY_AFTERCHECKPOINTDONE + " ms, the actual elapsed time is: " + elapsedTime + " ms");
+			} else {
+				System.out
+						.println("FAILED: expected MILLIS_DELAY_AFTERCHECKPOINTDONE " + MILLIS_DELAY_AFTERCHECKPOINTDONE
+								+ " ms, but the actual elapsed time is: " + elapsedTime + " ms");
+			}
+		}
+	};
+
+	// Timer.schedule(TimerTask task, long delay)
+	private void testMillisDelayAfterCheckpointDone(Timer timerMillisDelay) throws InterruptedException {
+		timerMillisDelay.schedule(taskMillisDelayAfterCheckpointDone, MILLIS_DELAY_AFTERCHECKPOINTDONE);
+	}
+
+	// expect the checkpoint takes longer than 10ms
+	private final long timeMillisScheduledBeforeCheckpointDone = currentTimeMillis + 10;
+	private final TimerTask taskDateScheduledBeforeCheckpointDone = new TimerTask() {
+		public void run() {
+			final long taskRunTimeMillis = System.currentTimeMillis();
+			boolean pass = false;
+			if ((taskRunTimeMillis >= timeMillisScheduledBeforeCheckpointDone)
+					&& (taskRunTimeMillis < (timeMillisScheduledBeforeCheckpointDone + MAX_TARDINESS_MS))) {
+				pass = true;
+			}
+			showThreadCurrentTime("taskDateScheduledBeforeCheckpointDone");
+			if (pass) {
+				System.out.println("PASSED: expected to run after timeMillisScheduledBeforeCheckpointDone "
+						+ timeMillisScheduledBeforeCheckpointDone + " ms, the actual taskRunTimeMillis is: "
+						+ taskRunTimeMillis + " ms");
+			} else {
+				System.out.println("FAILED: expected to run after timeMillisScheduledBeforeCheckpointDone "
+						+ timeMillisScheduledBeforeCheckpointDone + " ms, but the actual taskRunTimeMillis is: "
+						+ taskRunTimeMillis + " ms");
+			}
+		}
+	};
+
+	// Timer.schedule(TimerTask task, Date time)
+	private void testDateScheduledBeforeCheckpointDone(Timer timerDateScheduledBeforeCheckpointDone)
+			throws InterruptedException {
+		Date dateScheduled = new Date(timeMillisScheduledBeforeCheckpointDone);
+		timerDateScheduledBeforeCheckpointDone.schedule(taskDateScheduledBeforeCheckpointDone, dateScheduled);
+	}
+
+	// expect the Checkpoint takes less than 2000ms
+	private final long timeMillisScheduledAfterCheckpointDone = currentTimeMillis + 2000;
+	private final TimerTask taskDateScheduledAfterCheckpoint = new TimerTask() {
+		public void run() {
+			final long taskRunTimeMillis = System.currentTimeMillis();
+			boolean pass = false;
+			if ((taskRunTimeMillis >= timeMillisScheduledAfterCheckpointDone)
+					&& (taskRunTimeMillis < (timeMillisScheduledAfterCheckpointDone + MAX_TARDINESS_MS))) {
+				pass = true;
+			}
+			showThreadCurrentTime("taskDateScheduledAfterCheckpoint");
+			if (pass) {
+				System.out.println("PASSED: expected to run after timeMillisScheduledAfterCheckpointDone "
+						+ timeMillisScheduledAfterCheckpointDone + " ms, the actual taskRunTimeMillis is: "
+						+ taskRunTimeMillis + " ms");
+			} else {
+				System.out.println("FAILED: expected to run after timeMillisScheduledAfterCheckpointDone "
+						+ timeMillisScheduledAfterCheckpointDone + " ms, but the actual taskRunTimeMillis is: "
+						+ taskRunTimeMillis + " ms");
+			}
+		}
+	};
+
+	// Timer.schedule(TimerTask task, Date time)
+	private void testDateScheduledAfterCheckpointDone(Timer timerDateScheduledAfterCheckpointDone)
+			throws InterruptedException {
+		Date dateScheduled = new Date(timeMillisScheduledAfterCheckpointDone);
+		timerDateScheduledAfterCheckpointDone.schedule(taskDateScheduledAfterCheckpoint, dateScheduled);
+	}
+
+	private void showThreadCurrentTime(String logStr) {
+		System.out.println(logStr + ": System.currentTimeMillis: " + System.currentTimeMillis() + ", " + new Date()
+				+ ", Thread's name: " + Thread.currentThread().getName());
 	}
 }

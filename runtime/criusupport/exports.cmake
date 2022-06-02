@@ -22,8 +22,6 @@
 
 if(J9VM_OPT_CRIU_SUPPORT)
 	omr_add_exports(j9criu
-		Java_openj9_internal_criu_InternalCRIUSupport_isCheckpointAllowedImpl
-		Java_openj9_internal_criu_InternalCRIUSupport_isCRIUSupportEnabledImpl
 		Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl
 	)
 endif()
