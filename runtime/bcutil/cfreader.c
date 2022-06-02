@@ -2572,25 +2572,25 @@ static I_32
 checkClassVersion(J9CfrClassFile* classfile, U_8* segment, U_32 vmVersionShifted, U_32 flags)
 {
 	const U_32 offset = 6;
-	const U_16 max_allowed_version = vmVersionShifted >> BCT_MajorClassFileVersionMaskShift;
+	const U_16 maxMajorVersion = vmVersionShifted >> BCT_MajorClassFileVersionMaskShift;
 	const U_16 majorVersion = classfile->majorVersion;
 	const U_16 minorVersion = classfile->minorVersion;
-	U_32 errorCode = J9NLS_CFR_ERR_MAJOR_VERSION__ID;
+	U_32 errorCode = J9NLS_CFR_ERR_MAJOR_VERSION2__ID;
 
 	/* Support versions 45.0 -> <whatever is legal for this VM> */
-	if (majorVersion == max_allowed_version) {
-		errorCode = J9NLS_CFR_ERR_MINOR_VERSION__ID;
+	if (majorVersion == maxMajorVersion) {
+		errorCode = J9NLS_CFR_ERR_MINOR_VERSION2__ID;
 		if (0 == minorVersion) {
 			return 0;
 		} else if (0xffff == minorVersion) {
-			errorCode = J9NLS_CFR_ERR_PREVIEW_VERSION__ID;
+			errorCode = J9NLS_CFR_ERR_PREVIEW_VERSION_NOT_ENABLED__ID;
 			/* Preview flags won't be set for Java 8 & earlier (excluding cfdump) */
 			if (J9_ARE_ANY_BITS_SET(flags, BCT_AnyPreviewVersion | BCT_EnablePreview)) {
 				return 0;
 			}
 		}
-	} else if ((majorVersion >= 45) && (majorVersion < max_allowed_version)) {
-		errorCode = J9NLS_CFR_ERR_MINOR_VERSION__ID;
+	} else if ((majorVersion >= 45) && (majorVersion < maxMajorVersion)) {
+		errorCode = J9NLS_CFR_ERR_MINOR_VERSION2__ID;
 		if (majorVersion <= 55) {
 			/* versions prior to and including Java 11, allow any minor */
 			return 0;
@@ -2600,7 +2600,7 @@ checkClassVersion(J9CfrClassFile* classfile, U_8* segment, U_32 vmVersionShifted
 			return 0;
 		}
 		if (0xffff == minorVersion) {
-			errorCode = J9NLS_CFR_ERR_PREVIEW_VERSION__ID;
+			errorCode = J9NLS_CFR_ERR_PREVIEW_VERSION2__ID;
 			/* Allow cfdump to dump preview classes from other releases */
 			if (J9_ARE_ANY_BITS_SET(flags, BCT_AnyPreviewVersion)) {
 				return 0;
@@ -2609,6 +2609,9 @@ checkClassVersion(J9CfrClassFile* classfile, U_8* segment, U_32 vmVersionShifted
 	}
 
 	buildError((J9CfrError *) segment, errorCode, CFR_ThrowUnsupportedClassVersionError, offset);
+	((J9CfrError *) segment)->errorMaxMajorVersion = maxMajorVersion;
+	((J9CfrError *) segment)->errorMajorVersion = majorVersion;
+	((J9CfrError *) segment)->errorMinorVersion = minorVersion;
 	return -1;
 }
 
@@ -2832,8 +2835,8 @@ j9bcutil_readClassFileBytes(J9PortLibrary *portLib,
 
 	Trc_BCU_j9bcutil_readClassFileBytes_Entry();
 
-	/* There must be at least enough space for the classfile struct. */
-	if (segmentLength < (UDATA) sizeof(J9CfrClassFile)) {
+	/* There must be at least enough space for the classfile struct or error struct. */
+	if ((segmentLength < (UDATA) sizeof(J9CfrClassFile)) || (segmentLength < (UDATA) sizeof(J9CfrError))) {
 		Trc_BCU_j9bcutil_readClassFileBytes_Exit(-2);
 		return -2;
 	}

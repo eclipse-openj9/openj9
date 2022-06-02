@@ -338,6 +338,9 @@ typedef struct J9CfrError {
 	I_32 errorBsmIndex;
 	U_32 errorBsmArgsIndex;
 	U_32 errorCPType;
+	U_16 errorMaxMajorVersion;
+	U_16 errorMajorVersion;
+	U_16 errorMinorVersion;
 	struct J9CfrMethod* errorMember;
 	struct J9CfrConstantPoolInfo* constantPool;
 } J9CfrError;
