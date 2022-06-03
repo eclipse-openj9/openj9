@@ -1,14 +1,6 @@
-/*[INCLUDE-IF Sidecar16]*/
-package java.lang.ref;
-
-/*[IF Sidecar19-SE]
-import jdk.internal.ref.Cleaner;
-/*[ELSE]*/
-import sun.misc.Cleaner;
-/*[ENDIF]*/
-
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 /*******************************************************************************
- * Copyright (c) 1998, 2017 IBM Corp. and others
+ * Copyright (c) 1998, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,7 +20,14 @@ import sun.misc.Cleaner;
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
- 
+package java.lang.ref;
+
+/*[IF JAVA_SPEC_VERSION >= 9]
+import jdk.internal.ref.Cleaner;
+/*[ELSE] JAVA_SPEC_VERSION >= 9 */
+import sun.misc.Cleaner;
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
+
 /**
  * ReferenceQueue is the container on which reference objects
  * are enqueued when their reachability type is detected for 
@@ -170,8 +169,8 @@ public Reference<? extends T> remove(long timeout) throws IllegalArgumentExcepti
  * @return		boolean
  *					true if reference is enqueued.
  *					false if reference failed to enqueue.
- */	
-boolean enqueue (Reference reference) {
+ */
+boolean enqueue(Reference<? extends T> reference) {
 	/*[PR CMVC 96472] deadlock loading sun.misc.Cleaner */
 	/*[PR 102259] call Cleaner.clean(), do not enqueue */
 	if (reference instanceof Cleaner) {
@@ -216,6 +215,36 @@ boolean enqueue (Reference reference) {
 
 void forEach(java.util.function.Consumer<? super Reference<? extends T>> consumer) {
 }
+
+/*[IF JAVA_SPEC_VERSION >= 19]*/
+final boolean headIsNull() {
+	return empty;
+}
+
+final Reference<? extends T> poll0() {
+	return poll();
+}
+
+final Reference<? extends T> remove0(long timeout) throws IllegalArgumentException, InterruptedException {
+	return remove(timeout);
+}
+
+final Reference<? extends T> remove0() throws IllegalArgumentException, InterruptedException {
+	return remove(0L);
+}
+
+final boolean enqueue0(Reference reference) {
+	return enqueue(reference);
+}
+
+void signal() {}
+void await() throws InterruptedException {}
+void await(long timeout) throws InterruptedException {}
+
+ReferenceQueue(int value) {
+	this();
+}
+/*[ENDIF] JAVA_SPEC_VERSION >= 19 */
 
 /**
  * Constructs a new instance of this class.

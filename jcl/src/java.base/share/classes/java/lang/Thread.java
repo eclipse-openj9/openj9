@@ -1,4 +1,4 @@
-/*[INCLUDE-IF (JAVA_SPEC_VERSION >= 8) & !OPENJDK_THREAD_SUPPORT]*/
+/*[INCLUDE-IF (JAVA_SPEC_VERSION >= 8) & (JAVA_SPEC_VERSION < 19)]*/
 /*******************************************************************************
  * Copyright (c) 1998, 2022 IBM Corp. and others
  *
@@ -726,7 +726,11 @@ public void interrupt() {
  * @see			Thread#interrupt
  * @see			Thread#isInterrupted
  */
-public static native boolean interrupted();
+public static boolean interrupted() {
+	return interruptedImpl();
+}
+
+private static native boolean interruptedImpl();
 
 /**
  * Posts an interrupt request to the receiver
@@ -1108,7 +1112,11 @@ public static void sleep(long time) throws InterruptedException {
  *
  * @see			Thread#interrupt()
  */
-public static native void sleep(long time, int nanos) throws InterruptedException;
+public static void sleep(long time, int nanos) throws InterruptedException {
+	sleepImpl(time, nanos);
+}
+
+private static native void sleepImpl(long time, int nanos) throws InterruptedException;
 
 /*[IF Sidecar19-SE]*/
 /**
@@ -1305,7 +1313,11 @@ public String toString() {
  *
  * @version		initial
  */
-public static native void yield();
+public static void yield() {
+	yield0();
+}
+
+private static native void yield0();
 
 /**
  * Returns whether the current thread has a monitor lock on the specified object.

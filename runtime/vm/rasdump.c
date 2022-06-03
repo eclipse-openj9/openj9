@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -223,8 +223,18 @@ gpThreadDump(struct J9JavaVM *vm, struct J9VMThread *currentThread)
 		do {
 			if (currentThread->threadObject) {
 				j9object_t threadObject = currentThread->threadObject;
+#if JAVA_SPEC_VERSION >= 19
+				UDATA priority = 0;
+				UDATA isDaemon = 0;
+				j9object_t threadHolder = J9VMJAVALANGTHREAD_HOLDER(currentThread, threadObject);
+				if (NULL != threadHolder) {
+					priority = J9VMJAVALANGTHREADFIELDHOLDER_PRIORITY(currentThread, threadHolder);
+					isDaemon = J9VMJAVALANGTHREADFIELDHOLDER_DAEMON(currentThread, threadHolder);
+				}
+#else /* JAVA_SPEC_VERSION >= 19 */
 				UDATA priority = vm->internalVMFunctions->getJavaThreadPriority(vm, currentThread);
 				UDATA isDaemon = J9VMJAVALANGTHREAD_ISDAEMON(currentThread, threadObject);
+#endif /* JAVA_SPEC_VERSION >= 19 */
 				char* name = getOMRVMThreadName(currentThread->omrVMThread);
 
 				j9tty_printf(

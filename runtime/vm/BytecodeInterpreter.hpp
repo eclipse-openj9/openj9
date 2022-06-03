@@ -2627,7 +2627,7 @@ done:
 		return EXECUTE_BYTECODE;
 	}
 
-	/* java.lang.Thread: public static native boolean interrupted(); */
+	/* java.lang.Thread: private static native boolean interruptedImpl(); */
 	VMINLINE VM_BytecodeAction
 	inlThreadInterrupted(REGISTER_ARGS_LIST)
 	{
@@ -4754,7 +4754,7 @@ done:
 		return rc;
 	}
 
-	/* java.lang.Thread: public static native void sleep(long millis, int nanos); */
+	/* java.lang.Thread: private static native void sleepImpl(long millis, int nanos); */
 	VMINLINE VM_BytecodeAction
 	inlThreadSleep(REGISTER_ARGS_LIST)
 	{

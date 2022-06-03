@@ -1,10 +1,6 @@
-/*[INCLUDE-IF Sidecar16]*/
-package java.lang;
-
-import com.ibm.oti.util.Util;
-
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 /*******************************************************************************
- * Copyright (c) 2002, 2021 IBM Corp. and others
+ * Copyright (c) 2002, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,6 +20,9 @@ import com.ibm.oti.util.Util;
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
+package java.lang;
+
+import com.ibm.oti.util.Util;
 
 /**
  * StackTraceElement represents a stack frame.
@@ -333,4 +332,15 @@ public String toString() {
 	return buf.toString();
 }
 
+/*[IF JAVA_SPEC_VERSION >= 19]*/
+static StackTraceElement[] of(StackTraceElement[] stackTrace) {
+	// TODO: determine need action before return
+	return stackTrace;
+}
+
+static StackTraceElement of(StackFrameInfo s) {
+	// TODO: initialize StackTraceElement with StackFrameInfo data
+	return new StackTraceElement();
+}
+/*[ENDIF] JAVA_SPEC_VERSION >= 19 */
 }

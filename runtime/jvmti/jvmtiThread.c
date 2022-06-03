@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,6 +20,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
+#include <assert.h>
 #include "jvmtiHelpers.h"
 #include "jvmti_internal.h"
 
@@ -453,6 +454,9 @@ jvmtiGetThreadInfo(jvmtiEnv* env,
 			j9object_t threadObject = (NULL == thread) ? targetThread->threadObject : *((j9object_t*) thread);
 			jobject threadGroup = NULL;
 			jobject contextClassLoader;
+#if JAVA_SPEC_VERSION >= 19
+			j9object_t threadHolder = J9VMJAVALANGTHREAD_HOLDER(currentThread, threadObject);
+#endif /* JAVA_SPEC_VERSION >= 19 */
 
 			if (NULL == targetThread) {
 				/* java.lang.thread may not have a ref to vm thread. for example, after it gets terminated.
@@ -493,7 +497,15 @@ jvmtiGetThreadInfo(jvmtiEnv* env,
 				releaseOMRVMThreadName(targetThread->omrVMThread);
 
 				if (JAVAVM_FROM_ENV(env)->jclFlags & J9_JCL_FLAG_THREADGROUPS) {
-					threadGroup = vm->internalVMFunctions->j9jni_createLocalRef((JNIEnv *) currentThread, (j9object_t)J9VMJAVALANGTHREAD_GROUP(currentThread, threadObject));
+#if JAVA_SPEC_VERSION >= 19
+					j9object_t group = NULL;
+					if (NULL != threadHolder) {
+						group = (j9object_t)J9VMJAVALANGTHREADFIELDHOLDER_GROUP(currentThread, threadHolder);
+					}
+#else /* JAVA_SPEC_VERSION >= 19 */
+					j9object_t group = (j9object_t)J9VMJAVALANGTHREAD_GROUP(currentThread, threadObject);
+#endif /* JAVA_SPEC_VERSION >= 19 */
+					threadGroup = vm->internalVMFunctions->j9jni_createLocalRef((JNIEnv *) currentThread, group);
 				}
 			}
 
@@ -501,10 +513,18 @@ jvmtiGetThreadInfo(jvmtiEnv* env,
 
 			rv_name = name;
 			{
+#if JAVA_SPEC_VERSION >= 19
+				rv_priority = J9VMJAVALANGTHREADFIELDHOLDER_PRIORITY(currentThread, threadHolder);
+#else /* JAVA_SPEC_VERSION >= 19 */
 				rv_priority = J9VMJAVALANGTHREAD_PRIORITY(currentThread, threadObject);
+#endif /* JAVA_SPEC_VERSION >= 19 */
 			}
 
+#if JAVA_SPEC_VERSION >= 19
+			rv_is_daemon = J9VMJAVALANGTHREADFIELDHOLDER_DAEMON(currentThread, threadHolder) ? JNI_TRUE : JNI_FALSE;
+#else /* JAVA_SPEC_VERSION >= 19 */
 			rv_is_daemon = J9VMJAVALANGTHREAD_ISDAEMON(currentThread, threadObject) ? JNI_TRUE : JNI_FALSE;
+#endif /* JAVA_SPEC_VERSION >= 19 */
 			rv_thread_group = (jthreadGroup) threadGroup;
 			rv_context_class_loader = contextClassLoader;
 		}
@@ -806,8 +826,16 @@ jvmtiRunAgentThread(jvmtiEnv* env,
 
 			/* Run the thread */
 
+#if JAVA_SPEC_VERSION >= 19
+			j9object_t threadHolder = J9VMJAVALANGTHREAD_HOLDER(currentThread, threadObject);
+			if (NULL != threadHolder) {
+				J9VMJAVALANGTHREADFIELDHOLDER_SET_PRIORITY(currentThread, threadHolder, priority);
+				J9VMJAVALANGTHREADFIELDHOLDER_SET_DAEMON(currentThread, threadHolder, TRUE);
+			}
+#else /* JAVA_SPEC_VERSION >= 19 */
 			J9VMJAVALANGTHREAD_SET_PRIORITY(currentThread, threadObject, priority);
 			J9VMJAVALANGTHREAD_SET_ISDAEMON(currentThread, threadObject, TRUE);
+#endif /* JAVA_SPEC_VERSION >= 19 */
 			result = vm->internalVMFunctions->startJavaThread(currentThread, threadObject,
 				J9_PRIVATE_FLAGS_DAEMON_THREAD | J9_PRIVATE_FLAGS_NO_EXCEPTION_IN_START_JAVA_THREAD,
 				vm->defaultOSStackSize, (UDATA) priority, agentThreadStart, args, NULL);
@@ -1076,5 +1104,24 @@ done:
 	TRACE_JVMTI_RETURN(jvmtiGetCurrentThread);
 }
 
+#if JAVA_SPEC_VERSION >= 19
+jvmtiError JNICALL
+jvmtiSuspendAllVirtualThreads(jvmtiEnv* env,
+	jint except_count,
+	const jthread* except_list)
+{
+	assert(!"jvmtiSuspendAllVirtualThreads unimplemented");
+	return JVMTI_ERROR_NONE;
+}
 
+
+jvmtiError JNICALL
+jvmtiResumeAllVirtualThreads(jvmtiEnv* env,
+	jint except_count,
+	const jthread* except_list)
+{
+	assert(!"jvmtiResumeAllVirtualThreads unimplemented");
+	return JVMTI_ERROR_NONE;
+}
+#endif /* JAVA_SPEC_VERSION >= 19 */
 
