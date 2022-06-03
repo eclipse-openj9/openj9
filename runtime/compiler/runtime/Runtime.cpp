@@ -1973,7 +1973,7 @@ char * feGetEnv2(const char * s, const void * vm)
             }
           else
             {
-            int32_t res = j9sysinfo_get_env("TR_silentEnv", NULL, 0);
+            static const int32_t res = j9sysinfo_get_env("TR_silentEnv", NULL, 0);
             // If TR_silentEnv is not found the result is -1. Setting TR_silentEnv prevents printing envVars
             bool verboseQuery = (res == -1 ? true : false);
 
