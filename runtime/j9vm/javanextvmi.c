@@ -202,4 +202,48 @@ JVM_LoadZipLibrary(void)
 {
 	assert(!"JVM_LoadZipLibrary unimplemented");
 }
-#endif /* JAVA_SPEC_VERSION >= 18 */
+
+JNIEXPORT void JNICALL
+JVM_RegisterContinuationMethods(JNIEnv *env, jclass clz)
+{
+	assert(!"JVM_RegisterContinuationMethods unimplemented");
+}
+
+JNIEXPORT jboolean JNICALL
+JVM_IsContinuationsSupported(void)
+{
+	assert(!"JVM_IsContinuationsSupported unimplemented");
+	return JNI_TRUE;
+}
+
+JNIEXPORT jboolean JNICALL
+JVM_IsPreviewEnabled(void)
+{
+	assert(!"JVM_IsPreviewEnabled unimplemented");
+	return JNI_TRUE;
+}
+
+JNIEXPORT void JNICALL
+JVM_VirtualThreadMountBegin(JNIEnv *env)
+{
+	assert(!"JVM_VirtualThreadMountBegin unimplemented");
+}
+
+JNIEXPORT void JNICALL
+JVM_VirtualThreadMountEnd(JNIEnv *env)
+{
+	assert(!"JVM_VirtualThreadMountEnd unimplemented");
+}
+
+JNIEXPORT void JNICALL
+JVM_VirtualThreadUnmountBegin(JNIEnv *env)
+{
+	assert(!"JVM_VirtualThreadUnmountBegin unimplemented");
+}
+
+JNIEXPORT void JNICALL
+JVM_VirtualThreadUnmountEnd(JNIEnv *env)
+{
+	assert(!"JVM_VirtualThreadUnmountEnd unimplemented");
+}
+#endif /* JAVA_SPEC_VERSION >= 19 */

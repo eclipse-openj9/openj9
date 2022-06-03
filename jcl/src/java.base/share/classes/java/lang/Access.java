@@ -62,6 +62,13 @@ import jdk.internal.misc.JavaLangAccess;
 /*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 import jdk.internal.module.ServicesCatalog;
 import jdk.internal.reflect.ConstantPool;
+/*[IF JAVA_SPEC_VERSION >= 19]*/
+import java.util.concurrent.Callable;
+import jdk.internal.vm.Continuation;
+import jdk.internal.vm.ContinuationScope;
+import jdk.internal.vm.StackableScope;
+import jdk.internal.vm.ThreadContainer;
+/*[ENDIF] JAVA_SPEC_VERSION >= 19 */
 /*[ELSE] Sidecar19-SE */
 import sun.misc.JavaLangAccess;
 import sun.reflect.ConstantPool;
@@ -501,6 +508,91 @@ final class Access implements JavaLangAccess {
 		return StringCoding.implEncodeAsciiArray(sa, sp, da, dp, len);
 	}
 /*[ENDIF] JAVA_SPEC_VERSION >= 17 */
+
+/*[IF JAVA_SPEC_VERSION >= 19]*/
+	public Thread currentCarrierThread() {
+		return Thread.currentCarrierThread();
+	}
+
+	public <T> T getCarrierThreadLocal(ThreadLocal<T> local) {
+		return local.getCarrierThreadLocal();
+	}
+
+	public <T> void setCarrierThreadLocal(ThreadLocal<T> local, T value) {
+		local.setCarrierThreadLocal(value);
+	}
+
+	public <V> V executeOnCarrierThread(Callable<V> task) throws Exception {
+		throw new UnsupportedOperationException();
+	}
+
+	public Continuation getContinuation(Thread thread) {
+		return thread.getContinuation();
+	}
+
+	public void setContinuation(Thread thread, Continuation c) {
+		thread.setContinuation(c);
+	}
+
+	public Object[] extentLocalCache() {
+		return Thread.extentLocalCache();
+	}
+
+	public void setExtentLocalCache(Object[] cache) {
+		Thread.setExtentLocalCache(cache);
+	}
+
+	public Object extentLocalBindings() {
+		return Thread.extentLocalBindings();
+	}
+
+	public void setExtentLocalBindings(Object bindings) {
+		Thread.setExtentLocalBindings(bindings);
+	}
+
+	public StackableScope headStackableScope(Thread thread) {
+		return thread.headStackableScopes();
+	}
+
+	public void setHeadStackableScope(StackableScope scope) {
+		Thread.setHeadStackableScope(scope);
+	}
+
+	public ThreadContainer threadContainer(Thread thread) {
+		return thread.threadContainer();
+	}
+
+	public void start(Thread thread, ThreadContainer container) {
+		thread.start(container);
+	}
+
+	public Thread[] getAllThreads() {
+		return Thread.getAllThreads();
+	}
+
+	public ContinuationScope virtualThreadContinuationScope() {
+		return VirtualThread.continuationScope();
+	}
+
+	public void parkVirtualThread() {
+		throw new UnsupportedOperationException();
+	}
+
+	public void parkVirtualThread(long nanos) {
+		throw new UnsupportedOperationException();
+	}
+
+	public void unparkVirtualThread(Thread thread) {
+		if (thread.isVirtual()) {
+			VirtualThread t = (VirtualThread)thread;
+			t.unpark();
+		}
+	}
+
+	public StackWalker newStackWalkerInstance(Set<StackWalker.Option> options, ContinuationScope contScope, Continuation continuation) {
+		return StackWalker.newInstance(options, null, contScope, continuation);
+	}
+/*[ENDIF] JAVA_SPEC_VERSION >= 19 */
 
 /*[ENDIF] Sidecar19-SE */
 }

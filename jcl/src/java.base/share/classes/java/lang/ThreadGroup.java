@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar18-SE & !OPENJDK_THREAD_SUPPORT]*/
+/*[INCLUDE-IF (8 <= JAVA_SPEC_VERSION) & (JAVA_SPEC_VERSION < 19)]*/
 /*******************************************************************************
  * Copyright (c) 1998, 2022 IBM Corp. and others
  *

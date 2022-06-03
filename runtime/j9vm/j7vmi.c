@@ -2257,25 +2257,38 @@ JVM_StartThread(JNIEnv* jniEnv, jobject newThread)
 {
 	J9VMThread* currentThread = (J9VMThread*)jniEnv;
 	J9JavaVM* javaVM = currentThread->javaVM;
-	UDATA priority, isDaemon, privateFlags;
-	j9object_t newThreadObject;
-	UDATA result;
+	UDATA priority = J9THREAD_PRIORITY_NORMAL;
+	UDATA isDaemon = FALSE;
+	UDATA privateFlags = 0;
+	j9object_t newThreadObject = NULL;
+	UDATA result = 0;
 
 	javaVM->internalVMFunctions->internalEnterVMFromJNI(currentThread);
 
 	newThreadObject = J9_JNI_UNWRAP_REFERENCE(newThread);
+#if JAVA_SPEC_VERSION >= 19
+	j9object_t threadHolder = J9VMJAVALANGTHREAD_HOLDER(currentThread, newThreadObject);
+#endif /* JAVA_SPEC_VERSION >= 19 */
 
-	if (0 != (javaVM->runtimeFlags & J9RuntimeFlagNoPriorities)) {
-		priority = J9THREAD_PRIORITY_NORMAL;
-	} else {
+	if (J9_ARE_NO_BITS_SET(javaVM->runtimeFlags, J9RuntimeFlagNoPriorities)) {
+#if JAVA_SPEC_VERSION >= 19
+		if (NULL != threadHolder) {
+			priority = J9VMJAVALANGTHREADFIELDHOLDER_PRIORITY(currentThread, threadHolder);
+		}
+#else /* JAVA_SPEC_VERSION >= 19 */
 		priority = J9VMJAVALANGTHREAD_PRIORITY(currentThread, newThreadObject);
+#endif /* JAVA_SPEC_VERSION >= 19 */
 	}
 
+#if JAVA_SPEC_VERSION >= 19
+	if (NULL != threadHolder) {
+		isDaemon = J9VMJAVALANGTHREADFIELDHOLDER_DAEMON(currentThread, threadHolder);
+	}
+#else /* JAVA_SPEC_VERSION >= 19 */
 	isDaemon = J9VMJAVALANGTHREAD_ISDAEMON(currentThread, newThreadObject);
+#endif /* JAVA_SPEC_VERSION >= 19 */
 	if (isDaemon) {
 		privateFlags = J9_PRIVATE_FLAGS_DAEMON_THREAD;
-	} else {
-		privateFlags = 0;
 	}
 
 	result = javaVM->internalVMFunctions->startJavaThread(

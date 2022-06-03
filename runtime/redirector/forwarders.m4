@@ -384,3 +384,17 @@ _IF([JAVA_SPEC_VERSION >= 18],
 	[_X(JVM_ReportFinalizationComplete, JNICALL, false, void, JNIEnv *env, jobject obj)])
 _IF([JAVA_SPEC_VERSION >= 19],
 	[_X(JVM_LoadZipLibrary, JNICALL, false, void, void)])
+_IF([JAVA_SPEC_VERSION >= 19],
+	[_X(JVM_RegisterContinuationMethods, JNICALL, false, void, JNIEnv *env, jclass clz)])
+_IF([JAVA_SPEC_VERSION >= 19],
+	[_X(JVM_IsContinuationsSupported, JNICALL, false, void, void)])
+_IF([JAVA_SPEC_VERSION >= 19],
+	[_X(JVM_IsPreviewEnabled, JNICALL, false, void, void)])
+_IF([JAVA_SPEC_VERSION >= 19],
+	[_X(JVM_VirtualThreadMountBegin, JNICALL, false, void, JNIEnv *env)])
+_IF([JAVA_SPEC_VERSION >= 19],
+	[_X(JVM_VirtualThreadMountEnd, JNICALL, false, void, JNIEnv *env)])
+_IF([JAVA_SPEC_VERSION >= 19],
+	[_X(JVM_VirtualThreadUnmountBegin, JNICALL, false, void, JNIEnv *env)])
+_IF([JAVA_SPEC_VERSION >= 19],
+	[_X(JVM_VirtualThreadUnmountEnd, JNICALL, false, void, JNIEnv *env)])

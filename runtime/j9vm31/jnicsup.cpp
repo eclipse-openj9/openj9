@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2021, 2021 IBM Corp. and others
+ * Copyright (c) 2021, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -313,6 +313,9 @@ struct JNINativeInterface_ EsJNIFunctions = {
 #if JAVA_SPEC_VERSION >= 9
 	GetModule,
 #endif /* JAVA_SPEC_VERSION >= 9 */
+#if JAVA_SPEC_VERSION >= 19
+	IsVirtualThread,
+#endif /* JAVA_SPEC_VERSION >= 19 */
 };
 
 static void initializeJNIEnv31(JNIEnv31 * jniEnv31, jlong jniEnv64);
@@ -844,6 +847,20 @@ GetModule(JNIEnv *env, jclass clazz)
 	return returnValue;
 }
 #endif /* JAVA_SPEC_VERSION >= 9 */
+
+#if JAVA_SPEC_VERSION >= 19
+jboolean JNICALL
+IsVirtualThread(JNIEnv *env, jobject obj)
+{
+	const jint NUM_ARGS = 2;
+	J9_CEL4RO64_ArgType argTypes[NUM_ARGS] = { CEL4RO64_type_JNIEnv64, CEL4RO64_type_jobject };
+	uint64_t argValues[NUM_ARGS] = { JNIENV64_FROM_JNIENV31(env), obj };
+	jboolean returnValue = JNI_FALSE;
+	FUNCTION_DESCRIPTOR_FROM_JNIENV31(env, IsVirtualThread);
+	j9_cel4ro64_call_function(functionDescriptor, argTypes, argValues, NUM_ARGS, CEL4RO64_type_jboolean, &returnValue);
+	return returnValue;
+}
+#endif /* JAVA_SPEC_VERSION >= 19 */
 
 /**
  * Following set of functions are JNIEnv31 utility routines.

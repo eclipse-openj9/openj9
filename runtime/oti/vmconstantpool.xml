@@ -49,6 +49,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<classref name="java/lang/Class"/>
 	<classref name="java/lang/IllegalThreadStateException"/>
 	<classref name="java/lang/Thread"/>
+	<classref name="java/lang/Thread$FieldHolder" versions="19-"/>
 	<classref name="java/lang/ArithmeticException"/>
 	<classref name="java/lang/ThreadGroup"/>
 	<classref name="java/lang/InterruptedException"/>
@@ -190,16 +191,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<fieldref class="java/lang/StackTraceElement" name="fileName" signature="Ljava/lang/String;"/>
 	<fieldref class="java/lang/StackTraceElement" name="lineNumber" signature="I"/>
 	<fieldref class="java/lang/StackTraceElement" name="source" signature="Ljava/lang/Object;"/>
-	<fieldref class="java/lang/Thread" name="threadRef" signature="J" cast="struct J9VMThread *" flags="!opt_openjdkThreadSupport">
-		<fieldalias name="eetop" signature="J" cast="struct J9VMThread *" flags="opt_openjdkThreadSupport"/>
-	</fieldref>
-	<fieldref class="java/lang/Thread" name="stackSize" signature="J"/>
-	<fieldref class="java/lang/Thread" name="tid" signature="J"/>
-	<fieldref class="java/lang/Thread" name="deadInterrupt" signature="Z" versions="14-" flags="!opt_openjdkThreadSupport">
-		<fieldalias name="interrupted" signature="Z" versions="14-" flags="opt_openjdkThreadSupport"/>
-	</fieldref>
-	<fieldref class="java/lang/Thread" name="started" signature="Z"/>
-	<fieldref class="java/lang/Thread" name="name" signature="Ljava/lang/String;"/>
 
 	<fieldref class="java/lang/StackWalker$StackFrameImpl" name="declaringClass" signature="Ljava/lang/Class;" versions="9-"/>
 	<fieldref class="java/lang/StackWalker$StackFrameImpl" name="callerSensitive" signature="Z" versions="9-"/>
@@ -212,18 +203,36 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<fieldref class="java/lang/StackWalker$StackFrameImpl" name="methodSignature" signature="Ljava/lang/String;" versions="9-"/>
 	<fieldref class="java/lang/StackWalker$StackFrameImpl" name="frameModule" signature="Ljava/lang/Module;" versions="9-"/>
 
-	<fieldref class="java/lang/Thread" name="priority" signature="I"/>
-	<fieldref class="java/lang/Thread" name="isDaemon" signature="Z" flags="!opt_openjdkThreadSupport">
-		<fieldalias name="daemon" signature="Z" flags="opt_openjdkThreadSupport"/>
-	</fieldref>
-	<fieldref class="java/lang/Thread" name="group" signature="Ljava/lang/ThreadGroup;"/>
-	<fieldref class="java/lang/Thread" name="stopCalled" signature="Z"/>
+	<!-- Common field references shared between OpenJ9 and OpenJDK Thread. -->
 	<fieldref class="java/lang/Thread" name="contextClassLoader" signature="Ljava/lang/ClassLoader;"/>
 	<fieldref class="java/lang/Thread" name="inheritedAccessControlContext" signature="Ljava/security/AccessControlContext;"/>
-	<fieldref class="java/lang/Thread" name="lock" signature="Ljava/lang/Object;" flags="!opt_openjdkThreadSupport">
-		<fieldalias name="blockerLock" signature="Ljava/lang/Object;" flags="opt_openjdkThreadSupport"/>
-	</fieldref>
+	<fieldref class="java/lang/Thread" name="name" signature="Ljava/lang/String;"/>
 	<fieldref class="java/lang/Thread" name="parkBlocker" signature="Ljava/lang/Object;"/>
+	<fieldref class="java/lang/Thread" name="tid" signature="J"/>
+	<fieldref class="java/lang/Thread" name="threadRef" signature="J" cast="struct J9VMThread *" versions="8-18">
+		<fieldalias name="eetop" signature="J" cast="struct J9VMThread *" versions="19-"/>
+	</fieldref>
+	<fieldref class="java/lang/Thread" name="deadInterrupt" signature="Z" versions="14-18">
+		<fieldalias name="interrupted" signature="Z" versions="19-"/>
+	</fieldref>
+	<fieldref class="java/lang/Thread" name="lock" signature="Ljava/lang/Object;" versions="8-18">
+		<fieldalias name="interruptLock" signature="Ljava/lang/Object;" versions="19-"/>
+	</fieldref>
+	<fieldref class="java/lang/Thread" name="started" signature="Z"/>
+	<fieldref class="java/lang/Thread" name="stopCalled" signature="Z"/>
+
+	<!-- Field references for Java 19 Virtual Thread. -->
+	<fieldref class="java/lang/Thread" name="holder" signature="Ljava/lang/Thread$FieldHolder;" versions="19-"/>
+	<fieldref class="java/lang/Thread$FieldHolder" name="daemon" signature="Z" versions="19-"/>
+	<fieldref class="java/lang/Thread$FieldHolder" name="group" signature="Ljava/lang/ThreadGroup;" versions="19-"/>
+	<fieldref class="java/lang/Thread$FieldHolder" name="priority" signature="I" versions="19-"/>
+	<fieldref class="java/lang/Thread$FieldHolder" name="threadStatus" signature="I" versions="19-"/>
+
+	<!-- Field references for OpenJ9 Java 8-18 Thread. -->
+	<fieldref class="java/lang/Thread" name="priority" signature="I" versions="8-18"/>
+	<fieldref class="java/lang/Thread" name="isDaemon" signature="Z" versions="8-18"/>
+	<fieldref class="java/lang/Thread" name="group" signature="Ljava/lang/ThreadGroup;" versions="8-18"/>
+
 	<fieldref class="java/lang/Throwable" name="cause" signature="Ljava/lang/Throwable;"/>
 	<fieldref class="java/lang/Throwable" name="detailMessage" signature="Ljava/lang/String;"/>
 	<fieldref class="java/lang/Throwable" name="walkback" signature="Ljava/lang/Object;"/>
@@ -275,23 +284,19 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<fieldref class="java/lang/ThreadGroup" name="name" signature="Ljava/lang/String;"/>
 	<fieldref class="java/lang/ThreadGroup" name="maxPriority" signature="I"/>
 	<fieldref class="java/lang/ThreadGroup" name="parent" signature="Ljava/lang/ThreadGroup;"/>
-	<fieldref class="java/lang/ThreadGroup" name="numThreads" signature="I" flags="!opt_openjdkThreadSupport">
-		<fieldalias name="nthreads" signature="I" flags="opt_openjdkThreadSupport"/>
+	<fieldref class="java/lang/ThreadGroup" name="numThreads" signature="I" versions="8-18"/>
+	<fieldref class="java/lang/ThreadGroup" name="numGroups" signature="I" versions="8-18">
+		<fieldalias name="ngroups" signature="I" versions="19-"/>
 	</fieldref>
-	<fieldref class="java/lang/ThreadGroup" name="numGroups" signature="I" flags="!opt_openjdkThreadSupport">
-		<fieldalias name="ngroups" signature="I" flags="opt_openjdkThreadSupport"/>
+	<fieldref class="java/lang/ThreadGroup" name="childrenThreads" signature="[Ljava/lang/Thread;" versions="8-18"/>
+	<fieldref class="java/lang/ThreadGroup" name="childrenGroups" signature="[Ljava/lang/ThreadGroup;" versions="8-18">
+		<fieldalias name="groups" signature="[Ljava/lang/ThreadGroup;" versions="19-"/>
 	</fieldref>
-	<fieldref class="java/lang/ThreadGroup" name="childrenThreads" signature="[Ljava/lang/Thread;" flags="!opt_openjdkThreadSupport">
-		<fieldalias name="threads" signature="[Ljava/lang/Thread;" flags="opt_openjdkThreadSupport"/>
+	<fieldref class="java/lang/ThreadGroup" name="isDaemon" signature="Z" versions="8-18">
+		<fieldalias name="daemon" signature="Z" versions="19-"/>
 	</fieldref>
-	<fieldref class="java/lang/ThreadGroup" name="childrenGroups" signature="[Ljava/lang/ThreadGroup;" flags="!opt_openjdkThreadSupport">
-		<fieldalias name="groups" signature="[Ljava/lang/ThreadGroup;" flags="opt_openjdkThreadSupport"/>
-	</fieldref>
-	<fieldref class="java/lang/ThreadGroup" name="isDaemon" signature="Z" flags="!opt_openjdkThreadSupport">
-		<fieldalias name="daemon" signature="Z" flags="opt_openjdkThreadSupport"/>
-	</fieldref>
-	<fieldref class="java/lang/ThreadGroup" name="childrenGroupsLock" signature="Ljava/lang/Object;" flags="!opt_openjdkThreadSupport"/>
-	<fieldref class="java/lang/ThreadGroup" name="childrenThreadsLock" signature="Ljava/lang/Object;" flags="!opt_openjdkThreadSupport"/>
+	<fieldref class="java/lang/ThreadGroup" name="childrenGroupsLock" signature="Ljava/lang/Object;" versions="8-18"/>
+	<fieldref class="java/lang/ThreadGroup" name="childrenThreadsLock" signature="Ljava/lang/Object;" versions="8-18"/>
 	<fieldref class="java/lang/ref/Reference" name="referent" signature="Ljava/lang/Object;"/>
 	<fieldref class="java/lang/ref/Reference" name="queue" signature="Ljava/lang/ref/ReferenceQueue;"/>
 	<fieldref class="java/lang/ref/Reference" name="state" signature="I"/>

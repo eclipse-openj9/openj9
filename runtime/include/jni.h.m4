@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -457,6 +457,7 @@ struct JNINativeInterface_ {
 	jlong (JNICALL * GetDirectBufferCapacity)(JNIEnv *env, jobject buf);
 	jobjectRefType (JNICALL * GetObjectRefType)(JNIEnv* env, jobject obj);
 ifelse(eval(JAVA_SPEC_VERSION >= 9), 1, `	jobject (JNICALL * GetModule)(JNIEnv *env, jclass clazz);', `dnl')
+ifelse(eval(JAVA_SPEC_VERSION >= 19), 1, `	jboolean (JNICALL * IsVirtualThread)(JNIEnv *env, jobject obj);', `dnl')
 };
 struct JNIEnv_ {
 	const struct JNINativeInterface_ *functions;
@@ -693,6 +694,7 @@ struct JNIEnv_ {
 	jlong GetDirectBufferCapacity(jobject buf) { return functions->GetDirectBufferCapacity(this, buf); }
 	jobjectRefType GetObjectRefType(jobject obj) { return functions->GetObjectRefType(this, obj); }
 ifelse(eval(JAVA_SPEC_VERSION >= 9), 1, `	jobject GetModule(jclass clazz) { return functions->GetModule(this, clazz); }', `dnl')
+ifelse(eval(JAVA_SPEC_VERSION >= 19), 1, `	jboolean IsVirtualThread(JNIEnv *env, jobject obj) { return functions->IsVirtualThread(this, obj); }', `dnl')
 #endif
 };
 

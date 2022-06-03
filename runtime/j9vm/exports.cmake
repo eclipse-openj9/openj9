@@ -394,6 +394,13 @@ endif()
 if(NOT JAVA_SPEC_VERSION LESS 19)
 	jvm_add_exports(jvm
 		JVM_LoadZipLibrary
+		JVM_RegisterContinuationMethods
+		JVM_IsContinuationsSupported
+		JVM_IsPreviewEnabled
+		JVM_VirtualThreadMountBegin
+		JVM_VirtualThreadMountEnd
+		JVM_VirtualThreadUnmountBegin
+		JVM_VirtualThreadUnmountEnd
 	)
 endif()
 

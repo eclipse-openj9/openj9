@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,9 +28,9 @@
 
 extern "C" {
 
-/* java.lang.Thread: public static native void sleep(long millis, int nanos) throws InterruptedException; */
+/* java.lang.Thread: private static native void sleepImpl(long millis, int nanos) throws InterruptedException; */
 void JNICALL
-Fast_java_lang_Thread_sleep(J9VMThread *currentThread, jlong millis, jint nanos)
+Fast_java_lang_Thread_sleepImpl(J9VMThread *currentThread, jlong millis, jint nanos)
 {
 	if (0 == threadSleepImpl(currentThread, (I_64)millis, (I_32)nanos)) {
 		/* No need to check return value here - pop frames cannot occur as this method is native */
@@ -46,9 +46,9 @@ Fast_java_lang_Thread_currentThread(J9VMThread *currentThread)
 }
 
 
-/* java.lang.Thread: public static native boolean interrupted(); */
+/* java.lang.Thread: private static native boolean interruptedImpl(); */
 jboolean JNICALL
-Fast_java_lang_Thread_interrupted(J9VMThread *currentThread)
+Fast_java_lang_Thread_interruptedImpl(J9VMThread *currentThread)
 {
 	jboolean rc = JNI_FALSE;
 #if defined(WIN32)
@@ -98,12 +98,12 @@ Fast_java_lang_Thread_onSpinWait(J9VMThread *currentThread)
 #endif /* WIN32 */
 
 J9_FAST_JNI_METHOD_TABLE(java_lang_Thread)
-	J9_FAST_JNI_METHOD("sleep", "(JI)V", Fast_java_lang_Thread_sleep,
+	J9_FAST_JNI_METHOD("sleepImpl", "(JI)V", Fast_java_lang_Thread_sleepImpl,
 		J9_FAST_JNI_RETAIN_VM_ACCESS | J9_FAST_JNI_DO_NOT_WRAP_OBJECTS | J9_FAST_JNI_DO_NOT_PASS_RECEIVER)
 	J9_FAST_JNI_METHOD("currentThread", "()Ljava/lang/Thread;", Fast_java_lang_Thread_currentThread,
 		J9_FAST_JNI_RETAIN_VM_ACCESS | J9_FAST_JNI_NOT_GC_POINT | J9_FAST_JNI_NO_NATIVE_METHOD_FRAME | J9_FAST_JNI_NO_EXCEPTION_THROW |
 		J9_FAST_JNI_NO_SPECIAL_TEAR_DOWN | J9_FAST_JNI_DO_NOT_WRAP_OBJECTS | J9_FAST_JNI_DO_NOT_PASS_RECEIVER)
-	J9_FAST_JNI_METHOD("interrupted", "()Z", Fast_java_lang_Thread_interrupted,
+	J9_FAST_JNI_METHOD("interruptedImpl", "()Z", Fast_java_lang_Thread_interruptedImpl,
 		INTERRUPTED_FLAGS)
 	J9_FAST_JNI_METHOD("isInterruptedImpl", "()Z", Fast_java_lang_Thread_isInterruptedImpl,
 		J9_FAST_JNI_RETAIN_VM_ACCESS | J9_FAST_JNI_NOT_GC_POINT | J9_FAST_JNI_NO_NATIVE_METHOD_FRAME | J9_FAST_JNI_NO_EXCEPTION_THROW |

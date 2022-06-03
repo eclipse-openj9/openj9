@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -98,6 +98,11 @@ dumpCapabilities(J9JavaVM * vm, const jvmtiCapabilities *capabilities, const cha
 #if JAVA_SPEC_VERSION >= 11
 	PRINT_CAPABILITY(can_generate_sampled_object_alloc_events);
 #endif /* JAVA_SPEC_VERSION >= 11 */
+
+	/* JVMTI 19 */
+#if JAVA_SPEC_VERSION >= 19
+	PRINT_CAPABILITY(can_support_virtual_threads);
+#endif /* JAVA_SPEC_VERSION >= 19 */
 #undef PRINT_CAPABILITY
 }
 

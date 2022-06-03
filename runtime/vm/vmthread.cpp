@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2378,7 +2378,17 @@ findDeadlock_fail:
 UDATA
 getJavaThreadPriority(struct J9JavaVM *vm, J9VMThread* thread )
 {
+#if JAVA_SPEC_VERSION >= 19
+	j9object_t threadHolder = J9VMJAVALANGTHREAD_HOLDER(thread, thread->threadObject);
+	UDATA priority = 0;
+	if (NULL != threadHolder) {
+		priority = J9VMJAVALANGTHREADFIELDHOLDER_PRIORITY(thread, threadHolder);
+	}
+
+	return priority;
+#else /* JAVA_SPEC_VERSION >= 19 */
 	return J9VMJAVALANGTHREAD_PRIORITY(thread, thread->threadObject);
+#endif /* JAVA_SPEC_VERSION >= 19 */
 }
 
 
