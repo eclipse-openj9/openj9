@@ -3777,8 +3777,11 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 			FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXUSECOMPRESSEDOOPS, NULL));
 		IDATA nocompressed = OMR_MAX(FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XNOCOMPRESSEDREFS, NULL),
 			FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXNOUSECOMPRESSEDOOPS, NULL));
-		/* Compressed refs by default */
-		if (compressed >= nocompressed) {
+		/* if unspecified, use compressed refs by default, unless there is a specified -Xmx over the threshold */
+		if (compressed > nocompressed) {
+			/* use compressed refs if explicitly requested */
+			vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_COMPRESS_OBJECT_REFERENCES;
+		} else if (compressed == nocompressed) {
 			/* switching to nocompressedrefs based on -Xmx, similar logic as redirector.c:chooseJVM() */
 			const char* option = "-Xmx";
 			UDATA requestedHeapSize = 0;
