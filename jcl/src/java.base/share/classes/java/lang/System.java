@@ -138,11 +138,15 @@ public final class System {
 	private static boolean hasSetOutEncoding;
 	private static String consoleDefaultEncoding;
 	/* The consoleDefaultCharset is different from the default console encoding when the encoding
-	 * doesn't exist, or isn't available at startup. Some Charset's are not available in the
-	 * java.base module and so are not used at startup.
+	 * doesn't exist, or isn't available at startup. Some character sets are not available in the
+	 * java.base module, there are more in the jdk.charsets module, and so are not used at startup.
 	 */
 	private static Charset consoleDefaultCharset;
 	/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
+	/*[IF JAVA_SPEC_VERSION >= 19]*/
+	private static String stdoutProp;
+	private static String stderrProp;
+	/*[ENDIF] JAVA_SPEC_VERSION >= 19 */
 
 /*[IF Sidecar19-SE]*/
 	static java.lang.ModuleLayer	bootLayer;
@@ -190,7 +194,12 @@ public final class System {
 	 * consoleDefaultCharset must be initialized before calling.
 	 * consoleDefaultEncoding must be initialized before calling with fallback set to true.
 	 */
-	static Charset getCharset(String primary, boolean fallback) {
+	static Charset getCharset(boolean isStdout, boolean fallback) {
+		/*[IF JAVA_SPEC_VERSION >= 19]*/
+		String primary = isStdout ? stdoutProp : stderrProp;
+		/*[ELSE] JAVA_SPEC_VERSION >= 19 */
+		String primary = internalGetProperties().getProperty(isStdout ? "sun.stdout.encoding" : "sun.stderr.encoding"); //$NON-NLS-1$  //$NON-NLS-2$
+		/*[ENDIF] JAVA_SPEC_VERSION >= 19 */
 		if (primary != null) {
 			try {
 				Charset newCharset = Charset.forName(primary);
@@ -219,20 +228,6 @@ public final class System {
 	}
 
 	/*
-	 * Return if sun.stderr.encoding was used.
-	 */
-	static boolean hasSetErrEncoding() {
-		return hasSetErrEncoding;
-	}
-
-	/*
-	 * Return if sun.stdout.encoding was used.
-	 */
-	static boolean hasSetOutEncoding() {
-		return hasSetOutEncoding;
-	}
-
-	/*
 	 * Return the appropriate System console using the requested Charset.
 	 * If the Charset is null use the default console Charset.
 	 *
@@ -241,11 +236,57 @@ public final class System {
 	static PrintStream createConsole(FileDescriptor desc, Charset charset) {
 		BufferedOutputStream bufStream = new BufferedOutputStream(new FileOutputStream(desc));
 		Charset consoleCharset = charset == null ? consoleDefaultCharset : charset;
+
+		/*[IF JAVA_SPEC_VERSION >= 19]*/
+		Properties props = internalGetProperties();
+		// If the user didn't set the encoding property, set it now.
+		if (FileDescriptor.out == desc) {
+			if (null == stdoutProp) {
+				props.put("stdout.encoding", consoleCharset.name()); //$NON-NLS-1$
+			}
+		} else if (FileDescriptor.err == desc) {
+			if (null == stderrProp) {
+				props.put("stderr.encoding", consoleCharset.name()); //$NON-NLS-1$
+			}
+		}
+		/*[ENDIF] JAVA_SPEC_VERSION >= 19 */
+
 		/*[IF PLATFORM-mz31 | PLATFORM-mz64]*/
 		return ConsolePrintStream.localize(bufStream, true, consoleCharset);
 		/*[ELSE]*/
 		return new PrintStream(bufStream, true, consoleCharset);
 		/*[ENDIF] PLATFORM-mz31 | PLATFORM-mz64 */
+	}
+
+	static void finalizeConsoleEncoding() {
+		/* Some character sets are not available in the java.base module and so are not used at startup. There
+		 * are additional character sets in the jdk.charsets module, which is only loaded later. This means the
+		 * default character set may not be the same as the desired encoding. When all modules and character sets
+		 * are available, check if the desired encodings can be used for System.err and System.out.
+		 */
+		// If the encoding property was already set, don't change the encoding.
+		if (!hasSetErrEncoding) {
+			Charset stderrCharset = getCharset(false, true);
+			if (stderrCharset != null) {
+				err.flush();
+				setErr(createConsole(FileDescriptor.err, stderrCharset));
+			}
+		}
+
+		// If the encoding property was already set, don't change the encoding.
+		if (!hasSetOutEncoding) {
+			Charset stdoutCharset = getCharset(true, true);
+			if (stdoutCharset != null) {
+				out.flush();
+				setOut(createConsole(FileDescriptor.out, stdoutCharset));
+			}
+		}
+
+		/*[IF JAVA_SPEC_VERSION >= 19]*/
+		// Cache the final system property values so they can be restored if ensureProperties(false) is called.
+		stdoutProp = systemProperties.getProperty("stdout.encoding"); //$NON-NLS-1$
+		stderrProp = systemProperties.getProperty("stderr.encoding"); //$NON-NLS-1$
+		/*[ENDIF] JAVA_SPEC_VERSION >= 19 */
 	}
 	/*[ELSE]*/
 	/*[IF Sidecar18-SE-OpenJ9]*/
@@ -365,8 +406,8 @@ public final class System {
 		/*[ENDIF] PLATFORM-mz31|PLATFORM-mz64 */
 		/*[ENDIF] JAVA_SPEC_VERSION >= 18 */
 		/* consoleDefaultCharset must be initialized before calling getCharset() */
-		Charset stdoutCharset = getCharset(props.getProperty("sun.stdout.encoding"), false); //$NON-NLS-1$
-		Charset stderrCharset = getCharset(props.getProperty("sun.stderr.encoding"), false); //$NON-NLS-1$
+		Charset stdoutCharset = getCharset(true, false);
+		Charset stderrCharset = getCharset(false, false);
 		/*[ELSE] JAVA_SPEC_VERSION >= 11 */
 		Charset consoleCharset = Charset.defaultCharset();
 		String stdoutCharset = getCharsetName(props.getProperty("sun.stdout.encoding"), consoleCharset); //$NON-NLS-1$
@@ -376,12 +417,8 @@ public final class System {
 
 		/*[IF Sidecar18-SE-OpenJ9]*/
 		/*[IF JAVA_SPEC_VERSION >= 11]*/
-		if (stderrCharset != null) {
-			hasSetErrEncoding = true;
-		}
-		if (stdoutCharset != null) {
-			hasSetOutEncoding = true;
-		}
+		hasSetErrEncoding = stderrCharset != null;
+		hasSetOutEncoding = stdoutCharset != null;
 		/* consoleDefaultCharset must be initialized before calling createConsole() */
 		/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 		/*[IF JAVA_SPEC_VERSION >= 17] */
@@ -400,7 +437,7 @@ public final class System {
 		setErr(createConsole(FileDescriptor.err));
 		setOut(createConsole(FileDescriptor.out));
 		/*[ENDIF] Sidecar18-SE-OpenJ9 */
-		
+
 		/*[IF JAVA_SPEC_VERSION >= 17] */
 		setSMCallers = Collections.synchronizedMap(new WeakHashMap<>());
 		/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
@@ -653,6 +690,33 @@ private static void ensureProperties(boolean isInitialization) {
 	/* Set native.encoding after setting all the defined properties, it can't be modified by using -D on the command line */
 	initializedProperties.put("native.encoding", platformEncoding); //$NON-NLS-1$
 	/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
+
+	/*[IF JAVA_SPEC_VERSION >= 19]*/
+	if (null != stdoutProp) {
+		// Reinitialize required properties if ensureProperties(false) is called.
+		initializedProperties.put("stdout.encoding", stdoutProp); //$NON-NLS-1$
+	} else {
+		stdoutProp = initializedProperties.get("stdout.encoding"); //$NON-NLS-1$
+		if (null == stdoutProp) {
+			stdoutProp = initializedProperties.get("sun.stdout.encoding"); //$NON-NLS-1$
+			if (null != stdoutProp) {
+				initializedProperties.put("stdout.encoding", stdoutProp); //$NON-NLS-1$
+			}
+		}
+	}
+	if (null != stderrProp) {
+		// Reinitialize required properties if ensureProperties(false) is called.
+		initializedProperties.put("stderr.encoding", stderrProp); //$NON-NLS-1$
+	} else {
+		stderrProp = initializedProperties.get("stderr.encoding");
+		if (null == stderrProp) { //$NON-NLS-1$
+			stderrProp = initializedProperties.get("sun.stderr.encoding"); //$NON-NLS-1$
+			if (null != stderrProp) {
+				initializedProperties.put("stderr.encoding", stderrProp); //$NON-NLS-1$
+			}
+		}
+	}
+	/*[ENDIF] JAVA_SPEC_VERSION >= 19 */
 
 	/* java.lang.VersionProps.init() eventually calls into System.setProperty() where propertiesInitialized needs to be true */
 	propertiesInitialized = true;
@@ -1166,7 +1230,7 @@ public static void setSecurityManager(final SecurityManager s) {
 				// ignore any potential exceptions
 			}
 		}
-		
+
 		try {
 			/*[PR 97686] Preload the policy permission */
 			AccessController.doPrivileged(new PrivilegedAction<Void>() {
