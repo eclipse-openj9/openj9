@@ -647,8 +647,12 @@ bool J9::TransformUtil::foldFinalFieldsIn(TR_OpaqueClassBlock *clazz, const char
       name[size - 1] = '\0';
       return TR::SimpleRegex::match(classRegex, name);
       }
+   else if (classNameLength >= 21 && !strncmp(className, "jdk/internal/reflect/", 21))
+      return true;
    else if (classNameLength >= 17 && !strncmp(className, "java/lang/invoke/", 17))
       return true; // We can ONLY do this opt to fields that are never victimized by setAccessible
+   else if (classNameLength >= 18 && !strncmp(className, "java/lang/reflect/", 18))
+      return true;
    else if (classNameLength >= 30 && !strncmp(className, "java/lang/String$UnsafeHelpers", 30))
       return true;
 
@@ -690,6 +694,8 @@ bool J9::TransformUtil::foldFinalFieldsIn(TR_OpaqueClassBlock *clazz, const char
    else if (classNameLength >= 15 && !strncmp(className, "java/lang/Float", 15))
       return true;
    else if (classNameLength >= 16 && !strncmp(className, "java/lang/Double", 16))
+      return true;
+   else if (classNameLength >= 17 && !strncmp(className, "java/lang/Boolean", 17))
       return true;
 
    if (classNameLength == 16 && !strncmp(className, "java/lang/System", 16))
