@@ -32,6 +32,10 @@
 #define DEBUG_BCV
 */
 
+#if JAVA_SPEC_VERSION >= 19
+extern J9JavaVM *BFUjavaVM;
+#endif /* JAVA_SPEC_VERSION >= 19 */
+
 #if JAVA_SPEC_VERSION >= 16
 JNIEXPORT void JNICALL
 JVM_DefineArchivedModules(JNIEnv *env, jobject obj1, jobject obj2)
@@ -212,15 +216,18 @@ JVM_RegisterContinuationMethods(JNIEnv *env, jclass clz)
 JNIEXPORT jboolean JNICALL
 JVM_IsContinuationsSupported(void)
 {
-	assert(!"JVM_IsContinuationsSupported unimplemented");
-	return JNI_TRUE;
+	return JNI_FALSE;
 }
 
 JNIEXPORT jboolean JNICALL
 JVM_IsPreviewEnabled(void)
 {
-	assert(!"JVM_IsPreviewEnabled unimplemented");
-	return JNI_TRUE;
+	jboolean isPreviewEnabled = JNI_FALSE;
+	J9VMThread *currentThread = BFUjavaVM->internalVMFunctions->currentVMThread(BFUjavaVM);
+	if (J9_ARE_ANY_BITS_SET(currentThread->javaVM->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_PREVIEW)) {
+		isPreviewEnabled = JNI_TRUE;
+	}
+	return isPreviewEnabled;
 }
 
 JNIEXPORT void JNICALL
