@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2022 IBM Corp. and others
+# Copyright (c) 2000, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -279,7 +279,7 @@ J9NLS_VM_CHECK_JAVA_HOME.user_response=Check that JAVA_HOME environment variable
 # This message will be followed by the exception's class name and
 # (if non-null) the exception's detail message
 # e.g. Exception in thread "main" java/lang/StackOverflowError: An overflow occurred
-J9NLS_VM_STACK_TRACE_EXCEPTION_IN=Exception dans l'unit\u00e9 d'ex\u00e9cution "%.*s"\u0020
+J9NLS_VM_STACK_TRACE_EXCEPTION_IN=Exception dans l'unit\u00e9 d'ex\u00e9cution "%.*s"
 # START NON-TRANSLATABLE
 J9NLS_VM_STACK_TRACE_EXCEPTION_IN.sample_input_1=57
 J9NLS_VM_STACK_TRACE_EXCEPTION_IN.sample_input_2=\"main\" java/lang/StackOverflowError: An overflow occurred
@@ -531,7 +531,7 @@ J9NLS_VM_XJNI_OPTIONS_1.system_action=
 J9NLS_VM_XJNI_OPTIONS_1.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_VM_XJNI_OPTIONS_2=\ \ \ -Xjni:arrayCacheMax=[<x>|unlimited] d\u00e9finit la taille maximale du tableau mis en cache\n
+J9NLS_VM_XJNI_OPTIONS_2=\ \ \ -Xjni:arrayCacheMax=[<x>|unlimited] d\u00e9finit la taille maximale du tableau JNI mis en cache
 # START NON-TRANSLATABLE
 J9NLS_VM_XJNI_OPTIONS_2.explanation=NOTAG
 J9NLS_VM_XJNI_OPTIONS_2.system_action=
@@ -677,7 +677,7 @@ J9NLS_VM_SHARESTRING_WITHOUT_SHARECLASSES.user_response=Enable shared classes, o
 # arguments 4 and 5 are the loaded class name
 # arguments 6 and 7 are the defining loader class name
 # argument 8 is the defining loader identity hash code
-J9NLS_VM_LOADING_CONSTRAINT_VIOLATION=violation de contrainte de chargement : le chargeur "%2$.*1$s@%3$x" a lanc\u00e9 pr\u00e9alablement le chargement pour un type diff\u00e9rent portant le nom "%5$.*4$s" d\u00e9fini par le chargeur "%7$.*6$s@%8$x"
+J9NLS_VM_LOADING_CONSTRAINT_VIOLATION=violation de contrainte de chargement : le chargeur "%2$.*1$s@%3$x" a initi\u00e9 pr\u00e9c\u00e9demment le chargement pour un type diff\u00e9rent dont le nom est "%5$.*4$s" d\u00e9fini par le chargeur "%7$.*6$s@%8$x"
 # START NON-TRANSLATABLE
 J9NLS_VM_LOADING_CONSTRAINT_VIOLATION.sample_input_1=9
 J9NLS_VM_LOADING_CONSTRAINT_VIOLATION.sample_input_2=MyLoader
@@ -979,7 +979,7 @@ J9NLS_VM_XLOG_HELP01.user_response=
 # END NON-TRANSLATABLE
 
 # -Xsyslog:help is not translatable
-J9NLS_VM_XLOG_HELP02= -Xsyslog:help              Imprime l'aide -Xsyslog de la machine virtuelle Java.
+J9NLS_VM_XLOG_HELP02= -Xsyslog:help              Affiche l'aide -Xsyslog de la machine virtuelle Java.
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP02.explanation=NOTAG
 J9NLS_VM_XLOG_HELP02.system_action=
@@ -1035,7 +1035,7 @@ J9NLS_VM_XLOG_HELP08.user_response=
 # END NON-TRANSLATABLE
 
 # -Xsyslog:config is not translatable
-J9NLS_VM_XLOG_HELP09= -Xsyslog:config            Consigne les messages de configuration de la machine virtuelle Java.\n
+J9NLS_VM_XLOG_HELP09= -Xsyslog:config            Consigne les messages de configuration de la machine virtuelle Java.
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP09.explanation=NOTAG
 J9NLS_VM_XLOG_HELP09.system_action=
@@ -1043,7 +1043,7 @@ J9NLS_VM_XLOG_HELP09.user_response=
 # END NON-TRANSLATABLE
 
 # info, warn, error, vital and config are not translatable
-J9NLS_VM_XLOG_HELP10=Les options info, warn, error, vital et config peuvent \u00eatre combin\u00e9es \u00e0 l'aide d'une ',' par exemple :\n
+J9NLS_VM_XLOG_HELP10=Les options info, warn, error, vital et config peuvent \u00eatre combin\u00e9es \u00e0 l'aide d'une ',' par exemple :
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP10.explanation=NOTAG
 J9NLS_VM_XLOG_HELP10.system_action=
@@ -1059,7 +1059,7 @@ J9NLS_VM_XLOG_HELP11.user_response=
 # END NON-TRANSLATABLE
 
 # -Xsyslog:info,warn,error is not translatable
-J9NLS_VM_XLOG_HELP12= -Xsyslog:info,warn,error\n
+J9NLS_VM_XLOG_HELP12= -Xsyslog:info,warn,error
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP12.explanation=NOTAG
 J9NLS_VM_XLOG_HELP12.system_action=
@@ -1092,7 +1092,7 @@ J9NLS_LOCKNURSERY_CONFIG_BAD_OPTION.user_response=Change the value specified for
 J9NLS_LOCKNURSERY_CONFIG_BAD_OPTION.sample_input_1=xxx
 # END NON-TRANSLATABLE
 
-J9NLS_LOCKNURSERY_CONFIG_WHAT_HEADER1=Configuration lockword
+J9NLS_LOCKNURSERY_CONFIG_WHAT_HEADER1=Configuration de lockword
 # START NON-TRANSLATABLE
 J9NLS_LOCKNURSERY_CONFIG_WHAT_HEADER1.explanation=This is an information message that is displayed when the -Xlockword:what is on the command line.
 J9NLS_LOCKNURSERY_CONFIG_WHAT_HEADER1.system_action=The JVM prints this message when the JVM is started and runs with the lockword configuration displayed.
@@ -1114,7 +1114,7 @@ J9NLS_LOCKNURSERY_CONFIG_WHAT_MODE.user_response=None, this is an information me
 J9NLS_LOCKNURSERY_CONFIG_WHAT_MODE.sample_input_1=default
 # END NON-TRANSLATABLE
 
-J9NLS_LOCKNURSERY_CONFIG_WHAT_HAS_LOCKWORD= lockword :%.*s
+J9NLS_LOCKNURSERY_CONFIG_WHAT_HAS_LOCKWORD= lockword : %.*s
 # START NON-TRANSLATABLE
 J9NLS_LOCKNURSERY_CONFIG_WHAT_HAS_LOCKWORD.explanation=This is an information message that is displayed when the -Xlockword:what is on the command line.
 J9NLS_LOCKNURSERY_CONFIG_WHAT_HAS_LOCKWORD.system_action=The JVM prints this message for each class that has been specifically assigned a lockword when the JVM is started and runs with the lockword configuration displayed.
@@ -1123,7 +1123,7 @@ J9NLS_LOCKNURSERY_CONFIG_WHAT_HAS_LOCKWORD.sample_input_1=16
 J9NLS_LOCKNURSERY_CONFIG_WHAT_HAS_LOCKWORD.sample_input_2=java/lang/String
 # END NON-TRANSLATABLE
 
-J9NLS_LOCKNURSERY_CONFIG_WHAT_DOES_NOT_HAVE_LOCKWORD= noLockword :%.*s
+J9NLS_LOCKNURSERY_CONFIG_WHAT_DOES_NOT_HAVE_LOCKWORD= noLockword : %.*s
 # START NON-TRANSLATABLE
 J9NLS_LOCKNURSERY_CONFIG_WHAT_DOES_NOT_HAVE_LOCKWORD.explanation=This is an information message that is displayed when the -Xlockword:what is on the command line.
 J9NLS_LOCKNURSERY_CONFIG_WHAT_DOES_NOT_HAVE_LOCKWORD.system_action=The JVM prints this message for each class that has been specifically not assigned a lockword when the JVM is started and runs with the lockword configuration displayed.
@@ -1248,7 +1248,7 @@ J9NLS_VM_TERMINATING_PROCESS_USING_CEEAB2.sample_input_2=1
 J9NLS_VM_TERMINATING_PROCESS_USING_CEEAB2.sample_input_3=2
 # END NON-TRANSLATABLE
 
-J9NLS_LOCKNURSERY_CONFIG_TENANT_BAD_OPTION=Mode de mot de verrouillage sp\u00e9cifi\u00e9 non valide ; java/lang/Class et java/lang/String ne peuvent pas comporter de mots de verrouillage lorsque -Xtenant est pr\u00e9sent : %s
+J9NLS_LOCKNURSERY_CONFIG_TENANT_BAD_OPTION=Mode lockword sp\u00e9cifi\u00e9 non valide ; java/lang/Class et java/lang/String ne peuvent pas comporter de mots de verrouillage lorsque -Xtenant est pr\u00e9sent : %s
 # START NON-TRANSLATABLE
 J9NLS_LOCKNURSERY_CONFIG_TENANT_BAD_OPTION.explanation=This is an error message displayed when the user requests that either of java/lang/Class or java/lang/String have a lockword when -Xtenant is on the commandline
 J9NLS_LOCKNURSERY_CONFIG_TENANT_BAD_OPTION.system_action=The JVM prints this message and then terminates.
@@ -1765,7 +1765,7 @@ J9NLS_VM_FAILED_TO_LOAD_MODULE_REQUIRED_DLL.user_response=No action required if 
 # argument 14 is the other classloader's identity hashcode
 # arguments 15 and 16 are the other classloader's class
 # arguments 17 and 18 are the name of class being created
-J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION=violation de contrainte de chargement lors de la red\u00e9finition de la m\u00e9thode "%2$.*1$s.%4$.*3$s%6$.*5$s" pendant la cr\u00e9ation de la classe "%18$.*17$s" : le chargeur "%8$.*7$s@%9$x" de la classe "%11$.*10$s" et le chargeur "%13$.*12$s@%14$x" de la classe "%16$.*15$s" ont des types diff\u00e9rents pour la signature de m\u00e9thode
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION=violation de contrainte de chargement lors du remplacement de la m\u00e9thode "%2$.*1$s.%4$.*3$s%6$.*5$s" pendant la cr\u00e9ation de la classe "%18$.*17$s" : le chargeur "%8$.*7$s@%9$x" de la classe "%11$.*10$s" et le chargeur "%13$.*12$s@%14$x" de la classe "%16$.*15$s" ont des types diff\u00e9rents pour la signature de m\u00e9thode
 # START NON-TRANSLATABLE
 J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_1=4
 J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_2=Main
@@ -2058,7 +2058,7 @@ J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_PACKAGE.user_response=Con
 # END NON-TRANSLATABLE
 
 # Message for IncompatibleClassChangeError due to default method conflict during MemberName resolution
-J9NLS_VM_DEFAULT_METHOD_CONFLICT_GENERIC=Conflit de m\u00e9thode par d\u00e9faut trouv\u00e9 lors de l'appel de MethodHandle.
+J9NLS_VM_DEFAULT_METHOD_CONFLICT_GENERIC=Conflit de m\u00e9thode par d\u00e9faut d\u00e9tect\u00e9 lors de l'appel de MethodHandle.
 # START NON-TRANSLATABLE
 J9NLS_VM_DEFAULT_METHOD_CONFLICT_GENERIC.explanation=Default method conflict raised from MemberName resolution.
 J9NLS_VM_DEFAULT_METHOD_CONFLICT_GENERIC.system_action=The JVM will throw an IncompatibleClassChangeError.
@@ -2083,7 +2083,7 @@ J9NLS_VM_VALUETYPE_HAS_WRONG_SUPERCLASS.user_response=Contact the provider of th
 # END NON-TRANSLATABLE
 
 # Messages related to parsing the ensureHashed configuration
-J9NLS_VM_INVALID_EMPTY_OPTION=La cha\u00eene vide transmise \u00e0 l'option "%s" n'est pas autoris\u00e9e
+J9NLS_VM_INVALID_EMPTY_OPTION=La transmission d'une cha\u00eene vide \u00e0 l'option "%s" n'est pas autoris\u00e9e
 # START NON-TRANSLATABLE
 J9NLS_VM_INVALID_EMPTY_OPTION.sample_input_1=-XX:+EnsureHashed:
 J9NLS_VM_INVALID_EMPTY_OPTION.explanation=The options cannot be empty.

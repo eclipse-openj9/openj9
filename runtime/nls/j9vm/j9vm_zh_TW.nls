@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2022 IBM Corp. and others
+# Copyright (c) 2000, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -279,7 +279,7 @@ J9NLS_VM_CHECK_JAVA_HOME.user_response=Check that JAVA_HOME environment variable
 # This message will be followed by the exception's class name and
 # (if non-null) the exception's detail message
 # e.g. Exception in thread "main" java/lang/StackOverflowError: An overflow occurred
-J9NLS_VM_STACK_TRACE_EXCEPTION_IN=\u57f7\u884c\u7dd2 "%.*s" \u4e2d\u767c\u751f\u7570\u5e38\u72c0\u6cc1\u0020
+J9NLS_VM_STACK_TRACE_EXCEPTION_IN=\u57f7\u884c\u7dd2 "%.*s" \u4e2d\u767c\u751f\u7570\u5e38\u72c0\u6cc1
 # START NON-TRANSLATABLE
 J9NLS_VM_STACK_TRACE_EXCEPTION_IN.sample_input_1=57
 J9NLS_VM_STACK_TRACE_EXCEPTION_IN.sample_input_2=\"main\" java/lang/StackOverflowError: An overflow occurred
@@ -531,7 +531,7 @@ J9NLS_VM_XJNI_OPTIONS_1.system_action=
 J9NLS_VM_XJNI_OPTIONS_1.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_VM_XJNI_OPTIONS_2=\ \ \ -Xjni:arrayCacheMax=[<x>|unlimited] \u8a2d\u5b9a JNI \u5feb\u53d6\u9663\u5217\u7684\u5927\u5c0f\u4e0a\u9650\n
+J9NLS_VM_XJNI_OPTIONS_2=\ \ \ -Xjni:arrayCacheMax=[<x>|unlimited] \u8a2d\u5b9a JNI \u5feb\u53d6\u9663\u5217\u7684\u5927\u5c0f\u4e0a\u9650
 # START NON-TRANSLATABLE
 J9NLS_VM_XJNI_OPTIONS_2.explanation=NOTAG
 J9NLS_VM_XJNI_OPTIONS_2.system_action=
@@ -1035,7 +1035,7 @@ J9NLS_VM_XLOG_HELP08.user_response=
 # END NON-TRANSLATABLE
 
 # -Xsyslog:config is not translatable
-J9NLS_VM_XLOG_HELP09= -Xsyslog:config            \u8a18\u8f09 JVM \u914d\u7f6e\u8a0a\u606f\u3002\n
+J9NLS_VM_XLOG_HELP09= -Xsyslog:config            \u8a18\u8f09 JVM \u914d\u7f6e\u8a0a\u606f\u3002
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP09.explanation=NOTAG
 J9NLS_VM_XLOG_HELP09.system_action=
@@ -1043,7 +1043,7 @@ J9NLS_VM_XLOG_HELP09.user_response=
 # END NON-TRANSLATABLE
 
 # info, warn, error, vital and config are not translatable
-J9NLS_VM_XLOG_HELP10=\u60a8\u53ef\u4ee5\u4f7f\u7528 ',' \u4f86\u7d50\u5408 info\u3001warn\u3001error\u3001vital \u53ca config \u9078\u9805\uff0c\u4f8b\u5982\uff1a\n
+J9NLS_VM_XLOG_HELP10=\u60a8\u53ef\u4ee5\u4f7f\u7528 ',' \u4f86\u7d50\u5408 info\u3001warn\u3001error\u3001vital \u53ca config \u9078\u9805\uff0c\u4f8b\u5982\uff1a
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP10.explanation=NOTAG
 J9NLS_VM_XLOG_HELP10.system_action=
@@ -1059,7 +1059,7 @@ J9NLS_VM_XLOG_HELP11.user_response=
 # END NON-TRANSLATABLE
 
 # -Xsyslog:info,warn,error is not translatable
-J9NLS_VM_XLOG_HELP12= -Xsyslog:info,warn,error\n
+J9NLS_VM_XLOG_HELP12= -Xsyslog:info,warn,error
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP12.explanation=NOTAG
 J9NLS_VM_XLOG_HELP12.system_action=

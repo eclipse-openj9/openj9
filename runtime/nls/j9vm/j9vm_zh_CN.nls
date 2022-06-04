@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2022 IBM Corp. and others
+# Copyright (c) 2000, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -279,7 +279,7 @@ J9NLS_VM_CHECK_JAVA_HOME.user_response=Check that JAVA_HOME environment variable
 # This message will be followed by the exception's class name and
 # (if non-null) the exception's detail message
 # e.g. Exception in thread "main" java/lang/StackOverflowError: An overflow occurred
-J9NLS_VM_STACK_TRACE_EXCEPTION_IN=\u7ebf\u7a0b\u201c%.*s\u201d\u4e2d\u53d1\u751f\u5f02\u5e38\u0020
+J9NLS_VM_STACK_TRACE_EXCEPTION_IN=\u7ebf\u7a0b\u201c%.*s\u201d\u4e2d\u53d1\u751f\u5f02\u5e38 
 # START NON-TRANSLATABLE
 J9NLS_VM_STACK_TRACE_EXCEPTION_IN.sample_input_1=57
 J9NLS_VM_STACK_TRACE_EXCEPTION_IN.sample_input_2=\"main\" java/lang/StackOverflowError: An overflow occurred
@@ -426,7 +426,7 @@ J9NLS_VM_FAILED_TO_ALLOCATE_MONITOR.user_response=Verify that the system has eno
 
 # argument is the unrecognized command line option
 # this occurs if you pass an unrecognized option to -Xthr. e.g. ./j9 -Xthr:foo
-J9NLS_VM_UNRECOGNIZED_XTHR_OPTION=-Xthr\uff1a\u65e0\u6cd5\u8bc6\u522b\u9009\u9879 -->\u201c%s\u201d
+J9NLS_VM_UNRECOGNIZED_XTHR_OPTION=-Xthr\uff1a\u65e0\u6cd5\u8bc6\u522b\u7684\u9009\u9879 -->\u201c%s\u201d
 # START NON-TRANSLATABLE
 J9NLS_VM_UNRECOGNIZED_XTHR_OPTION.sample_input_1=foo
 J9NLS_VM_UNRECOGNIZED_XTHR_OPTION.explanation=The parameters passed via the -Xthr: command line option are unrecognized.
@@ -515,7 +515,7 @@ J9NLS_VM_JLM_HOLD_TIMES_NOT_SUPPORTED.user_response=
 
 # argument is the unrecognized command line option
 # this occurs if you pass an unrecognized option to -Xjni. e.g. ./j9 -Xjni:foo
-J9NLS_VM_UNRECOGNIZED_XJNI_OPTION=-Xjni\uff1a\u65e0\u6cd5\u8bc6\u522b\u7684\u9009\u9879 --> '%s'
+J9NLS_VM_UNRECOGNIZED_XJNI_OPTION=-Xjni\uff1a\u65e0\u6cd5\u8bc6\u522b\u7684\u9009\u9879 -->\u201c%s\u201d
 # START NON-TRANSLATABLE
 J9NLS_VM_UNRECOGNIZED_XJNI_OPTION.sample_input_1=someoption
 J9NLS_VM_UNRECOGNIZED_XJNI_OPTION.explanation=The option specified with the -Xjni: command line parameter is unrecognized.
@@ -524,14 +524,14 @@ J9NLS_VM_UNRECOGNIZED_XJNI_OPTION.user_response=Correct the option specified wit
 # END NON-TRANSLATABLE
 
 # help text for -Xjni:help
-J9NLS_VM_XJNI_OPTIONS_1=\u7528\u9014\uff1a\n
+J9NLS_VM_XJNI_OPTIONS_1=\u7528\u9014\uff1a
 # START NON-TRANSLATABLE
 J9NLS_VM_XJNI_OPTIONS_1.explanation=NOTAG
 J9NLS_VM_XJNI_OPTIONS_1.system_action=
 J9NLS_VM_XJNI_OPTIONS_1.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_VM_XJNI_OPTIONS_2=\ \ \ -Xjni:arrayCacheMax=[<x>|unlimited] \u8bbe\u7f6e JNI \u9ad8\u901f\u7f13\u5b58\u6570\u7ec4\u7684\u6700\u5927\u5927\u5c0f\n
+J9NLS_VM_XJNI_OPTIONS_2=\ \ \ -Xjni:arrayCacheMax=[<x>|unlimited] \u8bbe\u7f6e JNI \u9ad8\u901f\u7f13\u5b58\u6570\u7ec4\u7684\u6700\u5927\u5927\u5c0f
 # START NON-TRANSLATABLE
 J9NLS_VM_XJNI_OPTIONS_2.explanation=NOTAG
 J9NLS_VM_XJNI_OPTIONS_2.system_action=
@@ -1027,7 +1027,7 @@ J9NLS_VM_XLOG_HELP07.user_response=
 # END NON-TRANSLATABLE
 
 # -Xsyslog:vital is not translatable
-J9NLS_VM_XLOG_HELP08= -Xsyslog:vital         C    \u8bb0\u5f55 JVM \u91cd\u8981\u6d88\u606f\u3002\u7f3a\u7701\u60c5\u51b5\u4e0b\u4f1a\u6253\u5f00\u6b64\u53c2\u6570\u3002
+J9NLS_VM_XLOG_HELP08= -Xsyslog:vital             \u8bb0\u5f55 JVM \u91cd\u8981\u6d88\u606f\u3002\u7f3a\u7701\u60c5\u51b5\u4e0b\u4f1a\u542f\u7528\u6b64\u9009\u9879\u3002
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP08.explanation=NOTAG
 J9NLS_VM_XLOG_HELP08.system_action=
@@ -1035,7 +1035,7 @@ J9NLS_VM_XLOG_HELP08.user_response=
 # END NON-TRANSLATABLE
 
 # -Xsyslog:config is not translatable
-J9NLS_VM_XLOG_HELP09= -Xsyslog:config            \u8bb0\u5f55 JVM \u914d\u7f6e\u6d88\u606f\u3002\n
+J9NLS_VM_XLOG_HELP09= -Xsyslog:config            \u8bb0\u5f55 JVM \u914d\u7f6e\u6d88\u606f\u3002
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP09.explanation=NOTAG
 J9NLS_VM_XLOG_HELP09.system_action=
@@ -1043,7 +1043,7 @@ J9NLS_VM_XLOG_HELP09.user_response=
 # END NON-TRANSLATABLE
 
 # info, warn, error, vital and config are not translatable
-J9NLS_VM_XLOG_HELP10=\u53ef\u4ee5\u901a\u8fc7\u201c,\u201d\u7ec4\u5408\u4f7f\u7528 info\u3001warn\u3001error\u3001vital \u548c config \u9009\u9879\uff0c\u4f8b\u5982\uff1a\n
+J9NLS_VM_XLOG_HELP10=\u53ef\u4ee5\u901a\u8fc7\u201c,\u201d\u7ec4\u5408\u4f7f\u7528 info\u3001warn\u3001error\u3001vital \u548c config \u9009\u9879\uff0c\u4f8b\u5982\uff1a
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP10.explanation=NOTAG
 J9NLS_VM_XLOG_HELP10.system_action=
@@ -1059,7 +1059,7 @@ J9NLS_VM_XLOG_HELP11.user_response=
 # END NON-TRANSLATABLE
 
 # -Xsyslog:info,warn,error is not translatable
-J9NLS_VM_XLOG_HELP12= -Xsyslog:info,warn,error\n
+J9NLS_VM_XLOG_HELP12= -Xsyslog:info,warn,error
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP12.explanation=NOTAG
 J9NLS_VM_XLOG_HELP12.system_action=
