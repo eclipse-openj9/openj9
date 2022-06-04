@@ -476,7 +476,7 @@ J9NLS_JCL_CRIU_FAILED_TO_CLOSE_DIR.system_action=The JVM will throw a RestoreExc
 J9NLS_JCL_CRIU_FAILED_TO_CLOSE_DIR.user_response=Ensure the specified directory is accessible.
 # END NON-TRANSLATABLE
 
-J9NLS_JCL_CRIU_FAILED_TO_CONVERT_JAVA_STRING=\uc790\ubc14 \ubb38\uc790\uc5f4\uc744 \uae30\ubcf8 \uc778\ucf54\ub529\uc73c\ub85c \ubcc0\ud658\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4. \uc624\ub958 \ubc88\ud638=%li
+J9NLS_JCL_CRIU_FAILED_TO_CONVERT_JAVA_STRING=\uc790\ubc14 \ubb38\uc790\uc5f4\uc744 \ub124\uc774\ud2f0\ube0c \uc778\ucf54\ub529\uc73c\ub85c \ubcc0\ud658\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4. \uc624\ub958 \ubc88\ud638=%li
 # START NON-TRANSLATABLE
 J9NLS_JCL_CRIU_FAILED_TO_CONVERT_JAVA_STRING.sample_input_1=1
 J9NLS_JCL_CRIU_FAILED_TO_CONVERT_JAVA_STRING.explanation=An error occured when the JVM attempted to convert a java string to native encoding.

@@ -531,7 +531,7 @@ J9NLS_VM_XJNI_OPTIONS_1.system_action=
 J9NLS_VM_XJNI_OPTIONS_1.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_VM_XJNI_OPTIONS_2=\ \ \ -Xjni:arrayCacheMax=[<x>|unlimited] JNI gyors\u00edt\u00f3t\u00e1razott t\u00f6mb maxim\u00e1lis m\u00e9ret\u00e9nek be\u00e1ll\u00edt\u00e1sa\n
+J9NLS_VM_XJNI_OPTIONS_2=\ \ \ -Xjni:arrayCacheMax=[<x>|unlimited] JNI gyors\u00edt\u00f3t\u00e1razott t\u00f6mb maxim\u00e1lis m\u00e9ret\u00e9nek be\u00e1ll\u00edt\u00e1sa
 # START NON-TRANSLATABLE
 J9NLS_VM_XJNI_OPTIONS_2.explanation=NOTAG
 J9NLS_VM_XJNI_OPTIONS_2.system_action=
@@ -1035,7 +1035,7 @@ J9NLS_VM_XLOG_HELP08.user_response=
 # END NON-TRANSLATABLE
 
 # -Xsyslog:config is not translatable
-J9NLS_VM_XLOG_HELP09= -Xsyslog:config            JVM konfigur\u00e1ci\u00f3s  \u00fczenetek napl\u00f3z\u00e1sa.\n
+J9NLS_VM_XLOG_HELP09= -Xsyslog:config            JVM konfigur\u00e1ci\u00f3s  \u00fczenetek napl\u00f3z\u00e1sa.
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP09.explanation=NOTAG
 J9NLS_VM_XLOG_HELP09.system_action=
@@ -1043,7 +1043,7 @@ J9NLS_VM_XLOG_HELP09.user_response=
 # END NON-TRANSLATABLE
 
 # info, warn, error, vital and config are not translatable
-J9NLS_VM_XLOG_HELP10=Az info, warn, error, vital \u00e9s config be\u00e1ll\u00edt\u00e1sok vessz\u0151vel ',' \u00f6sszekapcsolhat\u00f3k; p\u00e9ld\u00e1ul:\n
+J9NLS_VM_XLOG_HELP10=Az info, warn, error, vital \u00e9s config be\u00e1ll\u00edt\u00e1sok vessz\u0151vel ',' \u00f6sszekapcsolhat\u00f3k; p\u00e9ld\u00e1ul:
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP10.explanation=NOTAG
 J9NLS_VM_XLOG_HELP10.system_action=
@@ -1059,7 +1059,7 @@ J9NLS_VM_XLOG_HELP11.user_response=
 # END NON-TRANSLATABLE
 
 # -Xsyslog:info,warn,error is not translatable
-J9NLS_VM_XLOG_HELP12= -Xsyslog:info,warn,error\n
+J9NLS_VM_XLOG_HELP12= -Xsyslog:info,warn,error
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP12.explanation=NOTAG
 J9NLS_VM_XLOG_HELP12.system_action=

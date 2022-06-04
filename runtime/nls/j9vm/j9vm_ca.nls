@@ -524,14 +524,14 @@ J9NLS_VM_UNRECOGNIZED_XJNI_OPTION.user_response=Correct the option specified wit
 # END NON-TRANSLATABLE
 
 # help text for -Xjni:help
-J9NLS_VM_XJNI_OPTIONS_1=\u00das:\n
+J9NLS_VM_XJNI_OPTIONS_1=\u00das:
 # START NON-TRANSLATABLE
 J9NLS_VM_XJNI_OPTIONS_1.explanation=NOTAG
 J9NLS_VM_XJNI_OPTIONS_1.system_action=
 J9NLS_VM_XJNI_OPTIONS_1.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_VM_XJNI_OPTIONS_2=\ \ \ -Xjni:arrayCacheMax=[<x>|unlimited] estableix la mida m\u00e0xima de la matriu en mem\u00f2ria cau JNI\n
+J9NLS_VM_XJNI_OPTIONS_2=\ \ \ -Xjni:arrayCacheMax=[<x>|unlimited] estableix la mida m\u00e0xima de la matriu en mem\u00f2ria cau JNI
 # START NON-TRANSLATABLE
 J9NLS_VM_XJNI_OPTIONS_2.explanation=NOTAG
 J9NLS_VM_XJNI_OPTIONS_2.system_action=
@@ -971,7 +971,7 @@ J9NLS_VM_XSCDMX_IGNORED.user_response=Ignore this message, remove -Xscdmx, or en
 # END NON-TRANSLATABLE
 
 # Help text for the -Xsyslog option. Note: please do not translate the text of the option flags: help, all, none, warn, error, info, config, vital
-J9NLS_VM_XLOG_HELP01=\n\u00das:\n
+J9NLS_VM_XLOG_HELP01=\u00das:
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP01.explanation=NOTAG
 J9NLS_VM_XLOG_HELP01.system_action=
@@ -1035,7 +1035,7 @@ J9NLS_VM_XLOG_HELP08.user_response=
 # END NON-TRANSLATABLE
 
 # -Xsyslog:config is not translatable
-J9NLS_VM_XLOG_HELP09= -Xsyslog:config            Registra missatges de configuraci\u00f3 de la JVM. \n
+J9NLS_VM_XLOG_HELP09= -Xsyslog:config            Registra missatges de configuraci\u00f3 de la JVM.
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP09.explanation=NOTAG
 J9NLS_VM_XLOG_HELP09.system_action=
@@ -1043,7 +1043,7 @@ J9NLS_VM_XLOG_HELP09.user_response=
 # END NON-TRANSLATABLE
 
 # info, warn, error, vital and config are not translatable
-J9NLS_VM_XLOG_HELP10=Les opcions info, warn, error, vital i config es poden combinar amb una ',', per exemple: \n
+J9NLS_VM_XLOG_HELP10=Les opcions info, warn, error, vital i config es poden combinar amb una ',', per exemple:
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP10.explanation=NOTAG
 J9NLS_VM_XLOG_HELP10.system_action=
@@ -1059,7 +1059,7 @@ J9NLS_VM_XLOG_HELP11.user_response=
 # END NON-TRANSLATABLE
 
 # -Xsyslog:info,warn,error is not translatable
-J9NLS_VM_XLOG_HELP12= -Xsyslog:info,warn,error\n
+J9NLS_VM_XLOG_HELP12= -Xsyslog:info,warn,error
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP12.explanation=NOTAG
 J9NLS_VM_XLOG_HELP12.system_action=

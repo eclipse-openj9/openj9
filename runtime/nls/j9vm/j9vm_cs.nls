@@ -531,7 +531,7 @@ J9NLS_VM_XJNI_OPTIONS_1.system_action=
 J9NLS_VM_XJNI_OPTIONS_1.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_VM_XJNI_OPTIONS_2=\ \ \ -Xjni:arrayCacheMax=[<x>|unlimited] nastav\u00ed maxim\u00e1ln\u00ed velikost pole v mezipam\u011bti rozhran\u00ed JNI\n
+J9NLS_VM_XJNI_OPTIONS_2=\ \ \ -Xjni:arrayCacheMax=[<x>|unlimited] nastav\u00ed maxim\u00e1ln\u00ed velikost pole ulo\u017een\u00e9ho v mezipam\u011bti rozhran\u00ed JNI
 # START NON-TRANSLATABLE
 J9NLS_VM_XJNI_OPTIONS_2.explanation=NOTAG
 J9NLS_VM_XJNI_OPTIONS_2.system_action=
@@ -1019,7 +1019,7 @@ J9NLS_VM_XLOG_HELP06.user_response=
 # END NON-TRANSLATABLE
 
 # -Xsyslog:error is not translatable
-J9NLS_VM_XLOG_HELP07= -Xsyslog:error             Protokolovat chybov\u00e9 zpr\u00e1vy prost\u0159ed\u00ed JVM. Tato volba je zapnuta p\u0159i v\u00fdchoz\u00edm nastaven\u00ed.
+J9NLS_VM_XLOG_HELP07= -Xsyslog:error             Protokolovat chybov\u00e9 zpr\u00e1vy prost\u0159ed\u00ed JVM. Tato volba je standardn\u011b zapnuta.
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP07.explanation=NOTAG
 J9NLS_VM_XLOG_HELP07.system_action=
@@ -1027,7 +1027,7 @@ J9NLS_VM_XLOG_HELP07.user_response=
 # END NON-TRANSLATABLE
 
 # -Xsyslog:vital is not translatable
-J9NLS_VM_XLOG_HELP08= -Xsyslog:vital             Protokolovat z\u00e1va\u017en\u00e9 zpr\u00e1vy prost\u0159ed\u00ed JVM. Tato volba je zapnuta p\u0159i v\u00fdchoz\u00edm nastaven\u00ed.
+J9NLS_VM_XLOG_HELP08= -Xsyslog:vital             Protokolovat z\u00e1va\u017en\u00e9 zpr\u00e1vy prost\u0159ed\u00ed JVM. Tato volba je standardn\u011b zapnuta.
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP08.explanation=NOTAG
 J9NLS_VM_XLOG_HELP08.system_action=
@@ -1035,7 +1035,7 @@ J9NLS_VM_XLOG_HELP08.user_response=
 # END NON-TRANSLATABLE
 
 # -Xsyslog:config is not translatable
-J9NLS_VM_XLOG_HELP09= -Xsyslog:config            Protokolovat zpr\u00e1vy konfigurace prost\u0159ed\u00ed JVM. \n
+J9NLS_VM_XLOG_HELP09= -Xsyslog:config            Protokolovat zpr\u00e1vy konfigurace prost\u0159ed\u00ed JVM.
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP09.explanation=NOTAG
 J9NLS_VM_XLOG_HELP09.system_action=
@@ -1043,7 +1043,7 @@ J9NLS_VM_XLOG_HELP09.user_response=
 # END NON-TRANSLATABLE
 
 # info, warn, error, vital and config are not translatable
-J9NLS_VM_XLOG_HELP10=Volby pro informa\u010dn\u00ed, varovn\u00e9, chybov\u00e9 a z\u00e1va\u017en\u00e9 zpr\u00e1vy lze kombinovat pomoc\u00ed \u010d\u00e1rky (','). P\u0159\u00edklad: \n
+J9NLS_VM_XLOG_HELP10=Volby pro informa\u010dn\u00ed, varovn\u00e9, chybov\u00e9 a z\u00e1va\u017en\u00e9 zpr\u00e1vy lze kombinovat pomoc\u00ed \u010d\u00e1rky (','). P\u0159\u00edklad:
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP10.explanation=NOTAG
 J9NLS_VM_XLOG_HELP10.system_action=
@@ -1059,7 +1059,7 @@ J9NLS_VM_XLOG_HELP11.user_response=
 # END NON-TRANSLATABLE
 
 # -Xsyslog:info,warn,error is not translatable
-J9NLS_VM_XLOG_HELP12= -Xsyslog:info,warn,error\n
+J9NLS_VM_XLOG_HELP12= -Xsyslog:info,warn,error
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP12.explanation=NOTAG
 J9NLS_VM_XLOG_HELP12.system_action=

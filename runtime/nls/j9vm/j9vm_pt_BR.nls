@@ -531,7 +531,7 @@ J9NLS_VM_XJNI_OPTIONS_1.system_action=
 J9NLS_VM_XJNI_OPTIONS_1.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_VM_XJNI_OPTIONS_2=\ \ \ -Xjni:arrayCacheMax=[<x>|unlimited] configurou o tamanho m\u00e1ximo da matriz em cache JNI\n
+J9NLS_VM_XJNI_OPTIONS_2=\ \ \ -Xjni:arrayCacheMax=[<x>|unlimited] configurou o tamanho m\u00e1ximo da matriz em cache JNI
 # START NON-TRANSLATABLE
 J9NLS_VM_XJNI_OPTIONS_2.explanation=NOTAG
 J9NLS_VM_XJNI_OPTIONS_2.system_action=
@@ -971,7 +971,7 @@ J9NLS_VM_XSCDMX_IGNORED.user_response=Ignore this message, remove -Xscdmx, or en
 # END NON-TRANSLATABLE
 
 # Help text for the -Xsyslog option. Note: please do not translate the text of the option flags: help, all, none, warn, error, info, config, vital
-J9NLS_VM_XLOG_HELP01=\n Uso:\n
+J9NLS_VM_XLOG_HELP01=Uso:
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP01.explanation=NOTAG
 J9NLS_VM_XLOG_HELP01.system_action=
@@ -1035,7 +1035,7 @@ J9NLS_VM_XLOG_HELP08.user_response=
 # END NON-TRANSLATABLE
 
 # -Xsyslog:config is not translatable
-J9NLS_VM_XLOG_HELP09= -Xsyslog:config            Registrar as mensagens de configura\u00e7\u00e3o da JVM.\n
+J9NLS_VM_XLOG_HELP09= -Xsyslog:config            Registrar as mensagens de configura\u00e7\u00e3o da JVM.
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP09.explanation=NOTAG
 J9NLS_VM_XLOG_HELP09.system_action=
@@ -1043,7 +1043,7 @@ J9NLS_VM_XLOG_HELP09.user_response=
 # END NON-TRANSLATABLE
 
 # info, warn, error, vital and config are not translatable
-J9NLS_VM_XLOG_HELP10=As op\u00e7\u00f5es de info, warn, error, vital e config podem ser combinadas com uma ",", por exemplo:\n
+J9NLS_VM_XLOG_HELP10=As op\u00e7\u00f5es de info, warn, error, vital e config podem ser combinadas com uma ",", por exemplo:
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP10.explanation=NOTAG
 J9NLS_VM_XLOG_HELP10.system_action=
@@ -1059,7 +1059,7 @@ J9NLS_VM_XLOG_HELP11.user_response=
 # END NON-TRANSLATABLE
 
 # -Xsyslog:info,warn,error is not translatable
-J9NLS_VM_XLOG_HELP12= -Xsyslog:info,warn,error\n
+J9NLS_VM_XLOG_HELP12= -Xsyslog:info,warn,error
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP12.explanation=NOTAG
 J9NLS_VM_XLOG_HELP12.system_action=
@@ -1092,7 +1092,7 @@ J9NLS_LOCKNURSERY_CONFIG_BAD_OPTION.user_response=Change the value specified for
 J9NLS_LOCKNURSERY_CONFIG_BAD_OPTION.sample_input_1=xxx
 # END NON-TRANSLATABLE
 
-J9NLS_LOCKNURSERY_CONFIG_WHAT_HEADER1=Configura\u00e7\u00e3o de Palavra de Bloqueio
+J9NLS_LOCKNURSERY_CONFIG_WHAT_HEADER1=Configura\u00e7\u00e3o de palavra de bloqueio
 # START NON-TRANSLATABLE
 J9NLS_LOCKNURSERY_CONFIG_WHAT_HEADER1.explanation=This is an information message that is displayed when the -Xlockword:what is on the command line.
 J9NLS_LOCKNURSERY_CONFIG_WHAT_HEADER1.system_action=The JVM prints this message when the JVM is started and runs with the lockword configuration displayed.
@@ -1106,7 +1106,7 @@ J9NLS_LOCKNURSERY_CONFIG_WHAT_HEADER2.system_action=The JVM prints this message 
 J9NLS_LOCKNURSERY_CONFIG_WHAT_HEADER2.user_response=None, this is an information message that is displayed when the -Xlockword:what is on the command line.
 # END NON-TRANSLATABLE
 
-J9NLS_LOCKNURSERY_CONFIG_WHAT_MODE= Modo de Palavra de Bloqueio=%s
+J9NLS_LOCKNURSERY_CONFIG_WHAT_MODE= Modo de palavra de bloqueio=%s
 # START NON-TRANSLATABLE
 J9NLS_LOCKNURSERY_CONFIG_WHAT_MODE.explanation=This is an information message that is displayed when the -Xlockword:what is on the command line.
 J9NLS_LOCKNURSERY_CONFIG_WHAT_MODE.system_action=The JVM prints this message including the current lockword mode when the JVM is started and runs with the lockword configuration displayed.
@@ -2070,7 +2070,7 @@ J9NLS_VM_DEFAULT_METHOD_CONFLICT_GENERIC.user_response=Investigate the source of
 # argument 2 is the string of value type name
 # argument 3 is the length of super class name
 # argument 4 is the string of super class name
-J9NLS_VM_VALUETYPE_HAS_WRONG_SUPERCLASS=Classe do tipo de valor %2$.*1$s tem uma superclasse inv\u00e1lida %4$.*3$s
+J9NLS_VM_VALUETYPE_HAS_WRONG_SUPERCLASS=Classe do tipo de valor %2$.*1$s tem uma superclasse %4$.*3$s inv\u00e1lida
 # START NON-TRANSLATABLE
 J9NLS_VM_VALUETYPE_HAS_WRONG_SUPERCLASS.sample_input_1=3
 J9NLS_VM_VALUETYPE_HAS_WRONG_SUPERCLASS.sample_input_2=Foo
