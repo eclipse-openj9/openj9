@@ -80,7 +80,7 @@ J9NLS_VM_OPTIONS_FILE_NOT_FOUND_STR.user_response=Correct the issue with the opt
 # END NON-TRANSLATABLE
 
 # Note: this string is not used by J2ME VMs.
-J9NLS_VM_UNRECOGNISED_JIT_COMPILER=Prevajalnika JIT "%s" ni mogo\u010de najti. Uporabljen bo interpreter.
+J9NLS_VM_UNRECOGNISED_JIT_COMPILER=Prevajalnika JIT "%s" ni mogo\u010de najti. Uporabljen bo interpretor.
 # START NON-TRANSLATABLE
 J9NLS_VM_UNRECOGNISED_JIT_COMPILER.sample_input_1=j9jitm.dll
 J9NLS_VM_UNRECOGNISED_JIT_COMPILER.explanation=The -Djava.compiler= command line option specified a compiler that is not known to the JVM.
@@ -253,7 +253,7 @@ J9NLS_VM_SEARCHED_IN_DIR.system_action=The JVM will terminate.
 J9NLS_VM_SEARCHED_IN_DIR.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_VM_OUT_OF_STACK_MAP_MEMORY=Zmanjkalo je pomnilnika za preslikavo skladov interpreterja \u2013 VM prekinjen
+J9NLS_VM_OUT_OF_STACK_MAP_MEMORY=Zmanjkalo je pomnilnika za preslikavo skladov interpretorja \u2013 VM prekinjen
 # START NON-TRANSLATABLE
 J9NLS_VM_OUT_OF_STACK_MAP_MEMORY.explanation=There was a failure to allocate native memory required by the JVM.
 J9NLS_VM_OUT_OF_STACK_MAP_MEMORY.system_action=The JVM will terminate.
@@ -279,7 +279,7 @@ J9NLS_VM_CHECK_JAVA_HOME.user_response=Check that JAVA_HOME environment variable
 # This message will be followed by the exception's class name and
 # (if non-null) the exception's detail message
 # e.g. Exception in thread "main" java/lang/StackOverflowError: An overflow occurred
-J9NLS_VM_STACK_TRACE_EXCEPTION_IN=Izjemno stanje v niti "%.*s"\u0020
+J9NLS_VM_STACK_TRACE_EXCEPTION_IN=Izjemno stanje v niti "%.*s"
 # START NON-TRANSLATABLE
 J9NLS_VM_STACK_TRACE_EXCEPTION_IN.sample_input_1=57
 J9NLS_VM_STACK_TRACE_EXCEPTION_IN.sample_input_2=\"main\" java/lang/StackOverflowError: An overflow occurred
@@ -524,14 +524,14 @@ J9NLS_VM_UNRECOGNIZED_XJNI_OPTION.user_response=Correct the option specified wit
 # END NON-TRANSLATABLE
 
 # help text for -Xjni:help
-J9NLS_VM_XJNI_OPTIONS_1=Uporaba:\n
+J9NLS_VM_XJNI_OPTIONS_1=Uporaba:
 # START NON-TRANSLATABLE
 J9NLS_VM_XJNI_OPTIONS_1.explanation=NOTAG
 J9NLS_VM_XJNI_OPTIONS_1.system_action=
 J9NLS_VM_XJNI_OPTIONS_1.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_VM_XJNI_OPTIONS_2=\ Nastavljena najve\u010dja velikost -Xjni:arrayCacheMax=[<x>|unlimited] predpomnjene matrike JNI\n
+J9NLS_VM_XJNI_OPTIONS_2=\ \ \ Nastavljena najve\u010dja velikost -Xjni:arrayCacheMax=[<x>|unlimited] predpomnjene matrike JNI
 # START NON-TRANSLATABLE
 J9NLS_VM_XJNI_OPTIONS_2.explanation=NOTAG
 J9NLS_VM_XJNI_OPTIONS_2.system_action=
@@ -971,7 +971,7 @@ J9NLS_VM_XSCDMX_IGNORED.user_response=Ignore this message, remove -Xscdmx, or en
 # END NON-TRANSLATABLE
 
 # Help text for the -Xsyslog option. Note: please do not translate the text of the option flags: help, all, none, warn, error, info, config, vital
-J9NLS_VM_XLOG_HELP01=\nUporaba:\n
+J9NLS_VM_XLOG_HELP01=Uporaba:
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP01.explanation=NOTAG
 J9NLS_VM_XLOG_HELP01.system_action=
@@ -1035,7 +1035,7 @@ J9NLS_VM_XLOG_HELP08.user_response=
 # END NON-TRANSLATABLE
 
 # -Xsyslog:config is not translatable
-J9NLS_VM_XLOG_HELP09= -Xsyslog:config            Zabele\u017eite konfiguracijska sporo\u010dila JVM.\n
+J9NLS_VM_XLOG_HELP09= -Xsyslog:config            Zabele\u017eite konfiguracijska sporo\u010dila JVM.
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP09.explanation=NOTAG
 J9NLS_VM_XLOG_HELP09.system_action=
@@ -1043,7 +1043,7 @@ J9NLS_VM_XLOG_HELP09.user_response=
 # END NON-TRANSLATABLE
 
 # info, warn, error, vital and config are not translatable
-J9NLS_VM_XLOG_HELP10=Mo\u017enosti info, warn, error, vital in config je mogo\u010de kombinirati z ',', na primer:\n
+J9NLS_VM_XLOG_HELP10=Mo\u017enosti info, warn, error, vital in config je mogo\u010de kombinirati z ',', na primer:
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP10.explanation=NOTAG
 J9NLS_VM_XLOG_HELP10.system_action=
@@ -1051,7 +1051,7 @@ J9NLS_VM_XLOG_HELP10.user_response=
 # END NON-TRANSLATABLE
 
 # -Xsyslog:error,warn is not translatable
-J9NLS_VM_XLOG_HELP11= -Xsyslog:error,warn
+J9NLS_VM_XLOG_HELP11= -Xsyslog:napaka,opozorilo
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP11.explanation=NOTAG
 J9NLS_VM_XLOG_HELP11.system_action=
@@ -1059,7 +1059,7 @@ J9NLS_VM_XLOG_HELP11.user_response=
 # END NON-TRANSLATABLE
 
 # -Xsyslog:info,warn,error is not translatable
-J9NLS_VM_XLOG_HELP12= -Xsyslog:info,warn,error\n
+J9NLS_VM_XLOG_HELP12= -Xsyslog:informacije,opozorilo,napaka
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP12.explanation=NOTAG
 J9NLS_VM_XLOG_HELP12.system_action=
@@ -1114,7 +1114,7 @@ J9NLS_LOCKNURSERY_CONFIG_WHAT_MODE.user_response=None, this is an information me
 J9NLS_LOCKNURSERY_CONFIG_WHAT_MODE.sample_input_1=default
 # END NON-TRANSLATABLE
 
-J9NLS_LOCKNURSERY_CONFIG_WHAT_HAS_LOCKWORD= lockword:%.*s
+J9NLS_LOCKNURSERY_CONFIG_WHAT_HAS_LOCKWORD= beseda za zaklep:%.*s
 # START NON-TRANSLATABLE
 J9NLS_LOCKNURSERY_CONFIG_WHAT_HAS_LOCKWORD.explanation=This is an information message that is displayed when the -Xlockword:what is on the command line.
 J9NLS_LOCKNURSERY_CONFIG_WHAT_HAS_LOCKWORD.system_action=The JVM prints this message for each class that has been specifically assigned a lockword when the JVM is started and runs with the lockword configuration displayed.
@@ -1123,7 +1123,7 @@ J9NLS_LOCKNURSERY_CONFIG_WHAT_HAS_LOCKWORD.sample_input_1=16
 J9NLS_LOCKNURSERY_CONFIG_WHAT_HAS_LOCKWORD.sample_input_2=java/lang/String
 # END NON-TRANSLATABLE
 
-J9NLS_LOCKNURSERY_CONFIG_WHAT_DOES_NOT_HAVE_LOCKWORD= noLockword:%.*s
+J9NLS_LOCKNURSERY_CONFIG_WHAT_DOES_NOT_HAVE_LOCKWORD= brez besede za zaklep:%.*s
 # START NON-TRANSLATABLE
 J9NLS_LOCKNURSERY_CONFIG_WHAT_DOES_NOT_HAVE_LOCKWORD.explanation=This is an information message that is displayed when the -Xlockword:what is on the command line.
 J9NLS_LOCKNURSERY_CONFIG_WHAT_DOES_NOT_HAVE_LOCKWORD.system_action=The JVM prints this message for each class that has been specifically not assigned a lockword when the JVM is started and runs with the lockword configuration displayed.
@@ -1765,7 +1765,7 @@ J9NLS_VM_FAILED_TO_LOAD_MODULE_REQUIRED_DLL.user_response=No action required if 
 # argument 14 is the other classloader's identity hashcode
 # arguments 15 and 16 are the other classloader's class
 # arguments 17 and 18 are the name of class being created
-J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION=kr\u0161itev omejitve nalaganja pri pregla\u0161anju metode "%2$.*1$s.%4$.*3$s%6$.*5$s" med ustvarjanjem razreda "%18$.*17$s": nalagalnik "%8$.*7$s@%9$x" razreda "%11$.*10$s" in nalagalnik "%13$.*12$s@%14$x" razreda "%16$.*15$s" imata razli\u010dna tipa za podpis metode
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION=kr\u0161itev omejitve nalaganja pri pregla\u0161anju metode "%2$.*1$s.%4$.*3$s%6$.*5$s" med izdelovanjem razreda "%18$.*17$s": nalagalnik "%8$.*7$s@%9$x" razreda "%11$.*10$s" in nalagalnik "%13$.*12$s@%14$x" razreda "%16$.*15$s" imata razli\u010dna tipa za podpis metode
 # START NON-TRANSLATABLE
 J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_1=4
 J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_2=Main
@@ -1898,7 +1898,7 @@ J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_TYPE.user_response=Contact the
 
 # retVal, errno and errno2 should not be translated. They refer to internal variables.
 # This replaces the J9NLS_VM_THREAD_CREATE_FAILED_WITH_ERRNO2 message
-J9NLS_VM_THREAD_CREATE_FAILED_WITH_32BIT_ERRNO2=Niti ni bilo mogo\u010de ustvariti: retVal %1$zd, errno %2$zd (0x%3$zx), errno2 0x%4$x
+J9NLS_VM_THREAD_CREATE_FAILED_WITH_32BIT_ERRNO2=Niti ni bilo mogo\u010de izdelati: retVal %1$zd, errno %2$zd (0x%3$zx), errno2 0x%4$x
 # START NON-TRANSLATABLE
 J9NLS_VM_THREAD_CREATE_FAILED_WITH_32BIT_ERRNO2.sample_input_1=-1
 J9NLS_VM_THREAD_CREATE_FAILED_WITH_32BIT_ERRNO2.sample_input_2=565

@@ -279,7 +279,7 @@ J9NLS_VM_CHECK_JAVA_HOME.user_response=Check that JAVA_HOME environment variable
 # This message will be followed by the exception's class name and
 # (if non-null) the exception's detail message
 # e.g. Exception in thread "main" java/lang/StackOverflowError: An overflow occurred
-J9NLS_VM_STACK_TRACE_EXCEPTION_IN=Wyj\u0105tek w w\u0105tku "%.*s"\u0020
+J9NLS_VM_STACK_TRACE_EXCEPTION_IN=Wyj\u0105tek w w\u0105tku "%.*s"
 # START NON-TRANSLATABLE
 J9NLS_VM_STACK_TRACE_EXCEPTION_IN.sample_input_1=57
 J9NLS_VM_STACK_TRACE_EXCEPTION_IN.sample_input_2=\"main\" java/lang/StackOverflowError: An overflow occurred
@@ -531,7 +531,7 @@ J9NLS_VM_XJNI_OPTIONS_1.system_action=
 J9NLS_VM_XJNI_OPTIONS_1.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_VM_XJNI_OPTIONS_2=\ \ \ -Xjni:arrayCacheMax=[<x>|unlimited] ustawienie maksymalnej wielko\u015bci tablicy JNI w pami\u0119ci podr\u0119cznej\n
+J9NLS_VM_XJNI_OPTIONS_2=\ \ \ -Xjni:arrayCacheMax=[<x>|unlimited] ustawienie maksymalnej wielko\u015bci tablicy JNI w pami\u0119ci podr\u0119cznej
 # START NON-TRANSLATABLE
 J9NLS_VM_XJNI_OPTIONS_2.explanation=NOTAG
 J9NLS_VM_XJNI_OPTIONS_2.system_action=
@@ -922,7 +922,7 @@ J9NLS_VM_SSE2_NOT_SUPPORTED.user_response=See the 'Supported Environments' infor
 # END NON-TRANSLATABLE
 
 # Message for -verbose:shutdown
-J9NLS_VM_THREAD_PREVENTING_SHUTDOWN=W\u0105tek "%s" jest nadal aktywny po uruchomieniu punkt\u00f3w zaczepienia zamykania.
+J9NLS_VM_THREAD_PREVENTING_SHUTDOWN=W\u0105tek "%s" jest nadal aktywny po uruchomieniu hak\u00f3w zamykania.
 # START NON-TRANSLATABLE
 J9NLS_VM_THREAD_PREVENTING_SHUTDOWN.explanation=A thread remains alive after running the shutdown hooks and prevents the VM from shutting down.
 J9NLS_VM_THREAD_PREVENTING_SHUTDOWN.system_action=DestroyJavaVM will return JNI_ERR.
@@ -987,7 +987,7 @@ J9NLS_VM_XLOG_HELP02.user_response=
 # END NON-TRANSLATABLE
 
 # -Xsyslog:none is not translatable
-J9NLS_VM_XLOG_HELP03= -Xsyslog:none              Wy\u0142\u0105cza podane poprzednio opcje dziennika JVM, r\u00f3wnie\u017c domy\u015blne.
+J9NLS_VM_XLOG_HELP03= -Xsyslog:none              Wy\u0142\u0105cza podane poprzednio opcje rejestrowania JVM, r\u00f3wnie\u017c domy\u015blne.
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP03.explanation=NOTAG
 J9NLS_VM_XLOG_HELP03.system_action=
@@ -1019,7 +1019,7 @@ J9NLS_VM_XLOG_HELP06.user_response=
 # END NON-TRANSLATABLE
 
 # -Xsyslog:error is not translatable
-J9NLS_VM_XLOG_HELP07= -Xsyslog:error             Rejestruje komunikaty o b\u0142\u0119dach JVM. Opcja w\u0142\u0105czona domy\u015blnie.
+J9NLS_VM_XLOG_HELP07= -Xsyslog:error             Rejestruje komunikaty o b\u0142\u0119dach JVM. Opcja domy\u015blnie w\u0142\u0105czona.
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP07.explanation=NOTAG
 J9NLS_VM_XLOG_HELP07.system_action=
@@ -1027,7 +1027,7 @@ J9NLS_VM_XLOG_HELP07.user_response=
 # END NON-TRANSLATABLE
 
 # -Xsyslog:vital is not translatable
-J9NLS_VM_XLOG_HELP08= -Xsyslog:vital             Rejestruje istotne komunikaty JVM. Opcja w\u0142\u0105czona domy\u015blnie.
+J9NLS_VM_XLOG_HELP08= -Xsyslog:vital             Rejestruje istotne komunikaty JVM. Opcja domy\u015blnie w\u0142\u0105czona.
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP08.explanation=NOTAG
 J9NLS_VM_XLOG_HELP08.system_action=
@@ -1035,7 +1035,7 @@ J9NLS_VM_XLOG_HELP08.user_response=
 # END NON-TRANSLATABLE
 
 # -Xsyslog:config is not translatable
-J9NLS_VM_XLOG_HELP09= -Xsyslog:config            Rejestruje komunikaty o konfiguracji JVM.\n
+J9NLS_VM_XLOG_HELP09= -Xsyslog:config            Rejestruje komunikaty o konfiguracji JVM.
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP09.explanation=NOTAG
 J9NLS_VM_XLOG_HELP09.system_action=
@@ -1043,7 +1043,7 @@ J9NLS_VM_XLOG_HELP09.user_response=
 # END NON-TRANSLATABLE
 
 # info, warn, error, vital and config are not translatable
-J9NLS_VM_XLOG_HELP10=Opcje info, warn, error, vital i config mog\u0105 by\u0107 \u0142\u0105czone z u\u017cyciem przecinka ',', na przyk\u0142ad:\n
+J9NLS_VM_XLOG_HELP10=Opcje info, warn, error, vital i config mog\u0105 by\u0107 \u0142\u0105czone z u\u017cyciem przecinka ',', na przyk\u0142ad:
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP10.explanation=NOTAG
 J9NLS_VM_XLOG_HELP10.system_action=
@@ -1059,7 +1059,7 @@ J9NLS_VM_XLOG_HELP11.user_response=
 # END NON-TRANSLATABLE
 
 # -Xsyslog:info,warn,error is not translatable
-J9NLS_VM_XLOG_HELP12= -Xsyslog:info,warn,error\n
+J9NLS_VM_XLOG_HELP12= -Xsyslog:info,warn,error
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP12.explanation=NOTAG
 J9NLS_VM_XLOG_HELP12.system_action=
@@ -1765,7 +1765,7 @@ J9NLS_VM_FAILED_TO_LOAD_MODULE_REQUIRED_DLL.user_response=No action required if 
 # argument 14 is the other classloader's identity hashcode
 # arguments 15 and 16 are the other classloader's class
 # arguments 17 and 18 are the name of class being created
-J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION=naruszenie ograniczenia \u0142adowania podczas nadpisywania metody "%2$.*1$s.%4$.*3$s%6$.*5$s" w momencie tworzenia klasy "%18$.*17$s": program \u0142aduj\u0105cy "%8$.*7$s@%9$x" klasy "%11$.*10$s" i program \u0142aduj\u0105cy "%13$.*12$s@%14$x" klasy "%16$.*15$s"  maj\u0105 r\u00f3\u017cne typy dla sygnatury metody
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION=naruszenie ograniczenia \u0142adowania podczas nadpisywania metody "%2$.*1$s.%4$.*3$s%6$.*5$s" w momencie tworzenia klasy "%18$.*17$s": program \u0142aduj\u0105cy "%8$.*7$s@%9$x" klasy "%11$.*10$s" i program \u0142aduj\u0105cy "%13$.*12$s@%14$x" klasy "%16$.*15$s" maj\u0105 r\u00f3\u017cne typy dla sygnatury metody.
 # START NON-TRANSLATABLE
 J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_1=4
 J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_2=Main
@@ -2091,7 +2091,7 @@ J9NLS_VM_INVALID_EMPTY_OPTION.system_action=The JVM prints this message and term
 J9NLS_VM_INVALID_EMPTY_OPTION.user_response=Provide non-empty options.
 # END NON-TRANSLATABLE
 
-J9NLS_ENSUREHASHED_CONFIG_OUT_OF_MEM=Nie mo\u017cna przydzieli\u0107 pami\u0119ci dla tabeli klas mieszanych.
+J9NLS_ENSUREHASHED_CONFIG_OUT_OF_MEM=Nie mo\u017cna przydzieli\u0107 pami\u0119ci dla tabeli klas mieszania.
 # START NON-TRANSLATABLE
 J9NLS_ENSUREHASHED_CONFIG_OUT_OF_MEM.explanation=There was a failure to allocate native memory to store the hashed classes options.
 J9NLS_ENSUREHASHED_CONFIG_OUT_OF_MEM.system_action=The JVM prints this message and terminates.

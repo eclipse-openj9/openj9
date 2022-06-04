@@ -279,7 +279,7 @@ J9NLS_VM_CHECK_JAVA_HOME.user_response=Check that JAVA_HOME environment variable
 # This message will be followed by the exception's class name and
 # (if non-null) the exception's detail message
 # e.g. Exception in thread "main" java/lang/StackOverflowError: An overflow occurred
-J9NLS_VM_STACK_TRACE_EXCEPTION_IN="%.*s" i\u015f par\u00e7ac\u0131\u011f\u0131nda kural d\u0131\u015f\u0131 durum\u0020
+J9NLS_VM_STACK_TRACE_EXCEPTION_IN="%.*s" i\u015f par\u00e7ac\u0131\u011f\u0131nda kural d\u0131\u015f\u0131 durum
 # START NON-TRANSLATABLE
 J9NLS_VM_STACK_TRACE_EXCEPTION_IN.sample_input_1=57
 J9NLS_VM_STACK_TRACE_EXCEPTION_IN.sample_input_2=\"main\" java/lang/StackOverflowError: An overflow occurred
@@ -531,7 +531,7 @@ J9NLS_VM_XJNI_OPTIONS_1.system_action=
 J9NLS_VM_XJNI_OPTIONS_1.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_VM_XJNI_OPTIONS_2=\ \ \ -Xjni:arrayCacheMax=[<x>|unlimited] JNI \u00f6nbelle\u011fe al\u0131nan dizisinin b\u00fcy\u00fckl\u00fck \u00fcst s\u0131n\u0131r\u0131n\u0131 ayarlar\n
+J9NLS_VM_XJNI_OPTIONS_2=\ \ \ -Xjni:arrayCacheMax=[<x>|unlimited] JNI \u00f6nbelle\u011fe al\u0131nan dizisinin b\u00fcy\u00fckl\u00fck \u00fcst s\u0131n\u0131r\u0131n\u0131 ayarlar
 # START NON-TRANSLATABLE
 J9NLS_VM_XJNI_OPTIONS_2.explanation=NOTAG
 J9NLS_VM_XJNI_OPTIONS_2.system_action=
@@ -1035,7 +1035,7 @@ J9NLS_VM_XLOG_HELP08.user_response=
 # END NON-TRANSLATABLE
 
 # -Xsyslog:config is not translatable
-J9NLS_VM_XLOG_HELP09= -Xsyslog:config            JVM yap\u0131land\u0131rma iletilerini g\u00fcnl\u00fc\u011fe kaydedin.\n
+J9NLS_VM_XLOG_HELP09= -Xsyslog:config            JVM yap\u0131land\u0131rma iletilerini g\u00fcnl\u00fc\u011fe kaydedin.
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP09.explanation=NOTAG
 J9NLS_VM_XLOG_HELP09.system_action=
@@ -1043,7 +1043,7 @@ J9NLS_VM_XLOG_HELP09.user_response=
 # END NON-TRANSLATABLE
 
 # info, warn, error, vital and config are not translatable
-J9NLS_VM_XLOG_HELP10=info, warn, error, vital ve config se\u00e7enekleri ',' ile birle\u015ftirilebilir, \u00f6rne\u011fin:\n
+J9NLS_VM_XLOG_HELP10=info, warn, error, vital ve config se\u00e7enekleri ',' ile birle\u015ftirilebilir, \u00f6rne\u011fin:
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP10.explanation=NOTAG
 J9NLS_VM_XLOG_HELP10.system_action=
@@ -1059,7 +1059,7 @@ J9NLS_VM_XLOG_HELP11.user_response=
 # END NON-TRANSLATABLE
 
 # -Xsyslog:info,warn,error is not translatable
-J9NLS_VM_XLOG_HELP12= -Xsyslog:info,warn,error\n
+J9NLS_VM_XLOG_HELP12= -Xsyslog:info,warn,error
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP12.explanation=NOTAG
 J9NLS_VM_XLOG_HELP12.system_action=

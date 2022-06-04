@@ -279,7 +279,7 @@ J9NLS_VM_CHECK_JAVA_HOME.user_response=Check that JAVA_HOME environment variable
 # This message will be followed by the exception's class name and
 # (if non-null) the exception's detail message
 # e.g. Exception in thread "main" java/lang/StackOverflowError: An overflow occurred
-J9NLS_VM_STACK_TRACE_EXCEPTION_IN=V\u00fdnimka vo vl\u00e1kne "%.*s"\u0020
+J9NLS_VM_STACK_TRACE_EXCEPTION_IN=V\u00fdnimka vo vl\u00e1kne "%.*s"
 # START NON-TRANSLATABLE
 J9NLS_VM_STACK_TRACE_EXCEPTION_IN.sample_input_1=57
 J9NLS_VM_STACK_TRACE_EXCEPTION_IN.sample_input_2=\"main\" java/lang/StackOverflowError: An overflow occurred
@@ -531,7 +531,7 @@ J9NLS_VM_XJNI_OPTIONS_1.system_action=
 J9NLS_VM_XJNI_OPTIONS_1.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_VM_XJNI_OPTIONS_2=\ \ \ -Xjni:arrayCacheMax=[<x>|unlimited] nastav\u00ed maxim\u00e1lnu ve\u013ekos\u0165 po\u013ea v pam\u00e4ti cache JNI\n
+J9NLS_VM_XJNI_OPTIONS_2=\ \ \ -Xjni:arrayCacheMax=[<x>|unlimited] nastav\u00ed maxim\u00e1lnu ve\u013ekos\u0165 po\u013ea v pam\u00e4ti cache JNI
 # START NON-TRANSLATABLE
 J9NLS_VM_XJNI_OPTIONS_2.explanation=NOTAG
 J9NLS_VM_XJNI_OPTIONS_2.system_action=
@@ -995,7 +995,7 @@ J9NLS_VM_XLOG_HELP03.user_response=
 # END NON-TRANSLATABLE
 
 # -Xsyslog:all is not translatable
-J9NLS_VM_XLOG_HELP04= -Xsyslog:all               Protokolova\u0165 v\u0161etky spr\u00e1vy JVM.
+J9NLS_VM_XLOG_HELP04= -Xsyslog:all               Zaznamen\u00e1va\u0165 v\u0161etky spr\u00e1vy JVM do protokolu.
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP04.explanation=NOTAG
 J9NLS_VM_XLOG_HELP04.system_action=
@@ -1003,7 +1003,7 @@ J9NLS_VM_XLOG_HELP04.user_response=
 # END NON-TRANSLATABLE
 
 # -Xsyslog:info is not translatable
-J9NLS_VM_XLOG_HELP05= -Xsyslog:info              Protokolova\u0165 informa\u010dn\u00e9 spr\u00e1vy JVM.
+J9NLS_VM_XLOG_HELP05= -Xsyslog:info              Zaznamen\u00e1va\u0165 informa\u010dn\u00e9 spr\u00e1vy JVM do protokolu.
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP05.explanation=NOTAG
 J9NLS_VM_XLOG_HELP05.system_action=
@@ -1011,7 +1011,7 @@ J9NLS_VM_XLOG_HELP05.user_response=
 # END NON-TRANSLATABLE
 
 # -Xsyslog:warn is not translatable
-J9NLS_VM_XLOG_HELP06= -Xsyslog:warn              Protokolova\u0165 varovn\u00e9 spr\u00e1vy JVM.
+J9NLS_VM_XLOG_HELP06= -Xsyslog:warn              Zaznamen\u00e1va\u0165 varovn\u00e9 spr\u00e1vy JVM do protokolu.
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP06.explanation=NOTAG
 J9NLS_VM_XLOG_HELP06.system_action=
@@ -1019,7 +1019,7 @@ J9NLS_VM_XLOG_HELP06.user_response=
 # END NON-TRANSLATABLE
 
 # -Xsyslog:error is not translatable
-J9NLS_VM_XLOG_HELP07= -Xsyslog:error             Protokolova\u0165 chybov\u00e9 spr\u00e1vy JVM. Toto je predvolene zapnut\u00e9.
+J9NLS_VM_XLOG_HELP07= -Xsyslog:error             Zaznamen\u00e1va\u0165 chybov\u00e9 spr\u00e1vy JVM do protokolu. Toto je predvolene zapnut\u00e9.
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP07.explanation=NOTAG
 J9NLS_VM_XLOG_HELP07.system_action=
@@ -1027,7 +1027,7 @@ J9NLS_VM_XLOG_HELP07.user_response=
 # END NON-TRANSLATABLE
 
 # -Xsyslog:vital is not translatable
-J9NLS_VM_XLOG_HELP08= -Xsyslog:vital             Protokolova\u0165 k\u013e\u00fa\u010dov\u00e9 spr\u00e1vy JVM. Toto je predvolene zapnut\u00e9.
+J9NLS_VM_XLOG_HELP08= -Xsyslog:vital             Zaznamen\u00e1va\u0165 kritick\u00e9 spr\u00e1vy JVM do protokolu. Toto je predvolene zapnut\u00e9.
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP08.explanation=NOTAG
 J9NLS_VM_XLOG_HELP08.system_action=
@@ -1035,7 +1035,7 @@ J9NLS_VM_XLOG_HELP08.user_response=
 # END NON-TRANSLATABLE
 
 # -Xsyslog:config is not translatable
-J9NLS_VM_XLOG_HELP09= -Xsyslog:vital             Protokolova\u0165 konfigura\u010dn\u00e9 spr\u00e1vy JVM.\n
+J9NLS_VM_XLOG_HELP09= -Xsyslog:vital             Zaznamen\u00e1va\u0165 konfigura\u010dn\u00e9 spr\u00e1vy JVM do protokolu.
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP09.explanation=NOTAG
 J9NLS_VM_XLOG_HELP09.system_action=
@@ -1043,7 +1043,7 @@ J9NLS_VM_XLOG_HELP09.user_response=
 # END NON-TRANSLATABLE
 
 # info, warn, error, vital and config are not translatable
-J9NLS_VM_XLOG_HELP10=Vo\u013eby info, warn, error, vital a config mo\u017eno kombinova\u0165 pomocou zna\u010dku ',', napr\u00edklad:\n
+J9NLS_VM_XLOG_HELP10=Vo\u013eby info, warn, error, vital a config mo\u017eno kombinova\u0165 pomocou zna\u010dku ',', napr\u00edklad:
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP10.explanation=NOTAG
 J9NLS_VM_XLOG_HELP10.system_action=
@@ -1059,7 +1059,7 @@ J9NLS_VM_XLOG_HELP11.user_response=
 # END NON-TRANSLATABLE
 
 # -Xsyslog:info,warn,error is not translatable
-J9NLS_VM_XLOG_HELP12= -Xsyslog:info,warn,error\n
+J9NLS_VM_XLOG_HELP12= -Xsyslog:info,warn,error
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP12.explanation=NOTAG
 J9NLS_VM_XLOG_HELP12.system_action=
@@ -1224,14 +1224,14 @@ J9NLS_VM_HEAP_OUT_OF_MEMORY.system_action=
 J9NLS_VM_HEAP_OUT_OF_MEMORY.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_VM_ILLEGAL_RESUME_DETECTED=Aplik\u00e1cia obnovila vykon\u00e1vanie po spracovan\u00ed neopravite\u013en\u00e9ho stavu a ileg\u00e1lne sa vr\u00e1tila, alebo sa zavolala, do Java
+J9NLS_VM_ILLEGAL_RESUME_DETECTED=Aplik\u00e1cia obnovila vykon\u00e1vanie po opraven\u00ed nevyrie\u0161ite\u013en\u00e9ho stavu a neplatne sa vr\u00e1tila (alebo sa zavolala) do prostredia Java
 # START NON-TRANSLATABLE
 J9NLS_VM_ILLEGAL_RESUME_DETECTED.explanation=Application resumed execution after handling an unrecoverable condition and illegally returned to or called back into Java
 J9NLS_VM_ILLEGAL_RESUME_DETECTED.system_action=The JVM prints the error message and terminates the process using the z/OS specific system call CEE3AB2()
 J9NLS_VM_ILLEGAL_RESUME_DETECTED.user_response=Inspect their user condition handler and change it to not resume execution after receiving an unrecoverable condition on a Java thread
 # END NON-TRANSLATABLE
 
-J9NLS_VM_ILLEGAL_RESUME_DETECTED_JIT=Aplik\u00e1cia obnovila vykon\u00e1vanie po spracovan\u00ed neopravite\u013en\u00e9ho stavu a ileg\u00e1lne sa vr\u00e1tila, alebo sa zavolala, do Java (k\u00f3d JIT)
+J9NLS_VM_ILLEGAL_RESUME_DETECTED_JIT=Aplik\u00e1cia obnovila vykon\u00e1vanie po opraven\u00ed nevyrie\u0161ite\u013en\u00e9ho stavu a neplatne sa vr\u00e1tila (alebo sa zavolala) do prostredia Java (k\u00f3d JIT)
 # START NON-TRANSLATABLE
 J9NLS_VM_ILLEGAL_RESUME_DETECTED_JIT.explanation=Application resumed execution after handling an unrecoverable condition and illegally returned to or called back into Java
 J9NLS_VM_ILLEGAL_RESUME_DETECTED_JIT.system_action=The JVM prints the error message and terminates the process using the z/OS specific system call CEE3AB2()

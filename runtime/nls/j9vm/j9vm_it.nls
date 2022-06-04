@@ -80,7 +80,7 @@ J9NLS_VM_OPTIONS_FILE_NOT_FOUND_STR.user_response=Correct the issue with the opt
 # END NON-TRANSLATABLE
 
 # Note: this string is not used by J2ME VMs.
-J9NLS_VM_UNRECOGNISED_JIT_COMPILER=Programma di compilazione JIT "%s" non trovato. Utilizza l'interpreter.
+J9NLS_VM_UNRECOGNISED_JIT_COMPILER=Programma di compilazione JIT "%s" non trovato. Verr\u00e0 utilizzato l'interpreter.
 # START NON-TRANSLATABLE
 J9NLS_VM_UNRECOGNISED_JIT_COMPILER.sample_input_1=j9jitm.dll
 J9NLS_VM_UNRECOGNISED_JIT_COMPILER.explanation=The -Djava.compiler= command line option specified a compiler that is not known to the JVM.
@@ -279,7 +279,7 @@ J9NLS_VM_CHECK_JAVA_HOME.user_response=Check that JAVA_HOME environment variable
 # This message will be followed by the exception's class name and
 # (if non-null) the exception's detail message
 # e.g. Exception in thread "main" java/lang/StackOverflowError: An overflow occurred
-J9NLS_VM_STACK_TRACE_EXCEPTION_IN=Eccezione nel thread "%.*s"\u0020
+J9NLS_VM_STACK_TRACE_EXCEPTION_IN=Eccezione nel thread "%.*s"
 # START NON-TRANSLATABLE
 J9NLS_VM_STACK_TRACE_EXCEPTION_IN.sample_input_1=57
 J9NLS_VM_STACK_TRACE_EXCEPTION_IN.sample_input_2=\"main\" java/lang/StackOverflowError: An overflow occurred
@@ -396,7 +396,7 @@ J9NLS_VM_ERROR_FAILED_TO_INITIALIZE_DLL.user_response=Contact your service repre
 # END NON-TRANSLATABLE
 
 # JVMRI and -Xtrace are not translatable.
-J9NLS_VM_JVMRI_REQUESTED_WITHOUT_TRACE=JVMRI richiede il motore di traccia: eseguire con il flag -Xtrace
+J9NLS_VM_JVMRI_REQUESTED_WITHOUT_TRACE=JVMRI richiede il motore di traccia: eseguire con l'indicatore -Xtrace
 # START NON-TRANSLATABLE
 J9NLS_VM_JVMRI_REQUESTED_WITHOUT_TRACE.explanation=The requested JVMRI environment requires that tracing be enabled.
 J9NLS_VM_JVMRI_REQUESTED_WITHOUT_TRACE.system_action=The requested JVMRI environment will not be returned via the GetEnv() JNI function.
@@ -531,7 +531,7 @@ J9NLS_VM_XJNI_OPTIONS_1.system_action=
 J9NLS_VM_XJNI_OPTIONS_1.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_VM_XJNI_OPTIONS_2=\ \ \ -Xjni:arrayCacheMax=[<x>|unlimited] set maximum size of JNI cached array\n
+J9NLS_VM_XJNI_OPTIONS_2=\ \ \ -Xjni:arrayCacheMax=[<x>|unlimited] imposta la dimensione massima dell'array JNI in cache
 # START NON-TRANSLATABLE
 J9NLS_VM_XJNI_OPTIONS_2.explanation=NOTAG
 J9NLS_VM_XJNI_OPTIONS_2.system_action=
@@ -677,7 +677,7 @@ J9NLS_VM_SHARESTRING_WITHOUT_SHARECLASSES.user_response=Enable shared classes, o
 # arguments 4 and 5 are the loaded class name
 # arguments 6 and 7 are the defining loader class name
 # argument 8 is the defining loader identity hash code
-J9NLS_VM_LOADING_CONSTRAINT_VIOLATION=violazione vincolo di caricamento: il loader "%2$.*1$s@%3$x" ha avviato precedentemente il caricamento per un tipo diverso con nome "%5$.*4$s" definito dal loader "%7$.*6$s@%8$x"
+J9NLS_VM_LOADING_CONSTRAINT_VIOLATION=violazione dei vincoli di caricamento: il loader "%2$.*1$s@%3$x" ha avviato precedentemente il caricamento di un tipo diverso con nome "%5$.*4$s" definito dal loader "%7$.*6$s@%8$x"
 # START NON-TRANSLATABLE
 J9NLS_VM_LOADING_CONSTRAINT_VIOLATION.sample_input_1=9
 J9NLS_VM_LOADING_CONSTRAINT_VIOLATION.sample_input_2=MyLoader
@@ -940,7 +940,7 @@ J9NLS_VM_THREAD_PREVENTING_SHUTDOWN.sample_input_1=Attach API
 # arguments 12 and 13 are the other classloader name
 # argument 14 is the other classloader's identity hashcode
 # arguments 15 and 16 are the other classloader's class
-J9NLS_VM_LOADING_CONSTRAINT_SIG_VIOLATION=violazione di vincolo di caricamento durante la risoluzione del metodo "%2$.*1$s.%4$.*3$s%6$.*5$s" : il loader "%8$.*7$s@%9$x" della classe "%11$.*10$s" e il loader "%13$.*12$s@%14$x" della classe "%16$.*15$s" hanno tipo diversi per la firma del metodo
+J9NLS_VM_LOADING_CONSTRAINT_SIG_VIOLATION=violazione dei vincoli di caricamento durante la risoluzione del metodo "%2$.*1$s.%4$.*3$s%6$.*5$s" : il loader "%8$.*7$s@%9$x" della classe "%11$.*10$s" e il loader "%13$.*12$s@%14$x" della classe "%16$.*15$s" hanno tipo diversi per la firma del metodo
 # START NON-TRANSLATABLE
 J9NLS_VM_LOADING_CONSTRAINT_SIG_VIOLATION.sample_input_1=4
 J9NLS_VM_LOADING_CONSTRAINT_SIG_VIOLATION.sample_input_2=Main
@@ -1035,7 +1035,7 @@ J9NLS_VM_XLOG_HELP08.user_response=
 # END NON-TRANSLATABLE
 
 # -Xsyslog:config is not translatable
-J9NLS_VM_XLOG_HELP09= -Xsyslog:config            Registra i messaggi di configurazione JVM.\n
+J9NLS_VM_XLOG_HELP09= -Xsyslog:config            Registra i messaggi di configurazione JVM.
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP09.explanation=NOTAG
 J9NLS_VM_XLOG_HELP09.system_action=
@@ -1043,7 +1043,7 @@ J9NLS_VM_XLOG_HELP09.user_response=
 # END NON-TRANSLATABLE
 
 # info, warn, error, vital and config are not translatable
-J9NLS_VM_XLOG_HELP10=Le opzioni di configurazione info, warn, error, vital e config possono essere combinate con ',' ad esempio:\n
+J9NLS_VM_XLOG_HELP10=Le opzioni di configurazione info, warn, error, vital e config possono essere combinate con ',' ad esempio:
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP10.explanation=NOTAG
 J9NLS_VM_XLOG_HELP10.system_action=
@@ -1059,7 +1059,7 @@ J9NLS_VM_XLOG_HELP11.user_response=
 # END NON-TRANSLATABLE
 
 # -Xsyslog:info,warn,error is not translatable
-J9NLS_VM_XLOG_HELP12= -Xsyslog:info,warn,error\n
+J9NLS_VM_XLOG_HELP12= -Xsyslog:info,avvertenza,errore
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP12.explanation=NOTAG
 J9NLS_VM_XLOG_HELP12.system_action=
@@ -1702,7 +1702,7 @@ J9NLS_VM_ILLEGAL_ACCESS_NONSTATIC_FINAL.user_response=Modify source code to avoi
 # Second argument is class name
 # Third argument is nest host name length
 # Fourth argument is nest host name
-J9NLS_VM_NEST_HOST_HAS_DIFFERENT_CLASSLOADER=La classe %2$.*1$s e i relativi host nest %4$.*3$s devono avere lo stesso programma di caricamento classe.
+J9NLS_VM_NEST_HOST_HAS_DIFFERENT_CLASSLOADER=La classe %2$.*1$s e i relativi host nest %4$.*3$s devono avere lo stesso classloader.
 # START NON-TRANSLATABLE
 J9NLS_VM_NEST_HOST_HAS_DIFFERENT_CLASSLOADER.sample_input_1=3
 J9NLS_VM_NEST_HOST_HAS_DIFFERENT_CLASSLOADER.sample_input_2=Foo
@@ -1765,7 +1765,7 @@ J9NLS_VM_FAILED_TO_LOAD_MODULE_REQUIRED_DLL.user_response=No action required if 
 # argument 14 is the other classloader's identity hashcode
 # arguments 15 and 16 are the other classloader's class
 # arguments 17 and 18 are the name of class being created
-J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION=Violazione vincolo di caricamento quando si sovrascrive il metodo "%2$.*1$s.%4$.*3$s%6$.*5$s" durante la creazione della classe "%18$.*17$s": programma di caricamento "%8$.*7$s@%9$x" della classe "%11$.*10$s" e programma di caricamento "%13$.*12$s@%14$x" della classe "%16$.*15$s" hanno differenti tipi di firma del metodo
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION=violazione dei vincoli di caricamento quando si sovrascrive il metodo "%2$.*1$s.%4$.*3$s%6$.*5$s" durante la creazione della classe "%18$.*17$s": il loader "%8$.*7$s@%9$x" della classe "%11$.*10$s" e il loader "%13$.*12$s@%14$x" della classe "%16$.*15$s" hanno differenti tipi di firma del metodo
 # START NON-TRANSLATABLE
 J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_1=4
 J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_2=Main
@@ -1830,7 +1830,7 @@ J9NLS_VM_MODULE_NAME_IS_INVALID.user_response=Don't pass a module with invalid n
 # END NON-TRANSLATABLE
 
 # No arguments
-J9NLS_VM_ONLY_BOOTCLASSLOADER_LOAD_MODULE_JAVABASE=Solo il programma di caricamento classe bootstrap pu\u00f2 definire il modulo java.base.
+J9NLS_VM_ONLY_BOOTCLASSLOADER_LOAD_MODULE_JAVABASE=Solo il classloader bootstrap pu\u00f2 definire il modulo java.base.
 # START NON-TRANSLATABLE
 J9NLS_VM_ONLY_BOOTCLASSLOADER_LOAD_MODULE_JAVABASE.explanation=Non-bootstrap classloader can't define module java.base.
 J9NLS_VM_ONLY_BOOTCLASSLOADER_LOAD_MODULE_JAVABASE.system_action=The JVM will throw a java/lang/LayerInstantiationException.
@@ -1838,7 +1838,7 @@ J9NLS_VM_ONLY_BOOTCLASSLOADER_LOAD_MODULE_JAVABASE.user_response=Don't define mo
 # END NON-TRANSLATABLE
 
 # No arguments
-J9NLS_VM_ONLY_BOOT_PLATFORM_CLASSLOADER_DEFINE_PKG_JAVA=Solo il programma di caricamento classe bootstrap o della piattaforma pu\u00f2 definire il pacchetto java o java.*.
+J9NLS_VM_ONLY_BOOT_PLATFORM_CLASSLOADER_DEFINE_PKG_JAVA=Solo il classloader bootstrap o della piattaforma pu\u00f2 definire il pacchetto java o java.*.
 # START NON-TRANSLATABLE
 J9NLS_VM_ONLY_BOOT_PLATFORM_CLASSLOADER_DEFINE_PKG_JAVA.explanation=A classloader other than boostrap or platform classloader can't define package java or java.*.
 J9NLS_VM_ONLY_BOOT_PLATFORM_CLASSLOADER_DEFINE_PKG_JAVA.system_action=The JVM will throw a java/lang/LayerInstantiationException.
@@ -2058,7 +2058,7 @@ J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_PACKAGE.user_response=Con
 # END NON-TRANSLATABLE
 
 # Message for IncompatibleClassChangeError due to default method conflict during MemberName resolution
-J9NLS_VM_DEFAULT_METHOD_CONFLICT_GENERIC=Conflitto di metodo predefinito trovato durante il richiamo di MethodHandle.
+J9NLS_VM_DEFAULT_METHOD_CONFLICT_GENERIC=\u00c8 stato rilevato un conflitto del metodo predefinito durante il richiamo di MethodHandle.
 # START NON-TRANSLATABLE
 J9NLS_VM_DEFAULT_METHOD_CONFLICT_GENERIC.explanation=Default method conflict raised from MemberName resolution.
 J9NLS_VM_DEFAULT_METHOD_CONFLICT_GENERIC.system_action=The JVM will throw an IncompatibleClassChangeError.
@@ -2091,7 +2091,7 @@ J9NLS_VM_INVALID_EMPTY_OPTION.system_action=The JVM prints this message and term
 J9NLS_VM_INVALID_EMPTY_OPTION.user_response=Provide non-empty options.
 # END NON-TRANSLATABLE
 
-J9NLS_ENSUREHASHED_CONFIG_OUT_OF_MEM=Impossibile allocare memoria per la tabella delle classi hash.
+J9NLS_ENSUREHASHED_CONFIG_OUT_OF_MEM=Impossibile allocare LA memoria per la tabella delle classi hash.
 # START NON-TRANSLATABLE
 J9NLS_ENSUREHASHED_CONFIG_OUT_OF_MEM.explanation=There was a failure to allocate native memory to store the hashed classes options.
 J9NLS_ENSUREHASHED_CONFIG_OUT_OF_MEM.system_action=The JVM prints this message and terminates.
