@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2022 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -248,8 +248,6 @@ public:
 	void signalThreadsToActivateWriteBarrier(MM_EnvironmentBase *env);
 
 	void signalThreadsToDeactivateWriteBarrier(MM_EnvironmentBase *env);
-
-	void acquireExclusiveVMAccessAndSignalThreadsToActivateWriteBarrier(MM_EnvironmentBase *env);
 
 	/**
 	 * This method is called during card cleaning for each object associated with an uncleaned, dirty card in the card

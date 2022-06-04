@@ -1,5 +1,6 @@
+
 /*******************************************************************************
- * Copyright (c) 1991, 2022 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,7 +33,6 @@
 #include "GCExtensions.hpp"
 #include "OMRVMInterface.hpp"
 #include "Heap.hpp"
-#include "VMAccess.hpp"
 
 MM_IdleGCManager *
 MM_IdleGCManager::newInstance(MM_EnvironmentBase* env)
@@ -81,9 +81,7 @@ MM_IdleGCManager::manageFreeHeap(J9VMThread* currentThread)
 	MM_GCExtensions* _extensions = MM_GCExtensions::getExtensions(env);
 
 	_javaVM->internalVMFunctions->internalAcquireVMAccess(currentThread);
-	VM_VMAccess::setPublicFlags(currentThread, J9_PUBLIC_FLAGS_NOT_AT_SAFE_POINT);
 	_extensions->heap->systemGarbageCollect(env, J9MMCONSTANT_EXPLICIT_GC_IDLE_GC);
-	VM_VMAccess::clearPublicFlags(currentThread, J9_PUBLIC_FLAGS_NOT_AT_SAFE_POINT);
 	_javaVM->internalVMFunctions->internalReleaseVMAccess(currentThread);
 }
 
