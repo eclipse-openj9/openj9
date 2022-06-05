@@ -860,9 +860,9 @@ TR_VectorAPIExpansion::vectorizeLoadOrStore(TR_VectorAPIExpansion *opt, TR::Node
 
       }
    if (node->getOpCode().isStore())
-      TR::Node::recreate(node, TR::ILOpCode::createVectorOpCode(OMR::vstore, type));
+      TR::Node::recreate(node, TR::ILOpCode::createVectorOpCode(TR::vstore, type));
    else
-      TR::Node::recreate(node, TR::ILOpCode::createVectorOpCode(OMR::vload, type));
+      TR::Node::recreate(node, TR::ILOpCode::createVectorOpCode(TR::vload, type));
 
    node->setSymbolReference(vecSymRef);
    }
@@ -1197,7 +1197,7 @@ TR::Node *TR_VectorAPIExpansion::transformLoadFromArray(TR_VectorAPIExpansion *o
       TR::VectorLength lengthEnum = supportedOnPlatform(comp, vectorLength);
       TR::DataType vectorType = OMR::DataType(elementType).scalarToVector(lengthEnum);
       TR::SymbolReference *vecShadow = comp->getSymRefTab()->findOrCreateArrayShadowSymbolRef(vectorType, NULL);
-      TR::Node::recreate(node, TR::ILOpCode::createVectorOpCode(OMR::vloadi, vectorType));
+      TR::Node::recreate(node, TR::ILOpCode::createVectorOpCode(TR::vloadi, vectorType));
       node->setSymbolReference(vecShadow);
       }
 
@@ -1289,7 +1289,7 @@ TR::Node *TR_VectorAPIExpansion::transformStoreToArray(TR_VectorAPIExpansion *op
 
       if (valueToWrite->getOpCodeValue() == TR::aload) vectorizeLoadOrStore(opt, valueToWrite, vectorType);
 
-      TR::Node::recreate(node, TR::ILOpCode::createVectorOpCode(OMR::vstorei, vectorType));
+      TR::Node::recreate(node, TR::ILOpCode::createVectorOpCode(TR::vstorei, vectorType));
       node->setSymbolReference(vecShadow);
       }
 
@@ -1415,7 +1415,7 @@ TR::Node *TR_VectorAPIExpansion::blendIntrinsicHandler(TR_VectorAPIExpansion *op
 
    TR::ILOpCodes scalarOpCode = TR::BadILOp;
    // TODO: check if vbitselect can beused vs vselect
-   TR::ILOpCodes vectorOpCode = TR::ILOpCode::createVectorOpCode(OMR::vbitselect, elementType.scalarToVector(OMR::DataType::bitsToVectorLength(vectorLength)));
+   TR::ILOpCodes vectorOpCode = TR::ILOpCode::createVectorOpCode(TR::vbitselect, elementType.scalarToVector(OMR::DataType::bitsToVectorLength(vectorLength)));
 
    if (mode == checkScalarization)
       return NULL;
@@ -1446,7 +1446,7 @@ TR::Node *TR_VectorAPIExpansion::broadcastCoercedIntrinsicHandler(TR_VectorAPIEx
       {
       if (!supportedOnPlatform(comp, vectorLength)) return NULL;
 
-      TR::ILOpCodes splatsOpCode = TR::ILOpCode::createVectorOpCode(OMR::vsplats, elementType.scalarToVector(OMR::DataType::bitsToVectorLength(vectorLength)));
+      TR::ILOpCodes splatsOpCode = TR::ILOpCode::createVectorOpCode(TR::vsplats, elementType.scalarToVector(OMR::DataType::bitsToVectorLength(vectorLength)));
 
       if (!comp->cg()->getSupportsOpCodeForAutoSIMD(splatsOpCode))
          return NULL;
@@ -1513,7 +1513,7 @@ TR::Node *TR_VectorAPIExpansion::broadcastCoercedIntrinsicHandler(TR_VectorAPIEx
       {
       node->setAndIncChild(0, newNode);
       node->setNumChildren(1);
-      TR::ILOpCodes splatsOpCode = TR::ILOpCode::createVectorOpCode(OMR::vsplats, elementType.scalarToVector(OMR::DataType::bitsToVectorLength(vectorLength)));
+      TR::ILOpCodes splatsOpCode = TR::ILOpCode::createVectorOpCode(TR::vsplats, elementType.scalarToVector(OMR::DataType::bitsToVectorLength(vectorLength)));
 
       TR::Node::recreate(node, splatsOpCode);
 
@@ -1589,12 +1589,12 @@ TR::ILOpCodes TR_VectorAPIExpansion::ILOpcodeFromVectorAPIOpcode(int32_t vectorA
       {
       switch (vectorAPIOpCode)
          {
-         case BT_eq: return scalar ? TR::ILOpCode::cmpeqOpCode(elementType) : TR::ILOpCode::createVectorOpCode(OMR::vcmpeq, vectorType);
-         case BT_ne: return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(OMR::vcmpne, vectorType);
-         case BT_le: return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(OMR::vcmple, vectorType);
-         case BT_ge: return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(OMR::vcmpge, vectorType);
-         case BT_lt: return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(OMR::vcmplt, vectorType);
-         case BT_gt: return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(OMR::vcmpgt, vectorType);
+         case BT_eq: return scalar ? TR::ILOpCode::cmpeqOpCode(elementType) : TR::ILOpCode::createVectorOpCode(TR::vcmpeq, vectorType);
+         case BT_ne: return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vcmpne, vectorType);
+         case BT_le: return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vcmple, vectorType);
+         case BT_ge: return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vcmpge, vectorType);
+         case BT_lt: return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vcmplt, vectorType);
+         case BT_gt: return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vcmpgt, vectorType);
          default:
             return TR::BadILOp;
          }
@@ -1602,19 +1602,19 @@ TR::ILOpCodes TR_VectorAPIExpansion::ILOpcodeFromVectorAPIOpcode(int32_t vectorA
 
    switch (vectorAPIOpCode)
       {
-      case VECTOR_OP_ABS: return scalar ? TR::ILOpCode::absOpCode(elementType) : TR::ILOpCode::createVectorOpCode(OMR::vabs, vectorType);
-      case VECTOR_OP_NEG: return scalar ? TR::ILOpCode::negateOpCode(elementType) : TR::ILOpCode::createVectorOpCode(OMR::vneg, vectorType);
-      case VECTOR_OP_SQRT:return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(OMR::vsqrt, vectorType);
-      case VECTOR_OP_ADD: return scalar ? TR::ILOpCode::addOpCode(elementType, true) : TR::ILOpCode::createVectorOpCode(OMR::vadd, vectorType);
-      case VECTOR_OP_SUB: return scalar ? TR::ILOpCode::subtractOpCode(elementType) : TR::ILOpCode::createVectorOpCode(OMR::vsub, vectorType);
-      case VECTOR_OP_MUL: return scalar ? TR::ILOpCode::multiplyOpCode(elementType) : TR::ILOpCode::createVectorOpCode(OMR::vmul, vectorType);
-      case VECTOR_OP_DIV: return scalar ? TR::ILOpCode::divideOpCode(elementType) : TR::ILOpCode::createVectorOpCode(OMR::vdiv, vectorType);
-      case VECTOR_OP_MIN: return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(OMR::vmin, vectorType);
-      case VECTOR_OP_MAX: return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(OMR::vmax, vectorType);
-      case VECTOR_OP_AND: return scalar ? TR::ILOpCode::andOpCode(elementType) : TR::ILOpCode::createVectorOpCode(OMR::vand, vectorType);
-      case VECTOR_OP_OR:  return scalar ? TR::ILOpCode::orOpCode(elementType)  : TR::ILOpCode::createVectorOpCode(OMR::vor, vectorType);
-      case VECTOR_OP_XOR: return scalar ? TR::ILOpCode::xorOpCode(elementType) : TR::ILOpCode::createVectorOpCode(OMR::vxor, vectorType);
-      case VECTOR_OP_FMA: return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(OMR::vfma, vectorType);
+      case VECTOR_OP_ABS: return scalar ? TR::ILOpCode::absOpCode(elementType) : TR::ILOpCode::createVectorOpCode(TR::vabs, vectorType);
+      case VECTOR_OP_NEG: return scalar ? TR::ILOpCode::negateOpCode(elementType) : TR::ILOpCode::createVectorOpCode(TR::vneg, vectorType);
+      case VECTOR_OP_SQRT:return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vsqrt, vectorType);
+      case VECTOR_OP_ADD: return scalar ? TR::ILOpCode::addOpCode(elementType, true) : TR::ILOpCode::createVectorOpCode(TR::vadd, vectorType);
+      case VECTOR_OP_SUB: return scalar ? TR::ILOpCode::subtractOpCode(elementType) : TR::ILOpCode::createVectorOpCode(TR::vsub, vectorType);
+      case VECTOR_OP_MUL: return scalar ? TR::ILOpCode::multiplyOpCode(elementType) : TR::ILOpCode::createVectorOpCode(TR::vmul, vectorType);
+      case VECTOR_OP_DIV: return scalar ? TR::ILOpCode::divideOpCode(elementType) : TR::ILOpCode::createVectorOpCode(TR::vdiv, vectorType);
+      case VECTOR_OP_MIN: return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vmin, vectorType);
+      case VECTOR_OP_MAX: return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vmax, vectorType);
+      case VECTOR_OP_AND: return scalar ? TR::ILOpCode::andOpCode(elementType) : TR::ILOpCode::createVectorOpCode(TR::vand, vectorType);
+      case VECTOR_OP_OR:  return scalar ? TR::ILOpCode::orOpCode(elementType)  : TR::ILOpCode::createVectorOpCode(TR::vor, vectorType);
+      case VECTOR_OP_XOR: return scalar ? TR::ILOpCode::xorOpCode(elementType) : TR::ILOpCode::createVectorOpCode(TR::vxor, vectorType);
+      case VECTOR_OP_FMA: return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vfma, vectorType);
       default:
          return TR::BadILOp;
       // shiftLeftOpCode

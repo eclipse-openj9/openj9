@@ -172,23 +172,21 @@ char *J9::DataType::_TR_BCDSignCodeNames[num_bcd_sign_codes] =
    };
 
 
-
-
 TR::ILOpCodes
-J9::DataType::getDataTypeConversion(TR::DataType t1, TR::DataType t2)
+J9::ILOpCode::getDataTypeConversion(TR::DataType t1, TR::DataType t2)
    {
    TR_ASSERT(t1 < TR::NumAllTypes, "conversion opcode from unexpected datatype %s requested", t1.toString());
    TR_ASSERT(t2 < TR::NumAllTypes, "conversion opcode to unexpected data type %s requested", t2.toString());
 
 
-   if (t1.isVector() && t2.isVector()) return TR::ILOpCode::createVectorOpCode(OMR::vcast, t1, t2);
+   if (t1.isVector() && t2.isVector()) return TR::ILOpCode::createVectorOpCode(TR::vcast, t1, t2);
 
    if (t1.isVector() || t2.isVector()) return TR::BadILOp;
 
    if (t1 < TR::NumOMRTypes)
       {
       if (t2 < TR::NumOMRTypes)
-         return OMR::DataType::getDataTypeConversion(t1, t2);
+         return OMR::ILOpCode::getDataTypeConversion(t1, t2);
       else
          return J9::conversionMapOMR2TR[t1][t2 - TR::NumOMRTypes];
       }
@@ -200,6 +198,7 @@ J9::DataType::getDataTypeConversion(TR::DataType t1, TR::DataType t2)
          return J9::conversionMapTR2TR[t1 - TR::NumOMRTypes][t2 - TR::NumOMRTypes];
       }
    }
+
 
 static int32_t J9DataTypeSizes[] =
    {
