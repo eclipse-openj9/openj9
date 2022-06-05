@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -139,7 +139,9 @@ acquireExclusiveVMAccess(J9VMThread * vmThread)
 	 */
 	if ( ++(vmThread->omrVMThread->exclusiveCount) == 1 ) {
 		omrthread_monitor_enter(vmThread->publicFlagsMutex);
-		VM_VMAccess::setPublicFlags(vmThread, J9_PUBLIC_FLAGS_NOT_AT_SAFE_POINT);
+		if (J9_ARE_NO_BITS_SET(vmThread->publicFlags, J9_PUBLIC_FLAGS_NOT_AT_SAFE_POINT)) {
+			VM_VMAccess::setPublicFlags(vmThread, J9_PUBLIC_FLAGS_NOT_AT_SAFE_POINT | J9_PUBLIC_FLAGS_EXCLUSIVE_SET_NOT_SAFE);
+		}
 		omrthread_monitor_enter(vm->exclusiveAccessMutex);
 		if ( J9_XACCESS_NONE != vm->exclusiveAccessState ) {
 			UDATA reacquireJNICriticalAccess = FALSE;
@@ -503,7 +505,9 @@ void releaseExclusiveVMAccess(J9VMThread * vmThread)
 
 		/* Check the exclusive access queue */
 		omrthread_monitor_enter(vmThread->publicFlagsMutex);
-		VM_VMAccess::clearPublicFlags(vmThread, J9_PUBLIC_FLAGS_NOT_AT_SAFE_POINT);
+		if (J9_ARE_ANY_BITS_SET(vmThread->publicFlags, J9_PUBLIC_FLAGS_EXCLUSIVE_SET_NOT_SAFE)) {
+			VM_VMAccess::clearPublicFlags(vmThread, J9_PUBLIC_FLAGS_NOT_AT_SAFE_POINT | J9_PUBLIC_FLAGS_EXCLUSIVE_SET_NOT_SAFE);
+		}
 		omrthread_monitor_enter(vm->exclusiveAccessMutex);
 
 		if ( !J9_LINEAR_LINKED_LIST_IS_EMPTY(vm->exclusiveVMAccessQueueHead) ) {
@@ -1243,7 +1247,7 @@ releaseSafePointVMAccess(J9VMThread * vmThread)
  *
  * Note: While the current thread has another thread halted, it must not do anything to modify
  * it's own stack, including the creation of JNI local refs, pushObjectInSpecialFrame, or the
- * running of any java code.
+ * running of any java code or allocating of any java objects.
  */
 
 void
@@ -1256,6 +1260,8 @@ _tryAgain:
 
 	/* Inspecting the current thread does not require any halting */
 	if (currentThread != vmThread) {
+		VM_VMAccess::setPublicFlags(currentThread, J9_PUBLIC_FLAGS_NOT_AT_SAFE_POINT);
+
 		omrthread_monitor_enter(vmThread->publicFlagsMutex);
 
 		/* increment the inspection count but don't try to short circuit -- the thread might not actually be halted yet */
@@ -1313,6 +1319,8 @@ resumeThreadForInspection(J9VMThread * currentThread, J9VMThread * vmThread)
 	/* Inspecting the current thread does not require any halting */
 
 	if (currentThread != vmThread) {
+		VM_VMAccess::clearPublicFlags(currentThread, J9_PUBLIC_FLAGS_NOT_AT_SAFE_POINT);
+
 		/* Ignore resumes for threads which have not been suspended for inspection */
 
 		omrthread_monitor_enter(vmThread->publicFlagsMutex);

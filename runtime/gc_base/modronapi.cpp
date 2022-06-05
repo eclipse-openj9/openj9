@@ -1,6 +1,5 @@
-
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -48,6 +47,7 @@
 #include "MemoryPoolLargeObjects.hpp"
 #include "VMInterface.hpp"
 #include "VMThreadListIterator.hpp"
+#include "VMAccess.hpp"
 
 extern "C" {
 
@@ -86,8 +86,15 @@ j9gc_modron_global_collect_with_overrides(J9VMThread *vmThread, U_32 gcCode)
 		}
 	}
 
+	VM_VMAccess::setPublicFlags(vmThread, J9_PUBLIC_FLAGS_NOT_AT_SAFE_POINT);
 	MM_GCExtensions::getExtensions(env)->heap->systemGarbageCollect(env, gcCode);
-	
+	VM_VMAccess::clearPublicFlags(vmThread, J9_PUBLIC_FLAGS_NOT_AT_SAFE_POINT);
+
+	if (J9_ARE_ANY_BITS_SET(vmThread->publicFlags, J9_PUBLIC_FLAGS_HALT_THREAD_ANY)) {
+		vmThread->javaVM->internalVMFunctions->internalReleaseVMAccess(vmThread);
+		vmThread->javaVM->internalVMFunctions->internalAcquireVMAccess(vmThread);
+	}
+
 	return 0;
 }
 
@@ -96,7 +103,14 @@ j9gc_modron_local_collect(J9VMThread *vmThread)
 {
 	MM_EnvironmentBase *env = MM_EnvironmentBase::getEnvironment(vmThread->omrVMThread);
 
+	VM_VMAccess::setPublicFlags(vmThread, J9_PUBLIC_FLAGS_NOT_AT_SAFE_POINT);
 	((MM_MemorySpace *)vmThread->omrVMThread->memorySpace)->localGarbageCollect(env, J9MMCONSTANT_IMPLICIT_GC_DEFAULT);
+	VM_VMAccess::clearPublicFlags(vmThread, J9_PUBLIC_FLAGS_NOT_AT_SAFE_POINT);
+
+	if (J9_ARE_ANY_BITS_SET(vmThread->publicFlags, J9_PUBLIC_FLAGS_HALT_THREAD_ANY)) {
+		vmThread->javaVM->internalVMFunctions->internalReleaseVMAccess(vmThread);
+		vmThread->javaVM->internalVMFunctions->internalAcquireVMAccess(vmThread);
+	}
 
 	return 0;
 }

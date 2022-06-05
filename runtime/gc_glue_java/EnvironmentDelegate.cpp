@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2021 IBM Corp. and others
+ * Copyright (c) 2017, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -234,7 +234,6 @@ MM_EnvironmentDelegate::assumeExclusiveVMAccess(uintptr_t exclusiveCount)
 void
 MM_EnvironmentDelegate::releaseCriticalHeapAccess(uintptr_t *data)
 {
-	VM_VMAccess::setPublicFlags(_vmThread, J9_PUBLIC_FLAGS_NOT_AT_SAFE_POINT);
 	MM_JNICriticalRegion::releaseAccess(_vmThread, data);
 }
 
@@ -242,7 +241,6 @@ void
 MM_EnvironmentDelegate::reacquireCriticalHeapAccess(uintptr_t data)
 {
 	MM_JNICriticalRegion::reacquireAccess(_vmThread, data);
-	VM_VMAccess::clearPublicFlags(_vmThread, J9_PUBLIC_FLAGS_NOT_AT_SAFE_POINT);
 }
 
 void
