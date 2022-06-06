@@ -67,6 +67,7 @@ J9NLS_CFR_ERROR_TEMPLATE_METHOD.sample_input_8=5
 J9NLS_CFR_ERROR_TEMPLATE_METHOD.explanation=NOTAG
 J9NLS_CFR_ERROR_TEMPLATE_METHOD.system_action=
 J9NLS_CFR_ERROR_TEMPLATE_METHOD.user_response=
+
 # END NON-TRANSLATABLE
 
 # Example: JVMCFRE074 bad magic number; class=Foo, offset=0
@@ -79,6 +80,7 @@ J9NLS_CFR_ERROR_TEMPLATE_NO_METHOD.sample_input_4=0
 J9NLS_CFR_ERROR_TEMPLATE_NO_METHOD.explanation=NOTAG
 J9NLS_CFR_ERROR_TEMPLATE_NO_METHOD.system_action=
 J9NLS_CFR_ERROR_TEMPLATE_NO_METHOD.user_response=
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_BAD_METHOD_NAME=\u65b9\u6cd5\u540d\u7a31\u7121\u6548
@@ -86,13 +88,15 @@ J9NLS_CFR_ERR_BAD_METHOD_NAME=\u65b9\u6cd5\u540d\u7a31\u7121\u6548
 J9NLS_CFR_ERR_BAD_METHOD_NAME.explanation=The method name is invalid.
 J9NLS_CFR_ERR_BAD_METHOD_NAME.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_BAD_METHOD_NAME.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_MAJOR_VERSION=
+J9NLS_CFR_ERR_MAJOR_VERSION=\u4e0d\u6b63\u78ba\u7684\u4e3b\u8981\u7248\u672c
 # START NON-TRANSLATABLE
-J9NLS_CFR_ERR_MAJOR_VERSION.explanation=NOTAG
-J9NLS_CFR_ERR_MAJOR_VERSION.system_action=
-J9NLS_CFR_ERR_MAJOR_VERSION.user_response=
+J9NLS_CFR_ERR_MAJOR_VERSION.explanation=The major version in the classfile is unsupported on the VM rejecting the classfile.
+J9NLS_CFR_ERR_MAJOR_VERSION.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_MAJOR_VERSION.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_BC_UNKNOWN=\u4e0d\u660e\u7684\u4f4d\u5143\u7d44\u78bc
@@ -100,6 +104,7 @@ J9NLS_CFR_ERR_BC_UNKNOWN=\u4e0d\u660e\u7684\u4f4d\u5143\u7d44\u78bc
 J9NLS_CFR_ERR_BC_UNKNOWN.explanation=An undefined bytecode was encountered in the classfile.
 J9NLS_CFR_ERR_BC_UNKNOWN.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_BC_UNKNOWN.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_DUPLICATE_INTERFACE=\u91cd\u8907\u7684\u4ecb\u9762
@@ -107,6 +112,7 @@ J9NLS_CFR_ERR_DUPLICATE_INTERFACE=\u91cd\u8907\u7684\u4ecb\u9762
 J9NLS_CFR_ERR_DUPLICATE_INTERFACE.explanation=The class implements the same interface twice.
 J9NLS_CFR_ERR_DUPLICATE_INTERFACE.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_DUPLICATE_INTERFACE.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 #StackMap/StackMapTable is not translatable
@@ -115,6 +121,7 @@ J9NLS_CFR_ERR_INVALID_STACK_MAP_ATTRIBUTE=\u7121\u6548\u7684 StackMap/StackMapTa
 J9NLS_CFR_ERR_INVALID_STACK_MAP_ATTRIBUTE.explanation=The StackMap/StackMapTable attribute is malformed.
 J9NLS_CFR_ERR_INVALID_STACK_MAP_ATTRIBUTE.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_INVALID_STACK_MAP_ATTRIBUTE.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_BAD_FIELD_DESCRIPTOR=\u6b04\u4f4d\u7c3d\u7ae0\u7121\u6548
@@ -122,6 +129,7 @@ J9NLS_CFR_ERR_BAD_FIELD_DESCRIPTOR=\u6b04\u4f4d\u7c3d\u7ae0\u7121\u6548
 J9NLS_CFR_ERR_BAD_FIELD_DESCRIPTOR.explanation=The field signature is invalid.
 J9NLS_CFR_ERR_BAD_FIELD_DESCRIPTOR.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_BAD_FIELD_DESCRIPTOR.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 # tableswitch is not translatable
@@ -130,6 +138,7 @@ J9NLS_CFR_ERR_BC_SWITCH_EMPTY=tableswitch \u4f4d\u5143\u7d44\u78bc\u4e2d\u7684\u
 J9NLS_CFR_ERR_BC_SWITCH_EMPTY.explanation=The 'tableswitch' bytecode is incorrectly formed.  The 'high' value must be greater than the 'low' value.
 J9NLS_CFR_ERR_BC_SWITCH_EMPTY.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_BC_SWITCH_EMPTY.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_INTERFACE_FIELD=\u4ecb\u9762\u6b04\u4f4d\u5fc5\u9808\u70ba public static \u53ca final
@@ -137,6 +146,7 @@ J9NLS_CFR_ERR_INTERFACE_FIELD=\u4ecb\u9762\u6b04\u4f4d\u5fc5\u9808\u70ba public 
 J9NLS_CFR_ERR_INTERFACE_FIELD.explanation=Fields declared in interfaces must be declared with the 'public', 'static' & 'final' modifiers.
 J9NLS_CFR_ERR_INTERFACE_FIELD.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_INTERFACE_FIELD.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 # lookupswitch is not translatable
@@ -145,6 +155,7 @@ J9NLS_CFR_ERR_BC_SWITCH_NEGATIVE_COUNT=lookupswitch \u4f4d\u5143\u7d44\u78bc\u4e
 J9NLS_CFR_ERR_BC_SWITCH_NEGATIVE_COUNT.explanation=The 'lookupswitch' bytecode is malformed.  The number of pairs must not be negative.
 J9NLS_CFR_ERR_BC_SWITCH_NEGATIVE_COUNT.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_BC_SWITCH_NEGATIVE_COUNT.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 # anewarray is not translatable
@@ -153,6 +164,7 @@ J9NLS_CFR_ERR_BC_ANEWARRAY_NOT_CLASS=anewarray \u4f4d\u5143\u7d44\u78bc\u5fc5\u9
 J9NLS_CFR_ERR_BC_ANEWARRAY_NOT_CLASS.explanation=The 'anewarray' bytecode must refer to a class.
 J9NLS_CFR_ERR_BC_ANEWARRAY_NOT_CLASS.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_BC_ANEWARRAY_NOT_CLASS.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_CONSTANT_VALUE_INDEX=\u5e38\u6578\u503c\u5fc5\u9808\u70ba\u4e00\u500b\u503c
@@ -160,6 +172,7 @@ J9NLS_CFR_ERR_CONSTANT_VALUE_INDEX=\u5e38\u6578\u503c\u5fc5\u9808\u70ba\u4e00\u5
 J9NLS_CFR_ERR_CONSTANT_VALUE_INDEX.explanation=An 'ConstantValue_attribute' must refer to a constant value.
 J9NLS_CFR_ERR_CONSTANT_VALUE_INDEX.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_CONSTANT_VALUE_INDEX.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 # PC is a standard reference for instruction pointer and is not translatable
@@ -168,6 +181,7 @@ J9NLS_CFR_ERR_LOCAL_VARIABLE_LENGTH=\u5340\u57df\u8b8a\u6578 PC \u9577\u5ea6\u71
 J9NLS_CFR_ERR_LOCAL_VARIABLE_LENGTH.explanation=A 'LocalVariableTable' or 'LocalVariableTypeTable' attribute has an invalid PC.
 J9NLS_CFR_ERR_LOCAL_VARIABLE_LENGTH.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_LOCAL_VARIABLE_LENGTH.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 # Code is not translatable
@@ -176,6 +190,7 @@ J9NLS_CFR_ERR_CODE_FOR_ABSTRACT_OR_NATIVE=native \u6216 abstract \u65b9\u6cd5\u6
 J9NLS_CFR_ERR_CODE_FOR_ABSTRACT_OR_NATIVE.explanation='native' and 'abstract' methods must not have a 'Code_attribute' defined.
 J9NLS_CFR_ERR_CODE_FOR_ABSTRACT_OR_NATIVE.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_CODE_FOR_ABSTRACT_OR_NATIVE.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_INTERFACE_NOT_CLASS=\u4ecb\u9762\u5fc5\u9808\u70ba\u985e\u5225
@@ -183,6 +198,7 @@ J9NLS_CFR_ERR_INTERFACE_NOT_CLASS=\u4ecb\u9762\u5fc5\u9808\u70ba\u985e\u5225
 J9NLS_CFR_ERR_INTERFACE_NOT_CLASS.explanation=A value in the class's interfaces[] is not a class.
 J9NLS_CFR_ERR_INTERFACE_NOT_CLASS.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_INTERFACE_NOT_CLASS.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_BC_IINC_INDEX=\u5340\u57df\u8b8a\u6578\u7d22\u5f15\u7684\u589e\u91cf\u8d85\u51fa\u7bc4\u570d
@@ -190,6 +206,7 @@ J9NLS_CFR_ERR_BC_IINC_INDEX=\u5340\u57df\u8b8a\u6578\u7d22\u5f15\u7684\u589e\u91
 J9NLS_CFR_ERR_BC_IINC_INDEX.explanation=The index to an 'iinc' bytecode is not a valid local variable.
 J9NLS_CFR_ERR_BC_IINC_INDEX.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_BC_IINC_INDEX.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 #StackMap/StackMapTable is not translatable
@@ -198,6 +215,7 @@ J9NLS_CFR_ERR_MULTIPLE_STACK_MAP_ATTRIBUTES=\u591a\u500b StackMap/StackMapTable 
 J9NLS_CFR_ERR_MULTIPLE_STACK_MAP_ATTRIBUTES.explanation=Multiple StackMap/StackMapTable attributes were defined.
 J9NLS_CFR_ERR_MULTIPLE_STACK_MAP_ATTRIBUTES.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_MULTIPLE_STACK_MAP_ATTRIBUTES.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_INNER_CLASS_NOT_CLASS=\u5167\u90e8\u985e\u5225\u5fc5\u9808\u70ba\u4e00\u500b\u985e\u5225
@@ -205,6 +223,7 @@ J9NLS_CFR_ERR_INNER_CLASS_NOT_CLASS=\u5167\u90e8\u985e\u5225\u5fc5\u9808\u70ba\u
 J9NLS_CFR_ERR_INNER_CLASS_NOT_CLASS.explanation=An 'InnerClasses_attribute' must refer to a class.
 J9NLS_CFR_ERR_INNER_CLASS_NOT_CLASS.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_INNER_CLASS_NOT_CLASS.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 # PC is a standard reference for instruction pointer and is not translatable
@@ -213,6 +232,7 @@ J9NLS_CFR_ERR_LOCAL_VARIABLE_START=\u5340\u57df\u8b8a\u6578 PC \u555f\u52d5\u712
 J9NLS_CFR_ERR_LOCAL_VARIABLE_START.explanation=The start PC referred to in one of the local variable attributes is invalid.
 J9NLS_CFR_ERR_LOCAL_VARIABLE_START.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_LOCAL_VARIABLE_START.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_HANDLER_START_PC=\u7570\u5e38\u72c0\u6cc1\u8655\u7406\u7a0b\u5f0f\u555f\u52d5 PC \u7121\u6548
@@ -220,6 +240,7 @@ J9NLS_CFR_ERR_HANDLER_START_PC=\u7570\u5e38\u72c0\u6cc1\u8655\u7406\u7a0b\u5f0f\
 J9NLS_CFR_ERR_HANDLER_START_PC.explanation=An invalid PC was used in the exception table of a method.
 J9NLS_CFR_ERR_HANDLER_START_PC.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_HANDLER_START_PC.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_DUPLICATE_FIELD=\u8907\u88fd\u6b04\u4f4d
@@ -227,6 +248,7 @@ J9NLS_CFR_ERR_DUPLICATE_FIELD=\u8907\u88fd\u6b04\u4f4d
 J9NLS_CFR_ERR_DUPLICATE_FIELD.explanation=A duplicate definition of a field was found.
 J9NLS_CFR_ERR_DUPLICATE_FIELD.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_DUPLICATE_FIELD.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 # thisClass is not translatable
@@ -235,6 +257,7 @@ J9NLS_CFR_ERR_NOT_CLASS=thisClass \u5fc5\u9808\u70ba\u985e\u5225
 J9NLS_CFR_ERR_NOT_CLASS.explanation=The 'thisClass' field must be a valid index to a class in the constantpool.
 J9NLS_CFR_ERR_NOT_CLASS.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_NOT_CLASS.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_CONSTANT_POOL_EMPTY=\u5e38\u6578\u5132\u5b58\u5340\u662f\u7a7a\u7684
@@ -242,6 +265,7 @@ J9NLS_CFR_ERR_CONSTANT_POOL_EMPTY=\u5e38\u6578\u5132\u5b58\u5340\u662f\u7a7a\u76
 J9NLS_CFR_ERR_CONSTANT_POOL_EMPTY.explanation=The constant pool of a classfile cannot be empty.
 J9NLS_CFR_ERR_CONSTANT_POOL_EMPTY.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_CONSTANT_POOL_EMPTY.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_BAD_CLASS_INDEX=\u985e\u5225\u540d\u7a31\u5fc5\u9808\u70ba\u5b57\u4e32
@@ -249,6 +273,7 @@ J9NLS_CFR_ERR_BAD_CLASS_INDEX=\u985e\u5225\u540d\u7a31\u5fc5\u9808\u70ba\u5b57\u
 J9NLS_CFR_ERR_BAD_CLASS_INDEX.explanation=The constant pool entry is the wrong type for its use.
 J9NLS_CFR_ERR_BAD_CLASS_INDEX.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_BAD_CLASS_INDEX.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_TWO_CONSTANT_VALUE_ATTRIBUTES=\u6b04\u4f4d\u6709\u5169\u500b ConstantValue \u5c6c\u6027
@@ -256,6 +281,7 @@ J9NLS_CFR_ERR_TWO_CONSTANT_VALUE_ATTRIBUTES=\u6b04\u4f4d\u6709\u5169\u500b Const
 J9NLS_CFR_ERR_TWO_CONSTANT_VALUE_ATTRIBUTES.explanation=A field can only have one ConstantValue attribute.
 J9NLS_CFR_ERR_TWO_CONSTANT_VALUE_ATTRIBUTES.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_TWO_CONSTANT_VALUE_ATTRIBUTES.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 #newarray is not translatable
@@ -264,6 +290,7 @@ J9NLS_CFR_ERR_BC_NEWARRAY_TYPE=\u7121\u6cd5\u8fa8\u8b58 newarray \u4f4d\u5143\u7
 J9NLS_CFR_ERR_BC_NEWARRAY_TYPE.explanation=A 'newarray' bytecode has an invalid type specified.
 J9NLS_CFR_ERR_BC_NEWARRAY_TYPE.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_BC_NEWARRAY_TYPE.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 #multianewarray is not translatable
@@ -272,6 +299,7 @@ J9NLS_CFR_ERR_BC_MULTI_NOT_ARRAY=multianewarray \u4f4d\u5143\u7d44\u78bc\u5fc5\u
 J9NLS_CFR_ERR_BC_MULTI_NOT_ARRAY.explanation=An array class must be specified for 'multinewarray' bytecodes.
 J9NLS_CFR_ERR_BC_MULTI_NOT_ARRAY.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_BC_MULTI_NOT_ARRAY.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 #ldc* is not translatable
@@ -280,6 +308,7 @@ J9NLS_CFR_ERR_BC_LDC_NOT_CONSTANT=ldc* \u4f4d\u5143\u7d44\u78bc\u5fc5\u9808\u53c
 J9NLS_CFR_ERR_BC_LDC_NOT_CONSTANT.explanation=An 'ldc' bytecode can only reference constant values.
 J9NLS_CFR_ERR_BC_LDC_NOT_CONSTANT.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_BC_LDC_NOT_CONSTANT.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 #multianewarray is not translatable
@@ -288,6 +317,7 @@ J9NLS_CFR_ERR_BC_MULTI_NOT_CLASS=multianewarray \u4f4d\u5143\u7d44\u78bc\u5fc5\u
 J9NLS_CFR_ERR_BC_MULTI_NOT_CLASS.explanation=A 'multinewarray' bytecode references something other then a class.
 J9NLS_CFR_ERR_BC_MULTI_NOT_CLASS.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_BC_MULTI_NOT_CLASS.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_NULL_SUPER=\u7a7a\u503c\u8d85\u985e\u5225
@@ -295,6 +325,7 @@ J9NLS_CFR_ERR_NULL_SUPER=\u7a7a\u503c\u8d85\u985e\u5225
 J9NLS_CFR_ERR_NULL_SUPER.explanation=All classes other then java.lang.Object must have a non-null superclass.
 J9NLS_CFR_ERR_NULL_SUPER.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_NULL_SUPER.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_EXCEPTION_NOT_CLASS=\u64f2\u51fa\u7570\u5e38\u72c0\u6cc1\u5fc5\u9808\u70ba\u985e\u5225
@@ -302,6 +333,7 @@ J9NLS_CFR_ERR_EXCEPTION_NOT_CLASS=\u64f2\u51fa\u7570\u5e38\u72c0\u6cc1\u5fc5\u98
 J9NLS_CFR_ERR_EXCEPTION_NOT_CLASS.explanation=The 'Exceptions_attribute' refers to something that is not a class.
 J9NLS_CFR_ERR_EXCEPTION_NOT_CLASS.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_EXCEPTION_NOT_CLASS.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_INTERFACE_SUPER_NOT_OBJECT=\u4ecb\u9762\u8d85\u985e\u5225\u5fc5\u9808\u70ba java.lang.Object
@@ -309,6 +341,7 @@ J9NLS_CFR_ERR_INTERFACE_SUPER_NOT_OBJECT=\u4ecb\u9762\u8d85\u985e\u5225\u5fc5\u9
 J9NLS_CFR_ERR_INTERFACE_SUPER_NOT_OBJECT.explanation=Interfaces must have java.lang.Object as the superclass.
 J9NLS_CFR_ERR_INTERFACE_SUPER_NOT_OBJECT.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_INTERFACE_SUPER_NOT_OBJECT.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_HANDLER_RANGE_EMPTY=\u7570\u5e38\u72c0\u6cc1\u8655\u7406\u7a0b\u5f0f\u7bc4\u570d\u662f\u7a7a\u7684
@@ -316,6 +349,7 @@ J9NLS_CFR_ERR_HANDLER_RANGE_EMPTY=\u7570\u5e38\u72c0\u6cc1\u8655\u7406\u7a0b\u5f
 J9NLS_CFR_ERR_HANDLER_RANGE_EMPTY.explanation=An exception handler has a start PC greater or equal to its end PC.
 J9NLS_CFR_ERR_HANDLER_RANGE_EMPTY.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_HANDLER_RANGE_EMPTY.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_BC_INCOMPLETE=\u4f4d\u5143\u7d44\u78bc\u4e0d\u5b8c\u6574
@@ -323,6 +357,7 @@ J9NLS_CFR_ERR_BC_INCOMPLETE=\u4f4d\u5143\u7d44\u78bc\u4e0d\u5b8c\u6574
 J9NLS_CFR_ERR_BC_INCOMPLETE.explanation=A bytecode has been truncated.
 J9NLS_CFR_ERR_BC_INCOMPLETE.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_BC_INCOMPLETE.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 #new is not translatable
@@ -331,6 +366,7 @@ J9NLS_CFR_ERR_BC_NEW_NOT_CLASS=new \u4f4d\u5143\u7d44\u78bc\u5fc5\u9808\u53c3\u7
 J9NLS_CFR_ERR_BC_NEW_NOT_CLASS.explanation=A 'new' bytecode doesn't reference a class.
 J9NLS_CFR_ERR_BC_NEW_NOT_CLASS.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_BC_NEW_NOT_CLASS.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_BC_JUMP_TARGET=\u76ee\u6a19\u4e0d\u662f jump \u4f4d\u5143\u7d44\u78bc\u4e2d\u7684\u6307\u4ee4
@@ -338,6 +374,7 @@ J9NLS_CFR_ERR_BC_JUMP_TARGET=\u76ee\u6a19\u4e0d\u662f jump \u4f4d\u5143\u7d44\u7
 J9NLS_CFR_ERR_BC_JUMP_TARGET.explanation=An instruction attempts to branch to a location that is not the start of a bytecode.
 J9NLS_CFR_ERR_BC_JUMP_TARGET.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_BC_JUMP_TARGET.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 #temp is not translatable
@@ -346,6 +383,7 @@ J9NLS_CFR_ERR_BC_BAD_TEMP_SHAPE=temp \u5305\u542b\u932f\u8aa4\u985e\u578b
 J9NLS_CFR_ERR_BC_BAD_TEMP_SHAPE.explanation=THIS MESSAGE IS RESERVED FOR FUTURE USE
 J9NLS_CFR_ERR_BC_BAD_TEMP_SHAPE.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_BC_BAD_TEMP_SHAPE.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 #Exceptions is not translatable
@@ -354,6 +392,7 @@ J9NLS_CFR_ERR_TWO_EXCEPTIONS_ATTRIBUTES=\u65b9\u6cd5\u6709\u5169\u500b Exception
 J9NLS_CFR_ERR_TWO_EXCEPTIONS_ATTRIBUTES.explanation=Methods must only have 1 Exceptions attribute.
 J9NLS_CFR_ERR_TWO_EXCEPTIONS_ATTRIBUTES.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_TWO_EXCEPTIONS_ATTRIBUTES.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_BC_LOAD_INDEX=\u5340\u57df\u8b8a\u6578\u7d22\u5f15\u7684\u8ca0\u8f09\u8d85\u51fa\u7bc4\u570d
@@ -361,6 +400,7 @@ J9NLS_CFR_ERR_BC_LOAD_INDEX=\u5340\u57df\u8b8a\u6578\u7d22\u5f15\u7684\u8ca0\u8f
 J9NLS_CFR_ERR_BC_LOAD_INDEX.explanation=A local variable index is out of range.
 J9NLS_CFR_ERR_BC_LOAD_INDEX.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_BC_LOAD_INDEX.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_LENGTH_TOO_SMALL=\u5c6c\u6027\u9577\u5ea6\u5c0f\u65bc\u5c6c\u6027\u8cc7\u6599
@@ -368,13 +408,15 @@ J9NLS_CFR_ERR_LENGTH_TOO_SMALL=\u5c6c\u6027\u9577\u5ea6\u5c0f\u65bc\u5c6c\u6027\
 J9NLS_CFR_ERR_LENGTH_TOO_SMALL.explanation=An attribute has more data then its length field claims.
 J9NLS_CFR_ERR_LENGTH_TOO_SMALL.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_LENGTH_TOO_SMALL.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_MINOR_VERSION=
+J9NLS_CFR_ERR_MINOR_VERSION=\u4e0d\u6b63\u78ba\u7684\u6b21\u8981\u7248\u672c
 # START NON-TRANSLATABLE
-J9NLS_CFR_ERR_MINOR_VERSION.explanation=NOTAG
-J9NLS_CFR_ERR_MINOR_VERSION.system_action=
-J9NLS_CFR_ERR_MINOR_VERSION.user_response=
+J9NLS_CFR_ERR_MINOR_VERSION.explanation=An invalid minor version has been specified.
+J9NLS_CFR_ERR_MINOR_VERSION.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_MINOR_VERSION.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_CODE_ARRAY_TOO_LARGE=\u4f4d\u5143\u7d44\u78bc\u9663\u5217\u5927\u5c0f > 65535
@@ -382,6 +424,7 @@ J9NLS_CFR_ERR_CODE_ARRAY_TOO_LARGE=\u4f4d\u5143\u7d44\u78bc\u9663\u5217\u5927\u5
 J9NLS_CFR_ERR_CODE_ARRAY_TOO_LARGE.explanation=A bytecode array is too large.
 J9NLS_CFR_ERR_CODE_ARRAY_TOO_LARGE.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_CODE_ARRAY_TOO_LARGE.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_BC_NOT_WIDE=\u4f4d\u5143\u7d44\u78bc\u7121\u6cd5\u8b8a\u5f97\u66f4\u5927
@@ -389,6 +432,7 @@ J9NLS_CFR_ERR_BC_NOT_WIDE=\u4f4d\u5143\u7d44\u78bc\u7121\u6cd5\u8b8a\u5f97\u66f4
 J9NLS_CFR_ERR_BC_NOT_WIDE.explanation=Illegal use of the 'wide' bytecode modifier.
 J9NLS_CFR_ERR_BC_NOT_WIDE.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_BC_NOT_WIDE.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 # invokeinterface is not translatable
@@ -397,6 +441,7 @@ J9NLS_CFR_ERR_BC_METHOD_RESERVED=invokeinterface \u4f4d\u5143\u7d44\u78bc\u4fdd\
 J9NLS_CFR_ERR_BC_METHOD_RESERVED.explanation='invokeinterface' has none zero value in the fourth operand byte.
 J9NLS_CFR_ERR_BC_METHOD_RESERVED.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_BC_METHOD_RESERVED.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_BAD_INDEX=\u5e38\u6578\u5132\u5b58\u5340\u7d22\u5f15\u8d85\u51fa\u7bc4\u570d
@@ -404,6 +449,7 @@ J9NLS_CFR_ERR_BAD_INDEX=\u5e38\u6578\u5132\u5b58\u5340\u7d22\u5f15\u8d85\u51fa\u
 J9NLS_CFR_ERR_BAD_INDEX.explanation=The constant pool index is not within the constant pool.
 J9NLS_CFR_ERR_BAD_INDEX.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_BAD_INDEX.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_BC_SWITCH_PAD=switch \u4f4d\u5143\u7d44\u78bc\u586b\u88dc\u4e0d\u6b63\u78ba
@@ -411,6 +457,7 @@ J9NLS_CFR_ERR_BC_SWITCH_PAD=switch \u4f4d\u5143\u7d44\u78bc\u586b\u88dc\u4e0d\u6
 J9NLS_CFR_ERR_BC_SWITCH_PAD.explanation=The padding to one of the switch bytecodes is incorrect.
 J9NLS_CFR_ERR_BC_SWITCH_PAD.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_BC_SWITCH_PAD.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_INTERFACE_CLASS=\u4ecb\u9762\u985e\u5225\u53ea\u80fd\u662f public\u3001abstract \u6216 annotation
@@ -418,6 +465,7 @@ J9NLS_CFR_ERR_INTERFACE_CLASS=\u4ecb\u9762\u985e\u5225\u53ea\u80fd\u662f public\
 J9NLS_CFR_ERR_INTERFACE_CLASS.explanation=An interface class had a modifier that is illegal for interfaces.
 J9NLS_CFR_ERR_INTERFACE_CLASS.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_INTERFACE_CLASS.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_BC_STORE_INDEX=\u5340\u57df\u8b8a\u6578\u7d22\u5f15\u7684\u5132\u5b58\u8d85\u51fa\u7bc4\u570d
@@ -425,6 +473,7 @@ J9NLS_CFR_ERR_BC_STORE_INDEX=\u5340\u57df\u8b8a\u6578\u7d22\u5f15\u7684\u5132\u5
 J9NLS_CFR_ERR_BC_STORE_INDEX.explanation=A local variable index equal to or greater then the maximum locals was used.
 J9NLS_CFR_ERR_BC_STORE_INDEX.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_BC_STORE_INDEX.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 # checkcast is not translatable
@@ -433,6 +482,7 @@ J9NLS_CFR_ERR_BC_CHECKCAST_NOT_CLASS=checkcast \u4f4d\u5143\u7d44\u78bc\u5fc5\u9
 J9NLS_CFR_ERR_BC_CHECKCAST_NOT_CLASS.explanation=A 'checkcast' bytecode referenced something other than a class.
 J9NLS_CFR_ERR_BC_CHECKCAST_NOT_CLASS.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_BC_CHECKCAST_NOT_CLASS.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_INTERFACE_METHOD=\u4ecb\u9762\u65b9\u6cd5\u5fc5\u9808\u70ba public \u53ca abstract
@@ -440,6 +490,7 @@ J9NLS_CFR_ERR_INTERFACE_METHOD=\u4ecb\u9762\u65b9\u6cd5\u5fc5\u9808\u70ba public
 J9NLS_CFR_ERR_INTERFACE_METHOD.explanation=Interface classes can only have abstract public methods.
 J9NLS_CFR_ERR_INTERFACE_METHOD.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_INTERFACE_METHOD.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_BAD_STRING_INDEX=\u5b57\u4e32\u5e38\u6578\u5fc5\u9808\u70ba\u5b57\u4e32
@@ -447,6 +498,7 @@ J9NLS_CFR_ERR_BAD_STRING_INDEX=\u5b57\u4e32\u5e38\u6578\u5fc5\u9808\u70ba\u5b57\
 J9NLS_CFR_ERR_BAD_STRING_INDEX.explanation=A string constant must refer to a CONSTANT_Utf8_info.
 J9NLS_CFR_ERR_BAD_STRING_INDEX.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_BAD_STRING_INDEX.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_OUTER_CLASS_NOT_CLASS=\u5916\u90e8\u985e\u5225\u5fc5\u9808\u70ba\u985e\u5225
@@ -454,6 +506,7 @@ J9NLS_CFR_ERR_OUTER_CLASS_NOT_CLASS=\u5916\u90e8\u985e\u5225\u5fc5\u9808\u70ba\u
 J9NLS_CFR_ERR_OUTER_CLASS_NOT_CLASS.explanation=The outer class of an InnerClasses_attribute must be a class.
 J9NLS_CFR_ERR_OUTER_CLASS_NOT_CLASS.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_OUTER_CLASS_NOT_CLASS.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_TOO_MANY_ARGS=\u65b9\u6cd5\u7684\u5f15\u6578\u5c6c\u6027\u8d85\u904e 255 \u500b
@@ -461,6 +514,7 @@ J9NLS_CFR_ERR_TOO_MANY_ARGS=\u65b9\u6cd5\u7684\u5f15\u6578\u5c6c\u6027\u8d85\u90
 J9NLS_CFR_ERR_TOO_MANY_ARGS.explanation=A method cannot have more then 255 argument slots.
 J9NLS_CFR_ERR_TOO_MANY_ARGS.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_TOO_MANY_ARGS.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 #Fieldref is not translatable
@@ -469,6 +523,7 @@ J9NLS_CFR_ERR_BC_NOT_FIELDREF=\u6b04\u4f4d\u4f4d\u5143\u7d44\u78bc\u5fc5\u9808\u
 J9NLS_CFR_ERR_BC_NOT_FIELDREF.explanation=A field bytecode must reference a FieldRef.
 J9NLS_CFR_ERR_BC_NOT_FIELDREF.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_BC_NOT_FIELDREF.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 # PC is a standard reference for instruction pointer and is not translatable
@@ -477,6 +532,7 @@ J9NLS_CFR_ERR_HANDLER_END_PC=\u7570\u5e38\u72c0\u6cc1\u8655\u7406\u7a0b\u5f0f\u7
 J9NLS_CFR_ERR_HANDLER_END_PC.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_HANDLER_END_PC.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_HANDLER_END_PC.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 # invokeinterface is not translatable
@@ -485,6 +541,7 @@ J9NLS_CFR_ERR_BC_METHOD_NARGS=invokeinterface \u4f4d\u5143\u7d44\u78bc\u5f15\u65
 J9NLS_CFR_ERR_BC_METHOD_NARGS.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_BC_METHOD_NARGS.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_BC_METHOD_NARGS.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_CATCH_NOT_CLASS=\u7570\u5e38\u72c0\u6cc1\u8655\u7406\u7a0b\u5f0f\u985e\u578b\u5fc5\u9808\u70ba\u985e\u5225
@@ -492,6 +549,7 @@ J9NLS_CFR_ERR_CATCH_NOT_CLASS=\u7570\u5e38\u72c0\u6cc1\u8655\u7406\u7a0b\u5f0f\u
 J9NLS_CFR_ERR_CATCH_NOT_CLASS.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_CATCH_NOT_CLASS.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_CATCH_NOT_CLASS.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_BC_RET_INDEX=\u5340\u57df\u8b8a\u6578\u7d22\u5f15\u7684\u50b3\u56de\u5b50\u5e38\u5f0f\u8d85\u51fa\u7bc4\u570d
@@ -499,6 +557,7 @@ J9NLS_CFR_ERR_BC_RET_INDEX=\u5340\u57df\u8b8a\u6578\u7d22\u5f15\u7684\u50b3\u56d
 J9NLS_CFR_ERR_BC_RET_INDEX.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_BC_RET_INDEX.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_BC_RET_INDEX.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_HANDLER_TARGET=\u7570\u5e38\u72c0\u6cc1\u8655\u7406\u7a0b\u5f0f PC \u4e0d\u662f\u6307\u4ee4
@@ -506,6 +565,7 @@ J9NLS_CFR_ERR_HANDLER_TARGET=\u7570\u5e38\u72c0\u6cc1\u8655\u7406\u7a0b\u5f0f PC
 J9NLS_CFR_ERR_HANDLER_TARGET.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_HANDLER_TARGET.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_HANDLER_TARGET.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 # PC is a standard reference for instruction pointer and is not translatable
@@ -514,6 +574,7 @@ J9NLS_CFR_ERR_HANDLER_END_TARGET=\u7570\u5e38\u72c0\u6cc1\u8655\u7406\u7a0b\u5f0
 J9NLS_CFR_ERR_HANDLER_END_TARGET.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_HANDLER_END_TARGET.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_HANDLER_END_TARGET.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 # UTF8 is not translatable
@@ -522,6 +583,7 @@ J9NLS_CFR_ERR_BAD_NAME_INDEX=\u540d\u7a31\u5fc5\u9808\u70ba UTF8 \u5b57\u4e32
 J9NLS_CFR_ERR_BAD_NAME_INDEX.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_BAD_NAME_INDEX.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_BAD_NAME_INDEX.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_MAX_LOCALS=\u5340\u57df\u6578\u4e0a\u9650\u5c0f\u65bc\u5f15\u6578\u5927\u5c0f
@@ -529,6 +591,7 @@ J9NLS_CFR_ERR_MAX_LOCALS=\u5340\u57df\u6578\u4e0a\u9650\u5c0f\u65bc\u5f15\u6578\
 J9NLS_CFR_ERR_MAX_LOCALS.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_MAX_LOCALS.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_MAX_LOCALS.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 # invoke is not translatable
@@ -537,6 +600,7 @@ J9NLS_CFR_ERR_BC_METHOD_INVALID=invoke \u4f4d\u5143\u7d44\u78bc\u547c\u53eb\u712
 J9NLS_CFR_ERR_BC_METHOD_INVALID.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_BC_METHOD_INVALID.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_BC_METHOD_INVALID.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 # UTF8 is not translatable
@@ -545,6 +609,7 @@ J9NLS_CFR_ERR_BAD_DESCRIPTOR_INDEX=\u63cf\u8ff0\u5b50\u5fc5\u9808\u70ba UTF8 \u5
 J9NLS_CFR_ERR_BAD_DESCRIPTOR_INDEX.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_BAD_DESCRIPTOR_INDEX.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_BAD_DESCRIPTOR_INDEX.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_MULTIPLE_ENCLOSING_METHOD_ATTRIBUTES=\u591a\u500b\u542b\u62ec\u65b9\u6cd5\u5c6c\u6027
@@ -552,6 +617,7 @@ J9NLS_CFR_ERR_MULTIPLE_ENCLOSING_METHOD_ATTRIBUTES=\u591a\u500b\u542b\u62ec\u65b
 J9NLS_CFR_ERR_MULTIPLE_ENCLOSING_METHOD_ATTRIBUTES.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_MULTIPLE_ENCLOSING_METHOD_ATTRIBUTES.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_MULTIPLE_ENCLOSING_METHOD_ATTRIBUTES.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 # InnerClasses is not translatable
@@ -560,6 +626,7 @@ J9NLS_CFR_ERR_MULTIPLE_INNER_CLASS_ATTRIBUTES=\u591a\u500b InnerClasses \u5c6c\u
 J9NLS_CFR_ERR_MULTIPLE_INNER_CLASS_ATTRIBUTES.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_MULTIPLE_INNER_CLASS_ATTRIBUTES.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_MULTIPLE_INNER_CLASS_ATTRIBUTES.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_UNKNOWN_CONSTANT=\u4e0d\u660e\u5e38\u6578\u5132\u5b58\u5340\u9805\u76ee\u6a19\u7c64
@@ -567,6 +634,7 @@ J9NLS_CFR_ERR_UNKNOWN_CONSTANT=\u4e0d\u660e\u5e38\u6578\u5132\u5b58\u5340\u9805\
 J9NLS_CFR_ERR_UNKNOWN_CONSTANT.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_UNKNOWN_CONSTANT.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_UNKNOWN_CONSTANT.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_BAD_CLASS_NAME=\u985e\u5225\u540d\u7a31\u7121\u6548
@@ -574,6 +642,7 @@ J9NLS_CFR_ERR_BAD_CLASS_NAME=\u985e\u5225\u540d\u7a31\u7121\u6548
 J9NLS_CFR_ERR_BAD_CLASS_NAME.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_BAD_CLASS_NAME.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_BAD_CLASS_NAME.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_LENGTH_TOO_BIG=\u5c6c\u6027\u9577\u5ea6\u5927\u65bc\u5c6c\u6027\u8cc7\u6599
@@ -581,6 +650,7 @@ J9NLS_CFR_ERR_LENGTH_TOO_BIG=\u5c6c\u6027\u9577\u5ea6\u5927\u65bc\u5c6c\u6027\u8
 J9NLS_CFR_ERR_LENGTH_TOO_BIG.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_LENGTH_TOO_BIG.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_LENGTH_TOO_BIG.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 # PC is a standard reference for instruction pointer and is not translatable
@@ -589,6 +659,7 @@ J9NLS_CFR_ERR_LINE_NUMBER_PC=\u884c\u865f PC \u7121\u6548
 J9NLS_CFR_ERR_LINE_NUMBER_PC.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_LINE_NUMBER_PC.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_LINE_NUMBER_PC.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_CODE_ARRAY_EMPTY=\u4f4d\u5143\u7d44\u78bc\u9663\u5217\u662f\u7a7a\u7684
@@ -596,6 +667,7 @@ J9NLS_CFR_ERR_CODE_ARRAY_EMPTY=\u4f4d\u5143\u7d44\u78bc\u9663\u5217\u662f\u7a7a\
 J9NLS_CFR_ERR_CODE_ARRAY_EMPTY.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_CODE_ARRAY_EMPTY.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_CODE_ARRAY_EMPTY.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 # lookupswitch is not translatable
@@ -604,6 +676,7 @@ J9NLS_CFR_ERR_BC_SWITCH_NOT_SORTED=\u9805\u76ee\u672a\u5132\u5b58\u5728 lookupsw
 J9NLS_CFR_ERR_BC_SWITCH_NOT_SORTED.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_BC_SWITCH_NOT_SORTED.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_BC_SWITCH_NOT_SORTED.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 #StackMap/StackMapTable and Code are not translatable
@@ -612,6 +685,7 @@ J9NLS_CFR_ERR_STACK_MAP_ATTRIBUTE_OUTSIDE_CODE_ATTRIBUTE=\u5728 Code \u5c6c\u602
 J9NLS_CFR_ERR_STACK_MAP_ATTRIBUTE_OUTSIDE_CODE_ATTRIBUTE.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_STACK_MAP_ATTRIBUTE_OUTSIDE_CODE_ATTRIBUTE.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_STACK_MAP_ATTRIBUTE_OUTSIDE_CODE_ATTRIBUTE.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 # Code is not translatable
@@ -620,6 +694,7 @@ J9NLS_CFR_ERR_CODE_MISSING=\u672a\u6307\u5b9a Code \u5c6c\u6027
 J9NLS_CFR_ERR_CODE_MISSING.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_CODE_MISSING.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_CODE_MISSING.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_LOCAL_VARIABLE_SIGNATURE_INVALID=\u5340\u57df\u8b8a\u6578\u7c3d\u7ae0\u7121\u6548
@@ -627,6 +702,7 @@ J9NLS_CFR_ERR_LOCAL_VARIABLE_SIGNATURE_INVALID=\u5340\u57df\u8b8a\u6578\u7c3d\u7
 J9NLS_CFR_ERR_LOCAL_VARIABLE_SIGNATURE_INVALID.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_LOCAL_VARIABLE_SIGNATURE_INVALID.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_LOCAL_VARIABLE_SIGNATURE_INVALID.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_MAGIC=\u4e0d\u6b63\u78ba\u7684\u5947\u5e7b\u6578\u5b57
@@ -634,6 +710,7 @@ J9NLS_CFR_ERR_MAGIC=\u4e0d\u6b63\u78ba\u7684\u5947\u5e7b\u6578\u5b57
 J9NLS_CFR_ERR_MAGIC.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_MAGIC.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_MAGIC.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_INTERFACE_NOT_ABSTRACT=\u4ecb\u9762\u5fc5\u9808\u70ba abstract
@@ -641,6 +718,7 @@ J9NLS_CFR_ERR_INTERFACE_NOT_ABSTRACT=\u4ecb\u9762\u5fc5\u9808\u70ba abstract
 J9NLS_CFR_ERR_INTERFACE_NOT_ABSTRACT.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_INTERFACE_NOT_ABSTRACT.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_INTERFACE_NOT_ABSTRACT.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_ENCLOSING_METHOD_CLASS_INDEX_NOT_CLASS=\u542b\u62ec\u65b9\u6cd5\u985e\u5225\u7d22\u5f15\u5fc5\u9808\u53c3\u7167\u985e\u5225
@@ -648,6 +726,7 @@ J9NLS_CFR_ERR_ENCLOSING_METHOD_CLASS_INDEX_NOT_CLASS=\u542b\u62ec\u65b9\u6cd5\u9
 J9NLS_CFR_ERR_ENCLOSING_METHOD_CLASS_INDEX_NOT_CLASS.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_ENCLOSING_METHOD_CLASS_INDEX_NOT_CLASS.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_ENCLOSING_METHOD_CLASS_INDEX_NOT_CLASS.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 # PC is a standard reference for instruction pointer and is not translatable
@@ -656,6 +735,7 @@ J9NLS_CFR_ERR_HANDLER_PC=\u7570\u5e38\u72c0\u6cc1\u8655\u7406\u7a0b\u5f0f PC \u7
 J9NLS_CFR_ERR_HANDLER_PC.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_HANDLER_PC.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_HANDLER_PC.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_BAD_METHOD_DESCRIPTOR=\u65b9\u6cd5\u7c3d\u7ae0\u7121\u6548
@@ -663,6 +743,7 @@ J9NLS_CFR_ERR_BAD_METHOD_DESCRIPTOR=\u65b9\u6cd5\u7c3d\u7ae0\u7121\u6548
 J9NLS_CFR_ERR_BAD_METHOD_DESCRIPTOR.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_BAD_METHOD_DESCRIPTOR.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_BAD_METHOD_DESCRIPTOR.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 # UTF8 is not translatable
@@ -671,6 +752,7 @@ J9NLS_CFR_ERR_SOURCE_FILE_INDEX=\u539f\u59cb\u6a94\u5fc5\u9808\u70ba UTF8
 J9NLS_CFR_ERR_SOURCE_FILE_INDEX.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_SOURCE_FILE_INDEX.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_SOURCE_FILE_INDEX.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 # <init> is not translatable
@@ -679,6 +761,7 @@ J9NLS_CFR_ERR_INIT_METHOD=<init> \u65b9\u6cd5\u4e0d\u53ef\u70ba static\u3001fina
 J9NLS_CFR_ERR_INIT_METHOD.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_INIT_METHOD.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_INIT_METHOD.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_FINAL_ABSTRACT_CLASS=\u985e\u5225\u662f abstract \u53ca final
@@ -686,6 +769,7 @@ J9NLS_CFR_ERR_FINAL_ABSTRACT_CLASS=\u985e\u5225\u662f abstract \u53ca final
 J9NLS_CFR_ERR_FINAL_ABSTRACT_CLASS.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_FINAL_ABSTRACT_CLASS.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_FINAL_ABSTRACT_CLASS.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_NO_ERROR=\u7121\u932f\u8aa4
@@ -693,6 +777,7 @@ J9NLS_CFR_ERR_NO_ERROR=\u7121\u932f\u8aa4
 J9NLS_CFR_ERR_NO_ERROR.explanation=None
 J9NLS_CFR_ERR_NO_ERROR.system_action=THIS MESSAGE IS RESERVED FOR FUTURE USE
 J9NLS_CFR_ERR_NO_ERROR.user_response=None
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_INNER_NAME_NOT_UTF8=\u5167\u90e8\u540d\u7a31\u5fc5\u9808\u70ba\u5b57\u4e32
@@ -700,6 +785,7 @@ J9NLS_CFR_ERR_INNER_NAME_NOT_UTF8=\u5167\u90e8\u540d\u7a31\u5fc5\u9808\u70ba\u5b
 J9NLS_CFR_ERR_INNER_NAME_NOT_UTF8.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_INNER_NAME_NOT_UTF8.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_INNER_NAME_NOT_UTF8.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 # Code is not translatable
@@ -708,6 +794,7 @@ J9NLS_CFR_ERR_TWO_CODE_ATTRIBUTES=\u65b9\u6cd5\u6709\u5169\u500b Code \u5c6c\u60
 J9NLS_CFR_ERR_TWO_CODE_ATTRIBUTES.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_TWO_CODE_ATTRIBUTES.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_TWO_CODE_ATTRIBUTES.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 # InterfaceMethodref is not translatable
@@ -716,6 +803,7 @@ J9NLS_CFR_ERR_BC_NOT_INTERFACEMETHODREF=\u4ecb\u9762\u65b9\u6cd5\u4f4d\u5143\u7d
 J9NLS_CFR_ERR_BC_NOT_INTERFACEMETHODREF.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_BC_NOT_INTERFACEMETHODREF.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_BC_NOT_INTERFACEMETHODREF.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_LOCAL_VARIABLE_NAME_NOT_UTF8=\u5340\u57df\u8b8a\u6578\u540d\u7a31\u5fc5\u9808\u70ba\u5b57\u4e32
@@ -723,6 +811,7 @@ J9NLS_CFR_ERR_LOCAL_VARIABLE_NAME_NOT_UTF8=\u5340\u57df\u8b8a\u6578\u540d\u7a31\
 J9NLS_CFR_ERR_LOCAL_VARIABLE_NAME_NOT_UTF8.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_LOCAL_VARIABLE_NAME_NOT_UTF8.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_LOCAL_VARIABLE_NAME_NOT_UTF8.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_BAD_NAME_AND_TYPE_INDEX=\u9810\u671f\u540d\u7a31\u53ca\u985e\u578b
@@ -730,6 +819,7 @@ J9NLS_CFR_ERR_BAD_NAME_AND_TYPE_INDEX=\u9810\u671f\u540d\u7a31\u53ca\u985e\u578b
 J9NLS_CFR_ERR_BAD_NAME_AND_TYPE_INDEX.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_BAD_NAME_AND_TYPE_INDEX.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_BAD_NAME_AND_TYPE_INDEX.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 # new is not translatable
@@ -738,6 +828,7 @@ J9NLS_CFR_ERR_BC_NEW_ARRAY=New \u4f4d\u5143\u7d44\u78bc\u7121\u6cd5\u5efa\u7acb\
 J9NLS_CFR_ERR_BC_NEW_ARRAY.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_BC_NEW_ARRAY.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_BC_NEW_ARRAY.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 # PC is a standard reference for instruction pointer and is not translatable
@@ -746,6 +837,7 @@ J9NLS_CFR_ERR_HANDLER_START_TARGET=\u7570\u5e38\u72c0\u6cc1\u8655\u7406\u7a0b\u5
 J9NLS_CFR_ERR_HANDLER_START_TARGET.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_HANDLER_START_TARGET.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_HANDLER_START_TARGET.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_BC_INVALID_SIG=\u7c3d\u7ae0\u7121\u6548
@@ -753,6 +845,7 @@ J9NLS_CFR_ERR_BC_INVALID_SIG=\u7c3d\u7ae0\u7121\u6548
 J9NLS_CFR_ERR_BC_INVALID_SIG.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_BC_INVALID_SIG.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_BC_INVALID_SIG.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_ACCESS_CONFLICT_METHOD=\u65b9\u6cd5\u6700\u591a\u53ef\u4ee5\u662f public private \u6216 protected
@@ -760,6 +853,7 @@ J9NLS_CFR_ERR_ACCESS_CONFLICT_METHOD=\u65b9\u6cd5\u6700\u591a\u53ef\u4ee5\u662f 
 J9NLS_CFR_ERR_ACCESS_CONFLICT_METHOD.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_ACCESS_CONFLICT_METHOD.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_ACCESS_CONFLICT_METHOD.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 # instanceof is not translatable
@@ -768,6 +862,7 @@ J9NLS_CFR_ERR_BC_INSTANCEOF_NOT_CLASS=instanceof \u4f4d\u5143\u7d44\u78bc\u5fc5\
 J9NLS_CFR_ERR_BC_INSTANCEOF_NOT_CLASS.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_BC_INSTANCEOF_NOT_CLASS.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_BC_INSTANCEOF_NOT_CLASS.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_ANNOTATION_NOT_INTERFACE=annotation \u5fc5\u9808\u70ba\u4ecb\u9762
@@ -775,6 +870,7 @@ J9NLS_CFR_ERR_ANNOTATION_NOT_INTERFACE=annotation \u5fc5\u9808\u70ba\u4ecb\u9762
 J9NLS_CFR_ERR_ANNOTATION_NOT_INTERFACE.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_ANNOTATION_NOT_INTERFACE.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_ANNOTATION_NOT_INTERFACE.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_BC_SWITCH_TARGET=\u76ee\u6a19\u4e0d\u662f switch \u4f4d\u5143\u7d44\u78bc\u4e2d\u7684\u6307\u4ee4
@@ -782,6 +878,7 @@ J9NLS_CFR_ERR_BC_SWITCH_TARGET=\u76ee\u6a19\u4e0d\u662f switch \u4f4d\u5143\u7d4
 J9NLS_CFR_ERR_BC_SWITCH_TARGET.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_BC_SWITCH_TARGET.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_BC_SWITCH_TARGET.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 # InnerClasses is not translatable
@@ -790,6 +887,7 @@ J9NLS_CFR_ERR_DUPLICATE_INNER_CLASS_ENTRY=InnerClasses \u5c6c\u6027\u4e2d\u6709\
 J9NLS_CFR_ERR_DUPLICATE_INNER_CLASS_ENTRY.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_DUPLICATE_INNER_CLASS_ENTRY.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_DUPLICATE_INNER_CLASS_ENTRY.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_LOCAL_VARIABLE_SIGNATURE_NOT_UTF8=\u5340\u57df\u8b8a\u6578\u7c3d\u7ae0\u5fc5\u9808\u70ba\u5b57\u4e32
@@ -797,6 +895,7 @@ J9NLS_CFR_ERR_LOCAL_VARIABLE_SIGNATURE_NOT_UTF8=\u5340\u57df\u8b8a\u6578\u7c3d\u
 J9NLS_CFR_ERR_LOCAL_VARIABLE_SIGNATURE_NOT_UTF8.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_LOCAL_VARIABLE_SIGNATURE_NOT_UTF8.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_LOCAL_VARIABLE_SIGNATURE_NOT_UTF8.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_ILLEGAL_METHOD_MODIFIERS=\u4e0d\u5408\u6cd5\u7684\u65b9\u6cd5\u4fee\u98fe\u5143
@@ -804,6 +903,7 @@ J9NLS_CFR_ERR_ILLEGAL_METHOD_MODIFIERS=\u4e0d\u5408\u6cd5\u7684\u65b9\u6cd5\u4fe
 J9NLS_CFR_ERR_ILLEGAL_METHOD_MODIFIERS.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_ILLEGAL_METHOD_MODIFIERS.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_ILLEGAL_METHOD_MODIFIERS.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 # multianewarray is not translatable
@@ -812,6 +912,7 @@ J9NLS_CFR_ERR_BC_MULTI_DIMS=multianewarray \u4f4d\u5143\u7d44\u78bc\u4e2d\u8981\
 J9NLS_CFR_ERR_BC_MULTI_DIMS.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_BC_MULTI_DIMS.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_BC_MULTI_DIMS.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_BC_SWITCH_OFFSET=switch \u4f4d\u5143\u7d44\u78bc\u4e2d\u7684\u504f\u79fb\u8d85\u51fa\u7bc4\u570d
@@ -819,6 +920,7 @@ J9NLS_CFR_ERR_BC_SWITCH_OFFSET=switch \u4f4d\u5143\u7d44\u78bc\u4e2d\u7684\u504f
 J9NLS_CFR_ERR_BC_SWITCH_OFFSET.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_BC_SWITCH_OFFSET.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_BC_SWITCH_OFFSET.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_BC_FIELD_INVALID_SIG=\u6b04\u4f4d\u7c3d\u7ae0\u7121\u6548
@@ -826,6 +928,7 @@ J9NLS_CFR_ERR_BC_FIELD_INVALID_SIG=\u6b04\u4f4d\u7c3d\u7ae0\u7121\u6548
 J9NLS_CFR_ERR_BC_FIELD_INVALID_SIG.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_BC_FIELD_INVALID_SIG.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_BC_FIELD_INVALID_SIG.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_ABSTRACT_METHOD=abstract \u65b9\u6cd5\u4e0d\u53ef\u4ee5\u662f private\u3001static\u3001final\u3001native\u3001synchronized \u6216 strict
@@ -833,6 +936,7 @@ J9NLS_CFR_ERR_ABSTRACT_METHOD=abstract \u65b9\u6cd5\u4e0d\u53ef\u4ee5\u662f priv
 J9NLS_CFR_ERR_ABSTRACT_METHOD.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_ABSTRACT_METHOD.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_ABSTRACT_METHOD.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_ACCESS_CONFLICT_FIELD=\u6b04\u4f4d\u6700\u591a\u53ef\u4ee5\u662f public private \u6216 protected
@@ -840,6 +944,7 @@ J9NLS_CFR_ERR_ACCESS_CONFLICT_FIELD=\u6b04\u4f4d\u6700\u591a\u53ef\u4ee5\u662f p
 J9NLS_CFR_ERR_ACCESS_CONFLICT_FIELD.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_ACCESS_CONFLICT_FIELD.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_ACCESS_CONFLICT_FIELD.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 # superClass is not translatable
@@ -848,6 +953,7 @@ J9NLS_CFR_ERR_SUPER_NOT_CLASS=superClass \u5fc5\u9808\u70ba\u985e\u5225
 J9NLS_CFR_ERR_SUPER_NOT_CLASS.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_SUPER_NOT_CLASS.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_SUPER_NOT_CLASS.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_DUPLICATE_METHOD=\u8907\u88fd\u65b9\u6cd5
@@ -855,6 +961,7 @@ J9NLS_CFR_ERR_DUPLICATE_METHOD=\u8907\u88fd\u65b9\u6cd5
 J9NLS_CFR_ERR_DUPLICATE_METHOD.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_DUPLICATE_METHOD.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_DUPLICATE_METHOD.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_BC_JUMP_OFFSET=jump \u4f4d\u5143\u7d44\u78bc\u4e2d\u7684\u504f\u79fb\u8d85\u51fa\u7bc4\u570d
@@ -862,6 +969,7 @@ J9NLS_CFR_ERR_BC_JUMP_OFFSET=jump \u4f4d\u5143\u7d44\u78bc\u4e2d\u7684\u504f\u79
 J9NLS_CFR_ERR_BC_JUMP_OFFSET.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_BC_JUMP_OFFSET.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_BC_JUMP_OFFSET.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_ENCLOSING_METHOD_METHOD_INDEX_NOT_NAME_AND_TYPE=\u542b\u62ec\u65b9\u6cd5\u65b9\u6cd5\u7d22\u5f15\u5fc5\u9808\u53c3\u7167\u540d\u7a31\u53ca\u985e\u578b
@@ -869,6 +977,7 @@ J9NLS_CFR_ERR_ENCLOSING_METHOD_METHOD_INDEX_NOT_NAME_AND_TYPE=\u542b\u62ec\u65b9
 J9NLS_CFR_ERR_ENCLOSING_METHOD_METHOD_INDEX_NOT_NAME_AND_TYPE.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_ENCLOSING_METHOD_METHOD_INDEX_NOT_NAME_AND_TYPE.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_ENCLOSING_METHOD_METHOD_INDEX_NOT_NAME_AND_TYPE.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_BC_METHOD_INVALID_SIG=\u65b9\u6cd5\u7c3d\u7ae0\u7121\u6548
@@ -876,6 +985,7 @@ J9NLS_CFR_ERR_BC_METHOD_INVALID_SIG=\u65b9\u6cd5\u7c3d\u7ae0\u7121\u6548
 J9NLS_CFR_ERR_BC_METHOD_INVALID_SIG.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_BC_METHOD_INVALID_SIG.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_BC_METHOD_INVALID_SIG.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_INCOMPATIBLE_CONSTANT=\u6b04\u4f4d\u7684\u5e38\u6578\u4e0d\u76f8\u5bb9
@@ -883,6 +993,7 @@ J9NLS_CFR_ERR_INCOMPATIBLE_CONSTANT=\u6b04\u4f4d\u7684\u5e38\u6578\u4e0d\u76f8\u
 J9NLS_CFR_ERR_INCOMPATIBLE_CONSTANT.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_INCOMPATIBLE_CONSTANT.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_INCOMPATIBLE_CONSTANT.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 # UTF8 is not translatable
@@ -891,6 +1002,7 @@ J9NLS_CFR_ERR_BAD_UTF8=\u5f62\u614b\u7570\u5e38\u7684 UTF8
 J9NLS_CFR_ERR_BAD_UTF8.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_BAD_UTF8.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_BAD_UTF8.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_NO_DYNAMIC_VERIFICATION=VM \u4e0d\u652f\u63f4\u52d5\u614b\u9a57\u8b49
@@ -898,6 +1010,7 @@ J9NLS_CFR_ERR_NO_DYNAMIC_VERIFICATION=VM \u4e0d\u652f\u63f4\u52d5\u614b\u9a57\u8
 J9NLS_CFR_ERR_NO_DYNAMIC_VERIFICATION.explanation=THIS MESSAGE IS RESERVED FOR FUTURE USE
 J9NLS_CFR_ERR_NO_DYNAMIC_VERIFICATION.system_action=THIS MESSAGE IS RESERVED FOR FUTURE USE
 J9NLS_CFR_ERR_NO_DYNAMIC_VERIFICATION.user_response=No Action.
+
 # END NON-TRANSLATABLE
 
 # EOF is a standard reference for end of file and is not translatable
@@ -906,6 +1019,7 @@ J9NLS_CFR_ERR_UNEXPECTED_EOF=\u975e\u9810\u671f\u7684 EOF
 J9NLS_CFR_ERR_UNEXPECTED_EOF.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_UNEXPECTED_EOF.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_UNEXPECTED_EOF.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_BAD_FIELD_NAME=\u6b04\u4f4d\u540d\u7a31\u7121\u6548
@@ -913,6 +1027,7 @@ J9NLS_CFR_ERR_BAD_FIELD_NAME=\u6b04\u4f4d\u540d\u7a31\u7121\u6548
 J9NLS_CFR_ERR_BAD_FIELD_NAME.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_BAD_FIELD_NAME.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_BAD_FIELD_NAME.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_TOO_MANY_DIMENSIONS=\u9663\u5217\u7dad\u5ea6 > 255
@@ -920,6 +1035,7 @@ J9NLS_CFR_ERR_TOO_MANY_DIMENSIONS=\u9663\u5217\u7dad\u5ea6 > 255
 J9NLS_CFR_ERR_TOO_MANY_DIMENSIONS.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_TOO_MANY_DIMENSIONS.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_TOO_MANY_DIMENSIONS.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 # Methodref is not translatable
@@ -928,6 +1044,7 @@ J9NLS_CFR_ERR_BC_NOT_METHODREF=\u547c\u53eb\u4f4d\u5143\u7d44\u78bc\u5fc5\u9808\
 J9NLS_CFR_ERR_BC_NOT_METHODREF.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_BC_NOT_METHODREF.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_BC_NOT_METHODREF.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_FINAL_VOLATILE_FIELD=\u6b04\u4f4d\u4e0d\u80fd\u540c\u6642\u662f final \u53ca volatile
@@ -935,6 +1052,7 @@ J9NLS_CFR_ERR_FINAL_VOLATILE_FIELD=\u6b04\u4f4d\u4e0d\u80fd\u540c\u6642\u662f fi
 J9NLS_CFR_ERR_FINAL_VOLATILE_FIELD.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_FINAL_VOLATILE_FIELD.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_FINAL_VOLATILE_FIELD.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 # EOF is a standard reference for end of file and is not translatable
@@ -943,6 +1061,7 @@ J9NLS_CFR_ERR_EXPECTED_EOF=EOF \u4e4b\u5f8c\u7684\u984d\u5916\u4f4d\u5143\u7d44
 J9NLS_CFR_ERR_EXPECTED_EOF.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_EXPECTED_EOF.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_EXPECTED_EOF.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 #SourceFile is not translatable
@@ -951,6 +1070,7 @@ J9NLS_CFR_ERR_FOUND_MULTIPLE_SOURCE_FILE_ATTRIBUTES=\u591a\u500b SourceFile \u5c
 J9NLS_CFR_ERR_FOUND_MULTIPLE_SOURCE_FILE_ATTRIBUTES.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_FOUND_MULTIPLE_SOURCE_FILE_ATTRIBUTES.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_FOUND_MULTIPLE_SOURCE_FILE_ATTRIBUTES.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 # jsr, jsr_w are not translatable
@@ -959,6 +1079,7 @@ J9NLS_CFR_ERR_FOUND_JSR_IN_CLASS_VER_51=\u5728\u7248\u672c >= 51.0 \u7684\u985e\
 J9NLS_CFR_ERR_FOUND_JSR_IN_CLASS_VER_51.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_FOUND_JSR_IN_CLASS_VER_51.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_FOUND_JSR_IN_CLASS_VER_51.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_LOCAL_VARIABLE_NAME=\u4e0d\u5408\u6cd5\u7684\u6b04\u4f4d\u540d\u7a31
@@ -966,6 +1087,7 @@ J9NLS_CFR_ERR_LOCAL_VARIABLE_NAME=\u4e0d\u5408\u6cd5\u7684\u6b04\u4f4d\u540d\u7a
 J9NLS_CFR_ERR_LOCAL_VARIABLE_NAME.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_LOCAL_VARIABLE_NAME.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_LOCAL_VARIABLE_NAME.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 # A class can have at most one of the following access flags set: public or module
@@ -983,6 +1105,7 @@ J9NLS_CFR_ERR_BAD_METHODHANDLE_REF_INDEX=MethodHandle \u5e38\u6578\u5fc5\u9808\u
 J9NLS_CFR_ERR_BAD_METHODHANDLE_REF_INDEX.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_BAD_METHODHANDLE_REF_INDEX.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_BAD_METHODHANDLE_REF_INDEX.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_BAD_ANNOTATION_TAG=\u8a3b\u91cb\u5143\u7d20\u503c\u6a19\u7c64\u7121\u6548
@@ -990,6 +1113,7 @@ J9NLS_CFR_ERR_BAD_ANNOTATION_TAG=\u8a3b\u91cb\u5143\u7d20\u503c\u6a19\u7c64\u712
 J9NLS_CFR_ERR_BAD_ANNOTATION_TAG.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_BAD_ANNOTATION_TAG.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_BAD_ANNOTATION_TAG.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 # InvokeDynamic and invokedynamic are not translatable
@@ -1037,6 +1161,7 @@ J9NLS_CFR_ERR_FOUND_MULTIPLE_BOOTSTRAP_METHODS_ATTRIBUTES=\u591a\u500b Bootstrap
 J9NLS_CFR_ERR_FOUND_MULTIPLE_BOOTSTRAP_METHODS_ATTRIBUTES.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_FOUND_MULTIPLE_BOOTSTRAP_METHODS_ATTRIBUTES.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_FOUND_MULTIPLE_BOOTSTRAP_METHODS_ATTRIBUTES.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 # BootstrapMethods entries in the attributes table
@@ -1053,6 +1178,7 @@ J9NLS_CFR_ERR_BAD_TARGET_TYPE_TAG=\u7121\u6cd5\u8fa8\u8b58 type_annotation targe
 J9NLS_CFR_ERR_BAD_TARGET_TYPE_TAG.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_BAD_TARGET_TYPE_TAG.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_BAD_TARGET_TYPE_TAG.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 #More than one method parameters attribute
@@ -1061,6 +1187,7 @@ J9NLS_CFR_ERR_TWO_METHOD_PARAMETERS_ATTRIBUTES=\u65b9\u6cd5\u6709\u5169\u500b Me
 J9NLS_CFR_ERR_TWO_METHOD_PARAMETERS_ATTRIBUTES.explanation=Methods may have at most one MethodParameters attribute
 J9NLS_CFR_ERR_TWO_METHOD_PARAMETERS_ATTRIBUTES.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_TWO_METHOD_PARAMETERS_ATTRIBUTES.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 #Invalid method parameter flag
@@ -1069,6 +1196,7 @@ J9NLS_CFR_ERR_INVALID_METHOD_PARAMETER_FLAG=\u65b9\u6cd5\u53c3\u6578\u7684\u65d7
 J9NLS_CFR_ERR_INVALID_METHOD_PARAMETER_FLAG.explanation=Invalid method parameter flag
 J9NLS_CFR_ERR_INVALID_METHOD_PARAMETER_FLAG.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_INVALID_METHOD_PARAMETER_FLAG.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 #Method parameter name is not UTF8
@@ -1077,6 +1205,7 @@ J9NLS_CFR_ERR_METHOD_PARAMETER_NAME_NOT_UTF8=\u65b9\u6cd5\u53c3\u6578\u540d\u7a3
 J9NLS_CFR_ERR_METHOD_PARAMETER_NAME_NOT_UTF8.explanation=Invalid method parameter name type
 J9NLS_CFR_ERR_METHOD_PARAMETER_NAME_NOT_UTF8.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_METHOD_PARAMETER_NAME_NOT_UTF8.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_INTERFACE_METHOD_JAVA_8=\u4ecb\u9762\u65b9\u6cd5\u7684\u4fee\u98fe\u5143\u4e0d\u5408\u6cd5
@@ -1084,6 +1213,7 @@ J9NLS_CFR_ERR_INTERFACE_METHOD_JAVA_8=\u4ecb\u9762\u65b9\u6cd5\u7684\u4fee\u98fe
 J9NLS_CFR_ERR_INTERFACE_METHOD_JAVA_8.explanation=See the JVM spec for details of the allowed interface method modifiers
 J9NLS_CFR_ERR_INTERFACE_METHOD_JAVA_8.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_INTERFACE_METHOD_JAVA_8.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 #More than one type annotations attribute
@@ -1092,6 +1222,7 @@ J9NLS_CFR_ERR_MULTIPLE_TYPE_ANNOTATIONS_ATTRIBUTES__ID=\u985e\u5225\u6709\u591a\
 J9NLS_CFR_ERR_MULTIPLE_TYPE_ANNOTATIONS_ATTRIBUTES__ID.explanation=Classes may have at most one each of RuntimeVisibleTypeAnnotations and RuntimeInvisibleTypeAnnotations attributes
 J9NLS_CFR_ERR_MULTIPLE_TYPE_ANNOTATIONS_ATTRIBUTES__ID.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_MULTIPLE_TYPE_ANNOTATIONS_ATTRIBUTES__ID.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 # invalid constant pool index
@@ -1100,6 +1231,7 @@ J9NLS_CFR_ERR_INVALID_CONSTANT_POOL_INDEX=Classfile \u5c6c\u6027\u53c3\u7167\u52
 J9NLS_CFR_ERR_INVALID_CONSTANT_POOL_INDEX.explanation=Constant pool indexes must refer to valid constant pool entries
 J9NLS_CFR_ERR_INVALID_CONSTANT_POOL_INDEX.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_INVALID_CONSTANT_POOL_INDEX.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 #More than one source debug extension attribute
@@ -1108,6 +1240,7 @@ J9NLS_CFR_ERR_MULTIPLE_SOURCE_DEBUG_EXTENSION_ATTRIBUTES__ID=\u985e\u5225\u5177\
 J9NLS_CFR_ERR_MULTIPLE_SOURCE_DEBUG_EXTENSION_ATTRIBUTES__ID.explanation=Classes may have at most one SourceDebugExtension attribute
 J9NLS_CFR_ERR_MULTIPLE_SOURCE_DEBUG_EXTENSION_ATTRIBUTES__ID.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_MULTIPLE_SOURCE_DEBUG_EXTENSION_ATTRIBUTES__ID.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 #More than one annotation default attribute
@@ -1116,6 +1249,7 @@ J9NLS_CFR_ERR_MULTIPLE_ANNOTATION_DEFAULT_ATTRIBUTES__ID=method_info \u5177\u670
 J9NLS_CFR_ERR_MULTIPLE_ANNOTATION_DEFAULT_ATTRIBUTES__ID.explanation=method_info attributes may have at most one AnnotationDefault attribute
 J9NLS_CFR_ERR_MULTIPLE_ANNOTATION_DEFAULT_ATTRIBUTES__ID.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_MULTIPLE_ANNOTATION_DEFAULT_ATTRIBUTES__ID.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 #More than one parameter annotations attribute
@@ -1124,6 +1258,7 @@ J9NLS_CFR_ERR_MULTIPLE_PARAMETER_ANNOTATION_ATTRIBUTES__ID=method_info \u5177\u6
 J9NLS_CFR_ERR_MULTIPLE_PARAMETER_ANNOTATION_ATTRIBUTES__ID.explanation=method_info attributes may have at most one each of RuntimeInvisibleParameterAnnotations or RuntimeVisibleParameterAnnotations attributes
 J9NLS_CFR_ERR_MULTIPLE_PARAMETER_ANNOTATION_ATTRIBUTES__ID.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_MULTIPLE_PARAMETER_ANNOTATION_ATTRIBUTES__ID.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 #More than one annotations attribute
@@ -1132,6 +1267,7 @@ J9NLS_CFR_ERR_MULTIPLE_ANNOTATION_ATTRIBUTES__ID=\u985e\u5225\u6709\u591a\u500b 
 J9NLS_CFR_ERR_MULTIPLE_ANNOTATION_ATTRIBUTES__ID.explanation=Class may have at most one each of RuntimeInvisibleAnnotations or RuntimeVisibleAnnotations attributes
 J9NLS_CFR_ERR_MULTIPLE_ANNOTATION_ATTRIBUTES__ID.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_MULTIPLE_ANNOTATION_ATTRIBUTES__ID.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 #Multiple nest mates attributes
@@ -1140,6 +1276,7 @@ J9NLS_CFR_ERR_MULTIPLE_NEST_ATTRIBUTES=\u591a\u500b\u5de2\u72c0\u5925\u4f34\u5c6
 J9NLS_CFR_ERR_MULTIPLE_NEST_ATTRIBUTES.explanation=Class can have at most one NestMate or MemberOfNeset attribute
 J9NLS_CFR_ERR_MULTIPLE_NEST_ATTRIBUTES.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_MULTIPLE_NEST_ATTRIBUTES.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 #Nest members attribute name is not a utf8
@@ -1148,6 +1285,7 @@ J9NLS_CFR_ERR_NEST_MEMBERS_NAME_NOT_CONSTANT_CLASS=\u5de2\u72c0\u5c6c\u6027\u768
 J9NLS_CFR_ERR_NEST_MEMBERS_NAME_NOT_CONSTANT_CLASS.explanation=Member of nest attribute must be a constant class
 J9NLS_CFR_ERR_NEST_MEMBERS_NAME_NOT_CONSTANT_CLASS.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_NEST_MEMBERS_NAME_NOT_CONSTANT_CLASS.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 # Nest host attribute is not a constant class
@@ -1156,6 +1294,7 @@ J9NLS_CFR_ERR_BAD_NEST_HOST_INDEX=\u5de2\u72c0\u4e3b\u6a5f\u5fc5\u9808\u662f\u5e
 J9NLS_CFR_ERR_BAD_NEST_HOST_INDEX.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_BAD_NEST_HOST_INDEX.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_BAD_NEST_HOST_INDEX.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 # <clinit> method at version 51.0 or above does not have static flag set
@@ -1164,6 +1303,7 @@ J9NLS_CFR_ERR_CLINIT_NOT_STATIC=\u65b9\u6cd5 <clinit> \u4e0d\u662f Static
 J9NLS_CFR_ERR_CLINIT_NOT_STATIC.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_CLINIT_NOT_STATIC.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_CLINIT_NOT_STATIC.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 # <clinit> method at version 51.0 must be void and take no arguments
@@ -1172,6 +1312,7 @@ J9NLS_CFR_ERR_CLINIT_ILLEGAL_SIGNATURE=\u65b9\u6cd5 <clinit> \u5177\u6709\u4e0d\
 J9NLS_CFR_ERR_CLINIT_ILLEGAL_SIGNATURE.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_CLINIT_ILLEGAL_SIGNATURE.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_CLINIT_ILLEGAL_SIGNATURE.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 # <init> method cannot be in an Interface in Java 9
@@ -1180,6 +1321,7 @@ J9NLS_CFR_ERR_INIT_ILLEGAL_IN_INTERFACE=\u4ecb\u9762\u4e0d\u80fd\u5177\u6709\u54
 J9NLS_CFR_ERR_INIT_ILLEGAL_IN_INTERFACE.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_INIT_ILLEGAL_IN_INTERFACE.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_INIT_ILLEGAL_IN_INTERFACE.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_CONSTANT_MODULE_OUTSIDE_MODULE=\u985e\u5225\u6a94\u4e2d\u7684\u4e0d\u660e\u5e38\u6578\u6a19\u7c64 19
@@ -1187,6 +1329,7 @@ J9NLS_CFR_ERR_CONSTANT_MODULE_OUTSIDE_MODULE=\u985e\u5225\u6a94\u4e2d\u7684\u4e0
 J9NLS_CFR_ERR_CONSTANT_MODULE_OUTSIDE_MODULE.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_CONSTANT_MODULE_OUTSIDE_MODULE.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_CONSTANT_MODULE_OUTSIDE_MODULE.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_CONSTANT_PACKAGE_OUTSIDE_MODULE=\u985e\u5225\u6a94\u4e2d\u7684\u4e0d\u660e\u5e38\u6578\u6a19\u7c64 20
@@ -1194,6 +1337,7 @@ J9NLS_CFR_ERR_CONSTANT_PACKAGE_OUTSIDE_MODULE=\u985e\u5225\u6a94\u4e2d\u7684\u4e
 J9NLS_CFR_ERR_CONSTANT_PACKAGE_OUTSIDE_MODULE.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_CONSTANT_PACKAGE_OUTSIDE_MODULE.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_CONSTANT_PACKAGE_OUTSIDE_MODULE.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V53=\u5728\u7248\u672c\u4f4e\u65bc 53.0 \u7684\u985e\u5225\u6a94\u4e2d\uff0c\u5e38\u6578\u5132\u5b58\u5340\u9805\u76ee\u7121\u6548
@@ -1201,6 +1345,7 @@ J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V53=\u5728\u7248\u672c\u4f4e\u65bc 53.0 \u
 J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V53.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V53.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V53.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_MODULE_IS_INVALID_CLASS=module-info \u4e0d\u662f\u985e\u5225\uff0c\u56e0\u70ba\u5df2\u8a2d\u5b9a access_flag ACC_MODULE
@@ -1208,6 +1353,7 @@ J9NLS_CFR_ERR_MODULE_IS_INVALID_CLASS=module-info \u4e0d\u662f\u985e\u5225\uff0c
 J9NLS_CFR_ERR_MODULE_IS_INVALID_CLASS.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_MODULE_IS_INVALID_CLASS.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_MODULE_IS_INVALID_CLASS.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V55=\u5728\u7248\u672c\u4f4e\u65bc 55.0 \u7684\u985e\u5225\u6a94\u4e2d\uff0c\u5e38\u6578\u5132\u5b58\u5340\u9805\u76ee\u7121\u6548
@@ -1215,6 +1361,7 @@ J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V55=\u5728\u7248\u672c\u4f4e\u65bc 55.0 \u
 J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V55.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V55.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V55.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 #ldc and ldc_w are not translatable
@@ -1223,6 +1370,7 @@ J9NLS_CFR_ERR_BC_LDC_NOT_CONSTANT_OR_CONSTANT_DYNAMIC=ldc \u8207 ldc_2 \u4f4d\u5
 J9NLS_CFR_ERR_BC_LDC_NOT_CONSTANT_OR_CONSTANT_DYNAMIC.explanation=An 'ldc' or 'ldc_w' bytecode can only reference constant values or a Constant_Dynamic entry.
 J9NLS_CFR_ERR_BC_LDC_NOT_CONSTANT_OR_CONSTANT_DYNAMIC.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_BC_LDC_NOT_CONSTANT_OR_CONSTANT_DYNAMIC.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 #ldc2_w is not translatable
@@ -1231,6 +1379,7 @@ J9NLS_CFR_ERR_BC_LDC2W_NOT_CONSTANT_OR_CONSTANT_DYNAMIC=ldc2_w \u4f4d\u5143\u7d4
 J9NLS_CFR_ERR_BC_LDC2W_NOT_CONSTANT_OR_CONSTANT_DYNAMIC.explanation=An 'ldc2_w' bytecode can only reference constant values or a Constant_Dynamic entry.
 J9NLS_CFR_ERR_BC_LDC2W_NOT_CONSTANT_OR_CONSTANT_DYNAMIC.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_BC_LDC2W_NOT_CONSTANT_OR_CONSTANT_DYNAMIC.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 #ldc and ldc_w are not translatable
@@ -1239,6 +1388,7 @@ J9NLS_CFR_ERR_BC_LDC_CONSTANT_DYNAMIC_RETURNS_LONG_OR_DOUBLE=ldc \u53ca ldc_w \u
 J9NLS_CFR_ERR_BC_LDC_CONSTANT_DYNAMIC_RETURNS_LONG_OR_DOUBLE.explanation=An 'ldc' or 'ldc_w' bytecode cannot reference constant values or Constant_Dynamic entry of type 'long' or 'double'.
 J9NLS_CFR_ERR_BC_LDC_CONSTANT_DYNAMIC_RETURNS_LONG_OR_DOUBLE.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_BC_LDC_CONSTANT_DYNAMIC_RETURNS_LONG_OR_DOUBLE.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 #ldc2_w is not translatable
@@ -1247,6 +1397,7 @@ J9NLS_CFR_ERR_BC_LDC2W_CONSTANT_DYNAMIC_NOT_LONG_OR_DOUBLE=ldc2_w \u4f4d\u5143\u
 J9NLS_CFR_ERR_BC_LDC2W_CONSTANT_DYNAMIC_NOT_LONG_OR_DOUBLE.explanation=An 'ldc2_w' bytecode can only reference constant values or Constant_Dynamic entry of type 'long' or 'double'.
 J9NLS_CFR_ERR_BC_LDC2W_CONSTANT_DYNAMIC_NOT_LONG_OR_DOUBLE.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_BC_LDC2W_CONSTANT_DYNAMIC_NOT_LONG_OR_DOUBLE.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V49=\u5728\u7248\u672c\u4f4e\u65bc 49.0 \u7684\u985e\u5225\u6a94\u4e2d\uff0c\u5e38\u6578\u5132\u5b58\u5340\u9805\u76ee\u7121\u6548
@@ -1254,6 +1405,7 @@ J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V49=\u5728\u7248\u672c\u4f4e\u65bc 49.0 \
 J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V49.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V49.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V49.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V51=\u5728\u7248\u672c\u4f4e\u65bc 51.0 \u7684\u985e\u5225\u6a94\u4e2d\uff0c\u5e38\u6578\u5132\u5b58\u5340\u9805\u76ee\u7121\u6548
@@ -1261,6 +1413,7 @@ J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V51=\u5728\u7248\u672c\u4f4e\u65bc 51.0 \
 J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V51.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V51.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V51.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V55=\u5728\u7248\u672c\u4f4e\u65bc 55.0 \u7684\u985e\u5225\u6a94\u4e2d\uff0c\u5e38\u6578\u5132\u5b58\u5340\u9805\u76ee\u7121\u6548
@@ -1268,6 +1421,7 @@ J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V55=\u5728\u7248\u672c\u4f4e\u65bc 55.0 \
 J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V55.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V55.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V55.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 #Example: JVMCFRE154 BootstrapMethod (0) arguments contain invalid constantpool entry at index (#20) of type (9); class=Foo, offset=492
@@ -1291,11 +1445,11 @@ J9NLS_CFR_ERR_VALUE_TYPES_IS_NOT_SUPPORTED.system_action=The JVM will throw a ve
 J9NLS_CFR_ERR_VALUE_TYPES_IS_NOT_SUPPORTED.user_response=Contact the provider of the classfile for a corrected version or use the -XX:+EnableValhalla option.
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_PREVIEW_VERSION=
+J9NLS_CFR_ERR_PREVIEW_VERSION=\u985e\u5225\u6a94\u662f\u9810\u89bd\u7248\u672c\uff0c\u4f46\u4e3b\u8981\u7248\u672c\u932f\u8aa4\uff0c\u6216\u8005\u672a\u555f\u7528\u9810\u89bd\u3002
 # START NON-TRANSLATABLE
-J9NLS_CFR_ERR_PREVIEW_VERSION.explanation=NOTAG
-J9NLS_CFR_ERR_PREVIEW_VERSION.system_action=
-J9NLS_CFR_ERR_PREVIEW_VERSION.user_response=
+J9NLS_CFR_ERR_PREVIEW_VERSION.explanation=Classfiles with minor version 65535 must have the same major version as the VM rumtime version and preview must be enabled
+J9NLS_CFR_ERR_PREVIEW_VERSION.system_action=The JVM will throw a verification or classloading-related exception.
+J9NLS_CFR_ERR_PREVIEW_VERSION.user_response=Run with the correct Java runtime version and use --enable-preview.
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_LVT_INDEX_OUTOFRANGE=LocalVariableTable \u4e2d\u7684\u7d22\u5f15\u8d85\u51fa\u7bc4\u570d
@@ -1418,6 +1572,7 @@ J9NLS_CFR_ERR_OUTER_CLASS_NAME_NOT_UTF8=\u5916\u90e8\u985e\u5225\u540d\u7a31\u5f
 J9NLS_CFR_ERR_OUTER_CLASS_NAME_NOT_UTF8.explanation=The outer class name of an InnerClasses attribute must be a string in the case of a non-zero outer class info index.
 J9NLS_CFR_ERR_OUTER_CLASS_NAME_NOT_UTF8.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_OUTER_CLASS_NAME_NOT_UTF8.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_OUTER_CLASS_UTF8_ZERO_LENGTH=InnerClasses \u5c6c\u6027\u4e2d\u5916\u90e8\u985e\u5225\u540d\u7a31\u7684\u9577\u5ea6\u70ba\u96f6
@@ -1425,6 +1580,7 @@ J9NLS_CFR_ERR_OUTER_CLASS_UTF8_ZERO_LENGTH=InnerClasses \u5c6c\u6027\u4e2d\u5916
 J9NLS_CFR_ERR_OUTER_CLASS_UTF8_ZERO_LENGTH.explanation=The outer class name of an InnerClasses attribute must be a non-zero UTF8 string.
 J9NLS_CFR_ERR_OUTER_CLASS_UTF8_ZERO_LENGTH.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_OUTER_CLASS_UTF8_ZERO_LENGTH.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_OUTER_CLASS_BAD_ARRAY_CLASS=\u5916\u90e8\u985e\u5225\u662f InnerClasses \u5c6c\u6027\u4e2d\u7684\u9663\u5217\u985e\u5225
@@ -1432,6 +1588,7 @@ J9NLS_CFR_ERR_OUTER_CLASS_BAD_ARRAY_CLASS=\u5916\u90e8\u985e\u5225\u662f InnerCl
 J9NLS_CFR_ERR_OUTER_CLASS_BAD_ARRAY_CLASS.explanation=The outer class of an InnerClasses attribute must be a non-array class.
 J9NLS_CFR_ERR_OUTER_CLASS_BAD_ARRAY_CLASS.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_OUTER_CLASS_BAD_ARRAY_CLASS.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_VALUE_FLAG_MISSING_ON_PRIMITIVE_CLASS=\u521d\u59cb\u985e\u5225\u4e0a\u907a\u6f0f\u5b58\u53d6\u65d7\u6a19 ACC_VALUE\u3002
@@ -1469,7 +1626,7 @@ J9NLS_CFR_ERR_PERMITS_VALUE_ON_NON_ABSTRACT_CLASS.system_action=The JVM will thr
 J9NLS_CFR_ERR_PERMITS_VALUE_ON_NON_ABSTRACT_CLASS.user_response=Contact the provider of the class file for a corrected version.
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_PERMITS_VALUE_ON_INTERFACE=\u4e0d\u5f97\u5728\u4ecb\u9762\u4e0a\u8a2d\u5b9a\u5b58\u53d6\u65d7\u6a19 ACC_PERMITS_VALUE\u3002
+J9NLS_CFR_ERR_PERMITS_VALUE_ON_INTERFACE=\u4e0d\u61c9\u5728\u4ecb\u9762\u4e0a\u8a2d\u5b9a\u5b58\u53d6\u65d7\u6a19 ACC_PERMITS_VALUE\u3002
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_PERMITS_VALUE_ON_INTERFACE.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_PERMITS_VALUE_ON_INTERFACE.system_action=The JVM will throw a verification or class loading-related exception such as java.lang.ClassFormatError.
@@ -1490,7 +1647,7 @@ J9NLS_CFR_ERR_MISSING_ACC_STATIC_ON_ABSTRACT_CLASS_FIELD.system_action=The JVM w
 J9NLS_CFR_ERR_MISSING_ACC_STATIC_ON_ABSTRACT_CLASS_FIELD.user_response=Contact the provider of the class file for a corrected version.
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_NON_STATIC_SYNCHRONIZED_VALUE_TYPE_METHOD=\u5728\u503c\u985e\u5225\u53ca\u5177\u6709 ACC_PERMITS_VALUE \u65d7\u6a19\u7684\u62bd\u8c61\u985e\u5225\u4e2d\uff0c synchronized \u65b9\u6cd5\u5fc5\u9808\u662f\u975c\u614b
+J9NLS_CFR_ERR_NON_STATIC_SYNCHRONIZED_VALUE_TYPE_METHOD=\u5728\u503c\u985e\u5225\u53ca\u5177\u6709 ACC_PERMITS_VALUE \u65d7\u6a19\u7684\u62bd\u8c61\u985e\u5225\u4e2d\uff0csynchronized \u65b9\u6cd5\u5fc5\u9808\u662f\u975c\u614b
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_NON_STATIC_SYNCHRONIZED_VALUE_TYPE_METHOD.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_NON_STATIC_SYNCHRONIZED_VALUE_TYPE_METHOD.system_action=The JVM will throw a verification or class loading-related exception such as java.lang.ClassFormatError.
@@ -1498,7 +1655,7 @@ J9NLS_CFR_ERR_NON_STATIC_SYNCHRONIZED_VALUE_TYPE_METHOD.user_response=Contact th
 # END NON-TRANSLATABLE
 
 # <new> is not translatable
-J9NLS_CFR_ERR_INVALID_FLAGS_ON_NEW=\u547d\u540d\u7684\u65b9\u6cd5<new>\u5fc5\u9808\u662f\u975c\u614b\u7684\uff0c\u4e0d\u80fd\u662f final\u3001synchronized\u3001native \u6216 abstract
+J9NLS_CFR_ERR_INVALID_FLAGS_ON_NEW=\u540d\u70ba <new> \u7684\u65b9\u6cd5\u5fc5\u9808\u662f\u975c\u614b\u7684\uff0c\u4e14\u4e0d\u80fd\u662f final\u3001synchronized\u3001native \u6216 abstract
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_INVALID_FLAGS_ON_NEW.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_INVALID_FLAGS_ON_NEW.system_action=The JVM will throw a verification or class loading-related exception such as java.lang.ClassFormatError.
@@ -1506,7 +1663,7 @@ J9NLS_CFR_ERR_INVALID_FLAGS_ON_NEW.user_response=Contact the provider of the cla
 # END NON-TRANSLATABLE
 
 # <init> is not translatable
-J9NLS_CFR_ERR_INIT_ON_VALUE_CLASS=\u7121\u6cd5\u547d\u540d\u503c\u985e\u5225\u7684\u65b9\u6cd5<init>
+J9NLS_CFR_ERR_INIT_ON_VALUE_CLASS=\u503c\u985e\u5225\u7684\u65b9\u6cd5\u7121\u6cd5\u547d\u540d\u70ba <init>
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_INIT_ON_VALUE_CLASS.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_INIT_ON_VALUE_CLASS.system_action=The JVM will throw a verification or class loading-related exception such as java.lang.ClassFormatError.
