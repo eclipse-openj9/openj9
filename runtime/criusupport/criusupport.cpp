@@ -413,6 +413,12 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 			nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_JCL_CRIU_DUMP_FAILED, NULL);
 			goto wakeJavaThreadsWithExclusiveVMAccess;
 		}
+		if (vm->portLibrary->checkpointRestoreTimeDelta < 0) {
+			currentExceptionClass = vm->criuRestoreExceptionClass;
+			nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
+					J9NLS_JCL_CRIU_NEGATIVE_CHECKPOINT_RESTORE_TIME_DELTA, NULL);
+			goto wakeJavaThreadsWithExclusiveVMAccess;
+		}
 
 		/* We can only end up here if the CRIU restore was successful */
 		isAfterCheckpoint = TRUE;
