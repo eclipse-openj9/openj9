@@ -824,26 +824,134 @@ bool TR_J9InterfaceCallSite::findCallSiteTargetImpl(TR_CallStack *callStack, TR_
    if (calleeResolvedMethod && !calleeResolvedMethod->virtualMethodIsOverridden())
       {
       TR_VirtualGuardKind kind = TR_ProfiledGuard;
+      TR_VirtualGuardTestType testType = TR_DummyTest;
+      TR_OpaqueClassBlock *thisClass = _receiverClass;
       if (_receiverClass != NULL
           && !TR::Compiler->cls.isInterfaceClass(comp(), _receiverClass))
          {
          kind = TR_InterfaceGuard;
+         testType = TR_MethodTest;
          }
       else
          {
-         // Profiled guard with method test must test for a method defined by a
-         // class that implements the expected interface. See the comment in
-         // TR_J9InterfaceCallSite::findCallSiteTarget().
+         // Whether to try to choose VFT test based on a non-extended defClass
+         // or based on profiling. This does not affect the final defClass
+         // heuristic because in that case we can be certain that the class
+         // won't be extended later.
+         bool useVftTestHeuristics = true;
+         TR::PersistentInfo *persistInfo = comp()->getPersistentInfo();
+         if (persistInfo->getJitState() == STARTUP_STATE)
+            {
+            const static bool useVftTestHeuristicsDuringStartup =
+               feGetEnv("TR_useInterfaceVftTestHeuristicsDuringStartup") != NULL;
+
+            useVftTestHeuristics = useVftTestHeuristicsDuringStartup;
+            }
+
+         // Profiled guards must guarantee that passing receivers are instances
+         // of some class that implements the expected interface. See the
+         // comment in TR_J9InterfaceCallSite::findCallSiteTarget().
+         //
+         // The choice of VFT test vs. method test is irrelevant here, as
+         // either one would accept instances of defClass. However, a VFT test
+         // obtained by consulting the profiled receiver types would work.
+         //
          TR_OpaqueClassBlock *defClass = calleeResolvedMethod->containingClass();
+         thisClass = defClass;
          TR_OpaqueClassBlock *iface = getClassFromMethod();
          if (fe()->isInstanceOf(defClass, iface, true, true, true) != TR_yes)
+            {
             calleeResolvedMethod = NULL; // hope to get a VFT test from profiling
+            }
+         // Heuristically choose between VFT test and method test. VFT test
+         // is cheaper, but method test can potentially allow the inlined
+         // body to be run for more receivers.
+         else if (TR::Compiler->cls.isClassFinal(comp(), defClass))
+            {
+            testType = TR_VftTest; // method test will never help
+            }
+         else if (useVftTestHeuristics && !fe()->classHasBeenExtended(defClass))
+            {
+            // Hope that defClass won't be extended in the future, or if it is,
+            // that its subtypes will override the inlined method anyway.
+            testType = TR_VftTest;
+            }
+         else
+            {
+            // There's already at least one subclass inheriting the single
+            // implementation. Choose method test because it covers the
+            // defining class and (so far) all of its subclasses. (If there
+            // were a subclass with its own override, then calleeResolvedMethod
+            // would be overridden.)
+            testType = TR_MethodTest;
+
+            // Still consult the profiling though, since it might reveal that
+            // one type is overwhelmingly frequent at this call site. In that
+            // case, change back to VFT test.
+            TR_ValueProfileInfoManager *profMgr =
+               TR_ValueProfileInfoManager::get(comp());
+
+            TR_AddressInfo *valueInfo = NULL;
+            if (profMgr != NULL)
+               {
+               valueInfo = static_cast<TR_AddressInfo*>(
+                  profMgr->getValueInfo(_bcInfo, comp(), AddressInfo));
+               }
+
+            if (useVftTestHeuristics
+                && valueInfo != NULL
+                && !comp()->getOption(TR_DisableProfiledInlining))
+               {
+               TR_ScratchList<TR_ExtraAddressInfo> byFreqDesc(comp()->trMemory());
+               valueInfo->getSortedList(comp(), &byFreqDesc);
+               ListIterator<TR_ExtraAddressInfo> it(&byFreqDesc);
+               uint32_t remainingTotalFreq = valueInfo->getTotalFrequency();
+               TR_OpaqueClassBlock *topProfiledClass = NULL;
+               uint32_t topProfiledFreq = 0;
+               TR_ExtraAddressInfo *cur = it.getFirst();
+               for (; cur != NULL; cur = it.getNext())
+                  {
+                  auto *curClass =
+                     reinterpret_cast<TR_OpaqueClassBlock*>(cur->_value);
+
+                  if (persistInfo->isObsoleteClass(curClass, comp()->fe())
+                      || fe()->isInstanceOf(curClass, iface, true, true, true) != TR_yes)
+                     {
+                     remainingTotalFreq -= cur->_frequency;
+                     }
+                  else if (topProfiledClass == NULL)
+                     {
+                     topProfiledClass = curClass;
+                     topProfiledFreq = cur->_frequency;
+                     }
+                  }
+
+               if (topProfiledClass != NULL
+                   && remainingTotalFreq >= 32
+                   && topProfiledFreq == remainingTotalFreq)
+                  {
+                  testType = TR_VftTest;
+                  thisClass = topProfiledClass;
+                  }
+               }
+            }
          }
 
       if (calleeResolvedMethod != NULL)
          {
-         TR_VirtualGuardSelection * guard = new (comp()->trHeapMemory()) TR_VirtualGuardSelection(kind, TR_MethodTest);
-         addTarget(comp()->trMemory(),inliner,guard,calleeResolvedMethod,_receiverClass,heapAlloc);
+         TR_ASSERT_FATAL(testType != TR_DummyTest, "failed to select a guard test type");
+         TR_VirtualGuardSelection *guard =
+            new (comp()->trHeapMemory()) TR_VirtualGuardSelection(
+               kind, testType, thisClass);
+
+         addTarget(
+            comp()->trMemory(),
+            inliner,
+            guard,
+            calleeResolvedMethod,
+            thisClass,
+            heapAlloc);
+
          heuristicTrace(inliner->tracer(),"Call is an Interface with a Single Implementer guard %p\n", guard);
          return true;
          }
