@@ -753,7 +753,7 @@ bool TR_J9InterfaceCallSite::findCallSiteTarget (TR_CallStack *callStack, TR_Inl
          TR_OpaqueClassBlock *passClass = NULL;
          TR_ResolvedMethod *callee = tgt->_calleeMethod;
          if (tgt->_guard->_type == TR_VftTest)
-            passClass = tgt->_guard->_thisClass;
+            passClass = tgt->_receiverClass;
          else
             passClass = callee->containingClass();
 
