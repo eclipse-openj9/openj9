@@ -21,14 +21,14 @@
  *******************************************************************************/
 #include <string.h>
 #include <stdlib.h>
-#include "jcl.h"
+#include "j9jclnls.h"
 #include "j9lib.h"
 #include "j9protos.h"
-#include "omrthread.h"
-#include "jclprots.h"
+#include "jcl.h"
 #include "jcl_internal.h"
+#include "jclprots.h"
+#include "omrthread.h"
 #include "ut_j9jcl.h"
-#include "j9jclnls.h"
 
 #include "VMHelpers.hpp"
 #include "ObjectMonitor.hpp"
@@ -403,12 +403,10 @@ jobject JNICALL
 Java_java_lang_Thread_currentCarrierThread(JNIEnv *env, jclass clazz)
 {
 	J9VMThread *currentThread = (J9VMThread*)env;
-	J9JavaVM *vm = currentThread->javaVM;
-	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
-
-	vmFuncs->internalEnterVMFromJNI(currentThread);
-	jobject result = vmFuncs->j9jni_createLocalRef(env, currentThread->threadObject);
-	vmFuncs->internalExitVMToJNI(currentThread);
+	VM_VMAccess::inlineEnterVMFromJNI(currentThread);
+	/* ToDo: change it to carrierThreadObject when it is set to a non-null value later */
+	jobject result = VM_VMHelpers::createLocalRef(env, currentThread->threadObject);
+	VM_VMAccess::inlineExitVMToJNI(currentThread);
 
 	return result;
 }
@@ -417,22 +415,32 @@ Java_java_lang_Thread_currentCarrierThread(JNIEnv *env, jclass clazz)
 void JNICALL
 Java_java_lang_Thread_setCurrentThread(JNIEnv *env, jclass clazz, jobject thread)
 {
-	Assert_JCL_unimplemented();
+	J9VMThread *currentThread = (J9VMThread*)env;
+	VM_VMAccess::inlineEnterVMFromJNI(currentThread);
+	currentThread->threadObject = J9_JNI_UNWRAP_REFERENCE(thread);
+	VM_VMAccess::inlineExitVMToJNI(currentThread);
 }
 
 /* static native Object[] extentLocalCache(); */
-jobject JNICALL
+jobjectArray JNICALL
 Java_java_lang_Thread_extentLocalCache(JNIEnv *env, jclass clazz)
 {
-	Assert_JCL_unimplemented();
-	return NULL;
+	J9VMThread *currentThread = (J9VMThread*)env;
+	VM_VMAccess::inlineEnterVMFromJNI(currentThread);
+	jobjectArray result = (jobjectArray)VM_VMHelpers::createLocalRef(env, currentThread->extentLocalCache);
+	VM_VMAccess::inlineExitVMToJNI(currentThread);
+
+	return result;
 }
 
 /* static native void setExtentLocalCache(Object[] cache); */
 void JNICALL
 Java_java_lang_Thread_setExtentLocalCache(JNIEnv *env, jclass clazz, jobjectArray cache)
 {
-	Assert_JCL_unimplemented();
+	J9VMThread *currentThread = (J9VMThread*)env;
+	VM_VMAccess::inlineEnterVMFromJNI(currentThread);
+	currentThread->extentLocalCache = J9_JNI_UNWRAP_REFERENCE(cache);
+	VM_VMAccess::inlineExitVMToJNI(currentThread);
 }
 
 /* private static native StackTraceElement[][] dumpThreads(Thread[] threads); */

@@ -5111,6 +5111,10 @@ typedef struct J9VMThread {
 	U_64 *ffiArgs;
 	UDATA ffiArgCount;
 #endif /* JAVA_SPEC_VERSION >= 16 */
+#if JAVA_SPEC_VERSION >= 19
+	j9object_t carrierThreadObject;
+	j9object_t extentLocalCache;
+#endif /* JAVA_SPEC_VERSION >= 19 */
 } J9VMThread;
 
 #define J9VMTHREAD_ALIGNMENT  0x100
