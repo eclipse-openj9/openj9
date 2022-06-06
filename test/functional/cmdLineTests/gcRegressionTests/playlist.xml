@@ -31,7 +31,7 @@
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -DTESTSJARPATH=$(Q)$(TEST_RESROOT)$(D)gcRegressionTests.jar$(Q) -DRESJAR=$(CMDLINETESTER_RESJAR) \
 		-DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS)$(SQ) -jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)gcRegressionTests.xml$(Q) \
-		-explainExcludes -xids all,$(PLATFORM),$(VARIATION) -plats all,$(PLATFORM),$(VARIATION) -xlist $(Q)$(TEST_RESROOT)$(D)gcRegressionTests_excludes.xml$(Q) -nonZeroExitWhenError; \
+		-explainExcludes -xids all,$(PLATFORM),$(VARIATION),$(JDK_VERSION) -plats all,$(PLATFORM),$(VARIATION) -xlist $(Q)$(TEST_RESROOT)$(D)gcRegressionTests_excludes.xml$(Q) -nonZeroExitWhenError; \
 		$(TEST_STATUS)</command>
 		<levels>
 			<level>sanity</level>
@@ -95,7 +95,7 @@
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -DTESTSJARPATH=$(Q)$(TEST_RESROOT)$(D)gcRegressionTests.jar$(Q) -DRESJAR=$(CMDLINETESTER_RESJAR) \
 		-DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS)$(SQ) -jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)gcRegressionTests.xml$(Q) \
-		-explainExcludes -xids all,$(PLATFORM),Mode301 -plats all,$(PLATFORM),Mode301 -xlist $(Q)$(TEST_RESROOT)$(D)gcRegressionTests_excludes.xml$(Q) -explainExcludes -nonZeroExitWhenError; \
+		-explainExcludes -xids all,$(PLATFORM),Mode301,$(JDK_VERSION) -plats all,$(PLATFORM),Mode301 -xlist $(Q)$(TEST_RESROOT)$(D)gcRegressionTests_excludes.xml$(Q) -explainExcludes -nonZeroExitWhenError; \
 		$(TEST_STATUS)</command>
 		<levels>
 			<level>sanity</level>
