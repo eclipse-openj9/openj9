@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2016 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -59,6 +59,12 @@ GC_VMThreadSlotIterator::nextSlot()
 		return (j9object_t *)&(_vmThread->omrVMThread->_savedObject1);
 	case 9:
 		return (j9object_t *)&(_vmThread->omrVMThread->_savedObject2);
+#if JAVA_SPEC_VERSION >= 19
+	case 10:
+		return &(_vmThread->carrierThreadObject);
+	case 11:
+		return &(_vmThread->extentLocalCache);
+#endif /* JAVA_SPEC_VERSION >= 19 */
 	default:
 		break;
 	}
