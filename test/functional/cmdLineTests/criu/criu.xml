@@ -28,7 +28,7 @@
   <variable name="MAINCLASS_SIMPLE" value="org.openj9.criu.CRIUSimpleTest" />
 
   <test id="Create and Restore Criu Checkpoint Image once">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ $JVM_OPTIONS$ $MAINCLASS_SIMPLE$ SingleCheckpoint</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ $JVM_OPTIONS$ $MAINCLASS_SIMPLE$ 1 false</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
     <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
     <output type="required" caseSensitive="yes" regex="no">Post-checkpoint</output>
@@ -38,7 +38,7 @@
   </test>
 
   <test id="Create and Restore Criu Checkpoint Image twice">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ $JVM_OPTIONS$ $MAINCLASS_SIMPLE$ TwoCheckpoints</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ $JVM_OPTIONS$ $MAINCLASS_SIMPLE$ 2 false</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
     <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
     <output type="required" caseSensitive="yes" regex="no">Post-checkpoint 1</output>
@@ -49,7 +49,7 @@
   </test>
 
   <test id="Create and Restore Criu Checkpoint Image three times">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ $JVM_OPTIONS$ $MAINCLASS_SIMPLE$ ThreeCheckpoints</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ $JVM_OPTIONS$ $MAINCLASS_SIMPLE$ 3 false</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
     <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
     <output type="required" caseSensitive="yes" regex="no">Post-checkpoint 1</output>
