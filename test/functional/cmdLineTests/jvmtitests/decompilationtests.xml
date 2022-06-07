@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
 
 <!--
-  Copyright (c) 2004, 2020 IBM Corp. and others
+  Copyright (c) 2004, 2022 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,7 +24,7 @@
 
 <!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
 
-<suite id="Decompilation Tests" timeout="300"> <!-- CMVC 161669: some machines take a long time to run decomp002 -->
+<suite id="Decompilation Tests" timeout="600"> <!-- CMVC 161669: some machines take a long time to run decomp002 -->
 	<variable name="JVM_OPTS" value="-Xdump:system:events=abort " />
 	<variable name="AGENTLIB" value="-agentlib:jvmtitest" />
 	<variable name="TESTRUNNER" value="com.ibm.jvmti.tests.util.TestRunner" />
