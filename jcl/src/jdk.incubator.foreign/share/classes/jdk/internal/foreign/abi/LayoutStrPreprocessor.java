@@ -1,4 +1,4 @@
-/*[INCLUDE-IF JAVA_SPEC_VERSION >= 16]*/
+/*[INCLUDE-IF (JAVA_SPEC_VERSION >= 16) & (JAVA_SPEC_VERSION <= 18) ]*/
 /*******************************************************************************
  * Copyright (c) 2021, 2022 IBM Corp. and others
  *
@@ -125,7 +125,13 @@ final class LayoutStrPreprocessor {
 			SequenceLayout arrayLayout = (SequenceLayout)targetLayout;
 			MemoryLayout elementLayout = arrayLayout.elementLayout();
 			long elementCount = arrayLayout.elementCount().getAsLong();
-			targetLayoutString.append(elementCount).append(':').append(preprocessLayout(elementLayout, isDownCall));
+
+			/* The padding bytes is required in the native signature for upcall thunk generation */
+			if (elementLayout.isPadding() && !isDownCall) {
+				targetLayoutString.append('(').append(arrayLayout.byteSize()).append(')');
+			} else {
+				targetLayoutString.append(elementCount).append(':').append(preprocessLayout(elementLayout, isDownCall));
+			}
 		} else if (targetLayout instanceof GroupLayout) { // Intended for the nested structs
 			GroupLayout structLayout = (GroupLayout)targetLayout;
 			List<MemoryLayout> elementLayoutList = structLayout.memberLayouts();
@@ -137,7 +143,7 @@ final class LayoutStrPreprocessor {
 				/* Ignore any padding element in the struct as it is handled by ffi_call by default */
 				if (structElement.isPadding()) {
 					paddingElements += 1;
-					/* The padding bytes is required in native during the upcall */
+					/* The padding bytes is required in the native signature for upcall thunk generation */
 					if (!isDownCall) {
 						elementLayoutStrs.append('(').append(structElement.byteSize()).append(')');
 					}
