@@ -575,11 +575,19 @@ final class Access implements JavaLangAccess {
 	}
 
 	public void parkVirtualThread() {
-		throw new UnsupportedOperationException();
+		if (Thread.currentThread() instanceof BaseVirtualThread bvt) {
+			bvt.park();
+		} else {
+			throw new WrongThreadException();
+		}
 	}
 
 	public void parkVirtualThread(long nanos) {
-		throw new UnsupportedOperationException();
+		if (Thread.currentThread() instanceof BaseVirtualThread bvt) {
+			bvt.parkNanos(nanos);
+		} else {
+			throw new WrongThreadException();
+		}
 	}
 
 	public void unparkVirtualThread(Thread thread) {
