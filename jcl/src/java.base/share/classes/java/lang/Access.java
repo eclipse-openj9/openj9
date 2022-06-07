@@ -591,9 +591,10 @@ final class Access implements JavaLangAccess {
 	}
 
 	public void unparkVirtualThread(Thread thread) {
-		if (thread.isVirtual()) {
-			VirtualThread t = (VirtualThread)thread;
-			t.unpark();
+		if (thread instanceof BaseVirtualThread bvt) {
+			bvt.unpark();
+		} else {
+			throw new WrongThreadException();
 		}
 	}
 
