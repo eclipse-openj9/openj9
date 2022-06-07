@@ -364,7 +364,8 @@ You must install a number of software dependencies to create a suitable build en
 - [Cygwin for 64-bit versions of Windows](https://cygwin.com/install.html), which provides a Unix-style command line interface. Install all packages in the `Devel` category. In the `Archive` category, install the packages `zip` and `unzip`. In the `Utils` category, install the `cpio` package. Install any further package dependencies that are identified by the installer. More information about using Cygwin can be found [here](https://cygwin.com/docs.html).
 - [Windows JDK 8](https://api.adoptopenjdk.net/v3/binary/latest/8/ga/windows/x64/jdk/openj9/normal/adoptopenjdk), which is used as the boot JDK.
 - [Windows SDK 7 Debugging tools](https://www.microsoft.com/download/confirmation.aspx?id=8279).
-- [Microsoft Visual Studio 2013 Professional](https://www.visualstudio.com/vs/older-downloads/).
+- [Microsoft Visual Studio 2013 Professional](https://www.visualstudio.com/vs/older-downloads/) OR
+- [Microsoft Visual Studio 2017](https://visualstudio.microsoft.com/thank-you-downloading-visual-studio/?sku=Community&rel=15), the OpenJ9 project is using this level.
 - [Freemarker V2.3.8](https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download) - only when building with `--with-cmake=no`
 - [Freetype2 V2.5.3](https://www.freetype.org/)
 - [LLVM/Clang 64bit](http://releases.llvm.org/7.0.0/LLVM-7.0.0-win64.exe) or [LLVM/Clang 32bit](http://releases.llvm.org/7.0.0/LLVM-7.0.0-win32.exe)
@@ -389,11 +390,18 @@ set INCLUDE=C:\Program Files\Debugging Tools for Windows (x64)\sdk\inc;%INCLUDE%
 set LIB=C:\Program Files\Debugging Tools for Windows (x64)\sdk\lib;%LIB%
 ```
 
-Not all of the shared libraries that are included with Visual Studio 2013 are registered during installation.
-In particular, the `msdia120.dll` libraries must be registered manually by running command prompt as administrator.  To do so, execute the following from a command prompt:
+Not all of the shared libraries that are included with Visual Studio 2013 or 2017 are registered during installation.
+In particular, the `msdia120.dll` or `msdia140.dll` libraries must be registered manually by running command prompt as administrator.  To do so, execute the following from a command prompt:
+
+VS2013:
 ```
 regsvr32 "C:\Program Files (x86)\Microsoft Visual Studio 12.0\DIA SDK\bin\msdia120.dll"
 regsvr32 "C:\Program Files (x86)\Microsoft Visual Studio 12.0\DIA SDK\bin\amd64\msdia120.dll"
+```
+VS2017:
+```
+regsvr32 "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\DIA SDK\bin\msdia140.dll"
+regsvr32 "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\DIA SDK\bin\amd64\msdia140.dll"
 ```
 
 You can download Freetype manually or obtain it using the [wget](http://www.gnu.org/software/wget/faq.html#download) utility. If you choose to use `wget`, follow these steps:
