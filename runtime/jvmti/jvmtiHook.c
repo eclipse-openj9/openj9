@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -145,6 +145,10 @@ static void jvmtiHookGetEnv (J9HookInterface** hook, UDATA eventNum, void* event
 static void jvmtiHookVmDumpStart (J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData);
 static void jvmtiHookVmDumpEnd (J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData);
 static UDATA methodExists(J9Class * methodClass, U_8 * nameData, UDATA nameLength, J9UTF8 * signature);
+#if JAVA_SPEC_VERSION >= 19
+static void jvmtiHookVirtualThreadStarted (J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData);
+static void jvmtiHookVirtualThreadEnd (J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData);
+#endif /* JAVA_SPEC_VERSION >= 19 */
 
 static void
 jvmtiHookThreadEnd(J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData)
@@ -337,6 +341,69 @@ jvmtiHookMethodEnter(J9HookInterface** hook, UDATA eventNum, void* eventData, vo
 	TRACE_JVMTI_EVENT_RETURN(jvmtiHookMethodEnter);
 }
 
+#if JAVA_SPEC_VERSION >= 19
+static void
+jvmtiHookVirtualThreadStarted(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData)
+{
+	J9VirtualThreadStartedEvent *data = eventData;
+	J9JVMTIEnv *j9env = userData;
+	jvmtiEventThreadStart callback = j9env->callbacks.VirtualThreadStart;
+	J9VMThread *currentThread = data->currentThread;
+
+	Trc_JVMTI_jvmtiHookVirtualThreadStarted_Entry();
+
+	ENSURE_EVENT_PHASE_START_OR_LIVE(jvmtiHookVirtualThreadStarted, j9env);
+
+	/* Call the event callback */
+
+	if (NULL != callback) {
+		jthread threadRef = NULL;
+		UDATA hadVMAccess = 0;
+		UDATA javaOffloadOldState = 0;
+
+		if (prepareForEvent(
+			j9env, currentThread, currentThread, JVMTI_EVENT_VIRTUAL_THREAD_START,
+			&threadRef, &hadVMAccess, FALSE, 0, &javaOffloadOldState)
+		) {
+			callback((jvmtiEnv *)j9env, (JNIEnv *)currentThread, threadRef);
+			finishedEvent(currentThread, JVMTI_EVENT_VIRTUAL_THREAD_START, hadVMAccess, javaOffloadOldState);
+		}
+	}
+
+	TRACE_JVMTI_EVENT_RETURN(jvmtiHookVirtualThreadStarted);
+}
+
+static void
+jvmtiHookVirtualThreadEnd(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData)
+{
+	J9VirtualThreadEndEvent *data = eventData;
+	J9JVMTIEnv *j9env = userData;
+	jvmtiEventThreadEnd callback = j9env->callbacks.VirtualThreadEnd;
+	J9VMThread *currentThread = data->currentThread;
+
+	Trc_JVMTI_jvmtiHookVirtualThreadEnd_Entry();
+
+	ENSURE_EVENT_PHASE_START_OR_LIVE(jvmtiHookVirtualThreadEnd, j9env);
+
+	/* Call the event callback */
+
+	if (NULL != callback) {
+		jthread threadRef = NULL;
+		UDATA hadVMAccess = 0;
+		UDATA javaOffloadOldState = 0;
+
+		if (prepareForEvent(
+			j9env, currentThread, currentThread, JVMTI_EVENT_VIRTUAL_THREAD_END,
+			&threadRef, &hadVMAccess, FALSE, 0, &javaOffloadOldState)
+		) {
+			callback((jvmtiEnv *)j9env, (JNIEnv *)currentThread, threadRef);
+			finishedEvent(data->currentThread, JVMTI_EVENT_VIRTUAL_THREAD_END, hadVMAccess, javaOffloadOldState);
+		}
+	}
+
+	TRACE_JVMTI_EVENT_RETURN(jvmtiHookVirtualThreadEnd);
+}
+#endif /* JAVA_SPEC_VERSION >= 19 */
 
 static IDATA
 hookRegister(J9JVMTIHookInterfaceWithID* hookInterfaceWithID, UDATA eventNum, J9HookFunction function, const char *callsite, void *userData)
@@ -450,8 +517,16 @@ processEvent(J9JVMTIEnv* j9env, jint event, J9HookRedirectorFunction redirectorF
 			J9JVMTIHookInterfaceWithID * gcHook = &j9env->gcHook;
 			return redirectorFunction(gcHook, J9HOOK_MM_OBJECT_ALLOCATION_SAMPLING, jvmtiHookSampledObjectAlloc, OMR_GET_CALLSITE(), j9env);
 		}
-
 #endif /* JAVA_SPEC_VERSION >= 11 */
+
+#if JAVA_SPEC_VERSION >= 19
+		case JVMTI_EVENT_VIRTUAL_THREAD_START:
+			return redirectorFunction(vmHook, J9HOOK_VM_VIRTUAL_THREAD_STARTED, jvmtiHookVirtualThreadStarted, OMR_GET_CALLSITE(), j9env);
+
+		case JVMTI_EVENT_VIRTUAL_THREAD_END:
+			return redirectorFunction(vmHook, J9HOOK_VM_VIRTUAL_THREAD_END, jvmtiHookVirtualThreadEnd, OMR_GET_CALLSITE(), j9env);
+#endif /* JAVA_SPEC_VERSION >= 19 */
+
 		case JVMTI_EVENT_NATIVE_METHOD_BIND:
 			return redirectorFunction(vmHook, J9HOOK_VM_JNI_NATIVE_BIND, jvmtiHookJNINativeBind, OMR_GET_CALLSITE(), j9env);
 

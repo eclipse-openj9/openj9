@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-Copyright (c) 2006, 2021 IBM Corp. and others
+Copyright (c) 2006, 2022 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1331,6 +1331,24 @@ typedef UDATA (* lookupNativeAddressCallback)(struct J9VMThread *currentThread, 
 		<name>J9HOOK_VM_PREPARING_FOR_RESTORE</name>
 		<description>Triggered as the JVM is preparing to restore from a checkpointed JVM</description>
 		<struct>J9RestoreEvent</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
+	</event>
+
+	<event>
+		<name>J9HOOK_VM_VIRTUAL_THREAD_STARTED</name>
+		<description>
+			Triggered once the virtual thread is ready to run. At this point the virtual thread has an object associated with it.
+		</description>
+		<struct>J9VirtualThreadStartedEvent</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
+	</event>
+
+	<event>
+		<name>J9HOOK_VM_VIRTUAL_THREAD_END</name>
+		<description>
+			Triggered when a virtual thread is about to die.
+		</description>
+		<struct>J9VirtualThreadEndEvent</struct>
 		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
 	</event>
 </interface>

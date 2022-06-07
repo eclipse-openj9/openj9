@@ -187,6 +187,14 @@ jvmtiGetPotentialCapabilities(jvmtiEnv* env, jvmtiCapabilities* capabilities_ptr
 	}
 #endif /* JAVA_SPEC_VERSION >= 11 */
 
+#if JAVA_SPEC_VERSION >= 19
+	if (isEventHookable(j9env, JVMTI_EVENT_VIRTUAL_THREAD_START)
+	&& isEventHookable(j9env, JVMTI_EVENT_VIRTUAL_THREAD_END)
+	) {
+		rv_capabilities.can_support_virtual_threads = 1;
+	}
+#endif /* JAVA_SPEC_VERSION >= 19 */
+
 	if (isEventHookable(j9env, JVMTI_EVENT_NATIVE_METHOD_BIND)) {
 		rv_capabilities.can_generate_native_method_bind_events = 1;
 	}
@@ -590,6 +598,13 @@ mapCapabilitiesToEvents(J9JVMTIEnv * j9env, jvmtiCapabilities * capabilities, J9
 		rc |= eventHookFunction(j9env, JVMTI_EVENT_SAMPLED_OBJECT_ALLOC);
 	}
 #endif /* JAVA_SPEC_VERSION >= 11 */
+
+#if JAVA_SPEC_VERSION >= 19
+	if (capabilities->can_support_virtual_threads) {
+		rc |= eventHookFunction(j9env, JVMTI_EVENT_VIRTUAL_THREAD_START);
+		rc |= eventHookFunction(j9env, JVMTI_EVENT_VIRTUAL_THREAD_END);
+	}
+#endif /* JAVA_SPEC_VERSION >= 19 */
 
 	if (capabilities->can_generate_object_free_events) {
 		rc |= eventHookFunction(j9env, JVMTI_EVENT_OBJECT_FREE);
