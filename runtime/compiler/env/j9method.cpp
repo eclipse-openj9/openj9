@@ -3694,9 +3694,9 @@ void TR_ResolvedJ9Method::construct()
 
    static X InvokersMethods[] =
       {
-      {x(TR::java_lang_invoke_Invokers_checkCustomized,                    "checkCustomized",             "(Ljava/lang/invoke/MethodHandle;)V")},
-      {x(TR::java_lang_invoke_Invokers_checkExactType,                     "checkExactType",              "(Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)V")},
-      {x(TR::java_lang_invoke_Invokers_getCallSiteTarget,                  "getCallSiteTarget",           "(Ljava/lang/invoke/CallSite;)Ljava/lang/invoke/MethodHandle;")},
+      {TR::java_lang_invoke_Invokers_checkCustomized,            15,       "checkCustomized",             (int16_t)-1, "*"},
+      {TR::java_lang_invoke_Invokers_checkExactType,             14,       "checkExactType",              (int16_t)-1, "*"},
+      {TR::java_lang_invoke_Invokers_getCallSiteTarget,          17,       "getCallSiteTarget",           (int16_t)-1, "*"},
       {TR::unknownMethod}
       };
 
