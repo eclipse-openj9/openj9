@@ -26,6 +26,7 @@
 #include "codegen/PrivateLinkage.hpp"
 #include "env/jittypes.h"
 #include "env/CompilerEnv.hpp"
+#include "env/ObjectModel.hpp"
 #include "runtime/CodeCacheManager.hpp"
 #include "runtime/CodeCache.hpp"
 #include "runtime/CodeRuntime.hpp"
@@ -1003,6 +1004,74 @@ void arm64CreateMethodTrampoline(void *trampPtr, void *startPC, void *method)
 #endif
    }
 
+#define ARM64_INSTRUCTION_LENGTH 4
+
+/**
+ * @brief Answers if the callSite is interface call via cache slots
+ *
+ * @param[in]  callSite:             address of the branch instruction at the caller method
+ * @param[out] addrOfFirstClassSlot: address of the first class cache slot
+ * @return true if the callSite is interface call via cache slots
+ */
+static bool isInterfaceCallSite(uint8_t *callSite, intptr_t& addrOfFirstClassSlot)
+   {
+   /*
+    *  Following instruction sequence is used for interface call.
+    *  We can assume tmpReg is x9.
+    *  Searching for the last 4 instructions
+    *
+    *  ldrx tmpReg, L_firstClassCacheSlot
+    *  cmpx vftReg, tmpReg
+    *  ldrx tmpReg, L_firstBranchAddressCacheSlot
+    *  beq  hitLabel
+    *  ldrx tmpReg, L_secondClassCacheSlot
+    *  cmpx vftReg, tmpReg
+    *  bne  snippetLabel
+    *  ldrx tmpReg, L_secondBranchAddressCacheSlot
+    * hitLabel:
+    *  blr  tmpReg
+    * doneLabel:
+    */
+
+   int32_t blrInstr = *reinterpret_cast<int32_t *>(callSite);
+   /* Check if the instruction at the callSite is 'blr x9' */
+   if (blrInstr != 0xd63f0120)
+      {
+      return false;
+      }
+
+   int32_t ldrInst = *reinterpret_cast<int32_t *>(callSite - ARM64_INSTRUCTION_LENGTH);
+   /* Check if the instruction before blr is 'ldrx x9, label' */
+   if ((ldrInst & 0xff00001f) != 0x58000009)
+      {
+      return false;
+      }
+   /* distance is encoded in bit 5-23 */
+   int64_t distance = ((ldrInst << 8) >> 13) * 4;
+   intptr_t secondBranchAddressSlotAddr = reinterpret_cast<intptr_t>(callSite) - ARM64_INSTRUCTION_LENGTH + distance;
+   //     The layout of the cache slots is as follows:
+   //     +---------+---------------+---------+---------------+
+   //     |  class1 |method address1|  class2 |method address2|
+   //     +---------+---------------+---------+---------------+
+   addrOfFirstClassSlot = secondBranchAddressSlotAddr - sizeof(intptr_t) * 3;
+
+   int32_t bneInst = *reinterpret_cast<int32_t *>(callSite - ARM64_INSTRUCTION_LENGTH * 2);
+   /* Check if the instruction before ldr is 'bne' */
+   if ((bneInst & 0xff00001f) != 0x54000001)
+      {
+      return false;
+      }
+
+   int32_t cmpInst = *reinterpret_cast<int32_t *>(callSite - ARM64_INSTRUCTION_LENGTH * 3);
+   /* Check if the instruction before bne is 'cmp vftReg, x9' */
+   if ((cmpInst & 0xfffffc1f) != 0xeb09001f)
+      {
+      return false;
+      }
+
+   return true;
+   }
+
 bool arm64CodePatching(void *callee, void *callSite, void *currentPC, void *currentTramp, void *newAddrOfCallee, void *extra)
    {
    J9::PrivateLinkage::LinkageInfo *linkInfo = J9::PrivateLinkage::LinkageInfo::get(newAddrOfCallee);
@@ -1011,62 +1080,87 @@ bool arm64CodePatching(void *callee, void *callSite, void *currentPC, void *curr
    int32_t         currentDistance;
    int32_t         branchInstr = *(int32_t *)callSite;
    void           *newTramp;
+   intptr_t       addrOfFirstClassSlot;
 
    distance = entryAddress - (uint8_t *)callSite;
    currentDistance = (branchInstr << 6) >> 4;
    branchInstr &= 0xfc000000;
 
-   if (branchInstr != 0x94000000)
+   if (branchInstr == 0x94000000)
       {
-      // This is not a 'bl' instruction -- Don't patch
-      return true;
-      }
-
-   if (TR::Options::getCmdLineOptions()->getOption(TR_StressTrampolines)
-            || distance>(intptr_t)TR::Compiler->target.cpu.maxUnconditionalBranchImmediateForwardOffset()
-            || distance<(intptr_t)TR::Compiler->target.cpu.maxUnconditionalBranchImmediateBackwardOffset()
-   )  {
-      if (currentPC == newAddrOfCallee)
-         {
-         newTramp = currentTramp;
-         }
-      else
-         {
-         newTramp = mcc_replaceTrampoline(reinterpret_cast<TR_OpaqueMethodBlock *>(callee), callSite, currentTramp, currentPC, newAddrOfCallee, false);
-         TR_ASSERT_FATAL(newTramp != NULL, "Internal error: Could not replace trampoline.\n");
-
-         if (currentTramp == NULL)
+      /* bl instruction */
+      if (TR::Options::getCmdLineOptions()->getOption(TR_StressTrampolines)
+               || distance>(intptr_t)TR::Compiler->target.cpu.maxUnconditionalBranchImmediateForwardOffset()
+               || distance<(intptr_t)TR::Compiler->target.cpu.maxUnconditionalBranchImmediateBackwardOffset()
+      )  {
+         if (currentPC == newAddrOfCallee)
             {
-            arm64CreateMethodTrampoline(newTramp, newAddrOfCallee, callee);
+            newTramp = currentTramp;
             }
          else
             {
+            newTramp = mcc_replaceTrampoline(reinterpret_cast<TR_OpaqueMethodBlock *>(callee), callSite, currentTramp, currentPC, newAddrOfCallee, false);
+            TR_ASSERT_FATAL(newTramp != NULL, "Internal error: Could not replace trampoline.\n");
+
+            if (currentTramp == NULL)
+               {
+               arm64CreateMethodTrampoline(newTramp, newAddrOfCallee, callee);
+               }
+            else
+               {
 #if defined(OSX) && defined(AARCH64)
-            pthread_jit_write_protect_np(0);
+               pthread_jit_write_protect_np(0);
 #endif
-            *((uint64_t*)currentTramp+1) = (uint64_t)entryAddress;
+               *((uint64_t*)currentTramp+1) = (uint64_t)entryAddress;
 #if defined(TR_HOST_ARM64)
-            arm64CodeSync((uint8_t*)currentTramp+8, 8);
+               arm64CodeSync((uint8_t*)currentTramp+8, 8);
 #endif
 #if defined(OSX) && defined(AARCH64)
-            pthread_jit_write_protect_np(1);
+               pthread_jit_write_protect_np(1);
 #endif
+               }
             }
+
+         distance = (uint8_t *)newTramp - (uint8_t *)callSite;
          }
 
-      distance = (uint8_t *)newTramp - (uint8_t *)callSite;
+      if (currentDistance != distance)
+         {
+         branchInstr |= (distance >> 2) & 0x03ffffff;
+#if defined(OSX) && defined(AARCH64)
+         pthread_jit_write_protect_np(0);
+#endif
+         *(int32_t *)callSite = branchInstr;
+#if defined(TR_HOST_ARM64)
+         arm64CodeSync((uint8_t*)callSite, 4);
+#endif
+#if defined(OSX) && defined(AARCH64)
+         pthread_jit_write_protect_np(1);
+#endif
+         }
       }
-
-   if (currentDistance != distance)
+   else if (isInterfaceCallSite(static_cast<uint8_t *>(callSite), addrOfFirstClassSlot))
       {
-      branchInstr |= (distance >> 2) & 0x03ffffff;
+      /* extra contains the java stack address where registers are saved. See _samplingPatchCallSite. */
+
+      const intptr_t *obj = *reinterpret_cast<intptr_t **>(extra);
+      const void *classslot = reinterpret_cast<const int8_t *>(obj) + TR::Compiler->om.offsetOfObjectVftField();
+
+      intptr_t currentReceiverJ9Class = TR::Compiler->om.compressObjectReferences() ? *static_cast<const uint32_t *>(classslot) : *static_cast<const intptr_t *>(classslot);
+      // Throwing away the flag bits in CLASS slot
+      currentReceiverJ9Class &= TR::Compiler->om.maskOfObjectVftField();
+
 #if defined(OSX) && defined(AARCH64)
       pthread_jit_write_protect_np(0);
 #endif
-      *(int32_t *)callSite = branchInstr;
-#if defined(TR_HOST_ARM64)
-      arm64CodeSync((uint8_t*)callSite, 4);
-#endif
+      if (*reinterpret_cast<intptr_t *>(addrOfFirstClassSlot) == currentReceiverJ9Class)
+         {
+         *reinterpret_cast<intptr_t *>(addrOfFirstClassSlot + sizeof(intptr_t)) = reinterpret_cast<intptr_t>(entryAddress);
+         }
+      else if (*reinterpret_cast<intptr_t *>(addrOfFirstClassSlot + sizeof(intptr_t) * 2) == currentReceiverJ9Class) /* Checking the second cache slot */
+         {
+         *reinterpret_cast<intptr_t *>(addrOfFirstClassSlot + sizeof(intptr_t) * 3) = reinterpret_cast<intptr_t>(entryAddress);
+         }
 #if defined(OSX) && defined(AARCH64)
       pthread_jit_write_protect_np(1);
 #endif
