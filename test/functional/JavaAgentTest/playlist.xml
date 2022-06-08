@@ -89,6 +89,12 @@
 	</test>
 	<test>
 		<testCaseName>TestRefreshGCSpecialClassesCache_NOBCI_JIT_ON</testCaseName>
+		<disables>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/15272</comment>
+				<version>19+</version>
+			</disable>
+		</disables>
 		<variations>
 			<variation>Mode107</variation>
 		</variations>
@@ -117,6 +123,12 @@
 	</test>
 	<test>
 		<testCaseName>TestRefreshGCSpecialClassesCache_BCI_FAST_HCR</testCaseName>
+		<disables>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/15272</comment>
+				<version>19+</version>
+			</disable>
+		</disables>
 		<variations>
 			<variation>NoOptions</variation>
 			<variation>Mode100</variation>
@@ -179,6 +191,10 @@
 			<disable>
 				<comment>https://github.com/eclipse-openj9/openj9/issues/12878</comment>
 				<testflag>VTSTANDARD</testflag>
+			</disable>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/15272</comment>
+				<version>19+</version>
 			</disable>
 		</disables>
 	</test>

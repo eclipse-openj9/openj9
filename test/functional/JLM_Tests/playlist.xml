@@ -1152,9 +1152,14 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-	<!-- Exclude testOpenJ9DiagnosticsMXBean test on win32: https://github.com/eclipse-openj9/openj9/issues/2213-->
 	<test>
 		<testCaseName>testOpenJ9DiagnosticsMXBean</testCaseName>
+		<disables>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/10922</comment>
+				<version>19+</version>
+			</disable>
+		</disables>
 		<variations>
 			<variation>NoOptions</variation>
 		</variations>
