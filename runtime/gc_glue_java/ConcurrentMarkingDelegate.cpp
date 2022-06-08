@@ -460,7 +460,7 @@ MM_ConcurrentMarkingDelegate::acquireExclusiveVMAccessAndSignalThreadsToActivate
 	_collector->acquireExclusiveVMAccessAndSignalThreadsToActivateWriteBarrier(env);
 	VM_VMAccess::clearPublicFlags(vmThread, J9_PUBLIC_FLAGS_NOT_AT_SAFE_POINT);
 
-	if (J9_ARE_ANY_BITS_SET(vmThread->publicFlags, J9_PUBLIC_FLAGS_HALT_THREAD_ANY)) {
+	if (J9_ARE_ANY_BITS_SET(vmThread->publicFlags, J9_PUBLIC_FLAGS_HALT_THREAD_ANY) && (0 == vmThread->omrVMThread->exclusiveCount)) {
 		vmThread->javaVM->internalVMFunctions->internalReleaseVMAccess(vmThread);
 		vmThread->javaVM->internalVMFunctions->internalAcquireVMAccess(vmThread);
 	}
