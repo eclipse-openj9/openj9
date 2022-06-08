@@ -193,6 +193,63 @@
 	</test>
 	<test>
 		<testCaseName>cmdLineTester_jvmtitests_debug</testCaseName>
+		<disables>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/15152</comment>
+				<version>19+</version>
+				<variation>Mode107</variation>
+			</disable>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/15152</comment>
+				<version>19+</version>
+				<variation>Mode108</variation>
+			</disable>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/15152</comment>
+				<version>19+</version>
+				<variation>Mode154</variation>
+			</disable>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/15152</comment>
+				<version>19+</version>
+				<variation>Mode307</variation>
+			</disable>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/15152</comment>
+				<version>19+</version>
+				<variation>Mode357</variation>
+			</disable>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/15152</comment>
+				<version>19+</version>
+				<variation>Mode507</variation>
+			</disable>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/15152</comment>
+				<version>19+</version>
+				<variation>Mode557</variation>
+			</disable>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/15152</comment>
+				<version>19+</version>
+				<variation>Mode607</variation>
+			</disable>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/15152</comment>
+				<version>19+</version>
+				<variation>Mode608</variation>
+			</disable>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/15152</comment>
+				<version>19+</version>
+				<variation>Mode107-OSR</variation>
+			</disable>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/15152</comment>
+				<version>19+</version>
+				<variation>Mode607-OSR</variation>
+			</disable>
+		</disables>
 		<variations>
 			<variation>Mode100</variation>
 			<variation>Mode107</variation>
@@ -233,6 +290,63 @@
 	</test>
 	<test>
 		<testCaseName>cmdLineTester_jvmtitests_debug_openj9_none_SCC</testCaseName>
+		<disables>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/15152</comment>
+				<version>19+</version>
+				<variation>Mode107</variation>
+			</disable>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/15152</comment>
+				<version>19+</version>
+				<variation>Mode108</variation>
+			</disable>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/15152</comment>
+				<version>19+</version>
+				<variation>Mode154</variation>
+			</disable>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/15152</comment>
+				<version>19+</version>
+				<variation>Mode307</variation>
+			</disable>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/15152</comment>
+				<version>19+</version>
+				<variation>Mode357</variation>
+			</disable>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/15152</comment>
+				<version>19+</version>
+				<variation>Mode507</variation>
+			</disable>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/15152</comment>
+				<version>19+</version>
+				<variation>Mode557</variation>
+			</disable>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/15152</comment>
+				<version>19+</version>
+				<variation>Mode607</variation>
+			</disable>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/15152</comment>
+				<version>19+</version>
+				<variation>Mode608</variation>
+			</disable>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/15152</comment>
+				<version>19+</version>
+				<variation>Mode107-OSR</variation>
+			</disable>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/15152</comment>
+				<version>19+</version>
+				<variation>Mode607-OSR</variation>
+			</disable>
+		</disables>
 		<variations>
 			<variation>Mode100</variation>
 			<variation>Mode107</variation>
@@ -618,6 +732,12 @@
 	</test>
 	<test>
 		<testCaseName>decompileAtMethodResolve</testCaseName>
+		<disables>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/15152</comment>
+				<version>19+</version>
+			</disable>
+		</disables>
 		<variations>
 			<variation>NoOptions</variation>
 		</variations>
