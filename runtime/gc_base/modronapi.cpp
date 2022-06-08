@@ -86,11 +86,18 @@ j9gc_modron_global_collect_with_overrides(J9VMThread *vmThread, U_32 gcCode)
 		}
 	}
 
+	/* Prevent thread to respond to safe point; GC has higher priority */
 	VM_VMAccess::setPublicFlags(vmThread, J9_PUBLIC_FLAGS_NOT_AT_SAFE_POINT);
 	MM_GCExtensions::getExtensions(env)->heap->systemGarbageCollect(env, gcCode);
 	VM_VMAccess::clearPublicFlags(vmThread, J9_PUBLIC_FLAGS_NOT_AT_SAFE_POINT);
 
-	if (J9_ARE_ANY_BITS_SET(vmThread->publicFlags, J9_PUBLIC_FLAGS_HALT_THREAD_ANY)) {
+	/* During GC that we just performed, this thread might have temporarily released and required VM access, misleading other threads
+	 * that we will not proceed running (like waking up an inspector thread to walk this thread's stack). Hence we have to check again if we are expected to halt.
+	 * An exceptional case is if this thread already blocked all other threads globally (for example RAS DUMP acquired exclusive VM access prior to entering here),
+	 * in which case we are safe to proceed - with such externally obtained exclusive VM access, we would not have yielded VM access and would not have mislead other threads.
+	 * On the other side, while still holding exclusive, blocking would be wrong, leading to a deadlock.
+	 */
+	if (J9_ARE_ANY_BITS_SET(vmThread->publicFlags, J9_PUBLIC_FLAGS_HALT_THREAD_ANY) && (0 == vmThread->omrVMThread->exclusiveCount)) {
 		vmThread->javaVM->internalVMFunctions->internalReleaseVMAccess(vmThread);
 		vmThread->javaVM->internalVMFunctions->internalAcquireVMAccess(vmThread);
 	}
@@ -107,7 +114,7 @@ j9gc_modron_local_collect(J9VMThread *vmThread)
 	((MM_MemorySpace *)vmThread->omrVMThread->memorySpace)->localGarbageCollect(env, J9MMCONSTANT_IMPLICIT_GC_DEFAULT);
 	VM_VMAccess::clearPublicFlags(vmThread, J9_PUBLIC_FLAGS_NOT_AT_SAFE_POINT);
 
-	if (J9_ARE_ANY_BITS_SET(vmThread->publicFlags, J9_PUBLIC_FLAGS_HALT_THREAD_ANY)) {
+	if (J9_ARE_ANY_BITS_SET(vmThread->publicFlags, J9_PUBLIC_FLAGS_HALT_THREAD_ANY) && (0 == vmThread->omrVMThread->exclusiveCount)) {
 		vmThread->javaVM->internalVMFunctions->internalReleaseVMAccess(vmThread);
 		vmThread->javaVM->internalVMFunctions->internalAcquireVMAccess(vmThread);
 	}
