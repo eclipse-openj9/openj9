@@ -21,6 +21,7 @@
  *******************************************************************************/
 #include "codegen/CodeGenerator.hpp"
 #include "compile/ResolvedMethod.hpp"
+#include "env/VerboseLog.hpp"
 #include "env/VMAccessCriticalSection.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
@@ -1357,6 +1358,12 @@ TR::Node *TR_VectorAPIExpansion::naryIntrinsicHandler(TR_VectorAPIExpansion *opt
       else
          {
          TR_ASSERT_FATAL(scalarOpCode != TR::BadILOp, "Scalar opcode should exist for node %p\n", node);
+
+         if (TR::Options::getVerboseOption(TR_VerboseVectorAPI))
+            {
+            TR::ILOpCode opcode(scalarOpCode);
+            TR_VerboseLog::writeLine(TR_Vlog_VECTOR_API, "Scalarized using %s in %s", opcode.getName(), comp->signature());
+            }
          }
       }
    else
@@ -1384,6 +1391,13 @@ TR::Node *TR_VectorAPIExpansion::naryIntrinsicHandler(TR_VectorAPIExpansion *opt
          vectorOpCode = ILOpcodeFromVectorAPIOpcode(vectorAPIOpcode, opType, vectorLength);
 
          TR_ASSERT_FATAL(vectorOpCode != TR::BadILOp, "Vector opcode should exist for node %p\n", node);
+
+         if (TR::Options::getVerboseOption(TR_VerboseVectorAPI))
+            {
+            TR::ILOpCode opcode(vectorOpCode);
+            TR_VerboseLog::writeLine(TR_Vlog_VECTOR_API, "Vectorized using %s%s in %s", opcode.getName(),
+                                     TR::DataType::getName(opcode.getVectorResultDataType()), comp->signature());
+            }
          }
       }
 
@@ -1488,6 +1502,11 @@ TR::Node *TR_VectorAPIExpansion::broadcastCoercedIntrinsicHandler(TR_VectorAPIEx
          {
          addScalarNode(opt, node, numLanes, i, node);
          }
+
+      if (TR::Options::getVerboseOption(TR_VerboseVectorAPI))
+         {
+         TR_VerboseLog::writeLine(TR_Vlog_VECTOR_API, "Scalarized broadcast for %s in %s", TR::DataType::getName(elementType), comp->signature());
+         }
       }
    else if (mode == doVectorization)
       {
@@ -1496,6 +1515,13 @@ TR::Node *TR_VectorAPIExpansion::broadcastCoercedIntrinsicHandler(TR_VectorAPIEx
       TR::ILOpCodes splatsOpCode = TR::ILOpCode::createVectorOpCode(OMR::vsplats, elementType.scalarToVector(OMR::DataType::bitsToVectorLength(vectorLength)));
 
       TR::Node::recreate(node, splatsOpCode);
+
+      if (TR::Options::getVerboseOption(TR_VerboseVectorAPI))
+         {
+         TR::ILOpCode opcode(splatsOpCode);
+         TR_VerboseLog::writeLine(TR_Vlog_VECTOR_API, "Vectorized using %s%s in %s", opcode.getName(),
+                                  TR::DataType::getName(opcode.getVectorResultDataType()), comp->signature());
+         }
       }
 
    return node;
