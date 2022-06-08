@@ -97,6 +97,7 @@ In the end code generators perform binary encoding to write the appropriate bits
 * <details><summary><b>3. Optimizer</b></summary>
 
   * Overview of Optimizer
+    * [Dynamic Optimization Design](optimizer/OptimizerDesignFeatures.md)
   * Analyses
     * [Data Flow Analysis (YouTube)](https://youtu.be/YCCdJ1Qphao)
   * [Local Optimizations](optimizer/LocalOptimizationsSummary.md)
