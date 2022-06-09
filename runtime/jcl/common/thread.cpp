@@ -404,8 +404,7 @@ Java_java_lang_Thread_currentCarrierThread(JNIEnv *env, jclass clazz)
 {
 	J9VMThread *currentThread = (J9VMThread*)env;
 	VM_VMAccess::inlineEnterVMFromJNI(currentThread);
-	/* ToDo: change it to carrierThreadObject when it is set to a non-null value later */
-	jobject result = VM_VMHelpers::createLocalRef(env, currentThread->threadObject);
+	jobject result = VM_VMHelpers::createLocalRef(env, currentThread->carrierThreadObject);
 	VM_VMAccess::inlineExitVMToJNI(currentThread);
 
 	return result;

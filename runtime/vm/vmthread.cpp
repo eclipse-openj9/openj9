@@ -260,6 +260,13 @@ allocateVMThread(J9JavaVM * vm, omrthread_t osThread, UDATA privateFlags, void *
 	newThread->ffiArgCount = 0;
 #endif /* JAVA_SPEC_VERSION >= 16 */
 
+#if JAVA_SPEC_VERSION >= 19
+	newThread->currentContinuation = NULL;
+	newThread->pinnedStateCounter = 0;
+	newThread->carrierThreadObject = threadObject;
+	newThread->extentLocalCache = NULL;
+#endif /* JAVA_SPEC_VERSION >= 19 */
+
 	/* If an exclusive access request is in progress, mark this thread */
 
 	omrthread_monitor_enter(vm->exclusiveAccessMutex);
@@ -336,6 +343,9 @@ fail:
 			freeVMThread(vm, newThread);
 		}
 		newThread->threadObject = NULL;
+#if JAVA_SPEC_VERSION >= 19
+		newThread->carrierThreadObject = NULL;
+#endif /* JAVA_SPEC_VERSION >= 19 */
 		/* Detach the thread from OMR */
 		detachVMThreadFromOMR(vm, newThread);
 		if (!threadIsRecycled) {

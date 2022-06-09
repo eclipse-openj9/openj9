@@ -291,6 +291,9 @@ gcCleanupHeapStructures(J9JavaVM * vm)
 	if (vm->mainThread && vm->mainThread->threadObject) {
 		/* main thread has not been deallocated yet, but heap has gone */
 		vm->mainThread->threadObject = NULL;
+#if JAVA_SPEC_VERSION >= 19
+		vm->mainThread->carrierThreadObject = NULL;
+#endif /* JAVA_SPEC_VERSION >= 19 */
 	}
 	return;
 }

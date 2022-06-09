@@ -4875,6 +4875,19 @@ typedef struct J9InvocationJavaVM {
 	J9NativeLibrary * reserved2_library;
 } J9InvocationJavaVM;
 
+#if JAVA_SPEC_VERSION >= 19
+typedef struct J9VMContinuation {
+	UDATA* arg0EA;
+	UDATA* bytecodes;
+	UDATA* sp;
+	U_8* pc;
+	struct J9Method* literals;
+	UDATA* stackOverflowMark;
+	UDATA* stackOverflowMark2;
+	J9JavaStack* stackObject;
+} J9VMContinuation;
+#endif /* JAVA_SPEC_VERSION >= 19 */
+
 /* @ddr_namespace: map_to_type=J9VMThread */
 
 typedef struct J9VMThread {
@@ -5112,6 +5125,8 @@ typedef struct J9VMThread {
 	UDATA ffiArgCount;
 #endif /* JAVA_SPEC_VERSION >= 16 */
 #if JAVA_SPEC_VERSION >= 19
+	J9VMContinuation *currentContinuation;
+	UDATA pinnedStateCounter;
 	j9object_t carrierThreadObject;
 	j9object_t extentLocalCache;
 #endif /* JAVA_SPEC_VERSION >= 19 */

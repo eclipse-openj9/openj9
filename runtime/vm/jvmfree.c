@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -147,6 +147,9 @@ recycleVMThread(J9VMThread * vmThread)
 
 	/* Indicate that the vmThread is dying */
 	vmThread->threadObject = NULL;
+#if JAVA_SPEC_VERSION >= 19
+	vmThread->carrierThreadObject = NULL;
+#endif /* JAVA_SPEC_VERSION >= 19 */
 
 	issueWriteBarrier();
 
