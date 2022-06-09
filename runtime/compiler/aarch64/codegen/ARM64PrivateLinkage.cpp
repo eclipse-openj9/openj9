@@ -1582,6 +1582,8 @@ static void buildInterfaceCall(TR::CodeGenerator *cg, TR::Node *callNode, TR::Re
    {
    /*
     *  Generating following instruction sequence.
+    *  Recompilation is dependent on this instruction sequence.
+    *  Please do not modify without changing recompilation code.
     *
     *  ldrx tmpReg, L_firstClassCacheSlot
     *  cmpx vftReg, tmpReg
