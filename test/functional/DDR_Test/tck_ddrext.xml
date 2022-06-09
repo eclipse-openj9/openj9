@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-Copyright (c) 2016, 2021 IBM Corp. and others
+Copyright (c) 2016, 2022 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -219,11 +219,12 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 
 		<exec executable="${JAVA_COMMAND}" failonerror="true">
 			<arg line="${DUMP_OPTION}" />
-			<arg line="-Xitsn1000" />
+			<arg value="-Xitsn1000" />
 			<arg line="${EXTRADUMPOPT}" />
 			<arg line="${JVM_OPTIONS}" />
 			<arg line="${TEST_LIB_PATH_VAL}" />
-			<arg value="-Xjit:{j9vm/test/corehelper/CoreGen.main*}(count=0)" />
+			<!-- Don't let JIT compile the methods we need to find. -->
+			<arg value="-Xjit:exclude={java/lang/Thread.sleep*},{j9vm/test/corehelper/CoreGen.main*}(count=0)" />
 			<arg value="-cp" />
 			<arg value="${TEST_RESROOT}/DDR_Test.jar" />
 			<arg value="${COREGEN}" />
