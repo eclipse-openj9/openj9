@@ -47,10 +47,10 @@ public class SysPropTest
 				isWindows = true;
 			}
 
-			/* On jdk18+ with JEP 400 UTF-8 by default, the non-ascii characters in the testkey property
+			/* On jdk18 with JEP 400 UTF-8 by default, the non-ascii characters in the testkey property
 			 * are converted to UTF8 by the test (not the JVM).
 			 */
-			final byte[] expectedBytes = ((VersionCheck.major() >= 18) && !isWindows) ? inputBytesUtf8 : inputBytes;
+			final byte[] expectedBytes = ((VersionCheck.major() == 18) && !isWindows) ? inputBytesUtf8 : inputBytes;
 
 			if (argEncoding.equals("DEFAULT")) {
 				osEncoding = System.getProperty("os.encoding");
@@ -60,7 +60,7 @@ public class SysPropTest
 			 * sets os.encoding to UTF8. To replicate this behavior, on Windows use the default encoding
 			 * and not the os.encoding.
 			 */
-			if (osEncoding != null && osEncoding.length() != 0 && isWindows == false) {
+			if ((osEncoding != null) && (osEncoding.length() != 0) && !isWindows) {
 				strTestProp = new String(expectedBytes, osEncoding);
 			} else {
 				if ((argEncoding.equals("UTF-8") || argEncoding.equals("ISO-8859-1"))) {
