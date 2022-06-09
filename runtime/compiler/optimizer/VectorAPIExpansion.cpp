@@ -1421,6 +1421,8 @@ TR::Node *TR_VectorAPIExpansion::naryIntrinsicHandler(TR_VectorAPIExpansion *opt
 TR::Node *TR_VectorAPIExpansion::blendIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node,
                                                        TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode)
    {
+   return NULL; // the folowing is a prototype cod until Mask/Shuffle design
+
    TR::Compilation *comp = opt->comp();
 
    if (opt->_trace)
@@ -1544,6 +1546,8 @@ TR::Node *TR_VectorAPIExpansion::broadcastCoercedIntrinsicHandler(TR_VectorAPIEx
 TR::Node *TR_VectorAPIExpansion::compareIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node,
                                                        TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode)
    {
+   return NULL; // the folowing is a prototype cod until Mask/Shuffle design
+
    TR::Compilation *comp = opt->comp();
    TR::Node *opcodeNode = node->getFirstChild();
 
