@@ -944,6 +944,20 @@ bool TR_J9InterfaceCallSite::findCallSiteTargetImpl(TR_CallStack *callStack, TR_
             new (comp()->trHeapMemory()) TR_VirtualGuardSelection(
                kind, testType, thisClass);
 
+         if (kind == TR_ProfiledGuard)
+            {
+            // Almost all bytecode would pass type checking even including
+            // interface types. So even though this can't be a nop guard
+            // (because verification doesn't check interface types), treat it
+            // as much like a nop guard as possible. In particular, this will
+            // ensure that the block containing the cold call is actually
+            // marked cold, and ensure that priv. arg remat is allowed.
+            guard->_forceTakenSideCold = true;
+
+            // It is still a high-probability profiled guard...
+            guard->setIsHighProbablityProfiledGuard();
+            }
+
          addTarget(
             comp()->trMemory(),
             inliner,

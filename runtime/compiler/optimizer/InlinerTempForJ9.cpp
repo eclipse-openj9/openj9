@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2847,7 +2847,7 @@ TR_MultipleCallTargetInliner::eliminateTailRecursion(
       backEdge = TR::CFGEdge::createEdge(gotoBlock,  branchDestination, trMemory());
       callerCFG->addEdge(backEdge);
       callerCFG->removeEdge(origEdge);
-      if (guard->_kind == TR_ProfiledGuard)
+      if (guard->_kind == TR_ProfiledGuard && !guard->_forceTakenSideCold)
          {
          if (block->getFrequency() < 0)
             block2->setFrequency(block->getFrequency());
@@ -6784,7 +6784,11 @@ TR_J9InlinerPolicy::suitableForRemat(TR::Compilation *comp, TR::Node *callNode, 
 
    bool suitableForRemat = true;
    TR_AddressInfo *valueInfo = static_cast<TR_AddressInfo*>(TR_ValueProfileInfoManager::getProfiledValueInfo(callNode, comp, AddressInfo));
-   if (guard->isHighProbablityProfiledGuard())
+   if (guard->_forceTakenSideCold)
+      {
+      // remat ok
+      }
+   else if (guard->isHighProbablityProfiledGuard())
       {
       if (comp->getMethodHotness() <= warm && comp->getPersistentInfo()->getJitState() == STARTUP_STATE)
          {
