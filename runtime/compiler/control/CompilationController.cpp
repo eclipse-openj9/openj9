@@ -723,6 +723,69 @@ TR::DefaultCompilationStrategy::ProcessJittedSample::shouldProcessSample()
    return shouldProcess;
    }
 
+void
+TR::DefaultCompilationStrategy::ProcessJittedSample::determineWhetherToRecompileIfCountHitsZero()
+   {
+   if (!_isAlreadyBeingCompiled)
+      {
+      // do not allow scorching compiles based on count reaching 0
+      if (_methodInfo->getNextCompileLevel() > hot)
+         {
+         // replenish the counter with a multiple of sampleInterval
+         _bodyInfo->setCounter(_hotSampleInterval);
+         // even if the count reached 0, we still need to check if we can
+         // promote this method through sample thresholds
+         }
+      else // allow transition to HOT through exhaustion of count
+         {
+         _recompile = true;
+         TR::Recompilation::limitMethodsCompiled++;
+         // Currently the counter can be decremented because (1) the method was
+         // sampled; (2) EDO; (3) PIC miss; (4) megamorphic interface call profile.
+         // EDO will have its own recompilation snippet, but in cases (3) and (4)
+         // the counter just reaches 0, and only the next sample will trigger
+         // recompilation. These cases can be identified by the negative counter
+         // (we decrement the counter above in sampleMethod()). In contrast, if the
+         // counter is decremented through sampling, only the first thread that sees
+         // the counter 0 will recompile the method, and all the others will be
+         // prevented from reaching this point due to isAlreadyBeingCompiled
+
+         if (_count < 0 && !_methodInfo->disableMiscSamplingCounterDecrementation())
+            {
+            // recompile at same level
+            _nextOptLevel = _bodyInfo->getHotness();
+
+            // mark this special situation
+            _methodInfo->setDisableMiscSamplingCounterDecrementation();
+            // write a message in the vlog to know the reason of recompilation
+            if (_logSampling)
+               _curMsg += sprintf(_curMsg, " PICrecomp");
+            _methodInfo->setReasonForRecompilation(TR_PersistentMethodInfo::RecompDueToMegamorphicCallProfile);
+            }
+         else
+            {
+            _nextOptLevel = _methodInfo->getNextCompileLevel();
+            _methodInfo->setReasonForRecompilation(
+               _bodyInfo->getIsPushedForRecompilation()
+               ? TR_PersistentMethodInfo::RecompDueToRecompilationPushing
+               : TR_PersistentMethodInfo::RecompDueToCounterZero);
+
+            // It's possible that a thread decrements the counter to 0 and another
+            // thread decrements it further to -1 which will trigger a compilation
+            // at same level. The following line will prevent that.
+            _methodInfo->setDisableMiscSamplingCounterDecrementation();
+            }
+         }
+      }
+
+   if (_recompile) // recompilation due to count reaching 0
+      {
+      _bodyInfo->setOldStartCountDelta(_totalSampleCount - _startSampleCount);// Should we handle overflow?
+      _bodyInfo->setHotStartCountDelta(0);
+      _bodyInfo->setStartCount(_totalSampleCount);
+      }
+   }
+
 TR_OptimizationPlan *
 TR::DefaultCompilationStrategy::ProcessJittedSample::process()
    {
@@ -748,6 +811,16 @@ TR::DefaultCompilationStrategy::ProcessJittedSample::process()
       if (shouldProcessSample())
          {
          initializeRecompRelatedFields();
+
+         if (_logSampling)
+            _curMsg += sprintf(_curMsg, " cnt=%d ncl=%d glblSmplCnt=%d startCnt=%d[-%u,+%u] samples=[%d %d] windows=[%d %u] crtSmplIntrvlCnt=%u",
+               _count, _methodInfo->getNextCompileLevel(), _totalSampleCount, _startSampleCount,
+               _bodyInfo->getOldStartCountDelta(), _bodyInfo->getHotStartCountDelta(),
+               _globalSamples, _globalSamplesInHotWindow,
+               _scorchingSampleInterval, _hotSampleInterval, _crtSampleIntervalCount);
+
+         if (_count <= 0)
+            determineWhetherToRecompileIfCountHitsZero();
          }
       }
 
