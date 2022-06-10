@@ -531,7 +531,9 @@ TR::DefaultCompilationStrategy::ProcessJittedSample::ProcessJittedSample(J9JITCo
      _j9method(j9method),
      _event(event),
      _startPC(event->_oldStartPC),
-     _bodyInfo(NULL)
+     _bodyInfo(NULL),
+     _methodInfo(NULL),
+     _isAlreadyBeingCompiled(false)
    {
    _logSampling = _fe->isLogSamplingSet() || TrcEnabled_Trc_JIT_Sampling_Detail;
    _msg[0] = 0;
@@ -598,7 +600,7 @@ TR::DefaultCompilationStrategy::ProcessJittedSample::yieldToAppThread()
    }
 
 void
-TR::DefaultCompilationStrategy::ProcessJittedSample::findAndSetBodyInfo()
+TR::DefaultCompilationStrategy::ProcessJittedSample::findAndSetBodyAndMethodInfo()
    {
    J9::PrivateLinkage::LinkageInfo *linkageInfo = J9::PrivateLinkage::LinkageInfo::get(_startPC);
 
@@ -632,6 +634,49 @@ TR::DefaultCompilationStrategy::ProcessJittedSample::findAndSetBodyInfo()
          _curMsg += sprintf(_curMsg, " uses sampling but sampling disabled (last comp. with prex)");
       _bodyInfo = NULL;
       }
+
+   if (_bodyInfo)
+      {
+      _methodInfo = _bodyInfo->getMethodInfo();
+      }
+   }
+
+bool
+TR::DefaultCompilationStrategy::ProcessJittedSample::shouldProcessSample()
+   {
+   TR_ASSERT_FATAL(_methodInfo->getMethodInfo() == reinterpret_cast<TR_OpaqueMethodBlock *>(_j9method),
+                   "_methodInfo->getMethodInfo()=%p != _j9method=%p",
+                   _methodInfo->getMethodInfo(), _j9method);
+
+   bool shouldProcess = true;
+   void *currentStartPC = TR::CompilationInfo::getPCIfCompiled(_j9method);
+
+   // See if the method has already been compiled but we get a sample in the old body
+   if (currentStartPC != _startPC) // rare case
+      {
+      shouldProcess = false;
+      }
+   else if (TR::Options::getCmdLineOptions()->getFixedOptLevel() != -1
+            || TR::Options::getAOTCmdLineOptions()->getFixedOptLevel() != -1) // prevent recompilation when opt level is specified
+      {
+      shouldProcess = false;
+      }
+   else
+      {
+      _isAlreadyBeingCompiled = TR::Recompilation::isAlreadyBeingCompiled(reinterpret_cast<TR_OpaqueMethodBlock *>(_j9method), _startPC, _fe);
+      // If we already decided to recompile this body, and we haven't yet
+      // queued the method don't bother continuing. Very small window of time.
+      //
+      if (_bodyInfo->getSamplingRecomp() && // flag needs to be tested after getting compilationMonitor
+         !_isAlreadyBeingCompiled)
+         {
+         if (_logSampling)
+            _curMsg += sprintf(_curMsg, " uses sampling but a recomp decision has already been taken");
+         shouldProcess = false;
+         }
+      }
+
+   return shouldProcess;
    }
 
 TR_OptimizationPlan *
@@ -650,8 +695,17 @@ TR::DefaultCompilationStrategy::ProcessJittedSample::process()
    if (TR::Options::getCmdLineOptions()->getOption(TR_EnableAppThreadYield))
       yieldToAppThread();
 
-   // Find and set bodyInfo
-   findAndSetBodyInfo();
+   // Find and set body and method info
+   findAndSetBodyAndMethodInfo();
+
+   if (_bodyInfo)
+      {
+      OMR::CriticalSection processSample(_compInfo->getCompilationMonitor());
+      if (shouldProcessSample())
+         {
+         // Next commit
+         }
+      }
 
    // Print log to vlog
    printBufferToVLog();
