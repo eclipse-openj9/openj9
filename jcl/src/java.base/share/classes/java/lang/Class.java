@@ -5367,14 +5367,33 @@ SecurityException {
 /*[IF JAVA_SPEC_VERSION >= 12]*/
 	/**
 	 * Create class of an array. The component type will be this Class instance.
-	 * 
+	 *
 	 * @return array class where the component type is this Class instance
+	/*[IF JAVA_SPEC_VERSION >= 19]
+	 *
+	 * @throws UnsupportedOperationException when the receiver is the void type, or the dimensions of the new array type would exceed 255.
+	/*[ENDIF] JAVA_SPEC_VERSION >= 19
 	 */
 	public Class<?> arrayType() {
-		if (this == void.class) {
-			throw new IllegalArgumentException();
+		/*[IF JAVA_SPEC_VERSION >= 19]*/
+		try {
+			Class<?> baseType = this;
+			for (int arrayCount = 0; baseType.isArray(); arrayCount++) {
+				if (arrayCount == 254) {
+					throw new IllegalArgumentException();
+				}
+				baseType = baseType.getComponentType();
+			}
+		/*[ENDIF] JAVA_SPEC_VERSION >= 19 */
+			if (this == void.class) {
+				throw new IllegalArgumentException();
+			}
+			return arrayTypeImpl();
+		/*[IF JAVA_SPEC_VERSION >= 19]*/
+		} catch (Exception e) {
+			throw new UnsupportedOperationException(e);
 		}
-		return arrayTypeImpl();
+		/*[ENDIF] JAVA_SPEC_VERSION >= 19 */
 	}
 
 	private native Class<?> arrayTypeImpl();
