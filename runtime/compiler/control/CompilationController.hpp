@@ -108,6 +108,7 @@ class DefaultCompilationStrategy : public TR::CompilationStrategy
       bool shouldProcessSample();
 
       void initializeRecompRelatedFields();
+      void determineWhetherToRecompileIfCountHitsZero();
 
       J9JITConfig                 *_jitConfig;
       J9VMThread                  *_vmThread;
