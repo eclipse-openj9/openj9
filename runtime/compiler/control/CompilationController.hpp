@@ -29,6 +29,7 @@
 #include "env/VMJ9.h"
 
 class TR_OptimizationPlan;
+class TR_PersistentJittedBodyInfo;
 struct TR_MethodToBeCompiled;
 
 int32_t printTruncatedSignature(char *sigBuf, int32_t bufLen, J9Method *j9method);
@@ -102,15 +103,17 @@ class DefaultCompilationStrategy : public TR::CompilationStrategy
       void printBufferToVLog();
 
       void yieldToAppThread();
+      void findAndSetBodyInfo();
 
-      J9JITConfig         *_jitConfig;
-      J9VMThread          *_vmThread;
-      TR::CompilationInfo *_compInfo;
-      TR_J9VMBase         *_fe;
-      TR::Options         *_cmdLineOptions;
-      J9Method            *_j9method;
-      TR_MethodEvent      *_event;
-      void                *_startPC;
+      J9JITConfig                 *_jitConfig;
+      J9VMThread                  *_vmThread;
+      TR::CompilationInfo         *_compInfo;
+      TR_J9VMBase                 *_fe;
+      TR::Options                 *_cmdLineOptions;
+      J9Method                    *_j9method;
+      TR_MethodEvent              *_event;
+      void                        *_startPC;
+      TR_PersistentJittedBodyInfo *_bodyInfo;
 
       static const uint32_t MSG_SZ = 450;
       bool _logSampling;

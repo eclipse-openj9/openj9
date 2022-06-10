@@ -530,7 +530,8 @@ TR::DefaultCompilationStrategy::ProcessJittedSample::ProcessJittedSample(J9JITCo
      _cmdLineOptions(cmdLineOptions),
      _j9method(j9method),
      _event(event),
-     _startPC(event->_oldStartPC)
+     _startPC(event->_oldStartPC),
+     _bodyInfo(NULL)
    {
    _logSampling = _fe->isLogSamplingSet() || TrcEnabled_Trc_JIT_Sampling_Detail;
    _msg[0] = 0;
@@ -596,6 +597,43 @@ TR::DefaultCompilationStrategy::ProcessJittedSample::yieldToAppThread()
       }
    }
 
+void
+TR::DefaultCompilationStrategy::ProcessJittedSample::findAndSetBodyInfo()
+   {
+   J9::PrivateLinkage::LinkageInfo *linkageInfo = J9::PrivateLinkage::LinkageInfo::get(_startPC);
+
+   if (linkageInfo->hasFailedRecompilation())
+      {
+      _compInfo->_stats._compiledMethodSamplesIgnored++;
+      if (_logSampling)
+         _curMsg += sprintf(_curMsg, " has already failed a recompilation attempt");
+      }
+   else if (!linkageInfo->isSamplingMethodBody())
+      {
+      _compInfo->_stats._compiledMethodSamplesIgnored++;
+      if (_logSampling)
+         _curMsg += sprintf(_curMsg, " does not use sampling");
+      }
+   else if (debug("disableSamplingRecompilation"))
+      {
+      _compInfo->_stats._compiledMethodSamplesIgnored++;
+      if (_logSampling)
+         _curMsg += sprintf(_curMsg, " sampling disabled");
+      }
+   else
+      {
+      _bodyInfo = TR::Recompilation::getJittedBodyInfoFromPC(_startPC);
+      }
+
+   if (_bodyInfo && _bodyInfo->getDisableSampling())
+      {
+      _compInfo->_stats._compiledMethodSamplesIgnored++;
+      if (_logSampling)
+         _curMsg += sprintf(_curMsg, " uses sampling but sampling disabled (last comp. with prex)");
+      _bodyInfo = NULL;
+      }
+   }
+
 TR_OptimizationPlan *
 TR::DefaultCompilationStrategy::ProcessJittedSample::process()
    {
@@ -611,6 +649,9 @@ TR::DefaultCompilationStrategy::ProcessJittedSample::process()
    // will be changed by the sampling thread, every 0.5 seconds
    if (TR::Options::getCmdLineOptions()->getOption(TR_EnableAppThreadYield))
       yieldToAppThread();
+
+   // Find and set bodyInfo
+   findAndSetBodyInfo();
 
    // Print log to vlog
    printBufferToVLog();
