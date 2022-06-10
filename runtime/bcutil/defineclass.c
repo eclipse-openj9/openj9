@@ -885,6 +885,10 @@ createROMClassFromClassFile(J9VMThread *currentThread, J9LoadROMClassData *loadD
 			break;
 		}
 
+		case BCT_ERR_DUPLICATE_NAME:
+			/* This case is handled below */
+			break;
+
 		/*
 		 * Error messages are contents of vm->dynamicLoadBuffers->classFileError if anything is assigned
 		 * otherwise just the classname.
@@ -928,7 +932,15 @@ createROMClassFromClassFile(J9VMThread *currentThread, J9LoadROMClassData *loadD
 			J9_VM_FUNCTION(currentThread, setCurrentException)(currentThread, exceptionNumber, NULL);
 		} else {
 			PORT_ACCESS_FROM_JAVAVM(vm);
-			J9_VM_FUNCTION(currentThread, setCurrentExceptionUTF)(currentThread, exceptionNumber, (const char*)errorUTF);
+			if (BCT_ERR_DUPLICATE_NAME == result) {
+				size_t nameLength = 0;
+				if (NULL != errorUTF ){
+					nameLength = strlen(errorUTF);
+				}
+				J9_VM_FUNCTION(currentThread, setCurrentExceptionNLSWithArgs)(currentThread, J9NLS_JCL_DUPLICATE_CLASS_DEFINITION, J9VMCONSTANTPOOL_JAVALANGLINKAGEERROR, (const char*)errorUTF, nameLength);
+			} else {
+				J9_VM_FUNCTION(currentThread, setCurrentExceptionUTF)(currentThread, exceptionNumber, (const char*)errorUTF);
+			}
 			j9mem_free_memory(errorUTF);
 		}
 	}

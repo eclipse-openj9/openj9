@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2021 IBM Corp. and others
+ * Copyright (c) 1998, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -133,8 +133,9 @@ defineClassCommon(JNIEnv *env, jobject classLoaderObject,
 
 	if (isContiguousClassBytes) {
 		/* For ARRAYLETS case, we get free range checking from GetByteArrayRegion JNI call */
-		if ((offset < 0) || (length < 0) || 
-	      (((U_32)offset + (U_32)length) > J9INDEXABLEOBJECT_SIZE(currentThread, *(J9IndexableObject **)classRep))) {
+		if ((offset < 0) || (length < 0)
+			|| (((U_32)offset + (U_32)length) > J9INDEXABLEOBJECT_SIZE(currentThread, *(J9IndexableObject **)classRep))
+		) {
 			vmFuncs->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGINDEXOUTOFBOUNDSEXCEPTION, NULL);
 			goto done;
 		}
@@ -153,7 +154,7 @@ retry:
 
 	omrthread_monitor_enter(vm->classTableMutex);
 	/* Hidden class is never added into the hash table */
-	if (J9_ARE_NO_BITS_SET(*options, J9_FINDCLASS_FLAG_HIDDEN)) {
+	if ((NULL != utf8Name) && J9_ARE_NO_BITS_SET(*options, J9_FINDCLASS_FLAG_HIDDEN)) {
 		if (NULL != vmFuncs->hashClassTableAt(classLoader, utf8Name, utf8Length)) {
 			/* Bad, we have already defined this class - fail */
 			omrthread_monitor_exit(vm->classTableMutex);
