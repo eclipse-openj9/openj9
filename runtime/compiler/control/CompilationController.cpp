@@ -545,6 +545,50 @@ TR::DefaultCompilationStrategy::ProcessJittedSample::ProcessJittedSample(J9JITCo
    }
 
 void
+TR::DefaultCompilationStrategy::ProcessJittedSample::initializeRecompRelatedFields()
+   {
+   _recompile = false;
+   _useProfiling = false;
+   _dontSwitchToProfiling = false;
+   _postponeDecision = false;
+
+   // Profiling compilations that precede scorching ones are quite taxing
+   // on large multicore machines. Thus, we want to observe the hotness of a
+   // method for longer, rather than rushing into a profiling very-hot compilation.
+   // We can afford to do so because scorching methods accumulate samples at a
+   // higher rate than hot ones.
+   // The goal here is to implement a rather short decision window (sampling interval)
+   // for decisions to upgrade to hot, but a larger decision window for decisions
+   // to go to scorching. This is based on density of samples observed in the JVM:
+   // the larger the density of samples, the larger the scorching decision window.
+   // scorchingSampleInterval will be a multiple of hotSampleInterval
+   // When a hotSampleInterval ends, if the method looks scorching we postpone any
+   // recompilation decision until a scorchingSampleInterval finishes. If the method
+   // only looks hot, then we decide to recompile at hot at the end of the hotSampleInterval
+
+   _intervalIncreaseFactor = _compInfo->getJitSampleInfoRef().getIncreaseFactor();
+
+   // possibly larger sample interval for scorching compilations
+   _scorchingSampleInterval = TR::Options::_sampleInterval * _intervalIncreaseFactor;
+
+   // Hot recompilation decisions use the regular sized sampling interval
+   _hotSampleInterval  = TR::Options::_sampleInterval;
+   _hotSampleThreshold = TR::Options::_sampleThreshold;
+
+   _count = _bodyInfo->decCounter();
+   _crtSampleIntervalCount = _bodyInfo->incSampleIntervalCount(_scorchingSampleInterval);
+   _hotSamplingWindowComplete = (_crtSampleIntervalCount % _hotSampleInterval) == 0;
+   _scorchingSamplingWindowComplete = (_crtSampleIntervalCount == 0);
+
+   _startSampleCount = _bodyInfo->getStartCount();
+   _globalSamples = _totalSampleCount - _startSampleCount;
+   _globalSamplesInHotWindow = _globalSamples - _bodyInfo->getHotStartCountDelta();
+
+   _scaledScorchingThreshold = 0;
+   _scaledHotThreshold = 0;
+   }
+
+void
 TR::DefaultCompilationStrategy::ProcessJittedSample::logSampleInfoToBuffer()
    {
    if (_logSampling || TrcEnabled_Trc_JIT_Sampling)
@@ -701,7 +745,7 @@ TR::DefaultCompilationStrategy::ProcessJittedSample::process()
       OMR::CriticalSection processSample(_compInfo->getCompilationMonitor());
       if (shouldProcessSample())
          {
-         // Next commit
+         initializeRecompRelatedFields();
          }
       }
 
