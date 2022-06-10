@@ -107,6 +107,8 @@ class DefaultCompilationStrategy : public TR::CompilationStrategy
       void findAndSetBodyAndMethodInfo();
       bool shouldProcessSample();
 
+      void initializeRecompRelatedFields();
+
       J9JITConfig                 *_jitConfig;
       J9VMThread                  *_vmThread;
       TR::CompilationInfo         *_compInfo;
@@ -125,6 +127,26 @@ class DefaultCompilationStrategy : public TR::CompilationStrategy
       char *_curMsg;
 
       int32_t _totalSampleCount;
+
+      // Recomp related fields
+      bool _recompile;
+      bool _useProfiling;
+      bool _dontSwitchToProfiling;
+      bool _postponeDecision;
+      TR_Hotness _nextOptLevel;
+      uint32_t _intervalIncreaseFactor;
+      int32_t _scorchingSampleInterval;
+      uint8_t _hotSampleInterval;
+      int32_t _hotSampleThreshold;
+      int32_t _count;
+      uint8_t _crtSampleIntervalCount;
+      bool _hotSamplingWindowComplete;
+      bool _scorchingSamplingWindowComplete;
+      int32_t _startSampleCount;
+      int32_t _globalSamples;
+      int32_t _globalSamplesInHotWindow;
+      int32_t _scaledScorchingThreshold;
+      int32_t _scaledHotThreshold;
       };
 
    // statistics regarding the events it receives
