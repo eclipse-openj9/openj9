@@ -516,6 +516,23 @@ TR::DefaultCompilationStrategy::processInterpreterSample(TR_MethodEvent *event)
       return plan;
 }
 
+TR::DefaultCompilationStrategy::ProcessJittedSample::ProcessJittedSample(J9JITConfig *jitConfig,
+                                                                         J9VMThread *vmThread,
+                                                                         TR::CompilationInfo *compInfo,
+                                                                         TR_J9VMBase *fe,
+                                                                         TR::Options *cmdLineOptions,
+                                                                         J9Method *j9method)
+   : _jitConfig(jitConfig),
+     _vmThread(vmThread),
+     _compInfo(compInfo),
+     _fe(fe),
+     _cmdLineOptions(cmdLineOptions),
+     _j9method(j9method)
+   {
+   _logSampling = _fe->isLogSamplingSet() || TrcEnabled_Trc_JIT_Sampling_Detail;
+   _msg[0] = 0;
+   _curMsg = _msg;
+   }
 
 TR_OptimizationPlan *
 TR::DefaultCompilationStrategy::processJittedSample(TR_MethodEvent *event)
