@@ -786,6 +786,237 @@ TR::DefaultCompilationStrategy::ProcessJittedSample::determineWhetherToRecompile
       }
    }
 
+void
+TR::DefaultCompilationStrategy::ProcessJittedSample::determineWhetherRecompileIsHotOrScorching(float scalingFactor,
+                                                                                               bool conservativeCase,
+                                                                                               bool useAggressiveRecompilations,
+                                                                                               bool isBigAppStartup)
+   {
+   // The method is hot, but is it actually scorching?
+   //
+   // If the scorching interval is done, perform normal scorching test
+   // If the scorching interval is not done, performs a sniff test for a shorter interval
+   //    1. If the method looks scorching during this small interval, do not
+   //       do anything; just wait for the scorching interval to finish
+   //    2. If the method does not look scorching, perform a hot compilation
+   //
+   // First let's do some scaling based on size, startup, bigApp, numProc, etc
+   _scaledScorchingThreshold = (int32_t)(TR::Options::_scorchingSampleThreshold * scalingFactor);
+   if (conservativeCase)
+      {
+      _scaledScorchingThreshold >>= 1; // halve the threshold for a more conservative comp decision
+      if (TR::Compiler->target.numberOfProcessors() != 1)
+         useAggressiveRecompilations = true; // to allow recomp at original threshold,
+      else                                   // but double the sample interval (60 samples)
+         useAggressiveRecompilations = false;
+      }
+
+   if (isBigAppStartup)
+      {
+      _scaledScorchingThreshold >>= TR::Options::_bigAppSampleThresholdAdjust; //adjust to avoid scorching recomps
+      useAggressiveRecompilations = false; //this could have been set, so disable to avoid
+      }
+
+   if (!_scorchingSamplingWindowComplete)
+      {
+      // Perform scorching recompilation sniff test using a shorter sample interval
+      // TODO: relax the thresholds a bit, maybe we can go directly to scorching next time
+      if (_globalSamplesInHotWindow <= _scaledScorchingThreshold)
+         _postponeDecision = true;
+      }
+   else // scorching sample interval is done
+      {
+      // Adjust the scorchingSampleThreshold because the sample window is larger
+      _scaledScorchingThreshold = _scaledScorchingThreshold * _intervalIncreaseFactor;
+
+      // Make the scorching compilation less likely as time goes by
+      // The bigger the number of scorching intervals, the smaller scaledScorchingThreshold
+      if (_bodyInfo->getNumScorchingIntervals() > 3)
+         _scaledScorchingThreshold >>= 1;
+
+      // secondCriteria looks at hotness over a period of time that is double
+      // than normal (60 samples). This is why we have to increase scaledScorchingThreshold
+      // by a factor of 2. If we want to become twice as aggressive we need to double
+      // scaledScorchingThreshold yet again
+      //
+      bool secondCriteriaScorching = useAggressiveRecompilations &&
+         (_totalSampleCount - _bodyInfo->getOldStartCount() <= (_scaledScorchingThreshold << 2));
+      // Scorching test
+      if ((_globalSamples <= _scaledScorchingThreshold) || secondCriteriaScorching)
+         {
+         // Determine whether or not the method is to be profiled before
+         // being compiled as scorching hot.
+         // For profiling the platform must support counting recompilation.
+         //
+         if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableProfiling) &&
+            TR::Recompilation::countingSupported() && !TR::CodeCacheManager::instance()->almostOutOfCodeCache() &&
+            !(_methodInfo->profilingDisabled()))
+            {
+            _nextOptLevel = veryHot;
+            _useProfiling = true;
+            }
+         else
+            {
+            _nextOptLevel = scorching;
+            }
+         _recompile = true;
+         _compInfo->_stats._methodsSelectedToRecompile++;
+         TR::Recompilation::scorchingThresholdMethodsCompiled++;
+         }
+      }
+   // Should we proceed with the hot compilation?
+   if (!_recompile && !_postponeDecision && _bodyInfo->getHotness() <= warm)
+      {
+      _nextOptLevel = hot;
+      // Decide whether to deny optimizer to switch to profiling on the fly
+      if (_globalSamplesInHotWindow > TR::Options::_sampleDontSwitchToProfilingThreshold &&
+         !TR::Options::getCmdLineOptions()->getOption(TR_AggressiveSwitchingToProfiling))
+         _dontSwitchToProfiling = true;
+      _recompile = true;
+      _compInfo->_stats._methodsSelectedToRecompile++;
+      TR::Recompilation::hotThresholdMethodsCompiled++;
+      }
+   }
+
+void
+TR::DefaultCompilationStrategy::ProcessJittedSample::determineWhetherToRecompileBasedOnThreshold()
+   {
+   _compInfo->_stats._methodsReachingSampleInterval++;
+
+   // Goal: based on codeSize, scale the original Threshold by no more than +/-x%
+   // 'x' will be called sampleThresholdVariationAllowance
+   // When codeSize==avgCodeSize, we want the scaling factor to be 1.0
+   // The scaling of the threshold can be turned off by having
+   // the sampleThresholdVariationAllowance equal to 0
+   J9JITExceptionTable *metaData = jitConfig->jitGetExceptionTableFromPC(_event->_vmThread, (UDATA)_startPC);
+   int32_t codeSize = 0; // TODO eliminate the overhead; we already have metadata
+   if (metaData)
+      codeSize = _compInfo->calculateCodeSize(metaData);
+
+   // Scale the recompilation thresholds based on method size
+   int32_t avgCodeSize = (TR::Compiler->target.cpu.isI386() || TR::Compiler->target.cpu.isPower()) ? 1500 : 3000; // experimentally determined
+
+   TR_ASSERT(codeSize != 0, "startPC!=0 ==> codeSize!=0");
+
+   float scalingFactor = 0.01*((100 - TR::Options::_sampleThresholdVariationAllowance) +
+                        (avgCodeSize << 1)*TR::Options::_sampleThresholdVariationAllowance /
+                        (float)(avgCodeSize + codeSize));
+   _curMsg += sprintf(_curMsg, " SizeScaling=%.1f", scalingFactor);
+   _scaledHotThreshold = (int32_t)(_hotSampleThreshold * scalingFactor);
+
+   // Do not use aggressive recompilations for big applications like websphere.
+   // WebSphere loads more than 14000 classes, typical small apps more like 1000-2000 classes.
+   // ==> use a reasonable value like 5000 to determine if the application is big
+   bool useAggressiveRecompilations = !_cmdLineOptions->getOption(TR_DisableAggressiveRecompilations) &&
+                                       (_bodyInfo->decAggressiveRecompilationChances() > 0 ||
+                                       _compInfo->getPersistentInfo()->getNumLoadedClasses() < TR::Options::_bigAppThreshold);
+
+   bool conservativeCase = TR::Options::getCmdLineOptions()->getOption(TR_ConservativeCompilation) &&
+                           _compInfo->getPersistentInfo()->getNumLoadedClasses() >= TR::Options::_bigAppThreshold;
+
+   if (conservativeCase)
+      {
+      _scaledHotThreshold >>= 1; // halve the threshold for a more conservative comp decision
+      useAggressiveRecompilations = true; // force it, to allow recomp at original threshold,
+                                          // but double the sample interval (60 samples)
+      }
+   // For low number of processors become more conservative during startup
+   if (_jitConfig->javaVM->phase != J9VM_PHASE_NOT_STARTUP &&
+         TR::Compiler->target.numberOfProcessors() <= 2)
+      _scaledHotThreshold >>= 2;
+
+   // Used to make recompilations less aggressive during WebSphere startup,
+   // avoiding costly hot, and very hot compilation
+   bool isBigAppStartup = (_jitConfig->javaVM->phase != J9VM_PHASE_NOT_STARTUP
+                           && TR::Options::sharedClassCache()
+                           && _compInfo->getPersistentInfo()->getNumLoadedClasses() >= TR::Options::_bigAppThreshold
+                           && TR::Options::_bigAppSampleThresholdAdjust > 0);
+   if (isBigAppStartup)
+      {
+      _scaledHotThreshold >>= TR::Options::_bigAppSampleThresholdAdjust; //adjust to avoid hot recomps
+      useAggressiveRecompilations = false; //also to avoid potential hot recomps, this could have been set
+      }
+
+   // We allow hot compilations at a lower CPU, but for a longer period of time (scorching window)
+   bool secondCriteriaHot = false;
+   // Check for non first hot interval
+   if (useAggressiveRecompilations)
+      {
+      int32_t samplesInSelf = _scorchingSamplingWindowComplete ? _scorchingSampleInterval : _crtSampleIntervalCount;
+      // Alternative: Here we may want to do something only if a scorchingSampleWindow is complete
+      if (samplesInSelf > _hotSampleInterval)
+         {
+         // 0.5*targetCPU < crtCPU
+         if (((_globalSamples * _hotSampleInterval) >> 1) < (_scaledHotThreshold * samplesInSelf))
+            secondCriteriaHot = true;
+         }
+      }
+
+   // TODO: if the scorching window is complete, should we look at CPU over the larger window?
+   if (_globalSamplesInHotWindow <= _scaledHotThreshold || secondCriteriaHot)
+      {
+      determineWhetherRecompileIsHotOrScorching(scalingFactor, conservativeCase, useAggressiveRecompilations, isBigAppStartup);
+      }
+   // If the method is truly cold, replenish the counter to avoid
+   // recompilation through counter decrementation
+   else if (_globalSamplesInHotWindow >= TR::Options::_resetCountThreshold)
+      {
+      _compInfo->_stats._methodsSampleWindowReset++;
+      _bodyInfo->setCounter(_count + _hotSampleInterval);
+      if (_logSampling)
+         _curMsg += sprintf(_curMsg, " is cold, reset cnt to %d", _bodyInfo->getCounter());
+      }
+
+   // The hot sample interval is done. Prepare for next interval.
+   if (_scorchingSamplingWindowComplete)
+      {
+      // scorching sample interval is done
+      _bodyInfo->setStartCount(_totalSampleCount);
+      _bodyInfo->setOldStartCountDelta(_totalSampleCount - _startSampleCount);
+      _bodyInfo->setHotStartCountDelta(0);
+      }
+   else
+      {
+      int32_t hotStartCountDelta = _totalSampleCount - _startSampleCount;
+      TR_ASSERT(hotStartCountDelta >= 0, "hotStartCountDelta should not be negative\n");
+      if (hotStartCountDelta > 0xffff)
+         hotStartCountDelta = 0xffff;
+      _bodyInfo->setHotStartCountDelta(hotStartCountDelta);
+      }
+
+   if (_recompile)
+      {
+      // One more test
+      if (!_isAlreadyBeingCompiled)
+         {
+         _methodInfo->setReasonForRecompilation(TR_PersistentMethodInfo::RecompDueToThreshold);
+         }
+      else // the method is already being compiled; maybe we need to update the opt level
+         {
+         _recompile = false; // do not need to recompile the method
+         if ((int32_t)_nextOptLevel > (int32_t)_methodInfo->getNextCompileLevel())
+            {
+            // search the queue to update the optimization plan.
+            //
+            TR::IlGeneratorMethodDetails details(_j9method);
+            TR_MethodToBeCompiled *entry =
+               _compInfo->adjustCompilationEntryAndRequeue(details, _methodInfo, _nextOptLevel,
+                                                            _useProfiling,
+                                                            CP_ASYNC_NORMAL, _fe);
+            if (entry)
+               {
+               if (_logSampling)
+                  _curMsg += sprintf(_curMsg, " adj opt lvl to %d", (int32_t)(entry->_optimizationPlan->getOptLevel()));
+               int32_t measuredCpuUtil = _crtSampleIntervalCount == 0 ? // scorching interval done?
+                                          _scorchingSampleInterval * 1000 / _globalSamples :
+                                          _hotSampleInterval * 1000 / _globalSamplesInHotWindow;
+               entry->_optimizationPlan->setPerceivedCPUUtil(measuredCpuUtil);
+               }
+            }
+         }
+      }
+   }
+
 TR_OptimizationPlan *
 TR::DefaultCompilationStrategy::ProcessJittedSample::process()
    {
@@ -821,6 +1052,9 @@ TR::DefaultCompilationStrategy::ProcessJittedSample::process()
 
          if (_count <= 0)
             determineWhetherToRecompileIfCountHitsZero();
+
+         if (!_recompile && _hotSamplingWindowComplete && _totalSampleCount > _startSampleCount)
+            determineWhetherToRecompileBasedOnThreshold();
          }
       }
 
