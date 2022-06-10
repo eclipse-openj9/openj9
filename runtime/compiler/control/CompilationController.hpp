@@ -109,6 +109,8 @@ class DefaultCompilationStrategy : public TR::CompilationStrategy
 
       void initializeRecompRelatedFields();
       void determineWhetherToRecompileIfCountHitsZero();
+      void determineWhetherToRecompileBasedOnThreshold();
+      void determineWhetherRecompileIsHotOrScorching(float scalingFactor, bool conservativeCase, bool useAggressiveRecompilations, bool isBigAppStartup);
 
       J9JITConfig                 *_jitConfig;
       J9VMThread                  *_vmThread;
