@@ -92,20 +92,30 @@ class DefaultCompilationStrategy : public TR::CompilationStrategy
                           TR::CompilationInfo *compInfo,
                           TR_J9VMBase *fe,
                           TR::Options *cmdLineOptions,
-                          J9Method *j9method);
+                          J9Method *j9method,
+                          TR_MethodEvent *event);
+
+      TR_OptimizationPlan * process();
 
       private:
+      void logSampleInfoToBuffer();
+      void printBufferToVLog();
+
       J9JITConfig         *_jitConfig;
       J9VMThread          *_vmThread;
       TR::CompilationInfo *_compInfo;
       TR_J9VMBase         *_fe;
       TR::Options         *_cmdLineOptions;
       J9Method            *_j9method;
+      TR_MethodEvent      *_event;
+      void                *_startPC;
 
       static const uint32_t MSG_SZ = 450;
       bool _logSampling;
       char _msg[MSG_SZ];
       char *_curMsg;
+
+      int32_t _totalSampleCount;
       };
 
    // statistics regarding the events it receives

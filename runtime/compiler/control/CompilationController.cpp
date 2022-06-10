@@ -521,17 +521,75 @@ TR::DefaultCompilationStrategy::ProcessJittedSample::ProcessJittedSample(J9JITCo
                                                                          TR::CompilationInfo *compInfo,
                                                                          TR_J9VMBase *fe,
                                                                          TR::Options *cmdLineOptions,
-                                                                         J9Method *j9method)
+                                                                         J9Method *j9method,
+                                                                         TR_MethodEvent *event)
    : _jitConfig(jitConfig),
      _vmThread(vmThread),
      _compInfo(compInfo),
      _fe(fe),
      _cmdLineOptions(cmdLineOptions),
-     _j9method(j9method)
+     _j9method(j9method),
+     _event(event),
+     _startPC(event->_oldStartPC)
    {
    _logSampling = _fe->isLogSamplingSet() || TrcEnabled_Trc_JIT_Sampling_Detail;
    _msg[0] = 0;
    _curMsg = _msg;
+
+   _totalSampleCount = ++TR::Recompilation::globalSampleCount;
+   _compInfo->_stats._compiledMethodSamples++;
+   TR::Recompilation::jitGlobalSampleCount++;
+   }
+
+void
+TR::DefaultCompilationStrategy::ProcessJittedSample::logSampleInfoToBuffer()
+   {
+   if (_logSampling || TrcEnabled_Trc_JIT_Sampling)
+      {
+      #define SIG_SZ 150
+      char sig[SIG_SZ];  // hopefully the size is good for most cases
+      _fe->printTruncatedSignature(sig, SIG_SZ, (TR_OpaqueMethodBlock*)_j9method);
+      int32_t pcOffset = (uint8_t *)(_event->_samplePC) - (uint8_t *)_startPC;
+      if (_logSampling)
+         _curMsg += sprintf(_curMsg, "(%d)\tCompiled %s\tPC=" POINTER_PRINTF_FORMAT "\t%+d\t", _totalSampleCount, sig, _startPC, pcOffset);
+      if (TrcEnabled_Trc_JIT_Sampling && ((_totalSampleCount % 4) == 0))
+         Trc_JIT_Sampling(getJ9VMThreadFromTR_VM(_fe), "Compiled", sig, 0); // TODO put good pcOffset
+      #undef SIG_SZ
+      }
+   }
+
+void
+TR::DefaultCompilationStrategy::ProcessJittedSample::printBufferToVLog()
+   {
+   if (_logSampling)
+      {
+      bool bufferOverflow = ((_curMsg - _msg) >= MSG_SZ); // check for overflow at runtime
+      if (_fe->isLogSamplingSet())
+         {
+         TR_VerboseLog::CriticalSection vlogLock;
+         TR_VerboseLog::writeLine(TR_Vlog_SAMPLING,"%s", _msg);
+         if (bufferOverflow)
+            TR_VerboseLog::writeLine(TR_Vlog_SAMPLING,"Sampling line is too big: %d characters", _curMsg-_msg);
+         }
+      Trc_JIT_Sampling_Detail(getJ9VMThreadFromTR_VM(_fe), _msg);
+      if (bufferOverflow)
+         Trc_JIT_Sampling_Detail(getJ9VMThreadFromTR_VM(_fe), "Sampling line will cause buffer overflow");
+      // check for buffer overflow and write a message
+      }
+   }
+
+TR_OptimizationPlan *
+TR::DefaultCompilationStrategy::ProcessJittedSample::process()
+   {
+   TR_OptimizationPlan *plan = NULL;
+
+   /* Log sample info */
+   logSampleInfoToBuffer();
+
+   /* Print log to vlog */
+   printBufferToVLog();
+
+   return plan;
    }
 
 TR_OptimizationPlan *
