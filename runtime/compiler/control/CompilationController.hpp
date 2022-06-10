@@ -30,6 +30,7 @@
 
 class TR_OptimizationPlan;
 class TR_PersistentJittedBodyInfo;
+class TR_PersistentMethodInfo;
 struct TR_MethodToBeCompiled;
 
 int32_t printTruncatedSignature(char *sigBuf, int32_t bufLen, J9Method *j9method);
@@ -103,7 +104,8 @@ class DefaultCompilationStrategy : public TR::CompilationStrategy
       void printBufferToVLog();
 
       void yieldToAppThread();
-      void findAndSetBodyInfo();
+      void findAndSetBodyAndMethodInfo();
+      bool shouldProcessSample();
 
       J9JITConfig                 *_jitConfig;
       J9VMThread                  *_vmThread;
@@ -114,6 +116,8 @@ class DefaultCompilationStrategy : public TR::CompilationStrategy
       TR_MethodEvent              *_event;
       void                        *_startPC;
       TR_PersistentJittedBodyInfo *_bodyInfo;
+      TR_PersistentMethodInfo     *_methodInfo;
+      bool                         _isAlreadyBeingCompiled;
 
       static const uint32_t MSG_SZ = 450;
       bool _logSampling;
