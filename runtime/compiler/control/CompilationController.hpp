@@ -113,6 +113,8 @@ class DefaultCompilationStrategy : public TR::CompilationStrategy
       void determineWhetherRecompileIsHotOrScorching(float scalingFactor, bool conservativeCase, bool useAggressiveRecompilations, bool isBigAppStartup);
       void determineWhetherToRecompileLessOptimizedMethods();
 
+      TR_OptimizationPlan * triggerRecompIfNeeded();
+
       J9JITConfig                 *_jitConfig;
       J9VMThread                  *_vmThread;
       TR::CompilationInfo         *_compInfo;

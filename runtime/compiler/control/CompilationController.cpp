@@ -1109,6 +1109,75 @@ TR::DefaultCompilationStrategy::ProcessJittedSample::determineWhetherToRecompile
    }
 
 TR_OptimizationPlan *
+TR::DefaultCompilationStrategy::ProcessJittedSample::triggerRecompIfNeeded()
+   {
+   TR_OptimizationPlan *plan = NULL;
+
+   if (_recompile)
+      {
+      //induceRecompilation(fe, startPC);
+      bool useSampling = (_nextOptLevel != scorching && !_useProfiling);
+      plan = TR_OptimizationPlan::alloc(_nextOptLevel, _useProfiling, useSampling);
+      if (plan)
+         {
+         int32_t measuredCpuUtil = _crtSampleIntervalCount == 0 ? // scorching interval done?
+            (_globalSamples != 0 ? _scorchingSampleInterval * 1000 / _globalSamples : 0) :
+            (_globalSamplesInHotWindow != 0 ? _hotSampleInterval * 1000 / _globalSamplesInHotWindow : 0);
+         plan->setPerceivedCPUUtil(measuredCpuUtil);
+         plan->setIsUpgradeRecompilation(_willUpgrade);
+         plan->setDoNotSwitchToProfiling(_dontSwitchToProfiling);
+         if (_crtSampleIntervalCount == 0 && // scorching compilation decision can be taken
+               _globalSamples <= TR::Options::_relaxedCompilationLimitsSampleThreshold) // FIXME: needs scaling
+            plan->setRelaxedCompilationLimits(true);
+         if (_logSampling)
+            {
+            float cpu = measuredCpuUtil / 10.0;
+            if (_useProfiling)
+               _curMsg += sprintf(_curMsg, " --> recompile at level %d, profiled CPU=%.1f%%", _nextOptLevel, cpu);
+            else
+               _curMsg += sprintf(_curMsg, " --> recompile at level %d CPU=%.1f%%", _nextOptLevel, cpu);
+
+            if (_methodInfo->getReasonForRecompilation() == TR_PersistentMethodInfo::RecompDueToThreshold)
+               {
+               _curMsg += sprintf(_curMsg, " scaledThresholds=[%d %d]", _scaledScorchingThreshold, _scaledHotThreshold);
+               }
+            }
+         }
+      else // OOM
+         {
+         if (_logSampling)
+            _curMsg += sprintf(_curMsg, " --> not recompiled: OOM");
+         }
+      }
+   else if (_logSampling)
+      {
+      if (_isAlreadyBeingCompiled)
+         _curMsg += sprintf(_curMsg, " - is already being recompiled");
+      else if (!_hotSamplingWindowComplete)
+         _curMsg += sprintf(_curMsg, " not recompiled, smpl interval not done");
+      else
+         {
+         float measuredCpuUtil = 0.0;
+         if (_crtSampleIntervalCount == 0) // scorching interval done
+            {
+            if (_globalSamples)
+               measuredCpuUtil = _scorchingSampleInterval * 100.0 / _globalSamples;
+            }
+         else
+            {
+            if (_globalSamplesInHotWindow)
+               measuredCpuUtil = _hotSampleInterval * 100.0 / _globalSamplesInHotWindow;
+            }
+         _curMsg += sprintf(_curMsg, " not recompiled, CPU=%.1f%% %s scaledThresholds=[%d %d]",
+            measuredCpuUtil, _postponeDecision ? " postpone decision" : "",
+            _scaledScorchingThreshold, _scaledHotThreshold);
+         }
+      }
+
+   return plan;
+   }
+
+TR_OptimizationPlan *
 TR::DefaultCompilationStrategy::ProcessJittedSample::process()
    {
    TR_OptimizationPlan *plan = NULL;
@@ -1129,27 +1198,50 @@ TR::DefaultCompilationStrategy::ProcessJittedSample::process()
 
    if (_bodyInfo)
       {
-      OMR::CriticalSection processSample(_compInfo->getCompilationMonitor());
-      if (shouldProcessSample())
+      bool shouldProcess;
+
          {
-         initializeRecompRelatedFields();
+         OMR::CriticalSection processSample(_compInfo->getCompilationMonitor());
 
-         if (_logSampling)
-            _curMsg += sprintf(_curMsg, " cnt=%d ncl=%d glblSmplCnt=%d startCnt=%d[-%u,+%u] samples=[%d %d] windows=[%d %u] crtSmplIntrvlCnt=%u",
-               _count, _methodInfo->getNextCompileLevel(), _totalSampleCount, _startSampleCount,
-               _bodyInfo->getOldStartCountDelta(), _bodyInfo->getHotStartCountDelta(),
-               _globalSamples, _globalSamplesInHotWindow,
-               _scorchingSampleInterval, _hotSampleInterval, _crtSampleIntervalCount);
+         shouldProcess = shouldProcessSample();
+         if (shouldProcess)
+            {
+            initializeRecompRelatedFields();
 
-         if (_count <= 0)
-            determineWhetherToRecompileIfCountHitsZero();
+            if (_logSampling)
+               _curMsg += sprintf(_curMsg, " cnt=%d ncl=%d glblSmplCnt=%d startCnt=%d[-%u,+%u] samples=[%d %d] windows=[%d %u] crtSmplIntrvlCnt=%u",
+                  _count, _methodInfo->getNextCompileLevel(), _totalSampleCount, _startSampleCount,
+                  _bodyInfo->getOldStartCountDelta(), _bodyInfo->getHotStartCountDelta(),
+                  _globalSamples, _globalSamplesInHotWindow,
+                  _scorchingSampleInterval, _hotSampleInterval, _crtSampleIntervalCount);
 
-         if (!_recompile && _hotSamplingWindowComplete && _totalSampleCount > _startSampleCount)
-            determineWhetherToRecompileBasedOnThreshold();
+            if (_count <= 0)
+               determineWhetherToRecompileIfCountHitsZero();
 
-         if (!_recompile)
-            determineWhetherToRecompileLessOptimizedMethods();
+            if (!_recompile && _hotSamplingWindowComplete && _totalSampleCount > _startSampleCount)
+               determineWhetherToRecompileBasedOnThreshold();
+
+            if (!_recompile)
+               determineWhetherToRecompileLessOptimizedMethods();
+
+            // if we don't take any recompilation decision, let's see if we can
+            // schedule a compilation from the low priority queue
+            if (!_recompile && _compInfo && _compInfo->getLowPriorityCompQueue().hasLowPriorityRequest() &&
+                _compInfo->canProcessLowPriorityRequest())
+               {
+               // wake up the compilation thread
+               _compInfo->getCompilationMonitor()->notifyAll();
+               }
+            if (_recompile)
+               {
+               // Method is being recompiled because it is truly hot;
+               _bodyInfo->setSamplingRecomp();
+               }
+            }
          }
+
+      if (shouldProcess)
+         plan = triggerRecompIfNeeded();
       }
 
    // Print log to vlog
