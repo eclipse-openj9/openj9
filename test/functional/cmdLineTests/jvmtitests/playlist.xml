@@ -444,12 +444,6 @@
 	${TEST_STATUS}</command>
 		<!-- Option -XX:+JitInlineWatches is currently unsupported on arm -->
 		<platformRequirements>^arch.arm</platformRequirements>
-		<disables>
-			<disable>
-				<comment>https://github.com/eclipse-openj9/openj9/issues/14502</comment>
-				<platform>aarch64.*mac.*</platform>
-			</disable>
-		</disables>
 		<levels>
 			<level>extended</level>
 		</levels>
