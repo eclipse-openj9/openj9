@@ -334,7 +334,7 @@ L_USSGclinitCase:
 	mov	x30, x10					// send helpers expect link register to contain snippet return address
 	br	x1						// in <clinit> case, dispatch method directly without patching
 
-FUNC_LABEL(_interpreterUnresolvedStaticGlue:)
+FUNC_LABEL(_interpreterUnresolvedStaticGlue):
 	LOAD_FUNC_PTR(x3, const_jitResolveStaticMethod)
 	b	L_mergedUnresolvedSpecialStaticGlue
 
@@ -1216,3 +1216,22 @@ FUNC_LABEL(_patchGCRHelper):
 	FINISH_MODIFYING_CODE
 	mov	x1, #4						// 1 instruction to flush
 	b	flushICache
+
+#if defined(OSX)
+	.globl	FUNC_LABEL(_fieldWatchHelper)
+
+// Rewrite a slot in data snippet for field watch
+//
+// in:     x0  = address in data snippet
+//         x1  = value to be written
+FUNC_LABEL(_fieldWatchHelper):
+	SAVE_REGS_IN_NATIVE_STACK
+	mov	x0, #0
+	bl	FUNC_LABEL(pthread_jit_write_protect_np)
+	ldp	x0, x1, [sp]
+	str	x1, [x0]
+	mov	x1, #1
+	bl	FUNC_LABEL(pthread_jit_write_protect_np)
+	RESTORE_REGS_FROM_NATIVE_STACK
+	ret
+#endif
