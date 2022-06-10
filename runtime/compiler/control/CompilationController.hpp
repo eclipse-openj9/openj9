@@ -111,6 +111,7 @@ class DefaultCompilationStrategy : public TR::CompilationStrategy
       void determineWhetherToRecompileIfCountHitsZero();
       void determineWhetherToRecompileBasedOnThreshold();
       void determineWhetherRecompileIsHotOrScorching(float scalingFactor, bool conservativeCase, bool useAggressiveRecompilations, bool isBigAppStartup);
+      void determineWhetherToRecompileLessOptimizedMethods();
 
       J9JITConfig                 *_jitConfig;
       J9VMThread                  *_vmThread;
@@ -136,6 +137,7 @@ class DefaultCompilationStrategy : public TR::CompilationStrategy
       bool _useProfiling;
       bool _dontSwitchToProfiling;
       bool _postponeDecision;
+      bool _willUpgrade;
       TR_Hotness _nextOptLevel;
       uint32_t _intervalIncreaseFactor;
       int32_t _scorchingSampleInterval;

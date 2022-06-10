@@ -551,6 +551,7 @@ TR::DefaultCompilationStrategy::ProcessJittedSample::initializeRecompRelatedFiel
    _useProfiling = false;
    _dontSwitchToProfiling = false;
    _postponeDecision = false;
+   _willUpgrade = false;
 
    // Profiling compilations that precede scorching ones are quite taxing
    // on large multicore machines. Thus, we want to observe the hotness of a
@@ -1017,6 +1018,96 @@ TR::DefaultCompilationStrategy::ProcessJittedSample::determineWhetherToRecompile
       }
    }
 
+void
+TR::DefaultCompilationStrategy::ProcessJittedSample::determineWhetherToRecompileLessOptimizedMethods()
+   {
+   if (_bodyInfo->getFastRecompilation() && !_isAlreadyBeingCompiled)
+      {
+      // Allow profiling even if we are about to exhaust the code cache
+      // because this case is used for diagnostic only
+      if (_bodyInfo->getFastScorchingRecompilation())
+         {
+         if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableProfiling) &&
+               TR::Recompilation::countingSupported() &&
+               !(_methodInfo->profilingDisabled()))
+            {
+            _nextOptLevel = veryHot;
+            _useProfiling = true;
+            }
+         else
+            {
+            _nextOptLevel = scorching;
+            }
+         }
+      else
+         {
+         _nextOptLevel = hot;
+         }
+      _recompile = true;
+      _methodInfo->setReasonForRecompilation(TR_PersistentMethodInfo::RecompDueToThreshold);//lie
+      }
+   else if (!_postponeDecision &&
+      !TR::Options::getCmdLineOptions()->getOption(TR_DisableUpgrades) &&
+      // case (1) methods downgraded to cold
+      ((_bodyInfo->getHotness() < warm &&
+         (_methodInfo->isOptLevelDowngraded() || _cmdLineOptions->getOption(TR_EnableUpgradingAllColdCompilations))) ||
+      // case (2) methods taken from shared cache
+      _bodyInfo->getIsAotedBody()))
+         // case (3) cold compilations for bootstrap methods, even if not downgraded
+      {
+      // test other conditions for upgrading
+
+      uint32_t threshold = TR::Options::_coldUpgradeSampleThreshold;
+      // Pick a threshold based on method size (higher thresholds for bigger methods)
+      if (_jitConfig->javaVM->phase != J9VM_PHASE_NOT_STARTUP &&
+            _compInfo->getPersistentInfo()->getNumLoadedClasses() >= TR::Options::_bigAppThreshold)
+         {
+         threshold += (uint32_t)(TR::CompilationInfo::getMethodBytecodeSize(_j9method) >> 8);
+         // sampleIntervalCount goes from 0 to _sampleInterval-1
+         // Very big methods (bigger than 6K bytecodes) will have a threshold bigger than this
+         // and never be upgraded, which is what we want
+         }
+      if ((uint32_t)_crtSampleIntervalCount >= threshold &&
+            _compInfo->getMethodQueueSize() <= TR::CompilationInfo::SMALL_QUEUE &&
+            !_compInfo->getPersistentInfo()->isClassLoadingPhase() &&
+            !_isAlreadyBeingCompiled &&
+            !_cmdLineOptions->getOption(TR_DisableUpgradingColdCompilations))
+         {
+         _recompile = true;
+         if (!_bodyInfo->getIsAotedBody())
+            {
+            // cold-nonaot compilations can only be upgraded to warm
+            _nextOptLevel = warm;
+            }
+         else // AOT bodies
+            {
+            if (!TR::Options::isQuickstartDetected())
+               {
+               // AOT upgrades are performed at warm
+               // We may want to look at how expensive the method is though
+               _nextOptLevel = warm;
+               }
+            else // -Xquickstart (and AOT)
+               {
+               _nextOptLevel = cold;
+               // Exception: bootstrap class methods that are cheap should be upgraded directly at warm
+               if (_cmdLineOptions->getOption(TR_UpgradeBootstrapAtWarm) && _fe->isClassLibraryMethod((TR_OpaqueMethodBlock *)_j9method))
+                  {
+                  TR_J9SharedCache *sc = TR_J9VMBase::get(_jitConfig, _event->_vmThread, TR_J9VMBase::AOT_VM)->sharedCache();
+                  bool expensiveComp = sc->isHint(_j9method, TR_HintLargeMemoryMethodW);
+                  if (!expensiveComp)
+                     _nextOptLevel = warm;
+                  }
+               }
+            }
+         _methodInfo->setReasonForRecompilation(TR_PersistentMethodInfo::RecompDueToOptLevelUpgrade);
+         // reset the flag to avoid upgrading repeatedly
+         _methodInfo->setOptLevelDowngraded(false);
+         _willUpgrade = true;
+         }
+      }
+   }
+
 TR_OptimizationPlan *
 TR::DefaultCompilationStrategy::ProcessJittedSample::process()
    {
@@ -1055,6 +1146,9 @@ TR::DefaultCompilationStrategy::ProcessJittedSample::process()
 
          if (!_recompile && _hotSamplingWindowComplete && _totalSampleCount > _startSampleCount)
             determineWhetherToRecompileBasedOnThreshold();
+
+         if (!_recompile)
+            determineWhetherToRecompileLessOptimizedMethods();
          }
       }
 
