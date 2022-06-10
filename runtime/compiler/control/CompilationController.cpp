@@ -578,15 +578,41 @@ TR::DefaultCompilationStrategy::ProcessJittedSample::printBufferToVLog()
       }
    }
 
+void
+TR::DefaultCompilationStrategy::ProcessJittedSample::yieldToAppThread()
+   {
+   int32_t sleepNano = _compInfo->getAppSleepNano(); // determine how much I need to sleep
+   if (sleepNano != 0) // If I need to sleep at all
+      {
+      if (sleepNano == 1000000)
+         {
+         j9thread_sleep(1); // param in ms
+         }
+      else
+         {
+         if (_fe->shouldSleep()) // sleep every other sample point
+            j9thread_sleep(1); // param in ms
+         }
+      }
+   }
+
 TR_OptimizationPlan *
 TR::DefaultCompilationStrategy::ProcessJittedSample::process()
    {
    TR_OptimizationPlan *plan = NULL;
 
-   /* Log sample info */
+   // Log sample info
    logSampleInfoToBuffer();
 
-   /* Print log to vlog */
+   // Insert an yield point if compilation queue size is too big and CPU utilization is close to 100%
+   // QueueSize changes all the time, so threads may experience cache misses
+   // trying to access it. It's better to have a variable defined in compInfo
+   // which says by how much we need to delay application threads. This variable
+   // will be changed by the sampling thread, every 0.5 seconds
+   if (TR::Options::getCmdLineOptions()->getOption(TR_EnableAppThreadYield))
+      yieldToAppThread();
+
+   // Print log to vlog
    printBufferToVLog();
 
    return plan;

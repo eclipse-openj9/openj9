@@ -101,6 +101,8 @@ class DefaultCompilationStrategy : public TR::CompilationStrategy
       void logSampleInfoToBuffer();
       void printBufferToVLog();
 
+      void yieldToAppThread();
+
       J9JITConfig         *_jitConfig;
       J9VMThread          *_vmThread;
       TR::CompilationInfo *_compInfo;
