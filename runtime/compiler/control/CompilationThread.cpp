@@ -2613,13 +2613,40 @@ void TR::CompilationInfo::resumeCompilationThread()
    }
 
 #if defined(J9VM_OPT_CRIU_SUPPORT)
+
+class ReleaseVMAccessAndAcquireMonitor
+   {
+   public:
+   ReleaseVMAccessAndAcquireMonitor(J9VMThread *vmThread, TR::Monitor *monitor)
+      : _hadVMAccess(vmThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS),
+        _vmThread(vmThread),
+        _monitor(monitor)
+      {
+      if (_hadVMAccess)
+         releaseVMAccessNoSuspend(_vmThread);
+      _monitor->enter();
+      }
+
+   ~ReleaseVMAccessAndAcquireMonitor()
+      {
+      _monitor->exit();
+      if (_hadVMAccess)
+         acquireVMAccessNoSuspend(_vmThread);
+      }
+
+   private:
+   bool         _hadVMAccess;
+   J9VMThread  *_vmThread;
+   TR::Monitor *_monitor;
+   };
+
 void TR::CompilationInfo::prepareForCheckpoint()
    {
    J9JavaVM   *vm       = _jitConfig->javaVM;
    J9VMThread *vmThread = vm->internalVMFunctions->currentVMThread(vm);
 
    {
-   OMR::CriticalSection suspendCompThreadsForCheckpoint(getCompilationMonitor());
+   ReleaseVMAccessAndAcquireMonitor suspendCompThreadsForCheckpoint(vmThread, getCompilationMonitor());
 
    if (shouldCheckpointBeInterrupted())
       return;
@@ -2634,6 +2661,9 @@ void TR::CompilationInfo::prepareForCheckpoint()
     */
    bool purgeMethodQueue = false;
    suspendCompilationThread(purgeMethodQueue);
+
+   /* With the thread state now updated, notify any active comp threads waiting for work */
+   getCompilationMonitor()->notifyAll();
 
    /* Wait until all compilation threads are suspended. */
    for (int32_t i = 0; i < getNumTotalCompilationThreads(); i++)
