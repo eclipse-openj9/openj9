@@ -4867,6 +4867,124 @@ throwNativeOOMError(JNIEnv *env, U_32 moduleName, U_32 messageNumber);
 void
 throwNewJavaIoIOException(JNIEnv *env, const char *message);
 
+#if JAVA_SPEC_VERSION >= 16
+
+/* ------------------- UpcallThunkGen.cpp ----------------- */
+
+/**
+ * @brief Generate the appropriate thunk/adaptor for a given J9UpcallMetaData
+ *
+ * @param metaData[in/out] a pointer to the given J9UpcallMetaData
+ * @return the address for this future upcall function handle, either the thunk or the thunk-descriptor
+ */
+void *
+createUpcallThunk(J9UpcallMetaData *data);
+
+/**
+ * @brief Calculate the requested argument in-stack memory address to return
+ *
+ * @param nativeSig a pointer to the J9UpcallNativeSignature
+ * @param argListPtr a pointer to the argument list prepared by the thunk
+ * @param argIdx the requested argument index
+ * @return the address in argument list for the requested argument
+ *
+ * Details:
+ *   A quick walk-through of the argument list ahead of the requested one
+ *   Calculating its address based on argListPtr
+ */
+void *
+getArgPointer(J9UpcallNativeSignature *nativeSig, void *argListPtr, int argIdx);
+
+/**
+ * @brief Allocate a piece of thunk memory with a given size from the existing virtual memory block
+ *
+ * @param data a pointer to J9UpcallMetaData
+ * @return the start address of the upcall thunk memory, or NULL on failure.
+ */
+void *
+allocateUpcallThunkMemory(J9UpcallMetaData *data);
+
+
+/**
+ * @brief Flush the generated thunk to the memory
+ *
+ * @param data a pointer to J9UpcallMetaData
+ * @param thunkAddress the address of the generated thunk
+ * @return void
+ */
+void
+doneUpcallThunkGeneration(J9UpcallMetaData *data, void *thunkAddress);
+
+/* ------------------- UpcallVMHelpers.cpp ----------------- */
+
+/**
+ * @brief Call into the interpreter via native2InterpJavaUpcallImpl to invoke the upcall
+ * specific method handle and ignore the return value in the case of void.
+ *
+ * @param data a pointer to J9UpcallMetaData
+ * @param argsListPointer a pointer to the argument list
+ * @return void
+ */
+void JNICALL
+native2InterpJavaUpcall0(J9UpcallMetaData *data, void *argsListPointer);
+
+/**
+ * @brief Call into the interpreter via native2InterpJavaUpcallImpl to invoke the upcall
+ * specific method handle and return an I_32 value in the case of byte/char/short/int.
+ *
+ * @param data a pointer to J9UpcallMetaData
+ * @param argsListPointer a pointer to the argument list
+ * @return an I_32 value
+ */
+I_32 JNICALL
+native2InterpJavaUpcall1(J9UpcallMetaData *data, void *argsListPointer);
+
+/**
+ * @brief Call into the interpreter via native2InterpJavaUpcallImpl to invoke the upcall
+ * specific method handle and return an I_64 value in the case of long/pointer.
+ *
+ * @param data a pointer to J9UpcallMetaData
+ * @param argsListPointer a pointer to the argument list
+ * @return an I_64 value
+ */
+I_64 JNICALL
+native2InterpJavaUpcallJ(J9UpcallMetaData *data, void *argsListPointer);
+
+/**
+ * @brief Call into the interpreter via native2InterpJavaUpcallImpl to invoke the upcall
+ * specific method handle and return a float value as specified in the return type.
+ *
+ * @param data a pointer to J9UpcallMetaData
+ * @param argsListPointer a pointer to the argument list
+ * @return a float
+ */
+float JNICALL
+native2InterpJavaUpcallF(J9UpcallMetaData *data, void *argsListPointer);
+
+/**
+ * @brief Call into the interpreter via native2InterpJavaUpcallImpl to invoke the upcall
+ * specific method handle and return a double value as specified in the return type.
+ *
+ * @param data a pointer to J9UpcallMetaData
+ * @param argsListPointer a pointer to the argument list
+ * @return a double
+ */
+double JNICALL
+native2InterpJavaUpcallD(J9UpcallMetaData *data, void *argsListPointer);
+
+/**
+ * @brief Call into the interpreter via native2InterpJavaUpcallImpl to invoke the upcall
+ * specific method handle and return a U_8 pointer to the requested struct.
+ *
+ * @param data a pointer to J9UpcallMetaData
+ * @param argsListPointer a pointer to the argument list
+ * @return a U_8 pointer
+ */
+U_8 * JNICALL
+native2InterpJavaUpcallStruct(J9UpcallMetaData *data, void *argsListPointer);
+
+#endif /* JAVA_SPEC_VERSION >= 16 */
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif

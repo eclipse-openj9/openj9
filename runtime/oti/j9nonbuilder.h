@@ -4889,7 +4889,6 @@ typedef struct J9InternalVMFunctions {
 	void (*freeTLS)(struct J9VMThread *currentThread, j9object_t threadObj);
 #endif /* JAVA_SPEC_VERSION >= 19 */
 #if JAVA_SPEC_VERSION >= 16
-/*
 	void * ( *createUpcallThunk)(struct J9UpcallMetaData *data);
 	void * ( *getArgPointer)(struct J9UpcallNativeSignature *nativeSig, void *argListPtr, int argIdx);
 	void * ( *allocateUpcallThunkMemory)(struct J9UpcallMetaData *data);
@@ -4900,7 +4899,6 @@ typedef struct J9InternalVMFunctions {
 	float (JNICALL *native2InterpJavaUpcallF)(struct J9UpcallMetaData *data, void *argsListPointer);
 	double (JNICALL *native2InterpJavaUpcallD)(struct J9UpcallMetaData *data, void *argsListPointer);
 	U_8 * (JNICALL *native2InterpJavaUpcallStruct)(struct J9UpcallMetaData *data, void *argsListPointer);
-*/
 #endif /* JAVA_SPEC_VERSION >= 16 */
 } J9InternalVMFunctions;
 

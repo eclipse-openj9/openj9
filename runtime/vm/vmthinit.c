@@ -87,6 +87,7 @@ UDATA initializeVMThreading(J9JavaVM *vm)
 #if JAVA_SPEC_VERSION >= 16
 		omrthread_monitor_init_with_name(&vm->cifNativeCalloutDataCacheMutex, 0, "CIF cache mutex") ||
 		omrthread_monitor_init_with_name(&vm->cifArgumentTypesCacheMutex, 0, "CIF argument types mutex") ||
+		omrthread_monitor_init_with_name(&vm->thunkHeapWrapperMutex, 0, "Wait mutex for allocating the upcall thunk memory") ||
 #endif /* JAVA_SPEC_VERSION >= 16 */
 
 #if JAVA_SPEC_VERSION >= 19
@@ -184,6 +185,11 @@ void terminateVMThreading(J9JavaVM *vm)
 	if (NULL != vm->cifArgumentTypesCacheMutex) {
 		omrthread_monitor_destroy(vm->cifArgumentTypesCacheMutex);
 		vm->cifArgumentTypesCacheMutex = NULL;
+	}
+
+	if (NULL != vm->thunkHeapWrapperMutex) {
+		omrthread_monitor_destroy(vm->thunkHeapWrapperMutex);
+		vm->thunkHeapWrapperMutex = NULL;
 	}
 #endif /* JAVA_SPEC_VERSION >= 16 */
 
