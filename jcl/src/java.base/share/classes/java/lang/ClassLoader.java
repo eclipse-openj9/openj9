@@ -1373,6 +1373,10 @@ Class<?> loadClassHelper(final String className, boolean resolveClass, boolean d
  *
  * @return		True if the ClassLoader successfully registers as 
  * 				parallel capable, false otherwise.
+/*[IF JAVA_SPEC_VERSION >= 19]
+ *
+ * @throws IllegalCallerException if the caller is not a subclass of ClassLoader
+/*[ENDIF] JAVA_SPEC_VERSION >= 19
  *
  * @see			java.lang.ClassLoader
  */
@@ -1406,6 +1410,12 @@ private static boolean registerAsParallelCapable(Class<?> callerCls) {
 	}
 
 	Class<?> superCls = callerCls.getSuperclass();
+
+	/*[IF JAVA_SPEC_VERSION >= 19]*/
+	if (!ClassLoader.class.isAssignableFrom(superCls)) {
+		throw new IllegalCallerException(callerCls.getName());
+	}
+	/*[ENDIF] JAVA_SPEC_VERSION >= 19 */
 
 	if (superCls == ClassLoader.class || parallelCapableCollection.containsKey(superCls)) {
 		parallelCapableCollection.put(callerCls, null);
