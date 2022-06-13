@@ -21,8 +21,11 @@
  *******************************************************************************/
 
 /**
- * This file contains the native code used by the test cases in
- * org.openj9.test.jep389.downcall via a Clinker FFI DownCall.
+ * This file contains the native code used by the test cases via a Clinker FFI DownCall in java,
+ * which come from:
+ * org.openj9.test.jep389.downcall (JDK16/17)
+ * org.openj9.test.jep419.downcall (JDK18)
+ * org.openj9.test.jep424.downcall (JDK19+)
  *
  * Created by jincheng@ca.ibm.com
  */
@@ -69,24 +72,6 @@ int
 add3Ints(int intArg1, int intArg2, int intArg3)
 {
 	int intSum = intArg1 + intArg2 + intArg3;
-	return intSum;
-}
-
-/**
- * Add integers from the va_list with the specified count
- *
- * @param intCount the count of the integers
- * @param intArgList the integer va_list
- * @return the sum of integers from the va_list
- */
-int
-addIntsFromVaList(int intCount, va_list intVaList)
-{
-	int intSum = 0;
-	while (intCount > 0) {
-		intSum += va_arg(intVaList, int);
-		intCount--;
-	}
 	return intSum;
 }
 
@@ -268,24 +253,6 @@ addLongAndLongFromPointer(LONG *longArg1, LONG longArg2)
 }
 
 /**
- * Add long integers from the va_list with the specified count
- *
- * @param longCount the count of the long integers
- * @param longArgList the long va_list
- * @return the sum of long integers from the va_list
- */
-LONG
-addLongsFromVaList(int longCount, va_list longVaList)
-{
-	LONG longSum = 0;
-	while (longCount > 0) {
-		longSum += va_arg(longVaList, LONG);
-		longCount--;
-	}
-	return longSum;
-}
-
-/**
  * Add two floats.
  *
  * @param floatArg1 the 1st float to add
@@ -338,24 +305,6 @@ double
 addDoubleAndDoubleFromPointer(double *doubleArg1, double doubleArg2)
 {
 	double doubleSum = *doubleArg1 + doubleArg2;
-	return doubleSum;
-}
-
-/**
- * Add doubles from the va_list with the specified count
- *
- * @param doubleCount the count of the double arguments
- * @param doubleArgList the double va_list
- * @return the sum of doubles from the va_list
- */
-double
-addDoublesFromVaList(int doubleCount, va_list doubleVaList)
-{
-	double doubleSum = 0;
-	while (doubleCount > 0) {
-		doubleSum += va_arg(doubleVaList, double);
-		doubleCount--;
-	}
 	return doubleSum;
 }
 
@@ -1255,7 +1204,7 @@ addIntAndIntsFromNestedStruct(int arg1, stru_NestedStruct_Int arg2)
  *
  * @param arg1 an integer
  * @param arg2 a struct with an integer and a nested struct
- * @return the sum of these ints
+ * @return the sum of these integers
  */
 int
 addIntAndIntsFromNestedStruct_reverseOrder(int arg1, stru_Int_NestedStruct arg2)

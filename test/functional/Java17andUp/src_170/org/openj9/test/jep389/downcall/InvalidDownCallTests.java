@@ -57,7 +57,7 @@ public class InvalidDownCallTests {
 		System.loadLibrary("clinkerffitests");
 	}
 	private static final SymbolLookup nativeLibLookup = SymbolLookup.loaderLookup();
-	private static final SymbolLookup defaultLibLookup = (!isAixOS) ? CLinker.systemLookup() : null;
+	private static final SymbolLookup defaultLibLookup = CLinker.systemLookup();
 
 	@Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "The return type must be .*")
 	public void test_invalidBooleanTypeOnReturn() throws Throwable {
@@ -358,19 +358,11 @@ public class InvalidDownCallTests {
 
 	@Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "ValueLayout is expected.*")
 	public void test_invalidMemoryLayoutForMemoryAddress() throws Throwable {
-		/* Temporarily disable the default library loading on AIX till we figure out a way
-		 * around to handle the case as the official implementation in OpenJDK17 doesn't
-		 * help to load the static libray (libc.a).
-		 */
-		if (isAixOS) {
-			throw new IllegalArgumentException("ValueLayout is expected");
-		} else {
-			Addressable functionSymbol = defaultLibLookup.lookup("strlen").get();
-			MethodType mt = MethodType.methodType(long.class, MemoryAddress.class);
-			FunctionDescriptor fd = FunctionDescriptor.of(longLayout, MemoryLayout.paddingLayout(64));
-			MethodHandle mh = clinker.downcallHandle(functionSymbol, mt, fd);
-			fail("Failed to throw out IllegalArgumentException in the case of the invalid MemoryLayout");
-		}
+		Addressable functionSymbol = defaultLibLookup.lookup("strlen").get();
+		MethodType mt = MethodType.methodType(long.class, MemoryAddress.class);
+		FunctionDescriptor fd = FunctionDescriptor.of(longLayout, MemoryLayout.paddingLayout(64));
+		MethodHandle mh = clinker.downcallHandle(functionSymbol, mt, fd);
+		fail("Failed to throw out IllegalArgumentException in the case of the invalid MemoryLayout");
 	}
 
 	@Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "Mismatched size .*")
@@ -384,19 +376,11 @@ public class InvalidDownCallTests {
 
 	@Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "Mismatched size .*")
 	public void test_mismatchedLayoutSizeForMemoryAddress() throws Throwable {
-		/* Temporarily disable the default library loading on AIX till we figure out a way
-		 * around to handle the case as the official implementation in OpenJDK17 doesn't
-		 * help to load the static libray (libc.a).
-		 */
-		if (isAixOS) {
-			throw new IllegalArgumentException("Mismatched size ");
-		} else {
-			Addressable functionSymbol = defaultLibLookup.lookup("strlen").get();
-			MethodType mt = MethodType.methodType(long.class, MemoryAddress.class);
-			FunctionDescriptor fd = FunctionDescriptor.of(longLayout, MemoryLayouts.BITS_16_LE);
-			MethodHandle mh = clinker.downcallHandle(functionSymbol, mt, fd);
-			fail("Failed to throw out IllegalArgumentException in the case of the mismatched layout size");
-		}
+		Addressable functionSymbol = defaultLibLookup.lookup("strlen").get();
+		MethodType mt = MethodType.methodType(long.class, MemoryAddress.class);
+		FunctionDescriptor fd = FunctionDescriptor.of(longLayout, MemoryLayouts.BITS_16_LE);
+		MethodHandle mh = clinker.downcallHandle(functionSymbol, mt, fd);
+		fail("Failed to throw out IllegalArgumentException in the case of the mismatched layout size");
 	}
 
 	@Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = ".* neither primitive nor .*")

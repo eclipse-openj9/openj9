@@ -47,7 +47,6 @@ import static jdk.incubator.foreign.VaList.Builder;
  */
 @Test(groups = { "level.sanity" })
 public class PrimitiveTypeTests2 {
-	private static boolean isAixOS = System.getProperty("os.name").toLowerCase().contains("aix");
 	private static CLinker clinker = CLinker.systemCLinker();
 	private static ResourceScope resourceScope = ResourceScope.newImplicitScope();
 	private static SegmentAllocator nativeAllocator = SegmentAllocator.nativeAllocator(resourceScope);
@@ -264,53 +263,35 @@ public class PrimitiveTypeTests2 {
 
 	@Test
 	public void test_strlenFromDefaultLibWithMemAddr_2() throws Throwable {
-		/* Temporarily disable the default library loading on AIX till we figure out a way
-		 * around to handle the case as the official implementation in OpenJDK17 doesn't
-		 * help to load the static libray (libc.a).
-		 */
-		if (!isAixOS) {
-			NativeSymbol strlenSymbol = clinker.lookup("strlen").get();
-			FunctionDescriptor fd = FunctionDescriptor.of(JAVA_LONG, ADDRESS);
-			MethodHandle mh = clinker.downcallHandle(fd);
-			MemorySegment funcSegmt = nativeAllocator.allocateUtf8String("JEP419 DOWNCALL TEST SUITES");
-			long strLength = (long)mh.invoke(strlenSymbol, funcSegmt);
-			Assert.assertEquals(strLength, 27);
-		}
+		NativeSymbol strlenSymbol = clinker.lookup("strlen").get();
+		FunctionDescriptor fd = FunctionDescriptor.of(JAVA_LONG, ADDRESS);
+		MethodHandle mh = clinker.downcallHandle(fd);
+		MemorySegment funcSegmt = nativeAllocator.allocateUtf8String("JEP419 DOWNCALL TEST SUITES");
+		long strLength = (long)mh.invoke(strlenSymbol, funcSegmt);
+		Assert.assertEquals(strLength, 27);
 	}
 
 	@Test
 	public void test_memoryAllocFreeFromDefaultLib_2() throws Throwable {
-		/* Temporarily disable the default library loading on AIX till we figure out a way
-		 * around to handle the case as the official implementation in OpenJDK17 doesn't
-		 * help to load the static libray (libc.a).
-		 */
-		if (!isAixOS) {
-			NativeSymbol allocSymbol = clinker.lookup("malloc").get();
-			FunctionDescriptor allocFuncDesc = FunctionDescriptor.of(ADDRESS, JAVA_LONG);
-			MethodHandle allocHandle = clinker.downcallHandle(allocFuncDesc);
-			MemoryAddress allocMemAddr = (MemoryAddress)allocHandle.invokeExact(allocSymbol, 10L);
-			allocMemAddr.set(JAVA_INT, 0, 15);
-			Assert.assertEquals(allocMemAddr.get(JAVA_INT, 0), 15);
+		NativeSymbol allocSymbol = clinker.lookup("malloc").get();
+		FunctionDescriptor allocFuncDesc = FunctionDescriptor.of(ADDRESS, JAVA_LONG);
+		MethodHandle allocHandle = clinker.downcallHandle(allocFuncDesc);
+		MemoryAddress allocMemAddr = (MemoryAddress)allocHandle.invokeExact(allocSymbol, 10L);
+		allocMemAddr.set(JAVA_INT, 0, 15);
+		Assert.assertEquals(allocMemAddr.get(JAVA_INT, 0), 15);
 
-			NativeSymbol freeSymbol = clinker.lookup("free").get();
-			FunctionDescriptor freeFuncDesc = FunctionDescriptor.ofVoid(ADDRESS);
-			MethodHandle freeHandle = clinker.downcallHandle(freeFuncDesc);
-			freeHandle.invoke(freeSymbol, allocMemAddr);
-		}
+		NativeSymbol freeSymbol = clinker.lookup("free").get();
+		FunctionDescriptor freeFuncDesc = FunctionDescriptor.ofVoid(ADDRESS);
+		MethodHandle freeHandle = clinker.downcallHandle(freeFuncDesc);
+		freeHandle.invoke(freeSymbol, allocMemAddr);
 	}
 
 	@Test
 	public void test_printfFromDefaultLibWithMemAddr_2() throws Throwable {
-		/* Temporarily disable the default library loading on AIX till we figure out a way
-		 * around to handle the case as the official implementation in OpenJDK17 doesn't
-		 * help to load the static libray (libc.a).
-		 */
-		if (!isAixOS) {
-			NativeSymbol functionSymbol = clinker.lookup("printf").get();
-			FunctionDescriptor fd = FunctionDescriptor.of(JAVA_INT, ADDRESS, JAVA_INT, JAVA_INT, JAVA_INT);
-			MethodHandle mh = clinker.downcallHandle(fd);
-			MemorySegment formatSegmt = nativeAllocator.allocateUtf8String("\n%d + %d = %d\n");
-			mh.invoke(functionSymbol, formatSegmt, 15, 27, 42);
-		}
+		NativeSymbol functionSymbol = clinker.lookup("printf").get();
+		FunctionDescriptor fd = FunctionDescriptor.of(JAVA_INT, ADDRESS, JAVA_INT, JAVA_INT, JAVA_INT);
+		MethodHandle mh = clinker.downcallHandle(fd);
+		MemorySegment formatSegmt = nativeAllocator.allocateUtf8String("\n%d + %d = %d\n");
+		mh.invoke(functionSymbol, formatSegmt, 15, 27, 42);
 	}
 }

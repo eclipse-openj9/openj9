@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2021, 2021 IBM Corp. and others
+ * Copyright (c) 2021, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,7 +33,7 @@ import jdk.incubator.foreign.SymbolLookup;
 import static jdk.incubator.foreign.ValueLayout.*;
 
 /**
- * Test cases for JEP 419: Foreign Linker API (Second Incubator) DownCall for primitive types,
+ * Test cases for JEP 419: Foreign Linker API (Second Incubator) for primitive types in downcall,
  * which verifies multiple downcalls with the same or different layouts or argument/return types.
  */
 @Test(groups = { "level.sanity" })

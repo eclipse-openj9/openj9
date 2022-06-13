@@ -31,12 +31,16 @@ import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.CLinker;
 import static jdk.incubator.foreign.CLinker.*;
 import jdk.incubator.foreign.FunctionDescriptor;
+import jdk.incubator.foreign.MemoryAccess;
+import jdk.incubator.foreign.MemoryAddress;
+import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.ResourceScope;
 import jdk.incubator.foreign.SymbolLookup;
 
 /**
  * Test cases for JEP 389: Foreign Linker API (Incubator) for primitive types in downcall,
- * which verifies the downcalls with the same layout & argument and return types in multithreading.
+ * which verifies the downcalls with the same downcall handlder (cached as soft reference in OpenJDK)
+ * in multithreading.
  */
 @Test(groups = { "level.sanity" })
 public class MultiThreadingTests1 implements Thread.UncaughtExceptionHandler {
@@ -55,43 +59,56 @@ public class MultiThreadingTests1 implements Thread.UncaughtExceptionHandler {
 	}
 
 	@Test
-	public void test_twoThreadsWithSameFuncDescriptor() throws Throwable {
+	public void test_twoThreadsWithSameFuncDesc_SameDowncallHandler() throws Throwable {
 		Thread thr1 = new Thread(){
 			public void run() {
 				try {
-					MethodType mt = MethodType.methodType(int.class, int.class, int.class);
-					FunctionDescriptor fd = FunctionDescriptor.of(C_INT, C_INT, C_INT);
-					Addressable functionSymbol = nativeLibLookup.lookup("add2Ints").get();
-					MethodHandle mh = clinker.downcallHandle(functionSymbol, mt, fd);
-					int result = (int)mh.invokeExact(112, 123);
-					Assert.assertEquals(result, 235);
+					try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+						MethodType mt = MethodType.methodType(int.class, int.class, MemoryAddress.class);
+						FunctionDescriptor fd = FunctionDescriptor.of(C_INT, C_INT, C_POINTER);
+						Addressable functionSymbol = nativeLibLookup.lookup("addIntAndIntFromPointer").get();
+						MethodHandle mh = clinker.downcallHandle(functionSymbol, mt, fd);
+
+						MemorySegment intSegmt = MemorySegment.allocateNative(C_INT, scope);
+						MemoryAccess.setInt(intSegmt, 215);
+						int result = (int)mh.invokeExact(321, intSegmt.address());
+						Assert.assertEquals(result, 536);
+					}
 				} catch (Throwable t) {
 					throw new RuntimeException(t);
 				}
 			}
 		};
-		thr1.setUncaughtExceptionHandler(this);
-		thr1.start();
 
 		Thread thr2 = new Thread(){
 			public void run() {
 				try {
-					MethodType mt = MethodType.methodType(int.class, int.class, int.class);
-					FunctionDescriptor fd = FunctionDescriptor.of(C_INT, C_INT, C_INT);
-					Addressable functionSymbol = nativeLibLookup.lookup("add2Ints").get();
-					MethodHandle mh = clinker.downcallHandle(functionSymbol, mt, fd);
-					int result = (int)mh.invokeExact(235, 439);
-					Assert.assertEquals(result, 674);
+					try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+						MethodType mt = MethodType.methodType(int.class, int.class, MemoryAddress.class);
+						FunctionDescriptor fd = FunctionDescriptor.of(C_INT, C_INT, C_POINTER);
+						Addressable functionSymbol = nativeLibLookup.lookup("addIntAndIntFromPointer").get();
+						MethodHandle mh = clinker.downcallHandle(functionSymbol, mt, fd);
+
+						MemorySegment intSegmt = MemorySegment.allocateNative(C_INT, scope);
+						MemoryAccess.setInt(intSegmt, 215);
+						int result = (int)mh.invokeExact(322, intSegmt.address());
+						Assert.assertEquals(result, 537);
+					}
 				} catch (Throwable t) {
 					throw new RuntimeException(t);
 				}
 			}
 		};
+
+		thr1.setUncaughtExceptionHandler(this);
 		thr2.setUncaughtExceptionHandler(this);
+
+		thr1.start();
 		thr2.start();
 
 		thr1.join();
 		thr2.join();
+
 
 		if (initException != null){
 			throw new RuntimeException(initException);
