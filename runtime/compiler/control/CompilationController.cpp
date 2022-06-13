@@ -587,6 +587,15 @@ TR::DefaultCompilationStrategy::ProcessJittedSample::initializeRecompRelatedFiel
 
    _scaledScorchingThreshold = 0;
    _scaledHotThreshold = 0;
+
+   if (_logSampling)
+      {
+      _curMsg += sprintf(_curMsg, " cnt=%d ncl=%d glblSmplCnt=%d startCnt=%d[-%u,+%u] samples=[%d %d] windows=[%d %u] crtSmplIntrvlCnt=%u",
+         _count, _methodInfo->getNextCompileLevel(), _totalSampleCount, _startSampleCount,
+         _bodyInfo->getOldStartCountDelta(), _bodyInfo->getHotStartCountDelta(),
+         _globalSamples, _globalSamplesInHotWindow,
+         _scorchingSampleInterval, _hotSampleInterval, _crtSampleIntervalCount);
+      }
    }
 
 void
@@ -1201,24 +1210,22 @@ TR::DefaultCompilationStrategy::ProcessJittedSample::process()
          {
          OMR::CriticalSection processSample(_compInfo->getCompilationMonitor());
 
+         // Determine if this sample should be processed
          shouldProcess = shouldProcessSample();
          if (shouldProcess)
             {
+            // Initialize the member fields that will be used for determining whether to recompile
             initializeRecompRelatedFields();
 
-            if (_logSampling)
-               _curMsg += sprintf(_curMsg, " cnt=%d ncl=%d glblSmplCnt=%d startCnt=%d[-%u,+%u] samples=[%d %d] windows=[%d %u] crtSmplIntrvlCnt=%u",
-                  _count, _methodInfo->getNextCompileLevel(), _totalSampleCount, _startSampleCount,
-                  _bodyInfo->getOldStartCountDelta(), _bodyInfo->getHotStartCountDelta(),
-                  _globalSamples, _globalSamplesInHotWindow,
-                  _scorchingSampleInterval, _hotSampleInterval, _crtSampleIntervalCount);
-
+            // Determine whether to recompile if the counter hits zero
             if (_count <= 0)
                determineWhetherToRecompileIfCountHitsZero();
 
+            // Determine whether to recompile based on the sampling window and thresholds
             if (!_recompile && _hotSamplingWindowComplete && _totalSampleCount > _startSampleCount)
                determineWhetherToRecompileBasedOnThreshold();
 
+            // Determine whether to recompile if the previous criteria was not sufficient
             if (!_recompile)
                determineWhetherToRecompileLessOptimizedMethods();
 
@@ -1231,14 +1238,13 @@ TR::DefaultCompilationStrategy::ProcessJittedSample::process()
                _compInfo->getCompilationMonitor()->notifyAll();
                }
 
+            // Method is being recompiled because it is truly hot;
             if (_recompile)
-               {
-               // Method is being recompiled because it is truly hot;
                _bodyInfo->setSamplingRecomp();
-               }
             }
          }
 
+      // Queue the method for recompilation if needed
       if (shouldProcess)
          plan = triggerRecompIfNeeded();
       }
