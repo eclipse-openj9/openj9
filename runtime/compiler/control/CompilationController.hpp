@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -89,6 +89,18 @@ class DefaultCompilationStrategy : public TR::CompilationStrategy
    class ProcessJittedSample
       {
       public:
+
+      /**
+       * @brief Construct a new Process Jitted Sample object.
+       *
+       * @param jitConfig The J9JITConfig
+       * @param vmThread The J9VMThread of the current thread
+       * @param compInfo The TR::CompilationINfo
+       * @param fe The TR_J9VMBase front end
+       * @param cmdLineOptions The TR::Options object
+       * @param j9method The J9Method associated with the sample
+       * @param event The TR_MethodEvent associated with the sample
+       */
       ProcessJittedSample(J9JITConfig *jitConfig,
                           J9VMThread *vmThread,
                           TR::CompilationInfo *compInfo,
@@ -97,22 +109,83 @@ class DefaultCompilationStrategy : public TR::CompilationStrategy
                           J9Method *j9method,
                           TR_MethodEvent *event);
 
+      /**
+       * @brief Process a sample in a JIT method and trigger a recompilation if needed.
+       *
+       * @return Pointer to a TR_OptimizationPlan if a recomp is triggered, NULL otherwise.
+       */
       TR_OptimizationPlan * process();
 
       private:
+
+      /**
+       * @brief Log basic sample info to the buffer.
+       */
       void logSampleInfoToBuffer();
+
+      /**
+       * @brief Print all the info placed into the buffer to the verbose log.
+       */
       void printBufferToVLog();
 
+      /**
+       * @brief Yield to application threads if requested.
+       */
       void yieldToAppThread();
+
+      /**
+       * @brief Find the TR_PersistentJittedBodyInfo associated with this sample.
+       *        Depending on the flags in the LinkageInfo, this method may not
+       *        set the Body and Method infos.
+       */
       void findAndSetBodyAndMethodInfo();
+
+      /**
+       * @brief Determine whether to process the sample.
+       *
+       * @return true if the sample will be processed, false otherwise
+       */
       bool shouldProcessSample();
 
+      /**
+       * @brief Initialie fields only used if shouldProcessSample above returns true.
+       */
       void initializeRecompRelatedFields();
+
+      /**
+       * @brief Determine whether to recompile the method if the count in the bodyinfo
+       *        hits zero.
+       */
       void determineWhetherToRecompileIfCountHitsZero();
+
+      /**
+       * @brief Determine whether to recompile the method if the higher opt level
+       *        thresholds are met.
+       */
       void determineWhetherToRecompileBasedOnThreshold();
+
+      /**
+       * @brief Determine whether the method should be recompiled at the hot optimization
+       *        level, or if it should recompiled at an even higher level.
+       *
+       * @param scalingFactor Factor used to scale the thresholds used in determining recomp decisions
+       * @param conservativeCase Bool to determine whether to be conservative with the decision
+       * @param useAggressiveRecompilations Bool to determine whether be aggressive with recomp decisions
+       * @param isBigAppStartup Bool to determine if the JIT is currently optimizing for Big App Startup
+       */
       void determineWhetherRecompileIsHotOrScorching(float scalingFactor, bool conservativeCase, bool useAggressiveRecompilations, bool isBigAppStartup);
+
+      /**
+       * @brief Determine whether the method should be upgraded even if the previous
+       *        criteria was not sufficient.
+       */
       void determineWhetherToRecompileLessOptimizedMethods();
 
+      /**
+       * @brief Queue the method for recompilation if needed.
+       *
+       * @return Pointer to a TR_OptimizationPlan if a recomp is triggered, NULL otherwise.
+       */
       TR_OptimizationPlan * triggerRecompIfNeeded();
 
       J9JITConfig                 *_jitConfig;
