@@ -166,7 +166,7 @@ public final class InternalUpcallHandler {
 				 * is only alive for a MemorySession(JDK19)/ResourceScope(JDK17/18) specified in java, which means the upcall handler
 				 * and its UpcallMHMetaData object will be cleaned up automatically once their session/scope is closed.
 				 */
-				metaData = new UpcallMHMetaData(target);
+				metaData = new UpcallMHMetaData(target, sessionOrScope);
 				addr = allocateUpcallStub(metaData, nativeSignatureStrs);
 				cachedUpcallThunkAddr.put(upcallThunkAddrKey, Long.valueOf(addr));
 			}

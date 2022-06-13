@@ -109,6 +109,7 @@ OutOfLineINL_openj9_internal_foreign_abi_InternalUpcallHandler_allocateUpcallStu
 
 	/* Set the fields of the J9UpcallMetaData struct for the thunk generation */
 	upcallMetaData->vm = vm;
+	upcallMetaData->downCallThread = currentThread;
 	upcallMetaData->nativeFuncSignature = nativeSig;
 	mhMetaData = (j9object_t)currentThread->sp[1];
 	upcallMetaData->mhMetaData = j9jni_createGlobalRef((JNIEnv*)currentThread, mhMetaData, false);
