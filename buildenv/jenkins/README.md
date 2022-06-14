@@ -36,9 +36,6 @@ This folder contains Jenkins pipeline scripts that are used in the OpenJ9 Jenkin
     - Linux on x86-64 largeheap/non-compressed references
         - Spec: x86-64_linux_xl
         - Shortname: xlinuxlargeheap or xlinuxxl
-    - Linux on x86-64 with JITServer
-        - Spec x86-64_linux_jit
-        - Shortname: xlinuxjit
     - Linux on s390x largeheap/non-compressed references
         - Spec: s390x_linux_xl
         - Shortname: zlinuxlargeheap or zlinuxxl

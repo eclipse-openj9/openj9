@@ -194,7 +194,7 @@ ojdk292:
 # Linux PPCLE 64bits
 #========================================#
 ppc64le_linux:
-  extends: ['boot_jdk_default', 'cuda_version', 'debuginfo', 'openjdk_reference_repo', 'openssl']
+  extends: ['boot_jdk_default', 'cuda_version', 'debuginfo', 'jitserver', 'openjdk_reference_repo', 'openssl']
   boot_jdk:
     arch: 'ppc64le'
     os: 'linux'
@@ -204,25 +204,18 @@ ppc64le_linux:
     11: 'linux-ppc64le-normal-server-release'
   node_labels:
     build: 'ci.role.build && hw.arch.ppc64le && sw.os.cent.7'
-  extra_configure_options:
-    all: '--enable-jitserver'
   build_env:
     cmd:
       all: 'source /home/jenkins/set_gcc_10.3.0_env'
       8: 'source /home/jenkins/set_gcc7.5.0_env'
       11: 'source /home/jenkins/set_gcc7.5.0_env'
 #========================================#
-# Linux PPCLE 64bits /w JITSERVER
-#========================================#
-ppc64le_linux_jit:
-  extends: ['ppc64le_linux', 'jitserver']
-#========================================#
 # Linux S390 64bits
 # Note: boot_jdk 8 must use an Adopt JDK8 build rather than an
 #       IBM 7 for the bootJDK or compiling corba will fail to find Object.
 #========================================#
 s390x_linux:
-  extends: ['boot_jdk_default', 'debuginfo', 'openjdk_reference_repo', 'openssl']
+  extends: ['boot_jdk_default', 'debuginfo', 'jitserver', 'openjdk_reference_repo', 'openssl']
   boot_jdk:
     arch: 's390x'
     os: 'linux'
@@ -237,11 +230,6 @@ s390x_linux:
       all: 'source /home/jenkins/set_gcc_10.3.0_env'
       8: 'source /home/jenkins/set_gcc7.5.0_env'
       11: 'source /home/jenkins/set_gcc7.5.0_env'
-#========================================#
-# Linux S390 64bits /w JITSERVER
-#========================================#
-s390x_linux_jit:
-  extends: ['s390x_linux', 'jitserver']
 #========================================#
 # AIX PPC 64bits
 #========================================#
@@ -275,7 +263,7 @@ ppc64_aix:
 # Linux x86 64bits
 #========================================#
 x86-64_linux:
-  extends: ['boot_jdk_default', 'cuda_version', 'debuginfo', 'openjdk_reference_repo', 'openssl']
+  extends: ['boot_jdk_default', 'cuda_version', 'debuginfo', 'jitserver', 'openjdk_reference_repo', 'openssl']
   boot_jdk:
     arch: 'x64'
     os: 'linux'
@@ -291,8 +279,6 @@ x86-64_linux:
     docker_image:
       8: 'eclipseopenj9/jenkins-agent-x86-centos6:16'
       11: 'eclipseopenj9/jenkins-agent-x86-centos6:16'
-  extra_configure_options:
-    all: '--enable-jitserver'
   build_env:
     cmd:
       all: 'source /home/jenkins/set_gcc_10.3.0_env'
@@ -304,11 +290,6 @@ x86-64_linux:
     17: '!sw.os.cent.6'
     18: '!sw.os.cent.6'
     next: '!sw.os.cent.6'
-#========================================#
-# Linux x86 64bits /w JITSERVER
-#========================================#
-x86-64_linux_jit:
-  extends: ['x86-64_linux', 'jitserver']
 #========================================#
 # Linux Aarch 64bits
 #========================================#
