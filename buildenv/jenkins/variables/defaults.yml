@@ -40,6 +40,10 @@ openjdk:
     default:
       repoUrl: 'https://github.com/ibmruntimes/openj9-openjdk-jdk18.git'
       branch: 'openj9'
+  19:
+    default:
+      repoUrl: 'https://github.com/ibmruntimes/openj9-openjdk-jdk19.git'
+      branch: 'openj9'
   next:
     default:
       repoUrl: 'https://github.com/ibmruntimes/openj9-openjdk-jdk.git'
@@ -107,6 +111,7 @@ build_discarder:
     OpenJDK11: 5
     OpenJDK17: 10
     OpenJDK18: 10
+    OpenJDK19: 10
     OpenJDK: 10
     Personal: 30
     Pipeline: 100
@@ -153,6 +158,7 @@ boot_jdk_default:
       11: '11'
       17: '17'
       18: '17'
+      19: '18'
       next: '18'
     dir_strip:
       all: '1'
@@ -263,6 +269,7 @@ ppc64_aix:
     11: '--disable-warnings-as-errors'
     17: '--disable-warnings-as-errors'
     18: '--disable-warnings-as-errors'
+    19: '--disable-warnings-as-errors'
     next: '--disable-warnings-as-errors'
   build_env:
     vars:
@@ -270,6 +277,7 @@ ppc64_aix:
       11: 'PATH+XLC=/opt/IBM/xlC/16.1.0/bin:/opt/IBM/xlc/16.1.0/bin CC=xlclang CXX=xlclang++'
       17: 'PATH+XLC=/opt/IBM/xlC/16.1.0/bin:/opt/IBM/xlc/16.1.0/bin CC=xlclang CXX=xlclang++'
       18: 'PATH+XLC=/opt/IBM/xlC/16.1.0/bin:/opt/IBM/xlc/16.1.0/bin CC=xlclang CXX=xlclang++'
+      19: 'PATH+XLC=/opt/IBM/xlC/16.1.0/bin:/opt/IBM/xlc/16.1.0/bin CC=xlclang CXX=xlclang++'
       next: 'PATH+XLC=/opt/IBM/xlC/16.1.0/bin:/opt/IBM/xlc/16.1.0/bin CC=xlclang CXX=xlclang++'
 #========================================#
 # Linux x86 64bits
@@ -303,6 +311,7 @@ x86-64_linux:
   extra_test_labels:
     17: '!sw.os.cent.6'
     18: '!sw.os.cent.6'
+    19: '!sw.os.cent.6'
     next: '!sw.os.cent.6'
 #========================================#
 # Linux x86 64bits /w JITSERVER
@@ -350,6 +359,7 @@ x86-64_windows:
     11: '--with-toolchain-version=2017'
     17: '--with-toolchain-version=2019'
     18: '--with-toolchain-version=2019'
+    19: '--with-toolchain-version=2019'
     next: '--with-toolchain-version=2019'
   node_labels:
     build: 'ci.role.build && hw.arch.x86 && sw.os.windows'
