@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2021 IBM Corp. and others
+ * Copyright (c) 2018, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,46 +28,44 @@ variableFile = ''
 buildFile = ''
 
 timestamps {
-    timeout(time: 20, unit: 'HOURS') {
-        node(SETUP_LABEL) {
-            retry(3) {
-                try {
-                    def gitConfig = scm.getUserRemoteConfigs().get(0)
-                    def remoteConfigParameters = [url: params.SCM_REPO]
-                    def scmBranch = params.SCM_BRANCH
-                    if (!scmBranch) {
-                        scmBranch = scm.branches[0].name
-                    }
-
-                    if (gitConfig.getCredentialsId()) {
-                        remoteConfigParameters.put("credentialsId", "${gitConfig.getCredentialsId()}")
-                    }
-
-                    if (params.SCM_REFSPEC) {
-                        remoteConfigParameters.put("refspec", params.SCM_REFSPEC)
-                    }
-
-                    checkout changelog: false,
-                            poll: false,
-                            scm: [$class: 'GitSCM',
-                            branches: [[name: "${scmBranch}"]],
-                            doGenerateSubmoduleConfigurations: false,
-                            extensions: [[$class: 'CloneOption',
-                                          reference: "${HOME}/openjdk_cache"],
-                                        [$class: 'SparseCheckoutPaths', sparseCheckoutPaths: [[path: 'buildenv/jenkins']]]],
-                            userRemoteConfigs: [remoteConfigParameters]]
-
-                    variableFile = load 'buildenv/jenkins/common/variables-functions.groovy'
-                    variableFile.setup()
-                } catch(e) {
-                    sleep time: 60, unit: 'SECONDS'
-                    throw e
-                } finally {
-                    // disableDeferredWipeout also requires deleteDirs. See https://issues.jenkins-ci.org/browse/JENKINS-54225
-                    cleanWs notFailBuild: true, disableDeferredWipeout: true, deleteDirs: true
+    node(SETUP_LABEL) {
+        retry(3) {
+            try {
+                def gitConfig = scm.getUserRemoteConfigs().get(0)
+                def remoteConfigParameters = [url: params.SCM_REPO]
+                def scmBranch = params.SCM_BRANCH
+                if (!scmBranch) {
+                    scmBranch = scm.branches[0].name
                 }
+
+                if (gitConfig.getCredentialsId()) {
+                    remoteConfigParameters.put("credentialsId", "${gitConfig.getCredentialsId()}")
+                }
+
+                if (params.SCM_REFSPEC) {
+                    remoteConfigParameters.put("refspec", params.SCM_REFSPEC)
+                }
+
+                checkout changelog: false,
+                        poll: false,
+                        scm: [$class: 'GitSCM',
+                        branches: [[name: "${scmBranch}"]],
+                        doGenerateSubmoduleConfigurations: false,
+                        extensions: [[$class: 'CloneOption',
+                                      reference: "${HOME}/openjdk_cache"],
+                                    [$class: 'SparseCheckoutPaths', sparseCheckoutPaths: [[path: 'buildenv/jenkins']]]],
+                        userRemoteConfigs: [remoteConfigParameters]]
+
+                variableFile = load 'buildenv/jenkins/common/variables-functions.groovy'
+                variableFile.setup()
+            } catch(e) {
+                sleep time: 60, unit: 'SECONDS'
+                throw e
+            } finally {
+                // disableDeferredWipeout also requires deleteDirs. See https://issues.jenkins-ci.org/browse/JENKINS-54225
+                cleanWs notFailBuild: true, disableDeferredWipeout: true, deleteDirs: true
             }
         }
-        buildFile.build_all()
     }
+    buildFile.build_all()
 }
