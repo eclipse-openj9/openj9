@@ -1147,6 +1147,15 @@ public static ClassLoader getSystemClassLoader () {
 	return sysLoader;
 }
 
+/*[IF JAVA_SPEC_VERSION >= 19]*/
+/*
+ * Returns the system class loader without a security check.
+*/
+static ClassLoader internalGetSystemClassLoader() {
+	return applicationClassLoader;
+}
+/*[ENDIF] JAVA_SPEC_VERSION >= 19 */
+
 /**
  * Answers an URL specifying a resource which can be found by 
  * looking up resName using the system class loader's resource 
