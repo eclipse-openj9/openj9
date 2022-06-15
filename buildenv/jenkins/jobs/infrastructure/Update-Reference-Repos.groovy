@@ -56,13 +56,18 @@ timeout(time: 6, unit: 'HOURS') {
                         branches: [[name: scm.branches[0].name]],
                         doGenerateSubmoduleConfigurations: false,
                         extensions: [[$class: 'CloneOption',
-                                      reference: "${HOME}/openjdk_cache"]],
+                                      reference: get_cache_dir()]],
                         submoduleCfg: [],
                         userRemoteConfigs: [remoteConfigParameters]]
 
                 def variableFile = load 'buildenv/jenkins/common/variables-functions.groovy'
                 variableFile.parse_variables_file()
                 variableFile.set_user_credentials()
+
+                def defaultRepos = [] // extensions, OpenJ9 and OMR repos
+                defaultRepos.addAll(get_openjdk_repos(VARIABLES.openjdk, true))
+                defaultRepos.add([name: "openj9", url: VARIABLES.openj9.get('default').get('repoUrl')])
+                defaultRepos.add([name: "omr", url: VARIABLES.omr.get('default').get('repoUrl')])
 
                 def buildNodes = jenkins.model.Jenkins.instance.getLabel(LABEL).getNodes()
                 def todoNodes = []
@@ -94,12 +99,13 @@ timeout(time: 6, unit: 'HOURS') {
                         if (!sNode.toComputer().name) {
                             sNodeName = builtInLabel
                         }
+
                         setupNodesNames.add(sNodeName)
 
                         jobs["${sNodeName}"] = {
                             node("${sNodeName}") {
                                 stage("${sNodeName} - Update Reference Repo") {
-                                    refresh(sNodeName, "${HOME}/openjdk_cache", [[name: "openj9", url: VARIABLES.openj9.get('default').get('repoUrl')]], true)
+                                    refresh(sNodeName, get_cache_dir(), defaultRepos, true)
                                 }
                             }
                         }
@@ -141,8 +147,8 @@ timeout(time: 6, unit: 'HOURS') {
                         }
 
                         if (jenkins.model.Jenkins.instance.getLabel(SETUP_LABEL).getNodes().contains(aNode)) {
-                            // add OpenJ9 repo
-                            repos.add([name: "openj9", url: VARIABLES.openj9.get('default').get('repoUrl')])
+                            // add OpenJ9, OMR and extension repos
+                            repos.addAll(defaultRepos)
                             setupNodesNames.add(aNode)
                         }
 
@@ -152,7 +158,7 @@ timeout(time: 6, unit: 'HOURS') {
                         jobs["${nodeName}"] = {
                             node("${nodeName}") {
                                 stage("${nodeName} - Update Reference Repo") {
-                                    refresh(nodeName, "${HOME}/openjdk_cache", repos, foundLabel)
+                                    refresh(nodeName, get_cache_dir(), repos, foundLabel)
                                 }
                             }
                         }
@@ -229,4 +235,11 @@ def get_openjdk_repos(openJdkMap, useDefault) {
         }
     }
     return repos
+}
+
+/*
+ * Returns the location of the Git reference repository.
+ */
+def get_cache_dir() {
+    return (params.REPO_CACHE_DIR ?: "${HOME}/openjdk_cache")
 }
