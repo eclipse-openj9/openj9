@@ -72,7 +72,7 @@ Fast_java_lang_Class_forNameImpl(J9VMThread *currentThread, j9object_t className
 		goto done;
 	}
 
-	/* Fetch the J9ClasLoader, creating it if need be */
+	/* Fetch the J9ClassLoader, creating it if need be */
 	if (NULL == classLoaderObject) {
 		classLoader = vm->systemClassLoader;
 	} else {
