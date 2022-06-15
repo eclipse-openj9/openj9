@@ -225,7 +225,7 @@ validate_options() {
     esac
   fi
 
-  all_versions="8 11 17 18 next"
+  all_versions="8 11 17 18 19 next"
   local -A known_version
   local version
   for version in $all_versions ; do
@@ -663,18 +663,31 @@ bootjdk_url() {
   fi
 }
 
+bootjdk_version() {
+  local jdk_version=$1
+  case $jdk_version in
+    8 | 11 | 17)
+      echo $jdk_version
+      ;;
+    18)
+      echo "17"
+      ;;
+    19 | next)
+      echo "18"
+      ;;
+    *)
+      echo "Unsupported JDK version: '$jdk_version'" >&2
+      exit 1
+      ;;
+  esac
+}
+
 install_bootjdks() {
   local bootjdk_versions=
   local version
   local -A wanted
   for version in $jdk_versions ; do
-    if [ $version = next ] ; then
-      wanted[17]=yes
-    elif [ $version = 18 ] ; then
-      wanted[17]=yes
-    else
-      wanted[$version]=yes
-    fi
+    wanted[$(bootjdk_version $version)]=yes
   done
   for version in ${all_versions/next/} ; do
     if [ "${wanted[$version]}" = yes ] ; then
