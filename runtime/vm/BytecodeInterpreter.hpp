@@ -4605,7 +4605,7 @@ done:
 			goto done;
 		}
 
-		/* Fetch the J9ClasLoader, creating it if need be */
+		/* Fetch the J9ClassLoader, creating it if need be */
 		if (NULL == classLoaderObject) {
 			classLoader = _vm->systemClassLoader;
 		} else {
