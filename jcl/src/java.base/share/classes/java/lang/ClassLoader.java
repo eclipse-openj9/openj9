@@ -1405,17 +1405,18 @@ protected static boolean registerAsParallelCapable() {
 /*[IF JAVA_SPEC_VERSION >= 18]*/
 @CallerSensitiveAdapter
 private static boolean registerAsParallelCapable(Class<?> callerCls) {
+	/*[IF JAVA_SPEC_VERSION >= 19]*/
+	if ((null == callerCls) || !ClassLoader.class.isAssignableFrom(callerCls)) {
+		// callerCls may be null, which must throw IllegalCallerException
+		throw new IllegalCallerException(String.valueOf(callerCls));
+	}
+	/*[ENDIF] JAVA_SPEC_VERSION >= 19 */
+
 	if (parallelCapableCollection.containsKey(callerCls)) {
 		return true;
 	}
 
 	Class<?> superCls = callerCls.getSuperclass();
-
-	/*[IF JAVA_SPEC_VERSION >= 19]*/
-	if (!ClassLoader.class.isAssignableFrom(superCls)) {
-		throw new IllegalCallerException(callerCls.getName());
-	}
-	/*[ENDIF] JAVA_SPEC_VERSION >= 19 */
 
 	if (superCls == ClassLoader.class || parallelCapableCollection.containsKey(superCls)) {
 		parallelCapableCollection.put(callerCls, null);
