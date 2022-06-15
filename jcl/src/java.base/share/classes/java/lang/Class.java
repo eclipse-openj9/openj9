@@ -445,11 +445,19 @@ private static Class<?> forName(String className, Class<?> caller) throws ClassN
 	if (null == sm) {
 		if (null != caller) {
 			callerClassLoader = caller.internalGetClassLoader();
+		/*[IF JAVA_SPEC_VERSION >= 19]*/
+		} else {
+			callerClassLoader = ClassLoader.internalGetSystemClassLoader();
+		/*[ENDIF] JAVA_SPEC_VERSION >= 19 */
 		}
 		return forNameImpl(className, true, callerClassLoader);
 	}
 	if (null != caller) {
 		callerClassLoader = caller.getClassLoaderImpl();
+	/*[IF JAVA_SPEC_VERSION >= 19]*/
+	} else {
+		callerClassLoader = ClassLoader.internalGetSystemClassLoader();
+	/*[ENDIF] JAVA_SPEC_VERSION >= 19 */
 	}
 	Class<?> c = forNameImpl(className, false, callerClassLoader);
 	forNameAccessCheck(sm, caller, c);
