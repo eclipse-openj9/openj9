@@ -1,6 +1,6 @@
 /*[INCLUDE-IF JAVA_SPEC_VERSION < 17]*/
 /*******************************************************************************
- * Copyright (c) 1998, 2021 IBM Corp. and others
+ * Copyright (c) 1998, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2158,8 +2158,11 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		}
 
 		if (s2Length == 0) {
-			// At this point we know fromIndex < s1Length so there is a hit at fromIndex
+			// At this point we know fromIndex <= s1Length so there is a hit at fromIndex
 			return fromIndex;
+		} else if (s2Length > (s1Length - fromIndex)) {
+			// impossible for substring to be found in string if it is longer than the string starting from fromIndex
+			return -1;
 		}
 
 		byte[] s1Value = value;
