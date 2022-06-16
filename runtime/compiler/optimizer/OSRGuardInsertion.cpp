@@ -405,8 +405,13 @@ void TR_OSRGuardInsertion::removeHCRGuards(TR_BitVector &fearGeneratingNodes, TR
 
             TR::DebugCounter::prependDebugCounter(comp(), TR::DebugCounter::debugCounterName(comp(), "hcrGuardRemoval/success"), cursor->getExit());
             }
-         else if (guardInfo->mergedWithHCRGuard())
+         else if (guardInfo->mergedWithHCRGuard()
+            && performTransformation(
+                  comp(),
+                  "O^O HCR GUARD REMOVAL: removing HCR guard merged into node n%un\n",
+                  node->getGlobalIndex()))
             {
+            comp()->addClassForOSRRedefinition(guardInfo->getThisClass());
             guardInfo->setMergedWithHCRGuard(false);
             if (TR_FearPointAnalysis::virtualGuardsKillFear())
                guardInfo->setMergedWithOSRGuard();
