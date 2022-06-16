@@ -380,7 +380,22 @@ J9::ARM64::TreeEvaluator::generateFillInDataBlockSequenceForUnresolvedField(TR::
       TR::MemoryReference *memRef = TR::MemoryReference::createWithDisplacement(cg, dataSnippetRegister, offsetof(J9JITWatchedStaticFieldData, fieldClass));
 
       // Store value to fieldClass member of the snippet
+#if !defined(OSX)
       generateMemSrc1Instruction(cg, TR::InstOpCode::strimmx, node, memRef, fieldClassReg);
+#else
+      {
+      // call helper for storing the data to code cache
+      TR::Register *addrReg1 = cg->allocateRegister();
+      TR::RegisterDependencyConditions *deps1 = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(2, 2, cg->trMemory());
+      generateTrg1MemInstruction(cg, TR::InstOpCode::addimmx, node, addrReg1, memRef);
+      TR::addDependency(deps1, addrReg1, TR::RealRegister::x0, TR_GPR, cg);
+      TR::addDependency(deps1, fieldClassReg, TR::RealRegister::x1, TR_GPR, cg);
+      TR::SymbolReference *helperSym = comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_ARM64fieldWatchHelper);
+      TR::Instruction *call = generateImmSymInstruction(cg, TR::InstOpCode::bl, node, reinterpret_cast<uintptr_t>(helperSym->getMethodAddress()), deps1, helperSym, NULL);
+      cg->machine()->setLinkRegisterKilled(true);
+      cg->stopUsingRegister(addrReg1);
+      }
+#endif
 
       if (!isSideEffectReg)
          cg->stopUsingRegister(fieldClassReg);
@@ -423,7 +438,22 @@ J9::ARM64::TreeEvaluator::generateFillInDataBlockSequenceForUnresolvedField(TR::
 
    // store result into J9JITWatchedStaticFieldData.fieldAddress / J9JITWatchedInstanceFieldData.offset
    TR::MemoryReference *dataRef = TR::MemoryReference::createWithDisplacement(cg, dataSnippetRegister, offsetInDataBlock);
+#if !defined(OSX)
    generateMemSrc1Instruction(cg, TR::InstOpCode::strimmx, node, dataRef, resultReg);
+#else
+   {
+   // call helper for storing the data to code cache
+   TR::Register *addrReg2 = cg->allocateRegister();
+   TR::RegisterDependencyConditions *deps2 = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(2, 2, cg->trMemory());
+   generateTrg1MemInstruction(cg, TR::InstOpCode::addimmx, node, addrReg2, dataRef);
+   TR::addDependency(deps2, addrReg2, TR::RealRegister::x0, TR_GPR, cg);
+   TR::addDependency(deps2, resultReg, TR::RealRegister::x1, TR_GPR, cg);
+   TR::SymbolReference *helperSym = comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_ARM64fieldWatchHelper);
+   TR::Instruction *call = generateImmSymInstruction(cg, TR::InstOpCode::bl, node, reinterpret_cast<uintptr_t>(helperSym->getMethodAddress()), deps2, helperSym, NULL);
+   cg->machine()->setLinkRegisterKilled(true);
+   cg->stopUsingRegister(addrReg2);
+   }
+#endif
 
    generateLabelInstruction(cg, TR::InstOpCode::b, node, endLabel);
 
