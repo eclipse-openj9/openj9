@@ -101,8 +101,7 @@ public class TimeChangeTest {
 			final long endNanoTime = System.nanoTime();
 			final long elapsedTime = (endNanoTime - startNanoTime) / 1000000;
 			boolean pass = false;
-			if ((elapsedTime >= MILLIS_DELAY_BEFORECHECKPOINTDONE)
-					&& (elapsedTime < (MILLIS_DELAY_BEFORECHECKPOINTDONE + MAX_TARDINESS_MS))) {
+			if (elapsedTime >= MILLIS_DELAY_BEFORECHECKPOINTDONE) {
 				pass = true;
 			}
 			showThreadCurrentTime("taskMillisDelayBeforeCheckpointDone");
@@ -128,8 +127,7 @@ public class TimeChangeTest {
 			final long endNanoTime = System.nanoTime();
 			final long elapsedTime = (endNanoTime - startNanoTime) / 1000000;
 			boolean pass = false;
-			if ((elapsedTime >= MILLIS_DELAY_AFTERCHECKPOINTDONE)
-					&& (elapsedTime < (MILLIS_DELAY_AFTERCHECKPOINTDONE + MAX_TARDINESS_MS))) {
+			if (elapsedTime >= MILLIS_DELAY_AFTERCHECKPOINTDONE) {
 				pass = true;
 			}
 			showThreadCurrentTime("taskMillisDelayAfterCheckpointDone");
@@ -155,8 +153,7 @@ public class TimeChangeTest {
 		public void run() {
 			final long taskRunTimeMillis = System.currentTimeMillis();
 			boolean pass = false;
-			if ((taskRunTimeMillis >= timeMillisScheduledBeforeCheckpointDone)
-					&& (taskRunTimeMillis < (timeMillisScheduledBeforeCheckpointDone + MAX_TARDINESS_MS))) {
+			if (taskRunTimeMillis >= timeMillisScheduledBeforeCheckpointDone) {
 				pass = true;
 			}
 			showThreadCurrentTime("taskDateScheduledBeforeCheckpointDone");
@@ -185,8 +182,7 @@ public class TimeChangeTest {
 		public void run() {
 			final long taskRunTimeMillis = System.currentTimeMillis();
 			boolean pass = false;
-			if ((taskRunTimeMillis >= timeMillisScheduledAfterCheckpointDone)
-					&& (taskRunTimeMillis < (timeMillisScheduledAfterCheckpointDone + MAX_TARDINESS_MS))) {
+			if (taskRunTimeMillis >= timeMillisScheduledAfterCheckpointDone) {
 				pass = true;
 			}
 			showThreadCurrentTime("taskDateScheduledAfterCheckpoint");
