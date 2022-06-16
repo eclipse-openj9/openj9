@@ -361,7 +361,7 @@ omr_add_exports(jclse
 	Java_java_lang_Thread_startImpl
 	Java_java_lang_Thread_stopImpl
 	Java_java_lang_Thread_suspendImpl
-	Java_java_lang_Thread_yield0
+	Java_java_lang_Thread_yield
 	Java_java_lang_invoke_MethodHandleResolver_getCPClassNameAt
 	Java_java_lang_invoke_MethodHandleResolver_getCPMethodHandleAt
 	Java_java_lang_invoke_MethodHandleResolver_getCPMethodTypeAt
@@ -676,5 +676,6 @@ if(NOT JAVA_SPEC_VERSION LESS 19)
 		Java_java_lang_Thread_getThreads
 		Java_java_lang_Thread_setCurrentThread
 		Java_java_lang_Thread_setExtentLocalCache
+		Java_java_lang_Thread_registerNatives
 	)
 endif()

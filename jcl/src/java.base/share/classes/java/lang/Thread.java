@@ -1313,11 +1313,7 @@ public String toString() {
  *
  * @version		initial
  */
-public static void yield() {
-	yield0();
-}
-
-private static native void yield0();
+public static native void yield();
 
 /**
  * Returns whether the current thread has a monitor lock on the specified object.

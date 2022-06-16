@@ -157,7 +157,7 @@ Java_java_lang_Thread_setNameImpl(JNIEnv *env, jobject thread, jlong threadRef, 
 }
 
 void JNICALL
-Java_java_lang_Thread_yield0(JNIEnv *env, jclass threadClass)
+Java_java_lang_Thread_yield(JNIEnv *env, jclass threadClass)
 {
 	J9VMThread *currentThread = (J9VMThread*)env;
 	/* Check whether Thread.Stop has been called */
@@ -512,6 +512,23 @@ Java_java_lang_Thread_getNextThreadIdOffset(JNIEnv *env, jclass clazz)
 {
 	J9JavaVM *vm = ((J9VMThread *)env)->javaVM;
 	return (U_64)(uintptr_t)&(vm->nextTID);
+}
+
+void JNICALL
+Java_java_lang_Thread_registerNatives(JNIEnv *env, jclass clazz)
+{
+	JNINativeMethod natives[] = {
+		{
+			(char*)"yield0",
+			(char*)"()V",
+			(void*)&Java_java_lang_Thread_yield
+		}
+	};
+	jint numNatives = sizeof(natives)/sizeof(JNINativeMethod);
+	env->RegisterNatives(clazz, natives, numNatives);
+#if defined(J9VM_OPT_JAVA_OFFLOAD_SUPPORT)
+	clearNonZAAPEligibleBit(env, clazz, natives, numNatives);
+#endif /* J9VM_OPT_JAVA_OFFLOAD_SUPPORT */
 }
 #endif /* JAVA_SPEC_VERSION >= 19 */
 
