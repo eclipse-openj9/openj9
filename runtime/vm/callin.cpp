@@ -534,6 +534,9 @@ oom:
 				}
 				/* Link the thread and the object */
 				initializee->threadObject = threadObject;
+#if JAVA_SPEC_VERSION >= 19
+				initializee->carrierThreadObject = threadObject;
+#endif /* JAVA_SPEC_VERSION >= 19 */
 				J9VMJAVALANGTHREAD_SET_THREADREF(currentThread, threadObject, initializee);
 				/* Run the Thread constructor */
 				I_32 priority = J9THREAD_PRIORITY_NORMAL;

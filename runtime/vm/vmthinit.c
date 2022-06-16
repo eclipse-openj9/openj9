@@ -180,6 +180,7 @@ void terminateVMThreading(J9JavaVM *vm)
 		vm->cifArgumentTypesCacheMutex = NULL;
 	}
 #endif /* JAVA_SPEC_VERSION >= 16 */
+
 	destroyMonitorTable(vm);
 }
 
