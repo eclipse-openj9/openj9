@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,15 +25,15 @@
 
 #include "il/OMRILOps.hpp"
 
-namespace J9 { 
+namespace J9 {
 
 class ILOpCode : public OMR::ILOpCode
    {
 
 public:
- 
+
    ILOpCode() : OMR::ILOpCode() {}
-   ILOpCode(TR::ILOpCodes opCode) : OMR::ILOpCode(opCode) {}  
+   ILOpCode(TR::ILOpCodes opCode) : OMR::ILOpCode(opCode) {}
 
    /**
     * ILTypeProp, ILProp1, ILProp2, ILProp3
@@ -169,9 +169,11 @@ public:
 
       }
 
+   static TR::ILOpCodes getDataTypeConversion(TR::DataType t1, TR::DataType t2);
+
    static TR::ILOpCodes getProperConversion(TR::DataType sourceDataType, TR::DataType targetDataType, bool needUnsignedConversion)
       {
-      TR::ILOpCodes op = TR::DataType::getDataTypeConversion(sourceDataType, targetDataType);
+      TR::ILOpCodes op = getDataTypeConversion(sourceDataType, targetDataType);
       if (!needUnsignedConversion) return op;
 
       switch (op)

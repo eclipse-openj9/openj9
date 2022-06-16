@@ -57,7 +57,7 @@ namespace TR { class TreeTop; }
 
 typedef enum
    {
-   TR_variable = OMR::ILOpCode::NumAllIlOps,
+   TR_variable = TR::NumAllIlOps,
    TR_booltable,
    TR_entrynode,
    TR_exitnode,
@@ -417,7 +417,7 @@ protected:
    void setOpcode(uint32_t opc)
       {
       _opcode = opc;
-      _ilOpCode.setOpCodeValue(opc < OMR::ILOpCode::NumAllIlOps ? (TR::ILOpCodes)opc : TR::BadILOp);
+      _ilOpCode.setOpCodeValue(opc < TR::NumAllIlOps ? (TR::ILOpCodes)opc : TR::BadILOp);
       }
    uint32_t _opcode;    // TR::ILOpCodes enum
    TR::ILOpCode _ilOpCode;

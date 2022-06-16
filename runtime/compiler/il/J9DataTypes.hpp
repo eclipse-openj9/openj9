@@ -344,8 +344,6 @@ public:
    static bool rawSignIsNegative(TR::DataType dt, int32_t rawSignCode);
    static bool normalizedSignIsNegative(TR::DataType dt, TR_BCDSignCode normalizedSign);
 
-   static TR::ILOpCodes getDataTypeConversion(TR::DataType t1, TR::DataType t2);
-
 private:
    static char*         _TR_RawBCDSignCodeNames[num_raw_bcd_sign_codes];
    static int32_t       _TR_RawBCDSignCodeValues[num_raw_bcd_sign_codes];
