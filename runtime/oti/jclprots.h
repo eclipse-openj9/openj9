@@ -1118,7 +1118,7 @@ jlong JNICALL Java_javax_rcm_CPUThrottlingRunnable_requestToken(JNIEnv *env, job
 jlong JNICALL Java_javax_rcm_CPUThrottlingRunnable_getTokenBucketLimit(JNIEnv *env, jclass clazz, jlong resourceHandle);
 jlong JNICALL Java_javax_rcm_CPUThrottlingRunnable_getTokenBucketInterval(JNIEnv *env, jclass clazz, jlong resourceHandle);
 /* thread.c */
-void JNICALL Java_java_lang_Thread_yield0(JNIEnv *env, jclass threadClass);
+void JNICALL Java_java_lang_Thread_yield(JNIEnv *env, jclass threadClass);
 
 /* java_lang_Class.c */
 jboolean JNICALL
