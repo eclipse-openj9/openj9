@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2006, 2021 IBM Corp. and others
+ * Copyright (c) 2006, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,11 +27,13 @@ import com.ibm.j9ddr.corereaders.tdump.zebedee.mvs.*;
 import com.ibm.j9ddr.corereaders.tdump.zebedee.util.*;
 
 import java.io.*;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.logging.*;
 
 /**
  * This class represents a single LE stack frame (aka DSA). Use {@link #getParentFrame} to
- * get the stack frame that called this one. 
+ * get the stack frame that called this one.
  * XXX see ceekdmdr
  *
  * @has - - - com.ibm.zebedee.le.Function
@@ -244,13 +246,13 @@ public class DsaStackFrame {
     }
 
     /**
-     * This method emulates the Ceektbck traceback macro. Most of the comments are from there 
+     * This method emulates the Ceektbck traceback macro. Most of the comments are from there
      * including the following description:
-     *       This module performs the processing of the CEETRCB low level  
-     *       service.  This service determines the entry address, entry    
-     *       point name, compile unit address, compile unit name, calling  
-     *       instruction address, calling statement number, CIB address,   
-     *       and callers DSA address, given the DSA address for a routine. 
+     *       This module performs the processing of the CEETRCB low level
+     *       service.  This service determines the entry address, entry
+     *       point name, compile unit address, compile unit name, calling
+     *       instruction address, calling statement number, CIB address,
+     *       and callers DSA address, given the DSA address for a routine.
      */
     void ceextbck(long dsaptr, boolean isDownStack, Caa caa) throws IOException {
         log.fine("ceextbck, dsaptr = " + hex(dsaptr) + " downstack = " + isDownStack);
@@ -286,7 +288,7 @@ public class DsaStackFrame {
             if (!transition) {
                 int hdsp_signature = space.readInt(dsaptr + 72);    // dsaptr->hdspdsasig
                 if ((hdsp_signature & 0xfffffff0) == 0x0808cee0) {  // dispatcher eyecatch
-                    /* CEEHDSP with XPLINK support uses CODENUM() for subroutines. 
+                    /* CEEHDSP with XPLINK support uses CODENUM() for subroutines.
                      * This means R11 may not be the entry for the call to this routine.
                      * Get entry from a local VCON. */
                     //entry_address = addr(CEEHDSP);
@@ -311,7 +313,7 @@ public class DsaStackFrame {
             }
             boolean cel_enabled;
             long signaturePtr = entry_address;
-            /* Determine if the routine is CEL Enabled by looking at 
+            /* Determine if the routine is CEL Enabled by looking at
              * the signature byte in the PPA1 */
             if (entry_address == 0) {
                 cel_enabled = false;
@@ -338,19 +340,19 @@ public class DsaStackFrame {
                         cel_enabled = false;
                     }
                 } else {
-                    /* 
+                    /*
                      * Check whether this module is a wrapped
-                     * transfer vector.                      
+                     * transfer vector.
                      *   If the module entry-point + 0 = X'47F0Fxxx'
-                     *      (a 'BR xxx(15)' instruction)           
+                     *      (a 'BR xxx(15)' instruction)
                      *     Calculate the address of the signature:
-                     *         Module entry-point                
+                     *         Module entry-point
                      *         Plus 'xxx' from the BR instruction
-                     *         Minus X'14' (signature size) 
-                     *     If signature address + 0 = 0    
+                     *         Minus X'14' (signature size)
+                     *     If signature address + 0 = 0
                      *         (i.e., no BR instruction)  &
                      *        signature address + 5 = X'C3C5C5'
-                     *       Get PPA1 address        
+                     *       Get PPA1 address
                      *       If PPA1 eyecatcher = X'CE'
                      *         Valid wrapped transfer vector
                      */
@@ -402,11 +404,11 @@ public class DsaStackFrame {
             log.fine("callers address is " + hex(callers_instruction_address));
             parentCallingAddress = callers_instruction_address;
             /*
-             * If the routine is CEL enabled, determine the calling  
-             * address if none was supplied, the callers instruction 
-             * address, entry point name, member id, compile unit    
-             * unit address, and compile unit name, from standard    
-             * fields in the callers DSA and this routines PPAs.     
+             * If the routine is CEL enabled, determine the calling
+             * address if none was supplied, the callers instruction
+             * address, entry point name, member id, compile unit
+             * unit address, and compile unit name, from standard
+             * fields in the callers DSA and this routines PPAs.
              */
             if (cel_enabled) {
                 /* If p_call_instruction_address is zero, try to determine
@@ -549,7 +551,7 @@ public class DsaStackFrame {
                 } else {
                     /* Downstack DSA.  The return address is in the callees DSA. If the
                      * callee dsa was supplied, obtain the return address from reg7.
-                     * If no callee DSA, see if the CAA is also CEEKTBCK's CAA. If they 
+                     * If no callee DSA, see if the CAA is also CEEKTBCK's CAA. If they
                      * are the same, this means that the DSA is on CEEKTBCK's BackChain.
                      * Will scan the DSA chain to find the DSA immediately before the
                      * input DSA. */
@@ -601,7 +603,7 @@ public class DsaStackFrame {
                     }
                     /* Assume calling instruction is a BALR type instruction which is
                      * 2 bytes long. Thus the calling instruction is 2 bytes ahead of
-                     * the next instruction to be executed in the routine. 
+                     * the next instruction to be executed in the routine.
                      *
                      * Test for amode switching glue code at the next instruction address.
                      * If so, replace next instruction address with real return address
@@ -698,7 +700,7 @@ public class DsaStackFrame {
             long cibhptr = ceexhcomTemplate.getHcom_cibh(inputStream, ceecaaerrcm);
             long previous_cibhptr = 0;
             int cib_count = 0;
-            
+
             // Walk the CIB chain. For safety we check for loops and for a maximum of 255 CIBs in the chain. The
             // 255 limit is somewhat arbitrary, the CIB represents a 'condition' (e.g. signal) that has occurred,
             // and testing a variety of zOS dumps shows that the number of CIBs per DSA is typically 0 or 1.
@@ -729,19 +731,24 @@ public class DsaStackFrame {
     long findSfxm(long sfxm_dsa, int p_dsafmt) throws IOException {
         final long HEPV_Entry_Sig = 0x00C300C500C500L; /* Entry Marker signature */
         long p_sfxm = 0;
+        Set<Long> visited = new HashSet<>();
         try {
             if (p_dsafmt == US_FORMAT) {
                 /* processing UPstack DSA */
                 log.fine("findSfxm processing upstack dsa");
                 long hcom_exit_stk = ceexhcomTemplate.getHcom_exit_stk(inputStream, caa.ceecaaerrcm());
                 log.fine("findSfxm hcom_exit_stk = 0x" + hex(hcom_exit_stk));
-                for (long tptr = hcom_exit_stk; tptr != 0; ) {
-                    /* If the SFXM is for an UPSTACK DSA and that DSA     
-                     * backchains to the input DSA then we have found     
-                     * the SFXM that we want.                             
+                for (long tptr = hcom_exit_stk; tptr != 0;) {
+                    if (!visited.add(tptr)) {
+                        log.fine("back-link cycle found in upstack dsm at " + hex(tptr));
+                        break;
+                    }
+                    /* If the SFXM is for an UPSTACK DSA and that DSA
+                     * backchains to the input DSA then we have found
+                     * the SFXM that we want.
                      * NOTE: An SFXM that belongs to an UPSTACK DSA starts
-                     * with a couple of NOPRs and a BALR. An SFXM that    
-                     * belongs to a DOWNSTACK DSA starts with an XPLINK   
+                     * with a couple of NOPRs and a BALR. An SFXM that
+                     * belongs to a DOWNSTACK DSA starts with an XPLINK
                      * style entry marker. */
                     long sfxm_code_eyecatch = CeexsfxmTemplate.getSfxm_code_eyecatch(inputStream, tptr);
                     if ((sfxm_code_eyecatch >>> 8) != HEPV_Entry_Sig) {
@@ -762,7 +769,11 @@ public class DsaStackFrame {
                 int offset = CeexsfxmTemplate.getSfxm_code_return_pt$offset();
                 long ceedsahpr7 = ceedsahpTemplate.getCeedsahpr7(inputStream, sfxm_dsa);
                 ceedsahpr7 = stripTopBit(ceedsahpr7);
-                for (long tptr = hcom_exit_stk; tptr != 0; ) {
+                for (long tptr = hcom_exit_stk; tptr != 0;) {
+                    if (!visited.add(tptr)) {
+                        log.fine("back-link cycle found in downstack dsm at " + hex(tptr));
+                        break;
+                    }
                     if ((tptr + offset) == ceedsahpr7) {
                         /* Find the last SFXM by comparing Sfxm_Next with Sfxm_Save_R7.
                          * When they are not equal, we're at the last SFXM for this routine. */
@@ -1046,7 +1057,7 @@ public class DsaStackFrame {
                 /* if no name is present  */
                 if ((ppa1flags4 & 0x01) != 0) {
                     int length = space.readUnsignedShort(ptrnam);
-                    if (length > 0 && length < 1000) 
+                    if (length > 0 && length < 1000)
                         function = space.readEbcdicString(ptrnam + 2, length);
                 }
             }
@@ -1062,7 +1073,7 @@ public class DsaStackFrame {
         }
         return function;
     }
-    
+
     private static String hex(long i) {
         return Long.toHexString(i);
     }
