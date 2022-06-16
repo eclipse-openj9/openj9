@@ -179,6 +179,7 @@ public final class Class<T> implements java.io.Serializable, GenericDeclaration,
 	/*[PR CMVC 125822] Move RAM class fields onto the heap to fix hotswap crash */
 	private transient ProtectionDomain protectionDomain;
 	private transient String classNameString;
+	private transient String cachedToString;
 
 	/* Cache filename on Class to avoid repeated lookups / allocations in stack traces */
 	private transient String fileNameString;
@@ -2743,6 +2744,16 @@ private String toResourceName(String resName) {
  */
 @Override
 public String toString() {
+	String result = cachedToString;
+	if (null == result) {
+		result = toStringImpl();
+		cachedToString = result;
+	}
+
+	return result;
+}
+
+private String toStringImpl() {
 	// Note change from 1.1.7 to 1.2: For primitive types,
 	// return just the type name.
 	if (isPrimitive()) return getName();
