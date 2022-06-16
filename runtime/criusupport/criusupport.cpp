@@ -184,7 +184,7 @@ free:
 }
 
 /**
- * Caller must first acquire exclusive VMAccess
+ * Caller must first acquire exclusive safepoint or exclusive VMAccess
  */
 static void
 toggleSuspendOnJavaThreads(J9VMThread *currentThread, BOOLEAN suspend)
@@ -192,7 +192,7 @@ toggleSuspendOnJavaThreads(J9VMThread *currentThread, BOOLEAN suspend)
 	J9JavaVM *vm = currentThread->javaVM;
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 
-	Assert_CRIU_true(J9_XACCESS_EXCLUSIVE == vm->exclusiveAccessState);
+	Assert_CRIU_true((J9_XACCESS_EXCLUSIVE == vm->exclusiveAccessState) || (J9_XACCESS_EXCLUSIVE == vm->safePointState));
 
 	J9VMThread *walkThread = J9_LINKED_LIST_START_DO(vm->mainThread);
 	while (NULL != walkThread) {
@@ -206,6 +206,26 @@ toggleSuspendOnJavaThreads(J9VMThread *currentThread, BOOLEAN suspend)
 			}
 		}
 		walkThread = J9_LINKED_LIST_NEXT_DO(vm->mainThread, walkThread);
+	}
+}
+
+static VMINLINE void
+acquireSafeOrExcusiveVMAccess(J9VMThread *currentThread, J9InternalVMFunctions *vmFuncs, bool isSafe)
+{
+	if (isSafe) {
+		vmFuncs->acquireSafePointVMAccess(currentThread);
+	} else {
+		vmFuncs->acquireExclusiveVMAccess(currentThread);
+	}
+}
+
+static VMINLINE void
+releaseSafeOrExcusiveVMAccess(J9VMThread *currentThread, J9InternalVMFunctions *vmFuncs, bool isSafe)
+{
+	if (isSafe) {
+		vmFuncs->releaseSafePointVMAccess(currentThread);
+	} else {
+		vmFuncs->releaseExclusiveVMAccess(currentThread);
 	}
 }
 
@@ -261,6 +281,7 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 		BOOLEAN isAfterCheckpoint = FALSE;
 		I_64 beforeCheckpoint = 0;
 		I_64 afterRestore = 0;
+		bool safePoint = J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_OSR_SAFE_POINT);
 
 		vmFuncs->internalEnterVMFromJNI(currentThread);
 
@@ -378,20 +399,20 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 			criu_set_work_dir_fd(workDirFD);
 		}
 
-		vmFuncs->acquireExclusiveVMAccess(currentThread);
+		acquireSafeOrExcusiveVMAccess(currentThread, vmFuncs, safePoint);
 
 		toggleSuspendOnJavaThreads(currentThread, TRUE);
 
 		vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_CRIU_SINGLE_THREAD_MODE;
 
-		vmFuncs->releaseExclusiveVMAccess(currentThread);
+		releaseSafeOrExcusiveVMAccess(currentThread, vmFuncs, safePoint);
 
 		if (FALSE == vmFuncs->jvmCheckpointHooks(currentThread)) {
 			/* throw the pending exception */
 			goto wakeJavaThreads;
 		}
 
-		vmFuncs->acquireExclusiveVMAccess(currentThread);
+		acquireSafeOrExcusiveVMAccess(currentThread, vmFuncs, safePoint);
 
 		/* Run internal checkpoint hooks, after iterating heap objects */
 		if (FALSE == vmFuncs->runInternalJVMCheckpointHooks(currentThread)) {
@@ -425,7 +446,7 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 			goto wakeJavaThreadsWithExclusiveVMAccess;
 		}
 
-		vmFuncs->releaseExclusiveVMAccess(currentThread);
+		releaseSafeOrExcusiveVMAccess(currentThread, vmFuncs, safePoint);
 
 		if (FALSE == vmFuncs->jvmRestoreHooks(currentThread)) {
 			/* throw the pending exception */
@@ -440,7 +461,7 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 		}
 
 wakeJavaThreads:
-		vmFuncs->acquireExclusiveVMAccess(currentThread);
+		acquireSafeOrExcusiveVMAccess(currentThread, vmFuncs, safePoint);
 
 wakeJavaThreadsWithExclusiveVMAccess:
 
@@ -448,7 +469,7 @@ wakeJavaThreadsWithExclusiveVMAccess:
 
 		toggleSuspendOnJavaThreads(currentThread, FALSE);
 
-		vmFuncs->releaseExclusiveVMAccess(currentThread);
+		releaseSafeOrExcusiveVMAccess(currentThread, vmFuncs, safePoint);
 closeWorkDirFD:
 		if ((0 != close(workDirFD)) && (NULL == currentExceptionClass)) {
 			systemReturnCode = errno;
