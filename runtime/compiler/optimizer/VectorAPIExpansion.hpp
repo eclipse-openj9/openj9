@@ -155,12 +155,24 @@ class TR_VectorAPIExpansion : public TR::Optimization
 
 
   /** \brief
+   *  Used to specify Vector API opcode category
+   *
+   */
+   enum vapiOpCodeType
+      {
+      Compare,
+      Reduction,
+      Other
+      };
+
+
+  /** \brief
    *  Entry of the method handlers table
    */
    struct methodTableEntry
       {
       TR::Node * (* _methodHandler)(TR_VectorAPIExpansion *, TR::TreeTop *, TR::Node *, TR::DataType, vec_sz_t, handlerMode);
-      TR::DataType _elementType;
+      TR::DataType _elementType;  // for high level API methods only
       vapiArgType  _returnType;
       vapiArgType  _argumentTypes[10];
       };
@@ -471,13 +483,13 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *  \param vectorLength
    *     return scalar opcode if vectorLength == 0 and vector opcode otherwise
    *
-   *  \param compare
-   *     true if it's compare opcode
+   *  \param opCodeType
+   *     opcode type
    *
    *  \return
    *     scalar TR::IL opcode if scalar is true, otherwise vector opcode
    */
-   static TR::ILOpCodes ILOpcodeFromVectorAPIOpcode(int32_t vectorOpCode, TR::DataType elementType, vec_sz_t vectorLength, bool compare = false);
+   static TR::ILOpCodes ILOpcodeFromVectorAPIOpcode(int32_t vectorOpCode, TR::DataType elementType, vec_sz_t vectorLength, vapiOpCodeType opCodeType);
 
   /** \brief
    *    For the node's symbol reference, creates and records(if it does not exist yet)
@@ -705,7 +717,6 @@ class TR_VectorAPIExpansion : public TR::Optimization
    */
    static TR::Node *unaryIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode);
 
-
   /** \brief
    *    Scalarizes or vectorizes a node that is a call to \c VectorSupport.binaryOp() intrinsic.
    *    In both cases, the node is modified in place.
@@ -735,6 +746,34 @@ class TR_VectorAPIExpansion : public TR::Optimization
    */
    static TR::Node *binaryIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode);
 
+  /** \brief
+   *    Scalarizes or vectorizes a node that is a call to \c VectorSupport.reductionCoerced() intrinsic.
+   *    In both cases, the node is modified in place.
+   *    In the case of scalarization, extra nodes are created(number of lanes minus one)
+   *
+   *   \param opt
+   *      This optimization object
+   *
+   *   \param treeTop
+   *      Tree top of the \c node
+   *
+   *   \param node
+   *      Node to transform
+   *
+   *   \param elementType
+   *      Element type
+   *
+   *   \param vectorLength
+   *      Full vector length in bits (e.g. 128 for Float128Vector)
+   *
+   *   \param mode
+   *      Handler mode
+   *
+   *   \return
+   *      Transformed node
+   *
+   */
+   static TR::Node *reductionCoercedIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode);
 
   /** \brief
    *    Scalarizes or vectorizes a node that is a call to \c VectorSupport.ternaryOp() intrinsic.
@@ -792,10 +831,13 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *   \param numChildren
    *      Number of operands
    *
+   *   \param opCodeType
+   *      opcode type
+   *
    *   \return
    *      Transformed node
    */
-   static TR::Node *naryIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode, int32_t numChidren);
+   static TR::Node *naryIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode, int32_t numChidren, vapiOpCodeType opCodeType);
 
   /** \brief
    *    Scalarizes or vectorizes a node that is a call to \c VectorSupport.blend() intrinsic.
@@ -1075,9 +1117,12 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *   \param numOperands
    *      Number of operands
    *
+   *   \param opCodeType
+   *      opcode type
+   *
    *   \return
    *      Transformed node
    */
-   static TR::Node *transformNary(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode, TR::ILOpCodes scalarOpCode, TR::ILOpCodes vectorOpCode, int32_t firstOperand, int32_t numOperands);
+   static TR::Node *transformNary(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode, TR::ILOpCodes scalarOpCode, TR::ILOpCodes vectorOpCode, int32_t firstOperand, int32_t numOperands, vapiOpCodeType opCodeType);
    };
 #endif /* VECTORAPIEXPANSION_INCL */
