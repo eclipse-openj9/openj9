@@ -1023,6 +1023,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	--add-exports java.base/sun.net.www.protocol.jrt=ALL-UNNAMED \
 	--add-opens=java.base/java.lang=ALL-UNNAMED \
 	--add-opens=java.base/java.security=ALL-UNNAMED \
+	-Xdump:system:events=throw,filter=java/lang/AssertionError \
 	$(ADD_EXPORTS_JDK_INTERNAL_ACCESS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(P)$(TEST_RESROOT)$(D)TestResources.jar$(P)$(LIB_DIR)$(D)asm-all.jar$(JAXB_API_JAR)$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
@@ -1173,6 +1174,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	--add-exports java.base/sun.net.www.protocol.jrt=ALL-UNNAMED \
 	--add-opens=java.base/java.lang=ALL-UNNAMED \
 	--add-opens=java.base/java.security=ALL-UNNAMED \
+	-Xdump:system:events=throw,filter=java/lang/AssertionError \
 	$(ADD_EXPORTS_JDK_INTERNAL_ACCESS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(P)$(TEST_RESROOT)$(D)TestResources.jar$(P)$(LIB_DIR)$(D)asm-all.jar$(JAXB_API_JAR)$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
