@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2019 IBM Corp. and others
+ * Copyright (c) 2019, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,14 +22,14 @@
 /*******************************************************************************
  * Portions Copyright (c) 1999-2003 Apple Computer, Inc. All Rights
  * Reserved.
- * 
+ *
  * This file contains Original Code and/or Modifications of Original Code
  * as defined in and that are subject to the Apple Public Source License
  * Version 2.0 (the 'License'). You may not use this file except in
  * compliance with the License. Please obtain a copy of the License at
  * http://www.opensource.apple.com/apsl/ and read it before using this
  * file.
- * 
+ *
  * The Original Code and all software distributed under the License are
  * distributed on an 'AS IS' basis, WITHOUT WARRANTY OF ANY KIND, EITHER
  * EXPRESS OR IMPLIED, AND APPLE HEREBY DISCLAIMS ALL SUCH WARRANTIES,
@@ -49,24 +49,21 @@ import javax.imageio.stream.ImageInputStream;
 public class BuildVersionCommand extends LoadCommand
 {
 
-	// version numbers are encoded as nibbles in an int in xxxx.yy.zz format
+	/*
+	 * version numbers are encoded as nibbles in an int in xxxx.yy.zz format
+	 * e.g. 11.5.0 is encoded as 0x000B0500
+	 */
 	public static class Version
 	{
-		int major;
-		int minor;
-		int patch;
+		final int major;
+		final int minor;
+		final int patch;
 
 		public Version(int encoding)
 		{
-			for (int i = 8; i > 4; i--) {
-				major = major * 10 + ((encoding >>> (i * 4)) & 0xf);
-			}
-			for (int i = 4; i > 2; i--) {
-				minor = minor * 10 + ((encoding >>> (i * 4)) & 0xf);
-			}
-			for (int i = 2; i > 0; i--) {
-				patch = patch * 10 + ((encoding >>> (i * 4)) & 0xf);
-			}
+			major = encoding >>> 16;
+			minor = (encoding >>> 8) & 0xFF;
+			patch = encoding & 0xFF;
 		}
 	}
 
@@ -74,9 +71,16 @@ public class BuildVersionCommand extends LoadCommand
 	{
 		public static final int TOOL_CLANG = 1;
 		public static final int TOOL_SWIFT = 2;
-		public static final int TOOL_LD	= 3;
-		int toolType;
-		int version;
+		public static final int TOOL_LD = 3;
+
+		final int toolType;
+		final int version;
+
+		BuildToolVersion(ImageInputStream stream) throws IOException {
+			super();
+			toolType = stream.readInt();
+			version = stream.readInt();
+		}
 	}
 
 	int platform;
@@ -86,23 +90,24 @@ public class BuildVersionCommand extends LoadCommand
 	Version minOsVersion;
 	Version sdkVersion;
 	List<BuildToolVersion> tools;
-	
+
 	public BuildVersionCommand() {}
 
 	public BuildVersionCommand readCommand(ImageInputStream stream, long streamSegmentOffset) throws IOException
 	{
 		super.readCommand(stream, streamSegmentOffset);
+
+		platform = stream.readInt();
 		minOs = stream.readInt();
 		sdk = stream.readInt();
+		numTools = stream.readInt();
+
 		minOsVersion = new Version(minOs);
 		sdkVersion = new Version(sdk);
-		numTools = stream.readInt();
+
 		tools = new ArrayList<>(numTools);
 		for (int i = 0; i < numTools; i++) {
-			BuildToolVersion tool = new BuildToolVersion();
-			tool.toolType = stream.readInt();
-			tool.version = stream.readInt();
-			tools.add(tool);
+			tools.add(new BuildToolVersion(stream));
 		}
 		return this;
 	}
