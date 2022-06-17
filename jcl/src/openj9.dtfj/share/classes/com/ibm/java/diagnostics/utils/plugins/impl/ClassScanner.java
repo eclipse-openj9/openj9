@@ -1,6 +1,6 @@
-/*[INCLUDE-IF Sidecar18-SE]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 /*******************************************************************************
- * Copyright (c) 2012, 2021 IBM Corp. and others
+ * Copyright (c) 2012, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -44,19 +44,20 @@ public class ClassScanner extends ClassVisitor {
 	private final Set<ClassListener> listeners;
 
 	public ClassScanner(URL url, Set<ClassListener> listeners) {
-		/*[IF JAVA_SPEC_VERSION >= 15]*/
+		/*[IF JAVA_SPEC_VERSION >= 19]*/
+		super(Opcodes.ASM9, null);
+		/*[ELSEIF JAVA_SPEC_VERSION >= 15]*/
 		super(Opcodes.ASM8, null);
-		/*[ELSE]*/
-		/*[IF JAVA_SPEC_VERSION >= 11]*/
+		/*[ELSEIF JAVA_SPEC_VERSION >= 11]*/
 		super(Opcodes.ASM6, null);
-		/*[ELSE]*/
+		/*[ELSE] JAVA_SPEC_VERSION >= 11 */
 		super(Opcodes.ASM5, null);
-		/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
-		/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
+		/*[ENDIF] JAVA_SPEC_VERSION >= 19 */
 		this.url = url;
 		this.listeners = listeners;
 	}
 
+	@Override
 	public AnnotationVisitor visitAnnotation(String classname, boolean visible) {
 		currentAnnotation = info.addAnnotation(classname);
 		for (ClassListener listener : listeners) {
@@ -65,6 +66,7 @@ public class ClassScanner extends ClassVisitor {
 		return new ClassScannerAnnotation(Opcodes.ASM4);
 	}
 
+	@Override
 	public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
 		String dotName = name.replace('/', '.');
 		String dotSuperName = superName.replace('/', '.');
@@ -78,41 +80,74 @@ public class ClassScanner extends ClassVisitor {
 		}
 	}
 
-	public void visitAttribute(Attribute attr) {}
-	public void visitEnd() {}
-	public FieldVisitor visitField(int arg0, String arg1, String arg2, String arg3, Object arg4) { return null; }
-	public void visitInnerClass(String arg0, String arg1, String arg2, int arg3) {}
-	public MethodVisitor visitMethod(int arg0, String arg1,	String arg2, String arg3, String[] arg4) { return null;	}
-	public void visitOuterClass(String arg0, String arg1, String arg2) {}
-	public void visitSource(String arg0, String arg1) {}
+	@Override
+	public void visitAttribute(Attribute attr) {
+		return;
+	}
+
+	@Override
+	public void visitEnd() {
+		return;
+	}
+
+	@Override
+	public FieldVisitor visitField(int arg0, String arg1, String arg2, String arg3, Object arg4) {
+		return null;
+	}
+
+	@Override
+	public void visitInnerClass(String arg0, String arg1, String arg2, int arg3) {
+		return;
+	}
+
+	@Override
+	public MethodVisitor visitMethod(int arg0, String arg1, String arg2, String arg3, String[] arg4) {
+		return null;
+	}
+
+	@Override
+	public void visitOuterClass(String arg0, String arg1, String arg2) {
+		return;
+	}
+
+	@Override
+	public void visitSource(String arg0, String arg1) {
+		return;
+	}
 
 	public ClassInfo getClassInfo() {
 		return info;
 	}
-	
+
 	class ClassScannerAnnotation extends AnnotationVisitor {
 
 		public ClassScannerAnnotation(int arg0) {
 			super(arg0);
 		}
 
+		@Override
 		public AnnotationVisitor visitAnnotation(String name, String desc) {
-			return null;			//not interested in nested annotations
+			return null; //not interested in nested annotations
 		}
 
+		@Override
 		public AnnotationVisitor visitArray(String name) {
-			return null;		//not interested in arrays
-		}
-		
-		public void visitEnum(String name, String desc, String value) {
+			return null; //not interested in arrays
 		}
 
+		@Override
+		public void visitEnum(String name, String desc, String value) {
+			return;
+		}
+
+		@Override
 		public void visit(String name, Object value) {
 			currentAnnotation.addEntry(name, value);
-			for(ClassListener listener : listeners) {
+			for (ClassListener listener : listeners) {
 				listener.visitAnnotationValue(name, value);
 			}
-			
+
 		}
 	}
+
 }
