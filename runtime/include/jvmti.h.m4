@@ -744,7 +744,10 @@ ifelse(eval(JAVA_SPEC_VERSION >= 11), 1, [	JVMTI_EVENT_SAMPLED_OBJECT_ALLOC = 86
 ifelse(eval(JAVA_SPEC_VERSION >= 19), 1, [	JVMTI_EVENT_VIRTUAL_THREAD_START = 87,], [dnl])
 ifelse(eval(JAVA_SPEC_VERSION >= 19), 1, [	JVMTI_EVENT_VIRTUAL_THREAD_END = 88,], [dnl])
 
-	JVMTI_MAX_EVENT_TYPE_VAL = 86,
+ifelse(eval(JAVA_SPEC_VERSION >= 19), 1, [	JVMTI_MAX_EVENT_TYPE_VAL = 88,],[
+ifelse(eval(JAVA_SPEC_VERSION >= 11), 1, [	JVMTI_MAX_EVENT_TYPE_VAL = 86,],[
+	JVMTI_MAX_EVENT_TYPE_VAL = 84,])])
+
 	jvmtiEventEnsureWideEnum = 0x1000000						/* ensure 4-byte enum */
 } jvmtiEvent;
 

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -156,6 +156,13 @@ jvmtiSetEventNotificationMode(jvmtiEnv* env,
 					break;
 #endif /* JAVA_SPEC_VERSION >= 11 */
 
+#if JAVA_SPEC_VERSION >= 19
+				case JVMTI_EVENT_VIRTUAL_THREAD_START:
+				case JVMTI_EVENT_VIRTUAL_THREAD_END:
+					ENSURE_CAPABILITY(env, can_support_virtual_threads);
+					break;
+#endif /* JAVA_SPEC_VERSION >= 19 */
+
 				case JVMTI_EVENT_NATIVE_METHOD_BIND:
 					ENSURE_CAPABILITY(env, can_generate_native_method_bind_events);
 					break;
@@ -196,6 +203,9 @@ jvmtiSetEventNotificationMode(jvmtiEnv* env,
 #if JAVA_SPEC_VERSION >= 11
 			case  JVMTI_EVENT_SAMPLED_OBJECT_ALLOC:
 #endif /* JAVA_SPEC_VERSION >= 11 */
+#if JAVA_SPEC_VERSION >= 19
+			case JVMTI_EVENT_VIRTUAL_THREAD_START:
+#endif /* JAVA_SPEC_VERSION >= 19 */
 				if (event_thread != NULL) {
 					JVMTI_ERROR(JVMTI_ERROR_ILLEGAL_ARGUMENT);
 				}
