@@ -618,6 +618,7 @@ JIT_HELPER(__bwWordArrayCopy);
 JIT_HELPER(__bwDoubleWordArrayCopy);
 JIT_HELPER(__bwQuadWordArrayCopy);
 JIT_HELPER(_patchGCRHelper);
+JIT_HELPER(_fieldWatchHelper);
 
 #elif defined(TR_HOST_S390)
 JIT_HELPER(__double2Long);
@@ -1599,7 +1600,7 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    SET(TR_ARM64interpreterDoubleStaticGlue,       (void *) _interpreterDoubleStaticGlue,     TR_Helper);
    SET(TR_ARM64interpreterSyncDoubleStaticGlue,   (void *) _interpreterSyncDoubleStaticGlue, TR_Helper);
    SET(TR_ARM64nativeStaticHelper,                (void *) _nativeStaticHelper,              TR_Helper);
-   SET(TR_ARM64interfaceCompleteSlot2,            (void *) _interfaceCompleteSlot2,           TR_Helper);
+   SET(TR_ARM64interfaceCompleteSlot2,            (void *) _interfaceCompleteSlot2,          TR_Helper);
    SET(TR_ARM64interfaceSlotsUnavailable,         (void *) _interfaceSlotsUnavailable,       TR_Helper);
    SET(TR_ARM64floatRemainder,                    (void *) helperCFloatRemainderFloat,       TR_Helper);
    SET(TR_ARM64doubleRemainder,                   (void *) helperCDoubleRemainderDouble,     TR_Helper);
@@ -1611,11 +1612,16 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    SET(TR_ARM64forwardDoubleWordArrayCopy,        (void *) __fwDoubleWordArrayCopy,          TR_Helper);
    SET(TR_ARM64forwardWordArrayCopy,              (void *) __fwWordArrayCopy,                TR_Helper);
    SET(TR_ARM64forwardHalfWordArrayCopy,          (void *) __fwHalfWordArrayCopy,            TR_Helper);
-   SET(TR_ARM64backwardQuadWordArrayCopy,         (void *) __bwQuadWordArrayCopy,             TR_Helper);
+   SET(TR_ARM64backwardQuadWordArrayCopy,         (void *) __bwQuadWordArrayCopy,            TR_Helper);
    SET(TR_ARM64backwardDoubleWordArrayCopy,       (void *) __bwDoubleWordArrayCopy,          TR_Helper);
    SET(TR_ARM64backwardWordArrayCopy,             (void *) __bwWordArrayCopy,                TR_Helper);
    SET(TR_ARM64backwardHalfWordArrayCopy,         (void *) __bwHalfWordArrayCopy,            TR_Helper);
    SET(TR_ARM64PatchGCRHelper,                    (void *) _patchGCRHelper,                  TR_Helper);
+#if defined(OSX)
+   SET(TR_ARM64fieldWatchHelper,                  (void *) _fieldWatchHelper,                TR_Helper);
+#else
+   SET(TR_ARM64fieldWatchHelper,                  (void *) 0,                                TR_Helper);
+#endif
 
 #elif defined(TR_HOST_S390)
    SET(TR_S390double2Long,                                (void *) 0,                                              TR_Helper);
