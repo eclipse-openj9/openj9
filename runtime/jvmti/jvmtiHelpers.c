@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -412,8 +412,12 @@ prepareForEvent(J9JVMTIEnv * j9env, J9VMThread * currentThread, J9VMThread * eve
 	/* Allow the VM_DEATH and THREAD_END event to be sent on a dead thread, but no others */
 
 	if (currentThread->publicFlags & J9_PUBLIC_FLAGS_STOPPED) {
-        if (eventNumber != JVMTI_EVENT_VM_DEATH && 
-            eventNumber != JVMTI_EVENT_THREAD_END) {
+		if ((eventNumber != JVMTI_EVENT_VM_DEATH)
+		&& (eventNumber != JVMTI_EVENT_THREAD_END)
+#if JAVA_SPEC_VERSION >= 19
+		&& (eventNumber != JVMTI_EVENT_VIRTUAL_THREAD_END)
+#endif /* JAVA_SPEC_VERSION >= 19 */
+		) {
 			return FALSE;
 		}
 	}
