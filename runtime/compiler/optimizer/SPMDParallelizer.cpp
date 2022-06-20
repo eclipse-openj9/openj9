@@ -4366,7 +4366,18 @@ bool TR_SPMDKernelParallelizer::checkIndependence(TR_RegionStructure *loop, TR_U
       for (cursor.SetToFirstOne(); cursor.Valid(); cursor.SetToNextOne())
          {
          int32_t defIndex = (int32_t) cursor ;
-         defsOfDefsInLoop[useDefInfo->getNode(defIndex)->getGlobalIndex()]=true;
+         TR::Node *useDefNode = useDefInfo->getNode(defIndex);
+
+         if (!useDefNode)
+            {
+            if (trace())
+               {
+               traceMsg(comp, "Def #%d (from method entry) reaches a use inside loop %d\n", defIndex, loop->getNumber());
+               }
+            return false;
+            }
+
+         defsOfDefsInLoop[useDefNode->getGlobalIndex()]=true;
          }
 
       }
