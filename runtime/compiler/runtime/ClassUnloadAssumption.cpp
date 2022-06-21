@@ -560,7 +560,7 @@ void TR_RuntimeAssumptionTable::reclaimAssumptions(OMR::RuntimeAssumption **sent
                 kind != RuntimeAssumptionOnClassRedefinitionNOP)
                {
                fprintf(stderr, "%d assumptions were left after metadata %p assumption reclaiming\n", numAssumptionsNotReclaimed, metaData);
-               fprintf(stderr, "RA=%p kind=%d key=%p assumingPC=%p\n", cursor, cursor->getAssumptionKind(), cursor->getKey(), cursor->getFirstAssumingPC());
+               fprintf(stderr, "RA=%p kind=%d key=%p assumingPC=%p\n", cursor, cursor->getAssumptionKind(), (void*) cursor->getKey(), cursor->getFirstAssumingPC());
                TR_ASSERT(false, "non redefinition assumptions left after metadata reclamation\n");
                }
             cursor = cursor->getNextAssumptionForSameJittedBody();
