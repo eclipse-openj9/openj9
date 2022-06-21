@@ -374,7 +374,7 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 				criuSetUnprivileged(JNI_FALSE != unprivileged);
 			} else {
 				currentExceptionClass = vm->criuSystemCheckpointExceptionClass;
-				systemReturnCode = NULL != dlerrorReturnString ? J9_CRIU_UNPRIVILEGED_DLSYM_ERROR : J9_CRIU_UNPRIVILEGED_DLSYM_NULL_SYMBOL;
+				systemReturnCode = (NULL != dlerrorReturnString) ? J9_CRIU_UNPRIVILEGED_DLSYM_ERROR : J9_CRIU_UNPRIVILEGED_DLSYM_NULL_SYMBOL;
 				nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_JCL_CRIU_CANNOT_SET_UNPRIVILEGED, NULL);
 				goto closeWorkDirFD;
 			}
@@ -435,6 +435,11 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 			goto wakeJavaThreadsWithExclusiveVMAccess;
 		}
 		if (vm->portLibrary->checkpointRestoreTimeDelta < 0) {
+			/* A negative value was calculated for checkpointRestoreTimeDelta,
+			 * Trc_CRIU_before_checkpoint & Trc_CRIU_after_checkpoint can be used for further investigation.
+			 * Currently OpenJ9 CRIU only supports 64-bit systems, and IDATA is equivalent to int64_t here.
+			 */
+			systemReturnCode = (IDATA)vm->portLibrary->checkpointRestoreTimeDelta;
 			currentExceptionClass = vm->criuRestoreExceptionClass;
 			nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
 					J9NLS_JCL_CRIU_NEGATIVE_CHECKPOINT_RESTORE_TIME_DELTA, NULL);
