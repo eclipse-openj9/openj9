@@ -5014,24 +5014,6 @@ TR_J9InlinerPolicy::supressInliningRecognizedInitialCallee(TR_CallSite* callsite
             return true;
             }
          break;
-      case TR::java_lang_Integer_stringSize:
-      case TR::java_lang_Long_stringSize:
-         if (comp->cg()->getSupportsIntegerStringSize())
-            {
-            return true;
-            }
-         break;
-      case TR::java_lang_Integer_getChars: // For compressed strings
-      case TR::java_lang_Long_getChars: // For compressed strings
-      case TR::java_lang_StringUTF16_getChars_Long: // For uncompressed strings
-      case TR::java_lang_StringUTF16_getChars_Integer: // For uncompressed strings
-      case TR::java_lang_Integer_getChars_charBuffer: // For uncompressed strings in Java 8
-      case TR::java_lang_Long_getChars_charBuffer: // For uncompressed strings in Java 8
-         if (comp->cg()->getSupportsIntegerToChars())
-            {
-            return true;
-            }
-         break;
       case TR::java_lang_StringCoding_encodeASCII:
       case TR::java_lang_String_encodeASCII:
          if (comp->cg()->getSupportsInlineEncodeASCII())

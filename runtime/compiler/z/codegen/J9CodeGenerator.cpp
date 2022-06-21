@@ -209,13 +209,6 @@ J9::Z::CodeGenerator::initialize()
       cg->setHasFixedFrameC_CallingConvention();
       }
 
-   static bool disableIntegerToChars = (feGetEnv("TR_DisableIntegerToChars") != NULL);
-   if (cg->getSupportsVectorRegisters() && !TR::Compiler->om.canGenerateArraylets() && !disableIntegerToChars && comp->target().cpu.isAtLeast(OMR_PROCESSOR_S390_ZNEXT))
-      {
-      cg->setSupportsIntegerToChars();
-      cg->setSupportsIntegerStringSize();
-      }
-
    cg->setIgnoreDecimalOverflowException(false);
    }
 
@@ -3927,32 +3920,6 @@ J9::Z::CodeGenerator::inlineDirectCall(
       case TR::com_ibm_jit_JITHelpers_transformedEncodeUTF16Big:
          return resultReg = comp->getOption(TR_DisableUTF16BEEncoder) ? TR::TreeEvaluator::inlineUTF16BEEncodeSIMD(node, cg)
                                                                       : TR::TreeEvaluator::inlineUTF16BEEncode    (node, cg);
-         break;
-      case TR::java_lang_Integer_stringSize:
-      case TR::java_lang_Long_stringSize:
-         if (cg->getSupportsIntegerStringSize())
-            {
-            resultReg = TR::TreeEvaluator::inlineIntegerStringSize(node, cg);
-            return resultReg != NULL;
-            }
-         break;
-      case TR::java_lang_Integer_getChars:
-      case TR::java_lang_Long_getChars:
-         if (cg->getSupportsIntegerToChars())
-            {
-            resultReg = TR::TreeEvaluator::inlineIntegerToCharsForLatin1Strings(node, cg);
-            return resultReg != NULL;
-            }
-         break;
-      case TR::java_lang_StringUTF16_getChars_Integer:
-      case TR::java_lang_StringUTF16_getChars_Long:
-      case TR::java_lang_Integer_getChars_charBuffer:
-      case TR::java_lang_Long_getChars_charBuffer:
-         if (cg->getSupportsIntegerToChars())
-            {
-            resultReg = TR::TreeEvaluator::inlineIntegerToCharsForUTF16Strings(node, cg);
-            return resultReg != NULL;
-            }
          break;
 
       default:

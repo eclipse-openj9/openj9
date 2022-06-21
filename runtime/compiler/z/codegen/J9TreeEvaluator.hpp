@@ -554,9 +554,6 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
    static TR::Register *awrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *awrtbariEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 
-   static TR::Register *inlineIntegerStringSize(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *inlineIntegerToCharsForLatin1Strings(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *inlineIntegerToCharsForUTF16Strings(TR::Node *node, TR::CodeGenerator *cg);
    };
 }
 
