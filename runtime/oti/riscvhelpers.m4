@@ -18,6 +18,8 @@ dnl [2] http://openjdk.java.net/legal/assembly-exception.html
 dnl
 dnl SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 
+.cfi_sections .eh_frame, .debug_frame
+
 include(jilvalues.m4)
 
 J9CONST({CINTERP_STACK_SIZE},J9TR_cframe_sizeof)
@@ -153,6 +155,11 @@ define({GPR_SAVE_INDEX},{
 })
 define({GPR_SAVE_OFFSET},{eval(J9TR_cframe_preservedGPRs+(($1)*ALen))})
 define({GPR_SAVE_SLOT},{M(sp, GPR_SAVE_OFFSET(GPR_SAVE_INDEX($1)))})
+define({GPR_SAVE},{sd $1, GPR_SAVE_SLOT($1)
+    .cfi_rel_offset $1, GPR_SAVE_OFFSET(GPR_SAVE_INDEX($1))})
+define({GPR_RESTORE},{ld $1, GPR_SAVE_SLOT($1)
+    .cfi_same_value $1})
+
 define({FPR_SAVE_INDEX},{
     ifelse(eval(FPR_NUMBER_$1 >= FPR_NUMBER_fs0 && FPR_NUMBER_$1 <= FPR_NUMBER_fs1),1,
         eval(FPR_NUMBER_$1-8),
@@ -164,6 +171,10 @@ define({FPR_SAVE_INDEX},{
 })
 define({FPR_SAVE_OFFSET},{eval(J9TR_cframe_preservedFPRs+(($1)*8))})
 define({FPR_SAVE_SLOT},{M(sp, FPR_SAVE_OFFSET(FPR_SAVE_INDEX($1)))})
+define({FPR_SAVE},{fsd $1, FPR_SAVE_SLOT($1)
+    .cfi_rel_offset $1, FPR_SAVE_OFFSET(FPR_SAVE_INDEX($1))})
+define({FPR_RESTORE},{fld $1, FPR_SAVE_SLOT($1)
+    .cfi_same_value $1})
 
 define({JIT_GPR_SAVE_OFFSET},{eval(J9TR_cframe_jitGPRs+(($1)*ALen))})
 define({JIT_GPR_SAVE_SLOT},{M(sp, JIT_GPR_SAVE_OFFSET(GPR_NUMBER($1)))})
