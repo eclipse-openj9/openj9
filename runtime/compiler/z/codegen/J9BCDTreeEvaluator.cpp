@@ -1673,16 +1673,10 @@ J9::Z::TreeEvaluator::zd2pdVectorEvaluatorHelper(TR::Node * node, TR::CodeGenera
  *
 */
 void
-J9::Z::TreeEvaluator::pd2zdSignFixup(TR::Node *node,
-                                             TR::MemoryReference *destMR,
-                                             TR::CodeGenerator * cg,
-                                             TR::RegisterPair *zonedDecimalRegPair)
+J9::Z::TreeEvaluator::pd2zdSignFixup(TR::Node *node, TR::MemoryReference *destMR, TR::CodeGenerator * cg, TR::Register *zonedDecimalLow)
    {
    TR::Register* signCode     = cg->allocateRegister();
    TR::Register* signCode4Bit = cg->allocateRegister();
-   TR::Register* zonedDecimalLow = NULL;
-   if (zonedDecimalRegPair)
-      zonedDecimalLow = zonedDecimalRegPair->getLowOrder();
 
    TR::LabelSymbol * processSign     = generateLabelSymbol(cg);
    TR::LabelSymbol * processSignEnd  = generateLabelSymbol(cg);
@@ -2027,11 +2021,10 @@ J9::Z::TreeEvaluator::pd2zdVector2VectorEvaluatorHelper(TR::Node * node, TR::Cod
    if (precision > TR_VECTOR_REGISTER_SIZE)
       generateVRRkInstruction(cg, TR::InstOpCode::VUPKZH, node, zonedDecimalHigh, valueRegister, M3);
 
-   pd2zdSignFixup(node, NULL, cg, zonedRegPair);
+   pd2zdSignFixup(node, NULL, cg, zonedDecimalLow);
 
    node->setRegister(zonedRegPair);
    cg->decReferenceCount(child);
-   // zonedRegPair->setIsInitialized();
    traceMsg(comp, "DAA: Leave pd2zdVectorEvaluatorHelper\n");
    return zonedRegPair;
    }
