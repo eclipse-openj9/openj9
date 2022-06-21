@@ -1527,6 +1527,28 @@ TR_CISCGraph::importUDchains(TR::Compilation *comp, TR_UseDefInfo *useDefInfo, b
          /* set DU-chains to TR_CISCNode._chain */
          TR_ASSERT(n->getTrNodeInfo()->isSingleton(), "direct store must correspond to a single TR node");
          TR::Node *trNode = n->getTrNodeInfo()->getListHead()->getData()->_node;
+
+         if (!trNode->getSymbol()->isAutoOrParm())
+            {
+            TR_ASSERT_FATAL_WITH_NODE(
+               trNode,
+               trNode->getSymbol()->isStatic(),
+               "direct store to non-auto, non-static");
+
+            // Regardless of the uses that we can see within this method (which
+            // may not even appear, since we won't necessarily get use-def
+            // indices for static accesses), it's always possible that the
+            // destination static is used after the loop, but outside of this
+            // method. Recognizing this possibility will prevent the store from
+            // being considered negligible and ultimately incorrectly removed.
+            n->addChain(_exitNode, true);
+
+            // With this use recorded here, any real uses that might happen to
+            // be available are no longer informative. Avoid adding a duplicate
+            // entry for _exitNode.
+            continue;
+            }
+
          int32_t useDefIndex = trNode->getUseDefIndex();
          if (useDefIndex == 0) continue;
          TR_ASSERT(useDefInfo->isDefIndex(useDefIndex), "error!");
