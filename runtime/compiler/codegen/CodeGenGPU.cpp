@@ -46,7 +46,7 @@
 
 static const char* getOpCodeName(TR::ILOpCodes opcode) {
 
-   TR_ASSERT(opcode < TR::ILOpCode::NumAllIlOps, "Wrong opcode");
+   TR_ASSERT(opcode < TR::NumAllIlOps, "Wrong opcode");
 
    switch(opcode)
       {
