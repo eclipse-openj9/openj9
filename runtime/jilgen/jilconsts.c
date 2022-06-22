@@ -67,7 +67,7 @@ writeConstant(OMRPortLibrary *OMRPORTLIB, IDATA fd, char const *name, UDATA valu
 static IDATA
 createConstant(OMRPortLibrary *OMRPORTLIB, char const *name, UDATA value)
 {
-	if (values) {
+	if (0 != values) {
 		return omrstr_printf(line, sizeof(line), "J9CONST({%s},%zu)dnl\n", name, value);
 	}
 #if defined(J9VM_ARCH_POWER) || defined(J9VM_ARCH_ARM) || defined(J9VM_ARCH_AARCH64)
@@ -89,15 +89,15 @@ createConstant(OMRPortLibrary *OMRPORTLIB, char const *name, UDATA value)
 #if defined(J9VM_ENV_DATA64)
 static char const *macroString = "\n\
 %macro MoveHelper 2 ; register, helperName\n\
-		lea %1, [rel %2]\n\
+	lea %1, [rel %2]\n\
 %endmacro\n\
 \n\
 %macro CallHelper 1 ; helperName\n\
-	   	call %1\n\
+	call %1\n\
 %endmacro\n\
 \n\
 %macro CallHelperUseReg 2 ; helperName, register\n\
-	   	call %1\n\
+	call %1\n\
 %endmacro\n\
 \n\
 %macro DECLARE_EXTERN 1 ; helperName\n\
@@ -154,15 +154,15 @@ static char const *macroString = "\n\
 #elif defined(OSX) /* LINUX */
 static char const *macroString = "\n\
 %macro MoveHelper 2 ; register, helperName\n\
-		lea %1, [rel %2]\n\
+	lea %1, [rel %2]\n\
 %endmacro\n\
 \n\
 %macro CallHelper 1 ; helperName\n\
-	   	call %1\n\
+	call %1\n\
 %endmacro\n\
 \n\
 %macro CallHelperUseReg 2 ; helperName, register\n\
-	   	call %1\n\
+	call %1\n\
 %endmacro\n\
 \n\
 %macro DECLARE_EXTERN 1 ; helperName\n\
@@ -189,15 +189,15 @@ static char const *macroString = "\n\
 #if defined(J9VM_ENV_DATA64)
 static char const *macroString = "\n\
 %macro MoveHelper 2 ; register, helperName\n\
-		lea %1, [rel %2]\n\
+	lea %1, [rel %2]\n\
 %endmacro\n\
 \n\
 %macro CallHelper 1 ; helperName\n\
-	   	call %1\n\
+	call %1\n\
 %endmacro\n\
 \n\
 %macro CallHelperUseReg 2 ; helperName, register\n\
-	   	call %1\n\
+	call %1\n\
 %endmacro\n\
 \n\
 %macro DECLARE_EXTERN 1 ; helperName\n\
@@ -322,8 +322,13 @@ writeConstants(OMRPortLibrary *OMRPORTLIB, IDATA fd)
 #endif /* J9VM_PORT_ZOS_CEEHDLRSUPPORT */
 
 #if defined(OMR_GC_CONCURRENT_SCAVENGER)
+#if defined(J9VM_ARCH_AARCH64) || defined(J9VM_ARCH_ARM) || defined(J9VM_ARCH_POWER)
+			/* These platforms include j9cfg.h so don't redefine OMR_GC_CONCURRENT_SCAVENGER in jilconsts. */
+			((0 != values) ? writeConstant(OMRPORTLIB, fd, "OMR_GC_CONCURRENT_SCAVENGER", 1) : 0) |
+#else /* defined(J9VM_ARCH_AARCH64) || defined(J9VM_ARCH_ARM) || defined(J9VM_ARCH_POWER) */
 			writeConstant(OMRPORTLIB, fd, "OMR_GC_CONCURRENT_SCAVENGER", 1) |
-#endif /* OMR_GC_CONCURRENT_SCAVENGER */
+#endif /* defined(J9VM_ARCH_AARCH64) || defined(J9VM_ARCH_ARM) || defined(J9VM_ARCH_POWER) */
+#endif /* defined(OMR_GC_CONCURRENT_SCAVENGER) */
 
 			/* C stack frame */
 			writeConstant(OMRPORTLIB, fd, "J9TR_cframe_sizeof", sizeof(J9CInterpreterStackFrame)) |
@@ -381,7 +386,7 @@ writeConstants(OMRPortLibrary *OMRPORTLIB, IDATA fd)
 			writeConstant(OMRPORTLIB, fd, "J9TR_cframe_preservedGPRs", offsetof(J9CInterpreterStackFrame, preservedGPRs)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_cframe_preservedFPRs", offsetof(J9CInterpreterStackFrame, preservedFPRs)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_cframe_jitGPRs", offsetof(J9CInterpreterStackFrame, jitGPRs)) |
-			writeConstant(OMRPORTLIB, fd, "J9TR_cframe_jitFPRs", offsetof(J9CInterpreterStackFrame, jitFPRs)) |			
+			writeConstant(OMRPORTLIB, fd, "J9TR_cframe_jitFPRs", offsetof(J9CInterpreterStackFrame, jitFPRs)) |
 #elif defined(J9VM_ARCH_X86) /* J9VM_ARCH_RISCV */
 			/* x86 */
 			writeConstant(OMRPORTLIB, fd, "J9TR_cframe_vmStruct", offsetof(J9CInterpreterStackFrame, vmStruct)) |
@@ -534,7 +539,7 @@ writeConstants(OMRPortLibrary *OMRPORTLIB, IDATA fd)
 			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_loadPreservedAndBranch", offsetof(J9JITConfig, loadPreservedAndBranch)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_pseudoTOC", offsetof(J9JITConfig, pseudoTOC));
 
-	if (values) {
+	if (0 != values) {
 		err |=
 			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_old_fast_jitNewObject", offsetof(J9JITConfig, old_fast_jitNewObject)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_old_slow_jitNewObject", offsetof(J9JITConfig, old_slow_jitNewObject)) |
@@ -835,21 +840,21 @@ done:
 #if defined(WIN32)
 int
 wmain(int argc, wchar_t ** argv, wchar_t ** envp)
-#else
+#else /* defined(WIN32) */
 int
 main(int argc, char ** argv, char ** envp)
-#endif
+#endif /* defined(WIN32) */
 {
 	OMRPortLibrary j9portLibrary;
 	int rc = 257;
-	
+
 	if (0 == omrthread_init_library()) {
 		omrthread_t attachedThread = NULL;
 		if (0 == omrthread_attach_ex(&attachedThread, J9THREAD_ATTR_DEFAULT)) {
 			/* Use portlibrary version which we compiled against, and have allocated space
-			 * for on the stack.  This version may be different from the one in the linked DLL.
+			 * for on the stack. This version may be different from the one in the linked DLL.
 			 */
-			if (0 == omrport_init_library(&j9portLibrary, sizeof(OMRPortLibrary))) {
+			if (0 == omrport_init_library(&j9portLibrary, sizeof(j9portLibrary))) {
 				if (JNI_OK == writeJitConstants(&j9portLibrary)) {
 					rc = 0;
 				}

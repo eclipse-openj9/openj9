@@ -21,6 +21,7 @@
  *******************************************************************************/
 
 #include "aarch64/runtime/arm64asmdefs.inc"
+#include "j9cfg.h"
 #include "jilconsts.inc"
 
 	.file "Recompilation.s"
