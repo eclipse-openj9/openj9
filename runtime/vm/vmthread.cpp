@@ -262,7 +262,9 @@ allocateVMThread(J9JavaVM * vm, omrthread_t osThread, UDATA privateFlags, void *
 
 #if JAVA_SPEC_VERSION >= 19
 	newThread->currentContinuation = NULL;
-	newThread->pinnedStateCounter = 0;
+	newThread->continuationPinCount = 0;
+	newThread->ownedMonitorCount = 0;
+	newThread->callOutCount = 0;
 	newThread->carrierThreadObject = threadObject;
 	newThread->extentLocalCache = NULL;
 #endif /* JAVA_SPEC_VERSION >= 19 */
