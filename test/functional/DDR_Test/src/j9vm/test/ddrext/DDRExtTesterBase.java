@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2020 IBM Corp. and others
+ * Copyright (c) 2001, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -40,35 +40,35 @@ import com.ibm.j9ddr.tools.ddrinteractive.CommandUtils;
 import com.ibm.j9ddr.tools.ddrinteractive.DDRInteractive;
 
 public class DDRExtTesterBase extends TestCase {
-	private static Logger log = Logger.getLogger(DDRExtTesterBase.class);
-	public static ArrayList<String> coveredStructures = new ArrayList<String>();
-	private String currentCommand = null;
-	private String[] coreinfoOutput = null;
+	private static final Logger log = Logger.getLogger(DDRExtTesterBase.class);
+	public static final ArrayList<String> coveredStructures = new ArrayList<>();
+
+	private String currentCommand;
+	private String[] coreinfoOutput;
 	private int javaVersion = -1;
 	private int javaSr = -1;
-	private String vmVersion = null;
+	private String vmVersion;
 
 	/**
-	 * Executes a given DDR extension and returns its output 
-	 * @param ddrExtCmd - DDR command to execute 
-	 * @param arg - Argument of the DDR command 
-	 * @return - Output of the DDR command 
+	 * Executes a given DDR extension and returns its output
+	 * @param ddrExtCmd - DDR command to execute
+	 * @param arg - Argument of the DDR command
+	 * @return - Output of the DDR command
 	 */
 	protected String exec(String ddrExtCmd, String[] arg) {
+		String argStr = "";
+		for (int i = 0; i < arg.length; i++) {
+			argStr = argStr + " " + arg[i];
+		}
 		String output = null;
-		if (SetupConfig.getDDRContxt() != null) { // this means we are
-			// running from ddr
-			// plugin
+		if (SetupConfig.getDDRContxt() != null) {
+			// this means we are running from ddr plugin
 			DDROutputStream mps = SetupConfig.getPrintStream();
-			String argStr = "";
-			for (int i = 0; i < arg.length; i++) {
-				argStr = argStr + " " + arg[i];
-			}
-			log.debug("Execute command: !" + ddrExtCmd + " " + argStr);
+			log.debug("Execute command: !" + ddrExtCmd + argStr);
 			if (ddrExtCmd.startsWith("!") == false) {
 				ddrExtCmd = "!" + ddrExtCmd;
 			}
-			currentCommand = "'" + ddrExtCmd + " " + argStr + "'";
+			currentCommand = "'" + ddrExtCmd + argStr + "'";
 			SetupConfig.getDDRContxt().execute(ddrExtCmd, arg,
 					SetupConfig.getPrintStream());
 			output = mps.getOutBuffer().toString();
@@ -89,15 +89,11 @@ public class DDRExtTesterBase extends TestCase {
 			}
 			if (app != null) {
 				DDROutputStream mps = SetupConfig.getPrintStream();
-				String argStr = "";
-				for (int i = 0; i < arg.length; i++) {
-					argStr = argStr + " " + arg[i];
-				}
-				log.debug("Execute command: !" + ddrExtCmd + " " + argStr);
+				log.debug("Execute command: !" + ddrExtCmd + argStr);
 				if (ddrExtCmd.startsWith("!") == false) {
 					ddrExtCmd = "!" + ddrExtCmd;
 				}
-				currentCommand = "'" + ddrExtCmd + " " + argStr + "'";
+				currentCommand = "'" + ddrExtCmd + argStr + "'";
 				app.execute(ddrExtCmd, arg);
 				output = mps.getOutBuffer().toString();
 				mps.clear();
@@ -117,8 +113,11 @@ public class DDRExtTesterBase extends TestCase {
 	 * @return - True if validation passes,false otherwise
 	 */
 	private boolean basicValidation(String output) {
-		if (output == null || output.isEmpty()) {
-			log.error(currentCommand + " output is null or empty");
+		if (output == null) {
+			log.error(currentCommand + " output is null");
+			return false;
+		} else if (output.isEmpty()) {
+			log.error(currentCommand + " output is empty");
 			return false;
 		} else if (output.contains(Constants.UNRECOGNIZED_CMD)) {
 			log.error(currentCommand + " is not recognized");
@@ -126,38 +125,35 @@ public class DDRExtTesterBase extends TestCase {
 		}
 		return true;
 	}
-	
+
 	/**
 	 * Validation method for DDR extension output. Check that successKey appears expectedMatches number of times
-	 * 
+	 *
 	 * @param output - DDR extension output to validate.
 	 * @param successKey - Comma separated list of tokens that must be available in the output for it to be valid.
 	 * @param expectedMatches - number of times successKey must be seen
-	 * @return True if validation passes, false otherwise. 
+	 * @return True if validation passes, false otherwise.
 	 */
 	protected boolean validate(String output, String successKey, int expectedMatches) {
-		
-		int matchesFound = 0;
-		
 		Pattern pattern = Pattern.compile(successKey.trim(), Pattern.CASE_INSENSITIVE);
 		Matcher matcher = pattern.matcher(output);
-		
+		int matchesFound = 0;
+
 		while (matcher.find()) {
 			matchesFound = matchesFound + 1;
 		}
-		
-		return (matchesFound == expectedMatches);
+
+		return matchesFound == expectedMatches;
 	}
-	
+
 	/**
 	 * Validation method for DDR extension output
 	 * @param output - DDR extension output to validate.
 	 * @param successKeys - Comma separated list of tokens that must be available in the output for it to be valid.
 	 * @param failureKeys - Comma separated list of tokens that must NOT be available in the output for it to be valid.
-	 * @return True if validation passes, false otherwise. 
+	 * @return True if validation passes, false otherwise.
 	 */
-	protected boolean validate(String output, String successKeys,
-			String failureKeys) {
+	protected boolean validate(String output, String successKeys, String failureKeys) {
 		return validate(output, successKeys, failureKeys, false, false);
 	}
 
@@ -167,7 +163,7 @@ public class DDRExtTesterBase extends TestCase {
 	 * @param successKeys - Comma separated list of tokens that must be available in the output for it to be valid.
 	 * @param failureKeys - Comma separated list of tokens that must NOT be available in the output for it to be valid.
 	 * @param goNextStep - Flag indicating whether or not we will perform exhaustive validation using all extension outputs available in this output.
-	 * @return True if validation passes, false otherwise. 
+	 * @return True if validation passes, false otherwise.
 	 */
 	protected boolean validate(String output, String successKeys,
 			String failureKeys, boolean goNextStep) {
@@ -181,7 +177,7 @@ public class DDRExtTesterBase extends TestCase {
 	 * @param failureKeys - Comma separated list of tokens that must NOT be available in the output for it to be valid.
 	 * @param goNextStep - Flag indicating whether or not we will perform exhaustive validation using all extension outputs available in this output.
 	 * @param isNegativeTest - Flag indicating whether or not this is a negative test. If set, it will not fail validation if it sees a failure key in output.
-	 * @return True if validation passes, false otherwise. 
+	 * @return True if validation passes, false otherwise.
 	 */
 	protected boolean validate(String output, String successKeys,
 			String failureKeys, boolean goNextStep, boolean isNegativeTest) {
@@ -229,13 +225,13 @@ public class DDRExtTesterBase extends TestCase {
 			}
 		}
 
-		/*Performing exhaustive validation using all available structures (subcommands) in the output*/
+		/* Performing exhaustive validation using all available structures (subcommands) in the output */
 		if (goNextStep) {
 			int firstIndex = output.indexOf("!");
 			String parentCmd = currentCommand;
 			boolean allNextCmdAlreadyCovered = true;
 			if (firstIndex != -1) { // if this output contains any !subcommand
-				ArrayList<String> structuresToRun = new ArrayList<String>();
+				ArrayList<String> structuresToRun = new ArrayList<>();
 				output = output.substring(output.indexOf("!") + 1); // chop off
 				Scanner scanner = new Scanner(output).useDelimiter("!");
 				String structToRun = null;
@@ -280,11 +276,9 @@ public class DDRExtTesterBase extends TestCase {
 
 						if (nxtOutput.contains("{")
 								&& nxtOutput.contains("}")
-								&& nxtOutput.indexOf("{") < nxtOutput
-								.indexOf("}")) {
+								&& nxtOutput.indexOf("{") < nxtOutput.indexOf("}")) {
 							String structPropertyPattern = ".*=.* 0x.*|<FAULT>";
-							Pattern pattern = Pattern
-							.compile(structPropertyPattern);
+							Pattern pattern = Pattern.compile(structPropertyPattern);
 							Matcher matcher = pattern.matcher(nxtOutput);
 							if (matcher.find()
 									&& runCommonFailureTestForSubCmd(nxtOutput)) {
@@ -314,7 +308,7 @@ public class DDRExtTesterBase extends TestCase {
 	 * @param address
 	 * @return
 	 */
-	private String cleanse(String address) {
+	private static String cleanse(String address) {
 		if (address.contains(Constants.NL)) {
 			address = address.substring(0, address.indexOf(Constants.NL));
 		}
@@ -331,7 +325,7 @@ public class DDRExtTesterBase extends TestCase {
 		if (address.contains("\t")) {
 			address = address.split("\t")[0];
 		}
-	
+
 		if (address.endsWith(")") || address.endsWith(">")) {
 			address = address.substring(0, address.length() - 1);
 		}
@@ -346,8 +340,8 @@ public class DDRExtTesterBase extends TestCase {
 	private boolean runCommonFailureTest(String output) {
 		String[] cFailKeys = Constants.COMMON_FAILURE_KEYS.split(",");
 		for (String cfKey : cFailKeys) {
-			Pattern pattern = Pattern.compile(cfKey, Pattern.CASE_INSENSITIVE
-					| Pattern.LITERAL);
+			Pattern pattern = Pattern.compile(cfKey,
+					Pattern.CASE_INSENSITIVE | Pattern.LITERAL);
 			Matcher matcher = pattern.matcher(output);
 			if (matcher.find()) {
 				log.error(currentCommand
@@ -360,7 +354,7 @@ public class DDRExtTesterBase extends TestCase {
 	}
 
 	/**
-	 * Common failure test for subcommands. Used during exhaustive validation of a ddr extension. 
+	 * Common failure test for subcommands. Used during exhaustive validation of a ddr extension.
 	 * @param output
 	 * @return
 	 */
@@ -371,8 +365,7 @@ public class DDRExtTesterBase extends TestCase {
 				if (cfKey.trim().equals("<FAULT>")) {
 					log.warn(currentCommand
 							+ " output contains <FAULT> references");
-					// log.warn(currentCommand+ " output :" + Constants.NL +
-					// output);
+					// log.warn(currentCommand+ " output :" + Constants.NL + output);
 					return true;
 				}
 				log.error(currentCommand
@@ -384,35 +377,34 @@ public class DDRExtTesterBase extends TestCase {
 		return true;
 	}
 
-	
 	/**
 	 * Get the address corresponding to the cmd in threadOutput
-	 * 
+	 *
 	 * For example, if we wanted the address 0x03596100 corresponding to j9vmthread in the following string:
-	 * 
+	 *
 	 * !stack 0x03596100	!j9vmthread 0x03596100	!j9thread 0x2aaab7c72b10	tid 0x5221 (21025) // (Thread-3)
-	 * 
+	 *
 	 * 	we would call getAddressFor with:
-	 * 
+	 *
 	 *  	threadOutput = the string
 	 *  	eyeCatcher 	= "(Thread-3"
 	 *  	cmd  		= "j9vmthread"
 	 *  	cmdDelimiter= "\t"
-	 *  
+	 *
 	 * @param threadOutput	the output to parses
 	 * @param eyeCatcher	only search this string if eyeCatcher is present
 	 * @param cmd			the cmd who's address we are after
 	 * @param cmdDelimiter	the delimiter that separates multiples commands in the output
-	 * @return 	the string representation of the address as it appears in threadOutput 
+	 * @return 	the string representation of the address as it appears in threadOutput
 	 */
 	public String getAddressFor(String threadOutput, String eyeCatcher, String cmd, String cmdDelimiter) {
 		String[] lines = threadOutput.split(Constants.NL);
-		for (int i = 0; i < lines.length; i++) {
-			if ((null == eyeCatcher) || (lines[i].contains(eyeCatcher))) {
-				String[] tokens = lines[i].split(cmdDelimiter);
-				for (int j = 0; j < tokens.length; j++) {
-					if (tokens[j].contains(cmd)) {
-						return tokens[j].trim().split(" ")[1];
+		for (String line : lines) {
+			if ((null == eyeCatcher) || line.contains(eyeCatcher)) {
+				String[] tokens = line.split(cmdDelimiter);
+				for (String token : tokens) {
+					if (token.contains(cmd)) {
+						return token.trim().split(" ")[1];
 					}
 				}
 			}
@@ -420,12 +412,11 @@ public class DDRExtTesterBase extends TestCase {
 		return null;
 	}
 
-
 	/**
 	 * Helper function that looks for the address cmd in threadOutput
-	 * 
+	 *
 	 * See {@link DDRExtTesterBase#getAddressFor(String, String, String, String)}
-	 * 
+	 *
 	 * @param cmd
 	 * @param threadOutput
 	 * @return the address corresponding to the command
@@ -433,7 +424,7 @@ public class DDRExtTesterBase extends TestCase {
 	public String getAddressForThreads(String cmd, String threadOutput) {
 		return getAddressFor(threadOutput, "(Thread-", cmd, "\t");
 	}
-	
+
 	/**Used to get the full core file path from the ddrext.properties file
 	 * @return
 	 */
@@ -458,7 +449,7 @@ public class DDRExtTesterBase extends TestCase {
 			log.error("Not able to read file " + Constants.DDREXT_PROPERTIES);
 			log.error(e.toString());
 		}
-		if (path.equals("")) {
+		if ((path == null) || path.isEmpty()) {
 			log.error("Please provide your dump location in "
 					+ Constants.DDREXT_PROPERTIES);
 			return null;
@@ -469,20 +460,20 @@ public class DDRExtTesterBase extends TestCase {
 	public static void resetList() {
 		coveredStructures.clear();
 	}
-	
-	/* Check whether core is generated on 64 bit platform or not. 
-	 * Run setvm with the address that can exist only on 64 bit platform 
+
+	/* Check whether core is generated on 64 bit platform or not.
+	 * Run setvm with the address that can exist only on 64 bit platform
 	 */
-	public boolean is64BitPlatform(){
-		String setVMOutput = exec(Constants.SETVM_CMD, new String[] {CommandUtils.UDATA_MAX_64BIT.toString()});
+	public boolean is64BitPlatform() {
+		String setVMOutput = exec(Constants.SETVM_CMD, new String[] { CommandUtils.UDATA_MAX_64BIT.toString() });
 		boolean is64BitPlatform = true;
-		/* If it is 32 bit platform, than it will complain about address being too large */
+		/* If it is 32-bit platform, then it will complain about address being too large. */
 		if (validate(setVMOutput, "is larger than the max available memory address: 0xFFFFFFFF", null)) {
 			is64BitPlatform = false;
-		} 
+		}
 		return is64BitPlatform;
 	}
-	
+
 	/**
 	 * get and save the output from !coreinfo
 	 * @return array of strings
@@ -555,7 +546,7 @@ public class DDRExtTesterBase extends TestCase {
 		javaVersion = 0;
 		return javaVersion;
 	}
-	
+
 	/**
 	 * @return the version string for the J9 VM, e.g. "2.6", or "unknown"
 	 */
