@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -482,6 +482,22 @@ typedef struct jvmtiGcp_translation {
 		} \
 	} while(0)
 
+#if JAVA_SPEC_VERSION >= 19
+#define ENSURE_JTHREAD_NOT_VIRTUAL(vmThread, jthrd) \
+	do { \
+		if (IS_VIRTUAL_THREAD((vmThread), J9_JNI_UNWRAP_REFERENCE(jthrd))) { \
+			JVMTI_ERROR(JVMTI_ERROR_UNSUPPORTED_OPERATION); \
+		} \
+	} while(0)
+
+#define ENSURE_JTHREADOBJECT_NOT_VIRTUAL(vmThread, jthrdObject) \
+	do { \
+		if (IS_VIRTUAL_THREAD((vmThread), (jthrdObject))) { \
+			JVMTI_ERROR(JVMTI_ERROR_UNSUPPORTED_OPERATION); \
+		} \
+	} while(0)
+#endif /* JAVA_SPEC_VERSION >= 19 */
+
 #else
 
 #define ENSURE_PHASE_START_OR_LIVE(env) 
@@ -499,6 +515,10 @@ typedef struct jvmtiGcp_translation {
 #define ENSURE_JTHREADGROUP_NON_NULL(var)
 #define ENSURE_VALID_HEAP_OBJECT_FILTER(var)
 #define ENSURE_MONITOR_NON_NULL(var)
+#if JAVA_SPEC_VERSION >= 19
+#define ENSURE_JTHREAD_NOT_VIRTUAL(vmThread, jthrd)
+#define ENSURE_JTHREADOBJECT_NOT_VIRTUAL(vmThread, jthrdObject)
+#endif /* JAVA_SPEC_VERSION >= 19 */
 
 #endif
 

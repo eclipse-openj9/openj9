@@ -356,6 +356,9 @@ static const struct { \
 #define J9_IS_HIDDEN_METHOD(method) \
 	((NULL != (method)) && (J9ROMCLASS_IS_ANON_OR_HIDDEN(J9_CLASS_FROM_METHOD((method))->romClass) || J9_ARE_ANY_BITS_SET(J9_ROM_METHOD_FROM_RAM_METHOD((method))->modifiers, J9AccMethodFrameIteratorSkip)))
 
+#define IS_VIRTUAL_THREAD(vmThread, object) \
+	isSameOrSuperClassOf(J9VMJAVALANGBASEVIRTUALTHREAD_OR_NULL(((vmThread)->javaVM)), J9OBJECT_CLAZZ((vmThread), (object)))
+
 #if defined(OPENJ9_BUILD)
 #define J9_SHARED_CACHE_DEFAULT_BOOT_SHARING(vm) TRUE
 #else /* defined(OPENJ9_BUILD) */
