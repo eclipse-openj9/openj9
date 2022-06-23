@@ -1343,7 +1343,7 @@ TR_J9SharedCache::getClassChainOffsetIdentifyingLoaderNoFail(TR_OpaqueClassBlock
 #endif // defined(J9VM_OPT_JITSERVER)
 
 const void *
-TR_J9SharedCache::storeSharedData(J9VMThread *vmThread, char *key, J9SharedDataDescriptor *descriptor)
+TR_J9SharedCache::storeSharedData(J9VMThread *vmThread, const char *key, const J9SharedDataDescriptor *descriptor)
    {
 #if defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64))
    return _sharedCacheConfig->storeSharedData(
@@ -1487,10 +1487,10 @@ TR_J9JITServerSharedCache::addHint(J9Method * method, TR_SharedCacheHint theHint
    }
 
 const void *
-TR_J9JITServerSharedCache::storeSharedData(J9VMThread *vmThread, char *key, J9SharedDataDescriptor *descriptor)
+TR_J9JITServerSharedCache::storeSharedData(J9VMThread *vmThread, const char *key, const J9SharedDataDescriptor *descriptor)
    {
    TR_ASSERT(_stream, "stream must be initialized by now");
-   std::string dataStr((char *) descriptor->address, descriptor->length);
+   std::string dataStr((const char *)descriptor->address, descriptor->length);
 
    _stream->write(JITServer::MessageType::SharedCache_storeSharedData, std::string(key, strlen(key)), *descriptor, dataStr);
    return std::get<0>(_stream->read<const void *>());
