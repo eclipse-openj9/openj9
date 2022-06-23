@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2020 IBM Corp. and others
+ * Copyright (c) 2018, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -147,17 +147,18 @@ JITServerIProfiler::searchForMethodSample(TR_OpaqueMethodBlock *omb, int32_t buc
       return NULL;
       }
    stream->write(JITServer::MessageType::IProfiler_searchForMethodSample, omb);
-   const std::string entryStr = std::get<0>(stream->read<std::string>());
+   auto recv = stream->read<std::string>();
+   auto &entryStr = std::get<0>(recv);
    if (entryStr.empty())
       {
       return NULL;
       }
-   const auto serialEntry = (TR_ContiguousIPMethodHashTableEntry*) &entryStr[0];
+   auto serialEntry = (TR_ContiguousIPMethodHashTableEntry *)entryStr.data();
    return deserializeMethodEntry(serialEntry, TR::comp()->trMemory());
    }
 
 // This method is used to search only the hash table
-TR_IPBytecodeHashTableEntry*
+TR_IPBytecodeHashTableEntry *
 JITServerIProfiler::profilingSample(uintptr_t pc, uintptr_t data, bool addIt, bool isRIData, uint32_t freq)
    {
    if (addIt)
@@ -202,44 +203,44 @@ JITServerIProfiler::profilingSample(TR_OpaqueMethodBlock *method, uint32_t byteC
          auto stream = TR::CompilationInfo::getStream();
          stream->write(JITServer::MessageType::IProfiler_profilingSample, method, byteCodeIndex, (uintptr_t)1);
          auto recv = stream->read<std::string, bool, bool, bool>();
-         const std::string ipdata = std::get<0>(recv);
+         auto &ipdata = std::get<0>(recv);
          bool wholeMethod = std::get<1>(recv); // indicates whether the client has sent info for entire method
          bool usePersistentCache = std::get<2>(recv);
          bool isCompiled = std::get<3>(recv);
          TR_ASSERT(!wholeMethod, "Client should not have sent whole method info");
          uintptr_t methodStart = TR::Compiler->mtd.bytecodeStart(method);
-         TR_IPBCDataStorageHeader *clientData = ipdata.empty() ? NULL : (TR_IPBCDataStorageHeader *) &ipdata[0];
+         TR_IPBCDataStorageHeader *clientData = ipdata.empty() ? NULL : (TR_IPBCDataStorageHeader *)ipdata.data();
          bool isMethodBeingCompiled = (method == comp->getMethodBeingCompiled()->getPersistentIdentifier());
 
          if (!clientData && entry)
             {
-            uint8_t bytecode = *((uint8_t*)(methodStart+byteCodeIndex));
+            uint8_t bytecode = *(uint8_t *)(methodStart + byteCodeIndex);
             fprintf(stderr, "Error cached IP data for method %p bcIndex %u bytecode=%x: ipdata is empty but we have a cached entry=%p\n", 
                method, byteCodeIndex, bytecode, entry);
             }
-            
+
             bool isCompiledWhenProfiling = false;
             if(!entryFromPerCompilationCache)
                {
-               auto & j9methodMap = clientSessionData->getJ9MethodMap();
-               auto it = j9methodMap.find((J9Method*)method);
+               auto &j9methodMap = clientSessionData->getJ9MethodMap();
+               auto it = j9methodMap.find((J9Method *)method);
                if (it != j9methodMap.end())
                   {
                   isCompiledWhenProfiling = it->second._isCompiledWhenProfiling;
                   }
                }
          validateCachedIPEntry(entry, clientData, methodStart, isMethodBeingCompiled, method, entryFromPerCompilationCache, isCompiledWhenProfiling);
-#endif
+#endif /* defined(DEBUG) || defined(PROD_WITH_ASSUMES) */
          return entry; // could be NULL
          }
       }
-   
+
    // Now ask the client
    //
    auto stream = TR::CompilationInfo::getStream();
    stream->write(JITServer::MessageType::IProfiler_profilingSample, method, byteCodeIndex, (uintptr_t)(_useCaching ? 0 : 1));
    auto recv = stream->read<std::string, bool, bool, bool>();
-   const std::string ipdata = std::get<0>(recv);
+   auto &ipdata = std::get<0>(recv);
    bool wholeMethod = std::get<1>(recv); // indicates whether the client sent info for entire method
    bool usePersistentCache = std::get<2>(recv); // indicates whether info can be saved in persistent memory, or only in heap memory
    bool isCompiled = std::get<3>(recv);
@@ -248,7 +249,7 @@ JITServerIProfiler::profilingSample(TR_OpaqueMethodBlock *method, uint32_t byteC
    bool doCache = _useCaching && wholeMethod;
    if (!doCache)
       _statsIProfilerInfoReqNotCacheable++;
-  
+
    if (ipdata.empty()) // client didn't send us anything
       {
       _statsIProfilerInfoIsEmpty++;

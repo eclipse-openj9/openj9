@@ -204,6 +204,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
       {
       case MessageType::compilationCode:
       case MessageType::compilationFailure:
+      case MessageType::AOTCache_serializedAOTMethod:
       case MessageType::compilationThreadCrashed:
          done = true;
          break;
@@ -267,11 +268,11 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
       case MessageType::VM_getSystemClassFromClassName:
          {
          auto recv = client->getRecvData<std::string, bool>();
-         const std::string name = std::get<0>(recv);
+         auto &name = std::get<0>(recv);
          bool isVettedForAOT = std::get<1>(recv);
          // Always need non-AOT front-end here, since class validation is done on the server
          TR_J9VMBase *fej9 = TR_J9VMBase::get(vmThread->javaVM->jitConfig, vmThread);
-         client->write(response, fej9->getSystemClassFromClassName(name.c_str(), name.length(), isVettedForAOT));
+         client->write(response, fej9->getSystemClassFromClassName(name.data(), name.length(), isVettedForAOT));
          }
          break;
       case MessageType::VM_isMethodTracingEnabled:
@@ -298,10 +299,10 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          // performs some class validation which we want to do at the server
          TR_J9VMBase *fej9 = TR_J9VMBase::get(vmThread->javaVM->jitConfig, vmThread);
          auto recv = client->getRecvData<std::string, TR_OpaqueMethodBlock *, bool>();
-         std::string sig = std::get<0>(recv);
+         auto &sig = std::get<0>(recv);
          auto method = std::get<1>(recv);
          bool isVettedForAOT = std::get<2>(recv);
-         auto clazz = fej9->getClassFromSignature(sig.c_str(), sig.length(), method, isVettedForAOT);
+         auto clazz = fej9->getClassFromSignature(sig.data(), sig.length(), method, isVettedForAOT);
          J9ClassLoader *cl = clazz ? reinterpret_cast<J9ClassLoader *>(fej9->getClassLoader(clazz)) : NULL;
          J9ClassLoader *methodCL = reinterpret_cast<J9ClassLoader *>(fej9->getClassLoader(fej9->getClassOfMethod(method)));
          client->write(response, clazz, cl, methodCL);
@@ -717,15 +718,15 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
       case MessageType::VM_getJ2IThunk:
          {
          auto recv = client->getRecvData<std::string>();
-         std::string signature = std::get<0>(recv);
-         client->write(response, fe->getJ2IThunk(&signature[0], signature.size(), comp));
+         auto &signature = std::get<0>(recv);
+         client->write(response, fe->getJ2IThunk((char *)signature.data(), signature.size(), comp));
          }
          break;
       case MessageType::VM_setJ2IThunk:
          {
          auto recv = client->getRecvData<std::string, std::string>();
-         std::string signature = std::get<0>(recv);
-         std::string serializedThunk = std::get<1>(recv);
+         auto &signature = std::get<0>(recv);
+         auto &serializedThunk = std::get<1>(recv);
 
          void *thunkAddress;
          if (!comp->compileRelocatableCode())
@@ -736,38 +737,34 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
                compInfoPT->getCompilation()->failCompilation<TR::CodeCacheError>("Failed to allocate space in the code cache");
 
             thunkAddress = thunkStart + 8;
-            void *vmHelper = j9ThunkVMHelperFromSignature(fe->_jitConfig, signature.size(), &signature[0]);
-            compInfoPT->reloRuntime()->reloTarget()->performThunkRelocation(reinterpret_cast<uint8_t *>(thunkAddress), (UDATA)vmHelper);
+            void *vmHelper = j9ThunkVMHelperFromSignature(fe->_jitConfig, signature.size(), (char *)signature.data());
+            compInfoPT->reloRuntime()->reloTarget()->performThunkRelocation(reinterpret_cast<uint8_t *>(thunkAddress), (uintptr_t)vmHelper);
             }
          else
             {
             // For AOT, set address to received string, because it will be stored to SCC, so
             // no need for code cache allocation
-            thunkAddress = reinterpret_cast<void *>(&serializedThunk[0] + 8);
+            thunkAddress = reinterpret_cast<void *>((char *)serializedThunk.data() + 8);
             }
 
-         // Ideally, should use signature.data() here, but setJ2IThunk has non-const pointer
-         // as argument, and it uses it to invoke a VM function that also takes non-const pointer.
-         thunkAddress = fe->setJ2IThunk(&signature[0], signature.size(), thunkAddress, comp);
-
+         thunkAddress = fe->setJ2IThunk((char *)signature.data(), signature.size(), thunkAddress, comp);
          client->write(response, thunkAddress);
          }
          break;
       case MessageType::VM_needsInvokeExactJ2IThunk:
          {
          auto recv = client->getRecvData<std::string>();
-         std::string signature = std::get<0>(recv);
+         auto &signature = std::get<0>(recv);
 
          TR_J2IThunkTable *thunkTable = comp->getPersistentInfo()->getInvokeExactJ2IThunkTable();
-         // Ideally, should use signature.data() here, but findThunk takes non-const pointer
-         TR_J2IThunk *thunk = thunkTable->findThunk(&signature[0], fe);
+         TR_J2IThunk *thunk = thunkTable->findThunk((char *)signature.data(), fe);
          client->write(response, thunk == NULL);
          }
          break;
       case MessageType::VM_setInvokeExactJ2IThunk:
          {
          auto recv = client->getRecvData<std::string>();
-         std::string &serializedThunk = std::get<0>(recv);
+         auto &serializedThunk = std::get<0>(recv);
 
          // Do not need relocation here, because helper address should have been originally
          // fetched from the client.
@@ -782,13 +779,13 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          break;
       case MessageType::VM_getInstanceFieldOffset:
          {
-         auto recv = client->getRecvData<TR_OpaqueClassBlock *, std::string, std::string, UDATA>();
+         auto recv = client->getRecvData<TR_OpaqueClassBlock *, std::string, std::string, uintptr_t>();
          TR_OpaqueClassBlock *clazz = std::get<0>(recv);
-         std::string field = std::get<1>(recv);
-         std::string sig = std::get<2>(recv);
-         UDATA options = std::get<3>(recv);
-         client->write(response, fe->getInstanceFieldOffset(clazz, const_cast<char*>(field.c_str()), field.length(),
-                  const_cast<char*>(sig.c_str()), sig.length(), options));
+         auto &field = std::get<1>(recv);
+         auto &sig = std::get<2>(recv);
+         uintptr_t options = std::get<3>(recv);
+         client->write(response, fe->getInstanceFieldOffset(clazz, const_cast<char *>(field.data()), field.length(),
+                                                            const_cast<char *>(sig.data()), sig.length(), options));
          }
          break;
       case MessageType::VM_getJavaLangClassHashCode:
@@ -808,22 +805,22 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
       case MessageType::VM_getMethodFromName:
          {
          auto recv = client->getRecvData<std::string, std::string, std::string>();
-         std::string className = std::get<0>(recv);
-         std::string methodName = std::get<1>(recv);
-         std::string signature = std::get<2>(recv);
-         client->write(response, fe->getMethodFromName(const_cast<char*>(className.c_str()),
-                  const_cast<char*>(methodName.c_str()), const_cast<char*>(signature.c_str())));
+         auto &className = std::get<0>(recv);
+         auto &methodName = std::get<1>(recv);
+         auto &signature = std::get<2>(recv);
+         client->write(response, fe->getMethodFromName(const_cast<char *>(className.data()), const_cast<char *>(methodName.data()),
+                                                       const_cast<char *>(signature.data())));
          }
          break;
       case MessageType::VM_getMethodFromClass:
          {
          auto recv = client->getRecvData<TR_OpaqueClassBlock *, std::string, std::string, TR_OpaqueClassBlock *>();
          TR_OpaqueClassBlock *methodClass = std::get<0>(recv);
-         std::string methodName = std::get<1>(recv);
-         std::string signature = std::get<2>(recv);
+         auto &methodName = std::get<1>(recv);
+         auto &signature = std::get<2>(recv);
          TR_OpaqueClassBlock *callingClass = std::get<3>(recv);
-         client->write(response, fe->getMethodFromClass(methodClass, const_cast<char*>(methodName.c_str()),
-                  const_cast<char*>(signature.c_str()), callingClass));
+         client->write(response, fe->getMethodFromClass(methodClass, const_cast<char *>(methodName.data()),
+                                                        const_cast<char *>(signature.data()), callingClass));
          }
          break;
       case MessageType::VM_createMethodHandleArchetypeSpecimen:
@@ -890,13 +887,15 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          TR_OpaqueClassBlock *clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
          int32_t *start = fe->getReferenceSlotsInClass(comp, clazz);
          if (!start)
-            client->write(response, std::string(""));
+            {
+            client->write(response, std::string());
+            }
          else
             {
             int32_t numSlots = 0;
             for (; start[numSlots]; ++numSlots);
             // Copy the null terminated array into a string
-            std::string slotsStr((char *) start, (1 + numSlots) * sizeof(int32_t));
+            std::string slotsStr((char *)start, (1 + numSlots) * sizeof(int32_t));
             client->write(response, slotsStr);
             }
          }
@@ -917,13 +916,11 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          {
          auto recv = client->getRecvData<TR_OpaqueClassBlock *, std::string, std::string>();
          TR_OpaqueClassBlock *clazz = std::get<0>(recv);
-         std::string fieldName = std::get<1>(recv);
-         std::string sigName = std::get<2>(recv);
+         auto &fieldName = std::get<1>(recv);
+         auto &sigName = std::get<2>(recv);
          client->write(response, fe->getStaticFieldAddress(clazz,
-                  reinterpret_cast<unsigned char*>(const_cast<char*>(fieldName.c_str())),
-                  fieldName.length(),
-                  reinterpret_cast<unsigned char*>(const_cast<char*>(sigName.c_str())),
-                  sigName.length()));
+                       reinterpret_cast<unsigned char *>(const_cast<char *>(fieldName.data())), fieldName.length(),
+                       reinterpret_cast<unsigned char *>(const_cast<char *>(sigName.data())), sigName.length()));
          }
          break;
       case MessageType::VM_getInterpreterVTableSlot:
@@ -1723,8 +1720,8 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          {
          auto recv = client->getRecvData<TR_ResolvedJ9Method *, std::vector<TR_ResolvedMethodType>, std::vector<int32_t>>();
          auto owningMethod = std::get<0>(recv);
-         auto methodTypes = std::get<1>(recv);
-         auto cpIndices = std::get<2>(recv);
+         auto &methodTypes = std::get<1>(recv);
+         auto &cpIndices = std::get<2>(recv);
          int32_t numMethods = methodTypes.size();
          std::vector<TR_OpaqueMethodBlock *> ramMethods(numMethods);
          std::vector<uint32_t> vTableOffsets(numMethods);
@@ -2154,11 +2151,11 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
       case MessageType::SharedCache_storeSharedData:
          {
          auto recv = client->getRecvData<std::string, J9SharedDataDescriptor, std::string>();
-         auto key = std::get<0>(recv);
-         auto descriptor = std::get<1>(recv);
-         auto dataStr = std::get<2>(recv);
-         descriptor.address = (U_8 *) &dataStr[0];
-         auto ptr = fe->sharedCache()->storeSharedData(vmThread, (char *) key.data(), &descriptor);
+         auto &key = std::get<0>(recv);
+         auto &descriptor = std::get<1>(recv);
+         auto &dataStr = std::get<2>(recv);
+         descriptor.address = (uint8_t *)dataStr.data();
+         auto ptr = fe->sharedCache()->storeSharedData(vmThread, key.data(), &descriptor);
          client->write(response, ptr);
          }
          break;
@@ -2810,9 +2807,6 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
 
          client->write(response, knownObjectTableDumpInfoList);
          }
-         break;
-      case MessageType::AOTCache_serializedAOTMethod:
-         done = true;
          break;
       case MessageType::AOTCache_getROMClassBatch:
          {

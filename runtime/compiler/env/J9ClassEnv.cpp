@@ -582,7 +582,7 @@ static void addEntryForField(TR_VMField *field, TR::TypeLayoutBuilder &tlb, TR::
    addEntryForFieldImpl(field, tlb, region, definingClass, prefix, prefixLength, offsetBase, comp);
    }
 
-const TR::TypeLayout*
+const TR::TypeLayout *
 J9::ClassEnv::enumerateFields(TR::Region &region, TR_OpaqueClassBlock *opaqueClazz, TR::Compilation *comp)
    {
    TR::TypeLayoutBuilder tlb(region);
@@ -592,26 +592,26 @@ J9::ClassEnv::enumerateFields(TR::Region &region, TR_OpaqueClassBlock *opaqueCla
       auto stream = TR::CompilationInfo::getStream();
       stream->write(JITServer::MessageType::ClassEnv_enumerateFields, opaqueClazz);
       auto recv = stream->read<std::vector<TR::TypeLayoutEntry>, std::vector<std::string>, std::vector<std::string>>();
-      auto entries = std::get<0>(recv);
-      auto fieldNames = std::get<1>(recv);
-      auto typeSignatures = std::get<2>(recv);
+      auto &entries = std::get<0>(recv);
+      auto &fieldNames = std::get<1>(recv);
+      auto &typeSignatures = std::get<2>(recv);
       for (int32_t idx = 0; idx < entries.size(); ++idx)
          {
          TR::TypeLayoutEntry entry = entries[idx];
          char *fieldname = new (region) char[fieldNames[idx].length() + 1];
-         memcpy(fieldname, fieldNames[idx].c_str(), fieldNames[idx].length() + 1);
+         memcpy(fieldname, fieldNames[idx].data(), fieldNames[idx].length() + 1);
          entry._fieldname = fieldname;
          char *typeSignature = new (region) char[typeSignatures[idx].length() + 1];
-         memcpy(typeSignature, typeSignatures[idx].c_str(), typeSignatures[idx].length() + 1);
+         memcpy(typeSignature, typeSignatures[idx].data(), typeSignatures[idx].length() + 1);
          entry._typeSignature = typeSignature;
          tlb.add(entry);
          }
 
       }
    else
-#endif
+#endif /* defined(J9VM_OPT_JITSERVER) */
       {
-      TR_VMFieldsInfo fieldsInfo(comp, reinterpret_cast<J9Class*>(opaqueClazz), 1, stackAlloc);
+      TR_VMFieldsInfo fieldsInfo(comp, reinterpret_cast<J9Class *>(opaqueClazz), 1, stackAlloc);
       ListIterator<TR_VMField> iter(fieldsInfo.getFields());
       for (TR_VMField *field = iter.getFirst(); field; field = iter.getNext())
          {

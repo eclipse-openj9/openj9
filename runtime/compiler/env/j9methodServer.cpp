@@ -52,14 +52,6 @@ romMethodAtClassIndex(J9ROMClass *romClass, uint64_t methodIndex)
    return romMethod;
    }
 
-static J9UTF8 *str2utf8(const char *str, int32_t length, TR_Memory *trMemory, TR_AllocationKind allocKind)
-   {
-   J9UTF8 *utf8 = (J9UTF8 *) trMemory->allocateMemory(length+sizeof(J9UTF8), allocKind); // This allocates more memory than it needs.
-   J9UTF8_SET_LENGTH(utf8, length);
-   memcpy(J9UTF8_DATA(utf8), str, length);
-   return utf8;
-   }
-
 TR_ResolvedJ9JITServerMethod::TR_ResolvedJ9JITServerMethod(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd * fe, TR_Memory * trMemory, TR_ResolvedMethod * owningMethod, uint32_t vTableSlot)
    : TR_ResolvedJ9Method(fe, owningMethod)
    {
@@ -286,9 +278,10 @@ TR_ResolvedJ9JITServerMethod::getConstantDynamicTypeFromCP(I_32 cpIndex)
    TR_ASSERT_FATAL(cpIndex != -1, "ConstantDynamic cpIndex shouldn't be -1");
    _stream->write(JITServer::MessageType::ResolvedMethod_getConstantDynamicTypeFromCP, _remoteMirror, cpIndex);
 
-   const std::string &retConstantDynamicTypeStr = std::get<0>(_stream->read<std::string>());
-   TR_Memory *trMemory = ((TR::CompilationInfoPerThreadRemote *) _fe->_compInfoPT)->getCompilation()->trMemory();
-   J9UTF8 * constantDynamicType = str2utf8((char*)&retConstantDynamicTypeStr[0], (int32_t)retConstantDynamicTypeStr.length(), trMemory, heapAlloc);
+   auto recv = _stream->read<std::string>();
+   auto &retConstantDynamicTypeStr = std::get<0>(recv);
+   TR_Memory *trMemory = ((TR::CompilationInfoPerThreadRemote *)_fe->_compInfoPT)->getCompilation()->trMemory();
+   J9UTF8 *constantDynamicType = str2utf8(retConstantDynamicTypeStr.data(), retConstantDynamicTypeStr.length(), trMemory, heapAlloc);
    return constantDynamicType;
    }
 
@@ -811,10 +804,11 @@ char *
 TR_ResolvedJ9JITServerMethod::localName(U_32 slotNumber, U_32 bcIndex, I_32 &len, TR_Memory *trMemory)
    {
    _stream->write(JITServer::MessageType::ResolvedMethod_localName, _remoteMirror, slotNumber, bcIndex);
-   const std::string nameString = std::get<0>(_stream->read<std::string>());
+   auto recv = _stream->read<std::string>();
+   auto &nameString = std::get<0>(recv);
    len = nameString.length();
-   char *out = (char*) trMemory->allocateHeapMemory(len);
-   memcpy(out, &nameString[0], len);
+   char *out = (char *)trMemory->allocateHeapMemory(len);
+   memcpy(out, nameString.data(), len);
    return out;
    }
 
@@ -1062,7 +1056,8 @@ TR_ResolvedJ9JITServerMethod::isSubjectToPhaseChange(TR::Compilation *comp)
    }
 
 TR_ResolvedMethod *
-TR_ResolvedJ9JITServerMethod::getResolvedHandleMethod(TR::Compilation * comp, I_32 cpIndex, bool * unresolvedInCP, bool * isInvokeCacheAppendixNull)
+TR_ResolvedJ9JITServerMethod::getResolvedHandleMethod(TR::Compilation *comp, I_32 cpIndex, bool *unresolvedInCP,
+                                                      bool *isInvokeCacheAppendixNull)
    {
    TR_ASSERT(cpIndex != -1, "cpIndex shouldn't be -1");
 #if TURN_OFF_INLINING
@@ -1070,24 +1065,17 @@ TR_ResolvedJ9JITServerMethod::getResolvedHandleMethod(TR::Compilation * comp, I_
 #else
    _stream->write(JITServer::MessageType::ResolvedMethod_getResolvedHandleMethod, _remoteMirror, cpIndex);
    auto recv = _stream->read<TR_OpaqueMethodBlock *, TR_ResolvedJ9JITServerMethodInfo, std::string, bool, bool>();
-   TR_OpaqueMethodBlock *ramMethod = std::get<0>(recv);
-   auto methodInfo = std::get<1>(recv);
-   std::string &signature = std::get<2>(recv);
+   auto ramMethod = std::get<0>(recv);
+   auto &methodInfo = std::get<1>(recv);
+   auto &signature = std::get<2>(recv);
    if (unresolvedInCP)
       *unresolvedInCP = std::get<3>(recv);
    if (isInvokeCacheAppendixNull)
       *isInvokeCacheAppendixNull = std::get<4>(recv);
 
-
    return static_cast<TR_J9ServerVM *>(_fe)->createResolvedMethodWithSignature(
-      comp->trMemory(),
-      ramMethod,
-      NULL,
-      &signature[0],
-      signature.length(),
-      this,
-      methodInfo
-      );
+      comp->trMemory(), ramMethod, NULL, (char *)signature.data(), signature.length(), this, methodInfo
+   );
 #endif
    }
 
@@ -1136,7 +1124,8 @@ TR_ResolvedJ9JITServerMethod::varHandleMethodTypeTableEntryAddress(int32_t cpInd
 #endif /* defined(J9VM_OPT_METHOD_HANDLE) */
 
 TR_ResolvedMethod *
-TR_ResolvedJ9JITServerMethod::getResolvedDynamicMethod(TR::Compilation * comp, I_32 callSiteIndex, bool * unresolvedInCP, bool * isInvokeCacheAppendixNull)
+TR_ResolvedJ9JITServerMethod::getResolvedDynamicMethod(TR::Compilation *comp, I_32 callSiteIndex, bool *unresolvedInCP,
+                                                       bool *isInvokeCacheAppendixNull)
    {
    TR_ASSERT(callSiteIndex != -1, "callSiteIndex shouldn't be -1");
 
@@ -1144,24 +1133,18 @@ TR_ResolvedJ9JITServerMethod::getResolvedDynamicMethod(TR::Compilation * comp, I
    return 0;
 #else
    _stream->write(JITServer::MessageType::ResolvedMethod_getResolvedDynamicMethod, _remoteMirror, callSiteIndex);
-   auto recv = _stream->read<TR_OpaqueMethodBlock*, TR_ResolvedJ9JITServerMethodInfo, std::string, bool, bool>();
-   TR_OpaqueMethodBlock *ramMethod = std::get<0>(recv);
+   auto recv = _stream->read<TR_OpaqueMethodBlock *, TR_ResolvedJ9JITServerMethodInfo, std::string, bool, bool>();
+   auto ramMethod = std::get<0>(recv);
    auto &methodInfo = std::get<1>(recv);
-   std::string signature = std::get<2>(recv);
+   auto &signature = std::get<2>(recv);
    if (unresolvedInCP)
       *unresolvedInCP = std::get<3>(recv);
    if (isInvokeCacheAppendixNull)
       *isInvokeCacheAppendixNull = std::get<4>(recv);
 
    return static_cast<TR_J9ServerVM *>(_fe)->createResolvedMethodWithSignature(
-      comp->trMemory(),
-      ramMethod,
-      NULL,
-      &signature[0],
-      signature.size(),
-      this,
-      methodInfo
-      );
+      comp->trMemory(), ramMethod, NULL, (char *)signature.data(), signature.size(), this, methodInfo
+   );
 #endif
    }
 
@@ -2675,9 +2658,9 @@ TR_J9ServerMethod::TR_J9ServerMethod(TR_FrontEnd * fe, TR_Memory * trMemory, J9C
       cache.insert({cpIndex, {classNameStr, methodNameStr, methodSignatureStr}});
       }
 
-   _className = str2utf8((char*)&classNameStr[0], classNameStr.length(), trMemory, heapAlloc);
-   _name = str2utf8((char*)&methodNameStr[0], methodNameStr.length(), trMemory, heapAlloc);
-   _signature = str2utf8((char*)&methodSignatureStr[0], methodSignatureStr.length(), trMemory, heapAlloc);
+   _className = str2utf8(classNameStr.data(), classNameStr.length(), trMemory, heapAlloc);
+   _name = str2utf8(methodNameStr.data(), methodNameStr.length(), trMemory, heapAlloc);
+   _signature = str2utf8(methodSignatureStr.data(), methodSignatureStr.length(), trMemory, heapAlloc);
 
    parseSignature(trMemory);
    _fullSignature = NULL;

@@ -251,23 +251,6 @@ TR_J9VMBase::createResolvedMethodWithSignature(TR_Memory * trMemory, TR_OpaqueMe
    return result;
    }
 
-static J9UTF8 *str2utf8(char *string, int32_t length, TR_Memory *trMemory, TR_AllocationKind allocKind)
-   {
-   J9UTF8 *utf8 = (J9UTF8 *) trMemory->allocateMemory(length+sizeof(J9UTF8), allocKind); // This allocates more memory than it needs.
-   J9UTF8_SET_LENGTH(utf8, length);
-   memcpy(J9UTF8_DATA(utf8), string, length);
-   return utf8;
-   }
-
-static char *utf82str(J9UTF8 *utf8, TR_Memory *trMemory, TR_AllocationKind allocKind)
-   {
-   uint16_t length = J9UTF8_LENGTH(utf8);
-   char *string = (char *) trMemory->allocateMemory(length+1, allocKind);
-   memcpy(string, J9UTF8_DATA(utf8), length);
-   string[length] = 0;
-   return string;
-   }
-
 bool TR_ResolvedJ9Method::isMethodInValidLibrary()
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *)_fe;
@@ -7630,10 +7613,10 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
             auto stream = TR::CompilationInfo::getStream();
             stream->write(JITServer::MessageType::runFEMacro_invokeExplicitCastHandleConvertArgs, thunkDetails->getHandleRef());
             auto recv = stream->read<std::string>();
-            std::string methodDescriptorString = std::get<0>(recv);
+            auto &methodDescriptorString = std::get<0>(recv);
             methodDescriptorLength = methodDescriptorString.length();
-            methodDescriptor = (char*)alloca(methodDescriptorLength+1);
-            memcpy(methodDescriptor, &methodDescriptorString[0], methodDescriptorLength);
+            methodDescriptor = (char *)alloca(methodDescriptorLength + 1);
+            memcpy(methodDescriptor, methodDescriptorString.data(), methodDescriptorLength);
             methodDescriptor[methodDescriptorLength] = 0;
             }
          else
@@ -7833,10 +7816,10 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
             auto stream = TR::CompilationInfo::getStream();
             stream->write(JITServer::MessageType::runFEMacro_invokeILGenMacrosInvokeExactAndFixup, thunkDetails->getHandleRef(), listOfOffsets);
             auto recv = stream->read<std::string>();
-            std::string methodDescriptorString = std::get<0>(recv);
+            auto &methodDescriptorString = std::get<0>(recv);
             methodDescriptorLength = methodDescriptorString.length();
-            methodDescriptor = (char*)alloca(methodDescriptorLength+1);
-            memcpy(methodDescriptor, &methodDescriptorString[0], methodDescriptorLength);
+            methodDescriptor = (char *)alloca(methodDescriptorLength + 1);
+            memcpy(methodDescriptor, methodDescriptorString.data(), methodDescriptorLength);
             methodDescriptor[methodDescriptorLength] = 0;
             }
          else
@@ -7942,10 +7925,11 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
             {
             auto stream = TR::CompilationInfo::getStream();
             stream->write(JITServer::MessageType::runFEMacro_invokeArgumentMoverHandlePermuteArgs, thunkDetails->getHandleRef());
-            std::string methodDescString = std::get<0>(stream->read<std::string>());
+            auto recv = stream->read<std::string>();
+            auto &methodDescString = std::get<0>(recv);
             methodDescriptorLength = methodDescString.size();
-            nextHandleSignature = (char*)alloca(methodDescriptorLength+1);
-            memcpy(nextHandleSignature, &methodDescString[0], methodDescriptorLength);
+            nextHandleSignature = (char *)alloca(methodDescriptorLength + 1);
+            memcpy(nextHandleSignature, methodDescString.data(), methodDescriptorLength);
             nextHandleSignature[methodDescriptorLength] = 0;
             }
          else
@@ -7997,7 +7981,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
             // Do the client-side operations
             auto recv = stream->read<int32_t, std::vector<int32_t>>();
             permuteLength = std::get<0>(recv);
-            std::vector<int32_t> argIndices = std::get<1>(recv);
+            auto &argIndices = std::get<1>(recv);
 
             // Do the server-side operations
             originalArgs = genNodeAndPopChildren(TR::icall, 1, placeholderWithDummySignature());
@@ -8392,14 +8376,14 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
             {
             auto stream = TR::CompilationInfo::getStream();
             stream->write(JITServer::MessageType::runFEMacro_invokeSpreadHandleArrayArg, thunkDetails->getHandleRef());
-            auto recv = stream->read<J9ArrayClass *, int32_t, UDATA, J9Class *, std::string, bool>();
+            auto recv = stream->read<J9ArrayClass *, int32_t, uintptr_t, J9Class *, std::string, bool>();
             arrayJ9Class = std::get<0>(recv);
             spreadPosition = std::get<1>(recv);
             arity = std::get<2>(recv);
             leafClass = std::get<3>(recv);
-            const std::string &leafClassNameStr = std::get<4>(recv);
+            auto &leafClassNameStr = std::get<4>(recv);
             leafClassNameLength = leafClassNameStr.length();
-            leafClassNameChars = (char *) alloca(leafClassNameLength + 1);
+            leafClassNameChars = (char *)alloca(leafClassNameLength + 1);
             memcpy(leafClassNameChars, leafClassNameStr.data(), leafClassNameLength);
             leafClassNameChars[leafClassNameLength] = 0;
             isPrimitiveClass = std::get<5>(recv);
@@ -8554,7 +8538,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
             stream->write(JITServer::MessageType::runFEMacro_invokeFoldHandle, thunkDetails->getHandleRef());
             auto recv = stream->read<std::vector<int32_t>, int32_t, int32_t>();
 
-            std::vector<int32_t> indices = std::get<0>(recv);
+            auto &indices = std::get<0>(recv);
             int32_t foldPosition = std::get<1>(recv);
             int32_t numArgs = std::get<2>(recv);
             int32_t arrayLength = indices.size();
@@ -8634,7 +8618,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
 
             auto recv = stream->read<int32_t, std::vector<int32_t>>();
             int32_t arrayLength = std::get<0>(recv);
-            std::vector<int32_t> argIndices = std::get<1>(recv);
+            auto &argIndices = std::get<1>(recv);
             // Push the indices in reverse order
             for (int i = arrayLength - 1; i >= 0; i--) {
                loadConstant(TR::iconst, argIndices[i]);
@@ -8767,10 +8751,10 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
             stream->write(JITServer::MessageType::runFEMacro_invokeFinallyHandle, thunkDetails->getHandleRef());
             auto recv = stream->read<int32_t, std::string>();
             numArgsPassToFinallyTarget = std::get<0>(recv);
-            std::string methodDescriptorString = std::get<1>(recv);
+            auto &methodDescriptorString = std::get<1>(recv);
             int methodDescriptorLength = methodDescriptorString.size();
-            methodDescriptor = (char*)alloca(methodDescriptorLength+1);
-            memcpy(methodDescriptor, &methodDescriptorString[0], methodDescriptorLength);
+            methodDescriptor = (char *)alloca(methodDescriptorLength + 1);
+            memcpy(methodDescriptor, methodDescriptorString.data(), methodDescriptorLength);
             methodDescriptor[methodDescriptorLength] = 0;
             }
          else
@@ -8916,22 +8900,23 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
             stream->write(JITServer::MessageType::runFEMacro_invokeFilterArgumentsHandle, thunkDetails->getHandleRef(), knotEnabled);
             auto recv = stream->read<int32_t, std::string, std::vector<uint8_t>, std::vector<TR::KnownObjectTable::Index>, std::vector<uintptr_t *>>();
             startPos = std::get<0>(recv);
-            std::string nextSigStr = std::get<1>(recv);
-            std::vector<uint8_t> &haveFilterList = std::get<2>(recv);
-            std::vector<TR::KnownObjectTable::Index> &recvfilterIndexList = std::get<3>(recv);
-            std::vector<uintptr_t *> &recvFilterObjectReferenceLocationList = std::get<4>(recv);
+            auto &nextSigStr = std::get<1>(recv);
+            auto &haveFilterList = std::get<2>(recv);
+            auto &recvfilterIndexList = std::get<3>(recv);
+            auto &recvFilterObjectReferenceLocationList = std::get<4>(recv);
 
             // copy the next signature
             intptr_t methodDescriptorLength = nextSigStr.size();
-            nextSignature = (char*)alloca(methodDescriptorLength+1);
-            memcpy(nextSignature, &nextSigStr[0], methodDescriptorLength);
+            nextSignature = (char *)alloca(methodDescriptorLength + 1);
+            memcpy(nextSignature, nextSigStr.data(), methodDescriptorLength);
             nextSignature[methodDescriptorLength] = 0;
 
             // copy the filters
             int32_t numFilters = haveFilterList.size();
-            filterIndexList = knotEnabled ? (TR::KnownObjectTable::Index *) comp()->trMemory()->allocateMemory(sizeof(TR::KnownObjectTable::Index) * numFilters, stackAlloc) : NULL;
-            haveFilter = (bool *) comp()->trMemory()->allocateMemory(sizeof(bool) * numFilters, stackAlloc);
-            for (int i = 0; i <numFilters; i++)
+            filterIndexList = knotEnabled ? (TR::KnownObjectTable::Index *)comp()->trMemory()->allocateMemory(
+                              sizeof(TR::KnownObjectTable::Index) * numFilters, stackAlloc) : NULL;
+            haveFilter = (bool *)comp()->trMemory()->allocateMemory(sizeof(bool) * numFilters, stackAlloc);
+            for (int i = 0; i < numFilters; i++)
                {
                haveFilter[i] = haveFilterList[i];
                if (knotEnabled)
