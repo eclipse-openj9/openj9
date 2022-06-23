@@ -27,10 +27,6 @@
 
 <suite id="J9 GC Regression Tests">
 
-<!-- Java 19 Porject Loom excluded tests -->
-<exclude id="-verbose:gc -Xcheck:memory - check for memory corruption" platform="19" shouldFix="true"><reason>Temp disable on Loom test failures</reason></exclude>
-<exclude id="-verbose:gc -Xcheck:memory -Xverbosegclog:foo.log - check for memory corruption" platform="19" shouldFix="true"><reason>Temp disable on Loom test failures</reason></exclude>
-
 <!-- Hard RTJ doesn't support dynamic class unloading, SRT: out of memory issues  -->
 <exclude id="Unload lots of classes using normal behaviour (JIT Disabled)" platform="Mode301" shouldFix="true"><reason>Class unloading not supported on RTJ</reason></exclude>
 <exclude id="Unload lots of classes using FVT stress argument to force finalization (JIT Disabled)" platform="Mode301" shouldFix="true"><reason>Class unloading not supported on RTJ</reason></exclude>
