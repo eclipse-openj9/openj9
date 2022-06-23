@@ -72,11 +72,10 @@ protected:
 
    virtual ~CommunicationStream()
       {
-      if (_connfd != -1)
-         close(_connfd);
-
       if (_ssl)
          (*OBIO_free_all)(_ssl);
+      if (_connfd != -1)
+         close(_connfd);
       }
 
    void initStream(int connfd, BIO *ssl)
