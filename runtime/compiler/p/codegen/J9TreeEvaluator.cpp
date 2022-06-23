@@ -6439,7 +6439,7 @@ TR::Register *J9::Power::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeG
 
       TR::Instruction *firstInstruction = cg->getAppendInstruction();
 
-      if (!isDualTLH && needZeroInit)
+      if (!(isDualTLH && fej9->tlhHasBeenCleared()) && needZeroInit)
          {
          zeroReg = cg->allocateRegister();
          TR::addDependency(conditions, zeroReg, TR::RealRegister::NoReg, TR_GPR, cg);
@@ -6565,8 +6565,8 @@ TR::Register *J9::Power::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeG
          genInitObjectHeader(node, iCursor, clazz, classReg, resReg, zeroReg, condReg, tmp5Reg, tmp4Reg, packedRegOffs, conditions, needZeroInit, cg);
          }
 
-      //Do not need zero init if using dualTLH now.
-      if (!isDualTLH && needZeroInit && (!isConstantZeroLenArrayAlloc))
+      //Do not need zero init if using dualTLH now, unless explicit zeroInit is required.
+      if (!(isDualTLH && fej9->tlhHasBeenCleared()) && needZeroInit && (!isConstantZeroLenArrayAlloc))
          {
          // Perform initialization if it is needed:
          //   1) Initialize certain array elements individually. This depends on the optimizer
@@ -6579,6 +6579,8 @@ TR::Register *J9::Power::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeG
          TR_ExtraInfoForNew *initInfo = node->getSymbolReference()->getExtraInfo();
 
          static bool disableFastArrayZeroInit = (feGetEnv("TR_DisableFastArrayZeroInit") != NULL);
+
+         iCursor = generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, zeroReg, 0, iCursor);
 
          if (!node->canSkipZeroInitialization() && (initInfo == NULL || initInfo->numZeroInitSlots > 0))
             {
@@ -6902,7 +6904,7 @@ TR::Register *J9::Power::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeG
       cg->stopUsingRegister(tmp7Reg);
       cg->stopUsingRegister(resReg);
       cg->stopUsingRegister(dataSizeReg);
-      if (!isDualTLH && needZeroInit)
+      if (!(isDualTLH && fej9->tlhHasBeenCleared()) && needZeroInit)
          cg->stopUsingRegister(zeroReg);
       cg->decReferenceCount(firstChild);
       if (opCode == TR::New)
