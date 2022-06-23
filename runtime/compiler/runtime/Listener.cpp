@@ -142,12 +142,12 @@ handleOpenSSLConnectionError(int connfd, SSL *&ssl, BIO *&bio, const char *errMs
        TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "%s: errno=%d", errMsg, errno);
    (*OERR_print_errors_fp)(stderr);
 
-   close(connfd);
    if (bio)
       {
       (*OBIO_free_all)(bio);
       bio = NULL;
       }
+   close(connfd);
    return false;
    }
 
