@@ -929,7 +929,7 @@ bool
 JITServerHelpers::shouldRetryConnection(OMRPortLibrary *portLibrary)
    {
    OMRPORT_ACCESS_FROM_OMRPORT(portLibrary);
-   return omrtime_current_time_millis() > _nextConnectionRetryTime;
+   return omrtime_current_time_millis() >= _nextConnectionRetryTime;
    }
 
 bool
