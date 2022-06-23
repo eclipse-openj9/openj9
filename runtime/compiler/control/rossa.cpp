@@ -1794,7 +1794,7 @@ onLoadInternal(
          PersistentUnorderedMap<TR_OpaqueClassBlock*, uint8_t>::allocator_type(TR::Compiler->persistentAllocator())));
 
       // Try to initialize SSL
-      if (JITServer::ClientStream::static_init(compInfo->getPersistentInfo()) != 0)
+      if (JITServer::ClientStream::static_init(compInfo) != 0)
          return -1;
 
       JITServer::CommunicationStream::initConfigurationFlags();

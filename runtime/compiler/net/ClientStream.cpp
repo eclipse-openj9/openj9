@@ -21,7 +21,6 @@
  *******************************************************************************/
 
 #include "ClientStream.hpp"
-#include "control/CompilationRuntime.hpp"
 #include "control/Options.hpp"
 #include "env/VerboseLog.hpp"
 #include "net/LoadSSLLibs.hpp"
@@ -51,7 +50,7 @@ const int ClientStream::INCOMPATIBILITY_COUNT_LIMIT = 1; // This needs to be sma
 
 // Create SSL context, load certs and keys. Only needs to be done once.
 // This is called during startup from rossa.cpp
-int ClientStream::static_init(TR::PersistentInfo *info)
+int ClientStream::static_init(TR::CompilationInfo *compInfo)
    {
    if (!CommunicationStream::useSSL())
       return 0;
@@ -73,7 +72,6 @@ int ClientStream::static_init(TR::PersistentInfo *info)
       return -1;
       }
 
-   TR::CompilationInfo *compInfo = TR::CompilationInfo::get();
    auto &sslKeys = compInfo->getJITServerSslKeys();
    auto &sslCerts = compInfo->getJITServerSslCerts();
    auto &sslRootCerts = compInfo->getJITServerSslRootCerts();

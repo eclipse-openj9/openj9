@@ -45,7 +45,7 @@
 #include "runtime/Listener.hpp"
 
 static SSL_CTX *
-createSSLContext(TR::PersistentInfo *info)
+createSSLContext(TR::CompilationInfo *compInfo)
    {
    SSL_CTX *ctx = (*OSSL_CTX_new)((*OSSLv23_server_method)());
 
@@ -66,7 +66,6 @@ createSSLContext(TR::PersistentInfo *info)
       exit(1);
       }
 
-   TR::CompilationInfo *compInfo = TR::CompilationInfo::get();
    auto &sslKeys = compInfo->getJITServerSslKeys();
    auto &sslCerts = compInfo->getJITServerSslCerts();
    auto &sslRootCerts = compInfo->getJITServerSslRootCerts();
@@ -183,12 +182,13 @@ TR_Listener::TR_Listener()
 void
 TR_Listener::serveRemoteCompilationRequests(BaseCompileDispatcher *compiler)
    {
-   TR::PersistentInfo *info = getCompilationInfo(jitConfig)->getPersistentInfo();
+   TR::CompilationInfo *compInfo = getCompilationInfo(jitConfig);
+   TR::PersistentInfo *info = compInfo->getPersistentInfo();
    SSL_CTX *sslCtx = NULL;
    if (JITServer::CommunicationStream::useSSL())
       {
       JITServer::CommunicationStream::initSSL();
-      sslCtx = createSSLContext(info);
+      sslCtx = createSSLContext(compInfo);
       }
 
    uint32_t port = info->getJITServerPort();
