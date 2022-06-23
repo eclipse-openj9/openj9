@@ -5126,7 +5126,9 @@ typedef struct J9VMThread {
 #endif /* JAVA_SPEC_VERSION >= 16 */
 #if JAVA_SPEC_VERSION >= 19
 	J9VMContinuation *currentContinuation;
-	UDATA pinnedStateCounter;
+	UDATA continuationPinCount;
+	UDATA ownedMonitorCount;
+	UDATA callOutCount;
 	j9object_t carrierThreadObject;
 	j9object_t extentLocalCache;
 #endif /* JAVA_SPEC_VERSION >= 19 */
