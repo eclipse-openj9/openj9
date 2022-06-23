@@ -31,26 +31,26 @@ public class TestDeadlockCase6 extends DDRExtTesterBase
 	 *        Test Case #6
 	 * Test JOS, NSS, JSO deadlock.
 	 */
-	
+
 	public void testDeadlock6()
 	{
 		String output = exec(Constants.MONITORS_CMD, new String[] { Constants.DEADLOCK_CMD });
-		
+
 		if (null == output) {
 			fail("\"!monitors deadlock\" output is null. Can not proceed with test");
 			return;
 		}
-		
+
 		// N.B. The order in which the threads are found is not well defined,
 		// thus in this case we may have "OS Thread" or "Thread" appear twice.
-		
+
 		assertTrue(validate(output, Constants.DEADLOCK_THREAD, null));
 		assertTrue(validate(output, Constants.DEADLOCK_OS_THREAD, null));
 		assertTrue(validate(output, Constants.DEADLOCK_BLOCKING_ON, 3));
 		assertTrue(validate(output, Constants.DEADLOCK_OWNED_BY, 3));
 		assertTrue(validate(output, Constants.DEADLOCK_FIRST_MON, 1));
 		assertTrue(validate(output, Constants.DEADLOCK_SECOND_MON, 1));
-		assertTrue(validate(output, Constants.DEADLOCK_JAVA_OBJ, 1) || validate(output, Constants.DEADLOCK_JAVA_IDENTITY, 1));
+		assertTrue(validate(output, Constants.DEADLOCK_JAVA_OBJ, 1));
 	}
 
 }
