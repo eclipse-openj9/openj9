@@ -33,9 +33,9 @@ extern "C" {
 jlong JNICALL
 Java_openj9_internal_criu_InternalCRIUSupport_getCheckpointRestoreNanoTimeDeltaImpl(JNIEnv *env, jclass unused)
 {
-	PORT_ACCESS_FROM_ENV(env);
+	J9VMThread *currentThread = (J9VMThread *)env;
 
-	return PORTLIB->checkpointRestoreTimeDelta;
+	return currentThread->javaVM->checkpointState.checkpointRestoreTimeDelta;
 }
 
 jboolean JNICALL
