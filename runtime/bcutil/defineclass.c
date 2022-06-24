@@ -935,7 +935,7 @@ createROMClassFromClassFile(J9VMThread *currentThread, J9LoadROMClassData *loadD
 			if (BCT_ERR_DUPLICATE_NAME == result) {
 				size_t nameLength = 0;
 				if (NULL != errorUTF ){
-					nameLength = strlen(errorUTF);
+					nameLength = strlen((const char*)errorUTF);
 				}
 				J9_VM_FUNCTION(currentThread, setCurrentExceptionNLSWithArgs)(currentThread, J9NLS_JCL_DUPLICATE_CLASS_DEFINITION, J9VMCONSTANTPOOL_JAVALANGLINKAGEERROR, (const char*)errorUTF, nameLength);
 			} else {
