@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2021 IBM Corp. and others
+ * Copyright (c) 2011, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -43,4 +43,5 @@
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 #define BCT_ERR_INVALID_VALUE_TYPE -20
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#define BCT_ERR_DUPLICATE_NAME -21
 

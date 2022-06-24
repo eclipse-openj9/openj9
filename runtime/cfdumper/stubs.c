@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2019 IBM Corp. and others
+ * Copyright (c) 2019, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -46,6 +46,8 @@
  *    _internalDefineClass in libj9dyn.a(defineclass.o)
  * "_setCurrentExceptionUTF", referenced from:
  *    _internalDefineClass in libj9dyn.a(defineclass.o)
+  * "setCurrentExceptionNLSWithArgs", referenced from:
+ *    _internalDefineClass in libj9dyn.a(defineclass.o)
  */
 
 void freeMemorySegment (J9JavaVM *javaVM, J9MemorySegment *segment, BOOLEAN freeDescriptor)
@@ -64,16 +66,23 @@ internalCreateRAMClassFromROMClass(J9VMThread *vmThread, J9ClassLoader *classLoa
 
 }
 
-void  
+void
 setCurrentExceptionUTF(J9VMThread * vmThread, UDATA exceptionNumber, const char * detailUTF)
 {
 	printf("setCurrentExceptionUTF stub called!\n");
 	return;
 }
 
-void  
+void
 setCurrentException(J9VMThread *currentThread, UDATA exceptionNumber, UDATA *detailMessage)
 {
 	printf("setCurrentException stub called!\n");
+	return;
+}
+
+void
+setCurrentExceptionNLSWithArgs(J9VMThread * vmThread, U_32 nlsModule, U_32 nlsID, UDATA exceptionIndex, ...)
+{
+	printf("setCurrentExceptionNLSWithArgs stub called!\n");
 	return;
 }
