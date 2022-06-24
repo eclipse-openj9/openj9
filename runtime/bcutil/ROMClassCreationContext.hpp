@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2021 IBM Corp. and others
+ * Copyright (c) 2001, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -452,16 +452,30 @@ public:
 					return ClassNameMismatch;
 #undef J9WRONGNAME
 				}
-			} else if (shouldCheckPackageName() /* classname is null */
-					&& (classNameLength >= 5)
-					&& (0 == memcmp(className, "java/", 5))
-					&& !isClassAnon()
-			) {
-				/*
-				 * Non-bootstrap classloaders may not load nto the "java" package.
-				 * if classname is not null, the JCL or JNI has already checked it
-				 */
-				return IllegalPackageName;
+			} else { /* classname is null */
+				/* If a name was not provided with the load data, now is our first chance to check for a duplicate definition */
+				if ((NULL != _javaVM) && (NULL != J9_VM_FUNCTION_VIA_JAVAVM(_javaVM, hashClassTableAt)(_classLoader, className, classNameLength))) {
+					PORT_ACCESS_FROM_PORT(_portLibrary);
+					U_8 *errorUTF = (U_8 *) j9mem_allocate_memory(classNameLength + 1, J9MEM_CATEGORY_CLASSES);
+					if (NULL != errorUTF) {
+						memcpy(errorUTF, className, classNameLength);
+						errorUTF[classNameLength] = '\0';
+					}
+					recordCFRError(errorUTF);
+					return DuplicateName;
+				}
+
+				if (shouldCheckPackageName()
+						&& (classNameLength >= 5)
+						&& (0 == memcmp(className, "java/", 5))
+						&& !isClassAnon()
+				) {
+					/*
+					* Non-bootstrap classloaders may not load nto the "java" package.
+					* if classname is not null, the JCL or JNI has already checked it
+					*/
+					return IllegalPackageName;
+				}
 			}
 
 		}
