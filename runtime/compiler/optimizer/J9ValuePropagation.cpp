@@ -3065,8 +3065,8 @@ J9::ValuePropagation::innerConstrainAcall(TR::Node *node)
          method->getRecognizedMethod() == TR::jdk_internal_vm_vector_VectorSupport_load;
          bool isVectorSupportBinaryOp =
          method->getRecognizedMethod() == TR::jdk_internal_vm_vector_VectorSupport_binaryOp;
-         bool isVectorSupportBroadcastCoerced =
-         method->getRecognizedMethod() == TR::jdk_internal_vm_vector_VectorSupport_broadcastCoerced;
+         bool isVectorSupportFromBitsCoerced =
+         method->getRecognizedMethod() == TR::jdk_internal_vm_vector_VectorSupport_fromBitsCoerced;
          bool isVectorSupportUnaryOp =
          method->getRecognizedMethod() == TR::jdk_internal_vm_vector_VectorSupport_unaryOp;
          bool isVectorSupportTernaryOp =
@@ -3078,7 +3078,7 @@ J9::ValuePropagation::innerConstrainAcall(TR::Node *node)
 
          if (isVectorSupportLoad ||
              isVectorSupportBinaryOp ||
-             isVectorSupportBroadcastCoerced ||
+             isVectorSupportFromBitsCoerced ||
              isVectorSupportUnaryOp ||
              isVectorSupportTernaryOp ||
              isVectorSupportCompare ||
@@ -3088,7 +3088,7 @@ J9::ValuePropagation::innerConstrainAcall(TR::Node *node)
             int typeChildIndex;
 
             if (isVectorSupportLoad ||
-                isVectorSupportBroadcastCoerced ||
+                isVectorSupportFromBitsCoerced ||
                 isVectorSupportBlend)
                typeChildIndex = 0;
             else if (isVectorSupportCompare)
