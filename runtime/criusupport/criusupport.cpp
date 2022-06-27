@@ -279,8 +279,11 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 		char workDirBuf[STRING_BUFFER_SIZE];
 		char *workDirChars = workDirBuf;
 		BOOLEAN isAfterCheckpoint = FALSE;
-		I_64 beforeCheckpoint = 0;
-		I_64 afterRestore = 0;
+		I_64 checkpointNanoTimeMononic = 0;
+		I_64 restoreNanoTimeMononic = 0;
+		U_64 checkpointNanoUTCTime = 0;
+		U_64 restoreNanoUTCTime = 0;
+		UDATA success = 0;
 		bool safePoint = J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_OSR_SAFE_POINT);
 
 		vmFuncs->internalEnterVMFromJNI(currentThread);
@@ -422,29 +425,57 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 			goto wakeJavaThreadsWithExclusiveVMAccess;
 		}
 
-		vm->portLibrary->checkpointRestoreTimeDelta = 0;
-		beforeCheckpoint = j9time_nano_time();
-		Trc_CRIU_before_checkpoint(currentThread, beforeCheckpoint);
+		vm->checkpointState.checkpointRestoreTimeDelta = 0;
+		vm->portLibrary->nanoTimeMononicClockDelta = 0;
+		checkpointNanoTimeMononic = j9time_nano_time();
+		checkpointNanoUTCTime = j9time_current_time_nanos(&success);
+		if (0 == success) {
+			systemReturnCode = errno;
+			currentExceptionClass = vm->criuJVMCheckpointExceptionClass;
+			nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_JCL_CRIU_J9_CURRENT_TIME_NANOS_FAILURE, NULL);
+			goto wakeJavaThreadsWithExclusiveVMAccess;
+		}
+		Trc_CRIU_before_checkpoint(currentThread, checkpointNanoTimeMononic, checkpointNanoUTCTime);
+
 		systemReturnCode = criu_dump();
-		afterRestore = j9time_nano_time();
-		vm->portLibrary->checkpointRestoreTimeDelta = afterRestore - beforeCheckpoint;
-		Trc_CRIU_after_checkpoint(currentThread, afterRestore, vm->portLibrary->checkpointRestoreTimeDelta);
 		if (systemReturnCode < 0) {
 			currentExceptionClass = vm->criuSystemCheckpointExceptionClass;
 			nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_JCL_CRIU_DUMP_FAILED, NULL);
 			goto wakeJavaThreadsWithExclusiveVMAccess;
 		}
-		if (vm->portLibrary->checkpointRestoreTimeDelta < 0) {
+
+		restoreNanoUTCTime = j9time_current_time_nanos(&success);
+		if (0 == success) {
+			systemReturnCode = errno;
+			currentExceptionClass = vm->criuRestoreExceptionClass;
+			nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_JCL_CRIU_J9_CURRENT_TIME_NANOS_FAILURE, NULL);
+			goto wakeJavaThreadsWithExclusiveVMAccess;
+		}
+		restoreNanoTimeMononic = j9time_nano_time();
+		/* JVM downtime between checkpoint and restore is calculated with j9time_current_time_nanos()
+		 * which is expected to be accurate in scenarios such as host rebooting, CRIU image moving across timezones.
+		 */
+		vm->checkpointState.checkpointRestoreTimeDelta = (I_64)(restoreNanoUTCTime - checkpointNanoUTCTime);
+		Trc_CRIU_after_checkpoint(currentThread, restoreNanoUTCTime, checkpointNanoUTCTime, vm->checkpointState.checkpointRestoreTimeDelta,
+			restoreNanoTimeMononic, checkpointNanoTimeMononic, vm->checkpointState.checkpointRestoreTimeDelta);
+		if (vm->checkpointState.checkpointRestoreTimeDelta < 0) {
 			/* A negative value was calculated for checkpointRestoreTimeDelta,
 			 * Trc_CRIU_before_checkpoint & Trc_CRIU_after_checkpoint can be used for further investigation.
 			 * Currently OpenJ9 CRIU only supports 64-bit systems, and IDATA is equivalent to int64_t here.
 			 */
-			systemReturnCode = (IDATA)vm->portLibrary->checkpointRestoreTimeDelta;
+			systemReturnCode = (IDATA)vm->checkpointState.checkpointRestoreTimeDelta;
 			currentExceptionClass = vm->criuRestoreExceptionClass;
 			nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
 					J9NLS_JCL_CRIU_NEGATIVE_CHECKPOINT_RESTORE_TIME_DELTA, NULL);
 			goto wakeJavaThreadsWithExclusiveVMAccess;
 		}
+		/* j9time_nano_time() might be based on a different starting point in scenarios
+		 * such as host rebooting, CRIU image moving across timezones.
+		 * The adjustment calculated below is expected to be same as checkpointRestoreTimeDelta
+		 * if there is no change for j9time_nano_time() start point.
+		 * This value might be negative.
+		 */
+		vm->portLibrary->nanoTimeMononicClockDelta = restoreNanoTimeMononic - checkpointNanoTimeMononic;
 
 		/* We can only end up here if the CRIU restore was successful */
 		isAfterCheckpoint = TRUE;
