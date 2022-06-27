@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -57,6 +57,10 @@ jvmtiError JNICALL
 jvmtiGetCurrentThreadCpuTime(jvmtiEnv* env,
 	jlong* nanos_ptr)
 {
+#if JAVA_SPEC_VERSION >= 19
+	J9JavaVM *vm = JAVAVM_FROM_ENV(env);
+	J9VMThread *currentThread = NULL;
+#endif /* JAVA_SPEC_VERSION >= 19 */
 	jvmtiError rc;
 	jlong rv_nanos = 0;
 
@@ -66,6 +70,14 @@ jvmtiGetCurrentThreadCpuTime(jvmtiEnv* env,
 	ENSURE_CAPABILITY(env, can_get_current_thread_cpu_time);
 
 	ENSURE_NON_NULL(nanos_ptr);
+
+#if JAVA_SPEC_VERSION >= 19
+	rc = getCurrentVMThread(vm, &currentThread);
+	if (JVMTI_ERROR_NONE != rc) {
+		goto done;
+	}
+	ENSURE_JTHREADOBJECT_NOT_VIRTUAL(currentThread, currentThread->threadObject);
+#endif /* JAVA_SPEC_VERSION >= 19 */
 
 	rv_nanos = (jlong)omrthread_get_self_cpu_time(omrthread_self());
 	rc = JVMTI_ERROR_NONE;
@@ -131,6 +143,9 @@ jvmtiGetThreadCpuTime(jvmtiEnv* env,
 			ENSURE_NON_NULL(nanos_ptr);
 			rv_nanos = (jlong)omrthread_get_cpu_time(omrthread_self());
 		} else {
+#if JAVA_SPEC_VERSION >= 19
+			ENSURE_JTHREAD_NOT_VIRTUAL(currentThread, thread);
+#endif /* JAVA_SPEC_VERSION >= 19 */
 			rc = getVMThread(currentThread, thread, &targetThread, TRUE, TRUE);
 			if (rc == JVMTI_ERROR_NONE) {
 				if (nanos_ptr == NULL) {
