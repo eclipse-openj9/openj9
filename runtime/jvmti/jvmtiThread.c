@@ -364,6 +364,11 @@ jvmtiStopThread(jvmtiEnv* env,
 
 		ENSURE_JOBJECT_NON_NULL(exception);
 
+		ENSURE_JTHREAD_NON_NULL(thread);
+#if JAVA_SPEC_VERSION >= 19
+		ENSURE_JTHREAD_NOT_VIRTUAL(currentThread, thread);
+#endif /* JAVA_SPEC_VERSION >= 19 */
+
 		rc = getVMThread(currentThread, thread, &targetThread, FALSE, TRUE);
 		if (rc == JVMTI_ERROR_NONE) {
 			omrthread_monitor_enter(targetThread->publicFlagsMutex);
@@ -805,6 +810,9 @@ jvmtiRunAgentThread(jvmtiEnv* env,
 		ENSURE_PHASE_LIVE(env);
 
 		ENSURE_JTHREAD_NON_NULL(thread);
+#if JAVA_SPEC_VERSION >= 19
+		ENSURE_JTHREAD_NOT_VIRTUAL(currentThread, thread);
+#endif /* JAVA_SPEC_VERSION >= 19 */
 		/* Perhaps verify that thread has not already been started? */
 		ENSURE_NON_NULL(proc);
 		if ((priority < JVMTI_THREAD_MIN_PRIORITY) || (priority > JVMTI_THREAD_MAX_PRIORITY)) {

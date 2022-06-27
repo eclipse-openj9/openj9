@@ -50,6 +50,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<classref name="java/lang/IllegalThreadStateException"/>
 	<classref name="java/lang/Thread"/>
 	<classref name="java/lang/Thread$FieldHolder" versions="19-"/>
+	<classref name="java/lang/BaseVirtualThread" versions="19-"/>
 	<classref name="java/lang/ArithmeticException"/>
 	<classref name="java/lang/ThreadGroup"/>
 	<classref name="java/lang/InterruptedException"/>
