@@ -430,11 +430,13 @@ getObjectClass(JNIEnv *env, jobject obj)
 jint JNICALL
 getVersion(JNIEnv *env)
 {
-#if JAVA_SPEC_VERSION >= 10
+#if JAVA_SPEC_VERSION >= 19
+	return JNI_VERSION_19;
+#elif JAVA_SPEC_VERSION >= 10
 	return JNI_VERSION_10;
 #else /* JAVA_SPEC_VERSION >= 10 */
 	return JNI_VERSION_1_8;
-#endif /* JAVA_SPEC_VERSION >= 10 */
+#endif /* JAVA_SPEC_VERSION >= 19 */
 }
 
 jsize JNICALL
@@ -608,7 +610,7 @@ getOrSetArrayRegion(JNIEnv *env, jarray array, jsize start, jsize len, void *buf
 	UDATA ustart = (UDATA)(IDATA)start;
 	UDATA ulen = (UDATA)(IDATA)len;
 	UDATA end = ustart + ulen;
-	if ((ustart >= size) 
+	if ((ustart >= size)
 		|| (end > size)
 		|| (end < ustart) /* overflow */
 	) {
@@ -943,7 +945,7 @@ getStringUTFRegion(JNIEnv *env, jstring str, jsize start, jsize len, char *buf)
 {
 	J9VMThread *currentThread = (J9VMThread*)env;
 	VM_VMAccess::inlineEnterVMFromJNI(currentThread);
-	if ((start < 0) 
+	if ((start < 0)
 		|| (len < 0)
 		|| (((U_32) (start + len)) > I_32_MAX)
 	) {
@@ -1048,7 +1050,7 @@ unregisterNatives(JNIEnv *env, jclass clazz)
 	acquireExclusiveVMAccess(currentThread);
 	J9Method *currentMethod = j9clazz->ramMethods;
 	J9Method *endOfMethods = currentMethod + j9clazz->romClass->romMethodCount;
-	
+
 	if (
 			(NULL != vm->jitConfig)  &&
 			(NULL != vm->jitConfig->jitDiscardPendingCompilationsOfNatives)
@@ -1074,7 +1076,7 @@ getStringRegion(JNIEnv *env, jstring str, jsize start, jsize len, jchar *buf)
 {
 	J9VMThread *currentThread = (J9VMThread*)env;
 	VM_VMAccess::inlineEnterVMFromJNI(currentThread);
-	if ((start < 0) 
+	if ((start < 0)
 		|| (len < 0)
 		|| (((U_32) (start + len)) > I_32_MAX)
 	) {
@@ -1218,4 +1220,4 @@ queryJavaVM31(J9JavaVM* vm)
 }
 #endif /* defined(J9VM_ZOS_3164_INTEROPERABILITY) */
 
-}
+} /* extern "C" */

@@ -29,7 +29,6 @@
 #include <stdlib.h>
 #include <assert.h>
 
-
 #include "j9consts.h"
 #include "jclprots.h"
 #include "j9protos.h"
@@ -60,8 +59,8 @@ extern void initializeVMI(void);
 static J9ThreadEnv*
 getJ9ThreadEnv(JNIEnv* env)
 {
-	JavaVM* jniVM;
-	static J9ThreadEnv* threadEnv;
+	JavaVM* jniVM = NULL;
+	static J9ThreadEnv* threadEnv = NULL;
 
 	if (NULL != threadEnv) {
 		return threadEnv;
@@ -88,9 +87,9 @@ getJ9ThreadEnv(JNIEnv* env)
 void JNICALL
 JVM_ArrayCopy(JNIEnv *env, jclass ignored, jobject src, jint src_pos, jobject dst, jint dst_pos, jint length)
 {
-	J9VMThread *currentThread;
-	J9JavaVM *vm;
-	J9InternalVMFunctions *vmFuncs;
+	J9VMThread *currentThread = NULL;
+	J9JavaVM *vm = NULL;
+	J9InternalVMFunctions *vmFuncs = NULL;
 
 	Assert_SC_notNull(env);
 
@@ -625,9 +624,9 @@ JVM_FindPrimitiveClass(JNIEnv* env, char* name)
 jobject JNICALL
 JVM_GetArrayElement(JNIEnv *env, jobject array, jint index)
 {
-	J9VMThread *currentThread;
-	J9JavaVM *vm;
-	J9InternalVMFunctions *vmFuncs;
+	J9VMThread *currentThread = NULL;
+	J9JavaVM *vm = NULL;
+	J9InternalVMFunctions *vmFuncs = NULL;
 	jobject elementJNIRef = NULL;
 
 	Assert_SC_notNull(env);
@@ -749,9 +748,9 @@ JVM_GetArrayElement(JNIEnv *env, jobject array, jint index)
 jint JNICALL
 JVM_GetArrayLength(JNIEnv *env, jobject array)
 {
-	J9VMThread *currentThread;
-	J9JavaVM *vm;
-	J9InternalVMFunctions *vmFuncs;
+	J9VMThread *currentThread = NULL;
+	J9JavaVM *vm = NULL;
+	J9InternalVMFunctions *vmFuncs = NULL;
 	jsize arrayLength = 0;
 
 	Assert_SC_notNull(env);
@@ -765,8 +764,8 @@ JVM_GetArrayLength(JNIEnv *env, jobject array)
 	if (NULL == array) {
 		vmFuncs->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, NULL);
 	} else {
-		J9Class *ramClass;
-		j9object_t j9array;
+		J9Class *ramClass = NULL;
+		j9object_t j9array = NULL;
 
 		j9array = J9_JNI_UNWRAP_REFERENCE(array);
 		ramClass = J9OBJECT_CLAZZ(currentThread, j9array);
@@ -787,11 +786,11 @@ J9Class*
 java_lang_Class_vmRef(JNIEnv* env, jobject clazz)
 {
 	J9VMThread* currentThread = (J9VMThread*) env;
-	J9JavaVM*  vm = currentThread->javaVM;
-	J9Class* ramClass;
+	J9JavaVM* vm = currentThread->javaVM;
+	J9Class* ramClass = NULL;
 
 	vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
-	ramClass = J9VMJAVALANGCLASS_VMREF(currentThread, J9_JNI_UNWRAP_REFERENCE(clazz) );
+	ramClass = J9VMJAVALANGCLASS_VMREF(currentThread, J9_JNI_UNWRAP_REFERENCE(clazz));
 	vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 
 	return ramClass;
@@ -831,10 +830,10 @@ utf8_to_java_lang_String(JNIEnv* env, J9UTF8* utf)
 jobject JNICALL
 JVM_GetClassDeclaredConstructors(JNIEnv* env, jclass clazz, jboolean unknown)
 {
-	J9Class* ramClass;
-	J9ROMClass* romClass;
-	jclass jlrConstructor;
-	jobjectArray result;
+	J9Class* ramClass = NULL;
+	J9ROMClass* romClass = NULL;
+	jclass jlrConstructor = NULL;
+	jobjectArray result = NULL;
 	char* eyecatcher = "<init>";
 	U_16 initLength = 6;
 	jsize size = 0;
@@ -887,7 +886,7 @@ JVM_GetClassDeclaredConstructors(JNIEnv* env, jclass clazz, jboolean unknown)
 				char* name = utf8_to_cstring(env, nameUTF);
 				char* signature = utf8_to_cstring(env, signatureUTF);
 				jmethodID methodID = (*env)->GetMethodID(env, clazz, name, signature);
-				jobject reflectedMethod;
+				jobject reflectedMethod = NULL;
 
 				assert(methodID != NULL);
 				if (NULL != name) {
@@ -912,12 +911,12 @@ JVM_GetClassDeclaredConstructors(JNIEnv* env, jclass clazz, jboolean unknown)
 jobject JNICALL
 JVM_GetClassDeclaredFields(JNIEnv* env, jobject clazz, jint arg2)
 {
-	J9Class* ramClass;
-	J9ROMClass* romClass;
-	jclass jlrField;
-	jsize size;
-	jobjectArray result;
-	J9ROMFieldShape *field;
+	J9Class* ramClass = NULL;
+	J9ROMClass* romClass = NULL;
+	jclass jlrField = NULL;
+	jsize size = 0;
+	jobjectArray result = NULL;
+	J9ROMFieldShape *field = NULL;
 	J9ROMFieldWalkState walkState;
 	jsize index = 0;
 	PORT_ACCESS_FROM_ENV(env);
@@ -946,17 +945,17 @@ JVM_GetClassDeclaredFields(JNIEnv* env, jobject clazz, jint arg2)
 
 	/* Iterate through the fields */
 	field = romFieldsStartDo( romClass, &walkState );
-	while( field != NULL ) {
+	while (NULL != field) {
 		U_32 modifiers = field->modifiers;
-		jfieldID fieldID;
-		jobject reflectedField;
-		jboolean isStatic;
+		jfieldID fieldID = 0;
+		jobject reflectedField = NULL;
+		jboolean isStatic = JNI_FALSE;
 		J9UTF8* nameUTF =  J9ROMFIELDSHAPE_NAME(field);
 		J9UTF8* signatureUTF = J9ROMFIELDSHAPE_SIGNATURE(field);
 		char* name = utf8_to_cstring(env, nameUTF);
 		char* signature = utf8_to_cstring(env, signatureUTF);
 
-		if(modifiers & J9AccStatic) {
+		if (J9_ARE_ANY_BITS_SET(modifiers, J9AccStatic)) {
 			fieldID  = (*env)->GetStaticFieldID(env, clazz, name, signature);
 			isStatic = JNI_TRUE;
 		} else {
@@ -975,7 +974,7 @@ JVM_GetClassDeclaredFields(JNIEnv* env, jobject clazz, jint arg2)
 		reflectedField = (*env)->ToReflectedField(env, clazz, fieldID, isStatic);
 		assert(reflectedField != NULL);
 		(*env)->SetObjectArrayElement(env, result, index++, reflectedField);
-		field = romFieldsNextDo( &walkState );
+		field = romFieldsNextDo(&walkState);
 	}
 
 	return result;
@@ -986,10 +985,10 @@ JVM_GetClassDeclaredFields(JNIEnv* env, jobject clazz, jint arg2)
 jobject JNICALL
 JVM_GetClassDeclaredMethods(JNIEnv* env, jobject clazz, jboolean unknown)
 {
-	J9Class* ramClass;
-	J9ROMClass* romClass;
-	jclass jlrMethod;
-	jobjectArray result;
+	J9Class* ramClass = NULL;
+	J9ROMClass* romClass = NULL;
+	jclass jlrMethod = NULL;
+	jobjectArray result = NULL;
 	char* eyecatcher = "<init>";
 	U_16 initLength = 6;
 	jsize size = 0;
@@ -1042,18 +1041,17 @@ JVM_GetClassDeclaredMethods(JNIEnv* env, jobject clazz, jboolean unknown)
 				char* name = utf8_to_cstring(env, nameUTF);
 				char* signature = utf8_to_cstring(env, signatureUTF);
 				U_32 modifiers = romMethod->modifiers;
-				jmethodID methodID;
-				jobject reflectedMethod;
-				jboolean isStatic;
+				jmethodID methodID = NULL;
+				jobject reflectedMethod = NULL;
+				jboolean isStatic = JNI_FALSE;
 
-				if(modifiers & J9AccStatic) {
+				if (J9_ARE_ANY_BITS_SET(modifiers, J9AccStatic)) {
 					methodID = (*env)->GetStaticMethodID(env, clazz, name, signature);
 					isStatic = JNI_TRUE;
 				} else {
 					methodID = (*env)->GetMethodID(env, clazz, name, signature);
 					isStatic = JNI_FALSE;
 				}
-
 
 				assert(methodID != NULL);
 				if (NULL != name) {
@@ -1175,9 +1173,9 @@ JVM_GetInheritedAccessControlContext(jint arg0, jint arg1)
 jvalue JNICALL
 JVM_GetPrimitiveArrayElement(JNIEnv *env, jobject array, jint index, jint wCode)
 {
-	J9VMThread *currentThread;
-	J9JavaVM *vm;
-	J9InternalVMFunctions *vmFuncs;
+	J9VMThread *currentThread = NULL;
+	J9JavaVM *vm = NULL;
+	J9InternalVMFunctions *vmFuncs = NULL;
 	jvalue value;
 
 	Assert_SC_notNull(env);
@@ -1364,7 +1362,7 @@ JVM_GetStackTraceDepth(JNIEnv* env, jobject throwable)
 	J9VMThread* currentThread = (J9VMThread*) env;
 	J9JavaVM * vm = currentThread->javaVM;
 	J9InternalVMFunctions * vmfns = vm->internalVMFunctions;
-	jint numberOfFrames;
+	jint numberOfFrames = 0;
 	UDATA pruneConstructors = 0;
 	/* If -XX:+ShowHiddenFrames option has not been set, skip hidden method frames */
 	UDATA skipHiddenFrames = J9_ARE_NO_BITS_SET(vm->runtimeFlags, J9_RUNTIME_SHOW_HIDDEN_FRAMES);
@@ -1452,7 +1450,7 @@ JVM_GetStackTraceElement(JNIEnv* env, jobject throwable, jint index)
 	J9VMThread* currentThread = (J9VMThread*) env;
 	J9JavaVM * vm = currentThread->javaVM;
 	J9InternalVMFunctions * vmfns = vm->internalVMFunctions;
-	jobject stackTraceElement;
+	jobject stackTraceElement = NULL;
 	UDATA pruneConstructors = 0;
 	GetStackTraceElementUserData userData;
 	jobject declaringClass = NULL;
@@ -1560,7 +1558,7 @@ JVM_InternString(JNIEnv *env, jstring str)
 		J9VMThread* currentThread = (J9VMThread*) env;
 		J9JavaVM* javaVM = currentThread->javaVM;
 		J9InternalVMFunctions* vmfns = javaVM->internalVMFunctions;
-		j9object_t stringObject;
+		j9object_t stringObject = NULL;
 
 		vmfns->internalEnterVMFromJNI(currentThread);
 		stringObject = J9_JNI_UNWRAP_REFERENCE(str);
@@ -1613,10 +1611,10 @@ jboolean JNICALL
 JVM_IsInterrupted(JNIEnv* env, jobject thread, jboolean unknown)
 {
 	J9VMThread *currentThread = (J9VMThread *)env;
-	J9VMThread *targetThread;
+	J9VMThread *targetThread = NULL;
 	J9JavaVM* vm = currentThread->javaVM;
 	J9ThreadEnv* threadEnv = getJ9ThreadEnv(env);
-	UDATA rcClear;
+	UDATA rcClear = 0;
 
 	vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
 	targetThread = J9VMJAVALANGTHREAD_THREADREF(currentThread, J9_JNI_UNWRAP_REFERENCE(thread) );
@@ -1651,17 +1649,16 @@ JVM_IsPrimitiveClass(JNIEnv* env, jclass clazz)
 
 
 /**
- * Check whether the jni version is supported.
- * This function may not lock, gc or throw exception.
+ * Check whether the JNI version is supported.
+ * This function may not lock, GC or throw an exception.
  * @param version
- * @return true if version is JNI_VERSION_1_1, JNI_VERSION_1_2, JNI_VERSION_1_4, JNI_VERSION_1_6, or
- * 		   JNI_VERSION_1_8, JNI_VERSION_9, JNI_VERSION_10; false if not.
+ * @return true if version is supported; false if not
  * @careful
  */
 jboolean JNICALL
 JVM_IsSupportedJNIVersion(jint version)
 {
-	switch(version) {
+	switch (version) {
 	case JNI_VERSION_1_1:
 	case JNI_VERSION_1_2:
 	case JNI_VERSION_1_4:
@@ -1673,6 +1670,9 @@ JVM_IsSupportedJNIVersion(jint version)
 #if JAVA_SPEC_VERSION >= 10
 	case JNI_VERSION_10:
 #endif /* JAVA_SPEC_VERSION >= 10 */
+#if JAVA_SPEC_VERSION >= 19
+	case JNI_VERSION_19:
+#endif /* JAVA_SPEC_VERSION >= 19 */
 		return JNI_TRUE;
 
 	default:
@@ -1707,8 +1707,8 @@ JVM_NewArray(JNIEnv* jniEnv, jclass componentType, jint dimension)
 	J9MemoryManagerFunctions * mmfns = vm->memoryManagerFunctions;
 	J9Class* ramClass = java_lang_Class_vmRef(jniEnv, componentType);
 	J9ROMClass* romClass = ramClass->romClass;
-	j9object_t newArray;
-	jobject arrayRef;
+	j9object_t newArray = NULL;
+	jobject arrayRef = NULL;
 
 	vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
 	if (ramClass->arrayClass == NULL) {
@@ -1846,9 +1846,9 @@ JVM_ResumeThread(jint arg0, jint arg1)
 void JNICALL
 JVM_SetArrayElement(JNIEnv *env, jobject array, jint index, jobject value)
 {
-	J9VMThread *currentThread;
-	J9JavaVM *vm;
-	J9InternalVMFunctions *vmFuncs;
+	J9VMThread *currentThread = NULL;
+	J9JavaVM *vm = NULL;
+	J9InternalVMFunctions *vmFuncs = NULL;
 
 	Assert_SC_notNull(env);
 
@@ -2047,9 +2047,9 @@ JVM_SetClassSigners(jint arg0, jint arg1, jint arg2)
 void JNICALL
 JVM_SetPrimitiveArrayElement(JNIEnv *env, jobject array, jint index, jvalue value, unsigned char vCode)
 {
-	J9VMThread *currentThread;
-	J9JavaVM *vm;
-	J9InternalVMFunctions *vmFuncs;
+	J9VMThread *currentThread = NULL;
+	J9JavaVM *vm = NULL;
+	J9InternalVMFunctions *vmFuncs = NULL;
 
 	Assert_SC_notNull(env);
 
@@ -2228,7 +2228,7 @@ JVM_SetThreadPriority(JNIEnv* env, jobject thread, jint priority)
 	J9VMThread *currentThread = (J9VMThread *)env;
 	J9JavaVM* vm = currentThread->javaVM;
 	const UDATA *prioMap = currentThread->javaVM->java2J9ThreadPriorityMap;
-	J9VMThread *vmThread;
+	J9VMThread *vmThread = NULL;
 
 	if (currentThread->javaVM->runtimeFlags & J9_RUNTIME_NO_PRIORITIES) {
 		return;
@@ -2244,7 +2244,7 @@ JVM_SetThreadPriority(JNIEnv* env, jobject thread, jint priority)
 	vmThread = J9VMJAVALANGTHREAD_THREADREF(currentThread, J9_JNI_UNWRAP_REFERENCE(thread) );
 	vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 
-	if ( (NULL != vmThread) && (NULL != vmThread->osThread)) {
+	if ((NULL != vmThread) && (NULL != vmThread->osThread)) {
 		J9ThreadEnv* threadEnv = getJ9ThreadEnv(env);
 		threadEnv->set_priority(vmThread->osThread, prioMap[priority]);
 	}
@@ -2368,8 +2368,8 @@ JVM_Yield(jint arg0, jint arg1)
 jint JNICALL
 JVM_SetSockOpt(jint fd, int level, int optname, const char *optval, int optlen)
 {
-	jint retVal;
-	
+	jint retVal = 0;
+
 #if defined(WIN32)
 	retVal = setsockopt(fd, level, optname, optval, optlen);
 #elif defined(J9ZTPF)
@@ -2377,7 +2377,7 @@ JVM_SetSockOpt(jint fd, int level, int optname, const char *optval, int optlen)
 #else
 	retVal = setsockopt(fd, level, optname, optval, (socklen_t)optlen);
 #endif
-	
+
 	return retVal;
 }
 
@@ -2385,7 +2385,7 @@ JVM_SetSockOpt(jint fd, int level, int optname, const char *optval, int optlen)
 jint JNICALL
 JVM_GetSockOpt(jint fd, int level, int optname, char *optval, int *optlen)
 {
-	jint retVal;
+	jint retVal = 0;
 
 #if defined(WIN32)
 	retVal = getsockopt(fd, level, optname, optval, optlen);
@@ -2394,7 +2394,7 @@ JVM_GetSockOpt(jint fd, int level, int optname, char *optval, int *optlen)
 #else
 	retVal = getsockopt(fd, level, optname, optval, (socklen_t *)optlen);
 #endif
-	
+
 	return retVal;
 }
 
@@ -2404,7 +2404,7 @@ JVM_GetSockOpt(jint fd, int level, int optname, char *optval, int *optlen)
 jint JNICALL
 JVM_SocketShutdown(jint fd, jint howto)
 {
-	jint retVal = JNI_FALSE;
+	jint retVal = 0;
 
 #if defined(J9UNIX)
 	retVal = shutdown(fd, howto);
@@ -2413,7 +2413,7 @@ JVM_SocketShutdown(jint fd, jint howto)
 #else /* defined(J9UNIX) */
 	assert(!"JVM_SocketShutdown() stubbed!");
 #endif /* defined(J9UNIX) */
-	
+
 	return retVal;
 }
 
@@ -2424,14 +2424,14 @@ JVM_SocketShutdown(jint fd, jint howto)
 jint JNICALL
 JVM_GetSockName(jint fd, struct sockaddr *him, int *len)
 {
-	jint retVal;
+	jint retVal = 0;
 
 #if defined(WIN32)
 	retVal = getsockname(fd, him, len);
 #else
 	retVal = getsockname(fd, him, (socklen_t *)len);
 #endif
-	
+
 	return retVal;
 }
 
@@ -2441,9 +2441,7 @@ JVM_GetSockName(jint fd, struct sockaddr *him, int *len)
 int JNICALL
 JVM_GetHostName(char* name, int namelen)
 {
-	jint retVal;
-
-	retVal = gethostname(name, namelen);
+	jint retVal = gethostname(name, namelen);
 
 	return retVal;
 }
@@ -2514,7 +2512,7 @@ void
 throwNewNullPointerException(JNIEnv *env, char *message)
 {
 	jclass exceptionClass = (*env)->FindClass(env, "java/lang/NullPointerException");
-	if (exceptionClass == 0) {
+	if (NULL == exceptionClass) {
 		/* Just return if we can't load the exception class. */
 		return;
 	}
@@ -2528,7 +2526,7 @@ void
 throwNewIndexOutOfBoundsException(JNIEnv *env, char *message)
 {
 	jclass exceptionClass = (*env)->FindClass(env, "java/lang/IndexOutOfBoundsException");
-	if (exceptionClass == 0) {
+	if (NULL == exceptionClass) {
 		/* Just return if we can't load the exception class. */
 		return;
 	}
@@ -2543,7 +2541,7 @@ void
 throwNewInternalError(JNIEnv *env, char *message)
 {
 	jclass exceptionClass = (*env)->FindClass(env, "java/lang/InternalError");
-	if (exceptionClass == 0) {
+	if (NULL == exceptionClass) {
 		/* Just return if we can't load the exception class. */
 		return;
 	}
