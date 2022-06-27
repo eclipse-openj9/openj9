@@ -388,11 +388,11 @@ typedef struct J9PortLibrary {
 	/** see @ref j9portcontrol.c::j9port_control "j9port_control"*/
 	int32_t (*port_control)(struct J9PortLibrary *portLibrary, const char *key, uintptr_t value) ;
 #if defined(J9VM_OPT_CRIU_SUPPORT)
-	/* The delta between Checkpoint and Restore of j9time_nano_time() return values.
+	/* The delta between Checkpoint and Restore of j9time_current_time_nanos() return values.
 	 * It is initialized to 0 before Checkpoint, and set after restore.
 	 * Only supports one Checkpoint, could be restored multiple times.
 	 */
-	int64_t checkpointRestoreTimeDelta;
+	int64_t nanoTimeMononicClockDelta;
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 } J9PortLibrary;
 
@@ -475,7 +475,7 @@ extern J9_CFUNC int32_t j9port_isCompatible(struct J9PortLibraryVersion *expecte
 #define j9time_current_time_nanos(param1) OMRPORT_FROM_J9PORT(privatePortLibrary)->time_current_time_nanos(OMRPORT_FROM_J9PORT(privatePortLibrary),param1)
 #define j9time_current_time_millis() OMRPORT_FROM_J9PORT(privatePortLibrary)->time_current_time_millis(OMRPORT_FROM_J9PORT(privatePortLibrary))
 #if defined(J9VM_OPT_CRIU_SUPPORT)
-#define NANO_TIME_ADJUSTMENT privatePortLibrary->checkpointRestoreTimeDelta
+#define NANO_TIME_ADJUSTMENT privatePortLibrary->nanoTimeMononicClockDelta
 #else /* defined(J9VM_OPT_CRIU_SUPPORT) */
 #define NANO_TIME_ADJUSTMENT 0
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */

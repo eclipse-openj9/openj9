@@ -4095,6 +4095,11 @@ typedef struct J9CRIUCheckpointState {
 	struct J9Pool *hookRecords;
 	struct J9Pool *delayedLockingOperationsRecords;
 	struct J9VMThread *checkpointThread;
+	/* The delta between Checkpoint and Restore of j9time_current_time_nanos() return values.
+	 * It is initialized to 0 before Checkpoint, and set after restore.
+	 * Only supports one Checkpoint, could be restored multiple times.
+	 */
+	I_64 checkpointRestoreTimeDelta;
 } J9CRIUCheckpointState;
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
