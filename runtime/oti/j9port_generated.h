@@ -392,7 +392,7 @@ typedef struct J9PortLibrary {
 	 * It is initialized to 0 before Checkpoint, and set after restore.
 	 * Only supports one Checkpoint, could be restored multiple times.
 	 */
-	int64_t nanoTimeMononicClockDelta;
+	int64_t nanoTimeMonotonicClockDelta;
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 } J9PortLibrary;
 
@@ -475,7 +475,7 @@ extern J9_CFUNC int32_t j9port_isCompatible(struct J9PortLibraryVersion *expecte
 #define j9time_current_time_nanos(param1) OMRPORT_FROM_J9PORT(privatePortLibrary)->time_current_time_nanos(OMRPORT_FROM_J9PORT(privatePortLibrary),param1)
 #define j9time_current_time_millis() OMRPORT_FROM_J9PORT(privatePortLibrary)->time_current_time_millis(OMRPORT_FROM_J9PORT(privatePortLibrary))
 #if defined(J9VM_OPT_CRIU_SUPPORT)
-#define NANO_TIME_ADJUSTMENT privatePortLibrary->nanoTimeMononicClockDelta
+#define NANO_TIME_ADJUSTMENT privatePortLibrary->nanoTimeMonotonicClockDelta
 #else /* defined(J9VM_OPT_CRIU_SUPPORT) */
 #define NANO_TIME_ADJUSTMENT 0
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */

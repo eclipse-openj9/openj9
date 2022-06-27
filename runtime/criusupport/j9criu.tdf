@@ -33,7 +33,7 @@ TraceAssert=Assert_CRIU_mustNotHaveVMAccess noEnv Overhead=1 Level=1 Assert="0 =
 TraceException=Trc_CRIU_getNativeString_getStringSizeFail Overhead=1 Level=1 Template="Failed to get Java string size: mutf8String=%s mutf8StringSize=%zu"
 TraceException=Trc_CRIU_getNativeString_convertFail Overhead=1 Level=1 Template="Failed to convert Java string: mutf8String=%s mutf8StringSize=%zu requiredConvertedStringSize=%zd"
 
-TraceEvent=Trc_CRIU_before_checkpoint Overhead=1 Level=2 Template="Before checkpoint criu_dump(), checkpointNanoTimeMononic = %lld, checkpointNanoUTCTime = %llu"
-TraceEvent=Trc_CRIU_after_checkpoint Overhead=1 Level=2 Template="After checkpoint criu_dump(), restoreNanoUTCTime = %llu, checkpointNanoUTCTime = %llu,  restoreNanoTimeMononic = %lld, checkpointNanoTimeMononic = %lld, checkpointNanoTimeMononic = %lld, checkpointRestoreTimeDelta = %lld"
+TraceEvent=Trc_CRIU_before_checkpoint Overhead=1 Level=2 Template="Before checkpoint criu_dump(), checkpointNanoTimeMonotonic = %lld, checkpointNanoUTCTime = %llu"
+TraceEvent=Trc_CRIU_after_checkpoint Overhead=1 Level=2 Template="After checkpoint criu_dump(), restoreNanoUTCTime = %llu, checkpointNanoUTCTime = %llu,  restoreNanoTimeMonotonic = %lld, checkpointNanoTimeMonotonic = %lld, checkpointNanoTimeMonotonic = %lld, checkpointRestoreTimeDelta = %lld"
 TraceEntry=Trc_CRIU_checkpointJVMImpl_Entry Overhead=1 Level=2 Template="Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl"
 TraceExit=Trc_CRIU_checkpointJVMImpl_Exit Overhead=1 Level=2 Template="Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl"
