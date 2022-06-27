@@ -516,683 +516,41 @@ TR::DefaultCompilationStrategy::processInterpreterSample(TR_MethodEvent *event)
       return plan;
 }
 
-TR::DefaultCompilationStrategy::ProcessJittedSample::ProcessJittedSample(J9JITConfig *jitConfig,
-                                                                         J9VMThread *vmThread,
-                                                                         TR::CompilationInfo *compInfo,
-                                                                         TR_J9VMBase *fe,
-                                                                         TR::Options *cmdLineOptions,
-                                                                         J9Method *j9method,
-                                                                         TR_MethodEvent *event)
-   : _jitConfig(jitConfig),
-     _vmThread(vmThread),
-     _compInfo(compInfo),
-     _fe(fe),
-     _cmdLineOptions(cmdLineOptions),
-     _j9method(j9method),
-     _event(event),
-     _startPC(event->_oldStartPC),
-     _bodyInfo(NULL),
-     _methodInfo(NULL),
-     _isAlreadyBeingCompiled(false)
-   {
-   _logSampling = _fe->isLogSamplingSet() || TrcEnabled_Trc_JIT_Sampling_Detail;
-   _msg[0] = 0;
-   _curMsg = _msg;
 
-   _totalSampleCount = ++TR::Recompilation::globalSampleCount;
-   _compInfo->_stats._compiledMethodSamples++;
-   TR::Recompilation::jitGlobalSampleCount++;
-   }
+TR_OptimizationPlan *
+TR::DefaultCompilationStrategy::processJittedSample(TR_MethodEvent *event)
+{
+   TR_OptimizationPlan *plan = 0;
+   TR::Options * cmdLineOptions = TR::Options::getCmdLineOptions();
+   J9Method *j9method = event->_j9method;
+   J9JITConfig *jitConfig = event->_vmThread->javaVM->jitConfig;
+   TR::CompilationInfo *compInfo = 0;
+   if (jitConfig)
+      compInfo = TR::CompilationInfo::get(jitConfig);
 
-void
-TR::DefaultCompilationStrategy::ProcessJittedSample::initializeRecompRelatedFields()
-   {
-   _recompile = false;
-   _useProfiling = false;
-   _dontSwitchToProfiling = false;
-   _postponeDecision = false;
-   _willUpgrade = false;
+   TR_J9VMBase * fe = TR_J9VMBase::get(jitConfig, event->_vmThread);
+   int32_t totalSampleCount = ++ TR::Recompilation::globalSampleCount;
+   uint64_t crtTime = compInfo->getPersistentInfo()->getElapsedTime();
 
-   // Profiling compilations that precede scorching ones are quite taxing
-   // on large multicore machines. Thus, we want to observe the hotness of a
-   // method for longer, rather than rushing into a profiling very-hot compilation.
-   // We can afford to do so because scorching methods accumulate samples at a
-   // higher rate than hot ones.
-   // The goal here is to implement a rather short decision window (sampling interval)
-   // for decisions to upgrade to hot, but a larger decision window for decisions
-   // to go to scorching. This is based on density of samples observed in the JVM:
-   // the larger the density of samples, the larger the scorching decision window.
-   // scorchingSampleInterval will be a multiple of hotSampleInterval
-   // When a hotSampleInterval ends, if the method looks scorching we postpone any
-   // recompilation decision until a scorchingSampleInterval finishes. If the method
-   // only looks hot, then we decide to recompile at hot at the end of the hotSampleInterval
-
-   _intervalIncreaseFactor = _compInfo->getJitSampleInfoRef().getIncreaseFactor();
-
-   // possibly larger sample interval for scorching compilations
-   _scorchingSampleInterval = TR::Options::_sampleInterval * _intervalIncreaseFactor;
-
-   // Hot recompilation decisions use the regular sized sampling interval
-   _hotSampleInterval  = TR::Options::_sampleInterval;
-   _hotSampleThreshold = TR::Options::_sampleThreshold;
-
-   _count = _bodyInfo->decCounter();
-   _crtSampleIntervalCount = _bodyInfo->incSampleIntervalCount(_scorchingSampleInterval);
-   _hotSamplingWindowComplete = (_crtSampleIntervalCount % _hotSampleInterval) == 0;
-   _scorchingSamplingWindowComplete = (_crtSampleIntervalCount == 0);
-
-   _startSampleCount = _bodyInfo->getStartCount();
-   _globalSamples = _totalSampleCount - _startSampleCount;
-   _globalSamplesInHotWindow = _globalSamples - _bodyInfo->getHotStartCountDelta();
-
-   _scaledScorchingThreshold = 0;
-   _scaledHotThreshold = 0;
-
-   if (_logSampling)
+#define MSG_SZ 450
+   char msg[MSG_SZ];  // size should be big enough to hold the whole one-line msg
+   msg[0] = 0;
+   char *curMsg = msg;
+   void *startPC = event->_oldStartPC;
+   bool logSampling = fe->isLogSamplingSet() || TrcEnabled_Trc_JIT_Sampling_Detail;
+   if (logSampling || TrcEnabled_Trc_JIT_Sampling)
       {
-      _curMsg += sprintf(_curMsg, " cnt=%d ncl=%d glblSmplCnt=%d startCnt=%d[-%u,+%u] samples=[%d %d] windows=[%d %u] crtSmplIntrvlCnt=%u",
-         _count, _methodInfo->getNextCompileLevel(), _totalSampleCount, _startSampleCount,
-         _bodyInfo->getOldStartCountDelta(), _bodyInfo->getHotStartCountDelta(),
-         _globalSamples, _globalSamplesInHotWindow,
-         _scorchingSampleInterval, _hotSampleInterval, _crtSampleIntervalCount);
-      }
-   }
-
-void
-TR::DefaultCompilationStrategy::ProcessJittedSample::logSampleInfoToBuffer()
-   {
-   if (_logSampling || TrcEnabled_Trc_JIT_Sampling)
-      {
-      #define SIG_SZ 150
+#define SIG_SZ 150
       char sig[SIG_SZ];  // hopefully the size is good for most cases
-      _fe->printTruncatedSignature(sig, SIG_SZ, (TR_OpaqueMethodBlock*)_j9method);
-      int32_t pcOffset = (uint8_t *)(_event->_samplePC) - (uint8_t *)_startPC;
-      if (_logSampling)
-         _curMsg += sprintf(_curMsg, "(%d)\tCompiled %s\tPC=" POINTER_PRINTF_FORMAT "\t%+d\t", _totalSampleCount, sig, _startPC, pcOffset);
-      if (TrcEnabled_Trc_JIT_Sampling && ((_totalSampleCount % 4) == 0))
-         Trc_JIT_Sampling(getJ9VMThreadFromTR_VM(_fe), "Compiled", sig, 0); // TODO put good pcOffset
-      #undef SIG_SZ
-      }
-   }
-
-void
-TR::DefaultCompilationStrategy::ProcessJittedSample::printBufferToVLog()
-   {
-   if (_logSampling)
-      {
-      bool bufferOverflow = ((_curMsg - _msg) >= MSG_SZ); // check for overflow at runtime
-      if (_fe->isLogSamplingSet())
-         {
-         TR_VerboseLog::CriticalSection vlogLock;
-         TR_VerboseLog::writeLine(TR_Vlog_SAMPLING,"%s", _msg);
-         if (bufferOverflow)
-            TR_VerboseLog::writeLine(TR_Vlog_SAMPLING,"Sampling line is too big: %d characters", _curMsg-_msg);
-         }
-      Trc_JIT_Sampling_Detail(getJ9VMThreadFromTR_VM(_fe), _msg);
-      if (bufferOverflow)
-         Trc_JIT_Sampling_Detail(getJ9VMThreadFromTR_VM(_fe), "Sampling line will cause buffer overflow");
-      // check for buffer overflow and write a message
-      }
-   }
-
-void
-TR::DefaultCompilationStrategy::ProcessJittedSample::yieldToAppThread()
-   {
-   int32_t sleepNano = _compInfo->getAppSleepNano(); // determine how much I need to sleep
-   if (sleepNano != 0) // If I need to sleep at all
-      {
-      if (sleepNano == 1000000)
-         {
-         j9thread_sleep(1); // param in ms
-         }
-      else
-         {
-         if (_fe->shouldSleep()) // sleep every other sample point
-            j9thread_sleep(1); // param in ms
-         }
-      }
-   }
-
-void
-TR::DefaultCompilationStrategy::ProcessJittedSample::findAndSetBodyAndMethodInfo()
-   {
-   J9::PrivateLinkage::LinkageInfo *linkageInfo = J9::PrivateLinkage::LinkageInfo::get(_startPC);
-
-   if (linkageInfo->hasFailedRecompilation())
-      {
-      _compInfo->_stats._compiledMethodSamplesIgnored++;
-      if (_logSampling)
-         _curMsg += sprintf(_curMsg, " has already failed a recompilation attempt");
-      }
-   else if (!linkageInfo->isSamplingMethodBody())
-      {
-      _compInfo->_stats._compiledMethodSamplesIgnored++;
-      if (_logSampling)
-         _curMsg += sprintf(_curMsg, " does not use sampling");
-      }
-   else if (debug("disableSamplingRecompilation"))
-      {
-      _compInfo->_stats._compiledMethodSamplesIgnored++;
-      if (_logSampling)
-         _curMsg += sprintf(_curMsg, " sampling disabled");
-      }
-   else
-      {
-      _bodyInfo = TR::Recompilation::getJittedBodyInfoFromPC(_startPC);
+      fe->printTruncatedSignature(sig, SIG_SZ, (TR_OpaqueMethodBlock*)j9method);
+      int32_t pcOffset = (uint8_t *)(event->_samplePC) - (uint8_t *)startPC;
+      if (logSampling)
+         curMsg += sprintf(curMsg, "(%d)\tCompiled %s\tPC=" POINTER_PRINTF_FORMAT "\t%+d\t", totalSampleCount, sig, startPC, pcOffset);
+      if (TrcEnabled_Trc_JIT_Sampling && ((totalSampleCount % 4) == 0))
+         Trc_JIT_Sampling(getJ9VMThreadFromTR_VM(fe), "Compiled", sig, 0); // TODO put good pcOffset
       }
 
-   if (_bodyInfo && _bodyInfo->getDisableSampling())
-      {
-      _compInfo->_stats._compiledMethodSamplesIgnored++;
-      if (_logSampling)
-         _curMsg += sprintf(_curMsg, " uses sampling but sampling disabled (last comp. with prex)");
-      _bodyInfo = NULL;
-      }
-
-   if (_bodyInfo)
-      {
-      _methodInfo = _bodyInfo->getMethodInfo();
-      }
-   }
-
-bool
-TR::DefaultCompilationStrategy::ProcessJittedSample::shouldProcessSample()
-   {
-   TR_ASSERT_FATAL(_methodInfo->getMethodInfo() == reinterpret_cast<TR_OpaqueMethodBlock *>(_j9method),
-                   "_methodInfo->getMethodInfo()=%p != _j9method=%p",
-                   _methodInfo->getMethodInfo(), _j9method);
-
-   bool shouldProcess = true;
-   void *currentStartPC = TR::CompilationInfo::getPCIfCompiled(_j9method);
-
-   // See if the method has already been compiled but we get a sample in the old body
-   if (currentStartPC != _startPC) // rare case
-      {
-      shouldProcess = false;
-      }
-   else if (TR::Options::getCmdLineOptions()->getFixedOptLevel() != -1
-            || TR::Options::getAOTCmdLineOptions()->getFixedOptLevel() != -1) // prevent recompilation when opt level is specified
-      {
-      shouldProcess = false;
-      }
-   else
-      {
-      _isAlreadyBeingCompiled = TR::Recompilation::isAlreadyBeingCompiled(reinterpret_cast<TR_OpaqueMethodBlock *>(_j9method), _startPC, _fe);
-      // If we already decided to recompile this body, and we haven't yet
-      // queued the method don't bother continuing. Very small window of time.
-      //
-      if (_bodyInfo->getSamplingRecomp() && // flag needs to be tested after getting compilationMonitor
-         !_isAlreadyBeingCompiled)
-         {
-         if (_logSampling)
-            _curMsg += sprintf(_curMsg, " uses sampling but a recomp decision has already been taken");
-         shouldProcess = false;
-         }
-      }
-
-   return shouldProcess;
-   }
-
-void
-TR::DefaultCompilationStrategy::ProcessJittedSample::determineWhetherToRecompileIfCountHitsZero()
-   {
-   if (!_isAlreadyBeingCompiled)
-      {
-      // do not allow scorching compiles based on count reaching 0
-      if (_methodInfo->getNextCompileLevel() > hot)
-         {
-         // replenish the counter with a multiple of sampleInterval
-         _bodyInfo->setCounter(_hotSampleInterval);
-         // even if the count reached 0, we still need to check if we can
-         // promote this method through sample thresholds
-         }
-      else // allow transition to HOT through exhaustion of count
-         {
-         _recompile = true;
-         TR::Recompilation::limitMethodsCompiled++;
-         // Currently the counter can be decremented because (1) the method was
-         // sampled; (2) EDO; (3) PIC miss; (4) megamorphic interface call profile.
-         // EDO will have its own recompilation snippet, but in cases (3) and (4)
-         // the counter just reaches 0, and only the next sample will trigger
-         // recompilation. These cases can be identified by the negative counter
-         // (we decrement the counter above in sampleMethod()). In contrast, if the
-         // counter is decremented through sampling, only the first thread that sees
-         // the counter 0 will recompile the method, and all the others will be
-         // prevented from reaching this point due to isAlreadyBeingCompiled
-
-         if (_count < 0 && !_methodInfo->disableMiscSamplingCounterDecrementation())
-            {
-            // recompile at same level
-            _nextOptLevel = _bodyInfo->getHotness();
-
-            // mark this special situation
-            _methodInfo->setDisableMiscSamplingCounterDecrementation();
-            // write a message in the vlog to know the reason of recompilation
-            if (_logSampling)
-               _curMsg += sprintf(_curMsg, " PICrecomp");
-            _methodInfo->setReasonForRecompilation(TR_PersistentMethodInfo::RecompDueToMegamorphicCallProfile);
-            }
-         else
-            {
-            _nextOptLevel = _methodInfo->getNextCompileLevel();
-            _methodInfo->setReasonForRecompilation(
-               _bodyInfo->getIsPushedForRecompilation()
-               ? TR_PersistentMethodInfo::RecompDueToRecompilationPushing
-               : TR_PersistentMethodInfo::RecompDueToCounterZero);
-
-            // It's possible that a thread decrements the counter to 0 and another
-            // thread decrements it further to -1 which will trigger a compilation
-            // at same level. The following line will prevent that.
-            _methodInfo->setDisableMiscSamplingCounterDecrementation();
-            }
-         }
-      }
-
-   if (_recompile) // recompilation due to count reaching 0
-      {
-      _bodyInfo->setOldStartCountDelta(_totalSampleCount - _startSampleCount);// Should we handle overflow?
-      _bodyInfo->setHotStartCountDelta(0);
-      _bodyInfo->setStartCount(_totalSampleCount);
-      }
-   }
-
-void
-TR::DefaultCompilationStrategy::ProcessJittedSample::determineWhetherRecompileIsHotOrScorching(float scalingFactor,
-                                                                                               bool conservativeCase,
-                                                                                               bool useAggressiveRecompilations,
-                                                                                               bool isBigAppStartup)
-   {
-   // The method is hot, but is it actually scorching?
-   //
-   // If the scorching interval is done, perform normal scorching test
-   // If the scorching interval is not done, performs a sniff test for a shorter interval
-   //    1. If the method looks scorching during this small interval, do not
-   //       do anything; just wait for the scorching interval to finish
-   //    2. If the method does not look scorching, perform a hot compilation
-   //
-   // First let's do some scaling based on size, startup, bigApp, numProc, etc
-   _scaledScorchingThreshold = (int32_t)(TR::Options::_scorchingSampleThreshold * scalingFactor);
-   if (conservativeCase)
-      {
-      _scaledScorchingThreshold >>= 1; // halve the threshold for a more conservative comp decision
-      if (TR::Compiler->target.numberOfProcessors() != 1)
-         useAggressiveRecompilations = true; // to allow recomp at original threshold,
-      else                                   // but double the sample interval (60 samples)
-         useAggressiveRecompilations = false;
-      }
-
-   if (isBigAppStartup)
-      {
-      _scaledScorchingThreshold >>= TR::Options::_bigAppSampleThresholdAdjust; //adjust to avoid scorching recomps
-      useAggressiveRecompilations = false; //this could have been set, so disable to avoid
-      }
-
-   if (!_scorchingSamplingWindowComplete)
-      {
-      // Perform scorching recompilation sniff test using a shorter sample interval
-      // TODO: relax the thresholds a bit, maybe we can go directly to scorching next time
-      if (_globalSamplesInHotWindow <= _scaledScorchingThreshold)
-         _postponeDecision = true;
-      }
-   else // scorching sample interval is done
-      {
-      // Adjust the scorchingSampleThreshold because the sample window is larger
-      _scaledScorchingThreshold = _scaledScorchingThreshold * _intervalIncreaseFactor;
-
-      // Make the scorching compilation less likely as time goes by
-      // The bigger the number of scorching intervals, the smaller scaledScorchingThreshold
-      if (_bodyInfo->getNumScorchingIntervals() > 3)
-         _scaledScorchingThreshold >>= 1;
-
-      // secondCriteria looks at hotness over a period of time that is double
-      // than normal (60 samples). This is why we have to increase scaledScorchingThreshold
-      // by a factor of 2. If we want to become twice as aggressive we need to double
-      // scaledScorchingThreshold yet again
-      //
-      bool secondCriteriaScorching = useAggressiveRecompilations &&
-         (_totalSampleCount - _bodyInfo->getOldStartCount() <= (_scaledScorchingThreshold << 2));
-      // Scorching test
-      if ((_globalSamples <= _scaledScorchingThreshold) || secondCriteriaScorching)
-         {
-         // Determine whether or not the method is to be profiled before
-         // being compiled as scorching hot.
-         // For profiling the platform must support counting recompilation.
-         //
-         if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableProfiling) &&
-            TR::Recompilation::countingSupported() && !TR::CodeCacheManager::instance()->almostOutOfCodeCache() &&
-            !(_methodInfo->profilingDisabled()))
-            {
-            _nextOptLevel = veryHot;
-            _useProfiling = true;
-            }
-         else
-            {
-            _nextOptLevel = scorching;
-            }
-         _recompile = true;
-         _compInfo->_stats._methodsSelectedToRecompile++;
-         TR::Recompilation::scorchingThresholdMethodsCompiled++;
-         }
-      }
-   // Should we proceed with the hot compilation?
-   if (!_recompile && !_postponeDecision && _bodyInfo->getHotness() <= warm)
-      {
-      _nextOptLevel = hot;
-      // Decide whether to deny optimizer to switch to profiling on the fly
-      if (_globalSamplesInHotWindow > TR::Options::_sampleDontSwitchToProfilingThreshold &&
-         !TR::Options::getCmdLineOptions()->getOption(TR_AggressiveSwitchingToProfiling))
-         _dontSwitchToProfiling = true;
-      _recompile = true;
-      _compInfo->_stats._methodsSelectedToRecompile++;
-      TR::Recompilation::hotThresholdMethodsCompiled++;
-      }
-   }
-
-void
-TR::DefaultCompilationStrategy::ProcessJittedSample::determineWhetherToRecompileBasedOnThreshold()
-   {
-   _compInfo->_stats._methodsReachingSampleInterval++;
-
-   // Goal: based on codeSize, scale the original Threshold by no more than +/-x%
-   // 'x' will be called sampleThresholdVariationAllowance
-   // When codeSize==avgCodeSize, we want the scaling factor to be 1.0
-   // The scaling of the threshold can be turned off by having
-   // the sampleThresholdVariationAllowance equal to 0
-   J9JITExceptionTable *metaData = jitConfig->jitGetExceptionTableFromPC(_event->_vmThread, (UDATA)_startPC);
-   int32_t codeSize = 0; // TODO eliminate the overhead; we already have metadata
-   if (metaData)
-      codeSize = _compInfo->calculateCodeSize(metaData);
-
-   // Scale the recompilation thresholds based on method size
-   int32_t avgCodeSize = (TR::Compiler->target.cpu.isI386() || TR::Compiler->target.cpu.isPower()) ? 1500 : 3000; // experimentally determined
-
-   TR_ASSERT(codeSize != 0, "startPC!=0 ==> codeSize!=0");
-
-   float scalingFactor = 0.01*((100 - TR::Options::_sampleThresholdVariationAllowance) +
-                        (avgCodeSize << 1)*TR::Options::_sampleThresholdVariationAllowance /
-                        (float)(avgCodeSize + codeSize));
-   _curMsg += sprintf(_curMsg, " SizeScaling=%.1f", scalingFactor);
-   _scaledHotThreshold = (int32_t)(_hotSampleThreshold * scalingFactor);
-
-   // Do not use aggressive recompilations for big applications like websphere.
-   // WebSphere loads more than 14000 classes, typical small apps more like 1000-2000 classes.
-   // ==> use a reasonable value like 5000 to determine if the application is big
-   bool useAggressiveRecompilations = !_cmdLineOptions->getOption(TR_DisableAggressiveRecompilations) &&
-                                       (_bodyInfo->decAggressiveRecompilationChances() > 0 ||
-                                       _compInfo->getPersistentInfo()->getNumLoadedClasses() < TR::Options::_bigAppThreshold);
-
-   bool conservativeCase = TR::Options::getCmdLineOptions()->getOption(TR_ConservativeCompilation) &&
-                           _compInfo->getPersistentInfo()->getNumLoadedClasses() >= TR::Options::_bigAppThreshold;
-
-   if (conservativeCase)
-      {
-      _scaledHotThreshold >>= 1; // halve the threshold for a more conservative comp decision
-      useAggressiveRecompilations = true; // force it, to allow recomp at original threshold,
-                                          // but double the sample interval (60 samples)
-      }
-   // For low number of processors become more conservative during startup
-   if (_jitConfig->javaVM->phase != J9VM_PHASE_NOT_STARTUP &&
-         TR::Compiler->target.numberOfProcessors() <= 2)
-      _scaledHotThreshold >>= 2;
-
-   // Used to make recompilations less aggressive during WebSphere startup,
-   // avoiding costly hot, and very hot compilation
-   bool isBigAppStartup = (_jitConfig->javaVM->phase != J9VM_PHASE_NOT_STARTUP
-                           && TR::Options::sharedClassCache()
-                           && _compInfo->getPersistentInfo()->getNumLoadedClasses() >= TR::Options::_bigAppThreshold
-                           && TR::Options::_bigAppSampleThresholdAdjust > 0);
-   if (isBigAppStartup)
-      {
-      _scaledHotThreshold >>= TR::Options::_bigAppSampleThresholdAdjust; //adjust to avoid hot recomps
-      useAggressiveRecompilations = false; //also to avoid potential hot recomps, this could have been set
-      }
-
-   // We allow hot compilations at a lower CPU, but for a longer period of time (scorching window)
-   bool secondCriteriaHot = false;
-   // Check for non first hot interval
-   if (useAggressiveRecompilations)
-      {
-      int32_t samplesInSelf = _scorchingSamplingWindowComplete ? _scorchingSampleInterval : _crtSampleIntervalCount;
-      // Alternative: Here we may want to do something only if a scorchingSampleWindow is complete
-      if (samplesInSelf > _hotSampleInterval)
-         {
-         // 0.5*targetCPU < crtCPU
-         if (((_globalSamples * _hotSampleInterval) >> 1) < (_scaledHotThreshold * samplesInSelf))
-            secondCriteriaHot = true;
-         }
-      }
-
-   // TODO: if the scorching window is complete, should we look at CPU over the larger window?
-   if (_globalSamplesInHotWindow <= _scaledHotThreshold || secondCriteriaHot)
-      {
-      determineWhetherRecompileIsHotOrScorching(scalingFactor, conservativeCase, useAggressiveRecompilations, isBigAppStartup);
-      }
-   // If the method is truly cold, replenish the counter to avoid
-   // recompilation through counter decrementation
-   else if (_globalSamplesInHotWindow >= TR::Options::_resetCountThreshold)
-      {
-      _compInfo->_stats._methodsSampleWindowReset++;
-      _bodyInfo->setCounter(_count + _hotSampleInterval);
-      if (_logSampling)
-         _curMsg += sprintf(_curMsg, " is cold, reset cnt to %d", _bodyInfo->getCounter());
-      }
-
-   // The hot sample interval is done. Prepare for next interval.
-   if (_scorchingSamplingWindowComplete)
-      {
-      // scorching sample interval is done
-      _bodyInfo->setStartCount(_totalSampleCount);
-      _bodyInfo->setOldStartCountDelta(_totalSampleCount - _startSampleCount);
-      _bodyInfo->setHotStartCountDelta(0);
-      }
-   else
-      {
-      int32_t hotStartCountDelta = _totalSampleCount - _startSampleCount;
-      TR_ASSERT(hotStartCountDelta >= 0, "hotStartCountDelta should not be negative\n");
-      if (hotStartCountDelta > 0xffff)
-         hotStartCountDelta = 0xffff;
-      _bodyInfo->setHotStartCountDelta(hotStartCountDelta);
-      }
-
-   if (_recompile)
-      {
-      // One more test
-      if (!_isAlreadyBeingCompiled)
-         {
-         _methodInfo->setReasonForRecompilation(TR_PersistentMethodInfo::RecompDueToThreshold);
-         }
-      else // the method is already being compiled; maybe we need to update the opt level
-         {
-         _recompile = false; // do not need to recompile the method
-         if ((int32_t)_nextOptLevel > (int32_t)_methodInfo->getNextCompileLevel())
-            {
-            // search the queue to update the optimization plan.
-            //
-            TR::IlGeneratorMethodDetails details(_j9method);
-            TR_MethodToBeCompiled *entry =
-               _compInfo->adjustCompilationEntryAndRequeue(details, _methodInfo, _nextOptLevel,
-                                                            _useProfiling,
-                                                            CP_ASYNC_NORMAL, _fe);
-            if (entry)
-               {
-               if (_logSampling)
-                  _curMsg += sprintf(_curMsg, " adj opt lvl to %d", (int32_t)(entry->_optimizationPlan->getOptLevel()));
-               int32_t measuredCpuUtil = _crtSampleIntervalCount == 0 ? // scorching interval done?
-                                          _scorchingSampleInterval * 1000 / _globalSamples :
-                                          _hotSampleInterval * 1000 / _globalSamplesInHotWindow;
-               entry->_optimizationPlan->setPerceivedCPUUtil(measuredCpuUtil);
-               }
-            }
-         }
-      }
-   }
-
-void
-TR::DefaultCompilationStrategy::ProcessJittedSample::determineWhetherToRecompileLessOptimizedMethods()
-   {
-   if (_bodyInfo->getFastRecompilation() && !_isAlreadyBeingCompiled)
-      {
-      // Allow profiling even if we are about to exhaust the code cache
-      // because this case is used for diagnostic only
-      if (_bodyInfo->getFastScorchingRecompilation())
-         {
-         if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableProfiling) &&
-               TR::Recompilation::countingSupported() &&
-               !(_methodInfo->profilingDisabled()))
-            {
-            _nextOptLevel = veryHot;
-            _useProfiling = true;
-            }
-         else
-            {
-            _nextOptLevel = scorching;
-            }
-         }
-      else
-         {
-         _nextOptLevel = hot;
-         }
-      _recompile = true;
-      _methodInfo->setReasonForRecompilation(TR_PersistentMethodInfo::RecompDueToThreshold);//lie
-      }
-   else if (!_postponeDecision &&
-      !TR::Options::getCmdLineOptions()->getOption(TR_DisableUpgrades) &&
-      // case (1) methods downgraded to cold
-      ((_bodyInfo->getHotness() < warm &&
-         (_methodInfo->isOptLevelDowngraded() || _cmdLineOptions->getOption(TR_EnableUpgradingAllColdCompilations))) ||
-      // case (2) methods taken from shared cache
-      _bodyInfo->getIsAotedBody()))
-         // case (3) cold compilations for bootstrap methods, even if not downgraded
-      {
-      // test other conditions for upgrading
-
-      uint32_t threshold = TR::Options::_coldUpgradeSampleThreshold;
-      // Pick a threshold based on method size (higher thresholds for bigger methods)
-      if (_jitConfig->javaVM->phase != J9VM_PHASE_NOT_STARTUP &&
-            _compInfo->getPersistentInfo()->getNumLoadedClasses() >= TR::Options::_bigAppThreshold)
-         {
-         threshold += (uint32_t)(TR::CompilationInfo::getMethodBytecodeSize(_j9method) >> 8);
-         // sampleIntervalCount goes from 0 to _sampleInterval-1
-         // Very big methods (bigger than 6K bytecodes) will have a threshold bigger than this
-         // and never be upgraded, which is what we want
-         }
-      if ((uint32_t)_crtSampleIntervalCount >= threshold &&
-            _compInfo->getMethodQueueSize() <= TR::CompilationInfo::SMALL_QUEUE &&
-            !_compInfo->getPersistentInfo()->isClassLoadingPhase() &&
-            !_isAlreadyBeingCompiled &&
-            !_cmdLineOptions->getOption(TR_DisableUpgradingColdCompilations))
-         {
-         _recompile = true;
-         if (!_bodyInfo->getIsAotedBody())
-            {
-            // cold-nonaot compilations can only be upgraded to warm
-            _nextOptLevel = warm;
-            }
-         else // AOT bodies
-            {
-            if (!TR::Options::isQuickstartDetected())
-               {
-               // AOT upgrades are performed at warm
-               // We may want to look at how expensive the method is though
-               _nextOptLevel = warm;
-               }
-            else // -Xquickstart (and AOT)
-               {
-               _nextOptLevel = cold;
-               // Exception: bootstrap class methods that are cheap should be upgraded directly at warm
-               if (_cmdLineOptions->getOption(TR_UpgradeBootstrapAtWarm) && _fe->isClassLibraryMethod((TR_OpaqueMethodBlock *)_j9method))
-                  {
-                  TR_J9SharedCache *sc = TR_J9VMBase::get(_jitConfig, _event->_vmThread, TR_J9VMBase::AOT_VM)->sharedCache();
-                  bool expensiveComp = sc->isHint(_j9method, TR_HintLargeMemoryMethodW);
-                  if (!expensiveComp)
-                     _nextOptLevel = warm;
-                  }
-               }
-            }
-         _methodInfo->setReasonForRecompilation(TR_PersistentMethodInfo::RecompDueToOptLevelUpgrade);
-         // reset the flag to avoid upgrading repeatedly
-         _methodInfo->setOptLevelDowngraded(false);
-         _willUpgrade = true;
-         }
-      }
-   }
-
-TR_OptimizationPlan *
-TR::DefaultCompilationStrategy::ProcessJittedSample::triggerRecompIfNeeded()
-   {
-   TR_OptimizationPlan *plan = NULL;
-
-   if (_recompile)
-      {
-      //induceRecompilation(fe, startPC);
-      bool useSampling = (_nextOptLevel != scorching && !_useProfiling);
-      plan = TR_OptimizationPlan::alloc(_nextOptLevel, _useProfiling, useSampling);
-      if (plan)
-         {
-         int32_t measuredCpuUtil = _crtSampleIntervalCount == 0 ? // scorching interval done?
-            (_globalSamples != 0 ? _scorchingSampleInterval * 1000 / _globalSamples : 0) :
-            (_globalSamplesInHotWindow != 0 ? _hotSampleInterval * 1000 / _globalSamplesInHotWindow : 0);
-         plan->setPerceivedCPUUtil(measuredCpuUtil);
-         plan->setIsUpgradeRecompilation(_willUpgrade);
-         plan->setDoNotSwitchToProfiling(_dontSwitchToProfiling);
-         if (_crtSampleIntervalCount == 0 && // scorching compilation decision can be taken
-               _globalSamples <= TR::Options::_relaxedCompilationLimitsSampleThreshold) // FIXME: needs scaling
-            plan->setRelaxedCompilationLimits(true);
-         if (_logSampling)
-            {
-            float cpu = measuredCpuUtil / 10.0;
-            if (_useProfiling)
-               _curMsg += sprintf(_curMsg, " --> recompile at level %d, profiled CPU=%.1f%%", _nextOptLevel, cpu);
-            else
-               _curMsg += sprintf(_curMsg, " --> recompile at level %d CPU=%.1f%%", _nextOptLevel, cpu);
-
-            if (_methodInfo->getReasonForRecompilation() == TR_PersistentMethodInfo::RecompDueToThreshold)
-               {
-               _curMsg += sprintf(_curMsg, " scaledThresholds=[%d %d]", _scaledScorchingThreshold, _scaledHotThreshold);
-               }
-            }
-         }
-      else // OOM
-         {
-         if (_logSampling)
-            _curMsg += sprintf(_curMsg, " --> not recompiled: OOM");
-         }
-      }
-   else if (_logSampling)
-      {
-      if (_isAlreadyBeingCompiled)
-         _curMsg += sprintf(_curMsg, " - is already being recompiled");
-      else if (!_hotSamplingWindowComplete)
-         _curMsg += sprintf(_curMsg, " not recompiled, smpl interval not done");
-      else
-         {
-         float measuredCpuUtil = 0.0;
-         if (_crtSampleIntervalCount == 0) // scorching interval done
-            {
-            if (_globalSamples)
-               measuredCpuUtil = _scorchingSampleInterval * 100.0 / _globalSamples;
-            }
-         else
-            {
-            if (_globalSamplesInHotWindow)
-               measuredCpuUtil = _hotSampleInterval * 100.0 / _globalSamplesInHotWindow;
-            }
-         _curMsg += sprintf(_curMsg, " not recompiled, CPU=%.1f%% %s scaledThresholds=[%d %d]",
-            measuredCpuUtil, _postponeDecision ? " postpone decision" : "",
-            _scaledScorchingThreshold, _scaledHotThreshold);
-         }
-      }
-
-   return plan;
-   }
-
-TR_OptimizationPlan *
-TR::DefaultCompilationStrategy::ProcessJittedSample::process()
-   {
-   TR_OptimizationPlan *plan = NULL;
-
-   // Log sample info
-   logSampleInfoToBuffer();
+   TR::Recompilation::jitGlobalSampleCount++;
 
    // Insert an yield point if compilation queue size is too big and CPU utilization is close to 100%
    // QueueSize changes all the time, so threads may experience cache misses
@@ -1200,76 +558,603 @@ TR::DefaultCompilationStrategy::ProcessJittedSample::process()
    // which says by how much we need to delay application threads. This variable
    // will be changed by the sampling thread, every 0.5 seconds
    if (TR::Options::getCmdLineOptions()->getOption(TR_EnableAppThreadYield))
-      yieldToAppThread();
-
-   // Find and set body and method info
-   findAndSetBodyAndMethodInfo();
-
-   if (_bodyInfo)
       {
-      bool shouldProcess;
-
+      int32_t sleepNano = compInfo->getAppSleepNano(); // determine how much I need to sleep
+      if (sleepNano != 0) // If I need to sleep at all
          {
-         OMR::CriticalSection processSample(_compInfo->getCompilationMonitor());
-
-         // Determine if this sample should be processed
-         shouldProcess = shouldProcessSample();
-         if (shouldProcess)
+         if (sleepNano == 1000000)
             {
-            // Initialize the member fields that will be used for determining whether to recompile
-            initializeRecompRelatedFields();
-
-            // Determine whether to recompile if the counter hits zero
-            if (_count <= 0)
-               determineWhetherToRecompileIfCountHitsZero();
-
-            // Determine whether to recompile based on the sampling window and thresholds
-            if (!_recompile && _hotSamplingWindowComplete && _totalSampleCount > _startSampleCount)
-               determineWhetherToRecompileBasedOnThreshold();
-
-            // Determine whether to recompile if the previous criteria was not sufficient
-            if (!_recompile)
-               determineWhetherToRecompileLessOptimizedMethods();
-
-            // if we don't take any recompilation decision, let's see if we can
-            // schedule a compilation from the low priority queue
-            if (!_recompile && _compInfo && _compInfo->getLowPriorityCompQueue().hasLowPriorityRequest() &&
-                _compInfo->canProcessLowPriorityRequest())
-               {
-               // wake up the compilation thread
-               _compInfo->getCompilationMonitor()->notifyAll();
-               }
-
-            // Method is being recompiled because it is truly hot;
-            if (_recompile)
-               _bodyInfo->setSamplingRecomp();
+            j9thread_sleep(1); // param in ms
+            }
+         else
+            {
+            if (fe->shouldSleep()) // sleep every other sample point
+               j9thread_sleep(1); // param in ms
             }
          }
+      }
+   J9::PrivateLinkage::LinkageInfo *linkageInfo = J9::PrivateLinkage::LinkageInfo::get(startPC);
+   TR_PersistentJittedBodyInfo *bodyInfo = NULL;
 
-      // Queue the method for recompilation if needed
-      if (shouldProcess)
-         plan = triggerRecompIfNeeded();
+      compInfo->_stats._compiledMethodSamples++;
+
+   if (linkageInfo->hasFailedRecompilation())
+      {
+      compInfo->_stats._compiledMethodSamplesIgnored++;
+      if (logSampling)
+         curMsg += sprintf(curMsg, " has already failed a recompilation attempt");
+      }
+   else if (!linkageInfo->isSamplingMethodBody())
+      {
+      compInfo->_stats._compiledMethodSamplesIgnored++;
+      if (logSampling)
+         curMsg += sprintf(curMsg, " does not use sampling");
+      }
+   else if (debug("disableSamplingRecompilation"))
+      {
+      compInfo->_stats._compiledMethodSamplesIgnored++;
+      if (logSampling)
+         curMsg += sprintf(curMsg, " sampling disabled");
+      }
+   else
+      bodyInfo = TR::Recompilation::getJittedBodyInfoFromPC(startPC);
+
+   if (bodyInfo && bodyInfo->getDisableSampling())
+      {
+      compInfo->_stats._compiledMethodSamplesIgnored++;
+      if (logSampling)
+         curMsg += sprintf(curMsg, " uses sampling but sampling disabled (last comp. with prex)");
+      bodyInfo = NULL;
       }
 
-   // Print log to vlog
-   printBufferToVLog();
+   if (bodyInfo)
+      {
+      bool getOut = false;
+      TR_PersistentMethodInfo *methodInfo = bodyInfo->getMethodInfo();
+      fe->acquireCompilationLock();
+      bool isAlreadyBeingCompiled;
+      TR_OpaqueMethodBlock *j9m = methodInfo->getMethodInfo();
+      void *currentStartPC = TR::CompilationInfo::getPCIfCompiled((J9Method*)j9m);
 
+      // See if the method has already been compiled but we get a sample in the old body
+      if (currentStartPC != startPC) // rare case
+         getOut = true;
+      else if (TR::Options::getCmdLineOptions()->getFixedOptLevel() != -1
+               || TR::Options::getAOTCmdLineOptions()->getFixedOptLevel() != -1) // prevent recompilation when opt level is specified
+         {
+         getOut = true;
+         }
+      else
+         {
+         isAlreadyBeingCompiled = TR::Recompilation::isAlreadyBeingCompiled(methodInfo->getMethodInfo(), startPC, fe);
+         // If we already decided to recompile this body, and we haven't yet
+         // queued the method don't bother continuing. Very small window of time.
+         //
+         if (bodyInfo->getSamplingRecomp() && // flag needs to be tested after getting compilationMonitor
+            !isAlreadyBeingCompiled)
+            {
+            if (logSampling)
+               curMsg += sprintf(curMsg, " uses sampling but a recomp decision has already been taken");
+            getOut = true;
+            }
+         }
+      if (getOut)
+         {
+         fe->releaseCompilationLock();
+         // and do nothing
+         }
+      else
+         {
+         bool recompile = false;
+         TR_Hotness nextOptLevel;
+         bool useProfiling = false;
+
+         // Profiling compilations that precede scorching ones are quite taxing
+         // on large multicore machines. Thus, we want to observe the hotness of a
+         // method for longer, rather than rushing into a profiling very-hot compilation.
+         // We can afford to do so because scorching methods accumulate samples at a
+         // higher rate than hot ones.
+         // The goal here is to implement a rather short decision window (sampling interval)
+         // for decisions to upgrade to hot, but a larger decision window for decisions
+         // to go to scorching. This is based on density of samples observed in the JVM:
+         // the larger the density of samples, the larger the scorching decision window.
+         // scorchingSampleInterval will be a multiple of hotSampleInterval
+         // When a hotSampleInterval ends, if the method looks scorching we postpone any
+         // recompilation decision until a scorchingSampleInterval finishes. If the method
+         // only looks hot, then we decide to recompile at hot at the end of the hotSampleInterval
+
+         uint32_t intervalIncreaseFactor = compInfo->getJitSampleInfoRef().getIncreaseFactor();
+         // possibly larger sample interval for scorching compilations
+         int32_t scorchingSampleInterval = TR::Options::_sampleInterval * intervalIncreaseFactor;
+
+         // Hot recompilation decisions use the regular sized sampling interval
+         uint8_t hotSampleInterval  = TR::Options::_sampleInterval;
+         int32_t hotSampleThreshold = TR::Options::_sampleThreshold;
+
+         int32_t count = bodyInfo->decCounter();
+         uint8_t crtSampleIntervalCount = bodyInfo->incSampleIntervalCount(scorchingSampleInterval);
+         bool hotSamplingWindowComplete = (crtSampleIntervalCount % hotSampleInterval) == 0;
+         bool scorchingSamplingWindowComplete = (crtSampleIntervalCount == 0);
+
+         int32_t startSampleCount = bodyInfo->getStartCount();
+         int32_t globalSamples = totalSampleCount - startSampleCount;
+         int32_t globalSamplesInHotWindow = globalSamples - bodyInfo->getHotStartCountDelta();
+
+         int32_t scaledScorchingThreshold = 0, scaledHotThreshold = 0;
+
+         if (logSampling)
+            curMsg += sprintf(curMsg, " cnt=%d ncl=%d glblSmplCnt=%d startCnt=%d[-%u,+%u] samples=[%d %d] windows=[%d %u] crtSmplIntrvlCnt=%u",
+               count, methodInfo->getNextCompileLevel(), totalSampleCount, startSampleCount,
+               bodyInfo->getOldStartCountDelta(), bodyInfo->getHotStartCountDelta(),
+               globalSamples, globalSamplesInHotWindow,
+               scorchingSampleInterval, hotSampleInterval, crtSampleIntervalCount);
+
+         bool dontSwitchToProfiling = false;
+         if (count <= 0)
+            {
+            if (!isAlreadyBeingCompiled)
+               {
+               // do not allow scorching compiles based on count reaching 0
+               if (methodInfo->getNextCompileLevel() > hot)
+                  {
+                  // replenish the counter with a multiple of sampleInterval
+                  bodyInfo->setCounter(hotSampleInterval);
+                  // even if the count reached 0, we still need to check if we can
+                  // promote this method through sample thresholds
+                  }
+               else // allow transition to HOT through exhaustion of count
+                  {
+                  recompile = true;
+                  TR::Recompilation::limitMethodsCompiled++;
+                  // Currently the counter can be decremented because (1) the method was
+                  // sampled; (2) EDO; (3) PIC miss; (4) megamorphic interface call profile.
+                  // EDO will have its own recompilation snippet, but in cases (3) and (4)
+                  // the counter just reaches 0, and only the next sample will trigger
+                  // recompilation. These cases can be identified by the negative counter
+                  // (we decrement the counter above in sampleMethod()). In contrast, if the
+                  // counter is decremented through sampling, only the first thread that sees
+                  // the counter 0 will recompile the method, and all the others will be
+                  // prevented from reaching this point due to isAlreadyBeingCompiled
+
+                  if (count < 0 && !methodInfo->disableMiscSamplingCounterDecrementation())
+                     {
+                     // recompile at same level
+                     nextOptLevel = bodyInfo->getHotness();
+
+                     // mark this special situation
+                     methodInfo->setDisableMiscSamplingCounterDecrementation();
+                     // write a message in the vlog to know the reason of recompilation
+                     if (logSampling)
+                        curMsg += sprintf(curMsg, " PICrecomp");
+                     methodInfo->setReasonForRecompilation(TR_PersistentMethodInfo::RecompDueToMegamorphicCallProfile);
+                     }
+                  else
+                     {
+                     nextOptLevel = methodInfo->getNextCompileLevel();
+                     methodInfo->setReasonForRecompilation(bodyInfo->getIsPushedForRecompilation() ?
+                                  TR_PersistentMethodInfo::RecompDueToRecompilationPushing : TR_PersistentMethodInfo::RecompDueToCounterZero);
+                     // It's possible that a thread decrements the counter to 0 and another
+                     // thread decrements it further to -1 which will trigger a compilation
+                     // at same level. The following line will prevent that.
+                     methodInfo->setDisableMiscSamplingCounterDecrementation();
+                     }
+                  }
+               }
+
+            if (recompile) // recompilation due to count reaching 0
+               {
+               bodyInfo->setOldStartCountDelta(totalSampleCount - startSampleCount);// Should we handle overflow?
+               bodyInfo->setHotStartCountDelta(0);
+               bodyInfo->setStartCount(totalSampleCount);
+               }
+            }
+
+         bool postponeDecision = false;
+         if (!recompile && hotSamplingWindowComplete && totalSampleCount > startSampleCount)
+            {
+            compInfo->_stats._methodsReachingSampleInterval++;
+
+            // Goal: based on codeSize, scale the original Threshold by no more than +/-x%
+            // 'x' will be called sampleThresholdVariationAllowance
+            // When codeSize==avgCodeSize, we want the scaling factor to be 1.0
+            // The scaling of the threshold can be turned off by having
+            // the sampleThresholdVariationAllowance equal to 0
+            J9JITExceptionTable *metaData = jitConfig->jitGetExceptionTableFromPC(event->_vmThread, (UDATA)startPC);
+            int32_t codeSize = 0; // TODO eliminate the overhead; we already have metadata
+            if (metaData)
+               codeSize = compInfo->calculateCodeSize(metaData);
+
+            // Scale the recompilation thresholds based on method size
+            int32_t avgCodeSize = (TR::Compiler->target.cpu.isI386() || TR::Compiler->target.cpu.isPower()) ? 1500 : 3000; // experimentally determined
+
+            TR_ASSERT(codeSize != 0, "startPC!=0 ==> codeSize!=0");
+
+            float scalingFactor = 0.01*((100 - TR::Options::_sampleThresholdVariationAllowance) +
+                                 (avgCodeSize << 1)*TR::Options::_sampleThresholdVariationAllowance /
+                                 (float)(avgCodeSize + codeSize));
+            curMsg += sprintf(curMsg, " SizeScaling=%.1f", scalingFactor);
+            scaledHotThreshold = (int32_t)(hotSampleThreshold*scalingFactor);
+
+            // Do not use aggressive recompilations for big applications like websphere.
+            // WebSphere loads more than 14000 classes, typical small apps more like 1000-2000 classes.
+            // ==> use a reasonable value like 5000 to determine if the application is big
+            bool useAggressiveRecompilations = !cmdLineOptions->getOption(TR_DisableAggressiveRecompilations) &&
+                                               (bodyInfo->decAggressiveRecompilationChances() > 0 ||
+                                               compInfo->getPersistentInfo()->getNumLoadedClasses() < TR::Options::_bigAppThreshold);
+
+            bool conservativeCase = TR::Options::getCmdLineOptions()->getOption(TR_ConservativeCompilation) &&
+                                    compInfo->getPersistentInfo()->getNumLoadedClasses() >= TR::Options::_bigAppThreshold;
+
+            if (conservativeCase)
+               {
+               scaledHotThreshold >>= 1; // halve the threshold for a more conservative comp decision
+               useAggressiveRecompilations = true; // force it, to allow recomp at original threshold,
+                                                   // but double the sample interval (60 samples)
+               }
+            // For low number of processors become more conservative during startup
+            if (jitConfig->javaVM->phase != J9VM_PHASE_NOT_STARTUP &&
+                TR::Compiler->target.numberOfProcessors() <= 2)
+               scaledHotThreshold >>= 2;
+
+            // Used to make recompilations less aggressive during WebSphere startup,
+            // avoiding costly hot, and very hot compilation
+            bool isBigAppStartup = (jitConfig->javaVM->phase != J9VM_PHASE_NOT_STARTUP
+                                    && TR::Options::sharedClassCache()
+                                    && compInfo->getPersistentInfo()->getNumLoadedClasses() >= TR::Options::_bigAppThreshold
+                                    && TR::Options::_bigAppSampleThresholdAdjust > 0);
+            if (isBigAppStartup)
+               {
+               scaledHotThreshold >>= TR::Options::_bigAppSampleThresholdAdjust; //adjust to avoid hot recomps
+               useAggressiveRecompilations = false; //also to avoid potential hot recomps, this could have been set
+               }
+
+            // We allow hot compilations at a lower CPU, but for a longer period of time (scorching window)
+            bool secondCriteriaHot = false;
+            // Check for non first hot interval
+            if (useAggressiveRecompilations)
+               {
+               int32_t samplesInSelf = scorchingSamplingWindowComplete ? scorchingSampleInterval : crtSampleIntervalCount;
+               // Alternative: Here we may want to do something only if a scorchingSampleWindow is complete
+               if (samplesInSelf > hotSampleInterval)
+                  {
+                  // 0.5*targetCPU < crtCPU
+                  if (((globalSamples*hotSampleInterval) >> 1) < (scaledHotThreshold * samplesInSelf))
+                     secondCriteriaHot = true;
+                  }
+               }
+
+            // TODO: if the scorching window is complete, should we look at CPU over the larger window?
+            if (globalSamplesInHotWindow <= scaledHotThreshold || secondCriteriaHot)
+               {
+               // The method is hot, but is it actually scorching?
+               //
+               // If the scorching interval is done, perform normal scorching test
+               // If the scorching interval is not done, performs a sniff test for a shorter interval
+               //    1. If the method looks scorching during this small interval, do not
+               //       do anything; just wait for the scorching interval to finish
+               //    2. If the method does not look scorching, perform a hot compilation
+               //
+               // First let's do some scaling based on size, startup, bigApp, numProc, etc
+               scaledScorchingThreshold = (int32_t)(TR::Options::_scorchingSampleThreshold * scalingFactor);
+               if (conservativeCase)
+                  {
+                  scaledScorchingThreshold >>= 1; // halve the threshold for a more conservative comp decision
+                  if (TR::Compiler->target.numberOfProcessors() != 1)
+                     useAggressiveRecompilations = true; // to allow recomp at original threshold,
+                  else                                   // but double the sample interval (60 samples)
+                     useAggressiveRecompilations = false;
+                  }
+
+               if (isBigAppStartup)
+                  {
+                  scaledScorchingThreshold >>= TR::Options::_bigAppSampleThresholdAdjust; //adjust to avoid scorching recomps
+                  useAggressiveRecompilations = false; //this could have been set, so disable to avoid
+                  }
+
+               if (!scorchingSamplingWindowComplete)
+                  {
+                  // Perform scorching recompilation sniff test using a shorter sample interval
+                  // TODO: relax the thresholds a bit, maybe we can go directly to scorching next time
+                  if (globalSamplesInHotWindow <= scaledScorchingThreshold)
+                     postponeDecision = true;
+                  }
+               else // scorching sample interval is done
+                  {
+                  // Adjust the scorchingSampleThreshold because the sample window is larger
+                  scaledScorchingThreshold = scaledScorchingThreshold * intervalIncreaseFactor;
+
+                  // Make the scorching compilation less likely as time goes by
+                  // The bigger the number of scorching intervals, the smaller scaledScorchingThreshold
+                  if (bodyInfo->getNumScorchingIntervals() > 3)
+                     scaledScorchingThreshold >>= 1;
+
+                  // secondCriteria looks at hotness over a period of time that is double
+                  // than normal (60 samples). This is why we have to increase scaledScorchingThreshold
+                  // by a factor of 2. If we want to become twice as aggressive we need to double
+                  // scaledScorchingThreshold yet again
+                  //
+                  bool secondCriteriaScorching = useAggressiveRecompilations &&
+                     (totalSampleCount - bodyInfo->getOldStartCount() <= (scaledScorchingThreshold << 2));
+                  // Scorching test
+                  if ((globalSamples <= scaledScorchingThreshold) || secondCriteriaScorching)
+                     {
+                     // Determine whether or not the method is to be profiled before
+                     // being compiled as scorching hot.
+                     // For profiling the platform must support counting recompilation.
+                     //
+                     if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableProfiling) &&
+                        TR::Recompilation::countingSupported() && !TR::CodeCacheManager::instance()->almostOutOfCodeCache() &&
+                        !(methodInfo->profilingDisabled()))
+                        {
+                        nextOptLevel = veryHot;
+                        useProfiling = true;
+                        }
+                     else
+                        {
+                        nextOptLevel = scorching;
+                        }
+                     recompile = true;
+                     compInfo->_stats._methodsSelectedToRecompile++;
+                     TR::Recompilation::scorchingThresholdMethodsCompiled++;
+                     }
+                  }
+               // Should we proceed with the hot compilation?
+               if (!recompile && !postponeDecision && bodyInfo->getHotness() <= warm)
+                  {
+                  nextOptLevel = hot;
+                  // Decide whether to deny optimizer to switch to profiling on the fly
+                  if (globalSamplesInHotWindow > TR::Options::_sampleDontSwitchToProfilingThreshold &&
+                     !TR::Options::getCmdLineOptions()->getOption(TR_AggressiveSwitchingToProfiling))
+                     dontSwitchToProfiling = true;
+                  recompile = true;
+                  compInfo->_stats._methodsSelectedToRecompile++;
+                  TR::Recompilation::hotThresholdMethodsCompiled++;
+                  }
+               }
+            // If the method is truly cold, replenish the counter to avoid
+            // recompilation through counter decrementation
+            else if (globalSamplesInHotWindow >= TR::Options::_resetCountThreshold)
+               {
+               compInfo->_stats._methodsSampleWindowReset++;
+               bodyInfo->setCounter(count + hotSampleInterval);
+               if (logSampling)
+                  curMsg += sprintf(curMsg, " is cold, reset cnt to %d", bodyInfo->getCounter());
+               }
+            // The hot sample interval is done. Prepare for next interval.
+            if (scorchingSamplingWindowComplete)
+               {
+               // scorching sample interval is done
+               bodyInfo->setStartCount(totalSampleCount);
+               bodyInfo->setOldStartCountDelta(totalSampleCount - startSampleCount);
+               bodyInfo->setHotStartCountDelta(0);
+               }
+            else
+               {
+               int32_t hotStartCountDelta = totalSampleCount - startSampleCount;
+               TR_ASSERT(hotStartCountDelta >= 0, "hotStartCountDelta should not be negative\n");
+               if (hotStartCountDelta > 0xffff)
+                  hotStartCountDelta = 0xffff;
+               bodyInfo->setHotStartCountDelta(hotStartCountDelta);
+               }
+
+            if (recompile)
+               {
+               // One more test
+               if (!isAlreadyBeingCompiled)
+                  {
+                  methodInfo->setReasonForRecompilation(TR_PersistentMethodInfo::RecompDueToThreshold);
+                  }
+               else // the method is already being compiled; maybe we need to update the opt level
+                  {
+                  recompile = false; // do not need to recompile the method
+                  if ((int32_t)nextOptLevel > (int32_t)methodInfo->getNextCompileLevel())
+                     {
+                     // search the queue to update the optimization plan.
+                     //
+                     TR::IlGeneratorMethodDetails details(j9method);
+                     TR_MethodToBeCompiled *entry =
+                        compInfo->adjustCompilationEntryAndRequeue(details, methodInfo, nextOptLevel,
+                                                                   useProfiling,
+                                                                   CP_ASYNC_NORMAL, fe);
+                     if (entry)
+                        {
+                        if (logSampling)
+                           curMsg += sprintf(curMsg, " adj opt lvl to %d", (int32_t)(entry->_optimizationPlan->getOptLevel()));
+                        int32_t measuredCpuUtil = crtSampleIntervalCount == 0 ? // scorching interval done?
+                                                   scorchingSampleInterval * 1000 / globalSamples :
+                                                   hotSampleInterval * 1000 / globalSamplesInHotWindow;
+                        entry->_optimizationPlan->setPerceivedCPUUtil(measuredCpuUtil);
+                        }
+                     }
+                  }
+               }
+            }
+
+         // try to upgrade some of the less optimized compilations
+         bool willUpgrade = false;
+         if (!recompile)
+            {
+            if (bodyInfo->getFastRecompilation() && !isAlreadyBeingCompiled)
+               {
+               // Allow profiling even if we are about to exhaust the code cache
+               // because this case is used for diagnostic only
+               if (bodyInfo->getFastScorchingRecompilation())
+                  {
+                  if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableProfiling) &&
+                      TR::Recompilation::countingSupported() &&
+                      !(methodInfo->profilingDisabled()))
+                     {
+                     nextOptLevel = veryHot;
+                     useProfiling = true;
+                     }
+                  else
+                     {
+                     nextOptLevel = scorching;
+                     }
+                  }
+               else
+                  {
+                  nextOptLevel = hot;
+                  }
+               recompile = true;
+               methodInfo->setReasonForRecompilation(TR_PersistentMethodInfo::RecompDueToThreshold);//lie
+               }
+            else if (!postponeDecision &&
+               !TR::Options::getCmdLineOptions()->getOption(TR_DisableUpgrades) &&
+               // case (1) methods downgraded to cold
+               ((bodyInfo->getHotness() < warm &&
+                (methodInfo->isOptLevelDowngraded() || cmdLineOptions->getOption(TR_EnableUpgradingAllColdCompilations))) ||
+               // case (2) methods taken from shared cache
+               bodyInfo->getIsAotedBody()))
+                // case (3) cold compilations for bootstrap methods, even if not downgraded
+               {
+               // test other conditions for upgrading
+
+               uint32_t threshold = TR::Options::_coldUpgradeSampleThreshold;
+               // Pick a threshold based on method size (higher thresholds for bigger methods)
+               if (jitConfig->javaVM->phase != J9VM_PHASE_NOT_STARTUP &&
+                   compInfo->getPersistentInfo()->getNumLoadedClasses() >= TR::Options::_bigAppThreshold)
+                  {
+                  threshold += (uint32_t)(TR::CompilationInfo::getMethodBytecodeSize(j9method) >> 8);
+                  // sampleIntervalCount goes from 0 to _sampleInterval-1
+                  // Very big methods (bigger than 6K bytecodes) will have a threshold bigger than this
+                  // and never be upgraded, which is what we want
+                  }
+               if ((uint32_t)crtSampleIntervalCount >= threshold &&
+                   compInfo->getMethodQueueSize() <= TR::CompilationInfo::SMALL_QUEUE &&
+                   !compInfo->getPersistentInfo()->isClassLoadingPhase() &&
+                   !isAlreadyBeingCompiled &&
+                   !cmdLineOptions->getOption(TR_DisableUpgradingColdCompilations))
+                  {
+                  recompile = true;
+                  if (!bodyInfo->getIsAotedBody())
+                     {
+                     // cold-nonaot compilations can only be upgraded to warm
+                     nextOptLevel = warm;
+                     }
+                  else // AOT bodies
+                     {
+                     if (!TR::Options::isQuickstartDetected())
+                        {
+                        // AOT upgrades are performed at warm
+                        // We may want to look at how expensive the method is though
+                        nextOptLevel = warm;
+                        }
+                     else // -Xquickstart (and AOT)
+                        {
+                        nextOptLevel = cold;
+                        // Exception: bootstrap class methods that are cheap should be upgraded directly at warm
+                        if (cmdLineOptions->getOption(TR_UpgradeBootstrapAtWarm) && fe->isClassLibraryMethod((TR_OpaqueMethodBlock *)j9method))
+                           {
+                           TR_J9SharedCache *sc = TR_J9VMBase::get(jitConfig, event->_vmThread, TR_J9VMBase::AOT_VM)->sharedCache();
+                           bool expensiveComp = sc->isHint(j9method, TR_HintLargeMemoryMethodW);
+                           if (!expensiveComp)
+                              nextOptLevel = warm;
+                           }
+                        }
+                     }
+                  methodInfo->setReasonForRecompilation(TR_PersistentMethodInfo::RecompDueToOptLevelUpgrade);
+                  // reset the flag to avoid upgrading repeatedly
+                  methodInfo->setOptLevelDowngraded(false);
+                  willUpgrade = true;
+                  }
+               }
+            }
+
+         // if we don't take any recompilation decision, let's see if we can
+         // schedule a compilation from the low priority queue
+         if (!recompile && compInfo && compInfo->getLowPriorityCompQueue().hasLowPriorityRequest() &&
+             compInfo->canProcessLowPriorityRequest())
+            {
+            // wake up the compilation thread
+            compInfo->getCompilationMonitor()->notifyAll();
+            }
+         if (recompile)
+            {
+            // Method is being recompiled because it is truly hot;
+            bodyInfo->setSamplingRecomp();
+            }
+         fe->releaseCompilationLock();
+         if (recompile)
+            {
+            //induceRecompilation(fe, startPC);
+            bool useSampling = (nextOptLevel != scorching && !useProfiling);
+            plan = TR_OptimizationPlan::alloc(nextOptLevel, useProfiling, useSampling);
+            if (plan)
+               {
+               int32_t measuredCpuUtil = crtSampleIntervalCount == 0 ? // scorching interval done?
+                  (globalSamples != 0 ? scorchingSampleInterval * 1000 / globalSamples : 0) :
+                  (globalSamplesInHotWindow != 0 ? hotSampleInterval * 1000 / globalSamplesInHotWindow : 0);
+               plan->setPerceivedCPUUtil(measuredCpuUtil);
+               plan->setIsUpgradeRecompilation(willUpgrade);
+               plan->setDoNotSwitchToProfiling(dontSwitchToProfiling);
+               if (crtSampleIntervalCount == 0 && // scorching compilation decision can be taken
+                   globalSamples <= TR::Options::_relaxedCompilationLimitsSampleThreshold) // FIXME: needs scaling
+                  plan->setRelaxedCompilationLimits(true);
+               if (logSampling)
+                  {
+                  float cpu = measuredCpuUtil / 10.0;
+                  if (useProfiling)
+                     curMsg += sprintf(curMsg, " --> recompile at level %d, profiled CPU=%.1f%%", nextOptLevel, cpu);
+                  else
+                     curMsg += sprintf(curMsg, " --> recompile at level %d CPU=%.1f%%", nextOptLevel, cpu);
+
+                  if (methodInfo->getReasonForRecompilation() == TR_PersistentMethodInfo::RecompDueToThreshold)
+                     {
+                     curMsg += sprintf(curMsg, " scaledThresholds=[%d %d]", scaledScorchingThreshold, scaledHotThreshold);
+                     }
+                  }
+               }
+            else // OOM
+               {
+               if (logSampling)
+                  curMsg += sprintf(curMsg, " --> not recompiled: OOM");
+               }
+            }
+         else if (logSampling)
+            {
+            if (isAlreadyBeingCompiled)
+               curMsg += sprintf(curMsg, " - is already being recompiled");
+            else if (!hotSamplingWindowComplete)
+               curMsg += sprintf(curMsg, " not recompiled, smpl interval not done");
+            else
+               {
+               float measuredCpuUtil = 0.0;
+               if (crtSampleIntervalCount == 0) // scorching interval done
+                  {
+                  if (globalSamples)
+                     measuredCpuUtil = scorchingSampleInterval * 100.0 / globalSamples;
+                  }
+               else
+                  {
+                  if (globalSamplesInHotWindow)
+                     measuredCpuUtil = hotSampleInterval * 100.0 / globalSamplesInHotWindow;
+                  }
+               curMsg += sprintf(curMsg, " not recompiled, CPU=%.1f%% %s scaledThresholds=[%d %d]",
+                  measuredCpuUtil, postponeDecision ? " postpone decision" : "",
+                  scaledScorchingThreshold, scaledHotThreshold);
+               }
+            }
+         }
+      } // endif (bodyInfo)
+
+   if (logSampling)
+      {
+      bool bufferOverflow = ((curMsg - msg) >= MSG_SZ); // check for overflow at runtime
+      if (fe->isLogSamplingSet())
+         {
+         TR_VerboseLog::CriticalSection vlogLock;
+         TR_VerboseLog::writeLine(TR_Vlog_SAMPLING,"%s", msg);
+         if (bufferOverflow)
+            TR_VerboseLog::writeLine(TR_Vlog_SAMPLING,"Sampling line is too big: %d characters", curMsg-msg);
+         }
+      Trc_JIT_Sampling_Detail(getJ9VMThreadFromTR_VM(fe), msg);
+      if (bufferOverflow)
+         Trc_JIT_Sampling_Detail(getJ9VMThreadFromTR_VM(fe), "Sampling line will cause buffer overflow");
+      // check for buffer overflow and write a message
+      }
    return plan;
-   }
-
-TR_OptimizationPlan *
-TR::DefaultCompilationStrategy::processJittedSample(TR_MethodEvent *event)
-   {
-   TR::Options * cmdLineOptions  = TR::Options::getCmdLineOptions();
-   J9Method *j9method            = event->_j9method;
-   J9VMThread *vmThread          = event->_vmThread;
-   J9JITConfig *jitConfig        = vmThread->javaVM->jitConfig;
-   TR::CompilationInfo *compInfo = TR::CompilationInfo::get(jitConfig);
-   TR_J9VMBase * fe              = TR_J9VMBase::get(jitConfig, vmThread);
-
-   ProcessJittedSample pjs(jitConfig, vmThread, compInfo, fe, cmdLineOptions, j9method, event);
-   return pjs.process();
-   }
+}
 
 TR_OptimizationPlan *
 TR::DefaultCompilationStrategy::processHWPSample(TR_MethodEvent *event)
