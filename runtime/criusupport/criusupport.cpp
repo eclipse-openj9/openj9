@@ -279,8 +279,8 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 		char workDirBuf[STRING_BUFFER_SIZE];
 		char *workDirChars = workDirBuf;
 		BOOLEAN isAfterCheckpoint = FALSE;
-		I_64 checkpointNanoTimeMononic = 0;
-		I_64 restoreNanoTimeMononic = 0;
+		I_64 checkpointNanoTimeMonotonic = 0;
+		I_64 restoreNanoTimeMonotonic = 0;
 		U_64 checkpointNanoUTCTime = 0;
 		U_64 restoreNanoUTCTime = 0;
 		UDATA success = 0;
@@ -426,8 +426,8 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 		}
 
 		vm->checkpointState.checkpointRestoreTimeDelta = 0;
-		vm->portLibrary->nanoTimeMononicClockDelta = 0;
-		checkpointNanoTimeMononic = j9time_nano_time();
+		vm->portLibrary->nanoTimeMonotonicClockDelta = 0;
+		checkpointNanoTimeMonotonic = j9time_nano_time();
 		checkpointNanoUTCTime = j9time_current_time_nanos(&success);
 		if (0 == success) {
 			systemReturnCode = errno;
@@ -435,7 +435,7 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 			nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_JCL_CRIU_J9_CURRENT_TIME_NANOS_FAILURE, NULL);
 			goto wakeJavaThreadsWithExclusiveVMAccess;
 		}
-		Trc_CRIU_before_checkpoint(currentThread, checkpointNanoTimeMononic, checkpointNanoUTCTime);
+		Trc_CRIU_before_checkpoint(currentThread, checkpointNanoTimeMonotonic, checkpointNanoUTCTime);
 
 		systemReturnCode = criu_dump();
 		if (systemReturnCode < 0) {
@@ -451,13 +451,13 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 			nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_JCL_CRIU_J9_CURRENT_TIME_NANOS_FAILURE, NULL);
 			goto wakeJavaThreadsWithExclusiveVMAccess;
 		}
-		restoreNanoTimeMononic = j9time_nano_time();
+		restoreNanoTimeMonotonic = j9time_nano_time();
 		/* JVM downtime between checkpoint and restore is calculated with j9time_current_time_nanos()
 		 * which is expected to be accurate in scenarios such as host rebooting, CRIU image moving across timezones.
 		 */
 		vm->checkpointState.checkpointRestoreTimeDelta = (I_64)(restoreNanoUTCTime - checkpointNanoUTCTime);
 		Trc_CRIU_after_checkpoint(currentThread, restoreNanoUTCTime, checkpointNanoUTCTime, vm->checkpointState.checkpointRestoreTimeDelta,
-			restoreNanoTimeMononic, checkpointNanoTimeMononic, vm->checkpointState.checkpointRestoreTimeDelta);
+			restoreNanoTimeMonotonic, checkpointNanoTimeMonotonic, vm->checkpointState.checkpointRestoreTimeDelta);
 		if (vm->checkpointState.checkpointRestoreTimeDelta < 0) {
 			/* A negative value was calculated for checkpointRestoreTimeDelta,
 			 * Trc_CRIU_before_checkpoint & Trc_CRIU_after_checkpoint can be used for further investigation.
@@ -475,7 +475,7 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 		 * if there is no change for j9time_nano_time() start point.
 		 * This value might be negative.
 		 */
-		vm->portLibrary->nanoTimeMononicClockDelta = restoreNanoTimeMononic - checkpointNanoTimeMononic;
+		vm->portLibrary->nanoTimeMonotonicClockDelta = restoreNanoTimeMonotonic - checkpointNanoTimeMonotonic;
 
 		/* We can only end up here if the CRIU restore was successful */
 		isAfterCheckpoint = TRUE;
