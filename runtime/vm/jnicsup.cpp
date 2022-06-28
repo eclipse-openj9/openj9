@@ -2068,7 +2068,7 @@ fail:
 
 	VM_VMAccess::inlineExitVMToJNI(vmThread);
 
-	Trc_VM_JNI_monitorEnter_Entry(vmThread, rc);
+	Trc_VM_JNI_monitorEnter_Exit(vmThread, rc);
 
 	return rc;
 }
@@ -2094,7 +2094,7 @@ monitorExit(JNIEnv* env, jobject obj)
 
 	VM_VMAccess::inlineExitVMToJNI(vmThread);
 
-	Trc_VM_JNI_monitorExit_Entry(vmThread, rc);
+	Trc_VM_JNI_monitorExit_Exit(vmThread, rc);
 
 	return rc;
 }
