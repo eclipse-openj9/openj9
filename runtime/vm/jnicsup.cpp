@@ -2474,8 +2474,23 @@ getModule(JNIEnv *env, jclass clazz)
 static jboolean JNICALL
 isVirtualThread(JNIEnv *env, jobject obj)
 {
-	Assert_VM_unreachable();
-	return JNI_FALSE;
+	jboolean result = JNI_FALSE;
+	J9VMThread *vmThread = (J9VMThread *)env;
+
+	Trc_VM_JNI_isVirtualThread_Entry(vmThread, obj);
+
+	if (NULL != obj) {
+		VM_VMAccess::inlineEnterVMFromJNI(vmThread);
+		j9object_t object = J9_JNI_UNWRAP_REFERENCE(obj);
+		if ((NULL != object) && IS_VIRTUAL_THREAD(vmThread, object)) {
+			result = JNI_TRUE;
+		}
+		VM_VMAccess::inlineExitVMToJNI(vmThread);
+	}
+
+	Trc_VM_JNI_isVirtualThread_Exit(vmThread, result);
+
+	return result;
 }
 #endif /* JAVA_SPEC_VERSION >= 19 */
 
