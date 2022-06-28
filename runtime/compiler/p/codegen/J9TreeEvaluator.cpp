@@ -5562,6 +5562,10 @@ static void genHeapAlloc(TR::Node *node, TR::Instruction *&iCursor, TR_OpaqueCla
 
                iCursor = generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, node, heapTopReg,
                      TR::MemoryReference::createWithDisplacement(cg, metaReg, offsetof(J9VMThread, heapTop), TR::Compiler->om.sizeofReferenceAddress()), iCursor);
+
+               if (needZeroInit)
+                   iCursor = generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, zeroReg, 0, iCursor);
+
                }
 
             } //if(!cg->isDualTLH()) == false
@@ -6294,6 +6298,9 @@ TR::Register *J9::Power::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeG
    bool isConstantLenArrayAlloc = isArrayAlloc && node->getFirstChild()->getOpCode().isLoadConst();
    bool isConstantZeroLenArrayAlloc = isConstantLenArrayAlloc && (node->getFirstChild()->getInt() == 0);
 
+   if (isConstantZeroLenArrayAlloc)
+      needZeroInit = false;
+
    TR_ASSERT(objectSize <= 0 || (objectSize & (TR::Compiler->om.sizeofReferenceAddress() - 1)) == 0, "object size causes an alignment problem");
    if (objectSize < 0 || (objectSize == 0 && !usingTLH))
       doInline = false;
@@ -6439,7 +6446,7 @@ TR::Register *J9::Power::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeG
 
       TR::Instruction *firstInstruction = cg->getAppendInstruction();
 
-      if (!isDualTLH && needZeroInit)
+      if (needZeroInit)
          {
          zeroReg = cg->allocateRegister();
          TR::addDependency(conditions, zeroReg, TR::RealRegister::NoReg, TR_GPR, cg);
@@ -6565,8 +6572,8 @@ TR::Register *J9::Power::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeG
          genInitObjectHeader(node, iCursor, clazz, classReg, resReg, zeroReg, condReg, tmp5Reg, tmp4Reg, packedRegOffs, conditions, needZeroInit, cg);
          }
 
-      //Do not need zero init if using dualTLH now.
-      if (!isDualTLH && needZeroInit && (!isConstantZeroLenArrayAlloc))
+      //Do not need zero init if using dualTLH now, unless DisableBatchClear is set
+      if (needZeroInit && (!isConstantZeroLenArrayAlloc))
          {
          // Perform initialization if it is needed:
          //   1) Initialize certain array elements individually. This depends on the optimizer
@@ -6902,7 +6909,7 @@ TR::Register *J9::Power::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeG
       cg->stopUsingRegister(tmp7Reg);
       cg->stopUsingRegister(resReg);
       cg->stopUsingRegister(dataSizeReg);
-      if (!isDualTLH && needZeroInit)
+      if (needZeroInit)
          cg->stopUsingRegister(zeroReg);
       cg->decReferenceCount(firstChild);
       if (opCode == TR::New)
