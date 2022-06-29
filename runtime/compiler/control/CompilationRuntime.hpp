@@ -1236,6 +1236,12 @@ public:
    void  addJITServerSslCert(const std::string &cert) { _sslCerts.push_back(cert); }
    const std::string &getJITServerSslRootCerts() const { return _sslRootCerts; }
    void  setJITServerSslRootCerts(const std::string &cert) { _sslRootCerts = cert; }
+   const PersistentVector<std::string> &getJITServerMetricsSslKeys() const { return _metricsSslKeys; }
+   void  addJITServerMetricsSslKey(const std::string &key) { _metricsSslKeys.push_back(key); }
+   const PersistentVector<std::string> &getJITServerMetricsSslCerts() const { return _metricsSslCerts; }
+   void  addJITServerMetricsSslCert(const std::string &cert) { _metricsSslCerts.push_back(cert); }
+   bool  useSSL() const { return (_sslKeys.size() || _sslCerts.size() || _sslRootCerts.size() ||
+                                  _metricsSslKeys.size() || _metricsSslCerts.size()); }
 
    void setCompThreadActivationPolicy(JITServer::CompThreadActivationPolicy newPolicy) { _activationPolicy = newPolicy; }
    JITServer::CompThreadActivationPolicy getCompThreadActivationPolicy() const { return _activationPolicy; }
@@ -1465,6 +1471,8 @@ private:
    std::string                   _sslRootCerts;
    PersistentVector<std::string> _sslKeys;
    PersistentVector<std::string> _sslCerts;
+   PersistentVector<std::string> _metricsSslKeys;
+   PersistentVector<std::string> _metricsSslCerts;
    JITServer::CompThreadActivationPolicy _activationPolicy;
    JITServerSharedROMClassCache *_sharedROMClassCache;
    JITServerAOTCacheMap *_JITServerAOTCacheMap;

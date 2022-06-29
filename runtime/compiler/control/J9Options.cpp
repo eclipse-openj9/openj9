@@ -2018,6 +2018,33 @@ bool J9::Options::preProcessJitServer(J9JavaVM *vm, J9JITConfig *jitConfig)
                if (ret == OPTION_OK)
                   compInfo->getPersistentInfo()->setJITServerMetricsPort(port);
                }
+
+            // For optional metrics server encryption. Key and cert have to be set as a pair.
+            const char *xxJITServerMetricsSSLKeyOption = "-XX:JITServerMetricsSSLKey=";
+            const char *xxJITServerMetricsSSLCertOption = "-XX:JITServerMetricsSSLCert=";
+            int32_t xxJITServerMetricsSSLKeyArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxJITServerMetricsSSLKeyOption, 0);
+            int32_t xxJITServerMetricsSSLCertArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxJITServerMetricsSSLCertOption, 0);
+
+            if ((xxJITServerMetricsSSLKeyArgIndex >= 0) && (xxJITServerMetricsSSLCertArgIndex >= 0))
+               {
+               char *keyFileName = NULL;
+               char *certFileName = NULL;
+               GET_OPTION_VALUE(xxJITServerMetricsSSLKeyArgIndex, '=', &keyFileName);
+               GET_OPTION_VALUE(xxJITServerMetricsSSLCertArgIndex, '=', &certFileName);
+               std::string key = readFileToString(keyFileName);
+               std::string cert = readFileToString(certFileName);
+
+               if (!key.empty() && !cert.empty())
+                  {
+                  compInfo->addJITServerMetricsSslKey(key);
+                  compInfo->addJITServerMetricsSslCert(cert);
+                  }
+               else
+                  {
+                  j9tty_printf(PORTLIB, "Fatal Error: The metrics server SSL key and cert cannot be empty\n");
+                  return false;
+                  }
+               }
             }
          else
             {
