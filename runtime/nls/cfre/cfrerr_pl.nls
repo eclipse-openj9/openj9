@@ -1455,14 +1455,14 @@ J9NLS_CFR_ERR_INCORRECT_FLAG_FOUND_ON_VALUE_CLASS.system_action=The JVM will thr
 J9NLS_CFR_ERR_INCORRECT_FLAG_FOUND_ON_VALUE_CLASS.user_response=Contact the provider of the class file for a corrected version.
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_PERMITS_VALUE_ON_FINAL_CLASS=Klasa ma ustawione zar\u00f3wno ACC_FINAL, jak i ACC_PERMITS_VALUE.
+J9NLS_CFR_ERR_PERMITS_VALUE_ON_FINAL_CLASS=Klasa ma ustawion\u0105 zar\u00f3wno flag\u0119 ACC_FINAL, jak i ACC_PERMITS_VALUE.
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_PERMITS_VALUE_ON_FINAL_CLASS.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_PERMITS_VALUE_ON_FINAL_CLASS.system_action=The JVM will throw a verification or classloading related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_PERMITS_VALUE_ON_FINAL_CLASS.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_PERMITS_VALUE_ON_NON_ABSTRACT_CLASS=Flaga dost\u0119pu ACC_PERMITS_VALUE nie powinna zosta\u0107 ustawiona w klasie nieabstrakcyjnej.
+J9NLS_CFR_ERR_PERMITS_VALUE_ON_NON_ABSTRACT_CLASS=Flaga dost\u0119pu ACC_PERMITS_VALUE nie powinna by\u0107 ustawiona w klasie nieabstrakcyjnej.
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_PERMITS_VALUE_ON_NON_ABSTRACT_CLASS.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_PERMITS_VALUE_ON_NON_ABSTRACT_CLASS.system_action=The JVM will throw a verification or classloading related exception such as java.lang.ClassFormatError.
