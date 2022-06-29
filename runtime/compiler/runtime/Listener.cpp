@@ -187,7 +187,6 @@ TR_Listener::serveRemoteCompilationRequests(BaseCompileDispatcher *compiler)
    SSL_CTX *sslCtx = NULL;
    if (JITServer::CommunicationStream::useSSL())
       {
-      JITServer::CommunicationStream::initSSL();
       sslCtx = createSSLContext(compInfo);
       }
 
@@ -311,7 +310,6 @@ TR_Listener::serveRemoteCompilationRequests(BaseCompileDispatcher *compiler)
    if (sslCtx)
       {
       (*OSSL_CTX_free)(sslCtx);
-      (*OEVP_cleanup)();
       }
    }
 
