@@ -396,7 +396,7 @@ J9NLS_VM_ERROR_FAILED_TO_INITIALIZE_DLL.user_response=Contact your service repre
 # END NON-TRANSLATABLE
 
 # JVMRI and -Xtrace are not translatable.
-J9NLS_VM_JVMRI_REQUESTED_WITHOUT_TRACE=JVMRI requer um mecanismo de rastreio: execute com o sinalizador -Xtrace
+J9NLS_VM_JVMRI_REQUESTED_WITHOUT_TRACE=JVMRI requer um mecanismo de rastreio: execute com a sinaliza\u00e7\u00e3o -Xtrace
 # START NON-TRANSLATABLE
 J9NLS_VM_JVMRI_REQUESTED_WITHOUT_TRACE.explanation=The requested JVMRI environment requires that tracing be enabled.
 J9NLS_VM_JVMRI_REQUESTED_WITHOUT_TRACE.system_action=The requested JVMRI environment will not be returned via the GetEnv() JNI function.
