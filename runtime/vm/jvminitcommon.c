@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -127,23 +127,30 @@ createLoadInfo(J9PortLibrary *portLibrary, J9Pool *aPool, const char *name, U_32
 }
 
 /**
- * This method indicates if the requested jniVersion is valid or not
+ * This method indicates if the requested jniVersion is valid or not.
  * @param jniVersion the version to be checked
  * @returns true if the version is valid
  */
 UDATA
 jniVersionIsValid(UDATA jniVersion)
 {
-	return (jniVersion == JNI_VERSION_1_1)
-		|| (jniVersion == JNI_VERSION_1_2)
-		|| (jniVersion == JNI_VERSION_1_4)
-		|| (jniVersion == JNI_VERSION_1_6)
-		|| (jniVersion == JNI_VERSION_1_8)
+	switch (jniVersion) {
+	case JNI_VERSION_1_1:
+	case JNI_VERSION_1_2:
+	case JNI_VERSION_1_4:
+	case JNI_VERSION_1_6:
+	case JNI_VERSION_1_8:
 #if JAVA_SPEC_VERSION >= 9
-		|| (jniVersion == JNI_VERSION_9)
+	case JNI_VERSION_9:
 #endif /* JAVA_SPEC_VERSION >= 9 */
 #if JAVA_SPEC_VERSION >= 10
-		|| (jniVersion == JNI_VERSION_10)
+	case JNI_VERSION_10:
 #endif /* JAVA_SPEC_VERSION >= 10 */
-		;
+#if JAVA_SPEC_VERSION >= 19
+	case JNI_VERSION_19:
+#endif /* JAVA_SPEC_VERSION >= 19 */
+		return JNI_TRUE;
+	default:
+		return JNI_FALSE;
+	}
 }
