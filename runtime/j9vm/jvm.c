@@ -2512,7 +2512,8 @@ JNI_GetCreatedJavaVMs(JavaVM **vmBuf, jsize bufLen, jsize *nVMs)
  *	DLL: jvm
  */
 
-jint JNICALL JNI_GetDefaultJavaVMInitArgs(void *vm_args) {
+jint JNICALL JNI_GetDefaultJavaVMInitArgs(void *vm_args)
+{
 	jint requestedVersion = ((JavaVMInitArgs *)vm_args)->version;
 
 	switch (requestedVersion) {
@@ -2531,6 +2532,9 @@ jint JNICALL JNI_GetDefaultJavaVMInitArgs(void *vm_args) {
 #if JAVA_SPEC_VERSION >= 10
 	case JNI_VERSION_10:
 #endif /* JAVA_SPEC_VERSION >= 10 */
+#if JAVA_SPEC_VERSION >= 19
+	case JNI_VERSION_19:
+#endif /* JAVA_SPEC_VERSION >= 19 */
 		return JNI_OK;
 	}
 
