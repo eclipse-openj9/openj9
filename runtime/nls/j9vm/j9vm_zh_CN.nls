@@ -1019,7 +1019,7 @@ J9NLS_VM_XLOG_HELP06.user_response=
 # END NON-TRANSLATABLE
 
 # -Xsyslog:error is not translatable
-J9NLS_VM_XLOG_HELP07= -Xsyslog:error             \u8bb0\u5f55 JVM \u9519\u8bef\u6d88\u606f\u3002\u7f3a\u7701\u60c5\u51b5\u4e0b\u4f1a\u6253\u5f00\u6b64\u53c2\u6570\u3002
+J9NLS_VM_XLOG_HELP07= -Xsyslog:error             \u8bb0\u5f55 JVM \u9519\u8bef\u6d88\u606f\u3002\u7f3a\u7701\u60c5\u51b5\u4e0b\u4f1a\u542f\u7528\u6b64\u9009\u9879\u3002
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP07.explanation=NOTAG
 J9NLS_VM_XLOG_HELP07.system_action=
