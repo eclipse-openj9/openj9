@@ -223,6 +223,14 @@ if(NOT JAVA_SPEC_VERSION LESS 16)
 	)
 endif()
 
+if(NOT JAVA_SPEC_VERSION LESS 19)
+	# sources for Java 19+
+	target_sources(jclse
+		PRIVATE
+			${CMAKE_CURRENT_SOURCE_DIR}/common/jdk_internal_vm_Continuation.cpp
+	)
+endif()
+
 include(exports.cmake)
 
 target_enable_ddr(jclse)
