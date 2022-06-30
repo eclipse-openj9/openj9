@@ -72,4 +72,16 @@ public final class InternalCRIUSupport {
 		}
 		return checkpointAllowed;
 	}
+
+	/**
+	 *
+	 * Executes a runnable in NotCheckpointSafe mode. This means that while the
+	 * runnable frame is on the stack, a checkpoint cannot be taken.
+	 *
+	 * @param run Runnable
+	 */
+	@NotCheckpointSafe
+	public static void runRunnableInNotCheckpointSafeMode(Runnable run) {
+		run.run();
+	}
 }

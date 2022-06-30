@@ -4100,6 +4100,7 @@ typedef struct J9CRIUCheckpointState {
 	 * Only supports one Checkpoint, could be restored multiple times.
 	 */
 	I_64 checkpointRestoreTimeDelta;
+	UDATA maxRetryForNotCheckpointSafe;
 } J9CRIUCheckpointState;
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
