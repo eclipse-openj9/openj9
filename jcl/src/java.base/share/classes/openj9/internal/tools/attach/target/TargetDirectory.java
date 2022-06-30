@@ -1,7 +1,7 @@
-/*[INCLUDE-IF Sidecar18-SE]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 package openj9.internal.tools.attach.target;
 /*******************************************************************************
- * Copyright (c) 2009, 2021 IBM Corp. and others
+ * Copyright (c) 2009, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -40,9 +40,9 @@ public final class TargetDirectory {
 	static final int ADVERTISEMENT_FILE_PERMISSIONS = 0600;
 	static final String ATTACH_NOTIFICATION_SYNC_FILENAME = "attachNotificationSync"; //$NON-NLS-1$
 	/**
-	 * All users must have write access in order to get an exclusive (i.e write) lock on the file.
+	 * All group users must have write access in order to get an exclusive (i.e write) lock on the file.
 	 */
-	public static final int SYNC_FILE_PERMISSIONS = 0666; 
+	public static final int SYNC_FILE_PERMISSIONS = 0660;
 	static final int TARGET_DIRECTORY_PERMISSIONS = 01711;
 
 	private volatile static  File targetDirectoryFileObject;

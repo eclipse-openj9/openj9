@@ -1,6 +1,6 @@
-/*[INCLUDE-IF Sidecar18-SE]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 /*******************************************************************************
- * Copyright (c) 2009, 2021 IBM Corp. and others
+ * Copyright (c) 2009, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -39,7 +39,7 @@ public abstract class CommonDirectory {
 	private static final String ATTACH_LOCK = "_attachlock"; //$NON-NLS-1$
 	private static final String COM_IBM_TOOLS_ATTACH_DIRECTORY = "com.ibm.tools.attach.directory"; //$NON-NLS-1$
 	private static final int COMMON_DIRECTORY_PERMISSIONS = 01777; /* allow anyone to create directories, but only owner can delete */
-	private static final int COMMON_LOCK_FILE_PERMISSIONS = 0666; /* allow anyone to create and use the file */
+	private static final int COMMON_LOCK_FILE_PERMISSIONS = 0660; /* allow group users to create and use the file */
 	private static final String CONTROLLER_LOCKFILE = "_controller"; //$NON-NLS-1$
 	static final String CONTROLLER_NOTIFIER = "_notifier"; //$NON-NLS-1$
 	static final int SEMAPHORE_OKAY = 0;
