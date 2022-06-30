@@ -22,9 +22,9 @@
 
 #include "fastJNI.h"
 #include "j9protos.h"
-#include "VMHelpers.hpp"
 #include "j9vmnls.h"
 #include "AtomicSupport.hpp"
+#include "VMHelpers.hpp"
 
 extern "C" {
 
@@ -45,6 +45,18 @@ Fast_java_lang_Thread_currentThread(J9VMThread *currentThread)
 	return currentThread->threadObject;
 }
 
+#if JAVA_SPEC_VERSION >= 19
+/* java.lang.Thread: native void setCurrentThread(Thread thread); */
+void JNICALL
+Fast_java_lang_Thread_setCurrentThread(J9VMThread *currentThread, j9object_t receiverObject, j9object_t threadObject)
+{
+	J9VMThread *targetThread = J9VMJAVALANGTHREAD_THREADREF(currentThread, receiverObject);
+	/* This is a package private method, currently the receiver object is Thread.currentCarrierThread()
+	 * which is assumed alive, hence targetThread can't be null.
+	 */
+	targetThread->threadObject = threadObject;
+}
+#endif /* JAVA_SPEC_VERSION >= 19 */
 
 /* java.lang.Thread: private static native boolean interruptedImpl(); */
 jboolean JNICALL
@@ -103,6 +115,11 @@ J9_FAST_JNI_METHOD_TABLE(java_lang_Thread)
 	J9_FAST_JNI_METHOD("currentThread", "()Ljava/lang/Thread;", Fast_java_lang_Thread_currentThread,
 		J9_FAST_JNI_RETAIN_VM_ACCESS | J9_FAST_JNI_NOT_GC_POINT | J9_FAST_JNI_NO_NATIVE_METHOD_FRAME | J9_FAST_JNI_NO_EXCEPTION_THROW |
 		J9_FAST_JNI_NO_SPECIAL_TEAR_DOWN | J9_FAST_JNI_DO_NOT_WRAP_OBJECTS | J9_FAST_JNI_DO_NOT_PASS_RECEIVER)
+#if JAVA_SPEC_VERSION >= 19
+	J9_FAST_JNI_METHOD("setCurrentThread", "(Ljava/lang/Thread;)V", Fast_java_lang_Thread_setCurrentThread,
+		J9_FAST_JNI_RETAIN_VM_ACCESS | J9_FAST_JNI_NOT_GC_POINT | J9_FAST_JNI_NO_NATIVE_METHOD_FRAME | J9_FAST_JNI_NO_EXCEPTION_THROW |
+		J9_FAST_JNI_NO_SPECIAL_TEAR_DOWN | J9_FAST_JNI_DO_NOT_WRAP_OBJECTS )
+#endif /* JAVA_SPEC_VERSION >= 19 */
 	J9_FAST_JNI_METHOD("interruptedImpl", "()Z", Fast_java_lang_Thread_interruptedImpl,
 		INTERRUPTED_FLAGS)
 	J9_FAST_JNI_METHOD("isInterruptedImpl", "()Z", Fast_java_lang_Thread_isInterruptedImpl,

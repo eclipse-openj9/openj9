@@ -674,7 +674,6 @@ if(NOT JAVA_SPEC_VERSION LESS 19)
 		Java_java_lang_Thread_extentLocalCache
 		Java_java_lang_Thread_getNextThreadIdOffset
 		Java_java_lang_Thread_getThreads
-		Java_java_lang_Thread_setCurrentThread
 		Java_java_lang_Thread_setExtentLocalCache
 		Java_java_lang_Thread_registerNatives
 	)

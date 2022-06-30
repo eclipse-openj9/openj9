@@ -2610,13 +2610,30 @@ done:
 		_sp += (slotCount - 1);
 	}
 
-	/* java.lang.Thread: public static native Thread _currentThread(); */
+	/* java.lang.Thread: public static native Thread currentThread(); */
 	VMINLINE VM_BytecodeAction
 	inlThreadCurrentThread(REGISTER_ARGS_LIST)
 	{
 		returnObjectFromINL(REGISTER_ARGS, _currentThread->threadObject, 0);
 		return EXECUTE_BYTECODE;
 	}
+
+#if JAVA_SPEC_VERSION >= 19
+	/* java.lang.Thread: native void setCurrentThread(Thread thread); */
+	VMINLINE VM_BytecodeAction
+	inlThreadSetCurrentThread(REGISTER_ARGS_LIST)
+	{
+		j9object_t thread = ((j9object_t*)_sp)[0];
+		j9object_t receiverObject = ((j9object_t*)_sp)[1];
+		J9VMThread *targetThread = J9VMJAVALANGTHREAD_THREADREF(_currentThread, receiverObject);
+		/* This is a package private method, currently the receiver object is Thread.currentCarrierThread()
+		 * which is assumed alive, hence targetThread can't be null.
+		 */
+		targetThread->threadObject = thread;
+		returnVoidFromINL(REGISTER_ARGS, 2);
+		return EXECUTE_BYTECODE;
+	}
+#endif /* JAVA_SPEC_VERSION >= 19 */
 
 	/* java.lang.Thread: public static native Thread onSpinWait(); */
 	VMINLINE VM_BytecodeAction
@@ -9754,6 +9771,9 @@ public:
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_CLASS_GET_MODIFIERS_IMPL),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_CLASS_GET_COMPONENT_TYPE),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_THREAD_CURRENT_THREAD),
+#if JAVA_SPEC_VERSION >= 19
+		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_THREAD_SET_CURRENT_THREAD),
+#endif /* JAVA_SPEC_VERSION >= 19 */
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_STRING_INTERN),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_SYSTEM_ARRAYCOPY),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_SYSTEM_CURRENT_TIME_MILLIS),
@@ -10235,6 +10255,10 @@ runMethod: {
 		goto i2j;
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_THREAD_CURRENT_THREAD):
 		PERFORM_ACTION(inlThreadCurrentThread(REGISTER_ARGS));
+#if JAVA_SPEC_VERSION >= 19
+	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_THREAD_SET_CURRENT_THREAD):
+		PERFORM_ACTION(inlThreadSetCurrentThread(REGISTER_ARGS));
+#endif /* JAVA_SPEC_VERSION >= 19 */
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_OBJECT_GET_CLASS):
 		PERFORM_ACTION(inlObjectGetClass(REGISTER_ARGS));
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_CLASS_IS_ASSIGNABLE_FROM):
