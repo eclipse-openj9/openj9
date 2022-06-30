@@ -410,16 +410,6 @@ Java_java_lang_Thread_currentCarrierThread(JNIEnv *env, jclass clazz)
 	return result;
 }
 
-/* native void setCurrentThread(Thread thread); */
-void JNICALL
-Java_java_lang_Thread_setCurrentThread(JNIEnv *env, jclass clazz, jobject thread)
-{
-	J9VMThread *currentThread = (J9VMThread*)env;
-	VM_VMAccess::inlineEnterVMFromJNI(currentThread);
-	currentThread->threadObject = J9_JNI_UNWRAP_REFERENCE(thread);
-	VM_VMAccess::inlineExitVMToJNI(currentThread);
-}
-
 /* static native Object[] extentLocalCache(); */
 jobjectArray JNICALL
 Java_java_lang_Thread_extentLocalCache(JNIEnv *env, jclass clazz)
