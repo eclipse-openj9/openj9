@@ -1449,8 +1449,8 @@ TR::Node *TR_VectorAPIExpansion::blendIntrinsicHandler(TR_VectorAPIExpansion *op
                         4/*first operand*/, 3, Other);
    }
 
-TR::Node *TR_VectorAPIExpansion::broadcastCoercedIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node,
-                                                        TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode)
+TR::Node *TR_VectorAPIExpansion::fromBitsCoercedIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node,
+                                                                 TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode)
    {
    TR::Compilation *comp = opt->comp();
 
@@ -1470,7 +1470,7 @@ TR::Node *TR_VectorAPIExpansion::broadcastCoercedIntrinsicHandler(TR_VectorAPIEx
       }
 
    if (opt->_trace)
-      traceMsg(comp, "broadcastCoercedIntrinsicHandler for node %p\n", node);
+      traceMsg(comp, "fromBitsCoercedIntrinsicHandler for node %p\n", node);
 
    int32_t elementSize = OMR::DataType::getSize(elementType);
    TR::Node *valueToBroadcast = node->getChild(3);
@@ -1521,7 +1521,7 @@ TR::Node *TR_VectorAPIExpansion::broadcastCoercedIntrinsicHandler(TR_VectorAPIEx
 
       if (TR::Options::getVerboseOption(TR_VerboseVectorAPI))
          {
-         TR_VerboseLog::writeLine(TR_Vlog_VECTOR_API, "Scalarized broadcast for %s in %s", TR::DataType::getName(elementType), comp->signature());
+         TR_VerboseLog::writeLine(TR_Vlog_VECTOR_API, "Scalarized fromBitsCoerced for %s in %s", TR::DataType::getName(elementType), comp->signature());
          }
       }
    else if (mode == doVectorization)
@@ -1784,8 +1784,8 @@ TR_VectorAPIExpansion::methodTable[] =
    {storeIntrinsicHandler, TR::NoType, Unknown, {Unknown, elementType, numLanes, Unknown, Unknown, Vector}}, // jdk_internal_vm_vector_VectorSupport_store
    {binaryIntrinsicHandler, TR::NoType, Vector,  {Unknown, Unknown, Unknown, elementType, numLanes, Vector, Vector, Mask}},  // jdk_internal_vm_vector_VectorSupport_binaryOp
    {blendIntrinsicHandler, TR::NoType, Vector, {Unknown, Unknown, elementType, numLanes, Vector, Vector, Vector, Unknown}}, // jdk_internal_vm_vector_VectorSupport_blend
-   {broadcastCoercedIntrinsicHandler, TR::NoType, Vector, {Unknown, elementType, numLanes, Unknown, Unknown, Unknown}},  // jdk_internal_vm_vector_VectorSupport_broadcastCoerced
    {compareIntrinsicHandler, TR::NoType, Vector, {Unknown, Unknown, Unknown, elementType, numLanes, Vector, Vector, Mask}}, // jdk_internal_vm_vector_VectorSupport_compare
+   {fromBitsCoercedIntrinsicHandler, TR::NoType, Vector, {Unknown, elementType, numLanes, Unknown, Unknown, Unknown}},  // jdk_internal_vm_vector_VectorSupport_fromBitsCoerced
    {reductionCoercedIntrinsicHandler, TR::NoType, Unknown, {Unknown, Unknown, Unknown, elementType, numLanes, Vector, Mask}},  // jdk_internal_vm_vector_VectorSupport_reductionCoerced
    {ternaryIntrinsicHandler, TR::NoType, Vector, {Unknown, Unknown, Unknown, elementType, numLanes, Vector, Vector, Vector, Mask}},  // jdk_internal_vm_vector_VectorSupport_ternaryOp
    {unaryIntrinsicHandler, TR::NoType, Vector,   {Unknown, Unknown, Unknown, elementType, numLanes, Vector, Mask}},  // jdk_internal_vm_vector_VectorSupport_unaryOp
