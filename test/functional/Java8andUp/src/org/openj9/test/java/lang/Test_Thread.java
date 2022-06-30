@@ -33,6 +33,7 @@ public class Test_Thread {
 	static class SimpleThread implements Runnable {
 		int delay;
 
+		@Override
 		public void run() {
 			try {
 				synchronized (this) {
@@ -42,18 +43,17 @@ public class Test_Thread {
 			} catch (InterruptedException e) {
 				return;
 			}
-
 		}
 
 		public SimpleThread(int d) {
-			if (d >= 0)
-				delay = d;
+			delay = Math.max(d, 0);
 		}
 	}
 
 	static class YieldThread implements Runnable {
 		volatile int delay;
 
+		@Override
 		public void run() {
 			int x = 0;
 			while (true) {
@@ -62,8 +62,7 @@ public class Test_Thread {
 		}
 
 		public YieldThread(int d) {
-			if (d >= 0)
-				delay = d;
+			delay = Math.max(d, 0);
 		}
 	}
 
@@ -71,6 +70,7 @@ public class Test_Thread {
 		Thread parent;
 		volatile int checkVal = -1;
 
+		@Override
 		public void run() {
 			try {
 				synchronized (this) {
@@ -194,20 +194,20 @@ public class Test_Thread {
 		tg.destroy();
 
 		Runnable r = new Runnable() {
+			@Override
 			public void run() {
 			}
 		};
 
-		ThreadGroup foo = null;
+		ThreadGroup foo = new ThreadGroup("foo");
 		try {
-			new Thread(foo = new ThreadGroup("foo"), r, null);
+			new Thread(foo, r, null);
 			// Should not get here
 			AssertJUnit.assertTrue("Null cannot be accepted as Thread name", false);
 		} catch (NullPointerException npe) {
-			AssertJUnit.assertTrue("Null cannot be accepted as Thread name", true);
+			// expected: null cannot be accepted as thread name
 			foo.destroy();
 		}
-
 	}
 
 	/**
@@ -287,6 +287,7 @@ public class Test_Thread {
 				return enumerateCount;
 			}
 
+			@Override
 			public synchronized void run() {
 				try {
 					this.notify();
@@ -421,6 +422,7 @@ public class Test_Thread {
 		/* [PR CMVC 88976] the Thread is alive until cleanup() is called */
 		final Object lock = new Object();
 		Thread t = new Thread() {
+			@Override
 			public void run() {
 				synchronized (lock) {
 					lock.notifyAll();
@@ -451,6 +453,7 @@ public class Test_Thread {
 			Thread parent;
 			boolean sync;
 
+			@Override
 			public void run() {
 				if (sync) {
 					synchronized (lock) {
@@ -552,11 +555,14 @@ public class Test_Thread {
 		class SpinThread implements Runnable {
 			public volatile boolean done = false;
 
+			@Override
 			public void run() {
-				while (!Thread.currentThread().isInterrupted())
-					;
-				while (!done)
-					;
+				while (!Thread.currentThread().isInterrupted()) {
+					/* wait to be interrupted */
+				}
+				while (!done) {
+					/* wait to be told we're done */
+				}
 			}
 		}
 
@@ -583,12 +589,8 @@ public class Test_Thread {
 		SimpleThread simple;
 		try {
 			st = new Thread(simple = new SimpleThread(100));
-			AssertJUnit.assertTrue("Thread is alive", !st.isAlive()); // cause isAlive() to
-			// be compiled by
-			// the jit, as it
-			// must be called
-			// within 100ms
-			// below
+			AssertJUnit.assertTrue("Thread is alive", !st.isAlive()); // cause isAlive()
+			// to be compiled by the jit, as it must be called within 100ms below
 			synchronized (simple) {
 				st.start();
 				simple.wait();
@@ -615,12 +617,8 @@ public class Test_Thread {
 		SimpleThread simple;
 		try {
 			st = new Thread(simple = new SimpleThread(1000), "SimpleThread12");
-			AssertJUnit.assertTrue("Thread is alive", !st.isAlive()); // cause isAlive() to
-			// be compiled by
-			// the jit, as it
-			// must be called
-			// within 100ms
-			// below
+			AssertJUnit.assertTrue("Thread is alive", !st.isAlive()); // cause isAlive()
+			// to be compiled by the jit, as it must be called within 100ms below
 			synchronized (simple) {
 				st.start();
 				simple.wait();
@@ -648,6 +646,7 @@ public class Test_Thread {
 		final Object lock = new Object();
 		final Thread main = Thread.currentThread();
 		Thread killer = new Thread(new Runnable() {
+			@Override
 			public void run() {
 				try {
 					synchronized (lock) {
@@ -680,9 +679,9 @@ public class Test_Thread {
 	 */
 	@Test
 	public void test_join3() {
-		SimpleThread simple;
 		try {
-			Thread t = new Thread(simple = new SimpleThread(3000), "Squawk1");
+			SimpleThread simple = new SimpleThread(60 * 1000);
+			Thread t = new Thread(simple, "Squawk1");
 			synchronized (simple) {
 				t.start();
 				simple.wait();
@@ -690,8 +689,9 @@ public class Test_Thread {
 			long firstRead = System.currentTimeMillis();
 			t.join(100, 999999);
 			long secondRead = System.currentTimeMillis();
-			AssertJUnit.assertTrue("Did not join by appropriate time: " + secondRead + "-" + firstRead + "="
-					+ (secondRead - firstRead), secondRead - firstRead >= 100);
+			long delta = secondRead - firstRead;
+			AssertJUnit.assertTrue("Did not join by appropriate time: " + secondRead + "-" + firstRead + "=" + delta,
+					delta >= 100);
 			AssertJUnit.assertTrue("Joined thread is not alive", t.isAlive());
 			t.interrupt();
 		} catch (Exception e) {
@@ -701,6 +701,7 @@ public class Test_Thread {
 		final Object lock = new Object();
 		final Thread main = Thread.currentThread();
 		Thread killer = new Thread(new Runnable() {
+			@Override
 			public void run() {
 				try {
 					synchronized (lock) {
@@ -767,6 +768,7 @@ public class Test_Thread {
 		class RunThread implements Runnable {
 			boolean didThreadRun = false;
 
+			@Override
 			public void run() {
 				didThreadRun = true;
 			}
@@ -783,7 +785,7 @@ public class Test_Thread {
 			AssertJUnit.assertTrue("Thread did not run", rt.didThreadRun);
 			t.join();
 		} catch (InterruptedException e) {
-			AssertJUnit.assertTrue("Joined thread was interrupted", true);
+			// expected: joined thread was interrupted
 		}
 		AssertJUnit.assertTrue("Joined thread is still alive", !t.isAlive());
 	}
@@ -811,8 +813,7 @@ public class Test_Thread {
 			st.setName(null);
 			AssertJUnit.assertTrue("Null should not be accepted as a valid name", false);
 		} catch (NullPointerException e) {
-			// success
-			AssertJUnit.assertTrue("Null should not be accepted as a valid name", true);
+			// expected: null should not be accepted as a valid name
 		}
 		st.start();
 	}
@@ -863,8 +864,9 @@ public class Test_Thread {
 			/* [PR CMVC 133063] timing related test failure */
 			for (int i = 0; i < 5; i++) {
 				Thread.sleep(150);
-				if (orgval != t.getCheckVal())
+				if (orgval != t.getCheckVal()) {
 					break;
+				}
 			}
 			AssertJUnit.assertTrue("Thread is not running2", orgval != t.getCheckVal());
 			ct.interrupt();
@@ -897,7 +899,7 @@ public class Test_Thread {
 				} catch (IllegalThreadStateException e) {
 					/* IllegalThreadStateException is expected
 					 *
-					 *  This thread's group should only have this thread as child since it is alive and still running.
+					 * This thread's group should only have this thread as child since it is alive and still running.
 					 */
 					if (myGroup.activeCount() != 1) {
 						testResult = "This running thread's thread group does not have one child which should be this thread";
@@ -931,13 +933,14 @@ public class Test_Thread {
 	public void test_start_WeakReference() {
 		/* [PR CVMC 118827] references are not removed in dead threads */
 		Object o = new Object();
-		final WeakReference ref = new WeakReference(o);
+		final WeakReference<Object> ref = new WeakReference<>(o);
 		Thread t = new Thread(new Runnable() {
 			// If Thread.runnable isn't cleared, "save" holds a reference
 			Object save;
 			ThreadLocal tl = new ThreadLocal();
 			InheritableThreadLocal itl = new InheritableThreadLocal();
 
+			@Override
 			public void run() {
 				save = ref.get();
 				tl.set(save);
@@ -968,7 +971,6 @@ public class Test_Thread {
 				st.start();
 				r.wait();
 			}
-
 		} catch (InterruptedException e) {
 			Assert.fail("Unexpected interrupt received", e);
 		}
@@ -997,6 +999,7 @@ public class Test_Thread {
 		class StopBeforeStartThread extends Thread {
 			public boolean failed = false;
 
+			@Override
 			public void run() {
 				synchronized (this) {
 					failed = true;
@@ -1051,6 +1054,7 @@ public class Test_Thread {
 		 */
 		final Object notify = new Object();
 		Thread t1 = new Thread(new Runnable() {
+			@Override
 			public void run() {
 				synchronized (notify) {
 					notify.notify();
@@ -1098,18 +1102,21 @@ public class Test_Thread {
 	@AfterMethod
 	protected void tearDown() {
 		try {
-			if (st != null)
+			if (st != null) {
 				st.interrupt();
+			}
 		} catch (Exception e) {
 		}
 		try {
-			if (spinner != null)
+			if (spinner != null) {
 				spinner.interrupt();
+			}
 		} catch (Exception e) {
 		}
 		try {
-			if (ct != null)
+			if (ct != null) {
 				ct.interrupt();
+			}
 		} catch (Exception e) {
 		}
 
@@ -1121,13 +1128,14 @@ public class Test_Thread {
 		} catch (Exception e) {
 		}
 
-		/*Make sure that the current thread is not interrupted. If it is, set it back to false.*/
-		/*Otherwise any call to join, wait, sleep from the current thread throws either InterruptedException or IllegalMonitorStateException*/
+		/* Make sure that the current thread is not interrupted. If it is, set it back to false. */
+		/* Otherwise any call to join, wait, sleep from the current thread throws either
+		 * InterruptedException or IllegalMonitorStateException. */
 		if (Thread.currentThread().isInterrupted()) {
 			try {
 				Thread.currentThread().join(10);
 			} catch (InterruptedException e) {
-				//If we are here, current threads interrupted status is set to false.
+				// If we are here, current threads interrupted status is set to false.
 			}
 		}
 	}
