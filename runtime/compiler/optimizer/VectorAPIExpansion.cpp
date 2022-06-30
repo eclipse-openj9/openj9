@@ -1725,13 +1725,38 @@ TR::Node *TR_VectorAPIExpansion::transformNary(TR_VectorAPIExpansion *opt, TR::T
       if (opCodeType == Reduction && elementType != TR::Int64)
          {
          // reductionCoersed intrinsic returns Long but reduction opcode has vector element type
-         TR::ILOpCodes convOpCode = TR::ILOpCode::getDataTypeConversion(elementType, TR::Int64);
+         TR::ILOpCodes convOpCode = TR::BadILOp;
+
+         switch (elementType)
+            {
+            case TR::Int8:
+            case TR::Int16:
+            case TR::Int32:
+               convOpCode = TR::ILOpCode::getDataTypeConversion(elementType, TR::Int64);
+               break;
+            case TR::Float:
+               convOpCode = TR::i2l;  // will have fbits2i as a child
+               break;
+            case TR::Double:
+               convOpCode = TR::ILOpCode::getDataTypeBitConversion(TR::Double, TR::Int64);
+               break;
+            default:
+               TR_ASSERT_FATAL(false, "Wrong vector element type for reduction operation\n");
+            }
+
          TR::Node::recreate(node, convOpCode);
 
          TR::Node *vectorNode = TR::Node::create(node, vectorOpCode, 1);
          vectorNode->setAndIncChild(0, operands[0]);
+         TR::Node *childNode = vectorNode;
 
-         node->setAndIncChild(0, vectorNode);
+         if (elementType == TR::Float)
+            {
+            childNode = TR::Node::create(node, TR::ILOpCode::getDataTypeBitConversion(TR::Float, TR::Int32), 1);
+            childNode->setAndIncChild(0, vectorNode);
+            }
+
+         node->setAndIncChild(0, childNode);
          node->setNumChildren(1);
          }
       else
