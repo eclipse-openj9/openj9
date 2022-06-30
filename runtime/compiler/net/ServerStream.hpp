@@ -262,6 +262,13 @@ public:
    static int getNumConnectionsOpened() { return _numConnectionsOpened; }
    static int getNumConnectionsClosed() { return _numConnectionsClosed; }
 
+   /**
+      @brief Create an SSL_CTX suitable for a server
+   */
+   static bool createSSLContext(SSL_CTX *&ctx, const char *sessionContextID, size_t sessionContextIDLen,
+                                const PersistentVector<std::string> &sslKeys, const PersistentVector<std::string> &sslCerts,
+                                const std::string &sslRootCerts);
+
 private:
    static int _numConnectionsOpened;
    static int _numConnectionsClosed;
