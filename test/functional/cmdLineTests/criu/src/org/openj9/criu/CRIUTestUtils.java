@@ -33,6 +33,8 @@ import org.eclipse.openj9.criu.CRIUSupport;
 import org.eclipse.openj9.criu.RestoreException;
 
 public class CRIUTestUtils {
+	public final static Path imagePath = Paths.get("cpData");
+
 	public static void deleteCheckpointDirectory(Path path) {
 		try {
 			if (path.toFile().exists()) {
@@ -70,6 +72,7 @@ public class CRIUTestUtils {
 				if (criu == null) {
 					criu = new CRIUSupport(path);
 				}
+				showThreadCurrentTime("Performing CRIUSupport.checkpointJVM()");
 				criu.setLeaveRunning(false).setShellJob(true).setFileLocks(true).checkpointJVM();
 			} catch (RestoreException e) {
 				e.printStackTrace();

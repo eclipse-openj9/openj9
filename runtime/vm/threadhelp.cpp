@@ -21,23 +21,21 @@
  *******************************************************************************/
 
 #include "j9.h"
-#include "omrthread.h"
 #include "j9consts.h"
-#include "j9protos.h"
 #include "j9jclnls.h"
-#include "ut_j9vm.h"
+#include "j9protos.h"
 #include "monhelp.h"
 #include "objhelp.h"
+#include "omrthread.h"
+#include "ut_j9vm.h"
 
 #include <string.h>
-
 
 extern "C" {
 
 #define CASTMON(monitor)  ((J9ThreadAbstractMonitor*)(monitor))
 
-
-static IDATA validateTimeouts(J9VMThread* vmThread, I_64 millis, I_32 nanos);
+static IDATA validateTimeouts(J9VMThread *vmThread, I_64 millis, I_32 nanos);
 static IDATA failedToSetAttr(IDATA rc);
 static IDATA setThreadAttributes(omrthread_attr_t *attr, uintptr_t stacksize, uintptr_t priority, uint32_t category, omrthread_detachstate_t detachState);
 
@@ -45,8 +43,10 @@ static IDATA setThreadAttributes(omrthread_attr_t *attr, uintptr_t stacksize, ui
  * @return non-zero on error. If an error occurs, an IllegalArgumentException will be set.
  */
 static IDATA
-validateTimeouts(J9VMThread* vmThread, I_64 millis, I_32 nanos)
+validateTimeouts(J9VMThread *vmThread, I_64 millis, I_32 nanos)
 {
+	IDATA result = -1;
+
 	if (millis < 0) {
 		setCurrentExceptionNLS(
 			vmThread, 
@@ -58,223 +58,150 @@ validateTimeouts(J9VMThread* vmThread, I_64 millis, I_32 nanos)
 			J9VMCONSTANTPOOL_JAVALANGILLEGALARGUMENTEXCEPTION,
 			J9NLS_JCL_NANOSECOND_TIMEOUT_VALUE_OUT_OF_RANGE);
 	} else {
-		return 0;
+		result = 0;
+	}
+	/* Trc_JCL_InvalidTimeout(vmThread, millis, nanos); */
+
+	return result;
+}
+
+IDATA
+monitorWaitImpl(J9VMThread *vmThread, j9object_t object, I_64 millis, I_32 nanos, BOOLEAN interruptable)
+{
+	IDATA rc = -1;
+	omrthread_monitor_t monitor = getMonitorForWait(vmThread, object);
+
+	/* Trc_JCL_wait_Entry(vmThread, object, millis, nanos); */
+	if ((0 != validateTimeouts(vmThread, millis, nanos))
+		|| (NULL == monitor)
+	) {
+		/* Trc_JCL_wait_Exit(vmThread); */
+		/* some error occurred. The helper will have set the current exception */
+	} else {
+		UDATA thrstate = 0;
+		J9JavaVM *javaVM = vmThread->javaVM;
+		if ((millis > 0) || (nanos > 0)) {
+			thrstate = J9_PUBLIC_FLAGS_THREAD_WAITING | J9_PUBLIC_FLAGS_THREAD_TIMED;
+		} else {
+			thrstate = J9_PUBLIC_FLAGS_THREAD_WAITING;
+		}
+		omrthread_monitor_pin(monitor, vmThread->osThread);
+		/* We need to put the blocking object in the special frame since calling out to the hooks could cause
+		 * a GC wherein the object might move. Note that we can't simply store the object before the hook call since the
+		 * hook might call back into this method if it tries to wait in Java code.
+		 */
+		PUSH_OBJECT_IN_SPECIAL_FRAME(vmThread, object);
+		TRIGGER_J9HOOK_VM_MONITOR_WAIT(javaVM->hookInterface, vmThread, monitor, millis, nanos);
+		object = POP_OBJECT_IN_SPECIAL_FRAME(vmThread);
+#ifdef J9VM_OPT_SIDECAR
+		vmThread->mgmtWaitedCount++;
+#endif
+		J9VMTHREAD_SET_BLOCKINGENTEROBJECT(vmThread, vmThread, object);
+		object = NULL;
+		internalReleaseVMAccessSetStatus(vmThread, thrstate);
+		rc = timeCompensationHelper(vmThread,
+			interruptable ? HELPER_TYPE_MONITOR_WAIT_INTERRUPTABLE : HELPER_TYPE_MONITOR_WAIT_TIMED, monitor, millis, nanos);
+		internalAcquireVMAccessClearStatus(vmThread, thrstate);
+		J9VMTHREAD_SET_BLOCKINGENTEROBJECT(vmThread, vmThread, NULL);
+		omrthread_monitor_unpin(monitor, vmThread->osThread);
+		TRIGGER_J9HOOK_VM_MONITOR_WAITED(javaVM->hookInterface, vmThread, monitor, millis, nanos, rc);
+
+		switch (rc) {
+		case 0:
+			/* Trc_JCL_wait_Exit(vmThread); */
+			/* FALLTHROUGH */
+		case J9THREAD_TIMED_OUT:
+			/* Trc_JCL_wait_TimedOut(vmThread); */
+			/* FALLTHROUGH */
+		case J9THREAD_PRIORITY_INTERRUPTED:
+			/* Trc_JCL_wait_PriorityInterrupted(vmThread); */
+			/* just return and allow #checkAsyncEvents:checkForContextSwitch: to do its job */
+			rc = 0;
+			break;
+
+		case J9THREAD_INTERRUPTED:
+			/* Trc_JCL_wait_Interrupted(vmThread); */
+			setCurrentException(vmThread, J9VMCONSTANTPOOL_JAVALANGINTERRUPTEDEXCEPTION, NULL);
+#if JAVA_SPEC_VERSION >= 19
+			J9VMJAVALANGTHREAD_SET_DEADINTERRUPT(vmThread, vmThread->threadObject, JNI_FALSE);
+#endif /* JAVA_SPEC_VERSION >= 19 */
+#if defined(J9VM_OPT_SIDECAR) && ( defined (WIN32) || defined(WIN64))
+			/* Since the interrupt status was consumed by interrupting the Wait or Sleep
+			 * reset the sidecar interrupt status.
+			 */
+			if (NULL != javaVM->sidecarClearInterruptFunction) {
+				((void(*)(J9VMThread *vmThread))javaVM->sidecarClearInterruptFunction)(vmThread);
+			}
+#endif
+			rc = -1;
+			break;
+		case J9THREAD_ILLEGAL_MONITOR_STATE:
+			/* Trc_JCL_wait_IllegalState(vmThread); */
+			setCurrentException(vmThread, J9VMCONSTANTPOOL_JAVALANGILLEGALMONITORSTATEEXCEPTION, NULL);
+			rc = -1;
+			break;
+		default:
+			/* Trc_JCL_wait_Error(vmThread, rc); */
+			setCurrentException(vmThread, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, NULL);
+			rc = -1;
+			break;
+		}
 	}
 
-//	Trc_JCL_InvalidTimeout(vmThread, millis, nanos);
-
-	return -1;
-
+	return rc;
 }
-/**
- * @param[in] vmThread current thread
- * @param[in] object the object to wait on
- * @param[in] millis millisecond timeout
- * @param[in] nanos nanosecond timeout
- * @param[in] interruptable set to FALSE to ignore interrupts
- *
- * @return 0 on success, non-zero on failure. This function always sets the current exception on failure.
- */
+
 IDATA
-monitorWaitImpl(J9VMThread *vmThread, j9object_t object, I_64 millis, I_32 nanos, UDATA interruptable)
+threadSleepImpl(J9VMThread *vmThread, I_64 millis, I_32 nanos)
 {
 	IDATA rc = 0;
-	UDATA thrstate = 0;
-	omrthread_monitor_t monitor = NULL;
 	J9JavaVM *javaVM = vmThread->javaVM;
-	BOOLEAN waitTimed = ((millis > 0) || (nanos > 0));
 
-//	Trc_JCL_wait_Entry(vmThread, object, millis, nanos);
-	if (validateTimeouts(vmThread, millis, (I_32)nanos)) {
-//		Trc_JCL_wait_Exit(vmThread);
-		return -1;
-	}
-	if (waitTimed) {
-		thrstate = J9_PUBLIC_FLAGS_THREAD_WAITING | J9_PUBLIC_FLAGS_THREAD_TIMED;
+	/* Trc_JCL_sleep_Entry(vmThread, millis, nanos); */
+	if (0 != validateTimeouts(vmThread, millis, nanos)) {
+		/* An IllegalArgumentException has been set. */
+		rc = -1;
 	} else {
-		thrstate = J9_PUBLIC_FLAGS_THREAD_WAITING;
-	}
-
-	monitor = getMonitorForWait(vmThread, object);
-	if (NULL == monitor) {
-		/* some error occurred. The helper will have set the current exception */
-//		Trc_JCL_wait_Exit(vmThread);
-		return -1;
-	}
-	omrthread_monitor_pin(monitor, vmThread->osThread);
-
-	/* We need to put the blocking object in the special frame since calling out to the hooks could cause
-	 * a GC wherein the object might move.  Note that we can't simply store the object before the hook call since the
-	 * hook might call back into this method if it tries to wait in Java code.
-	 */
-	PUSH_OBJECT_IN_SPECIAL_FRAME(vmThread, object);
-	TRIGGER_J9HOOK_VM_MONITOR_WAIT(vmThread->javaVM->hookInterface, vmThread, monitor, millis, (I_32)nanos);
-	object = POP_OBJECT_IN_SPECIAL_FRAME(vmThread);
-
 #ifdef J9VM_OPT_SIDECAR
-	vmThread->mgmtWaitedCount++;
+		/* Increment the wait count even if the deadline is past. */
+		vmThread->mgmtWaitedCount++;
 #endif
+		TRIGGER_J9HOOK_VM_SLEEP(javaVM->hookInterface, vmThread, millis, nanos);
+		internalReleaseVMAccessSetStatus(vmThread, J9_PUBLIC_FLAGS_THREAD_SLEEPING);
+		rc = timeCompensationHelper(vmThread, HELPER_TYPE_THREAD_SLEEP, NULL, millis, nanos);
+		internalAcquireVMAccessClearStatus(vmThread, J9_PUBLIC_FLAGS_THREAD_SLEEPING);
+		TRIGGER_J9HOOK_VM_SLEPT(javaVM->hookInterface, vmThread);
 
-	J9VMTHREAD_SET_BLOCKINGENTEROBJECT(vmThread, vmThread, object);
-	object = NULL;
-	internalReleaseVMAccessSetStatus(vmThread, thrstate);
-
-#if defined(J9VM_OPT_CRIU_SUPPORT)
-	I_64 beforeWait = 0;
-	if (waitTimed) {
-		PORT_ACCESS_FROM_JAVAVM(javaVM);
-		beforeWait = j9time_nano_time();
-	}
-continueWait:
-#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
-
-	if (interruptable) {
-		rc = omrthread_monitor_wait_interruptable(monitor, millis, nanos);
-	} else {
-		rc = omrthread_monitor_wait_timed(monitor, millis, nanos);
-	}
-
-#if defined(J9VM_OPT_CRIU_SUPPORT)
-	if (((J9THREAD_INTERRUPTED == rc)
-		|| (J9THREAD_PRIORITY_INTERRUPTED == rc))
-		&& J9_IS_SINGLE_THREAD_MODE(javaVM)
-	) {
-		if (waitTimed) {
-			PORT_ACCESS_FROM_JAVAVM(javaVM);
-			const I_32 oneMillion = 1000000;
-			I_64 waitedTimeNanos = j9time_nano_time() - beforeWait;
-			I_64 waitedTimeMillis = waitedTimeNanos / oneMillion;
-			if (waitedTimeMillis < millis) {
-				millis -= waitedTimeMillis;
-				waitedTimeNanos = (waitedTimeNanos % oneMillion);
-				if (waitedTimeNanos >= nanos) {
-					nanos = (I_32)(waitedTimeNanos - nanos);
-				} else {
-					/* nanos is [0, 999999] */
-					nanos = (I_32)(oneMillion - nanos + waitedTimeNanos);
-					millis -= 1;
-				}
-			} else {
-				/* timed out, waiting another 10ms in single thread mode */
-				millis = 10;
-				nanos = 0;
+		if (0 == rc) {
+			/* Trc_JCL_sleep_Exit(vmThread); */
+			/* omrthread_sleep_interruptable returned on success */
+		} else if (J9THREAD_INTERRUPTED == rc) {
+			/* Trc_JCL_sleep_Interrupted(vmThread); */
+			setCurrentException(vmThread, J9VMCONSTANTPOOL_JAVALANGINTERRUPTEDEXCEPTION, NULL);
+#if JAVA_SPEC_VERSION >= 19
+			J9VMJAVALANGTHREAD_SET_DEADINTERRUPT(vmThread, vmThread->threadObject, JNI_FALSE);
+#endif /* JAVA_SPEC_VERSION >= 19 */
+#if defined(J9VM_OPT_SIDECAR) && ( defined (WIN32) || defined(WIN64))
+			/* Since the interrupt status was consumed by interrupting the Wait or Sleep
+			 * reset the sidecar interrupt status.
+			 */
+			if (NULL != javaVM->sidecarClearInterruptFunction) {
+				((void(*)(J9VMThread *vmThread))javaVM->sidecarClearInterruptFunction)(vmThread);
 			}
-		}
-		/* continue waiting if interrupted spuriously in single thread mode */
-		goto continueWait;
-	}
-#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
-
-	internalAcquireVMAccessClearStatus(vmThread, thrstate);
-	J9VMTHREAD_SET_BLOCKINGENTEROBJECT(vmThread, vmThread, NULL);
-
-	omrthread_monitor_unpin(monitor, vmThread->osThread);
-	TRIGGER_J9HOOK_VM_MONITOR_WAITED(javaVM->hookInterface, vmThread, monitor, millis, (I_32)nanos, rc);
-
-	switch (rc) {
-	case 0:
-//		Trc_JCL_wait_Exit(vmThread);
-		return 0;
-
-	case J9THREAD_TIMED_OUT:
-//		Trc_JCL_wait_TimedOut(vmThread);
-		return 0;
-
-	case J9THREAD_PRIORITY_INTERRUPTED:
-//		Trc_JCL_wait_PriorityInterrupted(vmThread);
-		/* just return and allow #checkAsyncEvents:checkForContextSwitch: to do its job */
-		return 0;
-
-	case J9THREAD_INTERRUPTED:
-//		Trc_JCL_wait_Interrupted(vmThread);
-
-		setCurrentException(vmThread, J9VMCONSTANTPOOL_JAVALANGINTERRUPTEDEXCEPTION, NULL);
-#if JAVA_SPEC_VERSION >= 19
-		J9VMJAVALANGTHREAD_SET_DEADINTERRUPT(vmThread, vmThread->threadObject, JNI_FALSE);
-#endif /* JAVA_SPEC_VERSION >= 19 */
-#if defined(J9VM_OPT_SIDECAR) && ( defined (WIN32) || defined(WIN64))
-		/* since the interrupt status was consumed by interrupting the Wait or Sleep
-		 * reset the sidecar interrupt status
-		 */
-		if (NULL != javaVM->sidecarClearInterruptFunction) {
-			((void(*)(J9VMThread *vmThread))javaVM->sidecarClearInterruptFunction)(vmThread);
-		}
 #endif
-		return -1;
-
-	case J9THREAD_ILLEGAL_MONITOR_STATE:
-//		Trc_JCL_wait_IllegalState(vmThread);
-		setCurrentException(vmThread, J9VMCONSTANTPOOL_JAVALANGILLEGALMONITORSTATEEXCEPTION, NULL);
-		return -1;
-
-	default:
-//		Trc_JCL_wait_Error(vmThread, rc);
-		setCurrentException(vmThread, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, NULL);
-		return -1;
-	}
-}
-
-/**
- * @param[in] vmThread current thread
- * @param[in] object the object to wait on
- * @param[in] millis millisecond timeout
- * @param[in] nanos nanosecond timeout
- *
- * @return 0 on success, non-zero on failure. This function always sets the current exception on failure.
- */
-IDATA
-threadSleepImpl(J9VMThread* vmThread, I_64 millis, I_32 nanos)
-{
-	IDATA rc;
-	J9JavaVM* javaVM = vmThread->javaVM;
-
-//	Trc_JCL_sleep_Entry(vmThread, millis, nanos);
-
-	if (validateTimeouts(vmThread, millis, (I_32)nanos)) {
-//		Trc_JCL_sleep_Exit(vmThread);
-		return -1;
-	}
-	
-#ifdef J9VM_OPT_SIDECAR
-	/* Increment the wait count even if the deadline is past */
-	vmThread->mgmtWaitedCount++;
-#endif
-
-	TRIGGER_J9HOOK_VM_SLEEP(javaVM->hookInterface, vmThread, millis, nanos);
-	internalReleaseVMAccessSetStatus(vmThread, J9_PUBLIC_FLAGS_THREAD_SLEEPING);
-	rc = omrthread_sleep_interruptable(millis, nanos);
-	internalAcquireVMAccessClearStatus(vmThread, J9_PUBLIC_FLAGS_THREAD_SLEEPING);
-	TRIGGER_J9HOOK_VM_SLEPT(javaVM->hookInterface, vmThread);
-
-	if (rc == 0) {
-//		Trc_JCL_sleep_Exit(vmThread);
-		return 0;
-	} else if (rc == J9THREAD_INTERRUPTED) {
-//		Trc_JCL_sleep_Interrupted(vmThread);
-		setCurrentException(vmThread, J9VMCONSTANTPOOL_JAVALANGINTERRUPTEDEXCEPTION, NULL);
-
-#if JAVA_SPEC_VERSION >= 19
-		J9VMJAVALANGTHREAD_SET_DEADINTERRUPT(vmThread, vmThread->threadObject, JNI_FALSE);
-#endif /* JAVA_SPEC_VERSION >= 19 */
-#if defined(J9VM_OPT_SIDECAR) && ( defined (WIN32) || defined(WIN64))
-		/* since the interrupt status was consumed by interrupting the Wait or Sleep
-		 * reset the sidecar interrupt status
-		 */
-		if (javaVM->sidecarClearInterruptFunction != NULL){
-			((void(*)(J9VMThread *vmThread))javaVM->sidecarClearInterruptFunction)(vmThread);
+			rc = -1;
+		} else if (J9THREAD_PRIORITY_INTERRUPTED == rc) {
+			/* Trc_JCL_sleep_PriorityInterrupted(vmThread); */
+			/* just return and allow #checkAsyncEvents:checkForContextSwitch: to do its job */
+			rc = 0;
+		} else {
+			/* Trc_JCL_sleep_Error(vmThread, rc); */
+			setCurrentException(vmThread, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, NULL);
+			rc = -1;
 		}
-#endif
-
-		return -1;
-	} else if (rc == J9THREAD_PRIORITY_INTERRUPTED) {
-//		Trc_JCL_sleep_PriorityInterrupted(vmThread);
-		/* just return and allow #checkAsyncEvents:checkForContextSwitch: to do its job */
-		return 0;
-	} else {
-//		Trc_JCL_sleep_Error(vmThread, rc);
-		setCurrentException(vmThread, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, NULL);
-		return -1;
 	}
+
+	return rc;
 }
 
 /**
@@ -482,5 +409,98 @@ freeTLS(J9VMThread *currentThread, j9object_t threadObj)
 	}
 }
 #endif /* JAVA_SPEC_VERSION >= 19 */
+
+IDATA
+timeCompensationHelper(J9VMThread *vmThread, U_8 threadHelperType, omrthread_monitor_t monitor, I_64 millis, I_32 nanos)
+{
+	IDATA rc = 0;
+
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+	J9JavaVM *vm = vmThread->javaVM;
+	/* Time compensation only supports CRIURestoreNonPortableMode which is default mode. */
+	bool waitTimed = (millis > 0) || (nanos > 0);
+	bool compensationMightBeRequired = waitTimed && !J9_IS_CRIU_RESTORED(vm);
+	I_64 nanoTimeStart = 0;
+	if (compensationMightBeRequired) {
+		PORT_ACCESS_FROM_JAVAVM(vm);
+		nanoTimeStart = j9time_nano_time();
+	}
+continueTimeCompensation:
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+
+	switch(threadHelperType) {
+	case HELPER_TYPE_MONITOR_WAIT_INTERRUPTABLE:
+		rc = omrthread_monitor_wait_interruptable(monitor, millis, nanos);
+		break;
+	case HELPER_TYPE_MONITOR_WAIT_TIMED:
+		rc = omrthread_monitor_wait_timed(monitor, millis, nanos);
+		break;
+	case HELPER_TYPE_THREAD_PARK:
+		rc = omrthread_park(millis, nanos);
+		break;
+	case HELPER_TYPE_THREAD_SLEEP:
+		rc = omrthread_sleep_interruptable(millis, nanos);
+		break;
+	default:
+		Assert_VM_unreachable();
+	}
+
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+	bool isThreadHaltedAtSingleThreadedMode = J9_IS_SINGLE_THREAD_MODE(vm)
+		&& J9_ARE_ANY_BITS_SET(vmThread->publicFlags, J9_PUBLIC_FLAGS_HALT_THREAD_FOR_CHECKPOINT);
+	if ((compensationMightBeRequired && J9_IS_CRIU_RESTORED(vm))
+		|| isThreadHaltedAtSingleThreadedMode
+	) {
+		/* There was a C/R and a compensation is required,
+		 * or this is a halted thread at single threaded mode.
+		 */
+		bool timeCompensationRequired = TRUE;
+		if (waitTimed) {
+			PORT_ACCESS_FROM_JAVAVM(vm);
+			const I_32 oneMillion = 1000000;
+			I_64 nanoTimePast = j9time_nano_time() - nanoTimeStart;
+			I_64 millisPast = nanoTimePast / oneMillion;
+			nanoTimePast = nanoTimePast % oneMillion;
+			if (millisPast < millis) {
+				/* not timed out yet */
+				millis -= millisPast;
+				if (nanos >= nanoTimePast) {
+					nanos = (I_32)(nanos - nanoTimePast);
+				} else {
+					/* nanos/nanoTimePast are within [0, 999999] */
+					nanos = (I_32)(oneMillion - nanoTimePast + nanos);
+					millis -= 1;
+				}
+			} else if ((millisPast > millis)
+				|| (nanoTimePast >= nanos)
+			) {
+				/* timed out since millisPast > millis or millisPast == millis && nanoTimePast >= nanos */
+				if (isThreadHaltedAtSingleThreadedMode) {
+					/* This is a halted thread at single threaded mode, sleep another 10ms. */
+					millis = 10;
+					nanos = 0;
+				} else {
+					/* timed out and no compensation required */
+					timeCompensationRequired = FALSE;
+				}
+			} else {
+				/* not timed out yet, millisPast == millis and nanos > nanoTimePast */
+				millis = 0;
+				nanos = (I_32)(nanos - nanoTimePast);
+			}
+		} else if (isThreadHaltedAtSingleThreadedMode) {
+			/* This is a halted thread at single threaded mode, wait another 10ms. */
+			millis = 10;
+			nanos = 0;
+		}
+		if (timeCompensationRequired) {
+			Assert_VM_false((0 == millis) && (0 == nanos));
+			goto continueTimeCompensation;
+		}
+	}
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+
+	return rc;
+}
 
 }
