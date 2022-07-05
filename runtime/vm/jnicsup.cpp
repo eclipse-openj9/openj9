@@ -2042,8 +2042,9 @@ monitorEnter(JNIEnv* env, jobject obj)
 
 	if (J9_OBJECT_MONITOR_ENTER_FAILED(monstatus)) {
 fail:
+		switch (monstatus) {
 #if JAVA_SPEC_VERSION >= 16
-		if (J9_OBJECT_MONITOR_VALUE_TYPE_IMSE == monstatus) {
+		case J9_OBJECT_MONITOR_VALUE_TYPE_IMSE: {
 			J9Class* badClass = J9OBJECT_CLAZZ(vmThread, obj);
 			J9UTF8 *badClassName = J9ROMCLASS_CLASSNAME(badClass->romClass);
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
@@ -2055,10 +2056,19 @@ fail:
 				Assert_VM_true(J9_ARE_ALL_BITS_SET(vmThread->javaVM->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_VALUE_BASED_EXCEPTION));
 				setCurrentExceptionNLSWithArgs(vmThread, J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_BASED, J9VMCONSTANTPOOL_JAVALANGVIRTUALMACHINEERROR, J9UTF8_LENGTH(badClassName), J9UTF8_DATA(badClassName));
 			}
-		} else
+			break;
+		}
 #endif /* JAVA_SPEC_VERSION >= 16 */
-		if (J9_OBJECT_MONITOR_OOM == monstatus) {
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+		case J9_OBJECT_MONITOR_CRIU_SINGLE_THREAD_MODE_THROW:
+			setCRIUSingleThreadModeJVMCRIUException(vmThread, 0, 0);
+			break;
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+		case J9_OBJECT_MONITOR_OOM:
 			SET_NATIVE_OUT_OF_MEMORY_ERROR(vmThread, J9NLS_VM_FAILED_TO_ALLOCATE_MONITOR);
+			break;
+		default:
+			Assert_VM_unreachable();
 		}
 		rc = -1;
 	} else if (J9_UNEXPECTED(!VM_ObjectMonitor::recordJNIMonitorEnter(vmThread, (j9object_t)monstatus))) {

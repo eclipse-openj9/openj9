@@ -8073,8 +8073,8 @@ setThreadNameAsyncHandler(J9VMThread *currentThread, IDATA handlerKey, void *use
 
 	if (shouldUpdateName) {
 		/* don't allow another thread to change the name while I am reading it */
-		threadLock = (j9object_t) objectMonitorEnter(currentThread, threadLock);
-		if (threadLock == NULL) {
+		threadLock = (j9object_t)objectMonitorEnter(currentThread, threadLock);
+		if (J9_OBJECT_MONITOR_ENTER_FAILED(threadLock)) {
 			/* We may be out of memory - try again later */
 			J9SignalAsyncEvent(javaVM, currentThread, handlerKey);
 		} else {

@@ -281,9 +281,16 @@ enterInitializationLock(J9VMThread *currentThread, j9object_t initializationLock
 		Trc_VM_enterInitializationLock_async(currentThread);
 		VM_ObjectMonitor::exitObjectMonitor(currentThread, initializationLock);
 		initializationLock = NULL;
-	} else if (NULL == initializationLock) {
-		Trc_VM_enterInitializationLock_OOM(currentThread);
-		setNativeOutOfMemoryError(currentThread, J9NLS_VM_FAILED_TO_ALLOCATE_MONITOR);
+	} else if (J9_OBJECT_MONITOR_ENTER_FAILED(initializationLock)) {
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+		if (J9_OBJECT_MONITOR_CRIU_SINGLE_THREAD_MODE_THROW == (UDATA)initializationLock) {
+			setCRIUSingleThreadModeJVMCRIUException(currentThread, 0, 0);
+		} else
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+		if (J9_OBJECT_MONITOR_OOM == (UDATA)initializationLock) {
+			Trc_VM_enterInitializationLock_OOM(currentThread);
+			setNativeOutOfMemoryError(currentThread, J9NLS_VM_FAILED_TO_ALLOCATE_MONITOR);
+		}
 	}
 	return initializationLock;
 }
@@ -307,7 +314,7 @@ setInitStatus(J9VMThread *currentThread, J9Class *clazz, UDATA status, j9object_
 			STATE_NAME(status)
 	);
 	initializationLock = (j9object_t)VM_ObjectMonitor::enterObjectMonitor(currentThread, initializationLock);
-	Assert_VM_false(NULL == initializationLock);
+	Assert_VM_false(J9_OBJECT_MONITOR_ENTER_FAILED(initializationLock));
 	clazz = VM_VMHelpers::currentClass(clazz);
 	do {
 		clazz->initializeStatus = status;
@@ -372,10 +379,10 @@ classInitStateMachine(J9VMThread *currentThread, J9Class *clazz, J9ClassInitStat
 				goto done;
 			case J9ClassInitUnverified: {
 				initializationLock = enterInitializationLock(currentThread, initializationLock);
-				clazz = VM_VMHelpers::currentClass(clazz);
-				if (NULL == initializationLock) {
+				if (J9_OBJECT_MONITOR_ENTER_FAILED(initializationLock)) {
 					goto done;
 				}
+				clazz = VM_VMHelpers::currentClass(clazz);
 				if (J9ClassInitUnverified != clazz->initializeStatus) {
 					Trc_VM_classInitStateMachine_stateChanged(currentThread);
 					VM_ObjectMonitor::exitObjectMonitor(currentThread, initializationLock);
@@ -506,10 +513,10 @@ doVerify:
 					goto done;
 				}
 				initializationLock = enterInitializationLock(currentThread, initializationLock);
-				clazz = VM_VMHelpers::currentClass(clazz);
-				if (NULL == initializationLock) {
+				if (J9_OBJECT_MONITOR_ENTER_FAILED(initializationLock)) {
 					goto done;
 				}
+				clazz = VM_VMHelpers::currentClass(clazz);
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 				if (J9_IS_J9CLASS_VALUETYPE(clazz)) {
 					PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, initializationLock);
@@ -594,12 +601,10 @@ doVerify:
 
 						if (isStatic) {
 							initializationLock = enterInitializationLock(currentThread, initializationLock);
-							clazz = VM_VMHelpers::currentClass(clazz);
-
-							if (NULL == initializationLock) {
+							if (J9_OBJECT_MONITOR_ENTER_FAILED(initializationLock)) {
 								goto done;
 							}
-
+							clazz = VM_VMHelpers::currentClass(clazz);
 							clazz->initializeStatus = (UDATA)currentThread | J9ClassInitUnprepared;
 							VM_ObjectMonitor::exitObjectMonitor(currentThread, initializationLock);
 						}
@@ -615,12 +620,10 @@ doVerify:
 						if (isStatic) {
 							PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, exception);
 							initializationLock = enterInitializationLock(currentThread, initializationLock);
-							clazz = VM_VMHelpers::currentClass(clazz);
-
-							if (NULL == initializationLock) {
+							if (J9_OBJECT_MONITOR_ENTER_FAILED(initializationLock)) {
 								goto done;
 							}
-
+							clazz = VM_VMHelpers::currentClass(clazz);
 							clazz->initializeStatus = J9ClassInitUnprepared;
 							VM_ObjectMonitor::exitObjectMonitor(currentThread, initializationLock);
 							exception = POP_OBJECT_IN_SPECIAL_FRAME(currentThread);
@@ -641,10 +644,10 @@ doVerify:
 
 				/* Prepare this class */
 				initializationLock = enterInitializationLock(currentThread, initializationLock);
-				clazz = VM_VMHelpers::currentClass(clazz);
-				if (NULL == initializationLock) {
+				if (J9_OBJECT_MONITOR_ENTER_FAILED(initializationLock)) {
 					goto done;
 				}
+				clazz = VM_VMHelpers::currentClass(clazz);
 				if (J9ClassInitUnprepared != clazz->initializeStatus) {
 					VM_ObjectMonitor::exitObjectMonitor(currentThread, initializationLock);
 					break;
@@ -675,10 +678,10 @@ doVerify:
 					goto done;
 				}
 				initializationLock = enterInitializationLock(currentThread, initializationLock);
-				clazz = VM_VMHelpers::currentClass(clazz);
-				if (NULL == initializationLock) {
+				if (J9_OBJECT_MONITOR_ENTER_FAILED(initializationLock)) {
 					goto done;
 				}
+				clazz = VM_VMHelpers::currentClass(clazz);
 				if (J9ClassInitNotInitialized != clazz->initializeStatus) {
 					Trc_VM_classInitStateMachine_stateChanged(currentThread);
 					VM_ObjectMonitor::exitObjectMonitor(currentThread, initializationLock);
@@ -783,10 +786,10 @@ initFailed:
 			}
 			default: { // IN PROGRESS (status contains a thread in the high bits)
 				initializationLock = enterInitializationLock(currentThread, initializationLock);
-				clazz = VM_VMHelpers::currentClass(clazz);
-				if (NULL == initializationLock) {
+				if (J9_OBJECT_MONITOR_ENTER_FAILED(initializationLock)) {
 					goto done;
 				}
+				clazz = VM_VMHelpers::currentClass(clazz);
 				UDATA const status = clazz->initializeStatus;
 				J9VMThread *initializingThread = (J9VMThread*)(status & ~(UDATA)J9ClassInitStatusMask);
 				if (NULL == initializingThread) {

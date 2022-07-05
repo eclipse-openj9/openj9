@@ -968,6 +968,19 @@ setClassLoadingConstraintSignatureError(J9VMThread *currentThread, J9ClassLoader
 void
 setClassLoadingConstraintOverrideError(J9VMThread *currentThread, J9UTF8 *newClassNameUTF, J9ClassLoader *loader1, J9UTF8 *class1NameUTF, J9ClassLoader *loader2, J9UTF8 *class2NameUTF, J9UTF8 *exceptionClassNameUTF, U_8 *methodName, UDATA methodNameLength, U_8 *signature, UDATA signatureLength);
 
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+/**
+ * @brief Set JVMCRIUException to indicate that current operation is not allowed in CRIU single thread mode.
+ * @param vmThread[in] the current J9VMThread
+ * @param moduleName[in] the NLS module
+ * @param messageNumber[in] the NLS message
+ *
+ * @return void
+ */
+void
+setCRIUSingleThreadModeJVMCRIUException(J9VMThread *vmThread, U_32 moduleName, U_32 messageNumber);
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+
 /* ---------------- extendedMessageNPE.cpp ---------------- */
 
 /**

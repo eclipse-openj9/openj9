@@ -4867,6 +4867,7 @@ typedef struct J9InternalVMFunctions {
 	BOOLEAN (*runInternalJVMCheckpointHooks)(struct J9VMThread *currentThread);
 	BOOLEAN (*runInternalJVMRestoreHooks)(struct J9VMThread *currentThread);
 	BOOLEAN (*runDelayedLockRelatedOperations)(struct J9VMThread *currentThread);
+	void (*setCRIUSingleThreadModeJVMCRIUException)(struct J9VMThread *vmThread, U_32 moduleName, U_32 messageNumber);
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 	j9object_t (*getClassNameString)(struct J9VMThread *currentThread, j9object_t classObject, jboolean internAndAssign);
 	j9object_t* (*getDefaultValueSlotAddress)(struct J9Class *clazz);
@@ -5695,18 +5696,16 @@ typedef struct J9JavaVM {
 /* objectMonitorEnterNonBlocking return codes */
 #define J9_OBJECT_MONITOR_OOM 0
 #define J9_OBJECT_MONITOR_VALUE_TYPE_IMSE 1
-/*
- * Currently, not needed but reserving it for future use
- *
- * #define J9_OBJECT_MONITOR_PRIMITIVE_WRAPPER_IMSE 2
- */
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+#define J9_OBJECT_MONITOR_CRIU_SINGLE_THREAD_MODE_THROW 2
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 #define J9_OBJECT_MONITOR_BLOCKING 3
 
-#if JAVA_SPEC_VERSION >= 16
-#define J9_OBJECT_MONITOR_ENTER_FAILED(rc) ((rc) < J9_OBJECT_MONITOR_BLOCKING)
-#else /* JAVA_SPEC_VERSION >= 16 */
-#define J9_OBJECT_MONITOR_ENTER_FAILED(rc) ((rc) == J9_OBJECT_MONITOR_OOM)
-#endif /* JAVA_SPEC_VERSION >= 16 */
+#if (JAVA_SPEC_VERSION >= 16) || defined(J9VM_OPT_CRIU_SUPPORT)
+#define J9_OBJECT_MONITOR_ENTER_FAILED(rc) ((UDATA)(rc) < J9_OBJECT_MONITOR_BLOCKING)
+#else /* (JAVA_SPEC_VERSION >= 16) || defined(J9VM_OPT_CRIU_SUPPORT) */
+#define J9_OBJECT_MONITOR_ENTER_FAILED(rc) ((UDATA)(rc) == J9_OBJECT_MONITOR_OOM)
+#endif /* (JAVA_SPEC_VERSION >= 16) || defined(J9VM_OPT_CRIU_SUPPORT) */
 #define J9JAVAVM_REFERENCE_SIZE(vm) (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm) ? sizeof(U_32) : sizeof(UDATA))
 #define J9JAVAVM_OBJECT_HEADER_SIZE(vm) (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm) ? sizeof(J9ObjectCompressed) : sizeof(J9ObjectFull))
 #define J9JAVAVM_CONTIGUOUS_HEADER_SIZE(vm) (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm) ? sizeof(J9IndexableObjectContiguousCompressed) : sizeof(J9IndexableObjectContiguousFull))

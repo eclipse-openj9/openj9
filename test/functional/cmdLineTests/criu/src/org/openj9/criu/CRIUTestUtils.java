@@ -59,12 +59,18 @@ public class CRIUTestUtils {
 	}
 
 	public static void checkPointJVM(Path path, boolean deleteDir) {
+		checkPointJVM(null, path, deleteDir);
+	}
+
+	public static void checkPointJVM(CRIUSupport criu, Path path, boolean deleteDir) {
 		if (CRIUSupport.isCRIUSupportEnabled()) {
 			deleteCheckpointDirectory(path);
 			createCheckpointDirectory(path);
 			try {
-				new CRIUSupport(path)
-				.setLeaveRunning(false)
+				if (criu == null) {
+					criu = new CRIUSupport(path);
+				}
+				criu.setLeaveRunning(false)
 				.setShellJob(true)
 				.setFileLocks(true)
 				.checkpointJVM();

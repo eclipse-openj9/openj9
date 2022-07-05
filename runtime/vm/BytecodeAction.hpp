@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2020 IBM Corp. and others
+ * Copyright (c) 2001, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -57,6 +57,9 @@ typedef enum {
 #if JAVA_SPEC_VERSION >= 16
 	THROW_VALUE_TYPE_ILLEGAL_MONITOR_STATE,
 #endif /* JAVA_SPEC_VERSION >= 16 */
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+	THROW_CRIU_SINGLE_THREAD_MODE,
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 	/* All values after this line are for the debug interpreter only - add general values above this line */
 	GOTO_EXECUTE_BREAKPOINTED_BYTECODE,
 	HANDLE_POP_FRAMES,
