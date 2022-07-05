@@ -1513,7 +1513,7 @@ J9NLS_CFR_ERR_INIT_ON_VALUE_CLASS.system_action=The JVM will throw a verificatio
 J9NLS_CFR_ERR_INIT_ON_VALUE_CLASS.user_response=Contact the provider of the class file for a corrected version.
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_MISSING_ACC_STATIC_ON_ABSTRACT_IDENTITYLESS_CLASS_FIELD=\u62bd\u8c61\u975e ID \u30af\u30e9\u30b9\u3067\u306f\u3001\u5404\u30d5\u30a3\u30fc\u30eb\u30c9\u3092 static \u3068\u3057\u3066\u5ba3\u8a00\u3059\u308b\u5fc5\u8981\u304c\u3042\u308a\u307e\u3059\u3002
+J9NLS_CFR_ERR_MISSING_ACC_STATIC_ON_ABSTRACT_IDENTITYLESS_CLASS_FIELD=abstract non-identity \u30af\u30e9\u30b9\u3067\u306f\u3001\u5404\u30d5\u30a3\u30fc\u30eb\u30c9\u3092 static \u3068\u3057\u3066\u5ba3\u8a00\u3059\u308b\u5fc5\u8981\u304c\u3042\u308a\u307e\u3059\u3002
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_MISSING_ACC_STATIC_ON_ABSTRACT_IDENTITYLESS_CLASS_FIELD.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_MISSING_ACC_STATIC_ON_ABSTRACT_IDENTITYLESS_CLASS_FIELD.system_action=The JVM will throw a verification or classloading related exception such as java.lang.ClassFormatError.
@@ -1527,7 +1527,7 @@ J9NLS_CFR_ERR_NON_STATIC_SYNCHRONIZED_VALUE_TYPE_METHOD_V1.system_action=The JVM
 J9NLS_CFR_ERR_NON_STATIC_SYNCHRONIZED_VALUE_TYPE_METHOD_V1.user_response=Contact the provider of the class file for a corrected version.
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_FINAL_ABSTRACT_FLAG_MISSING_ON_VALUE_CLASS=\u5024\u30af\u30e9\u30b9\u3067\u30a2\u30af\u30bb\u30b9\u30fb\u30d5\u30e9\u30b0 ACC_FINAL or ACC_ABSTRACT \u304c\u6b20\u843d\u3057\u3066\u3044\u307e\u3059\u3002
+J9NLS_CFR_ERR_FINAL_ABSTRACT_FLAG_MISSING_ON_VALUE_CLASS=\u5024\u30af\u30e9\u30b9\u3067\u30a2\u30af\u30bb\u30b9\u30fb\u30d5\u30e9\u30b0 ACC_FINAL \u307e\u305f\u306f ACC_ABSTRACT \u304c\u6b20\u843d\u3057\u3066\u3044\u307e\u3059\u3002
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_FINAL_ABSTRACT_FLAG_MISSING_ON_VALUE_CLASS.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_FINAL_ABSTRACT_FLAG_MISSING_ON_VALUE_CLASS.system_action=The JVM will throw a verification or classloading related exception such as java.lang.ClassFormatError.
