@@ -1234,7 +1234,7 @@ J9NLS_CFR_ERR_BC_LDC2W_NOT_CONSTANT_OR_CONSTANT_DYNAMIC.user_response=Contact th
 # END NON-TRANSLATABLE
 
 #ldc and ldc_w are not translatable
-J9NLS_CFR_ERR_BC_LDC_CONSTANT_DYNAMIC_RETURNS_LONG_OR_DOUBLE=Las entradas Constant_Dynamic referenciadas por los c\u00f3digos de byte ldc y ldc_w no deben devolver 'long' ni 'double'
+J9NLS_CFR_ERR_BC_LDC_CONSTANT_DYNAMIC_RETURNS_LONG_OR_DOUBLE=Las entradas Constant_Dynamic referenciadas por los c\u00f3digos de byte ldc y ldc_w no pueden devolver 'long' ni 'double'
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_BC_LDC_CONSTANT_DYNAMIC_RETURNS_LONG_OR_DOUBLE.explanation=An 'ldc' or 'ldc_w' bytecode cannot reference constant values or Constant_Dynamic entry of type 'long' or 'double'.
 J9NLS_CFR_ERR_BC_LDC_CONSTANT_DYNAMIC_RETURNS_LONG_OR_DOUBLE.system_action=The JVM will throw a verification or classloading related exception such as java.lang.ClassFormatError.
@@ -1462,7 +1462,7 @@ J9NLS_CFR_ERR_PERMITS_VALUE_ON_FINAL_CLASS.system_action=The JVM will throw a ve
 J9NLS_CFR_ERR_PERMITS_VALUE_ON_FINAL_CLASS.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_PERMITS_VALUE_ON_NON_ABSTRACT_CLASS=El distintivo de acceso ACC_PERMITS_VALUE no debe establecerse en una clase no abstracta.
+J9NLS_CFR_ERR_PERMITS_VALUE_ON_NON_ABSTRACT_CLASS=El distintivo de acceso ACC_PERMITS_VALUE no se puede establecer en una clase no abstracta.
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_PERMITS_VALUE_ON_NON_ABSTRACT_CLASS.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_PERMITS_VALUE_ON_NON_ABSTRACT_CLASS.system_action=The JVM will throw a verification or classloading related exception such as java.lang.ClassFormatError.
@@ -1513,7 +1513,7 @@ J9NLS_CFR_ERR_INIT_ON_VALUE_CLASS.system_action=The JVM will throw a verificatio
 J9NLS_CFR_ERR_INIT_ON_VALUE_CLASS.user_response=Contact the provider of the class file for a corrected version.
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_MISSING_ACC_STATIC_ON_ABSTRACT_IDENTITYLESS_CLASS_FIELD=En una clase que no sea de identidad abstracta, cada campo debe declararse como est\u00e1tico.
+J9NLS_CFR_ERR_MISSING_ACC_STATIC_ON_ABSTRACT_IDENTITYLESS_CLASS_FIELD=En una clase abstracta que no sea de identidad, todos los campos se deben declarar como est\u00e1ticos.
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_MISSING_ACC_STATIC_ON_ABSTRACT_IDENTITYLESS_CLASS_FIELD.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_MISSING_ACC_STATIC_ON_ABSTRACT_IDENTITYLESS_CLASS_FIELD.system_action=The JVM will throw a verification or classloading related exception such as java.lang.ClassFormatError.
@@ -1534,14 +1534,14 @@ J9NLS_CFR_ERR_FINAL_ABSTRACT_FLAG_MISSING_ON_VALUE_CLASS.system_action=The JVM w
 J9NLS_CFR_ERR_FINAL_ABSTRACT_FLAG_MISSING_ON_VALUE_CLASS.user_response=Contact the provider of the class file for a corrected version.
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_INCORRECT_FLAG_FOUND_ON_PRMITIVE_VALUE_CLASS=Se ha encontrado un distintivo de acceso incorrecto en la clase de valor primitivo.
+J9NLS_CFR_ERR_INCORRECT_FLAG_FOUND_ON_PRMITIVE_VALUE_CLASS=Se ha encontrado un distintivo de acceso incorrecto en la clase de valor primitiva.
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_INCORRECT_FLAG_FOUND_ON_PRMITIVE_VALUE_CLASS.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_INCORRECT_FLAG_FOUND_ON_PRMITIVE_VALUE_CLASS.system_action=The JVM will throw a verification or classloading related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_INCORRECT_FLAG_FOUND_ON_PRMITIVE_VALUE_CLASS.user_response=Contact the provider of the class file for a corrected version.
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_MAJOR_VERSION2=versi\u00f3n principal incorrecta %1$u.%2$u de class=%4$.*3$s, la versi\u00f3n principal soportada m\u00e1xima es %5$u.0; offset=%6$u
+J9NLS_CFR_ERR_MAJOR_VERSION2=versi\u00f3n principal incorrecta %1$u.%2$u de class=%4$.*3$s, la versi\u00f3n principal m\u00e1xima soportada es la %5$u.0; offset=%6$u
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_MAJOR_VERSION2.sample_input_1=62
 J9NLS_CFR_ERR_MAJOR_VERSION2.sample_input_2=0

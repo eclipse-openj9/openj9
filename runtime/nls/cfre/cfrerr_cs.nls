@@ -1554,7 +1554,7 @@ J9NLS_CFR_ERR_MAJOR_VERSION2.system_action=The JVM will throw a verification or 
 J9NLS_CFR_ERR_MAJOR_VERSION2.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_MINOR_VERSION2=chybn\u00e1 vedlej\u0161\u00ed verze t\u0159\u00eddy %2$.*1$s. Z\u00edsk\u00e1na vedlej\u0161\u00ed verze .%3$u, ale .0 je jedin\u00e1 platn\u00e1 vedlej\u0161\u00ed verze pro hlavn\u00ed verzi %4$u; offset=%5$u
+J9NLS_CFR_ERR_MINOR_VERSION2=Chybn\u00e1 vedlej\u0161\u00ed verze t\u0159\u00eddy %2$.*1$s. Z\u00edsk\u00e1na vedlej\u0161\u00ed verze .%3$u, ale .0 je jedin\u00e1 platn\u00e1 vedlej\u0161\u00ed verze pro hlavn\u00ed verzi %4$u; offset=%5$u
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_MINOR_VERSION2.sample_input_1=4
 J9NLS_CFR_ERR_MINOR_VERSION2.sample_input_2=main
