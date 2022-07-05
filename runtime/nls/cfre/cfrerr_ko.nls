@@ -1541,7 +1541,7 @@ J9NLS_CFR_ERR_INCORRECT_FLAG_FOUND_ON_PRMITIVE_VALUE_CLASS.system_action=The JVM
 J9NLS_CFR_ERR_INCORRECT_FLAG_FOUND_ON_PRMITIVE_VALUE_CLASS.user_response=Contact the provider of the class file for a corrected version.
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_MAJOR_VERSION2=class=%4$.*3$s\uc758 \uc798\ubabb\ub41c \uc8fc \ubc84\uc804 %1$u.%2$u, \uc9c0\uc6d0\ub418\ub294 \ucd5c\ub300 \uc8fc \ubc84\uc804\uc740 %5$u.0\uc785\ub2c8\ub2e4. \uc624\ud504\uc14b=%6$u.
+J9NLS_CFR_ERR_MAJOR_VERSION2=class=%4$.*3$s\uc758 \uc798\ubabb\ub41c \uc8fc \ubc84\uc804 %1$u.%2$u\uc785\ub2c8\ub2e4. \uc9c0\uc6d0\ub418\ub294 \ucd5c\ub300 \uc8fc \ubc84\uc804\uc740 %5$u.0\uc785\ub2c8\ub2e4. \uc624\ud504\uc14b=%6$u
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_MAJOR_VERSION2.sample_input_1=62
 J9NLS_CFR_ERR_MAJOR_VERSION2.sample_input_2=0
