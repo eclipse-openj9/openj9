@@ -30,4 +30,5 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<export name="Java_jdk_internal_vm_Continuation_createContinuationImpl" />
 	<export name="Java_jdk_internal_vm_Continuation_pin" />
 	<export name="Java_jdk_internal_vm_Continuation_unpin" />
+	<export name="Java_jdk_internal_vm_Continuation_isPinnedImpl" />
 </exports>

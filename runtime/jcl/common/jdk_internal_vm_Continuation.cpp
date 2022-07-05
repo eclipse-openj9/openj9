@@ -81,4 +81,27 @@ Java_jdk_internal_vm_Continuation_createContinuationImpl(JNIEnv *env, jobject co
 	return result ? JNI_TRUE : JNI_FALSE;
 }
 
+/**
+ * Determine if the current continuation is pinned.
+ *
+ * @param env instance of JNIEnv.
+ * @param unused.
+ * @return true if pinned; otherwise, false.
+ */
+jboolean JNICALL
+Java_jdk_internal_vm_Continuation_isPinnedImpl(JNIEnv *env, jclass unused)
+{
+	jboolean result = JNI_FALSE;
+	J9VMThread *currentThread = (J9VMThread *)env;
+
+	if ((currentThread->continuationPinCount > 0)
+	|| (currentThread->ownedMonitorCount > 0)
+	|| (currentThread->callOutCount > 0)
+	) {
+		result = JNI_TRUE;
+	}
+
+	return result;
+}
+
 } /* extern "C" */
