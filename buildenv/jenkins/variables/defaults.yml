@@ -403,6 +403,7 @@ x86-64_mac:
 #========================================#
 aarch64_mac:
   extends: ['boot_jdk_default', 'openssl', 'openssl_bundle']
+  extra_getsource_options: '--openssl-version=1.1.1p'
   boot_jdk:
     arch: 'aarch64'
     os: 'mac'
