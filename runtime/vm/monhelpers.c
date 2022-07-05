@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,21 +33,22 @@
 IDATA
 objectMonitorExit(J9VMThread* vmStruct, j9object_t object)
 {
+	IDATA rc = J9THREAD_ILLEGAL_MONITOR_STATE;
 	j9objectmonitor_t *lockEA = NULL;
 	j9objectmonitor_t lock = 0;
 
 	Assert_VM_true(vmStruct != NULL);
 	Assert_VM_true(0 == ((UDATA)vmStruct & OBJECT_HEADER_LOCK_BITS_MASK));
 
-	Trc_VM_objectMonitorExit_Entry(vmStruct,object);
+	Trc_VM_objectMonitorExit_Entry(vmStruct, object);
 
-	if (!LN_HAS_LOCKWORD(vmStruct,object)) {
+	if (!LN_HAS_LOCKWORD(vmStruct, object)) {
 		J9ObjectMonitor *objectMonitor = NULL;
 
 		objectMonitor = monitorTableAt(vmStruct, object);
 		if (objectMonitor == NULL) {
 			Trc_VM_objectMonitorExit_Exit_IllegalNullMonitor(vmStruct, object);
-			return J9THREAD_ILLEGAL_MONITOR_STATE;
+			goto done;
 		}
 
 		lockEA = &(objectMonitor->alternateLockword);
@@ -114,7 +115,7 @@ restart:
 			}
 		} else if (count & OBJECT_HEADER_LOCK_LEARNING) {
 			/* Lock is in Learning state but unowned (if it were owned it would have been caught by the first Learning state check) */
-			return J9THREAD_ILLEGAL_MONITOR_STATE;
+			goto done;
 		} else if (count >= OBJECT_HEADER_LOCK_FIRST_RECURSION_BIT) {
 			/* just decrement the flatlock recursion count */
 			lock -= OBJECT_HEADER_LOCK_FIRST_RECURSION_BIT;
@@ -123,7 +124,7 @@ restart:
 		} else if (count & OBJECT_HEADER_LOCK_RESERVED) {
 			/* lock is reserved but unowned (if it were owned the count would be >= OBJECT_HEADER_LOCK_FIRST_RECURSION_BIT) */
 			Trc_VM_objectMonitorExit_Exit_ReservedButUnownedFlatLock(vmStruct, lock, object);
-			return J9THREAD_ILLEGAL_MONITOR_STATE;
+			goto done;
 #endif
 		} else {
 			/* FLC set, non-recursive */
@@ -142,12 +143,12 @@ restart:
 			}
 		}
 		Trc_VM_objectMonitorExit_Exit_FCBSet(vmStruct);
-		return 0;
+		rc = 0;
+		goto done;
 	} else if (J9_LOCK_IS_INFLATED(lock)) {
 		/* Dealing with an inflated monitor */
 		J9ObjectMonitor *objectMonitor = NULL;
 		J9ThreadAbstractMonitor *monitor = NULL;
-		IDATA rc = 0;
 		IDATA deflate = 1;
 		
 		objectMonitor = J9_INFLLOCK_OBJECT_MONITOR(lock);		
@@ -164,7 +165,7 @@ restart:
 
 		if (monitor->owner != vmStruct->osThread) {
 			Trc_VM_objectMonitorExit_Exit_IllegalInflatedLock(vmStruct, monitor->owner, vmStruct->osThread);
-			return J9THREAD_ILLEGAL_MONITOR_STATE;
+			goto done;
 		}
 
 		/*
@@ -218,18 +219,25 @@ restart:
 				}
 			}
 		}
-		rc =  omrthread_monitor_exit((omrthread_monitor_t)monitor);
+		rc = omrthread_monitor_exit((omrthread_monitor_t)monitor);
 		Trc_VM_objectMonitorExit_Exit_InflatedLock(vmStruct, rc);
-		return rc;
+		goto done;
 	} else {
 		/* flat lock, but wrong thread */
 		Assert_VM_true( (lock == 0) || (lock == OBJECT_HEADER_LOCK_LEARNING) || (lock == OBJECT_HEADER_LOCK_RESERVED) || ((UDATA)lock & ~(UDATA)OBJECT_HEADER_LOCK_BITS_MASK) );
 		Trc_VM_objectMonitorExit_Exit_IllegalFlatLock(vmStruct, lock, object);
-		return J9THREAD_ILLEGAL_MONITOR_STATE;
+		goto done;
 	}
 
 	Assert_VM_unreachable();
 
+done:
+#if JAVA_SPEC_VERSION >= 19
+	if (0 == rc) {
+		vmStruct->ownedMonitorCount -= 1;
+	}
+#endif /* JAVA_SPEC_VERSION >= 19 */
+	return rc;
 }
 
 
