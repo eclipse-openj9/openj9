@@ -1234,7 +1234,7 @@ J9NLS_CFR_ERR_BC_LDC2W_NOT_CONSTANT_OR_CONSTANT_DYNAMIC.user_response=Contact th
 # END NON-TRANSLATABLE
 
 #ldc and ldc_w are not translatable
-J9NLS_CFR_ERR_BC_LDC_CONSTANT_DYNAMIC_RETURNS_LONG_OR_DOUBLE=Les entrades Constant_Dynamic a les quals fan refer\u00e8ncia els codis de bytes ldc i ldc_w no han de tornar 'long' ni 'double'
+J9NLS_CFR_ERR_BC_LDC_CONSTANT_DYNAMIC_RETURNS_LONG_OR_DOUBLE=Les entrades Constant_Dynamic a les quals fan refer\u00e8ncia els codis de bytes ldc i ldc_w no poden retornar 'long' ni 'double'
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_BC_LDC_CONSTANT_DYNAMIC_RETURNS_LONG_OR_DOUBLE.explanation=An 'ldc' or 'ldc_w' bytecode cannot reference constant values or Constant_Dynamic entry of type 'long' or 'double'.
 J9NLS_CFR_ERR_BC_LDC_CONSTANT_DYNAMIC_RETURNS_LONG_OR_DOUBLE.system_action=The JVM will throw a verification or classloading related exception such as java.lang.ClassFormatError.
@@ -1513,7 +1513,7 @@ J9NLS_CFR_ERR_INIT_ON_VALUE_CLASS.system_action=The JVM will throw a verificatio
 J9NLS_CFR_ERR_INIT_ON_VALUE_CLASS.user_response=Contact the provider of the class file for a corrected version.
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_MISSING_ACC_STATIC_ON_ABSTRACT_IDENTITYLESS_CLASS_FIELD=En una classe no d'identitat abstracta, cada camp ha de declarar-se est\u00e0tic.
+J9NLS_CFR_ERR_MISSING_ACC_STATIC_ON_ABSTRACT_IDENTITYLESS_CLASS_FIELD=En una classe abstracta que no sigui d'identitat, tots els camps s'han de declarar est\u00e0tics.
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_MISSING_ACC_STATIC_ON_ABSTRACT_IDENTITYLESS_CLASS_FIELD.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_MISSING_ACC_STATIC_ON_ABSTRACT_IDENTITYLESS_CLASS_FIELD.system_action=The JVM will throw a verification or classloading related exception such as java.lang.ClassFormatError.
@@ -1534,14 +1534,14 @@ J9NLS_CFR_ERR_FINAL_ABSTRACT_FLAG_MISSING_ON_VALUE_CLASS.system_action=The JVM w
 J9NLS_CFR_ERR_FINAL_ABSTRACT_FLAG_MISSING_ON_VALUE_CLASS.user_response=Contact the provider of the class file for a corrected version.
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_INCORRECT_FLAG_FOUND_ON_PRMITIVE_VALUE_CLASS=S'ha trobat un senyalador d'acc\u00e9s incorrecte a la classe de valor primitiu.
+J9NLS_CFR_ERR_INCORRECT_FLAG_FOUND_ON_PRMITIVE_VALUE_CLASS=S'ha trobat un senyalador d'acc\u00e9s incorrecte a la classe de valor primitiva.
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_INCORRECT_FLAG_FOUND_ON_PRMITIVE_VALUE_CLASS.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_INCORRECT_FLAG_FOUND_ON_PRMITIVE_VALUE_CLASS.system_action=The JVM will throw a verification or classloading related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_INCORRECT_FLAG_FOUND_ON_PRMITIVE_VALUE_CLASS.user_response=Contact the provider of the class file for a corrected version.
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_MAJOR_VERSION2=versi\u00f3 principal incorrecta %1$u.%2$u de class=%4$.*3$s, la versi\u00f3 principal admesa m\u00e0xima \u00e9s %5$u.0; offset=%6$u
+J9NLS_CFR_ERR_MAJOR_VERSION2=versi\u00f3 principal incorrecta %1$u.%2$u de class=%4$.*3$s, la versi\u00f3 principal m\u00e0xima admesa \u00e9s la %5$u.0; offset=%6$u
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_MAJOR_VERSION2.sample_input_1=62
 J9NLS_CFR_ERR_MAJOR_VERSION2.sample_input_2=0
