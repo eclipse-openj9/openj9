@@ -151,6 +151,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 
 	<classref name="jdk/internal/vm/Continuation" versions="19-"/>
 
+	<classref name="org/eclipse/openj9/criu/JVMCheckpointException" flags="opt_criuSupport"/>
+	<classref name="org/eclipse/openj9/criu/RestoreException" flags="opt_criuSupport"/>
+
 <!--
 	NOTE: the resolution code in jclcinit.c only looks at the J9ROMClassRef->runtimeFlags to determine
 	whether or not to attempt the class load.  The flags sepcified on the fields are ignored.

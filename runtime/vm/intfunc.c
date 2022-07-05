@@ -409,6 +409,7 @@ J9InternalVMFunctions J9InternalFunctions = {
 	runInternalJVMCheckpointHooks,
 	runInternalJVMRestoreHooks,
 	runDelayedLockRelatedOperations,
+	setCRIUSingleThreadModeJVMCRIUException,
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 	getClassNameString,
 	getDefaultValueSlotAddress,

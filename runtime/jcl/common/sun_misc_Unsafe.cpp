@@ -405,9 +405,16 @@ Java_sun_misc_Unsafe_monitorEnter(JNIEnv *env, jobject receiver, jobject obj)
 		vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, NULL);
 	} else {
 		UDATA monresult = vmFuncs->objectMonitorEnter(currentThread, J9_JNI_UNWRAP_REFERENCE(obj));
-		if (0 == monresult) {
+		if (J9_OBJECT_MONITOR_ENTER_FAILED(monresult)) {
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+			if (J9_OBJECT_MONITOR_CRIU_SINGLE_THREAD_MODE_THROW == monresult) {
+				vmFuncs->setCRIUSingleThreadModeJVMCRIUException(currentThread, 0, 0);
+			} else
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+			if (J9_OBJECT_MONITOR_OOM == monresult) {
 oom:
-			vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
+				vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
+			}
 		} else if (J9_UNEXPECTED(!VM_ObjectMonitor::recordJNIMonitorEnter(currentThread, (j9object_t)monresult))) {
 			vmFuncs->objectMonitorExit(currentThread, (j9object_t)monresult);
 			goto oom;

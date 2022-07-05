@@ -183,8 +183,16 @@ jvmtiGetThreadGroupChildren(jvmtiEnv* env,
 			childrenGroupsLock = (j9object_t)vmFuncs->objectMonitorEnter(currentThread, childrenGroupsLock);
 			/* The threadGroupObject has to be reobtained as it might have been GC'ed while waiting for the lock */
 			threadGroupObject = *((j9object_t*)group);
-			if (J9_OBJECT_MONITOR_ENTER_FAILED((UDATA)childrenGroupsLock)) {
-				rc = JVMTI_ERROR_OUT_OF_MEMORY;
+			if (J9_OBJECT_MONITOR_ENTER_FAILED(childrenGroupsLock)) {
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+				if (J9_OBJECT_MONITOR_CRIU_SINGLE_THREAD_MODE_THROW == (UDATA)childrenGroupsLock) {
+					vmFuncs->setCRIUSingleThreadModeJVMCRIUException(currentThread, 0, 0);
+					rc = JVMTI_ERROR_THREAD_SUSPENDED;
+				} else
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+				if (J9_OBJECT_MONITOR_OOM == (UDATA)childrenGroupsLock) {
+					rc = JVMTI_ERROR_OUT_OF_MEMORY;
+				}
 				goto done;
 			}
 
@@ -211,8 +219,16 @@ jvmtiGetThreadGroupChildren(jvmtiEnv* env,
 			childrenThreadsLock = (j9object_t)vmFuncs->objectMonitorEnter(currentThread, childrenThreadsLock);
 			/* The threadGroupObject has to be reobtained as it might have been GC'ed while waiting for the lock */
 			threadGroupObject = *((j9object_t*)group);
-			if (J9_OBJECT_MONITOR_ENTER_FAILED((UDATA)childrenThreadsLock)) {
-				rc = JVMTI_ERROR_OUT_OF_MEMORY;
+			if (J9_OBJECT_MONITOR_ENTER_FAILED(childrenThreadsLock)) {
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+				if (J9_OBJECT_MONITOR_CRIU_SINGLE_THREAD_MODE_THROW == (UDATA)childrenThreadsLock) {
+					vmFuncs->setCRIUSingleThreadModeJVMCRIUException(currentThread, 0, 0);
+					rc = JVMTI_ERROR_THREAD_SUSPENDED;
+				} else
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+				if (J9_OBJECT_MONITOR_OOM == (UDATA)childrenThreadsLock) {
+					rc = JVMTI_ERROR_OUT_OF_MEMORY;
+				}
 				j9mem_free_memory(groups);
 				goto done;
 			}

@@ -417,6 +417,16 @@ setNativeOutOfMemoryErrorFromJIT(J9VMThread *currentThread, U_32 moduleName, U_3
 	return J9_JITHELPER_ACTION_THROW;
 }
 
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+static VMINLINE void*
+setCRIUSingleThreadModeExceptionFromJIT(J9VMThread *currentThread, U_32 moduleName, U_32 messageNumber)
+{
+	TIDY_BEFORE_THROW();
+	currentThread->javaVM->internalVMFunctions->setCRIUSingleThreadModeJVMCRIUException(currentThread, moduleName, messageNumber);
+	return J9_JITHELPER_ACTION_THROW;
+}
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+
 static VMINLINE void*
 setHeapOutOfMemoryErrorFromJIT(J9VMThread *currentThread)
 {
@@ -1725,8 +1735,9 @@ slow_jitMonitorEnterImpl(J9VMThread *currentThread, bool forMethod)
 				resolveFrame->specialFrameFlags = (resolveFrame->specialFrameFlags & ~J9_STACK_FLAGS_JIT_FRAME_SUB_TYPE_MASK) | J9_STACK_FLAGS_JIT_FAILED_METHOD_MONITOR_ENTER_RESOLVE;
 			}
 		}
+		switch (monstatus) {
 #if JAVA_SPEC_VERSION >= 16
-		if (J9_OBJECT_MONITOR_VALUE_TYPE_IMSE == monstatus) {
+		case J9_OBJECT_MONITOR_VALUE_TYPE_IMSE: {
 			j9object_t syncObject = (j9object_t)currentThread->floatTemp2;
 			J9Class* badClass = J9OBJECT_CLAZZ(currentThread, syncObject);
 			J9UTF8 *className = J9ROMCLASS_CLASSNAME(badClass->romClass);
@@ -1740,16 +1751,24 @@ slow_jitMonitorEnterImpl(J9VMThread *currentThread, bool forMethod)
 			{
 				Assert_CodertVM_true(J9_ARE_ALL_BITS_SET(currentThread->javaVM->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_VALUE_BASED_EXCEPTION));
 				currentThread->javaVM->internalVMFunctions->setCurrentExceptionNLSWithArgs(currentThread, J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_BASED, 
-						J9VMCONSTANTPOOL_JAVALANGVIRTUALMACHINEERROR, J9UTF8_LENGTH(className), J9UTF8_DATA(className));
+					J9VMCONSTANTPOOL_JAVALANGVIRTUALMACHINEERROR, J9UTF8_LENGTH(className), J9UTF8_DATA(className));
 			}
 			addr = J9_JITHELPER_ACTION_THROW;
-			goto done;
+			break;
 		}
 #endif /* JAVA_SPEC_VERSION >= 16 */
-		if (J9_OBJECT_MONITOR_OOM == monstatus) {
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+		case J9_OBJECT_MONITOR_CRIU_SINGLE_THREAD_MODE_THROW:
+			addr = setCRIUSingleThreadModeExceptionFromJIT(currentThread, J9NLS_VM_CRIU_SINGLETHREADMODE_JVMCRIUEXCEPTION);
+			break;
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+		case J9_OBJECT_MONITOR_OOM:
 			addr = setNativeOutOfMemoryErrorFromJIT(currentThread, J9NLS_VM_FAILED_TO_ALLOCATE_MONITOR);
-			goto done;
+			break;
+		default:
+			Assert_CodertVM_unreachable();
 		}
+		goto done;
 	} else {
 		currentThread->javaVM->internalVMFunctions->objectMonitorEnterBlocking(currentThread);
 		/* Do not check asyncs for synchronized block (non-method) entry, since we now have the monitor,
