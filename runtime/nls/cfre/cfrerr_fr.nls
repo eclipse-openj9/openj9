@@ -472,7 +472,7 @@ J9NLS_CFR_ERR_BC_NOT_FIELDREF.user_response=Contact the provider of the classfil
 # END NON-TRANSLATABLE
 
 # PC is a standard reference for instruction pointer and is not translatable
-J9NLS_CFR_ERR_HANDLER_END_PC=fin de PC du gestionnaire d'exception non valide
+J9NLS_CFR_ERR_HANDLER_END_PC=PC de fin du gestionnaire d'exception non valide
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_HANDLER_END_PC.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_HANDLER_END_PC.system_action=The JVM will throw a verification or classloading related exception such as java.lang.ClassFormatError.
@@ -1271,7 +1271,7 @@ J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V55.user_response=Contact the provider of
 # END NON-TRANSLATABLE
 
 #Example: JVMCFRE154 BootstrapMethod (0) arguments contain invalid constantpool entry at index (#20) of type (9); class=Foo, offset=492
-J9NLS_CFR_ERR_BAD_BOOTSTRAP_ARGUMENT_ENTRY=Les arguments de BootstrapMethod (%1$d) contiennent une entr\u00e9e constantpool non valide \u00e0 l'index (#%2$u) du type (%3$u) ; class=%5$.*4$s, offset=%6$u
+J9NLS_CFR_ERR_BAD_BOOTSTRAP_ARGUMENT_ENTRY=Les arguments de BootstrapMethod (%1$d) contiennent une entr\u00e9e constantpool non valide \u00e0 l'index (#%2$u) du type (%3$u) ; classe=%5$.*4$s, d\u00e9calage=%6$u
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_BAD_BOOTSTRAP_ARGUMENT_ENTRY.sample_input_1=1
 J9NLS_CFR_ERR_BAD_BOOTSTRAP_ARGUMENT_ENTRY.sample_input_2=3
@@ -1527,7 +1527,7 @@ J9NLS_CFR_ERR_NON_STATIC_SYNCHRONIZED_VALUE_TYPE_METHOD_V1.system_action=The JVM
 J9NLS_CFR_ERR_NON_STATIC_SYNCHRONIZED_VALUE_TYPE_METHOD_V1.user_response=Contact the provider of the class file for a corrected version.
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_FINAL_ABSTRACT_FLAG_MISSING_ON_VALUE_CLASS=L'indicateur d'acc\u00e8s ACC_FINAL ou ACC_ABSTRACT est manquant dans la classe de valeur.
+J9NLS_CFR_ERR_FINAL_ABSTRACT_FLAG_MISSING_ON_VALUE_CLASS=L'indicateur d'acc\u00e8s ACC_FINAL ou ACC_ABSTRACT manque dans la classe de valeur.
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_FINAL_ABSTRACT_FLAG_MISSING_ON_VALUE_CLASS.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_FINAL_ABSTRACT_FLAG_MISSING_ON_VALUE_CLASS.system_action=The JVM will throw a verification or classloading related exception such as java.lang.ClassFormatError.
@@ -1541,7 +1541,7 @@ J9NLS_CFR_ERR_INCORRECT_FLAG_FOUND_ON_PRMITIVE_VALUE_CLASS.system_action=The JVM
 J9NLS_CFR_ERR_INCORRECT_FLAG_FOUND_ON_PRMITIVE_VALUE_CLASS.user_response=Contact the provider of the class file for a corrected version.
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_MAJOR_VERSION2=Version principale %1$u.%2$u de class=%4$.*3$s incorrecte, la version principale maximale prise en charge est %5$u.0; offset=%6$u
+J9NLS_CFR_ERR_MAJOR_VERSION2=Version principale %1$u.%2$u de class=%4$.*3$s incorrecte ; la version principale maximale prise en charge est %5$u.0 ; d\u00e9calage=%6$u
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_MAJOR_VERSION2.sample_input_1=62
 J9NLS_CFR_ERR_MAJOR_VERSION2.sample_input_2=0
@@ -1554,7 +1554,7 @@ J9NLS_CFR_ERR_MAJOR_VERSION2.system_action=The JVM will throw a verification or 
 J9NLS_CFR_ERR_MAJOR_VERSION2.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_MINOR_VERSION2=Version secondaire incorrecte de la classe %2$.*1$s. Version secondaire .%3$u obtenue, mais .0 est la seule version secondaire valide pour la version principale %4$u; offset=%5$u
+J9NLS_CFR_ERR_MINOR_VERSION2=Version secondaire incorrecte de la classe %2$.*1$s. Version secondaire .%3$u obtenue, mais .0 est la seule version secondaire valide pour la version principale %4$u ; d\u00e9calage=%5$u
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_MINOR_VERSION2.sample_input_1=4
 J9NLS_CFR_ERR_MINOR_VERSION2.sample_input_2=main
@@ -1566,7 +1566,7 @@ J9NLS_CFR_ERR_MINOR_VERSION2.system_action=The JVM will throw a verification or 
 J9NLS_CFR_ERR_MINOR_VERSION2.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_PREVIEW_VERSION_NOT_ENABLED=La version %1$u.%2$u de la classe %4$.*3$s est une version d'aper\u00e7u mais l'aper\u00e7u n'est pas activ\u00e9, veuillez l'activer avec --enable-preview; offset=%5$u
+J9NLS_CFR_ERR_PREVIEW_VERSION_NOT_ENABLED=La version %1$u.%2$u de la classe %4$.*3$s est une version d'aper\u00e7u mais l'aper\u00e7u n'est pas activ\u00e9 ; veuillez l'activer avec --enable-preview ; d\u00e9calage=%5$u
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_PREVIEW_VERSION_NOT_ENABLED.sample_input_1=61
 J9NLS_CFR_ERR_PREVIEW_VERSION_NOT_ENABLED.sample_input_2=65535
@@ -1578,7 +1578,7 @@ J9NLS_CFR_ERR_PREVIEW_VERSION_NOT_ENABLED.system_action=The JVM will throw a ver
 J9NLS_CFR_ERR_PREVIEW_VERSION_NOT_ENABLED.user_response=Run with the correct Java runtime version and use --enable-preview.
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_PREVIEW_VERSION2=La version %1$u.%2$u de la classe %4$.*3$s est une version d'aper\u00e7u principale non prise en charge, l'environnement d'ex\u00e9cution autorise uniquement %5$u.65535, essayez de recompiler le code avec la m\u00eame version de l'environnement d'ex\u00e9cution ; offset=%6$u
+J9NLS_CFR_ERR_PREVIEW_VERSION2=La version %1$u.%2$u de la classe %4$.*3$s est une version d'aper\u00e7u principale non prise en charge. L'environnement d'ex\u00e9cution autorise uniquement %5$u.65535. Essayez de recompiler le code avec la m\u00eame version de l'environnement d'ex\u00e9cution ; d\u00e9calage=%6$u
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_PREVIEW_VERSION2.sample_input_1=60
 J9NLS_CFR_ERR_PREVIEW_VERSION2.sample_input_2=65535

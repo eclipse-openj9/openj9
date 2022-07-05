@@ -70,7 +70,7 @@ J9NLS_CFR_ERROR_TEMPLATE_METHOD.user_response=
 # END NON-TRANSLATABLE
 
 # Example: JVMCFRE074 bad magic number; class=Foo, offset=0
-J9NLS_CFR_ERROR_TEMPLATE_NO_METHOD=%1$s; klasa=%3$.*2$s, pozycja=%4$u
+J9NLS_CFR_ERROR_TEMPLATE_NO_METHOD=%1$s; klasa=%3$.*2$s, przesuni\u0119cie=%4$u
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERROR_TEMPLATE_NO_METHOD.sample_input_1=JVMCFRE074 bad magic number
 J9NLS_CFR_ERROR_TEMPLATE_NO_METHOD.sample_input_2=3
@@ -1534,14 +1534,14 @@ J9NLS_CFR_ERR_FINAL_ABSTRACT_FLAG_MISSING_ON_VALUE_CLASS.system_action=The JVM w
 J9NLS_CFR_ERR_FINAL_ABSTRACT_FLAG_MISSING_ON_VALUE_CLASS.user_response=Contact the provider of the class file for a corrected version.
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_INCORRECT_FLAG_FOUND_ON_PRMITIVE_VALUE_CLASS=Znaleziono niepoprawn\u0105 flag\u0119 dost\u0119pu dla klasy warto\u015bci elementu podstawowego.
+J9NLS_CFR_ERR_INCORRECT_FLAG_FOUND_ON_PRMITIVE_VALUE_CLASS=Znaleziono niepoprawn\u0105 flag\u0119 dost\u0119pu dla klasy warto\u015bci podstawowej.
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_INCORRECT_FLAG_FOUND_ON_PRMITIVE_VALUE_CLASS.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_INCORRECT_FLAG_FOUND_ON_PRMITIVE_VALUE_CLASS.system_action=The JVM will throw a verification or classloading related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_INCORRECT_FLAG_FOUND_ON_PRMITIVE_VALUE_CLASS.user_response=Contact the provider of the class file for a corrected version.
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_MAJOR_VERSION2=niepoprawna wersja g\u0142\u00f3wna %1$u.%2$u class=%4$.*3$s, maksymalna obs\u0142ugiwana wersja g\u0142\u00f3wna to %5$u.0; offset=%6$u
+J9NLS_CFR_ERR_MAJOR_VERSION2=niepoprawna wersja g\u0142\u00f3wna %1$u.%2$u klasa=%4$.*3$s, maksymalna obs\u0142ugiwana wersja g\u0142\u00f3wna to %5$u.0; przesuni\u0119cie=%6$u
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_MAJOR_VERSION2.sample_input_1=62
 J9NLS_CFR_ERR_MAJOR_VERSION2.sample_input_2=0
@@ -1554,7 +1554,7 @@ J9NLS_CFR_ERR_MAJOR_VERSION2.system_action=The JVM will throw a verification or 
 J9NLS_CFR_ERR_MAJOR_VERSION2.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_MINOR_VERSION2=niepoprawna wersja podrz\u0119dna klasy %2$.*1$s. Ma wersj\u0119 podrz\u0119dn\u0105 .%3$u, ale .0 to jedyna poprawna wersja podrz\u0119dna dla wersji g\u0142\u00f3wnej %4$u; offset=%5$u
+J9NLS_CFR_ERR_MINOR_VERSION2=niepoprawna wersja podrz\u0119dna klasy %2$.*1$s. Ma wersj\u0119 podrz\u0119dn\u0105 .%3$u, ale .0 jest jedyn\u0105 poprawn\u0105 wersj\u0105 podrz\u0119dn\u0105 dla wersji g\u0142\u00f3wnej %4$u; przesuni\u0119cie=%5$u
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_MINOR_VERSION2.sample_input_1=4
 J9NLS_CFR_ERR_MINOR_VERSION2.sample_input_2=main
@@ -1566,7 +1566,7 @@ J9NLS_CFR_ERR_MINOR_VERSION2.system_action=The JVM will throw a verification or 
 J9NLS_CFR_ERR_MINOR_VERSION2.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_PREVIEW_VERSION_NOT_ENABLED=wersja %1$u.%2$u klasy %4$.*3$s to wersja podgl\u0105du, ale podgl\u0105d jest wy\u0142\u0105czony, w\u0142\u0105cz go przy u\u017cyciu --enable-preview; offset=%5$u
+J9NLS_CFR_ERR_PREVIEW_VERSION_NOT_ENABLED=wersja %1$u.%2$u klasy %4$.*3$s to wersja wczesnego podgl\u0105du, ale podgl\u0105d jest wy\u0142\u0105czony, w\u0142\u0105cz go przy u\u017cyciu --enable-preview; przesuni\u0119cie=%5$u
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_PREVIEW_VERSION_NOT_ENABLED.sample_input_1=61
 J9NLS_CFR_ERR_PREVIEW_VERSION_NOT_ENABLED.sample_input_2=65535
@@ -1578,7 +1578,7 @@ J9NLS_CFR_ERR_PREVIEW_VERSION_NOT_ENABLED.system_action=The JVM will throw a ver
 J9NLS_CFR_ERR_PREVIEW_VERSION_NOT_ENABLED.user_response=Run with the correct Java runtime version and use --enable-preview.
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_PREVIEW_VERSION2=wersja %1$u.%2$u klasy %4$.*3$s jest nieobs\u0142ugiwan\u0105 wersj\u0105 g\u0142\u00f3wn\u0105 podgl\u0105du, \u015brodowisko wykonawcze zezwala tylko na %5$u.65535, spr\u00f3buj ponownie skompilowa\u0107 kod przy u\u017cyciu tej samej wersji \u015brodowiska wykonawczego; offset=%6$u
+J9NLS_CFR_ERR_PREVIEW_VERSION2=wersja %1$u.%2$u klasy %4$.*3$s jest nieobs\u0142ugiwan\u0105 wersj\u0105 g\u0142\u00f3wn\u0105 wczesnego podgl\u0105du, \u015brodowisko wykonawcze zezwala tylko na wersj\u0119 %5$u.65535, spr\u00f3buj ponownie skompilowa\u0107 kod przy u\u017cyciu tej samej wersji \u015brodowiska wykonawczego; przesuni\u0119cie=%6$u
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_PREVIEW_VERSION2.sample_input_1=60
 J9NLS_CFR_ERR_PREVIEW_VERSION2.sample_input_2=65535
