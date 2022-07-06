@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -93,12 +93,6 @@ calculateInstanceDescription( J9VMThread *vmThread, J9Class *ramClass, J9Class *
 		 */
 		ramClass->totalInstanceSize = walkResult->totalInstanceSize;
 		ramClass->backfillOffset = objectHeaderSize + ((walkResult->backfillOffset == -1) ?	walkResult->totalInstanceSize : walkResult->backfillOffset);
-
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-		if (J9ROMCLASS_IS_VALUE(ramClass->romClass)) {
-			ramClass->backfillOffset = walkResult->backfillOffset;
-		}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 		/* write lockword offset into ramClass */
 		ramClass->lockOffset =	walkState->lockOffset;
