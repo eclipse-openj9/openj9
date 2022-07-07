@@ -4643,6 +4643,22 @@ JavaCoreDumpWriter::writeThreadBlockers(J9VMThread* vmThread, UDATA vmstate, j9o
 			// Should only occur for WAITING threads.
 			// (For BLOCKED threads this would indicate a broken VM)
 			_OutputStream.writeCharacters("<unowned>");
+
+			// Get J9VMThread details from initializeStatus field.
+			J9Class *lockClass = J9VMJAVALANGJ9VMINTERNALSCLASSINITIALIZATIONLOCK_OR_NULL(vmThread->javaVM);
+			if ((NULL != lockObject) && (NULL != lockClass)) {
+				J9Class *clazz = J9OBJECT_CLAZZ(vmThread, lockObject);
+				if (instanceOfOrCheckCastNoCacheUpdate(clazz, lockClass)) {
+					j9object_t theClass = J9VMJAVALANGJ9VMINTERNALSCLASSINITIALIZATIONLOCK_THECLASS_VM(vmThread->javaVM, lockObject);
+					J9Class *vmRef = J9VMJAVALANGCLASS_VMREF(vmThread, theClass);
+					J9VMThread *initializingThread = (J9VMThread *)(vmRef->initializeStatus & ~(UDATA)J9ClassInitStatusMask);
+					if (NULL != initializingThread) {
+						_OutputStream.writeCharacters(" Initializing thread: \"");
+						writeThreadName(initializingThread);
+						_OutputStream.writeCharacters("\"");
+					}
+				}
+			}
 		}
 	}
 	_OutputStream.writeCharacters("\n");
