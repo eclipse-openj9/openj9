@@ -72,7 +72,7 @@ public class Thread implements Runnable {
 	 */
 	public final static int NORM_PRIORITY = 5;		// Normal priority for a thread
 	/*[PR 97331] Initial thread name should be Thread-0 */
-	private static int createCount = -1;					// Used internally to compute Thread names that comply with the Java specification
+	private static int createCount;					// Used internally to compute Thread names that comply with the Java specification
 	/*[PR 122459] LIR646 - Remove use of generic object for synchronization */
 	private static final class TidLock {
 		TidLock() {}
@@ -907,12 +907,7 @@ public final synchronized void join(long timeoutInMilliseconds, int nanos) throw
  */
 private synchronized static String newName() {
 	/*[PR 97331] Initial thread name should be Thread-0 */
-	if (createCount == -1) {
-		createCount++;
-		return "main"; //$NON-NLS-1$
-	} else {
-		return "Thread-" + createCount++; //$NON-NLS-1$
-	}
+	return "Thread-" + createCount++; //$NON-NLS-1$
 }
 
 /**
