@@ -898,3 +898,6 @@ TraceException=Trc_VM_criu_runDelayedLockRelatedOperations_contendedMonitorEnter
 TraceException=Trc_VM_criu_runDelayedLockRelatedOperations_contendedMonitorEnter2 Overhead=1 Level=2 Template="Object monitor should be free to acquire monitor=%p"
 TraceEvent=Trc_VM_criu_runDelayedLockRelatedOperations_runDelayedOperation Overhead=1 Level=3 Template="Checkpoint thread calling delayed lock-related op=%zu on instance=%p monitor=%p"
 TraceEvent=Trc_VM_criu_delayedLockingOperation_delayOperation Overhead=1 Level=3 Template="Checkpoint thread calling lock-related op=%zu on instance=%p"
+
+TraceEntry=Trc_VM_JNI_isVirtualThread_Entry Overhead=1 Level=4 Template="JNI IsVirtualThread(obj=%p)"
+TraceExit=Trc_VM_JNI_isVirtualThread_Exit Overhead=1 Level=4 Template="JNI IsVirtualThread -- rc = %d"
