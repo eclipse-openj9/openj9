@@ -252,7 +252,7 @@ J9::MonitorTable::readReleaseClassUnloadMonitor(int32_t compThreadIndex)
       }
    else
       {
-      TR_ASSERT(false, "comp thread %d does not have classUnloadMonitor", compThreadIndex);
+      //TR_ASSERT(false, "comp thread %d does not have classUnloadMonitor", compThreadIndex);
       return -1; // could not release monitor
       }
    }
