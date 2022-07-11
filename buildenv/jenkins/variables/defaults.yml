@@ -387,7 +387,7 @@ x86-32_windows:
     vars:
       8: 'PATH+TOOLS=/cygdrive/c/openjdk/LLVM32/bin:/cygdrive/c/openjdk/nasm-2.13.03'
 #========================================#
-# OSX x86 64bits
+# Mac x86 64bits
 #========================================#
 x86-64_mac:
   extends: ['boot_jdk_default', 'debuginfo', 'openssl', 'openssl_bundle']
@@ -405,7 +405,7 @@ x86-64_mac:
   freemarker: '/Users/jenkins/freemarker.jar'
   openjdk_reference_repo: '/Users/jenkins/openjdk_cache'
   node_labels:
-    build: 'ci.role.build && hw.arch.x86 && sw.os.mac.10_14'
+    build: 'ci.role.build && hw.arch.x86 && sw.os.mac.10_15'
   build_env:
     vars: 'OPENJ9_JAVA_OPTIONS=-Xdump:system+java:events=systhrow,filter=java/lang/ClassCastException,request=exclusive+prepwalk+preempt'
 #========================================#
