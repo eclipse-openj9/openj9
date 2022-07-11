@@ -89,6 +89,11 @@ UDATA initializeVMThreading(J9JavaVM *vm)
 		omrthread_monitor_init_with_name(&vm->cifArgumentTypesCacheMutex, 0, "CIF argument types mutex") ||
 #endif /* JAVA_SPEC_VERSION >= 16 */
 
+#if JAVA_SPEC_VERSION >= 19
+		/* Held when adding or removing a virtual thread from the list at virtual thread start or terminate. */
+		omrthread_monitor_init_with_name(&vm->liveVirtualThreadListMutex, 0, "Live virtual thread list mutex") ||
+#endif /* JAVA_SPEC_VERSION >= 19 */
+
 		initializeMonitorTable(vm)
 	)
 	{
@@ -179,6 +184,13 @@ void terminateVMThreading(J9JavaVM *vm)
 		vm->cifArgumentTypesCacheMutex = NULL;
 	}
 #endif /* JAVA_SPEC_VERSION >= 16 */
+
+#if JAVA_SPEC_VERSION >= 19
+	if (NULL != vm->liveVirtualThreadListMutex) {
+		omrthread_monitor_destroy(vm->liveVirtualThreadListMutex);
+		vm->liveVirtualThreadListMutex = NULL;
+	}
+#endif /* JAVA_SPEC_VERSION >= 19 */
 
 	destroyMonitorTable(vm);
 }
