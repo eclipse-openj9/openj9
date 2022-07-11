@@ -513,7 +513,6 @@ initializeAttachedThreadImpl(J9VMThread *currentThread, const char *name, j9obje
 		if (NULL != cachedOOM) {
 			initializee->outOfMemoryError = cachedOOM;
 			J9MemoryManagerFunctions const * const mmFuncs = vm->memoryManagerFunctions;
-			/* See if a name was given for the thread (if so, this implies that it will be a daemon thread) */
 			j9object_t threadName = NULL;
 			if (NULL != name) {
 				/* Allocate a String for the thread name */
