@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2020 IBM Corp. and others
+ * Copyright (c) 2018, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -152,8 +152,13 @@ void TR_BoolArrayStoreTransformer::perform()
 
    if (!_bstoreiUnknownArrayTypeNodes->empty())
       {
-      if (_hasByteArrayAutoOrCheckCast && _hasBoolArrayAutoOrCheckCast) // only need to iterate CFG if both byte and boolean array exist
+      if ((_hasByteArrayAutoOrCheckCast && _hasBoolArrayAutoOrCheckCast) || comp()->isDLT())
+         {
+         // need to iterate CFG if both byte and boolean array exist or on DLT compiles
+         // On DLT compiles full analysis is needed because not all bytecodes are translated
+         // into IL. Autos and/or checkcast operations of type boolean[] and byte[] may exist.
          findBoolArrayStoreNodes();
+         }
       else
          {
          if (_hasBoolArrayAutoOrCheckCast) // if only boolean array exist then all the bstorei nodes are operating on boolean array
