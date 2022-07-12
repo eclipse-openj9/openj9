@@ -776,6 +776,7 @@ install_cuda() {
 
 install_python() {
   local python_version=3.7.3
+  local python_short_version=${python_version%.*}
   echo ""
   echo "# Install python."
   echo "RUN cd /tmp \\"
@@ -787,6 +788,11 @@ install_python() {
   echo " && make install \\"
   echo " && cd .. \\"
   echo " && rm -rf python.tar.xz Python-$python_version"
+if [ $criu != no ] && [ $dist = ubuntu ]; then
+  echo ""
+  echo "# Set capabilities for python3."
+  echo "RUN setcap cap_sys_admin=eip /usr/local/bin/python$python_short_version"
+fi
 }
 
 adjust_ldconfig() {
