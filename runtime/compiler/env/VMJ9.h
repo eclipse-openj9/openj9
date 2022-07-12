@@ -512,7 +512,10 @@ public:
    virtual uintptr_t         thisThreadGetJavaPCOffset();
    virtual uintptr_t         thisThreadGetJavaSPOffset();
    virtual uintptr_t         thisThreadGetJavaLiteralsOffset();
-
+#if JAVA_SPEC_VERSION >= 19
+   virtual uintptr_t         thisThreadGetOwnedMonitorCountOffset();
+   virtual uintptr_t         thisThreadGetCallOutCountOffset();
+#endif
    // Move to CompilerEnv VM?
    virtual uintptr_t         thisThreadGetSystemSPOffset();
 

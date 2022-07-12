@@ -1042,6 +1042,11 @@ UDATA TR_J9VMBase::thisThreadGetPublicFlagsOffset()                 {return offs
 UDATA TR_J9VMBase::thisThreadGetJavaPCOffset()                      {return offsetof(J9VMThread, pc);}
 UDATA TR_J9VMBase::thisThreadGetJavaSPOffset()                      {return offsetof(J9VMThread, sp);}
 
+#if JAVA_SPEC_VERSION >= 19
+uintptr_t TR_J9VMBase::thisThreadGetOwnedMonitorCountOffset()       {return offsetof(J9VMThread, ownedMonitorCount);}
+uintptr_t TR_J9VMBase::thisThreadGetCallOutCountOffset()            {return offsetof(J9VMThread, callOutCount);}
+#endif
+
 UDATA TR_J9VMBase::thisThreadGetSystemSPOffset()
    {
 #if defined(J9VM_JIT_FREE_SYSTEM_STACK_POINTER)
