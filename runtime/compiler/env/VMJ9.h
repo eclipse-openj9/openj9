@@ -685,12 +685,7 @@ public:
    virtual uintptr_t         getCellSizeForSizeClass(uintptr_t);
    virtual uintptr_t         getObjectSizeClass(uintptr_t);
 
-   uintptr_t                 thisThreadMonitorCacheOffset();
    uintptr_t                 thisThreadOSThreadOffset();
-
-   uintptr_t                 getMonitorNextOffset();
-   uintptr_t                 getMonitorOwnerOffset();
-   uintptr_t                 getMonitorEntryCountOffset();
 
    uintptr_t                 getRealtimeSizeClassesOffset();
    uintptr_t                 getSmallCellSizesOffset();
