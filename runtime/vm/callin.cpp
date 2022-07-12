@@ -366,7 +366,11 @@ done:
 	return success;
 }
 
+#if JAVA_SPEC_VERSION >= 19
+void
+#else /* JAVA_SPEC_VERSION >= 19 */
 static void
+#endif /* JAVA_SPEC_VERSION >= 19 */
 restoreCallInFrame(J9VMThread *currentThread)
 {
 	Assert_VM_mustHaveVMAccess(currentThread);

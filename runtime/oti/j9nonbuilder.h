@@ -2879,6 +2879,9 @@ typedef struct J9JavaStack {
 	UDATA size;
 	struct J9JavaStack* previous;
 	UDATA firstReferenceFrame;
+#if JAVA_SPEC_VERSION >= 19
+	BOOLEAN isVirtual;
+#endif /* JAVA_SPEC_VERSION >= 19 */
 } J9JavaStack;
 
 /* @ddr_namespace: map_to_type=J9Object */
@@ -4871,6 +4874,9 @@ typedef struct J9InternalVMFunctions {
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 	j9object_t (*getClassNameString)(struct J9VMThread *currentThread, j9object_t classObject, jboolean internAndAssign);
 	j9object_t* (*getDefaultValueSlotAddress)(struct J9Class *clazz);
+#if JAVA_SPEC_VERSION >= 19
+	BOOLEAN (*createContinuation)(struct J9VMThread *currentThread, j9object_t continuationObject);
+#endif /* JAVA_SPEC_VERSION >= 19 */
 } J9InternalVMFunctions;
 
 /* Jazz 99339: define a new structure to replace JavaVM so as to pass J9NativeLibrary to JVMTIEnv  */
@@ -4891,6 +4897,7 @@ typedef struct J9VMContinuation {
 	UDATA* stackOverflowMark;
 	UDATA* stackOverflowMark2;
 	J9JavaStack* stackObject;
+	struct J9VMEntryLocalStorage entryLocalStorage;
 } J9VMContinuation;
 #endif /* JAVA_SPEC_VERSION >= 19 */
 

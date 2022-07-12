@@ -216,7 +216,7 @@ JVM_RegisterContinuationMethods(JNIEnv *env, jclass clz)
 JNIEXPORT jboolean JNICALL
 JVM_IsContinuationsSupported(void)
 {
-	return JNI_FALSE;
+	return JNI_TRUE;
 }
 
 JNIEXPORT jboolean JNICALL

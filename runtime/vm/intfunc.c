@@ -413,4 +413,7 @@ J9InternalVMFunctions J9InternalFunctions = {
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 	getClassNameString,
 	getDefaultValueSlotAddress,
+#if JAVA_SPEC_VERSION >= 19
+	createContinuation,
+#endif /* JAVA_SPEC_VERSION >= 19 */
 };
