@@ -1,6 +1,6 @@
 /*[INCLUDE-IF CRIU_SUPPORT]*/
 /*******************************************************************************
- * Copyright (c) 2021, 2021 IBM Corp. and others
+ * Copyright (c) 2021, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,6 +29,15 @@ public final class JVMCheckpointException extends JVMCRIUException {
 	private static final long serialVersionUID = 4486137934620495516L;
 
 	/**
+	 * Creates a JVMCheckpointException with the specified message and a default error code.
+	 *
+	 * @param message   the message
+	 */
+	public JVMCheckpointException(String message) {
+		super(message, 0);
+	}
+
+	/**
 	 * Creates a JVMCheckpointException with the specified message and error code.
 	 *
 	 * @param message   the message
@@ -43,7 +52,7 @@ public final class JVMCheckpointException extends JVMCRIUException {
 	 *
 	 * @param message   the message
 	 * @param errorCode the error code
-	 * @param causedBy  throwable that cuased the exception
+	 * @param causedBy  throwable that caused the exception
 	 */
 	public JVMCheckpointException(String message, int errorCode, Throwable causedBy) {
 		super(message, errorCode, causedBy);
