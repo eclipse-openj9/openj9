@@ -1075,15 +1075,17 @@ JavaCoreDumpWriter::writeEnvironmentSection(void)
 	_OutputStream.writeCharacters(" JVM\n");
 
 #if defined(J9VM_OPT_JITSERVER)
-	if (0 != jitConfig->clientUID) {
-		_OutputStream.writeCharacters("1CICLIENTID    Client UID ");
-		_OutputStream.writeInteger64(jitConfig->clientUID, "%" OMR_PRIu64);
-		_OutputStream.writeCharacters("\n");
-	}
-	if (0 != jitConfig->serverUID) {
-		_OutputStream.writeCharacters("1CISERVERID    Server UID ");
-		_OutputStream.writeInteger64(jitConfig->serverUID, "%" OMR_PRIu64);
-		_OutputStream.writeCharacters("\n");
+	if (NULL != jitConfig) {
+		if (0 != jitConfig->clientUID) {
+			_OutputStream.writeCharacters("1CICLIENTID    Client UID ");
+			_OutputStream.writeInteger64(jitConfig->clientUID, "%" OMR_PRIu64);
+			_OutputStream.writeCharacters("\n");
+		}
+		if (0 != jitConfig->serverUID) {
+			_OutputStream.writeCharacters("1CISERVERID    Server UID ");
+			_OutputStream.writeInteger64(jitConfig->serverUID, "%" OMR_PRIu64);
+			_OutputStream.writeCharacters("\n");
+		}
 	}
 #endif /* J9VM_OPT_JITSERVER */
 
