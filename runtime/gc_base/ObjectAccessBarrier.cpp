@@ -1503,11 +1503,9 @@ MM_ObjectAccessBarrier::copyObjectFields(J9VMThread *vmThread, J9Class *objectCl
 	I_32 hashCode = 0;
 	bool isDestObjectPreHashed = false;
 
-	if (!isValueType) {
-		isDestObjectPreHashed = _extensions->objectModel.hasBeenHashed(destObject);
-		if (isDestObjectPreHashed) {
-			hashCode = _extensions->objectModel.getObjectHashCode(vmThread->javaVM, destObject);
-		}
+	isDestObjectPreHashed = _extensions->objectModel.hasBeenHashed(destObject);
+	if (isDestObjectPreHashed) {
+		hashCode = _extensions->objectModel.getObjectHashCode(vmThread->javaVM, destObject);
 	}
 
 	UDATA offset = 0;
@@ -1597,16 +1595,15 @@ MM_ObjectAccessBarrier::copyObjectFields(J9VMThread *vmThread, J9Class *objectCl
 		}
 	}
 
-	if (!isValueType) {
-		/* If an object was pre-hashed and a hash was stored within the fields of the object restore it.*/
-		if (isDestObjectPreHashed) {
-			UDATA hashcodeOffset = _extensions->mixedObjectModel.getHashcodeOffset(destObject);
-			if (hashcodeOffset <= limit) {
-				I_32 *hashcodePointer = (I_32*)((U_8*)destObject + hashcodeOffset);
-				*hashcodePointer = hashCode;
-			}
+	/* If an object was pre-hashed and a hash was stored within the fields of the object restore it.*/
+	if (isDestObjectPreHashed) {
+		UDATA hashcodeOffset = _extensions->mixedObjectModel.getHashcodeOffset(destObject);
+		if (hashcodeOffset <= limit) {
+			I_32 *hashcodePointer = (I_32*)((U_8*)destObject + hashcodeOffset);
+			*hashcodePointer = hashCode;
 		}
-
+	}
+	if (!isValueType) {
 		if (initializeLockWord) {
 			/* initialize lockword, if present */
 			lockwordAddress = getLockwordAddress(vmThread, destObject);
