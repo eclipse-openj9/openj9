@@ -5263,61 +5263,50 @@ J9::X86::TreeEvaluator::VMmonentEvaluator(
          }
       else
          {
-         #if defined(J9VM_OPT_REAL_TIME_LOCKING_SUPPORT)
-            // need to get monitor from cache, if we can
+         bool conditionallyReserve = false;
+         bool shouldConditionallyReserveForReservableClasses =
+            comp->getOption(TR_ReservingLocks)
+            && !TR::Options::_aggressiveLockReservation
+            && lwOffset > 0
+            && cg->getMonClass(node) != NULL;
+
+         if (shouldConditionallyReserveForReservableClasses)
+            {
+            TR_PersistentClassInfo *monClassInfo = comp
+               ->getPersistentInfo()
+               ->getPersistentCHTable()
+               ->findClassInfoAfterLocking(cg->getMonClass(node), comp);
+
+            if (monClassInfo != NULL && monClassInfo->isReservable())
+               conditionallyReserve = true;
+            }
+
+         if (!conditionallyReserve)
+            {
+            // we want to write thread reg into lock word
+            lockedReg = vmThreadReg;
+            }
+         else
+            {
             lockedReg = cg->allocateRegister();
             numDeps++;
-            generateRegMemInstruction(TR::InstOpCode::LRegMem(), node, lockedReg,
-                                      generateX86MemoryReference(vmThreadReg, fej9->thisThreadMonitorCacheOffset(), cg), cg);
-            generateRegRegInstruction(TR::InstOpCode::TESTRegReg(), node, lockedReg, lockedReg, cg);
-            generateLabelInstruction(TR::InstOpCode::JE4, node, snippetLabel, cg);
 
-         #else
-            bool conditionallyReserve = false;
-            bool shouldConditionallyReserveForReservableClasses =
-               comp->getOption(TR_ReservingLocks)
-               && !TR::Options::_aggressiveLockReservation
-               && lwOffset > 0
-               && cg->getMonClass(node) != NULL;
+            // Compute the value to put into the lock word based on the
+            // current value, which is either 0 or RES_BIT ("reservable").
+            //
+            //    0       ==> vmThreadReg
+            //    RES_BIT ==> vmThreadReg | RES_BIT | INC_DEC_VALUE
+            //
+            // For reservable locks, failure to reserve at this point would
+            // prevent any future reservation of the same lock.
 
-            if (shouldConditionallyReserveForReservableClasses)
-               {
-               TR_PersistentClassInfo *monClassInfo = comp
-                  ->getPersistentInfo()
-                  ->getPersistentCHTable()
-                  ->findClassInfoAfterLocking(cg->getMonClass(node), comp);
-
-               if (monClassInfo != NULL && monClassInfo->isReservable())
-                  conditionallyReserve = true;
-               }
-
-            if (!conditionallyReserve)
-               {
-               // we want to write thread reg into lock word
-               lockedReg = vmThreadReg;
-               }
-            else
-               {
-               lockedReg = cg->allocateRegister();
-               numDeps++;
-
-               // Compute the value to put into the lock word based on the
-               // current value, which is either 0 or RES_BIT ("reservable").
-               //
-               //    0       ==> vmThreadReg
-               //    RES_BIT ==> vmThreadReg | RES_BIT | INC_DEC_VALUE
-               //
-               // For reservable locks, failure to reserve at this point would
-               // prevent any future reservation of the same lock.
-
-               bool b64 = cg->comp()->target().is64Bit() && !fej9->generateCompressedLockWord();
-               generateRegRegInstruction(TR::InstOpCode::MOVRegReg(b64), node, lockedReg, eaxReal, cg);
-               generateRegImmInstruction(TR::InstOpCode::SHRRegImm1(b64), node, lockedReg, RES_BIT_POSITION, cg);
-               generateRegInstruction(TR::InstOpCode::NEGReg(b64), node, lockedReg, cg);
-               generateRegImmInstruction(TR::InstOpCode::ANDRegImms(b64), node, lockedReg, RES_BIT | INC_DEC_VALUE, cg);
-               generateRegRegInstruction(TR::InstOpCode::ADDRegReg(b64), node, lockedReg, vmThreadReg, cg);
-               }
-         #endif
+            bool b64 = cg->comp()->target().is64Bit() && !fej9->generateCompressedLockWord();
+            generateRegRegInstruction(TR::InstOpCode::MOVRegReg(b64), node, lockedReg, eaxReal, cg);
+            generateRegImmInstruction(TR::InstOpCode::SHRRegImm1(b64), node, lockedReg, RES_BIT_POSITION, cg);
+            generateRegInstruction(TR::InstOpCode::NEGReg(b64), node, lockedReg, cg);
+            generateRegImmInstruction(TR::InstOpCode::ANDRegImms(b64), node, lockedReg, RES_BIT | INC_DEC_VALUE, cg);
+            generateRegRegInstruction(TR::InstOpCode::ADDRegReg(b64), node, lockedReg, vmThreadReg, cg);
+            }
          }
 
       // try to swap into lock word
@@ -5353,15 +5342,6 @@ J9::X86::TreeEvaluator::VMmonentEvaluator(
       deps->addPostCondition(lookupOffsetReg, TR::RealRegister::NoReg, cg);
 
    deps->stopAddingConditions();
-
-   #if defined(J9VM_OPT_REAL_TIME_LOCKING_SUPPORT)
-      // our lock is in the object, now need to advance to next monitor in cache
-      generateRegMemInstruction(TR::InstOpCode::LRegMem(), node, lockedReg,
-                                generateX86MemoryReference(lockedReg, fej9->getMonitorNextOffset(), cg), cg);
-      generateMemRegInstruction(TR::InstOpCode::SMemReg(), node,
-                                generateX86MemoryReference(vmThreadReg, fej9->thisThreadMonitorCacheOffset(), cg),
-                                lockedReg, cg);
-   #endif
 
    generateLabelInstruction(TR::InstOpCode::label, node, fallThru, deps, cg);
 
@@ -5552,7 +5532,6 @@ TR::Register
    if (isMonitorValueBasedOrValueType == TR_maybe)
       TR::TreeEvaluator::generateCheckForValueMonitorEnterOrExit(node, J9_CLASS_DISALLOWS_LOCKING_FLAGS, snippetLabel, cg);
 
-#if !defined(J9VM_OPT_REAL_TIME_LOCKING_SUPPORT)
    // Now that the object reference has been generated, see if this is the end
    // of a small synchronized block.
    // The definition of "small" depends on the method hotness and is measured
@@ -5565,7 +5544,6 @@ TR::Register
    if (hotness == scorching) maxInstructions = 30;
    else if (hotness == hot)  maxInstructions = 20;
    else                      maxInstructions = 10;
-#endif
 
    startLabel->setStartInternalControlFlow();
    TR::LabelSymbol *snippetFallThru = inlineRecursive ? generateLabelSymbol(cg): fallThru;
@@ -5602,106 +5580,6 @@ TR::Register
 
    TR::LabelSymbol *monitorLookupCacheLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *fallThruFromMonitorLookupCacheLabel = generateLabelSymbol(cg);
-
-#if defined(J9VM_OPT_REAL_TIME_LOCKING_SUPPORT)
-   TR::LabelSymbol *decCountLabel = generateLabelSymbol(cg);
-
-   unlockedReg = cg->allocateRegister();
-   tempReg     = cg->allocateRegister();
-   eaxReal     = cg->allocateRegister();
-
-   numDeps += 3;
-
-   if (lwOffset <= 0)
-      {
-      generateRegImmInstruction(TR::InstOpCode::CMPRegImms(), node, objectClassReg, 0, cg);
-
-      generateCommonLockNurseryCodes(node,
-                               cg,
-                               false, //true for VMmonentEvaluator, false for VMmonexitEvaluator
-                               monitorLookupCacheLabel,
-                               fallThruFromMonitorLookupCacheLabel,
-                               snippetLabel,
-                               numDeps,
-                               lwOffset,
-                               objectClassReg,
-                               lookupOffsetReg,
-                               vmThreadReg,
-                               objectReg);
-      }
-
-
-   // load lock word
-   generateRegMemInstruction(TR::InstOpCode::LRegMem(), node, tempReg, getMemoryReference(objectClassReg, objectReg, lwOffset, cg), cg);
-
-   // extract monitor from lock word
-   generateRegRegInstruction(TR::InstOpCode::MOVRegReg(), node, unlockedReg, tempReg, cg);
-
-   #define LOCK_PINNED_BIT (0x1)
-   generateRegImmInstruction(TR::InstOpCode::ANDRegImms(), node, unlockedReg, ~((UDATA) LOCK_PINNED_BIT), cg);
-
-   // need a NULL test to snippet: about to dereference lock word
-   generateRegRegInstruction(TR::InstOpCode::TESTRegReg(), node, unlockedReg, unlockedReg, cg);
-   generateLabelInstruction(TR::InstOpCode::JE4, node, snippetLabel, cg);
-
-   // if OS monitors don't match, let snippet handle it
-   generateRegMemInstruction(TR::InstOpCode::LRegMem(), node, eaxReal,
-                             generateX86MemoryReference(unlockedReg, fej9->getMonitorOwnerOffset(), cg), cg);
-   generateRegMemInstruction(TR::InstOpCode::CMPRegMem(), node, eaxReal,
-                             generateX86MemoryReference(vmThreadReg, fej9->thisThreadOSThreadOffset(), cg), cg);
-   generateLabelInstruction(TR::InstOpCode::JNE4, node, snippetLabel, cg);
-
-   // monitors match so we can unlock it
-   // decrement count, maybe unlock object
-   generateRegMemInstruction(TR::InstOpCode::LRegMem(), node, eaxReal,
-                             generateX86MemoryReference(unlockedReg, fej9->getMonitorEntryCountOffset(), cg), cg);
-   generateRegImmInstruction(TR::InstOpCode::CMPRegImms(), node, eaxReal, 1, cg);
-   generateLabelInstruction(TR::InstOpCode::JA4, node, decCountLabel, cg);
-
-
-   // leaving main-line code path
-   // create the outlined path that decrements the count
-      {
-      TR_OutlinedInstructionsGenerator og(decCountLabel, node, cg);
-      generateMemInstruction(  TR::InstOpCode::DECMem(cg), node, generateX86MemoryReference(unlockedReg, fej9->getMonitorEntryCountOffset(), cg), cg);
-      generateLabelInstruction(TR::InstOpCode::JMP4,       node, fallThru, cg);
-
-      og.endOutlinedInstructionSequence();
-      }
-
-   // back to main-line code path
-
-   // unlock object...but only if lock pinned bit is clear
-   generateRegRegInstruction(TR::InstOpCode::CMPRegReg(), node, eaxReal, unlockedReg, cg);
-   generateLabelInstruction(TR::InstOpCode::JNE4, node, snippetLabel, cg);
-
-
-   TR::InstOpCode::Mnemonic op = cg->comp()->target().isSMP() ? TR::InstOpCode::LCMPXCHGMemReg(gen64BitInstr) : TR::InstOpCode::CMPXCHGMemReg(gen64BitInstr);
-
-   // compare-and-swap to unlock:
-   generateRegRegInstruction(TR::InstOpCode::XORRegReg(), node, eaxReal, eaxReal, cg);
-   cg->setImplicitExceptionPoint(generateMemRegInstruction(op, node, getMemoryReference(objectClassReg, objectReg, lwOffset, cg), eaxReal, cg));
-
-   generateRegRegInstruction(TR::InstOpCode::CMPRegReg(), node, eaxReal, unlockedReg, cg);
-   generateLabelInstruction(TR::InstOpCode::JNE4, node, snippetLabel, cg);
-
-   // unlocked the object, just need to put monitor back in thread cache
-   generateRegMemInstruction(TR::InstOpCode::LRegMem(), node, eaxReal,
-                             generateX86MemoryReference(vmThreadReg, fej9->thisThreadMonitorCacheOffset(), cg), cg);
-   generateMemRegInstruction(TR::InstOpCode::SMemReg(), node,
-                             generateX86MemoryReference(unlockedReg, fej9->getMonitorNextOffset(), cg), eaxReal, cg);
-   generateMemRegInstruction(TR::InstOpCode::SMemReg(), node,
-                             generateX86MemoryReference(vmThreadReg, fej9->thisThreadMonitorCacheOffset(), cg),
-                             unlockedReg, cg);
-
-   TR_OutlinedInstructions *outlinedHelperCall = new (cg->trHeapMemory()) TR_OutlinedInstructions(node, TR::call, NULL, snippetLabel, fallThru, cg);
-   cg->getOutlinedInstructionsList().push_front(outlinedHelperCall);
-   cg->generateDebugCounter(
-      outlinedHelperCall->getFirstInstruction(),
-      TR::DebugCounter::debugCounterName(comp, "helperCalls/%s/(%s)/%d/%d", node->getOpCode().getName(), comp->signature(), node->getByteCodeInfo().getCallerIndex(), node->getByteCodeInfo().getByteCodeIndex()),
-      1, TR::DebugCounter::Cheap);
-
-#else
 
    if (lwOffset <= 0)
       {
@@ -5908,9 +5786,6 @@ TR::Register
       generateMemImmInstruction(TR::InstOpCode::SMemImm4(gen64BitInstr), node, lwMR, 0, cg);
       }
 
-#endif // J9VM_OPT_REAL_TIME_LOCKING_SUPPORT
-
-
    // Create dependencies for the registers used.
    // The first dependencies must be objectReg, vmThreadReg, tempReg
    // Or, for readmonitors they must be objectReg, vmThreadReg, unlockedReg, eaxReal
@@ -5920,9 +5795,7 @@ TR::Register
    deps->addPostCondition(objectReg, TR::RealRegister::NoReg, cg);
    deps->addPostCondition(cg->getVMThreadRegister(), TR::RealRegister::ebp, cg);
 
-#if !defined(J9VM_OPT_REAL_TIME_LOCKING_SUPPORT)
    if (node->isReadMonitor())
-#endif
       {
       deps->addPostCondition(unlockedReg, TR::RealRegister::NoReg, cg);
       deps->addPostCondition(eaxReal, TR::RealRegister::eax, cg);
