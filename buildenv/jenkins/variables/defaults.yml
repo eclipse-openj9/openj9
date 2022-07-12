@@ -391,6 +391,7 @@ x86-32_windows:
 #========================================#
 x86-64_mac:
   extends: ['boot_jdk_default', 'debuginfo', 'openssl', 'openssl_bundle']
+  extra_getsource_options: '--openssl-version=1.1.1p'
   boot_jdk:
     arch: 'x64'
     os: 'mac'
