@@ -45,6 +45,7 @@ import java.nio.charset.Charset;
 /*[IF Sidecar19-SE]*/
 import jdk.internal.ref.CleanerShutdown;
 import jdk.internal.ref.CleanerImpl;
+import jdk.internal.misc.InnocuousThread;
 import jdk.internal.misc.Unsafe;
 /*[ELSE]*/
 import sun.misc.Unsafe;
@@ -120,40 +121,45 @@ final class J9VMInternals {
 
 		if (Boolean.getBoolean("ibm.java9.forceCommonCleanerShutdown")) { //$NON-NLS-1$
 			Runnable runnable = () -> {
-				CleanerShutdown.shutdownCleaner();
-				Thread threads[] = null;
+				Thread[] threads;
 				/*[IF JAVA_SPEC_VERSION < 19]*/
-				ThreadGroup threadGroup = Thread.currentThread().group; // the system ThreadGroup
-				ThreadGroup threadGroups[] = new ThreadGroup[threadGroup.numGroups];
-				threadGroup.enumerate(threadGroups, false); /* non-recursive enumeration */
-				for (ThreadGroup tg : threadGroups) {
-					if ("InnocuousThreadGroup".equals(tg.getName())) { //$NON-NLS-1$
-						threads = new Thread[tg.numThreads];
-						tg.enumerate(threads, false);
-					}
+				ThreadGroup threadGroup;
+				try {
+					Field innocuousThreadGroupField = InnocuousThread.class.getDeclaredField("INNOCUOUSTHREADGROUP"); //$NON-NLS-1$
+					innocuousThreadGroupField.setAccessible(true);
+					threadGroup = (ThreadGroup)innocuousThreadGroupField.get(null);
+				} catch (IllegalAccessException | NoSuchFieldException e) {
+					throw new InternalError(e);
 				}
+
+				threads = new Thread[threadGroup.numThreads];
+				threadGroup.enumerate(threads, false);
 				/*[ELSE] JAVA_SPEC_VERSION < 19 */
 				threads = Thread.getAllThreads();
 				/*[ENDIF] JAVA_SPEC_VERSION < 19 */
+
+				CleanerShutdown.shutdownCleaner();
+
 				for (Thread t : threads) {
 					if (t.getName().equals("Common-Cleaner")) { //$NON-NLS-1$
 						t.interrupt();
 						try {
 							/* Need to wait for the Common-Cleaner thread to die before
-								* continuing. If not this will result in a race condition where
-								* the VM might attempt to shutdown before Common-Cleaner has a
-								* chance to stop properly. This will result in an unsuccessful
-								* shutdown and we will not release vm resources.
-								*/
+							 * continuing. If not this will result in a race condition where
+							 * the VM might attempt to shutdown before Common-Cleaner has a
+							 * chance to stop properly. This will result in an unsuccessful
+							 * shutdown and we will not release vm resources.
+							 */
 							t.join(3000);
 							/* giving this a 3sec timeout. If it works it should work fairly
-								* quickly, 3 seconds should be more than enough time. If it doesn't
-								* work it may block indefinitely. Turning on -verbose:shutdown will
-								* let us know if it worked or not
-								*/
+							 * quickly, 3 seconds should be more than enough time. If it doesn't
+							 * work it may block indefinitely. Turning on -verbose:shutdown will
+							 * let us know if it worked or not
+							 */
 						} catch (Throwable e) {
 							/* empty block */
 						}
+						break;
 					}
 				}
 			};
