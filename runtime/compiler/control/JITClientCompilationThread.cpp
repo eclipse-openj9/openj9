@@ -3083,7 +3083,8 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
          }
       catch (const JITServer::StreamFailure &e)
          {
-         JITServerHelpers::postStreamFailure(OMRPORT_FROM_J9PORT(compInfoPT->getJitConfig()->javaVM->portLibrary), compInfo);
+         JITServerHelpers::postStreamFailure(OMRPORT_FROM_J9PORT(compInfoPT->getJitConfig()->javaVM->portLibrary), compInfo,
+                                             e.retryConnectionImmediately());
          if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJITServer, TR_VerboseCompilationDispatch))
             TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE,
                "JITServer::StreamFailure: %s for %s @ %s", e.what(), compiler->signature(), compiler->getHotnessName());
@@ -3349,7 +3350,7 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
             }
 
          // Since server has crashed, all compilations will switch to local
-         JITServerHelpers::postStreamFailure(OMRPORT_FROM_J9PORT(compInfoPT->getJitConfig()->javaVM->portLibrary), compInfo);
+         JITServerHelpers::postStreamFailure(OMRPORT_FROM_J9PORT(compInfoPT->getJitConfig()->javaVM->portLibrary), compInfo, false);
          entry->_compErrCode = compilationFailure;
          compiler->failCompilation<JITServer::ServerCompilationFailure>("JITServer compilation thread has crashed.");
          }
@@ -3379,7 +3380,8 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
       }
    catch (const JITServer::StreamFailure &e)
       {
-      JITServerHelpers::postStreamFailure(OMRPORT_FROM_J9PORT(compInfoPT->getJitConfig()->javaVM->portLibrary), compInfo);
+      JITServerHelpers::postStreamFailure(OMRPORT_FROM_J9PORT(compInfoPT->getJitConfig()->javaVM->portLibrary), compInfo,
+                                          e.retryConnectionImmediately());
 
       if (!details.isJitDumpMethod())
          {

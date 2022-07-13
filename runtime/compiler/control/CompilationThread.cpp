@@ -3668,7 +3668,7 @@ void TR::CompilationInfo::stopCompilationThreads()
          }
       catch (const JITServer::StreamFailure &e)
          {
-         JITServerHelpers::postStreamFailure(OMRPORT_FROM_J9PORT(_jitConfig->javaVM->portLibrary), this);
+         JITServerHelpers::postStreamFailure(OMRPORT_FROM_J9PORT(_jitConfig->javaVM->portLibrary), this, e.retryConnectionImmediately());
          // catch the stream failure exception if the server dies before the dummy message is send for termination.
          if (TR::Options::getVerboseOption(TR_VerboseJITServer))
             TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "JITServer StreamFailure (server unreachable before the termination message was sent): %s", e.what());

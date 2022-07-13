@@ -113,7 +113,7 @@ private:
             if (bytesRead <= 0)
                {
                (*OERR_print_errors_fp)(stderr);
-               throw JITServer::StreamFailure("JITServer I/O error: read error");
+               throw JITServer::StreamFailure("JITServer I/O error: read error", (*OBIO_should_retry)(_ssl));
                }
             totalBytesRead += bytesRead;
             }
@@ -126,7 +126,7 @@ private:
             if (bytesRead <= 0)
                {
                throw JITServer::StreamFailure("JITServer I/O error: read error: " +
-                                              (bytesRead ? std::string(strerror(errno)) : "connection closed by peer"));
+                                              (bytesRead ? std::string(strerror(errno)) : "connection closed by peer"), EAGAIN == errno);
                }
             totalBytesRead += bytesRead;
             }
@@ -142,7 +142,7 @@ private:
          if (bytesRead <= 0)
             {
             (*OERR_print_errors_fp)(stderr);
-            throw JITServer::StreamFailure("JITServer I/O error: read error");
+            throw JITServer::StreamFailure("JITServer I/O error: read error", (*OBIO_should_retry)(_ssl));
             }
          }
       else
@@ -151,7 +151,7 @@ private:
          if (bytesRead <= 0)
             {
             throw JITServer::StreamFailure("JITServer I/O error: read error: " +
-                                           (bytesRead ? std::string(strerror(errno)) : "connection closed by peer"));
+                                           (bytesRead ? std::string(strerror(errno)) : "connection closed by peer"), EAGAIN == errno);
             }
          }
       return bytesRead;
