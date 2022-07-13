@@ -462,4 +462,25 @@ failedToSetAttr(IDATA rc)
 	return ((rc != J9THREAD_SUCCESS) && (rc != J9THREAD_ERR_UNSUPPORTED_ATTR));
 }
 
+#if JAVA_SPEC_VERSION >= 19
+/**
+ * Frees a thread object's TLS array.
+ *
+ * @param[in] currentThread the current thread
+ * @param[in] threadObj the thread object to free TLS from
+ */
+void
+freeTLS(J9VMThread *currentThread, j9object_t threadObj)
+{
+	J9JavaVM *vm = currentThread->javaVM;
+	void *tlsArray = J9OBJECT_ADDRESS_LOAD(currentThread, threadObj, vm->tlsOffset);
+	if (NULL != tlsArray) {
+		omrthread_monitor_enter(vm->tlsPoolMutex);
+		pool_removeElement(vm->tlsPool, tlsArray);
+		omrthread_monitor_exit(vm->tlsPoolMutex);
+		J9OBJECT_ADDRESS_STORE(currentThread, threadObj, vm->tlsOffset, NULL);
+	}
+}
+#endif /* JAVA_SPEC_VERSION >= 19 */
+
 }

@@ -316,7 +316,7 @@ disposeEnvironment(J9JVMTIEnv * j9env, UDATA freeData)
 		}
 
 		if (0 != j9env->tlsKey) {
-			omrthread_tls_free(j9env->tlsKey);
+			jvmtiTLSFree(vm, j9env->tlsKey);
 			j9env->tlsKey = 0;
 		}
 	}
@@ -352,7 +352,6 @@ allocateEnvironment(J9InvocationJavaVM * invocationJavaVM, jint version, void **
 #if defined (J9VM_INTERP_NATIVE_SUPPORT)
 			J9HookInterface** jitHook = vm->internalVMFunctions->getJITHookInterface(vm);
 #endif
-			J9VMThread * walkThread;
 
 			memset(j9env, 0, sizeof(J9JVMTIEnv));
 			j9env->functions = &jvmtiFunctionTable;
@@ -405,30 +404,15 @@ allocateEnvironment(J9InvocationJavaVM * invocationJavaVM, jint version, void **
 			if (j9env->breakpoints == NULL) {
 				goto fail;
 			}
-			if (omrthread_tls_alloc(&j9env->tlsKey)) {
+			if (jvmtiTLSAlloc(vm, &j9env->tlsKey)) {
 				goto fail;
 			}
 
-			/* Create thread data structs for all existing threads */
-
-			omrthread_monitor_enter(vm->vmThreadListMutex);
-			walkThread = vm->mainThread;
-			do {
-				if (createThreadData(j9env, walkThread) != JVMTI_ERROR_NONE) {
-					/* Struct creation failed, disallow the attaching of this environment */
-					omrthread_monitor_exit(vm->vmThreadListMutex);
-					goto fail;
-				}
-			} while ((walkThread = walkThread->linkNext) != vm->mainThread);
-
-			/* Hook events that every environment needs */
+			/* Hook the thread and virtual thread destroy events to clean up any allocated TLS structs. */
 
 			if (hookRequiredEvents(j9env) != 0) {
-				omrthread_monitor_exit(vm->vmThreadListMutex);
 				goto fail;
 			}
-
-			omrthread_monitor_exit(vm->vmThreadListMutex);
 
 			if (jvmtiData->environmentsHead == NULL) {
 				issueWriteBarrier();
@@ -463,6 +447,20 @@ fail:
 UDATA
 prepareForEvent(J9JVMTIEnv * j9env, J9VMThread * currentThread, J9VMThread * eventThread, UDATA eventNumber, jthread * threadRefPtr, UDATA * hadVMAccessPtr, UDATA wantVMAccess, UDATA jniRefSlots, UDATA * javaOffloadOldState)
 {
+	J9JVMTIThreadData *threadData = NULL;
+#if JAVA_SPEC_VERSION >= 19
+	j9object_t threadObj = currentThread->threadObject;
+	/* threadObj can be null early in J9VMThread initialization. */
+	if (NULL != threadObj) {
+		void *tlsArray = J9OBJECT_ADDRESS_LOAD(currentThread, threadObj, currentThread->javaVM->tlsOffset);
+		if (NULL != tlsArray) {
+			threadData = jvmtiTLSGet(currentThread, threadObj, j9env->tlsKey);
+		}
+	}
+#else
+	threadData = jvmtiTLSGet(currentThread, currentThread->threadObject, j9env->tlsKey);
+#endif /* JAVA_SPEC_VERSION >= 19 */
+
 	/* If this environment has been disposed, do not report any events */
 
 	if (j9env->flags & J9JVMTIENV_FLAG_DISPOSED) {
@@ -474,9 +472,6 @@ prepareForEvent(J9JVMTIEnv * j9env, J9VMThread * currentThread, J9VMThread * eve
 	if (currentThread->publicFlags & J9_PUBLIC_FLAGS_STOPPED) {
 		if ((eventNumber != JVMTI_EVENT_VM_DEATH)
 		&& (eventNumber != JVMTI_EVENT_THREAD_END)
-#if JAVA_SPEC_VERSION >= 19
-		&& (eventNumber != JVMTI_EVENT_VIRTUAL_THREAD_END)
-#endif /* JAVA_SPEC_VERSION >= 19 */
 		) {
 			return FALSE;
 		}
@@ -493,7 +488,9 @@ prepareForEvent(J9JVMTIEnv * j9env, J9VMThread * currentThread, J9VMThread * eve
 
 	/* See if the event is enabled either globally or for the current thread */
 
-	if (EVENT_IS_ENABLED(eventNumber, &(j9env->globalEventEnable)) || EVENT_IS_ENABLED(eventNumber, &(THREAD_DATA_FOR_VMTHREAD(j9env, currentThread)->threadEventEnable))) {
+	if (EVENT_IS_ENABLED(eventNumber, &(j9env->globalEventEnable))
+		|| ((NULL != threadData) && EVENT_IS_ENABLED(eventNumber, &(threadData->threadEventEnable)))
+	) {
 		j9object_t * refs;
 
 		++jniRefSlots;		/* for saving the current exception */
@@ -1435,26 +1432,59 @@ queueCompileEvent(J9JVMTIData * jvmtiData, jmethodID methodID, void * startPC, U
 
 #endif /* INTERP_NATIVE_SUPPORT */
 
-
+#if JAVA_SPEC_VERSION >= 19
 jvmtiError
-createThreadData(J9JVMTIEnv * j9env, J9VMThread * vmThread)
+allocateTLS(J9JavaVM *vm, j9object_t thread)
 {
-	J9JVMTIThreadData * threadData;
+	void *tlsArray = NULL;
+	jvmtiError rc = JVMTI_ERROR_NONE;
+	Assert_JVMTI_notNull(thread);
 
-	omrthread_monitor_enter(j9env->threadDataPoolMutex);
-	threadData = pool_newElement(j9env->threadDataPool);
-	omrthread_monitor_exit(j9env->threadDataPoolMutex);
-	if (threadData == NULL) {
-		return JVMTI_ERROR_OUT_OF_MEMORY;
+	tlsArray = J9OBJECT_ADDRESS_LOAD_VM(vm, thread, vm->tlsOffset);
+	if (NULL == tlsArray) {
+		omrthread_monitor_enter(vm->tlsPoolMutex);
+		tlsArray = J9OBJECT_ADDRESS_LOAD_VM(vm, thread, vm->tlsOffset);
+		if (NULL == tlsArray) {
+			/* We are the first to access the TLS array for the given thread. */
+			tlsArray = pool_newElement(vm->tlsPool);
+			if (NULL == tlsArray) {
+				rc = JVMTI_ERROR_OUT_OF_MEMORY;
+			} else {
+				J9OBJECT_ADDRESS_STORE_VM(vm, thread, vm->tlsOffset, tlsArray);
+			}
+		}
+		omrthread_monitor_exit(vm->tlsPoolMutex);
 	}
 
-	memset(threadData, 0, sizeof(J9JVMTIThreadData));
-	threadData->vmThread = vmThread;
-	omrthread_tls_set(vmThread->osThread, j9env->tlsKey, threadData);
-	return JVMTI_ERROR_NONE;
+	return rc;
 }
+#endif /* JAVA_SPEC_VERSION >= 19 */
 
+jvmtiError
+createThreadData(J9JVMTIEnv *j9env, J9VMThread *vmThread, j9object_t thread)
+{
+	J9JVMTIThreadData *threadData = NULL;
+	jvmtiError rc = JVMTI_ERROR_NONE;
+	Assert_JVMTI_notNull(thread);
 
+	threadData = jvmtiTLSGet(vmThread, thread, j9env->tlsKey);
+	if (NULL == threadData) {
+		omrthread_monitor_enter(j9env->threadDataPoolMutex);
+		threadData = jvmtiTLSGet(vmThread, thread, j9env->tlsKey);
+		if (NULL == threadData) {
+			/* We are the first to access the thread data for the given thread. */
+			threadData = pool_newElement(j9env->threadDataPool);
+			if (NULL == threadData) {
+				rc = JVMTI_ERROR_OUT_OF_MEMORY;
+			} else {
+				jvmtiTLSSet(vmThread, thread, j9env->tlsKey, threadData);
+			}
+		}
+		omrthread_monitor_exit(j9env->threadDataPoolMutex);
+	}
+
+	return rc;
+}
 
 jvmtiError
 setEventNotificationMode(J9JVMTIEnv * j9env, J9VMThread * currentThread, jint mode, jint event_type, jthread event_thread, jint low, jint high)
@@ -1479,11 +1509,24 @@ setEventNotificationMode(J9JVMTIEnv * j9env, J9VMThread * currentThread, jint mo
 	if (event_thread == NULL) {
 		eventMap = &(j9env->globalEventEnable);
 	} else {
+		j9object_t threadObject = J9_JNI_UNWRAP_REFERENCE(event_thread);
 		rc = getVMThread(currentThread, event_thread, &targetThread, TRUE, TRUE);
 		if (rc != JVMTI_ERROR_NONE) {
 			goto done;
 		}
-		eventMap = &(THREAD_DATA_FOR_VMTHREAD(j9env, targetThread)->threadEventEnable);
+#if JAVA_SPEC_VERSION >= 19
+		rc = allocateTLS(vm, threadObject);
+		if (JVMTI_ERROR_NONE != rc) {
+			releaseVMThread(currentThread, targetThread, event_thread);
+			goto done;
+		}
+#endif /* JAVA_SPEC_VERSION >= 19 */
+		rc = createThreadData(j9env, targetThread, threadObject);
+		if (JVMTI_ERROR_NONE != rc) {
+			releaseVMThread(currentThread, targetThread, event_thread);
+			goto done;
+		}
+		eventMap = &(jvmtiTLSGet(targetThread, threadObject, j9env->tlsKey)->threadEventEnable);
 	}
 
 	/* Single step can alloc/free the bytecode table, so we need exclusive to prevent any threads from using the table */
@@ -1659,4 +1702,105 @@ ensureHeapWalkable(J9VMThread *currentThread)
 			mmFuncs->j9gc_modron_global_collect_with_overrides(currentThread, J9MMCONSTANT_EXPLICIT_GC_RASDUMP_COMPACT);
 		}
 	}
+}
+
+#if JAVA_SPEC_VERSION >= 19
+static void
+tlsNullFinalizer(void *entry)
+{
+	/* do nothing */
+}
+#endif /* JAVA_SPEC_VERSION >= 19 */
+
+IDATA
+jvmtiTLSAlloc(J9JavaVM *vm, UDATA *handle)
+{
+#if JAVA_SPEC_VERSION >= 19
+	return jvmtiTLSAllocWithFinalizer(vm, handle, tlsNullFinalizer);
+#else /* JAVA_SPEC_VERSION >= 19 */
+	return omrthread_tls_alloc(handle);
+#endif /* JAVA_SPEC_VERSION >= 19 */
+}
+
+#if JAVA_SPEC_VERSION >= 19
+IDATA
+jvmtiTLSAllocWithFinalizer(J9JavaVM *vm, UDATA *handle, j9_tls_finalizer_t finalizer)
+{
+	IDATA i = 0;
+
+	Assert_JVMTI_notNull(finalizer);
+	*handle = 0;
+
+	omrthread_monitor_enter(vm->tlsFinalizersMutex);
+	for (i = 0; i < J9JVMTI_MAX_TLS_KEYS; i++) {
+		if (NULL == vm->tlsFinalizers[i]) {
+			*handle = i + 1;
+			vm->tlsFinalizers[i] = finalizer;
+			break;
+		}
+	}
+	omrthread_monitor_exit(vm->tlsFinalizersMutex);
+
+	return i < J9JVMTI_MAX_TLS_KEYS ? 0 : -1;
+}
+#endif /* JAVA_SPEC_VERSION >= 19 */
+
+IDATA
+jvmtiTLSFree(J9JavaVM *vm, UDATA key)
+{
+#if JAVA_SPEC_VERSION >= 19
+	pool_state state;
+	J9JVMTIThreadData **each = NULL;
+
+	omrthread_monitor_enter(vm->tlsPoolMutex);
+	each = pool_startDo(vm->tlsPool, &state);
+	while (NULL != each) {
+		each[key - 1] = NULL;
+		each = pool_nextDo(&state);
+	}
+	omrthread_monitor_exit(vm->tlsPoolMutex);
+
+	omrthread_monitor_enter(vm->tlsFinalizersMutex);
+	vm->tlsFinalizers[key - 1] = NULL;
+	omrthread_monitor_exit(vm->tlsFinalizersMutex);
+
+	return 0;
+#else /* JAVA_SPEC_VERSION >= 19 */
+	return omrthread_tls_free(key);
+#endif /* JAVA_SPEC_VERSION >= 19 */
+}
+
+IDATA
+jvmtiTLSSet(J9VMThread *vmThread, j9object_t thread, UDATA key, J9JVMTIThreadData *value)
+{
+#if JAVA_SPEC_VERSION >= 19
+	J9JavaVM *vm = vmThread->javaVM;
+	J9JVMTIThreadData **data = NULL;
+	Assert_JVMTI_notNull(thread);
+
+	data = (J9JVMTIThreadData **)J9OBJECT_ADDRESS_LOAD_VM(vm, thread, vm->tlsOffset);
+	Assert_JVMTI_notNull(data);
+	data[key - 1] = value;
+
+	return 0;
+#else /* JAVA_SPEC_VERSION >= 19 */
+	return omrthread_tls_set(vmThread->osThread, key, (void *)(value));
+#endif /* JAVA_SPEC_VERSION >= 19 */
+}
+
+J9JVMTIThreadData *
+jvmtiTLSGet(J9VMThread *vmThread, j9object_t thread, UDATA key)
+{
+#if JAVA_SPEC_VERSION >= 19
+	J9JavaVM *vm = vmThread->javaVM;
+	J9JVMTIThreadData **data = NULL;
+	Assert_JVMTI_notNull(thread);
+
+	data = (J9JVMTIThreadData **)J9OBJECT_ADDRESS_LOAD_VM(vm, thread, vm->tlsOffset);
+	Assert_JVMTI_notNull(data);
+
+	return data[key - 1];
+#else /* JAVA_SPEC_VERSION >= 19 */
+	return (J9JVMTIThreadData *)omrthread_tls_get(vmThread->osThread, key);
+#endif /* JAVA_SPEC_VERSION >= 19 */
 }

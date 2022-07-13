@@ -603,6 +603,10 @@ Java_java_lang_VirtualThread_notifyJvmtiMountEnd(JNIEnv *env, jobject thread, jb
 	omrthread_monitor_enter(vm->liveVirtualThreadListMutex);
 	j9object_t threadObj = J9_JNI_UNWRAP_REFERENCE(thread);
 
+	if (firstMount) {
+		TRIGGER_J9HOOK_VM_VIRTUAL_THREAD_STARTED(vm->hookInterface, currentThread);
+	}
+
 	/* Allow thread to be inspected again. */
 	Assert_JCL_true(-1 ==  J9OBJECT_I64_LOAD(currentThread, threadObj, vm->virtualThreadInspectorCountOffset));
 	J9OBJECT_I64_STORE(currentThread, threadObj, vm->virtualThreadInspectorCountOffset, 0);
@@ -647,6 +651,8 @@ Java_java_lang_VirtualThread_notifyJvmtiUnmountBegin(JNIEnv *env, jobject thread
 			J9OBJECT_OBJECT_STORE(currentThread, threadPrev, vm->virtualThreadLinkNextOffset, threadNext);
 			J9OBJECT_OBJECT_STORE(currentThread, threadNext, vm->virtualThreadLinkPreviousOffset, threadPrev);
 		}
+
+		TRIGGER_J9HOOK_VM_VIRTUAL_THREAD_END(vm->hookInterface, currentThread);
 	}
 
 	omrthread_monitor_exit(vm->liveVirtualThreadListMutex);
@@ -664,6 +670,10 @@ Java_java_lang_VirtualThread_notifyJvmtiUnmountEnd(JNIEnv *env, jobject thread, 
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 	omrthread_monitor_enter(vm->liveVirtualThreadListMutex);
 	j9object_t threadObj = J9_JNI_UNWRAP_REFERENCE(thread);
+
+	if (lastUnmount) {
+		vmFuncs->freeTLS(currentThread, threadObj);
+	}
 
 	/* Allow thread to be inspected again. */
 	Assert_JCL_true(-1 ==  J9OBJECT_I64_LOAD(currentThread, threadObj, vm->virtualThreadInspectorCountOffset));

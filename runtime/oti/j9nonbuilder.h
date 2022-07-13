@@ -272,6 +272,11 @@
 #define J9_CATCHTYPE_VALUE_FOR_SYNTHETIC_HANDLER_4BYTES 0xFFFFFFFF
 #define J9_CATCHTYPE_VALUE_FOR_SYNTHETIC_HANDLER_2BYTES 0xFFFF
 
+#if JAVA_SPEC_VERSION >= 19
+#define J9JVMTI_MAX_TLS_KEYS 124
+typedef void(*j9_tls_finalizer_t)(void *);
+#endif /* JAVA_SPEC_VERSION >= 19 */
+
 typedef enum {
 	J9FlushCompQueueDataBreakpoint
 } J9JITFlushCompilationQueueReason;
@@ -4885,6 +4890,7 @@ typedef struct J9InternalVMFunctions {
 	j9object_t* (*getDefaultValueSlotAddress)(struct J9Class *clazz);
 #if JAVA_SPEC_VERSION >= 19
 	BOOLEAN (*createContinuation)(struct J9VMThread *currentThread, j9object_t continuationObject);
+	void (*freeTLS)(struct J9VMThread *currentThread, j9object_t threadObj);
 #endif /* JAVA_SPEC_VERSION >= 19 */
 #if JAVA_SPEC_VERSION >= 16
 /*
@@ -5766,6 +5772,11 @@ typedef struct J9JavaVM {
 	UDATA virtualThreadLinkNextOffset;
 	UDATA virtualThreadLinkPreviousOffset;
 	UDATA virtualThreadInspectorCountOffset;
+	UDATA tlsOffset;
+	j9_tls_finalizer_t tlsFinalizers[J9JVMTI_MAX_TLS_KEYS];
+	omrthread_monitor_t tlsFinalizersMutex;
+	struct J9Pool *tlsPool;
+	omrthread_monitor_t tlsPoolMutex;
 	jclass jlThreadConstants;
 	jfieldID vthreadGroupID;
 #endif /* JAVA_SPEC_VERSION >= 19 */

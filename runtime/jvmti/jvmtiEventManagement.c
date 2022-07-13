@@ -203,9 +203,6 @@ jvmtiSetEventNotificationMode(jvmtiEnv* env,
 #if JAVA_SPEC_VERSION >= 11
 			case  JVMTI_EVENT_SAMPLED_OBJECT_ALLOC:
 #endif /* JAVA_SPEC_VERSION >= 11 */
-#if JAVA_SPEC_VERSION >= 19
-			case JVMTI_EVENT_VIRTUAL_THREAD_START:
-#endif /* JAVA_SPEC_VERSION >= 19 */
 				if (event_thread != NULL) {
 					JVMTI_ERROR(JVMTI_ERROR_ILLEGAL_ARGUMENT);
 				}
