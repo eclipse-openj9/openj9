@@ -291,13 +291,13 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<fieldref class="java/lang/ThreadGroup" name="maxPriority" signature="I"/>
 	<fieldref class="java/lang/ThreadGroup" name="parent" signature="Ljava/lang/ThreadGroup;"/>
 	<fieldref class="java/lang/ThreadGroup" name="numThreads" signature="I" versions="8-18"/>
-	<fieldref class="java/lang/ThreadGroup" name="numGroups" signature="I" versions="8-18">
-		<fieldalias name="ngroups" signature="I" versions="19-"/>
-	</fieldref>
+	<fieldref class="java/lang/ThreadGroup" name="numGroups" signature="I" versions="8-18"/>
 	<fieldref class="java/lang/ThreadGroup" name="childrenThreads" signature="[Ljava/lang/Thread;" versions="8-18"/>
-	<fieldref class="java/lang/ThreadGroup" name="childrenGroups" signature="[Ljava/lang/ThreadGroup;" versions="8-18">
-		<fieldalias name="groups" signature="[Ljava/lang/ThreadGroup;" versions="19-"/>
-	</fieldref>
+	<fieldref class="java/lang/ThreadGroup" name="childrenGroups" signature="[Ljava/lang/ThreadGroup;" versions="8-18"/>
+	<fieldref class="java/lang/ThreadGroup" name="ngroups" signature="I" versions="19-"/>
+	<fieldref class="java/lang/ThreadGroup" name="groups" signature="[Ljava/lang/ThreadGroup;" versions="19-"/>
+	<fieldref class="java/lang/ThreadGroup" name="nweaks" signature="I" versions="19-"/>
+	<fieldref class="java/lang/ThreadGroup" name="weaks" signature="[Ljava/lang/ref/WeakReference;" versions="19-"/>
 	<fieldref class="java/lang/ThreadGroup" name="isDaemon" signature="Z" versions="8-18">
 		<fieldalias name="daemon" signature="Z" versions="19-"/>
 	</fieldref>
