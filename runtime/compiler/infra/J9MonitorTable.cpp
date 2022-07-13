@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -252,7 +252,7 @@ J9::MonitorTable::readReleaseClassUnloadMonitor(int32_t compThreadIndex)
       }
    else
       {
-      //TR_ASSERT(false, "comp thread %d does not have classUnloadMonitor", compThreadIndex);
+      TR_ASSERT(false, "comp thread %d does not have classUnloadMonitor", compThreadIndex);
       return -1; // could not release monitor
       }
    }

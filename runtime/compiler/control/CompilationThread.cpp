@@ -4934,7 +4934,7 @@ TR::CompilationInfo::addMethodToBeCompiled(TR::IlGeneratorMethodDetails & detail
             {
             if (TR::Options::isAnyVerboseOptionSet())
                TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "Discrepancy for queue size while adding to queue: Before adding numEntries=%d  _numQueuedMethods=%d\n", numEntries, _numQueuedMethods);
-            //TR_ASSERT(false, "Discrepancy for queue size while adding to queue");
+            TR_ASSERT(false, "Discrepancy for queue size while adding to queue");
             }
          }
       cur = getCompilationQueueEntry();
@@ -11599,7 +11599,8 @@ TR::CompilationInfo::replenishInvocationCount(J9Method *method, TR::Compilation 
       }
    else
       {
-      //TR_ASSERT(false, "Unexpected value for method->extra = %p (method=%p)\n", TR::CompilationInfo::getJ9MethodExtra(method), method);
+         //assert below is commented because it is fired when compiled with PROD_WITH_ASSUMES
+         //TR_ASSERT(false, "Unexpected value for method->extra = %p (method=%p)\n", TR::CompilationInfo::getJ9MethodExtra(method), method);
       }
    }
 
