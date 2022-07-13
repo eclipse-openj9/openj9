@@ -23,22 +23,27 @@
 #
 
 echo "start running script";
-$2 -XX:+EnableCRIUSupport $3 -cp "$1/criu.jar" $4 $5 >testOutput 2>&1;
-if [ "$5" == "SingleCheckpoint" ] || [ "$5" == "TwoCheckpoints" ] || [ "$5" == "ThreeCheckpoints" ]
-then
-sleep 2;
-criu restore -D ./cpData --shell-job;
+# the expected arguments are:
+# $1 is the TEST_ROOT
+# $2 is the JAVA_COMMAND
+# $3 is the JVM_OPTIONS
+# $4 is the MAINCLASS
+# $5 is the NUM_CHECKPOINT
+# $6 is the KEEP_CHECKPOINT
+
+$2 -XX:+EnableCRIUSupport $3 -cp "$1/criu.jar" $4 "$5" >testOutput 2>&1;
+
+if [ "$6" != true ]; then
+    NUM_CHECKPOINT=$5
+    for ((i=0; i<$NUM_CHECKPOINT; i++)); do
+        sleep 2;
+        criu restore -D ./cpData --shell-job;
+    done
 fi
-if [ "$5" == "TwoCheckpoints" ] || [ "$5" == "ThreeCheckpoints" ]
-then
-sleep 2;
-criu restore -D ./cpData --shell-job;
-fi
-if [ "$5" == "ThreeCheckpoints" ]
-then
-sleep 2;
-criu restore -D ./cpData --shell-job;
-fi
+
 cat testOutput;
-rm -rf testOutput
+
+if  [ "$6" != true ]; then
+    rm -rf testOutput
+fi
 echo "finished script";

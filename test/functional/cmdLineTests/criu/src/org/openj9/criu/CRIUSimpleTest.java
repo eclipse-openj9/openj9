@@ -28,47 +28,20 @@ import java.nio.file.Path;
 public class CRIUSimpleTest {
 
 	public static void main(String args[]) {
-		String test = args[0];
-
-		switch(test) {
-		case "SingleCheckpoint":
-			singleCheckpoint();
-			break;
-		case "TwoCheckpoints":
-			twoCheckpoints();
-			break;
-		case "ThreeCheckpoints":
-			threeCheckpoints();
-			break;
-		default:
-			throw new RuntimeException("incorrect parameters");
+		try {
+			int num_checkpoints=Integer.parseInt(args[0]);
+			checkpoints(num_checkpoints);
+		} catch (NumberFormatException e) {
+			System.out.println("Input is not a valid integer");
 		}
 	}
 
-	public static void singleCheckpoint() {
+	public static void checkpoints(int num_checkpoints) {
 		Path path = Paths.get("cpData");
-		System.out.println("Single checkpoint:\nPre-checkpoint");
-		CRIUTestUtils.checkPointJVM(path);
-		System.out.println("Post-checkpoint");
-	}
-
-	public static void twoCheckpoints() {
-		Path path = Paths.get("cpData");
-		System.out.println("Two checkpoints:\nPre-checkpoint");
-		CRIUTestUtils.checkPointJVM(path);
-		System.out.println("Post-checkpoint 1");
-		CRIUTestUtils.checkPointJVM(path);
-		System.out.println("Post-checkpoint 2");
-	}
-
-	public static void threeCheckpoints() {
-		Path path = Paths.get("cpData");
-		System.out.println("Three checkpoints:\nPre-checkpoint");
-		CRIUTestUtils.checkPointJVM(path);
-		System.out.println("Post-checkpoint 1");
-		CRIUTestUtils.checkPointJVM(path);
-		System.out.println("Post-checkpoint 2");
-		CRIUTestUtils.checkPointJVM(path);
-		System.out.println("Post-checkpoint 3");
+		System.out.println("Total checkpoint(s) " + num_checkpoints + ":\nPre-checkpoint");
+		for (int cur_checkpint = 1; cur_checkpint <= num_checkpoints; ++cur_checkpint) {
+			CRIUTestUtils.checkPointJVM(path);
+			System.out.println("Post-checkpoint " + cur_checkpint);
+		}
 	}
 }

@@ -1680,8 +1680,9 @@ J9NLS_CFR_ERR_OUTER_CLASS_REFERENCETYPE_DESCRIPTOR.user_response=Contact the pro
 # END NON-TRANSLATABLE
 
 # ReferenceType is not translatable
-NEST_MEMBER_INVALID_REFERENCETYPE_DESCRIPTOR=Nest member classes cannot be ReferenceType descriptors
+J9NLS_CFR_ERR_NEST_MEMBER_INVALID_REFERENCETYPE_DESCRIPTOR=Nest member classes cannot be ReferenceType descriptors
 # START NON-TRANSLATABLE
-J9NLS_CFR_ERR_NEST_HOST_INVALID_REFERENCETYPE_DESCRIPTOR.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
-J9NLS_CFR_ERR_NEST_HOST_INVALID_REFERENCETYPE_DESCRIPTOR.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
-J9NLS_CFR_ERR_NEST_HOST_INVALID_REFERENCETYPE_DESCRIPTOR.user_response=Contact the provider of the classfile for a corrected version.
+J9NLS_CFR_ERR_NEST_MEMBER_INVALID_REFERENCETYPE_DESCRIPTOR.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
+J9NLS_CFR_ERR_NEST_MEMBER_INVALID_REFERENCETYPE_DESCRIPTOR.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_NEST_MEMBER_INVALID_REFERENCETYPE_DESCRIPTOR.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
