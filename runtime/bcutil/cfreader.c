@@ -2558,7 +2558,7 @@ checkAttributes(J9PortLibrary* portLib, J9CfrClassFile* classfile, J9CfrAttribut
 				}
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 				if (bcvIsReferenceTypeDescriptor(&cpBase[cpBase[value].slot1])) {
-					errorCode = NEST_MEMBER_INVALID_REFERENCETYPE_DESCRIPTOR__ID;
+					errorCode = J9NLS_CFR_ERR_NEST_MEMBER_INVALID_REFERENCETYPE_DESCRIPTOR__ID;
 					goto _errorFound;
 				}
 #endif /* #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
@@ -3891,4 +3891,3 @@ checkClassBytes(J9VMThread *currentThread, U_8* classBytes, UDATA classBytesLeng
 	return rc;
 }
 #endif /* JAVA_SPEC_VERSION >= 15 */
-
