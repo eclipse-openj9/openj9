@@ -801,6 +801,9 @@ public abstract class ELFFileReader {
 	 */
 	public String readSONAME(ELFFileReader coreFileReader) {
 		ProgramHeaderEntry dynamicTableEntry = getDynamicTableEntry();
+		if (dynamicTableEntry == null) {
+			return null;
+		}
 		try {
 			long imageStart = dynamicTableEntry.virtualAddress;
 
