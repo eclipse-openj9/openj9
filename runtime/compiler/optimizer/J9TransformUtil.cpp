@@ -606,8 +606,13 @@ static void *dereferenceStructPointerChain(void *baseStruct, TR::Node *baseNode,
                   {
                   // if stable array, check that we are loading from the beginning of an element that it's not Null
                   // size of the element was checked in verifyFieldAccess
-                  if (fieldAddress % symRef->getSymbol()->getSize() != 0 ||
-                      isNullValueAtAddress(comp, symRef->getSymbol()->getDataType(), fieldAddress, symRef->getSymbol()))
+                  TR::DataType type = symRef->getSymbol()->getDataType();
+                  int32_t width = TR::Symbol::convertTypeToSize(type);
+                  if (type == TR::Address)
+                     width = TR::Compiler->om.sizeofReferenceField();
+
+                  if ((fieldAddress % width) != 0 ||
+                      isNullValueAtAddress(comp, type, fieldAddress, symRef->getSymbol()))
                      return NULL;
                   }
                }
