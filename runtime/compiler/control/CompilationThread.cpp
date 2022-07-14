@@ -2109,7 +2109,6 @@ bool TR::CompilationInfo::shouldAbortCompilation(TR_MethodToBeCompiled *entry, T
 
    if (entry->_unloadedMethod) // method was unloaded while we were trying to compile it
       {
-      TR_ASSERT(entry->_compErrCode == compilationInterrupted, "Received error code %u, expect compilationInterrupted when the method was unloaded", entry->_compErrCode);
       entry->_compErrCode = compilationNotNeeded; // change error code
       return true;
       }
@@ -11599,7 +11598,7 @@ TR::CompilationInfo::replenishInvocationCount(J9Method *method, TR::Compilation 
       }
    else
       {
-         //assert below is commented because it is fired when compiled with PROD_WITH_ASSUMES
+         // Temporarily disable the asset below until we figure out the root cause
          //TR_ASSERT(false, "Unexpected value for method->extra = %p (method=%p)\n", TR::CompilationInfo::getJ9MethodExtra(method), method);
       }
    }

@@ -10776,7 +10776,7 @@ void J9::X86::TreeEvaluator::VMwrtbarWithoutStoreEvaluator(
    {
    TR::Compilation *comp = cg->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
-   //assert below is commented because it is fired when compiled with PROD_WITH_ASSUMES
+   // Temporarily disable the asset below until we figure out the root cause
    //TR_ASSERT(!(comp->getOptions()->realTimeGC()),"Call the real-time barrier");
    auto gcMode = TR::Compiler->om.writeBarrierType();
 
