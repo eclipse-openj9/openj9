@@ -190,6 +190,9 @@ restart:
 			if (J9_ARE_ANY_BITS_SET(((J9ThreadMonitor*)monitor)->flags, J9THREAD_MONITOR_INFLATED)) {
 				Trc_VM_objectMonitorEnterBlocking_alreadyInflated(currentThread);
 				internalAcquireVMAccess(currentThread);
+#if JAVA_SPEC_VERSION >= 19
+				currentThread->ownedMonitorCount += 1;
+#endif /* JAVA_SPEC_VERSION >= 19 */
 				goto done;
 			}
 			if (0 != internalTryAcquireVMAccess(currentThread)) {
@@ -404,6 +407,9 @@ restart:
 					goto restart;
 				}
 			}
+#if JAVA_SPEC_VERSION >= 19
+			currentThread->ownedMonitorCount += 1;
+#endif /* JAVA_SPEC_VERSION >= 19 */
 			/* no barrier is required in the recursive case */
 		} else {
 			/* check to see if object is unlocked (JIT did not do initial inline sequence due to insufficient static type info) */
@@ -704,6 +710,9 @@ spinOnTryEnter(J9VMThread *currentThread, J9ObjectMonitor *objectMonitor, j9obje
 				if (J9_LOCK_IS_INFLATED(J9_LOAD_LOCKWORD(currentThread, lwEA))) {
 					/* try_enter succeeded - monitor is inflated */
 					rc = true;
+#if JAVA_SPEC_VERSION >= 19
+					currentThread->ownedMonitorCount += 1;
+#endif /* JAVA_SPEC_VERSION >= 19 */
 				} else {
 					/* try_enter succeeded - monitor is not inflated - would block */
 					SET_IGNORE_ENTER(monitor);
