@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2021 IBM Corp. and others
+ * Copyright (c) 2016, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -125,6 +125,9 @@ public:
  		UDATA *bp = buildSpecialStackFrame(currentThread, J9SF_FRAME_TYPE_NATIVE_METHOD, jitStackFrameFlags(currentThread, 0), true);
  		*--currentThread->sp = (UDATA)method;
  		currentThread->arg0EA = bp + J9_ROM_METHOD_FROM_RAM_METHOD(method)->argCount;
+#if JAVA_SPEC_VERSION >= 19
+		currentThread->callOutCount += 1;
+#endif /* JAVA_SPEC_VERSION >= 19 */
  		return bp;
  	}
  
@@ -134,6 +137,9 @@ public:
  		J9SFNativeMethodFrame *nativeMethodFrame = (J9SFNativeMethodFrame*)currentThread->sp;
  		currentThread->jitStackFrameFlags = nativeMethodFrame->specialFrameFlags & J9_SSF_JIT_NATIVE_TRANSITION_FRAME;
  		restoreSpecialStackFrameLeavingArgs(currentThread, ((UDATA*)(nativeMethodFrame + 1)) - 1);
+#if JAVA_SPEC_VERSION >= 19
+		currentThread->callOutCount -= 1;
+#endif /* JAVA_SPEC_VERSION >= 19 */
  	}
 };
 

@@ -2214,9 +2214,13 @@ done:
 		/* If the stack grew, receiverAddress is still pointing to the correct slot
 		 * in the old stack, so does not need to be updated here.
 		 */
-
+#if JAVA_SPEC_VERSION >= 19
+		_currentThread->callOutCount += 1;
+#endif /* JAVA_SPEC_VERSION >= 19 */
 		ret = callCFunction(REGISTER_ARGS, jniMethodStartAddress, receiverAddress, javaArgs, &bp, isStatic, &returnType);
-
+#if JAVA_SPEC_VERSION >= 19
+		_currentThread->callOutCount -= 1;
+#endif /* JAVA_SPEC_VERSION >= 19 */
 		if (isSynchronized) {
 			j9object_t syncObject = NULL;
 			if (isStatic) {
@@ -4743,6 +4747,9 @@ done:
 		*--_sp = (UDATA)_sendMethod;
 		_arg0EA = bp + 5;
 		updateVMStruct(REGISTER_ARGS);
+#if JAVA_SPEC_VERSION >= 19
+		_currentThread->callOutCount += 1;
+#endif /* JAVA_SPEC_VERSION >= 19 */
 		exitVMToJNI(_currentThread);
 		I_32 status = JNI_ERR;
 		JNIEnv *env = (JNIEnv*)_currentThread;
@@ -4759,6 +4766,9 @@ done:
 //		Trc_JCL_attach_loadAgentLibraryStatus(env, status);
 		env->ExceptionClear();
 		enterVMFromJNI(_currentThread);
+#if JAVA_SPEC_VERSION >= 19
+		_currentThread->callOutCount -= 1;
+#endif /* JAVA_SPEC_VERSION >= 19 */
 		VMStructHasBeenUpdated(REGISTER_ARGS);
 		bp = _arg0EA - 5;
 		J9SFJNINativeMethodFrame *nativeMethodFrame = recordJNIReturn(REGISTER_ARGS, bp);
@@ -4914,7 +4924,13 @@ nativeOOM:
 		}
 		/* vmStruct already up-to-date */
 		internalReleaseVMAccess(_currentThread);
+#if JAVA_SPEC_VERSION >= 19
+		_currentThread->callOutCount += 1;
+#endif /* JAVA_SPEC_VERSION >= 19 */
 		registerRC = registerNativeLibrary(_currentThread, classLoader, cLibName, cLibPath, NULL, errBuf, bufLen);
+#if JAVA_SPEC_VERSION >= 19
+		_currentThread->callOutCount -= 1;
+#endif /* JAVA_SPEC_VERSION >= 19 */
 		internalAcquireVMAccess(_currentThread);
 		VMStructHasBeenUpdated(REGISTER_ARGS);
 		if (VM_VMHelpers::exceptionPending(_currentThread)) {
