@@ -274,6 +274,9 @@ writeConstants(OMRPortLibrary *OMRPORTLIB, IDATA fd)
 	jint rc = JNI_OK;
 	UDATA err =
 			/* Build flags */
+#if defined(JAVA_SPEC_VERSION)
+			writeConstant(OMRPORTLIB, fd, "ASM_JAVA_SPEC_VERSION", JAVA_SPEC_VERSION) |
+#endif /* JAVA_SPEC_VERSION */
 #if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
 			writeConstant(OMRPORTLIB, fd, "ASM_J9VM_INTERP_ATOMIC_FREE_JNI", 1) |
 #endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
