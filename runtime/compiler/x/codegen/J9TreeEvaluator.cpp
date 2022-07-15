@@ -4721,15 +4721,15 @@ void J9::X86::TreeEvaluator::asyncGCMapCheckPatching(TR::Node *node, TR::CodeGen
      }
   }
 
-void J9::X86::TreeEvaluator::inlineRecursiveMonitor(TR::Node          *node,
-                                                               TR::CodeGenerator   *cg,
-                                                               TR::LabelSymbol     *fallThruLabel,
-                                                               TR::LabelSymbol     *jitMonitorEnterOrExitSnippetLabel,
-                                                               TR::LabelSymbol     *inlineRecursiveSnippetLabel,
-                                                               TR::Register        *objectReg,
-                                                               int                  lwOffset,
-                                                               TR::LabelSymbol     *snippetRestartLabel,
-                                                               bool                 reservingLock)
+void J9::X86::TreeEvaluator::inlineRecursiveMonitor(
+      TR::Node *node,
+      TR::CodeGenerator *cg,
+      TR::LabelSymbol *fallThruLabel,
+      TR::LabelSymbol *jitMonitorEnterOrExitSnippetLabel,
+      TR::LabelSymbol *inlineRecursiveSnippetLabel,
+      TR::Register *objectReg,
+      int lwOffset,
+      bool reservingLock)
    {
    //Code generated:
    // mov lockWordReg, [obj+lwOffset]
@@ -4773,9 +4773,8 @@ void J9::X86::TreeEvaluator::inlineRecursiveMonitor(TR::Node          *node,
    restartDeps->addPostCondition(lockWordMaskedReg, TR::RealRegister::NoReg, cg);
    restartDeps->addPostCondition(lockWordReg, TR::RealRegister::NoReg, cg);
    restartDeps->stopAddingConditions();
-   generateLabelInstruction(TR::InstOpCode::label, node, snippetRestartLabel, restartDeps, cg);
 
-   generateLabelInstruction(TR::InstOpCode::JMP4, node, fallThruLabel, cg);
+   generateLabelInstruction(TR::InstOpCode::JMP4, node, fallThruLabel, restartDeps, cg);
 
    cg->stopUsingRegister(lockWordReg);
    cg->stopUsingRegister(lockWordMaskedReg);
@@ -4923,11 +4922,10 @@ J9::X86::TreeEvaluator::VMmonentEvaluator(
    cg->setImplicitExceptionPoint(NULL);
 
    TR::LabelSymbol *startLabel = generateLabelSymbol(cg);
-   TR::LabelSymbol *fallThru = generateLabelSymbol(cg);
-   TR::LabelSymbol *snippetFallThru = inlineRecursive ? generateLabelSymbol(cg) : fallThru;
+   TR::LabelSymbol *fallThruLabel = generateLabelSymbol(cg);
 
    startLabel->setStartInternalControlFlow();
-   fallThru->setEndInternalControlFlow();
+   fallThruLabel->setEndInternalControlFlow();
    generateLabelInstruction(TR::InstOpCode::label, node, startLabel, cg);
 
    TR::Register *vmThreadReg = cg->getVMThreadRegister();
@@ -4959,7 +4957,7 @@ J9::X86::TreeEvaluator::VMmonentEvaluator(
             node->setSymbolReference(comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_AMD64JitMonitorExitReservedPrimitive, true, true, true));
 
          exitLabel = generateLabelSymbol(cg);
-         TR_OutlinedInstructions *outlinedExitHelperCall = new (cg->trHeapMemory()) TR_OutlinedInstructions(node, TR::call, NULL, exitLabel, fallThru, cg);
+         TR_OutlinedInstructions *outlinedExitHelperCall = new (cg->trHeapMemory()) TR_OutlinedInstructions(node, TR::call, NULL, exitLabel, fallThruLabel, cg);
          cg->getOutlinedInstructionsList().push_front(outlinedExitHelperCall);
          }
 
@@ -5002,11 +5000,11 @@ J9::X86::TreeEvaluator::VMmonentEvaluator(
       TR::LabelSymbol *JITMonitorEntrySnippetLabel = generateLabelSymbol(cg);
       TR::TreeEvaluator::transactionalMemoryJITMonitorEntry(node, cg, startLabel, snippetLabel, JITMonitorEntrySnippetLabel, objectReg, lwOffset);
       outlinedHelperCall = new (cg->trHeapMemory()) TR_OutlinedInstructions(helperCallNode, TR::call, NULL,
-                                                            JITMonitorEntrySnippetLabel, (exitLabel) ? exitLabel : fallThru, cg);
+                                                            JITMonitorEntrySnippetLabel, (exitLabel) ? exitLabel : fallThruLabel, cg);
       }
    else
       outlinedHelperCall = new (cg->trHeapMemory()) TR_OutlinedInstructions(helperCallNode, TR::call, NULL,
-                                                         snippetLabel, (exitLabel) ? exitLabel : snippetFallThru, cg);
+                                                         snippetLabel, (exitLabel) ? exitLabel : fallThruLabel, cg);
 
    if (helperCallNode != node)
       helperCallNode->recursivelyDecReferenceCount();
@@ -5028,7 +5026,7 @@ J9::X86::TreeEvaluator::VMmonentEvaluator(
       TR::LabelSymbol *inlineRecursiveSnippetLabel = generateLabelSymbol(cg);
       TR::LabelSymbol *jitMonitorEnterSnippetLabel = snippetLabel;
       snippetLabel = inlineRecursiveSnippetLabel;
-      TR::TreeEvaluator::inlineRecursiveMonitor(node, cg, fallThru, jitMonitorEnterSnippetLabel, inlineRecursiveSnippetLabel, objectReg, lwOffset, snippetFallThru, reservingLock);
+      TR::TreeEvaluator::inlineRecursiveMonitor(node, cg, fallThruLabel, jitMonitorEnterSnippetLabel, inlineRecursiveSnippetLabel, objectReg, lwOffset, reservingLock);
       }
 
    // Compare the monitor slot in the object against zero.  If it succeeds
@@ -5176,7 +5174,7 @@ J9::X86::TreeEvaluator::VMmonentEvaluator(
       if (!TR::Options::_aggressiveLockReservation)
          {
          // Jump over the non-reservable path
-         generateLabelInstruction(TR::InstOpCode::JMP4, node, fallThru, cg);
+         generateLabelInstruction(TR::InstOpCode::JMP4, node, fallThruLabel, cg);
 
          // It's possible that the lock may be available, but not reservable. In
          // that case we should try the usual cmpxchg for non-reserving enter.
@@ -5343,7 +5341,7 @@ J9::X86::TreeEvaluator::VMmonentEvaluator(
 
    deps->stopAddingConditions();
 
-   generateLabelInstruction(TR::InstOpCode::label, node, fallThru, deps, cg);
+   generateLabelInstruction(TR::InstOpCode::label, node, fallThruLabel, deps, cg);
 
 #if defined(TRACE_LOCK_RESERVATION)
    {
@@ -5525,7 +5523,7 @@ TR::Register
    TR::Register *vmThreadReg = cg->getVMThreadRegister();
 
    TR::LabelSymbol *startLabel = generateLabelSymbol(cg);
-   TR::LabelSymbol *fallThru   = generateLabelSymbol(cg);
+   TR::LabelSymbol *fallThruLabel = generateLabelSymbol(cg);
    // Create the monitor exit snippet
    TR::LabelSymbol *snippetLabel = generateLabelSymbol(cg);
 
@@ -5546,8 +5544,7 @@ TR::Register
    else                      maxInstructions = 10;
 
    startLabel->setStartInternalControlFlow();
-   TR::LabelSymbol *snippetFallThru = inlineRecursive ? generateLabelSymbol(cg): fallThru;
-   fallThru->setEndInternalControlFlow();
+   fallThruLabel->setEndInternalControlFlow();
    generateLabelInstruction(TR::InstOpCode::label, node, startLabel, cg);
 
    TR::Register *eaxReal     = 0;
@@ -5640,7 +5637,7 @@ TR::Register
          node->setSymbolReference(comp->getSymRefTab()->findOrCreateRuntimeHelper(helper, true, true, true));
          }
       }
-   TR_OutlinedInstructions *outlinedHelperCall = new (cg->trHeapMemory()) TR_OutlinedInstructions(node, TR::call, NULL, snippetLabel, snippetFallThru, cg);
+   TR_OutlinedInstructions *outlinedHelperCall = new (cg->trHeapMemory()) TR_OutlinedInstructions(node, TR::call, NULL, snippetLabel, fallThruLabel, cg);
    cg->getOutlinedInstructionsList().push_front(outlinedHelperCall);
    cg->generateDebugCounter(
       outlinedHelperCall->getFirstInstruction(),
@@ -5652,7 +5649,7 @@ TR::Register
       TR::LabelSymbol *inlineRecursiveSnippetLabel = generateLabelSymbol(cg);
       TR::LabelSymbol *jitMonitorExitSnippetLabel = snippetLabel;
       snippetLabel = inlineRecursiveSnippetLabel;
-      TR::TreeEvaluator::inlineRecursiveMonitor(node, cg, fallThru, jitMonitorExitSnippetLabel, inlineRecursiveSnippetLabel, objectReg, lwOffset, snippetFallThru, reservingLock);
+      TR::TreeEvaluator::inlineRecursiveMonitor(node, cg, fallThruLabel, jitMonitorExitSnippetLabel, inlineRecursiveSnippetLabel, objectReg, lwOffset, reservingLock);
       }
 
    bool reservingDecrementNeeded = false;
@@ -5775,7 +5772,7 @@ TR::Register
 
    if (reservingLock && !TR::Options::_aggressiveLockReservation)
       {
-      generateLabelInstruction(TR::InstOpCode::JMP4, node, fallThru, cg);
+      generateLabelInstruction(TR::InstOpCode::JMP4, node, fallThruLabel, cg);
 
       // Avoid the helper for non-recursive exit in case it isn't reserved
       generateLabelInstruction(TR::InstOpCode::label, node, mismatchLabel, cg);
@@ -5812,7 +5809,7 @@ TR::Register
       deps->addPostCondition(objectClassReg, TR::RealRegister::NoReg, cg);
 
    deps->stopAddingConditions();
-   generateLabelInstruction(TR::InstOpCode::label, node, fallThru, deps, cg);
+   generateLabelInstruction(TR::InstOpCode::label, node, fallThruLabel, deps, cg);
 
 #if defined(TRACE_LOCK_RESERVATION)
    if (reservingLock)
