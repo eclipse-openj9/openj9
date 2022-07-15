@@ -319,6 +319,12 @@ buildCallInStackFrame(J9VMThread *currentThread, J9VMEntryLocalStorage *newELS, 
 				goto done;
 			}
 		}
+#if JAVA_SPEC_VERSION >= 19
+		/* Increment avoided for the first call-in where
+		 * currentThread->entryLocalStorage is NULL.
+		 */
+		currentThread->callOutCount += 1;
+#endif /* JAVA_SPEC_VERSION >= 19 */
 	}
 	if (returnsObject) {
 		flags |= J9_SSF_RETURNS_OBJECT;
@@ -396,6 +402,12 @@ restoreCallInFrame(J9VMThread *currentThread)
 	if (NULL != oldELS) {
 		UDATA usedBytes = ((UDATA)oldELS - (UDATA)newELS);
 		currentThread->currentOSStackFree += usedBytes;
+#if JAVA_SPEC_VERSION >= 19
+		/* Decrement avoided for the last return where
+		 * currentThread->entryLocalStorage is set to NULL.
+		 */
+		currentThread->callOutCount -= 1;
+#endif /* JAVA_SPEC_VERSION >= 19 */
 	}
 #if defined(WIN32) && !defined(J9VM_ENV_DATA64)
 	if (J9_ARE_NO_BITS_SET(currentThread->javaVM->sigFlags, J9_SIG_XRS_SYNC)) {
