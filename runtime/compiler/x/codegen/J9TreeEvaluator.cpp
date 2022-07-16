@@ -4923,6 +4923,7 @@ J9::X86::TreeEvaluator::VMmonentEvaluator(
 
    TR::LabelSymbol *startLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *fallThruLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *inlinedMonEnterFallThruLabel = generateLabelSymbol(cg);
 
    startLabel->setStartInternalControlFlow();
    fallThruLabel->setEndInternalControlFlow();
@@ -5026,7 +5027,7 @@ J9::X86::TreeEvaluator::VMmonentEvaluator(
       TR::LabelSymbol *inlineRecursiveSnippetLabel = generateLabelSymbol(cg);
       TR::LabelSymbol *jitMonitorEnterSnippetLabel = snippetLabel;
       snippetLabel = inlineRecursiveSnippetLabel;
-      TR::TreeEvaluator::inlineRecursiveMonitor(node, cg, fallThruLabel, jitMonitorEnterSnippetLabel, inlineRecursiveSnippetLabel, objectReg, lwOffset, reservingLock);
+      TR::TreeEvaluator::inlineRecursiveMonitor(node, cg, inlinedMonEnterFallThruLabel, jitMonitorEnterSnippetLabel, inlineRecursiveSnippetLabel, objectReg, lwOffset, reservingLock);
       }
 
    // Compare the monitor slot in the object against zero.  If it succeeds
@@ -5174,7 +5175,7 @@ J9::X86::TreeEvaluator::VMmonentEvaluator(
       if (!TR::Options::_aggressiveLockReservation)
          {
          // Jump over the non-reservable path
-         generateLabelInstruction(TR::InstOpCode::JMP4, node, fallThruLabel, cg);
+         generateLabelInstruction(TR::InstOpCode::JMP4, node, inlinedMonEnterFallThruLabel, cg);
 
          // It's possible that the lock may be available, but not reservable. In
          // that case we should try the usual cmpxchg for non-reserving enter.
@@ -5314,6 +5315,20 @@ J9::X86::TreeEvaluator::VMmonentEvaluator(
 
       generateLabelInstruction(TR::InstOpCode::JNE4, node, snippetLabel, cg);
       }
+
+   generateLabelInstruction(TR::InstOpCode::label, node, inlinedMonEnterFallThruLabel, cg);
+
+#if defined(TR_TARGET_64BIT) && (JAVA_SPEC_VERSION >= 19)
+   // Adjust J9VMThread ownedMonitorCount for execution paths that do not
+   // go out of line to acquire the lock.  It is safe and efficient to do
+   // this unconditionally.  There is no need to check for overflow..
+   //
+   generateMemInstruction(
+      TR::InstOpCode::INC8Mem,
+      node,
+      generateX86MemoryReference(cg->getVMThreadRegister(), fej9->thisThreadGetOwnedMonitorCountOffset(), cg),
+      cg);
+#endif
 
    // Create dependencies for the registers used.
    // The dependencies must be in the order:
@@ -5524,6 +5539,8 @@ TR::Register
 
    TR::LabelSymbol *startLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *fallThruLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *inlinedMonExitFallThruLabel = generateLabelSymbol(cg);
+
    // Create the monitor exit snippet
    TR::LabelSymbol *snippetLabel = generateLabelSymbol(cg);
 
@@ -5649,7 +5666,7 @@ TR::Register
       TR::LabelSymbol *inlineRecursiveSnippetLabel = generateLabelSymbol(cg);
       TR::LabelSymbol *jitMonitorExitSnippetLabel = snippetLabel;
       snippetLabel = inlineRecursiveSnippetLabel;
-      TR::TreeEvaluator::inlineRecursiveMonitor(node, cg, fallThruLabel, jitMonitorExitSnippetLabel, inlineRecursiveSnippetLabel, objectReg, lwOffset, reservingLock);
+      TR::TreeEvaluator::inlineRecursiveMonitor(node, cg, inlinedMonExitFallThruLabel, jitMonitorExitSnippetLabel, inlineRecursiveSnippetLabel, objectReg, lwOffset, reservingLock);
       }
 
    bool reservingDecrementNeeded = false;
@@ -5772,7 +5789,7 @@ TR::Register
 
    if (reservingLock && !TR::Options::_aggressiveLockReservation)
       {
-      generateLabelInstruction(TR::InstOpCode::JMP4, node, fallThruLabel, cg);
+      generateLabelInstruction(TR::InstOpCode::JMP4, node, inlinedMonExitFallThruLabel, cg);
 
       // Avoid the helper for non-recursive exit in case it isn't reserved
       generateLabelInstruction(TR::InstOpCode::label, node, mismatchLabel, cg);
@@ -5782,6 +5799,20 @@ TR::Register
       lwMR = getMemoryReference(objectClassReg, objectReg, lwOffset, cg);
       generateMemImmInstruction(TR::InstOpCode::SMemImm4(gen64BitInstr), node, lwMR, 0, cg);
       }
+
+   generateLabelInstruction(TR::InstOpCode::label, node, inlinedMonExitFallThruLabel, cg);
+
+#if defined(TR_TARGET_64BIT) && (JAVA_SPEC_VERSION >= 19)
+   // Adjust J9VMThread ownedMonitorCount for execution paths that do not
+   // go out of line to release the lock.  It is safe and efficient to do
+   // this unconditionally.  There is no need to check for underflow.
+   //
+   generateMemInstruction(
+      TR::InstOpCode::DEC8Mem,
+      node,
+      generateX86MemoryReference(cg->getVMThreadRegister(), fej9->thisThreadGetOwnedMonitorCountOffset(), cg),
+      cg);
+#endif
 
    // Create dependencies for the registers used.
    // The first dependencies must be objectReg, vmThreadReg, tempReg
