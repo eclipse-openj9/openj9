@@ -485,6 +485,11 @@ writeConstants(OMRPortLibrary *OMRPORTLIB, IDATA fd)
 			writeConstant(OMRPORTLIB, fd, "J9TR_VMThread_gsParameters_returnAddr", offsetof(J9VMThread, gsParameters.returnAddr)) |
 #endif /* OMR_GC_CONCURRENT_SCAVENGER */
 
+#if JAVA_SPEC_VERSION >= 19
+			writeConstant(OMRPORTLIB, fd, "J9TR_VMThread_ownedMonitorCount", offsetof(J9VMThread, ownedMonitorCount)) |
+			writeConstant(OMRPORTLIB, fd, "J9TR_VMThread_callOutCount", offsetof(J9VMThread, callOutCount)) |
+#endif
+
 			/* J9StackWalkState */
 			writeConstant(OMRPORTLIB, fd, "J9TR_J9StackWalkState_restartPoint", offsetof(J9StackWalkState, restartPoint)) |
 
