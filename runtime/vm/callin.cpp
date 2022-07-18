@@ -663,7 +663,11 @@ runJavaThread(J9VMThread *currentThread)
 void JNICALL
 runStaticMethod(J9VMThread *currentThread, U_8 *className, J9NameAndSignature *selector, UDATA argCount, UDATA *arguments)
 {
-	/* Assumes that the called method returns void and that className is a canonical UTF.
+	/* Assumes that className is a canonical UTF.
+	 * The returnValue and returnValue2 are copies of the top two stack slots when the called method returns.
+	 * On 64-bit, long values are stored in the lower-memory slot of the 2 stack slots required for longs,
+	 * so returnValue contains the return value.
+	 *
 	 * Also, the arguments must be in stack shape (ints in the low-memory half of the stack slot on 64-bit)
 	 * and contain no object pointers, as there are GC points in here before the arguments are copied to
 	 * the stack.
@@ -703,6 +707,7 @@ internalRunStaticMethod(J9VMThread *currentThread, J9Method *method, BOOLEAN ret
 	Trc_VM_internalRunStaticMethod_Entry(currentThread);
 	J9VMEntryLocalStorage newELS;
 
+	Assert_VM_false(VM_VMHelpers::classRequiresInitialization(currentThread, J9_CLASS_FROM_METHOD(method)));
 	if (buildCallInStackFrame(currentThread, &newELS, returnsObject != 0, false)) {
 		for (UDATA i = 0; i < argCount; ++i) {
 			*--currentThread->sp = arguments[i];
