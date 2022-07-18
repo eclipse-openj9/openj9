@@ -71,11 +71,6 @@ static UDATA nativeMethodEqual(void *leftKey, void *rightKey, void *userData);
 static UDATA bindNative(J9VMThread *currentThread, J9Method *nativeMethod, char * longJNI, char * shortJNI, UDATA bindJNINative);
 static UDATA lookupNativeAddress(J9VMThread *currentThread, J9Method *nativeMethod, J9NativeLibrary *handle, char *longJNI, char *shortJNI, UDATA functionArgCount, UDATA bindJNINative);
 
-#if JAVA_SPEC_VERSION >= 15
-J9_DECLARE_CONSTANT_UTF8(j9_findnative_sig, "(Ljava/lang/ClassLoader;Ljava/lang/String;)J");
-J9_DECLARE_CONSTANT_UTF8(j9_findnative_name, "findNative");
-#endif /* JAVA_SPEC_VERSION >= 15 */
-
 typedef struct {
 	const char *nativeName;
 	UDATA sendTargetNumber;
@@ -1095,29 +1090,30 @@ lookupJNINative(J9VMThread *currentThread, J9NativeLibrary *nativeLibrary, J9Met
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
 	Trc_VM_lookupJNINative_Entry(currentThread, nativeLibrary, nativeMethod, symbolName, signature);
-#if JAVA_SPEC_VERSION >= 15
+#if JAVA_SPEC_VERSION >= 17
 	if (NULL == nativeLibrary) {
-		J9MemoryManagerFunctions const * const mmFuncs = vm->memoryManagerFunctions;
-		J9NameAndSignature nas = {0};
-		nas.name = (J9UTF8 *)&j9_findnative_name;
-		nas.signature = (J9UTF8 *)&j9_findnative_sig;
 		internalAcquireVMAccess(currentThread);
-		j9object_t entryName = mmFuncs->j9gc_createJavaLangString(currentThread, (U_8*)symbolName, strlen(symbolName), 0);
-		j9object_t classLoaderObject = J9_CLASS_FROM_METHOD(nativeMethod)->classLoader->classLoaderObject;
-		UDATA args[] = { (UDATA) classLoaderObject, (UDATA) entryName };
-		runStaticMethod(currentThread, (U_8 *)"java/lang/ClassLoader", &nas, 2, (UDATA *)args);
+		j9object_t entryName = vm->memoryManagerFunctions->j9gc_createJavaLangString(currentThread, (U_8*)symbolName, strlen(symbolName), 0);
+		if (NULL != entryName) {
+			j9object_t classLoaderObject = J9_CLASS_FROM_METHOD(nativeMethod)->classLoader->classLoaderObject;
+			J9Method *findNativeMethod = J9VMJAVALANGCLASSLOADER_FINDNATIVE_METHOD(vm);
+			UDATA args[] = {(UDATA)classLoaderObject, (UDATA)entryName};
+			internalRunStaticMethod(currentThread, findNativeMethod, TRUE, (sizeof(args) / sizeof(UDATA)), args);
+			functionAddress = (UDATA*)(*(U_64*)&(currentThread->returnValue));
+		}
+		/* always clear pending exception, might retry later */
+		VM_VMHelpers::clearException(currentThread);
 		internalReleaseVMAccess(currentThread);
-		functionAddress = (UDATA *) currentThread->returnValue;
-		if ((NULL != currentThread->currentException) || (NULL == functionAddress) ) {
+		if (NULL == functionAddress) {
 			lookupResult = 1;
 		}
 		Trc_VM_lookupJNINative_NullNativeLibrary(currentThread, nativeMethod, symbolName, signature, functionAddress);
 	} else
-#endif /* JAVA_SPEC_VERSION >= 15 */
+#endif /* JAVA_SPEC_VERSION >= 17 */
 	{
 		lookupResult = j9sl_lookup_name(nativeLibrary->handle, symbolName, (UDATA*)&functionAddress, signature);
 	}
-	if (lookupResult == 0) {
+	if (0 == lookupResult) {
 		UDATA cpFlags = J9_STARTPC_JNI_NATIVE;
 
 #if defined(J9VM_OPT_JVMTI)
