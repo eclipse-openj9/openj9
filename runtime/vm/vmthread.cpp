@@ -1447,6 +1447,9 @@ allocateJavaStack(J9JavaVM * vm, UDATA stackSize, J9JavaStack * previousStack)
 		stack->previous = previousStack;
 		stack->firstReferenceFrame = 0;
 
+#if JAVA_SPEC_VERSION >= 19
+		stack->isVirtual = FALSE;
+#endif /* JAVA_SPEC_VERSION >= 19 */
 
 		/* If this is a profiling VM, or verbose:stack is enabled, paint the stack with a distinctive pattern so we can
 			determine how much has been used */

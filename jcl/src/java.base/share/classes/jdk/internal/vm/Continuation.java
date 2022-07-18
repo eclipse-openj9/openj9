@@ -24,12 +24,20 @@ package jdk.internal.vm;
 
 import java.util.Set;
 import java.util.function.Supplier;
+import jdk.internal.access.JavaLangAccess;
+import jdk.internal.access.SharedSecrets;
 
 /**
  * Continuation class performing the mount/unmount operation for VirtualThread
  */
 public class Continuation {
 	private long vmRef; /* J9VMContinuation */
+
+	private final ContinuationScope scope;
+	private final Runnable runnable;
+	private Continuation parent;
+	private boolean started;
+	private volatile boolean finished;
 
 	/**
 	 * Continuation's Pinned reasons
@@ -76,15 +84,17 @@ public class Continuation {
 	 * @param target The target of the Continuation to execute
 	 */
 	public Continuation(ContinuationScope scope, Runnable target) {
-		throw new UnsupportedOperationException();
+		this.scope = scope;
+		this.runnable = target;
+		createContinuationImpl();
 	}
 
 	public ContinuationScope getScope() {
-		throw new UnsupportedOperationException();
+		return scope;
 	}
 
 	public Continuation getParent() {
-		throw new UnsupportedOperationException();
+		return parent;
 	}
 
 	public static Continuation getCurrentContinuation(ContinuationScope scope) {
@@ -127,8 +137,39 @@ public class Continuation {
 		throw new UnsupportedOperationException();
 	}
 
+	private static void execute(Continuation cont) {
+		cont.runnable.run();
+	}
+
 	public final void run() {
-		throw new UnsupportedOperationException();
+		if (finished) {
+			throw new IllegalStateException("Continuation has already finished.");
+		}
+/*
+		Thread carrier = JLA.currentCarrierThread();
+		Continuation currentContinuation = JLA.getContinuation(carrier);
+
+		if ((null != parent) && (parent != currentContinuation)) {
+			throw new IllegalStateException("Running on carrier with incorrect parent.");
+		} else {
+			parent = currentContinuation;
+		}
+
+		JLA.setContinuation(carrier, this);
+*/
+		boolean result = true;
+		try {
+			result = enterImpl();
+		} finally {
+			if (result) {
+				/* Continuation completed */
+			} else {
+				/* Continuation yielded */
+			}
+		}
+/*
+		JLA.setContinuation(carrier, parent);
+*/
 	}
 
 	/**
@@ -137,7 +178,8 @@ public class Continuation {
 	 * @return {@link true} or {@link false} based on success/failure
 	 */
 	public static boolean yield(ContinuationScope scope) {
-		throw new UnsupportedOperationException();
+		/* TODO find matching scope to yield */
+		return yieldImpl();
 	}
 
 	protected void onPinned(Pinned reason) {
@@ -149,7 +191,7 @@ public class Continuation {
 	}
 
 	public boolean isDone() {
-		throw new UnsupportedOperationException();
+		return finished;
 	}
 
 	public boolean isPreempted() {
@@ -167,4 +209,10 @@ public class Continuation {
 	public PreemptStatus tryPreempt(Thread t) {
 		throw new UnsupportedOperationException();
 	}
+
+	/* Continuation Native APIs */
+	private native boolean createContinuationImpl();
+	private native boolean enterImpl();
+	private static native boolean yieldImpl();
+
 }
