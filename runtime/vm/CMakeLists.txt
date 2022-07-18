@@ -190,6 +190,12 @@ if(J9VM_OPT_CRIU_SUPPORT)
 	)
 endif()
 
+if(NOT JAVA_SPEC_VERSION LESS 19)
+	list(APPEND main_sources
+		ContinuationHelpers.cpp
+	)
+endif()
+
 set(interpreter_sources
 	BytecodeInterpreterCompressed.cpp
 	BytecodeInterpreterFull.cpp
