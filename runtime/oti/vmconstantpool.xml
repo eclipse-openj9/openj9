@@ -403,7 +403,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 
 <!--
 	NOTE: the resolution code in jclcinit.c only looks at the J9ROMClassRef->runtimeFlags to determine
-	whether or not to attempt the class load.  The flags sepcified on the methods are ignored.
+	whether or not to attempt the class load.  The flags specified on the methods are ignored.
 	The method flags are only documentation to help map which feature (as expressed on the class) requires
 	the particular method.
 
@@ -423,6 +423,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<virtualmethodref class="java/lang/ClassLoader" name="loadClass" signature="(Ljava/lang/String;)Ljava/lang/Class;"/>
 	<specialmethodref class="java/lang/Thread" name="uncaughtException" signature="(Ljava/lang/Throwable;)V"/>
 	<specialmethodref class="java/lang/Thread" name="&lt;init>" signature="(Ljava/lang/String;Ljava/lang/Object;IZ)V"/>
+	<staticmethodref class="java/lang/ClassLoader" name="findNative" signature="(Ljava/lang/ClassLoader;Ljava/lang/String;)J" versions="17-"/>
 
 	<fieldref class="java/lang/J9VMInternals$ClassInitializationLock" name="theClass" signature="Ljava/lang/Class;"/>
 
