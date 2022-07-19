@@ -44,96 +44,6 @@
 #include "runtime/CompileService.hpp"
 #include "runtime/Listener.hpp"
 
-static SSL_CTX *
-createSSLContext(TR::CompilationInfo *compInfo)
-   {
-   SSL_CTX *ctx = (*OSSL_CTX_new)((*OSSLv23_server_method)());
-
-   if (!ctx)
-      {
-      perror("can't create SSL context");
-      (*OERR_print_errors_fp)(stderr);
-      exit(1);
-      }
-
-   const char *sessionIDContext = "JITServer";
-   (*OSSL_CTX_set_session_id_context)(ctx, (const unsigned char*)sessionIDContext, strlen(sessionIDContext));
-
-   if ((*OSSL_CTX_set_ecdh_auto)(ctx, 1) != 1)
-      {
-      perror("failed to configure SSL ecdh");
-      (*OERR_print_errors_fp)(stderr);
-      exit(1);
-      }
-
-   auto &sslKeys = compInfo->getJITServerSslKeys();
-   auto &sslCerts = compInfo->getJITServerSslCerts();
-   auto &sslRootCerts = compInfo->getJITServerSslRootCerts();
-
-   TR_ASSERT_FATAL(sslKeys.size() == 1 && sslCerts.size() == 1, "only one key and cert is supported for now");
-   TR_ASSERT_FATAL(sslRootCerts.size() == 0, "server does not understand root certs yet");
-
-   // Parse and set private key
-   BIO *keyMem = (*OBIO_new_mem_buf)(&sslKeys[0][0], sslKeys[0].size());
-   if (!keyMem)
-      {
-      perror("cannot create memory buffer for private key (OOM?)");
-      (*OERR_print_errors_fp)(stderr);
-      exit(1);
-      }
-   EVP_PKEY *privKey = (*OPEM_read_bio_PrivateKey)(keyMem, NULL, NULL, NULL);
-   if (!privKey)
-      {
-      perror("cannot parse private key");
-      (*OERR_print_errors_fp)(stderr);
-      exit(1);
-      }
-   if ((*OSSL_CTX_use_PrivateKey)(ctx, privKey) != 1)
-      {
-      perror("cannot use private key");
-      (*OERR_print_errors_fp)(stderr);
-      exit(1);
-      }
-
-   // Parse and set certificate
-   BIO *certMem = (*OBIO_new_mem_buf)(&sslCerts[0][0], sslCerts[0].size());
-   if (!certMem)
-      {
-      perror("cannot create memory buffer for cert (OOM?)");
-      (*OERR_print_errors_fp)(stderr);
-      exit(1);
-      }
-   X509 *certificate = (*OPEM_read_bio_X509)(certMem, NULL, NULL, NULL);
-   if (!certificate)
-      {
-      perror("cannot parse cert");
-      (*OERR_print_errors_fp)(stderr);
-      exit(1);
-      }
-   if ((*OSSL_CTX_use_certificate)(ctx, certificate) != 1)
-      {
-      perror("cannot use cert");
-      (*OERR_print_errors_fp)(stderr);
-      exit(1);
-      }
-
-   // Verify key and cert are valid
-   if ((*OSSL_CTX_check_private_key)(ctx) != 1)
-      {
-      perror("private key check failed");
-      (*OERR_print_errors_fp)(stderr);
-      exit(1);
-      }
-
-   // verify server identity using standard method
-   (*OSSL_CTX_set_verify)(ctx, SSL_VERIFY_PEER, NULL);
-
-   if (TR::Options::getVerboseOption(TR_VerboseJITServer))
-      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Successfully initialized SSL context (%s)\n", (*OOpenSSL_version)(0));
-
-   return ctx;
-   }
-
 static bool
 handleOpenSSLConnectionError(int connfd, SSL *&ssl, BIO *&bio, const char *errMsg)
    {
@@ -187,7 +97,15 @@ TR_Listener::serveRemoteCompilationRequests(BaseCompileDispatcher *compiler)
    SSL_CTX *sslCtx = NULL;
    if (JITServer::CommunicationStream::useSSL())
       {
-      sslCtx = createSSLContext(compInfo);
+      auto &sslKeys = compInfo->getJITServerSslKeys();
+      auto &sslCerts = compInfo->getJITServerSslCerts();
+      auto &sslRootCerts = compInfo->getJITServerSslRootCerts();
+      const char *sessionContextId = "JITServer";
+      if (!JITServer::ServerStream::createSSLContext(sslCtx, sessionContextId, sizeof(sessionContextId), sslKeys, sslCerts, sslRootCerts))
+         {
+         fprintf(stderr, "Failed to initialize the SSL context\n");
+         exit(1);
+         }
       }
 
    uint32_t port = info->getJITServerPort();
