@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2020, 2021 IBM Corp. and others
+ * Copyright (c) 2020, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -798,6 +798,10 @@ computeNPEMsgAtPC(J9VMThread *vmThread, J9ROMMethod *romMethod, J9ROMClass *romC
 	PORT_ACCESS_FROM_VMC(vmThread);
 
 	Trc_VM_ComputeNPEMsgAtPC_Entry(vmThread, romClass, romMethod, temps, bytecodeOffset, bcCurrent, npePC, npeFinalFlag, *isMethodFlag, *npeMsg);
+	if (NULL != *npeMsg) {
+		j9mem_free_memory(*npeMsg);
+		*npeMsg = NULL;
+	}
 	if ((bcCurrent >= JBiconstm1) && (bcCurrent <= JBdconst1)) {
 		/*
 		 * JBiconstm1, JBiconst0, JBiconst1, JBiconst2, JBiconst3, JBiconst4, JBiconst5
@@ -903,7 +907,7 @@ computeNPEMsgAtPC(J9VMThread *vmThread, J9ROMMethod *romMethod, J9ROMClass *romC
 				UDATA objectrefPos = bytecodeOffset[npePC].first;
 
 				if (BYTECODE_BRANCH_TARGET == objectrefPos) {
-					*npeMsg = NULL;
+					/* *npeMsg is NULL */
 				} else {
 					computeNPEMsgAtPC(vmThread, romMethod, romClass, objectrefPos, false, npeMsg, isMethodFlag, temps, bytecodeOffset);
 				}
@@ -1024,7 +1028,7 @@ computeNPEMsgAtPC(J9VMThread *vmThread, J9ROMMethod *romMethod, J9ROMClass *romC
 			if ((BYTECODE_BRANCH_TARGET == bcCausePos)
 				|| (BYTECODE_BRANCH_TARGET == bcCausePos2)
 			) {
-				*npeMsg = NULL;
+				/* *npeMsg is NULL */
 			} else {
 				computeNPEMsgAtPC(vmThread, romMethod, romClass, bcCausePos, false, npeMsg, isMethodFlag, temps, bytecodeOffset);
 			}
@@ -1041,30 +1045,32 @@ computeNPEMsgAtPC(J9VMThread *vmThread, J9ROMMethod *romMethod, J9ROMClass *romC
 		case JBaaload: {
 			UDATA bcCausePos = bytecodeOffset[npePC].first;
 
-			const char* npeMsgObjref = NULL;
+			char *npeMsgObjref = NULL;
 			UDATA aaloadIndexPos = 0;
 			if (BYTECODE_BRANCH_TARGET == bcCausePos) {
 				if (!npeFinalFlag) {
-					npeMsgObjref = "<array>";
+					npeMsgObjref = getMsgWithAllocation(vmThread, "<array>");
 				}
 			} else {
-				computeNPEMsgAtPC(vmThread, romMethod, romClass, bcCausePos, false, (char **)&npeMsgObjref, isMethodFlag, temps, bytecodeOffset);
+				computeNPEMsgAtPC(vmThread, romMethod, romClass, bcCausePos, false, &npeMsgObjref, isMethodFlag, temps, bytecodeOffset);
 			}
 			aaloadIndexPos = bytecodeOffset[npePC].second;
 			if (npeFinalFlag || (NULL == npeMsgObjref)) {
-				*npeMsg = (char *)npeMsgObjref;
+				*npeMsg = npeMsgObjref;
 			} else {
-				const char* npeMsgIndex = NULL;
+				char *npeMsgIndex = NULL;
 				if (BYTECODE_BRANCH_TARGET == aaloadIndexPos) {
-					npeMsgIndex = "...";
+					npeMsgIndex = getMsgWithAllocation(vmThread, "...");
 				} else {
-					computeNPEMsgAtPC(vmThread, romMethod, romClass, aaloadIndexPos, false, (char **)&npeMsgIndex, isMethodFlag, temps, bytecodeOffset);
+					computeNPEMsgAtPC(vmThread, romMethod, romClass, aaloadIndexPos, false, &npeMsgIndex, isMethodFlag, temps, bytecodeOffset);
 				}
 
 				if (NULL != npeMsgIndex) {
 					*npeMsg = getMsgWithAllocation(vmThread, "%s[%s]", npeMsgObjref, npeMsgIndex);
 					*isMethodFlag = false;
+					j9mem_free_memory(npeMsgIndex);
 				}
+				j9mem_free_memory(npeMsgObjref);
 			}
 			break;
 		}
@@ -1101,6 +1107,7 @@ computeNPEMsgAtPC(J9VMThread *vmThread, J9ROMMethod *romMethod, J9ROMClass *romC
 					*npeMsg = getMsgWithAllocation(vmThread, "%.*s", J9UTF8_LENGTH(fieldName), J9UTF8_DATA(fieldName));
 				} else {
 					*npeMsg = getMsgWithAllocation(vmThread, "%s.%.*s", npeMsgObjref, J9UTF8_LENGTH(fieldName), J9UTF8_DATA(fieldName));
+					j9mem_free_memory(npeMsgObjref);
 				}
 				*isMethodFlag = false;
 			}
