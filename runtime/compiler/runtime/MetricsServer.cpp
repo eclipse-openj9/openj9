@@ -39,93 +39,12 @@
 #include "env/PersistentInfo.hpp"
 #include "env/VerboseLog.hpp"
 #include "env/VMJ9.h"
+#include "net/ServerStream.hpp"
 #include "runtime/MetricsServer.hpp"
 
 bool MetricsServer::useSSL(TR::CompilationInfo *compInfo)
    {
    return (compInfo->getJITServerMetricsSslKeys().size() || compInfo->getJITServerMetricsSslCerts().size());
-   }
-
-static bool handleCreateSSLContextError(SSL_CTX *&ctx, const char *errMsg)
-   {
-   perror(errMsg);
-   (*OERR_print_errors_fp)(stderr);
-   if (ctx)
-      {
-      (*OSSL_CTX_free)(ctx);
-      ctx = NULL;
-      }
-   return false;
-   }
-
-static bool
-createSSLContext(TR::CompilationInfo *compInfo, SSL_CTX *&ctx)
-   {
-   ctx = (*OSSL_CTX_new)((*OSSLv23_server_method)());
-
-   if (!ctx)
-      {
-      return handleCreateSSLContextError(ctx, "can't create SSL context");
-      }
-
-   const char *sessionIDContext = "MetricsServer";
-   (*OSSL_CTX_set_session_id_context)(ctx, (const unsigned char*)sessionIDContext, strlen(sessionIDContext));
-
-   if ((*OSSL_CTX_set_ecdh_auto)(ctx, 1) != 1)
-      {
-      return handleCreateSSLContextError(ctx, "failed to configure SSL ecdh");
-      }
-
-   auto &sslKeys = compInfo->getJITServerMetricsSslKeys();
-   auto &sslCerts = compInfo->getJITServerMetricsSslCerts();
-
-   TR_ASSERT_FATAL(sslKeys.size() == 1 && sslCerts.size() == 1, "only one key and cert is supported for now");
-
-   // Parse and set private key
-   BIO *keyMem = (*OBIO_new_mem_buf)(&sslKeys[0][0], sslKeys[0].size());
-   if (!keyMem)
-      {
-      return handleCreateSSLContextError(ctx, "cannot create memory buffer for private key (OOM?)");
-      }
-   EVP_PKEY *privKey = (*OPEM_read_bio_PrivateKey)(keyMem, NULL, NULL, NULL);
-   if (!privKey)
-      {
-      return handleCreateSSLContextError(ctx, "cannot parse private key");
-      }
-   if ((*OSSL_CTX_use_PrivateKey)(ctx, privKey) != 1)
-      {
-      return handleCreateSSLContextError(ctx, "cannot use private key");
-      }
-
-   // Parse and set certificate
-   BIO *certMem = (*OBIO_new_mem_buf)(&sslCerts[0][0], sslCerts[0].size());
-   if (!certMem)
-      {
-      return handleCreateSSLContextError(ctx, "cannot create memory buffer for cert (OOM?)");
-      }
-   X509 *certificate = (*OPEM_read_bio_X509)(certMem, NULL, NULL, NULL);
-   if (!certificate)
-      {
-      return handleCreateSSLContextError(ctx, "cannot parse cert");
-      }
-   if ((*OSSL_CTX_use_certificate)(ctx, certificate) != 1)
-      {
-      return handleCreateSSLContextError(ctx, "cannot use cert");
-      }
-
-   // Verify key and cert are valid
-   if ((*OSSL_CTX_check_private_key)(ctx) != 1)
-      {
-      return handleCreateSSLContextError(ctx, "private key check failed");
-      }
-
-   // verify server identity using standard method
-   (*OSSL_CTX_set_verify)(ctx, SSL_VERIFY_PEER, NULL);
-
-   if (TR::Options::getVerboseOption(TR_VerboseJITServer))
-      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "MetricsServer: Successfully initialized SSL context (%s)\n", (*OOpenSSL_version)(0));
-
-   return true;
    }
 
 bool HttpGetRequest::handleSSLConnectionError(const char *errMsg)
@@ -842,17 +761,27 @@ MetricsServer::serveMetricsRequests()
 
    MetricsDatabase metricsDatabase(compInfo);
 
-   if (useSSL(compInfo) && !createSSLContext(compInfo, _sslCtx))
+   if (useSSL(compInfo))
       {
-      if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+      auto &sslKeys = compInfo->getJITServerMetricsSslKeys();
+      auto &sslCerts = compInfo->getJITServerMetricsSslCerts();
+      std::string sslRootCerts = "";
+      const char *sessionContextId = "MetricsServer";
+      if (!JITServer::ServerStream::createSSLContext(_sslCtx, sessionContextId, sizeof(sessionContextId), sslKeys, sslCerts, sslRootCerts))
          {
-         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Cannot create MetricsServer SSL context. Will continue without metrics.");
+         if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+            {
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Cannot create MetricsServer SSL context. Will continue without metrics.");
+            }
+         return;
          }
-      return;
       }
 
    if (TR::Options::getVerboseOption(TR_VerboseJITServer))
-      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "MetricsServer waiting for http requests on port %u", port);
+      {
+      const char *logMessage = _sslCtx ? "MetricsServer waiting for https requests on port %u" : "MetricsServer waiting for http requests on port %u";
+      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, logMessage, port);
+      }
 
    while (!getMetricsThreadExitFlag())
       {
