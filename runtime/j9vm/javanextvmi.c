@@ -152,6 +152,11 @@ JVM_GetExtendedNPEMessage(JNIEnv *env, jthrowable throwableObj)
 				}
 				j9mem_free_memory(npeMsg);
 			}
+			j9mem_free_memory(npeMsgData.liveStack);
+			j9mem_free_memory(npeMsgData.bytecodeOffset);
+			j9mem_free_memory(npeMsgData.bytecodeMap);
+			j9mem_free_memory(npeMsgData.stackMaps);
+			j9mem_free_memory(npeMsgData.unwalkedQueue);
 		} else {
 			Trc_SC_GetExtendedNPEMessage_Null_NPE_MSG(vmThread, userData.romClass, userData.romMethod, userData.bytecodeOffset);
 		}
