@@ -2769,7 +2769,8 @@ int32_t *TR::CompilationInfo::_compThreadActivationThresholdsonStarvation = NULL
 void TR::CompilationInfo::updateNumUsableCompThreads(int32_t &numUsableCompThreads)
    {
 #if defined(J9VM_OPT_JITSERVER)
-   if (getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
+   J9JavaVM *vm = getJITConfig()->javaVM;
+   if (vm->internalVMFunctions->isJITServerEnabled(vm))
       {
       if (numUsableCompThreads <= 0)
          {

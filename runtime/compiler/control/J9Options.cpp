@@ -1871,18 +1871,23 @@ void J9::Options::preProcessSamplingExpirationTime(J9JavaVM *vm)
 
 void J9::Options::preProcessCompilationThreads(J9JavaVM *vm, J9JITConfig *jitConfig)
    {
-   TR::CompilationInfo *compInfo = getCompilationInfo(jitConfig);
-   char *compThreadsOption = "-XcompilationThreads";
-   int32_t argIndex = FIND_ARG_IN_VMARGS(EXACT_MEMORY_MATCH, compThreadsOption, 0);
-   if (argIndex >= 0)
+   static bool notYetParsed = true; // We want to avoid duplicate error messages in updateNumUsableCompThreads
+   if (notYetParsed)
       {
-      UDATA numCompThreads;
-      IDATA ret = GET_INTEGER_VALUE(argIndex, compThreadsOption, numCompThreads);
-
-      if (ret == OPTION_OK && numCompThreads > 0)
+      notYetParsed = false;
+      TR::CompilationInfo *compInfo = getCompilationInfo(jitConfig);
+      char *compThreadsOption = "-XcompilationThreads";
+      int32_t argIndex = FIND_ARG_IN_VMARGS(EXACT_MEMORY_MATCH, compThreadsOption, 0);
+      if (argIndex >= 0)
          {
-         _numUsableCompilationThreads = numCompThreads;
-         compInfo->updateNumUsableCompThreads(_numUsableCompilationThreads);
+         UDATA numCompThreads;
+         IDATA ret = GET_INTEGER_VALUE(argIndex, compThreadsOption, numCompThreads);
+
+         if (ret == OPTION_OK && numCompThreads > 0)
+            {
+            _numUsableCompilationThreads = numCompThreads;
+            compInfo->updateNumUsableCompThreads(_numUsableCompilationThreads);
+            }
          }
       }
    }
