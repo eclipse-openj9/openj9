@@ -1,4 +1,4 @@
-/*[INCLUDE-IF (JAVA_SPEC_VERSION >= 16) & (JAVA_SPEC_VERSION <= 18)]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 19]*/
 /*******************************************************************************
  * Copyright (c) 2021, 2022 IBM Corp. and others
  *
@@ -25,31 +25,24 @@ package jdk.internal.foreign.abi;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 
-import jdk.incubator.foreign.Addressable;
-import jdk.incubator.foreign.FunctionDescriptor;
+import java.lang.foreign.Addressable;
+import java.lang.foreign.FunctionDescriptor;
 import openj9.internal.foreign.abi.InternalDowncallHandler;
 
 /**
- * The counterpart in OpenJDK is replaced with this class that wraps up a method handle
+ * The counterpart in OpenJDK is replaced with this class that wrap up a method handle
  * enabling the native code to the ffi_call via the libffi interface at runtime.
  */
-public class ProgrammableInvoker {
+public class DowncallLinker {
 	/**
-	 * The method is ultimately invoked by Clinker on the specific platforms to generate the requested
+	 * The method is ultimately invoked by Linker on the specific platforms to generate the requested
 	 * method handle to the underlying C function.
 	 *
-	 * @param downcallAddr The downcall symbol
 	 * @param functionMethodType The MethodType of the specified native function
 	 * @param funcDesc The function descriptor of the specified native function
 	 * @return a method handle bound to the native method
 	 */
-	/*[IF JAVA_SPEC_VERSION >= 17]*/
 	public static MethodHandle getBoundMethodHandle(MethodType functionMethodType, FunctionDescriptor funcDesc) {
 		return InternalDowncallHandler.getBoundMethodHandle(functionMethodType, funcDesc);
 	}
-	/*[ELSE] JAVA_SPEC_VERSION >= 17 */
-	public static MethodHandle getBoundMethodHandle(Addressable downcallAddr, MethodType functionMethodType, FunctionDescriptor funcDesc) {
-		return InternalDowncallHandler.getBoundMethodHandle(downcallAddr, functionMethodType, funcDesc);
-	}
-	/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 }

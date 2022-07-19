@@ -1,6 +1,6 @@
-/*[INCLUDE-IF (JAVA_SPEC_VERSION >= 16) & (JAVA_SPEC_VERSION <= 18)]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 19]*/
 /*******************************************************************************
- * Copyright (c) 2021, 2022 IBM Corp. and others
+ * Copyright (c) 2022, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,9 +20,17 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-package jdk.internal.foreign.abi;
+package openj9.internal.foreign.abi;
 
 import java.util.List;
+
+/*[IF JAVA_SPEC_VERSION >= 19]*/
+import java.lang.foreign.GroupLayout;
+import java.lang.foreign.MemoryAddress;
+import java.lang.foreign.MemoryLayout;
+import java.lang.foreign.SequenceLayout;
+import java.lang.foreign.ValueLayout;
+/*[ELSE] JAVA_SPEC_VERSION >= 19 */
 /*[IF JAVA_SPEC_VERSION <= 17]*/
 import jdk.incubator.foreign.CLinker.TypeKind;
 import static jdk.incubator.foreign.CLinker.TypeKind.*;
@@ -32,6 +40,7 @@ import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.SequenceLayout;
 import jdk.incubator.foreign.ValueLayout;
+/*[ENDIF] JAVA_SPEC_VERSION >= 19 */
 
 /**
  * The methods of the class are used to preprocess the layout specified in the function
@@ -124,7 +133,11 @@ final class LayoutStrPreprocessor {
 		} else if (targetLayout instanceof SequenceLayout) { // Intended for nested arrays
 			SequenceLayout arrayLayout = (SequenceLayout)targetLayout;
 			MemoryLayout elementLayout = arrayLayout.elementLayout();
+			/*[IF JAVA_SPEC_VERSION >= 19]*/
+			long elementCount = arrayLayout.elementCount();
+			/*[ELSE] JAVA_SPEC_VERSION >= 19 */
 			long elementCount = arrayLayout.elementCount().getAsLong();
+			/*[ENDIF] JAVA_SPEC_VERSION >= 19 */
 
 			/* The padding bytes is required in the native signature for upcall thunk generation */
 			if (elementLayout.isPadding() && !isDownCall) {
