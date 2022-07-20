@@ -679,5 +679,6 @@ if(NOT JAVA_SPEC_VERSION LESS 19)
 		Java_jdk_internal_vm_Continuation_createContinuationImpl
 		Java_jdk_internal_vm_Continuation_pin
 		Java_jdk_internal_vm_Continuation_unpin
+		Java_jdk_internal_vm_Continuation_isPinnedImpl
 	)
 endif()
