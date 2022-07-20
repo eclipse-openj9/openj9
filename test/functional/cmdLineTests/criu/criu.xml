@@ -37,6 +37,7 @@
     <output type="failure" caseSensitive="yes" regex="no">ERR</output>
   </test>
 
+<!--
   <test id="Create and Restore Criu Checkpoint Image twice">
     <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ $JVM_OPTIONS$ $MAINCLASS_SIMPLE$ 2 2 false</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
@@ -59,5 +60,6 @@
     <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
     <output type="failure" caseSensitive="yes" regex="no">ERR</output>
   </test>
+-->
 
 </suite>
