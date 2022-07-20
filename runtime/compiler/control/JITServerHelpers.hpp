@@ -118,7 +118,7 @@ public:
 
    // Functions used for allowing the client to compile locally when server is unavailable.
    // Should be used only on the client side.
-   static void postStreamFailure(OMRPortLibrary *portLibrary, TR::CompilationInfo *compInfo);
+   static void postStreamFailure(OMRPortLibrary *portLibrary, TR::CompilationInfo *compInfo, bool retryConnectionImmediately);
    static bool shouldRetryConnection(OMRPortLibrary *portLibrary);
    static void postStreamConnectionSuccess();
    static bool isServerAvailable() { return _serverAvailable; }

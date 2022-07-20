@@ -2110,9 +2110,9 @@ bool J9::Options::preProcessJitServer(J9JavaVM *vm, J9JITConfig *jitConfig)
             int32_t xxJITServerLocalSyncCompilesArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxJITServerLocalSyncCompilesOption, 0);
             int32_t xxDisableJITServerLocalSyncCompilesArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxDisableJITServerLocalSyncCompilesOption, 0);
 
-            if (xxJITServerLocalSyncCompilesArgIndex > xxDisableJITServerLocalSyncCompilesArgIndex)
+            if (xxDisableJITServerLocalSyncCompilesArgIndex > xxJITServerLocalSyncCompilesArgIndex)
                {
-               compInfo->getPersistentInfo()->setLocalSyncCompiles(true);
+               compInfo->getPersistentInfo()->setLocalSyncCompiles(false);
                }
 
             const char *xxJITServerAOTCacheNameOption = "-XX:JITServerAOTCacheName=";
