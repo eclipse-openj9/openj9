@@ -202,8 +202,10 @@ public class Continuation {
 
 	public static native void unpin();
 
+	private static native boolean isPinnedImpl();
+
 	public static boolean isPinned(ContinuationScope scope) {
-		throw new UnsupportedOperationException();
+		return isPinnedImpl();
 	}
 
 	public PreemptStatus tryPreempt(Thread t) {
