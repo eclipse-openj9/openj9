@@ -111,6 +111,13 @@ void TR_BoolArrayStoreTransformer::perform()
    if (comp()->getOption(TR_TraceILGen))
       traceMsg(comp(), "<BoolArrayStoreTransformer>\n");
 
+   if (comp()->isDLT())
+      {
+      // Parameter slots may have been stored to in bytecode that isn't
+      // included in the DLT body.
+      _hasVariantArgs = true;
+      }
+
    if (!_hasVariantArgs)
       {
       // There is no store to args and bstorei nodes with argument as array base have known type
@@ -277,8 +284,13 @@ void TR_BoolArrayStoreTransformer::findBoolArrayStoreNodes()
     * Do a reverse post-order traversal of the CFG as the best effort to figure out types in one traverse
     */
    TR::ReversePostorderSnapshotBlockIterator blockIt (comp()->getFlowGraph(), comp());
-   //Initialize type info for parms for the entry block
-   if (blockIt.currentBlock())
+   // Initialize type info for parms for the entry block.
+   //
+   // Skip this for DLT because parameter slots may have been stored to in
+   // bytecode that isn't included in the DLT body, in which case the initial
+   // parameter value we receive will not necessarily be the right type.
+   //
+   if (blockIt.currentBlock() && !comp()->isDLT())
       {
       TR::Block *firstBlock = blockIt.currentBlock();
       ListIterator<TR::ParameterSymbol> parms(&comp()->getMethodSymbol()->getParameterList());
