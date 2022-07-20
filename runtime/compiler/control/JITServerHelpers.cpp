@@ -883,24 +883,33 @@ JITServerHelpers::romMethodOfRamMethod(J9Method* method)
    }
 
 void
-JITServerHelpers::postStreamFailure(OMRPortLibrary *portLibrary, TR::CompilationInfo *compInfo)
+JITServerHelpers::postStreamFailure(OMRPortLibrary *portLibrary, TR::CompilationInfo *compInfo, bool retryConnectionImmediately)
    {
    OMR::CriticalSection postStreamFailure(getClientStreamMonitor());
 
    OMRPORT_ACCESS_FROM_OMRPORT(portLibrary);
    uint64_t current_time = omrtime_current_time_millis();
-   if (!_waitTimeMs)
-      _waitTimeMs = TR::Options::_reconnectWaitTimeMs;
-   if (current_time >= _nextConnectionRetryTime)
-      _waitTimeMs *= 2; // Exponential backoff
-   _nextConnectionRetryTime = current_time + _waitTimeMs;
+   if (retryConnectionImmediately)
+      {
+      _nextConnectionRetryTime = current_time;
+      }
+   else
+      {
+      if (!_waitTimeMs)
+         _waitTimeMs = TR::Options::_reconnectWaitTimeMs;
+      if (current_time >= _nextConnectionRetryTime)
+         _waitTimeMs *= 2; // Exponential backoff
+      _nextConnectionRetryTime = current_time + _waitTimeMs;
+      }
+
 
    if (_serverAvailable && TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseJITServerConns))
       {
       TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
-                                     "t=%6u Lost connection to the server (serverUID=%llu)",
+                                     "t=%6u Lost connection to the server (serverUID=%llu). Retry immediately: %d.",
                                      (uint32_t)compInfo->getPersistentInfo()->getElapsedTime(),
-                                     (unsigned long long)compInfo->getPersistentInfo()->getServerUID());
+                                     (unsigned long long)compInfo->getPersistentInfo()->getServerUID(),
+                                     retryConnectionImmediately);
       compInfo->getPersistentInfo()->setServerUID(0);
       }
 

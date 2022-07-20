@@ -275,7 +275,7 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
    static bool _shareROMClasses;
    static int32_t _sharedROMClassCacheNumPartitions;
    static int32_t _reconnectWaitTimeMs;
-   static const uint32_t DEFAULT_JITCLIENT_TIMEOUT = 10000; // ms
+   static const uint32_t DEFAULT_JITCLIENT_TIMEOUT = 30000; // ms
    static const uint32_t DEFAULT_JITSERVER_TIMEOUT = 30000; // ms
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
