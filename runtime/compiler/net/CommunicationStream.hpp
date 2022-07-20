@@ -125,10 +125,16 @@ private:
             ssize_t bytesRead = read(_connfd, data + totalBytesRead, size - totalBytesRead);
             if (bytesRead <= 0)
                {
-               throw JITServer::StreamFailure("JITServer I/O error: read error: " +
-                                              (bytesRead ? std::string(strerror(errno)) : "connection closed by peer"), EAGAIN == errno);
+               if (EINTR != errno)
+                  {
+                  throw JITServer::StreamFailure("JITServer I/O error: read error: " +
+                                                 (bytesRead ? std::string(strerror(errno)) : "connection closed by peer"), EAGAIN == errno);
+                  }
                }
-            totalBytesRead += bytesRead;
+            else
+               {
+               totalBytesRead += bytesRead;
+               }
             }
          }
       }
@@ -147,11 +153,21 @@ private:
          }
       else
          {
-         bytesRead = read(_connfd, data, size);
-         if (bytesRead <= 0)
+         while (true)
             {
-            throw JITServer::StreamFailure("JITServer I/O error: read error: " +
-                                           (bytesRead ? std::string(strerror(errno)) : "connection closed by peer"), EAGAIN == errno);
+            bytesRead = read(_connfd, data, size);
+            if (bytesRead <= 0)
+               {
+               if (EINTR != errno)
+                  {
+                  throw JITServer::StreamFailure("JITServer I/O error: read error: " +
+                                                 (bytesRead ? std::string(strerror(errno)) : "connection closed by peer"), EAGAIN == errno);
+                  }
+               }
+            else
+               {
+               break;
+               }
             }
          }
       return bytesRead;
@@ -180,9 +196,15 @@ private:
             ssize_t bytesWritten = write(_connfd, data + totalBytesWritten, size - totalBytesWritten);
             if (bytesWritten <= 0)
                {
-               throw JITServer::StreamFailure("JITServer I/O error: write error: " + std::string(strerror(errno)));
+               if (EINTR != errno)
+                  {
+                  throw JITServer::StreamFailure("JITServer I/O error: write error: " + std::string(strerror(errno)));
+                  }
                }
-            totalBytesWritten += bytesWritten;
+            else
+               {
+               totalBytesWritten += bytesWritten;
+               }
             }
          }
       }
