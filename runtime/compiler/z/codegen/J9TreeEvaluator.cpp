@@ -2423,7 +2423,7 @@ J9::Z::TreeEvaluator::inlineMathFma(TR::Node *node, TR::CodeGenerator *cg)
 
    if (cg->getSupportsVectorRegisters() &&
          (!node->getOpCode().isFloat() ||
-           cg->comp()->target().cpu.getSupportsVectorFacilityEnhancement1()))
+           cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_S390_VECTOR_FACILITY_ENHANCEMENT_1)))
       {
       // target = a*b + c
       TR::Register * c = cg->evaluate(node->getThirdChild());
