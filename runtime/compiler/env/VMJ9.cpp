@@ -3948,6 +3948,13 @@ TR_J9VMBase::isForceInline(TR_ResolvedMethod *method)
                                            (J9Method*)method->getPersistentIdentifier());
    }
 
+bool
+TR_J9VMBase::isDontInline(TR_ResolvedMethod *method)
+   {
+   return jitIsMethodTaggedWithDontInline(
+      vmThread(), (J9Method*)method->getPersistentIdentifier());
+   }
+
 // Creates a node to initialize the local object flags field
 //
 TR::Node *
