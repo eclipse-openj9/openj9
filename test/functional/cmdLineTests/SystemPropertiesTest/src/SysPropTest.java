@@ -28,12 +28,10 @@ import org.openj9.test.util.VersionCheck;
 public class SysPropTest
 {
 	/* TestVa&#187;lue&#161; */
-	static final byte[] inputBytes = { (byte)'T', (byte)'e', (byte)'s', (byte)'t', (byte)'V', (byte)'a', (byte)187, (byte)'l', (byte)'u', (byte)'e', (byte)161};
-	static final byte[] inputBytesUtf8 = { (byte)'T', (byte)'e', (byte)'s', (byte)'t', (byte)'V', (byte)'a', (byte)0xC2, (byte)187, (byte)'l', (byte)'u', (byte)'e', (byte)0xC2, (byte)161};
+	static final byte[] expectedBytes = { (byte)'T', (byte)'e', (byte)'s', (byte)'t', (byte)'V', (byte)'a', (byte)187, (byte)'l', (byte)'u', (byte)'e', (byte)161};
 
 	public static void main(String args[])
 	{
-		boolean isWindows = false;
 		if (args.length == 0) {
 			System.out.println("test failed");
 			return;
@@ -41,16 +39,9 @@ public class SysPropTest
 		String argEncoding = args[0];
 		/* check -Dtestkey=TestVa?lue? */
 		try {
+			boolean isWindows = System.getProperty("os.name").contains("Windows");
 			String osEncoding = "";
 			String strTestProp;
-			if (System.getProperty("os.name").contains("Windows")) {
-				isWindows = true;
-			}
-
-			/* On jdk18 with JEP 400 UTF-8 by default, the non-ascii characters in the testkey property
-			 * are converted to UTF8 by the test (not the JVM).
-			 */
-			final byte[] expectedBytes = ((VersionCheck.major() == 18) && !isWindows) ? inputBytesUtf8 : inputBytes;
 
 			if (argEncoding.equals("DEFAULT")) {
 				osEncoding = System.getProperty("os.encoding");
