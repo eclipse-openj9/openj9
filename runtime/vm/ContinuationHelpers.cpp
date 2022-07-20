@@ -120,6 +120,13 @@ resumeContinuation(J9VMThread *currentThread, J9VMContinuation *continuation)
 
 	currentThread->returnValue = J9_BCLOOP_EXECUTE_BYTECODE;
 
+	/* Match the increment in enterContinuation -> runStaticMethod so that the
+	 * callOutCount start state is the same in resumeContinuation.
+	 * TODO: This increment should be removed once the call-ins are no
+	 * longer used and the new design for single cInterpreter is implemented.
+	 */
+	currentThread->callOutCount += 1;
+
 	c_cInterpreter(currentThread);
 
 	restoreCallInFrame(currentThread);
@@ -136,6 +143,11 @@ enterContinuation(J9VMThread *currentThread, j9object_t continuationObject)
 
 	VM_ContinuationHelpers::swapFieldsWithContinuation(currentThread, continuation);
 	currentThread->currentContinuation = continuation;
+
+	/* Reset counters which determine if the current continuation is pinned. */
+	currentThread->continuationPinCount = 0;
+	currentThread->ownedMonitorCount = 0;
+	currentThread->callOutCount = 0;
 
 	if (started) {
 		/* resuming Continuation from yield */
@@ -180,6 +192,27 @@ yieldContinuation(J9VMThread *currentThread)
 	/* pop the current ELS struct from the J9VMThread and store its info in J9VMContinuation struct */
 	VM_ContinuationHelpers::popAndStoreELS(currentThread, continuation);
 	currentThread->currentContinuation = NULL;
+
+	return result;
+}
+
+jint
+isPinnedContinuation(J9VMThread *currentThread)
+{
+	jint result = 0;
+
+	if (currentThread->continuationPinCount > 0) {
+		result = J9VM_CONTINUATION_PINNED_REASON_CRITICAL_SECTION;
+	} else if (currentThread->ownedMonitorCount > 0) {
+		result = J9VM_CONTINUATION_PINNED_REASON_MONITOR;
+	} else if (currentThread->callOutCount > 1) {
+		/* TODO: This check should be changed from > 1 to > 0 once the call-ins are no
+		 * longer used and the new design for single cInterpreter is implemented.
+		 */
+		result = J9VM_CONTINUATION_PINNED_REASON_NATIVE;
+	} else {
+		/* Do nothing. */
+	}
 
 	return result;
 }

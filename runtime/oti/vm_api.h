@@ -4310,6 +4310,15 @@ enterContinuation(struct J9VMThread *currentThread, j9object_t continuationObjec
  */
 BOOLEAN
 yieldContinuation(struct J9VMThread *currentThread);
+
+/**
+ * Determine if the current continuation is pinned.
+ *
+ * @param currentThread
+ * @return 0 if not pinned; otherwise, an error code corresponding to the pinned reason.
+ */
+jint
+isPinnedContinuation(J9VMThread *currentThread);
 #endif /* JAVA_SPEC_VERSION >= 19 */
 
 /* ---------------- hookableAsync.c ---------------- */

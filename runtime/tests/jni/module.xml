@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-   Copyright (c) 2006, 2020 IBM Corp. and others
+   Copyright (c) 2006, 2022 IBM Corp. and others
 
    This program and the accompanying materials are made available under
    the terms of the Eclipse Public License 2.0 which accompanies this
@@ -243,6 +243,7 @@
 	<export name="Java_j9vm_test_corehelper_DeadlockCoreGenerator_createNativeDeadlock"/>
 	<export name="Java_j9vm_test_jni_PthreadTest_attachAndDetach"/>
 	<export name="Java_org_openj9_test_contendedfields_FieldUtilities_getObjectAlignmentInBytes"/>
+	<export name="Java_org_openj9_test_jep425_VirtualThreadTests_lockSupportPark"/>
 </exports>
 <exports group="packed">
 	<export name="Java_com_ibm_j9_packed_util_NativeTest_setUp"/>

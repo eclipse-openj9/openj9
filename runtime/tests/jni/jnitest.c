@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1021,4 +1021,19 @@ Java_j9vm_test_jni_PthreadTest_attachAndDetach(JNIEnv *env, jclass clazz)
     }
     return worked;
 #endif /* defined(WIN32) */
+}
+
+jboolean JNICALL
+Java_org_openj9_test_jep425_VirtualThreadTests_lockSupportPark(JNIEnv *env, jclass cls)
+{
+	jboolean result = JNI_FALSE;
+	jclass clazz = (*env)->FindClass(env, "java/util/concurrent/locks/LockSupport");
+	if (NULL != clazz) {
+		jmethodID method = (*env)->GetStaticMethodID(env, clazz, "park", "()V");
+		if (NULL != method) {
+			(*env)->CallStaticObjectMethod(env, clazz, method);
+			result = JNI_TRUE;
+		}
+	}
+	return result;
 }
