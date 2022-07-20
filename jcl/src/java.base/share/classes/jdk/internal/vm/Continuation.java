@@ -39,6 +39,8 @@ public class Continuation {
 	private boolean started;
 	private volatile boolean finished;
 
+	private static final JavaLangAccess JLA = SharedSecrets.getJavaLangAccess();
+
 	/**
 	 * Continuation's Pinned reasons
 	 */
@@ -145,7 +147,7 @@ public class Continuation {
 		if (finished) {
 			throw new IllegalStateException("Continuation has already finished.");
 		}
-/*
+
 		Thread carrier = JLA.currentCarrierThread();
 		Continuation currentContinuation = JLA.getContinuation(carrier);
 
@@ -156,7 +158,7 @@ public class Continuation {
 		}
 
 		JLA.setContinuation(carrier, this);
-*/
+
 		boolean result = true;
 		try {
 			result = enterImpl();
@@ -166,10 +168,8 @@ public class Continuation {
 			} else {
 				/* Continuation yielded */
 			}
+			JLA.setContinuation(carrier, parent);
 		}
-/*
-		JLA.setContinuation(carrier, parent);
-*/
 	}
 
 	/**
