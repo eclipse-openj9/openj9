@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1391,6 +1391,16 @@ printMethodExtendedModifiers(J9PortLibrary *portLib, U_32 modifiers)
 		}
 	}
 #endif /* JAVA_SPEC_VERSION >= 16*/
+
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+	if (J9_ARE_ANY_BITS_SET(modifiers, CFR_METHOD_EXT_NOT_CHECKPOINT_SAFE_ANNOTATION)) {
+		j9tty_printf(PORTLIB, "(NotCheckpointSafe annotation)");
+		modifiers &= ~CFR_METHOD_EXT_NOT_CHECKPOINT_SAFE_ANNOTATION;
+		if (0 != modifiers) {
+			j9tty_printf(PORTLIB, " ");
+		}
+	}
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 }
 
 

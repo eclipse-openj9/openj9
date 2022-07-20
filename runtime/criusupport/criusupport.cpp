@@ -209,6 +209,62 @@ toggleSuspendOnJavaThreads(J9VMThread *currentThread, BOOLEAN suspend)
 	}
 }
 
+static UDATA
+notCheckpointSafeFrameWalkFunction(J9VMThread *vmThread, J9StackWalkState *walkState)
+{
+	J9Method *method = walkState->method;
+	if (NULL != method) {
+		J9ClassLoader *methodLoader = J9_CLASS_FROM_METHOD(method)->classLoader;
+		/* we only enforce this in methods loaded by the bootloader */
+		if (methodLoader == vmThread->javaVM->systemClassLoader) {
+			J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
+			if (J9ROMMETHOD_HAS_EXTENDED_MODIFIERS(romMethod)) {
+				U_32 extraModifiers = getExtendedModifiersDataFromROMMethod(romMethod);
+				if (J9ROMMETHOD_HAS_NOT_CHECKPOINT_SAFE_ANNOTATION(extraModifiers)) {
+					*(bool *)walkState->userData1 = false;
+					walkState->userData2 = (void *)vmThread;
+					walkState->userData3 = (void *)method;
+					return J9_STACKWALK_STOP_ITERATING;
+				}
+			}
+		}
+	}
+
+	return J9_STACKWALK_KEEP_ITERATING;
+}
+
+static bool
+checkIfSafeToCheckpoint(J9VMThread *currentThread)
+{
+	bool isSafe = true;
+	J9JavaVM *vm = currentThread->javaVM;
+
+	Assert_CRIU_true((J9_XACCESS_EXCLUSIVE == vm->exclusiveAccessState) || (J9_XACCESS_EXCLUSIVE == vm->safePointState));
+
+	J9VMThread *walkThread = J9_LINKED_LIST_START_DO(vm->mainThread);
+	while (NULL != walkThread) {
+		if (VM_VMHelpers::threadCanRunJavaCode(walkThread)
+		&& (currentThread != walkThread)
+		) {
+			J9StackWalkState walkState;
+			walkState.walkThread = walkThread;
+			walkState.flags = J9_STACKWALK_ITERATE_FRAMES | J9_STACKWALK_INCLUDE_NATIVES;
+			walkState.skipCount = 0;
+			walkState.userData1 = (void *)&isSafe;
+			walkState.frameWalkFunction = notCheckpointSafeFrameWalkFunction;
+
+			vm->walkStackFrames(walkThread, &walkState);
+			if (!isSafe) {
+				Trc_CRIU_checkpointJVMImpl_checkIfSafeToCheckpointBlocked(currentThread, walkState.userData2, walkState.userData3);
+				break;
+			}
+		}
+		walkThread = J9_LINKED_LIST_NEXT_DO(vm->mainThread, walkThread);
+	}
+
+	return isSafe;
+}
+
 static VMINLINE void
 acquireSafeOrExcusiveVMAccess(J9VMThread *currentThread, J9InternalVMFunctions *vmFuncs, bool isSafe)
 {
@@ -285,6 +341,7 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 		U_64 restoreNanoUTCTime = 0;
 		UDATA success = 0;
 		bool safePoint = J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_OSR_SAFE_POINT);
+		bool retryPermitted = vm->checkpointState.maxRetryForNotCheckpointSafe > 0;
 
 		vmFuncs->internalEnterVMFromJNI(currentThread);
 
@@ -404,6 +461,20 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 
 		acquireSafeOrExcusiveVMAccess(currentThread, vmFuncs, safePoint);
 
+		for (UDATA i = 0; !checkIfSafeToCheckpoint(currentThread) && retryPermitted; i++) {
+			releaseSafeOrExcusiveVMAccess(currentThread, vmFuncs, safePoint);
+			vmFuncs->internalExitVMToJNI(currentThread);
+			omrthread_nanosleep(1000);
+			vmFuncs->internalEnterVMFromJNI(currentThread);
+			if (i == vm->checkpointState.maxRetryForNotCheckpointSafe) {
+				currentExceptionClass = vm->criuJVMCheckpointExceptionClass;
+				systemReturnCode = vm->checkpointState.maxRetryForNotCheckpointSafe;
+				nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_JCL_CRIU_MAX_RETRY_FOR_NOTCHECKPOINTSAFE_REACHED, NULL);
+				goto closeWorkDirFD;
+			}
+			acquireSafeOrExcusiveVMAccess(currentThread, vmFuncs, safePoint);
+		}
+
 		toggleSuspendOnJavaThreads(currentThread, TRUE);
 
 		vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_CRIU_SINGLE_THREAD_MODE;
@@ -419,7 +490,7 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 
 		/* Run internal checkpoint hooks, after iterating heap objects */
 		if (FALSE == vmFuncs->runInternalJVMCheckpointHooks(currentThread)) {
-			currentExceptionClass = vm->criuSystemCheckpointExceptionClass;
+			currentExceptionClass = vm->criuJVMCheckpointExceptionClass;
 			nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
 				J9NLS_JCL_CRIU_FAILED_TO_RUN_INTERNAL_CHECKPOINT_HOOKS, NULL);
 			goto wakeJavaThreadsWithExclusiveVMAccess;
