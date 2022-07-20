@@ -81,8 +81,14 @@ ClassFileOracle::KnownAnnotation ClassFileOracle::_knownAnnotations[] = {
 		{SCOPED_SIGNATURE, sizeof(SCOPED_SIGNATURE)},
 #undef SCOPED_SIGNATURE
 #endif /* JAVA_SPEC_VERSION >= 16 */
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+#define NOTCHECKPOINTSAFE_SIGNATURE "Lopenj9/internal/criu/NotCheckpointSafe;"
+		{NOTCHECKPOINTSAFE_SIGNATURE, sizeof(NOTCHECKPOINTSAFE_SIGNATURE)},
+#undef NOTCHECKPOINTSAFE_SIGNATURE
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 		{0, 0}
 };
+
 
 bool
 ClassFileOracle::containsKnownAnnotation(UDATA knownAnnotationSet, UDATA knownAnnotation)
@@ -928,6 +934,9 @@ ClassFileOracle::walkMethodAttributes(U_16 methodIndex)
 #if JAVA_SPEC_VERSION >= 16
 			knownAnnotations = addAnnotationBit(knownAnnotations, SCOPED_ANNOTATION);
 #endif /* JAVA_SPEC_VERSION >= 16*/
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+			knownAnnotations = addAnnotationBit(knownAnnotations, NOT_CHECKPOINT_SAFE_ANNOTATION);
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
 			J9CfrAttributeRuntimeVisibleAnnotations *attribAnnotations = (J9CfrAttributeRuntimeVisibleAnnotations *)attrib;
 			if (0 == attribAnnotations->rawDataLength) { /* rawDataLength non-zero in case of error in the attribute */
@@ -962,6 +971,12 @@ ClassFileOracle::walkMethodAttributes(U_16 methodIndex)
 					_methodsInfo[methodIndex].extendedModifiers |= CFR_METHOD_EXT_HAS_SCOPED_ANNOTATION;
 				}
 #endif /* JAVA_SPEC_VERSION >= 16*/
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+				if (containsKnownAnnotation(foundAnnotations, NOT_CHECKPOINT_SAFE_ANNOTATION)) {
+					/* J9AccMethodHasExtendedModifiers in the modifiers is set when the ROM class is written */
+					_methodsInfo[methodIndex].extendedModifiers |= CFR_METHOD_EXT_NOT_CHECKPOINT_SAFE_ANNOTATION;
+				}
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 			}
 			_methodsInfo[methodIndex].annotationsAttribute = attribAnnotations;
 			_methodsInfo[methodIndex].modifiers |= J9AccMethodHasMethodAnnotations;

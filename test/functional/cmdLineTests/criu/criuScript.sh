@@ -28,13 +28,14 @@ echo "start running script";
 # $2 is the JAVA_COMMAND
 # $3 is the JVM_OPTIONS
 # $4 is the MAINCLASS
-# $5 is the NUM_CHECKPOINT
-# $6 is the KEEP_CHECKPOINT
+# $5 is the APP ARGS
+# $6 is the NUM_CHECKPOINT
+# $7 is the KEEP_CHECKPOINT
 
-$2 -XX:+EnableCRIUSupport $3 -cp "$1/criu.jar" $4 "$5" >testOutput 2>&1;
+$2 -XX:+EnableCRIUSupport $3 -cp "$1/criu.jar" $4 $5 "$6" >testOutput 2>&1;
 
 if [ "$6" != true ]; then
-    NUM_CHECKPOINT=$5
+    NUM_CHECKPOINT=$6
     for ((i=0; i<$NUM_CHECKPOINT; i++)); do
         sleep 2;
         criu restore -D ./cpData --shell-job;
@@ -43,7 +44,7 @@ fi
 
 cat testOutput;
 
-if  [ "$6" != true ]; then
+if  [ "$7" != true ]; then
     rm -rf testOutput
 fi
 echo "finished script";

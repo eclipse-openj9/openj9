@@ -41,6 +41,8 @@
 	</target>
 
 	<target name="compile" depends="init" description="Using java ${JDK_VERSION} to compile the source ">
+		<property name="addExports" value="--add-exports java.base/openj9.internal.criu=ALL-UNNAMED --add-exports java.base/jdk.internal.misc=ALL-UNNAMED" />
+		<echo>===addExports:        ${addExports}</echo>
 		<echo>Ant version is ${ant.version}</echo>
 		<echo>============COMPILER SETTINGS============</echo>
 		<echo>===fork:                         yes</echo>
@@ -48,6 +50,7 @@
 		<echo>===debug:                        on</echo>
 		<echo>===destdir:                      ${DEST}</echo>
 		<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
+			<compilerarg line='${addExports}' />
 		</javac>
 	</target>
 

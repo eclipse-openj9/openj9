@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE & !OPENJDK_METHODHANDLES]*/
 /*******************************************************************************
- * Copyright (c) 2009, 2021 IBM Corp. and others
+ * Copyright (c) 2009, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -52,6 +52,10 @@ import java.util.WeakHashMap;
 
 import com.ibm.oti.util.Msg;
 import com.ibm.oti.vm.VM;
+
+/*[IF CRIU_SUPPORT]*/
+import openj9.internal.criu.NotCheckpointSafe;
+/*[ENDIF] CRIU_SUPPORT*/
 
 /*[IF Sidecar18-SE-OpenJ9]*/
 import java.lang.invoke.MethodTypeForm;
@@ -617,6 +621,9 @@ public final class MethodType implements Serializable
 	 * @param type - the MethodType to be interned
 	 * @return - the interned MethodType.
 	 */
+	/*[IF CRIU_SUPPORT]*/
+	@NotCheckpointSafe
+	/*[ENDIF] CRIU_SUPPORT */
 	private MethodType intern() {
 		
 		MethodType type = probeTable();
