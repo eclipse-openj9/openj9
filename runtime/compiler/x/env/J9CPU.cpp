@@ -341,6 +341,7 @@ J9::X86::CPU::supports_feature_test(uint32_t feature)
       case OMR_FEATURE_X86_TM:
          return TR::CodeGenerator::getX86ProcessorInfo().hasThermalMonitor() == ans;
       case OMR_FEATURE_X86_AVX:
+      case OMR_FEATURE_X86_AVX2:
       case OMR_FEATURE_X86_AVX512F:
       case OMR_FEATURE_X86_AVX512VL:
       case OMR_FEATURE_X86_AVX512BW:
