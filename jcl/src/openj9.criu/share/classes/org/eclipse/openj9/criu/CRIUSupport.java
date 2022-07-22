@@ -59,6 +59,7 @@ public final class CRIUSupport {
 	private static final CRIUDumpPermission CRIU_DUMP_PERMISSION = new CRIUDumpPermission();
 	private static boolean nativeLoaded;
 	private static boolean initComplete;
+	private static String errorMsg;
 
 	private static native void checkpointJVMImpl(String imageDir,
 			boolean leaveRunning,
@@ -96,6 +97,7 @@ public final class CRIUSupport {
 					return null;
 				});
 			} catch (UnsatisfiedLinkError e) {
+				errorMsg = e.getMessage();
 				Properties internalProperties = com.ibm.oti.vm.VM.getVMLangAccess().internalGetProperties();
 				if (internalProperties.getProperty("enable.j9internal.checkpoint.hook.api.debug") != null) { //$NON-NLS-1$
 					e.printStackTrace();
@@ -152,12 +154,13 @@ public final class CRIUSupport {
 	}
 
 	/**
-	 * Queries if CRIU support is enabled.
+	 * Queries if CRIU support is enabled and j9criu29 library has been loaded.
 	 *
-	 * @return TRUE if support is enabled, FALSE otherwise
+	 * @return TRUE if support is enabled and the library is loaded, FALSE otherwise
 	 */
 	public static boolean isCRIUSupportEnabled() {
-		return InternalCRIUSupport.isCRIUSupportEnabled();
+		init();
+		return (nativeLoaded && InternalCRIUSupport.isCRIUSupportEnabled());
 	}
 
 	/**
@@ -176,18 +179,20 @@ public final class CRIUSupport {
 	 * @return NULL if isCRIUSupportEnabled() returns true and nativeLoaded is true as well, otherwise the error message.
 	 */
 	public static String getErrorMessage() {
-		String s = null;
-		if (isCRIUSupportEnabled()) {
-			if (!nativeLoaded) {
-				s = "There was a problem loaded the criu native library.\n" //$NON-NLS-1$
-						+ "Please check that criu is installed on the machine by running `criu check`.\n" //$NON-NLS-1$
-						+ "Also, please ensure that the JDK is criu enabled by contacting your JDK provider."; //$NON-NLS-1$
+		if (errorMsg == null) {
+			if (InternalCRIUSupport.isCRIUSupportEnabled()) {
+				if (!nativeLoaded) {
+					errorMsg = "There was a problem loaded the criu native library.\n" //$NON-NLS-1$
+							+ "Please check that criu is installed on the machine by running `criu check`.\n" //$NON-NLS-1$
+							+ "Also, please ensure that the JDK is criu enabled by contacting your JDK provider."; //$NON-NLS-1$
+				}
+				// no error message if nativeLoaded
+			} else {
+				errorMsg = "To enable criu support, please run java with the `-XX:+EnableCRIUSupport` option."; //$NON-NLS-1$
 			}
-		} else {
-			s = "To enable criu support, please run java with the `-XX:+EnableCRIUSupport` option."; //$NON-NLS-1$
 		}
 
-		return s;
+		return errorMsg;
 	}
 
 	/* Higher priority hooks are run last in pre-checkoint hooks, and are run
@@ -585,24 +590,27 @@ public final class CRIUSupport {
 	 *                                       restore
 	 */
 	public synchronized void checkpointJVM() {
-		/* Add env variables restore hook. */
-		registerRestoreEnvVariables();
+		if (isCRIUSupportEnabled()) {
+			if (InternalCRIUSupport.isCheckpointAllowed()) {
+				/* Add env variables restore hook. */
+				registerRestoreEnvVariables();
+				/* Add security provider hooks. */
+				SecurityProviders.registerResetCRIUState();
+				SecurityProviders.registerRestoreSecurityProviders();
 
-		/* Add security provider hooks. */
-		SecurityProviders.registerResetCRIUState();
-		SecurityProviders.registerRestoreSecurityProviders();
-
-		if (InternalCRIUSupport.isCheckpointAllowed()) {
-			init();
-			checkpointJVMImpl(imageDir, leaveRunning, shellJob, extUnixSupport, logLevel, logFile, fileLocks, workDir,
-					tcpEstablished, autoDedup, trackMemory, unprivileged);
-		} else {
-			if (InternalCRIUSupport.isCRIUSupportEnabled()) {
-				throw new UnsupportedOperationException(
-					"Running in non-portable mode (only one checkpoint is allowed), and we have already checkpointed once"); //$NON-NLS-1$
+				try {
+					checkpointJVMImpl(imageDir, leaveRunning, shellJob, extUnixSupport, logLevel, logFile, fileLocks,
+							workDir, tcpEstablished, autoDedup, trackMemory, unprivileged);
+				} catch (UnsatisfiedLinkError ule) {
+					errorMsg = ule.getMessage();
+					throw new InternalError("There is a problem with libj9criu in the JDK"); //$NON-NLS-1$
+				}
 			} else {
-				throw new UnsupportedOperationException("CRIU support is not enabled"); //$NON-NLS-1$
+				throw new UnsupportedOperationException(
+						"Running in non-portable mode (only one checkpoint is allowed), and we have already checkpointed once"); //$NON-NLS-1$
 			}
+		} else {
+			throw new UnsupportedOperationException("CRIU support is not enabled"); //$NON-NLS-1$
 		}
 	}
 }
