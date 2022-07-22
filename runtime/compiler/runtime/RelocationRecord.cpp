@@ -851,6 +851,9 @@ TR_RelocationRecord::create(TR_RelocationRecord *storage, TR_RelocationRuntime *
       case TR_ValidateJ2IThunkFromMethod:
          reloRecord = new (storage) TR_RelocationRecordValidateJ2IThunkFromMethod(reloRuntime, record);
          break;
+      case TR_StaticDefaultValueInstance:
+         reloRecord = new (storage) TR_RelocationRecordStaticDefaultValueInstance(reloRuntime, record);
+         break;
       default:
          // TODO: error condition
          printf("Unexpected relo record: %d\n", reloType);fflush(stdout);
@@ -6366,6 +6369,51 @@ TR_RelocationRecordValidateJ2IThunkFromMethod::methodID(TR_RelocationTarget *rel
    return reloTarget->loadUnsigned16b((uint8_t *) &((TR_RelocationRecordValidateJ2IThunkFromMethodBinaryTemplate *)_record)->_methodID);
    }
 
+
+char *
+TR_RelocationRecordStaticDefaultValueInstance::name()
+   {
+   return "TR_StaticDefaultValueInstance";
+   }
+
+TR_RelocationErrorCode
+TR_RelocationRecordStaticDefaultValueInstance::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation)
+   {
+   uintptr_t newConstantPool = computeNewConstantPool(reloRuntime, reloTarget, constantPool(reloTarget));
+   TR_OpaqueClassBlock *newClassAddress = computeNewClassAddress(reloRuntime, newConstantPool, inlinedSiteIndex(reloTarget), cpIndex(reloTarget));
+
+   if (!newClassAddress ||
+       !reloRuntime->comp()->fej9()->isClassInitialized(newClassAddress))
+      return TR_RelocationErrorCode::staticDefaultValueInstanceRelocationFailure;
+
+   j9object_t *newDefaultValueSlotAddress = TR::Compiler->cls.getDefaultValueSlotAddress(reloRuntime->comp(), newClassAddress);
+
+   reloTarget->storeAddressSequence((uint8_t *)newDefaultValueSlotAddress, reloLocation, reloFlags(reloTarget));
+
+   RELO_LOG(reloRuntime->reloLogger(), 6, "\tapplyRelocation: newDefaultValueSlotAddress %p\n", newDefaultValueSlotAddress);
+   return TR_RelocationErrorCode::relocationOK;
+   }
+
+TR_RelocationErrorCode
+TR_RelocationRecordStaticDefaultValueInstance::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocationHigh, uint8_t *reloLocationLow)
+   {
+   uintptr_t newConstantPool = computeNewConstantPool(reloRuntime, reloTarget, constantPool(reloTarget));
+
+   TR_OpaqueClassBlock *newClassAddress = computeNewClassAddress(reloRuntime, newConstantPool, inlinedSiteIndex(reloTarget), cpIndex(reloTarget));
+
+   if (!newClassAddress ||
+       !reloRuntime->comp()->fej9()->isClassInitialized(newClassAddress))
+      return TR_RelocationErrorCode::staticDefaultValueInstanceRelocationFailure;
+
+   j9object_t *newDefaultValueSlotAddress = TR::Compiler->cls.getDefaultValueSlotAddress(reloRuntime->comp(), newClassAddress);
+
+   reloTarget->storeAddress((uint8_t *)newDefaultValueSlotAddress, reloLocationHigh, reloLocationLow, reloFlags(reloTarget));
+
+   RELO_LOG(reloRuntime->reloLogger(), 6, "\tapplyRelocation: newDefaultValueSlotAddress %p\n", newDefaultValueSlotAddress);
+   return TR_RelocationErrorCode::relocationOK;
+   }
+
+// The _relocationRecordHeaderSizeTable table should be the last thing in this file
 uint32_t TR_RelocationRecord::_relocationRecordHeaderSizeTable[TR_NumExternalRelocationKinds] =
    {
    sizeof(TR_RelocationRecordConstantPoolBinaryTemplate),                            // TR_ConstantPool                                 = 0
@@ -6479,4 +6527,6 @@ uint32_t TR_RelocationRecord::_relocationRecordHeaderSizeTable[TR_NumExternalRel
    sizeof(TR_RelocationRecordWithInlinedSiteIndexBinaryTemplate),                    // TR_InlinedMethodPointer                         = 108
    0,                                                                                // TR_VMINLMethod                                  = 109
    sizeof(TR_RelocationRecordValidateJ2IThunkFromMethodBinaryTemplate),              // TR_ValidateJ2IThunkFromMethod                   = 110
+   sizeof(TR_RelocationRecordConstantPoolWithIndexBinaryTemplate),                   // TR_StaticDefaultValueInstance                   = 111
    };
+// The _relocationRecordHeaderSizeTable table should be the last thing in this file

@@ -6649,9 +6649,8 @@ TR_J9ByteCodeIlGenerator::genAconst_init(TR_OpaqueClassBlock *valueTypeClass, in
       traceMsg(comp(), "Handling aconst_init for valueClass %s\n", comp()->getDebug()->getName(valueClassSymRef));
       }
 
-   loadSymbol(TR::loadaddr, valueClassSymRef);
-
    TR::Node *newValueNode = NULL;
+   static const char *disableLoadStaticDefaultValueInstance = feGetEnv("TR_DisableLoadStaticDefaultValueInstance");
 
    if (valueClassSymRef->isUnresolved())
       {
@@ -6659,8 +6658,26 @@ TR_J9ByteCodeIlGenerator::genAconst_init(TR_OpaqueClassBlock *valueTypeClass, in
       // If the class is still unresolved, abort the compilation and track the failure with a static debug counter.
       abortForUnresolvedValueTypeOp("aconst_init", "class");
       }
+   else if (!disableLoadStaticDefaultValueInstance &&
+            comp()->fej9()->isClassInitialized(valueTypeClass))
+      {
+      /*
+       * n4n   treetop
+       * n3n      aload 0x1d3298[#358  Static] [flags 0x307 0x40 ]
+       */
+      j9object_t *defaultValueSlotAddress = TR::Compiler->cls.getDefaultValueSlotAddress(comp(), valueTypeClass);
+
+      newValueNode = TR::Node::createWithSymRef(TR::aload, 0, comp()->getSymRefTab()->findOrCreateDefaultValueSymbolRef((void *)defaultValueSlotAddress, cpIndex));
+
+      if (comp()->getOption(TR_TraceILGen))
+         {
+         traceMsg(comp(), "Handling aconst_init for valueClass %s: use pre-allocated defaultValue instance at %p\n", comp()->getDebug()->getName(valueClassSymRef), defaultValueSlotAddress);
+         }
+      }
    else
       {
+      loadSymbol(TR::loadaddr, valueClassSymRef);
+
       const TR::TypeLayout *typeLayout = comp()->typeLayout(valueTypeClass);
       size_t fieldCount = typeLayout->count();
 
