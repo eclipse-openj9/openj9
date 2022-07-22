@@ -382,6 +382,8 @@ static const OptimizationStrategy warmStrategyOpts[] =
    { OMR::globalDeadStoreElimination,                OMR::IfVectorAPI                }, // global dead store removal
    { OMR::deadTreesElimination,                      OMR::IfVectorAPI                }, // cleanup after dead store removal
    { OMR::vectorAPIExpansion,                        OMR::IfVectorAPI                },
+   { OMR::osrGuardRemoval,                           OMR::IfVectorAPI                },
+
    { OMR::cheapTacticalGlobalRegisterAllocatorGroup, OMR::IfEnabled                  },
    { OMR::jProfilingValue,                           OMR::MustBeDone                 },
    { OMR::treeLowering,                              OMR::MustBeDone                 },
@@ -425,7 +427,8 @@ static const OptimizationStrategy reducedWarmStrategyOpts[] =
    { OMR::jProfilingRecompLoopTest,                  OMR::IfLoops                    },
    { OMR::globalDeadStoreElimination,                OMR::IfVectorAPI           }, // global dead store removal
    { OMR::deadTreesElimination,                      OMR::IfVectorAPI           }, // cleanup after dead store removal
-   { OMR::vectorAPIExpansion,                        OMR::IfVectorAPI},
+   { OMR::vectorAPIExpansion,                        OMR::IfVectorAPI           },
+   { OMR::osrGuardRemoval,                           OMR::IfVectorAPI           },
    { OMR::cheapTacticalGlobalRegisterAllocatorGroup, OMR::IfEnabled                  },
    { OMR::treeLowering,                              OMR::MustBeDone                 },
    { OMR::jProfilingValue,                           OMR::MustBeDone                 },
@@ -456,6 +459,7 @@ const OptimizationStrategy hotStrategyOpts[] =
    { OMR::globalDeadStoreElimination,            OMR::IfVectorAPI }, // global dead store removal
    { OMR::deadTreesElimination,                  OMR::IfVectorAPI }, // cleanup after dead store removal
    { OMR::vectorAPIExpansion,                    OMR::IfVectorAPI },
+   { OMR::osrGuardRemoval,                       OMR::IfVectorAPI },
    { OMR::dataAccessAccelerator                                           },
    { OMR::osrGuardRemoval,                       OMR::IfEnabled           }, // run after calls/monents/asyncchecks have been removed
    { OMR::globalDeadStoreGroup,                                           },
@@ -554,6 +558,7 @@ const OptimizationStrategy scorchingStrategyOpts[] =
    { OMR::globalDeadStoreElimination,            OMR::IfVectorAPI }, // global dead store removal
    { OMR::deadTreesElimination,                  OMR::IfVectorAPI }, // cleanup after dead store removal
    { OMR::vectorAPIExpansion,                    OMR::IfVectorAPI },
+   { OMR::osrGuardRemoval,                       OMR::IfVectorAPI },
    { OMR::loopCanonicalizationGroup,             OMR::IfLoops     }, // canonicalize loops (improve fall throughs)
    { OMR::inductionVariableAnalysis,             OMR::IfLoops     },
    { OMR::redundantInductionVarElimination,      OMR::IfLoops     },
@@ -648,6 +653,7 @@ static const OptimizationStrategy AOTStrategyOpts[] =
    { OMR::globalDeadStoreElimination,            OMR::IfVectorAPI }, // global dead store removal
    { OMR::deadTreesElimination,                  OMR::IfVectorAPI }, // cleanup after dead store removal
    { OMR::vectorAPIExpansion,                    OMR::IfVectorAPI },
+   { OMR::osrGuardRemoval,                       OMR::IfVectorAPI },
    { OMR::globalDeadStoreGroup,                            },
    { OMR::globalCopyPropagation,                 OMR::IfNoLoops },
    { OMR::loopCanonicalizationGroup,             OMR::IfLoops   }, // canonicalize loops (improve fall throughs) and versioning
@@ -770,6 +776,7 @@ static const OptimizationStrategy cheapWarmStrategyOpts[] =
    { OMR::globalDeadStoreElimination,                OMR::IfVectorAPI                }, // global dead store removal
    { OMR::deadTreesElimination,                      OMR::IfVectorAPI                }, // cleanup after dead store removal
    { OMR::vectorAPIExpansion,                        OMR::IfVectorAPI                },
+   { OMR::osrGuardRemoval,                           OMR::IfVectorAPI                },
    { OMR::cheapTacticalGlobalRegisterAllocatorGroup, OMR::IfEnabled                  },
    { OMR::jProfilingValue,                           OMR::MustBeDone                 },
    { OMR::treeLowering,                              OMR::MustBeDone                 },

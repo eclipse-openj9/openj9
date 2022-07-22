@@ -671,6 +671,12 @@ TR_VectorAPIExpansion::validateVectorAliasClasses()
                   traceMsg(comp(), "Class #%d can't be vectorized due to #%d\n", id, i);
 
                _aliasTable[id]._cantVectorize = true;
+
+               if (_aliasTable[id]._cantScalarize)
+                  {
+                  vectorClass = false;
+                  break;
+                  }
                }
 
             if (_aliasTable[i]._cantScalarize)
@@ -678,6 +684,12 @@ TR_VectorAPIExpansion::validateVectorAliasClasses()
                if (_trace)
                   traceMsg(comp(), "Class #%d can't be scalarized due to #%d\n", id, i);
                _aliasTable[id]._cantScalarize = true;
+
+               if (_aliasTable[id]._cantVectorize)
+                  {
+                  vectorClass = false;
+                  break;
+                  }
                }
             }
          }
@@ -963,11 +975,8 @@ TR_VectorAPIExpansion::generateAddressNode(TR::Node *array, TR::Node *arrayIndex
         ++shiftAmount;
 
 
-   TR::Node *i2lNode = TR::Node::create(TR::i2l, 1);
-   i2lNode->setAndIncChild(0, arrayIndex);
-
    TR::Node *lshlNode = TR::Node::create(TR::lshl, 2);
-   lshlNode->setAndIncChild(0, i2lNode);
+   lshlNode->setAndIncChild(0, arrayIndex);
    lshlNode->setAndIncChild(1, TR::Node::create(TR::iconst, 0, shiftAmount));
 
    TR::Node *laddNode = TR::Node::create(TR::ladd, 2);
@@ -1376,7 +1385,8 @@ TR::Node *TR_VectorAPIExpansion::naryIntrinsicHandler(TR_VectorAPIExpansion *opt
          if (TR::Options::getVerboseOption(TR_VerboseVectorAPI))
             {
             TR::ILOpCode opcode(scalarOpCode);
-            TR_VerboseLog::writeLine(TR_Vlog_VECTOR_API, "Scalarized using %s in %s", opcode.getName(), comp->signature());
+            TR_VerboseLog::writeLine(TR_Vlog_VECTOR_API, "Scalarized using %s in %s at%s",
+                                     opcode.getName(), comp->signature(), comp->getHotnessName(comp->getMethodHotness()));
             }
          }
       }
@@ -1408,8 +1418,9 @@ TR::Node *TR_VectorAPIExpansion::naryIntrinsicHandler(TR_VectorAPIExpansion *opt
          if (TR::Options::getVerboseOption(TR_VerboseVectorAPI))
             {
             TR::ILOpCode opcode(vectorOpCode);
-            TR_VerboseLog::writeLine(TR_Vlog_VECTOR_API, "Vectorized using %s%s in %s", opcode.getName(),
-                                     TR::DataType::getName(opcode.getVectorResultDataType()), comp->signature());
+            TR_VerboseLog::writeLine(TR_Vlog_VECTOR_API, "Vectorized using %s%s in %s at %s",
+                                     opcode.getName(), TR::DataType::getName(opcode.getVectorResultDataType()),
+                                     comp->signature(), comp->getHotnessName(comp->getMethodHotness()));
             }
          }
       }
@@ -1521,7 +1532,7 @@ TR::Node *TR_VectorAPIExpansion::fromBitsCoercedIntrinsicHandler(TR_VectorAPIExp
 
       if (TR::Options::getVerboseOption(TR_VerboseVectorAPI))
          {
-         TR_VerboseLog::writeLine(TR_Vlog_VECTOR_API, "Scalarized fromBitsCoerced for %s in %s", TR::DataType::getName(elementType), comp->signature());
+         TR_VerboseLog::writeLine(TR_Vlog_VECTOR_API, "Scalarized fromBitsCoerced for %s in %s at%s", TR::DataType::getName(elementType), comp->signature(), comp->getHotnessName(comp->getMethodHotness()));
          }
       }
    else if (mode == doVectorization)
@@ -1535,8 +1546,9 @@ TR::Node *TR_VectorAPIExpansion::fromBitsCoercedIntrinsicHandler(TR_VectorAPIExp
       if (TR::Options::getVerboseOption(TR_VerboseVectorAPI))
          {
          TR::ILOpCode opcode(splatsOpCode);
-         TR_VerboseLog::writeLine(TR_Vlog_VECTOR_API, "Vectorized using %s%s in %s", opcode.getName(),
-                                  TR::DataType::getName(opcode.getVectorResultDataType()), comp->signature());
+         TR_VerboseLog::writeLine(TR_Vlog_VECTOR_API, "Vectorized using %s%s in %s at %s", opcode.getName(),
+                                  TR::DataType::getName(opcode.getVectorResultDataType()), comp->signature(),
+                                  comp->getHotnessName(comp->getMethodHotness()));
          }
       }
 
