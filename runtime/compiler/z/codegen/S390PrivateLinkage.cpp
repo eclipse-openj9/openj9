@@ -101,17 +101,6 @@ J9::Z::PrivateLinkage::PrivateLinkage(TR::CodeGenerator * codeGen,TR_LinkageConv
    setLongDoubleReturnRegister4  (TR::RealRegister::FPR4 );
    setLongDoubleReturnRegister6  (TR::RealRegister::FPR6 );
 
-   if(comp()->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z13) && comp()->target().cpu.supportsFeature(OMR_FEATURE_S390_VECTOR_FACILITY) &&
-     !comp()->getOption(TR_DisableSIMD))
-       {
-       codeGen->setSupportsVectorRegisters();
-       codeGen->setSupportsAutoSIMD();
-       }
-   else
-      {
-      comp()->setOption(TR_DisableSIMD);
-      }
-
    const bool enableVectorLinkage = codeGen->getSupportsVectorRegisters();
    if (enableVectorLinkage) setVectorReturnRegister(TR::RealRegister::VRF24);
 
