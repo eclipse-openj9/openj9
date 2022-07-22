@@ -5742,6 +5742,68 @@ typedef struct J9JITWatchedStaticFieldData {
 #error Math is depending on J9_INLINE_JNI_MAX_ARG_COUNT being 32
 #endif
 
+typedef struct J9JITGPRSpillArea {
+#if defined(J9VM_ARCH_S390)
+	U_8 jitGPRs[16 * 8];	/* r0-r15 full 8-byte */
+#elif defined(J9VM_ARCH_POWER) /* J9VM_ARCH_S390 */
+	UDATA jitGPRs[32];	/* r0-r31 */
+	UDATA jitCR;
+	UDATA jitLR;
+#elif defined(J9VM_ARCH_ARM) /* J9VM_ARCH_POWER */
+#if defined(J9VM_ENV_DATA64)
+	/* ARM 64 */
+#error ARM 64 unsupported
+#else /* J9VM_ENV_DATA64 */
+	/* ARM 32 */
+	UDATA jitGPRs[16];	/* r0-r15 */
+#endif /* J9VM_ENV_DATA64 */
+#elif defined(J9VM_ARCH_AARCH64) /* J9VM_ARCH_ARM */
+	UDATA jitGPRs[32]; /* x0-x31 */
+#elif defined(J9VM_ARCH_RISCV) /* J9VM_ARCH_AARCH64 */
+	UDATA jitGPRs[32];	/* x0-x31 */
+#elif defined(J9VM_ARCH_X86) /* J9VM_ARCH_RISCV */
+#if defined(J9VM_ENV_DATA64)
+	union {
+		UDATA numbered[16];
+		struct {
+			UDATA rax;
+			UDATA rbx;
+			UDATA rcx;
+			UDATA rdx;
+			UDATA rdi;
+			UDATA rsi;
+			UDATA rbp;
+			UDATA rsp;
+			UDATA r8;
+			UDATA r9;
+			UDATA r10;
+			UDATA r11;
+			UDATA r12;
+			UDATA r13;
+			UDATA r14;
+			UDATA r15;
+		} named;
+	} jitGPRs;
+#else /* J9VM_ENV_DATA64 */
+	union {
+		UDATA numbered[8];
+		struct {
+			UDATA rax;
+			UDATA rbx;
+			UDATA rcx;
+			UDATA rdx;
+			UDATA rdi;
+			UDATA rsi;
+			UDATA rbp;
+			UDATA rsp;
+		} named;
+	} jitGPRs;
+#endif /* J9VM_ENV_DATA64 */
+#else /* J9VM_ARCH_X86 */
+#error Unknown architecture
+#endif /* J9VM_ARCH_X86 */
+} J9JITGPRSpillArea;
+
 typedef struct J9CInterpreterStackFrame {
 #if defined(J9VM_ARCH_S390)
 #if defined(J9ZOS390)
@@ -5783,7 +5845,7 @@ typedef struct J9CInterpreterStackFrame {
 	UDATA outgoingArguments[J9_INLINE_JNI_MAX_ARG_COUNT];
 	U_8 preservedFPRs[8 * 8]; /* fp8-fp15 - callee saves in own frame */
 #endif /* J9ZOS390 */
-	U_8 jitGPRs[16 * 8]; /* r0-r15 full 8-byte */
+	J9JITGPRSpillArea jitGPRs;
 	U_8 jitFPRs[16 * 8]; /* f0-f15 */
 	U_8 jitVRs[32 * 16]; /* v0-v31 */
 #elif defined(J9VM_ARCH_POWER) /* J9VM_ARCH_S390 */
@@ -5799,9 +5861,7 @@ typedef struct J9CInterpreterStackFrame {
 	UDATA reserved;
 	UDATA currentTOC; /* callee saves incoming TOC in own frame */
 	UDATA outgoingArguments[J9_INLINE_JNI_MAX_ARG_COUNT];
-	UDATA jitGPRs[32]; /* r0-r31 */
-	UDATA jitCR;
-	UDATA jitLR;
+	J9JITGPRSpillArea jitGPRs;
 	U_8 jitFPRs[32 * 8]; /* fp0-fp31 */
 #if defined(J9VM_ENV_DATA64)
 	U_8 jitVRs[52 * 16]; /* vsr0-vsr51 */
@@ -5825,9 +5885,7 @@ typedef struct J9CInterpreterStackFrame {
 	UDATA preservedLR; /* callee saves in caller frame */
 	UDATA currentTOC; /* callee saves own TOC in own frame */
 	UDATA outgoingArguments[J9_INLINE_JNI_MAX_ARG_COUNT];
-	UDATA jitGPRs[32]; /* r0-r31 */
-	UDATA jitCR;
-	UDATA jitLR;
+	J9JITGPRSpillArea jitGPRs;
 	U_8 jitFPRs[32 * 8]; /* fp0-fp31 */
 	U_8 jitVRs[52 * 16]; /* vsr0-vsr51 */
 	UDATA align[6];
@@ -5846,9 +5904,7 @@ typedef struct J9CInterpreterStackFrame {
 	UDATA reserved;
 	UDATA currentTOC; /* callee saves own TOC in own frame */
 	UDATA outgoingArguments[J9_INLINE_JNI_MAX_ARG_COUNT];
-	UDATA jitGPRs[32]; /* r0-r31 */
-	UDATA jitCR;
-	UDATA jitLR;
+	J9JITGPRSpillArea jitGPRs;
 	U_8 jitFPRs[32 * 8]; /* fp0-fp31 */
 	U_8 jitVRs[52 * 16]; /* vsr0-vsr51 */
 	UDATA align[4];
@@ -5868,9 +5924,7 @@ typedef struct J9CInterpreterStackFrame {
 	UDATA backChain; /* caller SP */
 	UDATA preservedLR; /* callee saves in caller frame */
 	UDATA outgoingArguments[J9_INLINE_JNI_MAX_ARG_COUNT];
-	UDATA jitGPRs[32]; /* r0-r31 */
-	UDATA jitCR;
-	UDATA jitLR;
+	J9JITGPRSpillArea jitGPRs;
 	U_8 jitFPRs[32 * 8]; /* fp0-fp31 */
 	UDATA preservedCR; /* callee saves in own frame */
 	UDATA preservedGPRs[19]; /* r13-r31 */
@@ -5886,48 +5940,28 @@ typedef struct J9CInterpreterStackFrame {
 	UDATA preservedGPRs[9]; /* r4-r11 and r14 */
 	UDATA align[1];
 	U_8 preservedFPRs[8 * 8]; /* fpr8-15 */
-	UDATA jitGPRs[16]; /* r0-r15 */
+	J9JITGPRSpillArea jitGPRs;
 	U_8 jitFPRs[16 * 8]; /* fpr0-15 */
 #endif /* J9VM_ENV_DATA64 */
 #elif defined(J9VM_ARCH_AARCH64) /* J9VM_ARCH_ARM */
 	UDATA preservedGPRs[12]; /* x19-x30 */
 	U_8 preservedFPRs[8 * 8]; /* v8-15 */
-	UDATA jitGPRs[32]; /* x0-x31 */
+	J9JITGPRSpillArea jitGPRs;
 	U_8 jitFPRs[32 * 16]; /* v0-v31 */
-#elif defined(J9VM_ARCH_RISCV) /* J9VM_ARCH_ARM */
+#elif defined(J9VM_ARCH_RISCV) /* J9VM_ARCH_AARCH64 */
 	UDATA preservedGPRs[13];   /* x8, x9 and x18-x27 and ra */
 	U_8 preservedFPRs[12 * 8]; /* f8, f9 and f18-f27 */
-	UDATA jitGPRs[32];         /* x0-x31 */
+	J9JITGPRSpillArea jitGPRs;
 	U_8 jitFPRs[32 * 8];       /* f0-f31 */
 	U_8 padding[8]; /* padding to 16-byte boundary */
-#elif defined(J9VM_ARCH_X86) /* J9VM_ARCH_AARCH64 */
+#elif defined(J9VM_ARCH_X86) /* J9VM_ARCH_RISCV */
 #if defined(J9VM_ENV_DATA64) && defined(WIN32)
 	UDATA arguments[4]; /* outgoing arguments shadow */
 #endif /*J9VM_ENV_DATA64 && WIN32*/
 	UDATA vmStruct;
 	UDATA machineBP;
 #if defined(J9VM_ENV_DATA64)
-	union {
-		UDATA numbered[16];
-		struct {
-			UDATA rax;
-			UDATA rbx;
-			UDATA rcx;
-			UDATA rdx;
-			UDATA rdi;
-			UDATA rsi;
-			UDATA rbp;
-			UDATA rsp;
-			UDATA r8;
-			UDATA r9;
-			UDATA r10;
-			UDATA r11;
-			UDATA r12;
-			UDATA r13;
-			UDATA r14;
-			UDATA r15;
-		} named;
-	} jitGPRs;
+	J9JITGPRSpillArea jitGPRs;
 #if defined(WIN32)
 	/* Windows x86-64
 	 *
@@ -5957,19 +5991,7 @@ typedef struct J9CInterpreterStackFrame {
 	 *
 	 * Stack is forcibly aligned to 16 after pushing EBP
 	 */
-	union {
-		UDATA numbered[8];
-		struct {
-			UDATA rax;
-			UDATA rbx;
-			UDATA rcx;
-			UDATA rdx;
-			UDATA rdi;
-			UDATA rsi;
-			UDATA rbp;
-			UDATA rsp;
-		} named;
-	} jitGPRs;
+	J9JITGPRSpillArea jitGPRs;
 	UDATA align1[2];
 	U_8 jitFPRs[8 * 64]; /* zmm0-7 512-bit */
 	U_8 maskRegisters[8 * 8]; /* k0-k7 */
