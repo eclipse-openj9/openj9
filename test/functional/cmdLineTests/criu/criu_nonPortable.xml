@@ -64,6 +64,17 @@
     <output type="required" caseSensitive="yes" regex="no">Error</output>
   </test>
 
+  <test id="Create CRIU checkpoint image and restore three times - testSystemNanoTimeJit">
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" "$MAINCLASS_TIMECHANGE$ testSystemNanoTimeJit" 3 3 false</command>
+    <output type="success" caseSensitive="no" regex="no">Killed</output>
+    <output type="required" caseSensitive="yes" regex="no">System.nanoTime() before CRIU checkpoint:</output>
+    <output type="required" caseSensitive="yes" regex="no">PASSED: System.nanoTime() after CRIU restore:</output>
+    <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
+    <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
+    <output type="failure" caseSensitive="yes" regex="no">FAILED: System.nanoTime() after CRIU restore:</output>
+    <output type="required" caseSensitive="yes" regex="no">Error</output>
+  </test>
+
   <test id="Create CRIU checkpoint image and restore three times - testMillisDelayBeforeCheckpointDone">
     <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" "$MAINCLASS_TIMECHANGE$ testMillisDelayBeforeCheckpointDone" 3 3 false</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
