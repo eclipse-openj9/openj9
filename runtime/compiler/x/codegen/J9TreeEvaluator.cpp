@@ -8223,6 +8223,9 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
          numDeps += 2;
       }
 
+   if (discontiguousDataAddrOffsetReg)
+      numDeps++;
+
    // Create dependencies for the allocation registers here.
    // The size and class registers, if they exist, must be the first
    // dependencies since the heap allocation snippet needs to find them to grab
