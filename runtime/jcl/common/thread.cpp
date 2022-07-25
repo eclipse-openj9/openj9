@@ -453,11 +453,11 @@ Java_java_lang_Thread_getThreads(JNIEnv *env, jclass clazz)
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 	vmFuncs->acquireExclusiveVMAccess(currentThread);
 
-	j9object_t *threads = (j9object_t*)j9mem_allocate_memory(sizeof(j9object_t) * vm->totalThreadCount, J9MEM_CATEGORY_VM_JCL);
+	jobject *threads = (jobject*)j9mem_allocate_memory(sizeof(jobject) * vm->totalThreadCount, J9MEM_CATEGORY_VM_JCL);
 	if (NULL == threads) {
 		vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
 	} else {
-		j9object_t *currentThreadPtr = threads;
+		jobject *currentThreadPtr = threads;
 		J9VMThread *targetThread = vm->mainThread;
 		UDATA threadCount = 0;
 
@@ -467,7 +467,7 @@ Java_java_lang_Thread_getThreads(JNIEnv *env, jclass clazz)
 			/* Only count live threads */
 			if (NULL != threadObject) {
 				if (J9VMJAVALANGTHREAD_STARTED(currentThread, threadObject) && (NULL != J9VMJAVALANGTHREAD_THREADREF(currentThread, threadObject))) {
-					*currentThreadPtr++ = threadObject;
+					*currentThreadPtr++ = vmFuncs->j9jni_createLocalRef(env, threadObject);;
 					threadCount += 1;
 				}
 			}
@@ -479,7 +479,7 @@ Java_java_lang_Thread_getThreads(JNIEnv *env, jclass clazz)
 			j9object_t arrayObject = vm->memoryManagerFunctions->J9AllocateIndexableObject(currentThread, arrayClass, (U_32)threadCount, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
 			if (NULL != arrayObject) {
 				for (UDATA i = 0; i < threadCount; i++) {
-					J9JAVAARRAYOFOBJECT_STORE(currentThread, arrayObject, i, threads[i]);
+					J9JAVAARRAYOFOBJECT_STORE(currentThread, arrayObject, i, J9_JNI_UNWRAP_REFERENCE(threads[i]));
 				}
 				result = (jobjectArray)vmFuncs->j9jni_createLocalRef(env, arrayObject);
 			} else {
