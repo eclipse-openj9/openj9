@@ -152,7 +152,14 @@ MM_ConcurrentMarkingDelegate::scanThreadRoots(MM_EnvironmentBase *env)
 	markSchemeStackIteratorData localData;
 	localData.markingScheme = _markingScheme;
 	localData.env = env;
+	/* In a case this thread is a carrier thread, and a virtual thread is mounted, we will scan virtual thread's stack. */
 	GC_VMThreadStackSlotIterator::scanSlots(vmThread, vmThread, (void *)&localData, concurrentStackSlotIterator, true, false);
+
+#if JAVA_SPEC_VERSION >= 19
+	if (NULL != vmThread->currentContinuation) {
+		GC_VMThreadStackSlotIterator::scanSlots(vmThread, vmThread->currentContinuation, (void *)&localData, concurrentStackSlotIterator, true, false);
+	}
+#endif /* JAVA_SPEC_VERSION >= 19 */
 
 	return true;
 }

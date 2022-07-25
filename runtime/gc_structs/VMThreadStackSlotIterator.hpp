@@ -43,6 +43,14 @@ typedef void J9MODRON_OSLOTITERATOR(J9JavaVM *javaVM, J9Object **objectIndirect,
  */
 class GC_VMThreadStackSlotIterator
 {
+private:
+	static void initializeStackWalkState(
+			J9StackWalkState *stackWalkState,
+			J9VMThread *vmThread,
+			void *userData,
+			J9MODRON_OSLOTITERATOR *oSlotIterator,
+			bool includeStackFrameClassReferences,
+			bool trackVisibleFrameDepth);
 public:
 	static void scanSlots(
 			J9VMThread *vmThread,
@@ -59,6 +67,16 @@ public:
 			J9MODRON_OSLOTITERATOR *oSlotIterator,
 			bool includeStackFrameClassReferences,
 			bool trackVisibleFrameDepth);
+
+#if JAVA_SPEC_VERSION >= 19
+	static void scanSlots(
+			J9VMThread *vmThread,
+			J9VMContinuation *continuation,
+			void *userData,
+			J9MODRON_OSLOTITERATOR *oSlotIterator,
+			bool includeStackFrameClassReferences,
+			bool trackVisibleFrameDepth);
+#endif /* JAVA_SPEC_VERSION >= 19 */
 };
 
 #endif /* VMTHREADSTACKSLOTITERATOR_HPP_ */
