@@ -193,7 +193,7 @@ public:
 	double initialRAMPercent; /**< Value of -XX:InitialRAMPercentage specified by the user */
 	UDATA minimumFreeSizeForSurvivor; /**< minimum free size can be reused by collector as survivor, for balanced GC only */
 	UDATA freeSizeThresholdForSurvivor; /**< if average freeSize(freeSize/freeCount) of the region is smaller than the Threshold, the region would not be reused by collector as survivor, for balanced GC only */
-	bool  recycleRemainders; /**< true if need to recycle TLHRemainders at the end of PGC, for balanced GC only */
+	bool recycleRemainders; /**< true if need to recycle TLHRemainders at the end of PGC, for balanced GC only */
 
 protected:
 private:
