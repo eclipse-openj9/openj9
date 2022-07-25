@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -63,7 +63,9 @@
 #include "runtime/J9VMAccess.hpp"
 #include "runtime/RelocationRuntime.hpp"
 #include "control/CompilationRuntime.hpp"
+#include "env/ClassLoaderTable.hpp"
 #include "env/J9JitMemory.hpp"
+#include "env/VMAccessCriticalSection.hpp"
 #include "env/VMJ9.h"
 #include "env/j9method.h"
 #include "env/ut_j9jit.h"
@@ -3064,6 +3066,7 @@ TR_IPBCDataCallGraph::canBePersisted(TR_J9SharedCache *sharedCache, TR::Persiste
    return IPBC_ENTRY_CAN_PERSIST;
    }
 
+
 void
 TR_IPBCDataCallGraph::createPersistentCopy(TR_J9SharedCache *sharedCache, TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info)
    {
@@ -3074,57 +3077,88 @@ TR_IPBCDataCallGraph::createPersistentCopy(TR_J9SharedCache *sharedCache, TR_IPB
    storage->ID = TR_IPBCD_CALL_GRAPH;
    storage->left = 0;
    storage->right = 0;
+   // We can only afford to store one entry, the one with most samples
+   // The samples for the remaining entries will be added to the "other" category
+   uint16_t maxWeight = 0;
+   int32_t indexMaxWeight = -1; // Index for the entry with most samples
+   uint32_t sumWeights = 0;
    for (int32_t i=0; i < NUM_CS_SLOTS;i++)
       {
       J9Class *clazz = (J9Class *) _csInfo.getClazz(i);
       if (clazz)
          {
          bool isUnloadedClass = info->isUnloadedClass(clazz, true);
-         TR_ASSERT(!isUnloadedClass, "cannot store unloaded class");
-
          if (!isUnloadedClass)
             {
-            uintptr_t romClass = (uintptr_t) clazz->romClass;
-
-            /*
-             * The following race is possible:
-             *
-             * 1. Thread 1 calls TR_IPBCDataCallGraph::canBePersisted on Entry A, which succeeds.
-             *    However, at least one class in the list is NULL.
-             * 2. Thread 2 calls TR_IPBCDataCallGraph::setData on Entry A, which also succeeds,
-             *    setting one of the classes that was previous NULL to something non-NULL.
-             * 3. Thread 1 calls TR_IPBCDataCallGraph::createPersistentCopy. Normally if a class
-             *    in the list is NULL, the value stored is also NULL. However, because Thread 2
-             *    updated some previously NULL class, Thread 1 will compute the difference of
-             *    (ramClass->romClass - startOfSCC) and potentially get a value that's bigger than the SCC.
-             *
-             * Because locking the entry in TR_IPBCDataCallGraph::setData would negatively impact
-             * performance, in order to prevent an issue in loadFromPersistentCopy, check again whether
-             * the romClass is within the SCC.
-             */
-            if (sharedCache->isROMClassInSharedCache(clazz->romClass))
+            if (_csInfo._weight[i] > maxWeight)
                {
-               store->_csInfo.setClazz(i, (uintptr_t)sharedCache->offsetInSharedCacheFromROMClass(clazz->romClass));
-               TR_ASSERT(_csInfo.getClazz(i), "Race condition detected: cached value=%p, pc=%p", clazz, _pc);
+               maxWeight = _csInfo._weight[i];
+               indexMaxWeight = i;
+               }
+            sumWeights += _csInfo._weight[i];
+            }
+         }
+      }
+   sumWeights += _csInfo._residueWeight;
+
+   store->_csInfo.setClazz(0, 0); // Assume invalid entry 0 and overwite later
+   store->_csInfo._weight[0] = 0;
+   store->_csInfo._residueWeight = sumWeights - maxWeight;
+   store->_csInfo._tooBigToBeInlined = _csInfo._tooBigToBeInlined;
+
+   // Having VM access in hand prevents class unloading and redefinition
+   TR::VMAccessCriticalSection criticalSection(sharedCache->fe());
+
+   if (indexMaxWeight >= 0) // If there is a valid dominant class
+      {
+      TR_OpaqueClassBlock *clazz =  (TR_OpaqueClassBlock*)_csInfo.getClazz(indexMaxWeight);
+      if (!info->isUnloadedClass(clazz, true))
+         {
+         J9ROMClass *romClass = ((J9Class*)clazz)->romClass;
+         if (sharedCache->isROMClassInSharedCache(romClass))
+            {
+            uintptr_t *classChain = sharedCache->rememberClass(clazz);
+            if (classChain)
+               {
+               store->_csInfo.setClazz(0, sharedCache->offsetInSharedCacheFromPointer(classChain));
+               store->_csInfo._weight[0] = _csInfo._weight[indexMaxWeight];
+               // I need to find the chain of the first class loaded by the class loader of this RAMClass
+               // getClassChainOffsetIdentifyingLoader() fails the compilation if not found, hence we use a special implementation
+               uintptr_t classChainOffsetOfCLInSharedCache = sharedCache->getClassChainOffsetIdentifyingLoaderNoThrow(clazz);
+               // The chain that identifies the class loader is stored at index 1
+               store->_csInfo.setClazz(1, classChainOffsetOfCLInSharedCache);
+#ifdef PERSISTENCE_VERBOSE
+               if (classChainOffsetOfCLInSharedCache == 0)
+                  fprintf(stderr, "Cannot store CallGraphEntry: classChain identifying classloader is 0. This IProfiler callgraph entry will not be good\n");
+#endif
                }
             else
                {
-               store->_csInfo.setClazz(i, 0);
+#ifdef PERSISTENCE_VERBOSE
+               fprintf(stderr, "createPersistentCopy: Cannot store CallGraphEntry because cannot remember clazz\n");
+#endif
                }
             }
-         else
+         else // Most frequent class is not in SCC, so I cannot store IProfiler info about this in SCC
             {
-            store->_csInfo.setClazz(i, 0);
+#ifdef PERSISTENCE_VERBOSE
+            fprintf(stderr, "createPersistentCopy: Cannot store CallGraphEntry because ROMClass not in SCC\n");
+#endif
             }
          }
       else
          {
-         store->_csInfo.setClazz(i, 0);
+#ifdef PERSISTENCE_VERBOSE
+         fprintf(stderr, "createPersistentCopy: Cannot store CallGraphEntry because RAMClass in unloaded\n");
+#endif
          }
-      store->_csInfo._weight[i] = _csInfo._weight[i];
       }
-   store->_csInfo._residueWeight = _csInfo._residueWeight;
-   store->_csInfo._tooBigToBeInlined = _csInfo._tooBigToBeInlined;
+   else
+      {
+#ifdef PERSISTENCE_VERBOSE
+      fprintf(stderr, "createPersistentCopy: Cannot store CallGraphEntry because there is no data\n");
+#endif
+      }
    }
 
 void
@@ -3132,39 +3166,95 @@ TR_IPBCDataCallGraph::loadFromPersistentCopy(TR_IPBCDataStorageHeader * storage,
    {
    TR_IPBCDataCallGraphStorage * store = (TR_IPBCDataCallGraphStorage *) storage;
    TR_ASSERT(storage->ID == TR_IPBCD_CALL_GRAPH, "Incompatible types between storage and loading of iprofile persistent data");
-   for (int32_t i = 0; i < NUM_CS_SLOTS; i++)
+   TR_J9SharedCache *sharedCache = comp->fej9()->sharedCache();
+
+   // First index has the dominant class
+   _csInfo.setClazz(0, 0);
+   _csInfo._weight[0] = 0;
+   uintptr_t csInfoChainOffset = store->_csInfo.getClazz(0);
+   auto classChainIdentifyingLoaderOffsetInSCC = store->_csInfo.getClazz(1);
+   if (csInfoChainOffset && classChainIdentifyingLoaderOffsetInSCC)
       {
-      if (store->_csInfo.getClazz(i))
+      uintptr_t *classChain = (uintptr_t*)sharedCache->pointerFromOffsetInSharedCache(csInfoChainOffset);
+      if (classChain)
          {
-         J9Class *ramClass = NULL;
-         J9ROMClass *romClass = 0;
-
-         uintptr_t csInfoClazzOffset = store->_csInfo.getClazz(i);
-         if (comp->fej9()->sharedCache()->isROMClassOffsetInSharedCache(csInfoClazzOffset, &romClass))
-            ramClass = ((TR_J9VM *)comp->fej9())->matchRAMclassFromROMclass((J9ROMClass *)romClass, comp);
-
-         // Optimizer and the codegen assume receiver classes of a call from profiling data are initialized,
-         // otherwise they shouldn't show up in the profile. But classes from iprofiling data from last run
-         // may be uninitialized in load time, as the program behavior may change in the second run. Thus
-         // we need to verify that a class is initialized, otherwise optimizer or codegen will make wrong
-         // transformation based on invalid assumption.
-         //
-         if (ramClass && comp->fej9()->isClassInitialized((TR_OpaqueClassBlock*)ramClass))
+#ifdef PERSISTENCE_VERBOSE
+         // Find ROMClass to print information in case we cannot convert from ROMClass to RAMClass
+         J9ROMClass *romClass = sharedCache->startingROMClassOfClassChain(classChain);
+         J9UTF8 *classNameUTF8 = J9ROMCLASS_CLASSNAME(romClass);
+         int classNameLength = J9UTF8_LENGTH(classNameUTF8);
+         char *className = (char*)(J9UTF8_DATA(classNameUTF8));
+#endif
+         // I need to convert from ROMClass into RAMClass
+         void *classChainIdentifyingLoader = sharedCache->pointerFromOffsetInSharedCache(classChainIdentifyingLoaderOffsetInSCC);
+         if (classChainIdentifyingLoader)
             {
-            _csInfo.setClazz(i, (uintptr_t)ramClass);
-            _csInfo._weight[i] = store->_csInfo._weight[i];
+            TR::VMAccessCriticalSection criticalSection(comp->fej9());
+            J9ClassLoader *classLoader = (J9ClassLoader *)sharedCache->persistentClassLoaderTable()->lookupClassLoaderAssociatedWithClassChain(classChainIdentifyingLoader);
+            if (classLoader)
+               {
+               TR_OpaqueClassBlock *j9class = sharedCache->lookupClassFromChainAndLoader(classChain, classLoader);
+               if (j9class)
+                  {
+                  // Optimizer and the codegen assume receiver classes of a call from profiling data are initialized,
+                  // otherwise they shouldn't show up in the profile. But classes from iprofiling data from last run
+                  // may be uninitialized in load time, as the program behavior may change in the second run. Thus
+                  // we need to verify that a class is initialized, otherwise optimizer or codegen will make wrong
+                  // transformation based on invalid assumption.
+                  //
+                  if (comp->fej9()->isClassInitialized(j9class))
+                     {
+                     _csInfo.setClazz(0, (uintptr_t)j9class);
+                     _csInfo._weight[0] = store->_csInfo._weight[0];
+                     }
+                  else
+                     {
+#ifdef PERSISTENCE_VERBOSE
+                     fprintf(stderr, "loadFromPersistentCopy: Cannot covert ROMClass to RAMClass because RAMClass is not initialized %.*s\n", classNameLength, className);
+#endif
+                     }
+                  }
+               else
+                  {
+#ifdef PERSISTENCE_VERBOSE
+                  // This is the second most frequent failure. Do we have the wrong classLoader?
+                  fprintf(stderr, "loadFromPersistentCopy: Cannot convert ROMClass to RAMClass. lookupClassFromChainAndLoader failed  %.*s\n", classNameLength, className);
+#endif
+                  }
+               }
+            else
+               {
+#ifdef PERSISTENCE_VERBOSE
+               // This is the most important failure case
+               fprintf(stderr, "loadFromPersistentCopy: Cannot convert ROMClass to RAMClass. Cannot find classloader  %.*s\n", classNameLength, className);
+#endif
+               }
             }
          else
             {
-            _csInfo.setClazz(i, 0);
-            _csInfo._weight[i] = 0;
+#ifdef PERSISTENCE_VERBOSE
+            fprintf(stderr, "loadFromPersistentCopy: Cannot convert ROMClass to RAMClass. Cannot find chain identifying classloader\n");
+#endif
             }
          }
       else
          {
-         _csInfo.setClazz(i, 0);
-         _csInfo._weight[i] = 0;
+#ifdef PERSISTENCE_VERBOSE
+         fprintf(stderr, "loadFromPersistentCopy: Cannot convert ROMClass to RAMClass. Cannot get the class chain of ROMMethod\n");
+#endif
          }
+      }
+   else
+      {
+#ifdef PERSISTENCE_VERBOSE
+      fprintf(stderr, "loadFromPersistentCopy: Cannot convert ROMClass to RAMClass. Don't have required information in the entry\n");
+#endif
+      }
+   // Populate the remaining entries with 0
+   for (int32_t i = 1; i < NUM_CS_SLOTS; i++)
+      {
+      _csInfo.setClazz(i, 0);
+      _csInfo._weight[i] = 0;
       }
    _csInfo._residueWeight = store->_csInfo._residueWeight;
    _csInfo._tooBigToBeInlined = store->_csInfo._tooBigToBeInlined;

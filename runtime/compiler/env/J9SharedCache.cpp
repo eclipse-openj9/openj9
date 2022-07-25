@@ -1342,6 +1342,17 @@ TR_J9SharedCache::getClassChainOffsetIdentifyingLoaderNoFail(TR_OpaqueClassBlock
    }
 #endif // defined(J9VM_OPT_JITSERVER)
 
+uintptr_t
+TR_J9SharedCache::getClassChainOffsetIdentifyingLoaderNoThrow(TR_OpaqueClassBlock *clazz)
+   {
+   void *loaderForClazz = _fe->getClassLoader(clazz);
+   void *classChainIdentifyingLoaderForClazz = persistentClassLoaderTable()->lookupClassChainAssociatedWithClassLoader(loaderForClazz);
+   uintptr_t classChainOffsetInSharedCache;
+   if (!isPointerInSharedCache(classChainIdentifyingLoaderForClazz, &classChainOffsetInSharedCache))
+      return 0;
+   return classChainOffsetInSharedCache;
+   }
+
 const void *
 TR_J9SharedCache::storeSharedData(J9VMThread *vmThread, const char *key, const J9SharedDataDescriptor *descriptor)
    {
