@@ -470,6 +470,7 @@ MM_WriteOnceCompactor::initRegionCompactDataForCompactSet(MM_EnvironmentVLHGC *e
 			region->_compactData._blockedList = NULL;
 			region->getUnfinalizedObjectList()->startUnfinalizedProcessing();
 			region->getOwnableSynchronizerObjectList()->startOwnableSynchronizerProcessing();
+			region->getContinuationObjectList()->startProcessing();
 			
 			/* clear all reference lists in compacted regions, since the GMP will need to rediscover all of these objects */
 			region->getReferenceObjectList()->startWeakReferenceProcessing();
@@ -557,6 +558,7 @@ MM_WriteOnceCompactor::compact(MM_EnvironmentVLHGC *env)
 	env->_compactVLHGCStats._moveStartTime = timeTemp;
 	moveObjects(env);
 	env->getGCEnvironment()->_ownableSynchronizerObjectBuffer->flush(env);
+	env->getGCEnvironment()->_continuationObjectBuffer->flush(env);
 	/* Note:  moveObjects implicitly synchronizes threads */
 	timeTemp = j9time_hires_clock();
 	env->_compactVLHGCStats._moveEndTime = timeTemp;
@@ -1445,6 +1447,7 @@ MM_WriteOnceCompactor::fixupObject(MM_EnvironmentVLHGC* env, J9Object *objectPtr
 		fixupMixedObject(env, objectPtr, cache);
 		break;
 	case GC_ObjectModel::SCAN_CONTINUATION_OBJECT:
+		addContinuationObjectInList(env, objectPtr);
 		fixupContinuationObject(env, objectPtr, cache);
 		break;
 	case GC_ObjectModel::SCAN_CLASS_OBJECT:

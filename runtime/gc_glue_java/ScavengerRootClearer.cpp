@@ -39,6 +39,10 @@
 #include "SlotObject.hpp"
 #include "UnfinalizedObjectBuffer.hpp"
 #include "UnfinalizedObjectList.hpp"
+#include "ContinuationObjectBuffer.hpp"
+#include "ContinuationObjectList.hpp"
+#include "VMHelpers.hpp"
+
 #include "ScavengerRootClearer.hpp"
 
 void
@@ -103,12 +107,12 @@ MM_ScavengerRootClearer::scavengeReferenceObjects(MM_EnvironmentStandard *env, u
 	MM_ScavengerJavaStats *javaStats = &env->getGCEnvironment()->_scavengerJavaStats;
 	MM_HeapRegionDescriptorStandard *region = NULL;
 	GC_HeapRegionIteratorStandard regionIterator(_extensions->heapRegionManager);
-	while(NULL != (region = regionIterator.nextRegion())) {
+	while (NULL != (region = regionIterator.nextRegion())) {
 		if (MEMORY_TYPE_NEW == (region->getTypeFlags() & MEMORY_TYPE_NEW)) {
 			MM_HeapRegionDescriptorStandardExtension *regionExtension = MM_ConfigurationDelegate::getHeapRegionDescriptorStandardExtension(env, region);
 			for (uintptr_t i = 0; i < regionExtension->_maxListIndex; i++) {
 				/* NOTE: we can't look at the list to determine if there's work to do since another thread may have already processed it and deleted everything */
-				if(J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
+				if (J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
 					MM_ReferenceObjectList *list = &regionExtension->_referenceObjectLists[i];
 					MM_ReferenceStats *stats = NULL;
 					j9object_t head = NULL;
@@ -163,13 +167,13 @@ MM_ScavengerRootClearer::scavengeUnfinalizedObjects(MM_EnvironmentStandard *env)
 	GC_HeapRegionIteratorStandard regionIterator(_extensions->heapRegionManager);
 	GC_Environment *gcEnv = env->getGCEnvironment();
 	bool const compressed = _extensions->compressObjectReferences();
-	while(NULL != (region = regionIterator.nextRegion())) {
+	while (NULL != (region = regionIterator.nextRegion())) {
 		if (MEMORY_TYPE_NEW == (region->getTypeFlags() & MEMORY_TYPE_NEW)) {
 			MM_HeapRegionDescriptorStandardExtension *regionExtension = MM_ConfigurationDelegate::getHeapRegionDescriptorStandardExtension(env, region);
 			for (uintptr_t i = 0; i < regionExtension->_maxListIndex; i++) {
 				MM_UnfinalizedObjectList *list = &regionExtension->_unfinalizedObjectLists[i];
 				if (!list->wasEmpty()) {
-					if(J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
+					if (J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
 						omrobjectptr_t object = list->getPriorList();
 						while (NULL != object) {
 							omrobjectptr_t next = NULL;
@@ -213,6 +217,49 @@ MM_ScavengerRootClearer::scavengeUnfinalizedObjects(MM_EnvironmentStandard *env)
 	env->enableHotFieldDepthCopy();
 }
 #endif /* J9VM_GC_FINALIZATION */
+
+void
+MM_ScavengerRootClearer::scavengeContinuationObjects(MM_EnvironmentStandard *env)
+{
+	MM_HeapRegionDescriptorStandard *region = NULL;
+	GC_HeapRegionIteratorStandard regionIterator(_extensions->heapRegionManager);
+	GC_Environment *gcEnv = env->getGCEnvironment();
+	bool const compressed = _extensions->compressObjectReferences();
+	while (NULL != (region = regionIterator.nextRegion())) {
+		if (MEMORY_TYPE_NEW == (region->getTypeFlags() & MEMORY_TYPE_NEW)) {
+			MM_HeapRegionDescriptorStandardExtension *regionExtension = MM_ConfigurationDelegate::getHeapRegionDescriptorStandardExtension(env, region);
+			for (uintptr_t i = 0; i < regionExtension->_maxListIndex; i++) {
+				MM_ContinuationObjectList *list = &regionExtension->_continuationObjectLists[i];
+				if (!list->wasEmpty()) {
+					if (J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
+						omrobjectptr_t object = list->getPriorList();
+						while (NULL != object) {
+							omrobjectptr_t next = NULL;
+							gcEnv->_scavengerJavaStats._continuationCandidates += 1;
+
+							MM_ForwardedHeader forwardedHeader(object, compressed);
+							if (!forwardedHeader.isForwardedPointer()) {
+								Assert_MM_true(_scavenger->isObjectInEvacuateMemory(object));
+								gcEnv->_scavengerJavaStats._continuationCleared += 1;
+								VM_VMHelpers::cleanupContinuationObject((J9VMThread *)env->getLanguageVMThread(), object);
+							} else {
+								omrobjectptr_t forwardedPtr = forwardedHeader.getForwardedObject();
+								Assert_MM_true(NULL != forwardedPtr);
+								next = _extensions->accessBarrier->getContinuationLink(forwardedPtr);
+								gcEnv->_continuationObjectBuffer->add(env, forwardedPtr);
+							}
+							object = next;
+						}
+					}
+				}
+			}
+		}
+	}
+
+	/* restore everything to a flushed state before exiting */
+	gcEnv->_continuationObjectBuffer->flush(env);
+}
+
 #endif /* defined(OMR_GC_MODRON_SCAVENGER) */
 
 

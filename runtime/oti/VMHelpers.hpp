@@ -516,6 +516,11 @@ public:
 			if (classFlags & J9AccClassOwnableSynchronizer) {
 				currentThread->javaVM->memoryManagerFunctions->ownableSynchronizerObjectCreated(currentThread, object);
 			}
+#if JAVA_SPEC_VERSION >= 19
+			if (classFlags & J9AccClassContinuation) {
+				currentThread->javaVM->memoryManagerFunctions->continuationObjectCreated(currentThread, object);
+			}
+#endif /* JAVA_SPEC_VERSION >= 19 */
 		}
 	}
 
@@ -2060,6 +2065,18 @@ exit:
 		needScan = started && (NULL != continuation);
 #endif /* JAVA_SPEC_VERSION >= 19 */
 		return needScan;
+	}
+
+	static VMINLINE void
+	cleanupContinuationObject(J9VMThread *vmThread, J9Object *objectPtr)
+	{
+#if JAVA_SPEC_VERSION >= 19
+		J9VMContinuation *j9vmContinuation = J9VMJDKINTERNALVMCONTINUATION_VMREF(vmThread, objectPtr);
+		if (NULL != j9vmContinuation) {
+			/* clean up J9VMContinuation, set vmref = NULL */
+			J9VMJDKINTERNALVMCONTINUATION_SET_VMREF(vmThread, objectPtr, NULL);
+		}
+#endif /* JAVA_SPEC_VERSION >= 19 */
 	}
 };
 

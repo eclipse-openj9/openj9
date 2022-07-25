@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,6 +31,7 @@
 #include "HeapRegionDataForCompactVLHGC.hpp"
 #include "LightweightNonReentrantLock.hpp"
 #include "OwnableSynchronizerObjectList.hpp"
+#include "ContinuationObjectList.hpp"
 #include "ReferenceObjectList.hpp"
 #include "RememberedSetCardList.hpp"
 #include "UnfinalizedObjectList.hpp"
@@ -52,7 +53,7 @@ public:
 	struct {
 		bool _shouldMark;	/**< true if the collector is to mark this region during the collection cycle */
 		bool _noEvacuation; /**< true if the region is set that do not copyforward, it is valid if _shouldMark is true. */
-		UDATA _dynamicMarkCost;	/**< The cost of marking this region (that is, the number of other regions (not including this one) which will need to be scanned - this value is dynamic in that converting the regions which refer to it to scan or mark reduces this number.  It is only valid during GC setup */
+		uintptr_t _dynamicMarkCost;	/**< The cost of marking this region (that is, the number of other regions (not including this one) which will need to be scanned - this value is dynamic in that converting the regions which refer to it to scan or mark reduces this number.  It is only valid during GC setup */
 		U_8 _overflowFlags;	/**< Used to denote that work packet overflow occurred for an object in this region - bits 0x1 is GMP or global while 0x2 is PGC */
 	} _markData;
 	struct {
@@ -60,7 +61,7 @@ public:
 	} _reclaimData;
 	struct {
 		bool _alreadySwept;	/**< true if the collector has already swept this region during the last collection increment */
-		UDATA _lastGCNumber;	/**< initially 0 but set to the GC's collection ID every time it is swept so that the GC can ensure it doesn't over-collect the same set */
+		uintptr_t _lastGCNumber;	/**< initially 0 but set to the GC's collection ID every time it is swept so that the GC can ensure it doesn't over-collect the same set */
 	} _sweepData;
 	struct {
 		bool _initialLiveSet;  /**< true if the region was part of the live set at the start of collection */
@@ -76,12 +77,12 @@ public:
 	MM_HeapRegionDataForCompactVLHGC _compactData;
 #endif /* defined (J9VM_GC_MODRON_COMPACTION) */
 	/* this is only of interest for collectors who can move objects so we ifdef it out, in other cases, to prove that no other specs are absorbing the cost of looking up regions and tracking critical counts */
-	UDATA volatile _criticalRegionsInUse;	/**< The number of JNI critical regions which are currently in use within the receiver's address range (typically 0).  This value can be modified concurrently so atomics are required */
+	uintptr_t volatile _criticalRegionsInUse;	/**< The number of JNI critical regions which are currently in use within the receiver's address range (typically 0).  This value can be modified concurrently so atomics are required */
 
 	bool _previousMarkMapCleared;		/**< if true, previous mark map is guarantied to be cleared; if false it like is not cleared */
 	bool _nextMarkMapCleared;			/**< if true, next mark map is guarantied to be cleared; if false it like is not cleared */
-	UDATA _projectedLiveBytes;			/**< number of bytes in the region projected to be live at the beginning of the current GC. UDATA_MAX has a special meaning of 'uninitialized'*/
-	UDATA _projectedLiveBytesPreviousPGC;   /**< _projectedLiveBytes value from previous PGC; updated just before we apply decay for this PGC */
+	uintptr_t _projectedLiveBytes;			/**< number of bytes in the region projected to be live at the beginning of the current GC. uintptr_t_MAX has a special meaning of 'uninitialized'*/
+	uintptr_t _projectedLiveBytesPreviousPGC;   /**< _projectedLiveBytes value from previous PGC; updated just before we apply decay for this PGC */
 	IDATA _projectedLiveBytesDeviation;	/**< difference between actual live bytes and projected live bytes. Note: not always update to date and can be negative. */
 	MM_HeapRegionDescriptorVLHGC *_compactDestinationQueueNext; /**< pointer to next compact destination region in the queue */
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
@@ -97,7 +98,7 @@ private:
 	U_64 _lowerAgeBound; /**< lowest possible age of any object in this region */
 	U_64 _upperAgeBound; /**< highest possible age of any object in this region */
 	double _allocationAgeSizeProduct; /**< sum of (age * size) products for each object in the region. used for age merging math in survivor regions */
-	UDATA _age; /**< logical allocation age (number of GC cycles since the last attempted allocation) */
+	uintptr_t _age; /**< logical allocation age (number of GC cycles since the last attempted allocation) */
 	MM_RememberedSetCardList _rememberedSetCardList; /**< remembered set card list */
 	MM_RememberedSetCard *_rsclBufferPool;			 /**< RSCL Buffer pool owned by this region (Buffers can still be shared among other regions) */
 	
@@ -105,6 +106,7 @@ private:
 
 	MM_UnfinalizedObjectList _unfinalizedObjectList; /**< A list of unfinalized objects in this region */
 	MM_OwnableSynchronizerObjectList _ownableSynchronizerObjectList; /**< A list of ownable synchronizer objects in this region */
+	MM_ContinuationObjectList _continuationObjectList; /**< A list of continuation objects in this region */
 	MM_ReferenceObjectList _referenceObjectList; /**< A list of reference objects (i.e. weak/soft/phantom) in this region */
 	
 	/*
@@ -154,14 +156,14 @@ public:
 	 *	Get Logical Age - return back logical age in range 0-tarokRegionMaxAge
 	 *	@return return age value
 	 */
-	MMINLINE UDATA getLogicalAge() { return _age; }
+	MMINLINE uintptr_t getLogicalAge() { return _age; }
 
 	/**
 	 * Set Age - set both allocation and logical age
 	 * @param allocationAge allocation age to set
 	 * @param logicalAge logical age to set
 	 */
-	MMINLINE void setAge(U_64 allocationAge, UDATA logicalAge)
+	MMINLINE void setAge(U_64 allocationAge, uintptr_t logicalAge)
 	{
 		_allocationAge = allocationAge;
 		_age = logicalAge;
@@ -179,7 +181,7 @@ public:
 	/**
 	 * Increment lowest and higher object age bounds (when doing region aging)
 	 */
-	MMINLINE void incrementAgeBounds(UDATA increment) {
+	MMINLINE void incrementAgeBounds(uintptr_t increment) {
 		_lowerAgeBound += increment;
 		_upperAgeBound += increment;
 	}
@@ -240,7 +242,7 @@ public:
 	 * Get the amount of bytes we expect to be reclaimed after a collection. i.e. bytes occupied - projected live bytes.
 	 * This will not include free space in the tail.
 	 */
-	UDATA getProjectedReclaimableBytes();
+	uintptr_t getProjectedReclaimableBytes();
 
 	/**
 	 * Fetch the list of unfinalized objects within this region.
@@ -254,6 +256,11 @@ public:
 	 */
 	MM_OwnableSynchronizerObjectList *getOwnableSynchronizerObjectList() { return &_ownableSynchronizerObjectList; }
 	
+	/**
+	 * Fetch the list of continuation objects within this region.
+	 * @return the list
+	 */
+	MM_ContinuationObjectList *getContinuationObjectList() { return &_continuationObjectList; }
 	/**
 	 * Fetch the list of reference objects within this region.
 	 * @return the list

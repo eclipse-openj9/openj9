@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -57,6 +57,9 @@ public:
 	uintptr_t _ownableSynchronizerCandidates;  /**< number of ownable synchronizer objects visited this cycle */
 	uintptr_t _ownableSynchronizerSurvived;	/**< number of ownable synchronizer objects survived this cycle */
 
+	uintptr_t _continuationCandidates;  /**< number of continuation objects visited this cycle */
+	uintptr_t _continuationCleared;	/**< number of continuation objects cleared this cycle */
+
 	MM_ReferenceStats _weakReferenceStats;  /**< Weak reference stats for the cycle */
 	MM_ReferenceStats _softReferenceStats;  /**< Soft reference stats for the cycle */
 	MM_ReferenceStats _phantomReferenceStats;  /**< Phantom reference stats for the cycle */
@@ -91,6 +94,9 @@ public:
 		_ownableSynchronizerCandidates = 0;
 		_ownableSynchronizerSurvived = 0;
 
+		_continuationCandidates = 0;
+		_continuationCleared = 0;
+
 		_weakReferenceStats.clear();
 		_softReferenceStats.clear();
 		_phantomReferenceStats.clear();
@@ -117,6 +123,7 @@ public:
 		_unfinalizedEnqueued += stats->_unfinalizedEnqueued;
 
 		_ownableSynchronizerSurvived += stats->_ownableSynchronizerSurvived;
+		_continuationCleared += stats->_continuationCleared;
 
 		_weakReferenceStats.merge(&stats->_weakReferenceStats);
 		_softReferenceStats.merge(&stats->_softReferenceStats);
@@ -140,6 +147,8 @@ public:
 		, _unfinalizedEnqueued(0)
 		, _ownableSynchronizerCandidates(0)
 		, _ownableSynchronizerSurvived(0)
+		, _continuationCandidates(0)
+		, _continuationCleared(0)
 		, _weakReferenceStats()
 		, _softReferenceStats()
 		, _phantomReferenceStats()

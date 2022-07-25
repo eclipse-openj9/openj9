@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -40,25 +40,28 @@ class MM_MarkJavaStats : public MM_Base {
 private:
 protected:
 public:
-	UDATA _unfinalizedCandidates; /**< unfinalized objects that are candidates to be finalized visited this cycle */
-	UDATA _unfinalizedEnqueued; /**< unfinalized objects that are enqueued during this cycle (MUST be less than or equal _unfinalizedCandidates) */
+	uintptr_t _unfinalizedCandidates; /**< unfinalized objects that are candidates to be finalized visited this cycle */
+	uintptr_t _unfinalizedEnqueued; /**< unfinalized objects that are enqueued during this cycle (MUST be less than or equal _unfinalizedCandidates) */
 
-	UDATA _ownableSynchronizerCandidates; /**< number of ownable synchronizer objects visited this cycle */
-	UDATA _ownableSynchronizerCleared; /**< number of ownable synchronizer objects cleared this cycle */
+	uintptr_t _ownableSynchronizerCandidates; /**< number of ownable synchronizer objects visited this cycle */
+	uintptr_t _ownableSynchronizerCleared; /**< number of ownable synchronizer objects cleared this cycle */
+
+	uintptr_t _continuationCandidates; /**< number of continuation objects visited this cycle */
+	uintptr_t _continuationCleared; /**< number of continuation objects cleared this cycle */
 
 	MM_ReferenceStats _weakReferenceStats; /**< Weak reference stats for the cycle */
 	MM_ReferenceStats _softReferenceStats; /**< Soft reference stats for the cycle */
 	MM_ReferenceStats _phantomReferenceStats; /**< Phantom reference stats for the cycle */
 
-	UDATA _stringConstantsCleared; /**< The number of string constants that have been cleared during marking */
-	UDATA _stringConstantsCandidates; /**< The number of string constants that have been visited in string table during marking */
+	uintptr_t _stringConstantsCleared; /**< The number of string constants that have been cleared during marking */
+	uintptr_t _stringConstantsCandidates; /**< The number of string constants that have been visited in string table during marking */
 
-	UDATA _monitorReferenceCleared; /**< The number of monitor references that have been cleared during marking */
-	UDATA _monitorReferenceCandidates; /**< The number of monitor references that have been visited in monitor table during marking */
+	uintptr_t _monitorReferenceCleared; /**< The number of monitor references that have been cleared during marking */
+	uintptr_t _monitorReferenceCandidates; /**< The number of monitor references that have been visited in monitor table during marking */
 
 #if defined(J9MODRON_TGC_PARALLEL_STATISTICS)
-	UDATA splitArraysProcessed; /**< The number of array chunks (not counting parts smaller than the split size) processed by this thread */
-	UDATA splitArraysAmount;
+	uintptr_t splitArraysProcessed; /**< The number of array chunks (not counting parts smaller than the split size) processed by this thread */
+	uintptr_t splitArraysAmount;
 #endif /* J9MODRON_TGC_PARALLEL_STATISTICS */
 
 	/* function members */
@@ -74,6 +77,8 @@ public:
 		, _unfinalizedEnqueued(0)
 		, _ownableSynchronizerCandidates(0)
 		, _ownableSynchronizerCleared(0)
+		, _continuationCandidates(0)
+		, _continuationCleared(0)
 		, _weakReferenceStats()
 		, _softReferenceStats()
 		, _phantomReferenceStats()

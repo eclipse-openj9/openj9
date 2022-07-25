@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -44,7 +44,7 @@ private:
 	 * @param unfinalizedCandidates number of unfinalized candidates encountered.
 	 * @param unfinalizedCount number of candidates that transitioned from unfinalized.
 	 */
-	void outputUnfinalizedInfo(MM_EnvironmentBase *env, UDATA indent, UDATA unfinalizedCandidates, UDATA unfinalizedEnqueuedCount);
+	void outputUnfinalizedInfo(MM_EnvironmentBase *env, uintptr_t indent, uintptr_t unfinalizedCandidates, uintptr_t unfinalizedEnqueuedCount);
 
 	/**
 	 * Output ownable synchronizer processing summary.
@@ -53,7 +53,8 @@ private:
 	 * @param ownableSynchronizerCandidates number of ownable synchronizers encountered.
 	 * @param ownableSynchronizerCleared number of ownable synchronizers cleared.
 	 */
-	void outputOwnableSynchronizerInfo(MM_EnvironmentBase *env, UDATA indent, UDATA ownableSynchronizerCandidates, UDATA ownableSynchronizerCleared);
+	void outputOwnableSynchronizerInfo(MM_EnvironmentBase *env, uintptr_t indent, uintptr_t ownableSynchronizerCandidates, uintptr_t ownableSynchronizerCleared);
+	void outputContinuationInfo(MM_EnvironmentBase *env, uintptr_t indent, uintptr_t continuationCandidates, uintptr_t continuationCleared);
 
 	/**
 	 * Output reference processing summary.
@@ -64,16 +65,16 @@ private:
 	 * @param dynamicThreshold dynamic threshold value for reference
 	 * @param maxThreshold maximum threshold value for reference. If it equal 0 thresholds should not be included to output line
 	 */
-	void outputReferenceInfo(MM_EnvironmentBase *env, UDATA indent, const char *referenceType, MM_ReferenceStats *referenceStats, UDATA dynamicThreshold, UDATA maxThreshold);
+	void outputReferenceInfo(MM_EnvironmentBase *env, uintptr_t indent, const char *referenceType, MM_ReferenceStats *referenceStats, uintptr_t dynamicThreshold, uintptr_t maxThreshold);
 
 protected:
 
 	virtual bool initialize(MM_EnvironmentBase *env, MM_VerboseManager *manager);
 	virtual void tearDown(MM_EnvironmentBase *env);
 
-	virtual void outputMemoryInfoInnerStanzaInternal(MM_EnvironmentBase *env, UDATA indent, MM_CollectionStatistics *stats);
+	virtual void outputMemoryInfoInnerStanzaInternal(MM_EnvironmentBase *env, uintptr_t indent, MM_CollectionStatistics *stats);
 
-	virtual bool getThreadName(char *buf, UDATA bufLen, OMR_VMThread *vmThread);
+	virtual bool getThreadName(char *buf, uintptr_t bufLen, OMR_VMThread *vmThread);
 	virtual void writeVmArgs(MM_EnvironmentBase* env, MM_VerboseBuffer* buffer);
 
 	MM_VerboseHandlerOutputStandardJava(MM_GCExtensions *extensions) :
@@ -107,7 +108,7 @@ public:
 	 * @param eventNum The hook event number.
 	 * @param eventData hook specific event data.
 	 */
-	void handleClassUnloadEnd(J9HookInterface** hook, UDATA eventNum, void* eventData);
+	void handleClassUnloadEnd(J9HookInterface** hook, uintptr_t eventNum, void* eventData);
 #endif /* defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING) */
 
 	/**
@@ -115,7 +116,7 @@ public:
 	 * @param eventNum The hook event number.
 	 * @param eventData hook specific event data.
 	 */
-	void handleSlowExclusive(J9HookInterface **hook, UDATA eventNum, void *eventData);
+	void handleSlowExclusive(J9HookInterface **hook, uintptr_t eventNum, void *eventData);
 };
 
 #endif /* VERBOSEHANDLEROUTPUTSTANDARDJAVA_HPP_ */

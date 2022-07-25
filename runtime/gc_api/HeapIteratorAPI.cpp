@@ -42,6 +42,7 @@
 #include "MixedObjectIterator.hpp"
 #include "ObjectAccessBarrier.hpp"
 #include "OwnableSynchronizerObjectList.hpp"
+#include "ContinuationObjectList.hpp"
 #include "PointerArrayIterator.hpp"
 #include "SlotObject.hpp"
 #include "VMInterface.hpp"
@@ -524,6 +525,47 @@ j9mm_iterate_all_ownable_synchronizer_objects(J9VMThread *vmThread, J9PortLibrar
 	return returnCode;
 }
 
+/**
+ * Walk all continuation objects, call user provided function.
+ * @param flags The flags describing the walk (unused currently)
+ * @param func The function to call on each object descriptor.
+ * @param userData Pointer to storage for userData.
+ * @return return 0 on successfully iterating entire list, return user provided function call if it did not return JVMTI_ITERATION_CONTINUE
+ */
+jvmtiIterationControl
+j9mm_iterate_all_continuation_objects(J9VMThread *vmThread, J9PortLibrary *portLibrary, UDATA flags, jvmtiIterationControl (*func)(J9VMThread *vmThread, J9MM_IterateObjectDescriptor *object, void *userData), void *userData)
+{
+	J9JavaVM *javaVM = vmThread->javaVM;
+	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(javaVM->omrVM);
+	MM_ObjectAccessBarrier *barrier = extensions->accessBarrier;
+	MM_ContinuationObjectList *continuationObjectList = extensions->getContinuationObjectListsExternal(vmThread);
+
+	Assert_MM_true(NULL != continuationObjectList);
+
+	J9MM_IterateObjectDescriptor objectDescriptor;
+	J9MM_IterateRegionDescriptor regionDesc;
+	jvmtiIterationControl returnCode = JVMTI_ITERATION_CONTINUE;
+
+	while (NULL != continuationObjectList) {
+		J9Object *objectPtr = continuationObjectList->getHeadOfList();
+		while (NULL != objectPtr) {
+			UDATA regionFound = j9mm_find_region_for_pointer(javaVM, objectPtr, &regionDesc);
+			if (0 != regionFound) {
+				initializeObjectDescriptor(javaVM, &objectDescriptor, &regionDesc, objectPtr);
+				returnCode = func(vmThread, &objectDescriptor, userData);
+				if (JVMTI_ITERATION_ABORT == returnCode) {
+					return returnCode;
+				}
+			} else {
+				Assert_MM_unreachable();
+			}
+			objectPtr = barrier->getContinuationLink(objectPtr);
+		}
+		continuationObjectList = continuationObjectList->getNextList();
+	}
+	return returnCode;
+}
+
 } /* extern "C" */
 
 /**
@@ -671,7 +713,7 @@ iterateRegions(
 	GC_HeapRegionIterator regionIterator(manager, memorySpace);
 	MM_HeapRegionDescriptor *region = NULL;
 	MM_GCExtensionsBase* extensions = MM_GCExtensionsBase::getExtensions(vm->omrVM);
-	while(NULL != (region = regionIterator.nextRegion())) {
+	while (NULL != (region = regionIterator.nextRegion())) {
 		J9MM_IterateRegionDescriptorPrivate regionDescription;
 		regionDescription.type = j9mm_region_type_region;
 		initializeRegionDescriptor(extensions, &regionDescription.descriptor, region);
@@ -700,7 +742,7 @@ iterateRegionObjects(
 	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(vm->omrVM);
 	HeapIteratorAPI_BufferedIterator objectHeapIterator(vm, PORTLIB, heapRegion, true);
 	J9Object* object = NULL;
-	while(NULL != (object = objectHeapIterator.nextObject())) {
+	while (NULL != (object = objectHeapIterator.nextObject())) {
 		J9MM_IterateObjectDescriptor objectDescriptor;
 		if ((extensions->objectModel.isDeadObject(object)) || (0 != (J9CLASS_FLAGS(J9GC_J9OBJECT_CLAZZ_VM(object, vm)) & J9AccClassDying))) {
 			if (0 != (flags & j9mm_iterator_flag_include_holes)) {

@@ -49,6 +49,7 @@
 #include "MarkingSchemeRootMarker.hpp"
 #include "MarkingSchemeRootClearer.hpp"
 #include "OwnableSynchronizerObjectList.hpp"
+#include "ContinuationObjectList.hpp"
 #include "VMHelpers.hpp"
 #include "ParallelDispatcher.hpp"
 #include "ReferenceObjectBuffer.hpp"
@@ -133,6 +134,8 @@ MM_MarkingDelegate::workerSetupForGC(MM_EnvironmentBase *env)
 	if (_extensions->scavengerEnabled) {
 		/* clear scavenger stats for correcting the ownableSynchronizerObjects stats, only in generational gc */
 		gcEnv->_scavengerJavaStats.clearOwnableSynchronizerCounts();
+		/* clear scavenger stats for correcting the continuationObjects stats, only in generational gc */
+		gcEnv->_scavengerJavaStats.clearContinuationCounts();
 	}
 #endif /* defined(J9VM_GC_MODRON_SCAVENGER) */
 #if defined(OMR_GC_MODRON_STANDARD) || defined(OMR_GC_REALTIME)
@@ -169,6 +172,8 @@ MM_MarkingDelegate::workerCleanupAfterGC(MM_EnvironmentBase *env)
 	if (_extensions->scavengerEnabled) {
 		/* merge scavenger ownableSynchronizerObjects stats, only in generational gc */
 		_extensions->scavengerJavaStats.mergeOwnableSynchronizerCounts(&gcEnv->_scavengerJavaStats);
+		/* merge scavenger continuationObjects stats, only in generational gc */
+		_extensions->scavengerJavaStats.mergeContinuationCounts(&gcEnv->_scavengerJavaStats);
 	}
 #endif /* defined(J9VM_GC_MODRON_SCAVENGER) */
 }
@@ -199,11 +204,13 @@ MM_MarkingDelegate::startRootListProcessing(MM_EnvironmentBase *env)
 	if (J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
 		_shouldScanUnfinalizedObjects = false;
 		_shouldScanOwnableSynchronizerObjects = false;
+		_shouldScanContinuationObjects = false;
+
 		MM_HeapRegionDescriptorStandard *region = NULL;
 		GC_HeapRegionIteratorStandard regionIterator(_extensions->heap->getHeapRegionManager());
 		while (NULL != (region = regionIterator.nextRegion())) {
 			MM_HeapRegionDescriptorStandardExtension *regionExtension = MM_ConfigurationDelegate::getHeapRegionDescriptorStandardExtension(env, region);
-			for (UDATA i = 0; i < regionExtension->_maxListIndex; i++) {
+			for (uintptr_t i = 0; i < regionExtension->_maxListIndex; i++) {
 				/* Start unfinalized object processing for region */
 				MM_UnfinalizedObjectList *unfinalizedObjectList = &(regionExtension->_unfinalizedObjectLists[i]);
 				unfinalizedObjectList->startUnfinalizedProcessing();
@@ -215,6 +222,12 @@ MM_MarkingDelegate::startRootListProcessing(MM_EnvironmentBase *env)
 				ownableSynchronizerObjectList->startOwnableSynchronizerProcessing();
 				if (!ownableSynchronizerObjectList->wasEmpty()) {
 					_shouldScanOwnableSynchronizerObjects = true;
+				}
+				/* Start continuation processing for region */
+				MM_ContinuationObjectList *continuationObjectList = &(regionExtension->_continuationObjectLists[i]);
+				continuationObjectList->startProcessing();
+				if (!continuationObjectList->wasEmpty()) {
+					_shouldScanContinuationObjects = true;
 				}
 			}
 		}
@@ -454,8 +467,8 @@ void
 MM_MarkingDelegate::processReferenceList(MM_EnvironmentBase *env, MM_HeapRegionDescriptorStandard* region, omrobjectptr_t headOfList, MM_ReferenceStats *referenceStats)
 {
 	/* no list can possibly contain more reference objects than there are bytes in a region. */
-	const UDATA maxObjects = region->getSize();
-	UDATA objectsVisited = 0;
+	const uintptr_t maxObjects = region->getSize();
+	uintptr_t objectsVisited = 0;
 	GC_FinalizableReferenceBuffer buffer(_extensions);
 #if defined(J9VM_GC_FINALIZATION)
 	bool finalizationRequired = false;
@@ -477,7 +490,7 @@ MM_MarkingDelegate::processReferenceList(MM_EnvironmentBase *env, MM_HeapRegionD
 			_markingScheme->fixupForwardedSlot(&referentSlotObject);
 			omrobjectptr_t referent = referentSlotObject.readReferenceFromSlot();
 
-			UDATA referenceObjectType = J9CLASS_FLAGS(J9GC_J9OBJECT_CLAZZ(referenceObj, env)) & J9AccClassReferenceMask;
+			uintptr_t referenceObjectType = J9CLASS_FLAGS(J9GC_J9OBJECT_CLAZZ(referenceObj, env)) & J9AccClassReferenceMask;
 			if (_markingScheme->isMarked(referent)) {
 				if (J9AccClassReferenceSoft == referenceObjectType) {
 					U_32 age = J9GC_J9VMJAVALANGSOFTREFERENCE_AGE(env, referenceObj);
@@ -537,7 +550,7 @@ MM_MarkingDelegate::getReferenceStatus(MM_EnvironmentBase *env, omrobjectptr_t o
 	 * during concurrent gc, the cycleState of the mutator thread might not be set,
 	 * but if the cycleState of the thread is not set, we know it is in concurrent mode(not clearable phase).
 	 */
-	UDATA referenceObjectOptions = MM_CycleState::references_default;
+	uintptr_t referenceObjectOptions = MM_CycleState::references_default;
 	if (NULL != env->_cycleState) {
 		referenceObjectOptions = env->_cycleState->_referenceObjectOptions;
 	}
@@ -547,7 +560,7 @@ MM_MarkingDelegate::getReferenceStatus(MM_EnvironmentBase *env, omrobjectptr_t o
 	*referentMustBeMarked = *isReferenceCleared;
 	bool referentMustBeCleared = false;
 
-	UDATA referenceObjectType = J9CLASS_FLAGS(J9GC_J9OBJECT_CLAZZ(objectPtr, env)) & J9AccClassReferenceMask;
+	uintptr_t referenceObjectType = J9CLASS_FLAGS(J9GC_J9OBJECT_CLAZZ(objectPtr, env)) & J9AccClassReferenceMask;
 	switch (referenceObjectType) {
 	case J9AccClassReferenceWeak:
 		referentMustBeCleared = (0 != (referenceObjectOptions & MM_CycleState::references_clear_weak));
@@ -556,7 +569,8 @@ MM_MarkingDelegate::getReferenceStatus(MM_EnvironmentBase *env, omrobjectptr_t o
 		referentMustBeCleared = (0 != (referenceObjectOptions & MM_CycleState::references_clear_soft));
 		*referentMustBeMarked = *referentMustBeMarked || (
 			((0 == (referenceObjectOptions & MM_CycleState::references_soft_as_weak))
-			&& ((UDATA)J9GC_J9VMJAVALANGSOFTREFERENCE_AGE(env, objectPtr) < _extensions->getDynamicMaxSoftReferenceAge())));
+			/* TODO: MaxAge should be u32 not udata */
+			&& ((uintptr_t)J9GC_J9VMJAVALANGSOFTREFERENCE_AGE(env, objectPtr) < _extensions->getDynamicMaxSoftReferenceAge())));
 		break;
 	case J9AccClassReferencePhantom:
 		referentMustBeCleared = (0 != (referenceObjectOptions & MM_CycleState::references_clear_phantom));

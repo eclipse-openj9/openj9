@@ -274,6 +274,16 @@ jvmtiIterationControl
 j9mm_iterate_all_ownable_synchronizer_objects(J9VMThread *vmThread, J9PortLibrary *portLibrary, UDATA flags, jvmtiIterationControl (*func)(J9VMThread *vmThread, J9MM_IterateObjectDescriptor *object, void *userData), void *userData);
 
 /**
+ * Walk all continuation object, call user provided function.
+ * @param flags The flags describing the walk (unused currently)
+ * @param func The function to call on each object descriptor.
+ * @param userData Pointer to storage for userData.
+ * @return return 0 on successfully iterating entire list, return user provided function call if it did not return JVMTI_ITERATION_CONTINUE
+ */
+jvmtiIterationControl
+j9mm_iterate_all_continuation_objects(J9VMThread *vmThread, J9PortLibrary *portLibrary, UDATA flags, jvmtiIterationControl (*func)(J9VMThread *vmThread, J9MM_IterateObjectDescriptor *object, void *userData), void *userData);
+
+/**
  * Shortcut specific for Segregated heap to find the page the pointer belongs to
  * This is instead of iterating pages, which may be very time consuming.
  * @param objectDescriptor Structure containing pointer to an object

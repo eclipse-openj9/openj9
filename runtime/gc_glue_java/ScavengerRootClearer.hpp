@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -52,6 +52,8 @@ private:
 #if defined(J9VM_GC_FINALIZATION)
 	void scavengeUnfinalizedObjects(MM_EnvironmentStandard *env);
 #endif /* defined(J9VM_GC_FINALIZATION) */
+
+	void scavengeContinuationObjects(MM_EnvironmentStandard *env);
 
 public:
 	MM_ScavengerRootClearer(MM_EnvironmentBase *env, MM_Scavenger *scavenger) :
@@ -140,7 +142,7 @@ public:
 			reportScanningStarted(RootScannerEntity_UnfinalizedObjectsComplete);
 			/* ensure that all unfinalized processing is complete before we start marking additional objects */
 			env->_currentTask->synchronizeGCThreads(env, UNIQUE_ID);
-			if(!_scavenger->completeScan(MM_EnvironmentStandard::getEnvironment(env))) {
+			if (!_scavenger->completeScan(MM_EnvironmentStandard::getEnvironment(env))) {
 				result = complete_phase_ABORT;
 			}
 			reportScanningEnded(RootScannerEntity_UnfinalizedObjectsComplete);
@@ -151,6 +153,17 @@ public:
 
 	/* empty, move ownable synchronizer processing in main scan phase */
 	virtual void scanOwnableSynchronizerObjects(MM_EnvironmentBase *env) {}
+
+	virtual void
+	scanContinuationObjects(MM_EnvironmentBase *env)
+	{
+		if (_scavenger->getDelegate()->getShouldScavengeContinuationObjects()) {
+			/* allow the scavenger to handle this */
+			reportScanningStarted(RootScannerEntity_ContinuationObjects);
+			scavengeContinuationObjects(MM_EnvironmentStandard::getEnvironment(env));
+			reportScanningEnded(RootScannerEntity_ContinuationObjects);
+		}
+	}
 
 	virtual void
 	scanPhantomReferenceObjects(MM_EnvironmentBase *env)
@@ -173,7 +186,7 @@ public:
 				env->_currentTask->releaseSynchronizedGCThreads(env);
 			}
 			/* phantom reference processing may resurrect objects - scan them now */
-			if(!_scavenger->completeScan(MM_EnvironmentStandard::getEnvironment(env))) {
+			if (!_scavenger->completeScan(MM_EnvironmentStandard::getEnvironment(env))) {
 				result = complete_phase_ABORT;
 			}
 
@@ -190,10 +203,10 @@ public:
 		omrobjectptr_t objectPtr = (omrobjectptr_t )monitor->userData;
 		_env->getGCEnvironment()->_scavengerJavaStats._monitorReferenceCandidates += 1;
 		
-		if(_scavenger->isObjectInEvacuateMemory(objectPtr)) {
+		if (_scavenger->isObjectInEvacuateMemory(objectPtr)) {
 			MM_ForwardedHeader forwardedHeader(objectPtr, compressed);
 			omrobjectptr_t forwardPtr = forwardedHeader.getForwardedObject();
-			if(NULL != forwardPtr) {
+			if (NULL != forwardPtr) {
 				monitor->userData = (uintptr_t)forwardPtr;
 			} else {
 				_env->getGCEnvironment()->_scavengerJavaStats._monitorReferenceCleared += 1;
@@ -237,7 +250,7 @@ public:
 	{
 		bool const compressed = _extensions->compressObjectReferences();
 		omrobjectptr_t objectPtr = *slotPtr;
-		if(objectPtr && _scavenger->isObjectInEvacuateMemory(objectPtr)) {
+		if (objectPtr && _scavenger->isObjectInEvacuateMemory(objectPtr)) {
 			MM_ForwardedHeader forwardedHeader(objectPtr, compressed);
 			*slotPtr = forwardedHeader.getForwardedObject();
 		}
@@ -249,7 +262,7 @@ public:
 	{
 		bool const compressed = _extensions->compressObjectReferences();
 		omrobjectptr_t objectPtr = *slotPtr;
-		if(objectPtr && _scavenger->isObjectInEvacuateMemory(objectPtr)) {
+		if (objectPtr && _scavenger->isObjectInEvacuateMemory(objectPtr)) {
 			MM_ForwardedHeader forwardedHeader(objectPtr, compressed);
 			*slotPtr = forwardedHeader.getForwardedObject();
 		}
