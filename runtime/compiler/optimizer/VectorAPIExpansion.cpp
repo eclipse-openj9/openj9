@@ -1385,7 +1385,7 @@ TR::Node *TR_VectorAPIExpansion::naryIntrinsicHandler(TR_VectorAPIExpansion *opt
          if (TR::Options::getVerboseOption(TR_VerboseVectorAPI))
             {
             TR::ILOpCode opcode(scalarOpCode);
-            TR_VerboseLog::writeLine(TR_Vlog_VECTOR_API, "Scalarized using %s in %s at%s",
+            TR_VerboseLog::writeLine(TR_Vlog_VECTOR_API, "Scalarized using %s in %s at %s",
                                      opcode.getName(), comp->signature(), comp->getHotnessName(comp->getMethodHotness()));
             }
          }
