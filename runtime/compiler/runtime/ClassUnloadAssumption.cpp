@@ -385,7 +385,7 @@ void TR_RuntimeAssumptionTable::addAssumption(OMR::RuntimeAssumption *a, TR_Runt
       }
    }
 
-/** 
+/**
  * Mark an assumption for future detach and reclaiming from the RAT
  * @param assumption The assumption to be marked for removal
  * Once all assumptions are marked a call to reclaimMarkedFromRAT() will free
@@ -405,9 +405,9 @@ void TR_RuntimeAssumptionTable::markForDetachFromRAT(OMR::RuntimeAssumption *ass
 
 /**
  * Traverse the entire RAT detaching and reclaiming all marked assumptions.
- * This assumes that the assumptions have already been detached from the 
+ * This assumes that the assumptions have already been detached from the
  * metadata's linked list. Only RAT 'kinds' that have any marked assumptions
- * will be traversed, and only the hashtable linked-lists that have a non-zero 
+ * will be traversed, and only the hashtable linked-lists that have a non-zero
  * marked for detach count will be traversed.
  */
 void TR_RuntimeAssumptionTable::reclaimMarkedAssumptionsFromRAT(int32_t cleanupCount)
@@ -499,14 +499,14 @@ void TR_RuntimeAssumptionTable::markAssumptionsAndDetach(void * md, bool reclaim
             #if defined(PROD_WITH_ASSUMES) || defined(DEBUG)
             TR_RuntimeAssumptionKind kind = cursor->getAssumptionKind();
             TR_ASSERT(kind == RuntimeAssumptionOnClassRedefinitionPIC ||
-                      kind == RuntimeAssumptionOnClassRedefinitionUPIC || 
+                      kind == RuntimeAssumptionOnClassRedefinitionUPIC ||
                       kind == RuntimeAssumptionOnClassRedefinitionNOP,
                "non redefinition assumption (RA=%p kind=%d key=%p) left after metadata reclamation\n",
                cursor, kind, cursor->getKey());
             #endif
             }
          }
-      
+
       if (!entriesRemain)
          {
          sentry->markForDetach();
@@ -717,12 +717,33 @@ void TR_UnloadedClassPicSite::compensate(TR_FrontEnd *, bool isSMP, void *)
             }
 
          }
+      else if (((*((uint16_t *)cursor) & (uint16_t)0xFF0F) == (uint16_t)0xC00F))
+         {
+         //if LLILF we need to convert to LGFI to get sign extension
+         *(cursor+1) ^= (int8_t)0x0E;
+         }
       }
 #endif
       }
    else
       {
-      *(int64_t *)_picLocation = -1;
+#if (defined(TR_HOST_64BIT) && defined(TR_HOST_S390))
+      //Check if LLILF followed by IIHF
+      int8_t * cursor = (int8_t *)_picLocation - 2;
+      //Mask out register bits from opcodes
+      uint16_t opcode = *(uint16_t *)cursor & (uint16_t)0xFF0F;
+      uint16_t next_opcode = *(uint16_t *)(cursor + 6) & (uint16_t)0xFF0F;
+      if ((opcode == (uint16_t)0xC00F) && (next_opcode == (uint16_t)0xC008))
+         {
+         //patch both immediates
+         *(int32_t *)_picLocation     = -1;
+         *(int32_t *)(_picLocation+6) = -1;
+         }
+      else
+#endif
+         {
+         *(int64_t *)_picLocation = -1;
+         }
       }
 #elif defined(TR_HOST_POWER)
    // On PPC, the patching is on a 4-byte entity regardless of 32/64bit JIT
@@ -1156,14 +1177,29 @@ void TR_RedefinedClassPicSite::compensate(TR_FrontEnd *, bool isSMP, void *newKe
                   }
                }
             }
-
          }
       }
 #endif
       }
    else
       {
-      *(int64_t *)_picLocation = (uintptr_t)newKey;
+#if (defined(TR_HOST_64BIT) && defined(TR_HOST_S390))
+      //Check if LLILF followed by IIHF
+      int8_t * cursor = (int8_t *)_picLocation - 2;
+      //Mask out register bits from opcodes
+      uint16_t opcode = *(uint16_t *)cursor & (uint16_t)0xFF0F;
+      uint16_t next_opcode = *(uint16_t *)(cursor + 6) & (uint16_t)0xFF0F;
+      if ((opcode == (uint16_t)0xC00F) && (next_opcode == (uint16_t)0xC008))
+         {
+         //patch both immediates
+         *(int32_t *)_picLocation     = (uintptr_t)newKey;
+         *(int32_t *)(_picLocation+6) = ((uintptr_t)newKey) >> 32;
+         }
+      else
+#endif
+         {
+         *(int64_t *)_picLocation = (uintptr_t)newKey;
+         }
       }
 #elif defined(TR_HOST_POWER)
    extern void ppcCodeSync(unsigned char *codeStart, unsigned int codeSize);
@@ -1266,7 +1302,7 @@ J9::PersistentInfo::isUnloadedClass(
       auto clientData = TR::compInfoPT->getClientData();
       OMR::CriticalSection isUnloadedClass(clientData->getROMMapMonitor());
       return clientData->getUnloadedClassAddresses().mayContain((uintptr_t)v);
-      } 
+      }
 #endif
    OMR::CriticalSection isUnloadedClass(assumptionTableMutex);
    bool result = (_unloadedClassAddresses && _unloadedClassAddresses->mayContain((uintptr_t)v));
