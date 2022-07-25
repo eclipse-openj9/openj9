@@ -29,7 +29,7 @@ public class CRIUSimpleTest {
 
 	public static void main(String args[]) {
 		try {
-			int num_checkpoints=Integer.parseInt(args[0]);
+			int num_checkpoints=Integer.parseInt(args[1]);
 			checkpoints(num_checkpoints);
 		} catch (NumberFormatException e) {
 			System.out.println("Input is not a valid integer");
