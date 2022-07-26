@@ -424,6 +424,15 @@ TR::Register *J9::Power::JNILinkage::buildDirectDispatch(TR::Node *callNode)
       // if the current method is simply a wrapper for the JNI call, hide the call-out stack frame
       if (resolvedMethod == comp()->getCurrentMethod())
          tagBits |= fej9->constJNICallOutFrameInvisibleTag();
+#if JAVA_SPEC_VERSION >= 19
+      /*
+       * For virtual threads, increment callOutCount. It is safe and most efficient to
+       * do this unconditionally. No need to check for overflow.
+       */
+      generateTrg1MemInstruction(cg(), TR::InstOpCode::Op_load, callNode, gr11Reg, TR::MemoryReference::createWithDisplacement(cg(), metaReg, fej9->thisThreadGetCallOutCountOffset(), TR::Compiler->om.sizeofReferenceAddress()));
+      generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::addi, callNode, gr11Reg, gr11Reg, 1);
+      generateMemSrc1Instruction(cg(), TR::InstOpCode::Op_st, callNode, TR::MemoryReference::createWithDisplacement(cg(), metaReg, fej9->thisThreadGetCallOutCountOffset(), TR::Compiler->om.sizeofReferenceAddress()), gr11Reg);
+#endif //JAVA_SPEC_VERSION >= 19
       loadConstant(cg(), callNode, tagBits, gr11Reg);
       loadConstant(cg(), callNode, 0, gr12Reg);
 
@@ -582,6 +591,15 @@ TR::Register *J9::Power::JNILinkage::buildDirectDispatch(TR::Node *callNode)
 
    if (createJNIFrame)
       {
+#if JAVA_SPEC_VERSION >= 19
+      /*
+       * For virtual threads, decrement callOutCount. It is safe and most efficient to
+       * do this unconditionally. No need to check for underflow.
+       */
+      generateTrg1MemInstruction(cg(), TR::InstOpCode::Op_load, callNode, gr12Reg, TR::MemoryReference::createWithDisplacement(cg(), metaReg, fej9->thisThreadGetCallOutCountOffset(), TR::Compiler->om.sizeofReferenceAddress()));
+      generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::addi, callNode, gr12Reg, gr12Reg, -1);
+      generateMemSrc1Instruction(cg(), TR::InstOpCode::Op_st, callNode, TR::MemoryReference::createWithDisplacement(cg(), metaReg, fej9->thisThreadGetCallOutCountOffset(), TR::Compiler->om.sizeofReferenceAddress()), gr12Reg);
+#endif //JAVA_SPEC_VERSION >= 19
       // restore stack pointer: need to deal with growable stack -- stack may already be moved.
       generateTrg1MemInstruction(cg(),TR::InstOpCode::Op_load, callNode, gr12Reg, TR::MemoryReference::createWithDisplacement(cg(), metaReg, fej9->thisThreadGetJavaLiteralsOffset(), TR::Compiler->om.sizeofReferenceAddress()));
       generateTrg1MemInstruction(cg(),TR::InstOpCode::Op_load, callNode, stackPtr, TR::MemoryReference::createWithDisplacement(cg(), metaReg,fej9->thisThreadGetJavaSPOffset(), TR::Compiler->om.sizeofReferenceAddress()));
