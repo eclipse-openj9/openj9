@@ -48,8 +48,10 @@ public class TimeChangeTest {
 			TimeChangeTest tct = new TimeChangeTest();
 			if ("testSystemNanoTime".equalsIgnoreCase(testName)) {
 				tct.testSystemNanoTime();
-			} else if ("testSystemNanoTimeJit".equalsIgnoreCase(testName)) {
-				tct.testSystemNanoTimeJit();
+			} else if ("testSystemNanoTimeJitPreCheckpointCompile".equalsIgnoreCase(testName)) {
+				tct.testSystemNanoTimeJitPreCheckpointCompile();
+			} else if ("testSystemNanoTimeJitPostCheckpointCompile".equalsIgnoreCase(testName)) {
+				tct.testSystemNanoTimeJitPostCheckpointCompile();
 			} else {
 				tct.test(testName);
 			}
@@ -98,9 +100,18 @@ public class TimeChangeTest {
 		}
 	}
 
-	public void testSystemNanoTimeJit() {
+	public void testSystemNanoTimeJitPreCheckpointCompile() {
+		testSystemNanoTimeJitTestPreCheckpointPhase();
 		testSystemNanoTimeJitWarmupPhase();
-		testSystemNanoTimeJitTestPhase();
+		CRIUTestUtils.checkPointJVM(imagePath, false);
+		testSystemNanoTimeJitTestPostCheckpointPhase();
+	}
+
+	public void testSystemNanoTimeJitPostCheckpointCompile() {
+		testSystemNanoTimeJitTestPreCheckpointPhase();
+		CRIUTestUtils.checkPointJVM(imagePath, false);
+		testSystemNanoTimeJitWarmupPhase();
+		testSystemNanoTimeJitTestPostCheckpointPhase();
 	}
 
 	private static void testSystemNanoTimeJitWarmupPhase() {
@@ -109,10 +120,12 @@ public class TimeChangeTest {
 		}
 	}
 
-	private void testSystemNanoTimeJitTestPhase() {
+	private void testSystemNanoTimeJitTestPreCheckpointPhase() {
 		final long beforeCheckpoint = nanoTimeInt();
 		System.out.println("System.nanoTime() before CRIU checkpoint: " + beforeCheckpoint);
-		CRIUTestUtils.checkPointJVM(imagePath, false);
+	}
+
+	private void testSystemNanoTimeJitTestPostCheckpointPhase() {
 		final long afterRestoreJit = nanoTimeJit();
 		final long afterRestoreInt = nanoTimeInt();
 		if (afterRestoreJit <= afterRestoreInt) {
