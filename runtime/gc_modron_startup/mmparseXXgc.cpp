@@ -973,7 +973,7 @@ gcParseXXgcArguments(J9JavaVM *vm, char *optArg)
 			continue;
 		}
 		if(try_scan(&scan_start, "softwareRangeCheckReadBarrier")) {
-			extensions->softwareRangeCheckReadBarrier = true;
+			extensions->softwareRangeCheckReadBarrierForced = true;
 			continue;
 		}
 

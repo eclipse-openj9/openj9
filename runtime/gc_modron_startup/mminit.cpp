@@ -2915,45 +2915,36 @@ gcInitializeDefaults(J9JavaVM* vm)
 	vm->vmThreadSize = J9_VMTHREAD_SEGREGATED_ALLOCATION_CACHE_OFFSET + vm->segregatedAllocationCacheSize + sizeof(OMR_VMThread);
 
 #if defined(OMR_GC_CONCURRENT_SCAVENGER)
-	if (gc_policy_gencon == extensions->configurationOptions._gcPolicy) {
-		/* after we parsed cmd line options, check if we can obey the request to run CS (valid for Gencon only) */
-		if (extensions->concurrentScavengerForced) {
-#if defined(J9VM_ARCH_X86) || defined(J9VM_ARCH_POWER) || defined(J9VM_ARCH_AARCH64)
-			/*
-			 * x86, POWER and AArch64 do not respect -XXgc:softwareRangeCheckReadBarrier and have it set to true always.
-			 *
-			 * Z is the only consumer that actually uses -XXgc:softwareRangeCheckReadBarrier
-			 * to overwrite HW concurrent scavenge.
-			 */
-			extensions->softwareRangeCheckReadBarrier = true;
-#endif /* J9VM_ARCH_X86 || J9VM_ARCH_POWER || J9VM_ARCH_AARCH64 */
-			if (LOADED == (FIND_DLL_TABLE_ENTRY(J9_JIT_DLL_NAME)->loadFlags & LOADED)) {
-				/* If running jitted, it must be on supported h/w */
-				J9ProcessorDesc  processorDesc;
-				j9sysinfo_get_processor_description(&processorDesc);
-				bool hwSupported = j9sysinfo_processor_has_feature(&processorDesc, J9PORT_S390_FEATURE_GUARDED_STORAGE) &&
-						j9sysinfo_processor_has_feature(&processorDesc, J9PORT_S390_FEATURE_SIDE_EFFECT_ACCESS);
+	if ((gc_policy_gencon == extensions->configurationOptions._gcPolicy) && extensions->concurrentScavengerForced) {
 
-				if (hwSupported) {
-					/* Software Barrier request overwrites HW usage on supported HW */
-					extensions->concurrentScavengerHWSupport = hwSupported
-						&& !extensions->softwareRangeCheckReadBarrier
+		extensions->concurrentScavenger = true;
+
+		if (LOADED == (FIND_DLL_TABLE_ENTRY(J9_JIT_DLL_NAME)->loadFlags & LOADED)) {
+
+			/* Check for supported hardware */
+			J9ProcessorDesc  processorDesc;
+			j9sysinfo_get_processor_description(&processorDesc);
+			bool hwSupported = j9sysinfo_processor_has_feature(&processorDesc, J9PORT_S390_FEATURE_GUARDED_STORAGE) &&
+					j9sysinfo_processor_has_feature(&processorDesc, J9PORT_S390_FEATURE_SIDE_EFFECT_ACCESS);
+
+			if (hwSupported) {
+				/*
+				 * HW support can be overwritten by
+				 *  - explicit Software Range Check Barrier request -XXgc:softwareRangeCheckReadBarrier
+				 *  - usage of CRIU
+				 *  - usage of Portable AOT
+				 */
+				extensions->concurrentScavengerHWSupport = hwSupported
+					&& !extensions->softwareRangeCheckReadBarrierForced
 #if defined(J9VM_OPT_CRIU_SUPPORT)
-						&& !vm->internalVMFunctions->isCRIUSupportEnabled(vm->internalVMFunctions->currentVMThread(vm))
+					&& !vm->internalVMFunctions->isCRIUSupportEnabled(vm->internalVMFunctions->currentVMThread(vm))
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
-						&& !J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_PORTABLE_SHARED_CACHE);
-					extensions->concurrentScavenger = hwSupported || extensions->softwareRangeCheckReadBarrier;
-				} else {
-					extensions->concurrentScavengerHWSupport = false;
-#if defined(J9VM_ARCH_X86) || defined(J9VM_ARCH_POWER) || defined(J9VM_ARCH_AARCH64) || defined(J9VM_ARCH_S390)
-					extensions->concurrentScavenger = true;
-#endif /*J9VM_ARCH_X86 || J9VM_ARCH_POWER || J9VM_ARCH_AARCH64 || J9VM_ARCH_S390 */
-				}
-			} else {
-				/* running interpreted is ok on any h/w */
-				extensions->concurrentScavenger = true;
+					&& !J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_PORTABLE_SHARED_CACHE);
 			}
 		}
+
+		/* Use Software Range Check Barrier if HW Support is not available or is not allowed to be used */
+		extensions->softwareRangeCheckReadBarrier = !extensions->concurrentScavengerHWSupport;
 	}
 #endif /* OMR_GC_CONCURRENT_SCAVENGER */
 
