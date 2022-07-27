@@ -28,6 +28,11 @@
 			<variation>-Xint</variation>
 			<variation>-Xjit:count=0</variation>
 		</variations>
+		<disables>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/15584</comment>
+			</disable>
+		</disables>
 		<command>
 			$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump \
 			-DSCRIPPATH=$(TEST_RESROOT)$(D)criuScript.sh -DTEST_RESROOT=$(TEST_RESROOT) \
