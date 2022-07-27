@@ -7147,8 +7147,8 @@ static void genInitObjectHeader(TR::Node             *node,
          }
       else
          {
-         TR_ASSERT((node->getOpCodeValue() == TR::New)
-                   && classReg, "must have a classReg for TR::New in AOT mode");
+         TR_ASSERT_FATAL((node->getOpCodeValue() == TR::New)
+                   && classReg, "Must have a classReg for TR::New in non-SVM AOT mode");
          clzReg = classReg;
          }
       }
@@ -7967,6 +7967,21 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
 
       dataOffset = TR::Compiler->om.objectHeaderSizeInBytes(); //Not used...
       classReg = node->getFirstChild()->getRegister();
+
+      // For Non-SVM AOT, the class has to be in a register
+      if (TR::Compiler->om.areValueTypesEnabled() &&
+          !classReg &&
+          cg->needClassAndMethodPointerRelocations() &&
+          !comp->getOption(TR_UseSymbolValidationManager))
+         {
+         classReg = cg->evaluate(node->getFirstChild());
+
+         if (comp->getOption(TR_TraceCG))
+            {
+            traceMsg(comp, "%s: evaluate loadaddr: clazz %p classReg %s\n", __FUNCTION__, clazz, classReg ? classReg->getRegisterName(comp) : "<none>");
+            }
+         }
+
       TR_ASSERT(objectSize > 0, "assertion failure");
       }
    else
