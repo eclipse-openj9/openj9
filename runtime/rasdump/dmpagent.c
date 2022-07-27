@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -131,10 +131,19 @@ typedef struct J9RASprotectedDumpData
 }\
 J9RASprotectedDumpData;
 
-/* Known dump events */
+/*
+ * Known dump events.
+ * The order matters because comparisons elsewhere may search for known
+ * event names by the shortest match and raise an error on remaining tokens;
+ * for example, if 'user2' was after 'user' and the event being searched was
+ * 'user2', then comparisons elsewhere may match 'user' first and then show
+ * an error starting at 2 since that is not part of the 'user' event and is
+ * a dangling token.
+ */
 static const J9RASdumpEvent rasDumpEvents[] =
 {
 	{ "gpf",         "ON_GP_FAULT",             J9RAS_DUMP_ON_GP_FAULT },
+	{ "user2",       "ON_USER2_SIGNAL",         J9RAS_DUMP_ON_USER2_SIGNAL },
 	{ "user",        "ON_USER_SIGNAL",          J9RAS_DUMP_ON_USER_SIGNAL },
 	{ "abort",       "ON_ABORT_SIGNAL",         J9RAS_DUMP_ON_ABORT_SIGNAL },
 	{ "vmstart",     "ON_VM_STARTUP",           J9RAS_DUMP_ON_VM_STARTUP },

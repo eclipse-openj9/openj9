@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2007, 2017 IBM Corp. and others
+ * Copyright (c) 2007, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -148,18 +148,14 @@ public class PlatformTagParser extends TagParser implements IPlatformTypes {
 	}
 	
 	/**
-	 * Add rule for J9Generic_Signal/J9Generic_Signal_Number (1XHEXCPCODE line)
+	 * Add rule for Signal_Number (1XHEXCPCODE line)
 	 */
 	private void addExceptionCodeRule() {
 		ILineRule lineRule = new LineRule() {
 			public void processLine(String source, int startingOffset) {
-				// the signal number is a hex value following "J9Generic_Signal_Number: " or
-				// "J9Generic_Signal: "
-				if (findFirst(PlatformPatternMatchers.J9Signal_1)) {
-					consumeUntilFirstMatch(PlatformPatternMatchers.J9Signal_1);
-					addNonPrefixedHexToken(PL_SIGNAL);
-				} else if (findFirst(PlatformPatternMatchers.J9Signal_2)) {
-					consumeUntilFirstMatch(PlatformPatternMatchers.J9Signal_2);
+				// the signal number is a hex value following "Signal_Number: "
+				if (!source.contains("J9Generic_Signal") && findFirst(PlatformPatternMatchers.Signal)) {
+					consumeUntilFirstMatch(PlatformPatternMatchers.Signal);
 					addNonPrefixedHexToken(PL_SIGNAL);
 				}
 			}

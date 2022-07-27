@@ -305,12 +305,19 @@ standardInit(J9JavaVM *vm, char *dllName)
 	}
 #endif
 
-#ifdef J9VM_INTERP_SIG_QUIT_THREAD
+#if defined(J9VM_INTERP_SIG_QUIT_THREAD)
 	result = J9SigQuitStartup(vm);
 	if (JNI_OK != result) {
 		goto _fail;
 	}
-#endif
+#endif /* defined(J9VM_INTERP_SIG_QUIT_THREAD) */
+
+#if defined(J9VM_INTERP_SIG_USR2)
+	result = J9SigUsr2Startup(vm);
+	if (JNI_OK != result) {
+		goto _fail;
+	}
+#endif /* defined(J9VM_INTERP_SIG_USR2) */
 
 	/* We need to initialize the methodID caches for String.<init> and String.getBytes(String) while we are still in single threaded mode.
 	 * The JCL natives that initialize this are not thread safe and we run the risk of invoking these methods with a NULL methodID.

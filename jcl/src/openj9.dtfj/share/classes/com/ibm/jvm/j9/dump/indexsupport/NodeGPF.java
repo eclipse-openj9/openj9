@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2004, 2020 IBM Corp. and others
+ * Copyright (c) 2004, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -64,25 +64,20 @@ public class NodeGPF extends NodeAbstract
 		}
 		_process.setSignalNumber(signalNumber);
 	}
-	// These flag definitions came from j9port.h
+
+	// These ultimately came from omr/include_core/omrport.h (passed through
+	// runtime/oti/j9port.h). NodeGPF is for processing older core dump
+	// jextract XMLs, so although some of these constants changed with
+	// https://github.com/eclipse/omr/pull/3921, the following should be fixed
+	// in time.
 	private final static int J9PORT_SIG_FLAG_SIGSEGV 	= 4;
 	private final static int J9PORT_SIG_FLAG_SIGBUS 	= 8;
 	private final static int J9PORT_SIG_FLAG_SIGILL 	= 16;
 	private final static int J9PORT_SIG_FLAG_SIGFPE 	= 32;
 	private final static int J9PORT_SIG_FLAG_SIGTRAP 	= 64;
-	//private final static int J9PORT_SIG_FLAG_SIGRESERVED7 = 0x80;
-	//private final static int J9PORT_SIG_FLAG_SIGRESERVED8 = 0x100;
-	//private final static int J9PORT_SIG_FLAG_SIGRESERVED9 = 0x200;
-	//private final static int J9PORT_SIG_FLAG_SIGALLSYNC 	= 124;
 	private final static int J9PORT_SIG_FLAG_SIGQUIT 	= 0x400;
 	private final static int J9PORT_SIG_FLAG_SIGABRT 	= 0x800;
 	private final static int J9PORT_SIG_FLAG_SIGTERM 	= 0x1000;
-	//private final static int J9PORT_SIG_FLAG_SIGRECONFIG 		= 0x2000;
-	//private final static int J9PORT_SIG_FLAG_SIGRESERVED14 	= 0x4000;
-	//private final static int J9PORT_SIG_FLAG_SIGRESERVED15 	= 0x8000;
-	//private final static int J9PORT_SIG_FLAG_SIGRESERVED16 	= 0x10000;
-	//private final static int J9PORT_SIG_FLAG_SIGRESERVED17 	= 0x20000;
-	//private final static int J9PORT_SIG_FLAG_SIGALLASYNC 		= 0x3C00;
 	private final static int J9PORT_SIG_FLAG_SIGFPE_DIV_BY_ZERO 	= 0x40020;
 	private final static int J9PORT_SIG_FLAG_SIGFPE_INT_DIV_BY_ZERO = 0x80020;
 	private final static int J9PORT_SIG_FLAG_SIGFPE_INT_OVERFLOW 	= 0x100020;
