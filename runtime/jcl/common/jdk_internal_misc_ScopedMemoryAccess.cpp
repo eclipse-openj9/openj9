@@ -27,6 +27,7 @@
 #include "jcl_internal.h"
 #include "rommeth.h"
 #include "omrlinkedlist.h"
+#include "VMHelpers.hpp"
 
 extern "C" {
 
@@ -88,19 +89,21 @@ Java_jdk_internal_misc_ScopedMemoryAccess_closeScope0(JNIEnv *env, jobject insta
 		vmFuncs->acquireExclusiveVMAccess(currentThread);
 		J9VMThread *walkThread = J9_LINKED_LIST_START_DO(vm->mainThread);
 		while (NULL != walkThread) {
-			J9StackWalkState walkState;
-			walkState.walkThread = walkThread;
-			walkState.flags = J9_STACKWALK_ITERATE_FRAMES | J9_STACKWALK_ITERATE_O_SLOTS;
-			walkState.skipCount = 0;
-			walkState.userData1 = (void *)scope;
-			walkState.userData2 = (void *)&scopeNotFound;
-			walkState.frameWalkFunction = closeScope0FrameWalkFunction;
-			walkState.objectSlotWalkFunction = closeScope0OSlotWalkFunction;
+			if (VM_VMHelpers::threadCanRunJavaCode(walkThread)) {
+				J9StackWalkState walkState;
+				walkState.walkThread = walkThread;
+				walkState.flags = J9_STACKWALK_ITERATE_FRAMES | J9_STACKWALK_ITERATE_O_SLOTS;
+				walkState.skipCount = 0;
+				walkState.userData1 = (void *)scope;
+				walkState.userData2 = (void *)&scopeNotFound;
+				walkState.frameWalkFunction = closeScope0FrameWalkFunction;
+				walkState.objectSlotWalkFunction = closeScope0OSlotWalkFunction;
 
-			vm->walkStackFrames(walkThread, &walkState);
-			if (JNI_FALSE == *(jboolean *)walkState.userData2) {
-				/* scope found */
-				break;
+				vm->walkStackFrames(walkThread, &walkState);
+				if (JNI_FALSE == *(jboolean *)walkState.userData2) {
+					/* scope found */
+					break;
+				}
 			}
 
 			walkThread = J9_LINKED_LIST_NEXT_DO(vm->mainThread, walkThread);
