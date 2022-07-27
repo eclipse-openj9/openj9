@@ -462,7 +462,14 @@ Java_java_lang_Thread_getThreads(JNIEnv *env, jclass clazz)
 		UDATA threadCount = 0;
 
 		do {
+#if JAVA_SPEC_VERSION >= 19
+			/* carrierThreadObject should always point to a platform thread.
+			 * Thus, all virtual threads should be excluded.
+			 */
+			j9object_t threadObject = targetThread->carrierThreadObject;
+#else /* JAVA_SPEC_VERSION >= 19 */
 			j9object_t threadObject = targetThread->threadObject;
+#endif /* JAVA_SPEC_VERSION >= 19 */
 
 			/* Only count live threads */
 			if (NULL != threadObject) {
