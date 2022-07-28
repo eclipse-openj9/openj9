@@ -6370,7 +6370,7 @@ TR_J9ByteCodeIlGenerator::genNew(TR::ILOpCodes opCode)
    }
 
 void
-TR_J9ByteCodeIlGenerator::genWithField(uint16_t fieldCpIndex)
+TR_J9ByteCodeIlGenerator::genWithField(int32_t fieldCpIndex)
    {
    const int32_t bcIndex = currentByteCodeIndex();
    int32_t classCpIndex = method()->classCPIndexOfFieldOrStatic(fieldCpIndex);
@@ -6445,7 +6445,7 @@ TR_J9ByteCodeIlGenerator::genWithField(TR::SymbolReference * symRef, TR_OpaqueCl
    }
 
 void
-TR_J9ByteCodeIlGenerator::genFlattenableWithFieldWithHelper(uint16_t fieldCpIndex)
+TR_J9ByteCodeIlGenerator::genFlattenableWithFieldWithHelper(int32_t fieldCpIndex)
    {
    bool isStore = false;
    TR::SymbolReference * symRef = symRefTab()->findOrCreateShadowSymbol(_methodSymbol, fieldCpIndex, isStore);
@@ -6502,7 +6502,7 @@ static TR::SymbolReference * createLoadFieldSymRef(TR::Compilation * comp, TR_Op
    }
 
 void
-TR_J9ByteCodeIlGenerator::genFlattenableWithField(uint16_t fieldCpIndex, TR_OpaqueClassBlock * valueClass)
+TR_J9ByteCodeIlGenerator::genFlattenableWithField(int32_t fieldCpIndex, TR_OpaqueClassBlock * valueClass)
    {
    /* An example on what the tree with flattened fields would look like
     *
@@ -6621,14 +6621,19 @@ TR_J9ByteCodeIlGenerator::genFlattenableWithField(uint16_t fieldCpIndex, TR_Opaq
    }
 
 void
-TR_J9ByteCodeIlGenerator::genAconst_init(uint16_t cpIndex)
+TR_J9ByteCodeIlGenerator::genAconst_init(int32_t cpIndex)
    {
-   TR_OpaqueClassBlock *valueTypeClass = method()->getClassFromConstantPool(comp(), cpIndex);
-   genAconst_init(valueTypeClass);
+   TR_OpaqueClassBlock *valueTypeClass = method()->getClassFromConstantPool(comp(), cpIndex, true /* returnClassForAot */);
+
+   if (comp()->getOption(TR_TraceILGen))
+      {
+      traceMsg(comp(), "%s: cpIndex %d valueTypeClass %p\n", __FUNCTION__, cpIndex, valueTypeClass);
+      }
+   genAconst_init(valueTypeClass, cpIndex);
    }
 
 void
-TR_J9ByteCodeIlGenerator::genAconst_init(TR_OpaqueClassBlock *valueTypeClass)
+TR_J9ByteCodeIlGenerator::genAconst_init(TR_OpaqueClassBlock *valueTypeClass, int32_t cpIndex)
    {
    // valueTypeClass will be NULL if it is unresolved.  Abort the compilation and
    // track the failure with a static debug counter
@@ -6637,7 +6642,7 @@ TR_J9ByteCodeIlGenerator::genAconst_init(TR_OpaqueClassBlock *valueTypeClass)
       abortForUnresolvedValueTypeOp("aconst_init", "class");
       }
 
-   TR::SymbolReference *valueClassSymRef = symRefTab()->findOrCreateClassSymbol(_methodSymbol, 0, valueTypeClass);
+   TR::SymbolReference *valueClassSymRef = symRefTab()->findOrCreateClassSymbol(_methodSymbol, cpIndex, valueTypeClass);
 
    if (comp()->getOption(TR_TraceILGen))
       {
@@ -6665,7 +6670,9 @@ TR_J9ByteCodeIlGenerator::genAconst_init(TR_OpaqueClassBlock *valueTypeClass)
 
          if (comp()->getOption(TR_TraceILGen))
             {
-            traceMsg(comp(), "Handling aconst_init for valueClass %s\n - field[%d] name %s type %d offset %d\n", comp()->getDebug()->getName(valueClassSymRef), idx, entry._fieldname, entry._datatype.getDataType(), entry._offset);
+            traceMsg(comp(), "Handling aconst_init for valueClass %s valueClassSymRef #%d CPIndex %d\n - field[%d] name %s type %d offset %d\n",
+                  comp()->getDebug()->getName(valueClassSymRef), valueClassSymRef->getReferenceNumber(), valueClassSymRef->getCPIndex(),
+                  idx, entry._fieldname, entry._datatype.getDataType(), entry._offset);
             }
 
          // Supply default value that is appropriate for the type of the corresponding field
@@ -6719,9 +6726,22 @@ TR_J9ByteCodeIlGenerator::genAconst_init(TR_OpaqueClassBlock *valueTypeClass)
                /// reference.
                if (fieldSignature[0] == 'Q')
                   {
+                  // In non-SVM AOT compilation, cpIndex is required for AOT relocation.
+                  // In this case, cpindex is unknown for the field.
+                  if (comp()->compileRelocatableCode() && !comp()->getOption(TR_UseSymbolValidationManager))
+                     {
+                     abortForUnresolvedValueTypeOp("aconst_init", "field");
+                     }
+
                   TR_OpaqueClassBlock *fieldClass = fej9()->getClassFromSignature(fieldSignature, (int32_t)strlen(fieldSignature),
                                                                                   comp()->getCurrentMethod());
-                  genAconst_init(fieldClass);
+                  if (comp()->getOption(TR_TraceILGen))
+                     {
+                     traceMsg(comp(), "fieldSignature %s fieldClass %p\n", fieldSignature, fieldClass);
+                     }
+
+                  // Set cpIndex as -1 since it's unknown for the field class
+                  genAconst_init(fieldClass, -1 /* cpIndex */);
                   }
                else if (comp()->target().is64Bit())
                   {

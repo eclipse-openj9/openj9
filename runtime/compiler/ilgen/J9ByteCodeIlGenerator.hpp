@@ -247,12 +247,12 @@ private:
    void         genMonitorEnter();
    void         genMonitorExit(bool);
    TR_OpaqueClassBlock *loadValueClass(int32_t classCpIndex);
-   void         genAconst_init(uint16_t classCpIndex);
-   void         genAconst_init(TR_OpaqueClassBlock *valueTypeClass);
-   void         genWithField(uint16_t fieldCpIndex);
+   void         genAconst_init(int32_t classCpIndex);
+   void         genAconst_init(TR_OpaqueClassBlock *valueTypeClass, int32_t cpIndex);
+   void         genWithField(int32_t fieldCpIndex);
    void         genWithField(TR::SymbolReference *, TR_OpaqueClassBlock *);
-   void         genFlattenableWithField(uint16_t, TR_OpaqueClassBlock *);
-   void         genFlattenableWithFieldWithHelper(uint16_t fieldCpIndex);
+   void         genFlattenableWithField(int32_t, TR_OpaqueClassBlock *);
+   void         genFlattenableWithFieldWithHelper(int32_t fieldCpIndex);
    void         genFlush(int32_t nargs);
    void         genFullFence(TR::Node *node);
    void         handlePendingPushSaveSideEffects(TR::Node *, int32_t stackSize = -1);
