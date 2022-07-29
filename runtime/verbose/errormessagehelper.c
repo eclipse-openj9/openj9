@@ -532,7 +532,27 @@ decodeConstuctedStackMapFrameData(StackMapFrame* stackMapFrame, U_8* nextStackma
 	VerificationTypeInfo* currentVerificationTypeEntry = stackMapFrame->entries;
 	U_16 maxStack = methodInfo->maxStack;
 	U_16 maxLocals = methodInfo->maxLocals;
-	IDATA lastIndex = stackBaseIndex - 1;
+	/* The layout of 'locals' and 'stack' in each stackmap frame of a constructed stackmaps looks as follows:
+	 * +-----------------------+------------------+
+	 * |         locals        |     stack        |
+	 * +-----------------------+------------------+
+	 * 0                      | |
+	 *                lastIndex stackBaseIndex
+	 * It shows that stackBaseIndex points to the 1st element of 'stack' while lastIndex points to
+	 * the last element of 'locals'.
+	 *
+	 * Initially, both stackBaseIndex and stackTopIndex are set to -1 by default before the stackmaps
+	 * are constructed internally against the class bytecode (class version <= 50) via simulateStack(),
+	 * in which case both 'locals' and 'stack' are empty in each stackmap frame of the stackmaps.
+	 * (See the code of initializing stackmaps in j9bcv_verifyBytecodes() at bcverify.c)
+	 *
+	 * Thus, there are 3 cases in terms of a given stackmap frame of the constructed stackmaps:
+	 * 1)if stackBaseIndex == -1(which means that both 'locals' and 'stack' are empty), lastIndex is -1.
+	 * 2)if stackBaseIndex == 0 (which means that there is 1 element in 'locals'), lastIndex is 0.
+	 * 3)if stackBaseIndex >= 1 (which means that there is at least 1 element in 'locals'),
+	 *   lastIndex is (stackBaseIndex - 1).
+	 */
+	IDATA lastIndex = (stackBaseIndex >= 1) ? (stackBaseIndex - 1) : stackBaseIndex;
 	IDATA slot = 0;
 	IDATA dataTypeCode = DATATYPE_1_SLOT;
 	BOOLEAN nonTopFound = FALSE;
@@ -807,6 +827,7 @@ releaseVerificationTypeBuffer(StackMapFrame* stackMapFrame, MethodContextInfo* m
 	if (NULL != stackMapFrame->entries) {
 		PORT_ACCESS_FROM_PORT(methodInfo->portLib);
 		j9mem_free_memory(stackMapFrame->entries);
+		stackMapFrame->entries = NULL;
 	}
 }
 
