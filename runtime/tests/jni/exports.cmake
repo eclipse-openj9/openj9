@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2019, 2020 IBM Corp. and others
+# Copyright (c) 2019, 2022 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -239,4 +239,5 @@ omr_add_exports(j9ben
 	Java_j9vm_test_corehelper_DeadlockCoreGenerator_createNativeDeadlock
 	Java_j9vm_test_jni_PthreadTest_attachAndDetach
 	Java_org_openj9_test_contendedfields_FieldUtilities_getObjectAlignmentInBytes
+	Java_org_openj9_test_jep425_VirtualThreadTests_lockSupportPark
 )

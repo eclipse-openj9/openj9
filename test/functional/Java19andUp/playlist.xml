@@ -40,6 +40,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<types>
+			<type>native</type>
+		</types>
 		<impls>
 			<impl>openj9</impl>
 		</impls>
