@@ -125,6 +125,9 @@ typedef struct J9CreateRAMClassState {
 	J9Class *classBeingRedefined;
 	IDATA entryIndex;
 	I_32 locationType;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	UDATA valueTypeFlags;
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 } J9CreateRAMClassState;
 
 typedef struct J9EquivalentEntry {
@@ -2224,6 +2227,96 @@ nativeOOM:
 #endif /* JAVA_SPEC_VERSION >= 11 */
 		}
 
+		/* Update the classFlags field if necessary */
+		U_32 classFlags = state->ramClass->classFlags;
+		if (NULL != superclass) {
+			/**
+			 * watched fields tag and exemption from validation are inherited from the superclass.
+			 * J9ClassHasIdentity is also inherited. If a class cannot be super class
+			 * of value types, its subclasses cannot be super of value types either.
+			 * J9ClassEnsureHashed inherited as subclasses of commonly hashed classes are likely
+			 * to be hashed as well.
+			 */
+			const U_32 inheritedFlags = J9ClassHasWatchedFields | J9ClassIsExemptFromValidation | J9ClassHasIdentity | J9ClassEnsureHashed;
+			classFlags |= (superclass->classFlags & inheritedFlags);
+		}
+		if (J9_ARE_ALL_BITS_SET(options, J9_FINDCLASS_FLAG_ANON)) {
+			/* if anonClass replace classLoader with hostClassLoader, no one can know about anonClassLoader */
+			state->ramClass->classLoader = hostClassLoader;
+			if (NULL != state->ramClass->classObject) {
+				/* no object is created when doing hotswapping */
+				J9VMJAVALANGCLASS_SET_CLASSLOADER(vmThread, state->ramClass->classObject, hostClassLoader->classLoaderObject);
+			}
+			classFlags |= J9ClassIsAnonymous;
+		}
+		if (J9_ARE_NO_BITS_SET(classFlags, J9ClassIsExemptFromValidation)) {
+			J9UTF8 *className = J9ROMCLASS_CLASSNAME(romClass);
+
+			if (J9UTF8_LITERAL_EQUALS(J9UTF8_DATA(className), J9UTF8_LENGTH(className), MAGIC_ACCESSOR_IMPL)) {
+				classFlags |= J9ClassIsExemptFromValidation;
+			}
+		}
+		if (J9ROMCLASS_IS_VALUEBASED(romClass)) {
+			classFlags |= J9ClassIsValueBased;
+		}
+		if (NULL != javaVM->ensureHashedClasses) {
+			J9UTF8 *className = J9ROMCLASS_CLASSNAME(romClass);
+			J9UTF8 **entry = (J9UTF8 **)hashTableFind(javaVM->ensureHashedClasses, &className);
+
+			if (NULL != entry) {
+				classFlags |= J9ClassEnsureHashed;
+			}
+		}
+
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		if (J9_ARE_ALL_BITS_SET(classFlags, J9ClassHasIdentity)) {
+			if (J9ROMCLASS_IS_VALUE(romClass)) {
+				J9UTF8* className = J9ROMCLASS_CLASSNAME(romClass);
+				J9UTF8 *superclassName = J9ROMCLASS_SUPERCLASSNAME(romClass);
+				setCurrentExceptionNLSWithArgs(vmThread, J9NLS_VM_VALUETYPE_HAS_WRONG_SUPERCLASS,
+						J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR, J9UTF8_LENGTH(className),
+						J9UTF8_DATA(className), J9UTF8_LENGTH(superclassName), J9UTF8_DATA(superclassName));
+			}
+		} else {
+			if (J9ROMCLASS_HAS_IDENTITY(romClass)) {
+				classFlags |= J9ClassHasIdentity;
+			}
+		}
+
+		if (J9ROMCLASS_IS_VALUE(romClass)) {
+			classFlags |= J9ClassIsValueType;
+			if (J9ROMCLASS_IS_PRIMITIVE_VALUE_TYPE(romClass)) {
+				UDATA instanceSize = state->ramClass->totalInstanceSize;
+				classFlags |= J9ClassIsPrimitiveValueType;
+				if ((instanceSize <= javaVM->valueFlatteningThreshold)
+					&& !J9ROMCLASS_IS_CONTENDED(romClass)
+				) {
+					Trc_VM_CreateRAMClassFromROMClass_valueTypeIsFlattened(vmThread, J9UTF8_LENGTH(className), J9UTF8_DATA(className), state->ramClass);
+					classFlags |= J9ClassIsFlattened;
+				}
+				if (J9_ARE_ALL_BITS_SET(state->valueTypeFlags, J9ClassCanSupportFastSubstitutability)) {
+					classFlags |= J9ClassCanSupportFastSubstitutability;
+				}
+				if (J9_ARE_ALL_BITS_SET(state->valueTypeFlags, J9ClassLargestAlignmentConstraintDouble)) {
+					classFlags |= J9ClassLargestAlignmentConstraintDouble;
+				} else if (J9_ARE_ALL_BITS_SET(state->valueTypeFlags, J9ClassLargestAlignmentConstraintReference)) {
+					classFlags |= J9ClassLargestAlignmentConstraintReference;
+				}
+				if (J9_ARE_ALL_BITS_SET(state->valueTypeFlags, J9ClassRequiresPrePadding)) {
+					classFlags |= J9ClassRequiresPrePadding;
+				}
+			}
+		}
+		if (J9_ARE_ALL_BITS_SET(state->valueTypeFlags, J9ClassContainsUnflattenedFlattenables)) {
+			classFlags |= J9ClassContainsUnflattenedFlattenables;
+		}
+		if (J9_ARE_ALL_BITS_SET(state->valueTypeFlags, J9ClassHasReferences)) {
+			classFlags |= J9ClassHasReferences;
+		}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+
+		state->ramClass->classFlags = classFlags;
+
 		/* Ensure all previous writes have completed before making the new class visible. */
 		VM_AtomicSupport::writeBarrier();
 
@@ -3351,6 +3444,9 @@ fail:
 		}
 	}
 
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	state->valueTypeFlags = *valueTypeFlags;
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 	return internalCreateRAMClassDone(vmThread, classLoader, hostClassLoader, romClass, options, elementClass, className, state, superclass, segment);
 }
 
@@ -3531,97 +3627,6 @@ retry:
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	if (state.retry) {
 		goto retry;
-	}
-
-	if (NULL != result) {
-		U_32 classFlags = result->classFlags;
-		if (NULL != superclass) {
-			/**
-			 * watched fields tag and exemption from validation are inherited from the superclass.
-			 * J9ClassHasIdentity is also inherited. If a class cannot be super class
-			 * of value types, its subclasses cannot be super of value types either.
-			 * J9ClassEnsureHashed inherited as subclasses of commonly hashed classes are likely
-			 * to be hashed as well.
-			 */
-			const U_32 inheritedFlags = J9ClassHasWatchedFields | J9ClassIsExemptFromValidation | J9ClassHasIdentity | J9ClassEnsureHashed;
-			classFlags |= (superclass->classFlags & inheritedFlags);
-		}
-		if (J9_ARE_ALL_BITS_SET(options, J9_FINDCLASS_FLAG_ANON)) {
-			/* if anonClass replace classLoader with hostClassLoader, no one can know about anonClassLoader */
-			result->classLoader = hostClassLoader;
-			if (NULL != result->classObject) {
-				/* no object is created when doing hotswapping */
-				J9VMJAVALANGCLASS_SET_CLASSLOADER(vmThread, result->classObject, hostClassLoader->classLoaderObject);
-			}
-			classFlags |= J9ClassIsAnonymous;
-		}
-		if (J9_ARE_NO_BITS_SET(classFlags, J9ClassIsExemptFromValidation)) {
-			J9UTF8 *className = J9ROMCLASS_CLASSNAME(romClass);
-
-			if (J9UTF8_LITERAL_EQUALS(J9UTF8_DATA(className), J9UTF8_LENGTH(className), MAGIC_ACCESSOR_IMPL)) {
-				classFlags |= J9ClassIsExemptFromValidation;
-			}
-		}
-		if (J9ROMCLASS_IS_VALUEBASED(romClass)) {
-			classFlags |= J9ClassIsValueBased;
-		}
-		if (NULL != javaVM->ensureHashedClasses) {
-			J9UTF8 *className = J9ROMCLASS_CLASSNAME(romClass);
-			J9UTF8 **entry = (J9UTF8 **)hashTableFind(javaVM->ensureHashedClasses, &className);
-
-			if (NULL != entry) {
-				classFlags |= J9ClassEnsureHashed;
-			}
-		}
-
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-		if (J9_ARE_ALL_BITS_SET(classFlags, J9ClassHasIdentity)) {
-			if (J9ROMCLASS_IS_VALUE(romClass)) {
-				J9UTF8* className = J9ROMCLASS_CLASSNAME(romClass);
-				J9UTF8 *superclassName = J9ROMCLASS_SUPERCLASSNAME(romClass);
-				setCurrentExceptionNLSWithArgs(vmThread, J9NLS_VM_VALUETYPE_HAS_WRONG_SUPERCLASS, 
-						J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR, J9UTF8_LENGTH(className), 
-						J9UTF8_DATA(className), J9UTF8_LENGTH(superclassName), J9UTF8_DATA(superclassName));
-			}
-		} else {
-			if (J9ROMCLASS_HAS_IDENTITY(romClass)) {
-				classFlags |= J9ClassHasIdentity;
-			}
-		}
-		
-		if (J9ROMCLASS_IS_VALUE(romClass)) {
-			classFlags |= J9ClassIsValueType;
-			if (J9ROMCLASS_IS_PRIMITIVE_VALUE_TYPE(romClass)) {
-				UDATA instanceSize = result->totalInstanceSize;
-				classFlags |= J9ClassIsPrimitiveValueType;
-				if ((instanceSize <= javaVM->valueFlatteningThreshold)
-					&& !J9ROMCLASS_IS_CONTENDED(romClass)
-				) {
-					Trc_VM_CreateRAMClassFromROMClass_valueTypeIsFlattened(vmThread, J9UTF8_LENGTH(className), J9UTF8_DATA(className), result);
-					classFlags |= J9ClassIsFlattened;
-				}
-				if (J9_ARE_ALL_BITS_SET(valueTypeFlags, J9ClassCanSupportFastSubstitutability)) {
-					classFlags |= J9ClassCanSupportFastSubstitutability;
-				}
-				if (J9_ARE_ALL_BITS_SET(valueTypeFlags, J9ClassLargestAlignmentConstraintDouble)) {
-					classFlags |= J9ClassLargestAlignmentConstraintDouble;
-				} else if (J9_ARE_ALL_BITS_SET(valueTypeFlags, J9ClassLargestAlignmentConstraintReference)) {
-					classFlags |= J9ClassLargestAlignmentConstraintReference;
-				}
-				if (J9_ARE_ALL_BITS_SET(valueTypeFlags, J9ClassRequiresPrePadding)) {
-					classFlags |= J9ClassRequiresPrePadding;
-				}
-			}
-		}
-		if (J9_ARE_ALL_BITS_SET(valueTypeFlags, J9ClassContainsUnflattenedFlattenables)) {
-			classFlags |= J9ClassContainsUnflattenedFlattenables;
-		}
-		if (J9_ARE_ALL_BITS_SET(valueTypeFlags, J9ClassHasReferences)) {
-			classFlags |= J9ClassHasReferences;
-		}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
-
-		result->classFlags = classFlags;
 	}
 
 done:
