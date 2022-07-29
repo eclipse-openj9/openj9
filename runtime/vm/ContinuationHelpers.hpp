@@ -24,6 +24,11 @@
 
 #include "j9.h"
 
+/* These should match the error code values in enum Pinned within class Continuation. */
+#define J9VM_CONTINUATION_PINNED_REASON_NATIVE 1
+#define J9VM_CONTINUATION_PINNED_REASON_MONITOR 2
+#define J9VM_CONTINUATION_PINNED_REASON_CRITICAL_SECTION 3
+
 class VM_ContinuationHelpers {
 	/*
 	 * Data members

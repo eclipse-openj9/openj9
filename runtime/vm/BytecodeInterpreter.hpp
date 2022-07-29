@@ -5196,6 +5196,26 @@ done:
 		return rc;
 
 	}
+
+	/* jdk.internal.vm.Continuation: private static native int isPinnedImpl(); */
+	VMINLINE VM_BytecodeAction
+	isPinnedContinuationImpl(REGISTER_ARGS_LIST)
+	{
+		VM_BytecodeAction rc = EXECUTE_BYTECODE;
+		jint result = 0;
+		buildInternalNativeStackFrame(REGISTER_ARGS);
+		updateVMStruct(REGISTER_ARGS);
+
+		/* Check if the current Continuation is pinned. */
+		result = isPinnedContinuation(_currentThread);
+
+		VMStructHasBeenUpdated(REGISTER_ARGS);
+		restoreInternalNativeStackFrame(REGISTER_ARGS);
+
+		returnSingleFromINL(REGISTER_ARGS, result, 0);
+		return rc;
+
+	}
 #endif /* JAVA_SPEC_VERSION >= 19 */
 
 	/* Redirect to out of line INL methods */
@@ -10009,6 +10029,7 @@ public:
 #if JAVA_SPEC_VERSION >= 19
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_ENTER_CONTINUATION),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_YIELD_CONTINUATION),
+		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_ISPINNED_CONTINUATION),
 #endif /* JAVA_SPEC_VERSION >= 19 */
 	};
 #endif /* !defined(USE_COMPUTED_GOTO) */
@@ -10642,6 +10663,8 @@ runMethod: {
 		PERFORM_ACTION(enterContinuationImpl(REGISTER_ARGS));
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_YIELD_CONTINUATION):
 		PERFORM_ACTION(yieldContinuationImpl(REGISTER_ARGS));
+	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_ISPINNED_CONTINUATION):
+		PERFORM_ACTION(isPinnedContinuationImpl(REGISTER_ARGS));
 #endif /* JAVA_SPEC_VERSION >= 19 */
 #if !defined(USE_COMPUTED_GOTO)
 	default:

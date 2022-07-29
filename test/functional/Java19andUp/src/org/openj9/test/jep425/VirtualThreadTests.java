@@ -32,6 +32,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
+import java.util.concurrent.locks.LockSupport;
 
 /**
  * Test cases for JEP 425: Virtual Threads (Preview) Continuation execution
@@ -39,12 +40,21 @@ import java.util.stream.IntStream;
  */
 @Test(groups = { "level.sanity" })
 public class VirtualThreadTests {
+	static {
+		try {
+			System.loadLibrary("j9ben");
+		} catch (UnsatisfiedLinkError e) {
+			System.out.println("No natives for JNI tests");
+		}
+	}
+
+	public static native boolean lockSupportPark();
 
 	@Test
 	public void test_basicVirtualthread() {
 		var wrapper = new Object(){ boolean executed = false; };
 		try {
-			Thread t = Thread.ofVirtual().name("duke").unstarted(()->{
+			Thread t = Thread.ofVirtual().name("duke").unstarted(() -> {
 				wrapper.executed = true;
 			});
 
@@ -66,13 +76,65 @@ public class VirtualThreadTests {
 							results[i] = 1;
 							Thread.sleep(Duration.ofSeconds(1));
 							results[i] += 1;
+							Thread.sleep(Duration.ofSeconds(1));
+							results[i] += 1;
 							return i;
 					});
 			});
-			executor.awaitTermination(2L, TimeUnit.SECONDS);
+			executor.awaitTermination(5L, TimeUnit.SECONDS);
 			for (int i = 0; i < 6; i++) {
-				AssertJUnit.assertTrue("Virtual Thread " + i + ": incorrect result of " + results[i], (results[i] == 2));
+				AssertJUnit.assertTrue("Virtual Thread " + i + ": incorrect result of " + results[i], (results[i] == 3));
 			}
+		} catch (Exception e) {
+			Assert.fail("Unexpected exception occured : " + e.getMessage() , e);
+		}
+	}
+
+	@Test
+	public void test_synchronizedBlockFromVirtualthread() {
+		try {
+			Thread t = Thread.ofVirtual().name("synchronized").unstarted(() -> {
+				synchronized(VirtualThreadTests.class) {
+					try {
+						LockSupport.park();
+						Assert.fail("IllegalStateException not thrown");
+					} catch (IllegalStateException e) {
+						/* Virtual Thread is pinned in a synchronized block, and it should not be
+						 * allowed to yield. An IllegalStateException is thrown if a Virtual Thread
+						 * is yielded in a pinned state.
+						 */
+						String message = e.getMessage();
+						AssertJUnit.assertTrue("Virtual Thread pinned state should be MONITOR: " + message, message.contains("MONITOR"));
+					}
+				}
+			});
+
+			t.start();
+			t.join();
+		} catch (Exception e) {
+			Assert.fail("Unexpected exception occured : " + e.getMessage() , e);
+		}
+	}
+
+	@Test
+	public void test_jniFromVirtualthread() {
+		try {
+			Thread t = Thread.ofVirtual().name("native").unstarted(() -> {
+				try {
+					lockSupportPark();
+					Assert.fail("IllegalStateException not thrown");
+				} catch (IllegalStateException e) {
+					/* Virtual Thread is pinned inside JNI, and it should not be allowed
+					 * to yield. An IllegalStateException is thrown if a Virtual Thread
+					 * is yielded in a pinned state.
+					 */
+					String message = e.getMessage();
+					AssertJUnit.assertTrue("Virtual Thread pinned state should be NATIVE: " + message, message.contains("NATIVE"));
+				}
+			});
+
+			t.start();
+			t.join();
 		} catch (Exception e) {
 			Assert.fail("Unexpected exception occured : " + e.getMessage() , e);
 		}

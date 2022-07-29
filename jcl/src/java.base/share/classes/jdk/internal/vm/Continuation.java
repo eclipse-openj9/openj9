@@ -44,11 +44,21 @@ public class Continuation {
 	 */
 	public enum Pinned {
 		/** In native code */
-		NATIVE,
+		NATIVE(1),
 		/** Holding monitor(s) */
-		MONITOR,
+		MONITOR(2),
 		/** In critical section */
-		CRITICAL_SECTION
+		CRITICAL_SECTION(3);
+
+		private final int errorCode;
+
+		private Pinned(int errorCode) {
+			this.errorCode = errorCode;
+		}
+
+		public int errorCode() {
+			return this.errorCode;
+		}
 	}
 
 	public enum PreemptStatus {
@@ -179,6 +189,20 @@ public class Continuation {
 	 */
 	public static boolean yield(ContinuationScope scope) {
 		/* TODO find matching scope to yield */
+		int rcPinned = isPinnedImpl();
+		if (rcPinned != 0) {
+			Pinned reason = null;
+			if (rcPinned == Pinned.CRITICAL_SECTION.errorCode()) {
+				reason = Pinned.CRITICAL_SECTION;
+			} else if (rcPinned == Pinned.MONITOR.errorCode()) {
+				reason = Pinned.MONITOR;
+			} else if (rcPinned == Pinned.NATIVE.errorCode()) {
+				reason = Pinned.NATIVE;
+			} else {
+				throw new AssertionError("Unknown pinned error code: " + rcPinned);
+			}
+			throw new IllegalStateException("Continuation is pinned: " + reason);
+		}
 		return yieldImpl();
 	}
 
@@ -202,10 +226,10 @@ public class Continuation {
 
 	public static native void unpin();
 
-	private static native boolean isPinnedImpl();
+	private static native int isPinnedImpl();
 
 	public static boolean isPinned(ContinuationScope scope) {
-		return isPinnedImpl();
+		return (isPinnedImpl() != 0);
 	}
 
 	public PreemptStatus tryPreempt(Thread t) {

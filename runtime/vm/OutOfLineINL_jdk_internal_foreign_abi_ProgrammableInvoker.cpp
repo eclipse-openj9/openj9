@@ -44,6 +44,9 @@ OutOfLineINL_jdk_internal_foreign_abi_ProgrammableInvoker_resolveRequiredFields(
 				J9VMCONSTANTPOOL_JDKINTERNALFOREIGNABIPROGRAMMABLEINVOKER_ARGTYPESADDR
 			};
 
+#if JAVA_SPEC_VERSION >= 19
+	currentThread->callOutCount += 1;
+#endif /* JAVA_SPEC_VERSION >= 19 */
 	VM_OutOfLineINL_Helpers::buildInternalNativeStackFrame(currentThread, method);
 	for (int i = 0; i < cpEntryNum; i++) {
 		J9RAMFieldRef *cpFieldRef = ((J9RAMFieldRef*)jclConstantPool) + cpIndex[i];
@@ -61,6 +64,9 @@ OutOfLineINL_jdk_internal_foreign_abi_ProgrammableInvoker_resolveRequiredFields(
 	VM_OutOfLineINL_Helpers::restoreInternalNativeStackFrame(currentThread);
 
 done:
+#if JAVA_SPEC_VERSION >= 19
+	currentThread->callOutCount -= 1;
+#endif /* JAVA_SPEC_VERSION >= 19 */
 	VM_OutOfLineINL_Helpers::returnVoid(currentThread, 0);
 	return rc;
 }

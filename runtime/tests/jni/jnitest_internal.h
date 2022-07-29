@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1743,6 +1743,15 @@ Java_jit_test_vich_JNIObjectArray_getObjectArrayElement(JNIEnv *env, jobject obj
 /* ---------------- jnitest.c ---------------- */
 
 /**
+ * @brief Invoke LockSupport.park().
+ * @param env
+ * @param cls
+ * @return JNI_TRUE if LockSupport.park() is invoked; otherwise, JNI_FALSE.
+ */
+jboolean JNICALL
+Java_org_openj9_test_jep425_VirtualThreadTests_lockSupportPark(JNIEnv *env, jclass cls);
+
+/**
 * @brief
 * @param env
 * @param rcv
@@ -2068,7 +2077,6 @@ Java_j9vm_test_thread_NativeHelpers_abort(JNIEnv *env, jclass cls, jobject threa
 */
 void JNICALL 
 Java_j9vm_test_thread_NativeHelpers_priorityInterrupt(JNIEnv *env, jclass cls, jobject thread);
-
 
 /* ---------------- jniReturnInvalidReference.c ---------------- */
 jobject JNICALL 
