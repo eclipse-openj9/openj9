@@ -55,6 +55,8 @@ jvmCheckpointHooks(J9VMThread *currentThread)
 	nas.name = (J9UTF8 *)&runPreCheckpointHooks_name;
 	nas.signature = (J9UTF8 *)&runPreCheckpointHooks_sig;
 
+	/* initialize before running checkpoint hooks */
+	initializeCriuHooks(currentThread);
 	/* make sure Java hooks are the first thing run when initiating checkpoint */
 	runStaticMethod(currentThread, J9UTF8_DATA(&j9InternalCheckpointHookAPI_name), &nas, 0, NULL);
 
@@ -356,7 +358,6 @@ runInternalJVMCheckpointHooks(J9VMThread *currentThread)
 
 	Trc_VM_criu_runCheckpointHooks_Entry(currentThread);
 
-	initializeCriuHooks(currentThread);
 	/* Iterate heap objects to prepare internal hooks at checkpoint. */
 	vm->memoryManagerFunctions->j9mm_iterate_all_objects(vm, vm->portLibrary, 0, objectIteratorCallback, currentThread);
 
@@ -413,8 +414,14 @@ runDelayedLockRelatedOperations(J9VMThread *currentThread)
 	Assert_VM_true(vm->checkpointState.checkpointThread == currentThread);
 
 	while (NULL != delayedLockingOperation) {
-		omrthread_monitor_t monitorPtr = NULL;
 		j9object_t instance = J9_JNI_UNWRAP_REFERENCE(delayedLockingOperation->globalObjectRef);
+		omrthread_monitor_t monitorPtr = NULL;
+		if (J9_SINGLE_THREAD_MODE_OP_INTERRUPT == delayedLockingOperation->operation) {
+			VM_VMHelpers::threadInterruptImpl(currentThread, instance);
+			Trc_VM_criu_runDelayedLockRelatedOperations_runDelayedInterrupt(currentThread, J9_SINGLE_THREAD_MODE_OP_INTERRUPT, instance);
+			goto next;
+		}
+
 		if (!VM_ObjectMonitor::inlineFastObjectMonitorEnter(currentThread, instance)) {
 			rc = objectMonitorEnterNonBlocking(currentThread, instance);
 			if (J9_OBJECT_MONITOR_BLOCKING == rc) {
@@ -435,7 +442,7 @@ runDelayedLockRelatedOperations(J9VMThread *currentThread)
 				goto done;
 			} else {
 				/* no waiters */
-				goto next;
+				goto exitMonitor;
 			}
 		}
 
@@ -457,13 +464,14 @@ runDelayedLockRelatedOperations(J9VMThread *currentThread)
 			goto done;
 		}
 
-next:
+exitMonitor:
 		if (!VM_ObjectMonitor::inlineFastObjectMonitorExit(currentThread, instance)) {
 			if (0 != objectMonitorExit(currentThread, instance)) {
 				Assert_VM_unreachable();
 			}
 		}
 
+next:
 		vmFuncs->j9jni_deleteGlobalRef((JNIEnv*) currentThread, delayedLockingOperation->globalObjectRef, JNI_FALSE);
 		J9DelayedLockingOpertionsRecord *lastOperation = delayedLockingOperation;
 		delayedLockingOperation = J9_LINKED_LIST_NEXT_DO(vm->checkpointState.delayedLockingOperationsRoot, delayedLockingOperation);
@@ -474,6 +482,12 @@ done:
 	vm->checkpointState.delayedLockingOperationsRoot = NULL;
 
 	return rc;
+}
+
+BOOLEAN
+delayedLockingOperation(J9VMThread *currentThread, j9object_t instance, UDATA operation)
+{
+	return VM_CRIUHelpers::delayedLockingOperation(currentThread, instance, operation);
 }
 
 } /* extern "C" */
