@@ -161,13 +161,19 @@ jvmtiGetAllThreads(jvmtiEnv* env,
 
 			targetThread = vm->mainThread;
 			do {
+#if JAVA_SPEC_VERSION >= 19
+				/* carrierThreadObject should always point to a platform thread.
+				 * Thus, all virtual threads should be excluded.
+				 */
+				j9object_t threadObject = targetThread->carrierThreadObject;
+#else /* JAVA_SPEC_VERSION >= 19 */
 				j9object_t threadObject = targetThread->threadObject;
+#endif /* JAVA_SPEC_VERSION >= 19 */
 
 				/* Only count live threads */
-
 				if (threadObject != NULL) {
 					if (J9VMJAVALANGTHREAD_STARTED(currentThread, threadObject) && (J9VMJAVALANGTHREAD_THREADREF(currentThread, threadObject) != NULL)) {
-						*currentThreadPtr++ = (jthread) vm->internalVMFunctions->j9jni_createLocalRef((JNIEnv *) currentThread, (j9object_t) threadObject);
+						*currentThreadPtr++ = (jthread)vm->internalVMFunctions->j9jni_createLocalRef((JNIEnv *)currentThread, (j9object_t)threadObject);
 						++threadCount;
 					}
 				}
