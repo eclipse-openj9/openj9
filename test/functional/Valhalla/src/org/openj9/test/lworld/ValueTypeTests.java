@@ -3128,7 +3128,7 @@ public class ValueTypeTests {
 		valueTypeIdentityObjectTestHelper("testValueTypeSubClassInvisibleLightAbstractClass", superClassName, 0);
 	}
 
-	@Test(priority=1, expectedExceptions=VerifyError.class)
+	@Test(priority=1, expectedExceptions=ClassFormatError.class)
 	static public void testValueTypeHasSychMethods() throws Throwable {
 		String fields[] = {"longField:J"};
 		Class valueClass = ValueTypeGenerator.generateIllegalValueClassWithSychMethods("testValueTypeHasSychMethods", fields);
