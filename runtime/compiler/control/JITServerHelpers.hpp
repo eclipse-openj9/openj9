@@ -55,6 +55,7 @@ public:
       CLASSINFO_CONSTANT_POOL,
       CLASSINFO_CLASS_CHAIN_OFFSET_IDENTIFYING_LOADER,
       CLASSINFO_ARRAY_ELEMENT_SIZE,
+      CLASSINFO_DEFAULT_VALUE_SLOT_ADDRESS,
       };
 
    // NOTE: when adding new elements to this tuple, add them to the end,
@@ -84,7 +85,8 @@ public:
       uintptr_t,                         // 20: _classChainOffsetIdentifyingLoader
       std::vector<J9ROMMethod *>,        // 21: _origROMMethods
       std::string,                       // 22: _classNameIdentifyingLoader
-      int32_t                            // 23: _arrayElementSize
+      int32_t,                           // 23: _arrayElementSize
+      j9object_t *                       // 24: _defaultValueSlotAddress
       >;
 
    // Packs a ROMClass to be transferred to the server.

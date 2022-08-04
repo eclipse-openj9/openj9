@@ -589,7 +589,7 @@ J9::ClassEnv::enumerateFields(TR::Region &region, TR_OpaqueClassBlock *opaqueCla
 #if defined(J9VM_OPT_JITSERVER)
    if (comp->isOutOfProcessCompilation())
       {
-      auto stream = TR::CompilationInfo::getStream();
+      auto stream = comp->getStream();
       stream->write(JITServer::MessageType::ClassEnv_enumerateFields, opaqueClazz);
       auto recv = stream->read<std::vector<TR::TypeLayoutEntry>, std::vector<std::string>, std::vector<std::string>>();
       auto &entries = std::get<0>(recv);
@@ -981,7 +981,7 @@ bool
 J9::ClassEnv::isClassRefPrimitiveValueType(TR::Compilation *comp, TR_OpaqueClassBlock *cpContextClass, int32_t cpIndex)
    {
 #if defined(J9VM_OPT_JITSERVER)
-   if (auto stream = TR::CompilationInfo::getStream())
+   if (auto stream = comp->getStream())
       {
       stream->write(JITServer::MessageType::ClassEnv_isClassRefPrimitiveValueType, cpContextClass, cpIndex);
       return std::get<0>(stream->read<bool>());
@@ -1025,7 +1025,7 @@ int32_t
 J9::ClassEnv::flattenedArrayElementSize(TR::Compilation *comp, TR_OpaqueClassBlock *arrayClass)
    {
 #if defined(J9VM_OPT_JITSERVER)
-   if (auto stream = TR::CompilationInfo::getStream())
+   if (auto stream = comp->getStream())
       {
       int32_t arrayElementSize = 0;
       JITServerHelpers::getAndCacheRAMClassInfo((J9Class *)arrayClass, TR::compInfoPT->getClientData(), stream, JITServerHelpers::CLASSINFO_ARRAY_ELEMENT_SIZE, (void *)&arrayElementSize);
@@ -1036,5 +1036,46 @@ J9::ClassEnv::flattenedArrayElementSize(TR::Compilation *comp, TR_OpaqueClassBlo
       {
       J9JavaVM *vm = comp->fej9()->getJ9JITConfig()->javaVM;
       return vm->internalVMFunctions->arrayElementSize((J9ArrayClass*)self()->convertClassOffsetToClassPtr(arrayClass));
+      }
+   }
+
+j9object_t*
+J9::ClassEnv::getDefaultValueSlotAddress(TR::Compilation *comp, TR_OpaqueClassBlock *clazz)
+   {
+   TR_ASSERT_FATAL(self()->isClassInitialized(comp, clazz), "clazz %p must be initialized when getDefaultValueSlotAddress is called", clazz);
+
+#if defined(J9VM_OPT_JITSERVER)
+   if (auto stream = comp->getStream())
+      {
+      j9object_t* defaultValueSlotAddress = NULL;
+      ClientSessionData *clientSessionData = TR::compInfoPT->getClientData();
+
+      JITServerHelpers::getAndCacheRAMClassInfo((J9Class *)clazz, clientSessionData, stream, JITServerHelpers::CLASSINFO_DEFAULT_VALUE_SLOT_ADDRESS, (void *)&defaultValueSlotAddress);
+
+      if (!defaultValueSlotAddress)
+         {
+         stream->write(JITServer::MessageType::ClassEnv_getDefaultValueSlotAddress, clazz);
+         defaultValueSlotAddress = std::get<0>(stream->read<j9object_t*>());
+
+         if (defaultValueSlotAddress)
+            {
+            OMR::CriticalSection getRemoteROMClass(clientSessionData->getROMMapMonitor());
+            auto it = clientSessionData->getROMClassMap().find((J9Class*) clazz);
+            if (it != clientSessionData->getROMClassMap().end())
+               {
+               it->second._defaultValueSlotAddress = defaultValueSlotAddress;
+               }
+            }
+         }
+
+      return defaultValueSlotAddress;
+      }
+   else // non-jitserver
+#endif /* defined(J9VM_OPT_JITSERVER) */
+      {
+      J9Class *j9class = reinterpret_cast<J9Class *>(clazz);
+      J9JavaVM *vm = comp->fej9()->getJ9JITConfig()->javaVM;
+
+      return vm->internalVMFunctions->getDefaultValueSlotAddress(j9class);
       }
    }
