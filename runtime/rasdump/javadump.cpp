@@ -131,7 +131,7 @@ UDATA handlerWriteStacks            (struct J9PortLibrary *, U_32, void *, void 
 }
 
 static IDATA vmthread_comparator(struct J9AVLTree *tree, struct J9AVLTreeNode *insertNode, struct J9AVLTreeNode *walkNode);
-static IDATA vmthread_locator(struct J9AVLTree *tree, UDATA tid , struct J9AVLTreeNode *walkNode);
+static IDATA vmthread_locator(struct J9AVLTree *tree, UDATA tid, struct J9AVLTreeNode *walkNode);
 
 /* Functions used by hash table prototypes */
 static UDATA lockHashFunction(void* key, void* user);
@@ -2161,8 +2161,7 @@ JavaCoreDumpWriter::writeHookInterface(struct J9HookInterface **hookInterface)
 void
 JavaCoreDumpWriter::writeThreadsWithNativeStacks(void)
 {
-	J9VMThread* vmThread = _Context->onThread;
-	J9PlatformThread *nativeThread = NULL;
+	J9VMThread *vmThread = _Context->onThread;
 	J9ThreadWalkState state;
 	J9AVLTree vmthreads;
 	vmthread_avl_node *vmthreadStore = NULL;
@@ -2177,6 +2176,7 @@ JavaCoreDumpWriter::writeThreadsWithNativeStacks(void)
 	char backingStore[8096];
 	bool restartedWalk = false;
 
+	OMRPORT_ACCESS_FROM_J9PORT(_PortLibrary);
 	PORT_ACCESS_FROM_PORT(_PortLibrary);
 
 	/* This function can fail early if there is insufficient stack space for the AVL tree. If we have
@@ -2202,13 +2202,15 @@ JavaCoreDumpWriter::writeThreadsWithNativeStacks(void)
 	/* first and second phase of native thread stack collection timeout set to 10 seconds each */
 	state.deadline1 = (j9time_current_time_millis() / 1000) + 10;
 	state.deadline2 = state.deadline1 + 10;
+	state.options = OMR_INTROSPECT_NO_SYMBOLS;
 
+	memset(&closure, 0, sizeof(closure));
 	closure.state = &state;
 	closure.heap = heap;
 	closure.jcw = this;
 
 	/* populate the VM thread avl tree or dump the java stacks if they won't fit */
-	J9VMThread* walkThread = J9_LINKED_LIST_START_DO(_VirtualMachine->mainThread);
+	J9VMThread *walkThread = J9_LINKED_LIST_START_DO(_VirtualMachine->mainThread);
 	for (i = 0; (NULL != walkThread) && (i < _AllocatedVMThreadCount); i++) {
 		j9object_t lockObject = NULL;
 		J9VMThread *lockOwner = NULL;
@@ -2221,7 +2223,7 @@ JavaCoreDumpWriter::writeThreadsWithNativeStacks(void)
 
 		if (0 == i) {
 			/* build the avl tree for lookup. Having this in the loop allows us to restart the walk easily if needed */
-			memset(&vmthreads, 0, sizeof(J9AVLTree));
+			memset(&vmthreads, 0, sizeof(vmthreads));
 			vmthreads.insertionComparator = vmthread_comparator;
 			vmthreads.searchComparator = vmthread_locator;
 		}
@@ -2250,7 +2252,7 @@ JavaCoreDumpWriter::writeThreadsWithNativeStacks(void)
 		vmthreadStore[i].lockObject = lockObject;
 		vmthreadStore[i].lockOwner = lockOwner;
 		vmthreadStore[i].javaPriority = javaPriority;
-		avl_insert(&vmthreads, (J9AVLTreeNode*)&vmthreadStore[i]);
+		avl_insert(&vmthreads, (J9AVLTreeNode *)&vmthreadStore[i]);
 
 		walkThread = J9_LINKED_LIST_NEXT_DO(_VirtualMachine->mainThread, walkThread);
 		if ((NULL != walkThread) && (walkThread->publicFlags == J9_PUBLIC_FLAGS_HALT_THREAD_INSPECTION)) {
@@ -2268,22 +2270,22 @@ JavaCoreDumpWriter::writeThreadsWithNativeStacks(void)
 	}
 
 	UDATA returnValue = 0;
-	nativeThread = NULL;
+	J9PlatformThread *nativeThread = NULL;
 
 	if ((NULL != vmThread) && (NULL != vmThread->gpInfo)) {
 		/* Extract the OS thread */
 		closure.gpInfo = vmThread->gpInfo;
 
-		returnValue = j9sig_protect(protectedStartDoWithSignal, &closure, handlerNativeThreadWalk, this, J9PORT_SIG_FLAG_SIGALLSYNC | J9PORT_SIG_FLAG_MAY_RETURN, (UDATA*)&nativeThread);
+		returnValue = j9sig_protect(protectedStartDoWithSignal, &closure, handlerNativeThreadWalk, this, J9PORT_SIG_FLAG_SIGALLSYNC | J9PORT_SIG_FLAG_MAY_RETURN, (UDATA *)&nativeThread);
 	} else {
-		returnValue = j9sig_protect(protectedStartDo, &closure, handlerNativeThreadWalk, this, J9PORT_SIG_FLAG_SIGALLSYNC | J9PORT_SIG_FLAG_MAY_RETURN, (UDATA*)&nativeThread);
+		returnValue = j9sig_protect(protectedStartDo, &closure, handlerNativeThreadWalk, this, J9PORT_SIG_FLAG_SIGALLSYNC | J9PORT_SIG_FLAG_MAY_RETURN, (UDATA *)&nativeThread);
 	}
 
 	if (J9PORT_SIG_EXCEPTION_OCCURRED == returnValue) {
 		errorMessage = "GPF received while walking native threads\n";
 
 		/* we need to set up the next thread so we continue the walk if possible */
-		while (j9sig_protect(protectedNextDo, &closure, handlerNativeThreadWalk, this, J9PORT_SIG_FLAG_SIGALLSYNC | J9PORT_SIG_FLAG_MAY_RETURN, (UDATA*)&nativeThread) == J9PORT_SIG_EXCEPTION_OCCURRED) {
+		while (j9sig_protect(protectedNextDo, &closure, handlerNativeThreadWalk, this, J9PORT_SIG_FLAG_SIGALLSYNC | J9PORT_SIG_FLAG_MAY_RETURN, (UDATA *)&nativeThread) == J9PORT_SIG_EXCEPTION_OCCURRED) {
 			errorMessage = "GPF received while walking native threads\n";
 		}
 	}
@@ -2303,7 +2305,7 @@ JavaCoreDumpWriter::writeThreadsWithNativeStacks(void)
 
 		if (NULL == nativeThread) {
 			nativeThread = &pseudoThread;
-			memset(nativeThread, 0, sizeof(J9PlatformThread));
+			memset(nativeThread, 0, sizeof(*nativeThread));
 
 			/* if there's no native thread then we need to figure out what tid vmThread is stored
 			 * against so we can delete it and prevent it being duplicated when we dump outstanding
@@ -2312,7 +2314,7 @@ JavaCoreDumpWriter::writeThreadsWithNativeStacks(void)
 			if ((NULL != vmThread) && (NULL != vmThread->osThread)) {
 				pseudoThread.thread_id = omrthread_get_osId(vmThread->osThread);
 				if (0 == pseudoThread.thread_id) {
-					pseudoThread.thread_id = (UDATA) (((U_8*)vmThread->osThread) + sizeof(J9AbstractThread));
+					pseudoThread.thread_id = (UDATA) (((U_8 *)vmThread->osThread) + sizeof(J9AbstractThread));
 				}
 			}
 		}
@@ -2335,13 +2337,15 @@ JavaCoreDumpWriter::writeThreadsWithNativeStacks(void)
 		}
 
 		if (nativeThread == &pseudoThread) {
-			if (j9introspect_backtrace_thread(nativeThread, heap, vmThread->gpInfo) == 0) {
+			if (omrintrospect_backtrace_thread(nativeThread, heap, vmThread->gpInfo) == 0) {
 				/* failed to produce backtrace from signal */
 				nativeThread = NULL;
-			} else {
-				/* try symbol resolution */
-				j9introspect_backtrace_symbols(nativeThread, heap);
 			}
+		}
+
+		if (NULL != nativeThread) {
+			/* do full symbol resolution for the faulting thread */
+			omrintrospect_backtrace_symbols_ex(nativeThread, heap, 0);
 		}
 
 		/* write out our failing thread */
@@ -2385,6 +2389,9 @@ JavaCoreDumpWriter::writeThreadsWithNativeStacks(void)
 					javaPriority = 0;
 				}
 			}
+
+			/* just do basic symbol resolution for other threads */
+			omrintrospect_backtrace_symbols_ex(nativeThread, heap, OMR_BACKTRACE_SYMBOLS_BASIC);
 
 			writeThread(javaThread, nativeThread, vmstate, javaState, javaPriority, lockObject, lockOwnerThread);
 
@@ -5607,25 +5614,25 @@ handlerWriteSection(struct J9PortLibrary* portLibrary, U_32 gpType, void* gpInfo
 UDATA
 protectedStartDoWithSignal(struct J9PortLibrary *portLibrary, void *args)
 {
-	PORT_ACCESS_FROM_PORT(portLibrary);
+	OMRPORT_ACCESS_FROM_J9PORT(portLibrary);
 	struct walkClosure *closure = (struct walkClosure *)args;
-	return (UDATA)j9introspect_threads_startDo_with_signal(closure->heap, (J9ThreadWalkState*)closure->state, closure->gpInfo);
+	return (UDATA)omrintrospect_threads_startDo_with_signal(closure->heap, (J9ThreadWalkState *)closure->state, closure->gpInfo);
 }
 
 UDATA
 protectedStartDo(struct J9PortLibrary *portLibrary, void *args)
 {
-	PORT_ACCESS_FROM_PORT(portLibrary);
+	OMRPORT_ACCESS_FROM_J9PORT(portLibrary);
 	struct walkClosure *closure = (struct walkClosure *)args;
-	return (UDATA)j9introspect_threads_startDo(closure->heap, (J9ThreadWalkState*)closure->state);
+	return (UDATA)omrintrospect_threads_startDo(closure->heap, (J9ThreadWalkState *)closure->state);
 }
 
 UDATA
 protectedNextDo(struct J9PortLibrary *portLibrary, void *args)
 {
-	PORT_ACCESS_FROM_PORT(portLibrary);
+	OMRPORT_ACCESS_FROM_J9PORT(portLibrary);
 	struct walkClosure *closure = (struct walkClosure *)args;
-	return (UDATA)j9introspect_threads_nextDo((J9ThreadWalkState*)closure->state);
+	return (UDATA)omrintrospect_threads_nextDo((J9ThreadWalkState *)closure->state);
 }
 
 UDATA
@@ -5983,7 +5990,7 @@ vmthread_comparator(struct J9AVLTree *tree, struct J9AVLTreeNode *insertNode, st
 }
 
 static IDATA
-vmthread_locator(struct J9AVLTree *tree, UDATA tid , struct J9AVLTreeNode *walkNode)
+vmthread_locator(struct J9AVLTree *tree, UDATA tid, struct J9AVLTreeNode *walkNode)
 {
 	UDATA walk_tid = 0;
 	vmthread_avl_node *walk_thread = (vmthread_avl_node *)walkNode;

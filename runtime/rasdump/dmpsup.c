@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1254,16 +1254,17 @@ static void
 initBackTrace(J9JavaVM *vm)
 {
 #if defined(LINUX) || defined(OSX)
-	J9PlatformThread threadInfo;
-	J9Heap *heap;
-	char backingStore[8096];
-	
 	PORT_ACCESS_FROM_JAVAVM(vm);
-	
+	OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
+	J9PlatformThread threadInfo;
+	char backingStore[8096];
+	J9Heap *heap = omrheap_create(backingStore, sizeof(backingStore), 0);
+
+	memset(&threadInfo, 0, sizeof(threadInfo));
+
 	/* Use a local heap so the memory used for the backtrace is freed automatically. */
-	heap = j9heap_create(backingStore, sizeof(backingStore), 0);
-	if( j9introspect_backtrace_thread(&threadInfo, heap, NULL) != 0 ) {
-		j9introspect_backtrace_symbols(&threadInfo, heap);
+	if (omrintrospect_backtrace_thread(&threadInfo, heap, NULL) != 0) {
+		omrintrospect_backtrace_symbols_ex(&threadInfo, heap, 0);
 	}
 #endif /* defined(LINUX) || defined(OSX) */
 }

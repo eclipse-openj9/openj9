@@ -1312,35 +1312,35 @@ executeAbortHook(struct J9PortLibrary* portLibrary, void* userData)
 }
 
 static void
-printBacktrace(struct J9JavaVM *vm, void* gpInfo)
+printBacktrace(struct J9JavaVM *vm, void *gpInfo)
 {
-	J9PlatformThread thread;
-	J9PlatformStackFrame *frame;
-
 	PORT_ACCESS_FROM_JAVAVM(vm);
+	OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
+	J9PlatformStackFrame *frame = NULL;
+	J9PlatformThread thread;
 
 	memset(&thread, 0, sizeof(thread));
 
-	j9tty_printf(PORTLIB, "----------- Stack Backtrace -----------\n");
-	j9introspect_backtrace_thread(&thread, NULL, gpInfo);
-	j9introspect_backtrace_symbols(&thread, NULL);
+	omrtty_printf("----------- Stack Backtrace -----------\n");
+	omrintrospect_backtrace_thread(&thread, NULL, gpInfo);
+	omrintrospect_backtrace_symbols_ex(&thread, NULL, 0);
 
 	frame = thread.callstack;
 	while (frame) {
 		J9PlatformStackFrame *tmp = frame;
 
-		if (frame->symbol) {
-			j9tty_printf(PORTLIB, "%s\n", frame->symbol);
-			j9mem_free_memory(frame->symbol);
+		if (NULL != frame->symbol) {
+			omrtty_printf("%s\n", frame->symbol);
+			omrmem_free_memory(frame->symbol);
 		} else {
-			j9tty_printf(PORTLIB, "0x%p\n", (void*)frame->instruction_pointer);
+			omrtty_printf("0x%p\n", (void *)frame->instruction_pointer);
 		}
 
 		frame = frame->parent_frame;
-		j9mem_free_memory(tmp);
+		omrmem_free_memory(tmp);
 	}
 
-	j9tty_printf(PORTLIB, "---------------------------------------\n");
+	omrtty_printf("---------------------------------------\n");
 }
 
 #if defined(J9VM_PORT_ZOS_CEEHDLRSUPPORT)
