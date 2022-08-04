@@ -2248,7 +2248,7 @@ MM_CopyForwardScheme::updateMarkMapAndCardTableOnCopy(MM_EnvironmentVLHGC *env, 
 				/* do nothing */
 				break;
 			default:
-				Assert_MM_unreachable();
+				Assert_GC_true_with_message4(env, false, "Unexpected Card state %u for Card %p, srcObject %p, dstObject %p\n", *card, card, srcObject, dstObject);
 			}
 		}
 	}
