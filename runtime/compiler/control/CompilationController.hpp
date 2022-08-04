@@ -54,6 +54,7 @@ class TR_MethodEvent
           OtherRecompilationTrigger,
           JitCompilationInducedByDLT,
           HWPRecompilationTrigger,
+          CompilationBeforeCheckpoint,
           NumEvents      // must be the last one
    };
    int32_t      _eventType;

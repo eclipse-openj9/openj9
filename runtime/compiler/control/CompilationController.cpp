@@ -267,6 +267,14 @@ TR_OptimizationPlan *TR::DefaultCompilationStrategy::processEvent(TR_MethodEvent
          plan = processHWPSample(event);
          }
          break;
+      case TR_MethodEvent::CompilationBeforeCheckpoint:
+         {
+         // use the counts to determine the first level of compilation
+         hotnessLevel = TR::DefaultCompilationStrategy::getInitialOptLevel(event->_j9method);
+         plan = TR_OptimizationPlan::alloc(hotnessLevel);
+         *newPlanCreated = true;
+         }
+         break;
       default:
          TR_ASSERT(0, "Bad event type %d", event->_eventType);
       }
