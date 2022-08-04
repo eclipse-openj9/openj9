@@ -31,12 +31,6 @@
 
 extern "C" {
 
-J9_DECLARE_CONSTANT_UTF8(continuationClass_name, "jdk/internal/vm/Continuation");
-J9_DECLARE_CONSTANT_UTF8(execute_sig, "(Ljdk/internal/vm/Continuation;)V");
-J9_DECLARE_CONSTANT_UTF8(execute_name, "execute");
-
-extern void c_cInterpreter(J9VMThread *currentThread);
-
 BOOLEAN
 createContinuation(J9VMThread *currentThread, j9object_t continuationObject)
 {
@@ -92,46 +86,6 @@ end:
 	return result;
 }
 
-void JNICALL
-resumeContinuation(J9VMThread *currentThread, J9VMContinuation *continuation)
-{
-	J9VMEntryLocalStorage newELS;
-	newELS = continuation->entryLocalStorage;
-	newELS.oldEntryLocalStorage = currentThread->entryLocalStorage;;
-	currentThread->entryLocalStorage = &newELS;
-
-	if (NULL != newELS.oldEntryLocalStorage) {
-		/* Assuming oldELS > newELS, bytes used is (oldELS - newELS) */
-		UDATA freeBytes = currentThread->currentOSStackFree;
-		UDATA usedBytes = ((UDATA)newELS.oldEntryLocalStorage - (UDATA)&newELS);
-		freeBytes -= usedBytes;
-		currentThread->currentOSStackFree = freeBytes;
-
-		if ((IDATA)freeBytes < J9_OS_STACK_GUARD) {
-			if (J9_ARE_NO_BITS_SET(currentThread->privateFlags, J9_PRIVATE_FLAGS_CONSTRUCTING_EXCEPTION)) {
-				setCurrentExceptionNLS(currentThread, J9VMCONSTANTPOOL_JAVALANGSTACKOVERFLOWERROR, J9NLS_VM_OS_STACK_OVERFLOW);
-				currentThread->currentOSStackFree += usedBytes;
-			}
-		}
-	}
-
-	VM_OutOfLineINL_Helpers::restoreInternalNativeStackFrame(currentThread);
-	VM_OutOfLineINL_Helpers::returnSingle(currentThread, JNI_TRUE, 0);
-
-	currentThread->returnValue = J9_BCLOOP_EXECUTE_BYTECODE;
-
-	/* Match the increment in enterContinuation -> runStaticMethod so that the
-	 * callOutCount start state is the same in resumeContinuation.
-	 * TODO: This increment should be removed once the call-ins are no
-	 * longer used and the new design for single cInterpreter is implemented.
-	 */
-	currentThread->callOutCount += 1;
-
-	c_cInterpreter(currentThread);
-
-	restoreCallInFrame(currentThread);
-}
-
 BOOLEAN
 enterContinuation(J9VMThread *currentThread, j9object_t continuationObject)
 {
@@ -151,28 +105,28 @@ enterContinuation(J9VMThread *currentThread, j9object_t continuationObject)
 
 	if (started) {
 		/* resuming Continuation from yield */
-		resumeContinuation(currentThread, continuation);
+		VM_OutOfLineINL_Helpers::restoreInternalNativeStackFrame(currentThread);
+		VM_OutOfLineINL_Helpers::returnSingle(currentThread, JNI_TRUE, 1);
+		result = FALSE;
 	} else {
-		/* start new */
-		UDATA args[] = { (UDATA) continuationObject };
-		J9NameAndSignature executeNameAndSig = { (J9UTF8*)&execute_name, (J9UTF8*)&execute_sig };
-
+		/* start new Continuation execution */
 		J9VMJDKINTERNALVMCONTINUATION_SET_STARTED(currentThread, continuationObject, JNI_TRUE);
+		/* prepare callin frame, send method will be set by interpreter */
+		J9SFJNICallInFrame *frame = ((J9SFJNICallInFrame*)currentThread->sp) - 1;
 
-		runStaticMethod(currentThread, J9UTF8_DATA(&continuationClass_name), &executeNameAndSig, 1, args);
+		frame->exitAddress = NULL;
+		frame->specialFrameFlags = 0;
+		frame->savedCP = currentThread->literals;
+		frame->savedPC = currentThread->pc;
+		frame->savedA0 = (UDATA*)((UDATA)currentThread->arg0EA | J9SF_A0_INVISIBLE_TAG);
+		currentThread->sp = (UDATA*)frame;
+		currentThread->pc = currentThread->javaVM->callInReturnPC;
+		currentThread->literals = 0;
+		currentThread->arg0EA = (UDATA*)&frame->savedA0;
+
+		/* push argument to stack */
+		*--currentThread->sp = (UDATA)continuationObject;
 	}
-
-	J9VMJDKINTERNALVMCONTINUATION_SET_FINISHED(currentThread, continuationObject, JNI_TRUE);
-
-	Assert_VM_notNull(currentThread->currentContinuation);
-
-	VM_ContinuationHelpers::swapFieldsWithContinuation(currentThread, continuation);
-	currentThread->currentContinuation = NULL;
-
-	/* For some reason the JCL swap thread objects when the VirtualThread dies, but it does
-	 * on enter and yield.
-	 */
-	currentThread->threadObject = currentThread->carrierThreadObject;
 
 	return result;
 }
@@ -183,14 +137,10 @@ yieldContinuation(J9VMThread *currentThread)
 	BOOLEAN result = TRUE;
 	J9VMContinuation *continuation = currentThread->currentContinuation;
 
-	/* need to check pin state before yielding */
-
 	Assert_VM_notNull(currentThread->currentContinuation);
 
 	VM_ContinuationHelpers::swapFieldsWithContinuation(currentThread, continuation);
 
-	/* pop the current ELS struct from the J9VMThread and store its info in J9VMContinuation struct */
-	VM_ContinuationHelpers::popAndStoreELS(currentThread, continuation);
 	currentThread->currentContinuation = NULL;
 
 	return result;
@@ -205,7 +155,7 @@ isPinnedContinuation(J9VMThread *currentThread)
 		result = J9VM_CONTINUATION_PINNED_REASON_CRITICAL_SECTION;
 	} else if (currentThread->ownedMonitorCount > 0) {
 		result = J9VM_CONTINUATION_PINNED_REASON_MONITOR;
-	} else if (currentThread->callOutCount > 1) {
+	} else if (currentThread->callOutCount > 0) {
 		/* TODO: This check should be changed from > 1 to > 0 once the call-ins are no
 		 * longer used and the new design for single cInterpreter is implemented.
 		 */

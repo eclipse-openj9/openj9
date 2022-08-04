@@ -444,6 +444,8 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<staticmethodref class="jdk/internal/loader/NativeLibraries" name="load" signature="(Ljdk/internal/loader/NativeLibraries$NativeLibraryImpl;Ljava/lang/String;ZZZ)Z" versions="15-18"/>
 	<staticmethodref class="jdk/internal/loader/NativeLibraries" name="load" signature="(Ljdk/internal/loader/NativeLibraries$NativeLibraryImpl;Ljava/lang/String;ZZ)Z" versions="19-"/>
 
+	<!-- Static method references needed to support VirtualThread/Continuation. -->
+	<staticmethodref class="jdk/internal/vm/Continuation" name="execute" signature="(Ljdk/internal/vm/Continuation;)V" versions="19-"/>
 	<!-- Security manager check -->
 	<staticfieldref class="java/lang/System" name="security" signature="Ljava/lang/SecurityManager;"/>
 

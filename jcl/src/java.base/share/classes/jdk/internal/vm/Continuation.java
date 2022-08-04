@@ -37,7 +37,7 @@ public class Continuation {
 	private final Runnable runnable;
 	private Continuation parent;
 	private boolean started;
-	private volatile boolean finished;
+	private boolean finished;
 
 	private static final JavaLangAccess JLA = SharedSecrets.getJavaLangAccess();
 
@@ -150,7 +150,12 @@ public class Continuation {
 	}
 
 	private static void execute(Continuation cont) {
-		cont.runnable.run();
+		try {
+			cont.runnable.run();
+		} finally {
+			cont.finished = true;
+			yieldImpl(true);
+		}
 	}
 
 	public final void run() {
@@ -203,7 +208,7 @@ public class Continuation {
 			}
 			throw new IllegalStateException("Continuation is pinned: " + reason);
 		}
-		return yieldImpl();
+		return yieldImpl(false);
 	}
 
 	protected void onPinned(Pinned reason) {
@@ -239,6 +244,6 @@ public class Continuation {
 	/* Continuation Native APIs */
 	private native boolean createContinuationImpl();
 	private native boolean enterImpl();
-	private static native boolean yieldImpl();
+	private static native boolean yieldImpl(boolean isFinished);
 
 }

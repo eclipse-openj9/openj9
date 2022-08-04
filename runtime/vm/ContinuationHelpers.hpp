@@ -67,14 +67,14 @@ public:
 		SWAP_MEMBER(stackOverflowMark, UDATA*, vmThread, continuation);
 		SWAP_MEMBER(stackOverflowMark2, UDATA*, vmThread, continuation);
 		SWAP_MEMBER(stackObject, J9JavaStack*, vmThread, continuation);
-	}
+		SWAP_MEMBER(decompilationStack, J9JITDecompilationInfo*, vmThread, continuation);
+		SWAP_MEMBER(j2iFrame, UDATA*, vmThread, continuation);
 
-	static VMINLINE void
-	popAndStoreELS(J9VMThread *vmThread, J9VMContinuation *continuation)
-	{
-		continuation->entryLocalStorage = *vmThread->entryLocalStorage;
-		continuation->entryLocalStorage.oldEntryLocalStorage = NULL;
-		vmThread->entryLocalStorage = vmThread->entryLocalStorage->oldEntryLocalStorage;
+		/* Swap the JIT GPR registers data referenced by ELS */
+		J9JITGPRSpillArea tempGPRs = continuation->jitGPRs;
+		continuation->jitGPRs = *(J9JITGPRSpillArea*)vmThread->entryLocalStorage->jitGlobalStorageBase;
+		*(J9JITGPRSpillArea*)vmThread->entryLocalStorage->jitGlobalStorageBase = tempGPRs;
+		SWAP_MEMBER(oldEntryLocalStorage, J9VMEntryLocalStorage*, vmThread->entryLocalStorage, continuation);
 	}
 
 };
