@@ -859,7 +859,6 @@ JavaCoreDumpWriter::writeUserRequestedTitle(void)
 	_OutputStream.writeCharacters("\n");
 }
 
-
 /**************************************************************************************************/
 /*                                                                                                */
 /* JavaCoreDumpWriter::writeProcessorSection() method implementation                              */
@@ -2344,8 +2343,12 @@ JavaCoreDumpWriter::writeThreadsWithNativeStacks(void)
 		}
 
 		if (NULL != nativeThread) {
-			/* do full symbol resolution for the faulting thread */
-			omrintrospect_backtrace_symbols_ex(nativeThread, heap, 0);
+			RasDumpGlobalStorage *dumpGlobals = (RasDumpGlobalStorage *)_VirtualMachine->j9rasdumpGlobalStorage;
+
+			if (J9RAS_JAVADUMP_SHOW_NATIVE_STACK_SYMBOLS_NONE != dumpGlobals->showNativeSymbols) {
+				/* do full symbol resolution for the faulting thread */
+				omrintrospect_backtrace_symbols_ex(nativeThread, heap, 0);
+			}
 		}
 
 		/* write out our failing thread */
@@ -2372,6 +2375,7 @@ JavaCoreDumpWriter::writeThreadsWithNativeStacks(void)
 			J9VMThread *javaThread = NULL;
 			j9object_t lockObject = NULL;
 			J9VMThread *lockOwnerThread = NULL;
+
 			if (NULL != vmthreads.rootNode) {
 				vmthread_avl_node *node = (vmthread_avl_node *)avl_search(&vmthreads, nativeThread->thread_id);
 				if (NULL != node) {
@@ -2390,8 +2394,20 @@ JavaCoreDumpWriter::writeThreadsWithNativeStacks(void)
 				}
 			}
 
-			/* just do basic symbol resolution for other threads */
-			omrintrospect_backtrace_symbols_ex(nativeThread, heap, OMR_BACKTRACE_SYMBOLS_BASIC);
+			RasDumpGlobalStorage *dumpGlobals = (RasDumpGlobalStorage *)_VirtualMachine->j9rasdumpGlobalStorage;
+
+			switch (dumpGlobals->showNativeSymbols) {
+			case J9RAS_JAVADUMP_SHOW_NATIVE_STACK_SYMBOLS_ALL:
+				/* do full symbol resolution */
+				omrintrospect_backtrace_symbols_ex(nativeThread, heap, 0);
+				break;
+			case J9RAS_JAVADUMP_SHOW_NATIVE_STACK_SYMBOLS_BASIC:
+				/* just do basic symbol resolution for other threads */
+				omrintrospect_backtrace_symbols_ex(nativeThread, heap, OMR_BACKTRACE_SYMBOLS_BASIC);
+				break;
+			default:
+				break;
+			}
 
 			writeThread(javaThread, nativeThread, vmstate, javaState, javaPriority, lockObject, lockOwnerThread);
 
@@ -3019,7 +3035,6 @@ JavaCoreDumpWriter::writeSharedClassSectionTopLayerStatsHelper(J9SharedClassJava
 			"\n2SCLTEXTFRB            Free bytes                                = "
 	);
 	_OutputStream.writeInteger(javacoreData->freeBytes, "%zu");
-
 
 	_OutputStream.writeCharacters(
 			"\n2SCLTEXTARB            Reserved space for AOT bytes              = "
@@ -5763,7 +5778,7 @@ protectedWriteJavaLangThreadInfo(struct J9PortLibrary *portLibrary, void *args)
 
 /**
  * Wrapper function for writeThreadsWithNativeStacks
-  * If the call to writeThreadsWithNativeStacks fails handlerWriteStacks
+ * If the call to writeThreadsWithNativeStacks fails handlerWriteStacks
  * will be called and return J9PORT_SIG_EXCEPTION_RETURN instead.
  * @param portLibrary[in] pointer to the port library
  * @param args[in,out] pointer to the arguments to unpack for writeThreadsWithNativeStacks
@@ -5779,7 +5794,7 @@ protectedWriteThreadsWithNativeStacks(struct J9PortLibrary *portLibrary, void *a
 
 /**
  * Wrapper function for writeThreadsJavaOnly
-  * If the call to writeThreadsJavaOnly fails handlerWriteStacks
+ * If the call to writeThreadsJavaOnly fails handlerWriteStacks
  * will be called and return J9PORT_SIG_EXCEPTION_RETURN instead.
  * @param portLibrary[in] pointer to the port library
  * @param args[in,out] pointer to the arguments to unpack for writeThreadsJavaOnly

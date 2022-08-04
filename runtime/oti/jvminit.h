@@ -195,10 +195,7 @@ enum INIT_STAGE {
 	GC_SHUTDOWN_COMPLETE,
 	/* this stage will only be invoked for the jcl shared library when it is being run remotely */
 	OFFLOAD_JCL_PRECONFIGURE
-
-
 };
-
 
 #define VMOPT_EXIT "exit"
 #define VMOPT_ABORT "abort"
@@ -264,9 +261,9 @@ enum INIT_STAGE {
 #define VMOPT_XMXCL "-Xmxcl"
 #define VMOPT_XMX "-Xmx"
 #define VMOPT_XMS "-Xms"
-#define VMOPT_XDUMP  "-Xdump"
-#define VMOPT_XDUMP_NONE  "-Xdump:none"
-#define VMOPT_XDUMP_DIRECTORY_EQUALS  "-Xdump:directory="
+#define VMOPT_XDUMP "-Xdump"
+#define VMOPT_XDUMP_NONE "-Xdump:none"
+#define VMOPT_XDUMP_DIRECTORY_EQUALS "-Xdump:directory="
 #define VMOPT_XDUMP_TOOL_OUTOFMEMORYERROR_EXEC_EQUALS "-Xdump:tool:events=systhrow,filter=java/lang/OutOfMemoryError,exec="
 #define VMOPT_XARGENCODING "-Xargencoding"
 #define VMOPT_XARGENCODINGCOLON "-Xargencoding:"
@@ -318,7 +315,7 @@ enum INIT_STAGE {
 #define VMOPT_XXNOSTACKTRACEINTHROWABLE "-XX:-StackTraceInThrowable"
 #define VMOPT_XXSTACKTRACEINTHROWABLE "-XX:+StackTraceInThrowable"
 #define VMOPT_XXNOPAGEALIGNDIRECTMEMORY "-XX:-PageAlignDirectMemory"
-#define VMOPT_XXPAGEALIGNDIRECTMEMORY   "-XX:+PageAlignDirectMemory"
+#define VMOPT_XXPAGEALIGNDIRECTMEMORY "-XX:+PageAlignDirectMemory"
 #define VMOPT_XXVMLOCKCLASSLOADERENABLE "-XX:+VMLockClassLoader"
 #define VMOPT_XXVMLOCKCLASSLOADERDISABLE "-XX:-VMLockClassLoader"
 #define VMOPT_XXNOVERBOSEVERIFICATION "-XX:-VerboseVerification"
@@ -406,6 +403,14 @@ enum INIT_STAGE {
 #define VMOPT_XXDISABLECRIUNONPORTABLEMODE "-XX:-CRIURestoreNonPortableMode"
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
+/*
+ * Options to control how much effort is expended
+ * resolving native symbols in java dumps.
+ */
+#define VMOPT_XXNOSHOWNATIVESTACKSYMBOLS "-XX:-ShowNativeStackSymbols" /* don't show any native stack symbols */
+#define VMOPT_XXSHOWNATIVESTACKSYMBOLS_BASIC "-XX:+ShowNativeStackSymbols=basic" /* show only easily acquired native stack symbols */
+#define VMOPT_XXSHOWNATIVESTACKSYMBOLS_ALL "-XX:+ShowNativeStackSymbols=all" /* show all available native stack symbols */
+
 /* Option to turn on exception on synchronization on instances of value-based classes */
 #define VMOPT_XXDIAGNOSE_SYNC_ON_VALUEBASED_CLASSES_EQUALS1 "-XX:DiagnoseSyncOnValueBasedClasses=1"
 /* Option to turn on warning on synchronization on instances of value-based classes */
@@ -491,7 +496,7 @@ enum INIT_STAGE {
 #define VMOPT_ENABLE_PREVIEW "--enable-preview"
 
 #define VMOPT_XXNLSMESSAGES "-XX:+NLSMessages"
-#define VMOPT_XXNONLSMESSAGES  "-XX:-NLSMessages"
+#define VMOPT_XXNONLSMESSAGES "-XX:-NLSMessages"
 
 #define VMOPT_XCOMPRESSEDREFS "-Xcompressedrefs"
 #define VMOPT_XNOCOMPRESSEDREFS "-Xnocompressedrefs"
@@ -679,10 +684,8 @@ enum INIT_STAGE {
 #define JVMINIT_VERBOSE_INIT_TRACE_WORKING_SET(vm)
 #endif
 
-
 #ifdef __cplusplus
 }
 #endif
 
 #endif /* JVMINIT_H */
-
