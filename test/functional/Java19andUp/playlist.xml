@@ -23,6 +23,11 @@
 <playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../TestConfig/playlist.xsd">
 	<test>
 		<testCaseName>Jep425Tests_testVirtualThread</testCaseName>
+		<disables>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/15650 and 15651</comment>
+			</disable>
+		</disables>
 		<variations>
 			<variation>--enable-preview -Xgcpolicy:nogc</variation>
 		</variations>
@@ -47,7 +52,7 @@
 			<impl>openj9</impl>
 		</impls>
 		<versions>
-			<version>19</version>
+			<version>19+</version>
 		</versions>
 	</test>
 </playlist>
