@@ -489,10 +489,14 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *  \param opCodeType
    *     opcode type
    *
+   *  \param withMask
+   *     true if mask is present, false otherwise
+   *
    *  \return
    *     scalar TR::IL opcode if scalar is true, otherwise vector opcode
    */
-   static TR::ILOpCodes ILOpcodeFromVectorAPIOpcode(int32_t vectorOpCode, TR::DataType elementType, vec_sz_t vectorLength, vapiOpCodeType opCodeType);
+   static TR::ILOpCodes ILOpcodeFromVectorAPIOpcode(int32_t vectorOpCode, TR::DataType elementType,
+                                                    vec_sz_t vectorLength, vapiOpCodeType opCodeType, bool withMask);
 
   /** \brief
    *    For the node's symbol reference, creates and records(if it does not exist yet)
