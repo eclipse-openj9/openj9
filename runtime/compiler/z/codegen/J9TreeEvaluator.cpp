@@ -7300,6 +7300,8 @@ reservationLockEnter(TR::Node *node, int32_t lwOffset, TR::Register *objectClass
    //    CRJ   valReg,     monitorReg, MASK6, callLabel
    //    AHI   monitorReg, INC_DEC_VALUE
    //    ST    monitorReg, #lwOffset(objectReg)
+   //    # IF 64-Bit and JAVA_VERSION >= 19
+   //       AGSI #ownedMonitorCountOffset(J9VMThread), 1
 
    // load monitor reg
    generateRXInstruction(cg, loadOp, node, monitorReg, generateS390MemoryReference(objReg, lwOffset, cg));
@@ -7326,6 +7328,9 @@ reservationLockEnter(TR::Node *node, int32_t lwOffset, TR::Register *objectClass
       generateRIInstruction  (cg, addImmOp, node, monitorReg, (uintptr_t) LOCK_INC_DEC_VALUE);
       generateRXInstruction(cg, storeOp, node, monitorReg, generateS390MemoryReference(objReg, lwOffset, cg));
       }
+#if defined(TR_TARGET_64BIT) && (JAVA_SPEC_VERSION >= 19)
+   generateSIInstruction(cg, TR::InstOpCode::AGSI, node, generateS390MemoryReference(cg->getMethodMetaDataRealRegister(), fej9->thisThreadGetOwnedMonitorCountOffset(), cg), 1);
+#endif
 
    if (outlinedSlowPath) // Means we have OOL
       {
@@ -7351,6 +7356,10 @@ reservationLockEnter(TR::Node *node, int32_t lwOffset, TR::Register *objectClass
       // XR    monitorReg, monitorReg
       // CS    monitorReg, valReg, #lwOffset(objectReg)
       // BRC   MASK6, callHelper
+      // #IF 64-Bit and JAVA_VERSION >= 19
+      //    BRC   incrementOwnedMonitorCountLabel
+      // #ELSEIF
+      //    BRC   returnLabel
       // BRC   returnLabel
       // checkLabel:
       // LGFI  tempReg, LOCK_RES_NON_PRIMITIVE_ENTER_MASK
@@ -7358,6 +7367,9 @@ reservationLockEnter(TR::Node *node, int32_t lwOffset, TR::Register *objectClass
       // CRJ   tempReg, valReg, MASK6, callHelper
       // AHI   monitorReg, INC_DEC_VALUE
       // ST    monitorReg, #lwOffset(objectReg)
+      // #IF 64-Bit && JAVA_VERSION >=19
+      //    incrementOwnedMonitorCountLabel:
+      //    AGSI #ownedMonitorCountOffset(J9VMThread), 1
       // BRC   returnLabel
       // callHelper:
       // BRASL R14, jitMonitorEntry
@@ -7375,10 +7387,15 @@ reservationLockEnter(TR::Node *node, int32_t lwOffset, TR::Register *objectClass
       // Call VM helper if the CAS fails (contention)
       instr = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNE, node, callLabel);
 
-      cg->generateDebugCounter("LockEnt/LR/CASSuccessfull", 1, TR::DebugCounter::Undetermined);
+      cg->generateDebugCounter("LockEnt/LR/CASSuccessful", 1, TR::DebugCounter::Undetermined);
 
       // Lock is acquired successfully
+#if defined(TR_TARGET_64BIT) && (JAVA_SPEC_VERSION >= 19)
+      TR::LabelSymbol *incrementOwnedMonitorCountLabel = generateLabelSymbol(cg);
+      generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, incrementOwnedMonitorCountLabel);
+#else
       generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, helperReturnOOLLabel);
+#endif
 
       generateS390LabelInstruction(cg,TR::InstOpCode::label,node,reserved_checkLabel);
       // Mask the counter
@@ -7398,11 +7415,14 @@ reservationLockEnter(TR::Node *node, int32_t lwOffset, TR::Register *objectClass
          generateRIInstruction  (cg, addImmOp, node, monitorReg, (uintptr_t) LOCK_INC_DEC_VALUE);
          generateRXInstruction(cg, storeOp, node, monitorReg, generateS390MemoryReference(objReg, lwOffset, cg));
          }
+#if defined(TR_TARGET_64BIT) && (JAVA_SPEC_VERSION >= 19)
+      generateS390LabelInstruction(cg, TR::InstOpCode::label, node, incrementOwnedMonitorCountLabel);
+      generateSIInstruction(cg, TR::InstOpCode::AGSI, node, generateS390MemoryReference(cg->getMethodMetaDataRealRegister(), fej9->thisThreadGetOwnedMonitorCountOffset(), cg), 1);
+#endif
       generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, helperReturnOOLLabel);
       // call to jithelper
       generateS390LabelInstruction(cg, TR::InstOpCode::label, node, callLabel);
       cg->generateDebugCounter("LockEnt/LR/VMHelper", 1, TR::DebugCounter::Undetermined);
-      uintptr_t returnAddress = (uintptr_t) (node->getSymbolReference()->getMethodAddress());
 
       // We are calling helper within ICF so we need to combine dependency from ICF and helper call at merge label
       TR::RegisterDependencyConditions *deps = NULL;
@@ -7519,6 +7539,8 @@ reservationLockExit(TR::Node *node, int32_t lwOffset, TR::Register *objectClassR
    //   CRJ   valReg, monitorReg, BNE, callLabel
    //   AHI   valReg, -INC_DEC_VALUE
    //   ST    valReg, #lwOffset(objectReg)
+   // #IF 64-Bit && JAVA_VERSION >=19
+   //    AGSI #ownedMonitorCountOffset(J9VMThread), -1
 
    generateRXInstruction(cg, loadOp, node, monitorReg, generateS390MemoryReference(objReg, lwOffset, cg));
    if (!isPrimitive)
@@ -7550,6 +7572,9 @@ reservationLockExit(TR::Node *node, int32_t lwOffset, TR::Register *objectClassR
       generateRXInstruction(cg, use64b? TR::InstOpCode::STG : TR::InstOpCode::ST,
          node, tempReg, generateS390MemoryReference(objReg, lwOffset, cg));
       }
+#if defined(TR_TARGET_64BIT) && (JAVA_SPEC_VERSION >= 19)
+      generateSIInstruction(cg, TR::InstOpCode::AGSI, node, generateS390MemoryReference(cg->getMethodMetaDataRealRegister(), fej9->thisThreadGetOwnedMonitorCountOffset(), cg), -1);
+#endif
 
    if (outlinedSlowPath) // Means we have OOL
       {
@@ -7578,6 +7603,8 @@ reservationLockExit(TR::Node *node, int32_t lwOffset, TR::Register *objectClassR
       // BRC   BERC, callHelper
       // AHI   monitorReg, -INC_DEC_VALUE
       // ST    monitorReg, #lwOffset(objectReg)
+      // #IF 64-Bit && JAVA_VERSION >=19
+      //    AGSI #ownedMonitorCountOffset(J9VMThread), -1
       // BRC   returnLabel
       // callHelper:
       // BRASL R14, jitMonitorExit
@@ -7598,7 +7625,9 @@ reservationLockExit(TR::Node *node, int32_t lwOffset, TR::Register *objectClassR
          isPrimitive ? OBJECT_HEADER_LOCK_RECURSION_MASK : LOCK_RES_NON_PRIMITIVE_EXIT_MASK);
 
       if (isPrimitive)
+         {
          generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNE, node, helperReturnOOLLabel);
+         }
       else
          {
          generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, node, callLabel/*,conditions*/);
@@ -7609,11 +7638,15 @@ reservationLockExit(TR::Node *node, int32_t lwOffset, TR::Register *objectClassR
       generateRXInstruction(cg, storeOp, node, monitorReg, generateS390MemoryReference(objReg, lwOffset, cg));
 
       if (!isPrimitive)
+         {
+#if defined(TR_TARGET_64BIT) && (JAVA_SPEC_VERSION >= 19)
+         generateSIInstruction(cg, TR::InstOpCode::AGSI, node, generateS390MemoryReference(cg->getMethodMetaDataRealRegister(), fej9->thisThreadGetOwnedMonitorCountOffset(), cg), -1);
+#endif
          generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, helperReturnOOLLabel);
+         }
       // call to jithelper
       generateS390LabelInstruction(cg, TR::InstOpCode::label, node, callLabel);
       cg->generateDebugCounter("LockExit/LR/VMHelper", 1, TR::DebugCounter::Undetermined);
-      uintptr_t returnAddress = (uintptr_t) (node->getSymbolReference()->getMethodAddress());
       TR::RegisterDependencyConditions *deps = NULL;
       helperLink->buildDirectDispatch(node, &deps);
       TR::RegisterDependencyConditions *mergeConditions = mergeConditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(ICFConditions, deps, cg);
@@ -8680,8 +8713,13 @@ J9::Z::TreeEvaluator::VMmonentEvaluator(TR::Node * node, TR::CodeGenerator * cg)
          else
             generateRSInstruction(cg, TR::InstOpCode::getCmpAndSwapOpCode(), node, monitorReg, metaReg,
                                   generateS390MemoryReference(baseReg, lwOffset, cg));
-
+#if defined(TR_TARGET_64BIT) && (JAVA_SPEC_VERSION >= 19)
+         generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNE, node, helperCallLabel);
+         generateSIInstruction(cg, TR::InstOpCode::AGSI, node, generateS390MemoryReference(cg->getMethodMetaDataRealRegister(), fej9->thisThreadGetOwnedMonitorCountOffset(), cg), 1);
+         generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, helperReturnOOLLabel);
+#else
          generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, node, helperReturnOOLLabel);
+#endif
          generateS390LabelInstruction(cg, TR::InstOpCode::label, node, helperCallLabel );
          TR::RegisterDependencyConditions *deps = NULL;
          dummyResultReg = helperLink->buildDirectDispatch(node, &deps);
@@ -8770,6 +8808,9 @@ J9::Z::TreeEvaluator::VMmonentEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    // Jump to OOL branch in case that the CAS is unsuccessful (Lockword had contained a non-zero value before CAS)
    // Both TR::InstOpCode::MASK6 and TR::InstOpCode::MASK4 are ok here. TR::InstOpCode::MASK4 is directly testing failure condition.
    generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BL, node, callLabel);
+#if defined(TR_TARGET_64BIT) && (JAVA_SPEC_VERSION >= 19)
+   generateSIInstruction(cg, TR::InstOpCode::AGSI, node, generateS390MemoryReference(cg->getMethodMetaDataRealRegister(), fej9->thisThreadGetOwnedMonitorCountOffset(), cg), 1);
+#endif
    cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "%s/CSSuccessfull", debugCounterNamePrefix), 1, TR::DebugCounter::Undetermined);
    TR_S390OutOfLineCodeSection *outlinedHelperCall = NULL;
    TR::Instruction *cursor;
@@ -8839,7 +8880,9 @@ J9::Z::TreeEvaluator::VMmonentEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       if (normalLockWithReservationPreserving)
          generateRIInstruction(cg, addImmOp, node, monitorReg, OBJECT_HEADER_LOCK_FIRST_RECURSION_BIT);
       generateRXInstruction(cg, storeOp, node, monitorReg, tempMR1);
-
+#if defined(TR_TARGET_64BIT) && (JAVA_SPEC_VERSION >= 19)
+      generateSIInstruction(cg, TR::InstOpCode::AGSI, node, generateS390MemoryReference(cg->getMethodMetaDataRealRegister(), fej9->thisThreadGetOwnedMonitorCountOffset(), cg), 1);
+#endif
       generateS390BranchInstruction(cg,TR::InstOpCode::BRC,TR::InstOpCode::COND_BRC,node,returnLabel);
 
       tempMR->stopUsingMemRefRegister(cg);
@@ -9097,7 +9140,9 @@ J9::Z::TreeEvaluator::VMmonexitEvaluator(TR::Node * node, TR::CodeGenerator * cg
             gcPoint = generateSILInstruction(cg, TR::InstOpCode::MVHI, node, generateS390MemoryReference(baseReg, lwOffset, cg), 0);
          else
             gcPoint = generateSILInstruction(cg, TR::InstOpCode::getMoveHalfWordImmOpCode(), node, generateS390MemoryReference(baseReg, lwOffset, cg), 0);
-
+#if defined(TR_TARGET_64BIT) && (JAVA_SPEC_VERSION >= 19)
+         generateSIInstruction(cg, TR::InstOpCode::AGSI, node, generateS390MemoryReference(cg->getMethodMetaDataRealRegister(), fej9->thisThreadGetOwnedMonitorCountOffset(), cg), -1);
+#endif
          generateS390BranchInstruction(cg,TR::InstOpCode::BRC,TR::InstOpCode::COND_BRC,node,helperReturnOOLLabel);
 
          generateS390LabelInstruction(cg, TR::InstOpCode::label , node, helperCallLabel );
@@ -9168,7 +9213,9 @@ J9::Z::TreeEvaluator::VMmonexitEvaluator(TR::Node * node, TR::CodeGenerator * cg
    // If VMThread matches, we can safely perform the monitor exit by zero'ing
    // out the lockWord on the object
    generateSILInstruction(cg, moveImmOp, node, generateS390MemoryReference(baseReg, lwOffset, cg), 0);
-
+#if defined(TR_TARGET_64BIT) && (JAVA_SPEC_VERSION >= 19)
+   generateSIInstruction(cg, TR::InstOpCode::AGSI, node, generateS390MemoryReference(cg->getMethodMetaDataRealRegister(), fej9->thisThreadGetOwnedMonitorCountOffset(), cg), -1);
+#endif
    TR_S390OutOfLineCodeSection *outlinedHelperCall = NULL;
 
    outlinedHelperCall = new (cg->trHeapMemory()) TR_S390OutOfLineCodeSection(callLabel,cFlowRegionEnd,cg);
@@ -9236,6 +9283,9 @@ J9::Z::TreeEvaluator::VMmonexitEvaluator(TR::Node * node, TR::CodeGenerator * cg
          generateRIInstruction(cg, addImmOp, node, monitorReg, -OBJECT_HEADER_LOCK_FIRST_RECURSION_BIT);
          generateRXInstruction(cg, storeOp, node, monitorReg, tempMR1);
          }
+#if defined(TR_TARGET_64BIT) && (JAVA_SPEC_VERSION >= 19)
+      generateSIInstruction(cg, TR::InstOpCode::AGSI, node, generateS390MemoryReference(cg->getMethodMetaDataRealRegister(), fej9->thisThreadGetOwnedMonitorCountOffset(), cg), -1);
+#endif
       generateS390BranchInstruction(cg,TR::InstOpCode::BRC,TR::InstOpCode::COND_BRC,node,returnLabel);
       tempMR->stopUsingMemRefRegister(cg);
       tempMR1->stopUsingMemRefRegister(cg);

@@ -2954,9 +2954,16 @@ TR::Register * J9::Z::JNILinkage::buildDirectDispatch(TR::Node * callNode)
 
    if (isJNICallOutFrame)
      {
-     // Sets up PC, Stack pointer and literals offset slots.
-     setupJNICallOutFrame(callNode, javaStackPointerRealRegister, methodMetaDataVirtualRegister,
-                     returnFromJNICallLabel, jniCallDataSnippet);
+      // Sets up PC, Stack pointer and literals offset slots.
+      setupJNICallOutFrame(callNode, javaStackPointerRealRegister, methodMetaDataVirtualRegister,
+                              returnFromJNICallLabel, jniCallDataSnippet);
+#if defined(TR_TARGET_64BIT) && (JAVA_SPEC_VERSION >= 19)
+      /**
+       * For virtual threads, bump the callOutCounter.  It is safe and most efficient to
+       * do this unconditionally.  No need to check for overflow.
+       */
+      generateSIInstruction(cg(), TR::InstOpCode::AGSI, callNode, generateS390MemoryReference(methodMetaDataVirtualRegister, fej9->thisThreadGetCallOutCountOffset(), cg()), 1);
+#endif
      }
    else
      {
@@ -3010,7 +3017,16 @@ TR::Register * J9::Z::JNILinkage::buildDirectDispatch(TR::Node * callNode)
 #endif
      }
 
-
+#if defined(TR_TARGET_64BIT) && (JAVA_SPEC_VERSION >= 19)
+   if (isJNICallOutFrame)
+      {
+      /**
+       * For virtual threads, decrement the callOutCounter.  It is safe and most efficient to
+       * do this unconditionally.  No need to check for underflow.
+       */
+      generateSIInstruction(cg(), TR::InstOpCode::AGSI, callNode, generateS390MemoryReference(methodMetaDataVirtualRegister, fej9->thisThreadGetCallOutCountOffset(), cg()), -1);
+      }
+#endif
    generateRXInstruction(codeGen, TR::InstOpCode::getAddOpCode(), callNode, javaStackPointerRealRegister,
             new (trHeapMemory()) TR::MemoryReference(methodMetaDataVirtualRegister, (int32_t)fej9->thisThreadGetJavaLiteralsOffset(), codeGen));
 
