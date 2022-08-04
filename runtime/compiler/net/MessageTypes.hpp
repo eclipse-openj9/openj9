@@ -224,6 +224,7 @@ enum MessageType : uint16_t
    ClassEnv_enumerateFields,
    ClassEnv_isClassRefPrimitiveValueType,
    ClassEnv_flattenedArrayElementSize,
+   ClassEnv_getDefaultValueSlotAddress,
 
    // For TR_J9SharedCache
    SharedCache_getClassChainOffsetIdentifyingLoader,

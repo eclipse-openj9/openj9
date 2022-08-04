@@ -575,6 +575,7 @@ JITServerHelpers::cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Cl
    auto &origROMMethods = std::get<21>(classInfoTuple);
    classInfoStruct._classNameIdentifyingLoader = std::get<22>(classInfoTuple);
    classInfoStruct._arrayElementSize = std::get<23>(classInfoTuple);
+   classInfoStruct._defaultValueSlotAddress = std::get<24>(classInfoTuple);
 
    auto result = clientSessionData->getROMClassMap().insert({ clazz, classInfoStruct });
 
@@ -663,12 +664,21 @@ JITServerHelpers::packRemoteROMClassInfo(J9Class *clazz, J9VMThread *vmThread, T
 
    int32_t arrayElementSize = vmThread->javaVM->internalVMFunctions->arrayElementSize((J9ArrayClass*)clazz);
 
+   // getDefaultValueSlotAddress can only be called if the value type class is initialized
+   j9object_t* defaultValueSlotAddress = NULL;
+   if (TR::Compiler->om.areValueTypesEnabled() &&
+       classInitialized &&
+       TR::Compiler->cls.isValueTypeClass(TR::Compiler->cls.convertClassPtrToClassOffset(clazz)))
+      {
+      defaultValueSlotAddress = vmThread->javaVM->internalVMFunctions->getDefaultValueSlotAddress(clazz);
+      }
+
    return std::make_tuple(
       packedROMClassStr, methodsOfClass, baseClass, numDims, parentClass,
       TR::Compiler->cls.getITable((TR_OpaqueClassBlock *)clazz), methodTracingInfo,
       classHasFinalFields, classDepthAndFlags, classInitialized, byteOffsetToLockword, leafComponentClass,
       classLoader, hostClass, componentClass, arrayClass, totalInstanceSize, clazz->romClass,
-      cp, classFlags, classChainOffsetIdentifyingLoader, origROMMethods, classNameIdentifyingLoader, arrayElementSize
+      cp, classFlags, classChainOffsetIdentifyingLoader, origROMMethods, classNameIdentifyingLoader, arrayElementSize, defaultValueSlotAddress
    );
    }
 
@@ -840,6 +850,9 @@ JITServerHelpers::getROMClassData(const ClientSessionData::ClassInfo &classInfo,
          break;
       case CLASSINFO_ARRAY_ELEMENT_SIZE:
          *(int32_t *)data = classInfo._arrayElementSize;
+         break;
+      case CLASSINFO_DEFAULT_VALUE_SLOT_ADDRESS:
+         *(j9object_t **)data = classInfo._defaultValueSlotAddress;
          break;
       default:
          TR_ASSERT(false, "Class Info not supported %u\n", dataType);

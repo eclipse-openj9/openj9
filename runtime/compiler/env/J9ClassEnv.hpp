@@ -277,6 +277,17 @@ public:
     * 2 concrete classses and false otherwise.
     */
    bool containsZeroOrOneConcreteClass(TR::Compilation *comp, List<TR_PersistentClassInfo>* subClasses);
+
+   /** \brief
+    *     Returns the reference to the address of the default value instance for a value class.
+    *
+    *  \param clazz
+    *     The class that the default value instance belongs to. Must be an initialized value class.
+    *
+    *  \return
+    *     The reference to the address of the default value instance.
+    */
+   j9object_t *getDefaultValueSlotAddress(TR::Compilation *comp, TR_OpaqueClassBlock *clazz);
    };
 
 }

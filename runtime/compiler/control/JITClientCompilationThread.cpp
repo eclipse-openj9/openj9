@@ -2079,6 +2079,13 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(response, TR::Compiler->cls.flattenedArrayElementSize(comp, arrayClass));
          }
          break;
+      case MessageType::ClassEnv_getDefaultValueSlotAddress:
+         {
+         auto recv = client->getRecvData<TR_OpaqueClassBlock *>();
+         auto clazz = std::get<0>(recv);
+         client->write(response, TR::Compiler->cls.getDefaultValueSlotAddress(comp, clazz));
+         }
+         break;
       case MessageType::ClassEnv_enumerateFields:
          {
          auto recv = client->getRecvData<TR_OpaqueClassBlock *>();
