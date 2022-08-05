@@ -23,13 +23,8 @@
 <playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../TestConfig/playlist.xsd">
 	<test>
 		<testCaseName>Jep425Tests_testVirtualThread</testCaseName>
-		<disables>
-			<disable>
-				<comment>https://github.com/eclipse-openj9/openj9/issues/15650 and 15651</comment>
-			</disable>
-		</disables>
 		<variations>
-			<variation>--enable-preview -Xgcpolicy:nogc</variation>
+			<variation>--enable-preview -Xint -Xgcpolicy:nogc</variation>
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) $(JAVA_COMMAND) $(JVM_OPTIONS) \
 			-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
