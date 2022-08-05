@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -504,7 +504,7 @@ bool TR_DynamicLiteralPool::transformStaticSymRefToIndirectLoad(TR::TreeTop * tt
 
 bool TR_DynamicLiteralPool::addNewAloadChild(TR::Node *node)
    {
-   if (!performTransformation(comp(), "%s creating new aload child for node %p (%s) %p \n", optDetailString(),node,node->getOpCode().getName()))
+   if (!performTransformation(comp(), "%s creating new aload child for node %p (%s)\n", optDetailString(), node, node->getOpCode().getName()))
       return false;
    _changed = true;
    node->setAndIncChild(node->getNumChildren(),getAloadFromCurrentBlock(node));
