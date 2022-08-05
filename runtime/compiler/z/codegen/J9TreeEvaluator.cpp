@@ -3655,8 +3655,8 @@ bool genInstanceOfOrCheckcastSuperClassTest(TR::Node *node, TR::CodeGenerator *c
       {
       TR::Register *scratchRegister1 = srm->findOrCreateScratchRegister();
       //TR::Register *scratchRegister1 = scratch1Reg;
-      TR_ASSERT((node->getOpCodeValue() == TR::instanceof &&
-            node->getSecondChild()->getOpCodeValue() != TR::loadaddr), "genTestIsSuper: castClassDepth == -1 is only supported for transformed isInstance calls.");
+      TR_ASSERT(node->getSecondChild()->getOpCodeValue() != TR::loadaddr,
+            "genTestIsSuper: castClassDepth == -1 is not supported for a loadaddr castClass.");
       cursor = generateRXInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, scratchRegister1,
             generateS390MemoryReference(castClassReg, offsetof(J9Class, romClass), cg), cursor);
       cursor = generateRXInstruction(cg, TR::InstOpCode::L, node, scratchRegister1,

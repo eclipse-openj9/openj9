@@ -1345,8 +1345,7 @@ uint32_t J9::TreeEvaluator::calculateInstanceOfOrCheckCastSequences(TR::Node *in
       sequences[i++] = ClassEqualityTest;
       sequences[i++] = CastClassCacheTest;
       // On Z, We were having support for Super Class Test for dynamic Cast Class so adding it here. It can be guarded if Power/X do not need it.
-      if (cg->supportsInliningOfIsInstance() &&
-         instanceOfOrCheckCastNode->getOpCodeValue() == TR::instanceof &&
+      if ( (cg->supportsInliningOfIsInstance() || instanceOfOrCheckCastNode->getOpCodeValue() == TR::checkcast) &&
          instanceOfOrCheckCastNode->getSecondChild()->getOpCodeValue() != TR::loadaddr)
          sequences[i++] = SuperClassTest;
       if (createDynamicCacheTests)
