@@ -7149,9 +7149,20 @@ TR::CompilationInfoPerThreadBase::isCPUCheapCompilation(uint32_t bcsz, TR_Hotnes
    }
 
 bool
-TR::CompilationInfoPerThreadBase::cannotPerformRemoteComp()
+TR::CompilationInfoPerThreadBase::cannotPerformRemoteComp(
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+   J9VMThread *vmThread
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+)
    {
-   return !JITServer::ClientStream::isServerCompatible(OMRPORT_FROM_J9PORT(_jitConfig->javaVM->portLibrary)) ||
+   return
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+          // In non-portable restore (i.e. single checkpoint) mode prevent remote compilations until
+          // after the process is restored. In portable restore mode checkpoints are always possible
+          // so there's no point to delaying remote compilations.
+          (_jitConfig->javaVM->internalVMFunctions->isCheckpointAllowed(vmThread) && _jitConfig->javaVM->internalVMFunctions->isNonPortableRestoreMode(vmThread)) ||
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+          !JITServer::ClientStream::isServerCompatible(OMRPORT_FROM_J9PORT(_jitConfig->javaVM->portLibrary)) ||
           (!JITServerHelpers::isServerAvailable() && !JITServerHelpers::shouldRetryConnection(OMRPORT_FROM_J9PORT(_jitConfig->javaVM->portLibrary))) ||
           (TR::Compiler->target.cpu.isPower() && _jitConfig->inlineFieldWatches); // Power codegen is missing some FieldWatch relocation support
    }
@@ -7398,7 +7409,11 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
          }
       }
 #if defined(J9VM_OPT_JITSERVER)
-   bool cannotDoRemoteCompilation = cannotPerformRemoteComp();
+   bool cannotDoRemoteCompilation = cannotPerformRemoteComp(
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+      vmThread
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+   );
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
    if (!entry->isAotLoad()) // We don't/can't relocate this method
@@ -8005,7 +8020,6 @@ TR::CompilationInfoPerThreadBase::compile(J9VMThread * vmThread,
    J9Method *method = entry->getMethodDetails().getMethod();
    bool canDoRelocatableCompile = false;
    bool eligibleForRelocatableCompile = false;
-   bool eligibleForRemoteCompile = false;
    _qszWhenCompStarted = getCompilationInfo()->getMethodQueueSize();
 
    TR_RelocationRuntime *reloRuntime = NULL;

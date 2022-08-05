@@ -349,7 +349,11 @@ class CompilationInfoPerThreadBase
              can do a remote compilation, because the server could have died since
              we last checked.
     */
-   bool cannotPerformRemoteComp();
+   bool cannotPerformRemoteComp(
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+      J9VMThread *vmThread
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+   );
    /**
       @brief Returns true if heuristics determine that we have the resources to perform
              this compilation locally, rather than offloading it to the remote server.
