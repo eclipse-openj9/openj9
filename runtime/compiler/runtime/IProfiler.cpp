@@ -3127,37 +3127,32 @@ TR_IPBCDataCallGraph::createPersistentCopy(TR_J9SharedCache *sharedCache, TR_IPB
                uintptr_t classChainOffsetOfCLInSharedCache = sharedCache->getClassChainOffsetIdentifyingLoaderNoThrow(clazz);
                // The chain that identifies the class loader is stored at index 1
                store->_csInfo.setClazz(1, classChainOffsetOfCLInSharedCache);
-#ifdef PERSISTENCE_VERBOSE
                if (classChainOffsetOfCLInSharedCache == 0)
-                  fprintf(stderr, "Cannot store CallGraphEntry: classChain identifying classloader is 0. This IProfiler callgraph entry will not be good\n");
-#endif
+                  if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseIProfilerPersistence))
+                     TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "createPersistentCopy: Cannot store CallGraphEntry because classChain identifying classloader is 0.\n");
                }
             else
                {
-#ifdef PERSISTENCE_VERBOSE
-               fprintf(stderr, "createPersistentCopy: Cannot store CallGraphEntry because cannot remember clazz\n");
-#endif
+               if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseIProfilerPersistence))
+                  TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "createPersistentCopy: Cannot store CallGraphEntry because cannot remember class.\n");
                }
             }
          else // Most frequent class is not in SCC, so I cannot store IProfiler info about this in SCC
             {
-#ifdef PERSISTENCE_VERBOSE
-            fprintf(stderr, "createPersistentCopy: Cannot store CallGraphEntry because ROMClass not in SCC\n");
-#endif
+            if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseIProfilerPersistence))
+               TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "createPersistentCopy: Cannot store CallGraphEntry because ROMClass is not in SCC.\n");
             }
          }
       else
          {
-#ifdef PERSISTENCE_VERBOSE
-         fprintf(stderr, "createPersistentCopy: Cannot store CallGraphEntry because RAMClass in unloaded\n");
-#endif
+         if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseIProfilerPersistence))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "createPersistentCopy: Cannot store CallGraphEntry because RAMClass is unloaded.\n");
          }
       }
    else
       {
-#ifdef PERSISTENCE_VERBOSE
-      fprintf(stderr, "createPersistentCopy: Cannot store CallGraphEntry because there is no data\n");
-#endif
+      if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseIProfilerPersistence))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "createPersistentCopy: Cannot store CallGraphEntry because there is no data.\n");
       }
    }
 
@@ -3178,13 +3173,6 @@ TR_IPBCDataCallGraph::loadFromPersistentCopy(TR_IPBCDataStorageHeader * storage,
       uintptr_t *classChain = (uintptr_t*)sharedCache->pointerFromOffsetInSharedCache(csInfoChainOffset);
       if (classChain)
          {
-#ifdef PERSISTENCE_VERBOSE
-         // Find ROMClass to print information in case we cannot convert from ROMClass to RAMClass
-         J9ROMClass *romClass = sharedCache->startingROMClassOfClassChain(classChain);
-         J9UTF8 *classNameUTF8 = J9ROMCLASS_CLASSNAME(romClass);
-         int classNameLength = J9UTF8_LENGTH(classNameUTF8);
-         char *className = (char*)(J9UTF8_DATA(classNameUTF8));
-#endif
          // I need to convert from ROMClass into RAMClass
          void *classChainIdentifyingLoader = sharedCache->pointerFromOffsetInSharedCache(classChainIdentifyingLoaderOffsetInSCC);
          if (classChainIdentifyingLoader)
@@ -3209,46 +3197,61 @@ TR_IPBCDataCallGraph::loadFromPersistentCopy(TR_IPBCDataStorageHeader * storage,
                      }
                   else
                      {
-#ifdef PERSISTENCE_VERBOSE
-                     fprintf(stderr, "loadFromPersistentCopy: Cannot covert ROMClass to RAMClass because RAMClass is not initialized %.*s\n", classNameLength, className);
-#endif
+                     if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseIProfilerPersistence))
+                        {
+                        J9UTF8 *classNameUTF8 = J9ROMCLASS_CLASSNAME(sharedCache->startingROMClassOfClassChain(classChain));
+                        TR_VerboseLog::writeLineLocked(TR_Vlog_PERF,"loadFromPersistentCopy: Cannot covert ROMClass to RAMClass because RAMClass is not initialized. Class: %.*s\n",
+                                                       J9UTF8_LENGTH(classNameUTF8), J9UTF8_DATA(classNameUTF8));
+                        }
                      }
                   }
                else
                   {
-#ifdef PERSISTENCE_VERBOSE
                   // This is the second most frequent failure. Do we have the wrong classLoader?
-                  fprintf(stderr, "loadFromPersistentCopy: Cannot convert ROMClass to RAMClass. lookupClassFromChainAndLoader failed  %.*s\n", classNameLength, className);
-#endif
+                  if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseIProfilerPersistence))
+                     {
+                     J9UTF8 *classNameUTF8 = J9ROMCLASS_CLASSNAME(sharedCache->startingROMClassOfClassChain(classChain));
+                     TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "loadFromPersistentCopy: Cannot convert ROMClass to RAMClass because lookupClassFromChainAndLoader failed. Class: %.*s\n",
+                                                    J9UTF8_LENGTH(classNameUTF8), J9UTF8_DATA(classNameUTF8));
+                     }
+
                   }
                }
             else
                {
-#ifdef PERSISTENCE_VERBOSE
                // This is the most important failure case
-               fprintf(stderr, "loadFromPersistentCopy: Cannot convert ROMClass to RAMClass. Cannot find classloader  %.*s\n", classNameLength, className);
-#endif
+               if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseIProfilerPersistence))
+                  {
+                  J9UTF8 *classNameUTF8 = J9ROMCLASS_CLASSNAME(sharedCache->startingROMClassOfClassChain(classChain));
+                  TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "loadFromPersistentCopy: Cannot convert ROMClass to RAMClass. Cannot find classloader. Class: %.*s\n",
+                                                 J9UTF8_LENGTH(classNameUTF8), J9UTF8_DATA(classNameUTF8));
+                  }
                }
             }
          else
             {
-#ifdef PERSISTENCE_VERBOSE
-            fprintf(stderr, "loadFromPersistentCopy: Cannot convert ROMClass to RAMClass. Cannot find chain identifying classloader\n");
-#endif
+            if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseIProfilerPersistence))
+               {
+               J9UTF8 *classNameUTF8 = J9ROMCLASS_CLASSNAME(sharedCache->startingROMClassOfClassChain(classChain));
+               TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "loadFromPersistentCopy: Cannot convert ROMClass to RAMClass. Cannot find chain identifying classloader. Class: %.*s\n",
+                                              J9UTF8_LENGTH(classNameUTF8), J9UTF8_DATA(classNameUTF8));
+               }
             }
          }
       else
          {
-#ifdef PERSISTENCE_VERBOSE
-         fprintf(stderr, "loadFromPersistentCopy: Cannot convert ROMClass to RAMClass. Cannot get the class chain of ROMMethod\n");
-#endif
+         if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseIProfilerPersistence))
+            {
+            TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "loadFromPersistentCopy: Cannot convert ROMClass to RAMClass. Cannot get the class chain of ROMClass.\n");
+            }
          }
       }
    else
       {
-#ifdef PERSISTENCE_VERBOSE
-      fprintf(stderr, "loadFromPersistentCopy: Cannot convert ROMClass to RAMClass. Don't have required information in the entry\n");
-#endif
+      if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseIProfilerPersistence))
+         {
+         TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "loadFromPersistentCopy: Cannot convert ROMClass to RAMClass. Don't have required information in the entry.\n");
+         }
       }
    // Populate the remaining entries with 0
    for (int32_t i = 1; i < NUM_CS_SLOTS; i++)
