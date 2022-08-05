@@ -4868,6 +4868,7 @@ typedef struct J9InternalVMFunctions {
 	BOOLEAN (*jvmRestoreHooks)(struct J9VMThread *currentThread);
 	BOOLEAN (*isCRIUSupportEnabled)(struct J9VMThread *currentThread);
 	BOOLEAN (*isCheckpointAllowed)(struct J9VMThread *currentThread);
+	BOOLEAN (*isNonPortableRestoreMode)(struct J9VMThread *currentThread);
 	BOOLEAN (*runInternalJVMCheckpointHooks)(struct J9VMThread *currentThread);
 	BOOLEAN (*runInternalJVMRestoreHooks)(struct J9VMThread *currentThread);
 	BOOLEAN (*runDelayedLockRelatedOperations)(struct J9VMThread *currentThread);

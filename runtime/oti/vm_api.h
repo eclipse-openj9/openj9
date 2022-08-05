@@ -514,6 +514,18 @@ BOOLEAN
 isCheckpointAllowed(J9VMThread *currentThread);
 
 /**
+ * @brief Queries if non-portable restore mode (specified via
+ * -XX:+CRIURestoreNonPortableMode) is enabled. If so, checkpointing will
+ * not be permitted after the JVM has been restored from a checkpoint
+ * (checkpoint once mode).
+ *
+ * @param currentThread vmthread token
+ * @return TRUE if enabled, FALSE otherwise
+ */
+BOOLEAN
+isNonPortableRestoreMode(J9VMThread *currentThread);
+
+/**
  * @brief JVM hooks to run before performing a JVM checkpoint
  *
  * @param currentThread vmthread token
