@@ -28,11 +28,12 @@
   <variable name="MAINCLASS_SIMPLE" value="org.openj9.criu.CRIUSimpleTest" />
 
   <test id="Create Criu Checkpoint Image without Restore">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ $JVM_OPTIONS$ $MAINCLASS_SIMPLE$ 1 true</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ $JVM_OPTIONS$ $MAINCLASS_SIMPLE$ 1 1 true</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
     <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
     <output type="failure" caseSensitive="yes" regex="no">Post-checkpoint</output>
     <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
+    <output type="failure" caseSensitive="yes" regex="no">Removed testOutput file</output>
     <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
     <output type="failure" caseSensitive="yes" regex="no">ERR</output>
   </test>

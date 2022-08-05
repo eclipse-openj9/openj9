@@ -32,9 +32,9 @@ echo "start running script";
 # $6 is the NUM_CHECKPOINT
 # $7 is the KEEP_CHECKPOINT
 
-$2 -XX:+EnableCRIUSupport $3 -cp "$1/criu.jar" $4 $5 "$6" >testOutput 2>&1;
+$2 -XX:+EnableCRIUSupport $3 -cp "$1/criu.jar" $4 $5 $6 >testOutput 2>&1;
 
-if [ "$6" != true ]; then
+if [ "$7" != true ]; then
     NUM_CHECKPOINT=$6
     for ((i=0; i<$NUM_CHECKPOINT; i++)); do
         sleep 2;
@@ -46,5 +46,6 @@ cat testOutput;
 
 if  [ "$7" != true ]; then
     rm -rf testOutput
+    echo "Removed testOutput file"
 fi
 echo "finished script";
