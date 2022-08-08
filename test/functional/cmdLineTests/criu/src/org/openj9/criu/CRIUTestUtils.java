@@ -27,16 +27,16 @@ import java.nio.file.Files;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.io.File;
 import java.io.IOException;
+import java.util.Date;
 
-import org.eclipse.openj9.criu.*;
+import org.eclipse.openj9.criu.CRIUSupport;
+import org.eclipse.openj9.criu.RestoreException;
 
 public class CRIUTestUtils {
 	public static void deleteCheckpointDirectory(Path path) {
 		try {
 			if (path.toFile().exists()) {
-				Files.walk(path)
-				.map(Path::toFile)
-				.forEach(File::delete);
+				Files.walk(path).map(Path::toFile).forEach(File::delete);
 
 				Files.deleteIfExists(path);
 			}
@@ -70,10 +70,7 @@ public class CRIUTestUtils {
 				if (criu == null) {
 					criu = new CRIUSupport(path);
 				}
-				criu.setLeaveRunning(false)
-				.setShellJob(true)
-				.setFileLocks(true)
-				.checkpointJVM();
+				criu.setLeaveRunning(false).setShellJob(true).setFileLocks(true).checkpointJVM();
 			} catch (RestoreException e) {
 				e.printStackTrace();
 			}
@@ -83,5 +80,11 @@ public class CRIUTestUtils {
 		} else {
 			System.err.println("CRIU is not enabled");
 		}
+	}
+
+	public static void showThreadCurrentTime(String logStr) {
+		System.out.println(logStr + ", current thread name: " + Thread.currentThread().getName() + ", " + new Date()
+				+ ", System.currentTimeMillis(): " + System.currentTimeMillis() + ", System.nanoTime(): "
+				+ System.nanoTime());
 	}
 }

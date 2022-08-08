@@ -30,64 +30,51 @@ import java.nio.file.Paths;
 
 public class TestSingleThreadModeRestoreException {
 
-	private final static Path imagePath = Paths.get("cpData");
 	private static final Object lock = new Object();
 
 	public static void main(String[] args) {
 		new TestSingleThreadModeRestoreException().testSingleThreadModeRestoreException();
 	}
 
-	private void log(String msg) {
-		System.out.println(msg + ": " + this + " name: " + Thread.currentThread().getName());
-	}
-
-	Thread newThreadOwnMonitor() {
+	Thread doCheckpoint() {
 		Thread t = new Thread(new Runnable() {
 			public void run() {
-				log("newThreadOwnMonitor() before synchronized on " + lock);
-				synchronized (lock) {
-					for (;;) {
-						try {
-							log("newThreadOwnMonitor() before Thread.sleep()");
-							Thread.sleep(1000);
-							log("newThreadOwnMonitor() after Thread.sleep()");
-						} catch (InterruptedException e) {
-							log("newThreadOwnMonitor() interrupted");
-							break;
+				Path imagePath = Paths.get("cpData");
+				CRIUTestUtils.deleteCheckpointDirectory(imagePath);
+				CRIUTestUtils.deleteCheckpointDirectory(imagePath);
+				CRIUTestUtils.createCheckpointDirectory(imagePath);
+				CRIUSupport criu = new CRIUSupport(imagePath);
+				criu.registerPostRestoreHook(new Runnable() {
+					public void run() {
+						CRIUTestUtils.showThreadCurrentTime("PreSnapshotHook() before synchronized on " + lock);
+						synchronized (lock) {
+							CRIUTestUtils.showThreadCurrentTime("PreSnapshotHook() within synchronized on " + lock);
 						}
+						CRIUTestUtils.showThreadCurrentTime("PreSnapshotHook() after synchronized on " + lock);
 					}
-				}
-				log("newThreadOwnMonitor() after synchronized on " + lock);
+				});
+
+				System.out.println("Pre-checkpoint");
+				CRIUTestUtils.checkPointJVM(criu, imagePath, false);
 			}
 		});
 		return t;
 	}
 
 	void testSingleThreadModeRestoreException() {
-		boolean result = false;
-		Thread tom = newThreadOwnMonitor();
-		tom.start();
-
-		CRIUTestUtils.deleteCheckpointDirectory(imagePath);
-		CRIUTestUtils.createCheckpointDirectory(imagePath);
-		CRIUSupport criu = new CRIUSupport(imagePath);
-		criu.registerPostRestoreHook(new Runnable() {
-			public void run() {
-				log("PreSnapshotHook() before synchronized on " + lock);
-				synchronized (lock) {
-					log("PreSnapshotHook() within synchronized on " + lock);
-				}
-				log("PreSnapshotHook() after synchronized on " + lock);
+		CRIUTestUtils.showThreadCurrentTime("testSingleThreadModeRestoreException() before synchronized on " + lock);
+		synchronized (lock) {
+			try {
+				// ensure the lock already taken before performing a checkpoint
+				CRIUTestUtils.showThreadCurrentTime("testSingleThreadModeRestoreException() before doCheckpoint()");
+				Thread tpc = doCheckpoint();
+				tpc.start();
+				// set timeout 10s
+				tpc.join(10000);
+				CRIUTestUtils.showThreadCurrentTime("testSingleThreadModeRestoreException() after doCheckpoint()");
+			} catch (InterruptedException e) {
 			}
-		});
-
-		System.out.println("Pre-checkpoint");
-		CRIUTestUtils.checkPointJVM(criu, imagePath, false);
-
-		tom.interrupt();
-		try {
-			tom.join();
-		} catch (InterruptedException e) {
 		}
+		CRIUTestUtils.showThreadCurrentTime("testSingleThreadModeRestoreException() after synchronized on " + lock);
 	}
 }

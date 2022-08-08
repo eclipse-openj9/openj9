@@ -4089,6 +4089,7 @@ typedef struct J9DelayedLockingOpertionsRecord {
 
 #define J9_SINGLE_THREAD_MODE_OP_NOTIFY 0x1
 #define J9_SINGLE_THREAD_MODE_OP_NOTIFY_ALL 0x2
+#define J9_SINGLE_THREAD_MODE_OP_INTERRUPT 0x3
 
 typedef struct J9CRIUCheckpointState {
 	BOOLEAN isCheckPointEnabled;
@@ -4871,6 +4872,7 @@ typedef struct J9InternalVMFunctions {
 	BOOLEAN (*runInternalJVMCheckpointHooks)(struct J9VMThread *currentThread);
 	BOOLEAN (*runInternalJVMRestoreHooks)(struct J9VMThread *currentThread);
 	BOOLEAN (*runDelayedLockRelatedOperations)(struct J9VMThread *currentThread);
+	BOOLEAN (*delayedLockingOperation)(struct J9VMThread *currentThread, j9object_t instance, UDATA operation);
 	void (*setCRIUSingleThreadModeJVMCRIUException)(struct J9VMThread *vmThread, U_32 moduleName, U_32 messageNumber);
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 	j9object_t (*getClassNameString)(struct J9VMThread *currentThread, j9object_t classObject, jboolean internAndAssign);

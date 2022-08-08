@@ -19,8 +19,8 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 #include "j9jclnls.h"
 #include "j9lib.h"
 #include "j9protos.h"
@@ -30,9 +30,9 @@
 #include "omrthread.h"
 #include "ut_j9jcl.h"
 
-#include "VMHelpers.hpp"
 #include "ObjectMonitor.hpp"
 #include "VMAccess.hpp"
+#include "VMHelpers.hpp"
 
 extern "C" {
 
@@ -280,20 +280,16 @@ Java_java_lang_Thread_interruptImpl(JNIEnv *env, jobject rcv)
 
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 	j9object_t receiverObject = J9_JNI_UNWRAP_REFERENCE(rcv);
-	J9VMThread *targetThread = J9VMJAVALANGTHREAD_THREADREF(currentThread, receiverObject);
-	if (J9VMJAVALANGTHREAD_STARTED(currentThread, receiverObject) && (NULL != targetThread)) {
-		void (*sidecarInterruptFunction)(J9VMThread*) = vm->sidecarInterruptFunction;
-		if (NULL != sidecarInterruptFunction) {
-			sidecarInterruptFunction(targetThread);
-		}
-		omrthread_interrupt(targetThread->osThread);
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+	if (J9_IS_SINGLE_THREAD_MODE(vm)) {
+		vmFuncs->delayedLockingOperation(currentThread, receiverObject, J9_SINGLE_THREAD_MODE_OP_INTERRUPT);
+		/* exception is already set if any */
+	} else
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+	{
+		VM_VMHelpers::threadInterruptImpl(currentThread, receiverObject);
+		Trc_JCL_Thread_interruptImpl(currentThread, receiverObject);
 	}
-#if JAVA_SPEC_VERSION >= 14
-	else {
-		J9VMJAVALANGTHREAD_SET_DEADINTERRUPT(currentThread, receiverObject, JNI_TRUE);
-	}
-#endif /* JAVA_SPEC_VERSION >= 14 */
-
 	vmFuncs->internalExitVMToJNI(currentThread);
 }
 

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2021 IBM Corp. and others
+ * Copyright (c) 2001, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -121,6 +121,9 @@ public class J9BCUtil {
 		out.append("  Signature: " + J9UTF8Helper.stringValue(signature) + nl);
 		out.append(String.format("  Access Flags (%s): ", Long.toHexString(romMethod.modifiers().longValue())));
 		dumpModifiers(out, romMethod.modifiers().longValue(), MODIFIERSOURCE_METHOD, INCLUDE_INTERNAL_MODIFIERS);
+		out.append(nl);
+		out.append("  Internal Attribute Flags:");
+		dumpMethodJ9Modifiers(out, romMethod.modifiers(), J9ROMMethodHelper.getExtendedModifiersDataFromROMMethod(romMethod));
 		out.append(nl);
 		out.append("  Max Stack: " + romMethod.maxStack().longValue() + nl);
 
@@ -726,6 +729,21 @@ public class J9BCUtil {
 			out.append("(record) ");
 		if ((accessFlags & J9JavaAccessFlags.J9AccSealed) != 0)
 			out.append("(sealed) ");
+	}
+
+	private static void dumpMethodJ9Modifiers(PrintStream out, UDATA modifiers, UDATA extraModifiers) {
+		if (modifiers.allBitsIn(J9JavaAccessFlags.J9AccMethodCallerSensitive)) {
+			out.append(" @CallerSensitive");
+		}
+		if (modifiers.allBitsIn(J9JavaAccessFlags.J9AccMethodFrameIteratorSkip)) {
+			out.append(" @FrameIteratorSkip");
+		}
+		if (extraModifiers.allBitsIn(J9CfrClassFile.CFR_METHOD_EXT_NOT_CHECKPOINT_SAFE_ANNOTATION)) {
+			out.append(" @NotCheckpointSafe");
+		}
+		if (extraModifiers.allBitsIn(J9CfrClassFile.CFR_METHOD_EXT_HAS_SCOPED_ANNOTATION)) {
+			out.append(" @Scoped");
+		}
 	}
 
 	private static void dumpEnclosingMethod(PrintStream out, J9ROMClassPointer romClass, long flags) throws CorruptDataException {

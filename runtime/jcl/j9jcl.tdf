@@ -691,3 +691,5 @@ TraceEntry=Trc_JCL_com_ibm_oti_shared_SharedClassStatistics_cachePathImpl_Entry 
 TraceExit=Trc_JCL_com_ibm_oti_shared_SharedClassStatistics_cachePathImpl_Exit Overhead=1 Level=2 Template="JCL: SharedClassStatistics cacheNameImpl: Exiting with result %p (%s)"
 TraceEntry=Trc_JCL_com_ibm_oti_shared_SharedClassStatistics_numberAttachedImpl_Entry Overhead=1 Level=2 Template="JCL: SharedClassStatistics numberAttachedImpl: Entering"
 TraceExit=Trc_JCL_com_ibm_oti_shared_SharedClassStatistics_numberAttachedImpl_Exit Overhead=1 Level=2 Template="JCL: SharedClassStatistics numberAttachedImpl: Exiting with result %lld"
+
+TraceEvent=Trc_JCL_Thread_interruptImpl Overhead=1 Level=3 Template="Thread.interrupt() on receiverObject=%p"

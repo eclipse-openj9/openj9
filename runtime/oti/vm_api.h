@@ -565,6 +565,18 @@ runInternalJVMRestoreHooks(J9VMThread *currentThread);
  */
 BOOLEAN
 runDelayedLockRelatedOperations(J9VMThread *currentThread);
+
+/**
+ * @brief This function delays the identity operations during the Java checkpoint and restore hooks.
+ *
+ * @param currentThread thread token
+ * @param instance the identity object
+ * @param operation the operation specified for the instance
+ *
+ * @return BOOLEAN TRUE if no error, otherwise FALSE
+ */
+BOOLEAN
+delayedLockingOperation(J9VMThread *currentThread, j9object_t instance, UDATA operation);
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
 /* ---------------- classloadersearch.c ---------------- */

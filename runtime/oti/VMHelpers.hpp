@@ -2012,6 +2012,32 @@ exit:
 		return J9_ARE_NO_BITS_SET(omrthread_get_category(vmThread->osThread), nonJavaThreads);
 	}
 
+	/**
+	 * Interrupt the target Thread.
+	 *
+	 * Current thread must have VM access.
+	 *
+	 * @param[in] currentThread the current J9VMThread
+	 * @param[in] targetObject the target Thread object
+	 *
+	 */
+	static VMINLINE void
+	threadInterruptImpl(J9VMThread *currentThread, j9object_t targetObject)
+	{
+		J9VMThread *targetThread = J9VMJAVALANGTHREAD_THREADREF(currentThread, targetObject);
+		if (J9VMJAVALANGTHREAD_STARTED(currentThread, targetObject) && (NULL != targetThread)) {
+			void (*sidecarInterruptFunction)(J9VMThread*) = currentThread->javaVM->sidecarInterruptFunction;
+			if (NULL != sidecarInterruptFunction) {
+				sidecarInterruptFunction(targetThread);
+			}
+			omrthread_interrupt(targetThread->osThread);
+		}
+#if JAVA_SPEC_VERSION > 11
+		else {
+			J9VMJAVALANGTHREAD_SET_DEADINTERRUPT(currentThread, targetObject, JNI_TRUE);
+		}
+#endif /* JAVA_SPEC_VERSION > 11 */
+	}
 };
 
 #endif /* VMHELPERS_HPP_ */
