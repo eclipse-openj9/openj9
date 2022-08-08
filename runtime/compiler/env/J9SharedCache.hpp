@@ -93,7 +93,7 @@ public:
    TR_ALLOC_SPECIALIZED(TR_Memory::SharedCache)
 
    TR_J9SharedCache(TR_J9VMBase *fe);
-
+   TR_J9VMBase *fe() { return _fe; }
    virtual bool isHint(TR_ResolvedMethod *, TR_SharedCacheHint, uint16_t *dataField = NULL);
    virtual bool isHint(J9Method *, TR_SharedCacheHint, uint16_t *dataField = NULL);
    virtual uint16_t getAllEnabledHints(J9Method *method);
@@ -310,6 +310,8 @@ public:
    uintptr_t getClassChainOffsetIdentifyingLoaderNoFail(TR_OpaqueClassBlock *clazz, uintptr_t **classChain = NULL);
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
+   uintptr_t getClassChainOffsetIdentifyingLoaderNoThrow(TR_OpaqueClassBlock *clazz);
+
    virtual const void *storeSharedData(J9VMThread *vmThread, const char *key, const J9SharedDataDescriptor *descriptor);
 
    enum TR_J9SharedCacheDisabledReason
@@ -375,7 +377,6 @@ private:
 
    J9JITConfig *jitConfig() { return _jitConfig; }
    J9JavaVM *javaVM() { return _javaVM; }
-   TR_J9VMBase *fe() { return _fe; }
    J9SharedClassConfig *sharedCacheConfig() { return _sharedCacheConfig; }
 
    TR_AOTStats *aotStats() { return _aotStats; }
