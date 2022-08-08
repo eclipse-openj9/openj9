@@ -29,7 +29,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Date;
 
-import org.eclipse.openj9.criu.*;
+import org.eclipse.openj9.criu.CRIUSupport;
+import org.eclipse.openj9.criu.RestoreException;
 
 public class CRIUTestUtils {
 	public static void deleteCheckpointDirectory(Path path) {

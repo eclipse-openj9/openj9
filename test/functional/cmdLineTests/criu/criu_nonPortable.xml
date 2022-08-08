@@ -30,6 +30,7 @@
   <variable name="MAINCLASS_SINGLETHREADMODE_CHECKPOINT" value="org.openj9.criu.TestSingleThreadModeCheckpointException" />
   <variable name="MAINCLASS_SINGLETHREADMODE_RESTORE" value="org.openj9.criu.TestSingleThreadModeRestoreException" />
   <variable name="MAINCLASS_DEADLOCK_TEST" value="org.openj9.criu.DeadlockTest" />
+  <variable name="MAINCLASS_DELAYEDOPERATIONS" value="org.openj9.criu.TestDelayedOperations" />
 
   <test id="Create and Restore Criu Checkpoint Image once">
     <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_SIMPLE$ 1 1 false</command>
@@ -162,5 +163,16 @@
     <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
     <output type="failure" caseSensitive="yes" regex="no">ERR</output>
     <output type="failure" caseSensitive="yes" regex="no">TEST FAILED</output>
+  </test>
+
+  <test id="Create and Restore Criu Checkpoint Image once - TestDelayedOperations">
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_DELAYEDOPERATIONS$ 1 1 false</command>
+    <output type="success" caseSensitive="yes" regex="no">TestDelayedOperations.testDelayedThreadInterrupt(): PASSED</output>
+    <output type="required" caseSensitive="no" regex="no">Killed</output>
+    <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
+    <output type="failure" caseSensitive="no" regex="no">TestDelayedOperations.testDelayedThreadInterrupt(): FAILED</output>
+    <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
+    <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
+    <output type="failure" caseSensitive="yes" regex="no">ERR</output>
   </test>
 </suite>
