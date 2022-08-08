@@ -3549,6 +3549,29 @@ void genInstanceOfOrCheckCastSuperClassTest(TR::Node *node, TR::Register *condRe
    {
    TR::Compilation *comp = cg->comp();
 
+   // When castClass is an unknown at compile time check if castClass is an interface or an array.
+   // If so skip superClassTest.
+   bool dynamicCastClass = castClassDepth == -1;
+   if ( dynamicCastClass )
+      {
+      TR::Register *scratchRegister1 = srm->findOrCreateScratchRegister();
+      TR::Register *scratchRegister2 = srm->findOrCreateScratchRegister();
+      TR_ASSERT(node->getSecondChild()->getOpCodeValue() != TR::loadaddr,
+            "genInstanceOfOrCheckCastSuperClassTest: castClassDepth == -1 is not supported for a loadaddr castClass");
+
+      generateTrg1MemInstruction(cg, TR::InstOpCode::Op_load, node, scratchRegister1, TR::MemoryReference::createWithDisplacement(cg, castClassReg, offsetof(J9Class, romClass), TR::Compiler->om.sizeofReferenceAddress()));
+      generateTrg1MemInstruction(cg, TR::InstOpCode::lwz, node, scratchRegister1, TR::MemoryReference::createWithDisplacement(cg, scratchRegister1, offsetof(J9ROMClass, modifiers), 4));
+
+      // Array and interface check
+      loadConstant(cg, node, (J9AccClassArray | J9AccInterface), scratchRegister2);
+      generateTrg1Src2Instruction(cg, TR::InstOpCode::and_r, node, scratchRegister2, scratchRegister1, scratchRegister2);
+      // At this point cr0[eq] will be set if this is not an interface or an array.
+      generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, falseLabel, condReg);
+
+      srm->reclaimScratchRegister(scratchRegister1);
+      srm->reclaimScratchRegister(scratchRegister2);
+      }
+
    // Compare the instance class depth to the cast class depth. If the instance class depth is less than or equal to
    // to the cast class depth then the cast class cannot be a superclass of the instance class.
    //
