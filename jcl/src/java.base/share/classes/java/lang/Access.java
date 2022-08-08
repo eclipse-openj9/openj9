@@ -523,7 +523,20 @@ final class Access implements JavaLangAccess {
 	}
 
 	public <V> V executeOnCarrierThread(Callable<V> task) throws Exception {
-		throw new UnsupportedOperationException();
+		V result;
+		Thread currentThread = Thread.currentThread();
+		if (currentThread.isVirtual()) {
+			Thread carrierThread = Thread.currentCarrierThread();
+			carrierThread.setCurrentThread(carrierThread);
+			try {
+				result = task.call();
+			} finally {
+				carrierThread.setCurrentThread(currentThread);
+			}
+		} else {
+			result = task.call();
+		}
+		return result;
 	}
 
 	public Continuation getContinuation(Thread thread) {
