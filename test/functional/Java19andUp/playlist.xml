@@ -27,8 +27,10 @@
 			<variation>--enable-preview -Xint -Xgcpolicy:nogc</variation>
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) $(JAVA_COMMAND) $(JVM_OPTIONS) \
+			--add-opens java.base/java.lang=ALL-UNNAMED \
 			-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
-			org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng_190.xml$(Q) -testnames Jep425Tests_testVirtualThread \
+			org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng_190.xml$(Q) \
+			-testnames Jep425Tests_testVirtualThread \
 			-groups $(TEST_GROUP) \
 			-excludegroups $(DEFAULT_EXCLUDE); \
 			$(TEST_STATUS)

@@ -5765,6 +5765,7 @@ typedef struct J9JavaVM {
 	omrthread_monitor_t liveVirtualThreadListMutex;
 	UDATA virtualThreadLinkNextOffset;
 	UDATA virtualThreadLinkPreviousOffset;
+	UDATA virtualThreadInspectorCountOffset;
 #endif /* JAVA_SPEC_VERSION >= 19 */
 } J9JavaVM;
 

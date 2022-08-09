@@ -156,7 +156,7 @@ jvmtiGetThreadCpuTime(jvmtiEnv* env,
 				} else {
 					rv_nanos = (jlong)omrthread_get_cpu_time(targetThread->osThread);
 				}
-				releaseVMThread(currentThread, targetThread);
+				releaseVMThread(currentThread, targetThread, NULL);
 			}
 		}
 done:

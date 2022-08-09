@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -38,6 +38,12 @@
 #include "ut_j9jvmti.h"
 #include "omrlinkedlist.h"
 #include "jvmti_internal.h"
+
+#if JAVA_SPEC_VERSION >= 19
+/* See VirtualThreadTests.test_verifyJVMTIMacros for validation of below macro values. */
+#define JVMTI_VTHREAD_STATE_NEW 0
+#define JVMTI_VTHREAD_STATE_TERMINATED 99
+#endif /* JAVA_SPEC_VERSION >= 19 */
 
 #endif			/* jvmtiHelpers_h */
 

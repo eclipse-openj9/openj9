@@ -138,7 +138,7 @@ jvmtiForceEarlyReturn(jvmtiEnv* env,
 
 	rc = getCurrentVMThread(vm, &currentThread);
 	if (rc == JVMTI_ERROR_NONE) {
-		J9VMThread * targetThread;
+		J9VMThread *targetThread = NULL;
 
 		vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
 
@@ -238,7 +238,7 @@ jvmtiForceEarlyReturn(jvmtiEnv* env,
 			}
 resume:
 			vm->internalVMFunctions->resumeThreadForInspection(currentThread, targetThread);
-			releaseVMThread(currentThread, targetThread);
+			releaseVMThread(currentThread, targetThread, thread);
 		}
 done:
 		vm->internalVMFunctions->internalExitVMToJNI(currentThread);

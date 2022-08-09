@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2020 IBM Corp. and others
+ * Copyright (c) 2018, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,8 +29,8 @@ extern "C" {
 jvmtiError
 suspendThread(J9VMThread *currentThread, jthread thread, UDATA allowNull, UDATA *currentThreadSuspended)
 {
-	J9VMThread * targetThread;
-	jvmtiError rc;
+	J9VMThread *targetThread = NULL;
+	jvmtiError rc = JVMTI_ERROR_NONE;
 
 	*currentThreadSuspended = FALSE;
 	rc = getVMThread(currentThread, thread, &targetThread, allowNull, TRUE);
@@ -59,7 +59,7 @@ suspendThread(J9VMThread *currentThread, jthread thread, UDATA allowNull, UDATA 
 				Trc_JVMTI_threadSuspended(targetThread);
 			}
 		}
-		releaseVMThread(currentThread, targetThread);
+		releaseVMThread(currentThread, targetThread, thread);
 	}
 
 	return rc;
