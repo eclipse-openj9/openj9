@@ -404,6 +404,12 @@ if(NOT JAVA_SPEC_VERSION LESS 19)
 	)
 endif()
 
+if(NOT JAVA_SPEC_VERSION LESS 20)
+	jvm_add_exports(jvm
+		JVM_GetClassFileVersion
+	)
+endif()
+
 if(J9VM_OPT_JITSERVER)
 	jvm_add_exports(jvm
 		JITServer_CreateServer

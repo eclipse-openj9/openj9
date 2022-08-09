@@ -259,3 +259,32 @@ JVM_VirtualThreadUnmountEnd(JNIEnv *env)
 	assert(!"JVM_VirtualThreadUnmountEnd unimplemented");
 }
 #endif /* JAVA_SPEC_VERSION >= 19 */
+
+#if JAVA_SPEC_VERSION >= 20
+JNIEXPORT jint JNICALL
+JVM_GetClassFileVersion(JNIEnv *env, jclass cls)
+{
+	jint version = 0;
+	J9VMThread *currentThread = (J9VMThread *)env;
+	J9InternalVMFunctions const * const vmFuncs = currentThread->javaVM->internalVMFunctions;
+
+	vmFuncs->internalEnterVMFromJNI(currentThread);
+
+	if (NULL == cls) {
+		vmFuncs->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, NULL);
+	} else {
+		J9Class *clazz = J9VM_J9CLASS_FROM_JCLASS(currentThread, cls);
+		J9ROMClass *romClass = clazz->romClass;
+
+		if (J9ROMCLASS_IS_PRIMITIVE_OR_ARRAY(romClass)) {
+			version = BCT_JavaMajorVersionShifted(JAVA_SPEC_VERSION) >> BCT_MajorClassFileVersionMaskShift;
+		} else {
+			version = (jint)((romClass->minorVersion << 16) + romClass->majorVersion);
+		}
+	}
+
+	vmFuncs->internalExitVMToJNI(currentThread);
+
+	return version;
+}
+#endif /* JAVA_SPEC_VERSION >= 20 */
