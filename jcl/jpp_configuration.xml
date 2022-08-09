@@ -234,7 +234,7 @@
 		<classpathentry kind="src" path="src/openj9.traceformat/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.zosconditionhandling/share/classes"/>
 		<classpathentry kind="lib" path="/binaries/common/ibm/ibmjzos.jar"/>
-		<classpathentry kind="lib" path="/binaries/vm/third/rt-compressed.sunJava19.jar"/>
+		<classpathentry kind="lib" path="/binaries/vm/third/rt-compressed.sunJava20.jar"/>
 		<source path="src"/>
 		<parameter name="macro:define" value="JAVA_SPEC_VERSION=20"/>
 		<parameter name="msg:outputdir" value="java.base/share/classes/com/ibm/oti/util"/>
