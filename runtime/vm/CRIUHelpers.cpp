@@ -116,6 +116,12 @@ isCheckpointAllowed(J9VMThread *currentThread)
 	return result;
 }
 
+BOOLEAN
+isNonPortableRestoreMode(J9VMThread *currentThread)
+{
+	return currentThread->javaVM->checkpointState.isNonPortableRestoreMode;
+}
+
 /**
  * This adds an internal CRIU hook to trace all heap objects of instanceType and its subclasses if specified.
  *
