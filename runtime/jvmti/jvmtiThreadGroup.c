@@ -304,7 +304,7 @@ getThreadGroupChildrenImpl(J9JavaVM *vm, J9VMThread *currentThread, jobject grou
 
 			if (JVMTI_ERROR_NONE == getVMThread(currentThread, (jthread)&thread, &targetThread, FALSE, TRUE)) {
 				threads[numLiveThreads++] = (jthread)vmFuncs->j9jni_createLocalRef((JNIEnv *)currentThread, thread);
-				releaseVMThread(currentThread, targetThread);
+				releaseVMThread(currentThread, targetThread, (jthread)&thread);
 			}
 		}
 

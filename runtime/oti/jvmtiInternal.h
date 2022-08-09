@@ -566,6 +566,12 @@ typedef struct jvmtiGcp_translation {
 #define IBMJVMTI_EXTENDED_CALLSTACK     1
 #define IBMJVMTI_UNEXTENDED_CALLSTACK   0
 
+#if JAVA_SPEC_VERSION >= 19
+/* These macros corresponds to the states in j.l.VirtualThread. */
+#define JVMTI_VTHREAD_STATE_NEW 0
+#define JVMTI_VTHREAD_STATE_TERMINATED 99
+#endif /* JAVA_SPEC_VERSION >= 19 */
+
 /* The brace mismatches in the macros below are due to the usage pattern:
  *
  * JVMTI_ENVIRONMENTS_DO(jvmtiData, j9env) {
