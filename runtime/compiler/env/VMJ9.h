@@ -1345,7 +1345,22 @@ public:
    virtual bool isStringCompressionEnabledVM();
    virtual void *getInvokeExactThunkHelperAddress(TR::Compilation *comp, TR::SymbolReference *glueSymRef, TR::DataType dataType);
 
+   /**
+    * \brief Answers whether snapshots (checkpoints) that will include this compiled body
+    * (if/when it is successfully compiled) can be taken.
+    *
+    * \return True if snapshots can be taken, false if no snapshots that will include this
+    * body are allowed.
+    */
    bool inSnapshotMode();
+
+   /**
+    * \brief Answers whether checkpoint and restore mode is enabled (but not necessarily
+    * whether snapshots can be taken or if any restores have already occurred).
+    *
+    * \return True if checkpoint and restore mode is enabled, false otherwise.
+    */
+   bool isSnapshotModeEnabled();
 
 protected:
 

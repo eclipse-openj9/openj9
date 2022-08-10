@@ -165,9 +165,6 @@ J9::Z::CodeGenerator::initialize()
    if (!disableMonitorCacheLookup)
       comp->setOption(TR_EnableMonitorCacheLookup);
 
-   // Enable high-resolution timer
-   cg->setSupportsCurrentTimeMaxPrecision();
-
    // Defect 109299 : PMR 14649,999,760 / CritSit AV8426
    // Turn off use of hardware clock on zLinux for calculating currentTimeMillis() as user can adjust time on their system.
    //
@@ -176,6 +173,12 @@ J9::Z::CodeGenerator::initialize()
    // (see the java/lang/System.nanoTime() spec for details).
    if (comp->target().isZOS())
       cg->setSupportsMaxPrecisionMilliTime();
+
+   // Enable high-resolution timer for System.nanoTime() unless we need to support checkpointing (i.e. snapshot mode), which requires
+   // that we adjust nanoTime() after restoring checkpoints. This adjustment is currently not implemented for the high res timer, hence
+   // we need to stick to the Java nanoTime() implementation.
+   if (!fej9->isSnapshotModeEnabled())
+      cg->setSupportsCurrentTimeMaxPrecision();
 
    // Support BigDecimal Long Lookaside versioning optimizations.
    if (!comp->getOption(TR_DisableBDLLVersioning))
@@ -4095,4 +4098,3 @@ J9::Z::CodeGenerator::supportsTrapsInTMRegion()
    {
    return self()->comp()->target().isZOS();
    }
-

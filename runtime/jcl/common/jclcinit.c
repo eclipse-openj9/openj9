@@ -595,7 +595,6 @@ initializeRequiredClasses(J9VMThread *vmThread, char* dllName)
 #endif /* JAVA_SPEC_VERSION >= 18 */
 #if JAVA_SPEC_VERSION >= 19
 			J9VMCONSTANTPOOL_JAVALANGTHREADFIELDHOLDER,
-			J9VMCONSTANTPOOL_JDKINTERNALVMCONTINUATION,
 #endif /* JAVA_SPEC_VERSION >= 19 */
 	};
 
@@ -644,6 +643,15 @@ initializeRequiredClasses(J9VMThread *vmThread, char* dllName)
 	}
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 
+#if JAVA_SPEC_VERSION >= 19
+	/* These fields point to the next and previous VirtualThreads in the liveVirtualThreadList. */
+	if (0 != vmFuncs->addHiddenInstanceField(vm, "java/lang/VirtualThread", "linkNext", "Ljava/lang/VirtualThread;", &vm->virtualThreadLinkNextOffset)) {
+		return 1;
+	}
+	if (0 != vmFuncs->addHiddenInstanceField(vm, "java/lang/VirtualThread", "linkPrevious", "Ljava/lang/VirtualThread;", &vm->virtualThreadLinkPreviousOffset)) {
+		return 1;
+	}
+#endif /* JAVA_SPEC_VERSION >= 19 */
 
 	vmThread->privateFlags |= J9_PRIVATE_FLAGS_REPORT_ERROR_LOADING_CLASS;
 

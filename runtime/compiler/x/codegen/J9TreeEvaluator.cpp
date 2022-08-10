@@ -9255,6 +9255,17 @@ inlineNanoTime(
       // result = reg + result
       generateRegMemInstruction(TR::InstOpCode::LEA8RegMem, node, result, generateX86MemoryReference(reg, result, 0, cg), cg);
 
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+      if (fej9->isSnapshotModeEnabled())
+         {
+         // result = result - nanoTimeMonotonicClockDelta
+         TR::Register *vmThreadReg = cg->getVMThreadRegister();
+         generateRegMemInstruction(TR::InstOpCode::L8RegMem, node, reg, generateX86MemoryReference(vmThreadReg, offsetof(J9VMThread, javaVM), cg), cg);
+         generateRegMemInstruction(TR::InstOpCode::L8RegMem, node, reg, generateX86MemoryReference(reg, offsetof(J9JavaVM, portLibrary), cg), cg);
+         generateRegMemInstruction(TR::InstOpCode::SUB8RegMem, node, result, generateX86MemoryReference(reg, offsetof(J9PortLibrary, nanoTimeMonotonicClockDelta), cg), cg);
+         }
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+
       cg->stopUsingRegister(reg);
 
       // Store the result to memory if necessary
@@ -9369,9 +9380,23 @@ inlineNanoTime(
       generateRegRegInstruction(TR::InstOpCode::IMUL4AccReg, node, eaxReal, edxReal, dep1, cg);
 
 
-      // add the two parts then store it back
+      // add the two parts
       generateRegRegInstruction(TR::InstOpCode::ADD4RegReg, node, eaxReal, reglow, cg);
       generateRegImmInstruction(TR::InstOpCode::ADC4RegImm4, node, edxReal, 0x0, cg);
+
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+      if (fej9->isSnapshotModeEnabled())
+         {
+         // subtract nanoTimeMonotonicClockDelta from the result
+         TR::Register *vmThreadReg = cg->getVMThreadRegister();
+         generateRegMemInstruction(TR::InstOpCode::L4RegMem, node, regLow, generateX86MemoryReference(vmThreadReg, offsetof(J9VMThread, javaVM), cg), cg);
+         generateRegMemInstruction(TR::InstOpCode::L4RegMem, node, regLow, generateX86MemoryReference(regLow, offsetof(J9JavaVM, portLibrary), cg), cg);
+         generateRegMemInstruction(TR::InstOpCode::SUB4RegMem, node, eaxReal, generateX86MemoryReference(regLow, offsetof(J9PortLibrary, nanoTimeMonotonicClockDelta), cg), cg);
+         generateRegMemInstruction(TR::InstOpCode::SBB4RegMem, node, edxReal, generateX86MemoryReference(regLow, offsetof(J9PortLibrary, nanoTimeMonotonicClockDelta) + 4, cg), cg);
+         }
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+
+      // store it back
       generateMemRegInstruction(TR::InstOpCode::S4MemReg, node, generateX86MemoryReference(resultAddress, 0, cg), eaxReal, cg);
       generateMemRegInstruction(TR::InstOpCode::S4MemReg, node, generateX86MemoryReference(resultAddress, 4, cg), edxReal, cg);
 
