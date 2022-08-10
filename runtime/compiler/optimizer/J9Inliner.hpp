@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -96,10 +96,6 @@ class TR_MultipleCallTargetInliner : public TR_InlinerBase
       float getScalingFactor(float factor);
       virtual bool supportsMultipleTargetInlining () { return true ; }
 
-      void walkCallSites(TR::ResolvedMethodSymbol *, TR_CallStack *, TR_InnerPreexistenceInfo *, int32_t walkDepth);
-      void walkCallSite( TR::ResolvedMethodSymbol * calleeSymbol, TR_CallStack * callStack,
-                         TR::TreeTop * callNodeTreeTop, TR::Node * parent, TR::Node * callNode, TR_VirtualGuardSelection *guard,
-                         TR_OpaqueClassBlock * thisClass, bool inlineNonRecursively, int32_t walkDepth);
    private:
       bool analyzeCallSite(TR::ResolvedMethodSymbol *, TR_CallStack *, TR::TreeTop *, TR::Node *, TR::Node *);
       void weighCallSite( TR_CallStack * callStack , TR_CallSite *callsite, bool currentBlockHasExceptionSuccessors,bool dontAddCalls=false);
