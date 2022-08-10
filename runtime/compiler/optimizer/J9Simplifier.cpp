@@ -326,22 +326,20 @@ J9::Simplifier::simplifyiCallMethods(TR::Node * node, TR::Block * block)
 TR::Node *
 J9::Simplifier::simplifylCallMethods(TR::Node * node, TR::Block * block)
    {
-   if (comp()->cg()->getSupportsCurrentTimeMaxPrecision())
+   TR::MethodSymbol * methodSymbol = node->getSymbol()->getMethodSymbol();
+   if (methodSymbol)
       {
-      TR::MethodSymbol * methodSymbol = node->getSymbol()->getMethodSymbol();
-      if (methodSymbol)
+      if ((methodSymbol->getRecognizedMethod() == TR::java_lang_System_currentTimeMillis) &&
+          comp()->cg()->getSupportsMaxPrecisionMilliTime() &&
+          (methodSymbol->isJNI() || methodSymbol->isVMInternalNative() || methodSymbol->isJITInternalNative()))
          {
-         if (comp()->cg()->getSupportsMaxPrecisionMilliTime() &&
-             (methodSymbol->getRecognizedMethod() == TR::java_lang_System_currentTimeMillis) &&
-             (methodSymbol->isJNI() || methodSymbol->isVMInternalNative() || methodSymbol->isJITInternalNative()))
-            {
-            node = convertCurrentTimeMillis(node, block);
-            }
-         else if (methodSymbol->getRecognizedMethod() == TR::java_lang_System_nanoTime &&
+         node = convertCurrentTimeMillis(node, block);
+         }
+      else if ((methodSymbol->getRecognizedMethod() == TR::java_lang_System_nanoTime) &&
+               comp()->cg()->getSupportsCurrentTimeMaxPrecision() &&
                (methodSymbol->isJNI() || methodSymbol->isVMInternalNative() || methodSymbol->isJITInternalNative()))
-            {
-            node = convertNanoTime(node, block);
-            }
+         {
+         node = convertNanoTime(node, block);
          }
       }
    else

@@ -90,6 +90,7 @@
 			<variation>-Xjit:count=0 -XX:+CRIURestoreNonPortableMode</variation>
 		</variations>
 		<command>
+			TR_Options=$(Q)exclude={org/openj9/criu/TimeChangeTest.nanoTimeInt()J},dontInline={org/openj9/criu/TimeChangeTest.nanoTimeInt()J|org/openj9/criu/TimeChangeTest.nanoTimeJit()J},{org/openj9/criu/TimeChangeTest.nanoTimeJit()J}(count=1)$(Q) \
 			$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump \
 			-DSCRIPPATH=$(TEST_RESROOT)$(D)criuScript.sh -DTEST_RESROOT=$(TEST_RESROOT) \
 			-DJAVA_COMMAND=$(JAVA_COMMAND) -DJVM_OPTIONS=$(Q)$(JVM_OPTIONS)$(Q) \

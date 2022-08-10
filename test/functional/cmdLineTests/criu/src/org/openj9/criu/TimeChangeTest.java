@@ -48,6 +48,10 @@ public class TimeChangeTest {
 			TimeChangeTest tct = new TimeChangeTest();
 			if ("testSystemNanoTime".equalsIgnoreCase(testName)) {
 				tct.testSystemNanoTime();
+			} else if ("testSystemNanoTimeJitPreCheckpointCompile".equalsIgnoreCase(testName)) {
+				tct.testSystemNanoTimeJitPreCheckpointCompile();
+			} else if ("testSystemNanoTimeJitPostCheckpointCompile".equalsIgnoreCase(testName)) {
+				tct.testSystemNanoTimeJitPostCheckpointCompile();
 			} else {
 				tct.test(testName);
 			}
@@ -94,6 +98,58 @@ public class TimeChangeTest {
 			System.out.println("FAILED: System.nanoTime() after CRIU restore: " + afterRestore
 					+ ", the elapse time is: " + elapsedTime + " ns, w/ MAX_TARDINESS_NS : " + MAX_TARDINESS_NS);
 		}
+	}
+
+	public void testSystemNanoTimeJitPreCheckpointCompile() {
+		testSystemNanoTimeJitTestPreCheckpointPhase();
+		testSystemNanoTimeJitWarmupPhase();
+		CRIUTestUtils.checkPointJVM(imagePath, false);
+		testSystemNanoTimeJitTestPostCheckpointPhase();
+	}
+
+	public void testSystemNanoTimeJitPostCheckpointCompile() {
+		testSystemNanoTimeJitTestPreCheckpointPhase();
+		CRIUTestUtils.checkPointJVM(imagePath, false);
+		testSystemNanoTimeJitWarmupPhase();
+		testSystemNanoTimeJitTestPostCheckpointPhase();
+	}
+
+	private static void testSystemNanoTimeJitWarmupPhase() {
+		for (int i = 0; i < 100000; i++) {
+			nanoTimeJit();
+		}
+	}
+
+	private void testSystemNanoTimeJitTestPreCheckpointPhase() {
+		final long beforeCheckpoint = nanoTimeInt();
+		System.out.println("System.nanoTime() before CRIU checkpoint: " + beforeCheckpoint);
+	}
+
+	private void testSystemNanoTimeJitTestPostCheckpointPhase() {
+		final long afterRestoreJit = nanoTimeJit();
+		final long afterRestoreInt = nanoTimeInt();
+		if (afterRestoreJit <= afterRestoreInt) {
+			System.out.println("PASSED: System.nanoTime() after CRIU restore: interpreter nanotime = " + afterRestoreInt + ", JIT nanotime = " + afterRestoreJit);
+		} else {
+			System.out.println("FAILED: System.nanoTime() after CRIU restore: interpreter nanotime = " + afterRestoreInt + ", JIT nanotime = " + afterRestoreJit);
+		}
+	}
+
+	/*
+	 * In order to test the JIT handling of System.nanoTime() these two methods,
+	 * nanoTimeInt() and nanoTimeJit(), need special treatment.
+	 * 1) nanoTimeInt() must not be compiled or inlined to ensure that when called it
+	 * will invoke the non-JIT implementation of System.nanoTime().
+	 * 2) nanoTimeJit() must not be inlined so that it can be warmed up effectively.
+	 * The above is currently accomplished via Xjit exclude= and dontInline= options
+	 * when the test is executed.
+	 */
+	private static long nanoTimeInt() {
+		return System.nanoTime();
+	}
+
+	private static long nanoTimeJit() {
+		return System.nanoTime();
 	}
 
 	private final TimerTask taskMillisDelayBeforeCheckpointDone = new TimerTask() {
