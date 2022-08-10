@@ -522,6 +522,105 @@ Java_java_lang_Thread_registerNatives(JNIEnv *env, jclass clazz)
 	clearNonZAAPEligibleBit(env, clazz, natives, numNatives);
 #endif /* J9VM_OPT_JAVA_OFFLOAD_SUPPORT */
 }
+
+/* private native void notifyJvmtiMountBegin(boolean firstMount); */
+void JNICALL
+Java_java_lang_VirtualThread_notifyJvmtiMountBegin(JNIEnv *env, jobject thread, jboolean firstMount)
+{
+	if (firstMount) {
+		J9VMThread *currentThread = (J9VMThread *)env;
+		J9JavaVM *vm = currentThread->javaVM;
+		J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+		J9MemoryManagerFunctions *mmFuncs = vm->memoryManagerFunctions;
+
+		vmFuncs->internalEnterVMFromJNI(currentThread);
+
+		omrthread_monitor_enter(vm->liveVirtualThreadListMutex);
+		if (NULL == vm->liveVirtualThreadList) {
+			J9Class *virtualThreadClass = J9OBJECT_CLAZZ(currentThread, J9_JNI_UNWRAP_REFERENCE(thread));
+
+			/* Allocate empty virtual thread and create a global reference to it as root for the linked list.
+			 * This prevents the root reference from becoming stale if the GC moves the object.
+			 */
+			j9object_t rootVirtualThread = mmFuncs->J9AllocateObject(currentThread, virtualThreadClass, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
+			if (NULL != rootVirtualThread) {
+				/* The global ref will be freed at vm death. */
+				jobject globalRef = vmFuncs->j9jni_createGlobalRef((JNIEnv *)currentThread, rootVirtualThread, JNI_FALSE);
+				if (NULL != globalRef) {
+					vm->liveVirtualThreadList = (j9object_t *)globalRef;
+
+					/* Set linkNext/linkPrevious to itself. */
+					J9OBJECT_OBJECT_STORE(currentThread, rootVirtualThread, vm->virtualThreadLinkNextOffset, rootVirtualThread);
+					J9OBJECT_OBJECT_STORE(currentThread, rootVirtualThread, vm->virtualThreadLinkPreviousOffset, rootVirtualThread);
+				} else {
+					vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
+				}
+			} else {
+				vmFuncs->setHeapOutOfMemoryError(currentThread);
+			}
+		}
+
+		if (NULL != vm->liveVirtualThreadList) {
+			j9object_t root = *(vm->liveVirtualThreadList);
+			j9object_t threadObj = J9_JNI_UNWRAP_REFERENCE(thread);
+			j9object_t rootPrev = J9OBJECT_OBJECT_LOAD(currentThread, root, vm->virtualThreadLinkPreviousOffset);
+
+			/* Add thread to the end of the list. */
+			J9OBJECT_OBJECT_STORE(currentThread, threadObj, vm->virtualThreadLinkNextOffset, root);
+			J9OBJECT_OBJECT_STORE(currentThread, threadObj, vm->virtualThreadLinkPreviousOffset, rootPrev);
+			J9OBJECT_OBJECT_STORE(currentThread, rootPrev, vm->virtualThreadLinkNextOffset, threadObj);
+			J9OBJECT_OBJECT_STORE(currentThread, root, vm->virtualThreadLinkPreviousOffset, threadObj);
+		}
+		omrthread_monitor_exit(vm->liveVirtualThreadListMutex);
+
+		vmFuncs->internalExitVMToJNI(currentThread);
+	}
+}
+
+/* private native void notifyJvmtiMountEnd(boolean firstMount); */
+void JNICALL
+Java_java_lang_VirtualThread_notifyJvmtiMountEnd(JNIEnv *env, jobject thread, jboolean firstMount)
+{
+}
+
+/* private native void notifyJvmtiUnmountBegin(boolean lastUnmount); */
+void JNICALL
+Java_java_lang_VirtualThread_notifyJvmtiUnmountBegin(JNIEnv *env, jobject thread, jboolean lastUnmount)
+{
+}
+
+/* private native void notifyJvmtiUnmountEnd(boolean lastUnmount); */
+void JNICALL
+Java_java_lang_VirtualThread_notifyJvmtiUnmountEnd(JNIEnv *env, jobject thread, jboolean lastUnmount)
+{
+	if (lastUnmount) {
+		J9VMThread *currentThread = (J9VMThread *)env;
+		J9JavaVM *vm = currentThread->javaVM;
+		J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+
+		vmFuncs->internalEnterVMFromJNI(currentThread);
+
+		omrthread_monitor_enter(vm->liveVirtualThreadListMutex);
+		if (NULL != vm->liveVirtualThreadList) {
+			j9object_t threadObj = J9_JNI_UNWRAP_REFERENCE(thread);
+			j9object_t threadPrev = J9OBJECT_OBJECT_LOAD(currentThread, threadObj, vm->virtualThreadLinkPreviousOffset);
+			j9object_t threadNext = J9OBJECT_OBJECT_LOAD(currentThread, threadObj, vm->virtualThreadLinkNextOffset);
+
+			/* Remove thread from list. The root will never be removed. */
+			J9OBJECT_OBJECT_STORE(currentThread, threadPrev, vm->virtualThreadLinkNextOffset, threadNext);
+			J9OBJECT_OBJECT_STORE(currentThread, threadNext, vm->virtualThreadLinkPreviousOffset, threadPrev);
+		}
+		omrthread_monitor_exit(vm->liveVirtualThreadListMutex);
+
+		vmFuncs->internalExitVMToJNI(currentThread);
+	}
+}
+
+/* private static native void registerNatives(); */
+void JNICALL
+Java_java_lang_VirtualThread_registerNatives(JNIEnv *env, jclass clazz)
+{
+}
 #endif /* JAVA_SPEC_VERSION >= 19 */
 
 }
