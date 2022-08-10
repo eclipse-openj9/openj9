@@ -2650,6 +2650,9 @@ bool J9::Options::feLatePostProcess(void * base, TR::OptionSet * optionSet)
             }
 
          self()->setOption(TR_FullSpeedDebug);
+#if defined(J9VM_OPT_JITSERVER)
+         compInfo->getPersistentInfo()->setLocalSyncCompiles(false);
+#endif /* defined(J9VM_OPT_JITSERVER) */
          self()->setOption(TR_DisableDirectToJNI);
          //setOption(TR_DisableNoVMAccess);
          //setOption(TR_DisableAsyncCompilation);
