@@ -346,6 +346,7 @@ J9::X86::CPU::supports_feature_test(uint32_t feature)
       case OMR_FEATURE_X86_AVX512VL:
       case OMR_FEATURE_X86_AVX512BW:
       case OMR_FEATURE_X86_AVX512DQ:
+      case OMR_FEATURE_X86_FMA:
          return true;
       default:
          return false;
