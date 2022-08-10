@@ -56,8 +56,4 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<reason>Nestmates are not enabled on java10</reason>
 	</exclude>
 
-	<exclude id="gtgc001" platform="all">
-		<reason>GetThreadGroupChildren requires refactor for Project Loom</reason>
-	</exclude>
-
 </suite>
