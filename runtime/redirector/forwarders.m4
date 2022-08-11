@@ -398,3 +398,5 @@ _IF([JAVA_SPEC_VERSION >= 19],
 	[_X(JVM_VirtualThreadUnmountBegin, JNICALL, false, void, JNIEnv *env)])
 _IF([JAVA_SPEC_VERSION >= 19],
 	[_X(JVM_VirtualThreadUnmountEnd, JNICALL, false, void, JNIEnv *env)])
+_IF([JAVA_SPEC_VERSION >= 20],
+	[_X(JVM_GetClassFileVersion, JNICALL, false, jint, JNIEnv *env, jclass cls)])
