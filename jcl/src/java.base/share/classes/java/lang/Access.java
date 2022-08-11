@@ -1,5 +1,5 @@
 /*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
-/*******************************************************************************
+/*
  * Copyright (c) 2007, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
@@ -19,7 +19,7 @@
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
- *******************************************************************************/
+ */
 package java.lang;
 
 import java.lang.annotation.Annotation;
@@ -69,6 +69,9 @@ import jdk.internal.vm.ContinuationScope;
 import jdk.internal.vm.StackableScope;
 import jdk.internal.vm.ThreadContainer;
 /*[ENDIF] JAVA_SPEC_VERSION >= 19 */
+/*[IF JAVA_SPEC_VERSION >= 20]*/
+import jdk.internal.misc.CarrierThreadLocal;
+/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
 /*[ELSE] Sidecar19-SE */
 import sun.misc.JavaLangAccess;
 import sun.reflect.ConstantPool;
@@ -514,6 +517,31 @@ final class Access implements JavaLangAccess {
 		return Thread.currentCarrierThread();
 	}
 
+/*[IF JAVA_SPEC_VERSION >= 20]*/
+	/*
+	 * To access package-private methods in ThreadLocal, an
+	 * (implicit) cast from CarrierThreadLocal is required.
+	 */
+	private static <T> ThreadLocal<T> asThreadLocal(CarrierThreadLocal<T> local) {
+		return local;
+	}
+
+	public <T> T getCarrierThreadLocal(CarrierThreadLocal<T> local) {
+		return asThreadLocal(local).getCarrierThreadLocal();
+	}
+
+	public boolean isCarrierThreadLocalPresent(CarrierThreadLocal<?> local) {
+		return asThreadLocal(local).isCarrierThreadLocalPresent();
+	}
+
+	public void removeCarrierThreadLocal(CarrierThreadLocal<?> local) {
+		asThreadLocal(local).removeCarrierThreadLocal();
+	}
+
+	public <T> void setCarrierThreadLocal(CarrierThreadLocal<T> local, T value) {
+		asThreadLocal(local).setCarrierThreadLocal(value);
+	}
+/*[ELSE] JAVA_SPEC_VERSION >= 20 */
 	public <T> T getCarrierThreadLocal(ThreadLocal<T> local) {
 		return local.getCarrierThreadLocal();
 	}
@@ -521,6 +549,7 @@ final class Access implements JavaLangAccess {
 	public <T> void setCarrierThreadLocal(ThreadLocal<T> local, T value) {
 		local.setCarrierThreadLocal(value);
 	}
+/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
 
 	public <V> V executeOnCarrierThread(Callable<V> task) throws Exception {
 		V result;
