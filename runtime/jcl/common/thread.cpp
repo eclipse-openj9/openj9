@@ -620,6 +620,10 @@ Java_java_lang_VirtualThread_notifyJvmtiUnmountEnd(JNIEnv *env, jobject thread, 
 void JNICALL
 Java_java_lang_VirtualThread_registerNatives(JNIEnv *env, jclass clazz)
 {
+	jfieldID notifyJvmtiEvents = env->GetStaticFieldID(clazz, "notifyJvmtiEvents", "Z");
+
+	Assert_JCL_notNull(notifyJvmtiEvents);
+	env->SetStaticBooleanField(clazz, notifyJvmtiEvents, JNI_TRUE);
 }
 #endif /* JAVA_SPEC_VERSION >= 19 */
 
