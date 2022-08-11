@@ -40,12 +40,12 @@ TR::JitConfig * TR::JitConfig::instance() { return NULL; }
 TR::CPU
 J9::X86::CPU::detectRelocatable(OMRPortLibrary * const omrPortLib)
    {
-   // Sandybridge Architecture is selected to be our default portable processor description
+   // For our portable processor description we allow only features present in the Sandybridge Architecture
    const uint32_t customFeatures [] = {OMR_FEATURE_X86_FPU, OMR_FEATURE_X86_CX8, OMR_FEATURE_X86_CMOV,
                                        OMR_FEATURE_X86_MMX, OMR_FEATURE_X86_SSE, OMR_FEATURE_X86_SSE2,
                                        OMR_FEATURE_X86_SSSE3, OMR_FEATURE_X86_SSE4_1, OMR_FEATURE_X86_POPCNT,
-                                       OMR_FEATURE_X86_SSE3, OMR_FEATURE_X86_AESNI, OMR_FEATURE_X86_AVX,
-                                       OMR_FEATURE_X86_AVX512F};
+                                       OMR_FEATURE_X86_SSE3, OMR_FEATURE_X86_AESNI, OMR_FEATURE_X86_AVX
+                                      };
 
    OMRPORT_ACCESS_FROM_OMRPORT(omrPortLib);
    OMRProcessorDesc customProcessorDescription;
@@ -157,7 +157,7 @@ J9::X86::CPU::supportsFeature(uint32_t feature)
       TR_ASSERT_FATAL(self()->supports_feature_test(feature), "Old API and new API did not match: processor feature %d\n", feature);
       TR_ASSERT_FATAL(TRUE == omrsysinfo_processor_has_feature(&_supportedFeatureMasks, feature), "New processor feature usage detected, please add feature %d to _supportedFeatureMasks via TR::CPU::enableFeatureMasks()\n", feature);
       }
-      
+
    return TRUE == omrsysinfo_processor_has_feature(&_processorDescription, feature);
    }
 
