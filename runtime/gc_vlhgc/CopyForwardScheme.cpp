@@ -2232,8 +2232,9 @@ MM_CopyForwardScheme::updateMarkMapAndCardTableOnCopy(MM_EnvironmentVLHGC *env, 
 
 			MM_CardTable *cardTable = _extensions->cardTable;
 			Card *card = cardTable->heapAddrToCardAddr(env, srcObject);
+			Card srcCardState = *card;
 
-			switch(*card) {
+			switch(srcCardState) {
 			case CARD_GMP_MUST_SCAN:
 			case CARD_DIRTY:
 			{
@@ -2247,8 +2248,22 @@ MM_CopyForwardScheme::updateMarkMapAndCardTableOnCopy(MM_EnvironmentVLHGC *env, 
 			case CARD_CLEAN:
 				/* do nothing */
 				break;
+
+			/* Unexpected states */
+			case CARD_REMEMBERED:
+				Assert_GC_true_with_message4(env, false, "Unexpected Card state CARD_REMEMBERED %u for Card %p, srcObject %p, dstObject %p\n", CARD_REMEMBERED, card, srcObject, dstObject);
+				break;
+			case CARD_REMEMBERED_AND_GMP_SCAN:
+				Assert_GC_true_with_message4(env, false, "Unexpected Card state CARD_REMEMBERED_AND_GMP_SCAN %u for Card %p, srcObject %p, dstObject %p\n", CARD_REMEMBERED_AND_GMP_SCAN, card, srcObject, dstObject);
+				break;
+			case CARD_MARK_COMPACT_TRANSITION:
+				Assert_GC_true_with_message4(env, false, "Unexpected Card state CARD_MARK_COMPACT_TRANSITION %u for Card %p, srcObject %p, dstObject %p\n", CARD_MARK_COMPACT_TRANSITION, card, srcObject, dstObject);
+				break;
+			case CARD_INVALID:
+				Assert_GC_true_with_message4(env, false, "Unexpected Card state CARD_INVALID %u for Card %p, srcObject %p, dstObject %p\n", CARD_INVALID, card, srcObject, dstObject);
+				break;
 			default:
-				Assert_GC_true_with_message4(env, false, "Unexpected Card state %u for Card %p, srcObject %p, dstObject %p\n", *card, card, srcObject, dstObject);
+				Assert_GC_true_with_message4(env, false, "Unexpected Card state UNKNOWN %u for Card %p, srcObject %p, dstObject %p\n", srcCardState, card, srcObject, dstObject);
 			}
 		}
 	}
