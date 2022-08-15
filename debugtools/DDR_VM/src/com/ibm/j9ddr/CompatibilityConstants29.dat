@@ -67,6 +67,10 @@ J9Object.OBJECT_HEADER_LOCK_LEARNING = 0
 J9Object.OBJECT_HEADER_LOCK_LEARNING_RECURSION_OFFSET = 0
 J9Object.OBJECT_HEADER_LOCK_V2_RECURSION_OFFSET = 0
 
+J9PortLibrary.OMRPORT_SIG_FLAG_SIGUSR2 = 0
+
+J9RASdumpAgent.J9RAS_DUMP_ON_USER2_SIGNAL = 0
+
 J9RecordComponentFlags.J9RecordComponentFlagHasAnnotations = 0
 J9RecordComponentFlags.J9RecordComponentFlagHasGenericSignature = 0
 J9RecordComponentFlags.J9RecordComponentFlagHasTypeAnnotations = 0

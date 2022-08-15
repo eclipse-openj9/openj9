@@ -53,6 +53,7 @@ import com.ibm.j9ddr.corereaders.memory.IProcess;
 import com.ibm.j9ddr.corereaders.osthread.IOSThread;
 import com.ibm.j9ddr.view.dtfj.DTFJCorruptDataException;
 import com.ibm.j9ddr.view.dtfj.image.J9RASImageDataFactory.ProcessData;
+import static com.ibm.j9ddr.vm29.structure.J9PortLibrary.*;
 
 /**
  * Adapter for DDR IProcesses to make them implement the ImageProcess
@@ -70,19 +71,6 @@ public class J9DDRImageProcess implements ImageProcess {
 	private ProcessData j9rasProcessData;
 	private String version;
 	private WeakReference<Map<Long,Object>> cachedThreads = null;
-	
-	// These flag definitions came from j9port.h
-	private final static int J9PORT_SIG_FLAG_SIGSEGV 	= 4;
-	private final static int J9PORT_SIG_FLAG_SIGBUS 	= 8;
-	private final static int J9PORT_SIG_FLAG_SIGILL 	= 16;
-	private final static int J9PORT_SIG_FLAG_SIGFPE 	= 32;
-	private final static int J9PORT_SIG_FLAG_SIGTRAP 	= 64;
-	private final static int J9PORT_SIG_FLAG_SIGQUIT 	= 0x400;
-	private final static int J9PORT_SIG_FLAG_SIGABRT 	= 0x800;
-	private final static int J9PORT_SIG_FLAG_SIGTERM 	= 0x1000;
-	private final static int J9PORT_SIG_FLAG_SIGFPE_DIV_BY_ZERO 	= 0x40020;
-	private final static int J9PORT_SIG_FLAG_SIGFPE_INT_DIV_BY_ZERO = 0x80020;
-	private final static int J9PORT_SIG_FLAG_SIGFPE_INT_OVERFLOW 	= 0x100020;
 	
 	private final static String[] SIGNAL_NAMES = {
 		"ZERO",
@@ -499,7 +487,7 @@ public class J9DDRImageProcess implements ImageProcess {
 				}
 			}
 		} catch (com.ibm.j9ddr.CorruptDataException e) {
-			//Do nothing - fall back to core file readers
+			// Fall back to core file readers.
 		}
 		
 		try {
@@ -578,24 +566,59 @@ public class J9DDRImageProcess implements ImageProcess {
 		Map<Long, Object> dtfjThreadMap = getThreadMap();
 		return (J9DDRBaseImageThread)dtfjThreadMap.get(id);
 	}
-	
-	private int resolveGenericSignal(int num) {
-		if ((num & J9PORT_SIG_FLAG_SIGQUIT) != 0) 	return 3;
-		if ((num & J9PORT_SIG_FLAG_SIGILL) != 0) 	return 4;
-		if ((num & J9PORT_SIG_FLAG_SIGTRAP) != 0) 	return 5;
-		if ((num & J9PORT_SIG_FLAG_SIGABRT) != 0) 	return 6;
-		if ((num & J9PORT_SIG_FLAG_SIGFPE) != 0) {
-			if (num == J9PORT_SIG_FLAG_SIGFPE_DIV_BY_ZERO) 		return 35;
-			if (num == J9PORT_SIG_FLAG_SIGFPE_INT_DIV_BY_ZERO) 	return 36;
-			if (num == J9PORT_SIG_FLAG_SIGFPE_INT_OVERFLOW) 	return 37;
+
+	private static int resolveGenericSignal(int num) {
+		if (num == OMRPORT_SIG_FLAG_SIGQUIT) {
+			return 3;
+		}
+
+		if (num == OMRPORT_SIG_FLAG_SIGILL) {
+			return 4;
+		}
+
+		if (num == OMRPORT_SIG_FLAG_SIGTRAP) {
+			return 5;
+		}
+
+		if (num == OMRPORT_SIG_FLAG_SIGABRT) {
+			return 6;
+		}
+
+		if (num == OMRPORT_SIG_FLAG_SIGFPE_DIV_BY_ZERO) {
+			return 35;
+		}
+
+		if (num == OMRPORT_SIG_FLAG_SIGFPE_INT_DIV_BY_ZERO) {
+			return 36;
+		}
+
+		if (num == OMRPORT_SIG_FLAG_SIGFPE_INT_OVERFLOW) {
+			return 37;
+		}
+
+		if ((num & OMRPORT_SIG_FLAG_SIGFPE) != 0) {
 			return 8;
 		}
-		if ((num & J9PORT_SIG_FLAG_SIGBUS) != 0) 	return 10;
-		if ((num & J9PORT_SIG_FLAG_SIGSEGV) != 0) 	return 11;
-		if ((num & J9PORT_SIG_FLAG_SIGTERM) != 0) 	return 15;
+
+		if (num == OMRPORT_SIG_FLAG_SIGBUS) {
+			return 10;
+		}
+
+		if (num == OMRPORT_SIG_FLAG_SIGSEGV) {
+			return 11;
+		}
+
+		if (num == OMRPORT_SIG_FLAG_SIGTERM) {
+			return 15;
+		}
+
+		if (num == OMRPORT_SIG_FLAG_SIGUSR2) {
+			return 17;
+		}
+
 		return num;
 	}
-	
+
 	/**
 	 * Looks up the given key in rawText and finds the long that corresponds to it.  ie: "... key=number..."
 	 * Returns 0 if the key is not found.

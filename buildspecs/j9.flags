@@ -966,11 +966,15 @@ all data is stored in their own region. It additionaly reduces footprint, mainly
 		<ifRemoved>NO ROMable AOT Support for TJ Watson</ifRemoved>
 	</flag>
 	<flag id="interp_sigQuitThread">
-		<description>Controls if a separate thread handles SIGQUITsignal.</description>
-		<ifRemoved>platform cannot answer SIGQUIT.</ifRemoved>
+		<description>Controls if a separate thread handles the SIGQUIT signal.</description>
+		<ifRemoved>Platform cannot answer SIGQUIT.</ifRemoved>
 		<requires>
 			<require flag="interp_gpHandler"/>
 		</requires>
+	</flag>
+	<flag id="interp_sigUsr2">
+		<description>Controls if SIGUSR2 is handled.</description>
+		<ifRemoved>Platform cannot answer SIGUSR2.</ifRemoved>
 	</flag>
 	<flag id="interp_smallMonitorSlot">
 		<description>Flag to indicate that on 64-bit platforms, the monitor slot in object headers is a U32 rather than a UDATA.</description>

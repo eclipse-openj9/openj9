@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2021 IBM Corp. and others
+ * Copyright (c) 2001, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -159,15 +159,20 @@ permittedSubclassesHelper(JNIEnv *env, jobject cls);
 
 /* ---------------- sigquit.c ---------------- */
 void
-J9SigQuitShutdown(J9JavaVM * vm);
+J9SigQuitShutdown(J9JavaVM *vm);
 
+#if defined(J9VM_INTERP_SIG_USR2)
+/* ---------------- sigusr2.c ---------------- */
+void
+J9SigUsr2Shutdown(J9JavaVM *vm);
+#endif /* defined(J9VM_INTERP_SIG_USR2) */
 
 /* ---------------- unsafe_mem.c ---------------- */
 UDATA
-initializeUnsafeMemoryTracking(J9JavaVM* vm);
+initializeUnsafeMemoryTracking(J9JavaVM *vm);
 
 void
-freeUnsafeMemory(J9JavaVM* vm);
+freeUnsafeMemory(J9JavaVM *vm);
 
 /* ---------------- java_dyn_methodhandle.c ---------------- */
 #if defined(J9VM_OPT_JAVA_OFFLOAD_SUPPORT)

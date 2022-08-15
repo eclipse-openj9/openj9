@@ -603,15 +603,15 @@ prepareForDump(struct J9JavaVM *vm, struct J9RASdumpAgent *agent, struct J9RASdu
 		 */
 
 		/* Share exclusive access when it's a "slow entry" or "user" event, as there may be a deadlock */
-		UDATA shareVMAccess = exclusiveHeld &&
-				( (context->eventFlags & J9RAS_DUMP_ON_USER_SIGNAL) ||
-				(context->eventFlags & J9RAS_DUMP_ON_SLOW_EXCLUSIVE_ENTER) );
+		UDATA shareVMAccess = exclusiveHeld
+				&& OMR_ARE_ANY_BITS_SET(context->eventFlags, J9RAS_DUMP_ON_USER_SIGNAL | J9RAS_DUMP_ON_SLOW_EXCLUSIVE_ENTER);
 
 		if ( shareVMAccess == 0 ) {
 
 			/* Deferred attach of SigQuit thread, needed if we're preparing to walk the heap (GC pre-req) */
-			if ( (agent->requestMask & (J9RAS_DUMP_DO_PREPARE_HEAP_FOR_WALK | J9RAS_DUMP_DO_COMPACT_HEAP | J9RAS_DUMP_DO_ATTACH_THREAD)) &&
-			(context->eventFlags & J9RAS_DUMP_ON_USER_SIGNAL ) ) {
+			if (OMR_ARE_ANY_BITS_SET(agent->requestMask, J9RAS_DUMP_DO_PREPARE_HEAP_FOR_WALK | J9RAS_DUMP_DO_COMPACT_HEAP | J9RAS_DUMP_DO_ATTACH_THREAD)
+					&& OMR_ARE_ANY_BITS_SET(context->eventFlags, J9RAS_DUMP_ON_USER_SIGNAL | J9RAS_DUMP_ON_USER2_SIGNAL)
+			) {
 
 				JavaVMAttachArgs attachArgs;
 
@@ -1046,7 +1046,7 @@ rasDumpEnableHooks(J9JavaVM *vm, UDATA eventFlags)
 	omr_error_t retVal = OMR_ERROR_NONE;
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
-	const UDATA hookFlags = J9RAS_DUMP_ON_ANY & ~J9RAS_DUMP_ON_GP_FAULT & ~J9RAS_DUMP_ON_USER_SIGNAL;
+	const UDATA hookFlags = J9RAS_DUMP_ON_ANY & ~J9RAS_DUMP_ON_GP_FAULT & ~J9RAS_DUMP_ON_USER_SIGNAL & ~J9RAS_DUMP_ON_USER2_SIGNAL;
 
 	if (eventFlags & hookFlags) {
 		J9HookInterface** vmHooks = vm->internalVMFunctions->getVMHookInterface(vm);

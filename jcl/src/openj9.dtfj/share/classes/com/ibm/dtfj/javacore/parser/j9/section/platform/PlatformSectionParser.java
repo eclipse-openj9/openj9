@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2007, 2018 IBM Corp. and others
+ * Copyright (c) 2007, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -133,7 +133,7 @@ public class PlatformSectionParser extends SectionParser implements IPlatformTyp
 		while((results = processTagLineOptional(T_1XHEXCPCODE)) != null) {
 			int j9_signal = results.getIntValue(PL_SIGNAL);
 			if (j9_signal != IBuilderData.NOT_AVAILABLE) {
-				fImageProcessBuilder.setSignal(resolveGenericSignal(j9_signal));
+				fImageProcessBuilder.setSignal(j9_signal);
 			}
 		}
 		
@@ -202,43 +202,6 @@ public class PlatformSectionParser extends SectionParser implements IPlatformTyp
 			}
 			fImageProcessBuilder.setRegisters(m);
 		}
-	}
-	
-	// J9 port library signal bit values (from j9port.h). These same values are also used in 
-	// class com.ibm.jvm.j9.dump.indexsupport.NodeGPF in the DTFJ J9 project. Really this is 
-	// a candidate for using a DTFJ 'Common' project at some point.
-	private final static int J9PORT_SIG_FLAG_SIGSEGV 	= 4;
-	private final static int J9PORT_SIG_FLAG_SIGBUS 	= 8;
-	private final static int J9PORT_SIG_FLAG_SIGILL 	= 16;
-	private final static int J9PORT_SIG_FLAG_SIGFPE 	= 32;
-	private final static int J9PORT_SIG_FLAG_SIGTRAP 	= 64;
-	private final static int J9PORT_SIG_FLAG_SIGQUIT 	= 0x400;
-	private final static int J9PORT_SIG_FLAG_SIGABRT 	= 0x800;
-	private final static int J9PORT_SIG_FLAG_SIGTERM 	= 0x1000;
-	
-	private final static int J9PORT_SIG_FLAG_SIGFPE_DIV_BY_ZERO 	= 0x40020;
-	private final static int J9PORT_SIG_FLAG_SIGFPE_INT_DIV_BY_ZERO = 0x80020;
-	private final static int J9PORT_SIG_FLAG_SIGFPE_INT_OVERFLOW 	= 0x100020;
-
-	/**
-	 * Converts J9 signal value to generic signal number.
-	 */
-	private int resolveGenericSignal(int num) {
-
-		if ((num & J9PORT_SIG_FLAG_SIGQUIT) != 0) 	return 3;
-		if ((num & J9PORT_SIG_FLAG_SIGILL) != 0) 	return 4;
-		if ((num & J9PORT_SIG_FLAG_SIGTRAP) != 0) 	return 5;
-		if ((num & J9PORT_SIG_FLAG_SIGABRT) != 0) 	return 6;
-		if ((num & J9PORT_SIG_FLAG_SIGFPE) != 0) {
-			if (num == J9PORT_SIG_FLAG_SIGFPE_DIV_BY_ZERO) 		return 35;
-			if (num == J9PORT_SIG_FLAG_SIGFPE_INT_DIV_BY_ZERO) 	return 36;
-			if (num == J9PORT_SIG_FLAG_SIGFPE_INT_OVERFLOW) 	return 37;
-			return 8;
-		}
-		if ((num & J9PORT_SIG_FLAG_SIGBUS) != 0) 	return 10;
-		if ((num & J9PORT_SIG_FLAG_SIGSEGV) != 0) 	return 11;
-		if ((num & J9PORT_SIG_FLAG_SIGTERM) != 0) 	return 15;
-		return num;
 	}
 	
 	/**

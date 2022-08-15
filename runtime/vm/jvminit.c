@@ -7406,10 +7406,10 @@ setSignalOptions(J9JavaVM *vm, J9PortLibrary *portLibrary)
 			vm->sigFlags |= J9_SIG_XRS_SYNC;
 			sigOptions |= J9PORT_SIG_OPTIONS_REDUCED_SIGNALS_SYNCHRONOUS;
 		} else if ((NULL != optionValue) && (0 == strcmp(optionValue, "async"))) {
-			vm->sigFlags |= (J9_SIG_XRS_ASYNC | J9_SIG_NO_SIG_QUIT);
+			vm->sigFlags |= (J9_SIG_XRS_ASYNC | J9_SIG_NO_SIG_QUIT | J9_SIG_NO_SIG_USR2);
 			sigOptions |= J9PORT_SIG_OPTIONS_REDUCED_SIGNALS_ASYNCHRONOUS;
 		} else {
-			vm->sigFlags |= (J9_SIG_XRS_SYNC | J9_SIG_XRS_ASYNC | J9_SIG_NO_SIG_QUIT);
+			vm->sigFlags |= (J9_SIG_XRS_SYNC | J9_SIG_XRS_ASYNC | J9_SIG_NO_SIG_QUIT | J9_SIG_NO_SIG_USR2);
 			sigOptions |= (J9PORT_SIG_OPTIONS_REDUCED_SIGNALS_SYNCHRONOUS | J9PORT_SIG_OPTIONS_REDUCED_SIGNALS_ASYNCHRONOUS);
 		}
 	}

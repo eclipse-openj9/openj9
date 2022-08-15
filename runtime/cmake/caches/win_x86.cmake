@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2021, 2021 IBM Corp. and others
+# Copyright (c) 2021, 2022 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,6 +27,7 @@ set(J9VM_ENV_SSE2_SUPPORT_DETECTION ON CACHE BOOL "")
 
 set(J9VM_INTERP_ATOMIC_FREE_JNI ON CACHE BOOL "")
 set(J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH ON CACHE BOOL "")
+set(J9VM_INTERP_SIG_USR2 OFF CACHE BOOL "")
 set(J9VM_INTERP_TWO_PASS_EXCLUSIVE ON CACHE BOOL "")
 set(J9VM_INTERP_USE_UNSAFE_HELPER OFF CACHE BOOL "")
 set(J9VM_MODULE_CODEGEN_IA32 ON CACHE BOOL "")
