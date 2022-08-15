@@ -39,7 +39,7 @@ public class Continuation {
 	private boolean started;
 	private boolean finished;
 
-	private static final JavaLangAccess JLA = SharedSecrets.getJavaLangAccess();
+	private static JavaLangAccess JLA = SharedSecrets.getJavaLangAccess();
 
 	/**
 	 * Continuation's Pinned reasons
@@ -99,6 +99,9 @@ public class Continuation {
 		this.scope = scope;
 		this.runnable = target;
 		createContinuationImpl();
+		if (JLA == null) {
+			JLA = SharedSecrets.getJavaLangAccess();
+		}
 	}
 
 	public ContinuationScope getScope() {
