@@ -236,25 +236,25 @@ JVM_IsPreviewEnabled(void)
 }
 
 JNIEXPORT void JNICALL
-JVM_VirtualThreadMountBegin(JNIEnv *env)
+JVM_VirtualThreadMountBegin(JNIEnv *env, jobject thread, jboolean firstMount)
 {
 	assert(!"JVM_VirtualThreadMountBegin unimplemented");
 }
 
 JNIEXPORT void JNICALL
-JVM_VirtualThreadMountEnd(JNIEnv *env)
+JVM_VirtualThreadMountEnd(JNIEnv *env, jobject thread, jboolean firstMount)
 {
 	assert(!"JVM_VirtualThreadMountEnd unimplemented");
 }
 
 JNIEXPORT void JNICALL
-JVM_VirtualThreadUnmountBegin(JNIEnv *env)
+JVM_VirtualThreadUnmountBegin(JNIEnv *env, jobject thread, jboolean lastUnmount)
 {
 	assert(!"JVM_VirtualThreadUnmountBegin unimplemented");
 }
 
 JNIEXPORT void JNICALL
-JVM_VirtualThreadUnmountEnd(JNIEnv *env)
+JVM_VirtualThreadUnmountEnd(JNIEnv *env, jobject thread, jboolean lastUnmount)
 {
 	assert(!"JVM_VirtualThreadUnmountEnd unimplemented");
 }
