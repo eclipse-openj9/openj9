@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2007, 2017 IBM Corp. and others
+ * Copyright (c) 2007, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -43,8 +43,7 @@ public class PlatformPatternMatchers {
 	public static final Matcher Linux = CommonPatternMatchers.generateMatcher("Linux", Pattern.CASE_INSENSITIVE);
 	public static final Matcher AIX = CommonPatternMatchers.generateMatcher("AIX", Pattern.CASE_INSENSITIVE);
 	public static final Matcher z_OS = CommonPatternMatchers.generateMatcher("z/OS", Pattern.CASE_INSENSITIVE);
-	public static final Matcher J9Signal_1 = CommonPatternMatchers.generateMatcher("J9Generic_Signal:", Pattern.CASE_INSENSITIVE);
-	public static final Matcher J9Signal_2 = CommonPatternMatchers.generateMatcher("J9Generic_Signal_Number:", Pattern.CASE_INSENSITIVE);
+	public static final Matcher Signal = CommonPatternMatchers.generateMatcher("Signal_Number:", Pattern.CASE_INSENSITIVE);
 	public static final Matcher Module = CommonPatternMatchers.generateMatcher("Module:", Pattern.CASE_INSENSITIVE);
 	public static final Matcher Module_base = CommonPatternMatchers.generateMatcher("Module_base_address:", Pattern.CASE_INSENSITIVE);
 	public static final Matcher Module_offset = CommonPatternMatchers.generateMatcher("Module_offset:", Pattern.CASE_INSENSITIVE);

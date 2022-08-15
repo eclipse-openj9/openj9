@@ -309,6 +309,13 @@ extern J9_CFUNC jint
 J9SigQuitStartup (J9JavaVM * vm);
 #endif /* J9VM_INTERP_SIG_QUIT_THREAD (autogen) */
 
+/* sigusr2.c */
+#if defined(J9VM_INTERP_SIG_USR2)
+extern J9_CFUNC void
+J9SigUsr2Shutdown(J9JavaVM *vm);
+extern J9_CFUNC jint
+J9SigUsr2Startup(J9JavaVM *vm);
+#endif /* defined(J9VM_INTERP_SIG_USR2) */
 
 /* BBjclNativesCommonExceptionHelpers*/
 void

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -45,6 +45,7 @@ import static com.ibm.j9ddr.vm29.structure.J9RASdumpAgent.J9RAS_DUMP_ON_THREAD_E
 import static com.ibm.j9ddr.vm29.structure.J9RASdumpAgent.J9RAS_DUMP_ON_THREAD_START;
 import static com.ibm.j9ddr.vm29.structure.J9RASdumpAgent.J9RAS_DUMP_ON_TRACE_ASSERT;
 import static com.ibm.j9ddr.vm29.structure.J9RASdumpAgent.J9RAS_DUMP_ON_USER_SIGNAL;
+import static com.ibm.j9ddr.vm29.structure.J9RASdumpAgent.J9RAS_DUMP_ON_USER2_SIGNAL;
 import static com.ibm.j9ddr.vm29.structure.J9RASdumpAgent.J9RAS_DUMP_ON_VM_SHUTDOWN;
 import static com.ibm.j9ddr.vm29.structure.J9RASdumpAgent.J9RAS_DUMP_ON_VM_STARTUP;
 
@@ -83,7 +84,8 @@ public class ShowDumpAgentsCommand extends Command
 			J9RAS_DUMP_ON_EXCEPTION_DESCRIBE,
 			J9RAS_DUMP_ON_SLOW_EXCLUSIVE_ENTER,
 			J9RAS_DUMP_ON_EXCEPTION_SYSTHROW, J9RAS_DUMP_ON_TRACE_ASSERT,
-			J9RAS_DUMP_ON_OBJECT_ALLOCATION, J9RAS_DUMP_ON_CORRUPT_CACHE };
+			J9RAS_DUMP_ON_OBJECT_ALLOCATION, J9RAS_DUMP_ON_CORRUPT_CACHE,
+			J9RAS_DUMP_ON_USER2_SIGNAL };
 	
 	private int J9RAS_DUMP_KNOWN_EVENTS = rasDumpEvents.length;
 	
@@ -114,9 +116,11 @@ public class ShowDumpAgentsCommand extends Command
 //		{ "gpf",         "ON_GP_FAULT",             J9RAS_DUMP_ON_GP_FAULT },
 		rasDumpEventsToNames.put(J9RAS_DUMP_ON_GP_FAULT, "gpf");
 //		{ "user",        "ON_USER_SIGNAL",          J9RAS_DUMP_ON_USER_SIGNAL },
-		rasDumpEventsToNames.put(J9RAS_DUMP_ON_USER_SIGNAL,"user");
+		rasDumpEventsToNames.put(J9RAS_DUMP_ON_USER_SIGNAL, "user");
+//		{ "user2",       "ON_USER2_SIGNAL",         J9RAS_DUMP_ON_USER2_SIGNAL },
+		rasDumpEventsToNames.put(J9RAS_DUMP_ON_USER2_SIGNAL, "user2");
 //		{ "abort",       "ON_ABORT_SIGNAL",         J9RAS_DUMP_ON_ABORT_SIGNAL },
-		rasDumpEventsToNames.put(J9RAS_DUMP_ON_ABORT_SIGNAL,"abort");
+		rasDumpEventsToNames.put(J9RAS_DUMP_ON_ABORT_SIGNAL, "abort");
 //		{ "vmstart",     "ON_VM_STARTUP",           J9RAS_DUMP_ON_VM_STARTUP },
 		rasDumpEventsToNames.put(J9RAS_DUMP_ON_VM_STARTUP, "vmstart");
 //		{ "vmstop",      "ON_VM_SHUTDOWN",          J9RAS_DUMP_ON_VM_SHUTDOWN },
@@ -132,9 +136,9 @@ public class ShowDumpAgentsCommand extends Command
 //		{ "thrstart",    "ON_THREAD_START",         J9RAS_DUMP_ON_TH/READ_START },
 		rasDumpEventsToNames.put(J9RAS_DUMP_ON_THREAD_START, "thrstart");
 //		{ "blocked",     "ON_THREAD_BLOCKED",       J9RAS_DUMP_ON_THREAD_BLOCKED },
-		rasDumpEventsToNames.put(J9RAS_DUMP_ON_THREAD_BLOCKED,  "blocked");
+		rasDumpEventsToNames.put(J9RAS_DUMP_ON_THREAD_BLOCKED, "blocked");
 //		{ "thrstop",     "ON_THREAD_END",           J9RAS_DUMP_ON_THREAD_END },
-		rasDumpEventsToNames.put(J9RAS_DUMP_ON_THREAD_END,"thrstop");
+		rasDumpEventsToNames.put(J9RAS_DUMP_ON_THREAD_END, "thrstop");
 //		{ "fullgc",      "ON_GLOBAL_GC",            J9RAS_DUMP_ON_GLOBAL_GC },
 		rasDumpEventsToNames.put(J9RAS_DUMP_ON_GLOBAL_GC, "fullgc");
 //		{ "uncaught",    "ON_EXCEPTION_DESCRIBE",   J9RAS_DUMP_ON_EXCEPTION_DESCRIBE },
@@ -146,12 +150,12 @@ public class ShowDumpAgentsCommand extends Command
 //		{ "traceassert", "ON_TRACE_ASSERT",         J9RAS_DUMP_ON_TRACE_ASSERT },
 		rasDumpEventsToNames.put(J9RAS_DUMP_ON_TRACE_ASSERT, "traceassert");
 //		{ "allocation",  "ON_OBJECT_ALLOCATION",    J9RAS_DUMP_ON_OBJECT_ALLOCATION },
-		rasDumpEventsToNames.put(J9RAS_DUMP_ON_OBJECT_ALLOCATION,  "allocation");
-//		{ "corruptcache",  "ON_CORRUPT_CACHE",   	J9RAS_DUMP_ON_CORRUPT_CACHE }
+		rasDumpEventsToNames.put(J9RAS_DUMP_ON_OBJECT_ALLOCATION, "allocation");
+//		{ "corruptcache",  "ON_CORRUPT_CACHE",      J9RAS_DUMP_ON_CORRUPT_CACHE }
 		rasDumpEventsToNames.put(J9RAS_DUMP_ON_CORRUPT_CACHE, "corruptcache");
 
 		/* Known VM requests */
-//		{ "multiple",  "DO_MULTIPLE_HEAPS",        J9RAS_DUMP_DO_MULTIPLE_HEAPS },
+//		{ "multiple",  "DO_MULTIPLE_HEAPS",          J9RAS_DUMP_DO_MULTIPLE_HEAPS },
 		rasDumpRequestsToNames.put(J9RAS_DUMP_DO_MULTIPLE_HEAPS, "multiple");
 //		{ "exclusive", "DO_EXCLUSIVE_VM_ACCESS",     J9RAS_DUMP_DO_EXCLUSIVE_VM_ACCESS },
 		rasDumpRequestsToNames.put(J9RAS_DUMP_DO_EXCLUSIVE_VM_ACCESS, "exclusive");

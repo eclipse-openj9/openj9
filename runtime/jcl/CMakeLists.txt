@@ -171,6 +171,10 @@ else()
 	target_sources(jclse PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/unix/syshelp.c)
 endif()
 
+if(J9VM_INTERP_SIG_USR2)
+	target_sources(jclse PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/common/sigusr2.c)
+endif()
+
 if(J9VM_OPT_METHOD_HANDLE)
 	target_sources(jclse
 		PRIVATE

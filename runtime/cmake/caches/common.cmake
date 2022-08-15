@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 1991, 2021 IBM Corp. and others
+# Copyright (c) 1991, 2022 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -168,6 +168,7 @@ set(J9VM_INTERP_NEW_HEADER_SHAPE ON CACHE BOOL "")
 set(J9VM_INTERP_PROFILING_BYTECODES ON CACHE BOOL "")
 set(J9VM_INTERP_SIG_QUIT_THREAD ON CACHE BOOL "")
 set(J9VM_INTERP_SIG_QUIT_THREAD_USES_SEMAPHORES ON CACHE BOOL "")
+set(J9VM_INTERP_SIG_USR2 ON CACHE BOOL "")
 set(J9VM_INTERP_USE_SPLIT_SIDE_TABLES ON CACHE BOOL "")
 set(J9VM_INTERP_USE_UNSAFE_HELPER ON CACHE BOOL "")
 set(J9VM_INTERP_VERBOSE ON CACHE BOOL "")

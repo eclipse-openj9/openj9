@@ -5424,9 +5424,12 @@ typedef struct J9JavaVM {
 	UDATA gcWriteBarrierType;
 	UDATA gcReadBarrierType;
 	UDATA gcPolicy;
-	void  ( *J9SigQuitShutdown)(struct J9JavaVM *vm) ;
+	void (*J9SigQuitShutdown)(struct J9JavaVM *vm);
+#if defined(J9VM_INTERP_SIG_USR2)
+	void (*J9SigUsr2Shutdown)(struct J9JavaVM *vm);
+#endif /* defined(J9VM_INTERP_SIG_USR2) */
 	U_32 globalEventFlags;
-	void  ( *sidecarInterruptFunction)(struct J9VMThread * vmThread) ;
+	void (*sidecarInterruptFunction)(struct J9VMThread *vmThread);
 	struct J9ReflectFunctionTable reflectFunctions;
 	omrthread_monitor_t bindNativeMutex;
 	J9SidecarExitHook sidecarExitHook;

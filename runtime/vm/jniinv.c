@@ -226,6 +226,10 @@ error:
 	vm->J9SigQuitShutdown(vm);
 #endif
 
+#if defined(J9VM_INTERP_SIG_USR2)
+	vm->J9SigUsr2Shutdown(vm);
+#endif /* defined(J9VM_INTERP_SIG_USR2) */
+
 #ifdef J9VM_PROF_EVENT_REPORTING
 	if (env) {
 #if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
@@ -391,6 +395,12 @@ protectedDestroyJavaVM(J9PortLibrary* portLibrary, void * userData)
 		vm->J9SigQuitShutdown(vm);
 	}
 #endif
+
+#if defined(J9VM_INTERP_SIG_USR2)
+	if (vm->J9SigUsr2Shutdown) {
+		vm->J9SigUsr2Shutdown(vm);
+	}
+#endif /* defined(J9VM_INTERP_SIG_USR2) */
 
 	Trc_JNIinv_protectedDestroyJavaVM_vmShutdownDone();
 
