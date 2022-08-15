@@ -3871,7 +3871,7 @@ void TR_EscapeAnalysis::referencedField(TR::Node *base, TR::Node *field, bool is
          int N = 1;
          if (refType.isVector())
             {
-            fieldType = refType.vectorToScalar();
+            fieldType = refType.getVectorElementType();
             N = TR::Symbol::convertTypeToSize(refType)/TR::Symbol::convertTypeToSize(fieldType) ;
             }
          for (int j = 0; j < N; j++)
@@ -6242,7 +6242,7 @@ TR::Node *TR_EscapeAnalysis::createConst(TR::Compilation *comp, TR::Node *node, 
    if (type.isVector())
       {
       result = TR::Node::create(node, TR::ILOpCode::createVectorOpCode(TR::vsplats, type), 1);
-      result->setAndIncChild(0, TR::Node::create(node, comp->il.opCodeForConst(type), value));
+      result->setAndIncChild(0, TR::Node::create(node, comp->il.opCodeForConst(type.getVectorElementType()), value));
       }
    else
       {
