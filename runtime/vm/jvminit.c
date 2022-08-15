@@ -8264,17 +8264,17 @@ parseEnsureHashedOption(J9JavaVM *jvm, char *option, BOOLEAN isAdd)
 
 	if (TRUE == isAdd) {
 		/* -XX:+EnsureHashed: */
-		J9UTF8 **oldEntry = hashTableFind(jvm->ensureHashedClasses, &hashtableEntry);
-		if (NULL != oldEntry){
-			hashTableRemove(jvm->ensureHashedClasses, &hashtableEntry);
-			j9mem_free_memory(*oldEntry);
-			oldEntry = NULL;
-		}
-		if (NULL == hashTableAdd(jvm->ensureHashedClasses, &hashtableEntry)) {
+		if (NULL == hashTableFind(jvm->ensureHashedClasses, &hashtableEntry)) {
+			if (NULL == hashTableAdd(jvm->ensureHashedClasses, &hashtableEntry)) {
+				j9mem_free_memory(hashtableEntry);
+				hashtableEntry = NULL;
+				j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_ENSUREHASHED_CONFIG_OUT_OF_MEM);
+				return JNI_ENOMEM;
+			}
+		} else {
+			/* Already in the table, discard the new entry */
 			j9mem_free_memory(hashtableEntry);
 			hashtableEntry = NULL;
-			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_ENSUREHASHED_CONFIG_OUT_OF_MEM);
-			return JNI_ENOMEM;
 		}
 	} else {
 		/* -XX:-EnsureHashed: */
