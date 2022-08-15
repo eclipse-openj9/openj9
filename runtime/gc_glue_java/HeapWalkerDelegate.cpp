@@ -1,0 +1,71 @@
+
+/*******************************************************************************
+ * Copyright (c) 2022, 2022 IBM Corp. and others
+ *
+ * This program and the accompanying materials are made available under
+ * the terms of the Eclipse Public License 2.0 which accompanies this
+ * distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+ * or the Apache License, Version 2.0 which accompanies this distribution and
+ * is available at https://www.apache.org/licenses/LICENSE-2.0.
+ *
+ * This Source Code may also be made available under the following
+ * Secondary Licenses when the conditions for such availability set
+ * forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+ * General Public License, version 2 with the GNU Classpath
+ * Exception [1] and GNU General Public License, version 2 with the
+ * OpenJDK Assembly Exception [2].
+ *
+ * [1] https://www.gnu.org/software/classpath/license.html
+ * [2] http://openjdk.java.net/legal/assembly-exception.html
+ *
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ *******************************************************************************/
+
+#include "HeapWalkerDelegate.hpp"
+
+#include "j9.h"
+#include "EnvironmentBase.hpp"
+#include "ObjectModel.hpp"
+#include "VMHelpers.hpp"
+#include "VMThreadStackSlotIterator.hpp"
+#include "HeapWalker.hpp"
+
+
+void
+MM_HeapWalkerDelegate::objectSlotsDo(OMR_VMThread *omrVMThread, omrobjectptr_t objectPtr, MM_HeapWalkerSlotFunc function, void *userData)
+{
+	MM_EnvironmentBase *env = MM_EnvironmentBase::getEnvironment(omrVMThread);
+	switch(_objectModel->getScanType(objectPtr)) {
+	case GC_ObjectModel::SCAN_CONTINUATION_OBJECT:
+		doContinuationObject(env, objectPtr, function, userData);
+		break;
+	default:
+		break;
+	}
+}
+
+/**
+ * @todo Provide function documentation
+ */
+void
+stackSlotIteratorForHeapWalker(J9JavaVM *javaVM, J9Object **slotPtr, void *localData, J9StackWalkState *walkState, const void *stackLocation)
+{
+	StackIteratorData4HeapWalker *data = (StackIteratorData4HeapWalker *)localData;
+	data->heapWalker->heapWalkerSlotCallback(data->env, slotPtr, data->function, data->userData);
+}
+
+void
+MM_HeapWalkerDelegate::doContinuationObject(MM_EnvironmentBase *env, omrobjectptr_t objectPtr, MM_HeapWalkerSlotFunc function, void *userData)
+{
+	J9VMThread *currentThread = (J9VMThread *)env->getLanguageVMThread();
+	if (VM_VMHelpers::needScanStacksForContinuation(currentThread, objectPtr)) {
+		StackIteratorData4HeapWalker localData;
+		localData.heapWalker = _heapWalker;
+		localData.env = env;
+		localData.fromObject = objectPtr;
+		localData.function = function;
+		localData.userData = userData;
+		/* so far there is no case we need ClassWalk for heapwalker, so we set bStackFrameClassWalkNeeded = false */
+		GC_VMThreadStackSlotIterator::scanSlots(currentThread, objectPtr, (void *)&localData, stackSlotIteratorForHeapWalker, false, false);
+	}
+}

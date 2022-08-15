@@ -44,6 +44,7 @@
 #include "JNICriticalRegion.hpp"
 #include "OwnableSynchronizerObjectBufferRealtime.hpp"
 #include "OwnableSynchronizerObjectList.hpp"
+#include "VMHelpers.hpp"
 #include "RealtimeAccessBarrier.hpp"
 #include "RealtimeGC.hpp"
 #include "RealtimeMarkingScheme.hpp"
@@ -1526,6 +1527,44 @@ MM_MetronomeDelegate::unsetUnmarkedImpliesCleared()
 	/* enable to use mark information to detect is class dead */
 	_unmarkedImpliesClasses = true;
 #endif /* defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING) */
+}
+
+void
+stackSlotIteratorForRealtimeGC(J9JavaVM *javaVM, J9Object **slotPtr, void *localData, J9StackWalkState *walkState, const void *stackLocation)
+{
+	StackIteratorData4RealtimeMarkingScheme *data = (StackIteratorData4RealtimeMarkingScheme *)localData;
+	MM_RealtimeMarkingScheme *realtimeMarkingScheme = data->realtimeMarkingScheme;
+	MM_EnvironmentRealtime *env = data->env;
+
+	J9Object *object = *slotPtr;
+	if (realtimeMarkingScheme->isHeapObject(object)) {
+		/* heap object - validate and mark */
+		Assert_MM_validStackSlot(MM_StackSlotValidator(0, object, stackLocation, walkState).validate(env));
+		realtimeMarkingScheme->markObject(env, object);
+	} else if (NULL != object) {
+		/* stack object - just validate */
+		Assert_MM_validStackSlot(MM_StackSlotValidator(MM_StackSlotValidator::NOT_ON_HEAP, object, stackLocation, walkState).validate(env));
+	}
+}
+
+UDATA
+MM_MetronomeDelegate::scanContinuationObject(MM_EnvironmentRealtime *env, J9Object *objectPtr)
+{
+	J9VMThread *currentThread = (J9VMThread *)env->getLanguageVMThread();
+	if (VM_VMHelpers::needScanStacksForContinuation(currentThread, objectPtr)) {
+		StackIteratorData4RealtimeMarkingScheme localData;
+		localData.realtimeMarkingScheme = _markingScheme;
+		localData.env = env;
+		localData.fromObject = objectPtr;
+
+		bool bStackFrameClassWalkNeeded = false;
+#if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
+		bStackFrameClassWalkNeeded = isDynamicClassUnloadingEnabled();
+#endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
+
+		GC_VMThreadStackSlotIterator::scanSlots(currentThread, objectPtr, (void *)&localData, stackSlotIteratorForRealtimeGC, bStackFrameClassWalkNeeded, false);
+	}
+	return scanMixedObject(env, objectPtr);
 }
 
 #endif /* defined(J9VM_GC_REALTIME) */

@@ -87,7 +87,8 @@ J9::ClassEnv::isClassSpecialForStackAllocation(TR_OpaqueClassBlock * clazz)
    const UDATA mask = (J9AccClassReferenceWeak |
                        J9AccClassReferenceSoft |
                        J9AccClassFinalizeNeeded |
-                       J9AccClassOwnableSynchronizer);
+                       J9AccClassOwnableSynchronizer |
+                       J9AccClassContinuation );
 
 #if defined(J9VM_OPT_JITSERVER)
    if (auto stream = TR::CompilationInfo::getStream())

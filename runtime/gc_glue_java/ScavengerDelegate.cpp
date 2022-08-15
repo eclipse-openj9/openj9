@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2021 IBM Corp. and others
+ * Copyright (c) 2019, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,6 +22,7 @@
 
 #include "omrcfg.h"
 
+#include "j9.h"
 #if defined(OMR_GC_MODRON_SCAVENGER)
 
 #include "ScavengerDelegate.hpp"
@@ -83,6 +84,7 @@
 #include "OMRVMInterface.hpp"
 #include "OwnableSynchronizerObjectBuffer.hpp"
 #include "OwnableSynchronizerObjectList.hpp"
+#include "VMHelpers.hpp"
 #include "ParallelDispatcher.hpp"
 #include "ParallelGlobalGC.hpp"
 #include "ParallelHeapWalker.hpp"
@@ -288,6 +290,178 @@ MM_ScavengerDelegate::internalGarbageCollect_shouldPercolateGarbageCollect(MM_En
 	return shouldPercolate;
 }
 
+void
+MM_ScavengerDelegate::doStackSlot(MM_EnvironmentStandard *env, omrobjectptr_t *slotPtr, MM_ScavengeScanReason reason, bool *shouldRemember)
+{
+	MM_Scavenger *scavenger = _extensions->scavenger;
+	if (scavenger->isHeapObject(*slotPtr) && !_extensions->heap->objectIsInGap(*slotPtr)) {
+		switch (reason) {
+		case SCAN_REASON_SCAVENGE:
+			*shouldRemember |= scavenger->copyObjectSlot(env, slotPtr);
+			break;
+		case SCAN_REASON_FIXUP:
+#if defined(OMR_GC_CONCURRENT_SCAVENGER)
+			scavenger->fixupSlot(slotPtr);
+#endif /* OMR_GC_CONCURRENT_SCAVENGER */
+			break;
+		case SCAN_REASON_BACKOUT:
+#if defined(OMR_GC_CONCURRENT_SCAVENGER)
+			if (_extensions->concurrentScavenger) {
+				scavenger->fixupSlotWithoutCompression(slotPtr);
+			} else
+#endif /* OMR_GC_CONCURRENT_SCAVENGER */
+			{
+				scavenger->backOutFixSlotWithoutCompression(slotPtr);
+			}
+			break;
+		case SCAN_REASON_SHOULDREMEMBER:
+			*shouldRemember = scavenger->shouldRememberSlot(slotPtr);
+			break;
+		}
+	}
+}
+
+/**
+ * @todo Provide function documentation
+ */
+void
+stackSlotIteratorForScavenge(J9JavaVM *javaVM, J9Object **slotPtr, void *localData, J9StackWalkState *walkState, const void *stackLocation)
+{
+	StackIteratorData4Scavenge *data = (StackIteratorData4Scavenge *)localData;
+	data->scavengerDelegate->doStackSlot(data->env, slotPtr, data->reason, data->shouldRemember);
+}
+
+bool
+MM_ScavengerDelegate::doContinuationObject(MM_EnvironmentStandard *env, omrobjectptr_t objectPtr, MM_ScavengeScanReason reason)
+{
+	bool shouldRemember = false;
+
+	J9VMThread *currentThread = (J9VMThread *)env->getLanguageVMThread();
+	if (VM_VMHelpers::needScanStacksForContinuation(currentThread, objectPtr)) {
+		StackIteratorData4Scavenge localData;
+		localData.scavengerDelegate = this;
+		localData.env = env;
+		localData.reason = reason;
+		localData.shouldRemember = &shouldRemember;
+
+		GC_VMThreadStackSlotIterator::scanSlots(currentThread, objectPtr, (void *)&localData, stackSlotIteratorForScavenge, false, false);
+	}
+	return 	shouldRemember;
+}
+
+
+GC_ObjectScanner *
+MM_ScavengerDelegate::getObjectScanner(MM_EnvironmentStandard *env, omrobjectptr_t objectPtr, void *allocSpace, uintptr_t flags, MM_ScavengeScanReason reason, bool *shouldRemember)
+{
+#if defined(OMR_GC_MODRON_STRICT)
+	Assert_MM_true((GC_ObjectScanner::scanHeap == flags) ^ (GC_ObjectScanner::scanRoots == flags));
+#endif /* defined(OMR_GC_MODRON_STRICT) */
+
+	GC_ObjectScanner *objectScanner = NULL;
+	J9Class *clazzPtr = J9GC_J9OBJECT_CLAZZ(objectPtr, env);
+
+	switch(_extensions->objectModel.getScanType(clazzPtr)) {
+	case GC_ObjectModel::SCAN_MIXED_OBJECT_LINKED:
+		_extensions->scavenger->deepScan(env, objectPtr, clazzPtr->selfReferencingField1, clazzPtr->selfReferencingField2);
+		/* Fall through and treat as mixed object (create mixed object scanner) */
+	case GC_ObjectModel::SCAN_ATOMIC_MARKABLE_REFERENCE_OBJECT:
+	case GC_ObjectModel::SCAN_MIXED_OBJECT:
+	case GC_ObjectModel::SCAN_CLASS_OBJECT:
+	case GC_ObjectModel::SCAN_CLASSLOADER_OBJECT:
+		objectScanner = GC_MixedObjectScanner::newInstance(env, objectPtr, allocSpace, flags);
+		break;
+	case GC_ObjectModel::SCAN_REFERENCE_MIXED_OBJECT:
+		if (GC_ObjectScanner::isHeapScan(flags)) {
+			I_32 referenceState = J9GC_J9VMJAVALANGREFERENCE_STATE(env, objectPtr);
+			bool isReferenceCleared = (GC_ObjectModel::REF_STATE_CLEARED == referenceState) || (GC_ObjectModel::REF_STATE_ENQUEUED == referenceState);
+			bool isObjectInNewSpace = _extensions->scavenger->isObjectInNewSpace(objectPtr);
+			bool shouldScavengeReferenceObject = isObjectInNewSpace && !isReferenceCleared;
+			bool referentMustBeMarked = isReferenceCleared || !isObjectInNewSpace;
+			bool referentMustBeCleared = false;
+
+			UDATA referenceObjectOptions = env->_cycleState->_referenceObjectOptions;
+			UDATA referenceObjectType = J9CLASS_FLAGS(clazzPtr) & J9AccClassReferenceMask;
+			switch (referenceObjectType) {
+			case J9AccClassReferenceWeak:
+				referentMustBeCleared = (0 != (referenceObjectOptions & MM_CycleState::references_clear_weak));
+				if (!referentMustBeCleared && shouldScavengeReferenceObject && !_shouldScavengeWeakReferenceObjects) {
+					_shouldScavengeWeakReferenceObjects = true;
+				}
+				break;
+			case J9AccClassReferenceSoft:
+				referentMustBeCleared = (0 != (referenceObjectOptions & MM_CycleState::references_clear_soft));
+				referentMustBeMarked = referentMustBeMarked || ((0 == (referenceObjectOptions & MM_CycleState::references_soft_as_weak))
+					&& ((UDATA)J9GC_J9VMJAVALANGSOFTREFERENCE_AGE(env, objectPtr) < _extensions->getDynamicMaxSoftReferenceAge())
+				);
+				if (!referentMustBeCleared && shouldScavengeReferenceObject && !_shouldScavengeSoftReferenceObjects) {
+					_shouldScavengeSoftReferenceObjects = true;
+				}
+				break;
+			case J9AccClassReferencePhantom:
+				referentMustBeCleared = (0 != (referenceObjectOptions & MM_CycleState::references_clear_phantom));
+				if (!referentMustBeCleared && shouldScavengeReferenceObject && !_shouldScavengePhantomReferenceObjects) {
+					_shouldScavengePhantomReferenceObjects = true;
+				}
+				break;
+			default:
+				Assert_MM_unreachable();
+			}
+
+			GC_SlotObject referentPtr(env->getOmrVM(), J9GC_J9VMJAVALANGREFERENCE_REFERENT_ADDRESS(env, objectPtr));
+			if (referentMustBeCleared) {
+				/* Discovering this object at this stage in the GC indicates that it is being resurrected. Clear its referent slot. */
+				referentPtr.writeReferenceToSlot(NULL);
+				/* record that the reference has been cleared if it's not already in the cleared or enqueued state */
+				if (!isReferenceCleared) {
+					J9GC_J9VMJAVALANGREFERENCE_STATE(env, objectPtr) = GC_ObjectModel::REF_STATE_CLEARED;
+				}
+			} else if (shouldScavengeReferenceObject) {
+				env->getGCEnvironment()->_referenceObjectBuffer->add(env, objectPtr);
+			}
+
+			fomrobject_t *referentSlotAddress = referentMustBeMarked ? NULL : referentPtr.readAddressFromSlot();
+			objectScanner = GC_ReferenceObjectScanner::newInstance(env, objectPtr, referentSlotAddress, allocSpace, flags);
+		} else {
+			objectScanner = GC_MixedObjectScanner::newInstance(env, objectPtr, allocSpace, flags);
+		}
+		break;
+	case GC_ObjectModel::SCAN_OWNABLESYNCHRONIZER_OBJECT:
+		if (GC_ObjectScanner::isHeapScan(flags)) {
+			private_addOwnableSynchronizerObjectInList(env, objectPtr);
+		}
+		objectScanner = GC_MixedObjectScanner::newInstance(env, objectPtr, allocSpace, flags);
+		break;
+	case GC_ObjectModel::SCAN_CONTINUATION_OBJECT:
+		*shouldRemember = doContinuationObject(env, objectPtr, reason);
+		objectScanner = GC_MixedObjectScanner::newInstance(env, objectPtr, allocSpace, flags);
+		break;
+	case GC_ObjectModel::SCAN_POINTER_ARRAY_OBJECT:
+		{
+			uintptr_t splitAmount = 0;
+			if (!GC_ObjectScanner::isIndexableObjectNoSplit(flags)) {
+				splitAmount = _extensions->scavenger->getArraySplitAmount(env, _extensions->indexableObjectModel.getSizeInElements((omrarrayptr_t)objectPtr));
+			}
+			objectScanner = GC_PointerArrayObjectScanner::newInstance(env, objectPtr, allocSpace, flags, splitAmount);
+		}
+		break;
+		case GC_ObjectModel::SCAN_FLATTENED_ARRAY_OBJECT:
+		{
+			Assert_MM_true(J9_IS_J9CLASS_FLATTENED(clazzPtr));
+			uintptr_t slotsToDo = 0;
+			uintptr_t startIndex = 0;
+			objectScanner = GC_FlattenedArrayObjectScanner::newInstance(env, objectPtr, allocSpace, GC_ObjectScanner::indexableObject | GC_ObjectScanner::indexableObjectNoSplit, slotsToDo, startIndex);
+		}
+		break;
+	case GC_ObjectModel::SCAN_PRIMITIVE_ARRAY_OBJECT:
+		break;
+	default:
+		Assert_GC_true_with_message(env, false, "Bad scan type for object pointer %p\n", objectPtr);
+	}
+
+	return objectScanner;
+}
+
+/* TODO:it is old API just for cross dependency , need to remove at second stage merge */
 GC_ObjectScanner *
 MM_ScavengerDelegate::getObjectScanner(MM_EnvironmentStandard *env, omrobjectptr_t objectPtr, void *allocSpace, uintptr_t flags)
 {

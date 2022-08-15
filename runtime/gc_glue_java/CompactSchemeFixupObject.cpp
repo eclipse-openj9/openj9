@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,6 +19,7 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
+#include "j9.h"
 
 #include "CompactSchemeFixupObject.hpp"
 
@@ -31,6 +32,7 @@
 #include "MixedObjectIterator.hpp"
 #include "ObjectAccessBarrier.hpp"
 #include "OwnableSynchronizerObjectBuffer.hpp"
+#include "VMHelpers.hpp"
 #include "ParallelDispatcher.hpp"
 #include "PointerContiguousArrayIterator.hpp"
 #include "FlattenedContiguousArrayIterator.hpp"
@@ -44,6 +46,39 @@ MM_CompactSchemeFixupObject::fixupMixedObject(omrobjectptr_t objectPtr)
 
 	while (NULL != (slotObject = it.nextSlot())) {
 		_compactScheme->fixupObjectSlot(slotObject);
+	}
+}
+
+void
+MM_CompactSchemeFixupObject::doStackSlot(MM_EnvironmentBase *env, omrobjectptr_t fromObject, omrobjectptr_t *slot)
+{
+	*slot = _compactScheme->getForwardingPtr(*slot);
+}
+
+/**
+ * @todo Provide function documentation
+ */
+void
+stackSlotIteratorForCompactScheme(J9JavaVM *javaVM, J9Object **slotPtr, void *localData, J9StackWalkState *walkState, const void *stackLocation)
+{
+	StackIteratorData4CompactSchemeFixupObject *data = (StackIteratorData4CompactSchemeFixupObject *)localData;
+	data->compactSchemeFixupObject->doStackSlot(data->env, data->fromObject, slotPtr);
+}
+
+
+void
+MM_CompactSchemeFixupObject::fixupContinuationObject(MM_EnvironmentStandard *env, omrobjectptr_t objectPtr)
+{
+	fixupMixedObject(objectPtr);
+	/* fixup Java Stacks in J9VMContinuation */
+	J9VMThread *currentThread = (J9VMThread *)env->getLanguageVMThread();
+	if (VM_VMHelpers::needScanStacksForContinuation(currentThread, objectPtr)) {
+		StackIteratorData4CompactSchemeFixupObject localData;
+		localData.compactSchemeFixupObject = this;
+		localData.env = env;
+		localData.fromObject = objectPtr;
+
+		GC_VMThreadStackSlotIterator::scanSlots(currentThread, objectPtr, (void *)&localData, stackSlotIteratorForCompactScheme, false, false);
 	}
 }
 
@@ -104,7 +139,9 @@ MM_CompactSchemeFixupObject::fixupObject(MM_EnvironmentStandard *env, omrobjectp
 		addOwnableSynchronizerObjectInList(env, objectPtr);
 		fixupMixedObject(objectPtr);
 		break;
-
+	case GC_ObjectModel::SCAN_CONTINUATION_OBJECT:
+		fixupContinuationObject(env, objectPtr);
+		break;
 	case GC_ObjectModel::SCAN_FLATTENED_ARRAY_OBJECT:
 		fixupFlattenedArrayObject(objectPtr);
 		break;

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -38,6 +38,7 @@ private:
 	MM_CompactScheme *_compactScheme;
 public:
 
+	void doStackSlot(MM_EnvironmentBase *env, omrobjectptr_t fromObject, omrobjectptr_t *slot);
 	/**
 	 * Perform fixup for a single object
 	 * @param env[in] the current thread
@@ -73,6 +74,7 @@ private:
 	 */
 	void fixupFlattenedArrayObject(omrobjectptr_t objectPtr);
 
+	void fixupContinuationObject(MM_EnvironmentStandard *env, omrobjectptr_t objectPtr);
 	/**
 	 * Called whenever a ownable synchronizer object is fixed up during compact. Places the object on the thread-specific buffer of gc work thread.
 	 * @param env -- current thread environment
@@ -80,5 +82,11 @@ private:
 	 */
 	MMINLINE void addOwnableSynchronizerObjectInList(MM_EnvironmentBase *env, omrobjectptr_t objectPtr);
 };
+
+typedef struct StackIteratorData4CompactSchemeFixupObject {
+	MM_CompactSchemeFixupObject *compactSchemeFixupObject;
+	MM_EnvironmentBase *env;
+	J9Object *fromObject;
+} StackIteratorData4CompactSchemeFixupObject;
 
 #endif /* COMPACTSCHEMEOBJECTFIXUP_HPP_ */

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -97,6 +97,7 @@ private:
 	GC_ArrayObjectModel *_indexableObjectModel; /**< pointer to the indexable object model in extensions (so that we can delegate to it) */
 	J9Class *_classClass; /**< java.lang.Class class pointer for detecting special objects */
 	J9Class *_classLoaderClass; /**< java.lang.ClassLoader class pointer for detecting special objects */
+	J9Class *_continuationClass; /**< jdk/internal/vm/Continuation class pointer for detecting subclass of Continuation */
 	J9Class *_atomicMarkableReferenceClass; /**< java.util.concurrent.atomic.AtomicMarkableReference class pointer for detecting special objects */
 
 protected:
@@ -115,7 +116,8 @@ public:
 		SCAN_ATOMIC_MARKABLE_REFERENCE_OBJECT = 7,
 		SCAN_OWNABLESYNCHRONIZER_OBJECT = 8,
 		SCAN_MIXED_OBJECT_LINKED = 9,
-		SCAN_FLATTENED_ARRAY_OBJECT = 10
+		SCAN_FLATTENED_ARRAY_OBJECT = 10,
+		SCAN_CONTINUATION_OBJECT = 11
 	};
 
 	/**
@@ -179,7 +181,7 @@ public:
 		switch(J9GC_CLASS_SHAPE(clazz)) {
 		case OBJECT_HEADER_SHAPE_MIXED:
 		{
-			uintptr_t classFlags = J9CLASS_FLAGS(clazz) & (J9AccClassReferenceMask | J9AccClassGCSpecial | J9AccClassOwnableSynchronizer);
+			uintptr_t classFlags = J9CLASS_FLAGS(clazz) & (J9AccClassReferenceMask | J9AccClassGCSpecial | J9AccClassOwnableSynchronizer | J9AccClassContinuation);
 			if (0 == classFlags) {
 				if (0 != clazz->selfReferencingField1) {
 					result = SCAN_MIXED_OBJECT_LINKED;
@@ -193,6 +195,8 @@ public:
 					result = getSpecialClassScanType(clazz);
 				} else if (0 != (classFlags & J9AccClassOwnableSynchronizer)) {
 					result = SCAN_OWNABLESYNCHRONIZER_OBJECT;
+				} else if (0 != (classFlags & J9AccClassContinuation)) {
+					result = SCAN_CONTINUATION_OBJECT;
 				} else {
 					/* Assert_MM_unreachable(); */
 					assert(false);

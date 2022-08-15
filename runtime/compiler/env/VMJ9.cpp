@@ -1588,7 +1588,7 @@ UDATA TR_J9VMBase::constClassFlagsPublic()      {return J9AccPublic;}
 
 int32_t TR_J9VMBase::getFlagValueForPrimitiveTypeCheck()        {return J9AccClassInternalPrimitiveType;}
 int32_t TR_J9VMBase::getFlagValueForArrayCheck()                {return J9AccClassArray;}
-int32_t TR_J9VMBase::getFlagValueForFinalizerCheck()            {return J9AccClassFinalizeNeeded | J9AccClassOwnableSynchronizer;}
+int32_t TR_J9VMBase::getFlagValueForFinalizerCheck()            {return J9AccClassFinalizeNeeded | J9AccClassOwnableSynchronizer | J9AccClassContinuation;}
 
 
 UDATA TR_J9VMBase::getGCForwardingPointerOffset()               {
@@ -6497,6 +6497,13 @@ TR_J9VMBase::isOwnableSyncClass(TR_OpaqueClassBlock *clazz)
    return ((J9CLASS_FLAGS(j9class) & J9AccClassOwnableSynchronizer) != 0);
    }
 
+bool
+TR_J9VMBase::isContinuationClass(TR_OpaqueClassBlock *clazz)
+   {
+   J9Class* j9class = TR::Compiler->cls.convertClassOffsetToClassPtr(clazz);
+   return ((J9CLASS_FLAGS(j9class) & J9AccClassContinuation) != 0);
+   }
+
 const char *
 TR_J9VMBase::getByteCodeName(uint8_t opcode)
    {
@@ -6831,7 +6838,7 @@ TR_J9VM::isPublicClass(TR_OpaqueClassBlock * clazz)
 bool
 TR_J9VMBase::hasFinalizer(TR_OpaqueClassBlock * classPointer)
    {
-   return (J9CLASS_FLAGS(TR::Compiler->cls.convertClassOffsetToClassPtr(classPointer)) & (J9AccClassFinalizeNeeded | J9AccClassOwnableSynchronizer)) != 0;
+   return (J9CLASS_FLAGS(TR::Compiler->cls.convertClassOffsetToClassPtr(classPointer)) & (J9AccClassFinalizeNeeded | J9AccClassOwnableSynchronizer | J9AccClassContinuation)) != 0;
    }
 
 uintptr_t

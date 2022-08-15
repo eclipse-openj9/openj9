@@ -3115,7 +3115,7 @@ fail:
 			 *            + AccClassHasJDBCNatives (set during native method binding, not inherited)
 			 *           + AccClassGCSpecial (set during internal class load hook and inherited)
 			 *
-			 *         + AccClassIsContended (from romClass->extraModifiers and inherited)
+			 *         + AccClassContinuation (set during internal class load hook and inherited)
 			 *        + AccClassHasFinalFields (from romClass->extraModifiers and inherited)
 			 *       + AccClassHotSwappedOut (not set during creation, not inherited)
 			 *      + AccClassDying (not set during creation, inherited but that can't actually occur)
@@ -3192,7 +3192,7 @@ fail:
 
 				/* fill in class depth */
 				tempClassDepthAndFlags |= superclass->classDepthAndFlags;
-				tempClassDepthAndFlags &= ~(J9AccClassHotSwappedOut | J9AccClassHasBeenOverridden | J9AccClassHasJDBCNatives | J9AccClassRAMArray | (OBJECT_HEADER_SHAPE_MASK << J9AccClassRAMShapeShift));
+				tempClassDepthAndFlags &= ~(J9AccClassHotSwappedOut | J9AccClassHasBeenOverridden | J9AccClassHasJDBCNatives | J9AccClassIsContended | J9AccClassRAMArray | (OBJECT_HEADER_SHAPE_MASK << J9AccClassRAMShapeShift));
 				tempClassDepthAndFlags++;
 
 #if defined(J9VM_GC_FINALIZATION)
