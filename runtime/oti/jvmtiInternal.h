@@ -483,17 +483,17 @@ typedef struct jvmtiGcp_translation {
 	} while(0)
 
 #if JAVA_SPEC_VERSION >= 19
-#define ENSURE_JTHREAD_NOT_VIRTUAL(vmThread, jthrd) \
+#define ENSURE_JTHREAD_NOT_VIRTUAL(vmThread, jthrd, error) \
 	do { \
 		if (IS_VIRTUAL_THREAD((vmThread), J9_JNI_UNWRAP_REFERENCE(jthrd))) { \
-			JVMTI_ERROR(JVMTI_ERROR_UNSUPPORTED_OPERATION); \
+			JVMTI_ERROR(error); \
 		} \
 	} while(0)
 
-#define ENSURE_JTHREADOBJECT_NOT_VIRTUAL(vmThread, jthrdObject) \
+#define ENSURE_JTHREADOBJECT_NOT_VIRTUAL(vmThread, jthrdObject, error) \
 	do { \
 		if (IS_VIRTUAL_THREAD((vmThread), (jthrdObject))) { \
-			JVMTI_ERROR(JVMTI_ERROR_UNSUPPORTED_OPERATION); \
+			JVMTI_ERROR(error); \
 		} \
 	} while(0)
 #endif /* JAVA_SPEC_VERSION >= 19 */
@@ -516,8 +516,8 @@ typedef struct jvmtiGcp_translation {
 #define ENSURE_VALID_HEAP_OBJECT_FILTER(var)
 #define ENSURE_MONITOR_NON_NULL(var)
 #if JAVA_SPEC_VERSION >= 19
-#define ENSURE_JTHREAD_NOT_VIRTUAL(vmThread, jthrd)
-#define ENSURE_JTHREADOBJECT_NOT_VIRTUAL(vmThread, jthrdObject)
+#define ENSURE_JTHREAD_NOT_VIRTUAL(vmThread, jthrd, error)
+#define ENSURE_JTHREADOBJECT_NOT_VIRTUAL(vmThread, jthrdObject, error)
 #endif /* JAVA_SPEC_VERSION >= 19 */
 
 #endif

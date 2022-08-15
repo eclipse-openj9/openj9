@@ -76,7 +76,10 @@ jvmtiGetCurrentThreadCpuTime(jvmtiEnv* env,
 	if (JVMTI_ERROR_NONE != rc) {
 		goto done;
 	}
-	ENSURE_JTHREADOBJECT_NOT_VIRTUAL(currentThread, currentThread->threadObject);
+	ENSURE_JTHREADOBJECT_NOT_VIRTUAL(
+		currentThread,
+		currentThread->threadObject,
+		JVMTI_ERROR_UNSUPPORTED_OPERATION);
 #endif /* JAVA_SPEC_VERSION >= 19 */
 
 	rv_nanos = (jlong)omrthread_get_self_cpu_time(omrthread_self());
@@ -144,7 +147,7 @@ jvmtiGetThreadCpuTime(jvmtiEnv* env,
 			rv_nanos = (jlong)omrthread_get_cpu_time(omrthread_self());
 		} else {
 #if JAVA_SPEC_VERSION >= 19
-			ENSURE_JTHREAD_NOT_VIRTUAL(currentThread, thread);
+			ENSURE_JTHREAD_NOT_VIRTUAL(currentThread, thread, JVMTI_ERROR_UNSUPPORTED_OPERATION);
 #endif /* JAVA_SPEC_VERSION >= 19 */
 			rc = getVMThread(currentThread, thread, &targetThread, TRUE, TRUE);
 			if (rc == JVMTI_ERROR_NONE) {

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,11 +32,11 @@ jvmtiForceEarlyReturnObject(jvmtiEnv* env,
 {
 	jvmtiError rc;
 
-	Trc_JVMTI_jvmtiForceEarlyReturnVoid_Entry(env);
+	Trc_JVMTI_jvmtiForceEarlyReturnObject_Entry(env);
 
 	rc = jvmtiForceEarlyReturn(env, thread, JVMTI_TYPE_JOBJECT, value);
 
-	return rc; 
+	TRACE_JVMTI_RETURN(jvmtiForceEarlyReturnObject);
 }
 
 
@@ -47,11 +47,11 @@ jvmtiForceEarlyReturnInt(jvmtiEnv* env,
 {
 	jvmtiError rc;
 
-	Trc_JVMTI_jvmtiForceEarlyReturnVoid_Entry(env);
+	Trc_JVMTI_jvmtiForceEarlyReturnInt_Entry(env);
 
 	rc = jvmtiForceEarlyReturn(env, thread, JVMTI_TYPE_JINT, &value);
 
-	return rc; 
+	TRACE_JVMTI_RETURN(jvmtiForceEarlyReturnInt);
 }
 
 
@@ -62,11 +62,11 @@ jvmtiForceEarlyReturnLong(jvmtiEnv* env,
 {
 	jvmtiError rc;
 
-	Trc_JVMTI_jvmtiForceEarlyReturnVoid_Entry(env);
+	Trc_JVMTI_jvmtiForceEarlyReturnLong_Entry(env);
 
 	rc = jvmtiForceEarlyReturn(env, thread, JVMTI_TYPE_JLONG, &value);
 
-	return rc; 
+	TRACE_JVMTI_RETURN(jvmtiForceEarlyReturnLong);
 }
 
 
@@ -77,11 +77,11 @@ jvmtiForceEarlyReturnFloat(jvmtiEnv* env,
 {
 	jvmtiError rc;
 
-	Trc_JVMTI_jvmtiForceEarlyReturnVoid_Entry(env);
+	Trc_JVMTI_jvmtiForceEarlyReturnFloat_Entry(env);
 
 	rc = jvmtiForceEarlyReturn(env, thread, JVMTI_TYPE_JFLOAT, &value);
 
-	return rc; 
+	TRACE_JVMTI_RETURN(jvmtiForceEarlyReturnFloat);
 }
 
 
@@ -92,11 +92,11 @@ jvmtiForceEarlyReturnDouble(jvmtiEnv* env,
 {
 	jvmtiError rc;
 
-	Trc_JVMTI_jvmtiForceEarlyReturnVoid_Entry(env);
+	Trc_JVMTI_jvmtiForceEarlyReturnDouble_Entry(env);
 
 	rc = jvmtiForceEarlyReturn(env, thread, JVMTI_TYPE_JDOUBLE, &value);
 
-	return rc; 
+	TRACE_JVMTI_RETURN(jvmtiForceEarlyReturnDouble);
 }
 
 
@@ -110,7 +110,7 @@ jvmtiForceEarlyReturnVoid(jvmtiEnv* env,
 
 	rc = jvmtiForceEarlyReturn(env, thread, JVMTI_TYPE_CVOID, NULL);
 
-	return rc;
+	TRACE_JVMTI_RETURN(jvmtiForceEarlyReturnVoid);
 }
 
 
@@ -148,8 +148,11 @@ jvmtiForceEarlyReturn(jvmtiEnv* env,
 		/* Check if the jthread is really a j.l.Thread. a NULL jthread indicates that
 		 * the user wants to use the current thread hence defer the assignment to getVMThread */
 		
-		if (thread) {
+		if (NULL != thread) {
 			ENSURE_JTHREAD(currentThread, thread);
+#if JAVA_SPEC_VERSION >= 19
+			ENSURE_JTHREAD_NOT_VIRTUAL(currentThread, thread, JVMTI_ERROR_OPAQUE_FRAME);
+#endif /* JAVA_SPEC_VERSION >= 19 */
 		}
 
 		rc = getVMThread(currentThread, thread, &targetThread, TRUE, TRUE);
@@ -241,5 +244,5 @@ done:
 		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
-	TRACE_JVMTI_RETURN(jvmtiPopFrame);
+	return rc;
 }
