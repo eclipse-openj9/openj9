@@ -2109,7 +2109,6 @@ bool TR::CompilationInfo::shouldAbortCompilation(TR_MethodToBeCompiled *entry, T
 
    if (entry->_unloadedMethod) // method was unloaded while we were trying to compile it
       {
-      TR_ASSERT(entry->_compErrCode == compilationInterrupted, "Received error code %u, expect compilationInterrupted when the method was unloaded", entry->_compErrCode);
       entry->_compErrCode = compilationNotNeeded; // change error code
       return true;
       }
@@ -2129,7 +2128,7 @@ bool TR::CompilationInfo::shouldAbortCompilation(TR_MethodToBeCompiled *entry, T
 
 // This method has side-effects, It modifies the optimization plan and persistentMethodInfo
 // This method is executed with compilationMonitor in hand
-//
+
 bool TR::CompilationInfo::shouldRetryCompilation(TR_MethodToBeCompiled *entry, TR::Compilation *comp)
    {
    // The JITServer should not retry compilations on it's own,

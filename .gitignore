@@ -45,3 +45,4 @@ com.ibm.jvmti.tests
 # Default test directory (BUILD_ROOT)
 /jvmtest/
 /build/
+test/aqa-tests
