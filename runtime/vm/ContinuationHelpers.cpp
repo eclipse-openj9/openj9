@@ -27,6 +27,7 @@
 #include "vm_api.h"
 #include "ContinuationHelpers.hpp"
 #include "OutOfLineINL.hpp"
+#include "VMHelpers.hpp"
 
 
 extern "C" {
@@ -167,4 +168,37 @@ isPinnedContinuation(J9VMThread *currentThread)
 	return result;
 }
 
+UDATA
+walkContinuationStackFrames(J9VMThread *currentThread, j9object_t continuationObject, J9StackWalkState *walkState)
+{
+	Assert_VM_notNull(currentThread);
+
+	UDATA rc = J9_STACKWALK_RC_NONE;
+	J9VMContinuation *continuation = J9VMJDKINTERNALVMCONTINUATION_VMREF(currentThread, continuationObject);
+
+	if (NULL != continuation) {
+		J9VMThread stackThread = {0};
+		J9VMEntryLocalStorage els = {0};
+
+		stackThread.entryLocalStorage = &els;
+		stackThread.javaVM = currentThread->javaVM;
+		stackThread.arg0EA = continuation->arg0EA;
+		stackThread.bytecodes = continuation->bytecodes;
+		stackThread.sp = continuation->sp;
+		stackThread.pc = continuation->pc;
+		stackThread.literals = continuation->literals;
+		stackThread.stackOverflowMark = continuation->stackOverflowMark;
+		stackThread.stackOverflowMark2 = continuation->stackOverflowMark2;
+		stackThread.stackObject = continuation->stackObject;
+		stackThread.entryLocalStorage->oldEntryLocalStorage = continuation->oldEntryLocalStorage;
+		stackThread.entryLocalStorage->jitGlobalStorageBase = (UDATA*)&continuation->jitGPRs;
+		stackThread.j2iFrame = continuation->j2iFrame;
+		stackThread.decompilationStack = continuation->decompilationStack;
+
+		walkState->walkThread = &stackThread;
+		rc = currentThread->javaVM->walkStackFrames(currentThread, walkState);
+	}
+
+	return rc;
+}
 } /* extern "C" */
