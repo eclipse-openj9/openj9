@@ -3581,14 +3581,26 @@ void genInstanceOfOrCheckCastSuperClassTest(TR::Node *node, TR::Register *condRe
                               TR::MemoryReference::createWithDisplacement(cg, instanceClassReg, offsetof(J9Class, classDepthAndFlags), TR::Compiler->om.sizeofReferenceAddress()));
    static_assert(J9AccClassDepthMask < UINT_MAX, "Class depth is not containable in 32 bits");
    generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rlwinm, node, instanceClassDepthReg, instanceClassDepthReg, 0, J9AccClassDepthMask);
-   if (castClassDepth <= UPPER_IMMED && castClassDepth >= LOWER_IMMED)
-      generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpi4, node, condReg, instanceClassDepthReg, castClassDepth);
-   else
+   if (dynamicCastClass)
       {
       castClassDepthReg = srm->findOrCreateScratchRegister();
-      loadConstant(cg, node, castClassDepth, castClassDepthReg);
+      generateTrg1MemInstruction(cg, TR::InstOpCode::Op_load, node, castClassDepthReg,
+                                 TR::MemoryReference::createWithDisplacement(cg, castClassReg, offsetof(J9Class, classDepthAndFlags), TR::Compiler->om.sizeofReferenceAddress()));
+      generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rlwinm, node, castClassDepthReg, castClassDepthReg, 0, J9AccClassDepthMask);
       generateTrg1Src2Instruction(cg, TR::InstOpCode::cmp4, node, condReg, instanceClassDepthReg, castClassDepthReg);
       }
+   else
+      {
+      if (castClassDepth <= UPPER_IMMED && castClassDepth >= LOWER_IMMED)
+         generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpi4, node, condReg, instanceClassDepthReg, castClassDepth);
+      else
+         {
+         castClassDepthReg = srm->findOrCreateScratchRegister();
+         loadConstant(cg, node, castClassDepth, castClassDepthReg);
+         generateTrg1Src2Instruction(cg, TR::InstOpCode::cmp4, node, condReg, instanceClassDepthReg, castClassDepthReg);
+         }
+      }
+
    srm->reclaimScratchRegister(instanceClassDepthReg);
 
    // At this point condReg[gt] will be set if the instance class depth is greater than the cast class depth.
@@ -3605,35 +3617,46 @@ void genInstanceOfOrCheckCastSuperClassTest(TR::Node *node, TR::Register *condRe
                               TR::MemoryReference::createWithDisplacement(cg, instanceClassReg, offsetof(J9Class, superclasses), TR::Compiler->om.sizeofReferenceAddress()));
 
    int32_t castClassDepthOffset = castClassDepth * TR::Compiler->om.sizeofReferenceAddress();
-   if (castClassDepthOffset <= UPPER_IMMED && castClassDepthOffset >= LOWER_IMMED)
+   if (dynamicCastClass)
       {
-      generateTrg1MemInstruction(cg, TR::InstOpCode::Op_load, node, instanceClassSuperClassReg,
-                                 TR::MemoryReference::createWithDisplacement(cg, instanceClassSuperClassesArrayReg, castClassDepthOffset, TR::Compiler->om.sizeofReferenceAddress()));
+      if (comp->target().is64Bit())
+         generateShiftLeftImmediateLong(cg, node, castClassDepthReg, castClassDepthReg, 3);
+      else
+         generateShiftLeftImmediate(cg, node, castClassDepthReg, castClassDepthReg, 2);
+      generateTrg1MemInstruction(cg, TR::InstOpCode::Op_loadx, node, instanceClassSuperClassReg, TR::MemoryReference::createWithIndexReg(cg, instanceClassSuperClassesArrayReg, castClassDepthReg, TR::Compiler->om.sizeofReferenceAddress()));
       }
    else
       {
-      if (!castClassDepthReg)
+      if (castClassDepthOffset <= UPPER_IMMED && castClassDepthOffset >= LOWER_IMMED)
          {
-         castClassDepthReg = srm->findOrCreateScratchRegister();
-         if (0x00008000 == HI_VALUE(castClassDepthOffset))
-            {
-            generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addis, node, castClassDepthReg, instanceClassSuperClassesArrayReg, 0x7FFF);
-            generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addis, node, castClassDepthReg, castClassDepthReg, 0x1);
-            }
-         else
-            {
-            generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addis, node, castClassDepthReg, instanceClassSuperClassesArrayReg, HI_VALUE(castClassDepthOffset));
-            }
          generateTrg1MemInstruction(cg, TR::InstOpCode::Op_load, node, instanceClassSuperClassReg,
-                                    TR::MemoryReference::createWithDisplacement(cg, castClassDepthReg, LO_VALUE(castClassDepthOffset), TR::Compiler->om.sizeofReferenceAddress()));
+                                    TR::MemoryReference::createWithDisplacement(cg, instanceClassSuperClassesArrayReg, castClassDepthOffset, TR::Compiler->om.sizeofReferenceAddress()));
          }
       else
          {
-         if (comp->target().is64Bit())
-            generateShiftLeftImmediateLong(cg, node, castClassDepthReg, castClassDepthReg, 3);
+         if (!castClassDepthReg)
+            {
+            castClassDepthReg = srm->findOrCreateScratchRegister();
+            if (0x00008000 == HI_VALUE(castClassDepthOffset))
+               {
+               generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addis, node, castClassDepthReg, instanceClassSuperClassesArrayReg, 0x7FFF);
+               generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addis, node, castClassDepthReg, castClassDepthReg, 0x1);
+               }
+            else
+               {
+               generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addis, node, castClassDepthReg, instanceClassSuperClassesArrayReg, HI_VALUE(castClassDepthOffset));
+               }
+            generateTrg1MemInstruction(cg, TR::InstOpCode::Op_load, node, instanceClassSuperClassReg,
+                                       TR::MemoryReference::createWithDisplacement(cg, castClassDepthReg, LO_VALUE(castClassDepthOffset), TR::Compiler->om.sizeofReferenceAddress()));
+            }
          else
-            generateShiftLeftImmediate(cg, node, castClassDepthReg, castClassDepthReg, 2);
-         generateTrg1MemInstruction(cg, TR::InstOpCode::Op_loadx, node, instanceClassSuperClassReg, TR::MemoryReference::createWithIndexReg(cg, instanceClassSuperClassesArrayReg, castClassDepthReg, TR::Compiler->om.sizeofReferenceAddress()));
+            {
+            if (comp->target().is64Bit())
+               generateShiftLeftImmediateLong(cg, node, castClassDepthReg, castClassDepthReg, 3);
+            else
+               generateShiftLeftImmediate(cg, node, castClassDepthReg, castClassDepthReg, 2);
+            generateTrg1MemInstruction(cg, TR::InstOpCode::Op_loadx, node, instanceClassSuperClassReg, TR::MemoryReference::createWithIndexReg(cg, instanceClassSuperClassesArrayReg, castClassDepthReg, TR::Compiler->om.sizeofReferenceAddress()));
+            }
          }
       }
    generateTrg1Src2Instruction(cg, TR::InstOpCode::Op_cmpl, node, condReg, instanceClassSuperClassReg, castClassReg);
