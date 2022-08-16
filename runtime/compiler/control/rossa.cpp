@@ -1518,7 +1518,27 @@ onLoadInternal(
       {
       javaVM->extendedRuntimeFlags |= J9_EXTENDED_RUNTIME_USE_VECTOR_REGISTERS;
       }
+#elif defined(J9HAMMER)
+   bool hasAVX = TR::Compiler->target.cpu.supportsAVX();
+   bool hasAVX512 = TR::Compiler->target.cpu.supportsFeature(OMR_FEATURE_X86_AVX512F);
+   bool hasAVX512bw = TR::Compiler->target.cpu.supportsFeature(OMR_FEATURE_X86_AVX512BW);
+   static char *useExtendedRegisters = feGetEnv("TR_UseExtendedVectorRegisters");
+
+   if (hasAVX512 && hasAVX512bw && useExtendedRegisters)
+      {
+      javaVM->extendedRuntimeFlags |= J9_EXTENDED_RUNTIME_USE_VECTOR_REGISTERS;
+      javaVM->extendedRuntimeFlags |= J9_EXTENDED_RUNTIME_USE_EXTENDED_VECTOR_REGISTERS;
+      }
+   else if (hasAVX512 && useExtendedRegisters)
+      {
+      javaVM->extendedRuntimeFlags |= J9_EXTENDED_RUNTIME_USE_EXTENDED_VECTOR_REGISTERS;
+      }
+   else if (hasAVX)
+      {
+      javaVM->extendedRuntimeFlags |= J9_EXTENDED_RUNTIME_USE_VECTOR_REGISTERS;
+      }
 #endif
+
 
    // Address the case where the number of compilation threads is higher than the
    // maximum number of code caches
