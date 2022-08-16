@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -332,6 +332,12 @@ jvmtiPopFrame(jvmtiEnv* env,
 
 		ENSURE_PHASE_LIVE(env);
 		ENSURE_CAPABILITY(env, can_pop_frame);
+
+#if JAVA_SPEC_VERSION >= 19
+		if (NULL != thread) {
+			ENSURE_JTHREAD_NOT_VIRTUAL(currentThread, thread, JVMTI_ERROR_OPAQUE_FRAME);
+		}
+#endif /* JAVA_SPEC_VERSION >= 19 */
 
 		rc = getVMThread(currentThread, thread, &targetThread, FALSE, TRUE);
 		if (rc == JVMTI_ERROR_NONE) {
