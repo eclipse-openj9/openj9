@@ -2669,6 +2669,9 @@ void TR::CompilationInfo::releaseCompMonitorUntilNotifiedOnCRMonitor(J9VMThread 
 
 bool TR::CompilationInfo::suspendCompThreadsForCheckpoint(J9VMThread *vmThread)
    {
+   if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCheckpointRestore))
+      TR_VerboseLog::writeLineLocked(TR_Vlog_CHECKPOINT_RESTORE, "Preparing to suspend threads for checkpoint");
+
    /* Indicate to compilation threads that they should suspend for checkpoint/restore */
    setSuspendThreadsForCheckpoint();
 
@@ -2697,8 +2700,15 @@ bool TR::CompilationInfo::suspendCompThreadsForCheckpoint(J9VMThread *vmThread)
 
       /* Stop cycling through the threads if checkpointing should be interrupted. */
       if (shouldCheckpointBeInterrupted())
+         {
+         if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCheckpointRestore))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_CHECKPOINT_RESTORE, "Aborting; checkpoint is interrupted");
          return false;
+         }
       }
+
+   if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCheckpointRestore))
+      TR_VerboseLog::writeLineLocked(TR_Vlog_CHECKPOINT_RESTORE, "Finished suspending threads for checkpoint");
 
    return true;
    }
