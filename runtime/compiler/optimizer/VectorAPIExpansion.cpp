@@ -1193,6 +1193,7 @@ TR::Node *TR_VectorAPIExpansion::transformLoadFromArray(TR_VectorAPIExpansion *o
       if (elementType == TR::Int8 || elementType == TR::Int16)
          {
          TR::Node *newLoadNode = node->duplicateTree(false);
+         aladdNode->decReferenceCount(); // since aladd has one extra count due to duplication
          TR::Node::recreate(node, elementType == TR::Int8 ? TR::b2i : TR::s2i);
          node->setAndIncChild(0, newLoadNode);
          }
@@ -1518,7 +1519,7 @@ TR::Node *TR_VectorAPIExpansion::fromBitsCoercedIntrinsicHandler(TR_VectorAPIExp
    if (mode == doScalarization)
       {
       // modify original node in place
-      node->setAndIncChild(0, newNode->getChild(0));
+      node->setChild(0, newNode->getChild(0));
       node->setNumChildren(1);
 
       int32_t numLanes = vectorLength/8/elementSize;
