@@ -85,8 +85,6 @@ UDATA rasDumpPendingHooks = 0;
 
 /* Cached VM event handlers for use by J9VMRASdumpHooks */
 UDATA rasDumpUnhookedEvents = J9RAS_DUMP_ON_ANY;
-void *rasDumpOldHooks[J9RAS_DUMP_HOOK_TABLE_SIZE];
-
 
 static void rasDumpHookVmInit (J9HookInterface** hookInterface, UDATA eventNum, void* eventData, void* userData);
 static void rasDumpHookGCInitialized(J9HookInterface** hookInterface, UDATA eventNum, void* eventData, void* userData);
