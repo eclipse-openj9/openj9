@@ -1062,7 +1062,12 @@ initializeJavaVM(void * osMainThread, J9JavaVM ** vmPtr, J9CreateJavaVMParams *c
 	}
 #endif /* J9VM_OPT_JITSERVER */
 
-#if defined(J9HAMMER) && (JAVA_SPEC_VERSION >= 17)
+
+/*
+ * Disable AVX+ vector register preservation on x86 due to a large performance regression.
+ * Issue: #15716
+ */
+#if defined(J9HAMMER) && (JAVA_SPEC_VERSION >= 17) && 0
 	J9ProcessorDesc desc;
 	j9sysinfo_get_processor_description(&desc);
 
@@ -1074,7 +1079,7 @@ initializeJavaVM(void * osMainThread, J9JavaVM ** vmPtr, J9CreateJavaVMParams *c
 	} else if (j9sysinfo_processor_has_feature(&desc, J9PORT_X86_FEATURE_AVX)) {
 		vm->extendedRuntimeFlags |= J9_EXTENDED_RUNTIME_USE_VECTOR_REGISTERS;
 	}
-#endif /* defined(J9HAMMER) && (JAVA_SPEC_VERSION >= 17) */
+#endif /* defined(J9HAMMER) && (JAVA_SPEC_VERSION >= 17) && 0 */
 
 	initArgs.j2seVersion = createParams->j2seVersion;
 	initArgs.j2seRootDirectory = createParams->j2seRootDirectory;
