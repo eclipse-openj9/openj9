@@ -7609,7 +7609,9 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
              (TR::Options::getCmdLineOptions()->getOption(TR_EnableJITServerHeuristics) ||
              _compInfo.getPersistentInfo()->isLocalSyncCompiles()) &&
              !TR::Options::getCmdLineOptions()->getOption(TR_DisableUpgradingColdCompilations) &&
-             TR::Options::getCmdLineOptions()->allowRecompilation())
+             TR::Options::getCmdLineOptions()->allowRecompilation() &&
+             !details.isMethodInProgress() &&
+             !TR::Options::getCmdLineOptions()->getOption(TR_MimicInterpreterFrameShape))
             {
             doLocalCompilation = true;
             entry->_origOptLevel = entry->_optimizationPlan->getOptLevel();
