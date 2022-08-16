@@ -60,7 +60,7 @@ public final class SecurityProviders {
 				CRIUSupport.RESTORE_SECURITY_PROVIDERS_PRIORITY,
 				"Restore the security providers", //$NON-NLS-1$
 				() -> {
-					if (InternalCRIUSupport.isCheckpointAllowed()) {
+					if (!InternalCRIUSupport.isCheckpointAllowed()) {
 						CRIUConfigurator.setCRIURestoreMode();
 					}
 				});
