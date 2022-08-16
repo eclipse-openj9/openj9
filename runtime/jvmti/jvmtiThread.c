@@ -372,7 +372,7 @@ jvmtiStopThread(jvmtiEnv* env,
 
 		ENSURE_JTHREAD_NON_NULL(thread);
 #if JAVA_SPEC_VERSION >= 19
-		ENSURE_JTHREAD_NOT_VIRTUAL(currentThread, thread);
+		ENSURE_JTHREAD_NOT_VIRTUAL(currentThread, thread, JVMTI_ERROR_UNSUPPORTED_OPERATION);
 #endif /* JAVA_SPEC_VERSION >= 19 */
 
 		rc = getVMThread(currentThread, thread, &targetThread, FALSE, TRUE);
@@ -817,7 +817,7 @@ jvmtiRunAgentThread(jvmtiEnv* env,
 
 		ENSURE_JTHREAD_NON_NULL(thread);
 #if JAVA_SPEC_VERSION >= 19
-		ENSURE_JTHREAD_NOT_VIRTUAL(currentThread, thread);
+		ENSURE_JTHREAD_NOT_VIRTUAL(currentThread, thread, JVMTI_ERROR_UNSUPPORTED_OPERATION);
 #endif /* JAVA_SPEC_VERSION >= 19 */
 		/* Perhaps verify that thread has not already been started? */
 		ENSURE_NON_NULL(proc);
