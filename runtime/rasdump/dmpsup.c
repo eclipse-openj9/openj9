@@ -33,7 +33,6 @@
 #include "omrthread.h"
 #include "omrlinkedlist.h"
 
-
 #if defined(J9VM_PORT_OMRSIG_SUPPORT)
 #include "omrsig.h"
 #else /* defined(J9VM_PORT_OMRSIG_SUPPORT) */
@@ -98,7 +97,6 @@ static const J9RASdefaultOption defaultAgents[] = {
 };
 static const int numDefaultAgents = ( sizeof(defaultAgents) / sizeof(J9RASdefaultOption) );
 
-
 static omr_error_t shutdownDumpAgents (J9JavaVM *vm);
 static omr_error_t popDumpFacade (J9JavaVM *vm);
 static omr_error_t installAbortHandler (J9JavaVM *vm);
@@ -145,7 +143,7 @@ loadOMRSIG(J9JavaVM *vm)
 		return FALSE;
 	}
 	omrsigHandle = omrsigLoadInfo.descriptor;
-	
+
 	j9sl_lookup_name(omrsigHandle, "omrsig_primary_signal", (UDATA *) &omrsig_primary_signal_Static, "IP");
 	j9sl_lookup_name(omrsigHandle, "omrsig_handler", (UDATA *) &omrsig_handler_Static, "IPP");
 	return TRUE;
@@ -155,7 +153,7 @@ void
 unloadOMRSIG(J9PortLibrary *portLib)
 {
 	PORT_ACCESS_FROM_PORT(portLib);
-	
+
 	j9sl_close_shared_library(omrsigHandle);
 	omrsigHandle = 0;
 }
@@ -177,7 +175,6 @@ omrsig_handler(int sig, void *siginfo, void *uc)
 }
 
 #endif
-
 
 static void
 abortHandler(int sig)
@@ -305,7 +302,6 @@ installAbortHandler(J9JavaVM *vm)
 	return OMR_ERROR_NONE;
 }
 
-
 UDATA
 lockConfigForUse(void)
 {
@@ -332,7 +328,6 @@ lockConfigForUpdate(void)
 	 */
 	return compareAndSwapUDATA(&rasDumpLockConfig, 0, -1) == 0;
 }
-
 
 UDATA
 unlockConfig(void)
@@ -396,7 +391,7 @@ storeDefaultData(J9JavaVM *vm)
 	return OMR_ERROR_NONE;
 }
 
-/* Function for configuring the RAS dump agents. Since Java 6 SR2 (VMDESIGN 1477), in increasing 
+/* Function for configuring the RAS dump agents. Since Java 6 SR2 (VMDESIGN 1477), in increasing
  * order of precedence:
  * 		Default agents
  * 		DISABLE_JAVADUMP, IBM_HEAPDUMP, IBM_HEAP_DUMP
@@ -511,6 +506,24 @@ configureDumpAgents(J9JavaVM *vm)
 	}
 #endif
 
+	/* process options controlling javadump symbol resolution */
+	{
+		IDATA noSymbols = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXNOSHOWNATIVESTACKSYMBOLS, NULL);
+		IDATA allSymbols = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXSHOWNATIVESTACKSYMBOLS_ALL, NULL);
+		IDATA basicSymbols = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXSHOWNATIVESTACKSYMBOLS_BASIC, NULL);
+
+		/* set default */
+		dumpGlobal->showNativeSymbols = J9RAS_JAVADUMP_SHOW_NATIVE_STACK_SYMBOLS_BASIC;
+
+		if ((noSymbols > allSymbols) && (noSymbols > basicSymbols)) {
+			/* no symbols requested */
+			dumpGlobal->showNativeSymbols = J9RAS_JAVADUMP_SHOW_NATIVE_STACK_SYMBOLS_NONE;
+		} else if ((allSymbols > basicSymbols) && (allSymbols > noSymbols)) {
+			/* all symbols requested */
+			dumpGlobal->showNativeSymbols = J9RAS_JAVADUMP_SHOW_NATIVE_STACK_SYMBOLS_ALL;
+		}
+	}
+
 	agentOpts = j9mem_allocate_memory(sizeof(J9RASdumpOption)*MAX_DUMP_OPTS, OMRMEM_CATEGORY_VM);
 	if( NULL == agentOpts ) {
 		j9tty_err_printf(PORTLIB, "Storage for dump options not available, unable to process dump options\n");
@@ -526,19 +539,19 @@ configureDumpAgents(J9JavaVM *vm)
 		agentOpts[agentNum].args = defaultAgents[i].args;
 		agentNum++;
 	}
-	
+
 	/* Process DISABLE_JAVADUMP IBM_HEAPDUMP IBM_JAVADUMP_OUTOFMEMORY and IBM_HEAPDUMP_OUTOFMEMORY */
 	mapDumpSwitches(vm, agentOpts, &agentNum);
-	
+
 	/* Process JAVA_DUMP_OPTS */
 	mapDumpOptions(vm, agentOpts, &agentNum);
-	
-	/* Process IBM_JAVA_HEAPDUMP_TEXT and IBM_JAVA_HEAPDUMP_TEST */ 
+
+	/* Process IBM_JAVA_HEAPDUMP_TEXT and IBM_JAVA_HEAPDUMP_TEST */
 	mapDumpDefaults(vm, agentOpts, &agentNum);
 
 	/* Process IBM_XE_COE_NAME */
 	mapDumpSettings(vm, agentOpts, &agentNum);
-	
+
 
 	/*
 	 * Process -XX:[+-]HeapDumpOnOutOfMemoryError.
@@ -587,7 +600,7 @@ configureDumpAgents(J9JavaVM *vm)
 					char *optionValue = NULL;
 					/* The mapped option specifies the tool command to run after the equals */
 					GET_OPTION_VALUE(xdumpIndex, '=', &optionValue);
-					
+
 					/* Move toolCursor past ":tool:" */
 					toolCursor += strlen(toolString);
 
@@ -598,7 +611,7 @@ configureDumpAgents(J9JavaVM *vm)
 
 						/* Construct optionString by combining the J9 tool dump command with the mapped option */
 						optionString = (char *) j9mem_allocate_memory(optionStringMemAlloc, OMRMEM_CATEGORY_VM);
-						
+
 						if (NULL != optionString) {
 							strcpy(optionString, toolCursor);
 							strcat(optionString + toolCursorLength, optionValue);
@@ -747,9 +760,9 @@ configureDumpAgents(J9JavaVM *vm)
 	if (showAgents) {
 		showDumpAgents(vm);
 	}
-	
+
 	storeDefaultData(vm);
-	
+
 	/* Free any allocated argument strings (used when we have a variable dump count) */
 	for (i = 0; i < agentNum; i++) {
 		if (agentOpts[i].flags == J9RAS_DUMP_OPT_ARGS_ALLOC) {
@@ -761,7 +774,6 @@ configureDumpAgents(J9JavaVM *vm)
 	return J9VMDLLMAIN_OK;
 }
 
-
 static omr_error_t
 shutdownDumpAgents(J9JavaVM *vm)
 {
@@ -769,23 +781,22 @@ shutdownDumpAgents(J9JavaVM *vm)
 
 	if ( FIND_DUMP_QUEUE(vm, queue) ) {
 		J9RASdumpAgent * current = queue->agents;
-		
+
 		while (current) {
 			J9RASdumpAgent * next = current->nextPtr;
-			
+
 			if (current->shutdownFn) {
 				current->shutdownFn(vm, &current);	/* agent will remove itself */
 			} else {
 				removeDumpAgent(vm, current);
 			}
-			
+
 			current = next;
 		}
 	}
 
 	return OMR_ERROR_NONE;
 }
-
 
 static omr_error_t
 printDumpUsage(J9JavaVM *vm)
@@ -827,7 +838,6 @@ printDumpUsage(J9JavaVM *vm)
 	return OMR_ERROR_NONE;
 }
 
-
 omr_error_t
 queryVmDump(struct J9JavaVM *vm, int buffer_size, void* options_buffer, int* data_size)
 {
@@ -838,9 +848,9 @@ queryVmDump(struct J9JavaVM *vm, int buffer_size, void* options_buffer, int* dat
 	IDATA writtenToBuffer = FALSE;
 	IDATA foundDumpAgent = FALSE;
 	omr_error_t rc = OMR_ERROR_NONE;
-	
+
 	PORT_ACCESS_FROM_JAVAVM(vm);
-	
+
 	if (NULL == data_size) {
 		/* cannot write the data_size so abandon at this point. */
 		return OMR_ERROR_ILLEGAL_ARGUMENT;
@@ -865,7 +875,7 @@ queryVmDump(struct J9JavaVM *vm, int buffer_size, void* options_buffer, int* dat
 				}
 			}
 		}
-		
+
 		if (!foundDumpAgent) {
 			/* failed to find a dump agent in the queue, so clean up and return */
 
@@ -885,7 +895,7 @@ queryVmDump(struct J9JavaVM *vm, int buffer_size, void* options_buffer, int* dat
 		} else {
 			/* copy the memory into the user's buffer and then free our internal buffer */
 			numBytesWritten++;
-			
+
 			if (buffer_size >= numBytesWritten && options_buffer != NULL) {
 				/* do the copy */
 				memcpy(options_buffer, tempBuf, numBytesWritten);
@@ -909,12 +919,10 @@ queryVmDump(struct J9JavaVM *vm, int buffer_size, void* options_buffer, int* dat
 	return rc;
 }
 
-
 omr_error_t
 setDumpOption(struct J9JavaVM *vm, char *optionString)
 {
 	PORT_ACCESS_FROM_JAVAVM(vm);
-
 
 	/* -Xdump:what */
 	if ( strcmp(optionString, "what") == 0 )
@@ -1005,7 +1013,7 @@ resetDumpOptions(struct J9JavaVM *vm)
     struct J9RASdumpSettings *origSettings = queue->settings;
     struct J9RASdumpAgent *origAgents = queue->agents;
     struct J9RASdumpSettings *origDefaultSettings = queue->defaultSettings;
-    struct J9RASdumpAgent *origDefaultAgents = queue->defaultAgents;    
+    struct J9RASdumpAgent *origDefaultAgents = queue->defaultAgents;
 
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
@@ -1022,9 +1030,9 @@ resetDumpOptions(struct J9JavaVM *vm)
 		unlockConfig();
 		return OMR_ERROR_OUT_OF_NATIVE_MEMORY;
 	}
-	
+
 	/* queue->defaultSettings and queue->defaultAgents do not change! */
-	
+
 	queue->agents = copyDumpAgentsQueue(vm, origDefaultAgents);
 	if (queue->agents == NULL){
 		struct J9RASdumpSettings *newSettings = queue->settings;
@@ -1036,7 +1044,7 @@ resetDumpOptions(struct J9JavaVM *vm)
 		unlockConfig();
 		return OMR_ERROR_OUT_OF_NATIVE_MEMORY;
 	}
-	
+
 	/* add the old agents to the shutdown queue */
 	if (queue->agentShutdownQueue == NULL){
 		queue->agentShutdownQueue = origAgents;
@@ -1047,7 +1055,7 @@ resetDumpOptions(struct J9JavaVM *vm)
 		}
 		agent->nextPtr = origAgents;
 	}
-	
+
 	/* free the old settings  */
 	j9mem_free_memory(origSettings);
 
@@ -1106,7 +1114,6 @@ pushDumpFacade(J9JavaVM *vm)
 	return retVal;
 }
 
-
 static omr_error_t
 popDumpFacade(J9JavaVM *vm)
 {
@@ -1127,7 +1134,7 @@ popDumpFacade(J9JavaVM *vm)
 
 		/* Free settings */
 		freeDumpSettings(vm, queue->settings);
-		
+
 		/* free our stored queue */
 		if (queue->defaultSettings != NULL){
 			j9mem_free_memory(queue->defaultSettings);
@@ -1144,7 +1151,7 @@ popDumpFacade(J9JavaVM *vm)
 			}
 			queue->defaultAgents = NULL;
 		}
-		
+
 		if (queue->agentShutdownQueue != NULL){
 			struct J9RASdumpAgent *currentAgent = queue->agentShutdownQueue;
 			while (currentAgent != NULL){
@@ -1155,7 +1162,7 @@ popDumpFacade(J9JavaVM *vm)
 			}
 			queue->agentShutdownQueue = NULL;
 		}
-		
+
 		j9mem_free_memory(queue);
 	}
 
@@ -1166,7 +1173,7 @@ static void
 initRasDumpGlobalStorage(J9JavaVM *vm)
 {
 	/* Create global storage for rasdump and populate it */
-	
+
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	IDATA rc = 0;
 
@@ -1175,26 +1182,26 @@ initRasDumpGlobalStorage(J9JavaVM *vm)
 
 	if (NULL != vm->j9rasdumpGlobalStorage) {
 		RasDumpGlobalStorage* dump_storage = (RasDumpGlobalStorage*)vm->j9rasdumpGlobalStorage;
-		
+
 		/* ensure that the storage is all NULLs to start with */
 		memset (dump_storage, '\0', sizeof(RasDumpGlobalStorage));
-		
+
 		/* now allocate the mutex and the tokens */
 		rc = omrthread_monitor_init_with_name(&dump_storage->dumpLabelTokensMutex, 0, "dump tokens mutex");
 		if (0 == rc) {
 			/* created the mutex */
 			I_64 now = j9time_current_time_millis();
-			
+
 			omrthread_monitor_enter(dump_storage->dumpLabelTokensMutex);
-			
+
 			/* create the tokens */
 			dump_storage->dumpLabelTokens = j9str_create_tokens(now);
-			
+
 			omrthread_monitor_exit(dump_storage->dumpLabelTokensMutex);
-		} 
+		}
 	}
 }
-	
+
 static void
 freeRasDumpGlobalStorage(J9JavaVM *vm)
 {
@@ -1202,7 +1209,7 @@ freeRasDumpGlobalStorage(J9JavaVM *vm)
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	RasDumpGlobalStorage *dump_storage = (RasDumpGlobalStorage *)vm->j9rasdumpGlobalStorage;
 	vm->j9rasdumpGlobalStorage = NULL;
-	
+
 	if (NULL != dump_storage) {
 		/* global storage exists. */
 
@@ -1210,7 +1217,7 @@ freeRasDumpGlobalStorage(J9JavaVM *vm)
 		if (NULL != dump_storage->dumpLabelTokensMutex) {
 			omrthread_monitor_destroy(dump_storage->dumpLabelTokensMutex);
 		}
-		
+
 		if (NULL != dump_storage->dumpLabelTokens) {
 			j9str_free_tokens(dump_storage->dumpLabelTokens);
 		}
@@ -1219,7 +1226,7 @@ freeRasDumpGlobalStorage(J9JavaVM *vm)
 		j9mem_free_memory(dump_storage);
 	}
 }
-	
+
 static void
 hookVmInitialized(J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData)
 {
@@ -1234,7 +1241,6 @@ JVM_OnLoad(JavaVM *vm, char *options, void *reserved)
 	return JNI_OK;
 }
 
-
 jint JNICALL
 JVM_OnUnload(JavaVM *vm, void *reserved)
 {
@@ -1247,7 +1253,7 @@ JVM_OnUnload(JavaVM *vm, void *reserved)
  * those can hold a lock required for the initialization to complete. This causes
  * a hang. Therefore we do one redundant call to backtrace at startup to prevent
  * java dumps hanging the VM.
- * 
+ *
  * See defect 183803
  */
 static void
@@ -1274,7 +1280,7 @@ initBackTrace(J9JavaVM *vm)
  * core dumps. The systemInfo field in J9RAS points to a linked list of J9RASSystemInfo structures
  * which store optional, platform specific information. This avoids cluttering J9RAS with fields
  * that are rarely used or only exist on some platforms.
- * 
+ *
  * @param vm[in] pointer to the JVM
  */
 static void
@@ -1429,7 +1435,7 @@ J9VMDllMain(J9JavaVM *vm, IDATA stage, void *reserved)
 	J9VMDllLoadInfo* loadInfo;
 	RasGlobalStorage *tempRasGbl;
 	J9HookInterface** hook = vm->internalVMFunctions->getVMHookInterface(vm);
-	
+
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
 	switch (stage)
@@ -1495,7 +1501,7 @@ J9VMDllMain(J9JavaVM *vm, IDATA stage, void *reserved)
 					j9tty_err_printf(PORTLIB, "Error initializing jvmri interface, trace not enabled\n");
 					return J9VMDLLMAIN_FAILED;
 				}
-				
+
 				if ((*hook)->J9HookRegisterWithCallSite(hook, J9HOOK_VM_INITIALIZED, hookVmInitialized, OMR_GET_CALLSITE(), NULL)) {
 					j9tty_err_printf(PORTLIB, "Trace engine failed to hook VM events, trace not enabled\n");
 					return J9VMDLLMAIN_FAILED;
@@ -1504,18 +1510,18 @@ J9VMDllMain(J9JavaVM *vm, IDATA stage, void *reserved)
 			/* Register GC event hooks that were deferred from earlier dump agent processing */
 			rasDumpFlushHooks(vm, stage);
 			break;
-			
+
 		case JIT_INITIALIZED :
 				/* Register this module with trace */
 				UT_MODULE_LOADED(J9_UTINTERFACE_FROM_VM(vm));
 				Trc_dump_J9VMDllMain_Event1(vm);
 				break;
-			
+
 		case VM_INITIALIZATION_COMPLETE:
 			/* Register thread event hooks that were deferred from earlier dump agent processing */
 			rasDumpFlushHooks(vm, stage);
 			break;
-		
+
 		case GC_SHUTDOWN_COMPLETE :
 
 			/* Replace old dump facade */
@@ -1539,7 +1545,7 @@ J9VMDllMain(J9JavaVM *vm, IDATA stage, void *reserved)
 			freeRasDumpGlobalStorage(vm);
 			loadInfo = FIND_DLL_TABLE_ENTRY( J9_RAS_TRACE_DLL_NAME );
 			if((loadInfo->loadFlags & LOADED) == 0) {
-				/* If RasTrace created the JVMRI struct, let it destroy it. Otherwise it's our job. */ 
+				/* If RasTrace created the JVMRI struct, let it destroy it. Otherwise it's our job. */
 				if (vm->j9rasGlobalStorage != NULL) {
 					tempRasGbl = (RasGlobalStorage *)vm->j9rasGlobalStorage;
 					vm->j9rasGlobalStorage = NULL;
@@ -1551,7 +1557,7 @@ J9VMDllMain(J9JavaVM *vm, IDATA stage, void *reserved)
 				}
 			}
 			break;
-			
+
 		default :
 			break;
 	}
@@ -1571,7 +1577,6 @@ processZOSDumpOptions(J9JavaVM *vm, J9RASdumpOption* agentOpts, int optIndex)
 	char* opts;
 	int argsLen;
 
-
 	kind = scanDumpType(&typeString);
 	if (agentOpts[i].kind != kind) {
 		/* not the -Xdump:system case */
@@ -1582,7 +1587,7 @@ processZOSDumpOptions(J9JavaVM *vm, J9RASdumpOption* agentOpts, int optIndex)
 			return J9VMDLLMAIN_OK;
 		}
 	}
-	
+
 	/* handling the -Xdump:system case */
 	argsLen = strlen(agentOpts[i].args);
 
@@ -1617,17 +1622,17 @@ processZOSDumpOptions(J9JavaVM *vm, J9RASdumpOption* agentOpts, int optIndex)
 			memset(opts, '\0', optsLen);
 		}
 	}
-	
+
 	if (NULL == ceedump && NULL == ieatdump) {
 		ieatdump = (char*)-1;
 	}
-	
+
 	if (ceedump) {
 		int ceedumpKind;
-		
+
 		typeString = "ceedump";
 		ceedumpKind = scanDumpType(&typeString);
-		
+
 		if (loadDumpAgent(vm, ceedumpKind, agentOpts[i].args) == OMR_ERROR_INTERNAL) {
 			printDumpSpec(vm, ceedumpKind, 2);
 			return J9VMDLLMAIN_SILENT_EXIT_VM;

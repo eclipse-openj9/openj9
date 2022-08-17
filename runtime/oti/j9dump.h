@@ -30,13 +30,20 @@
 typedef struct RasDumpGlobalStorage {
 	void* dumpLabelTokens;
 	omrthread_monitor_t dumpLabelTokensMutex;
-	
+
 	UDATA allocationRangeMin;
 	UDATA allocationRangeMax;
-	
-	UDATA noProtect; /* If set, do not take dumps under their own signal handler */
-	UDATA noFailover; /* If set, do not failover to /tmp etc if unable to write dump */
+
+	U_32 noProtect; /* If set, do not take dumps under their own signal handler */
+	U_32 noFailover; /* If set, do not failover to /tmp etc if unable to write dump */
+
+	U_32 showNativeSymbols; /* How to handle resolving native stack symbols. */
 } RasDumpGlobalStorage;
+
+/* Values for RasDumpGlobalStorage.showNativeSymbols. */
+#define J9RAS_JAVADUMP_SHOW_NATIVE_STACK_SYMBOLS_NONE  0
+#define J9RAS_JAVADUMP_SHOW_NATIVE_STACK_SYMBOLS_BASIC 1
+#define J9RAS_JAVADUMP_SHOW_NATIVE_STACK_SYMBOLS_ALL   2
 
 struct J9RASdumpAgent; /* Forward struct declaration */
 struct J9RASdumpContext; /* Forward struct declaration */
