@@ -292,7 +292,7 @@ static inlMapping mappings[] = {
 	{ "Java_sun_reflect_Reflection_getClassAccessFlags__Ljava_lang_Class_2", J9_BCLOOP_SEND_TARGET_INL_REFLECTION_GETCLASSACCESSFLAGS },
 #endif /* JAVA_SPEC_VERSION >= 11 */
 #if JAVA_SPEC_VERSION >= 16
-	{ "Java_jdk_internal_foreign_abi_ProgrammableInvoker_invokeNative__JJJ_3J", J9_BCLOOP_SEND_TARGET_INL_PROGRAMMABLEINVOKER_INVOKENATIVE },
+	{ "Java_openj9_internal_foreign_abi_InternalDowncallHandler_invokeNative__JJJ_3J", J9_BCLOOP_SEND_TARGET_INL_INTERNALDOWNCALLHANDLER_INVOKENATIVE },
 #endif /* JAVA_SPEC_VERSION >= 16 */
 #if JAVA_SPEC_VERSION >= 19
 	{ "Java_jdk_internal_vm_Continuation_enterImpl__", J9_BCLOOP_SEND_TARGET_ENTER_CONTINUATION },
@@ -322,8 +322,10 @@ static J9OutOfLineINLMapping outOfLineINLmappings[] = {
 	{ "Java_java_lang_invoke_NativeMethodHandle_freeJ9NativeCalloutDataRef__", OutOfLineINL_java_lang_invoke_NativeMethodHandle_freeJ9NativeCalloutDataRef },
 #endif /* defined(J9VM_OPT_PANAMA) */
 #if JAVA_SPEC_VERSION >= 16
-	{ "Java_jdk_internal_foreign_abi_ProgrammableInvoker_resolveRequiredFields__", OutOfLineINL_jdk_internal_foreign_abi_ProgrammableInvoker_resolveRequiredFields },
-	{ "Java_jdk_internal_foreign_abi_ProgrammableInvoker_initCifNativeThunkData___3Ljava_lang_String_2Ljava_lang_String_2Z", OutOfLineINL_jdk_internal_foreign_abi_ProgrammableInvoker_initCifNativeThunkData },
+	{ "Java_openj9_internal_foreign_abi_InternalDowncallHandler_resolveRequiredFields__", OutOfLineINL_openj9_internal_foreign_abi_InternalDowncallHandler_resolveRequiredFields },
+	{ "Java_openj9_internal_foreign_abi_InternalDowncallHandler_initCifNativeThunkData___3Ljava_lang_String_2Ljava_lang_String_2Z", OutOfLineINL_openj9_internal_foreign_abi_InternalDowncallHandler_initCifNativeThunkData },
+	{ "Java_openj9_internal_foreign_abi_InternalUpcallHandler_allocateUpcallStub__Lopenj9_internal_foreign_abi_UpcallMHMetaData_2_3Ljava_lang_String_2", OutOfLineINL_openj9_internal_foreign_abi_InternalUpcallHandler_allocateUpcallStub },
+	{ "Java_openj9_internal_foreign_abi_UpcallMHMetaData_resolveUpcallDataFields__", OutOfLineINL_openj9_internal_foreign_abi_UpcallMHMetaData_resolveUpcallDataFields },
 #endif /* JAVA_SPEC_VERSION >= 16 */
 };
 

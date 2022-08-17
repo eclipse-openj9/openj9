@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2021 IBM Corp. and others
+ * Copyright (c) 2001, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -158,8 +158,8 @@ convertToNativeArgArray(J9VMThread *currentThread, j9object_t argArray, U_64 *ff
 	UDATA argCount = (UDATA)J9INDEXABLEOBJECT_SIZE(currentThread, argArray);
 	/* 3 means each element of the array to be copied is 8 bytes (64bits) in size
 	 * as specified in memcpyToOrFromArrayContiguous() at ArrayCopyHelpers.hpp.
-	 * Note: all parameters are converted to long in ProgrammableInvoker, so the size of
-	 * element in the argument array must be 64bits.
+	 * Note: all parameters are converted to long in InternalDowncallHandler,
+	 * so the size of element in the argument array must be 64bits.
 	 */
 	VM_ArrayCopyHelpers::memcpyFromArray(currentThread, argArray, 3, 0, argCount, (void*)ffiArgs);
 	return ffiArgs;
