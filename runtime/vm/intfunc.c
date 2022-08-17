@@ -124,6 +124,7 @@ J9InternalVMFunctions J9InternalFunctions = {
 	romImageNewSegment,
 #endif /* J9VM_IVE_ROM_IMAGE_HELPERS || (J9VM_OPT_DYNAMIC_LOAD_SUPPORT && J9VM_OPT_ROM_IMAGE_SUPPORT) */
 	runCallInMethod,
+	runStaticMethod,
 	catUtfToString4,
 	allocateMemorySegmentList,
 	allocateMemorySegmentListWithFlags,

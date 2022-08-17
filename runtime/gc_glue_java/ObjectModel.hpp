@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -373,7 +373,7 @@ public:
 			result = *(int32_t*)((uint8_t*)object + hashOffset);
 		} else {
 			atomicSetObjectFlags(object, 0, OBJECT_HEADER_HAS_BEEN_HASHED_IN_CLASS);
-			result = convertValueToHash(vm, (uintptr_t)object);
+			result = computeObjectAddressToHash(vm, object);
 		}
 #else /* defined (OMR_GC_MODRON_COMPACTION) || defined (J9VM_GC_GENERATIONAL) */
 		result = computeObjectAddressToHash(vm, object);
@@ -395,7 +395,7 @@ public:
 		uintptr_t hashOffset = getHashcodeOffset(objectPtr);
 		uint32_t *hashCodePointer = (uint32_t*)((uint8_t*)objectPtr + hashOffset);
 
-		*hashCodePointer = convertValueToHash(vm, (uintptr_t)objectPtr);
+		*hashCodePointer = computeObjectAddressToHash(vm, objectPtr);
 		setObjectHasBeenMoved(objectPtr);
 #endif /* defined (OMR_GC_MODRON_COMPACTION) || defined (J9VM_GC_GENERATIONAL) */
 	}
@@ -491,7 +491,7 @@ public:
 	MMINLINE int32_t
 	computeObjectHash(MM_ForwardedHeader *forwardedHeader)
 	{
-		return convertValueToHash(_javaVM, (uintptr_t)forwardedHeader->getObject());
+		return computeObjectAddressToHash(_javaVM, forwardedHeader->getObject());
 	}
 
 	MMINLINE uintptr_t
@@ -608,7 +608,7 @@ public:
 			}
 
 			uint32_t *hashCodePointer = (uint32_t*)((uint8_t*) destinationObjectPtr + hashOffset);
-			*hashCodePointer = convertValueToHash(_javaVM, (uintptr_t)forwardedHeader->getObject());
+			*hashCodePointer = computeObjectAddressToHash(_javaVM, forwardedHeader->getObject());
 			setObjectJustHasBeenMoved(destinationObjectPtr);
 		}
 	}
