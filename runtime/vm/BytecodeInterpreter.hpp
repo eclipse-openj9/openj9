@@ -4996,13 +4996,14 @@ done:
 	}
 
 #if JAVA_SPEC_VERSION >= 16
-	/* jdk.internal.foreign.abi.ProgrammableInvoker:
+	/* openj9.internal.foreign.abi.InternalDowncallHandler:
 	 * private native long invokeNative(long returnStructMemAddr, long functionAddr, long calloutThunk, long[] argValues);
 	 */
 	VMINLINE VM_BytecodeAction
-	inlProgrammableInvokerInvokeNative(REGISTER_ARGS_LIST)
+	inlInternalDowncallHandlerInvokeNative(REGISTER_ARGS_LIST)
 	{
 		VM_BytecodeAction rc = EXECUTE_BYTECODE;
+		UDATA *bp = NULL;
 #if !defined(J9VM_ENV_LITTLE_ENDIAN)
 		/* Move forward by 4 bytes to the starting address of the int numbers on the platforms
 		 * with big-endianness given UDATA (8 bytes) is used to hold all types of arguments.
@@ -5026,6 +5027,7 @@ done:
 		UDATA *returnStorage = &(_currentThread->returnValue);
 		U_64 *ffiArgs = _currentThread->ffiArgs;
 		U_64 sFfiArgs[16];
+		UDATA argSlots = 8;
 
 		j9object_t argValues = *(j9object_t *)_sp; // argValues
 		ffi_cif *cif = (ffi_cif *)(UDATA)*(I_64 *)(_sp + 1); // calloutThunk
@@ -5102,7 +5104,7 @@ done:
 			} else {
 				values[i] = &(ffiArgs[i]);
 #if !defined(J9VM_ENV_LITTLE_ENDIAN)
-				/* Note: A float number is converted to int by Float.floatToIntBits() in ProgrammableInvoker */
+				/* Note: A float number is converted to int by Float.floatToIntBits() in InternalDowncallHandler */
 				if ((J9NtcInt == argType) || (J9NtcFloat == argType)) {
 					values[i] = (void *)((U_64)values[i] + extraBytesOfInt);
 				} else if ((J9NtcShort == argType) || (J9NtcChar == argType)) {
@@ -5114,19 +5116,40 @@ done:
 			}
 		}
 
+		bp = buildSpecialStackFrame(REGISTER_ARGS, J9SF_FRAME_TYPE_JNI_NATIVE_METHOD, jitStackFrameFlags(REGISTER_ARGS, 0), true);
+		*--_sp = (UDATA)_sendMethod;
+		_arg0EA = bp + argSlots;
+
+#if JAVA_SPEC_VERSION >= 19
+		_currentThread->callOutCount += 1;
+#endif /* JAVA_SPEC_VERSION >= 19 */
 		updateVMStruct(REGISTER_ARGS);
 		VM_VMAccess::inlineExitVMToJNI(_currentThread);
+		VM_VMHelpers::beforeJNICall(_currentThread);
 #if FFI_NATIVE_RAW_API
 		ffi_ptrarray_to_raw(cif, values, values_raw);
 		ffi_raw_call(cif, FFI_FN(function), returnStorage, values_raw);
 #else /* FFI_NATIVE_RAW_API */
 		ffi_call(cif, FFI_FN(function), returnStorage, values);
 #endif /* FFI_NATIVE_RAW_API */
+		VM_VMHelpers::afterJNICall(_currentThread);
 		VM_VMAccess::inlineEnterVMFromJNI(_currentThread);
 		VMStructHasBeenUpdated(REGISTER_ARGS);
+#if JAVA_SPEC_VERSION >= 19
+		_currentThread->callOutCount -= 1;
+#endif /* JAVA_SPEC_VERSION >= 19 */
+		if (VM_VMHelpers::exceptionPending(_currentThread)) {
+			rc = GOTO_THROW_CURRENT_EXCEPTION;
+		}
+		{
+			bp = _arg0EA - argSlots;
+			J9SFJNINativeMethodFrame *nativeMethodFrame = recordJNIReturn(REGISTER_ARGS, bp);
+			_currentThread->jitStackFrameFlags = nativeMethodFrame->specialFrameFlags & J9_SSF_JIT_NATIVE_TRANSITION_FRAME;
+			restoreSpecialStackFrameLeavingArgs(REGISTER_ARGS, bp);
+		}
 
 		VM_VMHelpers::convertFFIReturnValue(_currentThread, returnType, returnTypeSize, returnStorage);
-		returnDoubleFromINL(REGISTER_ARGS, _currentThread->returnValue, 8);
+		returnDoubleFromINL(REGISTER_ARGS, _currentThread->returnValue, argSlots);
 
 done:
 		if (!isMinimal) {
@@ -10024,7 +10047,7 @@ public:
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_MEMBERNAME_DEFAULT_CONFLICT),
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 #if JAVA_SPEC_VERSION >= 16
-		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_PROGRAMMABLEINVOKER_INVOKENATIVE),
+		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_INTERNALDOWNCALLHANDLER_INVOKENATIVE),
 #endif /* JAVA_SPEC_VERSION >= 16 */
 #if JAVA_SPEC_VERSION >= 19
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_ENTER_CONTINUATION),
@@ -10655,8 +10678,8 @@ runMethod: {
 		PERFORM_ACTION(throwDefaultConflictForMemberName(REGISTER_ARGS));
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 #if JAVA_SPEC_VERSION >= 16
-	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_PROGRAMMABLEINVOKER_INVOKENATIVE):
-		PERFORM_ACTION(inlProgrammableInvokerInvokeNative(REGISTER_ARGS));
+	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_INTERNALDOWNCALLHANDLER_INVOKENATIVE):
+		PERFORM_ACTION(inlInternalDowncallHandlerInvokeNative(REGISTER_ARGS));
 #endif /* JAVA_SPEC_VERSION >= 16 */
 #if JAVA_SPEC_VERSION >= 19
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_ENTER_CONTINUATION):

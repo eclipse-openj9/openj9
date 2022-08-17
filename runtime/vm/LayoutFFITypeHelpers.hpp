@@ -322,6 +322,17 @@ done:
 	void
 	freeStructFFITypeElements(ffi_type **elements);
 
+	/* @brief Encode a signature string to a struct representing the signature to be used
+	 * to handle the argument or return value in the upcall.
+	 *
+	 * @param cSignature[in] A pointer to a preprocessed signature string
+	 * @param sigType[in] A pointer to the J9UpcallSigType struct
+	 * @return void
+	 */
+	static void
+	encodeUpcallSignature(char *cSignature, J9UpcallSigType *sigType)
+	{
+	}
 #endif /* JAVA_SPEC_VERSION >= 16 */
 };
 

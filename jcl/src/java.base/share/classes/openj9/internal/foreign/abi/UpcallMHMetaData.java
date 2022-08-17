@@ -32,7 +32,7 @@ import java.lang.invoke.MethodType;
 final class UpcallMHMetaData {
 
 	/* The target method handle intended for upcall which is placed on the java stack
-	 * in icallVMprJavaUpcallImpl for call-in so as to invoke the method handle.
+	 * in native2InterpJavaUpcallImpl for call-in so as to invoke the method handle.
 	 */
 	private final MethodHandle calleeMH;
 	/* The method type of the target method handle which is mainly used by

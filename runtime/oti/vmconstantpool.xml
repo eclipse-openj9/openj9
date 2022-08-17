@@ -145,14 +145,27 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<classref name="jdk/internal/loader/NativeLibraries" versions="15-"/>
 	<classref name="jdk/internal/loader/NativeLibraries$NativeLibraryImpl" versions="15-"/>
 
-	<classref name="jdk/internal/foreign/abi/ProgrammableInvoker" flags="opt_openjdkFfi" versions="16-"/>
-
 	<classref name="java/lang/invoke/MethodHandleNatives" flags="opt_openjdkMethodhandle" versions="18-"/>
 
 	<classref name="jdk/internal/vm/Continuation" versions="19-"/>
 
 	<classref name="org/eclipse/openj9/criu/JVMCheckpointException" flags="opt_criuSupport"/>
 	<classref name="org/eclipse/openj9/criu/RestoreException" flags="opt_criuSupport"/>
+
+	<!-- Class references needed to support Foreign Linker API. -->
+	<classref name="openj9/internal/foreign/abi/InternalDowncallHandler" flags="opt_openjdkFfi" versions="16-"/>
+	<classref name="openj9/internal/foreign/abi/InternalUpcallHandler" flags="opt_openjdkFfi" versions="16-"/>
+	<classref name="openj9/internal/foreign/abi/UpcallMHMetaData" flags="opt_openjdkFfi" versions="16-"/>
+
+	<classref name="jdk/incubator/foreign/MemoryAddress" flags="opt_openjdkFfi" versions="16-18"/>
+	<classref name="jdk/lang/foreign/MemoryAddress" flags="opt_openjdkFfi" versions="19-"/>
+	<classref name="jdk/incubator/foreign/MemorySegment" flags="opt_openjdkFfi" versions="16-18"/>
+	<classref name="jdk/lang/foreign/MemorySegment" flags="opt_openjdkFfi" versions="19-"/>
+	<classref name="jdk/internal/foreign/MemoryAddressImpl" flags="opt_openjdkFfi" versions="16-"/>
+	<classref name="jdk/internal/foreign/AbstractMemorySegmentImpl" flags="opt_openjdkFfi" versions="16-"/>
+	<classref name="jdk/internal/foreign/NativeMemorySegmentImpl" flags="opt_openjdkFfi" versions="16-"/>
+	<classref name="jdk/internal/foreign/ConfinedScope" flags="opt_openjdkFfi" versions="16-18"/>
+	<classref name="jdk/internal/foreign/ConfinedSession" flags="opt_openjdkFfi" versions="19-"/>
 
 <!--
 	NOTE: the resolution code in jclcinit.c only looks at the J9ROMClassRef->runtimeFlags to determine
@@ -393,13 +406,26 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 
 	<fieldref class="jdk/internal/loader/NativeLibraries$NativeLibraryImpl" name="fromClass" signature="Ljava/lang/Class;" versions="15-"/>
 
-	<fieldref class="jdk/internal/foreign/abi/ProgrammableInvoker" name="cifNativeThunkAddr" signature="J" flags="opt_openjdkFfi" versions="16-"/>
-	<fieldref class="jdk/internal/foreign/abi/ProgrammableInvoker" name="argTypesAddr" signature="J" flags="opt_openjdkFfi" versions="16-"/>
-
 	<fieldref class="jdk/internal/vm/Continuation" name="vmRef" signature="J" cast="struct J9VMContinuation *" versions="19-"/>
 	<fieldref class="jdk/internal/vm/Continuation" name="finished" signature="Z" versions="19-"/>
 	<fieldref class="jdk/internal/vm/Continuation" name="started" signature="Z" versions="19-"/>
 	<fieldref class="jdk/internal/vm/Continuation" name="parent" signature="Ljdk/internal/vm/Continuation;" versions="19-"/>
+
+	<!-- Field references needed to support Foreign Linker API. -->
+	<fieldref class="openj9/internal/foreign/abi/InternalDowncallHandler" name="cifNativeThunkAddr" signature="J" flags="opt_openjdkFfi" versions="16-"/>
+	<fieldref class="openj9/internal/foreign/abi/InternalDowncallHandler" name="argTypesAddr" signature="J" flags="opt_openjdkFfi" versions="16-"/>
+
+	<fieldref class="openj9/internal/foreign/abi/UpcallMHMetaData" name="calleeMH" signature="Ljava/lang/invoke/MethodHandle;" flags="opt_openjdkFfi" versions="16-"/>
+	<fieldref class="openj9/internal/foreign/abi/UpcallMHMetaData" name="calleeType" signature="Ljava/lang/invoke/MethodType;" flags="opt_openjdkFfi" versions="16-"/>
+	<fieldref class="openj9/internal/foreign/abi/UpcallMHMetaData" name="invokeCache" signature="[Ljava/lang/Object;" flags="opt_openjdkFfi" versions="16-"/>
+
+	<fieldref class="jdk/internal/foreign/MemoryAddressImpl" name="segment" signature="Ljdk/internal/foreign/AbstractMemorySegmentImpl;" flags="opt_openjdkFfi" versions="16-17"/>
+	<fieldref class="jdk/internal/foreign/MemoryAddressImpl" name="offset" signature="J" flags="opt_openjdkFfi" versions="16-"/>
+
+	<fieldref class="jdk/internal/foreign/NativeMemorySegmentImpl" name="min" signature="J" flags="opt_openjdkFfi" versions="16-"/>
+	<fieldref class="jdk/internal/foreign/NativeMemorySegmentImpl" name="length" signature="J" flags="opt_openjdkFfi" versions="16-"/>
+	<fieldref class="jdk/internal/foreign/NativeMemorySegmentImpl" name="scope" signature="Ljdk/internal/foreign/ResourceScopeImpl;" flags="opt_openjdkFfi" versions="16-18"/>
+	<fieldref class="jdk/internal/foreign/NativeMemorySegmentImpl" name="session" signature="Ljava/lang/foreign/MemorySession;" flags="opt_openjdkFfi" versions="19-"/>
 
 <!--
 	NOTE: the resolution code in jclcinit.c only looks at the J9ROMClassRef->runtimeFlags to determine
@@ -440,6 +466,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 
 	<!-- Static method references needed to support OpenJDK MethodHandles. -->
 	<staticmethodref class="java/lang/invoke/MethodHandleResolver" name="linkCallerMethod" signature="(Ljava/lang/Class;ILjava/lang/Class;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/Object;" flags="opt_openjdkMethodhandle"/>
+
+	<!-- Static method references needed to support Foreign Linker API. -->
+	<staticmethodref class="java/lang/invoke/MethodHandleResolver" name="upcallLinkCallerMethod" signature="(Ljava/lang/Class;Ljava/lang/invoke/MethodType;)Ljava/lang/Object;" versions="16-"/>
 
 	<staticmethodref class="jdk/internal/loader/NativeLibraries" name="load" signature="(Ljdk/internal/loader/NativeLibraries$NativeLibraryImpl;Ljava/lang/String;ZZZ)Z" versions="15-18"/>
 	<staticmethodref class="jdk/internal/loader/NativeLibraries" name="load" signature="(Ljdk/internal/loader/NativeLibraries$NativeLibraryImpl;Ljava/lang/String;ZZ)Z" versions="19-"/>
