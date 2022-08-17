@@ -24,6 +24,14 @@ package openj9.internal.foreign.abi;
 
 import java.util.HashMap;
 import java.util.List;
+/*[IF JAVA_SPEC_VERSION >= 17]*/
+/*[IF JAVA_SPEC_VERSION >= 18]*/
+import java.util.Objects;
+/*[ENDIF] JAVA_SPEC_VERSION >= 18 */
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.Set;
+/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
+
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -42,6 +50,8 @@ import java.lang.foreign.MemorySegment;
 import java.lang.foreign.MemorySession;
 import java.lang.foreign.SegmentAllocator;
 import java.lang.foreign.ValueLayout;
+import java.lang.foreign.VaList;
+import jdk.internal.foreign.MemorySessionImpl;
 /*[ELSE] JAVA_SPEC_VERSION >= 19 */
 import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.FunctionDescriptor;
@@ -50,8 +60,13 @@ import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 /*[IF JAVA_SPEC_VERSION == 18]*/
 import jdk.incubator.foreign.NativeSymbol;
+import jdk.incubator.foreign.VaList;
 /*[ENDIF] JAVA_SPEC_VERSION == 18 */
 /*[IF JAVA_SPEC_VERSION >= 17]*/
+import jdk.incubator.foreign.ResourceScope;
+/*[IF JAVA_SPEC_VERSION == 17]*/
+import jdk.incubator.foreign.ResourceScope.Handle;
+/*[ENDIF] JAVA_SPEC_VERSION == 17 */
 import jdk.incubator.foreign.SegmentAllocator;
 /*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 import jdk.incubator.foreign.ValueLayout;
@@ -65,11 +80,9 @@ public class InternalDowncallHandler {
 
 	private final MethodType funcMethodType;
 	private final FunctionDescriptor funcDescriptor;
-	/*[IF JAVA_SPEC_VERSION == 18]*/
-	private NativeSymbol functionAddr;
-	/*[ELSE] JAVA_SPEC_VERSION == 18 */
+	/*[IF JAVA_SPEC_VERSION == 16]*/
 	private Addressable functionAddr;
-	/*[ENDIF] JAVA_SPEC_VERSION == 18 */
+	/*[ENDIF] JAVA_SPEC_VERSION == 16 */
 	/*[IF JAVA_SPEC_VERSION >= 18]*/
 	private static final Class<?> addrClass = Addressable.class;
 	/*[ELSE] JAVA_SPEC_VERSION >= 18 */
@@ -79,7 +92,21 @@ public class InternalDowncallHandler {
 	private long argTypesAddr;
 	private MemoryLayout[] argLayoutArray;
 	private MemoryLayout realReturnLayout;
-	private MemorySegment returnStructSegmt;
+
+	/* The hashtables of sessions/scopes is intended for multithreading in which case
+	 * the same downcall handler might hold various sessions/scopes being used by
+	 * different threads in downcall.
+	 */
+	/*[IF JAVA_SPEC_VERSION >= 19]*/
+	private Set<MemorySession> sessionOrScopeSet;
+	/*[ELSE] JAVA_SPEC_VERSION >= 19 */
+	/*[IF JAVA_SPEC_VERSION >= 17]*/
+	private Set<ResourceScope> sessionOrScopeSet;
+	/*[IF JAVA_SPEC_VERSION == 17]*/
+	private final ConcurrentHashMap<ResourceScope, Handle> scopeHandleMap;
+	/*[ENDIF] JAVA_SPEC_VERSION == 17 */
+	/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
+	/*[ENDIF] JAVA_SPEC_VERSION >= 19 */
 
 	static final Lookup lookup = MethodHandles.lookup();
 
@@ -95,8 +122,8 @@ public class InternalDowncallHandler {
 	private static final MethodHandle intToLongArgFilter;
 	private static final MethodHandle floatToLongArgFilter;
 	private static final MethodHandle doubleToLongArgFilter;
-	private static final MethodHandle memAddrToLongArgFilter;
-	private static final MethodHandle memSegmtToLongArgFilter;
+	private MethodHandle memAddrToLongArgFilter;
+	private MethodHandle memSegmtToLongArgFilter;
 
 	/* Return value filters that convert the Long object to the primitive types/MemoryAddress/MemorySegment */
 	private static final MethodHandle longObjToVoidRetFilter;
@@ -109,7 +136,7 @@ public class InternalDowncallHandler {
 	private static final MethodHandle longObjToFloatRetFilter;
 	private static final MethodHandle longObjToDoubleRetFilter;
 	private static final MethodHandle longObjToMemAddrRetFilter;
-	private MethodHandle longObjToMemSegmtRetFilter;
+	private static final MethodHandle objToMemSegmtRetFilter;
 
 	private static synchronized native void resolveRequiredFields();
 	private native void initCifNativeThunkData(String[] argLayouts, String retLayout, boolean newArgTypes);
@@ -130,8 +157,6 @@ public class InternalDowncallHandler {
 			intToLongArgFilter = lookup.findStatic(InternalDowncallHandler.class, "intToLongArg", methodType(long.class, int.class)); //$NON-NLS-1$
 			floatToLongArgFilter = lookup.findStatic(InternalDowncallHandler.class, "floatToLongArg", methodType(long.class, float.class)); //$NON-NLS-1$
 			doubleToLongArgFilter = lookup.findStatic(Double.class, "doubleToLongBits", methodType(long.class, double.class)); //$NON-NLS-1$
-			memAddrToLongArgFilter = lookup.findStatic(InternalDowncallHandler.class, "memAddrToLongArg", methodType(long.class, addrClass)); //$NON-NLS-1$
-			memSegmtToLongArgFilter = lookup.findStatic(InternalDowncallHandler.class, "memSegmtToLongArg", methodType(long.class, MemorySegment.class)); //$NON-NLS-1$
 
 			/* Set up the return value filters for the primitive types and MemoryAddress */
 			longObjToVoidRetFilter = lookup.findStatic(InternalDowncallHandler.class, "longObjToVoidRet", methodType(void.class, Object.class)); //$NON-NLS-1$
@@ -144,6 +169,7 @@ public class InternalDowncallHandler {
 			longObjToFloatRetFilter = lookup.findStatic(InternalDowncallHandler.class, "longObjToFloatRet", methodType(float.class, Object.class)); //$NON-NLS-1$
 			longObjToDoubleRetFilter = lookup.findStatic(InternalDowncallHandler.class, "longObjToDoubleRet", methodType(double.class, Object.class)); //$NON-NLS-1$
 			longObjToMemAddrRetFilter = lookup.findStatic(InternalDowncallHandler.class, "longObjToMemAddrRet", methodType(MemoryAddress.class, Object.class)); //$NON-NLS-1$
+			objToMemSegmtRetFilter = lookup.findStatic(InternalDowncallHandler.class, "objToMemSegmtRet", methodType(MemorySegment.class, Object.class)); //$NON-NLS-1$
 		} catch (IllegalAccessException | NoSuchMethodException e) {
 			throw new InternalError(e);
 		}
@@ -192,33 +218,75 @@ public class InternalDowncallHandler {
 		return Float.floatToIntBits(argValue);
 	}
 
+	/* Save the active session of the specified passed-in memory specific argument in the downcall handler
+	 * given the argument might be created within different sessions/scopes.
+	 */
+	/*[IF JAVA_SPEC_VERSION >= 17]*/
+	/*[IF JAVA_SPEC_VERSION >= 19]*/
+	private final void addMemArgSession(MemorySession memArgSessionOrScope)
+	/*[ELSE] JAVA_SPEC_VERSION >= 19 */
+	private final void addMemArgScope(ResourceScope memArgSessionOrScope)
+	/*[ENDIF] JAVA_SPEC_VERSION >= 19 */
+	{
+		if ((memArgSessionOrScope.ownerThread() != null)
+		&& !sessionOrScopeSet.contains(memArgSessionOrScope)
+		) {
+			sessionOrScopeSet.add(memArgSessionOrScope);
+		}
+	}
+	/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
+
 	/* Intended for memAddrToLongArgFilter that converts the memory address to long.
 	 * Note: the passed-in argument can be an instance of MemoryAddress, MemorySegment
 	 * or VaList which extends Addressable in OpenJDK since Java 18 featured with
 	 * JEP419 (Second Incubator).
 	 */
 	/*[IF JAVA_SPEC_VERSION >= 18]*/
-	private static final long memAddrToLongArg(Addressable argValue) throws IllegalStateException {
-		/* Only check MemorySegment given MemoryAddress.scope() doesn't exist in JEP419 */
+	private final long memAddrToLongArg(Addressable argValue) throws IllegalStateException {
+		/* Only check MemorySegment and VaList given MemoryAddress.scope() doesn't exist in JDK17 */
 		if (argValue instanceof MemorySegment) {
 			/*[IF JAVA_SPEC_VERSION >= 19]*/
 			if (!((MemorySegment)argValue).session().isAlive()) {
-				throw new IllegalStateException("The session of the memory segment is closed");  //$NON-NLS-1$
+				throw new IllegalStateException("Already closed: attempted to access the memory segment in a closed session");  //$NON-NLS-1$
 			}
+			addMemArgSession(((MemorySegment)argValue).session());
 			/*[ELSE] JAVA_SPEC_VERSION >= 19 */
 			if (!((MemorySegment)argValue).scope().isAlive()) {
-				throw new IllegalStateException("The scope of the memory segment is closed");  //$NON-NLS-1$
+				throw new IllegalStateException("Already closed: attempted to access the memory segment in a closed scope");  //$NON-NLS-1$
 			}
+			addMemArgScope(((MemorySegment)argValue).scope());
+			/*[ENDIF] JAVA_SPEC_VERSION >= 19 */
+		}
+		/*[IF JAVA_SPEC_VERSION == 18]*/
+		else if (argValue instanceof NativeSymbol) {
+			if (!((NativeSymbol)argValue).scope().isAlive()) {
+				throw new IllegalStateException("Already closed: attempted to access the native symbol in a closed scope");  //$NON-NLS-1$
+			}
+			addMemArgScope(((NativeSymbol)argValue).scope());
+		}
+		/*[ENDIF] JAVA_SPEC_VERSION == 18 */
+		else if (argValue instanceof VaList) {
+			/*[IF JAVA_SPEC_VERSION >= 19]*/
+			if (!((VaList)argValue).session().isAlive()) {
+				throw new IllegalStateException("Already closed: attempted to access the variable argument list in a closed session");  //$NON-NLS-1$
+			}
+			addMemArgSession(((VaList)argValue).session());
+			/*[ELSE] JAVA_SPEC_VERSION >= 19 */
+			if (!((VaList)argValue).scope().isAlive()) {
+				throw new IllegalStateException("Already closed: attempted to access the variable argument list in a closed scope");  //$NON-NLS-1$
+			}
+			addMemArgScope(((VaList)argValue).scope());
 			/*[ENDIF] JAVA_SPEC_VERSION >= 19 */
 		}
 		return argValue.address().toRawLongValue();
 	}
 	/*[ELSE] JAVA_SPEC_VERSION >= 18 */
 	/*[IF JAVA_SPEC_VERSION == 17]*/
-	private static final long memAddrToLongArg(MemoryAddress argValue) throws IllegalStateException {
+	private final long memAddrToLongArg(MemoryAddress argValue) throws IllegalStateException {
 		if (!argValue.scope().isAlive()) {
-			throw new IllegalStateException("The scope of the memory address is closed");  //$NON-NLS-1$
+			throw new IllegalStateException("Already closed: attempted to access the memory address in a closed scope");  //$NON-NLS-1$
 		}
+		addMemArgScope(argValue.scope());
 		return argValue.address().toRawLongValue();
 	}
 	/*[ELSE] JAVA_SPEC_VERSION == 17 */
@@ -229,20 +297,23 @@ public class InternalDowncallHandler {
 	/*[ENDIF] JAVA_SPEC_VERSION >= 18 */
 
 	/* Intended for memSegmtToLongArgFilter that converts the memory segment to long */
-	private static final long memSegmtToLongArg(MemorySegment argValue) throws IllegalStateException {
+	private final long memSegmtToLongArg(MemorySegment argValue) throws IllegalStateException {
 		/*[IF JAVA_SPEC_VERSION >= 19]*/
 		if (!argValue.session().isAlive()) {
-			throw new IllegalStateException("The session of the memory segment is closed");  //$NON-NLS-1$
+			throw new IllegalStateException("Already closed: attempted to access the memory segment in a closed session");  //$NON-NLS-1$
 		}
+		addMemArgSession(argValue.session());
 		/*[ELSE] JAVA_SPEC_VERSION >= 19 */
 		/*[IF JAVA_SPEC_VERSION >= 17]*/
-		if (!argValue.scope().isAlive())
-		/*[ELSE] JAVA_SPEC_VERSION >= 17 */
-		if (!argValue.isAlive())
-		/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
-		{
-			throw new IllegalStateException("The scope of the memory segment is closed");  //$NON-NLS-1$
+		if (!argValue.scope().isAlive()) {
+			throw new IllegalStateException("Already closed: attempted to access the memory segment in a closed scope");  //$NON-NLS-1$
 		}
+		addMemArgScope(argValue.scope());
+		/*[ELSE] JAVA_SPEC_VERSION >= 17 */
+		if (!argValue.isAlive()){
+			throw new IllegalStateException("Already closed: attempted to access the closed memory segment");  //$NON-NLS-1$
+		}
+		/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 		/*[ENDIF] JAVA_SPEC_VERSION >= 19 */
 		return argValue.address().toRawLongValue();
 	}
@@ -301,18 +372,27 @@ public class InternalDowncallHandler {
 		return MemoryAddress.ofLong(tmpValue);
 	}
 
-	/* Intended for longObjToMemSegmtRetFilter that converts the Long object to the memory address.
+	/* Intended for objToMemSegmtRetFilter that simply casts the passed-in object to the memory segment
+	 * given the requested the memory segment is directly returned from runNativeMethod().
 	 * Note: the returned memory address is exactly the address of the memory previously allocated
 	 * for the specified struct layout on return.
 	 */
-	private final MemorySegment longObjToMemSegmtRet(Object retValue) {
-		return returnStructSegmt;
+	private static final MemorySegment objToMemSegmtRet(Object retValue) {
+		return (MemorySegment)retValue;
 	}
 
+	/**
+	 * The internal constructor is responsible for mapping the preprocessed layouts
+	 * of return type & argument types to the underlying prep_cif in native.
+	 *
+	 * @param downcallAddr The downcall symbol
+	 * @param functionMethodType The MethodType of the specified native function
+	 * @param funcDesc The function descriptor of the specified native function
+	 */
 	/*[IF JAVA_SPEC_VERSION >= 17]*/
-	InternalDowncallHandler(MethodType functionMethodType, FunctionDescriptor functionDescriptor)
+	public InternalDowncallHandler(MethodType functionMethodType, FunctionDescriptor functionDescriptor)
 	/*[ELSE] JAVA_SPEC_VERSION >= 17 */
-	InternalDowncallHandler(Addressable downcallAddr, MethodType functionMethodType, FunctionDescriptor functionDescriptor)
+	public InternalDowncallHandler(Addressable downcallAddr, MethodType functionMethodType, FunctionDescriptor functionDescriptor)
 	/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 	{
 		realReturnLayout = functionDescriptor.returnLayout().orElse(null); // set to null for void
@@ -328,39 +408,39 @@ public class InternalDowncallHandler {
 		 * check the layout against the method type.
 		 */
 		TypeLayoutCheckHelper.checkIfValidLayoutAndType(functionMethodType, argLayoutArray, realReturnLayout);
-		/*[ENDIF] JAVA_SPEC_VERSION <= 17 */
 
-		/*[IF JAVA_SPEC_VERSION >= 17]*/
-		/* The native function address has been removed from the parameter lists of downcallHandle() APIs
-		 * so as to being passed in as the first argument when invoking the returned downcall handle
+		/*[IF JAVA_SPEC_VERSION == 16]*/
+		/* 1) The native function address has been removed from the parameter lists of downcallHandle() APIs
+		 * since JDK17 so as to being passed in as the first argument when invoking the returned downcall handle
 		 * or bound as the first argument via MethodHandles.insertArguments() beforehand in OpenJDK.
-		 */
-		functionAddr = null;
-		/*[ELSE] JAVA_SPEC_VERSION >= 17 */
-		/* As explained in the Spec of LibraryLookup in JDK16, the downcall must hold a strong reference to
-		 * the native library symbol to prevent the underlying native library from being unloaded
-		 * during the native calls.
-		 *
+		/* 2) As explained in the Spec of LibraryLookup in JDK16, the downcall must hold a strong reference to
+		 * the native library symbol to prevent the underlying native library from being unloaded during the
+		 * native calls, which is no longer required since JDK17 as the symbol intende for for the current thread
+		 * is directly passed to the native invocation so as to fit in the multithreading environment.
 		 * Note: the passed-in addressable parameter can be either LibraryLookup.Symbol or MemoryAddress.
 		 */
 		functionAddr = downcallAddr;
-		/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
+		/*[ENDIF] JAVA_SPEC_VERSION == 16 */
+		/*[ENDIF] JAVA_SPEC_VERSION <= 17 */
 
 		funcMethodType = functionMethodType;
 		funcDescriptor = functionDescriptor;
 
 		cifNativeThunkAddr = 0;
 		argTypesAddr = 0;
-		returnStructSegmt = null;
-		longObjToMemSegmtRetFilter = null;
-		/* Create the filter for the returned memory segment (non-static) at runtime */
-		if (funcMethodType.returnType() == MemorySegment.class) {
-			try {
-				longObjToMemSegmtRetFilter = lookup.bind(this, "longObjToMemSegmtRet", methodType(MemorySegment.class, Object.class)); //$NON-NLS-1$
-			} catch (ReflectiveOperationException e) {
-				throw new InternalError(e);
-			}
+
+		sessionOrScopeSet = ConcurrentHashMap.newKeySet();
+		/*[IF JAVA_SPEC_VERSION == 17]*/
+		scopeHandleMap = new ConcurrentHashMap<>();
+		/*[ENDIF] JAVA_SPEC_VERSION == 17 */
+
+		try {
+			memAddrToLongArgFilter = lookup.bind(this, "memAddrToLongArg", methodType(long.class, addrClass)); //$NON-NLS-1$
+			memSegmtToLongArgFilter = lookup.bind(this, "memSegmtToLongArg", methodType(long.class, MemorySegment.class)); //$NON-NLS-1$
+		} catch (ReflectiveOperationException e) {
+			throw new InternalError(e);
 		}
+
 		generateAdapter();
 	}
 
@@ -433,22 +513,9 @@ public class InternalDowncallHandler {
 	 * The method is ultimately invoked by Linker on the specific platforms to generate the requested
 	 * method handle to the underlying C function.
 	 *
-	 * @param downcallAddr The downcall symbol
-	 * @param functionMethodType The MethodType of the specified native function
-	 * @param funcDesc The function descriptor of the specified native function
 	 * @return a method handle bound to the native method
 	 */
-	/*[IF JAVA_SPEC_VERSION >= 17]*/
-	public static MethodHandle getBoundMethodHandle(MethodType functionMethodType, FunctionDescriptor funcDesc)
-	/*[ELSE] JAVA_SPEC_VERSION >= 17 */
-	public static MethodHandle getBoundMethodHandle(Addressable downcallAddr, MethodType functionMethodType, FunctionDescriptor funcDesc)
-	/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
-	{
-		/*[IF JAVA_SPEC_VERSION >= 17]*/
-		InternalDowncallHandler nativeInvoker = new InternalDowncallHandler(functionMethodType, funcDesc);
-		/*[ELSE] JAVA_SPEC_VERSION >= 17 */
-		InternalDowncallHandler nativeInvoker = new InternalDowncallHandler(downcallAddr, functionMethodType, funcDesc);
-		/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
+	public MethodHandle getBoundMethodHandle() {
 		try {
 			/*[IF JAVA_SPEC_VERSION >= 17]*/
 			/*[IF JAVA_SPEC_VERSION == 18]*/
@@ -460,10 +527,10 @@ public class InternalDowncallHandler {
 			MethodType nativeMethodType = methodType(Object.class, long[].class);
 			/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 
-			MethodHandle boundHandle = lookup.bind(nativeInvoker, "runNativeMethod", nativeMethodType); //$NON-NLS-1$
+			MethodHandle boundHandle = lookup.bind(this, "runNativeMethod", nativeMethodType); //$NON-NLS-1$
 
 			/* Replace the original handle with the specified types of the C function */
-			boundHandle = nativeInvoker.permuteMH(boundHandle, functionMethodType);
+			boundHandle = permuteMH(boundHandle, funcMethodType);
 			return boundHandle;
 		} catch (ReflectiveOperationException e) {
 			throw new InternalError(e);
@@ -495,7 +562,7 @@ public class InternalDowncallHandler {
 	}
 
 	/* Obtain the filter that converts the passed-in argument to long against its type */
-	private static MethodHandle getArgumentFilter(Class<?> argTypeClass) {
+	private MethodHandle getArgumentFilter(Class<?> argTypeClass) {
 		/* Set the filter to null in the case of long by default as there is no conversion for long */
 		MethodHandle filterMH = null;
 
@@ -555,11 +622,80 @@ public class InternalDowncallHandler {
 		) {
 			filterMH = longObjToMemAddrRetFilter;
 		} else if (returnType == MemorySegment.class) {
-			filterMH = longObjToMemSegmtRetFilter;
+			filterMH = objToMemSegmtRetFilter;
 		}
 
 		return filterMH;
 	}
+
+	/*[IF JAVA_SPEC_VERSION >= 19]*/
+	/* Set up the dependency from the sessions of memory related arguments to the specified session
+	 * so as to keep these arguments' sessions alive till the specified session is closed.
+	 */
+	private void SetDependency(MemorySession session) {
+		Objects.requireNonNull(session);
+		for (MemorySession memArgSession : sessionOrScopeSet) {
+			/* keepAlive() is replaced with whileAlive(Runnable action) since JDK19 in which case
+			 * the only way to invoke the native in downcall is to wrap it up in another thread
+			 * (for the critical action) rather than the current thread owning the downcall handler,
+			 * which is incorrect in our situation given the downcall must be executed by the owner
+			 * thread according to the API Spec. So we have to directly implement the equivalent of
+			 * keepAlive() in JDK19 to set up the state of arguments' session.
+			 */
+			if (memArgSession.isAlive()) {
+				Thread owner = memArgSession.ownerThread();
+				if (owner == Thread.currentThread()) { // For the confined session
+					MemorySessionImpl memArgSessionImpl = (MemorySessionImpl)memArgSession;
+					memArgSessionImpl.acquire0();
+					session.addCloseAction(memArgSessionImpl::release0);
+				}
+			}
+		}
+	}
+	/*[ENDIF] JAVA_SPEC_VERSION >= 19 */
+	/*[IF JAVA_SPEC_VERSION == 18]*/
+	/* Set up the dependency from the scopes of memory related arguments to the specified scope
+	 * so as to keep these arguments' scopes alive till the specified scope is closed.
+	 */
+	private void SetDependency(ResourceScope scope) {
+		Objects.requireNonNull(scope);
+		for (ResourceScope memArgScope : sessionOrScopeSet) {
+			if (memArgScope.isAlive()) {
+				Thread owner = memArgScope.ownerThread();
+				if (owner == Thread.currentThread()) { // For the confined scope
+					scope.keepAlive(memArgScope); // keepAlive() is only used in JDK18
+				}
+			}
+		}
+	}
+	/*[ENDIF] JAVA_SPEC_VERSION == 18 */
+	/*[IF JAVA_SPEC_VERSION == 17]*/
+	/* Occupy the scope by setting the scope's state in downcall which is similiar to keepAlive() in JDK18 */
+	private void acquireScope() {
+		for (ResourceScope memArgScope : sessionOrScopeSet) {
+			if (memArgScope.isAlive()) {
+				Thread owner = memArgScope.ownerThread();
+				if (owner == Thread.currentThread()) { // For the confined scope
+					Handle scopeHandle = memArgScope.acquire();
+					scopeHandleMap.put(memArgScope, scopeHandle);
+				}
+			}
+		}
+	}
+
+	/* Release the scope with the scope's handle in downcall */
+	private void releaseScope() {
+		for (ResourceScope memArgScope : sessionOrScopeSet) {
+			if (memArgScope.isAlive()) {
+				Thread owner = memArgScope.ownerThread();
+				if (owner == Thread.currentThread()) { // For the confined scope
+					Handle scopeHandle = scopeHandleMap.get(memArgScope);
+					memArgScope.release(scopeHandle);
+				}
+			}
+		}
+	}
+	/*[ENDIF] JAVA_SPEC_VERSION == 17 */
 
 	/* The method (bound by the method handle to the native code) intends to invoke the C function via the inlined code */
 	/*[IF JAVA_SPEC_VERSION >= 17]*/
@@ -576,29 +712,61 @@ public class InternalDowncallHandler {
 		if (downcallAddr.address() == MemoryAddress.NULL) {
 			throw new IllegalArgumentException("A non-null memory address is expected for downcall"); //$NON-NLS-1$
 		}
-		/* Hold a strong reference in the downcall to the native library symbol to
-		 * prevent the underlying native library from being unloaded.
-		 */
-		functionAddr = downcallAddr;
 		/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 
+		long retMemAddr = 0;
+		MemorySegment retStruSegmt = null;
 		if (funcMethodType.returnType() == MemorySegment.class) {
 			/*[IF JAVA_SPEC_VERSION >= 17]*/
 			/* The segment allocator (introduced since Java 17 to replace NativeScope in Java 16) is confined
 			 * by the memory session(Java19)/resource scope(Java17/18) defined in user applications in which
 			 * case the allocated memory will be released automatically once the session/scope is closed.
 			 */
-			returnStructSegmt = segmtAllocator.allocate(realReturnLayout);
+			retStruSegmt = segmtAllocator.allocate(realReturnLayout);
 			/*[ELSE] JAVA_SPEC_VERSION >= 17 */
 			/* The memory segment will be released explicitly by users via close() in java code in Java 16 */
-			returnStructSegmt = MemorySegment.allocateNative(realReturnLayout);
+			retStruSegmt = MemorySegment.allocateNative(realReturnLayout);
 			/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
-			if (returnStructSegmt == null) {
+			if (retStruSegmt == null) {
 				throw new OutOfMemoryError("Failed to allocate native memory for the returned memory segment"); //$NON-NLS-1$
 			}
+			retMemAddr = retStruSegmt.address().toRawLongValue();
 		}
-		long retMemAddr = (returnStructSegmt == null) ? 0 : returnStructSegmt.address().toRawLongValue();
-		long returnVal = invokeNative(retMemAddr, functionAddr.address().toRawLongValue(), cifNativeThunkAddr, args);
-		return Long.valueOf(returnVal);
+
+		long returnVal = 0;
+		/* The session/scope associated with memory specific arguments must be kept alive in downcall since JDK17 */
+		if (!sessionOrScopeSet.isEmpty()) {
+			/*[IF JAVA_SPEC_VERSION >= 19]*/
+			try (MemorySession nativeSession = MemorySession.openConfined()) {
+				SetDependency(nativeSession);
+				returnVal = invokeNative(retMemAddr, downcallAddr.address().toRawLongValue(), cifNativeThunkAddr, args);
+			}
+			/*[ELSE] JAVA_SPEC_VERSION >= 19 */
+			/*[IF JAVA_SPEC_VERSION == 18]*/
+			try (ResourceScope nativeScope = ResourceScope.newConfinedScope()) {
+				SetDependency(nativeScope);
+				returnVal = invokeNative(retMemAddr, downcallAddr.address().toRawLongValue(), cifNativeThunkAddr, args);
+			}
+			/*[ELSE] JAVA_SPEC_VERSION == 18 */
+			acquireScope();
+			returnVal = invokeNative(retMemAddr, downcallAddr.address().toRawLongValue(), cifNativeThunkAddr, args);
+			releaseScope();
+			/*[ENDIF] JAVA_SPEC_VERSION == 18 */
+			/*[ENDIF] JAVA_SPEC_VERSION >= 19 */
+		}
+		else
+		{
+			/*[IF JAVA_SPEC_VERSION >= 17]*/
+			returnVal = invokeNative(retMemAddr, downcallAddr.address().toRawLongValue(), cifNativeThunkAddr, args);
+			/*[ELSE] JAVA_SPEC_VERSION >= 17 */
+			/* The given function address never changes since the initialization of the downcall handler in JDK16 */
+			returnVal = invokeNative(retMemAddr, functionAddr.address().toRawLongValue(), cifNativeThunkAddr, args);
+			/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
+		}
+
+		/* This struct specific MemorySegment object returns to the current thread in the multithreading environment,
+		 * in which case the native invocations from threads end up with distinct returned structs.
+		 */
+		return (retStruSegmt != null) ? retStruSegmt : Long.valueOf(returnVal);
 	}
 }
