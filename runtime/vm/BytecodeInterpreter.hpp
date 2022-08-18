@@ -5177,37 +5177,37 @@ ffi_OOM:
 	enterContinuationImpl(REGISTER_ARGS_LIST)
 	{
 		VM_BytecodeAction rc = EXECUTE_BYTECODE;
-		jboolean res = JNI_FALSE;
 
 		j9object_t continuationObject = *(j9object_t*)_sp;
 
 		buildInternalNativeStackFrame(REGISTER_ARGS);
 		updateVMStruct(REGISTER_ARGS);
 
-		res = enterContinuation(_currentThread, continuationObject);
-
-		VMStructHasBeenUpdated(REGISTER_ARGS);
-		if (VM_VMHelpers::exceptionPending(_currentThread)) {
-			rc = GOTO_THROW_CURRENT_EXCEPTION;
-			goto done;
+		if (enterContinuation(_currentThread, continuationObject)) {
+			_sendMethod = J9VMJDKINTERNALVMCONTINUATION_EXECUTE_METHOD(_currentThread->javaVM);
+			rc = GOTO_RUN_METHOD;
 		}
 
-		restoreInternalNativeStackFrame(REGISTER_ARGS);
-		returnSingleFromINL(REGISTER_ARGS, res, 1);
-done:
+		VMStructHasBeenUpdated(REGISTER_ARGS);
+
 		return rc;
 	}
 
-	/* jdk.internal.vm.Continuation: private static native boolean yieldImpl(); */
+	/* jdk.internal.vm.Continuation: private static native boolean yieldImpl(boolean isFinished); */
 	VMINLINE VM_BytecodeAction
 	yieldContinuationImpl(REGISTER_ARGS_LIST)
 	{
 		VM_BytecodeAction rc = EXECUTE_BYTECODE;
+		UDATA isFinished = *(I_32*)_sp;
+
 		buildInternalNativeStackFrame(REGISTER_ARGS);
 		updateVMStruct(REGISTER_ARGS);
 
 		/* store the current Continuation state and swap to carrier thread stack */
 		yieldContinuation(_currentThread);
+		if (isFinished) {
+			/* CleanupContinuation */
+		}
 
 		VMStructHasBeenUpdated(REGISTER_ARGS);
 		restoreInternalNativeStackFrame(REGISTER_ARGS);
