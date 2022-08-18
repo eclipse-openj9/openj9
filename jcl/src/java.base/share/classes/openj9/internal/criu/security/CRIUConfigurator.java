@@ -73,31 +73,33 @@ public final class CRIUConfigurator {
 	 * back.
 	 */
 	public static void setCRIURestoreMode() {
-		Security.removeProvider("CRIUSEC");
-		// Note that CRIUSEC was set as security.provider.1 in the method
-		// setCRIUSecMode, which is called before this method.
-		systemProps.remove("security.provider.1");
-		if (debug) {
-			System.out.println("CRIUSEC removed.");
-		}
+		if (null != systemProps) {
+			Security.removeProvider("CRIUSEC");
+			// Note that CRIUSEC was set as security.provider.1 in the method
+			// setCRIUSecMode, which is called before this method.
+			systemProps.remove("security.provider.1");
+			if (debug) {
+				System.out.println("CRIUSEC removed.");
+			}
 
-		for (Map.Entry<String, String> entry : oldProviders.entrySet()) {
-			systemProps.put(entry.getKey(), entry.getValue());
-		}
-		try {
-			// Invoke the fromSecurityProperties method from the ProviderList class.
-			Class<?> runnable = Class.forName("sun.security.jca.ProviderList", true,
-					ClassLoader.getSystemClassLoader());
-			Method readProperties = runnable.getDeclaredMethod("fromSecurityProperties");
-			readProperties.setAccessible(true);
-			ProviderList providerList = (ProviderList) readProperties.invoke(null);
-			Providers.setProviderList(providerList);
-		} catch (Exception e) {
-			System.out.println(e.toString());
-		}
-		if (debug) {
-			for (String provider : oldProviders.values()) {
-				System.out.println(provider + " restored.");
+			for (Map.Entry<String, String> entry : oldProviders.entrySet()) {
+				systemProps.put(entry.getKey(), entry.getValue());
+			}
+			try {
+				// Invoke the fromSecurityProperties method from the ProviderList class.
+				Class<?> runnable = Class.forName("sun.security.jca.ProviderList", true,
+						ClassLoader.getSystemClassLoader());
+				Method readProperties = runnable.getDeclaredMethod("fromSecurityProperties");
+				readProperties.setAccessible(true);
+				ProviderList providerList = (ProviderList) readProperties.invoke(null);
+				Providers.setProviderList(providerList);
+			} catch (Exception e) {
+				System.out.println(e.toString());
+			}
+			if (debug) {
+				for (String provider : oldProviders.values()) {
+					System.out.println(provider + " restored.");
+				}
 			}
 		}
 	}
