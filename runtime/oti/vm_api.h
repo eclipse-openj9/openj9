@@ -4343,6 +4343,16 @@ yieldContinuation(struct J9VMThread *currentThread);
  */
 jint
 isPinnedContinuation(J9VMThread *currentThread);
+
+/**
+ * @brief  Walk the stackframes associated with Continuation object
+ *
+ * @param currentThread
+ * @param continuationObject
+ * @return UDATA
+ */
+UDATA
+walkContinuationStackFrames(J9VMThread *currentThread, j9object_t continuationObject, J9StackWalkState *walkState);
 #endif /* JAVA_SPEC_VERSION >= 19 */
 
 /* ---------------- hookableAsync.c ---------------- */

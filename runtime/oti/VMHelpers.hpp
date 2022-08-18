@@ -2040,6 +2040,16 @@ exit:
 		}
 #endif /* JAVA_SPEC_VERSION > 11 */
 	}
+
+	static VMINLINE UDATA
+	walkContinuationStackFramesWrapper(J9VMThread *vmThread, j9object_t continuationObject, J9StackWalkState *walkState)
+	{
+		UDATA rc = J9_STACKWALK_RC_NONE;
+#if JAVA_SPEC_VERSION >= 19
+		rc = walkContinuationStackFrames(vmThread, continuationObject, walkState);
+#endif /* JAVA_SPEC_VERSION >= 19 */
+		return rc;
+	}
 };
 
 #endif /* VMHELPERS_HPP_ */
