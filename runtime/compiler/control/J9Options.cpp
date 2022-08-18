@@ -1229,6 +1229,25 @@ static bool JITServerParseCommonOptions(J9JavaVM *vm, TR::CompilationInfo *compI
 
    return true;
    }
+
+static void JITServerParseLocalSyncCompiles(J9JavaVM *vm, TR::CompilationInfo *compInfo, bool isFSDEnabled)
+   {
+   const char *xxJITServerLocalSyncCompilesOption = "-XX:+JITServerLocalSyncCompiles";
+   const char *xxDisableJITServerLocalSyncCompilesOption = "-XX:-JITServerLocalSyncCompiles";
+
+   int32_t xxJITServerLocalSyncCompilesArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxJITServerLocalSyncCompilesOption, 0);
+   int32_t xxDisableJITServerLocalSyncCompilesArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxDisableJITServerLocalSyncCompilesOption, 0);
+
+   // We either obey the command line option, or make sure to disable LocalSyncCompiles if
+   // something is set that interferes with remote async recompilations.
+   if ((xxDisableJITServerLocalSyncCompilesArgIndex > xxJITServerLocalSyncCompilesArgIndex) ||
+       ((xxJITServerLocalSyncCompilesArgIndex < 0) &&
+        (xxDisableJITServerLocalSyncCompilesArgIndex < 0) &&
+        (!compInfo->asynchronousCompilation() || isFSDEnabled)))
+      {
+      compInfo->getPersistentInfo()->setLocalSyncCompiles(false);
+      }
+   }
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
 void J9::Options::preProcessMmf(J9JavaVM *vm, J9JITConfig *jitConfig)
@@ -2126,17 +2145,6 @@ bool J9::Options::preProcessJitServer(J9JavaVM *vm, J9JITConfig *jitConfig)
                compInfo->getPersistentInfo()->setJITServerAddress(address);
                }
 
-            const char *xxJITServerLocalSyncCompilesOption = "-XX:+JITServerLocalSyncCompiles";
-            const char *xxDisableJITServerLocalSyncCompilesOption = "-XX:-JITServerLocalSyncCompiles";
-
-            int32_t xxJITServerLocalSyncCompilesArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxJITServerLocalSyncCompilesOption, 0);
-            int32_t xxDisableJITServerLocalSyncCompilesArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxDisableJITServerLocalSyncCompilesOption, 0);
-
-            if (xxDisableJITServerLocalSyncCompilesArgIndex > xxJITServerLocalSyncCompilesArgIndex)
-               {
-               compInfo->getPersistentInfo()->setLocalSyncCompiles(false);
-               }
-
             const char *xxJITServerAOTCacheNameOption = "-XX:JITServerAOTCacheName=";
             int32_t xxJITServerAOTCacheNameArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxJITServerAOTCacheNameOption, 0);
 
@@ -2650,9 +2658,6 @@ bool J9::Options::feLatePostProcess(void * base, TR::OptionSet * optionSet)
             }
 
          self()->setOption(TR_FullSpeedDebug);
-#if defined(J9VM_OPT_JITSERVER)
-         compInfo->getPersistentInfo()->setLocalSyncCompiles(false);
-#endif /* defined(J9VM_OPT_JITSERVER) */
          self()->setOption(TR_DisableDirectToJNI);
          //setOption(TR_DisableNoVMAccess);
          //setOption(TR_DisableAsyncCompilation);
@@ -2737,6 +2742,8 @@ bool J9::Options::feLatePostProcess(void * base, TR::OptionSet * optionSet)
    if (_highActiveThreadThreshold  > _veryHighActiveThreadThreshold)
       _highActiveThreadThreshold  = _veryHighActiveThreadThreshold;
 
+   // This option needs to be parsed late so that we can account for FullSpeedDebug
+   JITServerParseLocalSyncCompiles(javaVM, compInfo, self()->getOption(TR_FullSpeedDebug));
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
    // Determine whether or not to inline monitor enter/exit
