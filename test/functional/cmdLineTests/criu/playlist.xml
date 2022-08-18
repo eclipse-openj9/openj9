@@ -114,7 +114,7 @@
 	<test>
 		<testCaseName>cmdLineTester_criu_security</testCaseName>
 		<variations>
-			<variation>-Denable.j9internal.checkpoint.security.api.debug=true</variation>
+			<variation>-XX:+CRIURestoreNonPortableMode -Denable.j9internal.checkpoint.security.api.debug=true</variation>
 		</variations>
 		<command>
 			$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump \
