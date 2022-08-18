@@ -1597,8 +1597,8 @@ exit:
 	 *
 	 * @param currentThread[in] The pointer to the current J9VMThread
 	 * @param returnType[in] The type of the return value
+	 * @param returnTypeSize[in] The size of the return value
 	 * @param returnStorage[in] The pointer to the return value
-	 * @param isDownCall[in] A flag indicating whether the current invocation is returned from the downcall
 	 */
 	static VMINLINE void
 	convertFFIReturnValue(J9VMThread* currentThread, U_8 returnType, UDATA returnTypeSize, UDATA* returnStorage)
