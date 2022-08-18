@@ -58,9 +58,8 @@ import static com.ibm.j9ddr.vm29.structure.J9PortLibrary.*;
 /**
  * Adapter for DDR IProcesses to make them implement the ImageProcess
  * API
- * 
- * @author andhall
  *
+ * @author andhall
  */
 public class J9DDRImageProcess implements ImageProcess {
 
@@ -70,69 +69,45 @@ public class J9DDRImageProcess implements ImageProcess {
 	private boolean processDataSet = false;
 	private ProcessData j9rasProcessData;
 	private String version;
-	private WeakReference<Map<Long,Object>> cachedThreads = null;
-	
-	private final static String[] SIGNAL_NAMES = {
-		"ZERO",
-		"SIGHUP",		// 1
-		"SIGINT",		// 2 + win
-		"SIGQUIT",
-		"SIGILL",		// 4 + win
-		"SIGTRAP",		// 5
-		"SIGABRT",
-		"SIGEMT",
-		"SIGFPE",		// 8 + win
-		"SIGKILL",
-		"SIGBUS",		// 10
-		"SIGSEGV",		// 11 + win
-		"SIGSYS",
-		"SIGPIPE",
-		"SIGALRM",
-		"SIGTERM",		// 15 + win
-		"SIGUSR1",
-		"SIGUSR2",
-		"SIGCHLD",
-		"SIGPWR",
-		"SIGWINCH",		// 20
-		"SIGURG/BREAK",	// 21 / win
-		"SIGPOLL/ABRT",	// 22 / win
-		"SIGSTOP",
-		"SIGTSTP",
-		"SIGCONT",		// 25
-		"SIGTTIN",
-		"SIGTTOU",
-		"SIGVTALRM",
-		"SIGPROF",
-		"SIGXCPU",		// 30
-		"SIGXFSZ",
-		"SIGWAITING",
-		"SIGLWP",
-		"SIGAIO",		// 34
-		"SIGFPE_DIV_BY_ZERO",		// 35 - synthetic from generic signal
-		"SIGFPE_INT_DIV_BY_ZERO",	// 36 - synthetic from generic signal
-		"SIGFPE_INT_OVERFLOW"		// 37 - synthetic from generic signal
+	private WeakReference<Map<Long, Object>> cachedThreads = null;
+
+	private final static String[] SIGNAL_NAMES = { "ZERO", "SIGHUP", // 1
+			"SIGINT", // 2 + win
+			"SIGQUIT", "SIGILL", // 4 + win
+			"SIGTRAP", // 5
+			"SIGABRT", "SIGEMT", "SIGFPE", // 8 + win
+			"SIGKILL", "SIGBUS", // 10
+			"SIGSEGV", // 11 + win
+			"SIGSYS", "SIGPIPE", "SIGALRM", "SIGTERM", // 15 + win
+			"SIGUSR1", "SIGUSR2", "SIGCHLD", "SIGPWR", "SIGWINCH", // 20
+			"SIGURG/BREAK", // 21 / win
+			"SIGPOLL/ABRT", // 22 / win
+			"SIGSTOP", "SIGTSTP", "SIGCONT", // 25
+			"SIGTTIN", "SIGTTOU", "SIGVTALRM", "SIGPROF", "SIGXCPU", // 30
+			"SIGXFSZ", "SIGWAITING", "SIGLWP", "SIGAIO", // 34
+			"SIGFPE_DIV_BY_ZERO", // 35 - synthetic from generic signal
+			"SIGFPE_INT_DIV_BY_ZERO", // 36 - synthetic from generic signal
+			"SIGFPE_INT_OVERFLOW" // 37 - synthetic from generic signal
 	};
-	
-	public J9DDRImageProcess(IProcess thisProcess)
-	{
+
+	public J9DDRImageProcess(IProcess thisProcess) {
 		this.process = thisProcess;
 	}
 
 	public IProcess getIProcess() {
 		return process;
 	}
-	
+
 	/**
 	 * This method tries to get command line of the program that generated core file.
-	 * 
+	 *
 	 * We can't get the command line from the core dump on zOS, or on recent Windows versions. On Linux
 	 * it may be truncated. The java launcher stores the command line in an environment variable, so for
 	 * all platforms we now try that first, with the core reader as a fallback.
-	 * 
+	 *
 	 * @return String instance of the commandline
 	 * @throws DataUnavailable
 	 * @throws {@link CorruptDataException}
-	 *  
 	 */
 	public String getCommandLine() throws DataUnavailable, CorruptDataException {
 		try {
@@ -151,31 +126,29 @@ public class J9DDRImageProcess implements ImageProcess {
 
 			return process.getCommandLine();
 		} catch (com.ibm.j9ddr.CorruptDataException e) {
-			throw new DTFJCorruptDataException(process,e);
+			throw new DTFJCorruptDataException(process, e);
 		} catch (DataUnavailableException e) {
 			throw new DataUnavailable(e.getMessage());
 		}
 	}
 
-	private void checkFailureInfo()
-	{
+	private void checkFailureInfo() {
 		if (!processDataSet) {
 			j9rasProcessData = J9RASImageDataFactory.getProcessData(process);
-			
 			processDataSet = true;
 		}
 	}
-	
+
 	/**
 	 * This method returns the ImageThread that matches the TID stored in the J9RAS data structure,
-	 *  or
-	 *  case 1: if no J9RAS structure available return null
-	 *  case 2: if J9RAS structure available but no TID field (old JVMs, old jextract behaviour) 
-	 *  		- return the first thread, or null if no threads
-	 *  case 3: if J9RAS structure available with TID field but TID is zero (eg dump triggered outside JVM)
-	 *  		- platform specific code if core readers have identified a current thread, else...
-	 *  case 4: if J9RAS structure available with TID field but no match (eg Linux), return a stub ImageThread
-	 * 
+	 * or
+	 * case 1: if no J9RAS structure available return null
+	 * case 2: if J9RAS structure available but no TID field (old JVMs, old jextract behaviour)
+	 *         - return the first thread, or null if no threads
+	 * case 3: if J9RAS structure available with TID field but TID is zero (eg dump triggered outside JVM)
+	 *         - platform specific code if core readers have identified a current thread, else...
+	 * case 4: if J9RAS structure available with TID field but no match (eg Linux), return a stub ImageThread
+	 *
 	 * @return ImageThread
 	 * @throws {@link CorruptDataException}
 	 */
@@ -197,10 +170,10 @@ public class J9DDRImageProcess implements ImageProcess {
 
 				for (IOSThread thread : process.getThreads()) {
 					if (thread.getThreadId() == currentThreadId) {
-						return new J9DDRImageThread(process,thread); 
+						return new J9DDRImageThread(process, thread);
 					}
 				}
-				
+
 				if (currentThreadId == 0) {
 					// For dumps triggered from outside the JVM, the TID in the J9RAS structure will be unset/zero. The core
 					// readers may be able to identify the crashing/triggering thread in these cases. For zOS, we can look
@@ -209,33 +182,31 @@ public class J9DDRImageProcess implements ImageProcess {
 						for (IOSThread thread : process.getThreads()) {
 							Properties threadProps = thread.getProperties();
 							String tcc = threadProps.getProperty("Task Completion Code");
-							if (tcc != null && !tcc.equals("0x0")) { 
+							if (tcc != null && !tcc.equals("0x0")) {
 								return new J9DDRImageThread(process, thread);
 							}
 						}
 					}
 				}
-				//If we're on Linux, the TID of the failing thread will have been altered by the fork/abort method
-				//of taking the dump. If there's only one thread - it's the failing thread with a different tid.
-				//We cannot match the native thread at this point, so provide a stub based on the information in the RAS structure.
+				// If we're on Linux, the TID of the failing thread will have been altered by the fork/abort method
+				// of taking the dump. If there's only one thread - it's the failing thread with a different tid.
+				// We cannot match the native thread at this point, so provide a stub based on the information in the RAS structure.
 				return new J9DDRStubImageThread(process, currentThreadId);
-
 			} else {
 				return null;
 			}
 		} catch (com.ibm.j9ddr.CorruptDataException e) {
-			throw new DTFJCorruptDataException(process,e);
+			throw new DTFJCorruptDataException(process, e);
 		}
 	}
-	
+
 	/**
 	 * This method gets the environment variables.
-	 * First it tries to extract it from RAS structure. 
-	 * If not, it tries to get it from loaded modules. 
-	 * @return Properties instance of environment variables. 
+	 * First it tries to extract it from RAS structure.
+	 * If not, it tries to get it from loaded modules.
+	 * @return Properties instance of environment variables.
 	 * @throws DataUnavailable
 	 * @throws CorruptDataException
-	 * 
 	 */
 	public Properties getEnvironment() throws DataUnavailable, CorruptDataException {
 		try {
@@ -244,19 +215,19 @@ public class J9DDRImageProcess implements ImageProcess {
 				try {
 					Properties properties;
 					long environ = j9rasProcessData.getEnvironment();
-					
+
 					if (process.getPlatform() == Platform.WINDOWS && j9rasProcessData.version() > 4) {
 						// Get the env vars from an environment strings block instead of the environ global
-						properties =  EnvironmentUtils.readEnvironmentStrings(process, environ);
+						properties = EnvironmentUtils.readEnvironmentStrings(process, environ);
 					} else {
 						long stringPointer = process.getPointerAt(environ);
-						properties =  EnvironmentUtils.readEnvironment(process, stringPointer);
+						properties = EnvironmentUtils.readEnvironment(process, stringPointer);
 					}
 					if ((null == properties) || (0 == properties.size())) {
-						/* In the case of env vars is null or empty, 
-						 * throw exception so that it tries to get env vars from modules 
+						/* In the case of env vars is null or empty,
+						 * throw exception so that it tries to get env vars from modules
 						 */
-						 throw new com.ibm.j9ddr.CorruptDataException("");
+						throw new com.ibm.j9ddr.CorruptDataException("");
 					}
 					return properties;
 				} catch (com.ibm.j9ddr.CorruptDataException e1) {
@@ -268,54 +239,51 @@ public class J9DDRImageProcess implements ImageProcess {
 				return process.getEnvironmentVariables();
 			}
 		} catch (com.ibm.j9ddr.CorruptDataException e) {
-			throw new DTFJCorruptDataException(process,e);
+			throw new DTFJCorruptDataException(process, e);
 		} catch (DataUnavailableException e) {
 			throw new DataUnavailable(e.getMessage());
 		}
 	}
 
 	public ImageModule getExecutable() throws DataUnavailable, CorruptDataException {
-		
 		IModule executable;
 		try {
 			executable = process.getExecutable();
 		} catch (com.ibm.j9ddr.CorruptDataException e) {
-			throw new DTFJCorruptDataException(new J9DDRCorruptData(process,e));
+			throw new DTFJCorruptDataException(new J9DDRCorruptData(process, e));
 		}
 		if (executable == null) {
 			// Executable not available (J9DDRImageModule constructor below would throw NPE)
 			throw new DataUnavailable("executable not found");
 		}
-		
+
 		if (process.getPlatform() == Platform.LINUX) {
-			//On Linux, the core file reader can easily fail to get the correct command line and executable
-			//(because of 80 char limit on command line in the ELF header).
-			//We preempt this by looking for the command line in the environment
+			// On Linux, the core file reader can easily fail to get the correct command line and executable
+			// (because of 80 char limit on command line in the ELF header).
+			// We preempt this by looking for the command line in the environment
 			String executableName = getExecutablePath();
-			
+
 			if (null == executableName) {
 				return new J9DDRImageModule(process, executable);
 			}
-			
-			//Override the executableName
+
+			// Override the executableName
 			return new J9DDRImageModule(process, executable, executableName);
 		} else {
 			return new J9DDRImageModule(process, executable);
 		}
 	}
 
-	String getExecutablePath()
-	{
+	String getExecutablePath() {
 		String commandLine;
 		try {
 			commandLine = getCommandLine();
 		} catch (Exception e) {
-			//Can't get command line - try getting it from system properties if we have them
+			// Can't get command line - try getting it from system properties if we have them
 			return getExecutablePathFromSystemProperties();
 		}
-		//TODO think about executable paths with spaces in
+		// TODO think about executable paths with spaces in
 		int spaceIndex = commandLine.indexOf(" ");
-		
 		String executableName = null;
 		if (spaceIndex != -1) {
 			executableName = commandLine.substring(0, spaceIndex);
@@ -325,46 +293,41 @@ public class J9DDRImageProcess implements ImageProcess {
 		return executableName;
 	}
 
-	private String getExecutablePathFromSystemProperties()
-	{
+	private String getExecutablePathFromSystemProperties() {
 		Iterator<?> runtimeIt = getRuntimes();
-		
+
 		while (runtimeIt.hasNext()) {
 			Object o = runtimeIt.next();
-			
+
 			if (o instanceof JavaRuntime) {
-				JavaRuntime runtime = (JavaRuntime)o;
-				
+				JavaRuntime runtime = (JavaRuntime) o;
+
 				try {
 					JavaVMInitArgs args = runtime.getJavaVMInitArgs();
-					
 					Iterator<?> optionsIt = args.getOptions();
-					
 					Pattern javaHomePattern = Pattern.compile("-Djava.home=(.*)");
-					
+
 					while (optionsIt.hasNext()) {
 						Object optionObj = optionsIt.next();
-						
+
 						if (optionObj instanceof JavaVMOption) {
-							JavaVMOption option = (JavaVMOption)optionObj;
-							
+							JavaVMOption option = (JavaVMOption) optionObj;
 							Matcher m = javaHomePattern.matcher(option.getOptionString());
-							
+
 							if (m.find()) {
 								String javaHome = m.group(1);
-								
-								//Note this method not used on Windows - don't have to worry about .exe or \
+
+								// Note this method not used on Windows - don't have to worry about .exe or \
 								return javaHome + "/bin/java";
 							}
 						}
 					}
-					
 				} catch (Exception e) {
-					//Ignore
+					// Ignore
 				}
 			}
 		}
-		
+
 		return null;
 	}
 
@@ -377,7 +340,7 @@ public class J9DDRImageProcess implements ImageProcess {
 				} catch (DataUnavailable e) {
 					// Java5 SR9 and earlier don't contain pid in J9RAS structure
 					return Long.toString(process.getProcessId());
-				}				
+				}
 			} else {
 				return Long.toString(process.getProcessId());
 			}
@@ -385,10 +348,9 @@ public class J9DDRImageProcess implements ImageProcess {
 			return "<Unknown>";
 		}
 	}
-	
+
 	@Override
-	public String toString()
-	{
+	public String toString() {
 		try {
 			return "ImageProcess: " + getID();
 		} catch (Exception ex) {
@@ -399,16 +361,16 @@ public class J9DDRImageProcess implements ImageProcess {
 	public Iterator<?> getLibraries() throws DataUnavailable, CorruptDataException {
 		try {
 			Collection<? extends IModule> modules = process.getModules();
-			
+
 			List<ImageModule> libraries = new ArrayList<ImageModule>();
-			
+
 			for (IModule module : modules) {
 				libraries.add(new J9DDRImageModule(process, module));
 			}
-			
+
 			return libraries.iterator();
 		} catch (com.ibm.j9ddr.CorruptDataException e) {
-			throw new DTFJCorruptDataException(new J9DDRCorruptData(process,e));
+			throw new DTFJCorruptDataException(new J9DDRCorruptData(process, e));
 		}
 	}
 
@@ -418,48 +380,48 @@ public class J9DDRImageProcess implements ImageProcess {
 
 	public Iterator<?> getRuntimes() {
 		List<Object> toIterate = new LinkedList<Object>();
-		
+
 		try {
 			IVMData data = VMDataFactory.getVMData(process);
 			version = data.getVersion();
-			
+
 			Object[] passbackArray = new Object[1];
-			
+
 			try {
-				//attempt to load a default bootstrap class which will allow different implementations to provide their own initializers
-				data.bootstrapRelative("view.dtfj.DTFJBootstrapShim", (Object)passbackArray, this);
+				// attempt to load a default bootstrap class which will allow different implementations to provide their own initializers
+				data.bootstrapRelative("view.dtfj.DTFJBootstrapShim", (Object) passbackArray, this);
 			} catch (ClassNotFoundException e) {
-				//no specific class was found, so use a generic native one instead
+				// no specific class was found, so use a generic native one instead
 				try {
-					data.bootstrap("com.ibm.j9ddr.view.nativert.Bootstrap", (Object)passbackArray, this);
-					
+					data.bootstrap("com.ibm.j9ddr.view.nativert.Bootstrap", (Object) passbackArray, this);
+
 				} catch (ClassNotFoundException e1) {
-					//this class should be packaged and without it we can't work, so abort
+					// this class should be packaged and without it we can't work, so abort
 					throw new Error(e1);
 				}
 			}
-			
+
 			if (passbackArray[0] != null) {
 				toIterate.add(passbackArray[0]);
 			}
 		} catch (IOException e) {
 			// VMDataFactory may throw IOException for JVMs that this level of DDR does not support. Pass the
 			// detail message in a CDE. The underlying exception will have been logged in VMDataFactory.
-			toIterate.add(new J9DDRCorruptData(process,"Unsupported JVM level: " + e.getMessage()));
+			toIterate.add(new J9DDRCorruptData(process, "Unsupported JVM level: " + e.getMessage()));
 		} catch (UnsupportedOperationException e) {
 			// VMDataFactory may throw unsupported UnsupportedOperationException
 			// exceptions for JVM's DDR does not support.
-			toIterate.add(new J9DDRCorruptData(process,"Unsupported JVM level"));
+			toIterate.add(new J9DDRCorruptData(process, "Unsupported JVM level"));
 		} catch (Exception e) {
-			toIterate.add(new J9DDRCorruptData(process,e.getMessage()));
+			toIterate.add(new J9DDRCorruptData(process, e.getMessage()));
 		}
-		
+
 		return toIterate.iterator();
 	}
-	
+
 	public String getSignalName() throws DataUnavailable, CorruptDataException {
 		int number = getSignalNumber();
-		
+
 		if (number == 0) {
 			return null;
 		} else if (number > 0 && number < SIGNAL_NAMES.length) {
@@ -471,15 +433,16 @@ public class J9DDRImageProcess implements ImageProcess {
 
 	public int getSignalNumber() throws DataUnavailable, CorruptDataException {
 		checkFailureInfo();
-		
+
 		try {
 			if (j9rasProcessData.gpInfo() != null) {
-				int genericSignalNumber = (int)longByResolvingRawKey(j9rasProcessData.gpInfo(), "J9Generic_Signal_Number");
-				if(genericSignalNumber == 0) {
-					//on Windows AMD64 the key name is J9Generic_Signal, so try that if we haven't got a signal number
-					genericSignalNumber = (int)longByResolvingRawKey(j9rasProcessData.gpInfo(), "J9Generic_Signal");
+				int genericSignalNumber = (int) longByResolvingRawKey(j9rasProcessData.gpInfo(),
+						"J9Generic_Signal_Number");
+				if (genericSignalNumber == 0) {
+					// on Windows AMD64 the key name is J9Generic_Signal, so try that if we haven't got a signal number
+					genericSignalNumber = (int) longByResolvingRawKey(j9rasProcessData.gpInfo(), "J9Generic_Signal");
 				}
-				
+
 				if (genericSignalNumber != 0) {
 					return resolveGenericSignal(genericSignalNumber);
 				} else {
@@ -489,7 +452,7 @@ public class J9DDRImageProcess implements ImageProcess {
 		} catch (com.ibm.j9ddr.CorruptDataException e) {
 			// Fall back to core file readers.
 		}
-		
+
 		try {
 			return this.process.getSignalNumber();
 		} catch (DataUnavailableException e) {
@@ -499,45 +462,45 @@ public class J9DDRImageProcess implements ImageProcess {
 
 	private Map<Long, Object> getThreadMap() {
 		Map<Long, Object> dtfjThreadMap = null;
-		if( cachedThreads != null ) {
-			dtfjThreadMap = (Map<Long, Object>)cachedThreads.get();
+		if (cachedThreads != null) {
+			dtfjThreadMap = (Map<Long, Object>) cachedThreads.get();
 		}
-		
+
 		/* We did not find a cache of threads, build one. */
-		if( dtfjThreadMap == null ) {
+		if (dtfjThreadMap == null) {
 			Collection<? extends IOSThread> threads = null;
 			long corruptId = -1;
-			
+
 			try {
 				threads = process.getThreads();
 			} catch (com.ibm.j9ddr.CorruptDataException e) {
-				return Collections.singletonMap(corruptId, (Object)new J9DDRCorruptData(process,e));
+				return Collections.singletonMap(corruptId, (Object) new J9DDRCorruptData(process, e));
 			}
 
-			//On Linux, fork/abort system dumping means we only get one thread, with an altered TID. In this case we have logic in
-			//getCurrentThread that renames the dump thread. Add this thread in addition to the native thread.
+			// On Linux, fork/abort system dumping means we only get one thread, with an altered TID. In this case we have logic in
+			// getCurrentThread that renames the dump thread. Add this thread in addition to the native thread.
 
 			boolean forkandabort = ((process.getPlatform() == Platform.LINUX) && (threads.size() == 1));
 
 			dtfjThreadMap = new HashMap<Long, Object>();
-			
+
 			if (forkandabort) {
 				try {
-					J9DDRBaseImageThread currentThread = (J9DDRBaseImageThread)getCurrentThread();
-					if( currentThread != null ) {
+					J9DDRBaseImageThread currentThread = (J9DDRBaseImageThread) getCurrentThread();
+					if (currentThread != null) {
 						dtfjThreadMap.put(currentThread.getThreadId(), currentThread);
 					}
 				} catch (CorruptDataException e) {
 					// A corrupt thread won't have an id but we will still return the corrupt
 					// data in the list of all threads.
-					dtfjThreadMap.put(corruptId--, new J9DDRCorruptData(process,e.getMessage()));
+					dtfjThreadMap.put(corruptId--, new J9DDRCorruptData(process, e.getMessage()));
 				} catch (com.ibm.j9ddr.CorruptDataException e) {
 					// A corrupt thread won't have an id but we will still return the corrupt
 					// data in the list of all threads.
-					dtfjThreadMap.put(corruptId--, new J9DDRCorruptData(process,e.getMessage()));
+					dtfjThreadMap.put(corruptId--, new J9DDRCorruptData(process, e.getMessage()));
 				}
-			} 
-			
+			}
+
 			for (IOSThread thread : threads) {
 				try {
 					dtfjThreadMap.put(thread.getThreadId(), new J9DDRImageThread(process, thread));
@@ -549,22 +512,22 @@ public class J9DDRImageProcess implements ImageProcess {
 			}
 			cachedThreads = new WeakReference<Map<Long, Object>>(dtfjThreadMap);
 		}
-		
+
 		return dtfjThreadMap;
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	public Iterator<?> getThreads() {
 		Map<Long, Object> dtfjThreadMap = getThreadMap();
 		return dtfjThreadMap.values().iterator();
 	}
-	
+
 	/*
 	 * Return the thread with the given id or null.
 	 */
 	public J9DDRBaseImageThread getThread(long id) {
 		Map<Long, Object> dtfjThreadMap = getThreadMap();
-		return (J9DDRBaseImageThread)dtfjThreadMap.get(id);
+		return (J9DDRBaseImageThread) dtfjThreadMap.get(id);
 	}
 
 	private static int resolveGenericSignal(int num) {
@@ -622,37 +585,36 @@ public class J9DDRImageProcess implements ImageProcess {
 	/**
 	 * Looks up the given key in rawText and finds the long that corresponds to it.  ie: "... key=number..."
 	 * Returns 0 if the key is not found.
-	 * 
+	 *
 	 * @param rawText
 	 * @param key
 	 * @return
 	 */
-	private static long longByResolvingRawKey(String rawText, String key)
-	{
+	private static long longByResolvingRawKey(String rawText, String key) {
 		long value = 0;
 		int index = rawText.indexOf(key);
-		
-		while ((index > 0) && (!Character.isWhitespace(rawText.charAt(index-1)))) {
-			index = rawText.indexOf(key, index+1);
+
+		while ((index > 0) && (!Character.isWhitespace(rawText.charAt(index - 1)))) {
+			index = rawText.indexOf(key, index + 1);
 		}
-		
+
 		if (index >= 0) {
 			int equalSign = rawText.indexOf("=", index);
-			
+
 			if (equalSign > index) {
-				int exclusiveEnd = equalSign +1;
-				
+				int exclusiveEnd = equalSign + 1;
+
 				while ((exclusiveEnd < rawText.length()) && (!Character.isWhitespace(rawText.charAt(exclusiveEnd)))) {
 					exclusiveEnd++;
 				}
-				//the value on the right of the equal sign is always supposed to be hexadecimal
-				String number = "0x" + rawText.substring(equalSign+1, exclusiveEnd);
+				// the value on the right of the equal sign is always supposed to be hexadecimal
+				String number = "0x" + rawText.substring(equalSign + 1, exclusiveEnd);
 				value = longFromString(number, 0);
 			}
 		}
 		return value;
 	}
-	
+
 	/**
 	 * Helper method for parsing strings into numbers.
 	 * Strips the 0x from strings, if they exist.  Also handles the case of 16 character numbers which would be greater than MAX_LONG
@@ -660,17 +622,16 @@ public class J9DDRImageProcess implements ImageProcess {
 	 * @param defaultValue The value which will be returned if value is null
 	 * @return defaultValue if the value is null or the long value of the given string
 	 */
-	private static long longFromString(String value, long defaultValue)
-	{
+	private static long longFromString(String value, long defaultValue) {
 		long translated = defaultValue;
 		int radix = 10;
-		
+
 		if (null != value) {
 			if (value.startsWith("0x")) {
 				value = value.substring(2);
 				radix = 16;
 				if (16 == value.length()) {
-					//split and shift since this would overflow
+					// split and shift since this would overflow
 					String highS = value.substring(0, 8);
 					String lowS = value.substring(8, 16);
 					long high = Long.parseLong(highS, radix);
@@ -685,26 +646,25 @@ public class J9DDRImageProcess implements ImageProcess {
 		}
 		return translated;
 	}
-	
-	/** 
-	 *  Returns the build version(e.g. 23-26) of the first VM in the process (useful for testing).
-	 *  
-	 *  Would be nice if DTFJJavaRuntime could implement this method, but that would be complicated
-	 *  as there are multiple version-packaged DTFJJavaRuntimes (e.g. j9ddr.vmxx.view.dtfj.java.DTFJJavaRunTime)
-	 *  and tests are not version-packaged.
+
+	/**
+	 * Returns the build version(e.g. 23-26) of the first VM in the process (useful for testing).
+	 *
+	 * Would be nice if DTFJJavaRuntime could implement this method, but that would be complicated
+	 * as there are multiple version-packaged DTFJJavaRuntimes (e.g. j9ddr.vmxx.view.dtfj.java.DTFJJavaRunTime)
+	 * and tests are not version-packaged.
 	 */
-	public String getVersion()
-	{
+	public String getVersion() {
 		return version;
 	}
-	
+
 	boolean isFailingProcess() throws DataUnavailableException {
 		return process.isFailingProcess();
 	}
-	
-	//currently returns no OS specific properties
+
+	// currently returns no OS specific properties
 	public Properties getProperties() {
 		return new Properties();
 	}
-}
 
+}
