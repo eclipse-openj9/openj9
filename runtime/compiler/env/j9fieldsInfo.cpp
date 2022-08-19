@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -135,11 +135,14 @@ TR_VMFieldsInfo::TR_VMFieldsInfo(TR::Compilation * comp, J9Class *aClazz, int bu
    UDATA *descriptorPtr = aClazz->instanceDescription;
    UDATA descriptorWord=0;
 
+   bool useImmediate = false;
    int32_t bitIndex = 0;
    if ( ((UDATA) descriptorPtr) & BCT_J9DescriptionImmediate )
       {
       bitIndex++;
       descriptorWord = ((UDATA) descriptorPtr) >> 1;
+
+      useImmediate = true;
       }
    else
       {
@@ -158,7 +161,12 @@ TR_VMFieldsInfo::TR_VMFieldsInfo(TR::Compilation * comp, J9Class *aClazz, int bu
          _gcDescriptor.push_back(countSlots);
          }
       countSlots++;
-      if (countSlots >= (slotsInHeader + numSlotsInObject))
+      // There is a case where the number of object slots are greater than the number of
+      // bits in a word and instanceDescription is used as an immediate value instead of
+      // a pointer, such as when the class doesn't have any references. We need to break
+      // the loop in this case before instanceDescription is dereferenced as a pointer.
+      if ((countSlots >= (slotsInHeader + numSlotsInObject)) ||
+          (useImmediate && bitIndex == (numBitsInWord - 1)))
          {
          break;
          }
@@ -174,6 +182,7 @@ TR_VMFieldsInfo::TR_VMFieldsInfo(TR::Compilation * comp, J9Class *aClazz, int bu
          bitIndex++;
          }
       }
+
    // null terminated
    _gcDescriptor.push_back(0);
 }
