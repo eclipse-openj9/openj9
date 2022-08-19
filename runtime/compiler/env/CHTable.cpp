@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -541,13 +541,13 @@ TR_CHTable::commitVirtualGuard(TR_VirtualGuard *info, List<TR_VirtualGuardSite> 
 
    if ((info->getKind() == TR_HCRGuard) || info->mergedWithHCRGuard())
       {
-      guardedClass = info->getThisClass();
+      TR_OpaqueClassBlock *hcrGuardedClass = info->getThisClass();
       ListIterator<TR_VirtualGuardSite> it(&sites);
       for (TR_VirtualGuardSite *site = it.getFirst(); site; site = it.getNext())
          {
          TR_ASSERT(site->getLocation(), "assertion failure");
          TR_PatchNOPedGuardSiteOnClassRedefinition
-            ::make(comp->fe(), comp->trPersistentMemory(), guardedClass, site->getLocation(), site->getDestination(), comp->getMetadataAssumptionList());
+            ::make(comp->fe(), comp->trPersistentMemory(), hcrGuardedClass, site->getLocation(), site->getDestination(), comp->getMetadataAssumptionList());
          comp->setHasClassRedefinitionAssumptions();
          }
       // if it's not real HCR guard then we need to register
