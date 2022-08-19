@@ -25,6 +25,7 @@
 #include <stdint.h>
 #include "optimizer/Optimization.hpp"
 #include "optimizer/OptimizationManager.hpp"
+#include "codegen/CodeGenerator.hpp"
 #include "codegen/RecognizedMethods.hpp"
 #include "il/SymbolReference.hpp"
 #include "infra/Assert.hpp"
@@ -264,7 +265,9 @@ class TR_VectorAPIExpansion : public TR::Optimization
    static TR::VectorLength supportedOnPlatform(TR::Compilation *comp, vec_sz_t vectorLength)
          {
          // General check for supported infrastructure
-         if (!comp->target().cpu.isPower() && !comp->target().cpu.isZ() && !comp->target().cpu.isARM64())
+         if (!comp->target().cpu.isPower() &&
+               !(comp->target().cpu.isZ() && comp->cg()->getSupportsVectorRegisters()) &&
+               !comp->target().cpu.isARM64())
             return TR::NoVectorLength;
 
          if (vectorLength != 128)
