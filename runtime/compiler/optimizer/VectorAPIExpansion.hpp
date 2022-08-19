@@ -262,21 +262,35 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *     \c TR::NoVectorLength otherwise
    */
    static TR::VectorLength supportedOnPlatform(TR::Compilation *comp, vec_sz_t vectorLength)
+      {
+      // General check for supported infrastructure
+      switch (comp->target().cpu.majorArch())
          {
-         // General check for supported infrastructure
-         if (!comp->target().cpu.isPower() && !comp->target().cpu.isZ() && !comp->target().cpu.isARM64())
+         case TR::arch_power:
+         case TR::arch_z:
+         case TR::arch_arm64:
+            if (vectorLength != 128)
+               return TR::NoVectorLength;
+            break;
+         case TR::arch_x86:
+            if (vectorLength == 512 && !comp->target().cpu.supportsFeature(OMR_FEATURE_X86_AVX512F))
+               return TR::NoVectorLength;
+            if (vectorLength == 256 && !comp->target().cpu.supportsFeature(OMR_FEATURE_X86_AVX))
+               return TR::NoVectorLength;
+            if (vectorLength == 64)
+               return TR::NoVectorLength;
+            break;
+         default:
             return TR::NoVectorLength;
-
-         if (vectorLength != 128)
-            return TR::NoVectorLength;
-
-         TR::VectorLength length = OMR::DataType::bitsToVectorLength(vectorLength);
-
-         TR_ASSERT_FATAL(length > TR::NoVectorLength && length <= TR::NumVectorLengths,
-                         "VectorAPIExpansion requested invalid vector length %d\n", length);
-
-         return length;
          }
+
+      TR::VectorLength length = OMR::DataType::bitsToVectorLength(vectorLength);
+
+      TR_ASSERT_FATAL(length > TR::NoVectorLength && length <= TR::NumVectorLengths,
+                      "VectorAPIExpansion requested invalid vector length %d\n", length);
+
+      return length;
+      }
 
    /** \brief
     *     Checks if the method being compiled contains any recognized Vector API methods
