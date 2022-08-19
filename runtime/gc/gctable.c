@@ -251,6 +251,8 @@ J9MemoryManagerFunctions MemoryManagerFunctions = {
 	j9mm_iterate_all_continuation_objects,
 	ownableSynchronizerObjectCreated,
 	continuationObjectCreated,
+	preMountContinuation,
+	postDismountContinuation,
 	j9gc_notifyGCOfClassReplacement,
 	j9gc_get_jit_string_dedup_policy,
 	j9gc_stringHashFn,
