@@ -6202,6 +6202,26 @@ TR_J9VMBase::isClassLoadedBySystemClassLoader(TR_OpaqueClassBlock *clazz)
 intptr_t
 TR_J9VMBase::getVFTEntry(TR_OpaqueClassBlock *clazz, int32_t offset)
    {
+   if (isInterfaceClass(clazz))
+      return 0; // no VFT
+
+   // Handle only positive offsets (i.e. in the interpreter side of the VFT)
+   // for now, since the only use of getVFTEntry() is to analyze guards with
+   // method tests in VP, and those use a positive offset to find the J9Method.
+   int32_t fixedPartOfOffset = sizeof (J9Class) + sizeof(J9VTableHeader);
+   if (offset < fixedPartOfOffset)
+      return 0;
+
+   // offset - fixedPartOfOffset is non-negative and fits into 32 bits because
+   // offset >= fixedPartOfOffset. Dividing will only reduce the value.
+   uint32_t index =
+      static_cast<uint32_t>(offset - fixedPartOfOffset) / sizeof(uintptr_t);
+
+   J9Class *j9class = reinterpret_cast<J9Class*>(clazz);
+   J9VTableHeader *vftHeader = reinterpret_cast<J9VTableHeader*>(j9class + 1);
+   if (index >= vftHeader->size)
+      return 0;
+
    return *(intptr_t*) (((uint8_t *)clazz) + offset);
    }
 
