@@ -83,8 +83,11 @@ class TR_VectorAPIExpansion : public TR::Optimization
    static int32_t const _lastMethod = TR::LastVectorMethod;
 
    static int32_t const _numMethods = _lastMethod - _firstMethod + 1;
-   static int32_t const _numArguments = 15;
 
+   // max number of arguments in the recognized Vector API methods
+   static int32_t const _maxNumberArguments = 10;
+
+   // max number of operands in a vector operation (e.g. unary, binary, ternary, etc)
    static int32_t const _maxNumberOperands = 5;
 
    public:
@@ -144,14 +147,17 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *  vector species, element type, or number of lanes
    *
    */
-   enum vapiArgType
+   enum vapiObjType
       {
       Unknown = 0,
       Vector,
       Species,
-      elementType,
-      numLanes,
-      Mask
+      ElementType,
+      NumLanes,
+      Mask,
+      Scalar,
+      Shuffle,
+      Invalid
       };
 
 
@@ -172,10 +178,9 @@ class TR_VectorAPIExpansion : public TR::Optimization
    */
    struct methodTableEntry
       {
-      TR::Node * (* _methodHandler)(TR_VectorAPIExpansion *, TR::TreeTop *, TR::Node *, TR::DataType, vec_sz_t, handlerMode);
-      TR::DataType _elementType;  // for high level API methods only
-      vapiArgType  _returnType;
-      vapiArgType  _argumentTypes[10];
+      TR::Node * (* _methodHandler)(TR_VectorAPIExpansion *, TR::TreeTop *, TR::Node *, TR::DataType, TR::VectorLength, int32_t, handlerMode);
+      vapiObjType  _returnType;
+      vapiObjType  _argumentTypes[_maxNumberArguments];
       };
 
    static const vec_sz_t vec_len_unknown = -1;
@@ -204,7 +209,7 @@ class TR_VectorAPIExpansion : public TR::Optimization
 
       vectorAliasTableElement() : _symRef(NULL), _vecSymRef(NULL),
                                   _vecLen(vec_len_default), _elementType(TR::NoType), _aliases(NULL), _classId(0),
-                                  _cantVectorize(false), _cantScalarize(false) {}
+                                  _cantVectorize(false), _cantScalarize(false), _objectType(Unknown) {}
 
       TR::SymbolReference *_symRef;
       union
@@ -222,6 +227,7 @@ class TR_VectorAPIExpansion : public TR::Optimization
       int32_t              _classId;
       bool                 _cantVectorize;
       bool                 _cantScalarize;
+      vapiObjType          _objectType;
       };
 
 
@@ -310,31 +316,21 @@ class TR_VectorAPIExpansion : public TR::Optimization
    */
    static bool isVectorAPIMethod(TR::MethodSymbol * methodSymbol);
 
+
   /** \brief
-   *     Checks if methodSymbol returns Vector object
+   *     Returns return type (\c vapiObjType) for the method
    *
    *  \param methodSymbol
    *     Method symbol
    *
    *  \return
-   *     \c true if \c methodSymbol returns Vector object,
-   *     \c false otherwise
+   *     \c vapiObjType
    */
-   bool returnsVector(TR::MethodSymbol * methodSymbol);
+   vapiObjType getReturnType(TR::MethodSymbol * methodSymbol);
+
 
   /** \brief
-   *     Returns the vector element type on which method operates
-   *
-   *  \param methodSymbol
-   *     Method symbol
-   *
-   *  \return
-   *     TR::DataType
-   */
-   TR::DataType dataType(TR::MethodSymbol * methodSymbol);
-
-  /** \brief
-   *     Checks if method's argument is one the \c vapiArgType types
+   *     Checks if method's argument is one the \c vapiObjType types
    *
    *  \param methodSymbol
    *     Method symbol
@@ -343,13 +339,13 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *     argument's number
    *
    *  \param type
-   *     \c vapiArgType
+   *     \c vapiObjType
    *
    *  \return
    *     \c true if the argument is the same as \c type,
    *     \c false otherwise
    */
-   bool isArgType(TR::MethodSymbol *methodSymbol, int32_t i, vapiArgType type);
+   bool isArgType(TR::MethodSymbol *methodSymbol, int32_t i, vapiObjType type);
 
   /** \brief
    *     Aliases symbol references with each other as described above
@@ -429,6 +425,30 @@ class TR_VectorAPIExpansion : public TR::Optimization
    */
    vec_sz_t getVectorSizeFromVectorSpecies(TR::Node *vectorSpeciesNode);
 
+
+  /** \brief
+   *     Returns J9Class for a known object being loaded by node
+   *
+   *  \param comp
+   *     Compilation
+   *
+   *  \param classNode
+   *     Node that loads \c java/lang/Class
+   */
+   static J9Class *getJ9ClassFromClassNode(TR::Compilation *comp, TR::Node *classNode);
+
+
+  /** \brief
+   *     Returns corresponding \c vapiObjType for a known object being loaded by node
+   *
+   *  \param comp
+   *     Compilation
+   *
+   *  \param classNode
+   *     Node that loads \c java/lang/Class
+   */
+   static vapiObjType getObjectTypeFromClassNode(TR::Compilation *comp, TR::Node *classNode);
+
   /** \brief
    *     Maps object of type \c java/lang/Class (e.g., \c java/lang/Float.TYPE)
    *     into corresponding \c TR::DataType
@@ -496,7 +516,7 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *     scalar TR::IL opcode if scalar is true, otherwise vector opcode
    */
    static TR::ILOpCodes ILOpcodeFromVectorAPIOpcode(int32_t vectorOpCode, TR::DataType elementType,
-                                                    vec_sz_t vectorLength, vapiOpCodeType opCodeType, bool withMask);
+                                                    TR::VectorLength vectorLength, vapiOpCodeType opCodeType, bool withMask);
 
   /** \brief
    *    For the node's symbol reference, creates and records(if it does not exist yet)
@@ -509,10 +529,13 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *  \param node
    *    The node
    *
-   *  \param type
-   *    Element type
+   *  \param opcodeType
+   *    Opcode type
+   *
+   *  \param symRefType
+   *    Symbol reference type
    */
-   static void vectorizeLoadOrStore(TR_VectorAPIExpansion *opt, TR::Node *node, TR::DataType type);
+   static void vectorizeLoadOrStore(TR_VectorAPIExpansion *opt, TR::Node *node, TR::DataType opcodeType, TR::DataType symRefType);
 
   /** \brief
    *    For the node's symbol reference, creates and records, if it does not exist yet,
@@ -592,7 +615,10 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *      Element type
    *
    *   \param vectorLength
-   *      Full vector length in bits (e.g. 128 for Float128Vector)
+   *      Vector length
+   *
+   *   \param numLanes
+   *       Number of elements
    *
    *   \param mode
    *      \c handlerMode
@@ -601,7 +627,7 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *      Transformed node
    *
    */
-   static void aloadHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode);
+   static void aloadHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, TR::VectorLength vectorLength, int32_t numLanes, handlerMode mode);
 
   /** \brief
    *    Scalarizes or vectorizes \c astore node. In both cases, the node is modified in place.
@@ -620,13 +646,16 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *      Element type
    *
    *   \param vectorLength
-   *      Full vector length in bits (e.g. 128 for Float128Vector)
+   *      Vector length
+   *
+   *   \param numLanes
+   *       Number of elements
    *
    *   \param mode
    *      Handler mode
    *
    */
-   static void astoreHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode);
+   static void astoreHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, TR::VectorLength vectorLength, int32_t numLanes, handlerMode mode);
 
   /** \brief
    *    Handler used for unsupported methods
@@ -634,7 +663,7 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *   \return
    *      NULL
    */
-   static TR::Node *unsupportedHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode);
+   static TR::Node *unsupportedHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, TR::VectorLength vectorLength, int32_t numLanes, handlerMode mode);
 
   /** \brief
    *    Scalarizes or vectorizes a node that is a call to \c VectorSupport.load() intrinsic.
@@ -654,7 +683,10 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *      Element type
    *
    *   \param vectorLength
-   *      Full vector length in bits (e.g. 128 for Float128Vector)
+   *      Vector length
+   *
+   *   \param numLanes
+   *       Number of elements
    *
    *   \param mode
    *      Handler mode
@@ -663,7 +695,7 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *      Transformed node
    *
    */
-   static TR::Node *loadIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode);
+   static TR::Node *loadIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, TR::VectorLength vectorLength, int32_t numLanes, handlerMode mode);
 
 
   /** \brief
@@ -684,7 +716,10 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *      Element type
    *
    *   \param vectorLength
-   *      Full vector length in bits (e.g. 128 for Float128Vector)
+   *      Vector length
+   *
+   *   \param numLanes
+   *      Number of elements
    *
    *   \param mode
    *      Handler mode
@@ -693,7 +728,7 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *      Transformed node
    *
    */
-   static TR::Node *storeIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode);
+   static TR::Node *storeIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, TR::VectorLength vectorLength, int32_t numLanes, handlerMode mode);
 
   /** \brief
    *    Scalarizes or vectorizes a node that is a call to \c VectorSupport.unaryOp() intrinsic.
@@ -713,7 +748,10 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *      Element type
    *
    *   \param vectorLength
-   *      Full vector length in bits (e.g. 128 for Float128Vector)
+   *      Vector length
+   *
+   *   \param numLanes
+   *      Number of elements
    *
    *   \param mode
    *      Handler mode
@@ -722,7 +760,7 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *      Transformed node
    *
    */
-   static TR::Node *unaryIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode);
+   static TR::Node *unaryIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, TR::VectorLength vectorLength, int32_t numLanes, handlerMode mode);
 
   /** \brief
    *    Scalarizes or vectorizes a node that is a call to \c VectorSupport.binaryOp() intrinsic.
@@ -742,7 +780,10 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *      Element type
    *
    *   \param vectorLength
-   *      Full vector length in bits (e.g. 128 for Float128Vector)
+   *      Vector length
+   *
+   *   \param numLanes
+   *      Number of elements
    *
    *   \param mode
    *      Handler mode
@@ -751,7 +792,7 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *      Transformed node
    *
    */
-   static TR::Node *binaryIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode);
+   static TR::Node *binaryIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, TR::VectorLength vectorLength, int32_t numLanes, handlerMode mode);
 
   /** \brief
    *    Scalarizes or vectorizes a node that is a call to \c VectorSupport.reductionCoerced() intrinsic.
@@ -771,7 +812,10 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *      Element type
    *
    *   \param vectorLength
-   *      Full vector length in bits (e.g. 128 for Float128Vector)
+   *      Vector length
+   *
+   *   \param numLanes
+   *      Number of elements
    *
    *   \param mode
    *      Handler mode
@@ -780,7 +824,7 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *      Transformed node
    *
    */
-   static TR::Node *reductionCoercedIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode);
+   static TR::Node *reductionCoercedIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, TR::VectorLength vectorLength, int32_t numLanes, handlerMode mode);
 
   /** \brief
    *    Scalarizes or vectorizes a node that is a call to \c VectorSupport.ternaryOp() intrinsic.
@@ -800,7 +844,10 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *      Element type
    *
    *   \param vectorLength
-   *      Full vector length in bits (e.g. 128 for Float128Vector)
+   *      Vector length
+   *
+   *   \param numLanes
+   *      Number of elements
    *
    *   \param mode
    *      Handler mode
@@ -809,7 +856,7 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *      Transformed node
    *
    */
-   static TR::Node *ternaryIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode);
+   static TR::Node *ternaryIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, TR::VectorLength vectorLength, int32_t numLanes, handlerMode mode);
 
 
   /** \brief
@@ -830,7 +877,10 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *      Element type
    *
    *   \param vectorLength
-   *      Full vector length in bits (e.g. 128 for Float128Vector)
+   *      Vector length
+   *
+   *   \param numLanes
+   *      Number of elements
    *
    *   \param mode
    *      Handler mode
@@ -844,7 +894,7 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *   \return
    *      Transformed node
    */
-   static TR::Node *naryIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode, int32_t numChidren, vapiOpCodeType opCodeType);
+   static TR::Node *naryIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, TR::VectorLength vectorLength, int32_t numLanes, handlerMode mode, int32_t numChidren, vapiOpCodeType opCodeType);
 
   /** \brief
    *    Scalarizes or vectorizes a node that is a call to \c VectorSupport.blend() intrinsic.
@@ -864,7 +914,10 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *      Element type
    *
    *   \param vectorLength
-   *      Full vector length in bits (e.g. 128 for Float128Vector)
+   *      Vector length
+   *
+   *   \param numLanes
+   *      Number of elements
    *
    *   \param mode
    *      Handler mode
@@ -872,7 +925,7 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *   \return
    *      Transformed node
    */
-   static TR::Node *blendIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode);
+   static TR::Node *blendIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, TR::VectorLength vectorLength, int32_t numLanes, handlerMode mode);
 
   /** \brief
    *    Scalarizes or vectorizes a node that is a call to \c VectorSupport.fromBitsCoerced() intrinsic.
@@ -892,7 +945,10 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *      Element type
    *
    *   \param vectorLength
-   *      Full vector length in bits (e.g. 128 for Float128Vector)
+   *      Vector length
+   *
+   *   \param numLanes
+   *      Number of elements
    *
    *   \param mode
    *      Handler mode
@@ -900,7 +956,7 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *   \return
    *      Transformed node
    */
-   static TR::Node *fromBitsCoercedIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode);
+   static TR::Node *fromBitsCoercedIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, TR::VectorLength vectorLength, int32_t numLanes, handlerMode mode);
 
   /** \brief
    *    Scalarizes or vectorizes a node that is a call to \c VectorSupport.compare() intrinsic.
@@ -920,7 +976,10 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *      Element type
    *
    *   \param vectorLength
-   *      Full vector length in bits (e.g. 128 for Float128Vector)
+   *      Vector length
+   *
+   *   \param numLanes
+   *      Number of elements
    *
    *   \param mode
    *      Handler mode
@@ -928,97 +987,8 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *   \return
    *      Transformed node
    */
-   static TR::Node *compareIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode);
+   static TR::Node *compareIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, TR::VectorLength vectorLength, int32_t numLanes, handlerMode mode);
 
-
-  /** \brief
-   *    Scalarizes or vectorizes a node that is a call to \c intoArray() Vector API method.
-   *    In both cases, the node is modified in place.
-   *    In the case of scalarization, extra nodes are created(lanes minus one nodes)
-   *
-   *   \param opt
-   *      This optimization object
-   *
-   *   \param treeTop
-   *      Tree top of the \c node
-   *
-   *   \param node
-   *      Node to transform
-   *
-   *   \param elementType
-   *      Element type
-   *
-   *   \param vectorLength
-   *      Full vector length in bits (e.g. 128 for Float128Vector)
-   *
-   *   \param mode
-   *      Handler mode
-   *
-   *   \return
-   *      Transformed node
-   *
-   */
-   static TR::Node *intoArrayHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode);
-
-
-  /** \brief
-   *    Scalarizes or vectorizes a node that is a call to \c fromArray() Vector API method.
-   *    In both cases, the node is modified in place.
-   *    In the case of scalarization, extra nodes are created(number of lanes minus one)
-   *
-   *   \param opt
-   *      This optimization object
-   *
-   *   \param treeTop
-   *      Tree top of the \c node
-   *
-   *   \param node
-   *      Node to transform
-   *
-   *   \param elementType
-   *      Element type
-   *
-   *   \param vectorLength
-   *      Full vector length in bits (e.g. 128 for Float128Vector)
-   *
-   *   \param mode
-   *      Handler mode
-   *
-   *   \return
-   *      Transformed node
-   *
-   */
-
-   static TR::Node *fromArrayHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode);
-
-  /** \brief
-   *    Scalarizes or vectorizes a node that is a call to \c add() Vector API method.
-   *    In both cases, the node is modified in place.
-   *    In the case of scalarization, extra nodes are created(number of lanes minus one)
-   *
-   *   \param opt
-   *      This optimization object
-   *
-   *   \param treeTop
-   *      Tree top of the \c node
-   *
-   *   \param node
-   *      Node to transform
-   *
-   *   \param elementType
-   *      Element type
-   *
-   *   \param vectorLength
-   *      Full vector length in bits (e.g. 128 for Float128Vector)
-   *
-   *   \param mode
-   *      Handler mode
-   *
-   *   \return
-   *      Transformed node
-   *
-   */
-   static TR::Node *addHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode);
 
   /** \brief
    *    Helper method to transform a load from array node
@@ -1036,7 +1006,10 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *      Element type
    *
    *   \param vectorLength
-   *      Full vector length in bits (e.g. 128 for Float128Vector)
+   *      Vector length
+   *
+   *   \param numLanes
+   *      Number of elements
    *
    *   \param mode
    *      Handler mode
@@ -1047,11 +1020,14 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *   \param arrayIndex
    *      array index node
    *
+   *   \param objType
+   *      Vector API object type (Vector, Mask, Shuffle, etc.)
+   *
    *   \return
    *      Transformed node
    *
    */
-   static TR::Node *transformLoadFromArray(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode, TR::Node *array, TR::Node *arrayIndex);
+   static TR::Node *transformLoadFromArray(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, TR::VectorLength vectorLength, int32_t numLanes, handlerMode mode, TR::Node *array, TR::Node *arrayIndex, vapiObjType objType);
 
   /** \brief
    *    Helper method to transform a store to array node
@@ -1069,11 +1045,13 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *      Element type
    *
    *   \param vectorLength
-   *      Full vector length in bits (e.g. 128 for Float128Vector)
+   *      Vector length
+   *
+   *   \param numLanes
+   *      Number of elements
    *
    *   \param mode
    *      Handler mode
-   *
    *
    *   \param valueToWrite
    *      Node containing the value to be written
@@ -1084,11 +1062,14 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *   \param arrayIndex
    *      array index node
    *
+   *   \param objType
+   *      Vector API object type (Vector, Mask, Shuffle, etc.)
+   *
    *   \return
    *      Transformed node
    *
    */
-   static TR::Node *transformStoreToArray(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode, TR::Node *valueToWrite, TR::Node *array, TR::Node *arrayIndex);
+   static TR::Node *transformStoreToArray(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, TR::VectorLength vectorLength, int32_t numLanes, handlerMode mode, TR::Node *valueToWrite, TR::Node *array, TR::Node *arrayIndex, vapiObjType objType);
 
 
   /** \brief
@@ -1107,7 +1088,10 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *      Element type
    *
    *   \param vectorLength
-   *      Full vector length in bits (e.g. 128 for Float128Vector)
+   *      Vector length
+   *
+   *   \param numLanes
+   *      Number of elements
    *
    *   \param mode
    *      Handler mode
@@ -1130,6 +1114,6 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *   \return
    *      Transformed node
    */
-   static TR::Node *transformNary(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode, TR::ILOpCodes scalarOpCode, TR::ILOpCodes vectorOpCode, int32_t firstOperand, int32_t numOperands, vapiOpCodeType opCodeType);
+   static TR::Node *transformNary(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, TR::VectorLength vectorLength, int32_t numLanes, handlerMode mode, TR::ILOpCodes scalarOpCode, TR::ILOpCodes vectorOpCode, int32_t firstOperand, int32_t numOperands, vapiOpCodeType opCodeType);
    };
 #endif /* VECTORAPIEXPANSION_INCL */

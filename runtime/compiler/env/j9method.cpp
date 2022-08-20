@@ -2561,26 +2561,6 @@ void TR_ResolvedJ9Method::construct()
    };
 
 
-   static X FloatVectorMethods[] =
-      {
-      {x(TR::jdk_incubator_vector_FloatVector_fromArray, "fromArray" , "(Ljdk/incubator/vector/VectorSpecies;[FI)Ljdk/incubator/vector/FloatVector;")},
-      {x(TR::jdk_incubator_vector_FloatVector_intoArray, "intoArray" , "([FI)V")},
-
-      {x(TR::jdk_incubator_vector_FloatVector_fromArray_mask, "fromArray" , "(Ljdk/incubator/vector/VectorSpecies;[FILjdk/incubator/vector/VectorMask;)Ljdk/incubator/vector/FloatVector;")},
-      {x(TR::jdk_incubator_vector_FloatVector_intoArray_mask, "intoArray" , "([FILjdk/incubator/vector/VectorMask;)V")},
-
-      {x(TR::jdk_incubator_vector_FloatVector_add, "add" , "(Ljdk/incubator/vector/Vector;)Ljdk/incubator/vector/FloatVector;")},
-
-      {TR::unknownMethod}
-      };
-
-   static X VectorSpeciesMethods[] =
-      {
-      {x(TR::jdk_incubator_vector_VectorSpecies_indexInRange, "indexInRange" , "(II)Ljdk/incubator/vector/VectorMask;")},
-
-      {TR::unknownMethod}
-      };
-
    static X BigDecimalMethods[] =
       {
       {x(TR::java_math_BigDecimal_add,                   "add",                   "(Ljava/math/BigDecimal;)Ljava/math/BigDecimal;")},
@@ -4105,7 +4085,6 @@ void TR_ResolvedJ9Method::construct()
       { "java/lang/invoke/MutableCallSite", MutableCallSiteMethods },
       { "java/lang/invoke/PrimitiveHandle", PrimitiveHandleMethods },
       { "com/ibm/dataaccess/PackedDecimal", DataAccessPackedDecimalMethods },
-      { "jdk/incubator/vector/FloatVector", FloatVectorMethods},
       { 0 }
       };
 
@@ -4123,8 +4102,6 @@ void TR_ResolvedJ9Method::construct()
       { "java/util/concurrent/atomic/Fences", JavaUtilConcurrentAtomicFencesMethods },
       { "com/ibm/Compiler/Internal/Prefetch", PrefetchMethods },
       { "java/lang/invoke/VarHandleInternal", VarHandleMethods },
-      { "jdk/incubator/vector/VectorSpecies", VectorSpeciesMethods},
-
       { 0 }
       };
 

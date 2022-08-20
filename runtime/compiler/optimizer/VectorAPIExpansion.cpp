@@ -63,36 +63,24 @@ TR_VectorAPIExpansion::isVectorAPIMethod(TR::MethodSymbol * methodSymbol)
            index <= _lastMethod);
    }
 
-bool
-TR_VectorAPIExpansion::returnsVector(TR::MethodSymbol * methodSymbol)
+TR_VectorAPIExpansion::vapiObjType
+TR_VectorAPIExpansion::getReturnType(TR::MethodSymbol * methodSymbol)
    {
-   if (!isVectorAPIMethod(methodSymbol)) return false;
+   if (!isVectorAPIMethod(methodSymbol)) return Unknown;
 
    TR::RecognizedMethod index = methodSymbol->getRecognizedMethod();
 
-   return methodTable[index - _firstMethod]._returnType == Vector;
-   }
-
-TR::DataType
-TR_VectorAPIExpansion::dataType(TR::MethodSymbol * methodSymbol)
-   {
-   if (!isVectorAPIMethod(methodSymbol)) return TR::NoType;
-
-   TR::RecognizedMethod index = methodSymbol->getRecognizedMethod();
-
-   return methodTable[index - _firstMethod]._elementType;
+   return methodTable[index - _firstMethod]._returnType;
    }
 
 bool
-TR_VectorAPIExpansion::isArgType(TR::MethodSymbol *methodSymbol, int32_t i, vapiArgType type)
+TR_VectorAPIExpansion::isArgType(TR::MethodSymbol *methodSymbol, int32_t i, vapiObjType type)
    {
-   if (!isVectorAPIMethod(methodSymbol)) return false;
+   if (!isVectorAPIMethod(methodSymbol) || i < 0 ) return false;
 
    TR::RecognizedMethod index = methodSymbol->getRecognizedMethod();
 
-   if (i < 0) return false;
-
-   TR_ASSERT_FATAL(i < _numArguments, "Argument index %d is too big", i);
+   TR_ASSERT_FATAL(i < _maxNumberArguments, "Argument index %d is too big", i);
    return (methodTable[index - _firstMethod]._argumentTypes[i] == type);
    }
 
@@ -174,6 +162,29 @@ TR_VectorAPIExpansion::visitNodeToBuildVectorAliases(TR::Node *node)
          if (rhs->getOpCode().hasSymbolReference())
             {
             alias(node, rhs);
+
+            int32_t id1 = node->getSymbolReference()->getReferenceNumber();
+            int32_t id2 = rhs->getSymbolReference()->getReferenceNumber();
+
+            if (_aliasTable[id1]._objectType == Unknown &&
+                _aliasTable[id2]._objectType == Unknown)
+               {
+               _aliasTable[id1]._objectType = Invalid;
+               _aliasTable[id2]._objectType = Invalid;
+               }
+            else if (_aliasTable[id1]._objectType == Unknown)
+               {
+               _aliasTable[id1]._objectType = _aliasTable[id2]._objectType;
+               }
+            else if (_aliasTable[id2]._objectType == Unknown)
+               {
+               _aliasTable[id2]._objectType = _aliasTable[id1]._objectType;
+               }
+            else if (_aliasTable[id1]._objectType != _aliasTable[id2]._objectType)
+               {
+               _aliasTable[id1]._objectType = Invalid;
+               _aliasTable[id2]._objectType = Invalid;
+               }
             }
          else
             {
@@ -189,18 +200,27 @@ TR_VectorAPIExpansion::visitNodeToBuildVectorAliases(TR::Node *node)
       TR::DataType methodElementType = TR::NoType;
       int32_t methodNumLanes = 0;
       int32_t methodRefNum = node->getSymbolReference()->getReferenceNumber();
-
       int32_t numChildren = node->getNumChildren();
+      bool isVectorAPICall = isVectorAPIMethod(methodSymbol);
+
+      _aliasTable[methodRefNum]._objectType = getReturnType(methodSymbol);
+
+      if (_aliasTable[methodRefNum]._objectType == Unknown &&
+          isVectorAPICall &&
+          methodSymbol->getRecognizedMethod() == TR::jdk_internal_vm_vector_VectorSupport_load)
+         {
+         _aliasTable[methodRefNum]._objectType = getObjectTypeFromClassNode(comp(), node->getFirstChild());
+         }
 
       for (int32_t i = 0; i < numChildren; i++)
          {
-         if (!isVectorAPIMethod(methodSymbol) ||
+         if (!isVectorAPICall ||
              isArgType(methodSymbol, i, Vector) ||
              isArgType(methodSymbol, i, Mask))
             {
             TR::Node *child = node->getChild(i);
             bool hasSymbolReference = child->getOpCode().hasSymbolReference();
-            bool isMask = isVectorAPIMethod(methodSymbol) && isArgType(methodSymbol, i, Mask);
+            bool isMask = isVectorAPICall && isArgType(methodSymbol, i, Mask);
             bool isNullMask = isMask && child->isConstZeroValue();
 
             if (hasSymbolReference)
@@ -217,7 +237,7 @@ TR_VectorAPIExpansion::visitNodeToBuildVectorAliases(TR::Node *node)
                }
             }
 
-         if (!isVectorAPIMethod(methodSymbol))
+         if (!isVectorAPICall)
             {
             if (_trace)
                traceMsg(comp(), "Invalidating #%d since it's not a vector API method in node %p\n",
@@ -260,19 +280,15 @@ TR_VectorAPIExpansion::visitNodeToBuildVectorAliases(TR::Node *node)
             if (_trace)
                traceMsg(comp(), "%snode n%dn (#%d) was updated with vecLen : %d\n",
                             OPT_DETAILS_VECTOR, node->getGlobalIndex(), methodRefNum, speciesLen);
-
-            methodElementType = dataType(methodSymbol);
-            int32_t elementSize = OMR::DataType::getSize(methodElementType);
-            methodNumLanes = speciesLen/8/elementSize;
             }
-         else if (isArgType(methodSymbol, i, elementType))
+         else if (isArgType(methodSymbol, i, ElementType))
             {
             TR::Node *elementTypeNode = node->getChild(i);
             methodElementType = getDataTypeFromClassNode(comp(), elementTypeNode);
             _aliasTable[methodRefNum]._elementType = methodElementType;
 
             }
-         else if (isArgType(methodSymbol, i, numLanes))
+         else if (isArgType(methodSymbol, i, NumLanes))
             {
             TR::Node *numLanesNode = node->getChild(i);
             _aliasTable[methodRefNum]._vecLen = vec_len_unknown;
@@ -303,12 +319,18 @@ TR_VectorAPIExpansion::visitNodeToBuildVectorAliases(TR::Node *node)
       else
          {
          int32_t elementSize = OMR::DataType::getSize(methodElementType);
-         vec_sz_t vectorLength = methodNumLanes*8*elementSize;
+         vec_sz_t bitsLength = methodNumLanes*8*elementSize;
+         TR::VectorLength vectorLength = OMR::DataType::bitsToVectorLength(bitsLength);
+         bool canVectorize = false;
 
-         bool canVectorize = methodTable[handlerIndex]._methodHandler(this, NULL, node, methodElementType, vectorLength,
-                                                                      checkVectorization);
-         bool canScalarize = methodTable[handlerIndex]._methodHandler(this, NULL, node, methodElementType, vectorLength,
-                                                                         checkScalarization);
+         if (supportedOnPlatform(comp(), bitsLength) != TR::NoVectorLength)
+            {
+            canVectorize = methodTable[handlerIndex]._methodHandler(this, NULL, node, methodElementType, vectorLength, methodNumLanes,
+                                                                    checkVectorization);
+            }
+
+         bool canScalarize = methodTable[handlerIndex]._methodHandler(this, NULL, node, methodElementType, vectorLength, methodNumLanes,
+                                                                      checkScalarization);
          if (!canVectorize)
             {
             if (_trace)
@@ -364,14 +386,12 @@ TR_VectorAPIExpansion::visitNodeToBuildVectorAliases(TR::Node *node)
          TR::Node *child = node->getChild(i);
          if (child->getOpCode().hasSymbolReference())
             {
-            bool vectorResult = false;
+            bool scalarResult = false;
             if (child->getOpCode().isFunctionCall())
                {
                TR::MethodSymbol * methodSymbol = child->getSymbolReference()->getSymbol()->castToMethodSymbol();
-               vectorResult = returnsVector(methodSymbol);
+               if (getReturnType(methodSymbol) ==  Scalar) continue; // OK to use by any other parent node
                }
-
-            if (!vectorResult) continue;  // OK to use reduction calls by any other parent node
 
             if (_trace)
                traceMsg(comp(), "Invalidating #%d since it's used by unsupported node %p\n",
@@ -489,9 +509,13 @@ TR_VectorAPIExpansion::getVectorSizeFromVectorSpecies(TR::Node *vectorSpeciesNod
       return vec_len_unknown;
    }
 
-TR::DataType
-TR_VectorAPIExpansion::getDataTypeFromClassNode(TR::Compilation *comp, TR::Node *classNode)
+
+J9Class *
+TR_VectorAPIExpansion::getJ9ClassFromClassNode(TR::Compilation *comp, TR::Node *classNode)
    {
+   if (!classNode->getOpCode().hasSymbolReference())
+      return NULL;
+
    TR::SymbolReference *symRef = classNode->getSymbolReference();
    if (symRef)
       {
@@ -503,23 +527,65 @@ TR_VectorAPIExpansion::getDataTypeFromClassNode(TR::Compilation *comp, TR::Node 
 
          uintptr_t javaLangClass = comp->getKnownObjectTable()->getPointer(symRef->getKnownObjectIndex());
          J9Class *j9class = (J9Class *)(intptr_t)fej9->getInt64Field(javaLangClass, "vmRef");
-         J9JavaVM *vm = fej9->getJ9JITConfig()->javaVM;
 
-         if (j9class == vm->floatReflectClass)
-            return TR::Float;
-         else if (j9class == vm->doubleReflectClass)
-            return TR::Double;
-         else if (j9class == vm->byteReflectClass)
-            return TR::Int8;
-         else if (j9class == vm->shortReflectClass)
-            return TR::Int16;
-         else if (j9class == vm->intReflectClass)
-            return TR::Int32;
-         else if (j9class == vm->longReflectClass)
-            return TR::Int64;
+         return j9class;
          }
       }
-   return TR::NoType;
+   return NULL;
+   }
+
+
+TR::DataType
+TR_VectorAPIExpansion::getDataTypeFromClassNode(TR::Compilation *comp, TR::Node *classNode)
+   {
+   J9Class *j9class = getJ9ClassFromClassNode(comp, classNode);
+
+   if (!j9class) return TR::NoType;
+
+   TR_J9VMBase *fej9 = comp->fej9();
+   J9JavaVM *vm = fej9->getJ9JITConfig()->javaVM;
+
+   if (j9class == vm->floatReflectClass)
+      return TR::Float;
+   else if (j9class == vm->doubleReflectClass)
+      return TR::Double;
+   else if (j9class == vm->byteReflectClass)
+      return TR::Int8;
+   else if (j9class == vm->shortReflectClass)
+      return TR::Int16;
+   else if (j9class == vm->intReflectClass)
+      return TR::Int32;
+   else if (j9class == vm->longReflectClass)
+      return TR::Int64;
+   else
+      return TR::NoType;
+   }
+
+
+TR_VectorAPIExpansion::vapiObjType
+TR_VectorAPIExpansion::getObjectTypeFromClassNode(TR::Compilation *comp, TR::Node *classNode)
+   {
+   J9Class *j9class = getJ9ClassFromClassNode(comp, classNode);
+
+   if (!j9class) return Unknown;
+
+   J9UTF8 *className = J9ROMCLASS_CLASSNAME(j9class->romClass);
+   int32_t length = J9UTF8_LENGTH(className);
+   char *classNameChars = (char*)J9UTF8_DATA(className);
+
+   // Currently, classNode can be one of the following types
+   // jdk/incubator/vector/<species name>Vector
+   // jdk/incubator/vector/<species name>Vector$<species name>Mask
+   // jdk/incubator/vector/<species name>Vector$<species name>Shuffle
+
+   if (!strncmp(classNameChars + length - 6, "Vector", 6))
+      return Vector;
+   else if (!strncmp(classNameChars + length - 4, "Mask", 4))
+      return Mask;
+   else if (!strncmp(classNameChars + length - 7, "Shuffle", 7))
+      return Shuffle;
+
+   return Unknown;
    }
 
 
@@ -663,6 +729,18 @@ TR_VectorAPIExpansion::validateVectorAliasClasses()
             if (!vectorClass)
                break;
 
+            if (_aliasTable[i]._objectType == Invalid)
+               {
+               if (_trace)
+                  traceMsg(comp(), "Class #%d can't be vectorized or scalarized due to invalid object type of  #%d\n", id, i);
+
+               _aliasTable[id]._cantVectorize = true;
+               _aliasTable[id]._cantScalarize = true;
+               vectorClass = false;
+               break;
+               }
+
+
             if (_aliasTable[i]._cantVectorize)
                {
                if (_trace)
@@ -802,13 +880,16 @@ TR_VectorAPIExpansion::expandVectorAPI()
          traceMsg(comp(), "Transforming node %p of class %d\n", node, classId);
 
       TR::DataType elementType = _aliasTable[classId]._elementType;
-      int32_t vectorLength = _aliasTable[classId]._vecLen;
+      int32_t bitsLength = _aliasTable[classId]._vecLen;
+      TR::VectorLength vectorLength = OMR::DataType::bitsToVectorLength(bitsLength);
+      int32_t elementSize = OMR::DataType::getSize(elementType);
+      int32_t numLanes = bitsLength/8/elementSize;
 
       if (opCodeValue == TR::astore)
          {
          if (_trace)
             traceMsg(comp(), "handling astore %p\n", node);
-         astoreHandler(this, treeTop, node, elementType, vectorLength, doMode);
+         astoreHandler(this, treeTop, node, elementType, vectorLength, numLanes, doMode);
          }
       else if (opCode.isFunctionCall())
          {
@@ -817,18 +898,15 @@ TR_VectorAPIExpansion::expandVectorAPI()
          TR::RecognizedMethod index = methodSymbol->getRecognizedMethod();
          int32_t handlerIndex = index - _firstMethod;
 
-         TR_ASSERT_FATAL(methodTable[handlerIndex]._methodHandler(this, treeTop, node, elementType, vectorLength, checkMode),
+         TR_ASSERT_FATAL(methodTable[handlerIndex]._methodHandler(this, treeTop, node, elementType, vectorLength, numLanes, checkMode),
                          "Analysis should've proved that method is supported");
 
          TR::Node::recreate(parent, TR::treetop);
-         methodTable[handlerIndex]._methodHandler(this, treeTop, node, elementType, vectorLength, doMode);
+         methodTable[handlerIndex]._methodHandler(this, treeTop, node, elementType, vectorLength, numLanes, doMode);
          }
 
       if (doMode == doScalarization)
          {
-         int32_t elementSize = OMR::DataType::getSize(elementType);
-         int32_t numLanes = vectorLength/8/elementSize;
-
          TR::TreeTop *prevTreeTop = treeTop;
          for (int32_t i = 1; i < numLanes; i++)
             {
@@ -862,7 +940,8 @@ TR_VectorAPIExpansion::expandVectorAPI()
 //
 
 void
-TR_VectorAPIExpansion::vectorizeLoadOrStore(TR_VectorAPIExpansion *opt, TR::Node *node, TR::DataType type)
+TR_VectorAPIExpansion::vectorizeLoadOrStore(TR_VectorAPIExpansion *opt, TR::Node *node,
+                                            TR::DataType opcodeType, TR::DataType symRefType)
    {
    TR::Compilation *comp = opt->comp();
 
@@ -872,16 +951,16 @@ TR_VectorAPIExpansion::vectorizeLoadOrStore(TR_VectorAPIExpansion *opt, TR::Node
    TR::SymbolReference *vecSymRef = (opt->_aliasTable)[symRef->getReferenceNumber()]._vecSymRef;
    if (vecSymRef == NULL)
       {
-      vecSymRef = comp->cg()->allocateLocalTemp(type);
+      vecSymRef = comp->cg()->allocateLocalTemp(symRefType);
       (opt->_aliasTable)[symRef->getReferenceNumber()]._vecSymRef = vecSymRef;
       if (opt->_trace)
          traceMsg(comp, "   created new vector symRef #%d for #%d\n", vecSymRef->getReferenceNumber(), symRef->getReferenceNumber());
 
       }
    if (node->getOpCode().isStore())
-      TR::Node::recreate(node, TR::ILOpCode::createVectorOpCode(TR::vstore, type));
+      TR::Node::recreate(node, TR::ILOpCode::createVectorOpCode(symRefType.isVector() ? TR::vstore : TR::mstore, opcodeType));
    else
-      TR::Node::recreate(node, TR::ILOpCode::createVectorOpCode(TR::vload, type));
+      TR::Node::recreate(node, TR::ILOpCode::createVectorOpCode(symRefType.isVector() ? TR::vload : TR::mload, opcodeType));
 
    node->setSymbolReference(vecSymRef);
    }
@@ -992,14 +1071,13 @@ TR_VectorAPIExpansion::generateAddressNode(TR::Node *array, TR::Node *arrayIndex
 
 
 void TR_VectorAPIExpansion::aloadHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node,
-                                          TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode)
+                                         TR::DataType elementType, TR::VectorLength vectorLength, int32_t numLanes, handlerMode mode)
    {
    TR::Compilation *comp = opt->comp();
 
    if (mode == doScalarization)
       {
       int32_t elementSize = OMR::DataType::getSize(elementType);
-      int32_t numLanes = vectorLength/8/elementSize;
       int32_t id = node->getSymbolReference()->getReferenceNumber();
 
       scalarizeLoadOrStore(opt, node, elementType, numLanes);
@@ -1017,9 +1095,13 @@ void TR_VectorAPIExpansion::aloadHandler(TR_VectorAPIExpansion *opt, TR::TreeTop
       }
    else if (mode == doVectorization)
       {
-      TR::VectorLength lengthEnum = supportedOnPlatform(comp, vectorLength);
-      TR::DataType vectorType = OMR::DataType(elementType).scalarToVector(lengthEnum);
-      vectorizeLoadOrStore(opt, node, vectorType);
+      TR::DataType vectorType = TR::DataType::createVectorType(elementType, vectorLength);
+      TR::DataType symRefType = vectorType;
+
+      if (opt->_aliasTable[node->getSymbolReference()->getReferenceNumber()]._objectType == Mask)
+         symRefType = TR::DataType::createMaskType(elementType, vectorLength);
+
+      vectorizeLoadOrStore(opt, node, vectorType, symRefType);
       }
 
    return;
@@ -1027,7 +1109,7 @@ void TR_VectorAPIExpansion::aloadHandler(TR_VectorAPIExpansion *opt, TR::TreeTop
 
 
 void TR_VectorAPIExpansion::astoreHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node,
-                                          TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode)
+                                          TR::DataType elementType, TR::VectorLength vectorLength, int32_t numLanes, handlerMode mode)
    {
    TR::Compilation *comp = opt->comp();
 
@@ -1036,7 +1118,6 @@ void TR_VectorAPIExpansion::astoreHandler(TR_VectorAPIExpansion *opt, TR::TreeTo
    if (mode == doScalarization)
       {
       int32_t elementSize = OMR::DataType::getSize(elementType);
-      int32_t numLanes = vectorLength/8/elementSize;
       int32_t id = node->getSymbolReference()->getReferenceNumber();
 
       TR::ILOpCodes storeOpCode = comp->il.opCodeForDirectStore(elementType);
@@ -1047,7 +1128,7 @@ void TR_VectorAPIExpansion::astoreHandler(TR_VectorAPIExpansion *opt, TR::TreeTo
 
       TR::SymbolReference *rhsSymRef = rhs->getSymbolReference();
 
-      if (rhs->getOpCodeValue() == TR::aload) aloadHandler(opt, treeTop, rhs, elementType, vectorLength, mode);
+      if (rhs->getOpCodeValue() == TR::aload) aloadHandler(opt, treeTop, rhs, elementType, vectorLength, numLanes, mode);
 
       for (int32_t i = 1; i < numLanes; i++)
          {
@@ -1060,10 +1141,15 @@ void TR_VectorAPIExpansion::astoreHandler(TR_VectorAPIExpansion *opt, TR::TreeTo
       }
    else if (mode == doVectorization)
       {
-      TR::VectorLength lengthEnum = supportedOnPlatform(comp, vectorLength);
-      TR::DataType vectorType = OMR::DataType(elementType).scalarToVector(lengthEnum);
-      vectorizeLoadOrStore(opt, node, vectorType);
-      if (rhs->getOpCodeValue() == TR::aload) vectorizeLoadOrStore(opt, rhs, vectorType);
+      TR::DataType vectorType = TR::DataType::createVectorType(elementType, vectorLength);
+      TR::DataType symRefType = vectorType;
+
+      if (opt->_aliasTable[node->getSymbolReference()->getReferenceNumber()]._objectType == Mask)
+         symRefType = TR::DataType::createMaskType(elementType, vectorLength);
+
+      vectorizeLoadOrStore(opt, node, vectorType, symRefType);
+
+      if (rhs->getOpCodeValue() == TR::aload) vectorizeLoadOrStore(opt, rhs, vectorType, symRefType);
       }
 
    return;
@@ -1072,88 +1158,38 @@ void TR_VectorAPIExpansion::astoreHandler(TR_VectorAPIExpansion *opt, TR::TreeTo
 
 TR::Node *TR_VectorAPIExpansion::unsupportedHandler(TR_VectorAPIExpansion *, TR::TreeTop *treeTop,
                                                     TR::Node *node, TR::DataType elementType,
-                                                    vec_sz_t length, handlerMode mode)
+                                                    TR::VectorLength vectorLength, int32_t numLanes, handlerMode mode)
    {
    return NULL;
    }
 
 
-TR::Node *TR_VectorAPIExpansion::fromArrayHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop,
-                                                  TR::Node *node, TR::DataType elementType,
-                                                  vec_sz_t vectorLength, handlerMode mode)
-   {
-   TR::Compilation *comp = opt->comp();
-
-   if (mode == checkScalarization) return node;
-   if (mode == checkVectorization)
-      return supportedOnPlatform(comp, vectorLength) != TR::NoVectorLength ? node : NULL;
-
-   if (opt->_trace)
-      traceMsg(comp, "fromArrayHandler for node %p\n", node);
-
-   TR::Node *array = node->getSecondChild();
-   TR::Node *arrayIndex = node->getThirdChild();
-
-   // TODO: insert exception check
-
-   return transformLoadFromArray(opt, treeTop, node, elementType, vectorLength, mode, array, arrayIndex);
-   }
-
-
-TR::Node *TR_VectorAPIExpansion::intoArrayHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node,
-                                                  TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode)
-   {
-   TR::Compilation *comp = opt->comp();
-
-   if (mode == checkScalarization) return node;
-   if (mode == checkVectorization)
-      return supportedOnPlatform(comp, vectorLength) != TR::NoVectorLength ? node : NULL;
-
-   if (opt->_trace)
-      traceMsg(comp, "intoArrayHandler for node %p\n", node);
-
-   TR::Node *valueToWrite = node->getFirstChild();
-   TR::Node *array = node->getSecondChild();
-   TR::Node *arrayIndex = node->getThirdChild();
-
-   // TODO: insert exception check
-
-   return transformStoreToArray(opt, treeTop, node, elementType, vectorLength, mode, valueToWrite, array, arrayIndex);
-   }
-
-
-TR::Node *TR_VectorAPIExpansion::addHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node,
-                                            TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode)
-   {
-   // This handler is not for intrinsic and is currently disabled
-
-   TR::Compilation *comp = opt->comp();
-
-   if (mode == checkScalarization) return node;
-   if (mode == checkVectorization)
-      return supportedOnPlatform(comp, vectorLength) != TR::NoVectorLength ? node : NULL;
-
-   // TODO: The above does not check the actual opcode and type
-
-   if (opt->_trace)
-      traceMsg(comp, "addHandler for node %p\n", node);
-
-   TR::ILOpCodes scalarOpCode = ILOpcodeFromVectorAPIOpcode(VECTOR_OP_ADD, elementType, 0, Other, false);
-   TR::ILOpCodes vectorOpCode = ILOpcodeFromVectorAPIOpcode(VECTOR_OP_ADD, elementType, vectorLength, Other, false);
-
-   return transformNary(opt, treeTop, node, elementType, vectorLength, mode, scalarOpCode, vectorOpCode, 0, 2, Other);
-}
-
-
 TR::Node *TR_VectorAPIExpansion::loadIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop,
                                                       TR::Node *node, TR::DataType elementType,
-                                                      vec_sz_t vectorLength, handlerMode mode)
+                                                      TR::VectorLength vectorLength, int32_t numLanes, handlerMode mode)
    {
    TR::Compilation *comp = opt->comp();
 
-   if (mode == checkScalarization) return node;
-   if (mode == checkVectorization)
-      return supportedOnPlatform(comp, vectorLength) != TR::NoVectorLength ? node : NULL;
+   vapiObjType objType = getObjectTypeFromClassNode(comp, node->getFirstChild());
+
+   if (mode == checkScalarization)
+      {
+      return (objType == Vector) ? node : NULL;
+      }
+   else if (mode == checkVectorization)
+      {
+      if (objType != Vector)  // TODO: implement Mask and Shuffle
+         return NULL;
+
+      TR::DataType vectorType = TR::DataType::createVectorType(elementType, vectorLength);
+      TR::ILOpCodes vectorOpCode = TR::ILOpCode::createVectorOpCode(TR::vloadi, vectorType);
+
+      if (!comp->cg()->getSupportsOpCodeForAutoSIMD(vectorOpCode))
+         return NULL;
+
+      return node;
+      }
+
 
    if (opt->_trace)
       traceMsg(comp, "loadIntrinsicHandler for node %p\n", node);
@@ -1161,12 +1197,13 @@ TR::Node *TR_VectorAPIExpansion::loadIntrinsicHandler(TR_VectorAPIExpansion *opt
    TR::Node *array = node->getChild(5);
    TR::Node *arrayIndex = node->getChild(6);
 
-   return transformLoadFromArray(opt, treeTop, node, elementType, vectorLength, mode, array, arrayIndex);
+   return transformLoadFromArray(opt, treeTop, node, elementType, vectorLength, numLanes, mode, array, arrayIndex, objType);
    }
 
-TR::Node *TR_VectorAPIExpansion::transformLoadFromArray(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType,
-                                               vec_sz_t vectorLength, handlerMode mode,
-                                               TR::Node *array, TR::Node *arrayIndex)
+TR::Node *TR_VectorAPIExpansion::transformLoadFromArray(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node,
+                                                        TR::DataType elementType, TR::VectorLength vectorLength, int32_t numLanes,
+                                                        handlerMode mode,
+                                                        TR::Node *array, TR::Node *arrayIndex, vapiObjType objType)
 
    {
    TR::Compilation *comp = opt->comp();
@@ -1180,7 +1217,6 @@ TR::Node *TR_VectorAPIExpansion::transformLoadFromArray(TR_VectorAPIExpansion *o
 
    if (mode == doScalarization)
       {
-      int32_t numLanes = vectorLength/8/elementSize;
       TR::ILOpCodes loadOpCode = TR::ILOpCode::indirectLoadOpCode(elementType);
       TR::SymbolReference *scalarShadow = comp->getSymRefTab()->findOrCreateArrayShadowSymbolRef(elementType, NULL);
 
@@ -1211,11 +1247,24 @@ TR::Node *TR_VectorAPIExpansion::transformLoadFromArray(TR_VectorAPIExpansion *o
       }
    else if (mode == doVectorization)
       {
-      TR::VectorLength lengthEnum = supportedOnPlatform(comp, vectorLength);
-      TR::DataType vectorType = OMR::DataType(elementType).scalarToVector(lengthEnum);
-      TR::SymbolReference *vecShadow = comp->getSymRefTab()->findOrCreateArrayShadowSymbolRef(vectorType, NULL);
-      TR::Node::recreate(node, TR::ILOpCode::createVectorOpCode(TR::vloadi, vectorType));
-      node->setSymbolReference(vecShadow);
+      TR::DataType symRefType;
+      TR::DataType opCodeType;
+
+      opCodeType = TR::DataType::createVectorType(elementType, vectorLength);
+      symRefType = opCodeType;
+
+      TR::SymbolReference *symRef = comp->getSymRefTab()->findOrCreateArrayShadowSymbolRef(symRefType, NULL);
+      TR::ILOpCodes op = TR::ILOpCode::createVectorOpCode(TR::vloadi, opCodeType);
+      TR::Node::recreate(node, op);
+      node->setSymbolReference(symRef);
+
+      if (TR::Options::getVerboseOption(TR_VerboseVectorAPI))
+         {
+         TR::ILOpCode opcode(op);
+         TR_VerboseLog::writeLine(TR_Vlog_VECTOR_API, "Vectorized using %s%s in %s at %s",
+                                  opcode.getName(), TR::DataType::getName(opcode.getVectorResultDataType()),
+                                  comp->signature(), comp->getHotnessName(comp->getMethodHotness()));
+         }
       }
 
    return node;
@@ -1223,13 +1272,30 @@ TR::Node *TR_VectorAPIExpansion::transformLoadFromArray(TR_VectorAPIExpansion *o
 
 
 TR::Node *TR_VectorAPIExpansion::storeIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node,
-                                                  TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode)
+                                                       TR::DataType elementType, TR::VectorLength vectorLength, int32_t numLanes,
+                                                       handlerMode mode)
    {
    TR::Compilation *comp = opt->comp();
 
-   if (mode == checkScalarization) return node;
-   if (mode == checkVectorization)
-      return supportedOnPlatform(comp, vectorLength) != TR::NoVectorLength ? node : NULL;
+   vapiObjType objType = getObjectTypeFromClassNode(comp, node->getFirstChild());
+
+   if (mode == checkScalarization)
+      {
+      return (objType == Vector) ? node : NULL;
+      }
+   else if (mode == checkVectorization)
+      {
+      if (objType != Vector)  // TODO: Mask and Shuffle
+         return NULL;
+
+      TR::DataType vectorType = TR::DataType::createVectorType(elementType, vectorLength);
+      TR::ILOpCodes vectorOpCode = TR::ILOpCode::createVectorOpCode(TR::vstorei, vectorType);
+
+      if (!comp->cg()->getSupportsOpCodeForAutoSIMD(vectorOpCode))
+         return NULL;
+
+      return node;
+      }
 
    if (opt->_trace)
       traceMsg(comp, "storeIntrinsicHandler for node %p\n", node);
@@ -1238,13 +1304,14 @@ TR::Node *TR_VectorAPIExpansion::storeIntrinsicHandler(TR_VectorAPIExpansion *op
    TR::Node *array = node->getChild(6);
    TR::Node *arrayIndex = node->getChild(7);
 
-   return transformStoreToArray(opt, treeTop, node, elementType, vectorLength, mode, valueToWrite, array, arrayIndex);
+   return transformStoreToArray(opt, treeTop, node, elementType, vectorLength, numLanes, mode, valueToWrite, array, arrayIndex, objType);
    }
 
 
 TR::Node *TR_VectorAPIExpansion::transformStoreToArray(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node,
-                                                       TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode,
-                                                       TR::Node *valueToWrite, TR::Node *array, TR::Node *arrayIndex)
+                                                       TR::DataType elementType, TR::VectorLength vectorLength, int32_t numLanes,
+                                                       handlerMode mode,
+                                                       TR::Node *valueToWrite, TR::Node *array, TR::Node *arrayIndex, vapiObjType objType)
 
    {
    TR::Compilation *comp = opt->comp();
@@ -1259,8 +1326,6 @@ TR::Node *TR_VectorAPIExpansion::transformStoreToArray(TR_VectorAPIExpansion *op
 
    if (mode == doScalarization)
       {
-      int32_t numLanes = vectorLength/8/elementSize;
-
       // TODO: use TR::ILOpCode::indirectLoadOpCode(elementType) after adding it to OMR
       TR_ASSERT_FATAL(elementType < TR::NumOMRTypes, "unexpected type");
       TR::ILOpCodes storeOpCode = comp->il.OMR::IL::opCodeForIndirectStore(elementType);
@@ -1268,7 +1333,7 @@ TR::Node *TR_VectorAPIExpansion::transformStoreToArray(TR_VectorAPIExpansion *op
       TR::SymbolReference *scalarShadow = comp->getSymRefTab()->findOrCreateArrayShadowSymbolRef(elementType, NULL);
 
       if (valueToWrite->getOpCodeValue() == TR::aload)
-         aloadHandler(opt, treeTop, valueToWrite, elementType, vectorLength, mode);
+         aloadHandler(opt, treeTop, valueToWrite, elementType, vectorLength, numLanes, mode);
 
       TR::Node::recreate(node, storeOpCode);
       node->setSymbolReference(scalarShadow);
@@ -1299,15 +1364,37 @@ TR::Node *TR_VectorAPIExpansion::transformStoreToArray(TR_VectorAPIExpansion *op
       }
    else if (mode == doVectorization)
       {
-      // vectorization(will be enabled later)
-      TR::VectorLength lengthEnum = supportedOnPlatform(comp, vectorLength);
-      TR::DataType vectorType = OMR::DataType(elementType).scalarToVector(lengthEnum);
-      TR::SymbolReference *vecShadow = comp->getSymRefTab()->findOrCreateArrayShadowSymbolRef(vectorType, NULL);
+      TR::DataType vectorType = TR::DataType::createVectorType(elementType, vectorLength);
 
-      if (valueToWrite->getOpCodeValue() == TR::aload) vectorizeLoadOrStore(opt, valueToWrite, vectorType);
+      if (valueToWrite->getOpCodeValue() == TR::aload)
+         {
+         TR::DataType symRefType = vectorType;
 
-      TR::Node::recreate(node, TR::ILOpCode::createVectorOpCode(TR::vstorei, vectorType));
-      node->setSymbolReference(vecShadow);
+         if (opt->_aliasTable[valueToWrite->getSymbolReference()->getReferenceNumber()]._objectType == Mask)
+            symRefType = TR::DataType::createMaskType(elementType, vectorLength);
+
+         vectorizeLoadOrStore(opt, valueToWrite, vectorType, symRefType);
+         }
+
+      TR::DataType symRefType;
+      TR::DataType opCodeType;
+      TR::VectorOperation opCode;
+
+      opCodeType = TR::DataType::createVectorType(elementType, vectorLength);
+      symRefType = opCodeType;
+
+      TR::SymbolReference *symRef = comp->getSymRefTab()->findOrCreateArrayShadowSymbolRef(symRefType, NULL);
+      TR::ILOpCodes op = TR::ILOpCode::createVectorOpCode(TR::vstorei, opCodeType);
+      TR::Node::recreate(node, op);
+      node->setSymbolReference(symRef);
+
+      if (TR::Options::getVerboseOption(TR_VerboseVectorAPI))
+         {
+         TR::ILOpCode opcode(op);
+         TR_VerboseLog::writeLine(TR_Vlog_VECTOR_API, "Vectorized using %s%s in %s at %s",
+                                  opcode.getName(), TR::DataType::getName(opcode.getVectorResultDataType()),
+                                  comp->signature(), comp->getHotnessName(comp->getMethodHotness()));
+         }
       }
 
    return node;
@@ -1315,37 +1402,42 @@ TR::Node *TR_VectorAPIExpansion::transformStoreToArray(TR_VectorAPIExpansion *op
 
 
 TR::Node *TR_VectorAPIExpansion::unaryIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node,
-                                                        TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode)
+                                                       TR::DataType elementType, TR::VectorLength vectorLength, int32_t numLanes,
+                                                       handlerMode mode)
    {
-   return naryIntrinsicHandler(opt, treeTop, node, elementType, vectorLength, mode, 1, Other);
+   return naryIntrinsicHandler(opt, treeTop, node, elementType, vectorLength, numLanes, mode, 1, Other);
    }
 
 TR::Node *TR_VectorAPIExpansion::binaryIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node,
-                                                        TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode)
+                                                        TR::DataType elementType, TR::VectorLength vectorLength, int32_t numLanes,
+                                                        handlerMode mode)
    {
-   return naryIntrinsicHandler(opt, treeTop, node, elementType, vectorLength, mode, 2, Other);
+   return naryIntrinsicHandler(opt, treeTop, node, elementType, vectorLength, numLanes, mode, 2, Other);
    }
 
 TR::Node *TR_VectorAPIExpansion::reductionCoercedIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node,
-                                                                  TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode)
+                                                                  TR::DataType elementType, TR::VectorLength vectorLength, int32_t numLanes,
+                                                                  handlerMode mode)
    {
-   return naryIntrinsicHandler(opt, treeTop, node, elementType, vectorLength, mode, 1, Reduction);
+   return naryIntrinsicHandler(opt, treeTop, node, elementType, vectorLength, numLanes, mode, 1, Reduction);
    }
 
 TR::Node *TR_VectorAPIExpansion::ternaryIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node,
-                                                        TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode)
+                                                         TR::DataType elementType, TR::VectorLength vectorLength, int32_t numLanes,
+                                                         handlerMode mode)
    {
-   return naryIntrinsicHandler(opt, treeTop, node, elementType, vectorLength, mode, 3, Other);
+   return naryIntrinsicHandler(opt, treeTop, node, elementType, vectorLength, numLanes, mode, 3, Other);
    }
 
 TR::Node *TR_VectorAPIExpansion::naryIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node,
-                                                      TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode,
+                                                      TR::DataType elementType, TR::VectorLength vectorLength, int32_t numLanes,
+                                                      handlerMode mode,
                                                       int32_t numChildren, vapiOpCodeType opCodeType)
    {
    TR::Compilation *comp = opt->comp();
    TR::Node *opcodeNode = node->getFirstChild();
    int firstOperand = 5;
-   TR::Node *maskNode = node->getChild(firstOperand + numChildren);
+   TR::Node *maskNode = node->getChild(firstOperand + numChildren);  // each intrinsic has a mask argument
    bool withMask = !maskNode->isConstZeroValue();
 
    if (withMask) numChildren++;
@@ -1368,7 +1460,7 @@ TR::Node *TR_VectorAPIExpansion::naryIntrinsicHandler(TR_VectorAPIExpansion *opt
       // and all operations should be done in Int in the case of scalarization
       if (elementType == TR::Int8 || elementType == TR::Int16)
            opType = TR::Int32;
-      scalarOpCode = ILOpcodeFromVectorAPIOpcode(vectorAPIOpcode, opType, 0, opCodeType, withMask);
+      scalarOpCode = ILOpcodeFromVectorAPIOpcode(vectorAPIOpcode, opType, TR::NoVectorLength, opCodeType, withMask);
 
       if (mode == checkScalarization)
          {
@@ -1398,9 +1490,6 @@ TR::Node *TR_VectorAPIExpansion::naryIntrinsicHandler(TR_VectorAPIExpansion *opt
       {
       if (mode == checkVectorization)
          {
-         // can create the opcode only after checking if the length is supported
-         if (supportedOnPlatform(comp, vectorLength) == TR::NoVectorLength) return NULL;
-
          vectorOpCode = ILOpcodeFromVectorAPIOpcode(vectorAPIOpcode, opType, vectorLength, opCodeType, withMask);
 
          if (vectorOpCode == TR::BadILOp || !comp->cg()->getSupportsOpCodeForAutoSIMD(vectorOpCode))
@@ -1429,14 +1518,15 @@ TR::Node *TR_VectorAPIExpansion::naryIntrinsicHandler(TR_VectorAPIExpansion *opt
          }
       }
 
-   return transformNary(opt, treeTop, node, elementType, vectorLength, mode, scalarOpCode, vectorOpCode,
+   return transformNary(opt, treeTop, node, elementType, vectorLength, numLanes, mode, scalarOpCode, vectorOpCode,
                         firstOperand, numChildren, opCodeType);
    }
 
 TR::Node *TR_VectorAPIExpansion::blendIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node,
-                                                       TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode)
+                                                       TR::DataType elementType, TR::VectorLength vectorLength, int32_t numLanes,
+                                                       handlerMode mode)
    {
-   return NULL; // the folowing is a prototype cod until Mask/Shuffle design
+   return NULL; // WIP
 
    TR::Compilation *comp = opt->comp();
 
@@ -1444,15 +1534,14 @@ TR::Node *TR_VectorAPIExpansion::blendIntrinsicHandler(TR_VectorAPIExpansion *op
       traceMsg(comp, "blendIntrinsicHandler for node %p\n", node);
 
    TR::ILOpCodes scalarOpCode = TR::BadILOp;
-   // TODO: check if vbitselect can beused vs vselect
-   TR::ILOpCodes vectorOpCode = TR::ILOpCode::createVectorOpCode(TR::vbitselect, elementType.scalarToVector(OMR::DataType::bitsToVectorLength(vectorLength)));
+   TR::ILOpCodes vectorOpCode = TR::BadILOp;
 
    if (mode == checkScalarization)
       return NULL;
 
    if (mode == checkVectorization)
       {
-      if (!supportedOnPlatform(comp, vectorLength)) return NULL;
+      vectorOpCode = TR::ILOpCode::createVectorOpCode(TR::vbitselect, TR::DataType::createVectorType(elementType, vectorLength));
 
       if (!comp->cg()->getSupportsOpCodeForAutoSIMD(vectorOpCode))
          return NULL;
@@ -1460,12 +1549,13 @@ TR::Node *TR_VectorAPIExpansion::blendIntrinsicHandler(TR_VectorAPIExpansion *op
       return node;
       }
 
-   return transformNary(opt, treeTop, node, elementType, vectorLength, mode, scalarOpCode, vectorOpCode,
+   return transformNary(opt, treeTop, node, elementType, vectorLength, numLanes, mode, scalarOpCode, vectorOpCode,
                         4/*first operand*/, 3, Other);
    }
 
 TR::Node *TR_VectorAPIExpansion::fromBitsCoercedIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node,
-                                                                 TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode)
+                                                                 TR::DataType elementType, TR::VectorLength vectorLength, int32_t numLanes,
+                                                                 handlerMode mode)
    {
    TR::Compilation *comp = opt->comp();
 
@@ -1474,9 +1564,8 @@ TR::Node *TR_VectorAPIExpansion::fromBitsCoercedIntrinsicHandler(TR_VectorAPIExp
 
    if (mode == checkVectorization)
       {
-      if (!supportedOnPlatform(comp, vectorLength)) return NULL;
-
-      TR::ILOpCodes splatsOpCode = TR::ILOpCode::createVectorOpCode(TR::vsplats, elementType.scalarToVector(OMR::DataType::bitsToVectorLength(vectorLength)));
+      TR::ILOpCodes splatsOpCode = TR::ILOpCode::createVectorOpCode(TR::vsplats,
+                                                                    TR::DataType::createVectorType(elementType, vectorLength));
 
       if (!comp->cg()->getSupportsOpCodeForAutoSIMD(splatsOpCode))
          return NULL;
@@ -1525,8 +1614,6 @@ TR::Node *TR_VectorAPIExpansion::fromBitsCoercedIntrinsicHandler(TR_VectorAPIExp
       node->setChild(0, newNode->getChild(0));
       node->setNumChildren(1);
 
-      int32_t numLanes = vectorLength/8/elementSize;
-
       TR::Node::recreate(node, newNode->getOpCodeValue());
 
       for (int32_t i = 1; i < numLanes; i++)
@@ -1543,7 +1630,8 @@ TR::Node *TR_VectorAPIExpansion::fromBitsCoercedIntrinsicHandler(TR_VectorAPIExp
       {
       node->setAndIncChild(0, newNode);
       node->setNumChildren(1);
-      TR::ILOpCodes splatsOpCode = TR::ILOpCode::createVectorOpCode(TR::vsplats, elementType.scalarToVector(OMR::DataType::bitsToVectorLength(vectorLength)));
+      TR::ILOpCodes splatsOpCode = TR::ILOpCode::createVectorOpCode(TR::vsplats,
+                                                                    TR::DataType::createVectorType(elementType, vectorLength));
 
       TR::Node::recreate(node, splatsOpCode);
 
@@ -1560,19 +1648,18 @@ TR::Node *TR_VectorAPIExpansion::fromBitsCoercedIntrinsicHandler(TR_VectorAPIExp
    }
 
 TR::Node *TR_VectorAPIExpansion::compareIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node,
-                                                         TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode)
+                                                         TR::DataType elementType, TR::VectorLength vectorLength, int32_t numLanes,
+                                                         handlerMode mode)
    {
-   return naryIntrinsicHandler(opt, treeTop, node, elementType, vectorLength, mode, 2, Compare);
+   return naryIntrinsicHandler(opt, treeTop, node, elementType, vectorLength, numLanes, mode, 2, Compare);
    }
 
 TR::ILOpCodes TR_VectorAPIExpansion::ILOpcodeFromVectorAPIOpcode(int32_t vectorAPIOpCode, TR::DataType elementType,
-                                                                 vec_sz_t bitsLength, vapiOpCodeType opCodeType, bool withMask)
+                                                                 TR::VectorLength vectorLength, vapiOpCodeType opCodeType, bool withMask)
    {
    // TODO: support more scalarization
 
-   bool scalar = (bitsLength == 0);
-
-   TR::VectorLength vectorLength = OMR::DataType::bitsToVectorLength(bitsLength);
+   bool scalar = (vectorLength == TR::NoVectorLength);
    TR::DataType vectorType = scalar ? TR::NoType : TR::DataType::createVectorType(elementType.getDataType(), vectorLength);
 
    if (opCodeType == Compare && withMask)
@@ -1689,7 +1776,8 @@ TR::ILOpCodes TR_VectorAPIExpansion::ILOpcodeFromVectorAPIOpcode(int32_t vectorA
    }
 
 TR::Node *TR_VectorAPIExpansion::transformNary(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node,
-                                               TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode,
+                                               TR::DataType elementType, TR::VectorLength vectorLength, int32_t numLanes,
+                                               handlerMode mode,
                                                TR::ILOpCodes scalarOpCode, TR::ILOpCodes vectorOpCode, int32_t firstOperand,
                                                int32_t numOperands, vapiOpCodeType opCodeType)
    {
@@ -1710,12 +1798,11 @@ TR::Node *TR_VectorAPIExpansion::transformNary(TR_VectorAPIExpansion *opt, TR::T
       anchorOldChildren(opt, treeTop, node);
 
       int32_t elementSize = OMR::DataType::getSize(elementType);
-      int32_t numLanes = vectorLength/8/elementSize;
 
       for (int32_t i = 0; i < numOperands; i++)
          {
          if (operands[i]->getOpCodeValue() == TR::aload)
-            aloadHandler(opt, treeTop, operands[i], elementType, vectorLength, mode);
+            aloadHandler(opt, treeTop, operands[i], elementType, vectorLength, numLanes, mode);
          }
 
       for (int32_t i = 0; i < numOperands; i++)
@@ -1737,13 +1824,19 @@ TR::Node *TR_VectorAPIExpansion::transformNary(TR_VectorAPIExpansion *opt, TR::T
       }
    else if (mode == doVectorization)
       {
-      TR::VectorLength lengthEnum = supportedOnPlatform(comp, vectorLength);
-      TR::DataType vectorType = OMR::DataType(elementType).scalarToVector(lengthEnum);
+      TR::DataType vectorType = TR::DataType::createVectorType(elementType, vectorLength);
 
       for (int32_t i = 0; i < numOperands; i++)
          {
          if (operands[i]->getOpCodeValue() == TR::aload)
-            vectorizeLoadOrStore(opt, operands[i], vectorType);
+            {
+            TR::DataType symRefType = vectorType;
+
+            if (opt->_aliasTable[operands[i]->getSymbolReference()->getReferenceNumber()]._objectType == Mask)
+               symRefType = TR::DataType::createMaskType(elementType, vectorLength);
+
+            vectorizeLoadOrStore(opt, operands[i], vectorType, symRefType);
+            }
          }
 
 
@@ -1811,22 +1904,15 @@ TR::Node *TR_VectorAPIExpansion::transformNary(TR_VectorAPIExpansion *opt, TR::T
 TR_VectorAPIExpansion::methodTableEntry
 TR_VectorAPIExpansion::methodTable[] =
    {
-   {loadIntrinsicHandler,  TR::NoType, Vector,  {Unknown, elementType, numLanes}},                           // jdk_internal_vm_vector_VectorSupport_load
-   {storeIntrinsicHandler, TR::NoType, Unknown, {Unknown, elementType, numLanes, Unknown, Unknown, Vector}}, // jdk_internal_vm_vector_VectorSupport_store
-   {binaryIntrinsicHandler, TR::NoType, Vector,  {Unknown, Unknown, Unknown, elementType, numLanes, Vector, Vector, Mask}},  // jdk_internal_vm_vector_VectorSupport_binaryOp
-   {blendIntrinsicHandler, TR::NoType, Vector, {Unknown, Unknown, elementType, numLanes, Vector, Vector, Vector, Unknown}}, // jdk_internal_vm_vector_VectorSupport_blend
-   {compareIntrinsicHandler, TR::NoType, Vector, {Unknown, Unknown, Unknown, elementType, numLanes, Vector, Vector, Mask}}, // jdk_internal_vm_vector_VectorSupport_compare
-   {fromBitsCoercedIntrinsicHandler, TR::NoType, Vector, {Unknown, elementType, numLanes, Unknown, Unknown, Unknown}},  // jdk_internal_vm_vector_VectorSupport_fromBitsCoerced
-   {reductionCoercedIntrinsicHandler, TR::NoType, Unknown, {Unknown, Unknown, Unknown, elementType, numLanes, Vector, Mask}},  // jdk_internal_vm_vector_VectorSupport_reductionCoerced
-   {ternaryIntrinsicHandler, TR::NoType, Vector, {Unknown, Unknown, Unknown, elementType, numLanes, Vector, Vector, Vector, Mask}},  // jdk_internal_vm_vector_VectorSupport_ternaryOp
-   {unaryIntrinsicHandler, TR::NoType, Vector,   {Unknown, Unknown, Unknown, elementType, numLanes, Vector, Mask}},  // jdk_internal_vm_vector_VectorSupport_unaryOp
-
-   {unsupportedHandler /*fromArrayHandler*/,      TR::Float,  Vector,  {Species}}, // jdk_incubator_vector_FloatVector_fromArray,
-   {unsupportedHandler /*intoArrayHandler*/,      TR::Float,  Unknown, {Vector}},  // jdk_incubator_vector_FloatVector_intoArray,
-   {unsupportedHandler,    TR::Float,  Vector,  {Species}},                 // jdk_incubator_vector_FloatVector_fromArray_mask
-   {unsupportedHandler,    TR::Float,  Unknown, {}},                        // jdk_incubator_vector_FloatVector_intoArray_mask
-   {unsupportedHandler /*addHandler*/,            TR::Float,  Vector,  {Vector, Vector}},          // jdk_incubator_vector_FloatVector_add
-   {unsupportedHandler,    TR::Float,  Vector,  {}}                         // jdk_incubator_vector_VectorSpecies_indexInRange
+   {loadIntrinsicHandler,             Unknown, {Unknown, ElementType, NumLanes}},                                           // jdk_internal_vm_vector_VectorSupport_load
+   {storeIntrinsicHandler,            Unknown, {Unknown, ElementType, NumLanes, Unknown, Unknown, Vector}},                 // jdk_internal_vm_vector_VectorSupport_store
+   {binaryIntrinsicHandler,           Vector,  {Unknown, Unknown, Unknown, ElementType, NumLanes, Vector, Vector, Mask}},   // jdk_internal_vm_vector_VectorSupport_binaryOp
+   {blendIntrinsicHandler,            Vector,  {Unknown, Unknown, ElementType, NumLanes, Vector, Vector, Vector, Unknown}}, // jdk_internal_vm_vector_VectorSupport_blend
+   {compareIntrinsicHandler,          Mask,    {Unknown, Unknown, Unknown, ElementType, NumLanes, Vector, Vector, Mask}},   // jdk_internal_vm_vector_VectorSupport_compare
+   {fromBitsCoercedIntrinsicHandler,  Vector,  {Unknown, ElementType, NumLanes, Unknown, Unknown, Unknown}},                // jdk_internal_vm_vector_VectorSupport_fromBitsCoerced
+   {reductionCoercedIntrinsicHandler, Scalar,  {Unknown, Unknown, Unknown, ElementType, NumLanes, Vector, Mask}},           // jdk_internal_vm_vector_VectorSupport_reductionCoerced
+   {ternaryIntrinsicHandler,          Vector,  {Unknown, Unknown, Unknown, ElementType, NumLanes, Vector, Vector, Vector, Mask}},  // jdk_internal_vm_vector_VectorSupport_ternaryOp
+   {unaryIntrinsicHandler,            Vector,  {Unknown, Unknown, Unknown, ElementType, NumLanes, Vector, Mask}},           // jdk_internal_vm_vector_VectorSupport_unaryOp
    };
 
 
