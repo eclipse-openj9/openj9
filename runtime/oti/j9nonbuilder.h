@@ -5766,6 +5766,8 @@ typedef struct J9JavaVM {
 	UDATA virtualThreadLinkNextOffset;
 	UDATA virtualThreadLinkPreviousOffset;
 	UDATA virtualThreadInspectorCountOffset;
+	jclass jlThreadConstants;
+	jfieldID vthreadGroupID;
 #endif /* JAVA_SPEC_VERSION >= 19 */
 } J9JavaVM;
 
