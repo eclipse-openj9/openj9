@@ -71,7 +71,8 @@ J9::AheadOfTimeCompile::addClassSerializationRecord(TR_OpaqueClassBlock *ramClas
    TR::Compilation *comp = self()->comp();
    if (comp->isAOTCacheStore())
       {
-      const AOTCacheClassRecord *record = comp->getClientData()->getClassRecord((J9Class *)ramClass, comp->getStream());
+      bool missingLoaderInfo = false;
+      const AOTCacheClassRecord *record = comp->getClientData()->getClassRecord((J9Class *)ramClass, comp->getStream(), missingLoaderInfo);
       self()->addSerializationRecord(record, romClassOffsetAddr);
       }
    }

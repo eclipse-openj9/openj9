@@ -867,7 +867,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       entry._stream = stream; // Add the stream to the entry
 
       auto aotCache = clientSession->getOrCreateAOTCache(stream);
-      _aotCacheStore = classChain && aotCache;
+      _aotCacheStore = classChain && aotCache && JITServerAOTCacheMap::cacheHasSpace();
       aotCacheLoad = aotCacheLoad && classChain && aotCache;
       if (aotCache && !aotCacheLoad)
          aotCache->incNumCacheBypasses();
@@ -876,14 +876,18 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
          {
          // Get defining class chain record to use as a part of the key to lookup or store the method in AOT cache
          JITServerHelpers::cacheRemoteROMClassBatch(clientSession, uncachedRAMClasses, uncachedClassInfos);
-         _definingClassChainRecord = clientSession->getClassChainRecord(clazz, classChain, ramClassChain, stream);
+         bool missingLoaderInfo = false;
+         _definingClassChainRecord = clientSession->getClassChainRecord(clazz, classChain, ramClassChain, stream, missingLoaderInfo);
          if (!_definingClassChainRecord)
             {
             if (TR::Options::getVerboseOption(TR_VerboseJITServer))
                TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
-                  "clientUID %llu failed to get defining class chain record for %p; "
+                  "clientUID %llu failed to get defining class chain record for %p due to %s; "
                   "method %p won't be loaded from or stored in AOT cache",
-                  (unsigned long long)clientId, clazz, ramMethod
+                  (unsigned long long)clientId,
+                  clazz,
+                  missingLoaderInfo ? "missing class loader info" : "the AOT cache size limit",
+                  ramMethod
                );
             if (aotCacheLoad)
                aotCache->incNumCacheMisses();
