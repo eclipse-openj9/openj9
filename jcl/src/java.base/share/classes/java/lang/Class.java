@@ -2643,7 +2643,7 @@ boolean isPrimaryType() {
 }
 boolean isPrimitiveValueType() {
 	// ToDo: this is a temporary implementation - https://github.com/eclipse-openj9/openj9/issues/13615
-	return false;
+	return isPrimitiveClass();
 }
 /*[ENDIF] INLINE-TYPES */
 
