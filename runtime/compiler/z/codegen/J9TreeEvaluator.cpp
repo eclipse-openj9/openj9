@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2022 IBM Corp. and others
+ * Copyright (c) 2000, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1959,6 +1959,463 @@ J9::Z::TreeEvaluator::inlineUTF16BEEncode(TR::Node *node, TR::CodeGenerator *cg)
    cg->stopUsingRegister(output);
 
    return node->setRegister(translated);
+   }
+
+/**
+ * \brief Generate inline assembly for CRC32C.updateBytes and CRC32C.updateDirectByteBuffer
+ * \details
+ * CRC32C.updateBytes(crc, array, offset, end)
+ *    buffer = array + offset
+ *    remaining = offset - end
+ *    if remaining < 16 goto callJava
+ *    load vector folding constants into vConstR2R1, vConstR4R3, vConstR5, vConstRUPoly, vConstCRCPoly
+ *    load crc into vScratch
+ *    if remaining < 64 goto foldBy1
+ *
+ * ;;;; consume 64B at a time
+ *
+ * foldBy4:
+ *    load 64B from buffer into vFold1..vFold4
+ *    byteswap vFold1..Fold4
+ *    vFold1 ^= vScratch
+ *    goto advanceBy64B
+ *
+ * foldBy4Loop:
+ *    load 64B from buffer into vInput1, vInput2, vInput3, vInput4
+ *    byteswap vInput1, vInput2, vInput3, vInput4
+ *    vFold1 = vFold1 * vConstR2R1 + vInput1  (GF(2))
+ *    vFold2 = vFold2 * vConstR2R1 + vInput2  (GF(2))
+ *    vFold3 = vFold3 * vConstR2R1 + vInput3  (GF(2))
+ *    vFold4 = vFold4 * vConstR2R1 + vInput4  (GF(2))
+ *
+ * advanceBy64B:
+ *    buffer += 64
+ *    remaining -= 64
+ *    if remaining >= 64 goto foldBy4Loop
+ *
+ * ;;;; reduce 4 vectors into 1
+ *
+ *    vFold1 = vFold1 * vConstR4R3 + vFold2  (GF(2))
+ *    vFold1 = vFold1 * vConstR4R3 + vFold3  (GF(2))
+ *    vFold1 = vFold1 * vConstR4R3 + vFold4  (GF(2))
+ *    if remaining < 16 goto finalReduction
+ *    goto foldBy1Loop    ; jump over foldBy1 header
+ *
+ * ;;;; consume 16B at a time
+ *
+ * foldBy1:
+ *    load 16B from buffer into vFold1
+ *    byteswap vFold1
+ *    vFold1 ^= vScratch
+ *    goto advanceBy16B
+ *
+ * foldBy1Loop:
+ *    load 16B from buffer into vFold2
+ *    byteswap vFold2
+ *    vFold1 = vFold1 * vConstR4R3 + vFold2 (GF(2))
+ *
+ * advanceBy16B:
+ *    buffer += 16
+ *    remaining -= 16
+ *    if remaining >= 16 goto foldBy1Loop
+ *
+ * ;;;; reduce vFold1 into 32 bit CRC-32C value
+ *
+ * finalReduction:
+ *    move R4 in rightmost doubleword of vScratch and set leftmost doubleword to 1
+ *    vFold1 *= vScratch (GF(2))
+ *    vFold1 = vFold1 * vConstR5 + (rightmost word of vFold1) (GF(2))
+ *    ; apply Barret reduction to vFold1 to produce crc value
+ *    move leftmost words of vFold1 into doublewords of vFold2
+ *    vFold2 *= vConstRUPoly (GF(2))
+ *    move leftmost words of vFold2 into doublewords of vFold2
+ *    vFold2 = vFold2 * vConstCRCPoly + vFold1
+ *    crc = word element 2 of vFold2
+ *    if remaining > 0 goto callJava
+ *
+ * end:
+ *
+ * -------------------------------------------------------------
+ * ;;;; Out of line snippet
+ * callJava:
+ *    offset = end - remaining
+ *    crc = crc32c.updateBytes(crc, array, offset, end)  ; original java implementation
+ *    goto end
+ */
+TR::Register*
+J9::Z::TreeEvaluator::inlineCRC32CUpdateBytes(TR::Node *node, TR::CodeGenerator *cg, bool isDirectBuffer)
+   {
+   // Get call parameters
+   TR::Register* crc = cg->gprClobberEvaluate(node->getChild(0));
+   TR::Register* array = cg->gprClobberEvaluate(node->getChild(1));
+   TR::Register* offset = cg->gprClobberEvaluate(node->getChild(2));
+   TR::Register* end = cg->gprClobberEvaluate(node->getChild(3));
+
+   // Zero extend incoming 32 bit values
+   TR::Register* remaining = cg->allocateRegister();
+   generateRREInstruction(cg, TR::InstOpCode::LLGFR, node, offset, offset);
+   generateRREInstruction(cg, TR::InstOpCode::LLGFR, node, end, end);
+
+   // Calculate buffer pointer = array + offset
+   // For updateBytes need to account for array header size
+   TR::Register* buffer = cg->allocateRegister();
+   generateRXInstruction(cg, TR::InstOpCode::getLoadAddressOpCode(), node, buffer, generateS390MemoryReference(array, offset, isDirectBuffer ? 0 : TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg));
+
+   // Adjust remaining count for offset index
+   generateRRRInstruction(cg, TR::InstOpCode::getSubtractThreeRegOpCode(), node, remaining, end, offset);
+
+   // If less than 16B of input, branch to bytewise path
+   // The vectorized path only works for multiples of 16B
+   TR::RegisterDependencyConditions* dependencies = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 19, cg);
+   TR::LabelSymbol* callJava = generateLabelSymbol(cg);
+   TR::Instruction* cursor = generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::getCmpLogicalOpCode(), node, remaining, 16, TR::InstOpCode::COND_BL, callJava, false, false, NULL, dependencies);
+   TR_Debug* debugObj = cg->getDebug();
+   if (debugObj)
+      debugObj->addInstructionComment(cursor, "Jump to OOL call to original Java implementation if < 16B");
+
+   /**
+    * The CRC-32C vector constant block contains reduction constants to fold and process particular
+    * chunks of the input data stream in parallel.
+    *
+    * The constants are precomputed according to these definitions:
+    *
+    *	R1 = [(x^(4*128+32) mod P'(x) << 32)]' << 1
+    *	R2 = [(x^(4*128-32) mod P'(x) << 32)]' << 1
+    *	R3 = [(x^(128+32) mod P'(x) << 32)]'   << 1
+    *	R4 = [(x^(128-32) mod P'(x) << 32)]'   << 1
+    *	R5 = [(x^64 mod P'(x) << 32)]'	      << 1
+    *	R6 = [(x^32 mod P'(x) << 32)]'	      << 1
+    *
+    *	The bitreflected Barret reduction constant, u', is defined as the bit reversal of floor(x^64 / P(x))
+    *	where P(x) is the polynomial in the normal domain and the P'(x) is the polynomial in the reversed (bitreflected) domain.
+    *
+    * CRC-32C (Castagnoli) polynomials:
+    *
+    *	P(x)  = 0x1EDC6F41
+    *	P'(x) = 0x82F63B78
+    */
+
+   // Array of 16 rather than 12 because data snippets on Z must be a power of 2 size - See OMR issue #1815
+   // TODO: find out why BE constants don't work, and why we need to byteswap data - See OpenJ9 issue #16474
+   uint64_t crc32cVectorConstants[16] =
+      {
+      0x0F0E0D0C0B0A0908ull, 0x0706050403020100ull,   // BE->LE
+      0x000000009E4ADDF8ull, 0x00000000740EEF02ull,   // R2, R1
+      0x000000014CD00Bd6ull, 0x00000000F20C0dFEull,   // R4, R3
+      0x0000000000000000ull, 0x00000000DD45AAB8ull,   // R5
+      0x0000000000000000ull, 0x00000000DEA713F1ull,   // u'
+      0x0000000000000000ull, 0x0000000105ec76f0ull,   // P'(x) << 1
+      };
+
+   TR::MemoryReference *constantsMemRef = generateS390MemoryReference(cg->findOrCreateConstant(node, crc32cVectorConstants, 128), cg, 0, node);
+   dependencies->addAssignAnyPostCondOnMemRef(constantsMemRef);
+   // Allocate vectors for reduction constants
+   TR::Register* vConstPermLE2BE = cg->allocateRegister(TR_VRF);
+   TR::Register* vConstR2R1 = cg->allocateRegister(TR_VRF);
+   TR::Register* vConstR4R3 = cg->allocateRegister(TR_VRF);
+   TR::Register* vConstR5 = cg->allocateRegister(TR_VRF);
+   TR::Register* vConstRUPoly = cg->allocateRegister(TR_VRF);
+   TR::Register* vConstCRCPoly = cg->allocateRegister(TR_VRF);
+   // The constant vectors need to be adjacent since we use VLM
+   dependencies->addPostCondition(vConstPermLE2BE, TR::RealRegister::VRF9);
+   dependencies->addPostCondition(vConstR2R1, TR::RealRegister::VRF10);
+   dependencies->addPostCondition(vConstR4R3, TR::RealRegister::VRF11);
+   dependencies->addPostCondition(vConstR5, TR::RealRegister::VRF12);
+   dependencies->addPostCondition(vConstRUPoly, TR::RealRegister::VRF13);
+   dependencies->addPostCondition(vConstCRCPoly, TR::RealRegister::VRF14);
+   cursor = generateVRSaInstruction(cg, TR::InstOpCode::VLM, node, vConstPermLE2BE, vConstCRCPoly, constantsMemRef, 0);
+   if (debugObj)
+      debugObj->addInstructionComment(cursor, "Populate vectors with CRC-32C reduction constants");
+
+   TR::Register* vScratch = cg->allocateRegister(TR_VRF);
+   // Zero vScratch and load the initial CRC value into the rightmost word
+   generateVRIaInstruction(cg, TR::InstOpCode::VGBM, node, vScratch, 0, 0);
+   generateVRSbInstruction(cg, TR::InstOpCode::VLVG, node, vScratch, crc, generateS390MemoryReference(3, cg), 2);
+
+   // Jump to 16-byte processing path if less than 64 bytes of data
+   TR::LabelSymbol* startICF = generateLabelSymbol(cg);
+   generateS390LabelInstruction(cg, TR::InstOpCode::label, node, startICF);
+   startICF->setStartInternalControlFlow();
+   TR::LabelSymbol* foldBy1 = generateLabelSymbol(cg);
+   cursor = generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::getCmpLogicalOpCode(), node, remaining, 64, TR::InstOpCode::COND_BL, foldBy1, false, false, NULL, dependencies);
+   if (debugObj)
+      debugObj->addInstructionComment(cursor, "if remaining < 64 goto foldBy1");
+
+   /************************************** iteratively fold by 4 ******************************************/
+   TR::LabelSymbol* foldBy4 = generateLabelSymbol(cg);
+   cursor = generateS390LabelInstruction(cg, TR::InstOpCode::label, node, foldBy4);
+   if (debugObj)
+      debugObj->addInstructionComment(cursor, "foldBy4");
+
+   // Allocate vectors for CRC computation
+   TR::Register* vFold1 = cg->allocateRegister(TR_VRF);
+   TR::Register* vFold2 = cg->allocateRegister(TR_VRF);
+   TR::Register* vFold3 = cg->allocateRegister(TR_VRF);
+   TR::Register* vFold4 = cg->allocateRegister(TR_VRF);
+   // The CRC folding vectors need to be adjacent since we use VLM
+   dependencies->addPostCondition(vFold1, TR::RealRegister::VRF1);
+   dependencies->addPostCondition(vFold2, TR::RealRegister::VRF2);
+   dependencies->addPostCondition(vFold3, TR::RealRegister::VRF3);
+   dependencies->addPostCondition(vFold4, TR::RealRegister::VRF4);
+   // Load first
+   generateVRSaInstruction(cg, TR::InstOpCode::VLM, node, vFold1, vFold4, generateS390MemoryReference(buffer, 0, cg), 0);
+   generateVRReInstruction(cg, TR::InstOpCode::VPERM, node, vFold1, vFold1, vFold1, vConstPermLE2BE);
+   generateVRReInstruction(cg, TR::InstOpCode::VPERM, node, vFold2, vFold2, vFold2, vConstPermLE2BE);
+   generateVRReInstruction(cg, TR::InstOpCode::VPERM, node, vFold3, vFold3, vFold3, vConstPermLE2BE);
+   generateVRReInstruction(cg, TR::InstOpCode::VPERM, node, vFold4, vFold4, vFold4, vConstPermLE2BE);
+   generateVRRcInstruction(cg, TR::InstOpCode::VX, node, vFold1, vScratch, vFold1, 0);
+
+   TR::LabelSymbol* advanceBy64B = generateLabelSymbol(cg);
+   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_B, node, advanceBy64B);
+
+   TR::LabelSymbol* foldBy4Loop = generateLabelSymbol(cg);
+   cursor = generateS390LabelInstruction(cg, TR::InstOpCode::label, node, foldBy4Loop);
+   if (debugObj)
+      debugObj->addInstructionComment(cursor, "foldBy4Loop");
+
+   // Allocate vectors for loading input data
+   TR::Register* vInput1 = cg->allocateRegister(TR_VRF);
+   TR::Register* vInput2 = cg->allocateRegister(TR_VRF);
+   TR::Register* vInput3 = cg->allocateRegister(TR_VRF);
+   TR::Register* vInput4 = cg->allocateRegister(TR_VRF);
+   // The input vectors also need to be adjacent since we use VLM
+   dependencies->addPostCondition(vInput1, TR::RealRegister::VRF5);
+   dependencies->addPostCondition(vInput2, TR::RealRegister::VRF6);
+   dependencies->addPostCondition(vInput3, TR::RealRegister::VRF7);
+   dependencies->addPostCondition(vInput4, TR::RealRegister::VRF8);
+   // Load the next 64-byte chunk of input
+   generateVRSaInstruction(cg, TR::InstOpCode::VLM, node, vInput1, vInput4, generateS390MemoryReference(buffer, 0, cg), 0);
+   generateVRReInstruction(cg, TR::InstOpCode::VPERM, node, vInput1, vInput1, vInput1, vConstPermLE2BE);
+   generateVRReInstruction(cg, TR::InstOpCode::VPERM, node, vInput2, vInput2, vInput2, vConstPermLE2BE);
+   generateVRReInstruction(cg, TR::InstOpCode::VPERM, node, vInput3, vInput3, vInput3, vConstPermLE2BE);
+   generateVRReInstruction(cg, TR::InstOpCode::VPERM, node, vInput4, vInput4, vInput4, vConstPermLE2BE);
+
+   // GF(2) multiply vFold1..vFold4 with reduction constants, fold (accumulate) with next data chunk and store in vFold1..vFold4
+   generateVRRdInstruction(cg, TR::InstOpCode::VGFMA, node, vFold1, vConstR2R1, vFold1, vInput1, 0, 3);
+   generateVRRdInstruction(cg, TR::InstOpCode::VGFMA, node, vFold2, vConstR2R1, vFold2, vInput2, 0, 3);
+   generateVRRdInstruction(cg, TR::InstOpCode::VGFMA, node, vFold3, vConstR2R1, vFold3, vInput3, 0, 3);
+   generateVRRdInstruction(cg, TR::InstOpCode::VGFMA, node, vFold4, vConstR2R1, vFold4, vInput4, 0, 3);
+
+   generateS390LabelInstruction(cg, TR::InstOpCode::label, node, advanceBy64B);
+
+   // Adjust buffer pointer and remaining count
+   generateRXInstruction(cg, TR::InstOpCode::getLoadAddressOpCode(), node, buffer, generateS390MemoryReference(buffer, 64, cg));
+   generateRIInstruction(cg, TR::InstOpCode::getAddHalfWordImmOpCode(), node, remaining, -64);
+
+   // Check remaining buffer size and jump to proper folding method
+   cursor = generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::getCmpLogicalOpCode(), node, remaining, 64, TR::InstOpCode::COND_BNL, foldBy4Loop, false, false, NULL, dependencies);
+
+   TR::LabelSymbol* reduce4to1 = generateLabelSymbol(cg);
+   cursor = generateS390LabelInstruction(cg, TR::InstOpCode::label, node, reduce4to1);
+   if (debugObj)
+      debugObj->addInstructionComment(cursor, "reduce 4 vectors into 1");
+
+   // Fold vFold1..vFold4 into a single 128-bit value in vFold1
+   generateVRRdInstruction(cg, TR::InstOpCode::VGFMA, node, vFold1, vConstR4R3, vFold1, vFold2, 0, 3);
+   generateVRRdInstruction(cg, TR::InstOpCode::VGFMA, node, vFold1, vConstR4R3, vFold1, vFold3, 0, 3);
+   generateVRRdInstruction(cg, TR::InstOpCode::VGFMA, node, vFold1, vConstR4R3, vFold1, vFold4, 0, 3);
+
+   TR::LabelSymbol* finalReduction = generateLabelSymbol(cg);
+   cursor = generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::getCmpLogicalOpCode(), node, remaining, 16, TR::InstOpCode::COND_BL, finalReduction, false, false, NULL, dependencies);
+   if (debugObj)
+      debugObj->addInstructionComment(cursor, "if remaining < 16 goto finalReduction");
+
+   // Since the fold-by-4 header already set up the vectors, skip the fold-by-1 header
+   TR::LabelSymbol* foldBy1Loop = generateLabelSymbol(cg);
+   cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_B, node, foldBy1Loop);
+   if (debugObj)
+      debugObj->addInstructionComment(cursor, "Jump over foldBy1 header");
+
+   /************************************** fold by 1 ******************************************/
+   cursor = generateS390LabelInstruction(cg, TR::InstOpCode::label, node, foldBy1);
+   if (debugObj)
+      debugObj->addInstructionComment(cursor, "foldBy1");
+
+   if (cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z15))
+      {
+      generateVRXInstruction(cg, TR::InstOpCode::VLBR, node, vFold1, generateS390MemoryReference(buffer, 0, cg), 4);
+      }
+   else
+      {
+      generateVRXInstruction(cg, TR::InstOpCode::VL, node, vFold1, generateS390MemoryReference(buffer, 0, cg));
+      generateVRReInstruction(cg, TR::InstOpCode::VPERM, node, vFold1, vFold1, vFold1, vConstPermLE2BE);
+      }
+   generateVRRcInstruction(cg, TR::InstOpCode::VX, node, vFold1, vScratch, vFold1, 0);
+
+   TR::LabelSymbol* advanceBy16B = generateLabelSymbol(cg);
+   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_B, node, advanceBy16B);
+
+   cursor = generateS390LabelInstruction(cg, TR::InstOpCode::label, node, foldBy1Loop);
+   if (debugObj)
+      debugObj->addInstructionComment(cursor, "foldBy1Loop");
+
+   // Load and fold next data chunk
+   if (cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z15))
+      {
+      generateVRXInstruction(cg, TR::InstOpCode::VLBR, node, vFold2, generateS390MemoryReference(buffer, 0, cg), 4);
+      }
+   else
+      {
+      generateVRXInstruction(cg, TR::InstOpCode::VL, node, vFold2, generateS390MemoryReference(buffer, 0, cg));
+      generateVRReInstruction(cg, TR::InstOpCode::VPERM, node, vFold2, vFold2, vFold2, vConstPermLE2BE);
+      }
+   generateVRRdInstruction(cg, TR::InstOpCode::VGFMA, node, vFold1, vConstR4R3, vFold1, vFold2, 0, 3);
+
+   generateS390LabelInstruction(cg, TR::InstOpCode::label, node, advanceBy16B);
+
+   // Adjust buffer pointer and remaining count
+   generateRXInstruction(cg, TR::InstOpCode::getLoadAddressOpCode(), node, buffer, generateS390MemoryReference(buffer, 16, cg));
+   generateRIInstruction(cg, TR::InstOpCode::getAddHalfWordImmOpCode(), node, remaining, -16);
+
+   // Check whether to continue with 16-bit folding
+   generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::getCmpLogicalOpCode(), node, remaining, 16, TR::InstOpCode::COND_BNL, foldBy1Loop, false, false, NULL, dependencies);
+
+   // Set up the rest of dependencies for ICF
+   dependencies->addPostCondition(vScratch, TR::RealRegister::AssignAny);
+   dependencies->addPostCondition(buffer, TR::RealRegister::AssignAny);
+   dependencies->addPostCondition(remaining, TR::RealRegister::AssignAny);
+
+   /************************************** final reduction of 128 bits ******************************************/
+   cursor = generateS390LabelInstruction(cg, TR::InstOpCode::label, node, finalReduction, dependencies);
+   if (debugObj)
+      debugObj->addInstructionComment(cursor, "Reduce vector into 32-bit CRC-32C value");
+   finalReduction->setEndInternalControlFlow();
+
+   // Set up a vector register for byte shifts.
+   // The shift value must be loaded in bits 1-4 in byte element 7 of the vector.
+   // Shift by 8 bytes: 0x40
+   // Shift by 4 bytes: 0x20
+   TR::Register* vShift = vConstPermLE2BE;  // Don't need this constant anymore, can recycle vector
+   generateVRIaInstruction(cg, TR::InstOpCode::VLEIB, node, vShift, 0x40, 7);
+
+   // Prepare vScratch for the next GF(2) multiplication: shift V0 by 8 bytes to move R4 into the rightmost doubleword and set the leftmost doubleword to 0x1.
+   generateVRRcInstruction(cg, TR::InstOpCode::VSRLB, node, vScratch, vConstR4R3, vShift, 0);
+   generateVRIaInstruction(cg, TR::InstOpCode::VLEIG, node, vScratch, 1, 0);
+
+   // Compute GF(2) product of vFold1 and vScratch.
+   // The rightmost doubleword of vFold1 is multiplied with R4.
+   // The leftmost doubleword of vFold1 is multiplied by 0x1 then XORed with rightmost product.
+   // Implicitly, the intermediate leftmost product becomes padded.
+   generateVRRcInstruction(cg, TR::InstOpCode::VGFM, node, vFold1, vScratch, vFold1, 3);
+
+   // Now do the final 32-bit fold by multiplying the rightmost word in vFold1 with R5 and XOR the result with the remaining bits in vFold1.
+   //
+   // To achieve this by a single VGFMAG, right shift vFold1 by a word and store the result in
+   // vFold2 which is then accumulated. Use the vector unpack instruction to load the rightmost
+   // half of the doubleword into the rightmost doubleword element of vFold1; the other half is
+   // loaded in the leftmost doubleword. vConstR5 contains the R5 constant in the rightmost
+   // doubleword and the leftmost doubleword is zero to ignore the leftmost product of vFold1.
+   generateVRIaInstruction(cg, TR::InstOpCode::VLEIB, node, vShift, 0x20, 7);
+   generateVRRcInstruction(cg, TR::InstOpCode::VSRLB, node, vFold2, vFold1, vShift, 0);
+   generateVRRaInstruction(cg, TR::InstOpCode::VUPLL, node, vFold1, vFold1, 0, 0, 2);
+   generateVRRdInstruction(cg, TR::InstOpCode::VGFMA, node, vFold1, vConstR5, vFold1, vFold2, 0, 3);
+
+   /**
+    * Apply a Barret reduction to compute the final 32-bit CRC value.
+    *
+    * The input values to the Barret reduction are the degree-63 polynomial in vFold1 (R(x)),
+    * degree-32 generator polynomial, and the reduction constant u. The Barret reduction result is
+    * the CRC value of R(x) mod P(x).
+    *
+    * The Barret reduction algorithm is defined as:
+    *
+    *    1. T1(x) = floor( R(x) / x^32 ) GF2MUL u
+    *    2. T2(x) = floor( T1(x) / x^32 ) GF2MUL P(x)
+    *    3. C(x)  = R(x) XOR T2(x) mod x^32
+    *
+    * Note: The leftmost doubleword of vConstRUPoly is zero and, thus, the intermediate GF(2)
+    * product is zero and does not contribute to the final result.
+    */
+
+   generateVRRaInstruction(cg, TR::InstOpCode::VUPLL, node, vFold2, vFold1, 0, 0, 2);
+   generateVRRcInstruction(cg, TR::InstOpCode::VGFM,  node, vFold2, vConstRUPoly, vFold2, 3);
+
+   // Compute the GF(2) product of the CRC polynomial with T1(x) in vFold2 and XOR the intermediate
+   // result, T2(x), with the value in vFold1. The final result is stored in word element 2 of vFold2.
+   generateVRRaInstruction(cg, TR::InstOpCode::VUPLL, node, vFold2, vFold2, 0, 0, 2);
+   generateVRRdInstruction(cg, TR::InstOpCode::VGFMA, node, vFold2, vConstCRCPoly, vFold2, vFold1, 0, 3);
+
+   // Extract the CRC value from word element 2 of vFold2
+   generateVRScInstruction(cg, TR::InstOpCode::VLGV, node, crc, vFold2, generateS390MemoryReference(2, cg), 2);
+
+   cg->stopUsingRegister(vScratch);
+   cg->stopUsingRegister(vFold1);
+   cg->stopUsingRegister(vFold2);
+   cg->stopUsingRegister(vFold3);
+   cg->stopUsingRegister(vFold4);
+   cg->stopUsingRegister(vInput1);
+   cg->stopUsingRegister(vInput2);
+   cg->stopUsingRegister(vInput3);
+   cg->stopUsingRegister(vInput4);
+   cg->stopUsingRegister(vShift);
+   cg->stopUsingRegister(vConstR2R1);
+   cg->stopUsingRegister(vConstR4R3);
+   cg->stopUsingRegister(vConstR5);
+   cg->stopUsingRegister(vConstRUPoly);
+   cg->stopUsingRegister(vConstCRCPoly);
+   cg->stopUsingRegister(buffer);
+
+   cursor = generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::getCmpLogicalOpCode(), node, remaining, 0, TR::InstOpCode::COND_BNE, callJava, false, false, NULL, dependencies);
+   if (debugObj)
+      debugObj->addInstructionComment(cursor, "Jump to OOL call to original Java implementation if remaining data");
+
+   /************************************** call original implementation for remainder  ******************************************/
+   TR::LabelSymbol* done = generateLabelSymbol(cg);
+   TR_S390OutOfLineCodeSection *outlinedCall = new (cg->trHeapMemory()) TR_S390OutOfLineCodeSection(callJava, done, cg);
+   cg->getS390OutOfLineCodeSectionList().push_front(outlinedCall);
+   outlinedCall->swapInstructionListsWithCompilation();
+
+   cursor = generateS390LabelInstruction(cg, TR::InstOpCode::label, node, callJava);
+   if (debugObj)
+      debugObj->addInstructionComment(cursor, "Denotes start of OOL call to original CRC32C.updateBytes Java implementation");
+
+   // Calculate proper offset
+   generateRRRInstruction(cg, TR::InstOpCode::getSubtractThreeRegOpCode(), node, offset, end, remaining);
+
+   // Create dummy node for call
+   TR::Node *callNode = TR::Node::createWithSymRef(node, TR::icall, 4, node->getSymbolReference());
+   callNode->setChild(0, node->getChild(0));
+   callNode->setChild(1, node->getChild(1));
+   callNode->setChild(3, node->getChild(3));
+
+   TR::Node *offsetNode = TR::Node::copy(node->getChild(2));
+   offsetNode->setRegister(offset);
+   callNode->setChild(2, offsetNode);
+
+   // Call java implementation
+   cg->incReferenceCount(node->getChild(0));
+   cg->incReferenceCount(callNode);
+   TR::Register *newCRC = TR::TreeEvaluator::performCall(callNode, false, cg);
+
+   generateRRInstruction(cg, TR::InstOpCode::LGR, node, crc, newCRC);
+   cg->stopUsingRegister(newCRC);
+   cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, done);
+   if (debugObj)
+      debugObj->addInstructionComment(cursor, "Return to main-line");
+
+   outlinedCall->swapInstructionListsWithCompilation();
+
+   cg->stopUsingRegister(array);
+   cg->stopUsingRegister(offset);
+   cg->stopUsingRegister(end);
+   cg->stopUsingRegister(remaining);
+
+   // Dependencies common between main line and OOL
+   dependencies = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 5, cg);
+   dependencies->addPostCondition(array, TR::RealRegister::AssignAny);
+   dependencies->addPostCondition(offset, TR::RealRegister::AssignAny);
+   dependencies->addPostCondition(end, TR::RealRegister::AssignAny);
+   dependencies->addPostCondition(remaining, TR::RealRegister::AssignAny);
+   dependencies->addPostCondition(crc, TR::RealRegister::AssignAny);
+
+   generateS390LabelInstruction(cg, TR::InstOpCode::label, node, done, dependencies);
+
+   node->setRegister(crc);
+   cg->decReferenceCount(node->getChild(0));
+   cg->decReferenceCount(node->getChild(2));
+   cg->decReferenceCount(callNode);
+
+   return crc;
    }
 
 TR::Register*
