@@ -466,11 +466,17 @@ jvmtiGetThreadInfo(jvmtiEnv* env,
 			jobject contextClassLoader;
 #if JAVA_SPEC_VERSION >= 19
 			j9object_t threadHolder = J9VMJAVALANGTHREAD_HOLDER(currentThread, threadObject);
+			BOOLEAN isVirtual = IS_VIRTUAL_THREAD(currentThread, threadObject);
 #endif /* JAVA_SPEC_VERSION >= 19 */
 
-			if (NULL == targetThread) {
+			if (NULL == targetThread
+#if JAVA_SPEC_VERSION >= 19
+				|| isVirtual
+#endif /* JAVA_SPEC_VERSION >= 19 */
+			) {
 				/* java.lang.thread may not have a ref to vm thread. for example, after it gets terminated.
-				 * but we still want to return the name, so we retrieve it from the thread object itself. */
+				 * We still want to return the name, so we retrieve it from the thread object itself.
+				 * Do this for virtual threads as well since they are not mapped to a vm thread. */
 				j9object_t threadName = J9VMJAVALANGTHREAD_NAME(currentThread, threadObject);
 
 				if (NULL == threadName) {
@@ -481,7 +487,7 @@ jvmtiGetThreadInfo(jvmtiEnv* env,
 
 					if (NULL == name) {
 						rc = JVMTI_ERROR_OUT_OF_MEMORY;
-						goto done;
+						goto release;
 					}
 				}
 			} else {
@@ -495,7 +501,7 @@ jvmtiGetThreadInfo(jvmtiEnv* env,
 					/* failed to allocate memory, so release VMTthread and exit */
 					releaseOMRVMThreadName(targetThread->omrVMThread);
 					rc = JVMTI_ERROR_OUT_OF_MEMORY;
-					goto done;
+					goto release;
 				}
 
 				if (NULL == threadName) {
@@ -505,16 +511,66 @@ jvmtiGetThreadInfo(jvmtiEnv* env,
 				}
 
 				releaseOMRVMThreadName(targetThread->omrVMThread);
+			}
 
-				if (JAVAVM_FROM_ENV(env)->jclFlags & J9_JCL_FLAG_THREADGROUPS) {
+			if (J9_ARE_ALL_BITS_SET(vm->jclFlags, J9_JCL_FLAG_THREADGROUPS)) {
+				j9object_t group = NULL;
+
 #if JAVA_SPEC_VERSION >= 19
-					j9object_t group = NULL;
-					if (NULL != threadHolder) {
-						group = (j9object_t)J9VMJAVALANGTHREADFIELDHOLDER_GROUP(currentThread, threadHolder);
+				if (isVirtual) {
+					/* For virtual threads, check its state. */
+					if (JVMTI_VTHREAD_STATE_TERMINATED != J9VMJAVALANGVIRTUALTHREAD_STATE(currentThread, threadObject)) {
+						/* The thread group of a virtual thread is always j.l.Thread$Constants.VTHREAD_GROUP. */
+						JNIEnv *jniEnv = (JNIEnv *)currentThread;
+						jclass constants = vm->jlThreadConstants;
+						jfieldID id = vm->vthreadGroupID;
+						jobject tempGroup = NULL;
+
+						vm->internalVMFunctions->internalExitVMToJNI(currentThread);
+						if ((NULL == constants) || (NULL == id)) {
+							/* Cache class and field id. */
+							jclass localRef = (*jniEnv)->FindClass(jniEnv, "java/lang/Thread$Constants");
+							Assert_JVMTI_notNull(localRef);
+							constants = (jclass)((*jniEnv)->NewGlobalRef(jniEnv, localRef));
+							if (NULL == constants) {
+								releaseVMThread(currentThread, targetThread, thread);
+								j9mem_free_memory(name);
+								rc = JVMTI_ERROR_OUT_OF_MEMORY;
+								goto exit;
+							}
+							id = (*jniEnv)->GetStaticFieldID(jniEnv, constants, "VTHREAD_GROUP", "Ljava/lang/ThreadGroup;");
+							if (NULL == id) {
+								releaseVMThread(currentThread, targetThread, thread);
+								j9mem_free_memory(name);
+								rc = JVMTI_ERROR_OUT_OF_MEMORY;
+								goto exit;
+							}
+
+							vm->jlThreadConstants = constants;
+							vm->vthreadGroupID = id;
+						}
+
+						tempGroup = (*jniEnv)->GetStaticObjectField(jniEnv, constants, id);
+						Assert_JVMTI_notNull(tempGroup);
+						vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
+
+						group = J9_JNI_UNWRAP_REFERENCE(tempGroup);
+						threadObject = J9_JNI_UNWRAP_REFERENCE(thread);
 					}
+				} else {
+					/* For platform threads, a NULL vmthread indicates that a thread is terminated. */
+					if (NULL != targetThread) {
+						if (NULL != threadHolder) {
+							group = (j9object_t)J9VMJAVALANGTHREADFIELDHOLDER_GROUP(currentThread, threadHolder);
+						}
+					}
+				}
 #else /* JAVA_SPEC_VERSION >= 19 */
-					j9object_t group = (j9object_t)J9VMJAVALANGTHREAD_GROUP(currentThread, threadObject);
+				if (NULL != targetThread) {
+					group = (j9object_t)J9VMJAVALANGTHREAD_GROUP(currentThread, threadObject);
+				}
 #endif /* JAVA_SPEC_VERSION >= 19 */
+				if (NULL != group) {
 					threadGroup = vm->internalVMFunctions->j9jni_createLocalRef((JNIEnv *) currentThread, group);
 				}
 			}
@@ -524,24 +580,37 @@ jvmtiGetThreadInfo(jvmtiEnv* env,
 			rv_name = name;
 			{
 #if JAVA_SPEC_VERSION >= 19
-				rv_priority = J9VMJAVALANGTHREADFIELDHOLDER_PRIORITY(currentThread, threadHolder);
+				if (isVirtual) {
+					rv_priority = JVMTI_THREAD_NORM_PRIORITY;
+				} else {
+					rv_priority = J9VMJAVALANGTHREADFIELDHOLDER_PRIORITY(currentThread, threadHolder);
+				}
 #else /* JAVA_SPEC_VERSION >= 19 */
 				rv_priority = J9VMJAVALANGTHREAD_PRIORITY(currentThread, threadObject);
 #endif /* JAVA_SPEC_VERSION >= 19 */
 			}
 
 #if JAVA_SPEC_VERSION >= 19
-			rv_is_daemon = J9VMJAVALANGTHREADFIELDHOLDER_DAEMON(currentThread, threadHolder) ? JNI_TRUE : JNI_FALSE;
+			if (isVirtual) {
+				rv_is_daemon = JNI_TRUE;
+			} else {
+				rv_is_daemon = J9VMJAVALANGTHREADFIELDHOLDER_DAEMON(currentThread, threadHolder) ? JNI_TRUE : JNI_FALSE;
+			}
 #else /* JAVA_SPEC_VERSION >= 19 */
 			rv_is_daemon = J9VMJAVALANGTHREAD_ISDAEMON(currentThread, threadObject) ? JNI_TRUE : JNI_FALSE;
 #endif /* JAVA_SPEC_VERSION >= 19 */
 			rv_thread_group = (jthreadGroup) threadGroup;
 			rv_context_class_loader = contextClassLoader;
+
+release:
+			releaseVMThread(currentThread, targetThread, thread);
 		}
 done:
-		releaseVMThread(currentThread, targetThread, thread);
 		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
+#if JAVA_SPEC_VERSION >= 19
+exit:
+#endif /* JAVA_SPEC_VERSION >= 19 */
 
 	if (NULL != info_ptr) {
 		info_ptr->name = rv_name;
