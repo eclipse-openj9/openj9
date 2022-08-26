@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -309,7 +309,7 @@ jvmtiGetOrSetLocal(jvmtiEnv* env,
 
 	rc = getCurrentVMThread(vm, &currentThread);
 	if (rc == JVMTI_ERROR_NONE) {
-		J9VMThread * targetThread;
+		J9VMThread *targetThread = NULL;
 
 		vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
 		rc = getVMThread(currentThread, thread, &targetThread, TRUE, TRUE);
@@ -425,7 +425,7 @@ jvmtiGetOrSetLocal(jvmtiEnv* env,
 				
 				*((jobject *) value_ptr) = vm->internalVMFunctions->j9jni_createLocalRef((JNIEnv *) currentThread, obj);
 			}
-			releaseVMThread(currentThread, targetThread);
+			releaseVMThread(currentThread, targetThread, thread);
 		}
 		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}

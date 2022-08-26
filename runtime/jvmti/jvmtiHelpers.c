@@ -95,40 +95,82 @@ static UDATA watchedClassEqual (void *lhsEntry, void *rhsEntry, void *userData);
 
 
 jvmtiError
-getVMThread(J9VMThread * currentThread, jthread thread, J9VMThread ** vmThreadPtr, UDATA allowNull, UDATA mustBeAlive)
+getVMThread(J9VMThread *currentThread, jthread thread, J9VMThread **vmThreadPtr, UDATA allowNull, UDATA mustBeAlive)
 {
-	J9JavaVM * vm = currentThread->javaVM;
-	j9object_t threadObject;
-	J9VMThread * targetThread = NULL;
+	J9JavaVM *vm = currentThread->javaVM;
+	j9object_t threadObject = NULL;
+	J9VMThread *targetThread = NULL;
+	BOOLEAN isThreadAlive = FALSE;
+#if JAVA_SPEC_VERSION >= 19
+	BOOLEAN isVirtualThread = FALSE;
+#endif /* JAVA_SPEC_VERSION >= 19 */
 
-	if (thread == NULL) {
+	if (NULL == thread) {
 		if (allowNull) {
 			*vmThreadPtr = currentThread;
 			return JVMTI_ERROR_NONE;
 		}
 		return JVMTI_ERROR_INVALID_THREAD;
 	} else {
-		threadObject = *((j9object_t*) thread);
+		threadObject = J9_JNI_UNWRAP_REFERENCE(thread);
 		if (currentThread->threadObject == threadObject) {
 			*vmThreadPtr = currentThread;
 			return JVMTI_ERROR_NONE;
 		}
 	}
 
-	/* Make sure the vmThread stays alive while it is being used */
-
+	/* Make sure the vmThread stays alive while it is being used. */
 	omrthread_monitor_enter(vm->vmThreadListMutex);
-	if (!J9VMJAVALANGTHREAD_STARTED(currentThread, threadObject) || ((targetThread = J9VMJAVALANGTHREAD_THREADREF(currentThread, threadObject)) == NULL)) {
+#if JAVA_SPEC_VERSION >= 19
+	isVirtualThread = IS_VIRTUAL_THREAD(currentThread, threadObject);
+	if (isVirtualThread) {
+		omrthread_monitor_enter(vm->liveVirtualThreadListMutex);
+
+		while (J9OBJECT_I64_LOAD(currentThread, threadObject, vm->virtualThreadInspectorCountOffset) < 0) {
+			/* Thread is currently in the process of mounting/unmounting, wait. */
+			vm->internalVMFunctions->internalExitVMToJNI(currentThread);
+			omrthread_monitor_wait(vm->liveVirtualThreadListMutex);
+			vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
+			threadObject = J9_JNI_UNWRAP_REFERENCE(thread);
+		}
+
+		jint vthreadState = J9VMJAVALANGVIRTUALTHREAD_STATE(currentThread, threadObject);
+		j9object_t carrierThread = (j9object_t)J9VMJAVALANGVIRTUALTHREAD_CARRIERTHREAD(currentThread, threadObject);
+		if (NULL != carrierThread) {
+			targetThread = J9VMJAVALANGTHREAD_THREADREF(currentThread, carrierThread);
+		}
+		isThreadAlive = (JVMTI_VTHREAD_STATE_NEW != vthreadState) && (JVMTI_VTHREAD_STATE_TERMINATED != vthreadState);
+	} else
+#endif /* JAVA_SPEC_VERSION >= 19 */
+	{
+		targetThread = J9VMJAVALANGTHREAD_THREADREF(currentThread, threadObject);
+		isThreadAlive = J9VMJAVALANGTHREAD_STARTED(currentThread, threadObject) && (NULL != targetThread);
+	}
+
+	if (!isThreadAlive) {
 		if (mustBeAlive) {
+#if JAVA_SPEC_VERSION >= 19
+			if (isVirtualThread) {
+				omrthread_monitor_exit(vm->liveVirtualThreadListMutex);
+			}
+#endif /* JAVA_SPEC_VERSION >= 19 */
 			omrthread_monitor_exit(vm->vmThreadListMutex);
 			return JVMTI_ERROR_THREAD_NOT_ALIVE;
 		}
 	}
 
 	*vmThreadPtr = targetThread;
-	if (targetThread != NULL) {
-		++(targetThread->inspectorCount);
+	if (NULL != targetThread) {
+		targetThread->inspectorCount += 1;
 	}
+#if JAVA_SPEC_VERSION >= 19
+	if (isVirtualThread) {
+		I_64 vthreadInspectorCount = J9OBJECT_I64_LOAD(currentThread, threadObject, vm->virtualThreadInspectorCountOffset) + 1;
+		Assert_JVMTI_true(vthreadInspectorCount > 0);
+		J9OBJECT_I64_STORE(currentThread, threadObject, vm->virtualThreadInspectorCountOffset, vthreadInspectorCount);
+		omrthread_monitor_exit(vm->liveVirtualThreadListMutex);
+	}
+#endif /* JAVA_SPEC_VERSION >= 19 */
 	omrthread_monitor_exit(vm->vmThreadListMutex);
 	return JVMTI_ERROR_NONE;
 }
@@ -136,15 +178,33 @@ getVMThread(J9VMThread * currentThread, jthread thread, J9VMThread ** vmThreadPt
 
 
 void
-releaseVMThread(J9VMThread * currentThread, J9VMThread * targetThread)
+releaseVMThread(J9VMThread *currentThread, J9VMThread *targetThread, jthread thread)
 {
-	if ((currentThread != targetThread) && (targetThread != NULL)) {
-		J9JavaVM * vm = targetThread->javaVM;
+#if JAVA_SPEC_VERSION >= 19
+	if (NULL != thread) {
+		j9object_t threadObject = J9_JNI_UNWRAP_REFERENCE(thread);
+		if ((currentThread->threadObject != threadObject) && IS_VIRTUAL_THREAD(currentThread, threadObject)) {
+			J9JavaVM *vm = currentThread->javaVM;
+			I_64 vthreadInspectorCount = 0;
+			/* Release the virtual thread (allow it to die) now that we are no longer inspecting it. */
+			omrthread_monitor_enter(vm->liveVirtualThreadListMutex);
+			vthreadInspectorCount = J9OBJECT_I64_LOAD(currentThread, threadObject, vm->virtualThreadInspectorCountOffset);
+			Assert_JVMTI_true(vthreadInspectorCount > 0);
+			vthreadInspectorCount -= 1;
+			J9OBJECT_I64_STORE(currentThread, threadObject, vm->virtualThreadInspectorCountOffset, vthreadInspectorCount);
+			if (0 == vthreadInspectorCount) {
+				omrthread_monitor_notify_all(vm->liveVirtualThreadListMutex);
+			}
+			omrthread_monitor_exit(vm->liveVirtualThreadListMutex);
+		}
+	}
+#endif /* JAVA_SPEC_VERSION >= 19 */
 
-		/* Release this thread (allow it to die) now that we are no longer inspecting it */
-
+	if ((NULL != targetThread) && (currentThread != targetThread)) {
+		J9JavaVM *vm = targetThread->javaVM;
+		/* Release the J9VMThread (allow it to die) now that we are no longer inspecting it. */
 		omrthread_monitor_enter(vm->vmThreadListMutex);
-		if (--(targetThread->inspectorCount) == 0) {
+		if (0 == --(targetThread->inspectorCount)) {
 			omrthread_monitor_notify_all(vm->vmThreadListMutex);
 		}
 		omrthread_monitor_exit(vm->vmThreadListMutex);
@@ -1468,10 +1528,9 @@ setEventNotificationMode(J9JVMTIEnv * j9env, J9VMThread * currentThread, jint mo
 		}
 	}
 
-	if (targetThread != NULL) {
-		releaseVMThread(currentThread, targetThread);
+	if (NULL != event_thread) {
+		releaseVMThread(currentThread, targetThread, event_thread);
 	}
-
 done:
 	return rc;
 }

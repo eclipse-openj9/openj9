@@ -1458,7 +1458,7 @@ jvmtiGetOSThreadID(jvmtiEnv* jvmti_env, ...)
 
 	rc = getCurrentVMThread(vm, &currentThread);
 	if (rc == JVMTI_ERROR_NONE) {
-		J9VMThread * targetThread;
+		J9VMThread *targetThread = NULL;
 
 		vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
 
@@ -1468,7 +1468,7 @@ jvmtiGetOSThreadID(jvmtiEnv* jvmti_env, ...)
 		rc = getVMThread(currentThread, thread, &targetThread, TRUE, TRUE);
 		if (rc == JVMTI_ERROR_NONE) {
 			rv_threadid = (jlong) omrthread_get_osId(targetThread->osThread);
-			releaseVMThread(currentThread, targetThread);
+			releaseVMThread(currentThread, targetThread, thread);
 		}
 done:
 		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
@@ -1508,7 +1508,7 @@ jvmtiGetStackTraceExtended(jvmtiEnv* env, ...)
 
 	rc = getCurrentVMThread(vm, &currentThread);
 	if (rc == JVMTI_ERROR_NONE) {
-		J9VMThread * targetThread;
+		J9VMThread *targetThread = NULL;
 
 		vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
 
@@ -1525,7 +1525,7 @@ jvmtiGetStackTraceExtended(jvmtiEnv* env, ...)
 			rc = jvmtiInternalGetStackTraceExtended(env, type, currentThread, targetThread, start_depth, (UDATA) max_frame_count, frame_buffer, &rv_count);
 
 			vm->internalVMFunctions->resumeThreadForInspection(currentThread, targetThread);
-			releaseVMThread(currentThread, targetThread);
+			releaseVMThread(currentThread, targetThread, thread);
 		}
 done:
 		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
@@ -3444,7 +3444,7 @@ jvmtiGetJ9vmThread(jvmtiEnv *env, ...)
 
 	rc = getCurrentVMThread(vm, &currentThread);
 	if (rc == JVMTI_ERROR_NONE) {
-		J9VMThread * targetThread;
+		J9VMThread *targetThread = NULL;
 
 		vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
 
@@ -3455,7 +3455,7 @@ jvmtiGetJ9vmThread(jvmtiEnv *env, ...)
 		rc = getVMThread(currentThread, thread, &targetThread, TRUE, TRUE);
 		if (rc == JVMTI_ERROR_NONE) {
 			rv_vmThread = targetThread;
-			releaseVMThread(currentThread, targetThread);
+			releaseVMThread(currentThread, targetThread, thread);
 		}
 done:
 		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
