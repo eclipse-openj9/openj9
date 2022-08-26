@@ -1,7 +1,7 @@
 package org.openj9.test.java.lang;
 
 /*******************************************************************************
- * Copyright (c) 1998, 2020 IBM Corp. and others
+ * Copyright (c) 1998, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -271,19 +271,6 @@ public class Test_System {
 			System.runFinalization();
 		}
 		AssertJUnit.assertTrue("Failed to run finalization", ranFinalize);
-	}
-
-	/**
-	 * @tests java.lang.System#runFinalizersOnExit(boolean)
-	 */
-	@Test
-	public void test_runFinalizersOnExit() {
-		try {
-			System.runFinalizersOnExit(true);
-		} catch (Throwable t) {
-			AssertJUnit.assertTrue("Failed to set runFinalizersOnExit", false);
-		}
-		AssertJUnit.assertTrue("Passed runFinalizersOnExit", true);
 	}
 
 	/**
