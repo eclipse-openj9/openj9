@@ -356,7 +356,7 @@ x86-64_windows:
   extra_configure_options:
     all: '--disable-ccache --with-cuda="C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v9.0"'
     8: '--with-toolchain-version=2017 --with-freetype-src=/cygdrive/c/openjdk/freetype-2.5.3'
-    11: '--with-toolchain-version=2017'
+    11: '--with-toolchain-version=2019'
     17: '--with-toolchain-version=2019'
     18: '--with-toolchain-version=2019'
     19: '--with-toolchain-version=2019'
