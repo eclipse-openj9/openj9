@@ -644,11 +644,18 @@ initializeRequiredClasses(J9VMThread *vmThread, char* dllName)
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 
 #if JAVA_SPEC_VERSION >= 19
-	/* These fields point to the next and previous VirtualThreads in the liveVirtualThreadList. */
+	/* Points to the next VirtualThread in the liveVirtualThreadList. */
 	if (0 != vmFuncs->addHiddenInstanceField(vm, "java/lang/VirtualThread", "linkNext", "Ljava/lang/VirtualThread;", &vm->virtualThreadLinkNextOffset)) {
 		return 1;
 	}
+
+	/* Points to the previous VirtualThread in the liveVirtualThreadList. */
 	if (0 != vmFuncs->addHiddenInstanceField(vm, "java/lang/VirtualThread", "linkPrevious", "Ljava/lang/VirtualThread;", &vm->virtualThreadLinkPreviousOffset)) {
+		return 1;
+	}
+
+	/* Counter to track if the virtual thread is being inspected by JVMTI. */
+	if (0 != vmFuncs->addHiddenInstanceField(vm, "java/lang/VirtualThread", "inspectorCount", "J", &vm->virtualThreadInspectorCountOffset)) {
 		return 1;
 	}
 #endif /* JAVA_SPEC_VERSION >= 19 */

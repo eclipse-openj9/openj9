@@ -1124,14 +1124,14 @@ getThreadState(J9VMThread *currentThread, j9object_t threadObject);
 
 
 /**
-* @brief
-* @param currentThread
-* @param thread
-* @param vmThreadPtr
-* @param allowNull
-* @param mustBeAlive
-* @return jvmtiError
-*/
+ * @brief
+ * @param currentThread
+ * @param thread
+ * @param vmThreadPtr
+ * @param allowNull
+ * @param mustBeAlive
+ * @return jvmtiError
+ */
 jvmtiError
 getVMThread(J9VMThread * currentThread, jthread thread, J9VMThread ** vmThreadPtr, UDATA allowNull, UDATA mustBeAlive);
 
@@ -1203,13 +1203,14 @@ queueCompileEvent(J9JVMTIData * jvmtiData, jmethodID methodID, void * startPC, U
 
 
 /**
-* @brief
-* @param currentThread
-* @param targetThread
-* @return void
-*/
+ * @brief
+ * @param currentThread
+ * @param targetThread
+ * @param thread
+ * @return void
+ */
 void
-releaseVMThread(J9VMThread * currentThread, J9VMThread * targetThread);
+releaseVMThread(J9VMThread *currentThread, J9VMThread *targetThread, jthread thread);
 
 
 /**

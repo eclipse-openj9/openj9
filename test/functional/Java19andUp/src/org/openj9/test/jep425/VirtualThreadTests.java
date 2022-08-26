@@ -27,6 +27,7 @@ import org.testng.AssertJUnit;
 import static org.testng.Assert.fail;
 
 import java.lang.Thread;
+import java.lang.reflect.*;
 import java.time.Duration;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -135,6 +136,36 @@ public class VirtualThreadTests {
 
 			t.start();
 			t.join();
+		} catch (Exception e) {
+			Assert.fail("Unexpected exception occured : " + e.getMessage() , e);
+		}
+	}
+
+	private static int readVirtualThreadStates(Class vthreadCls, String fieldName) throws Exception {
+		Field vthreadState = vthreadCls.getDeclaredField(fieldName);
+		vthreadState.setAccessible(true);
+		return vthreadState.getInt(null);
+	}
+
+	@Test
+	public void test_verifyJVMTIMacros() {
+		final int JVMTI_VTHREAD_STATE_NEW = 0;
+		final int JVMTI_VTHREAD_STATE_TERMINATED = 99;
+
+		int value = 0;
+
+		try {
+			Class<?> vthreadCls = Class.forName("java.lang.VirtualThread");
+
+			value = readVirtualThreadStates(vthreadCls, "NEW");
+			if (JVMTI_VTHREAD_STATE_NEW != value) {
+				Assert.fail("JVMTI_VTHREAD_STATE_NEW (" + JVMTI_VTHREAD_STATE_NEW + ") does not match VirtualThread.NEW (" + value + ")");
+			}
+
+			value = readVirtualThreadStates(vthreadCls, "TERMINATED");
+			if (JVMTI_VTHREAD_STATE_TERMINATED != value) {
+				Assert.fail("JVMTI_VTHREAD_STATE_TERMINATED (" + JVMTI_VTHREAD_STATE_TERMINATED + ") does not match VirtualThread.TERMINATED (" + value + ")");
+			}
 		} catch (Exception e) {
 			Assert.fail("Unexpected exception occured : " + e.getMessage() , e);
 		}
