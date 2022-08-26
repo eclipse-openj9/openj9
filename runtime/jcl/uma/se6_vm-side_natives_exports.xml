@@ -280,7 +280,6 @@
 	<export name="Java_java_lang_Class_getVirtualMethodsImpl" />
 	<export name="Java_java_lang_J9VMInternals_getStackTrace" />
 	<export name="Java_java_lang_J9VMInternals_dumpString" />
-	<export name="Java_java_lang_ref_Finalizer_runAllFinalizersImpl" />
 	<export name="Java_java_lang_ref_Finalizer_runFinalizationImpl" />
 	<export name="Java_java_lang_ref_Reference_reprocess" />
 	<export name="Java_java_lang_Thread_getStackTraceImpl" />

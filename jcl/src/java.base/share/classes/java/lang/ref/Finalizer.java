@@ -2,7 +2,7 @@
 package java.lang.ref;
 
 /*******************************************************************************
- * Copyright (c) 2002, 2016 IBM Corp. and others
+ * Copyright (c) 2002, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,15 +32,8 @@ static void runFinalization() {
 
 private static native void runFinalizationImpl();
 
-// called by java.lang.Shutdown.runAllFinalizers native
-// invoked when Runtime.runFinalizersOnExit() was called with true
-static void runAllFinalizers() {
-	runAllFinalizersImpl();
-}
-
 static ReferenceQueue<Object> getQueue() {
 	return new ReferenceQueue<Object>();
 }
 
-private static native void runAllFinalizersImpl();
 }

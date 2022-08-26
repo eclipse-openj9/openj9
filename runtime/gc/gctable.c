@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -228,14 +228,10 @@ J9MemoryManagerFunctions MemoryManagerFunctions = {
 	j9gc_createJavaLangString,
 	j9gc_createJavaLangStringWithUTFCache,
 	j9gc_internString,
-#if defined(J9VM_GC_FINALIZATION)
-	j9gc_runFinalizersOnExit,
-#endif /* J9VM_GC_FINALIZATION */
 	j9gc_objaccess_jniGetPrimitiveArrayCritical,
 	j9gc_objaccess_jniReleasePrimitiveArrayCritical,
 	j9gc_objaccess_jniGetStringCritical,
 	j9gc_objaccess_jniReleaseStringCritical,
-	j9gc_finalizer_completeFinalizersOnExit,
 	j9gc_get_CPU_times,
 	omrgc_walkLWNRLockTracePool,
 #if defined(J9VM_GC_OBJECT_ACCESS_BARRIER)

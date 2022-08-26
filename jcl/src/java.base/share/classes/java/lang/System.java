@@ -796,8 +796,7 @@ private static native void rasInitializeVersion(String javaRuntimeVersion);
 
 /**
  * Causes the virtual machine to stop running, and the
- * program to exit. If runFinalizersOnExit(true) has been
- * invoked, then all finalizers will be run first.
+ * program to exit.
  *
  * @param		code		the return code.
  *
@@ -1095,12 +1094,7 @@ public static void runFinalization() {
 
 /*[IF JAVA_SPEC_VERSION < 11]*/
 /**
- * Ensure that, when the virtual machine is about to exit,
- * all objects are finalized. Note that all finalization
- * which occurs when the system is exiting is performed
- * after all running threads have been terminated.
- *
- * @param 		flag 		true means finalize all on exit.
+ * Throws {@code UnsupportedOperationException}.
  *
  * @deprecated 	This method is unsafe.
  */
