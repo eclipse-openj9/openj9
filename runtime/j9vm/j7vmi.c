@@ -2762,13 +2762,6 @@ JVM_EnqueueOperation(jint arg0, jint arg1, jint arg2, jint arg3, jint arg4)
 }
 
 jobject JNICALL
-JVM_Exit(jint arg0)
-{
-	assert(!"JVM_Exit() stubbed!");
-	return NULL;
-}
-
-jobject JNICALL
 JVM_GetCPFieldNameUTF(jint arg0, jint arg1, jint arg2)
 {
 	assert(!"JVM_GetCPFieldNameUTF() stubbed!");
