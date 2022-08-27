@@ -644,6 +644,11 @@ initializeRequiredClasses(J9VMThread *vmThread, char* dllName)
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 
 #if JAVA_SPEC_VERSION >= 19
+	/* TLS hidden field points to an array holding jvmti thread local data. */
+	if (0 != vmFuncs->addHiddenInstanceField(vm, "java/lang/Thread", "tls", "J", &vm->tlsOffset)) {
+		return 1;
+	}
+
 	/* Points to the next VirtualThread in the liveVirtualThreadList. */
 	if (0 != vmFuncs->addHiddenInstanceField(vm, "java/lang/VirtualThread", "linkNext", "Ljava/lang/VirtualThread;", &vm->virtualThreadLinkNextOffset)) {
 		return 1;

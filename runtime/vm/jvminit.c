@@ -824,6 +824,13 @@ freeJavaVM(J9JavaVM * vm)
 	}
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
+#if JAVA_SPEC_VERSION >= 19
+	if (NULL != vm->tlsPool) {
+		pool_kill(vm->tlsPool);
+		vm->tlsPool = NULL;
+	}
+#endif /* JAVA_SPEC_VERSION >= 19 */
+
 	j9mem_free_memory(vm->vTableScratch);
 	vm->vTableScratch = NULL;
 
@@ -2389,6 +2396,10 @@ VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved)
 					goto _error;
 				}
 			}
+#if JAVA_SPEC_VERSION >= 19
+			if (NULL == (vm->tlsPool = pool_new(sizeof(void *) * J9JVMTI_MAX_TLS_KEYS,  0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_JVMTI, POOL_FOR_PORT(vm->portLibrary))))
+				goto _error;
+#endif /* JAVA_SPEC_VERSION >= 19 */
 
 			break;
 

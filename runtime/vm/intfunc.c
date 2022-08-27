@@ -417,6 +417,7 @@ J9InternalVMFunctions J9InternalFunctions = {
 	getDefaultValueSlotAddress,
 #if JAVA_SPEC_VERSION >= 19
 	createContinuation,
+	freeTLS,
 #endif /* JAVA_SPEC_VERSION >= 19 */
 #if JAVA_SPEC_VERSION >= 16
 /*

@@ -635,3 +635,6 @@ TraceEntry=Trc_JVMTI_jvmtiHookVirtualThreadEnd_Entry Overhead=1 Level=5 Noenv Te
 TraceExit=Trc_JVMTI_jvmtiHookVirtualThreadEnd_Exit Overhead=1 Level=5 Noenv Template="HookVirtualThreadEnd"
 TraceEntry=Trc_JVMTI_jvmtiHookVirtualThreadStarted_Entry Overhead=1 Level=5 Noenv Template="HookVirtualThreadStarted"
 TraceExit=Trc_JVMTI_jvmtiHookVirtualThreadStarted_Exit Overhead=1 Level=5 Noenv Template="HookVirtualThreadStarted"
+
+TraceEntry=Trc_JVMTI_jvmtiHookVirtualThreadDestroy_Entry Overhead=1 Level=5 Noenv Template="HookVirtualThreadDestroy"
+TraceExit=Trc_JVMTI_jvmtiHookVirtualThreadDestroy_Exit Overhead=1 Level=5 Noenv Template="HookVirtualThreadDestroy"

@@ -230,6 +230,13 @@ deallocateVMThread(J9VMThread * vmThread, UDATA decrementZombieCount, UDATA send
 		TRIGGER_J9HOOK_VM_THREAD_DESTROY(vm->hookInterface, vmThread);
 	}
 
+#if JAVA_SPEC_VERSION >= 19
+	if (NULL != vmThread->threadObject) {
+		/* Deallocate thread object's tls array. */
+		freeTLS(vmThread, vmThread->threadObject);
+	}
+#endif /* JAVA_SPEC_VERSION >= 19 */
+
 	/* freeing the per thread buffers in the portlibrary */
 	j9port_tls_free();
 
