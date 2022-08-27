@@ -172,6 +172,11 @@ getVMThread(J9VMThread *currentThread, jthread thread, J9VMThread **vmThreadPtr,
 	}
 #endif /* JAVA_SPEC_VERSION >= 19 */
 	omrthread_monitor_exit(vm->vmThreadListMutex);
+
+#if JAVA_SPEC_VERSION >= 19
+	Assert_JVMTI_true((NULL != targetThread) || isVirtualThread);
+#endif /* JAVA_SPEC_VERSION >= 19 */
+
 	return JVMTI_ERROR_NONE;
 }
 
