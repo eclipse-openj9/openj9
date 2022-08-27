@@ -4719,6 +4719,17 @@ createJoinableThreadWithCategory(omrthread_t* handle, UDATA stacksize, UDATA pri
 IDATA
 attachThreadWithCategory(omrthread_t* handle, U_32 category);
 
+#if JAVA_SPEC_VERSION >= 19
+/**
+ * Frees a thread object's TLS array.
+ *
+ * @param[in] currentThread the current thread
+ * @param[in] threadObj the thread object to free TLS from
+ */
+void
+freeTLS(J9VMThread *currentThread, j9object_t threadObj);
+#endif /* JAVA_SPEC_VERSION >= 19 */
+
 /* -------------------- J9OMRHelpers.cpp ------------ */
 
 /**

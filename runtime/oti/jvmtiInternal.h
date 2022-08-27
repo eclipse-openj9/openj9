@@ -163,7 +163,11 @@ typedef struct J9JVMTIEnv {
 	J9JVMTIEventEnableMap globalEventEnable;
 	J9HashTable *watchedClasses;
 	J9Pool* breakpoints;
+#if JAVA_SPEC_VERSION >= 19
+	UDATA tlsKey;
+#else /* JAVA_SPEC_VERSION >= 19 */
 	omrthread_tls_key_t tlsKey;
+#endif /* JAVA_SPEC_VERSION >= 19 */
 	J9JVMTIHookInterfaceWithID vmHook;
 	J9JVMTIHookInterfaceWithID gcHook;
 	J9JVMTIHookInterfaceWithID gcOmrHook;
@@ -559,9 +563,6 @@ typedef struct jvmtiGcp_translation {
 #define GET_SUPERCLASS(clazz) \
 	((J9CLASS_DEPTH(clazz) == 0) ? NULL : \
 		(clazz)->superclasses[J9CLASS_DEPTH(clazz) - 1])
-
-#define THREAD_DATA_FOR_VMTHREAD(j9env, vmThread) \
-	((J9JVMTIThreadData *) omrthread_tls_get((vmThread)->osThread, (j9env)->tlsKey))
 
 #define IBMJVMTI_EXTENDED_CALLSTACK     1
 #define IBMJVMTI_UNEXTENDED_CALLSTACK   0

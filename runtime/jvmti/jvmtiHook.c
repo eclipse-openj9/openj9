@@ -56,7 +56,6 @@ typedef IDATA (*J9HookRedirectorFunction)(J9JVMTIHookInterfaceWithID* hookInterf
 
 
 static void jvmtiHookPermanentPC (J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData);
-static void jvmtiHookThreadCreated (J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData);
 static void jvmtiHookThreadDestroy (J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData);
 static void jvmtiHookGCEnd (J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData);
 static void jvmtiHookGCCycleEnd(J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData);
@@ -148,6 +147,7 @@ static UDATA methodExists(J9Class * methodClass, U_8 * nameData, UDATA nameLengt
 #if JAVA_SPEC_VERSION >= 19
 static void jvmtiHookVirtualThreadStarted (J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData);
 static void jvmtiHookVirtualThreadEnd (J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData);
+static void jvmtiHookVirtualThreadDestroy (J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData);
 #endif /* JAVA_SPEC_VERSION >= 19 */
 
 static void
@@ -180,24 +180,6 @@ jvmtiHookThreadEnd(J9HookInterface** hook, UDATA eventNum, void* eventData, void
 
 
 static void
-jvmtiHookThreadCreated(J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData)
-{
-	J9VMThreadCreatedEvent * data = eventData;
-	J9JVMTIEnv * j9env = userData;
-	J9VMThread * vmThread = data->vmThread;
-
-	Trc_JVMTI_jvmtiHookThreadCreated_Entry();
-
-	if (createThreadData(j9env, vmThread) != JVMTI_ERROR_NONE) {
-		/* Struct creation failed, disallow the attaching of this thread */
-		data->continueInitialization = FALSE;
-	}
-
-	TRACE_JVMTI_EVENT_RETURN(jvmtiHookThreadCreated);
-}
-
-
-static void
 jvmtiHookThreadStarted(J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData)
 {
 	J9VMThreadStartedEvent * data = eventData;
@@ -225,29 +207,47 @@ jvmtiHookThreadStarted(J9HookInterface** hook, UDATA eventNum, void* eventData, 
 	TRACE_JVMTI_EVENT_RETURN(jvmtiHookThreadStarted);
 }
 
+/**
+ * Deallocates the thread data block for the given environment/thread pair. For JDK19+, it is located in
+ * the vmThread's thread object. For JDK18 and earlier, it is in the OS thread.
+ *
+ * @param[in] j9env the environment
+ * @param[in] vmThread the terminating vm thread
+ */
+static void
+destroyThreadData(J9JVMTIEnv *j9env, J9VMThread *vmThread)
+{
+	j9object_t threadObject = vmThread->threadObject;
+#if JAVA_SPEC_VERSION >= 19
+	void *tlsArray = J9OBJECT_ADDRESS_LOAD(vmThread, threadObject, vmThread->javaVM->tlsOffset);
+
+	if (NULL != tlsArray)
+#endif /* JAVA_SPEC_VERSION >= 19 */
+	{
+		/* Deallocate the thread data block for this environment/thread pair, if it exists. */
+		J9JVMTIThreadData *threadData = jvmtiTLSGet(vmThread, threadObject, j9env->tlsKey);
+		if (NULL != threadData) {
+			jvmtiTLSSet(vmThread, threadObject, j9env->tlsKey, NULL);
+			omrthread_monitor_enter(j9env->threadDataPoolMutex);
+			pool_removeElement(j9env->threadDataPool, threadData);
+			omrthread_monitor_exit(j9env->threadDataPoolMutex);
+		}
+	}
+}
 
 static void
 jvmtiHookThreadDestroy(J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData)
 {
 	J9VMThreadDestroyEvent * data = eventData;
 	J9JVMTIEnv * j9env = userData;
-	J9JVMTIThreadData * threadData;
 	J9VMThread * vmThread = data->vmThread;
 
 	Trc_JVMTI_jvmtiHookThreadDestroy_Entry();
 
-	/* The final thread in the system is destroyed very late, JVMTI could be shut down by then */
+	/* The final thread in the system is destroyed very late, JVMTI could be shut down by then. */
 
 	if (vmThread->javaVM->jvmtiData != NULL) {
-		/* Deallocate the thread data block for this environment/thread pair, if it exists */
-
-		threadData = THREAD_DATA_FOR_VMTHREAD(j9env, vmThread);
-		if (threadData != NULL) {
-			omrthread_tls_set(data->vmThread->osThread, j9env->tlsKey, NULL);
-			omrthread_monitor_enter(j9env->threadDataPoolMutex);
-			pool_removeElement(j9env->threadDataPool, threadData);
-			omrthread_monitor_exit(j9env->threadDataPoolMutex);
-		}
+		destroyThreadData(j9env, vmThread);
 	}
 
 	TRACE_JVMTI_EVENT_RETURN(jvmtiHookThreadDestroy);
@@ -402,6 +402,24 @@ jvmtiHookVirtualThreadEnd(J9HookInterface **hook, UDATA eventNum, void *eventDat
 	}
 
 	TRACE_JVMTI_EVENT_RETURN(jvmtiHookVirtualThreadEnd);
+}
+
+static void
+jvmtiHookVirtualThreadDestroy(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData)
+{
+	J9VirtualThreadEndEvent *data = eventData;
+	J9JVMTIEnv *j9env = userData;
+	J9VMThread *currentThread = data->currentThread;
+
+	Trc_JVMTI_jvmtiHookVirtualThreadDestroy_Entry();
+
+	/* The final thread in the system is destroyed very late, JVMTI could be shut down by then. */
+
+	if (NULL != currentThread->javaVM->jvmtiData) {
+		destroyThreadData(j9env, currentThread);
+	}
+
+	TRACE_JVMTI_EVENT_RETURN(jvmtiHookVirtualThreadDestroy);
 }
 #endif /* JAVA_SPEC_VERSION >= 19 */
 
@@ -789,8 +807,10 @@ unhookAllEvents(J9JVMTIEnv * j9env)
 		unhookEvent(j9env, i);
 	}
 
-	hookUnregister(vmHook, J9HOOK_VM_THREAD_CREATED, jvmtiHookThreadCreated, NULL, j9env);
 	hookUnregister(vmHook, J9HOOK_VM_THREAD_DESTROY, jvmtiHookThreadDestroy, NULL, j9env);
+#if JAVA_SPEC_VERSION >= 19
+	hookUnregister(vmHook, J9HOOK_VM_VIRTUAL_THREAD_END, jvmtiHookVirtualThreadDestroy, NULL, j9env);
+#endif /* JAVA_SPEC_VERSION >= 19 */
 	hookUnregister(vmHook, J9HOOK_VM_POP_FRAMES_INTERRUPT, jvmtiHookPopFramesInterrupt, NULL, j9env);
 
 	hookUnregister(gcOmrHook, J9HOOK_MM_OMR_GLOBAL_GC_END, jvmtiHookGCEnd, NULL, j9env);
@@ -803,13 +823,15 @@ hookRequiredEvents(J9JVMTIEnv * j9env)
 {
 	J9JVMTIHookInterfaceWithID * vmHook = &j9env->vmHook;
 
-	if (hookRegister(vmHook, J9HOOK_VM_THREAD_CREATED, jvmtiHookThreadCreated, OMR_GET_CALLSITE(), j9env)) {
-		return 1;
-	}
-
 	if (hookRegister(vmHook, J9HOOK_VM_THREAD_DESTROY, jvmtiHookThreadDestroy, OMR_GET_CALLSITE(), j9env)) {
 		return 1;
 	}
+
+#if JAVA_SPEC_VERSION >= 19
+	if (hookRegister(vmHook, J9HOOK_VM_VIRTUAL_THREAD_END, jvmtiHookVirtualThreadDestroy, OMR_GET_CALLSITE(), j9env)) {
+		return 1;
+	}
+#endif /* JAVA_SPEC_VERSION >= 19 */
 
 	return 0;
 }

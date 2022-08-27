@@ -901,6 +901,62 @@ jvmtiIterateOverReachableObjects(jvmtiEnv* env,
 /* ---------------- jvmtiHelpers.c ---------------- */
 
 /**
+ * @brief Allocate a thread local storage key (which represents a jvmtiEnv) to index into a thread
+ * object's TLS array.
+ * @param[in] vm java vm
+ * @param[out] handle on successful return contains the allocated key value
+ * @return 0 on success, -1 on failure
+ */
+IDATA
+jvmtiTLSAlloc(J9JavaVM *vm, UDATA *handle);
+
+#if JAVA_SPEC_VERSION >= 19
+/**
+ * @brief Allocate a thread local storage key (which represents a jvmtiEnv) to index into a thread
+ * object's TLS array.
+ * @param[in] vm java vm
+ * @param[out] handle on successful return contains the allocated key value
+ * @param[in] finalizer a finalizer function which will be invoked when a thread is detached or terminates
+ * 		if the thread's TLS entry for this key is non-NULL
+ * @return 0 on success, -1 on failure
+ */
+IDATA
+jvmtiTLSAllocWithFinalizer(J9JavaVM *vm, UDATA *handle, j9_tls_finalizer_t finalizer);
+#endif /* JAVA_SPEC_VERSION >= 19 */
+
+/**
+ * @brief Free a thread local storage key allocated with jvmtiTLSAlloc.
+ * @param[in] vm java vm
+ * @param[in] key the key to be freed
+ * @return 0 on success, -1 on failure
+ */
+IDATA
+jvmtiTLSFree(J9JavaVM *vm, UDATA key);
+
+/**
+ * @brief Sets a thread's TLS value, accessed through a jvmtiEnv-thread pair. For JDK19+, the value is stored in the thread
+ * object. For JDK18 and earlier, it is stored in the VM thread. Both are fetched from a TLS array indexed by jvmtiEnv key.
+ * @param[in] vmThread current thread (JDK19+) or the vm thread to set the TLS value in (JDK18 and earlier)
+ * @param[in] thread the thread to set the value in (JDK19+) or unused (JDK18 and earlier)
+ * @param[in] key the jvmtiEnv key
+ * @param[in] value the value to set to the TLS
+ * @return 0 on success, -1 on failure
+ */
+IDATA
+jvmtiTLSSet(J9VMThread *vmThread, j9object_t thread, UDATA key, J9JVMTIThreadData *value);
+
+/**
+ * @brief Gets a thread's TLS value, accessed through a jvmtiEnv-thread pair. For JDK19+, the value is fetched from the thread
+ * object. For JDK18 and earlier, it is fetched from the VM thread. Both are fetched from a TLS array indexed by jvmtiEnv key.
+ * @param[in] vmThread current thread (JDK19+) or the vm thread to get the TLS value from (JDK18 and earlier)
+ * @param[in] thread thread the thread to get the value from (JDK19+) or unused (JDK18 and earlier)
+ * @param[in] key the jvmtiEnv key
+ * @return pointer to TLS data, NULL if data has not been set
+ */
+J9JVMTIThreadData *
+jvmtiTLSGet(J9VMThread *vmThread, j9object_t thread, UDATA key);
+
+/**
 * @brief Make the heap walkable, assume exclusive VM access is held
 * @param currentThread The current J9VMThread
 * @return void
@@ -939,14 +995,29 @@ jint
 allocateEnvironment(J9InvocationJavaVM * invocationJavaVM, jint version, void ** penv);
 
 
+#if JAVA_SPEC_VERSION >= 19
 /**
-* @brief
-* @param j9env
-* @param vmThread
-* @return jvmtiError
-*/
+ * @brief Lazy allocates TLS array and stores it in the given thread. Do nothing if it already exists.
+ * @param vm the java vm
+ * @param thread the thread to allocate TLS in
+ * @return JVMTI_ERROR_NONE on success, a JVMTI_ERROR on failure
+ */
 jvmtiError
-createThreadData(J9JVMTIEnv * j9env, J9VMThread * vmThread);
+allocateTLS(J9JavaVM *vm, j9object_t thread);
+#endif /* JAVA_SPEC_VERSION >= 19 */
+
+
+/**
+ * @brief Lazy allocates TLS data and stores it in the given thread. Do nothing if it already exists. For JDK19+,
+ * it will be stored in the thread object. For earlier JDK versions, it will be stored in the OMR thread
+ * associated with vmThread.
+ * @param j9env the JVMTI environment associated with the TLS
+ * @param vmThread the current J9VMThread (JDK19+) or the thread to store the tls data in (JDK18 and earlier)
+ * @param thread the thread to allocate TLS data in (JDK19+) or unused (JDK18 and earlier)
+ * @return JVMTI_ERROR_NONE on success, a JVMTI_ERROR on failure
+ */
+jvmtiError
+createThreadData(J9JVMTIEnv *j9env, J9VMThread *vmThread, j9object_t thread);
 
 
 /**

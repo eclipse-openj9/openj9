@@ -954,7 +954,32 @@ jvmtiSetThreadLocalStorage(jvmtiEnv* env,
 
 		rc = getVMThread(currentThread, thread, &targetThread, TRUE, TRUE);
 		if (rc == JVMTI_ERROR_NONE) {
-			THREAD_DATA_FOR_VMTHREAD((J9JVMTIEnv *) env, targetThread)->tls = (void *) data;
+			J9JVMTIEnv *j9env = (J9JVMTIEnv *)env;
+			J9JVMTIThreadData *threadData = NULL;
+			/* Use the current thread if the thread isn't specified. */
+			j9object_t threadObject = (NULL == thread) ? currentThread->threadObject : J9_JNI_UNWRAP_REFERENCE(thread);
+
+#if JAVA_SPEC_VERSION >= 19
+			if (NULL == targetThread) {
+				/* targetThread is NULL when the virtual thread is yielded. It is only used to fetch the javaVM so
+				 * set it to currentThread in this case.
+				 */
+				targetThread = currentThread;
+			}
+			rc = allocateTLS(vm, threadObject);
+			if (JVMTI_ERROR_NONE != rc) {
+				goto release;
+			}
+#endif /* JAVA_SPEC_VERSION >= 19 */
+			rc = createThreadData(j9env, targetThread, threadObject);
+			if (JVMTI_ERROR_NONE != rc) {
+				goto release;
+			}
+			threadData = jvmtiTLSGet(targetThread, threadObject, j9env->tlsKey);
+			/* threadData cannot be NULL here since createThreadData has succeeded. */
+			threadData->tls = (void *)data;
+
+release:
 			releaseVMThread(currentThread, targetThread, thread);
 		}
 
@@ -990,7 +1015,30 @@ jvmtiGetThreadLocalStorage(jvmtiEnv* env,
 
 		rc = getVMThread(currentThread, thread, &targetThread, TRUE, TRUE);
 		if (rc == JVMTI_ERROR_NONE) {
-			rv_data = THREAD_DATA_FOR_VMTHREAD((J9JVMTIEnv *) env, targetThread)->tls;
+			J9JVMTIEnv *j9env = (J9JVMTIEnv *)env;
+			J9JVMTIThreadData *threadData = NULL;
+			/* Use the current thread if the thread isn't specified. */
+			j9object_t threadObject = (NULL == thread) ? currentThread->threadObject : J9_JNI_UNWRAP_REFERENCE(thread);
+
+#if JAVA_SPEC_VERSION >= 19
+			if (NULL == targetThread) {
+				/* targetThread is NULL when the virtual thread is yielded. It is only used to fetch the javaVM so
+				 * set it to currentThread in this case.
+				 */
+				targetThread = currentThread;
+			}
+			void *tlsArray = J9OBJECT_ADDRESS_LOAD_VM(vm, threadObject, vm->tlsOffset);
+			if (NULL == tlsArray) {
+				goto release;
+			}
+#endif /* JAVA_SPEC_VERSION >= 19 */
+			threadData = jvmtiTLSGet(targetThread, threadObject, j9env->tlsKey);
+			if (NULL == threadData) {
+				goto release;
+			}
+			rv_data = threadData->tls;
+
+release:
 			releaseVMThread(currentThread, targetThread, thread);
 		}
 done:
