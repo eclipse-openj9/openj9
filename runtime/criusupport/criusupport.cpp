@@ -27,15 +27,15 @@
 #endif /* defined(LINUX) */
 
 #include "criusupport.hpp"
+#include "VMHelpers.hpp"
 
-#include "jni.h"
 #include "j9.h"
 #include "j9jclnls.h"
-#include "ut_j9criu.h"
+#include "jni.h"
+#include "jvmtinls.h"
 #include "omrlinkedlist.h"
 #include "omrthread.h"
-
-#include "VMHelpers.hpp"
+#include "ut_j9criu.h"
 
 extern "C" {
 
@@ -342,6 +342,9 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 		UDATA success = 0;
 		bool safePoint = J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_OSR_SAFE_POINT);
 		bool retryPermitted = vm->checkpointState.maxRetryForNotCheckpointSafe > 0;
+		BOOLEAN syslogFlagNone = TRUE;
+		char *syslogOptions = NULL;
+		I_32 syslogBufferSize = 0;
 
 		vmFuncs->internalEnterVMFromJNI(currentThread);
 
@@ -513,7 +516,33 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 		}
 		Trc_CRIU_before_checkpoint(currentThread, checkpointNanoTimeMonotonic, checkpointNanoUTCTime);
 
+		syslogOptions = (char *)j9mem_allocate_memory(STRING_BUFFER_SIZE, J9MEM_CATEGORY_VM);
+		if (NULL == syslogOptions) {
+			systemReturnCode = J9_NATIVE_STRING_OUT_OF_MEMORY;
+			vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
+			goto wakeJavaThreadsWithExclusiveVMAccess;
+		}
+		systemReturnCode = vmFuncs->queryLogOptions(vm, STRING_BUFFER_SIZE, syslogOptions, &syslogBufferSize);
+		if (JVMTI_ERROR_NONE != systemReturnCode) {
+			currentExceptionClass = vm->criuJVMCheckpointExceptionClass;
+			nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_JVMTI_COM_IBM_LOG_QUERY_OPT_ERROR, NULL);
+			j9mem_free_memory(syslogOptions);
+			goto wakeJavaThreadsWithExclusiveVMAccess;
+		}
+		Trc_CRIU_checkpointJVMImpl_syslogOptions(currentThread, syslogOptions);
+		if (0 != strcmp(syslogOptions, "none")) {
+			/* Not -Xsyslog:none, close the system logger handle before checkpoint. */
+			j9port_control(OMRPORT_CTLDATA_SYSLOG_CLOSE, 0);
+			syslogFlagNone = FALSE;
+		}
+
 		systemReturnCode = criu_dump();
+		if (!syslogFlagNone) {
+			/* Re-open the system logger, and set options with saved string value. */
+			j9port_control(J9PORT_CTLDATA_SYSLOG_OPEN, 0);
+			vmFuncs->setLogOptions(vm, syslogOptions);
+		}
+		j9mem_free_memory(syslogOptions);
 		if (systemReturnCode < 0) {
 			currentExceptionClass = vm->criuSystemCheckpointExceptionClass;
 			nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_JCL_CRIU_DUMP_FAILED, NULL);

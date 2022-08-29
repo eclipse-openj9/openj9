@@ -199,4 +199,14 @@
     <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
     <output type="failure" caseSensitive="yes" regex="no">ERR</output>
   </test>
+
+  <test id="Create and Restore Criu Checkpoint Image once with javacore generation">
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ -Xtrace:trigger=tpnid{j9criu.7-8,javadump},print={j9criu.12}" $MAINCLASS_SIMPLE$ 1 1 false</command>
+    <output type="success" caseSensitive="no" regex="no">Killed</output>
+    <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
+    <output type="required" caseSensitive="yes" regex="no">Post-checkpoint</output>
+    <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
+    <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
+    <output type="failure" caseSensitive="yes" regex="no">ERR</output>
+  </test>
 </suite>
