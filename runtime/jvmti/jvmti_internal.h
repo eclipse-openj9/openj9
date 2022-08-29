@@ -1193,6 +1193,16 @@ getObjectSize(J9JavaVM *vm, j9object_t obj);
 jint
 getThreadState(J9VMThread *currentThread, j9object_t threadObject);
 
+#if JAVA_SPEC_VERSION >= 19
+/**
+ * Get the state of a virtual thread.
+ * @param currentThread The current thread.
+ * @param thread The virtual thread whose state is queried.
+ * @return jint The virtual thread state .
+ */
+jint
+getVirtualThreadState(J9VMThread *currentThread, jthread thread);
+#endif /* JAVA_SPEC_VERSION >= 19 */
 
 /**
  * @brief
