@@ -279,6 +279,10 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
    static const uint32_t DEFAULT_JITSERVER_TIMEOUT = 30000; // ms
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+   static int32_t _sleepMsBeforeCheckpoint;
+#endif
+
    static int32_t _waitTimeToEnterIdleMode;
    static int32_t _waitTimeToEnterDeepIdleMode;
    static int32_t _waitTimeToExitStartupMode;
