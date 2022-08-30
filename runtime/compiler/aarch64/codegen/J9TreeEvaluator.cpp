@@ -5094,6 +5094,34 @@ static TR::Register *VMinlineCompareAndSwapObject(TR::Node *node, TR::CodeGenera
    return resultReg;
    }
 
+/**
+ * @brief Generates instruction sequence for java/lang/Math.min and max
+ *
+ * @param[in] node: node
+ * @param[in] isMax: true if operation is max
+ * @param[in] isDouble: true if type is double
+ * @param[in] cg: CodeGenerator
+ * @return the result register
+ */
+static TR::Register *
+VMinlineMathMinMax(TR::Node *node, bool isMax, bool isDouble, TR::CodeGenerator *cg)
+   {
+   TR::Node *firstChild = node->getFirstChild();
+   TR::Node *secondChild = node->getSecondChild();
+   TR::Register *lhsReg = cg->evaluate(firstChild);
+   TR::Register *rhsReg = cg->evaluate(secondChild);
+   TR::Register *resReg = cg->allocateRegister(TR_FPR);
+   TR::InstOpCode::Mnemonic op = isMax ? (isDouble ? TR::InstOpCode::fmaxd : TR::InstOpCode::fmaxs) :
+                                         (isDouble ? TR::InstOpCode::fmind : TR::InstOpCode::fmins);
+   generateTrg1Src2Instruction(cg, op, node, resReg, lhsReg, rhsReg);
+
+   node->setRegister(resReg);
+   cg->decReferenceCount(firstChild);
+   cg->decReferenceCount(secondChild);
+
+   return resReg;
+   }
+
 bool
 J9::ARM64::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&resultReg)
    {
@@ -5132,6 +5160,27 @@ J9::ARM64::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
             generateLabelInstruction(cg, TR::InstOpCode::label, node, label, conditions);
             cg->decReferenceCount(paramNode);
             resultReg = NULL;
+            return true;
+            }
+
+         case TR::java_lang_Math_max_D:
+            {
+            resultReg = VMinlineMathMinMax(node, true, true, cg);
+            return true;
+            }
+         case TR::java_lang_Math_max_F:
+            {
+            resultReg = VMinlineMathMinMax(node, true, false, cg);
+            return true;
+            }
+         case TR::java_lang_Math_min_D:
+            {
+            resultReg = VMinlineMathMinMax(node, false, true, cg);
+            return true;
+            }
+         case TR::java_lang_Math_min_F:
+            {
+            resultReg = VMinlineMathMinMax(node, false, false, cg);
             return true;
             }
 
