@@ -79,6 +79,8 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void * reserved)
    IDATA argIndexRIEnabled = 0;
    IDATA argIndexRIDisabled = 0;
 
+   IDATA argMergeJitOptions = 0;
+
    static bool isJIT = false;
    static bool isAOT = false;
 
@@ -244,6 +246,8 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void * reserved)
             /* We need to initialize the following if we allow JIT compilation, AOT compilation or AOT relocation to be done */
             try
                {
+               argMergeJitOptions = FIND_AND_CONSUME_ARG(EXACT_MATCH, "-XX:MergeJitOptions", 0);
+
                /*
                 * Note that the option prefix we need to match includes the colon.
                 */
@@ -253,23 +257,120 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void * reserved)
                /* do initializations for -Xjit options */
                if (isJIT && argIndexXjit >= 0)
                   {
-                  IDATA returnVal = 0, size = 128;
-                  xjitCommandLineOptions = 0;
-                  do
+                  if (argMergeJitOptions >= 0)
                      {
-                     size = size * 2;
-                     if (xjitCommandLineOptions)
-                        j9mem_free_memory(xjitCommandLineOptions);
-                     if (!(xjitCommandLineOptions = (char*)j9mem_allocate_memory(size * sizeof(char), J9MEM_CATEGORY_JIT)))
-                        return J9VMDLLMAIN_FAILED;
-                     returnVal = GET_COMPOUND_VALUE(argIndexXjit, ':', &xjitCommandLineOptions, size);
-                     } while (returnVal == OPTION_BUFFER_OVERFLOW);
+                     char *xXjitOptions = NULL;
+                     uint32_t sizeOfXjitOption = 0;
+                     bool firstOpt = true;
 
-                  if (!* xjitCommandLineOptions)
+                     /* Find first -Xjit: option */
+                     argIndexXjit = FIND_ARG_IN_VMARGS_FORWARD(STARTSWITH_MATCH, VMOPT_XJIT_COLON, NULL);
+
+                     /* Determine size of xjitCommandLineOptions string */
+                     while (argIndexXjit >= 0)
+                        {
+                        CONSUME_ARG(vm->vmArgsArray, argIndexXjit);
+                        GET_OPTION_VALUE(argIndexXjit, ':', &xXjitOptions);
+
+                        size_t partialOptLen = 0;
+
+                        if (xXjitOptions)
+                           {
+                           partialOptLen = strlen(xXjitOptions);
+                           sizeOfXjitOption += partialOptLen;
+
+                           /* Ignore -Xjit: options */
+                           if (!firstOpt && partialOptLen)
+                              sizeOfXjitOption += 1; // "," needed to combine multiple -Xjit: options
+                           }
+
+                        /* Ignore -Xjit: options */
+                        if (firstOpt && partialOptLen)
+                           firstOpt = false;
+
+                        /* Find next -Xjit: option */
+                        argIndexXjit = FIND_NEXT_ARG_IN_VMARGS_FORWARD(STARTSWITH_MATCH, VMOPT_XJIT_COLON, NULL, argIndexXjit);
+                        }
+
+                     /* Concatenate -Xjit options into xjitCommandLineOptions string */
+                     if (sizeOfXjitOption)
+                        {
+                        size_t partialOptLen = 1;  // \0
+                        sizeOfXjitOption += partialOptLen;
+
+                        if (!(xjitCommandLineOptions = (char*)j9mem_allocate_memory(sizeOfXjitOption*sizeof(char), J9MEM_CATEGORY_JIT)))
+                           return J9VMDLLMAIN_FAILED;
+
+                        char *cursor = xjitCommandLineOptions;
+                        firstOpt = true;
+
+                        /* Find first -Xjit: option */
+                        argIndexXjit = FIND_ARG_IN_VMARGS_FORWARD(STARTSWITH_MATCH, VMOPT_XJIT_COLON, NULL);
+                        while (argIndexXjit >= 0)
+                           {
+                           CONSUME_ARG(vm->vmArgsArray, argIndexXjit);
+                           GET_OPTION_VALUE(argIndexXjit, ':', &xXjitOptions);
+
+                           partialOptLen = 0;
+
+                           if (xXjitOptions)
+                              {
+                              partialOptLen = strlen(xXjitOptions);
+
+                              /* Ignore -Xjit: options */
+                              if (!firstOpt && partialOptLen)
+                                 {
+                                 strncpy(cursor, ",", 1);
+                                 cursor += 1;
+                                 }
+
+                              strncpy(cursor, xXjitOptions, partialOptLen);
+                              cursor += partialOptLen;
+                              }
+
+                           /* Ignore -Xjit: options */
+                           if (firstOpt && partialOptLen)
+                              firstOpt = false;
+
+                           /* Find next -Xjit: option */
+                           argIndexXjit = FIND_NEXT_ARG_IN_VMARGS_FORWARD(STARTSWITH_MATCH, VMOPT_XJIT_COLON, NULL, argIndexXjit);
+                           }
+
+                        /* At this point, the cursor should be at exactly the last array entry */
+                        TR_ASSERT_FATAL(cursor == &xjitCommandLineOptions[sizeOfXjitOption-1],
+                                       "cursor=%p, xjitCommandLineOptions=%p, sizeOfXjitOption=%d\n",
+                                       cursor, xjitCommandLineOptions, sizeOfXjitOption);
+
+                        /* Add NULL terminator */
+                        xjitCommandLineOptions[sizeOfXjitOption-1] = '\0';
+                        }
+                     /* If sizeOfXjitOption is 0 then there have been no arguments for (potentially multiple) -Xjit: */
+                     else
+                        {
+                        loadInfo->fatalErrorStr = "no arguments for -Xjit:";
+                        return J9VMDLLMAIN_FAILED;
+                        }
+                     }
+                  else
                      {
-                     j9mem_free_memory(xjitCommandLineOptions);
-                     loadInfo->fatalErrorStr = "no arguments for -Xjit:";
-                     return J9VMDLLMAIN_FAILED;
+                     IDATA returnVal = 0, size = 128;
+                     xjitCommandLineOptions = 0;
+                     do
+                        {
+                        size = size * 2;
+                        if (xjitCommandLineOptions)
+                           j9mem_free_memory(xjitCommandLineOptions);
+                        if (!(xjitCommandLineOptions = (char*)j9mem_allocate_memory(size * sizeof(char), J9MEM_CATEGORY_JIT)))
+                           return J9VMDLLMAIN_FAILED;
+                        returnVal = GET_COMPOUND_VALUE(argIndexXjit, ':', &xjitCommandLineOptions, size);
+                        } while (returnVal == OPTION_BUFFER_OVERFLOW);
+
+                     if (!* xjitCommandLineOptions)
+                        {
+                        j9mem_free_memory(xjitCommandLineOptions);
+                        loadInfo->fatalErrorStr = "no arguments for -Xjit:";
+                        return J9VMDLLMAIN_FAILED;
+                        }
                      }
                   }
 
