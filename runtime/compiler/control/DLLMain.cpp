@@ -317,7 +317,7 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void * reserved)
                               {
                               partialOptLen = strlen(xXjitOptions);
 
-                              /* Ignore -Xjit: options */
+                              /* Ignore empty -Xjit: options */
                               if (!firstOpt && partialOptLen)
                                  {
                                  strncpy(cursor, ",", 1);
@@ -328,7 +328,7 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void * reserved)
                               cursor += partialOptLen;
                               }
 
-                           /* Ignore -Xjit: options */
+                           /* Ignore empty -Xjit: options */
                            if (firstOpt && partialOptLen)
                               firstOpt = false;
 
@@ -379,23 +379,120 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void * reserved)
                /* do initializations for -Xaot options */
                if (isAOT && argIndexXaot >= 0)
                   {
-                  IDATA returnVal = 0, size = 128;
-                  xaotCommandLineOptions = 0;
-                  do
+                  if (argMergeJitOptions >= 0)
                      {
-                     size = size * 2;
-                     if (xaotCommandLineOptions)
-                        j9mem_free_memory(xaotCommandLineOptions);
-                     if (!(xaotCommandLineOptions = (char*)j9mem_allocate_memory(size * sizeof(char), J9MEM_CATEGORY_JIT)))
-                        return J9VMDLLMAIN_FAILED;
-                     returnVal = GET_COMPOUND_VALUE(argIndexXaot, ':', &xaotCommandLineOptions, size);
-                     } while (returnVal == OPTION_BUFFER_OVERFLOW);
+                     char *xXaotOptions = NULL;
+                     uint32_t sizeOfXaotOption = 0;
+                     bool firstOpt = true;
 
-                  if (!* xaotCommandLineOptions)
+                     /* Find first -Xaot: option */
+                     argIndexXaot = FIND_ARG_IN_VMARGS_FORWARD(STARTSWITH_MATCH, VMOPT_XAOT_COLON, NULL);
+
+                     /* Determine size of xaotCommandLineOptions string */
+                     while (argIndexXaot >= 0)
+                        {
+                        CONSUME_ARG(vm->vmArgsArray, argIndexXaot);
+                        GET_OPTION_VALUE(argIndexXaot, ':', &xXaotOptions);
+
+                        size_t partialOptLen = 0;
+
+                        if (xXaotOptions)
+                           {
+                           partialOptLen = strlen(xXaotOptions);
+                           sizeOfXaotOption += partialOptLen;
+
+                           /* Ignore empty -Xaot: options */
+                           if (!firstOpt && partialOptLen)
+                              sizeOfXaotOption += 1; // "," needed to combine multiple -Xaot: options
+                           }
+
+                        /* Ignore empty -Xaot: options */
+                        if (firstOpt && partialOptLen)
+                           firstOpt = false;
+
+                        /* Find next -Xaot: option */
+                        argIndexXaot = FIND_NEXT_ARG_IN_VMARGS_FORWARD(STARTSWITH_MATCH, VMOPT_XAOT_COLON, NULL, argIndexXaot);
+                        }
+
+                     /* Concatenate -Xaot options into xaotCommandLineOptions string */
+                     if (sizeOfXaotOption)
+                        {
+                        size_t partialOptLen = 1;  // \0
+                        sizeOfXaotOption += partialOptLen;
+
+                        if (!(xaotCommandLineOptions = (char*)j9mem_allocate_memory(sizeOfXaotOption*sizeof(char), J9MEM_CATEGORY_JIT)))
+                           return J9VMDLLMAIN_FAILED;
+
+                        char *cursor = xaotCommandLineOptions;
+                        firstOpt = true;
+
+                        /* Find first -Xaot: option */
+                        argIndexXaot = FIND_ARG_IN_VMARGS_FORWARD(STARTSWITH_MATCH, VMOPT_XAOT_COLON, NULL);
+                        while (argIndexXaot >= 0)
+                           {
+                           CONSUME_ARG(vm->vmArgsArray, argIndexXaot);
+                           GET_OPTION_VALUE(argIndexXaot, ':', &xXaotOptions);
+
+                           partialOptLen = 0;
+
+                           if (xXaotOptions)
+                              {
+                              partialOptLen = strlen(xXaotOptions);
+
+                              /* Ignore -Xaot: options */
+                              if (!firstOpt && partialOptLen)
+                                 {
+                                 strncpy(cursor, ",", 1);
+                                 cursor += 1;
+                                 }
+
+                              strncpy(cursor, xXaotOptions, partialOptLen);
+                              cursor += partialOptLen;
+                              }
+
+                           /* Ignore -Xaot: options */
+                           if (firstOpt && partialOptLen)
+                              firstOpt = false;
+
+                           /* Find next -Xaot: option */
+                           argIndexXaot = FIND_NEXT_ARG_IN_VMARGS_FORWARD(STARTSWITH_MATCH, VMOPT_XAOT_COLON, NULL, argIndexXaot);
+                           }
+
+                        /* At this point, the cursor should be at exactly the last array entry */
+                        TR_ASSERT_FATAL(cursor == &xaotCommandLineOptions[sizeOfXaotOption-1],
+                                       "cursor=%p, xaotCommandLineOptions=%p, sizeOfXaotOption=%d\n",
+                                       cursor, xaotCommandLineOptions, sizeOfXaotOption);
+
+                        /* Add NULL terminator */
+                        xaotCommandLineOptions[sizeOfXaotOption-1] = '\0';
+                        }
+                     /* If sizeOfXaotOption is 0 then there have been no arguments for (potentially multiple) -Xaot: */
+                     else
+                        {
+                        loadInfo->fatalErrorStr = "no arguments for -Xaot:";
+                        return J9VMDLLMAIN_FAILED;
+                        }
+                     }
+                  else
                      {
-                     j9mem_free_memory(xaotCommandLineOptions);
-                     loadInfo->fatalErrorStr = "no arguments for -Xaot:";
-                     return J9VMDLLMAIN_FAILED;
+                     IDATA returnVal = 0, size = 128;
+                     xaotCommandLineOptions = 0;
+                     do
+                        {
+                        size = size * 2;
+                        if (xaotCommandLineOptions)
+                           j9mem_free_memory(xaotCommandLineOptions);
+                        if (!(xaotCommandLineOptions = (char*)j9mem_allocate_memory(size * sizeof(char), J9MEM_CATEGORY_JIT)))
+                           return J9VMDLLMAIN_FAILED;
+                        returnVal = GET_COMPOUND_VALUE(argIndexXaot, ':', &xaotCommandLineOptions, size);
+                        } while (returnVal == OPTION_BUFFER_OVERFLOW);
+
+                     if (!* xaotCommandLineOptions)
+                        {
+                        j9mem_free_memory(xaotCommandLineOptions);
+                        loadInfo->fatalErrorStr = "no arguments for -Xaot:";
+                        return J9VMDLLMAIN_FAILED;
+                        }
                      }
                   }
 
