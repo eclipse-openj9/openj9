@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 
 <!--
-  Copyright (c) 2016, 2021 IBM Corp. and others
+  Copyright (c) 2016, 2022 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -40,7 +40,6 @@
 
 	<!--Properties for this particular build-->
 	<property name="src" location="./src" />
-	<property name="src_80" location="./src_80" />
 	<property name="build" location="./bin" />
 	<property name="transformerListener" location="${TEST_ROOT}/Utils/src"/>
 	<property name="TestUtilities" location="../TestUtilities/src"/>
@@ -109,7 +108,6 @@
 			<then>
 				<javac destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" classpathref="build.cp">
 					<src path="${src}" />
-					<src path="${src_80}" />
 					<src path="${excludeFiles}"/>
 					<src path="${TestUtilities}" />
 					<exclude name="**/attachAPI/**" />
@@ -123,7 +121,6 @@
 				<then>
 					<javac destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" classpathref="build.cp">
 						<src path="${src}" />
-						<src path="${src_80}" />
 						<src path="${excludeFiles}"/>
 						<src path="${TestUtilities}" />
 						<exclude name="**/attachAPI/**" />

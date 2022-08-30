@@ -58,6 +58,18 @@ public abstract class Reference<T> extends Object {
 	private ReferenceQueue queue;
 	private int state;
 
+	/* jdk.lang.ref.disableClearBeforeEnqueue property allow reverting to the old behavior(non clear before enqueue)
+	 *  defer initializing the immutable variable to avoid bootstrap error
+	 */
+	static class ClearBeforeEnqueue {
+		@SuppressWarnings("boxing")
+		static final boolean ENABLED = AccessController.doPrivileged(new PrivilegedAction<Boolean>() {
+			@Override public Boolean run() {
+				return !Boolean.getBoolean("jdk.lang.ref.disableClearBeforeEnqueue"); //$NON-NLS-1$
+			}
+		});
+	}
+
 	/*[IF Sidecar18-SE-OpenJ9 | Sidecar19-SE]*/
 	/**
 	 *  Wait for progress in reference processing.
@@ -88,18 +100,6 @@ public abstract class Reference<T> extends Object {
 				throw new UnsupportedOperationException();
 			}
 			/*[ENDIF] JAVA_SPEC_VERSION >= 19 */
-		});
-	}
-
-	/* jdk.lang.ref.disableClearBeforeEnqueue property allow reverting to the old behavior(non clear before enqueue)
-	 *  defer initializing the immutable variable to avoid bootstrap error
-	 */
-	static class ClearBeforeEnqueue {
-		@SuppressWarnings("boxing")
-		static final boolean ENABLED =  AccessController.doPrivileged(new PrivilegedAction<Boolean>() {
-			@Override public Boolean run() {
-				return !Boolean.getBoolean("jdk.lang.ref.disableClearBeforeEnqueue"); //$NON-NLS-1$
-			}
 		});
 	}
 
@@ -146,11 +146,9 @@ public abstract class Reference<T> extends Object {
 	 * @return	true if Reference is enqueued, false otherwise.
 	 */
 	public boolean enqueue() {
-		/*[IF Sidecar19-SE]*/
 		if (ClearBeforeEnqueue.ENABLED) {
 			clearImpl();
 		}
-		/*[ENDIF]*/
 		return enqueueImpl();
 	}
 
@@ -267,7 +265,6 @@ public abstract class Reference<T> extends Object {
 	}
 	/*[ENDIF]*/
 
-	/*[IF JAVA_SPEC_VERSION >= 11]*/
 	/**
 	 * This method will always throw CloneNotSupportedException. A clone of this instance will not be returned
 	 * since a Reference cannot be cloned. Workaround is to create a new Reference.
@@ -281,7 +278,6 @@ public abstract class Reference<T> extends Object {
 		/*[MSG "K0900", "Create a new Reference, since a Reference cannot be cloned."]*/
 		throw new CloneNotSupportedException(com.ibm.oti.util.Msg.getString("K0900")); //$NON-NLS-1$
 	}
-	/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 
 	/*[IF JAVA_SPEC_VERSION >= 16]*/
 	/**

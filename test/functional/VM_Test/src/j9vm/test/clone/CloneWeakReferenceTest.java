@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -43,51 +43,15 @@ public class CloneWeakReferenceTest {
 		
 		SubWeakReference reference = new SubWeakReference(referent);
 
-		if (VersionCheck.major() >= 11) {
-			try {
-				SubWeakReference clone = (SubWeakReference) reference.clone();
-				// fail if CloneNotSupportedException is not thrown
-				throw new RuntimeException(
-						"CloneNotSupportedException is expected, but it is not thrown for JDK version: "
-								+ VersionCheck.major());
-			} catch (CloneNotSupportedException e) {
-				// CloneNotSupportedException is expected for JDK version >= 11
-			}
-		} else {
+		try {
 			SubWeakReference clone = (SubWeakReference) reference.clone();
-			
-			if (clone.get() == referent) {
-				System.out.println("original and cloned weak references using the same referent (expected)");
-			} else {			
-				throw new RuntimeException("original and cloned weak references are not using the same referent!");
-			}
-			
-			referent = null;
-			
-			System.gc();
-			
-			/* At this point the weak references may not have been cleared.  In metronome, if a GC cycle
-			 * is ongoing when System.gc is called, the cycle will be finished. This GC is a 
-			 * snapshot-at-the-beginning collector.  If the GC cycle was started BEFORE referent was set
-			 * to null, then String object will not be collected and the weak references will not be
-			 * cleared.
-			 */
-
-			if (reference.get() != clone.get()) {
-				throw new RuntimeException("Referents not identical. reference.get(): " + reference.get() + " clone.get(): " + clone.get());
-			}
-			
-			System.gc();
-			
-			if (reference.get() != null) {
-				throw new RuntimeException("Reference referent not cleared: " + reference + " " + reference.get());
-			}
-			
-			if (clone.get() != null) {
-				throw new RuntimeException("Clone referent not cleared: " + clone + " " + clone.get());
-			}
+			// fail if CloneNotSupportedException is not thrown
+			throw new RuntimeException(
+					"CloneNotSupportedException is expected, but it is not thrown for JDK version: "
+							+ VersionCheck.major());
+		} catch (CloneNotSupportedException e) {
+			// CloneNotSupportedException is expected
 		}
-		
 	}
 
 	static class SubWeakReference extends WeakReference implements Cloneable {

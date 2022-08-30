@@ -1,7 +1,7 @@
 package org.openj9.test.java.lang.ref;
 
 /*******************************************************************************
- * Copyright (c) 1998, 2020 IBM Corp. and others
+ * Copyright (c) 1998, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,7 +34,6 @@ import java.lang.ref.SoftReference;
 public class Test_ReferenceQueue {
 	static Boolean b;
 	static Integer integer;
-	final boolean isJava8 = System.getProperty("java.specification.version").equals("1.8");
 	final boolean disableClearBeforeEnqueue =
             Boolean.getBoolean("jdk.lang.ref.disableClearBeforeEnqueue");
 
@@ -79,7 +78,7 @@ public class Test_ReferenceQueue {
 		SoftReference sr = new SoftReference(b, rq);
 		sr.enqueue();
 		try {
-			if (isJava8 || disableClearBeforeEnqueue) {
+			if (disableClearBeforeEnqueue) {
 				AssertJUnit.assertTrue("Poll failed.", ((Boolean)rq.poll().get()).booleanValue());
 			} else {
 				AssertJUnit.assertTrue("Poll failed.", (rq.poll().get() == null));
@@ -101,7 +100,7 @@ public class Test_ReferenceQueue {
 		SoftReference sr = new SoftReference(b, rq);
 		sr.enqueue();
 		try {
-			if (isJava8 || disableClearBeforeEnqueue) {
+			if (disableClearBeforeEnqueue) {
 				AssertJUnit.assertTrue("Remove failed.", ((Boolean)rq.remove().get()).booleanValue());
 			} else {
 				AssertJUnit.assertTrue("Remove failed.", (rq.remove().get() == null));

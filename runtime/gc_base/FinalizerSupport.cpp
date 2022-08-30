@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -186,7 +186,7 @@ static int J9THREAD_PROC FinalizeMainThread(void *javaVM)
 {
 	J9JavaVM *vm = (J9JavaVM *)javaVM;
 	omrthread_t workerThreadHandle;
-	int doneRunFinalizersOnExit, noCycleWait;
+	int noCycleWait;
 	struct finalizeWorkerData *workerData = NULL;
 	IDATA finalizeCycleInterval, finalizeCycleLimit, currentWaitTime, finalizableListUsed;
 	IDATA cycleIntervalWaitResult;
@@ -305,36 +305,6 @@ static int J9THREAD_PROC FinalizeMainThread(void *javaVM)
 		}
 		omrthread_monitor_exit(workerData->monitor);
 	} while(!(vm->finalizeMainFlags & J9_FINALIZE_FLAGS_SHUTDOWN));
-
-	/* Check if finalizers should be run on exit */
-	if(vm->finalizeMainFlags & J9_FINALIZE_FLAGS_RUN_FINALIZERS_ON_EXIT) {
-		doneRunFinalizersOnExit = 0;
-		while(!doneRunFinalizersOnExit) {
-			IDATA result = 0;
-			do {
-				/* Keep trying, even if a worker requests that it be abandoned */
-				result = FinalizeMainRunFinalization(vm, &workerThreadHandle, &workerData, finalizeCycleLimit, FINALIZE_WORKER_MODE_FORCED);
-			} while(result == -2);
-
-			if(result == -1) {
-				/* There was a bad error - just move to the actual quit phase */
-				break;
-			}
-	
-			omrthread_monitor_enter(workerData->monitor);
-			if(workerData->finished && workerData->noWorkDone) {
-				/* No more work to be done */
-				doneRunFinalizersOnExit = 1;
-			}
-			if(!workerData->finished) {
-				/* The worker seems to be hung - just quit */
-				doneRunFinalizersOnExit = 1;
-				workerData->die = FINALIZE_WORKER_ABANDONED;
-				workerThreadHandle = NULL;
-			}
-			omrthread_monitor_exit(workerData->monitor);
-		}
-	}
 
 	/* We've been told to die */
 	if(NULL != workerThreadHandle) {
@@ -822,48 +792,6 @@ gpProtectedFinalizeWorkerThread(void *entryArg)
 	return 0;
 }
 
-void
-j9gc_finalizer_completeFinalizersOnExit(J9VMThread* vmThread)
-{
-	J9JavaVM* vm = vmThread->javaVM;
-
-	/* If finalization has already been shut down, do nothing */
-	if (!J9_ARE_ALL_BITS_SET(vm->finalizeMainFlags, J9_FINALIZE_FLAGS_ACTIVE)) {
-		return;
-	}
-
-	/* Set the run finalizers on exit flag and initiate finalizer shutdown. */
-	omrthread_monitor_enter(vm->finalizeMainMonitor);
-	vm->finalizeMainFlags |= J9_FINALIZE_FLAGS_RUN_FINALIZERS_ON_EXIT;
-	if (!J9_ARE_ALL_BITS_SET(vm->finalizeMainFlags, J9_FINALIZE_FLAGS_SHUTDOWN)) {
-		vm->finalizeMainFlags |= J9_FINALIZE_FLAGS_SHUTDOWN;
-		omrthread_monitor_notify_all(vm->finalizeMainMonitor);
-	}
-	/* Is there an active worker thread? */
-	if (NULL != vm->finalizeWorkerData) {
-		struct finalizeWorkerData *workerData = (struct finalizeWorkerData*)vm->finalizeWorkerData;
-		if ((NULL != workerData) && (0 == workerData->finished)) {
-			/* An active worker thread exists (possibly the current thread).
-			 * Abandon it so that a new worker can be created.
-			 */
-			omrthread_monitor_enter(workerData->monitor);
-			if (0 == workerData->finished) {
-				workerData->finished = 1;
-				workerData->die = FINALIZE_WORKER_SHOULD_ABANDON;
-				omrthread_monitor_notify_all(workerData->monitor);
-			}
-			omrthread_monitor_exit(workerData->monitor);
-		}
-	}
-
-	/* Now block until finalizer shutdown is complete */
-	omrthread_monitor_notify_all(vm->finalizeMainMonitor);
-	while (!(vm->finalizeMainFlags & J9_FINALIZE_FLAGS_SHUTDOWN_COMPLETE)) {
-		omrthread_monitor_wait(vm->finalizeMainMonitor);
-	}
-	omrthread_monitor_exit(vm->finalizeMainMonitor);
-}
-
 int j9gc_finalizer_startup(J9JavaVM * vm)
 {
 	IDATA result;
@@ -1122,28 +1050,6 @@ forceClassLoaderUnload(J9VMThread *vmThread, J9ClassLoader *classLoader)
 	return result;
 }
 #endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
-
-/**
- * Set a global flag which determines if finalizers are run on exit.
- * This is used to implement java.lang.Runtime.runFinalizersOnExit().
- * 
- * @param vmThread[in] the current thread
- * @param run TRUE if finalizers should be run, false otherwise 
- */
-void
-j9gc_runFinalizersOnExit(J9VMThread* vmThread, UDATA run)
-{
-	J9JavaVM* jvm = vmThread->javaVM;
-	
-	omrthread_monitor_enter(jvm->finalizeMainMonitor);
-	if (FALSE == run) {
-		jvm->finalizeMainFlags &= ~(UDATA)J9_FINALIZE_FLAGS_RUN_FINALIZERS_ON_EXIT;
-	} else {
-		jvm->finalizeMainFlags |= (UDATA)J9_FINALIZE_FLAGS_RUN_FINALIZERS_ON_EXIT;
-	}
-	omrthread_monitor_exit(jvm->finalizeMainMonitor);
-}
-
 #endif /* J9VM_GC_FINALIZATION */
 
 } /* extern "C" */
