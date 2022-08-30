@@ -5098,21 +5098,7 @@ MM_CopyForwardScheme::processReferenceList(MM_EnvironmentVLHGC *env, MM_HeapRegi
 
 				referenceStats->_cleared += 1;
 				J9GC_J9VMJAVALANGREFERENCE_STATE(env, referenceObj) = GC_ObjectModel::REF_STATE_CLEARED;
-				
-				/* Phantom references keep it's referent alive in Java 8 and doesn't in Java 9 and later */
-				if ((J9AccClassReferencePhantom == referenceObjectType) && ((J2SE_VERSION(_javaVM) & J2SE_VERSION_MASK) <= J2SE_18)) {
-					/* Scanning will be done after the enqueuing */
-					copyAndForward(env, region->_allocateData._owningContext, referenceObj, &referentSlotObject);
-					if (GC_ObjectModel::REF_STATE_REMEMBERED == previousState) {
-						Assert_MM_true(NULL != env->_cycleState->_externalCycleState);
-						/* We changed the state from REMEMBERED to CLEARED, so this will not be enqueued back to region's reference queue.
-						 * However, GMP has to revisit this reference to mark the referent in its own mark map.
-						 */
-						_extensions->cardTable->dirtyCardWithValue(env, referenceObj, CARD_GMP_MUST_SCAN);
-					}
-				} else {
-					referentSlotObject.writeReferenceToSlot(NULL);
-				}
+				referentSlotObject.writeReferenceToSlot(NULL);
 
 				/* Check if the reference has a queue */
 				if (0 != J9GC_J9VMJAVALANGREFERENCE_QUEUE(env, referenceObj)) {

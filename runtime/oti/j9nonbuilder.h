@@ -4472,14 +4472,10 @@ typedef struct J9MemoryManagerFunctions {
 	j9object_t  ( *j9gc_createJavaLangString)(struct J9VMThread *vmThread, U_8 *data, UDATA length, UDATA stringFlags) ;
 	j9object_t  ( *j9gc_createJavaLangStringWithUTFCache)(struct J9VMThread *vmThread, struct J9UTF8 *utf) ;
 	j9object_t  ( *j9gc_internString)(struct J9VMThread *vmThread, j9object_t sourceString) ;
-#if defined(J9VM_GC_FINALIZATION)
-	void  ( *j9gc_runFinalizersOnExit)(struct J9VMThread* vmThread, UDATA run) ;
-#endif /* J9VM_GC_FINALIZATION */
 	void*  ( *j9gc_objaccess_jniGetPrimitiveArrayCritical)(struct J9VMThread* vmThread, jarray array, jboolean *isCopy) ;
 	void  ( *j9gc_objaccess_jniReleasePrimitiveArrayCritical)(struct J9VMThread* vmThread, jarray array, void * elems, jint mode) ;
 	const jchar*  ( *j9gc_objaccess_jniGetStringCritical)(struct J9VMThread* vmThread, jstring str, jboolean *isCopy) ;
 	void  ( *j9gc_objaccess_jniReleaseStringCritical)(struct J9VMThread* vmThread, jstring str, const jchar* elems) ;
-	void  ( *j9gc_finalizer_completeFinalizersOnExit)(struct J9VMThread* vmThread) ;
 	void  ( *j9gc_get_CPU_times)(struct J9JavaVM *javaVM, U_64* mainCpuMillis, U_64* workerCpuMillis, U_32* maxThreads, U_32* currentThreads) ;
 	void*  ( *omrgc_walkLWNRLockTracePool)(void *omrVM, pool_state *state) ;
 #if defined(J9VM_GC_OBJECT_ACCESS_BARRIER)

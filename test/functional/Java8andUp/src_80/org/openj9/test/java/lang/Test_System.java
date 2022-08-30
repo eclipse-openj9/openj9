@@ -282,10 +282,11 @@ public class Test_System {
 	public void test_runFinalizersOnExit() {
 		try {
 			System.runFinalizersOnExit(true);
-		} catch (Throwable t) {
-			AssertJUnit.assertTrue("Failed to set runFinalizersOnExit", false);
+		} catch (UnsupportedOperationException t) {
+			// Passed
+			return;
 		}
-		AssertJUnit.assertTrue("Passed runFinalizersOnExit", true);
+		AssertJUnit.fail("runFinalizersOnExit did not throw UnsupportedOperationException");
 	}
 
 	/**

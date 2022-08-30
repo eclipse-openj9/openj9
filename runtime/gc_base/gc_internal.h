@@ -264,8 +264,6 @@ extern J9_CFUNC UDATA finalizeObjectCreated(J9VMThread *vmThread, j9object_t obj
 extern J9_CFUNC UDATA forceClassLoaderUnload(J9VMThread *vmThread, J9ClassLoader *classLoader);
 extern J9_CFUNC void finalizeForcedUnfinalizedToFinalizable(J9VMThread *vmThread);
 extern J9_CFUNC void* finalizeForcedClassLoaderUnload(J9VMThread *vmThread);
-extern J9_CFUNC void j9gc_runFinalizersOnExit(J9VMThread* vmThread, UDATA run);
-extern J9_CFUNC void j9gc_finalizer_completeFinalizersOnExit(J9VMThread* vmThread);
 
 extern J9_CFUNC UDATA ownableSynchronizerObjectCreated(J9VMThread *vmThread, j9object_t object);
 

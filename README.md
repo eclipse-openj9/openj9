@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2017, 2021 IBM Corp. and others
+Copyright (c) 2017, 2022 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -118,6 +118,6 @@ Videos and Presentations
 - [How Concurrent Scavenge using the Guarded Storage Facility Works](https://developer.ibm.com/javasdk/2017/09/25/concurrent-scavenge-using-guarded-storage-facility-works/)
 - [Are you still paying for unused memory when your Java app is idle?](https://developer.ibm.com/javasdk/2017/09/25/still-paying-unused-memory-java-app-idle/)
 - [Under the hood of the Testarossa JIT Compiler](https://www.slideshare.net/MarkStoodley/under-the-hood-of-the-testarossa-jit-compiler)
-- [Class sharing In Eclipse OpenJ9](https://developer.ibm.com/components/java-platform/tutorials/j-class-sharing-openj9)
+- [Class sharing In Eclipse OpenJ9](https://developer.ibm.com/tutorials/j-class-sharing-openj9/)
 
-Copyright (c) 2017, 2020 IBM Corp. and others
+Copyright (c) 2017, 2022 IBM Corp. and others
