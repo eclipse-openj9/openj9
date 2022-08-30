@@ -213,7 +213,6 @@ jvm_add_exports(jvm
 	_JVM_DefineClass@24
 	_JVM_DefineClassWithSourceCond@32
 	_JVM_EnqueueOperation@20
-	_JVM_Exit@4
 	_JVM_GetCPFieldNameUTF@12
 	_JVM_GetClassConstructor@16
 	_JVM_GetClassConstructors@12

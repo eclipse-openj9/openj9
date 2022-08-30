@@ -252,7 +252,6 @@ _IF([JAVA_SPEC_VERSION < 17],
 _X(JVM_DefineClass,JNICALL,true,jobject,jint arg0, jint arg1, jint arg2, jint arg3, jint arg4, jint arg5)
 _X(JVM_DefineClassWithSourceCond,JNICALL,true,jobject,jint arg0, jint arg1, jint arg2, jint arg3, jint arg4, jint arg5, jint arg6, jint arg7)
 _X(JVM_EnqueueOperation,JNICALL,true,jobject,jint arg0, jint arg1, jint arg2, jint arg3, jint arg4)
-_X(JVM_Exit,JNICALL,true,jobject,jint arg0)
 _X(JVM_GetCPFieldNameUTF,JNICALL,true,jobject,jint arg0, jint arg1, jint arg2)
 _X(JVM_GetClassConstructor,JNICALL,true,jobject,jint arg0, jint arg1, jint arg2, jint arg3)
 _X(JVM_GetClassConstructors,JNICALL,true,jobject,jint arg0, jint arg1, jint arg2)
