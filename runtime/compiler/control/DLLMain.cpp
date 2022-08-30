@@ -126,8 +126,8 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void * reserved)
          FIND_AND_CONSUME_ARG(EXACT_MEMORY_MATCH, "-XsamplingExpirationTime", 0);
          FIND_AND_CONSUME_ARG(EXACT_MEMORY_MATCH, "-XcompilationThreads", 0);
          FIND_AND_CONSUME_ARG(EXACT_MEMORY_MATCH, "-XaggressivenessLevel", 0);
-         argIndexXjit = FIND_AND_CONSUME_ARG(OPTIONAL_LIST_MATCH, "-Xjit", 0);
-         argIndexXaot = FIND_AND_CONSUME_ARG(OPTIONAL_LIST_MATCH, "-Xaot", 0);
+         argIndexXjit = FIND_AND_CONSUME_ARG(OPTIONAL_LIST_MATCH, VMOPT_XJIT, 0);
+         argIndexXaot = FIND_AND_CONSUME_ARG(OPTIONAL_LIST_MATCH, VMOPT_XAOT, 0);
          argIndexXnojit = FIND_AND_CONSUME_ARG(OPTIONAL_LIST_MATCH, "-Xnojit", 0);
 
          argIndexRIEnabled = FIND_AND_CONSUME_ARG(EXACT_MATCH, "-XX:+RuntimeInstrumentation", 0);
@@ -251,8 +251,8 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void * reserved)
                /*
                 * Note that the option prefix we need to match includes the colon.
                 */
-               argIndexXjit = FIND_ARG_IN_VMARGS( STARTSWITH_MATCH, "-Xjit:", 0);
-               argIndexXaot = FIND_ARG_IN_VMARGS( STARTSWITH_MATCH, "-Xaot:", 0);
+               argIndexXjit = FIND_ARG_IN_VMARGS( STARTSWITH_MATCH, VMOPT_XJIT_COLON, 0);
+               argIndexXaot = FIND_ARG_IN_VMARGS( STARTSWITH_MATCH, VMOPT_XAOT_COLON, 0);
 
                /* do initializations for -Xjit options */
                if (isJIT && argIndexXjit >= 0)
