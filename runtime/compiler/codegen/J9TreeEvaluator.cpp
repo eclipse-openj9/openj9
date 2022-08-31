@@ -1292,7 +1292,7 @@ uint32_t J9::TreeEvaluator::calculateInstanceOfOrCheckCastSequences(TR::Node *in
 
    // By default maxOnsiteCacheSlotForInstanceOf is set to 0 which means cache is disable.
    // To enable test pass JIT option maxOnsiteCacheSlotForInstanceOf=<number_of_slots>
-   bool createDynamicCacheTests = cg->comp()->getOptions()->getMaxOnsiteCacheSlotForInstanceOf() > 0;
+   bool createDynamicCacheTests = cg->comp()->getOptions()->getMaxOnsiteCacheSlotForInstanceOf() > 0 && isInstanceOf;
 
 
    uint32_t i = 0;
@@ -1345,8 +1345,7 @@ uint32_t J9::TreeEvaluator::calculateInstanceOfOrCheckCastSequences(TR::Node *in
       sequences[i++] = ClassEqualityTest;
       sequences[i++] = CastClassCacheTest;
       // On Z, We were having support for Super Class Test for dynamic Cast Class so adding it here. It can be guarded if Power/X do not need it.
-      if (cg->supportsInliningOfIsInstance() &&
-         instanceOfOrCheckCastNode->getOpCodeValue() == TR::instanceof &&
+      if ( (cg->supportsInliningOfIsInstance() || instanceOfOrCheckCastNode->getOpCodeValue() == TR::checkcast) &&
          instanceOfOrCheckCastNode->getSecondChild()->getOpCodeValue() != TR::loadaddr)
          sequences[i++] = SuperClassTest;
       if (createDynamicCacheTests)

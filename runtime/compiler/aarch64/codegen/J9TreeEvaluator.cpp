@@ -1746,6 +1746,30 @@ static
 void genSuperClassTest(TR::Node *node, TR::Register *instanceClassReg, bool instanceClassRegCanBeReclaimed, TR::Register *castClassReg, int32_t castClassDepth,
                                             TR::LabelSymbol *falseLabel, TR_ARM64ScratchRegisterManager *srm, TR::CodeGenerator *cg)
    {
+
+   // When castClass is an unknown at compile time check if castClass is an interface or an array.
+   // If so skip superClassTest.
+   bool dynamicCastClass = castClassDepth == -1;
+   if ( dynamicCastClass )
+      {
+      TR::Register *scratchRegister1 = srm->findOrCreateScratchRegister();
+      TR::Register *scratchRegister2 = srm->findOrCreateScratchRegister();
+      TR_ASSERT(node->getSecondChild()->getOpCodeValue() != TR::loadaddr,
+            "genSuperClassTest: castClassDepth == -1 is not supported for a loadaddr castClass");
+
+      generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmx, node, scratchRegister1, TR::MemoryReference::createWithDisplacement(cg, castClassReg, offsetof(J9Class, romClass)));
+      generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmw, node, scratchRegister1, TR::MemoryReference::createWithDisplacement(cg, scratchRegister1, offsetof(J9ROMClass, modifiers)));
+
+      // Array and interface check
+      static_assert(((J9AccInterface | J9AccClassArray) < UINT_MAX && (J9AccInterface | J9AccClassArray) > 0), "(J9AccInterface | J9AccClassArray) is not a 32-bit number");
+      loadConstant32(cg, node, (J9AccClassArray | J9AccInterface), scratchRegister2);
+      generateTestInstruction(cg, node, scratchRegister1, scratchRegister2);
+      generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, falseLabel, TR::CC_NE);
+
+      srm->reclaimScratchRegister(scratchRegister1);
+      srm->reclaimScratchRegister(scratchRegister2);
+      }
+
    // Compare the instance class depth to the cast class depth. If the instance class depth is less than or equal to
    // to the cast class depth then the cast class cannot be a superclass of the instance class.
    //

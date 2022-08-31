@@ -3655,8 +3655,8 @@ bool genInstanceOfOrCheckcastSuperClassTest(TR::Node *node, TR::CodeGenerator *c
       {
       TR::Register *scratchRegister1 = srm->findOrCreateScratchRegister();
       //TR::Register *scratchRegister1 = scratch1Reg;
-      TR_ASSERT((node->getOpCodeValue() == TR::instanceof &&
-            node->getSecondChild()->getOpCodeValue() != TR::loadaddr), "genTestIsSuper: castClassDepth == -1 is only supported for transformed isInstance calls.");
+      TR_ASSERT(node->getSecondChild()->getOpCodeValue() != TR::loadaddr,
+            "genTestIsSuper: castClassDepth == -1 is not supported for a loadaddr castClass.");
       cursor = generateRXInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, scratchRegister1,
             generateS390MemoryReference(castClassReg, offsetof(J9Class, romClass), cg), cursor);
       cursor = generateRXInstruction(cg, TR::InstOpCode::L, node, scratchRegister1,
@@ -3912,7 +3912,7 @@ J9::Z::TreeEvaluator::checkcastEvaluator(TR::Node * node, TR::CodeGenerator * cg
             TR_ASSERT(numSequencesRemaining == 2, "SuperClassTest should always be followed by a GoToFalse and must always be the second last test generated");
             if (comp->getOption(TR_TraceCG))
                traceMsg(comp, "%s: Emitting Super Class Test, Cast Class Depth=%d\n", node->getOpCode().getName(),castClassDepth);
-            dynamicCastClass = genInstanceOfOrCheckcastSuperClassTest(node, cg, objClassReg, castClassReg, castClassDepth, callLabel, NULL, srm);
+            dynamicCastClass = genInstanceOfOrCheckcastSuperClassTest(node, cg, objClassReg, castClassReg, castClassDepth, callLabel, callLabel, srm);
             /* outlinedSlowPath will be non-NULL if we have a higher probability of ClassEqualityTest succeeding.
                * In such cases we will do rest of the tests in OOL section, and as such we need to skip the helper call
                * if the result of SuperClassTest is true and branch to resultLabel which will branch back to the doneLabel from OOL code.
