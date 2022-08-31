@@ -5146,6 +5146,43 @@ VMinlineMathMinMax(TR::Node *node, bool isMax, bool isDouble, TR::CodeGenerator 
    return resReg;
    }
 
+/**
+ * @brief Generates instruction sequence for inlining 3-children fp operation
+ *
+ * @param[in] node: node
+ * @param[in] op: opcode
+ * @param[in] cg: CodeGenerator
+ * @return the result register
+ */
+static TR::Register *inlineFPTrg1Src3(TR::Node *node, TR::InstOpCode::Mnemonic op, TR::CodeGenerator *cg)
+   {
+   TR_ASSERT_FATAL_WITH_NODE(node, node->getNumChildren() == 3, "In function inlineFPTrg1Src3, the node at address %p should have exactly 3 children, but got %u instead", node, node->getNumChildren());
+
+   TR::DataType type = node->getDataType();
+   TR_ASSERT_FATAL_WITH_NODE(node, type == TR::Float || type == TR::Double, "In function inlineFPTrg1Src3, the node at address %p should be either TR::Float or TR::Double", node);
+
+   TR::Node *firstChild = node->getFirstChild();
+   TR::Node *secondChild = node->getSecondChild();
+   TR::Node *thirdChild = node->getThirdChild();
+   TR::Register *src1Register = cg->evaluate(firstChild);
+   TR::Register *src2Register = cg->evaluate(secondChild);
+   TR::Register *src3Register = cg->evaluate(thirdChild);
+   TR::Register *targetRegister;
+
+   if (type == TR::Float)
+      targetRegister = cg->allocateSinglePrecisionRegister();
+   else
+      targetRegister = cg->allocateRegister(TR_FPR);
+
+   generateTrg1Src3Instruction(cg, op, node, targetRegister, src1Register, src2Register, src3Register);
+
+   node->setRegister(targetRegister);
+   cg->decReferenceCount(firstChild);
+   cg->decReferenceCount(secondChild);
+   cg->decReferenceCount(thirdChild);
+   return targetRegister;
+   }
+
 bool
 J9::ARM64::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&resultReg)
    {
@@ -5207,6 +5244,16 @@ J9::ARM64::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
             resultReg = VMinlineMathMinMax(node, false, false, cg);
             return true;
             }
+
+         case TR::java_lang_Math_fma_D:
+         case TR::java_lang_StrictMath_fma_D:
+            resultReg = inlineFPTrg1Src3(node, TR::InstOpCode::fmaddd, cg);
+            return true;
+
+         case TR::java_lang_Math_fma_F:
+         case TR::java_lang_StrictMath_fma_F:
+            resultReg = inlineFPTrg1Src3(node, TR::InstOpCode::fmadds, cg);
+            return true;
 
          case TR::sun_misc_Unsafe_compareAndSwapInt_jlObjectJII_Z:
             {
