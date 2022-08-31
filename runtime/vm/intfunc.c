@@ -420,7 +420,6 @@ J9InternalVMFunctions J9InternalFunctions = {
 	freeTLS,
 #endif /* JAVA_SPEC_VERSION >= 19 */
 #if JAVA_SPEC_VERSION >= 16
-/*
 	createUpcallThunk,
 	getArgPointer,
 	allocateUpcallThunkMemory,
@@ -431,6 +430,5 @@ J9InternalVMFunctions J9InternalFunctions = {
 	native2InterpJavaUpcallF,
 	native2InterpJavaUpcallD,
 	native2InterpJavaUpcallStruct,
-*/
 #endif /* JAVA_SPEC_VERSION >= 16 */
 };

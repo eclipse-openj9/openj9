@@ -122,6 +122,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<vpath pattern="stackswap.m4" path="wa64" augmentObjects="true" type="relativepath">
 				<include-if condition="spec.win_x86.* and spec.flags.J9VM_ENV_DATA64"/>
 			</vpath>
+			<vpath pattern="UpcallThunkGen.cpp" path="wa64" augmentObjects="true" type="relativepath">
+				<include-if condition="spec.win_x86.* and spec.flags.J9VM_ENV_DATA64"/>
+			</vpath>
 			<vpath pattern="stackswap.m4" path="xi32" augmentObjects="true" type="relativepath">
 				<include-if condition="spec.linux_x86.* and not spec.flags.J9VM_ENV_DATA64"/>
 			</vpath>
@@ -133,10 +136,17 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 				<include-if condition="spec.linux_x86.* and spec.flags.J9VM_ENV_DATA64"/>
 				<include-if condition="spec.osx_x86.* and spec.flags.J9VM_ENV_DATA64"/>
 			</vpath>
+			<vpath pattern="UpcallThunkGen.cpp" path="xa64" augmentObjects="true" type="relativepath">
+				<include-if condition="spec.linux_x86.* and spec.flags.J9VM_ENV_DATA64"/>
+				<include-if condition="spec.osx_x86.* and spec.flags.J9VM_ENV_DATA64"/>
+			</vpath>
 			<vpath pattern="unsafeHelper.s" path="xi32" augmentObjects="true" type="relativepath">
 				<include-if condition="spec.linux_x86.* and not spec.flags.J9VM_ENV_DATA64"/>
 			</vpath>
 			<vpath pattern="unsafeHelper.s" path="xl64" augmentObjects="true" type="relativepath">
+				<include-if condition="spec.linux_ppc-64.* and spec.flags.env_littleEndian"/>
+			</vpath>
+			<vpath pattern="UpcallThunkGen.cpp" path="xl64" augmentObjects="true" type="relativepath">
 				<include-if condition="spec.linux_ppc-64.* and spec.flags.env_littleEndian"/>
 			</vpath>
 			<vpath pattern="unsafeHelper.s" path="ap32" augmentObjects="true" type="relativepath">
@@ -145,10 +155,16 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<vpath pattern="unsafeHelper.s" path="ap64" augmentObjects="true" type="relativepath">
 				<include-if condition="spec.aix_ppc.* and spec.flags.J9VM_ENV_DATA64"/>
 			</vpath>
+			<vpath pattern="UpcallThunkGen.cpp" path="ap64" augmentObjects="true" type="relativepath">
+				<include-if condition="spec.aix_ppc.* and spec.flags.J9VM_ENV_DATA64"/>
+			</vpath>
 			<vpath pattern="unsafeHelper.s" path="xz31" augmentObjects="true" type="relativepath">
 				<include-if condition="spec.linux_390.* and not spec.flags.J9VM_ENV_DATA64"/>
 			</vpath>
 			<vpath pattern="unsafeHelper.s" path="xz64" augmentObjects="true" type="relativepath">
+				<include-if condition="spec.linux_390.* and spec.flags.J9VM_ENV_DATA64"/>
+			</vpath>
+			<vpath pattern="UpcallThunkGen.cpp" path="xz64" augmentObjects="true" type="relativepath">
 				<include-if condition="spec.linux_390.* and spec.flags.J9VM_ENV_DATA64"/>
 			</vpath>
 			<vpath pattern="unsafeHelper.s" path="xz64" augmentObjects="true" type="relativepath">
@@ -164,6 +180,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 				<include-if condition="spec.linux_arm.* and not spec.flags.J9VM_ENV_DATA64"/>
 			</vpath>
 			<vpath pattern="unsafeHelper.m4" path="xr64" augmentObjects="true" type="relativepath">
+				<include-if condition="spec.linux_aarch64.*"/>
+			</vpath>
+			<vpath pattern="UpcallThunkGen.cpp" path="xr64" augmentObjects="true" type="relativepath">
 				<include-if condition="spec.linux_aarch64.*"/>
 			</vpath>
 			<vpath pattern="unsafeHelper.s" path="rv64" augmentObjects="true" type="relativepath">

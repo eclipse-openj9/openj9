@@ -43,6 +43,9 @@
 #include "util_api.h"
 #if JAVA_SPEC_VERSION >= 16
 #include "vm_internal.h"
+#if defined(OSX) && defined(AARCH64)
+#include <pthread.h> /* for pthread_jit_write_protect_np */
+#endif
 #endif /* JAVA_SPEC_VERSION >= 16 */
 
 #if !defined(stdout)
@@ -319,6 +322,10 @@ static UDATA parseGlrOption(J9JavaVM* jvm, char* option);
 
 static void cleanupEnsureHashedConfig(J9JavaVM *jvm);
 static UDATA parseEnsureHashedConfig(J9JavaVM *jvm, char *options, BOOLEAN isAdd);
+
+#if JAVA_SPEC_VERSION >= 16
+static UDATA freeUpcallMetaDataDoFn(J9UpcallMetaDataEntry *entry, void *userData);
+#endif /* JAVA_SPEC_VERSION >= 16 */
 
 J9_DECLARE_CONSTANT_UTF8(j9_int_void, "(I)V");
 J9_DECLARE_CONSTANT_UTF8(j9_dispatch, "dispatch");
@@ -650,6 +657,29 @@ freeJavaVM(J9JavaVM * vm)
 		}
 		pool_kill(vm->cifArgumentTypesCache);
 		vm->cifArgumentTypesCache = NULL;
+	}
+
+	/* Clean up all resources created via allocateUpcallThunkMemory, including the generatered thunk
+	 * and the corresponding metadata of each entry stored in the hashtable.
+	 * See UpcallThunkMem.cpp for details.
+	 */
+	if (NULL != vm->thunkHeapWrapper) {
+		J9UpcallThunkHeapWrapper *thunkHeapWrapper = vm->thunkHeapWrapper;
+		J9PortVmemIdentifier vmemID = thunkHeapWrapper->vmemID;
+		UDATA byteAmount = j9vmem_supported_page_sizes()[0];
+
+		if (NULL != thunkHeapWrapper->metaDataHashTable) {
+			J9HashTable *metaDataHashTable = thunkHeapWrapper->metaDataHashTable;
+			UDATA entryCount = hashTableGetCount(metaDataHashTable);
+			if (entryCount > 0) {
+				hashTableForEachDo(metaDataHashTable, (J9HashTableDoFn)freeUpcallMetaDataDoFn, NULL);
+			}
+			hashTableFree(metaDataHashTable);
+			metaDataHashTable = NULL;
+		}
+		j9vmem_free_memory(vmemID.address, byteAmount, &vmemID);
+		j9mem_free_memory(thunkHeapWrapper);
+		thunkHeapWrapper = NULL;
 	}
 #endif /* JAVA_SPEC_VERSION >= 16 */
 
@@ -6709,6 +6739,8 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 	/* ffi_cif should be allocated on demand */
 	vm->cifNativeCalloutDataCache = NULL;
 	vm->cifArgumentTypesCache = NULL;
+	/* The thunk block should be allocated on demand */
+	vm->thunkHeapWrapper = NULL;
 #endif /* JAVA_SPEC_VERSION >= 16 */
 
 #if defined(J9X86) || defined(J9HAMMER)
@@ -8341,3 +8373,50 @@ parseEnsureHashedConfig(J9JavaVM *jvm, char *options, BOOLEAN isAdd)
 
 	return result;
 }
+
+#if JAVA_SPEC_VERSION >= 16
+/**
+ * This function free the memory of the generated thunk and the metadata
+ * in the specified entry of the metadata hashtable intended for upcall.
+ *
+ * @param entry A pointer to J9UpcallMetaDataEntry
+ * @param userData An optional parameter which is unused
+ * @returns JNI_OK on success
+ */
+static UDATA
+freeUpcallMetaDataDoFn(J9UpcallMetaDataEntry *entry, void *userData)
+{
+	void *thunkAddr = (void *)(entry->thunkAddrValue);
+	J9UpcallMetaData *metaData = entry->upcallMetaData;
+
+	if ((NULL != thunkAddr) && (NULL != metaData)) {
+		J9JavaVM *vm = metaData->vm;
+		const J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+		J9VMThread *currentThread = vmFuncs->currentVMThread(vm);
+		J9UpcallNativeSignature *nativeFuncSig = metaData->nativeFuncSignature;
+		J9Heap *thunkHeap = vm->thunkHeapWrapper->heap;
+		PORT_ACCESS_FROM_JAVAVM(vm);
+
+		if (NULL != nativeFuncSig) {
+			j9mem_free_memory(nativeFuncSig->sigArray);
+			j9mem_free_memory(nativeFuncSig);
+			nativeFuncSig = NULL;
+		}
+		vmFuncs->j9jni_deleteGlobalRef((JNIEnv *)currentThread, metaData->mhMetaData, JNI_FALSE);
+		j9mem_free_memory(metaData);
+		metaData = NULL;
+
+		if (NULL != thunkHeap) {
+#if defined(OSX) && defined(AARCH64)
+			pthread_jit_write_protect_np(0);
+#endif
+			j9heap_free(thunkHeap, thunkAddr);
+#if defined(OSX) && defined(AARCH64)
+			pthread_jit_write_protect_np(1);
+#endif
+		}
+		entry->thunkAddrValue = 0;
+	}
+	return JNI_OK;
+}
+#endif /* JAVA_SPEC_VERSION >= 16 */

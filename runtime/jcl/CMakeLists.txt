@@ -222,6 +222,7 @@ if(NOT JAVA_SPEC_VERSION LESS 16)
 	# sources for Java 16+
 	target_sources(jclse
 		PRIVATE
+			${CMAKE_CURRENT_SOURCE_DIR}/common/jdk_internal_foreign_abi_UpcallStubs.cpp
 			${CMAKE_CURRENT_SOURCE_DIR}/common/jdk_internal_misc_ScopedMemoryAccess.cpp
 			${CMAKE_CURRENT_SOURCE_DIR}/common/vectornatives.cpp
 	)

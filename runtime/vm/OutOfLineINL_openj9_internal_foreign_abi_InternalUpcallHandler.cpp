@@ -45,7 +45,7 @@ OutOfLineINL_openj9_internal_foreign_abi_InternalUpcallHandler_allocateUpcallStu
 {
 	VM_BytecodeAction rc = EXECUTE_BYTECODE;
 	J9JavaVM *vm = currentThread->javaVM;
-	//J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 	J9UpcallMetaData *upcallMetaData = NULL;
 	j9object_t mhMetaData = NULL;
 	J9UpcallNativeSignature *nativeSig = NULL;
@@ -129,11 +129,7 @@ OutOfLineINL_openj9_internal_foreign_abi_InternalUpcallHandler_allocateUpcallStu
 	}
 	VM_OutOfLineINL_Helpers::restoreInternalNativeStackFrame(currentThread);
 
-	/* Disable caling the thunk generation code for the moment
-	 * to pass compilation in Jenkins and will re-enable along
-	 * with the code in Part 2 & 3.
-	 */
-	//thunkAddr = vmFuncs->createUpcallThunk(upcallMetaData);
+	thunkAddr = vmFuncs->createUpcallThunk(upcallMetaData);
 	if (NULL == thunkAddr) {
 		rc = GOTO_THROW_CURRENT_EXCEPTION;
 		setNativeOutOfMemoryError(currentThread, 0, 0);
