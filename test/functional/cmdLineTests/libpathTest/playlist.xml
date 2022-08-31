@@ -62,7 +62,7 @@
 			</disable>
 			<disable>
 				<comment>https://github.com/adoptium/aqa-tests/issues/2877</comment>
-				<platform>aarch64_alpine-linux|x86-64_alpine-linux</platform>
+				<platform>(?:aarch64_alpine-linux|x86-64_alpine-linux)</platform>
 			</disable>
 		</disables>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -DJAVA_EXE=$(JAVA_COMMAND) -DEXTRA_OPTIONS=$(Q)$(JVM_OPTIONS)$(Q) -DJAVATEST_ROOT=$(JAVATEST_ROOT) -DJVM_TEST_ROOT=$(JVM_TEST_ROOT) \
