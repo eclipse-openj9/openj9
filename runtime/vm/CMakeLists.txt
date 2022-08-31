@@ -168,6 +168,8 @@ set(main_sources
 	threadhelp.cpp
 	threadpark.c
 	throwexception.c
+	UpcallThunkMem.cpp
+	UpcallVMHelpers.cpp
 	ValueTypeHelpers.cpp
 	visible.c
 	VMAccess.cpp
@@ -266,10 +268,14 @@ if(OMR_ARCH_X86)
 			xa64/stackswap.m4
 			xa64/unsafeHelper.m4
 		)
-		target_sources(j9vm PRIVATE unsafeHelper.s)
+		target_sources(j9vm PRIVATE
+			unsafeHelper.s
+			xa64/UpcallThunkGen.cpp
+		)
 	elseif(OMR_OS_WINDOWS)
 		if(OMR_ENV_DATA64)
 			j9vm_gen_asm(wa64/stackswap.m4)
+			target_sources(j9vm PRIVATE wa64/UpcallThunkGen.cpp)
 		else()
 			j9vm_gen_asm(wi32/stackswap.m4)
 			target_sources(j9vm PRIVATE
@@ -295,10 +301,16 @@ elseif(OMR_ARCH_POWER)
 		if(NOT (OMR_ENV_DATA64 AND OMR_ENV_LITTLE_ENDIAN))
 			message(SEND_ERROR "Only PPC64 LE is currently supported")
 		endif()
-		target_sources(j9vm PRIVATE xl64/unsafeHelper.s)
+		target_sources(j9vm PRIVATE
+			xl64/unsafeHelper.s
+			xl64/UpcallThunkGen.cpp
+		)
 	elseif(OMR_OS_AIX)
 		if(OMR_ENV_DATA64)
-			target_sources(j9vm PRIVATE ap64/unsafeHelper.s)
+			target_sources(j9vm PRIVATE
+				ap64/unsafeHelper.s
+				ap64/UpcallThunkGen.cpp
+			)
 		else()
 			target_sources(j9vm PRIVATE ap32/unsafeHelper.s)
 		endif()
@@ -314,7 +326,10 @@ elseif(OMR_ARCH_S390)
 	target_sources(j9vm PRIVATE zcinterp.s)
 	if(OMR_OS_LINUX)
 		if(OMR_ENV_DATA64)
-			target_sources(j9vm PRIVATE xz64/unsafeHelper.s)
+			target_sources(j9vm PRIVATE
+				xz64/unsafeHelper.s
+				xz64/UpcallThunkGen.cpp
+			)
 		else()
 			target_sources(j9vm PRIVATE xz31/unsafeHelper.s)
 		endif()
@@ -344,7 +359,10 @@ elseif(OMR_ARCH_AARCH64)
 	target_sources(j9vm PRIVATE arm64cinterp.s)
 	if(OMR_OS_LINUX OR OMR_OS_OSX)
 		j9vm_gen_asm(xr64/unsafeHelper.m4)
-		target_sources(j9vm PRIVATE unsafeHelper.s)
+		target_sources(j9vm PRIVATE
+			unsafeHelper.s
+			xr64/UpcallThunkGen.cpp
+			)
 	else()
 		message(SEND_ERROR "Unsupported OS")
 	endif()
