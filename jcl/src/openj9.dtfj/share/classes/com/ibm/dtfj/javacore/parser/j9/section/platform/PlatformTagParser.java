@@ -106,6 +106,8 @@ public class PlatformTagParser extends TagParser implements IPlatformTypes {
 					addToken(PL_OS_NAME, PlatformPatternMatchers.Linux);
 				} else if (findFirst(PlatformPatternMatchers.AIX)) {
 					addToken(PL_OS_NAME, PlatformPatternMatchers.AIX);
+				} else if (findFirst(PlatformPatternMatchers.OSX)) {
+					addToken(PL_OS_NAME, PlatformPatternMatchers.OSX);
 				} else if (findFirst(PlatformPatternMatchers.z_OS)) {
 					addToken(PL_OS_NAME, PlatformPatternMatchers.z_OS);
 				}
@@ -158,8 +160,12 @@ public class PlatformTagParser extends TagParser implements IPlatformTypes {
 		ILineRule lineRule = new LineRule() {
 			@Override
 			public void processLine(String source, int startingOffset) {
-				// the signal number is a hex value following "Signal_Number: "
-				if (!source.contains("J9Generic_Signal") && findFirst(PlatformPatternMatchers.Signal)) {
+				// the signal number is a hex value in a line like one of these:
+				// 1XHEXCPCODE    Signal_Number: 0000000B
+				// 1XHEXCPCODE    Windows_ExceptionCode: C0000005
+				// 1XHEXCPCODE    ExceptionCode: C0000005
+				// 1XHEXCPCODE    Condition_Message_Number: 80000023
+				if (findFirst(PlatformPatternMatchers.Signal)) {
 					consumeUntilFirstMatch(PlatformPatternMatchers.Signal);
 					addNonPrefixedHexToken(PL_SIGNAL);
 				}

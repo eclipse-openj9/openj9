@@ -42,8 +42,11 @@ public class PlatformPatternMatchers {
 	public static final Matcher Windows_Generic = CommonPatternMatchers.generateMatcher("Windows", Pattern.CASE_INSENSITIVE);
 	public static final Matcher Linux = CommonPatternMatchers.generateMatcher("Linux", Pattern.CASE_INSENSITIVE);
 	public static final Matcher AIX = CommonPatternMatchers.generateMatcher("AIX", Pattern.CASE_INSENSITIVE);
+	public static final Matcher OSX = CommonPatternMatchers.generateMatcher("Mac OS X", Pattern.CASE_INSENSITIVE);
 	public static final Matcher z_OS = CommonPatternMatchers.generateMatcher("z/OS", Pattern.CASE_INSENSITIVE);
-	public static final Matcher Signal = CommonPatternMatchers.generateMatcher("Signal_Number:", Pattern.CASE_INSENSITIVE);
+	public static final Matcher Signal = CommonPatternMatchers.generateMatcher(
+			"\\b(Signal_Number|Windows_ExceptionCode|ExceptionCode|Condition_Message_Number):",
+			Pattern.CASE_INSENSITIVE);
 	public static final Matcher Module = CommonPatternMatchers.generateMatcher("Module:", Pattern.CASE_INSENSITIVE);
 	public static final Matcher Module_base = CommonPatternMatchers.generateMatcher("Module_base_address:", Pattern.CASE_INSENSITIVE);
 	public static final Matcher Module_offset = CommonPatternMatchers.generateMatcher("Module_offset:", Pattern.CASE_INSENSITIVE);

@@ -32,6 +32,7 @@ import com.ibm.dtfj.image.ImageModule;
 import com.ibm.dtfj.image.ImagePointer;
 import com.ibm.dtfj.image.ImageProcess;
 import com.ibm.dtfj.image.ImageThread;
+import com.ibm.dtfj.image.j9.SignalName;
 import com.ibm.dtfj.java.JavaRuntime;
 import com.ibm.dtfj.java.javacore.JCInvalidArgumentsException;
 import com.ibm.dtfj.javacore.builder.IBuilderData;
@@ -230,67 +231,46 @@ public class JCImageProcess implements ImageProcess {
 		}
 	}
 
-	// Mapping from signal number to signal name. The same mapping is also used in class
-	// com.ibm.dtfj.image.j9.ImageProcess in the DTFJ J9 project. This is a candidate
-	// for moving to a DTFJ 'Common' project at some point.
-	private static String[] names = {
-		"ZERO",
-		"SIGHUP",		// 1
-		"SIGINT",		// 2 + win
-		"SIGQUIT",		// 3
-		"SIGILL",		// 4 + win
-		"SIGTRAP",		// 5
-		"SIGABRT",		// 6
-		"SIGEMT",		// 7
-		"SIGFPE",		// 8 + win
-		"SIGKILL",		// 9
-		"SIGBUS",		// 10
-		"SIGSEGV",		// 11 + win
-		"SIGSYS",		// 12
-		"SIGPIPE",		// 13
-		"SIGALRM",		// 14
-		"SIGTERM",		// 15 + win
-		"SIGUSR1",		// 16
-		"SIGUSR2",		// 17
-		"SIGCHLD",		// 18
-		"SIGPWR",		// 19
-		"SIGWINCH",		// 20
-		"SIGURG/BREAK",	// 21 / win
-		"SIGPOLL/ABRT",	// 22 / win
-		"SIGSTOP",		// 23
-		"SIGTSTP",		// 24
-		"SIGCONT",		// 25
-		"SIGTTIN",		// 26
-		"SIGTTOU",		// 27
-		"SIGVTALRM",	// 28
-		"SIGPROF",		// 29
-		"SIGXCPU",		// 30
-		"SIGXFSZ",		// 31
-		"SIGWAITING",	// 32
-		"SIGLWP",		// 33
-		"SIGAIO",		// 34
-		"SIGFPE_DIV_BY_ZERO",		// 35 - synthetic from generic signal
-		"SIGFPE_INT_DIV_BY_ZERO",	// 36 - synthetic from generic signal
-		"SIGFPE_INT_OVERFLOW"		// 37 - synthetic from generic signal
-	};
-	private String resolvePlatformName(int num) {
-		if (num >= 0 && num < names.length) return names[num];
-		else return "Signal."+Integer.toString(num);
-	}
 	/**
 	 * Get signal name (if signal was available in javacore).
 	 */
 	@Override
 	public String getSignalName() throws DataUnavailable, CorruptDataException {
-		if (fSignal == IBuilderData.NOT_AVAILABLE) {
+		int signal = fSignal;
+
+		if (signal == IBuilderData.NOT_AVAILABLE) {
 			throw new DataUnavailable("No signal name available");
 		}
-		if (fSignal >= 0 && fSignal < names.length) {
-			return names[fSignal];
-		} else {
-			// unknown signal, use same naming convention as core-file DTFJ
-			return "Signal." + Integer.toString(fSignal);
+
+		String name = null;
+
+		try {
+			JCImage image = fImageAddressSpace.getImage();
+			String systemType = image.getSystemType();
+
+			if (systemType == null) {
+				// system type unavailable
+			} else if (systemType.equalsIgnoreCase("AIX")) {
+				name = SignalName.forAIX(signal);
+			} else if (systemType.equalsIgnoreCase("Linux")) {
+				name = SignalName.forLinux(signal);
+			} else if (systemType.equalsIgnoreCase("Mac OS X")) {
+				name = SignalName.forOSX(signal);
+			} else if (systemType.regionMatches(true, 0, "Windows", 0, 7)) {
+				name = SignalName.forWindows(signal);
+			} else if (systemType.equalsIgnoreCase("z/OS")) {
+				name = SignalName.forZOS(signal);
+			}
+		} catch (CorruptDataException | DataUnavailable e) {
+			// system type is unavailable, answer a generic signal name
 		}
+
+		// unknown signal, use same naming convention as core-file DTFJ
+		if (name == null) {
+			name = "Unknown signal number " + signal;
+		}
+
+		return name;
 	}
 
 	/**

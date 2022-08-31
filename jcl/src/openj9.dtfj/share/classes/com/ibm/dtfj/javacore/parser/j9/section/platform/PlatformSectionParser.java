@@ -32,6 +32,7 @@ import com.ibm.dtfj.javacore.builder.IBuilderData;
 import com.ibm.dtfj.javacore.builder.IImageAddressSpaceBuilder;
 import com.ibm.dtfj.javacore.builder.IImageProcessBuilder;
 import com.ibm.dtfj.javacore.parser.framework.parser.ParserException;
+import com.ibm.dtfj.javacore.parser.framework.scanner.IParserToken;
 import com.ibm.dtfj.javacore.parser.j9.IAttributeValueMap;
 import com.ibm.dtfj.javacore.parser.j9.SectionParser;
 
@@ -127,13 +128,32 @@ public class PlatformSectionParser extends SectionParser implements IPlatformTyp
 	 * @throws ParserException
 	 */
 	private void crashInfo() throws ParserException {
-		IAttributeValueMap results = null;
-
 		// 1XHEXCPCODE line if present contains the signal information
-		while((results = processTagLineOptional(T_1XHEXCPCODE)) != null) {
-			int j9_signal = results.getIntValue(PL_SIGNAL);
-			if (j9_signal != IBuilderData.NOT_AVAILABLE) {
-				fImageProcessBuilder.setSignal(j9_signal);
+		for (;;) {
+			IAttributeValueMap results = processTagLineOptional(T_1XHEXCPCODE);
+
+			if (results == null) {
+				break;
+			}
+
+			IParserToken token = results.getToken(PL_SIGNAL);
+
+			if (token == null) {
+				continue;
+			}
+
+			String value = token.getValue();
+
+			if (value.startsWith("0x")) { //$NON-NLS-1$
+				try {
+					int signal = Integer.parseUnsignedInt(value.substring(2), 16);
+
+					if (signal != IBuilderData.NOT_AVAILABLE) {
+						fImageProcessBuilder.setSignal(signal);
+					}
+				} catch (NumberFormatException e) {
+					// ignore
+				}
 			}
 		}
 
