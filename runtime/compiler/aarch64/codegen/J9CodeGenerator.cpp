@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2021 IBM Corp. and others
+ * Copyright (c) 2019, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -215,5 +215,10 @@ J9::ARM64::CodeGenerator::supportsInliningOfIsInstance()
 bool
 J9::ARM64::CodeGenerator::suppressInliningOfRecognizedMethod(TR::RecognizedMethod method)
    {
+   if (method == TR::java_lang_Math_min_F ||
+       method == TR::java_lang_Math_max_F)
+      {
+      return true;
+      }
    return false;
    }
