@@ -48,5 +48,4 @@ public class PlatformPatternMatchers {
 	public static final Matcher Module_base = CommonPatternMatchers.generateMatcher("Module_base_address:", Pattern.CASE_INSENSITIVE);
 	public static final Matcher Module_offset = CommonPatternMatchers.generateMatcher("Module_offset:", Pattern.CASE_INSENSITIVE);
 
-
 }

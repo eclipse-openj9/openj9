@@ -36,10 +36,10 @@ import com.ibm.dtfj.javacore.parser.j9.IAttributeValueMap;
 import com.ibm.dtfj.javacore.parser.j9.SectionParser;
 
 public class PlatformSectionParser extends SectionParser implements IPlatformTypes {
-	
+
 	private IImageAddressSpaceBuilder fImageAddressSpaceBuilder;
 	private IImageProcessBuilder fImageProcessBuilder;
-	
+
 	public PlatformSectionParser() {
 		super(PLATFORM_SECTION);
 	}
@@ -48,14 +48,14 @@ public class PlatformSectionParser extends SectionParser implements IPlatformTyp
 	 * Controls parsing for host platform (XH) section in the javacore
 	 * @throws ParserException
 	 */
+	@Override
 	protected void topLevelRule() throws ParserException {
-		
-		// get access to DTFJ AddressSpace and ImageProcess objects 
+		// get access to DTFJ AddressSpace and ImageProcess objects
 		fImageAddressSpaceBuilder = fImageBuilder.getCurrentAddressSpaceBuilder();
 		if (fImageAddressSpaceBuilder != null) {
 			fImageProcessBuilder = fImageAddressSpaceBuilder.getCurrentImageProcessBuilder();
 		}
-		
+
 		hostInfo();
 		crashInfo();
 		// Windows can come before registers
@@ -67,13 +67,12 @@ public class PlatformSectionParser extends SectionParser implements IPlatformTyp
 	}
 
 	/**
-	 * Parse the OS and CPU information (2XHOSLEVEL,2XHCPUARCH and 2XHCPUS lines) 
+	 * Parse the OS and CPU information (2XHOSLEVEL,2XHCPUARCH and 2XHCPUS lines)
 	 * @throws ParserException
 	 */
 	private void hostInfo() throws ParserException {
-
 		IAttributeValueMap results = null;
-		
+
 		// Operating system information
 		results = processTagLineOptional(T_2XHHOSTNAME);
 		if (results != null) {
@@ -88,6 +87,7 @@ public class PlatformSectionParser extends SectionParser implements IPlatformTyp
 					InetAddress addr = InetAddress.getByName(host_addr);
 					fImageBuilder.addHostAddr(addr);
 				} catch (UnknownHostException e) {
+					// ignore
 				}
 			}
 		}
@@ -128,7 +128,7 @@ public class PlatformSectionParser extends SectionParser implements IPlatformTyp
 	 */
 	private void crashInfo() throws ParserException {
 		IAttributeValueMap results = null;
-		
+
 		// 1XHEXCPCODE line if present contains the signal information
 		while((results = processTagLineOptional(T_1XHEXCPCODE)) != null) {
 			int j9_signal = results.getIntValue(PL_SIGNAL);
@@ -136,11 +136,10 @@ public class PlatformSectionParser extends SectionParser implements IPlatformTyp
 				fImageProcessBuilder.setSignal(j9_signal);
 			}
 		}
-		
+
 		// 1XHERROR2 line indicates no crash information
 		processTagLineOptional(T_1XHERROR2);
 	}
-	
 
 	/**
 	 * Parse the exception information lines
@@ -168,7 +167,7 @@ public class PlatformSectionParser extends SectionParser implements IPlatformTyp
 			}
 		}
 	}
-	
+
 	/**
 	 * Parse the exception register information lines
 	 * @throws ParserException
@@ -203,14 +202,14 @@ public class PlatformSectionParser extends SectionParser implements IPlatformTyp
 			fImageProcessBuilder.setRegisters(m);
 		}
 	}
-	
+
 	/**
-	 * Parse the user args information (1XHUSERARGS and 2XHUSERARG lines) 
+	 * Parse the user args information (1XHUSERARGS and 2XHUSERARG lines)
 	 * @throws ParserException
 	 */
 	private void parseEnvironmentVars() throws ParserException {
 		IAttributeValueMap results = null;
-		
+
 		results = processTagLineOptional(T_1XHENVVARS);
 		if (results != null) {
 			while ((results = processTagLineOptional(T_2XHENVVAR)) != null) {
@@ -222,12 +221,13 @@ public class PlatformSectionParser extends SectionParser implements IPlatformTyp
 			}
 		}
 	}
-	
+
 	/**
 	 * Empty hook for now.
 	 */
+	@Override
 	protected void sovOnlyRules(String startingTag) throws ParserException {
-
+		// do nothing
 	}
 
 }

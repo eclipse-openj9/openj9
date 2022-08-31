@@ -31,17 +31,17 @@ import com.ibm.dtfj.javacore.parser.framework.tag.TagParser;
 import com.ibm.dtfj.javacore.parser.j9.section.common.CommonPatternMatchers;
 
 public class PlatformTagParser extends TagParser implements IPlatformTypes {
-	
+
 	public PlatformTagParser() {
 		super(PLATFORM_SECTION);
 	}
 
 	/**
-	 * Initialize parser with rules for lines in the host platform (XH) section in 
+	 * Initialize parser with rules for lines in the host platform (XH) section in
 	 * the javacore
 	 */
+	@Override
 	protected void initTagAttributeRules() {
-
 		addHostName();
 		addOSLevel();
 		addTag(T_2XHCPUS, null);
@@ -61,6 +61,7 @@ public class PlatformTagParser extends TagParser implements IPlatformTypes {
 	 */
 	private void addHostName() {
 		ILineRule lineRule = new LineRule() {
+			@Override
 			public void processLine(String source, int startingOffset) {
 				consumeUntilFirstMatch(CommonPatternMatchers.colon);
 				consumeUntilFirstMatch(CommonPatternMatchers.whitespace);
@@ -70,14 +71,15 @@ public class PlatformTagParser extends TagParser implements IPlatformTypes {
 		};
 		addTag(T_2XHHOSTNAME, lineRule);
 	}
-	
+
 	/**
 	 * Add rules for the OS level information (2XHOSLEVEL line)
 	 */
 	private void addOSLevel() {
 		ILineRule lineRule = new LineRule() {
+			@Override
 			public void processLine(String source, int startingOffset) {
-				// here we get the OS name, which in javacore is concatenated with 
+				// here we get the OS name, which in javacore is concatenated with
 				// the OS level, so we have to pull out the specific OS names
 				consumeUntilFirstMatch(CommonPatternMatchers.colon);
 				if (findFirst(PlatformPatternMatchers.Windows_XP)) {
@@ -122,6 +124,7 @@ public class PlatformTagParser extends TagParser implements IPlatformTypes {
 	 */
 	private void addCPUArch() {
 		ILineRule lineRule = new LineRule() {
+			@Override
 			public void processLine(String source, int startingOffset) {
 				// the CPU architecture is just a string following a colon
 				consumeUntilFirstMatch(CommonPatternMatchers.colon);
@@ -137,6 +140,7 @@ public class PlatformTagParser extends TagParser implements IPlatformTypes {
 	 */
 	private void addCPUCount() {
 		ILineRule lineRule = new LineRule() {
+			@Override
 			public void processLine(String source, int startingOffset) {
 				// the CPU count is a decimal number following a colon
 				consumeUntilFirstMatch(CommonPatternMatchers.colon);
@@ -146,12 +150,13 @@ public class PlatformTagParser extends TagParser implements IPlatformTypes {
 		addTag(T_3XHNUMCPUS, lineRule);
 		addTag(T_3XHNUMASUP, null);
 	}
-	
+
 	/**
 	 * Add rule for Signal_Number (1XHEXCPCODE line)
 	 */
 	private void addExceptionCodeRule() {
 		ILineRule lineRule = new LineRule() {
+			@Override
 			public void processLine(String source, int startingOffset) {
 				// the signal number is a hex value following "Signal_Number: "
 				if (!source.contains("J9Generic_Signal") && findFirst(PlatformPatternMatchers.Signal)) {
@@ -162,12 +167,13 @@ public class PlatformTagParser extends TagParser implements IPlatformTypes {
 		};
 		addTag(T_1XHEXCPCODE, lineRule);
 	}
-	
+
 	/**
 	 * Add rule for Windows exception module
 	 */
 	private void addExceptionModuleRule() {
 		ILineRule lineRule = new LineRule() {
+			@Override
 			public void processLine(String source, int startingOffset) {
 				// 1XHEXCPMODULE  Module: C:\Program Files\IBM\java60sr5\jre\bin\jdwp.dll
 				// 1XHEXCPMODULE  Module_base_address: 7F3F0000
@@ -181,20 +187,23 @@ public class PlatformTagParser extends TagParser implements IPlatformTypes {
 					addNonPrefixedHexToken(PL_MODULE_BASE);
 				} else if (findFirst(PlatformPatternMatchers.Module_offset)) {
 					consumeUntilFirstMatch(PlatformPatternMatchers.Module_offset);
-					addNonPrefixedHexToken(PL_MODULE_OFFSET);					
+					addNonPrefixedHexToken(PL_MODULE_OFFSET);
 				}
 			}
 		};
 		addTag(T_1XHEXCPMODULE, lineRule);
 	}
-	
+
 	private void addRegisterRule() {
 		// 1XHREGISTERS   Registers:
 		addTag(T_1XHREGISTERS, new LineRule() {
+			@Override
 			public void processLine(String source, int startingOffset) {
+				// do nothing
 			}
 		});
 		ILineRule lineRule = new LineRule() {
+			@Override
 			public void processLine(String source, int startingOffset) {
 				// 2XHREGISTER      EDI: 41460098
 				consumeUntilFirstMatch(CommonPatternMatchers.whitespace);
@@ -202,21 +211,23 @@ public class PlatformTagParser extends TagParser implements IPlatformTypes {
 				addNonPrefixedHexToken(PL_REGISTER_VALUE);
 			}
 		};
-		addTag(T_2XHREGISTER, lineRule);		
+		addTag(T_2XHREGISTER, lineRule);
 	}
-	
+
 	/**
 	 * Add rule for an individual environment variable tags
 	 */
-	private static final Matcher NOT_EQUALS = CommonPatternMatchers.generateMatcher("[^\\n\\r][^=\\n\\r]*", Pattern.CASE_INSENSITIVE);	
-	
+	private static final Matcher NOT_EQUALS = CommonPatternMatchers.generateMatcher("[^\\n\\r][^=\\n\\r]*", Pattern.CASE_INSENSITIVE);
+
 	private void addEnvironmentVars() {
-		
 		addTag(T_1XHENVVARS, new LineRule() {
+			@Override
 			public void processLine(String source, int startingOffset) {
+				// do nothing
 			}
 		});
 		ILineRule lineRule = new LineRule() {
+			@Override
 			public void processLine(String source, int startingOffset) {
 				consumeUntilFirstMatch(CommonPatternMatchers.whitespace);
 				addToken(ENV_NAME, NOT_EQUALS);
@@ -226,4 +237,5 @@ public class PlatformTagParser extends TagParser implements IPlatformTypes {
 		};
 		addTag(T_2XHENVVAR, lineRule);
 	}
+
 }

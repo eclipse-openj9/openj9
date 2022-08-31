@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2007, 2017 IBM Corp. and others
+ * Copyright (c) 2007, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -37,12 +37,12 @@ import com.ibm.dtfj.java.javacore.JCInvalidArgumentsException;
 import com.ibm.dtfj.javacore.builder.IBuilderData;
 
 public class JCImageProcess implements ImageProcess {
-	
-	private Vector fRuntimes;
-	private Vector fImageThreads;
-	private Vector fLibraries;
+
+	private Vector<JavaRuntime> fRuntimes;
+	private Vector<JCImageThread> fImageThreads;
+	private Vector<JCImageModule> fLibraries;
 	private Properties fProperties;
-	
+
 	private String fCommandLine;
 	private String fID;
 	private int fPointerSize;
@@ -51,15 +51,15 @@ public class JCImageProcess implements ImageProcess {
 	private long fCurrentThreadID = IBuilderData.NOT_AVAILABLE;
 
 	private final JCImageAddressSpace fImageAddressSpace;
-	
+
 	public JCImageProcess(JCImageAddressSpace imageAddressSpace) throws JCInvalidArgumentsException {
 		if (imageAddressSpace == null) {
 			throw new JCInvalidArgumentsException("An image process must pertain to an image address space");
 		}
 		fImageAddressSpace = imageAddressSpace;
-		fRuntimes = new Vector();
-		fImageThreads = new Vector();
-		fLibraries = new Vector();
+		fRuntimes = new Vector<>();
+		fImageThreads = new Vector<>();
+		fLibraries = new Vector<>();
 		fProperties = new Properties();
 
 		fCommandLine = null;
@@ -70,11 +70,10 @@ public class JCImageProcess implements ImageProcess {
 		imageAddressSpace.addImageProcess(this);
 	}
 
-	
-	
 	/**
-	 * 
+	 *
 	 */
+	@Override
 	public String getCommandLine() throws DataUnavailable, CorruptDataException {
 		if (fCommandLine == null) {
 			throw new DataUnavailable("No command line available");
@@ -83,8 +82,9 @@ public class JCImageProcess implements ImageProcess {
 	}
 
 	/**
-	 * 
+	 *
 	 */
+	@Override
 	public ImageThread getCurrentThread() throws CorruptDataException {
 		ImageThread currentThread = null;
 		if (fCurrentThreadID != IBuilderData.NOT_AVAILABLE) {
@@ -97,9 +97,8 @@ public class JCImageProcess implements ImageProcess {
 		}
 		return currentThread;
 	}
-	
+
 	/**
-	 * 
 	 * NON-DTFJ
 	 * Overwrites whatever was there if a key already exists.
 	 * @param key
@@ -109,10 +108,10 @@ public class JCImageProcess implements ImageProcess {
 		fProperties.put(key, value);
 	}
 
-	
 	/**
-	 * 
+	 *
 	 */
+	@Override
 	public Properties getEnvironment() throws DataUnavailable, CorruptDataException {
 		if (fProperties == null || fProperties.size() == 0) {
 			throw new DataUnavailable("Environment data not available");
@@ -120,10 +119,10 @@ public class JCImageProcess implements ImageProcess {
 		return fProperties;
 	}
 
-	
 	/**
-	 * 
+	 *
 	 */
+	@Override
 	public ImageModule getExecutable() throws DataUnavailable, CorruptDataException {
 		if (fExecutable == null) {
 			throw new DataUnavailable("No executable data");
@@ -131,22 +130,22 @@ public class JCImageProcess implements ImageProcess {
 		return fExecutable;
 	}
 
-	
 	/**
-	 * 
+	 *
 	 */
+	@Override
 	public String getID() throws DataUnavailable, CorruptDataException {
 		if (fID == null) {
 			throw new DataUnavailable("No process ID available");
 		}
 		return fID;
 	}
-	
-	
+
 	/**
-	 * 
+	 *
 	 */
-	public Iterator getLibraries() throws DataUnavailable, CorruptDataException {
+	@Override
+	public Iterator<?> getLibraries() throws DataUnavailable, CorruptDataException {
 		if (fLibraries.size() == 0) {
 			throw new DataUnavailable("No library information available");
 		}
@@ -157,23 +156,22 @@ public class JCImageProcess implements ImageProcess {
 	 * NON-DTFJ
 	 * @param module
 	 */
-	public void addLibrary(JCImageModule module)  {
+	public void addLibrary(JCImageModule module) {
 		if (module != null) {
 			fLibraries.add(module);
 		}
 	}
-	
+
 	/**
 	 * NON-DTFJ
 	 * @param name
-	 * 
 	 */
 	public ImageModule getLibrary(String name) {
 		JCImageModule module = null;
 		if (name != null) {
-			Iterator it = fLibraries.iterator();
+			Iterator<JCImageModule> it = fLibraries.iterator();
 			while (module == null && it.hasNext()) {
-				JCImageModule foundModule = (JCImageModule) it.next();
+				JCImageModule foundModule = it.next();
 				if (foundModule != null) {
 					String foundID = foundModule.getInternalName();
 					if (foundID != null && foundID.equals(name)) {
@@ -184,17 +182,15 @@ public class JCImageProcess implements ImageProcess {
 		}
 		return module;
 	}
-	
-	
-	
+
 	/**
 	 */
+	@Override
 	public int getPointerSize() {
 		return fPointerSize;
 	}
-	
+
 	/**
-	 * 
 	 * @param pointerSize
 	 */
 	public void setPointerSize(int pointerSize) {
@@ -208,23 +204,22 @@ public class JCImageProcess implements ImageProcess {
 	public void setSignal(int signal) {
 		fSignal = signal;
 	}
-	
-	/** 
+
+	/**
 	 * Non-DTFJ. Sets command line found in javacore
 	 */
 	public void setCommandLine(String commandLine) {
 		fCommandLine = commandLine;
 	}
-	
+
 	/**
-	 * 
+	 *
 	 */
-	public Iterator getRuntimes() {
+	@Override
+	public Iterator<?> getRuntimes() {
 		return fRuntimes.iterator();
 	}
-	
-	
-	
+
 	/**
 	 * NON-DTFJ
 	 * @param javaRuntime
@@ -235,7 +230,7 @@ public class JCImageProcess implements ImageProcess {
 		}
 	}
 
-	// Mapping from signal number to signal name. The same mapping is also used in class 
+	// Mapping from signal number to signal name. The same mapping is also used in class
 	// com.ibm.dtfj.image.j9.ImageProcess in the DTFJ J9 project. This is a candidate
 	// for moving to a DTFJ 'Common' project at some point.
 	private static String[] names = {
@@ -283,43 +278,43 @@ public class JCImageProcess implements ImageProcess {
 		else return "Signal."+Integer.toString(num);
 	}
 	/**
-	 * Get signal name (if signal was available in javacore)
+	 * Get signal name (if signal was available in javacore).
 	 */
+	@Override
 	public String getSignalName() throws DataUnavailable, CorruptDataException {
-		if (fSignal == IBuilderData.NOT_AVAILABLE ) {
+		if (fSignal == IBuilderData.NOT_AVAILABLE) {
 			throw new DataUnavailable("No signal name available");
 		}
 		if (fSignal >= 0 && fSignal < names.length) {
 			return names[fSignal];
 		} else {
 			// unknown signal, use same naming convention as core-file DTFJ
-			return "Signal."+Integer.toString(fSignal);
+			return "Signal." + Integer.toString(fSignal);
 		}
 	}
 
-	
 	/**
 	 * Get signal number (if signal was available in javacore)
 	 */
+	@Override
 	public int getSignalNumber() throws DataUnavailable, CorruptDataException {
-		if (fSignal == IBuilderData.NOT_AVAILABLE ) {
+		if (fSignal == IBuilderData.NOT_AVAILABLE) {
 			throw new DataUnavailable("No signal number available");
 		} else {
 			return fSignal;
 		}
 	}
 
-	
 	/**
-	 * 
+	 *
 	 */
-	public Iterator getThreads() {
+	@Override
+	public Iterator<?> getThreads() {
 		return fImageThreads.iterator();
 	}
-	
-	
+
 	/**
-	 * NOT in DTFJ
+	 * NON-DTFJ
 	 * @param thread
 	 */
 	public void addImageThread(JCImageThread thread) {
@@ -327,18 +322,15 @@ public class JCImageProcess implements ImageProcess {
 			fImageThreads.add(thread);
 		}
 	}
-	
-	
-	
+
 	/**
 	 * NON-DTFJ
 	 * @param id
-	 * 
 	 */
 	public JCImageThread getImageThread(ImagePointer id) {
 		JCImageThread thread = null;
 		if (id != null) {
-			Iterator it = getThreads();
+			Iterator<?> it = getThreads();
 			while (thread == null && it.hasNext()) {
 				JCImageThread foundThread = (JCImageThread) it.next();
 				if (foundThread != null) {
@@ -351,8 +343,7 @@ public class JCImageProcess implements ImageProcess {
 		}
 		return thread;
 	}
-	
-	
+
 	/**
 	 * NON-DTFJ
 	 */
@@ -366,7 +357,6 @@ public class JCImageProcess implements ImageProcess {
 	public void setExecutable(ImageModule execMod) {
 		fExecutable = execMod;
 	}
-
 
 	/**
 	 * NON-DTFJ
@@ -384,7 +374,9 @@ public class JCImageProcess implements ImageProcess {
 		}
 	}
 
+	@Override
 	public Properties getProperties() {
-		return new Properties();		//not supported for this reader
+		return new Properties(); // not supported for this reader
 	}
+
 }
