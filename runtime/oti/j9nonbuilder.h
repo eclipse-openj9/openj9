@@ -4900,6 +4900,9 @@ typedef struct J9InternalVMFunctions {
 	double (JNICALL *native2InterpJavaUpcallD)(struct J9UpcallMetaData *data, void *argsListPointer);
 	U_8 * (JNICALL *native2InterpJavaUpcallStruct)(struct J9UpcallMetaData *data, void *argsListPointer);
 #endif /* JAVA_SPEC_VERSION >= 16 */
+#if JAVA_SPEC_VERSION >= 19
+	UDATA (*walkContinuationStackFrames)(struct J9VMThread *currentThread, j9object_t continuationObject, J9StackWalkState *walkState);
+#endif /* JAVA_SPEC_VERSION >= 19 */
 } J9InternalVMFunctions;
 
 /* Jazz 99339: define a new structure to replace JavaVM so as to pass J9NativeLibrary to JVMTIEnv  */
