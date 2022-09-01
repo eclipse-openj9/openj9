@@ -22,7 +22,9 @@
  *******************************************************************************/
 package jdk.internal.vm;
 
+import java.util.EnumSet;
 import java.util.Set;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
 import jdk.internal.access.JavaLangAccess;
 import jdk.internal.access.SharedSecrets;
@@ -40,6 +42,8 @@ public class Continuation {
 	private boolean finished;
 
 	private static JavaLangAccess JLA = SharedSecrets.getJavaLangAccess();
+
+	private ReentrantLock continuationAccess = new ReentrantLock();
 
 	/**
 	 * Continuation's Pinned reasons
@@ -120,7 +124,7 @@ public class Continuation {
 	 * @return new StackWalker for this Continuation
 	 */
 	public StackWalker stackWalker() {
-		throw new UnsupportedOperationException();
+		return stackWalker(EnumSet.noneOf(StackWalker.Option.class));
 	}
 
 	/**
@@ -128,7 +132,7 @@ public class Continuation {
 	 * @return new StackWalker for this Continuation with set of options
 	 */
 	public StackWalker stackWalker(Set<StackWalker.Option> options) {
-		throw new UnsupportedOperationException();
+		return stackWalker(options, scope);
 	}
 
 	/**
@@ -137,7 +141,7 @@ public class Continuation {
 	 * @return new StackWalker for Continuations in the scope with set of options
 	 */
 	public StackWalker stackWalker(Set<StackWalker.Option> options, ContinuationScope scope) {
-		throw new UnsupportedOperationException();
+		return JLA.newStackWalkerInstance(options, scope, this);
 	}
 
 	/**
@@ -145,11 +149,20 @@ public class Continuation {
 	 * @throws IllegalStateException if this Continuation is mounted
 	 */
 	public StackTraceElement[] getStackTrace() {
-		throw new UnsupportedOperationException();
+		StackWalker walker = stackWalker(EnumSet.of(StackWalker.Option.SHOW_REFLECT_FRAMES));
+		return walker.walk(s -> s.map(StackWalker.StackFrame::toStackTraceElement).toArray(StackTraceElement[]::new));
 	}
 
 	public static <R> R wrapWalk(Continuation cont, ContinuationScope scope, Supplier<R> sup) {
 		throw new UnsupportedOperationException();
+	}
+
+	public boolean trylockAccess() {
+		return continuationAccess.tryLock();
+	}
+
+	public void unlockAccess() {
+		continuationAccess.unlock();
 	}
 
 	private static void execute(Continuation cont) {
@@ -179,8 +192,10 @@ public class Continuation {
 
 		boolean result = true;
 		try {
+			continuationAccess.lock();
 			result = enterImpl();
 		} finally {
+			continuationAccess.unlock();
 			if (result) {
 				/* Continuation completed */
 			} else {
