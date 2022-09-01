@@ -267,11 +267,11 @@ jvmtiGetFrameCount(jvmtiEnv* env,
 	jvmtiError rc;
 	J9VMThread * currentThread;
 	jint rv_count = 0;
+	J9InternalVMFunctions* vmFuncs = vm->internalVMFunctions;
 
 	Trc_JVMTI_jvmtiGetFrameCount_Entry(env);
 
 	rc = getCurrentVMThread(vm, &currentThread);
-	J9InternalVMFunctions* vmFuncs = vm->internalVMFunctions;
 	if (rc == JVMTI_ERROR_NONE) {
 		J9VMThread *targetThread = NULL;
 
