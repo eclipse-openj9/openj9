@@ -6167,6 +6167,15 @@ typedef struct J9CInterpreterStackFrame {
 #endif /* J9VM_ARCH_X86 */
 } J9CInterpreterStackFrame;
 
+typedef struct J9SpecialArguments {
+	UDATA localVerboseLevel;
+	IDATA *xoss;
+	UDATA *argEncoding;
+	IDATA *ibmMallocTraceSet;
+	const char *executableJarPath;
+	BOOLEAN captureCommandLine;
+} J9SpecialArguments;
+
 #include "objectreferencesmacros_define.inc"
 
 #endif /* J9NONBUILDER_H */

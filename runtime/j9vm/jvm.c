@@ -1534,14 +1534,6 @@ jio_vsnprintf(char * str, int n, const char * format, va_list args)
 	return result;
 }
 
-typedef struct J9SpecialArguments {
-	UDATA localVerboseLevel;
-	IDATA *xoss;
-	UDATA *argEncoding;
-	IDATA *ibmMallocTraceSet;
-	const char *executableJarPath;
-	BOOLEAN captureCommandLine;
-} J9SpecialArguments;
 /**
  * Look for special options:
  * -verbose:init
@@ -2306,7 +2298,7 @@ JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITSer
 					jvmBufferData(j9binBuffer), jvmBufferData(jrebinBuffer),
 					libpathValue, ldLibraryPathValue))
 			|| (0 != addJavaHome(&j9portLibrary, &vmArgumentsList, altJavaHomeSpecified, jvmBufferData(j9libBuffer)))
-			|| (doAddExtDir && (0 != addExtDir(&j9portLibrary, &vmArgumentsList, jvmBufferData(j9libBuffer), args, J2SE_CURRENT_VERSION)))
+			|| (doAddExtDir && (0 != addExtDir(&j9portLibrary, &vmArgumentsList, jvmBufferData(j9libBuffer), args, J2SE_CURRENT_VERSION, &specialArgs)))
 			|| (0 != addUserDir(&j9portLibrary, &vmArgumentsList, cwd))
 #if !defined(OPENJ9_BUILD)
 			|| (0 != addJavaPropertiesOptions(&j9portLibrary, &vmArgumentsList, localVerboseLevel))
