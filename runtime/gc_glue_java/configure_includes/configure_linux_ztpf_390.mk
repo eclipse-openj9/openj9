@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2016, 2020 IBM Corp. and others
+# Copyright (c) 2016, 2022 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -42,6 +42,9 @@ ifeq (default,$(origin CC))
 endif
 ifeq (default,$(origin CXX))
 	CXX=tpf-g++
+endif
+ifeq (default,$(origin AS))
+	AS=tpf-as
 endif
 
 CONFIGURE_ARGS += --host=s390x-ibm-tpf
