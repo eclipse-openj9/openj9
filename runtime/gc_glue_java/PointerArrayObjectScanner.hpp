@@ -85,29 +85,19 @@ public:
 	 * @param[in] objectPtr pointer to the array to be processed
 	 * @param[in] allocSpace pointer to space within which the scanner should be instantiated (in-place)
 	 * @param[in] flags Scanning context flags
-	 * @param[in] splitAmount If >0, the number of elements to include for this scanner instance; if 0, include all elements
+	 * @param[in] sizeInElements Number of elements to be scanned
 	 * @param[in] startIndex The index of the first element to scan
 	 */
 	MMINLINE static GC_PointerArrayObjectScanner *
-	newInstance(MM_EnvironmentBase *env, omrobjectptr_t objectPtr, void *allocSpace, uintptr_t flags, uintptr_t splitAmount, uintptr_t startIndex = 0)
+	newInstance(MM_EnvironmentBase *env, omrobjectptr_t objectPtr, fomrobject_t *basePtr, void *allocSpace, uintptr_t flags, uintptr_t sizeInElements,  uintptr_t startIndex = 0)
 	{
 		GC_PointerArrayObjectScanner *objectScanner = (GC_PointerArrayObjectScanner *)allocSpace;
 		if (NULL != objectScanner) {
 			bool const compressed = env->compressObjectReferences();
-			GC_ArrayObjectModel *arrayObjectModel = &(env->getExtensions()->indexableObjectModel);
-			omrarrayptr_t arrayPtr = (omrarrayptr_t)objectPtr;
-			uintptr_t sizeInElements = arrayObjectModel->getSizeInElements(arrayPtr);
-			fomrobject_t *basePtr = (fomrobject_t *)arrayObjectModel->getDataPointerForContiguous(arrayPtr);
+			/* If splitting is used, sizeInElements is the total size of the array. Otherwise, its the rest to be scanned. */
 			fomrobject_t *scanPtr = GC_SlotObject::addToSlotAddress(basePtr, startIndex, compressed);
 			fomrobject_t *limitPtr = GC_SlotObject::addToSlotAddress(basePtr, sizeInElements, compressed);
 			fomrobject_t *endPtr = limitPtr;
-
-			if (!GC_ObjectScanner::isIndexableObjectNoSplit(flags)) {
-				fomrobject_t *splitPtr = GC_SlotObject::addToSlotAddress(scanPtr, splitAmount, compressed);
-				if ((splitPtr > scanPtr) && (splitPtr < endPtr)) {
-					endPtr = splitPtr;
-				}
-			}
 
 			new(objectScanner) GC_PointerArrayObjectScanner(env, objectPtr, basePtr, limitPtr, scanPtr, endPtr, flags);
 			objectScanner->initialize(env);

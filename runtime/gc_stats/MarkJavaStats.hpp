@@ -56,11 +56,6 @@ public:
 	UDATA _monitorReferenceCleared; /**< The number of monitor references that have been cleared during marking */
 	UDATA _monitorReferenceCandidates; /**< The number of monitor references that have been visited in monitor table during marking */
 
-#if defined(J9MODRON_TGC_PARALLEL_STATISTICS)
-	UDATA splitArraysProcessed; /**< The number of array chunks (not counting parts smaller than the split size) processed by this thread */
-	UDATA splitArraysAmount;
-#endif /* J9MODRON_TGC_PARALLEL_STATISTICS */
-
 	/* function members */
 private:
 protected:

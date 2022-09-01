@@ -51,6 +51,7 @@
 #include "OwnableSynchronizerObjectList.hpp"
 #include "ParallelDispatcher.hpp"
 #include "ReferenceObjectBuffer.hpp"
+#include "RealtimeGC.hpp"
 #include "RootScanner.hpp"
 #include "StackSlotValidator.hpp"
 #include "Task.hpp"
@@ -567,7 +568,13 @@ MM_MarkingDelegate::setupReferenceObjectScanner(MM_EnvironmentBase *env, omrobje
 }
 
 uintptr_t
-MM_MarkingDelegate::setupPointerArrayScanner(MM_EnvironmentBase *env, omrobjectptr_t objectPtr, MM_MarkingSchemeScanReason reason, uintptr_t *sizeToDo, uintptr_t *slotsToDo)
+MM_MarkingDelegate::setupPointerArrayScanner(MM_EnvironmentBase *env, omrobjectptr_t objectPtr, MM_MarkingSchemeScanReason reason, uintptr_t *sizeToDo, uintptr_t *sizeInElementsToDo, fomrobject_t **basePtr, uintptr_t *flags)
+{
+	return _markingScheme->setupIndexableScanner(env, objectPtr, reason, sizeToDo, sizeInElementsToDo, basePtr, flags);
+}
+
+uintptr_t
+MM_MarkingDelegate::setupIndexableScanner(MM_EnvironmentBase *env, omrobjectptr_t objectPtr, MM_MarkingSchemeScanReason reason, uintptr_t *sizeToDo, uintptr_t *sizeInElementsToDo, fomrobject_t **basePtr, uintptr_t *flags)
 {
 	uintptr_t startIndex = 0;
 	uintptr_t headerBytesToScan = 0;
@@ -617,13 +624,17 @@ MM_MarkingDelegate::setupPointerArrayScanner(MM_EnvironmentBase *env, omrobjectp
 			Assert_MM_true(nextIndex == (((uintptr_t)element2) >> PACKET_ARRAY_SPLIT_SHIFT));
 			env->_workStack.push(env, element1, element2);
 			env->_workStack.flushOutputPacket(env);
-			MM_MarkJavaStats *markJavaStats = &(env->getGCEnvironment()->_markJavaStats);
-			markJavaStats->splitArraysProcessed += 1;
-			markJavaStats->splitArraysAmount += slotsToScan;
+			MM_MarkStats *markStats = &(env->_markStats);
+			markStats->_splitArraysProcessed += 1;
+			markStats->_splitArraysAmount += slotsToScan;
 		}
 	}
 
 	*sizeToDo = headerBytesToScan + (slotsToScan * referenceSize);
-	*slotsToDo = slotsToScan;
+	*sizeInElementsToDo = slotsToScan;
+	*basePtr = (fomrobject_t *)_extensions->indexableObjectModel.getDataPointerForContiguous((J9IndexableObject *)objectPtr);
+	*flags = GC_ObjectScanner::indexableObject;
+
 	return startIndex;
 }
+

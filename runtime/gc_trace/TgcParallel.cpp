@@ -112,8 +112,8 @@ tgcHookGlobalGcEnd(J9HookInterface** hook, uintptr_t eventNum, void* eventData, 
 				} else if (extensions->isStandardGC()) {
 #if defined(J9VM_GC_MODRON_STANDARD)
 					markStatsStallTime = env->_markStats.getStallTime();
-					splitArraysProcessed = env->getGCEnvironment()->_markJavaStats.splitArraysProcessed;
-					splitArraysAmount =  env->getGCEnvironment()->_markJavaStats.splitArraysAmount;
+					splitArraysProcessed = env->_markStats._splitArraysProcessed;
+					splitArraysAmount =  env->_markStats._splitArraysAmount;
 					shouldIncludeThread = env->_markStats._gcCount == extensions->globalGCStats.gcCount;
 #endif /* defined(J9VM_GC_MODRON_STANDARD) */
 				}
