@@ -567,6 +567,9 @@ spinOnFlatLock(J9VMThread *currentThread, j9objectmonitor_t volatile *lwEA, j9ob
 						if (lock == VM_ObjectMonitor::compareAndSwapLockword(currentThread, lwEA, lock, (j9objectmonitor_t)(UDATA)currentThread, false)) {
 							/* compare and swap succeeded */
 							VM_AtomicSupport::readBarrier();
+#if JAVA_SPEC_VERSION >= 19
+							currentThread->ownedMonitorCount += 1;
+#endif /* JAVA_SPEC_VERSION >= 19 */
 							rc = true;
 
 							/* Transition from Learning to Flat occurred so the Cancel Counter in the object's J9Class is incremented by 1. */
