@@ -135,6 +135,10 @@ int32_t J9::Options::_highActiveThreadThreshold = -1;
 int32_t J9::Options::_veryHighActiveThreadThreshold = -1;
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+int32_t J9::Options::_sleepMsBeforeCheckpoint = 1000; // 1 second
+#endif
+
 int32_t J9::Options::_interpreterSamplingThreshold = 300;
 int32_t J9::Options::_interpreterSamplingDivisor = TR_DEFAULT_INTERPRETER_SAMPLING_DIVISOR;
 int32_t J9::Options::_interpreterSamplingThresholdInStartupMode = TR_DEFAULT_INITIAL_BCOUNT; // 3000
@@ -991,6 +995,10 @@ TR::OptionTable OMR::Options::_feOptions[] = {
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_sharedROMClassCacheNumPartitions, 0, "F%d", NOT_IN_SUBSET},
 #endif /* defined(J9VM_OPT_JITSERVER) */
    {"singleCache", "C\tallow only one code cache and one data cache to be allocated", RESET_JITCONFIG_RUNTIME_FLAG(J9JIT_GROW_CACHES) },
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+   {"sleepMsBeforeCheckpoint=", " O<nnn>\tNumber of milliseconds to sleep before a checkpoint",
+        TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_sleepMsBeforeCheckpoint,  0, "F%d" },
+#endif
    {"smallMethodBytecodeSizeThreshold=", "O<nnn> \tThreshold for determining small methods "
                                          "(measured in number of bytecodes)",
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_smallMethodBytecodeSizeThreshold, 0, "F%d", NOT_IN_SUBSET},

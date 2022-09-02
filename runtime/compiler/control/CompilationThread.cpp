@@ -2646,8 +2646,22 @@ void TR::CompilationInfo::prepareForCheckpoint()
    J9JavaVM   *vm       = _jitConfig->javaVM;
    J9VMThread *vmThread = vm->internalVMFunctions->currentVMThread(vm);
 
+   if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCheckpointRestore))
+      TR_VerboseLog::writeLineLocked(TR_Vlog_CHECKPOINT_RESTORE, "Preparing for checkpoint");
+
    {
    ReleaseVMAccessAndAcquireMonitor suspendCompThreadsForCheckpoint(vmThread, getCompilationMonitor());
+
+   if (TR::Options::_sleepMsBeforeCheckpoint)
+      {
+      if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCheckpointRestore))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_CHECKPOINT_RESTORE, "Sleeping for %d ms", TR::Options::_sleepMsBeforeCheckpoint);
+
+      releaseCompMonitor(vmThread);
+      j9thread_sleep(static_cast<int64_t>(TR::Options::_sleepMsBeforeCheckpoint));
+      acquireCompMonitor(vmThread);
+      }
+
 
    if (shouldCheckpointBeInterrupted())
       return;
@@ -2713,10 +2727,14 @@ void TR::CompilationInfo::prepareForCheckpoint()
       }
    }
 
+   if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCheckpointRestore))
+      TR_VerboseLog::writeLineLocked(TR_Vlog_CHECKPOINT_RESTORE, "Ready for checkpoint");
    }
 
 void TR::CompilationInfo::prepareForRestore()
    {
+   if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCheckpointRestore))
+      TR_VerboseLog::writeLineLocked(TR_Vlog_CHECKPOINT_RESTORE, "Preparing for restore");
 
    {
    OMR::CriticalSection resumeCompThreadsForRestore(getCompilationMonitor());
@@ -2728,6 +2746,8 @@ void TR::CompilationInfo::prepareForRestore()
    resumeCompilationThread();
    }
 
+   if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCheckpointRestore))
+      TR_VerboseLog::writeLineLocked(TR_Vlog_CHECKPOINT_RESTORE, "Ready for restore");
    }
 #endif // #if defined(J9VM_OPT_CRIU_SUPPORT)
 
