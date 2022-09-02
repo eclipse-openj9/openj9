@@ -4061,7 +4061,10 @@ J9::CodeGenerator::fixUpProfiledInterfaceGuardTest()
          {
          TR_VirtualGuard *vg = comp->findVirtualGuardInfo(node);
          // Mainly we need to make sure that virtual guard which performs the TR_MethodTest and can be NOP'd are needed the range check.
-         if (vg && vg->getTestType() == TR_MethodTest && !(self()->willGenerateNOPForVirtualGuard(node)))
+         if (vg != NULL
+             && vg->getTestType() == TR_MethodTest
+             && !self()->willGenerateNOPForVirtualGuard(node)
+             && !node->vftEntryIsInBounds())
             {
             TR::SymbolReference *callSymRef = vg->getSymbolReference();
             TR_ASSERT_FATAL(callSymRef != NULL, "Guard n%dn for the inlined call should have stored symbol reference for the call", node->getGlobalIndex());
