@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1750,6 +1750,7 @@ MM_IncrementalGenerationalGC::verifyMarkMapClosure(MM_EnvironmentVLHGC *env, MM_
 				case GC_ObjectModel::SCAN_MIXED_OBJECT:
 				case GC_ObjectModel::SCAN_CLASS_OBJECT:
 				case GC_ObjectModel::SCAN_CLASSLOADER_OBJECT:
+				case GC_ObjectModel::SCAN_CONTINUATION_OBJECT:
 				{
 					Assert_MM_true(_extensions->classLoaderRememberedSet->isInstanceRemembered(env, object));
 					

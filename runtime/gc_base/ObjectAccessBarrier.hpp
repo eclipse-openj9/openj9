@@ -60,6 +60,7 @@ protected:
 #endif /* defined(OMR_GC_COMPRESSED_POINTERS) */
 	UDATA _referenceLinkOffset; /** Offset within java/lang/ref/Reference of the reference link field */
 	UDATA _ownableSynchronizerLinkOffset; /** Offset within java/util/concurrent/locks/AbstractOwnableSynchronizer of the ownable synchronizer link field */
+	UDATA _continuationLinkOffset; /** Offset within java/lang/VirtualThread$VThreadContinuation (jdk/internal/vm/Continuation) of the continuation link field */
 public:
 
 	/* member function */
@@ -491,6 +492,26 @@ public:
 	}
 
 	/**
+	 * Set the continuationLink link field of the specified reference object to value.
+	 * @param object the object to modify
+	 * @param value the value to store into the object's reference link field
+	 */
+	void setContinuationLink(j9object_t object, j9object_t value);
+
+	/**
+	 * Fetch the continuationLink link field of the specified reference object.
+	 * @param object the object to read
+	 * @return the value stored in the object's reference link field
+	 */
+	j9object_t getContinuationLink(j9object_t object)
+	{
+		UDATA linkOffset = _continuationLinkOffset;
+		fj9object_t *continuationLink = (fj9object_t*)((UDATA)object + linkOffset);
+		GC_SlotObject slot(_extensions->getOmrVM(), continuationLink);
+		return slot.readReferenceFromSlot();
+	}
+
+	/**
 	 * Implementation of the JNI GetPrimitiveArrayCritical API.
 	 * See the JNI spec for full details.
 	 *
@@ -592,6 +613,7 @@ public:
 #endif /* defined(OMR_GC_COMPRESSED_POINTERS) */
 		, _referenceLinkOffset(UDATA_MAX)
 		, _ownableSynchronizerLinkOffset(UDATA_MAX)
+		, _continuationLinkOffset(UDATA_MAX)
 	{
 		_typeId = __FUNCTION__;
 	}

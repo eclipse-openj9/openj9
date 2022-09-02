@@ -28,6 +28,7 @@
 
 #include "j9cfg.h"
 #include "j9.h"
+
 #include "ModronAssertions.h"
 #include "AllocateDescription.hpp"
 #include "AllocationContextTarok.hpp"
@@ -42,6 +43,7 @@
 #include "ClassLoaderIterator.hpp"
 #include "ClassLoaderRememberedSet.hpp"
 #include "CompactGroupManager.hpp"
+#include "VMHelpers.hpp"
 #include "WriteOnceCompactor.hpp"
 #include "Debug.hpp"
 #if defined(J9VM_GC_FINALIZATION)
@@ -1204,6 +1206,45 @@ MM_WriteOnceCompactor::fixupMixedObject(MM_EnvironmentVLHGC* env, J9Object *obje
 	}
 }
 
+void
+MM_WriteOnceCompactor::doStackSlot(MM_EnvironmentVLHGC *env, J9Object *fromObject, J9Object** slot)
+{
+	J9Object *pointer = *slot;
+	if (NULL != pointer) {
+		J9Object *forwardedPtr = getForwardingPtr(pointer);
+		if (pointer != forwardedPtr) {
+			*slot = forwardedPtr;
+		}
+		_interRegionRememberedSet->rememberReferenceForCompact(env, fromObject, forwardedPtr);
+	}
+}
+
+/**
+ * @todo Provide function documentation
+ */
+void
+stackSlotIteratorForWriteOnceCompactor(J9JavaVM *javaVM, J9Object **slotPtr, void *localData, J9StackWalkState *walkState, const void *stackLocation)
+{
+	StackIteratorData4WriteOnceCompactor *data = (StackIteratorData4WriteOnceCompactor *)localData;
+	data->writeOnceCompactor->doStackSlot(data->env, data->fromObject, slotPtr);
+}
+
+void
+MM_WriteOnceCompactor::fixupContinuationObject(MM_EnvironmentVLHGC* env, J9Object *objectPtr, J9MM_FixupCache *cache)
+{
+	fixupMixedObject(env, objectPtr, cache);
+
+	J9VMThread *currentThread = (J9VMThread *)env->getLanguageVMThread();
+	if (VM_VMHelpers::needScanStacksForContinuation(currentThread, objectPtr)) {
+		StackIteratorData4WriteOnceCompactor localData;
+		localData.writeOnceCompactor = this;
+		localData.env = env;
+		localData.fromObject = objectPtr;
+
+		GC_VMThreadStackSlotIterator::scanSlots(currentThread, objectPtr, (void *)&localData, stackSlotIteratorForWriteOnceCompactor, false, false);
+	}
+}
+
 #if defined (J9ZOS39064)
 /* Temporary fix CMVC 173946. Due to a compiler defect (385201) the JVM throws assertions on z/OS 
  * if this function is optimized at -O3. At -O2 the function works, but only because the problem is
@@ -1403,7 +1444,9 @@ MM_WriteOnceCompactor::fixupObject(MM_EnvironmentVLHGC* env, J9Object *objectPtr
 		addOwnableSynchronizerObjectInList(env, objectPtr);
 		fixupMixedObject(env, objectPtr, cache);
 		break;
-
+	case GC_ObjectModel::SCAN_CONTINUATION_OBJECT:
+		fixupContinuationObject(env, objectPtr, cache);
+		break;
 	case GC_ObjectModel::SCAN_CLASS_OBJECT:
 		fixupClassObject(env, objectPtr, cache);
 		break;
@@ -1833,6 +1876,7 @@ MM_WriteOnceCompactor::verifyHeap(MM_EnvironmentVLHGC *env, bool beforeCompactio
 			case GC_ObjectModel::SCAN_ATOMIC_MARKABLE_REFERENCE_OBJECT:
 			case GC_ObjectModel::SCAN_MIXED_OBJECT:
 			case GC_ObjectModel::SCAN_OWNABLESYNCHRONIZER_OBJECT:
+			case GC_ObjectModel::SCAN_CONTINUATION_OBJECT:
 			case GC_ObjectModel::SCAN_CLASS_OBJECT:
 			case GC_ObjectModel::SCAN_CLASSLOADER_OBJECT:
 			case GC_ObjectModel::SCAN_REFERENCE_MIXED_OBJECT:

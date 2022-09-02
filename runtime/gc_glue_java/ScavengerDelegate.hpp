@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2021 IBM Corp. and others
+ * Copyright (c) 2019, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,6 +25,7 @@
 
 #include "j9.h"
 #include "omrcfg.h"
+#include "omrgcconsts.h"
 
 #if defined(OMR_GC_MODRON_SCAVENGER)
 
@@ -114,6 +115,7 @@ private:
 	 * prevents scavenging. Percolate collect instead.
 	 */
 	bool private_shouldPercolateGarbageCollect_activeJNICriticalRegions(MM_EnvironmentBase *envBase);
+	bool doContinuationObject(MM_EnvironmentStandard *env, omrobjectptr_t objectPtr, MM_ScavengeScanReason reason);
 
 protected:
 public:
@@ -124,6 +126,8 @@ public:
 	void mainThreadGarbageCollect_scavengeComplete(MM_EnvironmentBase *envBase);
 	void mainThreadGarbageCollect_scavengeSuccess(MM_EnvironmentBase *envBase);
 	bool internalGarbageCollect_shouldPercolateGarbageCollect(MM_EnvironmentBase *envBase, PercolateReason *reason, U_32 *gcCode);
+	GC_ObjectScanner *getObjectScanner(MM_EnvironmentStandard *env, omrobjectptr_t objectPtr, void *allocSpace, uintptr_t flags, MM_ScavengeScanReason reason, bool *shouldRemember);
+	/* TODO:it is old API just for cross dependency , need to remove at second stage merge */
 	GC_ObjectScanner *getObjectScanner(MM_EnvironmentStandard *env, omrobjectptr_t objectPtr, void *allocSpace, uintptr_t flags);
 	void flushReferenceObjects(MM_EnvironmentStandard *env);
 	bool hasIndirectReferentsInNewSpace(MM_EnvironmentStandard *env, omrobjectptr_t objectPtr);
@@ -169,6 +173,7 @@ public:
 	void poisonSlots(MM_EnvironmentBase *env);
 	void healSlots(MM_EnvironmentBase *env);
 #endif /* defined(OMR_ENV_DATA64) && defined(OMR_GC_FULL_POINTERS) */
+	void doStackSlot(MM_EnvironmentStandard *env, omrobjectptr_t *slotPtr, MM_ScavengeScanReason reason, bool *shouldRemember);
 
 	bool initialize(MM_EnvironmentBase *env);
 	void tearDown(MM_EnvironmentBase *env);
@@ -177,4 +182,11 @@ public:
 };
 
 #endif /* OMR_GC_MODRON_SCAVENGER */
+typedef struct StackIteratorData4Scavenge {
+	MM_ScavengerDelegate *scavengerDelegate;
+	MM_EnvironmentStandard *env;
+	MM_ScavengeScanReason reason;
+	bool *shouldRemember;
+} StackIteratorData4Scavenge;
+
 #endif /* SCAVENGERDELEGATEJAVA_HPP_ */

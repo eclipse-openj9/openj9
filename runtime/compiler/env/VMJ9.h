@@ -1289,6 +1289,8 @@ public:
    virtual bool isOwnableSyncClass(TR_OpaqueClassBlock *clazz);
    const char *getJ9MonitorName(J9ThreadMonitor* monitor);
 
+   virtual bool  isContinuationClass(TR_OpaqueClassBlock *clazz);
+
    virtual TR_J9SharedCache *sharedCache() { return _sharedCache; }
    virtual void              freeSharedCache();
 

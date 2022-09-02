@@ -48,6 +48,7 @@
 #include "FinalizableReferenceBuffer.hpp"
 #include "FinalizeListManager.hpp"
 #endif /* J9VM_GC_FINALIZATION*/
+#include "VMHelpers.hpp"
 #include "GCExtensions.hpp"
 #include "GlobalCollectionCardCleaner.hpp"
 #include "GlobalCollectionNoScanCardCleaner.hpp"
@@ -763,6 +764,47 @@ MM_GlobalMarkingScheme::scanPointerArrayObject(MM_EnvironmentVLHGC *env, J9Index
 	}
 }
 
+void
+MM_GlobalMarkingScheme::doStackSlot(MM_EnvironmentVLHGC *env, J9Object *fromObject, J9Object** slotPtr, J9StackWalkState *walkState, const void *stackLocation)
+{
+	J9Object *object = *slotPtr;
+	if (isHeapObject(object)) {
+		/* heap object - validate and mark */
+		Assert_MM_validStackSlot(MM_StackSlotValidator(0, *slotPtr, stackLocation, walkState).validate(env));
+		markObject(env, object);
+		rememberReferenceIfRequired(env, fromObject, object);
+	} else if (NULL != object) {
+		/* stack object - just validate */
+		Assert_MM_validStackSlot(MM_StackSlotValidator(MM_StackSlotValidator::NOT_ON_HEAP, *slotPtr, stackLocation, walkState).validate(env));
+	}
+}
+
+void
+stackSlotIteratorForGlobalMarkingScheme(J9JavaVM *javaVM, J9Object **slotPtr, void *localData, J9StackWalkState *walkState, const void *stackLocation)
+{
+	StackIteratorData4GlobalMarkingScheme *data = (StackIteratorData4GlobalMarkingScheme *)localData;
+	data->globalMarkingScheme->doStackSlot(data->env, data->fromObject, slotPtr, walkState, stackLocation);
+}
+
+void
+MM_GlobalMarkingScheme::scanContinuationObject(MM_EnvironmentVLHGC *env, J9Object *objectPtr, ScanReason reason)
+{
+	scanMixedObject(env, objectPtr, reason);
+	J9VMThread *currentThread = (J9VMThread *)env->getLanguageVMThread();
+	if (VM_VMHelpers::needScanStacksForContinuation(currentThread, objectPtr)) {
+		StackIteratorData4GlobalMarkingScheme localData;
+		localData.globalMarkingScheme = this;
+		localData.env = env;
+		localData.fromObject = objectPtr;
+		bool bStackFrameClassWalkNeeded = false;
+#if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
+		bStackFrameClassWalkNeeded = isDynamicClassUnloadingEnabled();
+#endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
+
+		GC_VMThreadStackSlotIterator::scanSlots(currentThread, objectPtr, (void *)&localData, stackSlotIteratorForGlobalMarkingScheme, bStackFrameClassWalkNeeded, false);
+	}
+}
+
 void 
 MM_GlobalMarkingScheme::scanClassObject(MM_EnvironmentVLHGC *env, J9Object *classObject, ScanReason reason)
 {
@@ -896,6 +938,9 @@ MM_GlobalMarkingScheme::scanObject(MM_EnvironmentVLHGC *env, J9Object *objectPtr
 			case GC_ObjectModel::SCAN_MIXED_OBJECT:
 			case GC_ObjectModel::SCAN_OWNABLESYNCHRONIZER_OBJECT:
 				scanMixedObject(env, objectPtr, reason);
+				break;
+			case GC_ObjectModel::SCAN_CONTINUATION_OBJECT:
+				scanContinuationObject(env, objectPtr, reason);
 				break;
 			case GC_ObjectModel::SCAN_CLASS_OBJECT:
 				scanClassObject(env, objectPtr, reason);

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2021 IBM Corp. and others
+ * Copyright (c) 2017, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -113,6 +113,9 @@ public:
 
 	uintptr_t setupIndexableScanner(MM_EnvironmentBase *env, omrobjectptr_t objectPtr, MM_MarkingSchemeScanReason reason, uintptr_t *sizeToDo, uintptr_t *sizeInElementsToDo, fomrobject_t **basePtr, uintptr_t *flags) { return 0; }
 
+	void doStackSlot(MM_EnvironmentBase *env, omrobjectptr_t objectPtr, omrobjectptr_t *slotPtr);
+	void scanContinuationObject(MM_EnvironmentBase *env, omrobjectptr_t objectPtr);
+
 	MMINLINE GC_ObjectScanner *
 	getObjectScanner(MM_EnvironmentBase *env, omrobjectptr_t objectPtr, void *scannerSpace, MM_MarkingSchemeScanReason reason, uintptr_t *sizeToDo)
 	{
@@ -130,6 +133,11 @@ public:
 		case GC_ObjectModel::SCAN_OWNABLESYNCHRONIZER_OBJECT:
 		case GC_ObjectModel::SCAN_CLASS_OBJECT:
 		case GC_ObjectModel::SCAN_CLASSLOADER_OBJECT:
+			objectScanner = GC_MixedObjectScanner::newInstance(env, objectPtr, scannerSpace, 0);
+			*sizeToDo = referenceSize + ((GC_MixedObjectScanner *)objectScanner)->getBytesRemaining();
+			break;
+		case GC_ObjectModel::SCAN_CONTINUATION_OBJECT:
+			scanContinuationObject(env, objectPtr);
 			objectScanner = GC_MixedObjectScanner::newInstance(env, objectPtr, scannerSpace, 0);
 			*sizeToDo = referenceSize + ((GC_MixedObjectScanner *)objectScanner)->getBytesRemaining();
 			break;
@@ -230,5 +238,11 @@ public:
 	MMINLINE bool isDynamicClassUnloadingEnabled() { return NULL != _markMap; }
 #endif /* defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING) */
 };
+
+typedef struct StackIteratorData4MarkingDelegate {
+	MM_MarkingDelegate *markingDelegate;
+	MM_EnvironmentBase *env;
+	omrobjectptr_t fromObject;
+} StackIteratorData4MarkingDelegate;
 
 #endif /* MARKINGDELEGATE_HPP_ */

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -402,12 +402,12 @@ j9mm_iterate_object_slots(
 	case GC_ObjectModel::SCAN_ATOMIC_MARKABLE_REFERENCE_OBJECT:
 	case GC_ObjectModel::SCAN_MIXED_OBJECT:
 	case GC_ObjectModel::SCAN_OWNABLESYNCHRONIZER_OBJECT:
+	case GC_ObjectModel::SCAN_CONTINUATION_OBJECT:
 	case GC_ObjectModel::SCAN_CLASS_OBJECT:
 	case GC_ObjectModel::SCAN_CLASSLOADER_OBJECT:
 	case GC_ObjectModel::SCAN_REFERENCE_MIXED_OBJECT:
 		returnCode = iterateMixedObjectSlots(javaVM, objectPtr, object, flags, func, userData);
 		break;
-
 	case GC_ObjectModel::SCAN_POINTER_ARRAY_OBJECT:
 		returnCode = iterateArrayObjectSlots(javaVM, objectPtr, object, flags, func, userData);
 		if (JVMTI_ITERATION_CONTINUE == returnCode) {

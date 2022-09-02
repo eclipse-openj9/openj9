@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -328,6 +328,7 @@ mapEventType(J9VMThread *vmThread, J9JVMTIObjectIteratorData * data, IDATA type,
 		case J9GC_ROOT_TYPE_STRING_TABLE:
 		case J9GC_ROOT_TYPE_REMEMBERED_SET:
 		case J9GC_ROOT_TYPE_OWNABLE_SYNCHRONIZER_OBJECT:
+		case J9GC_ROOT_TYPE_CONTINUATION_OBJECT:
 			event.type = J9JVMTI_HEAP_EVENT_NONE_NOFOLLOW;
 			event.rootKind = JVMTI_HEAP_ROOT_OTHER;
 			break;
