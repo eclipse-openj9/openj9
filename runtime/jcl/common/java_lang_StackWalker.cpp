@@ -111,11 +111,11 @@ Java_java_lang_StackWalker_walkWrapperImpl(JNIEnv *env, jclass clazz, jint flags
 		walkState->userData1 = (void *)((UDATA) walkState->userData1 | FRAME_VALID);
 	}
 
-	jmethodID walkImplMID = JCL_CACHE_GET(env, MID_java_lang_StackWalker_walkWrapperImpl);
+	jmethodID walkImplMID = JCL_CACHE_GET(env, MID_java_lang_StackWalker_walkImpl);
 	if (NULL == walkImplMID) {
 		walkImplMID = env->GetStaticMethodID( clazz, "walkImpl", "(Ljava/util/function/Function;J)Ljava/lang/Object;");
 		Assert_JCL_notNull (walkImplMID);
-		JCL_CACHE_SET(env, MID_java_lang_StackWalker_walkWrapperImpl, walkImplMID);
+		JCL_CACHE_SET(env, MID_java_lang_StackWalker_walkImpl, walkImplMID);
 	}
 	jobject result = env->CallStaticObjectMethod(clazz, walkImplMID, function, (jlong)(UDATA)walkState);
 
