@@ -461,7 +461,6 @@ TraceAssert=Assert_JVMTI_false noEnv Overhead=1 Level=1 Assert="!(P1)"
 TraceAssert=Assert_JVMTI_notNull noEnv Overhead=1 Level=1 Assert="(P1) != NULL"
 TraceAssert=Assert_JVMTI_mustHaveVMAccess noEnv overhead=1 Level=1 Assert="(P1)->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS"
 TraceAssert=Assert_JVMTI_mustNotHaveVMAccess noEnv overhead=1 Level=1 Assert="0 == ((P1)->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS)"
-TraceAssert=Assert_JVMTI_unreachable noEnv Overhead=1 Level=1 Assert="0"
 
 TraceEntry=Trc_JVMTI_jvmtiHookResourceExhausted_Entry Overhead=1 Level=1 Noenv Template="ResourceExhaustedEvent"
 TraceExit=Trc_JVMTI_jvmtiHookResourceExhausted_Exit Overhead=1 Level=1 Noenv Template="ResourceExhaustedEvent"
@@ -639,3 +638,5 @@ TraceExit=Trc_JVMTI_jvmtiHookVirtualThreadStarted_Exit Overhead=1 Level=5 Noenv 
 
 TraceEntry=Trc_JVMTI_jvmtiHookVirtualThreadDestroy_Entry Overhead=1 Level=5 Noenv Template="HookVirtualThreadDestroy"
 TraceExit=Trc_JVMTI_jvmtiHookVirtualThreadDestroy_Exit Overhead=1 Level=5 Noenv Template="HookVirtualThreadDestroy"
+
+TraceAssert=Assert_JVMTI_unreachable noEnv Overhead=1 Level=1 Assert="0"
