@@ -62,6 +62,7 @@
 #include "EnvironmentVLHGC.hpp"
 #include "FinalizableObjectBuffer.hpp"
 #include "FinalizableReferenceBuffer.hpp"
+#include "VMHelpers.hpp"
 #include "FinalizeListManager.hpp"
 #include "ForwardedHeader.hpp"
 #include "GlobalAllocationManager.hpp"
@@ -2286,6 +2287,52 @@ MM_CopyForwardScheme::scanOwnableSynchronizerObjectSlots(MM_EnvironmentVLHGC *en
 	scanMixedObjectSlots(env, reservingContext, objectPtr, reason);
 }
 
+void
+MM_CopyForwardScheme::doStackSlot(MM_EnvironmentVLHGC *env, J9Object *fromObject, J9Object** slotPtr, J9StackWalkState *walkState, const void *stackLocation)
+{
+	if (isHeapObject(*slotPtr)) {
+		/* heap object - validate and copyforward */
+		Assert_MM_validStackSlot(MM_StackSlotValidator(MM_StackSlotValidator::COULD_BE_FORWARDED, *slotPtr, stackLocation, walkState).validate(env));
+		J9VMThread *thread = ((J9StackWalkState *)walkState)->currentThread;
+		MM_AllocationContextTarok *reservingContext = (MM_AllocationContextTarok *)MM_EnvironmentVLHGC::getEnvironment(thread)->getAllocationContext();
+		copyAndForward(MM_EnvironmentVLHGC::getEnvironment(env), reservingContext, fromObject, slotPtr);
+	} else if (NULL != *slotPtr) {
+		/* stack object - just validate */
+		Assert_MM_validStackSlot(MM_StackSlotValidator(MM_StackSlotValidator::NOT_ON_HEAP, *slotPtr, stackLocation, walkState).validate(env));
+	}
+}
+
+/**
+ * @todo Provide function documentation
+ */
+void
+stackSlotIteratorForCopyForwardScheme(J9JavaVM *javaVM, J9Object **slotPtr, void *localData, J9StackWalkState *walkState, const void *stackLocation)
+{
+	StackIteratorData4CopyForward *data = (StackIteratorData4CopyForward *)localData;
+	MM_CopyForwardScheme *copyForwardScheme = data->copyForwardScheme;
+
+	copyForwardScheme->doStackSlot(data->env, data->fromObject, slotPtr, walkState, stackLocation);
+}
+
+MMINLINE void
+MM_CopyForwardScheme::scanContinuationObjectSlots(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, J9Object *objectPtr, ScanReason reason)
+{
+	scanMixedObjectSlots(env, reservingContext, objectPtr, reason);
+	J9VMThread *currentThread = (J9VMThread *)env->getLanguageVMThread();
+	if (VM_VMHelpers::needScanStacksForContinuation(currentThread, objectPtr)) {
+		StackIteratorData4CopyForward localData;
+		localData.copyForwardScheme = this;
+		localData.env = env;
+		localData.fromObject = objectPtr;
+		/* check _includeStackFrameClassReferences, _trackVisibleStackFrameDepth  */
+		bool bStackFrameClassWalkNeeded = false;
+#if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
+		bStackFrameClassWalkNeeded = isDynamicClassUnloadingEnabled();
+#endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
+		GC_VMThreadStackSlotIterator::scanSlots(currentThread, objectPtr, (void *)&localData, stackSlotIteratorForCopyForwardScheme, bStackFrameClassWalkNeeded, false);
+	}
+}
+
 /**
  *  Iterate the slot reference and parse and pass leaf bit of the reference to copy forward
  *  to avoid to push leaf object to work stack in case the reference need to be marked instead of copied.
@@ -2891,6 +2938,9 @@ MM_CopyForwardScheme::scanObject(MM_EnvironmentVLHGC *env, MM_AllocationContextT
 	case GC_ObjectModel::SCAN_OWNABLESYNCHRONIZER_OBJECT:
 		scanOwnableSynchronizerObjectSlots(env, reservingContext, objectPtr, reason);
 		break;
+	case GC_ObjectModel::SCAN_CONTINUATION_OBJECT:
+		scanContinuationObjectSlots(env, reservingContext, objectPtr, reason);
+		break;
 	case GC_ObjectModel::SCAN_REFERENCE_MIXED_OBJECT:
 		scanReferenceObjectSlots(env, reservingContext, objectPtr, reason);
 		break;
@@ -3171,6 +3221,7 @@ MM_CopyForwardScheme::incrementalScanCacheBySlot(MM_EnvironmentVLHGC *env)
 				case GC_ObjectModel::SCAN_ATOMIC_MARKABLE_REFERENCE_OBJECT:
 				case GC_ObjectModel::SCAN_MIXED_OBJECT:
 				case GC_ObjectModel::SCAN_OWNABLESYNCHRONIZER_OBJECT:
+				case GC_ObjectModel::SCAN_CONTINUATION_OBJECT:
 					hasPartiallyScannedObject = incrementalScanMixedObjectSlots(env, reservingContext, scanCache, objectPtr, hasPartiallyScannedObject, &nextScanCache);
 					break;
 				case GC_ObjectModel::SCAN_CLASS_OBJECT:
@@ -4544,6 +4595,7 @@ MM_CopyForwardScheme::verifyObject(MM_EnvironmentVLHGC *env, J9Object *objectPtr
 	case GC_ObjectModel::SCAN_ATOMIC_MARKABLE_REFERENCE_OBJECT:
 	case GC_ObjectModel::SCAN_MIXED_OBJECT:
 	case GC_ObjectModel::SCAN_OWNABLESYNCHRONIZER_OBJECT:
+	case GC_ObjectModel::SCAN_CONTINUATION_OBJECT:
 		verifyMixedObjectSlots(env, objectPtr);
 		break;
 	case GC_ObjectModel::SCAN_CLASS_OBJECT:

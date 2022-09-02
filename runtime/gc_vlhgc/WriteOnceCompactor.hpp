@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -201,6 +201,7 @@ private:
 	MMINLINE void preObjectMove(MM_EnvironmentVLHGC* env, J9Object *objectPtr, UDATA *objectSizeAfterMove);
 	MMINLINE void postObjectMove(MM_EnvironmentVLHGC* env, J9Object *newLocation, J9Object *objectPtr);
 	void fixupMixedObject(MM_EnvironmentVLHGC* env, J9Object *objectPtr, J9MM_FixupCache *cache);
+	void fixupContinuationObject(MM_EnvironmentVLHGC* env, J9Object *objectPtr, J9MM_FixupCache *cache);
 	void fixupClassObject(MM_EnvironmentVLHGC* env, J9Object *classObject, J9MM_FixupCache *cache);
 	void fixupClassLoaderObject(MM_EnvironmentVLHGC* env, J9Object *classLoaderObject, J9MM_FixupCache *cache);
 	void fixupPointerArrayObject(MM_EnvironmentVLHGC* env, J9Object *objectPtr, J9MM_FixupCache *cache);
@@ -596,12 +597,19 @@ public:
 	 * @param workStackBaseHighPriority[in/out] The "high priority" work stack base.  This reference parameter will be updated before the function returns is region is high priority
 	 */
 	void pushRegionOntoWorkStack(MM_HeapRegionDescriptorVLHGC **workStackBase, MM_HeapRegionDescriptorVLHGC **workStackBaseHighPriority, MM_HeapRegionDescriptorVLHGC *region);
+	void doStackSlot(MM_EnvironmentVLHGC *env, J9Object *fromObject, J9Object** slot);
 
 	friend class MM_WriteOnceCompactFixupRoots;
 	friend class MM_ParallelWriteOnceCompactTask;
 };
 
 #endif /* J9VM_GC_MODRON_COMPACTION */
+
+typedef struct StackIteratorData4WriteOnceCompactor {
+	MM_WriteOnceCompactor *writeOnceCompactor;
+	MM_EnvironmentVLHGC *env;
+	J9Object *fromObject;
+} StackIteratorData4WriteOnceCompactor;
 
 #endif /* COMPACTSCHEMEVLHGC_HPP_ */
 

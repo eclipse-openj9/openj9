@@ -2046,9 +2046,20 @@ exit:
 	{
 		UDATA rc = J9_STACKWALK_RC_NONE;
 #if JAVA_SPEC_VERSION >= 19
-		rc = walkContinuationStackFrames(vmThread, continuationObject, walkState);
+		rc = vmThread->javaVM->internalVMFunctions->walkContinuationStackFrames(vmThread, continuationObject, walkState);
 #endif /* JAVA_SPEC_VERSION >= 19 */
 		return rc;
+	}
+
+	static VMINLINE bool
+	needScanStacksForContinuation(J9VMThread *vmThread, j9object_t continuationObject) {
+		bool needScan = false;
+#if JAVA_SPEC_VERSION >= 19
+		jboolean started = J9VMJDKINTERNALVMCONTINUATION_STARTED(vmThread, continuationObject);
+		J9VMContinuation *continuation = J9VMJDKINTERNALVMCONTINUATION_VMREF(vmThread, continuationObject);
+		needScan = started && (NULL != continuation);
+#endif /* JAVA_SPEC_VERSION >= 19 */
+		return needScan;
 	}
 };
 

@@ -43,6 +43,9 @@
 #include "Task.hpp"
 #include "WorkPacketsVLHGC.hpp"
 
+#include "VMThreadStackSlotIterator.hpp"
+#include "VMHelpers.hpp"
+
 MM_GlobalMarkCardScrubber::MM_GlobalMarkCardScrubber(MM_EnvironmentVLHGC *env, MM_HeapMap *map, UDATA yieldCheckFrequency)
 	: MM_CardCleaner()
 	, _markMap(map)
@@ -134,6 +137,9 @@ MM_GlobalMarkCardScrubber::scrubObject(MM_EnvironmentVLHGC *env, J9Object *objec
 		case GC_ObjectModel::SCAN_REFERENCE_MIXED_OBJECT:
 			doScrub = scrubMixedObject(env, objectPtr);
 			break;
+		case GC_ObjectModel::SCAN_CONTINUATION_OBJECT:
+			doScrub = scrubContinuationObject(env, objectPtr);
+			break;
 		case GC_ObjectModel::SCAN_CLASS_OBJECT:
 			doScrub = scrubClassObject(env, objectPtr);
 			break;
@@ -168,6 +174,35 @@ MM_GlobalMarkCardScrubber::scrubMixedObject(MM_EnvironmentVLHGC *env, J9Object *
 		doScrub = mayScrubReference(env, objectPtr, toObject);
 	}
 	
+	return doScrub;
+}
+
+
+void
+stackSlotIteratorForGlobalMarkCardScrubber(J9JavaVM *javaVM, J9Object **slotPtr, void *localData, J9StackWalkState *walkState, const void *stackLocation)
+{
+	StackIteratorData4GlobalMarkCardScrubber *data = (StackIteratorData4GlobalMarkCardScrubber *)localData;
+	if (*data->doScrub) {
+		*data->doScrub = data->globalMarkCardScrubber->mayScrubReference(data->env, data->fromObject, *slotPtr);
+	}
+	/* It's unfortunate, but we probably cannot terminate iteration of slots once we do see for one slot that we cannot scurb */
+}
+
+bool MM_GlobalMarkCardScrubber::scrubContinuationObject(MM_EnvironmentVLHGC *env, J9Object *objectPtr)
+{
+	bool doScrub = scrubMixedObject(env, objectPtr);
+	if (doScrub) {
+		J9VMThread *currentThread = (J9VMThread *)env->getLanguageVMThread();
+		if (VM_VMHelpers::needScanStacksForContinuation(currentThread, objectPtr)) {
+			StackIteratorData4GlobalMarkCardScrubber localData;
+			localData.globalMarkCardScrubber = this;
+			localData.env = env;
+			localData.doScrub = &doScrub;
+			localData.fromObject = objectPtr;
+
+			GC_VMThreadStackSlotIterator::scanSlots(currentThread, objectPtr, (void *)&localData, stackSlotIteratorForGlobalMarkCardScrubber, false, false);
+		}
+	}
 	return doScrub;
 }
 

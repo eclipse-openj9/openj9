@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2020 IBM Corp. and others
+ * Copyright (c) 2019, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,6 +35,7 @@
 #include "RealtimeMarkingScheme.hpp"
 #include "ReferenceObjectBuffer.hpp"
 #include "Scheduler.hpp"
+#include "StackSlotValidator.hpp"
 
 class MM_HeapRegionDescriptorRealtime;
 class MM_RealtimeMarkingSchemeRootMarker;
@@ -172,6 +173,9 @@ public:
 	void checkReferenceBuffer(MM_EnvironmentRealtime *env);
 	void setUnmarkedImpliesCleared();
 	void unsetUnmarkedImpliesCleared();
+
+	UDATA scanContinuationObject(MM_EnvironmentRealtime *env, J9Object *objectPtr);
+
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
 	MMINLINE void
 	markClassOfObject(MM_EnvironmentRealtime *env, J9Object *objectPtr)
@@ -217,6 +221,9 @@ public:
 		case GC_ObjectModel::SCAN_CLASS_OBJECT:
 		case GC_ObjectModel::SCAN_CLASSLOADER_OBJECT:
 			pointersScanned = scanMixedObject(env, objectPtr);
+			break;
+		case GC_ObjectModel::SCAN_CONTINUATION_OBJECT:
+			pointersScanned = scanContinuationObject(env, objectPtr);
 			break;
 		case GC_ObjectModel::SCAN_POINTER_ARRAY_OBJECT:
 			pointersScanned = scanPointerArrayObject(env, (J9IndexableObject *)objectPtr);
@@ -553,6 +560,12 @@ private:
 	friend class MM_RealtimeGC;
 	friend class MM_RealtimeMarkingSchemeRootClearer;
 };
+
+typedef struct StackIteratorData4RealtimeMarkingScheme {
+	MM_RealtimeMarkingScheme *realtimeMarkingScheme;
+	MM_EnvironmentRealtime *env;
+	J9Object *fromObject;
+} StackIteratorData4RealtimeMarkingScheme;
 
 #endif /* defined(J9VM_GC_REALTIME) */
 

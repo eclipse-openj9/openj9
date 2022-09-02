@@ -21,7 +21,7 @@
  *******************************************************************************/
 
 #include "j9protos.h"
-
+#include "vm_api.h"
 #if defined(J9VM_OPT_VM_LOCAL_STORAGE)
 
 #include "j9vmls.h"

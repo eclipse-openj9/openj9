@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,6 +32,7 @@
 #include "j9protos.h"
 
 #include "VMThreadStackSlotIterator.hpp"
+#include "VMHelpers.hpp"
 
 extern "C" {
 	
@@ -111,6 +112,43 @@ GC_VMThreadStackSlotIterator::scanSlots(
 		stackWalkState.flags |= J9_STACKWALK_ITERATE_METHOD_CLASS_SLOTS;
 	}
 
-	vmThread->javaVM->walkStackFrames(vmThread, &stackWalkState);
+	vm->walkStackFrames(vmThread, &stackWalkState);
 }
 
+void
+GC_VMThreadStackSlotIterator::scanSlots(
+			J9VMThread *vmThread,
+			j9object_t continuationObjectPtr,
+			void *userData,
+			J9MODRON_OSLOTITERATOR *oSlotIterator,
+			bool includeStackFrameClassReferences,
+			bool trackVisibleFrameDepth
+		)
+{
+	J9StackWalkState stackWalkState;
+	J9JavaVM *vm = vmThread->javaVM;
+
+	stackWalkState.objectSlotWalkFunction = vmThreadStackDoOSlotIterator;
+	stackWalkState.userData1 = (void *)oSlotIterator;
+	stackWalkState.userData2 = (void *)vm;
+	stackWalkState.userData3 = userData;
+
+	stackWalkState.flags = J9_STACKWALK_ITERATE_O_SLOTS | J9_STACKWALK_DO_NOT_SNIFF_AND_WHACK;
+
+	if (trackVisibleFrameDepth) {
+		stackWalkState.skipCount = 0;
+		stackWalkState.flags |= J9_STACKWALK_VISIBLE_ONLY;
+	} else {
+		if (NULL != vm->collectJitPrivateThreadData) {
+			stackWalkState.frameWalkFunction = vmThreadStackFrameIterator;
+			stackWalkState.flags |= J9_STACKWALK_ITERATE_FRAMES;
+		}
+		stackWalkState.flags |= J9_STACKWALK_SKIP_INLINES;
+	}
+
+	if (includeStackFrameClassReferences) {
+		stackWalkState.flags |= J9_STACKWALK_ITERATE_METHOD_CLASS_SLOTS;
+	}
+
+	VM_VMHelpers::walkContinuationStackFramesWrapper(vmThread, continuationObjectPtr, &stackWalkState);
+}

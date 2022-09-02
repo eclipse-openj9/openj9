@@ -301,6 +301,8 @@ private:
 	 */
 	MMINLINE void scanOwnableSynchronizerObjectSlots(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, J9Object *objectPtr, ScanReason reason);
 
+
+	MMINLINE void scanContinuationObjectSlots(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, J9Object *objectPtr, ScanReason reason);
 	/**
 	 * Called whenever a ownable synchronizer object is scaned during CopyForwardScheme. Places the object on the thread-specific buffer of gc work thread.
 	 * @param env -- current thread environment
@@ -1124,6 +1126,7 @@ public:
 	}
 
 	void abandonTLHRemainders(MM_EnvironmentVLHGC *env);
+	void doStackSlot(MM_EnvironmentVLHGC *env, J9Object *fromObject, J9Object** slotPtr, J9StackWalkState *walkState, const void *stackLocation);
 
 	friend class MM_CopyForwardGMPCardCleaner;
 	friend class MM_CopyForwardNoGMPCardCleaner;
@@ -1132,5 +1135,11 @@ public:
 	friend class MM_CopyForwardSchemeRootClearer;
 	friend class MM_CopyForwardSchemeAbortScanner;
 };
+
+typedef struct StackIteratorData4CopyForward {
+	MM_CopyForwardScheme *copyForwardScheme;
+	MM_EnvironmentVLHGC *env;
+	J9Object *fromObject;
+} StackIteratorData4CopyForward;
 
 #endif /* COPYFORWARDSCHEME_HPP_ */

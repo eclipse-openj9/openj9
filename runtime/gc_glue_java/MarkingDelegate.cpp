@@ -49,6 +49,7 @@
 #include "MarkingSchemeRootMarker.hpp"
 #include "MarkingSchemeRootClearer.hpp"
 #include "OwnableSynchronizerObjectList.hpp"
+#include "VMHelpers.hpp"
 #include "ParallelDispatcher.hpp"
 #include "ReferenceObjectBuffer.hpp"
 #include "RootScanner.hpp"
@@ -217,6 +218,48 @@ MM_MarkingDelegate::startRootListProcessing(MM_EnvironmentBase *env)
 				}
 			}
 		}
+	}
+}
+
+void
+MM_MarkingDelegate::doStackSlot(MM_EnvironmentBase *env, omrobjectptr_t objectPtr, omrobjectptr_t *slotPtr)
+{
+	omrobjectptr_t object = *slotPtr;
+	if (_markingScheme->isHeapObject(object) && !_extensions->heap->objectIsInGap(object)) {
+		if (_extensions->isConcurrentScavengerEnabled() && _extensions->isScavengerBackOutFlagRaised()) {
+			_markingScheme->fixupForwardedSlot(slotPtr);
+		}
+		_markingScheme->inlineMarkObject(env, *slotPtr);
+	}
+}
+
+/**
+ * @todo Provide function documentation
+ */
+void
+stackSlotIteratorForMarkingDelegate(J9JavaVM *javaVM, J9Object **slotPtr, void *localData, J9StackWalkState *walkState, const void *stackLocation)
+{
+	StackIteratorData4MarkingDelegate *data = (StackIteratorData4MarkingDelegate *)localData;
+	data->markingDelegate->doStackSlot(data->env, data->fromObject, slotPtr);
+}
+
+
+void
+MM_MarkingDelegate::scanContinuationObject(MM_EnvironmentBase *env, omrobjectptr_t objectPtr)
+{
+	J9VMThread *currentThread = (J9VMThread *)env->getLanguageVMThread();
+	if (VM_VMHelpers::needScanStacksForContinuation(currentThread, objectPtr)) {
+		StackIteratorData4MarkingDelegate localData;
+		localData.markingDelegate = this;
+		localData.env = env;
+		localData.fromObject = objectPtr;
+
+		bool bStackFrameClassWalkNeeded = false;
+#if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
+		bStackFrameClassWalkNeeded = isDynamicClassUnloadingEnabled();
+#endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
+
+		GC_VMThreadStackSlotIterator::scanSlots(currentThread, objectPtr, (void *)&localData, stackSlotIteratorForMarkingDelegate, bStackFrameClassWalkNeeded, false);
 	}
 }
 

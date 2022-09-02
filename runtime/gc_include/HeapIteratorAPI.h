@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -60,7 +60,8 @@ extern "C" {
 #define SCAN_REMEBERED_SET 0x08000
 #define SCAN_JVMTI_OBJECT_TAG_TABLE	0x10000
 #define SCAN_OWNABLE_SYNCHRONIZER 0x20000
-#define SCAN_ALL 0x3FFFF
+#define SCAN_CONTINUATION 0x40000
+#define SCAN_ALL 0x7FFFF
 
 #define HEAP_ROOT_SLOT_DESCRIPTOR_OBJECT 0
 #define HEAP_ROOT_SLOT_DESCRIPTOR_CLASS 1

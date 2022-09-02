@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -313,6 +313,8 @@ private:
 	 */
 	void scanMixedObject(MM_EnvironmentVLHGC *env, J9Object *objectPtr, ScanReason reason);
 	
+	void scanContinuationObject(MM_EnvironmentVLHGC *env, J9Object *objectPtr, ScanReason reason);
+
 	/**
 	 * Scan the specified instance of java.lang.Class.
 	 * 1. Scan the object itself, as in scanMixedObject()
@@ -504,6 +506,7 @@ public:
 	 */
 	void flushBuffers(MM_EnvironmentVLHGC *env);
 	
+	void doStackSlot(MM_EnvironmentVLHGC *env, J9Object *fromObject, J9Object** slotPtr, J9StackWalkState *walkState, const void *stackLocation);
 	/**
 	 * Create a GlobalMarkingScheme object.
 	 */
@@ -530,5 +533,11 @@ public:
 	friend class MM_GlobalMarkingSchemeRootMarker;
 	friend class MM_GlobalMarkingSchemeRootClearer;
 };
+
+typedef struct StackIteratorData4GlobalMarkingScheme {
+	MM_GlobalMarkingScheme *globalMarkingScheme;
+	MM_EnvironmentVLHGC *env;
+	J9Object *fromObject;
+} StackIteratorData4GlobalMarkingScheme;
 
 #endif /* GLOBALMARKINGSCHEME_HPP_ */

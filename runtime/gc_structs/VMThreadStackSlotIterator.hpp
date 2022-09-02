@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -47,6 +47,14 @@ public:
 	static void scanSlots(
 			J9VMThread *vmThread,
 			J9VMThread *walkThread,
+			void *userData,
+			J9MODRON_OSLOTITERATOR *oSlotIterator,
+			bool includeStackFrameClassReferences,
+			bool trackVisibleFrameDepth);
+
+	static void scanSlots(
+			J9VMThread *vmThread,
+			j9object_t continuationObjectPtr,
 			void *userData,
 			J9MODRON_OSLOTITERATOR *oSlotIterator,
 			bool includeStackFrameClassReferences,

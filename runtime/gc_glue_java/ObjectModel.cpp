@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -43,6 +43,7 @@ GC_ObjectModel::initialize(MM_GCExtensionsBase *extensions)
 
 	_classClass = NULL;
 	_classLoaderClass = NULL;
+	_continuationClass = NULL;
 	_atomicMarkableReferenceClass = NULL;
 	
 	J9HookInterface **vmHookInterface = _javaVM->internalVMFunctions->getVMHookInterface(_javaVM);
@@ -108,6 +109,7 @@ GC_ObjectModel::internalClassLoadHook(J9HookInterface** hook, UDATA eventNum, vo
 		const char * const javaLangClassLoader = "java/lang/ClassLoader";
 		const char * const javaLangClass = "java/lang/Class";
 		const char * const abstractOwnableSynchronizer = "java/util/concurrent/locks/AbstractOwnableSynchronizer";
+		const char * const continuation = "jdk/internal/vm/Continuation";
 
 		if (0 == compareUTF8Length(J9UTF8_DATA(className), J9UTF8_LENGTH(className), (U_8*)atomicMarkableReference, strlen(atomicMarkableReference))) {
 			clazz->classDepthAndFlags |= J9AccClassGCSpecial;
@@ -119,7 +121,13 @@ GC_ObjectModel::internalClassLoadHook(J9HookInterface** hook, UDATA eventNum, vo
 			clazz->classDepthAndFlags |= J9AccClassGCSpecial;
 			objectModel->_classClass = clazz;
 		} else if (0 == compareUTF8Length(J9UTF8_DATA(className), J9UTF8_LENGTH(className), (U_8*)abstractOwnableSynchronizer, strlen(abstractOwnableSynchronizer))) {
-			 clazz->classDepthAndFlags |= J9AccClassOwnableSynchronizer;
+			clazz->classDepthAndFlags |= J9AccClassOwnableSynchronizer;
+		} else if (0 == compareUTF8Length(J9UTF8_DATA(className), J9UTF8_LENGTH(className), (U_8*)continuation, strlen(continuation))) {
+			clazz->classDepthAndFlags |= J9AccClassContinuation;
+			objectModel->_continuationClass = clazz;
+		} else if ((NULL != objectModel->_continuationClass) && (isSameOrSuperClassOf(objectModel->_continuationClass, clazz))) {
+			/* if it is subclass of jdk/internal/vm/Continuation */
+			clazz->classDepthAndFlags |= J9AccClassContinuation;
 		}
 	}
 }
