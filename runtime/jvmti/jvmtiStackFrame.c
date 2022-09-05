@@ -392,9 +392,9 @@ jvmtiGetFrameLocation(jvmtiEnv* env,
 	jmethodID* method_ptr,
 	jlocation* location_ptr)
 {
-	J9JavaVM * vm = JAVAVM_FROM_ENV(env);
-	jvmtiError rc;
-	J9VMThread * currentThread;
+	J9JavaVM *vm = JAVAVM_FROM_ENV(env);
+	jvmtiError rc = JVMTI_ERROR_NONE;
+	J9VMThread *currentThread = NULL;
 	jmethodID rv_method = NULL;
 	jlocation rv_location = 0;
 
@@ -403,8 +403,9 @@ jvmtiGetFrameLocation(jvmtiEnv* env,
 	rc = getCurrentVMThread(vm, &currentThread);
 	if (rc == JVMTI_ERROR_NONE) {
 		J9VMThread *targetThread = NULL;
+		J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 
-		vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
+		vmFuncs->internalEnterVMFromJNI(currentThread);
 
 		ENSURE_PHASE_LIVE(env);
 
@@ -414,19 +415,32 @@ jvmtiGetFrameLocation(jvmtiEnv* env,
 
 		rc = getVMThread(currentThread, thread, &targetThread, TRUE, TRUE);
 		if (rc == JVMTI_ERROR_NONE) {
-			J9StackWalkState walkState;
-
-			vm->internalVMFunctions->haltThreadForInspection(currentThread, targetThread);
-
-			walkState.walkThread = targetThread;
+			J9StackWalkState walkState = {0};
 			walkState.flags = J9_STACKWALK_INCLUDE_NATIVES | J9_STACKWALK_VISIBLE_ONLY | J9_STACKWALK_COUNT_SPECIFIED | J9_STACKWALK_RECORD_BYTECODE_PC_OFFSET;
 			walkState.skipCount = (UDATA) depth;
 			walkState.maxFrames = 1;
-			vm->walkStackFrames(currentThread, &walkState);
-			if (walkState.framesWalked == 1) {
+
+#if JAVA_SPEC_VERSION >= 19
+			if (NULL == targetThread) {
+				j9object_t threadObject = J9_JNI_UNWRAP_REFERENCE(thread);
+				if (IS_VIRTUAL_THREAD(currentThread, threadObject)) {
+					j9object_t contObject = (j9object_t)J9VMJAVALANGVIRTUALTHREAD_CONT(currentThread, threadObject);
+					vmFuncs->walkContinuationStackFrames(currentThread, contObject, &walkState);
+				} else {
+					Assert_JVMTI_unreachable();
+				}
+			} else
+#endif /* JAVA_SPEC_VERSION >= 19 */
+			{
+				vmFuncs->haltThreadForInspection(currentThread, targetThread);
+				walkState.walkThread = targetThread;
+				vm->walkStackFrames(currentThread, &walkState);
+				vmFuncs->resumeThreadForInspection(currentThread, targetThread);
+			}
+			if (1 == walkState.framesWalked) {
 				jmethodID methodID = getCurrentMethodID(currentThread, walkState.method);
 
-				if (methodID == NULL) {
+				if (NULL == methodID) {
 					rc = JVMTI_ERROR_OUT_OF_MEMORY;
 				} else {
 					rv_method = methodID;
@@ -437,11 +451,10 @@ jvmtiGetFrameLocation(jvmtiEnv* env,
 				rc = JVMTI_ERROR_NO_MORE_FRAMES;
 			}
 
-			vm->internalVMFunctions->resumeThreadForInspection(currentThread, targetThread);
 			releaseVMThread(currentThread, targetThread, thread);
 		}
 done:
-		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
+		vmFuncs->internalExitVMToJNI(currentThread);
 	}
 
 	if (NULL != method_ptr) {
