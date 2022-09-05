@@ -215,6 +215,7 @@ int32_t J9::Options::_weightOfAOTLoad = 1; // must be between 0 and 256
 int32_t J9::Options::_weightOfJSR292 = 12; // must be between 0 and 256
 
 TR_YesNoMaybe J9::Options::_hwProfilerEnabled = TR_maybe;
+TR_YesNoMaybe J9::Options::_perfToolEnabled = TR_no;
 int32_t J9::Options::_hwprofilerNumOutstandingBuffers = 256; // 1MB / 4KB buffers
 
 // These numbers are cast into floats divided by 10000

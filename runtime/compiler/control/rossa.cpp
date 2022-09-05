@@ -1318,6 +1318,10 @@ onLoadInternal(
       return -1;
       }
 
+   // Enable perfTool
+   if (TR::Options::_perfToolEnabled == TR_yes)
+      TR::Options::getCmdLineOptions()->setOption(TR_PerfTool);
+
    // Now that the options have been processed we can initialize the RuntimeAssumptionTables
    // If we cannot allocate various runtime assumption hash tables, fail the JVM
 
