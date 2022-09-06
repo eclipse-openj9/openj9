@@ -60,6 +60,9 @@
 			<variation>-Xjit</variation>
 			<variation>-Xint</variation>
 			<variation>-Xjit:count=0</variation>
+			<variation>-Xjit -XX:+CRIURestoreNonPortableMode</variation>
+			<variation>-Xint -XX:+CRIURestoreNonPortableMode</variation>
+			<variation>-Xjit:count=0 -XX:+CRIURestoreNonPortableMode</variation>
 		</variations>
 		<command>
 			$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump \
