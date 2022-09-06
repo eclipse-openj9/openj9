@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -627,6 +627,13 @@ initializeSystemProperties(J9JavaVM * vm)
 		goto fail;
 	}
 #endif /* JAVA_SPEC_VERSION < 12 */
+
+#if JAVA_SPEC_VERSION == 8
+	rc = addSystemProperty(vm, "java.specification.maintenance.version", "4", 0);
+	if (J9SYSPROP_ERROR_NONE != rc) {
+		goto fail;
+	}
+#endif /* JAVA_SPEC_VERSION == 8 */
 
 	rc = addSystemProperty(vm, "java.vm.vendor", JAVA_VM_VENDOR, 0);
 	if (J9SYSPROP_ERROR_NONE != rc) {
