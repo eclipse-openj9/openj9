@@ -105,25 +105,39 @@ the format to use.
 - If you have many new test cases to add and special build requirements, then you may want to copy the [TestExample](https://github.com/eclipse-openj9/openj9/blob/master/test/functional/TestExample) update the build.xml and playlist.xml files to match your new Test class names. The playlist.xml format is defined in TKG/playlist.xsd.
 
 - A test can be tagged with following elements:
-      - level:   [sanity|extended|special] (extended default value)
-      - group:   [functional|system|openjdk|external|perf|jck] (required
-                 to provide one group per test)
-      - type:    [regular|native] (if a test is tagged with native, it means this
-                 test needs to run with test image (native test libs);
-                 NATIVE_TEST_LIBS needs to be set for local testing; if Grinder is used,
-                 native test libs download link needs to be provided in addition to SDK
-                 download link in CUSTOMIZED_SDK_URL; for details, please refer to
-                 [How-to-Run-a-Grinder-Build-on-Jenkins](https://github.com/adoptium/aqa-tests/wiki/How-to-Run-a-Grinder-Build-on-Jenkins);
-                 default to regular)
-      - impl:    [openj9|hotspot|ibm] (filter test based on exported JDK_IMPL
-                 value; a test can be tagged with multiple impls at the
-                 same time; default to all impls)
-      - version:  [8|8+|9|9+|10|10+|11|11+|Panama|Valhalla] (filter test based on
-                 exported JDK_VERSION value; a test can be tagged with
-                 multiple versions at the same time; if a test tagged with
-                 a number (e.g., 8), it will used to match JDK_VERSION; if
-                 a test tagged with a number followed by + sign, any JDK_VERSION
-                 after the number will be a match; default to always match)
+
+    - level:                    [sanity|extended|special] (extended default value)
+    - group:                    [functional|system|openjdk|external|perf|jck] (required
+                                to provide one group per test)
+    - type:                     [regular|native] (if a test is tagged with native, it means this
+                                test needs to run with test image (native test libs);
+                                NATIVE_TEST_LIBS needs to be set for local testing; if Grinder is used,
+                                native test libs download link needs to be provided in addition to SDK
+                                download link in CUSTOMIZED_SDK_URL; for details, please refer to
+                                [How-to-Run-a-Grinder-Build-on-Jenkins](https://github.com/adoptium/aqa-tests/wiki/How-to-Run-a-Grinder-Build-on-Jenkins);
+                                default to regular)
+    - impl:                     [openj9|hotspot|ibm] (filter test based on exported JDK_IMPL
+                                value; a test can be tagged with multiple impls at the
+                                same time; default to all impls)
+    - version:                  [8|8+|9|9+|10|10+|11|11+|Panama|Valhalla] (filter test based on
+                                exported JDK_VERSION value; a test can be tagged with
+                                multiple versions at the same time; if a test tagged with
+                                a number (e.g., 8), it will used to match JDK_VERSION; if
+                                a test tagged with a number followed by + sign, any JDK_VERSION
+                                after the number will be a match; default to always match)
+    - platformRequirements:     comma separated machine labels (`os.xxx,bits.xxx,arch.xxx`) (execute test only on
+                                the specified criteria; logical and relationship between comma separated labels;
+                                for example,
+                                `<platformRequirements>os.osx,bits.64,arch.x86</platformRequirements>` will run on osx_x86-64;
+                                multiple nested `<platformRequirements>` inside `<platformRequirementsList>` represents logical
+                                or relationship;
+                                for example, the following will run on both windows and aix:
+        ```
+        </platformRequirementsList>
+          <platformRequirements>os.win</platformRequirements>
+          <platformRequirements>os.aix</platformRequirements>
+        </platformRequirementsList>
+        ```
 
 - Most OpenJ9 FV tests are written with TestNG. We leverage
     TestNG groups to create test make targets. This means that
