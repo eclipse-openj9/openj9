@@ -21,6 +21,8 @@
  *******************************************************************************/
 package j9vm.test.ddrext;
 
+import org.openj9.test.util.VersionCheck;
+
 public class Constants {
 
 	public static final String HEXADDRESS_HEADER = "0x";
@@ -292,7 +294,7 @@ public class Constants {
 	public static final String J9CLASSSHAPE_CMD = "j9classshape";
 	public static final String J9CLASSSHAPE_TEST_CLASS = "j9vm/test/corehelper/SimpleThread$DumperThread";
 	public static final String J9CLASS_TEST_SUCCESS_KEY = "j9vm/test/corehelper/SimpleThread\\$DumperThread";
-	public static final String J9CLASSSHAPE_SUCCESS_KEY = "threadRef,"+J9CLASS_TEST_SUCCESS_KEY;
+	public static final String J9CLASSSHAPE_SUCCESS_KEY = (VersionCheck.major() >= 19 ? "eetop," : "threadRef,") + J9CLASS_TEST_SUCCESS_KEY;
 
 	public static final String J9VTABLES_CMD = "j9vtables";
 	public static final String J9VTABLES_SUCCESS_KEY = "j9class,j9method,"+J9CLASS_TEST_SUCCESS_KEY;
