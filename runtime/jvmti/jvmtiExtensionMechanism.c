@@ -1441,13 +1441,13 @@ done:
 static jvmtiError JNICALL
 jvmtiGetOSThreadID(jvmtiEnv* jvmti_env, ...)
 {
-	J9JavaVM * vm = JAVAVM_FROM_ENV(jvmti_env);
-	jvmtiError rc;
-	J9VMThread * currentThread;
+	J9JavaVM *vm = JAVAVM_FROM_ENV(jvmti_env);
+	jvmtiError rc = JVMTI_ERROR_NONE;
+	J9VMThread *currentThread = NULL;
 	jlong rv_threadid = 0;
 
-	jthread thread;
-	jlong * threadid_ptr;
+	jthread thread = NULL;
+	jlong *threadid_ptr = NULL;
 	va_list args;
 	va_start(args, jvmti_env);
 	thread = va_arg(args, jthread);
@@ -1464,6 +1464,12 @@ jvmtiGetOSThreadID(jvmtiEnv* jvmti_env, ...)
 
 		ENSURE_PHASE_START_OR_LIVE(jvmti_env);
 		ENSURE_NON_NULL(threadid_ptr);
+
+#if JAVA_SPEC_VERSION >= 19
+		if (NULL != thread) {
+			ENSURE_JTHREAD_NOT_VIRTUAL(currentThread, thread, JVMTI_ERROR_UNSUPPORTED_OPERATION);
+		}
+#endif /* JAVA_SPEC_VERSION >= 19 */
 
 		rc = getVMThread(currentThread, thread, &targetThread, TRUE, TRUE);
 		if (rc == JVMTI_ERROR_NONE) {

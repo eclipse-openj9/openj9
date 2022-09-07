@@ -415,12 +415,17 @@ jvmtiInterruptThread(jvmtiEnv* env,
 
 		rc = getVMThread(currentThread, thread, &targetThread, FALSE, TRUE);
 		if (rc == JVMTI_ERROR_NONE) {
-			omrthread_interrupt(targetThread->osThread);
+#if JAVA_SPEC_VERSION >= 19
+			if (NULL != targetThread)
+#endif /* JAVA_SPEC_VERSION >= 19 */
+			{
+				omrthread_interrupt(targetThread->osThread);
 #ifdef J9VM_OPT_SIDECAR
-			if (vm->sidecarInterruptFunction != NULL) {
-				vm->sidecarInterruptFunction(targetThread);
+				if (vm->sidecarInterruptFunction != NULL) {
+					vm->sidecarInterruptFunction(targetThread);
+				}
+#endif /* J9VM_OPT_SIDECAR */
 			}
-#endif
 			releaseVMThread(currentThread, targetThread, thread);
 		}
 done:
