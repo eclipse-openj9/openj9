@@ -1125,7 +1125,7 @@ def validate_arguments(ARGS) {
 def printStackTrace(e) {
     def writer = new StringWriter()
     e.printStackTrace(new PrintWriter(writer))
-    echo e.toString()
+    echo writer.toString()
 }
 
 /*
@@ -1585,6 +1585,8 @@ def set_build_variables_per_node() {
             }
         }
     }
+
+    FAIL_PATTERN = params.FAIL_PATTERN ?: buildspec.getScalarField('fail_pattern', SDK_VERSION)
 }
 
 def check_path(inPath) {

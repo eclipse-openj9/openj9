@@ -121,6 +121,7 @@ pipelineJob("$JOB_NAME") {
         } else if (jobType == 'build') {
             stringParam('NODE')
             choiceParam('JOB_TYPE', ['build'])
+            stringParam('FAIL_PATTERN')
         }
     }
 }

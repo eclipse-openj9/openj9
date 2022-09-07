@@ -344,8 +344,6 @@ aarch64_linux:
 x86-64_windows:
   extends: ['boot_jdk_default', 'cuda', 'debuginfo', 'openjdk_reference_repo', 'openssl', 'openssl_bundle']
   boot_jdk:
-    location:
-      all: '/cygdrive/f/Users/jenkins/bootjdks'
     arch: 'x64'
     os: 'windows'
   release:
@@ -365,14 +363,13 @@ x86-64_windows:
     build: 'ci.role.build && hw.arch.x86 && sw.os.windows'
   build_env:
     vars: 'PATH+TOOLS=/cygdrive/c/openjdk/LLVM64/bin:/cygdrive/c/openjdk/nasm-2.13.03'
+  fail_pattern: 'C1083'
 #========================================#
 # Windows x86 32bits
 #========================================#
 x86-32_windows:
   extends: ['boot_jdk_default', 'debuginfo', 'openjdk_reference_repo', 'openssl', 'openssl_bundle']
   boot_jdk:
-    location:
-      all: '/cygdrive/f/Users/jenkins/bootjdks'
     arch: 'x64'
     os: 'windows'
   release:
@@ -386,6 +383,7 @@ x86-32_windows:
   build_env:
     vars:
       8: 'PATH+TOOLS=/cygdrive/c/openjdk/LLVM32/bin:/cygdrive/c/openjdk/nasm-2.13.03'
+  fail_pattern: 'C1083'
 #========================================#
 # Mac x86 64bits
 #========================================#
