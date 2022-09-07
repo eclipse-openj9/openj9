@@ -31,6 +31,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 
 	<!--Properties for this particular build-->
 	<property name="src" location="./src" />
+	<property name="TestUtilities" location="../TestUtilities/src"/>
 	<property name="build" location="./bin" />
 	<property name="transformerListener" location="${TEST_ROOT}/Utils/src" />
 	<property name="LIB" value="junit4,asm_all,testng" />
@@ -54,6 +55,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 				<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
 					<src path="${src}" />
 					<src path="${transformerListener}" />
+					<src path="${TestUtilities}" />
 					<classpath>
 						<pathelement location="${LIB_DIR}/junit4.jar" />
 						<pathelement location="${LIB_DIR}/testng.jar" />
@@ -66,6 +68,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 				<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
 					<src path="${src}" />
 					<src path="${transformerListener}" />
+					<src path="${TestUtilities}" />
 					<classpath>
 						<pathelement location="${LIB_DIR}/junit4.jar" />
 						<pathelement location="${LIB_DIR}/testng.jar" />
