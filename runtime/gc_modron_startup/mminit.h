@@ -40,6 +40,13 @@ extern "C" {
 #endif
 
 jint gcInitializeDefaults(J9JavaVM* vm);
+
+void initializeIndexableObjectHeaderSizes(J9JavaVM* vm);
+#if defined(J9VM_ENV_DATA64)
+void setIndexableObjectHeaderSizeWithDataAddress(J9JavaVM* vm);
+#endif /* defined(J9VM_ENV_DATA64) */
+void setIndexableObjectHeaderSizeWithoutDataAddress(J9JavaVM* vm);
+
 void gcCleanupInitializeDefaults(OMR_VM* omrVM);
 
 jint gcInitializeHeapStructures(J9JavaVM* vm);

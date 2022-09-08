@@ -562,16 +562,6 @@ public:
 	{
 		GC_ObjectModelBase::fixupForwardedObject(forwardedHeader, destinationObjectPtr, objectAge);
 
-		if (isIndexable(forwardedHeader)) {
-			/* Updates internal field of indexable objects. Every indexable object have an extra field
-			 * that can be used to store any extra information about the indexable object. One use case is
-			 * OpenJ9 where we use this field to point to array data. In this case it will always point to
-			 * the address right after the header, in case of contiguous data it will point to the data
-			 * itself, and in case of discontiguous arraylet it will point to the first arrayiod. How to
-			 * updated dataAddr is up to the target language that must override fixupDataAddr */
-			_indexableObjectModel->fixupDataAddr(forwardedHeader, destinationObjectPtr);
-		}
-
 		fixupHashFlagsAndSlot(forwardedHeader, destinationObjectPtr);
 	}
 

@@ -78,9 +78,9 @@ public:
 	 * @return header size
 	 */
 	MMINLINE uintptr_t
-	contiguousHeaderSize()
+	contiguousIndexableHeaderSize()
 	{
-		return compressObjectReferences() ? sizeof(J9IndexableObjectContiguousCompressed) : sizeof(J9IndexableObjectContiguousFull);
+		return _contiguousIndexableHeaderSize;
 	}
 
 	/**
@@ -88,9 +88,9 @@ public:
 	 * @return header size
 	 */
 	MMINLINE uintptr_t
-	discontiguousHeaderSize()
+	discontiguousIndexableHeaderSize()
 	{
-		return compressObjectReferences() ? sizeof(J9IndexableObjectDiscontiguousCompressed) : sizeof(J9IndexableObjectDiscontiguousFull);
+		return _discontiguousIndexableHeaderSize;
 	}
 
 	/**
@@ -334,9 +334,9 @@ public:
 	MMINLINE uintptr_t
 	getHeaderSize(J9Class *clazzPtr, ArrayLayout layout)
 	{
-		uintptr_t headerSize = contiguousHeaderSize();
+		uintptr_t headerSize = contiguousIndexableHeaderSize();
 		if (layout != InlineContiguous) {
-			headerSize = discontiguousHeaderSize();
+			headerSize = discontiguousIndexableHeaderSize();
 		}
 		return headerSize;
 	}
@@ -847,9 +847,9 @@ public:
 		bool const compressed = compressObjectReferences();
 		void **dataAddrPtr = NULL;
 		if (compressed) {
-			dataAddrPtr = &((J9IndexableObjectContiguousCompressed *)arrayPtr)->dataAddr;
+			dataAddrPtr = &((J9IndexableObjectWithDataAddressContiguousCompressed *)arrayPtr)->dataAddr;
 		} else {
-			dataAddrPtr = &((J9IndexableObjectContiguousFull *)arrayPtr)->dataAddr;
+			dataAddrPtr = &((J9IndexableObjectWithDataAddressContiguousFull *)arrayPtr)->dataAddr;
 		}
 		return dataAddrPtr;
 	}
@@ -870,9 +870,9 @@ public:
 		bool const compressed = compressObjectReferences();
 		void **dataAddrPtr = NULL;
 		if (compressed) {
-			dataAddrPtr = &((J9IndexableObjectDiscontiguousCompressed *)arrayPtr)->dataAddr;
+			dataAddrPtr = &((J9IndexableObjectWithDataAddressDiscontiguousCompressed *)arrayPtr)->dataAddr;
 		} else {
-			dataAddrPtr = &((J9IndexableObjectDiscontiguousFull *)arrayPtr)->dataAddr;
+			dataAddrPtr = &((J9IndexableObjectWithDataAddressDiscontiguousFull *)arrayPtr)->dataAddr;
 		}
 		return dataAddrPtr;
 	}
@@ -889,7 +889,7 @@ public:
 	setDataAddrForContiguous(J9IndexableObject *arrayPtr)
 	{
 		void **dataAddrPtr = dataAddrSlotForContiguous(arrayPtr);
-		void *dataAddr = (void *)((uintptr_t)arrayPtr + contiguousHeaderSize());
+		void *dataAddr = (void *)((uintptr_t)arrayPtr + contiguousIndexableHeaderSize());
 		*dataAddrPtr = dataAddr;
 	}
 
@@ -915,12 +915,6 @@ public:
 		void *calculatedDataAddr = address;
 		void **dataAddrPtr = dataAddrSlotForDiscontiguous(arrayPtr);
 
-		/* If calculatedDataAddr is NULL then we make dataAddr point to the first arrayoid */
-		/* Later on, when sparse-heap is enabled by default, we must assert dataAddr is not NULL */
-		if (NULL == calculatedDataAddr) {
-			calculatedDataAddr = (void *)((uintptr_t)arrayPtr + discontiguousHeaderSize());
-		}
-
 		*dataAddrPtr = calculatedDataAddr;
 	}
 
@@ -930,30 +924,6 @@ public:
 	 * @param arrayPtr      Pointer to the indexable object
 	 */
 	void AssertArrayPtrIsIndexable(J9IndexableObject *arrayPtr);
-
-	/**
-	 * Asserts that the dataAddr field of the indexable object is correct.
-	 *
-	 * @param arrayPtr      Pointer to the indexable object
-	 * @param dataAddr      Pointer to indexable object data address
-	 */
-	MMINLINE bool
-	isCorrectDataAddrContiguous(J9IndexableObject *arrayPtr, void *dataAddr)
-	{
-		return dataAddr == (void *)((uintptr_t)arrayPtr + contiguousHeaderSize());
-	}
-
-	/**
-	 * Asserts that an indexable object pointer is indeed an indexable object
-	 *
-	 * @param arrayPtr      Pointer to the indexable object
-	 * @param dataAddr      Pointer to indexable object data address
-	 */
-	MMINLINE bool
-	isCorrectDataAddrDiscontiguous(J9IndexableObject *arrayPtr, void *dataAddr)
-	{
-		return dataAddr == (void *)((uintptr_t)arrayPtr + discontiguousHeaderSize());
-	}
 
 	/**
 	 * Returns data pointer associated with a contiguous Indexable object.
@@ -1014,43 +984,47 @@ public:
 	}
 
 	/**
-	 * Asserts that the dataAddr field of the indexable object is correct.
+	 * Checks that the dataAddr field of the indexable object is correct.
 	 *
 	 * @param arrayPtr      Pointer to the indexable object
+	 * @return if the dataAddr field of the indexable object is correct
 	 */
 	MMINLINE bool
-	isCorrectDataAddr(J9IndexableObject *arrayPtr)
+	isValidDataAddr(J9IndexableObject *arrayPtr)
 	{
+		bool isValidDataAddress = true;
 
-		return (InlineContiguous == getArrayLayout(arrayPtr))
-			? isCorrectDataAddrForContiguousArraylet(arrayPtr)
-			: isCorrectDataAddrForDiscontiguousArraylet(arrayPtr);
+		if (_isIndexableDataAddrPresent) {
+			void *dataAddr = getDataAddrForIndexableObject(arrayPtr);
+			isValidDataAddress = isValidDataAddr(arrayPtr, dataAddr);
+		}
+
+		return isValidDataAddress;
 	}
 
 	/**
-	 * Asserts that the dataAddr field of the contiguous arraylet is correct.
+	 * Checks that the dataAddr field of the indexable object is correct.
 	 *
 	 * @param arrayPtr      Pointer to the indexable object
+	 * @return if the dataAddr field of the indexable object is correct
 	 */
 	MMINLINE bool
-	isCorrectDataAddrForContiguousArraylet(J9IndexableObject *arrayPtr)
+	isValidDataAddr(J9IndexableObject *arrayPtr, void *dataAddr)
 	{
-		void *dataAddr = getDataAddrForContiguous(arrayPtr);
-		return isCorrectDataAddrContiguous(arrayPtr, dataAddr);
-	}
+		bool isValidDataAddress = false;
+		uintptr_t dataSizeInBytes = getDataSizeInBytes(arrayPtr);
 
-	/**
-	 * Asserts that the dataAddr field of the indexable object is correct.
-	 *
-	 * @param arrayPtr      Pointer to the indexable object
-	 */
-	MMINLINE bool
-	isCorrectDataAddrForDiscontiguousArraylet(J9IndexableObject *arrayPtr)
-	{
-		void *dataAddr = getDataAddrForDiscontiguous(arrayPtr);
-		return isCorrectDataAddrDiscontiguous(arrayPtr, dataAddr);
+		if (0 == dataSizeInBytes) {
+			isValidDataAddress = ((dataAddr == NULL) || (dataAddr == (void *)((uintptr_t)arrayPtr + discontiguousIndexableHeaderSize())));
+		} else if (dataSizeInBytes < _omrVM->_arrayletLeafSize) {
+			isValidDataAddress = (dataAddr == (void *)((uintptr_t)arrayPtr + contiguousIndexableHeaderSize()));
+		} else {
+			isValidDataAddress = (dataAddr == NULL);
+		}
+
+		return isValidDataAddress;
 	}
-#endif /* J9VM_ENV_DATA64 */
+#endif /* defined(J9VM_ENV_DATA64) */
 
 	/**
 	 * External fixup dataAddr API to update pointer of indexable objects.
@@ -1226,21 +1200,8 @@ public:
 	MMINLINE uintptr_t
 	getHeaderSize(J9IndexableObject *arrayPtr)
 	{
-		uintptr_t headerSize = 0;
-		if (compressObjectReferences()) {
-			uintptr_t size = ((J9IndexableObjectContiguousCompressed *)arrayPtr)->size;
-			headerSize = sizeof(J9IndexableObjectContiguousCompressed);
-			if (0 == size) {
-				headerSize = sizeof(J9IndexableObjectDiscontiguousCompressed);
-			}
-		} else {
-			uintptr_t size = ((J9IndexableObjectContiguousFull *)arrayPtr)->size;
-			headerSize = sizeof(J9IndexableObjectContiguousFull);
-			if (0 == size) {
-				headerSize = sizeof(J9IndexableObjectDiscontiguousFull);
-			}
-		}
-		return headerSize;
+		uintptr_t size = (compressObjectReferences() ? ((J9IndexableObjectContiguousCompressed *)arrayPtr)->size : ((J9IndexableObjectContiguousFull *)arrayPtr)->size);
+		return (0 == size) ? _discontiguousIndexableHeaderSize : _contiguousIndexableHeaderSize;
 	}
 
 	/**
@@ -1251,7 +1212,7 @@ public:
 	MMINLINE fj9object_t *
 	getArrayoidPointer(J9IndexableObject *arrayPtr)
 	{
-		return (fj9object_t *)((uintptr_t)arrayPtr + (compressObjectReferences() ? sizeof(J9IndexableObjectDiscontiguousCompressed) : sizeof(J9IndexableObjectDiscontiguousFull)));
+		return (fj9object_t *)((uintptr_t)arrayPtr + _discontiguousIndexableHeaderSize);
 	}
 
 	/**
@@ -1262,7 +1223,7 @@ public:
 	MMINLINE void *
 	getDataPointerForContiguous(J9IndexableObject *arrayPtr)
 	{
-		return (void *)((uintptr_t)arrayPtr + contiguousHeaderSize());
+		return (void *)((uintptr_t)arrayPtr + contiguousIndexableHeaderSize());
 	}
 
 

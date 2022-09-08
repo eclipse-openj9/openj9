@@ -216,15 +216,19 @@ public:
 		}
 
 		if (_extensions->objectModel.isIndexable(destinationObjectPtr)) {
-			/* Updates internal field of indexable objects. Every indexable object have an extra field
-			 * that can be used to store any extra information about the indexable object. One use case is
-			 * OpenJ9 where we use this field to point to array data. In this case it will always point to
-			 * the address right after the header, in case of contiguous data it will point to the data
-			 * itself, and in case of discontiguous arraylet it will point to the first arrayiod. How to
-			 * updated dataAddr is up to the target language that must override fixupDataAddr */
-			_extensions->indexableObjectModel.fixupDataAddr(destinationObjectPtr);
+#if defined(J9VM_ENV_DATA64)
+			if (_vmThread->isIndexableDataAddrPresent) {
+				/**
+				 * Update the dataAddr internal field of the indexable object. The field being updated
+				 * points to the array data. In the case of contiguous data, it will point to the data
+				 * itself, and in case of discontiguous arraylets, it will point to the first arrayoid. How to
+				 * update dataAddr is up to the target language that must override fixupDataAddr.
+				 */
+				_extensions->indexableObjectModel.fixupDataAddr(destinationObjectPtr);
+			}
+#endif /* defined(J9VM_ENV_DATA64) */
 
-			if (_extensions->isVLHGC()) {
+			if (UDATA_MAX != _extensions->getOmrVM()->_arrayletLeafSize) {
 				_extensions->indexableObjectModel.fixupInternalLeafPointersAfterCopy((J9IndexableObject *)destinationObjectPtr, (J9IndexableObject *)sourceObjectPtr);
 			}
 		}

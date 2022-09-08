@@ -854,6 +854,18 @@ gcParseXXgcArguments(J9JavaVM *vm, char *optArg)
 #endif /* defined(J9VM_GC_MODRON_SCAVENGER) || defined (J9VM_GC_VLHGC) */
 /* End of options relating to dynamicBreadthFirstScanOrdering */
 
+#if defined(J9VM_ENV_DATA64)
+		if (try_scan(&scan_start, "enableIndexableDualHeaderShape")) {
+			vm->isIndexableDualHeaderShapeEnabled = TRUE;
+			continue;
+		}
+
+		if (try_scan(&scan_start, "disableIndexableDualHeaderShape")) {
+			vm->isIndexableDualHeaderShapeEnabled = FALSE;
+			continue;
+		}
+#endif /* defined(J9VM_ENV_DATA64) */
+
 #if defined(J9VM_GC_MODRON_SCAVENGER)	
 		if (try_scan(&scan_start, "scanCacheMinimumSize=")) {
 			/* Read in restricted scan cache size */

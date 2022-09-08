@@ -714,9 +714,9 @@ writeConstants(OMRPortLibrary *OMRPORTLIB, IDATA fd)
 			/* Object headers */
 			writeConstant(OMRPORTLIB, fd, "J9TR_J9Object_class", offsetof(J9Object, clazz)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_ObjectHeader_class", offsetof(J9Object, clazz)) |
-			writeConstant(OMRPORTLIB, fd, "J9TR_IndexableObjectContiguous_objectData", sizeof(J9IndexableObjectContiguous)) |
-			writeConstant(OMRPORTLIB, fd, "J9TR_IndexableObjectContiguousCompressed_objectData", sizeof(J9IndexableObjectContiguousCompressed)) |
-			writeConstant(OMRPORTLIB, fd, "J9TR_IndexableObjectContiguousFull_objectData", sizeof(J9IndexableObjectContiguousFull)) |
+			writeConstant(OMRPORTLIB, fd, "J9TR_IndexableObjectContiguous_objectData", sizeof(J9IndexableObjectWithDataAddressContiguous)) |
+			writeConstant(OMRPORTLIB, fd, "J9TR_IndexableObjectContiguousCompressed_objectData", sizeof(J9IndexableObjectWithDataAddressContiguousCompressed)) |
+			writeConstant(OMRPORTLIB, fd, "J9TR_IndexableObjectContiguousFull_objectData", sizeof(J9IndexableObjectWithDataAddressContiguousFull)) |
 
 			/* J9SFJNICallInFrame */
 			writeConstant(OMRPORTLIB, fd, "J9TR_J9SFJNICallInFrame_exitAddress", offsetof(J9SFJNICallInFrame, exitAddress)) |

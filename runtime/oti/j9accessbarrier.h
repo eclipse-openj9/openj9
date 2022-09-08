@@ -105,23 +105,19 @@ typedef struct J9IndexableObject* mm_j9array_t;
 
 #define J9JAVAARRAYDISCONTIGUOUS_EA(vmThread, array, index, elemType) \
 	(J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread) \
-		? (&(((elemType*)J9_CONVERT_POINTER_FROM_TOKEN__(vmThread, ((U_32*)((J9IndexableObjectDiscontiguousCompressed *)array + 1))[((U_32)index)/(J9VMTHREAD_JAVAVM(vmThread)->arrayletLeafSize/sizeof(elemType))]))[((U_32)index)%(J9VMTHREAD_JAVAVM(vmThread)->arrayletLeafSize/sizeof(elemType))])) \
-		: (&(((elemType*)(((UDATA*)((J9IndexableObjectDiscontiguousFull *)array + 1))[((U_32)index)/(J9VMTHREAD_JAVAVM(vmThread)->arrayletLeafSize/sizeof(elemType))]))[((U_32)index)%(J9VMTHREAD_JAVAVM(vmThread)->arrayletLeafSize/sizeof(elemType))])))
+		? (&(((elemType*)J9_CONVERT_POINTER_FROM_TOKEN__(vmThread, ((U_32*)(((UDATA)(array)) + (vmThread)->discontiguousIndexableHeaderSize))[((U_32)index)/(J9VMTHREAD_JAVAVM(vmThread)->arrayletLeafSize/sizeof(elemType))]))[((U_32)index)%(J9VMTHREAD_JAVAVM(vmThread)->arrayletLeafSize/sizeof(elemType))])) \
+		: (&(((elemType*)(((UDATA*)(((UDATA)(array)) + (vmThread)->discontiguousIndexableHeaderSize))[((U_32)index)/(J9VMTHREAD_JAVAVM(vmThread)->arrayletLeafSize/sizeof(elemType))]))[((U_32)index)%(J9VMTHREAD_JAVAVM(vmThread)->arrayletLeafSize/sizeof(elemType))])))
 
 #define J9JAVAARRAYDISCONTIGUOUS_EA_VM(javaVM, array, index, elemType) \
 	(J9JAVAVM_COMPRESS_OBJECT_REFERENCES(javaVM) \
-		? (&(((elemType*)J9_CONVERT_POINTER_FROM_TOKEN_VM__(javaVM, ((U_32*)((J9IndexableObjectDiscontiguousCompressed *)array + 1))[((U_32)index)/((javaVM)->arrayletLeafSize/sizeof(elemType))]))[((U_32)index)%((javaVM)->arrayletLeafSize/sizeof(elemType))])) \
-		: (&(((elemType*)(((UDATA*)((J9IndexableObjectDiscontiguousFull *)array + 1))[((U_32)index)/((javaVM)->arrayletLeafSize/sizeof(elemType))]))[((U_32)index)%((javaVM)->arrayletLeafSize/sizeof(elemType))])))
+		? (&(((elemType*)J9_CONVERT_POINTER_FROM_TOKEN_VM__(javaVM, ((U_32*)(((UDATA)(array)) + (javaVM)->discontiguousIndexableHeaderSize))[((U_32)index)/((javaVM)->arrayletLeafSize/sizeof(elemType))]))[((U_32)index)%((javaVM)->arrayletLeafSize/sizeof(elemType))])) \
+		: (&(((elemType*)(((UDATA*)(((UDATA)(array)) + (javaVM)->discontiguousIndexableHeaderSize))[((U_32)index)/((javaVM)->arrayletLeafSize/sizeof(elemType))]))[((U_32)index)%((javaVM)->arrayletLeafSize/sizeof(elemType))])))
 
 #define J9JAVAARRAYCONTIGUOUS_EA(vmThread, array, index, elemType) \
-	(J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread) \
-		? (&((elemType*)((((J9IndexableObjectContiguousCompressed *)(array)) + 1)))[(index)]) \
-		: (&((elemType*)((((J9IndexableObjectContiguousFull *)(array)) + 1)))[(index)]))
+	(&((elemType*)((((UDATA)(array)) + (vmThread)->contiguousIndexableHeaderSize)))[(index)])
 
 #define J9JAVAARRAYCONTIGUOUS_EA_VM(javaVM, array, index, elemType) \
-	(J9JAVAVM_COMPRESS_OBJECT_REFERENCES(javaVM) \
-		? (&((elemType*)((((J9IndexableObjectContiguousCompressed *)(array)) + 1)))[(index)]) \
-		: (&((elemType*)((((J9IndexableObjectContiguousFull *)(array)) + 1)))[(index)]))
+	(&((elemType*)((((UDATA)(array)) + (javaVM)->contiguousIndexableHeaderSize)))[(index)])
 
 #define J9ISCONTIGUOUSARRAY(vmThread, array) \
 	(J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread) \

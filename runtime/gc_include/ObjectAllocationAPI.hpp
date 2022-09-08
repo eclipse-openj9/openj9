@@ -50,6 +50,12 @@ class MM_ObjectAllocationAPI
 	 */
 private:
 	const uintptr_t _gcAllocationType;
+
+	uintptr_t _contiguousIndexableHeaderSize;
+#if defined(J9VM_ENV_DATA64)
+	bool _isIndexableDataAddrPresent;
+#endif /* defined(J9VM_ENV_DATA64) */
+
 #if defined(J9VM_GC_BATCH_CLEAR_TLH)
 	const uintptr_t _initializeSlotsOnTLHAllocate;
 #endif /* J9VM_GC_BATCH_CLEAR_TLH */
@@ -70,56 +76,56 @@ private:
 	}
 
 	VMINLINE void
-	initializeContiguousIndexableObject(J9VMThread *currentThread, bool initializeSlots, J9Class *arrayClass, uint32_t size, uintptr_t dataSize, j9object_t *objectHeader)
+	initializeContiguousIndexableObject(J9VMThread *currentThread, bool initializeSlots, J9Class *arrayClass, uint32_t size, uintptr_t dataSize, j9object_t objectHeader)
 	{
+		void *dataAddr = (void *)((uintptr_t)objectHeader + _contiguousIndexableHeaderSize);
 		bool isCompressedReferences = J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(currentThread);
-
 		if (isCompressedReferences) {
-			uintptr_t headerSize = sizeof(J9IndexableObjectContiguousCompressed);
-			J9IndexableObjectContiguousCompressed *header = (J9IndexableObjectContiguousCompressed*)*objectHeader;
+			J9IndexableObjectContiguousCompressed *header = (J9IndexableObjectContiguousCompressed *)objectHeader;
 			header->clazz = (uint32_t)(uintptr_t)arrayClass;
 			header->size = size;
-			void *dataAddr = (void *)((uintptr_t)header + headerSize);
 #if defined(J9VM_ENV_DATA64)
-			header->dataAddr = dataAddr;
-#endif /* J9VM_ENV_DATA64 */
-			initializeIndexableSlots(initializeSlots, dataSize, dataAddr);
+			if (_isIndexableDataAddrPresent) {
+				((J9IndexableObjectWithDataAddressContiguousCompressed *)header)->dataAddr = dataAddr;
+			}
+#endif /* defined(J9VM_ENV_DATA64) */
 		} else {
-			uintptr_t headerSize = sizeof(J9IndexableObjectContiguousFull);
-			J9IndexableObjectContiguousFull *header = (J9IndexableObjectContiguousFull*)*objectHeader;
+			J9IndexableObjectContiguousFull *header = (J9IndexableObjectContiguousFull *)objectHeader;
 			header->clazz = (uintptr_t)arrayClass;
 			header->size = size;
-			void *dataAddr = (void *)((uintptr_t)header + headerSize);
 #if defined(J9VM_ENV_DATA64)
-			header->dataAddr = dataAddr;
-#endif /* J9VM_ENV_DATA64 */
-			initializeIndexableSlots(initializeSlots, dataSize, dataAddr);
+			if (_isIndexableDataAddrPresent) {
+				((J9IndexableObjectWithDataAddressContiguousFull *)header)->dataAddr = dataAddr;
+			}
+#endif /* defined(J9VM_ENV_DATA64) */
 		}
+		initializeIndexableSlots(initializeSlots, dataSize, dataAddr);
 	}
 
 	VMINLINE void
-	initializeDiscontiguousIndexableObject(J9VMThread *currentThread, J9Class *arrayClass, j9object_t *objectHeader)
+	initializeDiscontiguousIndexableObject(J9VMThread *currentThread, J9Class *arrayClass, j9object_t objectHeader)
 	{
 		bool isCompressedReferences = J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(currentThread);
-
 		if (isCompressedReferences) {
-			J9IndexableObjectDiscontiguousCompressed *header = (J9IndexableObjectDiscontiguousCompressed*)*objectHeader;
+			J9IndexableObjectDiscontiguousCompressed *header = (J9IndexableObjectDiscontiguousCompressed *)objectHeader;
 			header->clazz = (uint32_t)(uintptr_t)arrayClass;
 			header->mustBeZero = 0;
 			header->size = 0;
 #if defined(J9VM_ENV_DATA64)
-			uintptr_t headerSize = sizeof(J9IndexableObjectDiscontiguousCompressed);
-			header->dataAddr = (void *)((uintptr_t)header + headerSize);
-#endif /* J9VM_ENV_DATA64 */
+			if (_isIndexableDataAddrPresent) {
+				((J9IndexableObjectWithDataAddressDiscontiguousCompressed *)header)->dataAddr = NULL;
+			}
+#endif /* defined(J9VM_ENV_DATA64) */
 		} else {
-			J9IndexableObjectDiscontiguousFull *header = (J9IndexableObjectDiscontiguousFull*)*objectHeader;
+			J9IndexableObjectDiscontiguousFull *header = (J9IndexableObjectDiscontiguousFull *)objectHeader;
 			header->clazz = (uintptr_t)arrayClass;
 			header->mustBeZero = 0;
 			header->size = 0;
 #if defined(J9VM_ENV_DATA64)
-			uintptr_t headerSize = sizeof(J9IndexableObjectDiscontiguousFull);
-			header->dataAddr = (void *)((uintptr_t)header + headerSize);
-#endif /* J9VM_ENV_DATA64 */
+			if (_isIndexableDataAddrPresent) {
+				((J9IndexableObjectWithDataAddressDiscontiguousFull *)header)->dataAddr = NULL;
+			}
+#endif /* defined(J9VM_ENV_DATA64) */
 		}
 	}
 
@@ -142,21 +148,15 @@ private:
 
 #if !defined(J9VM_ENV_DATA64)
 			if (validSize)
-#endif /* J9VM_ENV_DATA64 */
+#endif /* !defined(J9VM_ENV_DATA64) */
 			{
 				/* Calculate the size of the object */
-				uintptr_t const headerSize = J9VMTHREAD_CONTIGUOUS_HEADER_SIZE(currentThread);
+				uintptr_t const headerSize = J9VMTHREAD_CONTIGUOUS_INDEXABLE_HEADER_SIZE(currentThread);
 				uintptr_t const dataSize = ((uintptr_t)size) * J9ARRAYCLASS_GET_STRIDE(arrayClass);
 				uintptr_t allocateSize = ROUND_UP_TO_POWEROF2(dataSize + headerSize, _objectAlignmentInBytes);
-#if defined(J9VM_ENV_DATA64)
-				if (allocateSize < J9_GC_MINIMUM_INDEXABLE_OBJECT_SIZE) {
-					allocateSize = J9_GC_MINIMUM_INDEXABLE_OBJECT_SIZE;
-				}
-#else /* !J9VM_ENV_DATA64 */
 				if (allocateSize < J9_GC_MINIMUM_OBJECT_SIZE) {
 					allocateSize = J9_GC_MINIMUM_OBJECT_SIZE;
 				}
-#endif /* J9VM_ENV_DATA64 */
 				/* Allocate the memory */
 				j9object_t objectHeader = NULL;
 
@@ -223,7 +223,7 @@ private:
 				}
 
 				/* Initialize the object */
-				initializeContiguousIndexableObject(currentThread, initializeSlots, arrayClass, size, dataSize, &objectHeader);
+				initializeContiguousIndexableObject(currentThread, initializeSlots, arrayClass, size, dataSize, objectHeader);
 
 				if (memoryBarrier) {
 					VM_AtomicSupport::writeBarrier();
@@ -233,10 +233,10 @@ private:
 		} else {
 #if defined(J9VM_ENV_DATA64)
 			/* Calculate size of indexable object */
-			uintptr_t const headerSize = J9VMTHREAD_DISCONTIGUOUS_HEADER_SIZE(currentThread);
+			uintptr_t const headerSize = J9VMTHREAD_DISCONTIGUOUS_INDEXABLE_HEADER_SIZE(currentThread);
 			uintptr_t allocateSize = ROUND_UP_TO_POWEROF2(headerSize, _objectAlignmentInBytes);
-			/* Discontiguous header size is always equal or greater than J9_GC_MINIMUM_INDEXABLE_OBJECT_SIZE; therefore,
-			 * there's no need to check if allocateSize is less than J9_GC_MINIMUM_INDEXABLE_OBJECT_SIZE
+			/* Discontiguous header size is always equal or greater than J9_GC_MINIMUM_OBJECT_SIZE; therefore,
+			 * there's no need to check if allocateSize is less than J9_GC_MINIMUM_OBJECT_SIZE
 			 */
 #else
 			/* Zero-length array is discontiguous - assume minimum object size */
@@ -297,7 +297,7 @@ private:
 			}
 
 			/* Initialize the object */
-			initializeDiscontiguousIndexableObject(currentThread, arrayClass, &objectHeader);
+			initializeDiscontiguousIndexableObject(currentThread, arrayClass, objectHeader);
 
 			if (memoryBarrier) {
 				VM_AtomicSupport::writeBarrier();
@@ -319,6 +319,10 @@ public:
 	 */
 	MM_ObjectAllocationAPI(J9VMThread *currentThread)
 		: _gcAllocationType(currentThread->javaVM->gcAllocationType)
+		, _contiguousIndexableHeaderSize(currentThread->contiguousIndexableHeaderSize)
+#if defined(J9VM_ENV_DATA64)
+		, _isIndexableDataAddrPresent(currentThread->isIndexableDataAddrPresent)
+#endif /* defined(J9VM_ENV_DATA64) */
 #if defined(J9VM_GC_BATCH_CLEAR_TLH)
 		, _initializeSlotsOnTLHAllocate(currentThread->javaVM->initializeSlotsOnTLHAllocate)
 #endif /* J9VM_GC_BATCH_CLEAR_TLH */

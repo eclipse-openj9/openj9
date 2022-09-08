@@ -191,6 +191,13 @@ allocateVMThread(J9JavaVM * vm, omrthread_t osThread, UDATA privateFlags, void *
 	newThread->threadObject = threadObject;
 	newThread->stackWalkState = &(newThread->inlineStackWalkState);
 	newThread->javaVM = vm;
+
+	newThread->contiguousIndexableHeaderSize = vm->contiguousIndexableHeaderSize;
+	newThread->discontiguousIndexableHeaderSize = vm->discontiguousIndexableHeaderSize;
+#if defined(J9VM_ENV_DATA64)
+	newThread->isIndexableDataAddrPresent = vm->isIndexableDataAddrPresent;
+#endif /* defined(J9VM_ENV_DATA64) */
+
 	newThread->privateFlags = privateFlags;
 	if (vm->extendedRuntimeFlags & J9_EXTENDED_RUNTIME_DEBUG_VM_ACCESS) {
 		setEventFlag(newThread, J9_PUBLIC_FLAGS_DEBUG_VM_ACCESS);
