@@ -79,6 +79,9 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void * reserved)
    IDATA argIndexRIEnabled = 0;
    IDATA argIndexRIDisabled = 0;
 
+   IDATA argIndexPerfEnabled = 0;
+   IDATA argIndexPerfDisabled = 0;
+
    static bool isJIT = false;
    static bool isAOT = false;
 
@@ -134,6 +137,13 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void * reserved)
          // Determine if user disabled Runtime Instrumentation
          if (argIndexRIEnabled >= 0 || argIndexRIDisabled >= 0)
             TR::Options::_hwProfilerEnabled = (argIndexRIDisabled > argIndexRIEnabled) ? TR_no : TR_yes;
+
+         argIndexPerfEnabled = FIND_AND_CONSUME_ARG(EXACT_MATCH, "-XX:+PerfTool", 0);
+         argIndexPerfDisabled = FIND_AND_CONSUME_ARG(EXACT_MATCH, "-XX:-PerfTool", 0);
+
+         // Determine if user disabled PerfTool
+         if (argIndexPerfEnabled >= 0 || argIndexPerfDisabled >= 0)
+            TR::Options::_perfToolEnabled = (argIndexPerfDisabled > argIndexPerfEnabled) ? TR_no : TR_yes;
 
          TR::Options::_doNotProcessEnvVars = (FIND_AND_CONSUME_ARG(EXACT_MATCH, "-XX:doNotProcessJitEnvVars", 0) >= 0);
 
