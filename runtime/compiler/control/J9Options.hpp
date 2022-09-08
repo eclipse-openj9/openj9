@@ -305,6 +305,7 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
    static int32_t _hwprofilerNumOutstandingBuffers;
 
    static TR_YesNoMaybe _hwProfilerEnabled;
+   static TR_YesNoMaybe _perfToolEnabled;
    static uint32_t _hwprofilerHotOptLevelThreshold;
    static uint32_t _hwprofilerScorchingOptLevelThreshold;
    static uint32_t _hwprofilerWarmOptLevelThreshold;
