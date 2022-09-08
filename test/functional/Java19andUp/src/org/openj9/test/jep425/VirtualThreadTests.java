@@ -141,6 +141,55 @@ public class VirtualThreadTests {
 		}
 	}
 
+	private static volatile boolean testThread1_ready = false;
+
+	@Test
+	public void test_YieldedVirtualThreadGetStackTrace() {
+		try {
+			Thread t = Thread.ofVirtual().name("yielded-stackwalker").start(() -> {
+					testThread1_ready = true;
+					LockSupport.park();
+				});
+			while (!testThread1_ready) {
+				Thread.sleep(10);
+			}
+			// Let virtual thread park
+			Thread.sleep(500);
+
+			StackTraceElement[] ste = t.getStackTrace();
+			AssertJUnit.assertTrue("Expected 11 frames, got " + ste.length, (11 == ste.length));
+			AssertJUnit.assertTrue("Expected top frame to be yieldImpl, got " + ste[0].getMethodName(), ste[0].getMethodName().equals("yieldImpl"));
+			LockSupport.unpark(t);
+			t.join();
+		} catch (Exception e) {
+			Assert.fail("Unexpected exception occured : " + e.getMessage() , e);
+		}
+	}
+
+	private static volatile boolean testThread2_state = false;
+
+	@Test
+	public void test_RunningVirtualThreadGetStackTrace() {
+		try {
+			Thread t = Thread.ofVirtual().name("running-stackwalker").start(() -> {
+					testThread2_state = true;
+					while (testThread2_state);
+				});
+			while (!testThread2_state) {
+				Thread.sleep(10);
+			}
+
+			StackTraceElement[] ste = t.getStackTrace();
+			AssertJUnit.assertTrue("Expected 4 frames, got " + ste.length, (4 == ste.length));
+			AssertJUnit.assertTrue("Expected top frame to be VirtualThreadTests class, got " + ste[0].toString(), ste[0].getClassName().equals("org.openj9.test.jep425.VirtualThreadTests"));
+
+			testThread2_state = false;
+			t.join();
+		} catch (Exception e) {
+			Assert.fail("Unexpected exception occured : " + e.getMessage() , e);
+		}
+	}
+
 	private static int readVirtualThreadStates(Class vthreadCls, String fieldName) throws Exception {
 		Field vthreadState = vthreadCls.getDeclaredField(fieldName);
 		vthreadState.setAccessible(true);
