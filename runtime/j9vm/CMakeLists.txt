@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2021 IBM Corp. and others
+# Copyright (c) 2017, 2022 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,9 +34,9 @@ target_sources(jvm_common INTERFACE
 	${CMAKE_CURRENT_SOURCE_DIR}/j8vmi.c
 	${CMAKE_CURRENT_SOURCE_DIR}/j9memcategories.c
 	${CMAKE_CURRENT_SOURCE_DIR}/java11vmi.c
-	${CMAKE_CURRENT_SOURCE_DIR}/javanextvmi.c
 	${CMAKE_CURRENT_SOURCE_DIR}/jvm.c
 	${CMAKE_CURRENT_SOURCE_DIR}/vmi.c
+	${CMAKE_CURRENT_SOURCE_DIR}/javanextvmi.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/asgct.cpp
 )
 

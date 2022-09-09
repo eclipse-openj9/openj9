@@ -390,12 +390,12 @@ _IF([JAVA_SPEC_VERSION >= 19],
 _IF([JAVA_SPEC_VERSION >= 19],
 	[_X(JVM_IsPreviewEnabled, JNICALL, false, void, void)])
 _IF([JAVA_SPEC_VERSION >= 19],
-	[_X(JVM_VirtualThreadMountBegin, JNICALL, false, void, JNIEnv *env, jobject vthread, jboolean first_mount)])
+	[_X(JVM_VirtualThreadMountBegin, JNICALL, false, void, JNIEnv *env, jobject thread, jboolean firstMount)])
 _IF([JAVA_SPEC_VERSION >= 19],
-	[_X(JVM_VirtualThreadMountEnd, JNICALL, false, void, JNIEnv *env, jobject vthread, jboolean first_mount)])
+	[_X(JVM_VirtualThreadMountEnd, JNICALL, false, void, JNIEnv *env, jobject thread, jboolean firstMount)])
 _IF([JAVA_SPEC_VERSION >= 19],
-	[_X(JVM_VirtualThreadUnmountBegin, JNICALL, false, void, JNIEnv *env, jobject vthread, jboolean last_unmount)])
+	[_X(JVM_VirtualThreadUnmountBegin, JNICALL, false, void, JNIEnv *env, jobject thread, jboolean lastUnmount)])
 _IF([JAVA_SPEC_VERSION >= 19],
-	[_X(JVM_VirtualThreadUnmountEnd, JNICALL, false, void, JNIEnv *env, jobject vthread, jboolean last_unmount)])
+	[_X(JVM_VirtualThreadUnmountEnd, JNICALL, false, void, JNIEnv *env, jobject thread, jboolean lastUnmount)])
 _IF([JAVA_SPEC_VERSION >= 20],
 	[_X(JVM_GetClassFileVersion, JNICALL, false, jint, JNIEnv *env, jclass cls)])
