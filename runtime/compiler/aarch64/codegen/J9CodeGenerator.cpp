@@ -216,7 +216,11 @@ bool
 J9::ARM64::CodeGenerator::suppressInliningOfRecognizedMethod(TR::RecognizedMethod method)
    {
    if (method == TR::java_lang_Math_min_F ||
-       method == TR::java_lang_Math_max_F)
+       method == TR::java_lang_Math_max_F ||
+       method == TR::java_lang_Math_fma_D ||
+       method == TR::java_lang_Math_fma_F ||
+       method == TR::java_lang_StrictMath_fma_D ||
+       method == TR::java_lang_StrictMath_fma_F)
       {
       return true;
       }
