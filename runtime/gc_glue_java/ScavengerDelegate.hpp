@@ -127,8 +127,6 @@ public:
 	void mainThreadGarbageCollect_scavengeSuccess(MM_EnvironmentBase *envBase);
 	bool internalGarbageCollect_shouldPercolateGarbageCollect(MM_EnvironmentBase *envBase, PercolateReason *reason, U_32 *gcCode);
 	GC_ObjectScanner *getObjectScanner(MM_EnvironmentStandard *env, omrobjectptr_t objectPtr, void *allocSpace, uintptr_t flags, MM_ScavengeScanReason reason, bool *shouldRemember);
-	/* TODO:it is old API just for cross dependency , need to remove at second stage merge */
-	GC_ObjectScanner *getObjectScanner(MM_EnvironmentStandard *env, omrobjectptr_t objectPtr, void *allocSpace, uintptr_t flags);
 	void flushReferenceObjects(MM_EnvironmentStandard *env);
 	bool hasIndirectReferentsInNewSpace(MM_EnvironmentStandard *env, omrobjectptr_t objectPtr);
 	bool scavengeIndirectObjectSlots(MM_EnvironmentStandard *env, omrobjectptr_t objectPtr);
