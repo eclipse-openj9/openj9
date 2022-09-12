@@ -4345,11 +4345,11 @@ jint
 isPinnedContinuation(J9VMThread *currentThread);
 
 /**
- * @brief  Walk the stackframes associated with Continuation object
+ * @brief Walk the stackframes associated with a continuation
  *
- * @param currentThread
- * @param continuationObject
- * @return UDATA
+ * @param currentThread current thread
+ * @param continuation the continuation to be walked
+ * @return 0 on success and non-zero on failure
  */
 UDATA
 walkContinuationStackFrames(J9VMThread *currentThread, J9VMContinuation *continuation, J9StackWalkState *walkState);

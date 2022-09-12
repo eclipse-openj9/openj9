@@ -1809,3 +1809,37 @@ jvmtiTLSGet(J9VMThread *vmThread, j9object_t thread, UDATA key)
 	return (J9JVMTIThreadData *)omrthread_tls_get(vmThread->osThread, key);
 #endif /* JAVA_SPEC_VERSION >= 19 */
 }
+
+UDATA
+genericWalkStackFramesHelper(J9VMThread *currentThread, J9VMThread *targetThread, j9object_t threadObject, J9StackWalkState *walkState)
+{
+	J9JavaVM *vm = currentThread->javaVM;
+	UDATA rc = J9_STACKWALK_RC_NONE;
+
+#if JAVA_SPEC_VERSION >= 19
+	if (IS_VIRTUAL_THREAD(currentThread, threadObject)) {
+		if (NULL != targetThread) {
+			walkState->walkThread = targetThread;
+			rc = vm->walkStackFrames(currentThread, walkState);
+		} else {
+			j9object_t contObject = (j9object_t)J9VMJAVALANGVIRTUALTHREAD_CONT(currentThread, threadObject);
+			J9VMContinuation *continuation = J9VMJDKINTERNALVMCONTINUATION_VMREF(currentThread, contObject);
+			vm->internalVMFunctions->walkContinuationStackFrames(currentThread, continuation, walkState);
+		}
+	} else
+#endif /* JAVA_SPEC_VERSION >= 19 */
+	{
+#if JAVA_SPEC_VERSION >= 19
+		J9VMContinuation *currentContinuation = targetThread->currentContinuation;
+		if (NULL != currentContinuation) {
+			rc = vm->internalVMFunctions->walkContinuationStackFrames(currentThread, currentContinuation, walkState);
+		} else
+#endif /* JAVA_SPEC_VERSION >= 19 */
+		{
+			walkState->walkThread = targetThread;
+			rc = vm->walkStackFrames(currentThread, walkState);
+		}
+	}
+
+	return rc;
+}
