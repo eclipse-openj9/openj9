@@ -2649,12 +2649,12 @@ jvmtiGetConstantPool_addReference(jvmtiGcp_translation *translation, UDATA cpInd
 static jvmtiError
 jvmtiGetConstantPool_addMethodHandle(jvmtiGcp_translation *translation, UDATA cpIndex, U_8 cpType, J9ROMMethodHandleRef *ref, U_32 *sunCpIndex)
 {
-	jvmtiGcp_translationEntry entry;
-	jvmtiGcp_translationEntry *htEntry;
-	U_8 fieldOrMethodCpType;
+	jvmtiGcp_translationEntry entry = {0};
+	jvmtiGcp_translationEntry *htEntry = NULL;
+	U_8 fieldOrMethodCpType = 0;
 
 	/* Add the Reference item to the hashtable, use our CP index as key */
-	entry.key = (void *) cpIndex;
+	entry.key = (void *)cpIndex;
 	entry.cpType = cpType;
 	entry.sunCpIndex = *sunCpIndex;
 	entry.type.methodHandle.methodOrFieldRefIndex = (*sunCpIndex) + 1;
@@ -2674,27 +2674,27 @@ jvmtiGetConstantPool_addMethodHandle(jvmtiGcp_translation *translation, UDATA cp
 	case MH_REF_PUTSTATIC:
 		fieldOrMethodCpType = CFR_CONSTANT_Fieldref;
 		break;
-
 	case MH_REF_INVOKEVIRTUAL:
 	case MH_REF_INVOKESTATIC:
 	case MH_REF_INVOKESPECIAL:
 	case MH_REF_NEWINVOKESPECIAL:
 		fieldOrMethodCpType = CFR_CONSTANT_Methodref;
 		break;
-
 	case MH_REF_INVOKEINTERFACE:
 		fieldOrMethodCpType = CFR_CONSTANT_InterfaceMethodref;
 		break;
 	default:
-		Assert_JVMTI_true(0);
+		Assert_JVMTI_unreachable();
 		return JVMTI_ERROR_INTERNAL;
 	}
 
 	/* Ensure the field/method ref is also added */
-	return jvmtiGetConstantPool_addReference(translation, ref->methodOrFieldRefIndex,
-						fieldOrMethodCpType,
-						(J9ROMFieldRef *) &translation->romConstantPool[ref->methodOrFieldRefIndex],
-						sunCpIndex);
+	return jvmtiGetConstantPool_addReference(
+				translation,
+				ref->methodOrFieldRefIndex,
+				fieldOrMethodCpType,
+				(J9ROMFieldRef *)&translation->romConstantPool[ref->methodOrFieldRefIndex],
+				sunCpIndex);
 }
 
 
