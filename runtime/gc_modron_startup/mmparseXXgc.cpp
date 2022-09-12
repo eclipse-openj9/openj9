@@ -1167,7 +1167,7 @@ gcParseXXgcArguments(J9JavaVM *vm, char *optArg)
 				returnValue = JNI_EINVAL;
 				break;
 			}
-			extensions->gcOnIdleCompactThreshold = ((float)percentage) / 100.0f;
+			extensions->pageFragmentationCompactThreshold = ((float)percentage) / 100.0f;
 			continue;
 		}
 #endif /* defined(OMR_GC_IDLE_HEAP_MANAGER) */
