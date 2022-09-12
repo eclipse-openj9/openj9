@@ -326,6 +326,9 @@ struct J9UpcallSigType;
 struct J9UpcallMetaData;
 struct J9UpcallNativeSignature;
 #endif /* JAVA_SPEC_VERSION >= 16 */
+#if JAVA_SPEC_VERSION >= 19
+struct J9VMContinuation;
+#endif /* JAVA_SPEC_VERSION >= 19 */
 
 /* @ddr_namespace: map_to_type=J9CfrError */
 
@@ -4901,7 +4904,7 @@ typedef struct J9InternalVMFunctions {
 	U_8 * (JNICALL *native2InterpJavaUpcallStruct)(struct J9UpcallMetaData *data, void *argsListPointer);
 #endif /* JAVA_SPEC_VERSION >= 16 */
 #if JAVA_SPEC_VERSION >= 19
-	UDATA (*walkContinuationStackFrames)(struct J9VMThread *currentThread, j9object_t continuationObject, J9StackWalkState *walkState);
+	UDATA (*walkContinuationStackFrames)(struct J9VMThread *currentThread, struct J9VMContinuation *continuation, J9StackWalkState *walkState);
 #endif /* JAVA_SPEC_VERSION >= 19 */
 } J9InternalVMFunctions;
 

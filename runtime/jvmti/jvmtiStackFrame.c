@@ -319,7 +319,8 @@ jvmtiGetFrameCount(jvmtiEnv* env,
 			if (NULL == targetThread) {
 				j9object_t threadObject = J9_JNI_UNWRAP_REFERENCE(thread);
 				j9object_t contObject = (j9object_t)J9VMJAVALANGVIRTUALTHREAD_CONT(currentThread, threadObject);
-				vmFuncs->walkContinuationStackFrames(currentThread, contObject, &walkState);
+				J9VMContinuation *continuation = J9VMJDKINTERNALVMCONTINUATION_VMREF(currentThread, contObject);
+				vmFuncs->walkContinuationStackFrames(currentThread, continuation, &walkState);
 			} else
 #endif /* JAVA_SPEC_VERSION >= 19 */
 			{
@@ -448,7 +449,8 @@ jvmtiGetFrameLocation(jvmtiEnv *env,
 			if (NULL == targetThread) {
 				j9object_t threadObject = J9_JNI_UNWRAP_REFERENCE(thread);
 				j9object_t contObject = (j9object_t)J9VMJAVALANGVIRTUALTHREAD_CONT(currentThread, threadObject);
-				vmFuncs->walkContinuationStackFrames(currentThread, contObject, &walkState);
+				J9VMContinuation *continuation = J9VMJDKINTERNALVMCONTINUATION_VMREF(currentThread, contObject);
+				vmFuncs->walkContinuationStackFrames(currentThread, continuation, &walkState);
 			} else
 #endif /* JAVA_SPEC_VERSION >= 19 */
 			{
@@ -658,7 +660,8 @@ jvmtiInternalGetStackTrace(
 	}
 #if JAVA_SPEC_VERSION >= 19
 	else if (NULL != continuationObject) {
-		vm->internalVMFunctions->walkContinuationStackFrames(currentThread, continuationObject, &walkState);
+		J9VMContinuation *continuation = J9VMJDKINTERNALVMCONTINUATION_VMREF(currentThread, continuationObject);
+		vm->internalVMFunctions->walkContinuationStackFrames(currentThread, continuation, &walkState);
 	}
 #endif /* JAVA_SPEC_VERSION >= 19 */
 	if (start_depth == 0) {
@@ -687,7 +690,8 @@ jvmtiInternalGetStackTrace(
 	}
 #if JAVA_SPEC_VERSION >= 19
 	else if (NULL != continuationObject) {
-		vm->internalVMFunctions->walkContinuationStackFrames(currentThread, continuationObject, &walkState);
+		J9VMContinuation *continuation = J9VMJDKINTERNALVMCONTINUATION_VMREF(currentThread, continuationObject);
+		vm->internalVMFunctions->walkContinuationStackFrames(currentThread, continuation, &walkState);
 	}
 #endif /* JAVA_SPEC_VERSION >= 19 */
 	if (NULL == walkState.userData1) {

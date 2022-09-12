@@ -4352,7 +4352,7 @@ isPinnedContinuation(J9VMThread *currentThread);
  * @return UDATA
  */
 UDATA
-walkContinuationStackFrames(J9VMThread *currentThread, j9object_t continuationObject, J9StackWalkState *walkState);
+walkContinuationStackFrames(J9VMThread *currentThread, J9VMContinuation *continuation, J9StackWalkState *walkState);
 #endif /* JAVA_SPEC_VERSION >= 19 */
 
 /* ---------------- hookableAsync.c ---------------- */

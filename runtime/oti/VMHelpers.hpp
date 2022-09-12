@@ -2046,7 +2046,8 @@ exit:
 	{
 		UDATA rc = J9_STACKWALK_RC_NONE;
 #if JAVA_SPEC_VERSION >= 19
-		rc = vmThread->javaVM->internalVMFunctions->walkContinuationStackFrames(vmThread, continuationObject, walkState);
+		J9VMContinuation *continuation = J9VMJDKINTERNALVMCONTINUATION_VMREF(vmThread, continuationObject);
+		rc = vmThread->javaVM->internalVMFunctions->walkContinuationStackFrames(vmThread, continuation, walkState);
 #endif /* JAVA_SPEC_VERSION >= 19 */
 		return rc;
 	}
