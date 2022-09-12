@@ -1,7 +1,7 @@
 package org.openj9.test.java.security;
 
 /*******************************************************************************
- * Copyright (c) 1998, 2020 IBM Corp. and others
+ * Copyright (c) 1998, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -255,27 +255,21 @@ public class Test_AccessController {
 					return AccessController.doPrivilegedWithCombiner(new PrivilegedAction<Boolean>() {
 						public Boolean run() {
 							try {
-								try {
-									AccessControlContext accNoMH = AccessController.getContext();
-									AccessControlContext accViaMH = (AccessControlContext)MethodHandles.lookup()
-											.findStatic(AccessController.class, "getContext",
-													MethodType.methodType(AccessControlContext.class))
-											.invoke();
-									if (!accNoMH.equals(accViaMH)) {
-										logger.error("AccessControlContext returned from AccessController.getContext() should be equal w/o MethodHandles.");
-										return false;
-									}
-								} catch (Throwable e) {
-									logger.error("FAIL: unexpected exception." + e);
+								AccessControlContext accNoMH = AccessController.getContext();
+								AccessControlContext accViaMH = (AccessControlContext)MethodHandles.lookup()
+										.findStatic(AccessController.class, "getContext",
+												MethodType.methodType(AccessControlContext.class))
+										.invoke();
+								if (!accNoMH.equals(accViaMH)) {
+									logger.error("AccessControlContext returned from AccessController.getContext() should be equal w/o MethodHandles.");
 									return false;
 								}
-
-								AccessController.checkPermission(READ_PROP_USER_DIR);
-								logger.error("FAILED: checkPermission should NOT succeed!");
+							} catch (Throwable e) {
+								logger.error("FAIL: unexpected exception." + e);
 								return false;
-							} catch (AccessControlException ace) {
-								logger.debug(PASSED_ACCESS_CONTROL_EXCEPTION_EXPECTED);
 							}
+							// The action is performed according to the caller's protection domain, not the upper doPrivileged AccessControlContext.
+							AccessController.checkPermission(READ_PROP_USER_DIR);
 							return true;
 						}
 					});

@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar18-SE]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 /*******************************************************************************
  * Copyright (c) 1998, 2022 IBM Corp. and others
  *
@@ -832,7 +832,7 @@ public static <T> T doPrivileged (PrivilegedExceptionAction<T> action, AccessCon
  */
 @CallerSensitive
 public static <T> T doPrivilegedWithCombiner(PrivilegedAction<T> action) {
-	return doPrivileged(action, getContextHelper(true));
+	return doPrivileged(action, doPrivilegedWithCombinerHelper(null));
 }
 
 /**
@@ -859,7 +859,7 @@ public static <T> T doPrivilegedWithCombiner(PrivilegedAction<T> action) {
 public static <T> T doPrivilegedWithCombiner(PrivilegedExceptionAction<T> action)
 	throws PrivilegedActionException
 {
-	return doPrivileged(action, getContextHelper(true));
+	return doPrivileged(action, doPrivilegedWithCombinerHelper(null));
 }
 
 /**
@@ -938,15 +938,7 @@ public static <T> T doPrivilegedWithCombiner(PrivilegedAction<T> action,
 		AccessControlContext context, Permission... perms)
 {
 	checkPermsNPE(perms);
-	ProtectionDomain domain = getCallerPD(1);
-	ProtectionDomain[] pdArray = (domain == null) ? null : new ProtectionDomain[] { domain };
-	AccessControlContext fixedContext = new AccessControlContext(context, pdArray, getNewAuthorizedState(context, domain));
-	if (null == context) {
-		AccessControlContext parentContext = getContextHelper(true);
-		fixedContext.domainCombiner = parentContext.domainCombiner;
-		fixedContext.nextStackAcc = parentContext;
-	}
-	return doPrivileged(action, fixedContext, perms);
+	return doPrivileged(action, doPrivilegedWithCombinerHelper(context), perms);
 }
 
 /**
@@ -1021,15 +1013,27 @@ public static <T> T doPrivilegedWithCombiner(PrivilegedExceptionAction<T> action
 	throws PrivilegedActionException
 {
 	checkPermsNPE(perms);
-	ProtectionDomain domain = getCallerPD(1);
+	return doPrivileged(action, doPrivilegedWithCombinerHelper(context), perms);
+}
+
+/**
+ * Helper method to construct an AccessControlContext for doPrivilegedWithCombiner methods.
+ *
+ * @param   context an AccessControlContext, if it is null, use getContextHelper() to construct a context.
+ *
+ * @return  An AccessControlContext to be applied to the doPrivileged(action, context, perms).
+ */
+@CallerSensitive
+private static AccessControlContext doPrivilegedWithCombinerHelper(AccessControlContext context) {
+	ProtectionDomain domain = getCallerPD(2);
 	ProtectionDomain[] pdArray = (domain == null) ? null : new ProtectionDomain[] { domain };
 	AccessControlContext fixedContext = new AccessControlContext(context, pdArray, getNewAuthorizedState(context, domain));
-	if (null == context) {
+	if (context == null) {
 		AccessControlContext parentContext = getContextHelper(true);
 		fixedContext.domainCombiner = parentContext.domainCombiner;
 		fixedContext.nextStackAcc = parentContext;
 	}
-	return doPrivileged(action, fixedContext, perms);
+	return fixedContext;
 }
 
 }
