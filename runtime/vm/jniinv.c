@@ -24,6 +24,9 @@
 #if defined (LINUXPPC64) || (defined (AIXPPC) && defined (PPC64)) || defined (J9ZOS39064) || defined(J9ZTPF)
 #include <stdlib.h> /* for getenv */
 #endif
+#ifdef J9ZTPF
+#include <tpf/cujvm.h> /* for z/TPF OS VM exit hook: cjvm_jvm_shutdown_hook() */
+#endif
 
 #include "j9user.h"
 #include "j9.h"
@@ -364,7 +367,7 @@ protectedDestroyJavaVM(J9PortLibrary* portLibrary, void * userData)
 	setEventFlag(vmThread, J9_PUBLIC_FLAGS_STOPPED);
 
 	/* We are dead at this point. Clear the suspend bit prior to triggering the thread end hook */
-    clearHaltFlag(vmThread, J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND);
+	clearHaltFlag(vmThread, J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND);
 
 	TRIGGER_J9HOOK_VM_THREAD_END(vm->hookInterface, vmThread, 1);
 
@@ -423,6 +426,11 @@ protectedDestroyJavaVM(J9PortLibrary* portLibrary, void * userData)
 #endif /* COUNT_BYTECODE_PAIRS */
 
 		Trc_JNIinv_protectedDestroyJavaVM_CallingExitHookSecondary();
+
+#ifdef J9ZTPF
+		/* run z/TPF OS exit hook */
+		cjvm_jvm_shutdown_hook();
+#endif
 		
 		if (vm->exitHook) {
 #if defined(J9VM_ZOS_3164_INTEROPERABILITY)
@@ -457,6 +465,11 @@ protectedDestroyJavaVM(J9PortLibrary* portLibrary, void * userData)
 #endif
 
 	Trc_JNIinv_protectedDestroyJavaVM_CallingExitHook();
+
+#ifdef J9ZTPF
+	/* run z/TPF OS exit hook */
+	cjvm_jvm_shutdown_hook();
+#endif
 
 	if (vm->exitHook) {
 #if defined(J9VM_ZOS_3164_INTEROPERABILITY)

@@ -96,6 +96,10 @@
 #include "Xj9I5OSDebug.H"
 #endif
 
+#ifdef J9ZTPF
+#include <tpf/cujvm.h> /* for z/TPF OS VM exit hook: cjvm_jvm_shutdown_hook() */
+#endif
+
 /*#define JVMINIT_UNIT_TEST*/
 
 #include "j2sever.h"
@@ -580,6 +584,11 @@ exitJavaVM(J9VMThread * vmThread, IDATA rc)
 #if defined(COUNT_BYTECODE_PAIRS)
 		printBytecodePairs(vm);
 #endif /* COUNT_BYTECODE_PAIRS */
+
+#ifdef J9ZTPF
+		/* run z/TPF OS exit hook */
+		cjvm_jvm_shutdown_hook();
+#endif
 
 		if (vm->exitHook) {
 #if defined(J9VM_ZOS_3164_INTEROPERABILITY)
