@@ -5193,21 +5193,17 @@ ffi_OOM:
 		return rc;
 	}
 
-	/* jdk.internal.vm.Continuation: private static native boolean yieldImpl(boolean isFinished); */
+	/* jdk.internal.vm.Continuation: private static native boolean yieldImpl(); */
 	VMINLINE VM_BytecodeAction
 	yieldContinuationImpl(REGISTER_ARGS_LIST)
 	{
 		VM_BytecodeAction rc = EXECUTE_BYTECODE;
-		UDATA isFinished = *(I_32*)_sp;
 
 		buildInternalNativeStackFrame(REGISTER_ARGS);
 		updateVMStruct(REGISTER_ARGS);
 
 		/* store the current Continuation state and swap to carrier thread stack */
 		yieldContinuation(_currentThread);
-		if (isFinished) {
-			/* CleanupContinuation */
-		}
 
 		VMStructHasBeenUpdated(REGISTER_ARGS);
 		restoreInternalNativeStackFrame(REGISTER_ARGS);

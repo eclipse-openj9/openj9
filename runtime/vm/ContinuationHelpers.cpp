@@ -105,9 +105,9 @@ enterContinuation(J9VMThread *currentThread, j9object_t continuationObject)
 	currentThread->callOutCount = 0;
 
 	if (started) {
-		/* resuming Continuation from yield */
+		/* resuming Continuation from yieldImpl */
 		VM_OutOfLineINL_Helpers::restoreInternalNativeStackFrame(currentThread);
-		VM_OutOfLineINL_Helpers::returnSingle(currentThread, JNI_TRUE, 1);
+		VM_OutOfLineINL_Helpers::returnSingle(currentThread, JNI_TRUE, 0);
 		result = FALSE;
 	} else {
 		/* start new Continuation execution */
@@ -145,6 +145,29 @@ yieldContinuation(J9VMThread *currentThread)
 	currentThread->currentContinuation = NULL;
 
 	return result;
+}
+
+void
+freeContinuation(J9VMThread *currentThread, j9object_t continuationObject)
+{
+	J9VMContinuation *continuation = J9VMJDKINTERNALVMCONTINUATION_VMREF(currentThread, continuationObject);
+	if (NULL != continuation) {
+		PORT_ACCESS_FROM_VMC(currentThread);
+		/* Free all stack used by continuation */
+		J9JavaStack *currentStack = continuation->stackObject;
+		do {
+			J9JavaStack *previous = currentStack->previous;
+
+			freeJavaStack(currentThread->javaVM, currentStack);
+			currentStack = previous;
+		} while (NULL != currentStack);
+
+		/* Free the J9VMContinuation struct */
+		j9mem_free_memory(continuation);
+
+		/* Update Continuation object's vmRef field */
+		J9VMJDKINTERNALVMCONTINUATION_SET_VMREF(currentThread, continuationObject, NULL);
+	}
 }
 
 jint
