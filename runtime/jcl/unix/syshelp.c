@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2021 IBM Corp. and others
+ * Copyright (c) 1998, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,51 +20,29 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#ifndef ARM_EMULATED
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#endif
-#if !defined(CHORUS) && !defined(ARM_EMULATED)
-#include <utime.h>
-#endif
+#include <dirent.h>
+#include <langinfo.h>
+#include <locale.h>
+#include <pwd.h>
 #include <stdlib.h>
 #include <string.h>
-#ifndef CHORUS
+#include <sys/stat.h>
+#include <sys/types.h>
 #include <time.h>
-#include <locale.h>
-#endif
-#if !defined(ARM_EMULATED) && !defined(CHORUS)
-#include <langinfo.h>
-#endif
-#ifdef ARM_EMULATED
-#define P_tmpdir "c:\\temp"
-#endif
+#include <unistd.h>
+#include <utime.h>
 
-#if !defined(CHORUS)
-/* If pwd.h is not supported, do not define J9PWENT */
-#define J9PWENT
-#include <pwd.h>
-#endif
-
-#include <dirent.h>
-
-#include "jcl.h"
-#include "jclprots.h"
-#include "jclglob.h"
 #include "j2sever.h"
-
-
+#include "jcl.h"
+#include "jclglob.h"
+#include "jclprots.h"
 
 #if defined(J9ZOS390)
 #include "atoe.h"
 #endif
 
-
 /* JCL_J2SE */
 #define JCL_J2SE
-
-
 
 /* defineCodepageTable */
 /* NULL separated list of code page aliases. The first name is */
@@ -84,7 +62,6 @@ char* CodepageTable[] = {
 	NULL
 #endif
 };
-
 
 /**
  * Try to find the 'correct' unix temp directory, as taken from the man page for tmpnam.
@@ -110,18 +87,17 @@ char * getTmpDir(JNIEnv *env, char**envSpace) {
 	return ".";
 }
 
-
-jobject getPlatformPropertyList(JNIEnv * env, const char *strings[], int propIndex)
+jobject getPlatformPropertyList(JNIEnv *env, const char *strings[], int propIndex)
 {
 	PORT_ACCESS_FROM_ENV(env);
-	I_32 result = 0;
-	char *charResult = NULL, *envSpace = NULL;
-	jobject plist;
-	char userdir[EsMaxPath];
-	char home[EsMaxPath], *homeAlloc = NULL;
-#if defined(J9PWENT)
-	struct passwd *pwentry = NULL;
-#endif
+	char *charResult = NULL;
+	char *envSpace = NULL;
+	jobject plist = NULL;
+	char userdir[EsMaxPath] = {0};
+	char home[EsMaxPath] = {0};
+	char *homeAlloc = NULL;
+	J9VMThread *currentThread = (J9VMThread*)env;
+	J9InternalVMFunctions *vmFuncs = currentThread->javaVM->internalVMFunctions;
 
 	/* Hard coded file/path separators and other values */
 
@@ -143,25 +119,22 @@ jobject getPlatformPropertyList(JNIEnv * env, const char *strings[], int propInd
 
 	/* Get the directory where the executable was started */
 	strings[propIndex++] = "user.dir";
-#ifndef ARM_EMULATED
 	charResult = getcwd(userdir, EsMaxPath);
-#else
-	charResult = NULL;
-#endif
-	if (charResult == NULL)
+	if (charResult == NULL) {
 		strings[propIndex++] = ".";
-	else
+	} else {
 		strings[propIndex++] = charResult;
+	}
 
 	strings[propIndex++] = "user.home";
 	charResult = NULL;
 #if defined(J9ZOS390)
 	charResult = getenv("HOME");
-	if (charResult != NULL) {
+	if (NULL != charResult) {
 		strings[propIndex++] = charResult;
 	} else {
 		uid_t uid = geteuid();
-		if (uid != 0) {
+		if (0 != uid) {
 			struct passwd *userDescription = getpwuid(uid);
 			if (NULL != userDescription) {
 				charResult = userDescription->pw_dir;
@@ -181,34 +154,43 @@ jobject getPlatformPropertyList(JNIEnv * env, const char *strings[], int propInd
 
 	/* there exist situations where one of the above calls will fail.  Fall through to the Unix solution for those cases */
 #endif
-#if defined(J9PWENT)
-	/*[PR 101939] user.home not set correctly when j9 invoked via execve(x,y,null) */
-	if (charResult == NULL){
-		pwentry = getpwuid(getuid());
-		if (pwentry) {
-			charResult = pwentry->pw_dir;
-			strings[propIndex++] = charResult;
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+	/* Skip getpwuid if a checkpoint can be taken.
+	 * https://github.com/eclipse-openj9/openj9/issues/15800
+	 */
+	if (!vmFuncs->isCheckpointAllowed(currentThread))
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+	{
+		/*[PR 101939] user.home not set correctly when j9 invoked via execve(x,y,null) */
+		if (NULL == charResult) {
+			struct passwd *pwentry = getpwuid(getuid());
+			if (NULL != pwentry) {
+				charResult = pwentry->pw_dir;
+				strings[propIndex++] = charResult;
+			}
 		}
 	}
-#endif
 
-	if (charResult == NULL) {
-		result = j9sysinfo_get_env("HOME", home, sizeof(home));
-		if (!result && strlen(home) > 0) {
-			strings[propIndex++] = home;
-		} else {
-			if (result != -1) {
-				homeAlloc = j9mem_allocate_memory(result, J9MEM_CATEGORY_VM_JCL);
+	if (NULL == charResult) {
+		IDATA result = j9sysinfo_get_env("HOME", home, sizeof(home));
+		strings[propIndex] = ".";
+		if (0 == result) {
+			if (strlen(home) > 0) {
+				strings[propIndex] = home;
 			}
-			if (homeAlloc) {
+		} else if (result > 0) {
+			homeAlloc = j9mem_allocate_memory(result, J9MEM_CATEGORY_VM_JCL);
+			if (NULL != homeAlloc) {
 				result = j9sysinfo_get_env("HOME", homeAlloc, result);
-			}
-			if (homeAlloc && !result) {
-				strings[propIndex++] = homeAlloc;
+				if (0 == result) {
+					strings[propIndex] = homeAlloc;
+				}
 			} else {
-				strings[propIndex++] = ".";
+				vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
+				goto failed;
 			}
 		}
+		propIndex += 1;
 	}
 
 	/* Get the Temp Dir name */
@@ -222,14 +204,16 @@ jobject getPlatformPropertyList(JNIEnv * env, const char *strings[], int propInd
 	}
 
 	plist = createSystemPropertyList(env, strings, propIndex);
-	if (envSpace)
+	if (NULL != envSpace) {
 		jclmem_free_memory(env,envSpace);
-	if (homeAlloc) jclmem_free_memory(env, homeAlloc);
+	}
+
+failed:
+	if (NULL != homeAlloc) {
+		jclmem_free_memory(env, homeAlloc);
+	}
 	return plist;
 }
-
-#undef J9PWENT
-
 
 /**
  * Turns a platform independent DLL name into a platform specific one.
@@ -285,8 +269,6 @@ char *getPlatformFileEncoding(JNIEnv * env, char *codepageProp, int propSize, in
 		}
 	}
 	codepage = nl_langinfo(_NL_CTYPE_CODESET_NAME);
-#elif defined(ARM_EMULATED)	|| defined(CHORUS)
-	codepage = NULL;
 #elif defined(OSX)
 	/* LC_ALL overwrites LC_CTYPE or LANG;
 	 * LC_CTYPE applies to classification and conversion of characters, and to multibyte and wide characters;
