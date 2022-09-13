@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -200,9 +200,119 @@ public:
 	static VMINLINE I_32
 	inlineComputeObjectAddressToHash(J9JavaVM *vm, j9object_t objectPointer)
 	{
-		return inlineConvertValueToHash(vm, (UDATA)objectPointer);
+		return convertObjectToHash(vm, objectPointer);
 	}
 
+	static VMINLINE I_32
+	convertObjectToHash(J9JavaVM *vm, j9object_t objectPointer)
+	{
+		I_32 hashValue = 0;
+		J9Class *clazz = J9OBJECT_CLAZZ(vm->internalVMFunctions->currentVMThread(vm), ((uintptr_t)objectPointer));
+
+		if ((NULL != clazz) && J9_IS_J9CLASS_VALUETYPE(clazz)) {
+			hashValue = inlineConvertValueObjectToHash(vm, objectPointer, clazz);
+		} else {
+			hashValue = inlineConvertValueToHash(vm, (UDATA)objectPointer);
+		}
+
+		return hashValue;
+	}
+
+	static VMINLINE I_32
+	inlineConvertValueObjectToHash(J9JavaVM *vm, j9object_t objectPointer, J9Class *clazz)
+	{
+		return convertValueObjectAtOffsetToHash(vm, objectPointer, clazz, J9VMTHREAD_OBJECT_HEADER_SIZE(vm->internalVMFunctions->currentVMThread(vm)));
+	}
+
+	static I_32
+	convertValueObjectAtOffsetToHash(J9JavaVM *vm, j9object_t objectPointer, J9Class *clazz, UDATA startOffset)
+	{
+		U_32 hashValue = getSalt(vm, (UDATA) objectPointer);
+		U_32 numBytesHashed = 0;
+
+		J9VMThread *currentThread = vm->internalVMFunctions->currentVMThread(vm);
+		MM_ObjectAccessBarrierAPI objectAccessBarrier(currentThread);
+
+		U_32 walkFlags = J9VM_FIELD_OFFSET_WALK_INCLUDE_INSTANCE;
+		J9ROMFieldOffsetWalkState state;
+		J9ROMFieldOffsetWalkResult *result = vm->internalVMFunctions->fieldOffsetsStartDo(vm, clazz->romClass, VM_VMHelpers::getSuperclass(clazz), &state, walkFlags, clazz->flattenedClassCache);
+
+		while (NULL != result->field) {
+			UDATA fieldOffset = startOffset + result->offset;
+			J9UTF8 *signature = J9ROMNAMEANDSIGNATURE_SIGNATURE(&result->field->nameAndSignature);
+			U_8 *sigChar = J9UTF8_DATA(signature);
+
+			switch (*sigChar) {
+
+			/* 32 bit fields */
+			case 'Z': /* boolean */
+			case 'B': /* byte */
+			case 'C': /* char */
+			case 'I': /* int */
+			case 'F': /* float */
+			case 'S': { /* short */
+				U_32 datum = objectAccessBarrier.inlineMixedObjectReadU32(currentThread, objectPointer, fieldOffset);
+				hashValue = mix(hashValue, datum);
+				numBytesHashed += 4;
+				break;
+			}
+
+			/* 64 bit fields */
+			case 'J': /* long */
+			case 'D': { /* double */
+				U_64 datum = objectAccessBarrier.inlineMixedObjectReadU64(currentThread, objectPointer, fieldOffset);
+				hashValue = mix(hashValue, (U_32) (datum & 0xffffffff));
+				hashValue = mix(hashValue, (U_32) (datum >> 32));
+				numBytesHashed += 8;
+				break;
+			}
+
+			/* Non-flattenable object fields */
+			case '[': /* Array */
+			case 'L': { /* Nullable class type or interface type */
+				j9object_t fieldObject = objectAccessBarrier.inlineMixedObjectReadObject(currentThread, objectPointer, fieldOffset);
+				U_32 datum = (U_32) inlineObjectHashCode(vm, fieldObject);
+				hashValue = mix(hashValue, datum);
+				numBytesHashed += 4;
+				break;
+			}
+
+			/* Flattenable object fields */
+			case 'Q': {
+				J9Class *fieldClass = vm->internalVMFunctions->findJ9ClassInFlattenedClassCache(clazz->flattenedClassCache, sigChar + 1, J9UTF8_LENGTH(signature) - 2);
+				if (J9_IS_FIELD_FLATTENED(fieldClass, result->field)) {
+					U_32 datum = (U_32) convertValueObjectAtOffsetToHash(vm, objectPointer, fieldClass, fieldOffset);
+					hashValue = mix(hashValue, datum);
+				} else {
+					/* Unflattened objects can be hashed like any other object */
+					j9object_t fieldObject = objectAccessBarrier.inlineMixedObjectReadObject(currentThread, objectPointer, fieldOffset);
+					U_32 datum = (U_32) inlineObjectHashCode(vm, fieldObject);
+					hashValue = mix(hashValue, datum);
+				}
+				numBytesHashed += 4;
+				break;
+			}
+
+			default: {
+				break;
+			}
+			}
+
+			result = vm->internalVMFunctions->fieldOffsetsNextDo(&state);
+		}
+
+		const U_32 MUL1 = 0x85ebca6b;
+		const U_32 MUL2 = 0xc2b2ae35;
+
+		hashValue ^= numBytesHashed;
+		hashValue ^= hashValue >> 16;
+		hashValue *= MUL1;
+		hashValue ^= hashValue >> 13;
+		hashValue *= MUL2;
+		hashValue ^= hashValue >> 16;
+
+		return (I_32) hashValue;
+	}
 
 	/**
 	 * Fetch objectPointer's hashcode
@@ -266,10 +376,10 @@ public:
 				if (J9_ARE_NO_BITS_SET(flags, OBJECT_HEADER_HAS_BEEN_HASHED_IN_CLASS)) {
 					setHasBeenHashed(vm, objectPointer);
 				}
-				hashValue = inlineConvertValueToHash(vm, (UDATA)objectPointer);
+				hashValue = convertObjectToHash(vm, objectPointer);
 			}
 #else /* defined(J9VM_GC_MODRON_COMPACTION) || defined(J9VM_GC_GENERATIONAL) */
-			hashValue = inlineConvertValueToHash(vm, (UDATA)objectPointer);
+			hashValue = convertObjectToHash(vm, objectPointer);
 #endif /* defined(J9VM_GC_MODRON_COMPACTION) || defined(J9VM_GC_GENERATIONAL) */
 		}
 		return hashValue;

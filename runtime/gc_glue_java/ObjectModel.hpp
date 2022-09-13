@@ -167,6 +167,27 @@ private:
 		return J9GC_CLASS_SHAPE(clazz);
 	}
 
+	MMINLINE uint32_t
+	hashPotentiallyForwardedObject(j9object_t objectPointer) {
+		uint32_t hashcode = 0;
+		MM_ForwardedHeader forwardedHeader(objectPointer, OMRVM_COMPRESS_OBJECT_REFERENCES(_javaVM->omrVM));
+
+		if (forwardedHeader.isForwardedPointer()) {
+			j9object_t forwardedObject = forwardedHeader.getForwardedObject();
+			J9Class *receiverClazz = J9OBJECT_CLAZZ(_javaVM->internalVMFunctions->currentVMThread(_javaVM), forwardedObject);
+			if ((NULL != receiverClazz) && J9_IS_J9CLASS_VALUETYPE(receiverClazz)) {
+				hashcode = computeObjectAddressToHash(_javaVM, forwardedObject);
+			} else {
+				/* When objectPointer is a forwarded pointer then we cannot use computeObjectAddressToHash because computeObjectAddressToHash assumes all pointers passed to it are not forwarded */
+				hashcode = convertValueToHash(_javaVM, (UDATA)forwardedHeader.getObject());
+			}
+		} else {
+			hashcode = computeObjectAddressToHash(_javaVM, forwardedHeader.getObject());
+		}
+
+		return hashcode;
+	}
+
 public:
 	/**
 	 * Determine the ScanType code for objects of the specified class. This code determines how instances should be scanned.
@@ -377,10 +398,10 @@ public:
 			result = *(int32_t*)((uint8_t*)object + hashOffset);
 		} else {
 			atomicSetObjectFlags(object, 0, OBJECT_HEADER_HAS_BEEN_HASHED_IN_CLASS);
-			result = convertValueToHash(vm, (uintptr_t)object);
+			result = hashPotentiallyForwardedObject(object);
 		}
 #else /* defined (OMR_GC_MODRON_COMPACTION) || defined (J9VM_GC_GENERATIONAL) */
-		result = computeObjectAddressToHash(vm, object);
+		result = hashPotentiallyForwardedObject(object);
 #endif /* defined (OMR_GC_MODRON_COMPACTION) || defined (J9VM_GC_GENERATIONAL) */
 		return result;
 	}
@@ -399,7 +420,7 @@ public:
 		uintptr_t hashOffset = getHashcodeOffset(objectPtr);
 		uint32_t *hashCodePointer = (uint32_t*)((uint8_t*)objectPtr + hashOffset);
 
-		*hashCodePointer = convertValueToHash(vm, (uintptr_t)objectPtr);
+		*hashCodePointer = hashPotentiallyForwardedObject(objectPtr);
 		setObjectHasBeenMoved(objectPtr);
 #endif /* defined (OMR_GC_MODRON_COMPACTION) || defined (J9VM_GC_GENERATIONAL) */
 	}
@@ -495,7 +516,7 @@ public:
 	MMINLINE int32_t
 	computeObjectHash(MM_ForwardedHeader *forwardedHeader)
 	{
-		return convertValueToHash(_javaVM, (uintptr_t)forwardedHeader->getObject());
+		return hashPotentiallyForwardedObject(forwardedHeader->getObject());
 	}
 
 	MMINLINE uintptr_t
@@ -612,7 +633,7 @@ public:
 			}
 
 			uint32_t *hashCodePointer = (uint32_t*)((uint8_t*) destinationObjectPtr + hashOffset);
-			*hashCodePointer = convertValueToHash(_javaVM, (uintptr_t)forwardedHeader->getObject());
+			*hashCodePointer = hashPotentiallyForwardedObject(forwardedHeader->getObject());
 			setObjectJustHasBeenMoved(destinationObjectPtr);
 		}
 	}

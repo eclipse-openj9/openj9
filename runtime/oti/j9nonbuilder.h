@@ -4903,6 +4903,7 @@ typedef struct J9InternalVMFunctions {
 #if JAVA_SPEC_VERSION >= 19
 	UDATA (*walkContinuationStackFrames)(struct J9VMThread *currentThread, j9object_t continuationObject, J9StackWalkState *walkState);
 #endif /* JAVA_SPEC_VERSION >= 19 */
+	J9Class* (*findJ9ClassInFlattenedClassCache)(J9FlattenedClassCache *flattenedClassCache, U_8 *className, UDATA classNameLength);
 } J9InternalVMFunctions;
 
 /* Jazz 99339: define a new structure to replace JavaVM so as to pass J9NativeLibrary to JVMTIEnv  */
