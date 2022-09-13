@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2019 IBM Corp. and others
+ * Copyright (c) 2015, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,7 +34,7 @@
 #include "ObjectAccessBarrier.hpp"
 #include "ReferenceObjectBuffer.hpp"
 #include "UnfinalizedObjectBuffer.hpp"
-
+#include "ContinuationObjectList.hpp"
 #include "ScavengerBackOutScanner.hpp"
 
 void
@@ -44,7 +44,7 @@ MM_ScavengerBackOutScanner::scanAllSlots(MM_EnvironmentBase *env)
 	{
 		GC_HeapRegionIteratorStandard regionIterator(_extensions->heapRegionManager);
 		MM_HeapRegionDescriptorStandard *region = NULL;
-		while(NULL != (region = regionIterator.nextRegion())) {
+		while (NULL != (region = regionIterator.nextRegion())) {
 			if ((MEMORY_TYPE_NEW == (region->getTypeFlags() & MEMORY_TYPE_NEW))) {
 				MM_HeapRegionDescriptorStandardExtension *regionExtension = MM_ConfigurationDelegate::getHeapRegionDescriptorStandardExtension(env, region);
 				for (uintptr_t i = 0; i < regionExtension->_maxListIndex; i++) {
@@ -246,7 +246,7 @@ MM_ScavengerBackOutScanner::backoutUnfinalizedObjects(MM_EnvironmentStandard *en
 	bool const compressed = _extensions->compressObjectReferences();
 
 	GC_HeapRegionIteratorStandard regionIterator(regionManager);
-	while(NULL != (region = regionIterator.nextRegion())) {
+	while (NULL != (region = regionIterator.nextRegion())) {
 		MM_HeapRegionDescriptorStandardExtension *regionExtension = MM_ConfigurationDelegate::getHeapRegionDescriptorStandardExtension(env, region);
 		for (uintptr_t i = 0; i < regionExtension->_maxListIndex; i++) {
 			MM_UnfinalizedObjectList *list = &regionExtension->_unfinalizedObjectLists[i];
@@ -257,7 +257,7 @@ MM_ScavengerBackOutScanner::backoutUnfinalizedObjects(MM_EnvironmentStandard *en
 #if defined(OMR_GC_CONCURRENT_SCAVENGER)
 	if (_extensions->isConcurrentScavengerEnabled()) {
 		GC_HeapRegionIteratorStandard regionIterator2(regionManager);
-		while(NULL != (region = regionIterator2.nextRegion())) {
+		while (NULL != (region = regionIterator2.nextRegion())) {
 			MM_HeapRegionDescriptorStandardExtension *regionExtension = MM_ConfigurationDelegate::getHeapRegionDescriptorStandardExtension(env, region);
 			for (uintptr_t i = 0; i < regionExtension->_maxListIndex; i++) {
 				MM_UnfinalizedObjectList *list = &regionExtension->_unfinalizedObjectLists[i];
@@ -286,7 +286,7 @@ MM_ScavengerBackOutScanner::backoutUnfinalizedObjects(MM_EnvironmentStandard *en
 #endif /* OMR_GC_CONCURRENT_SCAVENGER */
 	{
 		GC_HeapRegionIteratorStandard regionIterator2(regionManager);
-		while(NULL != (region = regionIterator2.nextRegion())) {
+		while (NULL != (region = regionIterator2.nextRegion())) {
 			MM_HeapRegionDescriptorStandardExtension *regionExtension = MM_ConfigurationDelegate::getHeapRegionDescriptorStandardExtension(env, region);
 			for (uintptr_t i = 0; i < regionExtension->_maxListIndex; i++) {
 				MM_UnfinalizedObjectList *list = &regionExtension->_unfinalizedObjectLists[i];
@@ -317,4 +317,23 @@ MM_ScavengerBackOutScanner::backoutUnfinalizedObjects(MM_EnvironmentStandard *en
 	env->getGCEnvironment()->_unfinalizedObjectBuffer->flush(env);
 }
 #endif /* J9VM_GC_FINALIZATION */
+void
+MM_ScavengerBackOutScanner::backoutContinuationObjects(MM_EnvironmentStandard *env)
+{
+	/* TODO: need to solution to handle the backout in case the list has been refreshed. (the related J9VMContinuations has been cleaned up)  */
+	if (!_extensions->isConcurrentScavengerEnabled()) {
+	/* Back out Continuation Processing */
+		MM_HeapRegionDescriptorStandard *region = NULL;
+		GC_HeapRegionIteratorStandard regionIterator(_extensions->heapRegionManager);
+		while (NULL != (region = regionIterator.nextRegion())) {
+			MM_HeapRegionDescriptorStandardExtension *regionExtension = MM_ConfigurationDelegate::getHeapRegionDescriptorStandardExtension(env, region);
+			for (uintptr_t i = 0; i < regionExtension->_maxListIndex; i++) {
+				MM_ContinuationObjectList *list = &regionExtension->_continuationObjectLists[i];
+				list->backoutList();
+			}
+		}
+	}
+
+	/* Done backout */
+}
 #endif /* defined(OMR_GC_MODRON_SCAVENGER) */

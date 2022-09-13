@@ -52,6 +52,7 @@ private:
 	bool _collectStringConstantsEnabled;
 	bool _shouldScanUnfinalizedObjects;
 	bool _shouldScanOwnableSynchronizerObjects;
+	bool _shouldScanContinuationObjects;
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
 	MM_MarkMap *_markMap;							/**< This is set when dynamic class loading is enabled, NULL otherwise */
 	volatile bool _anotherClassMarkPass;			/**< Used in completeClassMark for another scanning request*/
@@ -81,6 +82,7 @@ public:
 		, _collectStringConstantsEnabled(false)
 		, _shouldScanUnfinalizedObjects(false)
 		, _shouldScanOwnableSynchronizerObjects(false)
+		, _shouldScanContinuationObjects(false)
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
 		, _markMap(NULL)
 		, _anotherClassMarkPass(false)
@@ -120,10 +122,11 @@ public:
 	getObjectScanner(MM_EnvironmentBase *env, omrobjectptr_t objectPtr, void *scannerSpace, MM_MarkingSchemeScanReason reason, uintptr_t *sizeToDo)
 	{
 		J9Class *clazz = J9GC_J9OBJECT_CLAZZ(objectPtr, env);
-		UDATA const referenceSize = env->compressObjectReferences() ? sizeof(uint32_t) : sizeof(uintptr_t);
+		uintptr_t const referenceSize = env->compressObjectReferences() ? sizeof(uint32_t) : sizeof(uintptr_t);
 
 		/* object class must have proper eye catcher */
-		Assert_MM_true((UDATA)0x99669966 == clazz->eyecatcher);
+		/* TODO: should define J9CLASS_EYECATCHER */
+		Assert_MM_true((uintptr_t)0x99669966 == clazz->eyecatcher);
 
 		GC_ObjectScanner *objectScanner = NULL;
 		switch(_extensions->objectModel.getScanType(objectPtr)) {
@@ -209,10 +212,21 @@ public:
 		return _shouldScanOwnableSynchronizerObjects;
 	}
 
+	MMINLINE bool
+	shouldScanContinuationObjects()
+	{
+		return _shouldScanContinuationObjects;
+	}
+
 	MMINLINE void
 	shouldScanOwnableSynchronizerObjects(bool shouldScanOwnableSynchronizerObjects)
 	{
 		_shouldScanOwnableSynchronizerObjects = shouldScanOwnableSynchronizerObjects;
+	}
+	MMINLINE void
+	shouldScanContinuationObjects(bool shouldScanContinuationObjects)
+	{
+		_shouldScanContinuationObjects = shouldScanContinuationObjects;
 	}
 
 	void scanClass(MM_EnvironmentBase *env, J9Class *clazz);

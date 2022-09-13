@@ -41,6 +41,7 @@
 #include "ObjectAllocationInterface.hpp"
 #include "ObjectModel.hpp"
 #include "OwnableSynchronizerObjectBuffer.hpp"
+#include "ContinuationObjectBuffer.hpp"
 #include "ParallelDispatcher.hpp"
 #include "MemorySpace.hpp"
 #include "MemorySubSpace.hpp"
@@ -81,7 +82,7 @@ j9gc_modron_global_collect_with_overrides(J9VMThread *vmThread, U_32 gcCode)
 	MM_EnvironmentBase *env = MM_EnvironmentBase::getEnvironment(vmThread->omrVMThread);
 
 	if ((J9MMCONSTANT_EXPLICIT_GC_SYSTEM_GC == gcCode) || (J9MMCONSTANT_EXPLICIT_GC_NOT_AGGRESSIVE == gcCode)) {
-		if(MM_GCExtensions::getExtensions(env)->disableExplicitGC) {
+		if (MM_GCExtensions::getExtensions(env)->disableExplicitGC) {
 			return 0;
 		}
 	}
@@ -972,9 +973,9 @@ j9gc_get_CPU_times(J9JavaVM *javaVM, U_64 *mainCpuMillis, U_64 *workerCpuMillis,
 	U_64 workerMillis = 0;
 	U_64 workerNanos = 0;
 	J9VMThread *vmThread = iterator.nextVMThread();
-	while(NULL != vmThread) {
+	while (NULL != vmThread) {
 		MM_EnvironmentBase *env = MM_EnvironmentBase::getEnvironment(vmThread->omrVMThread);
-		if(!env->isMainThread()) {
+		if (!env->isMainThread()) {
 			/* For a large number of worker threads and very long runs, a sum of 
 			 * nanos might overflow a U_64. Sum the millis and nanos separately.
 			 */
@@ -986,13 +987,13 @@ j9gc_get_CPU_times(J9JavaVM *javaVM, U_64 *mainCpuMillis, U_64 *workerCpuMillis,
 
 	/* Adjust the total millis by the nanos, rounding up. */
 	workerMillis += workerNanos / 1000000;
-	if((workerNanos % 1000000) > 500000) {
+	if ((workerNanos % 1000000) > 500000) {
 		workerMillis += 1;
 	}
 
 	/* Adjust the main millis by the nanos, rounding up. */
 	mainMillis = extensions->_mainThreadCpuTimeNanos / 1000000;
-	if((extensions->_mainThreadCpuTimeNanos % 1000000) > 500000) {
+	if ((extensions->_mainThreadCpuTimeNanos % 1000000) > 500000) {
 		mainMillis += 1;
 	}
 	
@@ -1023,6 +1024,20 @@ ownableSynchronizerObjectCreated(J9VMThread *vmThread, j9object_t object)
 	return 0;
 }
 
+UDATA
+continuationObjectCreated(J9VMThread *vmThread, j9object_t object)
+{
+	Assert_MM_true(NULL != object);
+	MM_EnvironmentBase *env = MM_EnvironmentBase::getEnvironment(vmThread->omrVMThread);
+
+	env->getGCEnvironment()->_continuationObjectBuffer->add(env, object);
+	MM_ObjectAllocationInterface *objectAllocation = env->_objectAllocationInterface;
+	if (NULL != objectAllocation) {
+		objectAllocation->getAllocationStats()->_continuationObjectCount += 1;
+	}
+	return 0;
+}
+
 void
 j9gc_notifyGCOfClassReplacement(J9VMThread *vmThread, J9Class *oldClass, J9Class *newClass, UDATA isFastHCR)
 {
@@ -1049,7 +1064,7 @@ j9gc_notifyGCOfClassReplacement(J9VMThread *vmThread, J9Class *oldClass, J9Class
 	 */
 	Assert_MM_true(NULL == newClass->gcLink);
 
-	if(NULL != oldClass->gcLink) {
+	if (NULL != oldClass->gcLink) {
 		/* Remembered Set for class is using in balanced only */
 		MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(vmThread->javaVM);
 		Assert_MM_true(extensions->isVLHGC());
@@ -1109,7 +1124,7 @@ j9gc_incrementalUpdate_getCardSize(OMR_VM *omrVM)
 	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(omrVM);
 
 	/* make sure that the table is initialized */
-	if(NULL != extensions->cardTable) {
+	if (NULL != extensions->cardTable) {
 		return CARD_SIZE;
 	} else {
 		return 0;
@@ -1122,7 +1137,7 @@ j9gc_incrementalUpdate_getCardTableShiftValue(OMR_VM *omrVM)
 	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(omrVM);
 
 	/* make sure that the table is initialized */
-	if(NULL != extensions->cardTable) {
+	if (NULL != extensions->cardTable) {
 		return CARD_SIZE_SHIFT;
 	} else {
 		return 0;
@@ -1143,7 +1158,7 @@ j9gc_incrementalUpdate_getHeapBase(OMR_VM *omrVM)
 	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(omrVM);
 
 	/* make sure that the table is initialized */
-	if(NULL != extensions->cardTable) {
+	if (NULL != extensions->cardTable) {
 		return (uintptr_t) extensions->cardTable->getHeapBase();
 	} else {
 		return 0;

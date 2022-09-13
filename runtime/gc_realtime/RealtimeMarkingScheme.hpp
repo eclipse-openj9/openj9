@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -48,6 +48,7 @@ class MM_Scheduler;
 #define REFERENCE_OBJECT_YIELD_CHECK_INTERVAL 200
 #define UNFINALIZED_OBJECT_YIELD_CHECK_INTERVAL 70
 #define OWNABLE_SYNCHRONIZER_OBJECT_YIELD_CHECK_INTERVAL 70
+#define CONTINUATION_OBJECT_YIELD_CHECK_INTERVAL 70
 
 class MM_RealtimeMarkingScheme : public MM_SegregatedMarkingScheme
 {

@@ -248,7 +248,9 @@ J9MemoryManagerFunctions MemoryManagerFunctions = {
 #endif /* J9VM_GC_OBJECT_ACCESS_BARRIER */
 	j9gc_get_bytes_allocated_by_thread,
 	j9mm_iterate_all_ownable_synchronizer_objects,
+	j9mm_iterate_all_continuation_objects,
 	ownableSynchronizerObjectCreated,
+	continuationObjectCreated,
 	j9gc_notifyGCOfClassReplacement,
 	j9gc_get_jit_string_dedup_policy,
 	j9gc_stringHashFn,
