@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -119,20 +119,9 @@ private:
 	 * @param manager current region manager
 	 * @param memoryType memory type
 	 */
-	void scanArrayObject(MM_EnvironmentBase *env, J9Object *objectPtr, MM_MemoryPool *memoryPool, MM_HeapRegionManager *manager, UDATA memoryType);
+	void scanArrayObject(MM_EnvironmentBase *env, J9Object *objectPtr, MM_MemoryPool *memoryPool, MM_HeapRegionManager *manager, uintptr_t memoryType);
 
 protected:
-	/**
-	 * Determine whether running method classes in stack frames should be walked.
-	 * @return boolean determining whether running method classes in stack frames should be walked
-	 */
-	MMINLINE bool isStackFrameClassWalkNeeded() {
-		if (_nurseryReferencesOnly || _nurseryReferencesPossibly) {
-			return false;
-		}
-		return 	_includeStackFrameClassReferences;
-	}
-
 	/* Family of yielding methods to be overridden by incremental scanners such
 	 * as the RealtimeRootScanner. The default implementations of these do
 	 * nothing. 
@@ -144,7 +133,7 @@ protected:
 	 * yield.
 	 * @return true if the GC should yield, false otherwise
 	 */
-	virtual bool shouldYieldFromClassScan(UDATA timeSlackNanoSec = 0);
+	virtual bool shouldYieldFromClassScan(uintptr_t timeSlackNanoSec = 0);
 
 	/**
 	 * Root scanning methods that have been incrementalized are responsible for
@@ -261,6 +250,16 @@ protected:
 	void scanModularityObjects(J9ClassLoader * classLoader);
 
 public:
+	/**
+	 * Determine whether running method classes in stack frames should be walked.
+	 * @return boolean determining whether running method classes in stack frames should be walked
+	 */
+	MMINLINE bool isStackFrameClassWalkNeeded() {
+		if (_nurseryReferencesOnly || _nurseryReferencesPossibly) {
+			return false;
+		}
+		return 	_includeStackFrameClassReferences;
+	}
 
 	/** 
 	 * Maintain start/end increment times when scan is suspended. Add the diff (duration) to scan entity time. 
@@ -366,6 +365,9 @@ public:
 	}
 #endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
 
+	bool getClassDataAsRoots() {
+		return _classDataAsRoots;
+	}
 #if defined(J9VM_OPT_JVMTI)
 	/** Set whether the iterator will scan the JVMTIObjectTagTables (if applicable to the scan type) */
 	void setIncludeJVMTIObjectTagTables(bool includeJVMTIObjectTagTables) {
@@ -376,6 +378,10 @@ public:
 	/** Set whether the iterator will scan the JVMTIObjectTagTables (if applicable to the scan type) */
 	void setTrackVisibleStackFrameDepth(bool trackVisibleStackFrameDepth) {
 		 _trackVisibleStackFrameDepth = trackVisibleStackFrameDepth;
+	}
+
+	bool getTrackVisibleStackFrameDepth() {
+		return _trackVisibleStackFrameDepth;
 	}
 
 	/** General object slot handler to be reimplemented by specializing class. This handler is called for every reference to a J9Object. */
@@ -428,6 +434,8 @@ public:
 	 * which modifies elements within the list.
 	 */
 	virtual void scanOwnableSynchronizerObjects(MM_EnvironmentBase *env);
+	virtual void scanContinuationObjects(MM_EnvironmentBase *env);
+
 	virtual void scanStringTable(MM_EnvironmentBase *env);
 	void scanJNIGlobalReferences(MM_EnvironmentBase *env);
 	virtual void scanJNIWeakGlobalReferences(MM_EnvironmentBase *env);
@@ -482,11 +490,13 @@ public:
 	 * @todo Provide function documentation
 	 */
 	virtual void doOwnableSynchronizerObject(J9Object *objectPtr, MM_OwnableSynchronizerObjectList *list);
+	virtual void doContinuationObject(J9Object *objectPtr, MM_ContinuationObjectList *list);
 	
 	/**
 	 * @todo Provide function documentation
 	 */	
 	virtual CompletePhaseCode scanOwnableSynchronizerObjectsComplete(MM_EnvironmentBase *env);
+	virtual CompletePhaseCode scanContinuationObjectsComplete(MM_EnvironmentBase *env);
 
 	virtual void doMonitorReference(J9ObjectMonitor *objectMonitor, GC_HashTableIterator *monitorReferenceIterator);
 	virtual void doMonitorLookupCacheSlot(j9objectmonitor_t* slotPtr);

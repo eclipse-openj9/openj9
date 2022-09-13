@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -47,19 +47,22 @@ class MM_ScavengerJavaStats
 {
 public:
 
-	UDATA _unfinalizedCandidates;  /**< unfinalized objects that are candidates to be finalized visited this cycle */
-	UDATA _unfinalizedEnqueued;  /**< unfinalized objects that are enqueued during this cycle (MUST be less than or equal _unfinalizedCandidates) */
+	uintptr_t _unfinalizedCandidates;  /**< unfinalized objects that are candidates to be finalized visited this cycle */
+	uintptr_t _unfinalizedEnqueued;  /**< unfinalized objects that are enqueued during this cycle (MUST be less than or equal _unfinalizedCandidates) */
 
-	UDATA _ownableSynchronizerCandidates;  /**< number of ownable synchronizer objects visited this cycle */
-	UDATA _ownableSynchronizerTotalSurvived;	/**< number of ownable synchronizer objects survived this cycle */
-	UDATA _ownableSynchronizerNurserySurvived; /**< number of ownable synchronizer objects survived this cycle in Nursery Space */
+	uintptr_t _ownableSynchronizerCandidates;  /**< number of ownable synchronizer objects visited this cycle */
+	uintptr_t _ownableSynchronizerTotalSurvived;	/**< number of ownable synchronizer objects survived this cycle */
+	uintptr_t _ownableSynchronizerNurserySurvived; /**< number of ownable synchronizer objects survived this cycle in Nursery Space */
+
+	uintptr_t _continuationCandidates;  /**< number of continuation objects visited this cycle */
+	uintptr_t _continuationCleared;	/**< number of continuation objects survived this cycle */
 
 	MM_ReferenceStats _weakReferenceStats;  /**< Weak reference stats for the cycle */
 	MM_ReferenceStats _softReferenceStats;  /**< Soft reference stats for the cycle */
 	MM_ReferenceStats _phantomReferenceStats;  /**< Phantom reference stats for the cycle */
 
-	UDATA _monitorReferenceCleared; /**< The number of monitor references that have been cleared during scavenge */
-	UDATA _monitorReferenceCandidates; /**< The number of monitor references that have been visited in monitor table during scavenge */
+	uintptr_t _monitorReferenceCleared; /**< The number of monitor references that have been cleared during scavenge */
+	uintptr_t _monitorReferenceCandidates; /**< The number of monitor references that have been visited in monitor table during scavenge */
 
 protected:
 
@@ -74,11 +77,15 @@ public:
 	void mergeOwnableSynchronizerCounts(MM_ScavengerJavaStats *statsToMerge);
 	
 	MMINLINE void 
-	updateOwnableSynchronizerNurseryCounts(UDATA survivedCount)
+	updateOwnableSynchronizerNurseryCounts(uintptr_t survivedCount)
 	{
 		_ownableSynchronizerNurserySurvived += survivedCount;
 	}
-		
+	/* clear only ContinuationObject related data */
+	void clearContinuationCounts();
+	/* merge only ContinuationObject related data */
+	void mergeContinuationCounts(MM_ScavengerJavaStats *statsToMerge);
+
 	MM_ScavengerJavaStats();
 
 

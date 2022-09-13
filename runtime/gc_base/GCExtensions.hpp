@@ -57,6 +57,7 @@ class MM_HeapMap;
 class MM_MemorySubSpace;
 class MM_ObjectAccessBarrier;
 class MM_OwnableSynchronizerObjectList;
+class MM_ContinuationObjectList;
 class MM_StringTable;
 class MM_UnfinalizedObjectList;
 class MM_Wildcard;
@@ -87,6 +88,7 @@ class MM_IdleGCManager;
 class MM_GCExtensions : public MM_GCExtensionsBase {
 private:
 	MM_OwnableSynchronizerObjectList* ownableSynchronizerObjectLists; /**< The global linked list of ownable synchronizer object lists. */
+	MM_ContinuationObjectList* continuationObjectLists; /**< The global linked list of continuation object lists. */
 public:
 	MM_StringTable* stringTable; /**< top level String Table structure (internally organized as a set of hash sub-tables */
 
@@ -282,12 +284,17 @@ public:
 	MMINLINE MM_OwnableSynchronizerObjectList* getOwnableSynchronizerObjectLists() { return ownableSynchronizerObjectLists; }
 	MMINLINE void setOwnableSynchronizerObjectLists(MM_OwnableSynchronizerObjectList* newOwnableSynchronizerObjectLists) { ownableSynchronizerObjectLists = newOwnableSynchronizerObjectLists; }
 
+	MM_ContinuationObjectList* getContinuationObjectListsExternal(J9VMThread *vmThread);
+	MMINLINE MM_ContinuationObjectList* getContinuationObjectLists() { return continuationObjectLists; }
+	MMINLINE void setContinuationObjectLists(MM_ContinuationObjectList* newContinuationObjectLists) { continuationObjectLists = newContinuationObjectLists; }
+
 	/**
 	 * Create a GCExtensions object
 	 */
 	MM_GCExtensions()
 		: MM_GCExtensionsBase()
 		, ownableSynchronizerObjectLists(NULL)
+		, continuationObjectLists(NULL)
 		, stringTable(NULL)
 		, gcchkExtensions(NULL)
 		, tgcExtensions(NULL)

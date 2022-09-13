@@ -57,6 +57,8 @@
 #include "ObjectHeapIteratorAddressOrderedList.hpp"
 #include "ObjectModel.hpp"
 #include "OwnableSynchronizerObjectList.hpp"
+#include "ContinuationObjectList.hpp"
+#include "VMHelpers.hpp"
 #include "ParallelDispatcher.hpp"
 #include "PointerArrayIterator.hpp"
 #include "SlotObject.hpp"
@@ -163,8 +165,21 @@ MM_RootScanner::doOwnableSynchronizerObject(J9Object *objectPtr, MM_OwnableSynch
 	Assert_MM_unreachable();
 }
 
+void
+MM_RootScanner::doContinuationObject(J9Object *objectPtr, MM_ContinuationObjectList *list)
+{
+	Assert_MM_unreachable();
+}
+
+
 MM_RootScanner::CompletePhaseCode
 MM_RootScanner::scanOwnableSynchronizerObjectsComplete(MM_EnvironmentBase *env)
+{
+	return complete_phase_OK;
+}
+
+MM_RootScanner::CompletePhaseCode
+MM_RootScanner::scanContinuationObjectsComplete(MM_EnvironmentBase *env)
 {
 	return complete_phase_OK;
 }
@@ -613,7 +628,7 @@ MM_RootScanner::scanStringTable(MM_EnvironmentBase *env)
 	bool isMetronomeGC = _extensions->isMetronomeGC();
 
 	/* String Table */
-	for (UDATA tableIndex = 0; tableIndex < stringTable->getTableCount(); tableIndex++) {
+	for (uintptr_t tableIndex = 0; tableIndex < stringTable->getTableCount(); tableIndex++) {
 		if(_singleThread || J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
 
 			if (isMetronomeGC) {
@@ -642,7 +657,7 @@ MM_RootScanner::scanStringTable(MM_EnvironmentBase *env)
 
 	if(_singleThread || J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
 		j9object_t *stringCacheTable = stringTable->getStringInternCache();
-		UDATA cacheTableIndex = 0;
+		uintptr_t cacheTableIndex = 0;
 		for (; cacheTableIndex < MM_StringTable::getCacheSize(); cacheTableIndex++) {
 			doStringCacheTableSlot(&stringCacheTable[cacheTableIndex]);
 		}
@@ -736,6 +751,27 @@ MM_RootScanner::scanOwnableSynchronizerObjects(MM_EnvironmentBase *env)
 	reportScanningEnded(RootScannerEntity_OwnableSynchronizerObjects);
 }
 
+void
+MM_RootScanner::scanContinuationObjects(MM_EnvironmentBase *env)
+{
+	reportScanningStarted(RootScannerEntity_ContinuationObjects);
+
+	MM_ObjectAccessBarrier *barrier = _extensions->accessBarrier;
+	MM_ContinuationObjectList *continuationObjectList = _extensions->getContinuationObjectLists();
+	while(NULL != continuationObjectList) {
+		if (_singleThread || J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
+			J9Object *objectPtr = continuationObjectList->getHeadOfList();
+			while (NULL != objectPtr) {
+				doContinuationObject(objectPtr, continuationObjectList);
+				objectPtr = barrier->getContinuationLink(objectPtr);
+			}
+		}
+		continuationObjectList = continuationObjectList->getNextList();
+	}
+
+	reportScanningEnded(RootScannerEntity_ContinuationObjects);
+}
+
 /**
  * Scan the per-thread object monitor lookup caches.
  * Note that this is not a root since the cache contains monitors from the global monitor table
@@ -750,7 +786,7 @@ MM_RootScanner::scanMonitorLookupCaches(MM_EnvironmentBase *env)
 	while (J9VMThread *walkThread = vmThreadListIterator.nextVMThread()) {
 		if (_singleThread || J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
 			j9objectmonitor_t *objectMonitorLookupCache = walkThread->objectMonitorLookupCache;
-			UDATA cacheIndex = 0;
+			uintptr_t cacheIndex = 0;
 			for (; cacheIndex < J9VMTHREAD_OBJECT_MONITOR_CACHE_SIZE; cacheIndex++) {
 				doMonitorLookupCacheSlot(&objectMonitorLookupCache[cacheIndex]);
 			}
@@ -994,6 +1030,7 @@ MM_RootScanner::scanClearable(MM_EnvironmentBase *env)
 	}
 
 	scanOwnableSynchronizerObjects(env);
+	scanContinuationObjects(env);
 
 #if defined(J9VM_GC_MODRON_SCAVENGER)
 	/* Remembered set is clearable in a generational system -- if an object in old
@@ -1073,10 +1110,11 @@ MM_RootScanner::scanAllSlots(MM_EnvironmentBase *env)
 #endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
 
 	scanOwnableSynchronizerObjects(env);
+	scanContinuationObjects(env);
 }
 
 bool
-MM_RootScanner::shouldYieldFromClassScan(UDATA timeSlackNanoSec)
+MM_RootScanner::shouldYieldFromClassScan(uintptr_t timeSlackNanoSec)
 {
 	return false;
 }

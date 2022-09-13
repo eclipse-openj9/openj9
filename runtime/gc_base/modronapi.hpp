@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -100,6 +100,8 @@ J9HookInterface** j9gc_get_private_hook_interface(J9JavaVM *javaVM);
  * @returns 0 if the object was successfully placed on the ownable synchronizer list
  */
 UDATA ownableSynchronizerObjectCreated(J9VMThread *vmThread, j9object_t object);
+
+UDATA continuationObjectCreated(J9VMThread *vmThread, j9object_t object);
 
 /**
  * Called during class redefinition to notify the GC of replaced classes.In certain cases the GC needs to 

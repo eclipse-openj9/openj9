@@ -773,6 +773,7 @@ private:
 	void scanFinalizableList(MM_EnvironmentVLHGC *env, j9object_t headObject);
 #endif /* J9VM_GC_FINALIZATION */
 
+	void scanContinuationObjects(MM_EnvironmentVLHGC *env);
 	/**
 	 * Clear the cycle's mark map for all regions that are part of the evacuate set.
 	 * @param env GC thread.

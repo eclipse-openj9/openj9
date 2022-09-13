@@ -42,6 +42,8 @@
 #include "HeapRegionManager.hpp"
 #include "MarkMap.hpp"
 #include "ParallelTask.hpp"
+#include "ContinuationObjectBufferVLHGC.hpp"
+#include "ContinuationObjectList.hpp"
 
 #if defined(J9VM_GC_MODRON_COMPACTION)
 
@@ -509,6 +511,11 @@ private:
 		if (NULL != _extensions->accessBarrier->isObjectInOwnableSynchronizerList(objectPtr)) {
 			((MM_OwnableSynchronizerObjectBufferVLHGC*) env->getGCEnvironment()->_ownableSynchronizerObjectBuffer)->addForOnlyCompactedRegion(env, objectPtr);
 		}
+	}
+
+	MMINLINE void addContinuationObjectInList(MM_EnvironmentVLHGC *env, J9Object *objectPtr)
+	{
+		((MM_ContinuationObjectBufferVLHGC*) env->getGCEnvironment()->_continuationObjectBuffer)->addForOnlyCompactedRegion(env, objectPtr);
 	}
 
 #if defined(J9VM_GC_FINALIZATION)

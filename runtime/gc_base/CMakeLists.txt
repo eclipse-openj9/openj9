@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2021 IBM Corp. and others
+# Copyright (c) 2017, 2022 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,6 +25,8 @@ set(gc_base_sources
 	AsyncCallbackHandler.cpp
 	ClassLoaderLinkedListIterator.cpp
 	ClassLoaderManager.cpp
+	ContinuationObjectBuffer.cpp
+	ContinuationObjectList.cpp
 	FinalizeListManager.cpp
 	FinalizerSupport.cpp
 	GCExtensions.cpp

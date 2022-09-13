@@ -48,6 +48,8 @@
 #include "FinalizableReferenceBuffer.hpp"
 #include "FinalizeListManager.hpp"
 #endif /* J9VM_GC_FINALIZATION*/
+#include "ContinuationObjectBuffer.hpp"
+#include "ContinuationObjectList.hpp"
 #include "VMHelpers.hpp"
 #include "GCExtensions.hpp"
 #include "GlobalCollectionCardCleaner.hpp"
@@ -1081,6 +1083,38 @@ MM_GlobalMarkingScheme::scanOwnableSynchronizerObjects(MM_EnvironmentVLHGC *env)
 	env->getGCEnvironment()->_ownableSynchronizerObjectBuffer->flush(env);
 }
 
+void
+MM_GlobalMarkingScheme::scanContinuationObjects(MM_EnvironmentVLHGC *env)
+{
+	MM_HeapRegionDescriptorVLHGC *region = NULL;
+	GC_HeapRegionIteratorVLHGC regionIterator(_heapRegionManager);
+	while (NULL != (region = regionIterator.nextRegion())) {
+		if (region->containsObjects()) {
+			if (!region->getContinuationObjectList()->wasEmpty()) {
+				if (J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
+					J9Object *object = region->getContinuationObjectList()->getPriorList();
+					while (NULL != object) {
+						Assert_MM_true(region->isAddressInRegion(object));
+						env->_markVLHGCStats._continuationCandidates += 1;
+
+						/* read the next link before we add it to the buffer */
+						J9Object* next = _extensions->accessBarrier->getContinuationLink(object);
+						if (isMarked(object)) {
+							env->getGCEnvironment()->_continuationObjectBuffer->add(env, object);
+						} else {
+							VM_VMHelpers::cleanupContinuationObject((J9VMThread *)env->getLanguageVMThread(), object);
+							env->_markVLHGCStats._continuationCleared += 1;
+						}
+						object = next;
+					}
+				}
+			}
+		}
+	}
+	/* restore everything to a flushed state before exiting */
+	env->getGCEnvironment()->_continuationObjectBuffer->flush(env);
+}
+
 /**
  * The root set scanner for MM_GlobalMarkingScheme.
  * @copydoc MM_RootScanner
@@ -1255,6 +1289,13 @@ private:
 		reportScanningStarted(RootScannerEntity_OwnableSynchronizerObjects);
 		_markingScheme->scanOwnableSynchronizerObjects(MM_EnvironmentVLHGC::getEnvironment(env));
 		reportScanningEnded(RootScannerEntity_OwnableSynchronizerObjects);
+	}
+
+	virtual void scanContinuationObjects(MM_EnvironmentBase *env) {
+		/* allow the marking scheme to handle this, since it knows which regions are interesting */
+		reportScanningStarted(RootScannerEntity_ContinuationObjects);
+		_markingScheme->scanContinuationObjects(MM_EnvironmentVLHGC::getEnvironment(env));
+		reportScanningEnded(RootScannerEntity_ContinuationObjects);
 	}
 
 	virtual void doMonitorReference(J9ObjectMonitor *objectMonitor, GC_HashTableIterator *monitorReferenceIterator) {
@@ -1494,6 +1535,7 @@ MM_GlobalMarkingScheme::markLiveObjectsComplete(MM_EnvironmentVLHGC *env)
 				region->getReferenceObjectList()->startWeakReferenceProcessing();
 				region->getUnfinalizedObjectList()->startUnfinalizedProcessing();
 				region->getOwnableSynchronizerObjectList()->startOwnableSynchronizerProcessing();
+				region->getContinuationObjectList()->startProcessing();
 			}
 		}
 		env->_currentTask->releaseSynchronizedGCThreads(env);

@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -48,6 +48,7 @@
 #include "ObjectHeapIterator.hpp"
 #include "ObjectModel.hpp"
 #include "OwnableSynchronizerObjectList.hpp"
+#include "ContinuationObjectList.hpp"
 #include "PointerArrayIterator.hpp"
 #include "SegmentIterator.hpp"
 #include "StringTable.hpp"
@@ -69,6 +70,12 @@ MM_HeapRootScanner::doClassLoader(J9ClassLoader *classLoader)
 
 void
 MM_HeapRootScanner::doOwnableSynchronizerObject(J9Object *objectPtr)
+{
+	doObject(objectPtr);
+}
+
+void
+MM_HeapRootScanner::doContinuationObject(J9Object *objectPtr)
 {
 	doObject(objectPtr);
 }
@@ -173,10 +180,10 @@ MM_HeapRootScanner::scanClasses()
 	
 	GC_SegmentIterator segmentIterator(_javaVM->classMemorySegments, MEMORY_TYPE_RAM_CLASS);
 	
-	while(J9MemorySegment *segment = segmentIterator.nextSegment()) {
+	while (J9MemorySegment *segment = segmentIterator.nextSegment()) {
 		GC_ClassHeapIterator classHeapIterator(_javaVM, segment);
 		J9Class *clazz = NULL;
-		while(NULL != (clazz = classHeapIterator.nextClass())) {
+		while (NULL != (clazz = classHeapIterator.nextClass())) {
 			RootScannerEntityReachability reachability;
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
 			if (MM_GCExtensions::DYNAMIC_CLASS_UNLOADING_NEVER == dynamicClassUnloadingFlag) {
@@ -264,7 +271,7 @@ MM_HeapRootScanner::scanClassLoaders()
 	
 	reportScanningStarted(RootScannerEntity_ClassLoaders);
 	
-	while((classLoader = classLoaderIterator.nextSlot()) != NULL) {
+	while ((classLoader = classLoaderIterator.nextSlot()) != NULL) {
 		RootScannerEntityReachability reachability;
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
 		if (MM_GCExtensions::DYNAMIC_CLASS_UNLOADING_NEVER == dynamicClassUnloadingFlag) {
@@ -304,7 +311,7 @@ MM_HeapRootScanner::scanThreads()
 	
 	GC_VMThreadListIterator vmThreadListIterator(_javaVM);
 	
-	while(J9VMThread *walkThread = vmThreadListIterator.nextVMThread()) {
+	while (J9VMThread *walkThread = vmThreadListIterator.nextVMThread()) {
 		if (scanOneThread(walkThread)) {
 			vmThreadListIterator.reset(_javaVM->mainThread);
 		}
@@ -330,7 +337,7 @@ MM_HeapRootScanner::scanOneThread(J9VMThread* walkThread)
 {
 	GC_VMThreadIterator vmThreadIterator(walkThread);
 	
-	while(J9Object **slot = vmThreadIterator.nextSlot()) {
+	while (J9Object **slot = vmThreadIterator.nextSlot()) {
 		doVMThreadSlot(slot, &vmThreadIterator);
 	}
 	
@@ -391,7 +398,7 @@ MM_HeapRootScanner::scanJNIGlobalReferences()
 	GC_JNIGlobalReferenceIterator jniGlobalReferenceIterator(_javaVM->jniGlobalReferences);
 	J9Object **slot;
 
-	while((slot = (J9Object **)jniGlobalReferenceIterator.nextSlot()) != NULL) {
+	while ((slot = (J9Object **)jniGlobalReferenceIterator.nextSlot()) != NULL) {
 		doJNIGlobalReferenceSlot(slot, &jniGlobalReferenceIterator);
 	}
 
@@ -415,11 +422,11 @@ MM_HeapRootScanner::scanStringTable()
 	setReachability(reachability);
 	
 	MM_StringTable *stringTable = MM_GCExtensions::getExtensions(_javaVM->omrVM)->getStringTable();
-	for (UDATA tableIndex = 0; tableIndex < stringTable->getTableCount(); tableIndex++) {
+	for (uintptr_t tableIndex = 0; tableIndex < stringTable->getTableCount(); tableIndex++) {
 		GC_HashTableIterator stringTableIterator(stringTable->getTable(tableIndex));
 		J9Object **slot;
 
-		while((slot = (J9Object **)stringTableIterator.nextSlot()) != NULL) {
+		while ((slot = (J9Object **)stringTableIterator.nextSlot()) != NULL) {
 			doStringTableSlot(slot, NULL);
 		}
 	}
@@ -447,7 +454,7 @@ MM_HeapRootScanner::scanUnfinalizedObjects()
 	MM_ObjectAccessBarrier *barrier = _extensions->accessBarrier;
 	MM_UnfinalizedObjectList *unfinalizedObjectList = _extensions->unfinalizedObjectLists;
 
-	while(NULL != unfinalizedObjectList) {
+	while (NULL != unfinalizedObjectList) {
 		J9Object *objectPtr = unfinalizedObjectList->getHeadOfList();
 		while (NULL != objectPtr) {
 			doUnfinalizedObject(objectPtr);
@@ -468,7 +475,7 @@ MM_HeapRootScanner::scanOwnableSynchronizerObjects()
 	MM_ObjectAccessBarrier *barrier = _extensions->accessBarrier;
 	MM_OwnableSynchronizerObjectList *ownableSynchronizerObjectList = _extensions->getOwnableSynchronizerObjectLists();
 
-	while(NULL != ownableSynchronizerObjectList) {
+	while (NULL != ownableSynchronizerObjectList) {
 		J9Object *objectPtr = ownableSynchronizerObjectList->getHeadOfList();
 		while (NULL != objectPtr) {
 			doOwnableSynchronizerObject(objectPtr);
@@ -477,6 +484,26 @@ MM_HeapRootScanner::scanOwnableSynchronizerObjects()
 		ownableSynchronizerObjectList = ownableSynchronizerObjectList->getNextList();
 	}
 	reportScanningEnded(RootScannerEntity_OwnableSynchronizerObjects);
+}
+
+void
+MM_HeapRootScanner::scanContinuationObjects()
+{
+	reportScanningStarted(RootScannerEntity_ContinuationObjects);
+	setReachability(RootScannerEntityReachability_Weak);
+
+	MM_ObjectAccessBarrier *barrier = _extensions->accessBarrier;
+	MM_ContinuationObjectList *continuationObjectList = _extensions->getContinuationObjectLists();
+
+	while (NULL != continuationObjectList) {
+		J9Object *objectPtr = continuationObjectList->getHeadOfList();
+		while (NULL != objectPtr) {
+			doContinuationObject(objectPtr);
+			objectPtr = barrier->getContinuationLink(objectPtr);
+		}
+		continuationObjectList = continuationObjectList->getNextList();
+	}
+	reportScanningEnded(RootScannerEntity_ContinuationObjects);
 }
 
 /**
@@ -516,7 +543,7 @@ MM_HeapRootScanner::scanJNIWeakGlobalReferences()
 	GC_JNIWeakGlobalReferenceIterator jniWeakGlobalReferenceIterator(_javaVM->jniWeakGlobalReferences);
 	J9Object **slot;
 
-	while((slot = (J9Object **)jniWeakGlobalReferenceIterator.nextSlot()) != NULL) {
+	while ((slot = (J9Object **)jniWeakGlobalReferenceIterator.nextSlot()) != NULL) {
 		doJNIWeakGlobalReference(slot);
 	}
 
@@ -538,9 +565,9 @@ MM_HeapRootScanner::scanRememberedSet()
 	
 	GC_RememberedSetIterator rememberedSetIterator(&_extensions->rememberedSet);
 	
-	while((puddle = rememberedSetIterator.nextList()) != NULL) {
+	while ((puddle = rememberedSetIterator.nextList()) != NULL) {
 		GC_RememberedSetSlotIterator rememberedSetSlotIterator(puddle);
-		while((slotPtr = (J9Object **)rememberedSetSlotIterator.nextSlot()) != NULL) {
+		while ((slotPtr = (J9Object **)rememberedSetSlotIterator.nextSlot()) != NULL) {
 			doRememberedSetSlot(slotPtr, &rememberedSetSlotIterator);
 		}
 	}
@@ -564,9 +591,9 @@ MM_HeapRootScanner::scanJVMTIObjectTagTables()
 	J9Object **slotPtr;	
 	if (NULL != jvmtiData) {
 		GC_JVMTIObjectTagTableListIterator objectTagTableList( jvmtiData->environments);
-		while(NULL != (jvmtiEnv = (J9JVMTIEnv *)objectTagTableList.nextSlot())) {
+		while (NULL != (jvmtiEnv = (J9JVMTIEnv *)objectTagTableList.nextSlot())) {
 			GC_JVMTIObjectTagTableIterator objectTagTableIterator(jvmtiEnv->objectTagTable);
-			while(NULL != (slotPtr = (J9Object **)objectTagTableIterator.nextSlot())) {
+			while (NULL != (slotPtr = (J9Object **)objectTagTableIterator.nextSlot())) {
 				doJVMTIObjectTagSlot(slotPtr, &objectTagTableIterator);
 			}
 		}

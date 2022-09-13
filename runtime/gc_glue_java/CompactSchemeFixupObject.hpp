@@ -81,6 +81,8 @@ private:
 	 * @param object -- The object of type or subclass of java.util.concurrent.locks.AbstractOwnableSynchronizer.
 	 */
 	MMINLINE void addOwnableSynchronizerObjectInList(MM_EnvironmentBase *env, omrobjectptr_t objectPtr);
+
+	MMINLINE void addContinuationObjectInList(MM_EnvironmentBase *env, omrobjectptr_t objectPtr);
 };
 
 typedef struct StackIteratorData4CompactSchemeFixupObject {

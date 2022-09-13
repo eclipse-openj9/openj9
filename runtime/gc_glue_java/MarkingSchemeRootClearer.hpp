@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -64,6 +64,7 @@ public:
 	virtual void scanUnfinalizedObjects(MM_EnvironmentBase *env);
 	virtual CompletePhaseCode scanUnfinalizedObjectsComplete(MM_EnvironmentBase *env);
 	virtual void scanOwnableSynchronizerObjects(MM_EnvironmentBase *env);
+	virtual void scanContinuationObjects(MM_EnvironmentBase *env);
 	virtual void doMonitorReference(J9ObjectMonitor *objectMonitor, GC_HashTableIterator *monitorReferenceIterator);
 	virtual CompletePhaseCode scanMonitorReferencesComplete(MM_EnvironmentBase *envBase);
 	virtual void doJNIWeakGlobalReference(omrobjectptr_t *slotPtr);

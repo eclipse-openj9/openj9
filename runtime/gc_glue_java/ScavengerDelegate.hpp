@@ -69,6 +69,7 @@ private:
 	MM_GCExtensions *_extensions;
 	volatile bool _shouldScavengeFinalizableObjects; /**< Set to true at the beginning of a collection if there are any pending finalizable objects */
 	volatile bool _shouldScavengeUnfinalizedObjects; /**< Set to true at the beginning of a collection if there are any unfinalized objects */
+	volatile bool _shouldScavengeContinuationObjects; /**< Set to true at the beginning of a collection if there are any unfinalized objects */
 	volatile bool _shouldScavengeSoftReferenceObjects; /**< Set to true if there are any SoftReference objects discovered */
 	volatile bool _shouldScavengeWeakReferenceObjects; /**< Set to true if there are any WeakReference objects discovered */
 	volatile bool _shouldScavengePhantomReferenceObjects; /**< Set to true if there are any PhantomReference objects discovered */
@@ -96,6 +97,7 @@ private:
 
 	void private_addOwnableSynchronizerObjectInList(MM_EnvironmentStandard *env, omrobjectptr_t object);
 	void private_setupForOwnableSynchronizerProcessing(MM_EnvironmentStandard *env);
+	void private_setupForContinuationProcessing(MM_EnvironmentStandard *env);
 
 	/*
 	 * Scavenger Collector, Private
@@ -155,9 +157,11 @@ public:
 	}
 
 	void setShouldScavengeUnfinalizedObjects(bool shouldScavenge) { _shouldScavengeUnfinalizedObjects = shouldScavenge; }
+	void setShouldScavengeContinuationObjects(bool shouldScavenge) { _shouldScavengeContinuationObjects = shouldScavenge; }
 
 	volatile bool getShouldScavengeFinalizableObjects() { return _shouldScavengeFinalizableObjects; }
 	volatile bool getShouldScavengeUnfinalizedObjects() { return _shouldScavengeUnfinalizedObjects; }
+	volatile bool getShouldScavengeContinuationObjects() { return _shouldScavengeContinuationObjects; }
 	volatile bool getShouldScavengeSoftReferenceObjects() { return _shouldScavengeSoftReferenceObjects; }
 	volatile bool getShouldScavengeWeakReferenceObjects() { return _shouldScavengeWeakReferenceObjects; }
 	volatile bool getShouldScavengePhantomReferenceObjects() { return _shouldScavengePhantomReferenceObjects; }

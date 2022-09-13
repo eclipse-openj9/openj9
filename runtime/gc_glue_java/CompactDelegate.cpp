@@ -31,6 +31,8 @@
 #include "MarkMap.hpp"
 #include "OwnableSynchronizerObjectBuffer.hpp"
 #include "OwnableSynchronizerObjectList.hpp"
+#include "ContinuationObjectBuffer.hpp"
+#include "ContinuationObjectList.hpp"
 #include "PointerContiguousArrayIterator.hpp"
 
 #if defined(OMR_GC_MODRON_COMPACTION)
@@ -64,16 +66,16 @@ MM_CompactDelegate::verifyHeap(MM_EnvironmentBase *env, MM_MarkMap *markMap)
 	 * each pages maps to 2 mark bit slots so heap alignment needs to be a multiple
 	 * of the compaction page size
 	 */
-	assume0(extensions->heapAlignment % (2 * J9BITS_BITS_IN_SLOT * sizeof(UDATA)) == 0);
+	assume0(extensions->heapAlignment % (2 * J9BITS_BITS_IN_SLOT * sizeof(uintptr_t)) == 0);
 
 	MM_HeapRegionManager *regionManager = env->getExtensions()->getHeap()->getHeapRegionManager();
 	GC_HeapRegionIteratorStandard regionIterator(regionManager);
 	MM_HeapRegionDescriptorStandard *region = NULL;
 
-	while(NULL != (region = regionIterator.nextRegion())) {
+	while (NULL != (region = regionIterator.nextRegion())) {
 		void *lowAddress = region->getLowAddress();
 		void *highAddress = region->getHighAddress();
-		MM_HeapMapIterator markedObjectIterator(extensions, markMap, (UDATA *)lowAddress, (UDATA *)highAddress);
+		MM_HeapMapIterator markedObjectIterator(extensions, markMap, (uintptr_t *)lowAddress, (uintptr_t *)highAddress);
 
 		omrobjectptr_t objectPtr = NULL;
 		while (NULL != (objectPtr = markedObjectIterator.nextObject())) {
@@ -130,6 +132,8 @@ MM_CompactDelegate::workerCleanupAfterGC(MM_EnvironmentBase *env)
 {
 	/* flush ownable synchronizer object buffer after rebuild the ownableSynchronizerObjectList during fixupObjects */
 	env->getGCEnvironment()->_ownableSynchronizerObjectBuffer->flush(env);
+	/* flush continuation object buffer after rebuild the continuationObjectList during fixupObjects */
+	env->getGCEnvironment()->_continuationObjectBuffer->flush(env);
 }
 
 void
@@ -141,8 +145,8 @@ MM_CompactDelegate::mainSetupForGC(MM_EnvironmentBase *env)
 	while (NULL != (region = regionIterator.nextRegion())) {
 		MM_HeapRegionDescriptorStandardExtension *regionExtension = MM_ConfigurationDelegate::getHeapRegionDescriptorStandardExtension(env, region);
 		for (uintptr_t i = 0; i < regionExtension->_maxListIndex; i++) {
-			MM_OwnableSynchronizerObjectList *list = &regionExtension->_ownableSynchronizerObjectLists[i];
-			list->startOwnableSynchronizerProcessing();
+			regionExtension->_ownableSynchronizerObjectLists[i].startOwnableSynchronizerProcessing();
+			regionExtension->_continuationObjectLists[i].startProcessing();
 		}
 	}
 }

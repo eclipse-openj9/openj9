@@ -42,8 +42,10 @@
 #include "HeapRegionDescriptorRealtime.hpp"
 #include "MetronomeAlarmThread.hpp"
 #include "JNICriticalRegion.hpp"
-#include "OwnableSynchronizerObjectBufferRealtime.hpp"
 #include "OwnableSynchronizerObjectList.hpp"
+#include "OwnableSynchronizerObjectBufferRealtime.hpp"
+#include "ContinuationObjectList.hpp"
+#include "ContinuationObjectBufferRealtime.hpp"
 #include "VMHelpers.hpp"
 #include "RealtimeAccessBarrier.hpp"
 #include "RealtimeGC.hpp"
@@ -177,6 +179,11 @@ MM_MetronomeDelegate::initialize(MM_EnvironmentBase *env)
 		return false;
 	}
 
+	/* allocate and initialize the global continuation object lists */
+	if (!allocateAndInitializeContinuationObjectLists(env)) {
+		return false;
+	}
+
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
 	if (!_extensions->dynamicClassUnloadingThresholdForced) {
 		_extensions->dynamicClassUnloadingThreshold = 1;
@@ -263,6 +270,30 @@ MM_MetronomeDelegate::allocateAndInitializeOwnableSynchronizerObjectLists(MM_Env
 	return true;
 }
 
+bool
+MM_MetronomeDelegate::allocateAndInitializeContinuationObjectLists(MM_EnvironmentBase *env)
+{
+	const UDATA listCount = getContinuationObjectListCount(env);
+	Assert_MM_true(0 < listCount);
+	MM_ContinuationObjectList *continuationObjectLists = (MM_ContinuationObjectList *)env->getForge()->allocate((sizeof(MM_ContinuationObjectList) * listCount), MM_AllocationCategory::FIXED, J9_GET_CALLSITE());
+	if (NULL == continuationObjectLists) {
+		return false;
+	}
+	for (UDATA index = 0; index < listCount; index++) {
+		new(&continuationObjectLists[index]) MM_ContinuationObjectList();
+		/* add each list to the global list. we need to maintain the doubly linked list
+		 * to ensure uniformity with SE/Balanced.
+		 */
+		MM_ContinuationObjectList *previousContinuationObjectList = (0 == index) ? NULL : &continuationObjectLists[index-1];
+		MM_ContinuationObjectList *nextContinuationObjectList = ((listCount - 1) == index) ? NULL : &continuationObjectLists[index+1];
+
+		continuationObjectLists[index].setNextList(nextContinuationObjectList);
+		continuationObjectLists[index].setPreviousList(previousContinuationObjectList);
+	}
+	_extensions->setContinuationObjectLists(continuationObjectLists);
+	return true;
+}
+
 void
 MM_MetronomeDelegate::tearDown(MM_EnvironmentBase *env)
 {
@@ -281,6 +312,11 @@ MM_MetronomeDelegate::tearDown(MM_EnvironmentBase *env)
 		_extensions->setOwnableSynchronizerObjectLists(NULL);
 	}
 	
+	if (NULL != _extensions->getContinuationObjectLists()) {
+		env->getForge()->free(_extensions->getContinuationObjectLists());
+		_extensions->setContinuationObjectLists(NULL);
+	}
+
 	if (NULL != _extensions->accessBarrier) {
 		_extensions->accessBarrier->kill(env);
 		_extensions->accessBarrier = NULL;
@@ -1258,6 +1294,59 @@ MM_MetronomeDelegate::scanOwnableSynchronizerObjects(MM_EnvironmentRealtime *env
 					object = next;
 
 					if (OWNABLE_SYNCHRONIZER_OBJECT_YIELD_CHECK_INTERVAL == objectsVisited ) {
+						_scheduler->condYieldFromGC(env);
+						objectsVisited = 0;
+					}
+				}
+				_scheduler->condYieldFromGC(env);
+			}
+		}
+	}
+	/* restore everything to a flushed state before exiting */
+	buffer->flush(env);
+}
+
+void
+MM_MetronomeDelegate::scanContinuationObjects(MM_EnvironmentRealtime *env)
+{
+	const UDATA maxIndex = getContinuationObjectListCount(env);
+
+	/* first we need to move the current list to the prior list and process the prior list,
+	 * because if object has been marked, we have to re-insert it back to the current list.
+	 */
+	if (env->_currentTask->synchronizeGCThreadsAndReleaseMain(env, UNIQUE_ID)) {
+		GC_OMRVMInterface::flushNonAllocationCaches(env);
+		UDATA listIndex;
+		for (listIndex = 0; listIndex < maxIndex; ++listIndex) {
+			_extensions->getContinuationObjectLists()[listIndex].startProcessing();;
+		}
+		env->_currentTask->releaseSynchronizedGCThreads(env);
+	}
+
+	GC_Environment *gcEnv = env->getGCEnvironment();
+	MM_ContinuationObjectBuffer *buffer = gcEnv->_continuationObjectBuffer;
+	UDATA listIndex;
+	for (listIndex = 0; listIndex < maxIndex; ++listIndex) {
+		MM_ContinuationObjectList *list = &_extensions->getContinuationObjectLists()[listIndex];
+		if (!list->wasEmpty()) {
+			if (J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
+				J9Object *object = list->getPriorList();
+				UDATA objectsVisited = 0;
+				while (NULL != object) {
+					objectsVisited += 1;
+					gcEnv->_markJavaStats._continuationCandidates += 1;
+
+					/* Get next before adding it to the buffer, as buffer modifies ContinuationLink */
+					J9Object* next = _extensions->accessBarrier->getContinuationLink(object);
+					if (_markingScheme->isMarked(object)) {
+						buffer->add(env, object);
+					} else {
+						gcEnv->_markJavaStats._continuationCleared += 1;
+						VM_VMHelpers::cleanupContinuationObject((J9VMThread *)env->getLanguageVMThread(), object);
+					}
+					object = next;
+
+					if (CONTINUATION_OBJECT_YIELD_CHECK_INTERVAL == objectsVisited ) {
 						_scheduler->condYieldFromGC(env);
 						objectsVisited = 0;
 					}
