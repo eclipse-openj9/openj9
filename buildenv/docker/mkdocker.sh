@@ -89,7 +89,7 @@ parse_options() {
         action=build
         ;;
       --criu)
-        criu=3.16.1
+        criu=3.17.1
         ;;
       --cuda)
         cuda=9.0
