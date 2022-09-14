@@ -88,6 +88,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			</include>
 			<include path="$(OMR_DIR)/gc/include" type="relativepath"/>
 			<include path="j9gcgluejava"/>
+			<include path="j9gcinclude"/>
 		</includes>
 		<makefilestubs>
 			<makefilestub data="UMA_TREAT_WARNINGS_AS_ERRORS=1"/>

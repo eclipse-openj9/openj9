@@ -1351,6 +1351,17 @@ suspendAgentBreakpoint(J9VMThread * currentThread, J9JVMTIAgentBreakpoint * agen
 UDATA
 findDecompileInfo(J9VMThread *currentThread, J9VMThread *targetThread, UDATA depth, J9StackWalkState *walkState);
 
+/**
+ * A helper to walk a platform thread or virtual thread
+ * @param[in] currentThread current thread
+ * @param[in] targetThread the thread to walk
+ * @param[in] threadObject the thread to walk
+ * @param[in] walkState a stack walk state
+ * @return 0 on success and non-zero on failure
+ */
+UDATA
+genericWalkStackFramesHelper(J9VMThread *currentThread, J9VMThread *targetThread, j9object_t threadObject, J9StackWalkState *walkState);
+
 /* ---------------- jvmtiHook.c ---------------- */
 
 /**

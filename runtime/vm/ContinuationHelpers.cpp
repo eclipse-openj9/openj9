@@ -169,12 +169,11 @@ isPinnedContinuation(J9VMThread *currentThread)
 }
 
 UDATA
-walkContinuationStackFrames(J9VMThread *currentThread, j9object_t continuationObject, J9StackWalkState *walkState)
+walkContinuationStackFrames(J9VMThread *currentThread, J9VMContinuation *continuation, J9StackWalkState *walkState)
 {
 	Assert_VM_notNull(currentThread);
 
 	UDATA rc = J9_STACKWALK_RC_NONE;
-	J9VMContinuation *continuation = J9VMJDKINTERNALVMCONTINUATION_VMREF(currentThread, continuationObject);
 
 	if (NULL != continuation) {
 		J9VMThread stackThread = {0};
