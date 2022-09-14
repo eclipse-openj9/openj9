@@ -174,7 +174,9 @@ getVMThread(J9VMThread *currentThread, jthread thread, J9VMThread **vmThreadPtr,
 	omrthread_monitor_exit(vm->vmThreadListMutex);
 
 #if JAVA_SPEC_VERSION >= 19
-	Assert_JVMTI_true((NULL != targetThread) || isVirtualThread);
+	if (mustBeAlive) {
+		Assert_JVMTI_true((NULL != targetThread) || isVirtualThread);
+	}
 #endif /* JAVA_SPEC_VERSION >= 19 */
 
 	return JVMTI_ERROR_NONE;
@@ -776,6 +778,90 @@ getThreadState(J9VMThread *currentThread, j9object_t threadObject)
 
 	return state;
 }
+
+#if JAVA_SPEC_VERSION >= 19
+jint
+getVirtualThreadState(J9VMThread *currentThread, jthread thread)
+{
+	J9JavaVM* vm = currentThread->javaVM;
+	jint rc = 0;
+	J9VMThread *targetThread = NULL;
+	Assert_JVMTI_notNull(thread);
+	Assert_JVMTI_mustHaveVMAccess(currentThread);
+	if (JVMTI_ERROR_NONE == getVMThread(currentThread, thread, &targetThread, FALSE, FALSE)) {
+		j9object_t vThreadObject = J9_JNI_UNWRAP_REFERENCE(thread);
+		jint vThreadState = (jint) J9VMJAVALANGVIRTUALTHREAD_STATE(currentThread, vThreadObject);
+		/* The mapping from JVMTI_VTHREAD_STATE_XXX to JVMTI_JAVA_LANG_THREAD_STATE_XXX is based on j.l.VirtualThread.threadState(). */
+		switch (vThreadState) {
+		case JVMTI_VTHREAD_STATE_NEW:
+			rc = JVMTI_JAVA_LANG_THREAD_STATE_NEW;
+			break;
+		case JVMTI_VTHREAD_STATE_STARTED:
+		{
+			JNIEnv *env = (JNIEnv *)currentThread;
+			jfieldID fid = NULL;
+			jclass jlThread = NULL;
+
+			vm->internalVMFunctions->internalExitVMToJNI(currentThread);
+			jlThread = (*env)->FindClass(env, "java/lang/Thread");
+			if (NULL != jlThread) {
+				fid = (*env)->GetFieldID(env, jlThread, "container", "Ljdk/internal/vm/ThreadContainer;");
+			}
+			if ((NULL != fid)
+				&& (NULL == (*env)->GetObjectField(env, thread, fid))
+			) {
+				rc = JVMTI_JAVA_LANG_THREAD_STATE_NEW;
+			} else {
+				rc = JVMTI_JAVA_LANG_THREAD_STATE_RUNNABLE;
+			}
+			vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
+			break;
+		}
+		case JVMTI_VTHREAD_STATE_RUNNABLE:
+			rc = JVMTI_JAVA_LANG_THREAD_STATE_RUNNABLE;
+			break;
+		case JVMTI_VTHREAD_STATE_RUNNABLE_SUSPENDED:
+			rc = JVMTI_JAVA_LANG_THREAD_STATE_RUNNABLE | JVMTI_THREAD_STATE_SUSPENDED;
+			break;
+		case JVMTI_VTHREAD_STATE_RUNNING:
+			if (NULL != targetThread) {
+				vm->internalVMFunctions->haltThreadForInspection(currentThread, targetThread);
+				rc = getThreadState(currentThread, targetThread->carrierThreadObject);
+				vm->internalVMFunctions->resumeThreadForInspection(currentThread, targetThread);
+			} else {
+				rc = JVMTI_JAVA_LANG_THREAD_STATE_RUNNABLE;
+			}
+			break;
+		case JVMTI_VTHREAD_STATE_PARKING:
+			/* Fall Through */
+		case JVMTI_VTHREAD_STATE_YIELDING:
+			rc = JVMTI_JAVA_LANG_THREAD_STATE_RUNNABLE;
+			break;
+		case JVMTI_VTHREAD_STATE_PARKED:
+			rc = JVMTI_JAVA_LANG_THREAD_STATE_WAITING | JVMTI_THREAD_STATE_PARKED;
+			break;
+		case JVMTI_VTHREAD_STATE_PARKED_SUSPENDED:
+			rc = JVMTI_JAVA_LANG_THREAD_STATE_WAITING | JVMTI_THREAD_STATE_PARKED | JVMTI_THREAD_STATE_SUSPENDED;
+			break;
+		case JVMTI_VTHREAD_STATE_PINNED:
+			rc = JVMTI_JAVA_LANG_THREAD_STATE_WAITING;
+			break;
+		case JVMTI_VTHREAD_STATE_TERMINATED:
+			rc = JVMTI_JAVA_LANG_THREAD_STATE_TERMINATED;
+			break;
+		default:
+			Assert_JVMTI_unreachable();
+			rc = JVMTI_ERROR_INTERNAL;
+		}
+		releaseVMThread(currentThread, targetThread, thread);
+	} else {
+		/* This is unreachable. */
+		Assert_JVMTI_unreachable();
+		rc = JVMTI_ERROR_INTERNAL;
+	}
+	return rc;
+}
+#endif /* JAVA_SPEC_VERSION >= 19 */
 
 
 void

@@ -67,50 +67,59 @@ jvmtiGetThreadState(jvmtiEnv* env,
 		} else {
 			threadObject = *(j9object_t *)thread;
 		}
-
-		/* get the lock for the object */
-		threadObjectLock = J9VMJAVALANGTHREAD_LOCK(currentThread,threadObject);
-
-		/* now get the vmThread for the object and whether the thread has been started, we get
-		 * these under the thread object lock
-		 * so that we get a consistent view of the two values */
-		if (threadObjectLock != NULL){
-			rc = getVMThread(currentThread, thread, &targetThread, TRUE, FALSE);
-			threadStartedFlag = (jboolean) J9VMJAVALANGTHREAD_STARTED(currentThread, threadObject);
-		} else {
-			/* in this case we must be early in the thread creation.  We still need to call getVMThread so that
-			 * the inspection count etc. are handled correctly, however, we just want to fall into the case were
-			 * we return that the thread is NEW so we set the targetThread and threadStartedFlag to false.
+#if JAVA_SPEC_VERSION >= 19
+		if (IS_VIRTUAL_THREAD(currentThread, threadObject)) {
+			/* If thread is NULL, the current thread is used which cannot be a virtual thread.
+			 * There is an assertion inside getVirtualThreadState() that thread is not NULL.
 			 */
-			rc = getVMThread(currentThread, thread, &targetThread, TRUE, FALSE);
-			targetThread = NULL;
-			threadStartedFlag = JNI_FALSE;
-		}
+			rv_thread_state = getVirtualThreadState(currentThread, thread);
+		} else
+#endif /* JAVA_SPEC_VERSION >= 19 */
+		{
+			/* get the lock for the object */
+			threadObjectLock = J9VMJAVALANGTHREAD_LOCK(currentThread,threadObject);
 
-		if (rc == JVMTI_ERROR_NONE) {
-			/* we use the values of targetThread and threadStartedFlag that were obtained while holding the lock on the
-			 * thread so that get a consistent view of the values.  This is needed because if we don't get a consistent view
-			 * we may think the thread is TERMINATED instead of just starting.
-			 */
-			if (targetThread == NULL) {
-				/* If the thread is new, and we were not able to get and suspend its vmthread, 
-				 * we must not call getThreadState(). getThreadState() refetches the vmthread.
-				 * If the second fetch succeeded, we would erroneously attempt to inspect the
-				 * unsuspended thread.
-				 */
-				if (threadStartedFlag) {
-					rv_thread_state = JVMTI_THREAD_STATE_TERMINATED;
-				} else {
-					/* thread is new */
-					rv_thread_state = 0;
-				}
+			/* now get the vmThread for the object and whether the thread has been started, we get
+			 * these under the thread object lock
+			 * so that we get a consistent view of the two values */
+			if (threadObjectLock != NULL){
+				rc = getVMThread(currentThread, thread, &targetThread, TRUE, FALSE);
+				threadStartedFlag = (jboolean) J9VMJAVALANGTHREAD_STARTED(currentThread, threadObject);
 			} else {
-				vm->internalVMFunctions->haltThreadForInspection(currentThread, targetThread);
-				/* The vmthread can't be recycled because getVMThread() prevented it from exiting. */
-				rv_thread_state = getThreadState(currentThread, targetThread->threadObject);
-				vm->internalVMFunctions->resumeThreadForInspection(currentThread, targetThread);
+				/* in this case we must be early in the thread creation.  We still need to call getVMThread so that
+				 * the inspection count etc. are handled correctly, however, we just want to fall into the case were
+				 * we return that the thread is NEW so we set the targetThread and threadStartedFlag to false.
+				 */
+				rc = getVMThread(currentThread, thread, &targetThread, TRUE, FALSE);
+				targetThread = NULL;
+				threadStartedFlag = JNI_FALSE;
 			}
-			releaseVMThread(currentThread, targetThread, thread);
+
+			if (rc == JVMTI_ERROR_NONE) {
+				/* we use the values of targetThread and threadStartedFlag that were obtained while holding the lock on the
+				 * thread so that get a consistent view of the values.  This is needed because if we don't get a consistent view
+				 * we may think the thread is TERMINATED instead of just starting.
+				 */
+				if (targetThread == NULL) {
+					/* If the thread is new, and we were not able to get and suspend its vmthread,
+					 * we must not call getThreadState(). getThreadState() refetches the vmthread.
+					 * If the second fetch succeeded, we would erroneously attempt to inspect the
+					 * unsuspended thread.
+					 */
+					if (threadStartedFlag) {
+						rv_thread_state = JVMTI_THREAD_STATE_TERMINATED;
+					} else {
+						/* thread is new */
+						rv_thread_state = 0;
+					}
+				} else {
+					vm->internalVMFunctions->haltThreadForInspection(currentThread, targetThread);
+					/* The vmthread can't be recycled because getVMThread() prevented it from exiting. */
+					rv_thread_state = getThreadState(currentThread, targetThread->threadObject);
+					vm->internalVMFunctions->resumeThreadForInspection(currentThread, targetThread);
+				}
+				releaseVMThread(currentThread, targetThread, thread);
+			}
 		}
 done:
 		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
