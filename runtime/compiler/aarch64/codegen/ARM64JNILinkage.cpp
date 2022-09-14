@@ -258,6 +258,16 @@ void J9::ARM64::JNILinkage::buildJNICallOutFrame(TR::Node *callNode, bool isWrap
    {
    TR_J9VMBase *fej9 = reinterpret_cast<TR_J9VMBase *>(fe());
 
+#if JAVA_SPEC_VERSION >= 19
+   /**
+     * For virtual threads, bump the callOutCounter.  It is safe and most efficient to
+     * do this unconditionally.  No need to check for overflow.
+     */
+   generateTrg1MemInstruction(cg(), TR::InstOpCode::ldrimmx, callNode, scratchReg1, TR::MemoryReference::createWithDisplacement(cg(), vmThreadReg, fej9->thisThreadGetCallOutCountOffset()));
+   generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::addimmx, callNode, scratchReg1, scratchReg1, 1);
+   generateMemSrc1Instruction(cg(), TR::InstOpCode::strimmx, callNode, TR::MemoryReference::createWithDisplacement(cg(), vmThreadReg, fej9->thisThreadGetCallOutCountOffset()), scratchReg1);
+#endif
+
    // begin: mask out the magic bit that indicates JIT frames below
    loadConstant64(cg(), callNode, 0, scratchReg1);
    generateMemSrc1Instruction(cg(), TR::InstOpCode::strimmx, callNode, TR::MemoryReference::createWithDisplacement(cg(), vmThreadReg, fej9->thisThreadGetJavaFrameFlagsOffset()), scratchReg1);
@@ -343,6 +353,16 @@ void J9::ARM64::JNILinkage::buildJNICallOutFrame(TR::Node *callNode, bool isWrap
 void J9::ARM64::JNILinkage::restoreJNICallOutFrame(TR::Node *callNode, bool tearDownJNIFrame, TR::Register *vmThreadReg, TR::Register *javaStackReg, TR::Register *scratchReg)
    {
    TR_J9VMBase *fej9 = reinterpret_cast<TR_J9VMBase *>(fe());
+
+#if JAVA_SPEC_VERSION >= 19
+   /**
+     * For virtual threads, decrement the callOutCounter.  It is safe and most efficient to
+     * do this unconditionally.  No need to check for underflow.
+     */
+   generateTrg1MemInstruction(cg(), TR::InstOpCode::ldrimmx, callNode, scratchReg, TR::MemoryReference::createWithDisplacement(cg(), vmThreadReg, fej9->thisThreadGetCallOutCountOffset()));
+   generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::subimmx, callNode, scratchReg, scratchReg, 1);
+   generateMemSrc1Instruction(cg(), TR::InstOpCode::strimmx, callNode, TR::MemoryReference::createWithDisplacement(cg(), vmThreadReg, fej9->thisThreadGetCallOutCountOffset()), scratchReg);
+#endif
 
    // restore stack pointer: need to deal with growable stack -- stack may already be moved.
    generateTrg1MemInstruction(cg(), TR::InstOpCode::ldrimmx, callNode, scratchReg, TR::MemoryReference::createWithDisplacement(cg(), vmThreadReg, fej9->thisThreadGetJavaLiteralsOffset()));
