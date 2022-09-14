@@ -5239,6 +5239,10 @@ Object setMethodHandleCache(Object cache) {
 	return result;
 }
 
+ConstantPool getConstantPool() {
+	return SharedSecrets.getJavaLangAccess().getConstantPool(this);
+}
+
 ConstantPool getConstantPool(Object internalCP) {
 	return VM.getVMLangAccess().getConstantPool(internalCP);
 }
