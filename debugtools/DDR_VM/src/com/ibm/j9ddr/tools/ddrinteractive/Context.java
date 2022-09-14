@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -231,7 +231,7 @@ public class Context
 			} catch (Exception e) {
 				logger.log(Level.FINE, "Problem running command: ", e);
 				defaultOut.println("Problem running command:");
-				defaultOut.println(e.getMessage());
+				e.printStackTrace(defaultOut);
 			}
 
 			defaultOut.flush();
