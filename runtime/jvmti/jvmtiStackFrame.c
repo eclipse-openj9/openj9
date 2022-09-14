@@ -26,10 +26,7 @@
 static UDATA popFrameCheckIterator (J9VMThread * currentThread, J9StackWalkState * walkState);
 static UDATA jvmtiInternalGetStackTraceIterator (J9VMThread * currentThread, J9StackWalkState * walkState);
 static jvmtiError jvmtiInternalGetStackTrace(
-	jvmtiEnv *env, J9VMThread *currentThread, J9VMThread *targetThread,
-#if JAVA_SPEC_VERSION >= 19
-	j9object_t continuationObject,
-#endif /* JAVA_SPEC_VERSION >= 19 */
+	jvmtiEnv *env, J9VMThread *currentThread, J9VMThread *targetThread, j9object_t threadObject,
 	jint start_depth, UDATA max_frame_count, jvmtiFrameInfo *frame_buffer, jint *count_ptr);
 
 
@@ -63,23 +60,18 @@ jvmtiGetStackTrace(jvmtiEnv* env,
 
 		rc = getVMThread(currentThread, thread, &targetThread, TRUE, TRUE);
 		if (rc == JVMTI_ERROR_NONE) {
+			j9object_t threadObject = (NULL == thread) ? currentThread->threadObject : J9_JNI_UNWRAP_REFERENCE(thread);
 #if JAVA_SPEC_VERSION >= 19
-			if (NULL == targetThread) {
-				j9object_t threadObject = J9_JNI_UNWRAP_REFERENCE(thread);
-				j9object_t contObject = (j9object_t)J9VMJAVALANGVIRTUALTHREAD_CONT(currentThread, threadObject);
-				rc = jvmtiInternalGetStackTrace(env, currentThread, NULL, contObject, start_depth, (UDATA) max_frame_count, frame_buffer, &rv_count);
-			} else
+			if (NULL != targetThread)
 #endif /* JAVA_SPEC_VERSION >= 19 */
 			{
 				vmFuncs->haltThreadForInspection(currentThread, targetThread);
-
-				rc = jvmtiInternalGetStackTrace(
-					env, currentThread, targetThread,
+			}
+			rc = jvmtiInternalGetStackTrace(env, currentThread, targetThread, threadObject, start_depth, (UDATA) max_frame_count, frame_buffer, &rv_count);
 #if JAVA_SPEC_VERSION >= 19
-					NULL,
+			if (NULL != targetThread)
 #endif /* JAVA_SPEC_VERSION >= 19 */
-					start_depth, (UDATA) max_frame_count, frame_buffer, &rv_count);
-
+			{
 				vmFuncs->resumeThreadForInspection(currentThread, targetThread);
 			}
 			releaseVMThread(currentThread, targetThread, thread);
@@ -146,7 +138,9 @@ jvmtiGetAllStackTraces(jvmtiEnv* env,
 						currentThread,
 						targetThread,
 #if JAVA_SPEC_VERSION >= 19
-						NULL,
+						targetThread->carrierThreadObject,
+#else /* JAVA_SPEC_VERSION >= 19 */
+						targetThread->threadObject,
 #endif /* JAVA_SPEC_VERSION >= 19 */
 						0,
 						(UDATA) max_frame_count,
@@ -247,9 +241,7 @@ jvmtiGetThreadListStackTraces(jvmtiEnv* env,
 						env,
 						currentThread,
 						targetThread,
-#if JAVA_SPEC_VERSION >= 19
-						NULL,
-#endif /* JAVA_SPEC_VERSION >= 19 */
+						threadObject,
 						0,
 						(UDATA) max_frame_count,
 						(void *) currentFrameInfo,
@@ -311,21 +303,22 @@ jvmtiGetFrameCount(jvmtiEnv* env,
 
 		rc = getVMThread(currentThread, thread, &targetThread, TRUE, TRUE);
 		if (rc == JVMTI_ERROR_NONE) {
+			j9object_t threadObject = (NULL == thread) ? currentThread->threadObject : J9_JNI_UNWRAP_REFERENCE(thread);
 			J9StackWalkState walkState;
 			walkState.flags = J9_STACKWALK_INCLUDE_NATIVES | J9_STACKWALK_VISIBLE_ONLY;
 			walkState.skipCount = 0;
 
 #if JAVA_SPEC_VERSION >= 19
-			if (NULL == targetThread) {
-				j9object_t threadObject = J9_JNI_UNWRAP_REFERENCE(thread);
-				j9object_t contObject = (j9object_t)J9VMJAVALANGVIRTUALTHREAD_CONT(currentThread, threadObject);
-				vmFuncs->walkContinuationStackFrames(currentThread, contObject, &walkState);
-			} else
+			if (NULL != targetThread)
 #endif /* JAVA_SPEC_VERSION >= 19 */
 			{
 				vmFuncs->haltThreadForInspection(currentThread, targetThread);
-				walkState.walkThread = targetThread;
-				vm->walkStackFrames(currentThread, &walkState);
+			}
+			genericWalkStackFramesHelper(currentThread, targetThread, threadObject, &walkState);
+#if JAVA_SPEC_VERSION >= 19
+			if (NULL != targetThread)
+#endif /* JAVA_SPEC_VERSION >= 19 */
+			{
 				vmFuncs->resumeThreadForInspection(currentThread, targetThread);
 			}
 
@@ -439,24 +432,26 @@ jvmtiGetFrameLocation(jvmtiEnv *env,
 
 		rc = getVMThread(currentThread, thread, &targetThread, TRUE, TRUE);
 		if (rc == JVMTI_ERROR_NONE) {
+			j9object_t threadObject = (NULL == thread) ? currentThread->threadObject : J9_JNI_UNWRAP_REFERENCE(thread);
 			J9StackWalkState walkState = {0};
 			walkState.flags = J9_STACKWALK_INCLUDE_NATIVES | J9_STACKWALK_VISIBLE_ONLY | J9_STACKWALK_COUNT_SPECIFIED | J9_STACKWALK_RECORD_BYTECODE_PC_OFFSET;
 			walkState.skipCount = (UDATA) depth;
 			walkState.maxFrames = 1;
 
 #if JAVA_SPEC_VERSION >= 19
-			if (NULL == targetThread) {
-				j9object_t threadObject = J9_JNI_UNWRAP_REFERENCE(thread);
-				j9object_t contObject = (j9object_t)J9VMJAVALANGVIRTUALTHREAD_CONT(currentThread, threadObject);
-				vmFuncs->walkContinuationStackFrames(currentThread, contObject, &walkState);
-			} else
+			if (NULL != targetThread)
 #endif /* JAVA_SPEC_VERSION >= 19 */
 			{
 				vmFuncs->haltThreadForInspection(currentThread, targetThread);
-				walkState.walkThread = targetThread;
-				vm->walkStackFrames(currentThread, &walkState);
+			}
+			genericWalkStackFramesHelper(currentThread, targetThread, threadObject, &walkState);
+#if JAVA_SPEC_VERSION >= 19
+			if (NULL != targetThread)
+#endif /* JAVA_SPEC_VERSION >= 19 */
+			{
 				vmFuncs->resumeThreadForInspection(currentThread, targetThread);
 			}
+
 			if (1 == walkState.framesWalked) {
 				jmethodID methodID = getCurrentMethodID(currentThread, walkState.method);
 
@@ -639,28 +634,18 @@ jvmtiInternalGetStackTrace(
 	jvmtiEnv *env,
 	J9VMThread *currentThread,
 	J9VMThread *targetThread,
-#if JAVA_SPEC_VERSION >= 19
-	j9object_t continuationObject,
-#endif /* JAVA_SPEC_VERSION >= 19 */
+	j9object_t threadObject,
 	jint start_depth,
 	UDATA max_frame_count,
 	jvmtiFrameInfo *frame_buffer,
-	jint *count_ptr
-) {
-	J9JavaVM *vm = JAVAVM_FROM_ENV(env);
+	jint *count_ptr)
+{
 	J9StackWalkState walkState = {0};
 
 	walkState.flags = J9_STACKWALK_INCLUDE_NATIVES | J9_STACKWALK_VISIBLE_ONLY;
 	walkState.skipCount = 0;
-	if (NULL != targetThread) {
-		walkState.walkThread = targetThread;
-		vm->walkStackFrames(currentThread, &walkState);
-	}
-#if JAVA_SPEC_VERSION >= 19
-	else if (NULL != continuationObject) {
-		vm->internalVMFunctions->walkContinuationStackFrames(currentThread, continuationObject, &walkState);
-	}
-#endif /* JAVA_SPEC_VERSION >= 19 */
+
+	genericWalkStackFramesHelper(currentThread, targetThread, threadObject, &walkState);
 	if (start_depth == 0) {
 		/* This violates the spec, but matches JDK behaviour - allows querying an empty stack with start_depth == 0 */
 		walkState.skipCount = 0;
@@ -682,14 +667,7 @@ jvmtiInternalGetStackTrace(
 	walkState.userData1 = frame_buffer;
 	walkState.frameWalkFunction = jvmtiInternalGetStackTraceIterator;
 
-	if (NULL != targetThread) {
-		vm->walkStackFrames(currentThread, &walkState);
-	}
-#if JAVA_SPEC_VERSION >= 19
-	else if (NULL != continuationObject) {
-		vm->internalVMFunctions->walkContinuationStackFrames(currentThread, continuationObject, &walkState);
-	}
-#endif /* JAVA_SPEC_VERSION >= 19 */
+	genericWalkStackFramesHelper(currentThread, targetThread, threadObject, &walkState);
 	if (NULL == walkState.userData1) {
 		return JVMTI_ERROR_OUT_OF_MEMORY;
 	}
