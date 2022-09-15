@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2021 IBM Corp. and others
+ * Copyright (c) 2001, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -36,7 +36,7 @@ public class TestFindExt extends DDRExtTesterBase {
 	public void testFindMethodFromPC() {
 		String methodForNameOut = exec(Constants.METHODFORNAME_CMD,
 				new String[] { Constants.METHODFORNAME_METHOD });
-		String j9methodAddr = MethodForNameOutputParser.extractMethodAddress(methodForNameOut, null);
+		String j9methodAddr = MethodForNameOutputParser.extractMethodAddress(methodForNameOut, null, null);
 		String j9methodOut = exec("j9method", new String[] { j9methodAddr });
 		String j9rommethodAddr = extractJ9RomMethodAddress(j9methodOut);
 
@@ -134,7 +134,8 @@ public class TestFindExt extends DDRExtTesterBase {
 	public void testFindstackvalue() {
 		String methodForNameOut = exec(Constants.METHODFORNAME_CMD,
 				new String[] { Constants.METHODFORNAME_METHOD });
-		String j9methodAddr = MethodForNameOutputParser.extractMethodAddress(methodForNameOut, "JI");
+		String j9methodAddr = MethodForNameOutputParser.extractMethodAddress(methodForNameOut,
+				"J", Constants.METHODFORNAME_METHOD_FULLNAME);
 
 		if (j9methodAddr == null) {
 			log.info("Get an address from '!methodforname sleep' output: ");
