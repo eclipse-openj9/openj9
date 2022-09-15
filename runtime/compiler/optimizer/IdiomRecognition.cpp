@@ -7162,7 +7162,15 @@ TR_CISCTransformer::analyzeOneArrayIndex(TR_CISCNode *arrayindex, TR::SymbolRefe
          }
       if (!ret) return false;
       }
-   else if (t->getOpcode() != TR_variable)
+   else if (t->getOpcode() == TR_variable)
+      {
+      TR::SymbolReference *symref = t->getHeadOfTrNodeInfo()->_node->getSymbolReference();
+      if (symref != inductionVariableSymRef)
+         {
+         return false;
+         }
+      }
+   else
       {
       return false;
       }
