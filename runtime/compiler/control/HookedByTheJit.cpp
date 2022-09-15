@@ -1855,6 +1855,9 @@ static void jitHookPrepareRestore(J9HookInterface * * hookInterface, UDATA event
       {
       TR::Compiler->target.cpu = TR::CPU::detect(TR::Compiler->omrPortLib);
       jitConfig->targetProcessor = TR::Compiler->target.cpu.getProcessorDescription();
+
+      /* Reinitialize the (technically unused) targetProcesssorInfo on x86 to prevent asserts */
+      TR::Compiler->target.cpu.initializeTargetProcessorInfo(true);
       }
 
    TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
