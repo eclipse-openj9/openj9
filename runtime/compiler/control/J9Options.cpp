@@ -1156,6 +1156,7 @@ static bool JITServerParseCommonOptions(J9JavaVM *vm, TR::CompilationInfo *compI
    const char *xxDisableRequireJITServerOption = "-XX:-RequireJITServer";
    const char *xxJITServerLogConnections = "-XX:+JITServerLogConnections";
    const char *xxDisableJITServerLogConnections = "-XX:-JITServerLogConnections";
+   const char *xxJITServerAOTmxOption = "-XX:JITServerAOTmx=";
 
    int32_t xxJITServerPortArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxJITServerPortOption, 0);
    int32_t xxJITServerTimeoutArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxJITServerTimeoutOption, 0);
@@ -1168,6 +1169,7 @@ static bool JITServerParseCommonOptions(J9JavaVM *vm, TR::CompilationInfo *compI
    int32_t xxDisableRequireJITServerArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxDisableRequireJITServerOption, 0);
    int32_t xxJITServerLogConnectionsArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxJITServerLogConnections, 0);
    int32_t xxDisableJITServerLogConnectionsArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxDisableJITServerLogConnections, 0);
+   int32_t xxJITServerAOTmxArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxJITServerAOTmxOption, 0);
 
    if (xxJITServerPortArgIndex >= 0)
       {
@@ -1234,6 +1236,15 @@ static bool JITServerParseCommonOptions(J9JavaVM *vm, TR::CompilationInfo *compI
    if (xxJITServerLogConnectionsArgIndex > xxDisableJITServerLogConnectionsArgIndex)
       {
       TR::Options::setVerboseOption(TR_VerboseJITServerConns);
+      }
+
+   if (xxJITServerAOTmxArgIndex >= 0)
+      {
+      uint32_t aotMaxBytes = 0;
+      if (GET_MEMORY_VALUE(xxJITServerAOTmxArgIndex, xxJITServerAOTmxOption, aotMaxBytes) == OPTION_OK)
+         {
+         JITServerAOTCacheMap::setCacheMaxBytes(aotMaxBytes);
+         }
       }
 
    return true;

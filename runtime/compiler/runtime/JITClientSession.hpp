@@ -460,10 +460,15 @@ public:
       return _aotHeaderRecord;
       }
 
-   const AOTCacheClassRecord *getClassRecord(J9Class *clazz, JITServer::ServerStream *stream);
+   // If this function sets the missingLoaderInfo flag then a NULL result is due to missing class loader info; otherwise that
+   // result is due to a failure to allocate.
+   const AOTCacheClassRecord *getClassRecord(J9Class *clazz, JITServer::ServerStream *stream, bool &missingLoaderInfo);
    const AOTCacheMethodRecord *getMethodRecord(J9Method *method, J9Class *definingClass, JITServer::ServerStream *stream);
+   // If this function sets the missingLoaderInfo flag then a NULL result is due to missing class loader info; otherwise that
+   // result is due to a failure to allocate.
    const AOTCacheClassChainRecord *getClassChainRecord(J9Class *clazz, uintptr_t *classChain,
-                                                       const std::vector<J9Class *> &ramClassChain, JITServer::ServerStream *stream);
+                                                       const std::vector<J9Class *> &ramClassChain, JITServer::ServerStream *stream,
+                                                       bool &missingLoaderInfo);
 
    JITServerAOTCache::KnownIdSet &getAOTCacheKnownIds() { return _aotCacheKnownIds; }
    TR::Monitor *getAOTCacheKnownIdsMonitor() const { return _aotCacheKnownIdsMonitor; }
@@ -471,8 +476,12 @@ public:
 private:
    void destroyMonitors();
 
-   const AOTCacheClassRecord *getClassRecord(ClientSessionData::ClassInfo &classInfo);
-   const AOTCacheClassRecord *getClassRecord(J9Class *clazz, bool &missingLoaderRecord);
+   // If this function sets the missingLoaderInfo flag then a NULL result is due to missing class loader info; otherwise that
+   // result is due to a failure to allocate.
+   const AOTCacheClassRecord *getClassRecord(ClientSessionData::ClassInfo &classInfo, bool &missingLoaderInfo);
+   // If this function sets one of the two boolean flags then a NULL result is due to one of those error conditions; otherwise
+   // that result is due to a failure to allocate.
+   const AOTCacheClassRecord *getClassRecord(J9Class *clazz, bool &missingLoaderInfo, bool &uncachedClass);
 
    const uint64_t _clientUID;
    int64_t  _timeOfLastAccess; // in ms
@@ -549,8 +558,8 @@ private:
    bool _isInStartupPhase;
 
    std::string _aotCacheName;
-   JITServerAOTCache *_aotCache;
-   const AOTCacheAOTHeaderRecord *_aotHeaderRecord;
+   JITServerAOTCache *volatile _aotCache;
+   const AOTCacheAOTHeaderRecord *volatile _aotHeaderRecord;
 
    JITServerAOTCache::KnownIdSet _aotCacheKnownIds;
    TR::Monitor *_aotCacheKnownIdsMonitor;
