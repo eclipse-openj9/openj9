@@ -1225,6 +1225,9 @@ static void jitWalkResolveMethodFrame(J9StackWalkState *walkState)
 		while ((sigChar = jitNextSigChar(&sigData)) != ')') {
 
 			switch (sigChar) {
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+				case 'Q': /* fall through */
+#endif /* #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 				case 'L':
 #ifdef J9SW_ARGUMENT_REGISTER_COUNT
 					if (stackSpillCount) {
@@ -1332,6 +1335,9 @@ static UDATA jitNextSigChar(U_8 ** utfData)
 			}
 			/* Fall through to consume type name, utfChar == 'L' for return value */
 
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		case 'Q': /* fall through */
+#endif /* #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 		case 'L':
 			while (jitNextUTFChar(utfData) != ';') ;
 	}
