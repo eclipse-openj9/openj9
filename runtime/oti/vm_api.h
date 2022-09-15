@@ -4286,13 +4286,12 @@ jint
 threadParseArguments(J9JavaVM *vm, char *optArg);
 
 /**
- * @brief  returns the Java priority for the thread specified.  For RealtimeThreads the priority comes
- *         from the priority field in PriorityParameters while for regular threads or any thread in a non-realtime vm it
- *         comes from the priority field in Thread
- *         Callers of this method must ensure that the Java Thread object for the thread is not NULL and
- *         that this cannot change while the call is being made
- *         This method should also only be called when we don't need barrier checks such as call from
- *         jvmti and ras
+ * @brief Returns the Java priority for the thread specified. For RealtimeThreads, the priority
+ * comes from the priority field in PriorityParameters while for regular threads or any thread
+ * in a non-realtime vm it comes from the priority field in Thread. Callers of this method must
+ * ensure that the Java Thread object for the thread is not NULL and that this cannot change
+ * while the call is being made. This method should also only be called when we don't need barrier
+ * checks such as call from jvmti and ras.
  *
  * @param vm the vm used to lookup the priority
  * @param thread the thread for which the priority should be returned
@@ -4305,7 +4304,7 @@ getJavaThreadPriority(struct J9JavaVM *vm, J9VMThread* thread );
 /* ---------------- ContinuationHelpers.cpp ---------------- */
 
 /**
- * @brief  Create the native J9VMContinuation structure for Continuation
+ * @brief Create the native J9VMContinuation structure for Continuation.
  *
  * @param currentThread
  * @param continuationObject
@@ -4315,9 +4314,9 @@ BOOLEAN
 createContinuation(J9VMThread *currentThread, j9object_t continuationObject);
 
 /**
- * @brief  enters the Continuation runnable.
- *         If the Continuation has not started, start the runnable task via callin to interpreter on the method Continuation.execute
- *         If the Continuation has already started, resume the execution with a new interpreter instance on the stack
+ * @brief Enters the Continuation runnable.
+ * If the Continuation has not started, start the runnable task via callin to interpreter on the method Continuation.execute.
+ * If the Continuation has already started, resume the execution with a new interpreter instance on the stack.
  *
  * @param currentThread the thread to mount Continuation.
  * @param continuationObject
@@ -4327,7 +4326,7 @@ BOOLEAN
 enterContinuation(struct J9VMThread *currentThread, j9object_t continuationObject);
 
 /**
- * @brief  suspends the Continuation runnable.
+ * @brief Suspends the Continuation runnable.
  *
  * @param currentThread
  * @return BOOLEAN
@@ -4336,7 +4335,7 @@ BOOLEAN
 yieldContinuation(struct J9VMThread *currentThread);
 
 /**
- * @brief  Free the native memory allocated by Continuation
+ * @brief Free the native memory allocated by Continuation.
  *
  * @param currentThread the thread unmounting Continuation.
  * @param continuationObject
@@ -4345,7 +4344,7 @@ void
 freeContinuation(J9VMThread *currentThread, j9object_t continuationObject);
 
 /**
- * Determine if the current continuation is pinned.
+ * @brief Determine if the current continuation is pinned.
  *
  * @param currentThread
  * @return 0 if not pinned; otherwise, an error code corresponding to the pinned reason.
@@ -4354,7 +4353,18 @@ jint
 isPinnedContinuation(J9VMThread *currentThread);
 
 /**
- * @brief Walk the stackframes associated with a continuation
+ * @brief Walk the stackframes associated with Continuation object.
+ *
+ * @param currentThread
+ * @params allocated J9VMThread pointer
+ * @param allocated J9VMEntryLocalStorage pointer
+ * @param continuation struct
+ */
+void
+copyFieldsFromContinuation(J9VMThread *currentThread, J9VMThread *vmThread, J9VMEntryLocalStorage *els, J9VMContinuation *continuation);
+
+/**
+ * @brief Walk the stackframes associated with a continuation.
  *
  * @param currentThread current thread
  * @param continuation the continuation to be walked
