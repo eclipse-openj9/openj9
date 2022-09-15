@@ -1425,7 +1425,8 @@ TR_J9JITServerSharedCache::rememberClass(J9Class *clazz, const AOTCacheClassChai
          {
          JITServerHelpers::cacheRemoteROMClassBatch(clientData, uncachedRAMClasses, uncachedClassInfos);
          // This call will cache both the class chain and the AOT cache record in the client session
-         record = clientData->getClassChainRecord(clazz, classChain, ramClassChain, _stream);
+         bool missingLoaderInfo = false;
+         record = clientData->getClassChainRecord(clazz, classChain, ramClassChain, _stream, missingLoaderInfo);
          if (classChainRecord)
             *classChainRecord = record;
          }
