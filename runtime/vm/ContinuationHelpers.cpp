@@ -191,6 +191,25 @@ isPinnedContinuation(J9VMThread *currentThread)
 	return result;
 }
 
+void
+copyFieldsFromContinuation(J9VMThread *currentThread, J9VMThread *vmThread, J9VMEntryLocalStorage *els, J9VMContinuation *continuation)
+{
+	vmThread->entryLocalStorage = els;
+	vmThread->javaVM = currentThread->javaVM;
+	vmThread->arg0EA = continuation->arg0EA;
+	vmThread->bytecodes = continuation->bytecodes;
+	vmThread->sp = continuation->sp;
+	vmThread->pc = continuation->pc;
+	vmThread->literals = continuation->literals;
+	vmThread->stackOverflowMark = continuation->stackOverflowMark;
+	vmThread->stackOverflowMark2 = continuation->stackOverflowMark2;
+	vmThread->stackObject = continuation->stackObject;
+	vmThread->entryLocalStorage->oldEntryLocalStorage = continuation->oldEntryLocalStorage;
+	vmThread->entryLocalStorage->jitGlobalStorageBase = (UDATA*)&continuation->jitGPRs;
+	vmThread->j2iFrame = continuation->j2iFrame;
+	vmThread->decompilationStack = continuation->decompilationStack;
+}
+
 UDATA
 walkContinuationStackFrames(J9VMThread *currentThread, J9VMContinuation *continuation, J9StackWalkState *walkState)
 {
@@ -202,20 +221,7 @@ walkContinuationStackFrames(J9VMThread *currentThread, J9VMContinuation *continu
 		J9VMThread stackThread = {0};
 		J9VMEntryLocalStorage els = {0};
 
-		stackThread.entryLocalStorage = &els;
-		stackThread.javaVM = currentThread->javaVM;
-		stackThread.arg0EA = continuation->arg0EA;
-		stackThread.bytecodes = continuation->bytecodes;
-		stackThread.sp = continuation->sp;
-		stackThread.pc = continuation->pc;
-		stackThread.literals = continuation->literals;
-		stackThread.stackOverflowMark = continuation->stackOverflowMark;
-		stackThread.stackOverflowMark2 = continuation->stackOverflowMark2;
-		stackThread.stackObject = continuation->stackObject;
-		stackThread.entryLocalStorage->oldEntryLocalStorage = continuation->oldEntryLocalStorage;
-		stackThread.entryLocalStorage->jitGlobalStorageBase = (UDATA*)&continuation->jitGPRs;
-		stackThread.j2iFrame = continuation->j2iFrame;
-		stackThread.decompilationStack = continuation->decompilationStack;
+		copyFieldsFromContinuation(currentThread, &stackThread, &els, continuation);
 
 		walkState->walkThread = &stackThread;
 		rc = currentThread->javaVM->walkStackFrames(currentThread, walkState);
