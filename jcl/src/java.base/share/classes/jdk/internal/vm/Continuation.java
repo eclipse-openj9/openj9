@@ -157,7 +157,7 @@ public class Continuation {
 			cont.runnable.run();
 		} finally {
 			cont.finished = true;
-			yieldImpl(true);
+			yieldImpl();
 		}
 	}
 
@@ -211,7 +211,7 @@ public class Continuation {
 			}
 			throw new IllegalStateException("Continuation is pinned: " + reason);
 		}
-		return yieldImpl(false);
+		return yieldImpl();
 	}
 
 	protected void onPinned(Pinned reason) {
@@ -247,6 +247,6 @@ public class Continuation {
 	/* Continuation Native APIs */
 	private native boolean createContinuationImpl();
 	private native boolean enterImpl();
-	private static native boolean yieldImpl(boolean isFinished);
+	private static native boolean yieldImpl();
 
 }

@@ -2072,11 +2072,7 @@ exit:
 	cleanupContinuationObject(J9VMThread *vmThread, J9Object *objectPtr)
 	{
 #if JAVA_SPEC_VERSION >= 19
-		J9VMContinuation *j9vmContinuation = J9VMJDKINTERNALVMCONTINUATION_VMREF(vmThread, objectPtr);
-		if (NULL != j9vmContinuation) {
-			/* clean up J9VMContinuation, set vmref = NULL */
-			J9VMJDKINTERNALVMCONTINUATION_SET_VMREF(vmThread, objectPtr, NULL);
-		}
+		vmThread->javaVM->internalVMFunctions->freeContinuation(vmThread, objectPtr);
 #endif /* JAVA_SPEC_VERSION >= 19 */
 	}
 };

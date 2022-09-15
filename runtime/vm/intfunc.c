@@ -415,10 +415,6 @@ J9InternalVMFunctions J9InternalFunctions = {
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 	getClassNameString,
 	getDefaultValueSlotAddress,
-#if JAVA_SPEC_VERSION >= 19
-	createContinuation,
-	freeTLS,
-#endif /* JAVA_SPEC_VERSION >= 19 */
 #if JAVA_SPEC_VERSION >= 16
 	createUpcallThunk,
 	getArgPointer,
@@ -432,6 +428,9 @@ J9InternalVMFunctions J9InternalFunctions = {
 	native2InterpJavaUpcallStruct,
 #endif /* JAVA_SPEC_VERSION >= 16 */
 #if JAVA_SPEC_VERSION >= 19
+	createContinuation,
+	freeContinuation,
+	freeTLS,
 	walkContinuationStackFrames,
 #endif /* JAVA_SPEC_VERSION >= 19 */
 };

@@ -4890,10 +4890,6 @@ typedef struct J9InternalVMFunctions {
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 	j9object_t (*getClassNameString)(struct J9VMThread *currentThread, j9object_t classObject, jboolean internAndAssign);
 	j9object_t* (*getDefaultValueSlotAddress)(struct J9Class *clazz);
-#if JAVA_SPEC_VERSION >= 19
-	BOOLEAN (*createContinuation)(struct J9VMThread *currentThread, j9object_t continuationObject);
-	void (*freeTLS)(struct J9VMThread *currentThread, j9object_t threadObj);
-#endif /* JAVA_SPEC_VERSION >= 19 */
 #if JAVA_SPEC_VERSION >= 16
 	void * ( *createUpcallThunk)(struct J9UpcallMetaData *data);
 	void * ( *getArgPointer)(struct J9UpcallNativeSignature *nativeSig, void *argListPtr, int argIdx);
@@ -4907,6 +4903,9 @@ typedef struct J9InternalVMFunctions {
 	U_8 * (JNICALL *native2InterpJavaUpcallStruct)(struct J9UpcallMetaData *data, void *argsListPointer);
 #endif /* JAVA_SPEC_VERSION >= 16 */
 #if JAVA_SPEC_VERSION >= 19
+	BOOLEAN (*createContinuation)(struct J9VMThread *currentThread, j9object_t continuationObject);
+	void (*freeContinuation)(struct J9VMThread *currentThread, j9object_t continuationObject);
+	void (*freeTLS)(struct J9VMThread *currentThread, j9object_t threadObj);
 	UDATA (*walkContinuationStackFrames)(struct J9VMThread *currentThread, struct J9VMContinuation *continuation, J9StackWalkState *walkState);
 #endif /* JAVA_SPEC_VERSION >= 19 */
 } J9InternalVMFunctions;

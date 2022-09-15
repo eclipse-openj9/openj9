@@ -4336,6 +4336,15 @@ BOOLEAN
 yieldContinuation(struct J9VMThread *currentThread);
 
 /**
+ * @brief  Free the native memory allocated by Continuation
+ *
+ * @param currentThread the thread unmounting Continuation.
+ * @param continuationObject
+ */
+void
+freeContinuation(J9VMThread *currentThread, j9object_t continuationObject);
+
+/**
  * Determine if the current continuation is pinned.
  *
  * @param currentThread
