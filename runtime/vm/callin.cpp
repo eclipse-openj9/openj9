@@ -1394,6 +1394,18 @@ sidecarInvokeReflectConstructor(J9VMThread *currentThread, jobject constructorRe
 }
 
 #if JAVA_SPEC_VERSION >= 16
+bool
+buildCallInStackFrameHelper(J9VMThread *currentThread, J9VMEntryLocalStorage *newELS, bool returnsObject)
+{
+	return buildCallInStackFrame(currentThread, newELS, returnsObject, false);
+}
+
+void
+restoreCallInFrameHelper(J9VMThread *currentThread)
+{
+	restoreCallInFrame(currentThread);
+}
+
 void JNICALL
 sendResolveUpcallInvokeHandle(J9VMThread *currentThread, J9UpcallMetaData *data)
 {
@@ -1422,5 +1434,4 @@ sendResolveUpcallInvokeHandle(J9VMThread *currentThread, J9UpcallMetaData *data)
 	Trc_VM_sendResolveUpcallInvokeHandle_Exit(currentThread);
 }
 #endif /* JAVA_SPEC_VERSION >= 16 */
-
 } /* extern "C" */

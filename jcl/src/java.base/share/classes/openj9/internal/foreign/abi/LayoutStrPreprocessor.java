@@ -75,8 +75,14 @@ final class LayoutStrPreprocessor {
 					long tempPaddingBytes = structElement.byteSize();
 					/* The padding bits must be 8 bits (1 byte), 16 bits (2 bytes), 24 bits (3 bytes)
 					 * or 32 bits (4 bytes) as requested by ffi_call.
+					 *
+					 * Note:
+					 * there are a couple of padding bytes allowed on platforms as follows;
+					 * 1) 5 padding bytes for struct [bool/byte, short, double] (padding between short and double),
+					 * 2) 6 padding bytes for struct [short, long],
+					 * 3) 7 padding bytes for struct [bool/byte, long].
 					 */
-					if ((tempPaddingBytes <= 0) || (tempPaddingBytes > 4)) {
+					if ((tempPaddingBytes <= 0) || (tempPaddingBytes > 7)) {
 						throw new IllegalArgumentException("The padding bits is invalid: x" + (tempPaddingBytes * 8));  //$NON-NLS-1$
 					}
 					paddingBytes += tempPaddingBytes;
