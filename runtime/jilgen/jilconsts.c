@@ -734,6 +734,9 @@ writeConstants(OMRPortLibrary *OMRPORTLIB, IDATA fd)
 			writeConstant(OMRPORTLIB, fd, "J9TR_bcloop_j2i_virtual", J9_BCLOOP_J2I_VIRTUAL) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_bcloop_jump_bytecode_prototype", J9_BCLOOP_JUMP_BYTECODE_PROTOTYPE) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_bcloop_load_preserved_and_branch", J9_BCLOOP_LOAD_PRESERVED_AND_BRANCH) |
+#if JAVA_SPEC_VERSION >= 16
+			writeConstant(OMRPORTLIB, fd, "J9TR_bcloop_n2i_transition", J9_BCLOOP_N2I_TRANSITION) |
+#endif /* JAVA_SPEC_VERSION >= 16 */
 			writeConstant(OMRPORTLIB, fd, "J9TR_bcloop_return_from_jit", J9_BCLOOP_RETURN_FROM_JIT) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_bcloop_return_from_jit_ctor", J9_BCLOOP_RETURN_FROM_JIT_CTOR) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_bcloop_run_exception_handler", J9_BCLOOP_RUN_EXCEPTION_HANDLER) |
