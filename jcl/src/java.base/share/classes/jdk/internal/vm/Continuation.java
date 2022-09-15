@@ -24,10 +24,10 @@ package jdk.internal.vm;
 
 import java.util.EnumSet;
 import java.util.Set;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
 import jdk.internal.access.JavaLangAccess;
 import jdk.internal.access.SharedSecrets;
+import jdk.internal.misc.Unsafe;
 
 /**
  * Continuation class performing the mount/unmount operation for VirtualThread
@@ -43,7 +43,9 @@ public class Continuation {
 
 	private static JavaLangAccess JLA = SharedSecrets.getJavaLangAccess();
 
-	private ReentrantLock continuationAccess = new ReentrantLock();
+	private volatile boolean isAccessible = true;
+	private static Unsafe unsafe = Unsafe.getUnsafe();
+	private static long isAccessibleOffset = unsafe.objectFieldOffset(Continuation.class, "isAccessible");
 
 	/**
 	 * Continuation's Pinned reasons
@@ -158,11 +160,11 @@ public class Continuation {
 	}
 
 	public boolean trylockAccess() {
-		return continuationAccess.tryLock();
+		return unsafe.compareAndSetBoolean(this, isAccessibleOffset, true, false);
 	}
 
 	public void unlockAccess() {
-		continuationAccess.unlock();
+		isAccessible = true;
 	}
 
 	private static void execute(Continuation cont) {
@@ -175,6 +177,9 @@ public class Continuation {
 	}
 
 	public final void run() {
+		if (!trylockAccess()) {
+			throw new IllegalStateException("Continuation has already finished.");
+		}
 		if (finished) {
 			throw new IllegalStateException("Continuation has already finished.");
 		}
@@ -192,10 +197,9 @@ public class Continuation {
 
 		boolean result = true;
 		try {
-			continuationAccess.lock();
 			result = enterImpl();
 		} finally {
-			continuationAccess.unlock();
+			isAccessible = true;
 			if (result) {
 				/* Continuation completed */
 			} else {
