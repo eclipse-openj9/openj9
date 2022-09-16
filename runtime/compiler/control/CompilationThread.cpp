@@ -8181,6 +8181,11 @@ TR::CompilationInfoPerThreadBase::compile(J9VMThread * vmThread,
                                      reloRuntime);
       }
 
+#if defined(OSX) && defined(AARCH64)
+   // Re-acquire execution permission of JIT code cache for this thread
+   // regardless of the previous protection status
+   pthread_jit_write_protect_np(1);
+#endif
 
    vmThread->omrVMThread->vmState = oldState;
    vmThread->jitMethodToBeCompiled = NULL;
