@@ -38,9 +38,9 @@ extern void c_cInterpreter(J9VMThread *currentThread);
 extern bool buildCallInStackFrameHelper(J9VMThread *currentThread, J9VMEntryLocalStorage *newELS, bool returnsObject);
 extern void restoreCallInFrameHelper(J9VMThread *currentThread);
 
-static UDATA JNICALL native2InterpJavaUpcallImpl(J9UpcallMetaData *data, void *argsListPointer);
+static U_64 JNICALL native2InterpJavaUpcallImpl(J9UpcallMetaData *data, void *argsListPointer);
 static J9VMThread * getCurrentThread(J9UpcallMetaData *data, bool *isCurThrdAllocated);
-static void convertUpcallReturnValue(J9UpcallMetaData *data, U_8 returnType, UDATA *returnStorage);
+static void convertUpcallReturnValue(J9UpcallMetaData *data, U_8 returnType, U_64 *returnStorage);
 static j9object_t createMemAddressObject(J9UpcallMetaData *data, I_64 offset);
 static j9object_t createMemSegmentObject(J9UpcallMetaData *data, I_64 offset, U_32 sigTypeSize, j9object_t sessionOrScopeObject);
 static j9object_t getSessionOrScopeObject(J9UpcallMetaData *data);
@@ -72,8 +72,8 @@ native2InterpJavaUpcall0(J9UpcallMetaData *data, void *argsListPointer)
 I_32 JNICALL
 native2InterpJavaUpcall1(J9UpcallMetaData *data, void *argsListPointer)
 {
-	UDATA returnValue = native2InterpJavaUpcallImpl(data, argsListPointer);
-	return (I_32)returnValue;
+	U_64 returnValue = native2InterpJavaUpcallImpl(data, argsListPointer);
+	return (I_32)(I_64)returnValue;
 }
 
 /**
@@ -87,7 +87,7 @@ native2InterpJavaUpcall1(J9UpcallMetaData *data, void *argsListPointer)
 I_64 JNICALL
 native2InterpJavaUpcallJ(J9UpcallMetaData *data, void *argsListPointer)
 {
-	UDATA returnValue = native2InterpJavaUpcallImpl(data, argsListPointer);
+	U_64 returnValue = native2InterpJavaUpcallImpl(data, argsListPointer);
 	return (I_64)returnValue;
 }
 
@@ -103,7 +103,7 @@ float JNICALL
 native2InterpJavaUpcallF(J9UpcallMetaData *data, void *argsListPointer)
 {
 	U_32 returnValue = (U_32)native2InterpJavaUpcallImpl(data, argsListPointer);
-	/* The value returned from the upcall method is literally the single precision (32bit) IEEE 754 floating-point
+	/* The value returned from the upcall method is literally the single precision (32-bit) IEEE 754 floating-point
 	 * representation which must be converted to a real float value before returning back to the native
 	 * function in the downcall.
 	 */
@@ -121,8 +121,8 @@ native2InterpJavaUpcallF(J9UpcallMetaData *data, void *argsListPointer)
 double JNICALL
 native2InterpJavaUpcallD(J9UpcallMetaData *data, void *argsListPointer)
 {
-	UDATA returnValue = native2InterpJavaUpcallImpl(data, argsListPointer);
-	/* The value returned from the upcall method is literally the double precision (64bit) IEEE 754 floating-point
+	U_64 returnValue = native2InterpJavaUpcallImpl(data, argsListPointer);
+	/* The value returned from the upcall method is literally the double precision (64-bit) IEEE 754 floating-point
 	 * representation which must be converted to a real double value before returning back to the native
 	 * function in the downcall.
 	 */
@@ -140,8 +140,8 @@ native2InterpJavaUpcallD(J9UpcallMetaData *data, void *argsListPointer)
 U_8 * JNICALL
 native2InterpJavaUpcallStruct(J9UpcallMetaData *data, void *argsListPointer)
 {
-	UDATA returnValue = native2InterpJavaUpcallImpl(data, argsListPointer);
-	return (U_8 *)returnValue;
+	U_64 returnValue = native2InterpJavaUpcallImpl(data, argsListPointer);
+	return (U_8 *)(UDATA)returnValue;
 }
 
 /**
@@ -162,7 +162,7 @@ getReturnTypeFromMetaData(J9UpcallMetaData *data)
 			J9VMJAVALANGINVOKEMETHODTYPE_RTYPE(currentThread, methodType));
 	J9UpcallNativeSignature *nativeSig = data->nativeFuncSignature;
 	J9UpcallSigType *sigArray = nativeSig->sigArray;
-	/* The last element is for the return type */
+	/* The last element is for the return type. */
 	U_8 retSigType = sigArray[nativeSig->numSigs - 1].type & J9_FFI_UPCALL_SIG_TYPE_MASK;
 	U_8 returnType = 0;
 
@@ -204,19 +204,19 @@ getReturnTypeFromMetaData(J9UpcallMetaData *data)
 
 /**
  * @brief The common helper function that calls into the interpreter
- * via native2InterpJavaUpcallImpl to invoke the OpenJDK MH in the upcall
+ * via native2InterpJavaUpcallImpl to invoke the OpenJDK MH in the upcall.
  *
  * @param data a pointer to J9UpcallMetaData
  * @param argsListPointer a pointer to the argument list
  * @return the expected value against the specified return type
  */
-static UDATA JNICALL
+static U_64 JNICALL
 native2InterpJavaUpcallImpl(J9UpcallMetaData *data, void *argsListPointer)
 {
 	J9VMThread *downCallThread = data->downCallThread;
 	J9UpcallNativeSignature *nativeSig = data->nativeFuncSignature;
 	J9UpcallSigType *sigArray = nativeSig->sigArray;
-	I_32 paramCount = (I_32)(nativeSig->numSigs - 1); /* The last element is for the return type */
+	I_32 paramCount = (I_32)(nativeSig->numSigs - 1); /* The last element is for the return type. */
 	U_8 returnType = 0;
 	bool returnsObject = false;
 	J9VMEntryLocalStorage newELS = {0};
@@ -224,7 +224,7 @@ native2InterpJavaUpcallImpl(J9UpcallMetaData *data, void *argsListPointer)
 	bool isCurThrdAllocated = false;
 	bool throwOOM = false;
 	J9Method* thrLiterals = NULL;
-	UDATA returnStorage = 0;
+	U_64 returnStorage = 0;
 	j9object_t sessionOrScopeObject = NULL;
 
 	/* Determine whether to use the current thread or create a new one
@@ -241,7 +241,7 @@ native2InterpJavaUpcallImpl(J9UpcallMetaData *data, void *argsListPointer)
 
 	VM_VMAccess::inlineEnterVMFromJNI(currentThread);
 	returnType = getReturnTypeFromMetaData(data);
-	returnsObject = ((J9NtcPointer == returnType) || (J9NtcStruct == returnType)) ? true : false;
+	returnsObject = (J9NtcPointer == returnType) || (J9NtcStruct == returnType);
 
 	if (buildCallInStackFrameHelper(currentThread, &newELS, returnsObject)) {
 
@@ -297,7 +297,7 @@ native2InterpJavaUpcallImpl(J9UpcallMetaData *data, void *argsListPointer)
 				if (J9_FFI_UPCALL_SIG_TYPE_FLOAT == argSigType) {
 					argValue = argValue >> J9_FFI_UPCALL_SIG_TYPE_32_BIT;
 				}
-#endif /* J9VM_ENV_LITTLE_ENDIAN */
+#endif /* !defined(J9VM_ENV_LITTLE_ENDIAN) */
 				*(I_32*)--currentThread->sp = (I_32)argValue;
 				break;
 			}
@@ -317,9 +317,9 @@ native2InterpJavaUpcallImpl(J9UpcallMetaData *data, void *argsListPointer)
 					throwOOM = true;
 					goto done;
 				}
-				 /* Push the object on the special frame so as to avoid updating the address on the stack
-				  * by GC when allocating memory for the next pointer/struct of the argument list.
-				  */
+				/* Push the object on the special frame so as to avoid updating the address on the stack
+				 * by GC when allocating memory for the next pointer/struct of the argument list.
+				 */
 				PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, memAddrObject);
 				break;
 			}
@@ -334,9 +334,9 @@ native2InterpJavaUpcallImpl(J9UpcallMetaData *data, void *argsListPointer)
 					throwOOM = true;
 					goto done;
 				}
-				 /* Push the object on the special frame so as to avoid updating the address on the stack
-				  * by GC when allocating memory for the next pointer/struct of the argument list.
-				  */
+				/* Push the object on the special frame so as to avoid updating the address on the stack
+				 * by GC when allocating memory for the next pointer/struct of the argument list.
+				 */
 				PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, memSegmtObject);
 				break;
 			}
@@ -373,7 +373,8 @@ done:
 	}
 
 	if (!throwOOM) {
-		returnStorage = currentThread->returnValue;
+		/* Read returnStorage from returnValue (and returnValue2 on 32-bit platforms). */
+		returnStorage = *(U_64 *)&currentThread->returnValue;
 		convertUpcallReturnValue(data, returnType, &returnStorage);
 	}
 
@@ -396,7 +397,7 @@ doneAndExit:
 }
 
 /**
- * @brief Get a J9VMThread whether it is the current thread or a newly created thread if doesn't exist
+ * @brief Get a J9VMThread whether it is the current thread or a newly created thread if doesn't exist.
  *
  * Note:
  * The function is to handle the situation when there is no Java thread for the current native thread
@@ -415,7 +416,7 @@ getCurrentThread(J9UpcallMetaData *data, bool *isCurThrdAllocated)
 	omrthread_t osThread = NULL;
 
 	if (NULL == currentThread) {
-		/* Attach to the created OMR thread after setting the omr thread attributes */
+		/* Attach to the created OMR thread after setting the omr thread attributes. */
 		if (J9THREAD_SUCCESS != attachThreadWithCategory(&osThread, J9THREAD_CATEGORY_APPLICATION_THREAD)) {
 			goto oom;
 		}
@@ -423,7 +424,7 @@ getCurrentThread(J9UpcallMetaData *data, bool *isCurThrdAllocated)
 		/* Attach to the created J9VMThread after finishing all required steps which include the setting
 		 * of the threadName & threadObject, and triggering the jvmtihook start event for the thread, etc.
 		 */
-		if(JNI_OK != internalAttachCurrentThread(vm, &currentThread, NULL,
+		if (JNI_OK != internalAttachCurrentThread(vm, &currentThread, NULL,
 				J9_PRIVATE_FLAGS_ATTACHED_THREAD | J9_PRIVATE_FLAGS_FFI_UPCALL_THREAD, osThread)) {
 			omrthread_detach(osThread);
 			osThread = NULL;
@@ -445,14 +446,14 @@ oom:
 }
 
 /**
- * @brief Converts the type of the return value to the return type intended for JEP389/419 upcall
+ * @brief Converts the type of the return value to the return type intended for JEP389/419 upcall.
  *
  * @param data a pointer to J9UpcallMetaData
  * @param returnType the type for the return value
  * @param returnStorage a pointer to the return value
  */
 static void
-convertUpcallReturnValue(J9UpcallMetaData *data, U_8 returnType, UDATA *returnStorage)
+convertUpcallReturnValue(J9UpcallMetaData *data, U_8 returnType, U_64 *returnStorage)
 {
 	switch (returnType) {
 	case J9NtcBoolean: /* Fall through */
@@ -468,19 +469,19 @@ convertUpcallReturnValue(J9UpcallMetaData *data, U_8 returnType, UDATA *returnSt
 		 * on the Big-Endian(BE) platforms.
 		 */
 		*returnStorage = *returnStorage >> J9_FFI_UPCALL_SIG_TYPE_32_BIT;
-#endif /* J9VM_ENV_LITTLE_ENDIAN */
+#endif /* !defined(J9VM_ENV_LITTLE_ENDIAN) */
 		break;
 	}
 	case J9NtcPointer:
 	{
 		j9object_t memAddrObject = (j9object_t)*returnStorage;
-		*returnStorage = (UDATA)getNativeAddrFromMemAddressObject(data, memAddrObject);
+		*returnStorage = (U_64)getNativeAddrFromMemAddressObject(data, memAddrObject);
 		break;
 	}
 	case J9NtcStruct:
 	{
 		j9object_t memSegmtObject = (j9object_t)*returnStorage;
-		*returnStorage = (UDATA)getNativeAddrFromMemSegmentObject(data, memSegmtObject);
+		*returnStorage = (U_64)getNativeAddrFromMemSegmentObject(data, memSegmtObject);
 		break;
 	}
 	default: /* J9NtcVoid */
@@ -518,7 +519,7 @@ createMemAddressObject(J9UpcallMetaData *data, I_64 offset)
 			 * in downcall when the upcall thread is the same as the downcall thread; otherwise, the OOM
 			 * error should be still set to the downcall thread given the locally created native thread
 			 * in upcall will be cleaned up before the dispatcher exists and returns to the interpreter.
-			 * */
+			 */
 			setHeapOutOfMemoryError(downCallThread);
 			goto done;
 		}
@@ -577,7 +578,7 @@ createMemSegmentObject(J9UpcallMetaData *data, I_64 offset, U_32 sigTypeSize, j9
 			 * in downcall when the upcall thread is the same as the downcall thread; otherwise, the OOM
 			 * error should be still set to the downcall thread given the locally created native thread
 			 * in upcall will be cleaned up before the dispatcher exists and returns to the interpreter.
-			 * */
+			 */
 			setHeapOutOfMemoryError(downCallThread);
 			goto done;
 		}
@@ -612,7 +613,7 @@ getSessionOrScopeObject(J9UpcallMetaData *data)
 	j9object_t mhMetaData = J9_JNI_UNWRAP_REFERENCE(data->mhMetaData);
 	j9object_t sessionOrScopeObject = NULL;
 
-	/* Get the confined session/scope of the current thread in java if the thread is not created locally in native */
+	/* Get the confined session/scope of the current thread in java if the thread is not created locally in native. */
 	if (J9_ARE_NO_BITS_SET(currentThread->privateFlags, J9_PRIVATE_FLAGS_FFI_UPCALL_THREAD)) {
 #if JAVA_SPEC_VERSION >= 19
 		sessionOrScopeObject = J9VMOPENJ9INTERNALFOREIGNABIUPCALLMHMETADATA_SESSION(currentThread, mhMetaData);
@@ -641,7 +642,7 @@ getSessionOrScopeObject(J9UpcallMetaData *data)
 				 * in downcall when the upcall thread is the same as the downcall thread; otherwise, the OOM
 				 * error should be still set to the downcall thread given the locally created native thread
 				 * in upcall will be cleaned up before the dispatcher exists and returns to the interpreter.
-				 * */
+				 */
 				setHeapOutOfMemoryError(downCallThread);
 			}
 		}
@@ -673,7 +674,7 @@ getNativeAddrFromMemAddressObject(J9UpcallMetaData *data, j9object_t memAddrObje
 	I_64 nativePtrValue = offset;
 #if JAVA_SPEC_VERSION <= 17
 	j9object_t segmtObject = J9VMJDKINTERNALFOREIGNMEMORYADDRESSIMPL_SEGMENT(currentThread, memAddrObject);
-	/* The offset is set to zero in AbstractMemorySegmentImpl.address() in OpenJDK */
+	/* The offset is set to zero in AbstractMemorySegmentImpl.address() in OpenJDK. */
 	if (NULL != segmtObject) {
 		nativePtrValue = J9VMJDKINTERNALFOREIGNNATIVEMEMORYSEGMENTIMPL_MIN(currentThread, segmtObject);
 	}
