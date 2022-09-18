@@ -1362,6 +1362,24 @@ findDecompileInfo(J9VMThread *currentThread, J9VMThread *targetThread, UDATA dep
 UDATA
 genericWalkStackFramesHelper(J9VMThread *currentThread, J9VMThread *targetThread, j9object_t threadObject, J9StackWalkState *walkState);
 
+#if JAVA_SPEC_VERSION >= 19
+/**
+ * With the introduction of virtual threads, targetThread may not have threadObject
+ * mounted. If threadObject is not mounted onto the targetThread, then its stack
+ * and other important details will be stored in a J9VMContinuation instance. This
+ * helper determines if threadObject is not mounted, and returns the corresponding
+ * J9VMContinuation for threadObject. If threadObject is mounted onto the targetThread,
+ * then this helper returns NULL.
+ *
+ * @param[in] currentThread current thread.
+ * @param[in] targetThread the J9VMThread where threadObject can be mounted.
+ * @param[in] threadObject the thread object.
+ * @return a J9VMContinuation if threadObject is not mounted; otherwise NULL.
+ */
+J9VMContinuation *
+getJ9VMContinuationToWalk(J9VMThread *currentThread, J9VMThread *targetThread, j9object_t threadObject);
+#endif /* JAVA_SPEC_VERSION >= 19 */
+
 /* ---------------- jvmtiHook.c ---------------- */
 
 /**
