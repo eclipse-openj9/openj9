@@ -644,7 +644,7 @@ jvmtiGetOwnedMonitorInfo(jvmtiEnv* env,
 	jobject** owned_monitors_ptr)
 {
 	J9JavaVM * vm = JAVAVM_FROM_ENV(env);
-	jvmtiError rc;
+	jvmtiError rc = JVMTI_ERROR_NONE;
 	J9VMThread * currentThread;
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	jint rv_owned_monitor_count = 0;
@@ -666,10 +666,32 @@ jvmtiGetOwnedMonitorInfo(jvmtiEnv* env,
 
 		rc = getVMThread(currentThread, thread, &targetThread, TRUE, TRUE);
 		if (rc == JVMTI_ERROR_NONE) {
-			jobject * locks;
+			jobject * locks = NULL;
 			jint count = 0;
-
+#if JAVA_SPEC_VERSION >= 19
+			BOOLEAN isVirtual = FALSE;
+			j9object_t threadObject = NULL;
+			BOOLEAN swapNeeded = FALSE;
+			if (NULL != thread) {
+				threadObject = J9_JNI_UNWRAP_REFERENCE(thread);
+				isVirtual = IS_VIRTUAL_THREAD(currentThread, threadObject);
+				if (isVirtual && (NULL == targetThread)) {
+					/* Unmounted continuation, cannot hold any monitor */
+					releaseVMThread(currentThread, targetThread, thread);
+					goto done;
+				} else if (threadObject != targetThread->threadObject) {
+					/* CarrierThread with a Continuation mounted */
+					swapNeeded = TRUE;
+				}
+			}
+#endif /* JAVA_SPEC_VERSION >= 19 */
 			vm->internalVMFunctions->haltThreadForInspection(currentThread, targetThread);
+
+#if JAVA_SPEC_VERSION >= 19
+			if (swapNeeded) {
+				// swap stack
+			}
+#endif /* JAVA_SPEC_VERSION >= 19 */
 
 			count = walkLocalMonitorRefs(currentThread, NULL, targetThread, UDATA_MAX);
 
@@ -685,6 +707,12 @@ jvmtiGetOwnedMonitorInfo(jvmtiEnv* env,
 			}
 			rv_owned_monitors = locks;
 			rv_owned_monitor_count = count;
+
+#if JAVA_SPEC_VERSION >= 19
+			if (swapNeeded) {
+				// swap stack back
+			}
+#endif /* JAVA_SPEC_VERSION >= 19 */
 
 			vm->internalVMFunctions->resumeThreadForInspection(currentThread, targetThread);
 			releaseVMThread(currentThread, targetThread, thread);
@@ -710,7 +738,7 @@ jvmtiGetOwnedMonitorStackDepthInfo(jvmtiEnv* env,
 	jvmtiMonitorStackDepthInfo** monitor_info_ptr)
 {
 	J9JavaVM * vm = JAVAVM_FROM_ENV(env);
-	jvmtiError rc;
+	jvmtiError rc = JVMTI_ERROR_NONE;
 	J9VMThread * currentThread;
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	jint rv_monitor_info_count = 0;
@@ -742,8 +770,31 @@ jvmtiGetOwnedMonitorStackDepthInfo(jvmtiEnv* env,
 			IDATA maxRecords;
 			J9ObjectMonitorInfo * monitorEnterRecords = NULL;
 			jvmtiMonitorStackDepthInfo * resultArray = NULL;
+#if JAVA_SPEC_VERSION >= 19
+			BOOLEAN isVirtual = FALSE;
+			j9object_t threadObject = NULL;
+			BOOLEAN swapNeeded = FALSE;
+			if (NULL != thread) {
+				threadObject = J9_JNI_UNWRAP_REFERENCE(thread);
+				isVirtual = IS_VIRTUAL_THREAD(currentThread, threadObject);
+				if (isVirtual && (NULL == targetThread)) {
+					/* Unmounted continuation, cannot hold any monitor */
+					releaseVMThread(currentThread, targetThread, thread);
+					goto done;
+				} else if (threadObject != targetThread->threadObject) {
+					/* CarrierThread with a Continuation mounted */
+					swapNeeded = TRUE;
+				}
+			}
+#endif /* JAVA_SPEC_VERSION >= 19 */
 
 			vm->internalVMFunctions->haltThreadForInspection(currentThread, targetThread);
+
+#if JAVA_SPEC_VERSION >= 19
+			if (swapNeeded) {
+				// swap stack
+			}
+#endif /* JAVA_SPEC_VERSION >= 19 */
 
 			/* Get the count of owned monitors */
 
@@ -807,6 +858,12 @@ doneRelease:
 				j9mem_free_memory(monitorEnterRecords);
 			}
 
+#if JAVA_SPEC_VERSION >= 19
+			if (swapNeeded) {
+				// swap stack back
+			}
+#endif /* JAVA_SPEC_VERSION >= 19 */
+
 			vm->internalVMFunctions->resumeThreadForInspection(currentThread, targetThread);
 			releaseVMThread(currentThread, targetThread, thread);
 		}
@@ -829,7 +886,7 @@ jvmtiGetCurrentContendedMonitor(jvmtiEnv* env,
 	jobject* monitor_ptr)
 {
 	J9JavaVM * vm = JAVAVM_FROM_ENV(env);
-	jvmtiError rc;
+	jvmtiError rc = JVMTI_ERROR_NONE;
 	J9VMThread * currentThread;
 	jobject rv_monitor = NULL;
 
@@ -850,7 +907,20 @@ jvmtiGetCurrentContendedMonitor(jvmtiEnv* env,
 		if (rc == JVMTI_ERROR_NONE) {
 			j9object_t lockObject;
 			UDATA vmstate;
-			
+#if JAVA_SPEC_VERSION >= 19
+			BOOLEAN isVirtual = FALSE;
+			if (NULL != thread) {
+				j9object_t threadObject = J9_JNI_UNWRAP_REFERENCE(thread);
+				isVirtual = IS_VIRTUAL_THREAD(currentThread, threadObject);
+				if ((isVirtual && (NULL == targetThread))			/* Unmounted continuation, cannot hold any monitor */
+				|| (threadObject != targetThread->threadObject))	/* CarrierThread with a Continuation mounted cannot be contented */
+				{
+					releaseVMThread(currentThread, targetThread, thread);
+					goto done;
+				}
+			}
+#endif /* JAVA_SPEC_VERSION >= 19 */
+
 			/* CMVC 184481 - The targetThread should be suspended while we attempt to get its state */
 			vm->internalVMFunctions->haltThreadForInspection(currentThread, targetThread);
 			vmstate = getVMThreadObjectStatesAll(targetThread, &lockObject, NULL, NULL);
