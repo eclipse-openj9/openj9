@@ -461,14 +461,14 @@ public class DDRExtTesterBase extends TestCase {
 		coveredStructures.clear();
 	}
 
-	/* Check whether core is generated on 64 bit platform or not.
-	 * Run setvm with the address that can exist only on 64 bit platform
+	/* Check whether core is generated on a 64-bit platform or not.
+	 * Run setvm with an address that can exist only on a 64-bit platform.
 	 */
 	public boolean is64BitPlatform() {
 		String setVMOutput = exec(Constants.SETVM_CMD, new String[] { CommandUtils.UDATA_MAX_64BIT.toString() });
 		boolean is64BitPlatform = true;
-		/* If it is 32-bit platform, then it will complain about address being too large. */
-		if (validate(setVMOutput, "is larger than the max available memory address: 0xFFFFFFFF", null)) {
+		/* If it is a 32-bit platform, then it will complain about address being too large. */
+		if (validate(setVMOutput, "is larger than the max available memory address: 0xFFFFFFFF", 1)) {
 			is64BitPlatform = false;
 		}
 		return is64BitPlatform;
