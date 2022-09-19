@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -478,7 +478,7 @@ hookRememberedSetOverflow(J9HookInterface** hook, UDATA eventNum, void* eventDat
 	GC_CheckCycle *cycle = (GC_CheckCycle *)extensions->checkCycle;
 
 	if (cycle->getMiscFlags() & J9MODRON_GCCHK_REMEMBEREDSET_OVERFLOW) {
-		checkEngine->_rsOverflowState = MM_GCExtensions::getExtensions(event->currentThread)->isRememberedSetInOverflowState();
+		checkEngine->_rsOverflowState = MM_GCExtensions::getExtensions(event->currentThread)->isScavengerRememberedSetInOverflowState();
 	}
 }
 #endif /* J9VM_GC_GENERATIONAL */

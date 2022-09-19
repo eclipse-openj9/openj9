@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -349,7 +349,7 @@ MM_StandardAccessBarrier::recentlyAllocatedObject(J9VMThread *vmThread, J9Object
 				 * The REMEMBERED bit is kept in the object for optimization purposes (only scan objects
 				 * whose REMEMBERED bit is set in an overflow scan)
 				 */
-				extensions->setRememberedSetOverflowState();
+				extensions->setScavengerRememberedSetOverflowState();
 #if defined(J9VM_GC_MODRON_EVENTS)			
 				reportRememberedSetOverflow(vmThread);
 #endif /* J9VM_GC_MODRON_EVENTS */
