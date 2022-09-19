@@ -553,18 +553,18 @@ done:
 
 
 jvmtiError JNICALL
-jvmtiNotifyFramePop(jvmtiEnv* env,
+jvmtiNotifyFramePop(jvmtiEnv *env,
 	jthread thread,
 	jint depth)
 {
-	J9JavaVM * vm = JAVAVM_FROM_ENV(env);
-	jvmtiError rc;
-	J9VMThread * currentThread;
+	J9JavaVM *vm = JAVAVM_FROM_ENV(env);
+	jvmtiError rc = JVMTI_ERROR_NONE;
+	J9VMThread *currentThread = NULL;
 
 	Trc_JVMTI_jvmtiNotifyFramePop_Entry(env);
 
 	rc = getCurrentVMThread(vm, &currentThread);
-	if (rc == JVMTI_ERROR_NONE) {
+	if (JVMTI_ERROR_NONE == rc) {
 		J9VMThread *targetThread = NULL;
 
 		vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
@@ -575,24 +575,55 @@ jvmtiNotifyFramePop(jvmtiEnv* env,
 		ENSURE_NON_NEGATIVE(depth);
 
 		rc = getVMThread(currentThread, thread, &targetThread, TRUE, TRUE);
-		if (rc == JVMTI_ERROR_NONE) {
-			vm->internalVMFunctions->haltThreadForInspection(currentThread, targetThread);
-			if ((currentThread == targetThread) || (targetThread->publicFlags & J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND))  {
-				J9StackWalkState walkState;
+		if (JVMTI_ERROR_NONE == rc) {
+#if JAVA_SPEC_VERSION >= 19
+			BOOLEAN isVThreadSuspended = FALSE;
+			if (NULL != targetThread)
+#endif /* JAVA_SPEC_VERSION >= 19 */
+			{
+				vm->internalVMFunctions->haltThreadForInspection(currentThread, targetThread);
+			}
+#if JAVA_SPEC_VERSION >= 19
+			if ((NULL != thread) && (NULL == targetThread)) {
+				/* The assert in getVMThread will assure that this is a virtual thread */
+				jint vthreadState = J9VMJAVALANGVIRTUALTHREAD_STATE(currentThread, J9_JNI_UNWRAP_REFERENCE(thread));
+				isVThreadSuspended = OMR_ARE_ANY_BITS_SET(vthreadState, JVMTI_VTHREAD_STATE_SUSPENDED);
+			}
+#endif /* JAVA_SPEC_VERSION >= 19 */
 
-				rc = findDecompileInfo(currentThread, targetThread, (UDATA)depth, &walkState);
+			if ((currentThread == targetThread)
+#if JAVA_SPEC_VERSION >= 19
+			|| isVThreadSuspended
+#endif /* JAVA_SPEC_VERSION >= 19 */
+			|| ((NULL != targetThread) && OMR_ARE_ANY_BITS_SET(targetThread->publicFlags, J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND))
+			) {
+				J9StackWalkState walkState = {0};
+				J9VMThread *threadToWalk = targetThread;
+
+#if JAVA_SPEC_VERSION >= 19
+				J9VMThread stackThread = {0};
+				J9VMEntryLocalStorage els = {0};
+				j9object_t threadObject = (NULL == thread) ? currentThread->threadObject : J9_JNI_UNWRAP_REFERENCE(thread);
+				J9VMContinuation *continuation = getJ9VMContinuationToWalk(currentThread, targetThread, threadObject);
+				if (NULL != continuation) {
+					vm->internalVMFunctions->copyFieldsFromContinuation(currentThread, &stackThread, &els, continuation);
+					threadToWalk = &stackThread;
+				}
+#endif /* JAVA_SPEC_VERSION >= 19 */
+
+				rc = findDecompileInfo(currentThread, threadToWalk, (UDATA)depth, &walkState);
 				if (JVMTI_ERROR_NONE == rc) {
-					J9ROMMethod* romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(walkState.method);
+					J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(walkState.method);
 
-					if (romMethod->modifiers & J9AccNative) {
+					if (OMR_ARE_ANY_BITS_SET(romMethod->modifiers, J9AccNative)) {
 						rc = JVMTI_ERROR_OPAQUE_FRAME;
 					} else {
 #ifdef J9VM_JIT_FULL_SPEED_DEBUG
-						if (walkState.jitInfo != NULL) {
+						if (NULL != walkState.jitInfo) {
 							UDATA inlineDepth = (UDATA)walkState.userData2;
 							vm->jitConfig->jitFramePopNotificationAdded(currentThread, &walkState, inlineDepth);
 						} else
-#endif
+#endif /* J9VM_JIT_FULL_SPEED_DEBUG */
 						{
 							*walkState.bp |= J9SF_A0_REPORT_FRAME_POP_TAG;
 						}
@@ -601,8 +632,12 @@ jvmtiNotifyFramePop(jvmtiEnv* env,
 			} else {
 				rc = JVMTI_ERROR_THREAD_NOT_SUSPENDED;
 			}
-
-			vm->internalVMFunctions->resumeThreadForInspection(currentThread, targetThread);
+#if JAVA_SPEC_VERSION >= 19
+			if (NULL != targetThread)
+#endif /* JAVA_SPEC_VERSION >= 19 */
+			{
+				vm->internalVMFunctions->resumeThreadForInspection(currentThread, targetThread);
+			}
 			releaseVMThread(currentThread, targetThread, thread);
 		}
 done:
