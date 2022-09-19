@@ -335,7 +335,10 @@ elseif(OMR_ARCH_S390)
 		endif()
 	elseif(OMR_OS_ZOS)
 		if(OMR_ENV_DATA64)
-			target_sources(j9vm PRIVATE mz64/unsafeHelper.s)
+			target_sources(j9vm PRIVATE
+				mz64/unsafeHelper.s
+				mz64/UpcallThunkGen.cpp
+			)
 		else()
 			target_sources(j9vm PRIVATE
 				mz31/unsafeHelper.s
