@@ -206,6 +206,14 @@ validate_options() {
           fi
         fi
         ;;
+      s390x)
+        # overwrite CRIU version
+        criu=3.12
+        if [ $dist != ubuntu ] ; then
+          echo "CRIU is only supported on ubuntu for s390x" >&2
+          exit 1
+        fi
+        ;;
       *)
         echo "CRIU is not supported on architecture: '$arch'" >&2
         exit 1

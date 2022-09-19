@@ -60,7 +60,7 @@ if ("${OS}" == "centos6") {
     BUILD_OPTS = "--dist=ubuntu --version=20.04"
 }
 //Ref: https://github.com/eclipse-openj9/openj9/issues/14486
-if ("${OS}".contains("ubuntu") && ("${ARCH}" == "x86")) {
+if ("${OS}".contains("ubuntu") && ("${ARCH}" == "x86" || "${ARCH}" == "s390x")) {
     BUILD_OPTS += " --criu"
 }
 if ("${BUILD_OPTS}" == "") {
