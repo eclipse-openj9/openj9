@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,7 +27,7 @@ import org.testng.log4testng.Logger;
 import j9vm.test.ddrext.Constants;
 
 public class MethodForNameOutputParser {
-	
+
 	private static Logger log = Logger.getLogger(MethodForNameOutputParser.class);
 
 	/*
@@ -51,27 +51,31 @@ public class MethodForNameOutputParser {
 	 * @param fineMethodForNameOutput !methodforname output
 	 * @param methodArguments JVM signature of the arguments to the method, e.g. "JI". 
 	 * 			This must be the full set of arguments or "null" to take the first matching method.
+	 * @param signatureMustContain string the method signature must contain, used to narrow down
+	 * 			a specific method. Can be null if we just want first method matching methodArguments.
 	 * 
 	 * @return String representation of extracted J9Method address from
 	 * !methodforname extension. return null, if any error occurs or address
 	 * can not be found in given !methodforname output.
 	 */
-	public static String extractMethodAddress(String methodForNameOutput, String methodArguments) {
+	public static String extractMethodAddress(String methodForNameOutput, String methodArguments, String signatureMustContain) {
 		if (null == methodForNameOutput) {
 			log.error("!methodforname output is null");
 			return null;
 		}
-		
+
 		String[] outputLines = methodForNameOutput.split("!j9method");
 		for (String aLine : outputLines) {
 			if (aLine.contains("-->")) {
 				String[] tokens = aLine.split("-->");
 				String method = tokens[1].trim();
-				if (null == methodArguments 
+				if (null == methodArguments
 				|| method.substring(method.indexOf('(') + 1, method.indexOf(')')).equals(methodArguments)
 				) {
-					String address = tokens[0].trim();
-					return address;
+					if (null == signatureMustContain || method.contains(signatureMustContain)) {
+						String address = tokens[0].trim();
+						return address;
+					}
 				}
 			}
 		}

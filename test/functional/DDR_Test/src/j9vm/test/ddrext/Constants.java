@@ -446,6 +446,7 @@ public class Constants {
 
 	public static final String METHODFORNAME_CMD = "methodforname";
 	public static final String METHODFORNAME_METHOD = "sleep";
+	public static final String METHODFORNAME_METHOD_FULLNAME = "java/lang/Thread.sleep";
 	public static final String METHODFORNAME_SUCCESS_KEY = "java/lang/Thread.sleep,!j9method";
 	public static final String METHODFORNAME_FAILURE_KEY = "Found 0 method\\(s\\)";
 
