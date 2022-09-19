@@ -1,6 +1,6 @@
 /*[INCLUDE-IF DAA]*/
 /*******************************************************************************
- * Copyright (c) 2013, 2021 IBM Corp. and others
+ * Copyright (c) 2013, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2574,7 +2574,7 @@ public final class DecimalData
 
         // take care of the sign nibble and the right most digit
         byteArray[offset + length - 1] = (byte) ((buffer[numDigitsLeft] - '0') << 4);
-        byteArray[offset + length - 1] |= ((value.signum() == -1) ? 0x0D : 0x0C);
+        byteArray[offset + length - 1] |= (byte) ((value.signum() == -1) ? 0x0D : 0x0C);
 
         // compact 2 digits into each byte
         for (int i = numDigitsLeft - 1; i >= endPosition

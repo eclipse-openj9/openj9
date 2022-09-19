@@ -1,6 +1,6 @@
 /*[INCLUDE-IF DAA]*/
 /*******************************************************************************
- * Copyright (c) 2013, 2021 IBM Corp. and others
+ * Copyright (c) 2013, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -842,14 +842,14 @@ public final class PackedDecimal {
         int charStart = neg ? 1 : 0;
         int charEnd = chars.length - 1;
 
-        pd[end--] = (byte) ((neg ? 0x0D : 0x0C) | (chars[charEnd--] - '0' << 4));
+        pd[end--] = (byte) ((neg ? 0x0D : 0x0C) | ((chars[charEnd--] - '0') << 4));
 
         while (end >= offset) {
             byte b = 0;
             if (charEnd >= charStart) {
                 b = (byte) (chars[charEnd--] - '0');
                 if (charEnd >= charStart) {
-                    b |= chars[charEnd--] - '0' << 4;
+                    b |= (byte) ((chars[charEnd--] - '0') << 4);
                 }
             }
             pd[end--] = b;
