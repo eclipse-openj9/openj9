@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2020 IBM Corp. and others
+ * Copyright (c) 2001, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -136,7 +136,7 @@ public class TestDDRExtensionGeneral extends DDRExtTesterBase {
 	public void testByteCodes() {
 		String methodForNameOutput = exec(Constants.METHODFORNAME_CMD,
 				new String[] { Constants.METHODFORNAME_METHOD });
-		String methodAddr = MethodForNameOutputParser.extractMethodAddress(methodForNameOutput, null);
+		String methodAddr = MethodForNameOutputParser.extractMethodAddress(methodForNameOutput, null, null);
 		if (methodAddr == null || methodAddr == "") {
 			fail("Failed to obtain method address for method : "
 					+ Constants.METHODFORNAME_METHOD
