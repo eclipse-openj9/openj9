@@ -46,7 +46,7 @@
 #include "ScavengerRootScanner.hpp"
 
 void
-MM_ScavengerRootScanner::startProcessing(MM_EnvironmentBase *env)
+MM_ScavengerRootScanner::startContinuationProcessing(MM_EnvironmentBase *env)
 {
 	if(J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
 		_scavengerDelegate->setShouldScavengeContinuationObjects(false);

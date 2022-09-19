@@ -71,7 +71,7 @@ private:
 	void startUnfinalizedProcessing(MM_EnvironmentBase *env);
 	void scavengeFinalizableObjects(MM_EnvironmentStandard *env);
 #endif /* defined(J9VM_GC_FINALIZATION) */
-	void startProcessing(MM_EnvironmentBase *env);
+	void startContinuationProcessing(MM_EnvironmentBase *env);
 
 protected:
 
@@ -208,7 +208,7 @@ public:
 		 * hence not subject for unfinalized processing.
 		 */ 
 		startUnfinalizedProcessing(env);
-		startProcessing(env);
+		startContinuationProcessing(env);
 	}
 
 	void
