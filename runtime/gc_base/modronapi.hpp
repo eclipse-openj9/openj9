@@ -102,6 +102,8 @@ J9HookInterface** j9gc_get_private_hook_interface(J9JavaVM *javaVM);
 UDATA ownableSynchronizerObjectCreated(J9VMThread *vmThread, j9object_t object);
 
 UDATA continuationObjectCreated(J9VMThread *vmThread, j9object_t object);
+void preMountContinuation(J9VMThread *vmThread, j9object_t object);
+void postDismountContinuation(J9VMThread *vmThread, j9object_t object);
 
 /**
  * Called during class redefinition to notify the GC of replaced classes.In certain cases the GC needs to 
