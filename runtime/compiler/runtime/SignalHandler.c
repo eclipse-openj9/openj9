@@ -264,7 +264,7 @@ static IDATA jitX86decodeIdivInstruction(J9PortLibrary* portLib, void* sigInfo, 
 		}
 	}
 	return -1;
-	}
+}
 
 UDATA jitX86Handler(J9VMThread* vmThread, U_32 sigType, void* sigInfo)
 {
@@ -1909,20 +1909,20 @@ UDATA jitARM64Handler(J9VMThread* vmThread, U_32 sigType, void* sigInfo)
 		exceptionTable = jitConfig->jitGetExceptionTableFromPC(vmThread, *pcPtr);
 
 		if (!exceptionTable && J9PORT_SIG_FLAG_SIGBUS == sigType) {
-		   // We might be in a jit helper routine (like arraycopy) so look at the link register as well...
-		   UDATA *lrPtr;
-		   /* R30 is LR for aarch64 */
-		   infoType = j9sig_info(sigInfo, J9PORT_SIG_GPR, 30, &infoName, &infoValue);
-		   if (infoType != J9PORT_SIG_VALUE_ADDRESS) {
-		      return J9PORT_SIG_EXCEPTION_CONTINUE_SEARCH;
-		   }
-		   lrPtr = (UDATA *) infoValue;
-		   exceptionTable = jitConfig->jitGetExceptionTableFromPC(vmThread, *lrPtr);
-		   if (exceptionTable) {
+			// We might be in a jit helper routine (like arraycopy) so look at the link register as well...
+			UDATA *lrPtr;
+			/* R30 is LR for aarch64 */
+			infoType = j9sig_info(sigInfo, J9PORT_SIG_GPR, 30, &infoName, &infoValue);
+			if (infoType != J9PORT_SIG_VALUE_ADDRESS) {
+				return J9PORT_SIG_EXCEPTION_CONTINUE_SEARCH;
+			}
+			lrPtr = (UDATA *) infoValue;
+			exceptionTable = jitConfig->jitGetExceptionTableFromPC(vmThread, *lrPtr);
+			if (exceptionTable) {
 				vmThread->jitException = (J9Object *) (*lrPtr);  /* the lr points at the instruction after the helper call */
 				*pcPtr = (UDATA) ((void *) &jitHandleInternalErrorTrap);
 				return J9PORT_SIG_EXCEPTION_CONTINUE_EXECUTION;
-		   }
+			}
 		}
 
 		if (exceptionTable) {
