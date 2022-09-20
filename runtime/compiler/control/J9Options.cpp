@@ -136,7 +136,7 @@ int32_t J9::Options::_veryHighActiveThreadThreshold = -1;
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
 #if defined(J9VM_OPT_CRIU_SUPPORT)
-int32_t J9::Options::_sleepMsBeforeCheckpoint = 1000; // 1 second
+int32_t J9::Options::_sleepMsBeforeCheckpoint = 0;
 #endif
 
 int32_t J9::Options::_interpreterSamplingThreshold = 300;
