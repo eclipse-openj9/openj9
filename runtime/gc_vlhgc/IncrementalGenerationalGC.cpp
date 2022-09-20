@@ -1220,6 +1220,8 @@ MM_IncrementalGenerationalGC::runGlobalGarbageCollection(MM_EnvironmentVLHGC *en
 	env->_cycleState->_markMap = NULL;
 	env->_cycleState->_currentIncrement = 0;
 
+	_schedulingDelegate.checkEdenSizeAfterGlobalGC(env);
+
 	_extensions->globalVLHGCStats._heapSizingData.readyToResizeAtGlobalEnd = true;
 	if (attemptHeapResize(env, allocDescription)) {
 		/* Check was it successful contraction */
