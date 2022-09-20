@@ -31,7 +31,7 @@ usage() {
   echo "Options:"
   echo "  --help|-h             print this help, then exit"
   echo "  --arch=...            specify the processor architecture (default: host architecture)"
-  echo "  --build               build the docker image (overrides '--print')"
+  echo "  --build[=engine]      build the image (overrides '--print'). Optionally specify the engine (default: docker, or podman, if found)"
   echo "  --criu                include CRIU"
   echo "  --cuda                include CUDA header files"
   echo "  --dist=...            specify the Linux distribution (e.g. centos, ubuntu)"
@@ -64,6 +64,8 @@ arch=
 criu=no
 cuda=no
 dist=unspecified
+engine=docker
+engine_specified=0
 freemarker=no
 gen_git_cache=yes
 jdk_versions=all
@@ -87,6 +89,11 @@ parse_options() {
         ;;
       --build)
         action=build
+        ;;
+      --build=*)
+        action=build
+        engine="${arg#*=}"
+        engine_specified=1
         ;;
       --criu)
         criu=3.17.1
@@ -124,6 +131,15 @@ parse_options() {
         ;;
     esac
   done
+
+  # If --build was specified without an engine, and `docker` isn't on $PATH,
+  # and `podman` is on $PATH, then assume they're okay to use `podman`.
+  if [ "${action}" = build ] \
+     && [ "${engine_specified}" -eq 0 ] \
+     && ! command -v "$engine" >/dev/null 2>&1 \
+     && command -v podman >/dev/null 2>&1 ; then
+    engine=podman
+  fi
 }
 
 validate_options() {
@@ -242,6 +258,11 @@ validate_options() {
       exit 1
     fi
   done
+
+  if [ "${action}" = build ] && ! command -v "$engine" >/dev/null 2>&1 ; then
+    echo "Executable '$engine' could not be found. Update \$PATH or use another engine with '--build=engine'" >&2
+    exit 1
+  fi
 }
 
 build_cmd() {
@@ -889,7 +910,7 @@ fi
 main() {
   if [ $action = build ] ; then
     prepare_user
-    print_dockerfile | docker $(build_cmd -)
+    print_dockerfile | $engine $(build_cmd -)
   else
     print_dockerfile
   fi
