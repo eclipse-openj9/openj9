@@ -1345,7 +1345,7 @@ static void jitMethodSampleInterrupt(J9VMThread* vmThread, IDATA handlerKey, voi
            * flag is checked with the monitor in hand. This is more of an
            * optimization that statistically should be useful.
            */
-          && !compInfo->isCheckpointInProgress()
+          && !compInfo->shouldSuspendThreadsForCheckpoint()
 #endif
           && !compInfo->getPersistentInfo()->getDisableFurtherCompilation())
          {
@@ -1400,7 +1400,7 @@ static void jitMethodSampleInterrupt(J9VMThread* vmThread, IDATA handlerKey, voi
            * flag is checked with the monitor in hand. This is more of an
            * optimization that statistically should be useful.
            */
-          && !compInfo->isCheckpointInProgress()
+          && !compInfo->shouldSuspendThreadsForCheckpoint()
 #endif
           && !compInfo->getPersistentInfo()->getDisableFurtherCompilation())
          {

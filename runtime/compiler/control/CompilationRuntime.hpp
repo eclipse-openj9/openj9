@@ -393,8 +393,10 @@ public:
    enum TR_CheckpointStatus
       {
       NO_CHECKPOINT_IN_PROGRESS,
-      CHECKPOINT_IN_PROGRESS,
-      INTERRUPT_CHECKPOINT
+      COMPILE_METHODS_FOR_CHECKPOINT,
+      SUSPEND_THREADS_FOR_CHECKPOINT,
+      INTERRUPT_CHECKPOINT,
+      READY_FOR_CHECKPOINT_RESTORE
       };
 #endif
 
@@ -711,11 +713,16 @@ public:
    void waitOnCRMonitor();
 
    /* The following APIs should only be invoked with the Comp Monitor in hand. */
-   bool isCheckpointInProgress()        { return _checkpointStatus != TR_CheckpointStatus::NO_CHECKPOINT_IN_PROGRESS; }
-   void setCheckpointInProgress()       {        _checkpointStatus  = TR_CheckpointStatus::CHECKPOINT_IN_PROGRESS;    }
-   void resetCheckpointInProgress()     {        _checkpointStatus  = TR_CheckpointStatus::NO_CHECKPOINT_IN_PROGRESS; }
-   bool shouldCheckpointBeInterrupted() { return _checkpointStatus == TR_CheckpointStatus::INTERRUPT_CHECKPOINT;      }
-   void interruptCheckpoint()           {        _checkpointStatus  = TR_CheckpointStatus::INTERRUPT_CHECKPOINT;      }
+   bool isCheckpointInProgress()            { return _checkpointStatus != TR_CheckpointStatus::NO_CHECKPOINT_IN_PROGRESS;      }
+   void resetCheckpointInProgress()         {        _checkpointStatus  = TR_CheckpointStatus::NO_CHECKPOINT_IN_PROGRESS;      }
+   bool shouldCompileMethodsForCheckpoint() { return _checkpointStatus == TR_CheckpointStatus::COMPILE_METHODS_FOR_CHECKPOINT; }
+   void setCompileMethodsForCheckpoint()    {        _checkpointStatus  = TR_CheckpointStatus::COMPILE_METHODS_FOR_CHECKPOINT; }
+   bool shouldSuspendThreadsForCheckpoint() { return _checkpointStatus == TR_CheckpointStatus::SUSPEND_THREADS_FOR_CHECKPOINT; }
+   void setSuspendThreadsForCheckpoint()    {        _checkpointStatus  = TR_CheckpointStatus::SUSPEND_THREADS_FOR_CHECKPOINT; }
+   bool readyForCheckpointRestore()         { return _checkpointStatus == TR_CheckpointStatus::READY_FOR_CHECKPOINT_RESTORE;   }
+   void setReadyForCheckpointRestore()      {        _checkpointStatus  = TR_CheckpointStatus::READY_FOR_CHECKPOINT_RESTORE;   }
+   bool shouldCheckpointBeInterrupted()     { return _checkpointStatus == TR_CheckpointStatus::INTERRUPT_CHECKPOINT;           }
+   void interruptCheckpoint()               {        _checkpointStatus  = TR_CheckpointStatus::INTERRUPT_CHECKPOINT;           }
 #endif
 
    TR_PersistentMemory *     persistentMemory() { return _persistentMemory; }
@@ -1478,6 +1485,46 @@ private:
    JITServerAOTCacheMap *_JITServerAOTCacheMap;
    JITServerAOTDeserializer *_JITServerAOTDeserializer;
 #endif /* defined(J9VM_OPT_JITSERVER) */
+
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+   /**
+    * @brief Release the comp monitor in order to wait on the CR Monitor;
+    *        release the CR Monitor and reacquire the comp monitor once notified.
+    *
+    * IMPORTANT: There should be no return, or C++ exception thrown, after
+    *            releasing the Comp Monitor until it is re-acquired.
+    *            The Comp Monitor may be acquired in an OMR::CriticalSection
+    *            object; a return, or thrown exception, will destruct this
+    *            object as part leaving the scope, or stack unwinding, which
+    *            will attempt to release the monitor in its destructor.
+    *
+    * @param vmThread The J9VMThread
+    */
+   void releaseCompMonitorUntilNotifiedOnCRMonitor(J9VMThread *vmThread) throw();
+
+   /**
+    * @brief Compile methods for checkpoint.
+    *
+    * IMPORTANT: Must be called with the comp monitor in hand.
+    *
+    * @param vmThread The J9VMThread
+    *
+    * @return false if the checkpoint is interrupted, true otherwise.
+    *
+    */
+   bool compileMethodsForCheckpoint(J9VMThread *vmThread);
+
+   /**
+    * @brief Suspend compilation threads for checkpoint.
+    *
+    * IMPORTANT: Must be called with the comp monitor in hand.
+    *
+    * @param vmThread The J9VMThread
+    *
+    * @return false false if the checkpoint is interrupted, true otherwise.
+    */
+   bool suspendCompThreadsForCheckpoint(J9VMThread *vmThread);
+#endif
    }; // CompilationInfo
 }
 

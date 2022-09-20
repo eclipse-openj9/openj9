@@ -280,6 +280,7 @@ JIT_PRODUCT_SOURCE_FILES+=\
     compiler/compile/J9SymbolReferenceTable.cpp \
     compiler/control/CompilationController.cpp \
     compiler/control/CompilationThread.cpp \
+    compiler/control/CompileBeforeCheckpoint.cpp \
     compiler/control/DLLMain.cpp \
     compiler/control/HookedByTheJit.cpp \
     compiler/control/J9Options.cpp \
