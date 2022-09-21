@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2021 IBM Corp. and others
+ * Copyright (c) 2009, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -313,8 +313,6 @@ public class StackWalker
 				swPrintf(walkState, 2, "\tSTART_AT_JIT_FRAME");
 			if ((walkState.flags & J9_STACKWALK_COUNT_SPECIFIED) != 0)
 				swPrintf(walkState, 2, "\tCOUNT_SPECIFIED");
-			if ((walkState.flags & J9_STACKWALK_INCLUDE_ARRAYLET_LEAVES) != 0)
-				swPrintf(walkState, 2, "\tINCLUDE_ARRAYLET_LEAVES");
 			if ((walkState.flags & J9_STACKWALK_INCLUDE_NATIVES) != 0)
 				swPrintf(walkState, 2, "\tINCLUDE_NATIVES");
 			if ((walkState.flags & J9_STACKWALK_INCLUDE_CALL_IN_FRAMES) != 0)
