@@ -111,11 +111,11 @@ Java_java_lang_StackWalker_walkWrapperImpl(JNIEnv *env, jclass clazz, jint flags
 		walkState->userData1 = (void *)((UDATA) walkState->userData1 | FRAME_VALID);
 	}
 
-	jmethodID walkImplMID = JCL_CACHE_GET(env, MID_java_lang_StackWalker_walkWrapperImpl);
+	jmethodID walkImplMID = JCL_CACHE_GET(env, MID_java_lang_StackWalker_walkImpl);
 	if (NULL == walkImplMID) {
 		walkImplMID = env->GetStaticMethodID( clazz, "walkImpl", "(Ljava/util/function/Function;J)Ljava/lang/Object;");
 		Assert_JCL_notNull (walkImplMID);
-		JCL_CACHE_SET(env, MID_java_lang_StackWalker_walkWrapperImpl, walkImplMID);
+		JCL_CACHE_SET(env, MID_java_lang_StackWalker_walkImpl, walkImplMID);
 	}
 	jobject result = env->CallStaticObjectMethod(clazz, walkImplMID, function, (jlong)(UDATA)walkState);
 
@@ -126,6 +126,57 @@ Java_java_lang_StackWalker_walkWrapperImpl(JNIEnv *env, jclass clazz, jint flags
 
 	return result;
 }
+
+#if JAVA_SPEC_VERSION >= 19
+jobject JNICALL
+Java_java_lang_StackWalker_walkContinuationImpl(JNIEnv *env, jclass clazz, jint flags, jobject function, jobject cont)
+{
+	J9VMThread *vmThread = (J9VMThread *) env;
+	J9JavaVM *vm = vmThread->javaVM;
+
+	J9StackWalkState walkState = {0};
+	J9VMThread stackThread = {0};
+	J9VMEntryLocalStorage els = {0};
+
+	enterVMFromJNI(vmThread);
+	j9object_t continuationObject = J9_JNI_UNWRAP_REFERENCE(cont);
+	J9VMContinuation *continuation = J9VMJDKINTERNALVMCONTINUATION_VMREF(vmThread, continuationObject);
+	vm->internalVMFunctions->copyFieldsFromContinuation(vmThread, &stackThread, &els, continuation);
+	exitVMToJNI(vmThread);
+
+	walkState.walkThread = &stackThread;
+	walkState.flags = J9_STACKWALK_ITERATE_FRAMES | J9_STACKWALK_WALK_TRANSLATE_PC
+			|  J9_STACKWALK_INCLUDE_NATIVES | J9_STACKWALK_VISIBLE_ONLY;
+	/* If -XX:+ShowHiddenFrames and StackWalker.SHOW_HIDDEN_FRAMES option has not been set, skip hidden method frames */
+	if (J9_ARE_NO_BITS_SET(vm->runtimeFlags, J9_RUNTIME_SHOW_HIDDEN_FRAMES)
+	&& J9_ARE_NO_BITS_SET((UDATA)flags, SHOW_HIDDEN_FRAMES)
+	) {
+		walkState.flags |= J9_STACKWALK_SKIP_HIDDEN_FRAMES;
+	}
+	walkState.frameWalkFunction = stackFrameFilter;
+
+	/* walking unmounted Continuation will not require skipping StackWalker methods */
+	walkState.userData2 = NULL;
+	UDATA walkStateResult = vm->walkStackFrames(vmThread, &walkState);
+	Assert_JCL_true(walkStateResult == J9_STACKWALK_RC_NONE);
+	walkState.flags |= J9_STACKWALK_RESUME;
+	walkState.userData1 = (void *)(UDATA)flags;
+	if (J9SF_FRAME_TYPE_END_OF_STACK != walkState.pc) {
+		/* indicate the we have the topmost client method's frame */
+		walkState.userData1 = (void *)((UDATA) walkState.userData1 | FRAME_VALID);
+	}
+
+	jmethodID walkImplMID = JCL_CACHE_GET(env, MID_java_lang_StackWalker_walkImpl);
+	if (NULL == walkImplMID) {
+		walkImplMID = env->GetStaticMethodID( clazz, "walkImpl", "(Ljava/util/function/Function;J)Ljava/lang/Object;");
+		Assert_JCL_notNull (walkImplMID);
+		JCL_CACHE_SET(env, MID_java_lang_StackWalker_walkImpl, walkImplMID);
+	}
+	jobject result = env->CallStaticObjectMethod(clazz, walkImplMID, function, (jlong)(UDATA)&walkState);
+
+	return result;
+}
+#endif /* JAVA_SPEC_VERSION >= 19 */
 
 jobject JNICALL
 Java_java_lang_StackWalker_getImpl(JNIEnv *env, jobject clazz, jlong walkStateP)

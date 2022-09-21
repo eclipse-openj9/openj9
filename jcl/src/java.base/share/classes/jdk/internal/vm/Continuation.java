@@ -22,10 +22,12 @@
  *******************************************************************************/
 package jdk.internal.vm;
 
+import java.util.EnumSet;
 import java.util.Set;
 import java.util.function.Supplier;
 import jdk.internal.access.JavaLangAccess;
 import jdk.internal.access.SharedSecrets;
+import jdk.internal.misc.Unsafe;
 
 /**
  * Continuation class performing the mount/unmount operation for VirtualThread
@@ -40,6 +42,10 @@ public class Continuation {
 	private boolean finished;
 
 	private static JavaLangAccess JLA = SharedSecrets.getJavaLangAccess();
+
+	private volatile boolean isAccessible = true;
+	private static Unsafe unsafe = Unsafe.getUnsafe();
+	private static long isAccessibleOffset = unsafe.objectFieldOffset(Continuation.class, "isAccessible");
 
 	/**
 	 * Continuation's Pinned reasons
@@ -120,7 +126,7 @@ public class Continuation {
 	 * @return new StackWalker for this Continuation
 	 */
 	public StackWalker stackWalker() {
-		throw new UnsupportedOperationException();
+		return stackWalker(EnumSet.noneOf(StackWalker.Option.class));
 	}
 
 	/**
@@ -128,7 +134,7 @@ public class Continuation {
 	 * @return new StackWalker for this Continuation with set of options
 	 */
 	public StackWalker stackWalker(Set<StackWalker.Option> options) {
-		throw new UnsupportedOperationException();
+		return stackWalker(options, scope);
 	}
 
 	/**
@@ -137,7 +143,7 @@ public class Continuation {
 	 * @return new StackWalker for Continuations in the scope with set of options
 	 */
 	public StackWalker stackWalker(Set<StackWalker.Option> options, ContinuationScope scope) {
-		throw new UnsupportedOperationException();
+		return JLA.newStackWalkerInstance(options, scope, this);
 	}
 
 	/**
@@ -145,11 +151,20 @@ public class Continuation {
 	 * @throws IllegalStateException if this Continuation is mounted
 	 */
 	public StackTraceElement[] getStackTrace() {
-		throw new UnsupportedOperationException();
+		StackWalker walker = stackWalker(EnumSet.of(StackWalker.Option.SHOW_REFLECT_FRAMES));
+		return walker.walk(s -> s.map(StackWalker.StackFrame::toStackTraceElement).toArray(StackTraceElement[]::new));
 	}
 
 	public static <R> R wrapWalk(Continuation cont, ContinuationScope scope, Supplier<R> sup) {
 		throw new UnsupportedOperationException();
+	}
+
+	public boolean trylockAccess() {
+		return unsafe.compareAndSetBoolean(this, isAccessibleOffset, true, false);
+	}
+
+	public void unlockAccess() {
+		isAccessible = true;
 	}
 
 	private static void execute(Continuation cont) {
@@ -162,6 +177,9 @@ public class Continuation {
 	}
 
 	public final void run() {
+		if (!trylockAccess()) {
+			throw new IllegalStateException("Continuation has already finished.");
+		}
 		if (finished) {
 			throw new IllegalStateException("Continuation has already finished.");
 		}
@@ -181,6 +199,7 @@ public class Continuation {
 		try {
 			result = enterImpl();
 		} finally {
+			isAccessible = true;
 			if (result) {
 				/* Continuation completed */
 			} else {

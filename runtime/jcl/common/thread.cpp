@@ -326,18 +326,61 @@ Java_java_lang_Thread_getStackTraceImpl(JNIEnv *env, jobject rcv)
 	J9VMThread *currentThread = (J9VMThread*)env;
 	J9JavaVM *vm = currentThread->javaVM;
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+	jobject result = NULL;
 
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 	j9object_t receiverObject = J9_JNI_UNWRAP_REFERENCE(rcv);
 
-	/* Assume the thread is alive (guaranteed by java caller) */
-	J9VMThread *targetThread = J9VMJAVALANGTHREAD_THREADREF(currentThread, receiverObject);
+#if JAVA_SPEC_VERSION >= 19
+	BOOLEAN releaseInspector = FALSE;
+	if (IS_VIRTUAL_THREAD(currentThread, receiverObject)) {
+		omrthread_monitor_enter(vm->liveVirtualThreadListMutex);
+		j9object_t carrierThread = (j9object_t)J9VMJAVALANGVIRTUALTHREAD_CARRIERTHREAD(currentThread, receiverObject);
+		I_64 vthreadInspectorCount = J9OBJECT_I64_LOAD(currentThread, receiverObject, vm->virtualThreadInspectorCountOffset);
 
-	/* If calling getStackTrace on the current Thread, drop the first element, which is this method. */
-	UDATA skipCount = (currentThread == targetThread) ? 1 : 0;
+		/* Ensure virtual thread is mounted and not during transition. */
+		if ((NULL != carrierThread) && (vthreadInspectorCount >= 0)) {
+			J9OBJECT_I64_STORE(currentThread, receiverObject, vm->virtualThreadInspectorCountOffset, vthreadInspectorCount + 1);
+			/* Points receiver to carrierThread object. */
+			receiverObject = carrierThread;
+			releaseInspector = TRUE;
+		}
+		omrthread_monitor_exit(vm->liveVirtualThreadListMutex);
+		if (!releaseInspector) {
+			goto done;
+		}
+	}
+	{
+#endif /* JAVA_SPEC_VERSION >= 19 */
 
-	j9object_t resultObject = getStackTraceForThread(currentThread, targetThread, skipCount);
-	jobject result = vmFuncs->j9jni_createLocalRef(env, resultObject);
+		/* Assume the thread is alive (guaranteed by java caller). */
+		J9VMThread *targetThread = J9VMJAVALANGTHREAD_THREADREF(currentThread, receiverObject);
+
+		/* If calling getStackTrace on the current Thread, drop the first element, which is this method. */
+		UDATA skipCount = (currentThread == targetThread) ? 1 : 0;
+
+		j9object_t resultObject = getStackTraceForThread(currentThread, targetThread, skipCount);
+		result = vmFuncs->j9jni_createLocalRef(env, resultObject);
+
+#if JAVA_SPEC_VERSION >= 19
+	}
+	if (releaseInspector) {
+		receiverObject = J9_JNI_UNWRAP_REFERENCE(rcv);
+		/* Release the virtual thread (allow it to die) now that we are no longer inspecting it. */
+		omrthread_monitor_enter(vm->liveVirtualThreadListMutex);
+		I_64 vthreadInspectorCount = J9OBJECT_I64_LOAD(currentThread, receiverObject, vm->virtualThreadInspectorCountOffset);
+		Assert_JCL_true(vthreadInspectorCount > 0);
+		vthreadInspectorCount -= 1;
+		J9OBJECT_I64_STORE(currentThread, receiverObject, vm->virtualThreadInspectorCountOffset, vthreadInspectorCount);
+
+		if (0 == vthreadInspectorCount) {
+			omrthread_monitor_notify_all(vm->liveVirtualThreadListMutex);
+		}
+		omrthread_monitor_exit(vm->liveVirtualThreadListMutex);
+	}
+done:
+#endif /* JAVA_SPEC_VERSION >= 19 */
+
 	vmFuncs->internalExitVMToJNI(currentThread);
 	return result;
 }

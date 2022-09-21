@@ -4353,10 +4353,10 @@ jint
 isPinnedContinuation(J9VMThread *currentThread);
 
 /**
- * @brief Walk the stackframes associated with Continuation object.
+ * @brief Copy data from Continuation struct to vmThread.
  *
  * @param currentThread
- * @params allocated J9VMThread pointer
+ * @param allocated J9VMThread pointer
  * @param allocated J9VMEntryLocalStorage pointer
  * @param continuation struct
  */
