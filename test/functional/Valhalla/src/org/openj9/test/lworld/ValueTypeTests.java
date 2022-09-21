@@ -32,6 +32,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
+import jdk.internal.value.PrimitiveClass;
 import sun.misc.Unsafe;
 import org.testng.Assert;
 import static org.testng.Assert.*;
@@ -3023,14 +3024,14 @@ public class ValueTypeTests {
 	static public void testIdentityObjectOnValueType() throws Throwable {
 		String fields[] = {"longField:J"};
 		Class valueClass = ValueTypeGenerator.generateValueClass("testIdentityObjectOnValueType", fields);
-		assertTrue(valueClass.isPrimitiveClass());
+		assertTrue(PrimitiveClass.isPrimitiveClass(valueClass));
 		assertTrue(valueClass.isValue());
 	}
 
 	@Test(priority=1)
 	static public void testIdentityObjectOnHeavyAbstract() throws Throwable {
 		assertFalse(HeavyAbstractClass.class.isValue());
-		assertFalse(HeavyAbstractClass.class.isPrimitiveClass());
+		assertFalse(PrimitiveClass.isPrimitiveClass(HeavyAbstractClass.class));
 	}
 	public static abstract class HeavyAbstractClass {
 		/* Abstract class that has fields */
@@ -3077,7 +3078,7 @@ public class ValueTypeTests {
 			superClassName = "java/lang/Object";
 		}
 		Class valueClass = ValueTypeGenerator.generateValueClass(testName, superClassName, fields, extraClassFlags);
-		assertTrue(valueClass.isPrimitiveClass());
+		assertTrue(PrimitiveClass.isPrimitiveClass(valueClass));
 	}
 
 	@Test(priority=1, expectedExceptions=IncompatibleClassChangeError.class)
@@ -3150,19 +3151,19 @@ public class ValueTypeTests {
 	static public void testIsPrimitiveClassOnRef() throws Throwable {
 		String fields[] = {"longField:J"};
 		Class refClass = ValueTypeGenerator.generateRefClass("testIsPrimitiveClassOnRef", fields);
-		assertFalse(refClass.isPrimitiveClass());
+		assertFalse(PrimitiveClass.isPrimitiveClass(refClass));
 	}
 
 	@Test(priority=1)
 	static public void testIsPrimitiveClassOnValueType() throws Throwable {
 		String fields[] = {"longField:J"};
 		Class valueClass = ValueTypeGenerator.generateValueClass("testIsPrimitiveClassOnValueType", fields);
-		assertTrue(valueClass.isPrimitiveClass());
+		assertTrue(PrimitiveClass.isPrimitiveClass(valueClass));
 	}
 
 	@Test(priority=1)
 	static public void testIsPrimitiveClassOnInterface() throws Throwable {
-		assertFalse(TestInterface.class.isPrimitiveClass());
+		assertFalse(PrimitiveClass.isPrimitiveClass(TestInterface.class));
 	}
 
 	private interface TestInterface {
@@ -3171,21 +3172,21 @@ public class ValueTypeTests {
 
 	@Test(priority=1)
 	static public void testIsPrimitiveClassOnAbstractClass() throws Throwable {
-		assertFalse(HeavyAbstractClass.class.isPrimitiveClass());
+		assertFalse(PrimitiveClass.isPrimitiveClass(HeavyAbstractClass.class));
 	}
 
 	@Test(priority=1)
 	static public void testIsPrimitiveOnValueArrayClass() throws Throwable {
 		String fields[] = {"longField:J"};
 		Class valueClass = ValueTypeGenerator.generateValueClass("testIsPrimitiveOnValueArrayClass", fields);
-		assertFalse(valueClass.arrayType().isPrimitiveClass());
+		assertFalse(PrimitiveClass.isPrimitiveClass(valueClass.arrayType()));
 	}
 
 	@Test(priority=1)
 	static public void testIsPrimitiveOnRefArrayClass() throws Throwable {
 		String fields[] = {"longField:J"};
 		Class refClass = ValueTypeGenerator.generateRefClass("testIsPrimitiveOnRefArrayClass", fields);
-		assertFalse(refClass.arrayType().isPrimitiveClass());
+		assertFalse(PrimitiveClass.isPrimitiveClass(refClass.arrayType()));
 	}
 
 	@Test(priority=1)
