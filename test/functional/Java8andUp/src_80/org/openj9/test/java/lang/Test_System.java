@@ -276,6 +276,20 @@ public class Test_System {
 	}
 
 	/**
+	 * @tests java.lang.System#runFinalizersOnExit(boolean)
+	 */
+	@Test
+	public void test_runFinalizersOnExit() {
+		try {
+			System.runFinalizersOnExit(true);
+		} catch (UnsupportedOperationException t) {
+			// Passed
+			return;
+		}
+		AssertJUnit.fail("runFinalizersOnExit did not throw UnsupportedOperationException");
+	}
+
+	/**
 	 * @tests java.lang.System#setProperties(java.util.Properties)
 	 */
 	@Test
