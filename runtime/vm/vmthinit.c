@@ -56,6 +56,7 @@ UDATA initializeVMThreading(J9JavaVM *vm)
 		omrthread_monitor_init_with_name(&vm->fieldIndexMutex, 0, "Field Index Hashtable Mutex") ||
 		omrthread_monitor_init_with_name(&vm->jniCriticalLock, 0, "JNI critical region mutex") ||
 		omrthread_monitor_init_with_name(&vm->jniCryptoLibLock, 0, "JNI Cryptography mutex") ||
+		omrthread_monitor_init_with_name(&vm->jniHikmCryptoLibLock, 0, "JNI HIKM Cryptography mutex") ||
 #ifdef J9VM_THR_PREEMPTIVE
 		omrthread_monitor_init_with_name(&vm->classLoaderModuleAndLocationMutex, 0, "VM class loader modules") ||
 		omrthread_monitor_init_with_name(&vm->classLoaderBlocksMutex, 0, "VM class loader blocks") ||
@@ -174,6 +175,7 @@ void terminateVMThreading(J9JavaVM *vm)
 	if (vm->vmRuntimeStateListener.runtimeStateListenerMutex) omrthread_monitor_destroy(vm->vmRuntimeStateListener.runtimeStateListenerMutex);
 	if (vm->constantDynamicMutex) omrthread_monitor_destroy(vm->constantDynamicMutex);
 	if (vm->jniCryptoLibLock) omrthread_monitor_destroy(vm->jniCryptoLibLock);
+	if (vm->jniHikmCryptoLibLock) omrthread_monitor_destroy(vm->jniHikmCryptoLibLock);
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 	if (vm->valueTypeVerificationMutex) omrthread_monitor_destroy(vm->valueTypeVerificationMutex);
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
