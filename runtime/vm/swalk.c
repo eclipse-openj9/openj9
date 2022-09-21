@@ -167,7 +167,6 @@ UDATA  walkStackFrames(J9VMThread *currentThread, J9StackWalkState *walkState)
 	if (walkState->flags & J9_STACKWALK_CACHE_PCS) swPrintf(walkState, 2, "\tCACHE_PCS\n");
 	if (walkState->flags & J9_STACKWALK_SKIP_HIDDEN_FRAMES) swPrintf(walkState, 2, "\tSKIP_HIDDEN_FRAME\n");
 	if (walkState->flags & J9_STACKWALK_COUNT_SPECIFIED) swPrintf(walkState, 2, "\tCOUNT_SPECIFIED\n");
-	if (walkState->flags & J9_STACKWALK_INCLUDE_ARRAYLET_LEAVES) swPrintf(walkState, 2, "\tINCLUDE_ARRAYLET_LEAVES\n");
 	if (walkState->flags & J9_STACKWALK_INCLUDE_NATIVES) swPrintf(walkState, 2, "\tINCLUDE_NATIVES\n");
 	if (walkState->flags & J9_STACKWALK_INCLUDE_CALL_IN_FRAMES) swPrintf(walkState, 2, "\tINCLUDE_CALL_IN_FRAMES\n");
 	if (walkState->flags & J9_STACKWALK_ITERATE_FRAMES) swPrintf(walkState, 2, "\tITERATE_FRAMES\n");
