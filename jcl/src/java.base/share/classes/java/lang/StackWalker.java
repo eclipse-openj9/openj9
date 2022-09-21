@@ -232,11 +232,30 @@ public final class StackWalker {
 	 * @return the value returned by {@code function}.
 	 */
 	public <T> T walk(Function<? super Stream<StackFrame>, ? extends T> function) {
+		/*[IF JAVA_SPEC_VERSION >= 19]*/
+		if (null != cont) {
+			if (cont.trylockAccess()) {
+				try {
+					return walkContinuationImpl(flags, function, cont);
+				} finally {
+					cont.unlockAccess();
+				}
+			} else {
+				throw new IllegalStateException("Continuation is mounted.");
+			}
+		}
+		/*[ENDIF] JAVA_SPEC_VERSION >= 19 */
 		return walkWrapperImpl(flags, "walk", function); //$NON-NLS-1$
 	}
 
 	/*[IF JAVA_SPEC_VERSION >= 19]*/
 	final boolean retainClassRef;
+
+	private ExtendedOption extendedOption;
+	private ContinuationScope scope;
+	private Continuation cont;
+
+	private native static <T> T walkContinuationImpl(int flags, Function<? super Stream<StackFrame>, ? extends T> function, Continuation cont);
 
 	static StackWalker newInstance(Set<Option> options, ExtendedOption extendedOption) {
 		return newInstance(options, extendedOption, null, null);
@@ -246,7 +265,12 @@ public final class StackWalker {
 		return newInstance(options, extendedOption, contScope, null);
 	}
 	static StackWalker newInstance(Set<Option> options, ExtendedOption extendedOption, ContinuationScope contScope, Continuation continuation) {
-		return getInstance(options);
+		StackWalker result = getInstance(options);
+		result.extendedOption = extendedOption;
+		result.scope = contScope;
+		result.cont = continuation;
+
+		return result;
 	}
 
 	enum ExtendedOption {

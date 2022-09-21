@@ -670,6 +670,7 @@ endif()
 # java 19+
 if(NOT JAVA_SPEC_VERSION LESS 19)
 	omr_add_exports(jclse
+		Java_java_lang_StackWalker_walkContinuationImpl
 		Java_java_lang_Thread_currentCarrierThread
 		Java_java_lang_Thread_dumpThreads
 		Java_java_lang_Thread_extentLocalCache
