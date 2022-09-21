@@ -112,7 +112,7 @@ public class InternalDowncallHandler {
 	private MethodHandle longObjToMemSegmtRetFilter;
 
 	private static synchronized native void resolveRequiredFields();
-	private native void initCifNativeThunkData(String[] argLayouts, String retLayout, boolean newArgTypes);
+	private native void initCifNativeThunkData(String[] argLayouts, String retLayout, boolean newArgTypes, int varArgIndex);
 	private native long invokeNative(long returnStructMemAddr, long functionAddress, long calloutThunk, long[] argValues);
 
 	private static final class PrivateClassLock {
@@ -404,7 +404,8 @@ public class InternalDowncallHandler {
 			 * 1) generate the layout string with CLinker.TypeKind in Java 17.
 			 * 2) generate the layout string with MemoryLayout.carrier() (the type idenfied by the layout) in Java 18.
 			 */
-			String argRetLayoutStrsLine = argLayoutStrsLine.toString() + retLayoutStr;
+			int varArgIdx = LayoutStrPreprocessor.getVarArgIndex(funcDescriptor);
+			String argRetLayoutStrsLine = ((varArgIdx >= 0) ? varArgIdx : "") + argLayoutStrsLine.toString() + retLayoutStr;
 			Integer argRetLayoutStrLineHash = Integer.valueOf(argRetLayoutStrsLine.hashCode());
 			Integer argLayoutStrsLineHash = Integer.valueOf(argLayoutStrsLine.toString().hashCode());
 			Long cifNativeThunk = cachedCifNativeThunkAddr.get(argRetLayoutStrLineHash);
@@ -418,7 +419,7 @@ public class InternalDowncallHandler {
 				}
 
 				/* Prepare the prep_cif for the native function specified by the arguments/return layouts */
-				initCifNativeThunkData(argLayoutStrs, retLayoutStr, newArgTypes);
+				initCifNativeThunkData(argLayoutStrs, retLayoutStr, newArgTypes, varArgIdx);
 
 				/* Cache the address of prep_cif and argTypes after setting up via the out-of-line native code */
 				if (newArgTypes) {

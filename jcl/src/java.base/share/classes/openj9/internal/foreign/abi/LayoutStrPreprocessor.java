@@ -25,6 +25,7 @@ package openj9.internal.foreign.abi;
 import java.util.List;
 
 /*[IF JAVA_SPEC_VERSION >= 19]*/
+import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.GroupLayout;
 import java.lang.foreign.MemoryAddress;
 import java.lang.foreign.MemoryLayout;
@@ -35,6 +36,7 @@ import java.lang.foreign.ValueLayout;
 import jdk.incubator.foreign.CLinker.TypeKind;
 import static jdk.incubator.foreign.CLinker.TypeKind.*;
 /*[ENDIF] JAVA_SPEC_VERSION <= 17 */
+import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
@@ -48,6 +50,60 @@ import jdk.incubator.foreign.ValueLayout;
  * it to a simplified symbol string.
  */
 final class LayoutStrPreprocessor {
+
+	/*[IF JAVA_SPEC_VERSION <= 17]*/
+	private static final String osName = System.getProperty("os.name").toLowerCase(); //$NON-NLS-1$
+	private static final String arch = System.getProperty("os.arch").toLowerCase(); //$NON-NLS-1$
+	private static final String VARARGS_ATTR_NAME;
+
+	static {
+		/* Note: the attributes intended for the layout with variadic argument are defined in OpenJDK */
+		if ((arch.equals("amd64") || arch.equals("x86_64"))) { //$NON-NLS-1$ //$NON-NLS-2$
+			if (osName.startsWith("windows")) { //$NON-NLS-1$
+				VARARGS_ATTR_NAME = "abi/windows/varargs"; //$NON-NLS-1$
+			} else {
+				VARARGS_ATTR_NAME = "abi/sysv/varargs";; //$NON-NLS-1$
+			}
+		} else if (arch.equals("aarch64")) { //$NON-NLS-1$
+			if (osName.startsWith("mac")) { //$NON-NLS-1$
+				VARARGS_ATTR_NAME = "abi/aarch64/stack_varargs";; //$NON-NLS-1$
+			} else {
+				VARARGS_ATTR_NAME = "abi/sysv/varargs"; //$NON-NLS-1$;
+			}
+		} else if (arch.startsWith("ppc64")) { //$NON-NLS-1$
+			if (osName.startsWith("linux")) { //$NON-NLS-1$
+				VARARGS_ATTR_NAME = "abi/ppc64/sysv/varargs"; //$NON-NLS-1$
+			} else {
+				VARARGS_ATTR_NAME = "abi/ppc64/aix/varargs"; //$NON-NLS-1$
+			}
+		} else if (arch.equals("s390x") && osName.startsWith("linux")) { //$NON-NLS-1$ //$NON-NLS-2$
+			VARARGS_ATTR_NAME = "abi/s390x/sysv/varargs"; //$NON-NLS-1$
+		} else {
+			throw new InternalError("Unsupported platform: " + arch + "_" + osName); //$NON-NLS-1$ //$NON-NLS-2$
+		}
+	}
+	/*[ENDIF] JAVA_SPEC_VERSION <= 17 */
+
+	/* Get the index of the variadic argument layout in the function descriptor if exists */
+	static int getVarArgIndex(FunctionDescriptor funcDesc) {
+		/* -1 is the default value defined in JDK18+ when the function descriptor has no variadic arguments */
+		int varArgIdx = -1;
+
+		/*[IF JAVA_SPEC_VERSION >= 18]*/
+		varArgIdx = funcDesc.firstVariadicArgumentIndex();
+		/*[ELSE] JAVA_SPEC_VERSION >= 18 */
+		List<MemoryLayout> argLayouts = funcDesc.argumentLayouts();
+		for (int argIndex = 0; argIndex < argLayouts.size(); argIndex++) {
+			MemoryLayout argLayout = argLayouts.get(argIndex);
+			if (argLayout.attribute(VARARGS_ATTR_NAME).isPresent()) {
+				varArgIdx = argIndex;
+				break;
+			}
+		}
+		/*[ENDIF] JAVA_SPEC_VERSION >= 18 */
+
+		return varArgIdx;
+	}
 
 	/* Get the simplified layout string prefixed with layout size by parsing the structure of the layout */
 	static String getSimplifiedLayoutString(MemoryLayout targetLayout, boolean isDownCall) {
@@ -78,9 +134,9 @@ final class LayoutStrPreprocessor {
 					 *
 					 * Note:
 					 * there are a couple of padding bytes allowed on platforms as follows;
-					 * 1) 5 padding bytes for struct [bool/byte, short, double] (padding between short and double),
-					 * 2) 6 padding bytes for struct [short, long],
-					 * 3) 7 padding bytes for struct [bool/byte, long].
+					 * 1) 5 padding bytes for struct [bool/byte + short, long/double] (padding between short and long/double),
+					 * 2) 6 padding bytes for struct [short, long/double],
+					 * 3) 7 padding bytes for struct [bool/byte, long/double].
 					 */
 					if ((tempPaddingBytes <= 0) || (tempPaddingBytes > 7)) {
 						throw new IllegalArgumentException("The padding bits is invalid: x" + (tempPaddingBytes * 8));  //$NON-NLS-1$
