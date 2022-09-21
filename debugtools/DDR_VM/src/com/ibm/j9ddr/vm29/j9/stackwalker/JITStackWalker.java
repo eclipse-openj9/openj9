@@ -1206,10 +1206,7 @@ public class JITStackWalker
 		private static void
 		jitWalkStackAllocatedObject(WalkState walkState, J9ObjectPointer object) throws CorruptDataException
 		{
-//			if (J9_STACKWALK_INCLUDE_ARRAYLET_LEAVES == (walkState.flags & J9_STACKWALK_INCLUDE_ARRAYLET_LEAVES)) {
-//				iterateObjectSlotsFlags = iterateObjectSlotsFlags.bitOr(j9mm_iterator_flag_include_arraylet_leaves);
-//			}
-			
+
 			swPrintf(walkState, 4, "\t\tSA-Obj[{0}]", Long.toHexString(object.getAddress()));
 			
 			GCObjectIterator it = GCObjectIterator.fromJ9Object(object, false);

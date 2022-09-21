@@ -1617,13 +1617,8 @@ jitWalkStackAllocatedObject(J9StackWalkState * walkState, j9object_t object)
 {
 	J9JavaVM* vm = walkState->walkThread->javaVM;
 	J9MM_IterateObjectDescriptor descriptor;
-	UDATA iterateObjectSlotsFlags = 0;
 	J9MemoryManagerFunctions *mmFuncs = vm->memoryManagerFunctions;
 
-	if (J9_STACKWALK_INCLUDE_ARRAYLET_LEAVES == (walkState->flags & J9_STACKWALK_INCLUDE_ARRAYLET_LEAVES)) {
-		iterateObjectSlotsFlags |= j9mm_iterator_flag_include_arraylet_leaves;
-	}
-	
 #if defined (J9VM_INTERP_STACKWALK_TRACING)
 	swPrintf(walkState, 4, "\t\tSA-Obj[%p]\n", object);
 
@@ -1635,7 +1630,7 @@ jitWalkStackAllocatedObject(J9StackWalkState * walkState, j9object_t object)
 		vm,
 		vm->portLibrary,
 		&descriptor,
-		iterateObjectSlotsFlags,
+		0,
 		stackAllocatedObjectSlotWalkFunction,
 		walkState);
 }

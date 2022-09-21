@@ -231,7 +231,7 @@ poolElementAllocFailed:
 		walkState.objectSlotWalkFunction = growSlotIterator;
 		walkState.userData3 = (void *) oldStackStart;
 		walkState.userData4 = (void *) oldStackEnd;
-		walkState.flags = J9_STACKWALK_ITERATE_O_SLOTS | J9_STACKWALK_INCLUDE_ARRAYLET_LEAVES;
+		walkState.flags = J9_STACKWALK_ITERATE_O_SLOTS;
 		vmThread->javaVM->walkStackFrames(vmThread, &walkState);
 
 		/* Stack-allocated objects may escape into the interpreter enter records */
