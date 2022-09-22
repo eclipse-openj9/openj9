@@ -25,32 +25,32 @@
 #include "jvmti_internal.h"
 
 typedef struct J9JVMTIRunAgentThreadArgs {
-	jvmtiEnv * jvmti_env;
+	jvmtiEnv *jvmti_env;
 	jvmtiStartFunction proc;
-	const void * arg;
+	const void *arg;
 } J9JVMTIRunAgentThreadArgs;
 
-static int J9THREAD_PROC agentThreadStart (void *entryArg);
-static jint walkLocalMonitorRefs (J9VMThread* currentThread, jobject* locks, J9VMThread* targetThread, UDATA maxCount);
-static jvmtiError resumeThread (J9VMThread * currentThread, jthread thread);
-static UDATA wrappedAgentThreadStart (J9PortLibrary* portLib, void * entryArg);
-static void ownedMonitorIterator (J9VMThread* aThread, J9StackWalkState* walkState, j9object_t* slot, const void * stackLocation);
+static int J9THREAD_PROC agentThreadStart(void *entryArg);
+static jint walkLocalMonitorRefs(J9VMThread* currentThread, jobject *locks, J9VMThread *targetThread, J9VMThread *walkThread, UDATA maxCount);
+static jvmtiError resumeThread(J9VMThread *currentThread, jthread thread);
+static UDATA wrappedAgentThreadStart(J9PortLibrary *portLib, void *entryArg);
+static void ownedMonitorIterator(J9VMThread *currentThread, J9StackWalkState *walkState, j9object_t *slot, const void *stackLocation);
 
 
 jvmtiError JNICALL
-jvmtiGetThreadState(jvmtiEnv* env,
+jvmtiGetThreadState(jvmtiEnv *env,
 	jthread thread,
-	jint* thread_state_ptr)
+	jint *thread_state_ptr)
 {
-	J9JavaVM * vm = JAVAVM_FROM_ENV(env);
-	jvmtiError rc;
-	J9VMThread * currentThread;
+	J9JavaVM *vm = JAVAVM_FROM_ENV(env);
+	jvmtiError rc = JVMTI_ERROR_NONE;
+	J9VMThread *currentThread;
 	jint rv_thread_state = 0;
 
 	Trc_JVMTI_jvmtiGetThreadState_Entry(env);
 
 	rc = getCurrentVMThread(vm, &currentThread);
-	if (rc == JVMTI_ERROR_NONE) {
+	if (JVMTI_ERROR_NONE == rc) {
 		J9VMThread *targetThread = NULL;
 		j9object_t threadObject = NULL;
 		j9object_t threadObjectLock = NULL;
@@ -62,17 +62,17 @@ jvmtiGetThreadState(jvmtiEnv* env,
 		ENSURE_NON_NULL(thread_state_ptr);
 
 		/* if the thread is NULL then use the current thread */
-		if (thread == NULL) {
+		if (NULL == thread) {
 			threadObject = currentThread->threadObject;
 		} else {
-			threadObject = *(j9object_t *)thread;
+			threadObject = J9_JNI_UNWRAP_REFERENCE(thread);
 		}
 #if JAVA_SPEC_VERSION >= 19
 		if (IS_VIRTUAL_THREAD(currentThread, threadObject)) {
 			/* If thread is NULL, the current thread is used which cannot be a virtual thread.
 			 * There is an assertion inside getVirtualThreadState() that thread is not NULL.
 			 */
-			rv_thread_state = getVirtualThreadState(currentThread, thread);
+			rv_thread_state = getVirtualThreadState(currentThread, (jthread)&threadObject);
 		} else
 #endif /* JAVA_SPEC_VERSION >= 19 */
 		{
@@ -475,7 +475,7 @@ jvmtiGetThreadInfo(jvmtiEnv* env,
 		rc = getVMThread(currentThread, thread, &targetThread, TRUE, FALSE);
 		if (rc == JVMTI_ERROR_NONE) {
 			char* name = NULL;
-			j9object_t threadObject = (NULL == thread) ? targetThread->threadObject : *((j9object_t*) thread);
+			j9object_t threadObject = (NULL == thread) ? targetThread->threadObject : J9_JNI_UNWRAP_REFERENCE(thread);
 			jobject threadGroup = NULL;
 			jobject contextClassLoader;
 #if JAVA_SPEC_VERSION >= 19
@@ -569,14 +569,12 @@ jvmtiGetThreadInfo(jvmtiEnv* env,
 						vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
 
 						group = J9_JNI_UNWRAP_REFERENCE(tempGroup);
-						threadObject = J9_JNI_UNWRAP_REFERENCE(thread);
+						threadObject = (NULL == thread) ? targetThread->threadObject : J9_JNI_UNWRAP_REFERENCE(thread);
 					}
 				} else {
 					/* For platform threads, a NULL vmthread indicates that a thread is terminated. */
-					if (NULL != targetThread) {
-						if (NULL != threadHolder) {
-							group = (j9object_t)J9VMJAVALANGTHREADFIELDHOLDER_GROUP(currentThread, threadHolder);
-						}
+					if ((NULL != targetThread) && (NULL != threadHolder)) {
+						group = (j9object_t)J9VMJAVALANGTHREADFIELDHOLDER_GROUP(currentThread, threadHolder);
 					}
 				}
 #else /* JAVA_SPEC_VERSION >= 19 */
@@ -638,14 +636,14 @@ exit:
 
 
 jvmtiError JNICALL
-jvmtiGetOwnedMonitorInfo(jvmtiEnv* env,
+jvmtiGetOwnedMonitorInfo(jvmtiEnv *env,
 	jthread thread,
-	jint* owned_monitor_count_ptr,
-	jobject** owned_monitors_ptr)
+	jint *owned_monitor_count_ptr,
+	jobject **owned_monitors_ptr)
 {
-	J9JavaVM * vm = JAVAVM_FROM_ENV(env);
-	jvmtiError rc;
-	J9VMThread * currentThread;
+	J9JavaVM *vm = JAVAVM_FROM_ENV(env);
+	jvmtiError rc = JVMTI_ERROR_NONE;
+	J9VMThread *currentThread = NULL;
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	jint rv_owned_monitor_count = 0;
 	jobject *rv_owned_monitors = NULL;
@@ -665,28 +663,52 @@ jvmtiGetOwnedMonitorInfo(jvmtiEnv* env,
 		ENSURE_NON_NULL(owned_monitors_ptr);
 
 		rc = getVMThread(currentThread, thread, &targetThread, TRUE, TRUE);
-		if (rc == JVMTI_ERROR_NONE) {
-			jobject * locks;
+		if (JVMTI_ERROR_NONE == rc) {
+			jobject *locks = NULL;
 			jint count = 0;
+			J9VMThread *threadToWalk = targetThread;
+
+#if JAVA_SPEC_VERSION >= 19
+			J9VMThread stackThread = {0};
+			J9VMEntryLocalStorage els = {0};
+			j9object_t threadObject = (NULL == thread) ? currentThread->threadObject : J9_JNI_UNWRAP_REFERENCE(thread);
+			J9VMContinuation *continuation = NULL;
+
+			if ((NULL == targetThread) && IS_VIRTUAL_THREAD(currentThread, threadObject)) {
+				goto release;
+			}
+#endif /* JAVA_SPEC_VERSION >= 19 */
 
 			vm->internalVMFunctions->haltThreadForInspection(currentThread, targetThread);
 
-			count = walkLocalMonitorRefs(currentThread, NULL, targetThread, UDATA_MAX);
+#if JAVA_SPEC_VERSION >= 19
+			continuation = getJ9VMContinuationToWalk(currentThread, targetThread, threadObject);
+			if (NULL != continuation) {
+				memcpy(&stackThread, targetThread, sizeof(J9VMThread));
+				vm->internalVMFunctions->copyFieldsFromContinuation(currentThread, &stackThread, &els, continuation);
+				threadToWalk = &stackThread;
+			}
+#endif /* JAVA_SPEC_VERSION >= 19 */
+
+			count = walkLocalMonitorRefs(currentThread, NULL, targetThread, threadToWalk, UDATA_MAX);
 
 			locks = j9mem_allocate_memory(sizeof(jobject) * count, J9MEM_CATEGORY_JVMTI_ALLOCATE);
-			if (locks == NULL) {
+			if (NULL == locks) {
 				rc = JVMTI_ERROR_OUT_OF_MEMORY;
 			} else if (0 != count) {
 				/* Refetch count as it may decrease due to uniquifying the object list.
 				 * Only fill up 'locks' with number of monitors recorded in the first pass.
 				 * Suppress any newly acquired monitors in between.
 				 */
-				count = walkLocalMonitorRefs(currentThread, locks, targetThread, count);
+				count = walkLocalMonitorRefs(currentThread, locks, targetThread, threadToWalk, count);
 			}
 			rv_owned_monitors = locks;
 			rv_owned_monitor_count = count;
 
 			vm->internalVMFunctions->resumeThreadForInspection(currentThread, targetThread);
+#if JAVA_SPEC_VERSION >= 19
+release:
+#endif /* JAVA_SPEC_VERSION >= 19 */
 			releaseVMThread(currentThread, targetThread, thread);
 		}
 done:
@@ -704,14 +726,14 @@ done:
 
 
 jvmtiError JNICALL
-jvmtiGetOwnedMonitorStackDepthInfo(jvmtiEnv* env,
+jvmtiGetOwnedMonitorStackDepthInfo(jvmtiEnv *env,
 	jthread thread,
-	jint* monitor_info_count_ptr,
-	jvmtiMonitorStackDepthInfo** monitor_info_ptr)
+	jint *monitor_info_count_ptr,
+	jvmtiMonitorStackDepthInfo **monitor_info_ptr)
 {
-	J9JavaVM * vm = JAVAVM_FROM_ENV(env);
-	jvmtiError rc;
-	J9VMThread * currentThread;
+	J9JavaVM *vm = JAVAVM_FROM_ENV(env);
+	jvmtiError rc = JVMTI_ERROR_NONE;
+	J9VMThread *currentThread = NULL;
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	jint rv_monitor_info_count = 0;
 	jvmtiMonitorStackDepthInfo *rv_monitor_info = NULL;
@@ -719,7 +741,7 @@ jvmtiGetOwnedMonitorStackDepthInfo(jvmtiEnv* env,
 	Trc_JVMTI_jvmtiGetOwnedMonitorStackDepthInfo_Entry(env);
 
 	rc = getCurrentVMThread(vm, &currentThread);
-	if (rc == JVMTI_ERROR_NONE) {
+	if (JVMTI_ERROR_NONE == rc) {
 		J9VMThread *targetThread = NULL;
 
 		vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
@@ -729,9 +751,8 @@ jvmtiGetOwnedMonitorStackDepthInfo(jvmtiEnv* env,
 
 		ENSURE_NON_NULL(monitor_info_count_ptr);
 		ENSURE_NON_NULL(monitor_info_ptr);
-		ENSURE_JTHREAD_NON_NULL(thread);
 
-		if (thread) {
+		if (NULL != thread) {
 			ENSURE_JTHREAD(currentThread, thread);
 		}
 		
@@ -739,51 +760,67 @@ jvmtiGetOwnedMonitorStackDepthInfo(jvmtiEnv* env,
 		
 		rc = getVMThread(currentThread, thread, &targetThread, TRUE, TRUE);
 		if (rc == JVMTI_ERROR_NONE) {
-			IDATA maxRecords;
-			J9ObjectMonitorInfo * monitorEnterRecords = NULL;
-			jvmtiMonitorStackDepthInfo * resultArray = NULL;
+			IDATA maxRecords = 0;
+			J9ObjectMonitorInfo *monitorEnterRecords = NULL;
+			jvmtiMonitorStackDepthInfo *resultArray = NULL;
+			J9VMThread *threadToWalk = targetThread;
+
+#if JAVA_SPEC_VERSION >= 19
+			J9VMThread stackThread = {0};
+			J9VMEntryLocalStorage els = {0};
+			j9object_t threadObject = (NULL == thread) ? currentThread->threadObject : J9_JNI_UNWRAP_REFERENCE(thread);
+			J9VMContinuation *continuation = NULL;
+
+			if ((NULL == targetThread) && IS_VIRTUAL_THREAD(currentThread, threadObject)) {
+				goto release;
+			}
+#endif /* JAVA_SPEC_VERSION >= 19 */
 
 			vm->internalVMFunctions->haltThreadForInspection(currentThread, targetThread);
 
-			/* Get the count of owned monitors */
+#if JAVA_SPEC_VERSION >= 19
+			continuation = getJ9VMContinuationToWalk(currentThread, targetThread, threadObject);
+			if (NULL != continuation) {
+				memcpy(&stackThread, targetThread, sizeof(J9VMThread));
+				vm->internalVMFunctions->copyFieldsFromContinuation(currentThread, &stackThread, &els, continuation);
+				threadToWalk = &stackThread;
+			}
+#endif /* JAVA_SPEC_VERSION >= 19 */
 
-			maxRecords = vm->internalVMFunctions->getOwnedObjectMonitors(currentThread, targetThread, NULL, 0);
+			/* Get the count of owned monitors */
+			maxRecords = vm->internalVMFunctions->getOwnedObjectMonitors(currentThread, threadToWalk, NULL, 0);
 			if (maxRecords < 0) {
 				rc = JVMTI_ERROR_INTERNAL;
-				goto doneRelease;
+				goto freeMemory;
 			}
 
 			/* Do we have any enter records at all? */
-
-			if (maxRecords == 0) {
+			if (0 == maxRecords) {
 				rc = JVMTI_ERROR_NONE;
-				goto doneRelease;
+				goto freeMemory;
 			}
 
-			monitorEnterRecords = (J9ObjectMonitorInfo *) j9mem_allocate_memory(sizeof(J9ObjectMonitorInfo) * (UDATA)maxRecords, J9MEM_CATEGORY_JVMTI);
+			monitorEnterRecords = (J9ObjectMonitorInfo *)j9mem_allocate_memory(sizeof(J9ObjectMonitorInfo) * (UDATA)maxRecords, J9MEM_CATEGORY_JVMTI);
 			if (NULL == monitorEnterRecords) {
 				rc = JVMTI_ERROR_OUT_OF_MEMORY;
-				goto doneRelease;
+				goto freeMemory;
 			}
 
-			maxRecords = 
-				vm->internalVMFunctions->getOwnedObjectMonitors(currentThread, targetThread, monitorEnterRecords, maxRecords);
+			maxRecords = vm->internalVMFunctions->getOwnedObjectMonitors(currentThread, threadToWalk, monitorEnterRecords, maxRecords);
 			if (maxRecords < 0) {
 				rc = JVMTI_ERROR_INTERNAL;
-				goto doneRelease;
+				goto freeMemory;
 			}
 
 			/* Do we have any records at all? */
-
 			if (maxRecords > 0) {
-				resultArray = j9mem_allocate_memory((jlong) maxRecords * sizeof(jvmtiMonitorStackDepthInfo), J9MEM_CATEGORY_JVMTI_ALLOCATE);
-				if (resultArray == NULL) {
+				resultArray = j9mem_allocate_memory((jlong)maxRecords * sizeof(jvmtiMonitorStackDepthInfo), J9MEM_CATEGORY_JVMTI_ALLOCATE);
+				if (NULL == resultArray) {
 					maxRecords = 0;
 					resultArray = NULL;
 					rc = JVMTI_ERROR_OUT_OF_MEMORY;
 				} else {
-					IDATA i;
-
+					IDATA i = 0;
 					for (i = 0; i < maxRecords; i++) {
 						/* Negative stack depth indicates inability to retrieve it */
 						if (monitorEnterRecords[i].depth > 0) {
@@ -794,7 +831,7 @@ jvmtiGetOwnedMonitorStackDepthInfo(jvmtiEnv* env,
 						}
 						resultArray[i].monitor =
 							currentThread->javaVM->internalVMFunctions->j9jni_createLocalRef(
-											(JNIEnv *) currentThread, monitorEnterRecords[i].object);
+											(JNIEnv *)currentThread, monitorEnterRecords[i].object);
 					}
 				}
 			}
@@ -802,12 +839,15 @@ jvmtiGetOwnedMonitorStackDepthInfo(jvmtiEnv* env,
 			rv_monitor_info_count = (jint)maxRecords;
 			rv_monitor_info = resultArray; 
 
-doneRelease:
-			if (monitorEnterRecords) {
+freeMemory:
+			if (NULL != monitorEnterRecords) {
 				j9mem_free_memory(monitorEnterRecords);
 			}
 
 			vm->internalVMFunctions->resumeThreadForInspection(currentThread, targetThread);
+#if JAVA_SPEC_VERSION >= 19
+release:
+#endif /* JAVA_SPEC_VERSION >= 19 */
 			releaseVMThread(currentThread, targetThread, thread);
 		}
 done:
@@ -824,19 +864,19 @@ done:
 }
 
 jvmtiError JNICALL
-jvmtiGetCurrentContendedMonitor(jvmtiEnv* env,
+jvmtiGetCurrentContendedMonitor(jvmtiEnv *env,
 	jthread thread,
-	jobject* monitor_ptr)
+	jobject *monitor_ptr)
 {
-	J9JavaVM * vm = JAVAVM_FROM_ENV(env);
-	jvmtiError rc;
-	J9VMThread * currentThread;
+	J9JavaVM *vm = JAVAVM_FROM_ENV(env);
+	jvmtiError rc = JVMTI_ERROR_NONE;
+	J9VMThread *currentThread = NULL;
 	jobject rv_monitor = NULL;
 
 	Trc_JVMTI_jvmtiGetCurrentContendedMonitor_Entry(env);
 
 	rc = getCurrentVMThread(vm, &currentThread);
-	if (rc == JVMTI_ERROR_NONE) {
+	if (JVMTI_ERROR_NONE == rc) {
 		J9VMThread *targetThread = NULL;
 
 		vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
@@ -848,20 +888,47 @@ jvmtiGetCurrentContendedMonitor(jvmtiEnv* env,
 
 		rc = getVMThread(currentThread, thread, &targetThread, TRUE, TRUE);
 		if (rc == JVMTI_ERROR_NONE) {
-			j9object_t lockObject;
-			UDATA vmstate;
-			
+			j9object_t lockObject = NULL;
+			UDATA vmstate = 0;
+			J9VMThread *threadToWalk = targetThread;
+
+#if JAVA_SPEC_VERSION >= 19
+			J9VMThread stackThread = {0};
+			J9VMEntryLocalStorage els = {0};
+			j9object_t threadObject = (NULL == thread) ? currentThread->threadObject : J9_JNI_UNWRAP_REFERENCE(thread);
+			J9VMContinuation *continuation = NULL;
+
+			if ((NULL == targetThread) && IS_VIRTUAL_THREAD(currentThread, threadObject)) {
+				goto release;
+			}
+#endif /* JAVA_SPEC_VERSION >= 19 */
+
 			/* CMVC 184481 - The targetThread should be suspended while we attempt to get its state */
 			vm->internalVMFunctions->haltThreadForInspection(currentThread, targetThread);
-			vmstate = getVMThreadObjectStatesAll(targetThread, &lockObject, NULL, NULL);
 
-			if (lockObject && (0 == (vmstate & (J9VMTHREAD_STATE_PARKED | J9VMTHREAD_STATE_PARKED_TIMED)))) { 
-				rv_monitor = (jobject) vm->internalVMFunctions->j9jni_createLocalRef((JNIEnv *) currentThread, lockObject);
+#if JAVA_SPEC_VERSION >= 19
+			continuation = getJ9VMContinuationToWalk(currentThread, targetThread, threadObject);
+			if (NULL != continuation) {
+				memcpy(&stackThread, targetThread, sizeof(J9VMThread));
+				vm->internalVMFunctions->copyFieldsFromContinuation(currentThread, &stackThread, &els, continuation);
+				threadToWalk = &stackThread;
+			}
+#endif /* JAVA_SPEC_VERSION >= 19 */
+
+			vmstate = getVMThreadObjectStatesAll(threadToWalk, &lockObject, NULL, NULL);
+
+			if ((NULL != lockObject)
+			&& (OMR_ARE_NO_BITS_SET(vmstate, J9VMTHREAD_STATE_PARKED | J9VMTHREAD_STATE_PARKED_TIMED))
+			) {
+				rv_monitor = (jobject)vm->internalVMFunctions->j9jni_createLocalRef((JNIEnv *)currentThread, lockObject);
 			} else {
 				rv_monitor = NULL;
 			}
 
 			vm->internalVMFunctions->resumeThreadForInspection(currentThread, targetThread);
+#if JAVA_SPEC_VERSION >= 19
+release:
+#endif /* JAVA_SPEC_VERSION >= 19 */
 			releaseVMThread(currentThread, targetThread, thread);
 		}
 done:
@@ -1141,13 +1208,13 @@ wrappedAgentThreadStart(J9PortLibrary* portLib, void * entryArg)
 }
 
 static void
-ownedMonitorIterator(J9VMThread* targetThread, J9StackWalkState* walkState, j9object_t* slot, const void * stackLocation)
+ownedMonitorIterator(J9VMThread *currentThread, J9StackWalkState *walkState, j9object_t *slot, const void *stackLocation)
 {
-	J9VMThread * currentThread = (J9VMThread *) walkState->userData1;
-	J9JavaVM * vm = currentThread->javaVM;
-	jobject * locks = (jobject *) walkState->userData2;
+	J9JavaVM *vm = currentThread->javaVM;
+	J9VMThread *targetThread = (J9VMThread *)walkState->userData1;
+	jobject *locks = (jobject *)walkState->userData2;
 	UDATA count = (UDATA) walkState->userData3;
-	j9object_t obj = slot ? *slot : NULL;
+	j9object_t obj = (NULL != slot) ? *slot : NULL;
 
 	if (count >= (UDATA)walkState->userData4) {
 		/* PMR 69633,001,866 / CMVC 197115 
@@ -1160,39 +1227,39 @@ ownedMonitorIterator(J9VMThread* targetThread, J9StackWalkState* walkState, j9ob
 		return;
 	}
 
-	if (obj && getObjectMonitorOwner(vm, obj, NULL) == walkState->walkThread
-			&& !isObjectStackAllocated(walkState->walkThread, obj)) {
+	if ((NULL != obj)
+	&& (getObjectMonitorOwner(vm, obj, NULL) == targetThread)
+	&& !isObjectStackAllocated(walkState->walkThread, obj)
+	) {
 		if (NULL != locks) {
-			UDATA i;
-
+			UDATA i = 0;
 			/* Make sure each object only appears once in the list - n^2, but we expect n to be small */
 			for (i = 0; i < count; ++i) {
-				if (*((j9object_t*) (locks[i])) == obj) {
+				if (*((j9object_t *)locks[i]) == obj) {
 					return;
 				}
 			}
-
-			locks[count] = (jobject)vm->internalVMFunctions->j9jni_createLocalRef((JNIEnv *) currentThread, obj);
+			locks[count] = (jobject)vm->internalVMFunctions->j9jni_createLocalRef((JNIEnv *)currentThread, obj);
 		}
-		walkState->userData3 = (void *) (count + 1);
+		walkState->userData3 = (void *)(count + 1);
 	}
 }
 
 static jint
-walkLocalMonitorRefs(J9VMThread* currentThread, jobject* locks, J9VMThread* targetThread, UDATA maxCount)
+walkLocalMonitorRefs(J9VMThread *currentThread, jobject *locks, J9VMThread *targetThread, J9VMThread *walkThread, UDATA maxCount)
 {
-	J9JavaVM * vm = currentThread->javaVM;
-	J9StackWalkState walkState;
-	J9JNIReferenceFrame * frame;
-	pool_state poolState;
-	j9object_t* ref;
+	J9JavaVM *vm = currentThread->javaVM;
+	J9StackWalkState walkState = {0};
+	J9JNIReferenceFrame *frame = NULL;
+	pool_state poolState = {0};
+	j9object_t *ref = NULL;
 
-	walkState.userData1 = currentThread;					/* self */
-	walkState.userData2 = locks;							/* array */
-	walkState.userData3 = (void *)0;						/* count */
-	walkState.userData4 = (void *)maxCount;					/* Max count */
+	walkState.userData1 = targetThread;                     /* target thread */
+	walkState.userData2 = locks;                            /* array */
+	walkState.userData3 = (void *)0;                        /* count */
+	walkState.userData4 = (void *)maxCount;                 /* max count */
 	walkState.objectSlotWalkFunction = ownedMonitorIterator;
-	walkState.walkThread = targetThread;
+	walkState.walkThread = walkThread;
 	walkState.flags = J9_STACKWALK_ITERATE_O_SLOTS;
 	walkState.skipCount = 0;
 
@@ -1202,18 +1269,16 @@ walkLocalMonitorRefs(J9VMThread* currentThread, jobject* locks, J9VMThread* targ
 	frame = (J9JNIReferenceFrame *)targetThread->jniLocalReferences;
 
 	/* Check the local JNI refs */
-	while (frame != NULL) {
+	while (NULL != frame) {
 		ref = pool_startDo(frame->references, &poolState);
-
-		while (ref != NULL) {
-			ownedMonitorIterator(targetThread, &walkState, ref, ref);
+		while (NULL != ref) {
+			ownedMonitorIterator(currentThread, &walkState, ref, ref);
 			ref = pool_nextDo(&poolState);
 		}
-
 		frame = frame->previous;
 	}
 
-	return (jint) (UDATA) walkState.userData3;
+	return (jint)(UDATA)walkState.userData3;
 }
 
 jvmtiError JNICALL
