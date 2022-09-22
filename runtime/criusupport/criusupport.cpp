@@ -345,6 +345,7 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 		BOOLEAN syslogFlagNone = TRUE;
 		char *syslogOptions = NULL;
 		I_32 syslogBufferSize = 0;
+		UDATA oldVMState = VM_VMHelpers::setVMState(currentThread, J9VMSTATE_CRIU_SUPPORT_CHECKPOINT_PHASE_START);
 
 		vmFuncs->internalEnterVMFromJNI(currentThread);
 
@@ -484,6 +485,8 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 
 		releaseSafeOrExcusiveVMAccess(currentThread, vmFuncs, safePoint);
 
+		VM_VMHelpers::setVMState(currentThread, J9VMSTATE_CRIU_SUPPORT_CHECKPOINT_PHASE_JAVA_HOOKS);
+
 		if (FALSE == vmFuncs->jvmCheckpointHooks(currentThread)) {
 			/* throw the pending exception */
 			goto wakeJavaThreads;
@@ -495,6 +498,8 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 		vm->memoryManagerFunctions->j9gc_modron_global_collect_with_overrides(currentThread, J9MMCONSTANT_EXPLICIT_GC_IDLE_GC);
 
 		acquireSafeOrExcusiveVMAccess(currentThread, vmFuncs, safePoint);
+
+		VM_VMHelpers::setVMState(currentThread, J9VMSTATE_CRIU_SUPPORT_CHECKPOINT_PHASE_INTERNAL_HOOKS);
 
 		/* Run internal checkpoint hooks, after iterating heap objects */
 		if (FALSE == vmFuncs->runInternalJVMCheckpointHooks(currentThread)) {
@@ -536,7 +541,9 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 			syslogFlagNone = FALSE;
 		}
 
+		VM_VMHelpers::setVMState(currentThread, J9VMSTATE_CRIU_SUPPORT_CHECKPOINT_PHASE_END);
 		systemReturnCode = criu_dump();
+		VM_VMHelpers::setVMState(currentThread, J9VMSTATE_CRIU_SUPPORT_RESTORE_PHASE_START);
 		if (!syslogFlagNone) {
 			/* Re-open the system logger, and set options with saved string value. */
 			j9port_control(J9PORT_CTLDATA_SYSLOG_OPEN, 0);
@@ -585,6 +592,8 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 		/* We can only end up here if the CRIU restore was successful */
 		isAfterCheckpoint = TRUE;
 
+		VM_VMHelpers::setVMState(currentThread, J9VMSTATE_CRIU_SUPPORT_RESTORE_PHASE_JAVA_HOOKS);
+
 		/* Run internal restore hooks, and cleanup */
 		if (FALSE == vmFuncs->runInternalJVMRestoreHooks(currentThread)) {
 			currentExceptionClass = vm->criuRestoreExceptionClass;
@@ -594,6 +603,8 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 		}
 
 		releaseSafeOrExcusiveVMAccess(currentThread, vmFuncs, safePoint);
+
+		VM_VMHelpers::setVMState(currentThread, J9VMSTATE_CRIU_SUPPORT_RESTORE_PHASE_INTERNAL_HOOKS);
 
 		if (FALSE == vmFuncs->jvmRestoreHooks(currentThread)) {
 			/* throw the pending exception */
@@ -617,6 +628,8 @@ wakeJavaThreadsWithExclusiveVMAccess:
 		toggleSuspendOnJavaThreads(currentThread, FALSE);
 
 		releaseSafeOrExcusiveVMAccess(currentThread, vmFuncs, safePoint);
+
+		VM_VMHelpers::setVMState(currentThread, J9VMSTATE_CRIU_SUPPORT_RESTORE_PHASE_END);
 closeWorkDirFD:
 		if ((0 != close(workDirFD)) && (NULL == currentExceptionClass)) {
 			systemReturnCode = errno;
@@ -650,6 +663,7 @@ freeDir:
 			j9mem_free_memory(directoryChars);
 		}
 
+		VM_VMHelpers::setVMState(currentThread, oldVMState);
 		vmFuncs->internalExitVMToJNI(currentThread);
 #endif /* defined(LINUX) */
 	}
