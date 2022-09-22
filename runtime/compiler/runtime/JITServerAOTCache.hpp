@@ -29,8 +29,41 @@
 #include "env/PersistentCollections.hpp"
 #include "runtime/JITServerAOTSerializationRecords.hpp"
 
+static const uint32_t JITSERVER_AOTCACHE_VERSION = 0;
+static const char JITSERVER_AOTCACHE_EYECATCHER[] = "AOTCACHE";
+// the eye-catcher is not null-terminated in the snapshot files
+static const size_t JITSERVER_AOTCACHE_EYECATCHER_LENGTH = sizeof(JITSERVER_AOTCACHE_EYECATCHER) - 1;
+
 namespace TR { class Monitor; }
 
+// Information relevant to the compatibility of a cache snapshot with the server.
+struct JITServerAOTCacheVersion
+   {
+   char _eyeCatcher[JITSERVER_AOTCACHE_EYECATCHER_LENGTH];
+   uint32_t _snapshotVersion;
+   uint32_t _padding; // explicit padding, currently unused
+   uint64_t _jitserverVersion;
+   };
+
+// The header information for an AOT cache snapshot.
+struct JITServerAOTCacheHeader
+   {
+   JITServerAOTCacheVersion _version;
+   uint64_t _serverUID;
+   size_t _numClassLoaderRecords;
+   size_t _numClassRecords;
+   size_t _numMethodRecords;
+   size_t _numClassChainRecords;
+   size_t _numWellKnownClassesRecords;
+   size_t _numAOTHeaderRecords;
+   size_t _numCachedAOTMethods;
+   size_t _nextClassLoaderId;
+   size_t _nextClassId;
+   size_t _nextMethodId;
+   size_t _nextClassChainId;
+   size_t _nextWellKnownClassesId;
+   size_t _nextAOTHeaderId;
+   };
 
 // Base class for serialization record "wrappers" stored at the server.
 //
@@ -451,6 +484,5 @@ private:
    static size_t _cacheMaxBytes;
    static bool _cacheIsFull;
    };
-
 
 #endif /* defined(JITSERVER_AOTCACHE_H) */
