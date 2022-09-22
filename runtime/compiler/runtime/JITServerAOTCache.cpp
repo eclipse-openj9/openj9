@@ -207,6 +207,7 @@ CachedAOTMethod::CachedAOTMethod(const AOTCacheClassChainRecord *definingClassCh
                                  TR_Hotness optLevel, const AOTCacheAOTHeaderRecord *aotHeaderRecord,
                                  const Vector<std::pair<const AOTCacheRecord *, uintptr_t>> &records,
                                  const void *code, size_t codeSize, const void *data, size_t dataSize) :
+   _nextRecord(NULL),
    _data(definingClassChainRecord->data().id(), index, optLevel,
          aotHeaderRecord->data().id(), records.size(), code, codeSize, data, dataSize),
    _definingClassChainRecord(definingClassChainRecord)
@@ -346,24 +347,38 @@ freeMapValues(const PersistentUnorderedMap<K, V *, H> &map)
 JITServerAOTCache::JITServerAOTCache(const std::string &name) :
    _name(name),
    _classLoaderMap(decltype(_classLoaderMap)::allocator_type(TR::Compiler->persistentGlobalAllocator())),
+   _classLoaderHead(NULL),
+   _classLoaderTail(NULL),
    _nextClassLoaderId(1),// ID 0 is invalid
    _classLoaderMonitor(TR::Monitor::create("JIT-JITServerAOTCacheClassLoaderMonitor")),
    _classMap(decltype(_classMap)::allocator_type(TR::Compiler->persistentGlobalAllocator())),
+   _classHead(NULL),
+   _classTail(NULL),
    _nextClassId(1),// ID 0 is invalid
    _classMonitor(TR::Monitor::create("JIT-JITServerAOTCacheClassMonitor")),
    _methodMap(decltype(_methodMap)::allocator_type(TR::Compiler->persistentGlobalAllocator())),
+   _methodHead(NULL),
+   _methodTail(NULL),
    _nextMethodId(1),// ID 0 is invalid
    _methodMonitor(TR::Monitor::create("JIT-JITServerAOTCacheMethodMonitor")),
    _classChainMap(decltype(_classChainMap)::allocator_type(TR::Compiler->persistentGlobalAllocator())),
+   _classChainHead(NULL),
+   _classChainTail(NULL),
    _nextClassChainId(1),// ID 0 is invalid
    _classChainMonitor(TR::Monitor::create("JIT-JITServerAOTCacheClassChainMonitor")),
    _wellKnownClassesMap(decltype(_wellKnownClassesMap)::allocator_type(TR::Compiler->persistentGlobalAllocator())),
+   _wellKnownClassesHead(NULL),
+   _wellKnownClassesTail(NULL),
    _nextWellKnownClassesId(1),// ID 0 is invalid
    _wellKnownClassesMonitor(TR::Monitor::create("JIT-JITServerAOTCacheWellKnownClassesMonitor")),
    _aotHeaderMap(decltype(_aotHeaderMap)::allocator_type(TR::Compiler->persistentGlobalAllocator())),
+   _aotHeaderHead(NULL),
+   _aotHeaderTail(NULL),
    _nextAOTHeaderId(1),// ID 0 is invalid
    _aotHeaderMonitor(TR::Monitor::create("JIT-JITServerAOTCacheAOTHeaderMonitor")),
    _cachedMethodMap(decltype(_cachedMethodMap)::allocator_type(TR::Compiler->persistentGlobalAllocator())),
+   _cachedMethodHead(NULL),
+   _cachedMethodTail(NULL),
    _cachedMethodMonitor(TR::Monitor::create("JIT-JITServerAOTCacheCachedMethodMonitor")),
    _numCacheBypasses(0), _numCacheHits(0), _numCacheMisses(0),
    _numDeserializedMethods(0), _numDeserializationFailures(0)

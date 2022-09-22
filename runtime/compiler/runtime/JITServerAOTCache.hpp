@@ -49,6 +49,9 @@ namespace TR { class Monitor; }
 // record types) in order to simplify memory management and exception handling.
 // The subclasses store their underlying serialization record data inline
 // (as well as variable-length arrays of subrecord pointers in some cases).
+//
+// Each AOTCacheRecord also stores a _nextRecord pointer that points to the next record in
+// a traversal of all of the records of a particular subclass (used for cache persistence).
 class AOTCacheRecord
    {
 public:
@@ -64,8 +67,14 @@ public:
    static void *allocate(size_t size);
    static void free(void *ptr);
 
+   AOTCacheRecord *getNextRecord() const { return _nextRecord; }
+   void setNextRecord(AOTCacheRecord *record) { _nextRecord = record; }
+
 protected:
-   AOTCacheRecord() = default;
+   AOTCacheRecord() : _nextRecord(NULL) {}
+
+private:
+   AOTCacheRecord *_nextRecord;
    };
 
 
@@ -219,6 +228,9 @@ public:
                                   const Vector<std::pair<const AOTCacheRecord *, uintptr_t>> &records,
                                   const void *code, size_t codeSize, const void *data, size_t dataSize);
 
+   CachedAOTMethod *getNextRecord() const { return _nextRecord; }
+   void setNextRecord(CachedAOTMethod *record) { _nextRecord = record; }
+
 private:
    CachedAOTMethod(const AOTCacheClassChainRecord *definingClassChainRecord, uint32_t index,
                    TR_Hotness optLevel, const AOTCacheAOTHeaderRecord *aotHeaderRecord,
@@ -231,6 +243,7 @@ private:
              numRecords * sizeof(AOTCacheRecord *);
       }
 
+   CachedAOTMethod *_nextRecord;
    const AOTCacheClassChainRecord *const _definingClassChainRecord;
    SerializedAOTMethod _data;
    // Array of record pointers is stored inline after serialized AOT method data
@@ -298,6 +311,9 @@ public:
 
    void printStats(FILE *f) const;
 
+   bool writeCache(FILE *f) const;
+   static JITServerAOTCache *readCache(FILE *f, const std::string &name);
+
 private:
    struct ClassLoaderKey
       {
@@ -357,32 +373,48 @@ private:
 
    const std::string _name;
 
+   // Along with each map we also store pointers to the start and end points of a traversal of all the records.
+   // The _nextRecord in each record points to the next record in this traversal.
    PersistentUnorderedMap<ClassLoaderKey, AOTCacheClassLoaderRecord *, ClassLoaderKey::Hash> _classLoaderMap;
    uintptr_t _nextClassLoaderId;
+   AOTCacheClassLoaderRecord *_classLoaderHead;
+   AOTCacheClassLoaderRecord *_classLoaderTail;
    TR::Monitor *const _classLoaderMonitor;
 
    PersistentUnorderedMap<ClassKey, AOTCacheClassRecord *, ClassKey::Hash> _classMap;
    uintptr_t _nextClassId;
+   AOTCacheClassRecord *_classHead;
+   AOTCacheClassRecord *_classTail;
    TR::Monitor *const _classMonitor;
 
    PersistentUnorderedMap<MethodKey, AOTCacheMethodRecord *> _methodMap;
    uintptr_t _nextMethodId;
+   AOTCacheMethodRecord *_methodHead;
+   AOTCacheMethodRecord *_methodTail;
    TR::Monitor *const _methodMonitor;
 
    PersistentUnorderedMap<ClassChainKey, AOTCacheClassChainRecord *, ClassChainKey::Hash> _classChainMap;
+   AOTCacheClassChainRecord *_classChainHead;
+   AOTCacheClassChainRecord *_classChainTail;
    uintptr_t _nextClassChainId;
    TR::Monitor *const _classChainMonitor;
 
    PersistentUnorderedMap<WellKnownClassesKey, AOTCacheWellKnownClassesRecord *,
                           WellKnownClassesKey::Hash> _wellKnownClassesMap;
+   AOTCacheWellKnownClassesRecord *_wellKnownClassesHead;
+   AOTCacheWellKnownClassesRecord *_wellKnownClassesTail;
    uintptr_t _nextWellKnownClassesId;
    TR::Monitor *const _wellKnownClassesMonitor;
 
    PersistentUnorderedMap<AOTHeaderKey, AOTCacheAOTHeaderRecord *, AOTHeaderKey::Hash> _aotHeaderMap;
+   AOTCacheAOTHeaderRecord *_aotHeaderHead;
+   AOTCacheAOTHeaderRecord *_aotHeaderTail;
    uintptr_t _nextAOTHeaderId;
    TR::Monitor *const _aotHeaderMonitor;
 
    PersistentUnorderedMap<CachedMethodKey, CachedAOTMethod *> _cachedMethodMap;
+   CachedAOTMethod *_cachedMethodHead;
+   CachedAOTMethod *_cachedMethodTail;
    TR::Monitor *const _cachedMethodMonitor;
 
    // Statistics
