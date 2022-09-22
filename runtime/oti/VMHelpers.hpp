@@ -2075,6 +2075,15 @@ exit:
 		vmThread->javaVM->internalVMFunctions->freeContinuation(vmThread, objectPtr);
 #endif /* JAVA_SPEC_VERSION >= 19 */
 	}
+
+	static VMINLINE UDATA
+	setVMState(J9VMThread *currentThread, UDATA newState)
+	{
+		UDATA oldState = currentThread->omrVMThread->vmState;
+		currentThread->omrVMThread->vmState = newState;
+		return oldState;
+	}
+
 };
 
 #endif /* VMHELPERS_HPP_ */

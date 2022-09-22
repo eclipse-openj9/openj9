@@ -620,10 +620,10 @@ done:
 					UDATA *bp = buildMethodFrame(REGISTER_ARGS, _sendMethod, J9_SSF_JIT_NATIVE_TRANSITION_FRAME);
 					updateVMStruct(REGISTER_ARGS);
 					/* this call cannot change bp as no java code is run */
-					UDATA oldState = pushVMState(REGISTER_ARGS, J9VMSTATE_JIT);
+					UDATA oldState = VM_VMHelpers::setVMState(_currentThread, J9VMSTATE_JIT);
 					J9JITConfig *jitConfig = _vm->jitConfig;
 					jitConfig->entryPoint(jitConfig, _currentThread, _sendMethod, 0);
-					popVMState(REGISTER_ARGS, oldState);
+					VM_VMHelpers::setVMState(_currentThread, oldState);
 					VMStructHasBeenUpdated(REGISTER_ARGS);
 					restoreSpecialStackFrameLeavingArgs(REGISTER_ARGS, bp);
 					if (MASK_PC(_pc) != MASK_PC(_literals)) {
@@ -1895,16 +1895,6 @@ done:
 		return EXECUTE_BYTECODE;
 	}
 
-	VMINLINE UDATA
-	pushVMState(REGISTER_ARGS_LIST, UDATA newState)
-	{
-		UDATA oldState = _currentThread->omrVMThread->vmState;
-		_currentThread->omrVMThread->vmState = newState;
-		return oldState;
-	}
-
-	VMINLINE void popVMState(REGISTER_ARGS_LIST, UDATA oldState) { _currentThread->omrVMThread->vmState = oldState; }
-
 	VMINLINE bool startAddressIsCompiled(UDATA extra) { return J9_ARE_NO_BITS_SET(extra, J9_STARTPC_NOT_TRANSLATED); }
 	VMINLINE bool methodIsCompiled(J9Method *method) { return startAddressIsCompiled((UDATA)method->extra); }
 	VMINLINE bool singleStepEnabled() { return 0 != _vm->jitConfig->singleStepCount; }
@@ -1935,10 +1925,10 @@ done:
 				UDATA *bp = buildMethodFrame(REGISTER_ARGS, _sendMethod, 0);
 				updateVMStruct(REGISTER_ARGS);
 				/* this call cannot change bp as no java code is run */
-				UDATA oldState = pushVMState(REGISTER_ARGS, J9VMSTATE_JIT);
+				UDATA oldState = VM_VMHelpers::setVMState(_currentThread, J9VMSTATE_JIT);
 				J9JITConfig *jitConfig = _vm->jitConfig;
 				jitConfig->entryPoint(jitConfig, _currentThread, _sendMethod, 0);
-				popVMState(REGISTER_ARGS, oldState);
+				VM_VMHelpers::setVMState(_currentThread, oldState);
 				VMStructHasBeenUpdated(REGISTER_ARGS);
 				restoreSpecialStackFrameLeavingArgs(REGISTER_ARGS, bp);
 				/* If the method is now compiled, run it compiled, otherwise run it bytecoded */
@@ -2108,10 +2098,10 @@ done:
 		UDATA *bp = buildMethodFrame(REGISTER_ARGS, _sendMethod, jitStackFrameFlags(REGISTER_ARGS, 0));
 		updateVMStruct(REGISTER_ARGS);
 		/* this call cannot change bp as no java code is run */
-		UDATA oldState = pushVMState(REGISTER_ARGS, J9VMSTATE_JIT);
+		UDATA oldState = VM_VMHelpers::setVMState(_currentThread, J9VMSTATE_JIT);
 		J9JITConfig *jitConfig = _vm->jitConfig;
 		jitConfig->entryPoint(jitConfig, _currentThread, _sendMethod, 0);
-		popVMState(REGISTER_ARGS, oldState);
+		VM_VMHelpers::setVMState(_currentThread, oldState);
 		VMStructHasBeenUpdated(REGISTER_ARGS);
 		J9SFMethodFrame *methodFrame = (J9SFMethodFrame*)_sp;
 		_currentThread->jitStackFrameFlags = methodFrame->specialFrameFlags & J9_SSF_JIT_NATIVE_TRANSITION_FRAME;
@@ -2326,9 +2316,9 @@ done:
 			jniMethodStartAddress = (void*)CEEJNIWrapper;
 		}
 #endif /* J9VM_PORT_ZOS_CEEHDLRSUPPORT */
-		UDATA oldVMState = pushVMState(REGISTER_ARGS, J9VMSTATE_JNI);
+		UDATA oldVMState = VM_VMHelpers::setVMState(_currentThread, J9VMSTATE_JNI);
 		FFI_Return result = cJNICallout(REGISTER_ARGS, receiverAddress, javaArgs, returnType, &(_currentThread->returnValue), jniMethodStartAddress, isStatic);
-		popVMState(REGISTER_ARGS, oldVMState);
+		VM_VMHelpers::setVMState(_currentThread, oldVMState);
 #if defined(J9VM_PORT_ZOS_CEEHDLRSUPPORT)
 		if (J9_ARE_ANY_BITS_SET(_vm->sigFlags, J9_SIG_ZOS_CEEHDLR)) {
 			/* verify that the native didn't resume execution after an LE condition and illegally return to Java */
