@@ -2723,7 +2723,7 @@ jvmtiIsModifiableModule(jvmtiEnv* env,
 * @return jvmtiError
 */
 jvmtiError
-suspendThread(J9VMThread *currentThread, jthread thread, UDATA allowNull, UDATA *currentThreadSuspended);
+suspendThread(J9VMThread *currentThread, jthread thread, UDATA allowNull, BOOLEAN *currentThreadSuspended);
 
 /* ---------------- heapify.cpp ---------------- */
 /**

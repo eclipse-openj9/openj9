@@ -36,7 +36,6 @@ static jvmtiError resumeThread(J9VMThread *currentThread, jthread thread);
 static UDATA wrappedAgentThreadStart(J9PortLibrary *portLib, void *entryArg);
 static void ownedMonitorIterator(J9VMThread *currentThread, J9StackWalkState *walkState, j9object_t *slot, const void *stackLocation);
 
-
 jvmtiError JNICALL
 jvmtiGetThreadState(jvmtiEnv *env,
 	jthread thread,
@@ -44,7 +43,7 @@ jvmtiGetThreadState(jvmtiEnv *env,
 {
 	J9JavaVM *vm = JAVAVM_FROM_ENV(env);
 	jvmtiError rc = JVMTI_ERROR_NONE;
-	J9VMThread *currentThread;
+	J9VMThread *currentThread = NULL;
 	jint rv_thread_state = 0;
 
 	Trc_JVMTI_jvmtiGetThreadState_Entry(env);
@@ -61,7 +60,7 @@ jvmtiGetThreadState(jvmtiEnv *env,
 
 		ENSURE_NON_NULL(thread_state_ptr);
 
-		/* if the thread is NULL then use the current thread */
+		/* If the thread is NULL, then use the current thread. */
 		if (NULL == thread) {
 			threadObject = currentThread->threadObject;
 		} else {
@@ -76,17 +75,17 @@ jvmtiGetThreadState(jvmtiEnv *env,
 		} else
 #endif /* JAVA_SPEC_VERSION >= 19 */
 		{
-			/* get the lock for the object */
+			/* Get the lock for the object. */
 			threadObjectLock = J9VMJAVALANGTHREAD_LOCK(currentThread,threadObject);
 
-			/* now get the vmThread for the object and whether the thread has been started, we get
-			 * these under the thread object lock
-			 * so that we get a consistent view of the two values */
-			if (threadObjectLock != NULL){
+			/* Get the vmThread for the object and whether the thread has been started, we get
+			 * these under the thread object lock so that we get a consistent view of the two values.
+			 */
+			if (NULL != threadObjectLock) {
 				rc = getVMThread(currentThread, thread, &targetThread, TRUE, FALSE);
-				threadStartedFlag = (jboolean) J9VMJAVALANGTHREAD_STARTED(currentThread, threadObject);
+				threadStartedFlag = (jboolean)J9VMJAVALANGTHREAD_STARTED(currentThread, threadObject);
 			} else {
-				/* in this case we must be early in the thread creation.  We still need to call getVMThread so that
+				/* In this case, we must be early in the thread creation. We still need to call getVMThread so that
 				 * the inspection count etc. are handled correctly, however, we just want to fall into the case were
 				 * we return that the thread is NEW so we set the targetThread and threadStartedFlag to false.
 				 */
@@ -95,12 +94,12 @@ jvmtiGetThreadState(jvmtiEnv *env,
 				threadStartedFlag = JNI_FALSE;
 			}
 
-			if (rc == JVMTI_ERROR_NONE) {
-				/* we use the values of targetThread and threadStartedFlag that were obtained while holding the lock on the
+			if (JVMTI_ERROR_NONE == rc) {
+				/* We use the values of targetThread and threadStartedFlag that were obtained while holding the lock on the
 				 * thread so that get a consistent view of the values.  This is needed because if we don't get a consistent view
 				 * we may think the thread is TERMINATED instead of just starting.
 				 */
-				if (targetThread == NULL) {
+				if (NULL == targetThread) {
 					/* If the thread is new, and we were not able to get and suspend its vmthread,
 					 * we must not call getThreadState(). getThreadState() refetches the vmthread.
 					 * If the second fetch succeeded, we would erroneously attempt to inspect the
@@ -109,12 +108,12 @@ jvmtiGetThreadState(jvmtiEnv *env,
 					if (threadStartedFlag) {
 						rv_thread_state = JVMTI_THREAD_STATE_TERMINATED;
 					} else {
-						/* thread is new */
+						/* Thread is new. */
 						rv_thread_state = 0;
 					}
 				} else {
 					vm->internalVMFunctions->haltThreadForInspection(currentThread, targetThread);
-					/* The vmthread can't be recycled because getVMThread() prevented it from exiting. */
+					/* The VM thread can't be recycled because getVMThread() prevented it from exiting. */
 					rv_thread_state = getThreadState(currentThread, targetThread->threadObject);
 					vm->internalVMFunctions->resumeThreadForInspection(currentThread, targetThread);
 				}
@@ -131,15 +130,14 @@ done:
 	TRACE_JVMTI_RETURN(jvmtiGetThreadState);
 }
 
-
 jvmtiError JNICALL
-jvmtiGetAllThreads(jvmtiEnv* env,
-	jint* threads_count_ptr,
-	jthread** threads_ptr)
+jvmtiGetAllThreads(jvmtiEnv *env,
+	jint *threads_count_ptr,
+	jthread **threads_ptr)
 {
-	J9JavaVM * vm = JAVAVM_FROM_ENV(env);
-	jvmtiError rc;
-	J9VMThread * currentThread;
+	J9JavaVM *vm = JAVAVM_FROM_ENV(env);
+	jvmtiError rc = JVMTI_ERROR_NONE;
+	J9VMThread *currentThread = NULL;
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	jint rv_threads_count = 0;
 	jthread *rv_threads = NULL;
@@ -147,8 +145,8 @@ jvmtiGetAllThreads(jvmtiEnv* env,
 	Trc_JVMTI_jvmtiGetAllThreads_Entry(env);
 
 	rc = getCurrentVMThread(vm, &currentThread);
-	if (rc == JVMTI_ERROR_NONE) {
-		jthread * threads;
+	if (JVMTI_ERROR_NONE == rc) {
+		jthread *threads = NULL;
 			
 		vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);					
 
@@ -160,11 +158,11 @@ jvmtiGetAllThreads(jvmtiEnv* env,
 		vm->internalVMFunctions->acquireExclusiveVMAccess(currentThread);
 
 		threads = j9mem_allocate_memory(sizeof(jthread) * vm->totalThreadCount, J9MEM_CATEGORY_JVMTI_ALLOCATE);
-		if (threads == NULL) {
+		if (NULL == threads) {
 			rc = JVMTI_ERROR_OUT_OF_MEMORY;
 		} else {
-			jthread * currentThreadPtr = threads;
-			J9VMThread * targetThread;
+			jthread *currentThreadPtr = threads;
+			J9VMThread *targetThread = NULL;
 			jint threadCount = 0;
 
 			targetThread = vm->mainThread;
@@ -178,8 +176,8 @@ jvmtiGetAllThreads(jvmtiEnv* env,
 				j9object_t threadObject = targetThread->threadObject;
 #endif /* JAVA_SPEC_VERSION >= 19 */
 
-				/* Only count live threads */
-				if (threadObject != NULL) {
+				/* Only count live threads. */
+				if (NULL != threadObject) {
 					if (J9VMJAVALANGTHREAD_STARTED(currentThread, threadObject) && (J9VMJAVALANGTHREAD_THREADREF(currentThread, threadObject) != NULL)) {
 						*currentThreadPtr++ = (jthread)vm->internalVMFunctions->j9jni_createLocalRef((JNIEnv *)currentThread, (j9object_t)threadObject);
 						++threadCount;
@@ -206,20 +204,19 @@ done:
 	TRACE_JVMTI_RETURN(jvmtiGetAllThreads);
 }
 
-
 jvmtiError JNICALL
-jvmtiSuspendThread(jvmtiEnv* env,
+jvmtiSuspendThread(jvmtiEnv *env,
 	jthread thread)
 {
-	J9JavaVM * vm = JAVAVM_FROM_ENV(env);
-	J9VMThread * currentThread;
-	jvmtiError rc;
+	J9JavaVM *vm = JAVAVM_FROM_ENV(env);
+	J9VMThread *currentThread = NULL;
+	jvmtiError rc = JVMTI_ERROR_NONE;
 
 	Trc_JVMTI_jvmtiSuspendThread_Entry(env);
 
 	rc = getCurrentVMThread(vm, &currentThread);
-	if (rc == JVMTI_ERROR_NONE) {
-		UDATA currentThreadSuspended;
+	if (JVMTI_ERROR_NONE == rc) {
+		BOOLEAN currentThreadSuspended = FALSE;
 
 		vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
 
@@ -228,8 +225,7 @@ jvmtiSuspendThread(jvmtiEnv* env,
 
 		rc = suspendThread(currentThread, thread, TRUE, &currentThreadSuspended);
 
-		/* If the current thread was suspended, block now until it is resumed */
-
+		/* If the current thread was suspended, block now until it is resumed. */
 		if (currentThreadSuspended) {
 			vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 			setHaltFlag(currentThread, J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND);
@@ -242,23 +238,22 @@ done:
 	TRACE_JVMTI_RETURN(jvmtiSuspendThread);
 }
 
-
 jvmtiError JNICALL
-jvmtiSuspendThreadList(jvmtiEnv* env,
+jvmtiSuspendThreadList(jvmtiEnv *env,
 	jint request_count,
-	const jthread* request_list,
-	jvmtiError* results)
+	const jthread *request_list,
+	jvmtiError *results)
 {
-	J9JavaVM * vm = JAVAVM_FROM_ENV(env);
-	J9VMThread * currentThread;
-	jvmtiError rc;
+	J9JavaVM *vm = JAVAVM_FROM_ENV(env);
+	J9VMThread *currentThread = NULL;
+	jvmtiError rc = JVMTI_ERROR_NONE;
 
 	Trc_JVMTI_jvmtiSuspendThreadList_Entry(env);
 
 	rc = getCurrentVMThread(vm, &currentThread);
-	if (rc == JVMTI_ERROR_NONE) {
-		jint i;
-		UDATA currentThreadEverSuspended = FALSE;
+	if (JVMTI_ERROR_NONE == rc) {
+		jint i = 0;
+		BOOLEAN currentThreadEverSuspended = FALSE;
 
 		vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
 
@@ -270,14 +265,12 @@ jvmtiSuspendThreadList(jvmtiEnv* env,
 		ENSURE_NON_NULL(results);
 
 		for (i = 0; i < request_count; ++i) {
-			UDATA currentThreadSuspended;
-
+			BOOLEAN currentThreadSuspended = FALSE;
 			results[i] = suspendThread(currentThread, request_list[i], FALSE, &currentThreadSuspended);
 			currentThreadEverSuspended |= currentThreadSuspended;
 		}
 
-		/* If the current thread appeared in the list (and was marked as suspended), block now until the thread is resumed */
-
+		/* If the current thread appeared in the list (and was marked as suspended), block now until the thread is resumed. */
 		if (currentThreadEverSuspended) {
 			vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 			setHaltFlag(currentThread, J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND);
@@ -291,26 +284,24 @@ done:
 	TRACE_JVMTI_RETURN(jvmtiSuspendThreadList);
 }
 
-
 jvmtiError JNICALL
-jvmtiResumeThread(jvmtiEnv* env,
+jvmtiResumeThread(jvmtiEnv *env,
 	jthread thread)
 {
-	J9JavaVM * vm = JAVAVM_FROM_ENV(env);
-	J9VMThread * currentThread;
-	jvmtiError rc;
+	J9JavaVM *vm = JAVAVM_FROM_ENV(env);
+	J9VMThread *currentThread = NULL;
+	jvmtiError rc = JVMTI_ERROR_NONE;
 
 	Trc_JVMTI_jvmtiResumeThread_Entry(env);
 
 	rc = getCurrentVMThread(vm, &currentThread);
-	if (rc == JVMTI_ERROR_NONE) {
+	if (JVMTI_ERROR_NONE == rc) {
 		vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
 
 		ENSURE_PHASE_LIVE(env);
 		ENSURE_CAPABILITY(env, can_suspend);
 
 		rc = resumeThread(currentThread, thread);
-
 done:
 		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
@@ -318,22 +309,21 @@ done:
 	TRACE_JVMTI_RETURN(jvmtiResumeThread);
 }
 
-
 jvmtiError JNICALL
-jvmtiResumeThreadList(jvmtiEnv* env,
+jvmtiResumeThreadList(jvmtiEnv *env,
 	jint request_count,
-	const jthread* request_list,
-	jvmtiError* results)
+	const jthread *request_list,
+	jvmtiError *results)
 {
-	J9JavaVM * vm = JAVAVM_FROM_ENV(env);
-	J9VMThread * currentThread;
-	jvmtiError rc;
+	J9JavaVM *vm = JAVAVM_FROM_ENV(env);
+	J9VMThread *currentThread = NULL;
+	jvmtiError rc = JVMTI_ERROR_NONE;
 
 	Trc_JVMTI_jvmtiResumeThreadList_Entry(env);
 
 	rc = getCurrentVMThread(vm, &currentThread);
-	if (rc == JVMTI_ERROR_NONE) {
-		jint i;
+	if (JVMTI_ERROR_NONE == rc) {
+		jint i = 0;
 		
 		vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
 
@@ -347,7 +337,6 @@ jvmtiResumeThreadList(jvmtiEnv* env,
 		for (i = 0; i < request_count; ++i) {
 			results[i] = resumeThread(currentThread, request_list[i]);
 		}
-
 done:
 		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
@@ -355,20 +344,19 @@ done:
 	TRACE_JVMTI_RETURN(jvmtiResumeThreadList);
 }
 
-
 jvmtiError JNICALL
-jvmtiStopThread(jvmtiEnv* env,
+jvmtiStopThread(jvmtiEnv *env,
 	jthread thread,
 	jobject exception)
 {
-	J9JavaVM * vm = JAVAVM_FROM_ENV(env);
-	J9VMThread * currentThread;
-	jvmtiError rc;
+	J9JavaVM *vm = JAVAVM_FROM_ENV(env);
+	J9VMThread *currentThread = NULL;
+	jvmtiError rc = JVMTI_ERROR_NONE;
 
 	Trc_JVMTI_jvmtiStopThread_Entry(env);
 
 	rc = getCurrentVMThread(vm, &currentThread);
-	if (rc == JVMTI_ERROR_NONE) {
+	if (JVMTI_ERROR_NONE == rc) {
 		J9VMThread *targetThread = NULL;
 
 		vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
@@ -384,11 +372,11 @@ jvmtiStopThread(jvmtiEnv* env,
 #endif /* JAVA_SPEC_VERSION >= 19 */
 
 		rc = getVMThread(currentThread, thread, &targetThread, FALSE, TRUE);
-		if (rc == JVMTI_ERROR_NONE) {
+		if (JVMTI_ERROR_NONE == rc) {
 			omrthread_monitor_enter(targetThread->publicFlagsMutex);
-			if (!(targetThread->publicFlags & J9_PUBLIC_FLAGS_STOPPED)) {
+			if (OMR_ARE_NO_BITS_SET(targetThread->publicFlags, J9_PUBLIC_FLAGS_STOPPED)) {
 				omrthread_priority_interrupt(targetThread->osThread);
-				targetThread->stopThrowable = *((j9object_t*) exception);
+				targetThread->stopThrowable = J9_JNI_UNWRAP_REFERENCE(exception);
 				clearHaltFlag(targetThread, J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND);
 				setHaltFlag(targetThread, J9_PUBLIC_FLAGS_STOP);
 			}
@@ -402,19 +390,18 @@ done:
 	TRACE_JVMTI_RETURN(jvmtiStopThread);
 }
 
-
 jvmtiError JNICALL
-jvmtiInterruptThread(jvmtiEnv* env,
+jvmtiInterruptThread(jvmtiEnv *env,
 	jthread thread)
 {
-	J9JavaVM * vm = JAVAVM_FROM_ENV(env);
-	J9VMThread * currentThread;
-	jvmtiError rc;
+	J9JavaVM *vm = JAVAVM_FROM_ENV(env);
+	J9VMThread *currentThread = NULL;
+	jvmtiError rc = JVMTI_ERROR_NONE;
 
 	Trc_JVMTI_jvmtiInterruptThread_Entry(env);
 
 	rc = getCurrentVMThread(vm, &currentThread);
-	if (rc == JVMTI_ERROR_NONE) {
+	if (JVMTI_ERROR_NONE == rc) {
 		J9VMThread *targetThread = NULL;
 
 		vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
@@ -423,14 +410,14 @@ jvmtiInterruptThread(jvmtiEnv* env,
 		ENSURE_CAPABILITY(env, can_signal_thread);
 
 		rc = getVMThread(currentThread, thread, &targetThread, FALSE, TRUE);
-		if (rc == JVMTI_ERROR_NONE) {
+		if (JVMTI_ERROR_NONE == rc) {
 #if JAVA_SPEC_VERSION >= 19
 			if (NULL != targetThread)
 #endif /* JAVA_SPEC_VERSION >= 19 */
 			{
 				omrthread_interrupt(targetThread->osThread);
 #ifdef J9VM_OPT_SIDECAR
-				if (vm->sidecarInterruptFunction != NULL) {
+				if (NULL != vm->sidecarInterruptFunction) {
 					vm->sidecarInterruptFunction(targetThread);
 				}
 #endif /* J9VM_OPT_SIDECAR */
@@ -444,15 +431,14 @@ done:
 	TRACE_JVMTI_RETURN(jvmtiInterruptThread);
 }
 
-
 jvmtiError JNICALL
-jvmtiGetThreadInfo(jvmtiEnv* env,
+jvmtiGetThreadInfo(jvmtiEnv *env,
 	jthread thread,
-	jvmtiThreadInfo* info_ptr)
+	jvmtiThreadInfo *info_ptr)
 {
-	J9JavaVM * vm = JAVAVM_FROM_ENV(env);
-	jvmtiError rc;
-	J9VMThread * currentThread;
+	J9JavaVM *vm = JAVAVM_FROM_ENV(env);
+	jvmtiError rc = JVMTI_ERROR_NONE;
+	J9VMThread *currentThread = NULL;
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	char *rv_name = NULL;
 	jint rv_priority = 0;
@@ -463,56 +449,58 @@ jvmtiGetThreadInfo(jvmtiEnv* env,
 	Trc_JVMTI_jvmtiGetThreadInfo_Entry(env);
 
 	rc = getCurrentVMThread(vm, &currentThread);
-	if (rc == JVMTI_ERROR_NONE) {
+	if (JVMTI_ERROR_NONE == rc) {
 		J9VMThread *targetThread = NULL;
 
 		vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
 
 		ENSURE_PHASE_LIVE(env);
-
 		ENSURE_NON_NULL(info_ptr);
 
 		rc = getVMThread(currentThread, thread, &targetThread, TRUE, FALSE);
-		if (rc == JVMTI_ERROR_NONE) {
-			char* name = NULL;
+		if (JVMTI_ERROR_NONE == rc) {
+			char *name = NULL;
 			j9object_t threadObject = (NULL == thread) ? targetThread->threadObject : J9_JNI_UNWRAP_REFERENCE(thread);
 			jobject threadGroup = NULL;
-			jobject contextClassLoader;
+			jobject contextClassLoader = NULL;
 #if JAVA_SPEC_VERSION >= 19
 			j9object_t threadHolder = J9VMJAVALANGTHREAD_HOLDER(currentThread, threadObject);
 			BOOLEAN isVirtual = IS_VIRTUAL_THREAD(currentThread, threadObject);
 #endif /* JAVA_SPEC_VERSION >= 19 */
 
-			if (NULL == targetThread
+			if ((NULL == targetThread)
 #if JAVA_SPEC_VERSION >= 19
 				|| isVirtual
 #endif /* JAVA_SPEC_VERSION >= 19 */
 			) {
-				/* java.lang.thread may not have a ref to vm thread. for example, after it gets terminated.
+				/* java.lang.Thread may not have a ref to VM thread, for example, after it gets terminated.
 				 * We still want to return the name, so we retrieve it from the thread object itself.
-				 * Do this for virtual threads as well since they are not mapped to a vm thread. */
+				 * Do this for virtual threads as well since they are not mapped to a VM thread.
+				 */
 				j9object_t threadName = J9VMJAVALANGTHREAD_NAME(currentThread, threadObject);
 
 				if (NULL == threadName) {
 					name = j9mem_allocate_memory(1, J9MEM_CATEGORY_JVMTI_ALLOCATE);
+					if (NULL == name) {
+						rc = JVMTI_ERROR_OUT_OF_MEMORY;
+						goto release;
+					}
 					name[0] = '\0';
 				} else {
 					name = vm->internalVMFunctions->copyStringToUTF8WithMemAlloc(currentThread, threadName, J9_STR_NULL_TERMINATE_RESULT, "", 0, NULL, 0, NULL);
-
 					if (NULL == name) {
 						rc = JVMTI_ERROR_OUT_OF_MEMORY;
 						goto release;
 					}
 				}
 			} else {
-				char * threadName = getOMRVMThreadName(targetThread->omrVMThread);
-				size_t threadNameLen = (threadName == NULL) ? 1 : strlen(threadName) + 1;
+				char *threadName = getOMRVMThreadName(targetThread->omrVMThread);
+				size_t threadNameLen = (NULL == threadName) ? 1 : (strlen(threadName) + 1);
 
-				/* Be sure to allocate at least one byte for the nul termination */
-
+				/* Be sure to allocate at least one byte for the nul termination. */
 				name = j9mem_allocate_memory(threadNameLen, J9MEM_CATEGORY_JVMTI_ALLOCATE);
 				if (NULL == name) {
-					/* failed to allocate memory, so release VMTthread and exit */
+					/* Failed to allocate memory, so release VMTthread and exit. */
 					releaseOMRVMThreadName(targetThread->omrVMThread);
 					rc = JVMTI_ERROR_OUT_OF_MEMORY;
 					goto release;
@@ -583,11 +571,11 @@ jvmtiGetThreadInfo(jvmtiEnv* env,
 				}
 #endif /* JAVA_SPEC_VERSION >= 19 */
 				if (NULL != group) {
-					threadGroup = vm->internalVMFunctions->j9jni_createLocalRef((JNIEnv *) currentThread, group);
+					threadGroup = vm->internalVMFunctions->j9jni_createLocalRef((JNIEnv *)currentThread, group);
 				}
 			}
 
-			contextClassLoader = vm->internalVMFunctions->j9jni_createLocalRef((JNIEnv *) currentThread, J9VMJAVALANGTHREAD_CONTEXTCLASSLOADER(currentThread, threadObject));
+			contextClassLoader = vm->internalVMFunctions->j9jni_createLocalRef((JNIEnv *)currentThread, J9VMJAVALANGTHREAD_CONTEXTCLASSLOADER(currentThread, threadObject));
 
 			rv_name = name;
 			{
@@ -611,7 +599,7 @@ jvmtiGetThreadInfo(jvmtiEnv* env,
 #else /* JAVA_SPEC_VERSION >= 19 */
 			rv_is_daemon = J9VMJAVALANGTHREAD_ISDAEMON(currentThread, threadObject) ? JNI_TRUE : JNI_FALSE;
 #endif /* JAVA_SPEC_VERSION >= 19 */
-			rv_thread_group = (jthreadGroup) threadGroup;
+			rv_thread_group = (jthreadGroup)threadGroup;
 			rv_context_class_loader = contextClassLoader;
 
 release:
@@ -634,7 +622,6 @@ exit:
 	TRACE_JVMTI_RETURN(jvmtiGetThreadInfo);
 }
 
-
 jvmtiError JNICALL
 jvmtiGetOwnedMonitorInfo(jvmtiEnv *env,
 	jthread thread,
@@ -651,7 +638,7 @@ jvmtiGetOwnedMonitorInfo(jvmtiEnv *env,
 	Trc_JVMTI_jvmtiGetOwnedMonitorInfo_Entry(env);
 
 	rc = getCurrentVMThread(vm, &currentThread);
-	if (rc == JVMTI_ERROR_NONE) {
+	if (JVMTI_ERROR_NONE == rc) {
 		J9VMThread *targetThread = NULL;
 
 		vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
@@ -724,7 +711,6 @@ done:
 	TRACE_JVMTI_RETURN(jvmtiGetOwnedMonitorInfo);
 }
 
-
 jvmtiError JNICALL
 jvmtiGetOwnedMonitorStackDepthInfo(jvmtiEnv *env,
 	jthread thread,
@@ -759,7 +745,7 @@ jvmtiGetOwnedMonitorStackDepthInfo(jvmtiEnv *env,
 		rv_monitor_info_count = 0;
 		
 		rc = getVMThread(currentThread, thread, &targetThread, TRUE, TRUE);
-		if (rc == JVMTI_ERROR_NONE) {
+		if (JVMTI_ERROR_NONE == rc) {
 			IDATA maxRecords = 0;
 			J9ObjectMonitorInfo *monitorEnterRecords = NULL;
 			jvmtiMonitorStackDepthInfo *resultArray = NULL;
@@ -787,7 +773,7 @@ jvmtiGetOwnedMonitorStackDepthInfo(jvmtiEnv *env,
 			}
 #endif /* JAVA_SPEC_VERSION >= 19 */
 
-			/* Get the count of owned monitors */
+			/* Get the count of owned monitors. */
 			maxRecords = vm->internalVMFunctions->getOwnedObjectMonitors(currentThread, threadToWalk, NULL, 0);
 			if (maxRecords < 0) {
 				rc = JVMTI_ERROR_INTERNAL;
@@ -822,9 +808,9 @@ jvmtiGetOwnedMonitorStackDepthInfo(jvmtiEnv *env,
 				} else {
 					IDATA i = 0;
 					for (i = 0; i < maxRecords; i++) {
-						/* Negative stack depth indicates inability to retrieve it */
+						/* Negative stack depth indicates inability to retrieve it. */
 						if (monitorEnterRecords[i].depth > 0) {
-							/* Subtract one since jvmti indexes stack depth starting at 0 instead of 1 */							 
+							/* Subtract one since jvmti indexes stack depth starting at 0 instead of 1. */
 							resultArray[i].stack_depth = (jint)monitorEnterRecords[i].depth - 1;
 						} else {
 							resultArray[i].stack_depth = (jint)monitorEnterRecords[i].depth;
@@ -887,7 +873,7 @@ jvmtiGetCurrentContendedMonitor(jvmtiEnv *env,
 		ENSURE_NON_NULL(monitor_ptr);
 
 		rc = getVMThread(currentThread, thread, &targetThread, TRUE, TRUE);
-		if (rc == JVMTI_ERROR_NONE) {
+		if (JVMTI_ERROR_NONE == rc) {
 			j9object_t lockObject = NULL;
 			UDATA vmstate = 0;
 			J9VMThread *threadToWalk = targetThread;
@@ -903,7 +889,7 @@ jvmtiGetCurrentContendedMonitor(jvmtiEnv *env,
 			}
 #endif /* JAVA_SPEC_VERSION >= 19 */
 
-			/* CMVC 184481 - The targetThread should be suspended while we attempt to get its state */
+			/* CMVC 184481 - The targetThread should be suspended while we attempt to get its state. */
 			vm->internalVMFunctions->haltThreadForInspection(currentThread, targetThread);
 
 #if JAVA_SPEC_VERSION >= 19
@@ -941,23 +927,22 @@ done:
 	TRACE_JVMTI_RETURN(jvmtiGetCurrentContendedMonitor);
 }
 
-
 jvmtiError JNICALL
-jvmtiRunAgentThread(jvmtiEnv* env,
+jvmtiRunAgentThread(jvmtiEnv *env,
 	jthread thread,
 	jvmtiStartFunction proc,
-	const void* arg,
+	const void *arg,
 	jint priority)
 {
-	J9JavaVM * vm = JAVAVM_FROM_ENV(env);
-	J9VMThread * currentThread;
-	jvmtiError rc;
+	J9JavaVM *vm = JAVAVM_FROM_ENV(env);
+	J9VMThread *currentThread = NULL;
+	jvmtiError rc = JVMTI_ERROR_NONE;
 
 	Trc_JVMTI_jvmtiRunAgentThread_Entry(env);
 
 	rc = getCurrentVMThread(vm, &currentThread);
-	if (rc == JVMTI_ERROR_NONE) {
-		J9JVMTIRunAgentThreadArgs * args;
+	if (JVMTI_ERROR_NONE == rc) {
+		J9JVMTIRunAgentThreadArgs *args = NULL;
 		PORT_ACCESS_FROM_JAVAVM(vm);
 
 		vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
@@ -974,21 +959,19 @@ jvmtiRunAgentThread(jvmtiEnv* env,
 			JVMTI_ERROR(JVMTI_ERROR_INVALID_PRIORITY);
 		}
 
-		/* Create entry args for the thread proc */
-
+		/* Create entry args for the thread proc. */
 		args = j9mem_allocate_memory(sizeof(J9JVMTIRunAgentThreadArgs), J9MEM_CATEGORY_JVMTI);
-		if (args == NULL) {
+		if (NULL == args) {
 			rc = JVMTI_ERROR_OUT_OF_MEMORY;
 		} else {
-			j9object_t threadObject = *((j9object_t*) thread);
-			UDATA result;
+			j9object_t threadObject = J9_JNI_UNWRAP_REFERENCE(thread);
+			UDATA result = 0;
 
 			args->jvmti_env = env;
-			args->proc = (jvmtiStartFunction) J9_COMPATIBLE_FUNCTION_POINTER( proc );
+			args->proc = (jvmtiStartFunction)J9_COMPATIBLE_FUNCTION_POINTER(proc);
 			args->arg = arg;
 
-			/* Run the thread */
-
+			/* Run the thread. */
 #if JAVA_SPEC_VERSION >= 19
 			j9object_t threadHolder = J9VMJAVALANGTHREAD_HOLDER(currentThread, threadObject);
 			if (NULL != threadHolder) {
@@ -1001,7 +984,7 @@ jvmtiRunAgentThread(jvmtiEnv* env,
 #endif /* JAVA_SPEC_VERSION >= 19 */
 			result = vm->internalVMFunctions->startJavaThread(currentThread, threadObject,
 				J9_PRIVATE_FLAGS_DAEMON_THREAD | J9_PRIVATE_FLAGS_NO_EXCEPTION_IN_START_JAVA_THREAD,
-				vm->defaultOSStackSize, (UDATA) priority, agentThreadStart, args, NULL);
+				vm->defaultOSStackSize, (UDATA)priority, agentThreadStart, args, NULL);
 			if (result != J9_THREAD_START_NO_ERROR) {
 				rc = JVMTI_ERROR_OUT_OF_MEMORY;
 			}
@@ -1013,20 +996,19 @@ done:
 	TRACE_JVMTI_RETURN(jvmtiRunAgentThread);
 }
 
-
 jvmtiError JNICALL
-jvmtiSetThreadLocalStorage(jvmtiEnv* env,
+jvmtiSetThreadLocalStorage(jvmtiEnv *env,
 	jthread thread,
-	const void* data)
+	const void *data)
 {
-	J9JavaVM * vm = JAVAVM_FROM_ENV(env);
-	J9VMThread * currentThread;
-	jvmtiError rc;
+	J9JavaVM *vm = JAVAVM_FROM_ENV(env);
+	J9VMThread *currentThread = NULL;
+	jvmtiError rc = JVMTI_ERROR_NONE;
 
 	Trc_JVMTI_jvmtiSetThreadLocalStorage_Entry(env);
 
 	rc = getCurrentVMThread(vm, &currentThread);
-	if (rc == JVMTI_ERROR_NONE) {
+	if (JVMTI_ERROR_NONE == rc) {
 		J9VMThread *targetThread = NULL;
 
 		vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
@@ -1034,7 +1016,7 @@ jvmtiSetThreadLocalStorage(jvmtiEnv* env,
 		ENSURE_PHASE_START_OR_LIVE(env);
 
 		rc = getVMThread(currentThread, thread, &targetThread, TRUE, TRUE);
-		if (rc == JVMTI_ERROR_NONE) {
+		if (JVMTI_ERROR_NONE == rc) {
 			J9JVMTIEnv *j9env = (J9JVMTIEnv *)env;
 			J9JVMTIThreadData *threadData = NULL;
 			/* Use the current thread if the thread isn't specified. */
@@ -1071,21 +1053,20 @@ done:
 	TRACE_JVMTI_RETURN(jvmtiSetThreadLocalStorage);
 }
 
-
 jvmtiError JNICALL
-jvmtiGetThreadLocalStorage(jvmtiEnv* env,
+jvmtiGetThreadLocalStorage(jvmtiEnv *env,
 	jthread thread,
-	void** data_ptr)
+	void **data_ptr)
 {
-	J9JavaVM * vm = JAVAVM_FROM_ENV(env);
-	J9VMThread * currentThread;
-	jvmtiError rc;
+	J9JavaVM *vm = JAVAVM_FROM_ENV(env);
+	J9VMThread *currentThread = NULL;
+	jvmtiError rc = JVMTI_ERROR_NONE;
 	void *rv_data = NULL;
 
 	Trc_JVMTI_jvmtiGetThreadLocalStorage_Entry(env);
 
 	rc = getCurrentVMThread(vm, &currentThread);
-	if (rc == JVMTI_ERROR_NONE) {
+	if (JVMTI_ERROR_NONE == rc) {
 		J9VMThread *targetThread = NULL;
 
 		vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
@@ -1095,7 +1076,7 @@ jvmtiGetThreadLocalStorage(jvmtiEnv* env,
 		ENSURE_NON_NULL(data_ptr);
 
 		rc = getVMThread(currentThread, thread, &targetThread, TRUE, TRUE);
-		if (rc == JVMTI_ERROR_NONE) {
+		if (JVMTI_ERROR_NONE == rc) {
 			J9JVMTIEnv *j9env = (J9JVMTIEnv *)env;
 			J9JVMTIThreadData *threadData = NULL;
 			/* Use the current thread if the thread isn't specified. */
@@ -1132,13 +1113,12 @@ done:
 	TRACE_JVMTI_RETURN(jvmtiGetThreadLocalStorage);
 }
 
-
 static jvmtiError
-resumeThread(J9VMThread * currentThread, jthread thread)
+resumeThread(J9VMThread *currentThread, jthread thread)
 {
 	J9VMThread *targetThread = NULL;
 	jvmtiError rc = getVMThread(currentThread, thread, &targetThread, FALSE, TRUE);
-	if (rc == JVMTI_ERROR_NONE) {
+	if (JVMTI_ERROR_NONE == rc) {
 		if (targetThread->publicFlags & J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND) {
 			clearHaltFlag(targetThread, J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND);
 			Trc_JVMTI_threadResumed(targetThread);
@@ -1151,14 +1131,13 @@ resumeThread(J9VMThread * currentThread, jthread thread)
 	return rc;
 }
 
-
 static int J9THREAD_PROC
 agentThreadStart(void *entryArg)
 {
-	UDATA result;
-	J9JVMTIRunAgentThreadArgs * args = entryArg;
-	J9JavaVM * vm = JAVAVM_FROM_ENV((J9JVMTIEnv *) args->jvmti_env);
-	J9VMThread* vmThread = vm->internalVMFunctions->currentVMThread(vm);
+	UDATA result = 0;
+	J9JVMTIRunAgentThreadArgs *args = entryArg;
+	J9JavaVM *vm = JAVAVM_FROM_ENV((J9JVMTIEnv *)args->jvmti_env);
+	J9VMThread *vmThread = vm->internalVMFunctions->currentVMThread(vm);
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	
 	vmThread->gpProtected = 1;
@@ -1169,20 +1148,19 @@ agentThreadStart(void *entryArg)
 		&result);
 
 	vm->internalVMFunctions->exitJavaThread(vm);
-	/* Execution never reaches this point */
+	/* Execution never reaches this point. */
 	return 0;
 }
 
-
 static UDATA
-wrappedAgentThreadStart(J9PortLibrary* portLib, void * entryArg)
+wrappedAgentThreadStart(J9PortLibrary *portLib, void *entryArg)
 {
-	J9JVMTIRunAgentThreadArgs * args = entryArg;
-	J9JavaVM * vm = JAVAVM_FROM_ENV((J9JVMTIEnv *) args->jvmti_env);
-	J9VMThread* vmThread = vm->internalVMFunctions->currentVMThread(vm);
-	jvmtiEnv * jvmti_env = args->jvmti_env;
+	J9JVMTIRunAgentThreadArgs *args = entryArg;
+	J9JavaVM *vm = JAVAVM_FROM_ENV((J9JVMTIEnv *)args->jvmti_env);
+	J9VMThread *vmThread = vm->internalVMFunctions->currentVMThread(vm);
+	jvmtiEnv *jvmti_env = args->jvmti_env;
 	jvmtiStartFunction proc = args->proc;
-	const void * arg = args->arg;
+	const void *arg = args->arg;
 	PORT_ACCESS_FROM_PORT(portLib);
 
 	j9mem_free_memory(args);
@@ -1193,17 +1171,14 @@ wrappedAgentThreadStart(J9PortLibrary* portLib, void * entryArg)
 
 	TRIGGER_J9HOOK_VM_THREAD_STARTED(vm->hookInterface, vmThread, vmThread);
 
-	/* Run the agent thread */
+	/* Run the agent thread. */
+	proc(jvmti_env, (JNIEnv *)vmThread, (void *)arg);
 
-	proc(jvmti_env, (JNIEnv *) vmThread, (void *) arg);
-
-	/* The following is not quite correct - may need a new destructor */
-
+	/* The following is not quite correct - may need a new destructor. */
 	vmThread->currentException = NULL;
 	vm->internalVMFunctions->threadCleanup(vmThread, TRUE);
 
-	/* Exit the OS thread */
-
+	/* Exit the OS thread. */
 	return 0;
 }
 
@@ -1213,16 +1188,16 @@ ownedMonitorIterator(J9VMThread *currentThread, J9StackWalkState *walkState, j9o
 	J9JavaVM *vm = currentThread->javaVM;
 	J9VMThread *targetThread = (J9VMThread *)walkState->userData1;
 	jobject *locks = (jobject *)walkState->userData2;
-	UDATA count = (UDATA) walkState->userData3;
+	UDATA count = (UDATA)walkState->userData3;
 	j9object_t obj = (NULL != slot) ? *slot : NULL;
 
 	if (count >= (UDATA)walkState->userData4) {
-		/* PMR 69633,001,866 / CMVC 197115 
+		/* PMR 69633,001,866 / CMVC 197115.
 		 * There is a race condition that target thread actually acquires monitor(s)
 		 * between first and second pass (monitor enter is done outside of vm access).
-		 * userData4 is initialized to UDATA_MAX
-		 * 	1) at first pass, count will never be bigger than UDATA_MAX
-		 * 	2) at second pass, userData4 now holds the 'count' value obtained from first pass
+		 * userData4 is initialized to UDATA_MAX.
+		 * 1) At first pass, count will never be bigger than UDATA_MAX.
+		 * 2) At second pass, userData4 now holds the 'count' value obtained from first pass.
 		 */
 		return;
 	}
@@ -1233,9 +1208,9 @@ ownedMonitorIterator(J9VMThread *currentThread, J9StackWalkState *walkState, j9o
 	) {
 		if (NULL != locks) {
 			UDATA i = 0;
-			/* Make sure each object only appears once in the list - n^2, but we expect n to be small */
+			/* Make sure each object only appears once in the list - n^2, but we expect n to be small. */
 			for (i = 0; i < count; ++i) {
-				if (*((j9object_t *)locks[i]) == obj) {
+				if (J9_JNI_UNWRAP_REFERENCE(locks[i]) == obj) {
 					return;
 				}
 			}
@@ -1263,12 +1238,12 @@ walkLocalMonitorRefs(J9VMThread *currentThread, jobject *locks, J9VMThread *targ
 	walkState.flags = J9_STACKWALK_ITERATE_O_SLOTS;
 	walkState.skipCount = 0;
 
-	/* Check the Java stack */
+	/* Check the Java stack. */
 	vm->walkStackFrames(currentThread, &walkState);
 
 	frame = (J9JNIReferenceFrame *)targetThread->jniLocalReferences;
 
-	/* Check the local JNI refs */
+	/* Check the local JNI refs. */
 	while (NULL != frame) {
 		ref = pool_startDo(frame->references, &poolState);
 		while (NULL != ref) {
@@ -1278,29 +1253,29 @@ walkLocalMonitorRefs(J9VMThread *currentThread, jobject *locks, J9VMThread *targ
 		frame = frame->previous;
 	}
 
-	return (jint)(UDATA)walkState.userData3;
+	return (jint)(IDATA)(UDATA)walkState.userData3;
 }
 
 jvmtiError JNICALL
-jvmtiGetCurrentThread(jvmtiEnv* env,
-	jthread* thread_ptr)
+jvmtiGetCurrentThread(jvmtiEnv *env,
+	jthread *thread_ptr)
 {
-	J9JavaVM * vm = JAVAVM_FROM_ENV(env);
-	J9VMThread * currentThread;
-	jvmtiError rc;
+	J9JavaVM *vm = JAVAVM_FROM_ENV(env);
+	J9VMThread *currentThread = NULL;
+	jvmtiError rc = JVMTI_ERROR_NONE;
 	jthread rv_thread = NULL;
 
 	Trc_JVMTI_jvmtiGetCurrentThread_Entry(env);
 
 	rc = getCurrentVMThread(vm, &currentThread);
-	if (rc == JVMTI_ERROR_NONE) {
+	if (JVMTI_ERROR_NONE == rc) {
 		vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
 
 		ENSURE_PHASE_START_OR_LIVE(env);
 
 		ENSURE_NON_NULL(thread_ptr);
 
-		rv_thread = (jthread) vm->internalVMFunctions->j9jni_createLocalRef((JNIEnv *) currentThread, (j9object_t) currentThread->threadObject);
+		rv_thread = (jthread)vm->internalVMFunctions->j9jni_createLocalRef((JNIEnv *)currentThread, (j9object_t)currentThread->threadObject);
 done:
 		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
@@ -1313,9 +1288,9 @@ done:
 
 #if JAVA_SPEC_VERSION >= 19
 jvmtiError JNICALL
-jvmtiSuspendAllVirtualThreads(jvmtiEnv* env,
+jvmtiSuspendAllVirtualThreads(jvmtiEnv *env,
 	jint except_count,
-	const jthread* except_list)
+	const jthread *except_list)
 {
 	assert(!"jvmtiSuspendAllVirtualThreads unimplemented");
 	return JVMTI_ERROR_NONE;
@@ -1323,9 +1298,9 @@ jvmtiSuspendAllVirtualThreads(jvmtiEnv* env,
 
 
 jvmtiError JNICALL
-jvmtiResumeAllVirtualThreads(jvmtiEnv* env,
+jvmtiResumeAllVirtualThreads(jvmtiEnv *env,
 	jint except_count,
-	const jthread* except_list)
+	const jthread *except_list)
 {
 	assert(!"jvmtiResumeAllVirtualThreads unimplemented");
 	return JVMTI_ERROR_NONE;
