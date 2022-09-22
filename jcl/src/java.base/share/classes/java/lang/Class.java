@@ -5665,4 +5665,10 @@ SecurityException {
 	}
 	/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 
+/*[IF JAVA_SPEC_VERSION >= 20]*/
+	/* ToDo: Real implementation to be added under https://github.com/eclipse-openj9/openj9/issues/15933. */
+	public Set<AccessFlag> accessFlags() {
+		return null;
+	}
+/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
 }
