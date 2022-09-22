@@ -657,10 +657,8 @@ intptr_t
 MM_SchedulingDelegate::calculateRecommendedEdenChangeForExpandedHeap(MM_EnvironmentVLHGC *env)
 {
 
-	if ((0 == _pgcCountSinceGMPEnd) && (OMR_GC_CYCLE_TYPE_VLHGC_GLOBAL_GARBAGE_COLLECT != env->_cycleState->_type)) {
-		/* No statistics have been collected - just return the current eden size.
-		 * Even if PGC did not occur, a Global GC might have, in which case we still want to re-eval Eden size
-		 */
+	if (0 == _pgcCountSinceGMPEnd) {
+		/* No statistics have been collected - just return the current eden size */
 		return getCurrentEdenSizeInBytes(env);
 	}
 
@@ -1435,15 +1433,6 @@ MM_SchedulingDelegate::calculatePercentOfHeapExpanded(MM_EnvironmentVLHGC *env)
 	}
 	return ratioOfHeapExpanded;
 }
-
-void
-MM_SchedulingDelegate::checkEdenSizeAfterGlobalGC(MM_EnvironmentVLHGC *env)
-{
-	/* The logic is similar as if we did first PGC after GMP: we need to balanced out the cost of global GCs and GMPs  vs  PGCs */
-	checkEdenSizeAfterPgc(env, true);
-	calculateEdenSize(env);
-}
-
 
 void
 MM_SchedulingDelegate::checkEdenSizeAfterPgc(MM_EnvironmentVLHGC *env, bool globalSweepHappened)
