@@ -1929,3 +1929,24 @@ genericWalkStackFramesHelper(J9VMThread *currentThread, J9VMThread *targetThread
 
 	return rc;
 }
+
+#if JAVA_SPEC_VERSION >= 19
+J9VMContinuation *
+getJ9VMContinuationToWalk(J9VMThread *currentThread, J9VMThread *targetThread, j9object_t threadObject)
+{
+	J9VMContinuation *continuation = NULL;
+	if (IS_VIRTUAL_THREAD(currentThread, threadObject)) {
+		if (NULL == targetThread) {
+			/* An unmounted virtual thread will have a valid J9VMContinuation. */
+			j9object_t contObject = (j9object_t)J9VMJAVALANGVIRTUALTHREAD_CONT(currentThread, threadObject);
+			continuation = J9VMJDKINTERNALVMCONTINUATION_VMREF(currentThread, contObject);
+		}
+	} else {
+		/* J9VMThread->currentContinuation is set to NULL if a virtual thread is not mounted.
+		 * If a virtual thread is mounted, currentContinuation stores the carrier thread details.
+		 */
+		continuation = targetThread->currentContinuation;
+	}
+	return continuation;
+}
+#endif /* JAVA_SPEC_VERSION >= 19 */
