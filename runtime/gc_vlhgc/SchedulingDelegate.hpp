@@ -139,12 +139,6 @@ public:
 
 	uintptr_t getPgcCountSinceGMPEnd(MM_EnvironmentVLHGC *env) { return _pgcCountSinceGMPEnd; }
 
-	/**
-	 * Following a Global STW GC, compare PGC overhead vs global&GMP overhead, and resize eden size if needed
-	 * @param env[in] the main GC thread
-	 */
-	void checkEdenSizeAfterGlobalGC(MM_EnvironmentVLHGC *env);
-
 private:
 	/**
 	 * Internal helper for determining the next taxation threshold. This does all
