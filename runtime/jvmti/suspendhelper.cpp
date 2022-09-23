@@ -27,7 +27,7 @@
 extern "C" {
 
 jvmtiError
-suspendThread(J9VMThread *currentThread, jthread thread, UDATA allowNull, UDATA *currentThreadSuspended)
+suspendThread(J9VMThread *currentThread, jthread thread, UDATA allowNull, BOOLEAN *currentThreadSuspended)
 {
 	J9VMThread *targetThread = NULL;
 	jvmtiError rc = JVMTI_ERROR_NONE;
