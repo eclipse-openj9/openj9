@@ -2609,7 +2609,7 @@ public native boolean isPrimitive();
  *
  * @return	true if receiver is primitive class type, and false otherwise.
  */
-public native boolean isPrimitiveClass();
+native boolean isPrimitiveClass();
 
 /**
  * Answers true if the receiver represents a value class type. Array classes
@@ -2622,19 +2622,19 @@ public native boolean isValue();
 /**
  * ToDo: add comments for public methods - https://github.com/eclipse-openj9/openj9/issues/13615
  */
-public Class<?> asPrimaryType() {
+Class<?> asPrimaryType() {
 	// ToDo: this is a temporary implementation - https://github.com/eclipse-openj9/openj9/issues/13615
 	return this;
 }
-public Class<?> asValueType() {
+Class<?> asValueType() {
 	// ToDo: this is a temporary implementation - https://github.com/eclipse-openj9/openj9/issues/13615
 	return this;
 }
-public boolean isPrimaryType() {
+boolean isPrimaryType() {
 	// ToDo: this is a temporary implementation - https://github.com/eclipse-openj9/openj9/issues/13615
 	return true;
 }
-public boolean isPrimitiveValueType() {
+boolean isPrimitiveValueType() {
 	// ToDo: this is a temporary implementation - https://github.com/eclipse-openj9/openj9/issues/13615
 	return false;
 }
@@ -5665,4 +5665,10 @@ SecurityException {
 	}
 	/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 
+/*[IF JAVA_SPEC_VERSION >= 20]*/
+	/* ToDo: Real implementation to be added under https://github.com/eclipse-openj9/openj9/issues/15933. */
+	public Set<AccessFlag> accessFlags() {
+		return null;
+	}
+/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
 }

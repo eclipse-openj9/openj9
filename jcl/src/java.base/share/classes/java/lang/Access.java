@@ -645,5 +645,32 @@ final class Access implements JavaLangAccess {
 	}
 /*[ENDIF] JAVA_SPEC_VERSION >= 19 */
 
+/*[IF INLINE-TYPES]*/
+	@Override
+	public boolean isPrimitiveClass(Class<?> c) {
+		return c.isPrimitiveClass();
+	}
+
+	@Override
+	public Class<?> asPrimaryType(Class<?> c) {
+		return c.asPrimaryType();
+	}
+
+	@Override
+	public Class<?> asValueType(Class<?> c) {
+		return c.asValueType();
+	}
+
+	@Override
+	public boolean isPrimaryType(Class<?> c) {
+		return c.isPrimaryType();
+	}
+
+	@Override
+	public boolean isPrimitiveValueType(Class<?> c) {
+		return c.isPrimitiveValueType();
+	}
+/*[ENDIF] INLINE-TYPES */
+
 /*[ENDIF] Sidecar19-SE */
 }
