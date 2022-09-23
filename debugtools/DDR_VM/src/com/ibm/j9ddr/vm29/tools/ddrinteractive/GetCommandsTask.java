@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2020 IBM Corp. and others
+ * Copyright (c) 2010, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -72,6 +72,7 @@ import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.GCCheckCommand;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.HashCodeCommand;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.ITableSizeCommand;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.J9ClassShapeCommand;
+import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.J9ConstantPoolCommand;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.J9MemTagCommands;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.J9StaticsCommand;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.J9VTablesCommand;
@@ -196,6 +197,9 @@ public class GetCommandsTask extends BaseJVMCommands implements IBootstrapRunnab
 		toPassBack.add(new FindModulesCommand());
 		toPassBack.add(new DumpModuleCommand());
 		toPassBack.add(new DumpPackageCommand());
+		if (J9ConstantPoolCommand.isSupported()) {
+			toPassBack.add(new J9ConstantPoolCommand());
+		}
 
 		if (ValueTypeHelper.getValueTypeHelper().areValueTypesSupported()) {
 			toPassBack.add(new FlatObjectCommand());

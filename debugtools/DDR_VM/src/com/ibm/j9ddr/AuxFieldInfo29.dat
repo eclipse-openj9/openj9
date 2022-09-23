@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2021, 2021 IBM Corp. and others
+ * Copyright (c) 2021, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -159,6 +159,8 @@ J9IndexableObjectDiscontiguousCompressed.dataAddr = void*
 J9IndexableObjectDiscontiguousCompressed.size = U32
 J9IndexableObjectDiscontiguousFull.dataAddr = void*
 J9IndexableObjectDiscontiguousFull.size = U32
+J9InitializerMethods.initialSpecialMethod = required
+J9InitializerMethods.initialStaticMethod = required
 J9InternHashTableEntry.classLoader = required
 J9InternHashTableEntry.flags = required
 J9InternHashTableEntry.internWeight = required
@@ -252,6 +254,7 @@ J9JavaVM.hiddenInstanceFields = required
 J9JavaVM.hiddenLockwordFieldShape = required
 J9JavaVM.identityHashData = required
 J9JavaVM.impdep1PC = U8*
+J9JavaVM.initialMethods = required
 J9JavaVM.intReflectClass = required
 J9JavaVM.j2seVersion = required
 J9JavaVM.j9ras = required
@@ -350,6 +353,8 @@ J9PortControlData.omr_memory_categories = required
 J9PortLibrary.omrPortLibrary = required
 J9RAMClassRef.modifiers = required
 J9RAMClassRef.value = required
+J9RAMConstantDynamicRef.exception = j9object_t
+J9RAMConstantDynamicRef.value = j9object_t
 J9RAMConstantRef.slot1 = required
 J9RAMConstantRef.slot2 = required
 J9RAMFieldRef.flags = required
