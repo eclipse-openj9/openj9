@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1485,7 +1485,6 @@ public class PointerGenerator {
 		System.out.println("    -c <cache properties>     : cache control properties file");
 		System.out.println("    -l <legacy mode>          : true or false indicating if legacy DDR is used");
 		System.out.println("    -r <path>                 : path to superset file for restricting available constants");
-		System.out.println("    -c <path>                 : path to additional compatibility constants");
 		System.out.println("    -a <path>                 : path to auxiliary field information");
 	}
 
