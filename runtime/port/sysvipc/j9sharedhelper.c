@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -217,33 +217,61 @@ cleanSharedMemorySegments(struct J9PortLibrary* portLibrary)
 #define OUTPUTBUFSIZE 256
 
 	OMRPortLibrary *omrPortLibrary = OMRPORT_FROM_J9PORT(portLibrary);
-	char *ipcsField[IPCS_NO_FIELDS];
-	char outputBuf[OUTPUTBUFSIZE];
-	char *bufferPtr;
-	char *bufferEndPtr;
-	FILE *ipcsOutput;
+	char *ipcsField[IPCS_NO_FIELDS] = {0};
+	char outputBuf[OUTPUTBUFSIZE] = {0};
+	char *bufferPtr = NULL;
+	char *bufferEndPtr = NULL;
+	FILE *ipcsOutput = NULL;
 	int noHeaderLines = IPCS_NO_HEADER_LINES;
 	char processOwner[OUTPUTBUFSIZE] = "";
-	int i;
+	int i = 0;
+	IDATA result = 0;
+
+	OMRPORT_ACCESS_FROM_J9PORT(portLibrary);
 
 #if defined(J9ZOS390)
 	pid_t pid = -1;
-	int childStatus;
+	int childStatus = 0;
 #endif
 
 	Trc_PRT_shared_cleanSharedMemorySegments_entry();
-
-	omrPortLibrary->sysinfo_get_username(omrPortLibrary, processOwner, OUTPUTBUFSIZE);
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+	/* finalRestore is equivalent to !isCheckpointAllowed().
+	 * https://github.com/eclipse-openj9/openj9/issues/15800
+	 */
+	if (portLibrary->finalRestore)
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+	{
+		result = omrsysinfo_get_username(processOwner, OUTPUTBUFSIZE);
+		if (0 == result) {
+			/* succeeded */
+		} else if (result > 0) {
+			Trc_PRT_shared_cleanSharedMemorySegments_getUserNameTooLong(result, OUTPUTBUFSIZE);
+		} else {
+			Trc_PRT_shared_cleanSharedMemorySegments_getUserName_Failed();
+		}
+	}
+	if (0 != result) {
+		result = omrsysinfo_get_env("USER", processOwner, OUTPUTBUFSIZE);
+		if (0 == result) {
+			/* succeeded */
+		} else if (result > 0) {
+			Trc_PRT_shared_cleanSharedMemorySegments_getEnvUserNameTooLong(result, OUTPUTBUFSIZE);
+		} else {
+			Trc_PRT_shared_cleanSharedMemorySegments_getEnvUserName_Failed();
+		}
+	}
+	/* Keep existing behaviour regardless errors, processOwner = "" by default. */
 
 	/* Run ipcs command and get FILE * to read output */
 #if defined(J9ZOS390)
 	{
-		int pipeFd[2];
-		char *fdopenArg;
-		struct inheritance inherit;
-		int fdCnt;
-		int fdMap[3];
-		char *argv[3];
+		int pipeFd[2] = {0};
+		char *fdopenArg = NULL;
+		struct inheritance inherit = {0};
+		int fdCnt = 0;
+		int fdMap[3] = {0};
+		char *argv[3] = {0};
 		char **envp = NULL;
 
 		/* Open a pipe for use with the ipcs command - we will use the read end */

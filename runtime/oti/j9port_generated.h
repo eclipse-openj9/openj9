@@ -393,6 +393,11 @@ typedef struct J9PortLibrary {
 	 * Only supports one Checkpoint, could be restored multiple times.
 	 */
 	int64_t nanoTimeMonotonicClockDelta;
+	/* Invoking j9sysinfo_get_username()/getpwuid() with SSSD enabled can cause checkpoint failure.
+	 * It is safe to call those methods if checkpoint is disallowed after a final restore.
+	 * https://github.com/eclipse-openj9/openj9/issues/15800
+	 */
+	BOOLEAN finalRestore;
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 } J9PortLibrary;
 

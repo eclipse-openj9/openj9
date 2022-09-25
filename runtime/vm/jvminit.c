@@ -3752,6 +3752,7 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 		if (enableCRIU > disableCRIU) {
 			vm->checkpointState.isCheckPointEnabled = TRUE;
 			vm->checkpointState.isCheckPointAllowed = TRUE;
+			vm->portLibrary->finalRestore = FALSE;
 		}
 	}
 
