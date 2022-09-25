@@ -37,6 +37,8 @@
 #include "omrthread.h"
 #include "ut_j9criu.h"
 
+#define ENABLE_CRIUSUPPORT (0 == 1)
+
 extern "C" {
 
 typedef void (*criuSetUnprivilegedFunctionPointerType)(bool unprivileged);
@@ -487,38 +489,48 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 
 		VM_VMHelpers::setVMState(currentThread, J9VMSTATE_CRIU_SUPPORT_CHECKPOINT_PHASE_JAVA_HOOKS);
 
-		if (FALSE == vmFuncs->jvmCheckpointHooks(currentThread)) {
-			/* throw the pending exception */
-			goto wakeJavaThreads;
+		if (ENABLE_CRIUSUPPORT) {
+			if (FALSE == vmFuncs->jvmCheckpointHooks(currentThread)) {
+				/* throw the pending exception */
+				goto wakeJavaThreads;
+			}
 		}
 
-		/* trigger a GC to disclaim memory */
-		vm->memoryManagerFunctions->j9gc_modron_global_collect_with_overrides(currentThread, J9MMCONSTANT_EXPLICIT_GC_SYSTEM_GC);
-		/* TODO update this to J9MMCONSTANT_EXPLICIT_GC_PREPARE_FOR_CHECKPOINT */
-		vm->memoryManagerFunctions->j9gc_modron_global_collect_with_overrides(currentThread, J9MMCONSTANT_EXPLICIT_GC_IDLE_GC);
+		if (ENABLE_CRIUSUPPORT) {
+			/* trigger a GC to disclaim memory */
+			vm->memoryManagerFunctions->j9gc_modron_global_collect_with_overrides(currentThread, J9MMCONSTANT_EXPLICIT_GC_SYSTEM_GC);
+			/* TODO update this to J9MMCONSTANT_EXPLICIT_GC_PREPARE_FOR_CHECKPOINT */
+			vm->memoryManagerFunctions->j9gc_modron_global_collect_with_overrides(currentThread, J9MMCONSTANT_EXPLICIT_GC_IDLE_GC);
+
+		}
 
 		acquireSafeOrExcusiveVMAccess(currentThread, vmFuncs, safePoint);
 
 		VM_VMHelpers::setVMState(currentThread, J9VMSTATE_CRIU_SUPPORT_CHECKPOINT_PHASE_INTERNAL_HOOKS);
 
-		/* Run internal checkpoint hooks, after iterating heap objects */
-		if (FALSE == vmFuncs->runInternalJVMCheckpointHooks(currentThread)) {
-			currentExceptionClass = vm->criuJVMCheckpointExceptionClass;
-			nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
-				J9NLS_JCL_CRIU_FAILED_TO_RUN_INTERNAL_CHECKPOINT_HOOKS, NULL);
-			goto wakeJavaThreadsWithExclusiveVMAccess;
+		if (ENABLE_CRIUSUPPORT) {
+			/* Run internal checkpoint hooks, after iterating heap objects */
+			if (FALSE == vmFuncs->runInternalJVMCheckpointHooks(currentThread)) {
+				currentExceptionClass = vm->criuJVMCheckpointExceptionClass;
+				nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
+					J9NLS_JCL_CRIU_FAILED_TO_RUN_INTERNAL_CHECKPOINT_HOOKS, NULL);
+				goto wakeJavaThreadsWithExclusiveVMAccess;
+			}
 		}
 
 		vm->checkpointState.checkpointRestoreTimeDelta = 0;
 		vm->portLibrary->nanoTimeMonotonicClockDelta = 0;
-		checkpointNanoTimeMonotonic = j9time_nano_time();
-		checkpointNanoUTCTime = j9time_current_time_nanos(&success);
-		if (0 == success) {
-			systemReturnCode = errno;
-			currentExceptionClass = vm->criuJVMCheckpointExceptionClass;
-			nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_JCL_CRIU_J9_CURRENT_TIME_NANOS_FAILURE, NULL);
-			goto wakeJavaThreadsWithExclusiveVMAccess;
+		if (ENABLE_CRIUSUPPORT) {
+			checkpointNanoTimeMonotonic = j9time_nano_time();
+			checkpointNanoUTCTime = j9time_current_time_nanos(&success);
+			if (0 == success) {
+				systemReturnCode = errno;
+				currentExceptionClass = vm->criuJVMCheckpointExceptionClass;
+				nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_JCL_CRIU_J9_CURRENT_TIME_NANOS_FAILURE, NULL);
+				goto wakeJavaThreadsWithExclusiveVMAccess;
+			}
 		}
+
 		Trc_CRIU_before_checkpoint(currentThread, checkpointNanoTimeMonotonic, checkpointNanoUTCTime);
 
 		syslogOptions = (char *)j9mem_allocate_memory(STRING_BUFFER_SIZE, J9MEM_CATEGORY_VM);
@@ -555,67 +567,74 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 			nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_JCL_CRIU_DUMP_FAILED, NULL);
 			goto wakeJavaThreadsWithExclusiveVMAccess;
 		}
-
-		restoreNanoUTCTime = j9time_current_time_nanos(&success);
-		if (0 == success) {
-			systemReturnCode = errno;
-			currentExceptionClass = vm->criuRestoreExceptionClass;
-			nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_JCL_CRIU_J9_CURRENT_TIME_NANOS_FAILURE, NULL);
-			goto wakeJavaThreadsWithExclusiveVMAccess;
-		}
-		restoreNanoTimeMonotonic = j9time_nano_time();
-		/* JVM downtime between checkpoint and restore is calculated with j9time_current_time_nanos()
-		 * which is expected to be accurate in scenarios such as host rebooting, CRIU image moving across timezones.
-		 */
-		vm->checkpointState.checkpointRestoreTimeDelta = (I_64)(restoreNanoUTCTime - checkpointNanoUTCTime);
-		Trc_CRIU_after_checkpoint(currentThread, restoreNanoUTCTime, checkpointNanoUTCTime, vm->checkpointState.checkpointRestoreTimeDelta,
-			restoreNanoTimeMonotonic, checkpointNanoTimeMonotonic, vm->checkpointState.checkpointRestoreTimeDelta);
-		if (vm->checkpointState.checkpointRestoreTimeDelta < 0) {
-			/* A negative value was calculated for checkpointRestoreTimeDelta,
-			 * Trc_CRIU_before_checkpoint & Trc_CRIU_after_checkpoint can be used for further investigation.
-			 * Currently OpenJ9 CRIU only supports 64-bit systems, and IDATA is equivalent to int64_t here.
+		if (ENABLE_CRIUSUPPORT) {
+			restoreNanoUTCTime = j9time_current_time_nanos(&success);
+			if (0 == success) {
+				systemReturnCode = errno;
+				currentExceptionClass = vm->criuRestoreExceptionClass;
+				nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_JCL_CRIU_J9_CURRENT_TIME_NANOS_FAILURE, NULL);
+				goto wakeJavaThreadsWithExclusiveVMAccess;
+			}
+			restoreNanoTimeMonotonic = j9time_nano_time();
+			/* JVM downtime between checkpoint and restore is calculated with j9time_current_time_nanos()
+			 * which is expected to be accurate in scenarios such as host rebooting, CRIU image moving across timezones.
 			 */
-			systemReturnCode = (IDATA)vm->checkpointState.checkpointRestoreTimeDelta;
-			currentExceptionClass = vm->criuRestoreExceptionClass;
-			nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
-					J9NLS_JCL_CRIU_NEGATIVE_CHECKPOINT_RESTORE_TIME_DELTA, NULL);
-			goto wakeJavaThreadsWithExclusiveVMAccess;
+			vm->checkpointState.checkpointRestoreTimeDelta = (I_64)(restoreNanoUTCTime - checkpointNanoUTCTime);
+			Trc_CRIU_after_checkpoint(currentThread, restoreNanoUTCTime, checkpointNanoUTCTime, vm->checkpointState.checkpointRestoreTimeDelta,
+				restoreNanoTimeMonotonic, checkpointNanoTimeMonotonic, vm->checkpointState.checkpointRestoreTimeDelta);
+			if (vm->checkpointState.checkpointRestoreTimeDelta < 0) {
+				/* A negative value was calculated for checkpointRestoreTimeDelta,
+				 * Trc_CRIU_before_checkpoint & Trc_CRIU_after_checkpoint can be used for further investigation.
+				 * Currently OpenJ9 CRIU only supports 64-bit systems, and IDATA is equivalent to int64_t here.
+				 */
+				systemReturnCode = (IDATA)vm->checkpointState.checkpointRestoreTimeDelta;
+				currentExceptionClass = vm->criuRestoreExceptionClass;
+				nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
+						J9NLS_JCL_CRIU_NEGATIVE_CHECKPOINT_RESTORE_TIME_DELTA, NULL);
+				goto wakeJavaThreadsWithExclusiveVMAccess;
+			}
+			/* j9time_nano_time() might be based on a different starting point in scenarios
+			 * such as host rebooting, CRIU image moving across timezones.
+			 * The adjustment calculated below is expected to be same as checkpointRestoreTimeDelta
+			 * if there is no change for j9time_nano_time() start point.
+			 * This value might be negative.
+			 */
+			vm->portLibrary->nanoTimeMonotonicClockDelta = restoreNanoTimeMonotonic - checkpointNanoTimeMonotonic;
 		}
-		/* j9time_nano_time() might be based on a different starting point in scenarios
-		 * such as host rebooting, CRIU image moving across timezones.
-		 * The adjustment calculated below is expected to be same as checkpointRestoreTimeDelta
-		 * if there is no change for j9time_nano_time() start point.
-		 * This value might be negative.
-		 */
-		vm->portLibrary->nanoTimeMonotonicClockDelta = restoreNanoTimeMonotonic - checkpointNanoTimeMonotonic;
+
 
 		/* We can only end up here if the CRIU restore was successful */
 		isAfterCheckpoint = TRUE;
 
 		VM_VMHelpers::setVMState(currentThread, J9VMSTATE_CRIU_SUPPORT_RESTORE_PHASE_JAVA_HOOKS);
 
-		/* Run internal restore hooks, and cleanup */
-		if (FALSE == vmFuncs->runInternalJVMRestoreHooks(currentThread)) {
-			currentExceptionClass = vm->criuRestoreExceptionClass;
-			nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
-				J9NLS_JCL_CRIU_FAILED_TO_RUN_INTERNAL_RESTORE_HOOKS, NULL);
-			goto wakeJavaThreadsWithExclusiveVMAccess;
+		if (ENABLE_CRIUSUPPORT) {
+			/* Run internal restore hooks, and cleanup */
+			if (FALSE == vmFuncs->runInternalJVMRestoreHooks(currentThread)) {
+				currentExceptionClass = vm->criuRestoreExceptionClass;
+				nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
+					J9NLS_JCL_CRIU_FAILED_TO_RUN_INTERNAL_RESTORE_HOOKS, NULL);
+				goto wakeJavaThreadsWithExclusiveVMAccess;
+			}
 		}
+
 
 		releaseSafeOrExcusiveVMAccess(currentThread, vmFuncs, safePoint);
 
 		VM_VMHelpers::setVMState(currentThread, J9VMSTATE_CRIU_SUPPORT_RESTORE_PHASE_INTERNAL_HOOKS);
 
-		if (FALSE == vmFuncs->jvmRestoreHooks(currentThread)) {
-			/* throw the pending exception */
-			goto wakeJavaThreads;
-		}
+		if (ENABLE_CRIUSUPPORT) {
+			if (FALSE == vmFuncs->jvmRestoreHooks(currentThread)) {
+				/* throw the pending exception */
+				goto wakeJavaThreads;
+			}
 
-		if (FALSE == vmFuncs->runDelayedLockRelatedOperations(currentThread)) {
-			currentExceptionClass = vm->criuRestoreExceptionClass;
-			systemReturnCode = 0;
-			nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
-					J9NLS_JCL_CRIU_FAILED_DELAY_LOCK_RELATED_OPS, NULL);
+			if (FALSE == vmFuncs->runDelayedLockRelatedOperations(currentThread)) {
+				currentExceptionClass = vm->criuRestoreExceptionClass;
+				systemReturnCode = 0;
+				nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
+						J9NLS_JCL_CRIU_FAILED_DELAY_LOCK_RELATED_OPS, NULL);
+			}
 		}
 
 wakeJavaThreads:
