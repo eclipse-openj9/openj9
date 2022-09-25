@@ -339,16 +339,17 @@ jobject getPropertyList(JNIEnv *env)
 	const char * language = NULL;
 	const char * region = NULL;
 	const char * variant = NULL;
-	const char *strings[PROPERTY_COUNT];
+	const char *strings[PROPERTY_COUNT] = {0};
 #define USERNAME_LENGTH 128
-	char username[USERNAME_LENGTH];
+	char username[USERNAME_LENGTH] = {0};
 	char *usernameAlloc = NULL;
 	/* buffer to hold the size of the maximum direct byte buffer allocations */
-	char maxDirectMemBuff[24];
+	char maxDirectMemBuff[24] = {0};
 	IDATA result = 0;
 
-	J9JavaVM *javaVM = ((J9VMThread *) env)->javaVM;
-	OMR_VM *omrVM = javaVM->omrVM;
+	J9VMThread *currentThread = (J9VMThread*)env;
+	J9JavaVM *javaVM = currentThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = javaVM->internalVMFunctions;
 
 	/* Change the allocation value PROPERTY_COUNT above as you add/remove properties,
 	 * then follow the propIndex++ convention and consume 2 * slots for each property. 2 * number of property keys is the
@@ -357,15 +358,15 @@ jobject getPropertyList(JNIEnv *env)
 	 * enough room in the property list for all possibilities.
 	 */
 
-	if (J9_GC_POLICY_METRONOME == (omrVM->gcPolicy)) {
+	if (J9_GC_POLICY_METRONOME == (javaVM->omrVM->gcPolicy)) {
 		strings[propIndex++] = "com.ibm.jvm.realtime";
 		strings[propIndex++] = "soft";
 	}
 
 #if defined(J9VM_OPT_SHARED_CLASSES)
 	strings[propIndex++] = "com.ibm.oti.shared.enabled";
-	if ((((J9VMThread *) env)->javaVM->sharedClassConfig != NULL)
-		&& (J9_ARE_ALL_BITS_SET(((J9VMThread *) env)->javaVM->sharedClassConfig->runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_CACHE_NON_BOOT_CLASSES))
+	if ((NULL != javaVM->sharedClassConfig)
+		&& J9_ARE_ALL_BITS_SET(javaVM->sharedClassConfig->runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_CACHE_NON_BOOT_CLASSES)
 	) {
 		strings[propIndex++] = "true";
 	} else {
@@ -375,13 +376,13 @@ jobject getPropertyList(JNIEnv *env)
 
 #if defined(JCL_J2SE)
 	strings[propIndex++] = "ibm.signalhandling.sigchain";
-	if (javaVM->sigFlags & J9_SIG_NO_SIG_CHAIN) {
+	if (J9_ARE_ANY_BITS_SET(javaVM->sigFlags, J9_SIG_NO_SIG_CHAIN)) {
 		strings[propIndex++] = "false";
 	} else {
 		strings[propIndex++] = "true";
 	}
 	strings[propIndex++] = "ibm.signalhandling.sigint";
-	if (javaVM->sigFlags & J9_SIG_NO_SIG_INT) {
+	if (J9_ARE_ANY_BITS_SET(javaVM->sigFlags, J9_SIG_NO_SIG_INT)) {
 		strings[propIndex++] = "false";
 	} else {
 		strings[propIndex++] = "true";
@@ -434,13 +435,13 @@ jobject getPropertyList(JNIEnv *env)
 	variant = j9nls_get_variant();
 	
 	/* CMVC 144405 : Norwegian Bokmal and Nynorsk need special consideration */
-	if ( (strcmp(language, "nn")== 0) && (strcmp(region, "NO") == 0) ){
+	if ((0 == strcmp(language, "nn")) && (0 == strcmp(region, "NO"))) {
 		variant = "NY";
 	}
-	if ( (strcmp(language, "nn") == 0) || (strcmp(language, "nb") == 0) ) {
+	if ((0 == strcmp(language, "nn")) || (0 == strcmp(language, "nb"))) {
 		language = "no";
 	}
-	
+
 	strings[propIndex++] = "user.language";
 	strings[propIndex++] = language;	
 
@@ -454,19 +455,58 @@ jobject getPropertyList(JNIEnv *env)
 
 	/* Get the User name */
 	strings[propIndex++] = "user.name";
-	result = j9sysinfo_get_username(username, USERNAME_LENGTH);
-	if (!result) {
-		strings[propIndex++] = username;
-	} else {
-		if (result > 0) {
+	strings[propIndex] = "unknown";
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+	/* Skip j9sysinfo_get_username if a checkpoint can be taken.
+	 * https://github.com/eclipse-openj9/openj9/issues/15800
+	 */
+	if (!vmFuncs->isCheckpointAllowed(currentThread))
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+	{
+		result = j9sysinfo_get_username(username, USERNAME_LENGTH);
+		if (0 == result) {
+			strings[propIndex] = username;
+		} else if (result > 0) {
 			usernameAlloc = jclmem_allocate_memory(env, result);
-			if (usernameAlloc) {
+			if (NULL != usernameAlloc) {
 				result = j9sysinfo_get_username(usernameAlloc, result);
+				if (0 == result) {
+					strings[propIndex] = usernameAlloc;
+				} else {
+					/* free the memory, try j9sysinfo_get_env later */
+					jclmem_free_memory(env, usernameAlloc);
+					usernameAlloc = NULL;
+				}
+			} else {
+				vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
+				goto failed;
 			}
 		}
-		strings[propIndex++] = !usernameAlloc || result ? "unknown" : usernameAlloc;
 	}
-
+#if defined(LINUX) || defined(OSX)
+	if (0 != result) {
+		result = j9sysinfo_get_env("USER", username, USERNAME_LENGTH);
+		if (0 == result) {
+			strings[propIndex] = username;
+		} else if (result > 0) {
+			usernameAlloc = jclmem_allocate_memory(env, result);
+			if (NULL != usernameAlloc) {
+				result = j9sysinfo_get_env("USER", usernameAlloc, result);
+				if (0 == result) {
+					if (strlen(usernameAlloc) > 0) {
+						strings[propIndex] = usernameAlloc;
+					}
+					/* keep it as "unknown" if the env value is empty */
+				}
+				/* usernameAlloc to be freed before this method returns */
+			} else {
+				vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
+				goto failed;
+			}
+		}
+	}
+#endif /* defined(LINUX) || defined(OSX) */
+	propIndex += 1;
 #undef USERNAME_LENGTH
 
 #if defined(OPENJ9_BUILD) && JAVA_SPEC_VERSION == 8
@@ -494,6 +534,8 @@ jobject getPropertyList(JNIEnv *env)
 	}
 
 	propertyList = getPlatformPropertyList(env, strings, propIndex);
+
+failed:
 	if (NULL != usernameAlloc) {
 		jclmem_free_memory(env, usernameAlloc);
 	}

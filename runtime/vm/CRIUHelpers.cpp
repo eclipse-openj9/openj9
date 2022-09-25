@@ -84,6 +84,7 @@ jvmRestoreHooks(J9VMThread *currentThread)
 
 	if (vm->checkpointState.isNonPortableRestoreMode) {
 		vm->checkpointState.isCheckPointAllowed = FALSE;
+		vm->portLibrary->finalRestore = TRUE;
 	}
 
 	TRIGGER_J9HOOK_VM_PREPARING_FOR_RESTORE(vm->hookInterface, currentThread);

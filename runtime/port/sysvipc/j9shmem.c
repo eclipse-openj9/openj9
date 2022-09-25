@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1286,21 +1286,29 @@ j9shmem_getDir(struct J9PortLibrary* portLibrary, const char* ctrlDirName, uint3
 			} else {
 				Trc_PRT_j9shmem_getDir_tryHomeDirFailed_getEnvHomeFailed();
 			}
-			if (NULL == homeDir) {
-				struct passwd *pwent = getpwuid(getuid());
-				if (NULL != pwent) {
-					uintptr_t dirLen = strlen((const char*)pwent->pw_dir);
-					if (0 < dirLen
-						&& ((dirLen + baseDirLen) < bufLength))
-					{
-						homeDir = pwent->pw_dir;
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+			/* finalRestore is equivalent to !isCheckpointAllowed().
+			 * https://github.com/eclipse-openj9/openj9/issues/15800
+			 */
+			if (portLibrary->finalRestore)
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+			{
+				if (NULL == homeDir) {
+					struct passwd *pwent = getpwuid(getuid());
+					if (NULL != pwent) {
+						uintptr_t dirLen = strlen((const char*)pwent->pw_dir);
+						if (0 < dirLen
+							&& ((dirLen + baseDirLen) < bufLength))
+						{
+							homeDir = pwent->pw_dir;
+						} else {
+							rc = J9PORT_ERROR_SHMEM_GET_DIR_HOME_BUF_OVERFLOW;
+							Trc_PRT_j9shmem_getDir_tryHomeDirFailed_pw_dirDirTooLong(dirLen, bufLength - baseDirLen);
+						}
 					} else {
-						rc = J9PORT_ERROR_SHMEM_GET_DIR_HOME_BUF_OVERFLOW;
-						Trc_PRT_j9shmem_getDir_tryHomeDirFailed_pw_dirDirTooLong(dirLen, bufLength - baseDirLen);
+						rc = J9PORT_ERROR_SHMEM_GET_DIR_FAILED_TO_GET_HOME;
+						Trc_PRT_j9shmem_getDir_tryHomeDirFailed_getpwuidFailed();
 					}
-				} else {
-					rc = J9PORT_ERROR_SHMEM_GET_DIR_FAILED_TO_GET_HOME;
-					Trc_PRT_j9shmem_getDir_tryHomeDirFailed_getpwuidFailed();
 				}
 			}
 			if (NULL != homeDir) {
