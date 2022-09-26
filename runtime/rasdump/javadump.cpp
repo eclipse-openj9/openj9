@@ -59,10 +59,7 @@
 #include "ute.h"
 
 #include "ut_j9dmp.h"
-
-#if defined(J9VM_OPT_JITSERVER)
 #include "omrformatconsts.h"
-#endif /* defined(J9VM_OPT_JITSERVER) */
 
 #if defined(J9VM_ENV_DATA64)
 #define SEGMENT_HEADER "NULL           segment            start              alloc              end                type       size\n"
@@ -365,6 +362,7 @@ private :
 	U_32              _TotalCategories;
 	U_32              _MaxCategoryBits;
 	UDATA             _AllocatedVMThreadCount;
+	int64_t           _DumpStart;
 
 	/* Static declared data */
 	static const unsigned int _MaximumExceptionNameLength;
@@ -620,6 +618,7 @@ JavaCoreDumpWriter::writeTitleSection(void)
 	/* write the date and time that the dump was generated */
 	char timeStamp[_MaximumTimeStampLength + 1];
 	int64_t now = j9time_current_time_millis();
+	_DumpStart = now;
 
 	omrstr_ftime_ex(timeStamp, _MaximumTimeStampLength, TIMESTAMP_FORMAT, now, OMRSTR_FTIME_FLAG_UTC);
 	timeStamp[_MaximumTimeStampLength] = '\0';
@@ -3378,6 +3377,32 @@ JavaCoreDumpWriter::writeTrailer(void)
 {
 	_OutputStream.writeCharacters(
 		"0SECTION       Javadump End section\n"
+		"NULL           =================================\n"
+	);
+
+	PORT_ACCESS_FROM_JAVAVM(_VirtualMachine);
+	OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
+
+	/* Write the date and time that the dump completed generation. */
+	char timeStamp[_MaximumTimeStampLength + 1];
+	int64_t now = j9time_current_time_millis();
+
+	omrstr_ftime_ex(timeStamp, _MaximumTimeStampLength, TIMESTAMP_FORMAT, now, OMRSTR_FTIME_FLAG_LOCAL);
+	timeStamp[_MaximumTimeStampLength] = '\0';
+
+	_OutputStream.writeCharacters("1TIDMPCOMPLETE Dump completed: ");
+	_OutputStream.writeCharacters(timeStamp);
+	_OutputStream.writeInteger(now % 1000, ":%03d"); /* Add the milliseconds. */
+	_OutputStream.writeCharacters("\n");
+
+	/* Calculate the approximate time it took to produce the dump. */
+	uint64_t duration = (uint64_t)(now - _DumpStart);
+
+	_OutputStream.writeCharacters("1TIDMPDURATION Approximate time to produce this dump: ");
+	_OutputStream.writeInteger64(duration, "%" OMR_PRId64);
+	_OutputStream.writeCharacters(" ms\n");
+
+	_OutputStream.writeCharacters(
 		"NULL           ---------------------- END OF DUMP -------------------------------------\n"
 	);
 }
