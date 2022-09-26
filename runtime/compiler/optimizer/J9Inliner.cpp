@@ -852,7 +852,7 @@ bool TR_J9InterfaceCallSite::findCallSiteTargetImpl(TR_CallStack *callStack, TR_
          // won't be extended later.
          bool useVftTestHeuristics = true;
          TR::PersistentInfo *persistInfo = comp()->getPersistentInfo();
-         if (persistInfo->getJitState() == STARTUP_STATE)
+         if (TR::Compiler->vm.isVMInStartupPhase(comp()->fej9()->getJ9JITConfig()))
             {
             const static bool useVftTestHeuristicsDuringStartup =
                feGetEnv("TR_useInterfaceVftTestHeuristicsDuringStartup") != NULL;
