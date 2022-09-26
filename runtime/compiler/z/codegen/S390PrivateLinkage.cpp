@@ -2957,13 +2957,19 @@ TR::Register * J9::Z::JNILinkage::buildDirectDispatch(TR::Node * callNode)
       // Sets up PC, Stack pointer and literals offset slots.
       setupJNICallOutFrame(callNode, javaStackPointerRealRegister, methodMetaDataVirtualRegister,
                               returnFromJNICallLabel, jniCallDataSnippet);
-#if defined(TR_TARGET_64BIT) && (JAVA_SPEC_VERSION >= 19)
+
+#if (JAVA_SPEC_VERSION >= 19)
+#if defined(TR_TARGET_64BIT)
       /**
        * For virtual threads, bump the callOutCounter.  It is safe and most efficient to
        * do this unconditionally.  No need to check for overflow.
        */
       generateSIInstruction(cg(), TR::InstOpCode::AGSI, callNode, generateS390MemoryReference(methodMetaDataVirtualRegister, fej9->thisThreadGetCallOutCountOffset(), cg()), 1);
-#endif
+#else    /* TR_TARGET_64BIT */
+   TR_ASSERT_FATAL(false, "Virtual Thread is not supported on 31-Bit platform\n");
+#endif   /* TR_TARGET_64BIT */
+#endif   /* JAVA_SPEC_VERSION >= 19 */
+
      }
    else
      {
@@ -3017,7 +3023,8 @@ TR::Register * J9::Z::JNILinkage::buildDirectDispatch(TR::Node * callNode)
 #endif
      }
 
-#if defined(TR_TARGET_64BIT) && (JAVA_SPEC_VERSION >= 19)
+#if (JAVA_SPEC_VERSION >= 19)
+#if defined(TR_TARGET_64BIT)
    if (isJNICallOutFrame)
       {
       /**
@@ -3026,7 +3033,11 @@ TR::Register * J9::Z::JNILinkage::buildDirectDispatch(TR::Node * callNode)
        */
       generateSIInstruction(cg(), TR::InstOpCode::AGSI, callNode, generateS390MemoryReference(methodMetaDataVirtualRegister, fej9->thisThreadGetCallOutCountOffset(), cg()), -1);
       }
-#endif
+#else    /* TR_TARGET_64BIT */
+   TR_ASSERT_FATAL(false, "Virtual Thread is not supported on 31-Bit platform\n");
+#endif   /* TR_TARGET_64BIT */
+#endif   /* JAVA_SPEC_VERSION >= 19 */
+
    generateRXInstruction(codeGen, TR::InstOpCode::getAddOpCode(), callNode, javaStackPointerRealRegister,
             new (trHeapMemory()) TR::MemoryReference(methodMetaDataVirtualRegister, (int32_t)fej9->thisThreadGetJavaLiteralsOffset(), codeGen));
 
