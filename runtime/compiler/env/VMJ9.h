@@ -512,7 +512,10 @@ public:
    virtual uintptr_t         thisThreadGetJavaPCOffset();
    virtual uintptr_t         thisThreadGetJavaSPOffset();
    virtual uintptr_t         thisThreadGetJavaLiteralsOffset();
-
+#if JAVA_SPEC_VERSION >= 19
+   virtual uintptr_t         thisThreadGetOwnedMonitorCountOffset();
+   virtual uintptr_t         thisThreadGetCallOutCountOffset();
+#endif
    // Move to CompilerEnv VM?
    virtual uintptr_t         thisThreadGetSystemSPOffset();
 
@@ -682,12 +685,7 @@ public:
    virtual uintptr_t         getCellSizeForSizeClass(uintptr_t);
    virtual uintptr_t         getObjectSizeClass(uintptr_t);
 
-   uintptr_t                 thisThreadMonitorCacheOffset();
    uintptr_t                 thisThreadOSThreadOffset();
-
-   uintptr_t                 getMonitorNextOffset();
-   uintptr_t                 getMonitorOwnerOffset();
-   uintptr_t                 getMonitorEntryCountOffset();
 
    uintptr_t                 getRealtimeSizeClassesOffset();
    uintptr_t                 getSmallCellSizesOffset();
