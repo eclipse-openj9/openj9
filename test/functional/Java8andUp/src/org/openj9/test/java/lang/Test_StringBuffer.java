@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2018 IBM Corp. and others
+ * Copyright (c) 1998, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -307,8 +307,22 @@ public class Test_StringBuffer {
 	 */
 	@Test
 	public void test_deleteCharAt() {
-		testBuffer.deleteCharAt(3);
-		AssertJUnit.assertTrue("Deleted incorrect char", testBuffer.toString().equals("Thi is a test buffer"));
+		testBuffer.deleteCharAt(0);
+		AssertJUnit.assertTrue("Deleted incorrect char", testBuffer.toString().equals("his is a test buffer"));
+		testBuffer.deleteCharAt(2);
+		AssertJUnit.assertTrue("Deleted incorrect char", testBuffer.toString().equals("hi is a test buffer"));
+		testBuffer.deleteCharAt(testBuffer.length() - 1);
+		AssertJUnit.assertTrue("Deleted incorrect char", testBuffer.toString().equals("hi is a test buffe"));
+		try {
+			testBuffer.deleteCharAt(-1);
+			AssertJUnit.fail("Index less than zero should have failed");
+		} catch (IndexOutOfBoundsException e) {
+		}
+		try {
+			testBuffer.deleteCharAt(testBuffer.length());
+			AssertJUnit.fail("Index >= buffer length should have failed");
+		} catch (IndexOutOfBoundsException e) {
+		}
 	}
 
 	/**

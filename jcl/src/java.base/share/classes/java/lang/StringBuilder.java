@@ -656,14 +656,16 @@ public char charAt(int index) {
 }
 
 /**
- * Deletes a range of characters.
+ * Deletes a range of characters starting from offset {@code start} to offset
+ * {@code end - 1}. If {@code end} is beyond the last character, then this
+ * method deletes up to the end of the StringBuilder.
  *
  * @param		start	the offset of the first character
  * @param		end	the offset one past the last character
  * @return		this StringBuilder
  *
- * @exception	StringIndexOutOfBoundsException when {@code start < 0, start > end} or
- *				{@code end > length()}
+ * @exception	StringIndexOutOfBoundsException when {@code start < 0}, {@code start > end} or
+ *				{@code start > length()}
  */
 public StringBuilder delete(int start, int end) {
 	int currentLength = lengthInternal();
@@ -753,8 +755,8 @@ public StringBuilder delete(int start, int end) {
 public StringBuilder deleteCharAt(int location) {
 	int currentLength = lengthInternal();
 
-	if (currentLength != 0) {
-		return delete (location, location + 1);
+	if ((0 <= location) && (location < currentLength)) {
+		return delete(location, location + 1);
 	} else {
 		throw new StringIndexOutOfBoundsException ();
 	}
