@@ -192,7 +192,8 @@ _X(JVM_SetPrimitiveArrayElement,JNICALL,true,void,JNIEnv *env, jobject array, ji
 _X(JVM_SetProtectionDomain,JNICALL,true,jobject,jint arg0, jint arg1, jint arg2)
 _X(JVM_SetThreadPriority,JNICALL,true,void,JNIEnv *env, jobject thread, jint priority)
 _X(JVM_StartThread,JNICALL,true,void,JNIEnv *env, jobject newThread)
-_X(JVM_StopThread,JNICALL,true,jobject,jint arg0, jint arg1, jint arg2)
+_IF([JAVA_SPEC_VERSION < 20],
+	[_X(JVM_StopThread,JNICALL,true,jobject,jint arg0, jint arg1, jint arg2)])
 _X(JVM_SuspendThread,JNICALL,true,jobject,jint arg0, jint arg1)
 _IF([JAVA_SPEC_VERSION < 15],
 	[_X(JVM_UnloadLibrary, JNICALL, true, jobject, jint arg0)],

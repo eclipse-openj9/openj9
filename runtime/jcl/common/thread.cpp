@@ -238,6 +238,7 @@ Java_java_lang_Thread_suspendImpl(JNIEnv *env, jobject rcv)
 vmAccessReleased: ;
 }
 
+#if JAVA_SPEC_VERSION < 20
 void JNICALL
 Java_java_lang_Thread_stopImpl(JNIEnv *env, jobject rcv, jobject stopThrowable)
 {
@@ -270,6 +271,7 @@ Java_java_lang_Thread_stopImpl(JNIEnv *env, jobject rcv, jobject stopThrowable)
 	}
 	vmFuncs->internalExitVMToJNI(currentThread);
 }
+#endif /* JAVA_SPEC_VERSION < 20 */
 
 void JNICALL
 Java_java_lang_Thread_interruptImpl(JNIEnv *env, jobject rcv)

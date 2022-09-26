@@ -1124,8 +1124,12 @@ jobjectArray JNICALL Java_com_ibm_oti_vm_VM_getVMArgsImpl(JNIEnv *env, jobject r
 jlong JNICALL Java_javax_rcm_CPUThrottlingRunnable_requestToken(JNIEnv *env, jobject runnable, jlong tokenNumber);
 jlong JNICALL Java_javax_rcm_CPUThrottlingRunnable_getTokenBucketLimit(JNIEnv *env, jclass clazz, jlong resourceHandle);
 jlong JNICALL Java_javax_rcm_CPUThrottlingRunnable_getTokenBucketInterval(JNIEnv *env, jclass clazz, jlong resourceHandle);
-/* thread.c */
+
+/* thread.cpp */
 void JNICALL Java_java_lang_Thread_yield(JNIEnv *env, jclass threadClass);
+#if JAVA_SPEC_VERSION < 20
+void JNICALL Java_java_lang_Thread_stopImpl(JNIEnv *env, jobject rcv, jobject stopThrowable);
+#endif /* JAVA_SPEC_VERSION < 20 */
 
 /* java_lang_Class.c */
 jboolean JNICALL
