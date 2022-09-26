@@ -1342,12 +1342,6 @@ void J9::Options::preProcessMmf(J9JavaVM *vm, J9JITConfig *jitConfig)
 #endif
 
    // { RTSJ Support Begin
-
-   #if defined(J9VM_OPT_REAL_TIME_LOCKING_SUPPORT)
-      self()->setOption(TR_DisableMonitorOpts);
-   #endif
-
-
    value = mmf->j9gc_modron_getConfigurationValueForKey(vm, j9gc_modron_configuration_allocationType,&value) ?value:0;
    if (j9gc_modron_allocation_type_segregated == value)
       self()->setRealTimeGC(true);

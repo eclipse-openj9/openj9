@@ -1,4 +1,4 @@
-; Copyright (c) 2000, 2020 IBM Corp. and others
+; Copyright (c) 2000, 2022 IBM Corp. and others
 ;
 ; This program and the accompanying materials are made available under
 ; the terms of the Eclipse Public License 2.0 which accompanies this
@@ -179,6 +179,9 @@ eq_J9Monitor_CNTFLCClearMask  equ 0FFFFFFFFFFFFFF0Dh
     %ifdef TR_HOST_32BIT
         ret 4
     %else
+        %if ASM_JAVA_SPEC_VERSION >= 19
+        inc  qword [_rbp + J9TR_VMThread_ownedMonitorCount]
+        %endif
         ret
     %endif
    .trylock:
@@ -187,6 +190,9 @@ eq_J9Monitor_CNTFLCClearMask  equ 0FFFFFFFFFFFFFF0Dh
     %ifdef TR_HOST_32BIT
         ret 4
     %else
+        %if ASM_JAVA_SPEC_VERSION >= 19
+        inc  qword [_rbp + J9TR_VMThread_ownedMonitorCount]
+        %endif
         ret
     %endif
   .fallback:
@@ -207,6 +213,11 @@ eq_J9Monitor_CNTFLCClearMask  equ 0FFFFFFFFFFFFFF0Dh
     test _rax, eq_J9Monitor_RecCountMask
     jz   .fallback
     sub  dword [_rcx], eq_J9Monitor_IncDecValue
+    %if ASM_JAVA_SPEC_VERSION >= 19
+    %ifdef TR_HOST_64BIT
+    dec  qword [_rbp + J9TR_VMThread_ownedMonitorCount]
+    %endif
+    %endif
     ret
   .fallback:
 %endmacro
@@ -224,6 +235,9 @@ eq_J9Monitor_CNTFLCClearMask  equ 0FFFFFFFFFFFFFF0Dh
     %ifdef TR_HOST_32BIT
         ret 4
     %else
+        %if ASM_JAVA_SPEC_VERSION >= 19
+        inc  qword [_rbp + J9TR_VMThread_ownedMonitorCount]
+        %endif
         ret
     %endif
   .trylock:
@@ -232,6 +246,9 @@ eq_J9Monitor_CNTFLCClearMask  equ 0FFFFFFFFFFFFFF0Dh
     %ifdef TR_HOST_32BIT
         ret 4
     %else
+        %if ASM_JAVA_SPEC_VERSION >= 19
+        inc  qword [_rbp + J9TR_VMThread_ownedMonitorCount]
+        %endif
         ret
     %endif
   .fallback:
@@ -254,6 +271,11 @@ eq_J9Monitor_CNTFLCClearMask  equ 0FFFFFFFFFFFFFF0Dh
     test _rax, eq_J9Monitor_RecCountMask            ; check to see if we have any recursive bits on
     jnz  .fallback                                  ; yes some recursive count, go back to main line code
     sub  dword [_rcx], eq_J9Monitor_IncDecValue
+    %if ASM_JAVA_SPEC_VERSION >= 19
+    %ifdef TR_HOST_64BIT
+    dec  qword [_rbp + J9TR_VMThread_ownedMonitorCount]
+    %endif
+    %endif
     ret
   .fallback:
 %endmacro
@@ -276,6 +298,11 @@ eq_J9Monitor_CNTFLCClearMask  equ 0FFFFFFFFFFFFFF0Dh
     and  _rax, eq_J9Monitor_CountsClearMask        ; clear the count bits
     jnz  .fallback                                 ; if any bit is set we don't have it reserved by the same thread, or not reserved at all
     add  dword [_rcx], eq_J9Monitor_IncDecValue    ; add 1 to the reservation count
+    %if ASM_JAVA_SPEC_VERSION >= 19
+    %ifdef TR_HOST_64BIT
+    inc  qword [_rbp + J9TR_VMThread_ownedMonitorCount]
+    %endif
+    %endif
     ret
   .fallback:
 %endmacro
@@ -293,6 +320,11 @@ eq_J9Monitor_CNTFLCClearMask  equ 0FFFFFFFFFFFFFF0Dh
     and  _rax, eq_J9Monitor_CountsClearMask        ; clear the count bits
     jnz  .fallback                                 ; if any bit is set we don't have it reserved by the same thread, or not reserved at all
     sub  dword [_rcx], eq_J9Monitor_IncDecValue
+    %if ASM_JAVA_SPEC_VERSION >= 19
+    %ifdef TR_HOST_64BIT
+    dec  qword [_rbp + J9TR_VMThread_ownedMonitorCount]
+    %endif
+    %endif
     ret
   .fallback:
 %endmacro
