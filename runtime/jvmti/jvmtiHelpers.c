@@ -1601,23 +1601,33 @@ setEventNotificationMode(J9JVMTIEnv * j9env, J9VMThread * currentThread, jint mo
 		eventMap = &(j9env->globalEventEnable);
 	} else {
 		j9object_t threadObject = J9_JNI_UNWRAP_REFERENCE(event_thread);
+		J9VMThread *vmThreadForTLS = NULL;
 		rc = getVMThread(currentThread, event_thread, &targetThread, TRUE, TRUE);
 		if (rc != JVMTI_ERROR_NONE) {
 			goto done;
 		}
+		vmThreadForTLS = targetThread;
 #if JAVA_SPEC_VERSION >= 19
 		rc = allocateTLS(vm, threadObject);
 		if (JVMTI_ERROR_NONE != rc) {
 			releaseVMThread(currentThread, targetThread, event_thread);
 			goto done;
 		}
+		if (NULL == targetThread) {
+			/* targetThread is NULL only for virtual threads, as per the assertion in getVMThread,
+			 * when mustBeAlive is TRUE. vmThreadForTLS is only used to acquire J9JavaVM in
+			 * createThreadData and jvmtiTLSGet. If targetThread is NULL, currentThread is passed
+			 * to createThreadData and jvmtiTLSGet for retrieving J9JavaVM in JDK19+.
+			 */
+			vmThreadForTLS = currentThread;
+		}
 #endif /* JAVA_SPEC_VERSION >= 19 */
-		rc = createThreadData(j9env, targetThread, threadObject);
+		rc = createThreadData(j9env, vmThreadForTLS, threadObject);
 		if (JVMTI_ERROR_NONE != rc) {
 			releaseVMThread(currentThread, targetThread, event_thread);
 			goto done;
 		}
-		eventMap = &(jvmtiTLSGet(targetThread, threadObject, j9env->tlsKey)->threadEventEnable);
+		eventMap = &(jvmtiTLSGet(vmThreadForTLS, threadObject, j9env->tlsKey)->threadEventEnable);
 	}
 
 	/* Single step can alloc/free the bytecode table, so we need exclusive to prevent any threads from using the table */
