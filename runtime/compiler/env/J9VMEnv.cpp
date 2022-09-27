@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -510,4 +510,10 @@ J9::VMEnv::isVMInStartupPhase(J9JITConfig *jitConfig)
       }
 #endif /* defined(J9VM_OPT_JITSERVER) */
    return jitConfig->javaVM->phase != J9VM_PHASE_NOT_STARTUP;
+   }
+
+bool
+J9::VMEnv::isVMInStartupPhase(TR::Compilation *comp)
+   {
+   return self()->isVMInStartupPhase(comp->fej9()->getJ9JITConfig());
    }
