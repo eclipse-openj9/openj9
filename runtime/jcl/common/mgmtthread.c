@@ -227,15 +227,17 @@ Java_com_ibm_java_lang_management_internal_ThreadMXBeanImpl_getAllThreadIdsImpl(
 	/* Grab any thread (mainThread will do) */
 	currentThread = javaVM->mainThread;
 	/* Loop over all vmThreads until we get back to the starting thread: Count phase */
-	threadCount = 0;
 	do {
-		{
-			if ((currentThread->threadObject != NULL) && (J9VMJAVALANGTHREAD_THREADREF((J9VMThread *)env,currentThread->threadObject) != NULL)) {
-				/* CMVC 182865 - exclude threads which have not initialized their ID */
-				jlong threadID = getThreadID((J9VMThread *)env, (j9object_t)currentThread->threadObject);
-				if (((jlong)0) != threadID) {
-					threadIDs[threadCount++] = threadID;
-				}
+#if JAVA_SPEC_VERSION >= 19
+		j9object_t threadObject = currentThread->carrierThreadObject;
+#else /* JAVA_SPEC_VERSION >= 19 */
+		j9object_t threadObject = currentThread->threadObject;
+#endif /* JAVA_SPEC_VERSION >= 19 */
+		if ((NULL != threadObject) && (NULL != J9VMJAVALANGTHREAD_THREADREF((J9VMThread *)env, threadObject))) {
+			/* CMVC 182865 - exclude threads which have not initialized their ID */
+			jlong threadID = getThreadID((J9VMThread *)env, threadObject);
+			if (((jlong)0) != threadID) {
+				threadIDs[threadCount++] = threadID;
 			}
 		}
 	} while ((currentThread = currentThread->linkNext) != javaVM->mainThread);
@@ -937,24 +939,27 @@ getThread(JNIEnv *env, jlong threadID)
 	currentThread = javaVM->mainThread;
 	/* Loop over all vmThreads until we get back to the starting thread: look for matching threadID */
 	while (TRUE) {
-		if ((currentThread->threadObject != NULL) && (getThreadID((J9VMThread *)env, (j9object_t)currentThread->threadObject)  == threadID)) {
-			{
-				/*
-				 * We've found our matching thread, so we're done.
-				 * But first we have to check if the thread is alive
-				 * i.e. The j.l.Thread object's thread ref != 0
-				 */
-				if (J9VMJAVALANGTHREAD_THREADREF((J9VMThread *)env,currentThread->threadObject) == NULL) {
-					currentThread = NULL;
-				}
-				return currentThread;
+#if JAVA_SPEC_VERSION >= 19
+		j9object_t threadObject = currentThread->carrierThreadObject;
+#else /* JAVA_SPEC_VERSION >= 19 */
+		j9object_t threadObject = currentThread->threadObject;
+#endif /* JAVA_SPEC_VERSION >= 19 */
+		if ((NULL != threadObject) && (threadID == getThreadID((J9VMThread *)env, threadObject))) {
+			/*
+			 * We've found our matching thread, so we're done.
+			 * But first we have to check if the thread is alive
+			 * i.e. The j.l.Thread object's thread ref != 0
+			 */
+			if (NULL == J9VMJAVALANGTHREAD_THREADREF((J9VMThread *)env, threadObject)) {
+				currentThread = NULL;
 			}
+			return currentThread;
 		}
 
 		if ((currentThread = currentThread->linkNext) == javaVM->mainThread) {
 			/* Back at starting thread with no match, so return NULL */
 			return NULL;
-		}		
+		}
 	}
 }
 
@@ -1317,15 +1322,25 @@ getThreadInfo(J9VMThread *currentThread, J9VMThread *targetThread, ThreadInfo *i
 	j9object_t monitorOwnerObject = NULL;
 	IDATA exc = 0; /* exception index */
 
+#if JAVA_SPEC_VERSION >= 19
+	J9VMThread stackThread = {0};
+	J9VMEntryLocalStorage els = {0};
+	J9VMContinuation *continuation = targetThread->currentContinuation;
+	j9object_t threadObject = currentThread->carrierThreadObject;
+#else /* JAVA_SPEC_VERSION >= 19 */
+	j9object_t threadObject = currentThread->threadObject;
+#endif /* JAVA_SPEC_VERSION >= 19 */
+
 	Trc_JCL_threadmxbean_getThreadInfo_Entry(currentThread, targetThread);
 
-	info->thread =
-		vmfns->j9jni_createLocalRef((JNIEnv *)currentThread, (j9object_t)targetThread->threadObject);
+	info->thread = vmfns->j9jni_createLocalRef((JNIEnv *)currentThread, threadObject);
 	/* Set the native thread ID available through the thread library. */
 	info->nativeTID = (jlong) omrthread_get_osId(targetThread->osThread);
 	info->vmstate = getVMThreadObjectState(targetThread, &monitorObject, &monitorOwner, NULL);
-	if (targetThread->threadObject) {
-		info->jclThreadState = getJclThreadState(info->vmstate, J9VMJAVALANGTHREAD_STARTED(currentThread, targetThread->threadObject));
+	if (NULL != threadObject) {
+		info->jclThreadState = getJclThreadState(
+						info->vmstate,
+						J9VMJAVALANGTHREAD_STARTED(currentThread, threadObject));
 	} else {
 		info->jclThreadState = getJclThreadState(info->vmstate, JNI_TRUE);
 	}
@@ -1344,6 +1359,18 @@ getThreadInfo(J9VMThread *currentThread, J9VMThread *targetThread, ThreadInfo *i
 
 	/* this may block on vm->managementDataLock */
 	getContentionStats(currentThread, targetThread, info);
+#if JAVA_SPEC_VERSION >= 19
+	/* getStackFramePCs needs to run on the carrier thread's stack to produce the right output.
+	 * For threads with a continuation mounted, copy the carrier thread's stack data from the
+	 * continuation to a stack allocated J9VMThread structure. To avoid potential dependencies
+	 * on targetThread pointer's address, the stack allocated thread is only used for getStackFramePCs.
+	 */
+	if (NULL != continuation) {
+		memcpy(&stackThread, targetThread, sizeof(J9VMThread));
+		vm->internalVMFunctions->copyFieldsFromContinuation(currentThread, &stackThread, &els, continuation);
+		targetThread = &stackThread;
+	}
+#endif /* JAVA_SPEC_VERSION >= 19 */
 
 	exc = getStackFramePCs(currentThread, targetThread, info);
 	if (exc > 0) {
