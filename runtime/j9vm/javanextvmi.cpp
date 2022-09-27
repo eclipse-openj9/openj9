@@ -260,8 +260,8 @@ JVM_VirtualThreadMountBegin(JNIEnv *env, jobject thread, jboolean firstMount)
 
 	assert(IS_VIRTUAL_THREAD(currentThread, threadObj));
 
-	while (J9OBJECT_I64_LOAD(currentThread, threadObj, vm->virtualThreadInspectorCountOffset) > 0) {
-		/* Thread is being inspected, wait. */
+	while (0 != J9OBJECT_I64_LOAD(currentThread, threadObj, vm->virtualThreadInspectorCountOffset)) {
+		/* Thread is being inspected or unmounted, wait. */
 		VM_VMHelpers::pushObjectInSpecialFrame(currentThread, threadObj);
 		vmFuncs->internalExitVMToJNI(currentThread);
 		f_monitorWait(vm->liveVirtualThreadListMutex);
@@ -351,7 +351,7 @@ JVM_VirtualThreadUnmountBegin(JNIEnv *env, jobject thread, jboolean lastUnmount)
 	f_monitorEnter(vm->liveVirtualThreadListMutex);
 	j9object_t threadObj = J9_JNI_UNWRAP_REFERENCE(thread);
 
-	while (J9OBJECT_I64_LOAD(currentThread, threadObj, vm->virtualThreadInspectorCountOffset) > 0) {
+	while (0 != J9OBJECT_I64_LOAD(currentThread, threadObj, vm->virtualThreadInspectorCountOffset)) {
 		/* Thread is being inspected, wait. */
 		VM_VMHelpers::pushObjectInSpecialFrame(currentThread, threadObj);
 		vmFuncs->internalExitVMToJNI(currentThread);
