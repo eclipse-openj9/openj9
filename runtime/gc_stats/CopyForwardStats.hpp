@@ -123,6 +123,7 @@ public:
 		_unfinalizedEnqueued += stats->_unfinalizedEnqueued;
 
 		_ownableSynchronizerSurvived += stats->_ownableSynchronizerSurvived;
+		_continuationCandidates += stats->_continuationCandidates;
 		_continuationCleared += stats->_continuationCleared;
 
 		_weakReferenceStats.merge(&stats->_weakReferenceStats);

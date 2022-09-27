@@ -97,7 +97,6 @@ private:
 
 	void private_addOwnableSynchronizerObjectInList(MM_EnvironmentStandard *env, omrobjectptr_t object);
 	void private_setupForOwnableSynchronizerProcessing(MM_EnvironmentStandard *env);
-	void private_setupForContinuationProcessing(MM_EnvironmentStandard *env);
 
 	/*
 	 * Scavenger Collector, Private
