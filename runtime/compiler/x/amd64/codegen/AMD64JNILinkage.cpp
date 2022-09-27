@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2022 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1350,18 +1350,6 @@ TR::Register *J9::X86::AMD64::JNILinkage::buildDirectJNIDispatch(TR::Node *callN
 
       if (isGPUHelper)
          callNode->setSymbolReference(callSymRef); //change back to callSymRef afterwards
-
-#if JAVA_SPEC_VERSION >= 19
-      /**
-       * For virtual threads, bump the callOutCounter.  It is safe and most efficient to
-       * do this unconditionally.  No need to check for overflow.
-       */
-      generateMemInstruction(
-         TR::InstOpCode::INC8Mem,
-         callNode,
-         generateX86MemoryReference(vmThreadReg, fej9->thisThreadGetCallOutCountOffset(), cg()),
-         cg());
-#endif
       }
 
    // Switch from the Java stack to the C stack:
@@ -1410,7 +1398,7 @@ TR::Register *J9::X86::AMD64::JNILinkage::buildDirectJNIDispatch(TR::Node *callN
       targetAddress = (uintptr_t)callSymbol1->getResolvedMethod()->startAddressForJNIMethod(comp());
       }
 
-  TR::Instruction *callInstr = generateMethodDispatch(callNode, isJNIGCPoint, targetAddress);
+   TR::Instruction *callInstr = generateMethodDispatch(callNode, isJNIGCPoint, targetAddress);
 
   if (isGPUHelper)
       callNode->setSymbolReference(callSymRef); //change back to callSymRef afterwards
@@ -1481,18 +1469,6 @@ TR::Register *J9::X86::AMD64::JNILinkage::buildDirectJNIDispatch(TR::Node *callN
 
    if (createJNIFrame)
       {
-#if JAVA_SPEC_VERSION >= 19
-      /**
-       * For virtual threads, decrement the callOutCounter.  It is safe and most efficient to
-       * do this unconditionally.  No need to check for underflow.
-       */
-      generateMemInstruction(
-         TR::InstOpCode::DEC8Mem,
-         callNode,
-         generateX86MemoryReference(vmThreadReg, fej9->thisThreadGetCallOutCountOffset(), cg()),
-         cg());
-#endif
-
       generateRegMemInstruction(
             TR::InstOpCode::ADDRegMem(),
             callNode,

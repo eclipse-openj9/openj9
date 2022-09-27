@@ -1042,11 +1042,6 @@ UDATA TR_J9VMBase::thisThreadGetPublicFlagsOffset()                 {return offs
 UDATA TR_J9VMBase::thisThreadGetJavaPCOffset()                      {return offsetof(J9VMThread, pc);}
 UDATA TR_J9VMBase::thisThreadGetJavaSPOffset()                      {return offsetof(J9VMThread, sp);}
 
-#if JAVA_SPEC_VERSION >= 19
-uintptr_t TR_J9VMBase::thisThreadGetOwnedMonitorCountOffset()       {return offsetof(J9VMThread, ownedMonitorCount);}
-uintptr_t TR_J9VMBase::thisThreadGetCallOutCountOffset()            {return offsetof(J9VMThread, callOutCount);}
-#endif
-
 UDATA TR_J9VMBase::thisThreadGetSystemSPOffset()
    {
 #if defined(J9VM_JIT_FREE_SYSTEM_STACK_POINTER)
@@ -1714,10 +1709,45 @@ TR_J9VMBase::getObjectSizeClass(uintptr_t objectSize)
    }
 
 UDATA
+TR_J9VMBase::thisThreadMonitorCacheOffset()
+   {
+#if defined(J9VM_OPT_REAL_TIME_LOCKING_SUPPORT)
+   return offsetof(J9VMThread, monitorCache);
+#else
+   TR_ASSERT(0,"no monitorCache thread slot");
+   return 0;
+#endif
+   }
+
+UDATA
 TR_J9VMBase::thisThreadOSThreadOffset()
    {
    return offsetof(J9VMThread, osThread);
    }
+
+UDATA
+TR_J9VMBase::getMonitorNextOffset()
+   {
+#if defined(J9VM_OPT_REAL_TIME_LOCKING_SUPPORT)
+   return offsetof(J9ThreadAbstractMonitor, next);
+#else
+   TR_ASSERT(0,"no next field in J9ThreadAbstractMonitor");
+   return 0;
+#endif
+   }
+
+UDATA
+TR_J9VMBase::getMonitorOwnerOffset()
+   {
+   return offsetof(J9ThreadAbstractMonitor, owner);
+   }
+
+UDATA
+TR_J9VMBase::getMonitorEntryCountOffset()
+   {
+   return offsetof(J9ThreadAbstractMonitor, count);
+   }
+
 
 UDATA
 TR_J9VMBase::getRealtimeSizeClassesOffset()
