@@ -1,8 +1,6 @@
-/*[INCLUDE-IF Sidecar16]*/
-package java.lang.ref;
-
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 /*******************************************************************************
- * Copyright (c) 1998, 2010 IBM Corp. and others
+ * Copyright (c) 1998, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,7 +20,8 @@ package java.lang.ref;
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
- 
+package java.lang.ref;
+
 /**
  * WeakReference objects are used to detect referents which
  * are no longer visible.
@@ -31,7 +30,11 @@ package java.lang.ref;
  * @version		initial
  * @since		1.2
  */	
-public class WeakReference<T> extends java.lang.ref.Reference<T> {
+public
+/*[IF JAVA_SPEC_VERSION >= 19]*/
+non-sealed
+/*[ENDIF] JAVA_SPEC_VERSION >= 19 */
+class WeakReference<T> extends Reference<T> {
 
 /**
  * Constructs a new instance of this class.
