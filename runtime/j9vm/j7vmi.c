@@ -2311,14 +2311,14 @@ JVM_StartThread(JNIEnv* jniEnv, jobject newThread)
 }
 
 
-
+#if JAVA_SPEC_VERSION < 20
 jobject JNICALL
 JVM_StopThread(jint arg0, jint arg1, jint arg2)
 {
 	assert(!"JVM_StopThread() stubbed!");
 	return NULL;
 }
-
+#endif /* JAVA_SPEC_VERSION < 20 */
 
 
 jobject JNICALL

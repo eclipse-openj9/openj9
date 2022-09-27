@@ -156,7 +156,6 @@ jvm_add_exports(jvm
 	_JVM_GetStackTraceDepth@8
 	_JVM_FillInStackTrace@8
 	_JVM_StartThread@8
-	_JVM_StopThread@12
 	_JVM_IsThreadAlive@8
 	_JVM_SuspendThread@8
 	_JVM_ResumeThread@8
@@ -403,7 +402,11 @@ if(NOT JAVA_SPEC_VERSION LESS 19)
 	)
 endif()
 
-if(NOT JAVA_SPEC_VERSION LESS 20)
+if(JAVA_SPEC_VERSION LESS 20)
+	jvm_add_exports(jvm
+		_JVM_StopThread@12
+	)
+else()
 	jvm_add_exports(jvm
 		JVM_GetClassFileVersion
 	)

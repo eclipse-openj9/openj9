@@ -359,7 +359,6 @@ omr_add_exports(jclse
 	Java_java_lang_Thread_setNameImpl
 	Java_java_lang_Thread_setPriorityNoVMAccessImpl
 	Java_java_lang_Thread_startImpl
-	Java_java_lang_Thread_stopImpl
 	Java_java_lang_Thread_suspendImpl
 	Java_java_lang_Thread_yield
 	Java_java_lang_invoke_MethodHandleResolver_getCPClassNameAt
@@ -443,6 +442,12 @@ endif()
 if(JAVA_SPEC_VERSION LESS 19)
 omr_add_exports(jclse
 	Java_com_ibm_lang_management_internal_ExtendedRuntimeMXBeanImpl_getProcessIDImpl
+)
+endif()
+
+if(JAVA_SPEC_VERSION LESS 20)
+omr_add_exports(jclse
+	Java_java_lang_Thread_stopImpl
 )
 endif()
 

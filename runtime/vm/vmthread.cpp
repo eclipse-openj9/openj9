@@ -2071,7 +2071,6 @@ setFailedToForkThreadException(J9VMThread *currentThread, IDATA retVal, omrthrea
 static UDATA
 javaProtectedThreadProc(J9PortLibrary* portLibrary, void * entryarg)
 {
-	
 	J9VMThread * vmThread = (J9VMThread *) entryarg;
 	J9JavaVM *vm = vmThread->javaVM;
 
@@ -2079,26 +2078,20 @@ javaProtectedThreadProc(J9PortLibrary* portLibrary, void * entryarg)
 
 #if defined(LINUX)
 	omrthread_set_name(vmThread->osThread, (char*)vmThread->omrVMThread->threadName);
-#endif
+#endif /* defined(LINUX) */
 
 	threadAboutToStart(vmThread);
 
 	TRIGGER_J9HOOK_VM_THREAD_STARTED(vm->hookInterface, vmThread, vmThread);
 
-
 	acquireVMAccess(vmThread);
-#ifdef J9VM_OPT_DEPRECATED_METHODS
-	if (!(J9VMJAVALANGTHREAD_STOPCALLED(vmThread,vmThread->threadObject))){
-#endif
-
-		{
-			/* Start running the thread */
-			runJavaThread(vmThread);
-		}
-
-#ifdef J9VM_OPT_DEPRECATED_METHODS
+#if defined(J9VM_OPT_DEPRECATED_METHODS) && (JAVA_SPEC_VERSION < 20)
+	if (!(J9VMJAVALANGTHREAD_STOPCALLED(vmThread, vmThread->threadObject)))
+#endif /* defined(J9VM_OPT_DEPRECATED_METHODS) && (JAVA_SPEC_VERSION < 20) */
+	{
+		/* Start running the thread. */
+		runJavaThread(vmThread);
 	}
-#endif	
 	releaseVMAccess(vmThread);
 
 	/* Perform thread cleanup */
