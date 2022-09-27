@@ -657,14 +657,16 @@ public synchronized char charAt(int index) {
 }
 
 /**
- * Deletes a range of characters.
+ * Deletes a range of characters starting from offset {@code start} to offset
+ * {@code end - 1}. If {@code end} is beyond the last character, then this
+ * method deletes up to the end of the StringBuffer.
  *
  * @param		start	the offset of the first character
  * @param		end	the offset one past the last character
  * @return		this StringBuffer
  *
- * @exception	StringIndexOutOfBoundsException when {@code start < 0, start > end} or
- *				{@code end > length()}
+ * @exception	StringIndexOutOfBoundsException when {@code start < 0}, {@code start > end} or
+ *				{@code start > length()}
  */
 public synchronized StringBuffer delete(int start, int end) {
 	int currentLength = lengthInternalUnsynchronized();
@@ -754,8 +756,8 @@ public synchronized StringBuffer delete(int start, int end) {
 public synchronized StringBuffer deleteCharAt(int location) {
 	int currentLength = lengthInternalUnsynchronized();
 
-	if (currentLength != 0) {
-		return delete (location, location + 1);
+	if ((0 <= location) && (location < currentLength)) {
+		return delete(location, location + 1);
 	} else {
 		throw new StringIndexOutOfBoundsException ();
 	}
