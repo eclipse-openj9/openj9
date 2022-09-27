@@ -317,8 +317,12 @@ JITServerAOTCache::AOTHeaderKey::Hash::operator()(const AOTHeaderKey &k) const n
 
 // Insert the value (which must be allocated with AOTCacheRecord::allocate())
 // with the key into the map, avoiding memory leaks in case of exceptions.
+// Also insert it into the linked list traversal of the map defined by the
+// given head and tail.
 template<typename K, typename V, typename H> static void
 addToMap(PersistentUnorderedMap<K, V *, H> &map,
+         V *&traversalHead,
+         V *&traversalTail,
          const typename PersistentUnorderedMap<K, V *, H>::const_iterator &it,
          const K &key, V *value)
    {
@@ -331,6 +335,19 @@ addToMap(PersistentUnorderedMap<K, V *, H> &map,
       AOTCacheRecord::free(value);
       throw;
       }
+
+   // Normally we would need a write barrier here to ensure that the record was fully written to memory before
+   // adding it to this traversal. However, since we save the number of records to be written in writeRecordList,
+   // we will never encounter such a partial record in the serializer, and so the write barrier is unnecessary.
+   if (traversalTail == NULL)
+      {
+      traversalHead = value;
+      }
+   else
+      {
+      traversalTail->setNextRecord(value);
+      }
+   traversalTail = value;
    }
 
 // Free all the values (which must be allocated with AOTCacheRecord::allocate()) in the map.
@@ -433,7 +450,7 @@ JITServerAOTCache::getClassLoaderRecord(const uint8_t *name, size_t nameLength)
       }
 
    auto record = AOTCacheClassLoaderRecord::create(_nextClassLoaderId, name, nameLength);
-   addToMap(_classLoaderMap, it, { record->data().name(), record->data().nameLength() }, record);
+   addToMap(_classLoaderMap, _classLoaderHead, _classLoaderTail, it, { record->data().name(), record->data().nameLength() }, record);
    ++_nextClassLoaderId;
 
    if (TR::Options::getVerboseOption(TR_VerboseJITServer))
@@ -466,7 +483,7 @@ JITServerAOTCache::getClassRecord(const AOTCacheClassLoaderRecord *classLoaderRe
       }
 
    auto record = AOTCacheClassRecord::create(_nextClassId, classLoaderRecord, hash, romClass);
-   addToMap(_classMap, it, { classLoaderRecord, &record->data().hash() }, record);
+   addToMap(_classMap, _classHead, _classTail, it, { classLoaderRecord, &record->data().hash() }, record);
    ++_nextClassId;
 
    if (TR::Options::getVerboseOption(TR_VerboseJITServer))
@@ -499,7 +516,7 @@ JITServerAOTCache::getMethodRecord(const AOTCacheClassRecord *definingClassRecor
       }
 
    auto record = AOTCacheMethodRecord::create(_nextMethodId, definingClassRecord, index);
-   addToMap(_methodMap, it, key, record);
+   addToMap(_methodMap, _methodHead, _methodTail, it, key, record);
    ++_nextMethodId;
 
    if (TR::Options::getVerboseOption(TR_VerboseJITServer))
@@ -529,7 +546,7 @@ JITServerAOTCache::getClassChainRecord(const AOTCacheClassRecord *const *classRe
       }
 
    auto record = AOTCacheClassChainRecord::create(_nextClassChainId, classRecords, length);
-   addToMap(_classChainMap, it, { record->records(), length }, record);
+   addToMap(_classChainMap, _classChainHead, _classChainTail, it, { record->records(), length }, record);
    ++_nextClassChainId;
 
    if (TR::Options::getVerboseOption(TR_VerboseJITServer))
@@ -560,7 +577,7 @@ JITServerAOTCache::getWellKnownClassesRecord(const AOTCacheClassChainRecord *con
       }
 
    auto record = AOTCacheWellKnownClassesRecord::create(_nextWellKnownClassesId, chainRecords, length, includedClasses);
-   addToMap(_wellKnownClassesMap, it, { record->records(), length, includedClasses }, record);
+   addToMap(_wellKnownClassesMap, _wellKnownClassesHead, _wellKnownClassesTail, it, { record->records(), length, includedClasses }, record);
    ++_nextWellKnownClassesId;
 
    if (TR::Options::getVerboseOption(TR_VerboseJITServer))
@@ -594,7 +611,7 @@ JITServerAOTCache::getAOTHeaderRecord(const TR_AOTHeader *header, uint64_t clien
       }
 
    auto record = AOTCacheAOTHeaderRecord::create(_nextAOTHeaderId, header);
-   addToMap(_aotHeaderMap, it, { record->data().header() }, record);
+   addToMap(_aotHeaderMap, _aotHeaderHead, _aotHeaderTail, it, { record->data().header() }, record);
    ++_nextAOTHeaderId;
 
    if (TR::Options::getVerboseOption(TR_VerboseJITServer))
@@ -646,7 +663,7 @@ JITServerAOTCache::storeMethod(const AOTCacheClassChainRecord *definingClassChai
 
    auto method = CachedAOTMethod::create(definingClassChainRecord, index, optLevel, aotHeaderRecord,
                                          records, code, codeSize, data, dataSize);
-   addToMap(_cachedMethodMap, it, key, method);
+   addToMap(_cachedMethodMap, _cachedMethodHead, _cachedMethodTail, it, key, method);
 
    if (TR::Options::getVerboseOption(TR_VerboseJITServer))
       TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
