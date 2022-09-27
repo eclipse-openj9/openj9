@@ -49,7 +49,11 @@ import sun.misc.SharedSecrets;
  * @version		initial
  * @since		1.2
  */
-public abstract class Reference<T> extends Object {
+/*[IF JAVA_SPEC_VERSION < 19]*/
+public abstract	class Reference<T> extends Object {
+/*[ELSE] JAVA_SPEC_VERSION < 19
+public abstract sealed class Reference<T> extends Object permits PhantomReference, SoftReference, WeakReference, FinalReference {
+/*[ENDIF] JAVA_SPEC_VERSION < 19 */
 	private static final int STATE_INITIAL = 0;
 	private static final int STATE_CLEARED = 1;
 	private static final int STATE_ENQUEUED = 2;
