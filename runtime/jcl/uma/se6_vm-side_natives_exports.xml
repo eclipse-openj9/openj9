@@ -285,12 +285,16 @@
 	<export name="Java_java_lang_Thread_getStackTraceImpl" />
 	<export name="Java_java_lang_Thread_holdsLock" />
 	<export name="Java_java_lang_Thread_interruptImpl" />
-	<export name="Java_java_lang_Thread_resumeImpl" />
+	<export name="Java_java_lang_Thread_resumeImpl">
+		<exclude-if condition="spec.java20" />
+	</export>
 	<export name="Java_java_lang_Thread_startImpl" />
 	<export name="Java_java_lang_Thread_stopImpl">
 		<exclude-if condition="spec.java20" />
 	</export>
-	<export name="Java_java_lang_Thread_suspendImpl" />
+	<export name="Java_java_lang_Thread_suspendImpl">
+		<exclude-if condition="spec.java20" />
+	</export>
 	<export name="Java_java_security_AccessController_getAccSnapshot" />
 	<export name="Java_java_security_AccessController_getCallerPD" />
 	<export name="JCL_OnLoad" />
