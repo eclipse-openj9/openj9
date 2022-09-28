@@ -63,6 +63,42 @@ vmThreadStackFrameIterator(J9VMThread * currentThread, J9StackWalkState * walkSt
 
 } /* extern "C" */
 
+void
+GC_VMThreadStackSlotIterator::initializeStackWalkState(
+		J9StackWalkState *stackWalkState,
+		J9VMThread *vmThread,
+		void *userData,
+		J9MODRON_OSLOTITERATOR *oSlotIterator,
+		bool includeStackFrameClassReferences,
+		bool trackVisibleFrameDepth
+		)
+{
+	J9JavaVM *vm = vmThread->javaVM;
+
+	stackWalkState->objectSlotWalkFunction = vmThreadStackDoOSlotIterator;
+	stackWalkState->userData1 = (void *)oSlotIterator;
+	stackWalkState->userData2 = (void *)vm;
+	stackWalkState->userData3 = userData;
+
+	stackWalkState->flags = J9_STACKWALK_ITERATE_O_SLOTS | J9_STACKWALK_DO_NOT_SNIFF_AND_WHACK;
+	stackWalkState->walkThread = NULL;
+
+	if (trackVisibleFrameDepth) {
+		stackWalkState->skipCount = 0;
+		stackWalkState->flags |= J9_STACKWALK_VISIBLE_ONLY;
+	} else {
+		if (NULL != vm->collectJitPrivateThreadData) {
+			stackWalkState->frameWalkFunction = vmThreadStackFrameIterator;
+			stackWalkState->flags |= J9_STACKWALK_ITERATE_FRAMES;
+		}
+		stackWalkState->flags |= J9_STACKWALK_SKIP_INLINES;
+	}
+
+	if (includeStackFrameClassReferences) {
+		stackWalkState->flags |= J9_STACKWALK_ITERATE_METHOD_CLASS_SLOTS;
+	}
+
+}
 /**
  * Walk all slots of the walk thread which contain object references.
  * For every object slot found in <code>walkThread</code> call the <code>oSlotIterator</code> function.
@@ -87,32 +123,10 @@ GC_VMThreadStackSlotIterator::scanSlots(
 		)
 {
 	J9StackWalkState stackWalkState;
-	J9JavaVM *vm = vmThread->javaVM;
-
-	stackWalkState.objectSlotWalkFunction = vmThreadStackDoOSlotIterator;
-	stackWalkState.userData1 = (void *)oSlotIterator;
-	stackWalkState.userData2 = (void *)vm;
-	stackWalkState.userData3 = userData;
-
-	stackWalkState.flags = J9_STACKWALK_ITERATE_O_SLOTS | J9_STACKWALK_DO_NOT_SNIFF_AND_WHACK;
+	initializeStackWalkState(&stackWalkState, vmThread, userData, oSlotIterator, includeStackFrameClassReferences, trackVisibleFrameDepth);
 	stackWalkState.walkThread = walkThread;
 
-	if (trackVisibleFrameDepth) {
-		stackWalkState.skipCount = 0;
-		stackWalkState.flags |= J9_STACKWALK_VISIBLE_ONLY;
-	} else {
-		if (NULL != vm->collectJitPrivateThreadData) {
-			stackWalkState.frameWalkFunction = vmThreadStackFrameIterator;
-			stackWalkState.flags |= J9_STACKWALK_ITERATE_FRAMES;
-		}
-		stackWalkState.flags |= J9_STACKWALK_SKIP_INLINES;
-	}
-
-	if (includeStackFrameClassReferences) {
-		stackWalkState.flags |= J9_STACKWALK_ITERATE_METHOD_CLASS_SLOTS;
-	}
-
-	vm->walkStackFrames(vmThread, &stackWalkState);
+	vmThread->javaVM->walkStackFrames(vmThread, &stackWalkState);
 }
 
 void
@@ -126,29 +140,25 @@ GC_VMThreadStackSlotIterator::scanSlots(
 		)
 {
 	J9StackWalkState stackWalkState;
-	J9JavaVM *vm = vmThread->javaVM;
-
-	stackWalkState.objectSlotWalkFunction = vmThreadStackDoOSlotIterator;
-	stackWalkState.userData1 = (void *)oSlotIterator;
-	stackWalkState.userData2 = (void *)vm;
-	stackWalkState.userData3 = userData;
-
-	stackWalkState.flags = J9_STACKWALK_ITERATE_O_SLOTS | J9_STACKWALK_DO_NOT_SNIFF_AND_WHACK;
-
-	if (trackVisibleFrameDepth) {
-		stackWalkState.skipCount = 0;
-		stackWalkState.flags |= J9_STACKWALK_VISIBLE_ONLY;
-	} else {
-		if (NULL != vm->collectJitPrivateThreadData) {
-			stackWalkState.frameWalkFunction = vmThreadStackFrameIterator;
-			stackWalkState.flags |= J9_STACKWALK_ITERATE_FRAMES;
-		}
-		stackWalkState.flags |= J9_STACKWALK_SKIP_INLINES;
-	}
-
-	if (includeStackFrameClassReferences) {
-		stackWalkState.flags |= J9_STACKWALK_ITERATE_METHOD_CLASS_SLOTS;
-	}
+	initializeStackWalkState(&stackWalkState, vmThread, userData, oSlotIterator, includeStackFrameClassReferences, trackVisibleFrameDepth);
 
 	VM_VMHelpers::walkContinuationStackFramesWrapper(vmThread, continuationObjectPtr, &stackWalkState);
 }
+
+#if JAVA_SPEC_VERSION >= 19
+void
+GC_VMThreadStackSlotIterator::scanSlots(
+			J9VMThread *vmThread,
+			J9VMContinuation *continuation,
+			void *userData,
+			J9MODRON_OSLOTITERATOR *oSlotIterator,
+			bool includeStackFrameClassReferences,
+			bool trackVisibleFrameDepth
+		)
+{
+	J9StackWalkState stackWalkState;
+	initializeStackWalkState(&stackWalkState, vmThread, userData, oSlotIterator, includeStackFrameClassReferences, trackVisibleFrameDepth);
+
+	vmThread->javaVM->internalVMFunctions->walkContinuationStackFrames(vmThread, continuation, &stackWalkState);
+}
+#endif /* JAVA_SPEC_VERSION >= 19 */
