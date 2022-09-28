@@ -932,6 +932,9 @@ JNI_GetDefaultJavaVMInitArgs(void *vm_args)
 #if JAVA_SPEC_VERSION >= 19
 		case JNI_VERSION_19:
 #endif /* JAVA_SPEC_VERSION >= 19 */
+#if JAVA_SPEC_VERSION >= 20
+		case JNI_VERSION_20:
+#endif /* JAVA_SPEC_VERSION >= 20 */
 			return JNI_OK;
 		default:
 			break;

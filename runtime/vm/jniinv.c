@@ -130,8 +130,9 @@ jint JNICALL J9_CreateJavaVM(JavaVM ** p_vm, void ** p_env, J9CreateJavaVMParams
 	omrthread_monitor_t globalMonitor;
 #endif
 
-	if (!jniVersionIsValid(version) || version == JNI_VERSION_1_1)
-		return JNI_EVERSION;			/* unknown arg style, exit. */
+	if ((JNI_VERSION_1_1 == version) || !jniVersionIsValid(version)) {
+		return JNI_EVERSION; /* unknown arg style, exit. */
+	}
 
 #ifndef J9VM_OPT_MULTI_VM
 	if (*pvmList)
