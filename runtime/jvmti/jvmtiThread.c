@@ -57,15 +57,16 @@ jvmtiGetThreadState(jvmtiEnv *env,
 		vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
 
 		ENSURE_PHASE_LIVE(env);
-
 		ENSURE_NON_NULL(thread_state_ptr);
 
-		/* If the thread is NULL, then use the current thread. */
-		if (NULL == thread) {
-			threadObject = currentThread->threadObject;
-		} else {
+		if (NULL != thread) {
+			ENSURE_JTHREAD(currentThread, thread);
 			threadObject = J9_JNI_UNWRAP_REFERENCE(thread);
+		} else {
+			/* If the thread is NULL, then use the current thread. */
+			threadObject = currentThread->threadObject;
 		}
+
 #if JAVA_SPEC_VERSION >= 19
 		if (IS_VIRTUAL_THREAD(currentThread, threadObject)) {
 			/* If thread is NULL, the current thread is used which cannot be a virtual thread.
