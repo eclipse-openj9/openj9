@@ -1128,7 +1128,9 @@ jlong JNICALL Java_javax_rcm_CPUThrottlingRunnable_getTokenBucketInterval(JNIEnv
 /* thread.cpp */
 void JNICALL Java_java_lang_Thread_yield(JNIEnv *env, jclass threadClass);
 #if JAVA_SPEC_VERSION < 20
+void JNICALL Java_java_lang_Thread_resumeImpl(JNIEnv *env, jobject rcv);
 void JNICALL Java_java_lang_Thread_stopImpl(JNIEnv *env, jobject rcv, jobject stopThrowable);
+void JNICALL Java_java_lang_Thread_suspendImpl(JNIEnv *env, jobject rcv);
 #endif /* JAVA_SPEC_VERSION < 20 */
 
 /* java_lang_Class.c */

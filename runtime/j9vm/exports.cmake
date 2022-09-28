@@ -157,8 +157,6 @@ jvm_add_exports(jvm
 	_JVM_FillInStackTrace@8
 	_JVM_StartThread@8
 	_JVM_IsThreadAlive@8
-	_JVM_SuspendThread@8
-	_JVM_ResumeThread@8
 	_JVM_SetThreadPriority@12
 	_JVM_Yield@8
 	_JVM_CurrentThread@8
@@ -404,7 +402,9 @@ endif()
 
 if(JAVA_SPEC_VERSION LESS 20)
 	jvm_add_exports(jvm
+		_JVM_ResumeThread@8
 		_JVM_StopThread@12
+		_JVM_SuspendThread@8
 	)
 else()
 	jvm_add_exports(jvm

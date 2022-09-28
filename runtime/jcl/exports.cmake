@@ -355,11 +355,9 @@ omr_add_exports(jclse
 	Java_java_lang_Thread_getStateImpl
 	Java_java_lang_Thread_holdsLock
 	Java_java_lang_Thread_interruptImpl
-	Java_java_lang_Thread_resumeImpl
 	Java_java_lang_Thread_setNameImpl
 	Java_java_lang_Thread_setPriorityNoVMAccessImpl
 	Java_java_lang_Thread_startImpl
-	Java_java_lang_Thread_suspendImpl
 	Java_java_lang_Thread_yield
 	Java_java_lang_invoke_MethodHandleResolver_getCPClassNameAt
 	Java_java_lang_invoke_MethodHandleResolver_getCPMethodHandleAt
@@ -447,7 +445,9 @@ endif()
 
 if(JAVA_SPEC_VERSION LESS 20)
 omr_add_exports(jclse
+	Java_java_lang_Thread_resumeImpl
 	Java_java_lang_Thread_stopImpl
+	Java_java_lang_Thread_suspendImpl
 )
 endif()
 
