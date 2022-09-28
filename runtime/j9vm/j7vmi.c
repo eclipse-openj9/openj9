@@ -1673,6 +1673,9 @@ JVM_IsSupportedJNIVersion(jint version)
 #if JAVA_SPEC_VERSION >= 19
 	case JNI_VERSION_19:
 #endif /* JAVA_SPEC_VERSION >= 19 */
+#if JAVA_SPEC_VERSION >= 20
+	case JNI_VERSION_20:
+#endif /* JAVA_SPEC_VERSION >= 20 */
 		return JNI_TRUE;
 
 	default:
