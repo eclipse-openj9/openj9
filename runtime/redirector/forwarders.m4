@@ -185,7 +185,8 @@ _X(JVM_IsThreadAlive,JNICALL,true,jboolean,JNIEnv *env, jobject targetThread)
 _X(JVM_NewArray,JNICALL,true,jobject,JNIEnv *env, jclass componentType, jint dimension)
 _X(JVM_NewMultiArray,JNICALL,true,jobject,JNIEnv *env, jclass eltClass, jintArray dim)
 _X(JVM_ResolveClass,JNICALL,true,jobject,jint arg0, jint arg1)
-_X(JVM_ResumeThread,JNICALL,true,jobject,jint arg0, jint arg1)
+_IF([JAVA_SPEC_VERSION < 20],
+	[_X(JVM_ResumeThread,JNICALL,true,jobject,jint arg0, jint arg1)])
 _X(JVM_SetArrayElement,JNICALL,true,void,JNIEnv *env, jobject array, jint index, jobject value)
 _X(JVM_SetClassSigners,JNICALL,true,jobject,jint arg0, jint arg1, jint arg2)
 _X(JVM_SetPrimitiveArrayElement,JNICALL,true,void,JNIEnv *env, jobject array, jint index, jvalue value, unsigned char vCode)
@@ -194,7 +195,8 @@ _X(JVM_SetThreadPriority,JNICALL,true,void,JNIEnv *env, jobject thread, jint pri
 _X(JVM_StartThread,JNICALL,true,void,JNIEnv *env, jobject newThread)
 _IF([JAVA_SPEC_VERSION < 20],
 	[_X(JVM_StopThread,JNICALL,true,jobject,jint arg0, jint arg1, jint arg2)])
-_X(JVM_SuspendThread,JNICALL,true,jobject,jint arg0, jint arg1)
+_IF([JAVA_SPEC_VERSION < 20],
+	[_X(JVM_SuspendThread,JNICALL,true,jobject,jint arg0, jint arg1)])
 _IF([JAVA_SPEC_VERSION < 15],
 	[_X(JVM_UnloadLibrary, JNICALL, true, jobject, jint arg0)],
 	[_X(JVM_UnloadLibrary, JNICALL, true, void, void *handle)])

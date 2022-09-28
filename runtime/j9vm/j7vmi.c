@@ -1825,17 +1825,6 @@ JVM_ResolveClass(jint arg0, jint arg1)
 	return NULL;
 }
 
-
-
-jobject JNICALL
-JVM_ResumeThread(jint arg0, jint arg1)
-{
-	assert(!"JVM_ResumeThread() stubbed!");
-	return NULL;
-}
-
-
-
 /**
  * Set the val to the array at the index.
  * This function may lock, gc or throw exception.
@@ -2310,16 +2299,20 @@ JVM_StartThread(JNIEnv* jniEnv, jobject newThread)
 	return;
 }
 
-
 #if JAVA_SPEC_VERSION < 20
+jobject JNICALL
+JVM_ResumeThread(jint arg0, jint arg1)
+{
+	assert(!"JVM_ResumeThread() stubbed!");
+	return NULL;
+}
+
 jobject JNICALL
 JVM_StopThread(jint arg0, jint arg1, jint arg2)
 {
 	assert(!"JVM_StopThread() stubbed!");
 	return NULL;
 }
-#endif /* JAVA_SPEC_VERSION < 20 */
-
 
 jobject JNICALL
 JVM_SuspendThread(jint arg0, jint arg1)
@@ -2327,7 +2320,7 @@ JVM_SuspendThread(jint arg0, jint arg1)
 	assert(!"JVM_SuspendThread() stubbed!");
 	return NULL;
 }
-
+#endif /* JAVA_SPEC_VERSION < 20 */
 
 /* NOTE this is required by JDK15+ jdk.internal.loader.NativeLibraries.unload().
  */

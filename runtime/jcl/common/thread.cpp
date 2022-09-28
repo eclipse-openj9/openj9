@@ -183,6 +183,7 @@ Java_java_lang_Thread_yield(JNIEnv *env, jclass threadClass)
 	omrthread_yield();
 }
 
+#if JAVA_SPEC_VERSION < 20
 void JNICALL
 Java_java_lang_Thread_resumeImpl(JNIEnv *env, jobject rcv)
 {
@@ -238,7 +239,6 @@ Java_java_lang_Thread_suspendImpl(JNIEnv *env, jobject rcv)
 vmAccessReleased: ;
 }
 
-#if JAVA_SPEC_VERSION < 20
 void JNICALL
 Java_java_lang_Thread_stopImpl(JNIEnv *env, jobject rcv, jobject stopThrowable)
 {
