@@ -25,6 +25,7 @@
 #include "infra/CriticalSection.hpp"
 #include "runtime/JITServerAOTCache.hpp"
 #include "runtime/JITServerSharedROMClassCache.hpp"
+#include "net/CommunicationStream.hpp"
 
 size_t JITServerAOTCacheMap::_cacheMaxBytes = 300 * 1024 * 1024;
 bool JITServerAOTCacheMap::_cacheIsFull = false;
@@ -775,6 +776,126 @@ JITServerAOTCache::printStats(FILE *f) const
       _numDeserializedMethods,
       _numDeserializationFailures
    );
+   }
+
+// Write at most numRecordsToWrite to the given stream from the linked list starting at head.
+static bool
+writeRecordList(FILE *f, const AOTCacheRecord *head, size_t numRecordsToWrite)
+   {
+   const AOTCacheRecord *current = head;
+   size_t recordsWritten = 0;
+   while (current && (recordsWritten < numRecordsToWrite))
+      {
+      const AOTSerializationRecord *record = current->dataAddr();
+      if (1 != fwrite(record, record->size(), 1, f))
+         {
+         return false;
+         }
+      ++recordsWritten;
+      current = current->getNextRecord();
+      }
+   TR_ASSERT(recordsWritten == numRecordsToWrite, "Expected to write %zu records, wrote %zu", numRecordsToWrite, recordsWritten);
+
+   return true;
+   }
+
+static bool
+writeCachedMethodList(FILE *f, const CachedAOTMethod *head, size_t numRecordsToWrite)
+   {
+   const CachedAOTMethod *current = head;
+   size_t recordsWritten = 0;
+   while (current && (recordsWritten < numRecordsToWrite))
+      {
+      const SerializedAOTMethod *record = &current->data();
+      if (1 != fwrite(record, record->size(), 1, f))
+         {
+         return false;
+         }
+      ++recordsWritten;
+      current = current->getNextRecord();
+      }
+   TR_ASSERT(recordsWritten == numRecordsToWrite, "Expected to write %zu records, wrote %zu", numRecordsToWrite, recordsWritten);
+
+   return true;
+   }
+
+static void getCurrentAOTCacheVersion(JITServerAOTCacheVersion &version)
+   {
+   memcpy(version._eyeCatcher, JITSERVER_AOTCACHE_EYECATCHER, JITSERVER_AOTCACHE_EYECATCHER_LENGTH);
+   version._snapshotVersion = JITSERVER_AOTCACHE_VERSION;
+   version._jitserverVersion = JITServer::CommunicationStream::getJITServerFullVersion();
+   }
+
+// Write a full AOT cache snapshot to a stream. After the header information, the
+// AOTSerializationRecord or SerializedAOTMethod data (depending on record type) in each
+// record traversal is written directly to the stream in sections, since the full AOT record
+// can be reconstructed from only this information. These sections are ordered so that, when
+// reading the snapshot, the dependencies of each record will already have been read by the
+// time we get to that record.
+bool
+JITServerAOTCache::writeCache(FILE *f) const
+   {
+   JITServerAOTCacheHeader header = {0};
+   getCurrentAOTCacheVersion(header._version);
+   header._serverUID = TR::CompilationInfo::get()->getPersistentInfo()->getServerUID();
+
+   // It is possible for a record and its dependencies to be added between .size() calls,
+   // so we must reverse the order in which we read the map sizes (compared to their write order)
+   // to ensure that those dependencies are not excluded from serialization.
+      {
+      OMR::CriticalSection cs(_cachedMethodMonitor);
+      header._numCachedAOTMethods = _cachedMethodMap.size();
+      }
+      {
+      OMR::CriticalSection cs(_aotHeaderMonitor);
+      header._numAOTHeaderRecords = _aotHeaderMap.size();
+      header._nextAOTHeaderId = _nextAOTHeaderId;
+      }
+      {
+      OMR::CriticalSection cs(_wellKnownClassesMonitor);
+      header._numWellKnownClassesRecords = _wellKnownClassesMap.size();
+      header._nextWellKnownClassesId = _nextWellKnownClassesId;
+      }
+      {
+      OMR::CriticalSection cs(_classChainMonitor);
+      header._numClassChainRecords = _classChainMap.size();
+      header._nextClassChainId = _nextClassChainId;
+      }
+      {
+      OMR::CriticalSection cs(_methodMonitor);
+      header._numMethodRecords = _methodMap.size();
+      header._nextMethodId = _nextMethodId;
+      }
+      {
+      OMR::CriticalSection cs(_classMonitor);
+      header._numClassRecords = _classMap.size();
+      header._nextClassId = _nextClassId;
+      }
+      {
+      OMR::CriticalSection cs(_classLoaderMonitor);
+      header._numClassLoaderRecords = _classLoaderMap.size();
+      header._nextClassLoaderId = _nextClassLoaderId;
+      }
+
+   if (1 != fwrite(&header, sizeof(JITServerAOTCacheHeader), 1, f))
+      return false;
+
+   if (!writeRecordList(f, _classLoaderHead, header._numClassLoaderRecords))
+      return false;
+   if (!writeRecordList(f, _classHead, header._numClassRecords))
+      return false;
+   if (!writeRecordList(f, _methodHead, header._numMethodRecords))
+      return false;
+   if (!writeRecordList(f, _classChainHead, header._numClassChainRecords))
+      return false;
+   if (!writeRecordList(f, _wellKnownClassesHead, header._numWellKnownClassesRecords))
+      return false;
+   if (!writeRecordList(f, _aotHeaderHead, header._numAOTHeaderRecords))
+      return false;
+   if (!writeCachedMethodList(f, _cachedMethodHead, header._numCachedAOTMethods))
+      return false;
+
+   return true;
    }
 
 bool
