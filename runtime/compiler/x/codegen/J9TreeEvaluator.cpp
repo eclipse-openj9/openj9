@@ -4721,26 +4721,36 @@ void J9::X86::TreeEvaluator::asyncGCMapCheckPatching(TR::Node *node, TR::CodeGen
      }
   }
 
-void J9::X86::TreeEvaluator::inlineRecursiveMonitor(TR::Node          *node,
-                                                               TR::CodeGenerator   *cg,
-                                                               TR::LabelSymbol     *fallThruLabel,
-                                                               TR::LabelSymbol     *jitMonitorEnterOrExitSnippetLabel,
-                                                               TR::LabelSymbol     *inlineRecursiveSnippetLabel,
-                                                               TR::Register        *objectReg,
-                                                               int                  lwOffset,
-                                                               TR::LabelSymbol     *snippetRestartLabel,
-                                                               bool                 reservingLock)
+void J9::X86::TreeEvaluator::inlineRecursiveMonitor(
+      TR::Node *node,
+      TR::CodeGenerator *cg,
+      TR::LabelSymbol *fallThruLabel,
+      TR::LabelSymbol *jitMonitorEnterOrExitSnippetLabel,
+      TR::LabelSymbol *inlineRecursiveSnippetLabel,
+      TR::Register *objectReg,
+      int lwOffset,
+      TR::LabelSymbol *snippetRestartLabel,
+      bool reservingLock)
    {
-   //Code generated:
-   // mov lockWordReg, [obj+lwOffset]
-   // add lockWordReg, INC_DEC_VALUE/-INC_DEC_VALUE  ---> lock word with increased recursive count
-   // mov lockWordMaskedReg, NON_INC_DEC_MASK
-   // and lockWordMaskedReg, lockWordReg  ---> lock word masked out counter bits
-   // cmp lockWordMaskedReg, ebp
-   // jne jitMonitorEnterOrExitSnippetLabel
-   // mov [obj+lwOffset], lockWordReg
-   // jmp fallThruLabel
-
+   // Code generated:
+   //
+   // outlinedStartLabel:
+   //    mov lockWordReg, [obj+lwOffset]
+   //    add lockWordReg, INC_DEC_VALUE/-INC_DEC_VALUE  ---> lock word with increased recursive count
+   //    mov lockWordMaskedReg, NON_INC_DEC_MASK
+   //    and lockWordMaskedReg, lockWordReg  ---> lock word masked out counter bits
+   //    cmp lockWordMaskedReg, vmThreadReg
+   //    jne jitMonitorEnterOrExitSnippetLabel
+   //    mov [obj+lwOffset], lockWordReg
+   //
+   // #if defined(TR_TARGET_64BIT) && (JAVA_SPEC_VERSION >= 19)
+   //    inc|dec [vmThreadReg + ownedMonitorCountOffset]
+   // #endif
+   //
+   // snippetRestartLabel:
+   //    jmp fallThruLabel
+   // outlinedEndLabel:
+   //
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
    TR::LabelSymbol *outlinedStartLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *outlinedEndLabel = generateLabelSymbol(cg);
@@ -4766,6 +4776,19 @@ void J9::X86::TreeEvaluator::inlineRecursiveMonitor(TR::Node          *node,
 
    generateLabelInstruction(TR::InstOpCode::JNE4, node, jitMonitorEnterOrExitSnippetLabel, cg);
    generateMemRegInstruction(TR::InstOpCode::SMemReg(use64bitOp), node, generateX86MemoryReference(objectReg, lwOffset, cg), lockWordReg, cg);
+
+#if defined(TR_TARGET_64BIT) && (JAVA_SPEC_VERSION >= 19)
+   // Adjust J9VMThread ownedMonitorCount for execution paths that do not
+   // go out of line to acquire the lock.  It is safe and efficient to do
+   // this unconditionally.  There is no need to check for overflow or
+   // underflow.
+   //
+   generateMemInstruction(
+      isMonitorEnter ? TR::InstOpCode::INC8Mem : TR::InstOpCode::DEC8Mem,
+      node,
+      generateX86MemoryReference(vmThreadReg, fej9->thisThreadGetOwnedMonitorCountOffset(), cg),
+      cg);
+#endif
 
    TR::RegisterDependencyConditions *restartDeps = generateRegisterDependencyConditions((uint8_t)0, 4, cg);
    restartDeps->addPostCondition(objectReg, TR::RealRegister::NoReg, cg);
@@ -4923,11 +4946,12 @@ J9::X86::TreeEvaluator::VMmonentEvaluator(
    cg->setImplicitExceptionPoint(NULL);
 
    TR::LabelSymbol *startLabel = generateLabelSymbol(cg);
-   TR::LabelSymbol *fallThru = generateLabelSymbol(cg);
-   TR::LabelSymbol *snippetFallThru = inlineRecursive ? generateLabelSymbol(cg) : fallThru;
+   TR::LabelSymbol *fallThruLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *inlinedMonEnterFallThruLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *snippetFallThruLabel = inlineRecursive ? generateLabelSymbol(cg) : fallThruLabel;
 
    startLabel->setStartInternalControlFlow();
-   fallThru->setEndInternalControlFlow();
+   fallThruLabel->setEndInternalControlFlow();
    generateLabelInstruction(TR::InstOpCode::label, node, startLabel, cg);
 
    TR::Register *vmThreadReg = cg->getVMThreadRegister();
@@ -4959,7 +4983,7 @@ J9::X86::TreeEvaluator::VMmonentEvaluator(
             node->setSymbolReference(comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_AMD64JitMonitorExitReservedPrimitive, true, true, true));
 
          exitLabel = generateLabelSymbol(cg);
-         TR_OutlinedInstructions *outlinedExitHelperCall = new (cg->trHeapMemory()) TR_OutlinedInstructions(node, TR::call, NULL, exitLabel, fallThru, cg);
+         TR_OutlinedInstructions *outlinedExitHelperCall = new (cg->trHeapMemory()) TR_OutlinedInstructions(node, TR::call, NULL, exitLabel, fallThruLabel, cg);
          cg->getOutlinedInstructionsList().push_front(outlinedExitHelperCall);
          }
 
@@ -5002,11 +5026,11 @@ J9::X86::TreeEvaluator::VMmonentEvaluator(
       TR::LabelSymbol *JITMonitorEntrySnippetLabel = generateLabelSymbol(cg);
       TR::TreeEvaluator::transactionalMemoryJITMonitorEntry(node, cg, startLabel, snippetLabel, JITMonitorEntrySnippetLabel, objectReg, lwOffset);
       outlinedHelperCall = new (cg->trHeapMemory()) TR_OutlinedInstructions(helperCallNode, TR::call, NULL,
-                                                            JITMonitorEntrySnippetLabel, (exitLabel) ? exitLabel : fallThru, cg);
+                                                            JITMonitorEntrySnippetLabel, (exitLabel) ? exitLabel : fallThruLabel, cg);
       }
    else
       outlinedHelperCall = new (cg->trHeapMemory()) TR_OutlinedInstructions(helperCallNode, TR::call, NULL,
-                                                         snippetLabel, (exitLabel) ? exitLabel : snippetFallThru, cg);
+                                                         snippetLabel, (exitLabel) ? exitLabel : snippetFallThruLabel, cg);
 
    if (helperCallNode != node)
       helperCallNode->recursivelyDecReferenceCount();
@@ -5028,7 +5052,7 @@ J9::X86::TreeEvaluator::VMmonentEvaluator(
       TR::LabelSymbol *inlineRecursiveSnippetLabel = generateLabelSymbol(cg);
       TR::LabelSymbol *jitMonitorEnterSnippetLabel = snippetLabel;
       snippetLabel = inlineRecursiveSnippetLabel;
-      TR::TreeEvaluator::inlineRecursiveMonitor(node, cg, fallThru, jitMonitorEnterSnippetLabel, inlineRecursiveSnippetLabel, objectReg, lwOffset, snippetFallThru, reservingLock);
+      TR::TreeEvaluator::inlineRecursiveMonitor(node, cg, fallThruLabel, jitMonitorEnterSnippetLabel, inlineRecursiveSnippetLabel, objectReg, lwOffset, snippetFallThruLabel, reservingLock);
       }
 
    // Compare the monitor slot in the object against zero.  If it succeeds
@@ -5176,7 +5200,7 @@ J9::X86::TreeEvaluator::VMmonentEvaluator(
       if (!TR::Options::_aggressiveLockReservation)
          {
          // Jump over the non-reservable path
-         generateLabelInstruction(TR::InstOpCode::JMP4, node, fallThru, cg);
+         generateLabelInstruction(TR::InstOpCode::JMP4, node, inlinedMonEnterFallThruLabel, cg);
 
          // It's possible that the lock may be available, but not reservable. In
          // that case we should try the usual cmpxchg for non-reserving enter.
@@ -5263,61 +5287,50 @@ J9::X86::TreeEvaluator::VMmonentEvaluator(
          }
       else
          {
-         #if defined(J9VM_OPT_REAL_TIME_LOCKING_SUPPORT)
-            // need to get monitor from cache, if we can
+         bool conditionallyReserve = false;
+         bool shouldConditionallyReserveForReservableClasses =
+            comp->getOption(TR_ReservingLocks)
+            && !TR::Options::_aggressiveLockReservation
+            && lwOffset > 0
+            && cg->getMonClass(node) != NULL;
+
+         if (shouldConditionallyReserveForReservableClasses)
+            {
+            TR_PersistentClassInfo *monClassInfo = comp
+               ->getPersistentInfo()
+               ->getPersistentCHTable()
+               ->findClassInfoAfterLocking(cg->getMonClass(node), comp);
+
+            if (monClassInfo != NULL && monClassInfo->isReservable())
+               conditionallyReserve = true;
+            }
+
+         if (!conditionallyReserve)
+            {
+            // we want to write thread reg into lock word
+            lockedReg = vmThreadReg;
+            }
+         else
+            {
             lockedReg = cg->allocateRegister();
             numDeps++;
-            generateRegMemInstruction(TR::InstOpCode::LRegMem(), node, lockedReg,
-                                      generateX86MemoryReference(vmThreadReg, fej9->thisThreadMonitorCacheOffset(), cg), cg);
-            generateRegRegInstruction(TR::InstOpCode::TESTRegReg(), node, lockedReg, lockedReg, cg);
-            generateLabelInstruction(TR::InstOpCode::JE4, node, snippetLabel, cg);
 
-         #else
-            bool conditionallyReserve = false;
-            bool shouldConditionallyReserveForReservableClasses =
-               comp->getOption(TR_ReservingLocks)
-               && !TR::Options::_aggressiveLockReservation
-               && lwOffset > 0
-               && cg->getMonClass(node) != NULL;
+            // Compute the value to put into the lock word based on the
+            // current value, which is either 0 or RES_BIT ("reservable").
+            //
+            //    0       ==> vmThreadReg
+            //    RES_BIT ==> vmThreadReg | RES_BIT | INC_DEC_VALUE
+            //
+            // For reservable locks, failure to reserve at this point would
+            // prevent any future reservation of the same lock.
 
-            if (shouldConditionallyReserveForReservableClasses)
-               {
-               TR_PersistentClassInfo *monClassInfo = comp
-                  ->getPersistentInfo()
-                  ->getPersistentCHTable()
-                  ->findClassInfoAfterLocking(cg->getMonClass(node), comp);
-
-               if (monClassInfo != NULL && monClassInfo->isReservable())
-                  conditionallyReserve = true;
-               }
-
-            if (!conditionallyReserve)
-               {
-               // we want to write thread reg into lock word
-               lockedReg = vmThreadReg;
-               }
-            else
-               {
-               lockedReg = cg->allocateRegister();
-               numDeps++;
-
-               // Compute the value to put into the lock word based on the
-               // current value, which is either 0 or RES_BIT ("reservable").
-               //
-               //    0       ==> vmThreadReg
-               //    RES_BIT ==> vmThreadReg | RES_BIT | INC_DEC_VALUE
-               //
-               // For reservable locks, failure to reserve at this point would
-               // prevent any future reservation of the same lock.
-
-               bool b64 = cg->comp()->target().is64Bit() && !fej9->generateCompressedLockWord();
-               generateRegRegInstruction(TR::InstOpCode::MOVRegReg(b64), node, lockedReg, eaxReal, cg);
-               generateRegImmInstruction(TR::InstOpCode::SHRRegImm1(b64), node, lockedReg, RES_BIT_POSITION, cg);
-               generateRegInstruction(TR::InstOpCode::NEGReg(b64), node, lockedReg, cg);
-               generateRegImmInstruction(TR::InstOpCode::ANDRegImms(b64), node, lockedReg, RES_BIT | INC_DEC_VALUE, cg);
-               generateRegRegInstruction(TR::InstOpCode::ADDRegReg(b64), node, lockedReg, vmThreadReg, cg);
-               }
-         #endif
+            bool b64 = cg->comp()->target().is64Bit() && !fej9->generateCompressedLockWord();
+            generateRegRegInstruction(TR::InstOpCode::MOVRegReg(b64), node, lockedReg, eaxReal, cg);
+            generateRegImmInstruction(TR::InstOpCode::SHRRegImm1(b64), node, lockedReg, RES_BIT_POSITION, cg);
+            generateRegInstruction(TR::InstOpCode::NEGReg(b64), node, lockedReg, cg);
+            generateRegImmInstruction(TR::InstOpCode::ANDRegImms(b64), node, lockedReg, RES_BIT | INC_DEC_VALUE, cg);
+            generateRegRegInstruction(TR::InstOpCode::ADDRegReg(b64), node, lockedReg, vmThreadReg, cg);
+            }
          }
 
       // try to swap into lock word
@@ -5327,6 +5340,20 @@ J9::X86::TreeEvaluator::VMmonentEvaluator(
 
       generateLabelInstruction(TR::InstOpCode::JNE4, node, snippetLabel, cg);
       }
+
+   generateLabelInstruction(TR::InstOpCode::label, node, inlinedMonEnterFallThruLabel, cg);
+
+#if defined(TR_TARGET_64BIT) && (JAVA_SPEC_VERSION >= 19)
+   // Adjust J9VMThread ownedMonitorCount for execution paths that do not
+   // go out of line to acquire the lock.  It is safe and efficient to do
+   // this unconditionally.  There is no need to check for overflow..
+   //
+   generateMemInstruction(
+      TR::InstOpCode::INC8Mem,
+      node,
+      generateX86MemoryReference(cg->getVMThreadRegister(), fej9->thisThreadGetOwnedMonitorCountOffset(), cg),
+      cg);
+#endif
 
    // Create dependencies for the registers used.
    // The dependencies must be in the order:
@@ -5354,16 +5381,7 @@ J9::X86::TreeEvaluator::VMmonentEvaluator(
 
    deps->stopAddingConditions();
 
-   #if defined(J9VM_OPT_REAL_TIME_LOCKING_SUPPORT)
-      // our lock is in the object, now need to advance to next monitor in cache
-      generateRegMemInstruction(TR::InstOpCode::LRegMem(), node, lockedReg,
-                                generateX86MemoryReference(lockedReg, fej9->getMonitorNextOffset(), cg), cg);
-      generateMemRegInstruction(TR::InstOpCode::SMemReg(), node,
-                                generateX86MemoryReference(vmThreadReg, fej9->thisThreadMonitorCacheOffset(), cg),
-                                lockedReg, cg);
-   #endif
-
-   generateLabelInstruction(TR::InstOpCode::label, node, fallThru, deps, cg);
+   generateLabelInstruction(TR::InstOpCode::label, node, fallThruLabel, deps, cg);
 
 #if defined(TRACE_LOCK_RESERVATION)
    {
@@ -5545,14 +5563,14 @@ TR::Register
    TR::Register *vmThreadReg = cg->getVMThreadRegister();
 
    TR::LabelSymbol *startLabel = generateLabelSymbol(cg);
-   TR::LabelSymbol *fallThru   = generateLabelSymbol(cg);
+   TR::LabelSymbol *fallThruLabel   = generateLabelSymbol(cg);
+   TR::LabelSymbol *inlinedMonExitFallThruLabel = generateLabelSymbol(cg);
    // Create the monitor exit snippet
    TR::LabelSymbol *snippetLabel = generateLabelSymbol(cg);
 
    if (isMonitorValueBasedOrValueType == TR_maybe)
       TR::TreeEvaluator::generateCheckForValueMonitorEnterOrExit(node, J9_CLASS_DISALLOWS_LOCKING_FLAGS, snippetLabel, cg);
 
-#if !defined(J9VM_OPT_REAL_TIME_LOCKING_SUPPORT)
    // Now that the object reference has been generated, see if this is the end
    // of a small synchronized block.
    // The definition of "small" depends on the method hotness and is measured
@@ -5565,11 +5583,10 @@ TR::Register
    if (hotness == scorching) maxInstructions = 30;
    else if (hotness == hot)  maxInstructions = 20;
    else                      maxInstructions = 10;
-#endif
 
    startLabel->setStartInternalControlFlow();
-   TR::LabelSymbol *snippetFallThru = inlineRecursive ? generateLabelSymbol(cg): fallThru;
-   fallThru->setEndInternalControlFlow();
+   TR::LabelSymbol *snippetFallThruLabel = inlineRecursive ? generateLabelSymbol(cg): fallThruLabel;
+   fallThruLabel->setEndInternalControlFlow();
    generateLabelInstruction(TR::InstOpCode::label, node, startLabel, cg);
 
    TR::Register *eaxReal     = 0;
@@ -5602,106 +5619,6 @@ TR::Register
 
    TR::LabelSymbol *monitorLookupCacheLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *fallThruFromMonitorLookupCacheLabel = generateLabelSymbol(cg);
-
-#if defined(J9VM_OPT_REAL_TIME_LOCKING_SUPPORT)
-   TR::LabelSymbol *decCountLabel = generateLabelSymbol(cg);
-
-   unlockedReg = cg->allocateRegister();
-   tempReg     = cg->allocateRegister();
-   eaxReal     = cg->allocateRegister();
-
-   numDeps += 3;
-
-   if (lwOffset <= 0)
-      {
-      generateRegImmInstruction(TR::InstOpCode::CMPRegImms(), node, objectClassReg, 0, cg);
-
-      generateCommonLockNurseryCodes(node,
-                               cg,
-                               false, //true for VMmonentEvaluator, false for VMmonexitEvaluator
-                               monitorLookupCacheLabel,
-                               fallThruFromMonitorLookupCacheLabel,
-                               snippetLabel,
-                               numDeps,
-                               lwOffset,
-                               objectClassReg,
-                               lookupOffsetReg,
-                               vmThreadReg,
-                               objectReg);
-      }
-
-
-   // load lock word
-   generateRegMemInstruction(TR::InstOpCode::LRegMem(), node, tempReg, getMemoryReference(objectClassReg, objectReg, lwOffset, cg), cg);
-
-   // extract monitor from lock word
-   generateRegRegInstruction(TR::InstOpCode::MOVRegReg(), node, unlockedReg, tempReg, cg);
-
-   #define LOCK_PINNED_BIT (0x1)
-   generateRegImmInstruction(TR::InstOpCode::ANDRegImms(), node, unlockedReg, ~((UDATA) LOCK_PINNED_BIT), cg);
-
-   // need a NULL test to snippet: about to dereference lock word
-   generateRegRegInstruction(TR::InstOpCode::TESTRegReg(), node, unlockedReg, unlockedReg, cg);
-   generateLabelInstruction(TR::InstOpCode::JE4, node, snippetLabel, cg);
-
-   // if OS monitors don't match, let snippet handle it
-   generateRegMemInstruction(TR::InstOpCode::LRegMem(), node, eaxReal,
-                             generateX86MemoryReference(unlockedReg, fej9->getMonitorOwnerOffset(), cg), cg);
-   generateRegMemInstruction(TR::InstOpCode::CMPRegMem(), node, eaxReal,
-                             generateX86MemoryReference(vmThreadReg, fej9->thisThreadOSThreadOffset(), cg), cg);
-   generateLabelInstruction(TR::InstOpCode::JNE4, node, snippetLabel, cg);
-
-   // monitors match so we can unlock it
-   // decrement count, maybe unlock object
-   generateRegMemInstruction(TR::InstOpCode::LRegMem(), node, eaxReal,
-                             generateX86MemoryReference(unlockedReg, fej9->getMonitorEntryCountOffset(), cg), cg);
-   generateRegImmInstruction(TR::InstOpCode::CMPRegImms(), node, eaxReal, 1, cg);
-   generateLabelInstruction(TR::InstOpCode::JA4, node, decCountLabel, cg);
-
-
-   // leaving main-line code path
-   // create the outlined path that decrements the count
-      {
-      TR_OutlinedInstructionsGenerator og(decCountLabel, node, cg);
-      generateMemInstruction(  TR::InstOpCode::DECMem(cg), node, generateX86MemoryReference(unlockedReg, fej9->getMonitorEntryCountOffset(), cg), cg);
-      generateLabelInstruction(TR::InstOpCode::JMP4,       node, fallThru, cg);
-
-      og.endOutlinedInstructionSequence();
-      }
-
-   // back to main-line code path
-
-   // unlock object...but only if lock pinned bit is clear
-   generateRegRegInstruction(TR::InstOpCode::CMPRegReg(), node, eaxReal, unlockedReg, cg);
-   generateLabelInstruction(TR::InstOpCode::JNE4, node, snippetLabel, cg);
-
-
-   TR::InstOpCode::Mnemonic op = cg->comp()->target().isSMP() ? TR::InstOpCode::LCMPXCHGMemReg(gen64BitInstr) : TR::InstOpCode::CMPXCHGMemReg(gen64BitInstr);
-
-   // compare-and-swap to unlock:
-   generateRegRegInstruction(TR::InstOpCode::XORRegReg(), node, eaxReal, eaxReal, cg);
-   cg->setImplicitExceptionPoint(generateMemRegInstruction(op, node, getMemoryReference(objectClassReg, objectReg, lwOffset, cg), eaxReal, cg));
-
-   generateRegRegInstruction(TR::InstOpCode::CMPRegReg(), node, eaxReal, unlockedReg, cg);
-   generateLabelInstruction(TR::InstOpCode::JNE4, node, snippetLabel, cg);
-
-   // unlocked the object, just need to put monitor back in thread cache
-   generateRegMemInstruction(TR::InstOpCode::LRegMem(), node, eaxReal,
-                             generateX86MemoryReference(vmThreadReg, fej9->thisThreadMonitorCacheOffset(), cg), cg);
-   generateMemRegInstruction(TR::InstOpCode::SMemReg(), node,
-                             generateX86MemoryReference(unlockedReg, fej9->getMonitorNextOffset(), cg), eaxReal, cg);
-   generateMemRegInstruction(TR::InstOpCode::SMemReg(), node,
-                             generateX86MemoryReference(vmThreadReg, fej9->thisThreadMonitorCacheOffset(), cg),
-                             unlockedReg, cg);
-
-   TR_OutlinedInstructions *outlinedHelperCall = new (cg->trHeapMemory()) TR_OutlinedInstructions(node, TR::call, NULL, snippetLabel, fallThru, cg);
-   cg->getOutlinedInstructionsList().push_front(outlinedHelperCall);
-   cg->generateDebugCounter(
-      outlinedHelperCall->getFirstInstruction(),
-      TR::DebugCounter::debugCounterName(comp, "helperCalls/%s/(%s)/%d/%d", node->getOpCode().getName(), comp->signature(), node->getByteCodeInfo().getCallerIndex(), node->getByteCodeInfo().getByteCodeIndex()),
-      1, TR::DebugCounter::Cheap);
-
-#else
 
    if (lwOffset <= 0)
       {
@@ -5762,7 +5679,7 @@ TR::Register
          node->setSymbolReference(comp->getSymRefTab()->findOrCreateRuntimeHelper(helper, true, true, true));
          }
       }
-   TR_OutlinedInstructions *outlinedHelperCall = new (cg->trHeapMemory()) TR_OutlinedInstructions(node, TR::call, NULL, snippetLabel, snippetFallThru, cg);
+   TR_OutlinedInstructions *outlinedHelperCall = new (cg->trHeapMemory()) TR_OutlinedInstructions(node, TR::call, NULL, snippetLabel, snippetFallThruLabel, cg);
    cg->getOutlinedInstructionsList().push_front(outlinedHelperCall);
    cg->generateDebugCounter(
       outlinedHelperCall->getFirstInstruction(),
@@ -5774,7 +5691,7 @@ TR::Register
       TR::LabelSymbol *inlineRecursiveSnippetLabel = generateLabelSymbol(cg);
       TR::LabelSymbol *jitMonitorExitSnippetLabel = snippetLabel;
       snippetLabel = inlineRecursiveSnippetLabel;
-      TR::TreeEvaluator::inlineRecursiveMonitor(node, cg, fallThru, jitMonitorExitSnippetLabel, inlineRecursiveSnippetLabel, objectReg, lwOffset, snippetFallThru, reservingLock);
+      TR::TreeEvaluator::inlineRecursiveMonitor(node, cg, fallThruLabel, jitMonitorExitSnippetLabel, inlineRecursiveSnippetLabel, objectReg, lwOffset, snippetFallThruLabel, reservingLock);
       }
 
    bool reservingDecrementNeeded = false;
@@ -5897,7 +5814,7 @@ TR::Register
 
    if (reservingLock && !TR::Options::_aggressiveLockReservation)
       {
-      generateLabelInstruction(TR::InstOpCode::JMP4, node, fallThru, cg);
+      generateLabelInstruction(TR::InstOpCode::JMP4, node, inlinedMonExitFallThruLabel, cg);
 
       // Avoid the helper for non-recursive exit in case it isn't reserved
       generateLabelInstruction(TR::InstOpCode::label, node, mismatchLabel, cg);
@@ -5908,8 +5825,19 @@ TR::Register
       generateMemImmInstruction(TR::InstOpCode::SMemImm4(gen64BitInstr), node, lwMR, 0, cg);
       }
 
-#endif // J9VM_OPT_REAL_TIME_LOCKING_SUPPORT
+   generateLabelInstruction(TR::InstOpCode::label, node, inlinedMonExitFallThruLabel, cg);
 
+#if defined(TR_TARGET_64BIT) && (JAVA_SPEC_VERSION >= 19)
+   // Adjust J9VMThread ownedMonitorCount for execution paths that do not
+   // go out of line to release the lock.  It is safe and efficient to do
+   // this unconditionally.  There is no need to check for underflow.
+   //
+   generateMemInstruction(
+      TR::InstOpCode::DEC8Mem,
+      node,
+      generateX86MemoryReference(cg->getVMThreadRegister(), fej9->thisThreadGetOwnedMonitorCountOffset(), cg),
+      cg);
+#endif
 
    // Create dependencies for the registers used.
    // The first dependencies must be objectReg, vmThreadReg, tempReg
@@ -5920,9 +5848,7 @@ TR::Register
    deps->addPostCondition(objectReg, TR::RealRegister::NoReg, cg);
    deps->addPostCondition(cg->getVMThreadRegister(), TR::RealRegister::ebp, cg);
 
-#if !defined(J9VM_OPT_REAL_TIME_LOCKING_SUPPORT)
    if (node->isReadMonitor())
-#endif
       {
       deps->addPostCondition(unlockedReg, TR::RealRegister::NoReg, cg);
       deps->addPostCondition(eaxReal, TR::RealRegister::eax, cg);
@@ -5939,7 +5865,7 @@ TR::Register
       deps->addPostCondition(objectClassReg, TR::RealRegister::NoReg, cg);
 
    deps->stopAddingConditions();
-   generateLabelInstruction(TR::InstOpCode::label, node, fallThru, deps, cg);
+   generateLabelInstruction(TR::InstOpCode::label, node, fallThruLabel, deps, cg);
 
 #if defined(TRACE_LOCK_RESERVATION)
    if (reservingLock)
