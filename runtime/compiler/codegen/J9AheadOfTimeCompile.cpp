@@ -1683,6 +1683,9 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
 
       case TR_InlinedInterfaceMethod:
       case TR_InlinedVirtualMethod:
+      case TR_InlinedStaticMethod:
+      case TR_InlinedSpecialMethod:
+      case TR_InlinedAbstractMethod:
          {
          TR_RelocationRecordInlinedMethod *imRecord = reinterpret_cast<TR_RelocationRecordInlinedMethod *>(reloRecord);
 
