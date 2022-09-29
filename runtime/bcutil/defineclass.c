@@ -551,8 +551,8 @@ internalLoadROMClass(J9VMThread * vmThread, J9LoadROMClassData *loadData, J9Tran
 	/* Determine allowed class file version */
 #ifdef J9VM_OPT_SIDECAR
 	{
-		/* majorVer is introduced to workaround JDK8 zOS 64bit compiler issue. */
-		U_32 majorVer = BCT_JavaMajorVersionShifted(JAVA_SPEC_VERSION);
+		/* Using local variable majorVer avoids a z/OS 64-bit compiler issue. */
+		U_32 majorVer = BCT_JavaMaxMajorVersionShifted;
 		translationFlags |= majorVer;
 	}
 #endif
