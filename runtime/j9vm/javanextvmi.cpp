@@ -437,6 +437,12 @@ JVM_GetClassFileVersion(JNIEnv *env, jclass cls)
 
 	return version;
 }
+
+JNIEXPORT void JNICALL
+JVM_VirtualThreadHideFrames(JNIEnv *env, jobject vthread, jboolean hide)
+{
+	/* TODO toggle hiding of stack frames for JVMTI */
+}
 #endif /* JAVA_SPEC_VERSION >= 20 */
 
 } /* extern "C" */
