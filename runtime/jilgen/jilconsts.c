@@ -274,6 +274,9 @@ writeConstants(OMRPortLibrary *OMRPORTLIB, IDATA fd)
 	jint rc = JNI_OK;
 	UDATA err =
 			/* Build flags */
+#if defined(JAVA_SPEC_VERSION)
+			writeConstant(OMRPORTLIB, fd, "ASM_JAVA_SPEC_VERSION", JAVA_SPEC_VERSION) |
+#endif /* JAVA_SPEC_VERSION */
 #if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
 			writeConstant(OMRPORTLIB, fd, "ASM_J9VM_INTERP_ATOMIC_FREE_JNI", 1) |
 #endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
@@ -483,6 +486,11 @@ writeConstants(OMRPortLibrary *OMRPORTLIB, IDATA fd)
 			writeConstant(OMRPORTLIB, fd, "J9TR_VMThread_gsParameters_operandAddr", offsetof(J9VMThread, gsParameters.operandAddr)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_VMThread_gsParameters_returnAddr", offsetof(J9VMThread, gsParameters.returnAddr)) |
 #endif /* OMR_GC_CONCURRENT_SCAVENGER */
+
+#if JAVA_SPEC_VERSION >= 19
+			writeConstant(OMRPORTLIB, fd, "J9TR_VMThread_ownedMonitorCount", offsetof(J9VMThread, ownedMonitorCount)) |
+			writeConstant(OMRPORTLIB, fd, "J9TR_VMThread_callOutCount", offsetof(J9VMThread, callOutCount)) |
+#endif
 
 			/* J9StackWalkState */
 			writeConstant(OMRPORTLIB, fd, "J9TR_J9StackWalkState_restartPoint", offsetof(J9StackWalkState, restartPoint)) |
