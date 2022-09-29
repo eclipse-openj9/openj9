@@ -216,8 +216,6 @@ public class Continuation {
 	 */
 	public static boolean yield(ContinuationScope scope) {
 		/* TODO find matching scope to yield */
-		Thread carrierThread = JLA.currentCarrierThread();
-		Continuation cont = JLA.getContinuation(carrierThread);
 		int rcPinned = isPinnedImpl();
 		if (rcPinned != 0) {
 			Pinned reason = null;
@@ -230,19 +228,17 @@ public class Continuation {
 			} else {
 				throw new AssertionError("Unknown pinned error code: " + rcPinned);
 			}
-			cont.onPinned(reason);
-		} else {
-			yieldImpl();
-			cont.onContinue();
+			throw new IllegalStateException("Continuation is pinned: " + reason);
 		}
-		return (rcPinned == 0);
+		return yieldImpl();
 	}
 
 	protected void onPinned(Pinned reason) {
-		throw new IllegalStateException("Continuation is pinned: " + reason);
+		throw new UnsupportedOperationException();
 	}
 
 	protected void onContinue() {
+		throw new UnsupportedOperationException();
 	}
 
 	public boolean isDone() {

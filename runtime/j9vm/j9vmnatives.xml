@@ -412,6 +412,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<exports group="jdk20">
 		<!-- Additions for Java 20 (General) -->
 		<export name="JVM_GetClassFileVersion"/>
+		<export name="JVM_VirtualThreadHideFrames"/>
 	</exports>
 
 </exportlists>
