@@ -427,7 +427,7 @@ JVM_GetClassFileVersion(JNIEnv *env, jclass cls)
 		J9ROMClass *romClass = clazz->romClass;
 
 		if (J9ROMCLASS_IS_PRIMITIVE_OR_ARRAY(romClass)) {
-			version = BCT_JavaMajorVersionShifted(JAVA_SPEC_VERSION) >> BCT_MajorClassFileVersionMaskShift;
+			version = BCT_JavaMaxMajorVersionUnshifted;
 		} else {
 			version = (jint)((romClass->minorVersion << 16) + romClass->majorVersion);
 		}

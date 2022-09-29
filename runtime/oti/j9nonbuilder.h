@@ -2071,9 +2071,10 @@ typedef struct J9BCTranslationData {
 #define BCT_MajorClassFileVersionMaskShift  24
 
 /* A given Java feature version uses class-file format (version) + 44. */
-#define BCT_JavaMajorVersionShifted(java_version)  ((44 + (U_32)(java_version)) << BCT_MajorClassFileVersionMaskShift)
-/* When adding support for a new Java feature version, update this appropriately. */
-#define BCT_JavaMaxMajorVersionShifted  BCT_JavaMajorVersionShifted(19)
+#define BCT_JavaMajorVersionUnshifted(java_version)  (44 + (U_32)(java_version))
+#define BCT_JavaMajorVersionShifted(java_version)  (BCT_JavaMajorVersionUnshifted(java_version) << BCT_MajorClassFileVersionMaskShift)
+#define BCT_JavaMaxMajorVersionUnshifted  BCT_JavaMajorVersionUnshifted(JAVA_SPEC_VERSION)
+#define BCT_JavaMaxMajorVersionShifted  BCT_JavaMajorVersionShifted(JAVA_SPEC_VERSION)
 
 typedef struct J9RAMClassFreeListBlock {
 	UDATA size;
