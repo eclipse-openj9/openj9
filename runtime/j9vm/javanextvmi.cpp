@@ -445,4 +445,12 @@ JVM_VirtualThreadHideFrames(JNIEnv *env, jobject vthread, jboolean hide)
 }
 #endif /* JAVA_SPEC_VERSION >= 20 */
 
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+JNIEXPORT jboolean JNICALL
+JVM_IsValhallaEnabled()
+{
+	return JNI_TRUE;
+}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+
 } /* extern "C" */
