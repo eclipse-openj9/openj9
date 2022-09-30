@@ -25,6 +25,7 @@
 #include "j9vmnls.h"
 #include "ut_j9vm.h"
 #include "vm_api.h"
+#include "AtomicSupport.hpp"
 #include "ContinuationHelpers.hpp"
 #include "OutOfLineINL.hpp"
 #include "VMHelpers.hpp"
@@ -143,6 +144,13 @@ yieldContinuation(J9VMThread *currentThread)
 	VM_ContinuationHelpers::swapFieldsWithContinuation(currentThread, continuation);
 
 	currentThread->currentContinuation = NULL;
+
+	/* We need a full fence here to preserve happens-before relationship on PPC and other weakly
+	 * ordered architectures since learning/reservation is turned on by default. Since we have the
+	 * global pin lock counters we only need to need to address yield points, as thats the
+	 * only time a different virtualThread can run on the underlying j9vmthread.
+	 */
+	VM_AtomicSupport::readWriteBarrier();
 
 	return result;
 }
