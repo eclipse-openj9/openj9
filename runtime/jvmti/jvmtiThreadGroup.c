@@ -302,7 +302,10 @@ getThreadGroupChildrenImpl(J9JavaVM *vm, J9VMThread *currentThread, jobject grou
 			j9object_t thread = J9JAVAARRAYOFOBJECT_LOAD(currentThread, childrenThreads, i);
 			J9VMThread *targetThread = NULL;
 
-			if (JVMTI_ERROR_NONE == getVMThread(currentThread, (jthread)&thread, &targetThread, FALSE, TRUE)) {
+			rc = getVMThread(
+					currentThread, (jthread)&thread, &targetThread, JVMTI_ERROR_NONE,
+					J9JVMTI_GETVMTHREAD_ERROR_ON_NULL_JTHREAD | J9JVMTI_GETVMTHREAD_ERROR_ON_DEAD_THREAD);
+			if (JVMTI_ERROR_NONE == rc) {
 				threads[numLiveThreads++] = (jthread)vmFuncs->j9jni_createLocalRef((JNIEnv *)currentThread, thread);
 				releaseVMThread(currentThread, targetThread, (jthread)&thread);
 			}

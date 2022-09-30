@@ -95,7 +95,7 @@ static UDATA watchedClassEqual (void *lhsEntry, void *rhsEntry, void *userData);
 
 
 jvmtiError
-getVMThread(J9VMThread *currentThread, jthread thread, J9VMThread **vmThreadPtr, UDATA allowNull, UDATA mustBeAlive)
+getVMThread(J9VMThread *currentThread, jthread thread, J9VMThread **vmThreadPtr, jvmtiError vThreadError, UDATA flags)
 {
 	J9JavaVM *vm = currentThread->javaVM;
 	j9object_t threadObject = NULL;
@@ -106,13 +106,30 @@ getVMThread(J9VMThread *currentThread, jthread thread, J9VMThread **vmThreadPtr,
 #endif /* JAVA_SPEC_VERSION >= 19 */
 
 	if (NULL == thread) {
-		if (allowNull) {
-			*vmThreadPtr = currentThread;
-			return JVMTI_ERROR_NONE;
+		if (OMR_ARE_ANY_BITS_SET(flags, J9JVMTI_GETVMTHREAD_ERROR_ON_NULL_JTHREAD)) {
+			return JVMTI_ERROR_INVALID_THREAD;
 		}
-		return JVMTI_ERROR_INVALID_THREAD;
+#if JAVA_SPEC_VERSION >= 19
+		if (OMR_ARE_ANY_BITS_SET(flags, J9JVMTI_GETVMTHREAD_ERROR_ON_VIRTUALTHREAD)
+		&& IS_JAVA_LANG_VIRTUALTHREAD(currentThread, currentThread->threadObject)
+		) {
+			return vThreadError;
+		}
+#endif /* JAVA_SPEC_VERSION >= 19 */
+		*vmThreadPtr = currentThread;
+		return JVMTI_ERROR_NONE;
 	} else {
 		threadObject = J9_JNI_UNWRAP_REFERENCE(thread);
+		if (!IS_JAVA_LANG_THREAD(currentThread, threadObject)) {
+			return JVMTI_ERROR_INVALID_THREAD;
+		}
+#if JAVA_SPEC_VERSION >= 19
+		if (OMR_ARE_ANY_BITS_SET(flags, J9JVMTI_GETVMTHREAD_ERROR_ON_VIRTUALTHREAD)
+		&& IS_JAVA_LANG_VIRTUALTHREAD(currentThread, threadObject)
+		) {
+			return vThreadError;
+		}
+#endif /* JAVA_SPEC_VERSION >= 19 */
 		if (currentThread->threadObject == threadObject) {
 			*vmThreadPtr = currentThread;
 			return JVMTI_ERROR_NONE;
@@ -122,7 +139,7 @@ getVMThread(J9VMThread *currentThread, jthread thread, J9VMThread **vmThreadPtr,
 	/* Make sure the vmThread stays alive while it is being used. */
 	omrthread_monitor_enter(vm->vmThreadListMutex);
 #if JAVA_SPEC_VERSION >= 19
-	isVirtualThread = IS_VIRTUAL_THREAD(currentThread, threadObject);
+	isVirtualThread = IS_JAVA_LANG_VIRTUALTHREAD(currentThread, threadObject);
 	if (isVirtualThread) {
 		omrthread_monitor_enter(vm->liveVirtualThreadListMutex);
 
@@ -148,7 +165,7 @@ getVMThread(J9VMThread *currentThread, jthread thread, J9VMThread **vmThreadPtr,
 	}
 
 	if (!isThreadAlive) {
-		if (mustBeAlive) {
+		if (OMR_ARE_ANY_BITS_SET(flags, J9JVMTI_GETVMTHREAD_ERROR_ON_DEAD_THREAD)) {
 #if JAVA_SPEC_VERSION >= 19
 			if (isVirtualThread) {
 				omrthread_monitor_exit(vm->liveVirtualThreadListMutex);
@@ -174,8 +191,9 @@ getVMThread(J9VMThread *currentThread, jthread thread, J9VMThread **vmThreadPtr,
 	omrthread_monitor_exit(vm->vmThreadListMutex);
 
 #if JAVA_SPEC_VERSION >= 19
-	if (mustBeAlive) {
-		Assert_JVMTI_true((NULL != targetThread) || isVirtualThread);
+	if (isThreadAlive && !isVirtualThread) {
+		/* targetThread should not be NULL for alive non-virtual threads. */
+		Assert_JVMTI_true(NULL != targetThread);
 	}
 #endif /* JAVA_SPEC_VERSION >= 19 */
 
@@ -190,7 +208,7 @@ releaseVMThread(J9VMThread *currentThread, J9VMThread *targetThread, jthread thr
 #if JAVA_SPEC_VERSION >= 19
 	if (NULL != thread) {
 		j9object_t threadObject = J9_JNI_UNWRAP_REFERENCE(thread);
-		if ((currentThread->threadObject != threadObject) && IS_VIRTUAL_THREAD(currentThread, threadObject)) {
+		if ((currentThread->threadObject != threadObject) && IS_JAVA_LANG_VIRTUALTHREAD(currentThread, threadObject)) {
 			J9JavaVM *vm = currentThread->javaVM;
 			I_64 vthreadInspectorCount = 0;
 			/* Release the virtual thread (allow it to die) now that we are no longer inspecting it. */
@@ -788,7 +806,10 @@ getVirtualThreadState(J9VMThread *currentThread, jthread thread)
 	J9VMThread *targetThread = NULL;
 	Assert_JVMTI_notNull(thread);
 	Assert_JVMTI_mustHaveVMAccess(currentThread);
-	if (JVMTI_ERROR_NONE == getVMThread(currentThread, thread, &targetThread, FALSE, FALSE)) {
+	rc = getVMThread(
+			currentThread, thread, &targetThread, JVMTI_ERROR_NONE,
+			J9JVMTI_GETVMTHREAD_ERROR_ON_NULL_JTHREAD);
+	if (JVMTI_ERROR_NONE == rc) {
 		if (NULL != targetThread) {
 			vm->internalVMFunctions->haltThreadForInspection(currentThread, targetThread);
 			rc = getThreadState(currentThread, targetThread->carrierThreadObject);
@@ -1604,7 +1625,9 @@ setEventNotificationMode(J9JVMTIEnv * j9env, J9VMThread * currentThread, jint mo
 	} else {
 		j9object_t threadObject = J9_JNI_UNWRAP_REFERENCE(event_thread);
 		J9VMThread *vmThreadForTLS = NULL;
-		rc = getVMThread(currentThread, event_thread, &targetThread, TRUE, TRUE);
+		rc = getVMThread(
+				currentThread, event_thread, &targetThread, JVMTI_ERROR_NONE,
+				J9JVMTI_GETVMTHREAD_ERROR_ON_DEAD_THREAD);
 		if (rc != JVMTI_ERROR_NONE) {
 			goto done;
 		}
@@ -1616,10 +1639,10 @@ setEventNotificationMode(J9JVMTIEnv * j9env, J9VMThread * currentThread, jint mo
 			goto done;
 		}
 		if (NULL == targetThread) {
-			/* targetThread is NULL only for virtual threads, as per the assertion in getVMThread,
-			 * when mustBeAlive is TRUE. vmThreadForTLS is only used to acquire J9JavaVM in
-			 * createThreadData and jvmtiTLSGet. If targetThread is NULL, currentThread is passed
-			 * to createThreadData and jvmtiTLSGet for retrieving J9JavaVM in JDK19+.
+			/* targetThread is NULL only for virtual threads, as per the assertion in getVMThread.
+			 * vmThreadForTLS is only used to acquire J9JavaVM in createThreadData and jvmtiTLSGet.
+			 * If targetThread is NULL, currentThread is passed to createThreadData and jvmtiTLSGet
+			 * for retrieving J9JavaVM in JDK19+.
 			 */
 			vmThreadForTLS = currentThread;
 		}
@@ -1915,7 +1938,7 @@ genericWalkStackFramesHelper(J9VMThread *currentThread, J9VMThread *targetThread
 	UDATA rc = J9_STACKWALK_RC_NONE;
 
 #if JAVA_SPEC_VERSION >= 19
-	if (IS_VIRTUAL_THREAD(currentThread, threadObject)) {
+	if (IS_JAVA_LANG_VIRTUALTHREAD(currentThread, threadObject)) {
 		if (NULL != targetThread) {
 			walkState->walkThread = targetThread;
 			rc = vm->walkStackFrames(currentThread, walkState);
@@ -1947,7 +1970,7 @@ J9VMContinuation *
 getJ9VMContinuationToWalk(J9VMThread *currentThread, J9VMThread *targetThread, j9object_t threadObject)
 {
 	J9VMContinuation *continuation = NULL;
-	if (IS_VIRTUAL_THREAD(currentThread, threadObject)) {
+	if (IS_JAVA_LANG_VIRTUALTHREAD(currentThread, threadObject)) {
 		if (NULL == targetThread) {
 			/* An unmounted virtual thread will have a valid J9VMContinuation. */
 			j9object_t contObject = (j9object_t)J9VMJAVALANGVIRTUALTHREAD_CONT(currentThread, threadObject);
