@@ -1237,7 +1237,11 @@ MM_WriteOnceCompactor::fixupContinuationObject(MM_EnvironmentVLHGC* env, J9Objec
 	fixupMixedObject(env, objectPtr, cache);
 
 	J9VMThread *currentThread = (J9VMThread *)env->getLanguageVMThread();
-	if (VM_VMHelpers::needScanStacksForContinuation(currentThread, objectPtr)) {
+	/* In sliding compaction we must fix slots exactly once. Since we will fixup stack slots of
+	 * mounted Virtual threads later during root fixup, we will skip it during this heap fixup pass
+	 * (hence passing true for scanOnlyUnmounted parameter).
+	 */
+	if (VM_VMHelpers::needScanStacksForContinuation(currentThread, objectPtr, true)) {
 		StackIteratorData4WriteOnceCompactor localData;
 		localData.writeOnceCompactor = this;
 		localData.env = env;

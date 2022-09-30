@@ -98,6 +98,7 @@ enterContinuation(J9VMThread *currentThread, j9object_t continuationObject)
 	Assert_VM_Null(currentThread->currentContinuation);
 
 	VM_ContinuationHelpers::swapFieldsWithContinuation(currentThread, continuation);
+	continuation->carrierThread = currentThread;
 	currentThread->currentContinuation = continuation;
 
 	/* Reset counters which determine if the current continuation is pinned. */
@@ -142,7 +143,7 @@ yieldContinuation(J9VMThread *currentThread)
 	Assert_VM_notNull(currentThread->currentContinuation);
 
 	VM_ContinuationHelpers::swapFieldsWithContinuation(currentThread, continuation);
-
+	continuation->carrierThread = NULL;
 	currentThread->currentContinuation = NULL;
 
 	/* We need a full fence here to preserve happens-before relationship on PPC and other weakly

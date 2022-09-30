@@ -269,7 +269,7 @@ extern J9_CFUNC UDATA ownableSynchronizerObjectCreated(J9VMThread *vmThread, j9o
 extern J9_CFUNC UDATA continuationObjectCreated(J9VMThread *vmThread, j9object_t object);
 
 extern J9_CFUNC void preMountContinuation(J9VMThread *vmThread, j9object_t object);
-extern J9_CFUNC void postDismountContinuation(J9VMThread *vmThread, j9object_t object);
+extern J9_CFUNC void postUnmountContinuation(J9VMThread *vmThread, j9object_t object);
 
 extern J9_CFUNC void j9gc_notifyGCOfClassReplacement(J9VMThread *vmThread, J9Class *originalClass, J9Class *replacementClass, UDATA isFastHCR);
 
