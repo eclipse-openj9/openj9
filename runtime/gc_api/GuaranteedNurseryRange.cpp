@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -60,13 +60,8 @@ extern "C" {
 void
 j9mm_get_guaranteed_nursery_range(J9JavaVM* javaVM, void** start, void** end)
 {
-#if defined (J9VM_GC_GENERATIONAL)
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(javaVM->omrVM);
 	extensions->getGuaranteedNurseryRange(start, end);
-#else /* J9VM_GC_GENERATIONAL */
-	*start = NULL;
-	*end = NULL;
-#endif /* J9VM_GC_GENERATIONAL */
 }
 
 }
