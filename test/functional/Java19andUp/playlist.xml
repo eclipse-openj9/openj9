@@ -24,7 +24,7 @@
 	<test>
 		<testCaseName>Jep425Tests_testVirtualThread</testCaseName>
 		<variations>
-			<variation>--enable-preview -Xint -Xgcpolicy:nogc</variation>
+			<variation>--enable-preview -Xint -Xgcpolicy:optthruput</variation>
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) $(JAVA_COMMAND) $(JVM_OPTIONS) \
 			--add-opens java.base/java.lang=ALL-UNNAMED \
@@ -35,7 +35,7 @@
 			-excludegroups $(DEFAULT_EXCLUDE); \
 			$(TEST_STATUS)
 		</command>
-		<platformRequirements>bits.64,^arch.390,^arch.arm,^arch.riscv,^os.zos,^os.sunos,^os.osx</platformRequirements>
+		<platformRequirements>bits.64,^os.zos,^os.sunos</platformRequirements>
 		<levels>
 			<level>sanity</level>
 		</levels>
