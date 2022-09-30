@@ -6648,10 +6648,6 @@ TR_J9InnerPreexistenceInfo::perform(TR::Compilation *comp, TR::Node *guardNode, 
          ((TR_J9InnerPreexistenceInfo *)point->_callStack->_innerPrexInfo)->addInnerAssumption(a);
          disableTailRecursion = true;
 
-         // Tell compilation that this guard is to be removed
-         //
-         comp->removeVirtualGuard(virtualGuard);
-
          // "Remove" the guard node
          //
          TR_ASSERT(guardNode->getOpCodeValue() == TR::ificmpne ||
@@ -6660,7 +6656,7 @@ TR_J9InnerPreexistenceInfo::perform(TR::Compilation *comp, TR::Node *guardNode, 
                 "Wrong kind of if discovered for a virtual guard");
          guardNode->getFirstChild()->recursivelyDecReferenceCount();
          guardNode->setAndIncChild(0, guardNode->getSecondChild());
-         guardNode->resetIsTheVirtualGuardForAGuardedInlinedCall();
+         guardNode->setVirtualGuardInfo(NULL, comp);
 
          // FIXME:
          //printf("---$$$--- inner prex in %s\n", comp->signature());
