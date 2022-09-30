@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -418,7 +418,8 @@ class TR_CHTable
 
    void commitVirtualGuard(TR_VirtualGuard *info, List<TR_VirtualGuardSite> &sites,
                            TR_PersistentCHTable *table, TR::Compilation *comp);
-   void commitOSRVirtualGuards(TR::Compilation *comp, TR::list<TR_VirtualGuard*> &vguards);
+   void commitOSRVirtualGuards(
+      TR::Compilation *comp, const TR::Compilation::GuardSet &vguards);
 #if defined(J9VM_OPT_JITSERVER)
    CHTableCommitData computeDataForCHTableCommit(TR::Compilation *comp);
 #endif

@@ -273,7 +273,7 @@ bool TR_CHTable::commit(TR::Compilation *comp)
    if (canSkipCommit(comp))
       return true;
 
-   TR::list<TR_VirtualGuard*> &vguards = comp->getVirtualGuards();
+   const TR::Compilation::GuardSet &vguards = comp->getVirtualGuards();
    TR::list<TR_VirtualGuardSite*> *sideEffectPatchSites = comp->getSideEffectGuardPatchSites();
 
    cleanupNewlyExtendedInfo(comp);
@@ -423,7 +423,8 @@ bool TR_CHTable::commit(TR::Compilation *comp)
    }
 
 void
-TR_CHTable::commitOSRVirtualGuards(TR::Compilation *comp, TR::list<TR_VirtualGuard*> &vguards)
+TR_CHTable::commitOSRVirtualGuards(
+   TR::Compilation *comp, const TR::Compilation::GuardSet &vguards)
    {
    // Count patch sites with OSR assumptions
    int osrSites = 0;
@@ -806,7 +807,7 @@ TR_CHTable::computeDataForCHTableCommit(TR::Compilation *comp)
    cleanupNewlyExtendedInfo(comp);
 
    // collect virtual guard info
-   TR::list<TR_VirtualGuard*> &vguards = comp->getVirtualGuards();
+   const TR::Compilation::GuardSet &vguards = comp->getVirtualGuards();
    std::vector<VirtualGuardForCHTable> serialVGuards;
    serialVGuards.reserve(vguards.size());
 

@@ -44,7 +44,7 @@ static bool generatesFear(TR::Compilation *comp, TR_FearPointAnalysis &fearAnaly
 
 static bool hasHCRGuard(TR::Compilation *comp)
    {
-   TR::list<TR_VirtualGuard*> &virtualGuards = comp->getVirtualGuards();
+   const TR::Compilation::GuardSet &virtualGuards = comp->getVirtualGuards();
    for (auto itr = virtualGuards.begin(), end = virtualGuards.end(); itr != end; ++itr)
       {
       if ((*itr)->getKind() == TR_HCRGuard || (*itr)->mergedWithHCRGuard())
@@ -354,7 +354,6 @@ void TR_OSRGuardInsertion::removeHCRGuards(TR_BitVector &fearGeneratingNodes, TR
              && performTransformation(comp(), "O^O HCR GUARD REMOVAL: removing HCRGuard node n%dn\n", node->getGlobalIndex()))
             {
             comp()->addClassForOSRRedefinition(guardInfo->getThisClass());
-            comp()->removeVirtualGuard(guardInfo);
 
             // When removing the HCR branch, first remove the successor edges from the existing HCR block
             // This allows the branch removal operation to skip expensive checks when structure has been modified
