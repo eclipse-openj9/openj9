@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -245,16 +245,17 @@ int32_t TR_GlobalLiveVariablesForGC::perform()
       if (comp()->getOption(TR_MimicInterpreterFrameShape))
          ignoreOSRuses = true;
 
-      TR_Liveness liveLocals(comp(), optimizer(), comp()->getFlowGraph()->getStructure(), ignoreOSRuses, NULL, false, comp()->getOption(TR_EnableAggressiveLiveness));
+      TR_Liveness *liveLocals = new (stackMemoryRegion) TR_Liveness(comp(), optimizer(), comp()->getFlowGraph()->getStructure(), ignoreOSRuses, NULL, false, comp()->getOption(TR_EnableAggressiveLiveness));
+      liveLocals->perform(comp()->getFlowGraph()->getStructure());
 
       for (TR::CFGNode *cfgNode = comp()->getFlowGraph()->getFirstNode(); cfgNode; cfgNode = cfgNode->getNext())
          {
-         TR::Block *block     = toBlock(cfgNode);
-         int32_t blockNum    = block->getNumber();
-         if (blockNum > 0 && liveLocals._blockAnalysisInfo[blockNum])
+         TR::Block *block = toBlock(cfgNode);
+         int32_t blockNum = block->getNumber();
+         if (blockNum > 0 && liveLocals->_blockAnalysisInfo[blockNum])
             {
             liveVars = new (trHeapMemory()) TR_BitVector(numLocals, trMemory());
-            *liveVars = *liveLocals._blockAnalysisInfo[blockNum];
+            *liveVars = *(liveLocals->_blockAnalysisInfo[blockNum]);
             block->setLiveLocals(liveVars);
             }
          }
