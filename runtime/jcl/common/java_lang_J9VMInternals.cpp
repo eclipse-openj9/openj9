@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2018 IBM Corp. and others
+ * Copyright (c) 1998, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,14 +32,21 @@
 extern "C" {
 
 jobject JNICALL
-Java_java_lang_J9VMInternals_getStackTrace(JNIEnv * env, jclass recv, jobject throwable, jboolean pruneConstructors)
+Java_java_lang_J9VMInternals_getStackTrace(JNIEnv *env, jclass recv, jobject throwable, jboolean pruneConstructors)
 {
-	J9VMThread *currentThread = (J9VMThread*)env;
+#if JAVA_SPEC_VERSION >= 19
+	/* throwable can only be null for a virtual thread during mount and unmount transition. */
+	if (NULL == throwable) {
+		return NULL;
+	}
+#endif /* JAVA_SPEC_VERSION >= 19 */
+
+	J9VMThread *currentThread = (J9VMThread *)env;
 	J9JavaVM *vm = currentThread->javaVM;
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 
 	vmFuncs->internalEnterVMFromJNI(currentThread);
-	j9object_t traceObject = (j9object_t)getStackTrace(currentThread, (j9object_t*)throwable, (UDATA)pruneConstructors);
+	j9object_t traceObject = (j9object_t)getStackTrace(currentThread, (j9object_t *)throwable, (UDATA)pruneConstructors);
 	jobject result = vmFuncs->j9jni_createLocalRef(env, traceObject);
 	vmFuncs->internalExitVMToJNI(currentThread);
 	return result;
