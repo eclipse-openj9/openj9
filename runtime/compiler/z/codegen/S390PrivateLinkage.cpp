@@ -2954,9 +2954,22 @@ TR::Register * J9::Z::JNILinkage::buildDirectDispatch(TR::Node * callNode)
 
    if (isJNICallOutFrame)
      {
-     // Sets up PC, Stack pointer and literals offset slots.
-     setupJNICallOutFrame(callNode, javaStackPointerRealRegister, methodMetaDataVirtualRegister,
-                     returnFromJNICallLabel, jniCallDataSnippet);
+      // Sets up PC, Stack pointer and literals offset slots.
+      setupJNICallOutFrame(callNode, javaStackPointerRealRegister, methodMetaDataVirtualRegister,
+                              returnFromJNICallLabel, jniCallDataSnippet);
+
+#if (JAVA_SPEC_VERSION >= 19)
+#if defined(TR_TARGET_64BIT)
+      /**
+       * For virtual threads, bump the callOutCounter.  It is safe and most efficient to
+       * do this unconditionally.  No need to check for overflow.
+       */
+      generateSIInstruction(cg(), TR::InstOpCode::AGSI, callNode, generateS390MemoryReference(methodMetaDataVirtualRegister, fej9->thisThreadGetCallOutCountOffset(), cg()), 1);
+#else    /* TR_TARGET_64BIT */
+   TR_ASSERT_FATAL(false, "Virtual Thread is not supported on 31-Bit platform\n");
+#endif   /* TR_TARGET_64BIT */
+#endif   /* JAVA_SPEC_VERSION >= 19 */
+
      }
    else
      {
@@ -3010,6 +3023,20 @@ TR::Register * J9::Z::JNILinkage::buildDirectDispatch(TR::Node * callNode)
 #endif
      }
 
+#if (JAVA_SPEC_VERSION >= 19)
+#if defined(TR_TARGET_64BIT)
+   if (isJNICallOutFrame)
+      {
+      /**
+       * For virtual threads, decrement the callOutCounter.  It is safe and most efficient to
+       * do this unconditionally.  No need to check for underflow.
+       */
+      generateSIInstruction(cg(), TR::InstOpCode::AGSI, callNode, generateS390MemoryReference(methodMetaDataVirtualRegister, fej9->thisThreadGetCallOutCountOffset(), cg()), -1);
+      }
+#else    /* TR_TARGET_64BIT */
+   TR_ASSERT_FATAL(false, "Virtual Thread is not supported on 31-Bit platform\n");
+#endif   /* TR_TARGET_64BIT */
+#endif   /* JAVA_SPEC_VERSION >= 19 */
 
    generateRXInstruction(codeGen, TR::InstOpCode::getAddOpCode(), callNode, javaStackPointerRealRegister,
             new (trHeapMemory()) TR::MemoryReference(methodMetaDataVirtualRegister, (int32_t)fej9->thisThreadGetJavaLiteralsOffset(), codeGen));
