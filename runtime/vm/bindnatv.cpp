@@ -88,6 +88,7 @@ static inlMapping mappings[] = {
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 	{ "Java_java_lang_Class_isPrimitiveClass__", J9_BCLOOP_SEND_TARGET_INL_CLASS_IS_PRIMITIVE_CLASS },
 	{ "Java_java_lang_Class_isValue__", J9_BCLOOP_SEND_TARGET_INL_CLASS_IS_VALUE },
+	{ "Java_java_lang_Class_isIdentity__", J9_BCLOOP_SEND_TARGET_INL_CLASS_IS_IDENTITY },
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 	{ "Java_java_lang_Class_getModifiersImpl__", J9_BCLOOP_SEND_TARGET_INL_CLASS_GET_MODIFIERS_IMPL },
 	{ "Java_java_lang_Class_getComponentType__", J9_BCLOOP_SEND_TARGET_INL_CLASS_GET_COMPONENT_TYPE },

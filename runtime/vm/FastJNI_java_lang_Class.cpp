@@ -139,6 +139,15 @@ Fast_java_lang_Class_isPrimitiveClass(J9VMThread *currentThread, j9object_t clas
 	bool isPrimitiveClass = J9_IS_J9CLASS_PRIMITIVE_VALUETYPE(receiverClazz);
 	return isPrimitiveClass ? JNI_TRUE : JNI_FALSE;
 }
+
+/* java.lang.Class: private native boolean isIdentity(); */
+jboolean JNICALL
+Fast_java_lang_Class_isIdentity(J9VMThread *currentThread, j9object_t classObject)
+{
+	J9Class *receiverClazz = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, classObject);
+	bool isIdentity = J9ROMCLASS_HAS_IDENTITY(receiverClazz->romClass);
+	return isIdentity ? JNI_TRUE : JNI_FALSE;
+}
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 
 /* java.lang.Class: public native boolean isInstance(Object object); */
@@ -244,6 +253,9 @@ J9_FAST_JNI_METHOD_TABLE(java_lang_Class)
 		J9_FAST_JNI_NO_SPECIAL_TEAR_DOWN | J9_FAST_JNI_DO_NOT_WRAP_OBJECTS)
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 	J9_FAST_JNI_METHOD("isPrimitiveClass", "()Z", Fast_java_lang_Class_isPrimitiveClass,
+		J9_FAST_JNI_RETAIN_VM_ACCESS | J9_FAST_JNI_NOT_GC_POINT | J9_FAST_JNI_NO_NATIVE_METHOD_FRAME | J9_FAST_JNI_NO_EXCEPTION_THROW |
+		J9_FAST_JNI_NO_SPECIAL_TEAR_DOWN | J9_FAST_JNI_DO_NOT_WRAP_OBJECTS)
+	J9_FAST_JNI_METHOD("isIdentity", "()Z", Fast_java_lang_Class_isIdentity,
 		J9_FAST_JNI_RETAIN_VM_ACCESS | J9_FAST_JNI_NOT_GC_POINT | J9_FAST_JNI_NO_NATIVE_METHOD_FRAME | J9_FAST_JNI_NO_EXCEPTION_THROW |
 		J9_FAST_JNI_NO_SPECIAL_TEAR_DOWN | J9_FAST_JNI_DO_NOT_WRAP_OBJECTS)
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
