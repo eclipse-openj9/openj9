@@ -1417,7 +1417,7 @@ generateLockwordAddressLookup(TR::CodeGenerator *cg, TR::Node *node, TR::Registe
     * fallThruFromMonitorLookupCacheLabel:
     *
     */
-   TR::Compilation *comp = TR::comp();
+   TR::Compilation *comp = cg->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
    TR::Register *tempReg = srm->findOrCreateScratchRegister();
 
@@ -1501,7 +1501,7 @@ generateLockwordAddressLookup(TR::CodeGenerator *cg, TR::Node *node, TR::Registe
 TR::Register *
 J9::ARM64::TreeEvaluator::monexitEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   TR::Compilation *comp = TR::comp();
+   TR::Compilation *comp = cg->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
    int32_t staticLwOffset = fej9->getByteOffsetToLockword(cg->getMonClass(node));
    TR::InstOpCode::Mnemonic op;
@@ -1615,6 +1615,12 @@ J9::ARM64::TreeEvaluator::monexitEvaluator(TR::Node *node, TR::CodeGenerator *cg
        *    cmpx     metaReg, tempReg
        *    b.ne     snippetLabel
        *    strimmx  dataReg, [addrReg]
+       *
+       * #if JAVA_SPEC_VERSION >= 19
+       *    ldrimmx  tempReg, [vmThread + ownedMonitorCount]
+       *    subimmx  tempReg, tempReg, 1
+       *    strimmx  tempReg, [vmThread + ownedMonitorCount]
+       * #endif
        * OOLEndLabel:
        *    b        doneLabel
        *
@@ -1635,7 +1641,6 @@ J9::ARM64::TreeEvaluator::monexitEvaluator(TR::Node *node, TR::CodeGenerator *cg
       // OBJECT_HEADER_LOCK_RECURSION_MASK is 0xF0, immr=0x38, imms=0x3b for ~(0xF0)
       generateLogicalImmInstruction(cg, TR::InstOpCode::andimmx, node, tempReg, dataReg, true, 0xe3b);
       generateCompareInstruction(cg, node, metaReg, tempReg, true);
-
       TR::Snippet *snippet = new (cg->trHeapMemory()) TR::ARM64HelperCallSnippet(cg, node, snippetLabel, node->getSymbolReference(), OOLEndLabel);
       cg->addSnippet(snippet);
       TR::Instruction *gcPoint = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, snippetLabel, TR::CC_NE);
@@ -1645,6 +1650,17 @@ J9::ARM64::TreeEvaluator::monexitEvaluator(TR::Node *node, TR::CodeGenerator *cg
       generateMemSrc1Instruction(cg, fej9->generateCompressedLockWord() ? TR::InstOpCode::strimmw : TR::InstOpCode::strimmx,
                                  node, TR::MemoryReference::createWithDisplacement(cg, addrReg, 0), dataReg);
 
+#if JAVA_SPEC_VERSION >= 19
+      /**
+       * Adjust J9VMThread ownedMonitorCount for execution paths that do not
+       * go out of line to release the lock.  It is safe and efficient to do
+       * this unconditionally.  There is no need to check for underflow.
+       */
+      generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmx, node, tempReg, TR::MemoryReference::createWithDisplacement(cg, metaReg, fej9->thisThreadGetOwnedMonitorCountOffset()));
+      generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::subimmx, node, tempReg, tempReg, 1);
+      generateMemSrc1Instruction(cg, TR::InstOpCode::strimmx, node, TR::MemoryReference::createWithDisplacement(cg, metaReg, fej9->thisThreadGetOwnedMonitorCountOffset()), tempReg);
+#endif
+
       TR::RegisterDependencyConditions *ooldeps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 4, cg->trMemory());
       ooldeps->addPostCondition(objReg, TR::RealRegister::x0);
       ooldeps->addPostCondition(tempReg, TR::RealRegister::NoReg);
@@ -1652,6 +1668,7 @@ J9::ARM64::TreeEvaluator::monexitEvaluator(TR::Node *node, TR::CodeGenerator *cg
       ooldeps->addPostCondition(addrReg, TR::RealRegister::NoReg);
 
       generateLabelInstruction(cg, TR::InstOpCode::label, node, OOLEndLabel, ooldeps);
+
       generateLabelInstruction(cg, TR::InstOpCode::b, node, doneLabel);
 
       cg->stopUsingRegister(tempReg);
@@ -1664,6 +1681,17 @@ J9::ARM64::TreeEvaluator::monexitEvaluator(TR::Node *node, TR::CodeGenerator *cg
       TR_ARM64OutOfLineCodeSection *outlinedHelperCall = new (cg->trHeapMemory()) TR_ARM64OutOfLineCodeSection(node, TR::call, NULL, OOLLabel, doneLabel, cg);
       cg->getARM64OutOfLineCodeSectionList().push_front(outlinedHelperCall);
       }
+
+#if JAVA_SPEC_VERSION >= 19
+   /**
+    * Adjust J9VMThread ownedMonitorCount for execution paths that do not
+    * go out of line to release the lock.  It is safe and efficient to do
+    * this unconditionally.  There is no need to check for underflow.
+    */
+   generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmx, node, addrReg, TR::MemoryReference::createWithDisplacement(cg, metaReg, fej9->thisThreadGetOwnedMonitorCountOffset()));
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::subimmx, node, addrReg, addrReg, 1);
+   generateMemSrc1Instruction(cg, TR::InstOpCode::strimmx, node, TR::MemoryReference::createWithDisplacement(cg, metaReg, fej9->thisThreadGetOwnedMonitorCountOffset()), addrReg);
+#endif
 
    TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 2 + srm->numAvailableRegisters(), cg->trMemory());
    deps->addPostCondition(objReg, TR::RealRegister::NoReg);
@@ -3583,7 +3611,7 @@ J9::ARM64::TreeEvaluator::anewArrayEvaluator(TR::Node *node, TR::CodeGenerator *
 TR::Register *
 J9::ARM64::TreeEvaluator::monentEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   TR::Compilation *comp = TR::comp();
+   TR::Compilation *comp = cg->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
    const int32_t staticLwOffset = fej9->getByteOffsetToLockword(cg->getMonClass(node));
    TR::InstOpCode::Mnemonic op;
@@ -3708,6 +3736,13 @@ J9::ARM64::TreeEvaluator::monentEvaluator(TR::Node *node, TR::CodeGenerator *cg)
        *    cmpx     metaReg, tempReg
        *    b.ne     snippetLabel
        *    strimmx  dataReg, [addrReg]
+       *
+       * #if JAVA_SPEC_VERSION >= 19
+       *    ldrimmx  tempReg, [vmThread + ownedMonitorCount]
+       *    addimmx  tempReg, tempReg, 1
+       *    strimmx  tempReg, [vmThread + ownedMonitorCount]
+       * #endif
+       *
        * OOLEndLabel:
        *    b        doneLabel
        *
@@ -3736,6 +3771,17 @@ J9::ARM64::TreeEvaluator::monentEvaluator(TR::Node *node, TR::CodeGenerator *cg)
       generateMemSrc1Instruction(cg, fej9->generateCompressedLockWord() ? TR::InstOpCode::strimmw : TR::InstOpCode::strimmx,
                                  node, TR::MemoryReference::createWithDisplacement(cg, addrReg, 0), dataReg);
 
+#if JAVA_SPEC_VERSION >= 19
+      /**
+       * Adjust J9VMThread ownedMonitorCount for execution paths that do not
+       * go out of line to acquire the lock.  It is safe and efficient to do
+       * this unconditionally.  There is no need to check for overflow.
+       */
+      generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmx, node, tempReg, TR::MemoryReference::createWithDisplacement(cg, metaReg, fej9->thisThreadGetOwnedMonitorCountOffset()));
+      generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addimmx, node, tempReg, tempReg, 1);
+      generateMemSrc1Instruction(cg, TR::InstOpCode::strimmx, node, TR::MemoryReference::createWithDisplacement(cg, metaReg, fej9->thisThreadGetOwnedMonitorCountOffset()), tempReg);
+#endif
+
       TR::RegisterDependencyConditions *ooldeps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 4, cg->trMemory());
       ooldeps->addPostCondition(objReg, TR::RealRegister::x0);
       ooldeps->addPostCondition(tempReg, TR::RealRegister::NoReg);
@@ -3755,6 +3801,17 @@ J9::ARM64::TreeEvaluator::monentEvaluator(TR::Node *node, TR::CodeGenerator *cg)
       TR_ARM64OutOfLineCodeSection *outlinedHelperCall = new (cg->trHeapMemory()) TR_ARM64OutOfLineCodeSection(node, TR::call, NULL, OOLLabel, doneLabel, cg);
       cg->getARM64OutOfLineCodeSectionList().push_front(outlinedHelperCall);
       }
+
+#if JAVA_SPEC_VERSION >= 19
+   /**
+    * Adjust J9VMThread ownedMonitorCount for execution paths that do not
+    * go out of line to acquire the lock.  It is safe and efficient to do
+    * this unconditionally.  There is no need to check for overflow.
+    */
+   generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmx, node, addrReg, TR::MemoryReference::createWithDisplacement(cg, metaReg, fej9->thisThreadGetOwnedMonitorCountOffset()));
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addimmx, node, addrReg, addrReg, 1);
+   generateMemSrc1Instruction(cg, TR::InstOpCode::strimmx, node, TR::MemoryReference::createWithDisplacement(cg, metaReg, fej9->thisThreadGetOwnedMonitorCountOffset()), addrReg);
+#endif
 
    TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 2 + srm->numAvailableRegisters(), cg->trMemory());
    deps->addPostCondition(objReg, TR::RealRegister::NoReg);
