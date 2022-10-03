@@ -91,50 +91,50 @@ public class VirtualThreadTests {
 		}
 	}
 
+	private static volatile boolean testSyncThread_ready = false;
+
 	@Test
 	public void test_synchronizedBlockFromVirtualthread() {
 		try {
 			Thread t = Thread.ofVirtual().name("synchronized").unstarted(() -> {
 				synchronized(VirtualThreadTests.class) {
-					try {
-						LockSupport.park();
-						Assert.fail("IllegalStateException not thrown");
-					} catch (IllegalStateException e) {
-						/* Virtual Thread is pinned in a synchronized block, and it should not be
-						 * allowed to yield. An IllegalStateException is thrown if a Virtual Thread
-						 * is yielded in a pinned state.
-						 */
-						String message = e.getMessage();
-						AssertJUnit.assertTrue("Virtual Thread pinned state should be MONITOR: " + message, message.contains("MONITOR"));
-					}
+					testSyncThread_ready = true;
+					LockSupport.park();
 				}
 			});
 
 			t.start();
+			while (!testSyncThread_ready) {
+				Thread.sleep(1);
+			}
+			/* Let virtual thread park */
+			Thread.sleep(500);
+			AssertJUnit.assertTrue("Virtual Thread state should be WAITING", (t.getState() == Thread.State.WAITING));
+			LockSupport.unpark(t);
 			t.join();
 		} catch (Exception e) {
 			Assert.fail("Unexpected exception occured : " + e.getMessage() , e);
 		}
 	}
 
+	private static volatile boolean testJNIThread_ready = false;
+
 	@Test
 	public void test_jniFromVirtualthread() {
 		try {
 			Thread t = Thread.ofVirtual().name("native").unstarted(() -> {
-				try {
-					lockSupportPark();
-					Assert.fail("IllegalStateException not thrown");
-				} catch (IllegalStateException e) {
-					/* Virtual Thread is pinned inside JNI, and it should not be allowed
-					 * to yield. An IllegalStateException is thrown if a Virtual Thread
-					 * is yielded in a pinned state.
-					 */
-					String message = e.getMessage();
-					AssertJUnit.assertTrue("Virtual Thread pinned state should be NATIVE: " + message, message.contains("NATIVE"));
-				}
+				testJNIThread_ready = true;
+				lockSupportPark();
 			});
 
 			t.start();
+			while (!testJNIThread_ready) {
+				Thread.sleep(1);
+			}
+			/* Let virtual thread park */
+			Thread.sleep(500);
+			AssertJUnit.assertTrue("Virtual Thread state should be WAITING", (t.getState() == Thread.State.WAITING));
+			LockSupport.unpark(t);
 			t.join();
 		} catch (Exception e) {
 			Assert.fail("Unexpected exception occured : " + e.getMessage() , e);
@@ -153,7 +153,7 @@ public class VirtualThreadTests {
 			while (!testThread1_ready) {
 				Thread.sleep(10);
 			}
-			// Let virtual thread park
+			/* Let virtual thread park */
 			Thread.sleep(500);
 
 			StackTraceElement[] ste = t.getStackTrace();
