@@ -311,7 +311,9 @@ jvmtiGetOrSetLocal(jvmtiEnv *env,
 		J9VMThread *targetThread = NULL;
 
 		vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
-		rc = getVMThread(currentThread, thread, &targetThread, TRUE, TRUE);
+		rc = getVMThread(
+				currentThread, thread, &targetThread, JVMTI_ERROR_NONE,
+				J9JVMTI_GETVMTHREAD_ERROR_ON_DEAD_THREAD);
 		if (rc == JVMTI_ERROR_NONE) {
 			J9StackWalkState walkState = {0};
 			BOOLEAN objectFetched = FALSE;

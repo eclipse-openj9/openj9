@@ -146,10 +146,14 @@ jvmtiGetThreadCpuTime(jvmtiEnv* env,
 			ENSURE_NON_NULL(nanos_ptr);
 			rv_nanos = (jlong)omrthread_get_cpu_time(omrthread_self());
 		} else {
+			rc = getVMThread(
+					currentThread, thread, &targetThread,
 #if JAVA_SPEC_VERSION >= 19
-			ENSURE_JTHREAD_NOT_VIRTUAL(currentThread, thread, JVMTI_ERROR_UNSUPPORTED_OPERATION);
+					JVMTI_ERROR_UNSUPPORTED_OPERATION,
+#else /* JAVA_SPEC_VERSION >= 19 */
+					JVMTI_ERROR_NONE,
 #endif /* JAVA_SPEC_VERSION >= 19 */
-			rc = getVMThread(currentThread, thread, &targetThread, TRUE, TRUE);
+					J9JVMTI_GETVMTHREAD_ERROR_ON_DEAD_THREAD | J9JVMTI_GETVMTHREAD_ERROR_ON_VIRTUALTHREAD);
 			if (rc == JVMTI_ERROR_NONE) {
 				if (nanos_ptr == NULL) {
 					rc = JVMTI_ERROR_NULL_POINTER;

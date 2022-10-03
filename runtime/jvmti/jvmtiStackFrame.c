@@ -58,7 +58,9 @@ jvmtiGetStackTrace(jvmtiEnv* env,
 		ENSURE_NON_NULL(frame_buffer);
 		ENSURE_NON_NULL(count_ptr);
 
-		rc = getVMThread(currentThread, thread, &targetThread, TRUE, TRUE);
+		rc = getVMThread(
+				currentThread, thread, &targetThread, JVMTI_ERROR_NONE,
+				J9JVMTI_GETVMTHREAD_ERROR_ON_DEAD_THREAD);
 		if (rc == JVMTI_ERROR_NONE) {
 			j9object_t threadObject = (NULL == thread) ? currentThread->threadObject : J9_JNI_UNWRAP_REFERENCE(thread);
 #if JAVA_SPEC_VERSION >= 19
@@ -216,9 +218,9 @@ jvmtiGetThreadListStackTraces(jvmtiEnv* env,
 		while (0 != thread_count) {
 			jthread thread = *thread_list;
 
-			if ((NULL != thread) && IS_VIRTUAL_THREAD(currentThread, J9_JNI_UNWRAP_REFERENCE(thread))) {
+			if ((NULL != thread) && IS_JAVA_LANG_VIRTUALTHREAD(currentThread, J9_JNI_UNWRAP_REFERENCE(thread))) {
 				J9VMThread *targetThread = NULL;
-				getVMThread(currentThread, thread, &targetThread, TRUE, FALSE);
+				getVMThread(currentThread, thread, &targetThread, JVMTI_ERROR_NONE, 0);
 			}
 			++thread_list;
 			--thread_count;
@@ -254,13 +256,13 @@ jvmtiGetThreadListStackTraces(jvmtiEnv* env,
 				}
 
 				threadObject = J9_JNI_UNWRAP_REFERENCE(thread);
-				if (!isSameOrSuperClassOf(J9VMJAVALANGTHREAD_OR_NULL(vm), J9OBJECT_CLAZZ(currentThread, threadObject))) {
+				if (!IS_JAVA_LANG_THREAD(currentThread, threadObject)) {
 					rc = JVMTI_ERROR_INVALID_THREAD;
 					goto deallocate;
 				}
 
 #if JAVA_SPEC_VERSION >= 19
-				if (IS_VIRTUAL_THREAD(currentThread, threadObject)) {
+				if (IS_JAVA_LANG_VIRTUALTHREAD(currentThread, threadObject)) {
 					isVirtual = TRUE;
 					j9object_t carrierThread = (j9object_t)J9VMJAVALANGVIRTUALTHREAD_CARRIERTHREAD(currentThread, threadObject);
 					jint vthreadState = J9VMJAVALANGVIRTUALTHREAD_STATE(currentThread, threadObject);
@@ -323,7 +325,7 @@ fail:
 
 			if (NULL != thread) {
 				j9object_t threadObject = J9_JNI_UNWRAP_REFERENCE(thread);
-				if (IS_VIRTUAL_THREAD(currentThread, threadObject)) {
+				if (IS_JAVA_LANG_VIRTUALTHREAD(currentThread, threadObject)) {
 					J9VMThread *targetThread = NULL;
 					j9object_t carrierThread = (j9object_t)J9VMJAVALANGVIRTUALTHREAD_CARRIERTHREAD(currentThread, threadObject);
 					if (NULL != carrierThread) {
@@ -371,7 +373,9 @@ jvmtiGetFrameCount(jvmtiEnv* env,
 
 		ENSURE_NON_NULL(count_ptr);
 
-		rc = getVMThread(currentThread, thread, &targetThread, TRUE, TRUE);
+		rc = getVMThread(
+				currentThread, thread, &targetThread, JVMTI_ERROR_NONE,
+				J9JVMTI_GETVMTHREAD_ERROR_ON_DEAD_THREAD);
 		if (rc == JVMTI_ERROR_NONE) {
 			j9object_t threadObject = (NULL == thread) ? currentThread->threadObject : J9_JNI_UNWRAP_REFERENCE(thread);
 			J9StackWalkState walkState;
@@ -434,13 +438,9 @@ jvmtiPopFrame(jvmtiEnv* env,
 		ENSURE_PHASE_LIVE(env);
 		ENSURE_CAPABILITY(env, can_pop_frame);
 
-#if JAVA_SPEC_VERSION >= 19
-		if (NULL != thread) {
-			ENSURE_JTHREAD_NOT_VIRTUAL(currentThread, thread, JVMTI_ERROR_OPAQUE_FRAME);
-		}
-#endif /* JAVA_SPEC_VERSION >= 19 */
-
-		rc = getVMThread(currentThread, thread, &targetThread, FALSE, TRUE);
+		rc = getVMThread(
+				currentThread, thread, &targetThread, JVMTI_ERROR_OPAQUE_FRAME,
+				J9JVMTI_GETVMTHREAD_ERROR_ON_NULL_JTHREAD | J9JVMTI_GETVMTHREAD_ERROR_ON_DEAD_THREAD | J9JVMTI_GETVMTHREAD_ERROR_ON_VIRTUALTHREAD);
 		if (rc == JVMTI_ERROR_NONE) {
 			/* Does this thread need to be suspended at an event? */
 			vm->internalVMFunctions->haltThreadForInspection(currentThread, targetThread);
@@ -500,7 +500,9 @@ jvmtiGetFrameLocation(jvmtiEnv *env,
 		ENSURE_NON_NULL(method_ptr);
 		ENSURE_NON_NULL(location_ptr);
 
-		rc = getVMThread(currentThread, thread, &targetThread, TRUE, TRUE);
+		rc = getVMThread(
+				currentThread, thread, &targetThread, JVMTI_ERROR_NONE,
+				J9JVMTI_GETVMTHREAD_ERROR_ON_DEAD_THREAD);
 		if (rc == JVMTI_ERROR_NONE) {
 			j9object_t threadObject = (NULL == thread) ? currentThread->threadObject : J9_JNI_UNWRAP_REFERENCE(thread);
 			J9StackWalkState walkState = {0};
@@ -574,7 +576,9 @@ jvmtiNotifyFramePop(jvmtiEnv *env,
 
 		ENSURE_NON_NEGATIVE(depth);
 
-		rc = getVMThread(currentThread, thread, &targetThread, TRUE, TRUE);
+		rc = getVMThread(
+				currentThread, thread, &targetThread, JVMTI_ERROR_NONE,
+				J9JVMTI_GETVMTHREAD_ERROR_ON_DEAD_THREAD);
 		if (JVMTI_ERROR_NONE == rc) {
 #if JAVA_SPEC_VERSION >= 19
 			BOOLEAN isVThreadSuspended = FALSE;

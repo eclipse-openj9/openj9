@@ -335,7 +335,7 @@ Java_java_lang_Thread_getStackTraceImpl(JNIEnv *env, jobject rcv)
 
 #if JAVA_SPEC_VERSION >= 19
 	BOOLEAN releaseInspector = FALSE;
-	if (IS_VIRTUAL_THREAD(currentThread, receiverObject)) {
+	if (IS_JAVA_LANG_VIRTUALTHREAD(currentThread, receiverObject)) {
 		omrthread_monitor_enter(vm->liveVirtualThreadListMutex);
 		j9object_t carrierThread = (j9object_t)J9VMJAVALANGVIRTUALTHREAD_CARRIERTHREAD(currentThread, receiverObject);
 		I_64 vthreadInspectorCount = J9OBJECT_I64_LOAD(currentThread, receiverObject, vm->virtualThreadInspectorCountOffset);

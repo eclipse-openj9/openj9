@@ -258,7 +258,7 @@ JVM_VirtualThreadMountBegin(JNIEnv *env, jobject thread, jboolean firstMount)
 	f_monitorEnter(vm->liveVirtualThreadListMutex);
 	j9object_t threadObj = J9_JNI_UNWRAP_REFERENCE(thread);
 
-	assert(IS_VIRTUAL_THREAD(currentThread, threadObj));
+	assert(IS_JAVA_LANG_VIRTUALTHREAD(currentThread, threadObj));
 
 	while (0 != J9OBJECT_I64_LOAD(currentThread, threadObj, vm->virtualThreadInspectorCountOffset)) {
 		/* Thread is being inspected or unmounted, wait. */

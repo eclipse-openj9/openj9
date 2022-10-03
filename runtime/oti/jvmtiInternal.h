@@ -61,6 +61,9 @@ typedef enum {
 
 #define J9JVMTI_UDATA_BITS (sizeof(UDATA) * 8)
 
+#define J9JVMTI_GETVMTHREAD_ERROR_ON_NULL_JTHREAD 0x1
+#define J9JVMTI_GETVMTHREAD_ERROR_ON_DEAD_THREAD 0x2
+#define J9JVMTI_GETVMTHREAD_ERROR_ON_VIRTUALTHREAD 0x4
 
 typedef struct {
 	J9NativeLibrary nativeLib;
@@ -454,13 +457,12 @@ typedef struct jvmtiGcp_translation {
 
 #define ENSURE_JOBJECT_NON_NULL(var) ENSURE_JNI_OBJECT_NON_NULL((var), JVMTI_ERROR_INVALID_OBJECT)
 #define ENSURE_JCLASS_NON_NULL(var) ENSURE_JNI_OBJECT_NON_NULL((var), JVMTI_ERROR_INVALID_CLASS)
-#define ENSURE_JTHREAD_NON_NULL(var) ENSURE_JNI_OBJECT_NON_NULL((var), JVMTI_ERROR_INVALID_THREAD)
 #define ENSURE_JTHREADGROUP_NON_NULL(var) ENSURE_JNI_OBJECT_NON_NULL((var), JVMTI_ERROR_INVALID_THREAD_GROUP)
 #define ENSURE_JOBJECT_NON_NULL(var) ENSURE_JNI_OBJECT_NON_NULL((var), JVMTI_ERROR_INVALID_OBJECT)
 
 #define ENSURE_JTHREAD(vmThread, jthrd) \
     do { \
-        if (!isSameOrSuperClassOf(J9VMJAVALANGTHREAD_OR_NULL((vmThread->javaVM)), J9OBJECT_CLAZZ((vmThread), *((j9object_t *) (jthrd))))) { \
+        if (!IS_JAVA_LANG_THREAD((vmThread), J9_JNI_UNWRAP_REFERENCE(jthrd))) { \
             JVMTI_ERROR(JVMTI_ERROR_INVALID_THREAD); \
         } \
     } while(0)
@@ -489,14 +491,14 @@ typedef struct jvmtiGcp_translation {
 #if JAVA_SPEC_VERSION >= 19
 #define ENSURE_JTHREAD_NOT_VIRTUAL(vmThread, jthrd, error) \
 	do { \
-		if (IS_VIRTUAL_THREAD((vmThread), J9_JNI_UNWRAP_REFERENCE(jthrd))) { \
+		if (IS_JAVA_LANG_VIRTUALTHREAD((vmThread), J9_JNI_UNWRAP_REFERENCE(jthrd))) { \
 			JVMTI_ERROR(error); \
 		} \
 	} while(0)
 
 #define ENSURE_JTHREADOBJECT_NOT_VIRTUAL(vmThread, jthrdObject, error) \
 	do { \
-		if (IS_VIRTUAL_THREAD((vmThread), (jthrdObject))) { \
+		if (IS_JAVA_LANG_VIRTUALTHREAD((vmThread), (jthrdObject))) { \
 			JVMTI_ERROR(error); \
 		} \
 	} while(0)
@@ -515,7 +517,6 @@ typedef struct jvmtiGcp_translation {
 #define ENSURE_JFIELDID_NON_NULL(var)
 #define ENSURE_JOBJECT_NON_NULL(var)
 #define ENSURE_JCLASS_NON_NULL(var)
-#define ENSURE_JTHREAD_NON_NULL(var)
 #define ENSURE_JTHREADGROUP_NON_NULL(var)
 #define ENSURE_VALID_HEAP_OBJECT_FILTER(var)
 #define ENSURE_MONITOR_NON_NULL(var)
