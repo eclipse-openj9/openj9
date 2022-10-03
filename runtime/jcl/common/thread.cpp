@@ -375,7 +375,7 @@ Java_java_lang_Thread_getStackTraceImpl(JNIEnv *env, jobject rcv)
 		vthreadInspectorCount -= 1;
 		J9OBJECT_I64_STORE(currentThread, receiverObject, vm->virtualThreadInspectorCountOffset, vthreadInspectorCount);
 
-		if (0 == vthreadInspectorCount) {
+		if (!vm->inspectingLiveVirtualThreadList && (0 == vthreadInspectorCount)) {
 			omrthread_monitor_notify_all(vm->liveVirtualThreadListMutex);
 		}
 		omrthread_monitor_exit(vm->liveVirtualThreadListMutex);
