@@ -144,18 +144,10 @@ jvmtiForceEarlyReturn(jvmtiEnv* env,
 
 		ENSURE_PHASE_LIVE(env);
 		ENSURE_CAPABILITY(env, can_force_early_return);
-		
-		/* Check if the jthread is really a j.l.Thread. a NULL jthread indicates that
-		 * the user wants to use the current thread hence defer the assignment to getVMThread */
-		
-		if (NULL != thread) {
-			ENSURE_JTHREAD(currentThread, thread);
-#if JAVA_SPEC_VERSION >= 19
-			ENSURE_JTHREAD_NOT_VIRTUAL(currentThread, thread, JVMTI_ERROR_OPAQUE_FRAME);
-#endif /* JAVA_SPEC_VERSION >= 19 */
-		}
 
-		rc = getVMThread(currentThread, thread, &targetThread, TRUE, TRUE);
+		rc = getVMThread(
+				currentThread, thread, &targetThread, JVMTI_ERROR_OPAQUE_FRAME,
+				J9JVMTI_GETVMTHREAD_ERROR_ON_DEAD_THREAD | J9JVMTI_GETVMTHREAD_ERROR_ON_VIRTUALTHREAD);
 		if (rc == JVMTI_ERROR_NONE) {
 			/* Does this thread need to be suspended at an event? */
 			vm->internalVMFunctions->haltThreadForInspection(currentThread, targetThread);

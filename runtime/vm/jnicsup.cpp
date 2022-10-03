@@ -2492,7 +2492,7 @@ isVirtualThread(JNIEnv *env, jobject obj)
 	if (NULL != obj) {
 		VM_VMAccess::inlineEnterVMFromJNI(vmThread);
 		j9object_t object = J9_JNI_UNWRAP_REFERENCE(obj);
-		if ((NULL != object) && IS_VIRTUAL_THREAD(vmThread, object)) {
+		if ((NULL != object) && IS_JAVA_LANG_VIRTUALTHREAD(vmThread, object)) {
 			result = JNI_TRUE;
 		}
 		VM_VMAccess::inlineExitVMToJNI(vmThread);

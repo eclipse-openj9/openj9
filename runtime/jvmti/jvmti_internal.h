@@ -1205,16 +1205,17 @@ getVirtualThreadState(J9VMThread *currentThread, jthread thread);
 #endif /* JAVA_SPEC_VERSION >= 19 */
 
 /**
- * @brief
- * @param currentThread
- * @param thread
- * @param vmThreadPtr
- * @param allowNull
- * @param mustBeAlive
- * @return jvmtiError
+ * @brief Get the J9VMThread for the input jthread instance.
+ *
+ * @param[in] currentThread the current thread.
+ * @param[in] thread the input jthread instance.
+ * @param[out] vmThreadPtr stores the corresponding J9VMThread for the input thread parameter.
+ * @param[in] vThreadError error to be thrown if virtual threads are excluded.
+ * @param[in] flags specifies the control logic for error checking.
+ * @return JVMTI_ERROR_NONE (0) on success; otherwise a non-zero error value on failure.
  */
 jvmtiError
-getVMThread(J9VMThread * currentThread, jthread thread, J9VMThread ** vmThreadPtr, UDATA allowNull, UDATA mustBeAlive);
+getVMThread(J9VMThread *currentThread, jthread thread, J9VMThread **vmThreadPtr, jvmtiError vThreadError, UDATA flags);
 
 
 /**
@@ -2723,7 +2724,7 @@ jvmtiIsModifiableModule(jvmtiEnv* env,
 * @return jvmtiError
 */
 jvmtiError
-suspendThread(J9VMThread *currentThread, jthread thread, UDATA allowNull, BOOLEAN *currentThreadSuspended);
+suspendThread(J9VMThread *currentThread, jthread thread, BOOLEAN allowNull, BOOLEAN *currentThreadSuspended);
 
 /* ---------------- heapify.cpp ---------------- */
 /**

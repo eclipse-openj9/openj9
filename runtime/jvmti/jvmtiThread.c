@@ -52,15 +52,14 @@ jvmtiGetThreadState(jvmtiEnv *env,
 	if (JVMTI_ERROR_NONE == rc) {
 		J9VMThread *targetThread = NULL;
 		j9object_t threadObject = NULL;
-		j9object_t threadObjectLock = NULL;
 		jboolean threadStartedFlag = JNI_FALSE;
+
 		vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
 
 		ENSURE_PHASE_LIVE(env);
 		ENSURE_NON_NULL(thread_state_ptr);
 
 		if (NULL != thread) {
-			ENSURE_JTHREAD(currentThread, thread);
 			threadObject = J9_JNI_UNWRAP_REFERENCE(thread);
 		} else {
 			/* If the thread is NULL, then use the current thread. */
@@ -68,7 +67,7 @@ jvmtiGetThreadState(jvmtiEnv *env,
 		}
 
 #if JAVA_SPEC_VERSION >= 19
-		if (IS_VIRTUAL_THREAD(currentThread, threadObject)) {
+		if (IS_JAVA_LANG_VIRTUALTHREAD(currentThread, threadObject)) {
 			/* If thread is NULL, the current thread is used which cannot be a virtual thread.
 			 * There is an assertion inside getVirtualThreadState() that thread is not NULL.
 			 */
@@ -76,26 +75,21 @@ jvmtiGetThreadState(jvmtiEnv *env,
 		} else
 #endif /* JAVA_SPEC_VERSION >= 19 */
 		{
-			/* Get the lock for the object. */
-			threadObjectLock = J9VMJAVALANGTHREAD_LOCK(currentThread,threadObject);
-
-			/* Get the vmThread for the object and whether the thread has been started, we get
-			 * these under the thread object lock so that we get a consistent view of the two values.
-			 */
-			if (NULL != threadObjectLock) {
-				rc = getVMThread(currentThread, thread, &targetThread, TRUE, FALSE);
-				threadStartedFlag = (jboolean)J9VMJAVALANGTHREAD_STARTED(currentThread, threadObject);
-			} else {
-				/* In this case, we must be early in the thread creation. We still need to call getVMThread so that
-				 * the inspection count etc. are handled correctly, however, we just want to fall into the case were
-				 * we return that the thread is NEW so we set the targetThread and threadStartedFlag to false.
-				 */
-				rc = getVMThread(currentThread, thread, &targetThread, TRUE, FALSE);
-				targetThread = NULL;
-				threadStartedFlag = JNI_FALSE;
-			}
-
+			rc = getVMThread(currentThread, thread, &targetThread, JVMTI_ERROR_NONE, 0);
 			if (JVMTI_ERROR_NONE == rc) {
+				/* Get the lock for the object. */
+				j9object_t threadObjectLock = J9VMJAVALANGTHREAD_LOCK(currentThread,threadObject);
+				if (NULL != threadObjectLock) {
+					threadStartedFlag = (jboolean)J9VMJAVALANGTHREAD_STARTED(currentThread, threadObject);
+				} else {
+					/* In this case, we must be early in the thread creation. We still need to call getVMThread so that
+					* the inspection count etc. are handled correctly, however, we just want to fall into the case were
+					* we return that the thread is NEW so we set the targetThread and threadStartedFlag to false.
+					*/
+					targetThread = NULL;
+					threadStartedFlag = JNI_FALSE;
+				}
+
 				/* We use the values of targetThread and threadStartedFlag that were obtained while holding the lock on the
 				 * thread so that get a consistent view of the values.  This is needed because if we don't get a consistent view
 				 * we may think the thread is TERMINATED instead of just starting.
@@ -367,12 +361,14 @@ jvmtiStopThread(jvmtiEnv *env,
 
 		ENSURE_JOBJECT_NON_NULL(exception);
 
-		ENSURE_JTHREAD_NON_NULL(thread);
+		rc = getVMThread(
+				currentThread, thread, &targetThread,
 #if JAVA_SPEC_VERSION >= 19
-		ENSURE_JTHREAD_NOT_VIRTUAL(currentThread, thread, JVMTI_ERROR_UNSUPPORTED_OPERATION);
+				JVMTI_ERROR_UNSUPPORTED_OPERATION,
+#else /* JAVA_SPEC_VERSION >= 19 */
+				JVMTI_ERROR_NONE,
 #endif /* JAVA_SPEC_VERSION >= 19 */
-
-		rc = getVMThread(currentThread, thread, &targetThread, FALSE, TRUE);
+				J9JVMTI_GETVMTHREAD_ERROR_ON_NULL_JTHREAD | J9JVMTI_GETVMTHREAD_ERROR_ON_DEAD_THREAD | J9JVMTI_GETVMTHREAD_ERROR_ON_VIRTUALTHREAD);
 		if (JVMTI_ERROR_NONE == rc) {
 			omrthread_monitor_enter(targetThread->publicFlagsMutex);
 			if (OMR_ARE_NO_BITS_SET(targetThread->publicFlags, J9_PUBLIC_FLAGS_STOPPED)) {
@@ -410,7 +406,9 @@ jvmtiInterruptThread(jvmtiEnv *env,
 		ENSURE_PHASE_LIVE(env);
 		ENSURE_CAPABILITY(env, can_signal_thread);
 
-		rc = getVMThread(currentThread, thread, &targetThread, FALSE, TRUE);
+		rc = getVMThread(
+				currentThread, thread, &targetThread, JVMTI_ERROR_NONE,
+				J9JVMTI_GETVMTHREAD_ERROR_ON_NULL_JTHREAD | J9JVMTI_GETVMTHREAD_ERROR_ON_DEAD_THREAD);
 		if (JVMTI_ERROR_NONE == rc) {
 #if JAVA_SPEC_VERSION >= 19
 			if (NULL != targetThread)
@@ -458,7 +456,7 @@ jvmtiGetThreadInfo(jvmtiEnv *env,
 		ENSURE_PHASE_LIVE(env);
 		ENSURE_NON_NULL(info_ptr);
 
-		rc = getVMThread(currentThread, thread, &targetThread, TRUE, FALSE);
+		rc = getVMThread(currentThread, thread, &targetThread, JVMTI_ERROR_NONE, 0);
 		if (JVMTI_ERROR_NONE == rc) {
 			char *name = NULL;
 			j9object_t threadObject = (NULL == thread) ? targetThread->threadObject : J9_JNI_UNWRAP_REFERENCE(thread);
@@ -466,7 +464,7 @@ jvmtiGetThreadInfo(jvmtiEnv *env,
 			jobject contextClassLoader = NULL;
 #if JAVA_SPEC_VERSION >= 19
 			j9object_t threadHolder = J9VMJAVALANGTHREAD_HOLDER(currentThread, threadObject);
-			BOOLEAN isVirtual = IS_VIRTUAL_THREAD(currentThread, threadObject);
+			BOOLEAN isVirtual = IS_JAVA_LANG_VIRTUALTHREAD(currentThread, threadObject);
 #endif /* JAVA_SPEC_VERSION >= 19 */
 
 			if ((NULL == targetThread)
@@ -650,7 +648,9 @@ jvmtiGetOwnedMonitorInfo(jvmtiEnv *env,
 		ENSURE_NON_NULL(owned_monitor_count_ptr);
 		ENSURE_NON_NULL(owned_monitors_ptr);
 
-		rc = getVMThread(currentThread, thread, &targetThread, TRUE, TRUE);
+		rc = getVMThread(
+				currentThread, thread, &targetThread, JVMTI_ERROR_NONE,
+				J9JVMTI_GETVMTHREAD_ERROR_ON_DEAD_THREAD);
 		if (JVMTI_ERROR_NONE == rc) {
 			jobject *locks = NULL;
 			jint count = 0;
@@ -662,7 +662,7 @@ jvmtiGetOwnedMonitorInfo(jvmtiEnv *env,
 			j9object_t threadObject = (NULL == thread) ? currentThread->threadObject : J9_JNI_UNWRAP_REFERENCE(thread);
 			J9VMContinuation *continuation = NULL;
 
-			if ((NULL == targetThread) && IS_VIRTUAL_THREAD(currentThread, threadObject)) {
+			if ((NULL == targetThread) && IS_JAVA_LANG_VIRTUALTHREAD(currentThread, threadObject)) {
 				goto release;
 			}
 #endif /* JAVA_SPEC_VERSION >= 19 */
@@ -738,14 +738,12 @@ jvmtiGetOwnedMonitorStackDepthInfo(jvmtiEnv *env,
 
 		ENSURE_NON_NULL(monitor_info_count_ptr);
 		ENSURE_NON_NULL(monitor_info_ptr);
-
-		if (NULL != thread) {
-			ENSURE_JTHREAD(currentThread, thread);
-		}
 		
 		rv_monitor_info_count = 0;
 		
-		rc = getVMThread(currentThread, thread, &targetThread, TRUE, TRUE);
+		rc = getVMThread(
+				currentThread, thread, &targetThread, JVMTI_ERROR_NONE,
+				J9JVMTI_GETVMTHREAD_ERROR_ON_DEAD_THREAD);
 		if (JVMTI_ERROR_NONE == rc) {
 			IDATA maxRecords = 0;
 			J9ObjectMonitorInfo *monitorEnterRecords = NULL;
@@ -758,7 +756,7 @@ jvmtiGetOwnedMonitorStackDepthInfo(jvmtiEnv *env,
 			j9object_t threadObject = (NULL == thread) ? currentThread->threadObject : J9_JNI_UNWRAP_REFERENCE(thread);
 			J9VMContinuation *continuation = NULL;
 
-			if ((NULL == targetThread) && IS_VIRTUAL_THREAD(currentThread, threadObject)) {
+			if ((NULL == targetThread) && IS_JAVA_LANG_VIRTUALTHREAD(currentThread, threadObject)) {
 				goto release;
 			}
 #endif /* JAVA_SPEC_VERSION >= 19 */
@@ -873,7 +871,9 @@ jvmtiGetCurrentContendedMonitor(jvmtiEnv *env,
 
 		ENSURE_NON_NULL(monitor_ptr);
 
-		rc = getVMThread(currentThread, thread, &targetThread, TRUE, TRUE);
+		rc = getVMThread(
+				currentThread, thread, &targetThread, JVMTI_ERROR_NONE,
+				J9JVMTI_GETVMTHREAD_ERROR_ON_DEAD_THREAD);
 		if (JVMTI_ERROR_NONE == rc) {
 			j9object_t lockObject = NULL;
 			UDATA vmstate = 0;
@@ -885,7 +885,7 @@ jvmtiGetCurrentContendedMonitor(jvmtiEnv *env,
 			j9object_t threadObject = (NULL == thread) ? currentThread->threadObject : J9_JNI_UNWRAP_REFERENCE(thread);
 			J9VMContinuation *continuation = NULL;
 
-			if ((NULL == targetThread) && IS_VIRTUAL_THREAD(currentThread, threadObject)) {
+			if ((NULL == targetThread) && IS_JAVA_LANG_VIRTUALTHREAD(currentThread, threadObject)) {
 				goto release;
 			}
 #endif /* JAVA_SPEC_VERSION >= 19 */
@@ -950,7 +950,8 @@ jvmtiRunAgentThread(jvmtiEnv *env,
 
 		ENSURE_PHASE_LIVE(env);
 
-		ENSURE_JTHREAD_NON_NULL(thread);
+		ENSURE_JOBJECT_NON_NULL(thread);
+		ENSURE_JTHREAD(currentThread, thread);
 #if JAVA_SPEC_VERSION >= 19
 		ENSURE_JTHREAD_NOT_VIRTUAL(currentThread, thread, JVMTI_ERROR_UNSUPPORTED_OPERATION);
 #endif /* JAVA_SPEC_VERSION >= 19 */
@@ -1016,7 +1017,9 @@ jvmtiSetThreadLocalStorage(jvmtiEnv *env,
 
 		ENSURE_PHASE_START_OR_LIVE(env);
 
-		rc = getVMThread(currentThread, thread, &targetThread, TRUE, TRUE);
+		rc = getVMThread(
+				currentThread, thread, &targetThread, JVMTI_ERROR_NONE,
+				J9JVMTI_GETVMTHREAD_ERROR_ON_DEAD_THREAD);
 		if (JVMTI_ERROR_NONE == rc) {
 			J9JVMTIEnv *j9env = (J9JVMTIEnv *)env;
 			J9JVMTIThreadData *threadData = NULL;
@@ -1076,7 +1079,9 @@ jvmtiGetThreadLocalStorage(jvmtiEnv *env,
 
 		ENSURE_NON_NULL(data_ptr);
 
-		rc = getVMThread(currentThread, thread, &targetThread, TRUE, TRUE);
+		rc = getVMThread(
+				currentThread, thread, &targetThread, JVMTI_ERROR_NONE,
+				J9JVMTI_GETVMTHREAD_ERROR_ON_DEAD_THREAD);
 		if (JVMTI_ERROR_NONE == rc) {
 			J9JVMTIEnv *j9env = (J9JVMTIEnv *)env;
 			J9JVMTIThreadData *threadData = NULL;
@@ -1118,7 +1123,9 @@ static jvmtiError
 resumeThread(J9VMThread *currentThread, jthread thread)
 {
 	J9VMThread *targetThread = NULL;
-	jvmtiError rc = getVMThread(currentThread, thread, &targetThread, FALSE, TRUE);
+	jvmtiError rc = getVMThread(
+				currentThread, thread, &targetThread, JVMTI_ERROR_NONE,
+				J9JVMTI_GETVMTHREAD_ERROR_ON_NULL_JTHREAD | J9JVMTI_GETVMTHREAD_ERROR_ON_DEAD_THREAD);
 	if (JVMTI_ERROR_NONE == rc) {
 		if (targetThread->publicFlags & J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND) {
 			clearHaltFlag(targetThread, J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND);

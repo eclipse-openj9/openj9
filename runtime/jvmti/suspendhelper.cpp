@@ -27,13 +27,17 @@
 extern "C" {
 
 jvmtiError
-suspendThread(J9VMThread *currentThread, jthread thread, UDATA allowNull, BOOLEAN *currentThreadSuspended)
+suspendThread(J9VMThread *currentThread, jthread thread, BOOLEAN allowNull, BOOLEAN *currentThreadSuspended)
 {
 	J9VMThread *targetThread = NULL;
 	jvmtiError rc = JVMTI_ERROR_NONE;
+	UDATA flags = J9JVMTI_GETVMTHREAD_ERROR_ON_DEAD_THREAD;
 
 	*currentThreadSuspended = FALSE;
-	rc = getVMThread(currentThread, thread, &targetThread, allowNull, TRUE);
+	if (!allowNull) {
+		flags |= J9JVMTI_GETVMTHREAD_ERROR_ON_NULL_JTHREAD;
+	}
+	rc = getVMThread(currentThread, thread, &targetThread, JVMTI_ERROR_NONE, flags);
 	if (rc == JVMTI_ERROR_NONE) {
 		if (targetThread->publicFlags & J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND) {
 			rc = JVMTI_ERROR_THREAD_SUSPENDED;
