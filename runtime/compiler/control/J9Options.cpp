@@ -264,7 +264,7 @@ int32_t J9::Options::_numCodeCachesToCreateAtStartup = 0; // 0 means no change f
 int32_t J9::Options::_dataCacheQuantumSize = 64;
 int32_t J9::Options::_dataCacheMinQuanta = 2;
 
-int32_t J9::Options::_updateFreeMemoryMinPeriod = 500;  // 500 ms
+int32_t J9::Options::_updateFreeMemoryMinPeriod = 50;  // 50 ms
 
 size_t J9::Options::_scratchSpaceLimitKBWhenLowVirtualMemory = 64*1024; // 64MB; currently, only used on 32 bit Windows
 
