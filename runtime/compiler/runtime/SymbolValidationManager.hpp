@@ -691,6 +691,23 @@ struct J2IThunkFromMethodRecord : public SymbolValidationRecord
    TR_OpaqueMethodBlock *_method;
    };
 
+struct IsClassVisibleRecord : public SymbolValidationRecord
+   {
+   IsClassVisibleRecord(TR_OpaqueClassBlock *sourceClass, TR_OpaqueClassBlock *destClass, bool isVisible)
+      : SymbolValidationRecord(TR_ValidateIsClassVisible),
+        _sourceClass(sourceClass),
+        _destClass(destClass),
+        _isVisible(isVisible)
+      {}
+
+   virtual bool isLessThanWithinKind(SymbolValidationRecord *other);
+   virtual void printFields();
+
+   TR_OpaqueClassBlock *_sourceClass;
+   TR_OpaqueClassBlock *_destClass;
+   bool _isVisible;
+   };
+
 class SymbolValidationManager
    {
 public:

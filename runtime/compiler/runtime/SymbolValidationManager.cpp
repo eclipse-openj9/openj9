@@ -2160,3 +2160,22 @@ void TR::J2IThunkFromMethodRecord::printFields()
    traceMsg(TR::comp(), "\t_thunk=0x%p\n", _thunk);
    traceMsg(TR::comp(), "\t_method=0x%p\n", _method);
    }
+
+bool TR::IsClassVisibleRecord::isLessThanWithinKind(
+   SymbolValidationRecord *other)
+   {
+   TR::IsClassVisibleRecord *rhs = downcast(this, other);
+   return LexicalOrder::by(_sourceClass, rhs->_sourceClass)
+      .thenBy(_destClass, rhs->_destClass)
+      .thenBy(_isVisible, rhs->_isVisible).less();
+   }
+
+void TR::IsClassVisibleRecord::printFields()
+   {
+   traceMsg(TR::comp(), "IsClassVisibleRecord\n");
+   traceMsg(TR::comp(), "\t_sourceClass=0x%p\n", _sourceClass);
+   printClass(_sourceClass);
+   traceMsg(TR::comp(), "\t_destClass=0x%p\n", _destClass);
+   printClass(_destClass);
+   traceMsg(TR::comp(), "\t_isVisible=%s\n", _isVisible ? "true" : "false");
+   }
