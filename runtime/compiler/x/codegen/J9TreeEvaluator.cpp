@@ -74,7 +74,6 @@
 #include "x/codegen/MonitorSnippet.hpp"
 #include "x/codegen/OutlinedInstructions.hpp"
 #include "x/codegen/HelperCallSnippet.hpp"
-#include "x/codegen/X86Evaluator.hpp"
 #include "env/CompilerEnv.hpp"
 #include "runtime/J9Runtime.hpp"
 #include "codegen/J9WatchedStaticFieldSnippet.hpp"
