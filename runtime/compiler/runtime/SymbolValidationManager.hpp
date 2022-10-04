@@ -792,6 +792,7 @@ public:
    bool addStackWalkerMaySkipFramesRecord(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *methodClass, bool skipFrames);
    bool addClassInfoIsInitializedRecord(TR_OpaqueClassBlock *clazz, bool isInitialized);
    void addJ2IThunkFromMethodRecord(void *thunk, TR_OpaqueMethodBlock *method);
+   bool addIsClassVisibleRecord(TR_OpaqueClassBlock *sourceClass, TR_OpaqueClassBlock *destClass, bool isVisible);
 
 
 
@@ -842,6 +843,8 @@ public:
    // in TR_RelocationRecordValidateJ2IThunkFromMethod::applyRelocation() so
    // that the thunk loading logic can be confined to RelocationRecord.cpp.
    bool validateJ2IThunkFromMethodRecord(uint16_t thunkID, void *thunk);
+
+   bool validateIsClassVisibleRecord(uint16_t sourceClassID, uint16_t destClassID, bool wasVisible);
 
 
    TR_OpaqueClassBlock *getBaseComponentClass(TR_OpaqueClassBlock *clazz, int32_t & numDims);

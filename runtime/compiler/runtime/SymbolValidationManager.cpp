@@ -1124,6 +1124,21 @@ TR::SymbolValidationManager::addJ2IThunkFromMethodRecord(void *thunk, TR_OpaqueM
    appendNewRecord(thunk, record);
    }
 
+bool
+TR::SymbolValidationManager::addIsClassVisibleRecord(TR_OpaqueClassBlock *sourceClass, TR_OpaqueClassBlock *destClass, bool isVisible)
+   {
+   SVM_ASSERT_ALREADY_VALIDATED(this, sourceClass);
+   SVM_ASSERT_ALREADY_VALIDATED(this, destClass);
+
+   // Skip creating a record when destClass is a Java.lang.Object
+   // because Object is always visible
+   if (sourceClass == destClass
+      || _fej9->isJavaLangObject(destClass))
+      return true;
+
+   return addVanillaRecord(sourceClass, new (_region) IsClassVisibleRecord(sourceClass, destClass, isVisible));
+   }
+
 
 
 bool
@@ -1567,6 +1582,17 @@ bool
 TR::SymbolValidationManager::validateJ2IThunkFromMethodRecord(uint16_t thunkID, void *thunk)
    {
    return validateSymbol(thunkID, thunk, TR::SymbolType::typeOpaque);
+   }
+
+bool
+TR::SymbolValidationManager::validateIsClassVisibleRecord(uint16_t sourceClassID, uint16_t destClassID, bool wasVisible)
+   {
+   TR_OpaqueClassBlock *sourceClass = getClassFromID(sourceClassID);
+   TR_OpaqueClassBlock *destClass = getClassFromID(destClassID);
+
+   bool isVisible = _fej9->isClassVisible(sourceClass, destClass);
+
+   return (isVisible == wasVisible);
    }
 
 bool
