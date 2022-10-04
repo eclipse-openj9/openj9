@@ -1309,6 +1309,18 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          }
          break;
 
+      case TR_ValidateIsClassVisible:
+         {
+         TR_RelocationRecordValidateIsClassVisible *icvRecord = reinterpret_cast<TR_RelocationRecordValidateIsClassVisible *>(reloRecord);
+
+         TR::IsClassVisibleRecord *svmRecord = reinterpret_cast<TR::IsClassVisibleRecord *>(relocation->getTargetAddress());
+
+         icvRecord->setSourceClassID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_sourceClass));
+         icvRecord->setDestClassID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_destClass));
+         icvRecord->setIsVisible(reloTarget, svmRecord->_isVisible);
+         }
+         break;
+
       default:
          TR_ASSERT(false, "Unknown relo type %d!\n", kind);
          comp->failCompilation<J9::AOTRelocationRecordGenerationFailure>("Unknown relo type %d!\n", kind);
@@ -2211,6 +2223,23 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
                "\n Validate J2I Thunk From Method: thunkID=%d, methodID=%d",
                thunkRecord->thunkID(reloTarget),
                thunkRecord->methodID(reloTarget));
+            }
+         }
+         break;
+
+      case TR_ValidateIsClassVisible:
+         {
+         TR_RelocationRecordValidateIsClassVisible *icvRecord = reinterpret_cast<TR_RelocationRecordValidateIsClassVisible *>(reloRecord);
+
+         self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
+         if (isVerbose)
+            {
+            traceMsg(
+               self()->comp(),
+               "\n Validate Is Class Visible: sourceClassID=%d, destClassID=%d, isVisible=%s ",
+                     (uint32_t)icvRecord->sourceClassID(reloTarget),
+                     (uint32_t)icvRecord->destClassID(reloTarget),
+                     icvRecord->isVisible(reloTarget) ? "true" : "false");
             }
          }
          break;
