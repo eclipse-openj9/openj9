@@ -491,8 +491,7 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 
 		/* trigger a GC to disclaim memory */
 		vm->memoryManagerFunctions->j9gc_modron_global_collect_with_overrides(currentThread, J9MMCONSTANT_EXPLICIT_GC_SYSTEM_GC);
-		/* TODO update this to J9MMCONSTANT_EXPLICIT_GC_PREPARE_FOR_CHECKPOINT */
-		vm->memoryManagerFunctions->j9gc_modron_global_collect_with_overrides(currentThread, J9MMCONSTANT_EXPLICIT_GC_IDLE_GC);
+		vm->memoryManagerFunctions->j9gc_modron_global_collect_with_overrides(currentThread, J9MMCONSTANT_EXPLICIT_GC_PREPARE_FOR_CHECKPOINT);
 
 		acquireSafeOrExcusiveVMAccess(currentThread, vmFuncs, safePoint);
 
