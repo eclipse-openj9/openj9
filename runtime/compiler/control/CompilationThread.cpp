@@ -11681,35 +11681,35 @@ TR::CompilationInfo::computeFreePhysicalLimitAndAbortCompilationIfLow(TR::Compil
                                                                       size_t sizeToAllocate)
    {
    uint64_t freePhysicalMemorySizeB = computeAndCacheFreePhysicalMemory(incompleteInfo);
-   if (OMRPORT_MEMINFO_NOT_AVAILABLE != freePhysicalMemorySizeB)
+
+   if (OMRPORT_MEMINFO_NOT_AVAILABLE == freePhysicalMemorySizeB)
+      return OMRPORT_MEMINFO_NOT_AVAILABLE;
+
+   // Avoid consuming the last drop of physical memory for JIT; leave some for emergency situations
+   uint64_t safeMemReserve = (uint64_t)TR::Options::getSafeReservePhysicalMemoryValue();
+   uint64_t desiredMemory = sizeToAllocate + safeMemReserve;
+   // Fail the compilation now if the free physical memory is not enough
+   // to "safely" perform a warm compilation that may use up to 'sizeToAllocate' memory
+   // However, do not fail if information about physical memory is incomplete
+   if (!incompleteInfo && freePhysicalMemorySizeB < desiredMemory)
       {
-      bool fail = false;
-      // Avoid consuming the last drop of physical memory for JIT (leave 50 MB for emergency)
-      // TODO: the emergency could be generated from SWAP
-      if (freePhysicalMemorySizeB >= (uint64_t)TR::Options::getSafeReservePhysicalMemoryValue())
-         {
-         freePhysicalMemorySizeB -= (uint64_t)TR::Options::getSafeReservePhysicalMemoryValue();
-         // Fail the compilation now if the remaining physical memory is not enough
-         // to perform a warm compilation that may use up to 'sizeToAllocate' memory
-         // However, do not fail if information about physical memory is incomplete
-         if (!incompleteInfo && freePhysicalMemorySizeB < sizeToAllocate)
-            fail = true;
-         }
-      else
-         {
-         fail = !incompleteInfo;
-         }
-      if (fail)
+      // Read the amount of free physical memory more accurately, bypassing the caching mechanism
+      freePhysicalMemorySizeB = computeAndCacheFreePhysicalMemory(incompleteInfo, 0);
+      if (OMRPORT_MEMINFO_NOT_AVAILABLE == freePhysicalMemorySizeB)
+         return OMRPORT_MEMINFO_NOT_AVAILABLE;
+
+      if (!incompleteInfo && freePhysicalMemorySizeB < desiredMemory)
          {
          if (TR::Options::isAnyVerboseOptionSet(TR_VerbosePerformance, TR_VerboseCompileEnd, TR_VerboseCompFailure))
             {
-            TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE, "Aborting Compilation: Low On Physical Memory %lld B", freePhysicalMemorySizeB);
+            TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE, "Aborting Compilation: Low On Physical Memory %zu B, sizeToAllocate %zu safeMemReserve %zu",
+                                           (size_t)freePhysicalMemorySizeB, sizeToAllocate, (size_t)safeMemReserve);
             }
-
          comp->failCompilation<J9::LowPhysicalMemory>("Low Physical Memory");
+         // no return here
          }
       }
-   return freePhysicalMemorySizeB;
+   return (freePhysicalMemorySizeB >= safeMemReserve) ? (freePhysicalMemorySizeB - safeMemReserve) : 0;
    }
 
 void
