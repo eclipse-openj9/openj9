@@ -433,6 +433,13 @@ struct TR_RelocationRecordValidateJ2IThunkFromMethodBinaryTemplate : public TR_R
    uint16_t _methodID;
    };
 
+struct TR_RelocationRecordValidateIsClassVisibleBinaryTemplate : public TR_RelocationRecordBinaryTemplate
+   {
+   uint16_t _sourceClassID;
+   uint16_t _destClassID;
+   uint8_t _isVisible;
+   };
+
 // END OF BINARY TEMPLATES
 
 uint8_t
@@ -853,6 +860,9 @@ TR_RelocationRecord::create(TR_RelocationRecord *storage, TR_RelocationRuntime *
          break;
       case TR_StaticDefaultValueInstance:
          reloRecord = new (storage) TR_RelocationRecordStaticDefaultValueInstance(reloRuntime, record);
+         break;
+      case TR_ValidateIsClassVisible:
+         reloRecord = new (storage) TR_RelocationRecordValidateIsClassVisible(reloRuntime, record);
          break;
       default:
          // TODO: error condition
@@ -6369,6 +6379,66 @@ TR_RelocationRecordValidateJ2IThunkFromMethod::methodID(TR_RelocationTarget *rel
    return reloTarget->loadUnsigned16b((uint8_t *) &((TR_RelocationRecordValidateJ2IThunkFromMethodBinaryTemplate *)_record)->_methodID);
    }
 
+TR_RelocationErrorCode
+TR_RelocationRecordValidateIsClassVisible::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation)
+   {
+   uint16_t sourceClassID = this->sourceClassID(reloTarget);
+   uint16_t destClassID = this->destClassID(reloTarget);
+   bool isVisible = this->isVisible(reloTarget);
+
+   if (reloRuntime->comp()->getSymbolValidationManager()->validateIsClassVisibleRecord(sourceClassID, destClassID, isVisible))
+      return TR_RelocationErrorCode::relocationOK;
+   else
+      return TR_RelocationErrorCode::isClassVisibleValidationFailure;
+   }
+
+void
+TR_RelocationRecordValidateIsClassVisible::print(TR_RelocationRuntime *reloRuntime)
+   {
+   TR_RelocationTarget *reloTarget = reloRuntime->reloTarget();
+   TR_RelocationRuntimeLogger *reloLogger = reloRuntime->reloLogger();
+   TR_RelocationRecord::print(reloRuntime);
+   reloLogger->printf("\tsourceClassID %d\n", sourceClassID(reloTarget));
+   reloLogger->printf("\tdestClassID %d\n", destClassID(reloTarget));
+   reloLogger->printf("\tisVisible %s\n", isVisible(reloTarget) ? "true" : "false");
+   }
+
+void
+TR_RelocationRecordValidateIsClassVisible::setSourceClassID(TR_RelocationTarget *reloTarget, uint16_t sourceClassID)
+   {
+   reloTarget->storeUnsigned16b(sourceClassID, (uint8_t *) &((TR_RelocationRecordValidateIsClassVisibleBinaryTemplate *)_record)->_sourceClassID);
+   }
+
+uint16_t
+TR_RelocationRecordValidateIsClassVisible::sourceClassID(TR_RelocationTarget *reloTarget)
+   {
+   return reloTarget->loadUnsigned16b((uint8_t *) &((TR_RelocationRecordValidateIsClassVisibleBinaryTemplate *)_record)->_sourceClassID);
+   }
+
+void
+TR_RelocationRecordValidateIsClassVisible::setDestClassID(TR_RelocationTarget *reloTarget, uint16_t destClassID)
+   {
+   reloTarget->storeUnsigned16b(destClassID, (uint8_t *) &((TR_RelocationRecordValidateIsClassVisibleBinaryTemplate *)_record)->_destClassID);
+   }
+
+uint16_t
+TR_RelocationRecordValidateIsClassVisible::destClassID(TR_RelocationTarget *reloTarget)
+   {
+   return reloTarget->loadUnsigned16b((uint8_t *) &((TR_RelocationRecordValidateIsClassVisibleBinaryTemplate *)_record)->_destClassID);
+   }
+
+void
+TR_RelocationRecordValidateIsClassVisible::setIsVisible(TR_RelocationTarget *reloTarget, bool isVisible)
+   {
+   reloTarget->storeUnsigned8b((uint8_t)isVisible, (uint8_t *) &((TR_RelocationRecordValidateIsClassVisibleBinaryTemplate *)_record)->_isVisible);
+   }
+
+bool
+TR_RelocationRecordValidateIsClassVisible::isVisible(TR_RelocationTarget *reloTarget)
+   {
+   return (bool)reloTarget->loadUnsigned8b((uint8_t *) &((TR_RelocationRecordValidateIsClassVisibleBinaryTemplate *)_record)->_isVisible);
+   }
+
 
 char *
 TR_RelocationRecordStaticDefaultValueInstance::name()
@@ -6528,5 +6598,6 @@ uint32_t TR_RelocationRecord::_relocationRecordHeaderSizeTable[TR_NumExternalRel
    0,                                                                                // TR_VMINLMethod                                  = 109
    sizeof(TR_RelocationRecordValidateJ2IThunkFromMethodBinaryTemplate),              // TR_ValidateJ2IThunkFromMethod                   = 110
    sizeof(TR_RelocationRecordConstantPoolWithIndexBinaryTemplate),                   // TR_StaticDefaultValueInstance                   = 111
+   sizeof(TR_RelocationRecordValidateIsClassVisibleBinaryTemplate),                  // TR_ValidateIsClassVisible                       = 112
    };
 // The _relocationRecordHeaderSizeTable table should be the last thing in this file
