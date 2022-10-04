@@ -1546,6 +1546,7 @@ typedef struct J9SpecialArguments {
 	IDATA *ibmMallocTraceSet;
 	const char *executableJarPath;
 	BOOLEAN captureCommandLine;
+	BOOLEAN fips140_3;
 } J9SpecialArguments;
 /**
  * Look for special options:
@@ -1595,6 +1596,10 @@ initialArgumentScan(JavaVMInitArgs *args, J9SpecialArguments *specialArgs)
 			specialArgs->captureCommandLine = TRUE;
 		} else if (0 == strcmp(args->options[argCursor].optionString, VMOPT_XXNOOPENJ9COMMANDLINEENV)) {
 			specialArgs->captureCommandLine = FALSE;
+		} else if (0 == strcmp(args->options[argCursor].optionString, VMOPT_XFIPS_140_2)) {
+			specialArgs->fips140_3 = FALSE;
+		} else if (0 == strcmp(args->options[argCursor].optionString, VMOPT_XFIPS_140_3)) {
+			specialArgs->fips140_3 = TRUE;
 		}
 	}
 
@@ -1962,6 +1967,7 @@ JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITSer
 	specialArgs.executableJarPath = NULL;
 	specialArgs.ibmMallocTraceSet = &ibmMallocTraceSet;
 	specialArgs.captureCommandLine = TRUE;
+	specialArgs.fips140_3 = FALSE;
 #if defined(J9ZOS390)
 	/*
 	 * Temporarily disable capturing the command line on z/OS.
@@ -2311,7 +2317,7 @@ JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITSer
 					jvmBufferData(j9binBuffer), jvmBufferData(jrebinBuffer),
 					libpathValue, ldLibraryPathValue))
 			|| (0 != addJavaHome(&j9portLibrary, &vmArgumentsList, altJavaHomeSpecified, jvmBufferData(j9libBuffer)))
-			|| (doAddExtDir && (0 != addExtDir(&j9portLibrary, &vmArgumentsList, jvmBufferData(j9libBuffer), args, J2SE_CURRENT_VERSION)))
+			|| (doAddExtDir && (0 != addExtDir(&j9portLibrary, &vmArgumentsList, jvmBufferData(j9libBuffer), args, J2SE_CURRENT_VERSION, specialArgs.fips140_3)))
 			|| (0 != addUserDir(&j9portLibrary, &vmArgumentsList, cwd))
 #if !defined(OPENJ9_BUILD)
 			|| (0 != addJavaPropertiesOptions(&j9portLibrary, &vmArgumentsList, localVerboseLevel))
