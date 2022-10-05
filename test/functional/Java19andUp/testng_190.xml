@@ -29,4 +29,36 @@
 			<class name="org.openj9.test.jep425.VirtualThreadTests"/>
 		</classes>
 	</test>
+		<test name="Jep424Tests_testLinkerFfi_DownCall">
+		<classes>
+			<class name="org.openj9.test.jep424.downcall.InvalidDownCallTests"/>
+			<class name="org.openj9.test.jep424.downcall.MultiCallTests"/>
+			<class name="org.openj9.test.jep424.downcall.MultiThreadingTests1"/>
+			<class name="org.openj9.test.jep424.downcall.MultiThreadingTests2"/>
+			<class name="org.openj9.test.jep424.downcall.MultiThreadingTests3"/>
+			<class name="org.openj9.test.jep424.downcall.MultiThreadingTests4"/>
+			<class name="org.openj9.test.jep424.downcall.MultiThreadingTests5"/>
+			<class name="org.openj9.test.jep424.downcall.PrimitiveTypeTests1"/>
+			<class name="org.openj9.test.jep424.downcall.PrimitiveTypeTests2"/>
+			<class name="org.openj9.test.jep424.downcall.StructTests1"/>
+			<class name="org.openj9.test.jep424.downcall.StructTests2"/>
+		</classes>
+	</test>
+	<test name="Jep424Tests_testLinkerFfi_UpCall">
+		<classes>
+			<class name="org.openj9.test.jep424.upcall.MultiUpcallMHTests"/>
+			<class name="org.openj9.test.jep424.upcall.MultiUpcallThrdsMHTests1"/>
+			<class name="org.openj9.test.jep424.upcall.MultiUpcallThrdsMHTests2"/>
+			<class name="org.openj9.test.jep424.upcall.UpcallMHWithMixedSigStruTests"/>
+			<class name="org.openj9.test.jep424.upcall.UpcallMHWithPrimTests"/>
+			<class name="org.openj9.test.jep424.upcall.UpcallMHWithStructTests"/>
+		</classes>
+	</test>
+	<test name="Jep424Tests_testLinkerFfi_VaList">
+		<classes>
+			<class name="org.openj9.test.jep424.valist.ApiTests"/>
+			<class name="org.openj9.test.jep424.valist.DowncallTests"/>
+			<class name="org.openj9.test.jep424.valist.UpcallTests"/>
+		</classes>
+	</test>
 </suite>

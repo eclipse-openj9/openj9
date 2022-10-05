@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2021, 2021 IBM Corp. and others
+ * Copyright (c) 2021, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,8 +33,8 @@ import jdk.incubator.foreign.SymbolLookup;
 import static jdk.incubator.foreign.ValueLayout.*;
 
 /**
- * Test cases for JEP 419: Foreign Linker API (Second Incubator) DownCall for primitive types,
- * which verifies the downcalls with the diffrent return types in multithreading.
+ * Test cases for JEP 419: Foreign Linker API (Second Incubator) for primitive types in downcall,
+ * which verifies the downcalls with the diffrent layouts and arguments/return types in multithreading.
  */
 @Test(groups = { "level.sanity" })
 public class MultiThreadingTests3 implements Thread.UncaughtExceptionHandler {
@@ -53,7 +53,7 @@ public class MultiThreadingTests3 implements Thread.UncaughtExceptionHandler {
 	}
 
 	@Test
-	public void test_twoThreadsWithDiffReturnType() throws Throwable {
+	public void test_twoThreadsWithDiffFuncDescriptor() throws Throwable {
 		Thread thr1 = new Thread(){
 			public void run() {
 				try {
@@ -71,10 +71,11 @@ public class MultiThreadingTests3 implements Thread.UncaughtExceptionHandler {
 		Thread thr2 = new Thread(){
 			public void run() {
 				try {
-					FunctionDescriptor fd = FunctionDescriptor.ofVoid(JAVA_INT, JAVA_INT);
-					NativeSymbol functionSymbol = nativeLibLookup.lookup("add2IntsReturnVoid").get();
+					FunctionDescriptor fd = FunctionDescriptor.of(JAVA_INT, JAVA_INT, JAVA_INT, JAVA_INT);
+					NativeSymbol functionSymbol = nativeLibLookup.lookup("add3Ints").get();
 					MethodHandle mh = clinker.downcallHandle(functionSymbol, fd);
-					mh.invokeExact(454, 398);
+					int result = (int)mh.invokeExact(112, 123, 235);
+					Assert.assertEquals(result, 470);
 				} catch (Throwable t) {
 					throw new RuntimeException(t);
 				}

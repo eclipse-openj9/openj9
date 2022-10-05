@@ -170,7 +170,8 @@ public class StructTests1 {
 	@Test
 	public void test_addBoolAndBoolsFromNestedStructWithXor_1() throws Throwable {
 		GroupLayout nestedStructLayout = MemoryLayout.structLayout(C_CHAR.withName("elem1"), C_CHAR.withName("elem2"));
-		GroupLayout structLayout = MemoryLayout.structLayout(nestedStructLayout.withName("struct_elem1"), C_CHAR.withName("elem2"));
+		GroupLayout structLayout = MemoryLayout.structLayout(nestedStructLayout.withName("struct_elem1"),
+				C_CHAR.withName("elem2"), MemoryLayout.paddingLayout(C_CHAR.bitSize()));
 		MethodType mt = MethodType.methodType(boolean.class, boolean.class, MemorySegment.class);
 		FunctionDescriptor fd = FunctionDescriptor.of(C_CHAR, C_CHAR, structLayout);
 		Addressable functionSymbol = nativeLibLookup.lookup("addBoolAndBoolsFromNestedStructWithXor").get();
@@ -213,7 +214,8 @@ public class StructTests1 {
 	@Test
 	public void test_addBoolAndBoolsFromNestedStructWithXor_withoutLayoutName_1() throws Throwable {
 		GroupLayout nestedStructLayout = MemoryLayout.structLayout(C_CHAR, C_CHAR);
-		GroupLayout structLayout = MemoryLayout.structLayout(nestedStructLayout, C_CHAR);
+		GroupLayout structLayout = MemoryLayout.structLayout(nestedStructLayout, C_CHAR,
+				MemoryLayout.paddingLayout(C_CHAR.bitSize()));
 		MethodType mt = MethodType.methodType(boolean.class, boolean.class, MemorySegment.class);
 		FunctionDescriptor fd = FunctionDescriptor.of(C_CHAR, C_CHAR, structLayout);
 		Addressable functionSymbol = nativeLibLookup.lookup("addBoolAndBoolsFromNestedStructWithXor").get();
@@ -278,7 +280,8 @@ public class StructTests1 {
 	@Test
 	public void test_addBoolAndBoolsFromStructWithNestedBoolArray_withoutLayoutName_1() throws Throwable {
 		SequenceLayout boolArray = MemoryLayout.sequenceLayout(2, C_CHAR);
-		GroupLayout structLayout = MemoryLayout.structLayout(boolArray, C_CHAR);
+		GroupLayout structLayout = MemoryLayout.structLayout(boolArray, C_CHAR,
+				MemoryLayout.paddingLayout(C_CHAR.bitSize()));
 		MethodType mt = MethodType.methodType(boolean.class, boolean.class, MemorySegment.class);
 		FunctionDescriptor fd = FunctionDescriptor.of(C_CHAR, C_CHAR, structLayout);
 		Addressable functionSymbol = nativeLibLookup.lookup("addBoolAndBoolsFromStructWithNestedBoolArray").get();
@@ -350,7 +353,8 @@ public class StructTests1 {
 	public void test_addBoolAndBoolsFromStructWithNestedStructArray_withoutLayoutName_1() throws Throwable {
 		GroupLayout boolStruct = MemoryLayout.structLayout(C_CHAR, C_CHAR);
 		SequenceLayout structArray = MemoryLayout.sequenceLayout(2, boolStruct);
-		GroupLayout structLayout = MemoryLayout.structLayout(structArray, C_CHAR);
+		GroupLayout structLayout = MemoryLayout.structLayout(structArray, C_CHAR,
+				MemoryLayout.paddingLayout(C_CHAR.bitSize() * 3));
 		MethodType mt = MethodType.methodType(boolean.class, boolean.class, MemorySegment.class);
 		FunctionDescriptor fd = FunctionDescriptor.of(C_CHAR, C_CHAR, structLayout);
 		Addressable functionSymbol = nativeLibLookup.lookup("addBoolAndBoolsFromStructWithNestedStructArray").get();
@@ -555,7 +559,8 @@ public class StructTests1 {
 	@Test
 	public void test_addByteAndBytesFromNestedStruct_1() throws Throwable {
 		GroupLayout nestedStructLayout = MemoryLayout.structLayout(C_CHAR.withName("elem1"), C_CHAR.withName("elem2"));
-		GroupLayout structLayout = MemoryLayout.structLayout(nestedStructLayout.withName("struct_elem1"), C_CHAR.withName("elem2"));
+		GroupLayout structLayout = MemoryLayout.structLayout(nestedStructLayout.withName("struct_elem1"),
+				C_CHAR.withName("elem2"), MemoryLayout.paddingLayout(C_CHAR.bitSize()));
 		MethodType mt = MethodType.methodType(byte.class, byte.class, MemorySegment.class);
 		FunctionDescriptor fd = FunctionDescriptor.of(C_CHAR, C_CHAR, structLayout);
 		Addressable functionSymbol = nativeLibLookup.lookup("addByteAndBytesFromNestedStruct").get();
@@ -598,7 +603,8 @@ public class StructTests1 {
 	@Test
 	public void test_addByteAndBytesFromNestedStruct_withoutLayoutName_1() throws Throwable {
 		GroupLayout nestedStructLayout = MemoryLayout.structLayout(C_CHAR, C_CHAR);
-		GroupLayout structLayout = MemoryLayout.structLayout(nestedStructLayout, C_CHAR);
+		GroupLayout structLayout = MemoryLayout.structLayout(nestedStructLayout, C_CHAR,
+				MemoryLayout.paddingLayout(C_CHAR.bitSize()));
 		MethodType mt = MethodType.methodType(byte.class, byte.class, MemorySegment.class);
 		FunctionDescriptor fd = FunctionDescriptor.of(C_CHAR, C_CHAR, structLayout);
 		Addressable functionSymbol = nativeLibLookup.lookup("addByteAndBytesFromNestedStruct").get();
@@ -663,7 +669,8 @@ public class StructTests1 {
 	@Test
 	public void test_addByteAndBytesFromStructWithNestedByteArray_withoutLayoutName_1() throws Throwable {
 		SequenceLayout byteArray = MemoryLayout.sequenceLayout(2, C_CHAR);
-		GroupLayout structLayout = MemoryLayout.structLayout(byteArray, C_CHAR);
+		GroupLayout structLayout = MemoryLayout.structLayout(byteArray, C_CHAR,
+				MemoryLayout.paddingLayout(C_CHAR.bitSize()));
 		MethodType mt = MethodType.methodType(byte.class, byte.class, MemorySegment.class);
 		FunctionDescriptor fd = FunctionDescriptor.of(C_CHAR, C_CHAR, structLayout);
 		Addressable functionSymbol = nativeLibLookup.lookup("addByteAndBytesFromStructWithNestedByteArray").get();
@@ -735,7 +742,8 @@ public class StructTests1 {
 	public void test_addByteAndBytesFromStructWithNestedStructArray_withoutLayoutName_1() throws Throwable {
 		GroupLayout byteStruct = MemoryLayout.structLayout(C_CHAR, C_CHAR);
 		SequenceLayout structArray = MemoryLayout.sequenceLayout(2, byteStruct);
-		GroupLayout structLayout = MemoryLayout.structLayout(structArray, C_CHAR);
+		GroupLayout structLayout = MemoryLayout.structLayout(structArray, C_CHAR,
+				MemoryLayout.paddingLayout(C_CHAR.bitSize() * 3));
 		MethodType mt = MethodType.methodType(byte.class, byte.class, MemorySegment.class);
 		FunctionDescriptor fd = FunctionDescriptor.of(C_CHAR, C_CHAR, structLayout);
 		Addressable functionSymbol = nativeLibLookup.lookup("addByteAndBytesFromStructWithNestedStructArray").get();
@@ -940,7 +948,8 @@ public class StructTests1 {
 	@Test
 	public void test_addCharAndCharsFromNestedStruct_1() throws Throwable {
 		GroupLayout nestedStructLayout = MemoryLayout.structLayout(C_SHORT.withName("elem1"), C_SHORT.withName("elem2"));
-		GroupLayout structLayout = MemoryLayout.structLayout(nestedStructLayout.withName("struct_elem1"), C_SHORT.withName("elem2"));
+		GroupLayout structLayout = MemoryLayout.structLayout(nestedStructLayout.withName("struct_elem1"),
+				C_SHORT.withName("elem2"), MemoryLayout.paddingLayout(C_SHORT.bitSize()));
 		MethodType mt = MethodType.methodType(char.class, char.class, MemorySegment.class);
 		FunctionDescriptor fd = FunctionDescriptor.of(C_SHORT, C_SHORT, structLayout);
 		Addressable functionSymbol = nativeLibLookup.lookup("addCharAndCharsFromNestedStruct").get();
@@ -1174,7 +1183,8 @@ public class StructTests1 {
 
 	@Test
 	public void test_add3CharStructs_returnStruct_1() throws Throwable {
-		GroupLayout structLayout = MemoryLayout.structLayout(C_SHORT.withName("elem1"), C_SHORT.withName("elem2"), C_SHORT.withName("elem3"));
+		GroupLayout structLayout = MemoryLayout.structLayout(C_SHORT.withName("elem1"), C_SHORT.withName("elem2"),
+				C_SHORT.withName("elem3"), MemoryLayout.paddingLayout(C_SHORT.bitSize()));
 		VarHandle charHandle1 = structLayout.varHandle(char.class, PathElement.groupElement("elem1"));
 		VarHandle charHandle2 = structLayout.varHandle(char.class, PathElement.groupElement("elem2"));
 		VarHandle charHandle3 = structLayout.varHandle(char.class, PathElement.groupElement("elem3"));
@@ -1345,7 +1355,8 @@ public class StructTests1 {
 	@Test
 	public void test_addShortAndShortsFromNestedStruct_withoutLayoutName_1() throws Throwable {
 		GroupLayout nestedStructLayout = MemoryLayout.structLayout(C_SHORT, C_SHORT);
-		GroupLayout structLayout = MemoryLayout.structLayout(nestedStructLayout, C_SHORT);
+		GroupLayout structLayout = MemoryLayout.structLayout(nestedStructLayout, C_SHORT,
+				MemoryLayout.paddingLayout(C_SHORT.bitSize()));
 		MethodType mt = MethodType.methodType(short.class, short.class, MemorySegment.class);
 		FunctionDescriptor fd = FunctionDescriptor.of(C_SHORT, C_SHORT, structLayout);
 		Addressable functionSymbol = nativeLibLookup.lookup("addShortAndShortsFromNestedStruct").get();
@@ -2839,34 +2850,25 @@ public class StructTests1 {
 
 	@Test
 	public void test_addDoubleAndFloatDoubleFromStruct_1() throws Throwable {
-		GroupLayout structLayout = null;
-		MemorySegment structSegmt = null;
+		/* The size of [float, double] on AIX/PPC 64-bit is 12 bytes without padding by default
+		 * while the same struct is 16 bytes with padding on other platforms.
+		 */
+		GroupLayout structLayout = isAixOS ? MemoryLayout.structLayout(C_FLOAT.withName("elem1"),
+				C_DOUBLE.withName("elem2")) : MemoryLayout.structLayout(C_FLOAT.withName("elem1"),
+						MemoryLayout.paddingLayout(C_FLOAT.bitSize()), C_DOUBLE.withName("elem2"));
+		VarHandle elemHandle1 = structLayout.varHandle(float.class, PathElement.groupElement("elem1"));
+		VarHandle elemHandle2 = structLayout.varHandle(double.class, PathElement.groupElement("elem2"));
+
+		MethodType mt = MethodType.methodType(double.class, double.class, MemorySegment.class);
+		FunctionDescriptor fd = FunctionDescriptor.of(C_DOUBLE, C_DOUBLE, structLayout);
+		Addressable functionSymbol = nativeLibLookup.lookup("addDoubleAndFloatDoubleFromStruct").get();
+		MethodHandle mh = clinker.downcallHandle(functionSymbol, mt, fd);
 
 		try (ResourceScope scope = ResourceScope.newConfinedScope()) {
 			SegmentAllocator allocator = SegmentAllocator.ofScope(scope);
-
-			/* The size of [float, double] on AIX/PPC 64-bit is 12 bytes without padding by default
-			 * while the same struct is 16 bytes with padding on other platforms.
-			 */
-			if (isAixOS) {
-				structLayout = MemoryLayout.structLayout(C_FLOAT.withName("elem1"), C_DOUBLE.withName("elem2"));
-				structSegmt = allocator.allocate(structLayout);
-				MemoryAccess.setFloatAtOffset(structSegmt, 0, 18.444F);
-				MemoryAccess.setDoubleAtOffset(structSegmt, 4, 619.777D);
-			} else {
-				structLayout = MemoryLayout.structLayout(C_FLOAT.withName("elem1"),
-						MemoryLayout.paddingLayout(C_FLOAT.bitSize()), C_DOUBLE.withName("elem2"));
-				VarHandle elemHandle1 = structLayout.varHandle(float.class, PathElement.groupElement("elem1"));
-				VarHandle elemHandle2 = structLayout.varHandle(double.class, PathElement.groupElement("elem2"));
-				structSegmt = allocator.allocate(structLayout);
-				elemHandle1.set(structSegmt, 18.444F);
-				elemHandle2.set(structSegmt, 619.777D);
-			}
-
-			MethodType mt = MethodType.methodType(double.class, double.class, MemorySegment.class);
-			FunctionDescriptor fd = FunctionDescriptor.of(C_DOUBLE, C_DOUBLE, structLayout);
-			Addressable functionSymbol = nativeLibLookup.lookup("addDoubleAndFloatDoubleFromStruct").get();
-			MethodHandle mh = clinker.downcallHandle(functionSymbol, mt, fd);
+			MemorySegment structSegmt = allocator.allocate(structLayout);
+			elemHandle1.set(structSegmt, 18.444F);
+			elemHandle2.set(structSegmt, 619.777D);
 
 			double result = (double)mh.invokeExact(113.567D, structSegmt);
 			Assert.assertEquals(result, 751.788D, 0.001D);
@@ -2875,34 +2877,25 @@ public class StructTests1 {
 
 	@Test
 	public void test_addDoubleAndIntDoubleFromStruct_1() throws Throwable {
-		GroupLayout structLayout = null;
-		MemorySegment structSegmt = null;
+		/* The size of [int, double] on AIX/PPC 64-bit is 12 bytes without padding by default
+		 * while the same struct is 16 bytes with padding on other platforms.
+		 */
+		GroupLayout structLayout = isAixOS ? MemoryLayout.structLayout(C_INT.withName("elem1"),
+				C_DOUBLE.withName("elem2")) : MemoryLayout.structLayout(C_INT.withName("elem1"),
+						MemoryLayout.paddingLayout(C_INT.bitSize()), C_DOUBLE.withName("elem2"));
+		VarHandle elemHandle1 = structLayout.varHandle(int.class, PathElement.groupElement("elem1"));
+		VarHandle elemHandle2 = structLayout.varHandle(double.class, PathElement.groupElement("elem2"));
+
+		MethodType mt = MethodType.methodType(double.class, double.class, MemorySegment.class);
+		FunctionDescriptor fd = FunctionDescriptor.of(C_DOUBLE, C_DOUBLE, structLayout);
+		Addressable functionSymbol = nativeLibLookup.lookup("addDoubleAndIntDoubleFromStruct").get();
+		MethodHandle mh = clinker.downcallHandle(functionSymbol, mt, fd);
 
 		try (ResourceScope scope = ResourceScope.newConfinedScope()) {
 			SegmentAllocator allocator = SegmentAllocator.ofScope(scope);
-
-			/* The size of [int, double] on AIX/PPC 64-bit is 12 bytes without padding by default
-			 * while the same struct is 16 bytes with padding on other platforms.
-			 */
-			if (isAixOS) {
-				structLayout = MemoryLayout.structLayout(C_INT.withName("elem1"), C_DOUBLE.withName("elem2"));
-				structSegmt = allocator.allocate(structLayout);
-				MemoryAccess.setIntAtOffset(structSegmt, 0, 18);
-				MemoryAccess.setDoubleAtOffset(structSegmt, 4, 619.777D);
-			} else {
-				structLayout = MemoryLayout.structLayout(C_INT.withName("elem1"),
-						MemoryLayout.paddingLayout(C_INT.bitSize()), C_DOUBLE.withName("elem2"));
-				VarHandle elemHandle1 = structLayout.varHandle(int.class, PathElement.groupElement("elem1"));
-				VarHandle elemHandle2 = structLayout.varHandle(double.class, PathElement.groupElement("elem2"));
-				structSegmt = allocator.allocate(structLayout);
-				elemHandle1.set(structSegmt, 18);
-				elemHandle2.set(structSegmt, 619.777D);
-			}
-
-			MethodType mt = MethodType.methodType(double.class, double.class, MemorySegment.class);
-			FunctionDescriptor fd = FunctionDescriptor.of(C_DOUBLE, C_DOUBLE, structLayout);
-			Addressable functionSymbol = nativeLibLookup.lookup("addDoubleAndIntDoubleFromStruct").get();
-			MethodHandle mh = clinker.downcallHandle(functionSymbol, mt, fd);
+			MemorySegment structSegmt = allocator.allocate(structLayout);
+			elemHandle1.set(structSegmt, 18);
+			elemHandle2.set(structSegmt, 619.777D);
 
 			double result = (double)mh.invokeExact(113.567D, structSegmt);
 			Assert.assertEquals(result, 751.344D, 0.001D);

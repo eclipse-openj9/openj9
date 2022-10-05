@@ -32,6 +32,7 @@
 			<class name="org.openj9.test.jep389.downcall.MultiThreadingTests2"/>
 			<class name="org.openj9.test.jep389.downcall.MultiThreadingTests3"/>
 			<class name="org.openj9.test.jep389.downcall.MultiThreadingTests4"/>
+			<class name="org.openj9.test.jep389.downcall.MultiThreadingTests5"/>
 			<class name="org.openj9.test.jep389.downcall.PrimitiveTypeTests1"/>
 			<class name="org.openj9.test.jep389.downcall.PrimitiveTypeTests2"/>
 			<class name="org.openj9.test.jep389.downcall.PrimitiveTypeTests3"/>
@@ -39,9 +40,19 @@
 			<class name="org.openj9.test.jep389.downcall.StructTests2"/>
 		</classes>
 	</test>
+	<test name="Jep389Tests_testClinkerFfi_UpCall">
+		<classes>
+			<class name="org.openj9.test.jep389.upcall.MultiUpcallMHTests"/>
+			<class name="org.openj9.test.jep389.upcall.MultiUpcallThrdsMHTests1"/>
+			<class name="org.openj9.test.jep389.upcall.MultiUpcallThrdsMHTests2"/>
+			<class name="org.openj9.test.jep389.upcall.UpcallMHWithMixedSigStruTests"/>
+			<class name="org.openj9.test.jep389.upcall.UpcallMHWithPrimTests"/>
+			<class name="org.openj9.test.jep389.upcall.UpcallMHWithStructTests"/>
+		</classes>
+	</test>
 	<test name="Jep389Tests_testClinkerFfi_VaList">
 		<classes>
-			<class name="org.openj9.test.jep389.valist.VaListTests"/>
+			<class name="org.openj9.test.jep389.valist.ApiTests"/>
 		</classes>
 	</test>
 	<test name="CloseScope0Tests">
