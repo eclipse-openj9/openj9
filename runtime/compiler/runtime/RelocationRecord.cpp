@@ -6425,8 +6425,8 @@ uint32_t TR_RelocationRecord::_relocationRecordHeaderSizeTable[TR_NumExternalRel
    sizeof(TR_RelocationRecordConstantPoolBinaryTemplate),                            // TR_MethodObject                                 = 6
    0,                                                                                // TR_InterfaceObject                              = 7
    sizeof(TR_RelocationRecordHelperAddressBinaryTemplate),                           // TR_AbsoluteHelperAddress                        = 8
-   sizeof(TR_RelocationRecordWithOffsetBinaryTemplate),                              // TR_FixedSeqAddress                              = 9
-   sizeof(TR_RelocationRecordWithOffsetBinaryTemplate),                              // TR_FixedSeq2Address                             = 10
+   sizeof(TR_RelocationRecordWithOffsetBinaryTemplate),                              // TR_FixedSequenceAddress                         = 9
+   sizeof(TR_RelocationRecordWithOffsetBinaryTemplate),                              // TR_FixedSequenceAddress2                        = 10
    sizeof(TR_RelocationRecordDirectToJNIBinaryTemplate),                             // TR_JNIVirtualTargetAddress                      = 11
    sizeof(TR_RelocationRecordDirectToJNIBinaryTemplate),                             // TR_JNIStaticTargetAddress                       = 12
    sizeof(TR_RelocationRecordBinaryTemplate),                                        // TR_ArrayCopyHelper                              = 13
@@ -6499,8 +6499,8 @@ uint32_t TR_RelocationRecord::_relocationRecordHeaderSizeTable[TR_NumExternalRel
    0,                                                                                // TR_ValidateRomClass                             = 80
    0,                                                                                // TR_ValidatePrimitiveClass                       = 81
    0,                                                                                // TR_ValidateMethodFromInlinedSite                = 82
-   0,                                                                                // TR_ValidatedMethodByName                        = 83
-   sizeof(TR_RelocationRecordValidateMethodFromClassBinaryTemplate),                 // TR_ValidatedMethodFromClass                     = 84
+   0,                                                                                // TR_ValidateMethodByName                         = 83
+   sizeof(TR_RelocationRecordValidateMethodFromClassBinaryTemplate),                 // TR_ValidateMethodFromClass                      = 84
    sizeof(TR_RelocationRecordValidateMethodFromCPBinaryTemplate),                    // TR_ValidateStaticMethodFromCP                   = 85
    sizeof(TR_RelocationRecordValidateMethodFromCPBinaryTemplate),                    // TR_ValidateSpecialMethodFromCP                  = 86
    sizeof(TR_RelocationRecordValidateMethodFromCPBinaryTemplate),                    // TR_ValidateVirtualMethodFromCP                  = 87
