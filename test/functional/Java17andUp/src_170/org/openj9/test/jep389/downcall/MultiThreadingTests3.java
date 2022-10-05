@@ -36,7 +36,7 @@ import jdk.incubator.foreign.SymbolLookup;
 
 /**
  * Test cases for JEP 389: Foreign Linker API (Incubator) for primitive types in downcall,
- * which verifies the downcalls with the diffrent return types in multithreading.
+ * which verifies the downcalls with the diffrent layouts and arguments/return types in multithreading.
  */
 @Test(groups = { "level.sanity" })
 public class MultiThreadingTests3 implements Thread.UncaughtExceptionHandler {
@@ -55,7 +55,7 @@ public class MultiThreadingTests3 implements Thread.UncaughtExceptionHandler {
 	}
 
 	@Test
-	public void test_twoThreadsWithDiffReturnType() throws Throwable {
+	public void test_twoThreadsWithDiffFuncDescriptor() throws Throwable {
 		Thread thr1 = new Thread(){
 			public void run() {
 				try {
@@ -74,11 +74,12 @@ public class MultiThreadingTests3 implements Thread.UncaughtExceptionHandler {
 		Thread thr2 = new Thread(){
 			public void run() {
 				try {
-					MethodType mt = MethodType.methodType(void.class, int.class, int.class);
-					FunctionDescriptor fd = FunctionDescriptor.ofVoid(C_INT, C_INT);
-					Addressable functionSymbol = nativeLibLookup.lookup("add2IntsReturnVoid").get();
+					MethodType mt = MethodType.methodType(int.class, int.class, int.class, int.class);
+					FunctionDescriptor fd = FunctionDescriptor.of(C_INT, C_INT, C_INT, C_INT);
+					Addressable functionSymbol = nativeLibLookup.lookup("add3Ints").get();
 					MethodHandle mh = clinker.downcallHandle(functionSymbol, mt, fd);
-					mh.invokeExact(454, 398);
+					int result = (int)mh.invokeExact(112, 123, 235);
+					Assert.assertEquals(result, 470);
 				} catch (Throwable t) {
 					throw new RuntimeException(t);
 				}

@@ -24,29 +24,41 @@ package org.openj9.test.jep389.downcall;
 import org.testng.annotations.Test;
 import org.testng.Assert;
 import org.testng.AssertJUnit;
+
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
+import java.lang.invoke.VarHandle;
 
 import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.CLinker;
 import static jdk.incubator.foreign.CLinker.*;
 import jdk.incubator.foreign.FunctionDescriptor;
+import jdk.incubator.foreign.GroupLayout;
+import jdk.incubator.foreign.MemoryLayout;
+import jdk.incubator.foreign.MemoryLayout.PathElement;
+import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.ResourceScope;
+import jdk.incubator.foreign.SegmentAllocator;
 import jdk.incubator.foreign.SymbolLookup;
+import jdk.incubator.foreign.ValueLayout;
 
 /**
  * Test cases for JEP 389: Foreign Linker API (Incubator) for primitive types in downcall,
- * which verifies the downcalls with the diffrent layouts and arguments/return types in multithreading.
+ * which verifies the downcalls with the shared downcall handlder (cached as soft reference in OpenJDK)
+ * in multithreading.
  */
 @Test(groups = { "level.sanity" })
 public class MultiThreadingTests2 implements Thread.UncaughtExceptionHandler {
 	private volatile Throwable initException;
-	private static CLinker clinker = CLinker.getInstance();
 
 	static {
 		System.loadLibrary("clinkerffitests");
 	}
-	private static final SymbolLookup nativeLibLookup = SymbolLookup.loaderLookup();
+	private static final GroupLayout structLayout = MemoryLayout.structLayout(C_INT.withName("elem1"), C_INT.withName("elem2"));
+	private static final MethodType mt = MethodType.methodType(MemorySegment.class, MemorySegment.class, MemorySegment.class);
+	private static final FunctionDescriptor fd = FunctionDescriptor.of(structLayout, structLayout, structLayout);
+	private static final Addressable functionSymbol = SymbolLookup.loaderLookup().lookup("add2IntStructs_returnStruct").get();
+	private static final MethodHandle mh = CLinker.getInstance().downcallHandle(mt, fd);
 
 	@Test(enabled=false)
 	@Override
@@ -55,16 +67,26 @@ public class MultiThreadingTests2 implements Thread.UncaughtExceptionHandler {
 	}
 
 	@Test
-	public void test_twoThreadsWithDiffFuncDescriptor() throws Throwable {
+	public void test_twoThreadsWithSameFuncDesc_SharedDowncallHandler() throws Throwable {
 		Thread thr1 = new Thread(){
 			public void run() {
 				try {
-					MethodType mt = MethodType.methodType(int.class, int.class, int.class);
-					FunctionDescriptor fd = FunctionDescriptor.of(C_INT, C_INT, C_INT);
-					Addressable functionSymbol = nativeLibLookup.lookup("add2Ints").get();
-					MethodHandle mh = clinker.downcallHandle(functionSymbol, mt, fd);
-					int result = (int)mh.invokeExact(112, 123);
-					Assert.assertEquals(result, 235);
+					VarHandle intHandle1 = structLayout.varHandle(int.class, PathElement.groupElement("elem1"));
+					VarHandle intHandle2 = structLayout.varHandle(int.class, PathElement.groupElement("elem2"));
+
+					try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+						SegmentAllocator allocator = SegmentAllocator.ofScope(scope);
+						MemorySegment structSegmt1 = allocator.allocate(structLayout);
+						intHandle1.set(structSegmt1, 11223344);
+						intHandle2.set(structSegmt1, 55667788);
+						MemorySegment structSegmt2 = allocator.allocate(structLayout);
+						intHandle1.set(structSegmt2, 99001122);
+						intHandle2.set(structSegmt2, 33445566);
+
+						MemorySegment resultSegmt = (MemorySegment)mh.invokeExact(functionSymbol, allocator, structSegmt1, structSegmt2);
+						Assert.assertEquals(intHandle1.get(resultSegmt), 110224466);
+						Assert.assertEquals(intHandle2.get(resultSegmt), 89113354);
+					}
 				} catch (Throwable t) {
 					throw new RuntimeException(t);
 				}
@@ -74,12 +96,22 @@ public class MultiThreadingTests2 implements Thread.UncaughtExceptionHandler {
 		Thread thr2 = new Thread(){
 			public void run() {
 				try {
-					MethodType mt = MethodType.methodType(int.class, int.class, int.class, int.class);
-					FunctionDescriptor fd = FunctionDescriptor.of(C_INT, C_INT, C_INT, C_INT);
-					Addressable functionSymbol = nativeLibLookup.lookup("add3Ints").get();
-					MethodHandle mh = clinker.downcallHandle(functionSymbol, mt, fd);
-					int result = (int)mh.invokeExact(112, 123, 235);
-					Assert.assertEquals(result, 470);
+					VarHandle intHandle1 = structLayout.varHandle(int.class, PathElement.groupElement("elem1"));
+					VarHandle intHandle2 = structLayout.varHandle(int.class, PathElement.groupElement("elem2"));
+
+					try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+						SegmentAllocator allocator = SegmentAllocator.ofScope(scope);
+						MemorySegment structSegmt1 = allocator.allocate(structLayout);
+						intHandle1.set(structSegmt1, 11223344);
+						intHandle2.set(structSegmt1, 55667788);
+						MemorySegment structSegmt2 = allocator.allocate(structLayout);
+						intHandle1.set(structSegmt2, 99001123);
+						intHandle2.set(structSegmt2, 33445567);
+
+						MemorySegment resultSegmt = (MemorySegment)mh.invokeExact(functionSymbol, allocator, structSegmt1, structSegmt2);
+						Assert.assertEquals(intHandle1.get(resultSegmt), 110224467);
+						Assert.assertEquals(intHandle2.get(resultSegmt), 89113355);
+					}
 				} catch (Throwable t) {
 					throw new RuntimeException(t);
 				}

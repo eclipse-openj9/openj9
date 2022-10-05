@@ -4500,7 +4500,7 @@ typedef struct J9MemoryManagerFunctions {
 	UDATA ( *ownableSynchronizerObjectCreated)(struct J9VMThread *vmThread, j9object_t object) ;
 	UDATA ( *continuationObjectCreated)(struct J9VMThread *vmThread, j9object_t object) ;
 	void ( *preMountContinuation)(struct J9VMThread *vmThread, j9object_t object) ;
-	void ( *postDismountContinuation)(struct J9VMThread *vmThread, j9object_t object) ;
+	void ( *postUnmountContinuation)(struct J9VMThread *vmThread, j9object_t object) ;
 
 	void  ( *j9gc_notifyGCOfClassReplacement)(struct J9VMThread *vmThread, J9Class *originalClass, J9Class *replacementClass, UDATA isFastHCR) ;
 	I_32  ( *j9gc_get_jit_string_dedup_policy)(struct J9JavaVM *javaVM) ;
@@ -4998,6 +4998,7 @@ typedef struct J9VMContinuation {
 	UDATA* j2iFrame;
 	struct J9JITGPRSpillArea jitGPRs;
 	struct J9VMEntryLocalStorage* oldEntryLocalStorage;
+	struct J9VMThread* carrierThread;
 } J9VMContinuation;
 #endif /* JAVA_SPEC_VERSION >= 19 */
 

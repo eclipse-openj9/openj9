@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2021, 2021 IBM Corp. and others
+ * Copyright (c) 2021, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,13 +28,17 @@ import org.testng.AssertJUnit;
 import java.lang.invoke.MethodHandle;
 import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
+import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.NativeSymbol;
+import jdk.incubator.foreign.ResourceScope;
+import jdk.incubator.foreign.SegmentAllocator;
 import jdk.incubator.foreign.SymbolLookup;
 import static jdk.incubator.foreign.ValueLayout.*;
 
 /**
- * Test cases for JEP 419: Foreign Linker API (Second Incubator) DownCall for primitive types,
- * which verifies the downcalls with the same layout & argument and return types in multithreading.
+ * Test cases for JEP 419: Foreign Linker API (Second Incubator) for primitive types in downcall,
+ * which verifies the downcalls with the same downcall handlder (cached as soft reference in OpenJDK)
+ * in multithreading.
  */
 @Test(groups = { "level.sanity" })
 public class MultiThreadingTests1 implements Thread.UncaughtExceptionHandler {
@@ -53,37 +57,49 @@ public class MultiThreadingTests1 implements Thread.UncaughtExceptionHandler {
 	}
 
 	@Test
-	public void test_twoThreadsWithSameFuncDescriptor() throws Throwable {
+	public void test_twoThreadsWithSameFuncDesc_SameDowncallHandler() throws Throwable {
 		Thread thr1 = new Thread(){
 			public void run() {
 				try {
-					FunctionDescriptor fd = FunctionDescriptor.of(JAVA_INT, JAVA_INT, JAVA_INT);
-					NativeSymbol functionSymbol = nativeLibLookup.lookup("add2Ints").get();
-					MethodHandle mh = clinker.downcallHandle(functionSymbol, fd);
-					int result = (int)mh.invokeExact(112, 123);
-					Assert.assertEquals(result, 235);
+					try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+						FunctionDescriptor fd = FunctionDescriptor.of(JAVA_INT, JAVA_INT, ADDRESS);
+						NativeSymbol functionSymbol = nativeLibLookup.lookup("addIntAndIntFromPointer").get();
+						MethodHandle mh = clinker.downcallHandle(functionSymbol, fd);
+
+						SegmentAllocator allocator = SegmentAllocator.nativeAllocator(scope);
+						MemorySegment intSegmt = allocator.allocate(JAVA_INT, 215);
+						int result = (int)mh.invoke(321, intSegmt);
+						Assert.assertEquals(result, 536);
+					}
 				} catch (Throwable t) {
 					throw new RuntimeException(t);
 				}
 			}
 		};
-		thr1.setUncaughtExceptionHandler(this);
-		thr1.start();
 
 		Thread thr2 = new Thread(){
 			public void run() {
 				try {
-					FunctionDescriptor fd = FunctionDescriptor.of(JAVA_INT, JAVA_INT, JAVA_INT);
-					NativeSymbol functionSymbol = nativeLibLookup.lookup("add2Ints").get();
-					MethodHandle mh = clinker.downcallHandle(functionSymbol, fd);
-					int result = (int)mh.invokeExact(235, 439);
-					Assert.assertEquals(result, 674);
+					try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+						FunctionDescriptor fd = FunctionDescriptor.of(JAVA_INT, JAVA_INT, ADDRESS);
+						NativeSymbol functionSymbol = nativeLibLookup.lookup("addIntAndIntFromPointer").get();
+						MethodHandle mh = clinker.downcallHandle(functionSymbol, fd);
+
+						SegmentAllocator allocator = SegmentAllocator.nativeAllocator(scope);
+						MemorySegment intSegmt = allocator.allocate(JAVA_INT, 215);
+						int result = (int)mh.invoke(322, intSegmt);
+						Assert.assertEquals(result, 537);
+					}
 				} catch (Throwable t) {
 					throw new RuntimeException(t);
 				}
 			}
 		};
+
+		thr1.setUncaughtExceptionHandler(this);
 		thr2.setUncaughtExceptionHandler(this);
+
+		thr1.start();
 		thr2.start();
 
 		thr1.join();

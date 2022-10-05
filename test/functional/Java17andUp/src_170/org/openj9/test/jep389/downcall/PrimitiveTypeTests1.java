@@ -61,7 +61,7 @@ public class PrimitiveTypeTests1 {
 		System.loadLibrary("clinkerffitests");
 	}
 	private static final SymbolLookup nativeLibLookup = SymbolLookup.loaderLookup();
-	private static final SymbolLookup defaultLibLookup = (!isAixOS) ? CLinker.systemLookup() : null;
+	private static final SymbolLookup defaultLibLookup = CLinker.systemLookup();
 
 	@Test
 	public void test_addTwoBoolsWithOr_1() throws Throwable {
@@ -407,134 +407,92 @@ public class PrimitiveTypeTests1 {
 
 	@Test
 	public void test_strlenFromDefaultLibWithMemAddr_1() throws Throwable {
-		/* Temporarily disable the default library loading on AIX till we figure out a way
-		 * around to handle the case as the official implementation in OpenJDK17 doesn't
-		 * help to load the static libray (libc.a).
-		 */
-		if (!isAixOS) {
-			Addressable strlenSymbol = defaultLibLookup.lookup("strlen").get();
-			MethodType mt = MethodType.methodType(long.class, MemoryAddress.class);
-			FunctionDescriptor fd = FunctionDescriptor.of(longLayout, C_POINTER);
-			MethodHandle mh = clinker.downcallHandle(strlenSymbol, mt, fd);
-			MemorySegment funcMemSegment = CLinker.toCString("JEP389 DOWNCALL TEST SUITES", resourceScope);
-			long strLength = (long)mh.invokeExact(funcMemSegment.address());
-			Assert.assertEquals(strLength, 27);
-		}
+		Addressable strlenSymbol = defaultLibLookup.lookup("strlen").get();
+		MethodType mt = MethodType.methodType(long.class, MemoryAddress.class);
+		FunctionDescriptor fd = FunctionDescriptor.of(longLayout, C_POINTER);
+		MethodHandle mh = clinker.downcallHandle(strlenSymbol, mt, fd);
+		MemorySegment funcMemSegment = CLinker.toCString("JEP389 DOWNCALL TEST SUITES", resourceScope);
+		long strLength = (long)mh.invokeExact(funcMemSegment.address());
+		Assert.assertEquals(strLength, 27);
 	}
 
 	@Test
 	public void test_strlenFromDefaultLibWithMemAddr_fromMemAddr_1() throws Throwable {
-		/* Temporarily disable the default library loading on AIX till we figure out a way
-		 * around to handle the case as the official implementation in OpenJDK17 doesn't
-		 * help to load the static libray (libc.a).
-		 */
-		if (!isAixOS) {
-			Addressable strlenSymbol = defaultLibLookup.lookup("strlen").get();
-			MemoryAddress memAddr = strlenSymbol.address();
-			MethodType mt = MethodType.methodType(long.class, MemoryAddress.class);
-			FunctionDescriptor fd = FunctionDescriptor.of(longLayout, C_POINTER);
-			MethodHandle mh = clinker.downcallHandle(memAddr, mt, fd);
-			MemorySegment funcMemSegment = CLinker.toCString("JEP389 DOWNCALL TEST SUITES", resourceScope);
-			long strLength = (long)mh.invokeExact(funcMemSegment.address());
-			Assert.assertEquals(strLength, 27);
-		}
+		Addressable strlenSymbol = defaultLibLookup.lookup("strlen").get();
+		MemoryAddress memAddr = strlenSymbol.address();
+		MethodType mt = MethodType.methodType(long.class, MemoryAddress.class);
+		FunctionDescriptor fd = FunctionDescriptor.of(longLayout, C_POINTER);
+		MethodHandle mh = clinker.downcallHandle(memAddr, mt, fd);
+		MemorySegment funcMemSegment = CLinker.toCString("JEP389 DOWNCALL TEST SUITES", resourceScope);
+		long strLength = (long)mh.invokeExact(funcMemSegment.address());
+		Assert.assertEquals(strLength, 27);
 	}
 
 	@Test
 	public void test_memoryAllocFreeFromDefaultLib_1() throws Throwable {
-		/* Temporarily disable the default library loading on AIX till we figure out a way
-		 * around to handle the case as the official implementation in OpenJDK17 doesn't
-		 * help to load the static libray (libc.a).
-		 */
-		if (!isAixOS) {
-			Addressable allocSymbol = defaultLibLookup.lookup("malloc").get();
-			MethodType allocMethodType = MethodType.methodType(MemoryAddress.class, long.class);
-			FunctionDescriptor allocFuncDesc = FunctionDescriptor.of(C_POINTER, longLayout);
-			MethodHandle allocHandle = clinker.downcallHandle(allocSymbol, allocMethodType, allocFuncDesc);
-			MemoryAddress allocMemAddr = (MemoryAddress)allocHandle.invokeExact(10L);
-			MemorySegment memSeg = allocMemAddr.asSegment(10L, resourceScope);
-			MemoryAccess.setIntAtOffset(memSeg, 0, 15);
-			Assert.assertEquals(MemoryAccess.getIntAtOffset(memSeg, 0), 15);
+		Addressable allocSymbol = defaultLibLookup.lookup("malloc").get();
+		MethodType allocMethodType = MethodType.methodType(MemoryAddress.class, long.class);
+		FunctionDescriptor allocFuncDesc = FunctionDescriptor.of(C_POINTER, longLayout);
+		MethodHandle allocHandle = clinker.downcallHandle(allocSymbol, allocMethodType, allocFuncDesc);
+		MemoryAddress allocMemAddr = (MemoryAddress)allocHandle.invokeExact(10L);
+		MemorySegment memSeg = allocMemAddr.asSegment(10L, resourceScope);
+		MemoryAccess.setIntAtOffset(memSeg, 0, 15);
+		Assert.assertEquals(MemoryAccess.getIntAtOffset(memSeg, 0), 15);
 
-			Addressable freeSymbol = defaultLibLookup.lookup("free").get();
-			MethodType freeMethodType = MethodType.methodType(void.class, MemoryAddress.class);
-			FunctionDescriptor freeFuncDesc = FunctionDescriptor.ofVoid(C_POINTER);
-			MethodHandle freeHandle = clinker.downcallHandle(freeSymbol, freeMethodType, freeFuncDesc);
-			freeHandle.invokeExact(allocMemAddr);
-		}
+		Addressable freeSymbol = defaultLibLookup.lookup("free").get();
+		MethodType freeMethodType = MethodType.methodType(void.class, MemoryAddress.class);
+		FunctionDescriptor freeFuncDesc = FunctionDescriptor.ofVoid(C_POINTER);
+		MethodHandle freeHandle = clinker.downcallHandle(freeSymbol, freeMethodType, freeFuncDesc);
+		freeHandle.invokeExact(allocMemAddr);
 	}
 
 	@Test
 	public void test_memoryAllocFreeFromDefaultLib_fromMemAddr_1() throws Throwable {
-		/* Temporarily disable the default library loading on AIX till we figure out a way
-		 * around to handle the case as the official implementation in OpenJDK17 doesn't
-		 * help to load the static libray (libc.a).
-		 */
-		if (!isAixOS) {
-			Addressable allocSymbol = defaultLibLookup.lookup("malloc").get();
-			MemoryAddress allocMemAddrFromSymbol = allocSymbol.address();
-			MethodType allocMethodType = MethodType.methodType(MemoryAddress.class, long.class);
-			FunctionDescriptor allocFuncDesc = FunctionDescriptor.of(C_POINTER, longLayout);
-			MethodHandle allocHandle = clinker.downcallHandle(allocMemAddrFromSymbol, allocMethodType, allocFuncDesc);
-			MemoryAddress allocMemAddr = (MemoryAddress)allocHandle.invokeExact(10L);
-			MemorySegment memSeg = allocMemAddr.asSegment(10L, resourceScope);
-			MemoryAccess.setIntAtOffset(memSeg, 0, 15);
-			Assert.assertEquals(MemoryAccess.getIntAtOffset(memSeg, 0), 15);
+		Addressable allocSymbol = defaultLibLookup.lookup("malloc").get();
+		MemoryAddress allocMemAddrFromSymbol = allocSymbol.address();
+		MethodType allocMethodType = MethodType.methodType(MemoryAddress.class, long.class);
+		FunctionDescriptor allocFuncDesc = FunctionDescriptor.of(C_POINTER, longLayout);
+		MethodHandle allocHandle = clinker.downcallHandle(allocMemAddrFromSymbol, allocMethodType, allocFuncDesc);
+		MemoryAddress allocMemAddr = (MemoryAddress)allocHandle.invokeExact(10L);
+		MemorySegment memSeg = allocMemAddr.asSegment(10L, resourceScope);
+		MemoryAccess.setIntAtOffset(memSeg, 0, 15);
+		Assert.assertEquals(MemoryAccess.getIntAtOffset(memSeg, 0), 15);
 
-			Addressable freeSymbol = defaultLibLookup.lookup("free").get();
-			MemoryAddress freeMemAddr = freeSymbol.address();
-			MethodType freeMethodType = MethodType.methodType(void.class, MemoryAddress.class);
-			FunctionDescriptor freeFuncDesc = FunctionDescriptor.ofVoid(C_POINTER);
-			MethodHandle freeHandle = clinker.downcallHandle(freeMemAddr, freeMethodType, freeFuncDesc);
-			freeHandle.invokeExact(allocMemAddr);
-		}
+		Addressable freeSymbol = defaultLibLookup.lookup("free").get();
+		MemoryAddress freeMemAddr = freeSymbol.address();
+		MethodType freeMethodType = MethodType.methodType(void.class, MemoryAddress.class);
+		FunctionDescriptor freeFuncDesc = FunctionDescriptor.ofVoid(C_POINTER);
+		MethodHandle freeHandle = clinker.downcallHandle(freeMemAddr, freeMethodType, freeFuncDesc);
+		freeHandle.invokeExact(allocMemAddr);
 	}
 
 	@Test
 	public void test_memoryAllocFreeFromCLinkerMethod_1() throws Throwable {
-		/* Temporarily disable the default library loading on AIX till we figure out a way
-		 * around to handle the case as the official implementation in OpenJDK17 doesn't
-		 * help to load the static libray (libc.a).
-		 */
-		if (!isAixOS) {
-			MemoryAddress allocMemAddr = CLinker.allocateMemory(10L);
-			MemorySegment memSeg = allocMemAddr.asSegment(10L, resourceScope);
-			MemoryAccess.setIntAtOffset(memSeg, 0, 49);
-			Assert.assertEquals(MemoryAccess.getIntAtOffset(memSeg, 0), 49);
-			CLinker.freeMemory(allocMemAddr);
-		}
+		MemoryAddress allocMemAddr = CLinker.allocateMemory(10L);
+		MemorySegment memSeg = allocMemAddr.asSegment(10L, resourceScope);
+		MemoryAccess.setIntAtOffset(memSeg, 0, 49);
+		Assert.assertEquals(MemoryAccess.getIntAtOffset(memSeg, 0), 49);
+		CLinker.freeMemory(allocMemAddr);
 	}
 
 	@Test
 	public void test_printfFromDefaultLibWithMemAddr_1() throws Throwable {
-		/* Temporarily disable the default library loading on AIX till we figure out a way
-		 * around to handle the case as the official implementation in OpenJDK17 doesn't
-		 * help to load the static libray (libc.a).
-		 */
-		if (!isAixOS) {
-			Addressable functionSymbol = defaultLibLookup.lookup("printf").get();
-			MethodType mt = MethodType.methodType(int.class, MemoryAddress.class, int.class, int.class, int.class);
-			FunctionDescriptor fd = FunctionDescriptor.of(C_INT, C_POINTER, C_INT, C_INT, C_INT);
-			MethodHandle mh = clinker.downcallHandle(functionSymbol, mt, fd);
-			MemorySegment formatMemSegment = CLinker.toCString("\n%d + %d = %d\n", resourceScope);
-			mh.invoke(formatMemSegment.address(), 15, 27, 42);
-		}
+		Addressable functionSymbol = defaultLibLookup.lookup("printf").get();
+		MethodType mt = MethodType.methodType(int.class, MemoryAddress.class, int.class, int.class, int.class);
+		FunctionDescriptor fd = FunctionDescriptor.of(C_INT, C_POINTER, C_INT, C_INT, C_INT);
+		MethodHandle mh = clinker.downcallHandle(functionSymbol, mt, fd);
+		MemorySegment formatMemSegment = CLinker.toCString("\n%d + %d = %d\n", resourceScope);
+		mh.invoke(formatMemSegment.address(), 15, 27, 42);
 	}
 
 	@Test
 	public void test_printfFromDefaultLibWithMemAddr_fromMemAddr_1() throws Throwable {
-		/* Temporarily disable the default library loading on AIX till we figure out a way
-		 * around to handle the case as the official implementation in OpenJDK17 doesn't
-		 * help to load the static libray (libc.a).
-		 */
-		if (!isAixOS) {
-			Addressable functionSymbol = defaultLibLookup.lookup("printf").get();
-			MemoryAddress memAddr = functionSymbol.address();
-			MethodType mt = MethodType.methodType(int.class, MemoryAddress.class, int.class, int.class, int.class);
-			FunctionDescriptor fd = FunctionDescriptor.of(C_INT, C_POINTER, C_INT, C_INT, C_INT);
-			MethodHandle mh = clinker.downcallHandle(memAddr, mt, fd);
-			MemorySegment formatMemSegment = CLinker.toCString("\n%d + %d = %d\n", resourceScope);
-			mh.invoke(formatMemSegment.address(), 15, 27, 42);
-		}
+		Addressable functionSymbol = defaultLibLookup.lookup("printf").get();
+		MemoryAddress memAddr = functionSymbol.address();
+		MethodType mt = MethodType.methodType(int.class, MemoryAddress.class, int.class, int.class, int.class);
+		FunctionDescriptor fd = FunctionDescriptor.of(C_INT, C_POINTER, C_INT, C_INT, C_INT);
+		MethodHandle mh = clinker.downcallHandle(memAddr, mt, fd);
+		MemorySegment formatMemSegment = CLinker.toCString("\n%d + %d = %d\n", resourceScope);
+		mh.invoke(formatMemSegment.address(), 15, 27, 42);
 	}
 }

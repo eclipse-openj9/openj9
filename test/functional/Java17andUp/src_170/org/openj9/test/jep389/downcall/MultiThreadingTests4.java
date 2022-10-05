@@ -36,7 +36,7 @@ import jdk.incubator.foreign.SymbolLookup;
 
 /**
  * Test cases for JEP 389: Foreign Linker API (Incubator) for primitive types in downcall,
- * which verifies multiple downcalls combined with the diffrent layouts/arguments/return types in multithreading.
+ * which verifies the downcalls with the diffrent return types in multithreading.
  */
 @Test(groups = { "level.sanity" })
 public class MultiThreadingTests4 implements Thread.UncaughtExceptionHandler {
@@ -55,7 +55,7 @@ public class MultiThreadingTests4 implements Thread.UncaughtExceptionHandler {
 	}
 
 	@Test
-	public void test_multiThreadsWithMixedFuncDescriptors() throws Throwable {
+	public void test_twoThreadsWithDiffReturnType() throws Throwable {
 		Thread thr1 = new Thread(){
 			public void run() {
 				try {
@@ -63,8 +63,8 @@ public class MultiThreadingTests4 implements Thread.UncaughtExceptionHandler {
 					FunctionDescriptor fd = FunctionDescriptor.of(C_INT, C_INT, C_INT);
 					Addressable functionSymbol = nativeLibLookup.lookup("add2Ints").get();
 					MethodHandle mh = clinker.downcallHandle(functionSymbol, mt, fd);
-					int result = (int)mh.invokeExact(128, 246);
-					Assert.assertEquals(result, 374);
+					int result = (int)mh.invokeExact(112, 123);
+					Assert.assertEquals(result, 235);
 				} catch (Throwable t) {
 					throw new RuntimeException(t);
 				}
@@ -74,72 +74,11 @@ public class MultiThreadingTests4 implements Thread.UncaughtExceptionHandler {
 		Thread thr2 = new Thread(){
 			public void run() {
 				try {
-					MethodType mt = MethodType.methodType(int.class, int.class, int.class, int.class);
-					FunctionDescriptor fd = FunctionDescriptor.of(C_INT, C_INT, C_INT, C_INT);
-					Addressable functionSymbol = nativeLibLookup.lookup("add3Ints").get();
+					MethodType mt = MethodType.methodType(void.class, int.class, int.class);
+					FunctionDescriptor fd = FunctionDescriptor.ofVoid(C_INT, C_INT);
+					Addressable functionSymbol = nativeLibLookup.lookup("add2IntsReturnVoid").get();
 					MethodHandle mh = clinker.downcallHandle(functionSymbol, mt, fd);
-					int result = (int)mh.invokeExact(112, 642, 971);
-					Assert.assertEquals(result, 1725);
-				} catch (Throwable t) {
-					throw new RuntimeException(t);
-				}
-			}
-		};
-
-		Thread thr3 = new Thread(){
-			public void run() {
-				try {
-					MethodType mt = MethodType.methodType(boolean.class, boolean.class, boolean.class);
-					FunctionDescriptor fd = FunctionDescriptor.of(C_CHAR, C_CHAR, C_CHAR);
-					Addressable functionSymbol = nativeLibLookup.lookup("add2BoolsWithOr").get();
-					MethodHandle mh = clinker.downcallHandle(functionSymbol, mt, fd);
-					boolean result = (boolean)mh.invokeExact(true, false);
-					Assert.assertEquals(result, true);
-				} catch (Throwable t) {
-					throw new RuntimeException(t);
-				}
-			}
-		};
-
-		Thread thr4 = new Thread(){
-			public void run() {
-				try {
-					MethodType mt = MethodType.methodType(int.class, int.class, int.class);
-					FunctionDescriptor fd = FunctionDescriptor.of(C_INT, C_INT, C_INT);
-					Addressable functionSymbol = nativeLibLookup.lookup("add2Ints").get();
-					MethodHandle mh = clinker.downcallHandle(functionSymbol, mt, fd);
-					int result = (int)mh.invokeExact(416, 728);
-					Assert.assertEquals(result, 1144);
-				} catch (Throwable t) {
-					throw new RuntimeException(t);
-				}
-			}
-		};
-
-		Thread thr5 = new Thread(){
-			public void run() {
-				try {
-					MethodType mt = MethodType.methodType(int.class, int.class, int.class, int.class);
-					FunctionDescriptor fd = FunctionDescriptor.of(C_INT, C_INT, C_INT, C_INT);
-					Addressable functionSymbol = nativeLibLookup.lookup("add3Ints").get();
-					MethodHandle mh = clinker.downcallHandle(functionSymbol, mt, fd);
-					int result = (int)mh.invokeExact(1012, 1023, 2035);
-					Assert.assertEquals(result, 4070);
-				} catch (Throwable t) {
-					throw new RuntimeException(t);
-				}
-			}
-		};
-
-		Thread thr6 = new Thread(){
-			public void run() {
-				try {
-					MethodType mt = MethodType.methodType(boolean.class, boolean.class, boolean.class);
-					FunctionDescriptor fd = FunctionDescriptor.of(C_CHAR, C_CHAR, C_CHAR);
-					Addressable functionSymbol = nativeLibLookup.lookup("add2BoolsWithOr").get();
-					MethodHandle mh = clinker.downcallHandle(functionSymbol, mt, fd);
-					boolean result = (boolean)mh.invokeExact(false, false);
-					Assert.assertEquals(result, false);
+					mh.invokeExact(454, 398);
 				} catch (Throwable t) {
 					throw new RuntimeException(t);
 				}
@@ -148,24 +87,12 @@ public class MultiThreadingTests4 implements Thread.UncaughtExceptionHandler {
 
 		thr1.setUncaughtExceptionHandler(this);
 		thr2.setUncaughtExceptionHandler(this);
-		thr3.setUncaughtExceptionHandler(this);
-		thr4.setUncaughtExceptionHandler(this);
-		thr5.setUncaughtExceptionHandler(this);
-		thr6.setUncaughtExceptionHandler(this);
 
 		thr1.start();
 		thr2.start();
-		thr3.start();
-		thr4.start();
-		thr5.start();
-		thr6.start();
 
-		thr6.join();
-		thr5.join();
-		thr4.join();
-		thr3.join();
-		thr2.join();
 		thr1.join();
+		thr2.join();
 
 		if (initException != null){
 			throw new RuntimeException(initException);
