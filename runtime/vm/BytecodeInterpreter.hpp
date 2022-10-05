@@ -5232,7 +5232,7 @@ ffi_OOM:
 
 		j9object_t continuationObject = J9VMJAVALANGTHREAD_CONT(_currentThread, _currentThread->carrierThreadObject);
 		/* Notify GC of Continuation stack swap */
-		_vm->memoryManagerFunctions->postDismountContinuation(_currentThread, continuationObject);
+		_vm->memoryManagerFunctions->postUnmountContinuation(_currentThread, continuationObject);
 
 		VMStructHasBeenUpdated(REGISTER_ARGS);
 		restoreInternalNativeStackFrame(REGISTER_ARGS);

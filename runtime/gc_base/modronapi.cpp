@@ -56,11 +56,10 @@ void
 preMountContinuation(J9VMThread *vmThread, j9object_t object)
 {
 	/* need read barrier to handle concurrent scavenger and gcpolicy:metronome case */
-
 }
 
 void
-postDismountContinuation(J9VMThread *vmThread, j9object_t object)
+postUnmountContinuation(J9VMThread *vmThread, j9object_t object)
 {
 	/* Conservatively assume that via mutations of stack slots (which are not subject to access barriers),
 	 * all post-write barriers have been triggered on this Continuation object, since it's been mounted. */

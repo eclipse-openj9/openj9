@@ -2057,13 +2057,34 @@ exit:
 		return rc;
 	}
 
+#if JAVA_SPEC_VERSION >= 19
+	/**
+	 * Check if the related J9VMContinuation is mounted to carrier thread
+	 * @param[in] continuation the related J9VMContinuation
+	 * @return true if it is mounted.
+	 */
 	static VMINLINE bool
-	needScanStacksForContinuation(J9VMThread *vmThread, j9object_t continuationObject) {
+	isContinuationMounted(J9VMContinuation *continuation)
+	{
+		return (NULL != continuation->carrierThread);
+	}
+#endif /* JAVA_SPEC_VERSION >= 19 */
+
+	/**
+	 * Check if we need to scan the java stack for the Continuation Object
+	 * @param[in] vmThread the current J9VMThread
+	 * @param[in] continuationObject the continuation object
+	 * @param[in] scanOnlyUnmounted if it is true, only scan unmounted continuation object, default is false
+	 * @return true if we need to scan the java stack
+	 */
+	static VMINLINE bool
+	needScanStacksForContinuation(J9VMThread *vmThread, j9object_t continuationObject, bool scanOnlyUnmounted = false)
+	{
 		bool needScan = false;
 #if JAVA_SPEC_VERSION >= 19
 		jboolean started = J9VMJDKINTERNALVMCONTINUATION_STARTED(vmThread, continuationObject);
 		J9VMContinuation *continuation = J9VMJDKINTERNALVMCONTINUATION_VMREF(vmThread, continuationObject);
-		needScan = started && (NULL != continuation);
+		needScan = started && (NULL != continuation) && (!scanOnlyUnmounted || !isContinuationMounted(continuation));
 #endif /* JAVA_SPEC_VERSION >= 19 */
 		return needScan;
 	}
