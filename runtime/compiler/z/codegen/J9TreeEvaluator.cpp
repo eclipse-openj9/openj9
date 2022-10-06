@@ -7363,8 +7363,9 @@ reservationLockEnter(TR::Node *node, int32_t lwOffset, TR::Register *objectClass
       // BRC   MASK6, callHelper
       // #IF 64-Bit and JAVA_VERSION >= 19
       //    BRC   incrementOwnedMonitorCountLabel
-      // #ELSEIF
+      // #ELSE
       //    BRC   returnLabel
+      // #ENDIF
       // BRC   returnLabel
       // checkLabel:
       // LGFI  tempReg, LOCK_RES_NON_PRIMITIVE_ENTER_MASK
@@ -7375,6 +7376,7 @@ reservationLockEnter(TR::Node *node, int32_t lwOffset, TR::Register *objectClass
       // #IF 64-Bit && JAVA_VERSION >=19
       //    incrementOwnedMonitorCountLabel:
       //    AGSI #ownedMonitorCountOffset(J9VMThread), 1
+      // #ENDIF
       // BRC   returnLabel
       // callHelper:
       // BRASL R14, jitMonitorEntry
@@ -7556,6 +7558,7 @@ reservationLockExit(TR::Node *node, int32_t lwOffset, TR::Register *objectClassR
    //   ST    valReg, #lwOffset(objectReg)
    // #IF 64-Bit && JAVA_VERSION >=19
    //    AGSI #ownedMonitorCountOffset(J9VMThread), -1
+   // #ENDIF
 
    generateRXInstruction(cg, loadOp, node, monitorReg, generateS390MemoryReference(objReg, lwOffset, cg));
    if (!isPrimitive)
@@ -7624,6 +7627,7 @@ reservationLockExit(TR::Node *node, int32_t lwOffset, TR::Register *objectClassR
       // ST    monitorReg, #lwOffset(objectReg)
       // #IF 64-Bit && JAVA_VERSION >=19
       //    AGSI #ownedMonitorCountOffset(J9VMThread), -1
+      // #ENDIF
       // BRC   returnLabel
       // callHelper:
       // BRASL R14, jitMonitorExit
