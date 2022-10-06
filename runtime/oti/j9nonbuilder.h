@@ -4997,6 +4997,7 @@ typedef struct J9VMContinuation {
 	struct J9JITDecompilationInfo* decompilationStack;
 	UDATA* j2iFrame;
 	struct J9JITGPRSpillArea jitGPRs;
+	struct J9I2JState i2jState;
 	struct J9VMEntryLocalStorage* oldEntryLocalStorage;
 	struct J9VMThread* carrierThread;
 } J9VMContinuation;
