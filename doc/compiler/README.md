@@ -87,6 +87,7 @@ In the end code generators perform binary encoding to write the appropriate bits
     * [Testarossa's Intermediate Language (OMR)](https://github.com/eclipse/omr/blob/master/doc/compiler/il/IntroToTrees.md)
   * [Symbols, Symbol References, and Aliasing in the OMR compiler (OMR)](https://github.com/eclipse/omr/blob/master/doc/compiler/il/SymbolsSymrefsAliasing.md)
   * Reference of IL OpCodes
+    * [IL OpCodes (OMR)](https://github.com/eclipse/omr/blob/master/doc/compiler/il/ILOpcodes.md)
     * [Global Register Dependency (OMR)](https://github.com/eclipse/omr/blob/master/doc/compiler/il/GlRegDeps.md)
   * [Node Transmutation (OMR)](https://github.com/eclipse/omr/blob/master/doc/compiler/il/Node.md)
   * [Things to Consider When Adding a New IL Opcode (OMR)](https://github.com/eclipse/omr/blob/master/doc/compiler/il/ExtendingTrees.md)
