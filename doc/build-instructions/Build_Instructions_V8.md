@@ -151,6 +151,10 @@ bash configure --with-boot-jdk=/home/jenkins/bootjdks/jdk8
 ```
 :warning: The path in the example --with-boot-jdk= option is appropriate for the Docker installation. If not using the Docker environment, set the path appropriate for your setup, such as "<my_home_dir>/bootjdk8" as setup in the previous instructions.
 
+:pencil: Configuring and building is not specific to OpenJ9 but uses the OpenJDK build infrastructure with OpenJ9 added.
+Many other configuration options are available, including options to increase the verbosity of the build output to include command lines (`LOG=cmdlines`), more info or debug information.
+For more information see [OpenJDK build troubleshotting](https://htmlpreview.github.io/?https://raw.githubusercontent.com/openjdk/jdk8u/master/README-builds.html#troubleshooting).
+
 :pencil: **Mixed and compressed references support:** Different types of 64-bit builds can be created:
 - [compressed references](https://www.eclipse.org/openj9/docs/gc_overview/#compressed-references) (only)
 - non-compressed references (only)
@@ -281,6 +285,10 @@ When you have all the source files that you need, run the configure script, whic
 bash configure --with-cups-include=<cups_include_path>
 ```
 where `<cups_include_path>` is the absolute path to CUPS. For example, `/opt/freeware/include`.
+
+:pencil: Configuring and building is not specific to OpenJ9 but uses the OpenJDK build infrastructure with OpenJ9 added.
+Many other configuration options are available, including options to increase the verbosity of the build output to include command lines (`LOG=cmdlines`), more info or debug information.
+For more information see [OpenJDK build troubleshotting](https://htmlpreview.github.io/?https://raw.githubusercontent.com/openjdk/jdk8u/master/README-builds.html#troubleshooting).
 
 :pencil: **Mixed and compressed references support:** Different types of 64-bit builds can be created:
 - [compressed references](https://www.eclipse.org/openj9/docs/gc_overview/#compressed-references) (only)
@@ -470,6 +478,10 @@ Note: If you have multiple versions of Visual Studio installed, you can enforce 
 
 :pencil: Modify the path for freetype if you manually downloaded and unpacked this dependency into a different directory.
 
+:pencil: Configuring and building is not specific to OpenJ9 but uses the OpenJDK build infrastructure with OpenJ9 added.
+Many other configuration options are available, including options to increase the verbosity of the build output to include command lines (`LOG=cmdlines`), more info or debug information.
+For more information see [OpenJDK build troubleshotting](https://htmlpreview.github.io/?https://raw.githubusercontent.com/openjdk/jdk8u/master/README-builds.html#troubleshooting).
+
 :pencil: **Mixed and compressed references support:** Different types of 64-bit builds can be created:
 - [compressed references](https://www.eclipse.org/openj9/docs/gc_overview/#compressed-references) (only)
 - non-compressed references (only)
@@ -640,6 +652,10 @@ bash configure \
     --with-toolchain-type=clang
 ```
 
+:pencil: Configuring and building is not specific to OpenJ9 but uses the OpenJDK build infrastructure with OpenJ9 added.
+Many other configuration options are available, including options to increase the verbosity of the build output to include command lines (`LOG=cmdlines`), more info or debug information.
+For more information see [OpenJDK build troubleshotting](https://htmlpreview.github.io/?https://raw.githubusercontent.com/openjdk/jdk8u/master/README-builds.html#troubleshooting).
+
 :pencil: **Mixed and compressed references support:** Different types of 64-bit builds can be created:
 - [compressed references](https://www.eclipse.org/openj9/docs/gc_overview/#compressed-references) (only)
 - non-compressed references (only)
@@ -745,6 +761,10 @@ When you have all the source files that you need, run the configure script, whic
 ```
 bash configure --with-boot-jdk=<path_to_boot_JDK>
 ```
+:pencil: Configuring and building is not specific to OpenJ9 but uses the OpenJDK build infrastructure with OpenJ9 added.
+Many other configuration options are available, including options to increase the verbosity of the build output to include command lines (`LOG=cmdlines`), more info or debug information.
+For more information see [OpenJDK build troubleshotting](https://htmlpreview.github.io/?https://raw.githubusercontent.com/openjdk/jdk8u/master/README-builds.html#troubleshooting).
+
 :pencil: **Mixed and compressed references support:** Different types of 64-bit builds can be created:
 - [compressed references](https://www.eclipse.org/openj9/docs/gc_overview/#compressed-references) (only)
 - non-compressed references (only)
