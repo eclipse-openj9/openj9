@@ -141,6 +141,10 @@ bash configure --with-boot-jdk=/home/jenkins/bootjdks/jdk17
 ```
 :warning: The path in the example `--with-boot-jdk=` option is appropriate for the Docker installation. If you're not using the Docker environment, set the path that's appropriate for your setup, such as `<my_home_dir>/bootjdk17`.
 
+:pencil: Configuring and building is not specific to OpenJ9 but uses the OpenJDK build infrastructure with OpenJ9 added.
+Many other configuration options are available, including options to increase the verbosity of the build output to include command lines (`LOG=cmdlines`), more info or debug information.
+For more information see [OpenJDK build troubleshotting](https://htmlpreview.github.io/?https://raw.githubusercontent.com/openjdk/jdk17u/master/doc/building.html#troubleshooting).
+
 :pencil: **Mixed and compressed references support:** Different types of 64-bit builds can be created:
 - [compressed references](https://www.eclipse.org/openj9/docs/gc_overview/#compressed-references) (only)
 - non-compressed references (only)
@@ -277,6 +281,10 @@ bash configure \
     --disable-warnings-as-errors
 ```
 where `<cups_include_path>` is the absolute path to CUPS. For example, `/opt/freeware/include`.
+
+:pencil: Configuring and building is not specific to OpenJ9 but uses the OpenJDK build infrastructure with OpenJ9 added.
+Many other configuration options are available, including options to increase the verbosity of the build output to include command lines (`LOG=cmdlines`), more info or debug information.
+For more information see [OpenJDK build troubleshotting](https://htmlpreview.github.io/?https://raw.githubusercontent.com/openjdk/jdk17u/master/doc/building.html#troubleshooting).
 
 :pencil: **Mixed and compressed references support:** Different types of 64-bit builds can be created:
 - [compressed references](https://www.eclipse.org/openj9/docs/gc_overview/#compressed-references) (only)
@@ -443,6 +451,10 @@ bash configure \
 ```
 Note: If you have multiple versions of Visual Studio installed, you can enforce a specific version to be used by setting `--with-toolchain-version`, i.e., by including `--with-toolchain-version=2019` option in the configure command.
 
+:pencil: Configuring and building is not specific to OpenJ9 but uses the OpenJDK build infrastructure with OpenJ9 added.
+Many other configuration options are available, including options to increase the verbosity of the build output to include command lines (`LOG=cmdlines`), more info or debug information.
+For more information see [OpenJDK build troubleshotting](https://htmlpreview.github.io/?https://raw.githubusercontent.com/openjdk/jdk17u/master/doc/building.html#troubleshooting).
+
 :pencil: **Mixed and compressed references support:** Different types of 64-bit builds can be created:
 - [compressed references](https://www.eclipse.org/openj9/docs/gc_overview/#compressed-references) (only)
 - non-compressed references (only)
@@ -589,6 +601,10 @@ bash configure --with-boot-jdk=<path_to_boot_JDK17>
 
 :pencil: Modify the path for the macOS boot JDK that you installed in step 1. If `configure` is unable to detect Freetype, add the option `--with-freetype=<path to freetype>`, where `<path to freetype>` is typically `/usr/local/Cellar/freetype/2.9.1/`.
 
+:pencil: Configuring and building is not specific to OpenJ9 but uses the OpenJDK build infrastructure with OpenJ9 added.
+Many other configuration options are available, including options to increase the verbosity of the build output to include command lines (`LOG=cmdlines`), more info or debug information.
+For more information see [OpenJDK build troubleshotting](https://htmlpreview.github.io/?https://raw.githubusercontent.com/openjdk/jdk17u/master/doc/building.html#troubleshooting).
+
 :pencil: **Mixed and compressed references support:** Different types of 64-bit builds can be created:
 - [compressed references](https://www.eclipse.org/openj9/docs/gc_overview/#compressed-references) (only)
 - non-compressed references (only)
@@ -731,6 +747,10 @@ bash configure --openjdk-target=${OPENJ9_CC_PREFIX} \
                --disable-warnings-as-errors \
                --disable-ddr
 ```
+
+:pencil: Configuring and building is not specific to OpenJ9 but uses the OpenJDK build infrastructure with OpenJ9 added.
+Many other configuration options are available, including options to increase the verbosity of the build output to include command lines (`LOG=cmdlines`), more info or debug information.
+For more information see [OpenJDK build troubleshotting](https://htmlpreview.github.io/?https://raw.githubusercontent.com/openjdk/jdk17u/master/doc/building.html#troubleshooting).
 
 :pencil: **Mixed and compressed references support:** Different types of 64-bit builds can be created:
 - [compressed references](https://www.eclipse.org/openj9/docs/gc_overview/#compressed-references) (only)
