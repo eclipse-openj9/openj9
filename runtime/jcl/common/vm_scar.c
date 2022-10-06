@@ -33,6 +33,7 @@
 #include "j9jclnls.h"
 #include "jni.h"
 #include "j9protos.h"
+#include "j9port.h"
 #include "jvminit.h"
 #include "jclprots.h"
 #include "omrlinkedlist.h"
@@ -104,9 +105,16 @@ const U_64 jclConfig = J9CONST64(0x7363617237306200);		/* 'scar70b' */
 #endif /* defined(J9ZTPF) */
 #endif /* WIN32 */
 
+#define	FIPS_HOME_PROP_NAME	"com.ibm.fips.home"
+#define	FIPS_MODE_PROP_NAME	"com.ibm.fips.mode"
+
+#define	FIPS140_3_PROP_VALUE	"fips140-3"
+#define	FIPS140_2_PROP_VALUE	"fips140-2"
+#define	FIPS140_3_DIR		( DIR_SEPARATOR_STR FIPS140_3_PROP_VALUE )
+
 jint scarInit(J9JavaVM *vm);
 jint scarPreconfigure(J9JavaVM *vm);
-static UDATA addBFUSystemProperties(J9JavaVM* javaVM);
+static UDATA addBFUSystemProperties(J9JavaVM* vm);
 static IDATA addVMSpecificDirectories(J9JavaVM *vm, UDATA *cursor, char *subdirName);
 static IDATA loadClasslibPropertiesFile(J9JavaVM *vm, UDATA *cursor);
 static void setFatalErrorStringInDLLTableEntry(J9JavaVM* vm, char *errorString);
@@ -124,65 +132,66 @@ JNICALL JVM_OnLoad(JavaVM * jvm, char *options, void *reserved)
  * @return J9SYSPROP_ERROR_NONE on success, or a J9SYSPROP_ERROR_* value on failure.
  */
 static UDATA
-addBFUSystemProperties(J9JavaVM* javaVM)
+addBFUSystemProperties(J9JavaVM* vm)
 {
 	int fontPathSize = 0;
-	char* fontPathBuffer = "";
-	char* propValue;
-	UDATA rc;
-	const J9InternalVMFunctions* vmfunc = javaVM->internalVMFunctions;
+	char* fontPathBuffer = NULL;
+	char* propValue = NULL;
+	UDATA rc = 0;
+	const J9InternalVMFunctions* vmfunc = vm->internalVMFunctions;
 
-	PORT_ACCESS_FROM_JAVAVM(javaVM);
+	OMRPORT_ACCESS_FROM_OMRVM(vm->omrVM);
+	PORT_ACCESS_FROM_JAVAVM(vm);
 
 	if ( (fontPathSize = (int)j9sysinfo_get_env(JAVA_FONTS_STR, NULL, 0)) > 0 ) {
 		fontPathBuffer = j9mem_allocate_memory(fontPathSize, J9MEM_CATEGORY_VM_JCL);
 		if (fontPathBuffer) {
-			javaVM->jclSysPropBuffer = fontPathBuffer;		/* Use jclSysPropBuffer for all allocated sys prop values */
+			vm->jclSysPropBuffer = fontPathBuffer;		/* Use jclSysPropBuffer for all allocated sys prop values */
 			j9sysinfo_get_env(JAVA_FONTS_STR, fontPathBuffer, fontPathSize);
 		}
 	}
 	
 #ifdef WIN32
-	if (J9SYSPROP_ERROR_NOT_FOUND == vmfunc->getSystemProperty(javaVM, "java.awt.fonts", NULL)) {
-		rc = vmfunc->addSystemProperty(javaVM, "java.awt.fonts", fontPathBuffer, 0);
+	if (J9SYSPROP_ERROR_NOT_FOUND == vmfunc->getSystemProperty(vm, "java.awt.fonts", NULL)) {
+		rc = vmfunc->addSystemProperty(vm, "java.awt.fonts", fontPathBuffer, 0);
 		if (J9SYSPROP_ERROR_NONE != rc) {
 			return rc;
 		}
 	}
 #endif /* WIN32 */
 
-	if (J9SYSPROP_ERROR_NOT_FOUND == vmfunc->getSystemProperty(javaVM, "java.awt.graphicsenv", NULL)) {
-		rc = vmfunc->addSystemProperty(javaVM, "java.awt.graphicsenv", J9_AWTGRAPHICSENV_VALUE, 0);
+	if (J9SYSPROP_ERROR_NOT_FOUND == vmfunc->getSystemProperty(vm, "java.awt.graphicsenv", NULL)) {
+		rc = vmfunc->addSystemProperty(vm, "java.awt.graphicsenv", J9_AWTGRAPHICSENV_VALUE, 0);
 		if (J9SYSPROP_ERROR_NONE != rc) {
 			return rc;
 		}
 	}
 
-	if (J9SYSPROP_ERROR_NOT_FOUND == vmfunc->getSystemProperty(javaVM, "awt.toolkit", NULL)) {
-		rc = vmfunc->addSystemProperty(javaVM, "awt.toolkit", J9_AWTTOOLKIT_VALUE, 0);
+	if (J9SYSPROP_ERROR_NOT_FOUND == vmfunc->getSystemProperty(vm, "awt.toolkit", NULL)) {
+		rc = vmfunc->addSystemProperty(vm, "awt.toolkit", J9_AWTTOOLKIT_VALUE, 0);
 		if (J9SYSPROP_ERROR_NONE != rc) {
 			return rc;
 		}
 	}
 	
-	if (J9SYSPROP_ERROR_NOT_FOUND == vmfunc->getSystemProperty(javaVM, "java.awt.printerjob", NULL)) {
-		rc = vmfunc->addSystemProperty(javaVM, "java.awt.printerjob", J9_AWTPRINTERJOB_VALUE, 0);
+	if (J9SYSPROP_ERROR_NOT_FOUND == vmfunc->getSystemProperty(vm, "java.awt.printerjob", NULL)) {
+		rc = vmfunc->addSystemProperty(vm, "java.awt.printerjob", J9_AWTPRINTERJOB_VALUE, 0);
 		if (J9SYSPROP_ERROR_NONE != rc) {
 			return rc;
 		}
 	}
 
 #ifdef J9VM_UNIX
-	if (J9SYSPROP_ERROR_NOT_FOUND == vmfunc->getSystemProperty(javaVM, "java.awt.fonts", NULL)) {
-		rc = vmfunc->addSystemProperty(javaVM, "java.awt.fonts", "", 0);
+	if (J9SYSPROP_ERROR_NOT_FOUND == vmfunc->getSystemProperty(vm, "java.awt.fonts", NULL)) {
+		rc = vmfunc->addSystemProperty(vm, "java.awt.fonts", "", 0);
 		if (J9SYSPROP_ERROR_NONE != rc) {
 			return rc;
 		}
 	}
 
 #if defined(J9ZOS390)
-	if (J9SYSPROP_ERROR_NOT_FOUND == vmfunc->getSystemProperty(javaVM, "sun.security.policy.utf8", NULL)) {
-		rc = vmfunc->addSystemProperty(javaVM, "sun.security.policy.utf8", "false", 0);
+	if (J9SYSPROP_ERROR_NOT_FOUND == vmfunc->getSystemProperty(vm, "sun.security.policy.utf8", NULL)) {
+		rc = vmfunc->addSystemProperty(vm, "sun.security.policy.utf8", "false", 0);
 		if (J9SYSPROP_ERROR_NONE != rc) {
 			return rc;
 		}
@@ -190,8 +199,8 @@ addBFUSystemProperties(J9JavaVM* javaVM)
 #endif
 
 	if (fontPathSize >= 0) {
-		if (J9SYSPROP_ERROR_NOT_FOUND == vmfunc->getSystemProperty(javaVM, "sun.java2d.fontpath", NULL)) {
-			rc = vmfunc->addSystemProperty(javaVM, "sun.java2d.fontpath", fontPathBuffer, 0);
+		if (J9SYSPROP_ERROR_NOT_FOUND == vmfunc->getSystemProperty(vm, "sun.java2d.fontpath", NULL)) {
+			rc = vmfunc->addSystemProperty(vm, "sun.java2d.fontpath", fontPathBuffer, 0);
 			if (J9SYSPROP_ERROR_NONE != rc) {
 				return rc;
 			}
@@ -199,13 +208,13 @@ addBFUSystemProperties(J9JavaVM* javaVM)
 	}
 #endif /* J9VM_UNIX */
 
-	if (J9SYSPROP_ERROR_NOT_FOUND == vmfunc->getSystemProperty(javaVM, "sun.arch.data.model", NULL)) {
+	if (J9SYSPROP_ERROR_NOT_FOUND == vmfunc->getSystemProperty(vm, "sun.arch.data.model", NULL)) {
 #if defined(J9VM_ENV_DATA64)
 		propValue = "64";
 #else
 		propValue = "32";
 #endif
-		rc = vmfunc->addSystemProperty(javaVM, "sun.arch.data.model", propValue, 0);
+		rc = vmfunc->addSystemProperty(vm, "sun.arch.data.model", propValue, 0);
 		if (J9SYSPROP_ERROR_NONE != rc) {
 			return rc;
 		}
@@ -216,19 +225,19 @@ addBFUSystemProperties(J9JavaVM* javaVM)
 #else
 	propValue = "UnicodeBig";
 #endif
-	if (J9SYSPROP_ERROR_NOT_FOUND == vmfunc->getSystemProperty(javaVM, "sun.io.unicode.encoding", NULL)) {
-		rc = vmfunc->addSystemProperty(javaVM, "sun.io.unicode.encoding", propValue, 0);
+	if (J9SYSPROP_ERROR_NOT_FOUND == vmfunc->getSystemProperty(vm, "sun.io.unicode.encoding", NULL)) {
+		rc = vmfunc->addSystemProperty(vm, "sun.io.unicode.encoding", propValue, 0);
 		if (J9SYSPROP_ERROR_NONE != rc) {
 			return rc;
 		}
 	}
 
 #if defined(LINUX)
-	if (J9SYSPROP_ERROR_NOT_FOUND == vmfunc->getSystemProperty(javaVM, "sun.desktop", NULL)) {
+	if (J9SYSPROP_ERROR_NOT_FOUND == vmfunc->getSystemProperty(vm, "sun.desktop", NULL)) {
 		char tempString[2];
 		/* We don't care about the value of the env var, just whether it is not null */
 		if (j9sysinfo_get_env("GNOME_DESKTOP_SESSION_ID", tempString, 2) != -1) {
-			rc = vmfunc->addSystemProperty(javaVM, "sun.desktop", "gnome", 0);
+			rc = vmfunc->addSystemProperty(vm, "sun.desktop", "gnome", 0);
 			if (J9SYSPROP_ERROR_NONE != rc) {
 				return rc;
 			}
@@ -237,14 +246,56 @@ addBFUSystemProperties(J9JavaVM* javaVM)
 #endif /* LINUX */
 
 #if defined(WIN32)
-	if (J9SYSPROP_ERROR_NOT_FOUND == vmfunc->getSystemProperty(javaVM, "sun.desktop", NULL)) {
-		rc = vmfunc->addSystemProperty(javaVM, "sun.desktop", "windows", 0);
+	if (J9SYSPROP_ERROR_NOT_FOUND == vmfunc->getSystemProperty(vm, "sun.desktop", NULL)) {
+		rc = vmfunc->addSystemProperty(vm, "sun.desktop", "windows", 0);
 		if (J9SYSPROP_ERROR_NONE != rc) {
 			return rc;
 		}
 	}
 #endif
-	
+
+	if (J9SYSPROP_ERROR_NOT_FOUND == vmfunc->getSystemProperty(vm, FIPS_HOME_PROP_NAME, NULL)) {
+		size_t fipsHomePropertyFlags = 0;
+		IDATA fips140_2 = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XFIPS_140_2, NULL);
+		IDATA fips140_3 = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XFIPS_140_3, NULL);
+		if (fips140_2 >= fips140_3) {
+			/* FIPS 140-2 mode: set com.ibm.fips.home to same as JAVA_HOME */
+			fipsHomePropertyFlags = 0;
+			vm->fipsHome = vm->javaHome;
+			vm->fipsMode = (U_8 *)FIPS140_2_PROP_VALUE;
+		} else {
+			/* FIPS 140-3 mode: set com.ibm.fips.home to JAVA_HOME/FIPS140_3_DIR */
+			size_t javaHomePathLength = strlen((char*)vm->javaHome);
+			size_t fipsPathBufferSize = javaHomePathLength + strlen(FIPS140_3_DIR) + 1;
+			char* fipsPathBuffer = j9mem_allocate_memory(fipsPathBufferSize, J9MEM_CATEGORY_VM_JCL);
+			if (NULL == fipsPathBuffer) {
+				return J9SYSPROP_ERROR_OUT_OF_MEMORY;
+			} else {
+				size_t writtenLength = omrstr_printf(fipsPathBuffer, fipsPathBufferSize, "%s%s", (const char *)vm->javaHome, FIPS140_3_DIR);
+				Assert_JCL_true(writtenLength == (fipsPathBufferSize - 1));
+				fipsHomePropertyFlags = J9SYSPROP_FLAG_VALUE_ALLOCATED;
+			}
+			vm->fipsHome = (U_8 *)fipsPathBuffer;
+			vm->fipsMode = (U_8 *)FIPS140_3_PROP_VALUE;
+		}
+
+		rc = vmfunc->addSystemProperty(vm, FIPS_HOME_PROP_NAME, (const char *)vm->fipsHome, fipsHomePropertyFlags);
+		if (J9SYSPROP_ERROR_NONE != rc) {
+			return rc;
+		}
+
+		rc = vmfunc->addSystemProperty(vm, FIPS_MODE_PROP_NAME, (const char *)vm->fipsMode, 0);
+		if (J9SYSPROP_ERROR_NONE != rc) {
+			return rc;
+		}
+	}
+	if (J9SYSPROP_ERROR_NOT_FOUND == vmfunc->getSystemProperty(vm, FIPS_MODE_PROP_NAME, NULL)) {
+		rc = vmfunc->addSystemProperty(vm, FIPS_MODE_PROP_NAME, FIPS140_2_PROP_VALUE, 0);
+		if (J9SYSPROP_ERROR_NONE != rc) {
+			return rc;
+		}
+	}
+
 	return J9SYSPROP_ERROR_NONE;
 }
 
@@ -524,9 +575,9 @@ loadClasslibPropertiesFile(J9JavaVM *vm, UDATA *cursor)
 	UDATA startCount = *cursor;
 	UDATA count = 0;
 
-#define RELATIVE_PROPSPATH DIR_SEPARATOR_STR"lib"DIR_SEPARATOR_STR"classlib.properties"
+#define RELATIVE_PROPSPATH	DIR_SEPARATOR_STR "lib" DIR_SEPARATOR_STR "classlib.properties"
 
-	j9str_printf(PORTLIB, propsPath, sizeof(propsPath), "%s"RELATIVE_PROPSPATH, vm->javaHome);
+	j9str_printf(PORTLIB, propsPath, sizeof(propsPath), "%s" RELATIVE_PROPSPATH, vm->fipsHome);
 
 #undef RELATIVE_PROPSPATH
 

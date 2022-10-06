@@ -5374,6 +5374,8 @@ typedef struct J9JavaVM {
 	struct J9Pool* systemProperties;
 	omrthread_monitor_t systemPropertiesMutex;
 	U_8* javaHome;
+	U_8* fipsHome;
+	U_8* fipsMode;
 	void* cInterpreter;
 	UDATA (*bytecodeLoop)(struct J9VMThread *currentThread);
 	struct J9CudaGlobals* cudaGlobals;

@@ -177,10 +177,11 @@ addJavaHome(J9PortLibrary *portLib, J9JavaVMArgInfoList *vmArgumentsList, UDATA 
  * @param jrelibPath path to library directory
  * @param launcherArgs JavaVMInitArgs passed in from the launcher
  * @param j2seVersion java version number
+ * @param useFips140_3 if true add fips140-3 specific directory to java.ext.dirs, else add fips140-2
  * @return 0 on success, negative value on failure
  */
 IDATA
-addExtDir(J9PortLibrary *portLib, J9JavaVMArgInfoList *vmArgumentsList, char *jrelibPath, JavaVMInitArgs *launcherArgs, UDATA j2seVersion);
+addExtDir(J9PortLibrary *portLib, J9JavaVMArgInfoList *vmArgumentsList, char *jrelibPath, JavaVMInitArgs *launcherArgs, UDATA j2seVersion, BOOLEAN useFips140_3);
 
 /**
  * Add argument to set user.dir

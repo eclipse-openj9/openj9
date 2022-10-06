@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1018,20 +1018,37 @@ addJavaHome(J9PortLibrary *portLib, J9JavaVMArgInfoList *vmArgumentsList, UDATA 
 }
 
 IDATA
-addExtDir(J9PortLibrary *portLib, J9JavaVMArgInfoList *vmArgumentsList, char *jrelibPath, JavaVMInitArgs *launcherArgs, UDATA j2seVersion)
+addExtDir(J9PortLibrary *portLib, J9JavaVMArgInfoList *vmArgumentsList, char *jrelibPath, JavaVMInitArgs *launcherArgs, UDATA j2seVersion, BOOLEAN useFips140_3)
 {
 	char *javaHomeEnd = strrchr(jrelibPath, DIR_SEPARATOR);
+	size_t javaHomeLength = javaHomeEnd - jrelibPath;
 	size_t argumentLength = 1; /* add the \0 */
+	uintptr_t writtenLength = 0;
 	char *optionsArgumentBuffer = NULL;
 	J9JavaVMArgInfo *optArg = NULL;
 	const char *libExt = DIR_SEPARATOR_STR "lib" DIR_SEPARATOR_STR "ext";
+	const char *libExtFips = useFips140_3
+					? (DIR_SEPARATOR_STR "fips140-3" DIR_SEPARATOR_STR "lib" DIR_SEPARATOR_STR "ext")
+					: (DIR_SEPARATOR_STR "fips140-2" DIR_SEPARATOR_STR "lib" DIR_SEPARATOR_STR "ext");
 	I_32 optIndex = 0;
+	OMRPORT_ACCESS_FROM_J9PORT(portLib);
 	PORT_ACCESS_FROM_PORT(portLib);
 
 	Assert_Util_notNull(javaHomeEnd);
+	Assert_Util_true(javaHomeLength < strlen(jrelibPath));
 
+	/* start with length of property name assignment */
 	argumentLength += strlen(JAVA_EXT_DIRS_EQUALS);
-	argumentLength += javaHomeEnd - jrelibPath;
+
+	/* add length of FIPS specific directory to the ext dirs list */
+	argumentLength += javaHomeLength;
+	argumentLength += strlen(libExtFips);
+
+	/* add length of path separator */
+	argumentLength += strlen(J9JAVA_PATH_SEPARATOR);
+
+	/* add length of common extension directory */
+	argumentLength += javaHomeLength;
 	argumentLength += strlen(libExt);
 
 	optionsArgumentBuffer = j9mem_allocate_memory(argumentLength, OMRMEM_CATEGORY_VM);
@@ -1039,14 +1056,14 @@ addExtDir(J9PortLibrary *portLib, J9JavaVMArgInfoList *vmArgumentsList, char *jr
 		return -1;
 	}
 
-	/*
-	 * strcpy is safe because we allocated the buffer based on the size of the strings.
-	 * Also strncpy null-pads the buffer.
-	 */
-	strcpy(optionsArgumentBuffer, JAVA_EXT_DIRS_EQUALS);
-	/* need to use strncat because we are copying a substring */
-	strncat(optionsArgumentBuffer, jrelibPath, javaHomeEnd - jrelibPath);
-	strcat(optionsArgumentBuffer, libExt);
+	writtenLength = omrstr_printf(optionsArgumentBuffer, argumentLength, "%s%.*s%s%s%.*s%s",
+					JAVA_EXT_DIRS_EQUALS,
+					javaHomeLength, jrelibPath,
+					libExtFips,
+					J9JAVA_PATH_SEPARATOR,
+					javaHomeLength, jrelibPath,
+					libExt);
+	Assert_Util_true(writtenLength == (argumentLength - 1));
 
 	optArg = newJavaVMArgInfo(vmArgumentsList, optionsArgumentBuffer, ARG_MEMORY_ALLOCATION | CONSUMABLE_ARG);
 	if (NULL == optArg) {
