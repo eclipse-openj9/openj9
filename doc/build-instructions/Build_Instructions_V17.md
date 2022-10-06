@@ -143,7 +143,7 @@ bash configure --with-boot-jdk=/home/jenkins/bootjdks/jdk17
 
 :pencil: Configuring and building is not specific to OpenJ9 but uses the OpenJDK build infrastructure with OpenJ9 added.
 Many other configuration options are available, including options to increase the verbosity of the build output to include command lines (`LOG=cmdlines`), more info or debug information.
-For more information see [OpenJDK build troubleshotting](https://htmlpreview.github.io/?https://raw.githubusercontent.com/openjdk/jdk17u/master/doc/building.html#troubleshooting).
+For more information see [OpenJDK build troubleshooting](https://htmlpreview.github.io/?https://raw.githubusercontent.com/openjdk/jdk17u/master/doc/building.html#troubleshooting).
 
 :pencil: **Mixed and compressed references support:** Different types of 64-bit builds can be created:
 - [compressed references](https://www.eclipse.org/openj9/docs/gc_overview/#compressed-references) (only)
@@ -284,7 +284,7 @@ where `<cups_include_path>` is the absolute path to CUPS. For example, `/opt/fre
 
 :pencil: Configuring and building is not specific to OpenJ9 but uses the OpenJDK build infrastructure with OpenJ9 added.
 Many other configuration options are available, including options to increase the verbosity of the build output to include command lines (`LOG=cmdlines`), more info or debug information.
-For more information see [OpenJDK build troubleshotting](https://htmlpreview.github.io/?https://raw.githubusercontent.com/openjdk/jdk17u/master/doc/building.html#troubleshooting).
+For more information see [OpenJDK build troubleshooting](https://htmlpreview.github.io/?https://raw.githubusercontent.com/openjdk/jdk17u/master/doc/building.html#troubleshooting).
 
 :pencil: **Mixed and compressed references support:** Different types of 64-bit builds can be created:
 - [compressed references](https://www.eclipse.org/openj9/docs/gc_overview/#compressed-references) (only)
@@ -453,7 +453,7 @@ Note: If you have multiple versions of Visual Studio installed, you can enforce 
 
 :pencil: Configuring and building is not specific to OpenJ9 but uses the OpenJDK build infrastructure with OpenJ9 added.
 Many other configuration options are available, including options to increase the verbosity of the build output to include command lines (`LOG=cmdlines`), more info or debug information.
-For more information see [OpenJDK build troubleshotting](https://htmlpreview.github.io/?https://raw.githubusercontent.com/openjdk/jdk17u/master/doc/building.html#troubleshooting).
+For more information see [OpenJDK build troubleshooting](https://htmlpreview.github.io/?https://raw.githubusercontent.com/openjdk/jdk17u/master/doc/building.html#troubleshooting).
 
 :pencil: **Mixed and compressed references support:** Different types of 64-bit builds can be created:
 - [compressed references](https://www.eclipse.org/openj9/docs/gc_overview/#compressed-references) (only)
@@ -603,7 +603,7 @@ bash configure --with-boot-jdk=<path_to_boot_JDK17>
 
 :pencil: Configuring and building is not specific to OpenJ9 but uses the OpenJDK build infrastructure with OpenJ9 added.
 Many other configuration options are available, including options to increase the verbosity of the build output to include command lines (`LOG=cmdlines`), more info or debug information.
-For more information see [OpenJDK build troubleshotting](https://htmlpreview.github.io/?https://raw.githubusercontent.com/openjdk/jdk17u/master/doc/building.html#troubleshooting).
+For more information see [OpenJDK build troubleshooting](https://htmlpreview.github.io/?https://raw.githubusercontent.com/openjdk/jdk17u/master/doc/building.html#troubleshooting).
 
 :pencil: **Mixed and compressed references support:** Different types of 64-bit builds can be created:
 - [compressed references](https://www.eclipse.org/openj9/docs/gc_overview/#compressed-references) (only)
@@ -750,7 +750,7 @@ bash configure --openjdk-target=${OPENJ9_CC_PREFIX} \
 
 :pencil: Configuring and building is not specific to OpenJ9 but uses the OpenJDK build infrastructure with OpenJ9 added.
 Many other configuration options are available, including options to increase the verbosity of the build output to include command lines (`LOG=cmdlines`), more info or debug information.
-For more information see [OpenJDK build troubleshotting](https://htmlpreview.github.io/?https://raw.githubusercontent.com/openjdk/jdk17u/master/doc/building.html#troubleshooting).
+For more information see [OpenJDK build troubleshooting](https://htmlpreview.github.io/?https://raw.githubusercontent.com/openjdk/jdk17u/master/doc/building.html#troubleshooting).
 
 :pencil: **Mixed and compressed references support:** Different types of 64-bit builds can be created:
 - [compressed references](https://www.eclipse.org/openj9/docs/gc_overview/#compressed-references) (only)
