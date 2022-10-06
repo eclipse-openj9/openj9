@@ -4673,7 +4673,7 @@ static TR::Register *
 reservationLockEnter(TR::Node *node, int32_t lwOffset, TR::CodeGenerator *cg, TR::RegisterDependencyConditions *conditions, TR::Register *objReg, TR::Register *monitorReg, TR::Register *valReg, TR::Register *tempReg, TR::Register *cndReg, TR::LabelSymbol *callLabel)
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *) (cg->fe());
-   TR::LabelSymbol *resLabel, *doneLabel, *doneOOLLabel, *loopLabel, *reserved_checkLabel;
+   TR::LabelSymbol *resLabel, *doneLabel, *callReturnLabel, *loopLabel, *reserved_checkLabel;
    int32_t lockSize;
    TR::Compilation * comp = cg->comp();
 
@@ -4683,7 +4683,7 @@ reservationLockEnter(TR::Node *node, int32_t lwOffset, TR::CodeGenerator *cg, TR
    loopLabel = generateLabelSymbol(cg);
    reserved_checkLabel = generateLabelSymbol(cg);
    doneLabel = generateLabelSymbol(cg);
-   doneOOLLabel = generateLabelSymbol(cg);
+   callReturnLabel = generateLabelSymbol(cg);
 
    TR::TreeEvaluator::isPrimitiveMonitor(node, cg);
    bool isPrimitive = node->isPrimitiveLockedRegion();
@@ -4720,11 +4720,16 @@ reservationLockEnter(TR::Node *node, int32_t lwOffset, TR::CodeGenerator *cg, TR
     *                                                         addi   monitorReg, monitorReg, INC       <--- Diff
     *                                                         st     monitorReg, [objReg, lwOffset]    <--- Diff
     * doneLabel:
-    * doneOOLLabel:
+    * #if JAVA_SPEC_VERSION >= 19
+    *    ld/lwz tempReg, OwnedMonitorCountOffset(metaReg)     ld/lwz tempReg, OwnedMonitorCountOffset(metaReg)
+    *    addi   tempReg, tempReg, 1                           addi   tempReg, tempReg, 1
+    *    st     tempReg, OwnedMonitorCountOffset(metaReg)     st     tempReg, OwnedMonitorCountOffset(metaReg)
+    * #endif //JAVA_SPEC_VERSION >= 19
+    * callReturnLabel:
     * === OUT OF LINE ===
     * callLabel:
     *    bl     jitMonitorEntry
-    *    b      doneOOLLabel
+    *    b      callReturnLabel
     */
 
    generateTrg1MemInstruction(cg, lockSize == 8 ? TR::InstOpCode::ld : TR::InstOpCode::lwz, node, monitorReg, TR::MemoryReference::createWithDisplacement(cg, objReg, lwOffset, lockSize));
@@ -4771,13 +4776,23 @@ reservationLockEnter(TR::Node *node, int32_t lwOffset, TR::CodeGenerator *cg, TR
                                  node, TR::MemoryReference::createWithDisplacement(cg, objReg, lwOffset & 0x0000FFFF, lockSize), monitorReg);
       }
 
-   doneLabel->setEndInternalControlFlow();
-   generateDepLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel, conditions);
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel);
+#if JAVA_SPEC_VERSION >= 19
+      /*
+       * Adjust J9VMThread ownedMonitorCount for execution paths that do not
+       * go out of line to acquire the lock. It is safe and efficient to do
+       * this unconditionally. There is no need to check for overflow.
+       */
+      generateTrg1MemInstruction(cg, TR::InstOpCode::Op_load, node, tempReg, TR::MemoryReference::createWithDisplacement(cg, metaReg, fej9->thisThreadGetOwnedMonitorCountOffset(), TR::Compiler->om.sizeofReferenceAddress()));
+      generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, tempReg, tempReg, 1);
+      generateMemSrc1Instruction(cg, TR::InstOpCode::Op_st, node, TR::MemoryReference::createWithDisplacement(cg, metaReg, fej9->thisThreadGetOwnedMonitorCountOffset(), TR::Compiler->om.sizeofReferenceAddress()), tempReg);
+#endif //JAVA_SPEC_VERSION >= 19
 
-   TR_PPCOutOfLineCodeSection *outlinedHelperCall = new (cg->trHeapMemory()) TR_PPCOutOfLineCodeSection(node, TR::call, NULL, callLabel, doneOOLLabel, cg);
+   TR_PPCOutOfLineCodeSection *outlinedHelperCall = new (cg->trHeapMemory()) TR_PPCOutOfLineCodeSection(node, TR::call, NULL, callLabel, callReturnLabel, cg);
    cg->getPPCOutOfLineCodeSectionList().push_front(outlinedHelperCall);
 
-   generateLabelInstruction(cg, TR::InstOpCode::label, node, doneOOLLabel);
+   generateDepLabelInstruction(cg, TR::InstOpCode::label, node, callReturnLabel, conditions);
+   callReturnLabel->setEndInternalControlFlow();
 
    conditions->stopUsingDepRegs(cg, objReg);
    cg->decReferenceCount(node->getFirstChild());
@@ -4788,7 +4803,7 @@ static TR::Register *
 reservationLockExit(TR::Node *node, int32_t lwOffset, TR::CodeGenerator *cg, TR::RegisterDependencyConditions *conditions, TR::Register *objReg, TR::Register *monitorReg, TR::Register *valReg, TR::Register *tempReg, TR::Register *cndReg, TR::LabelSymbol *callLabel)
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *) (cg->fe());
-   TR::LabelSymbol *resLabel, *doneLabel, *doneOOLLabel;
+   TR::LabelSymbol *resLabel, *doneLabel, *callReturnLabel;
    int32_t lockSize;
    TR::Compilation *comp = cg->comp();
 
@@ -4796,7 +4811,7 @@ reservationLockExit(TR::Node *node, int32_t lwOffset, TR::CodeGenerator *cg, TR:
 
    resLabel = generateLabelSymbol(cg);
    doneLabel = generateLabelSymbol(cg);
-   doneOOLLabel = generateLabelSymbol(cg);
+   callReturnLabel = generateLabelSymbol(cg);
 
    bool isPrimitive = node->isPrimitiveLockedRegion();
    lockSize = comp->target().is64Bit() && !fej9->generateCompressedLockWord() ? 8 : 4;
@@ -4822,11 +4837,16 @@ reservationLockExit(TR::Node *node, int32_t lwOffset, TR::CodeGenerator *cg, TR:
     *    st     monitorReg, [objReg, lwOffset]             st     monitorReg, [objReg, lwOffset]
     *                                                      b      doneLabel                                    <-- Diff
     * doneLabel:
-    * doneOOLLabel:
+    * #if JAVA_SPEC_VERSION >= 19
+    *    ld/lwz tempReg, OwnedMonitorCountOffset(metaReg)  ld/lwz tempReg, OwnedMonitorCountOffset(metaReg)
+    *    addi   tempReg, tempReg, -1                       addi   tempReg, tempReg, -1
+    *    st     tempReg, OwnedMonitorCountOffset(metaReg)  st     tempReg, OwnedMonitorCountOffset(metaReg)
+    * #endif //JAVA_SPEC_VERSION >= 19
+    * callReturnLabel:
     * === OUT OF LINE ===
     * callLabel:
     *    bl     jitMonitorExit
-    *    b      doneOOLLabel
+    *    b      callReturnLabel
     */
 
    generateTrg1MemInstruction(cg, lockSize == 8 ? TR::InstOpCode::ld : TR::InstOpCode::lwz, node, monitorReg, TR::MemoryReference::createWithDisplacement(cg, objReg, lwOffset, lockSize));
@@ -4867,13 +4887,23 @@ reservationLockExit(TR::Node *node, int32_t lwOffset, TR::CodeGenerator *cg, TR:
    if (!isPrimitive)
       generateLabelInstruction(cg, TR::InstOpCode::b, node, doneLabel);
 
-   doneLabel->setEndInternalControlFlow();
-   generateDepLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel, conditions);
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel);
+#if JAVA_SPEC_VERSION >= 19
+      /*
+       * Adjust J9VMThread ownedMonitorCount for execution paths that do not
+       * go out of line to release the lock. It is safe and efficient to do
+       * this unconditionally. There is no need to check for underflow.
+       */
+      generateTrg1MemInstruction(cg, TR::InstOpCode::Op_load, node, tempReg, TR::MemoryReference::createWithDisplacement(cg, metaReg, fej9->thisThreadGetOwnedMonitorCountOffset(), TR::Compiler->om.sizeofReferenceAddress()));
+      generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, tempReg, tempReg, -1);
+      generateMemSrc1Instruction(cg, TR::InstOpCode::Op_st, node, TR::MemoryReference::createWithDisplacement(cg, metaReg, fej9->thisThreadGetOwnedMonitorCountOffset(), TR::Compiler->om.sizeofReferenceAddress()), tempReg);
+#endif //JAVA_SPEC_VERSION >= 19
 
-   TR_PPCOutOfLineCodeSection *outlinedHelperCall = new (cg->trHeapMemory()) TR_PPCOutOfLineCodeSection(node, TR::call, NULL, callLabel, doneOOLLabel, cg);
+   TR_PPCOutOfLineCodeSection *outlinedHelperCall = new (cg->trHeapMemory()) TR_PPCOutOfLineCodeSection(node, TR::call, NULL, callLabel, callReturnLabel, cg);
    cg->getPPCOutOfLineCodeSectionList().push_front(outlinedHelperCall);
 
-   generateLabelInstruction(cg, TR::InstOpCode::label, node, doneOOLLabel);
+   generateDepLabelInstruction(cg, TR::InstOpCode::label, node, callReturnLabel, conditions);
+   callReturnLabel->setEndInternalControlFlow();
 
    conditions->stopUsingDepRegs(cg, objReg);
    cg->decReferenceCount(node->getFirstChild());
@@ -5120,6 +5150,11 @@ TR::Register *J9::Power::TreeEvaluator::VMmonexitEvaluator(TR::Node *node, TR::C
        *    st     monitorReg, lwOffset(baseReg)
        *
        * doneLabel:
+       * #if JAVA_SPEC_VERSION >= 19
+       *    ld/lwz tempReg, OwnedMonitorCountOffset(metaReg)
+       *    addi   tempReg, tempReg, -1
+       *    st     tempReg, OwnedMonitorCountOffset(metaReg)
+       * #endif //JAVA_SPEC_VERSION >= 19
        * callReturnLabel:
        * === OUT OF LINE ===
        * callLabel:
@@ -5157,16 +5192,25 @@ TR::Register *J9::Power::TreeEvaluator::VMmonexitEvaluator(TR::Node *node, TR::C
       generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, monitorReg, monitorReg, -LOCK_INC_DEC_VALUE);
       generateMemSrc1Instruction(cg, storeOpCode, node, TR::MemoryReference::createWithDisplacement(cg, baseReg, lwOffset, lockSize), monitorReg);
 
-      generateDepLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel, conditions);
-
-      doneLabel->setEndInternalControlFlow();
+      generateLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel);
+#if JAVA_SPEC_VERSION >= 19
+      /*
+       * Adjust J9VMThread ownedMonitorCount for execution paths that do not
+       * go out of line to release the lock. It is safe and efficient to do
+       * this unconditionally. There is no need to check for underflow.
+       */
+      generateTrg1MemInstruction(cg, TR::InstOpCode::Op_load, node, tempReg, TR::MemoryReference::createWithDisplacement(cg, metaReg, fej9->thisThreadGetOwnedMonitorCountOffset(), TR::Compiler->om.sizeofReferenceAddress()));
+      generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, tempReg, tempReg, -1);
+      generateMemSrc1Instruction(cg, TR::InstOpCode::Op_st, node, TR::MemoryReference::createWithDisplacement(cg, metaReg, fej9->thisThreadGetOwnedMonitorCountOffset(), TR::Compiler->om.sizeofReferenceAddress()), tempReg);
+#endif //JAVA_SPEC_VERSION >= 19
 
       TR::LabelSymbol *callReturnLabel = generateLabelSymbol(cg);
 
       TR_PPCOutOfLineCodeSection *outlinedHelperCall = new (cg->trHeapMemory()) TR_PPCOutOfLineCodeSection(node, TR::call, NULL, callLabel, callReturnLabel, cg);
       cg->getPPCOutOfLineCodeSectionList().push_front(outlinedHelperCall);
 
-      generateLabelInstruction(cg, TR::InstOpCode::label, node, callReturnLabel);
+      generateDepLabelInstruction(cg, TR::InstOpCode::label, node, callReturnLabel, conditions);
+      callReturnLabel->setEndInternalControlFlow();
 
       conditions->stopUsingDepRegs(cg, objReg);
       cg->decReferenceCount(objNode);
@@ -7578,6 +7622,7 @@ TR::Register *J9::Power::TreeEvaluator::VMmonentEvaluator(TR::Node *node, TR::Co
    // full codegen support for read monitors is not enabled, pending performance tuning
    /*
     * Read only locks do not support either the Reserved bit nor the Learning bit.
+    * They do not support ownedMonitorCount updates either.
     * They are disabled until the code path is updated.
     */
    if (true || !ppcSupportsReadMonitors || !node->isReadMonitor())
@@ -7616,6 +7661,11 @@ TR::Register *J9::Power::TreeEvaluator::VMmonentEvaluator(TR::Node *node, TR::Co
        *    st     monitorReg, lwOffset(baseReg)
        *
        * doneLabel:
+       * #if JAVA_SPEC_VERSION >= 19
+       *    ld/lwz tempReg, OwnedMonitorCountOffset(metaReg)
+       *    addi   tempReg, tempReg, 1
+       *    st     tempReg, OwnedMonitorCountOffset(metaReg)
+       * #endif //JAVA_SPEC_VERSION >= 19
        * callReturnLabel:
        * === OUT OF LINE ===
        * callLabel:
@@ -7663,16 +7713,25 @@ TR::Register *J9::Power::TreeEvaluator::VMmonentEvaluator(TR::Node *node, TR::Co
       generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, monitorReg, monitorReg, LOCK_INC_DEC_VALUE);
       generateMemSrc1Instruction(cg, storeOpCode, node, TR::MemoryReference::createWithDisplacement(cg, baseReg, lwOffset, lockSize), monitorReg);
 
-      generateDepLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel, conditions);
-
-      doneLabel->setEndInternalControlFlow();
+      generateLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel);
+#if JAVA_SPEC_VERSION >= 19
+      /*
+       * Adjust J9VMThread ownedMonitorCount for execution paths that do not
+       * go out of line to acquire the lock. It is safe and efficient to do
+       * this unconditionally. There is no need to check for overflow.
+       */
+      generateTrg1MemInstruction(cg, TR::InstOpCode::Op_load, node, tempReg, TR::MemoryReference::createWithDisplacement(cg, metaReg, fej9->thisThreadGetOwnedMonitorCountOffset(), TR::Compiler->om.sizeofReferenceAddress()));
+      generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, tempReg, tempReg, 1);
+      generateMemSrc1Instruction(cg, TR::InstOpCode::Op_st, node, TR::MemoryReference::createWithDisplacement(cg, metaReg, fej9->thisThreadGetOwnedMonitorCountOffset(), TR::Compiler->om.sizeofReferenceAddress()), tempReg);
+#endif //JAVA_SPEC_VERSION >= 19
 
       TR::LabelSymbol *callReturnLabel = generateLabelSymbol(cg);
 
       TR_PPCOutOfLineCodeSection *outlinedHelperCall = new (cg->trHeapMemory()) TR_PPCOutOfLineCodeSection(node, TR::call, NULL, callLabel, callReturnLabel, cg);
       cg->getPPCOutOfLineCodeSectionList().push_front(outlinedHelperCall);
 
-      generateLabelInstruction(cg, TR::InstOpCode::label, node, callReturnLabel);
+      generateDepLabelInstruction(cg, TR::InstOpCode::label, node, callReturnLabel, conditions);
+      callReturnLabel->setEndInternalControlFlow();
 
       conditions->stopUsingDepRegs(cg, objReg);
       cg->decReferenceCount(objNode);
