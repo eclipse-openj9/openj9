@@ -3026,12 +3026,14 @@ public class ValueTypeTests {
 		Class valueClass = ValueTypeGenerator.generateValueClass("testIdentityObjectOnValueType", fields);
 		assertTrue(PrimitiveClass.isPrimitiveClass(valueClass));
 		assertTrue(valueClass.isValue());
+		assertFalse(valueClass.isIdentity());
 	}
 
 	@Test(priority=1)
 	static public void testIdentityObjectOnHeavyAbstract() throws Throwable {
 		assertFalse(HeavyAbstractClass.class.isValue());
 		assertFalse(PrimitiveClass.isPrimitiveClass(HeavyAbstractClass.class));
+		assertTrue(HeavyAbstractClass.class.isIdentity());
 	}
 	public static abstract class HeavyAbstractClass {
 		/* Abstract class that has fields */
@@ -3138,6 +3140,7 @@ public class ValueTypeTests {
 	@Test(priority = 1)
 	static public void testIdentityObjectOnJLObject() throws Throwable {
 		assertFalse(Object.class.isValue());
+		assertFalse(Object.class.isIdentity());
 	}
 
 	@Test(priority = 1)
@@ -3145,6 +3148,7 @@ public class ValueTypeTests {
 		String fields[] = {"longField:J"};
 		Class refClass = ValueTypeGenerator.generateRefClass("testIdentityObjectOnRef", fields);
 		assertFalse(refClass.isValue());
+		assertTrue(refClass.isIdentity());
 	}
 
 	@Test(priority=1)
@@ -3180,6 +3184,7 @@ public class ValueTypeTests {
 		String fields[] = {"longField:J"};
 		Class valueClass = ValueTypeGenerator.generateValueClass("testIsPrimitiveOnValueArrayClass", fields);
 		assertFalse(PrimitiveClass.isPrimitiveClass(valueClass.arrayType()));
+		assertTrue(valueClass.arrayType().isIdentity());
 	}
 
 	@Test(priority=1)
@@ -3187,6 +3192,7 @@ public class ValueTypeTests {
 		String fields[] = {"longField:J"};
 		Class refClass = ValueTypeGenerator.generateRefClass("testIsPrimitiveOnRefArrayClass", fields);
 		assertFalse(PrimitiveClass.isPrimitiveClass(refClass.arrayType()));
+		assertTrue(refClass.arrayType().isIdentity());
 	}
 
 	@Test(priority=1)

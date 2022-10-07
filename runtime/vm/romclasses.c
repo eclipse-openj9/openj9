@@ -127,6 +127,10 @@ initializeArrayROMClass(J9ROMArrayClass *romClass, J9UTF8 *className, U_32 array
 	NNSRP_SET(romClass->className, className);
 	NNSRP_SET(romClass->superclassName, &arrayROMClasses.objectClassName);
 	romClass->modifiers = J9AccFinal | J9AccPublic | J9AccClassArray | J9AccAbstract;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	/* Arrays are always identity classes. */
+	romClass->modifiers |= J9AccClassHasIdentity;
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	romClass->extraModifiers = J9AccClassCloneable | J9AccClassIsUnmodifiable;
 	romClass->interfaceCount = sizeof(arrayROMClasses.interfaceClasses) / sizeof(J9SRP);
 	NNSRP_SET(romClass->interfaces, &arrayROMClasses.interfaceClasses);
