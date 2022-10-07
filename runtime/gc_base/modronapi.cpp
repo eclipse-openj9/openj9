@@ -764,6 +764,9 @@ j9gc_get_gc_cause(OMR_VMThread *omrVMthread)
 			ret = "collect due to JVM becomes idle";
 			break;
 #endif
+		case J9MMCONSTANT_EXPLICIT_GC_PREPARE_FOR_CHECKPOINT:
+			ret = "collect due to checkpoint";
+			break;
 		case J9MMCONSTANT_IMPLICIT_GC_COMPLETE_CONCURRENT :
 			ret = "concurrent collection must be completed";
 			break;
