@@ -178,7 +178,7 @@ public class Continuation {
 
 	public final void run() {
 		if (!trylockAccess()) {
-			throw new IllegalStateException("Continuation has already finished.");
+			throw new IllegalStateException("Continuation inaccessible: mounted or being inspected.");
 		}
 		if (finished) {
 			throw new IllegalStateException("Continuation has already finished.");
@@ -199,13 +199,13 @@ public class Continuation {
 		try {
 			result = enterImpl();
 		} finally {
-			isAccessible = true;
 			if (result) {
 				/* Continuation completed */
 			} else {
 				/* Continuation yielded */
 			}
 			JLA.setContinuation(carrier, parent);
+			unlockAccess();
 		}
 	}
 

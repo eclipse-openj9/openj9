@@ -195,7 +195,12 @@ A binary for the full developer kit (jdk) is built and stored in the following d
 
     :pencil: On other architectures the **/jdk** directory is in **build/linux-ppc64le-normal-server-release/images** (Linux on 64-bit Power systems) and **build/linux-s390x-normal-server-release/images** (Linux on 64-bit z Systems).
 
-    :pencil: If you want a binary for the runtime environment (jre), you must run `make legacy-jre-image`, which produces a jre build in the **build/linux-x86_64-normal-server-release/images/jre** directory.
+:pencil: If you want a binary for the runtime environment (jre), you must run `make legacy-jre-image`, which produces a jre build in the **build/linux-x86_64-normal-server-release/images/jre** directory.
+
+:pencil: One of the images created with `make all` is the `debug-image`. This directory contains files that provide debug information for executables and shared libraries when using native debuggers.
+To use it, copy the contents of `debug-image` over the jdk before using the jdk with a native debugger.
+Another image created is the `test` image, which contains executables and native libraries required when running some functional and OpenJDK testing.
+For local testing set the NATIVE_TEST_LIBS environment variable to the test image location, see the [OpenJ9 test user guide](https://github.com/eclipse-openj9/openj9/blob/master/test/docs/OpenJ9TestUserGuide.md).
 
 ### 5. Test
 :penguin:
@@ -330,7 +335,12 @@ A binary for the full developer kit (jdk) is built and stored in the following d
 
 - **build/aix-ppc64-normal-server-release/images/jdk**
 
-    :pencil: If you want a binary for the runtime environment (jre), you must run `make legacy-jre-image`, which produces a jre build in the **build/aix-ppc64-normal-server-release/images/jre** directory.
+:pencil: If you want a binary for the runtime environment (jre), you must run `make legacy-jre-image`, which produces a jre build in the **build/aix-ppc64-normal-server-release/images/jre** directory.
+
+:pencil: One of the images created with `make all` is the `debug-image`. This directory contains files that provide debug information for executables and shared libraries when using native debuggers.
+To use it, copy the contents of `debug-image` over the jdk before using the jdk with a native debugger.
+Another image created is the `test` image, which contains executables and native libraries required when running some functional and OpenJDK testing.
+For local testing set the NATIVE_TEST_LIBS environment variable to the test image location, see the [OpenJ9 test user guide](https://github.com/eclipse-openj9/openj9/blob/master/test/docs/OpenJ9TestUserGuide.md).
 
 ### 5. Test
 :blue_book:
@@ -497,7 +507,12 @@ A binary for the full developer kit (jdk) is built and stored in the following d
 
 - **build/windows-x86_64-normal-server-release/images/jdk**
 
-    :pencil: If you want a binary for the runtime environment (jre), you must run `make legacy-jre-image`, which produces a jre build in the **build/windows-x86_64-normal-server-release/images/jre** directory.
+:pencil: If you want a binary for the runtime environment (jre), you must run `make legacy-jre-image`, which produces a jre build in the **build/windows-x86_64-normal-server-release/images/jre** directory.
+
+:pencil: One of the images created with `make all` is the `debug-image`. This directory contains files that provide debug information for executables and shared libraries when using native debuggers.
+To use it, copy the contents of `debug-image` over the jdk before using the jdk with a native debugger.
+Another image created is the `test` image, which contains executables and native libraries required when running some functional and OpenJDK testing.
+For local testing set the NATIVE_TEST_LIBS environment variable to the test image location, see the [OpenJ9 test user guide](https://github.com/eclipse-openj9/openj9/blob/master/test/docs/OpenJ9TestUserGuide.md).
 
 ### 5. Test
 :ledger:
@@ -643,7 +658,12 @@ Two builds of OpenJDK with Eclipse OpenJ9 are built and stored in the following 
 
     :pencil: For running applications such as Eclipse, use the **-bundle** version.
 
-    :pencil: If you want a binary for the runtime environment (jre), you must run `make legacy-jre-image`, which produces a jre build in the **build/macosx-x86_64-normal-server-release/images/jre** directory.
+:pencil: If you want a binary for the runtime environment (jre), you must run `make legacy-jre-image`, which produces a jre build in the **build/macosx-x86_64-normal-server-release/images/jre** directory.
+
+:pencil: One of the images created with `make all` is the `debug-image`. This directory contains files that provide debug information for executables and shared libraries when using native debuggers.
+To use it, copy the contents of `debug-image` over the jdk before using the jdk with a native debugger.
+Another image created is the `test` image, which contains executables and native libraries required when running some functional and OpenJDK testing.
+For local testing set the NATIVE_TEST_LIBS environment variable to the test image location, see the [OpenJ9 test user guide](https://github.com/eclipse-openj9/openj9/blob/master/test/docs/OpenJ9TestUserGuide.md).
 
 ### 5. Test
 :apple:
@@ -802,6 +822,11 @@ A binary for the full developer kit (jdk) is built and stored in the following d
 Copy its contents to your AArch64 Linux device.
 
 :pencil: If you want a binary for the runtime environment (jre), you must run `make legacy-jre-image`, which produces a jre build in the **build/linux-aarch64-normal-server-release/images/jre** directory.
+
+:pencil: One of the images created with `make all` is the `debug-image`. This directory contains files that provide debug information for executables and shared libraries when using native debuggers.
+To use it, copy the contents of `debug-image` over the jdk before using the jdk with a native debugger.
+Another image created is the `test` image, which contains executables and native libraries required when running some functional and OpenJDK testing.
+For local testing set the NATIVE_TEST_LIBS environment variable to the test image location, see the [OpenJ9 test user guide](https://github.com/eclipse-openj9/openj9/blob/master/test/docs/OpenJ9TestUserGuide.md).
 
 ### 6. Test
 :penguin:
@@ -1296,6 +1321,11 @@ If you want to specify `make` instead of `make all`, you must add `--default-mak
 A binary for the full developer kit (JDK without DDR support) is built and stored in the following directory:
 
 - **build/linux-riscv64-normal-server-release/images/jdk**
+
+:pencil: One of the images created with `make all` is the `debug-image`. This directory contains files that provide debug information for executables and shared libraries when using native debuggers.
+To use it, copy the contents of `debug-image` over the jdk before using the jdk with a native debugger.
+Another image created is the `test` image, which contains executables and native libraries required when running some functional and OpenJDK testing.
+For local testing set the NATIVE_TEST_LIBS environment variable to the test image location, see the [OpenJ9 test user guide](https://github.com/eclipse-openj9/openj9/blob/master/test/docs/OpenJ9TestUserGuide.md).
 
 ### 8. Test the JDK on Fedora/QEMU
 
