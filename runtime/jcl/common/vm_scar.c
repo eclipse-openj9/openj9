@@ -135,7 +135,7 @@ static UDATA
 addBFUSystemProperties(J9JavaVM* vm)
 {
 	int fontPathSize = 0;
-	char* fontPathBuffer = NULL;
+	char* fontPathBuffer = "";
 	char* propValue = NULL;
 	UDATA rc = 0;
 	const J9InternalVMFunctions* vmfunc = vm->internalVMFunctions;
