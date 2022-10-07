@@ -2103,6 +2103,26 @@ bool J9::Options::preProcessJitServer(J9JavaVM *vm, J9JITConfig *jitConfig)
             {
             disabledShareROMClasses = true;
             }
+
+         // Check if the JITServer AOT cache persistence feature is enabled
+         const char *xxJITServerAOTCachePersistenceOption = "-XX:+JITServerAOTCachePersistence";
+         const char *xxDisableJITServerAOTCachePersistenceOption = "-XX:-JITServerAOTCachePersistence";
+         int32_t xxJITServerAOTCachePersistenceArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxJITServerAOTCachePersistenceOption, 0);
+         int32_t xxDisableJITServerAOTCachePersistenceArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxDisableJITServerAOTCachePersistenceOption, 0);
+         if (xxJITServerAOTCachePersistenceArgIndex > xxDisableJITServerAOTCachePersistenceArgIndex)
+            {
+            compInfo->getPersistentInfo()->setJITServerUseAOTCachePersistence(true);
+
+            // If enabled, get the name of the directory where the AOT cache files will be stored
+            const char *xxJITServerAOTCacheDirOption = "-XX:JITServerAOTCacheDir=";
+            int32_t xxJITServerAOTCacheDirArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxJITServerAOTCacheDirOption, 0);
+            if (xxJITServerAOTCacheDirArgIndex >= 0)
+               {
+               char *directory = NULL;
+               GET_OPTION_VALUE(xxJITServerAOTCacheDirArgIndex, '=', &directory);
+               compInfo->getPersistentInfo()->setJITServerAOTCacheDir(directory);
+               }
+            }
          }
       else // Client mode (possibly)
          {

@@ -165,10 +165,12 @@ class PersistentInfo : public OMR::PersistentInfoConnector
          _socketTimeoutMs(0),
          _clientUID(0),
          _JITServerMetricsPort(38500),
-         _JITServerUseAOTCache(false),
          _requireJITServer(false),
          _localSyncCompiles(true),
+         _JITServerUseAOTCache(false),
          _JITServerAOTCacheName("default"),
+         _JITServerUseAOTCachePersistence(false),
+         _JITServerAOTCacheDir(),
 #endif /* defined(J9VM_OPT_JITSERVER) */
       OMR::PersistentInfoConnector(pm)
       {}
@@ -357,6 +359,10 @@ class PersistentInfo : public OMR::PersistentInfoConnector
    void setJITServerUseAOTCache(bool use) { _JITServerUseAOTCache = use; }
    const std::string &getJITServerAOTCacheName() const { return _JITServerAOTCacheName; }
    void setJITServerAOTCacheName(const char *name) { _JITServerAOTCacheName = name; }
+   bool getJITServerUseAOTCachePersistence() const { return _JITServerUseAOTCachePersistence; }
+   void setJITServerUseAOTCachePersistence(bool use) { _JITServerUseAOTCachePersistence = use; }
+   const std::string &getJITServerAOTCacheDir() const { return _JITServerAOTCacheDir; }
+   void setJITServerAOTCacheDir(const char *dir) { _JITServerAOTCacheDir = dir; }
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
    private:
@@ -452,6 +458,8 @@ class PersistentInfo : public OMR::PersistentInfoConnector
    bool        _localSyncCompiles;
    bool        _JITServerUseAOTCache;
    std::string _JITServerAOTCacheName; // Name of the server AOT cache that this client is using
+   bool        _JITServerUseAOTCachePersistence; // Whether to persist the JITServer AOT caches at the server
+   std::string _JITServerAOTCacheDir;  // Directory where the JITServer persistent AOT caches are located
 #endif /* defined(J9VM_OPT_JITSERVER) */
    };
 
