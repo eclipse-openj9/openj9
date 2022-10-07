@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2007, 2018 IBM Corp. and others
+ * Copyright (c) 2007, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -246,7 +246,7 @@ public class JavaRuntimeBuilder extends AbstractBuilderComponent implements IJav
 			}
 			if( fAddressSpace.isValidAddressID(blockingObject)) {
 				JCJavaClass jClass = generateJavaClass(getJavaRuntime(), blockingObjectClass, IBuilderData.NOT_AVAILABLE);
-				ImagePointer pointerObjectID = fAddressSpace.getPointer(javaObjID);
+				ImagePointer pointerObjectID = fAddressSpace.getPointer(blockingObject);
 				JCJavaObject jobject = new JCJavaObject(pointerObjectID, jClass);
 				javaThread.setBlockingObject(jobject);
 			}
