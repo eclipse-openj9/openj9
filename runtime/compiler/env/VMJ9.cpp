@@ -8426,13 +8426,11 @@ TR_J9SharedCacheVM::isClassVisible(TR_OpaqueClassBlock * sourceClass, TR_OpaqueC
    TR_ASSERT(comp, "Should be called only within a compilation");
 
    bool validated = false;
+   bool isVisible = TR_J9VMBase::isClassVisible(sourceClass, destClass);
 
    if (comp->getOption(TR_UseSymbolValidationManager))
       {
-      TR::SymbolValidationManager *svm = comp->getSymbolValidationManager();
-      SVM_ASSERT_ALREADY_VALIDATED(svm, sourceClass);
-      SVM_ASSERT_ALREADY_VALIDATED(svm, destClass);
-      validated = true;
+      validated = comp->getSymbolValidationManager()->addIsClassVisibleRecord(sourceClass, destClass, isVisible);
       }
    else
       {
@@ -8440,7 +8438,7 @@ TR_J9SharedCacheVM::isClassVisible(TR_OpaqueClassBlock * sourceClass, TR_OpaqueC
                   ((TR_ResolvedRelocatableJ9Method *) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class *) destClass);
       }
 
-   return (validated ? TR_J9VMBase::isClassVisible(sourceClass, destClass) : false);
+   return (validated ? isVisible : false);
    }
 
 bool

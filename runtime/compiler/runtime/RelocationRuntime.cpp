@@ -132,23 +132,24 @@ char *TR_RelocationRuntime::_reloErrorCodeNames[] =
    "methodFromSingleInterfaceImplValidationFailure",   // 41
    "methodFromSingleAbstractImplValidationFailure",    // 42
    "j2iThunkFromMethodValidationFailure",              // 43
-   "svmValidationFailure",                             // 44
-   "wkcValidationFailure",                             // 45
+   "isClassVisibleValidationFailure",                  // 44
+   "svmValidationFailure",                             // 45
+   "wkcValidationFailure",                             // 46
 
-   "classAddressRelocationFailure",                    // 46
-   "inlinedMethodRelocationFailure",                   // 47
-   "symbolFromManagerRelocationFailure",               // 48
-   "thunkRelocationFailure",                           // 49
-   "trampolineRelocationFailure",                      // 50
-   "picTrampolineRelocationFailure",                   // 51
-   "cacheFullRelocationFailure",                       // 52
-   "blockFrequencyRelocationFailure",                  // 53
-   "recompQueuedFlagRelocationFailure",                // 54
-   "debugCounterRelocationFailure",                    // 55
-   "directJNICallRelocationFailure",                   // 56
-   "ramMethodConstRelocationFailure",                  // 57
+   "classAddressRelocationFailure",                    // 47
+   "inlinedMethodRelocationFailure",                   // 48
+   "symbolFromManagerRelocationFailure",               // 49
+   "thunkRelocationFailure",                           // 50
+   "trampolineRelocationFailure",                      // 51
+   "picTrampolineRelocationFailure",                   // 52
+   "cacheFullRelocationFailure",                       // 53
+   "blockFrequencyRelocationFailure",                  // 54
+   "recompQueuedFlagRelocationFailure",                // 55
+   "debugCounterRelocationFailure",                    // 56
+   "directJNICallRelocationFailure",                   // 57
+   "ramMethodConstRelocationFailure",                  // 58
 
-   "maxRelocationError"                                // 58
+   "maxRelocationError"                                // 59
    };
 
 TR_RelocationRuntime::TR_RelocationRuntime(J9JITConfig *jitCfg)
