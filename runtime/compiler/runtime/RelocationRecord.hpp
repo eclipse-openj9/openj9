@@ -1929,5 +1929,27 @@ class TR_RelocationRecordStaticDefaultValueInstance : public TR_RelocationRecord
       virtual TR_RelocationErrorCode applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocationHigh, uint8_t *reloLocationLow);
    };
 
+class TR_RelocationRecordValidateIsClassVisible : public TR_RelocationRecord
+   {
+   public:
+      TR_RelocationRecordValidateIsClassVisible() {}
+      TR_RelocationRecordValidateIsClassVisible(TR_RelocationRuntime *reloRuntime, TR_RelocationRecordBinaryTemplate *record) : TR_RelocationRecord(reloRuntime, record) {}
+      virtual bool isValidationRecord() { return true; }
+      virtual char *name() { return "TR_RelocationRecordValidateIsClassVisible"; }
+      virtual void preparePrivateData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget) {}
+      virtual TR_RelocationErrorCode applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation);
+
+      virtual void print(TR_RelocationRuntime *reloRuntime);
+
+      void setSourceClassID(TR_RelocationTarget *reloTarget, uint16_t sourceClassID);
+      uint16_t sourceClassID(TR_RelocationTarget *reloTarget);
+
+      void setDestClassID(TR_RelocationTarget *reloTarget, uint16_t destClassID);
+      uint16_t destClassID(TR_RelocationTarget *reloTarget);
+
+      void setIsVisible(TR_RelocationTarget *reloTarget, bool isVisible);
+      bool isVisible(TR_RelocationTarget *reloTarget);
+   };
+
 #endif   // RELOCATION_RECORD_INCL
 

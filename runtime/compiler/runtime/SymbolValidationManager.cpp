@@ -1124,6 +1124,21 @@ TR::SymbolValidationManager::addJ2IThunkFromMethodRecord(void *thunk, TR_OpaqueM
    appendNewRecord(thunk, record);
    }
 
+bool
+TR::SymbolValidationManager::addIsClassVisibleRecord(TR_OpaqueClassBlock *sourceClass, TR_OpaqueClassBlock *destClass, bool isVisible)
+   {
+   SVM_ASSERT_ALREADY_VALIDATED(this, sourceClass);
+   SVM_ASSERT_ALREADY_VALIDATED(this, destClass);
+
+   // Skip creating a record when destClass is a Java.lang.Object
+   // because Object is always visible
+   if (sourceClass == destClass
+      || _fej9->isJavaLangObject(destClass))
+      return true;
+
+   return addVanillaRecord(sourceClass, new (_region) IsClassVisibleRecord(sourceClass, destClass, isVisible));
+   }
+
 
 
 bool
@@ -1567,6 +1582,17 @@ bool
 TR::SymbolValidationManager::validateJ2IThunkFromMethodRecord(uint16_t thunkID, void *thunk)
    {
    return validateSymbol(thunkID, thunk, TR::SymbolType::typeOpaque);
+   }
+
+bool
+TR::SymbolValidationManager::validateIsClassVisibleRecord(uint16_t sourceClassID, uint16_t destClassID, bool wasVisible)
+   {
+   TR_OpaqueClassBlock *sourceClass = getClassFromID(sourceClassID);
+   TR_OpaqueClassBlock *destClass = getClassFromID(destClassID);
+
+   bool isVisible = _fej9->isClassVisible(sourceClass, destClass);
+
+   return (isVisible == wasVisible);
    }
 
 bool
@@ -2159,4 +2185,23 @@ void TR::J2IThunkFromMethodRecord::printFields()
    traceMsg(TR::comp(), "J2IThunkFromMethodRecord\n");
    traceMsg(TR::comp(), "\t_thunk=0x%p\n", _thunk);
    traceMsg(TR::comp(), "\t_method=0x%p\n", _method);
+   }
+
+bool TR::IsClassVisibleRecord::isLessThanWithinKind(
+   SymbolValidationRecord *other)
+   {
+   TR::IsClassVisibleRecord *rhs = downcast(this, other);
+   return LexicalOrder::by(_sourceClass, rhs->_sourceClass)
+      .thenBy(_destClass, rhs->_destClass)
+      .thenBy(_isVisible, rhs->_isVisible).less();
+   }
+
+void TR::IsClassVisibleRecord::printFields()
+   {
+   traceMsg(TR::comp(), "IsClassVisibleRecord\n");
+   traceMsg(TR::comp(), "\t_sourceClass=0x%p\n", _sourceClass);
+   printClass(_sourceClass);
+   traceMsg(TR::comp(), "\t_destClass=0x%p\n", _destClass);
+   printClass(_destClass);
+   traceMsg(TR::comp(), "\t_isVisible=%s\n", _isVisible ? "true" : "false");
    }

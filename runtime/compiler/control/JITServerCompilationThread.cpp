@@ -1061,6 +1061,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
          stream->~ServerStream();
          TR::Compiler->persistentGlobalAllocator().deallocate(stream);
          entry._stream = NULL;
+         compInfo->recycleCompilationEntry(&entry);
          }
 
       // Reset the pointer to the cached client session data
@@ -1158,6 +1159,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       stream->~ServerStream();
       TR::Compiler->persistentGlobalAllocator().deallocate(stream);
       entry._stream = NULL;
+      compInfo->recycleCompilationEntry(&entry);
       }
 
    compInfo->printQueue();
