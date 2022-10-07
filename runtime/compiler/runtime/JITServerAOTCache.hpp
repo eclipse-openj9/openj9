@@ -35,6 +35,7 @@ static const char JITSERVER_AOTCACHE_EYECATCHER[] = "AOTCACHE";
 static const size_t JITSERVER_AOTCACHE_EYECATCHER_LENGTH = sizeof(JITSERVER_AOTCACHE_EYECATCHER) - 1;
 
 namespace TR { class Monitor; }
+namespace J9 { class J9SegmentProvider;}
 
 // Information relevant to the compatibility of a cache snapshot with the server.
 struct JITServerAOTCacheVersion
@@ -71,6 +72,8 @@ struct AOTCacheMethodRecord;
 struct AOTCacheClassChainRecord;
 struct AOTCacheWellKnownClassesRecord;
 struct AOTCacheAOTHeaderRecord;
+
+#define LOAD_AOTCACHE_REQUEST (JITServer::ServerStream *)0x1
 
 // Base class for serialization record "wrappers" stored at the server.
 //
@@ -576,7 +579,8 @@ public:
    JITServerAOTCacheMap();
    ~JITServerAOTCacheMap();
 
-   JITServerAOTCache *get(const std::string &name, uint64_t clientUID);
+   JITServerAOTCache *get(const std::string &name, uint64_t clientUID, bool &pending);
+   void loadNextQueuedAOTCacheFromFile(J9::J9SegmentProvider &scratchSegmentProvider);
 
    size_t getNumDeserializedMethods() const;
 
@@ -587,6 +591,18 @@ public:
 
 private:
    PersistentUnorderedMap<std::string, JITServerAOTCache *> _map;
+   std::string buildCacheFileName(const std::string &cacheDir, const std::string &cacheName);
+   // The following set is used to keep track of the caches that are in process of being loaded from file
+   // Once a cache is loaded, it is removed from the set and added to the _map
+   PersistentUnorderedSet<std::string> _cachesBeingLoaded;
+   // _cachesToLoadQueue is used to order the caches that need to be loaded from file.
+   // A compilation thread dequeues the first name and starts to load the cache from file.
+   // When it finishes (either successfully or not), it deletes the name from _cachesBeingLoaded.
+   PersistentList<std::string> _cachesToLoadQueue;
+   // _cachesExcludedFromLoading is used to keep track of the caches that we don't want to load
+   // from file, maybe because the load operation already was attempted and failed
+   // We could also populate this set from command line options
+   PersistentUnorderedSet<std::string> _cachesExcludedFromLoading;
    TR::Monitor *const _monitor;
 
    static size_t _cacheMaxBytes;

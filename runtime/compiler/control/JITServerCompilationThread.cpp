@@ -505,9 +505,29 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
    entry._compInfoPT = this; // Create the reverse link
    // Update the last time the compilation thread had to do something.
    compInfo->setLastReqStartTime(compInfo->getPersistentInfo()->getElapsedTime());
+
+   if (stream == LOAD_AOTCACHE_REQUEST)
+      {
+      // This is not a true compilation request, but rather a request to load an AOTCache from file
+
+      compInfo->releaseCompMonitor(compThread);
+      auto aotCacheMap = compInfo->getJITServerAOTCacheMap();
+      TR_ASSERT(aotCacheMap, "aotCacheMap must exist if such a special request was issued");
+      aotCacheMap->loadNextQueuedAOTCacheFromFile(scratchSegmentProvider);
+
+      // We had the compilation monitor in hand when entering processEntry() and we must leave with it in hand
+      compInfo->acquireCompMonitor(compThread);
+
+      // Put the request back into the pool
+      setMethodBeingCompiled(NULL); // Must have the compQmonitor
+      compInfo->recycleCompilationEntry(&entry);
+      return;
+      }
+
    clearPerCompilationCaches();
 
    _recompilationMethodInfo = NULL;
+
    // Release compMonitor before doing the blocking read
    compInfo->releaseCompMonitor(compThread);
 

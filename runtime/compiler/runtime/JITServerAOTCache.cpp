@@ -21,7 +21,9 @@
  *******************************************************************************/
 
 #include "control/CompilationRuntime.hpp"
+#include "env/J9SegmentProvider.hpp"
 #include "env/StackMemoryRegion.hpp"
+#include "env/SystemSegmentProvider.hpp"
 #include "infra/CriticalSection.hpp"
 #include "runtime/JITServerAOTCache.hpp"
 #include "runtime/JITServerSharedROMClassCache.hpp"
@@ -1413,6 +1415,9 @@ JITServerAOTCacheMap::cacheHasSpace()
 
 JITServerAOTCacheMap::JITServerAOTCacheMap() :
    _map(decltype(_map)::allocator_type(TR::Compiler->persistentGlobalAllocator())),
+   _cachesBeingLoaded(decltype(_cachesBeingLoaded)::allocator_type(TR::Compiler->persistentGlobalAllocator())),
+   _cachesToLoadQueue(decltype(_cachesToLoadQueue)::allocator_type(TR::Compiler->persistentGlobalAllocator())),
+   _cachesExcludedFromLoading(decltype(_cachesExcludedFromLoading)::allocator_type(TR::Compiler->persistentGlobalAllocator())),
    _monitor(TR::Monitor::create("JIT-JITServerAOTCacheMapMonitor"))
    {
    if (!_monitor)
@@ -1429,9 +1434,92 @@ JITServerAOTCacheMap::~JITServerAOTCacheMap()
    TR::Monitor::destroy(_monitor);
    }
 
+std::string
+JITServerAOTCacheMap::buildCacheFileName(const std::string &cacheDir, const std::string &cacheName)
+   {
+   std::string cacheFileName;
+   // If a directory is given, add it in the front of the cache name
+   if (!cacheDir.empty())
+      cacheFileName = cacheDir + "/"; // TODO: is there something more portable?
+   return cacheFileName + "JITServerAOTCache." + cacheName;
+   }
+
+void
+JITServerAOTCacheMap::loadNextQueuedAOTCacheFromFile(J9::J9SegmentProvider &scratchSegmentProvider)
+   {
+   std::string cacheName;
+      {
+      OMR::CriticalSection cs(_monitor);
+      TR_ASSERT(_cachesBeingLoaded.size() != 0, "There must be at least one AOT cache waiting to be loaded from file");
+
+      // Extract the first entry from the queue
+      // If there is nothing in the queue, then just return (another thread is working on it)
+      if (_cachesToLoadQueue.empty())
+         return;
+      cacheName = _cachesToLoadQueue.front();
+      _cachesToLoadQueue.pop_front();
+      }
+   TR::CompilationInfo *compInfo = TR::CompilationInfo::get();
+   std::string cacheFileName = buildCacheFileName(compInfo->getPersistentInfo()->getJITServerAOTCacheDir(), cacheName);
+   JITServerAOTCache *cache = NULL;
+
+   // Open the AOT cache file and create a new JITServerAOTCache object
+   FILE *cacheFile = fopen(cacheFileName.c_str(), "rb");
+   if (cacheFile)
+      {
+      if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "AOT cache: Opened file %s to load cache %s from file", cacheFileName.c_str(), cacheName.c_str());
+
+      size_t segmentSize = scratchSegmentProvider.getPreferredSegmentSize();
+      if (!segmentSize)
+         segmentSize = 1 << 24/*16 MB*/;
+      TR::RawAllocator rawAllocator(compInfo->getJITConfig()->javaVM);
+      J9::SystemSegmentProvider segmentProvider(1 << 16/*64 KB*/, segmentSize, TR::Options::getScratchSpaceLimit(), scratchSegmentProvider, rawAllocator);
+      TR::Region region(segmentProvider, rawAllocator);
+      TR_Memory trMemory(*compInfo->persistentMemory(), region);
+
+
+      cache = JITServerAOTCache::readCache(cacheFile, cacheName, trMemory); // This should not throw
+      fclose(cacheFile); // filestream not needed anymore
+      cacheFile = NULL;
+
+      if (cache)
+         {
+         try
+            {
+            // My JITServerAOTCache was created and populated; now, insert it into the map
+            OMR::CriticalSection cs(_monitor);
+            _map.insert(std::make_pair(cacheName, cache));
+            }
+         catch (...)
+            {
+            cache->~JITServerAOTCache();
+            TR::Compiler->persistentGlobalMemory()->freePersistentMemory(cache);
+            cache = NULL;
+            // Do not rethrow the exception
+            }
+         }
+      else // Failed to create the AOT cache from file
+         {
+         if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "AOT cache: Failed to create cache %s from file", cacheName.c_str());
+         }
+      }
+   else // Cannot open the AOT cache file
+      {
+      if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "AOT cache: Failed to open cache file %s", cacheFileName.c_str());
+      }
+   // Delete the entry from the set
+   OMR::CriticalSection cs(_monitor);
+   _cachesBeingLoaded.erase(cacheName);
+   // If the cache loading operation failed, exlude the cache from future attempts
+   if (!cache)
+      _cachesExcludedFromLoading.insert(cacheName);
+   }
 
 JITServerAOTCache *
-JITServerAOTCacheMap::get(const std::string &name, uint64_t clientUID)
+JITServerAOTCacheMap::get(const std::string &name, uint64_t clientUID, bool &pending)
    {
    OMR::CriticalSection cs(_monitor);
 
@@ -1439,7 +1527,7 @@ JITServerAOTCacheMap::get(const std::string &name, uint64_t clientUID)
    if (it != _map.end())
       {
       if (TR::Options::getVerboseOption(TR_VerboseJITServer))
-         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Using existing AOT cache %s for clientUID %llu",
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "AOT cache: Using existing cache %s for clientUID %llu",
                                         name.c_str(), (unsigned long long)clientUID);
       return it->second;
       }
@@ -1449,6 +1537,57 @@ JITServerAOTCacheMap::get(const std::string &name, uint64_t clientUID)
       return NULL;
       }
 
+   // See if we can load the cache from file
+   TR::CompilationInfo *compInfo = TR::CompilationInfo::get();
+   if (compInfo->getPersistentInfo()->getJITServerUseAOTCachePersistence() &&     // Persistence feature is enabled
+       _cachesExcludedFromLoading.find(name) == _cachesExcludedFromLoading.end()) // I am allowed to load this cache from file
+      {
+      // Check that we don't have another request in progress for the same named cache
+      if (_cachesBeingLoaded.find(name) != _cachesBeingLoaded.end())
+         {
+         // Another thread is already loading this cache
+         if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "AOT cache: Another thread is already loading cache %s from file\n", name.c_str());
+         pending = true;
+         return NULL;
+         }
+
+      // Prepend the directory where caches reside and check if my desired cache exists
+      std::string cacheFileName = buildCacheFileName(compInfo->getPersistentInfo()->getJITServerAOTCacheDir(), name);
+      OMRPORT_ACCESS_FROM_OMRPORT(TR::Compiler->omrPortLib);
+      J9FileStat buf;
+      int32_t rc = omrfile_stat(cacheFileName.c_str(), 0, &buf);
+      if (rc == 0 && buf.isFile) // Cache file exists // TODO: should we check permissions?
+         {
+         // Create special compilation request that will be used to deserialize the cache.
+         // Note: we must ensure that, in all parts of the code, we acquire the compMonitor after the AOTCacheMap monitor
+         OMR::CriticalSection compilationMonitorLock(compInfo->getCompilationMonitor());
+         if (!compInfo->getPersistentInfo()->getDisableFurtherCompilation())
+            {
+            // Setting the stream to LOAD_AOT_CACHE_REQUEST means that this is not a true
+            // compilation request, but rather a request to load a cache from file
+            if (compInfo->addOutOfProcessMethodToBeCompiled(LOAD_AOTCACHE_REQUEST /*stream*/))
+               {
+               // Successfully queued the new entry, so notify a thread
+               compInfo->getCompilationMonitor()->notifyAll();
+
+               _cachesBeingLoaded.insert(name); // Prevent other threads from loading the same cache
+               _cachesToLoadQueue.push_back(name);
+
+               pending = true; // Tell the caller that we are loading the cache from file
+               if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+                  TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "AOT cache: Queued comp request to load cache %s from file in the background", name.c_str());
+               return NULL;
+               }
+            }
+         }
+      else // Cache file does not exist
+         {
+         if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "AOT cache: Cache file %s does not exist", cacheFileName.c_str());
+         }
+      }
+   // If we reached this point, we need to create a new (empty) cache
    auto cache = new (TR::Compiler->persistentGlobalMemory()) JITServerAOTCache(name);
    if (!cache)
       throw std::bad_alloc();
@@ -1456,6 +1595,9 @@ JITServerAOTCacheMap::get(const std::string &name, uint64_t clientUID)
    try
       {
       _map.insert(it, { name, cache });
+      if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "AOT cache: Created empty cache %s for clientUID %llu",
+                                        name.c_str(), (unsigned long long)clientUID);
       }
    catch (...)
       {
@@ -1464,9 +1606,6 @@ JITServerAOTCacheMap::get(const std::string &name, uint64_t clientUID)
       throw;
       }
 
-   if (TR::Options::getVerboseOption(TR_VerboseJITServer))
-      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Created AOT cache %s for clientUID %llu",
-                                     name.c_str(), (unsigned long long)clientUID);
    return cache;
    }
 
