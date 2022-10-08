@@ -52,11 +52,11 @@ public interface IThreadTypes {
 	/*
 	 * VM thread id struct has a pointer to a corresponding abstract thread id
 	 * that represents an OS thread (native thread). The abstract thread id
-	 * then has a pointer to an actual native thread. 
-	 * 
+	 * then has a pointer to an actual native thread.
+	 *
 	 * A VM thread may or may not be associated with a Java thread object (gc VM threads
 	 * have no associated Java thread object).
-	 * 
+	 *
 	 * Hierarchy:
 	 * Java Thread Object (not found in javacore files)
 	 * VM Thread (typically an internal data structure like jniENV or J9JVMThread

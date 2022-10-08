@@ -35,7 +35,7 @@ public class ThreadTagParser extends TagParser {
 	}
 	
 	/**
-	 * Call inherited method addTag() to add a tag->rule pair. 
+	 * Call inherited method addTag() to add a tag->rule pair.
 	 */
 	protected void initTagAttributeRules() {	
 		/*
@@ -116,8 +116,8 @@ public class ThreadTagParser extends TagParser {
 	
 	
 	/**
-	 * 
-	 *
+	 * Parses
+	 * 2XMFULLTHDDUMP Full thread dump J9 VM (J2RE 6.0 IBM J9 2.4 Windows XP x86-32 build jvmwi3260-20090215_2988320090215_029883_lHdSMr, native threads):
 	 */
 	private void initOSInfoTag() {
 		ILineRule lineRule = new PointerSizeLineRule();
@@ -201,7 +201,7 @@ public class ThreadTagParser extends TagParser {
 	}
 	
 	/**
-	 * 
+	 * Stack traces
 	 * Both Sov and J9
 	 */
 	private void initStackTraceTag() {
@@ -211,7 +211,7 @@ public class ThreadTagParser extends TagParser {
 	}
 
 	/**
-	 * 
+	 * Native stack trace
 	 */
 	private void initNativeStackTraceTag() {
 		ILineRule lineRule = new NativeStackTraceLineRule();
