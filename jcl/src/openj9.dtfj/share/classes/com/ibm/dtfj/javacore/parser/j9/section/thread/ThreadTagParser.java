@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2007, 2021 IBM Corp. and others
+ * Copyright (c) 2007, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -42,6 +42,7 @@ public class ThreadTagParser extends TagParser {
 		 * Tags with attributes
 		 */
 		initThreadInfoTag();
+		initJavaLThrCCL();
 		initThreadInfo1Tag();
 		initThreadInfo2Tag();
 		initCPUTimeTag();
@@ -59,6 +60,8 @@ public class ThreadTagParser extends TagParser {
 		 * Tags with no attributes (or attributes to be ignored)
 		 */
 		addTag(IThreadTypes.T_1XMTHDINFO, null);
+		addTag(IThreadTypes.T_3XMJAVALTHREAD, null);
+		addTag(IThreadTypes.T_3XMHEAPALLOC, null);
 	}
 
 	private void initCPUTimeTag() {
@@ -94,6 +97,21 @@ public class ThreadTagParser extends TagParser {
 	private void initThreadInfoTag() {
 		ILineRule lineRule = new ThreadInfoLineRule();
 		addTag(IThreadTypes.T_3XMTHREADINFO, lineRule);
+	}
+	
+	/**
+	 *
+	 */
+	private void initJavaLThrCCL() {
+		ILineRule lineRule = new ThreadInfoLineRule() {
+			public void processLine(String source, int startingOffset) {
+				// 3XMJAVALTHRCCL            jdk/internal/loader/ClassLoaders$AppClassLoader(0x000000072254DA00)
+				consumeUntilFirstMatch(CommonPatternMatchers.whitespace);
+				addAllCharactersAsTokenAndConsumeFirstMatch(IThreadTypes.CONTEXT_CLASSLOADER_OBJECT_FULL_JAVA_NAME, CommonPatternMatchers.open_paren);
+				addPrefixedHexToken(IThreadTypes.CONTEXT_CLASSLOADER_OBJECT_ADDRESS);
+			}
+		};
+		addTag(IThreadTypes.T_3XMJAVALTHRCCL, lineRule);
 	}
 	
 	

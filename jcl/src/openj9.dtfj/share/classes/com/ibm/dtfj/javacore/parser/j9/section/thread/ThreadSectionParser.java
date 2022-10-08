@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2007, 2017 IBM Corp. and others
+ * Copyright (c) 2007, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -140,6 +140,20 @@ public class ThreadSectionParser extends SectionParser implements IThreadTypes{
 	 */
 	protected int processThreadandStackTrace(IAttributeValueMap javaThreadResults, boolean buildModel, boolean currentThread, int currentLineNumber) throws ParserException {
 		JavaThread javaThread = null;
+		// 3XMJAVALTHREAD            (java/lang/Thread getId:0xD, isDaemon:true)
+		processTagLineOptional(T_3XMJAVALTHREAD);
+		// 3XMJAVALTHRCCL            jdk/internal/loader/ClassLoaders$AppClassLoader(0x000000072254DA00)
+		IAttributeValueMap results = processTagLineOptional(T_3XMJAVALTHRCCL);
+		if (results != null) {
+			String cl_name = results.getTokenValue(IThreadTypes.CONTEXT_CLASSLOADER_OBJECT_FULL_JAVA_NAME);
+			long cl_address = results.getLongValue(IThreadTypes.CONTEXT_CLASSLOADER_OBJECT_ADDRESS);
+			try {
+				fRuntimeBuilder.addClassLoader(cl_name, 
+					cl_address, cl_address);
+			} catch (BuilderFailureException e) {
+				handleError("Failed to add class loader: " + cl_name + " " + cl_address + " ", e);
+			}
+		}
 		// 3XMTHREADINFO1 found only in J9 2.4 or higher. Native thread ID is contained
 		// in the latter. For all other older VMs, native thread ID is contained in 3XMTHREADINFO
 		IAttributeValueMap nativeResults = processTagLineOptional(T_3XMTHREADINFO1);
@@ -150,10 +164,12 @@ public class ThreadSectionParser extends SectionParser implements IThreadTypes{
 			nativeStacks.add(nativeStack);
 		}
 
-		IAttributeValueMap blockerInfo = processTagLineOptional(T_3XMTHREADBLOCK);
-		
 		IAttributeValueMap cpuTimes = processTagLineOptional(T_3XMCPUTIME);
+		
+		IAttributeValueMap blockerInfo = processTagLineOptional(T_3XMTHREADBLOCK);
 
+		processTagLineOptional(T_3XMHEAPALLOC);
+		
 		if (buildModel) {
 			javaThread = addThread(javaThreadResults, nativeResults, nativeStacks, blockerInfo, cpuTimes, currentLineNumber);
 		}
@@ -162,6 +178,7 @@ public class ThreadSectionParser extends SectionParser implements IThreadTypes{
 		if (imageThreadID == IBuilderData.NOT_AVAILABLE) {
 			imageThreadID = tid;
 		}
+
 		parseStackTrace(javaThread, currentLineNumber, buildModel);
 		parseNativeStackTrace(imageThreadID, buildModel);
 		if (currentThread) {

@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2007, 2017 IBM Corp. and others
+ * Copyright (c) 2007, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,14 +32,17 @@ public interface IThreadTypes {
 	public static final String T_1XMCURTHDINFO = "1XMCURTHDINFO";
 	public static final String T_1XMTHDINFO = "1XMTHDINFO";
 	public static final String T_2XMFULLTHDDUMP = "2XMFULLTHDDUMP";
+	public static final String T_3XMJAVALTHREAD = "3XMJAVALTHREAD";
+	public static final String T_3XMJAVALTHRCCL = "3XMJAVALTHRCCL";
 	public static final String T_3XMTHREADINFO = "3XMTHREADINFO";
 	public static final String T_3XMTHREADINFO1 = "3XMTHREADINFO1";
 	public static final String T_3XMTHREADINFO2 = "3XMTHREADINFO2";
 	public static final String T_3XMTHREADINFO3 = "3XMTHREADINFO3";
+	public static final String T_3XMCPUTIME = "3XMCPUTIME";
+	public static final String T_3XMTHREADBLOCK = "3XMTHREADBLOCK";
+	public static final String T_3XMHEAPALLOC = "3XMHEAPALLOC";
 	public static final String T_4XESTACKTRACE = "4XESTACKTRACE";
 	public static final String T_4XENATIVESTACK = "4XENATIVESTACK";
-	public static final String T_3XMTHREADBLOCK = "3XMTHREADBLOCK";
-	public static final String T_3XMCPUTIME = "3XMCPUTIME";
 
 	
 	/*
@@ -110,6 +113,9 @@ public interface IThreadTypes {
 	
 	public static final String BLOCKER_OBJECT_FULL_JAVA_NAME = "blocker_object_full_java_name";
 	public static final String BLOCKER_OBJECT_ADDRESS = "blocker_object_address";
+	
+	public static final String CONTEXT_CLASSLOADER_OBJECT_FULL_JAVA_NAME = "context_classloader_object_full_java_name";
+	public static final String CONTEXT_CLASSLOADER_OBJECT_ADDRESS = "context_classloader_object_address";
 	
 	public static final String CPU_TIME_TOTAL = "cpu_time_total";
 	public static final String CPU_TIME_USER = "cpu_time_user";
