@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,10 +22,14 @@
 
 #include "fastJNI.h"
 
-#include "j9protos.h"
 #include "j9consts.h"
-#include "VMHelpers.hpp"
+#include "j9protos.h"
 #include "ObjectMonitor.hpp"
+#include "ut_j9vm.h"
+#include "VMHelpers.hpp"
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+#include "CRIUHelpers.hpp"
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
 extern "C" {
 
@@ -43,14 +47,22 @@ Fast_java_lang_Object_wait(J9VMThread *currentThread, j9object_t receiverObject,
 void JNICALL
 Fast_java_lang_Object_notifyAll(J9VMThread *currentThread, j9object_t receiverObject)
 {
-	omrthread_monitor_t monitorPtr = NULL;
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+	if (VM_CRIUHelpers::isJVMInSingleThreadMode(currentThread->javaVM)) {
+		/* The exception is already set if the operation failed. */
+		VM_CRIUHelpers::delayedLockingOperation(currentThread, receiverObject, J9_SINGLE_THREAD_MODE_OP_NOTIFY_ALL);
+	} else
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+	{
+		omrthread_monitor_t monitorPtr = NULL;
 
-	if (VM_ObjectMonitor::getMonitorForNotify(currentThread, receiverObject, &monitorPtr, true)) {
-		if (0 != omrthread_monitor_notify_all(monitorPtr)) {
+		if (VM_ObjectMonitor::getMonitorForNotify(currentThread, receiverObject, &monitorPtr, true)) {
+			if (0 != omrthread_monitor_notify_all(monitorPtr)) {
+				setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALMONITORSTATEEXCEPTION, NULL);
+			}
+		} else if (NULL != monitorPtr) {
 			setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALMONITORSTATEEXCEPTION, NULL);
 		}
-	} else if (NULL != monitorPtr) {
-		setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALMONITORSTATEEXCEPTION, NULL);
 	}
 }
 
@@ -58,14 +70,22 @@ Fast_java_lang_Object_notifyAll(J9VMThread *currentThread, j9object_t receiverOb
 void JNICALL
 Fast_java_lang_Object_notify(J9VMThread *currentThread, j9object_t receiverObject)
 {
-	omrthread_monitor_t monitorPtr = NULL;
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+	if (VM_CRIUHelpers::isJVMInSingleThreadMode(currentThread->javaVM)) {
+		/* The exception is already set if the operation failed. */
+		VM_CRIUHelpers::delayedLockingOperation(currentThread, receiverObject, J9_SINGLE_THREAD_MODE_OP_NOTIFY);
+	} else
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+	{
+		omrthread_monitor_t monitorPtr = NULL;
 
-	if (VM_ObjectMonitor::getMonitorForNotify(currentThread, receiverObject, &monitorPtr, true)) {
-		if (0 != omrthread_monitor_notify(monitorPtr)) {
+		if (VM_ObjectMonitor::getMonitorForNotify(currentThread, receiverObject, &monitorPtr, true)) {
+			if (0 != omrthread_monitor_notify(monitorPtr)) {
+				setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALMONITORSTATEEXCEPTION, NULL);
+			}
+		} else if (NULL != monitorPtr) {
 			setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALMONITORSTATEEXCEPTION, NULL);
 		}
-	} else if (NULL != monitorPtr) {
-		setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALMONITORSTATEEXCEPTION, NULL);
 	}
 }
 
