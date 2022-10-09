@@ -2620,6 +2620,13 @@ native boolean isPrimitiveClass();
 public native boolean isValue();
 
 /**
+ * Answers true if the receiver represents an identity class type.
+ *
+ * @return	true if receiver is an identity class, and false otherwise.
+ */
+public native boolean isIdentity();
+
+/**
  * ToDo: add comments for public methods - https://github.com/eclipse-openj9/openj9/issues/13615
  */
 Class<?> asPrimaryType() {

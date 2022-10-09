@@ -186,25 +186,26 @@ struct TR_RelocationError
       methodFromSingleInterfaceImplValidationFailure   = (41 << RELO_ERRORCODE_SHIFT) | TR_RelocationErrorCodeType::VALIDATION,
       methodFromSingleAbstractImplValidationFailure    = (42 << RELO_ERRORCODE_SHIFT) | TR_RelocationErrorCodeType::VALIDATION,
       j2iThunkFromMethodValidationFailure              = (43 << RELO_ERRORCODE_SHIFT) | TR_RelocationErrorCodeType::VALIDATION,
-      svmValidationFailure                             = (44 << RELO_ERRORCODE_SHIFT) | TR_RelocationErrorCodeType::VALIDATION,
-      wkcValidationFailure                             = (45 << RELO_ERRORCODE_SHIFT) | TR_RelocationErrorCodeType::VALIDATION,
+      isClassVisibleValidationFailure                  = (44 << RELO_ERRORCODE_SHIFT) | TR_RelocationErrorCodeType::VALIDATION,
+      svmValidationFailure                             = (45 << RELO_ERRORCODE_SHIFT) | TR_RelocationErrorCodeType::VALIDATION,
+      wkcValidationFailure                             = (46 << RELO_ERRORCODE_SHIFT) | TR_RelocationErrorCodeType::VALIDATION,
 
-      classAddressRelocationFailure                    = (46 << RELO_ERRORCODE_SHIFT) | TR_RelocationErrorCodeType::RELOCATION,
-      inlinedMethodRelocationFailure                   = (47 << RELO_ERRORCODE_SHIFT) | TR_RelocationErrorCodeType::RELOCATION,
-      symbolFromManagerRelocationFailure               = (48 << RELO_ERRORCODE_SHIFT) | TR_RelocationErrorCodeType::RELOCATION,
-      thunkRelocationFailure                           = (49 << RELO_ERRORCODE_SHIFT) | TR_RelocationErrorCodeType::RELOCATION,
-      trampolineRelocationFailure                      = (50 << RELO_ERRORCODE_SHIFT) | TR_RelocationErrorCodeType::RELOCATION,
-      picTrampolineRelocationFailure                   = (51 << RELO_ERRORCODE_SHIFT) | TR_RelocationErrorCodeType::RELOCATION,
-      cacheFullRelocationFailure                       = (52 << RELO_ERRORCODE_SHIFT) | TR_RelocationErrorCodeType::RELOCATION,
-      blockFrequencyRelocationFailure                  = (53 << RELO_ERRORCODE_SHIFT) | TR_RelocationErrorCodeType::RELOCATION,
-      recompQueuedFlagRelocationFailure                = (54 << RELO_ERRORCODE_SHIFT) | TR_RelocationErrorCodeType::RELOCATION,
-      debugCounterRelocationFailure                    = (55 << RELO_ERRORCODE_SHIFT) | TR_RelocationErrorCodeType::RELOCATION,
-      directJNICallRelocationFailure                   = (56 << RELO_ERRORCODE_SHIFT) | TR_RelocationErrorCodeType::RELOCATION,
-      ramMethodConstRelocationFailure                  = (57 << RELO_ERRORCODE_SHIFT) | TR_RelocationErrorCodeType::RELOCATION,
+      classAddressRelocationFailure                    = (47 << RELO_ERRORCODE_SHIFT) | TR_RelocationErrorCodeType::RELOCATION,
+      inlinedMethodRelocationFailure                   = (48 << RELO_ERRORCODE_SHIFT) | TR_RelocationErrorCodeType::RELOCATION,
+      symbolFromManagerRelocationFailure               = (49 << RELO_ERRORCODE_SHIFT) | TR_RelocationErrorCodeType::RELOCATION,
+      thunkRelocationFailure                           = (50 << RELO_ERRORCODE_SHIFT) | TR_RelocationErrorCodeType::RELOCATION,
+      trampolineRelocationFailure                      = (51 << RELO_ERRORCODE_SHIFT) | TR_RelocationErrorCodeType::RELOCATION,
+      picTrampolineRelocationFailure                   = (52 << RELO_ERRORCODE_SHIFT) | TR_RelocationErrorCodeType::RELOCATION,
+      cacheFullRelocationFailure                       = (53 << RELO_ERRORCODE_SHIFT) | TR_RelocationErrorCodeType::RELOCATION,
+      blockFrequencyRelocationFailure                  = (54 << RELO_ERRORCODE_SHIFT) | TR_RelocationErrorCodeType::RELOCATION,
+      recompQueuedFlagRelocationFailure                = (55 << RELO_ERRORCODE_SHIFT) | TR_RelocationErrorCodeType::RELOCATION,
+      debugCounterRelocationFailure                    = (56 << RELO_ERRORCODE_SHIFT) | TR_RelocationErrorCodeType::RELOCATION,
+      directJNICallRelocationFailure                   = (57 << RELO_ERRORCODE_SHIFT) | TR_RelocationErrorCodeType::RELOCATION,
+      ramMethodConstRelocationFailure                  = (58 << RELO_ERRORCODE_SHIFT) | TR_RelocationErrorCodeType::RELOCATION,
 
-      staticDefaultValueInstanceRelocationFailure      = (58 << RELO_ERRORCODE_SHIFT) | TR_RelocationErrorCodeType::RELOCATION,
+      staticDefaultValueInstanceRelocationFailure      = (59 << RELO_ERRORCODE_SHIFT) | TR_RelocationErrorCodeType::RELOCATION,
 
-      maxRelocationError                               = (59 << RELO_ERRORCODE_SHIFT) | TR_RelocationErrorCodeType::NO_RELO_ERROR
+      maxRelocationError                               = (60 << RELO_ERRORCODE_SHIFT) | TR_RelocationErrorCodeType::NO_RELO_ERROR
       };
 
    static uint32_t decode(TR_RelocationErrorCode errorCode) { return static_cast<uint32_t>(errorCode >> RELO_ERRORCODE_SHIFT); }

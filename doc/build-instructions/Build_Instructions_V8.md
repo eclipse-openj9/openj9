@@ -196,6 +196,11 @@ Two Java builds are produced: a full developer kit (jdk) and a runtime environme
 
     :pencil: On other architectures the **/j2sdk-image** and **/j2re-image** directories are in **build/linux-ppc64le-normal-server-release/images** (Linux on 64-bit Power systems) and **build/linux-s390x-normal-server-release/images** (Linux on 64-bit z Systems)
 
+:pencil: One of the images created with `make all` is the `debug-image`. This directory contains files that provide debug information for executables and shared libraries when using native debuggers.
+To use it, copy the contents of `debug-image` over the jdk `jre` directory before using the jdk with a native debugger.
+Another image created is the `test` image, which contains executables and native libraries required when running some functional and OpenJDK testing.
+For local testing set the NATIVE_TEST_LIBS environment variable to the test image location, see the [OpenJ9 test user guide](https://github.com/eclipse-openj9/openj9/blob/master/test/docs/OpenJ9TestUserGuide.md).
+
 ### 5. Test
 :penguin:
 For a simple test, try running the `java -version` command.
@@ -327,7 +332,10 @@ Two Java builds are produced: a full developer kit (jdk) and a runtime environme
 - **build/aix-ppc64-normal-server-release/images/j2sdk-image**
 - **build/aix-ppc64-normal-server-release/images/j2re-image**
 
-    :pencil: A JRE binary is not currently generated due to an OpenJDK bug.
+:pencil: One of the images created with `make all` is the `debug-image`. This directory contains files that provide debug information for executables and shared libraries when using native debuggers.
+To use it, copy the contents of `debug-image` over the jdk `jre` directory before using the jdk with a native debugger.
+Another image created is the `test` image, which contains executables and native libraries required when running some functional and OpenJDK testing.
+For local testing set the NATIVE_TEST_LIBS environment variable to the test image location, see the [OpenJ9 test user guide](https://github.com/eclipse-openj9/openj9/blob/master/test/docs/OpenJ9TestUserGuide.md).
 
 ### 5. Test
 :blue_book:
@@ -524,6 +532,11 @@ Two Java builds are produced: a full developer kit (jdk) and a runtime environme
 - **build/windows-x86-normal-server-release/images/j2sdk-image**
 - **build/windows-x86-normal-server-release/images/j2re-image**
 
+:pencil: One of the images created with `make all` is the `debug-image`. This directory contains files that provide debug information for executables and shared libraries when using native debuggers.
+To use it, copy the contents of `debug-image` over the jdk `jre` directory before using the jdk with a native debugger.
+Another image created is the `test` image, which contains executables and native libraries required when running some functional and OpenJDK testing.
+For local testing set the NATIVE_TEST_LIBS environment variable to the test image location, see the [OpenJ9 test user guide](https://github.com/eclipse-openj9/openj9/blob/master/test/docs/OpenJ9TestUserGuide.md).
+
 ### 5. Test
 :ledger:
 For a simple test, try running the `java -version` command.
@@ -693,6 +706,11 @@ Four Java builds are produced, which include two full developer kits (jdk) and t
 
 :pencil:For running applications such as Eclipse, use the **-bundle** versions.
 
+:pencil: One of the images created with `make all` is the `debug-image`. This directory contains files that provide debug information for executables and shared libraries when using native debuggers.
+To use it, copy the contents of `debug-image` over the jdk `jre` directory before using the jdk with a native debugger.
+Another image created is the `test` image, which contains executables and native libraries required when running some functional and OpenJDK testing.
+For local testing set the NATIVE_TEST_LIBS environment variable to the test image location, see the [OpenJ9 test user guide](https://github.com/eclipse-openj9/openj9/blob/master/test/docs/OpenJ9TestUserGuide.md).
+
 ### 5. Test
 :apple:
 For a simple test, try running the `java -version` command. Change to the j2re-image directory:
@@ -800,6 +818,11 @@ If you want to specify `make` instead of `make all`, you must add `--default-mak
 Two Java builds are produced: a full developer kit (jdk) and a runtime environment (jre):
 - **build/linux-aarch64-normal-server-release/images/j2sdk-image**
 - **build/linux-aarch64-normal-server-release/images/j2re-image**
+
+:pencil: One of the images created with `make all` is the `debug-image`. This directory contains files that provide debug information for executables and shared libraries when using native debuggers.
+To use it, copy the contents of `debug-image` over the jdk `jre` directory before using the jdk with a native debugger.
+Another image created is the `test` image, which contains executables and native libraries required when running some functional and OpenJDK testing.
+For local testing set the NATIVE_TEST_LIBS environment variable to the test image location, see the [OpenJ9 test user guide](https://github.com/eclipse-openj9/openj9/blob/master/test/docs/OpenJ9TestUserGuide.md).
 
 ### 6. Test
 :penguin:
