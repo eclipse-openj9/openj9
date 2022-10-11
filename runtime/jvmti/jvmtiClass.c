@@ -296,6 +296,21 @@ done:
 }
 
 
+void fixHiddenOrAnonSignature(char* signature, UDATA signatureLength) {
+	if (signatureLength >= (ROM_ADDRESS_LENGTH + 2)) {
+		IDATA lastSeparatorIndex = signatureLength - (ROM_ADDRESS_LENGTH + 2);
+
+		/* hidden/anon class names are generated from ROMClassBuilder::handleAnonClassName() and have 0x<romaddress> appended at the end */
+		if ((ANON_CLASSNAME_CHARACTER_SEPARATOR == signature[lastSeparatorIndex])
+			&& ('0' == signature[lastSeparatorIndex+1])
+			&& ('x' == signature[lastSeparatorIndex+2])
+		) {
+			signature[lastSeparatorIndex] = '.';
+		}
+	}
+}
+
+
 jvmtiError JNICALL
 jvmtiGetClassSignature(jvmtiEnv* env,
 	jclass klass,
@@ -366,6 +381,10 @@ jvmtiGetClassSignature(jvmtiEnv* env,
 					signature[arity] = 'L';
 					memcpy(signature + arity + 1, J9UTF8_DATA(utf), utfLength);
 					signature[allocSize - 1] = ';';
+
+					if (J9ROMCLASS_IS_ANON_OR_HIDDEN(leafType->romClass)) {
+						fixHiddenOrAnonSignature(signature, allocSize);
+					}
 				}
 				signature[allocSize] = '\0';
 			} else {
@@ -381,6 +400,10 @@ jvmtiGetClassSignature(jvmtiEnv* env,
 				memcpy(signature + 1, J9UTF8_DATA(utf), utfLength);
 				signature[utfLength + 1] = ';';
 				signature[utfLength + 2] = '\0';
+
+				if (J9ROMCLASS_IS_ANON_OR_HIDDEN(clazz->romClass)) {
+					fixHiddenOrAnonSignature(signature, utfLength + 2);
+				}
 			}
 		}
 
