@@ -663,6 +663,11 @@ initializeRequiredClasses(J9VMThread *vmThread, char* dllName)
 	if (0 != vmFuncs->addHiddenInstanceField(vm, "java/lang/VirtualThread", "inspectorCount", "J", &vm->virtualThreadInspectorCountOffset)) {
 		return 1;
 	}
+
+	/* Stores a non-zero value if the virtual thread is suspended by JVMTI. */
+	if (0 != vmFuncs->addHiddenInstanceField(vm, "java/lang/VirtualThread", "isSuspendedByJVMTI", "I", &vm->isSuspendedByJVMTIOffset)) {
+		return 1;
+	}
 #endif /* JAVA_SPEC_VERSION >= 19 */
 
 	vmThread->privateFlags |= J9_PRIVATE_FLAGS_REPORT_ERROR_LOADING_CLASS;

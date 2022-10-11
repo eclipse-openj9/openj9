@@ -217,7 +217,7 @@ releaseVMThread(J9VMThread *currentThread, J9VMThread *targetThread, jthread thr
 			Assert_JVMTI_true(vthreadInspectorCount > 0);
 			vthreadInspectorCount -= 1;
 			J9OBJECT_I64_STORE(currentThread, threadObject, vm->virtualThreadInspectorCountOffset, vthreadInspectorCount);
-			if (0 == vthreadInspectorCount) {
+			if (!vm->inspectingLiveVirtualThreadList && (0 == vthreadInspectorCount)) {
 				omrthread_monitor_notify_all(vm->liveVirtualThreadListMutex);
 			}
 			omrthread_monitor_exit(vm->liveVirtualThreadListMutex);
@@ -874,6 +874,9 @@ getVirtualThreadState(J9VMThread *currentThread, jthread thread)
 			default:
 				Assert_JVMTI_unreachable();
 				rc = JVMTI_ERROR_INTERNAL;
+			}
+			if (0 != J9OBJECT_U32_LOAD(currentThread, vThreadObject, vm->isSuspendedByJVMTIOffset)) {
+				rc |= JVMTI_THREAD_STATE_SUSPENDED;
 			}
 		}
 		releaseVMThread(currentThread, targetThread, thread);
