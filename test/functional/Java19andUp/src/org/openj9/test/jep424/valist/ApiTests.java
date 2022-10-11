@@ -48,7 +48,7 @@ public class ApiTests {
 	private static String osName = System.getProperty("os.name").toLowerCase();
 	private static String arch = System.getProperty("os.arch").toLowerCase();
 	private static boolean isAixOS = osName.contains("aix");
-	private static boolean isWinOS = osName.contains("win");
+	private static boolean isWinX64 = osName.contains("win") && (arch.equals("amd64") || arch.equals("x86_64"));
 	private static boolean isMacOsAarch64 = osName.contains("mac") && arch.contains("aarch64");
 	private static boolean isSysVPPC64le = osName.contains("linux") && arch.contains("ppc64");
 
@@ -61,7 +61,7 @@ public class ApiTests {
 			 * AIX/ppc64 while the va_list without any argument is created on a fixed
 			 * address on other platforms.
 			 */
-			if (isWinOS || isMacOsAarch64 || isSysVPPC64le || isAixOS) {
+			if (isWinX64 || isMacOsAarch64 || isSysVPPC64le || isAixOS) {
 				Assert.assertEquals(emptyVaList.address(), MemoryAddress.NULL);
 			} else {
 				Assert.assertNotEquals(emptyVaList.address(), MemoryAddress.NULL);
