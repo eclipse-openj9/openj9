@@ -260,13 +260,19 @@ JVM_VirtualThreadMountBegin(JNIEnv *env, jobject thread, jboolean firstMount)
 
 	assert(IS_JAVA_LANG_VIRTUALTHREAD(currentThread, threadObj));
 
-	while (0 != J9OBJECT_I64_LOAD(currentThread, threadObj, vm->virtualThreadInspectorCountOffset)) {
+	while (vm->inspectingLiveVirtualThreadList
+	|| (0 != J9OBJECT_I64_LOAD(currentThread, threadObj, vm->virtualThreadInspectorCountOffset))
+	) {
 		/* Thread is being inspected or unmounted, wait. */
-		VM_VMHelpers::pushObjectInSpecialFrame(currentThread, threadObj);
 		vmFuncs->internalExitVMToJNI(currentThread);
 		f_monitorWait(vm->liveVirtualThreadListMutex);
+		/* Release the monitor before suspending. */
+		f_monitorExit(vm->liveVirtualThreadListMutex);
+		/* After wait, the thread may suspend here. */
 		vmFuncs->internalEnterVMFromJNI(currentThread);
-		threadObj = VM_VMHelpers::popObjectInSpecialFrame(currentThread);
+		/* Acquire the monitor after resuming from suspend. */
+		f_monitorEnter(vm->liveVirtualThreadListMutex);
+		threadObj = J9_JNI_UNWRAP_REFERENCE(thread);
 	}
 
 	/* Prevent inspectors from inspecting this thread during stack swap and mount by locking from notifyJvmtiMountBegin
@@ -334,9 +340,19 @@ JVM_VirtualThreadMountEnd(JNIEnv *env, jobject thread, jboolean firstMount)
 	/* Allow thread to be inspected again. */
 	assert(-1 == J9OBJECT_I64_LOAD(currentThread, threadObj, vm->virtualThreadInspectorCountOffset));
 	J9OBJECT_I64_STORE(currentThread, threadObj, vm->virtualThreadInspectorCountOffset, 0);
-	f_monitorNotifyAll(vm->liveVirtualThreadListMutex);
 
+	/* If isSuspendedByJVMTI is non-zero, J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND is set
+	 * in currentThread->publicFlags while resetting isSuspendedByJVMTI to zero. During
+	 * mount, this suspends the thread if the thread was unmounted when JVMTI suspended it.
+	 */
+	if (0 != J9OBJECT_U32_LOAD(currentThread, threadObj, vm->isSuspendedByJVMTIOffset)) {
+		J9OBJECT_U32_STORE(currentThread, threadObj, vm->isSuspendedByJVMTIOffset, 0);
+		vmFuncs->setHaltFlag(currentThread, J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND);
+	}
+
+	f_monitorNotifyAll(vm->liveVirtualThreadListMutex);
 	f_monitorExit(vm->liveVirtualThreadListMutex);
+
 	vmFuncs->internalExitVMToJNI(currentThread);
 }
 
@@ -351,13 +367,19 @@ JVM_VirtualThreadUnmountBegin(JNIEnv *env, jobject thread, jboolean lastUnmount)
 	f_monitorEnter(vm->liveVirtualThreadListMutex);
 	j9object_t threadObj = J9_JNI_UNWRAP_REFERENCE(thread);
 
-	while (0 != J9OBJECT_I64_LOAD(currentThread, threadObj, vm->virtualThreadInspectorCountOffset)) {
+	while (vm->inspectingLiveVirtualThreadList
+	|| (0 != J9OBJECT_I64_LOAD(currentThread, threadObj, vm->virtualThreadInspectorCountOffset))
+	) {
 		/* Thread is being inspected, wait. */
-		VM_VMHelpers::pushObjectInSpecialFrame(currentThread, threadObj);
 		vmFuncs->internalExitVMToJNI(currentThread);
 		f_monitorWait(vm->liveVirtualThreadListMutex);
+		/* Release the monitor before suspending. */
+		f_monitorExit(vm->liveVirtualThreadListMutex);
+		/* After wait, the thread may suspend here. */
 		vmFuncs->internalEnterVMFromJNI(currentThread);
-		threadObj = VM_VMHelpers::popObjectInSpecialFrame(currentThread);
+		/* Acquire the monitor after resuming from suspend. */
+		f_monitorEnter(vm->liveVirtualThreadListMutex);
+		threadObj = J9_JNI_UNWRAP_REFERENCE(thread);
 	}
 
 	/* Prevent inspectors from inspecting this thread during stack swap and unmount by locking from notifyJvmtiUnmountBegin
