@@ -817,6 +817,8 @@ public class NewElfDump extends CoreReaderSupport {
 		private short _programHeaderCount = 0;
 		private short _sectionHeaderEntrySize = 0;
 		private short _sectionHeaderCount = 0;
+		// The set of ELF objects mentioned in FILE notes.
+		final Set<String> _allElfFileNames = new HashSet<>();
 		// Maps to a set of paths of loaded shared libraries for a particular 'soname'.
 		final Map<String, Set<String>> _librariesBySOName = new HashMap<>();
 		private List<DataEntry> _processEntries = new ArrayList<>();
@@ -1034,6 +1036,8 @@ public class NewElfDump extends CoreReaderSupport {
 						// not an existing ELF file
 						continue;
 					}
+
+					_allElfFileNames.add(fileName);
 
 					String soname = result.getSONAME();
 
@@ -1663,14 +1667,11 @@ public class NewElfDump extends CoreReaderSupport {
 					continue;
 				}
 
-				// add all matching names found in the file notes
+				// use soname if we could't find something better in the file notes
 				Set<String> libs = _file._librariesBySOName.get(soname);
 
 				if (libs == null || libs.isEmpty()) {
-					// use soname if we could't find something better in the file notes
 					_additionalFileNames.add(soname);
-				} else {
-					_additionalFileNames.addAll(libs);
 				}
 			} catch (Exception ex) {
 				// We can't tell a loaded module from a loaded something else without trying to open it
@@ -2339,6 +2340,9 @@ public class NewElfDump extends CoreReaderSupport {
 			builder.setOSType("ELF"); //$NON-NLS-1$
 			builder.setCPUType(_file._arch.toString());
 			builder.setCPUSubType(readStringAt(_platformIdAddress));
+
+			// Include all libraries mentioned in NT_FILE notes.
+			_additionalFileNames.addAll(_file._allElfFileNames);
 		} catch (CorruptCoreException | IOException | MemoryAccessException e) {
 			// TODO throw exception or notify builder?
 		}
