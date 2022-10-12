@@ -1002,8 +1002,34 @@ triggerDumpAgents(struct J9JavaVM *vm, struct J9VMThread *self, UDATA eventFlags
 								OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
 								char dateStamp[64];
 								omrstr_ftime_ex(dateStamp, sizeof(dateStamp), "%Y/%m/%d %H:%M:%S", now, OMRSTR_FTIME_FLAG_LOCAL);
-								j9nls_printf(PORTLIB, J9NLS_INFO | J9NLS_STDERR | J9NLS_VITAL, J9NLS_DMP_PROCESSING_EVENT_TIME, mapDumpEvent(eventFlags), detailLength, detailData, dateStamp);
-								printed = 1;
+
+								/* If there are more details about the event, print them.
+								 * During abort event detailData is empty string - skip the abort event.
+								 */
+								if (('\0' != *detailData) && (NULL != eventData->exceptionRef) && (NULL != *eventData->exceptionRef)) {
+									j9object_t emessage = J9VMJAVALANGTHROWABLE_DETAILMESSAGE(self, *eventData->exceptionRef);
+									if (NULL != emessage) {
+										char stackBuffer[256];
+										UDATA extraDetailLength = 0;
+										char *extraDetail = self->javaVM->internalVMFunctions->copyStringToUTF8WithMemAlloc(self, emessage,
+												J9_STR_NULL_TERMINATE_RESULT, "", 0, stackBuffer,
+												sizeof(stackBuffer), &extraDetailLength);
+										if (NULL != extraDetail) {
+											j9nls_printf(PORTLIB, J9NLS_INFO | J9NLS_STDERR | J9NLS_VITAL,
+													J9NLS_DMP_PROCESSING_DETAILED_EVENT_TIME, mapDumpEvent(eventFlags),
+													detailLength, detailData, extraDetailLength, extraDetail, dateStamp);
+											if (stackBuffer != extraDetail) {
+												j9mem_free_memory(extraDetail);
+											}
+											printed = 1;
+										}
+									}
+								}
+								if (0 == printed) {
+									j9nls_printf(PORTLIB, J9NLS_INFO | J9NLS_STDERR | J9NLS_VITAL, J9NLS_DMP_PROCESSING_EVENT_TIME,
+											mapDumpEvent(eventFlags), detailLength, detailData, dateStamp);
+									printed = 1;
+								}
 							}
 						}
 
