@@ -49,7 +49,6 @@ static jvmtiIterationControl objectIteratorCallback(J9JavaVM *vm, J9MM_IterateOb
 BOOLEAN
 jvmCheckpointHooks(J9VMThread *currentThread)
 {
-	J9JavaVM *vm = currentThread->javaVM;
 	BOOLEAN result = TRUE;
 	J9NameAndSignature nas = {0};
 	nas.name = (J9UTF8 *)&runPreCheckpointHooks_name;
@@ -62,12 +61,8 @@ jvmCheckpointHooks(J9VMThread *currentThread)
 
 	if (VM_VMHelpers::exceptionPending(currentThread)) {
 		result = FALSE;
-		goto done;
 	}
 
-	TRIGGER_J9HOOK_VM_PREPARING_FOR_CHECKPOINT(vm->hookInterface, currentThread);
-
-done:
 	return result;
 }
 
