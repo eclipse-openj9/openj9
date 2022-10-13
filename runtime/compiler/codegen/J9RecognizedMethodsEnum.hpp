@@ -124,6 +124,7 @@
    java_lang_Object_clone,
    java_lang_Object_newInstancePrototype,
    java_lang_Object_getAddressAsPrimitive,
+   java_lang_Object_hashCode,
    java_lang_ref_Reference_getImpl,
    java_lang_ref_Reference_reachabilityFence,
    java_lang_ref_SoftReference_get,

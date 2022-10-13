@@ -4780,6 +4780,18 @@ TR_J9InlinerPolicy::supressInliningRecognizedInitialCallee(TR_CallSite* callsite
          return true;
       case TR::java_lang_Class_cast:
          return true; // Call will be transformed into checkcast
+      case TR::java_lang_Object_hashCode:
+         if (callNode &&
+             callNode->getFirstChild() &&
+             callNode->getFirstChild()->getOpCode().hasSymbolReference())
+            {
+            TR::SymbolReference * classChildSymRef = callNode->getFirstChild()->getSymbolReference();
+            if (classChildSymRef->hasKnownObjectIndex() &&
+                classChildSymRef->getSymbol()->isClassObject() &&
+                classChildSymRef->getSymbol()->isConstObjectRef())
+               return true; // VP may be able to determine the hash code and fold away the call
+            }
+         return false; // VP will not be able to fold away the call
       case TR::java_lang_String_hashCodeImplDecompressed:
          /*
           * X86 and z want to avoid inlining both java_lang_String_hashCodeImplDecompressed and java_lang_String_hashCodeImplCompressed

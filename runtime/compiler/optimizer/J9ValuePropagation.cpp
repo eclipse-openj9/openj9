@@ -1352,6 +1352,35 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
             }
          break;
          }
+      case TR::java_lang_Object_hashCode:
+         {
+         // Only constrain the call in the last run of vp to avoid adding the candidate twice if the call is inside a loop
+         if (!lastTimeThrough())
+            return;
+         TR::Node *jlClassChild = node->getFirstChild();
+         bool jlClassChildGlobal;
+         TR::VPConstraint *jlClassChildConstraint = getConstraint(jlClassChild, jlClassChildGlobal);
+         if (  jlClassChildConstraint
+            && jlClassChildConstraint->isFixedClass()
+            && jlClassChildConstraint->getKnownObject())
+            {
+            bool hashCodeComputed = false;
+            int32_t hashCode = comp()->fej9()->getJavaLangClassHashCode(comp(), jlClassChildConstraint->getClass(), hashCodeComputed);
+            if (!hashCodeComputed)
+               {
+               if (trace()) traceMsg(comp(), "VM helper failed to compute object hash code\n");
+               break;
+               }
+            transformCallToIconstInPlaceOrInDelayedTransformations(_curTree, hashCode, jlClassChildGlobal, transformNonnativeMethodInPlace, !transformNonnativeMethodInPlace);
+            TR::DebugCounter::incStaticDebugCounter(comp(), TR::DebugCounter::debugCounterName(comp(), "constrainCall/(%s)", signature));
+            return;
+            }
+         else
+            {
+            if (trace()) traceMsg(comp(), "Failed to transform Object.hashCode() into the result\n");
+            break;
+            }
+         }
       case TR::java_lang_String_equals:
          {
          // Only constrain the call in the last run of vp to avoid adding the candidate twice if the call is inside a loop

@@ -2303,6 +2303,7 @@ void TR_ResolvedJ9Method::construct()
       {x(TR::java_lang_Object_clone,                "clone",                "()Ljava/lang/Object;")},
       {x(TR::java_lang_Object_newInstancePrototype, "newInstancePrototype", "(Ljava/lang/Class;)Ljava/lang/Object;")},
       {x(TR::java_lang_Object_getAddressAsPrimitive, "getAddressAsPrimitive", "(Ljava/lang/Object;)I")},
+      {x(TR::java_lang_Object_hashCode,             "hashCode",             "()I")},
       {  TR::unknownMethod}
       };
 
