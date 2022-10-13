@@ -971,20 +971,22 @@ ClientSessionData::getClassChainRecord(J9Class *clazz, uintptr_t *classChain,
          {
          bool missingLoaderRecord = false;
          bool uncachedClass = false;
-         classRecords[i] = getClassRecord(ramClassChain[i], missingLoaderRecord, uncachedClass);
-         if (missingLoaderRecord)
+         if (!(classRecords[i] = getClassRecord(ramClassChain[i], missingLoaderRecord, uncachedClass)))
             {
-            missingLoaderRecordIndexes[numMissingLoaderRecords++] = i;
-            }
-         else if (uncachedClass)
-            {
-            uncachedIndexes[uncachedRAMClasses.size()] = i;
-            uncachedRAMClasses.push_back(ramClassChain[i]);
-            }
-         else
-            {
-            // There must have been an allocation failure.
-            return NULL;
+            if (missingLoaderRecord)
+               {
+               missingLoaderRecordIndexes[numMissingLoaderRecords++] = i;
+               }
+            else if (uncachedClass)
+               {
+               uncachedIndexes[uncachedRAMClasses.size()] = i;
+               uncachedRAMClasses.push_back(ramClassChain[i]);
+               }
+            else
+               {
+               // There must have been an allocation failure.
+               return NULL;
+               }
             }
          }
       }
