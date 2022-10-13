@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2022 IBM Corp. and others
+ * Copyright (c) 2000, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2047,14 +2047,6 @@ J9::Node::chkSpineCheckWithArrayElementChild()
    return self()->getOpCode().isSpineCheck() && _flags.testAny(spineCHKWithArrayElementChild);
    }
 
-const char *
-J9::Node::printSpineCheckWithArrayElementChild()
-   {
-   return self()->chkSpineCheckWithArrayElementChild() ? "spineCHKWithArrayElementChild " : "";
-   }
-
-
-
 bool
 J9::Node::isUnsafePutOrderedCall()
    {
@@ -2138,14 +2130,6 @@ J9::Node::chkDontInlineUnsafePutOrderedCall()
    bool isPutOrdered = self()->isUnsafePutOrderedCall();
    return isPutOrdered && _flags.testAny(dontInlineUnsafePutOrderedCall);
    }
-
-const char *
-J9::Node::printIsDontInlineUnsafePutOrderedCall()
-   {
-   return self()->chkDontInlineUnsafePutOrderedCall() ? "dontInlineUnsafePutOrderedCall " : "";
-   }
-
-
 
 bool
 J9::Node::isUnsafeGetPutCASCallOnNonArray()
@@ -2261,12 +2245,6 @@ J9::Node::chkCleanSignDuringPackedLeftShift()
       _flags.testAny(CleanSignDuringPackedLeftShift);
    }
 
-const char *
-J9::Node::printCleanSignDuringPackedLeftShift()
-   {
-   return self()->chkCleanSignDuringPackedLeftShift() ? "cleanSignDuringPackedLeftShift " : "";
-   }
-
 bool
 J9::Node::chkOpsSkipCopyOnLoad()
    {
@@ -2298,14 +2276,6 @@ J9::Node::chkSkipCopyOnLoad()
    {
    return self()->chkOpsSkipCopyOnLoad() && _flags.testAny(SkipCopyOnLoad);
    }
-
-const char *
-J9::Node::printSkipCopyOnLoad()
-   {
-   return self()->chkSkipCopyOnLoad() ? "skipCopyOnLoad " : "";
-   }
-
-
 
 bool
 J9::Node::chkOpsSkipCopyOnStore()
@@ -2341,14 +2311,6 @@ J9::Node::chkSkipCopyOnStore()
    return self()->chkOpsSkipCopyOnStore() && _flags.testAny(SkipCopyOnStore);
    }
 
-const char *
-J9::Node::printSkipCopyOnStore()
-   {
-   return self()->chkSkipCopyOnStore() ? "skipCopyOnStore " : "";
-   }
-
-
-
 bool
 J9::Node::chkOpsCleanSignInPDStoreEvaluator()
    {
@@ -2380,14 +2342,6 @@ J9::Node::chkCleanSignInPDStoreEvaluator()
    {
    return self()->chkOpsCleanSignInPDStoreEvaluator() && _flags.testAny(cleanSignInPDStoreEvaluator);
    }
-
-const char *
-J9::Node::printCleanSignInPDStoreEvaluator()
-   {
-   return self()->chkCleanSignInPDStoreEvaluator() ? "cleanSignInPDStoreEvaluator " : "";
-   }
-
-
 
 bool
 J9::Node::chkOpsUseStoreAsAnAccumulator()
@@ -2423,14 +2377,6 @@ J9::Node::chkUseStoreAsAnAccumulator()
    return self()->chkOpsUseStoreAsAnAccumulator() && _flags.testAny(UseStoreAsAnAccumulator);
    }
 
-const char *
-J9::Node::printUseStoreAsAnAccumulator()
-   {
-   return self()->chkUseStoreAsAnAccumulator() ? "useStoreAsAnAccumulator " : "";
-   }
-
-
-
 bool
 J9::Node::canSkipPadByteClearing()
    {
@@ -2459,14 +2405,6 @@ J9::Node::chkSkipPadByteClearing()
    return self()->getType().isAnyPacked() && !self()->getOpCode().isStore() &&
       _flags.testAny(skipPadByteClearing);
    }
-
-const char *
-J9::Node::printSkipPadByteClearing()
-   {
-   return self()->chkSkipPadByteClearing() ? "skipPadByteClearing " : "";
-   }
-
-
 
 bool
 J9::Node::chkOpsIsInMemoryCopyProp()
@@ -2499,14 +2437,6 @@ J9::Node::chkIsInMemoryCopyProp()
    return self()->chkOpsIsInMemoryCopyProp() && _flags.testAny(IsInMemoryCopyProp);
    }
 
-const char *
-J9::Node::printIsInMemoryCopyProp()
-   {
-   return self()->chkIsInMemoryCopyProp() ? "IsInMemoryCopyProp " : "";
-   }
-
-
-
 bool
 J9::Node::chkSharedMemory()
    {
@@ -2519,12 +2449,6 @@ J9::Node::setSharedMemory(bool v)
    {
    TR_ASSERT(self()->getType().isAddress(), "flag only valid for addresses\n");
    _flags.set(sharedMemory, v);
-   }
-
-const char *
-J9::Node::printSharedMemory()
-   {
-   return self()->getType().isAddress() ? "sharedMemory " : "";
    }
 
 /**

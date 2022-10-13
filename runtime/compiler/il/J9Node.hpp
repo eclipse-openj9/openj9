@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2022 IBM Corp. and others
+ * Copyright (c) 2000, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -296,14 +296,12 @@ public:
    bool isSpineCheckWithArrayElementChild();
    void setSpineCheckWithArrayElementChild(bool v, TR::Compilation *comp);
    bool chkSpineCheckWithArrayElementChild();
-   const char *printSpineCheckWithArrayElementChild();
 
    // Flags used by call nodes
    bool isUnsafePutOrderedCall();
    bool isDontInlinePutOrderedCall();
    void setDontInlinePutOrderedCall(TR::Compilation *comp);
    bool chkDontInlineUnsafePutOrderedCall();
-   const char * printIsDontInlineUnsafePutOrderedCall();
 
    /**
     * Checks  and return true if the callNode is JNI Call to Unsafe.copyMemory
@@ -328,54 +326,45 @@ public:
    bool cleanSignDuringPackedLeftShift();
    void setCleanSignDuringPackedLeftShift(bool v);
    bool chkCleanSignDuringPackedLeftShift();
-   const char *printCleanSignDuringPackedLeftShift();
 
    // Flag used by non-store and non-call binary coded decimal and aggregate nodes
    bool chkOpsSkipCopyOnLoad();
    bool skipCopyOnLoad();
    void setSkipCopyOnLoad(bool v);
    bool chkSkipCopyOnLoad();
-   const char *printSkipCopyOnLoad();
 
    // Flag used by binary coded decimal and aggregate store nodes
    bool chkOpsSkipCopyOnStore();
    bool skipCopyOnStore();
    void setSkipCopyOnStore(bool v);
    bool chkSkipCopyOnStore();
-   const char *printSkipCopyOnStore();
 
    // Flag used by packed decimal stores
    bool chkOpsCleanSignInPDStoreEvaluator();
    bool mustCleanSignInPDStoreEvaluator();
    void setCleanSignInPDStoreEvaluator(bool v);
    bool chkCleanSignInPDStoreEvaluator();
-   const char *printCleanSignInPDStoreEvaluator();
 
    // Flag used by binary coded decimal stores and aggregate stores
    bool chkOpsUseStoreAsAnAccumulator();
    bool useStoreAsAnAccumulator();
    void setUseStoreAsAnAccumulator(bool v);
    bool chkUseStoreAsAnAccumulator();
-   const char *printUseStoreAsAnAccumulator();
 
    // Flag used by non-store packed types
    bool canSkipPadByteClearing();
    void setSkipPadByteClearing(bool v);
    bool chkSkipPadByteClearing();
-   const char *printSkipPadByteClearing();
 
    // Flag used for BCD and Aggr type stores
    bool chkOpsIsInMemoryCopyProp();
    bool isInMemoryCopyProp();
    void setIsInMemoryCopyProp(bool v);
    bool chkIsInMemoryCopyProp();
-   const char *printIsInMemoryCopyProp();
 
    // Flag used by address type nodes in Java
    bool chkSharedMemory();
    void setSharedMemory(bool v);
-   const char *printSharedMemory();
-
 
    bool isArrayCopyCall();
 
