@@ -24,6 +24,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <dlfcn.h>
+#include <malloc.h>
 #endif /* defined(LINUX) */
 
 #include "criusupport.hpp"
@@ -540,6 +541,7 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 			syslogFlagNone = FALSE;
 		}
 
+		malloc_trim(0);
 		VM_VMHelpers::setVMState(currentThread, J9VMSTATE_CRIU_SUPPORT_CHECKPOINT_PHASE_END);
 		systemReturnCode = criu_dump();
 		VM_VMHelpers::setVMState(currentThread, J9VMSTATE_CRIU_SUPPORT_RESTORE_PHASE_START);
