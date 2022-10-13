@@ -93,6 +93,7 @@ static void dropToCurrentFrame (J9StackWalkState * walkState);
 
 UDATA  walkStackFrames(J9VMThread *currentThread, J9StackWalkState *walkState)
 {
+	long loop_count = 0;
 	UDATA rc = (walkState->walkThread->privateFlags & J9_PRIVATE_FLAGS_STACK_CORRUPT) ? J9_STACKWALK_RC_STACK_CORRUPT : J9_STACKWALK_RC_NONE;
 	J9Method * nextLiterals;
 	UDATA * nextA0;
@@ -256,7 +257,13 @@ UDATA  walkStackFrames(J9VMThread *currentThread, J9StackWalkState *walkState)
 	}
 #endif 
 
+	loop_count = 0;
 	while(1) {
+		loop_count = loop_count + 1;
+		if (loop_count > 4096) {
+			rc = J9_STACKWALK_RC_STACK_CORRUPT;
+			goto terminationPoint;
+		}
 		J9SFStackFrame * fixedStackFrame;
 
 		walkState->constantPool = NULL;
