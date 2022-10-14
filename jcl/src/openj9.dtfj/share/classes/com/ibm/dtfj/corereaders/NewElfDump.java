@@ -817,7 +817,10 @@ public class NewElfDump extends CoreReaderSupport {
 		private short _programHeaderCount = 0;
 		private short _sectionHeaderEntrySize = 0;
 		private short _sectionHeaderCount = 0;
-		// The set of ELF objects mentioned in FILE notes.
+		/*
+		 * The set of ELF objects mentioned in FILE notes,
+		 * as well as paths of symbolic links based on SONAMEs.
+		 */
 		final Set<String> _allElfFileNames = new HashSet<>();
 		// Maps to a set of paths of loaded shared libraries for a particular 'soname'.
 		final Map<String, Set<String>> _librariesBySOName = new HashMap<>();
@@ -1059,8 +1062,12 @@ public class NewElfDump extends CoreReaderSupport {
 
 						if (isSameFile(file, sofile)) {
 							Set<String> paths = _librariesBySOName.computeIfAbsent(soname, key -> new HashSet<>());
+							String sopath = sofile.getAbsolutePath();
 
-							paths.add(sofile.getAbsolutePath());
+							paths.add(sopath);
+
+							/* Add the SONAME-based path: it may be different than fileName added above. */
+							_allElfFileNames.add(sopath);
 						}
 					}
 
