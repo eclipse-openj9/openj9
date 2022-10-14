@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2007, 2021 IBM Corp. and others
+ * Copyright (c) 2007, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,19 +29,20 @@ import com.ibm.dtfj.javacore.parser.j9.section.common.CommonPatternMatchers;
 import com.ibm.dtfj.javacore.parser.j9.section.common.PointerSizeLineRule;
 
 public class ThreadTagParser extends TagParser {
-	
+
 	public ThreadTagParser() {
 		super(IThreadTypes.THREAD_SECTION);
 	}
-	
+
 	/**
-	 * Call inherited method addTag() to add a tag->rule pair. 
+	 * Call inherited method addTag() to add a tag->rule pair.
 	 */
-	protected void initTagAttributeRules() {	
+	protected void initTagAttributeRules() {
 		/*
 		 * Tags with attributes
 		 */
 		initThreadInfoTag();
+		initJavaLThrCCL();
 		initThreadInfo1Tag();
 		initThreadInfo2Tag();
 		initCPUTimeTag();
@@ -49,7 +50,7 @@ public class ThreadTagParser extends TagParser {
 		initStackTraceTag();
 		initNativeStackTraceTag();
 		initOSInfoTag();
-		
+
 		ILineRule lineRule = new LineRule() {
 			public void processLine(String source, int startingOffset) {
 			}
@@ -59,23 +60,25 @@ public class ThreadTagParser extends TagParser {
 		 * Tags with no attributes (or attributes to be ignored)
 		 */
 		addTag(IThreadTypes.T_1XMTHDINFO, null);
+		addTag(IThreadTypes.T_3XMJAVALTHREAD, null);
+		addTag(IThreadTypes.T_3XMHEAPALLOC, null);
 	}
 
 	private void initCPUTimeTag() {
 		// 3XMCPUTIME               CPU usage total: 9.656250000 secs, user: 4.781250000 secs, system: 4.875000000 secs
 		ILineRule lineRule = new LineRule() {
 			public void processLine(String source, int startingOffset) {
-				
+
 				consumeUntilFirstMatch(ThreadPatternMatchers.cpu_time_total);
 				addToken(IThreadTypes.CPU_TIME_TOTAL, ThreadPatternMatchers.cpu_time);
-				
+
 				/*
 				 * Optional: user time
 				 */
 				if( consumeUntilFirstMatch(ThreadPatternMatchers.cpu_time_user)) {
 					addToken(IThreadTypes.CPU_TIME_USER, ThreadPatternMatchers.cpu_time);
 				}
-				
+
 				/*
 				 * Optional: system time
 				 */
@@ -95,18 +98,32 @@ public class ThreadTagParser extends TagParser {
 		ILineRule lineRule = new ThreadInfoLineRule();
 		addTag(IThreadTypes.T_3XMTHREADINFO, lineRule);
 	}
-	
-	
+
 	/**
-	 * 
-	 *
+	 * Parse the context classloader line for the thread.
+	 */
+	private void initJavaLThrCCL() {
+		ILineRule lineRule = new ThreadInfoLineRule() {
+			@Override
+			public void processLine(String source, int startingOffset) {
+				// 3XMJAVALTHRCCL            jdk/internal/loader/ClassLoaders$AppClassLoader(0x000000072254DA00)
+				consumeUntilFirstMatch(CommonPatternMatchers.whitespace);
+				addAllCharactersAsTokenAndConsumeFirstMatch(IThreadTypes.CONTEXT_CLASSLOADER_OBJECT_FULL_JAVA_NAME, CommonPatternMatchers.open_paren);
+				addPrefixedHexToken(IThreadTypes.CONTEXT_CLASSLOADER_OBJECT_ADDRESS);
+			}
+		};
+		addTag(IThreadTypes.T_3XMJAVALTHRCCL, lineRule);
+	}
+
+	/**
+	 * Parses the pointer size (31/32/64 bits) from Java 6.0 and earlier.
+	 * 2XMFULLTHDDUMP Full thread dump J9 VM (J2RE 6.0 IBM J9 2.4 Windows XP x86-32 build jvmwi3260-20090215_2988320090215_029883_lHdSMr, native threads):
 	 */
 	private void initOSInfoTag() {
 		ILineRule lineRule = new PointerSizeLineRule();
 		addTag(IThreadTypes.T_2XMFULLTHDDUMP, lineRule);
 	}
-	
-	
+
 	/**
 	 *
 	 */
@@ -130,7 +147,7 @@ public class ThreadTagParser extends TagParser {
 				 */
 				consumeUntilFirstMatch(CommonPatternMatchers.colon);
 				addToken(IThreadTypes.NATIVE_THREAD_POLICY, CommonPatternMatchers.lettervalue);
-				
+
 				/*
 				 * Optional: Native Scope
 				 */
@@ -149,12 +166,12 @@ public class ThreadTagParser extends TagParser {
 				if(findFirst(ThreadPatternMatchers.vmflags) && consumeUntilFirstMatch(CommonPatternMatchers.colon)) {
 					addPrefixedHexToken(IThreadTypes.VM_FLAGS);
 				}
-				
-			}	
-		};	
-		addTag(IThreadTypes.T_3XMTHREADINFO1, lineRule);	
+
+			}
+		};
+		addTag(IThreadTypes.T_3XMTHREADINFO1, lineRule);
 	}
-	
+
 	/**
 	 * Parse the native stack address range information
 	 */
@@ -181,25 +198,25 @@ public class ThreadTagParser extends TagParser {
 		};
 		addTag(IThreadTypes.T_3XMTHREADINFO2, lineRule);
 	}
-	
+
 	/**
-	 * 
+	 * Set up the parsing rule for the Java stack trace for a thread.
 	 * Both Sov and J9
 	 */
 	private void initStackTraceTag() {
 		addTag(IThreadTypes.T_3XMTHREADINFO3, null);
 		ILineRule lineRule = new StackTraceLineRule();
-		addTag(IThreadTypes.T_4XESTACKTRACE, lineRule);	
+		addTag(IThreadTypes.T_4XESTACKTRACE, lineRule);
 	}
 
 	/**
-	 * 
+	 * Set up the parsing rule for the native stack trace for a thread.
 	 */
 	private void initNativeStackTraceTag() {
 		ILineRule lineRule = new NativeStackTraceLineRule();
-		addTag(IThreadTypes.T_4XENATIVESTACK, lineRule);	
+		addTag(IThreadTypes.T_4XENATIVESTACK, lineRule);
 	}
-	
+
 	/**
 	 * J9 R2.6+ only
 	 */
@@ -220,6 +237,6 @@ public class ThreadTagParser extends TagParser {
 			}
 		};
 		addTag(IThreadTypes.T_3XMTHREADBLOCK, lineRule);
-		
+
 	}
 }
