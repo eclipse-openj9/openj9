@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2007, 2017 IBM Corp. and others
+ * Copyright (c) 2007, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -42,24 +42,23 @@ import com.ibm.dtfj.javacore.parser.j9.SectionParser;
 import com.ibm.dtfj.javacore.parser.j9.section.common.ICommonTypes;
 
 /**
- * 
+ * Parse the thread section.
+ * This has details of all the threads, including Java and
+ * native stack traces.
  *
  */
 public class ThreadSectionParser extends SectionParser implements IThreadTypes{
-	
 
 	private IJavaRuntimeBuilder fRuntimeBuilder;
 	private IImageProcessBuilder fImageProcessBuilder;
 	private IImageAddressSpaceBuilder fImageAddressSpaceBuilder;
-	
-	
+
 	public ThreadSectionParser(){
 		super(THREAD_SECTION);
 	}
-	
+
 	/**
-	 * 
-	 * @param lookAheadBuffer
+	 *
 	 * @throws ParserException
 	 */
 	protected void topLevelRule() throws ParserException {
@@ -69,15 +68,15 @@ public class ThreadSectionParser extends SectionParser implements IThreadTypes{
 		currentThreadInfoSubsection();
 		allThreadInfoSubsection();
 	}
-	
+
 	/**
 	 * current_thread_info := CURRENT_THREAD_INFO_SUBSECTION thread_info_section | CURRENT_THREAD_INFO_SUBSECTION
 	 * <br><br>
 	 * This implementation allows for the parsing process to continue even after errors are caught. See the error handler
 	 * for more information.
-	 * 
+	 *
 	 * @see #handleError(Exception)
-	 * 
+	 *
 	 * @param scanner
 	 * @throws ParserException
 	 */
@@ -87,15 +86,14 @@ public class ThreadSectionParser extends SectionParser implements IThreadTypes{
 		 */
 		if (processTagLineOptional(T_1XMCURTHDINFO) != null) {
 			// Parse the thread info and stack trace
-			// We have to generate build model here as 
+			// We have to generate build model here as
 			// Java 7.0 doesn't have it in the allthreadinfo section.
 			threadInfo(true, true);
 		}
 	}
-	
+
 	/**
-	 * 
-	 * 
+	 *
 	 * @param scanner
 	 */
 	protected void allThreadInfoSubsection() throws ParserException {
@@ -107,7 +105,7 @@ public class ThreadSectionParser extends SectionParser implements IThreadTypes{
 		}
 		threadInfo(true, false);
 	}
-	
+
 	/**
 	 * @param buildModel true if data parsed should be added into the builder.
 	 * @param currentThread This is the current thread
@@ -117,7 +115,7 @@ public class ThreadSectionParser extends SectionParser implements IThreadTypes{
 		IAttributeValueMap results = null;
 		int currentLineNumber = getCurrentFileLineNumber();
 		if ((results = processTagLineRequired(T_3XMTHREADINFO)) != null) {
-			// Always parse the first thread of the section so that the first thread in 
+			// Always parse the first thread of the section so that the first thread in
 			// the current thread section will be generated first. It will be reparsed later,
 			// but that doesn't matter.
 			processThreadandStackTrace(results, buildModel, currentThread, currentLineNumber);
@@ -128,9 +126,9 @@ public class ThreadSectionParser extends SectionParser implements IThreadTypes{
 			}
 		}
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * @param javaThreadResults
 	 * @param buildModel
 	 * @param currentThread Is this the current thread?
@@ -140,19 +138,34 @@ public class ThreadSectionParser extends SectionParser implements IThreadTypes{
 	 */
 	protected int processThreadandStackTrace(IAttributeValueMap javaThreadResults, boolean buildModel, boolean currentThread, int currentLineNumber) throws ParserException {
 		JavaThread javaThread = null;
+		// 3XMJAVALTHREAD            (java/lang/Thread getId:0xD, isDaemon:true)
+		processTagLineOptional(T_3XMJAVALTHREAD);
+		// 3XMJAVALTHRCCL            jdk/internal/loader/ClassLoaders$AppClassLoader(0x000000072254DA00)
+		IAttributeValueMap results = processTagLineOptional(T_3XMJAVALTHRCCL);
+		if (results != null) {
+			String clName = results.getTokenValue(IThreadTypes.CONTEXT_CLASSLOADER_OBJECT_FULL_JAVA_NAME);
+			long clAddress = results.getLongValue(IThreadTypes.CONTEXT_CLASSLOADER_OBJECT_ADDRESS);
+			try {
+				fRuntimeBuilder.addClassLoader(clName, clAddress, clAddress);
+			} catch (BuilderFailureException e) {
+				handleError("Failed to add class loader: " + clName + " " + clAddress + " ", e);
+			}
+		}
 		// 3XMTHREADINFO1 found only in J9 2.4 or higher. Native thread ID is contained
 		// in the latter. For all other older VMs, native thread ID is contained in 3XMTHREADINFO
 		IAttributeValueMap nativeResults = processTagLineOptional(T_3XMTHREADINFO1);
-		
+
 		IAttributeValueMap nativeStack;
 		ArrayList nativeStacks = new ArrayList();
 		while ((nativeStack = processTagLineOptional(T_3XMTHREADINFO2)) != null) {
 			nativeStacks.add(nativeStack);
 		}
 
-		IAttributeValueMap blockerInfo = processTagLineOptional(T_3XMTHREADBLOCK);
-		
 		IAttributeValueMap cpuTimes = processTagLineOptional(T_3XMCPUTIME);
+
+		IAttributeValueMap blockerInfo = processTagLineOptional(T_3XMTHREADBLOCK);
+
+		processTagLineOptional(T_3XMHEAPALLOC);
 
 		if (buildModel) {
 			javaThread = addThread(javaThreadResults, nativeResults, nativeStacks, blockerInfo, cpuTimes, currentLineNumber);
@@ -170,13 +183,13 @@ public class ThreadSectionParser extends SectionParser implements IThreadTypes{
 		}
 		return getCurrentFileLineNumber();
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * @param javaThreadResults
 	 * @param nativeStacks list of attributes of the native stacks
 	 * @param currentFileLineNumber
-	 * @return java thread 
+	 * @return java thread
 	 * @throws ParserException if error handler decides to throw it due java thread or image thread error creation
 	 */
 	private JavaThread addThread(IAttributeValueMap javaThreadResults, IAttributeValueMap nativeResults, List nativeStacks, IAttributeValueMap blockerInfo, IAttributeValueMap cpuTimes, int currentFileLineNumber) throws ParserException {
@@ -188,16 +201,16 @@ public class ThreadSectionParser extends SectionParser implements IThreadTypes{
 
 		ImageThread imageThread = null;
 		JavaThread javaThread = null;
-		
-		//CMVC 158108 : fixed so that if the thread name is not present then it is not subsequently parsed 
+
+		//CMVC 158108 : fixed so that if the thread name is not present then it is not subsequently parsed
 		String threadName = javaThreadResults.getTokenValue(JAVA_THREAD_NAME);
-		
+
 		if (threadName != null && threadName.length() >= 2) {
 			threadName = threadName.substring(1, threadName.length() - 1); // remove quotes
 		}
 		String threadState = javaThreadResults.getTokenValue(JAVA_STATE);
 		int threadPriority = javaThreadResults.getIntValue(VM_THREAD_PRIORITY);
-		
+
 		long abstractThreadID = javaThreadResults.getLongValue(ABSTRACT_THREAD_ID);
 		Properties properties = new Properties();
 		if (abstractThreadID != IBuilderData.NOT_AVAILABLE) {
@@ -210,22 +223,22 @@ public class ThreadSectionParser extends SectionParser implements IThreadTypes{
 			addAsProperty(properties, VM_STATE, nativeResults.getTokenValue(VM_STATE));
 			addAsProperty(properties, VM_FLAGS, nativeResults.getTokenValue(VM_FLAGS));
 		}
-		
+
 		if (cpuTimes != null ) {
 			addAsProperty(properties, CPU_TIME_TOTAL, cpuTimes.getTokenValue(CPU_TIME_TOTAL));
 			addAsProperty(properties, CPU_TIME_USER, cpuTimes.getTokenValue(CPU_TIME_USER));
 			addAsProperty(properties, CPU_TIME_SYSTEM, cpuTimes.getTokenValue(CPU_TIME_SYSTEM));
 		}
-		
+
 		String blockerObjectClassName = null;
 		//CMVC 180977 : the parser expects missing data to be represented by a -ve number, so change the default address from 0 to IBuilderData.NOT_AVAILABLE (currently -1)
 		//this parser check will break on a sufficiently large 64bit number, but fixing that is beyond the scope of this defect.
-		long blockerObjectAddress = IBuilderData.NOT_AVAILABLE;		 
+		long blockerObjectAddress = IBuilderData.NOT_AVAILABLE;
 		if( blockerInfo != null ) {
 			blockerObjectClassName =  blockerInfo.getTokenValue(BLOCKER_OBJECT_FULL_JAVA_NAME);
 			blockerObjectAddress = blockerInfo.getLongValue(BLOCKER_OBJECT_ADDRESS);
 		}
-		
+
 		long javaObjID = javaThreadResults.getLongValue(JAVA_THREAD_OBJ);
 		if (javaObjID == IBuilderData.NOT_AVAILABLE && nativeResults == null) {
 			String vmthread = javaThreadResults.getTokenValue(VM_THREAD_ID);
@@ -234,7 +247,7 @@ public class ThreadSectionParser extends SectionParser implements IThreadTypes{
 			if (vmthread != null && !vmthread.startsWith("0x0"))
 				javaObjID = tid;
 		}
-		
+
 		try {
 			imageThread = fImageProcessBuilder.addImageThread(imageThreadID, abstractThreadID, properties);
 			if (threadName != null || tid != IBuilderData.NOT_AVAILABLE) {
@@ -243,7 +256,7 @@ public class ThreadSectionParser extends SectionParser implements IThreadTypes{
 		} catch (BuilderFailureException e) {
 			handleErrorAtLineNumber(currentFileLineNumber, "Failed to add thread: " + threadName + " " + imageThreadID, e);
 		}
-		
+
 		for (Iterator it = nativeStacks.iterator(); it.hasNext(); ) {
 			IAttributeValueMap stackInfo = (IAttributeValueMap)it.next();
 			long from = stackInfo.getLongValue(NATIVE_STACK_FROM);
@@ -254,12 +267,12 @@ public class ThreadSectionParser extends SectionParser implements IThreadTypes{
 				fImageProcessBuilder.addImageStackSection(imageThread, section);
 			}
 		}
-		
+
 		return javaThread;
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * @param results from parsing the threadinfo tag
 	 * @throws ParserException
 	 */
@@ -284,11 +297,11 @@ public class ThreadSectionParser extends SectionParser implements IThreadTypes{
 		 */
 		sovOnlyRules(T_3XMTHREADINFO);
 	}
-	
+
 	/**
 	 * Will generate a stack trace object based on the parsed attributes passed into it. If a valid javathread
 	 * does not exist, any builder exceptions will be handled by the error handler.
-	 * 
+	 *
 	 * @param stackTraceResults
 	 * @param javaThread
 	 */
@@ -317,14 +330,14 @@ public class ThreadSectionParser extends SectionParser implements IThreadTypes{
 			handleErrorAtLineNumber(fileLineNumber, "Failed to add stack frame: " + className + "." + methodName + " " + lineNumber, e);
 		}
 	}
-	
+
 	/**
 	 * Parse the native stack line information
 	 * @throws ParserException
 	 */
 	private void parseNativeStackTrace(long threadID, boolean buildModel) throws ParserException {
 		IAttributeValueMap results = null;
-		
+
 		// Process the version lines
 		processTagLineOptional(T_3XMTHREADINFO3);
 		while ((results = processTagLineOptional(T_4XENATIVESTACK)) != null) {
@@ -392,7 +405,7 @@ public class ThreadSectionParser extends SectionParser implements IThreadTypes{
 				if (routine != null) {
 					if (routine_offset != IBuilderData.NOT_AVAILABLE) {
 						name = "::"+routine+(routine_offset >= 0 ? "+" : "-") + routine_offset;
-					} else {	
+					} else {
 						name = "::"+routine;
 					}
 				} else {
@@ -407,9 +420,9 @@ public class ThreadSectionParser extends SectionParser implements IThreadTypes{
 		}
 	}
 
-	
+
 	/**
-	 * 
+	 *
 	 * @param startingTag
 	 * @throws ParserException
 	 */
