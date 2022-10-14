@@ -861,6 +861,7 @@ def set_basic_artifactory_config(id="Nightly") {
             ARTIFACTORY_CONFIG[geo]['daysToKeepArtifacts'] = get_value(VARIABLES.artifactory.daysToKeepArtifacts, geo).toInteger()
             ARTIFACTORY_CONFIG[geo]['manualCleanup'] = get_value(VARIABLES.artifactory.manualCleanup, geo)
             ARTIFACTORY_CONFIG[geo]['vpn'] = get_value(VARIABLES.artifactory.vpn, geo)
+            ARTIFACTORY_CONFIG[geo]['buildNamePrefix'] = get_value(VARIABLES.artifactory.buildNamePrefix, geo)
         }
 
         /*
