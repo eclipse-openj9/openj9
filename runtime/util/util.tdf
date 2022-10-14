@@ -1,4 +1,4 @@
-// Copyright (c) 2006, 2021 IBM Corp. and others
+// Copyright (c) 2006, 2022 IBM Corp. and others
 //
 // This program and the accompanying materials are made available under
 // the terms of the Eclipse Public License 2.0 which accompanies this
@@ -82,3 +82,5 @@ TraceExit=Trc_Util_validateLibrary_Exit Noenv Overhead=1 Level=5 Template="valid
 
 TraceEvent=Trc_Util_thrhelp_initializeCurrentOSStackFree Overhead=1 Level=1 Template="Setup osStack free for osthread=%p requested stacksize=%zu realStacksize=%zu (zero is not found) stackfree=%zu starting sp=%p"
 
+TraceEntry=Trc_Util_getDefinedArgumentFromJavaVMInitArgs_Entry Noenv Overhead=1 Level=3 Template="getDefinedArgumentFromJavaVMInitArgs (vmInitArgs=%p, defArg=%s)"
+TraceExit=Trc_Util_getDefinedArgumentFromJavaVMInitArgs_Exit Noenv Overhead=1 Level=3 Template="getDefinedArgumentFromJavaVMInitArgs (result=%s)"

@@ -3907,7 +3907,7 @@ registerBootstrapLibrary(J9VMThread * vmThread, const char * libName, J9NativeLi
 * @return UDATA
 */
 UDATA
-registerNativeLibrary(J9VMThread * vmThread, J9ClassLoader * classLoader, const char * libName, char * libraryPath, J9NativeLibrary** libraryPtr, char* errorBuffer, UDATA bufferLength);
+registerNativeLibrary(J9VMThread *vmThread, J9ClassLoader *classLoader, const char *libName, const char *libraryPath, J9NativeLibrary **libraryPtr, char *errorBuffer, UDATA bufferLength);
 
 
 /**
