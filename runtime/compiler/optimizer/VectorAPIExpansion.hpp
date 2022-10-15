@@ -129,6 +129,13 @@ class TR_VectorAPIExpansion : public TR::Optimization
    static int32_t const BT_ge = 7;
    static int32_t const BT_lt = 3;
    static int32_t const BT_gt = 1;
+   static int32_t const BT_overflow = 2;
+   static int32_t const BT_no_overflow = 6;
+   static int32_t const BT_unsigned_compare = 0b10000;
+   static int32_t const BT_ule = BT_le | BT_unsigned_compare;
+   static int32_t const BT_uge = BT_ge | BT_unsigned_compare;
+   static int32_t const BT_ult = BT_lt | BT_unsigned_compare;
+   static int32_t const BT_ugt = BT_gt | BT_unsigned_compare;
 
   /** \brief
    *  Is passed to methods handlers during analysis and transforamtion phases
@@ -169,6 +176,7 @@ class TR_VectorAPIExpansion : public TR::Optimization
       {
       Compare,
       Reduction,
+      Test,
       Other
       };
 
@@ -521,7 +529,7 @@ class TR_VectorAPIExpansion : public TR::Optimization
   /** \brief
    *    For the node's symbol reference, creates and records(if it does not exist yet)
    *    corresponding vector temporary symbol and symbol reference. Changes node's symbol reference and opcode
-   *    to corresponding vector symbol reference and opcode
+   *    to corresponding vector(or mask) symbol reference and opcode
    *
    *  \param opt
    *    This optimization object
@@ -529,13 +537,11 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *  \param node
    *    The node
    *
-   *  \param opcodeType
+   *  \param opCodeType
    *    Opcode type
    *
-   *  \param symRefType
-   *    Symbol reference type
    */
-   static void vectorizeLoadOrStore(TR_VectorAPIExpansion *opt, TR::Node *node, TR::DataType opcodeType, TR::DataType symRefType);
+   static void vectorizeLoadOrStore(TR_VectorAPIExpansion *opt, TR::Node *node, TR::DataType opCodeType);
 
   /** \brief
    *    For the node's symbol reference, creates and records, if it does not exist yet,
@@ -858,6 +864,38 @@ class TR_VectorAPIExpansion : public TR::Optimization
    */
    static TR::Node *ternaryIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, TR::VectorLength vectorLength, int32_t numLanes, handlerMode mode);
 
+
+  /** \brief
+   *    Scalarizes or vectorizes a node that is a call to \c VectorSupport.test() intrinsic.
+   *    In both cases, the node is modified in place.
+   *    In the case of scalarization, extra nodes are created(number of lanes minus one)
+   *
+   *   \param opt
+   *      This optimization object
+   *
+   *   \param treeTop
+   *      Tree top of the \c node
+   *
+   *   \param node
+   *      Node to transform
+   *
+   *   \param elementType
+   *      Element type
+   *
+   *   \param vectorLength
+   *      Vector length
+   *
+   *   \param numLanes
+   *      Number of elements
+   *
+   *   \param mode
+   *      Handler mode
+   *
+   *   \return
+   *      Transformed node
+   *
+   */
+   static TR::Node *testIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, TR::VectorLength vectorLength, int32_t numLanes, handlerMode mode);
 
   /** \brief
    *    Scalarizes or vectorizes a node that is a call to \c VectorSupport.unaryOp(),binaryOp(), etc. intrinsic.
