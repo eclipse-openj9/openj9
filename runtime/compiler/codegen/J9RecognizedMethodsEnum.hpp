@@ -455,6 +455,7 @@
    jdk_internal_vm_vector_VectorSupport_fromBitsCoerced,
    jdk_internal_vm_vector_VectorSupport_reductionCoerced,
    jdk_internal_vm_vector_VectorSupport_ternaryOp,
+   jdk_internal_vm_vector_VectorSupport_test,
    jdk_internal_vm_vector_VectorSupport_unaryOp,
    LastVectorIntrinsicMethod = jdk_internal_vm_vector_VectorSupport_unaryOp,
    LastVectorMethod = LastVectorIntrinsicMethod,
