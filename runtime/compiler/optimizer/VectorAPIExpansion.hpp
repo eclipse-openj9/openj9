@@ -131,7 +131,7 @@ class TR_VectorAPIExpansion : public TR::Optimization
    static int32_t const BT_gt = 1;
    static int32_t const BT_overflow = 2;
    static int32_t const BT_no_overflow = 6;
-   static int32_t const BT_unsigned_compare = 0b10000;
+   static int32_t const BT_unsigned_compare = 0x10;
    static int32_t const BT_ule = BT_le | BT_unsigned_compare;
    static int32_t const BT_uge = BT_ge | BT_unsigned_compare;
    static int32_t const BT_ult = BT_lt | BT_unsigned_compare;
