@@ -116,9 +116,9 @@ target_sources(jclse
 		${CMAKE_CURRENT_SOURCE_DIR}/common/com_ibm_oti_vm_VM.c
 		${CMAKE_CURRENT_SOURCE_DIR}/common/compiler.c
 		${CMAKE_CURRENT_SOURCE_DIR}/common/dump.c
-		${CMAKE_CURRENT_SOURCE_DIR}/common/exhelp
+		${CMAKE_CURRENT_SOURCE_DIR}/common/exhelp.c
 		${CMAKE_CURRENT_SOURCE_DIR}/common/extendedosmbean.c
-		${CMAKE_CURRENT_SOURCE_DIR}/common/getstacktrace
+		${CMAKE_CURRENT_SOURCE_DIR}/common/getstacktrace.c
 		${CMAKE_CURRENT_SOURCE_DIR}/common/gpu.c
 		${CMAKE_CURRENT_SOURCE_DIR}/common/iohelp.c
 		${CMAKE_CURRENT_SOURCE_DIR}/common/java_lang_Access.c
@@ -153,7 +153,7 @@ target_sources(jclse
 		${CMAKE_CURRENT_SOURCE_DIR}/common/reflecthelp.c
 		${CMAKE_CURRENT_SOURCE_DIR}/common/shared.c
 		${CMAKE_CURRENT_SOURCE_DIR}/common/sigquit.c
-		${CMAKE_CURRENT_SOURCE_DIR}/common/stdinit
+		${CMAKE_CURRENT_SOURCE_DIR}/common/stdinit.c
 		${CMAKE_CURRENT_SOURCE_DIR}/common/sun_misc_Perf.c
 		${CMAKE_CURRENT_SOURCE_DIR}/common/sun_misc_Unsafe.cpp
 		${CMAKE_CURRENT_SOURCE_DIR}/common/sun_reflect_ConstantPool.c
