@@ -215,6 +215,14 @@ outOfProcessCompilationEnd(TR_MethodToBeCompiled *entry, TR::Compilation *comp)
          TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Failed to serialize AOT method %s", comp->signature());
          }
       }
+
+   // Check whether we need to save a copy of the AOTcache in a file
+   if (compInfoPT->getCompilationInfo()->getPersistentInfo()->getJITServerUseAOTCachePersistence())
+      {
+      auto clientData = comp->getClientData();
+      if (clientData->usesAOTCache())
+         clientData->getAOTCache()->triggerAOTCacheStoreToFileIfNeeded();
+      }
    }
 
 TR::CompilationInfoPerThreadRemote::CompilationInfoPerThreadRemote(TR::CompilationInfo &compInfo, J9JITConfig *jitConfig, int32_t id, bool isDiagnosticThread)
@@ -506,14 +514,17 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
    // Update the last time the compilation thread had to do something.
    compInfo->setLastReqStartTime(compInfo->getPersistentInfo()->getElapsedTime());
 
-   if (stream == LOAD_AOTCACHE_REQUEST)
-      {
-      // This is not a true compilation request, but rather a request to load an AOTCache from file
 
+   if (stream == LOAD_AOTCACHE_REQUEST || stream == SAVE_AOTCACHE_REQUEST)
+      {
+      // This is not a true compilation request, but rather a request to save/load an AOTCache to/from file
       compInfo->releaseCompMonitor(compThread);
       auto aotCacheMap = compInfo->getJITServerAOTCacheMap();
       TR_ASSERT(aotCacheMap, "aotCacheMap must exist if such a special request was issued");
-      aotCacheMap->loadNextQueuedAOTCacheFromFile(scratchSegmentProvider);
+      if (stream == LOAD_AOTCACHE_REQUEST)
+         aotCacheMap->loadNextQueuedAOTCacheFromFile(scratchSegmentProvider);
+      else
+         aotCacheMap->saveNextQueuedAOTCacheToFile();
 
       // We had the compilation monitor in hand when entering processEntry() and we must leave with it in hand
       compInfo->acquireCompMonitor(compThread);
@@ -521,6 +532,8 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       // Put the request back into the pool
       setMethodBeingCompiled(NULL); // Must have the compQmonitor
       compInfo->recycleCompilationEntry(&entry);
+      // Will not attempt to suspend this compilation thread.
+      // If the queue is empty, it will go to sleep waiting for work
       return;
       }
 

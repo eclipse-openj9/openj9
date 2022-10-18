@@ -277,6 +277,8 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
    static int32_t _reconnectWaitTimeMs;
    static const uint32_t DEFAULT_JITCLIENT_TIMEOUT = 30000; // ms
    static const uint32_t DEFAULT_JITSERVER_TIMEOUT = 30000; // ms
+   static int32_t _aotCachePersistenceMinDeltaMethods;
+   static int32_t _aotCachePersistenceMinPeriodMs;
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
 #if defined(J9VM_OPT_CRIU_SUPPORT)
