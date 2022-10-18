@@ -203,7 +203,6 @@ isPinnedContinuation(J9VMThread *currentThread)
 void
 copyFieldsFromContinuation(J9VMThread *currentThread, J9VMThread *vmThread, J9VMEntryLocalStorage *els, J9VMContinuation *continuation)
 {
-	vmThread->entryLocalStorage = els;
 	vmThread->javaVM = currentThread->javaVM;
 	vmThread->arg0EA = continuation->arg0EA;
 	vmThread->bytecodes = continuation->bytecodes;
@@ -213,10 +212,12 @@ copyFieldsFromContinuation(J9VMThread *currentThread, J9VMThread *vmThread, J9VM
 	vmThread->stackOverflowMark = continuation->stackOverflowMark;
 	vmThread->stackOverflowMark2 = continuation->stackOverflowMark2;
 	vmThread->stackObject = continuation->stackObject;
-	vmThread->entryLocalStorage->oldEntryLocalStorage = continuation->oldEntryLocalStorage;
-	vmThread->entryLocalStorage->jitGlobalStorageBase = (UDATA*)&continuation->jitGPRs;
 	vmThread->j2iFrame = continuation->j2iFrame;
 	vmThread->decompilationStack = continuation->decompilationStack;
+	els->oldEntryLocalStorage = continuation->oldEntryLocalStorage;
+	els->jitGlobalStorageBase = (UDATA*)&continuation->jitGPRs;
+	els->i2jState = continuation->i2jState;
+	vmThread->entryLocalStorage = els;
 }
 
 UDATA

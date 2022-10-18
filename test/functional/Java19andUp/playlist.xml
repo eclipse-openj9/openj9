@@ -24,10 +24,10 @@
 	<test>
 		<testCaseName>Jep425Tests_testVirtualThread</testCaseName>
 		<variations>
-			<variation>--enable-preview -Xint -Xgcpolicy:optthruput</variation>
-			<variation>--enable-preview -Xint -Xgcpolicy:gencon</variation>
-			<variation>--enable-preview -Xint -Xgcpolicy:balanced</variation>
-			<variation>--enable-preview -Xint -Xgcpolicy:optavgpause</variation>
+			<variation>--enable-preview -Xgcpolicy:optthruput</variation>
+			<variation>--enable-preview -Xgcpolicy:gencon</variation>
+			<variation>--enable-preview -Xgcpolicy:balanced</variation>
+			<variation>--enable-preview -Xgcpolicy:optavgpause</variation>
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) $(JAVA_COMMAND) $(JVM_OPTIONS) \
 			--add-opens java.base/java.lang=ALL-UNNAMED \
@@ -38,7 +38,7 @@
 			-excludegroups $(DEFAULT_EXCLUDE); \
 			$(TEST_STATUS)
 		</command>
-		<platformRequirements>bits.64,^os.zos,^os.sunos</platformRequirements>
+		<platformRequirements>bits.64,^os.zos,^os.sunos,^arch.ppc</platformRequirements>
 		<levels>
 			<level>sanity</level>
 		</levels>
