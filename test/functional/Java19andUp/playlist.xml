@@ -38,7 +38,7 @@
 			-excludegroups $(DEFAULT_EXCLUDE); \
 			$(TEST_STATUS)
 		</command>
-		<platformRequirements>bits.64,^os.zos,^os.sunos,^arch.ppc</platformRequirements>
+		<platformRequirements>bits.64,^os.zos,^os.sunos</platformRequirements>
 		<levels>
 			<level>sanity</level>
 		</levels>

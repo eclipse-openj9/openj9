@@ -97,7 +97,9 @@ enterContinuation(J9VMThread *currentThread, j9object_t continuationObject)
 
 	Assert_VM_Null(currentThread->currentContinuation);
 
-	VM_ContinuationHelpers::swapFieldsWithContinuation(currentThread, continuation);
+
+	VM_ContinuationHelpers::swapFieldsWithContinuation(currentThread, continuation, started);
+
 	continuation->carrierThread = currentThread;
 	currentThread->currentContinuation = continuation;
 
