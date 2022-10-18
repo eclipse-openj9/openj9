@@ -70,11 +70,15 @@ public:
 		SWAP_MEMBER(decompilationStack, J9JITDecompilationInfo*, vmThread, continuation);
 		SWAP_MEMBER(j2iFrame, UDATA*, vmThread, continuation);
 
+		J9VMEntryLocalStorage *threadELS = vmThread->entryLocalStorage;
 		/* Swap the JIT GPR registers data referenced by ELS */
 		J9JITGPRSpillArea tempGPRs = continuation->jitGPRs;
-		continuation->jitGPRs = *(J9JITGPRSpillArea*)vmThread->entryLocalStorage->jitGlobalStorageBase;
-		*(J9JITGPRSpillArea*)vmThread->entryLocalStorage->jitGlobalStorageBase = tempGPRs;
-		SWAP_MEMBER(oldEntryLocalStorage, J9VMEntryLocalStorage*, vmThread->entryLocalStorage, continuation);
+		continuation->jitGPRs = *(J9JITGPRSpillArea*)threadELS->jitGlobalStorageBase;
+		*(J9JITGPRSpillArea*)threadELS->jitGlobalStorageBase = tempGPRs;
+		J9I2JState tempI2J = continuation->i2jState;
+		continuation->i2jState = threadELS->i2jState;
+		threadELS->i2jState = tempI2J;
+		SWAP_MEMBER(oldEntryLocalStorage, J9VMEntryLocalStorage*, threadELS, continuation);
 	}
 
 };
