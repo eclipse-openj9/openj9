@@ -305,7 +305,7 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 	J9VMThread *currentThread = (J9VMThread*)env;
 	J9JavaVM *vm = currentThread->javaVM;
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
-
+	UDATA timeSuccess = 0;
 	jclass currentExceptionClass = NULL;
 	char *exceptionMsg = NULL;
 	const char *nlsMsgFormat = NULL;
@@ -313,6 +313,8 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 	IDATA systemReturnCode = 0;
 	criuSetUnprivilegedFunctionPointerType criuSetUnprivileged = NULL;
 	const char *dlerrorReturnString = NULL;
+	I_64 restoreStart = -1;
+	I_64 restoreEnd = 0;
 	PORT_ACCESS_FROM_VMC(currentThread);
 
 	if (NULL == vm->criuJVMCheckpointExceptionClass) {
@@ -544,6 +546,9 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 		malloc_trim(0);
 		VM_VMHelpers::setVMState(currentThread, J9VMSTATE_CRIU_SUPPORT_CHECKPOINT_PHASE_END);
 		systemReturnCode = criu_dump();
+
+		restoreStart = j9time_current_time_nanos(&timeSuccess);
+
 		VM_VMHelpers::setVMState(currentThread, J9VMSTATE_CRIU_SUPPORT_RESTORE_PHASE_START);
 		if (!syslogFlagNone) {
 			/* Re-open the system logger, and set options with saved string value. */
@@ -701,7 +706,10 @@ freeDir:
 	}
 
 	vm->checkpointState.checkpointThread = NULL;
-
+	if (-1 != restoreStart) {
+		restoreEnd = j9time_current_time_nanos(&timeSuccess);
+		Trc_CRIU_checkpointJVMImpl_TotalRestoreTime(currentThread, restoreEnd - restoreStart);
+	}
 	Trc_CRIU_checkpointJVMImpl_Exit(currentThread);
 }
 
