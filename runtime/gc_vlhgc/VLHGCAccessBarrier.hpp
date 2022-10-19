@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -81,6 +81,8 @@ public:
 	
 	virtual bool preWeakRootSlotRead(J9VMThread *vmThread, j9object_t *srcAddress);
 	virtual bool preWeakRootSlotRead(J9JavaVM *vm, j9object_t *srcAddress);
+
+	virtual void postUnmountContinuation(J9VMThread *vmThread, j9object_t contObject);
 
 	virtual I_32 backwardReferenceArrayCopyIndex(J9VMThread *vmThread, J9IndexableObject *srcObject, J9IndexableObject *destObject, I_32 srcIndex, I_32 destIndex, I_32 lengthInSlots);
 	virtual I_32 forwardReferenceArrayCopyIndex(J9VMThread *vmThread, J9IndexableObject *srcObject, J9IndexableObject *destObject, I_32 srcIndex, I_32 destIndex, I_32 lengthInSlots);
