@@ -213,7 +213,7 @@ J9::Z::CodeGenerator::initialize()
       }
 
    static bool disableIntegerToChars = (feGetEnv("TR_DisableIntegerToChars") != NULL);
-   if (cg->getSupportsVectorRegisters() && !TR::Compiler->om.canGenerateArraylets() && !disableIntegerToChars && comp->target().cpu.isAtLeast(OMR_PROCESSOR_S390_ZNEXT))
+   if (cg->getSupportsVectorRegisters() && !TR::Compiler->om.canGenerateArraylets() && !disableIntegerToChars && comp->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z16))
       {
       cg->setSupportsIntegerToChars();
       cg->setSupportsIntegerStringSize();

@@ -13758,7 +13758,7 @@ J9::Z::TreeEvaluator::inlineIntegerToCharsForUTF16Strings(TR::Node *node, TR::Co
    }
 
  /*
-  * This method inlines calls to Integer.stringSize and Long.stringSize using the VCLZDP instruction on zNext
+  * This method inlines calls to Integer.stringSize and Long.stringSize using the VCLZDP instruction on z16
   */
 TR::Register*
 J9::Z::TreeEvaluator::inlineIntegerStringSize(TR::Node* node, TR::CodeGenerator* cg)
