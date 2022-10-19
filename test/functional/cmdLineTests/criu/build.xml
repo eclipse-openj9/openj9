@@ -49,9 +49,21 @@
 		<echo>===executable:                   ${compiler.javac}</echo>
 		<echo>===debug:                        on</echo>
 		<echo>===destdir:                      ${DEST}</echo>
-		<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
-			<compilerarg line='${addExports}' />
-		</javac>
+		<if>
+			<equals arg1="${JDK_VERSION}" arg2="8" />
+			<then>
+				<property name="excludeFile" value="org/openj9/criu/JDK11UpTimeoutAdjustmentTest.java" />
+				<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
+					<exclude name="${excludeFile}" />
+				</javac>
+			</then>
+			<else>
+				<property name="addExports" value="--add-exports=java.base/jdk.internal.misc=ALL-UNNAMED --add-exports=java.base/openj9.internal.criu=ALL-UNNAMED" />
+				<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
+					<compilerarg line="${addExports}" />
+				</javac>
+			</else>
+		</if>
 	</target>
 
 	<target name="dist" depends="compile" description="generate the distribution">

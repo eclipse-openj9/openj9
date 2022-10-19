@@ -46,6 +46,11 @@ extern "C" {
 #define J9_CREATEJAVAVM_ARGENCODING_PLATFORM 8
 #define J9_CREATEJAVAVM_START_JITSERVER 16
 
+#define HELPER_TYPE_MONITOR_WAIT_INTERRUPTABLE 1
+#define HELPER_TYPE_MONITOR_WAIT_TIMED         2
+#define HELPER_TYPE_THREAD_PARK                3
+#define HELPER_TYPE_THREAD_SLEEP               4
+
 typedef struct J9CreateJavaVMParams {
 	UDATA j2seVersion;
 	char* j2seRootDirectory;
@@ -4664,17 +4669,57 @@ initializeClass(J9VMThread *currentThread, J9Class *clazz);
 
 /* -------------------- threadpark.c ------------ */
 
+/**
+ * @param[in] vmThread the current thread
+ * @param[in] timeoutIsEpochRelative is the timeout in milliseconds relative to the beginning of the epoch
+ * @param[in] timeout nanosecond or millisecond timeout
+ */
 void
-threadParkImpl (J9VMThread* vmThread, IDATA timeoutIsEpochRelative, I_64 timeout);
+threadParkImpl(J9VMThread *vmThread, BOOLEAN timeoutIsEpochRelative, I_64 timeout);
 void
 threadUnparkImpl (J9VMThread* vmThread, j9object_t threadObject);
 
 /* -------------------- threadhelp.cpp ------------ */
 
+/**
+ * A time compensation helper for Object.wait(), Thread.sleep(), and Unsafe.park().
+ * No time compensation for these APIs if CRIU is disabled.
+ *
+ * @param[in] vmThread the current thread
+ * @param[in] threadHelperType the helper type
+ *            HELPER_TYPE_MONITOR_WAIT_INTERRUPTABLE - omrthread_monitor_wait_interruptable
+ *            HELPER_TYPE_MONITOR_WAIT_TIMED         - omrthread_monitor_wait_timed
+ *            HELPER_TYPE_THREAD_PARK                - omrthread_park
+ *            HELPER_TYPE_THREAD_SLEEP               - omrthread_sleep_interruptable
+ * @param[in] monitor the object monitor waiting on
+ * @param[in] millis milliseconds timeout
+ * @param[in] nanos nanosecond timeout
+ */
 IDATA
-monitorWaitImpl(J9VMThread *vmThread, j9object_t object, I_64 millis, I_32 nanos, UDATA interruptable);
+timeCompensationHelper(J9VMThread *vmThread, U_8 threadHelperType, omrthread_monitor_t monitor, I_64 millis, I_32 nanos);
+
+/**
+ * @param[in] vmThread current thread
+ * @param[in] object the object to wait on
+ * @param[in] millis millisecond timeout
+ * @param[in] nanos nanosecond timeout
+ * @param[in] interruptable set to FALSE to ignore interrupts
+ *
+ * @return 0 on success, non-zero on failure. This function always sets the current exception on failure.
+ */
 IDATA
-threadSleepImpl(J9VMThread* vmThread, I_64 millis, I_32 nanos);
+monitorWaitImpl(J9VMThread *vmThread, j9object_t object, I_64 millis, I_32 nanos, BOOLEAN interruptable);
+
+/**
+ * @param[in] vmThread current thread
+ * @param[in] millis millisecond timeout
+ * @param[in] nanos nanosecond timeout
+ *
+ * @return 0 on success, non-zero on failure. This function always sets the current exception on failure.
+ */
+IDATA
+threadSleepImpl(J9VMThread *vmThread, I_64 millis, I_32 nanos);
+
 omrthread_monitor_t
 getMonitorForWait (J9VMThread* vmThread, j9object_t object);
 /**

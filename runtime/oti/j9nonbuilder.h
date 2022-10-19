@@ -4799,9 +4799,9 @@ typedef struct J9InternalVMFunctions {
 	void  ( *invalidJITReturnAddress)(J9StackWalkState *walkState) ;
 	struct J9ClassLoader*  ( *internalAllocateClassLoader)(struct J9JavaVM *javaVM, j9object_t classLoaderObject) ;
 	void  ( *initializeClass)(struct J9VMThread *currentThread, struct J9Class *clazz) ;
-	void  ( *threadParkImpl)(struct J9VMThread* vmThread, IDATA timeoutIsEpochRelative, I_64 timeout) ;
+	void  ( *threadParkImpl)(struct J9VMThread* vmThread, BOOLEAN timeoutIsEpochRelative, I_64 timeout) ;
 	void  ( *threadUnparkImpl)(struct J9VMThread* vmThread, j9object_t threadObject) ;
-	IDATA  ( *monitorWaitImpl)(struct J9VMThread* vmThread, j9object_t object, I_64 millis, I_32 nanos, UDATA interruptable) ;
+	IDATA  ( *monitorWaitImpl)(struct J9VMThread* vmThread, j9object_t object, I_64 millis, I_32 nanos, BOOLEAN interruptable) ;
 	IDATA  ( *threadSleepImpl)(struct J9VMThread* vmThread, I_64 millis, I_32 nanos) ;
 	omrthread_monitor_t  ( *getMonitorForWait)(struct J9VMThread* vmThread, j9object_t object) ;
 	void  ( *jvmPhaseChange)(struct J9JavaVM* vm, UDATA phase) ;

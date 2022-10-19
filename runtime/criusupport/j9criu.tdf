@@ -34,7 +34,7 @@ TraceException=Trc_CRIU_getNativeString_getStringSizeFail Overhead=1 Level=1 Tem
 TraceException=Trc_CRIU_getNativeString_convertFail Overhead=1 Level=1 Template="Failed to convert Java string: mutf8String=%s mutf8StringSize=%zu requiredConvertedStringSize=%zd"
 
 TraceEvent=Trc_CRIU_before_checkpoint Overhead=1 Level=2 Template="Before checkpoint criu_dump(), checkpointNanoTimeMonotonic = %lld, checkpointNanoUTCTime = %llu"
-TraceEvent=Trc_CRIU_after_checkpoint Overhead=1 Level=2 Template="After checkpoint criu_dump(), restoreNanoUTCTime = %llu, checkpointNanoUTCTime = %llu,  restoreNanoTimeMonotonic = %lld, checkpointNanoTimeMonotonic = %lld, checkpointNanoTimeMonotonic = %lld, checkpointRestoreTimeDelta = %lld"
+TraceEvent=Trc_CRIU_after_checkpoint Overhead=1 Level=2 Template="After checkpoint criu_dump(), restoreNanoUTCTime = %llu, checkpointNanoUTCTime = %llu, checkpointRestoreTimeDelta = %lld, restoreNanoTimeMonotonic = %lld, checkpointNanoTimeMonotonic = %lld, nanoTimeMonotonicClockDelta = %lld"
 TraceEntry=Trc_CRIU_checkpointJVMImpl_Entry Overhead=1 Level=2 Template="Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl"
 TraceExit=Trc_CRIU_checkpointJVMImpl_Exit Overhead=1 Level=2 Template="Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl"
 TraceEvent=Trc_CRIU_checkpointJVMImpl_checkIfSafeToCheckpointBlocked Overhead=1 Level=2 Template="Checkpoint blocked because thread=%p is in method=%p marked as not safe to checkpoint"

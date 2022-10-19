@@ -305,6 +305,7 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 	J9VMThread *currentThread = (J9VMThread*)env;
 	J9JavaVM *vm = currentThread->javaVM;
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+	J9PortLibrary *portLibrary = vm->portLibrary;
 
 	jclass currentExceptionClass = NULL;
 	char *exceptionMsg = NULL;
@@ -510,7 +511,7 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 		}
 
 		vm->checkpointState.checkpointRestoreTimeDelta = 0;
-		vm->portLibrary->nanoTimeMonotonicClockDelta = 0;
+		portLibrary->nanoTimeMonotonicClockDelta = 0;
 		checkpointNanoTimeMonotonic = j9time_nano_time();
 		checkpointNanoUTCTime = j9time_current_time_nanos(&success);
 		if (0 == success) {
@@ -569,8 +570,6 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 		 * which is expected to be accurate in scenarios such as host rebooting, CRIU image moving across timezones.
 		 */
 		vm->checkpointState.checkpointRestoreTimeDelta = (I_64)(restoreNanoUTCTime - checkpointNanoUTCTime);
-		Trc_CRIU_after_checkpoint(currentThread, restoreNanoUTCTime, checkpointNanoUTCTime, vm->checkpointState.checkpointRestoreTimeDelta,
-			restoreNanoTimeMonotonic, checkpointNanoTimeMonotonic, vm->checkpointState.checkpointRestoreTimeDelta);
 		if (vm->checkpointState.checkpointRestoreTimeDelta < 0) {
 			/* A negative value was calculated for checkpointRestoreTimeDelta,
 			 * Trc_CRIU_before_checkpoint & Trc_CRIU_after_checkpoint can be used for further investigation.
@@ -588,7 +587,9 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 		 * if there is no change for j9time_nano_time() start point.
 		 * This value might be negative.
 		 */
-		vm->portLibrary->nanoTimeMonotonicClockDelta = restoreNanoTimeMonotonic - checkpointNanoTimeMonotonic;
+		portLibrary->nanoTimeMonotonicClockDelta = restoreNanoTimeMonotonic - checkpointNanoTimeMonotonic;
+		Trc_CRIU_after_checkpoint(currentThread, restoreNanoUTCTime, checkpointNanoUTCTime, vm->checkpointState.checkpointRestoreTimeDelta,
+			restoreNanoTimeMonotonic, checkpointNanoTimeMonotonic, portLibrary->nanoTimeMonotonicClockDelta);
 
 		/* We can only end up here if the CRIU restore was successful */
 		isAfterCheckpoint = TRUE;
