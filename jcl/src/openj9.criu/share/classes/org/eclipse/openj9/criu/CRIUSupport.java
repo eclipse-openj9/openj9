@@ -477,7 +477,7 @@ public final class CRIUSupport {
 	 *
 	 * TODO: Additional JVM capabilities will be added to prevent certain deadlock scenarios
 	 */
-	public CRIUSupport registerPreSnapshotHook(Runnable hook) {
+	public CRIUSupport registerPreCheckpointHook(Runnable hook) {
 		if (hook != null) {
 			J9InternalCheckpointHookAPI.registerPreCheckpointHook(USER_HOOKS_PRIORITY, "User pre-checkpoint hook", ()->{ //$NON-NLS-1$
 				try {

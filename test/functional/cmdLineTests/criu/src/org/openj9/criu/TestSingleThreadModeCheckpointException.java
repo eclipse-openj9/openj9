@@ -44,13 +44,13 @@ public class TestSingleThreadModeCheckpointException {
 				CRIUTestUtils.deleteCheckpointDirectory(imagePath);
 				CRIUTestUtils.createCheckpointDirectory(imagePath);
 				CRIUSupport criu = new CRIUSupport(imagePath);
-				criu.registerPreSnapshotHook(new Runnable() {
+				criu.registerPreCheckpointHook(new Runnable() {
 					public void run() {
-						CRIUTestUtils.showThreadCurrentTime("PreSnapshotHook() before synchronized on " + lock);
+						CRIUTestUtils.showThreadCurrentTime("PreCheckpointHook() before synchronized on " + lock);
 						synchronized (lock) {
-							CRIUTestUtils.showThreadCurrentTime("PreSnapshotHook() within synchronized on " + lock);
+							CRIUTestUtils.showThreadCurrentTime("PreCheckpointHook() within synchronized on " + lock);
 						}
-						CRIUTestUtils.showThreadCurrentTime("PreSnapshotHook() after synchronized on " + lock);
+						CRIUTestUtils.showThreadCurrentTime("PreCheckpointHook() after synchronized on " + lock);
 					}
 				});
 
