@@ -482,7 +482,7 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 
 		toggleSuspendOnJavaThreads(currentThread, TRUE);
 
-		vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_CRIU_SINGLE_THREAD_MODE;
+		vm->checkpointState.criuFlags |= J9_CHECKPOINT_STATE_SINGLE_THREADED_MODE;
 
 		releaseSafeOrExcusiveVMAccess(currentThread, vmFuncs, safePoint);
 
@@ -612,6 +612,13 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 			goto wakeJavaThreads;
 		}
 
+		/* Single threaded mode needs to be turned off before delayed lock related
+		 * events are sent as a thread which is in a wait() call it will attempt to
+		 * re-acquire the monitor after it is notified. Should that happen in single
+		 * threaded mode an exception will be thrown.
+		 */
+		vm->checkpointState.criuFlags &= ~J9_CHECKPOINT_STATE_SINGLE_THREADED_MODE;
+
 		if (FALSE == vmFuncs->runDelayedLockRelatedOperations(currentThread)) {
 			currentExceptionClass = vm->criuRestoreExceptionClass;
 			systemReturnCode = 0;
@@ -623,8 +630,6 @@ wakeJavaThreads:
 		acquireSafeOrExcusiveVMAccess(currentThread, vmFuncs, safePoint);
 
 wakeJavaThreadsWithExclusiveVMAccess:
-
-		vm->extendedRuntimeFlags2 &= ~J9_EXTENDED_RUNTIME2_CRIU_SINGLE_THREAD_MODE;
 
 		toggleSuspendOnJavaThreads(currentThread, FALSE);
 
