@@ -38,6 +38,7 @@
 #include "HeapRegionIterator.hpp"
 #include "HeapRegionManager.hpp"
 #include "GlobalCollector.hpp"
+#include "ObjectAccessBarrier.hpp"
 #include "ObjectAllocationInterface.hpp"
 #include "ObjectModel.hpp"
 #include "OwnableSynchronizerObjectBuffer.hpp"
@@ -51,20 +52,6 @@
 #include "VMAccess.hpp"
 
 extern "C" {
-
-void
-preMountContinuation(J9VMThread *vmThread, j9object_t object)
-{
-	/* need read barrier to handle concurrent scavenger and gcpolicy:metronome case */
-}
-
-void
-postUnmountContinuation(J9VMThread *vmThread, j9object_t object)
-{
-	/* Conservatively assume that via mutations of stack slots (which are not subject to access barriers),
-	 * all post-write barriers have been triggered on this Continuation object, since it's been mounted. */
-	vmThread->javaVM->memoryManagerFunctions->J9WriteBarrierBatch(vmThread, object);
-}
 
 UDATA
 j9gc_modron_global_collect(J9VMThread *vmThread)
