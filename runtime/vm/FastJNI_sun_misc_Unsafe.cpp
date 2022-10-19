@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,7 +31,7 @@ extern "C" {
 void JNICALL
 Fast_sun_misc_Unsafe_park(J9VMThread *currentThread, jboolean isAbsolute, jlong time)
 {
-	threadParkImpl(currentThread, (IDATA)isAbsolute, (I_64)time);
+	threadParkImpl(currentThread, isAbsolute ? TRUE : FALSE, (I_64)time);
 }
 
 /* sun.misc.Unsafe: public native void unpark(java.lang.Object thread); */

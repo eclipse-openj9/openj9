@@ -361,7 +361,7 @@ Java_sun_misc_Unsafe_park(JNIEnv *env, jobject receiver, jboolean isAbsolute, jl
 	J9JavaVM *vm = currentThread->javaVM;
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 	vmFuncs->internalEnterVMFromJNI(currentThread);
-	vmFuncs->threadParkImpl(currentThread, (IDATA)isAbsolute, (I_64)time);
+	vmFuncs->threadParkImpl(currentThread, isAbsolute ? TRUE : FALSE, (I_64)time);
 	vmFuncs->internalExitVMToJNI(currentThread);
 }
 
