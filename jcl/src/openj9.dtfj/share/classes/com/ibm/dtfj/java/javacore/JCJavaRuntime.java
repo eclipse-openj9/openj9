@@ -1,6 +1,6 @@
-/*[INCLUDE-IF Sidecar18-SE]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 /*******************************************************************************
- * Copyright (c) 2007, 2017 IBM Corp. and others
+ * Copyright IBM Corp. and others 2007
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,32 +22,32 @@
  *******************************************************************************/
 package com.ibm.dtfj.java.javacore;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Vector;
 
 import com.ibm.dtfj.image.CorruptDataException;
 import com.ibm.dtfj.image.DataUnavailable;
 import com.ibm.dtfj.image.ImagePointer;
-import com.ibm.dtfj.image.MemoryAccessException;
 import com.ibm.dtfj.image.javacore.JCCorruptData;
 import com.ibm.dtfj.image.javacore.JCImageAddressSpace;
 import com.ibm.dtfj.image.javacore.JCImageProcess;
 import com.ibm.dtfj.image.javacore.JCImageThread;
 import com.ibm.dtfj.image.javacore.LookupKey;
-import com.ibm.dtfj.java.JavaClass;
 import com.ibm.dtfj.java.JavaObject;
 import com.ibm.dtfj.java.JavaRuntime;
 import com.ibm.dtfj.java.JavaVMInitArgs;
 import com.ibm.dtfj.javacore.builder.IBuilderData;
 
 /**
- * A javacore-based implementation of 
+ * A javacore-based implementation of
  * JavaRuntime. This supports partial object creation, meaning
  * that a javaclass, javathread, etc.. can be partially constructed and
  * stored, and at a later time during the javacore parsing, when
@@ -59,42 +59,42 @@ import com.ibm.dtfj.javacore.builder.IBuilderData;
  * <br><br>
  * Rudimentary multiplatform support is also added in the form of unique
  * runtime ids that must be passed during construction.
- * 
+ *
  * @see com.ibm.dtfj.java.javacore.JCJavaClass
  * @see com.ibm.dtfj.java.javacore.JCJavaClassLoader
  * @see com.ibm.dtfj.java.javacore.JCJavaThread
  * @see com.ibm.dtfj.java.javacore.JCJavaMonitor
- * 
+ *
  * @see com.ibm.dtfj.java.JavaRuntime
  */
 public class JCJavaRuntime implements JavaRuntime {
-	
-	private Vector fHeaps;
+
+	private List<JCJavaHeap> fHeaps;
 	private Vector fCompiledMethods;
 	private HashMap fJavaClassLoaders;
 	private HashMap fJavaClasses;
 	private HashMap fMonitors;
 	private HashMap fJavaThreads;
 	private HashMap fJavaClassIDs;
+	private Map<String, Object> fTraceBuffers;
 	private JCJavaVMInitArgs fJavaVMInitArgs;
 	private List fMemoryCategories;
-	
+
 	private String fFullVersion;
 	private String fVersion;
 	private String fID;
-	
+
 	private final LookupKey fIDLookupKey;
 	private final JCImageProcess fImageProcess;
 	private final JCImageAddressSpace fImageAddressSpace;
-	
+
 	private boolean isJITEnabled = false;
 	private Properties jitOptions = new Properties();
-	
+
 	private long fStartTime;
 	private boolean fStartTimeSet = false;
 	private long fStartTimeNanos;
 	private boolean fStartTimeNanosSet = false;
-	
 
 	public JCJavaRuntime(JCImageProcess imageProcess, String id) throws JCInvalidArgumentsException {
 		if (imageProcess == null) {
@@ -106,8 +106,8 @@ public class JCJavaRuntime implements JavaRuntime {
 		fID = id;
 		fImageProcess = imageProcess;
 		fImageAddressSpace = imageProcess.getImageAddressSpace();
-		
-		fHeaps = new Vector();
+
+		fHeaps = new ArrayList<>();
 		fCompiledMethods = new Vector();
 		fJavaClassLoaders = new LinkedHashMap();
 		fMonitors = new LinkedHashMap();
@@ -115,13 +115,14 @@ public class JCJavaRuntime implements JavaRuntime {
 		fJavaClasses = new HashMap();
 		fJavaClassIDs = new HashMap();
 		fMemoryCategories = new LinkedList();
-		
+		fTraceBuffers = new HashMap<>();
+
 		fFullVersion = null;
 		fVersion = null;
 		fIDLookupKey = new LookupKey(IBuilderData.NOT_AVAILABLE);
 		imageProcess.addRuntime(this);
 	}
-	
+
 	/**
 	 * @see com.ibm.dtfj.java.JavaRuntime#getCompiledMethods()
 	 */
@@ -142,14 +143,14 @@ public class JCJavaRuntime implements JavaRuntime {
 	public Iterator getJavaClassLoaders() {
 		return fJavaClassLoaders.values().iterator();
 	}
-	
+
 	/**
 	 * @see com.ibm.dtfj.java.JavaRuntime#getMonitors()
 	 */
 	public Iterator getMonitors() {
 		return fMonitors.values().iterator();
 	}
-	
+
 	/**
 	 * @see com.ibm.dtfj.java.JavaRuntime#getThreads()
 	 */
@@ -158,7 +159,7 @@ public class JCJavaRuntime implements JavaRuntime {
 	}
 
 	/**
-	 *  @see com.ibm.dtfj.java.JavaRuntime#getJavaVMInitArgs()
+	 * @see com.ibm.dtfj.java.JavaRuntime#getJavaVMInitArgs()
 	 */
 	public JavaVMInitArgs getJavaVMInitArgs() throws DataUnavailable, CorruptDataException {
 		if (fJavaVMInitArgs == null) {
@@ -167,18 +168,22 @@ public class JCJavaRuntime implements JavaRuntime {
 			return fJavaVMInitArgs;
 		}
 	}
-	
+
 	/**
-	 *  @see com.ibm.dtfj.java.JavaRuntime#getJavaVM()
+	 * @see com.ibm.dtfj.java.JavaRuntime#getJavaVM()
 	 */
 	public ImagePointer getJavaVM() throws CorruptDataException {
 		throw new CorruptDataException(new JCCorruptData(null));
 	}
 
 	/**
-	 *  @see com.ibm.dtfj.java.JavaRuntime#getTraceBuffer()
+	 * @see com.ibm.dtfj.java.JavaRuntime#getTraceBuffer(String bufferName, boolean formatted)
 	 */
-	public Object getTraceBuffer(String arg0, boolean arg1) throws CorruptDataException {
+	@Override
+	public Object getTraceBuffer(String bufferName, boolean formatted) throws CorruptDataException {
+		if (fTraceBuffers.containsKey(bufferName)) {
+			return fTraceBuffers.get(bufferName);
+		}
 		throw new CorruptDataException(new JCCorruptData(null));
 	}
 
@@ -201,13 +206,13 @@ public class JCJavaRuntime implements JavaRuntime {
 		}
 		return fVersion;
 	}
-	
+
 	/*
 	 * ****************
 	 * NON-DTFJ methods
 	 * ****************
 	 */
-	
+
 	/**
 	 * NON-DTFJ
 	 * <br>
@@ -215,12 +220,12 @@ public class JCJavaRuntime implements JavaRuntime {
 	 * <br><br>
 	 * May be used in multiple runtime environments, where each runtime in a javacore
 	 * is identified uniquely. This method is generally just used during the building process only.
-	 * 
+	 *
 	 */
 	public String getInternalID() {
 		return fID;
 	}
-	
+
 	/**
 	 * NON-DTFJ
 	 * <br>
@@ -235,7 +240,7 @@ public class JCJavaRuntime implements JavaRuntime {
 		}
 		fJavaClassLoaders.put(new LookupKey(((JCJavaClassLoader)javaClassLoader).getPointerID().getAddress()), javaClassLoader);
 	}
-	
+
 	/**
 	 * NON-DTFJ
 	 * <br>
@@ -248,7 +253,7 @@ public class JCJavaRuntime implements JavaRuntime {
 		fIDLookupKey.setKey(clLoaderID);
 		return (JCJavaClassLoader) fJavaClassLoaders.get(fIDLookupKey);
 	}
-	
+
 	/**
 	 * NON-DTFJ
 	 * <br>
@@ -263,7 +268,7 @@ public class JCJavaRuntime implements JavaRuntime {
 		}
 		fMonitors.put(new LookupKey(monitor.getID().getAddress()), monitor);
 	}
-	
+
 	/**
 	 * NON-DTFJ
 	 * <br>
@@ -290,7 +295,7 @@ public class JCJavaRuntime implements JavaRuntime {
 		}
 		fJavaThreads.put(new LookupKey(javaThread.getThreadID().getAddress()), javaThread);
 	}
-	
+
 	/**
 	 * NON-DTFJ
 	 * <br>
@@ -330,7 +335,7 @@ public class JCJavaRuntime implements JavaRuntime {
 		}
 		return (JCJavaThread) javaThread;
 	}
-	
+
 	/**
 	 * NON-DTFJ
 	 * <br>
@@ -341,7 +346,7 @@ public class JCJavaRuntime implements JavaRuntime {
 	public JCImageProcess getImageProcess() {
 		return fImageProcess;
 	}
-	
+
 	/**
 	 * NON-DTFJ
 	 * <br>
@@ -351,7 +356,7 @@ public class JCJavaRuntime implements JavaRuntime {
 	 * are used for lookups while building the runtime object. When a valid javaclass is added, it gets
 	 * added at least the name-based map, and may be added to the ID-based map if the ID is available. The
 	 * class name of the java class is a requirement, so this field must be set in the java class being passed.
-	 * 
+	 *
 	 * @param javaClass must not be null or exception thrown
 	 * @throws JCRegistrationFailureException if java class is null
 	 */
@@ -378,7 +383,7 @@ public class JCJavaRuntime implements JavaRuntime {
 	public JCJavaClass findJavaClass(String javaClassName) {
 		return (JCJavaClass) fJavaClasses.get(javaClassName);
 	}
-	
+
 	/**
 	 * NON-DTFJ
 	 * <br>
@@ -386,7 +391,7 @@ public class JCJavaRuntime implements JavaRuntime {
 	 * <br><br>
 	 * In some cases, all that is available is a class ID, so it should be possible to retrieve
 	 * a class based on just an ID.
-	 * 
+	 *
 	 * @param id class address
 	 * @return found class or null if not found
 	 */
@@ -398,7 +403,7 @@ public class JCJavaRuntime implements JavaRuntime {
 		}
 		return javaClass;
 	}
-	
+
 	/**
 	 * NON-DTFJ
 	 * <br>
@@ -421,7 +426,7 @@ public class JCJavaRuntime implements JavaRuntime {
 	public JavaObject getObjectAtAddress(ImagePointer address)	throws DataUnavailable {
 		throw new DataUnavailable("Object information not available.");
 	}
-	
+
 	/**
 	 * NON-DTFJ
 	 * <br>
@@ -456,11 +461,11 @@ public class JCJavaRuntime implements JavaRuntime {
 	public void setJITEnabled(boolean enabled) {
 		isJITEnabled = enabled;
 	}
-	
+
 	public void addJITProperty(String name, String value) {
 		jitOptions.put(name, value);
 	}
-	
+
 	public Properties getJITProperties() throws DataUnavailable,	CorruptDataException {
 		if(isJITEnabled) {
 			return jitOptions;
@@ -484,15 +489,39 @@ public class JCJavaRuntime implements JavaRuntime {
 			throw new DataUnavailable("JVM start nanotime not available");
 		}
 	}
-	
+
 	public void setStartTime(long startTime) {
 		fStartTime = startTime;
 		fStartTimeSet = true;
 	}
-	
+
 	public void setStartTimeNanos(long nanoTime) {
 		fStartTimeNanos = nanoTime;
 		fStartTimeNanosSet = true;
 	}
-	
+
+	/**
+	 * Add a JavaHeap to the runtime.
+	 * NON-DTFJ
+	 * <br>
+	 * <b>For internal building purposes only</b>. Do not call outside the DTFJ implementation.
+	 * <br><br>
+	 * @param heap the new heap to add to the runtime
+	 */
+	public void addJavaHeap(JCJavaHeap heap) {
+		fHeaps.add(heap);
+	}
+
+	/**
+	 * Add a trace buffer to the runtime.
+	 * NON-DTFJ
+	 * <br>
+	 * <b>For internal building purposes only</b>. Do not call outside the DTFJ implementation.
+	 * <br><br>
+	 * @param id the name of the trace buffer
+	 * @param buffer the buffer
+	 */
+	public void addTraceBuffer(String id, Object buffer) {
+		fTraceBuffers.put(id, buffer);
+	}
 }

@@ -1,6 +1,6 @@
-/*[INCLUDE-IF Sidecar18-SE]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 /*******************************************************************************
- * Copyright (c) 2007, 2017 IBM Corp. and others
+ * Copyright IBM Corp. and others 2007
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,6 +34,8 @@ import com.ibm.dtfj.javacore.parser.j9.section.classloader.ClassLoaderTagParser;
 import com.ibm.dtfj.javacore.parser.j9.section.common.CommonTagParser;
 import com.ibm.dtfj.javacore.parser.j9.section.environment.EnvironmentSectionParser;
 import com.ibm.dtfj.javacore.parser.j9.section.environment.EnvironmentTagParser;
+import com.ibm.dtfj.javacore.parser.j9.section.gchistory.GCHistorySectionParser;
+import com.ibm.dtfj.javacore.parser.j9.section.gchistory.GCHistoryTagParser;
 import com.ibm.dtfj.javacore.parser.j9.section.memory.MemorySectionParser;
 import com.ibm.dtfj.javacore.parser.j9.section.memory.MemoryTagParser;
 import com.ibm.dtfj.javacore.parser.j9.section.monitor.MonitorSectionParser;
@@ -48,6 +50,8 @@ import com.ibm.dtfj.javacore.parser.j9.section.stack.StackTagParser;
 import com.ibm.dtfj.javacore.parser.j9.section.thread.ThreadSectionParser;
 import com.ibm.dtfj.javacore.parser.j9.section.thread.ThreadSovSectionParserPart;
 import com.ibm.dtfj.javacore.parser.j9.section.thread.ThreadTagParser;
+import com.ibm.dtfj.javacore.parser.j9.section.threadhistory.ThreadHistorySectionParser;
+import com.ibm.dtfj.javacore.parser.j9.section.threadhistory.ThreadHistoryTagParser;
 import com.ibm.dtfj.javacore.parser.j9.section.title.TitleSectionParser;
 import com.ibm.dtfj.javacore.parser.j9.section.title.TitleTagParser;
 
@@ -58,7 +62,7 @@ import com.ibm.dtfj.javacore.parser.j9.section.title.TitleTagParser;
  *
  */
 public class DTFJComponentLoader {
-	
+
 	public List loadSections()	{
 		ArrayList sections = getSections();
 		if (sections == null) {
@@ -66,13 +70,13 @@ public class DTFJComponentLoader {
 		}
 		J9TagManager.getCurrent().loadTagParsers(getTagParsers(sections));
 		SovereignParserPartManager.getCurrent().loadSovParts(getSovParts(sections));
-		return getSectionParsers(sections);	
+		return getSectionParsers(sections);
 	}
 
 	/**
-	 * 
+	 *
 	 * @param sections
-	 * 
+	 *
 	 */
 	private ArrayList getTagParsers(ArrayList sections) {
 		ArrayList tagParsers = null;
@@ -90,11 +94,11 @@ public class DTFJComponentLoader {
 		}
 		return tagParsers;
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * @param sections
-	 * 
+	 *
 	 */
 	private ArrayList getSovParts(ArrayList sections) {
 		ArrayList sovParts = null;
@@ -112,11 +116,11 @@ public class DTFJComponentLoader {
 		}
 		return sovParts;
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * @param sections
-	 * 
+	 *
 	 */
 	private ArrayList getSectionParsers(ArrayList sections) {
 		ArrayList sectionParsers = null;
@@ -134,10 +138,10 @@ public class DTFJComponentLoader {
 		}
 		return sectionParsers;
 	}
-	
+
 	/**
 	 * Hardcoded for now
-	 * 
+	 *
 	 */
 	private ArrayList getSections() {
 		ArrayList loadedSections = new ArrayList();
@@ -153,15 +157,19 @@ public class DTFJComponentLoader {
 		loadedSections.add(section);
 		section = new Section(new MemorySectionParser(), new MemoryTagParser(),  null);
 		loadedSections.add(section);
+		section = new Section(new GCHistorySectionParser(), new GCHistoryTagParser(),  null);
+		loadedSections.add(section);
 		section = new Section(new MonitorSectionParser(), new MonitorTagParser(), new MonitorSovSectionParserPart());
 		loadedSections.add(section);
 		section = new Section(new ThreadSectionParser(), new ThreadTagParser(),  new ThreadSovSectionParserPart());
+		loadedSections.add(section);
+		section = new Section(new ThreadHistorySectionParser(), new ThreadHistoryTagParser(),  null);
 		loadedSections.add(section);
 		section = new Section(new StackSectionParser(), new StackTagParser(), null);
 		loadedSections.add(section);
 		section = new Section(new ClassLoaderSectionParser(), new ClassLoaderTagParser(),  null);
 		loadedSections.add(section);
-		
+
 		return loadedSections;
 	}
 }
