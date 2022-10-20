@@ -4774,47 +4774,6 @@ void J9::X86::TreeEvaluator::inlineRecursiveMonitor(
    og.endOutlinedInstructionSequence();
    }
 
-void J9::X86::TreeEvaluator::transactionalMemoryJITMonitorEntry(TR::Node           *node,
-                                                               TR::CodeGenerator  *cg,
-                                                               TR::LabelSymbol     *startLabel,
-                                                               TR::LabelSymbol     *snippetLabel,
-                                                               TR::LabelSymbol     *JITMonitorEnterSnippetLabel,
-                                                               TR::Register       *objectReg,
-                                                               int               lwOffset)
-
-   {
-      TR::LabelSymbol *txJITMonitorEntryLabel = snippetLabel;
-      TR::LabelSymbol *outlinedStartLabel = generateLabelSymbol(cg);
-      TR::LabelSymbol *outlinedEndLabel = generateLabelSymbol(cg);
-
-      outlinedStartLabel->setStartInternalControlFlow();
-      outlinedEndLabel->setEndInternalControlFlow();
-
-      TR_OutlinedInstructionsGenerator og(txJITMonitorEntryLabel, node, cg);
-
-      TR::Register *counterReg = cg->allocateRegister();
-      generateRegImmInstruction(TR::InstOpCode::MOV4RegImm4, node, counterReg, 1024, cg);
-      TR::LabelSymbol *spinLabel = outlinedStartLabel;
-      generateLabelInstruction(TR::InstOpCode::label, node, spinLabel, cg);
-
-      generateInstruction(TR::InstOpCode::PAUSE, node, cg);
-      generateRegInstruction(TR::InstOpCode::DEC4Reg, node, counterReg, cg); // might need to consider 32bits later
-      generateLabelInstruction(TR::InstOpCode::JE4, node, JITMonitorEnterSnippetLabel, cg);
-      TR::MemoryReference *objLockRef = generateX86MemoryReference(objectReg, lwOffset, cg);
-      generateMemImmInstruction(TR::InstOpCode::CMP4MemImm4, node, objLockRef, 0, cg);
-      generateLabelInstruction(TR::InstOpCode::JNE4, node, spinLabel, cg);
-      generateLabelInstruction(TR::InstOpCode::JMP4, node, startLabel, cg);
-
-      TR::RegisterDependencyConditions *deps = generateRegisterDependencyConditions((uint8_t)0, 1, cg);
-      deps->addPostCondition(cg->getVMThreadRegister(), TR::RealRegister::ebp, cg);
-      deps->stopAddingConditions();
-      generateLabelInstruction(TR::InstOpCode::label, node, outlinedEndLabel, cg);
-
-      cg->stopUsingRegister(counterReg);
-
-      og.endOutlinedInstructionSequence();
-   }
-
 void
 J9::X86::TreeEvaluator::generateCheckForValueMonitorEnterOrExit(
       TR::Node *node,
@@ -4890,7 +4849,7 @@ J9::X86::TreeEvaluator::VMmonentEvaluator(
 
    static const char *disableInlineRecursiveEnv = feGetEnv("TR_DisableInlineRecursiveMonitor");
    bool inlineRecursive = disableInlineRecursiveEnv ? false : true;
-   if (comp->getOption(TR_X86HLE) || lwOffset <= 0)
+   if (lwOffset <= 0)
      inlineRecursive = false;
 
    // Evaluate the object reference
@@ -4978,16 +4937,8 @@ J9::X86::TreeEvaluator::VMmonentEvaluator(
          }
       }
 
-   if (cg->comp()->target().is64Bit() && cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_X86_HLE) && comp->getOption(TR_X86HLE))
-      {
-      TR::LabelSymbol *JITMonitorEntrySnippetLabel = generateLabelSymbol(cg);
-      TR::TreeEvaluator::transactionalMemoryJITMonitorEntry(node, cg, startLabel, snippetLabel, JITMonitorEntrySnippetLabel, objectReg, lwOffset);
-      outlinedHelperCall = new (cg->trHeapMemory()) TR_OutlinedInstructions(helperCallNode, TR::call, NULL,
-                                                            JITMonitorEntrySnippetLabel, (exitLabel) ? exitLabel : fallThruLabel, cg);
-      }
-   else
-      outlinedHelperCall = new (cg->trHeapMemory()) TR_OutlinedInstructions(helperCallNode, TR::call, NULL,
-                                                         snippetLabel, (exitLabel) ? exitLabel : snippetFallThruLabel, cg);
+   outlinedHelperCall = new (cg->trHeapMemory()) TR_OutlinedInstructions(helperCallNode, TR::call, NULL,
+                                                      snippetLabel, (exitLabel) ? exitLabel : snippetFallThruLabel, cg);
 
    if (helperCallNode != node)
       helperCallNode->recursivelyDecReferenceCount();
@@ -5033,14 +4984,10 @@ J9::X86::TreeEvaluator::VMmonentEvaluator(
    if (cg->comp()->target().is64Bit() && !fej9->generateCompressedLockWord())
       {
       op = cg->comp()->target().isSMP() ? TR::InstOpCode::LCMPXCHG8MemReg : TR::InstOpCode::CMPXCHG8MemReg;
-      if (cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_X86_HLE) && comp->getOption(TR_X86HLE))
-         op = cg->comp()->target().isSMP() ? TR::InstOpCode::XALCMPXCHG8MemReg : TR::InstOpCode::XACMPXCHG8MemReg;
       }
    else
       {
       op = cg->comp()->target().isSMP() ? TR::InstOpCode::LCMPXCHG4MemReg : TR::InstOpCode::CMPXCHG4MemReg;
-      if (cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_X86_HLE) && comp->getOption(TR_X86HLE))
-         op = cg->comp()->target().isSMP() ? TR::InstOpCode::XALCMPXCHG4MemReg : TR::InstOpCode::XACMPXCHG4MemReg;
       }
 
    TR::Register *objectClassReg = NULL;
@@ -5491,7 +5438,7 @@ TR::Register
 
    static const char *disableInlineRecursiveEnv = feGetEnv("TR_DisableInlineRecursiveMonitor");
    bool inlineRecursive = disableInlineRecursiveEnv ? false : true;
-   if (comp->getOption(TR_X86HLE) || lwOffset <= 0)
+   if (lwOffset <= 0)
      inlineRecursive = false;
 
    // Evaluate the object reference
@@ -5746,12 +5693,8 @@ TR::Register
 
    if (!node->isReadMonitor() && !reservingLock)
       {
-      if (cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_X86_HLE) && comp->getOption(TR_X86HLE))
-         generateMemImmInstruction(TR::InstOpCode::XRSMemImm4(gen64BitInstr),
-            node, getMemoryReference(objectClassReg, objectReg, lwOffset, cg), 0, cg);
-      else
-         generateMemImmInstruction(TR::InstOpCode::SMemImm4(gen64BitInstr), node,
-            getMemoryReference(objectClassReg, objectReg, lwOffset, cg), 0, cg);
+      generateMemImmInstruction(TR::InstOpCode::SMemImm4(gen64BitInstr), node,
+         getMemoryReference(objectClassReg, objectReg, lwOffset, cg), 0, cg);
       }
 
    if (reservingLock && !TR::Options::_aggressiveLockReservation)

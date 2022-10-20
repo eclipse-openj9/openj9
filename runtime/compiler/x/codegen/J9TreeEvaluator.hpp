@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -113,7 +113,6 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
    *     object is reference type or value type or value based class type.
    */
    static void generateCheckForValueMonitorEnterOrExit(TR::Node *node, int32_t classFlag, TR::LabelSymbol *snippetLabel, TR::CodeGenerator *cg);
-   static void transactionalMemoryJITMonitorEntry(TR::Node *node, TR::CodeGenerator *cg, TR::LabelSymbol *startLabel, TR::LabelSymbol *snippetLabel, TR::LabelSymbol *JITMonitorEnterSnippetLabel, TR::Register *objectReg, int lwoffset);
    static void generateValueTracingCode(TR::Node *node, TR::Register *vmThreadReg, TR::Register *scratchReg, TR::Register *valueRegHigh, TR::Register *valueRegLow, TR::CodeGenerator *cg);
    static void generateValueTracingCode(TR::Node *node, TR::Register *vmThreadReg, TR::Register *scratchReg, TR::Register *valueReg, TR::CodeGenerator *cg);
    static bool monEntryExitHelper(bool entry, TR::Node* node, bool reservingLock, bool normalLockPreservingReservation, TR_RuntimeHelper &helper, TR::CodeGenerator* cg);
