@@ -550,29 +550,6 @@ static TR_OutlinedInstructions *generateArrayletReference(
    return arrayletRef;
    }
 
-static TR::Instruction *generatePrefetchAfterHeaderAccess(TR::Node              *node,
-                                                         TR::Register          *objectReg,
-                                                         TR::CodeGenerator     *cg)
-   {
-   TR::Compilation *comp = cg->comp();
-   TR::Instruction *instr = NULL;
-
-   static const char *prefetch = feGetEnv("TR_EnableSoftwarePrefetch");
-   TR_ASSERT_FATAL(comp->compileRelocatableCode() || comp->isOutOfProcessCompilation() || comp->compilePortableCode() || comp->target().cpu.is(OMR_PROCESSOR_X86_INTELCORE2) == cg->getX86ProcessorInfo().isIntelCore2(), "isIntelCore2() failed\n");
-   if (prefetch && comp->getMethodHotness()>=scorching && comp->target().cpu.is(OMR_PROCESSOR_X86_INTELCORE2))
-      {
-      int32_t fieldOffset = 0;
-      if (TR::TreeEvaluator::loadLookaheadAfterHeaderAccess(node, fieldOffset, cg))
-         {
-         if (fieldOffset > 32)
-            instr = generateMemInstruction(TR::InstOpCode::PREFETCHT0, node, generateX86MemoryReference(objectReg, fieldOffset, cg), cg);
-
-         //printf("found a field load after monitor field at field offset %d\n", fieldOffset);
-         }
-      }
-
-   return instr;
-   }
 
 // 32-bit float/double convert to long
 //
@@ -4922,8 +4899,6 @@ J9::X86::TreeEvaluator::VMmonentEvaluator(
    TR::Register *eaxReal   = cg->allocateRegister();
    TR::Register *scratchReg = NULL;
    uint32_t numDeps = 3; // objectReg, eax, ebp
-
-   generatePrefetchAfterHeaderAccess (node, objectReg, cg);
 
    cg->setImplicitExceptionPoint(NULL);
 
