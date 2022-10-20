@@ -4887,8 +4887,6 @@ J9::X86::TreeEvaluator::VMmonentEvaluator(
    TR::Compilation *comp = cg->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
    static const char *noInline = feGetEnv("TR_NoInlineMonitor");
-   static const char *firstMonEnt = feGetEnv("TR_FirstMonEnt");
-   static int32_t monEntCount = 0;
    bool reservingLock = false;
    bool normalLockPreservingReservation = false;
    bool dummyMethodMonitor = false;
@@ -4900,8 +4898,7 @@ J9::X86::TreeEvaluator::VMmonentEvaluator(
        (comp->getOption(TR_FullSpeedDebug) && node->isSyncMethodMonitor()) ||
        noInline ||
        (isMonitorValueBasedOrValueType == TR_yes) ||
-       comp->getOption(TR_DisableInlineMonEnt) ||
-       (firstMonEnt && (*firstMonEnt-'0') > monEntCount++))
+       comp->getOption(TR_DisableInlineMonEnt))
       {
       // Don't inline
       //
