@@ -38,6 +38,7 @@
 #include "HeapRegionIterator.hpp"
 #include "HeapRegionManager.hpp"
 #include "GlobalCollector.hpp"
+#include "ObjectAccessBarrier.hpp"
 #include "ObjectAllocationInterface.hpp"
 #include "ObjectModel.hpp"
 #include "OwnableSynchronizerObjectBuffer.hpp"
