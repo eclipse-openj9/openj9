@@ -67,8 +67,6 @@ extern J9_CFUNC UDATA alwaysCallReferenceArrayCopyHelper(J9JavaVM *javaVM);
 extern J9_CFUNC void J9WriteBarrierBatch(J9VMThread *vmThread, j9object_t destinationObject);
 extern J9_CFUNC IDATA j9gc_objaccess_indexableReadI16(J9VMThread *vmThread, J9IndexableObject *srcObject, I_32 index, UDATA isVolatile);
 extern J9_CFUNC void J9WriteBarrierPost(J9VMThread *vmThread, j9object_t destinationObject, j9object_t storedObject);
-extern J9_CFUNC void preMountContinuation(J9VMThread *vmThread, j9object_t object);
-extern J9_CFUNC void postUnmountContinuation(J9VMThread *vmThread, j9object_t object);
 extern J9_CFUNC UDATA j9gc_heap_total_memory(J9JavaVM *javaVM);
 extern J9_CFUNC UDATA j9gc_is_garbagecollection_disabled(J9JavaVM *javaVM);
 extern J9_CFUNC UDATA j9gc_allsupported_memorypools(J9JavaVM* javaVM);
@@ -269,6 +267,9 @@ extern J9_CFUNC void* finalizeForcedClassLoaderUnload(J9VMThread *vmThread);
 
 extern J9_CFUNC UDATA ownableSynchronizerObjectCreated(J9VMThread *vmThread, j9object_t object);
 extern J9_CFUNC UDATA continuationObjectCreated(J9VMThread *vmThread, j9object_t object);
+
+extern J9_CFUNC void preMountContinuation(J9VMThread *vmThread, j9object_t object);
+extern J9_CFUNC void postUnmountContinuation(J9VMThread *vmThread, j9object_t object);
 
 extern J9_CFUNC void j9gc_notifyGCOfClassReplacement(J9VMThread *vmThread, J9Class *originalClass, J9Class *replacementClass, UDATA isFastHCR);
 
