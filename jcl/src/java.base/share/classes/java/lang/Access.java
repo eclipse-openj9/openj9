@@ -64,6 +64,7 @@ import jdk.internal.module.ServicesCatalog;
 import jdk.internal.reflect.ConstantPool;
 /*[IF JAVA_SPEC_VERSION >= 19]*/
 import java.util.concurrent.Callable;
+import jdk.internal.misc.CarrierThreadLocal;
 import jdk.internal.vm.Continuation;
 import jdk.internal.vm.ContinuationScope;
 import jdk.internal.vm.StackableScope;
@@ -642,6 +643,22 @@ final class Access implements JavaLangAccess {
 
 	public StackWalker newStackWalkerInstance(Set<StackWalker.Option> options, ContinuationScope contScope, Continuation continuation) {
 		return StackWalker.newInstance(options, null, contScope, continuation);
+	}
+
+	public boolean isCarrierThreadLocalPresent(CarrierThreadLocal<?> carrierThreadlocal) {
+		return ((ThreadLocal<?>)carrierThreadlocal).isCarrierThreadLocalPresent();
+	}
+
+	public <T> T getCarrierThreadLocal(CarrierThreadLocal<T> carrierThreadlocal) {
+		return ((ThreadLocal<T>)carrierThreadlocal).getCarrierThreadLocal();
+	}
+
+	public void removeCarrierThreadLocal(CarrierThreadLocal<?> carrierThreadlocal) {
+		((ThreadLocal<?>)carrierThreadlocal).removeCarrierThreadLocal();
+	}
+
+	public <T> void setCarrierThreadLocal(CarrierThreadLocal<T> carrierThreadlocal, T carrierThreadLocalvalue) {
+		((ThreadLocal<T>)carrierThreadlocal).setCarrierThreadLocal(carrierThreadLocalvalue);
 	}
 /*[ENDIF] JAVA_SPEC_VERSION >= 19 */
 
