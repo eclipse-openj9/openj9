@@ -5037,43 +5037,6 @@ J9::X86::TreeEvaluator::VMmonentEvaluator(
       else
          mismatchLabel = generateLabelSymbol(cg);
 
-#if defined(TRACE_LOCK_RESERVATION)
-      {
-      auto cds = cg->findOrCreate4ByteConstant(node, (int)node);
-      TR::MemoryReference *tempMR = generateX86MemoryReference(cds, cg);
-
-      TR::X86MemImmInstruction  * instr;
-      if (cg->comp()->target().is64Bit() && fej9->generateCompressedLockWord())
-         {
-         generateRegRegInstruction(TR::InstOpCode::XOR4RegReg, node, eaxReal, eaxReal, cg);  // Zero out eaxReal
-         instr = generateRegMemInstruction(TR::InstOpCode::L4RegMem, node, eaxReal, getMemoryReference(objectClassReg, objectReg, lwOffset, cg), cg);
-         }
-      else
-         instr = generateRegMemInstruction(TR::InstOpCode::LRegMem(), node, eaxReal, getMemoryReference(objectClassReg, objectReg, lwOffset, cg), cg);
-
-      cg->setImplicitExceptionPoint(instr);
-      instr->setNeedsGCMap(0xFF00FFFF);
-
-      TR::SymbolReference *tempRef = comp->getSymRefTab()->createTemporary(comp->getMethodSymbol(), TR_UInt32);
-      TR::MemoryReference *tempMR1 = generateX86MemoryReference(tempRef, cg);
-
-      generateMemRegInstruction(TR::InstOpCode::SMemReg(),node, tempMR, eaxReal, cg);
-      generateMemRegInstruction(TR::InstOpCode::SMemReg(),node, tempMR1, eaxReal, cg);
-
-      auto cds1 = cg->findOrCreate4ByteConstant(node, (int)node+2);
-      TR::MemoryReference *tempMR3 = generateX86MemoryReference(cds1, cg);
-      TR::SymbolReference *tempRef2 = comp->getSymRefTab()->createTemporary(comp->getMethodSymbol(), TR_UInt32);
-      TR::MemoryReference *tempMR2 = generateX86MemoryReference(tempRef2, cg);
-
-      generateMemRegInstruction(TR::InstOpCode::SMemReg(),node, tempMR3, objectReg, cg);
-      generateMemRegInstruction(TR::InstOpCode::SMemReg(),node, tempMR2, objectReg, cg);
-
-      scratchReg = cg->allocateRegister();
-      numDeps++;
-      TR::TreeEvaluator::generateValueTracingCode (node, vmThreadReg, scratchReg, objectReg, eaxReal, cg);
-      }
-#endif
-
       generateRegMemInstruction(TR::InstOpCode::LEARegMem(), node, eaxReal, generateX86MemoryReference(vmThreadReg, RES_BIT, cg), cg);
 
       TR::X86MemRegInstruction  * instr;
@@ -5272,36 +5235,6 @@ J9::X86::TreeEvaluator::VMmonentEvaluator(
 
    generateLabelInstruction(TR::InstOpCode::label, node, fallThruLabel, deps, cg);
 
-#if defined(TRACE_LOCK_RESERVATION)
-   {
-   auto cds = cg->findOrCreate4ByteConstant(node, (int)node+1);
-   TR::MemoryReference *tempMR = generateX86MemoryReference(cds, cg);
-
-   TR::X86RegMemInstruction  *instr;
-   if (cg->comp()->target().is64Bit() && fej9->generateCompressedLockWord())
-      instr = generateRegMemInstruction(TR::InstOpCode::L4RegMem, node, eaxReal, getMemoryReference(objectClassReg, objectReg, lwOffset, cg), cg)
-   else
-      instr = generateRegMemInstruction(TR::InstOpCode::LRegMem(), node, eaxReal, getMemoryReference(objectClassReg, objectReg, lwOffset, cg), cg);
-
-   cg->setImplicitExceptionPoint(instr);
-   instr->setNeedsGCMap(0xFF00FFFF);
-
-   TR::SymbolReference *tempRef = comp->getSymRefTab()->createTemporary(comp->getMethodSymbol(), TR_UInt32);
-   TR::MemoryReference *tempMR1 = generateX86MemoryReference(tempRef, cg);
-
-   generateMemRegInstruction(TR::InstOpCode::SMemReg(),node, tempMR, eaxReal, cg);
-   generateMemRegInstruction(TR::InstOpCode::SMemReg(),node, tempMR1, eaxReal, cg);
-
-   auto cds1 = cg->findOrCreate4ByteConstant(node, (int)node+2);
-   TR::MemoryReference *tempMR3 = generateX86MemoryReference(cds1, cg);
-   TR::SymbolReference *tempRef2 = comp->getSymRefTab()->createTemporary(comp->getMethodSymbol(), TR_UInt32);
-   TR::MemoryReference *tempMR2 = generateX86MemoryReference(tempRef2, cg);
-
-   generateMemRegInstruction(TR::InstOpCode::SMemReg(),node, tempMR3, objectReg, cg);
-   generateMemRegInstruction(TR::InstOpCode::SMemReg(),node, tempMR2, objectReg, cg);
-   }
-#endif
-
    cg->decReferenceCount(objectRef);
    cg->stopUsingRegister(eaxReal);
    if (scratchReg)
@@ -5317,68 +5250,6 @@ J9::X86::TreeEvaluator::VMmonentEvaluator(
       }
 
    return NULL;
-   }
-
-
-void J9::X86::TreeEvaluator::generateValueTracingCode(
-   TR::Node          *node,
-   TR::Register      *vmThreadReg,
-   TR::Register      *scratchReg,
-   TR::Register      *valueReg,
-   TR::CodeGenerator *cg)
-   {
-   if (!cg->comp()->getOption(TR_EnableValueTracing))
-      return;
-   // the code requires that the caller has vmThread in EBP as well as
-   // that the caller has already setup internal control flow
-   uint32_t vmThreadBase    = offsetof(J9VMThread, debugEventData6);
-   uint32_t vmThreadTop     = offsetof(J9VMThread, debugEventData4);
-   uint32_t vmThreadCursor  = offsetof(J9VMThread, debugEventData5);
-   TR::LabelSymbol *endLabel = generateLabelSymbol(cg);
-
-   generateRegMemInstruction(TR::InstOpCode::LRegMem(), node, scratchReg, generateX86MemoryReference(vmThreadReg, vmThreadCursor, cg), cg);
-   generateRegImmInstruction(TR::InstOpCode::ADDRegImms(), node, scratchReg, 8, cg);
-
-   generateMemRegInstruction(TR::InstOpCode::CMPMemReg(), node, generateX86MemoryReference(vmThreadReg, vmThreadTop, cg), scratchReg, cg);
-   generateLabelInstruction(TR::InstOpCode::JG4, node, endLabel, cg);
-   generateRegMemInstruction(TR::InstOpCode::LRegMem(), node, scratchReg, generateX86MemoryReference(vmThreadReg, vmThreadBase, cg), cg);
-   generateLabelInstruction(TR::InstOpCode::label, node, endLabel, cg);
-   generateMemImmInstruction(TR::InstOpCode::SMemImm4(), node, generateX86MemoryReference(scratchReg, 0, cg), node->getOpCodeValue(), cg);
-   generateMemRegInstruction(TR::InstOpCode::SMemReg(), node, generateX86MemoryReference(scratchReg, 0, cg), valueReg, cg);
-   generateMemRegInstruction(TR::InstOpCode::SMemReg(), node, generateX86MemoryReference(vmThreadReg, vmThreadCursor, cg), scratchReg, cg);
-   }
-
-void J9::X86::TreeEvaluator::generateValueTracingCode(
-   TR::Node          *node,
-   TR::Register      *vmThreadReg,
-   TR::Register      *scratchReg,
-   TR::Register      *valueRegHigh,
-   TR::Register      *valueRegLow,
-   TR::CodeGenerator *cg)
-   {
-   if (!cg->comp()->getOption(TR_EnableValueTracing))
-      return;
-
-   // the code requires that the caller has vmThread in EBP as well as
-   // that the caller has already setup internal control flow
-   uint32_t vmThreadBase    = offsetof(J9VMThread, debugEventData6);
-   uint32_t vmThreadTop     = offsetof(J9VMThread, debugEventData4);
-   uint32_t vmThreadCursor  = offsetof(J9VMThread, debugEventData5);
-   TR::LabelSymbol *endLabel = generateLabelSymbol(cg);
-
-   generateRegMemInstruction(TR::InstOpCode::LRegMem(), node, scratchReg, generateX86MemoryReference(vmThreadReg, vmThreadCursor, cg), cg);
-   generateRegImmInstruction(TR::InstOpCode::ADDRegImms(), node, scratchReg, 0x10, cg);
-
-   generateMemRegInstruction(TR::InstOpCode::CMPMemReg(), node, generateX86MemoryReference(vmThreadReg, vmThreadTop, cg), scratchReg, cg);
-   generateLabelInstruction(TR::InstOpCode::JG4, node, endLabel, cg);
-   generateRegMemInstruction(TR::InstOpCode::LRegMem(), node, scratchReg, generateX86MemoryReference(vmThreadReg, vmThreadBase, cg), cg);
-   generateLabelInstruction(TR::InstOpCode::label, node, endLabel, cg);
-   generateMemImmInstruction(TR::InstOpCode::SMemImm4(), node, generateX86MemoryReference(scratchReg,  0, cg), node->getOpCodeValue(), cg);
-   generateMemRegInstruction(TR::InstOpCode::SMemReg(), node, generateX86MemoryReference(scratchReg,   4, cg), valueRegHigh, cg);
-   generateMemRegInstruction(TR::InstOpCode::SMemReg(), node, generateX86MemoryReference(scratchReg,   8, cg), valueRegLow, cg);
-   generateRegMemInstruction(TR::InstOpCode::LRegMem(), node, valueRegLow, generateX86MemoryReference(valueRegHigh, 0, cg), cg);
-   generateMemRegInstruction(TR::InstOpCode::SMemReg(), node, generateX86MemoryReference(scratchReg, 0xc, cg), valueRegLow, cg);
-   generateMemRegInstruction(TR::InstOpCode::SMemReg(), node, generateX86MemoryReference(vmThreadReg, vmThreadCursor, cg), scratchReg, cg);
    }
 
 TR::Register
@@ -5596,55 +5467,6 @@ TR::Register
       {
       if (reservingLock)
          {
-#if defined(TRACE_LOCK_RESERVATION)
-         auto cds = cg->findOrCreate4ByteConstant(node, (int)node);
-         TR::MemoryReference *tempMR = generateX86MemoryReference(cds, cg);
-
-         if (cg->comp()->target().is64Bit() && fej9->generateCompressedLockWord())
-            {
-            generateRegRegInstruction(TR::InstOpCode::XORRegReg(), node, tempReg, tempReg, cg);  // Zero out tempReg before TR::InstOpCode::LRegMem op.
-            }
-         cg->setImplicitExceptionPoint(generateRegMemInstruction(
-               TR::InstOpCode::LRegMem(gen64BitInstr), node, tempReg,
-                                                                    getMemoryReference(objectClassReg, objectReg, lwOffset, cg), cg));
-
-         TR::SymbolReference *tempRef = comp->getSymRefTab()->createTemporary(comp->getMethodSymbol(), TR_UInt32);
-         TR::MemoryReference *tempMR1 = generateX86MemoryReference(tempRef, cg);
-
-         generateMemRegInstruction(TR::InstOpCode::SMemReg(),node, tempMR, tempReg, cg);
-         generateMemRegInstruction(TR::InstOpCode::SMemReg(),node, tempMR1, tempReg, cg);
-
-         auto cds1 = cg->findOrCreate4ByteConstant(node, (int)node+2);
-         TR::MemoryReference *tempMR3 = generateX86MemoryReference(cds1, cg);
-         TR::SymbolReference *tempRef2 = comp->getSymRefTab()->createTemporary(comp->getMethodSymbol(), TR_UInt32);
-         TR::MemoryReference *tempMR2 = generateX86MemoryReference(tempRef2, cg);
-
-         generateMemRegInstruction(TR::InstOpCode::SMemReg(),node, tempMR3, objectReg, cg);
-         generateMemRegInstruction(TR::InstOpCode::SMemReg(),node, tempMR2, objectReg, cg);
-
-         scratchReg = cg->allocateRegister();
-         numDeps++;
-
-         TR::LabelSymbol *doneTestLabel = generateLabelSymbol(cg);
-
-         //generateLabelInstruction(TR::InstOpCode::label, node, doneTestLabel, cg);
-         //generateImmSymInstruction(TR::InstOpCode::PUSHImm4, node, (uintptr_t)doneTestLabel->getStaticSymbol()->getStaticAddress(), node->getSymbolReference(), cg);
-         //generateRegInstruction(TR::InstOpCode::POPReg, node, scratchReg, cg);
-
-	 TR::TreeEvaluator::generateValueTracingCode (node, vmThreadReg, scratchReg, objectReg, tempReg, cg);
-
-         // cause crash in some cases
-         if (0)
-            {
-            generateRegImmInstruction(TR::InstOpCode::TEST1RegImm1, node, tempReg, 0xA, cg);
-            generateLabelInstruction(TR::InstOpCode::JNE4, node, doneTestLabel, cg);
-            generateRegRegInstruction(TR::InstOpCode::XOR4RegReg, node, scratchReg, scratchReg, cg);
-            generateRegMemInstruction(TR::InstOpCode::LRegMem(), node,
-                                                   scratchReg,
-                                                   generateX86MemoryReference(scratchReg, 0, cg), cg);
-            generateLabelInstruction(TR::InstOpCode::label, node, doneTestLabel, cg);
-            }
-#endif
          if (node->isPrimitiveLockedRegion())
             {
             cg->setImplicitExceptionPoint(generateRegMemInstruction(
@@ -5747,32 +5569,6 @@ TR::Register
 
    deps->stopAddingConditions();
    generateLabelInstruction(TR::InstOpCode::label, node, fallThruLabel, deps, cg);
-
-#if defined(TRACE_LOCK_RESERVATION)
-   if (reservingLock)
-      {
-      auto cds = cg->findOrCreate4ByteConstant(node, (int)node+1);
-      TR::MemoryReference *tempMR = generateX86MemoryReference(cds, cg);
-
-      cg->setImplicitExceptionPoint(generateRegMemInstruction(
-            TR::InstOpCode::LRegMem(gen64BitInstr), node, tempReg,
-                                                                 getMemoryReference(objectClassReg, objectReg, lwOffset, cg), cg));
-
-      TR::SymbolReference *tempRef = comp->getSymRefTab()->createTemporary(comp->getMethodSymbol(), TR_UInt32);
-      TR::MemoryReference *tempMR1 = generateX86MemoryReference(tempRef, cg);
-
-      generateMemRegInstruction(TR::InstOpCode::SMemReg(),node, tempMR, tempReg, cg);
-      generateMemRegInstruction(TR::InstOpCode::SMemReg(),node, tempMR1, tempReg, cg);
-
-      auto cds1 = cg->findOrCreate4ByteConstant(node, (int)node+2);
-      TR::MemoryReference *tempMR3 = generateX86MemoryReference(cds1, cg);
-      TR::SymbolReference *tempRef2 = comp->getSymRefTab()->createTemporary(comp->getMethodSymbol(), TR_UInt32);
-      TR::MemoryReference *tempMR2 = generateX86MemoryReference(tempRef2, cg);
-
-      generateMemRegInstruction(TR::InstOpCode::SMemReg(),node, tempMR3, objectReg, cg);
-      generateMemRegInstruction(TR::InstOpCode::SMemReg(),node, tempMR2, objectReg, cg);
-      }
-#endif
 
    if (eaxReal)
       cg->stopUsingRegister(eaxReal);
