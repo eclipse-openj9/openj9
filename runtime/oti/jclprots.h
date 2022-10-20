@@ -755,7 +755,7 @@ jint JNICALL JCL_OnLoad (JavaVM * vm, void *reserved);
 extern J9_CFUNC j9object_t
 createStackTraceThrowable (J9VMThread *currentThread,  const UDATA *frames, UDATA maxFrames);
 extern J9_CFUNC j9object_t
-getStackTraceForThread (J9VMThread * vmThread, J9VMThread *targetThread, UDATA skipCount);
+getStackTraceForThread (J9VMThread *vmThread, J9VMThread *targetThread, UDATA skipCount, j9object_t threadObject);
 
 /* J9SourceJclStandardInit*/
 jint JCL_OnUnload (J9JavaVM* vm, void* reserved);
