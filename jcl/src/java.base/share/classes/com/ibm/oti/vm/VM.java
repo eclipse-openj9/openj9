@@ -2,7 +2,7 @@
 
 package com.ibm.oti.vm;
 /*******************************************************************************
- * Copyright (c) 1998, 2021 IBM Corp. and others
+ * Copyright (c) 1998, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -41,8 +41,6 @@ import sun.reflect.CallerSensitive;
  */
 @SuppressWarnings("javadoc")
 public final class VM {
-
-	public static final boolean PACKED_SUPPORT_ENABLED = false;  /* TODO delete this when ARM JCL is updated */
 
 	public static final int J9_JAVA_CLASS_RAM_SHAPE_SHIFT;
 	public static final int OBJECT_HEADER_SHAPE_MASK;
