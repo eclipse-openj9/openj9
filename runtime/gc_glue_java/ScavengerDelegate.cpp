@@ -143,10 +143,6 @@ MM_ScavengerDelegate::initialize(MM_EnvironmentBase *env)
 		_flushCachesAsyncCallbackKey = _javaVM->internalVMFunctions->J9RegisterAsyncEvent(_javaVM, concurrentScavengerAsyncCallbackHandlerDelegate, NULL);
 	}
 #endif /* OMR_GC_CONCURRENT_SCAVENGER */
-#if defined(J9VM_GC_GENERATIONAL)
-	MM_StandardAccessBarrier *stdBarrier = (MM_StandardAccessBarrier *)_extensions->accessBarrier;
-	stdBarrier->setScavenger(_extensions->scavenger);
-#endif /* J9VM_GC_GENERATIONAL */
 
 	return true;
 }

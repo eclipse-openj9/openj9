@@ -80,6 +80,7 @@ MM_StandardAccessBarrier::initialize(MM_EnvironmentBase *env)
 	if (!_generationalAccessBarrierComponent.initialize(env)) {
 		return false;
 	}
+	_scavenger = MM_GCExtensions::getExtensions(env)->scavenger;
 #endif /* J9VM_GC_GENERATIONAL */
 	
 	return MM_ObjectAccessBarrier::initialize(env);
