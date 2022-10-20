@@ -4809,6 +4809,8 @@ J9::X86::TreeEvaluator::VMmonentEvaluator(
    //
    TR::Compilation *comp = cg->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
+   bool is64Bit = comp->target().is64Bit();
+
    static const char *noInline = feGetEnv("TR_NoInlineMonitor");
    bool reservingLock = false;
    bool normalLockPreservingReservation = false;
@@ -4893,10 +4895,10 @@ J9::X86::TreeEvaluator::VMmonentEvaluator(
 
       if (reservingLock && node->isPrimitiveLockedRegion() && dummyMethodMonitor)
          {
-         if (node->getSymbolReference() == cg->getSymRef(TR_methodMonitorEntry))
-            node->setSymbolReference(comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_AMD64JitMethodMonitorExitReservedPrimitive, true, true, true));
-         else
-            node->setSymbolReference(comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_AMD64JitMonitorExitReservedPrimitive, true, true, true));
+         TR_RuntimeHelper monExitHelper = (node->getSymbolReference() == cg->getSymRef(TR_methodMonitorEntry)) ?
+            TR_AMD64JitMethodMonitorExitReservedPrimitive : TR_AMD64JitMonitorExitReservedPrimitive;
+
+         node->setSymbolReference(comp->getSymRefTab()->findOrCreateRuntimeHelper(monExitHelper, true, true, true));
 
          exitLabel = generateLabelSymbol(cg);
          TR_OutlinedInstructions *outlinedExitHelperCall = new (cg->trHeapMemory()) TR_OutlinedInstructions(node, TR::call, NULL, exitLabel, fallThruLabel, cg);
@@ -4920,7 +4922,7 @@ J9::X86::TreeEvaluator::VMmonentEvaluator(
          // rely on the caller having done so even though the calling
          // convention doesn't appear to require it.
          TR::Node *reservableLwNode = NULL;
-         if (cg->comp()->target().is32Bit() || fej9->generateCompressedLockWord())
+         if (comp->target().is32Bit() || fej9->generateCompressedLockWord())
             reservableLwNode = TR::Node::iconst(node, reservableLwValue);
          else
             reservableLwNode = TR::Node::lconst(node, reservableLwValue);
@@ -4981,13 +4983,14 @@ J9::X86::TreeEvaluator::VMmonentEvaluator(
    TR::Register *lockedReg = NULL;
    TR::InstOpCode::Mnemonic op = TR::InstOpCode::bad;
 
-   if (cg->comp()->target().is64Bit() && !fej9->generateCompressedLockWord())
+   bool isSMP = comp->target().isSMP();
+   if (is64Bit && !fej9->generateCompressedLockWord())
       {
-      op = cg->comp()->target().isSMP() ? TR::InstOpCode::LCMPXCHG8MemReg : TR::InstOpCode::CMPXCHG8MemReg;
+      op = isSMP ? TR::InstOpCode::LCMPXCHG8MemReg : TR::InstOpCode::CMPXCHG8MemReg;
       }
    else
       {
-      op = cg->comp()->target().isSMP() ? TR::InstOpCode::LCMPXCHG4MemReg : TR::InstOpCode::CMPXCHG4MemReg;
+      op = isSMP ? TR::InstOpCode::LCMPXCHG4MemReg : TR::InstOpCode::CMPXCHG4MemReg;
       }
 
    TR::Register *objectClassReg = NULL;
@@ -4998,11 +5001,10 @@ J9::X86::TreeEvaluator::VMmonentEvaluator(
       TR::MemoryReference *objectClassMR = generateX86MemoryReference(objectReg, TMP_OFFSETOF_J9OBJECT_CLAZZ, cg);
       objectClassReg = cg->allocateRegister();
       numDeps++;
-      TR::X86RegMemInstruction *instr;
-      if (TR::Compiler->om.compressObjectReferences())
-         instr = generateRegMemInstruction(TR::InstOpCode::L4RegMem, node, objectClassReg, objectClassMR, cg);
-      else
-         instr = generateRegMemInstruction(TR::InstOpCode::LRegMem(), node, objectClassReg, objectClassMR, cg);
+
+      TR::InstOpCode::Mnemonic loadOp = (TR::Compiler->om.compressObjectReferences()) ? TR::InstOpCode::L4RegMem : TR::InstOpCode::LRegMem();
+      TR::X86RegMemInstruction *instr = generateRegMemInstruction(loadOp, node, objectClassReg, objectClassMR, cg);
+
       // This instruction may try to dereference a null memory address
       // add an implicit exception point for it.
       //
@@ -5031,22 +5033,13 @@ J9::X86::TreeEvaluator::VMmonentEvaluator(
 
    if (comp->getOption(TR_ReservingLocks) && reservingLock)
       {
-      TR::LabelSymbol *mismatchLabel = NULL;
-      if (TR::Options::_aggressiveLockReservation)
-         mismatchLabel = snippetLabel;
-      else
-         mismatchLabel = generateLabelSymbol(cg);
+      TR::LabelSymbol *mismatchLabel = TR::Options::_aggressiveLockReservation ? snippetLabel : generateLabelSymbol(cg);
 
       generateRegMemInstruction(TR::InstOpCode::LEARegMem(), node, eaxReal, generateX86MemoryReference(vmThreadReg, RES_BIT, cg), cg);
 
-      TR::X86MemRegInstruction  * instr;
-      if (cg->comp()->target().is64Bit() && fej9->generateCompressedLockWord())
-         {
-         // Use TR::InstOpCode::CMP4RegMem instead of TR::InstOpCode::CMPRegMem(...).
-         instr = generateMemRegInstruction(TR::InstOpCode::CMP4MemReg, node, getMemoryReference(objectClassReg, objectReg, lwOffset, cg), eaxReal, cg);
-         }
-      else
-         instr = generateMemRegInstruction(TR::InstOpCode::CMPMemReg(cg->comp()->target().is64Bit()), node, getMemoryReference(objectClassReg, objectReg, lwOffset, cg), eaxReal, cg);
+      TR::InstOpCode::Mnemonic cmpMemRegOp = (is64Bit && fej9->generateCompressedLockWord()) ?
+         TR::InstOpCode::CMP4MemReg : TR::InstOpCode::CMPMemReg(is64Bit);
+      TR::X86MemRegInstruction *instr = generateMemRegInstruction(cmpMemRegOp, node, getMemoryReference(objectClassReg, objectReg, lwOffset, cg), eaxReal, cg);
 
       cg->setImplicitExceptionPoint(instr);
       instr->setNeedsGCMap(0xFF00FFFF);
@@ -5055,13 +5048,9 @@ J9::X86::TreeEvaluator::VMmonentEvaluator(
 
       if (!node->isPrimitiveLockedRegion())
          {
-         if (cg->comp()->target().is64Bit() && fej9->generateCompressedLockWord())
-            {
-            // Use ADD4memImms instead of TR::InstOpCode::ADDMemImms
-            generateMemImmInstruction(TR::InstOpCode::ADD4MemImms, node, getMemoryReference(objectClassReg, objectReg, lwOffset, cg), REC_BIT, cg);
-            }
-         else
-            generateMemImmInstruction(TR::InstOpCode::ADDMemImms(), node, getMemoryReference(objectClassReg, objectReg, lwOffset, cg), REC_BIT, cg);
+         TR::InstOpCode::Mnemonic addMemImmOp = (is64Bit && fej9->generateCompressedLockWord()) ?
+            TR::InstOpCode::ADD4MemImms : TR::InstOpCode::ADDMemImms();
+         generateMemImmInstruction(addMemImmOp, node, getMemoryReference(objectClassReg, objectReg, lwOffset, cg), REC_BIT, cg);
          }
 
       if (!TR::Options::_aggressiveLockReservation)
@@ -5074,12 +5063,11 @@ J9::X86::TreeEvaluator::VMmonentEvaluator(
          // Otherwise we'll necessarily call the helper.
          generateLabelInstruction(TR::InstOpCode::label, node, mismatchLabel, cg);
 
-         TR::InstOpCode::Mnemonic cmpOp = TR::InstOpCode::CMPMemImms();
-         if (cg->comp()->target().is64Bit() && fej9->generateCompressedLockWord())
-            cmpOp = TR::InstOpCode::CMP4MemImms;
+         TR::InstOpCode::Mnemonic cmpMemImmOp = (is64Bit && fej9->generateCompressedLockWord()) ?
+            TR::InstOpCode::CMP4MemImms : TR::InstOpCode::CMPMemImms();
 
          auto lwMR = getMemoryReference(objectClassReg, objectReg, lwOffset, cg);
-         generateMemImmInstruction(cmpOp, node, lwMR, 0, cg);
+         generateMemImmInstruction(cmpMemImmOp, node, lwMR, 0, cg);
          generateLabelInstruction(TR::InstOpCode::JNE4, node, snippetLabel, cg);
          generateRegRegInstruction(TR::InstOpCode::XOR4RegReg, node, eaxReal, eaxReal, cg);
          lwMR = getMemoryReference(objectClassReg, objectReg, lwOffset, cg);
@@ -5093,11 +5081,12 @@ J9::X86::TreeEvaluator::VMmonentEvaluator(
          {
          if (comp->getOption(TR_ReservingLocks) && normalLockPreservingReservation)
             {
-            TR::X86MemImmInstruction  * instr;
-            if (cg->comp()->target().is64Bit() && fej9->generateCompressedLockWord())
-               instr = generateMemImmInstruction(TR::InstOpCode::CMP4MemImms, node, getMemoryReference(objectClassReg, objectReg, lwOffset, cg), 0, cg);
-            else
-               instr = generateMemImmInstruction(TR::InstOpCode::CMPMemImms(), node, getMemoryReference(objectClassReg, objectReg, lwOffset, cg), 0, cg);
+            TR::InstOpCode::Mnemonic cmpMemImmOp = (is64Bit && fej9->generateCompressedLockWord()) ?
+               TR::InstOpCode::CMP4MemImms : TR::InstOpCode::CMPMemImms();
+
+            TR::X86MemImmInstruction *instr =
+               generateMemImmInstruction(cmpMemImmOp, node, getMemoryReference(objectClassReg, objectReg, lwOffset, cg), 0, cg);
+
             cg->setImplicitExceptionPoint(instr);
             instr->setNeedsGCMap(0xFF00FFFF);
 
@@ -5114,7 +5103,7 @@ J9::X86::TreeEvaluator::VMmonentEvaluator(
          {
          TR::InstOpCode::Mnemonic loadOp = TR::InstOpCode::LRegMem();
          TR::InstOpCode::Mnemonic testOp = TR::InstOpCode::TESTRegImm4();
-         if (cg->comp()->target().is64Bit() && fej9->generateCompressedLockWord())
+         if (is64Bit && fej9->generateCompressedLockWord())
             {
             loadOp = TR::InstOpCode::L4RegMem;
             testOp = TR::InstOpCode::TEST4RegImm4;
@@ -5132,7 +5121,7 @@ J9::X86::TreeEvaluator::VMmonentEvaluator(
       if (node->isReadMonitor())
          {
          lockedReg = cg->allocateRegister();
-         if (cg->comp()->target().is64Bit() && fej9->generateCompressedLockWord())
+         if (is64Bit && fej9->generateCompressedLockWord())
             generateRegRegInstruction(TR::InstOpCode::XOR4RegReg, node, lockedReg, lockedReg, cg);  //After lockedReg is allocated zero it out.
          generateRegImmInstruction(TR::InstOpCode::MOVRegImm4(), node, lockedReg, INC_DEC_VALUE, cg);
          ++numDeps;
@@ -5176,7 +5165,7 @@ J9::X86::TreeEvaluator::VMmonentEvaluator(
             // For reservable locks, failure to reserve at this point would
             // prevent any future reservation of the same lock.
 
-            bool b64 = cg->comp()->target().is64Bit() && !fej9->generateCompressedLockWord();
+            bool b64 = is64Bit && !fej9->generateCompressedLockWord();
             generateRegRegInstruction(TR::InstOpCode::MOVRegReg(b64), node, lockedReg, eaxReal, cg);
             generateRegImmInstruction(TR::InstOpCode::SHRRegImm1(b64), node, lockedReg, RES_BIT_POSITION, cg);
             generateRegInstruction(TR::InstOpCode::NEGReg(b64), node, lockedReg, cg);
@@ -5203,7 +5192,7 @@ J9::X86::TreeEvaluator::VMmonentEvaluator(
    generateMemInstruction(
       TR::InstOpCode::INC8Mem,
       node,
-      generateX86MemoryReference(cg->getVMThreadRegister(), fej9->thisThreadGetOwnedMonitorCountOffset(), cg),
+      generateX86MemoryReference(vmThreadReg, fej9->thisThreadGetOwnedMonitorCountOffset(), cg),
       cg);
 #endif
 
@@ -5212,7 +5201,7 @@ J9::X86::TreeEvaluator::VMmonentEvaluator(
    //      objectReg, eaxReal, vmThreadReg
    // since the snippet needs to find them to grab the real registers from them.
    //
-   TR::RegisterDependencyConditions  *deps = generateRegisterDependencyConditions((uint8_t)0, (uint8_t)numDeps, cg);
+   TR::RegisterDependencyConditions *deps = generateRegisterDependencyConditions((uint8_t)0, (uint8_t)numDeps, cg);
    deps->addPostCondition(objectReg, TR::RealRegister::NoReg, cg);
    deps->addPostCondition(eaxReal, TR::RealRegister::eax, cg);
    deps->addPostCondition(vmThreadReg, TR::RealRegister::ebp, cg);
@@ -5252,8 +5241,8 @@ J9::X86::TreeEvaluator::VMmonentEvaluator(
    return NULL;
    }
 
-TR::Register
-*J9::X86::TreeEvaluator::VMmonexitEvaluator(
+TR::Register *
+J9::X86::TreeEvaluator::VMmonexitEvaluator(
       TR::Node          *node,
       TR::CodeGenerator *cg)
    {
@@ -5312,14 +5301,14 @@ TR::Register
    //
    TR::Node     *objectRef = node->getFirstChild();
    TR::Register *objectReg = cg->evaluate(objectRef);
-   TR::Register *tempReg   = NULL;
+   TR::Register *tempReg  = NULL;
    uint32_t     numDeps   = 2; // objectReg, ebp
 
    cg->setImplicitExceptionPoint(NULL);
    TR::Register *vmThreadReg = cg->getVMThreadRegister();
 
    TR::LabelSymbol *startLabel = generateLabelSymbol(cg);
-   TR::LabelSymbol *fallThruLabel   = generateLabelSymbol(cg);
+   TR::LabelSymbol *fallThruLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *inlinedMonExitFallThruLabel = generateLabelSymbol(cg);
    // Create the monitor exit snippet
    TR::LabelSymbol *snippetLabel = generateLabelSymbol(cg);
@@ -5327,40 +5316,29 @@ TR::Register
    if (isMonitorValueBasedOrValueType == TR_maybe)
       TR::TreeEvaluator::generateCheckForValueMonitorEnterOrExit(node, J9_CLASS_DISALLOWS_LOCKING_FLAGS, snippetLabel, cg);
 
-   // Now that the object reference has been generated, see if this is the end
-   // of a small synchronized block.
-   // The definition of "small" depends on the method hotness and is measured
-   // in instructions.
-   // The following method makes use of the fact that the body of the sync
-   // block has been generated but the monitor exit hasn't yet.
-   //
-   int32_t maxInstructions;
-   TR_Hotness hotness = comp->getMethodHotness();
-   if (hotness == scorching) maxInstructions = 30;
-   else if (hotness == hot)  maxInstructions = 20;
-   else                      maxInstructions = 10;
-
    startLabel->setStartInternalControlFlow();
    TR::LabelSymbol *snippetFallThruLabel = inlineRecursive ? generateLabelSymbol(cg): fallThruLabel;
    fallThruLabel->setEndInternalControlFlow();
    generateLabelInstruction(TR::InstOpCode::label, node, startLabel, cg);
 
-   TR::Register *eaxReal     = 0;
-   TR::Register *unlockedReg = 0;
-   TR::Register *scratchReg  = 0;
+   TR::Register *eaxReal = NULL;
+   TR::Register *unlockedReg = NULL;
+   TR::Register *scratchReg = NULL;
 
    TR::Register *objectClassReg = NULL;
    TR::Register *lookupOffsetReg = NULL;
 
+   TR::LabelSymbol *monitorLookupCacheLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *fallThruFromMonitorLookupCacheLabel = generateLabelSymbol(cg);
+
    if (lwOffset <= 0)
       {
       TR::MemoryReference *objectClassMR = generateX86MemoryReference(objectReg, TMP_OFFSETOF_J9OBJECT_CLAZZ, cg);
+      TR::InstOpCode::Mnemonic op = TR::Compiler->om.compressObjectReferences() ? TR::InstOpCode::L4RegMem : TR::InstOpCode::LRegMem();
       objectClassReg = cg->allocateRegister();
-      TR::Instruction *instr = NULL;
-      if (TR::Compiler->om.compressObjectReferences())
-         instr = generateRegMemInstruction(TR::InstOpCode::L4RegMem, node, objectClassReg, objectClassMR, cg);
-      else
-         instr = generateRegMemInstruction(TR::InstOpCode::LRegMem(), node, objectClassReg, objectClassMR, cg);
+
+      TR::Instruction *instr = generateRegMemInstruction(op, node, objectClassReg, objectClassMR, cg);
+
       //this instruction may try to dereference a null memory address
       //add an implicit exception point for it.
       cg->setImplicitExceptionPoint(instr);
@@ -5371,13 +5349,7 @@ TR::Register
       generateRegMemInstruction(TR::InstOpCode::LRegMem(), node, objectClassReg, generateX86MemoryReference(objectClassReg, offsetOfLockOffset, cg), cg);
 
       numDeps++;
-      }
 
-   TR::LabelSymbol *monitorLookupCacheLabel = generateLabelSymbol(cg);
-   TR::LabelSymbol *fallThruFromMonitorLookupCacheLabel = generateLabelSymbol(cg);
-
-   if (lwOffset <= 0)
-      {
       generateRegImmInstruction(TR::InstOpCode::CMP4RegImm4, node, objectClassReg, 0, cg);
 
       generateCommonLockNurseryCodes(node,
@@ -5421,10 +5393,7 @@ TR::Register
          tempReg = cg->allocateRegister();
          numDeps++;
          }
-      }
 
-   if (comp->getOption(TR_ReservingLocks))
-      {
       if (reservingLock || normalLockPreservingReservation)
          {
          TR_RuntimeHelper helper;
@@ -5435,6 +5404,7 @@ TR::Register
          node->setSymbolReference(comp->getSymRefTab()->findOrCreateRuntimeHelper(helper, true, true, true));
          }
       }
+
    TR_OutlinedInstructions *outlinedHelperCall = new (cg->trHeapMemory()) TR_OutlinedInstructions(node, TR::call, NULL, snippetLabel, snippetFallThruLabel, cg);
    cg->getOutlinedInstructionsList().push_front(outlinedHelperCall);
    cg->generateDebugCounter(
@@ -5469,9 +5439,13 @@ TR::Register
          {
          if (node->isPrimitiveLockedRegion())
             {
-            cg->setImplicitExceptionPoint(generateRegMemInstruction(
-                  TR::InstOpCode::LRegMem(gen64BitInstr), node, tempReg,
-                                                                       getMemoryReference(objectClassReg, objectReg, lwOffset, cg), cg));
+            cg->setImplicitExceptionPoint(
+               generateRegMemInstruction(
+                  TR::InstOpCode::LRegMem(gen64BitInstr), node,
+                  tempReg,
+                  getMemoryReference(objectClassReg, objectReg, lwOffset, cg),
+                  cg));
+
             // Mask out the thread ID and reservation count
             generateRegImmInstruction(TR::InstOpCode::ANDRegImms(), node, tempReg, FLAGS_MASK, cg);
             // If only the RES flag is set and no other we can continue
@@ -5481,24 +5455,26 @@ TR::Register
             {
             reservingDecrementNeeded = true;
             generateRegMemInstruction(TR::InstOpCode::LEARegMem(), node, tempReg, generateX86MemoryReference(vmThreadReg, (REC_BIT | RES_BIT), cg), cg);
-            cg->setImplicitExceptionPoint(generateMemRegInstruction(
+            cg->setImplicitExceptionPoint(
+               generateMemRegInstruction(
                   TR::InstOpCode::CMPMemReg(gen64BitInstr), node,
-                  getMemoryReference(objectClassReg, objectReg, lwOffset, cg), tempReg, cg));
+                  getMemoryReference(objectClassReg, objectReg, lwOffset, cg),
+                  tempReg,
+                  cg));
             }
          }
       else
          {
-         cg->setImplicitExceptionPoint(generateRegMemInstruction(
-               TR::InstOpCode::CMPRegMem(gen64BitInstr), node, vmThreadReg,
-                                                                   getMemoryReference(objectClassReg, objectReg, lwOffset, cg), cg));
+         cg->setImplicitExceptionPoint(
+            generateRegMemInstruction(
+               TR::InstOpCode::CMPRegMem(gen64BitInstr), node,
+               vmThreadReg,
+               getMemoryReference(objectClassReg, objectReg, lwOffset, cg),
+               cg));
          }
       }
 
-   TR::LabelSymbol *mismatchLabel = NULL;
-   if (reservingLock && !TR::Options::_aggressiveLockReservation)
-      mismatchLabel = generateLabelSymbol(cg);
-   else
-      mismatchLabel = snippetLabel;
+   TR::LabelSymbol *mismatchLabel = (reservingLock && !TR::Options::_aggressiveLockReservation) ? generateLabelSymbol(cg) : snippetLabel;
 
    generateLabelInstruction(TR::InstOpCode::JNE4, node, mismatchLabel, cg);
 
@@ -5538,7 +5514,7 @@ TR::Register
    generateMemInstruction(
       TR::InstOpCode::DEC8Mem,
       node,
-      generateX86MemoryReference(cg->getVMThreadRegister(), fej9->thisThreadGetOwnedMonitorCountOffset(), cg),
+      generateX86MemoryReference(vmThreadReg, fej9->thisThreadGetOwnedMonitorCountOffset(), cg),
       cg);
 #endif
 
@@ -5547,9 +5523,9 @@ TR::Register
    // Or, for readmonitors they must be objectReg, vmThreadReg, unlockedReg, eaxReal
    // snippet needs to find them to grab the real registers from them.
    //
-   TR::RegisterDependencyConditions  *deps = generateRegisterDependencyConditions((uint8_t)0, (uint8_t)numDeps, cg);
+   TR::RegisterDependencyConditions *deps = generateRegisterDependencyConditions((uint8_t)0, (uint8_t)numDeps, cg);
    deps->addPostCondition(objectReg, TR::RealRegister::NoReg, cg);
-   deps->addPostCondition(cg->getVMThreadRegister(), TR::RealRegister::ebp, cg);
+   deps->addPostCondition(vmThreadReg, TR::RealRegister::ebp, cg);
 
    if (node->isReadMonitor())
       {
