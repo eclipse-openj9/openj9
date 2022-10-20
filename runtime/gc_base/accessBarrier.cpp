@@ -835,19 +835,5 @@ j9gc_objaccess_jniDeleteGlobalReference(J9VMThread *vmThread, J9Object *referenc
 	barrier->jniDeleteGlobalReference(vmThread, reference);
 }
 
-void
-preMountContinuation(J9VMThread *vmThread, j9object_t object)
-{
-	MM_ObjectAccessBarrier *barrier = MM_GCExtensions::getExtensions(vmThread->javaVM)->accessBarrier;
-	barrier->preMountContinuation(vmThread, object);
-}
-
-void
-postUnmountContinuation(J9VMThread *vmThread, j9object_t object)
-{
-	MM_ObjectAccessBarrier *barrier = MM_GCExtensions::getExtensions(vmThread->javaVM)->accessBarrier;
-	barrier->postUnmountContinuation(vmThread, object);
-}
-
 } /* extern "C" */
 

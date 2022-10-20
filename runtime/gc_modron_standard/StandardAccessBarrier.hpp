@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2022 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -49,9 +49,8 @@ class MM_StandardAccessBarrier : public MM_ObjectAccessBarrier
 private:
 #if defined(J9VM_GC_GENERATIONAL)
 	MM_GenerationalAccessBarrierComponent _generationalAccessBarrierComponent;	/**< Generational Component of Access Barrier */
-	MM_Scavenger *_scavenger;	/**< caching MM_GCExtensions::scavenger,  initialization is postponed in MM_ScavengerDelegate::initialize(), due to StandardAccessBarrier is initialized earlier than scavenger is setup. */
 #endif /* J9VM_GC_GENERATIONAL */
-	MM_MarkingScheme *_markingScheme;	/**< caching MM_MarkingScheme instance */
+	MM_MarkingScheme *_markingScheme;
 
 	void postObjectStoreImpl(J9VMThread *vmThread, J9Object *dstObject, J9Object *srcObject);
 	void postBatchObjectStoreImpl(J9VMThread *vmThread, J9Object *dstObject);
@@ -71,17 +70,11 @@ public:
 
 	MM_StandardAccessBarrier(MM_EnvironmentBase *env, MM_MarkingScheme *markingScheme) :
 		MM_ObjectAccessBarrier(env)
-#if defined(J9VM_GC_GENERATIONAL)
-		, _scavenger(NULL)
-#endif /* J9VM_GC_GENERATIONAL */
 		, _markingScheme(markingScheme)
 	{
 		_typeId = __FUNCTION__;
 	}
 
-#if defined(J9VM_GC_GENERATIONAL)
-	void setScavenger(MM_Scavenger *scavenger) { _scavenger = scavenger; }
-#endif /* J9VM_GC_GENERATIONAL */
 	virtual J9Object* asConstantPoolObject(J9VMThread *vmThread, J9Object* toConvert, UDATA allocationFlags);
 
 	virtual void rememberObjectImpl(MM_EnvironmentBase *env, J9Object* object);
@@ -94,9 +87,6 @@ public:
 	virtual bool postBatchObjectStore(J9VMThread *vmThread, J9Object *destObject, bool isVolatile=false);
 	virtual bool postBatchObjectStore(J9VMThread *vmThread, J9Class *destClass, bool isVolatile=false);
 	virtual void recentlyAllocatedObject(J9VMThread *vmThread, J9Object *object); 
-
-	virtual void preMountContinuation(J9VMThread *vmThread, j9object_t contObject);
-	virtual void postUnmountContinuation(J9VMThread *vmThread, j9object_t contObject);
 
 	virtual void* jniGetPrimitiveArrayCritical(J9VMThread* vmThread, jarray array, jboolean *isCopy);
 	virtual void jniReleasePrimitiveArrayCritical(J9VMThread* vmThread, jarray array, void * elems, jint mode);

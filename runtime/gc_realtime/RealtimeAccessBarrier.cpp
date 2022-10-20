@@ -950,14 +950,5 @@ MM_RealtimeAccessBarrier::forwardReferenceArrayCopyIndex(J9VMThread *vmThread, J
 	return -2;
 }
 
-void
-MM_RealtimeAccessBarrier::preMountContinuation(J9VMThread *vmThread, j9object_t contObject)
-{
-	MM_EnvironmentRealtime *env = (MM_EnvironmentRealtime *) MM_EnvironmentBase::getEnvironment(vmThread->omrVMThread);
-	if (isBarrierActive(env)) {
-		_realtimeGC->getRealtimeDelegate()->scanContinuationObject(env, contObject);
-	}
-}
-
 #endif /* J9VM_GC_REALTIME */
 
