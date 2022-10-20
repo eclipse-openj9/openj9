@@ -61,31 +61,37 @@ jvmtiGetCurrentThreadCpuTime(jvmtiEnv* env,
 	J9JavaVM *vm = JAVAVM_FROM_ENV(env);
 	J9VMThread *currentThread = NULL;
 #endif /* JAVA_SPEC_VERSION >= 19 */
-	jvmtiError rc;
+	jvmtiError rc = JVMTI_ERROR_NONE;
 	jlong rv_nanos = 0;
 
 	Trc_JVMTI_jvmtiGetCurrentThreadCpuTime_Entry(env);
 
-	ENSURE_PHASE_START_OR_LIVE(env);
-	ENSURE_CAPABILITY(env, can_get_current_thread_cpu_time);
-
-	ENSURE_NON_NULL(nanos_ptr);
-
 #if JAVA_SPEC_VERSION >= 19
 	rc = getCurrentVMThread(vm, &currentThread);
-	if (JVMTI_ERROR_NONE != rc) {
-		goto done;
-	}
-	ENSURE_JTHREADOBJECT_NOT_VIRTUAL(
-		currentThread,
-		currentThread->threadObject,
-		JVMTI_ERROR_UNSUPPORTED_OPERATION);
+	if (JVMTI_ERROR_NONE == rc) {
+		vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
 #endif /* JAVA_SPEC_VERSION >= 19 */
 
-	rv_nanos = (jlong)omrthread_get_self_cpu_time(omrthread_self());
-	rc = JVMTI_ERROR_NONE;
+		ENSURE_PHASE_START_OR_LIVE(env);
+		ENSURE_CAPABILITY(env, can_get_current_thread_cpu_time);
+
+		ENSURE_NON_NULL(nanos_ptr);
+
+#if JAVA_SPEC_VERSION >= 19
+		ENSURE_JTHREADOBJECT_NOT_VIRTUAL(
+			currentThread,
+			currentThread->threadObject,
+			JVMTI_ERROR_UNSUPPORTED_OPERATION);
+#endif /* JAVA_SPEC_VERSION >= 19 */
+
+		rv_nanos = (jlong)omrthread_get_self_cpu_time(omrthread_self());
 
 done:
+#if JAVA_SPEC_VERSION >= 19
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
+	}
+#endif /* JAVA_SPEC_VERSION >= 19 */
+
 	if (NULL != nanos_ptr) {
 		*nanos_ptr = rv_nanos;
 	}
