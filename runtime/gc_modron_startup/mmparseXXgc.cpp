@@ -1515,6 +1515,7 @@ gcParseXXgcArguments(J9JavaVM *vm, char *optArg)
 			continue;
 		}
 
+
 		/* Couldn't find a match for arguments */
 		j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTION_UNKNOWN, error_scan);
 		returnValue = JNI_EINVAL;

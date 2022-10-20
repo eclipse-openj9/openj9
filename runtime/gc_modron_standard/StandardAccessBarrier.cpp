@@ -80,7 +80,6 @@ MM_StandardAccessBarrier::initialize(MM_EnvironmentBase *env)
 	if (!_generationalAccessBarrierComponent.initialize(env)) {
 		return false;
 	}
-	_scavenger = MM_GCExtensions::getExtensions(env)->scavenger;
 #endif /* J9VM_GC_GENERATIONAL */
 	
 	return MM_ObjectAccessBarrier::initialize(env);
@@ -266,12 +265,10 @@ MM_StandardAccessBarrier::postObjectStoreImpl(J9VMThread *vmThread, J9Object *ds
 {
 	/* If the source object is NULL, there is no need for a write barrier. */
 	if(NULL != srcObject) {
-#if defined(OMR_GC_CONCURRENT_SCAVENGER)
 		if (_extensions->isConcurrentScavengerEnabled() && !_extensions->isScavengerBackOutFlagRaised()) {
-			Assert_MM_false(_scavenger->isObjectInEvacuateMemory(dstObject));
-			Assert_MM_false(_scavenger->isObjectInEvacuateMemory(srcObject));
+			Assert_MM_false(_extensions->scavenger->isObjectInEvacuateMemory(dstObject));
+			Assert_MM_false(_extensions->scavenger->isObjectInEvacuateMemory(srcObject));
 		}
-#endif /* OMR_GC_CONCURRENT_SCAVENGER */
 
 #if defined(OMR_GC_MODRON_CONCURRENT_MARK)
 		/* Call the concurrent write barrier if required */
@@ -760,10 +757,10 @@ MM_StandardAccessBarrier::preWeakRootSlotRead(J9VMThread *vmThread, j9object_t *
 	omrobjectptr_t object = (omrobjectptr_t)*srcAddress;
 	bool const compressed = compressObjectReferences();
 
-	if ((NULL != _scavenger) && _scavenger->isObjectInEvacuateMemory(object)) {
+	if ((NULL != _extensions->scavenger) && _extensions->scavenger->isObjectInEvacuateMemory(object)) {
 		MM_EnvironmentStandard *env = MM_EnvironmentStandard::getEnvironment(vmThread->omrVMThread);
-		Assert_MM_true(_scavenger->isConcurrentCycleInProgress());
-		Assert_MM_true(_scavenger->isMutatorThreadInSyncWithCycle(env));
+		Assert_MM_true(_extensions->scavenger->isConcurrentCycleInProgress());
+		Assert_MM_true(_extensions->scavenger->isMutatorThreadInSyncWithCycle(env));
 
 		MM_ForwardedHeader forwardHeader(object, compressed);
 		omrobjectptr_t forwardPtr = forwardHeader.getForwardedObject();
@@ -790,8 +787,8 @@ MM_StandardAccessBarrier::preWeakRootSlotRead(J9JavaVM *vm, j9object_t *srcAddre
 	omrobjectptr_t object = (omrobjectptr_t)*srcAddress;
 	bool const compressed = compressObjectReferences();
 
-	if ((NULL != _scavenger) && _scavenger->isObjectInEvacuateMemory(object)) {
-		Assert_MM_true(_scavenger->isConcurrentCycleInProgress());
+	if ((NULL != _extensions->scavenger) && _extensions->scavenger->isObjectInEvacuateMemory(object)) {
+		Assert_MM_true(_extensions->scavenger->isConcurrentCycleInProgress());
 
 		MM_ForwardedHeader forwardHeader(object, compressed);
 		omrobjectptr_t forwardPtr = forwardHeader.getForwardedObject();
@@ -815,10 +812,10 @@ MM_StandardAccessBarrier::preObjectRead(J9VMThread *vmThread, J9Class *srcClass,
 	omrobjectptr_t object = *(volatile omrobjectptr_t *)srcAddress;
 	bool const compressed = compressObjectReferences();
 
-	if ((NULL != _scavenger) && _scavenger->isObjectInEvacuateMemory(object)) {
+	if ((NULL != _extensions->scavenger) && _extensions->scavenger->isObjectInEvacuateMemory(object)) {
 		MM_EnvironmentStandard *env = MM_EnvironmentStandard::getEnvironment(vmThread->omrVMThread);
-		Assert_MM_true(_scavenger->isConcurrentCycleInProgress());
-		Assert_MM_true(_scavenger->isMutatorThreadInSyncWithCycle(env));
+		Assert_MM_true(_extensions->scavenger->isConcurrentCycleInProgress());
+		Assert_MM_true(_extensions->scavenger->isMutatorThreadInSyncWithCycle(env));
 
 		MM_ForwardedHeader forwardHeader(object, compressed);
 		omrobjectptr_t forwardPtr = forwardHeader.getForwardedObject();
@@ -828,7 +825,7 @@ MM_StandardAccessBarrier::preObjectRead(J9VMThread *vmThread, J9Class *srcClass,
 			forwardHeader.copyOrWait(forwardPtr);
 			MM_AtomicOperations::lockCompareExchange((uintptr_t *)srcAddress, (uintptr_t)object, (uintptr_t)forwardPtr);
 		} else {
-			omrobjectptr_t destinationObjectPtr = _scavenger->copyObject(env, &forwardHeader);
+			omrobjectptr_t destinationObjectPtr = _extensions->scavenger->copyObject(env, &forwardHeader);
 			if (NULL == destinationObjectPtr) {
 				/* Failure - the scavenger must back out the work it has done. Attempt to return the original object. */
 				forwardPtr = forwardHeader.setSelfForwardedObject();
@@ -859,13 +856,13 @@ MM_StandardAccessBarrier::preObjectRead(J9VMThread *vmThread, J9Object *srcObjec
 	fomrobject_t objectToken = (fomrobject_t)(compressed ? (uintptr_t)*(volatile uint32_t *)srcAddress: *(volatile uintptr_t *)srcAddress);
 	omrobjectptr_t object = convertPointerFromToken(objectToken);
 
-	if (NULL != _scavenger) {
+	if (NULL != _extensions->scavenger) {
 		MM_EnvironmentStandard *env = MM_EnvironmentStandard::getEnvironment(vmThread->omrVMThread);
-		Assert_GC_true_with_message(env, !_scavenger->isObjectInEvacuateMemory((omrobjectptr_t)srcAddress) || _extensions->isScavengerBackOutFlagRaised(), "readObject %llx in Evacuate\n", srcAddress);
-		if (_scavenger->isObjectInEvacuateMemory(object)) {
-			Assert_GC_true_with_message2(env, _scavenger->isConcurrentCycleInProgress(),
+		Assert_GC_true_with_message(env, !_extensions->scavenger->isObjectInEvacuateMemory((omrobjectptr_t)srcAddress) || _extensions->isScavengerBackOutFlagRaised(), "readObject %llx in Evacuate\n", srcAddress);
+		if (_extensions->scavenger->isObjectInEvacuateMemory(object)) {
+			Assert_GC_true_with_message2(env, _extensions->scavenger->isConcurrentCycleInProgress(),
 					"CS not in progress, found a object in Survivor: slot %llx object %llx\n", srcAddress, object);
-			Assert_MM_true(_scavenger->isMutatorThreadInSyncWithCycle(env));
+			Assert_MM_true(_extensions->scavenger->isMutatorThreadInSyncWithCycle(env));
 			/* since object is still in evacuate, srcObject has not been scanned yet => we cannot assert
 			 * if srcObject should (already) be remembered (even if it's old)
 			 */
@@ -884,7 +881,7 @@ MM_StandardAccessBarrier::preObjectRead(J9VMThread *vmThread, J9Object *srcObjec
 				forwardHeader.copyOrWait(forwardPtr);
 				slotObject.atomicWriteReferenceToSlot(object, forwardPtr);
 			} else {
-				omrobjectptr_t destinationObjectPtr = _scavenger->copyObject(env, &forwardHeader);
+				omrobjectptr_t destinationObjectPtr = _extensions->scavenger->copyObject(env, &forwardHeader);
 				if (NULL == destinationObjectPtr) {
 					/* We have no place to copy (or less likely, we lost to another thread forwarding it).
 					 * We are forced to return the original location of the object.
@@ -1038,24 +1035,3 @@ MM_StandardAccessBarrier::checkClassLive(J9JavaVM *javaVM, J9Class *classPtr)
 }
 #endif /* defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING) */
 
-void
-MM_StandardAccessBarrier::preMountContinuation(J9VMThread *vmThread, j9object_t contObject)
-{
-#if defined(OMR_GC_CONCURRENT_SCAVENGER)
-	if (_extensions->isConcurrentScavengerInProgress()) {
-		/* concurrent scavenger in progress */
-		MM_EnvironmentStandard *env = (MM_EnvironmentStandard *) MM_EnvironmentBase::getEnvironment(vmThread->omrVMThread);
-		MM_ScavengeScanReason reason = SCAN_REASON_SCAVENGE;
-		_scavenger->getDelegate()->doContinuationObject(env, contObject, reason);
-	}
-#endif /* OMR_GC_CONCURRENT_SCAVENGER */
-}
-
-void
-MM_StandardAccessBarrier::postUnmountContinuation(J9VMThread *vmThread, j9object_t contObject)
-{
-	/* Conservatively assume that via mutations of stack slots (which are not subject to access barriers),
-	 * all post-write barriers have been triggered on this Continuation object, since it's been mounted.
-	 */
-	postBatchObjectStore(vmThread, contObject);
-}
