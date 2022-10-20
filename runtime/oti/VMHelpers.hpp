@@ -2033,7 +2033,10 @@ exit:
 	threadInterruptImpl(J9VMThread *currentThread, j9object_t targetObject)
 	{
 		J9VMThread *targetThread = J9VMJAVALANGTHREAD_THREADREF(currentThread, targetObject);
-		if (J9VMJAVALANGTHREAD_STARTED(currentThread, targetObject) && (NULL != targetThread)) {
+		if (J9VMJAVALANGTHREAD_STARTED(currentThread, targetObject)
+			&& (NULL != targetThread)
+			&& (NULL != targetThread->osThread)
+		) {
 			void (*sidecarInterruptFunction)(J9VMThread*) = currentThread->javaVM->sidecarInterruptFunction;
 			if (NULL != sidecarInterruptFunction) {
 				sidecarInterruptFunction(targetThread);
