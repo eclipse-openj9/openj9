@@ -5394,8 +5394,6 @@ TR::Register
    TR::Compilation *comp = cg->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
    static const char *noInline = feGetEnv("TR_NoInlineMonitor");
-   static const char *firstMonExit = feGetEnv("TR_FirstMonExit");
-   static int32_t monExitCount = 0;
    bool reservingLock = false;
    bool normalLockPreservingReservation = false;
    bool dummyMethodMonitor = false;
@@ -5403,11 +5401,10 @@ TR::Register
    int lwOffset = fej9->getByteOffsetToLockword((TR_OpaqueClassBlock *) cg->getMonClass(node));
    TR_YesNoMaybe isMonitorValueBasedOrValueType = cg->isMonitorValueBasedOrValueType(node);
 
-   if ((comp->getOption(TR_MimicInterpreterFrameShape) /*&& !comp->getOption(TR_EnableLiveMonitorMetadata)*/) ||
+   if (comp->getOption(TR_MimicInterpreterFrameShape) ||
        noInline ||
        (isMonitorValueBasedOrValueType == TR_yes) ||
-       comp->getOption(TR_DisableInlineMonExit) ||
-       (firstMonExit && (*firstMonExit-'0') > monExitCount++))
+       comp->getOption(TR_DisableInlineMonExit))
       {
       // Don't inline
       //
@@ -5421,7 +5418,6 @@ TR::Register
 
    if (lwOffset > 0 && comp->getOption(TR_ReservingLocks))
       {
-      bool dummy=false;
       TR::TreeEvaluator::evaluateLockForReservation (node, &reservingLock, &normalLockPreservingReservation, cg);
       if (node->isPrimitiveLockedRegion() && reservingLock)
          dummyMethodMonitor = TR::TreeEvaluator::isDummyMonitorExit(node, cg);
