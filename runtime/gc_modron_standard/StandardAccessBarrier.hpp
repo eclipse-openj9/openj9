@@ -49,7 +49,7 @@ class MM_StandardAccessBarrier : public MM_ObjectAccessBarrier
 private:
 #if defined(J9VM_GC_GENERATIONAL)
 	MM_GenerationalAccessBarrierComponent _generationalAccessBarrierComponent;	/**< Generational Component of Access Barrier */
-	MM_Scavenger *_scavenger;	/**< caching MM_GCExtensions::scavenger */
+	MM_Scavenger *_scavenger;	/**< caching MM_GCExtensions::scavenger,  initialization is postponed in MM_ScavengerDelegate::initialize(), due to StandardAccessBarrier is initialized earlier than scavenger is setup. */
 #endif /* J9VM_GC_GENERATIONAL */
 	MM_MarkingScheme *_markingScheme;	/**< caching MM_MarkingScheme instance */
 
@@ -79,6 +79,9 @@ public:
 		_typeId = __FUNCTION__;
 	}
 
+#if defined(J9VM_GC_GENERATIONAL)
+	void setScavenger(MM_Scavenger *scavenger) { _scavenger = scavenger; }
+#endif /* J9VM_GC_GENERATIONAL */
 	virtual J9Object* asConstantPoolObject(J9VMThread *vmThread, J9Object* toConvert, UDATA allocationFlags);
 
 	virtual void rememberObjectImpl(MM_EnvironmentBase *env, J9Object* object);
