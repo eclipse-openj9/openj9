@@ -7075,6 +7075,16 @@ public final class Unsafe {
 		return getReference(obj, offset);
 	}
 
+	public <V> V makePrivateBuffer(V v) {
+		// ToDo: this is a temporary implementation - https://github.com/eclipse-openj9/openj9/issues/13614
+		return null;
+	}
+
+	public <V> V finishPrivateBuffer(V v) {
+		// ToDo: this is a temporary implementation - https://github.com/eclipse-openj9/openj9/issues/13614
+		return null;
+	}
+
 	private static InternalError OpenJDKCompileStubThrowError() {
 		// ToDo: https://github.com/eclipse-openj9/openj9/issues/13614
 		throw new InternalError("Compile stub invoked! Apart from deliberate reflective access, this should not happen. Please report this to the project so it can be addressed");	//$NON-NLS-1$
