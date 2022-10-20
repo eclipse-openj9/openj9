@@ -4517,19 +4517,6 @@ TR::Register *J9::X86::TreeEvaluator::checkcastinstanceofEvaluator(TR::Node *nod
    return node->getRegister();
    }
 
-static bool comesFromClassLib(TR::Node *node, TR::Compilation *comp)
-   {
-   TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
-   TR_OpaqueMethodBlock *mb = node->getOwningMethod();
-   char buf[512];
-   const char *methodSig = fej9->sampleSignature(mb, buf, 512, comp->trMemory());
-   if (methodSig &&
-       (strncmp(methodSig, "java", 4)==0 ||
-        strncmp(methodSig, "sun", 3) ==0))
-      return true;
-   return false;
-   }
-
 static TR::MemoryReference *getMemoryReference(TR::Register *objectClassReg, TR::Register *objectReg, int32_t lwOffset, TR::CodeGenerator *cg)
    {
    if (objectClassReg)
@@ -4891,7 +4878,6 @@ J9::X86::TreeEvaluator::VMmonentEvaluator(
    bool normalLockPreservingReservation = false;
    bool dummyMethodMonitor = false;
    TR_YesNoMaybe isMonitorValueBasedOrValueType = cg->isMonitorValueBasedOrValueType(node);
-   static const char *doCmpFirst = feGetEnv("TR_AddCMPBeforeCMPXCHG");
 
    int lwOffset = fej9->getByteOffsetToLockword((TR_OpaqueClassBlock *) cg->getMonClass(node));
    if (comp->getOption(TR_MimicInterpreterFrameShape) ||
@@ -5255,21 +5241,6 @@ J9::X86::TreeEvaluator::VMmonentEvaluator(
          instr->setNeedsGCMap(0xFF00FFFF);
 
          generateRegImmInstruction(testOp, node, eaxReal, (int32_t)~RES_BIT, cg);
-         generateLabelInstruction(TR::InstOpCode::JNE4, node, snippetLabel, cg);
-         }
-
-      if (doCmpFirst &&
-         !comesFromClassLib(node, comp))
-         {
-         TR::X86MemImmInstruction  * instr;
-         if (cg->comp()->target().is64Bit() && fej9->generateCompressedLockWord())
-            instr = generateMemImmInstruction(TR::InstOpCode::CMP4MemImms, node, getMemoryReference(objectClassReg, objectReg, lwOffset, cg), 0, cg);
-         else
-            instr = generateMemImmInstruction(TR::InstOpCode::CMPMemImms(), node, getMemoryReference(objectClassReg, objectReg, lwOffset, cg), 0, cg);
-
-         cg->setImplicitExceptionPoint(instr);
-         instr->setNeedsGCMap(0xFF00FFFF);
-
          generateLabelInstruction(TR::InstOpCode::JNE4, node, snippetLabel, cg);
          }
 
