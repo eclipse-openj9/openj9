@@ -579,7 +579,7 @@ jvmtiGetThreadInfo(jvmtiEnv *env,
 			rv_name = name;
 			{
 #if JAVA_SPEC_VERSION >= 19
-				if (isVirtual) {
+				if (isVirtual || (NULL == threadHolder)) {
 					rv_priority = JVMTI_THREAD_NORM_PRIORITY;
 				} else {
 					rv_priority = J9VMJAVALANGTHREADFIELDHOLDER_PRIORITY(currentThread, threadHolder);
@@ -593,7 +593,11 @@ jvmtiGetThreadInfo(jvmtiEnv *env,
 			if (isVirtual) {
 				rv_is_daemon = JNI_TRUE;
 			} else {
-				rv_is_daemon = J9VMJAVALANGTHREADFIELDHOLDER_DAEMON(currentThread, threadHolder) ? JNI_TRUE : JNI_FALSE;
+				if (NULL == threadHolder) {
+					rv_is_daemon = JNI_FALSE;
+				} else {
+					rv_is_daemon = J9VMJAVALANGTHREADFIELDHOLDER_DAEMON(currentThread, threadHolder) ? JNI_TRUE : JNI_FALSE;
+				}
 			}
 #else /* JAVA_SPEC_VERSION >= 19 */
 			rv_is_daemon = J9VMJAVALANGTHREAD_ISDAEMON(currentThread, threadObject) ? JNI_TRUE : JNI_FALSE;
