@@ -386,7 +386,7 @@ void TR_OSRGuardInsertion::removeHCRGuards(TR_BitVector &fearGeneratingNodes, TR
 
             // if virtual guards kill fear we can short cut additional analysis if the method still has a guard
             // we can mark that guard as an OSR guard and continue without needing a data flow analysis
-            if (TR_FearPointAnalysis::virtualGuardsKillFear()
+            if (TR_FearPointAnalysis::virtualGuardsKillFear(comp())
                 && additionalVirtualGuard
                 && comp()->cg()->supportsMergingGuards())
                {
@@ -412,7 +412,7 @@ void TR_OSRGuardInsertion::removeHCRGuards(TR_BitVector &fearGeneratingNodes, TR
             {
             comp()->addClassForOSRRedefinition(guardInfo->getThisClass());
             guardInfo->setMergedWithHCRGuard(false);
-            if (TR_FearPointAnalysis::virtualGuardsKillFear())
+            if (TR_FearPointAnalysis::virtualGuardsKillFear(comp()))
                guardInfo->setMergedWithOSRGuard();
             else
                {
@@ -475,7 +475,7 @@ int32_t TR_OSRGuardInsertion::insertOSRGuards(TR_BitVector &fearGeneratingNodes)
          continue;
          }
 
-      if (TR_FearPointAnalysis::virtualGuardsKillFear()
+      if (TR_FearPointAnalysis::virtualGuardsKillFear(comp())
           && cursor->getNode()->isTheVirtualGuardForAGuardedInlinedCall()
           && comp()->cg()->supportsMergingGuards())
          {

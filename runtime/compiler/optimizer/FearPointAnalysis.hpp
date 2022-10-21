@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -41,7 +41,7 @@ class TR_FearPointAnalysis : public TR_BackwardUnionSingleBitContainerAnalysis
    virtual bool postInitializationProcessing();
    TR_SingleBitContainer *generatedFear(TR::Node *node);
 
-   static bool virtualGuardsKillFear();
+   static bool virtualGuardsKillFear(TR::Compilation *comp);
 
    private:
    void computeFear(TR::Compilation *comp, TR::Node *node, TR::NodeChecklist &checklist);
