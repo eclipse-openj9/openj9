@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2021, 2021 IBM Corp. and others
+ * Copyright (c) 2021, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -64,6 +64,7 @@ public:
    //NOTE: 0 signifies an invalid record ID
    uintptr_t id() const { return getId(_idAndType); }
    AOTSerializationRecordType type() const { return getType(_idAndType); }
+   bool isValid(AOTSerializationRecordType type) const;
    const uint8_t *end() const { return (const uint8_t *)this + size(); }
 
    static const AOTSerializationRecord *get(const std::string &str)
@@ -110,11 +111,13 @@ struct ClassLoaderSerializationRecord : public AOTSerializationRecord
 public:
    size_t nameLength() const { return _nameLength; }
    const uint8_t *name() const { return _name; }
+   bool isValid() const { return AOTSerializationRecord::isValid(AOTSerializationRecordType::ClassLoader); }
 
 private:
    friend class AOTCacheClassLoaderRecord;
 
    ClassLoaderSerializationRecord(uintptr_t id, const uint8_t *name, size_t nameLength);
+   ClassLoaderSerializationRecord();
 
    static size_t size(size_t nameLength)
       {
@@ -135,12 +138,14 @@ public:
    uint32_t romClassSize() const { return _romClassSize; }
    size_t nameLength() const { return _nameLength; }
    const uint8_t *name() const { return _name; }
+   bool isValid() const { return AOTSerializationRecord::isValid(AOTSerializationRecordType::Class); }
 
 private:
    friend class AOTCacheClassRecord;
 
    ClassSerializationRecord(uintptr_t id, uintptr_t classLoaderId,
                             const JITServerROMClassHash &hash, const J9ROMClass *romClass);
+   ClassSerializationRecord();
 
    static size_t size(size_t nameLength)
       {
@@ -162,11 +167,13 @@ struct MethodSerializationRecord : public AOTSerializationRecord
 public:
    uintptr_t definingClassId() const { return _definingClassId; }
    uint32_t index() const { return _index; }
+   bool isValid() const { return AOTSerializationRecord::isValid(AOTSerializationRecordType::Method); }
 
 private:
    friend class AOTCacheMethodRecord;
 
    MethodSerializationRecord(uintptr_t id, uintptr_t definingClassId, uint32_t index);
+   MethodSerializationRecord();
 
    const uintptr_t _definingClassId;
    // Index in the array of methods of the defining class
@@ -195,11 +202,13 @@ struct ClassChainSerializationRecord : public AOTSerializationRecord
    {
 public:
    const IdList &list() const { return _list; }
+   bool isValid() const { return AOTSerializationRecord::isValid(AOTSerializationRecordType::ClassChain); }
 
 private:
    template<class D, class R, typename... Args> friend class AOTCacheListRecord;
 
    ClassChainSerializationRecord(uintptr_t id, size_t length);
+   ClassChainSerializationRecord();
 
    IdList &list() { return _list; }
 
@@ -218,11 +227,13 @@ struct WellKnownClassesSerializationRecord : public AOTSerializationRecord
 public:
    uintptr_t includedClasses() const { return _includedClasses; }
    const IdList &list() const { return _list; }
+   bool isValid() const { return AOTSerializationRecord::isValid(AOTSerializationRecordType::WellKnownClasses); }
 
 private:
    template<class D, class R, typename... Args> friend class AOTCacheListRecord;
 
    WellKnownClassesSerializationRecord(uintptr_t id, size_t length, uintptr_t includedClasses);
+   WellKnownClassesSerializationRecord();
 
    IdList &list() { return _list; }
 
@@ -242,11 +253,13 @@ struct AOTHeaderSerializationRecord : public AOTSerializationRecord
    {
 public:
    const TR_AOTHeader *header() const { return &_header; }
+   bool isValid() const { return AOTSerializationRecord::isValid(AOTSerializationRecordType::AOTHeader); }
 
 private:
    friend class AOTCacheAOTHeaderRecord;
 
    AOTHeaderSerializationRecord(uintptr_t id, const TR_AOTHeader *header);
+   AOTHeaderSerializationRecord();
 
    const TR_AOTHeader _header;
    };
@@ -294,6 +307,7 @@ public:
    const uint8_t *data() const { return code() + _codeSize; }
    uint8_t *data() { return (uint8_t *)(code() + _codeSize); }
    const uint8_t *end() const { return (const uint8_t *)this + size(); }
+   bool isValid() const;
 
    static SerializedAOTMethod *get(std::string &str)
       {
@@ -308,6 +322,7 @@ private:
    SerializedAOTMethod(uintptr_t definingClassChainId, uint32_t index,
                        TR_Hotness optLevel, uintptr_t aotHeaderId, size_t numRecords,
                        const void *code, size_t codeSize, const void *data, size_t dataSize);
+   SerializedAOTMethod();
 
    static size_t size(size_t numRecords, size_t codeSize, size_t dataSize)
       {
