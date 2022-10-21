@@ -518,7 +518,7 @@ final class Access implements JavaLangAccess {
 		return Thread.currentCarrierThread();
 	}
 
-/*[IF JAVA_SPEC_VERSION >= 20]*/
+/*[IF JAVA_SPEC_VERSION >= 19]*/
 	/*
 	 * To access package-private methods in ThreadLocal, an
 	 * (implicit) cast from CarrierThreadLocal is required.
@@ -542,7 +542,7 @@ final class Access implements JavaLangAccess {
 	public <T> void setCarrierThreadLocal(CarrierThreadLocal<T> local, T value) {
 		asThreadLocal(local).setCarrierThreadLocal(value);
 	}
-/*[ELSE] JAVA_SPEC_VERSION >= 20 */
+/*[ELSE] JAVA_SPEC_VERSION >= 19 */
 	public <T> T getCarrierThreadLocal(ThreadLocal<T> local) {
 		return local.getCarrierThreadLocal();
 	}
@@ -550,7 +550,7 @@ final class Access implements JavaLangAccess {
 	public <T> void setCarrierThreadLocal(ThreadLocal<T> local, T value) {
 		local.setCarrierThreadLocal(value);
 	}
-/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 19 */
 
 	public <V> V executeOnCarrierThread(Callable<V> task) throws Exception {
 		V result;
@@ -643,22 +643,6 @@ final class Access implements JavaLangAccess {
 
 	public StackWalker newStackWalkerInstance(Set<StackWalker.Option> options, ContinuationScope contScope, Continuation continuation) {
 		return StackWalker.newInstance(options, null, contScope, continuation);
-	}
-
-	public boolean isCarrierThreadLocalPresent(CarrierThreadLocal<?> carrierThreadlocal) {
-		return ((ThreadLocal<?>)carrierThreadlocal).isCarrierThreadLocalPresent();
-	}
-
-	public <T> T getCarrierThreadLocal(CarrierThreadLocal<T> carrierThreadlocal) {
-		return ((ThreadLocal<T>)carrierThreadlocal).getCarrierThreadLocal();
-	}
-
-	public void removeCarrierThreadLocal(CarrierThreadLocal<?> carrierThreadlocal) {
-		((ThreadLocal<?>)carrierThreadlocal).removeCarrierThreadLocal();
-	}
-
-	public <T> void setCarrierThreadLocal(CarrierThreadLocal<T> carrierThreadlocal, T carrierThreadLocalvalue) {
-		((ThreadLocal<T>)carrierThreadlocal).setCarrierThreadLocal(carrierThreadLocalvalue);
 	}
 /*[ENDIF] JAVA_SPEC_VERSION >= 19 */
 
