@@ -6640,8 +6640,6 @@ TR_J9InnerPreexistenceInfo::perform(TR::Compilation *comp, TR::Node *guardNode, 
          {
          TR_ASSERT(virtualGuard, "we cannot directly devirtualize anything thats not guarded");
 
-         //_callNode->devirtualizeCall(_callTree);
-
          // Add an inner assumption on the outer guard
          //
          TR_InnerAssumption *a  = new (comp->trHeapMemory()) TR_InnerAssumption(point->_ordinal, virtualGuard);

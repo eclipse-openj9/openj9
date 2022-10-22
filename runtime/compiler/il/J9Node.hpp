@@ -93,7 +93,21 @@ public:
     */
    TR::Node *processJNICall(TR::TreeTop *callNodeTreeTop, TR::ResolvedMethodSymbol *owningSymbol, TR::Compilation *comp);
 
-   void                    devirtualizeCall(TR::TreeTop*);
+   /**
+    * @brief Stub method for OMR callers using the old API.  This function is
+    *    deprecated and will be removed once upstream OMR code is changed.
+    */
+   void devirtualizeCall(TR::TreeTop *treeTop);
+
+   /**
+    * @brief Devirtualize the call under the given treetop.
+    *
+    * @param[in] treeTop : \c TR::TreeTop of the call to devirtualize
+    * @param[in] comp : \c TR::Compilation object
+    *
+    * @return None
+    */
+   void devirtualizeCall(TR::TreeTop *treeTop, TR::Compilation *comp);
 
    /**
     * @return the signature of the node's type if applicable.

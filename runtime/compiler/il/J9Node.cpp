@@ -475,12 +475,17 @@ J9::Node::processJNICall(TR::TreeTop *callNodeTreeTop, TR::ResolvedMethodSymbol 
 void
 J9::Node::devirtualizeCall(TR::TreeTop *treeTop)
    {
+   return self()->devirtualizeCall(treeTop, TR::comp());
+   }
+
+void
+J9::Node::devirtualizeCall(TR::TreeTop *treeTop, TR::Compilation *comp)
+   {
    OMR::NodeConnector::devirtualizeCall(treeTop);
    TR::ResolvedMethodSymbol *methodSymbol = self()->getSymbol()->castToResolvedMethodSymbol();
 
    if (methodSymbol->isJNI())
       {
-      TR::Compilation *comp = TR::comp();
       self()->processJNICall(treeTop, comp->getMethodSymbol(), comp);
       }
    }
