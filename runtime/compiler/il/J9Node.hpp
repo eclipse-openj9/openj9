@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -75,7 +75,23 @@ public:
    /// given a direct call to Object.clone node, return the class of the receiver.
    ///
    TR_OpaqueClassBlock* getCloneClassInNode();
-   TR::Node *           processJNICall(TR::TreeTop *, TR::ResolvedMethodSymbol *);
+
+   /**
+    * @brief Stub method for OMR callers using the old API.  This function is
+    *    deprecated and will be removed once upstream OMR code is changed.
+    */
+   TR::Node *processJNICall(TR::TreeTop *callNodeTreeTop, TR::ResolvedMethodSymbol *owningSymbol);
+
+   /**
+    * @brief Transform a call node to prepare it for JNI dispatch.
+    *
+    * @param[in] callNodeTreeTop : \c TR::TreeTop for the call node
+    * @param[in] owningSymbol : \c TR::ResolvedMethodSymbol of the method to call
+    * @param[in] comp : \c TR::Compilation object
+    *
+    * @return Transformed call  \c TR::Node
+    */
+   TR::Node *processJNICall(TR::TreeTop *callNodeTreeTop, TR::ResolvedMethodSymbol *owningSymbol, TR::Compilation *comp);
 
    void                    devirtualizeCall(TR::TreeTop*);
 

@@ -260,11 +260,15 @@ J9::Node::getCloneClassInNode()
    return (TR_OpaqueClassBlock *)_unionBase._children[1];
    }
 
+TR::Node *
+J9::Node::processJNICall(TR::TreeTop *callNodeTreeTop, TR::ResolvedMethodSymbol *owningSymbol)
+   {
+   return self()->processJNICall(callNodeTreeTop, owningSymbol, TR::comp());
+   }
 
 TR::Node *
-J9::Node::processJNICall(TR::TreeTop * callNodeTreeTop, TR::ResolvedMethodSymbol * owningSymbol)
+J9::Node::processJNICall(TR::TreeTop *callNodeTreeTop, TR::ResolvedMethodSymbol *owningSymbol, TR::Compilation *comp)
    {
-   TR::Compilation * comp = TR::comp();
    if (!comp->cg()->getSupportsDirectJNICalls() || comp->getOption(TR_DisableDirectToJNI) || (comp->compileRelocatableCode() && !comp->cg()->supportsDirectJNICallsForAOT()))
       return self();
 
@@ -332,8 +336,8 @@ J9::Node::processJNICall(TR::TreeTop * callNodeTreeTop, TR::ResolvedMethodSymbol
       }
 
 #if defined(TR_TARGET_POWER)
-   // Recognizing these methods on Power allows us to take a shortcut 
-   // in the JNI dispatch where we mangle the register dependencies and call 
+   // Recognizing these methods on Power allows us to take a shortcut
+   // in the JNI dispatch where we mangle the register dependencies and call
    // optimized helpers in the JIT library using what amounts to system/C dispatch.
    // The addresses of the optimized helpers in the server process will not necessarily
    // match the client-side addresses, so we can't take this shortcut in JITServer mode.
@@ -475,7 +479,10 @@ J9::Node::devirtualizeCall(TR::TreeTop *treeTop)
    TR::ResolvedMethodSymbol *methodSymbol = self()->getSymbol()->castToResolvedMethodSymbol();
 
    if (methodSymbol->isJNI())
-      self()->processJNICall(treeTop, TR::comp()->getMethodSymbol());
+      {
+      TR::Compilation *comp = TR::comp();
+      self()->processJNICall(treeTop, comp->getMethodSymbol(), comp);
+      }
    }
 
 bool

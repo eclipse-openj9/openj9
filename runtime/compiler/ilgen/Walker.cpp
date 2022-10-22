@@ -4742,7 +4742,7 @@ break
       if (!resultNode)
          {
          if (symbol->isJNI())
-            resultNode = callNode->processJNICall(callNodeTreeTop, _methodSymbol);
+            resultNode = callNode->processJNICall(callNodeTreeTop, _methodSymbol, comp());
          else
             resultNode = callNode;
          }
