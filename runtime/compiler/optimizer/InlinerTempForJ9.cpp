@@ -2057,7 +2057,7 @@ TR_J9InlinerPolicy::inlineUnsafeCall(TR::ResolvedMethodSymbol *calleeSymbol, TR:
 bool
 TR_J9InlinerPolicy::isInlineableJNI(TR_ResolvedMethod *method,TR::Node *callNode)
    {
-   TR::Compilation* comp = TR::comp();
+   TR::Compilation *comp = this->comp();
    TR::RecognizedMethod recognizedMethod = method->getRecognizedMethod();
    // Reflection's JNI
    //
