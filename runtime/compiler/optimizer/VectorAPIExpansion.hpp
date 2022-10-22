@@ -120,7 +120,14 @@ class TR_VectorAPIExpansion : public TR::Optimization
    static int32_t const VECTOR_OP_URSHIFT = 16;
 
    static int32_t const VECTOR_OP_CAST        = 17;
-   static int32_t const VECTOR_OP_REINTERPRET = 18;
+   static int32_t const VECTOR_OP_UCAST       = 18;
+   static int32_t const VECTOR_OP_REINTERPRET = 19;
+
+   // Mask manipulation operations
+   static int32_t const VECTOR_OP_MASK_TRUECOUNT = 20;
+   static int32_t const VECTOR_OP_MASK_FIRSTTRUE = 21;
+   static int32_t const VECTOR_OP_MASK_LASTTRUE  = 22;
+   static int32_t const VECTOR_OP_MASK_TOLONG    = 23;
 
    // Compare
    static int32_t const BT_eq = 0;
@@ -136,6 +143,10 @@ class TR_VectorAPIExpansion : public TR::Optimization
    static int32_t const BT_uge = BT_ge | BT_unsigned_compare;
    static int32_t const BT_ult = BT_lt | BT_unsigned_compare;
    static int32_t const BT_ugt = BT_gt | BT_unsigned_compare;
+
+   // Various broadcasting modes.
+   static int32_t const MODE_BROADCAST = 0;
+   static int32_t const MODE_BITS_COERCED_LONG_TO_MASK = 1;
 
   /** \brief
    *  Is passed to methods handlers during analysis and transforamtion phases
@@ -175,6 +186,7 @@ class TR_VectorAPIExpansion : public TR::Optimization
    enum vapiOpCodeType
       {
       Compare,
+      MaskReduction,
       Reduction,
       Test,
       Other
@@ -799,6 +811,38 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *
    */
    static TR::Node *binaryIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, TR::VectorLength vectorLength, int32_t numLanes, handlerMode mode);
+
+  /** \brief
+   *    Scalarizes or vectorizes a node that is a call to \c VectorSupport.maskReductionCoerced() intrinsic.
+   *    In both cases, the node is modified in place.
+   *    In the case of scalarization, extra nodes are created(number of lanes minus one)
+   *
+   *   \param opt
+   *      This optimization object
+   *
+   *   \param treeTop
+   *      Tree top of the \c node
+   *
+   *   \param node
+   *      Node to transform
+   *
+   *   \param elementType
+   *      Element type
+   *
+   *   \param vectorLength
+   *      Vector length
+   *
+   *   \param numLanes
+   *      Number of elements
+   *
+   *   \param mode
+   *      Handler mode
+   *
+   *   \return
+   *      Transformed node
+   *
+   */
+   static TR::Node *maskReductionCoercedIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, TR::VectorLength vectorLength, int32_t numLanes, handlerMode mode);
 
   /** \brief
    *    Scalarizes or vectorizes a node that is a call to \c VectorSupport.reductionCoerced() intrinsic.
