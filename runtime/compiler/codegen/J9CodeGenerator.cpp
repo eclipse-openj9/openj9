@@ -3116,7 +3116,7 @@ J9::CodeGenerator::compressedReferenceRematerialization()
             prevTree->join(nextTree);
             }
 
-         if (node->canGCandReturn())
+         if (node->canGCandReturn(self()->comp()))
             {
             ListIterator<TR::Node> nodesIt(&rematerializedNodes);
             for (TR::Node * rematNode = nodesIt.getFirst(); rematNode != NULL; rematNode = nodesIt.getNext())

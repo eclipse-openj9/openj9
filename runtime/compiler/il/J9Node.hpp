@@ -162,6 +162,7 @@ public:
 
    bool canRemoveArithmeticOperand();
    bool canGCandReturn();
+   bool canGCandReturn(TR::Compilation *comp);
 
    static uint32_t hashOnBCDOrAggrLiteral(char *lit, size_t litSize);
 

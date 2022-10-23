@@ -1131,7 +1131,7 @@ TR_J9ByteCodeIlGenerator::genTreeTop(TR::Node * n)
 
    //In involuntaryOSR, exception points are OSR points but we don't need to
    //handle pending pushes for them because the operand stack is always empty at catch.
-   bool isExceptionOnlyPoint = comp()->getOSRMode() == TR::involuntaryOSR && !n->canGCandReturn() && n->canGCandExcept();
+   bool isExceptionOnlyPoint = comp()->getOSRMode() == TR::involuntaryOSR && !n->canGCandReturn(comp()) && n->canGCandExcept();
    if (comp()->getOption(TR_TraceOSR))
       traceMsg(comp(), "skip saving PPS for exceptionOnlyPoints %d node n%dn\n", isExceptionOnlyPoint, n->getGlobalIndex());
 

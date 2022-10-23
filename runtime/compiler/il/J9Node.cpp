@@ -2574,7 +2574,12 @@ J9::Node::requiresRegisterPair(TR::Compilation *comp)
 bool
 J9::Node::canGCandReturn()
    {
-   TR::Compilation * comp = TR::comp();
+   return self()->canGCandReturn(TR::comp());
+   }
+
+bool
+J9::Node::canGCandReturn(TR::Compilation *comp)
+   {
    if (comp->getOption(TR_EnableFieldWatch))
       {
       if (self()->getOpCodeValue() == TR::treetop || self()->getOpCode().isNullCheck() || self()->getOpCode().isAnchor())
