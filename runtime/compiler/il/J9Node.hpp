@@ -293,7 +293,7 @@ public:
 
    // Flag used by TR::BNDCHK nodes
    bool isSpineCheckWithArrayElementChild();
-   void setSpineCheckWithArrayElementChild(bool v);
+   void setSpineCheckWithArrayElementChild(bool v, TR::Compilation *comp);
    bool chkSpineCheckWithArrayElementChild();
    const char *printSpineCheckWithArrayElementChild();
 

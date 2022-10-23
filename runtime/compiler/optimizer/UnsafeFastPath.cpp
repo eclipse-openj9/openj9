@@ -848,7 +848,7 @@ int32_t TR_UnsafeFastPath::perform()
                      node = TR::Node::recreateWithoutProperties(node, comp()->il.opCodeForIndirectArrayStore(type), 2, addrCalc, value, unsafeSymRef);
 
                      spineCHK->setAndIncChild(0, node);
-                     spineCHK->setSpineCheckWithArrayElementChild(true);
+                     spineCHK->setSpineCheckWithArrayElementChild(true, comp());
                      }
 
                   if (trace())
@@ -879,7 +879,7 @@ int32_t TR_UnsafeFastPath::perform()
                      spineCHK->setAndIncChild(0, node);
                      }
 
-                  spineCHK->setSpineCheckWithArrayElementChild(true);
+                  spineCHK->setSpineCheckWithArrayElementChild(true, comp());
 
                   if (trace())
                      traceMsg(comp(), "Created node [" POINTER_PRINTF_FORMAT "] to load from location [" POINTER_PRINTF_FORMAT "] with spineCHK [" POINTER_PRINTF_FORMAT "]\n", node, addrCalc, spineCHK);

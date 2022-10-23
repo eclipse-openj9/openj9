@@ -2029,11 +2029,10 @@ J9::Node::isSpineCheckWithArrayElementChild()
    }
 
 void
-J9::Node::setSpineCheckWithArrayElementChild(bool v)
+J9::Node::setSpineCheckWithArrayElementChild(bool v, TR::Compilation *comp)
    {
-   TR::Compilation * c = TR::comp();
    TR_ASSERT(self()->getOpCode().isSpineCheck(), "assertion failure");
-   if (performNodeTransformation2(c, "O^O NODE FLAGS: Setting spineCHKWithArrayElementChild flag on node %p to %d\n", self(), v))
+   if (performNodeTransformation2(comp, "O^O NODE FLAGS: Setting spineCHKWithArrayElementChild flag on node %p to %d\n", self(), v))
       _flags.set(spineCHKWithArrayElementChild, v);
    }
 

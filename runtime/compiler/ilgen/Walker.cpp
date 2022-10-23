@@ -6169,7 +6169,7 @@ TR_J9ByteCodeIlGenerator::loadArrayElement(TR::DataType dataType, TR::ILOpCodes 
          checkNode->setChild(2, checkNode->getChild(0));  // index
          }
 
-      checkNode->setSpineCheckWithArrayElementChild(true);
+      checkNode->setSpineCheckWithArrayElementChild(true, comp());
       checkNode->setAndIncChild(0, element);              // array element
       checkNode->setAndIncChild(1, arrayBaseAddress);     // base array
       }
@@ -7749,7 +7749,7 @@ TR_J9ByteCodeIlGenerator::storeArrayElement(TR::DataType dataType, TR::ILOpCodes
          checkNode->setAndIncChild(0, elementAddress);    // iwrtbar
       else
          {
-         checkNode->setSpineCheckWithArrayElementChild(true);
+         checkNode->setSpineCheckWithArrayElementChild(true, comp());
          checkNode->setAndIncChild(0, storeNode);         // primitive store
          }
       checkNode->setAndIncChild(1, arrayBaseAddress);     // base array
