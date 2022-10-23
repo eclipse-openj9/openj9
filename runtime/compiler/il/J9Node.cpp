@@ -868,7 +868,7 @@ J9::Node::getStorageReferenceSize(TR::Compilation *comp)
       }
    else if (self()->getOpCode().isBCDToNonBCDConversion())
       {
-      return self()->getStorageReferenceSourceSize();
+      return self()->getStorageReferenceSourceSize(comp);
       }
    else
       {
@@ -911,9 +911,8 @@ J9::Node::getStorageReferenceSize(TR::Compilation *comp)
    }
 
 int32_t
-J9::Node::getStorageReferenceSourceSize()
+J9::Node::getStorageReferenceSourceSize(TR::Compilation *comp)
    {
-   TR::Compilation *comp = TR::comp();
    int32_t size = 0;
    switch (self()->getOpCodeValue())
       {

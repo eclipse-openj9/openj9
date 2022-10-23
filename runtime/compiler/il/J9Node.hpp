@@ -140,7 +140,7 @@ public:
    bool alwaysGeneratesAKnownPositiveCleanSign();
 #ifdef TR_TARGET_S390
    int32_t getStorageReferenceSize(TR::Compilation *comp);
-   int32_t getStorageReferenceSourceSize();
+   int32_t getStorageReferenceSourceSize(TR::Compilation *comp);
 #endif
 
    bool         isEvenPrecision();
