@@ -219,7 +219,7 @@ bool TR_UnsafeFastPath::tryTransformUnsafeAtomicCallInVarHandleAccessMethod(TR::
          node->setIsSafeForCGToFastPathUnsafeCall(true);
          if (!isVarHandleOperationMethodOnArray(callerMethod))
             {
-            node->setUnsafeGetPutCASCallOnNonArray();
+            node->setUnsafeGetPutCASCallOnNonArray(comp());
             }
 
          if (trace())

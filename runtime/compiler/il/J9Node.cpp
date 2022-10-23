@@ -2159,12 +2159,17 @@ J9::Node::isUnsafeGetPutCASCallOnNonArray()
 void
 J9::Node::setUnsafeGetPutCASCallOnNonArray()
    {
-   TR::Compilation * c = TR::comp();
+   self()->setUnsafeGetPutCASCallOnNonArray(TR::comp());
+   }
+
+void
+J9::Node::setUnsafeGetPutCASCallOnNonArray(TR::Compilation *comp)
+   {
    TR_ASSERT(self()->getSymbol()->isMethod() && self()->getSymbol()->getMethodSymbol(), "setUnsafeGetPutCASCallOnNonArray called on node which is not a call");
 
-   //TR_ASSERT(getSymbol()->getMethodSymbol()->castToResolvedMethodSymbol()->getResolvedMethod()->isUnsafeWithObjectArg(),"Attempt to change flag on a method that is not JNI Unsafe that needs special care for arraylets\n");
    TR_ASSERT(self()->getSymbol()->getMethodSymbol()->getMethod()->isUnsafeWithObjectArg() || self()->getSymbol()->getMethodSymbol()->getMethod()->isUnsafeCAS(),"Attempt to check flag on a method that is not JNI Unsafe that needs special care for arraylets\n");
-   if (performNodeTransformation1(c, "O^O NODE FLAGS: Setting unsafeGetPutOnNonArray flag on node %p\n", self()))
+
+   if (performNodeTransformation1(comp, "O^O NODE FLAGS: Setting unsafeGetPutOnNonArray flag on node %p\n", self()))
       _flags.set(unsafeGetPutOnNonArray);
    }
 

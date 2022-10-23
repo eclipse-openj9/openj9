@@ -311,6 +311,7 @@ public:
 
    bool isUnsafeGetPutCASCallOnNonArray();
    void setUnsafeGetPutCASCallOnNonArray();
+   void setUnsafeGetPutCASCallOnNonArray(TR::Compilation *comp);
 
    bool isProcessedByCallCloneConstrain();
    void setProcessedByCallCloneConstrain();
