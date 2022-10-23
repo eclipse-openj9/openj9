@@ -1594,8 +1594,8 @@ J9::Z::CodeGenerator::examineNode(
 
       if (nodeCanHaveHint &&
           bestNode &&
-          node->getStorageReferenceSize() > bestNode->getStorageReferenceSize() && // end hint before
-          endHintOnNode &&                                                                     // end hint after
+          node->getStorageReferenceSize(comp) > bestNode->getStorageReferenceSize(comp) && // end hint before
+          endHintOnNode &&                                                                 // end hint after
           !leftMostNodesList.empty())
          {
 
@@ -1626,7 +1626,7 @@ J9::Z::CodeGenerator::examineNode(
          // TODO: if a pdstore is to an auto then continually increase the size of this auto so it is the biggest on the left
          //       most subtree (i.e. force it to be the bestNode)
          if ((bestNode == NULL) ||
-             (node->getStorageReferenceSize() > bestNode->getStorageReferenceSize()) ||
+             (node->getStorageReferenceSize(comp) > bestNode->getStorageReferenceSize(comp)) ||
              (self()->nodeRequiresATemporary(node) && bestNode->getOpCode().isStore() && !self()->isAcceptableDestructivePDShiftRight(bestNode, NULL /* let the function find the load node */)))
             {
             if (!isAccumStore || node->useStoreAsAnAccumulator())
@@ -1636,10 +1636,10 @@ J9::Z::CodeGenerator::examineNode(
                   {
                   if (isAccumStore)
                      traceMsg(comp,"\t\tfound new store (canUse = %s) bestNode - %s (%p) with actual size %d and storageRefResultSize %d\n",
-                        bestNode->useStoreAsAnAccumulator() ? "yes":"no", bestNode->getOpCode().getName(),bestNode, bestNode->getSize(),bestNode->getStorageReferenceSize());
+                        bestNode->useStoreAsAnAccumulator() ? "yes":"no", bestNode->getOpCode().getName(),bestNode, bestNode->getSize(),bestNode->getStorageReferenceSize(comp));
                   else
                      traceMsg(comp,"\t\tfound new non-store bestNode - %s (%p) (isConversionToNonAggrOrNonBCD=%s, isForcedTemp=%s) with actual size %d and storageRefResultSize %d\n",
-                        bestNode->getOpCode().getName(),bestNode,isConversionToNonAggrOrNonBCD?"yes":"no",self()->nodeRequiresATemporary(node)?"yes":"no",bestNode->getSize(),bestNode->getStorageReferenceSize());
+                        bestNode->getOpCode().getName(),bestNode,isConversionToNonAggrOrNonBCD?"yes":"no",self()->nodeRequiresATemporary(node)?"yes":"no",bestNode->getSize(),bestNode->getStorageReferenceSize(comp));
                   }
                }
             }
@@ -1809,7 +1809,7 @@ J9::Z::CodeGenerator::processNodeList(
          {
          if (!leftMostNodesList.empty())
             {
-            int32_t bestNodeSize = bestNode->getStorageReferenceSize();
+            int32_t bestNodeSize = bestNode->getStorageReferenceSize(comp);
             int32_t tempSize = std::max(storeSize, bestNodeSize);
             if (self()->traceBCDCodeGen())
                {
@@ -2743,7 +2743,7 @@ J9::Z::CodeGenerator::materializeFullBCDValue(TR::Node *node,
    int32_t regSize = reg->getSize();
    if (self()->traceBCDCodeGen())
       traceMsg(comp,"\tmaterializeFullBCDValue evaluated %s (%p) (nodeSize %d, requested resultSize %d) to reg %s (regSize %d), clearSize=%d, updateStorageReference=%s\n",
-         node->getOpCode().getName(),node,node->getStorageReferenceSize(),resultSize,self()->getDebug()->getName(reg),regSize,clearSize,updateStorageReference?"yes":"no");
+         node->getOpCode().getName(),node,node->getStorageReferenceSize(comp),resultSize,self()->getDebug()->getName(reg),regSize,clearSize,updateStorageReference?"yes":"no");
 
    TR_ASSERT(clearSize >= 0,"invalid clearSize %d for node %p\n",clearSize,node);
    if (clearSize == 0)

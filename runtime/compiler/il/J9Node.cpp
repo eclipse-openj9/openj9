@@ -860,9 +860,8 @@ J9::Node::alwaysGeneratesAKnownPositiveCleanSign()
 
 #ifdef TR_TARGET_S390
 int32_t
-J9::Node::getStorageReferenceSize()
+J9::Node::getStorageReferenceSize(TR::Compilation *comp)
    {
-   TR::Compilation *comp = TR::comp();
    if (self()->getType().isAggregate())
       {
       return self()->getSize();

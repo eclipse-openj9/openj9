@@ -562,7 +562,7 @@ J9::Z::TreeEvaluator::packedToUnicodeHelper(TR::Node *node,
    TR_StorageReference *targetStorageReference = NULL;
    TR::Compilation *comp = cg->comp();
 
-   int32_t destSize = node->getStorageReferenceSize();
+   int32_t destSize = node->getStorageReferenceSize(comp);
 
    if (hint)
       {
@@ -3110,14 +3110,14 @@ J9::Z::TreeEvaluator::evaluateValueModifyingOperand(TR::Node * node,
                           initTarget && // have to also be initializing here otherwise in caller
                           node->getStorageReferenceHint() &&
                           node->getStorageReferenceHint()->isNodeBasedHint() &&
-                          (firstChild->getReferenceCount() > 1 || node->getStorageReferenceSize() > sourceSize) &&
+                          (firstChild->getReferenceCount() > 1 || node->getStorageReferenceSize(comp) > sourceSize) &&
                           node->getStorageReferenceHint() != firstStorageReference;
 
-   if (useNewStoreHint && node->getStorageReferenceHint()->getSymbolSize() < node->getStorageReferenceSize())
+   if (useNewStoreHint && node->getStorageReferenceHint()->getSymbolSize() < node->getStorageReferenceSize(comp))
       {
       useNewStoreHint = false;
       TR_ASSERT(false,"a storageRef hint should be big enough for the node result (%d is not >= %d)\n",
-         node->getStorageReferenceHint()->getSymbolSize(),node->getStorageReferenceSize());
+         node->getStorageReferenceHint()->getSymbolSize(),node->getStorageReferenceSize(comp));
       }
 
    if (isInitialized && !useNewStoreHint)
@@ -3144,7 +3144,7 @@ J9::Z::TreeEvaluator::evaluateValueModifyingOperand(TR::Node * node,
          }
       if (!skipClobberEvaluate)
          cg->ssrClobberEvaluate(firstChild, sourceMR);
-      int32_t resultSize = node->getStorageReferenceSize();
+      int32_t resultSize = node->getStorageReferenceSize(comp);
       if (cg->traceBCDCodeGen())
          traceMsg(comp,"\tisInitialized==true: liveSymSize %d (symSize %d - firstReg->deadAndIgnoredBytes %d), resultSize = %d (nodeSize %d)\n",
             savedLiveSymbolSize,firstStorageReference->getSymbolSize(),firstReg->getRightAlignedDeadAndIgnoredBytes(),resultSize,node->getSize());
@@ -3225,7 +3225,7 @@ J9::Z::TreeEvaluator::evaluateValueModifyingOperand(TR::Node * node,
       int32_t destLength = 0;
       if (node->getOpCode().canHaveStorageReferenceHint() && node->getStorageReferenceHint())
          {
-         int32_t resultSize = node->getStorageReferenceSize();
+         int32_t resultSize = node->getStorageReferenceSize(comp);
          targetStorageReference = node->getStorageReferenceHint();
          if (cg->traceBCDCodeGen())
             traceMsg(comp,"\tusing storageRefHint #%d on node %p (useNewStoreHintOnInit=%d)\n",targetStorageReference->getReferenceNumber(),node,useNewStoreHint && isInitialized);
@@ -3248,7 +3248,7 @@ J9::Z::TreeEvaluator::evaluateValueModifyingOperand(TR::Node * node,
          }
       else
          {
-         targetStorageReference = TR_StorageReference::createTemporaryBasedStorageReference(node->getStorageReferenceSize(), comp);
+         targetStorageReference = TR_StorageReference::createTemporaryBasedStorageReference(node->getStorageReferenceSize(comp), comp);
          if (cg->traceBCDCodeGen())
             traceMsg(comp,"\tcreated new targetStorageReference #%d on node %p\n",targetStorageReference->getReferenceNumber(),node);
          }
@@ -4795,7 +4795,7 @@ TR_OpaquePseudoRegister * J9::Z::TreeEvaluator::evaluateSignModifyingOperand(TR:
       if (node->getOpCode().canHaveStorageReferenceHint() && node->getStorageReferenceHint())
          targetStorageReference = node->getStorageReferenceHint();
       else
-         targetStorageReference = TR_StorageReference::createTemporaryBasedStorageReference(node->getStorageReferenceSize(), comp);
+         targetStorageReference = TR_StorageReference::createTemporaryBasedStorageReference(node->getStorageReferenceSize(comp), comp);
       targetReg->setStorageReference(targetStorageReference, node);
       if (initTarget)
          {
@@ -5583,7 +5583,7 @@ J9::Z::TreeEvaluator::pddivremEvaluatorHelper(TR::Node * node, TR::CodeGenerator
 
    targetReg->setDecimalPrecision(dividendPrecision);
    int32_t dividendSize = targetReg->getSize();
-   TR_ASSERT( dividendSize <= node->getStorageReferenceSize(),"allocated symbol for pddiv/pdrem is too small\n");
+   TR_ASSERT( dividendSize <= node->getStorageReferenceSize(comp),"allocated symbol for pddiv/pdrem is too small\n");
    if (cg->traceBCDCodeGen())
       traceMsg(comp,"\t%s: gen DP dividendSize = %d, secondOpSize = secondRegSize = %d, targetRegSize = %d (firstRegPrec %d, secondRegPrec %d)\n",
          node->getOpCode().getName(),dividendSize,secondReg->getSize(),targetReg->getSize(),firstReg->getDecimalPrecision(),secondReg->getDecimalPrecision());
@@ -5641,7 +5641,7 @@ J9::Z::TreeEvaluator::pddivremEvaluatorHelper(TR::Node * node, TR::CodeGenerator
 
    if (!node->canSkipPadByteClearing() && targetReg->isEvenPrecision() && isTruncation)
       {
-      TR_ASSERT( node->getStorageReferenceSize() >= dividendSize,"operand size should only shrink from original size\n");
+      TR_ASSERT( node->getStorageReferenceSize(comp) >= dividendSize,"operand size should only shrink from original size\n");
       int32_t leftMostByte = targetReg->getSize();
       if (cg->traceBCDCodeGen())
          traceMsg(comp,"\t%s: generating NI to clear top nibble with leftMostByte = targetReg->getSize() = %d\n",isRem ? "pdrem":"pddiv",targetReg->getSize());

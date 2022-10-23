@@ -139,7 +139,7 @@ public:
    bool alwaysGeneratesAKnownCleanSign();
    bool alwaysGeneratesAKnownPositiveCleanSign();
 #ifdef TR_TARGET_S390
-   int32_t getStorageReferenceSize();
+   int32_t getStorageReferenceSize(TR::Compilation *comp);
    int32_t getStorageReferenceSourceSize();
 #endif
 
