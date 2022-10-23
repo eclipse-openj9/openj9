@@ -2092,16 +2092,15 @@ J9::Node::isDontInlinePutOrderedCall()
    }
 
 void
-J9::Node::setDontInlinePutOrderedCall()
+J9::Node::setDontInlinePutOrderedCall(TR::Compilation *comp)
    {
-   TR::Compilation * c = TR::comp();
    TR_ASSERT(self()->getOpCode().isCall(), " Can only call this routine for a call node \n");
    bool isPutOrdered = self()->isUnsafePutOrderedCall();
 
    TR_ASSERT(isPutOrdered, "attempt to set dontInlinePutOrderedCall flag and not a putOrdered call");
    if (isPutOrdered)
       {
-      if (performNodeTransformation1(c, "O^O NODE FLAGS: Setting dontInlineUnsafePutOrderedCall flag on node %p\n", self()))
+      if (performNodeTransformation1(comp, "O^O NODE FLAGS: Setting dontInlineUnsafePutOrderedCall flag on node %p\n", self()))
          _flags.set(dontInlineUnsafePutOrderedCall);
       }
 

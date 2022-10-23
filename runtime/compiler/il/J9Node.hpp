@@ -300,7 +300,7 @@ public:
    // Flags used by call nodes
    bool isUnsafePutOrderedCall();
    bool isDontInlinePutOrderedCall();
-   void setDontInlinePutOrderedCall();
+   void setDontInlinePutOrderedCall(TR::Compilation *comp);
    bool chkDontInlineUnsafePutOrderedCall();
    const char * printIsDontInlineUnsafePutOrderedCall();
 
