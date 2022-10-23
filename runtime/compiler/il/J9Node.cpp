@@ -1126,9 +1126,8 @@ J9::Node::referencesSymbolInSubTree(TR::SymbolReference* symRef, vcount_t visitC
    }
 
 bool
-J9::Node::referencesMayKillAliasInSubTree(TR::Node * rootNode, vcount_t visitCount)
+J9::Node::referencesMayKillAliasInSubTree(TR::Node * rootNode, vcount_t visitCount, TR::Compilation *comp)
    {
-   TR::Compilation * comp = TR::comp();
    TR::SparseBitVector  references (comp->allocator());
    self()->getSubTreeReferences(references, visitCount);
 

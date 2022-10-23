@@ -166,7 +166,7 @@ public:
    static uint32_t hashOnBCDOrAggrLiteral(char *lit, size_t litSize);
 
    bool referencesSymbolInSubTree(TR::SymbolReference * symRef, vcount_t visitCount);
-   bool referencesMayKillAliasInSubTree(TR::Node * rootNode, vcount_t visitCount);
+   bool referencesMayKillAliasInSubTree(TR::Node * rootNode, vcount_t visitCount, TR::Compilation *comp);
    void getSubTreeReferences(TR::SparseBitVector &references, vcount_t visitCount);
    TR_ParentOfChildNode * referencesSymbolExactlyOnceInSubTree(TR::Node *, int32_t, TR::SymbolReference *, vcount_t);
 
