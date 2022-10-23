@@ -1155,42 +1155,6 @@ J9::Node::getSubTreeReferences(TR::SparseBitVector &references, vcount_t visitCo
     self()->getChild(i)->getSubTreeReferences(references, visitCount);
 }
 
-TR_ParentOfChildNode*
-J9::Node::referencesSymbolExactlyOnceInSubTree(
-   TR::Node* parent, int32_t childNum, TR::SymbolReference* symRef, vcount_t visitCount)
-   {
-   // The visit count in the node must be maintained by this method.
-   //
-   TR::Compilation * comp = TR::comp();
-   vcount_t oldVisitCount = self()->getVisitCount();
-   if (oldVisitCount == visitCount)
-      return NULL;
-   self()->setVisitCount(visitCount);
-
-   if (self()->getOpCode().hasSymbolReference() && (self()->getSymbolReference()->getReferenceNumber() == symRef->getReferenceNumber()))
-      {
-      TR_ParentOfChildNode* pNode = new (comp->trStackMemory()) TR_ParentOfChildNode(parent, childNum);
-      return pNode;
-      }
-
-   // For all other subtrees, see if any has a ref. If exactly one does, return it
-   TR_ParentOfChildNode* matchNode=NULL;
-   for (int32_t i = self()->getNumChildren()-1; i >= 0; i--)
-      {
-      TR::Node * child = self()->getChild(i);
-      TR_ParentOfChildNode* curr = child->referencesSymbolExactlyOnceInSubTree(self(), i, symRef, visitCount);
-      if (curr)
-         {
-         if (matchNode)
-            {
-            return NULL;
-            }
-         matchNode = curr;
-         }
-      }
-
-   return matchNode;
-   }
 
 /**
  * Node field functions
