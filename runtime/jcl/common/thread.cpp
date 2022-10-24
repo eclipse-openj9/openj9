@@ -493,16 +493,16 @@ Java_java_lang_Thread_getThreads(JNIEnv *env, jclass clazz)
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
 	vmFuncs->internalEnterVMFromJNI(currentThread);
-	vmFuncs->acquireExclusiveVMAccess(currentThread);
 
 	jobject *threads = (jobject*)j9mem_allocate_memory(sizeof(jobject) * vm->totalThreadCount, J9MEM_CATEGORY_VM_JCL);
 	if (NULL == threads) {
 		vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
 	} else {
 		jobject *currentThreadPtr = threads;
-		J9VMThread *targetThread = vm->mainThread;
 		UDATA threadCount = 0;
 
+		vmFuncs->acquireExclusiveVMAccess(currentThread);
+		J9VMThread *targetThread = vm->mainThread;
 		do {
 #if JAVA_SPEC_VERSION >= 19
 			/* carrierThreadObject should always point to a platform thread.
@@ -516,12 +516,13 @@ Java_java_lang_Thread_getThreads(JNIEnv *env, jclass clazz)
 			/* Only count live threads */
 			if (NULL != threadObject) {
 				if (J9VMJAVALANGTHREAD_STARTED(currentThread, threadObject) && (NULL != J9VMJAVALANGTHREAD_THREADREF(currentThread, threadObject))) {
-					*currentThreadPtr++ = vmFuncs->j9jni_createLocalRef(env, threadObject);;
+					*currentThreadPtr++ = vmFuncs->j9jni_createLocalRef(env, threadObject);
 					threadCount += 1;
 				}
 			}
 			targetThread = targetThread->linkNext;
 		} while (targetThread != vm->mainThread);
+		vmFuncs->releaseExclusiveVMAccess(currentThread);
 
 		J9Class *arrayClass = fetchArrayClass(currentThread, J9VMJAVALANGTHREAD_OR_NULL(vm));
 		if (NULL != arrayClass) {
@@ -538,7 +539,6 @@ Java_java_lang_Thread_getThreads(JNIEnv *env, jclass clazz)
 
 		j9mem_free_memory(threads);
 	}
-	vmFuncs->releaseExclusiveVMAccess(currentThread);
 	vmFuncs->internalExitVMToJNI(currentThread);
 
 	return result;
