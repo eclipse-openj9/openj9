@@ -30,7 +30,7 @@ import java.io.IOException;
 import java.util.Date;
 
 import org.eclipse.openj9.criu.CRIUSupport;
-import org.eclipse.openj9.criu.RestoreException;
+import org.eclipse.openj9.criu.SystemRestoreException;
 
 public class CRIUTestUtils {
 	public final static Path imagePath = Paths.get("cpData");
@@ -74,7 +74,7 @@ public class CRIUTestUtils {
 				}
 				showThreadCurrentTime("Performing CRIUSupport.checkpointJVM()");
 				criu.setLeaveRunning(false).setShellJob(true).setFileLocks(true).checkpointJVM();
-			} catch (RestoreException e) {
+			} catch (SystemRestoreException e) {
 				e.printStackTrace();
 			}
 			if (deleteDir) {

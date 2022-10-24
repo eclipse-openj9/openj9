@@ -23,7 +23,6 @@ package org.openj9.criu;
 
 import org.eclipse.openj9.criu.CRIUSupport;
 import org.eclipse.openj9.criu.JVMCheckpointException;
-import org.eclipse.openj9.criu.RestoreException;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;

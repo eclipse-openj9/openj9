@@ -23,38 +23,38 @@
 package org.eclipse.openj9.criu;
 
 /**
- * A CRIU exception representing a failure after restore.
+ * A CRIU exception representing a JVM failure after restore.
  */
-public final class RestoreException extends JVMCRIUException {
+public final class JVMRestoreException extends JVMCRIUException {
 	private static final long serialVersionUID = 1539393473417716292L;
 
 	/**
-	 * Creates a RestoreException with the specified message and a default error code.
+	 * Creates a JVMRestoreException with the specified message and a default error code.
 	 *
 	 * @param message   the message
 	 */
-	public RestoreException(String message) {
+	public JVMRestoreException(String message) {
 		super(message, 0);
 	}
 
 	/**
-	 * Creates a RestoreException with the specified message and error code.
+	 * Creates a JVMRestoreException with the specified message and error code.
 	 *
 	 * @param message   the message
 	 * @param errorCode the error code
 	 */
-	public RestoreException(String message, int errorCode) {
+	public JVMRestoreException(String message, int errorCode) {
 		super(message, errorCode);
 	}
 
 	/**
-	 * Creates a RestoreException with the specified message and error code.
+	 * Creates a JVMRestoreException with the specified message and error code.
 	 *
 	 * @param message   the message
 	 * @param errorCode the error code
 	 * @param causedBy  throwable that caused the exception
 	 */
-	public RestoreException(String message, int errorCode, Throwable causedBy) {
+	public JVMRestoreException(String message, int errorCode, Throwable causedBy) {
 		super(message, errorCode, causedBy);
 	}
 }

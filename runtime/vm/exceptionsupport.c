@@ -1306,13 +1306,13 @@ setCRIUSingleThreadModeJVMCRIUException(J9VMThread *vmThread, U_32 moduleName, U
 	}
 	msg = OMRPORT_FROM_J9PORT(PORTLIB)->nls_lookup_message(OMRPORT_FROM_J9PORT(PORTLIB), J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, moduleName, messageNumber, NULL);
 
-	/* set org.eclipse.openj9.criu.JVMCheckpointException or RestoreException */
+	/* set org.eclipse.openj9.criu.JVMCheckpointException or JVMRestoreException */
 	if (0 == vmThread->javaVM->checkpointState.checkpointRestoreTimeDelta) {
 		/* throw JVMCheckpointException at checkpoint */
 		setCurrentExceptionUTF(vmThread, J9VMCONSTANTPOOL_ORGECLIPSEOPENJ9CRIUJVMCHECKPOINTEXCEPTION, msg);
 	} else {
-		/* throw RestoreException at restore */
-		setCurrentExceptionUTF(vmThread, J9VMCONSTANTPOOL_ORGECLIPSEOPENJ9CRIURESTOREEXCEPTION, msg);
+		/* throw JVMRestoreException at restore */
+		setCurrentExceptionUTF(vmThread, J9VMCONSTANTPOOL_ORGECLIPSEOPENJ9CRIUJVMRESTOREEXCEPTION, msg);
 	}
 }
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
