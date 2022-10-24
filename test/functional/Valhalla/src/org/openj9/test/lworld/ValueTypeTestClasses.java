@@ -22,7 +22,7 @@
 package org.openj9.test.lworld;
 
 
-public class ValueTypeUnsafeTestClasses {
+public class ValueTypeTestClasses {
 
 	static primitive class ValueTypeInt {
 		ValueTypeInt(int i) { this.i = i; }
@@ -48,7 +48,7 @@ public class ValueTypeUnsafeTestClasses {
 		}
 	}
 
-	static primitive class ValueClassPoint2D {
+	static value class ValueClassPoint2D {
 		final ValueClassInt x, y;
 
 		ValueClassPoint2D(ValueClassInt x, ValueClassInt y) {

@@ -38,6 +38,7 @@ import org.testng.Assert;
 import static org.testng.Assert.*;
 import org.testng.annotations.Test;
 import org.testng.annotations.BeforeClass;
+import static org.openj9.test.lworld.ValueTypeTestClasses.*;
 
 /*
  * Instructions to run this test:
@@ -3209,6 +3210,46 @@ public class ValueTypeTests {
 		Class valueClass = ValueTypeGenerator.generateValueClass("testMethodTypeDescriptorValue", fields);
 		assertEquals(MethodType.methodType(valueClass).toMethodDescriptorString(), "()QtestMethodTypeDescriptorValue;");
 		assertEquals(valueClass.descriptorString(), "QtestMethodTypeDescriptorValue;");
+	}
+
+	@Test(priority=1)
+	static public void testValueClassHashCode() throws Throwable {
+		Object p1 = new ValueClassPoint2D(new ValueClassInt(1), new ValueClassInt(2));
+		Object p2 = new ValueClassPoint2D(new ValueClassInt(1), new ValueClassInt(2));
+		Object p3 = new ValueClassPoint2D(new ValueClassInt(2), new ValueClassInt(2));
+		Object p4 = new ValueClassPoint2D(new ValueClassInt(2), new ValueClassInt(1));
+		Object p5 = new ValueClassPoint2D(new ValueClassInt(3), new ValueClassInt(4));
+
+		int h1 = p1.hashCode();
+		int h2 = p2.hashCode();
+		int h3 = p3.hashCode();
+		int h4 = p4.hashCode();
+		int h5 = p5.hashCode();
+
+		assertEquals(h1, h2);
+		assertNotEquals(h1, h3);
+		assertNotEquals(h1, h4);
+		assertNotEquals(h1, h5);
+	}
+
+	@Test(priority=1)
+	static public void testPrimitiveClassHashCode() throws Throwable {
+		Object p1 = new ValueTypePoint2D(new ValueTypeInt(1), new ValueTypeInt(2));
+		Object p2 = new ValueTypePoint2D(new ValueTypeInt(1), new ValueTypeInt(2));
+		Object p3 = new ValueTypePoint2D(new ValueTypeInt(2), new ValueTypeInt(2));
+		Object p4 = new ValueTypePoint2D(new ValueTypeInt(2), new ValueTypeInt(1));
+		Object p5 = new ValueTypePoint2D(new ValueTypeInt(3), new ValueTypeInt(4));
+
+		int h1 = p1.hashCode();
+		int h2 = p2.hashCode();
+		int h3 = p3.hashCode();
+		int h4 = p4.hashCode();
+		int h5 = p5.hashCode();
+
+		assertEquals(h1, h2);
+		assertNotEquals(h1, h3);
+		assertNotEquals(h1, h4);
+		assertNotEquals(h1, h5);
 	}
 
 	static MethodHandle generateGetter(Class<?> clazz, String fieldName, Class<?> fieldType) {
