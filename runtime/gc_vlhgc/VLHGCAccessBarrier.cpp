@@ -634,3 +634,12 @@ MM_VLHGCAccessBarrier::preWeakRootSlotRead(J9JavaVM *vm, j9object_t *srcAddress)
 
 	return true;
 }
+
+void
+MM_VLHGCAccessBarrier::postUnmountContinuation(J9VMThread *vmThread, j9object_t contObject)
+{
+	/* Conservatively assume that via mutations of stack slots (which are not subject to access barriers),
+	 * all post-write barriers have been triggered on this Continuation object, since it's been mounted.
+	 */
+	postBatchObjectStore(vmThread, contObject);
+}

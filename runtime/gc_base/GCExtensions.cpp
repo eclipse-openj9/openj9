@@ -37,6 +37,7 @@
 #endif /* defined(OMR_GC_IDLE_HEAP_MANAGER) */
 #include "MemorySpace.hpp"
 #include "MemorySubSpace.hpp"
+#include "StandardAccessBarrier.hpp"
 #include "ObjectModel.hpp"
 #include "ReferenceChainWalkerMarkMap.hpp"
 #include "SublistPool.hpp"
@@ -283,4 +284,14 @@ MM_ContinuationObjectList *
 MM_GCExtensions::getContinuationObjectListsExternal(J9VMThread *vmThread)
 {
 	return continuationObjectLists;
+}
+
+
+void
+MM_GCExtensions::registerScavenger(MM_Scavenger *scavenger)
+{
+	MM_GCExtensionsBase::registerScavenger(scavenger);
+	Assert_MM_true(isStandardGC());
+	Assert_MM_true(isScavengerEnabled());
+	((MM_StandardAccessBarrier *)accessBarrier)->registerScavenger(scavenger);
 }
