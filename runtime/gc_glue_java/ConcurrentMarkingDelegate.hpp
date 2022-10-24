@@ -357,6 +357,8 @@ public:
 
 	bool setupClassScanning(MM_EnvironmentBase *env);
 
+	void rememberObjectToRescan(MM_EnvironmentBase *env, omrobjectptr_t objectPtr);
+
 	/**
 	 * Constructor.
 	 */

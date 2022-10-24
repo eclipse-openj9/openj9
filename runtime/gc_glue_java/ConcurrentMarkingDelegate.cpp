@@ -34,6 +34,7 @@
 #include "VMAccess.hpp"
 #include "VMInterface.hpp"
 #include "VMThreadListIterator.hpp"
+#include "StandardAccessBarrier.hpp"
 
 /**
  * Concurrents stack slot iterator.
@@ -471,6 +472,13 @@ MM_ConcurrentMarkingDelegate::acquireExclusiveVMAccessAndSignalThreadsToActivate
 		vmThread->javaVM->internalVMFunctions->internalReleaseVMAccess(vmThread);
 		vmThread->javaVM->internalVMFunctions->internalAcquireVMAccess(vmThread);
 	}
+}
+
+void
+MM_ConcurrentMarkingDelegate::rememberObjectToRescan(MM_EnvironmentBase *env, omrobjectptr_t objectPtr)
+{
+	MM_StandardAccessBarrier *barrier = (MM_StandardAccessBarrier *)(MM_GCExtensions::getExtensions(env)->accessBarrier);
+	barrier->rememberObjectToRescan(env, objectPtr);
 }
 
 #endif /* defined(OMR_GC_MODRON_CONCURRENT_MARK) */
