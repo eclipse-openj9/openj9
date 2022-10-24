@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -84,8 +84,7 @@ static UDATA classLoaderRegisterLibrary(void *voidVMThread, J9ClassLoader *class
 static BOOLEAN isAbsolutePath (const char *path);
 static J9ClassLoader* findLoadedSharedLibrary(J9VMThread* vmThread, const char* sharedLibraryName, J9NativeLibrary** libraryPtr);
 static void freeSharedLibrary(J9VMThread *vmThread, J9ClassLoader* classLoader, J9NativeLibrary* library);
-static UDATA    openNativeLibrary (J9JavaVM* vm, J9ClassLoader * classLoader, const char * libName, char * libraryPath, J9NativeLibrary** libraryPtr, openFunc_t openFunction, void* userData, char* errorBuffer, UDATA bufferLength);
-static char * getBootLibraryPath(JavaVMInitArgs *vmInitArgs);
+static UDATA openNativeLibrary(J9JavaVM *vm, J9ClassLoader *classLoader, const char *libName, const char *libraryPath, J9NativeLibrary **libraryPtr, openFunc_t openFunction, void *userData, char *errorBuffer, UDATA bufferLength);
 static void reportError(char* errorBuffer, const char* message, UDATA bufferLength);
 
 /* Callbacks used in library management */
@@ -214,22 +213,22 @@ sendLifecycleEventCallback(struct J9VMThread* vmThread, struct J9NativeLibrary* 
  * \return
  */
 static UDATA   
-openNativeLibrary(J9JavaVM* vm, J9ClassLoader * classLoader, const char * libName, char * libraryPath, J9NativeLibrary** libraryPtr, openFunc_t openFunction, void* userData, char* errorBuffer, UDATA bufferLength)
+openNativeLibrary(J9JavaVM *vm, J9ClassLoader *classLoader, const char *libName, const char *libraryPath, J9NativeLibrary **libraryPtr, openFunc_t openFunction, void *userData, char *errorBuffer, UDATA bufferLength)
 {
-	UDATA result;
+	UDATA result = 0;
 	/* systemClassLoader always uses immediate symbol resolution, others determined by vmargs or defaults. */
 	UDATA lazy = ((classLoader != vm->systemClassLoader)
-				  && (vm->extendedRuntimeFlags & J9_EXTENDED_RUNTIME_LAZY_SYMBOL_RESOLUTION)) ? J9PORT_SLOPEN_LAZY : 0;
+		&& (vm->extendedRuntimeFlags & J9_EXTENDED_RUNTIME_LAZY_SYMBOL_RESOLUTION)) ? J9PORT_SLOPEN_LAZY : 0;
 
 #if defined(J9VM_INTERP_MINIMAL_JNI)
 	char *fullPath = NULL;
 	char *fullPathPtr = libName;
 #else
-	char fullPath[MAX_PATH_SIZE + 1];
+	char fullPath[MAX_PATH_SIZE + 1] = {0};
 	char *fullPathPtr = fullPath;
 	UDATA fullPathBufferLength = MAX_PATH_SIZE;
-	char c;
-	char *search;
+	char c = 0;
+	const char *search = NULL;
 	UDATA expectedPathLength = 0;
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
@@ -366,32 +365,9 @@ reportError(char* errorBuffer, const char* message, UDATA bufferLength) {
  * \return One of the LOAD_* constants returned by \sa openNativeLibrary()
  */
 UDATA
-registerNativeLibrary(J9VMThread * vmThread, J9ClassLoader * classLoader, const char * libName, char * libraryPath, J9NativeLibrary** libraryPtr, char* errorBuffer, UDATA bufferLength)
+registerNativeLibrary(J9VMThread *vmThread, J9ClassLoader *classLoader, const char *libName, const char *libraryPath, J9NativeLibrary **libraryPtr, char *errorBuffer, UDATA bufferLength)
 {
 	return openNativeLibrary(vmThread->javaVM, classLoader, libName, libraryPath, libraryPtr, classLoaderRegisterLibrary, vmThread, errorBuffer, bufferLength);
-}
-
-/**
- * Look for the boot library path system property starting
- * at the bottom of the vmInitArgs->options array
- *
- * @return	The string corresponding to the "com.ibm.oti.vm.bootstrap.library.path"
- *          or NULL
- */
-static char *
-getBootLibraryPath(JavaVMInitArgs *vmInitArgs)
-{
-	char * bootLibraryPath = NULL;
-	jint count = vmInitArgs->nOptions;
-
-	for ( count = (vmInitArgs->nOptions - 1) ; count >= 0 ; count-- ) {
-		JavaVMOption* option = &(vmInitArgs->options[count]);
-		bootLibraryPath = getDefineArgument(option->optionString, "com.ibm.oti.vm.bootstrap.library.path");
-		if (bootLibraryPath){
-			break;
-		}
-	}
-	return bootLibraryPath;
 }
 
 /**
@@ -405,7 +381,7 @@ getBootLibraryPath(JavaVMInitArgs *vmInitArgs)
 UDATA
 registerBootstrapLibrary(J9VMThread *vmThread, const char *libName, J9NativeLibrary **libraryPtr, UDATA suppressError)
 {
-	char *bootLibraryPath = NULL;
+	const char *bootLibraryPath = NULL;
 	UDATA result = 0;
 	char errorBuffer[512] = {0};
 	JavaVMInitArgs *vmInitArgs = (JavaVMInitArgs *) vmThread->javaVM->vmArgsArray->actualVMArgs;
@@ -413,7 +389,7 @@ registerBootstrapLibrary(J9VMThread *vmThread, const char *libName, J9NativeLibr
 	Trc_VM_registerBootstrapLibrary_Entry(vmThread, libName, (NULL == libraryPtr) ? NULL : *libraryPtr);
 	/* Look for the boot library path system property */
 	if (NULL != vmInitArgs) {
-		bootLibraryPath = getBootLibraryPath(vmInitArgs);
+		bootLibraryPath = getDefinedArgumentFromJavaVMInitArgs(vmInitArgs, "com.ibm.oti.vm.bootstrap.library.path");
 	}
 	Assert_VM_mustNotHaveVMAccess(vmThread);
 	result = registerNativeLibrary(vmThread, vmThread->javaVM->systemClassLoader, libName, bootLibraryPath, libraryPtr, errorBuffer, sizeof(errorBuffer));
