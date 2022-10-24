@@ -1859,7 +1859,7 @@ TR::Register *J9::Power::TreeEvaluator::asynccheckEvaluator(TR::Node *node, TR::
 
       TR::LabelSymbol *snippetLabel;
       TR::Register *jumpRegister = cg->allocateRegister();
-      TR::RegisterDependencyConditions *dependencies = createConditionsAndPopulateVSXDeps(cg, 2);
+      TR::RegisterDependencyConditions *dependencies = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(2, 2, cg->trMemory());
 
       snippetLabel = cg->lookUpSnippet(TR::Snippet::IsHelperCall, node->getSymbolReference());
       if (snippetLabel == NULL)
