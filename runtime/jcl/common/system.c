@@ -61,7 +61,6 @@ typedef struct {
 
 jint propertyListAddString( JNIEnv *env, jarray array, jint arrayIndex, const char *value);
 static void JNICALL systemPropertyIterator(char* key, char* value, void* userData);
-char* getDefinedEncoding(JNIEnv *env, char *defArg);
 jobject getPropertyList(JNIEnv *env);
 
 #if JAVA_SPEC_VERSION >= 11
@@ -110,6 +109,8 @@ Java_java_lang_System_getSysPropBeforePropertiesInitialized(JNIEnv *env, jclass 
 	char property[128] = {0};
 	jstring result = NULL;
 	PORT_ACCESS_FROM_ENV(env);
+	VMI_ACCESS_FROM_ENV(env);
+	JavaVMInitArgs *vmInitArgs = (*VMI)->GetInitArgs(VMI);
 
 	switch (sysPropID) {
 	case 0: /* os.version */
@@ -136,7 +137,7 @@ Java_java_lang_System_getSysPropBeforePropertiesInitialized(JNIEnv *env, jclass 
 		break;
 
 	case 2: /* file.encoding */
-		sysPropValue = getDefinedEncoding(env, "-Dfile.encoding=");
+		sysPropValue = getDefinedArgumentFromJavaVMInitArgs(vmInitArgs, "file.encoding");
 		if (NULL == sysPropValue) {
 #if JAVA_SPEC_VERSION < 18
 			sysPropValue = getPlatformFileEncoding(env, property, sizeof(property), sysPropID);
@@ -158,7 +159,7 @@ Java_java_lang_System_getSysPropBeforePropertiesInitialized(JNIEnv *env, jclass 
 		break;
 
 	case 3: /* os.encoding */
-		sysPropValue = getDefinedEncoding(env, "-Dos.encoding=");
+		sysPropValue = getDefinedArgumentFromJavaVMInitArgs(vmInitArgs, "os.encoding");
 		if (NULL == sysPropValue) {
 #if defined(J9ZOS390) || defined(J9ZTPF)
 			sysPropValue = "ISO8859_1";
@@ -291,28 +292,6 @@ jobject createSystemPropertyList(JNIEnv *env, const char *defaultValues[], int d
 	}
 
 	return args;
-}
-
-
-char* getDefinedEncoding(JNIEnv *env, char *defArg)
-{
-	VMI_ACCESS_FROM_ENV(env);
-
-	JavaVMInitArgs  *vmInitArgs = (*VMI)->GetInitArgs(VMI);
-	int len = (int)strlen(defArg);
-
-	if (vmInitArgs) {
-		jint optionIndex;
-		JavaVMOption *option = vmInitArgs->options;
-
-		for (optionIndex=0; optionIndex < vmInitArgs->nOptions; optionIndex++) {
-			char *optionValue = option->optionString;
-			if (strncmp(defArg, optionValue, len) == 0)
-				return &optionValue[len];
-			option++;
-		}
-	}
-	return NULL;
 }
 
 /**

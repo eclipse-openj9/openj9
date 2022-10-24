@@ -1326,9 +1326,9 @@ getThreadInfo(J9VMThread *currentThread, J9VMThread *targetThread, ThreadInfo *i
 	J9VMThread stackThread = {0};
 	J9VMEntryLocalStorage els = {0};
 	J9VMContinuation *continuation = targetThread->currentContinuation;
-	j9object_t threadObject = currentThread->carrierThreadObject;
+	j9object_t threadObject = targetThread->carrierThreadObject;
 #else /* JAVA_SPEC_VERSION >= 19 */
-	j9object_t threadObject = currentThread->threadObject;
+	j9object_t threadObject = targetThread->threadObject;
 #endif /* JAVA_SPEC_VERSION >= 19 */
 
 	Trc_JCL_threadmxbean_getThreadInfo_Entry(currentThread, targetThread);

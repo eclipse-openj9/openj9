@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -180,13 +180,16 @@ instanceOfOrCheckCastNoCacheUpdate( J9Class *instanceClass, J9Class *castClass )
 /* ---------------- defarg.c ---------------- */
 
 /**
-* @brief
-* @param arg
-* @param key
-* @return char *
-*/
-char *getDefineArgument(char* arg, char* key);
-
+ * Look for the defined argument starting at the bottom of
+ * the vmInitArgs->options array.
+ *
+ * @param vmInitArgs a JavaVMInitArgs structure
+ * @param defArg the defined argument to be found
+ *
+ * @return the argument string value found or NULL
+ */
+const char*
+getDefinedArgumentFromJavaVMInitArgs(JavaVMInitArgs *vmInitArgs, const char *defArg);
 
 /* ---------------- divhelp.c ---------------- */
 

@@ -4691,7 +4691,7 @@ typedef struct J9InternalVMFunctions {
 	UDATA  ( *getAnnotationsFromAnnotationInfo)(struct J9AnnotationInfo *annInfo, UDATA annotationType, char *memberName, U_32 memberNameLength, char *memberSignature, U_32 memberSignatureLength, struct J9AnnotationInfoEntry **annotations) ;
 	struct J9AnnotationInfoEntry*  ( *getAnnotationFromAnnotationInfo)(struct J9AnnotationInfo *annInfo, UDATA annotationType, char *memberName, U_32 memberNameLength, char *memberSignature, U_32 memberSignatureLength, char *annotationName, U_32 annotationNameLength) ;
 	void*  ( *getNamedElementFromAnnotation)(struct J9AnnotationInfoEntry *annotation, char *name, U_32 nameLength) ;
-	UDATA  ( *registerNativeLibrary)(struct J9VMThread * vmThread, struct J9ClassLoader * classLoader, const char * libName, char * libraryPath, struct J9NativeLibrary** libraryPtr, char* errorBuffer, UDATA bufferLength) ;
+	UDATA  ( *registerNativeLibrary)(struct J9VMThread *vmThread, struct J9ClassLoader *classLoader, const char *libName, const char *libraryPath, struct J9NativeLibrary **libraryPtr, char *errorBuffer, UDATA bufferLength) ;
 	UDATA  ( *registerBootstrapLibrary)(struct J9VMThread * vmThread, const char * libName, struct J9NativeLibrary** libraryPtr, UDATA suppressError) ;
 	UDATA  ( *startJavaThread)(struct J9VMThread * currentThread, j9object_t threadObject, UDATA privateFlags,  UDATA osStackSize, UDATA priority, omrthread_entrypoint_t entryPoint, void * entryArg, j9object_t schedulingParameters) ;
 	j9object_t  ( *createCachedOutOfMemoryError)(struct J9VMThread * currentThread, j9object_t threadObject) ;
