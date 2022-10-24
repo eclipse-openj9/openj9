@@ -23,8 +23,6 @@
 #include "jvmtiHelpers.h"
 #include "objhelp.h"
 #include "HeapIteratorAPI.h"
-#include "MethodMetaData.h"
-#include "Bits.hpp"
 #include "ObjectAccessBarrierAPI.hpp"
 #include "VMAccess.hpp"
 
@@ -265,6 +263,8 @@ objectMapFunction(J9VMThread *currentThread, j9object_t obj, void *objectMapData
 /**
  * Copy stack-allocated object contents to the heap equivalent, replacing pointers to stack-allocated
  * objects with their heap equivalents. If there is an inline lockword in the object, it will be copied.
+ * The contents of the stack-allocated object will be zeroed. This is safe to do here because there is no
+ * possibility of failure at this point.
  *
  * @param currentThread - the current thread
  * @param entry - object map entry
@@ -285,6 +285,8 @@ copyObjectContents(J9VMThread *currentThread, J9JVMTIObjectMap *entry, J9HashTab
 	} else {
 		objectAccessBarrierAPI.cloneObject(currentThread, stackObject, heapObject, objectClass, objectMapFunction, (void*)&objectMapData, false);
 	}
+	J9JavaVM *vm = currentThread->javaVM;
+	vm->memoryManagerFunctions->j9gc_objaccess_zeroObjectContents(vm, stackObject);
 }
 
 /**

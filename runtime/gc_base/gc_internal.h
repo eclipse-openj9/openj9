@@ -256,7 +256,7 @@ extern J9_CFUNC UDATA j9gc_arraylet_getLeafSize(J9JavaVM* javaVM);
 extern J9_CFUNC UDATA j9gc_arraylet_getLeafLogSize(J9JavaVM* javaVM);
 extern J9_CFUNC void j9gc_get_CPU_times(J9JavaVM *javaVM, U_64* mainCpuMillis, U_64* workerCpuMillis, U_32* maxThreads, U_32* currentThreads);
 extern J9_CFUNC void j9gc_ensureLockedSynchronizersIntegrity(J9VMThread *vmThread);
-
+extern J9_CFUNC void j9gc_objaccess_zeroObjectContents(J9JavaVM *javaVM, j9object_t obj);
 
 /* J9VMFinalizeSupport*/
 extern J9_CFUNC void runFinalization(J9VMThread *vmThread);
