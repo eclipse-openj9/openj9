@@ -188,20 +188,27 @@ stackSlotIteratorForGlobalMarkCardScrubber(J9JavaVM *javaVM, J9Object **slotPtr,
 	/* It's unfortunate, but we probably cannot terminate iteration of slots once we do see for one slot that we cannot scurb */
 }
 
+bool MM_GlobalMarkCardScrubber::scrubContinuationNativeSlots(MM_EnvironmentVLHGC *env, J9Object *objectPtr)
+{
+	bool doScrub = true;
+	J9VMThread *currentThread = (J9VMThread *)env->getLanguageVMThread();
+	if (VM_VMHelpers::needScanStacksForContinuation(currentThread, objectPtr)) {
+		StackIteratorData4GlobalMarkCardScrubber localData;
+		localData.globalMarkCardScrubber = this;
+		localData.env = env;
+		localData.doScrub = &doScrub;
+		localData.fromObject = objectPtr;
+
+		GC_VMThreadStackSlotIterator::scanSlots(currentThread, objectPtr, (void *)&localData, stackSlotIteratorForGlobalMarkCardScrubber, false, false);
+	}
+	return doScrub;
+}
+
 bool MM_GlobalMarkCardScrubber::scrubContinuationObject(MM_EnvironmentVLHGC *env, J9Object *objectPtr)
 {
 	bool doScrub = scrubMixedObject(env, objectPtr);
 	if (doScrub) {
-		J9VMThread *currentThread = (J9VMThread *)env->getLanguageVMThread();
-		if (VM_VMHelpers::needScanStacksForContinuation(currentThread, objectPtr)) {
-			StackIteratorData4GlobalMarkCardScrubber localData;
-			localData.globalMarkCardScrubber = this;
-			localData.env = env;
-			localData.doScrub = &doScrub;
-			localData.fromObject = objectPtr;
-
-			GC_VMThreadStackSlotIterator::scanSlots(currentThread, objectPtr, (void *)&localData, stackSlotIteratorForGlobalMarkCardScrubber, false, false);
-		}
+		doScrub = scrubContinuationNativeSlots(env, objectPtr);
 	}
 	return doScrub;
 }

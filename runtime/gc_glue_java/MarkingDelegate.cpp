@@ -258,7 +258,7 @@ stackSlotIteratorForMarkingDelegate(J9JavaVM *javaVM, J9Object **slotPtr, void *
 
 
 void
-MM_MarkingDelegate::scanContinuationObject(MM_EnvironmentBase *env, omrobjectptr_t objectPtr)
+MM_MarkingDelegate::scanContinuationNativeSlots(MM_EnvironmentBase *env, omrobjectptr_t objectPtr)
 {
 	J9VMThread *currentThread = (J9VMThread *)env->getLanguageVMThread();
 	if (VM_VMHelpers::needScanStacksForContinuation(currentThread, objectPtr)) {

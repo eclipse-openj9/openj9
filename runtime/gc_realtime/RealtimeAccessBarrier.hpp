@@ -113,7 +113,6 @@ protected:
 
 private:
 	/* New methods */
-	void rememberObject(MM_EnvironmentBase *env, J9Object *object);
 	void rememberObjectIfBarrierEnabled(J9VMThread *vmThread, J9Object* object);
 
 	bool preObjectStoreInternal(J9VMThread *vmThread, J9Object *destClass, J9Object **destAddress, J9Object *value, bool isVolatile);
@@ -140,6 +139,7 @@ private:
 
 public:
 	static MM_RealtimeAccessBarrier *newInstance(MM_EnvironmentBase *env);
+	void rememberObject(MM_EnvironmentBase *env, J9Object *object);
 	MMINLINE void setDoubleBarrierActive() { _doubleBarrierActive = true; }
 	MMINLINE void setDoubleBarrierInactive() { _doubleBarrierActive = false; }
 	MMINLINE bool isDoubleBarrierActive() { return _doubleBarrierActive; }

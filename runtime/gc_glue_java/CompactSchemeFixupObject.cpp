@@ -68,9 +68,8 @@ stackSlotIteratorForCompactScheme(J9JavaVM *javaVM, J9Object **slotPtr, void *lo
 
 
 void
-MM_CompactSchemeFixupObject::fixupContinuationObject(MM_EnvironmentStandard *env, omrobjectptr_t objectPtr)
+MM_CompactSchemeFixupObject::fixupContinuationNativeSlots(MM_EnvironmentStandard *env, omrobjectptr_t objectPtr)
 {
-	fixupMixedObject(objectPtr);
 	/* fixup Java Stacks in J9VMContinuation */
 	J9VMThread *currentThread = (J9VMThread *)env->getLanguageVMThread();
 	/* In sliding compaction we must fix slots exactly once. Since we will fixup stack slots of
@@ -85,6 +84,14 @@ MM_CompactSchemeFixupObject::fixupContinuationObject(MM_EnvironmentStandard *env
 
 		GC_VMThreadStackSlotIterator::scanSlots(currentThread, objectPtr, (void *)&localData, stackSlotIteratorForCompactScheme, false, false);
 	}
+}
+
+void
+MM_CompactSchemeFixupObject::fixupContinuationObject(MM_EnvironmentStandard *env, omrobjectptr_t objectPtr)
+{
+	/* fixup continuation java stack first and then fixup the Object itself, fixup order shouldn't matter. */
+	fixupContinuationNativeSlots(env, objectPtr);
+	fixupMixedObject(objectPtr);
 }
 
 void

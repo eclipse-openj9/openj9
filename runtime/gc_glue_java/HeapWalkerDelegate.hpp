@@ -48,7 +48,7 @@ public:
 	 * Function members
 	 */
 private:
-	void doContinuationObject(MM_EnvironmentBase *env, omrobjectptr_t objectPtr, MM_HeapWalkerSlotFunc function, void *userData);
+	void doContinuationNativeSlots(MM_EnvironmentBase *env, omrobjectptr_t objectPtr, MM_HeapWalkerSlotFunc function, void *userData);
 protected:
 
 public:

@@ -176,6 +176,7 @@ public:
 	void setUnmarkedImpliesCleared();
 	void unsetUnmarkedImpliesCleared();
 
+	void  scanContinuationNativeSlots(MM_EnvironmentRealtime *env, J9Object *objectPtr);
 	UDATA scanContinuationObject(MM_EnvironmentRealtime *env, J9Object *objectPtr);
 
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)

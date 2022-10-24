@@ -74,6 +74,7 @@ private:
 	 */
 	void fixupFlattenedArrayObject(omrobjectptr_t objectPtr);
 
+	void fixupContinuationNativeSlots(MM_EnvironmentStandard *env, omrobjectptr_t objectPtr);
 	void fixupContinuationObject(MM_EnvironmentStandard *env, omrobjectptr_t objectPtr);
 	/**
 	 * Called whenever a ownable synchronizer object is fixed up during compact. Places the object on the thread-specific buffer of gc work thread.
