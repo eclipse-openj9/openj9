@@ -739,14 +739,14 @@ done:
 						}
 					}
 
-					captured = storeCommandLine(buffer);
+					captured = storeCommandLine(start);
 				}
 			}
 
 			free(buffer);
 		}
 	}
-#elif defined(WIN32) /* defined(AIXPPC) */
+#elif defined(WIN32) /* defined(OSX) */
 	const wchar_t *commandLine = GetCommandLineW();
 
 	if (NULL != commandLine) {

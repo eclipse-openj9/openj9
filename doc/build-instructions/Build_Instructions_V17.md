@@ -614,8 +614,6 @@ When you have all the source files that you need, run the configure script, whic
 bash configure --with-boot-jdk=<path_to_boot_JDK17>
 ```
 
-:pencil: Modify the path for the macOS boot JDK that you installed in step 1. If `configure` is unable to detect Freetype, add the option `--with-freetype=<path to freetype>`, where `<path to freetype>` is typically `/usr/local/Cellar/freetype/2.9.1/`.
-
 :pencil: Configuring and building is not specific to OpenJ9 but uses the OpenJDK build infrastructure with OpenJ9 added.
 Many other configuration options are available, including options to increase the verbosity of the build output to include command lines (`LOG=cmdlines`), more info or debug information.
 For more information see [OpenJDK build troubleshooting](https://htmlpreview.github.io/?https://raw.githubusercontent.com/openjdk/jdk17u/master/doc/building.html#troubleshooting).

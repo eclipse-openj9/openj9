@@ -3524,7 +3524,6 @@ MM_CopyForwardScheme::scanContinuationObjects(MM_EnvironmentVLHGC *env)
 				J9Object *pointer = region->getContinuationObjectList()->getPriorList();
 
 				while (NULL != pointer) {
-					//bool finalizable = false;
 					env->_copyForwardStats._continuationCandidates += 1;
 					Assert_MM_true(region->isAddressInRegion(pointer));
 
@@ -3540,9 +3539,9 @@ MM_CopyForwardScheme::scanContinuationObjects(MM_EnvironmentVLHGC *env)
 						}
 					}
 
-					J9Object* next = _extensions->accessBarrier->getContinuationLink(forwardedPtr);
+					J9Object* next = _extensions->accessBarrier->getContinuationLink(pointer);
 					if (NULL == forwardedPtr) {
-						/* object was not previously marked -- it is now finalizable so push it to the local buffer */
+						/* object was not previously marked, clean up */
 						env->_copyForwardStats._continuationCleared += 1;
 						VM_VMHelpers::cleanupContinuationObject((J9VMThread *)env->getLanguageVMThread(), pointer);
 					} else {

@@ -595,6 +595,7 @@ initializeRequiredClasses(J9VMThread *vmThread, char* dllName)
 #endif /* JAVA_SPEC_VERSION >= 18 */
 #if JAVA_SPEC_VERSION >= 19
 			J9VMCONSTANTPOOL_JAVALANGTHREADFIELDHOLDER,
+			J9VMCONSTANTPOOL_JAVALANGBASEVIRTUALTHREAD,
 #endif /* JAVA_SPEC_VERSION >= 19 */
 	};
 
@@ -661,6 +662,11 @@ initializeRequiredClasses(J9VMThread *vmThread, char* dllName)
 
 	/* Counter to track if the virtual thread is being inspected by JVMTI. */
 	if (0 != vmFuncs->addHiddenInstanceField(vm, "java/lang/VirtualThread", "inspectorCount", "J", &vm->virtualThreadInspectorCountOffset)) {
+		return 1;
+	}
+
+	/* Stores a non-zero value if the virtual thread is suspended by JVMTI. */
+	if (0 != vmFuncs->addHiddenInstanceField(vm, "java/lang/VirtualThread", "isSuspendedByJVMTI", "I", &vm->isSuspendedByJVMTIOffset)) {
 		return 1;
 	}
 #endif /* JAVA_SPEC_VERSION >= 19 */

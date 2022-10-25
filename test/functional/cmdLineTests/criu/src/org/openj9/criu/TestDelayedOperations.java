@@ -42,16 +42,16 @@ public class TestDelayedOperations {
 			final Thread currentThread = Thread.currentThread();
 			CRIUTestUtils.showThreadCurrentTime(
 					"currentThread : " + currentThread + " with name : " + currentThread.getName());
-			criu.registerPreSnapshotHook(new Runnable() {
+			criu.registerPreCheckpointHook(new Runnable() {
 				public void run() {
 					CRIUTestUtils.showThreadCurrentTime(
-							"PreSnapshotHook() before threadAwaiting.interrupt() - currentThread : " + currentThread);
+							"PreCheckpointHook() before threadAwaiting.interrupt() - currentThread : " + currentThread);
 					currentThread.interrupt();
 					if (currentThread.isInterrupted()) {
 						System.out.println(
-								"TestDelayedOperations.testDelayedThreadInterrupt(): FAILED at PreSnapshotHook()");
+								"TestDelayedOperations.testDelayedThreadInterrupt(): FAILED at PreCheckpointHook()");
 					}
-					CRIUTestUtils.showThreadCurrentTime("PreSnapshotHook() after threadAwaiting.interrupt()");
+					CRIUTestUtils.showThreadCurrentTime("PreCheckpointHook() after threadAwaiting.interrupt()");
 				}
 			});
 			criu.registerPostRestoreHook(new Runnable() {

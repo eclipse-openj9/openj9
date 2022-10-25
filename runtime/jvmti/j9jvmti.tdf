@@ -640,3 +640,9 @@ TraceEntry=Trc_JVMTI_jvmtiHookVirtualThreadDestroy_Entry Overhead=1 Level=5 Noen
 TraceExit=Trc_JVMTI_jvmtiHookVirtualThreadDestroy_Exit Overhead=1 Level=5 Noenv Template="HookVirtualThreadDestroy"
 
 TraceAssert=Assert_JVMTI_unreachable noEnv Overhead=1 Level=1 Assert="0"
+
+TraceEntry=Trc_JVMTI_jvmtiResumeAllVirtualThreads_Entry Overhead=1 Level=5 Noenv Template="ResumeAllVirtualThreads env=%p"
+TraceExit=Trc_JVMTI_jvmtiResumeAllVirtualThreads_Exit Overhead=1 Level=5 Noenv Template="ResumeAllVirtualThreads returning %d"
+
+TraceEntry=Trc_JVMTI_jvmtiSuspendAllVirtualThreads_Entry Overhead=1 Level=5 Noenv Template="SuspendAllVirtualThreads env=%p"
+TraceExit=Trc_JVMTI_jvmtiSuspendAllVirtualThreads_Exit Overhead=1 Level=5 Noenv Template="SuspendAllVirtualThreads returning %d"

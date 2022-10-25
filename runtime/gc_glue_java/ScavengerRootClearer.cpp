@@ -234,18 +234,17 @@ MM_ScavengerRootClearer::scavengeContinuationObjects(MM_EnvironmentStandard *env
 					if (J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
 						omrobjectptr_t object = list->getPriorList();
 						while (NULL != object) {
-							omrobjectptr_t next = NULL;
+							omrobjectptr_t next = _extensions->accessBarrier->getContinuationLink(object);
 							gcEnv->_scavengerJavaStats._continuationCandidates += 1;
 
 							MM_ForwardedHeader forwardedHeader(object, compressed);
 							if (!forwardedHeader.isForwardedPointer()) {
-								Assert_MM_true(_scavenger->isObjectInEvacuateMemory(object));
+								Assert_GC_true_with_message2(env, _scavenger->isObjectInEvacuateMemory(object), "Continuation object  %p should be a dead object, forwardedHeader=%p\n", object, &forwardedHeader);
 								gcEnv->_scavengerJavaStats._continuationCleared += 1;
 								VM_VMHelpers::cleanupContinuationObject((J9VMThread *)env->getLanguageVMThread(), object);
 							} else {
 								omrobjectptr_t forwardedPtr = forwardedHeader.getForwardedObject();
-								Assert_MM_true(NULL != forwardedPtr);
-								next = _extensions->accessBarrier->getContinuationLink(forwardedPtr);
+								Assert_GC_true_with_message(env, NULL != forwardedPtr, "Continuation object  %p should be forwarded\n", object);
 								gcEnv->_continuationObjectBuffer->add(env, forwardedPtr);
 							}
 							object = next;

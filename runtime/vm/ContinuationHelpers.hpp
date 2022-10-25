@@ -49,7 +49,7 @@ protected:
 public:
 
 	static VMINLINE void
-	swapFieldsWithContinuation(J9VMThread *vmThread, J9VMContinuation *continuation)
+	swapFieldsWithContinuation(J9VMThread *vmThread, J9VMContinuation *continuation, bool swapJ9VMthreadSavedRegisters = true)
 	{
 	/* Helper macro to swap fields between the two J9Class structs. */
 #define SWAP_MEMBER(fieldName, fieldType, class1, class2) \
@@ -70,11 +70,17 @@ public:
 		SWAP_MEMBER(decompilationStack, J9JITDecompilationInfo*, vmThread, continuation);
 		SWAP_MEMBER(j2iFrame, UDATA*, vmThread, continuation);
 
+		J9VMEntryLocalStorage *threadELS = vmThread->entryLocalStorage;
 		/* Swap the JIT GPR registers data referenced by ELS */
 		J9JITGPRSpillArea tempGPRs = continuation->jitGPRs;
-		continuation->jitGPRs = *(J9JITGPRSpillArea*)vmThread->entryLocalStorage->jitGlobalStorageBase;
-		*(J9JITGPRSpillArea*)vmThread->entryLocalStorage->jitGlobalStorageBase = tempGPRs;
-		SWAP_MEMBER(oldEntryLocalStorage, J9VMEntryLocalStorage*, vmThread->entryLocalStorage, continuation);
+		J9I2JState tempI2J = continuation->i2jState;
+		continuation->jitGPRs = *(J9JITGPRSpillArea*)threadELS->jitGlobalStorageBase;
+		continuation->i2jState = threadELS->i2jState;
+		if (swapJ9VMthreadSavedRegisters) {
+			*(J9JITGPRSpillArea*)threadELS->jitGlobalStorageBase = tempGPRs;
+		}
+		threadELS->i2jState = tempI2J;
+		SWAP_MEMBER(oldEntryLocalStorage, J9VMEntryLocalStorage*, threadELS, continuation);
 	}
 
 };

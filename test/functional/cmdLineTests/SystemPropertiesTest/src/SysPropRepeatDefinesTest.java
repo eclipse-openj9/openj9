@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2022 IBM Corp. and others
+ * Copyright (c) 2022, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,32 +20,23 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include "fastJNI.h"
+public class SysPropRepeatDefinesTest {
 
-#include "j9protos.h"
-#include "j9consts.h"
+	public static void main(String args[]) throws Exception {
+		if (args.length < 2) {
+			throw new Exception("System property name and expected value are required!");
+		}
 
-extern "C" {
+		String propName = args[0];
+		String expectedPropValue = args[1];
 
-/* sun.misc.Unsafe: public native void park(boolean isAbsolute, long time); */
-void JNICALL
-Fast_sun_misc_Unsafe_park(J9VMThread *currentThread, jboolean isAbsolute, jlong time)
-{
-	threadParkImpl(currentThread, isAbsolute ? TRUE : FALSE, (I_64)time);
-}
+		assertEquals("system property: " + propName, System.getProperty(propName), expectedPropValue);
+		System.out.println("Test passed.");
+	}
 
-/* sun.misc.Unsafe: public native void unpark(java.lang.Object thread); */
-void JNICALL
-Fast_sun_misc_Unsafe_unpark(J9VMThread *currentThread, j9object_t threadObject)
-{
-	threadUnparkImpl(currentThread, threadObject);
-}
-
-J9_FAST_JNI_METHOD_TABLE(sun_misc_Unsafe)
-	J9_FAST_JNI_METHOD("park", "(ZJ)V", Fast_sun_misc_Unsafe_park,
-		J9_FAST_JNI_RETAIN_VM_ACCESS | J9_FAST_JNI_DO_NOT_WRAP_OBJECTS | J9_FAST_JNI_DO_NOT_PASS_RECEIVER)
-	J9_FAST_JNI_METHOD("unpark", "(Ljava/lang/Object;)V", Fast_sun_misc_Unsafe_unpark,
-		J9_FAST_JNI_RETAIN_VM_ACCESS | J9_FAST_JNI_DO_NOT_WRAP_OBJECTS | J9_FAST_JNI_DO_NOT_PASS_RECEIVER)
-J9_FAST_JNI_METHOD_TABLE_END
-
+	private static void assertEquals(String message, String actual, String expected) throws Exception {
+		if (!expected.equals(actual)) {
+			throw new Exception("Test failed: " + message + " got: " + actual + ", but expected: " + expected);
+		}
+	}
 }

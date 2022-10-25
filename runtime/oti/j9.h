@@ -351,13 +351,18 @@ static const struct { \
 
 #define J9_IS_STRING_DESCRIPTOR(str, strLen) (((strLen) > 2) && (IS_REF_OR_VAL_SIGNATURE(*(str))) && (';' == *((str) + (strLen) - 1)))
 
+#if defined(J9VM_OPT_CRIU_SUPPORT)
 #define J9_IS_SINGLE_THREAD_MODE(vm) (J9_ARE_ALL_BITS_SET((vm)->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_CRIU_SINGLE_THREAD_MODE))
+#define J9_IS_CRIU_RESTORED(vm) (0 != vm->checkpointState.checkpointRestoreTimeDelta)
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
 #define J9_IS_HIDDEN_METHOD(method) \
 	((NULL != (method)) && (J9ROMCLASS_IS_ANON_OR_HIDDEN(J9_CLASS_FROM_METHOD((method))->romClass) || J9_ARE_ANY_BITS_SET(J9_ROM_METHOD_FROM_RAM_METHOD((method))->modifiers, J9AccMethodFrameIteratorSkip)))
 
+#if JAVA_SPEC_VERSION >= 19
 #define IS_JAVA_LANG_VIRTUALTHREAD(vmThread, object) \
-	isSameOrSuperClassOf(J9VMJAVALANGBASEVIRTUALTHREAD((vmThread)->javaVM), J9OBJECT_CLAZZ(vmThread, object))
+	isSameOrSuperClassOf(J9VMJAVALANGBASEVIRTUALTHREAD_OR_NULL((vmThread)->javaVM), J9OBJECT_CLAZZ(vmThread, object))
+#endif /* JAVA_SPEC_VERSION >= 19 */
 
 #define IS_JAVA_LANG_THREAD(vmThread, object) \
 	isSameOrSuperClassOf(J9VMJAVALANGTHREAD_OR_NULL((vmThread)->javaVM), J9OBJECT_CLAZZ(vmThread, object))

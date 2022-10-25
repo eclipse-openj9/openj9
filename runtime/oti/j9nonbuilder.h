@@ -4280,6 +4280,8 @@ typedef struct J9MemoryManagerFunctions {
 	void  ( *J9WriteBarrierBatch)(struct J9VMThread *vmThread, j9object_t destinationObject) ;
 	void  ( *J9WriteBarrierPostClass)(struct J9VMThread *vmThread, J9Class *destinationClazz, j9object_t storedObject) ;
 	void  ( *J9WriteBarrierClassBatch)(struct J9VMThread *vmThread, J9Class *destinationClazz) ;
+	void ( *preMountContinuation)(struct J9VMThread *vmThread, j9object_t object) ;
+	void ( *postUnmountContinuation)(struct J9VMThread *vmThread, j9object_t object) ;
 	UDATA  ( *allocateMemoryForSublistFragment)(void *vmThread, J9VMGC_SublistFragment *fragmentPrimitive) ;
 	UDATA  ( *j9gc_heap_free_memory)(struct J9JavaVM *javaVM) ;
 	UDATA  ( *j9gc_heap_total_memory)(struct J9JavaVM *javaVM) ;
@@ -4499,8 +4501,6 @@ typedef struct J9MemoryManagerFunctions {
 	jvmtiIterationControl  ( *j9mm_iterate_all_continuation_objects)(struct J9VMThread *vmThread, J9PortLibrary *portLibrary, UDATA flags, jvmtiIterationControl (*func)(struct J9VMThread *vmThread, struct J9MM_IterateObjectDescriptor *object, void *userData), void *userData) ;
 	UDATA ( *ownableSynchronizerObjectCreated)(struct J9VMThread *vmThread, j9object_t object) ;
 	UDATA ( *continuationObjectCreated)(struct J9VMThread *vmThread, j9object_t object) ;
-	void ( *preMountContinuation)(struct J9VMThread *vmThread, j9object_t object) ;
-	void ( *postUnmountContinuation)(struct J9VMThread *vmThread, j9object_t object) ;
 
 	void  ( *j9gc_notifyGCOfClassReplacement)(struct J9VMThread *vmThread, J9Class *originalClass, J9Class *replacementClass, UDATA isFastHCR) ;
 	I_32  ( *j9gc_get_jit_string_dedup_policy)(struct J9JavaVM *javaVM) ;
@@ -4691,7 +4691,7 @@ typedef struct J9InternalVMFunctions {
 	UDATA  ( *getAnnotationsFromAnnotationInfo)(struct J9AnnotationInfo *annInfo, UDATA annotationType, char *memberName, U_32 memberNameLength, char *memberSignature, U_32 memberSignatureLength, struct J9AnnotationInfoEntry **annotations) ;
 	struct J9AnnotationInfoEntry*  ( *getAnnotationFromAnnotationInfo)(struct J9AnnotationInfo *annInfo, UDATA annotationType, char *memberName, U_32 memberNameLength, char *memberSignature, U_32 memberSignatureLength, char *annotationName, U_32 annotationNameLength) ;
 	void*  ( *getNamedElementFromAnnotation)(struct J9AnnotationInfoEntry *annotation, char *name, U_32 nameLength) ;
-	UDATA  ( *registerNativeLibrary)(struct J9VMThread * vmThread, struct J9ClassLoader * classLoader, const char * libName, char * libraryPath, struct J9NativeLibrary** libraryPtr, char* errorBuffer, UDATA bufferLength) ;
+	UDATA  ( *registerNativeLibrary)(struct J9VMThread *vmThread, struct J9ClassLoader *classLoader, const char *libName, const char *libraryPath, struct J9NativeLibrary **libraryPtr, char *errorBuffer, UDATA bufferLength) ;
 	UDATA  ( *registerBootstrapLibrary)(struct J9VMThread * vmThread, const char * libName, struct J9NativeLibrary** libraryPtr, UDATA suppressError) ;
 	UDATA  ( *startJavaThread)(struct J9VMThread * currentThread, j9object_t threadObject, UDATA privateFlags,  UDATA osStackSize, UDATA priority, omrthread_entrypoint_t entryPoint, void * entryArg, j9object_t schedulingParameters) ;
 	j9object_t  ( *createCachedOutOfMemoryError)(struct J9VMThread * currentThread, j9object_t threadObject) ;
@@ -4799,9 +4799,9 @@ typedef struct J9InternalVMFunctions {
 	void  ( *invalidJITReturnAddress)(J9StackWalkState *walkState) ;
 	struct J9ClassLoader*  ( *internalAllocateClassLoader)(struct J9JavaVM *javaVM, j9object_t classLoaderObject) ;
 	void  ( *initializeClass)(struct J9VMThread *currentThread, struct J9Class *clazz) ;
-	void  ( *threadParkImpl)(struct J9VMThread* vmThread, IDATA timeoutIsEpochRelative, I_64 timeout) ;
+	void  ( *threadParkImpl)(struct J9VMThread* vmThread, BOOLEAN timeoutIsEpochRelative, I_64 timeout) ;
 	void  ( *threadUnparkImpl)(struct J9VMThread* vmThread, j9object_t threadObject) ;
-	IDATA  ( *monitorWaitImpl)(struct J9VMThread* vmThread, j9object_t object, I_64 millis, I_32 nanos, UDATA interruptable) ;
+	IDATA  ( *monitorWaitImpl)(struct J9VMThread* vmThread, j9object_t object, I_64 millis, I_32 nanos, BOOLEAN interruptable) ;
 	IDATA  ( *threadSleepImpl)(struct J9VMThread* vmThread, I_64 millis, I_32 nanos) ;
 	omrthread_monitor_t  ( *getMonitorForWait)(struct J9VMThread* vmThread, j9object_t object) ;
 	void  ( *jvmPhaseChange)(struct J9JavaVM* vm, UDATA phase) ;
@@ -4997,6 +4997,7 @@ typedef struct J9VMContinuation {
 	struct J9JITDecompilationInfo* decompilationStack;
 	UDATA* j2iFrame;
 	struct J9JITGPRSpillArea jitGPRs;
+	struct J9I2JState i2jState;
 	struct J9VMEntryLocalStorage* oldEntryLocalStorage;
 	struct J9VMThread* carrierThread;
 } J9VMContinuation;
@@ -5784,9 +5785,11 @@ typedef struct J9JavaVM {
 	U_64 nextTID;
 	j9object_t *liveVirtualThreadList;
 	omrthread_monitor_t liveVirtualThreadListMutex;
+	volatile BOOLEAN inspectingLiveVirtualThreadList;
 	UDATA virtualThreadLinkNextOffset;
 	UDATA virtualThreadLinkPreviousOffset;
 	UDATA virtualThreadInspectorCountOffset;
+	UDATA isSuspendedByJVMTIOffset;
 	UDATA tlsOffset;
 	j9_tls_finalizer_t tlsFinalizers[J9JVMTI_MAX_TLS_KEYS];
 	omrthread_monitor_t tlsFinalizersMutex;

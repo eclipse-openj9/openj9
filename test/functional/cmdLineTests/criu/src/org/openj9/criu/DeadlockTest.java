@@ -90,9 +90,9 @@ public class DeadlockTest {
 		t1.start();
 
 		CRIUSupport criuSupport = new CRIUSupport(path);
-		criuSupport.registerPreSnapshotHook(() -> {
+		criuSupport.registerPreCheckpointHook(() -> {
 			synchronized (lock) {
-				System.out.println("Presnapshot hook inside monitor");
+				System.out.println("Precheckpoint hook inside monitor");
 				testResult.testPassed = false;
 			}
 		});
@@ -198,7 +198,7 @@ public class DeadlockTest {
 		Class clazz = unsafe.defineClass(A.class.getName(), bytes, 0, bytes.length, loader, null);
 
 		CRIUSupport criuSupport = new CRIUSupport(path);
-		criuSupport.registerPreSnapshotHook(()->{
+		criuSupport.registerPreCheckpointHook(()->{
 			MethodType type = MethodType.methodType(clazz);
 		});
 

@@ -64,6 +64,7 @@ import jdk.internal.module.ServicesCatalog;
 import jdk.internal.reflect.ConstantPool;
 /*[IF JAVA_SPEC_VERSION >= 19]*/
 import java.util.concurrent.Callable;
+import jdk.internal.misc.CarrierThreadLocal;
 import jdk.internal.vm.Continuation;
 import jdk.internal.vm.ContinuationScope;
 import jdk.internal.vm.StackableScope;
@@ -517,40 +518,6 @@ final class Access implements JavaLangAccess {
 		return Thread.currentCarrierThread();
 	}
 
-/*[IF JAVA_SPEC_VERSION >= 20]*/
-	/*
-	 * To access package-private methods in ThreadLocal, an
-	 * (implicit) cast from CarrierThreadLocal is required.
-	 */
-	private static <T> ThreadLocal<T> asThreadLocal(CarrierThreadLocal<T> local) {
-		return local;
-	}
-
-	public <T> T getCarrierThreadLocal(CarrierThreadLocal<T> local) {
-		return asThreadLocal(local).getCarrierThreadLocal();
-	}
-
-	public boolean isCarrierThreadLocalPresent(CarrierThreadLocal<?> local) {
-		return asThreadLocal(local).isCarrierThreadLocalPresent();
-	}
-
-	public void removeCarrierThreadLocal(CarrierThreadLocal<?> local) {
-		asThreadLocal(local).removeCarrierThreadLocal();
-	}
-
-	public <T> void setCarrierThreadLocal(CarrierThreadLocal<T> local, T value) {
-		asThreadLocal(local).setCarrierThreadLocal(value);
-	}
-/*[ELSE] JAVA_SPEC_VERSION >= 20 */
-	public <T> T getCarrierThreadLocal(ThreadLocal<T> local) {
-		return local.getCarrierThreadLocal();
-	}
-
-	public <T> void setCarrierThreadLocal(ThreadLocal<T> local, T value) {
-		local.setCarrierThreadLocal(value);
-	}
-/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
-
 	public <V> V executeOnCarrierThread(Callable<V> task) throws Exception {
 		V result;
 		Thread currentThread = Thread.currentThread();
@@ -642,6 +609,30 @@ final class Access implements JavaLangAccess {
 
 	public StackWalker newStackWalkerInstance(Set<StackWalker.Option> options, ContinuationScope contScope, Continuation continuation) {
 		return StackWalker.newInstance(options, null, contScope, continuation);
+	}
+
+	/*
+	 * To access package-private methods in ThreadLocal, an
+	 * (implicit) cast from CarrierThreadLocal is required.
+	 */
+	private static <T> ThreadLocal<T> asThreadLocal(CarrierThreadLocal<T> local) {
+		return local;
+	}
+
+	public boolean isCarrierThreadLocalPresent(CarrierThreadLocal<?> carrierThreadlocal) {
+		return asThreadLocal(carrierThreadlocal).isCarrierThreadLocalPresent();
+	}
+
+	public <T> T getCarrierThreadLocal(CarrierThreadLocal<T> carrierThreadlocal) {
+		return asThreadLocal(carrierThreadlocal).getCarrierThreadLocal();
+	}
+
+	public void removeCarrierThreadLocal(CarrierThreadLocal<?> carrierThreadlocal) {
+		asThreadLocal(carrierThreadlocal).removeCarrierThreadLocal();
+	}
+
+	public <T> void setCarrierThreadLocal(CarrierThreadLocal<T> carrierThreadlocal, T carrierThreadLocalvalue) {
+		asThreadLocal(carrierThreadlocal).setCarrierThreadLocal(carrierThreadLocalvalue);
 	}
 /*[ENDIF] JAVA_SPEC_VERSION >= 19 */
 

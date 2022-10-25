@@ -479,7 +479,7 @@ bash configure --disable-ccache \
 ```
 bash configure --disable-ccache \
                --with-boot-jdk=/cygdrive/c/<path_to_jdk8> \
-               --with-freetype-src=/cygdrive/c/temp/freetype
+               --with-freetype-src=/cygdrive/c/temp/freetype \
                --with-target-bits=32
 ```
 Note: If you have multiple versions of Visual Studio installed, you can enforce a specific version to be used by setting `--with-toolchain-version`, i.e., by including `--with-toolchain-version=2013` option in the configure command.
