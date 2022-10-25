@@ -3592,7 +3592,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			if (COMPACT_STRINGS && (null == compressionFlag || coder == LATIN1)) {
 				int index = start + codePointCount;
 
-				if (index > len) {
+				if ((index > len) || (index < 0)) {
 					throw new IndexOutOfBoundsException();
 				} else {
 					return index;
@@ -8052,7 +8052,7 @@ written authorization of the copyright holder.
 			if (COMPACT_STRINGS && (null == compressionFlag || count >= 0)) {
 				int index = start + codePointCount;
 
-				if (index > len) {
+				if ((index > len) || (index < 0)) {
 					throw new IndexOutOfBoundsException();
 				} else {
 					return index;

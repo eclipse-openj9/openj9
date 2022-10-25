@@ -2773,7 +2773,7 @@ public int offsetByCodePoints(int start, int codePointCount) {
 		if (String.COMPACT_STRINGS && count >= 0) {
 			int index = start + codePointCount;
 
-			if (index >= currentLength) {
+			if ((index > currentLength) || (index < 0)) {
 				throw new IndexOutOfBoundsException();
 			} else {
 				return index;
