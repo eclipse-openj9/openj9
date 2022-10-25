@@ -4224,7 +4224,10 @@ done:
 			if (VM_VMHelpers::exceptionPending(_currentThread)) {
 				rc = GOTO_THROW_CURRENT_EXCEPTION;
 			} else {
-				I_32 result = (I_32)isFlattenableFieldFlattened(fieldID->declaringClass, fieldID->field);
+				I_32 result = false;
+				if (VM_ValueTypeHelpers::isNameOrSignatureQtype(J9ROMFIELDSHAPE_SIGNATURE(fieldID->field))) {
+					result = (I_32)isFlattenableFieldFlattened(fieldID->declaringClass, fieldID->field);
+				}
 				restoreInternalNativeStackFrame(REGISTER_ARGS);
 				returnSingleFromINL(REGISTER_ARGS, result, 2);
 			}
