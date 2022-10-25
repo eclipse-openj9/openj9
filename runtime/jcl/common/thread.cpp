@@ -501,7 +501,7 @@ Java_java_lang_Thread_getThreads(JNIEnv *env, jclass clazz)
 		jobject *currentThreadPtr = threads;
 		UDATA threadCount = 0;
 
-		vmFuncs->acquireExclusiveVMAccess(currentThread);
+		omrthread_monitor_enter(vm->vmThreadListMutex);
 		J9VMThread *targetThread = vm->mainThread;
 		do {
 #if JAVA_SPEC_VERSION >= 19
@@ -522,7 +522,7 @@ Java_java_lang_Thread_getThreads(JNIEnv *env, jclass clazz)
 			}
 			targetThread = targetThread->linkNext;
 		} while (targetThread != vm->mainThread);
-		vmFuncs->releaseExclusiveVMAccess(currentThread);
+		omrthread_monitor_exit(vm->vmThreadListMutex);
 
 		J9Class *arrayClass = fetchArrayClass(currentThread, J9VMJAVALANGTHREAD_OR_NULL(vm));
 		if (NULL != arrayClass) {
