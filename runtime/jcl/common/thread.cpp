@@ -493,15 +493,16 @@ Java_java_lang_Thread_getThreads(JNIEnv *env, jclass clazz)
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
 	vmFuncs->internalEnterVMFromJNI(currentThread);
+	vmFuncs->acquireExclusiveVMAccess(currentThread);
 
 	jobject *threads = (jobject*)j9mem_allocate_memory(sizeof(jobject) * vm->totalThreadCount, J9MEM_CATEGORY_VM_JCL);
 	if (NULL == threads) {
+		vmFuncs->releaseExclusiveVMAccess(currentThread);
 		vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
 	} else {
 		jobject *currentThreadPtr = threads;
 		UDATA threadCount = 0;
 
-		vmFuncs->acquireExclusiveVMAccess(currentThread);
 		J9VMThread *targetThread = vm->mainThread;
 		do {
 #if JAVA_SPEC_VERSION >= 19
