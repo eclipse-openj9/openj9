@@ -727,7 +727,7 @@ J9::CodeGenerator::createReferenceReadBarrier(TR::TreeTop* treeTop, TR::Node* pa
    // isCollectedReference() responds false to generic int shadows because their type
    // is int. However, address type generic int shadows refer to collected slots.
 
-   if (symbol == TR::comp()->getSymRefTab()->findGenericIntShadowSymbol() || symbol->isCollectedReference())
+   if (symbol == self()->comp()->getSymRefTab()->findGenericIntShadowSymbol() || symbol->isCollectedReference())
       {
       TR::Node::recreate(parent, TR::ardbari);
       if (treeTop->getNode()->getOpCodeValue() == TR::NULLCHK                  &&
@@ -3116,7 +3116,7 @@ J9::CodeGenerator::compressedReferenceRematerialization()
             prevTree->join(nextTree);
             }
 
-         if (node->canGCandReturn())
+         if (node->canGCandReturn(self()->comp()))
             {
             ListIterator<TR::Node> nodesIt(&rematerializedNodes);
             for (TR::Node * rematNode = nodesIt.getFirst(); rematNode != NULL; rematNode = nodesIt.getNext())

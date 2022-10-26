@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -275,7 +275,7 @@ int32_t TR_VarHandleTransformer::perform()
                 spineCHK->setAndIncChild(2, index);
                 spineCHK->setSymbolReference(spineCHKSymRef);
                 spineCHK->setAndIncChild(0, methodHandle);
-                spineCHK->setSpineCheckWithArrayElementChild(true);
+                spineCHK->setSpineCheckWithArrayElementChild(true, comp());
                 callTree->insertBefore(TR::TreeTop::create(comp(), spineCHK));
                 }
 

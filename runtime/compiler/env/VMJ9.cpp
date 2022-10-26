@@ -1193,7 +1193,6 @@ uintptr_t
 TR_J9VMBase::getReferenceFieldAtAddress(uintptr_t fieldAddress)
    {
    TR_ASSERT(haveAccess(), "Must haveAccess in getReferenceFieldAtAddress");
-   TR::Compilation* comp = TR::comp();
 #if defined(OMR_GC_CONCURRENT_SCAVENGER)
    // Emit read barrier
    if (TR::Compiler->om.readBarrierType() != gc_modron_readbar_none)
@@ -1918,7 +1917,6 @@ int32_t TR_J9VMBase::getArraySpineShift(int32_t width)
 
 int32_t TR_J9VMBase::getArrayletMask(int32_t width)
    {
-   TR::Compilation* comp = TR::comp();
    TR_ASSERT(TR::Compiler->om.canGenerateArraylets(), "not supposed to be generating arraylets!");
    TR_ASSERT(width >= 0, "unexpected arraylet datatype width");
    int32_t mask=(1 << getArraySpineShift(width))-1;
@@ -1927,7 +1925,6 @@ int32_t TR_J9VMBase::getArrayletMask(int32_t width)
 
 int32_t TR_J9VMBase::getArrayletLeafIndex(int64_t index, int32_t elementSize)
    {
-   TR::Compilation* comp = TR::comp();
    TR_ASSERT(TR::Compiler->om.canGenerateArraylets(), "not supposed to be generating arraylets!");
    TR_ASSERT(elementSize >= 0, "unexpected arraylet datatype width");
 
@@ -1939,7 +1936,6 @@ int32_t TR_J9VMBase::getArrayletLeafIndex(int64_t index, int32_t elementSize)
 
 int32_t TR_J9VMBase::getLeafElementIndex(int64_t index , int32_t elementSize)
    {
-   TR::Compilation* comp = TR::comp();
    TR_ASSERT(TR::Compiler->om.canGenerateArraylets(), "not supposed to be generating arraylets!");
    TR_ASSERT(elementSize >= 0, "unexpected arraylet datatype width");
 
@@ -8774,7 +8770,7 @@ TR_J9SharedCacheVM::getSystemClassFromClassName(const char * name, int32_t lengt
       {
       if (isVettedForAOT)
          {
-         if (((TR_ResolvedRelocatableJ9Method *) TR::comp()->getCurrentMethod())->validateArbitraryClass(TR::comp(), (J9Class *) classPointer))
+         if (((TR_ResolvedRelocatableJ9Method *) TR::comp()->getCurrentMethod())->validateArbitraryClass(comp, (J9Class *) classPointer))
             validated = true;
          }
       }
