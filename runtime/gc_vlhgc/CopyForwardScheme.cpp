@@ -2319,9 +2319,8 @@ stackSlotIteratorForCopyForwardScheme(J9JavaVM *javaVM, J9Object **slotPtr, void
 }
 
 MMINLINE void
-MM_CopyForwardScheme::scanContinuationObjectSlots(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, J9Object *objectPtr, ScanReason reason)
+MM_CopyForwardScheme::scanContinuationNativeSlots(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, J9Object *objectPtr, ScanReason reason)
 {
-	scanMixedObjectSlots(env, reservingContext, objectPtr, reason);
 	J9VMThread *currentThread = (J9VMThread *)env->getLanguageVMThread();
 	if (VM_VMHelpers::needScanStacksForContinuation(currentThread, objectPtr)) {
 		StackIteratorData4CopyForward localData;
@@ -2335,6 +2334,13 @@ MM_CopyForwardScheme::scanContinuationObjectSlots(MM_EnvironmentVLHGC *env, MM_A
 #endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
 		GC_VMThreadStackSlotIterator::scanSlots(currentThread, objectPtr, (void *)&localData, stackSlotIteratorForCopyForwardScheme, bStackFrameClassWalkNeeded, false);
 	}
+}
+
+MMINLINE void
+MM_CopyForwardScheme::scanContinuationObject(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, J9Object *objectPtr, ScanReason reason)
+{
+	scanContinuationNativeSlots(env, reservingContext, objectPtr, reason);
+	scanMixedObjectSlots(env, reservingContext, objectPtr, reason);
 }
 
 /**
@@ -2943,7 +2949,7 @@ MM_CopyForwardScheme::scanObject(MM_EnvironmentVLHGC *env, MM_AllocationContextT
 		scanOwnableSynchronizerObjectSlots(env, reservingContext, objectPtr, reason);
 		break;
 	case GC_ObjectModel::SCAN_CONTINUATION_OBJECT:
-		scanContinuationObjectSlots(env, reservingContext, objectPtr, reason);
+		scanContinuationObject(env, reservingContext, objectPtr, reason);
 		break;
 	case GC_ObjectModel::SCAN_REFERENCE_MIXED_OBJECT:
 		scanReferenceObjectSlots(env, reservingContext, objectPtr, reason);

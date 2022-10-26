@@ -37,7 +37,7 @@ MM_HeapWalkerDelegate::objectSlotsDo(OMR_VMThread *omrVMThread, omrobjectptr_t o
 	MM_EnvironmentBase *env = MM_EnvironmentBase::getEnvironment(omrVMThread);
 	switch(_objectModel->getScanType(objectPtr)) {
 	case GC_ObjectModel::SCAN_CONTINUATION_OBJECT:
-		doContinuationObject(env, objectPtr, function, userData);
+		doContinuationNativeSlots(env, objectPtr, function, userData);
 		break;
 	default:
 		break;
@@ -55,7 +55,7 @@ stackSlotIteratorForHeapWalker(J9JavaVM *javaVM, J9Object **slotPtr, void *local
 }
 
 void
-MM_HeapWalkerDelegate::doContinuationObject(MM_EnvironmentBase *env, omrobjectptr_t objectPtr, MM_HeapWalkerSlotFunc function, void *userData)
+MM_HeapWalkerDelegate::doContinuationNativeSlots(MM_EnvironmentBase *env, omrobjectptr_t objectPtr, MM_HeapWalkerSlotFunc function, void *userData)
 {
 	J9VMThread *currentThread = (J9VMThread *)env->getLanguageVMThread();
 	if (VM_VMHelpers::needScanStacksForContinuation(currentThread, objectPtr)) {

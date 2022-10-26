@@ -83,7 +83,9 @@ private:
 	 */
 	bool scrubMixedObject(MM_EnvironmentVLHGC *env, J9Object *objectPtr);
 
+	bool scrubContinuationNativeSlots(MM_EnvironmentVLHGC *env, J9Object *objectPtr);
 	bool scrubContinuationObject(MM_EnvironmentVLHGC *env, J9Object *objectPtr);
+
 	/**
 	 * Scrub a SCAN_POINTER_ARRAY_OBJECT.
 	 * @param env[in] the current thread

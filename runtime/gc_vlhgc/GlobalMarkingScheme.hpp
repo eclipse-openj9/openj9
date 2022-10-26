@@ -319,6 +319,7 @@ private:
 	 */
 	void scanMixedObject(MM_EnvironmentVLHGC *env, J9Object *objectPtr, ScanReason reason);
 	
+	void scanContinuationNativeSlots(MM_EnvironmentVLHGC *env, J9Object *objectPtr, ScanReason reason);
 	void scanContinuationObject(MM_EnvironmentVLHGC *env, J9Object *objectPtr, ScanReason reason);
 
 	/**
