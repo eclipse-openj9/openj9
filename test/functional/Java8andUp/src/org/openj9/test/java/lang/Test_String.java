@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2020 IBM Corp. and others
+ * Copyright (c) 1998, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1566,28 +1566,41 @@ public class Test_String {
 	@Test
 	public void test_offsetByCodePoints() {
 		String s1 = "A\ud800\udc00C";
-		AssertJUnit.assertTrue("wrong offset 0, 0", s1.offsetByCodePoints(0, 0) == 0);
-		AssertJUnit.assertTrue("wrong offset 0, 1", s1.offsetByCodePoints(0, 1) == 1);
-		AssertJUnit.assertTrue("wrong offset 0, 2", s1.offsetByCodePoints(0, 2) == 3);
-		AssertJUnit.assertTrue("wrong offset 0, 3", s1.offsetByCodePoints(0, 3) == 4);
-		AssertJUnit.assertTrue("wrong offset 1, 0", s1.offsetByCodePoints(1, 0) == 1);
-		AssertJUnit.assertTrue("wrong offset 1, 1", s1.offsetByCodePoints(1, 1) == 3);
-		AssertJUnit.assertTrue("wrong offset 1, 2", s1.offsetByCodePoints(1, 2) == 4);
-		AssertJUnit.assertTrue("wrong offset 2, 0", s1.offsetByCodePoints(2, 0) == 2);
-		AssertJUnit.assertTrue("wrong offset 2, 1", s1.offsetByCodePoints(2, 1) == 3);
-		AssertJUnit.assertTrue("wrong offset 2, 2", s1.offsetByCodePoints(2, 2) == 4);
-		AssertJUnit.assertTrue("wrong offset 3, 0", s1.offsetByCodePoints(3, 0) == 3);
-		AssertJUnit.assertTrue("wrong offset 3, 1", s1.offsetByCodePoints(3, 1) == 4);
-		AssertJUnit.assertTrue("wrong offset 4, 0", s1.offsetByCodePoints(4, 0) == 4);
+		AssertJUnit.assertEquals("wrong offset 0, 0", 0, s1.offsetByCodePoints(0, 0));
+		AssertJUnit.assertEquals("wrong offset 0, 1", 1, s1.offsetByCodePoints(0, 1));
+		AssertJUnit.assertEquals("wrong offset 0, 2", 3, s1.offsetByCodePoints(0, 2));
+		AssertJUnit.assertEquals("wrong offset 0, 3", 4, s1.offsetByCodePoints(0, 3));
+		AssertJUnit.assertEquals("wrong offset 1, 0", 1, s1.offsetByCodePoints(1, 0));
+		AssertJUnit.assertEquals("wrong offset 1, 1", 3, s1.offsetByCodePoints(1, 1));
+		AssertJUnit.assertEquals("wrong offset 1, 2", 4, s1.offsetByCodePoints(1, 2));
+		AssertJUnit.assertEquals("wrong offset 2, 0", 2, s1.offsetByCodePoints(2, 0));
+		AssertJUnit.assertEquals("wrong offset 2, 1", 3, s1.offsetByCodePoints(2, 1));
+		AssertJUnit.assertEquals("wrong offset 2, 2", 4, s1.offsetByCodePoints(2, 2));
+		AssertJUnit.assertEquals("wrong offset 3, 0", 3, s1.offsetByCodePoints(3, 0));
+		AssertJUnit.assertEquals("wrong offset 3, 1", 4, s1.offsetByCodePoints(3, 1));
+		AssertJUnit.assertEquals("wrong offset 4, 0", 4, s1.offsetByCodePoints(4, 0));
 
-		AssertJUnit.assertTrue("wrong offset 4, -1", s1.offsetByCodePoints(4, -1) == 3);
-		AssertJUnit.assertTrue("wrong offset 4, -2", s1.offsetByCodePoints(4, -2) == 1);
-		AssertJUnit.assertTrue("wrong offset 4, -3", s1.offsetByCodePoints(4, -3) == 0);
-		AssertJUnit.assertTrue("wrong offset 3, -1", s1.offsetByCodePoints(3, -1) == 1);
-		AssertJUnit.assertTrue("wrong offset 3, -2", s1.offsetByCodePoints(3, -2) == 0);
-		AssertJUnit.assertTrue("wrong offset 2, -1", s1.offsetByCodePoints(2, -1) == 1);
-		AssertJUnit.assertTrue("wrong offset 2, -2", s1.offsetByCodePoints(2, -2) == 0);
-		AssertJUnit.assertTrue("wrong offset 1, -1", s1.offsetByCodePoints(1, -1) == 0);
+		AssertJUnit.assertEquals("wrong offset 4, -1", 3, s1.offsetByCodePoints(4, -1));
+		AssertJUnit.assertEquals("wrong offset 4, -2", 1, s1.offsetByCodePoints(4, -2));
+		AssertJUnit.assertEquals("wrong offset 4, -3", 0, s1.offsetByCodePoints(4, -3));
+		AssertJUnit.assertEquals("wrong offset 3, -1", 1, s1.offsetByCodePoints(3, -1));
+		AssertJUnit.assertEquals("wrong offset 3, -2", 0, s1.offsetByCodePoints(3, -2));
+		AssertJUnit.assertEquals("wrong offset 2, -1", 1, s1.offsetByCodePoints(2, -1));
+		AssertJUnit.assertEquals("wrong offset 2, -2", 0, s1.offsetByCodePoints(2, -2));
+		AssertJUnit.assertEquals("wrong offset 1, -1", 0, s1.offsetByCodePoints(1, -1));
+
+		try {
+			s1.offsetByCodePoints(s1.length(), 1);
+			AssertJUnit.fail("returned index greater than length should fail");
+		} catch (IndexOutOfBoundsException e) {
+			// correct exception thrown
+		}
+		try {
+			s1.offsetByCodePoints(0, -1);
+			AssertJUnit.fail("returned index less than zero should fail");
+		} catch (IndexOutOfBoundsException e) {
+			// correct exception thrown
+		}
 	}
 
 	/**

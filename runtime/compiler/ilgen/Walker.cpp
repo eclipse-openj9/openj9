@@ -1131,7 +1131,7 @@ TR_J9ByteCodeIlGenerator::genTreeTop(TR::Node * n)
 
    //In involuntaryOSR, exception points are OSR points but we don't need to
    //handle pending pushes for them because the operand stack is always empty at catch.
-   bool isExceptionOnlyPoint = comp()->getOSRMode() == TR::involuntaryOSR && !n->canGCandReturn() && n->canGCandExcept();
+   bool isExceptionOnlyPoint = comp()->getOSRMode() == TR::involuntaryOSR && !n->canGCandReturn(comp()) && n->canGCandExcept();
    if (comp()->getOption(TR_TraceOSR))
       traceMsg(comp(), "skip saving PPS for exceptionOnlyPoints %d node n%dn\n", isExceptionOnlyPoint, n->getGlobalIndex());
 
@@ -4742,7 +4742,7 @@ break
       if (!resultNode)
          {
          if (symbol->isJNI())
-            resultNode = callNode->processJNICall(callNodeTreeTop, _methodSymbol);
+            resultNode = callNode->processJNICall(callNodeTreeTop, _methodSymbol, comp());
          else
             resultNode = callNode;
          }
@@ -6169,7 +6169,7 @@ TR_J9ByteCodeIlGenerator::loadArrayElement(TR::DataType dataType, TR::ILOpCodes 
          checkNode->setChild(2, checkNode->getChild(0));  // index
          }
 
-      checkNode->setSpineCheckWithArrayElementChild(true);
+      checkNode->setSpineCheckWithArrayElementChild(true, comp());
       checkNode->setAndIncChild(0, element);              // array element
       checkNode->setAndIncChild(1, arrayBaseAddress);     // base array
       }
@@ -7749,7 +7749,7 @@ TR_J9ByteCodeIlGenerator::storeArrayElement(TR::DataType dataType, TR::ILOpCodes
          checkNode->setAndIncChild(0, elementAddress);    // iwrtbar
       else
          {
-         checkNode->setSpineCheckWithArrayElementChild(true);
+         checkNode->setSpineCheckWithArrayElementChild(true, comp());
          checkNode->setAndIncChild(0, storeNode);         // primitive store
          }
       checkNode->setAndIncChild(1, arrayBaseAddress);     // base array

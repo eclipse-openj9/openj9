@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -75,9 +75,39 @@ public:
    /// given a direct call to Object.clone node, return the class of the receiver.
    ///
    TR_OpaqueClassBlock* getCloneClassInNode();
-   TR::Node *           processJNICall(TR::TreeTop *, TR::ResolvedMethodSymbol *);
 
-   void                    devirtualizeCall(TR::TreeTop*);
+   /**
+    * @brief Stub method for OMR callers using the old API.  This function is
+    *    deprecated and will be removed once upstream OMR code is changed.
+    */
+   TR::Node *processJNICall(TR::TreeTop *callNodeTreeTop, TR::ResolvedMethodSymbol *owningSymbol);
+
+   /**
+    * @brief Transform a call node to prepare it for JNI dispatch.
+    *
+    * @param[in] callNodeTreeTop : \c TR::TreeTop for the call node
+    * @param[in] owningSymbol : \c TR::ResolvedMethodSymbol of the method to call
+    * @param[in] comp : \c TR::Compilation object
+    *
+    * @return Transformed call  \c TR::Node
+    */
+   TR::Node *processJNICall(TR::TreeTop *callNodeTreeTop, TR::ResolvedMethodSymbol *owningSymbol, TR::Compilation *comp);
+
+   /**
+    * @brief Stub method for OMR callers using the old API.  This function is
+    *    deprecated and will be removed once upstream OMR code is changed.
+    */
+   void devirtualizeCall(TR::TreeTop *treeTop);
+
+   /**
+    * @brief Devirtualize the call under the given treetop.
+    *
+    * @param[in] treeTop : \c TR::TreeTop of the call to devirtualize
+    * @param[in] comp : \c TR::Compilation object
+    *
+    * @return None
+    */
+   void devirtualizeCall(TR::TreeTop *treeTop, TR::Compilation *comp);
 
    /**
     * @return the signature of the node's type if applicable.
@@ -109,8 +139,8 @@ public:
    bool alwaysGeneratesAKnownCleanSign();
    bool alwaysGeneratesAKnownPositiveCleanSign();
 #ifdef TR_TARGET_S390
-   int32_t getStorageReferenceSize();
-   int32_t getStorageReferenceSourceSize();
+   int32_t getStorageReferenceSize(TR::Compilation *comp);
+   int32_t getStorageReferenceSourceSize(TR::Compilation *comp);
 #endif
 
    bool         isEvenPrecision();
@@ -132,13 +162,13 @@ public:
 
    bool canRemoveArithmeticOperand();
    bool canGCandReturn();
+   bool canGCandReturn(TR::Compilation *comp);
 
    static uint32_t hashOnBCDOrAggrLiteral(char *lit, size_t litSize);
 
    bool referencesSymbolInSubTree(TR::SymbolReference * symRef, vcount_t visitCount);
-   bool referencesMayKillAliasInSubTree(TR::Node * rootNode, vcount_t visitCount);
+   bool referencesMayKillAliasInSubTree(TR::Node * rootNode, vcount_t visitCount, TR::Compilation *comp);
    void getSubTreeReferences(TR::SparseBitVector &references, vcount_t visitCount);
-   TR_ParentOfChildNode * referencesSymbolExactlyOnceInSubTree(TR::Node *, int32_t, TR::SymbolReference *, vcount_t);
 
    /**
     * Node field functions
@@ -264,14 +294,14 @@ public:
 
    // Flag used by TR::BNDCHK nodes
    bool isSpineCheckWithArrayElementChild();
-   void setSpineCheckWithArrayElementChild(bool v);
+   void setSpineCheckWithArrayElementChild(bool v, TR::Compilation *comp);
    bool chkSpineCheckWithArrayElementChild();
    const char *printSpineCheckWithArrayElementChild();
 
    // Flags used by call nodes
    bool isUnsafePutOrderedCall();
    bool isDontInlinePutOrderedCall();
-   void setDontInlinePutOrderedCall();
+   void setDontInlinePutOrderedCall(TR::Compilation *comp);
    bool chkDontInlineUnsafePutOrderedCall();
    const char * printIsDontInlineUnsafePutOrderedCall();
 
@@ -282,6 +312,7 @@ public:
 
    bool isUnsafeGetPutCASCallOnNonArray();
    void setUnsafeGetPutCASCallOnNonArray();
+   void setUnsafeGetPutCASCallOnNonArray(TR::Compilation *comp);
 
    bool isProcessedByCallCloneConstrain();
    void setProcessedByCallCloneConstrain();

@@ -1126,7 +1126,7 @@ TR_J9InlinerPolicy::createUnsafePutWithOffset(TR::ResolvedMethodSymbol *calleeSy
       {
       symRef->getSymbol()->setOrdered();
       orderedCallNode = callNodeTreeTop->getNode()->duplicateTree();
-      orderedCallNode->getFirstChild()->setDontInlinePutOrderedCall();
+      orderedCallNode->getFirstChild()->setDontInlinePutOrderedCall(comp());
 
       debugTrace(tracer(), "\t Duplicate Tree for ordered call, orderedCallNode = %p\n", orderedCallNode);
       }
@@ -2057,7 +2057,7 @@ TR_J9InlinerPolicy::inlineUnsafeCall(TR::ResolvedMethodSymbol *calleeSymbol, TR:
 bool
 TR_J9InlinerPolicy::isInlineableJNI(TR_ResolvedMethod *method,TR::Node *callNode)
    {
-   TR::Compilation* comp = TR::comp();
+   TR::Compilation *comp = this->comp();
    TR::RecognizedMethod recognizedMethod = method->getRecognizedMethod();
    // Reflection's JNI
    //
@@ -6639,8 +6639,6 @@ TR_J9InnerPreexistenceInfo::perform(TR::Compilation *comp, TR::Node *guardNode, 
                                    point->_ordinal, point->_callStack->_methodSymbol->getResolvedMethod()->signature(trMemory())))
          {
          TR_ASSERT(virtualGuard, "we cannot directly devirtualize anything thats not guarded");
-
-         //_callNode->devirtualizeCall(_callTree);
 
          // Add an inner assumption on the outer guard
          //

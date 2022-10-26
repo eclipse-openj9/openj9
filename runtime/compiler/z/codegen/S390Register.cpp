@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -393,7 +393,7 @@ TR_StorageReference::getMaxSharedNodeSize()
       ListIterator<TR::Node> listIt(_sharedNodes);
       for (TR::Node *listNode = listIt.getFirst(); listNode; listNode = listIt.getNext())
          {
-         int32_t nodeSize = listNode->getStorageReferenceSize();
+         int32_t nodeSize = listNode->getStorageReferenceSize(comp());
          if (nodeSize > maxSize)
             {
             if (comp()->cg()->traceBCDCodeGen())

@@ -7743,7 +7743,7 @@ bool TR_EscapeAnalysis::devirtualizeCallSites()
 
          directCallTree->setNode(directCallTreeNode);
 
-         directCall->devirtualizeCall(directCallTree);
+         directCall->devirtualizeCall(directCallTree, comp());
 
 
          TR::Node * coldCall = callNode->duplicateTree();
