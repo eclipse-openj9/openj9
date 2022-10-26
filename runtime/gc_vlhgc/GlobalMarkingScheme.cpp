@@ -789,9 +789,8 @@ stackSlotIteratorForGlobalMarkingScheme(J9JavaVM *javaVM, J9Object **slotPtr, vo
 }
 
 void
-MM_GlobalMarkingScheme::scanContinuationObject(MM_EnvironmentVLHGC *env, J9Object *objectPtr, ScanReason reason)
+MM_GlobalMarkingScheme::scanContinuationNativeSlots(MM_EnvironmentVLHGC *env, J9Object *objectPtr, ScanReason reason)
 {
-	scanMixedObject(env, objectPtr, reason);
 	J9VMThread *currentThread = (J9VMThread *)env->getLanguageVMThread();
 	if (VM_VMHelpers::needScanStacksForContinuation(currentThread, objectPtr)) {
 		StackIteratorData4GlobalMarkingScheme localData;
@@ -805,6 +804,13 @@ MM_GlobalMarkingScheme::scanContinuationObject(MM_EnvironmentVLHGC *env, J9Objec
 
 		GC_VMThreadStackSlotIterator::scanSlots(currentThread, objectPtr, (void *)&localData, stackSlotIteratorForGlobalMarkingScheme, bStackFrameClassWalkNeeded, false);
 	}
+}
+
+void
+MM_GlobalMarkingScheme::scanContinuationObject(MM_EnvironmentVLHGC *env, J9Object *objectPtr, ScanReason reason)
+{
+	scanContinuationNativeSlots(env, objectPtr, reason);
+	scanMixedObject(env, objectPtr, reason);
 }
 
 void 

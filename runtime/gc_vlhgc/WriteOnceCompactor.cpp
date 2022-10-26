@@ -1232,10 +1232,8 @@ stackSlotIteratorForWriteOnceCompactor(J9JavaVM *javaVM, J9Object **slotPtr, voi
 }
 
 void
-MM_WriteOnceCompactor::fixupContinuationObject(MM_EnvironmentVLHGC* env, J9Object *objectPtr, J9MM_FixupCache *cache)
+MM_WriteOnceCompactor::fixupContinuationNativeSlots(MM_EnvironmentVLHGC* env, J9Object *objectPtr, J9MM_FixupCache *cache)
 {
-	fixupMixedObject(env, objectPtr, cache);
-
 	J9VMThread *currentThread = (J9VMThread *)env->getLanguageVMThread();
 	/* In sliding compaction we must fix slots exactly once. Since we will fixup stack slots of
 	 * mounted Virtual threads later during root fixup, we will skip it during this heap fixup pass
@@ -1249,6 +1247,13 @@ MM_WriteOnceCompactor::fixupContinuationObject(MM_EnvironmentVLHGC* env, J9Objec
 
 		GC_VMThreadStackSlotIterator::scanSlots(currentThread, objectPtr, (void *)&localData, stackSlotIteratorForWriteOnceCompactor, false, false);
 	}
+}
+
+void
+MM_WriteOnceCompactor::fixupContinuationObject(MM_EnvironmentVLHGC* env, J9Object *objectPtr, J9MM_FixupCache *cache)
+{
+	fixupContinuationNativeSlots(env, objectPtr, cache);
+	fixupMixedObject(env, objectPtr, cache);
 }
 
 #if defined (J9ZOS39064)

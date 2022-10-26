@@ -156,7 +156,7 @@ public:
 
 	void setShouldScavengeUnfinalizedObjects(bool shouldScavenge) { _shouldScavengeUnfinalizedObjects = shouldScavenge; }
 	void setShouldScavengeContinuationObjects(bool shouldScavenge) { _shouldScavengeContinuationObjects = shouldScavenge; }
-	bool doContinuationObject(MM_EnvironmentStandard *env, omrobjectptr_t objectPtr, MM_ScavengeScanReason reason);
+	bool scanContinuationNativeSlots(MM_EnvironmentStandard *env, omrobjectptr_t objectPtr, MM_ScavengeScanReason reason);
 
 	volatile bool getShouldScavengeFinalizableObjects() { return _shouldScavengeFinalizableObjects; }
 	volatile bool getShouldScavengeUnfinalizedObjects() { return _shouldScavengeUnfinalizedObjects; }

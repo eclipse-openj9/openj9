@@ -1043,9 +1043,9 @@ MM_StandardAccessBarrier::preMountContinuation(J9VMThread *vmThread, j9object_t 
 #if defined(OMR_GC_CONCURRENT_SCAVENGER)
 	if (_extensions->isConcurrentScavengerInProgress()) {
 		/* concurrent scavenger in progress */
-		MM_EnvironmentStandard *env = (MM_EnvironmentStandard *) MM_EnvironmentBase::getEnvironment(vmThread->omrVMThread);
+		MM_EnvironmentStandard *env = MM_EnvironmentStandard::getEnvironment(vmThread->omrVMThread);
 		MM_ScavengeScanReason reason = SCAN_REASON_SCAVENGE;
-		_scavenger->getDelegate()->doContinuationObject(env, contObject, reason);
+		_scavenger->getDelegate()->scanContinuationNativeSlots(env, contObject, reason);
 	}
 #endif /* OMR_GC_CONCURRENT_SCAVENGER */
 }

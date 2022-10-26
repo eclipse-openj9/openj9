@@ -116,7 +116,7 @@ public:
 	uintptr_t setupIndexableScanner(MM_EnvironmentBase *env, omrobjectptr_t objectPtr, MM_MarkingSchemeScanReason reason, uintptr_t *sizeToDo, uintptr_t *sizeInElementsToDo, fomrobject_t **basePtr, uintptr_t *flags) { return 0; }
 
 	void doStackSlot(MM_EnvironmentBase *env, omrobjectptr_t objectPtr, omrobjectptr_t *slotPtr);
-	void scanContinuationObject(MM_EnvironmentBase *env, omrobjectptr_t objectPtr);
+	void scanContinuationNativeSlots(MM_EnvironmentBase *env, omrobjectptr_t objectPtr);
 
 	MMINLINE GC_ObjectScanner *
 	getObjectScanner(MM_EnvironmentBase *env, omrobjectptr_t objectPtr, void *scannerSpace, MM_MarkingSchemeScanReason reason, uintptr_t *sizeToDo)
@@ -140,7 +140,7 @@ public:
 			*sizeToDo = referenceSize + ((GC_MixedObjectScanner *)objectScanner)->getBytesRemaining();
 			break;
 		case GC_ObjectModel::SCAN_CONTINUATION_OBJECT:
-			scanContinuationObject(env, objectPtr);
+			scanContinuationNativeSlots(env, objectPtr);
 			objectScanner = GC_MixedObjectScanner::newInstance(env, objectPtr, scannerSpace, 0);
 			*sizeToDo = referenceSize + ((GC_MixedObjectScanner *)objectScanner)->getBytesRemaining();
 			break;

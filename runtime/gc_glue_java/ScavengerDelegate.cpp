@@ -340,7 +340,7 @@ stackSlotIteratorForScavenge(J9JavaVM *javaVM, J9Object **slotPtr, void *localDa
 }
 
 bool
-MM_ScavengerDelegate::doContinuationObject(MM_EnvironmentStandard *env, omrobjectptr_t objectPtr, MM_ScavengeScanReason reason)
+MM_ScavengerDelegate::scanContinuationNativeSlots(MM_EnvironmentStandard *env, omrobjectptr_t objectPtr, MM_ScavengeScanReason reason)
 {
 	bool shouldRemember = false;
 
@@ -440,7 +440,7 @@ MM_ScavengerDelegate::getObjectScanner(MM_EnvironmentStandard *env, omrobjectptr
 		objectScanner = GC_MixedObjectScanner::newInstance(env, objectPtr, allocSpace, flags);
 		break;
 	case GC_ObjectModel::SCAN_CONTINUATION_OBJECT:
-		*shouldRemember = doContinuationObject(env, objectPtr, reason);
+		*shouldRemember = scanContinuationNativeSlots(env, objectPtr, reason);
 		objectScanner = GC_MixedObjectScanner::newInstance(env, objectPtr, allocSpace, flags);
 		break;
 	case GC_ObjectModel::SCAN_POINTER_ARRAY_OBJECT:
