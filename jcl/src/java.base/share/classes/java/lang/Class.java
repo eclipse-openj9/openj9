@@ -5673,9 +5673,38 @@ SecurityException {
 	/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 
 /*[IF JAVA_SPEC_VERSION >= 20]*/
-	/* ToDo: Real implementation to be added under https://github.com/eclipse-openj9/openj9/issues/15933. */
+	/**
+	 * For an array class, the PUBLIC, PRIVATE and PROTECTED access flags should be the
+	 * same as those of its component type, and the FINAL access flag should always be
+	 * present. For a primitive type or void, the PUBLIC and FINAL access flags should always
+	 * be present, and the PROTECTED and PRIVATE access flags should always be absent.
+	 *
+	 * {@return an unmodifiable set of the {@linkplain AccessFlag access flags} for this
+	 * class, possibly empty}
+	 *
+	 * @since 20
+	 */
 	public Set<AccessFlag> accessFlags() {
-		return null;
+		int rawModifiers = getModifiersImpl();
+		/* Uses the implementation from getModifiers() and adds SUPER access flag to
+		 * the mask, instead of directly invoking getModifiers(), because the SUPER flag
+		 * may or may not be set in the rawModifiers.
+		 */
+		AccessFlag.Location location = AccessFlag.Location.CLASS;
+		if (isArray()) {
+			rawModifiers &= Modifier.PUBLIC | Modifier.PRIVATE | Modifier.PROTECTED |
+						Modifier.ABSTRACT | Modifier.FINAL;
+			location = AccessFlag.Location.INNER_CLASS;
+		} else {
+			rawModifiers &= Modifier.PUBLIC | Modifier.PRIVATE | Modifier.PROTECTED |
+						Modifier.STATIC | Modifier.FINAL | Modifier.INTERFACE |
+						Modifier.ABSTRACT | SYNTHETIC | ENUM | ANNOTATION |
+						AccessFlag.SUPER.mask() | AccessFlag.MODULE.mask();
+			if (isMemberClass() || isLocalClass() || isAnonymousClass()) {
+				location = AccessFlag.Location.INNER_CLASS;
+			}
+		}
+		return AccessFlag.maskToAccessFlags(rawModifiers, location);
 	}
 /*[ENDIF] JAVA_SPEC_VERSION >= 20 */
 }
