@@ -55,6 +55,157 @@ extern bool initializeJIT(J9JavaVM *vm);
 
 extern bool isQuickstart;
 
+static IDATA initializeCompilerArgs(J9JavaVM* vm,
+                                    J9VMDllLoadInfo* loadInfo,
+                                    IDATA argIndex,
+                                    char** xCommandLineOptionsPtr,
+                                    bool isXjit,
+                                    bool mergeCompilerOptions)
+   {
+   PORT_ACCESS_FROM_JAVAVM(vm);
+
+   char* xCommandLineOptions = NULL;
+
+   char *VMOPT_WITH_COLON;
+   char *fatalErrorStr;
+   if (isXjit)
+      {
+      VMOPT_WITH_COLON = VMOPT_XJIT_COLON;
+      fatalErrorStr = "no arguments for -Xjit:";
+      }
+   else
+      {
+      VMOPT_WITH_COLON = VMOPT_XAOT_COLON;
+      fatalErrorStr = "no arguments for -Xaot:";
+      }
+
+   if (mergeCompilerOptions)
+      {
+      char *xOptions = NULL;
+      uint32_t sizeOfOption = 0;
+      bool firstOpt = true;
+
+      /* Find first option with colon */
+      argIndex = FIND_ARG_IN_VMARGS_FORWARD(STARTSWITH_MATCH, VMOPT_WITH_COLON, NULL);
+
+      /* Determine size of xCommandLineOptions string */
+      while (argIndex >= 0)
+         {
+         CONSUME_ARG(vm->vmArgsArray, argIndex);
+         GET_OPTION_VALUE(argIndex, ':', &xOptions);
+
+         size_t partialOptLen = 0;
+
+         if (xOptions)
+            {
+            partialOptLen = strlen(xOptions);
+            sizeOfOption += partialOptLen;
+
+            /* Ignore empty options with colon */
+            if (!firstOpt && partialOptLen)
+               sizeOfOption += 1; // "," needed to combine multiple options with colon
+            }
+
+         /* Ignore empty options with colon */
+         if (firstOpt && partialOptLen)
+            firstOpt = false;
+
+         /* Find next option with colon */
+         argIndex = FIND_NEXT_ARG_IN_VMARGS_FORWARD(STARTSWITH_MATCH, VMOPT_WITH_COLON, NULL, argIndex);
+         }
+
+      /* Concatenate options into xCommandLineOptions string */
+      if (sizeOfOption)
+         {
+         size_t partialOptLen = 1;  // \0
+         sizeOfOption += partialOptLen;
+
+         if (!(xCommandLineOptions = (char*)j9mem_allocate_memory(sizeOfOption*sizeof(char), J9MEM_CATEGORY_JIT)))
+            return J9VMDLLMAIN_FAILED;
+
+         char *cursor = xCommandLineOptions;
+         firstOpt = true;
+
+         /* Find first option with colon */
+         argIndex = FIND_ARG_IN_VMARGS_FORWARD(STARTSWITH_MATCH, VMOPT_WITH_COLON, NULL);
+         while (argIndex >= 0)
+            {
+            CONSUME_ARG(vm->vmArgsArray, argIndex);
+            GET_OPTION_VALUE(argIndex, ':', &xOptions);
+
+            partialOptLen = 0;
+
+            if (xOptions)
+               {
+               partialOptLen = strlen(xOptions);
+
+               /* Ignore empty options with colon */
+               if (!firstOpt && partialOptLen)
+                  {
+                  TR_ASSERT_FATAL((cursor - xCommandLineOptions + 1) < sizeOfOption,
+                                  "%s Insufficient space to memcpy \",\";"
+                                  "cursor=%p, xCommandLineOptions=%p, sizeOfOption=%d\n",
+                                  VMOPT_WITH_COLON, cursor, xCommandLineOptions, sizeOfOption);
+                  memcpy(cursor, ",", 1);
+                  cursor += 1;
+                  }
+
+               TR_ASSERT_FATAL((cursor - xCommandLineOptions + partialOptLen) < sizeOfOption,
+                               "%s Insufficient space to memcpy \"%s\";"
+                               "cursor=%p, xCommandLineOptions=%p, sizeOfOption=%d\n",
+                               VMOPT_WITH_COLON, xOptions, cursor, xCommandLineOptions, sizeOfOption);
+               memcpy(cursor, xOptions, partialOptLen);
+               cursor += partialOptLen;
+               }
+
+            /* Ignore empty options with colon */
+            if (firstOpt && partialOptLen)
+               firstOpt = false;
+
+            /* Find next option with colon */
+            argIndex = FIND_NEXT_ARG_IN_VMARGS_FORWARD(STARTSWITH_MATCH, VMOPT_WITH_COLON, NULL, argIndex);
+            }
+
+         /* At this point, the cursor should be at exactly the last array entry */
+         TR_ASSERT_FATAL(cursor == &xCommandLineOptions[sizeOfOption-1],
+                        "%s cursor=%p, xCommandLineOptions=%p, sizeOfOption=%d\n",
+                        VMOPT_WITH_COLON, cursor, xCommandLineOptions, sizeOfOption);
+
+         /* Add NULL terminator */
+         xCommandLineOptions[sizeOfOption-1] = '\0';
+         }
+      /* If sizeOfOption is 0 then there have been no arguments for (potentially multiple) -Xjit: / -Xaot: */
+      else
+         {
+         loadInfo->fatalErrorStr = fatalErrorStr;
+         return J9VMDLLMAIN_FAILED;
+         }
+      }
+   else
+      {
+      IDATA returnVal = 0, size = 128;
+      do
+         {
+         size = size * 2;
+         if (xCommandLineOptions)
+            j9mem_free_memory(xCommandLineOptions);
+         if (!(xCommandLineOptions = (char*)j9mem_allocate_memory(size * sizeof(char), J9MEM_CATEGORY_JIT)))
+            return J9VMDLLMAIN_FAILED;
+         returnVal = GET_COMPOUND_VALUE(argIndex, ':', &xCommandLineOptions, size);
+         } while (returnVal == OPTION_BUFFER_OVERFLOW);
+
+      if (!* xCommandLineOptions)
+         {
+         j9mem_free_memory(xCommandLineOptions);
+         loadInfo->fatalErrorStr = fatalErrorStr;
+         return J9VMDLLMAIN_FAILED;
+         }
+      }
+
+   *xCommandLineOptionsPtr = xCommandLineOptions;
+   return 0;
+   }
+
 IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void * reserved)
    {
    J9JITConfig * jitConfig = 0;
@@ -81,6 +232,9 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void * reserved)
 
    IDATA argIndexPerfEnabled = 0;
    IDATA argIndexPerfDisabled = 0;
+
+   IDATA argIndexMergeOptionsEnabled = 0;
+   IDATA argIndexMergeOptionsDisabled = 0;
 
    static bool isJIT = false;
    static bool isAOT = false;
@@ -127,8 +281,8 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void * reserved)
          FIND_AND_CONSUME_ARG(EXACT_MEMORY_MATCH, "-XsamplingExpirationTime", 0);
          FIND_AND_CONSUME_ARG(EXACT_MEMORY_MATCH, "-XcompilationThreads", 0);
          FIND_AND_CONSUME_ARG(EXACT_MEMORY_MATCH, "-XaggressivenessLevel", 0);
-         argIndexXjit = FIND_AND_CONSUME_ARG(OPTIONAL_LIST_MATCH, "-Xjit", 0);
-         argIndexXaot = FIND_AND_CONSUME_ARG(OPTIONAL_LIST_MATCH, "-Xaot", 0);
+         argIndexXjit = FIND_AND_CONSUME_ARG(OPTIONAL_LIST_MATCH, VMOPT_XJIT, 0);
+         argIndexXaot = FIND_AND_CONSUME_ARG(OPTIONAL_LIST_MATCH, VMOPT_XAOT, 0);
          argIndexXnojit = FIND_AND_CONSUME_ARG(OPTIONAL_LIST_MATCH, "-Xnojit", 0);
 
          argIndexRIEnabled = FIND_AND_CONSUME_ARG(EXACT_MATCH, "-XX:+RuntimeInstrumentation", 0);
@@ -254,33 +408,26 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void * reserved)
             /* We need to initialize the following if we allow JIT compilation, AOT compilation or AOT relocation to be done */
             try
                {
+               argIndexMergeOptionsEnabled = FIND_AND_CONSUME_ARG(EXACT_MATCH, "-XX:+MergeCompilerOptions", 0);
+               argIndexMergeOptionsDisabled = FIND_AND_CONSUME_ARG(EXACT_MATCH, "-XX:-MergeCompilerOptions", 0);
+
+               // Determine if user wants to merge compiler options
+               bool mergeCompilerOptions = false;
+               if (argIndexMergeOptionsEnabled >= 0 || argIndexMergeOptionsDisabled >= 0)
+                  mergeCompilerOptions = (argIndexMergeOptionsEnabled > argIndexMergeOptionsDisabled);
+
                /*
                 * Note that the option prefix we need to match includes the colon.
                 */
-               argIndexXjit = FIND_ARG_IN_VMARGS( STARTSWITH_MATCH, "-Xjit:", 0);
-               argIndexXaot = FIND_ARG_IN_VMARGS( STARTSWITH_MATCH, "-Xaot:", 0);
+               argIndexXjit = FIND_ARG_IN_VMARGS( STARTSWITH_MATCH, VMOPT_XJIT_COLON, 0);
+               argIndexXaot = FIND_ARG_IN_VMARGS( STARTSWITH_MATCH, VMOPT_XAOT_COLON, 0);
 
                /* do initializations for -Xjit options */
                if (isJIT && argIndexXjit >= 0)
                   {
-                  IDATA returnVal = 0, size = 128;
-                  xjitCommandLineOptions = 0;
-                  do
-                     {
-                     size = size * 2;
-                     if (xjitCommandLineOptions)
-                        j9mem_free_memory(xjitCommandLineOptions);
-                     if (!(xjitCommandLineOptions = (char*)j9mem_allocate_memory(size * sizeof(char), J9MEM_CATEGORY_JIT)))
-                        return J9VMDLLMAIN_FAILED;
-                     returnVal = GET_COMPOUND_VALUE(argIndexXjit, ':', &xjitCommandLineOptions, size);
-                     } while (returnVal == OPTION_BUFFER_OVERFLOW);
-
-                  if (!* xjitCommandLineOptions)
-                     {
-                     j9mem_free_memory(xjitCommandLineOptions);
-                     loadInfo->fatalErrorStr = "no arguments for -Xjit:";
-                     return J9VMDLLMAIN_FAILED;
-                     }
+                  IDATA rc = initializeCompilerArgs(vm, loadInfo, argIndexXjit, &xjitCommandLineOptions, true, mergeCompilerOptions);
+                  if (rc)
+                     return rc;
                   }
 
                codert_onload(vm);
@@ -288,24 +435,9 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void * reserved)
                /* do initializations for -Xaot options */
                if (isAOT && argIndexXaot >= 0)
                   {
-                  IDATA returnVal = 0, size = 128;
-                  xaotCommandLineOptions = 0;
-                  do
-                     {
-                     size = size * 2;
-                     if (xaotCommandLineOptions)
-                        j9mem_free_memory(xaotCommandLineOptions);
-                     if (!(xaotCommandLineOptions = (char*)j9mem_allocate_memory(size * sizeof(char), J9MEM_CATEGORY_JIT)))
-                        return J9VMDLLMAIN_FAILED;
-                     returnVal = GET_COMPOUND_VALUE(argIndexXaot, ':', &xaotCommandLineOptions, size);
-                     } while (returnVal == OPTION_BUFFER_OVERFLOW);
-
-                  if (!* xaotCommandLineOptions)
-                     {
-                     j9mem_free_memory(xaotCommandLineOptions);
-                     loadInfo->fatalErrorStr = "no arguments for -Xaot:";
-                     return J9VMDLLMAIN_FAILED;
-                     }
+                  IDATA rc = initializeCompilerArgs(vm, loadInfo, argIndexXaot, &xaotCommandLineOptions, false, mergeCompilerOptions);
+                  if (rc)
+                     return rc;
                   }
 
                jitConfig = vm->jitConfig;
