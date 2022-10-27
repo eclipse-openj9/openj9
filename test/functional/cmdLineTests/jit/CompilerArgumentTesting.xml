@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+
+<!--
+  Copyright (c) 2022, 2022 IBM Corp. and others
+
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] http://openjdk.java.net/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+-->
+
+<!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
+<suite id="CompilerArgumentTesting.xml" timeout="1000">
+
+	<test id="JIT Version using -Xjit">
+		<command>$EXE$ -Xjit:version -version</command>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
+		<output type="required" caseSensitive="yes" regex="no">JIT: using build</output>
+		<output type="required" caseSensitive="yes" regex="no">JIT level:</output>
+		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">(Fatal|Unhandled) Exception</output>
+	</test>
+
+	<test id="JIT Version using -Xaot">
+		<command>$EXE$ -Xaot:version -version</command>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
+		<output type="required" caseSensitive="yes" regex="no">JIT: using build</output>
+		<output type="required" caseSensitive="yes" regex="no">JIT level:</output>
+                <output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">(Fatal|Unhandled) Exception</output>
+	</test>
+
+        <test id="Check valid option using -Xjit">
+		<command>$EXE$ -Xjit:verbose={options},disableInlining -version</command>
+                <output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
+		<output type="required" caseSensitive="yes" regex="no">verbose={options},disableInlining</output>
+		<output type="failure" caseSensitive="yes" regex="no">JIT: unrecognized option</output>
+                <output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">(Fatal|Unhandled) Exception</output>
+        </test>
+
+        <test id="Check valid option using -Xaot">
+		<command>$EXE$ -Xaot:verbose={options},disableInlining -version</command>
+                <output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
+		<output type="required" caseSensitive="yes" regex="no">verbose={options},disableInlining</output>
+		<output type="failure" caseSensitive="yes" regex="no">AOT: unrecognized option</output>
+                <output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">(Fatal|Unhandled) Exception</output>
+        </test>
+
+        <test id="Check invalid option using -Xjit">
+		<command>$EXE$ -Xjit:verbose={options},invalidoption -version</command>
+		<output type="success" caseSensitive="yes" regex="no">JIT: unrecognized option</output>
+                <output type="required" caseSensitive="no" regex="no">cannot initialize JIT</output>
+                <output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
+		<output type="failure" caseSensitive="yes" regex="no">verbose={options},invalidoption</output>
+        </test>
+
+        <test id="Check invalid option using -Xaot">
+		<command>$EXE$ -Xaot:verbose={options},invalidoption -version</command>
+		<output type="success" caseSensitive="yes" regex="no">AOT: unrecognized option</output>
+                <output type="required" caseSensitive="no" regex="no">cannot initialize JIT</output>
+                <output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
+		<output type="failure" caseSensitive="yes" regex="no">verbose={options},invalidoption</output>
+        </test>
+
+        <test id="Check valid options using -Xjit and -Xaot">
+		<command>$EXE$ -Xjit:verbose={options},disableAsyncCompilation -Xaot:disableInlining -version</command>
+                <output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
+		<output type="required" caseSensitive="yes" regex="no">verbose={options},disableAsyncCompilation</output>
+		<output type="required" caseSensitive="yes" regex="no">disableInlining</output>
+		<output type="failure" caseSensitive="yes" regex="no">JIT: unrecognized option</output>
+		<output type="failure" caseSensitive="yes" regex="no">AOT: unrecognized option</output>
+                <output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">(Fatal|Unhandled) Exception</output>
+        </test>
+
+        <test id="Check empty -Xjit:">
+		<command>$EXE$ -Xjit: -version</command>
+		<output type="success" caseSensitive="yes" regex="no">no arguments for -Xjit</output>
+		<output type="required" caseSensitive="no">Error: Could not create the Java Virtual Machine.</output>
+                <output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
+        </test>
+
+        <test id="Check empty -Xaot:">
+		<command>$EXE$ -Xdump:none -Xaot: -version</command>
+		<output type="success" caseSensitive="yes" regex="no">no arguments for -Xaot</output>
+                <output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
+        </test>
+
+	<test id="Test multiple -Xjit:">
+		<command>$EXE$ -Xjit:disableAsyncCompilation -Xjit:verbose={options} -version</command>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
+		<output type="required" caseSensitive="yes" regex="no">verbose={options}</output>
+		<output type="failure" caseSensitive="yes" regex="no">disableAsyncCompilation</output>
+	</test>
+
+	<test id="Test multiple -Xaot:">
+		<command>$EXE$ -Xaot:disableAsyncCompilation -Xaot:verbose={options} -version</command>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
+		<output type="required" caseSensitive="yes" regex="no">verbose={options}</output>
+		<output type="failure" caseSensitive="yes" regex="no">disableAsyncCompilation</output>
+	</test>
+
+	<test id="Test -XX:+MergeCompilerOptions with single -Xjit">
+		<command>$EXE$ -XX:+MergeCompilerOptions -Xjit:verbose={options} -version</command>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
+		<output type="required" caseSensitive="yes" regex="no">verbose={options}</output>
+		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">(Fatal|Unhandled) Exception</output>
+	</test>
+
+	<test id="Test -XX:+MergeCompilerOptions with single -Xaot">
+		<command>$EXE$ -XX:+MergeCompilerOptions -Xaot:verbose={options} -version</command>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
+		<output type="required" caseSensitive="yes" regex="no">verbose={options}</output>
+		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">(Fatal|Unhandled) Exception</output>
+	</test>
+
+	<test id="Test -XX:-MergeCompilerOptions with single -Xjit">
+		<command>$EXE$ -XX:-MergeCompilerOptions -Xjit:verbose={options} -version</command>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
+		<output type="required" caseSensitive="yes" regex="no">verbose={options}</output>
+		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">(Fatal|Unhandled) Exception</output>
+	</test>
+
+	<test id="Test -XX:-MergeCompilerOptions with single -Xaot">
+		<command>$EXE$ -XX:-MergeCompilerOptions -Xaot:verbose={options} -version</command>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
+		<output type="required" caseSensitive="yes" regex="no">verbose={options}</output>
+		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">(Fatal|Unhandled) Exception</output>
+	</test>
+
+	<test id="Test -XX:+MergeCompilerOptions with multiple -Xjit">
+		<command>$EXE$ -XX:+MergeCompilerOptions -Xjit:disableAsyncCompilation -Xjit:verbose={options} -version</command>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
+		<output type="required" caseSensitive="yes" regex="no">disableAsyncCompilation,verbose={options}</output>
+		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">(Fatal|Unhandled) Exception</output>
+	</test>
+
+	<test id="Test -XX:+MergeCompilerOptions with multiple -Xaot">
+		<command>$EXE$ -XX:+MergeCompilerOptions -Xaot:disableInlining -Xaot:verbose={options} -version</command>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
+		<output type="required" caseSensitive="yes" regex="no">disableInlining,verbose={options}</output>
+		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">(Fatal|Unhandled) Exception</output>
+	</test>
+
+	<test id="Test -XX:-MergeCompilerOptions with multiple -Xjit">
+		<command>$EXE$ -XX:-MergeCompilerOptions -Xjit:disableAsyncCompilation -Xjit:verbose={options} -version</command>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
+		<output type="required" caseSensitive="yes" regex="no">verbose={options}</output>
+		<output type="failure" caseSensitive="yes" regex="no">disableAsyncCompilation,verbose={options}</output>
+		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">(Fatal|Unhandled) Exception</output>
+	</test>
+
+	<test id="Test -XX:-MergeCompilerOptions with multiple -Xaot">
+		<command>$EXE$ -XX:-MergeCompilerOptions -Xaot:disableInlining -Xaot:verbose={options} -version</command>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
+		<output type="required" caseSensitive="yes" regex="no">verbose={options}</output>
+		<output type="failure" caseSensitive="yes" regex="no">disableInlining,verbose={options}</output>
+		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">(Fatal|Unhandled) Exception</output>
+	</test>
+
+	<test id="Test -XX:+MergeCompilerOptions with multiple -Xjit and -Xaot">
+		<command>$EXE$ -XX:+MergeCompilerOptions -Xjit:disableAsyncCompilation -Xaot:disableInlining -Xjit:verbose={options} -Xaot:disableOSR -version</command>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
+		<output type="required" caseSensitive="yes" regex="no">disableAsyncCompilation,verbose={options}</output>
+		<output type="required" caseSensitive="yes" regex="no">disableInlining,disableOSR</output>
+		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">(Fatal|Unhandled) Exception</output>
+	</test>
+
+	<test id="Test -XX:-MergeCompilerOptions with multiple -Xjit and -Xaot">
+		<command>$EXE$ -XX:-MergeCompilerOptions -Xjit:disableAsyncCompilation -Xaot:disableInlining -Xjit:verbose={options} -Xaot:disableOSR -version</command>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
+		<output type="required" casesensitive="yes" regex="no">verbose={options}</output>
+		<output type="required" caseSensitive="yes" regex="no">disableOSR</output>
+		<output type="failure" casesensitive="yes" regex="no">disableasynccompilation,verbose={options}</output>
+		<output type="failure" caseSensitive="yes" regex="no">disableInlining,disableOSR</output>
+		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">(Fatal|Unhandled) Exception</output>
+	</test>
+
+	<test id="Test -XX:+MergeCompilerOptions after -XX:-MergeCompilerOptions">
+		<command>$EXE$ -XX:-MergeCompilerOptions -XX:+MergeCompilerOptions -Xjit:disableAsyncCompilation -Xjit:verbose={options} -version</command>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
+		<output type="required" caseSensitive="yes" regex="no">disableAsyncCompilation,verbose={options}</output>
+		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">(Fatal|Unhandled) Exception</output>
+	</test>
+
+	<test id="Test -XX:+MergeCompilerOptions before -XX:-MergeCompilerOptions">
+		<command>$EXE$ -XX:+MergeCompilerOptions -XX:-MergeCompilerOptions -Xjit:disableAsyncCompilation -Xjit:verbose={options} -version</command>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
+		<output type="required" caseSensitive="yes" regex="no">verbose={options}</output>
+		<output type="failure" caseSensitive="yes" regex="no">disableAsyncCompilation,verbose={options}</output>
+		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">(Fatal|Unhandled) Exception</output>
+	</test>
+
+</suite>
