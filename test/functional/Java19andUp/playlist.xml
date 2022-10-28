@@ -128,7 +128,7 @@
 			-excludegroups $(DEFAULT_EXCLUDE); \
 			$(TEST_STATUS)
 		</command>
-		<platformRequirements>bits.64,^arch.x86,^arch.aarch64,^arch.390,^arch.arm,^arch.riscv,^os.zos,^os.sunos</platformRequirements>
+		<platformRequirements>bits.64,^arch.aarch64,^arch.arm,^arch.riscv,^os.zos,^os.sunos</platformRequirements>
 		<levels>
 			<level>sanity</level>
 		</levels>
