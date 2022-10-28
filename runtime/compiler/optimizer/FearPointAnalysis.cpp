@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,10 +34,10 @@
 #include "infra/BitVector.hpp"
 #include "infra/Checklist.hpp"
 
-bool TR_FearPointAnalysis::virtualGuardsKillFear()
+bool TR_FearPointAnalysis::virtualGuardsKillFear(TR::Compilation *comp)
    {
    static bool kill = (feGetEnv("TR_FPAnalaysisGuardsDoNotKillFear") == NULL);
-   return kill;
+   return kill && !(!comp->getOption(TR_DisableVectorAPIExpansion) && comp->getMethodSymbol()->hasVectorAPI());
    }
 
 int32_t TR_FearPointAnalysis::getNumberOfBits() { return 1; }
@@ -246,7 +246,7 @@ void TR_FearPointAnalysis::initializeGenAndKillSetInfo()
          }
 
       // kill any fear originating from inside
-      if (virtualGuardsKillFear()
+      if (virtualGuardsKillFear(comp())
           && treeTop->getNode()->isTheVirtualGuardForAGuardedInlinedCall()
           && comp()->cg()->supportsMergingGuards())
          {
