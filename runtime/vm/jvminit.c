@@ -668,17 +668,17 @@ freeJavaVM(J9JavaVM * vm)
 		vm->cifArgumentTypesCache = NULL;
 	}
 
-	/* Clean up all resources created via allocateUpcallThunkMemory, including the generatered thunk
-	 * and the corresponding metadata of each entry stored in the hashtable.
+	/* Empty the thunk heap list by cleaning up all resources created via allocateUpcallThunkMemory,
+	 * including the generated thunk and the corresponding metadata of each entry in the hashtable.
 	 * See UpcallThunkMem.cpp for details.
 	 */
-	if (NULL != vm->thunkHeapWrapper) {
-		J9UpcallThunkHeapWrapper *thunkHeapWrapper = vm->thunkHeapWrapper;
-		J9PortVmemIdentifier vmemID = thunkHeapWrapper->vmemID;
+	if (NULL != vm->thunkHeapHead) {
+		J9UpcallThunkHeapList *thunkHeapHead = vm->thunkHeapHead;
+		J9UpcallThunkHeapList *thunkHeapNode = NULL;
 		UDATA byteAmount = j9vmem_supported_page_sizes()[0];
 
-		if (NULL != thunkHeapWrapper->metaDataHashTable) {
-			J9HashTable *metaDataHashTable = thunkHeapWrapper->metaDataHashTable;
+		if (NULL != thunkHeapHead->metaDataHashTable) {
+			J9HashTable *metaDataHashTable = thunkHeapHead->metaDataHashTable;
 			UDATA entryCount = hashTableGetCount(metaDataHashTable);
 			if (entryCount > 0) {
 				hashTableForEachDo(metaDataHashTable, (J9HashTableDoFn)freeUpcallMetaDataDoFn, NULL);
@@ -686,9 +686,23 @@ freeJavaVM(J9JavaVM * vm)
 			hashTableFree(metaDataHashTable);
 			metaDataHashTable = NULL;
 		}
-		j9vmem_free_memory(vmemID.address, byteAmount, &vmemID);
-		j9mem_free_memory(thunkHeapWrapper);
-		thunkHeapWrapper = NULL;
+
+		thunkHeapNode = thunkHeapHead->next;
+		thunkHeapHead->next = NULL;
+		thunkHeapHead = thunkHeapNode;
+		while (NULL != thunkHeapHead) {
+			J9UpcallThunkHeapWrapper *thunkHeapWrapper = thunkHeapHead->thunkHeapWrapper;
+			if (NULL != thunkHeapWrapper) {
+				J9PortVmemIdentifier vmemID = thunkHeapWrapper->vmemID;
+				j9vmem_free_memory(vmemID.address, byteAmount, &vmemID);
+				j9mem_free_memory(thunkHeapWrapper);
+				thunkHeapWrapper = NULL;
+			}
+			thunkHeapNode = thunkHeapHead;
+			thunkHeapHead = thunkHeapHead->next;
+			j9mem_free_memory(thunkHeapNode);
+		}
+		vm->thunkHeapHead = NULL;
 	}
 #endif /* JAVA_SPEC_VERSION >= 16 */
 
@@ -6745,7 +6759,7 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 	vm->cifNativeCalloutDataCache = NULL;
 	vm->cifArgumentTypesCache = NULL;
 	/* The thunk block should be allocated on demand */
-	vm->thunkHeapWrapper = NULL;
+	vm->thunkHeapHead = NULL;
 #endif /* JAVA_SPEC_VERSION >= 16 */
 
 #if defined(J9X86) || defined(J9HAMMER)
@@ -8399,7 +8413,7 @@ freeUpcallMetaDataDoFn(J9UpcallMetaDataEntry *entry, void *userData)
 		const J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 		J9VMThread *currentThread = vmFuncs->currentVMThread(vm);
 		J9UpcallNativeSignature *nativeFuncSig = metaData->nativeFuncSignature;
-		J9Heap *thunkHeap = vm->thunkHeapWrapper->heap;
+		J9Heap *thunkHeap = metaData->thunkHeapWrapper->heap;
 		PORT_ACCESS_FROM_JAVAVM(vm);
 
 		if (NULL != nativeFuncSig) {
@@ -8414,11 +8428,11 @@ freeUpcallMetaDataDoFn(J9UpcallMetaDataEntry *entry, void *userData)
 		if (NULL != thunkHeap) {
 #if defined(OSX) && defined(AARCH64)
 			pthread_jit_write_protect_np(0);
-#endif
+#endif /* defined(OSX) && defined(AARCH64) */
 			j9heap_free(thunkHeap, thunkAddr);
 #if defined(OSX) && defined(AARCH64)
 			pthread_jit_write_protect_np(1);
-#endif
+#endif /* defined(OSX) && defined(AARCH64) */
 		}
 		entry->thunkAddrValue = 0;
 	}

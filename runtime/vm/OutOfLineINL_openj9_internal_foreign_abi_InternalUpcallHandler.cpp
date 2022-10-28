@@ -138,7 +138,7 @@ OutOfLineINL_openj9_internal_foreign_abi_InternalUpcallHandler_allocateUpcallStu
 	}
 
 done:
-	VM_OutOfLineINL_Helpers::returnDouble(currentThread, (I_64)(uintptr_t)thunkAddr, 3);
+	VM_OutOfLineINL_Helpers::returnDouble(currentThread, (I_64)(intptr_t)thunkAddr, 3);
 	return rc;
 
 freeAllMemoryThenExit:
