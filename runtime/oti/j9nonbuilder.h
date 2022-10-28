@@ -5783,8 +5783,8 @@ typedef struct J9JavaVM {
 	omrthread_monitor_t cifNativeCalloutDataCacheMutex;
 	struct J9Pool *cifArgumentTypesCache;
 	omrthread_monitor_t cifArgumentTypesCacheMutex;
-	struct J9UpcallThunkHeapWrapper *thunkHeapWrapper;
-	omrthread_monitor_t thunkHeapWrapperMutex;
+	struct J9UpcallThunkHeapList *thunkHeapHead;
+	omrthread_monitor_t thunkHeapListMutex;
 #endif /* JAVA_SPEC_VERSION >= 16 */
 	struct J9HashTable* ensureHashedClasses;
 #if JAVA_SPEC_VERSION >= 19
@@ -5933,6 +5933,18 @@ typedef struct J9UpcallNativeSignature {
 	J9UpcallSigType *sigArray;
 } J9UpcallNativeSignature;
 
+typedef struct J9UpcallThunkHeapWrapper {
+	J9Heap *heap;
+	uintptr_t heapSize;
+	J9PortVmemIdentifier vmemID;
+} J9UpcallThunkHeapWrapper;
+
+typedef struct J9UpcallThunkHeapList {
+	J9UpcallThunkHeapWrapper *thunkHeapWrapper;
+	J9HashTable *metaDataHashTable;
+	struct J9UpcallThunkHeapList *next;
+} J9UpcallThunkHeapList;
+
 typedef struct J9UpcallMetaData {
 	J9JavaVM *vm;
 	J9VMThread *downCallThread; /* The thread is mainly used to set exceptions in dispatcher if a native thread is created locally */
@@ -5942,19 +5954,13 @@ typedef struct J9UpcallMetaData {
 	UDATA thunkSize; /* The size of the generated thunk */
 	J9UpcallNativeSignature *nativeFuncSignature; /* The native function signature extracted from FunctionDescriptor */
 	UDATA functionPtr[3]; /* The address of the generated thunk on AIX or z/OS */
+	J9UpcallThunkHeapWrapper *thunkHeapWrapper; /* The thunk heap associated with the metaData */
 } J9UpcallMetaData;
 
 typedef struct J9UpcallMetaDataEntry {
 	UDATA thunkAddrValue;
 	J9UpcallMetaData *upcallMetaData;
 } J9UpcallMetaDataEntry;
-
-typedef struct J9UpcallThunkHeapWrapper {
-	J9Heap *heap;
-	uintptr_t heapSize;
-	J9PortVmemIdentifier vmemID;
-	J9HashTable *metaDataHashTable;
-} J9UpcallThunkHeapWrapper;
 
 #endif /* JAVA_SPEC_VERSION >= 16 */
 
