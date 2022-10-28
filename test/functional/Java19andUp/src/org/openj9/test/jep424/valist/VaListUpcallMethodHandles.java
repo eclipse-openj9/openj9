@@ -520,7 +520,8 @@ public class VaListUpcallMethodHandles {
 	}
 
 	public static long addLongIntOfStructsFromVaList(int argCount, MemoryAddress struVaListAddr) {
-		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_LONG.withName("elem1"), JAVA_INT.withName("elem2"));
+		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_LONG.withName("elem1"),
+				JAVA_INT.withName("elem2"), MemoryLayout.paddingLayout(32));
 		VarHandle elemHandle1 = structLayout.varHandle(PathElement.groupElement("elem1"));
 		VarHandle elemHandle2 = structLayout.varHandle(PathElement.groupElement("elem2"));
 
@@ -571,7 +572,8 @@ public class VaListUpcallMethodHandles {
 	}
 
 	public static double addDoubleFloatOfStructsFromVaList(int argCount, MemoryAddress struVaListAddr) {
-		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_DOUBLE.withName("elem1"), JAVA_FLOAT.withName("elem2"));
+		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_DOUBLE.withName("elem1"),
+				JAVA_FLOAT.withName("elem2") , MemoryLayout.paddingLayout(32));
 		VarHandle elemHandle1 = structLayout.varHandle(PathElement.groupElement("elem1"));
 		VarHandle elemHandle2 = structLayout.varHandle(PathElement.groupElement("elem2"));
 

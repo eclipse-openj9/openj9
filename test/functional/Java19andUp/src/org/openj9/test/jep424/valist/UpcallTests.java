@@ -50,7 +50,7 @@ public class UpcallTests {
 	private static String osName = System.getProperty("os.name").toLowerCase();
 	private static String arch = System.getProperty("os.arch").toLowerCase();
 	private static boolean isAixOS = osName.contains("aix");
-	private static boolean isWinOS = osName.contains("win");
+	private static boolean isWinX64 = osName.contains("win") && (arch.equals("amd64") || arch.equals("x86_64"));
 	private static boolean isLinuxX64 = osName.contains("linux") && (arch.equals("amd64") || arch.equals("x86_64"));
 	private static boolean isLinuxAarch64 = osName.contains("linux") && arch.equals("aarch64");
 	/* The padding of struct is not required on Power in terms of VaList */
@@ -248,12 +248,12 @@ public class UpcallTests {
 		/* There are a few issues with the test on some platforms as follows:
 		 * 1) VaList on Linux/x86_64 in OpenJDK is unable to handle the va_list with
 		 *    over 8 arguments (confirmed by OpenJDK/Hotspot).
-		 * 2) VaList on Linux/Aarch64 in OpenJDK has problem in supporting the struct
-		 *    with only one integral element (confirmed by OpenJDK/Hotspot).
+		 * 2) VaList on Linux/Aarch64 and Windows/x86_64 in OpenJDK has problem in supporting
+		 *    the struct with only one integral element (confirmed by OpenJDK/Hotspot).
 		 * Thus, the test is disabled on both these platforms for now till these issues
 		 * are fixed in OpenJDK and verified on OpenJDK/Hotspot in the future.
 		 */
-		if (!isLinuxX64 && !isLinuxAarch64) {
+		if (!isLinuxX64 && !isLinuxAarch64 && !isWinX64) {
 			GroupLayout structLayout = MemoryLayout.structLayout(JAVA_BYTE.withName("elem1"));
 			VarHandle byteHandle1 = structLayout.varHandle(PathElement.groupElement("elem1"));
 
@@ -305,30 +305,37 @@ public class UpcallTests {
 
 	@Test
 	public void test_add2BytesOfStructsFromVaListByUpcallMH() throws Throwable {
-		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_BYTE.withName("elem1"), JAVA_BYTE.withName("elem2"));
-		VarHandle byteHandle1 = structLayout.varHandle(PathElement.groupElement("elem1"));
-		VarHandle byteHandle2 = structLayout.varHandle(PathElement.groupElement("elem2"));
+		/* VaList on Windows/x86_64 in OpenJDK has problem in supporting the struct with
+		 * two byte elements (confirmed by OpenJDK/Hotspot). Thus, the test is disabled
+		 * on Windows/x86_64 for now till the issue is fixed in OpenJDK and verified on
+		 * OpenJDK/Hotspot in the future.
+		 */
+		if (!isWinX64) {
+			GroupLayout structLayout = MemoryLayout.structLayout(JAVA_BYTE.withName("elem1"), JAVA_BYTE.withName("elem2"));
+			VarHandle byteHandle1 = structLayout.varHandle(PathElement.groupElement("elem1"));
+			VarHandle byteHandle2 = structLayout.varHandle(PathElement.groupElement("elem2"));
 
-		Addressable functionSymbol = nativeLibLookup.lookup("add2BytesOfStructsFromVaListByUpcallMH").get();
-		FunctionDescriptor fd = FunctionDescriptor.of(JAVA_BYTE, JAVA_INT, ADDRESS, ADDRESS);
-		MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
+			Addressable functionSymbol = nativeLibLookup.lookup("add2BytesOfStructsFromVaListByUpcallMH").get();
+			FunctionDescriptor fd = FunctionDescriptor.of(JAVA_BYTE, JAVA_INT, ADDRESS, ADDRESS);
+			MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
 
-		try (MemorySession session = MemorySession.openConfined()) {
-			SegmentAllocator allocator = SegmentAllocator.newNativeArena(session);
-			MemorySegment structSegmt1 = allocator.allocate(structLayout);
-			byteHandle1.set(structSegmt1, (byte)1);
-			byteHandle2.set(structSegmt1, (byte)2);
-			MemorySegment structSegmt2 = allocator.allocate(structLayout);
-			byteHandle1.set(structSegmt2, (byte)3);
-			byteHandle2.set(structSegmt2, (byte)4);
+			try (MemorySession session = MemorySession.openConfined()) {
+				SegmentAllocator allocator = SegmentAllocator.newNativeArena(session);
+				MemorySegment structSegmt1 = allocator.allocate(structLayout);
+				byteHandle1.set(structSegmt1, (byte)1);
+				byteHandle2.set(structSegmt1, (byte)2);
+				MemorySegment structSegmt2 = allocator.allocate(structLayout);
+				byteHandle1.set(structSegmt2, (byte)3);
+				byteHandle2.set(structSegmt2, (byte)4);
 
-			VaList vaList = VaList.make(vaListBuilder -> vaListBuilder.addVarg(structLayout, structSegmt1)
-					.addVarg(structLayout, structSegmt2), session);
-			MemorySegment upcallFuncAddr = linker.upcallStub(VaListUpcallMethodHandles.MH_add2BytesOfStructsFromVaList,
-					FunctionDescriptor.of(JAVA_BYTE, JAVA_INT, ADDRESS), session);
+				VaList vaList = VaList.make(vaListBuilder -> vaListBuilder.addVarg(structLayout, structSegmt1)
+						.addVarg(structLayout, structSegmt2), session);
+				MemorySegment upcallFuncAddr = linker.upcallStub(VaListUpcallMethodHandles.MH_add2BytesOfStructsFromVaList,
+						FunctionDescriptor.of(JAVA_BYTE, JAVA_INT, ADDRESS), session);
 
-			byte result = (byte)mh.invoke(2, vaList, upcallFuncAddr);
-			Assert.assertEquals(result, 10);
+				byte result = (byte)mh.invoke(2, vaList, upcallFuncAddr);
+				Assert.assertEquals(result, 10);
+			}
 		}
 	}
 
@@ -455,12 +462,12 @@ public class UpcallTests {
 		/* There are a few issues with the test on some platforms as follows:
 		 * 1) VaList on Linux/x86_64 in OpenJDK is unable to handle the va_list with
 		 *    over 8 arguments (confirmed by OpenJDK/Hotspot).
-		 * 2) VaList on Linux/Aarch64 in OpenJDK has problem in supporting the struct
-		 *    with only one integral element (confirmed by OpenJDK/Hotspot).
+		 * 2) VaList on Linux/Aarch64 and Windows/x86_64 in OpenJDK has problem in supporting
+		 *    the struct with only one integral element (confirmed by OpenJDK/Hotspot).
 		 * Thus, the test is disabled on both these platforms for now till these issues
 		 * are fixed in OpenJDK and verified on OpenJDK/Hotspot in the future.
 		 */
-		if (!isLinuxX64 && !isLinuxAarch64) {
+		if (!isLinuxX64 && !isLinuxAarch64 && !isWinX64) {
 			GroupLayout structLayout = MemoryLayout.structLayout(JAVA_SHORT.withName("elem1"));
 			VarHandle shortHandle1 = structLayout.varHandle(PathElement.groupElement("elem1"));
 
@@ -512,30 +519,37 @@ public class UpcallTests {
 
 	@Test
 	public void test_add2ShortsOfStructsFromVaListByUpcallMH() throws Throwable {
-		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_SHORT.withName("elem1"), JAVA_SHORT.withName("elem2"));
-		VarHandle shortHandle1 = structLayout.varHandle(PathElement.groupElement("elem1"));
-		VarHandle shortHandle2 = structLayout.varHandle(PathElement.groupElement("elem2"));
+		/* VaList on Windows/x86_64 in OpenJDK has problem in supporting the struct with
+		 * two short elements (confirmed by OpenJDK/Hotspot). Thus, the test is disabled
+		 * on Windows/x86_64 for now till the issue is fixed in OpenJDK and verified on
+		 * OpenJDK/Hotspot in the future.
+		 */
+		if (!isWinX64) {
+			GroupLayout structLayout = MemoryLayout.structLayout(JAVA_SHORT.withName("elem1"), JAVA_SHORT.withName("elem2"));
+			VarHandle shortHandle1 = structLayout.varHandle(PathElement.groupElement("elem1"));
+			VarHandle shortHandle2 = structLayout.varHandle(PathElement.groupElement("elem2"));
 
-		Addressable functionSymbol = nativeLibLookup.lookup("add2ShortsOfStructsFromVaListByUpcallMH").get();
-		FunctionDescriptor fd = FunctionDescriptor.of(JAVA_SHORT, JAVA_INT, ADDRESS, ADDRESS);
-		MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
+			Addressable functionSymbol = nativeLibLookup.lookup("add2ShortsOfStructsFromVaListByUpcallMH").get();
+			FunctionDescriptor fd = FunctionDescriptor.of(JAVA_SHORT, JAVA_INT, ADDRESS, ADDRESS);
+			MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
 
-		try (MemorySession session = MemorySession.openConfined()) {
-			SegmentAllocator allocator = SegmentAllocator.newNativeArena(session);
-			MemorySegment structSegmt1 = allocator.allocate(structLayout);
-			shortHandle1.set(structSegmt1, (short)111);
-			shortHandle2.set(structSegmt1, (short)222);
-			MemorySegment structSegmt2 = allocator.allocate(structLayout);
-			shortHandle1.set(structSegmt2, (short)333);
-			shortHandle2.set(structSegmt2, (short)444);
+			try (MemorySession session = MemorySession.openConfined()) {
+				SegmentAllocator allocator = SegmentAllocator.newNativeArena(session);
+				MemorySegment structSegmt1 = allocator.allocate(structLayout);
+				shortHandle1.set(structSegmt1, (short)111);
+				shortHandle2.set(structSegmt1, (short)222);
+				MemorySegment structSegmt2 = allocator.allocate(structLayout);
+				shortHandle1.set(structSegmt2, (short)333);
+				shortHandle2.set(structSegmt2, (short)444);
 
-			VaList vaList = VaList.make(vaListBuilder -> vaListBuilder.addVarg(structLayout, structSegmt1)
-					.addVarg(structLayout, structSegmt2), session);
-			MemorySegment upcallFuncAddr = linker.upcallStub(VaListUpcallMethodHandles.MH_add2ShortsOfStructsFromVaList,
-					FunctionDescriptor.of(JAVA_SHORT, JAVA_INT, ADDRESS), session);
+				VaList vaList = VaList.make(vaListBuilder -> vaListBuilder.addVarg(structLayout, structSegmt1)
+						.addVarg(structLayout, structSegmt2), session);
+				MemorySegment upcallFuncAddr = linker.upcallStub(VaListUpcallMethodHandles.MH_add2ShortsOfStructsFromVaList,
+						FunctionDescriptor.of(JAVA_SHORT, JAVA_INT, ADDRESS), session);
 
-			short result = (short)mh.invoke(2, vaList, upcallFuncAddr);
-			Assert.assertEquals(result, 1110);
+				short result = (short)mh.invoke(2, vaList, upcallFuncAddr);
+				Assert.assertEquals(result, 1110);
+			}
 		}
 	}
 
@@ -577,12 +591,12 @@ public class UpcallTests {
 		/* There are a few issues with the test on some platforms as follows:
 		 * 1) VaList on Linux/x86_64 in OpenJDK is unable to handle the va_list with
 		 *    over 8 arguments (confirmed by OpenJDK/Hotspot).
-		 * 2) VaList on Linux/Aarch64 in OpenJDK has problem in supporting the struct
-		 *    with only one integral element (confirmed by OpenJDK/Hotspot).
+		 * 2) VaList on Linux/Aarch64 and Windows/x86_64 in OpenJDK has problem in supporting
+		 *    the struct with only one integral element (confirmed by OpenJDK/Hotspot).
 		 * Thus, the test is disabled on both these platforms for now till these issues
 		 * are fixed in OpenJDK and verified on OpenJDK/Hotspot in the future.
 		 */
-		if (!isLinuxX64 && !isLinuxAarch64) {
+		if (!isLinuxX64 && !isLinuxAarch64 && !isWinX64) {
 			GroupLayout structLayout = MemoryLayout.structLayout(JAVA_INT.withName("elem1"));
 			VarHandle intHandle1 = structLayout.varHandle(PathElement.groupElement("elem1"));
 
@@ -725,6 +739,12 @@ public class UpcallTests {
 
 	@Test
 	public void test_add1FloatOfStructsFromVaListByUpcallMH() throws Throwable {
+		/* VaList on Windows/x86_64 in OpenJDK has problem in supporting the struct with only
+		 * one float element (confirmed by OpenJDK/Hotspot). Thus, the test is disabled on
+		 * Windows/x86_64 for now till the issue is fixed in OpenJDK and verified on
+		 * OpenJDK/Hotspot in the future.
+		 */
+		if (!isWinX64) {
 			GroupLayout structLayout = MemoryLayout.structLayout(JAVA_FLOAT.withName("elem1"));
 			VarHandle floatHandle1 = structLayout.varHandle(PathElement.groupElement("elem1"));
 
@@ -738,15 +758,25 @@ public class UpcallTests {
 				floatHandle1.set(structSegmt1, 1.11F);
 				MemorySegment structSegmt2 = allocator.allocate(structLayout);
 				floatHandle1.set(structSegmt2, 2.22F);
+				MemorySegment structSegmt3 = allocator.allocate(structLayout);
+				floatHandle1.set(structSegmt3, 3.33F);
+				MemorySegment structSegmt4 = allocator.allocate(structLayout);
+				floatHandle1.set(structSegmt4, 4.44F);
+				MemorySegment structSegmt5 = allocator.allocate(structLayout);
+				floatHandle1.set(structSegmt5, 5.56F);
 
 				VaList vaList = VaList.make(vaListBuilder -> vaListBuilder.addVarg(structLayout, structSegmt1)
-						.addVarg(structLayout, structSegmt2), session);
+						.addVarg(structLayout, structSegmt2)
+						.addVarg(structLayout, structSegmt3)
+						.addVarg(structLayout, structSegmt4)
+						.addVarg(structLayout, structSegmt5), session);
 				MemorySegment upcallFuncAddr = linker.upcallStub(VaListUpcallMethodHandles.MH_add1FloatOfStructsFromVaList,
 						FunctionDescriptor.of(JAVA_FLOAT, JAVA_INT, ADDRESS), session);
 
-				float result = (float)mh.invoke(2, vaList, upcallFuncAddr);
-				Assert.assertEquals(result, 3.33F, 0.01F);
+				float result = (float)mh.invoke(5, vaList, upcallFuncAddr);
+				Assert.assertEquals(result, 16.66F, 0.01F);
 			}
+		}
 	}
 
 	@Test
@@ -850,37 +880,37 @@ public class UpcallTests {
 
 	@Test
 	public void test_add1DoubleOfStructsFromVaListByUpcallMH() throws Throwable {
-			GroupLayout structLayout = MemoryLayout.structLayout(JAVA_DOUBLE.withName("elem1"));
-			VarHandle doubleHandle1 = structLayout.varHandle(PathElement.groupElement("elem1"));
+		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_DOUBLE.withName("elem1"));
+		VarHandle doubleHandle1 = structLayout.varHandle(PathElement.groupElement("elem1"));
 
-			Addressable functionSymbol = nativeLibLookup.lookup("add1DoubleOfStructsFromVaListByUpcallMH").get();
-			FunctionDescriptor fd = FunctionDescriptor.of(JAVA_DOUBLE, JAVA_INT, ADDRESS, ADDRESS);
-			MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
+		Addressable functionSymbol = nativeLibLookup.lookup("add1DoubleOfStructsFromVaListByUpcallMH").get();
+		FunctionDescriptor fd = FunctionDescriptor.of(JAVA_DOUBLE, JAVA_INT, ADDRESS, ADDRESS);
+		MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
 
-			try (MemorySession session = MemorySession.openConfined()) {
-				SegmentAllocator allocator = SegmentAllocator.newNativeArena(session);
-				MemorySegment structSegmt1 = allocator.allocate(structLayout);
-				doubleHandle1.set(structSegmt1, 11111.1001D);
-				MemorySegment structSegmt2 = allocator.allocate(structLayout);
-				doubleHandle1.set(structSegmt2, 11111.1002D);
-				MemorySegment structSegmt3 = allocator.allocate(structLayout);
-				doubleHandle1.set(structSegmt3, 11111.1003D);
-				MemorySegment structSegmt4 = allocator.allocate(structLayout);
-				doubleHandle1.set(structSegmt4, 11111.1004D);
-				MemorySegment structSegmt5 = allocator.allocate(structLayout);
-				doubleHandle1.set(structSegmt5, 11111.1005D);
+		try (MemorySession session = MemorySession.openConfined()) {
+			SegmentAllocator allocator = SegmentAllocator.newNativeArena(session);
+			MemorySegment structSegmt1 = allocator.allocate(structLayout);
+			doubleHandle1.set(structSegmt1, 11111.1001D);
+			MemorySegment structSegmt2 = allocator.allocate(structLayout);
+			doubleHandle1.set(structSegmt2, 11111.1002D);
+			MemorySegment structSegmt3 = allocator.allocate(structLayout);
+			doubleHandle1.set(structSegmt3, 11111.1003D);
+			MemorySegment structSegmt4 = allocator.allocate(structLayout);
+			doubleHandle1.set(structSegmt4, 11111.1004D);
+			MemorySegment structSegmt5 = allocator.allocate(structLayout);
+			doubleHandle1.set(structSegmt5, 11111.1005D);
 
-				VaList vaList = VaList.make(vaListBuilder -> vaListBuilder.addVarg(structLayout, structSegmt1)
-						.addVarg(structLayout, structSegmt2)
-						.addVarg(structLayout, structSegmt3)
-						.addVarg(structLayout, structSegmt4)
-						.addVarg(structLayout, structSegmt5), session);
-				MemorySegment upcallFuncAddr = linker.upcallStub(VaListUpcallMethodHandles.MH_add1DoubleOfStructsFromVaList,
-						FunctionDescriptor.of(JAVA_DOUBLE, JAVA_INT, ADDRESS), session);
+			VaList vaList = VaList.make(vaListBuilder -> vaListBuilder.addVarg(structLayout, structSegmt1)
+					.addVarg(structLayout, structSegmt2)
+					.addVarg(structLayout, structSegmt3)
+					.addVarg(structLayout, structSegmt4)
+					.addVarg(structLayout, structSegmt5), session);
+			MemorySegment upcallFuncAddr = linker.upcallStub(VaListUpcallMethodHandles.MH_add1DoubleOfStructsFromVaList,
+					FunctionDescriptor.of(JAVA_DOUBLE, JAVA_INT, ADDRESS), session);
 
-				double result = (double)mh.invoke(5, vaList, upcallFuncAddr);
-				Assert.assertEquals(result, 55555.5015D, 0.0001D);
-			}
+			double result = (double)mh.invoke(5, vaList, upcallFuncAddr);
+			Assert.assertEquals(result, 55555.5015D, 0.0001D);
+		}
 	}
 
 	@Test
@@ -1017,7 +1047,7 @@ public class UpcallTests {
 	@Test
 	public void test_addLongIntOfStructsFromVaListByUpcallMH() throws Throwable {
 		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_LONG.withName("elem1"),
-				JAVA_INT.withName("elem2"));
+				JAVA_INT.withName("elem2"), MemoryLayout.paddingLayout(32));
 		VarHandle elemHandle1 = structLayout.varHandle(PathElement.groupElement("elem1"));
 		VarHandle elemHandle2 = structLayout.varHandle(PathElement.groupElement("elem2"));
 
@@ -1088,7 +1118,8 @@ public class UpcallTests {
 
 	@Test
 	public void test_addDoubleFloatOfStructsFromVaListByUpcallMH() throws Throwable {
-		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_DOUBLE.withName("elem1"), JAVA_FLOAT.withName("elem2"));
+		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_DOUBLE.withName("elem1"),
+				JAVA_FLOAT.withName("elem2") , MemoryLayout.paddingLayout(32));
 		VarHandle elemHandle1 = structLayout.varHandle(PathElement.groupElement("elem1"));
 		VarHandle elemHandle2 = structLayout.varHandle(PathElement.groupElement("elem2"));
 
