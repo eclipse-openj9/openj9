@@ -158,6 +158,13 @@ public class ValueTypeUnsafeTests {
 	}
 
 	@Test
+	static public void testUnflattenableFieldInVTIsNotFlattened() throws Throwable {
+		ValueClassPoint2D p = new ValueClassPoint2D(new ValueClassInt(1), new ValueClassInt(2));
+		boolean isFlattened = myUnsafe.isFlattened(p.getClass().getDeclaredField("x"));
+		assertFalse(isFlattened);
+	}
+
+	@Test
 	static public void testFlattenedObjectIsNotFlattenedArray() throws Throwable {
 		boolean isArrayFlattened = myUnsafe.isFlattenedArray(vtPoint.getClass());
 		assertFalse(isArrayFlattened);
