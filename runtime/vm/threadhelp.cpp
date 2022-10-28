@@ -429,6 +429,9 @@ continueTimeCompensation:
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
 	switch(threadHelperType) {
+	/* Following three APIs return J9THREAD_TIMED_OUT when the timeout expired.
+	 * A timeout of 0 (0ms, 0ns) indicates wait/park indefinitely.
+	 */
 	case HELPER_TYPE_MONITOR_WAIT_INTERRUPTABLE:
 		rc = omrthread_monitor_wait_interruptable(monitor, millis, nanos);
 		break;
@@ -439,6 +442,9 @@ continueTimeCompensation:
 		rc = omrthread_park(millis, nanos);
 		break;
 	case HELPER_TYPE_THREAD_SLEEP:
+		/* Returns 0 when the timeout specified passed.
+		 * A timeout of 0 (0ms, 0ns) indicates an immediate return.
+		 */
 		rc = omrthread_sleep_interruptable(millis, nanos);
 		break;
 	default:
@@ -451,11 +457,18 @@ continueTimeCompensation:
 	if ((compensationMightBeRequired && J9_IS_CRIU_RESTORED(vm))
 		|| isThreadHaltedAtSingleThreadedMode
 	) {
-		/* There was a C/R and a compensation is required,
+		/* There was a C/R and a compensation might be required,
 		 * or this is a halted thread at single threaded mode.
 		 */
 		bool timeCompensationRequired = TRUE;
-		if (waitTimed) {
+		const I_8 timeout10ms = 10;
+		bool timedout = FALSE;
+		if (HELPER_TYPE_THREAD_SLEEP == threadHelperType) {
+			timedout = 0 == rc;
+		} else {
+			timedout = J9THREAD_TIMED_OUT == rc;
+		}
+		if (waitTimed && timedout) {
 			PORT_ACCESS_FROM_JAVAVM(vm);
 			const I_32 oneMillion = 1000000;
 			I_64 nanoTimePast = j9time_nano_time() - nanoTimeStart;
@@ -477,7 +490,7 @@ continueTimeCompensation:
 				/* timed out since millisPast > millis or millisPast == millis && nanoTimePast >= nanos */
 				if (isThreadHaltedAtSingleThreadedMode) {
 					/* This is a halted thread at single threaded mode, sleep another 10ms. */
-					millis = 10;
+					millis = timeout10ms;
 					nanos = 0;
 				} else {
 					/* timed out and no compensation required */
@@ -490,8 +503,11 @@ continueTimeCompensation:
 			}
 		} else if (isThreadHaltedAtSingleThreadedMode) {
 			/* This is a halted thread at single threaded mode, wait another 10ms. */
-			millis = 10;
+			millis = timeout10ms;
 			nanos = 0;
+		} else {
+			/* No time compensation if not waitTimed and timedout, or not paused at single threaded mode. */
+			timeCompensationRequired = FALSE;
 		}
 		if (timeCompensationRequired) {
 			Assert_VM_false((0 == millis) && (0 == nanos));
