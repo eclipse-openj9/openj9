@@ -295,7 +295,7 @@ static const OptimizationStrategy coldStrategyOpts[] =
    { OMR::jProfilingValue,                           OMR::MustBeDone                 },
    { OMR::treeLowering,                              OMR::MustBeDone            },
    { OMR::globalLiveVariablesForGC,                  OMR::IfAggressiveLiveness  },
-   { OMR::profilingGroup,                            OMR::IfProfiling                },
+   { OMR::jitProfilingGroup,                         OMR::IfJitProfiling             },
    { OMR::regDepCopyRemoval                                                     },
    { OMR::hotFieldMarking                                                       },
    { OMR::endOpts                                                               }
@@ -392,9 +392,9 @@ static const OptimizationStrategy warmStrategyOpts[] =
    { OMR::compactNullChecks,                         OMR::IfEnabled                  }, // cleanup at the end
    { OMR::deadTreesElimination,                      OMR::IfEnabled                  }, // remove dead anchors created by check/store removal
    { OMR::deadTreesElimination,                      OMR::IfEnabled                  }, // remove dead RegStores produced by previous deadTrees pass
-   { OMR::compactLocals,                             OMR::IfNotJitProfiling          }, // analysis results are invalidated by profilingGroup
+   { OMR::compactLocals,                             OMR::IfNotJitProfiling          }, // analysis results are invalidated by jitProfilingGroup
    { OMR::globalLiveVariablesForGC                                              },
-   { OMR::profilingGroup,                            OMR::IfProfiling                },
+   { OMR::jitProfilingGroup,                         OMR::IfJitProfiling             },
    { OMR::regDepCopyRemoval                                                     },
    { OMR::hotFieldMarking                                                       },
    { OMR::endOpts                                                               }
@@ -509,7 +509,7 @@ const OptimizationStrategy hotStrategyOpts[] =
    { OMR::deadTreesElimination                                            }, // cleanup after dead store removal
    { OMR::compactNullChecks                                               }, // cleanup at the end
    { OMR::finalGlobalGroup                                                }, // done just before codegen
-   { OMR::profilingGroup,                        OMR::IfProfiling              },
+   { OMR::jitProfilingGroup,                     OMR::IfJitProfiling           },
    { OMR::regDepCopyRemoval                                               },
    { OMR::hotFieldMarking                                                       },
    { OMR::endOpts                                                         }
@@ -600,7 +600,7 @@ const OptimizationStrategy scorchingStrategyOpts[] =
    { OMR::deadTreesElimination                               }, // cleanup after dead store removal
    { OMR::compactNullChecks                                  }, // cleanup at the end
    { OMR::finalGlobalGroup                                   }, // done just before codegen
-   { OMR::profilingGroup,                        OMR::IfProfiling },
+   { OMR::jitProfilingGroup,                     OMR::IfJitProfiling },
    { OMR::regDepCopyRemoval                                  },
    { OMR::hotFieldMarking                                                       },
    { OMR::endOpts                                            }
@@ -785,16 +785,21 @@ static const OptimizationStrategy cheapWarmStrategyOpts[] =
    { OMR::deadTreesElimination,                      OMR::IfEnabled                  }, // remove dead anchors created by check/store removal
    { OMR::deadTreesElimination,                      OMR::IfEnabled                  }, // remove dead RegStores produced by previous deadTrees pass
    { OMR::redundantGotoElimination,                  OMR::IfEnabledAndNotJitProfiling }, // dead store and dead tree elimination may have left empty blocks
-   { OMR::compactLocals,                             OMR::IfNotJitProfiling          }, // analysis results are invalidated by profilingGroup
+   { OMR::compactLocals,                             OMR::IfNotJitProfiling          }, // analysis results are invalidated by jitProfilingGroup
    { OMR::globalLiveVariablesForGC                                              },
-   { OMR::profilingGroup,                            OMR::IfProfiling                },
+   { OMR::jitProfilingGroup,                         OMR::IfJitProfiling             },
    { OMR::regDepCopyRemoval                                                     },
    { OMR::hotFieldMarking                                                       },
    { OMR::endOpts                                                               }
    };
 
 
-static const OptimizationStrategy profilingOpts[] =
+// **********************************************************
+//
+// Transformations that are specific to JitProfiling mode
+//
+// **********************************************************
+static const OptimizationStrategy jitProfilingOpts[] =
    {
    { OMR::profileGenerator,          OMR::MustBeDone },
    { OMR::deadTreesElimination,      OMR::IfEnabled  },
@@ -928,8 +933,8 @@ J9::Optimizer::Optimizer(TR::Compilation *comp, TR::ResolvedMethodSymbol *method
       new (comp->allocator()) TR::OptimizationManager(self(), NULL, OMR::signExtendLoadsGroup, signExtendLoadsOpts);
    _opts[OMR::loopSpecializerGroup] =
       new (comp->allocator()) TR::OptimizationManager(self(), NULL, OMR::loopSpecializerGroup, loopSpecializerOpts);
-   _opts[OMR::profilingGroup] =
-      new (comp->allocator()) TR::OptimizationManager(self(), NULL, OMR::profilingGroup, profilingOpts);
+   _opts[OMR::jitProfilingGroup] =
+      new (comp->allocator()) TR::OptimizationManager(self(), NULL, OMR::jitProfilingGroup, jitProfilingOpts);
    _opts[OMR::sequentialLoadAndStoreColdGroup] =
       new (comp->allocator()) TR::OptimizationManager(self(), NULL, OMR::sequentialLoadAndStoreColdGroup, sequentialLoadAndStoreColdOpts);
    _opts[OMR::sequentialLoadAndStoreWarmGroup] =
