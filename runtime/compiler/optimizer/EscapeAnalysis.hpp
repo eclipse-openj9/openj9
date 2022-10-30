@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -341,7 +341,7 @@ class FlushCandidate : public TR_Link<FlushCandidate>
    {
    public:
    FlushCandidate(TR::TreeTop *flushNode, TR::Node *node, int32_t blockNum, Candidate *candidate = 0)
-     : _flushNode(flushNode), _node(node), _blockNum(blockNum), _candidate(candidate), _isKnownToLackCandidate(false)
+     : _flushNode(flushNode), _node(node), _blockNum(blockNum), _candidate(candidate), _isKnownToLackCandidate(false), _optimallyPlaced(false)
      {
      }
 
@@ -380,12 +380,33 @@ class FlushCandidate : public TR_Link<FlushCandidate>
     */
    void setIsKnownToLackCandidate(bool setting) {_isKnownToLackCandidate = setting;}
 
+    /**
+    * \brief Indicates whether this \c FlushCandidate is known to be
+    * optimally placed above a volatile access node and therefor should
+    * not be be considered for further optimization.
+    *
+    * \return \c true if this \c FlushCandidate is known be already optimally placed;
+    * \c false if this \c FlushCandidate can be considered for further optimization,
+    * or if it has not yet been determined whether it is optimally placed.
+    */
+   bool isOptimallyPlaced() { return _optimallyPlaced;}
+
+   /**
+    * \brief Sets the status of this \c FlushCandidate, indicating whether
+    * it is known to be optimally placed above a volatile access node.
+    *
+    * \param setting The updated status indicating whether this \c FlushCandidate
+    * is known to be optimally placed.
+    */
+   void setOptimallyPlaced(bool setting) {_optimallyPlaced = setting;}
+
    private:
    TR::Node *_node;
    TR::TreeTop *_flushNode;
    int32_t _blockNum;
    Candidate *_candidate;
    bool _isKnownToLackCandidate;
+   bool _optimallyPlaced;
    };
 
 
@@ -782,7 +803,7 @@ class TR_LocalFlushElimination
    TR_LocalFlushElimination(TR_EscapeAnalysis *, int32_t numAllocations);
 
    virtual int32_t perform();
-   bool examineNode(TR::Node *, TR::NodeChecklist& visited);
+   bool examineNode(TR::Node *, TR::TreeTop *, TR::NodeChecklist& visited);
 
    TR::Optimizer *        optimizer()                     { return _escapeAnalysis->optimizer(); }
    TR::Compilation *        comp()                          { return _escapeAnalysis->comp(); }

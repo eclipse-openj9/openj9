@@ -60,6 +60,7 @@
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
 #include "infra/Annotations.hpp"
+#include "infra/ILWalk.hpp"
 #include "infra/Bit.hpp"
 #include "optimizer/VectorAPIExpansion.hpp"
 #include "p/codegen/ForceRecompilationSnippet.hpp"
@@ -3363,7 +3364,31 @@ TR::Register *J9::Power::TreeEvaluator::flushEvaluator(TR::Node *node, TR::CodeG
    if (opCode == TR::allocationFence)
       {
       if (!node->canOmitSync())
-         generateInstruction(cg, TR::InstOpCode::lwsync, node);
+         {
+         // If the following node will issue an lwsync then skip emitting one now. EscapeAnalysis can purposefully place
+         // an AllocationFence before a monexit or volatile access so that the codegen can optimize the memory flush
+         TR::TreeTop *tt = cg->getCurrentEvaluationTreeTop()->getNextTreeTop();
+         TR::Node *node = tt->getNode();
+         TR::Node *child = (node->getNumChildren() >= 1) ? node->getFirstChild() : NULL;
+         if (!child || (node->getOpCodeValue() != TR::monexit && child->getOpCodeValue() != TR::monexit))
+            {
+            // Iterate the next tree to see if there is a resolved volatile load/store node that has yet to be evaluated
+            // An unresolved volatile might not actually be a volatile access, and therefore can not replace the AllocationFence
+            // An node that is already evaluated will not actually emit an 'lwsync' so it can not replace the AllocationFence
+            bool volatileAccessFound = false;
+            for (TR::PreorderNodeIterator it(tt, cg->comp()); it.currentTree() == tt; ++it)
+               {
+               node = it.currentNode();
+               if (node->getOpCode().hasSymbolReference() && !node->hasUnresolvedSymbolReference() && node->getSymbolReference()->getSymbol()->isVolatile() && !node->getRegister())
+                  {
+                  volatileAccessFound = true;
+                  break;
+                  }
+               }
+            if (!volatileAccessFound)
+               generateInstruction(cg, TR::InstOpCode::lwsync, node);
+            }
+         }
       }
    else
       {
@@ -4916,6 +4941,14 @@ TR::Register *J9::Power::TreeEvaluator::VMmonexitEvaluator(TR::Node *node, TR::C
    int32_t lwOffset = fej9->getByteOffsetToLockword((TR_OpaqueClassBlock *) cg->getMonClass(node));
    TR::Compilation *comp = cg->comp();
    TR_YesNoMaybe isMonitorValueBasedOrValueType = cg->isMonitorValueBasedOrValueType(node);
+   bool unconditionalSync = false;
+
+   // WARNING:
+   // If there is an AllocationFence directly above this monExit we will not have emitted an
+   // lwsync for the fence and now must ensure that an lwsync is always executed for this monexit.
+   // When unconditionalSync is true, all paths through this method must emit an unconditional 'lwsync'!
+   if (cg->getCurrentEvaluationTreeTop()->getPrevTreeTop()->getNode()->getOpCodeValue() == TR::allocationFence)
+      unconditionalSync = true;
 
    if (comp->getOption(TR_FullSpeedDebug) ||
          (isMonitorValueBasedOrValueType == TR_yes) ||
@@ -4925,6 +4958,8 @@ TR::Register *J9::Power::TreeEvaluator::VMmonexitEvaluator(TR::Node *node, TR::C
       TR::Node::recreate(node, TR::call);
       TR::Register *targetRegister = directCallEvaluator(node, cg);
       TR::Node::recreate(node, opCode);
+      if (comp->target().isSMP() && unconditionalSync == true)
+         generateInstruction(cg, TR::InstOpCode::lwsync, node);
       return targetRegister;
       }
 
@@ -5085,7 +5120,11 @@ TR::Register *J9::Power::TreeEvaluator::VMmonexitEvaluator(TR::Node *node, TR::C
          TR::TreeEvaluator::evaluateLockForReservation(node, &reserveLocking, &normalLockWithReservationPreserving, cg);
 
       if (reserveLocking)
+         {
+         if (comp->target().isSMP() && unconditionalSync == true)
+            generateInstruction(cg, TR::InstOpCode::lwsync, node);
          return reservationLockExit(node, lwOffset, cg, conditions, baseReg, monitorReg, threadReg, tempReg, condReg, callLabel);
+         }
       }
 
    int32_t lockSize;
@@ -5134,8 +5173,9 @@ TR::Register *J9::Power::TreeEvaluator::VMmonexitEvaluator(TR::Node *node, TR::C
        *    ld/lwz monitorReg, lwOffset(baseReg)
        *    li     tempReg, 0
        *    cmpl   cr0, monitorReg, metaReg
+       *    lwsync <if unconditionalSync>
        *    bne    decrementCheckLabel
-       *    lwsync
+       *    lwsync <if !unconditionalSync>
        *    st     tempReg, lwOffset(baseReg)
        *    b      doneLabel
        *
@@ -5170,11 +5210,13 @@ TR::Register *J9::Power::TreeEvaluator::VMmonexitEvaluator(TR::Node *node, TR::C
       generateTrg1MemInstruction(cg, loadOpCode, node, monitorReg, TR::MemoryReference::createWithDisplacement(cg, baseReg, lwOffset, lockSize));
       generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, tempReg, 0);
       generateTrg1Src2Instruction(cg, compareLogicalOpCode, node, condReg, monitorReg, metaReg);
+      if (comp->target().isSMP() && unconditionalSync == true)
+         generateInstruction(cg, TR::InstOpCode::lwsync, node);
       generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, decrementCheckLabel, condReg);
 
       // exiting from read monitors still needs lwsync
       // (ensures loads have completed before releasing lock)
-      if (comp->target().isSMP())
+      if (comp->target().isSMP() && unconditionalSync == false)
          generateInstruction(cg, TR::InstOpCode::lwsync, node);
 
       generateMemSrc1Instruction(cg, storeOpCode, node, TR::MemoryReference::createWithDisplacement(cg, baseReg, lwOffset, lockSize), tempReg);
