@@ -403,6 +403,7 @@ static bool isFreeDiskSpaceLow(J9JavaVM *vm, U_64* maxsize, U_64 runtimeFlags);
 static char* generateStartupHintsKey(J9JavaVM *vm);
 static void fetchStartupHintsFromSharedCache(J9VMThread* vmThread);
 static void findExistingCacheLayerNumbers(J9JavaVM* vm, const char* ctrlDirName, const char* cacheName, U_64 runtimeFlags, I_8 *maxLayerNo);
+static IDATA sysinfoGetUserNameHelper(J9JavaVM *vm, UDATA verboseFlags, char *buffer, UDATA length);
 
 typedef struct J9SharedVerifyStringTable {
 	void *romClassAreaStart;
@@ -2624,6 +2625,43 @@ performSharedClassesCommandLineAction(J9JavaVM* vm, J9SharedClassConfig* sharedC
 	return J9VMDLLMAIN_SILENT_EXIT_VM;
 }
 
+/* A helper to retrieve user name and store it into the buffer provided by the caller.
+ * j9sysinfo_get_env("USER") is invoked first, then j9sysinfo_get_username().
+ *
+ * @param[in] vm The Java VM
+ * @param[out] buffer Buffer for the user name
+ * @param[in] length The length of the buffer
+ *
+ * @return 0 on success, number of bytes required to hold the user name
+ * if the output buffer was too small, -1 on failure.
+ */
+static IDATA
+sysinfoGetUserNameHelper(J9JavaVM *vm, UDATA verboseFlags, char *buffer, UDATA length)
+{
+	PORT_ACCESS_FROM_JAVAVM(vm);
+
+	IDATA rc = j9sysinfo_get_env("USER", buffer, length);
+	if (rc > 0) {
+		SHRINIT_ERR_TRACE2(verboseFlags, J9NLS_SHRC_SHRINIT_FAILURE_COPYING_USERNAME_TOOLONG, length, rc);
+	} else if (rc < 0) {
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+		/* Skip j9sysinfo_get_username if a checkpoint can be taken. */
+		J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+		if (!vmFuncs->isCheckpointAllowed(vmFuncs->currentVMThread(vm)))
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+		{
+			rc = j9sysinfo_get_username(buffer, length);
+			if (rc > 0) {
+				SHRINIT_ERR_TRACE2(verboseFlags, J9NLS_SHRC_SHRINIT_FAILURE_COPYING_USERNAME_TOOLONG, length, rc);
+			} else if (rc < 0) {
+				SHRINIT_ERR_TRACE(verboseFlags, J9NLS_SHRC_SHRINIT_FAILURE_COPYING_USERNAME);
+			}
+		}
+	}
+
+	return rc;
+}
+
 bool
 modifyCacheName(J9JavaVM *vm, const char* origName, UDATA verboseFlags, char** modifiedCacheName, UDATA bufLen)
 {
@@ -2657,14 +2695,7 @@ modifyCacheName(J9JavaVM *vm, const char* origName, UDATA verboseFlags, char** m
 			modIndex = origNameLen + 1;
 			bufLeft = bufLen - modIndex;
 
-			if (j9sysinfo_get_username(&((*modifiedCacheName)[modIndex]), bufLeft) != 0) {
-				char username[CACHE_ROOT_MAXLEN];
-				if (j9sysinfo_get_username(username, CACHE_ROOT_MAXLEN) == 0) {
-					IDATA usernamelen = (IDATA)strlen(username);
-					SHRINIT_ERR_TRACE2(verboseFlags, J9NLS_SHRC_SHRINIT_FAILURE_COPYING_USERNAME_TOOLONG,bufLeft,usernamelen);
-				} else {
-					SHRINIT_ERR_TRACE(verboseFlags, J9NLS_SHRC_SHRINIT_FAILURE_COPYING_USERNAME);
-				}
+			if (0 != sysinfoGetUserNameHelper(vm, verboseFlags, &((*modifiedCacheName)[modIndex]), bufLeft)) {
 				return false;
 			}
 
@@ -2701,14 +2732,7 @@ modifyCacheName(J9JavaVM *vm, const char* origName, UDATA verboseFlags, char** m
 				case 'u':
 				case 'U':
 					/* FALLTHRU is intentional due to same behaviour for 'u' and 'U'*/
-					if (j9sysinfo_get_username(&((*modifiedCacheName)[modIndex]), bufLeft) != 0) {
-						char username[CACHE_ROOT_MAXLEN];
-						if (j9sysinfo_get_username(username, CACHE_ROOT_MAXLEN) == 0) {
-							IDATA usernamelen = (IDATA)strlen(username);
-							SHRINIT_ERR_TRACE2(verboseFlags, J9NLS_SHRC_SHRINIT_FAILURE_COPYING_USERNAME_TOOLONG,bufLeft,usernamelen);
-						} else {
-							SHRINIT_ERR_TRACE(verboseFlags, J9NLS_SHRC_SHRINIT_FAILURE_COPYING_USERNAME);
-						}
+					if (0 != sysinfoGetUserNameHelper(vm, verboseFlags, &((*modifiedCacheName)[modIndex]), bufLeft)) {
 						return false;
 					}
 					break;

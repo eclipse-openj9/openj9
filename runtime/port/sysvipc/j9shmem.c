@@ -1290,29 +1290,34 @@ j9shmem_getDir(struct J9PortLibrary* portLibrary, const char* ctrlDirName, uint3
 			} else {
 				Trc_PRT_j9shmem_getDir_tryHomeDirFailed_getEnvHomeFailed();
 			}
+			if (NULL == homeDir) {
+				struct passwd *pwent = NULL;
 #if defined(J9VM_OPT_CRIU_SUPPORT)
-			/* finalRestore is equivalent to !isCheckpointAllowed().
-			 * https://github.com/eclipse-openj9/openj9/issues/15800
-			 */
-			if (portLibrary->finalRestore)
+				/* finalRestore is equivalent to !isCheckpointAllowed().
+				 * https://github.com/eclipse-openj9/openj9/issues/15800
+				 */
+				if (!portLibrary->finalRestore) {
+					Trc_PRT_j9shmem_getDir_tryHomeDirFailed_notFinalRestore();
+				} else
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
-			{
-				if (NULL == homeDir) {
-					struct passwd *pwent = getpwuid(getuid());
-					if (NULL != pwent) {
-						uintptr_t dirLen = strlen((const char*)pwent->pw_dir);
-						if (0 < dirLen
-							&& ((dirLen + baseDirLen) < minBufLen))
-						{
-							homeDir = pwent->pw_dir;
-						} else {
-							rc = J9PORT_ERROR_SHMEM_GET_DIR_HOME_BUF_OVERFLOW;
-							Trc_PRT_j9shmem_getDir_tryHomeDirFailed_pw_dirDirTooLong(dirLen, minBufLen - baseDirLen);
-						}
-					} else {
-						rc = J9PORT_ERROR_SHMEM_GET_DIR_FAILED_TO_GET_HOME;
+				{
+					pwent = getpwuid(getuid());
+					if (NULL == pwent) {
 						Trc_PRT_j9shmem_getDir_tryHomeDirFailed_getpwuidFailed();
 					}
+				}
+				if (NULL != pwent) {
+					uintptr_t dirLen = strlen((const char*)pwent->pw_dir);
+					if ((0 < dirLen)
+						&& ((dirLen + baseDirLen) < minBufLen)
+					) {
+						homeDir = pwent->pw_dir;
+					} else {
+						rc = J9PORT_ERROR_SHMEM_GET_DIR_HOME_BUF_OVERFLOW;
+						Trc_PRT_j9shmem_getDir_tryHomeDirFailed_pw_dirDirTooLong(dirLen, minBufLen - baseDirLen);
+					}
+				} else {
+					rc = J9PORT_ERROR_SHMEM_GET_DIR_FAILED_TO_GET_HOME;
 				}
 			}
 			if (NULL != homeDir) {
