@@ -2268,6 +2268,9 @@ typedef struct J9ROMMethodHandleRef {
 #define MN_IS_TYPE			0x00080000
 #define MN_CALLER_SENSITIVE	0x00100000
 #define MN_TRUSTED_FINAL	0x00200000
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#define MN_FLATTENED		0x00400000
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 typedef struct J9ROMMethodRef {
 	U_32 classRefCPIndex;
