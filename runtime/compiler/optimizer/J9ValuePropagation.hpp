@@ -168,6 +168,35 @@ class ValuePropagation : public OMR::ValuePropagation
     */
    virtual TR::Node *innerConstrainAcall(TR::Node *node);
 
+   /**
+    * @brief Look for a likely sub type for a given class
+    *
+    * @param[in] klass : The class to be used to look for its sub type
+    *
+    * @return Resulting sub type class
+    */
+   virtual TR_OpaqueClassBlock *findLikelySubtype(TR_OpaqueClassBlock *klass);
+   /**
+    * @brief Look for a likely sub type for a given class signature
+    *
+    * @param[in] sig : The class signature to be used to look for its sub type
+    * @param[in] len : The class signature length
+    * @param[in] owningMethod : The owning method
+    *
+    * @return Resulting sub type class
+    */
+   virtual TR_OpaqueClassBlock *findLikelySubtype(const char *sig, int32_t len, TR_ResolvedMethod *owningMethod);
+   /**
+    * @brief Create a constraint if a likely sub type for a given class signature is found
+    *
+    * @param[in] owningMethod : The owning method
+    * @param[in] sig : The class signature to be used to look for its sub type
+    * @param[in] len : The class signature length
+    *
+    * @return Resulting constraint
+    */
+   virtual TR::VPConstraint* createTypeHintConstraint(TR_ResolvedMethod *owningMethod, const char *sig, int32_t len);
+
    private:
 
    /**
