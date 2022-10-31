@@ -503,6 +503,49 @@ final class J9VMInternals {
 	 */
 	static native int identityHashCode(Object anObject);
 
+	/*[IF INLINE-TYPES] */
+	/**
+	 * Answers an integer hash code for the parameter.
+	 * The caller must ensure that the parameter is a value type.
+	 * The hash code returned is the same one that would
+	 * be returned by java.lang.Object.hashCode(), assuming
+	 * the object's class has not overridden hashCode() and
+	 * that the parameter is a value type.
+	 *
+	 * @param		anObject	the object
+	 * @return		the hash code for the object
+	 * @throws		InternalError if the object is not a value type
+	 *
+	 * @see			java.lang.Object#hashCode
+	 */
+	static int valueHashCode(Object anObject) {
+		int hashcode;
+
+		try {
+			Class<?> valueObjectMethods = Class.forName("java.lang.runtime.ValueObjectMethods");
+			Method valueObjectHashCode = valueObjectMethods.getDeclaredMethod("valueObjectHashCode", Object.class);
+			valueObjectHashCode.setAccessible(true);
+			hashcode = (Integer)valueObjectHashCode.invoke(null, anObject);
+		} catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+			throw new InternalError(e);
+		}
+
+		if (positiveOnlyHashcodes()) {
+			hashcode &= 0x7FFF_FFFF;
+		}
+
+		return hashcode;
+	}
+
+	/**
+	 * Returns true if hash codes are positive only,
+	 * false otherwise.
+	 *
+	 * @return		A boolean indicating whether hash codes are all positive
+	 */
+	static native boolean positiveOnlyHashcodes();
+	/*[ENDIF] INLINE-TYPES */
+
 	/**
 	 * Primitive implementation of Object.clone().
 	 * Calling with null will cause a crash, so the caller
