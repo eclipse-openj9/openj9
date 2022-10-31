@@ -58,8 +58,41 @@ AOTCacheRecord::free(void *ptr)
    TR::Compiler->persistentGlobalMemory()->freePersistentMemory(ptr);
    }
 
+// Read a single AOT cache record R from a cache file
+template<class R> R *
+AOTCacheRecord::readRecord(FILE *f, const JITServerAOTCacheReadContext &context)
+   {
+   typename R::SerializationRecord header;
+   if (1 != fread(&header, sizeof(header), 1, f))
+      return NULL;
+
+   if (!header.isValidHeader(context))
+      return NULL;
+
+   R *record = new (AOTCacheRecord::allocate(R::size(header))) R(context, header);
+   memcpy((void *)record->dataAddr(), &header, sizeof(header));
+
+   size_t variableDataBytes = record->dataAddr()->size() - sizeof(header);
+   if (0 != variableDataBytes)
+      {
+      if (1 != fread((uint8_t *)record->dataAddr() + sizeof(header), variableDataBytes, 1, f))
+         {
+         AOTCacheRecord::free(record);
+         return NULL;
+         }
+      }
+
+   if (!record->setSubrecordPointers(context))
+      {
+      AOTCacheRecord::free(record);
+      return NULL;
+      }
+
+   return record;
+   }
+
 bool
-AOTSerializationRecord::isValid(AOTSerializationRecordType type) const
+AOTSerializationRecord::isValidHeader(AOTSerializationRecordType type) const
    {
    return (type == this->type()) &&
           (0 != this->id());
@@ -91,27 +124,6 @@ AOTCacheClassLoaderRecord::create(uintptr_t id, const uint8_t *name, size_t name
    return new (ptr) AOTCacheClassLoaderRecord(id, name, nameLength);
    }
 
-AOTCacheClassLoaderRecord *
-AOTCacheClassLoaderRecord::read(FILE *f, const JITServerAOTCacheReadContext &context)
-   {
-   ClassLoaderSerializationRecord header;
-   if (1 != fread(&header, sizeof(header), 1, f))
-      return NULL;
-
-   if (!header.isValid())
-      return NULL;
-
-   auto record = new (AOTCacheRecord::allocate(size(header.nameLength()))) AOTCacheClassLoaderRecord();
-   memcpy((void *)record->dataAddr(), &header, sizeof(header));
-   if (1 != fread((uint8_t *)record->dataAddr() + sizeof(header), header.AOTSerializationRecord::size() - sizeof(header), 1, f))
-      {
-      AOTCacheRecord::free(record);
-      return NULL;
-      }
-
-   return record;
-   }
-
 ClassSerializationRecord::ClassSerializationRecord(uintptr_t id, uintptr_t classLoaderId,
                                                    const JITServerROMClassHash &hash, const J9ROMClass *romClass) :
    AOTSerializationRecord(size(J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(romClass))), id, AOTSerializationRecordType::Class),
@@ -127,6 +139,14 @@ ClassSerializationRecord::ClassSerializationRecord() :
    {
    }
 
+bool
+ClassSerializationRecord::isValidHeader(const JITServerAOTCacheReadContext &context) const
+   {
+   return AOTSerializationRecord::isValidHeader(AOTSerializationRecordType::Class) &&
+          (classLoaderId() < context._classLoaderRecords.size()) &&
+          context._classLoaderRecords[classLoaderId()];
+   }
+
 AOTCacheClassRecord::AOTCacheClassRecord(uintptr_t id, const AOTCacheClassLoaderRecord *classLoaderRecord,
                                          const JITServerROMClassHash &hash, const J9ROMClass *romClass) :
    _classLoaderRecord(classLoaderRecord),
@@ -134,8 +154,8 @@ AOTCacheClassRecord::AOTCacheClassRecord(uintptr_t id, const AOTCacheClassLoader
    {
    }
 
-AOTCacheClassRecord::AOTCacheClassRecord(const AOTCacheClassLoaderRecord *classLoaderRecord) :
-   _classLoaderRecord(classLoaderRecord)
+AOTCacheClassRecord::AOTCacheClassRecord(const JITServerAOTCacheReadContext &context, const ClassSerializationRecord &header) :
+   _classLoaderRecord(context._classLoaderRecords[header.classLoaderId()])
    {
    }
 
@@ -153,29 +173,6 @@ AOTCacheClassRecord::subRecordsDo(const std::function<void(const AOTCacheRecord 
    f(_classLoaderRecord);
    }
 
-AOTCacheClassRecord *
-AOTCacheClassRecord::read(FILE *f, const JITServerAOTCacheReadContext &context)
-   {
-   ClassSerializationRecord header;
-   if (1 != fread(&header, sizeof(header), 1, f))
-      return NULL;
-
-   if (!header.isValid() ||
-       (header.classLoaderId() >= context._classLoaderRecords.size()) ||
-       !context._classLoaderRecords[header.classLoaderId()])
-      return NULL;
-
-   auto record = new (AOTCacheRecord::allocate(size(header.nameLength()))) AOTCacheClassRecord(context._classLoaderRecords[header.classLoaderId()]);
-   memcpy((void *)record->dataAddr(), &header, sizeof(header));
-   if (1 != fread((uint8_t *)record->dataAddr() + sizeof(header), header.AOTSerializationRecord::size() - sizeof(header), 1, f))
-      {
-      AOTCacheRecord::free(record);
-      return NULL;
-      }
-
-   return record;
-   }
-
 MethodSerializationRecord::MethodSerializationRecord(uintptr_t id, uintptr_t definingClassId, uint32_t index) :
    AOTSerializationRecord(sizeof(*this), id, AOTSerializationRecordType::Method),
    _definingClassId(definingClassId), _index(index)
@@ -188,6 +185,14 @@ MethodSerializationRecord::MethodSerializationRecord() :
    {
    }
 
+bool
+MethodSerializationRecord::isValidHeader(const JITServerAOTCacheReadContext &context) const
+      {
+      return AOTSerializationRecord::isValidHeader(AOTSerializationRecordType::Method) &&
+             (definingClassId() < context._classRecords.size()) &&
+             context._classRecords[definingClassId()];
+      }
+
 AOTCacheMethodRecord::AOTCacheMethodRecord(uintptr_t id, const AOTCacheClassRecord *definingClassRecord,
                                            uint32_t index) :
    _definingClassRecord(definingClassRecord),
@@ -195,8 +200,8 @@ AOTCacheMethodRecord::AOTCacheMethodRecord(uintptr_t id, const AOTCacheClassReco
    {
    }
 
-AOTCacheMethodRecord::AOTCacheMethodRecord(const AOTCacheClassRecord *definingClassRecord) :
-   _definingClassRecord(definingClassRecord)
+AOTCacheMethodRecord::AOTCacheMethodRecord(const JITServerAOTCacheReadContext &context, const MethodSerializationRecord &header) :
+   _definingClassRecord(context._classRecords[header.definingClassId()])
    {
    }
 
@@ -211,24 +216,6 @@ void
 AOTCacheMethodRecord::subRecordsDo(const std::function<void(const AOTCacheRecord *)> &f) const
    {
    f(_definingClassRecord);
-   }
-
-AOTCacheMethodRecord *
-AOTCacheMethodRecord::read(FILE *f, const JITServerAOTCacheReadContext &context)
-   {
-   MethodSerializationRecord header;
-   if (1 != fread(&header, sizeof(header), 1, f))
-      return NULL;
-
-   if (!header.isValid() ||
-       (header.definingClassId() >= context._classRecords.size()) ||
-       !context._classRecords[header.definingClassId()])
-      return NULL;
-
-   auto record = new (AOTCacheRecord::allocate(sizeof(AOTCacheMethodRecord))) AOTCacheMethodRecord(context._classRecords[header.definingClassId()]);
-   memcpy((void *)record->dataAddr(), &header, sizeof(header));
-
-   return record;
    }
 
 template<class D, class R, typename... Args>
@@ -248,37 +235,19 @@ AOTCacheListRecord<D, R, Args...>::subRecordsDo(const std::function<void(const A
       f(records()[i]);
    }
 
-template<class D, class R, typename... Args> AOTCacheListRecord<D, R, Args...>*
-AOTCacheListRecord<D, R, Args...>::read(FILE *f, const Vector<R *> &cacheRecords)
+template<class D, class R, typename... Args> bool
+AOTCacheListRecord<D, R, Args...>::setSubrecordPointers(const Vector<R *> &cacheRecords)
    {
-   D header;
-   if (1 != fread(&header, sizeof(header), 1, f))
-      return NULL;
-
-   if (!header.isValid())
-      return NULL;
-
-   auto record = new (AOTCacheRecord::allocate(size(header.list().length()))) AOTCacheListRecord();
-   memcpy((void *)record->dataAddr(), &header, sizeof(header));
-
-   if (1 != fread((uint8_t *)record->dataAddr() + sizeof(header), header.AOTSerializationRecord::size() - sizeof(header), 1, f))
+   for (size_t i = 0; i < data().list().length(); ++i)
       {
-      AOTCacheRecord::free(record);
-      return NULL;
-      }
-
-   for (size_t i = 0; i < header.list().length(); ++i)
-      {
-      uintptr_t id = record->data().list().ids()[i];
+      uintptr_t id = data().list().ids()[i];
       if ((id >= cacheRecords.size()) || !cacheRecords[id])
          {
-         AOTCacheRecord::free(record);
-         return NULL;
+         return false;
          }
-      record->records()[i] = cacheRecords[id];
+      records()[i] = cacheRecords[id];
       }
-
-   return record;
+   return true;
    }
 
 ClassChainSerializationRecord::ClassChainSerializationRecord(uintptr_t id, size_t length) :
@@ -300,6 +269,11 @@ AOTCacheClassChainRecord::create(uintptr_t id, const AOTCacheClassRecord *const 
    return new (ptr) AOTCacheClassChainRecord(id, records, length);
    }
 
+bool
+AOTCacheClassChainRecord::setSubrecordPointers(const JITServerAOTCacheReadContext &context)
+   {
+   return AOTCacheListRecord::setSubrecordPointers(context._classRecords);
+   }
 
 WellKnownClassesSerializationRecord::WellKnownClassesSerializationRecord(uintptr_t id, size_t length,
                                                                          uintptr_t includedClasses) :
@@ -322,6 +296,11 @@ AOTCacheWellKnownClassesRecord::create(uintptr_t id, const AOTCacheClassChainRec
    return new (ptr) AOTCacheWellKnownClassesRecord(id, records, length, includedClasses);
    }
 
+bool
+AOTCacheWellKnownClassesRecord::setSubrecordPointers(const JITServerAOTCacheReadContext &context)
+   {
+   return AOTCacheListRecord::setSubrecordPointers(context._classChainRecords);
+   }
 
 AOTHeaderSerializationRecord::AOTHeaderSerializationRecord(uintptr_t id, const TR_AOTHeader *header) :
    AOTSerializationRecord(sizeof(*this), id, AOTSerializationRecordType::AOTHeader),
@@ -347,22 +326,6 @@ AOTCacheAOTHeaderRecord::create(uintptr_t id, const TR_AOTHeader *header)
    return new (ptr) AOTCacheAOTHeaderRecord(id, header);
    }
 
-AOTCacheAOTHeaderRecord *
-AOTCacheAOTHeaderRecord::read(FILE *f, const JITServerAOTCacheReadContext &context)
-   {
-   AOTHeaderSerializationRecord header;
-   if (1 != fread(&header, sizeof(header), 1, f))
-      return NULL;
-
-   if (!header.isValid())
-      return NULL;
-
-   auto record = new (AOTCacheRecord::allocate(sizeof(AOTCacheAOTHeaderRecord))) AOTCacheAOTHeaderRecord();
-   memcpy((void *)record->dataAddr(), &header, sizeof(header));
-
-   return record;
-   }
-
 SerializedAOTMethod::SerializedAOTMethod(uintptr_t definingClassChainId, uint32_t index,
                                          TR_Hotness optLevel, uintptr_t aotHeaderId, size_t numRecords,
                                          const void *code, size_t codeSize, const void *data, size_t dataSize) :
@@ -384,9 +347,13 @@ SerializedAOTMethod::SerializedAOTMethod() :
    }
 
 bool
-SerializedAOTMethod::isValid() const
+SerializedAOTMethod::isValidHeader(const JITServerAOTCacheReadContext &context) const
    {
-   return _optLevel < TR_Hotness::numHotnessLevels;
+   return _optLevel < TR_Hotness::numHotnessLevels &&
+          (definingClassChainId() < context._classChainRecords.size()) &&
+          (aotHeaderId() < context._aotHeaderRecords.size()) &&
+          context._classChainRecords[definingClassChainId()] &&
+          context._aotHeaderRecords[aotHeaderId()];
    }
 
 CachedAOTMethod::CachedAOTMethod(const AOTCacheClassChainRecord *definingClassChainRecord, uint32_t index,
@@ -406,9 +373,9 @@ CachedAOTMethod::CachedAOTMethod(const AOTCacheClassChainRecord *definingClassCh
       }
    }
 
-CachedAOTMethod::CachedAOTMethod(const AOTCacheClassChainRecord *definingClassChainRecord) :
+CachedAOTMethod::CachedAOTMethod(const JITServerAOTCacheReadContext &context, const SerializedAOTMethod &header) :
    _nextRecord(NULL),
-   _definingClassChainRecord(definingClassChainRecord)
+   _definingClassChainRecord(context._classChainRecords[header.definingClassChainId()])
    {
    }
 
@@ -423,68 +390,48 @@ CachedAOTMethod::create(const AOTCacheClassChainRecord *definingClassChainRecord
                                     records, code, codeSize, data, dataSize);
    }
 
-CachedAOTMethod *
-CachedAOTMethod::read(FILE *f, const JITServerAOTCacheReadContext &context)
+bool
+CachedAOTMethod::setSubrecordPointers(const JITServerAOTCacheReadContext &context)
    {
-   SerializedAOTMethod header;
-   if (1 != fread(&header, sizeof(header), 1, f))
-      return NULL;
-
-   if ((!header.isValid()) ||
-       (header.definingClassChainId() >= context._classChainRecords.size()) ||
-       (header.aotHeaderId() >= context._aotHeaderRecords.size()) ||
-       !context._classChainRecords[header.definingClassChainId()])
-      return NULL;
-
-   auto record = new (AOTCacheRecord::allocate(size(header.numRecords(), header.codeSize(), header.dataSize())))
-                     CachedAOTMethod(context._classChainRecords[header.definingClassChainId()]);
-   memcpy(&record->_data, &header, sizeof(header));
-
-   if (1 != fread(record->data().offsets(), sizeof(SerializedSCCOffset) * header.numRecords() + header.codeSize() + header.dataSize(), 1, f))
-      goto error;
-
-   for (size_t i = 0; i < header.numRecords(); ++i)
+   // The defining class chain record pointer for the record will have been set by the CachedAOTMethod constructor at this point
+   for (size_t i = 0; i < data().numRecords(); ++i)
       {
-      const SerializedSCCOffset &sccOffset = record->data().offsets()[i];
+      const SerializedSCCOffset &sccOffset = data().offsets()[i];
 
       switch (sccOffset.recordType())
          {
          case AOTSerializationRecordType::ClassLoader:
             if ((sccOffset.recordId() >= context._classLoaderRecords.size()) || !context._classLoaderRecords[sccOffset.recordId()])
-               goto error;
-            record->records()[i] = context._classLoaderRecords[sccOffset.recordId()];
+               return false;
+            records()[i] = context._classLoaderRecords[sccOffset.recordId()];
             break;
          case AOTSerializationRecordType::Class:
             if ((sccOffset.recordId() >= context._classRecords.size()) || !context._classRecords[sccOffset.recordId()])
-               goto error;
-            record->records()[i] = context._classRecords[sccOffset.recordId()];
+               return false;
+            records()[i] = context._classRecords[sccOffset.recordId()];
             break;
          case AOTSerializationRecordType::Method:
             if ((sccOffset.recordId() >= context._methodRecords.size()) || !context._methodRecords[sccOffset.recordId()])
-               goto error;
-            record->records()[i] = context._methodRecords[sccOffset.recordId()];
+               return false;
+            records()[i] = context._methodRecords[sccOffset.recordId()];
             break;
          case AOTSerializationRecordType::ClassChain:
             if ((sccOffset.recordId() >= context._classChainRecords.size()) || !context._classChainRecords[sccOffset.recordId()])
-               goto error;
-            record->records()[i] = context._classChainRecords[sccOffset.recordId()];
+               return false;
+            records()[i] = context._classChainRecords[sccOffset.recordId()];
             break;
          case AOTSerializationRecordType::WellKnownClasses:
             if ((sccOffset.recordId() >= context._wellKnownClassesRecords.size()) || !context._wellKnownClassesRecords[sccOffset.recordId()])
-               goto error;
-            record->records()[i] = context._wellKnownClassesRecords[sccOffset.recordId()];
+               return false;
+            records()[i] = context._wellKnownClassesRecords[sccOffset.recordId()];
             break;
          case AOTSerializationRecordType::AOTHeader: // never associated with an SCC offset
          default:
-            goto error;
+            return false;
          }
       }
 
-   return record;
-
-error:
-   AOTCacheRecord::free(record);
-   return NULL;
+   return true;
    }
 
 bool
@@ -1279,7 +1226,7 @@ JITServerAOTCache::readRecords(FILE *f,
       if (!JITServerAOTCacheMap::cacheHasSpace())
          return false;
 
-      V *record = V::read(f, context);
+      V *record = AOTCacheRecord::readRecord<V>(f, context);
       if (!record)
          return false;
 
@@ -1337,9 +1284,8 @@ JITServerAOTCache::readCache(FILE *f, const JITServerAOTCacheHeader &header, TR_
       if (!JITServerAOTCacheMap::cacheHasSpace())
          return false;
 
-      auto record = CachedAOTMethod::read(f, context);
-
-      if (!record || !context._aotHeaderRecords[record->data().aotHeaderId()])
+      auto record = AOTCacheRecord::readRecord<CachedAOTMethod>(f, context);
+      if (!record)
          return false;
 
       CachedMethodKey key(record->definingClassChainRecord(),
