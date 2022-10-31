@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -178,8 +178,6 @@ class OMR_EXTENSIBLE TreeEvaluator: public OMR::TreeEvaluatorConnector
    static TR_OpaqueClassBlock* interpreterProfilingInstanceOfOrCheckCastInfo(TR::CodeGenerator * cg, TR::Node * node);
 
    static bool checkcastShouldOutlineSuperClassTest(TR::Node *castClassNode, TR::CodeGenerator *cg);
-
-   static bool loadLookaheadAfterHeaderAccess(TR::Node *node, int32_t &fieldOffset, TR::CodeGenerator *cg);
 
    static bool instanceOfNeedHelperCall(bool testCastClassIsSuper, bool isFinalClass);
 

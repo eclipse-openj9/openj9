@@ -1819,63 +1819,6 @@ J9::TreeEvaluator::checkcastShouldOutlineSuperClassTest(TR::Node *node, TR::Code
     }
 
 
-bool
-J9::TreeEvaluator::loadLookaheadAfterHeaderAccess(TR::Node *node, int32_t &fieldOffset, TR::CodeGenerator *cg)
-   {
-   TR::Node *object = node->getFirstChild();
-
-   TR::TreeTop *currTree = cg->getCurrentEvaluationTreeTop()->getNextTreeTop();
-   while (currTree)
-      {
-      TR::Node *currNode = currTree->getNode();
-      if (currNode->getOpCodeValue() == TR::aloadi || currNode->getOpCodeValue() == TR::iloadi)
-         {
-         if (currNode->getFirstChild() == object)
-            {
-            int displacement = 0;
-            TR::Symbol *sym = currNode->getSymbolReference()->getSymbol();
-            if (sym)
-               {
-               if (sym->isRegisterMappedSymbol() &&
-                   sym->getRegisterMappedSymbol()->getOffset() != 0)
-                  {
-                  displacement = sym->getRegisterMappedSymbol()->getOffset();
-                  }
-               }
-
-
-            fieldOffset = displacement + currNode->getSymbolReference()->getOffset();
-            return true;
-            }
-         }
-      else if (currNode->getNumChildren() > 0 &&
-               currNode->getFirstChild()->getNumChildren() > 0 &&
-               (currNode->getFirstChild()->getOpCodeValue() == TR::aloadi || currNode->getFirstChild()->getOpCodeValue() == TR::iloadi))
-         {
-         if (currNode->getFirstChild()->getFirstChild() == object)
-            {
-            int displacement = 0;
-            TR::Symbol *sym = currNode->getFirstChild()->getSymbolReference()->getSymbol();
-            if (sym)
-               {
-               if (sym->isRegisterMappedSymbol() &&
-                   sym->getRegisterMappedSymbol()->getOffset() != 0)
-                  {
-                  displacement = sym->getRegisterMappedSymbol()->getOffset();
-                  }
-               }
-
-            fieldOffset = displacement + currNode->getFirstChild()->getSymbolReference()->getOffset();
-            return true;
-            }
-         }
-      currTree = currTree->getNextTreeTop();
-      }
-
-   return false;
-   }
-
-
 // only need a helper call if the class is not super and not final, otherwise
 // it can be determined without a call-out
 bool J9::TreeEvaluator::instanceOfNeedHelperCall(bool testCastClassIsSuper, bool isFinalClass)
