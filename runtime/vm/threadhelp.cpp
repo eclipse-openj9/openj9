@@ -460,9 +460,9 @@ continueTimeCompensation:
 		/* There was a C/R and a compensation might be required,
 		 * or this is a halted thread at single threaded mode.
 		 */
-		bool timeCompensationRequired = TRUE;
+		bool timeCompensationRequired = true;
 		const I_8 timeout10ms = 10;
-		bool timedout = FALSE;
+		bool timedout = false;
 		if (HELPER_TYPE_THREAD_SLEEP == threadHelperType) {
 			timedout = 0 == rc;
 		} else {
@@ -494,7 +494,7 @@ continueTimeCompensation:
 					nanos = 0;
 				} else {
 					/* timed out and no compensation required */
-					timeCompensationRequired = FALSE;
+					timeCompensationRequired = false;
 				}
 			} else {
 				/* not timed out yet, millisPast == millis and nanos > nanoTimePast */
@@ -507,7 +507,7 @@ continueTimeCompensation:
 			nanos = 0;
 		} else {
 			/* No time compensation if not waitTimed and timedout, or not paused at single threaded mode. */
-			timeCompensationRequired = FALSE;
+			timeCompensationRequired = false;
 		}
 		if (timeCompensationRequired) {
 			Assert_VM_false((0 == millis) && (0 == nanos));
