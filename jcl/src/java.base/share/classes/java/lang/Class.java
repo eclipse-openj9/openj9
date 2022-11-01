@@ -2203,9 +2203,18 @@ public int getModifiers() {
 		rawModifiers &= Modifier.PUBLIC | Modifier.PRIVATE | Modifier.PROTECTED |
 				Modifier.ABSTRACT | Modifier.FINAL;	
 	} else {
-		rawModifiers &= Modifier.PUBLIC | Modifier.PRIVATE | Modifier.PROTECTED |
-					Modifier.STATIC | Modifier.FINAL | Modifier.INTERFACE |
-					Modifier.ABSTRACT | SYNTHETIC | ENUM | ANNOTATION;
+		int masks = Modifier.PUBLIC | Modifier.PRIVATE | Modifier.PROTECTED |
+				Modifier.STATIC | Modifier.FINAL | Modifier.INTERFACE |
+				Modifier.ABSTRACT | SYNTHETIC | ENUM | ANNOTATION;
+/*[IF INLINE-TYPES]*/
+		/**
+		 * ACC_PRIMITIVE and ACC_STRICT share the same bit (0x0800).
+		 * ACC_PRIMITIVE is applied to classes and ACC_STRICT is applied to methods.
+		 * OpenJDK has not added Modifier.PRIMITIVE yet. It is using Modifier.STRICT for the bit.
+		 */
+		masks |= Modifier.IDENTITY | Modifier.VALUE | Modifier.STRICT;
+/*[ENDIF] INLINE-TYPES */
+		rawModifiers &= masks;
 	}
 	return rawModifiers;
 }

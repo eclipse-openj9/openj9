@@ -2178,7 +2178,12 @@ findObjectDeadlockedThreads(J9VMThread *currentThread,
 	threadCount = 0;
 	vmThread = currentThread;
 	do {
-		if (vmThread->threadObject != NULL) {
+		if ((NULL != vmThread->threadObject)
+#if JAVA_SPEC_VERSION >= 19
+		/* Exclude J9VMThreads if a continuation is mounted to match the RI. */
+		&& (NULL == vmThread->currentContinuation)
+#endif /* JAVA_SPEC_VERSION >= 19 */
+		) {
 			++threadCount;
 		}
 	} while ((vmThread = vmThread->linkNext) != currentThread);
@@ -2211,7 +2216,12 @@ findObjectDeadlockedThreads(J9VMThread *currentThread,
 	threadCount = 0;
 	vmThread = currentThread;
 	do {
-		if (vmThread->threadObject != NULL) {
+		if ((NULL != vmThread->threadObject)
+#if JAVA_SPEC_VERSION >= 19
+		/* Exclude J9VMThreads if a continuation is mounted to match the RI. */
+		&& (NULL == vmThread->currentContinuation)
+#endif /* JAVA_SPEC_VERSION >= 19 */
+		) {
 			UDATA state;
 			J9VMThread *owner;
 			j9object_t monitorObject;
