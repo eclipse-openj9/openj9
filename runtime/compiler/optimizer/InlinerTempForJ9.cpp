@@ -356,6 +356,8 @@ TR_J9InlinerPolicy::alwaysWorthInlining(TR_ResolvedMethod * calleeMethod, TR::No
       case TR::java_lang_String_regionMatchesInternal:
       case TR::java_lang_String_regionMatches:
       case TR::java_lang_Class_newInstance:
+      case TR::jdk_internal_util_Preconditions_checkIndex:
+
       // we rely on inlining compareAndSwap so we see the inner native call and can special case it
       case TR::com_ibm_jit_JITHelpers_compareAndSwapIntInObject:
       case TR::com_ibm_jit_JITHelpers_compareAndSwapLongInObject:
