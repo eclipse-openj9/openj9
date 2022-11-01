@@ -297,8 +297,8 @@ x86-64_linux:
       8: 'ci.role.build && hw.arch.x86 && sw.tool.docker'
       11: 'ci.role.build && hw.arch.x86 && sw.tool.docker'
     docker_image:
-      8: 'eclipseopenj9/jenkins-agent-x86-centos6:16'
-      11: 'eclipseopenj9/jenkins-agent-x86-centos6:16'
+      8: 'eclipseopenj9/jenkins-agent-x86-centos6:24'
+      11: 'eclipseopenj9/jenkins-agent-x86-centos6:24'
   extra_configure_options:
     all: '--enable-jitserver'
   build_env:

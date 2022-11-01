@@ -169,6 +169,10 @@ validate_options() {
             echo "CentOS version 6 is not supported on $arch" >&2
             exit 1
           fi
+          if [ $arch = x86_64 ] ; then
+            # Certificates are old on CentOS:6 so we can't expect wget to check.
+            wget_O="wget --progress=dot:mega --no-check-certificate -O"
+          fi
           ;;
         7)
           ;;
@@ -372,6 +376,7 @@ fi
   echo "    perl-devel \\"
   echo "    perl-ExtUtils-MakeMaker \\" # required by git
   echo "    perl-GD \\"
+  echo "    perl-IPC-Cmd \\" # required for openssl v3 compiles
   echo "    perl-libwww-perl \\"
   echo "    perl-Time-HiRes \\"
   echo "    systemtap-devel \\"
@@ -459,7 +464,9 @@ if [ $arch = x86_64 ] ; then
   echo " && $wget_O gettext.tar.gz http://ftp.gnu.org/gnu/gettext/gettext-$gettext_version.tar.gz \\"
   echo " && tar -xzf gettext.tar.gz \\"
   echo " && cd gettext-$gettext_version \\"
+if [ $version != 6 ] ; then
   echo " && ./autogen.sh --skip-gnulib \\"
+fi
   echo " && ./configure --disable-nls \\"
   echo " && make \\"
   echo " && make install \\"
