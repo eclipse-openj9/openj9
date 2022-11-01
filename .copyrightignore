@@ -1,3 +1,29 @@
 //List of files that don't require copyrights
 //One file per line, and full paths must be used
 .copyrightignore
+
+// One could arguably claim copyright for these files
+.github/actions/spelling/patterns/patterns-runtime.txt
+.github/actions/spelling/patterns/patterns.txt
+
+.github/actions/spelling/excludes.txt
+
+// Dictionaries shouldn't be copyrightable
+.github/actions/spelling/allow/other.txt
+.github/actions/spelling/allow/runtime.txt
+.github/actions/spelling/allow/supplement-runtime.txt
+.github/actions/spelling/allow/supplement-test.txt
+.github/actions/spelling/allow/test.txt
+.github/actions/spelling/allow/words.txt
+.github/actions/spelling/expect/check-spelling-quirk-runtime.txt
+.github/actions/spelling/expect/expect-other.txt
+.github/actions/spelling/expect/expect-runtime.txt
+.github/actions/spelling/expect/expect-test.txt
+.github/actions/spelling/expect/expect.txt
+.github/actions/spelling/expect/typos-other.txt
+.github/actions/spelling/expect/typos-runtime.txt
+.github/actions/spelling/expect/typos-test.txt
+.github/actions/spelling/reject.txt
+
+// The contents of `advice.md` are included in GitHub comments
+.github/actions/spelling/advice.md
