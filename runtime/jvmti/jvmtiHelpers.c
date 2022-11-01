@@ -1980,10 +1980,17 @@ getJ9VMContinuationToWalk(J9VMThread *currentThread, J9VMThread *targetThread, j
 			continuation = J9VMJDKINTERNALVMCONTINUATION_VMREF(currentThread, contObject);
 		}
 	} else {
-		/* J9VMThread->currentContinuation is set to NULL if a virtual thread is not mounted.
-		 * If a virtual thread is mounted, currentContinuation stores the carrier thread details.
+		/* If a virtual thread is not mounted and a continuation is being run directly on a
+		 * platform thread, then the continuation is considered part of the platform thread,
+		 * and the fields should not be swapped with J9VMContinuation->currentContinuation
+		 * to get the platform thread details. This behaviour matches the RI.
 		 */
-		continuation = targetThread->currentContinuation;
+		if (threadObject != targetThread->threadObject) {
+			/* Get platform thread details from J9VMThread->currentContinuation IFF it
+			 * is not mounted.
+			 */
+			continuation = targetThread->currentContinuation;
+		}
 	}
 	return continuation;
 }
