@@ -21,11 +21,12 @@
  *******************************************************************************/
 package org.openj9.test.java.lang;
 
+import java.lang.ref.WeakReference;
+import org.openj9.test.util.VersionCheck;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 import org.testng.Assert;
 import org.testng.AssertJUnit;
-import java.lang.ref.WeakReference;
 
 @Test(groups = { "level.sanity" })
 public class Test_Thread {
@@ -734,29 +735,38 @@ public class Test_Thread {
 	 */
 	@Test
 	public void test_resume() {
-		int orgval;
-		ResSupThread t;
-		try {
-			t = new ResSupThread(Thread.currentThread());
-			synchronized (t) {
-				ct = new Thread(t, "Interupt Test2");
-				ct.start();
-				t.wait();
+		if (VersionCheck.major() < 20) {
+			int orgval;
+			ResSupThread t;
+			try {
+				t = new ResSupThread(Thread.currentThread());
+				synchronized (t) {
+					ct = new Thread(t, "Interupt Test2");
+					ct.start();
+					t.wait();
+				}
+				ct.suspend();
+				// Wait to be sure the suspend has occurred
+				Thread.sleep(500);
+				orgval = t.getCheckVal();
+				// Wait to be sure the thread is suspended
+				Thread.sleep(500);
+				AssertJUnit.assertTrue("Failed to suspend thread", orgval == t.getCheckVal());
+				ct.resume();
+				// Wait to be sure the resume has occurred.
+				Thread.sleep(500);
+				AssertJUnit.assertTrue("Failed to resume thread", orgval != t.getCheckVal());
+				ct.interrupt();
+			} catch (InterruptedException e) {
+				Assert.fail("Unexpected interrupt occurred", e);
 			}
-			ct.suspend();
-			// Wait to be sure the suspend has occurred
-			Thread.sleep(500);
-			orgval = t.getCheckVal();
-			// Wait to be sure the thread is suspended
-			Thread.sleep(500);
-			AssertJUnit.assertTrue("Failed to suspend thread", orgval == t.getCheckVal());
-			ct.resume();
-			// Wait to be sure the resume has occurred.
-			Thread.sleep(500);
-			AssertJUnit.assertTrue("Failed to resume thread", orgval != t.getCheckVal());
-			ct.interrupt();
-		} catch (InterruptedException e) {
-			Assert.fail("Unexpected interrupt occurred", e);
+		} else {
+			try {
+				Thread.currentThread().resume();
+				Assert.fail("expected UnsupportedOperationException");
+			} catch (UnsupportedOperationException e) {
+				// expected
+			}
 		}
 	}
 
@@ -964,31 +974,40 @@ public class Test_Thread {
 	 */
 	@Test
 	public void test_stop() {
-		try {
-			Runnable r = new ResSupThread(null);
-			synchronized (r) {
-				st = new Thread(r, "Interupt Test5");
-				st.start();
-				r.wait();
+		if (VersionCheck.major() < 20) {
+			try {
+				Runnable r = new ResSupThread(null);
+				synchronized (r) {
+					st = new Thread(r, "Interupt Test5");
+					st.start();
+					r.wait();
+				}
+			} catch (InterruptedException e) {
+				Assert.fail("Unexpected interrupt received", e);
 			}
-		} catch (InterruptedException e) {
-			Assert.fail("Unexpected interrupt received", e);
-		}
-		st.stop();
+			st.stop();
 
-		/*
-		 * Thread.stop() implementation is changed from 1.1.7 to the 1.2
-		 * behaviour. now stop() doesn't ensure immediate thread death, so we
-		 * have to wait till st thread joins back to current thread, before
-		 * making an isAlive() check.
-		 */
-		try {
-			st.join(10000);
-		} catch (InterruptedException e1) {
-			st.interrupt();
-			Assert.fail("Failed to stopThread before 10000 timeout", e1);
+			/*
+			 * Thread.stop() implementation is changed from 1.1.7 to the 1.2
+			 * behaviour. now stop() doesn't ensure immediate thread death, so we
+			 * have to wait till st thread joins back to current thread, before
+			 * making an isAlive() check.
+			 */
+			try {
+				st.join(10000);
+			} catch (InterruptedException e1) {
+				st.interrupt();
+				Assert.fail("Failed to stopThread before 10000 timeout", e1);
+			}
+			AssertJUnit.assertTrue("Failed to stopThread", !st.isAlive());
+		} else {
+			try {
+				Thread.currentThread().stop();
+				Assert.fail("expected UnsupportedOperationException");
+			} catch (UnsupportedOperationException e) {
+				// expected
+			}
 		}
-		AssertJUnit.assertTrue("Failed to stopThread", !st.isAlive());
 	}
 
 	/**
@@ -1006,16 +1025,25 @@ public class Test_Thread {
 				}
 			}
 		}
-		try {
-			StopBeforeStartThread t = new StopBeforeStartThread();
-			t.stop();
-			t.start();
-			t.join();
-			synchronized (t) {
-				AssertJUnit.assertFalse("thread should not run if stop called before start, stop()", t.failed);
+		if (VersionCheck.major() < 20) {
+			try {
+				StopBeforeStartThread t = new StopBeforeStartThread();
+				t.stop();
+				t.start();
+				t.join();
+				synchronized (t) {
+					AssertJUnit.assertFalse("thread should not run if stop called before start, stop()", t.failed);
+				}
+			} catch (Exception e) {
+				Assert.fail("Unexpected exception:", e);
 			}
-		} catch (Exception e) {
-			Assert.fail("Unexpected exception:", e);
+		} else {
+			try {
+				Thread.currentThread().stop();
+				Assert.fail("expected UnsupportedOperationException");
+			} catch (UnsupportedOperationException e) {
+				// expected
+			}
 		}
 	}
 
@@ -1024,55 +1052,64 @@ public class Test_Thread {
 	 */
 	@Test
 	public void test_suspend() {
-		int orgval;
-		ResSupThread t = new ResSupThread(Thread.currentThread());
-		try {
-			synchronized (t) {
-				ct = new Thread(t, "Interupt Test6");
-				ct.start();
-				t.wait();
-			}
-			ct.suspend();
-			// Wait to be sure the suspend has occurred
-			Thread.sleep(500);
-			orgval = t.getCheckVal();
-			// Wait to be sure the thread is suspended
-			Thread.sleep(500);
-			AssertJUnit.assertTrue("Failed to suspend thread", orgval == t.getCheckVal());
-			ct.resume();
-			// Wait to be sure the resume has occurred.
-			Thread.sleep(500);
-			AssertJUnit.assertTrue("Failed to resume thread", orgval != t.getCheckVal());
-			ct.interrupt();
-		} catch (InterruptedException e) {
-			Assert.fail("Unexpected interrupt occurred", e);
-		}
-
-		/*
-		 * [PR 106321] suspend() must not synchronize when a Thread is
-		 * suspending itself
-		 */
-		final Object notify = new Object();
-		Thread t1 = new Thread(new Runnable() {
-			@Override
-			public void run() {
-				synchronized (notify) {
-					notify.notify();
+		if (VersionCheck.major() < 20) {
+			int orgval;
+			ResSupThread t = new ResSupThread(Thread.currentThread());
+			try {
+				synchronized (t) {
+					ct = new Thread(t, "Interupt Test6");
+					ct.start();
+					t.wait();
 				}
+				ct.suspend();
+				// Wait to be sure the suspend has occurred
+				Thread.sleep(500);
+				orgval = t.getCheckVal();
+				// Wait to be sure the thread is suspended
+				Thread.sleep(500);
+				AssertJUnit.assertTrue("Failed to suspend thread", orgval == t.getCheckVal());
+				ct.resume();
+				// Wait to be sure the resume has occurred.
+				Thread.sleep(500);
+				AssertJUnit.assertTrue("Failed to resume thread", orgval != t.getCheckVal());
+				ct.interrupt();
+			} catch (InterruptedException e) {
+				Assert.fail("Unexpected interrupt occurred", e);
+			}
+
+			/*
+			 * [PR 106321] suspend() must not synchronize when a Thread is
+			 * suspending itself
+			 */
+			final Object notify = new Object();
+			Thread t1 = new Thread(new Runnable() {
+				@Override
+				public void run() {
+					synchronized (notify) {
+						notify.notify();
+					}
+					Thread.currentThread().suspend();
+				}
+			});
+			try {
+				synchronized (notify) {
+					t1.start();
+					notify.wait();
+				}
+				// wait for Thread to suspend
+				Thread.sleep(500);
+				AssertJUnit.assertTrue("Thread should be alive", t1.isAlive());
+				t1.resume();
+				t1.join();
+			} catch (InterruptedException e) {
+			}
+		} else {
+			try {
 				Thread.currentThread().suspend();
+				Assert.fail("expected UnsupportedOperationException");
+			} catch (UnsupportedOperationException e) {
+				// expected
 			}
-		});
-		try {
-			synchronized (notify) {
-				t1.start();
-				notify.wait();
-			}
-			// wait for Thread to suspend
-			Thread.sleep(500);
-			AssertJUnit.assertTrue("Thread should be alive", t1.isAlive());
-			t1.resume();
-			t1.join();
-		} catch (InterruptedException e) {
 		}
 	}
 
