@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2021 IBM Corp. and others
+ * Copyright (c) 2018, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -39,6 +39,8 @@ class PutStaticTestHelper {
 			try {
 				Thread.sleep(1000000);
 			} catch(InterruptedException e) {
+				PutStaticDuringClinit.interrupted = true;
+				break;
 			}
 		}
 	}
@@ -48,7 +50,8 @@ public class PutStaticDuringClinit {
 	public static Object lock = new Object();
 	public static boolean runBlocker = false;
 	public static boolean threadsReady = false;
-	public static boolean passed = true;
+	public static volatile boolean passed = true;
+	public static volatile boolean interrupted = false;
 
 	public static void jitWrite(String x) {
 		// https://github.com/eclipse-openj9/openj9/pull/2794
@@ -83,9 +86,11 @@ public class PutStaticDuringClinit {
 					lock.notifyAll();
 				}
 				jitWrite("whatever");
-				// <clinit> for PutStaticTestHelper never returns, so if execution reaches
-				// here, the VM has allowed an invalid putstatic.
-				passed = false;
+				if (!interrupted) {
+					// <clinit> for PutStaticTestHelper never returns, so if execution reaches
+					// here, the VM has allowed an invalid putstatic.
+					passed = false;
+				}
 			}
 		};
 		initializer.start();
@@ -105,8 +110,8 @@ public class PutStaticDuringClinit {
 		} catch (InterruptedException e) {
 			throw new RuntimeException(e);
 		}
-		initializer.stop();
-		blocker.stop();
+		initializer.interrupt();
+		blocker.interrupt();
 		try {
 			initializer.join(); 
 		} catch (InterruptedException e) {
