@@ -1,6 +1,6 @@
 
 ##############################################################################
-#  Copyright (c) 2020, 2020 IBM Corp. and others
+#  Copyright (c) 2020, 2022 IBM Corp. and others
 
 #  This program and the accompanying materials are made available under
 #  the terms of the Eclipse Public License 2.0 which accompanies this
@@ -38,6 +38,6 @@ ifeq (8, $(JDK_VERSION))
  endif
 else
  TEST_JAVA=$(REPORTDIR_NQ)/testJava
- PATH_TO_LIB=$(TEST_JAVA)/lib/j9vm:$(TEST_JAVA)/lib/compressedrefs:$(TEST_JAVA)/lib
- LIBJ9IFA29=/lib/compressedrefs/libj9ifa29.so
+ PATH_TO_LIB=$(TEST_JAVA)/lib/j9vm:$(TEST_JAVA)/lib/default:$(TEST_JAVA)/lib
+ LIBJ9IFA29=/lib/default/libj9ifa29.so
 endif
