@@ -6280,19 +6280,6 @@ TR_J9TransformInlinedFunction::appendCatchBlockToRethrowException(
    TR::Block * catchBlock = TR::Block::createEmptyBlock(modelNode, comp());
    catchBlock->setHandlerInfo(catchType, (uint8_t)comp()->getInlineDepth(), handlerIndex, calleeMethod, comp());
 
-   if (comp()->getOption(TR_EnableThisLiveRangeExtension))
-      {
-      if (!_calleeSymbol->isStatic() &&
-          (!comp()->fej9()->isClassFinal(_calleeSymbol->getResolvedMethod()->containingClass()) ||
-           comp()->fej9()->hasFinalizer(_calleeSymbol->getResolvedMethod()->containingClass())))
-         {
-         TR::Node *anchoredThis = TR::Node::createWithSymRef(modelNode, TR::aload, 0, symRefTab->findOrCreateAutoSymbol(_calleeSymbol, 0, TR::Address));
-         TR::SymbolReference *tempSymRef = comp()->getSymRefTab()->findOrCreateThisRangeExtensionSymRef(_calleeSymbol);
-         TR::TreeTop *storeTT = TR::TreeTop::create(comp(), TR::Node::createStore(tempSymRef, anchoredThis));
-         catchBlock->append(storeTT);
-         }
-      }
-
    // rethrow the exception
    //
    TR::SymbolReference * tempSymRef = 0;
@@ -6393,20 +6380,6 @@ TR_J9TransformInlinedFunction::appendCatchBlockForInlinedSyncMethod(
    monexitNode->setSyncMethodMonitor(true);
    monexitBlock->append(TR::TreeTop::create(comp(), monexitNode));
 
-   if (comp()->getOption(TR_EnableThisLiveRangeExtension))
-      {
-      if (!_calleeSymbol->isStatic() &&
-          (!comp()->fej9()->isClassFinal(_calleeSymbol->getResolvedMethod()->containingClass()) ||
-           comp()->fej9()->hasFinalizer(_calleeSymbol->getResolvedMethod()->containingClass())))
-         {
-         TR::Node *anchoredThis = TR::Node::createWithSymRef(lastNode, TR::aload, 0, symRefTab->findOrCreateAutoSymbol(_calleeSymbol, 0, TR::Address));
-         TR::SymbolReference *tempSymRef = comp()->getSymRefTab()->findOrCreateThisRangeExtensionSymRef(_calleeSymbol);
-         TR::TreeTop *storeTT = TR::TreeTop::create(comp(), TR::Node::createStore(tempSymRef, anchoredThis));
-         monexitBlock->append(storeTT);
-         }
-      }
-
-
    // rethrow the exception
    //
    TR::Node * temp = TR::Node::createWithSymRef(lastNode, TR::aload, 0, tempSymRef);
@@ -6428,9 +6401,6 @@ TR_J9TransformInlinedFunction::isSyncReturnBlock(TR::Compilation *comp, TR::Bloc
    TR::Node * node = tt->getNode();
 
    if (node->getOpCode().getOpCodeValue() == TR::monexitfence)
-      tt = tt->getNextTreeTop();
-
-   if (node->getOpCode().isStore() && (node->getSymbolReference() == comp->getSymRefTab()->findThisRangeExtensionSymRef()))
       tt = tt->getNextTreeTop();
 
    node = tt->getNode();

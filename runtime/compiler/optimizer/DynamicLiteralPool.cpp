@@ -209,8 +209,7 @@ bool TR_DynamicLiteralPool::visitTreeTop(TR::TreeTop * tt, TR::Node *grandParent
          }
       else if (opCode.hasSymbolReference() &&
                node->getSymbol()->isStatic() &&
-               !node->getSymbolReference()->isLiteralPoolAddress() &&
-               (node->getSymbolReference() != comp()->getSymRefTab()->findThisRangeExtensionSymRef()))
+               !node->getSymbolReference()->isLiteralPoolAddress())
          {
          dumpOptDetails(comp(), "looking at the static symref for node %p (%s)\n", node, opCode.getName());
          transformStaticSymRefToIndirectLoad(tt, parent, node);

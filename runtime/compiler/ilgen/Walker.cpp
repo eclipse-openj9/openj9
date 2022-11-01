@@ -7000,19 +7000,6 @@ TR_J9ByteCodeIlGenerator::genReturn(TR::ILOpCodes nodeop, bool monitorExit)
       genTreeTop(methodExitNode);
       }
 
-
-   if (comp()->getOption(TR_EnableThisLiveRangeExtension))
-      {
-      if (!_methodSymbol->isStatic() &&
-          (!fej9()->isClassFinal(_methodSymbol->getResolvedMethod()->containingClass()) ||
-           fej9()->hasFinalizer(_methodSymbol->getResolvedMethod()->containingClass())))
-         {
-         loadAuto(TR::Address, 0);
-         TR::SymbolReference *tempSymRef = symRefTab()->findOrCreateThisRangeExtensionSymRef(comp()->getMethodSymbol());
-         genTreeTop(TR::Node::createStore(tempSymRef, pop()));
-         }
-      }
-
    if (monitorExit && _methodSymbol->isSynchronised())
       {
       if (!isOutermostMethod())
@@ -7863,18 +7850,6 @@ TR_J9ByteCodeIlGenerator::genAThrow()
          {
          if (performTransformation(comp(), "O^O CLASS LOOKAHEAD: Can skip null check at exception throw %p based on class file examination\n", thisObject))
             canSkipNullCheck = true;
-         }
-      }
-
-    if (comp()->getOption(TR_EnableThisLiveRangeExtension))
-      {
-      if (!_methodSymbol->isStatic() &&
-          (!fej9()->isClassFinal(_methodSymbol->getResolvedMethod()->containingClass()) ||
-           fej9()->hasFinalizer(_methodSymbol->getResolvedMethod()->containingClass())))
-         {
-         loadAuto(TR::Address, 0);
-         TR::SymbolReference *tempSymRef = symRefTab()->findOrCreateThisRangeExtensionSymRef(comp()->getMethodSymbol());
-         genTreeTop(TR::Node::createStore(tempSymRef, pop()));
          }
       }
 

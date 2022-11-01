@@ -4525,8 +4525,7 @@ void TR_EscapeAnalysis::checkEscapeViaNonCall(TR::Node *node, TR::NodeChecklist&
 
       else // Direct load or store
          {
-         if (node->getOpCode().isStore() &&
-             (comp()->getSymRefTab()->findThisRangeExtensionSymRef() != node->getSymbolReference()))
+         if (node->getOpCode().isStore())
             {
             // Handle escapes via direct store of a candidate.
             // In a sniffed method even a store into a local may escape since
@@ -6088,8 +6087,7 @@ bool TR_EscapeAnalysis::fixupNode(TR::Node *node, TR::Node *parent, TR::NodeChec
          // during liveMonitor propagation
          //
          if (_curTree->getNode()->getOpCode().isStore() &&
-             (_curTree->getNode()->getSymbol()->holdsMonitoredObject() ||
-              (_curTree->getNode()->getSymbolReference() == comp()->getSymRefTab()->findThisRangeExtensionSymRef())))
+             (_curTree->getNode()->getSymbol()->holdsMonitoredObject()))
             {
             _curTree->getNode()->getFirstChild()->decReferenceCount();
             TR::Node *aconstNode = TR::Node::aconst(_curTree->getNode(), 0);
