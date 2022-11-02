@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -39,6 +39,8 @@ class InvokeStaticTestHelper {
 			try {
 				Thread.sleep(1000000);
 			} catch(InterruptedException e) {
+				InvokeStaticDuringClinit.interrupted = true;
+				break;
 			}
 		}
 	}
@@ -48,7 +50,8 @@ public class InvokeStaticDuringClinit {
 	public static Object lock = new Object();
 	public static boolean runBlocker = false;
 	public static boolean threadsReady = false;
-	public static boolean passed = true;
+	public static volatile boolean passed = true;
+	public static volatile boolean interrupted = false;
 
 	public static void staticMethod() {
 	}
@@ -82,9 +85,11 @@ public class InvokeStaticDuringClinit {
 					lock.notifyAll();
 				}
 				jitSend();
-				// <clinit> for InvokeStaticTestHelper never returns, so if execution reaches
-				// here, the VM has allowed an invalid invokestatic.
-				passed = false;
+				if (!interrupted) {
+					// <clinit> for InvokeStaticTestHelper never returns, so if execution reaches
+					// here, the VM has allowed an invalid invokestatic.
+					passed = false;
+				}
 			}
 		};
 		initializer.start();
@@ -104,8 +109,8 @@ public class InvokeStaticDuringClinit {
 		} catch (InterruptedException e) {
 			throw new RuntimeException(e);
 		}
-		initializer.stop();
-		blocker.stop();
+		initializer.interrupt();
+		blocker.interrupt();
 		try {
 			initializer.join(); 
 		} catch (InterruptedException e) {
