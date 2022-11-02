@@ -4240,6 +4240,13 @@ J9::Z::TreeEvaluator::multianewArrayEvaluator(TR::Node * node, TR::CodeGenerator
    TR::LabelSymbol *nonZeroFirstDimLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *cFlowRegionEnd = generateLabelSymbol(cg);
    TR::LabelSymbol *oolFailLabel = generateLabelSymbol(cg);
+#if defined(TR_TARGET_64BIT)
+   J9JavaVM *vm = fej9->vmThread()->javaVM;
+   bool isOffHeapAllocationEnabled = vm->memoryManagerFunctions->j9gc_off_heap_allocation_enabled(vm);
+   TR::LabelSymbol *populateFirstDimDataAddrSlot = NULL;
+   if (isOffHeapAllocationEnabled)
+      populateFirstDimDataAddrSlot = generateLabelSymbol(cg);
+#endif /* TR_TARGET_64BIT */
 
    // oolJumpLabel is a common point that all branches will jump to. From this label, we branch to OOL code.
    // We do this instead of jumping directly to OOL code from mainline because the RA can only handle the case where there's
@@ -4302,8 +4309,25 @@ J9::Z::TreeEvaluator::multianewArrayEvaluator(TR::Node * node, TR::CodeGenerator
 
    // Init class field, then jump to end of ICF
    generateRXInstruction(cg, use64BitClasses ? TR::InstOpCode::STG : TR::InstOpCode::ST, node, classReg, generateS390MemoryReference(targetReg, TR::Compiler->om.offsetOfObjectVftField(), cg));
-   cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, cFlowRegionEnd);
-   iComment("Init class field and jump to end of ICF.");
+#if defined(TR_TARGET_64BIT)
+   if (isOffHeapAllocationEnabled)
+      {
+      TR_ASSERT_FATAL_WITH_NODE(node
+         , IS_32BIT_SIGNED(fej9->getOffsetOfDiscontiguousDataAddrField() - fej9->getOffsetOfContiguousDataAddrField())
+         , "dataAddrFieldOffset is too big for the instruction.");
+
+      // Load dataAddr slot offset difference since 0 size arrays are treated as discontiguous.
+      generateRILInstruction(cg
+         , TR::InstOpCode::LGFI
+         , node
+         , temp1Reg
+         , static_cast<int32_t>(fej9->getOffsetOfDiscontiguousDataAddrField() - fej9->getOffsetOfContiguousDataAddrField()));
+      cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, populateFirstDimDataAddrSlot);
+      }
+   else
+      cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, cFlowRegionEnd);
+#endif /* TR_TARGET_64BIT */
+   iComment("Init class field and jump.");
 
    // We end up in this region of the ICF if the first dimension is non-zero and the second dimension is zero.
    cursor = generateS390LabelInstruction(cg, TR::InstOpCode::label, node, nonZeroFirstDimLabel);
@@ -4377,6 +4401,25 @@ J9::Z::TreeEvaluator::multianewArrayEvaluator(TR::Node * node, TR::CodeGenerator
    cursor = generateRXInstruction(cg, use64BitClasses ? TR::InstOpCode::STG : TR::InstOpCode::ST, node, componentClassReg, generateS390MemoryReference(temp2Reg, TR::Compiler->om.offsetOfObjectVftField(), cg));
    iComment("Init 2nd dim class field.");
 
+   TR::Register *temp3Reg = cg->allocateRegister();
+
+#if defined(TR_TARGET_64BIT)
+   if (isOffHeapAllocationEnabled)
+      {
+      // Populate dataAddr slot for 2nd dimension zero size array.
+      generateRXInstruction(cg
+         , TR::InstOpCode::LAY
+         , node
+         , temp3Reg
+         , generateS390MemoryReference(temp2Reg, TR::Compiler->om.discontiguousArrayHeaderSizeInBytes(), cg));
+      generateRXInstruction(cg
+         , TR::InstOpCode::STG
+         , node
+         , temp3Reg
+         , generateS390MemoryReference(temp2Reg, fej9->getOffsetOfDiscontiguousDataAddrField(), cg));
+      }
+#endif /* TR_TARGET_64BIT */
+
    // Store 2nd dim element into 1st dim array slot, compress temp2 if needed
    TR::Register *temp3Reg = cg->allocateRegister();
    if (comp->target().is64Bit() && comp->useCompressedPointers())
@@ -4400,7 +4443,17 @@ J9::Z::TreeEvaluator::multianewArrayEvaluator(TR::Node * node, TR::CodeGenerator
 
    generateRILInstruction(cg, TR::InstOpCode::SLFI, node, firstDimLenReg, 1);
    generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::CL, node, firstDimLenReg, 0, TR::InstOpCode::COND_BNE, loopLabel, false);
-   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, cFlowRegionEnd);
+
+#if defined(TR_TARGET_64BIT)
+   if (isOffHeapAllocationEnabled)
+      {
+      // No offset is needed since 1st dimension array is contiguous.
+      generateRRInstruction(cg, TR::InstOpCode::getXORRegOpCode(), node, temp1Reg, temp1Reg);
+      generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, populateFirstDimDataAddrSlot);
+      }
+   else
+      generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, cFlowRegionEnd);
+#endif /* TR_TARGET_64BIT */
 
    TR::RegisterDependencyConditions *dependencies = generateRegisterDependencyConditions(0,10,cg);
    dependencies->addPostCondition(dimReg, TR::RealRegister::AssignAny);
@@ -4416,6 +4469,26 @@ J9::Z::TreeEvaluator::multianewArrayEvaluator(TR::Node * node, TR::CodeGenerator
 
    generateS390LabelInstruction(cg, TR::InstOpCode::label, node, oolJumpLabel);
    generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, oolFailLabel);
+
+#if defined(TR_TARGET_64BIT)
+   if (isOffHeapAllocationEnabled)
+      {
+      /* Populate dataAddr slot of 1st dimension array. Arrays of non-zero size
+       * use contiguous header layout while zero size arrays use discontiguous header layout.
+       */
+      cursor = generateS390LabelInstruction(cg, TR::InstOpCode::label, node, populateFirstDimDataAddrSlot);
+      iComment("populateFirstDimDataAddrSlot.");
+
+      generateRXInstruction(cg, TR::InstOpCode::LAY
+         , node
+         , temp3Reg
+         , generateS390MemoryReference(targetReg, temp1Reg, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg));
+      generateRXInstruction(cg, TR::InstOpCode::STG
+         , node
+         , temp3Reg
+         , generateS390MemoryReference(targetReg, temp1Reg, fej9->getOffsetOfContiguousDataAddrField(), cg));
+      }
+#endif /* TR_TARGET_64BIT */
 
    generateS390LabelInstruction(cg, TR::InstOpCode::label, node, cFlowRegionEnd, dependencies);
 
