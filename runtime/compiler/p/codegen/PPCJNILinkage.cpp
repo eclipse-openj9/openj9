@@ -306,6 +306,10 @@ TR::Register *J9::Power::JNILinkage::buildDirectDispatch(TR::Node *callNode)
             }
          generateTrg1Src2Instruction(cg(), TR::InstOpCode::add, callNode, addrArg, addrArg, posArg);
 
+         if (crc32m2 || crc32m3) {
+            generateTrg1ImmInstruction(cg(), TR::InstOpCode::li, callNode, posArg, 0);
+         }
+
          deps->getPreConditions()->setDependencyInfo(map.getTargetIndex(TR::RealRegister::gr4), addrArg, TR::RealRegister::gr4, UsesDependentRegister);
          deps->getPostConditions()->setDependencyInfo(map.getTargetIndex(TR::RealRegister::gr4), addrArg, TR::RealRegister::gr4, UsesDependentRegister);
 

@@ -3278,6 +3278,13 @@ void TR_ResolvedJ9Method::construct()
       {  TR::unknownMethod}
       };
 
+   static X CRC32CMethods[] =
+      {
+      {x(TR::java_util_zip_CRC32C_updateBytes,               "updateBytes",                "(I[BII)I")},
+      {x(TR::java_util_zip_CRC32C_updateDirectByteBuffer,    "updateDirectByteBuffer",     "(IJII)I")},
+      {  TR::unknownMethod}
+      };
+
    static X ByteMethods[] =
       {
       {  TR::java_lang_Byte_init,          6,    "<init>", (int16_t)-1,    "*"},
@@ -3974,6 +3981,7 @@ void TR_ResolvedJ9Method::construct()
       { "java/lang/StrictMath", StrictMathMethods },
       { "java/math/BigDecimal", BigDecimalMethods },
       { "java/math/BigInteger", BigIntegerMethods },
+      { "java/util/zip/CRC32C", CRC32CMethods     },
       { 0 }
       };
 

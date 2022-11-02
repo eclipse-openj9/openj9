@@ -346,6 +346,8 @@
    java_util_zip_CRC32_updateBytes0,
    java_util_zip_CRC32_updateByteBuffer,
    java_util_zip_CRC32_updateByteBuffer0,
+   java_util_zip_CRC32C_updateBytes,
+   java_util_zip_CRC32C_updateDirectByteBuffer,
    sun_misc_Unsafe_compareAndSwapInt_jlObjectJII_Z,
    sun_misc_Unsafe_compareAndSwapLong_jlObjectJJJ_Z,
    sun_misc_Unsafe_compareAndSwapObject_jlObjectJjlObjectjlObject_Z,

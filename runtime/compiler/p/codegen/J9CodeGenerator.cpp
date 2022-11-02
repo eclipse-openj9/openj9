@@ -353,6 +353,12 @@ bool J9::Power::CodeGenerator::suppressInliningOfRecognizedMethod(TR::Recognized
           }
       }
 
+   if (method == TR::java_util_zip_CRC32C_updateBytes ||
+       method == TR::java_util_zip_CRC32C_updateDirectByteBuffer)
+      {
+      return true;
+      }
+
    return false;
 }
 
