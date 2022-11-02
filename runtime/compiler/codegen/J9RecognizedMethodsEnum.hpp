@@ -445,6 +445,7 @@
 
    jdk_internal_misc_Unsafe_copyMemory0,
    jdk_internal_loader_NativeLibraries_load,
+   jdk_internal_util_Preconditions_checkIndex,
 
    FirstVectorMethod,
    jdk_internal_vm_vector_VectorSupport_load = FirstVectorMethod,
