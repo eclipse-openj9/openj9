@@ -343,7 +343,9 @@ J9::Node::processJNICall(TR::TreeTop *callNodeTreeTop, TR::ResolvedMethodSymbol 
    // match the client-side addresses, so we can't take this shortcut in JITServer mode.
    if (((methodSymbol->getRecognizedMethod() == TR::java_util_zip_CRC32_update) ||
         (methodSymbol->getRecognizedMethod() == TR::java_util_zip_CRC32_updateBytes) ||
-        (methodSymbol->getRecognizedMethod() == TR::java_util_zip_CRC32_updateByteBuffer)) &&
+        (methodSymbol->getRecognizedMethod() == TR::java_util_zip_CRC32_updateByteBuffer) ||
+        (methodSymbol->getRecognizedMethod() == TR::java_util_zip_CRC32_updateBytes0) ||
+        (methodSymbol->getRecognizedMethod() == TR::java_util_zip_CRC32_updateByteBuffer0)) &&
        !comp->requiresSpineChecks()  &&
        !comp->compileRelocatableCode()
       #ifdef J9VM_OPT_JITSERVER

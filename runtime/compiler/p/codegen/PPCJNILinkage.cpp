@@ -115,8 +115,10 @@ TR::Register *J9::Power::JNILinkage::buildDirectDispatch(TR::Node *callNode)
    uintptr_t targetAddress;
 
    bool crc32m1 = (callSymbol->getRecognizedMethod() == TR::java_util_zip_CRC32_update);
-   bool crc32m2 = (callSymbol->getRecognizedMethod() == TR::java_util_zip_CRC32_updateBytes);
-   bool crc32m3 = (callSymbol->getRecognizedMethod() == TR::java_util_zip_CRC32_updateByteBuffer);
+   bool crc32m2 = ((callSymbol->getRecognizedMethod() == TR::java_util_zip_CRC32_updateBytes)  ||
+                  (callSymbol->getRecognizedMethod() == TR::java_util_zip_CRC32_updateBytes0));
+   bool crc32m3 = ((callSymbol->getRecognizedMethod() == TR::java_util_zip_CRC32_updateByteBuffer) ||
+                  (callSymbol->getRecognizedMethod() == TR::java_util_zip_CRC32_updateByteBuffer0));
 
    // TODO: How to handle discontiguous array?
    // The specialCaseJNI shortcut will mangle register dependencies and use system/C dispatch.
