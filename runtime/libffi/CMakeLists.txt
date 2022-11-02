@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2021 IBM Corp. and others
+# Copyright (c) 2017, 2022 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -37,6 +37,7 @@ j9vm_add_library(ffi STATIC
 	prep_cif.c
 	raw_api.c
 	types.c
+	tramp.c
 )
 
 # We need this because ffi_common.h is in 'include' in the top directory.
