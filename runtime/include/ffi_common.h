@@ -9,7 +9,7 @@
 
 /*
  * ===========================================================================
- * Copyright (c) 2021, 2021 IBM Corp. and others
+ * Copyright (c) 2021, 2022 IBM Corp. and others
  * ===========================================================================
  */
 
@@ -96,6 +96,12 @@ void ffi_type_test(ffi_type *a, char *file, int line);
 ffi_status ffi_prep_cif_machdep(ffi_cif *cif);
 ffi_status ffi_prep_cif_machdep_var(ffi_cif *cif,
 	 unsigned int nfixedargs, unsigned int ntotalargs);
+
+#if defined(__aarch64__) || defined(__arm64__)|| defined (_M_ARM64)
+/* Translate a data pointer to a code pointer.  Needed for closures on
+   some targets.  */
+void *ffi_data_to_code_pointer (void *data) FFI_HIDDEN;
+#endif /* (__aarch64__) || defined(__arm64__)|| defined (_M_ARM64)*/
 
 /* Extended cif, used in callback from assembly routine */
 typedef struct
