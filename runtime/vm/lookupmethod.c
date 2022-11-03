@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -723,8 +723,11 @@ retry:
 						goto done;
 					}
 					/* interface found inaccessable method in Object - keep looking
-					 * as valid interface method may be found by the iTable search
+					 * as valid interface method may be found by the iTable search.
+					 * However, we need to reset the exception info.
 					 */
+					exception = J9VMCONSTANTPOOL_JAVALANGNOSUCHMETHODERROR;
+					exceptionClass = targetClass;
 				} else if (!isInterfaceLookup) {
 					/* success */
 					goto done;
