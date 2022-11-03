@@ -142,6 +142,8 @@
 #define __errno2() 0
 #endif
 
+#define SHM_STRING_ENDS_WITH_CHAR(str, ch) ((ch) == *((str) + strlen(str) - 1))
+
 static int32_t createSharedMemory(J9PortLibrary *portLibrary, intptr_t fd, BOOLEAN isReadOnlyFD, const char *baseFile, int32_t size, int32_t perm, struct j9shmem_controlFileFormat * controlinfo, uintptr_t groupPerm, struct j9shmem_handle *handle);
 static intptr_t checkSize(J9PortLibrary *portLibrary, int shmid, int64_t size);
 static intptr_t openSharedMemory (J9PortLibrary *portLibrary, intptr_t fd, const char *baseFile, int32_t perm, struct j9shmem_controlFileFormat * controlinfo, uintptr_t groupPerm, struct j9shmem_handle *handle, BOOLEAN *canUnlink, uintptr_t cacheFileType);
@@ -1268,8 +1270,10 @@ j9shmem_getDir(struct J9PortLibrary* portLibrary, const char* ctrlDirName, uint3
 		rootDir = ctrlDirName;
 	} else {
 		if (J9_ARE_ALL_BITS_SET(flags, J9SHMEM_GETDIR_USE_USERHOME)) {
+			/* If J9SHMEM_GETDIR_USE_USERHOME is set, try setting cache directory to $HOME/.cache/javasharedresources/ */
 			Assert_PRT_true(TRUE == appendBaseDir);
-			uintptr_t baseDirLen = strlen(J9SH_BASEDIR);
+			uintptr_t baseDirLen = sizeof(J9SH_HIDDENDIR) - 1 + sizeof(J9SH_BASEDIR) - 1;
+			uintptr_t minBufLen = bufLength < J9SH_MAXPATH ? bufLength : J9SH_MAXPATH;
 			/*
 			 *  User could define/change their notion of the home directory by setting environment variable "HOME".
 			 *  So check "HOME" first, if failed, then check getpwuid(getuid())->pw_dir.
@@ -1277,11 +1281,11 @@ j9shmem_getDir(struct J9PortLibrary* portLibrary, const char* ctrlDirName, uint3
 			if (0 == omrsysinfo_get_env("HOME", homeDirBuf, J9SH_MAXPATH)) {
 				uintptr_t dirLen = strlen((const char*)homeDirBuf);
 				if (0 < dirLen
-					&& ((dirLen + baseDirLen) < bufLength))
+					&& ((dirLen + baseDirLen) < minBufLen))
 				{
 					homeDir = homeDirBuf;
 				} else {
-					Trc_PRT_j9shmem_getDir_tryHomeDirFailed_homeDirTooLong(dirLen, bufLength - baseDirLen);
+					Trc_PRT_j9shmem_getDir_tryHomeDirFailed_homeDirTooLong(dirLen, minBufLen - baseDirLen);
 				}
 			} else {
 				Trc_PRT_j9shmem_getDir_tryHomeDirFailed_getEnvHomeFailed();
@@ -1298,12 +1302,12 @@ j9shmem_getDir(struct J9PortLibrary* portLibrary, const char* ctrlDirName, uint3
 					if (NULL != pwent) {
 						uintptr_t dirLen = strlen((const char*)pwent->pw_dir);
 						if (0 < dirLen
-							&& ((dirLen + baseDirLen) < bufLength))
+							&& ((dirLen + baseDirLen) < minBufLen))
 						{
 							homeDir = pwent->pw_dir;
 						} else {
 							rc = J9PORT_ERROR_SHMEM_GET_DIR_HOME_BUF_OVERFLOW;
-							Trc_PRT_j9shmem_getDir_tryHomeDirFailed_pw_dirDirTooLong(dirLen, bufLength - baseDirLen);
+							Trc_PRT_j9shmem_getDir_tryHomeDirFailed_pw_dirDirTooLong(dirLen, minBufLen - baseDirLen);
 						}
 					} else {
 						rc = J9PORT_ERROR_SHMEM_GET_DIR_FAILED_TO_GET_HOME;
@@ -1315,7 +1319,9 @@ j9shmem_getDir(struct J9PortLibrary* portLibrary, const char* ctrlDirName, uint3
 				struct J9FileStat statBuf = {0};
 				if (0 == omrfile_stat(homeDir, 0, &statBuf)) {
 					if (!statBuf.isRemote) {
-						rootDir = homeDir;
+						uintptr_t charWritten = omrstr_printf(homeDirBuf, J9SH_MAXPATH, SHM_STRING_ENDS_WITH_CHAR(homeDir, '/') ? "%s%s" : "%s/%s", homeDir, J9SH_HIDDENDIR);
+						Assert_PRT_true(charWritten < J9SH_MAXPATH);
+						rootDir = homeDirBuf;
 					} else {
 						rc = J9PORT_ERROR_SHMEM_GET_DIR_HOME_ON_NFS;
 						Trc_PRT_j9shmem_getDir_tryHomeDirFailed_homeOnNFS(homeDir);
@@ -1334,7 +1340,7 @@ j9shmem_getDir(struct J9PortLibrary* portLibrary, const char* ctrlDirName, uint3
 		Assert_PRT_true(rc < 0);
 	} else {
 		if (appendBaseDir) {
-			if (omrstr_printf(buffer, bufLength, "%s/%s", rootDir, J9SH_BASEDIR) == bufLength - 1) {
+			if (omrstr_printf(buffer, bufLength, SHM_STRING_ENDS_WITH_CHAR(rootDir, '/') ? "%s%s" : "%s/%s", rootDir, J9SH_BASEDIR) >= bufLength) {
 				Trc_PRT_j9shmem_getDir_ExitFailedOverflow();
 				rc = J9PORT_ERROR_SHMEM_GET_DIR_BUF_OVERFLOW;
 			}
@@ -1342,8 +1348,8 @@ j9shmem_getDir(struct J9PortLibrary* portLibrary, const char* ctrlDirName, uint3
 			/* Avoid appending two slashes; this leads to problems in matching full file names. */
 			if (omrstr_printf(buffer,
 								bufLength,
-								('/' == rootDir[strlen(rootDir)-1]) ? "%s" : "%s/",
-										rootDir) == bufLength - 1) {
+								SHM_STRING_ENDS_WITH_CHAR(rootDir, '/') ? "%s" : "%s/",
+								rootDir) >= bufLength) {
 				Trc_PRT_j9shmem_getDir_ExitFailedOverflow();
 				rc = J9PORT_ERROR_SHMEM_GET_DIR_BUF_OVERFLOW;
 			}
