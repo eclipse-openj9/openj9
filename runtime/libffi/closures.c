@@ -26,12 +26,19 @@
    DEALINGS IN THE SOFTWARE.
    ----------------------------------------------------------------------- */
 
+/*
+ * ===========================================================================
+ * Copyright (c) 2021, 2022 IBM Corp. and others
+ * ===========================================================================
+ */
+
 #if defined __linux__ && !defined _GNU_SOURCE
 #define _GNU_SOURCE 1
 #endif
 
 #include <ffi.h>
 #include <ffi_common.h>
+#include <tramp.h>
 
 #if !FFI_MMAP_EXEC_WRIT && !FFI_EXEC_TRAMPOLINE_TABLE
 # if __gnu_linux__ && !defined(__ANDROID__)
@@ -625,6 +632,26 @@ ffi_closure_alloc (size_t size, void **code)
   return ptr;
 }
 
+#if defined(__aarch64__) || defined(__arm64__)|| defined (_M_ARM64)
+void *
+ffi_data_to_code_pointer (void *data)
+{
+  msegmentptr seg = segment_holding (gm, data);
+  /* We expect closures to be allocated with ffi_closure_alloc(), in
+     which case seg will be non-NULL.  However, some users take on the
+     burden of managing this memory themselves, in which case this
+     we'll just return data. */
+  if (seg)
+    {
+      if (!ffi_tramp_is_supported ())
+        return add_segment_exec_offset (data, seg);
+      return ffi_tramp_get_addr (((ffi_closure *) data)->ftramp);
+    }
+  else
+    return data;
+}
+#endif /* (__aarch64__) || defined(__arm64__)|| defined (_M_ARM64)*/
+
 /* Release a chunk of memory allocated with ffi_closure_alloc.  If
    FFI_CLOSURE_FREE_CODE is nonzero, the given address can be the
    writable or the executable address given.  Otherwise, only the
@@ -683,6 +710,14 @@ ffi_closure_free (void *ptr)
 {
   free (ptr);
 }
+
+#if defined(__aarch64__) || defined(__arm64__)|| defined (_M_ARM64)
+void *
+ffi_data_to_code_pointer (void *data)
+{
+  return data;
+}
+#endif /* (__aarch64__) || defined(__arm64__)|| defined (_M_ARM64)*/
 
 # endif /* ! FFI_MMAP_EXEC_WRIT */
 #endif /* FFI_CLOSURES */
