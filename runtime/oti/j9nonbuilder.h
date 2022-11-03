@@ -4534,6 +4534,10 @@ typedef struct J9MemoryManagerFunctions {
 	UDATA ( *j9gc_stringHashFn)(void *key, void *userData);
 	BOOLEAN ( *j9gc_stringHashEqualFn)(void *leftKey, void *rightKey, void *userData);
 	void  ( *j9gc_ensureLockedSynchronizersIntegrity)(struct J9VMThread *vmThread) ;
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+	void  ( *j9gc_prepare_for_checkpoint)(struct J9VMThread *vmThread) ;
+	BOOLEAN  ( *j9gc_reinitialize_for_restore)(struct J9VMThread *vmThread) ;
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 } J9MemoryManagerFunctions;
 
 typedef struct J9InternalVMFunctions {
