@@ -528,32 +528,39 @@ jvmtiGetThreadInfo(jvmtiEnv *env,
 						jobject tempGroup = NULL;
 
 						vm->internalVMFunctions->internalExitVMToJNI(currentThread);
-						if ((NULL == constants) || (NULL == id)) {
-							/* Cache class and field id. */
+						if (NULL == constants) {
+							/* Cache the class. */
 							jclass localRef = (*jniEnv)->FindClass(jniEnv, "java/lang/Thread$Constants");
 							Assert_JVMTI_notNull(localRef);
 							constants = (jclass)((*jniEnv)->NewGlobalRef(jniEnv, localRef));
-							if (NULL == constants) {
-								releaseVMThread(currentThread, targetThread, thread);
-								j9mem_free_memory(name);
+							if (NULL != constants) {
+								vm->jlThreadConstants = constants;
+							} else {
 								rc = JVMTI_ERROR_OUT_OF_MEMORY;
-								goto exit;
 							}
-							id = (*jniEnv)->GetStaticFieldID(jniEnv, constants, "VTHREAD_GROUP", "Ljava/lang/ThreadGroup;");
-							if (NULL == id) {
-								releaseVMThread(currentThread, targetThread, thread);
-								j9mem_free_memory(name);
-								rc = JVMTI_ERROR_OUT_OF_MEMORY;
-								goto exit;
-							}
-
-							vm->jlThreadConstants = constants;
-							vm->vthreadGroupID = id;
 						}
 
-						tempGroup = (*jniEnv)->GetStaticObjectField(jniEnv, constants, id);
-						Assert_JVMTI_notNull(tempGroup);
+						if ((NULL != constants) && (NULL == id)) {
+							/* Cache the field id. */
+							id = (*jniEnv)->GetStaticFieldID(jniEnv, constants, "VTHREAD_GROUP", "Ljava/lang/ThreadGroup;");
+							if (NULL != id) {
+								vm->vthreadGroupID = id;
+							} else {
+								rc = JVMTI_ERROR_OUT_OF_MEMORY;
+							}
+						}
+
+						if ((NULL != constants) && (NULL != id)) {
+							tempGroup = (*jniEnv)->GetStaticObjectField(jniEnv, constants, id);
+							Assert_JVMTI_notNull(tempGroup);
+						}
+
+						/* VM access is required before invoking releaseVMThread. */
 						vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
+						if (JVMTI_ERROR_OUT_OF_MEMORY == rc) {
+							j9mem_free_memory(name);
+							goto release;
+						}
 
 						group = J9_JNI_UNWRAP_REFERENCE(tempGroup);
 						threadObject = (NULL == thread) ? targetThread->threadObject : J9_JNI_UNWRAP_REFERENCE(thread);
@@ -611,9 +618,6 @@ release:
 done:
 		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
-#if JAVA_SPEC_VERSION >= 19
-exit:
-#endif /* JAVA_SPEC_VERSION >= 19 */
 
 	if (NULL != info_ptr) {
 		info_ptr->name = rv_name;
