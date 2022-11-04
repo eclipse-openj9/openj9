@@ -82,6 +82,9 @@ public abstract class SharedClassAbstractHelper extends SharedAbstractHelper imp
 		ROMCLASS_COOKIE_SIZE = initializeShareableClassloaderImpl(loader);
 	}
 
+	/*[IF JAVA_SPEC_VERSION >= 20]*/
+	@SuppressWarnings("deprecation")
+	/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
 	URL convertJarURL(URL url) {
 		if (url == null) {
 			return null;
@@ -125,6 +128,9 @@ public abstract class SharedClassAbstractHelper extends SharedAbstractHelper imp
 		}
 	}
 
+	/*[IF JAVA_SPEC_VERSION >= 20]*/
+	@SuppressWarnings("deprecation")
+	/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
 	private static URL getURLToCheck(URL url) {
 		String pathString = url.toString();
 		int indexBang = pathString.indexOf("!/"); //$NON-NLS-1$
