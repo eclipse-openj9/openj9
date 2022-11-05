@@ -156,6 +156,8 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
    static TR::Register *zdslsStoreiEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *zdstsStoreiEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *zd2zdsleEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *zd2zdsleEvaluatorHelper(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *zd2zdsleVectorEvaluatorHelper(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *zd2zdstsEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *zdsle2pdEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *zdsts2pdEvaluator(TR::Node *node, TR::CodeGenerator *cg);
@@ -316,8 +318,7 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
    static TR::Register *zdsls2pdEvaluator(TR::Node * node, TR::CodeGenerator * cg);
    static void zonedToZonedSeparateSignHelper(TR::Node *node, TR_PseudoRegister *srcReg, TR_PseudoRegister *targetReg, TR::MemoryReference *sourceMR, TR::MemoryReference *destMR, TR::CodeGenerator * cg);
    static TR::MemoryReference *packedToZonedHelper(TR::Node *node, TR_PseudoRegister *targetReg, TR::MemoryReference *sourceMR, TR_PseudoRegister *childReg, TR::CodeGenerator * cg);
-   static void pd2zdSignFixup(TR::Node *node, TR::MemoryReference *destMR, TR::CodeGenerator * cg, bool useLeftAlignedMR);
-   static TR::Register *zdstoreiVectorEvaluatorHelper(TR::Node *node, TR::CodeGenerator *cg);
+   static void pd2zdSignFixup(TR::Node *node, TR::MemoryReference *destMR, TR::CodeGenerator * cg, TR::Register *zonedDecimalLow = NULL);
 
    static void zonedSeparateSignToPackedOrZonedHelper(TR::Node *node, TR_PseudoRegister *targetReg, TR::MemoryReference *sourceMR, TR::MemoryReference *destMR, TR::CodeGenerator * cg);
    static TR::Register *zdsle2zdEvaluator(TR::Node *node, TR::CodeGenerator *cg);
@@ -334,6 +335,7 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
    static TR::Register *pd2udVectorEvaluatorHelper(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *pd2zdEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *pd2zdVectorEvaluatorHelper(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *pd2zdVector2VectorEvaluatorHelper(TR::Node *node, TR::CodeGenerator *cg);
 
    /*   PD <- UD/ZD   */
    static TR::Register *ud2pdEvaluator(TR::Node *node, TR::CodeGenerator *cg);
@@ -466,6 +468,7 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
    static TR::Register *pdstoreEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *pdstoreEvaluatorHelper(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *pdstoreVectorEvaluatorHelper(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *zdstoreiVectorEvaluatorHelper(TR::Node *node, TR::CodeGenerator *cg);
    static TR_OpaquePseudoRegister *evaluateValueModifyingOperand(TR::Node * node, bool initTarget, TR::MemoryReference *sourceMR, TR::CodeGenerator * cg, bool trackSignState=false, int32_t srcSize=0, bool alwaysLegalToCleanSign=false);
    static TR_PseudoRegister *evaluateBCDValueModifyingOperand(TR::Node * node, bool initTarget, TR::MemoryReference *sourceMR, TR::CodeGenerator * cg, bool trackSignState=false, int32_t srcSize=0, bool alwaysLegalToCleanSign=false);
    static TR_OpaquePseudoRegister *evaluateSignModifyingOperand(TR::Node *node, bool isEffectiveNop, bool isNondestructiveNop, bool initTarget, TR::MemoryReference *sourceMR, TR::CodeGenerator *cg);
@@ -555,9 +558,6 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
    static TR::Register *awrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *awrtbariEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 
-   static TR::Register *inlineIntegerStringSize(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *inlineIntegerToCharsForLatin1Strings(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *inlineIntegerToCharsForUTF16Strings(TR::Node *node, TR::CodeGenerator *cg);
    };
 }
 
