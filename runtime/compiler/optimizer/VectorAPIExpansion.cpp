@@ -20,6 +20,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 #include "compile/ResolvedMethod.hpp"
+#include "env/StackMemoryRegion.hpp"
 #include "env/VerboseLog.hpp"
 #include "env/VMAccessCriticalSection.hpp"
 #include "il/Node.hpp"
@@ -791,6 +792,8 @@ TR_VectorAPIExpansion::validateVectorAliasClasses()
 int32_t
 TR_VectorAPIExpansion::expandVectorAPI()
    {
+   TR::StackMemoryRegion stackMemoryRegion(*trMemory());
+
    if (_trace)
       traceMsg(comp(), "%s In expandVectorAPI\n", OPT_DETAILS_VECTOR);
 
