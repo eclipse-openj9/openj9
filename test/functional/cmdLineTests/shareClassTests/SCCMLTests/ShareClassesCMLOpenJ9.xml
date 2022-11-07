@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!--
-  Copyright (c) 2018, 2021 IBM Corp. and others
+  Copyright (c) 2018, 2022 IBM Corp. and others
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
   distribution and is available at https://www.eclipse.org/legal/epl-2.0/
@@ -24,6 +24,10 @@
 	<variable name="currentMode" value="$mode204$"/>
 	<variable name="CP_HANOI" value="-cp $UTILSJAR$" />
 	<variable name="PROGRAM_HANOI" value="org.openj9.test.ivj.Hanoi 2" />
+
+	<variable name="LINUX_AIX_OSX_PLATFORMS" value="aix.*,linux.*,osx.*" />
+	<variable name="ZOS_PLATFORMS" value="zos.*" />
+	<variable name="WINDOWS_PLATFORMS" value="win.*" />
 	<if testVariable="SCMODE" testValue="204" resultVariable="currentMode" resultValue="$mode204$"/>
 	
 	<echo value=" "/>
@@ -70,6 +74,21 @@
 		<output type="required" caseSensitive="yes" regex="no">Puzzle solved!</output>
 		<!-- j9jcl.104, j9jcl.97 SharedClassURLClasspathHelperImpl.storeSharedClassImpl()/findSharedClassImpl() is not triggered, non-bootstrap class sharing is not enabled.  -->
 		<output type="failure" caseSensitive="no" regex="no">SharedClassURLClasspathHelperImpl</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+
+	<test id="Test 2: Test the default shared cache directory" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ -Xtrace:print={j9shr.2264} -Xshareclasses:verbose,printCacheFilename</command>
+		<!-- Enable j9shr.2264 Trc_SHR_OSC_getCacheDir_j9shmem_getDir_failed1 for debugging purpose when failed -->
+		<output type="success" caseSensitive="no" regex="no" platforms="$LINUX_AIX_OSX_PLATFORMS$">/.cache/javasharedresources/</output>
+		<output type="success" caseSensitive="no" regex="no" platforms="$ZOS_PLATFORMS$">/tmp/javasharedresources/</output>
+		<output type="success" caseSensitive="no" regex="no" platforms="$WINDOWS_PLATFORMS$">\AppData\Local\javasharedresources\</output>
+
+		<output type="failure" caseSensitive="no" regex="no" platforms="$LINUX_AIX_OSX_PLATFORMS$">/tmp/</output>
+		<output type="failure" caseSensitive="no" regex="no" platforms="$ZOS_PLATFORMS$">/.cache/</output>
+		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes" platforms="$WINDOWS_PLATFORMS$">[\\/]tmp[\\/]</output>
+		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes" platforms="$WINDOWS_PLATFORMS$">[\\/].cache[\\/]</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
