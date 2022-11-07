@@ -1057,7 +1057,7 @@ TR_SharedCacheRelocationRuntime::checkAOTHeaderFlags(const TR_AOTHeader *hdrInCa
    {
    bool defaultMessage = true;
 
-   if (!TR::Compiler->target.cpu.isCompatible(hdrInCache->processorDescription))
+   if (!TR::Compiler->relocatableTarget.cpu.isCompatible(hdrInCache->processorDescription))
       defaultMessage = generateError(J9NLS_RELOCATABLE_CODE_WRONG_HARDWARE, "AOT header validation failed: Processor incompatible.");
    if ((featureFlags & TR_FeatureFlag_sanityCheckBegin) != (hdrInCache->featureFlags & TR_FeatureFlag_sanityCheckBegin))
       defaultMessage = generateError(J9NLS_RELOCATABLE_CODE_HEADER_START_SANITY_BIT_MANGLED, "AOT header validation failed: Processor feature sanity bit mangled.");
@@ -1188,7 +1188,7 @@ TR_SharedCacheRelocationRuntime::validateAOTHeader(TR_FrontEnd *fe, J9VMThread *
          }
       else if
          (hdrInCache->featureFlags != featureFlags ||
-          !TR::Compiler->target.cpu.isCompatible(hdrInCache->processorDescription)
+          !TR::Compiler->relocatableTarget.cpu.isCompatible(hdrInCache->processorDescription)
          )
          {
          checkAOTHeaderFlags(hdrInCache, featureFlags);
@@ -1276,16 +1276,7 @@ TR_SharedCacheRelocationRuntime::createAOTHeader(TR_FrontEnd *fe)
       aotHeader->gcPolicyFlag = javaVM()->memoryManagerFunctions->j9gc_modron_getWriteBarrierType(javaVM());
       aotHeader->lockwordOptionHashValue = getCurrentLockwordOptionHashValue(javaVM());
       aotHeader->compressedPointerShift = javaVM()->memoryManagerFunctions->j9gc_objaccess_compressedPointersShift(javaVM()->internalVMFunctions->currentVMThread(javaVM()));
-
-      if (J9_ARE_ANY_BITS_SET(javaVM()->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_PORTABLE_SHARED_CACHE))
-         {
-         TR::Compiler->relocatableTarget.cpu = TR::CPU::detectRelocatable(TR::Compiler->omrPortLib);
-         aotHeader->processorDescription = TR::Compiler->relocatableTarget.cpu.getProcessorDescription();
-         }
-      else
-         {
-         aotHeader->processorDescription = TR::Compiler->target.cpu.getProcessorDescription();
-         }
+      aotHeader->processorDescription = TR::Compiler->relocatableTarget.cpu.getProcessorDescription();
 
       // Set up other feature flags
       aotHeader->featureFlags = generateFeatureFlags(fe);
@@ -1374,7 +1365,7 @@ TR_SharedCacheRelocationRuntime::generateFeatureFlags(TR_FrontEnd *fe)
 
    featureFlags |= TR_FeatureFlag_sanityCheckBegin;
 
-   if (TR::Compiler->target.isSMP())
+   if (TR::Compiler->relocatableTarget.isSMP())
       featureFlags |= TR_FeatureFlag_IsSMP;
 
    if (TR::Options::useCompressedPointers())
@@ -1396,7 +1387,7 @@ TR_SharedCacheRelocationRuntime::generateFeatureFlags(TR_FrontEnd *fe)
       featureFlags |= TR_FeatureFlag_HCREnabled;
 
 #ifdef TR_TARGET_S390
-   if (TR::Compiler->target.cpu.supportsFeature(OMR_FEATURE_S390_VECTOR_FACILITY))
+   if (TR::Compiler->relocatableTarget.cpu.supportsFeature(OMR_FEATURE_S390_VECTOR_FACILITY))
       featureFlags |= TR_FeatureFlag_SIMDEnabled;
 #endif
 
@@ -1405,7 +1396,7 @@ TR_SharedCacheRelocationRuntime::generateFeatureFlags(TR_FrontEnd *fe)
       featureFlags |= TR_FeatureFlag_ConcurrentScavenge;
 
 #ifdef TR_TARGET_S390
-      if (!TR::Compiler->target.cpu.supportsFeature(OMR_FEATURE_S390_GUARDED_STORAGE))
+      if (!TR::Compiler->relocatableTarget.cpu.supportsFeature(OMR_FEATURE_S390_GUARDED_STORAGE))
          featureFlags |= TR_FeatureFlag_SoftwareReadBarrier;
 #endif
       }
@@ -1418,7 +1409,7 @@ TR_SharedCacheRelocationRuntime::generateFeatureFlags(TR_FrontEnd *fe)
    if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableTM) &&
        !TR::Options::getAOTCmdLineOptions()->getOption(TR_DisableTM))
       {
-      if (TR::Compiler->target.cpu.supportsTransactionalMemoryInstructions())
+      if (TR::Compiler->relocatableTarget.cpu.supportsTransactionalMemoryInstructions())
          {
          featureFlags |= TR_FeatureFlag_UsesTM;
          }

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -46,8 +46,16 @@ J9::CompilerEnv::initializeTargetEnvironment()
    OMR::CompilerEnvConnector::initializeTargetEnvironment();
    }
 
+void
+J9::CompilerEnv::initializeRelocatableTargetEnvironment()
+   {
+   OMR::CompilerEnvConnector::initializeRelocatableTargetEnvironment();
+   if (J9_ARE_ANY_BITS_SET(javaVM->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_PORTABLE_SHARED_CACHE))
+      relocatableTarget.cpu = TR::CPU::detectRelocatable(omrPortLib);
+   }
+
 /**
- * \brief Determines whether methods are compiled and the generated code simply 
+ * \brief Determines whether methods are compiled and the generated code simply
  *        "tossed" without execution.
  * \return true if compiles have been requested to be tossed; false otherwise.
  */
