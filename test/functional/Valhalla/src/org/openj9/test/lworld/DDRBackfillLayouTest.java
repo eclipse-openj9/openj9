@@ -22,6 +22,7 @@
 package org.openj9.test.lworld;
 
 import java.lang.reflect.Array;
+import static org.openj9.test.lworld.ValueTypeTestClasses.*;
 
 public class DDRBackfillLayouTest {
 	public static void main(String[] args) {
@@ -44,7 +45,6 @@ public class DDRBackfillLayouTest {
 		ValueTypeTests.testLayoutsWithPrimitives();
 		ValueTypeTests.testCreateFlatLayoutsWithValueTypes();
 		ValueTypeTests.testFlatLayoutsWithValueTypes();
-		ValueTypeTests.testCreateFlatLayoutsWithRecursiveLongs();
 		ValueTypeTests.testFlatLayoutsWithRecursiveLongs();
 		
 		Object flatSingleBackfillInstance =  ValueTypeTests.makeFlatSingleBackfillClass.invoke(ValueTypeTests.makeValueLong.invoke(ValueTypeTests.defaultLong), ValueTypeTests.makeValueObject.invoke(ValueTypeTests.defaultObject), ValueTypeTests.makeValueInt.invoke(ValueTypeTests.defaultInt));		
@@ -55,15 +55,17 @@ public class DDRBackfillLayouTest {
 		Object flatUnAlignedObjectBackfill2Instance = ValueTypeTests.makeFlatUnAlignedObjectBackfillClass2.invoke(ValueTypeTests.makeValueObject.invoke(ValueTypeTests.defaultObject), ValueTypeTests.makeFlatUnAlignedObjectClass.invoke(ValueTypeTests.makeValueObject.invoke(ValueTypeTests.defaultObject), ValueTypeTests.makeValueObject.invoke(ValueTypeTests.defaultObjectNew)), ValueTypeTests.makeValueLong.invoke(ValueTypeTests.defaultLong));
 		Object singleBackfillInstance = ValueTypeTests.makeSingleBackfillClass.invoke(ValueTypeTests.defaultLong, ValueTypeTests.defaultObject, ValueTypeTests.defaultInt);		
 		Object objectBackfillInstance2 = ValueTypeTests.makeObjectBackfillClass.invoke(ValueTypeTests.defaultLong, ValueTypeTests.defaultObject);
-		Object doubleLongInstance = ValueTypeTests.makeDoubleLongClass.invoke(ValueTypeTests.makeValueLong.invoke(ValueTypeTests.defaultLong), ValueTypeTests.defaultLongNew);
-		Object quadLongInstance = ValueTypeTests.makeQuadLongClass.invoke(doubleLongInstance, ValueTypeTests.makeValueLong.invoke(ValueTypeTests.defaultLongNew2), ValueTypeTests.defaultLongNew3);
-		Object doubleQuadLongInstance = ValueTypeTests.makeDoubleQuadLongClass.invoke(quadLongInstance, doubleLongInstance, ValueTypeTests.makeValueLong.invoke(ValueTypeTests.defaultLongNew4), ValueTypeTests.defaultLongNew5);
+
+		ValueTypeDoubleLong doubleLongInstance = new ValueTypeDoubleLong(new ValueTypeLong(ValueTypeTests.defaultLong), ValueTypeTests.defaultLongNew);
+		ValueTypeQuadLong quadLongInstance = new ValueTypeQuadLong(doubleLongInstance, new ValueTypeLong(ValueTypeTests.defaultLongNew2), ValueTypeTests.defaultLongNew3);
+		ValueTypeDoubleQuadLong doubleQuadLongInstance = new ValueTypeDoubleQuadLong(quadLongInstance, doubleLongInstance, new ValueTypeLong(ValueTypeTests.defaultLongNew4), ValueTypeTests.defaultLongNew5);
+		
 
 		Object flatUnAlignedSingleBackfill2Array = Array.newInstance(ValueTypeTests.flatUnAlignedSingleBackfillClass2, 3);
 		Array.set(flatUnAlignedSingleBackfill2Array, 1, flatUnAlignedSingleBackfill2Instance);
-		
-		Object quadLongArray = Array.newInstance(ValueTypeTests.quadLongClass, 3);
-		Array.set(quadLongArray, 1, quadLongInstance);
+
+		ValueTypeQuadLong[] quadLongArray = new ValueTypeQuadLong[3];
+		quadLongArray[1] = quadLongInstance;
 		
 		ValueTypeTests.checkObject(flatSingleBackfillInstance, 
 				objectBackfillInstance, 

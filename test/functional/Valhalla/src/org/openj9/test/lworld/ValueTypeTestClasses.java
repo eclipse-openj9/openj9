@@ -35,8 +35,11 @@ public class ValueTypeTestClasses {
 	}
 
 	static primitive class ValueTypeLong {
-		ValueTypeLong(long l) {this.l = l;}
 		final long l;
+		ValueTypeLong(long l) {this.l = l;}
+		public long getL() {
+			return l;
+		}
 	}
 
 	static primitive class ValueTypePoint2D {
@@ -104,4 +107,76 @@ public class ValueTypeTestClasses {
 		ValueTypeInt2(int i) { this.i = i; }
 		final int i;
 	}
+	
+	static primitive class ValueTypeFastSubVT {
+		final int x,y,z;
+		final Object[] arr;
+		ValueTypeFastSubVT(int x, int y, int z, Object[] arr) {
+			this.x = x;
+			this.y = y;
+			this.z = z;
+			this.arr = arr;
+		}
+	}
+	
+	static primitive class ValueTypeDoubleLong {
+		final ValueTypeLong l;
+		final long l2;
+		ValueTypeDoubleLong(ValueTypeLong l, long l2) {
+			this.l = l;
+			this.l2 = l2;
+		}
+		public ValueTypeLong getL() {
+			return l;
+		}
+		public long getL2() {
+			return l2;
+		}
+	}
+
+	static primitive class ValueTypeQuadLong {
+		final ValueTypeDoubleLong l;
+		final ValueTypeLong l2;
+		final long l3;
+		ValueTypeQuadLong(ValueTypeDoubleLong l, ValueTypeLong l2, long l3) {
+			this.l = l;
+			this.l2 = l2;
+			this.l3 = l3;
+		}
+		public ValueTypeDoubleLong getL() {
+			return l;
+		}
+		public ValueTypeLong getL2() {
+			return l2;
+		}
+		public long getL3() {
+			return l3;
+		}
+	}
+
+	static primitive class ValueTypeDoubleQuadLong {
+		final ValueTypeQuadLong l;
+		final ValueTypeDoubleLong l2;
+		final ValueTypeLong l3;
+		final long l4;
+		ValueTypeDoubleQuadLong(ValueTypeQuadLong l, ValueTypeDoubleLong l2, ValueTypeLong l3, long l4) {
+			this.l = l;
+			this.l2 = l2;
+			this.l3 = l3;
+			this.l4 = l4;
+		}
+		public ValueTypeQuadLong getL() {
+			return l;
+		}
+		public ValueTypeDoubleLong getL2() {
+			return l2;
+		}
+		public ValueTypeLong getL3() {
+			return l3;
+		}
+		public long getL4() {
+			return l4;
+		}
+	}
+	
 }
