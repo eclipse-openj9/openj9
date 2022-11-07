@@ -882,13 +882,17 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
             else // isStoreFlattenableArrayElement
                {
                TR_OpaqueClassBlock *valueClass = storeValueConstraint->getClass();
-               TR_YesNoMaybe isInstanceOfComponentType = comp()->fej9()->isInstanceOf(valueClass,
+               // storeValueConstraint might not be a resolved class constraint. Therefore valueClass might not exist
+               if (valueClass)
+                  {
+                  TR_YesNoMaybe isInstanceOfComponentType = comp()->fej9()->isInstanceOf(valueClass,
                                                                                    arrayComponentClass,
                                                                                    storeValueConstraint->isFixedClass(),
                                                                                    arrayConstraint->isFixedClass());
 
-               // If the value that's being stored is not the same as the array component type, use helper call.
-               canTransformFlattenedArrayElementLoadStore = (isInstanceOfComponentType == TR_yes);
+                  // If the value that's being stored is not the same as the array component type, use helper call.
+                  canTransformFlattenedArrayElementLoadStore = (isInstanceOfComponentType == TR_yes);
+                  }
                }
             }
          }
@@ -912,6 +916,10 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
          {
          canTransformIdentityLoadStore = true;
          }
+
+      if (trace())
+         traceMsg(comp(), "%s: n%dn %s canTransformFlattenedArrayElementLoadStore %d canTransformUnflattenedVTArrayElementLoadStore %d canTransformIdentityLoadStore %d\n", __FUNCTION__,
+            node->getGlobalIndex(), node->getOpCode().getName(), canTransformFlattenedArrayElementLoadStore, canTransformUnflattenedVTArrayElementLoadStore, canTransformIdentityLoadStore);
 
       if (canTransformFlattenedArrayElementLoadStore
           || canTransformUnflattenedVTArrayElementLoadStore
@@ -1957,6 +1965,7 @@ J9::ValuePropagation::transformFlattenedArrayElementLoad(TR_OpaqueClassBlock *ar
    int32_t elementStride = TR::Compiler->cls.flattenedArrayElementSize(comp(), arrayClass);
    TR::Node *elementAddressNode = J9::TransformUtil::calculateElementAddressWithElementStride(comp(), arrayRefNode, indexNode, elementStride);
 
+   int32_t offsetOfFirstField = fieldTypeLayout->entry(0)._offset;
    // Generate load for each of the final fields
    int newValueNodeChildIndex = 1;
    for (size_t idx = 0; idx < fieldCount; idx++)
@@ -1966,7 +1975,7 @@ J9::ValuePropagation::transformFlattenedArrayElementLoad(TR_OpaqueClassBlock *ar
 
       auto * fieldSymRef = comp()->getSymRefTab()->findOrFabricateFlattenedArrayElementFieldShadowSymbol(arrayComponentClass,
                                                                   fieldEntry._datatype,
-                                                                  fieldEntry._offset,
+                                                                  fieldEntry._offset - offsetOfFirstField,
                                                                   fieldEntry._isPrivate,
                                                                   fieldEntry._fieldname,
                                                                   fieldEntry._typeSignature);
@@ -2066,6 +2075,7 @@ J9::ValuePropagation::transformFlattenedArrayElementStore(TR_OpaqueClassBlock *a
    int32_t elementStride = TR::Compiler->cls.flattenedArrayElementSize(comp(), arrayClass);
    TR::Node *elementAddressNode = J9::TransformUtil::calculateElementAddressWithElementStride(comp(), arrayRefNode, indexNode, elementStride);
 
+   int32_t offsetOfFirstField = fieldTypeLayout->entry(0)._offset;
    // Generate store for each of the final fields
    TR::TreeTop *tt = callTree;
    for (size_t idx = 0; idx < fieldCount; idx++)
@@ -2084,7 +2094,7 @@ J9::ValuePropagation::transformFlattenedArrayElementStore(TR_OpaqueClassBlock *a
 
       auto * storeFieldSymRef = comp()->getSymRefTab()->findOrFabricateFlattenedArrayElementFieldShadowSymbol(arrayComponentClass,
                                                                   fieldEntry._datatype,
-                                                                  fieldEntry._offset,
+                                                                  fieldEntry._offset - offsetOfFirstField,
                                                                   fieldEntry._isPrivate,
                                                                   fieldEntry._fieldname,
                                                                   fieldEntry._typeSignature);

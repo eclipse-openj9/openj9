@@ -209,7 +209,7 @@ class SymbolReferenceTable : public OMR::SymbolReferenceTableConnector
     *  \param type
     *     The data type of the field.
     *  \param fieldOffset
-    *     The offset of the field.
+    *     The offset of the field from the beginning of the first field.
     *  \param isPrivate
     *     Specifies whether the field is private.
     *  \param fieldName
@@ -219,7 +219,7 @@ class SymbolReferenceTable : public OMR::SymbolReferenceTableConnector
     *  \return
     *     Returns an array shadow symbol reference fabricated for the field of a flattened array element.
     */
-   TR::SymbolReference * findOrFabricateFlattenedArrayElementFieldShadowSymbol(TR_OpaqueClassBlock *arrayComponentClass, TR::DataType type, uint32_t fieldOffset, bool isPrivate, const char *fieldName, const char *fieldSignature);
+   TR::SymbolReference * findOrFabricateFlattenedArrayElementFieldShadowSymbol(TR_OpaqueClassBlock *arrayComponentClass, TR::DataType type, int32_t fieldOffset, bool isPrivate, const char *fieldName, const char *fieldSignature);
 
    /** \brief
     *     Returns a symbol reference for default value instance of value class.
