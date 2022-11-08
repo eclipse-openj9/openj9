@@ -717,6 +717,7 @@ getArgPointer(J9UpcallNativeSignature *nativeSig, void *argListPtr, I_32 argIdx)
 	/* Loop through the arguments */
 	for (I_32 i = 0; i <= argIdx; i++) {
 		tempInt = sigArray[i].sizeInByte;
+		isPointerToStruct = false;
 		switch (sigArray[i].type) {
 #if defined(LINUX)
 			case J9_FFI_UPCALL_SIG_TYPE_CHAR:    /* Fall through */
