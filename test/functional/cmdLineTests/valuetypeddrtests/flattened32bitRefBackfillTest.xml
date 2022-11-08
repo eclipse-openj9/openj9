@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
 
 <!--
-  Copyright (c) 2019, 2021 IBM Corp. and others
+  Copyright (c) 2019, 2022 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -41,7 +41,7 @@
 		<output regex="no" type="failure">Exception caught!</output>
 	</test>
 
- 	<test id="Test 2: Run !threads">
+	<test id="Test 2: Run !threads">
 		<command command="$JDMPVIEW_EXE$">
 			<arg>-core $DUMPFILE$</arg>
 			<input>!threads</input>
@@ -530,7 +530,7 @@
 		<output regex="no" type="success" showMatch="yes" regex="yes" javaUtilPattern="yes">l.l2 \(offset = 16\) \(.*ValueTypeLong\)</output>
 		<output regex="no" type="success" showMatch="yes" regex="yes" javaUtilPattern="yes">J l3 = 0x33773377CC00CC00 \(offset = 24\) \(.*ValueTypeQuadLong\)</output>
 		<output regex="no" type="success" showMatch="yes" regex="yes" javaUtilPattern="yes">\// .*ValueTypeQuadLong</output>
-		<output regex="no" type="success" showMatch="yes" regex="yes" javaUtilPattern="yes">offset in top level container = 8;</output>		
+		<output regex="no" type="success" showMatch="yes" regex="yes" javaUtilPattern="yes">offset in top level container = 8;</output>
 		<output regex="no" type="failure">Problem running command</output>
 	</test>
 	
@@ -567,7 +567,7 @@
 		</command>
 		<output regex="no" type="success" showMatch="yes" regex="yes" javaUtilPattern="yes">J l2 = 0x11551155AAEEAAEE \(offset = 8\) \(.*ValueTypeDoubleLong\)</output>
 		<output regex="no" type="success" showMatch="yes" regex="yes" javaUtilPattern="yes">l2.l \(offset = 0\) \(.*ValueTypeLong\)</output>
-		<output regex="no" type="success" showMatch="yes">offset in top level container = 40;</output>	
+		<output regex="no" type="success" showMatch="yes">offset in top level container = 40;</output>
 		<output regex="no" type="failure">Problem running command</output>
 	</test>	
 
@@ -579,7 +579,7 @@
 		</command>
 		<output regex="no" type="success" showMatch="yes" regex="yes" javaUtilPattern="yes">J j = 0xFAFBFCFD11223344 \(offset = 0\) \(.*ValueTypeLong\)</output>
 		<output regex="no" type="success" showMatch="yes" regex="yes" javaUtilPattern="yes">\// .*ValueTypeLong</output>
-		<output regex="no" type="success" showMatch="yes">offset in top level container = 40;</output>	
+		<output regex="no" type="success" showMatch="yes">offset in top level container = 40;</output>
 		<output regex="no" type="failure">Problem running command</output>
 	</test>
 	
@@ -591,7 +591,7 @@
 		</command>
 		<output regex="no" type="success" showMatch="yes" regex="yes" javaUtilPattern="yes">J j = 0x44884488DD11DD11 \(offset = 0\) \(.*ValueTypeLong\)</output>
 		<output regex="no" type="success" showMatch="yes" regex="yes" javaUtilPattern="yes">\// .*ValueTypeLong</output>
-		<output regex="no" type="success" showMatch="yes">offset in top level container = 56;</output>	
+		<output regex="no" type="success" showMatch="yes">offset in top level container = 56;</output>
 		<output regex="no" type="failure">Problem running command</output>
 	</test>
 	
@@ -625,7 +625,7 @@
 		<output regex="no" type="success" showMatch="yes">[1] = !j9object 0x</output>
 		<output regex="no" type="success" showMatch="yes">[2] = !j9object 0x</output>
 		<output regex="no" type="success" showMatch="yes">U_32 size = 0x00000003;</output>
-		<output regex="no" type="success" showMatch="yes">// [L</output>	
+		<output regex="no" type="success" showMatch="yes">// [L</output>
 		<output regex="no" type="failure">Problem running command</output>
 	</test>
 	
@@ -639,7 +639,7 @@
 		<output regex="no" type="success" showMatch="yes">[0].singles (offset = 0) (FlatUnAlignedSingle)</output>
 		<output regex="no" type="success" showMatch="yes">[0].singles2 (offset = 20) (FlatUnAlignedSingle)</output>
 		<output regex="no" type="success" showMatch="yes">offset in top level container = 8;</output>
-		<output regex="no" type="success" showMatch="yes">// FlatUnAlignedSingleBackfill2</output>	
+		<output regex="no" type="success" showMatch="yes">// FlatUnAlignedSingleBackfill2</output>
 		<output regex="no" type="failure">Problem running command</output>
 	</test>
 	
@@ -653,7 +653,7 @@
 		<output regex="no" type="success" showMatch="yes">[0].singles (offset = 0) (FlatUnAlignedSingle)</output>
 		<output regex="no" type="success" showMatch="yes">[0].singles2 (offset = 20) (FlatUnAlignedSingle)</output>
 		<output regex="no" type="success" showMatch="yes">offset in top level container = 40;</output>
-		<output regex="no" type="success" showMatch="yes">// FlatUnAlignedSingleBackfill2</output>	
+		<output regex="no" type="success" showMatch="yes">// FlatUnAlignedSingleBackfill2</output>
 		<output regex="no" type="failure">Problem running command</output>
 	</test>
 	
@@ -665,7 +665,7 @@
 		</command>
 		<output regex="no" type="success" showMatch="yes">J j = 0xFAFBFCFD11223344 (offset = 0) (ValueLong)</output>
 		<output regex="no" type="success" showMatch="yes">offset in top level container = 52;</output>
-		<output regex="no" type="success" showMatch="yes">// FlatUnAlignedSingleBackfill2</output>	
+		<output regex="no" type="success" showMatch="yes">// FlatUnAlignedSingleBackfill2</output>
 		<output regex="no" type="failure">Problem running command</output>
 	</test>
 
@@ -679,7 +679,7 @@
 		<output regex="no" type="success" showMatch="yes">I i = 0x12123434</output>
 		<output regex="no" type="success" showMatch="yes">I i = 0x45456767</output>
 		<output regex="no" type="success" showMatch="yes">offset in top level container = 40;</output>
-		<output regex="no" type="success" showMatch="yes">// FlatUnAlignedSingleBackfill2</output>	
+		<output regex="no" type="success" showMatch="yes">// FlatUnAlignedSingleBackfill2</output>
 		<output regex="no" type="failure">Problem running command</output>
 	</test>
 	
@@ -693,7 +693,7 @@
 		<output regex="no" type="success" showMatch="yes" regex="yes" javaUtilPattern="yes">\[1\].l2 \(offset = 16\) \(.*ValueTypeLong\)</output>
 		<output regex="no" type="success" showMatch="yes" regex="yes" javaUtilPattern="yes">J l3 = 0x33773377CC00CC00 /(offset = 24/) /(.*ValueTypeQuadLong/)</output>
 		<output regex="no" type="success" showMatch="yes">offset in top level container = 40;</output>
-		<output regex="no" type="success" showMatch="yes" regex="yes" javaUtilPattern="yes">\// .*ValueTypeQuadLong</output>	
+		<output regex="no" type="success" showMatch="yes" regex="yes" javaUtilPattern="yes">\// .*ValueTypeQuadLong</output>
 		<output regex="no" type="failure">Problem running command</output>
 	</test>	
 
@@ -708,7 +708,7 @@
 		<output regex="no" type="success" showMatch="yes">J j = 0x22662266BBFFBBFF</output>
 		<output regex="no" type="success" showMatch="yes">J l3 = 0x33773377CC00CC00</output>
 		<output regex="no" type="success" showMatch="yes">offset in top level container = 40;</output>
-		<output regex="no" type="success" showMatch="yes" regex="yes" javaUtilPattern="yes">\// .*ValueTypeQuadLong</output>	
+		<output regex="no" type="success" showMatch="yes" regex="yes" javaUtilPattern="yes">\// .*ValueTypeQuadLong</output>
 		<output regex="no" type="failure">Problem running command</output>
 	</test>
 </suite>

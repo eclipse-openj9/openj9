@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2020 IBM Corp. and others
+ * Copyright (c) 2019, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -59,7 +59,6 @@ public class DDRBackfillLayouTest {
 		ValueTypeDoubleLong doubleLongInstance = new ValueTypeDoubleLong(new ValueTypeLong(ValueTypeTests.defaultLong), ValueTypeTests.defaultLongNew);
 		ValueTypeQuadLong quadLongInstance = new ValueTypeQuadLong(doubleLongInstance, new ValueTypeLong(ValueTypeTests.defaultLongNew2), ValueTypeTests.defaultLongNew3);
 		ValueTypeDoubleQuadLong doubleQuadLongInstance = new ValueTypeDoubleQuadLong(quadLongInstance, doubleLongInstance, new ValueTypeLong(ValueTypeTests.defaultLongNew4), ValueTypeTests.defaultLongNew5);
-		
 
 		Object flatUnAlignedSingleBackfill2Array = Array.newInstance(ValueTypeTests.flatUnAlignedSingleBackfillClass2, 3);
 		Array.set(flatUnAlignedSingleBackfill2Array, 1, flatUnAlignedSingleBackfill2Instance);

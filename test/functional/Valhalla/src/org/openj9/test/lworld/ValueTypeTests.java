@@ -1682,7 +1682,7 @@ public class ValueTypeTests {
 		assertEquals(quadLongInstance.getL().getL2(), defaultLongNew);
 		assertEquals(quadLongInstance.getL2().getL(), defaultLongNew2);
 		assertEquals(quadLongInstance.getL3(), defaultLongNew3);
-		
+
 		ValueTypeDoubleQuadLong doubleQuadLongInstance = new ValueTypeDoubleQuadLong(quadLongInstance, doubleLongInstance, new ValueTypeLong(defaultLongNew4), defaultLongNew5);
 
 		assertEquals(doubleQuadLongInstance.getL().getL().getL().getL(), defaultLong);
@@ -1693,7 +1693,6 @@ public class ValueTypeTests {
 		assertEquals(doubleQuadLongInstance.getL2().getL2(), defaultLongNew);
 		assertEquals(doubleQuadLongInstance.getL3().getL(), defaultLongNew4);
 		assertEquals(doubleQuadLongInstance.getL4(), defaultLongNew5);
-		
 	}
 	
 	/*

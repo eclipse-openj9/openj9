@@ -107,7 +107,7 @@ public class ValueTypeTestClasses {
 		ValueTypeInt2(int i) { this.i = i; }
 		final int i;
 	}
-	
+
 	static primitive class ValueTypeFastSubVT {
 		final int x,y,z;
 		final Object[] arr;
@@ -118,7 +118,7 @@ public class ValueTypeTestClasses {
 			this.arr = arr;
 		}
 	}
-	
+
 	static primitive class ValueTypeDoubleLong {
 		final ValueTypeLong l;
 		final long l2;
@@ -178,5 +178,4 @@ public class ValueTypeTestClasses {
 			return l4;
 		}
 	}
-	
 }
