@@ -171,6 +171,7 @@ public class J9ObjectFieldOffsetIterator_V1 extends J9ObjectFieldOffsetIterator 
 					offset = new UDATA(hiddenField.fieldOffset().intValue() - J9ObjectHelper.headerSize());
 					/* Hidden fields do not have a valid JVMTI index. */
 					index = new UDATA(-1);
+					break;
 				}
 			}
 		}
