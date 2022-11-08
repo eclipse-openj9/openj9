@@ -587,6 +587,12 @@
     </classes>
   </test>
 
+  <test name="RecognizedCRC32CTest">
+    <classes>
+      <class name="jit.test.recognizedMethod.TestJavaUtilZipCRC32C" />
+    </classes>
+  </test>
+
   <test name="JITServerTest">
     <classes>
       <class name="jit.test.jitserver.JITServerTest"/>
