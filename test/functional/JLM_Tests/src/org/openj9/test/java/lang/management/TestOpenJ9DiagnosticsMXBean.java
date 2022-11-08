@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2020 IBM Corp. and others
+ * Copyright (c) 2018, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -193,8 +193,10 @@ public class TestOpenJ9DiagnosticsMXBean {
 		for (String directory : dirs) {
 			File fdir = new File("." + File.separator + directory);
 			File[] files = fdir.listFiles();
-			for (File file : files) {
-				file.delete();
+			if (files != null) {
+				for (File file : files) {
+					file.delete();
+				}
 			}
 			fdir.delete();
 		}
