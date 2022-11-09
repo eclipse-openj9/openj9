@@ -52,9 +52,15 @@ J9::Z::CPU::detectRelocatable(OMRPortLibrary * const omrPortLib)
    omrsysinfo_get_processor_description(&processorDescription);
 
    if (processorDescription.processor > OMR_PROCESSOR_S390_Z10)
-      { 
+      {
       processorDescription.processor = OMR_PROCESSOR_S390_Z10;
       processorDescription.physicalProcessor = OMR_PROCESSOR_S390_Z10;
+      }
+
+   const uint32_t disabledFeatures [] = { OMR_FEATURE_S390_TE };
+   for (size_t i = 0; i < sizeof(disabledFeatures)/sizeof(uint32_t); i++)
+      {
+      omrsysinfo_processor_set_feature(&processorDescription, disabledFeatures[i], FALSE);
       }
 
    return TR::CPU::customize(processorDescription);

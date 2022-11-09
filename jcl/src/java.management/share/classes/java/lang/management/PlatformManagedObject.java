@@ -1,4 +1,4 @@
-/*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
+/*[INCLUDE-IF (JAVA_SPEC_VERSION == 8) & !Sidecar18-SE-OpenJ9]*/
 /*
  *******************************************************************************
  * Copyright (c) 2012, 2022 IBM Corp. and others

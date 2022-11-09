@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,11 +35,17 @@ J9::Power::CPU::detectRelocatable(OMRPortLibrary * const omrPortLib)
    OMRPORT_ACCESS_FROM_OMRPORT(omrPortLib);
    OMRProcessorDesc portableProcessorDescription;
    omrsysinfo_get_processor_description(&portableProcessorDescription);
-   
+
    if (portableProcessorDescription.processor > OMR_PROCESSOR_PPC_P8)
       {
       portableProcessorDescription.processor = OMR_PROCESSOR_PPC_P8;
       portableProcessorDescription.physicalProcessor = OMR_PROCESSOR_PPC_P8;
+      }
+
+   const uint32_t disabledFeatures [] = { OMR_FEATURE_PPC_HTM };
+   for (size_t i = 0; i < sizeof(disabledFeatures)/sizeof(uint32_t); i++)
+      {
+      omrsysinfo_processor_set_feature(&portableProcessorDescription, disabledFeatures[i], FALSE);
       }
 
    return TR::CPU::customize(portableProcessorDescription);
@@ -60,12 +66,12 @@ J9::Power::CPU::isCompatible(const OMRProcessorDesc& processorDescription)
    // Backwards compatibility only applies to p4,p5,p6,p7 and onwards
    // Looks for equality otherwise
    if ((processor == OMR_PROCESSOR_PPC_GP
-       || processor == OMR_PROCESSOR_PPC_GR 
-       || processor == OMR_PROCESSOR_PPC_P6 
+       || processor == OMR_PROCESSOR_PPC_GR
+       || processor == OMR_PROCESSOR_PPC_P6
        || (processor >= OMR_PROCESSOR_PPC_P7 && processor <= OMR_PROCESSOR_PPC_LAST))
-       && (targetProcessor == OMR_PROCESSOR_PPC_GP 
-        || targetProcessor == OMR_PROCESSOR_PPC_GR 
-        || targetProcessor == OMR_PROCESSOR_PPC_P6 
+       && (targetProcessor == OMR_PROCESSOR_PPC_GP
+        || targetProcessor == OMR_PROCESSOR_PPC_GR
+        || targetProcessor == OMR_PROCESSOR_PPC_P6
         || targetProcessor >= OMR_PROCESSOR_PPC_P7 && targetProcessor <= OMR_PROCESSOR_PPC_LAST))
       {
       return targetProcessor >= processor;
@@ -87,6 +93,6 @@ J9::Power::CPU::enableFeatureMasks()
       {
       omrsysinfo_processor_set_feature(&_supportedFeatureMasks, utilizedFeatures[i], TRUE);
       }
-   
+
    _isSupportedFeatureMasksEnabled = true;
    }
