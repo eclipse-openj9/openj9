@@ -190,12 +190,10 @@ void TR_HCRGuardAnalysis::initializeGenAndKillSetInfo()
             isKill = false;
             }
          }
-      else if (ttNode->isTheVirtualGuardForAGuardedInlinedCall()
-               && TR_FearPointAnalysis::virtualGuardsKillFear(comp())
-               && comp()->cg()->supportsMergingGuards())
+      else if (ttNode->isTheVirtualGuardForAGuardedInlinedCall())
          {
          TR_VirtualGuard *guardInfo = comp()->findVirtualGuardInfo(ttNode);
-         if (guardInfo->getKind() != TR_HCRGuard)
+         if (guardInfo->getKind() != TR_HCRGuard && TR_FearPointAnalysis::virtualGuardKillsFear(comp(), ttNode))
             {
             // Theoretically, the guard should only kill its inlined path. However, making it right require adding
             // complications to the data flow and/or optimizations using the result of the analysis. Based on the

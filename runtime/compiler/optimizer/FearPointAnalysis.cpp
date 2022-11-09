@@ -34,10 +34,31 @@
 #include "infra/BitVector.hpp"
 #include "infra/Checklist.hpp"
 
-bool TR_FearPointAnalysis::virtualGuardsKillFear(TR::Compilation *comp)
+
+bool TR_FearPointAnalysis::virtualGuardKillsFear(TR::Compilation *comp, TR::Node *virtualGuardNode)
    {
-   static bool kill = (feGetEnv("TR_FPAnalaysisGuardsDoNotKillFear") == NULL);
-   return kill && !(!comp->getOption(TR_DisableVectorAPIExpansion) && comp->getMethodSymbol()->hasVectorAPI());
+   if (!comp->cg()->supportsMergingGuards())
+      return false;
+
+   static bool kill = (feGetEnv("TR_FPAnalaysisGuardsDoNotKillFear")) == NULL;
+
+   if (kill && !comp->getOption(TR_DisableVectorAPIExpansion) && comp->getMethodSymbol()->hasVectorAPI())
+      {
+      TR_VirtualGuard *guardInfo = comp->findVirtualGuardInfo(virtualGuardNode);
+      if (guardInfo->isInlineGuard())
+         {
+         TR::Method *guardedMethod = guardInfo->getSymbolReference()->getSymbol()->castToMethodSymbol()->getMethod();
+         uint32_t classNameLength = guardedMethod->classNameLength();
+         char* className = guardedMethod->classNameChars();
+         // Set Virtual guard to not kill fear if it is guarding calls to method in two VectorJEP packages.
+         if ((classNameLength >= 20 && strncmp("jdk/incubator/vector", className, 20) == 0)
+               || (classNameLength >= 22 && strncmp("jdk/internal/vm/vector", className, 22) == 0))
+            {
+            return false;
+            }
+         }
+      }
+   return kill;
    }
 
 int32_t TR_FearPointAnalysis::getNumberOfBits() { return 1; }
@@ -246,9 +267,8 @@ void TR_FearPointAnalysis::initializeGenAndKillSetInfo()
          }
 
       // kill any fear originating from inside
-      if (virtualGuardsKillFear(comp())
-          && treeTop->getNode()->isTheVirtualGuardForAGuardedInlinedCall()
-          && comp()->cg()->supportsMergingGuards())
+      if (treeTop->getNode()->isTheVirtualGuardForAGuardedInlinedCall()
+            && virtualGuardKillsFear(comp(), treeTop->getNode()))
          {
          _regularKillSetInfo[currentBlock->getNumber()]->setAll(getNumberOfBits());
          _exceptionKillSetInfo[currentBlock->getNumber()]->setAll(getNumberOfBits());
