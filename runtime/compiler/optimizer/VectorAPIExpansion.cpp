@@ -682,8 +682,8 @@ TR_VectorAPIExpansion::validateSymRef(int32_t id, int32_t i, vec_sz_t &classLeng
                methodType != classType)
          {
          if (_trace)
-            traceMsg(comp(), "%s invalidating6 class #%d due to symref #%d method type %d, seen type %d\n",
-                     OPT_DETAILS_VECTOR, id, i, (int)methodType, (int)classType);
+            traceMsg(comp(), "%s invalidating6 class #%d due to symref #%d method type %s, seen type %s\n",
+                     OPT_DETAILS_VECTOR, id, i, TR::DataType::getName(methodType), TR::DataType::getName(classType));
          return false;
          }
       }
@@ -1602,6 +1602,14 @@ TR::Node *TR_VectorAPIExpansion::binaryIntrinsicHandler(TR_VectorAPIExpansion *o
    return naryIntrinsicHandler(opt, treeTop, node, elementType, vectorLength, numLanes, mode, 2, Other);
    }
 
+TR::Node *TR_VectorAPIExpansion::maskReductionCoercedIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node,
+                                                                  TR::DataType elementType, TR::VectorLength vectorLength, int32_t numLanes,
+                                                                  handlerMode mode)
+   {
+   return naryIntrinsicHandler(opt, treeTop, node, elementType, vectorLength, numLanes, mode, 1, MaskReduction);
+   }
+
+
 TR::Node *TR_VectorAPIExpansion::reductionCoercedIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node,
                                                                   TR::DataType elementType, TR::VectorLength vectorLength, int32_t numLanes,
                                                                   handlerMode mode)
@@ -1633,11 +1641,16 @@ TR::Node *TR_VectorAPIExpansion::naryIntrinsicHandler(TR_VectorAPIExpansion *opt
    TR::Node *opcodeNode = node->getFirstChild();
    int firstOperand = 5;
 
-   if (opCodeType == Test)
+   if (opCodeType == Test || opCodeType == MaskReduction)
       firstOperand = 4;
 
-   TR::Node *maskNode = node->getChild(firstOperand + numChildren);  // each intrinsic has a mask argument
-   bool withMask = !maskNode->isConstZeroValue();
+   bool withMask = false;
+
+   if (opCodeType != MaskReduction)
+      {
+      TR::Node *maskNode = node->getChild(firstOperand + numChildren);  // each intrinsic has a mask argument
+      withMask = !maskNode->isConstZeroValue();
+      }
 
    if (withMask) numChildren++;
 
@@ -1758,12 +1771,27 @@ TR::Node *TR_VectorAPIExpansion::fromBitsCoercedIntrinsicHandler(TR_VectorAPIExp
    {
    TR::Compilation *comp = opt->comp();
 
+   TR::Node *broadcastTypeNode = node->getChild(4);
+
+   if (!broadcastTypeNode->getOpCode().isLoadConst())
+      {
+      if (opt->_trace) traceMsg(comp, "Unknown broadcast type in node %p\n", node);
+      return NULL;
+      }
+
+   int32_t broadcastType = broadcastTypeNode->get32bitIntegralValue();
+
+   TR_ASSERT_FATAL(broadcastType == MODE_BROADCAST || broadcastType == MODE_BITS_COERCED_LONG_TO_MASK,
+                   "Unexpected broadcast type in node %p\n", node);
+
+   bool mask = (broadcastType == MODE_BITS_COERCED_LONG_TO_MASK);
+
    if (mode == checkScalarization)
-      return node;
+      return mask ? NULL : node;
 
    if (mode == checkVectorization)
       {
-      TR::ILOpCodes splatsOpCode = TR::ILOpCode::createVectorOpCode(TR::vsplats,
+      TR::ILOpCodes splatsOpCode = TR::ILOpCode::createVectorOpCode(mask ? TR::mLongBitsToMask : TR::vsplats,
                                                                     TR::DataType::createVectorType(elementType, vectorLength));
 
       if (!comp->cg()->getSupportsOpCodeForAutoSIMD(splatsOpCode))
@@ -1829,7 +1857,7 @@ TR::Node *TR_VectorAPIExpansion::fromBitsCoercedIntrinsicHandler(TR_VectorAPIExp
       {
       node->setAndIncChild(0, newNode);
       node->setNumChildren(1);
-      TR::ILOpCodes splatsOpCode = TR::ILOpCode::createVectorOpCode(TR::vsplats,
+      TR::ILOpCodes splatsOpCode = TR::ILOpCode::createVectorOpCode(mask ? TR::mLongBitsToMask : TR::vsplats,
                                                                     TR::DataType::createVectorType(elementType, vectorLength));
 
       TR::Node::recreate(node, splatsOpCode);
@@ -1926,11 +1954,23 @@ TR::ILOpCodes TR_VectorAPIExpansion::ILOpcodeFromVectorAPIOpcode(int32_t vectorA
          case VECTOR_OP_MIN: return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vreductionMin, vectorType);
          case VECTOR_OP_MAX: return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vreductionMax, vectorType);
          case VECTOR_OP_AND: return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vreductionAnd, vectorType);
-         case VECTOR_OP_OR:  return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vreductionOr, vectorType);
+         case VECTOR_OP_OR:  return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vreductionOr,  vectorType);
          case VECTOR_OP_XOR: return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vreductionXor, vectorType);
             // These don't seem to be generated by the library:
             // vreductionOrUnchecked
             // vreductionFirstNonZero
+         default:
+            return TR::BadILOp;
+         }
+      }
+   else if (opCodeType == MaskReduction)
+      {
+      switch (vectorAPIOpCode)
+         {
+         case VECTOR_OP_MASK_TRUECOUNT: return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::mTrueCount, vectorType);
+         case VECTOR_OP_MASK_FIRSTTRUE: return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::mFirstTrue, vectorType);
+         case VECTOR_OP_MASK_LASTTRUE:  return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::mLastTrue, vectorType);
+         case VECTOR_OP_MASK_TOLONG:    return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::mToLongBits, vectorType);
          default:
             return TR::BadILOp;
          }
@@ -2113,16 +2153,17 @@ TR::Node *TR_VectorAPIExpansion::transformNary(TR_VectorAPIExpansion *opt, TR::T
 TR_VectorAPIExpansion::methodTableEntry
 TR_VectorAPIExpansion::methodTable[] =
    {
-   {loadIntrinsicHandler,             Unknown, {Unknown, ElementType, NumLanes}},                                           // jdk_internal_vm_vector_VectorSupport_load
-   {storeIntrinsicHandler,            Unknown, {Unknown, ElementType, NumLanes, Unknown, Unknown, Vector}},                 // jdk_internal_vm_vector_VectorSupport_store
-   {binaryIntrinsicHandler,           Vector,  {Unknown, Unknown, Unknown, ElementType, NumLanes, Vector, Vector, Mask}},   // jdk_internal_vm_vector_VectorSupport_binaryOp
-   {blendIntrinsicHandler,            Vector,  {Unknown, Unknown, ElementType, NumLanes, Vector, Vector, Vector, Unknown}}, // jdk_internal_vm_vector_VectorSupport_blend
-   {compareIntrinsicHandler,          Mask,    {Unknown, Unknown, Unknown, ElementType, NumLanes, Vector, Vector, Mask}},   // jdk_internal_vm_vector_VectorSupport_compare
-   {fromBitsCoercedIntrinsicHandler,  Vector,  {Unknown, ElementType, NumLanes, Unknown, Unknown, Unknown}},                // jdk_internal_vm_vector_VectorSupport_fromBitsCoerced
-   {reductionCoercedIntrinsicHandler, Scalar,  {Unknown, Unknown, Unknown, ElementType, NumLanes, Vector, Mask}},           // jdk_internal_vm_vector_VectorSupport_reductionCoerced
-   {ternaryIntrinsicHandler,          Vector,  {Unknown, Unknown, Unknown, ElementType, NumLanes, Vector, Vector, Vector, Mask}},  // jdk_internal_vm_vector_VectorSupport_ternaryOp
-   {testIntrinsicHandler,             Scalar,  {Unknown, Unknown, ElementType, NumLanes, Mask, Mask, Unknown}},             // jdk_internal_vm_vector_VectorSupport_test
-   {unaryIntrinsicHandler,            Vector,  {Unknown, Unknown, Unknown, ElementType, NumLanes, Vector, Mask}},           // jdk_internal_vm_vector_VectorSupport_unaryOp
+   {loadIntrinsicHandler,                 Unknown, {Unknown, ElementType, NumLanes}},                                           // jdk_internal_vm_vector_VectorSupport_load
+   {storeIntrinsicHandler,                Unknown, {Unknown, ElementType, NumLanes, Unknown, Unknown, Vector}},                 // jdk_internal_vm_vector_VectorSupport_store
+   {binaryIntrinsicHandler,               Vector,  {Unknown, Unknown, Unknown, ElementType, NumLanes, Vector, Vector, Mask}},   // jdk_internal_vm_vector_VectorSupport_binaryOp
+   {blendIntrinsicHandler,                Vector,  {Unknown, Unknown, ElementType, NumLanes, Vector, Vector, Vector, Unknown}}, // jdk_internal_vm_vector_VectorSupport_blend
+   {compareIntrinsicHandler,              Mask,    {Unknown, Unknown, Unknown, ElementType, NumLanes, Vector, Vector, Mask}},   // jdk_internal_vm_vector_VectorSupport_compare
+   {fromBitsCoercedIntrinsicHandler,      Vector,  {Unknown, ElementType, NumLanes, Unknown, Unknown, Unknown}},                // jdk_internal_vm_vector_VectorSupport_fromBitsCoerced
+   {maskReductionCoercedIntrinsicHandler, Scalar,  {Unknown, Unknown, ElementType, NumLanes, Mask}},                            // jdk_internal_vm_vector_VectorSupport_maskReductionCoerced
+   {reductionCoercedIntrinsicHandler,     Scalar,  {Unknown, Unknown, Unknown, ElementType, NumLanes, Vector, Mask}},           // jdk_internal_vm_vector_VectorSupport_reductionCoerced
+   {ternaryIntrinsicHandler,              Vector,  {Unknown, Unknown, Unknown, ElementType, NumLanes, Vector, Vector, Vector, Mask}},  // jdk_internal_vm_vector_VectorSupport_ternaryOp
+   {testIntrinsicHandler,                 Scalar,  {Unknown, Unknown, ElementType, NumLanes, Mask, Mask, Unknown}},             // jdk_internal_vm_vector_VectorSupport_test
+   {unaryIntrinsicHandler,                Vector,  {Unknown, Unknown, Unknown, ElementType, NumLanes, Vector, Mask}},           // jdk_internal_vm_vector_VectorSupport_unaryOp
    };
 
 
