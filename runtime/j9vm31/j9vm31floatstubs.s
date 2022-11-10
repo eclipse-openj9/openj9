@@ -16,7 +16,7 @@
 * Exception [2].
 *
 * [1] https://www.gnu.org/software/classpath/license.html
-* [2] http://openjdk.java.net/legal/assembly-exception.html
+* [2] https://openjdk.org/legal/assembly-exception.html
 *
          TITLE 'j9vm31floatstubs'
 **********************************************************************
