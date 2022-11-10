@@ -1855,40 +1855,27 @@ JITServerAOTCacheMap::get(const std::string &name, uint64_t clientUID, bool &pen
          return NULL;
          }
 
-      // Prepend the directory where caches reside and check if my desired cache exists
-      std::string cacheFileName = buildCacheFileName(compInfo->getPersistentInfo()->getJITServerAOTCacheDir(), name);
-      OMRPORT_ACCESS_FROM_OMRPORT(TR::Compiler->omrPortLib);
-      J9FileStat buf;
-      int32_t rc = omrfile_stat(cacheFileName.c_str(), 0, &buf);
-      if (rc == 0 && buf.isFile) // Cache file exists
+      // Create special compilation request that will be used to deserialize the cache.
+      // Note: we must ensure that, in all parts of the code, we acquire the compMonitor after the AOTCacheMap monitor
+      OMR::CriticalSection compilationMonitorLock(compInfo->getCompilationMonitor());
+      if (!compInfo->getPersistentInfo()->getDisableFurtherCompilation())
          {
-         // Create special compilation request that will be used to deserialize the cache.
-         // Note: we must ensure that, in all parts of the code, we acquire the compMonitor after the AOTCacheMap monitor
-         OMR::CriticalSection compilationMonitorLock(compInfo->getCompilationMonitor());
-         if (!compInfo->getPersistentInfo()->getDisableFurtherCompilation())
+         // Setting the stream to LOAD_AOT_CACHE_REQUEST means that this is not a true
+         // compilation request, but rather a request to load a cache from file
+         if (compInfo->addOutOfProcessMethodToBeCompiled(LOAD_AOTCACHE_REQUEST /*stream*/))
             {
-            // Setting the stream to LOAD_AOT_CACHE_REQUEST means that this is not a true
-            // compilation request, but rather a request to load a cache from file
-            if (compInfo->addOutOfProcessMethodToBeCompiled(LOAD_AOTCACHE_REQUEST /*stream*/))
-               {
-               // Successfully queued the new entry, so notify a thread
-               compInfo->getCompilationMonitor()->notifyAll();
+            // Successfully queued the new entry, so notify a thread
+            compInfo->getCompilationMonitor()->notifyAll();
 
-               _cachesBeingLoaded.insert(name); // Prevent other threads from loading the same cache
-               _cachesToLoadQueue.push_back(name);
+            _cachesBeingLoaded.insert(name); // Prevent other threads from loading the same cache
+            _cachesToLoadQueue.push_back(name);
 
-               pending = true; // Tell the caller that we are loading the cache from file
-               if (TR::Options::getVerboseOption(TR_VerboseJITServer))
-                  TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "AOT cache: t=%llu Queued comp request to load cache '%s' from file in the background",
-                                                 compInfo->getPersistentInfo()->getElapsedTime(), name.c_str());
-               return NULL;
-               }
+            pending = true; // Tell the caller that we are loading the cache from file
+            if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+               TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "AOT cache: t=%llu Queued comp request to load cache '%s' from file in the background",
+                                                compInfo->getPersistentInfo()->getElapsedTime(), name.c_str());
+            return NULL;
             }
-         }
-      else // Cache file does not exist
-         {
-         if (TR::Options::getVerboseOption(TR_VerboseJITServer))
-            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "AOT cache: Cache file %s does not exist", cacheFileName.c_str());
          }
       }
    // If we reached this point, we need to create a new (empty) cache
