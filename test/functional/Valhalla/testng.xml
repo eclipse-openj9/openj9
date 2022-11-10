@@ -28,12 +28,20 @@
 	<test name="ValueTypeTests">
 		<classes>
 			<class name="org.openj9.test.lworld.ValueTypeTests"/>
-			<class name="org.openj9.test.lworld.ValueTypeArrayTests"/>
 		</classes>
 	</test>
 	<test name="ValueTypeTestsJIT">
 		<classes>
 			<class name="org.openj9.test.lworld.ValueTypeTests"/>
+		</classes>
+	</test>
+	<test name="ValueTypeArrayTests">
+		<classes>
+			<class name="org.openj9.test.lworld.ValueTypeArrayTests"/>
+		</classes>
+	</test>
+	<test name="ValueTypeArrayTestsJIT">
+		<classes>
 			<class name="org.openj9.test.lworld.ValueTypeArrayTests"/>
 		</classes>
 	</test>

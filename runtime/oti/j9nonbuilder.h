@@ -2537,7 +2537,6 @@ typedef struct J9StackWalkState {
 	void* inlinedCallSite;
 	void* stackMap;
 	void* inlineMap;
-	UDATA loopBreaker;
 	/* The size of J9StackWalkState must be a multiple of 8 because it is inlined into
 	 * J9VMThread where alignment assumotions are being made.
 	 */
