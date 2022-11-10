@@ -375,14 +375,16 @@ extern "C" {
 #define J9_STARTPC_DLT_READY 0x8
 #define J9_STARTPC_STATUS 0xF
 
+/* Frame iterator return values */
+#define J9_STACKWALK_STOP_ITERATING 0x0
+#define J9_STACKWALK_KEEP_ITERATING 0x1
+
 /* Stackwalk return values */
 #define J9_STACKWALK_RC_NONE 0x0
-#define J9_STACKWALK_STOP_ITERATING 0x0 /* Must be the same as no error */
-#define J9_STACKWALK_KEEP_ITERATING 0x1
-#define J9_STACKWALK_RC_NO_MEMORY 0x2
-#define J9_STACKWALK_RC_FRAME_NOT_FOUND 0x3
-#define J9_STACKWALK_RC_BAD_STATE_BUFFER 0x4
-#define J9_STACKWALK_RC_STACK_CORRUPT 0x5
+#define J9_STACKWALK_RC_NO_MEMORY 0x1
+#define J9_STACKWALK_RC_FRAME_NOT_FOUND 0x2
+#define J9_STACKWALK_RC_BAD_STATE_BUFFER 0x3
+#define J9_STACKWALK_RC_STACK_CORRUPT 0x4
 
 /* Tag for JIT artifact search cache */
 #define J9_STACKWALK_NO_JIT_CACHE 0x1
