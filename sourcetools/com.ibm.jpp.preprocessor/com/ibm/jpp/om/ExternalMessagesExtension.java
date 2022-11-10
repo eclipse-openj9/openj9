@@ -15,7 +15,7 @@
  * OpenJDK Assembly Exception [2].
  *
  * [1] https://www.gnu.org/software/classpath/license.html
- * [2] http://openjdk.java.net/legal/assembly-exception.html
+ * [2] https://openjdk.org/legal/assembly-exception.html
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
@@ -223,7 +223,7 @@ public class ExternalMessagesExtension extends BuilderExtension {
 					put.println("#     OpenJDK Assembly Exception [2].");
 					put.println("#"); 
 					put.println("#     [1] https://www.gnu.org/software/classpath/license.html");
-					put.println("#     [2] http://openjdk.java.net/legal/assembly-exception.html");
+					put.println("#     [2] https://openjdk.org/legal/assembly-exception.html");
 					put.println("#");
 					put.println("#     SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception");
 					put.println("#");
