@@ -280,6 +280,21 @@ JVM_VirtualThreadMountBegin(JNIEnv *env, jobject thread, jboolean firstMount)
 	 */
 	J9OBJECT_I64_STORE(currentThread, threadObj, vm->virtualThreadInspectorCountOffset, -1);
 
+	f_monitorExit(vm->liveVirtualThreadListMutex);
+	vmFuncs->internalExitVMToJNI(currentThread);
+}
+
+JNIEXPORT void JNICALL
+JVM_VirtualThreadMountEnd(JNIEnv *env, jobject thread, jboolean firstMount)
+{
+	J9VMThread *currentThread = (J9VMThread *)env;
+	J9JavaVM *vm = currentThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+
+	vmFuncs->internalEnterVMFromJNI(currentThread);
+	f_monitorEnter(vm->liveVirtualThreadListMutex);
+	j9object_t threadObj = J9_JNI_UNWRAP_REFERENCE(thread);
+
 	if (firstMount) {
 		if (NULL == vm->liveVirtualThreadList) {
 			J9Class *virtualThreadClass = J9OBJECT_CLAZZ(currentThread, J9_JNI_UNWRAP_REFERENCE(thread));
@@ -316,24 +331,7 @@ JVM_VirtualThreadMountBegin(JNIEnv *env, jobject thread, jboolean firstMount)
 			J9OBJECT_OBJECT_STORE(currentThread, rootPrev, vm->virtualThreadLinkNextOffset, threadObj);
 			J9OBJECT_OBJECT_STORE(currentThread, root, vm->virtualThreadLinkPreviousOffset, threadObj);
 		}
-	}
 
-	f_monitorExit(vm->liveVirtualThreadListMutex);
-	vmFuncs->internalExitVMToJNI(currentThread);
-}
-
-JNIEXPORT void JNICALL
-JVM_VirtualThreadMountEnd(JNIEnv *env, jobject thread, jboolean firstMount)
-{
-	J9VMThread *currentThread = (J9VMThread *)env;
-	J9JavaVM *vm = currentThread->javaVM;
-	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
-
-	vmFuncs->internalEnterVMFromJNI(currentThread);
-	f_monitorEnter(vm->liveVirtualThreadListMutex);
-	j9object_t threadObj = J9_JNI_UNWRAP_REFERENCE(thread);
-
-	if (firstMount) {
 		TRIGGER_J9HOOK_VM_VIRTUAL_THREAD_STARTED(vm->hookInterface, currentThread);
 	}
 
