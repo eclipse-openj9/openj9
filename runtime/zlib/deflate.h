@@ -329,7 +329,6 @@ void ZLIB_INTERNAL _tr_stored_block OF((deflate_state *s, charf *buf,
     s->dyn_ltree[cc].Freq++; \
     flush = (s->sym_next == s->sym_end); \
    }
-/* Source is modified from the original zlib version so it will compile on Windows. */
 # define _tr_tally_dist(s, distance, length, flush) \
   { uch len = (uch)(length); \
     ush dist = (ush)(distance); \
