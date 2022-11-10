@@ -193,23 +193,7 @@ public class ValueTypeTests {
 	static MethodHandle getUnAlignedObjectflatObjectBackfill2InstanceO = null;
 	static MethodHandle getUnAlignedObjectflatObjectBackfill2InstanceObjects = null;
 	static MethodHandle getUnAlignedObjectflatObjectBackfill2InstanceL = null;
-	/* LayoutsWithRecursiveLongs classes */
-	static Class<?> doubleLongClass = null;
-	static MethodHandle makeDoubleLongClass = null;
-	static MethodHandle getDoubleLongL = null;
-	static MethodHandle getDoubleLongL2 = null;
-	static Class<?> quadLongClass = null;
-	static MethodHandle makeQuadLongClass = null;
-	static MethodHandle getQuadLongL = null;
-	static MethodHandle getQuadLongL2 = null;
-	static MethodHandle getQuadLongL3 = null;
-	static Class<?> doubleQuadLongClass = null;
-	static MethodHandle makeDoubleQuadLongClass = null;
-	static MethodHandle getDoubleQuadLongL = null;
-	static MethodHandle getDoubleQuadLongL2 = null;
-	static MethodHandle getDoubleQuadLongL3 = null;
-	static MethodHandle getDoubleQuadLongL4 = null;
-	
+
 	/* fields */
 	static String typeWithSingleAlignmentFields[] = {
 		"tri:QTriangle2D;:value",
@@ -872,16 +856,11 @@ public class ValueTypeTests {
 	@Test(priority=3)
 	static public void testACMPTestOnFastSubstitutableValueTypesVer2() throws Throwable {
 		/* these VTs will have array refs */
-		String fields[] = {"x:I", "y:I", "z:I", "arr:[Ljava/lang/Object;"};
-		Class<?> fastSubVT = ValueTypeGenerator.generateValueClass("FastSubVT", fields);
-		
-		MethodHandle makeFastSubVT = lookup.findStatic(fastSubVT, "makeValueGeneric", MethodType.methodType(Object.class, Object.class, Object.class, Object.class, Object.class));
-		
 		Object[] arr = {"foo", "bar", "baz"};
 		Object[] arr2 = {"foozo", "barzo", "bazzo"};
-		Object valueType1 = makeFastSubVT.invoke(1, 2, 3, arr);
-		Object valueType2 = makeFastSubVT.invoke(1, 2, 3, arr);
-		Object newValueType = makeFastSubVT.invoke(3, 2, 1, arr2);
+		Object valueType1 = new ValueTypeFastSubVT(1, 2, 3, arr);
+		Object valueType2 = new ValueTypeFastSubVT(1, 2, 3, arr);
+		Object newValueType = new ValueTypeFastSubVT(3, 2, 1, arr2);
 		Object identityType = new String();
 		Object nullPointer = null;
 		
@@ -1691,52 +1670,29 @@ public class ValueTypeTests {
 		assertEquals(getObject.invoke(getUnAlignedObjectO2.invoke(getUnAlignedObjectflatObjectBackfill2InstanceObjects.invoke(flatUnAlignedObjectBackfill2Instance))), defaultObjectNew);
 		assertEquals(getObject.invoke(getUnAlignedObjectflatObjectBackfill2InstanceO.invoke(flatUnAlignedObjectBackfill2Instance)), defaultObject);		
 	}
-	
-	@Test(priority=3)
-	static public void testCreateFlatLayoutsWithRecursiveLongs() throws Throwable {
-		String doubleLongFields[] = {"l:QValueLong;", "l2:J"};
-		doubleLongClass = ValueTypeGenerator.generateValueClass("DoubleLong", doubleLongFields);
-		makeDoubleLongClass = lookup.findStatic(doubleLongClass, "makeValueGeneric", MethodType.methodType(Object.class, Object.class, Object.class));
-		getDoubleLongL = generateGenericGetter(doubleLongClass, "l");
-		getDoubleLongL2 = generateGenericGetter(doubleLongClass, "l2");
-		
-		String quadLongFields[] = {"l:QDoubleLong;", "l2:QValueLong;", "l3:J"};
-		quadLongClass = ValueTypeGenerator.generateValueClass("QuadLong", quadLongFields);
-		makeQuadLongClass = lookup.findStatic(quadLongClass, "makeValueGeneric", MethodType.methodType(Object.class, Object.class, Object.class, Object.class));
-		getQuadLongL = generateGenericGetter(quadLongClass, "l");
-		getQuadLongL2 = generateGenericGetter(quadLongClass, "l2");
-		getQuadLongL3 = generateGenericGetter(quadLongClass, "l3");
-		
-		String doubleQuadLongFields[] = {"l:QQuadLong;", "l2:QDoubleLong;", "l3:QValueLong;", "l4:J"};
-		doubleQuadLongClass = ValueTypeGenerator.generateValueClass("DoubleQuadLong", doubleQuadLongFields);
-		makeDoubleQuadLongClass = lookup.findStatic(doubleQuadLongClass, "makeValueGeneric", MethodType.methodType(Object.class, Object.class, Object.class, Object.class, Object.class));
-		getDoubleQuadLongL = generateGenericGetter(doubleQuadLongClass, "l");
-		getDoubleQuadLongL2 = generateGenericGetter(doubleQuadLongClass, "l2");
-		getDoubleQuadLongL3 = generateGenericGetter(doubleQuadLongClass, "l3");
-		getDoubleQuadLongL4 = generateGenericGetter(doubleQuadLongClass, "l4");
-	}
-	
+
 	@Test(priority=4, invocationCount=2)
 	static public void testFlatLayoutsWithRecursiveLongs() throws Throwable {
-		Object doubleLongInstance = makeDoubleLongClass.invoke(makeValueLong.invoke(defaultLong), defaultLongNew);
-		assertEquals(getLong.invoke(getDoubleLongL.invoke(doubleLongInstance)), defaultLong);
-		assertEquals(getDoubleLongL2.invoke(doubleLongInstance), defaultLongNew);
-		
-		Object quadLongInstance = makeQuadLongClass.invoke(doubleLongInstance, makeValueLong.invoke(defaultLongNew2), defaultLongNew3);
-		assertEquals(getLong.invoke(getDoubleLongL.invoke(getQuadLongL.invoke(quadLongInstance))), defaultLong);
-		assertEquals(getDoubleLongL2.invoke(getQuadLongL.invoke(quadLongInstance)), defaultLongNew);
-		assertEquals(getLong.invoke(getQuadLongL2.invoke(quadLongInstance)), defaultLongNew2);
-		assertEquals(getQuadLongL3.invoke(quadLongInstance), defaultLongNew3);
-		
-		Object doubleQuadLongInstance = makeDoubleQuadLongClass.invoke(quadLongInstance, doubleLongInstance, makeValueLong.invoke(defaultLongNew4), defaultLongNew5);
-		assertEquals(getLong.invoke(getDoubleLongL.invoke(getQuadLongL.invoke(getDoubleQuadLongL.invoke(doubleQuadLongInstance)))), defaultLong);
-		assertEquals(getDoubleLongL2.invoke(getQuadLongL.invoke(getDoubleQuadLongL.invoke(doubleQuadLongInstance))), defaultLongNew);
-		assertEquals(getLong.invoke(getQuadLongL2.invoke(getDoubleQuadLongL.invoke(doubleQuadLongInstance))), defaultLongNew2);
-		assertEquals(getQuadLongL3.invoke(getDoubleQuadLongL.invoke(doubleQuadLongInstance)), defaultLongNew3);
-		assertEquals(getLong.invoke(getDoubleLongL.invoke(getDoubleQuadLongL2.invoke(doubleQuadLongInstance))), defaultLong);
-		assertEquals(getDoubleLongL2.invoke(getDoubleQuadLongL2.invoke(doubleQuadLongInstance)), defaultLongNew);
-		assertEquals(getLong.invoke(getDoubleQuadLongL3.invoke(doubleQuadLongInstance)), defaultLongNew4);
-		assertEquals(getDoubleQuadLongL4.invoke(doubleQuadLongInstance), defaultLongNew5);
+		ValueTypeDoubleLong doubleLongInstance = new ValueTypeDoubleLong(new ValueTypeLong(defaultLong), defaultLongNew);
+		assertEquals(doubleLongInstance.getL().getL(), defaultLong);
+		assertEquals(doubleLongInstance.getL2(), defaultLongNew);
+
+		ValueTypeQuadLong quadLongInstance = new ValueTypeQuadLong(doubleLongInstance, new ValueTypeLong(defaultLongNew2), defaultLongNew3);
+		assertEquals(quadLongInstance.getL().getL().getL(), defaultLong);
+		assertEquals(quadLongInstance.getL().getL2(), defaultLongNew);
+		assertEquals(quadLongInstance.getL2().getL(), defaultLongNew2);
+		assertEquals(quadLongInstance.getL3(), defaultLongNew3);
+
+		ValueTypeDoubleQuadLong doubleQuadLongInstance = new ValueTypeDoubleQuadLong(quadLongInstance, doubleLongInstance, new ValueTypeLong(defaultLongNew4), defaultLongNew5);
+
+		assertEquals(doubleQuadLongInstance.getL().getL().getL().getL(), defaultLong);
+		assertEquals(doubleQuadLongInstance.getL().getL().getL2(), defaultLongNew);
+		assertEquals(doubleQuadLongInstance.getL().getL2().getL(), defaultLongNew2);
+		assertEquals(doubleQuadLongInstance.getL().getL3(), defaultLongNew3);
+		assertEquals(doubleQuadLongInstance.getL2().getL().getL(), defaultLong);
+		assertEquals(doubleQuadLongInstance.getL2().getL2(), defaultLongNew);
+		assertEquals(doubleQuadLongInstance.getL3().getL(), defaultLongNew4);
+		assertEquals(doubleQuadLongInstance.getL4(), defaultLongNew5);
 	}
 	
 	/*
