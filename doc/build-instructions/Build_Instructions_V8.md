@@ -471,15 +471,13 @@ When you have all the source files that you need, run the configure script, whic
 1) Win 64-bit
 ```
 bash configure --disable-ccache \
-               --with-boot-jdk=/cygdrive/c/<path to_jdk8> \
-               --with-freetype-src=/cygdrive/c/temp/freetype
+               --with-boot-jdk=/cygdrive/c/<path to_jdk8>
 ```
 
 2) Win 32-bit
 ```
 bash configure --disable-ccache \
                --with-boot-jdk=/cygdrive/c/<path_to_jdk8> \
-               --with-freetype-src=/cygdrive/c/temp/freetype \
                --with-target-bits=32
 ```
 Note: If you have multiple versions of Visual Studio installed, you can enforce a specific version to be used by setting `--with-toolchain-version`, i.e., by including `--with-toolchain-version=2013` option in the configure command.
@@ -660,8 +658,6 @@ When you have all the source files that you need, run the configure script, whic
 bash configure \
     TAR=gtar \
     --with-boot-jdk=<path_to_boot_JDK8> \
-    --with-freetype-include=/usr/local/include/freetype2 \
-    --with-freetype-lib=/usr/local/lib \
     --with-toolchain-type=clang
 ```
 
