@@ -4853,9 +4853,9 @@ done:
 		return rc;
 	}
 
-	/* java.lang.Object: public final native void wait(long millis, int nanos); */
+	/* java.lang.Object: public final native void waitImpl(long millis, int nanos); */
 	VMINLINE VM_BytecodeAction
-	inlObjectWait(REGISTER_ARGS_LIST)
+	inlObjectWaitImpl(REGISTER_ARGS_LIST)
 	{
 		VM_BytecodeAction rc = EXECUTE_BYTECODE;
 		I_32 nanos = *(I_32*)_sp;
@@ -10701,7 +10701,7 @@ runMethod: {
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_THREAD_SLEEP):
 		PERFORM_ACTION(inlThreadSleep(REGISTER_ARGS));
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_OBJECT_WAIT):
-		PERFORM_ACTION(inlObjectWait(REGISTER_ARGS));
+		PERFORM_ACTION(inlObjectWaitImpl(REGISTER_ARGS));
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_CLASSLOADER_LOADLIBRARYWITHPATH):
 		PERFORM_ACTION(inlClassLoaderLoadLibraryWithPath(REGISTER_ARGS));
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_THREAD_ISINTERRUPTEDIMPL):
