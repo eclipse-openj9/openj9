@@ -777,16 +777,26 @@ ClientSessionData::getOrCreateAOTCache(JITServer::ServerStream *stream)
       {
       if (auto aotCacheMap = TR::CompilationInfo::get()->getJITServerAOTCacheMap())
          {
-         auto aotCache = aotCacheMap->get(_aotCacheName, _clientUID);
+         bool cacheIsBeingLoadedFromDisk = false;
+         auto aotCache = aotCacheMap->get(_aotCacheName, _clientUID, cacheIsBeingLoadedFromDisk);
          if (!aotCache)
             {
-            _vmInfo->_useAOTCache = false;
-            if (TR::Options::getVerboseOption(TR_VerboseJITServer))
-               TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
-                  "clientUID=%llu requested AOT cache but the AOT cache size limit has been reached, disabling AOT cache",
-                  (unsigned long long)_clientUID
-               );
-            return NULL;
+            if (cacheIsBeingLoadedFromDisk)
+               {
+               if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+                  TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+                     "clientUID=%llu requested AOT cache but currently that cache is being loaded from disk", (unsigned long long)_clientUID);
+               }
+            else // We cannot create the cache because memory limit is reached
+               {
+               _vmInfo->_useAOTCache = false;
+               if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+                  TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+                     "clientUID=%llu requested AOT cache but the AOT cache size limit has been reached, disabling AOT cache",
+                     (unsigned long long)_clientUID
+                  );
+               }
+               return NULL;
             }
 
          auto record = aotCache->getAOTHeaderRecord(&_vmInfo->_aotHeader, _clientUID);

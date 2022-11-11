@@ -20,12 +20,27 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
+#include <cstdio> // for rename()
 #include "control/CompilationRuntime.hpp"
+#include "env/J9SegmentProvider.hpp"
 #include "env/StackMemoryRegion.hpp"
+#include "env/SystemSegmentProvider.hpp"
 #include "infra/CriticalSection.hpp"
 #include "runtime/JITServerAOTCache.hpp"
 #include "runtime/JITServerSharedROMClassCache.hpp"
 #include "net/CommunicationStream.hpp"
+
+struct JITServerAOTCacheReadContext
+   {
+   JITServerAOTCacheReadContext(const JITServerAOTCacheHeader &header, TR::StackMemoryRegion &stackMemoryRegion);
+
+   Vector<AOTCacheClassLoaderRecord *> _classLoaderRecords;
+   Vector<AOTCacheClassRecord *> _classRecords;
+   Vector<AOTCacheMethodRecord *> _methodRecords;
+   Vector<AOTCacheClassChainRecord *> _classChainRecords;
+   Vector<AOTCacheWellKnownClassesRecord *> _wellKnownClassesRecords;
+   Vector<AOTCacheAOTHeaderRecord *> _aotHeaderRecords;
+   };
 
 size_t JITServerAOTCacheMap::_cacheMaxBytes = 300 * 1024 * 1024;
 bool JITServerAOTCacheMap::_cacheIsFull = false;
@@ -46,8 +61,41 @@ AOTCacheRecord::free(void *ptr)
    TR::Compiler->persistentGlobalMemory()->freePersistentMemory(ptr);
    }
 
+// Read a single AOT cache record R from a cache file
+template<class R> R *
+AOTCacheRecord::readRecord(FILE *f, const JITServerAOTCacheReadContext &context)
+   {
+   typename R::SerializationRecord header;
+   if (1 != fread(&header, sizeof(header), 1, f))
+      return NULL;
+
+   if (!header.isValidHeader(context))
+      return NULL;
+
+   R *record = new (AOTCacheRecord::allocate(R::size(header))) R(context, header);
+   memcpy((void *)record->dataAddr(), &header, sizeof(header));
+
+   size_t variableDataBytes = record->dataAddr()->size() - sizeof(header);
+   if (0 != variableDataBytes)
+      {
+      if (1 != fread((uint8_t *)record->dataAddr() + sizeof(header), variableDataBytes, 1, f))
+         {
+         AOTCacheRecord::free(record);
+         return NULL;
+         }
+      }
+
+   if (!record->setSubrecordPointers(context))
+      {
+      AOTCacheRecord::free(record);
+      return NULL;
+      }
+
+   return record;
+   }
+
 bool
-AOTSerializationRecord::isValid(AOTSerializationRecordType type) const
+AOTSerializationRecord::isValidHeader(AOTSerializationRecordType type) const
    {
    return (type == this->type()) &&
           (0 != this->id());
@@ -79,33 +127,6 @@ AOTCacheClassLoaderRecord::create(uintptr_t id, const uint8_t *name, size_t name
    return new (ptr) AOTCacheClassLoaderRecord(id, name, nameLength);
    }
 
-AOTCacheClassLoaderRecord *
-AOTCacheClassLoaderRecord::read(FILE *f,
-                                const Vector<AOTCacheClassLoaderRecord *> &classLoaderRecords,
-                                const Vector<AOTCacheClassRecord *> &classRecords,
-                                const Vector<AOTCacheMethodRecord *> &methodRecords,
-                                const Vector<AOTCacheClassChainRecord *> &classChainRecords,
-                                const Vector<AOTCacheWellKnownClassesRecord *> &wellKnownClassesRecords,
-                                const Vector<AOTCacheAOTHeaderRecord *> &aotHeaderRecords)
-   {
-   ClassLoaderSerializationRecord header;
-   if (1 != fread(&header, sizeof(header), 1, f))
-      return NULL;
-
-   if (!header.isValid())
-      return NULL;
-
-   auto record = new (AOTCacheRecord::allocate(size(header.nameLength()))) AOTCacheClassLoaderRecord();
-   memcpy((void *)record->dataAddr(), &header, sizeof(header));
-   if (1 != fread((uint8_t *)record->dataAddr() + sizeof(header), header.AOTSerializationRecord::size() - sizeof(header), 1, f))
-      {
-      AOTCacheRecord::free(record);
-      return NULL;
-      }
-
-   return record;
-   }
-
 ClassSerializationRecord::ClassSerializationRecord(uintptr_t id, uintptr_t classLoaderId,
                                                    const JITServerROMClassHash &hash, const J9ROMClass *romClass) :
    AOTSerializationRecord(size(J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(romClass))), id, AOTSerializationRecordType::Class),
@@ -121,6 +142,14 @@ ClassSerializationRecord::ClassSerializationRecord() :
    {
    }
 
+bool
+ClassSerializationRecord::isValidHeader(const JITServerAOTCacheReadContext &context) const
+   {
+   return AOTSerializationRecord::isValidHeader(AOTSerializationRecordType::Class) &&
+          (classLoaderId() < context._classLoaderRecords.size()) &&
+          context._classLoaderRecords[classLoaderId()];
+   }
+
 AOTCacheClassRecord::AOTCacheClassRecord(uintptr_t id, const AOTCacheClassLoaderRecord *classLoaderRecord,
                                          const JITServerROMClassHash &hash, const J9ROMClass *romClass) :
    _classLoaderRecord(classLoaderRecord),
@@ -128,8 +157,8 @@ AOTCacheClassRecord::AOTCacheClassRecord(uintptr_t id, const AOTCacheClassLoader
    {
    }
 
-AOTCacheClassRecord::AOTCacheClassRecord(const AOTCacheClassLoaderRecord *classLoaderRecord) :
-   _classLoaderRecord(classLoaderRecord)
+AOTCacheClassRecord::AOTCacheClassRecord(const JITServerAOTCacheReadContext &context, const ClassSerializationRecord &header) :
+   _classLoaderRecord(context._classLoaderRecords[header.classLoaderId()])
    {
    }
 
@@ -147,35 +176,6 @@ AOTCacheClassRecord::subRecordsDo(const std::function<void(const AOTCacheRecord 
    f(_classLoaderRecord);
    }
 
-AOTCacheClassRecord *
-AOTCacheClassRecord::read(FILE *f,
-                          const Vector<AOTCacheClassLoaderRecord *> &classLoaderRecords,
-                          const Vector<AOTCacheClassRecord *> &classRecords,
-                          const Vector<AOTCacheMethodRecord *> &methodRecords,
-                          const Vector<AOTCacheClassChainRecord *> &classChainRecords,
-                          const Vector<AOTCacheWellKnownClassesRecord *> &wellKnownClassesRecords,
-                          const Vector<AOTCacheAOTHeaderRecord *> &aotHeaderRecords)
-   {
-   ClassSerializationRecord header;
-   if (1 != fread(&header, sizeof(header), 1, f))
-      return NULL;
-
-   if (!header.isValid() ||
-       (header.classLoaderId() >= classLoaderRecords.size()) ||
-       !classLoaderRecords[header.classLoaderId()])
-      return NULL;
-
-   auto record = new (AOTCacheRecord::allocate(size(header.nameLength()))) AOTCacheClassRecord(classLoaderRecords[header.classLoaderId()]);
-   memcpy((void *)record->dataAddr(), &header, sizeof(header));
-   if (1 != fread((uint8_t *)record->dataAddr() + sizeof(header), header.AOTSerializationRecord::size() - sizeof(header), 1, f))
-      {
-      AOTCacheRecord::free(record);
-      return NULL;
-      }
-
-   return record;
-   }
-
 MethodSerializationRecord::MethodSerializationRecord(uintptr_t id, uintptr_t definingClassId, uint32_t index) :
    AOTSerializationRecord(sizeof(*this), id, AOTSerializationRecordType::Method),
    _definingClassId(definingClassId), _index(index)
@@ -188,6 +188,14 @@ MethodSerializationRecord::MethodSerializationRecord() :
    {
    }
 
+bool
+MethodSerializationRecord::isValidHeader(const JITServerAOTCacheReadContext &context) const
+      {
+      return AOTSerializationRecord::isValidHeader(AOTSerializationRecordType::Method) &&
+             (definingClassId() < context._classRecords.size()) &&
+             context._classRecords[definingClassId()];
+      }
+
 AOTCacheMethodRecord::AOTCacheMethodRecord(uintptr_t id, const AOTCacheClassRecord *definingClassRecord,
                                            uint32_t index) :
    _definingClassRecord(definingClassRecord),
@@ -195,8 +203,8 @@ AOTCacheMethodRecord::AOTCacheMethodRecord(uintptr_t id, const AOTCacheClassReco
    {
    }
 
-AOTCacheMethodRecord::AOTCacheMethodRecord(const AOTCacheClassRecord *definingClassRecord) :
-   _definingClassRecord(definingClassRecord)
+AOTCacheMethodRecord::AOTCacheMethodRecord(const JITServerAOTCacheReadContext &context, const MethodSerializationRecord &header) :
+   _definingClassRecord(context._classRecords[header.definingClassId()])
    {
    }
 
@@ -211,30 +219,6 @@ void
 AOTCacheMethodRecord::subRecordsDo(const std::function<void(const AOTCacheRecord *)> &f) const
    {
    f(_definingClassRecord);
-   }
-
-AOTCacheMethodRecord *
-AOTCacheMethodRecord::read(FILE *f,
-                           const Vector<AOTCacheClassLoaderRecord *> &classLoaderRecords,
-                           const Vector<AOTCacheClassRecord *> &classRecords,
-                           const Vector<AOTCacheMethodRecord *> &methodRecords,
-                           const Vector<AOTCacheClassChainRecord *> &classChainRecords,
-                           const Vector<AOTCacheWellKnownClassesRecord *> &wellKnownClassesRecords,
-                           const Vector<AOTCacheAOTHeaderRecord *> &aotHeaderRecords)
-   {
-   MethodSerializationRecord header;
-   if (1 != fread(&header, sizeof(header), 1, f))
-      return NULL;
-
-   if (!header.isValid() ||
-       (header.definingClassId() >= classRecords.size()) ||
-       !classRecords[header.definingClassId()])
-      return NULL;
-
-   auto record = new (AOTCacheRecord::allocate(sizeof(AOTCacheMethodRecord))) AOTCacheMethodRecord(classRecords[header.definingClassId()]);
-   memcpy((void *)record->dataAddr(), &header, sizeof(header));
-
-   return record;
    }
 
 template<class D, class R, typename... Args>
@@ -254,37 +238,19 @@ AOTCacheListRecord<D, R, Args...>::subRecordsDo(const std::function<void(const A
       f(records()[i]);
    }
 
-template<class D, class R, typename... Args> AOTCacheListRecord<D, R, Args...>*
-AOTCacheListRecord<D, R, Args...>::read(FILE *f, const Vector<R *> &cacheRecords)
+template<class D, class R, typename... Args> bool
+AOTCacheListRecord<D, R, Args...>::setSubrecordPointers(const Vector<R *> &cacheRecords)
    {
-   D header;
-   if (1 != fread(&header, sizeof(header), 1, f))
-      return NULL;
-
-   if (!header.isValid())
-      return NULL;
-
-   auto record = new (AOTCacheRecord::allocate(size(header.list().length()))) AOTCacheListRecord();
-   memcpy((void *)record->dataAddr(), &header, sizeof(header));
-
-   if (1 != fread((uint8_t *)record->dataAddr() + sizeof(header), header.AOTSerializationRecord::size() - sizeof(header), 1, f))
+   for (size_t i = 0; i < data().list().length(); ++i)
       {
-      AOTCacheRecord::free(record);
-      return NULL;
-      }
-
-   for (size_t i = 0; i < header.list().length(); ++i)
-      {
-      uintptr_t id = record->data().list().ids()[i];
+      uintptr_t id = data().list().ids()[i];
       if ((id >= cacheRecords.size()) || !cacheRecords[id])
          {
-         AOTCacheRecord::free(record);
-         return NULL;
+         return false;
          }
-      record->records()[i] = cacheRecords[id];
+      records()[i] = cacheRecords[id];
       }
-
-   return record;
+   return true;
    }
 
 ClassChainSerializationRecord::ClassChainSerializationRecord(uintptr_t id, size_t length) :
@@ -306,6 +272,11 @@ AOTCacheClassChainRecord::create(uintptr_t id, const AOTCacheClassRecord *const 
    return new (ptr) AOTCacheClassChainRecord(id, records, length);
    }
 
+bool
+AOTCacheClassChainRecord::setSubrecordPointers(const JITServerAOTCacheReadContext &context)
+   {
+   return AOTCacheListRecord::setSubrecordPointers(context._classRecords);
+   }
 
 WellKnownClassesSerializationRecord::WellKnownClassesSerializationRecord(uintptr_t id, size_t length,
                                                                          uintptr_t includedClasses) :
@@ -328,6 +299,11 @@ AOTCacheWellKnownClassesRecord::create(uintptr_t id, const AOTCacheClassChainRec
    return new (ptr) AOTCacheWellKnownClassesRecord(id, records, length, includedClasses);
    }
 
+bool
+AOTCacheWellKnownClassesRecord::setSubrecordPointers(const JITServerAOTCacheReadContext &context)
+   {
+   return AOTCacheListRecord::setSubrecordPointers(context._classChainRecords);
+   }
 
 AOTHeaderSerializationRecord::AOTHeaderSerializationRecord(uintptr_t id, const TR_AOTHeader *header) :
    AOTSerializationRecord(sizeof(*this), id, AOTSerializationRecordType::AOTHeader),
@@ -353,28 +329,6 @@ AOTCacheAOTHeaderRecord::create(uintptr_t id, const TR_AOTHeader *header)
    return new (ptr) AOTCacheAOTHeaderRecord(id, header);
    }
 
-AOTCacheAOTHeaderRecord *
-AOTCacheAOTHeaderRecord::read(FILE *f,
-                              const Vector<AOTCacheClassLoaderRecord *> &classLoaderRecords,
-                              const Vector<AOTCacheClassRecord *> &classRecords,
-                              const Vector<AOTCacheMethodRecord *> &methodRecords,
-                              const Vector<AOTCacheClassChainRecord *> &classChainRecords,
-                              const Vector<AOTCacheWellKnownClassesRecord *> &wellKnownClassesRecords,
-                              const Vector<AOTCacheAOTHeaderRecord *> &aotHeaderRecords)
-   {
-   AOTHeaderSerializationRecord header;
-   if (1 != fread(&header, sizeof(header), 1, f))
-      return NULL;
-
-   if (!header.isValid())
-      return NULL;
-
-   auto record = new (AOTCacheRecord::allocate(sizeof(AOTCacheAOTHeaderRecord))) AOTCacheAOTHeaderRecord();
-   memcpy((void *)record->dataAddr(), &header, sizeof(header));
-
-   return record;
-   }
-
 SerializedAOTMethod::SerializedAOTMethod(uintptr_t definingClassChainId, uint32_t index,
                                          TR_Hotness optLevel, uintptr_t aotHeaderId, size_t numRecords,
                                          const void *code, size_t codeSize, const void *data, size_t dataSize) :
@@ -396,9 +350,13 @@ SerializedAOTMethod::SerializedAOTMethod() :
    }
 
 bool
-SerializedAOTMethod::isValid() const
+SerializedAOTMethod::isValidHeader(const JITServerAOTCacheReadContext &context) const
    {
-   return _optLevel < TR_Hotness::numHotnessLevels;
+   return _optLevel < TR_Hotness::numHotnessLevels &&
+          (definingClassChainId() < context._classChainRecords.size()) &&
+          (aotHeaderId() < context._aotHeaderRecords.size()) &&
+          context._classChainRecords[definingClassChainId()] &&
+          context._aotHeaderRecords[aotHeaderId()];
    }
 
 CachedAOTMethod::CachedAOTMethod(const AOTCacheClassChainRecord *definingClassChainRecord, uint32_t index,
@@ -418,9 +376,9 @@ CachedAOTMethod::CachedAOTMethod(const AOTCacheClassChainRecord *definingClassCh
       }
    }
 
-CachedAOTMethod::CachedAOTMethod(const AOTCacheClassChainRecord *definingClassChainRecord) :
+CachedAOTMethod::CachedAOTMethod(const JITServerAOTCacheReadContext &context, const SerializedAOTMethod &header) :
    _nextRecord(NULL),
-   _definingClassChainRecord(definingClassChainRecord)
+   _definingClassChainRecord(context._classChainRecords[header.definingClassChainId()])
    {
    }
 
@@ -435,74 +393,48 @@ CachedAOTMethod::create(const AOTCacheClassChainRecord *definingClassChainRecord
                                     records, code, codeSize, data, dataSize);
    }
 
-CachedAOTMethod *
-CachedAOTMethod::read(FILE *f,
-                      const Vector<AOTCacheClassLoaderRecord *> &classLoaderRecords,
-                      const Vector<AOTCacheClassRecord *> &classRecords,
-                      const Vector<AOTCacheMethodRecord *> &methodRecords,
-                      const Vector<AOTCacheClassChainRecord *> &classChainRecords,
-                      const Vector<AOTCacheWellKnownClassesRecord *> &wellKnownClassesRecords,
-                      const Vector<AOTCacheAOTHeaderRecord *> &aotHeaderRecords)
+bool
+CachedAOTMethod::setSubrecordPointers(const JITServerAOTCacheReadContext &context)
    {
-   SerializedAOTMethod header;
-   if (1 != fread(&header, sizeof(header), 1, f))
-      return NULL;
-
-   if ((!header.isValid()) ||
-       (header.definingClassChainId() >= classChainRecords.size()) ||
-       (header.aotHeaderId() >= aotHeaderRecords.size()) ||
-       !classChainRecords[header.definingClassChainId()])
-      return NULL;
-
-   auto record = new (AOTCacheRecord::allocate(size(header.numRecords(), header.codeSize(), header.dataSize())))
-                     CachedAOTMethod(classChainRecords[header.definingClassChainId()]);
-   memcpy(&record->_data, &header, sizeof(header));
-
-   if (1 != fread(record->data().offsets(), sizeof(SerializedSCCOffset) * header.numRecords() + header.codeSize() + header.dataSize(), 1, f))
-      goto error;
-
-   for (size_t i = 0; i < header.numRecords(); ++i)
+   // The defining class chain record pointer for the record will have been set by the CachedAOTMethod constructor at this point
+   for (size_t i = 0; i < data().numRecords(); ++i)
       {
-      const SerializedSCCOffset &sccOffset = record->data().offsets()[i];
+      const SerializedSCCOffset &sccOffset = data().offsets()[i];
 
       switch (sccOffset.recordType())
          {
          case AOTSerializationRecordType::ClassLoader:
-            if ((sccOffset.recordId() >= classLoaderRecords.size()) || !classLoaderRecords[sccOffset.recordId()])
-               goto error;
-            record->records()[i] = classLoaderRecords[sccOffset.recordId()];
+            if ((sccOffset.recordId() >= context._classLoaderRecords.size()) || !context._classLoaderRecords[sccOffset.recordId()])
+               return false;
+            records()[i] = context._classLoaderRecords[sccOffset.recordId()];
             break;
          case AOTSerializationRecordType::Class:
-            if ((sccOffset.recordId() >= classRecords.size()) || !classRecords[sccOffset.recordId()])
-               goto error;
-            record->records()[i] = classRecords[sccOffset.recordId()];
+            if ((sccOffset.recordId() >= context._classRecords.size()) || !context._classRecords[sccOffset.recordId()])
+               return false;
+            records()[i] = context._classRecords[sccOffset.recordId()];
             break;
          case AOTSerializationRecordType::Method:
-            if ((sccOffset.recordId() >= methodRecords.size()) || !methodRecords[sccOffset.recordId()])
-               goto error;
-            record->records()[i] = methodRecords[sccOffset.recordId()];
+            if ((sccOffset.recordId() >= context._methodRecords.size()) || !context._methodRecords[sccOffset.recordId()])
+               return false;
+            records()[i] = context._methodRecords[sccOffset.recordId()];
             break;
          case AOTSerializationRecordType::ClassChain:
-            if ((sccOffset.recordId() >= classChainRecords.size()) || !classChainRecords[sccOffset.recordId()])
-               goto error;
-            record->records()[i] = classChainRecords[sccOffset.recordId()];
+            if ((sccOffset.recordId() >= context._classChainRecords.size()) || !context._classChainRecords[sccOffset.recordId()])
+               return false;
+            records()[i] = context._classChainRecords[sccOffset.recordId()];
             break;
          case AOTSerializationRecordType::WellKnownClasses:
-            if ((sccOffset.recordId() >= wellKnownClassesRecords.size()) || !wellKnownClassesRecords[sccOffset.recordId()])
-               goto error;
-            record->records()[i] = wellKnownClassesRecords[sccOffset.recordId()];
+            if ((sccOffset.recordId() >= context._wellKnownClassesRecords.size()) || !context._wellKnownClassesRecords[sccOffset.recordId()])
+               return false;
+            records()[i] = context._wellKnownClassesRecords[sccOffset.recordId()];
             break;
          case AOTSerializationRecordType::AOTHeader: // never associated with an SCC offset
          default:
-            goto error;
+            return false;
          }
       }
 
-   return record;
-
-error:
-   AOTCacheRecord::free(record);
-   return NULL;
+   return true;
    }
 
 bool
@@ -707,6 +639,10 @@ JITServerAOTCache::JITServerAOTCache(const std::string &name) :
    _cachedMethodHead(NULL),
    _cachedMethodTail(NULL),
    _cachedMethodMonitor(TR::Monitor::create("JIT-JITServerAOTCacheCachedMethodMonitor")),
+   _timePrevSaveOperation(0),
+   _minNumAOTMethodsToSave(TR::Options::_aotCachePersistenceMinDeltaMethods),
+   _saveOperationInProgress(false), // protected by the _cachedMethodMonitor
+   _excludedFromSavingToFile(false),
    _numCacheBypasses(0), _numCacheHits(0), _numCacheMisses(0),
    _numDeserializedMethods(0), _numDeserializationFailures(0)
    {
@@ -736,6 +672,15 @@ JITServerAOTCache::~JITServerAOTCache()
    TR::Monitor::destroy(_cachedMethodMonitor);
    }
 
+JITServerAOTCacheReadContext::JITServerAOTCacheReadContext(const JITServerAOTCacheHeader &header, TR::StackMemoryRegion &stackMemoryRegion) :
+   _classLoaderRecords(header._nextClassLoaderId, NULL, stackMemoryRegion),
+   _classRecords(header._nextClassId, NULL, stackMemoryRegion),
+   _methodRecords(header._nextMethodId, NULL, stackMemoryRegion),
+   _classChainRecords(header._nextClassChainId, NULL, stackMemoryRegion),
+   _wellKnownClassesRecords(header._nextWellKnownClassesId, NULL, stackMemoryRegion),
+   _aotHeaderRecords(header._nextAOTHeaderId, NULL, stackMemoryRegion)
+   {
+   }
 
 // Helper macros to make the code for printing class and method names to vlog more concise
 #define RECORD_NAME(record) (int)(record).nameLength(), (const char *)(record).name()
@@ -1086,6 +1031,7 @@ JITServerAOTCache::printStats(FILE *f) const
    );
    }
 
+
 // Write at most numRecordsToWrite to the given stream from the linked list starting at head.
 static bool
 writeRecordList(FILE *f, const AOTCacheRecord *head, size_t numRecordsToWrite)
@@ -1140,7 +1086,8 @@ static void getCurrentAOTCacheVersion(JITServerAOTCacheVersion &version)
 // can be reconstructed from only this information. These sections are ordered so that, when
 // reading the snapshot, the dependencies of each record will already have been read by the
 // time we get to that record.
-bool
+// Return the number of AOT methods written to the snapshot or 0 on failure.
+size_t
 JITServerAOTCache::writeCache(FILE *f) const
    {
    JITServerAOTCacheHeader header = {0};
@@ -1153,6 +1100,11 @@ JITServerAOTCache::writeCache(FILE *f) const
       {
       OMR::CriticalSection cs(_cachedMethodMonitor);
       header._numCachedAOTMethods = _cachedMethodMap.size();
+      }
+   if (header._numCachedAOTMethods == 0)
+      {
+      TR_ASSERT_FATAL(false, "Expected to write at least one method to the AOT cache file");
+      return 0;
       }
       {
       OMR::CriticalSection cs(_aotHeaderMonitor);
@@ -1186,24 +1138,24 @@ JITServerAOTCache::writeCache(FILE *f) const
       }
 
    if (1 != fwrite(&header, sizeof(JITServerAOTCacheHeader), 1, f))
-      return false;
+      return 0;
 
    if (!writeRecordList(f, _classLoaderHead, header._numClassLoaderRecords))
-      return false;
+      return 0;
    if (!writeRecordList(f, _classHead, header._numClassRecords))
-      return false;
+      return 0;
    if (!writeRecordList(f, _methodHead, header._numMethodRecords))
-      return false;
+      return 0;
    if (!writeRecordList(f, _classChainHead, header._numClassChainRecords))
-      return false;
+      return 0;
    if (!writeRecordList(f, _wellKnownClassesHead, header._numWellKnownClassesRecords))
-      return false;
+      return 0;
    if (!writeRecordList(f, _aotHeaderHead, header._numAOTHeaderRecords))
-      return false;
+      return 0;
    if (!writeCachedMethodList(f, _cachedMethodHead, header._numCachedAOTMethods))
-      return false;
+      return 0;
 
-   return true;
+   return header._numCachedAOTMethods;
    }
 
 // Tests whether or not the given AOT snapshot is compatible with the server.
@@ -1276,24 +1228,19 @@ JITServerAOTCache::readCache(FILE *f, const std::string &name, TR_Memory &trMemo
 // updating the map, record traversal, and scratch Vector associated with V.
 template<typename K, typename V, typename H> bool
 JITServerAOTCache::readRecords(FILE *f,
+                               JITServerAOTCacheReadContext &context,
                                size_t numRecordsToRead,
                                PersistentUnorderedMap<K, V *, H> &map,
                                V *&traversalHead,
                                V *&traversalTail,
-                               Vector<V *> &records,
-                               const Vector<AOTCacheClassLoaderRecord *> &classLoaderRecords,
-                               const Vector<AOTCacheClassRecord *> &classRecords,
-                               const Vector<AOTCacheMethodRecord *> &methodRecords,
-                               const Vector<AOTCacheClassChainRecord *> &classChainRecords,
-                               const Vector<AOTCacheWellKnownClassesRecord *> &wellKnownClassesRecords,
-                               const Vector<AOTCacheAOTHeaderRecord *> &aotHeaderRecords)
+                               Vector<V *> &records)
    {
    for (size_t i = 0; i < numRecordsToRead; ++i)
       {
       if (!JITServerAOTCacheMap::cacheHasSpace())
          return false;
 
-      V *record = V::read(f, classLoaderRecords, classRecords, methodRecords, classChainRecords, wellKnownClassesRecords, aotHeaderRecords);
+      V *record = AOTCacheRecord::readRecord<V>(f, context);
       if (!record)
          return false;
 
@@ -1330,30 +1277,20 @@ JITServerAOTCache::readCache(FILE *f, const JITServerAOTCacheHeader &header, TR_
    _nextAOTHeaderId = header._nextAOTHeaderId;
 
    TR::StackMemoryRegion stackMemoryRegion(trMemory);
-   Vector<AOTCacheClassLoaderRecord *> classLoaderRecords(header._nextClassLoaderId, NULL, stackMemoryRegion);
-   Vector<AOTCacheClassRecord *> classRecords(header._nextClassId, NULL, stackMemoryRegion);
-   Vector<AOTCacheMethodRecord *> methodRecords(header._nextMethodId, NULL, stackMemoryRegion);
-   Vector<AOTCacheClassChainRecord *> classChainRecords(header._nextClassChainId, NULL, stackMemoryRegion);
-   Vector<AOTCacheWellKnownClassesRecord *> wellKnownClassesRecords(header._nextWellKnownClassesId, NULL, stackMemoryRegion);
-   Vector<AOTCacheAOTHeaderRecord *> aotHeaderRecords(header._nextAOTHeaderId, NULL, stackMemoryRegion);
+   JITServerAOTCacheReadContext context(header, stackMemoryRegion);
 
-   if (!readRecords(f, header._numClassLoaderRecords, _classLoaderMap, _classLoaderHead, _classLoaderTail, classLoaderRecords,
-                    classLoaderRecords, classRecords, methodRecords, classChainRecords, wellKnownClassesRecords, aotHeaderRecords))
+   if (!readRecords(f, context, header._numClassLoaderRecords, _classLoaderMap, _classLoaderHead, _classLoaderTail, context._classLoaderRecords))
       return false;
-   if (!readRecords(f, header._numClassRecords, _classMap, _classHead, _classTail, classRecords,
-                    classLoaderRecords, classRecords, methodRecords, classChainRecords, wellKnownClassesRecords, aotHeaderRecords))
+   if (!readRecords(f, context, header._numClassRecords, _classMap, _classHead, _classTail, context._classRecords))
       return false;
-   if (!readRecords(f, header._numMethodRecords, _methodMap, _methodHead, _methodTail, methodRecords,
-                    classLoaderRecords, classRecords, methodRecords, classChainRecords, wellKnownClassesRecords, aotHeaderRecords))
+   if (!readRecords(f, context, header._numMethodRecords, _methodMap, _methodHead, _methodTail, context._methodRecords))
       return false;
-   if (!readRecords(f, header._numClassChainRecords, _classChainMap, _classChainHead, _classChainTail, classChainRecords,
-                    classLoaderRecords, classRecords, methodRecords, classChainRecords, wellKnownClassesRecords, aotHeaderRecords))
+   if (!readRecords(f, context, header._numClassChainRecords, _classChainMap, _classChainHead, _classChainTail, context._classChainRecords))
       return false;
-   if (!readRecords(f, header._numWellKnownClassesRecords, _wellKnownClassesMap, _wellKnownClassesHead, _wellKnownClassesTail, wellKnownClassesRecords,
-                    classLoaderRecords, classRecords, methodRecords, classChainRecords, wellKnownClassesRecords, aotHeaderRecords))
+   if (!readRecords(f, context, header._numWellKnownClassesRecords, _wellKnownClassesMap, _wellKnownClassesHead,
+                    _wellKnownClassesTail, context._wellKnownClassesRecords))
       return false;
-   if (!readRecords(f, header._numAOTHeaderRecords, _aotHeaderMap, _aotHeaderHead, _aotHeaderTail, aotHeaderRecords,
-                    classLoaderRecords, classRecords, methodRecords, classChainRecords, wellKnownClassesRecords, aotHeaderRecords))
+   if (!readRecords(f, context, header._numAOTHeaderRecords, _aotHeaderMap, _aotHeaderHead, _aotHeaderTail, context._aotHeaderRecords))
       return false;
 
    for (size_t i = 0; i < header._numCachedAOTMethods; ++i)
@@ -1361,16 +1298,14 @@ JITServerAOTCache::readCache(FILE *f, const JITServerAOTCacheHeader &header, TR_
       if (!JITServerAOTCacheMap::cacheHasSpace())
          return false;
 
-      auto record = CachedAOTMethod::read(f, classLoaderRecords, classRecords, methodRecords,
-                                          classChainRecords, wellKnownClassesRecords, aotHeaderRecords);
-
-      if (!record || !aotHeaderRecords[record->data().aotHeaderId()])
+      auto record = AOTCacheRecord::readRecord<CachedAOTMethod>(f, context);
+      if (!record)
          return false;
 
       CachedMethodKey key(record->definingClassChainRecord(),
                           record->data().index(),
                           record->data().optLevel(),
-                          aotHeaderRecords[record->data().aotHeaderId()]);
+                          context._aotHeaderRecords[record->data().aotHeaderId()]);
 
       if (!addToMap(_cachedMethodMap, _cachedMethodHead, _cachedMethodTail, key, record))
          {
@@ -1382,6 +1317,150 @@ JITServerAOTCache::readCache(FILE *f, const JITServerAOTCacheHeader &header, TR_
    return true;
    }
 
+
+size_t
+JITServerAOTCache::getNumCachedMethods() const
+   {
+   OMR::CriticalSection cs(_cachedMethodMonitor);
+   return _cachedMethodMap.size();
+   }
+
+
+bool
+JITServerAOTCache::triggerAOTCacheStoreToFileIfNeeded()
+   {
+   TR::CompilationInfo *compInfo = TR::CompilationInfo::get();
+   auto aotCacheMap = compInfo->getJITServerAOTCacheMap();
+
+      {
+      OMR::CriticalSection cs(_cachedMethodMonitor);
+      if (_saveOperationInProgress || _excludedFromSavingToFile)
+         return false;
+
+      // Check whether enough new methods were added to the in-memory cache to be worth attempting a save operation
+      if (_cachedMethodMap.size() < _minNumAOTMethodsToSave)
+         return false;
+
+      // Prevent saving to file too often; wait some time between consecutive saves
+      if (compInfo->getPersistentInfo()->getElapsedTime() < _timePrevSaveOperation + TR::Options::_aotCachePersistenceMinPeriodMs)
+         return false;
+
+      // Prevent other threads from starting a save operation
+      // I can change my mind afterwards, but that's fine because
+      // any other thread would have drawn the same conclusion
+      _saveOperationInProgress = true;
+      }
+
+   // Memorize which AOT cache to save to file
+   aotCacheMap->queueAOTCacheForSavingToFile(_name);
+
+   // Place a special compilation request in the queue
+   // Any I/O operation should be done asynchronously on a new compilation thread
+   bool queuedRequest = false;
+      {
+      OMR::CriticalSection compilationMonitorLock(compInfo->getCompilationMonitor());
+      if (!compInfo->getPersistentInfo()->getDisableFurtherCompilation())
+         {
+         // Setting the stream to SAVE_AOT_CACHE_REQUEST means that this is not a true
+         // compilation request, but rather a request to save a cache to a file
+         if (compInfo->addOutOfProcessMethodToBeCompiled(SAVE_AOTCACHE_REQUEST /*stream*/))
+            {
+            // Successfully queued the new entry, so notify a thread
+            compInfo->getCompilationMonitor()->notifyAll();
+            if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+               TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "AOT cache: t=%llu Queued comp request to save cache '%s' to file in the background",
+                                              compInfo->getPersistentInfo()->getElapsedTime(), _name.c_str());
+            queuedRequest = true;
+            }
+         }
+      }
+   if (!queuedRequest)
+      {
+      // We don't need to acquire the monitor here because only the thread that set
+      // _saveOperationInProgress to true can reset it to false if a compilation request was not queued
+      _saveOperationInProgress = false;
+      }
+   return queuedRequest;
+   }
+
+// This method is called at the end of an AOT cache save attempt to memorize the
+// number of methods that were saved to file, and the time of the save operation.
+// The flag _saveOperationInProgress is also reset
+void
+JITServerAOTCache::finalizeSaveOperation(bool success, size_t numMethodsSavedToFile)
+   {
+   OMR::CriticalSection cs(_cachedMethodMonitor);
+   if (success)
+      {
+      _minNumAOTMethodsToSave = numMethodsSavedToFile + TR::Options::_aotCachePersistenceMinDeltaMethods;
+      }
+   // Overwite the time of the last save operation even if it failed
+   // so that we don't try too often
+   _timePrevSaveOperation = TR::CompilationInfo::get()->getPersistentInfo()->getElapsedTime();
+   _saveOperationInProgress = false;
+   }
+
+
+bool
+JITServerAOTCache::isAOTCacheBetterThanSnapshot(const std::string &cacheFileName, size_t numExtraMethods)
+   {
+   bool doSave = false;
+   FILE *cacheFile = fopen(cacheFileName.c_str(), "rb");
+   if (cacheFile)
+      {
+      // Read the header and extract the number of methods stored in the file
+      JITServerAOTCacheHeader header = {0};
+      if (1 == fread(&header, sizeof(JITServerAOTCacheHeader), 1, cacheFile))
+         {
+         // What do we do if the existing version is not compatible with ours?
+         // Probably we should overwrite because ours is newer
+         if (!isCompatibleSnapshotVersion(header._version))
+            {
+            if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+               TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "AOT cache: Found incompatible AOT cache file %s. Will overwrite.", cacheFileName.c_str());
+            doSave = true;
+            }
+         else // Header is compatible, check the number of methods
+            {
+            if (getNumCachedMethods() >= header._numCachedAOTMethods + numExtraMethods)
+               {
+               // We have better data than the existing snaphot, so overwrite it
+               doSave = true;
+               }
+            else // Existing snapshot has more methods (or same as us)
+               {
+               setMinNumAOTMethodsToSave(header._numCachedAOTMethods + TR::Options::_aotCachePersistenceMinDeltaMethods);
+               if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+                  TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "AOT cache: Save operation aborted for cache '%s' because we don't have %zu more methods than existing snapshot: %zu vs %zu.",
+                                                 name().c_str(), numExtraMethods, getNumCachedMethods(), header._numCachedAOTMethods);
+               }
+            }
+         }
+      else // Read error
+         {
+         if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "AOT cache: Cannot read header from exiting cache file %s. Will overwrite existing file.", cacheFileName.c_str());
+         // We should still proceed with the save operation, because the current cache is not usable
+         doSave = true;
+         }
+
+      fclose(cacheFile);
+      cacheFile = NULL;
+      }
+   else // Cannot open file
+      {
+      // If we cannot open the file for reading, the file might not exist
+      // and this is the first attempt to save a cache. It's also possible
+      // that the file exists, but we cannot read it. It's unlikely that
+      // the file has write permissions, but not read permissions
+      if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "AOT cache: Cannot open cache file %s for reading: %s", cacheFileName.c_str(), strerror(errno));
+      doSave = true;
+      }
+   return doSave;
+   }
+
+
 bool
 JITServerAOTCacheMap::cacheHasSpace()
    {
@@ -1389,7 +1468,6 @@ JITServerAOTCacheMap::cacheHasSpace()
       {
       return false;
       }
-
 
    // The AOT cache allocations are used as a stand-in for the total memory used by all AOT caches.
    // This underestimates the true value, but should be correlated with it.
@@ -1411,13 +1489,19 @@ JITServerAOTCacheMap::cacheHasSpace()
       }
    }
 
+
 JITServerAOTCacheMap::JITServerAOTCacheMap() :
    _map(decltype(_map)::allocator_type(TR::Compiler->persistentGlobalAllocator())),
+   _cachesBeingLoaded(decltype(_cachesBeingLoaded)::allocator_type(TR::Compiler->persistentGlobalAllocator())),
+   _cachesToLoadQueue(decltype(_cachesToLoadQueue)::allocator_type(TR::Compiler->persistentGlobalAllocator())),
+   _cachesExcludedFromLoading(decltype(_cachesExcludedFromLoading)::allocator_type(TR::Compiler->persistentGlobalAllocator())),
+   _cachesToSaveQueue(decltype(_cachesToSaveQueue)::allocator_type(TR::Compiler->persistentGlobalAllocator())),
    _monitor(TR::Monitor::create("JIT-JITServerAOTCacheMapMonitor"))
    {
    if (!_monitor)
       throw std::bad_alloc();
    }
+
 
 JITServerAOTCacheMap::~JITServerAOTCacheMap()
    {
@@ -1430,8 +1514,236 @@ JITServerAOTCacheMap::~JITServerAOTCacheMap()
    }
 
 
+std::string
+JITServerAOTCacheMap::buildCacheFileName(const std::string &cacheDir, const std::string &cacheName)
+   {
+   std::string cacheFileName;
+   // If a directory is given, add it in the front of the cache name
+   if (!cacheDir.empty())
+      cacheFileName = cacheDir + "/";
+   return cacheFileName + "JITServerAOTCache." + cacheName + ".J" + std::to_string(JAVA_SPEC_VERSION);
+   }
+
+
+void
+JITServerAOTCacheMap::queueAOTCacheForSavingToFile(const std::string &cacheName)
+   {
+   OMR::CriticalSection cs(_monitor);
+   _cachesToSaveQueue.push_back(cacheName);
+   }
+
+
+bool
+JITServerAOTCacheMap::saveNextQueuedAOTCacheToFile()
+   {
+   std::string cacheName;
+   JITServerAOTCache *cache = NULL;
+      {
+      OMR::CriticalSection cs(_monitor);
+
+      // Extract the first entry from the queue
+      // If there is nothing in the queue, then just return (another thread is working on it)
+      if (_cachesToSaveQueue.empty())
+         return false;
+      cacheName = _cachesToSaveQueue.front();
+      _cachesToSaveQueue.pop_front();
+      // Retrieve the cache by name
+      auto it = _map.find(cacheName);
+      TR_ASSERT(it != _map.end(), "AOT Caches are never deleted in the current implementation");
+      cache = it->second;
+      }
+
+   bool success = false;
+   size_t numAOTMethodsWritten = 0;
+   bool excludeCacheFromSaving = false;
+   TR::CompilationInfo *compInfo = TR::CompilationInfo::get();
+
+   // Must catch any exceptions because we need to reset the _saveOperationInProgress flag
+   // This is done in `finalizeSaveOperation()` which is called at the very end of this function
+   try
+      {
+      std::string cacheFileName = buildCacheFileName(compInfo->getPersistentInfo()->getJITServerAOTCacheDir(), cacheName);
+
+      // If a similarly named AOT cache file already exists, must determine if it's a better snapshot or not
+      if (cache->isAOTCacheBetterThanSnapshot(cacheFileName, TR::Options::_aotCachePersistenceMinDeltaMethods))
+         {
+         PORT_ACCESS_FROM_JITCONFIG(compInfo->getJITConfig());
+         OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
+         uint64_t startTime = TR::Options::getVerboseOption(TR_VerboseJITServer) ? j9time_hires_clock() : 0;
+
+         // Create a temporary file based on the UID of this server and the cache name
+         std::string tempFileName = buildCacheFileName(compInfo->getPersistentInfo()->getJITServerAOTCacheDir(),
+                                                       std::to_string(compInfo->getPersistentInfo()->getServerUID()) + "." + cacheName + ".tmp");
+         FILE *newCacheFile = fopen(tempFileName.c_str(), "wb");
+         if (newCacheFile)
+            {
+            if ((numAOTMethodsWritten = cache->writeCache(newCacheFile)) != 0)
+               {
+               fclose(newCacheFile);
+               newCacheFile = NULL;
+
+               // Before the rename operation, check again if our in-memory cache is still better than the existing snapshot
+               if (cache->isAOTCacheBetterThanSnapshot(cacheFileName, 1))
+                  {
+                  // Rename the file to the final name
+                  if (0 == rename(tempFileName.c_str(), cacheFileName.c_str()))
+                     {
+                     success = true;
+
+                     if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+                        {
+                        char timestamp[32];
+                        uint64_t durationUsec = j9time_hires_delta(startTime, j9time_hires_clock(), J9PORT_TIME_DELTA_IN_MICROSECONDS);
+                        omrstr_ftime_ex(timestamp, sizeof(timestamp), "%b-%d-%Y_%H:%M:%S ", j9time_current_time_millis(), OMRSTR_FTIME_FLAG_LOCAL);
+
+                        TR_VerboseLog::CriticalSection vlogLock;
+                        TR_VerboseLog::write(TR_Vlog_JITServer, "AOT cache: t=%llu Saved cache '%s' to file %s. %zu methods saved in %llu usec. Current time:",
+                                             compInfo->getPersistentInfo()->getElapsedTime(), cacheName.c_str(), cacheFileName.c_str(), numAOTMethodsWritten, durationUsec);
+                        TR_VerboseLog::writeLine(timestamp);
+                        }
+                     }
+                  else // Renaming failed
+                     {
+                     if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+                        TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "AOT cache: Failed to rename temporary cache file %s to %s: %s",
+                                                       tempFileName.c_str(), cacheFileName.c_str(), strerror(errno));
+                     remove(tempFileName.c_str());
+                     cache->excludeCacheFromSavingToFile();
+                     }
+                  }
+               else // We changed our mind because some other JITServer instance has just saved a better snapshot than ours
+                  {
+                  if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+                     TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "AOT cache: Gave up renaming cache file %s to %s",
+                                                    tempFileName.c_str(), cacheFileName.c_str());
+                  remove(tempFileName.c_str());
+                  }
+               }
+            else // Saving the AOT cache to file failed
+               {
+               fclose(newCacheFile);
+               newCacheFile = NULL;
+               if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+                  TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "AOT cache: Failed to serialize cache '%s' to file", cacheName.c_str());
+               remove(tempFileName.c_str());
+               cache->excludeCacheFromSavingToFile();
+               }
+            }
+         else  // Cannot open file for writing; permissions?
+            {
+            if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+               TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "AOT cache: Cannot open new file %s for writing: %s", tempFileName.c_str(), strerror(errno));
+            cache->excludeCacheFromSavingToFile();
+            }
+         }
+      } // end try
+   catch(const std::exception& e)
+      {
+      if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+         {
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "AOT cache: exception caught when trying to save cache '%s': %s", cacheName.c_str(), e.what());
+         }
+      }
+
+   cache->finalizeSaveOperation(success, numAOTMethodsWritten);
+   return success;
+   }
+
+
+void
+JITServerAOTCacheMap::loadNextQueuedAOTCacheFromFile(J9::J9SegmentProvider &scratchSegmentProvider)
+   {
+   std::string cacheName;
+      {
+      OMR::CriticalSection cs(_monitor);
+      TR_ASSERT(_cachesBeingLoaded.size() != 0, "There must be at least one AOT cache waiting to be loaded from file");
+
+      // Extract the first entry from the queue
+      // If there is nothing in the queue, then just return (another thread is working on it)
+      if (_cachesToLoadQueue.empty())
+         return;
+      cacheName = _cachesToLoadQueue.front();
+      _cachesToLoadQueue.pop_front();
+      }
+
+   JITServerAOTCache *cache = NULL;
+   FILE *cacheFile = NULL;
+   try
+      {
+      TR::CompilationInfo *compInfo = TR::CompilationInfo::get();
+      std::string cacheFileName = buildCacheFileName(compInfo->getPersistentInfo()->getJITServerAOTCacheDir(), cacheName);
+
+      // Open the AOT cache file and create a new JITServerAOTCache object
+      FILE *cacheFile = fopen(cacheFileName.c_str(), "rb");
+      if (cacheFile)
+         {
+         if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "AOT cache: t=%llu Opened file %s to load cache '%s' from file",
+                                           compInfo->getPersistentInfo()->getElapsedTime(), cacheFileName.c_str(), cacheName.c_str());
+         size_t segmentSize = scratchSegmentProvider.getPreferredSegmentSize();
+         if (!segmentSize)
+            segmentSize = 1 << 24/*16 MB*/;
+         TR::RawAllocator rawAllocator(compInfo->getJITConfig()->javaVM);
+         J9::SystemSegmentProvider segmentProvider(1 << 16/*64 KB*/, segmentSize, TR::Options::getScratchSpaceLimit(), scratchSegmentProvider, rawAllocator);
+         TR::Region region(segmentProvider, rawAllocator);
+         TR_Memory trMemory(*compInfo->persistentMemory(), region);
+
+         cache = JITServerAOTCache::readCache(cacheFile, cacheName, trMemory); // This should not throw
+         fclose(cacheFile); // filestream not needed anymore
+         cacheFile = NULL;
+
+         if (cache)
+            {
+            // Update the number of AOT methods needed to be eligible for a save operation
+            // No monitor is needed because no other thread knows about this cache yet
+            cache->setMinNumAOTMethodsToSave(cache->getNumCachedMethods() + TR::Options::_aotCachePersistenceMinDeltaMethods);
+
+            // My JITServerAOTCache was created and populated; now, insert it into the map
+            OMR::CriticalSection cs(_monitor);
+            _map.insert(std::make_pair(cacheName, cache));
+            }
+         else // Failed to create the AOT cache from file
+            {
+            if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+               TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "AOT cache: Failed to create cache '%s' from file", cacheName.c_str());
+            }
+         }
+      else // Cannot open the AOT cache file
+         {
+         if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "AOT cache: Failed to open cache file %s: %s", cacheFileName.c_str(), strerror(errno));
+         }
+      }
+   catch(const std::exception& e)
+      {
+      if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+         {
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "AOT cache: exception caught when trying to read-in cache '%s': %s", cacheName.c_str(), e.what());
+         }
+      if (cacheFile)
+         {
+         fclose(cacheFile);
+         cacheFile = NULL;
+         }
+      if (cache)
+         {
+         cache->~JITServerAOTCache();
+         TR::Compiler->persistentGlobalMemory()->freePersistentMemory(cache);
+         cache = NULL;
+         // Do not rethrow the exception
+         }
+      }
+   // Delete the entry from the set
+   OMR::CriticalSection cs(_monitor);
+   _cachesBeingLoaded.erase(cacheName);
+   // If the cache loading operation failed, exclude the cache from future attempts
+   if (!cache)
+      _cachesExcludedFromLoading.insert(cacheName);
+   }
+
+
 JITServerAOTCache *
-JITServerAOTCacheMap::get(const std::string &name, uint64_t clientUID)
+JITServerAOTCacheMap::get(const std::string &name, uint64_t clientUID, bool &pending)
    {
    OMR::CriticalSection cs(_monitor);
 
@@ -1439,7 +1751,7 @@ JITServerAOTCacheMap::get(const std::string &name, uint64_t clientUID)
    if (it != _map.end())
       {
       if (TR::Options::getVerboseOption(TR_VerboseJITServer))
-         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Using existing AOT cache %s for clientUID %llu",
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "AOT cache: Using existing cache '%s' for clientUID %llu",
                                         name.c_str(), (unsigned long long)clientUID);
       return it->second;
       }
@@ -1449,6 +1761,45 @@ JITServerAOTCacheMap::get(const std::string &name, uint64_t clientUID)
       return NULL;
       }
 
+   // See if we can load the cache from file
+   TR::CompilationInfo *compInfo = TR::CompilationInfo::get();
+   if (compInfo->getPersistentInfo()->getJITServerUseAOTCachePersistence() &&     // Persistence feature is enabled
+       _cachesExcludedFromLoading.find(name) == _cachesExcludedFromLoading.end()) // I am allowed to load this cache from file
+      {
+      // Check that we don't have another request in progress for the same named cache
+      if (_cachesBeingLoaded.find(name) != _cachesBeingLoaded.end())
+         {
+         // Another thread is already loading this cache
+         if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "AOT cache: Another thread is already loading cache '%s' from file", name.c_str());
+         pending = true;
+         return NULL;
+         }
+
+      // Create special compilation request that will be used to deserialize the cache.
+      // Note: we must ensure that, in all parts of the code, we acquire the compMonitor after the AOTCacheMap monitor
+      OMR::CriticalSection compilationMonitorLock(compInfo->getCompilationMonitor());
+      if (!compInfo->getPersistentInfo()->getDisableFurtherCompilation())
+         {
+         // Setting the stream to LOAD_AOT_CACHE_REQUEST means that this is not a true
+         // compilation request, but rather a request to load a cache from file
+         if (compInfo->addOutOfProcessMethodToBeCompiled(LOAD_AOTCACHE_REQUEST /*stream*/))
+            {
+            // Successfully queued the new entry, so notify a thread
+            compInfo->getCompilationMonitor()->notifyAll();
+
+            _cachesBeingLoaded.insert(name); // Prevent other threads from loading the same cache
+            _cachesToLoadQueue.push_back(name);
+
+            pending = true; // Tell the caller that we are loading the cache from file
+            if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+               TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "AOT cache: t=%llu Queued comp request to load cache '%s' from file in the background",
+                                                compInfo->getPersistentInfo()->getElapsedTime(), name.c_str());
+            return NULL;
+            }
+         }
+      }
+   // If we reached this point, we need to create a new (empty) cache
    auto cache = new (TR::Compiler->persistentGlobalMemory()) JITServerAOTCache(name);
    if (!cache)
       throw std::bad_alloc();
@@ -1456,6 +1807,9 @@ JITServerAOTCacheMap::get(const std::string &name, uint64_t clientUID)
    try
       {
       _map.insert(it, { name, cache });
+      if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "AOT cache: Created empty cache '%s' for clientUID %llu",
+                                        name.c_str(), (unsigned long long)clientUID);
       }
    catch (...)
       {
@@ -1464,9 +1818,6 @@ JITServerAOTCacheMap::get(const std::string &name, uint64_t clientUID)
       throw;
       }
 
-   if (TR::Options::getVerboseOption(TR_VerboseJITServer))
-      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Created AOT cache %s for clientUID %llu",
-                                     name.c_str(), (unsigned long long)clientUID);
    return cache;
    }
 

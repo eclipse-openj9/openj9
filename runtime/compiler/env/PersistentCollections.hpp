@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2021 IBM Corp. and others
+ * Copyright (c) 2018, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,9 +23,10 @@
 #ifndef PERSISTENT_COLLECTIONS_H
 #define PERSISTENT_COLLECTIONS_H
 
-#include <vector>
+#include <list>
 #include <unordered_map>
 #include <unordered_set>
+#include <vector>
 
 #include "env/PersistentAllocator.hpp"
 #include "env/Region.hpp"
@@ -35,6 +36,11 @@ template<typename T>
 using PersistentVectorAllocator = TR::typed_allocator<T, TR::PersistentAllocator &>;
 template<typename T>
 using PersistentVector = std::vector<T, PersistentVectorAllocator<T>>;
+
+template<typename T>
+using PersistentListAllocator = TR::typed_allocator<T, TR::PersistentAllocator &>;
+template<typename T>
+using PersistentList = std::list<T, PersistentListAllocator<T>>;
 
 template<typename T>
 using PersistentUnorderedSetAllocator = TR::typed_allocator<T, TR::PersistentAllocator &>;
