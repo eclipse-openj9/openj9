@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2022 IBM Corp. and others
+ * Copyright (c) 2000, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -457,6 +457,7 @@ JIT_HELPER(__forwardQuadWordArrayCopy_vsx);
 
 JIT_HELPER(__postP10ForwardCopy);
 JIT_HELPER(__postP10GenericCopy);
+JIT_HELPER(crc32_vpmsum);
 
 #ifdef J9VM_OPT_JAVA_CRYPTO_ACCELERATION
 #if defined(OMR_GC_FULL_POINTERS)
@@ -1387,6 +1388,7 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
 
    SET(TR_PPCpostP10ForwardCopy,           (void *) __postP10ForwardCopy,           TR_Helper);
    SET(TR_PPCpostP10GenericCopy,           (void *) __postP10GenericCopy,           TR_Helper);
+   SET(TR_PPCcrc32_vpmsum,                 (void *) crc32_vpmsum,                   TR_CHelper);
 
 #ifdef J9VM_OPT_JAVA_CRYPTO_ACCELERATION
 #if defined(OMR_GC_COMPRESSED_POINTERS)
