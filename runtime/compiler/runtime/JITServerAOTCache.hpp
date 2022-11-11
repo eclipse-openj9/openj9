@@ -35,6 +35,7 @@ static const char JITSERVER_AOTCACHE_EYECATCHER[] = "AOTCACHE";
 static const size_t JITSERVER_AOTCACHE_EYECATCHER_LENGTH = sizeof(JITSERVER_AOTCACHE_EYECATCHER) - 1;
 
 namespace TR { class Monitor; }
+namespace J9 { class J9SegmentProvider;}
 
 // Information relevant to the compatibility of a cache snapshot with the server.
 struct JITServerAOTCacheVersion
@@ -71,6 +72,9 @@ struct AOTCacheMethodRecord;
 struct AOTCacheClassChainRecord;
 struct AOTCacheWellKnownClassesRecord;
 struct AOTCacheAOTHeaderRecord;
+
+#define LOAD_AOTCACHE_REQUEST (JITServer::ServerStream *)0x1
+#define SAVE_AOTCACHE_REQUEST (JITServer::ServerStream *)0x3 // pointers cannot have the last bit set
 
 // Base class for serialization record "wrappers" stored at the server.
 //
@@ -422,8 +426,43 @@ public:
 
    void printStats(FILE *f) const;
 
-   bool writeCache(FILE *f) const;
+   size_t writeCache(FILE *f) const;
    static JITServerAOTCache *readCache(FILE *f, const std::string &name, TR_Memory &trMemory);
+   size_t getNumCachedMethods() const;
+   void setMinNumAOTMethodsToSave(size_t num) { _minNumAOTMethodsToSave = num; }
+
+  /**
+   * @brief  If conditions are right, launch another compilation thread to store this AOT cache to a file.
+   *
+   * This is done if both conditions below are met:
+   * (1) "enough" methods were added to the in-memory AOT cache since the last snapshot
+   * and
+   * (2) "enough" time has passed since the last snapshot
+   *
+   * Until the save operation is complete, the _saveOperationInProgress flag is set
+   * to 'true' to prevent other threads launching other save operations
+   * Internally, this method aquires temporarily the _cachedMethodMonitor,
+   * the monitor protecting the aotCacheMap and the compilation monitor.
+   *
+   * @return true if the save operation was launched, false otherwise
+   */
+   bool triggerAOTCacheStoreToFileIfNeeded();
+   void finalizeSaveOperation(bool success, size_t numMethodsSavedToFile);
+   void excludeCacheFromSavingToFile() { _excludedFromSavingToFile = true; }
+
+   /**
+      @brief Determine if current in-memory AOT cache is "better" than the one on file.
+
+      An in-memory AOT cache is considered "better" than the one on file if it has `numExtraMethods` more AOT methods.
+      Artificially, it is also considered better if one of the following conditions is true:
+      (1) cache on file is incompatible with the in-memory cache
+      (2) file containing the cache cannot be opened or its content cannot be read
+
+      @param cacheFileName The name of the file containing the AOT snapshot to be compared (second term of the comparison)
+      @param numExtraMethods How many more methods need to be in the in-memory cache compared to the AOT snapshot in order to be considered "better"
+      @return true if the in-memory cache is better than the one on file, false otherwise
+   */
+   bool isAOTCacheBetterThanSnapshot(const std::string &cacheFileName, size_t numExtraMethods);
 
 private:
    struct ClassLoaderKey
@@ -558,6 +597,11 @@ private:
    CachedAOTMethod *_cachedMethodTail;
    TR::Monitor *const _cachedMethodMonitor;
 
+   uint64_t _timePrevSaveOperation;   // Millis when this cache was last saved to file
+   size_t _minNumAOTMethodsToSave;    // Minimum number of AOT methods present in the cache before considering a save operation
+   bool _saveOperationInProgress;     // True if an AOTCache save operation is in progress
+   bool _excludedFromSavingToFile;    // True if this cache is excluded from saving to file
+
    // Statistics
    size_t _numCacheBypasses;
    size_t _numCacheHits;
@@ -575,9 +619,40 @@ public:
 
    JITServerAOTCacheMap();
    ~JITServerAOTCacheMap();
+   /**
+      @brief Enqueue the given AOT cache name to be saved saving to file, later-on.
+   */
+   void queueAOTCacheForSavingToFile(const std::string &cacheName);
 
-   JITServerAOTCache *get(const std::string &name, uint64_t clientUID);
+   /**
+      @brief Attempt to save to file the next AOT cache that is queued for saving.
+   */
+   bool saveNextQueuedAOTCacheToFile();
 
+   /**
+      @brief Load from file the next AOT cache that is queued for loading.
+
+      If the load operation succeeds, a new named in-memory cache is created.
+      If the load operation fails, this cache name is excluded from future load operations.
+      Any exceptions thrown by this method are caught and logged.
+      This method acquires the AOTCacheMap monitor.
+   */
+   void loadNextQueuedAOTCacheFromFile(J9::J9SegmentProvider &scratchSegmentProvider);
+
+   /**
+      @brief Obtain a pointer to a named AOT cache. If it doesn't exist, attempt to create one.
+
+      If the cache exists, return a pointer to it.
+      If the cache doesn't exist and the persistence feature is disabled, create an empty cache;
+      if the persistence feature is enabled and this cache name is not on the exclusion list,
+      enqueue a special compilation request that will load the cache from file and set "pending" to true
+
+      @param name  Name of the cache to get or create
+      @param clientUID UID of the client that will be using this cache
+      @param pending Output flag indicating that a cache load operation from file is in progress, but not read yet
+      @return Pointer to the named AOT cache, or NULL if the cache could not be created right away (or at all)
+   */
+   JITServerAOTCache *get(const std::string &name, uint64_t clientUID, bool &pending);
    size_t getNumDeserializedMethods() const;
 
    static void setCacheMaxBytes(size_t bytes) { _cacheMaxBytes = bytes; }
@@ -586,7 +661,29 @@ public:
    void printStats(FILE *f) const;
 
 private:
+   static std::string buildCacheFileName(const std::string &cacheDir, const std::string &cacheName);
+
    PersistentUnorderedMap<std::string, JITServerAOTCache *> _map;
+
+   // The following set is used to keep track of the caches that are in process of being loaded from file
+   // Once a cache is loaded, it is removed from the set and added to the _map
+   PersistentUnorderedSet<std::string> _cachesBeingLoaded;
+
+   // _cachesToLoadQueue is used to order the caches that need to be loaded from file.
+   // A compilation thread dequeues the first name and starts to load the cache from file.
+   // When it finishes (either successfully or not), it deletes the name from _cachesBeingLoaded.
+   PersistentList<std::string> _cachesToLoadQueue;
+
+   // _cachesExcludedFromLoading is used to keep track of the caches that we don't want to load
+   // from file, maybe because the load operation already was attempted and failed
+   // We could also populate this set from command line options
+   PersistentUnorderedSet<std::string> _cachesExcludedFromLoading;
+
+   // _cachesToSaveQueue is used to remember the caches that need to be saved to file
+   // A compilation thread dequeues the first name and tries to save the named cache to a file,
+   // possibly overwriting an existent file
+   PersistentList<std::string> _cachesToSaveQueue;
+
    TR::Monitor *const _monitor;
 
    static size_t _cacheMaxBytes;

@@ -12973,7 +12973,10 @@ TR::CompilationInfo::addOutOfProcessMethodToBeCompiled(JITServer::ServerStream *
       {
       // Initialize the entry with defaults (some, like methodDetails, are bogus)
       TR::IlGeneratorMethodDetails details;
-      entry->initialize(details, NULL, CP_SYNC_NORMAL, NULL);
+      // stream == LOAD_AOTCACHE_REQUEST is a special case of request that performs AOTCache loads from disk
+      // This needs to be served as soon as possible, so we give it a higher priority
+      CompilationPriority priority = (stream == LOAD_AOTCACHE_REQUEST) ? CP_SYNC_BELOW_MAX : CP_SYNC_NORMAL;
+      entry->initialize(details, NULL, priority, NULL);
       if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
          {
          PORT_ACCESS_FROM_JITCONFIG(_jitConfig);
