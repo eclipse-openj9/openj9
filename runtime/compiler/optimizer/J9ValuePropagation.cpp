@@ -2935,13 +2935,42 @@ bool J9::ValuePropagation::isUnreliableSignatureType(
    if (klass == NULL)
       return false;
 
+   TR_ASSERT_FATAL(
+      !comp()->compileRelocatableCode()
+      || comp()->getOption(TR_UseSymbolValidationManager),
+      "unexpected unreliable signature check in non-SVM AOT, klass=%p",
+      klass);
+
    if (comp()->getOption(TR_TrustAllInterfaceTypeInfo))
       return false;
 
+   int32_t numDims = 0;
+   klass = comp()->fej9()->getBaseComponentClass(klass, numDims);
    if (!TR::Compiler->cls.isInterfaceClass(comp(), klass))
       return false;
 
-   erased = NULL;
+   // Find the best array type that we can guarantee based on an
+   // array-of-interface signature.
+   TR_OpaqueClassBlock *objectClass = comp()->getObjectClassPointer();
+   erased = objectClass;
+   while (numDims > 0)
+      {
+      TR_OpaqueClassBlock *arrayClass =
+         fe()->getArrayClassFromComponentClass(erased);
+      if (arrayClass == NULL)
+         {
+         // No problem. An Object[] is still an Object, and an Object[][] is
+         // still an Object[], etc.
+         break;
+         }
+
+      erased = arrayClass;
+      numDims--;
+      }
+
+   if (erased == objectClass)
+      erased = NULL; // java/lang/Object is uninformative
+
    return true;
    }
 
