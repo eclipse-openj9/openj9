@@ -267,12 +267,14 @@ MM_MarkingDelegate::scanContinuationNativeSlots(MM_EnvironmentBase *env, omrobje
 		localData.env = env;
 		localData.fromObject = objectPtr;
 
-		bool bStackFrameClassWalkNeeded = false;
+		bool stackFrameClassWalkNeeded = false;
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
-		bStackFrameClassWalkNeeded = isDynamicClassUnloadingEnabled();
+		stackFrameClassWalkNeeded = isDynamicClassUnloadingEnabled();
 #endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
 
-		GC_VMThreadStackSlotIterator::scanSlots(currentThread, objectPtr, (void *)&localData, stackSlotIteratorForMarkingDelegate, bStackFrameClassWalkNeeded, false);
+		/* In STW GC there are no racing carrier threads doing mount and no need for the synchronization. */
+		bool syncWithContinuationMounting = J9_ARE_ANY_BITS_SET(currentThread->privateFlags, J9_PRIVATE_FLAGS_CONCURRENT_MARK_ACTIVE);
+		GC_VMThreadStackSlotIterator::scanSlots(currentThread, objectPtr, (void *)&localData, stackSlotIteratorForMarkingDelegate, stackFrameClassWalkNeeded, false, syncWithContinuationMounting);
 	}
 }
 

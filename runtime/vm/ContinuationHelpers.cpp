@@ -88,19 +88,44 @@ end:
 	return result;
 }
 
+void
+synchronizeWithConcurrentGCScan(J9VMThread *currentThread, J9VMContinuation *continuation)
+{
+	volatile uintptr_t *localAddr = &continuation->state;
+	/* atomically 'or' (not 'set') continuation->state  with currentThread */
+	uintptr_t oldContinuationState = VM_AtomicSupport::bitOr(localAddr, (uintptr_t)currentThread);
+
+	Assert_VM_Null(VM_VMHelpers::getCarrierThreadFromContinuationState(oldContinuationState));
+
+	if (VM_VMHelpers::isConcurrentlyScannedFromContinuationState(oldContinuationState)) {
+		/* currentThread was low tagged (GC was already in progress), but by 'or'-ing our ID, we let GC know there is a pending mount */
+		internalReleaseVMAccess(currentThread);
+
+		omrthread_monitor_enter(currentThread->publicFlagsMutex);
+		while (VM_VMHelpers::isConcurrentlyScannedFromContinuationState(*localAddr)) {
+			/* GC is still concurrently scanning the continuation(currentThread was still low tagged), wait for GC thread to notify us when it's done. */
+			omrthread_monitor_wait(currentThread->publicFlagsMutex);
+		}
+		omrthread_monitor_exit(currentThread->publicFlagsMutex);
+
+		internalAcquireVMAccess(currentThread);
+	}
+}
+
 BOOLEAN
 enterContinuation(J9VMThread *currentThread, j9object_t continuationObject)
 {
 	BOOLEAN result = TRUE;
 	jboolean started = J9VMJDKINTERNALVMCONTINUATION_STARTED(currentThread, continuationObject);
 	J9VMContinuation *continuation = J9VMJDKINTERNALVMCONTINUATION_VMREF(currentThread, continuationObject);
-
 	Assert_VM_Null(currentThread->currentContinuation);
+	Assert_VM_notNull(continuation);
 
+	/* let GC know we are mounting, so they don't need to scan us, or if there is already ongoing scan wait till it's complete. */
+	synchronizeWithConcurrentGCScan(currentThread, continuation);
 
 	VM_ContinuationHelpers::swapFieldsWithContinuation(currentThread, continuation, started);
 
-	continuation->carrierThread = currentThread;
 	currentThread->currentContinuation = continuation;
 
 	/* Reset counters which determine if the current continuation is pinned. */
@@ -141,12 +166,10 @@ yieldContinuation(J9VMThread *currentThread)
 {
 	BOOLEAN result = TRUE;
 	J9VMContinuation *continuation = currentThread->currentContinuation;
-
 	Assert_VM_notNull(currentThread->currentContinuation);
 
-	VM_ContinuationHelpers::swapFieldsWithContinuation(currentThread, continuation);
-	continuation->carrierThread = NULL;
 	currentThread->currentContinuation = NULL;
+	VM_ContinuationHelpers::swapFieldsWithContinuation(currentThread, continuation);
 
 	/* We need a full fence here to preserve happens-before relationship on PPC and other weakly
 	 * ordered architectures since learning/reservation is turned on by default. Since we have the
@@ -154,6 +177,18 @@ yieldContinuation(J9VMThread *currentThread)
 	 * only time a different virtualThread can run on the underlying j9vmthread.
 	 */
 	VM_AtomicSupport::readWriteBarrier();
+	/* we don't need atomic here, since no GC thread should be able to start scanning while continuation is mounted,
+	 * nor should another carrier thread be able to mount before we complete the unmount (hence no risk to overwrite anything in a race).
+	 * Order
+	 *
+	 *	swap-stacks
+	 *	writeBarrier
+	 *	state initial
+	 *
+	 * must be maintained for weakly ordered CPUs, to unsure that once the continuation is again available for GC scan (on potentially remote CPUs), all CPUs see up-to-date stack .
+	 */
+	Assert_VM_true((uintptr_t)currentThread == continuation->state);
+	continuation->state = J9_GC_CONTINUATION_STATE_INITIAL;
 
 	return result;
 }

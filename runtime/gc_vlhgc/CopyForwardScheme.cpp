@@ -2328,11 +2328,11 @@ MM_CopyForwardScheme::scanContinuationNativeSlots(MM_EnvironmentVLHGC *env, MM_A
 		localData.env = env;
 		localData.fromObject = objectPtr;
 		/* check _includeStackFrameClassReferences, _trackVisibleStackFrameDepth  */
-		bool bStackFrameClassWalkNeeded = false;
+		bool stackFrameClassWalkNeeded = false;
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
-		bStackFrameClassWalkNeeded = isDynamicClassUnloadingEnabled();
+		stackFrameClassWalkNeeded = isDynamicClassUnloadingEnabled();
 #endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
-		GC_VMThreadStackSlotIterator::scanSlots(currentThread, objectPtr, (void *)&localData, stackSlotIteratorForCopyForwardScheme, bStackFrameClassWalkNeeded, false);
+		GC_VMThreadStackSlotIterator::scanSlots(currentThread, objectPtr, (void *)&localData, stackSlotIteratorForCopyForwardScheme, stackFrameClassWalkNeeded, false);
 	}
 }
 

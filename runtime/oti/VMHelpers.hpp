@@ -41,6 +41,7 @@
 #include "j9modifiers_api.h"
 #include "j9cp.h"
 #include "ute.h"
+#include "AtomicSupport.hpp"
 #include "ObjectAllocationAPI.hpp"
 
 typedef enum {
@@ -2048,18 +2049,19 @@ exit:
 #endif /* JAVA_SPEC_VERSION > 11 */
 	}
 
-	static VMINLINE UDATA
-	walkContinuationStackFramesWrapper(J9VMThread *vmThread, j9object_t continuationObject, J9StackWalkState *walkState)
-	{
-		UDATA rc = J9_STACKWALK_RC_NONE;
 #if JAVA_SPEC_VERSION >= 19
-		J9VMContinuation *continuation = J9VMJDKINTERNALVMCONTINUATION_VMREF(vmThread, continuationObject);
-		rc = vmThread->javaVM->internalVMFunctions->walkContinuationStackFrames(vmThread, continuation, walkState);
-#endif /* JAVA_SPEC_VERSION >= 19 */
-		return rc;
+	static VMINLINE J9VMThread *
+	getCarrierThreadFromContinuationState(uintptr_t continuationState)
+	{
+		return (J9VMThread *)(continuationState & (~(uintptr_t)J9_GC_CONTINUATION_STATE_CONCURRENT_SCAN));
 	}
 
-#if JAVA_SPEC_VERSION >= 19
+	static VMINLINE bool
+	isConcurrentlyScannedFromContinuationState(uintptr_t continuationState)
+	{
+		return J9_ARE_ANY_BITS_SET(continuationState, J9_GC_CONTINUATION_STATE_CONCURRENT_SCAN);
+	}
+
 	/**
 	 * Check if the related J9VMContinuation is mounted to carrier thread
 	 * @param[in] continuation the related J9VMContinuation
@@ -2068,25 +2070,89 @@ exit:
 	static VMINLINE bool
 	isContinuationMounted(J9VMContinuation *continuation)
 	{
-		return (NULL != continuation->carrierThread);
+		return J9_ARE_ANY_BITS_SET(continuation->state, ~(uintptr_t)J9_GC_CONTINUATION_STATE_CONCURRENT_SCAN);
+	}
+
+	static VMINLINE bool
+	isContinuationMountedOrConcurrentlyScanned(J9VMContinuation *continuation)
+	{
+		return isContinuationMounted(continuation) || isConcurrentlyScannedFromContinuationState(continuation->state);
+	}
+
+/*
+ *	If low tagging failed due to either
+ *
+ *   a carrier thread winning to mount, we don't need to do anything, since it will be compensated by pre/post mount actions
+ *   another GC thread winning to scan, again don't do anything, and let the winning thread do the work, instead
+ */
+	static VMINLINE bool
+	tryWinningConcurrentGCScan(J9VMContinuation *continuation)
+	{
+		return J9_GC_CONTINUATION_STATE_INITIAL == VM_AtomicSupport::lockCompareExchange(&continuation->state, J9_GC_CONTINUATION_STATE_INITIAL, J9_GC_CONTINUATION_STATE_CONCURRENT_SCAN);
+	}
+
+	static VMINLINE void
+	exitConcurrentGCScan(J9VMContinuation *continuation)
+	{
+		/* clear CONCURRENTSCANNING flag */
+		uintptr_t oldContinuationState = VM_AtomicSupport::bitAnd(&continuation->state, ~(uintptr_t)J9_GC_CONTINUATION_STATE_CONCURRENT_SCAN);
+		J9VMThread *carrierThread = getCarrierThreadFromContinuationState(oldContinuationState);
+		if (NULL != carrierThread) {
+			omrthread_monitor_enter(carrierThread->publicFlagsMutex);
+			/*  notify the waiting carrierThread that we just finished scanning, and it can proceed with mounting. */
+			omrthread_monitor_notify_all(carrierThread->publicFlagsMutex);
+			omrthread_monitor_exit(carrierThread->publicFlagsMutex);
+		}
 	}
 #endif /* JAVA_SPEC_VERSION >= 19 */
 
+	static VMINLINE UDATA
+	walkContinuationStackFramesWrapper(J9VMThread *vmThread, j9object_t continuationObject, J9StackWalkState *walkState, bool syncWithContinuationMounting)
+	{
+		UDATA rc = J9_STACKWALK_RC_NONE;
+#if JAVA_SPEC_VERSION >= 19
+		J9VMContinuation *continuation = J9VMJDKINTERNALVMCONTINUATION_VMREF(vmThread, continuationObject);
+		if (syncWithContinuationMounting && (NULL != continuation)) {
+			if (!tryWinningConcurrentGCScan(continuation)) {
+				/* If continuation is mounted or already being scanned by another GC thread, we do nothing */
+				return rc;
+			}
+		}
+		rc = vmThread->javaVM->internalVMFunctions->walkContinuationStackFrames(vmThread, continuation, walkState);
+		if (syncWithContinuationMounting && (NULL != continuation)) {
+			exitConcurrentGCScan(continuation);
+		}
+#endif /* JAVA_SPEC_VERSION >= 19 */
+		return rc;
+	}
+
 	/**
 	 * Check if we need to scan the java stack for the Continuation Object
+	 * Used during main scan phase of GC (object graph traversal) or heap object iteration (in sliding compact).
+	 * Not meant to be used during root scanning (neither strong roots nor weak roots)!
 	 * @param[in] vmThread the current J9VMThread
 	 * @param[in] continuationObject the continuation object
 	 * @param[in] scanOnlyUnmounted if it is true, only scan unmounted continuation object, default is false
 	 * @return true if we need to scan the java stack
 	 */
 	static VMINLINE bool
-	needScanStacksForContinuation(J9VMThread *vmThread, j9object_t continuationObject, bool scanOnlyUnmounted = false)
+	needScanStacksForContinuation(J9VMThread *vmThread, j9object_t continuationObject)
 	{
 		bool needScan = false;
 #if JAVA_SPEC_VERSION >= 19
 		jboolean started = J9VMJDKINTERNALVMCONTINUATION_STARTED(vmThread, continuationObject);
 		J9VMContinuation *continuation = J9VMJDKINTERNALVMCONTINUATION_VMREF(vmThread, continuationObject);
-		needScan = started && (NULL != continuation) && (!scanOnlyUnmounted || !isContinuationMounted(continuation));
+		/**
+		 * We don't scan mounted continuations:
+		 *
+		 * for concurrent GCs, since stack is actively changing. Instead, we scan them during preMount or during root scanning if already mounted at cycle start or during postUnmount (might be indirectly via card cleaning) or during final STW (via root re-scan) if still mounted at cycle end
+		 * for sliding compacts to avoid double slot fixups
+		 *
+		 * For fully STW GCs, there is no harm to scan them, but it's a waste of time since they are scanned during root scanning already.
+		 *
+		 * We don't scan currently scanned either - one scan is enough.
+		 */
+		needScan = started && (NULL != continuation) && (!isContinuationMountedOrConcurrentlyScanned(continuation));
 #endif /* JAVA_SPEC_VERSION >= 19 */
 		return needScan;
 	}
