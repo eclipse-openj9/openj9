@@ -27,7 +27,7 @@ import openj9.internal.criu.security.CRIUConfigurator;
 
 /**
  * Handles the security providers.
- * The CRIUSECProvider is a security provider that is used as follows when CRIU
+ * The CRIUSEC provider is a security provider that is used as follows when CRIU
  * is enabled. During the checkpoint phase, all security providers are removed
  * from the system properties (which are read from security.java) and CRIUSEC is
  * added to the system properties. The pre-checkpoint hook clears the digests,
@@ -48,7 +48,7 @@ public final class SecurityProviders {
 		J9InternalCheckpointHookAPI.registerPreCheckpointHook(
 				CRIUSupport.RESET_CRIUSEC_PRIORITY,
 				"Reset the digests", //$NON-NLS-1$
-				() -> openj9.internal.criu.CRIUSECProvider.resetCRIUSEC()
+				() -> openj9.internal.criu.CRIUSEC.resetCRIUSEC()
 		);
 	}
 

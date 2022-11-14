@@ -29,6 +29,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
+import openj9.internal.security.RestrictedSecurityConfigurator;
+
 import sun.security.action.GetPropertyAction;
 import sun.security.jca.ProviderList;
 import sun.security.jca.Providers;
@@ -61,7 +63,7 @@ public final class CRIUConfigurator {
 		for (String provider : oldProviders.keySet()) {
 			props.remove(provider);
 		}
-		props.put("security.provider.1", "openj9.internal.criu.CRIUSECProvider");
+		props.put("security.provider.1", "openj9.internal.criu.CRIUSEC");
 
 		if (debug) {
 			System.out.println("CRIUSEC added and all other security providers removed.");
@@ -69,10 +71,11 @@ public final class CRIUConfigurator {
 	}
 
 	/**
-	 * Removes the CRIU security provider and adds the usual security providers
-	 * back.
+	 * Disables the restricted security mode. Removes the CRIU security provider
+	 * and adds the usual security providers back.
 	 */
 	public static void setCRIURestoreMode() {
+		RestrictedSecurityConfigurator.disable();
 		if (null != systemProps) {
 			Security.removeProvider("CRIUSEC");
 			// Note that CRIUSEC was set as security.provider.1 in the method
