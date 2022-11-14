@@ -356,4 +356,119 @@ public class ValueTypeArrayTests {
 			}
 		}
 	}
+
+   static primitive class SomeClassWithDoubleField{
+      public double d;
+
+		SomeClassWithDoubleField(double x) {
+			this.d = x;
+		}
+   }
+
+   static primitive class SomeClassWithFloatField{
+      public float f;
+
+		SomeClassWithFloatField(float x) {
+			this.f = x;
+		}
+   }
+
+   static primitive class SomeClassWithLongField{
+      public long l;
+
+		SomeClassWithLongField(long x) {
+			this.l = x;
+		}
+   }
+
+   static void readArrayElementWithDoubleField(SomeClassWithDoubleField[] data) throws Throwable {
+      for (int i=0; i<data.length; ++i) {
+         assertEquals(data[i].d, (double)i);
+      }
+   }
+
+   static void readArrayElementWithFloatField(SomeClassWithFloatField[] data) throws Throwable {
+      for (int i=0; i<data.length; ++i) {
+         assertEquals(data[i].f, (float)i);
+      }
+   }
+
+   static void readArrayElementWithLongField(SomeClassWithLongField[] data) throws Throwable {
+      for (int i=0; i<data.length; ++i) {
+         assertEquals(data[i].l, (long)i);
+      }
+   }
+
+   static void writeArrayElementWithDoubleField(SomeClassWithDoubleField[] srcData, SomeClassWithDoubleField[] dstData) throws Throwable {
+      for (int i=0; i<dstData.length; ++i) {
+         dstData[i] = srcData[i];
+      }
+
+      for (int i=0; i<dstData.length; ++i) {
+         assertEquals(dstData[i].d, (double)(i+1));
+      }
+   }
+
+   static void writeArrayElementWithFloatField(SomeClassWithFloatField[] srcData, SomeClassWithFloatField[] dstData) throws Throwable {
+      for (int i=0; i<dstData.length; ++i) {
+         dstData[i] = srcData[i];
+      }
+
+      for (int i=0; i<dstData.length; ++i) {
+         assertEquals(dstData[i].f, (float)(i+1));
+      }
+   }
+
+   static void writeArrayElementWithLongField(SomeClassWithLongField[] srcData, SomeClassWithLongField[] dstData) throws Throwable {
+      for (int i=0; i<dstData.length; ++i) {
+         dstData[i] = srcData[i];
+      }
+
+      for (int i=0; i<dstData.length; ++i) {
+         assertEquals(dstData[i].l, (long)(i+1));
+      }
+   }
+
+   @Test(priority=1,invocationCount=2)
+	static public void testValueTypeAaload() throws Throwable {
+      int ARRAY_LENGTH = 10;
+      SomeClassWithDoubleField[] data1 = new SomeClassWithDoubleField[ARRAY_LENGTH];
+      SomeClassWithFloatField[]  data2 = new SomeClassWithFloatField[ARRAY_LENGTH];
+      SomeClassWithLongField[]   data3 = new SomeClassWithLongField[ARRAY_LENGTH];
+
+      for (int i=0; i<ARRAY_LENGTH; ++i) {
+         data1[i] = new SomeClassWithDoubleField((double)i);
+         data2[i] = new SomeClassWithFloatField((float)i);
+         data3[i] = new SomeClassWithLongField((long)i);
+      }
+
+      readArrayElementWithDoubleField(data1);
+      readArrayElementWithFloatField(data2);
+      readArrayElementWithLongField(data3);
+   }
+
+   @Test(priority=1,invocationCount=2)
+	static public void testValueTypeAastore() throws Throwable {
+      int ARRAY_LENGTH = 10;
+      SomeClassWithDoubleField[] srcData1 = new SomeClassWithDoubleField[ARRAY_LENGTH];
+      SomeClassWithDoubleField[] dstData1 = new SomeClassWithDoubleField[ARRAY_LENGTH];
+      SomeClassWithFloatField[]  srcData2 = new SomeClassWithFloatField[ARRAY_LENGTH];
+      SomeClassWithFloatField[]  dstData2 = new SomeClassWithFloatField[ARRAY_LENGTH];
+      SomeClassWithLongField[]   srcData3 = new SomeClassWithLongField[ARRAY_LENGTH];
+      SomeClassWithLongField[]   dstData3 = new SomeClassWithLongField[ARRAY_LENGTH];
+
+      for (int i=0; i<ARRAY_LENGTH; ++i) {
+         srcData1[i] = new SomeClassWithDoubleField((double)(i+1));
+         srcData2[i] = new SomeClassWithFloatField((float)(i+1));
+         srcData3[i] = new SomeClassWithLongField((long)(i+1));
+
+         dstData1[i] = new SomeClassWithDoubleField((double)i);
+         dstData2[i] = new SomeClassWithFloatField((float)i);
+         dstData3[i] = new SomeClassWithLongField((long)i);
+      }
+
+      writeArrayElementWithDoubleField(srcData1, dstData1);
+      writeArrayElementWithFloatField(srcData2, dstData2);
+      writeArrayElementWithLongField(srcData3, dstData3);
+   }
 }
