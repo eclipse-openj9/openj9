@@ -25,10 +25,10 @@
 		<testCaseName>ValueTypeTests</testCaseName>
 		<variations>
 			<variation>-Xgcpolicy:optthruput</variation>
-			<variation> -XX:ValueTypeFlatteningThreshold=99999 -Xgcpolicy:optthruput -XX:-EnableArrayFlattening</variation>
+			<variation>-Xgcpolicy:optthruput -XX:ValueTypeFlatteningThreshold=99999 -XX:-EnableArrayFlattening</variation>
 			<variation>-Xgcpolicy:optthruput -XX:ValueTypeFlatteningThreshold=99999 -XX:+EnableArrayFlattening</variation>
 			<variation>-Xgcpolicy:gencon -XX:ValueTypeFlatteningThreshold=99999 -XX:+EnableArrayFlattening</variation>
-			<!-- Use -XX:-EnableArrayFlattening. testDefaultValueInTriangleArray asserts the fields of each element are not NULL, 
+			<!-- Use -XX:-EnableArrayFlattening. testDefaultValueInTriangleArray asserts the fields of each element are not NULL,
 					which is not true as a FlatteningThreshold is set. -->
 			<variation>-Xgcpolicy:gencon -XX:ValueTypeFlatteningThreshold=12 -XX:-EnableArrayFlattening</variation>
 			<variation>-Xnocompressedrefs -Xgcpolicy:optthruput -XX:ValueTypeFlatteningThreshold=99999 -XX:+EnableArrayFlattening</variation>
@@ -60,17 +60,17 @@
 	</test>
 	<test>
 		<testCaseName>ValueTypeTestsJIT</testCaseName>
-		<disables>
-			<disable>
-				<comment>https://github.com/eclipse-openj9/openj9/pull/9392#issuecomment-661246648</comment>
-				<variation>-Xjit:count=0</variation>
-			</disable>
-		</disables>
 		<variations>
 			<variation>-Xjit:count=0</variation>
 			<variation>-Xjit:count=1,disableAsyncCompilation -Xgcpolicy:optthruput</variation>
-			<variation>-Xjit:count=1,disableAsyncCompilation -Xgcpolicy:optthruput -XX:ValueTypeFlatteningThreshold=99999</variation>
-			<variation>-Xjit:count=1,disableAsyncCompilation -Xgcpolicy:gencon -XX:ValueTypeFlatteningThreshold=99999</variation>
+			<variation>-Xjit:count=1,disableAsyncCompilation -Xgcpolicy:optthruput -XX:ValueTypeFlatteningThreshold=99999 -XX:-EnableArrayFlattening</variation>
+			<variation>-Xjit:count=1,disableAsyncCompilation -Xgcpolicy:optthruput -XX:ValueTypeFlatteningThreshold=99999 -XX:+EnableArrayFlattening</variation>
+			<variation>-Xjit:count=1,disableAsyncCompilation -Xgcpolicy:gencon -XX:ValueTypeFlatteningThreshold=12 -XX:-EnableArrayFlattening</variation>
+			<variation>-Xjit:count=1,disableAsyncCompilation -Xgcpolicy:gencon -XX:ValueTypeFlatteningThreshold=99999 -XX:-EnableArrayFlattening</variation>
+			<variation>-Xjit:count=1,disableAsyncCompilation -Xgcpolicy:gencon -XX:ValueTypeFlatteningThreshold=99999 -XX:+EnableArrayFlattening</variation>
+			<variation>-Xjit:count=1,disableAsyncCompilation -Xnocompressedrefs -Xgcpolicy:optthruput -XX:ValueTypeFlatteningThreshold=99999 -XX:+EnableArrayFlattening</variation>
+			<variation>-Xjit:count=1,disableAsyncCompilation -Xnocompressedrefs -Xgcpolicy:gencon -XX:ValueTypeFlatteningThreshold=99999 -XX:+EnableArrayFlattening</variation>
+			<variation>-Xjit:count=1,disableAsyncCompilation -Xnocompressedrefs -Xgcpolicy:gencon</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 		--add-opens java.base/jdk.internal.misc=ALL-UNNAMED \
@@ -98,7 +98,7 @@
 		<testCaseName>ValueTypeArrayTests</testCaseName>
 		<variations>
 			<variation>-Xgcpolicy:optthruput</variation>
-			<variation> -XX:ValueTypeFlatteningThreshold=99999 -Xgcpolicy:optthruput -XX:-EnableArrayFlattening</variation>
+			<variation>-Xgcpolicy:optthruput -XX:ValueTypeFlatteningThreshold=99999 -XX:-EnableArrayFlattening</variation>
 			<variation>-Xgcpolicy:optthruput -XX:ValueTypeFlatteningThreshold=99999 -XX:+EnableArrayFlattening</variation>
 			<variation>-Xgcpolicy:gencon -XX:ValueTypeFlatteningThreshold=99999 -XX:+EnableArrayFlattening</variation>
 			<!-- Use -XX:-EnableArrayFlattening. testDefaultValueInTriangleArray asserts the fields of each element are not NULL,
@@ -133,17 +133,17 @@
 	</test>
 	<test>
 		<testCaseName>ValueTypeArrayTestsJIT</testCaseName>
-		<disables>
-			<disable>
-				<comment>https://github.com/eclipse-openj9/openj9/pull/9392#issuecomment-661246648</comment>
-				<variation>-Xjit:count=0</variation>
-			</disable>
-		</disables>
 		<variations>
 			<variation>-Xjit:count=0</variation>
 			<variation>-Xjit:count=1,disableAsyncCompilation -Xgcpolicy:optthruput</variation>
-			<variation>-Xjit:count=1,disableAsyncCompilation -Xgcpolicy:optthruput -XX:ValueTypeFlatteningThreshold=99999</variation>
-			<variation>-Xjit:count=1,disableAsyncCompilation -Xgcpolicy:gencon -XX:ValueTypeFlatteningThreshold=99999</variation>
+			<variation>-Xjit:count=1,disableAsyncCompilation -Xgcpolicy:optthruput -XX:ValueTypeFlatteningThreshold=99999 -XX:-EnableArrayFlattening</variation>
+			<variation>-Xjit:count=1,disableAsyncCompilation -Xgcpolicy:optthruput -XX:ValueTypeFlatteningThreshold=99999 -XX:+EnableArrayFlattening</variation>
+			<variation>-Xjit:count=1,disableAsyncCompilation -Xgcpolicy:gencon -XX:ValueTypeFlatteningThreshold=12 -XX:-EnableArrayFlattening</variation>
+			<variation>-Xjit:count=1,disableAsyncCompilation -Xgcpolicy:gencon -XX:ValueTypeFlatteningThreshold=99999 -XX:-EnableArrayFlattening</variation>
+			<variation>-Xjit:count=1,disableAsyncCompilation -Xgcpolicy:gencon -XX:ValueTypeFlatteningThreshold=99999 -XX:+EnableArrayFlattening</variation>
+			<variation>-Xjit:count=1,disableAsyncCompilation -Xnocompressedrefs -Xgcpolicy:optthruput -XX:ValueTypeFlatteningThreshold=99999 -XX:+EnableArrayFlattening</variation>
+			<variation>-Xjit:count=1,disableAsyncCompilation -Xnocompressedrefs -Xgcpolicy:gencon -XX:ValueTypeFlatteningThreshold=99999 -XX:+EnableArrayFlattening</variation>
+			<variation>-Xjit:count=1,disableAsyncCompilation -Xnocompressedrefs -Xgcpolicy:gencon</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 		--add-opens java.base/jdk.internal.misc=ALL-UNNAMED \

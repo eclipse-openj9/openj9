@@ -875,16 +875,14 @@ TR::SymbolReference *
 J9::SymbolReferenceTable::findOrFabricateFlattenedArrayElementFieldShadowSymbol(
    TR_OpaqueClassBlock *arrayComponentClass,
    TR::DataType type,
-   uint32_t fieldOffset,
+   int32_t fieldOffset,
    bool isPrivate,
    const char *fieldName,
    const char *fieldSignature)
    {
-   int32_t flattenedFieldOffset = (int32_t)fieldOffset - (int32_t)TR::Compiler->om.objectHeaderSizeInBytes();
+   TR_ASSERT_FATAL(fieldOffset >= 0, "fieldOffset %d is invalid: fieldOffset %u objectHeaderSizeInBytes %" OMR_PRIuPTR " \n", fieldOffset, fieldOffset, TR::Compiler->om.objectHeaderSizeInBytes());
 
-   TR_ASSERT_FATAL(flattenedFieldOffset >= 0, "flattenedFieldOffset %d is invalid: fieldOffset %u objectHeaderSizeInBytes %" OMR_PRIuPTR " \n", flattenedFieldOffset, fieldOffset, TR::Compiler->om.objectHeaderSizeInBytes());
-
-   ResolvedFieldShadowKey key(arrayComponentClass, flattenedFieldOffset, type);
+   ResolvedFieldShadowKey key(arrayComponentClass, fieldOffset, type);
 
    TR::SymbolReference *symRef = findFlattenedArrayElementFieldShadow(key, isPrivate);
    if (symRef != NULL)
@@ -924,7 +922,7 @@ J9::SymbolReferenceTable::findOrFabricateFlattenedArrayElementFieldShadowSymbol(
 
    bool isResolved = true;
    bool isUnresolvedInCP = false;
-   initShadowSymbol(NULL, symRef, isResolved, type, flattenedFieldOffset, isUnresolvedInCP);
+   initShadowSymbol(NULL, symRef, isResolved, type, fieldOffset, isUnresolvedInCP);
 
    _flattenedArrayElementFieldShadows.insert(std::make_pair(key, symRef));
    return symRef;
