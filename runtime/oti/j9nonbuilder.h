@@ -5003,7 +5003,7 @@ typedef struct J9VMContinuation {
 	struct J9JITGPRSpillArea jitGPRs;
 	struct J9I2JState i2jState;
 	struct J9VMEntryLocalStorage* oldEntryLocalStorage;
-	struct J9VMThread* carrierThread;
+	volatile UDATA state; /* it's a bit-wise struct of CarrierThread ID and ConcurrentlyScanned flag */
 } J9VMContinuation;
 #endif /* JAVA_SPEC_VERSION >= 19 */
 

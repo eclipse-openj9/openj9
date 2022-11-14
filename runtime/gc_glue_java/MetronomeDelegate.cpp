@@ -199,7 +199,7 @@ MM_MetronomeDelegate::initialize(MM_EnvironmentBase *env)
 	if (NULL == accessBarrier) {
 		return false;
 	}
-	MM_GCExtensions::getExtensions(_javaVM)->accessBarrier = (MM_ObjectAccessBarrier *)accessBarrier;
+	_extensions->accessBarrier = (MM_ObjectAccessBarrier *)accessBarrier;
 
 	_javaVM->realtimeHeapMapBasePageRounded = _markingScheme->_markMap->getHeapMapBaseRegionRounded();
 	_javaVM->realtimeHeapMapBits = _markingScheme->_markMap->getHeapMapBits();
@@ -1653,12 +1653,15 @@ MM_MetronomeDelegate::scanContinuationNativeSlots(MM_EnvironmentRealtime *env, J
 		localData.env = env;
 		localData.fromObject = objectPtr;
 
-		bool bStackFrameClassWalkNeeded = false;
+		bool stackFrameClassWalkNeeded = false;
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
-		bStackFrameClassWalkNeeded = isDynamicClassUnloadingEnabled();
+		stackFrameClassWalkNeeded = isDynamicClassUnloadingEnabled();
 #endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
 
-		GC_VMThreadStackSlotIterator::scanSlots(currentThread, objectPtr, (void *)&localData, stackSlotIteratorForRealtimeGC, bStackFrameClassWalkNeeded, false);
+		/* In STW GC there are no racing carrier threads doing mount and no need for the synchronization. */
+		bool syncWithContinuationMounting = _realtimeGC->isCollectorConcurrentTracing();
+
+		GC_VMThreadStackSlotIterator::scanSlots(currentThread, objectPtr, (void *)&localData, stackSlotIteratorForRealtimeGC, stackFrameClassWalkNeeded, false, syncWithContinuationMounting);
 	}
 }
 

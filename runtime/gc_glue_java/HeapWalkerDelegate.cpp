@@ -58,6 +58,7 @@ void
 MM_HeapWalkerDelegate::doContinuationNativeSlots(MM_EnvironmentBase *env, omrobjectptr_t objectPtr, MM_HeapWalkerSlotFunc function, void *userData)
 {
 	J9VMThread *currentThread = (J9VMThread *)env->getLanguageVMThread();
+
 	if (VM_VMHelpers::needScanStacksForContinuation(currentThread, objectPtr)) {
 		StackIteratorData4HeapWalker localData;
 		localData.heapWalker = _heapWalker;
@@ -65,7 +66,7 @@ MM_HeapWalkerDelegate::doContinuationNativeSlots(MM_EnvironmentBase *env, omrobj
 		localData.fromObject = objectPtr;
 		localData.function = function;
 		localData.userData = userData;
-		/* so far there is no case we need ClassWalk for heapwalker, so we set bStackFrameClassWalkNeeded = false */
+		/* so far there is no case we need ClassWalk for heapwalker, so we set stackFrameClassWalkNeeded = false */
 		GC_VMThreadStackSlotIterator::scanSlots(currentThread, objectPtr, (void *)&localData, stackSlotIteratorForHeapWalker, false, false);
 	}
 }

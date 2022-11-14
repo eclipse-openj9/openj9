@@ -1239,7 +1239,7 @@ MM_WriteOnceCompactor::fixupContinuationNativeSlots(MM_EnvironmentVLHGC* env, J9
 	 * mounted Virtual threads later during root fixup, we will skip it during this heap fixup pass
 	 * (hence passing true for scanOnlyUnmounted parameter).
 	 */
-	if (VM_VMHelpers::needScanStacksForContinuation(currentThread, objectPtr, true)) {
+	if (VM_VMHelpers::needScanStacksForContinuation(currentThread, objectPtr)) {
 		StackIteratorData4WriteOnceCompactor localData;
 		localData.writeOnceCompactor = this;
 		localData.env = env;
