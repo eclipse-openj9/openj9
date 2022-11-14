@@ -67,10 +67,18 @@ AOTCacheRecord::readRecord(FILE *f, const JITServerAOTCacheReadContext &context)
    {
    typename R::SerializationRecord header;
    if (1 != fread(&header, sizeof(header), 1, f))
+      {
+      if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "AOT cache: Could not read %s record header", R::getRecordName());
       return NULL;
+      }
 
    if (!header.isValidHeader(context))
+      {
+      if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "AOT cache: Header for %s record is invalid", R::getRecordName());
       return NULL;
+      }
 
    R *record = new (AOTCacheRecord::allocate(R::size(header))) R(context, header);
    memcpy((void *)record->dataAddr(), &header, sizeof(header));
@@ -80,6 +88,8 @@ AOTCacheRecord::readRecord(FILE *f, const JITServerAOTCacheReadContext &context)
       {
       if (1 != fread((uint8_t *)record->dataAddr() + sizeof(header), variableDataBytes, 1, f))
          {
+         if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "AOT cache: Unable to read variable part of %s record", R::getRecordName());
          AOTCacheRecord::free(record);
          return NULL;
          }
@@ -239,13 +249,15 @@ AOTCacheListRecord<D, R, Args...>::subRecordsDo(const std::function<void(const A
    }
 
 template<class D, class R, typename... Args> bool
-AOTCacheListRecord<D, R, Args...>::setSubrecordPointers(const Vector<R *> &cacheRecords)
+AOTCacheListRecord<D, R, Args...>::setSubrecordPointers(const Vector<R *> &cacheRecords, const char *recordName, const char *subrecordName)
    {
    for (size_t i = 0; i < data().list().length(); ++i)
       {
       uintptr_t id = data().list().ids()[i];
       if ((id >= cacheRecords.size()) || !cacheRecords[id])
          {
+         if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "AOT cache: Invalid %s subrecord: type %s, ID %zu", recordName, subrecordName, id);
          return false;
          }
       records()[i] = cacheRecords[id];
@@ -275,7 +287,7 @@ AOTCacheClassChainRecord::create(uintptr_t id, const AOTCacheClassRecord *const 
 bool
 AOTCacheClassChainRecord::setSubrecordPointers(const JITServerAOTCacheReadContext &context)
    {
-   return AOTCacheListRecord::setSubrecordPointers(context._classRecords);
+   return AOTCacheListRecord::setSubrecordPointers(context._classRecords, "class chain", "class");
    }
 
 WellKnownClassesSerializationRecord::WellKnownClassesSerializationRecord(uintptr_t id, size_t length,
@@ -302,7 +314,7 @@ AOTCacheWellKnownClassesRecord::create(uintptr_t id, const AOTCacheClassChainRec
 bool
 AOTCacheWellKnownClassesRecord::setSubrecordPointers(const JITServerAOTCacheReadContext &context)
    {
-   return AOTCacheListRecord::setSubrecordPointers(context._classChainRecords);
+   return AOTCacheListRecord::setSubrecordPointers(context._classChainRecords, "well-known classes", "class chain");
    }
 
 AOTHeaderSerializationRecord::AOTHeaderSerializationRecord(uintptr_t id, const TR_AOTHeader *header) :
@@ -396,45 +408,75 @@ CachedAOTMethod::create(const AOTCacheClassChainRecord *definingClassChainRecord
 bool
 CachedAOTMethod::setSubrecordPointers(const JITServerAOTCacheReadContext &context)
    {
+   const char *invalidSubrecordName = "";
+   size_t subrecordId = 0;
+
    // The defining class chain record pointer for the record will have been set by the CachedAOTMethod constructor at this point
    for (size_t i = 0; i < data().numRecords(); ++i)
       {
       const SerializedSCCOffset &sccOffset = data().offsets()[i];
+      subrecordId = sccOffset.recordId();
 
       switch (sccOffset.recordType())
          {
          case AOTSerializationRecordType::ClassLoader:
-            if ((sccOffset.recordId() >= context._classLoaderRecords.size()) || !context._classLoaderRecords[sccOffset.recordId()])
-               return false;
-            records()[i] = context._classLoaderRecords[sccOffset.recordId()];
+            if ((subrecordId >= context._classLoaderRecords.size()) || !context._classLoaderRecords[subrecordId])
+               {
+               invalidSubrecordName = "class loader";
+               goto error;
+               }
+            records()[i] = context._classLoaderRecords[subrecordId];
             break;
          case AOTSerializationRecordType::Class:
-            if ((sccOffset.recordId() >= context._classRecords.size()) || !context._classRecords[sccOffset.recordId()])
-               return false;
-            records()[i] = context._classRecords[sccOffset.recordId()];
+            if ((subrecordId >= context._classRecords.size()) || !context._classRecords[subrecordId])
+               {
+               invalidSubrecordName = "class";
+               goto error;
+               }
+            records()[i] = context._classRecords[subrecordId];
             break;
          case AOTSerializationRecordType::Method:
-            if ((sccOffset.recordId() >= context._methodRecords.size()) || !context._methodRecords[sccOffset.recordId()])
-               return false;
-            records()[i] = context._methodRecords[sccOffset.recordId()];
+            if ((subrecordId >= context._methodRecords.size()) || !context._methodRecords[subrecordId])
+               {
+               invalidSubrecordName = "method";
+               goto error;
+               }
+            records()[i] = context._methodRecords[subrecordId];
             break;
          case AOTSerializationRecordType::ClassChain:
-            if ((sccOffset.recordId() >= context._classChainRecords.size()) || !context._classChainRecords[sccOffset.recordId()])
-               return false;
-            records()[i] = context._classChainRecords[sccOffset.recordId()];
+            if ((subrecordId >= context._classChainRecords.size()) || !context._classChainRecords[subrecordId])
+               {
+               invalidSubrecordName = "class chain";
+               goto error;
+               }
+            records()[i] = context._classChainRecords[subrecordId];
             break;
          case AOTSerializationRecordType::WellKnownClasses:
-            if ((sccOffset.recordId() >= context._wellKnownClassesRecords.size()) || !context._wellKnownClassesRecords[sccOffset.recordId()])
-               return false;
-            records()[i] = context._wellKnownClassesRecords[sccOffset.recordId()];
+            if ((subrecordId >= context._wellKnownClassesRecords.size()) || !context._wellKnownClassesRecords[subrecordId])
+               {
+               invalidSubrecordName = "well-known classes";
+               goto error;
+               }
+            records()[i] = context._wellKnownClassesRecords[subrecordId];
             break;
          case AOTSerializationRecordType::AOTHeader: // never associated with an SCC offset
+            invalidSubrecordName = "AOT header";
+            goto error;
          default:
-            return false;
+            invalidSubrecordName = "invalid";
+            goto error;
          }
       }
 
    return true;
+
+error:
+   if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+                                     "AOT cache: Invalid cached AOT method subrecord: type %s, ID %zu",
+                                     invalidSubrecordName,
+                                     subrecordId);
+   return false;
    }
 
 bool
@@ -1043,6 +1085,8 @@ writeRecordList(FILE *f, const AOTCacheRecord *head, size_t numRecordsToWrite)
       const AOTSerializationRecord *record = current->dataAddr();
       if (1 != fwrite(record, record->size(), 1, f))
          {
+         if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "AOT cache: Unable to write record to cache file");
          return false;
          }
       ++recordsWritten;
@@ -1063,6 +1107,8 @@ writeCachedMethodList(FILE *f, const CachedAOTMethod *head, size_t numRecordsToW
       const SerializedAOTMethod *record = &current->data();
       if (1 != fwrite(record, record->size(), 1, f))
          {
+         if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "AOT cache: Unable to write record to cache file");
          return false;
          }
       ++recordsWritten;
@@ -1138,7 +1184,11 @@ JITServerAOTCache::writeCache(FILE *f) const
       }
 
    if (1 != fwrite(&header, sizeof(JITServerAOTCacheHeader), 1, f))
+      {
+      if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "AOT cache: Unable to write cache file header");
       return 0;
+      }
 
    if (!writeRecordList(f, _classLoaderHead, header._numClassLoaderRecords))
       return 0;
@@ -1180,10 +1230,18 @@ JITServerAOTCache::readCache(FILE *f, const std::string &name, TR_Memory &trMemo
 
    JITServerAOTCacheHeader header = {0};
    if (1 != fread(&header, sizeof(JITServerAOTCacheHeader), 1, f))
+      {
+      if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "AOT cache: Unable to read cache file header");
       return NULL;
+      }
 
    if (!isCompatibleSnapshotVersion(header._version))
+      {
+      if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "AOT cache: Cache file header incompatible with running server");
       return NULL;
+      }
 
    JITServerAOTCache *cache = NULL;
    try
@@ -1199,7 +1257,11 @@ JITServerAOTCache::readCache(FILE *f, const std::string &name, TR_Memory &trMemo
       }
 
    if (!cache)
+      {
+      if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "AOT cache: Unable to allocate new cache for reading");
       return NULL;
+      }
 
    bool readSuccess = false;
    try
@@ -1248,6 +1310,9 @@ JITServerAOTCache::readRecords(FILE *f,
           records[record->data().id()]) ||
           !addToMap(map, traversalHead, traversalTail, getRecordKey(record), record))
          {
+         if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "AOT cache: Record of type %s has invalid or overlapping ID %zu",
+                                           V::getRecordName(), record->data().id());
          AOTCacheRecord::free(record);
          return false;
          }
