@@ -3759,7 +3759,7 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 	{
 		IDATA enableCRIUNonPortableMode = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXENABLECRIUNONPORTABLEMODE, NULL);
 		IDATA disableCRIUNonPortableMode = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXDISABLECRIUNONPORTABLEMODE, NULL);
-		if (enableCRIUNonPortableMode > disableCRIUNonPortableMode) {
+		if (enableCRIUNonPortableMode >= disableCRIUNonPortableMode) {
 			if (vm->checkpointState.isCheckPointEnabled) {
 				vm->checkpointState.isNonPortableRestoreMode = TRUE;
 			}
