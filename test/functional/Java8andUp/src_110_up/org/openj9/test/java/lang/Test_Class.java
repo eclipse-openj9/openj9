@@ -998,24 +998,34 @@ public void test_getModifiers_classTypes() {
 		AnnotationClazz.class,
 		EnumClazz.class,
 	};
+	int IDENTITY = 0;
+	try {
+		Field f = Modifier.class.getDeclaredField("IDENTITY");
+		IDENTITY = f.getInt(null);
+	} catch (NoSuchFieldException e) {
+		/* Let IDENTITY be 0 in non-Valhalla builds. */
+	} catch(Exception e) {
+		Assert.fail("Unexpected exception " + e.getClass().getName() + " thrown when getting the value of modifier");
+	}
+
 	int[] modifiers = new int[] {
-		0x0000, //
-		0x0004, // protected
-		0x0002, // private
-		0x0000, //
-		0x0001, // public
-		0x0010, // final
-		0x0008, // static
-		0x0018, // final static
-		0x0009, // public static
-		0x0011, // public final
-		0x0019, // public final static
-		0x0000, //
-		0x0410, // static
-		0x0400, // abstract
-		0x1001, // public synthetic
-		0x2608, // static abstract interface annotation
-		0x4018, // static final enum
+		0x0000 | IDENTITY, // (Identity)
+		0x0004 | IDENTITY, // protected (Identity)
+		0x0002 | IDENTITY, // private (Identity)
+		0x0000 | IDENTITY, // (Identity)
+		0x0001 | IDENTITY, // public (Identity)
+		0x0010 | IDENTITY, // final (Identity)
+		0x0008 | IDENTITY, // static (Identity)
+		0x0018 | IDENTITY, // final static (Identity)
+		0x0009 | IDENTITY, // public static (Identity)
+		0x0011 | IDENTITY, // public final (Identity)
+		0x0019 | IDENTITY, // public final static (Identity)
+		0x0000 | IDENTITY, // (Identity)
+		0x0410,            // static
+		0x0400 | IDENTITY, // abstract (Identity)
+		0x1001 | IDENTITY, // public synthetic (Identity)
+		0x2608,            // static abstract interface annotation
+		0x4018 | IDENTITY, // static final enum (Identity)
 	};
 
 	StringBuilder errors = new StringBuilder();
