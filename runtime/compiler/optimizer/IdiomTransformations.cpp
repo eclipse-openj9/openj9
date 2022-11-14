@@ -10602,6 +10602,12 @@ CISCTransform2CountDecimalDigit(TR_CISCTransformer *trans)
    trans->findFirstNode(&trTreeTop, &trNode, &block);
    if (!block) return false;    // cannot find
 
+   if (comp->compileRelocatableCode())
+      {
+      traceMsg(comp, "Bailing CISCTransform2CountDecimalDigit - not supported for AOT compilations.");
+      return false;
+      }
+
    if (isLoopPreheaderLastBlockInMethod(comp, block))
       {
       traceMsg(comp, "Bailing CISCTransform2CountDecimalDigit due to null TT - might be a preheader in last block of method\n");
@@ -10904,6 +10910,12 @@ CISCTransform2LongToStringDigit(TR_CISCTransformer *trans)
 
    trans->findFirstNode(&trTreeTop, &trNode, &block);
    if (!block) return false;    // cannot find
+
+   if (comp->compileRelocatableCode())
+      {
+      traceMsg(comp, "Bailing CISCTransform2LongToStringDigit - not supported for AOT compilations.");
+      return false;
+      }
 
    if (isLoopPreheaderLastBlockInMethod(comp, block))
       {
