@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2020 IBM Corp. and others
+ * Copyright (c) 2001, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -409,7 +409,7 @@ public class TestAttachErrorHandling extends AttachApiTest implements TestConsta
 			targetManager = new TargetManager(TARGET_VM_CLASS);
 			targetManager.syncWithTarget();
 			String targetId = targetManager.targetId;
-			AssertJUnit.assertNotNull("target did not launch");
+			AssertJUnit.assertNotNull("target did not launch", targetId);
 			VirtualMachine vm = VirtualMachine.attach(targetId);
 			/* verify the connection */
 			Properties vmProps = vm.getSystemProperties();
