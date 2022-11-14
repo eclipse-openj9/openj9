@@ -1794,40 +1794,13 @@ j9bcv_verifyClassStructure (J9PortLibrary * portLib, J9CfrClassFile * classfile,
 			&& !isConstantInvokeDynamic
 #endif /* JAVA_SPEC_VERSION >= 18 */
 			) {
-				BOOLEAN invalidRetType = FALSE;
-				if (
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-#if defined(J9VM_OPT_VALHALLA_NEW_FACTORY_METHOD)
-				(CFR_METHOD_NAME_NEW == isInit)
-#else /* #if defined(J9VM_OPT_VALHALLA_NEW_FACTORY_METHOD) */
-				(CFR_METHOD_NAME_INIT == isInit) && J9_IS_CLASSFILE_VALUETYPE(classfile)
-#endif /* #if defined(J9VM_OPT_VALHALLA_NEW_FACTORY_METHOD) */
-#else /* #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
-				FALSE
-#endif /* #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
-				) {
-					U_16 returnChar = getReturnTypeFromSignature(info->bytes, info->slot1, NULL);
-					if (J9_IS_CLASSFILE_PRIMITIVE_VALUETYPE(classfile)) {
-						if (!IS_QTYPE(returnChar)) {
-							invalidRetType = TRUE;
-						}
-					} else {
-						if (!IS_LTYPE(returnChar)) {
-							invalidRetType = TRUE;
-						}
-					}
 /* This #if !defined check should be removed (along with all other code that references J9VM_OPT_VALHALLA_NEW_FACTORY_METHOD) once the <vnew> method is introduced */
 #if !defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-				} else {
-					if (info->bytes[info->slot1 - 1] != 'V') {
-						invalidRetType = TRUE;
-					}
-#endif /* #if !defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
-				}
-				if (invalidRetType) {
+				if (info->bytes[info->slot1 - 1] != 'V') {
 					errorType = J9NLS_CFR_ERR_BC_METHOD_INVALID_SIG__ID;
 					goto _formatError;
 				}
+#endif /* #if !defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 			}
 			if (argCount > 255) {
 				errorType = J9NLS_CFR_ERR_TOO_MANY_ARGS__ID;
