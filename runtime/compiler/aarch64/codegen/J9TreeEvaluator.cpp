@@ -46,6 +46,7 @@
 #include "il/Node_inlines.hpp"
 #include "il/OMRDataTypes_inlines.hpp"
 #include "il/StaticSymbol.hpp"
+#include "infra/ILWalk.hpp"
 #include "OMR/Bytes.hpp"
 
 /*
@@ -1515,6 +1516,11 @@ J9::ARM64::TreeEvaluator::monexitEvaluator(TR::Node *node, TR::CodeGenerator *cg
       TR::Node::recreate(node, TR::call);
       TR::Register *targetRegister = directCallEvaluator(node, cg);
       TR::Node::recreate(node, opCode);
+
+      // If there is an AllocationFence directly above this monExit we will not have emitted a
+      // dmb for the fence.
+      if (comp->target().isSMP() && cg->getCurrentEvaluationTreeTop()->getPrevTreeTop()->getNode()->getOpCodeValue() == TR::allocationFence)
+         generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, 0xB); // dmb ish (Inner Shareable full barrier)
       return targetRegister;
       }
 
@@ -2585,9 +2591,33 @@ J9::ARM64::TreeEvaluator::flushEvaluator(TR::Node *node, TR::CodeGenerator *cg)
       {
       if (!node->canOmitSync())
          {
-         // StoreStore barrier is required after publishing new object reference to other threads.
-         // dmb ishst (Inner Shareable store barrier)
-         generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, 0xA);
+         // If the following node will issue a dmb or a stlr then skip emitting a dmb now. EscapeAnalysis can purposefully
+         // place an AllocationFence before a monexit or volatile access so that the codegen can optimize the memory flush
+         TR::TreeTop *tt = cg->getCurrentEvaluationTreeTop()->getNextTreeTop();
+         TR::Node *node = tt->getNode();
+         TR::Node *child = (node->getNumChildren() >= 1) ? node->getFirstChild() : NULL;
+         if (!child || (node->getOpCodeValue() != TR::monexit && child->getOpCodeValue() != TR::monexit))
+            {
+            // Iterate the next tree to see if there is a resolved volatile load/store node that has yet to be evaluated
+            // An unresolved volatile might not actually be a volatile access, and therefore can not replace the AllocationFence
+            // An node that is already evaluated will not actually emit a 'dmb' so it can not replace the AllocationFence
+            bool volatileAccessFound = false;
+            for (TR::PreorderNodeIterator it(tt, cg->comp()); it.currentTree() == tt; ++it)
+               {
+               node = it.currentNode();
+               if (node->getOpCode().hasSymbolReference() && !node->hasUnresolvedSymbolReference() && node->getSymbolReference()->getSymbol()->isVolatile() && !node->getRegister())
+                  {
+                  volatileAccessFound = true;
+                  break;
+                  }
+               }
+            if (!volatileAccessFound)
+               {
+               // StoreStore barrier is required after publishing new object reference to other threads.
+               // dmb ishst (Inner Shareable store barrier)
+               generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, 0xA);
+               }
+            }
          }
       }
    else
