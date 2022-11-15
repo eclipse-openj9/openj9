@@ -148,6 +148,9 @@ class TR_VectorAPIExpansion : public TR::Optimization
    static int32_t const MODE_BROADCAST = 0;
    static int32_t const MODE_BITS_COERCED_LONG_TO_MASK = 1;
 
+   // Position of the parameters in the intrinsics.
+   static int32_t const BROADCAST_TYPE_CHILD = 4;
+
   /** \brief
    *  Is passed to methods handlers during analysis and transforamtion phases
    *
