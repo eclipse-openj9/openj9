@@ -5807,8 +5807,7 @@ typedef struct J9JavaVM {
 	omrthread_monitor_t tlsFinalizersMutex;
 	struct J9Pool *tlsPool;
 	omrthread_monitor_t tlsPoolMutex;
-	jclass jlThreadConstants;
-	jfieldID vthreadGroupID;
+	jobject vthreadGroup;
 #endif /* JAVA_SPEC_VERSION >= 19 */
 } J9JavaVM;
 

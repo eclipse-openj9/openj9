@@ -301,6 +301,25 @@ standardInit(J9JavaVM *vm, char *dllName)
 			(void)(*(JNIEnv*)vmThread)->GetStaticFieldID((JNIEnv*)vmThread, clazz, "helpers", "Lcom/ibm/jit/JITHelpers;");
 			(*(JNIEnv*)vmThread)->DeleteLocalRef((JNIEnv*)vmThread, clazz);
 		}
+
+#if JAVA_SPEC_VERSION >= 19
+		clazz = (*(JNIEnv*)vmThread)->FindClass((JNIEnv*)vmThread, "java/lang/Thread$Constants");
+		if (NULL != clazz) {
+			jfieldID id = (*(JNIEnv*)vmThread)->GetStaticFieldID((JNIEnv*)vmThread, clazz, "VTHREAD_GROUP", "Ljava/lang/ThreadGroup;");
+			if (NULL != id) {
+				jobject tempGroup = (*(JNIEnv*)vmThread)->GetStaticObjectField((JNIEnv*)vmThread, clazz, id);
+				if (NULL != tempGroup) {
+					vm->vthreadGroup = (jobject)(*(JNIEnv*)vmThread)->NewGlobalRef((JNIEnv*)vmThread, tempGroup);
+				}
+			}
+			(*(JNIEnv*)vmThread)->DeleteLocalRef((JNIEnv*)vmThread, clazz);
+			if (NULL == vm->vthreadGroup) {
+				goto _fail;
+			}
+		} else {
+			goto _fail;
+		}
+#endif /* JAVA_SPEC_VERSION >= 19 */
 #endif /* !J9VM_IVE_RAW_BUILD */
 	}
 #endif
