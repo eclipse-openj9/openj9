@@ -752,6 +752,10 @@ getArgPointer(J9UpcallNativeSignature *nativeSig, void *argListPtr, I_32 argIdx)
 		// where the struct must be stored when we return to native caller. So we must skip over that
 		// "hiddenParameter" when trying to identify arguments in getArgPointer.
 		calleeFrameIndex++;
+		// When the return type is a struct, the buffer where the struct must be populated is initially
+		// provided in GPR2 by the caller. So we must increment the GPR index as well in order to correctly
+		// find the position of the current argument pointer.
+		gprIndex++;
 	}
 
 	I_32 structOffset = 0;
