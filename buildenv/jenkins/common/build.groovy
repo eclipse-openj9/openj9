@@ -284,7 +284,12 @@ def checkoutRef (REF) {
 
 def build() {
     stage('Compile') {
-        def make_target = 'all'
+       def make_target = ''
+       if (SDK_VERSION == "17") {
+            make_target = 'java.base java.compiler java.datatransfer java.logging java.management java.management.rmi java.naming java.net.http java.prefs java.rmi java.scripting java.security.jgss java.security.sasl java.smartcardio java.sql java.sql.rowset java.transaction.xa java.xml java.xml.crypto jdk.attach jdk.compiler jdk.crypto.cryptoki jdk.crypto.ec jdk.dynalink jdk.httpserver jdk.incubator.foreign jdk.incubator.vector jdk.internal.ed jdk.internal.jvmstat jdk.internal.le jdk.internal.opt jdk.jartool jdk.javadoc jdk.jcmd jdk.jdeps jdk.jdi jdk.jdwp.agent jdk.jlink jdk.jshell jdk.jsobject jdk.localedata jdk.management jdk.management.agent jdk.naming.dns jdk.naming.rmi jdk.net jdk.nio.mapmode jdk.random jdk.sctp jdk.security.auth jdk.security.jgss jdk.unsupported jdk.xml.dom jdk.zipfs'
+        } else {
+           make_target = 'all'
+        }
         OPENJDK_CLONE_DIR = "${env.WORKSPACE}/${OPENJDK_CLONE_DIR}"
 
         withEnv(BUILD_ENV_VARS_LIST) {
