@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,7 +28,6 @@ import com.ibm.j9ddr.vm29.pointer.VoidPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ClassPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ObjectPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9VMThreadPointer;
-import com.ibm.j9ddr.vm29.pointer.generated.MM_OwnableSynchronizerObjectListPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.MM_SublistPuddlePointer;
 import com.ibm.j9ddr.vm29.pointer.generated.MM_UnfinalizedObjectListPointer;
 
@@ -106,10 +105,5 @@ public class CheckError
 	public CheckError(MM_UnfinalizedObjectListPointer object, J9ObjectPointer slot, CheckCycle cycle, Check check, int errorCode, int errorNumber)
 	{
 		this(object, VoidPointer.cast(slot), null, cycle, check, "", errorCode, errorNumber, check_type_unfinalized);
-	}
-	
-	public CheckError(MM_OwnableSynchronizerObjectListPointer object, J9ObjectPointer slot, CheckCycle cycle, Check check, int errorCode, int errorNumber)
-	{
-		this(object, VoidPointer.cast(slot), null, cycle, check, "", errorCode, errorNumber, check_type_ownable_synchronizer);
 	}
 }

@@ -425,15 +425,6 @@ public:
 	virtual void scanUnfinalizedObjects(MM_EnvironmentBase *env);
 #endif /* J9VM_GC_FINALIZATION */
 
-	/**
-	 * @todo Provide function documentation
-	 *
-	 * @NOTE this can only be used as a READ-ONLY version of the ownableSynchronizerObjectList.
-	 * If you need to modify elements with-in the list you will need to provide your own functionality.
-	 * See MM_MarkingScheme::scanUnfinalizedObjects(MM_EnvironmentStandard *env) as an example
-	 * which modifies elements within the list.
-	 */
-	virtual void scanOwnableSynchronizerObjects(MM_EnvironmentBase *env);
 	virtual void scanContinuationObjects(MM_EnvironmentBase *env);
 
 	virtual void scanStringTable(MM_EnvironmentBase *env);
@@ -489,13 +480,11 @@ public:
 	/**
 	 * @todo Provide function documentation
 	 */
-	virtual void doOwnableSynchronizerObject(J9Object *objectPtr, MM_OwnableSynchronizerObjectList *list);
 	virtual void doContinuationObject(J9Object *objectPtr, MM_ContinuationObjectList *list);
 	
 	/**
 	 * @todo Provide function documentation
 	 */	
-	virtual CompletePhaseCode scanOwnableSynchronizerObjectsComplete(MM_EnvironmentBase *env);
 	virtual CompletePhaseCode scanContinuationObjectsComplete(MM_EnvironmentBase *env);
 
 	virtual void doMonitorReference(J9ObjectMonitor *objectMonitor, GC_HashTableIterator *monitorReferenceIterator);

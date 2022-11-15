@@ -55,14 +55,6 @@ private:
 	 */
 	void outputUnfinalizedInfo(MM_EnvironmentBase *env, UDATA indent, UDATA unfinalizedCandidates, UDATA unfinalizedCount);
 
-	/**
-	 * Output unfinalized processing summary.
-	 * @param env GC thread used for output.
-	 * @param indent base level of indentation for the summary.
-	 * @param ownableSynchronizerCandidates number of ownable synchronizer candidates encountered.
-	 * @param ownableSynchronizerCleared number of ownable synchronizer candidates cleared.
-	 */
-	void outputOwnableSynchronizerInfo(MM_EnvironmentBase *env, UDATA indent, UDATA ownableSynchronizerCandidates, UDATA ownableSynchronizerCleared);
 	void outputContinuationInfo(MM_EnvironmentBase *env, UDATA indent, UDATA continuationCandidates, UDATA continuationCleared);
 
 	/**
@@ -71,8 +63,7 @@ private:
 	 * @param indent base level of indentation for the summary.
 	 * @param referenceType character string representation of the reference type.
 	 * @param referenceStats summary stats data of the processing.
-	 * @param dynamicThreshold dynamic threshold value for reference
-	 * @param maxThreshold maximum threshold value for reference. If it equal 0 thresholds should not be included to output line
+	 * @param dynamicThreshold dynamic threshold value for refe xThreshold maximum threshold value for reference. If it equal 0 thresholds should not be included to output line
 	 */
 	void outputReferenceInfo(MM_EnvironmentBase *env, UDATA indent, const char *referenceType, MM_ReferenceStats *referenceStats, UDATA dynamicThreshold, UDATA maxThreshold);
 

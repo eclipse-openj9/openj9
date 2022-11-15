@@ -27,9 +27,6 @@
 #include "GCExtensions.hpp"
 #include "JNICriticalRegion.hpp"
 #include "OMRVMInterface.hpp"
-#include "OwnableSynchronizerObjectBufferRealtime.hpp"
-#include "OwnableSynchronizerObjectBufferStandard.hpp"
-#include "OwnableSynchronizerObjectBufferVLHGC.hpp"
 #include "ContinuationObjectBufferRealtime.hpp"
 #include "ContinuationObjectBufferStandard.hpp"
 #include "ContinuationObjectBufferVLHGC.hpp"
@@ -58,21 +55,18 @@ MM_EnvironmentDelegate::initialize(MM_EnvironmentBase *env)
 #if defined(OMR_GC_MODRON_STANDARD)
 		_gcEnv._referenceObjectBuffer = MM_ReferenceObjectBufferStandard::newInstance(env);
 		_gcEnv._unfinalizedObjectBuffer = MM_UnfinalizedObjectBufferStandard::newInstance(env);
-		_gcEnv._ownableSynchronizerObjectBuffer = MM_OwnableSynchronizerObjectBufferStandard::newInstance(env);
 		_gcEnv._continuationObjectBuffer = MM_ContinuationObjectBufferStandard::newInstance(env);
 #endif /* defined(OMR_GC_MODRON_STANDARD) */
 	} else if (extensions->isMetronomeGC()) {
 #if defined(OMR_GC_REALTIME)
 		_gcEnv._referenceObjectBuffer = MM_ReferenceObjectBufferRealtime::newInstance(env);
 		_gcEnv._unfinalizedObjectBuffer = MM_UnfinalizedObjectBufferRealtime::newInstance(env);
-		_gcEnv._ownableSynchronizerObjectBuffer = MM_OwnableSynchronizerObjectBufferRealtime::newInstance(env);
 		_gcEnv._continuationObjectBuffer = MM_ContinuationObjectBufferRealtime::newInstance(env);
 #endif /* defined(OMR_GC_REALTIME) */
 	} else if (extensions->isVLHGC()) {
 #if defined(OMR_GC_VLHGC)
 		_gcEnv._referenceObjectBuffer = MM_ReferenceObjectBufferVLHGC::newInstance(env);
 		_gcEnv._unfinalizedObjectBuffer = MM_UnfinalizedObjectBufferVLHGC::newInstance(env);
-		_gcEnv._ownableSynchronizerObjectBuffer = MM_OwnableSynchronizerObjectBufferVLHGC::newInstance(env);
 		_gcEnv._continuationObjectBuffer = MM_ContinuationObjectBufferVLHGC::newInstance(env);
 #endif /* defined(OMR_GC_VLHGC) */
 	} else {
@@ -81,8 +75,7 @@ MM_EnvironmentDelegate::initialize(MM_EnvironmentBase *env)
 
 	if ((NULL == _gcEnv._referenceObjectBuffer) ||
 			(NULL == _gcEnv._unfinalizedObjectBuffer) ||
-			(NULL == _gcEnv._continuationObjectBuffer) ||
-			(NULL == _gcEnv._ownableSynchronizerObjectBuffer)) {
+			(NULL == _gcEnv._continuationObjectBuffer)) {
 		return false;
 	}
 
@@ -103,11 +96,6 @@ MM_EnvironmentDelegate::tearDown()
 	if (NULL != _gcEnv._unfinalizedObjectBuffer) {
 		_gcEnv._unfinalizedObjectBuffer->kill(_env);
 		_gcEnv._unfinalizedObjectBuffer = NULL;
-	}
-
-	if (NULL != _gcEnv._ownableSynchronizerObjectBuffer) {
-		_gcEnv._ownableSynchronizerObjectBuffer->kill(_env);
-		_gcEnv._ownableSynchronizerObjectBuffer = NULL;
 	}
 	if (NULL != _gcEnv._continuationObjectBuffer) {
 		_gcEnv._continuationObjectBuffer->kill(_env);
@@ -160,8 +148,6 @@ MM_EnvironmentDelegate::flushNonAllocationCaches()
 #if defined(J9VM_GC_FINALIZATION)
 	_gcEnv._unfinalizedObjectBuffer->flush(_env);
 #endif /* J9VM_GC_FINALIZATION */
-
-	_gcEnv._ownableSynchronizerObjectBuffer->flush(_env);
 	_gcEnv._continuationObjectBuffer->flush(_env);
 }
 

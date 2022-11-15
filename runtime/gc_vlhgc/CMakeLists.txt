@@ -59,7 +59,6 @@ set(gc_vlhgc_sources
 	InterRegionRememberedSet.cpp
 	MarkMapManager.cpp
 	MemorySubSpaceTarok.cpp
-	OwnableSynchronizerObjectBufferVLHGC.cpp
 	ParallelSweepSchemeVLHGC.cpp
 	ProjectedSurvivalCollectionSetDelegate.cpp
 	ReclaimDelegate.cpp

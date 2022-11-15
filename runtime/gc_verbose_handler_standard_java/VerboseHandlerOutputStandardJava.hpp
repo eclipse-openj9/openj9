@@ -46,14 +46,6 @@ private:
 	 */
 	void outputUnfinalizedInfo(MM_EnvironmentBase *env, uintptr_t indent, uintptr_t unfinalizedCandidates, uintptr_t unfinalizedEnqueuedCount);
 
-	/**
-	 * Output ownable synchronizer processing summary.
-	 * @param env GC thread used for output.
-	 * @param indent base level of indentation for the summary.
-	 * @param ownableSynchronizerCandidates number of ownable synchronizers encountered.
-	 * @param ownableSynchronizerCleared number of ownable synchronizers cleared.
-	 */
-	void outputOwnableSynchronizerInfo(MM_EnvironmentBase *env, uintptr_t indent, uintptr_t ownableSynchronizerCandidates, uintptr_t ownableSynchronizerCleared);
 	void outputContinuationInfo(MM_EnvironmentBase *env, uintptr_t indent, uintptr_t continuationCandidates, uintptr_t continuationCleared);
 
 	/**

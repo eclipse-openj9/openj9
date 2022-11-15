@@ -41,7 +41,6 @@ class GC_VMClassSlotIterator;
 class GC_VMThreadIterator;
 class MM_EnvironmentBase;
 class MM_Heap;
-class MM_OwnableSynchronizerObjectList;
 class MM_ContinuationObjectList;
 class MM_UnfinalizedObjectList;
 
@@ -101,7 +100,6 @@ private:
 	/**
 	 * @todo Provide function documentation
 	 */
-	virtual void doOwnableSynchronizerObject(J9Object *objectPtr, MM_OwnableSynchronizerObjectList *list);
 	virtual void doContinuationObject(J9Object *objectPtr, MM_ContinuationObjectList *list);
 
 	virtual void doJNIWeakGlobalReference(J9Object **slotPtr);

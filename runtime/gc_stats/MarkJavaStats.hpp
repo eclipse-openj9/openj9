@@ -75,8 +75,6 @@ public:
 		MM_Base()
 		, _unfinalizedCandidates(0)
 		, _unfinalizedEnqueued(0)
-		, _ownableSynchronizerCandidates(0)
-		, _ownableSynchronizerCleared(0)
 		, _continuationCandidates(0)
 		, _continuationCleared(0)
 		, _weakReferenceStats()

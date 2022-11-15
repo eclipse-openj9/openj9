@@ -54,9 +54,6 @@ public:
 	uintptr_t _unfinalizedCandidates;  /**< unfinalized objects that are candidates to be finalized visited this cycle */
 	uintptr_t _unfinalizedEnqueued;  /**< unfinalized objects that are enqueued during this cycle (MUST be less than or equal _unfinalizedCandidates) */
 
-	uintptr_t _ownableSynchronizerCandidates;  /**< number of ownable synchronizer objects visited this cycle */
-	uintptr_t _ownableSynchronizerSurvived;	/**< number of ownable synchronizer objects survived this cycle */
-
 	uintptr_t _continuationCandidates;  /**< number of continuation objects visited this cycle */
 	uintptr_t _continuationCleared;	/**< number of continuation objects cleared this cycle */
 
@@ -91,9 +88,6 @@ public:
 		_unfinalizedCandidates = 0;
 		_unfinalizedEnqueued = 0;
 
-		_ownableSynchronizerCandidates = 0;
-		_ownableSynchronizerSurvived = 0;
-
 		_continuationCandidates = 0;
 		_continuationCleared = 0;
 
@@ -122,7 +116,6 @@ public:
 		_unfinalizedCandidates += stats->_unfinalizedCandidates;
 		_unfinalizedEnqueued += stats->_unfinalizedEnqueued;
 
-		_ownableSynchronizerSurvived += stats->_ownableSynchronizerSurvived;
 		_continuationCandidates += stats->_continuationCandidates;
 		_continuationCleared += stats->_continuationCleared;
 
@@ -146,8 +139,6 @@ public:
 		MM_CopyForwardStatsCore()
 		, _unfinalizedCandidates(0)
 		, _unfinalizedEnqueued(0)
-		, _ownableSynchronizerCandidates(0)
-		, _ownableSynchronizerSurvived(0)
 		, _continuationCandidates(0)
 		, _continuationCleared(0)
 		, _weakReferenceStats()

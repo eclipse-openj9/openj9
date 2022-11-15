@@ -56,7 +56,6 @@
 #include "ObjectAccessBarrier.hpp"
 #include "ObjectHeapIteratorAddressOrderedList.hpp"
 #include "ObjectModel.hpp"
-#include "OwnableSynchronizerObjectList.hpp"
 #include "ContinuationObjectList.hpp"
 #include "VMHelpers.hpp"
 #include "ParallelDispatcher.hpp"
@@ -155,15 +154,6 @@ MM_RootScanner::scanUnfinalizedObjectsComplete(MM_EnvironmentBase *env)
 	return complete_phase_OK;
 }
 #endif /* J9VM_GC_FINALIZATION */
-
-void
-MM_RootScanner::doOwnableSynchronizerObject(J9Object *objectPtr, MM_OwnableSynchronizerObjectList *list)
-{
-	/* This function needs to be overridden if the default implementation of scanOwnableSynchronizerObjects
-	 * is used.
-	 */
-	Assert_MM_unreachable();
-}
 
 void
 MM_RootScanner::doContinuationObject(J9Object *objectPtr, MM_ContinuationObjectList *list)
@@ -743,27 +733,6 @@ MM_RootScanner::scanUnfinalizedObjects(MM_EnvironmentBase *env)
 #endif /* J9VM_GC_FINALIZATION */
 
 void
-MM_RootScanner::scanOwnableSynchronizerObjects(MM_EnvironmentBase *env)
-{
-	reportScanningStarted(RootScannerEntity_OwnableSynchronizerObjects);
-
-	MM_ObjectAccessBarrier *barrier = _extensions->accessBarrier;
-	MM_OwnableSynchronizerObjectList *ownableSynchronizerObjectList = _extensions->getOwnableSynchronizerObjectLists();
-	while(NULL != ownableSynchronizerObjectList) {
-		if (_singleThread || J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
-			J9Object *objectPtr = ownableSynchronizerObjectList->getHeadOfList();
-			while (NULL != objectPtr) {
-				doOwnableSynchronizerObject(objectPtr, ownableSynchronizerObjectList);
-				objectPtr = barrier->getOwnableSynchronizerLink(objectPtr);
-			}
-		}
-		ownableSynchronizerObjectList = ownableSynchronizerObjectList->getNextList();
-	}
-
-	reportScanningEnded(RootScannerEntity_OwnableSynchronizerObjects);
-}
-
-void
 MM_RootScanner::scanContinuationObjects(MM_EnvironmentBase *env)
 {
 	reportScanningStarted(RootScannerEntity_ContinuationObjects);
@@ -1041,7 +1010,6 @@ MM_RootScanner::scanClearable(MM_EnvironmentBase *env)
 		scanStringTable(env);
 	}
 
-	scanOwnableSynchronizerObjects(env);
 	scanContinuationObjects(env);
 
 #if defined(J9VM_GC_MODRON_SCAVENGER)

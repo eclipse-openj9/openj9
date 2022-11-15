@@ -48,7 +48,6 @@
 #include "MarkingScheme.hpp"
 #include "MarkingSchemeRootMarker.hpp"
 #include "MarkingSchemeRootClearer.hpp"
-#include "OwnableSynchronizerObjectList.hpp"
 #include "ContinuationObjectList.hpp"
 #include "VMHelpers.hpp"
 #include "ParallelDispatcher.hpp"
@@ -132,8 +131,6 @@ MM_MarkingDelegate::workerSetupForGC(MM_EnvironmentBase *env)
 	gcEnv->_markJavaStats.clear();
 #if defined(J9VM_GC_MODRON_SCAVENGER)
 	if (_extensions->scavengerEnabled) {
-		/* clear scavenger stats for correcting the ownableSynchronizerObjects stats, only in generational gc */
-		gcEnv->_scavengerJavaStats.clearOwnableSynchronizerCounts();
 		/* clear scavenger stats for correcting the continuationObjects stats, only in generational gc */
 		gcEnv->_scavengerJavaStats.clearContinuationCounts();
 	}
@@ -170,8 +167,6 @@ MM_MarkingDelegate::workerCleanupAfterGC(MM_EnvironmentBase *env)
 	_extensions->markJavaStats.merge(&gcEnv->_markJavaStats);
 #if defined(J9VM_GC_MODRON_SCAVENGER)
 	if (_extensions->scavengerEnabled) {
-		/* merge scavenger ownableSynchronizerObjects stats, only in generational gc */
-		_extensions->scavengerJavaStats.mergeOwnableSynchronizerCounts(&gcEnv->_scavengerJavaStats);
 		/* merge scavenger continuationObjects stats, only in generational gc */
 		_extensions->scavengerJavaStats.mergeContinuationCounts(&gcEnv->_scavengerJavaStats);
 	}
@@ -203,7 +198,6 @@ MM_MarkingDelegate::startRootListProcessing(MM_EnvironmentBase *env)
 	/* Start unfinalized object and ownable synchronizer processing */
 	if (J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
 		_shouldScanUnfinalizedObjects = false;
-		_shouldScanOwnableSynchronizerObjects = false;
 		_shouldScanContinuationObjects = false;
 
 		MM_HeapRegionDescriptorStandard *region = NULL;
@@ -216,12 +210,6 @@ MM_MarkingDelegate::startRootListProcessing(MM_EnvironmentBase *env)
 				unfinalizedObjectList->startUnfinalizedProcessing();
 				if (!unfinalizedObjectList->wasEmpty()) {
 					_shouldScanUnfinalizedObjects = true;
-				}
-				/* Start ownable synchronizer processing for region */
-				MM_OwnableSynchronizerObjectList *ownableSynchronizerObjectList = &(regionExtension->_ownableSynchronizerObjectLists[i]);
-				ownableSynchronizerObjectList->startOwnableSynchronizerProcessing();
-				if (!ownableSynchronizerObjectList->wasEmpty()) {
-					_shouldScanOwnableSynchronizerObjects = true;
 				}
 				/* Start continuation processing for region */
 				MM_ContinuationObjectList *continuationObjectList = &(regionExtension->_continuationObjectLists[i]);

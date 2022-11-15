@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -163,8 +163,6 @@ GC_CheckReporterTTY::report(GC_CheckError *error)
 			} else if(error->_objectType == check_type_unfinalized) {
 				slotValue = *((UDATA*)slot);
 			}  else if(error->_objectType == check_type_finalizable) {
-				slotValue = *((UDATA*)slot);
-			} else if(error->_objectType == check_type_ownable_synchronizer) {
 				slotValue = *((UDATA*)slot);
 			} else {
 				slotValue = *((UDATA*)slot);

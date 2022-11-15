@@ -459,9 +459,6 @@ MM_CopyForwardScheme::preProcessRegions(MM_EnvironmentVLHGC *env)
 	GC_HeapRegionIteratorVLHGC regionIterator(_regionManager);
 	MM_HeapRegionDescriptorVLHGC *region = NULL;
 
-	UDATA ownableSynchronizerCandidates = 0;
-	UDATA ownableSynchronizerCountInEden = 0;
-
 	_regionCountCannotBeEvacuated = 0;
 
 	while(NULL != (region = regionIterator.nextRegion())) {
@@ -472,11 +469,6 @@ MM_CopyForwardScheme::preProcessRegions(MM_EnvironmentVLHGC *env)
 			region->_copyForwardData._evacuateSet = region->_markData._shouldMark;
 			if (region->_markData._shouldMark) {
 				region->getUnfinalizedObjectList()->startUnfinalizedProcessing();
-				ownableSynchronizerCandidates += region->getOwnableSynchronizerObjectList()->getObjectCount();
-				if (region->isEden()) {
-					ownableSynchronizerCountInEden += region->getOwnableSynchronizerObjectList()->getObjectCount();
-				}
-				region->getOwnableSynchronizerObjectList()->startOwnableSynchronizerProcessing();
 				region->getContinuationObjectList()->startProcessing();
 				Assert_MM_true(region->getRememberedSetCardList()->isAccurate());
 				if ((region->_criticalRegionsInUse > 0) || !env->_cycleState->_shouldRunCopyForward || (100 == _extensions->fvtest_forceCopyForwardHybridRatio) || (randomDecideForceNonEvacuatedRegion(_extensions->fvtest_forceCopyForwardHybridRatio))) {
@@ -501,12 +493,6 @@ MM_CopyForwardScheme::preProcessRegions(MM_EnvironmentVLHGC *env)
 
 	/* reset _regionCountReservedNonEvacuated */
 	_regionCountReservedNonEvacuated = 0;
-	/* ideally allocationStats._ownableSynchronizerObjectCount should be equal with ownableSynchronizerCountInEden, 
-	 * in case partial constructing ownableSynchronizerObject has been moved during previous PGC, notification for new allocation would happen after gc,
-	 * so it is counted for new allocation, but not in Eden region. loose assertion for this special case
-	 */
-	Assert_MM_true(_extensions->allocationStats._ownableSynchronizerObjectCount >= ownableSynchronizerCountInEden);
-	static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._copyForwardStats._ownableSynchronizerCandidates = ownableSynchronizerCandidates;
 }
 
 void
@@ -795,7 +781,6 @@ MM_CopyForwardScheme::acquireEmptyRegion(MM_EnvironmentVLHGC *env, MM_ReservedRe
 			}
 
 			Assert_MM_true(NULL == newRegion->getUnfinalizedObjectList()->getHeadOfList());
-			Assert_MM_true(NULL == newRegion->getOwnableSynchronizerObjectList()->getHeadOfList());
 			Assert_MM_true(NULL == newRegion->getContinuationObjectList()->getHeadOfList());
 			Assert_MM_false(newRegion->_markData._shouldMark);
 
@@ -1402,8 +1387,6 @@ MM_CopyForwardScheme::mainCleanupForCopyForward(MM_EnvironmentVLHGC *env)
 		/* ensure that all managed caches have been returned to the free list */
 		Assert_MM_true(_cacheFreeList.getTotalCacheCount() == _cacheFreeList.countCaches());
 	}
-
-	Assert_MM_true(static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._copyForwardStats._ownableSynchronizerCandidates >= static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._copyForwardStats._ownableSynchronizerSurvived);
 }
 
 /**
@@ -2278,19 +2261,6 @@ MM_CopyForwardScheme::updateMarkMapAndCardTableOnCopy(MM_EnvironmentVLHGC *env, 
  * Object scan and copy routines
  ****************************************
  */
-MMINLINE void
-MM_CopyForwardScheme::scanOwnableSynchronizerObjectSlots(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, J9Object *objectPtr, ScanReason reason)
-{
-	if (SCAN_REASON_COPYSCANCACHE == reason) {
-		addOwnableSynchronizerObjectInList(env, objectPtr);
-	} else if (SCAN_REASON_PACKET == reason) {
-		if (isObjectInEvacuateMemoryNoCheck(objectPtr)) {
-			addOwnableSynchronizerObjectInList(env, objectPtr);
-		}
-	}
-	scanMixedObjectSlots(env, reservingContext, objectPtr, reason);
-}
-
 void
 MM_CopyForwardScheme::doStackSlot(MM_EnvironmentVLHGC *env, J9Object *fromObject, J9Object** slotPtr, J9StackWalkState *walkState, const void *stackLocation)
 {
@@ -2945,9 +2915,6 @@ MM_CopyForwardScheme::scanObject(MM_EnvironmentVLHGC *env, MM_AllocationContextT
 	case GC_ObjectModel::SCAN_MIXED_OBJECT:
 		scanMixedObjectSlots(env, reservingContext, objectPtr, reason);
 		break;
-	case GC_ObjectModel::SCAN_OWNABLESYNCHRONIZER_OBJECT:
-		scanOwnableSynchronizerObjectSlots(env, reservingContext, objectPtr, reason);
-		break;
 	case GC_ObjectModel::SCAN_CONTINUATION_OBJECT:
 		scanContinuationObject(env, reservingContext, objectPtr, reason);
 		break;
@@ -3230,7 +3197,6 @@ MM_CopyForwardScheme::incrementalScanCacheBySlot(MM_EnvironmentVLHGC *env)
 				case GC_ObjectModel::SCAN_MIXED_OBJECT_LINKED:
 				case GC_ObjectModel::SCAN_ATOMIC_MARKABLE_REFERENCE_OBJECT:
 				case GC_ObjectModel::SCAN_MIXED_OBJECT:
-				case GC_ObjectModel::SCAN_OWNABLESYNCHRONIZER_OBJECT:
 				case GC_ObjectModel::SCAN_CONTINUATION_OBJECT:
 					hasPartiallyScannedObject = incrementalScanMixedObjectSlots(env, reservingContext, scanCache, objectPtr, hasPartiallyScannedObject, &nextScanCache);
 					break;
@@ -3435,15 +3401,6 @@ MM_CopyForwardScheme::completeScan(MM_EnvironmentVLHGC *env)
 
 	if(_abortInProgress) {
 		completeScanForAbort(env);
-	}
-}
-
-MMINLINE void
-MM_CopyForwardScheme::addOwnableSynchronizerObjectInList(MM_EnvironmentVLHGC *env, j9object_t object)
-{
-	if (NULL != _extensions->accessBarrier->isObjectInOwnableSynchronizerList(object)) {
-		env->getGCEnvironment()->_ownableSynchronizerObjectBuffer->add(env, object);
-		env->_copyForwardStats._ownableSynchronizerSurvived += 1;
 	}
 }
 
@@ -3968,11 +3925,6 @@ private:
 	}
 #endif /* J9VM_GC_FINALIZATION */
 
-	virtual void scanOwnableSynchronizerObjects(MM_EnvironmentBase *env) {
-		/* allow the scheme to handle this, since it knows which regions are interesting */
-		/* empty, move ownable synchronizer processing in copy-continuous phase */
-	}
-
 	virtual void scanContinuationObjects(MM_EnvironmentBase *env) {
 		/* allow the scheme to handle this, since it knows which regions are interesting */
 		reportScanningStarted(RootScannerEntity_ContinuationObjects);
@@ -4329,9 +4281,6 @@ MM_CopyForwardScheme::workThreadGarbageCollect(MM_EnvironmentVLHGC *env)
 	}
 
 	env->_workStack.flush(env);
-	/* flush the buffer after clearable phase --- cmvc 198798 */
-	/* flush ownable synchronizer object buffer after rebuild the ownableSynchronizerObjectList during main scan phase */
-	env->getGCEnvironment()->_ownableSynchronizerObjectBuffer->flush(env);
 
 	abandonTLHRemainders(env);
 
@@ -4568,16 +4517,6 @@ private:
 	}
 #endif /* J9VM_GC_FINALIZATION */
 
-	virtual void doOwnableSynchronizerObject(J9Object *objectPtr, MM_OwnableSynchronizerObjectList *list) {
-		MM_EnvironmentVLHGC *env = MM_EnvironmentVLHGC::getEnvironment(_env);
-
-		if(!_copyForwardScheme->_abortInProgress && !_copyForwardScheme->isObjectInNoEvacuationRegions(env, objectPtr) && _copyForwardScheme->verifyIsPointerInEvacute(env, objectPtr)) {
-			PORT_ACCESS_FROM_ENVIRONMENT(env);
-			j9tty_printf(PORTLIB, "OwnableSynchronizer object list points into evacuate!  list %p object %p\n", list, objectPtr);
-			Assert_MM_unreachable();
-		}
-	}
-
 	virtual void doContinuationObject(J9Object *objectPtr, MM_ContinuationObjectList *list) {
 		MM_EnvironmentVLHGC *env = MM_EnvironmentVLHGC::getEnvironment(_env);
 
@@ -4665,7 +4604,6 @@ MM_CopyForwardScheme::verifyObject(MM_EnvironmentVLHGC *env, J9Object *objectPtr
 	case GC_ObjectModel::SCAN_MIXED_OBJECT_LINKED:
 	case GC_ObjectModel::SCAN_ATOMIC_MARKABLE_REFERENCE_OBJECT:
 	case GC_ObjectModel::SCAN_MIXED_OBJECT:
-	case GC_ObjectModel::SCAN_OWNABLESYNCHRONIZER_OBJECT:
 	case GC_ObjectModel::SCAN_CONTINUATION_OBJECT:
 		verifyMixedObjectSlots(env, objectPtr);
 		break;

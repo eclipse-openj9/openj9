@@ -70,7 +70,6 @@ public:
 		case GC_ObjectModel::SCAN_MIXED_OBJECT:
 		case GC_ObjectModel::SCAN_CLASS_OBJECT:
 		case GC_ObjectModel::SCAN_CLASSLOADER_OBJECT:
-		case GC_ObjectModel::SCAN_OWNABLESYNCHRONIZER_OBJECT:
 		case GC_ObjectModel::SCAN_CONTINUATION_OBJECT:
 		case GC_ObjectModel::SCAN_REFERENCE_MIXED_OBJECT:
 			return _mixedObjectIterator.initialize(_omrVM, objectPtr);
@@ -98,7 +97,6 @@ public:
 		case GC_ObjectModel::SCAN_MIXED_OBJECT:
 		case GC_ObjectModel::SCAN_CLASS_OBJECT:
 		case GC_ObjectModel::SCAN_CLASSLOADER_OBJECT:
-		case GC_ObjectModel::SCAN_OWNABLESYNCHRONIZER_OBJECT:
 		case GC_ObjectModel::SCAN_CONTINUATION_OBJECT:
 		case GC_ObjectModel::SCAN_REFERENCE_MIXED_OBJECT:
 			return _mixedObjectIterator.nextSlot();
@@ -127,7 +125,6 @@ public:
 		case GC_ObjectModel::SCAN_MIXED_OBJECT:
 		case GC_ObjectModel::SCAN_CLASS_OBJECT:
 		case GC_ObjectModel::SCAN_CLASSLOADER_OBJECT:
-		case GC_ObjectModel::SCAN_OWNABLESYNCHRONIZER_OBJECT:
 		case GC_ObjectModel::SCAN_CONTINUATION_OBJECT:
 		case GC_ObjectModel::SCAN_REFERENCE_MIXED_OBJECT:
 			return _mixedObjectIterator.restore(objectIteratorState);
@@ -155,7 +152,6 @@ public:
 		case GC_ObjectModel::SCAN_MIXED_OBJECT:
 		case GC_ObjectModel::SCAN_CLASS_OBJECT:
 		case GC_ObjectModel::SCAN_CLASSLOADER_OBJECT:
-		case GC_ObjectModel::SCAN_OWNABLESYNCHRONIZER_OBJECT:
 		case GC_ObjectModel::SCAN_CONTINUATION_OBJECT:
 		case GC_ObjectModel::SCAN_REFERENCE_MIXED_OBJECT:
 			return _mixedObjectIterator.save(objectIteratorState);

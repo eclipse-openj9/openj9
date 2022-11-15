@@ -126,14 +126,6 @@ MM_VerboseHandlerOutputStandardJava::outputUnfinalizedInfo(MM_EnvironmentBase *e
 }
 
 void
-MM_VerboseHandlerOutputStandardJava::outputOwnableSynchronizerInfo(MM_EnvironmentBase *env, uintptr_t indent, uintptr_t ownableSynchronizerCandidates, uintptr_t ownableSynchronizerCleared)
-{
-	if (0 != ownableSynchronizerCandidates) {
-		_manager->getWriterChain()->formatAndOutput(env, indent, "<ownableSynchronizers candidates=\"%zu\" cleared=\"%zu\" />", ownableSynchronizerCandidates, ownableSynchronizerCleared);
-	}
-}
-
-void
 MM_VerboseHandlerOutputStandardJava::outputContinuationInfo(MM_EnvironmentBase *env, uintptr_t indent, uintptr_t continuationCandidates, uintptr_t continuationCleared)
 {
 	if (0 != continuationCandidates) {
@@ -163,8 +155,6 @@ MM_VerboseHandlerOutputStandardJava::handleMarkEndInternal(MM_EnvironmentBase* e
 	MM_WorkPacketStats *workPacketStats = &_extensions->globalGCStats.workPacketStats;
 
 	outputUnfinalizedInfo(env, 1, markJavaStats->_unfinalizedCandidates, markJavaStats->_unfinalizedEnqueued);
-
-	outputOwnableSynchronizerInfo(env, 1, markJavaStats->_ownableSynchronizerCandidates, markJavaStats->_ownableSynchronizerCleared);
 
 	outputContinuationInfo(env, 1, markJavaStats->_continuationCandidates, markJavaStats->_continuationCleared);
 
@@ -248,8 +238,6 @@ MM_VerboseHandlerOutputStandardJava::handleScavengeEndInternal(MM_EnvironmentBas
 		MM_ScavengerJavaStats *scavengerJavaStats = &extensions->scavengerJavaStats;
 
 		outputUnfinalizedInfo(env, 1, scavengerJavaStats->_unfinalizedCandidates, scavengerJavaStats->_unfinalizedEnqueued);
-
-		outputOwnableSynchronizerInfo(env, 1, scavengerJavaStats->_ownableSynchronizerCandidates, (scavengerJavaStats->_ownableSynchronizerCandidates - scavengerJavaStats->_ownableSynchronizerTotalSurvived));
 
 		outputContinuationInfo(env, 1, scavengerJavaStats->_continuationCandidates, (scavengerJavaStats->_continuationCleared));
 

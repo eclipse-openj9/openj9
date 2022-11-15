@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2021 IBM Corp. and others
+ * Copyright (c) 2017, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -136,13 +136,6 @@ MM_GlobalCollectorDelegate::mainThreadGarbageCollectStarted(MM_EnvironmentBase *
 #if defined(J9VM_GC_MODRON_COMPACTION)
 	_criticalSectionCount = MM_StandardAccessBarrier::getJNICriticalRegionCount(_extensions);
 #endif /* J9VM_GC_MODRON_COMPACTION */
-
-#if defined(J9VM_GC_MODRON_SCAVENGER)
-	if (_extensions->scavengerEnabled) {
-		/* clear scavenger stats for correcting the ownableSynchronizerObjects stats, only in generational gc */
-		_extensions->scavengerJavaStats.clearOwnableSynchronizerCounts();
-	}
-#endif /* defined(J9VM_GC_MODRON_SCAVENGER) */
 
 #if defined(J9VM_GC_FINALIZATION)
 	/* this should not be set by the GC since it is used by components in order to record that they performed some operation which will require that we do some finalization */

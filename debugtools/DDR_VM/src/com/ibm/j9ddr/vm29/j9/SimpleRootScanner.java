@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -133,12 +133,6 @@ abstract class SimpleRootScanner extends AddressAwareRootScanner
 		doSlot(slot, address);
 	}
 	
-	@Override
-	protected void doOwnableSynchronizerObject(J9ObjectPointer slot, VoidPointer address)
-	{
-		doSlot(slot, address);
-	}
-
 	@Override
 	protected void doVMClassSlot(J9ClassPointer slot, VoidPointer address)
 	{

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,7 +35,6 @@ import com.ibm.j9ddr.vm29.j9.gc.GCJVMTIObjectTagTableListIterator;
 import com.ibm.j9ddr.vm29.j9.gc.GCMonitorReferenceIterator;
 import com.ibm.j9ddr.vm29.j9.gc.GCObjectHeapIterator;
 import com.ibm.j9ddr.vm29.j9.gc.GCObjectIterator;
-import com.ibm.j9ddr.vm29.j9.gc.GCOwnableSynchronizerObjectListIterator;
 import com.ibm.j9ddr.vm29.j9.gc.GCRememberedSetIterator;
 import com.ibm.j9ddr.vm29.j9.gc.GCRememberedSetSlotIterator;
 import com.ibm.j9ddr.vm29.j9.gc.GCSegmentIterator;
@@ -217,7 +216,6 @@ public abstract class RootScanner
 	
 	protected abstract void doFinalizableObject(J9ObjectPointer slot);
 	protected abstract void doUnfinalizedObject(J9ObjectPointer slot);
-	protected abstract void doOwnableSynchronizerObject(J9ObjectPointer slot);
 	
 	protected abstract void doMonitorReference(J9ObjectMonitorPointer objectMonitor);
 	protected abstract void doMonitorLookupCacheSlot(J9ObjectMonitorPointer slot);
@@ -389,8 +387,6 @@ public abstract class RootScanner
 		if(J9BuildFlags.opt_jvmti) {
 			scanJVMTIObjectTagTables();
 		}
-		
-		scanOwnableSynchronizerObjects();
 	}
 	
 	/**
@@ -462,8 +458,6 @@ public abstract class RootScanner
 		if (!_stringTableAsRoot && (!_nurseryReferencesOnly && !_nurseryReferencesPossibly)) {
 			scanStringTable();
 		}
-		
-		scanOwnableSynchronizerObjects();
 		
 		if (J9BuildFlags.gc_modronScavenger) {
 			/* Remembered set is clearable in a generational system -- if an object in old
@@ -573,18 +567,6 @@ public abstract class RootScanner
 		GCUnfinalizedObjectListIterator unfinalizedObjectListIterator = GCUnfinalizedObjectListIterator.from();
 		while(unfinalizedObjectListIterator.hasNext()) {
 			doUnfinalizedObject(unfinalizedObjectListIterator.next());
-		}
-	}
-	
-	protected void scanOwnableSynchronizerObjects() throws CorruptDataException
-	{
-		setReachability(Reachability.WEAK);
-		
-		GCOwnableSynchronizerObjectListIterator ownableSynchronizerObjectListIterator = GCOwnableSynchronizerObjectListIterator .from();
-
-		while (ownableSynchronizerObjectListIterator.hasNext()) {
-			J9ObjectPointer ownableSynchronizerObject = ownableSynchronizerObjectListIterator.next();
-			doOwnableSynchronizerObject(ownableSynchronizerObject);
 		}
 	}
 	

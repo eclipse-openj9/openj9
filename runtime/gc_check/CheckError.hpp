@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -39,7 +39,6 @@
 class GC_CheckReporter;
 class MM_SublistPuddle;
 class MM_UnfinalizedObjectList;
-class MM_OwnableSynchronizerObjectList;
 class GC_FinalizeListManager;
 
 enum {
@@ -311,16 +310,6 @@ public:
 	GC_CheckError(GC_FinalizeListManager *object, J9Object **slot, GC_CheckCycle *cycle, GC_Check *check, UDATA errorCode, UDATA errorNumber)
 	{
 		initialize((void*)object, (void*)slot, cycle, check, errorCode, errorNumber, check_type_finalizable);
-	}
-
-	//////// Constructors for MM_OwnableSynchronizerObjectList ////////
-
-	/**
-	 * Create a new CheckError object, with a blank elementName.
-	 */
-	GC_CheckError(MM_OwnableSynchronizerObjectList *object, J9Object **slot, GC_CheckCycle *cycle, GC_Check *check, UDATA errorCode, UDATA errorNumber)
-	{
-		initialize((void*)object, (void*)slot, cycle, check, errorCode, errorNumber, check_type_ownable_synchronizer);
 	}
 };
 

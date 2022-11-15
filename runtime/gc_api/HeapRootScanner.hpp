@@ -177,18 +177,7 @@ public:
 	void scanFinalizableObjects();
 	virtual void scanUnfinalizedObjects();
 #endif /* J9VM_GC_FINALIZATION */
-	/**
-	 * @todo Provide function documentation
-	 *
-	 * @NOTE this code is not thread safe and assumes it is called in a single threaded
-	 * manner.
-	 *
-	 * @NOTE this can only be used as a READ-ONLY version of the ownableSynchronizerObjectList.
-	 * If you need to modify elements with-in the list you will need to provide your own functionality.
-	 * See MM_MarkingScheme::scanOwnableSynchronizerObjects(MM_EnvironmentStandard *env) as an example
-	 * which modifies elements with-in the list.
-	 */
-	virtual void scanOwnableSynchronizerObjects();
+
 	virtual void scanContinuationObjects();
 	void scanStringTable();
 	void scanJNIGlobalReferences();
@@ -209,7 +198,6 @@ public:
 	/**
 	 * @todo Provide function documentation
 	 */
-	virtual void doOwnableSynchronizerObject(J9Object *objectPtr);
 	virtual void doContinuationObject(J9Object *objectPtr);
 
 	virtual void doMonitorReference(J9ObjectMonitor *objectMonitor, GC_HashTableIterator *monitorReferenceIterator);

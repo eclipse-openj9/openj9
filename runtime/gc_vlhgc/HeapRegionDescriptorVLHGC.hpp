@@ -30,7 +30,6 @@
 #include "HeapRegionDataForAllocate.hpp"
 #include "HeapRegionDataForCompactVLHGC.hpp"
 #include "LightweightNonReentrantLock.hpp"
-#include "OwnableSynchronizerObjectList.hpp"
 #include "ContinuationObjectList.hpp"
 #include "ReferenceObjectList.hpp"
 #include "RememberedSetCardList.hpp"
@@ -105,7 +104,6 @@ private:
 	MM_HeapRegionDescriptorVLHGC *_dynamicSelectionNext;  /**< Linked list pointer used during dynamic set selection (NOTE: Valid only during dynamic set selection) */
 
 	MM_UnfinalizedObjectList _unfinalizedObjectList; /**< A list of unfinalized objects in this region */
-	MM_OwnableSynchronizerObjectList _ownableSynchronizerObjectList; /**< A list of ownable synchronizer objects in this region */
 	MM_ContinuationObjectList _continuationObjectList; /**< A list of continuation objects in this region */
 	MM_ReferenceObjectList _referenceObjectList; /**< A list of reference objects (i.e. weak/soft/phantom) in this region */
 	
@@ -250,12 +248,6 @@ public:
 	 */
 	MM_UnfinalizedObjectList *getUnfinalizedObjectList() { return &_unfinalizedObjectList; }
 
-	/**
-	 * Fetch the list of ownable synchronizer objects within this region.
-	 * @return the list
-	 */
-	MM_OwnableSynchronizerObjectList *getOwnableSynchronizerObjectList() { return &_ownableSynchronizerObjectList; }
-	
 	/**
 	 * Fetch the list of continuation objects within this region.
 	 * @return the list

@@ -42,6 +42,7 @@
 #include "ReferenceChainWalkerMarkMap.hpp"
 #include "SublistPool.hpp"
 #include "Wildcard.hpp"
+#include "OwnableSynchronizerObjectList.hpp"
 
 MM_GCExtensions *
 MM_GCExtensions::newInstance(MM_EnvironmentBase *env)
@@ -272,12 +273,20 @@ MM_GCExtensions::computeDefaultMaxHeapForJava(bool enableOriginalJDK8HeapSizeCom
 	maxSizeDefaultMemorySpace = memoryMax;
 }
 
-MM_OwnableSynchronizerObjectList *
-MM_GCExtensions::getOwnableSynchronizerObjectListsExternal(J9VMThread *vmThread)
+void
+MM_GCExtensions::rebuildOwnableSynchronizerObjectList(MM_EnvironmentBase* env)
+{
+	ownableSynchronizerObjectList->reset();
+	ownableSynchronizerObjectList->rebuildList(env);
+}
+
+MM_OwnableSynchronizerObjectList*
+MM_GCExtensions::getOwnableSynchronizerObjectListExternal()
 {
 	Assert_MM_true(!isConcurrentScavengerInProgress());
+	Assert_MM_true(ownableSynchronizerObjectList->isRefreshed());
+	return ownableSynchronizerObjectList;
 
-	return ownableSynchronizerObjectLists;
 }
 
 MM_ContinuationObjectList *

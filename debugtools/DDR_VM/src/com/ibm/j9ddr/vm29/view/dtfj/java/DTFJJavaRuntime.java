@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -622,24 +622,6 @@ public class DTFJJavaRuntime implements JavaRuntime {
 		protected void doStackSlot(J9ObjectPointer slot)
 		{
 			/* Do nothing, we don't report stack slots here */
-		}
-
-		@Override
-		protected void doOwnableSynchronizerObject(J9ObjectPointer slot) 
-		{
-			if (slot.notNull()) {
-				try {
-					references.add(new DTFJJavaReference(DTFJJavaRuntime.this,
-							new DTFJJavaObject(slot),
-							"OwnableSynchronizerObject",
-							JavaReference.REFERENCE_UNKNOWN,
-							JavaReference.HEAP_ROOT_OTHER, 
-							getReachabilityCode()));
-				} catch (Throwable t) {
-					CorruptData cd = J9DDRDTFJUtils.handleAsCorruptData(DTFJContext.getProcess(), t);
-					references.add(cd);
-				}
-			}
 		}
 
 		@Override

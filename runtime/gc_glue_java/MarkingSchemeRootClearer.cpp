@@ -40,7 +40,6 @@
 #include "MarkingScheme.hpp"
 #include "MarkingSchemeRootClearer.hpp"
 #include "ModronAssertions.h"
-#include "OwnableSynchronizerObjectBuffer.hpp"
 #include "ContinuationObjectBuffer.hpp"
 #include "VMHelpers.hpp"
 #include "ParallelDispatcher.hpp"
@@ -257,52 +256,6 @@ MM_MarkingSchemeRootClearer::scanUnfinalizedObjectsComplete(MM_EnvironmentBase *
 		reportScanningEnded(RootScannerEntity_UnfinalizedObjectsComplete);
 	}
 	return complete_phase_OK;
-}
-
-void
-MM_MarkingSchemeRootClearer::scanOwnableSynchronizerObjects(MM_EnvironmentBase *env)
-{
-	if (_markingDelegate->shouldScanOwnableSynchronizerObjects()) {
-		/* allow the marking scheme to handle this */
-		reportScanningStarted(RootScannerEntity_OwnableSynchronizerObjects);
-		GC_Environment *gcEnv = env->getGCEnvironment();
-
-		MM_HeapRegionDescriptorStandard *region = NULL;
-		GC_HeapRegionIteratorStandard regionIterator(_extensions->heap->getHeapRegionManager());
-		while (NULL != (region = regionIterator.nextRegion())) {
-			MM_HeapRegionDescriptorStandardExtension *regionExtension = MM_ConfigurationDelegate::getHeapRegionDescriptorStandardExtension(env, region);
-			for (uintptr_t i = 0; i < regionExtension->_maxListIndex; i++) {
-				MM_OwnableSynchronizerObjectList *list = &regionExtension->_ownableSynchronizerObjectLists[i];
-				if (!list->wasEmpty()) {
-					if (J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
-						omrobjectptr_t object = list->getPriorList();
-						while (NULL != object) {
-							gcEnv->_markJavaStats._ownableSynchronizerCandidates += 1;
-							omrobjectptr_t next = _extensions->accessBarrier->getOwnableSynchronizerLink(object);
-							if (_markingScheme->isMarked(object)) {
-								/* object was already marked. */
-								gcEnv->_ownableSynchronizerObjectBuffer->add(env, object);
-							} else {
-								/* object was not previously marked */
-								gcEnv->_markJavaStats._ownableSynchronizerCleared += 1;
-							}
-							object = next;
-						}
-					}
-				}
-			}
-#if defined(J9VM_GC_MODRON_SCAVENGER)
-			/* correct scavenger statistics for ownableSynchronizerObjects, adjust survived ownableSynchronizerObject count in Nursery, only in generational gc */
-			if (_extensions->scavengerEnabled && (MEMORY_TYPE_NEW == (region->getTypeFlags() & MEMORY_TYPE_NEW))) {
-				gcEnv->_scavengerJavaStats.updateOwnableSynchronizerNurseryCounts(gcEnv->_markJavaStats._ownableSynchronizerCandidates - gcEnv->_markJavaStats._ownableSynchronizerCleared);
-			}
-#endif /* defined(J9VM_GC_MODRON_SCAVENGER) */
-		}
-
-		/* restore everything to a flushed state before exiting */
-		gcEnv->_ownableSynchronizerObjectBuffer->flush(env);
-		reportScanningEnded(RootScannerEntity_OwnableSynchronizerObjects);
-	}
 }
 
 void

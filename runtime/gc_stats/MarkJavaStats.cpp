@@ -32,9 +32,6 @@ MM_MarkJavaStats::clear()
 	_unfinalizedCandidates = 0;
 	_unfinalizedEnqueued = 0;
 
-	_ownableSynchronizerCandidates = 0;
-	_ownableSynchronizerCleared = 0;
-
 	_continuationCandidates = 0;
 	_continuationCleared = 0;
 
@@ -59,9 +56,6 @@ MM_MarkJavaStats::merge(MM_MarkJavaStats* statsToMerge)
 {
 	_unfinalizedCandidates += statsToMerge->_unfinalizedCandidates;
 	_unfinalizedEnqueued += statsToMerge->_unfinalizedEnqueued;
-
-	_ownableSynchronizerCandidates += statsToMerge->_ownableSynchronizerCandidates;
-	_ownableSynchronizerCleared += statsToMerge->_ownableSynchronizerCleared;
 
 	_continuationCandidates += statsToMerge->_continuationCandidates;
 	_continuationCleared += statsToMerge->_continuationCleared;

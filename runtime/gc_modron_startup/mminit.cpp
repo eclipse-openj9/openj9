@@ -90,6 +90,7 @@
 #include "ObjectAllocationInterface.hpp"
 #include "OMRVMInterface.hpp"
 #include "OMRVMThreadInterface.hpp"
+#include "OwnableSynchronizerObjectList.hpp"
 #include "ParallelDispatcher.hpp"
 #if defined(J9VM_GC_VLHGC)
 #include "RememberedSetCardList.hpp"
@@ -462,6 +463,11 @@ j9gc_initialize_heap(J9JavaVM *vm, IDATA *memoryParameterTable, UDATA heapBytesR
 	/* Create the environments pool */
 	extensions->environments = extensions->configuration->createEnvironmentPool(&env);
 	if (NULL == extensions->environments) {
+		goto error_no_memory;
+	}
+
+	extensions->ownableSynchronizerObjectList = MM_OwnableSynchronizerObjectList::newInstance(&env, extensions);
+	if (NULL == extensions->ownableSynchronizerObjectList) {
 		goto error_no_memory;
 	}
 

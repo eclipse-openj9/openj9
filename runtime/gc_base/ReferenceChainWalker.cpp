@@ -50,7 +50,6 @@ class GC_JVMTIObjectTagTableIterator;
 class GC_VMClassSlotIterator;
 class MM_HeapRegionDescriptor;
 class MM_HeapRegionManager;
-class MM_OwnableSynchronizerObjectList;
 class MM_ContinuationObjectList;
 class MM_UnfinalizedObjectList;
 
@@ -351,7 +350,6 @@ MM_ReferenceChainWalker::scanObject(J9Object *objectPtr)
 	case GC_ObjectModel::SCAN_MIXED_OBJECT_LINKED:
 	case GC_ObjectModel::SCAN_ATOMIC_MARKABLE_REFERENCE_OBJECT:
 	case GC_ObjectModel::SCAN_MIXED_OBJECT:
-	case GC_ObjectModel::SCAN_OWNABLESYNCHRONIZER_OBJECT:
 	case GC_ObjectModel::SCAN_CONTINUATION_OBJECT:
 	case GC_ObjectModel::SCAN_CLASS_OBJECT:
 	case GC_ObjectModel::SCAN_CLASSLOADER_OBJECT:
@@ -532,13 +530,6 @@ MM_ReferenceChainWalker::doUnfinalizedObject(J9Object *objectPtr, MM_Unfinalized
 	doSlot(&object, J9GC_ROOT_TYPE_UNFINALIZED_OBJECT, -1, NULL);
 }
 #endif /* J9VM_GC_FINALIZATION */
-
-void
-MM_ReferenceChainWalker::doOwnableSynchronizerObject(J9Object *objectPtr, MM_OwnableSynchronizerObjectList *list)
-{
-	J9Object *object = objectPtr;
-	doSlot(&object, J9GC_ROOT_TYPE_OWNABLE_SYNCHRONIZER_OBJECT, -1, NULL);
-}
 
 void
 MM_ReferenceChainWalker::doContinuationObject(J9Object *objectPtr, MM_ContinuationObjectList *list)

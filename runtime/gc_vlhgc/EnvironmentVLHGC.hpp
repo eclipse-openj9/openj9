@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -40,7 +40,7 @@
 #endif /* J9VM_GC_MODRON_COMPACTION */
 #include "CycleStateVLHGC.hpp"
 #include "EnvironmentBase.hpp"
-#include "OwnableSynchronizerObjectBufferVLHGC.hpp"
+#include "ObjectAccessBarrier.hpp"
 #include "ReferenceObjectBufferVLHGC.hpp"
 #include "UnfinalizedObjectBufferVLHGC.hpp"
 #include "WorkStack.hpp"

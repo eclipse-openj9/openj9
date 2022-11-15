@@ -290,26 +290,8 @@ private:
 	void flushCache(MM_EnvironmentVLHGC *env, MM_CopyScanCacheVLHGC *cache);
 	bool clearCache(MM_EnvironmentVLHGC *env, MM_CopyScanCacheVLHGC *cache);
 
-	/**
-	 * add OwnableSynchronizerObject in the buffer if reason == SCAN_REASON_COPYSCANCACHE || SCAN_REASON_PACKET
-	 * and call scanMixedObjectSlots().
-	 *
-	 * @param env current GC thread.
-	 * @param reservingContext[in] The context to which we would prefer to copy any objects discovered in this method
-	 * @param objectPtr current object being scanned.
-	 * @param reason to scan (dirty card, packet, scan cache, overflow)
-	 */
-	MMINLINE void scanOwnableSynchronizerObjectSlots(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, J9Object *objectPtr, ScanReason reason);
-
-
 	MMINLINE void scanContinuationNativeSlots(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, J9Object *objectPtr, ScanReason reason);
 	MMINLINE void scanContinuationObject(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, J9Object *objectPtr, ScanReason reason);
-	/**
-	 * Called whenever a ownable synchronizer object is scaned during CopyForwardScheme. Places the object on the thread-specific buffer of gc work thread.
-	 * @param env -- current thread environment
-	 * @param object -- The object of type or subclass of java.util.concurrent.locks.AbstractOwnableSynchronizer.
-	 */
-	MMINLINE void addOwnableSynchronizerObjectInList(MM_EnvironmentVLHGC *env, j9object_t object);
 
 	/**
 	 * Scan the slots of a mixed object.

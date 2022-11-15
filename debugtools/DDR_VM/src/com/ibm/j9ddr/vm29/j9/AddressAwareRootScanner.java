@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -47,7 +47,6 @@ public abstract class AddressAwareRootScanner extends RootScanner
 	protected abstract void doUnfinalizedObject(J9ObjectPointer slot, VoidPointer address);
 	protected abstract void doMonitorReference(J9ObjectMonitorPointer objectMonitor, VoidPointer address);
 	protected abstract void doMonitorLookupCacheSlot(J9ObjectMonitorPointer objectMonitor, ObjectMonitorReferencePointer address);
-	protected abstract void doOwnableSynchronizerObject(J9ObjectPointer slot, VoidPointer address);
 	protected abstract void doJNIWeakGlobalReference(J9ObjectPointer slot, VoidPointer address);
 	protected abstract void doJNIGlobalReferenceSlot(J9ObjectPointer slot, VoidPointer address);
 	protected abstract void doRememberedSlot(J9ObjectPointer slot, VoidPointer address);
@@ -152,12 +151,6 @@ public abstract class AddressAwareRootScanner extends RootScanner
 		doUnfinalizedObject(slot, VoidPointer.NULL);
 	}
 	
-	@Override
-	protected void doOwnableSynchronizerObject(J9ObjectPointer slot)
-	{
-		doOwnableSynchronizerObject(slot, VoidPointer.NULL);
-	}
-
 	@Override
 	protected void doVMClassSlot(J9ClassPointer slot)
 	{
