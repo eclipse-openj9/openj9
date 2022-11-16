@@ -178,18 +178,16 @@ timeout(time: TIMEOUT_TIME.toInteger(), unit: TIMEOUT_UNITS) {
                             if (MODES.contains('cleanup')) {
                                 stage("${nodeName} - Cleanup Workspaces") {
                                     def buildWorkspace = "${env.WORKSPACE}"
-                                    if (nodeLabels.contains('sw.os.windows')) {
-                                        // convert windows path to unix path
-                                        buildWorkspace = sh(script: "cygpath -u '${env.WORKSPACE}'", returnStdout: true).trim()
-                                    }
 
                                     def cleanDirsStr = "/tmp/${cleanDirs.join(' /tmp/')}"
                                     if (nodeLabels.contains('sw.os.windows')) {
+                                        // convert windows path to unix path
+                                        buildWorkspace = sh(script: "cygpath -u '${env.WORKSPACE}'", returnStdout: true).trim()
                                         // test resources
                                         cleanDirsStr += " ${buildWorkspace}/../../"
                                         cleanDirsStr += cleanDirs.join(" ${buildWorkspace}/../../")
-                                        // shared classes cache
-                                        cleanDirsStr += " ${buildWorkspace}/../../javasharedresources /tmp/javasharedresources /temp/javasharedresources"
+                                        windowsTemp = sh(script: "cygpath -u '${env.TEMP}'", returnStdout: true).trim()
+                                        cleanDirsStr += cleanDirs.join(" ${windowsTemp}/")
                                     }
 
                                     // cleanup test results
