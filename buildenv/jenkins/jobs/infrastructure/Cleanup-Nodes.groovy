@@ -197,14 +197,15 @@ timeout(time: TIMEOUT_TIME.toInteger(), unit: TIMEOUT_UNITS) {
                                     sh "rm -fr ${cleanDirsStr}"
 
                                     // Cleanup OSX shared memory and content in /cores
-                                    if (nodeLabels.contains('sw.os.osx')) {
+                                    if (nodeLabels.contains('sw.os.osx'||'sw.os.mac')) {
                                         retry(2) {
                                             sh """
                                                 ipcs -ma
                                                 ipcs -ma | awk '/^m / { if (\$9 == 0) { print \$2 }}' | xargs -n 1 ipcrm -m
                                                 ipcs -ma
                                                 du -sh /cores
-                                                rm -rf /cores/*
+                                                cd /cores
+                                                rm `ls -al | grep 'myid' | awk ' { print \$9 } '`
                                                 du -sh /cores
                                             """
                                         }
