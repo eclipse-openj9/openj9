@@ -134,6 +134,7 @@ public:
    const ClassLoaderSerializationRecord &data() const { return _data; }
    const AOTSerializationRecord *dataAddr() const override { return &_data; }
 
+   static const char *getRecordName() { return "class loader"; }
    static AOTCacheClassLoaderRecord *create(uintptr_t id, const uint8_t *name, size_t nameLength);
 
 private:
@@ -162,6 +163,7 @@ public:
    const ClassSerializationRecord &data() const { return _data; }
    const AOTSerializationRecord *dataAddr() const override { return &_data; }
 
+   static const char *getRecordName() { return "class"; }
    static AOTCacheClassRecord *create(uintptr_t id, const AOTCacheClassLoaderRecord *classLoaderRecord,
                                       const JITServerROMClassHash &hash, const J9ROMClass *romClass);
    void subRecordsDo(const std::function<void(const AOTCacheRecord *)> &f) const override;
@@ -194,6 +196,7 @@ public:
    const MethodSerializationRecord &data() const { return _data; }
    const AOTSerializationRecord *dataAddr() const override { return &_data; }
 
+   static const char *getRecordName() { return "method"; }
    static AOTCacheMethodRecord *create(uintptr_t id, const AOTCacheClassRecord *definingClassRecord, uint32_t index);
    void subRecordsDo(const std::function<void(const AOTCacheRecord *)> &f) const override;
 
@@ -238,7 +241,7 @@ protected:
 
    static size_t size(const D &header) { return size(header.list().length()); }
 
-   bool setSubrecordPointers(const Vector<R *> &cacheRecords);
+   bool setSubrecordPointers(const Vector<R *> &cacheRecords, const char *recordName, const char *subrecordName);
 
    // Layout: struct D header, uintptr_t ids[length], const R *records[length]
    D _data;
@@ -248,6 +251,7 @@ protected:
 class AOTCacheClassChainRecord final : public AOTCacheListRecord<ClassChainSerializationRecord, AOTCacheClassRecord>
    {
 public:
+   static const char *getRecordName() { return "class chain"; }
    static AOTCacheClassChainRecord *create(uintptr_t id, const AOTCacheClassRecord *const *records, size_t length);
 
    const AOTCacheClassRecord *rootClassRecord() const { return records()[0]; }
@@ -268,6 +272,7 @@ class AOTCacheWellKnownClassesRecord final :
    public AOTCacheListRecord<WellKnownClassesSerializationRecord, AOTCacheClassChainRecord, uintptr_t>
    {
 public:
+   static const char *getRecordName() { return "well-known classes"; }
    static AOTCacheWellKnownClassesRecord *create(uintptr_t id, const AOTCacheClassChainRecord *const *records,
                                                  size_t length, uintptr_t includedClasses);
 
@@ -288,6 +293,7 @@ public:
    const AOTHeaderSerializationRecord &data() const { return _data; }
    const AOTSerializationRecord *dataAddr() const override { return &_data; }
 
+   static const char *getRecordName() { return "AOT header"; }
    static AOTCacheAOTHeaderRecord *create(uintptr_t id, const TR_AOTHeader *header);
 
 private:
@@ -320,6 +326,7 @@ public:
    const AOTCacheRecord *const *records() const { return (const AOTCacheRecord *const *)_data.end(); }
    AOTCacheRecord **records() { return (AOTCacheRecord **)_data.end(); }
 
+   static const char *getRecordName() { return "cached AOT method"; }
    static CachedAOTMethod *create(const AOTCacheClassChainRecord *definingClassChainRecord, uint32_t index,
                                   TR_Hotness optLevel, const AOTCacheAOTHeaderRecord *aotHeaderRecord,
                                   const Vector<std::pair<const AOTCacheRecord *, uintptr_t>> &records,
