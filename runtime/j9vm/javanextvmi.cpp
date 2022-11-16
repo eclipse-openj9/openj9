@@ -19,7 +19,6 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-#include <assert.h>
 #include <jni.h>
 
 #include "bcverify_api.h"
@@ -52,13 +51,13 @@ extern IDATA (*f_monitorNotifyAll)(omrthread_monitor_t monitor);
 JNIEXPORT void JNICALL
 JVM_DefineArchivedModules(JNIEnv *env, jobject obj1, jobject obj2)
 {
-	assert(!"JVM_DefineArchivedModules unimplemented");
+	Assert_SC_true(!"JVM_DefineArchivedModules unimplemented");
 }
 
 JNIEXPORT void JNICALL
 JVM_LogLambdaFormInvoker(JNIEnv *env, jstring str)
 {
-	assert(!"JVM_LogLambdaFormInvoker unimplemented");
+	Assert_SC_true(!"JVM_LogLambdaFormInvoker unimplemented");
 }
 
 JNIEXPORT jboolean JNICALL
@@ -188,13 +187,13 @@ JVM_GetExtendedNPEMessage(JNIEnv *env, jthrowable throwableObj)
 JNIEXPORT void JNICALL
 JVM_DumpClassListToFile(JNIEnv *env, jstring str)
 {
-	assert(!"JVM_DumpClassListToFile unimplemented");
+	Assert_SC_true(!"JVM_DumpClassListToFile unimplemented");
 }
 
 JNIEXPORT void JNICALL
 JVM_DumpDynamicArchive(JNIEnv *env, jstring str)
 {
-	assert(!"JVM_DumpDynamicArchive unimplemented");
+	Assert_SC_true(!"JVM_DumpDynamicArchive unimplemented");
 }
 #endif /* JAVA_SPEC_VERSION >= 17 */
 
@@ -213,7 +212,7 @@ JVM_IsFinalizationEnabled(JNIEnv *env)
 JNIEXPORT void JNICALL
 JVM_ReportFinalizationComplete(JNIEnv *env, jobject obj)
 {
-	assert(!"JVM_ReportFinalizationComplete unimplemented");
+	Assert_SC_true(!"JVM_ReportFinalizationComplete unimplemented");
 }
 #endif /* JAVA_SPEC_VERSION >= 18 */
 
@@ -221,13 +220,13 @@ JVM_ReportFinalizationComplete(JNIEnv *env, jobject obj)
 JNIEXPORT void JNICALL
 JVM_LoadZipLibrary(void)
 {
-	assert(!"JVM_LoadZipLibrary unimplemented");
+	Assert_SC_true(!"JVM_LoadZipLibrary unimplemented");
 }
 
 JNIEXPORT void JNICALL
 JVM_RegisterContinuationMethods(JNIEnv *env, jclass clz)
 {
-	assert(!"JVM_RegisterContinuationMethods unimplemented");
+	Assert_SC_true(!"JVM_RegisterContinuationMethods unimplemented");
 }
 
 JNIEXPORT jboolean JNICALL
@@ -254,11 +253,25 @@ JVM_VirtualThreadMountBegin(JNIEnv *env, jobject thread, jboolean firstMount)
 	J9JavaVM *vm = currentThread->javaVM;
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 
+	Trc_SC_VirtualThreadMountBegin_Entry(currentThread, thread, firstMount);
+
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 	f_monitorEnter(vm->liveVirtualThreadListMutex);
 	j9object_t threadObj = J9_JNI_UNWRAP_REFERENCE(thread);
 
-	assert(IS_JAVA_LANG_VIRTUALTHREAD(currentThread, threadObj));
+	Assert_SC_true(IS_JAVA_LANG_VIRTUALTHREAD(currentThread, threadObj));
+
+	if (TrcEnabled_Trc_SC_VirtualThread_Info) {
+		j9object_t continuationObj = J9VMJAVALANGVIRTUALTHREAD_CONT(currentThread, threadObj);
+		Trc_SC_VirtualThread_Info(
+				currentThread,
+				threadObj,
+				J9VMJAVALANGVIRTUALTHREAD_STATE(currentThread, threadObj),
+				J9OBJECT_I64_LOAD(currentThread, threadObj, vm->virtualThreadInspectorCountOffset),
+				J9VMJAVALANGVIRTUALTHREAD_CARRIERTHREAD(currentThread, threadObj),
+				continuationObj,
+				J9VMJDKINTERNALVMCONTINUATION_VMREF(currentThread, continuationObj));
+	}
 
 	while (vm->inspectingLiveVirtualThreadList
 	|| (0 != J9OBJECT_I64_LOAD(currentThread, threadObj, vm->virtualThreadInspectorCountOffset))
@@ -282,6 +295,8 @@ JVM_VirtualThreadMountBegin(JNIEnv *env, jobject thread, jboolean firstMount)
 
 	f_monitorExit(vm->liveVirtualThreadListMutex);
 	vmFuncs->internalExitVMToJNI(currentThread);
+
+	Trc_SC_VirtualThreadMountBegin_Exit(currentThread, thread, firstMount);
 }
 
 JNIEXPORT void JNICALL
@@ -291,9 +306,23 @@ JVM_VirtualThreadMountEnd(JNIEnv *env, jobject thread, jboolean firstMount)
 	J9JavaVM *vm = currentThread->javaVM;
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 
+	Trc_SC_VirtualThreadMountEnd_Entry(currentThread, thread, firstMount);
+
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 	f_monitorEnter(vm->liveVirtualThreadListMutex);
 	j9object_t threadObj = J9_JNI_UNWRAP_REFERENCE(thread);
+
+	if (TrcEnabled_Trc_SC_VirtualThread_Info) {
+		j9object_t continuationObj = J9VMJAVALANGVIRTUALTHREAD_CONT(currentThread, threadObj);
+		Trc_SC_VirtualThread_Info(
+				currentThread,
+				threadObj,
+				J9VMJAVALANGVIRTUALTHREAD_STATE(currentThread, threadObj),
+				J9OBJECT_I64_LOAD(currentThread, threadObj, vm->virtualThreadInspectorCountOffset),
+				J9VMJAVALANGVIRTUALTHREAD_CARRIERTHREAD(currentThread, threadObj),
+				continuationObj,
+				J9VMJDKINTERNALVMCONTINUATION_VMREF(currentThread, continuationObj));
+	}
 
 	if (firstMount) {
 		if (NULL == vm->liveVirtualThreadList) {
@@ -322,6 +351,14 @@ JVM_VirtualThreadMountEnd(JNIEnv *env, jobject thread, jboolean firstMount)
 		}
 
 		if (NULL != vm->liveVirtualThreadList) {
+			j9object_t threadPrev = J9OBJECT_OBJECT_LOAD(currentThread, threadObj, vm->virtualThreadLinkPreviousOffset);
+			j9object_t threadNext = J9OBJECT_OBJECT_LOAD(currentThread, threadObj, vm->virtualThreadLinkNextOffset);
+
+			/* Non-null previous and next elements in the list suggest that the thread has
+			 * already been added to the list. Only add to the list if the previous and
+			 * next elements in the list are null.
+			 */
+			Assert_SC_true((NULL == threadPrev) && (NULL == threadNext));
 			j9object_t root = *(vm->liveVirtualThreadList);
 			j9object_t rootPrev = J9OBJECT_OBJECT_LOAD(currentThread, root, vm->virtualThreadLinkPreviousOffset);
 
@@ -336,7 +373,7 @@ JVM_VirtualThreadMountEnd(JNIEnv *env, jobject thread, jboolean firstMount)
 	}
 
 	/* Allow thread to be inspected again. */
-	assert(-1 == J9OBJECT_I64_LOAD(currentThread, threadObj, vm->virtualThreadInspectorCountOffset));
+	Assert_SC_true(-1 == J9OBJECT_I64_LOAD(currentThread, threadObj, vm->virtualThreadInspectorCountOffset));
 	J9OBJECT_I64_STORE(currentThread, threadObj, vm->virtualThreadInspectorCountOffset, 0);
 
 	/* If isSuspendedByJVMTI is non-zero, J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND is set
@@ -352,6 +389,8 @@ JVM_VirtualThreadMountEnd(JNIEnv *env, jobject thread, jboolean firstMount)
 	f_monitorExit(vm->liveVirtualThreadListMutex);
 
 	vmFuncs->internalExitVMToJNI(currentThread);
+
+	Trc_SC_VirtualThreadMountEnd_Exit(currentThread, thread, firstMount);
 }
 
 JNIEXPORT void JNICALL
@@ -361,9 +400,23 @@ JVM_VirtualThreadUnmountBegin(JNIEnv *env, jobject thread, jboolean lastUnmount)
 	J9JavaVM *vm = currentThread->javaVM;
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 
+	Trc_SC_VirtualThreadUnmountBegin_Entry(currentThread, thread, lastUnmount);
+
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 	f_monitorEnter(vm->liveVirtualThreadListMutex);
 	j9object_t threadObj = J9_JNI_UNWRAP_REFERENCE(thread);
+
+	if (TrcEnabled_Trc_SC_VirtualThread_Info) {
+		j9object_t continuationObj = J9VMJAVALANGVIRTUALTHREAD_CONT(currentThread, threadObj);
+		Trc_SC_VirtualThread_Info(
+				currentThread,
+				threadObj,
+				J9VMJAVALANGVIRTUALTHREAD_STATE(currentThread, threadObj),
+				J9OBJECT_I64_LOAD(currentThread, threadObj, vm->virtualThreadInspectorCountOffset),
+				J9VMJAVALANGVIRTUALTHREAD_CARRIERTHREAD(currentThread, threadObj),
+				continuationObj,
+				J9VMJDKINTERNALVMCONTINUATION_VMREF(currentThread, continuationObj));
+	}
 
 	while (vm->inspectingLiveVirtualThreadList
 	|| (0 != J9OBJECT_I64_LOAD(currentThread, threadObj, vm->virtualThreadInspectorCountOffset))
@@ -390,9 +443,18 @@ JVM_VirtualThreadUnmountBegin(JNIEnv *env, jobject thread, jboolean lastUnmount)
 			j9object_t threadPrev = J9OBJECT_OBJECT_LOAD(currentThread, threadObj, vm->virtualThreadLinkPreviousOffset);
 			j9object_t threadNext = J9OBJECT_OBJECT_LOAD(currentThread, threadObj, vm->virtualThreadLinkNextOffset);
 
-			/* Remove thread from list. The root will never be removed. */
+			/* Non-null previous and next elements in the list suggest that the thread has
+			 * been added to the list. Only remove from the list if the previous and next
+			 * elements in the list are non-null.
+			 */
+			Assert_SC_true((NULL != threadPrev) && (NULL != threadNext));
+			/* Remove thread from the list. The root will never be removed. */
 			J9OBJECT_OBJECT_STORE(currentThread, threadPrev, vm->virtualThreadLinkNextOffset, threadNext);
 			J9OBJECT_OBJECT_STORE(currentThread, threadNext, vm->virtualThreadLinkPreviousOffset, threadPrev);
+
+			/* Reset previous and next fields in the thread object to null. */
+			J9OBJECT_OBJECT_STORE(currentThread, threadObj, vm->virtualThreadLinkNextOffset, NULL);
+			J9OBJECT_OBJECT_STORE(currentThread, threadObj, vm->virtualThreadLinkPreviousOffset, NULL);
 		}
 
 		TRIGGER_J9HOOK_VM_VIRTUAL_THREAD_END(vm->hookInterface, currentThread);
@@ -400,6 +462,8 @@ JVM_VirtualThreadUnmountBegin(JNIEnv *env, jobject thread, jboolean lastUnmount)
 
 	f_monitorExit(vm->liveVirtualThreadListMutex);
 	vmFuncs->internalExitVMToJNI(currentThread);
+
+	Trc_SC_VirtualThreadUnmountBegin_Exit(currentThread, thread, lastUnmount);
 }
 
 JNIEXPORT void JNICALL
@@ -409,9 +473,23 @@ JVM_VirtualThreadUnmountEnd(JNIEnv *env, jobject thread, jboolean lastUnmount)
 	J9JavaVM *vm = currentThread->javaVM;
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 
+	Trc_SC_VirtualThreadUnmountEnd_Entry(currentThread, thread, lastUnmount);
+
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 	f_monitorEnter(vm->liveVirtualThreadListMutex);
 	j9object_t threadObj = J9_JNI_UNWRAP_REFERENCE(thread);
+
+	if (TrcEnabled_Trc_SC_VirtualThread_Info) {
+		j9object_t continuationObj = J9VMJAVALANGVIRTUALTHREAD_CONT(currentThread, threadObj);
+		Trc_SC_VirtualThread_Info(
+				currentThread,
+				threadObj,
+				J9VMJAVALANGVIRTUALTHREAD_STATE(currentThread, threadObj),
+				J9OBJECT_I64_LOAD(currentThread, threadObj, vm->virtualThreadInspectorCountOffset),
+				J9VMJAVALANGVIRTUALTHREAD_CARRIERTHREAD(currentThread, threadObj),
+				continuationObj,
+				J9VMJDKINTERNALVMCONTINUATION_VMREF(currentThread, continuationObj));
+	}
 
 	if (lastUnmount) {
 		vmFuncs->freeTLS(currentThread, threadObj);
@@ -421,12 +499,14 @@ JVM_VirtualThreadUnmountEnd(JNIEnv *env, jobject thread, jboolean lastUnmount)
 	}
 
 	/* Allow thread to be inspected again. */
-	assert(-1 == J9OBJECT_I64_LOAD(currentThread, threadObj, vm->virtualThreadInspectorCountOffset));
+	Assert_SC_true(-1 == J9OBJECT_I64_LOAD(currentThread, threadObj, vm->virtualThreadInspectorCountOffset));
 	J9OBJECT_I64_STORE(currentThread, threadObj, vm->virtualThreadInspectorCountOffset, 0);
 	f_monitorNotifyAll(vm->liveVirtualThreadListMutex);
 
 	f_monitorExit(vm->liveVirtualThreadListMutex);
 	vmFuncs->internalExitVMToJNI(currentThread);
+
+	Trc_SC_VirtualThreadUnmountEnd_Exit(currentThread, thread, lastUnmount);
 }
 #endif /* JAVA_SPEC_VERSION >= 19 */
 
