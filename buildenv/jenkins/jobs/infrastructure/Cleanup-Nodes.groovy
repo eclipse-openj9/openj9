@@ -97,30 +97,30 @@ timeout(time: TIMEOUT_TIME.toInteger(), unit: TIMEOUT_UNITS) {
     timestamps {
         node(SETUP_LABEL) {
             try {
-                def cleanDirs = ['NoEntryTest*.zip',
-                                 'auth*.login',
-                                 'tmp*',
-                                 'classes*',
-                                 'aci*',
+                def cleanDirs = ['aci*',
                                  'append*',
-                                 'mlib*',
-                                 'resource-*',
-                                 'openj9tr_resources*',
-                                 'testParentDir',
-                                 'jni-*',
-                                 'mauve',
-                                 'test*',
+                                 'auth*.login',
                                  'blah-*.tmp',
+                                 'classes*',
+                                 'intermediateClassCreateTest',
+                                 'jni-*',
                                  'lines*.tmp',
+                                 'mauve',
+                                 'mlib*',
+                                 'NoEntryTest*.zip',
+                                 'openj9tr_resources*',
                                  'prefix*.json',
+                                 'resource-*',
+                                 'sh-np.*',
+                                 'sh-np-*',
+                                 'sharedcacheapi',
                                  'sink*.tmp',
                                  'source*.tmp',
                                  'target*.tmp',
-                                 'sharedcacheapi',
-                                 'intermediateClassCreateTest',
-                                 'sh-np.*',
-                                 'xlc*',
-                                 'sh-np-*']
+                                 'test*',
+                                 'testParentDir',
+                                 'tmp*',
+                                 'xlc*']
 
                 for (aNode in jenkins.model.Jenkins.instance.getLabel(LABEL).getNodes()) {
                     def nodeName = aNode.getDisplayName()
