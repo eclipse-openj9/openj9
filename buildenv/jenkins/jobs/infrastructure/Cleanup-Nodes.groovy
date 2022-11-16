@@ -188,6 +188,9 @@ timeout(time: TIMEOUT_TIME.toInteger(), unit: TIMEOUT_UNITS) {
                                         cleanDirsStr += cleanDirs.join(" ${buildWorkspace}/../../")
                                         windowsTemp = sh(script: "cygpath -u '${env.TEMP}'", returnStdout: true).trim()
                                         cleanDirsStr += cleanDirs.join(" ${windowsTemp}/")
+                                    } else {
+                                        cleanDirsStr += " ${WORKSPACE}/../../"
+                                        cleanDirsStr += cleanDirs.join(" ${WORKSPACE}/../../")
                                     }
 
                                     // cleanup test results
