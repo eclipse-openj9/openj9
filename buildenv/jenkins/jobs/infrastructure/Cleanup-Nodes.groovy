@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2021 IBM Corp. and others
+ * Copyright (c) 2018, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -97,29 +97,56 @@ timeout(time: TIMEOUT_TIME.toInteger(), unit: TIMEOUT_UNITS) {
     timestamps {
         node(SETUP_LABEL) {
             try {
-                def cleanDirs = ['aci*',
+                def cleanDirs = ['*policy',
+                                 '*props',
+                                 '.com_ibm_tools_attach',
+                                 '..*.temp',
+                                 'aci*',
                                  'append*',
                                  'auth*.login',
-                                 'blah-*.tmp',
+                                 'blah*.tmp',
+                                 'buffer*txt',
                                  'classes*',
+                                 'Compression*.jpg',
+                                 'core*',
+                                 'dst*.dat',
+                                 'exp*tmp',
+                                 'foo*',
+                                 'heapdump*',
+                                 'imageio*.tmp',
                                  'intermediateClassCreateTest',
+                                 'javacore*',
+                                 'javasharedresources',
+                                 'jffi*.dll',
+                                 'jitdump*',
+                                 'jna-*',
                                  'jni-*',
                                  'lines*.tmp',
                                  'mauve',
                                  'mlib*',
+                                 'name*',
                                  'NoEntryTest*.zip',
                                  'openj9tr_resources*',
+                                 'packsrv*'
                                  'prefix*.json',
+                                 'readString_file*.tmp',
                                  'resource-*',
+                                 'rmid-err*.tmp',
                                  'sh-np.*',
                                  'sh-np-*',
                                  'sharedcacheapi',
                                  'sink*.tmp',
+                                 'Snap*',
                                  'source*.tmp',
+                                 'SpecialTempFile',
                                  'target*.tmp',
+                                 'temp*.tif',
                                  'test*',
                                  'testParentDir',
                                  'tmp*',
+                                 'unpacksrv*',
+                                 'work*'
+                                 'xfer.fch.*',
                                  'xlc*']
 
                 for (aNode in jenkins.model.Jenkins.instance.getLabel(LABEL).getNodes()) {
