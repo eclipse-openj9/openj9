@@ -1497,8 +1497,8 @@ J9NLS_CFR_ERR_NON_STATIC_SYNCHRONIZED_VALUE_TYPE_METHOD.system_action=The JVM wi
 J9NLS_CFR_ERR_NON_STATIC_SYNCHRONIZED_VALUE_TYPE_METHOD.user_response=Contact the provider of the class file for a corrected version.
 # END NON-TRANSLATABLE
 
-# <new> is not translatable
-J9NLS_CFR_ERR_INVALID_FLAGS_ON_NEW=Met\u00f3dy s n\u00e1zvom <new> musia by\u0165 statick\u00e9 a nesm\u00fa by\u0165 fin\u00e1lne, synchronizovan\u00e9, nat\u00edvne ani abstraktn\u00e9
+# <vnew> is not translatable
+J9NLS_CFR_ERR_INVALID_FLAGS_ON_NEW=Met\u00f3dy s n\u00e1zvom <vnew> musia by\u0165 statick\u00e9 a nesm\u00fa by\u0165 fin\u00e1lne, synchronizovan\u00e9, nat\u00edvne ani abstraktn\u00e9
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_INVALID_FLAGS_ON_NEW.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_INVALID_FLAGS_ON_NEW.system_action=The JVM will throw a verification or classloading related exception such as java.lang.ClassFormatError.

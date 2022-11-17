@@ -254,14 +254,20 @@ buildStackFromMethodSignature( J9BytecodeVerificationData *verifyData, UDATA **s
 		classIndex = findClassName(verifyData, J9UTF8_DATA(className), J9UTF8_LENGTH(className));
 
 		/* In the <init> method of Object the type of this is Object.  In other <init> methods, the type of this is uninitializedThis */
-		if ((J9UTF8_DATA(utf8string)[0] == '<')	&& (J9UTF8_DATA(utf8string)[1] == 'i') && (classIndex != BCV_JAVA_LANG_OBJECT_INDEX)) {
+		if ((classIndex != BCV_JAVA_LANG_OBJECT_INDEX)
+			&& (J9UTF8_LITERAL_EQUALS(J9UTF8_DATA(utf8string), J9UTF8_LENGTH(utf8string), "<init>")
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+				|| J9UTF8_LITERAL_EQUALS(J9UTF8_DATA(utf8string), J9UTF8_LENGTH(utf8string), "<vnew>")
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+			)
+		) {
 			/* This is <init>, not java/lang/Object */
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 			/* This is temporary and will have to be changed when <vnew> is introduced (along with all other code that references J9VM_OPT_VALHALLA_NEW_FACTORY_METHOD) */
 			if (J9ROMCLASS_IS_PRIMITIVE_VALUE_TYPE(romClass)) {
 				PUSH(BCV_PRIMITIVE_VALUETYPE | BCV_SPECIAL_INIT | (classIndex << BCV_CLASS_INDEX_SHIFT));
 			} else
-#endif /* #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 			{
 				PUSH(BCV_SPECIAL_INIT | (classIndex << BCV_CLASS_INDEX_SHIFT));
 			}
