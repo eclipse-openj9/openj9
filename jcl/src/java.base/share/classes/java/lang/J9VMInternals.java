@@ -338,7 +338,11 @@ final class J9VMInternals {
 	}
 
 	/**
-	 * Private method to be called by the VM after a Threads dies and throws ThreadDeath
+/*[IF JAVA_SPEC_VERSION < 20]
+	 * Private method to be called by the VM after a Threads dies and throws ThreadDeath.
+/*[ELSE]
+	 * Private method to be called by the VM after a Threads dies.
+/*[ENDIF]
 	 * It has to <code>notifyAll()</code> so that <code>join</code> can work properly.
 	 * However, it has to be done when the Thread is "thought of" as being dead by other
 	 * observer Threads (<code>isAlive()</code> has to return false for the Thread
@@ -641,7 +645,6 @@ final class J9VMInternals {
 					"{0} (loaded from {1} by {2}) called from {3} (loaded from {4} by {5}).",	//$NON-NLS-1$
 					args);
 		} catch (Exception | VirtualMachineError e) {
-			// don't catch ThreadDeath
 			if ((null == callingClassInfo) || (null == calledClassInfo)) {
 				return methodSig;
 			}
@@ -650,7 +653,6 @@ final class J9VMInternals {
 				return methodSig + "(loaded from " + callingClassInfo[0] + " by " + callingClassInfo[1] + ") called from " + clazz2.toString() +
 						" (loaded from " + calledClassInfo[0] + " by " + calledClassInfo[1] + ")";
 			} catch (Exception | VirtualMachineError e2) {
-				// don't catch ThreadDeath
 				/* if something fails, fall back to old message */
 				return methodSig;
 			}
