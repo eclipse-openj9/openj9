@@ -78,6 +78,8 @@ static I_32 adjustAlignment(I_32 offset, I_32 alignment)
 #define MAX_PARAM_GPR_NUM 8
 #define MAX_PARAM_FPR_NUM 8
 
+#define PARAM_REGS_SAVE_SIZE (MAX_PARAM_GPR_NUM * 8 + MAX_PARAM_FPR_NUM * 8)
+
 #define MAX_BYTES_COPY_BACK_STRAIGHT 64
 
 /**
@@ -393,7 +395,7 @@ createUpcallThunk(J9UpcallMetaData *metaData)
 		offsetToParamArea += 8;
 	}
 
-	I_32 frameSize0 = (gprCount + fprCount) * 8 + offsetToParamArea;
+	I_32 frameSize0 = PARAM_REGS_SAVE_SIZE + offsetToParamArea;
 	I_32 frameSize = adjustAlignment(frameSize0, 16); /* SP must always align to 16-byte boundary on AArch64 */
 	offsetToParamArea += (frameSize - frameSize0); /* Adjust the offset */
 
@@ -706,9 +708,13 @@ getArgPointer(J9UpcallNativeSignature *nativeSig, void *argListPtr, I_32 argIdx)
 {
 	J9UpcallSigType *sigArray = nativeSig->sigArray;
 	I_32 lastSigIdx = (I_32)(nativeSig->numSigs - 1); /* The index for the return type in the signature array */
-	I_32 stackSlotSize = 0;
 	I_32 stackOffset = 0;
-	I_32 tempInt = 0;
+	I_32 stackOffset1 = 0; /* for arguments in the stack extended by the thunk */
+	I_32 stackOffset2 = PARAM_REGS_SAVE_SIZE; /* for arguments in the original stack */
+	I_32 gprIdx = 0;
+	I_32 fprIdx = 0;
+	bool useMoreGPRs = true;
+	bool useMoreFPRs = true;
 	bool isPointerToStruct = false;
 	void *ret = NULL;
 
@@ -716,7 +722,7 @@ getArgPointer(J9UpcallNativeSignature *nativeSig, void *argListPtr, I_32 argIdx)
 
 	/* Loop through the arguments */
 	for (I_32 i = 0; i <= argIdx; i++) {
-		tempInt = sigArray[i].sizeInByte;
+		I_32 argSize = sigArray[i].sizeInByte;
 		isPointerToStruct = false;
 		switch (sigArray[i].type) {
 #if defined(LINUX)
@@ -724,63 +730,180 @@ getArgPointer(J9UpcallNativeSignature *nativeSig, void *argListPtr, I_32 argIdx)
 			case J9_FFI_UPCALL_SIG_TYPE_SHORT:   /* Fall through */
 			case J9_FFI_UPCALL_SIG_TYPE_INT32:   /* Fall through */
 			case J9_FFI_UPCALL_SIG_TYPE_POINTER: /* Fall through */
-			case J9_FFI_UPCALL_SIG_TYPE_INT64:   /* Fall through */
+			case J9_FFI_UPCALL_SIG_TYPE_INT64:
+				if (useMoreGPRs && (gprIdx < MAX_PARAM_GPR_NUM)) {
+					stackOffset = stackOffset1;
+					stackOffset1 += sizeof(void *);
+					gprIdx++;
+				} else {
+					stackOffset = stackOffset2;
+					stackOffset2 += sizeof(void *);
+				}
+				break;
 			case J9_FFI_UPCALL_SIG_TYPE_FLOAT:   /* Fall through */
 			case J9_FFI_UPCALL_SIG_TYPE_DOUBLE:
-				stackOffset = stackSlotSize;
-				stackSlotSize += sizeof(void *);
+				if (useMoreFPRs && (fprIdx < MAX_PARAM_FPR_NUM)) {
+					stackOffset = stackOffset1;
+					stackOffset1 += sizeof(void *);
+					fprIdx++;
+				} else {
+					stackOffset = stackOffset2;
+					stackOffset2 += sizeof(void *);
+				}
 				break;
 #elif defined(OSX)
 			case J9_FFI_UPCALL_SIG_TYPE_CHAR:
-				stackOffset = stackSlotSize;
-				stackSlotSize += 1;
+				if (useMoreGPRs && (gprIdx < MAX_PARAM_GPR_NUM)) {
+					stackOffset = stackOffset1;
+					stackOffset1 += 1;
+					gprIdx++;
+				} else {
+					stackOffset = stackOffset2;
+					stackOffset2 += 1;
+				}
 				break;
 			case J9_FFI_UPCALL_SIG_TYPE_SHORT:
-				stackSlotSize = adjustAlignment(stackSlotSize, 2);
-				stackOffset = stackSlotSize;
-				stackSlotSize += 2;
+				if (useMoreGPRs && (gprIdx < MAX_PARAM_GPR_NUM)) {
+					stackOffset1 = adjustAlignment(stackOffset1, 2);
+					stackOffset = stackOffset1;
+					stackOffset1 += 2;
+					gprIdx++;
+				} else {
+					stackOffset2 = adjustAlignment(stackOffset2, 2);
+					stackOffset = stackOffset2;
+					stackOffset2 += 2;
+				}
 				break;
 			case J9_FFI_UPCALL_SIG_TYPE_INT32:
-			case J9_FFI_UPCALL_SIG_TYPE_FLOAT:   /* Fall through */
-				stackSlotSize = adjustAlignment(stackSlotSize, 4);
-				stackOffset = stackSlotSize;
-				stackSlotSize += 4;
+				if (useMoreGPRs && (gprIdx < MAX_PARAM_GPR_NUM)) {
+					stackOffset1 = adjustAlignment(stackOffset1, 4);
+					stackOffset = stackOffset1;
+					stackOffset1 += 4;
+					gprIdx++;
+				} else {
+					stackOffset2 = adjustAlignment(stackOffset2, 4);
+					stackOffset = stackOffset2;
+					stackOffset2 += 4;
+				}
 				break;
 			case J9_FFI_UPCALL_SIG_TYPE_POINTER: /* Fall through */
-			case J9_FFI_UPCALL_SIG_TYPE_INT64:   /* Fall through */
+			case J9_FFI_UPCALL_SIG_TYPE_INT64:
+				if (useMoreGPRs && (gprIdx < MAX_PARAM_GPR_NUM)) {
+					stackOffset1 = adjustAlignment(stackOffset1, 8);
+					stackOffset = stackOffset1;
+					stackOffset1 += 8;
+					gprIdx++;
+				} else {
+					stackOffset2 = adjustAlignment(stackOffset2, 8);
+					stackOffset = stackOffset2;
+					stackOffset2 += 8;
+				}
+				break;
+			case J9_FFI_UPCALL_SIG_TYPE_FLOAT:
+				if (useMoreFPRs && (fprIdx < MAX_PARAM_FPR_NUM)) {
+					stackOffset1 = adjustAlignment(stackOffset1, 4);
+					stackOffset = stackOffset1;
+					stackOffset1 += 4;
+					fprIdx++;
+				} else {
+					stackOffset2 = adjustAlignment(stackOffset2, 4);
+					stackOffset = stackOffset2;
+					stackOffset2 += 4;
+				}
+				break;
 			case J9_FFI_UPCALL_SIG_TYPE_DOUBLE:
-				stackSlotSize = adjustAlignment(stackSlotSize, 8);
-				stackOffset = stackSlotSize;
-				stackSlotSize += 8;
+				if (useMoreFPRs && (fprIdx < MAX_PARAM_FPR_NUM)) {
+					stackOffset1 = adjustAlignment(stackOffset1, 8);
+					stackOffset = stackOffset1;
+					stackOffset1 += 8;
+					fprIdx++;
+				} else {
+					stackOffset2 = adjustAlignment(stackOffset2, 8);
+					stackOffset = stackOffset2;
+					stackOffset2 += 8;
+				}
 				break;
 #endif /* defined(LINUX) */
 			case J9_FFI_UPCALL_SIG_TYPE_STRUCT_AGGREGATE_ALL_SP:
+				if (argSize <= (I_32)(4 * sizeof(float))) {
+					I_32 structRegs = argSize/sizeof(float);
+					if (useMoreFPRs && (fprIdx + structRegs <= MAX_PARAM_FPR_NUM)) {
 #if defined(OSX)
-				stackSlotSize = adjustAlignment(stackSlotSize, 8);
-#endif
-				stackOffset = stackSlotSize;
-				if (tempInt <= (I_32)(4 * sizeof(float))) {
-					stackSlotSize += ROUND_UP_SLOT_BYTES(tempInt);
+						stackOffset1 = adjustAlignment(stackOffset1, 8);
+#endif /* defined(OSX) */
+						stackOffset = stackOffset1;
+						stackOffset1 += adjustAlignment(argSize, 8);
+						fprIdx += structRegs;
+					} else {
+						/* Whole struct is passed in stack */
+#if defined(OSX)
+						stackOffset2 = adjustAlignment(stackOffset2, 4);
+#endif /* defined(OSX) */
+						stackOffset = stackOffset2;
+#if defined(OSX)
+						stackOffset2 += argSize;
+#else
+						stackOffset2 += adjustAlignment(argSize, 8);
+#endif /* defined(OSX) */
+						useMoreFPRs = false;
+					}
 				} else {
 					/* Passed as pointer */
 					isPointerToStruct = true;
-					stackSlotSize += 8;
+					if (useMoreGPRs && (gprIdx < MAX_PARAM_GPR_NUM)) {
+#if defined(OSX)
+						stackOffset1 = adjustAlignment(stackOffset1, 8);
+#endif /* defined(OSX) */
+						stackOffset = stackOffset1;
+						stackOffset1 += 8;
+						gprIdx++;
+					} else {
+#if defined(OSX)
+						stackOffset2 = adjustAlignment(stackOffset2, 8);
+#endif /* defined(OSX) */
+						stackOffset = stackOffset2;
+						stackOffset2 += 8;
+					}
 				}
 				break;
 			case J9_FFI_UPCALL_SIG_TYPE_STRUCT_AGGREGATE_ALL_DP:
+				if (argSize <= (I_32)(4 * sizeof(double))) {
+					I_32 structRegs = argSize/sizeof(double);
+					if (useMoreFPRs && (fprIdx + structRegs <= MAX_PARAM_FPR_NUM)) {
 #if defined(OSX)
-				stackSlotSize = adjustAlignment(stackSlotSize, 8);
-#endif
-				stackOffset = stackSlotSize;
-				if (tempInt <= (I_32)(4 * sizeof(double))) {
-					stackSlotSize += ROUND_UP_SLOT_BYTES(tempInt);
+						stackOffset1 = adjustAlignment(stackOffset1, 8);
+#endif /* defined(OSX) */
+						stackOffset = stackOffset1;
+						stackOffset1 += argSize;
+						fprIdx += structRegs;
+					} else {
+						/* Whole struct is passed in stack */
+#if defined(OSX)
+						stackOffset2 = adjustAlignment(stackOffset2, 8);
+#endif /* defined(OSX) */
+						stackOffset = stackOffset2;
+						stackOffset2 += argSize;
+						useMoreFPRs = false;
+					}
 				} else {
 					/* Passed as pointer */
 					isPointerToStruct = true;
-					stackSlotSize += 8;
+					if (useMoreGPRs && (gprIdx < MAX_PARAM_GPR_NUM)) {
+#if defined(OSX)
+						stackOffset1 = adjustAlignment(stackOffset1, 8);
+#endif /* defined(OSX) */
+						stackOffset = stackOffset1;
+						stackOffset1 += 8;
+						gprIdx++;
+					} else {
+#if defined(OSX)
+						stackOffset2 = adjustAlignment(stackOffset2, 8);
+#endif /* defined(OSX) */
+						stackOffset = stackOffset2;
+						stackOffset2 += 8;
+					}
 				}
 				break;
-
 			case J9_FFI_UPCALL_SIG_TYPE_STRUCT_AGGREGATE_SP_DP:    /* Fall through */
 			case J9_FFI_UPCALL_SIG_TYPE_STRUCT_AGGREGATE_SP_SP_DP: /* Fall through */
 			case J9_FFI_UPCALL_SIG_TYPE_STRUCT_AGGREGATE_DP_SP:    /* Fall through */
@@ -791,16 +914,41 @@ getArgPointer(J9UpcallNativeSignature *nativeSig, void *argListPtr, I_32 argIdx)
 			case J9_FFI_UPCALL_SIG_TYPE_STRUCT_AGGREGATE_DP_MISC:  /* Fall through */
 			case J9_FFI_UPCALL_SIG_TYPE_STRUCT_AGGREGATE_OTHER:    /* Fall through */
 			case J9_FFI_UPCALL_SIG_TYPE_STRUCT_AGGREGATE_MISC:
+				if (argSize <= (I_32)(2 * sizeof(I_64))) {
+					I_32 structRegs = ROUND_UP_SLOT(argSize);
+					if (useMoreGPRs && (gprIdx + structRegs <= MAX_PARAM_GPR_NUM)) {
 #if defined(OSX)
-				stackSlotSize = adjustAlignment(stackSlotSize, 8);
-#endif
-				stackOffset = stackSlotSize;
-				if (tempInt <= (I_32)(2 * sizeof(I_64))) {
-					stackSlotSize += ROUND_UP_SLOT_BYTES(tempInt);
+						stackOffset1 = adjustAlignment(stackOffset1, 8);
+#endif /* defined(OSX) */
+						stackOffset = stackOffset1;
+						stackOffset1 += structRegs * 8;
+						gprIdx += structRegs;
+					} else {
+						/* Whole struct is passed in stack */
+#if defined(OSX)
+						stackOffset2 = adjustAlignment(stackOffset2, 8);
+#endif /* defined(OSX) */
+						stackOffset = stackOffset2;
+						stackOffset2 += structRegs * 8;
+						useMoreGPRs = false;
+					}
 				} else {
 					/* Passed as pointer */
 					isPointerToStruct = true;
-					stackSlotSize += 8;
+					if (useMoreGPRs && (gprIdx < MAX_PARAM_GPR_NUM)) {
+#if defined(OSX)
+						stackOffset1 = adjustAlignment(stackOffset1, 8);
+#endif /* defined(OSX) */
+						stackOffset = stackOffset1;
+						stackOffset1 += 8;
+						gprIdx++;
+					} else {
+#if defined(OSX)
+						stackOffset2 = adjustAlignment(stackOffset2, 8);
+#endif /* defined(OSX) */
+						stackOffset = stackOffset2;
+						stackOffset2 += 8;
+					}
 				}
 				break;
 			default:
