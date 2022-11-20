@@ -207,10 +207,30 @@ TR_VectorAPIExpansion::visitNodeToBuildVectorAliases(TR::Node *node)
       _aliasTable[methodRefNum]._objectType = getReturnType(methodSymbol);
 
       if (_aliasTable[methodRefNum]._objectType == Unknown &&
-          isVectorAPICall &&
-          methodSymbol->getRecognizedMethod() == TR::jdk_internal_vm_vector_VectorSupport_load)
+          isVectorAPICall)
          {
-         _aliasTable[methodRefNum]._objectType = getObjectTypeFromClassNode(comp(), node->getFirstChild());
+         if (methodSymbol->getRecognizedMethod() == TR::jdk_internal_vm_vector_VectorSupport_load)
+            {
+            _aliasTable[methodRefNum]._objectType = getObjectTypeFromClassNode(comp(), node->getFirstChild());
+            }
+         else if (methodSymbol->getRecognizedMethod() == TR::jdk_internal_vm_vector_VectorSupport_fromBitsCoerced)
+            {
+            TR::Node *broadcastTypeNode = node->getChild(BROADCAST_TYPE_CHILD);
+
+            if (!broadcastTypeNode->getOpCode().isLoadConst())
+               {
+               if (_trace) traceMsg(comp(), "Unknown broadcast type in node %p\n", node);
+               }
+            else
+               {
+               int32_t broadcastType = broadcastTypeNode->get32bitIntegralValue();
+
+               TR_ASSERT_FATAL(broadcastType == MODE_BROADCAST || broadcastType == MODE_BITS_COERCED_LONG_TO_MASK,
+                              "Unexpected broadcast type in node %p\n", node);
+
+               _aliasTable[methodRefNum]._objectType =(broadcastType == MODE_BROADCAST) ? Vector : Mask;
+               }
+            }
          }
 
       for (int32_t i = 0; i < numChildren; i++)
@@ -1810,7 +1830,8 @@ TR::Node *TR_VectorAPIExpansion::fromBitsCoercedIntrinsicHandler(TR_VectorAPIExp
 
    TR::Node *newNode;
 
-   switch (elementType) {
+   int32_t type = mask ? TR::Int64 : elementType;
+   switch (type) {
       case TR::Float:
           newNode = TR::Node::create(node, TR::ibits2f, 1, TR::Node::create(node, TR::l2i, 1, valueToBroadcast));
           break;
@@ -2158,7 +2179,7 @@ TR_VectorAPIExpansion::methodTable[] =
    {binaryIntrinsicHandler,               Vector,  {Unknown, Unknown, Unknown, ElementType, NumLanes, Vector, Vector, Mask}},   // jdk_internal_vm_vector_VectorSupport_binaryOp
    {blendIntrinsicHandler,                Vector,  {Unknown, Unknown, ElementType, NumLanes, Vector, Vector, Vector, Unknown}}, // jdk_internal_vm_vector_VectorSupport_blend
    {compareIntrinsicHandler,              Mask,    {Unknown, Unknown, Unknown, ElementType, NumLanes, Vector, Vector, Mask}},   // jdk_internal_vm_vector_VectorSupport_compare
-   {fromBitsCoercedIntrinsicHandler,      Vector,  {Unknown, ElementType, NumLanes, Unknown, Unknown, Unknown}},                // jdk_internal_vm_vector_VectorSupport_fromBitsCoerced
+   {fromBitsCoercedIntrinsicHandler,      Unknown, {Unknown, ElementType, NumLanes, Unknown, Unknown, Unknown}},                // jdk_internal_vm_vector_VectorSupport_fromBitsCoerced
    {maskReductionCoercedIntrinsicHandler, Scalar,  {Unknown, Unknown, ElementType, NumLanes, Mask}},                            // jdk_internal_vm_vector_VectorSupport_maskReductionCoerced
    {reductionCoercedIntrinsicHandler,     Scalar,  {Unknown, Unknown, Unknown, ElementType, NumLanes, Vector, Mask}},           // jdk_internal_vm_vector_VectorSupport_reductionCoerced
    {ternaryIntrinsicHandler,              Vector,  {Unknown, Unknown, Unknown, ElementType, NumLanes, Vector, Vector, Vector, Mask}},  // jdk_internal_vm_vector_VectorSupport_ternaryOp
