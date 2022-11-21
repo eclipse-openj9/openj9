@@ -29,8 +29,8 @@
 
 extern "C"
    {
-      unsigned int crc32_no_vpmsum(unsigned int crc, unsigned char *p, unsigned long len, unsigned int castagnoli);
-      unsigned int crc32_vpmsum(unsigned int crc, unsigned char *p, unsigned long len, unsigned int castagnoli);
+   unsigned int crc32_no_vpmsum(unsigned int crc, unsigned char *p, unsigned long len, unsigned int castagnoli);
+   unsigned int crc32_vpmsum(unsigned int crc, unsigned char *p, unsigned long len, unsigned int castagnoli);
    }
 
 class TR_BitVector;

@@ -2718,6 +2718,9 @@ void buildCRC32CCall(TR::Node *callNode,
     * where (off + len) is passed as len, perform a sub operation to take offset from len
     */
    generateTrg1Src2Instruction(cg, TR::InstOpCode::subf, callNode, lenArg, posArg, lenArg);
+   /* Passing one for the castagnoli parameter of crc32_vpmsum helper. Here we are re-using
+    * posArg in gr6 after the buffer address has been calculated.
+    */
    generateTrg1ImmInstruction(cg, TR::InstOpCode::li, callNode, posArg, 1);
 
    deps->getPreConditions()->setDependencyInfo(map.getTargetIndex(TR::RealRegister::gr4), addrArg, TR::RealRegister::gr4, UsesDependentRegister);

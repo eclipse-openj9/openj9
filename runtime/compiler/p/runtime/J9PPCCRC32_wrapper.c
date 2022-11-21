@@ -36,9 +36,10 @@ static unsigned int crc32_align(unsigned int crc, unsigned char *p,
    if (castagnoli)
       crc_table = crc32c_table;
 
-   while (len--) {
+   while (len--)
+      {
       crc = crc_table[(crc ^ *p++) & 0xff] ^ (crc >> 8);
-   }
+      }
    return crc;
    }
 
@@ -64,9 +65,10 @@ static unsigned int crc32_align(unsigned int crc, unsigned char *p,
    if (castagnoli)
       crc_table = crc32c_table;
 
-   while (len--) {
+   while (len--)
+      {
       crc = crc_table[((crc >> 24) ^ *p++) & 0xff] ^ (crc << 8);
-   }
+      }
    return crc;
    }
 
@@ -117,25 +119,28 @@ unsigned int crc32_vpmsum(unsigned int crc, unsigned char *p,
       crc ^= 0xffffffff;
 #endif
 
-   if (len < VMX_ALIGN + VMX_ALIGN_MASK) {
+   if (len < VMX_ALIGN + VMX_ALIGN_MASK)
+      {
       crc = crc32_align(crc, p, len, castagnoli);
       goto out;
-   }
+      }
 
-   if ((unsigned long)p & VMX_ALIGN_MASK) {
+   if ((unsigned long)p & VMX_ALIGN_MASK)
+      {
       prealign = VMX_ALIGN - ((unsigned long)p & VMX_ALIGN_MASK);
       crc = crc32_align(crc, p, prealign, castagnoli);
       len -= prealign;
       p += prealign;
-   }
+      }
 
    crc = __crc32_vpmsum(crc, p, len & ~VMX_ALIGN_MASK, castagnoli);
 
    tail = len & VMX_ALIGN_MASK;
-   if (tail) {
+   if (tail)
+      {
       p += len & ~VMX_ALIGN_MASK;
       crc = crc32_align(crc, p, tail, castagnoli);
-   }
+      }
 
 out:
 #ifdef CRC_XOR
