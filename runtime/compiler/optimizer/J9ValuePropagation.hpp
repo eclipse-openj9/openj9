@@ -51,6 +51,8 @@ class ValuePropagation : public OMR::ValuePropagation
    virtual void constrainRecognizedMethod(TR::Node *node);
    virtual bool transformUnsafeCopyMemoryCall(TR::Node *arrayCopyNode);
    virtual bool transformDirectLoad(TR::Node *node);
+   virtual bool isUnreliableSignatureType(
+      TR_OpaqueClassBlock *klass, TR_OpaqueClassBlock *&erased);
    virtual void doDelayedTransformations();
    void transformCallToNodeWithHCRGuard(TR::TreeTop *callTree, TR::Node *result);
    void transformCallToIconstInPlaceOrInDelayedTransformations(TR::TreeTop *callTree, int32_t result, bool isGlobal, bool inPlace = true, bool requiresGuard = false);
