@@ -2080,6 +2080,9 @@ void TR_ResolvedJ9Method::construct()
       {x(TR::java_lang_Class_newInstance,          "newInstance",          "()Ljava/lang/Object;")},
       {x(TR::java_lang_Class_isArray,              "isArray",              "()Z")},
       {x(TR::java_lang_Class_isPrimitive,          "isPrimitive",          "()Z")},
+      {x(TR::java_lang_Class_isValue,              "isValue",              "()Z")},
+      {x(TR::java_lang_Class_isPrimitiveClass,     "isPrimitiveClass",     "()Z")},
+      {x(TR::java_lang_Class_isIdentity,           "isIdentity",           "()Z")},
       {x(TR::java_lang_Class_getComponentType,     "getComponentType",     "()Ljava/lang/Class;")},
       {x(TR::java_lang_Class_getModifiersImpl,     "getModifiersImpl",     "()I")},
       {x(TR::java_lang_Class_isAssignableFrom,     "isAssignableFrom",     "(Ljava/lang/Class;)Z")},
@@ -3365,6 +3368,7 @@ void TR_ResolvedJ9Method::construct()
       {x(TR::java_lang_J9VMInternals_getSuperclass,                       "getSuperclass", "(Ljava/lang/Class;)Ljava/lang/Class;")},
       {x(TR::java_lang_J9VMInternals_identityHashCode,                    "identityHashCode", "(Ljava/lang/Object;)I")},
       {x(TR::java_lang_J9VMInternals_fastIdentityHashCode,                "fastIdentityHashCode", "(Ljava/lang/Object;)I")},
+      {x(TR::java_lang_J9VMInternals_valueHashCode,                       "valueHashCode", "(Ljava/lang/Object;)I")},
       {x(TR::java_lang_J9VMInternals_primitiveClone,                      "primitiveClone", "(Ljava/lang/Object;)Ljava/lang/Object;")},
       {  TR::unknownMethod}
       };

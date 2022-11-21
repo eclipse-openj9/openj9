@@ -1544,6 +1544,30 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
             }
          break;
          }
+      case TR::java_lang_Class_isValue:
+      case TR::java_lang_Class_isPrimitiveClass:
+      case TR::java_lang_Class_isIdentity:
+         {
+         TR::Node *classChild = node->getLastChild();
+         bool classChildGlobal;
+         TR::VPConstraint *classChildConstraint = getConstraint(classChild, classChildGlobal);
+
+         if (classChildConstraint
+             && classChildConstraint->isJavaLangClassObject() == TR_yes
+             && classChildConstraint->isNonNullObject()
+             && classChildConstraint->getClassType()
+             && classChildConstraint->getClassType()->asFixedClass())
+            {
+            TR_OpaqueClassBlock *thisClass = classChildConstraint->getClass();
+
+            const int queryResult = ((rm == TR::java_lang_Class_isValue) && TR::Compiler->cls.isValueTypeClass(thisClass))
+                                     || ((rm == TR::java_lang_Class_isPrimitiveClass) && TR::Compiler->cls.isPrimitiveValueTypeClass(thisClass))
+                                     || ((rm == TR::java_lang_Class_isIdentity) && TR::Compiler->cls.classHasIdentity(thisClass));
+            transformCallToIconstInPlaceOrInDelayedTransformations(_curTree, queryResult, classChildGlobal, true, false);
+            TR::DebugCounter::incStaticDebugCounter(comp(), TR::DebugCounter::debugCounterName(comp(), "constrainCall/(%s)", signature));
+            }
+         break;
+         }
       case TR::java_lang_Class_getComponentType:
          {
          TR::Node *classChild = node->getLastChild();
