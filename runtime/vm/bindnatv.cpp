@@ -198,7 +198,7 @@ static inlMapping mappings[] = {
 	{ "Java_java_lang_invoke_MethodHandles_getStackClass__I", J9_BCLOOP_SEND_TARGET_INL_VM_GETSTACKCLASS },
 	{ "Java_java_lang_Class_getStackClass__I", J9_BCLOOP_SEND_TARGET_INL_VM_GETSTACKCLASS },
 	{ "Java_java_lang_Thread_sleepImpl__JI", J9_BCLOOP_SEND_TARGET_INL_THREAD_SLEEP },
-	{ "Java_java_lang_Object_wait__JI", J9_BCLOOP_SEND_TARGET_INL_OBJECT_WAIT },
+	{ "Java_java_lang_Object_waitImpl__JI", J9_BCLOOP_SEND_TARGET_INL_OBJECT_WAIT },
 	{ "Java_java_lang_ClassLoader_loadLibraryWithPath___3BLjava_lang_ClassLoader_2_3B", J9_BCLOOP_SEND_TARGET_INL_CLASSLOADER_LOADLIBRARYWITHPATH },
 	{ "Java_java_lang_Thread_isInterruptedImpl__", J9_BCLOOP_SEND_TARGET_INL_THREAD_ISINTERRUPTEDIMPL },
 	{ "Java_java_lang_ClassLoader_initAnonClassLoader__Ljava_lang_InternalAnonymousClassLoader_2", J9_BCLOOP_SEND_TARGET_INL_CLASSLOADER_INITIALIZEANONCLASSLOADER },
