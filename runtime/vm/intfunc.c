@@ -444,4 +444,5 @@ J9InternalVMFunctions J9InternalFunctions = {
 #if defined(J9VM_ZOS_3164_INTEROPERABILITY) && (JAVA_SPEC_VERSION >= 17)
 	invoke31BitJNI_OnXLoad,
 #endif /* defined(J9VM_ZOS_3164_INTEROPERABILITY) && (JAVA_SPEC_VERSION >= 17) */
+	commonWalker,
 };

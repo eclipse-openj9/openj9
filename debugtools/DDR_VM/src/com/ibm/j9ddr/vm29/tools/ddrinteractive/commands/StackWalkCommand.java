@@ -41,11 +41,12 @@ import com.ibm.j9ddr.vm29.j9.stackwalker.WalkState;
 import com.ibm.j9ddr.vm29.pointer.U8Pointer;
 import com.ibm.j9ddr.vm29.pointer.UDATAPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9BuildFlags;
+import com.ibm.j9ddr.vm29.pointer.generated.J9I2JStatePointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9MethodPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9VMEntryLocalStoragePointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9VMThreadPointer;
 
-public class StackWalkCommand extends Command 
+public class StackWalkCommand extends Command
 {
 
 	public StackWalkCommand()
@@ -53,17 +54,11 @@ public class StackWalkCommand extends Command
 		addCommand("stack", "<thread>", "Walks the Java stack for <thread>");
 		addCommand("stackslots", "<thread>", "Walks the Java stack (including objects) for <thread>");
 	}
-	
-	public void run(String command, String[] args, Context context, PrintStream out) throws DDRInteractiveCommandException 
+
+	public void run(String command, String[] args, Context context, PrintStream out) throws DDRInteractiveCommandException
 	{
 		try {
-			UDATAPointer sp = UDATAPointer.NULL;
-			UDATAPointer arg0EA = UDATAPointer.NULL;
-			U8Pointer pc = U8Pointer.NULL;
-			J9MethodPointer literals = J9MethodPointer.NULL;
-			J9VMEntryLocalStoragePointer entryLocalStorage = J9VMEntryLocalStoragePointer.NULL;
-			
-			String[] realArgs = null;			
+			String[] realArgs = null;
 			if (args.length != 0) {
 				realArgs = args[0].split(",");
 			}
@@ -91,36 +86,34 @@ public class StackWalkCommand extends Command
 			StackWalkerUtils.enableVerboseLogging(3, out);
 
 			WalkState walkState = new WalkState();
+			walkState.walkThread = thread;
 			walkState.flags = J9_STACKWALK_RECORD_BYTECODE_PC_OFFSET;
-			
+
 			if (realArgs.length >= 5) {
 				address = CommandUtils.parsePointer(realArgs[1], J9BuildFlags.env_data64);
-				sp = UDATAPointer.cast(address);
-				
+				walkState.sp = UDATAPointer.cast(address);
+
 				address = CommandUtils.parsePointer(realArgs[2], J9BuildFlags.env_data64);
-				arg0EA = UDATAPointer.cast(address);
-				
+				walkState.arg0EA = UDATAPointer.cast(address);
+
 				address = CommandUtils.parsePointer(realArgs[3], J9BuildFlags.env_data64);
-				pc = U8Pointer.cast(address);
+				walkState.pc = U8Pointer.cast(address);
 
 				address = CommandUtils.parsePointer(realArgs[4], J9BuildFlags.env_data64);
-				literals = J9MethodPointer.cast(address);
-			} else {
-				sp = thread.sp();
-				arg0EA = thread.arg0EA();
-				pc = thread.pc();
-				literals = thread.literals();
+				walkState.literals = J9MethodPointer.cast(address);
 			}
 
 			if (realArgs.length >= 6) {
 				address = CommandUtils.parsePointer(realArgs[5], J9BuildFlags.env_data64);
-				entryLocalStorage = J9VMEntryLocalStoragePointer.cast(address);
-			} else {
-				if (J9BuildFlags.interp_nativeSupport) {
-					entryLocalStorage = thread.entryLocalStorage();
+				J9VMEntryLocalStoragePointer entryLocalStorage = J9VMEntryLocalStoragePointer.cast(address);
+				if (entryLocalStorage.notNull()) {
+					walkState.i2jState = entryLocalStorage.i2jState();
+					walkState.jitGlobalStorageBase = entryLocalStorage.jitGlobalStorageBase();
+					walkState.jitFPRegisterStorageBase = entryLocalStorage.jitFPRegisterStorageBase();
+					walkState.oldEntryLocalStorage = entryLocalStorage.oldEntryLocalStorage();
 				}
 			}
-			
+
 			if (command.equalsIgnoreCase("!stackslots")) {
 				walkState.flags |= J9_STACKWALK_ITERATE_O_SLOTS;
 				// 100 is highly arbitrary but basically means "print everything".
@@ -128,15 +121,13 @@ public class StackWalkCommand extends Command
 				// from to begin with, so it should mean we get the same output.
 				StackWalkerUtils.enableVerboseLogging(100, out);
 				walkState.callBacks = new BaseStackWalkerCallbacks();
-			} else {				
+			} else {
 				StackWalkerUtils.enableVerboseLogging(0, out);
 				walkState.callBacks = new TerseStackWalkerCallbacks();
 				walkState.flags |= J9_STACKWALK_ITERATE_FRAMES;
 			}
 
-			walkState.walkThread = thread;
-
-			StackWalkResult result = StackWalker.walkStackFrames(walkState, sp, arg0EA, pc, literals, entryLocalStorage);
+			StackWalkResult result = StackWalker.walkStackFrames(walkState);
 
 			if (result != StackWalkResult.NONE ) {
 				out.println("Stack walk result: " + result);
@@ -149,6 +140,4 @@ public class StackWalkCommand extends Command
 			throw new DDRInteractiveCommandException(e);
 		}
 	}
-
-
 }

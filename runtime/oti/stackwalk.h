@@ -179,7 +179,7 @@ extern "C" {
 
 #define J9SW_ARGUMENT_REGISTER_COUNT 0x4
 #define J9SW_JIT_FLOAT_ARGUMENT_REGISTER_COUNT 0x8
-#define JIT_RESOLVE_PARM(parmNumber) (walkState->walkedEntryLocalStorage->jitGlobalStorageBase[jitArgumentRegisterNumbers[(parmNumber) - 1]])
+#define JIT_RESOLVE_PARM(parmNumber) (walkState->jitGlobalStorageBase[jitArgumentRegisterNumbers[(parmNumber) - 1]])
 #define J9SW_POTENTIAL_SAVED_REGISTERS 0x10
 #define J9SW_REGISTER_MAP_MASK 0xFFFF
 #define J9SW_JIT_FIRST_RESOLVE_PARM_REGISTER 0x3
@@ -232,7 +232,7 @@ extern "C" {
 
 #define J9SW_ARGUMENT_REGISTER_COUNT 0x8
 #define J9SW_JIT_FLOAT_ARGUMENT_REGISTER_COUNT 0x8
-#define JIT_RESOLVE_PARM(parmNumber) (walkState->walkedEntryLocalStorage->jitGlobalStorageBase[jitArgumentRegisterNumbers[(parmNumber) - 1]])
+#define JIT_RESOLVE_PARM(parmNumber) (walkState->jitGlobalStorageBase[jitArgumentRegisterNumbers[(parmNumber) - 1]])
 #define J9SW_JIT_STACK_SLOTS_USED_BY_CALL 0x0
 #define J9SW_POTENTIAL_SAVED_REGISTERS 0x20
 #define J9SW_REGISTER_MAP_MASK 0xFFFFFFFF
@@ -272,7 +272,7 @@ extern "C" {
 
 #define J9SW_ARGUMENT_REGISTER_COUNT 0x3
 #define J9SW_JIT_FLOAT_ARGUMENT_REGISTER_COUNT 0x4
-#define JIT_RESOLVE_PARM(parmNumber) (walkState->walkedEntryLocalStorage->jitGlobalStorageBase[jitArgumentRegisterNumbers[(parmNumber) - 1]])
+#define JIT_RESOLVE_PARM(parmNumber) (walkState->jitGlobalStorageBase[jitArgumentRegisterNumbers[(parmNumber) - 1]])
 #define J9SW_JIT_STACK_SLOTS_USED_BY_CALL 0x0
 #undef  J9SW_JIT_LOOKUP_INTERFACE_RESOLVE_OFFSET_TO_SAVED_RECEIVER
 #undef  J9SW_JIT_VIRTUAL_METHOD_RESOLVE_OFFSET_TO_SAVED_RECEIVER
@@ -315,7 +315,7 @@ extern "C" {
 
 #define J9SW_ARGUMENT_REGISTER_COUNT 0x4
 #undef  J9SW_JIT_FLOAT_ARGUMENT_REGISTER_COUNT
-#define JIT_RESOLVE_PARM(parmNumber) (walkState->walkedEntryLocalStorage->jitGlobalStorageBase[jitArgumentRegisterNumbers[(parmNumber) - 1]])
+#define JIT_RESOLVE_PARM(parmNumber) (walkState->jitGlobalStorageBase[jitArgumentRegisterNumbers[(parmNumber) - 1]])
 #define J9SW_JIT_STACK_SLOTS_USED_BY_CALL 0x0
 #define J9SW_POTENTIAL_SAVED_REGISTERS 0xC
 #define J9SW_REGISTER_MAP_MASK 0xFFFFFFFF
@@ -342,7 +342,7 @@ extern "C" {
 
 #define J9SW_ARGUMENT_REGISTER_COUNT 0x8
 #define J9SW_JIT_FLOAT_ARGUMENT_REGISTER_COUNT 0x8
-#define JIT_RESOLVE_PARM(parmNumber) (walkState->walkedEntryLocalStorage->jitGlobalStorageBase[jitArgumentRegisterNumbers[(parmNumber) - 1]])
+#define JIT_RESOLVE_PARM(parmNumber) (walkState->jitGlobalStorageBase[jitArgumentRegisterNumbers[(parmNumber) - 1]])
 #define J9SW_JIT_STACK_SLOTS_USED_BY_CALL 0x0
 #define J9SW_POTENTIAL_SAVED_REGISTERS 0x20
 #define J9SW_REGISTER_MAP_MASK 0xFFFFFFFF
@@ -381,7 +381,7 @@ extern "C" {
 
 /* @ddr_namespace: map_to_type=J9StackWalkConstants */
 
-#define JIT_RESOLVE_PARM(parmNumber) (walkState->walkedEntryLocalStorage->jitGlobalStorageBase[jitArgumentRegisterNumbers[(parmNumber) - 1]])
+#define JIT_RESOLVE_PARM(parmNumber) (walkState->jitGlobalStorageBase[jitArgumentRegisterNumbers[(parmNumber) - 1]])
 #define J9SW_REGISTER_MAP_MASK 0xFFFF
 #define J9SW_JIT_FIRST_RESOLVE_PARM_REGISTER 0x3
 #define J9SW_JIT_CALLEE_PRESERVED_SIZE 8

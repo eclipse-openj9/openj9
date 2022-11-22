@@ -161,7 +161,7 @@ protectedASGCT(J9PortLibrary *portLib, void *arg)
 		if (NULL != ucontext) {
 			greg_t *regs = ((ucontext_t*)ucontext)->uc_mcontext.gregs;
 			greg_t rip = regs[REG_RIP];
-			J9JITExceptionTable *metaData = jitConfig->jitGetExceptionTableFromPC(currentThread, rip);
+			J9JITExceptionTable *metaData = jitConfig->jitGetExceptionTableFromPC(currentThread, rip, currentThread->javaVM);
 			if (NULL != metaData) {
 				greg_t rsp = regs[REG_RSP];
 				/* Build a JIT resolve frame on the C stack to avoid writing to the java

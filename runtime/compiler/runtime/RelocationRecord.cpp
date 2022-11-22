@@ -6166,7 +6166,7 @@ TR_RelocationRecordMethodCallAddress::computeTargetMethodAddress(TR_RelocationRu
    if (reloRuntime->options()->getOption(TR_StressTrampolines) || reloTarget->useTrampoline(callTargetAddress, baseLocation))
       {
       RELO_LOG(reloRuntime->reloLogger(), 6, "\tredirecting call to " POINTER_PRINTF_FORMAT " through trampoline\n", callTargetAddress);
-      auto metadata = jitGetExceptionTableFromPC(reloRuntime->currentThread(), (UDATA)callTargetAddress);
+      auto metadata = jitGetExceptionTableFromPC(reloRuntime->currentThread(), (UDATA)callTargetAddress, reloRuntime->currentThread()->javaVM);
       auto j9method = metadata->ramMethod;
       TR::VMAccessCriticalSection computeTargetMethodAddress(reloRuntime->fej9());
       // getResolvedTrampoline will create the trampoline if it doesn't exist, but we pass inBinaryEncoding=true because we want the compilation to fail

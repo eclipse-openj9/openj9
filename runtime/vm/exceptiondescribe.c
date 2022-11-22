@@ -276,7 +276,7 @@ iterateStackTrace(J9VMThread * vmThread, j9object_t* exception, callback_func_t 
 			J9JITConfig * jitConfig = vm->jitConfig;
 
 			if (jitConfig) {
-				metaData = jitConfig->jitGetExceptionTableFromPC(vmThread, methodPC);
+				metaData = jitConfig->jitGetExceptionTableFromPC(vmThread, methodPC, vmThread->javaVM);
 				if (metaData) {
 					inlineMap = jitConfig->jitGetInlinerMapFromPC(vmThread, vm, metaData, methodPC);
 					if (inlineMap) {

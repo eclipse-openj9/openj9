@@ -7678,7 +7678,7 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
          }
       else if (entry->_oldStartPC)
          {
-         J9JITExceptionTable *oldMetaData = jitConfig->jitGetExceptionTableFromPC(vmThread, (UDATA)entry->_oldStartPC);
+         J9JITExceptionTable *oldMetaData = jitConfig->jitGetExceptionTableFromPC(vmThread, (UDATA)entry->_oldStartPC, vmThread->javaVM);
          if (oldMetaData)
             {
             TR_PersistentJittedBodyInfo *oldBodyInfo = (TR_PersistentJittedBodyInfo *)oldMetaData->bodyInfo;

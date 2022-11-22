@@ -86,7 +86,7 @@ retry:
 
 	/* Check for stack overflow */
 
-	metaData = jitGetExceptionTableFromPC(currentThread, (UDATA) dltEntry);
+	metaData = jitGetExceptionTableFromPC(currentThread, (UDATA) dltEntry, currentThread->javaVM);
 	checkSP = walkState->sp - (metaData->totalFrameSize + J9SW_JIT_STACK_SLOTS_USED_BY_CALL);
 	if (checkSP < currentThread->stackOverflowMark2) {
 #if defined(J9VM_INTERP_GROWABLE_STACKS)

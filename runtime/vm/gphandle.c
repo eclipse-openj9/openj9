@@ -1065,7 +1065,7 @@ writeJITInfo(J9VMThread* vmThread, char* s, UDATA length, void* gpInfo)
 		if (jitConfig->jitGetExceptionTableFromPC == NULL) {
 			return numBytesWritten;
 		}
-		jitExceptionTable = jitConfig->jitGetExceptionTableFromPC(vmThread, pc);
+		jitExceptionTable = jitConfig->jitGetExceptionTableFromPC(vmThread, pc, vmThread->javaVM);
 
 		if (jitExceptionTable) {
 			J9Method *ramMethod = jitExceptionTable->ramMethod;

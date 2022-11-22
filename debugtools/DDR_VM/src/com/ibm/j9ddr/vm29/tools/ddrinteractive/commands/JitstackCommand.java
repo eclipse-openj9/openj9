@@ -40,6 +40,7 @@ import com.ibm.j9ddr.vm29.j9.stackwalker.WalkState;
 import com.ibm.j9ddr.vm29.pointer.U8Pointer;
 import com.ibm.j9ddr.vm29.pointer.UDATAPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9BuildFlags;
+import com.ibm.j9ddr.vm29.pointer.generated.J9I2JStatePointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9MethodPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9VMEntryLocalStoragePointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9VMThreadPointer;
@@ -80,17 +81,16 @@ public class JitstackCommand extends Command
 			J9VMThreadPointer thread = J9VMThreadPointer.cast(address);
 			StackWalkerUtils.enableVerboseLogging(2, out);
 			WalkState walkState = new WalkState();
+			walkState.walkThread = thread;
 
 			address = CommandUtils.parsePointer(realArgs[1], J9BuildFlags.env_data64);
 
-			UDATAPointer sp = UDATAPointer.cast(address);
+			walkState.sp = UDATAPointer.cast(address);
 			
 			address = CommandUtils.parsePointer(realArgs[2], J9BuildFlags.env_data64);
 			
-			U8Pointer pc = U8Pointer.cast(address);
+			walkState.pc = U8Pointer.cast(address);
 
-			UDATAPointer arg0EA = UDATAPointer.NULL;
-			J9MethodPointer literals = J9MethodPointer.NULL;
 			J9VMEntryLocalStoragePointer entryLocalStorage = J9VMEntryLocalStoragePointer.NULL;
 
 			if (realArgs.length == 4) {
@@ -99,9 +99,14 @@ public class JitstackCommand extends Command
 			} else {
 				entryLocalStorage = thread.entryLocalStorage();
 			}
+			if (entryLocalStorage.notNull()) {
+				walkState.i2jState = entryLocalStorage.i2jState();
+				walkState.jitGlobalStorageBase = entryLocalStorage.jitGlobalStorageBase();
+				walkState.jitFPRegisterStorageBase = entryLocalStorage.jitFPRegisterStorageBase();
+				walkState.oldEntryLocalStorage = entryLocalStorage.oldEntryLocalStorage();
+			}
 
-			walkState.flags = J9_STACKWALK_RECORD_BYTECODE_PC_OFFSET;
-			walkState.flags |= J9_STACKWALK_START_AT_JIT_FRAME;
+			walkState.flags = J9_STACKWALK_RECORD_BYTECODE_PC_OFFSET | J9_STACKWALK_START_AT_JIT_FRAME;
 			
 			if (command.equalsIgnoreCase("!jitstackslots")) {
 				walkState.flags |= J9_STACKWALK_ITERATE_O_SLOTS;
@@ -111,11 +116,9 @@ public class JitstackCommand extends Command
 				StackWalkerUtils.enableVerboseLogging(100, out);
 			}
 
-			walkState.walkThread = thread;
 			walkState.callBacks = new BaseStackWalkerCallbacks();
-			walkState.frameFlags = new UDATA(0);
 
-			StackWalkResult result = StackWalker.walkStackFrames(walkState, sp, arg0EA, pc, literals, entryLocalStorage);
+			StackWalkResult result = StackWalker.walkStackFrames(walkState);
 
 			if (result != StackWalkResult.NONE ) {
 				out.println("Stack walk result: " + result);

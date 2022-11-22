@@ -76,7 +76,7 @@ void jitAddPicToPatchOnClassUnload(void *classPointer, void *addressToBePatched)
    {
       J9JavaVM            *vm        = jitConfig->javaVM;
       J9VMThread          *vmContext = vm->internalVMFunctions->currentVMThread(vm);
-      J9JITExceptionTable *metaData  = jitConfig->jitGetExceptionTableFromPC(vmContext, (UDATA)addressToBePatched);
+      J9JITExceptionTable *metaData  = jitConfig->jitGetExceptionTableFromPC(vmContext, (UDATA)addressToBePatched, vmContext->javaVM);
 
       if (!createClassUnloadPicSite(classPointer, addressToBePatched, sizeof(uintptr_t),
                                     (OMR::RuntimeAssumption**)(&metaData->runtimeAssumptionList))
@@ -100,7 +100,7 @@ void jitAdd32BitPicToPatchOnClassUnload(void *classPointer, void *addressToBePat
 
       J9JavaVM            *vm        = jitConfig->javaVM;
       J9VMThread          *vmContext = vm->internalVMFunctions->currentVMThread(vm);
-      J9JITExceptionTable *metaData  = jitConfig->jitGetExceptionTableFromPC(vmContext, (UDATA)addressToBePatched);
+      J9JITExceptionTable *metaData  = jitConfig->jitGetExceptionTableFromPC(vmContext, (UDATA)addressToBePatched, vmContext->javaVM);
 
       if (!createClassUnloadPicSite(classPointer, addressToBePatched, 4,
                                     (OMR::RuntimeAssumption**)(&metaData->runtimeAssumptionList))
@@ -131,7 +131,7 @@ void jitAddPicToPatchOnClassRedefinition(void *classPointer, void *addressToBePa
    {
    J9JavaVM            *vm        = jitConfig->javaVM;
    J9VMThread          *vmThread  = vm->internalVMFunctions->currentVMThread(vm);
-   J9JITExceptionTable *metaData  = jitConfig->jitGetExceptionTableFromPC(vmThread, (UDATA)addressToBePatched);
+   J9JITExceptionTable *metaData  = jitConfig->jitGetExceptionTableFromPC(vmThread, (UDATA)addressToBePatched, vmThread->javaVM);
    createClassRedefinitionPicSite(classPointer, addressToBePatched, sizeof(uintptr_t), unresolved,
                                   (OMR::RuntimeAssumption**)(&metaData->runtimeAssumptionList));
    }
@@ -140,7 +140,7 @@ void jitAdd32BitPicToPatchOnClassRedefinition(void *classPointer, void *addressT
    {
    J9JavaVM            *vm        = jitConfig->javaVM;
    J9VMThread          *vmThread  = vm->internalVMFunctions->currentVMThread(vm);
-   J9JITExceptionTable *metaData  = jitConfig->jitGetExceptionTableFromPC(vmThread, (UDATA)addressToBePatched);
+   J9JITExceptionTable *metaData  = jitConfig->jitGetExceptionTableFromPC(vmThread, (UDATA)addressToBePatched, vmThread->javaVM);
    createClassRedefinitionPicSite(classPointer, addressToBePatched, 4, unresolved,
                                   (OMR::RuntimeAssumption**)(&metaData->runtimeAssumptionList));
    }

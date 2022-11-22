@@ -254,7 +254,7 @@ methodBeingTraced(J9JavaVM *vm, J9Method *method)
 UDATA   
 exceptionHandlerSearch(J9VMThread *currentThread, J9StackWalkState *walkState)
 {
-	J9JavaVM * vm = walkState->walkThread->javaVM;
+	J9JavaVM *vm = walkState->javaVM;
 
 	Trc_VM_exceptionHandlerSearch_Entry(currentThread);
 
@@ -339,9 +339,9 @@ exceptionHandlerSearch(J9VMThread *currentThread, J9StackWalkState *walkState)
 						}
 						currentThread->stackWalkState = tempWalkState.previous;
 						walkState->restartException = POP_OBJECT_IN_SPECIAL_FRAME(currentThread);
-#ifdef J9VM_JIT_FULL_SPEED_DEBUG						
-						walkState->decompilationStack = walkState->walkThread->decompilationStack;
-#endif									
+#ifdef J9VM_JIT_FULL_SPEED_DEBUG
+						walkState->decompilationStack = walkState->decompilationStack;
+#endif
 					}
 				}
 

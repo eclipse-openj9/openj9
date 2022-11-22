@@ -56,7 +56,7 @@ void _prepareForOSR(uintptr_t vmThreadArg, int32_t currentInlinedSiteIndex, int3
    int numSymsThatShareSlot = (slotData >> 16) & 0xFFF;
    int totalNumSlots = slotData & 0xFFFF;
    J9JITConfig *jitConfig = vmThread->javaVM->jitConfig;
-   J9JITExceptionTable *metaData = jitConfig->jitGetExceptionTableFromPC(vmThread, (UDATA) vmThread->osrBuffer->jitPC);
+   J9JITExceptionTable *metaData = jitConfig->jitGetExceptionTableFromPC(vmThread, (UDATA) vmThread->osrBuffer->jitPC, vmThread->javaVM);
    UDATA jitPCOffset = (UDATA) vmThread->osrBuffer->jitPC - metaData->startPC;
    J9OSRFrame *osrFrame = (J9OSRFrame*)((uint8_t*)vmThread->osrBuffer + vmThread->osrFrameIndex);
 

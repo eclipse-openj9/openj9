@@ -2220,7 +2220,7 @@ TR_J9VMBase::releaseCodeMemory(void *startPC, uint8_t bytesToSaveAtStart)
       TR::VMAccessCriticalSection releaseCodeMemory(this);
       J9JavaVM            *vm        = jitConfig->javaVM;
       J9VMThread          *vmContext = vm->internalVMFunctions->currentVMThread(vm);
-      J9JITExceptionTable *metaData  = jitConfig->jitGetExceptionTableFromPC(vmContext, (UDATA)startPC);
+      J9JITExceptionTable *metaData  = jitConfig->jitGetExceptionTableFromPC(vmContext, (UDATA)startPC, vmContext->javaVM);
       vlogReclamation("Queuing for reclamation", metaData, bytesToSaveAtStart);
       TR::CodeCacheManager::instance()->addFaintCacheBlock(metaData, bytesToSaveAtStart);
       }

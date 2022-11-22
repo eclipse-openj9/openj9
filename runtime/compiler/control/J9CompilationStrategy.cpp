@@ -825,7 +825,7 @@ J9::CompilationStrategy::ProcessJittedSample::determineWhetherToRecompileBasedOn
    // When codeSize==avgCodeSize, we want the scaling factor to be 1.0
    // The scaling of the threshold can be turned off by having
    // the sampleThresholdVariationAllowance equal to 0
-   J9JITExceptionTable *metaData = jitConfig->jitGetExceptionTableFromPC(_event->_vmThread, (UDATA)_startPC);
+   J9JITExceptionTable *metaData = jitConfig->jitGetExceptionTableFromPC(_event->_vmThread, (UDATA)_startPC, _event->_vmThread->javaVM);
    int32_t codeSize = 0; // TODO eliminate the overhead; we already have metadata
    if (metaData)
       codeSize = _compInfo->calculateCodeSize(metaData);
