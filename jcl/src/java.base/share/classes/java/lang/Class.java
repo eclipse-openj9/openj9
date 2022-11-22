@@ -2804,6 +2804,22 @@ public String toGenericString() {
 	boolean isArray = isArray();
 	boolean isInterface = !isArray && (0 != (modifiers & Modifier.INTERFACE));
 	
+/*[IF INLINE-TYPES]*/
+	String valueType;
+	if (Modifier.VALUE == (Modifier.VALUE & modifiers)) {
+		/**
+		 * Modifier.PRIMITIVE is not added by OpenJDK yet. It shares the same bit as Modifier.STRICT.
+		 * TODO: Change Modifier.STRICT to Modifier.PRIMITIVE.
+		 */
+		if (Modifier.STRICT == (Modifier.STRICT & modifiers)) {
+			valueType = "primitive "; //$NON-NLS-1$
+		} else {
+			valueType = "value "; //$NON-NLS-1$
+		}
+	} else {
+		valueType = ""; //$NON-NLS-1$
+	}
+/*[ENDIF] INLINE-TYPES */
 	// Get kind of type before modifying the modifiers
 	String kindOfType;
 	if ((!isArray) && ((modifiers & ANNOTATION) != 0)) {
@@ -2824,6 +2840,16 @@ public String toGenericString() {
 	if (isInterface) {
 		modifiers -= Modifier.INTERFACE;
 	}
+/*[IF INLINE-TYPES]*/
+	/**
+	 * IDENTITY shares the same bit as SYNCHRONIZED. VALUE shares the same bit as VOLATILE.
+	 * Modifier.toString() is used later in this function which translates them to "synchronized" and "volatile",
+	 * which is incorrect. So remove these bits if they are set.
+	 * Modifier.PRIMITIVE is not added by OpenJDK yet. It shares the same bit as Modifier.STRICT.
+	 * TODO: Change Modifier.STRICT to Modifier.PRIMITIVE.
+	 */
+	modifiers &= ~(Modifier.IDENTITY | Modifier.VALUE | Modifier.STRICT);
+/*[ENDIF] INLINE-TYPES */
 	
 	// Build generic string
 /*[IF Sidecar19-SE]*/
@@ -2850,6 +2876,9 @@ public String toGenericString() {
 	if (result.length() > 0) {
 		result.append(' ');
 	}
+/*[IF INLINE-TYPES]*/
+	result.append(valueType);
+/*[ENDIF] INLINE-TYPES */
 	result.append(kindOfType);
 	result.append(getName());
 	
