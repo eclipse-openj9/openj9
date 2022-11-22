@@ -2141,3 +2141,5 @@ TraceException=Trc_PRT_shared_cleanSharedMemorySegments_getUserNameTooLong Group
 TraceException=Trc_PRT_shared_cleanSharedMemorySegments_getUserName_Failed Group=j9shmem Overhead=1 Level=1 NoEnv Template="cleanSharedMemorySegments: omrsysinfo_get_username failed"
 TraceException=Trc_PRT_shared_cleanSharedMemorySegments_getEnvUserNameTooLong Group=j9shmem Overhead=1 Level=1 NoEnv Template="cleanSharedMemorySegments: The length of the environment variable USER is %zd, it should be greater than 0 and less than %d."
 TraceException=Trc_PRT_shared_cleanSharedMemorySegments_getEnvUserName_Failed Group=j9shmem Overhead=1 Level=1 NoEnv Template="cleanSharedMemorySegments: omrsysinfo_get_env failed"
+
+TraceException=Trc_PRT_j9shmem_getDir_tryHomeDirFailed_notFinalRestore Group=j9shmem Overhead=1 Level=1 NoEnv Template="j9shmem_getDir: not CRIU final restore, skip getpwuid(), and homeDir is NULL."
