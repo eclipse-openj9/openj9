@@ -33,7 +33,7 @@
 
 extern "C" {
 
-/* java.lang.Object: public final native void wait(long millis, int nanos) throws InterruptedException; */
+/* java.lang.Object: public final native void waitImpl(long millis, int nanos) throws InterruptedException; */
 void JNICALL
 Fast_java_lang_Object_wait(J9VMThread *currentThread, j9object_t receiverObject, jlong millis, jint nanos)
 {
@@ -90,7 +90,7 @@ Fast_java_lang_Object_notify(J9VMThread *currentThread, j9object_t receiverObjec
 }
 
 J9_FAST_JNI_METHOD_TABLE(java_lang_Object)
-	J9_FAST_JNI_METHOD("wait", "(JI)V", Fast_java_lang_Object_wait,
+	J9_FAST_JNI_METHOD("waitImpl", "(JI)V", Fast_java_lang_Object_wait,
 		J9_FAST_JNI_RETAIN_VM_ACCESS | J9_FAST_JNI_DO_NOT_WRAP_OBJECTS)
 	J9_FAST_JNI_METHOD("notifyAll", "()V", Fast_java_lang_Object_notifyAll,
 		J9_FAST_JNI_RETAIN_VM_ACCESS | J9_FAST_JNI_DO_NOT_WRAP_OBJECTS)

@@ -22,6 +22,10 @@
  *******************************************************************************/
 package java.lang;
 
+/*[IF JAVA_SPEC_VERSION >= 19] */
+import jdk.internal.misc.Blocker;
+/*[ENDIF] JAVA_SPEC_VERSION >= 19 */
+
 /**
  * Object is the root of the java class hierarchy. All non-base types
  * respond to the messages defined in this class.
@@ -269,7 +273,20 @@ public final void wait(long time) throws InterruptedException {
  * @see			#wait(long)
  * @see			java.lang.Thread
  */
-public final native void wait(long time, int frac) throws InterruptedException;
+public final void wait(long time, int frac) throws InterruptedException {
+/*[IF JAVA_SPEC_VERSION >= 19] */
+	long blockerRC = Blocker.begin();
+	try {
+		waitImpl(time, frac);
+	} finally {
+		Blocker.end(blockerRC);
+	}
+/*[ELSE] JAVA_SPEC_VERSION >= 19 */
+	waitImpl(time, frac);
+/*[ENDIF] JAVA_SPEC_VERSION >= 19 */
+}
+
+private final native void waitImpl(long time, int frac) throws InterruptedException;
 
 /*
  * Used as a prototype for the jit.

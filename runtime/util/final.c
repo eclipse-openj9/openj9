@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,15 +27,15 @@
 
 UDATA methodIsFinalInObject(UDATA nameLength, U_8* name, UDATA sigLength, U_8* sig) {
 
-	const char names[] = "wait\0" "wait\0" "wait\0" "notify\0" "notifyAll\0" "getClass\0";
+	const char names[] = "wait\0" "wait\0" "wait\0" "waitImpl\0" "notify\0" "notifyAll\0" "getClass\0";
 	const U_8 nameLengths[] = {
-		sizeof("wait") - 1, sizeof("wait") - 1, sizeof("wait") - 1,
+		sizeof("wait") - 1, sizeof("wait") - 1, sizeof("wait") - 1, sizeof("waitImpl") - 1,
 		sizeof("notify") - 1, sizeof("notifyAll") - 1, sizeof("getClass") - 1 };
-	const char sigs[] = "()V\0" "(J)V\0" "(JI)V\0" "()V\0" "()V\0" "()Ljava/lang/Class;\0";
+	const char sigs[] = "()V\0" "(J)V\0" "(JI)V\0" "(JI)V\0" "()V\0" "()V\0" "()Ljava/lang/Class;\0";
 	const U_8 sigLengths[] = {
-		sizeof("()V") - 1, sizeof("(J)V") - 1, sizeof("(JI)V") - 1,
+		sizeof("()V") - 1, sizeof("(J)V") - 1, sizeof("(JI)V") - 1, sizeof("(JI)V") - 1,
 		sizeof("()V") - 1, sizeof("()V") - 1, sizeof("()Ljava/lang/Class;") - 1 };
-#define OBJECT_FINAL_COUNT 6
+#define OBJECT_FINAL_COUNT 7
 #define SHORTEST_METHOD_NAME (sizeof("wait") - 1)
 #define LONGEST_METHOD_NAME (sizeof("notifyAll") - 1)
 
