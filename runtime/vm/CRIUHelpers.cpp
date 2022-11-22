@@ -78,8 +78,10 @@ jvmRestoreHooks(J9VMThread *currentThread)
 	Assert_VM_true(vm->checkpointState.isCheckPointEnabled);
 
 	if (vm->checkpointState.isNonPortableRestoreMode) {
+		PORT_ACCESS_FROM_JAVAVM(vm);
 		vm->checkpointState.isCheckPointAllowed = FALSE;
 		vm->portLibrary->finalRestore = TRUE;
+		j9port_control(J9PORT_CTLDATA_CRIU_SUPPORT_FLAGS, OMRPORT_CRIU_SUPPORT_ENABLED | J9OMRPORT_CRIU_SUPPORT_FINAL_RESTORE);
 	}
 
 	TRIGGER_J9HOOK_VM_PREPARING_FOR_RESTORE(vm->hookInterface, currentThread);
