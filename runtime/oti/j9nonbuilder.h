@@ -5778,10 +5778,12 @@ typedef struct J9JavaVM {
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 	jclass criuJVMCheckpointExceptionClass;
 	jclass criuSystemCheckpointExceptionClass;
-	jclass criuRestoreExceptionClass;
+	jclass criuJVMRestoreExceptionClass;
+	jclass criuSystemRestoreExceptionClass;
 	jmethodID criuJVMCheckpointExceptionInit;
 	jmethodID criuSystemCheckpointExceptionInit;
-	jmethodID criuRestoreExceptionInit;
+	jmethodID criuJVMRestoreExceptionInit;
+	jmethodID criuSystemRestoreExceptionInit;
 	J9CRIUCheckpointState checkpointState;
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 #if JAVA_SPEC_VERSION >= 16

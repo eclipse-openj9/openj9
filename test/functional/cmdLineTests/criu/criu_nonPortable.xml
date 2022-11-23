@@ -146,7 +146,7 @@
 
   <test id="Create and Restore Criu Checkpoint Image once - TestSingleThreadModeRestoreException">
     <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_SINGLETHREADMODE_RESTORE$ 1 1 false</command>
-    <output type="success" caseSensitive="yes" regex="no">org.eclipse.openj9.criu.RestoreException: Exception thrown when running user post-restore</output>
+    <output type="success" caseSensitive="yes" regex="no">org.eclipse.openj9.criu.JVMRestoreException: Exception thrown when running user post-restore</output>
     <output type="required" caseSensitive="no" regex="no">Killed</output>
     <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
     <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>

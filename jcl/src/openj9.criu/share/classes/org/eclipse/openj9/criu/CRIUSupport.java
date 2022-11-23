@@ -457,7 +457,7 @@ public final class CRIUSupport {
 				try {
 					hook.run();
 				} catch (Throwable t) {
-					throw new RestoreException("Exception thrown when running user post-restore hook", 0, t); //$NON-NLS-1$
+					throw new JVMRestoreException("Exception thrown when running user post-restore hook", 0, t); //$NON-NLS-1$
 				}
 			});
 		}
@@ -572,8 +572,8 @@ public final class CRIUSupport {
 				});
 	}
 
-	private static RestoreException throwSetEnvException(Throwable cause) {
-		throw new RestoreException("Failed to setup new environment variables", 0, cause); //$NON-NLS-1$
+	private static JVMRestoreException throwSetEnvException(Throwable cause) {
+		throw new JVMRestoreException("Failed to setup new environment variables", 0, cause); //$NON-NLS-1$
 	}
 
 	/**
@@ -586,7 +586,7 @@ public final class CRIUSupport {
 	 * @throws JVMCheckpointException        if a JVM error occurred before
 	 *                                       checkpoint
 	 * @throws SystemCheckpointException     if a CRIU operation failed
-	 * @throws RestoreException              if an error occurred during or after
+	 * @throws JVMRestoreException           if an error occurred during or after
 	 *                                       restore
 	 */
 	public synchronized void checkpointJVM() {
