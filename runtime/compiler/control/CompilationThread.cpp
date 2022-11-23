@@ -1747,6 +1747,20 @@ bool TR_LowPriorityCompQueue::addUpgradeReqToLPQ(TR_MethodToBeCompiled *compReq,
    return createLowPriorityCompReqAndQueueIt(compReq->getMethodDetails(), compReq->_newStartPC, reason);
    }
 
+//------------------------ addUpgradeReqToLPQ ----------------------
+// This method is used when the VM wants to queue a recompilation
+// but the JIT wants to postpone that recompilation for a later moment
+//------------------------------------------------------------------
+bool TR_LowPriorityCompQueue::addUpgradeReqToLPQ(J9Method *j9method, void *startPC, uint8_t reason)
+   {
+   TR_ASSERT(TR::CompilationInfo::isCompiled(j9method) && startPC, "j9method %p must be compiled because it is an upgrade", j9method);
+   TR::IlGeneratorMethodDetails details(j9method);
+   // filter out fixed opt level situations
+   if (!TR::Options::getCmdLineOptions()->allowRecompilation())
+      return false;
+   return createLowPriorityCompReqAndQueueIt(details, startPC, reason);
+   }
+
 bool TR::CompilationInfo::canProcessLowPriorityRequest()
    {
    // To avoid overhead cycling through all the threads, we should first
@@ -1758,6 +1772,13 @@ bool TR::CompilationInfo::canProcessLowPriorityRequest()
    // If the main compilation queue has requests, we should serve those first
    if (getMethodQueueSize() != 0)
       return false;
+
+   // In this special mode we don't expect compilations to contribute much to performance, hence prevent them
+   if (getLowCompDensityMode())
+      return false;
+
+   if (compileFromLPQRegardlessOfCPU())
+      return true;
 
 #if defined(J9VM_OPT_JITSERVER)
    // If the first LPQ entry is REASON_SERVER_UNAVAILABLE, only attempt compilation if server is available by now
@@ -5264,7 +5285,7 @@ TR::CompilationInfo::addMethodToBeCompiled(TR::IlGeneratorMethodDetails & detail
 
 //--------------------------- queueEntry ---------------------------------
 // Insert the compilation request in the queue at the appropriate place
-// based on its priority. Must have compilationQueueMonitor in hanb
+// based on its priority. Must have compilationQueueMonitor in hand
 //------------------------------------------------------------------------
 void TR::CompilationInfo::queueEntry(TR_MethodToBeCompiled *entry)
    {
@@ -6344,6 +6365,35 @@ void *TR::CompilationInfo::compileOnSeparateThread(J9VMThread * vmThread, TR::Il
       }
 #endif // defined(J9VM_INTERP_AOT_RUNTIME_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64))
 
+   // If the JVM is in low compilation density mode (meaning that the few trickling compilations
+   // do not matter much for performance), we want to defer any cold-->warm re-compilation that
+   // may be caused by GCR or sampling. Such compilation requests will be added to the
+   // Low Priority Queue (LPQ) and processed when the JVM exits lowCompDensityMode. This may happen
+   // because too many methods have gone through this postponing process.
+   if (getLowCompDensityMode() &&
+       async && // do not postpone synchronous requests
+       oldStartPC && // address only recompilations; first time compilations may be downgraded before placing an upgrade in LPQ
+       !details.isMethodInProgress() && // methods subject to DLT may appear as compiled
+       optimizationPlan->getOptLevel() == warm // Do not postpone hot/scorching compilations for performance reasons
+      )
+      {
+      // Add method to secondary compilation queue. TODO: do this only under an option
+      getLowPriorityCompQueue().addUpgradeReqToLPQ(method, oldStartPC, TR_MethodToBeCompiled::REASON_UPGRADE);
+
+      debugPrint(vmThread, "\tapplication thread release compilation monitor - postponing compilation\n");
+      debugPrint(vmThread, "-CM\n");
+      releaseCompMonitor(vmThread);
+      if (compErrCode)
+         *compErrCode = compilationInProgress; // Will be performed later
+      if (TR::Options::isAnyVerboseOptionSet(TR_VerbosePerformance, TR_VerboseJITServer, TR_VerboseCompileRequest))
+         {
+         TR_VerboseLog::writeLineLocked(TR_Vlog_CR,"t=%u Postponing recompilation for j9method=%p due to low compilation density mode",
+                                        (uint32_t)getPersistentInfo()->getElapsedTime(), method);
+         }
+      return 0; // mark that compilation is not yet done
+      }
+
+
    // determine priority
    CompilationPriority compPriority = CP_SYNC_NORMAL;
    if (async)
@@ -7287,6 +7337,12 @@ TR::CompilationInfoPerThreadBase::preferLocalComp(const TR_MethodToBeCompiled *e
    if (TR::Options::getCmdLineOptions()->getOption(TR_EnableJITServerHeuristics))
       {
       TR_Hotness optLevel = entry->_optimizationPlan->getOptLevel();
+      // If the server is running low on memory, keep all cold compilations local
+      if (_compInfo.getCompThreadActivationPolicy() == JITServer::CompThreadActivationPolicy::SUSPEND &&
+          optLevel <= cold)
+         {
+         return true;
+         }
       J9Method *method = entry->getMethodDetails().getMethod();
       uint32_t bcsz = TR::CompilationInfo::getMethodBytecodeSize(method);
       return isMemoryCheapCompilation(bcsz, optLevel) && isCPUCheapCompilation(bcsz, optLevel);
@@ -7381,6 +7437,8 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
    TR_J9VMBase *fe = TR_J9VMBase::get(_jitConfig, vmThread);
    if (NULL == fe)
       throw std::bad_alloc();
+
+   TR::PersistentInfo *persistentInfo = _compInfo.getPersistentInfo();
 
    // Check to see if we find an AOT version in the shared cache
    //
@@ -7641,7 +7699,7 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
          else // Use AOT heuristics
             {
             // Heuristic: generate AOT only for downgraded compilations in the first run
-            if ((!isSecondAOTRun && entry->_optimizationPlan->isOptLevelDowngraded()) ||
+            if ((!isSecondAOTRun && entry->_optimizationPlan->isOptLevelDowngraded() && !_compInfo.getLowCompDensityMode()) ||
                 entry->getMethodDetails().isJitDumpAOTMethod())
                {
                canDoRelocatableCompile = true;
@@ -7651,8 +7709,9 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
 #if defined(J9VM_OPT_JITSERVER)
                // We also want AOT compilations for JITServer clients that are attached to a
                // JITServer with an AOT cache, because those can be served relatively fast
-               if (_compInfo.getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT &&
-                   _compInfo.getPersistentInfo()->getJITServerUseAOTCache() && // Ideally we would check if the options allow us to use the AOT cache for this method
+               if (persistentInfo->getRemoteCompilationMode() == JITServer::CLIENT &&
+                   persistentInfo->getJITServerUseAOTCache() && // Ideally we would check if the options allow us to use the AOT cache for this method
+                   !_compInfo.getLowCompDensityMode() && // AOT req is sent to JITServer and we don't want to send JITServer any messages in this mode
                    !cannotDoRemoteCompilation) // Make sure remote compilations are possible (no strong guarantees)
                   {
                   if (!preferLocalComp(entry))
@@ -7692,7 +7751,7 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
          {
          _vm = TR_J9VMBase::get(_jitConfig, vmThread, TR_J9VMBase::AOT_VM);
 #if defined(J9VM_OPT_JITSERVER)
-         if (_compInfo.getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
+         if (persistentInfo->getRemoteCompilationMode() == JITServer::CLIENT)
             {
             if (cannotDoRemoteCompilation)
                downgradeLocalCompilationIfLowPhysicalMemory(entry);
@@ -7716,7 +7775,7 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
 #if defined(J9VM_OPT_JITSERVER)
       // When both canDoRelocatableCompile and TR::Options::canJITCompile() are false,
       // remote compilation request should not be used.
-      if ((_compInfo.getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT) &&
+      if ((persistentInfo->getRemoteCompilationMode() == JITServer::CLIENT) &&
           TR::Options::canJITCompile())
          {
          bool doLocalCompilation = entry->isAotLoad() || cannotDoRemoteCompilation || preferLocalComp(entry);
@@ -7732,7 +7791,7 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
              !details.isNewInstanceThunk() &&
              !details.isMethodHandleThunk() &&
              (TR::Options::getCmdLineOptions()->getOption(TR_EnableJITServerHeuristics) ||
-             _compInfo.getPersistentInfo()->isLocalSyncCompiles()) &&
+             persistentInfo->isLocalSyncCompiles()) &&
              !TR::Options::getCmdLineOptions()->getOption(TR_DisableUpgradingColdCompilations) &&
              TR::Options::getCmdLineOptions()->allowRecompilation() &&
              !details.isMethodInProgress() &&
@@ -7743,9 +7802,63 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
             entry->_optimizationPlan->setOptLevel(cold);
             entry->_optimizationPlan->setOptLevelDowngraded(true);
 
-            if (TR::Options::getVerboseOption(TR_VerboseCompilationDispatch))
-               TR_VerboseLog::writeLineLocked(TR_Vlog_DISPATCH, "Changed the remote sync compilation to a local sync cold compilation: j9method=%p",
-               entry->getMethodDetails().getMethod());
+            if (TR::Options::isAnyVerboseOptionSet(TR_VerbosePerformance, TR_VerboseJITServer, TR_VerboseCompilationDispatch))
+               TR_VerboseLog::writeLineLocked(TR_Vlog_DISPATCH, "t=%u Changed the remote sync compilation to a local sync cold compilation: j9method=%p",
+                  (uint32_t)persistentInfo->getElapsedTime(), method);
+            }
+         // We want to suppress remote compilations when the JVM has compiled most
+         // of the methods that are important to performance.
+         // If we detect that the density of compilation requests is very low, we will
+         // downgrade first time compilations to cold and keep them local.
+         // Hot/scorching recompilations should be allowed to proceed because they might
+         // be important for performance.
+         // Cold-->warm recompilations are already buffered in LPQ in compileOnSeparateThread()
+         if (!doLocalCompilation &&
+             (_compInfo.getLowCompDensityMode() || _compInfo.hasEnteredLowCompDensityModeInThePast() && _jitConfig->javaVM->internalVMFunctions->getVMRuntimeState(_jitConfig->javaVM) == J9VM_RUNTIME_STATE_IDLE) &&
+              entry->_optimizationPlan->getOptLevel() <= warm)
+            {
+            // Cold compilations can be kept local
+            if (entry->_optimizationPlan->getOptLevel() <= cold)
+               {
+               doLocalCompilation = true;
+               }
+            else // warm compilations here
+               {
+               // First time compilations should be downgraded to cold. Must obey fixed opt levels though
+               if (!TR::CompilationInfo::isCompiled(method) &&
+                   TR::Options::getCmdLineOptions()->allowRecompilation())
+                  {
+                  doLocalCompilation = true;
+                  entry->_optimizationPlan->setOptLevel(cold);
+                  entry->_optimizationPlan->setDisableGCR(); // upgrades are handled through LPQ
+                  if (TR::Options::isAnyVerboseOptionSet(TR_VerbosePerformance, TR_VerboseJITServer, TR_VerboseCompilationDispatch))
+                     {
+                     TR_VerboseLog::writeLineLocked(TR_Vlog_DISPATCH,"t=%u Changed remote warm compilation into local cold for j9method=%p due to low compilation density mode",
+                        (uint32_t)persistentInfo->getElapsedTime(), method);
+                     }
+                  // Add an upgrade recomp if possible
+                  if (!entry->isJNINative() &&
+                      !details.isNewInstanceThunk() &&
+                      !details.isMethodHandleThunk() &&
+                      !details.isMethodInProgress() &&
+                      !TR::Options::getCmdLineOptions()->getOption(TR_MimicInterpreterFrameShape)
+                     )
+                     {
+                     static char * dontUpgrade = feGetEnv("TR_DontUpgradeDuringLowCompDensityMode");
+                     if (!dontUpgrade)
+                        {
+                        entry->_optimizationPlan->setOptLevelDowngraded(true);
+                        // Mark the optimization plan to place an upgrade request in LPQ at the end of this compilation
+                        entry->_optimizationPlan->setAddToUpgradeQueue();
+                        if (TR::Options::isAnyVerboseOptionSet(TR_VerbosePerformance, TR_VerboseJITServer, TR_VerboseCompilationDispatch))
+                           {
+                           TR_VerboseLog::writeLineLocked(TR_Vlog_DISPATCH,"t=%u Will enqueue an upgrade compilation into LPQ for j9method=%p",
+                              (uint32_t)persistentInfo->getElapsedTime(), method);
+                           }
+                        }
+                     }
+                  }
+               }
             }
 
          if (!doLocalCompilation)
@@ -9496,6 +9609,11 @@ TR::CompilationInfoPerThreadBase::compile(
       ++_compInfo._numSyncCompilations;
    else
       ++_compInfo._numAsyncCompilations;
+
+   // For computing compilation density, ignore compilations done during idle state that
+   // were downgraded to cold, because such compilations don't contribute to throughput
+   if (!(_compInfo.getPersistentInfo()->getJitState() == IDLE_STATE && compiler->getMethodHotness() <= cold))
+      ++_compInfo._numCompsUsedForCompDensityCalculations;
 
    if (_methodBeingCompiled->isDLTCompile())
       compiler->setDltBcIndex(static_cast<J9::MethodInProgressDetails &>(_methodBeingCompiled->getMethodDetails()).getByteCodeIndex());
@@ -12240,7 +12358,6 @@ void TR_LowPriorityCompQueue::incStatsReqQueuedToLPQ(uint8_t reason)
 void TR_LowPriorityCompQueue::printStats() const
    {
    fprintf(stderr, "Stats for LPQ:\n");
-
    fprintf(stderr, "   Requests for LPQ = %4u (Sources: IProfiler=%3u Interpreter=%3u JIT=%3u)\n",
       _STAT_compReqQueuedByIProfiler + _STAT_compReqQueuedByInterpreter + _STAT_compReqQueuedByJIT,
       _STAT_compReqQueuedByIProfiler, _STAT_compReqQueuedByInterpreter, _STAT_compReqQueuedByJIT);
