@@ -472,7 +472,8 @@ J9NLS_JCL_CRIU_FAILED_TO_CLOSE_DIR=No se ha podido cerrar el directorio de datos
 # START NON-TRANSLATABLE
 J9NLS_JCL_CRIU_FAILED_TO_CLOSE_DIR.sample_input_1=1
 J9NLS_JCL_CRIU_FAILED_TO_CLOSE_DIR.explanation=An error occured when the JVM attempted to close the specified directory.
-J9NLS_JCL_CRIU_FAILED_TO_CLOSE_DIR.system_action=The JVM will throw a RestoreException or SystemCheckpointException.
+J9NLS_JCL_CRIU_FAILED_TO_CLOSE_DIR.system_action=The JVM will throw a SystemRestoreException or SystemCheckpointException.
+
 J9NLS_JCL_CRIU_FAILED_TO_CLOSE_DIR.user_response=Ensure the specified directory is accessible.
 # END NON-TRANSLATABLE
 
@@ -496,7 +497,7 @@ J9NLS_JCL_CRIU_FAILED_TO_CLOSE_WORK_DIR=No se ha podido cerrar el directorio de 
 # START NON-TRANSLATABLE
 J9NLS_JCL_CRIU_FAILED_TO_CLOSE_WORK_DIR.sample_input_1=1
 J9NLS_JCL_CRIU_FAILED_TO_CLOSE_WORK_DIR.explanation=An error occured when the JVM attempted to close the specified directory.
-J9NLS_JCL_CRIU_FAILED_TO_CLOSE_WORK_DIR.system_action=The JVM will throw a RestoreException or SystemCheckpointException.
+J9NLS_JCL_CRIU_FAILED_TO_CLOSE_WORK_DIR.system_action=The JVM will throw a SystemRestoreException or SystemCheckpointException.
 J9NLS_JCL_CRIU_FAILED_TO_CLOSE_WORK_DIR.user_response=Ensure the specified directory is accessible.
 # END NON-TRANSLATABLE
 
@@ -512,7 +513,7 @@ J9NLS_JCL_CRIU_FAILED_TO_RUN_INTERNAL_RESTORE_HOOKS=No se han podido ejecutar lo
 # START NON-TRANSLATABLE
 J9NLS_JCL_CRIU_FAILED_TO_RUN_INTERNAL_RESTORE_HOOKS.sample_input_1=1
 J9NLS_JCL_CRIU_FAILED_TO_RUN_INTERNAL_RESTORE_HOOKS.explanation=An error occured when the JVM attempted to run internal restore hooks.
-J9NLS_JCL_CRIU_FAILED_TO_RUN_INTERNAL_RESTORE_HOOKS.system_action=The JVM will throw a RestoreException.
+J9NLS_JCL_CRIU_FAILED_TO_RUN_INTERNAL_RESTORE_HOOKS.system_action=The JVM will throw a JVMRestoreException.
 J9NLS_JCL_CRIU_FAILED_TO_RUN_INTERNAL_RESTORE_HOOKS.user_response=View CRIU documentation to determine how to resolve the error.
 # END NON-TRANSLATABLE
 
@@ -520,6 +521,6 @@ J9NLS_JCL_CRIU_FAILED_DELAY_LOCK_RELATED_OPS=No se han podido ejecutar las opera
 # START NON-TRANSLATABLE
 J9NLS_JCL_CRIU_FAILED_DELAY_LOCK_RELATED_OPS.sample_input_1=1
 J9NLS_JCL_CRIU_FAILED_DELAY_LOCK_RELATED_OPS.explanation=An error occured when the JVM attempted to run delayed identity operations.
-J9NLS_JCL_CRIU_FAILED_DELAY_LOCK_RELATED_OPS.system_action=The JVM will throw a RestoreException.
+J9NLS_JCL_CRIU_FAILED_DELAY_LOCK_RELATED_OPS.system_action=The JVM will throw a JVMRestoreException.
 J9NLS_JCL_CRIU_FAILED_DELAY_LOCK_RELATED_OPS.user_response=View CRIU documentation to determine how to resolve the error.
 # END NON-TRANSLATABLE
