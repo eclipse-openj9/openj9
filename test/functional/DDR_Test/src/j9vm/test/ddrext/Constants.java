@@ -334,23 +334,23 @@ public class Constants {
 	public static final String DUMP_ROM_CLASS_LINEAR_FAILURE_KEY = "";
 
 	public static final String DUMP_ROM_CLASS_CMD = "dumpromclass";
-	public static final String DUMP_ROM_CLASS_SUCCESS_KEY = "ROM Size,Class Name: java/lang/Object,Superclass Name,Source File Name,Methods,Interfaces \\(0\\),Fields \\(0\\),CP Shape Description,Methods \\(13\\)";
+	public static final String DUMP_ROM_CLASS_SUCCESS_KEY = "ROM Size,Class Name: java/lang/Object,Superclass Name,Source File Name,Methods,Interfaces \\(0\\),Fields \\(0\\),CP Shape Description,Methods \\(14\\)";
 	public static final String DUMP_ROM_CLASS_FAILURE_KEY = "";
 
 	public static final String DUMP_ROM_CLASS_NAME_CMD = "name:";
 	public static final String DUMP_ROM_CLASS_NAME = "java/lang/Object";
-	public static final String DUMP_ROM_CLASS_NAME_SUCCESS_KEY = "ROM Size,Class Name: java/lang/Object,Superclass Name,Source File Name: Object.java,Methods,Interfaces \\(0\\),Fields \\(0\\),CP Shape Description,Methods \\(13\\),Found 1 class\\(es\\) with name java/lang/Object";
+	public static final String DUMP_ROM_CLASS_NAME_SUCCESS_KEY = "ROM Size,Class Name: java/lang/Object,Superclass Name,Source File Name: Object.java,Methods,Interfaces \\(0\\),Fields \\(0\\),CP Shape Description,Methods \\(14\\),Found 1 class\\(es\\) with name java/lang/Object";
 	public static final String DUMP_ROM_CLASS_NAME_FAILURE_KEY = "Found 0 class\\(es\\) with name java/lang/Object";
 
 	public static final String DUMP_ROM_CLASS_NAME_WC = "*Object*";
-	public static final String DUMP_ROM_CLASS_NAME_WC_SUCCESS_KEY = "ROM Size,Class Name: java/lang/Object,Superclass Name,Source File Name: Object.java,Methods,Interfaces \\(0\\),Fields \\(0\\),CP Shape Description,Methods \\(13\\),Found [1-9][0-9]* class\\(es\\) with name \\*Object\\*";
+	public static final String DUMP_ROM_CLASS_NAME_WC_SUCCESS_KEY = "ROM Size,Class Name: java/lang/Object,Superclass Name,Source File Name: Object.java,Methods,Interfaces \\(0\\),Fields \\(0\\),CP Shape Description,Methods \\(14\\),Found [1-9][0-9]* class\\(es\\) with name \\*Object\\*";
 	public static final String DUMP_ROM_CLASS_NAME_WC_FAILURE_KEY = "Found 0 class\\(es\\) with name \\*Object\\*";
 
 	public static final String DUMP_ROM_CLASS_MAPS_CMD = "maps";
-	public static final String DUMP_ROM_CLASS_MAPS_SUCCESS_KEY = "ROM Size,Class Name: java/lang/Object,Superclass Name,Source File Name: Object.java,Interfaces \\(0\\),Fields \\(0\\),CP Shape Description,Methods \\(13\\),lmap,dmap,smap";
+	public static final String DUMP_ROM_CLASS_MAPS_SUCCESS_KEY = "ROM Size,Class Name: java/lang/Object,Superclass Name,Source File Name: Object.java,Interfaces \\(0\\),Fields \\(0\\),CP Shape Description,Methods \\(14\\),lmap,dmap,smap";
 	public static final String DUMP_ROM_CLASS_MAPS_FAILURE_KEY = "";
 
-	public static final String DUMP_ROM_CLASS_NAME_MAPS_SUCCESS_KEY = "ROM Size,Class Name: java/lang/Object,Superclass Name,Source File Name: Object.java,Interfaces \\(0\\),Fields \\(0\\),CP Shape Description,Methods \\(13\\),lmap,dmap,smap,Found 1 class\\(es\\) with name java/lang/Object";
+	public static final String DUMP_ROM_CLASS_NAME_MAPS_SUCCESS_KEY = "ROM Size,Class Name: java/lang/Object,Superclass Name,Source File Name: Object.java,Interfaces \\(0\\),Fields \\(0\\),CP Shape Description,Methods \\(14\\),lmap,dmap,smap,Found 1 class\\(es\\) with name java/lang/Object";
 	public static final String DUMP_ROM_CLASS_NAME_MAPS_FAILURE_KEY = "Found 0 class\\(es\\) with name java/lang/Object";
 
 	public static final String DUMP_ROM_CLASS_INVALID_ADDR_SUCCESS_KEY = "Problem running command";//"DDRInteractiveCommandException";
