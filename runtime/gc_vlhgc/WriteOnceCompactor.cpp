@@ -43,6 +43,8 @@
 #include "ClassLoaderIterator.hpp"
 #include "ClassLoaderRememberedSet.hpp"
 #include "CompactGroupManager.hpp"
+#include "ContinuationObjectBuffer.hpp"
+#include "ContinuationObjectList.hpp"
 #include "VMHelpers.hpp"
 #include "WriteOnceCompactor.hpp"
 #include "Debug.hpp"
@@ -558,7 +560,6 @@ MM_WriteOnceCompactor::compact(MM_EnvironmentVLHGC *env)
 	env->_compactVLHGCStats._moveStartTime = timeTemp;
 	moveObjects(env);
 	env->getGCEnvironment()->_ownableSynchronizerObjectBuffer->flush(env);
-	env->getGCEnvironment()->_continuationObjectBuffer->flush(env);
 	/* Note:  moveObjects implicitly synchronizes threads */
 	timeTemp = j9time_hires_clock();
 	env->_compactVLHGCStats._moveEndTime = timeTemp;
@@ -1456,7 +1457,6 @@ MM_WriteOnceCompactor::fixupObject(MM_EnvironmentVLHGC* env, J9Object *objectPtr
 		fixupMixedObject(env, objectPtr, cache);
 		break;
 	case GC_ObjectModel::SCAN_CONTINUATION_OBJECT:
-		addContinuationObjectInList(env, objectPtr);
 		fixupContinuationObject(env, objectPtr, cache);
 		break;
 	case GC_ObjectModel::SCAN_CLASS_OBJECT:
@@ -2041,11 +2041,27 @@ MM_WriteOnceCompactor::fixupArrayletLeafRegionContentsAndObjectLists(MM_Environm
 					}
 				}
 			}
+			if (!region->getContinuationObjectList()->wasEmpty()) {
+				if (J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
+					J9Object *pointer = region->getContinuationObjectList()->getPriorList();
+					while (NULL != pointer) {
+						Assert_MM_true(region->isAddressInRegion(pointer));
+						J9Object* forwardedPtr = getForwardingPtr(pointer);
+
+						/* read the next link out of the moved copy of the object before we add it to the buffer */
+						pointer = _extensions->accessBarrier->getContinuationLink(forwardedPtr);
+
+						/* store the object in this thread's buffer. It will be flushed to the appropriate list when necessary. */
+						env->getGCEnvironment()->_continuationObjectBuffer->add(env, forwardedPtr);
+					}
+				}
+			}
 		}
 	}
 
 	/* restore everything to a flushed state before exiting */
 	env->getGCEnvironment()->_unfinalizedObjectBuffer->flush(env);
+	env->getGCEnvironment()->_continuationObjectBuffer->flush(env);
 }
 
 void

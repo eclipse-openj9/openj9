@@ -32,7 +32,6 @@
 #include "MixedObjectIterator.hpp"
 #include "ObjectAccessBarrier.hpp"
 #include "OwnableSynchronizerObjectBuffer.hpp"
-#include "ContinuationObjectBuffer.hpp"
 #include "VMHelpers.hpp"
 #include "ParallelDispatcher.hpp"
 #include "PointerContiguousArrayIterator.hpp"
@@ -126,12 +125,6 @@ MM_CompactSchemeFixupObject::addOwnableSynchronizerObjectInList(MM_EnvironmentBa
 	}
 }
 
-MMINLINE void
-MM_CompactSchemeFixupObject::addContinuationObjectInList(MM_EnvironmentBase *env, omrobjectptr_t objectPtr)
-{
-	env->getGCEnvironment()->_continuationObjectBuffer->add(env, objectPtr);
-}
-
 void
 MM_CompactSchemeFixupObject::fixupObject(MM_EnvironmentStandard *env, omrobjectptr_t objectPtr)
 {
@@ -158,7 +151,6 @@ MM_CompactSchemeFixupObject::fixupObject(MM_EnvironmentStandard *env, omrobjectp
 		fixupMixedObject(objectPtr);
 		break;
 	case GC_ObjectModel::SCAN_CONTINUATION_OBJECT:
-		addContinuationObjectInList(env, objectPtr);
 		fixupContinuationObject(env, objectPtr);
 		break;
 	case GC_ObjectModel::SCAN_FLATTENED_ARRAY_OBJECT:
