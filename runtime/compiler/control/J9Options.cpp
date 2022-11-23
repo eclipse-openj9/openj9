@@ -125,7 +125,7 @@ int32_t J9::Options::_cpuCompTimeExpensiveThreshold = 4000;
 uintptr_t J9::Options::_compThreadAffinityMask = 0;
 
 #if defined(J9VM_OPT_JITSERVER)
-int64_t J9::Options::_oldAge = 1000 * 60 * 1000; // 1000 minutes
+int64_t J9::Options::_oldAge = 1000 * 60 * 90; // 90 minutes
 int64_t J9::Options::_oldAgeUnderLowMemory = 1000 * 60 * 5; // 5 minutes
 int64_t J9::Options::_timeBetweenPurges = 1000 * 60 * 1; // 1 minute
 bool J9::Options::_shareROMClasses = false;
@@ -135,6 +135,9 @@ int32_t J9::Options::_highActiveThreadThreshold = -1;
 int32_t J9::Options::_veryHighActiveThreadThreshold = -1;
 int32_t J9::Options::_aotCachePersistenceMinDeltaMethods = 200;
 int32_t J9::Options::_aotCachePersistenceMinPeriodMs = 10000; // ms
+int32_t J9::Options::_lowCompDensityModeEnterThreshold = 4; // Maximum number of compilations per 10 min of CPU required to enter low compilation density mode. Use 0 to disable feature
+int32_t J9::Options::_lowCompDensityModeExitThreshold = 15; // Minimum number of compilations per 10 min of CPU required to exit low compilation density mode
+int32_t J9::Options::_lowCompDensityModeExitLPQSize = 120;  // Minimum number of compilations in LPQ to take us out of low compilation density mode
 TR::CompilationFilters *J9::Options::_JITServerAOTCacheStoreFilters = NULL;
 TR::CompilationFilters *J9::Options::_JITServerAOTCacheLoadFilters = NULL;
 TR::CompilationFilters *J9::Options::_JITServerRemoteExcludeFilters = NULL;
@@ -1061,6 +1064,14 @@ TR::OptionTable OMR::Options::_feOptions[] = {
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_LoopyMethodDivisionFactor, 0, "F%d", NOT_IN_SUBSET},
    {"loopyMethodSubtractionFactor=", "O<nnn>\tCounts Subtraction factor for Loopy methods",
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_LoopyMethodSubtractionFactor, 0, "F%d", NOT_IN_SUBSET},
+#if defined(J9VM_OPT_JITSERVER)
+   {"lowCompDensityModeEnterThreshold=", "M<nnn>\tMaximum number of compilations per 10 min of CPU required to enter low compilation density mode. Use 0 to disable feature.",
+        TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_lowCompDensityModeEnterThreshold, 0, "F%d", NOT_IN_SUBSET},
+   {"lowCompDensityModeExitLPQSize=", "M<nnn>\tMinimum number of compilations in LPQ to take us out of low compilation density mode",
+        TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_lowCompDensityModeExitLPQSize, 0, "F%d", NOT_IN_SUBSET},
+   {"lowCompDensityModeExitThreshold=", "M<nnn>\tMinimum number of compilations per 10 min of CPU required to exit low compilation density mode",
+        TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_lowCompDensityModeExitThreshold, 0, "F%d", NOT_IN_SUBSET},
+#endif /* defined(J9VM_OPT_JITSERVER) */
    {"lowerBoundNumProcForScaling=", "M<nnn>\tLower than this numProc we'll use the default scorchingSampleThreshold",
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_lowerBoundNumProcForScaling, 0, "F%d", NOT_IN_SUBSET},
    {"lowVirtualMemoryMBThreshold=","M<nnn>\tThreshold when we declare we are running low on virtual memory. Use 0 to disable the feature",
