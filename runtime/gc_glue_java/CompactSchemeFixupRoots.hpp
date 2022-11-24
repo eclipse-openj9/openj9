@@ -73,7 +73,6 @@ public:
 	virtual void scanUnfinalizedObjects(MM_EnvironmentBase *env) {
 		/* allow the compact scheme to handle this */
 		reportScanningStarted(RootScannerEntity_UnfinalizedObjects);
-		MM_CompactSchemeFixupObject fixupObject(env, _compactScheme);
 		fixupUnfinalizedObjects(env);
 		reportScanningEnded(RootScannerEntity_UnfinalizedObjects);
 	}
@@ -87,7 +86,6 @@ public:
 	virtual void scanFinalizableObjects(MM_EnvironmentBase *env) {
 		if (_singleThread || J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
 			reportScanningStarted(RootScannerEntity_FinalizableObjects);
-			MM_CompactSchemeFixupObject fixupObject(env, _compactScheme);
 			fixupFinalizableObjects(env);
 			reportScanningEnded(RootScannerEntity_FinalizableObjects);
 		}
@@ -99,7 +97,10 @@ public:
 	}
 
 	virtual void scanContinuationObjects(MM_EnvironmentBase *env) {
-		/* empty, move continuation processing in fixupObject */
+		/* allow the compact scheme to handle this */
+		reportScanningStarted(RootScannerEntity_ContinuationObjects);
+		fixupContinuationObjects(env);
+		reportScanningEnded(RootScannerEntity_ContinuationObjects);
 	}
 
 private:
@@ -107,5 +108,6 @@ private:
 	void fixupFinalizableObjects(MM_EnvironmentBase *env);
 	void fixupUnfinalizedObjects(MM_EnvironmentBase *env);
 #endif
+	void fixupContinuationObjects(MM_EnvironmentBase *env);
 };
 #endif /* FIXUPROOTS_HPP_ */

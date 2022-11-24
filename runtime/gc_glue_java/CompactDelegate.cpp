@@ -31,8 +31,6 @@
 #include "MarkMap.hpp"
 #include "OwnableSynchronizerObjectBuffer.hpp"
 #include "OwnableSynchronizerObjectList.hpp"
-#include "ContinuationObjectBuffer.hpp"
-#include "ContinuationObjectList.hpp"
 #include "PointerContiguousArrayIterator.hpp"
 
 #if defined(OMR_GC_MODRON_COMPACTION)
@@ -132,8 +130,6 @@ MM_CompactDelegate::workerCleanupAfterGC(MM_EnvironmentBase *env)
 {
 	/* flush ownable synchronizer object buffer after rebuild the ownableSynchronizerObjectList during fixupObjects */
 	env->getGCEnvironment()->_ownableSynchronizerObjectBuffer->flush(env);
-	/* flush continuation object buffer after rebuild the continuationObjectList during fixupObjects */
-	env->getGCEnvironment()->_continuationObjectBuffer->flush(env);
 }
 
 void
@@ -146,7 +142,6 @@ MM_CompactDelegate::mainSetupForGC(MM_EnvironmentBase *env)
 		MM_HeapRegionDescriptorStandardExtension *regionExtension = MM_ConfigurationDelegate::getHeapRegionDescriptorStandardExtension(env, region);
 		for (uintptr_t i = 0; i < regionExtension->_maxListIndex; i++) {
 			regionExtension->_ownableSynchronizerObjectLists[i].startOwnableSynchronizerProcessing();
-			regionExtension->_continuationObjectLists[i].startProcessing();
 		}
 	}
 }

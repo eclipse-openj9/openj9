@@ -514,11 +514,6 @@ private:
 		}
 	}
 
-	MMINLINE void addContinuationObjectInList(MM_EnvironmentVLHGC *env, J9Object *objectPtr)
-	{
-		((MM_ContinuationObjectBufferVLHGC*) env->getGCEnvironment()->_continuationObjectBuffer)->addForOnlyCompactedRegion(env, objectPtr);
-	}
-
 #if defined(J9VM_GC_FINALIZATION)
 	void fixupFinalizableObjects(MM_EnvironmentVLHGC *env);
 
