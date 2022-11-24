@@ -312,6 +312,8 @@ JVM_VirtualThreadMountEnd(JNIEnv *env, jobject thread, jboolean firstMount)
 	f_monitorEnter(vm->liveVirtualThreadListMutex);
 	j9object_t threadObj = J9_JNI_UNWRAP_REFERENCE(thread);
 
+	Assert_SC_true(IS_JAVA_LANG_VIRTUALTHREAD(currentThread, threadObj));
+
 	if (TrcEnabled_Trc_SC_VirtualThread_Info) {
 		j9object_t continuationObj = J9VMJAVALANGVIRTUALTHREAD_CONT(currentThread, threadObj);
 		Trc_SC_VirtualThread_Info(
@@ -333,10 +335,14 @@ JVM_VirtualThreadMountEnd(JNIEnv *env, jobject thread, jboolean firstMount)
 			 * This prevents the root reference from becoming stale if the GC moves the object.
 			 */
 			j9object_t rootVirtualThread = mmFuncs->J9AllocateObject(currentThread, virtualThreadClass, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
+
+			J9VMJAVALANGVIRTUALTHREAD_SET_STATE(currentThread, rootVirtualThread, J9VM_VIRTUALTHREAD_ROOT_NODE_STATE);
+
 			if (NULL != rootVirtualThread) {
 				/* The global ref will be freed at vm death. */
 				jobject globalRef = vmFuncs->j9jni_createGlobalRef((JNIEnv *)currentThread, rootVirtualThread, JNI_FALSE);
 				if (NULL != globalRef) {
+					Trc_SC_VirtualThread_RootNodeSet(currentThread, globalRef);
 					vm->liveVirtualThreadList = (j9object_t *)globalRef;
 
 					/* Set linkNext/linkPrevious to itself. */
@@ -405,6 +411,8 @@ JVM_VirtualThreadUnmountBegin(JNIEnv *env, jobject thread, jboolean lastUnmount)
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 	f_monitorEnter(vm->liveVirtualThreadListMutex);
 	j9object_t threadObj = J9_JNI_UNWRAP_REFERENCE(thread);
+
+	Assert_SC_true(IS_JAVA_LANG_VIRTUALTHREAD(currentThread, threadObj));
 
 	if (TrcEnabled_Trc_SC_VirtualThread_Info) {
 		j9object_t continuationObj = J9VMJAVALANGVIRTUALTHREAD_CONT(currentThread, threadObj);
@@ -478,6 +486,8 @@ JVM_VirtualThreadUnmountEnd(JNIEnv *env, jobject thread, jboolean lastUnmount)
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 	f_monitorEnter(vm->liveVirtualThreadListMutex);
 	j9object_t threadObj = J9_JNI_UNWRAP_REFERENCE(thread);
+
+	Assert_SC_true(IS_JAVA_LANG_VIRTUALTHREAD(currentThread, threadObj));
 
 	if (TrcEnabled_Trc_SC_VirtualThread_Info) {
 		j9object_t continuationObj = J9VMJAVALANGVIRTUALTHREAD_CONT(currentThread, threadObj);
