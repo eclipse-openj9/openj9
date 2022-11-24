@@ -115,8 +115,20 @@ TR::Register *J9::Power::JNILinkage::buildDirectDispatch(TR::Node *callNode)
    uintptr_t targetAddress;
 
    bool crc32m1 = (callSymbol->getRecognizedMethod() == TR::java_util_zip_CRC32_update);
-   bool crc32m2 = (callSymbol->getRecognizedMethod() == TR::java_util_zip_CRC32_updateBytes);
-   bool crc32m3 = (callSymbol->getRecognizedMethod() == TR::java_util_zip_CRC32_updateByteBuffer);
+   bool crc32m2 =
+#if JAVA_SPEC_VERSION >= 9
+                  (callSymbol->getRecognizedMethod() == TR::java_util_zip_CRC32_updateBytes0)
+#else
+                  (callSymbol->getRecognizedMethod() == TR::java_util_zip_CRC32_updateBytes)
+#endif
+                  ;
+   bool crc32m3 =
+#if JAVA_SPEC_VERSION >= 9
+                  (callSymbol->getRecognizedMethod() == TR::java_util_zip_CRC32_updateByteBuffer0)
+#else
+                  (callSymbol->getRecognizedMethod() == TR::java_util_zip_CRC32_updateByteBuffer)
+#endif
+                  ;
 
    // TODO: How to handle discontiguous array?
    // The specialCaseJNI shortcut will mangle register dependencies and use system/C dispatch.
@@ -303,6 +315,14 @@ TR::Register *J9::Power::JNILinkage::buildDirectDispatch(TR::Node *callNode)
                wasteArg = map.getSourceWithTarget(TR::RealRegister::gr4);
             }
          generateTrg1Src2Instruction(cg(), TR::InstOpCode::add, callNode, addrArg, addrArg, posArg);
+
+         if (crc32m2 || crc32m3)
+            {
+            /* Passing zero for the castagnoli parameter of crc32_vpmsum helper. Here we are re-using
+             * posArg in gr6 after the buffer address has been calculated.
+             */
+            generateTrg1ImmInstruction(cg(), TR::InstOpCode::li, callNode, posArg, 0);
+            }
 
          deps->getPreConditions()->setDependencyInfo(map.getTargetIndex(TR::RealRegister::gr4), addrArg, TR::RealRegister::gr4, UsesDependentRegister);
          deps->getPostConditions()->setDependencyInfo(map.getTargetIndex(TR::RealRegister::gr4), addrArg, TR::RealRegister::gr4, UsesDependentRegister);

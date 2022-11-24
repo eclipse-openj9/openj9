@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2017 IBM Corp. and others
+ * Copyright (c) 2015, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -64,6 +64,12 @@ T.barrett_constants:
         .tc     .barrett_constants[TC],.barrett_constants
 T.short_constants:
         .tc     .short_constants[TC],.short_constants
+T.constants_crc32c:
+        .tc     .constants_crc32c[TC],.constants_crc32c
+T.barrett_constants_crc32c:
+        .tc     .barrett_constants_crc32c[TC],.barrett_constants_crc32c
+T.short_constants_crc32c:
+        .tc     .short_constants_crc32c[TC],.short_constants_crc32c
 
         .csect  PPCcrc32_DATA{RO},4
 .byteswap_constant:
@@ -98,6 +104,7 @@ __crc32_vpmsum:
 
 #define __ASSEMBLY__
 #include "p/runtime/J9PPCCRC32_constants.h"
+#include "p/runtime/J9PPCCRC32C_constants.h"
 
 #if defined(AIXPPC)
         .csect       PPCcrc32_TEXT{PR}
@@ -147,7 +154,7 @@ __crc32_vpmsum:
         .globl    __crc32_vpmsum
 #endif
 
-/* unsigned int __crc32_vpmsum(unsigned int crc, void *p, unsigned long len) */
+/* unsigned int __crc32_vpmsum(unsigned int crc, void *p, unsigned long len, unsigned int castagnoli) */
 #if defined(AIXPPC)
 .__crc32_vpmsum:
    .function .__crc32_vpmsum,startproc.__crc32_vpmsum,16,0,(endproc.__crc32_vpmsum-startproc.__crc32_vpmsum)
@@ -165,6 +172,7 @@ startproc.__crc32_vpmsum:
         staddr  r27,-40(r1)
         staddr  r26,-48(r1)
         staddr  r25,-56(r1)
+        staddr  r24,-64(r1)
 
         li      off16,16
         li      off32,32
@@ -174,6 +182,8 @@ startproc.__crc32_vpmsum:
         li      off96,96
         li      off112,112
         li      r0,0
+
+        mr      r24,r6
 
         /* Enough room for saving 10 non volatile VMX registers */
         subi    r6,r1,64+10*16
@@ -264,16 +274,30 @@ startproc.__crc32_vpmsum:
         addi    r7,r7,-1
         mtctr   r7
 
+        cmpi    cr0,CmpAddr,r24,0
+        bne     .L13
 #if defined(AIXPPC)
         laddr   r3,T.constants(r2)
+        b       .L14
+.L13:
+        laddr   r3,T.constants_crc32c(r2)
 #elif defined(LINUXPPC64)
         addis   r3,r2,.constants@toc@ha
         addi    r3,r3,.constants@toc@l
+        b       .L14
+.L13:
+        addis   r3,r2,.constants_crc32c@toc@ha
+        addi    r3,r3,.constants_crc32c@toc@l
 #else
         lis     r3,.constants@ha
         addi    r3,r3,.constants@l
+        b       .L14
+.L13:
+        lis     r3,.constants_crc32c@ha
+        addi    r3,r3,.constants_crc32c@l
 #endif
 
+.L14:
         /* Find the start of our constants */
         add     r3,r3,r8
 
@@ -631,16 +655,30 @@ startproc.__crc32_vpmsum:
 
 .Lbarrett_reduction:
         /* Barrett constants */
+        cmpi    cr0,CmpAddr,r24,0
+        bne     .L17
 #if defined(AIXPPC)
         laddr   r3,T.barrett_constants(r2)
+        b       .L18
+.L17:
+        laddr   r3,T.barrett_constants_crc32c(r2)
 #elif defined(LINUXPPC64)
         addis   r3,r2,.barrett_constants@toc@ha
         addi    r3,r3,.barrett_constants@toc@l
+        b       .L18
+.L17:
+        addis   r3,r2,.barrett_constants_crc32c@toc@ha
+        addi    r3,r3,.barrett_constants_crc32c@toc@l
 #else
         lis     r3,.barrett_constants@ha      
         addi    r3,r3,.barrett_constants@l
+        b       .L18
+.L17:
+        lis     r3,.barrett_constants_crc32c@ha
+        addi    r3,r3,.barrett_constants_crc32c@l
 #endif
 
+.L18:
         lvx     const1,0,r3
         lvx     const2,off16,r3
 
@@ -721,6 +759,7 @@ startproc.__crc32_vpmsum:
         laddr   r27,-40(r1)
         laddr   r26,-48(r1)
         laddr   r25,-56(r1)
+        laddr   r24,-64(r1)
 
         blr
 
@@ -743,16 +782,33 @@ startproc.__crc32_vpmsum:
         cmpi    cr0,CmpAddr,r5,0
         beq     .Lzero
 
+        cmpi    cr0,CmpAddr,r24,0
+        bne     .L15
 #if defined(AIXPPC)
         laddr   r3,T.short_constants(r2)
+        b       .L16
+.L15:
+        laddr   r3,T.short_constants_crc32c(r2)
+
 #elif defined(LINUXPPC64)
+
         addis   r3,r2,.short_constants@toc@ha
         addi    r3,r3,.short_constants@toc@l
+        b       .L16
+.L15:
+        addis   r3,r2,.short_constants_crc32c@toc@ha
+        addi    r3,r3,.short_constants_crc32c@toc@l
+
 #else
         lis     r3,.short_constants@ha      
         addi    r3,r3,.short_constants@l
+        b       .L16
+.L15:
+        lis     r3,.short_constants_crc32c@ha
+        addi    r3,r3,.short_constants_crc32c@l
 #endif
 
+.L16:
         /* Calculate where in the constant table we need to start */
         subfic  r6,r5,256
         add     r3,r3,r6

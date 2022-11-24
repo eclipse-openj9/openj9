@@ -2669,6 +2669,100 @@ void inlineCharacterIsMethod(TR::Node *node, TR::MethodSymbol* methodSymbol, TR:
    cg->stopUsingRegister(tmpReg);
    }
 
+void buildCRC32CCall(TR::Node *callNode,
+               TR::RegisterDependencyConditions *deps,
+               TR::MethodSymbol* methodSymbol,
+               TR::CodeGenerator *cg,
+               TR::LabelSymbol *&returnLabel,
+               bool crc32m2, bool crc32m3)
+   {
+   TR::Compilation *comp = cg->comp();
+   uintptr_t targetAddress;
+   TR::Register        *gr2Reg;
+   bool aix_style_linkage = comp->target().isAIX() || (comp->target().is64Bit() && comp->target().isLinux());
+
+   if (aix_style_linkage)
+      {
+      gr2Reg = deps->searchPreConditionRegister(TR::RealRegister::gr2);
+      }
+
+   // Argument changes are needed
+   targetAddress = (uintptr_t)((comp->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P8) && comp->target().cpu.supportsFeature(OMR_FEATURE_PPC_HAS_VSX))?crc32_vpmsum:crc32_no_vpmsum);
+
+   // Assuming pre/postCondition have the same index, we use preCondition to map
+   OMR::RegisterDependencyMap map(deps->getPreConditions()->getRegisterDependency(0), deps->getAddCursorForPre());
+   for (int32_t cnt=0; cnt < deps->getAddCursorForPre(); cnt++)
+      map.addDependency(deps->getPreConditions()->getRegisterDependency(cnt), cnt);
+
+   TR::Register *addrArg, *posArg, *lenArg, *wasteArg;
+   if (crc32m2)
+      {
+      addrArg = map.getSourceWithTarget(TR::RealRegister::gr4);
+      posArg = map.getSourceWithTarget(TR::RealRegister::gr5);
+      lenArg = map.getSourceWithTarget(TR::RealRegister::gr6);
+
+      generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi2, callNode, addrArg, addrArg, TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
+      }
+
+   if (crc32m3)
+      {
+      addrArg = map.getSourceWithTarget(comp->target().is64Bit()?(TR::RealRegister::gr4):(TR::RealRegister::gr5));
+      posArg = map.getSourceWithTarget(comp->target().is64Bit()?(TR::RealRegister::gr5):(TR::RealRegister::gr6));
+      lenArg = map.getSourceWithTarget(comp->target().is64Bit()?(TR::RealRegister::gr6):(TR::RealRegister::gr7));
+      if (!comp->target().is64Bit())
+         wasteArg = map.getSourceWithTarget(TR::RealRegister::gr4);
+      }
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::add, callNode, addrArg, addrArg, posArg);
+
+   /* For CRC32C, java uses len arg as offset for crc calculation. To workaround this in vpmsum
+    * where (off + len) is passed as len, perform a sub operation to take offset from len
+    */
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::subf, callNode, lenArg, posArg, lenArg);
+   /* Passing one for the castagnoli parameter of crc32_vpmsum helper. Here we are re-using
+    * posArg in gr6 after the buffer address has been calculated.
+    */
+   generateTrg1ImmInstruction(cg, TR::InstOpCode::li, callNode, posArg, 1);
+
+   deps->getPreConditions()->setDependencyInfo(map.getTargetIndex(TR::RealRegister::gr4), addrArg, TR::RealRegister::gr4, UsesDependentRegister);
+   deps->getPostConditions()->setDependencyInfo(map.getTargetIndex(TR::RealRegister::gr4), addrArg, TR::RealRegister::gr4, UsesDependentRegister);
+
+   deps->getPreConditions()->setDependencyInfo(map.getTargetIndex(TR::RealRegister::gr5), lenArg, TR::RealRegister::gr5, UsesDependentRegister);
+   deps->getPostConditions()->setDependencyInfo(map.getTargetIndex(TR::RealRegister::gr5), lenArg, TR::RealRegister::gr5, UsesDependentRegister);
+
+   deps->getPreConditions()->setDependencyInfo(map.getTargetIndex(TR::RealRegister::gr6), posArg, TR::RealRegister::gr6, UsesDependentRegister);
+   deps->getPostConditions()->setDependencyInfo(map.getTargetIndex(TR::RealRegister::gr6), posArg, TR::RealRegister::gr6, UsesDependentRegister);
+
+   if (crc32m3 && !comp->target().is64Bit())
+      {
+      deps->getPreConditions()->setDependencyInfo(map.getTargetIndex(TR::RealRegister::gr7), wasteArg, TR::RealRegister::gr7, UsesDependentRegister);
+      deps->getPostConditions()->setDependencyInfo(map.getTargetIndex(TR::RealRegister::gr7), wasteArg, TR::RealRegister::gr7, UsesDependentRegister);
+      }
+
+   TR::Register *gr0Reg = deps->searchPreConditionRegister(TR::RealRegister::gr0);
+   TR::Register *gr11Reg = deps->searchPreConditionRegister(TR::RealRegister::gr11);
+   TR::Register *gr12Reg = deps->searchPreConditionRegister(TR::RealRegister::gr12);
+
+   loadConstant(cg, callNode, (int64_t)targetAddress, gr12Reg);
+   if (aix_style_linkage &&
+      !((comp)->target().is64Bit()  && ((comp)->target().isLinux()) && (comp)->target().cpu.isLittleEndian()))
+      {
+      // get the target address
+      generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, callNode, gr0Reg, TR::MemoryReference::createWithDisplacement(cg, gr12Reg, 0, TR::Compiler->om.sizeofReferenceAddress()));
+      // put the target address into the count register
+      generateSrc1Instruction(cg, TR::InstOpCode::mtctr, callNode, gr0Reg);
+      // load the toc register
+      generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, callNode, gr2Reg, TR::MemoryReference::createWithDisplacement(cg, gr12Reg, TR::Compiler->om.sizeofReferenceAddress(), TR::Compiler->om.sizeofReferenceAddress()));
+      // load the environment register
+      generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, callNode, gr11Reg, TR::MemoryReference::createWithDisplacement(cg, gr12Reg, 2*TR::Compiler->om.sizeofReferenceAddress(), TR::Compiler->om.sizeofReferenceAddress()));
+      }
+      else {
+      // put the target address into the count register
+      generateSrc1Instruction(cg, TR::InstOpCode::mtctr, callNode, gr12Reg);
+      }
+   generateInstruction(cg, TR::InstOpCode::bctrl, callNode);
+   generateDepLabelInstruction(cg, TR::InstOpCode::label, callNode, returnLabel, deps);
+   }
+
 void J9::Power::PrivateLinkage::buildDirectCall(TR::Node *callNode,
                                            TR::SymbolReference *callSymRef,
                                            TR::RegisterDependencyConditions *dependencies,
@@ -2759,7 +2853,18 @@ TR::Register *J9::Power::PrivateLinkage::buildDirectDispatch(TR::Node *callNode)
          }
       }
 
-   buildDirectCall(callNode, callSymRef, dependencies, pp, argSize);
+   if (comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P8) &&
+       comp()->target().cpu.supportsFeature(OMR_FEATURE_PPC_HAS_VSX) &&
+       (callNode->getSymbol()->castToMethodSymbol()->getRecognizedMethod() == TR::java_util_zip_CRC32C_updateBytes ||
+	callNode->getSymbol()->castToMethodSymbol()->getRecognizedMethod() == TR::java_util_zip_CRC32C_updateDirectByteBuffer)) {
+
+      TR::MethodSymbol *callSymbol = callNode->getSymbolReference()->getSymbol()->castToMethodSymbol();
+      bool crc32m2 = (callSymbol->getRecognizedMethod() == TR::java_util_zip_CRC32C_updateBytes);
+      bool crc32m3 = (callSymbol->getRecognizedMethod() == TR::java_util_zip_CRC32C_updateDirectByteBuffer);
+      buildCRC32CCall(callNode, dependencies, callSymbol, cg(), doneLabel, crc32m2, crc32m3);
+   } else {
+      buildDirectCall(callNode, callSymRef, dependencies, pp, argSize);
+   }
    // SG - end
 
    cg()->machine()->setLinkRegisterKilled(true);

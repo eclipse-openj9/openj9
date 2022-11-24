@@ -353,6 +353,17 @@ bool J9::Power::CodeGenerator::suppressInliningOfRecognizedMethod(TR::Recognized
           }
       }
 
+   /* Need this check for CRC32C update* methods so that this doesn't get inlined.
+    * Unlike CRC32's update* which are JNI methods, CRC32C have Java implementation
+    * and therefore we need to prevent the inliner from eliminating the calls so
+    * we can redirect them to our optimized helpers.
+    */
+   if (method == TR::java_util_zip_CRC32C_updateBytes ||
+       method == TR::java_util_zip_CRC32C_updateDirectByteBuffer)
+      {
+      return true;
+      }
+
    return false;
 }
 
