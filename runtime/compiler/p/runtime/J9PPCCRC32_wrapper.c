@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,16 +22,24 @@
 
 #define CRC_TABLE
 #include "p/runtime/J9PPCCRC32_constants.h"
+#include "p/runtime/J9PPCCRC32C_constants.h"
 
 #define VMX_ALIGN       16
 #define VMX_ALIGN_MASK  (VMX_ALIGN-1)
 
 #ifdef REFLECT
 static unsigned int crc32_align(unsigned int crc, unsigned char *p,
-                                unsigned long len)
+                                unsigned long len, unsigned int castagnoli)
    {
+   const unsigned int *crc_table = crc32_table;
+
+   if (castagnoli)
+      crc_table = crc32c_table;
+
    while (len--)
+      {
       crc = crc_table[(crc ^ *p++) & 0xff] ^ (crc >> 8);
+      }
    return crc;
    }
 
@@ -41,7 +49,7 @@ unsigned int crc32_oneByte(unsigned int crc, unsigned int b)
    crc ^= 0xffffffff;
 #endif
 
-   crc = crc_table[(crc ^ b) & 0xff] ^ (crc >> 8);
+   crc = crc32_table[(crc ^ b) & 0xff] ^ (crc >> 8);
 
 #ifdef CRC_XOR
    crc ^= 0xffffffff;
@@ -50,10 +58,17 @@ unsigned int crc32_oneByte(unsigned int crc, unsigned int b)
    }
 #else
 static unsigned int crc32_align(unsigned int crc, unsigned char *p,
-                                unsigned long len)
+                                unsigned long len, unsigned int castagnoli)
    {
+   const unsigned int *crc_table = crc32_table;
+
+   if (castagnoli)
+      crc_table = crc32c_table;
+
    while (len--)
+      {
       crc = crc_table[((crc >> 24) ^ *p++) & 0xff] ^ (crc << 8);
+      }
    return crc;
    }
 
@@ -63,7 +78,7 @@ unsigned int crc32_oneByte(unsigned int crc, unsigned int b)
    crc ^= 0xffffffff;
 #endif
 
-   crc = crc_table[((crc >> 24) ^ b) & 0xff] ^ (crc << 8);
+   crc = crc32_table[((crc >> 24) ^ b) & 0xff] ^ (crc << 8);
 
 #ifdef CRC_XOR
    crc ^= 0xffffffff;
@@ -73,57 +88,64 @@ unsigned int crc32_oneByte(unsigned int crc, unsigned int b)
 #endif
 
 unsigned int crc32_no_vpmsum(unsigned int crc, unsigned char *p,
-                             unsigned long len)
+                             unsigned long len, unsigned int castagnoli)
    {
 #ifdef CRC_XOR
-   crc ^= 0xffffffff;
+   if (!castagnoli)
+      crc ^= 0xffffffff;
 #endif
 
-   crc = crc32_align(crc, p, len);
+   crc = crc32_align(crc, p, len,castagnoli);
 
 #ifdef CRC_XOR
-   crc ^= 0xffffffff;
+   if (!castagnoli)
+      crc ^= 0xffffffff;
 #endif
 
    return crc;
    }
 
 unsigned int __crc32_vpmsum(unsigned int crc, unsigned char *p,
-                            unsigned long len);
+                            unsigned long len, unsigned long castagnoli);
 
 unsigned int crc32_vpmsum(unsigned int crc, unsigned char *p,
-                          unsigned long len)
+                          unsigned long len, unsigned int castagnoli)
    {
    unsigned int prealign;
    unsigned int tail;
 
 #ifdef CRC_XOR
-   crc ^= 0xffffffff;
+   if (!castagnoli)
+      crc ^= 0xffffffff;
 #endif
 
-   if (len < VMX_ALIGN + VMX_ALIGN_MASK) {
-      crc = crc32_align(crc, p, len);
+   if (len < VMX_ALIGN + VMX_ALIGN_MASK)
+      {
+      crc = crc32_align(crc, p, len, castagnoli);
       goto out;
-   }
+      }
 
-   if ((unsigned long)p & VMX_ALIGN_MASK) {
+   if ((unsigned long)p & VMX_ALIGN_MASK)
+      {
       prealign = VMX_ALIGN - ((unsigned long)p & VMX_ALIGN_MASK);
-      crc = crc32_align(crc, p, prealign);
+      crc = crc32_align(crc, p, prealign, castagnoli);
       len -= prealign;
       p += prealign;
-   }
+      }
 
-   crc = __crc32_vpmsum(crc, p, len & ~VMX_ALIGN_MASK);
+   crc = __crc32_vpmsum(crc, p, len & ~VMX_ALIGN_MASK, castagnoli);
 
    tail = len & VMX_ALIGN_MASK;
-   if (tail) {
+   if (tail)
+      {
       p += len & ~VMX_ALIGN_MASK;
-      crc = crc32_align(crc, p, tail);
-   }
+      crc = crc32_align(crc, p, tail, castagnoli);
+      }
 
 out:
 #ifdef CRC_XOR
-   crc ^= 0xffffffff;
+   if (!castagnoli)
+      crc ^= 0xffffffff;
 #endif
 
    return crc;

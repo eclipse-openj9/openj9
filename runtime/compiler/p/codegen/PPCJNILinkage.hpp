@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,8 +31,8 @@
 extern "C"
    {
    unsigned int crc32_oneByte(unsigned int crc, unsigned int b);
-   unsigned int crc32_no_vpmsum(unsigned int crc, unsigned char *p, unsigned long len);
-   unsigned int crc32_vpmsum(unsigned int crc, unsigned char *p, unsigned long len);
+   unsigned int crc32_no_vpmsum(unsigned int crc, unsigned char *p, unsigned long len, unsigned int castognoli);
+   unsigned int crc32_vpmsum(unsigned int crc, unsigned char *p, unsigned long len, unsigned int castognoli);
    }
 
 class TR_BitVector;
