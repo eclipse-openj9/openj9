@@ -306,8 +306,12 @@ TR_VectorAPIExpansion::visitNodeToBuildVectorAliases(TR::Node *node)
             {
             TR::Node *elementTypeNode = node->getChild(i);
             methodElementType = getDataTypeFromClassNode(comp(), elementTypeNode);
-            _aliasTable[methodRefNum]._elementType = methodElementType;
 
+            // maskReductionCoerced intrinsic has element type Int for Float vectors and Long for Double vectors.
+            // For the sake of class verification we can leave _elementType field unset
+            // and it will be automatically derived from the child type (since they will be in the same class)
+            if (methodSymbol->getRecognizedMethod() != TR::jdk_internal_vm_vector_VectorSupport_maskReductionCoerced)
+               _aliasTable[methodRefNum]._elementType = methodElementType;
             }
          else if (isArgType(methodSymbol, i, NumLanes))
             {
