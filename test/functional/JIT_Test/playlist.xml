@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <!--
-	Copyright (c) 2016, 2022 IBM Corp. and others
+	Copyright (c) 2016, 2023 IBM Corp. and others
 
 	This program and the accompanying materials are made available under
 	the terms of the Eclipse Public License 2.0 which accompanies this
@@ -724,6 +724,7 @@
 		<variations>
 			<variation>Mode610</variation>
 			<variation>Mode610 -Xshareclasses:none -Xjit:optLevel=hot</variation>
+			<variation>Mode610 -Xshareclasses:name=test_jitscc -XX:+JITServerUseAOTCache</variation>
 		</variations>
 		<!-- Check if the JITServer launcher exists and if so start the test and
 			 - specify the executables for the client and server via the CLIENT_EXE and SERVER_EXE properties respectively,
