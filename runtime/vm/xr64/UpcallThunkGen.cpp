@@ -181,7 +181,10 @@ createUpcallThunk(J9UpcallMetaData *metaData)
 	const J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 	J9UpcallSigType *sigArray = metaData->nativeFuncSignature->sigArray;
 	I_32 lastSigIdx = (I_32)(metaData->nativeFuncSignature->numSigs - 1); /* The index of the return type in the signature array */
-	I_32 tempInt = 0;
+	I_32 argSize = 0;
+	I_32 resultSize = 0;
+	I_32 gprIdx = 0;
+	I_32 fprIdx = 0;
 	I_32 instrCount = 0;
 	bool hiddenParameter = false;
 	bool resultDistNeeded = false;
@@ -197,7 +200,7 @@ createUpcallThunk(J9UpcallMetaData *metaData)
 	instrCount = 7 + 5;
 
 	/* Testing the return type */
-	tempInt = sigArray[lastSigIdx].sizeInByte;
+	resultSize = sigArray[lastSigIdx].sizeInByte;
 	switch (sigArray[lastSigIdx].type) {
 		case J9_FFI_UPCALL_SIG_TYPE_VOID:
 			metaData->upCallCommonDispatcher = (void *)vmFuncs->native2InterpJavaUpcall0;
@@ -218,42 +221,42 @@ createUpcallThunk(J9UpcallMetaData *metaData)
 			metaData->upCallCommonDispatcher = (void *)vmFuncs->native2InterpJavaUpcallD;
 			break;
 		case J9_FFI_UPCALL_SIG_TYPE_STRUCT_AGGREGATE_ALL_SP: /* all floats */
-			Assert_VM_true(0 == (tempInt % sizeof(float)));
+			Assert_VM_true(0 == (resultSize % sizeof(float)));
 			metaData->upCallCommonDispatcher = (void *)vmFuncs->native2InterpJavaUpcallStruct;
 			resultDistNeeded = true;
-			if (tempInt <= (I_32)(4 * sizeof(float))) { /* max 4 regs (s0-s3) */
+			if (resultSize <= (I_32)(4 * sizeof(float))) { /* max 4 regs (s0-s3) */
 				/* Distribute result back into FPRs */
-				instrCount += tempInt/sizeof(float);
+				instrCount += resultSize/sizeof(float);
 			} else {
 				/* Copy back to memory area designated by a hidden parameter */
 				hiddenParameter = true;
-				if (tempInt <= MAX_BYTES_COPY_BACK_STRAIGHT) {
+				if (resultSize <= MAX_BYTES_COPY_BACK_STRAIGHT) {
 					/* Straight-forward copy: load hidden pointer, sequence of copy */
-					instrCount += 1 + (ROUND_UP_SLOT(tempInt) * 2);
+					instrCount += 1 + (ROUND_UP_SLOT(resultSize) * 2);
 				} else {
 					/* Loop 32-byte per iteration: load hidden pointer, set up counter for loop-count */
 					/* 12-instruction loop body, residue copy */
-					instrCount += 2 + 12 + (ROUND_UP_SLOT(tempInt & 31) * 2);
+					instrCount += 2 + 12 + (ROUND_UP_SLOT(resultSize & 31) * 2);
 				}
 			}
 			break;
 		case J9_FFI_UPCALL_SIG_TYPE_STRUCT_AGGREGATE_ALL_DP: /* all doubles */
-			Assert_VM_true(0 == (tempInt % sizeof(double)));
+			Assert_VM_true(0 == (resultSize % sizeof(double)));
 			metaData->upCallCommonDispatcher = (void *)vmFuncs->native2InterpJavaUpcallStruct;
 			resultDistNeeded = true;
-			if (tempInt <= (I_32)(4 * sizeof(double))) { /* max 4 regs (d0-d3) */
+			if (resultSize <= (I_32)(4 * sizeof(double))) { /* max 4 regs (d0-d3) */
 				/* Distribute back into FPRs */
-				instrCount += tempInt/sizeof(double);
+				instrCount += resultSize/sizeof(double);
 			} else {
 				/* Copy back to memory area designated by a hidden parameter */
 				hiddenParameter = true;
-				if (tempInt <= MAX_BYTES_COPY_BACK_STRAIGHT) {
+				if (resultSize <= MAX_BYTES_COPY_BACK_STRAIGHT) {
 					/* Straight-forward copy: load hidden pointer, sequence of copy */
-					instrCount += 1 + (ROUND_UP_SLOT(tempInt) * 2);
+					instrCount += 1 + (ROUND_UP_SLOT(resultSize) * 2);
 				} else {
 					/* Loop 32-byte per iteration: load hidden pointer, set up counter for loop-count */
 					/* 12-instruction loop body, residue copy */
-					instrCount += 2 + 12 + (ROUND_UP_SLOT(tempInt & 31) * 2);
+					instrCount += 2 + 12 + (ROUND_UP_SLOT(resultSize & 31) * 2);
 				}
 			}
 			break;
@@ -269,19 +272,19 @@ createUpcallThunk(J9UpcallMetaData *metaData)
 		case J9_FFI_UPCALL_SIG_TYPE_STRUCT_AGGREGATE_MISC:
 			metaData->upCallCommonDispatcher = (void *)vmFuncs->native2InterpJavaUpcallStruct;
 			resultDistNeeded = true;
-			if (tempInt <= (I_32)(2 * sizeof(I_64))) { /* 16 bytes or smaller */
+			if (resultSize <= (I_32)(2 * sizeof(I_64))) { /* 16 bytes or smaller */
 				/* Distribute result back into GPRs (x0-x1) */
-				instrCount += ROUND_UP_SLOT(tempInt);
+				instrCount += ROUND_UP_SLOT(resultSize);
 			} else {
 				/* Copy back to memory area designated by a hidden parameter */
 				hiddenParameter = true;
-				if (tempInt <= MAX_BYTES_COPY_BACK_STRAIGHT) {
+				if (resultSize <= MAX_BYTES_COPY_BACK_STRAIGHT) {
 					/* Straight-forward copy: load hidden pointer, sequence of copy */
-					instrCount += 1 + (ROUND_UP_SLOT(tempInt) * 2);
+					instrCount += 1 + (ROUND_UP_SLOT(resultSize) * 2);
 				} else {
 					/* Loop 32-byte per iteration: load hidden pointer, set up counter for loop-count */
 					/* 12-instruction loop body, residue copy */
-					instrCount += 2 + 12 + (ROUND_UP_SLOT(tempInt & 31) * 2);
+					instrCount += 2 + 12 + (ROUND_UP_SLOT(resultSize & 31) * 2);
 				}
 			}
 			break;
@@ -289,64 +292,59 @@ createUpcallThunk(J9UpcallMetaData *metaData)
 			Assert_VM_unreachable();
 	}
 
-	I_32 gprCount = 0;
-	I_32 fprCount = 0;
-	bool useMoreGPRs = true;
-	bool useMoreFPRs = true;
-
 	/* Loop through the arguments */
 	for (I_32 i = 0; i < lastSigIdx; i++) {
-		tempInt = sigArray[i].sizeInByte;
+		argSize = sigArray[i].sizeInByte;
 		switch (sigArray[i].type) {
 			case J9_FFI_UPCALL_SIG_TYPE_CHAR:    /* Fall through */
 			case J9_FFI_UPCALL_SIG_TYPE_SHORT:   /* Fall through */
 			case J9_FFI_UPCALL_SIG_TYPE_INT32:   /* Fall through */
 			case J9_FFI_UPCALL_SIG_TYPE_POINTER: /* Fall through */
 			case J9_FFI_UPCALL_SIG_TYPE_INT64:
-				if (useMoreGPRs && (gprCount < MAX_PARAM_GPR_NUM)) {
-					gprCount++;
+				if (gprIdx < MAX_PARAM_GPR_NUM) {
+					gprIdx++;
 					instrCount += 1; /* for saving arg in GPR to stack */
 				}
 				break;
 			case J9_FFI_UPCALL_SIG_TYPE_FLOAT: /* Fall through */
 			case J9_FFI_UPCALL_SIG_TYPE_DOUBLE:
-				if (useMoreFPRs && (fprCount < MAX_PARAM_FPR_NUM)) {
-					fprCount++;
+				if (fprIdx < MAX_PARAM_FPR_NUM) {
+					fprIdx++;
 					instrCount += 1; /* for saving arg in FPR to stack */
 				}
 				break;
 			case J9_FFI_UPCALL_SIG_TYPE_STRUCT_AGGREGATE_ALL_SP:
-				if (tempInt <= (I_32)(4 * sizeof(float))) {
-					I_32 structRegs = tempInt/sizeof(float);
-					if (useMoreFPRs && (fprCount + structRegs <= MAX_PARAM_FPR_NUM)) {
-						fprCount += structRegs;
+				if (argSize <= (I_32)(4 * sizeof(float))) {
+					I_32 structRegs = argSize/sizeof(float);
+					if (fprIdx + structRegs <= MAX_PARAM_FPR_NUM) {
+						fprIdx += structRegs;
 						instrCount += structRegs; /* for saving arg in FPR to stack */
 					} else {
 						/* Whole struct is passed in stack */
-						useMoreFPRs = false;
+						fprIdx = MAX_PARAM_FPR_NUM; /* Use no more FPRs */
 					}
 				} else {
 					/* Passed as pointer */
-					if (useMoreGPRs && (gprCount < MAX_PARAM_GPR_NUM)) {
-						gprCount++;
+					if (gprIdx < MAX_PARAM_GPR_NUM) {
+						gprIdx++;
 						instrCount += 1;
 					}
 				}
 				break;
 			case J9_FFI_UPCALL_SIG_TYPE_STRUCT_AGGREGATE_ALL_DP:
-				if (tempInt <= (I_32)(4 * sizeof(double))) {
-					I_32 structRegs = tempInt/sizeof(double);
-					if (useMoreFPRs && (fprCount + structRegs <= MAX_PARAM_FPR_NUM)) {
-						fprCount += structRegs;
+				if (argSize <= (I_32)(4 * sizeof(double))) {
+					I_32 structRegs = argSize/sizeof(double);
+					if (fprIdx + structRegs <= MAX_PARAM_FPR_NUM) {
+						fprIdx += structRegs;
 						instrCount += structRegs; /* for saving arg in FPR to stack */
 					} else {
 						/* Whole struct is passed in stack */
-						useMoreFPRs = false;
+						fprIdx = MAX_PARAM_FPR_NUM; /* Use no more FPRs */
 					}
 				} else {
 					/* Passed as pointer */
-					if (useMoreGPRs && (gprCount < MAX_PARAM_GPR_NUM)) {
-						gprCount++;
+					if (gprIdx < MAX_PARAM_GPR_NUM) {
+						gprIdx++;
 						instrCount += 1;
 					}
 				}
@@ -361,19 +359,19 @@ createUpcallThunk(J9UpcallMetaData *metaData)
 			case J9_FFI_UPCALL_SIG_TYPE_STRUCT_AGGREGATE_DP_MISC:  /* Fall through */
 			case J9_FFI_UPCALL_SIG_TYPE_STRUCT_AGGREGATE_OTHER:    /* Fall through */
 			case J9_FFI_UPCALL_SIG_TYPE_STRUCT_AGGREGATE_MISC:
-				if (tempInt <= (I_32)(2 * sizeof(I_64))) {
-					I_32 structRegs = ROUND_UP_SLOT(tempInt);
-					if (gprCount + structRegs <= MAX_PARAM_GPR_NUM) {
-						gprCount += structRegs;
+				if (argSize <= (I_32)(2 * sizeof(I_64))) {
+					I_32 structRegs = ROUND_UP_SLOT(argSize);
+					if (gprIdx + structRegs <= MAX_PARAM_GPR_NUM) {
+						gprIdx += structRegs;
 						instrCount += structRegs; /* for saving args in GPR to stack */
 					} else {
 						/* Whole struct is passed in stack */
-						useMoreGPRs = false;
+						gprIdx = MAX_PARAM_GPR_NUM; /* Use no more GPRs */
 					}
 				} else {
 					/* Passed as pointer */
-					if (useMoreGPRs && (gprCount < MAX_PARAM_GPR_NUM)) {
-						gprCount++;
+					if (gprIdx < MAX_PARAM_GPR_NUM) {
+						gprIdx++;
 						instrCount += 1;
 					}
 				}
@@ -411,15 +409,12 @@ createUpcallThunk(J9UpcallMetaData *metaData)
 
 	/* Generate the instruction sequence according to the signature, looping over them again */
 	/* Thunk always saves the arguments at the 8-byte boundary in the extended stack */
-	I_32 gprIdx = 0;
-	I_32 fprIdx = 0;
+	gprIdx = 0;
+	fprIdx = 0;
 	I_32 stackOffset = 0;
 	I_32 instrIdx = 0;
 	const I_32 LR_OFFSET = 8; /* offset for saving the return address */
 	const I_32 HIDDEN_PARAM_OFFSET = 16; /* offset for saving the hidden param */
-
-	useMoreGPRs = true;
-	useMoreFPRs = true;
 
 #if defined(OSX)
 	pthread_jit_write_protect_np(0); /* Start writing instructions to memory */
@@ -435,50 +430,50 @@ createUpcallThunk(J9UpcallMetaData *metaData)
 
 	/* Loop through the arguments again */
 	for (I_32 i = 0; i < lastSigIdx; i++) {
-		tempInt = sigArray[i].sizeInByte;
+		argSize = sigArray[i].sizeInByte;
 		switch (sigArray[i].type) {
 			case J9_FFI_UPCALL_SIG_TYPE_CHAR:    /* Fall through */
 			case J9_FFI_UPCALL_SIG_TYPE_SHORT:   /* Fall through */
 			case J9_FFI_UPCALL_SIG_TYPE_INT32:   /* Fall through */
 			case J9_FFI_UPCALL_SIG_TYPE_POINTER: /* Fall through */
 			case J9_FFI_UPCALL_SIG_TYPE_INT64:
-				if (useMoreGPRs && (gprIdx < MAX_PARAM_GPR_NUM)) {
+				if (gprIdx < MAX_PARAM_GPR_NUM) {
 					thunkMem[instrIdx++] = STR(gprIdx, C_SP, offsetToParamArea + stackOffset);
 					gprIdx++;
 					stackOffset += 8;
 				}
 				break;
 			case J9_FFI_UPCALL_SIG_TYPE_FLOAT:
-				if (useMoreFPRs && (fprIdx < MAX_PARAM_FPR_NUM)) {
+				if (fprIdx < MAX_PARAM_FPR_NUM) {
 					thunkMem[instrIdx++] = VSTRS(fprIdx, C_SP, offsetToParamArea + stackOffset);
 					fprIdx++;
 					stackOffset += 8;
 				}
 				break;
 			case J9_FFI_UPCALL_SIG_TYPE_DOUBLE:
-				if (useMoreFPRs && (fprIdx < MAX_PARAM_FPR_NUM)) {
+				if (fprIdx < MAX_PARAM_FPR_NUM) {
 					thunkMem[instrIdx++] = VSTRD(fprIdx, C_SP, offsetToParamArea + stackOffset);
 					fprIdx++;
 					stackOffset += 8;
 				}
 				break;
 			case J9_FFI_UPCALL_SIG_TYPE_STRUCT_AGGREGATE_ALL_SP:
-				if (tempInt <= (I_32)(4 * sizeof(float))) {
-					I_32 structRegs = tempInt/sizeof(float);
-					if (useMoreFPRs && (fprIdx + structRegs <= MAX_PARAM_FPR_NUM)) {
+				if (argSize <= (I_32)(4 * sizeof(float))) {
+					I_32 structRegs = argSize/sizeof(float);
+					if (fprIdx + structRegs <= MAX_PARAM_FPR_NUM) {
 						for (I_32 fIdx=0; fIdx < structRegs; fIdx++) {
 							thunkMem[instrIdx++] = VSTRS(fprIdx + fIdx, C_SP,
 									offsetToParamArea + stackOffset + fIdx * 4);
 						}
 						fprIdx += structRegs;
-						stackOffset += adjustAlignment(tempInt, 8);
+						stackOffset += adjustAlignment(argSize, 8);
 					} else {
 						/* Whole struct is passed in stack */
-						useMoreFPRs = false;
+						fprIdx = MAX_PARAM_FPR_NUM; /* Use no more FPRs */
 					}
 				} else {
 					/* Passed as pointer */
-					if (useMoreGPRs && (gprIdx < MAX_PARAM_GPR_NUM)) {
+					if (gprIdx < MAX_PARAM_GPR_NUM) {
 						thunkMem[instrIdx++] = STR(gprIdx, C_SP, offsetToParamArea + stackOffset);
 						gprIdx++;
 						stackOffset += 8;
@@ -486,22 +481,22 @@ createUpcallThunk(J9UpcallMetaData *metaData)
 				}
 				break;
 			case J9_FFI_UPCALL_SIG_TYPE_STRUCT_AGGREGATE_ALL_DP:
-				if (tempInt <= (I_32)(4 * sizeof(double))) {
-					I_32 structRegs = tempInt/sizeof(double);
-					if (useMoreFPRs && (fprIdx + structRegs <= MAX_PARAM_FPR_NUM)) {
+				if (argSize <= (I_32)(4 * sizeof(double))) {
+					I_32 structRegs = argSize/sizeof(double);
+					if (fprIdx + structRegs <= MAX_PARAM_FPR_NUM) {
 						for (I_32 fIdx=0; fIdx < structRegs; fIdx++) {
 							thunkMem[instrIdx++] = VSTRD(fprIdx + fIdx, C_SP,
 									offsetToParamArea + stackOffset + fIdx * 8);
 						}
 						fprIdx += structRegs;
-						stackOffset += tempInt;
+						stackOffset += argSize;
 					} else {
 						/* Whole struct is passed in stack */
-						useMoreFPRs = false;
+						fprIdx = MAX_PARAM_FPR_NUM; /* Use no more FPRs */
 					}
 				} else {
 					/* Passed as pointer */
-					if (useMoreGPRs && (gprIdx < MAX_PARAM_GPR_NUM)) {
+					if (gprIdx < MAX_PARAM_GPR_NUM) {
 						thunkMem[instrIdx++] = STR(gprIdx, C_SP, offsetToParamArea + stackOffset);
 						gprIdx++;
 						stackOffset += 8;
@@ -518,9 +513,9 @@ createUpcallThunk(J9UpcallMetaData *metaData)
 			case J9_FFI_UPCALL_SIG_TYPE_STRUCT_AGGREGATE_DP_MISC:  /* Fall through */
 			case J9_FFI_UPCALL_SIG_TYPE_STRUCT_AGGREGATE_OTHER:    /* Fall through */
 			case J9_FFI_UPCALL_SIG_TYPE_STRUCT_AGGREGATE_MISC:
-				if (tempInt <= (I_32)(2 * sizeof(I_64))) {
-					I_32 structRegs = ROUND_UP_SLOT(tempInt);
-					if (useMoreGPRs && (gprIdx + structRegs <= MAX_PARAM_GPR_NUM)) {
+				if (argSize <= (I_32)(2 * sizeof(I_64))) {
+					I_32 structRegs = ROUND_UP_SLOT(argSize);
+					if (gprIdx + structRegs <= MAX_PARAM_GPR_NUM) {
 						for (I_32 gIdx=0; gIdx < structRegs; gIdx++) {
 							thunkMem[instrIdx++] = STR(gprIdx + gIdx, C_SP,
 									offsetToParamArea + stackOffset + gIdx * 8);
@@ -529,11 +524,11 @@ createUpcallThunk(J9UpcallMetaData *metaData)
 						stackOffset += structRegs * 8;
 					} else {
 						/* Whole struct is passed in stack */
-						useMoreGPRs = false;
+						gprIdx = MAX_PARAM_GPR_NUM; /* Use no more GPRs */
 					}
 				} else {
 					/* Passed as pointer */
-					if (useMoreGPRs && (gprIdx < MAX_PARAM_GPR_NUM)) {
+					if (gprIdx < MAX_PARAM_GPR_NUM) {
 						thunkMem[instrIdx++] = STR(gprIdx, C_SP, offsetToParamArea + stackOffset);
 						gprIdx++;
 						stackOffset += 8;
@@ -562,17 +557,17 @@ createUpcallThunk(J9UpcallMetaData *metaData)
 	thunkMem[instrIdx++] = BLR(2); /* call the common dispatcher */
 
 	if (resultDistNeeded) {
-		tempInt = sigArray[lastSigIdx].sizeInByte;
+		resultSize = sigArray[lastSigIdx].sizeInByte;
 		if (hiddenParameter) {
 			/* Distribute result if needed, then tear down the frame and return */
 			/* x0 is set by the call */
 			switch (sigArray[lastSigIdx].type & J9_FFI_UPCALL_SIG_TYPE_MASK) {
 				case J9_FFI_UPCALL_SIG_TYPE_STRUCT:
 				{
-					if (tempInt <= MAX_BYTES_COPY_BACK_STRAIGHT) {
-						copyBackStraight(thunkMem, &instrIdx, tempInt, HIDDEN_PARAM_OFFSET);
+					if (resultSize <= MAX_BYTES_COPY_BACK_STRAIGHT) {
+						copyBackStraight(thunkMem, &instrIdx, resultSize, HIDDEN_PARAM_OFFSET);
 					} else {
-						copyBackLoop(thunkMem, &instrIdx, tempInt, HIDDEN_PARAM_OFFSET);
+						copyBackLoop(thunkMem, &instrIdx, resultSize, HIDDEN_PARAM_OFFSET);
 					}
 					break;
 				}
@@ -582,12 +577,12 @@ createUpcallThunk(J9UpcallMetaData *metaData)
 		} else {
 			switch (sigArray[lastSigIdx].type) {
 				case J9_FFI_UPCALL_SIG_TYPE_STRUCT_AGGREGATE_ALL_SP:
-					for (I_32 fIdx = 0; (I_32)(fIdx * sizeof(float)) < tempInt; fIdx++) {
+					for (I_32 fIdx = 0; (I_32)(fIdx * sizeof(float)) < resultSize; fIdx++) {
 						thunkMem[instrIdx++] = VLDRS(fIdx, 0, fIdx * 4);
 					}
 					break;
 				case J9_FFI_UPCALL_SIG_TYPE_STRUCT_AGGREGATE_ALL_DP:
-					for (I_32 fIdx = 0; (I_32)(fIdx * sizeof(double)) < tempInt; fIdx++) {
+					for (I_32 fIdx = 0; (I_32)(fIdx * sizeof(double)) < resultSize; fIdx++) {
 						thunkMem[instrIdx++] = VLDRD(fIdx, 0, fIdx * 8);
 					}
 					break;
@@ -601,7 +596,7 @@ createUpcallThunk(J9UpcallMetaData *metaData)
 				case J9_FFI_UPCALL_SIG_TYPE_STRUCT_AGGREGATE_DP_MISC:  /* Fall through */
 				case J9_FFI_UPCALL_SIG_TYPE_STRUCT_AGGREGATE_OTHER:    /* Fall through */
 				case J9_FFI_UPCALL_SIG_TYPE_STRUCT_AGGREGATE_MISC:
-					for (I_32 gIdx = 1; (I_32)(gIdx * sizeof(I_64)) < ROUND_UP_SLOT_BYTES(tempInt); gIdx++) {
+					for (I_32 gIdx = 1; (I_32)(gIdx * sizeof(I_64)) < ROUND_UP_SLOT_BYTES(resultSize); gIdx++) {
 						thunkMem[instrIdx++] = LDR(gIdx, 0, gIdx * 8);
 					}
 					thunkMem[instrIdx++] = LDR(0, 0, 0); /* Load x0 at last */
@@ -651,8 +646,6 @@ getArgPointer(J9UpcallNativeSignature *nativeSig, void *argListPtr, I_32 argIdx)
 	I_32 stackOffset2 = PARAM_REGS_SAVE_SIZE; /* for arguments in the original stack */
 	I_32 gprIdx = 0;
 	I_32 fprIdx = 0;
-	bool useMoreGPRs = true;
-	bool useMoreFPRs = true;
 	bool isPointerToStruct = false;
 	void *ret = NULL;
 
@@ -668,7 +661,7 @@ getArgPointer(J9UpcallNativeSignature *nativeSig, void *argListPtr, I_32 argIdx)
 			case J9_FFI_UPCALL_SIG_TYPE_INT32:   /* Fall through */
 			case J9_FFI_UPCALL_SIG_TYPE_POINTER: /* Fall through */
 			case J9_FFI_UPCALL_SIG_TYPE_INT64:
-				if (useMoreGPRs && (gprIdx < MAX_PARAM_GPR_NUM)) {
+				if (gprIdx < MAX_PARAM_GPR_NUM) {
 					stackOffset = stackOffset1;
 					stackOffset1 += 8;
 					gprIdx++;
@@ -688,7 +681,7 @@ getArgPointer(J9UpcallNativeSignature *nativeSig, void *argListPtr, I_32 argIdx)
 				break;
 			case J9_FFI_UPCALL_SIG_TYPE_FLOAT:   /* Fall through */
 			case J9_FFI_UPCALL_SIG_TYPE_DOUBLE:
-				if (useMoreFPRs && (fprIdx < MAX_PARAM_FPR_NUM)) {
+				if (fprIdx < MAX_PARAM_FPR_NUM) {
 					stackOffset = stackOffset1;
 					stackOffset1 += 8;
 					fprIdx++;
@@ -707,7 +700,7 @@ getArgPointer(J9UpcallNativeSignature *nativeSig, void *argListPtr, I_32 argIdx)
 			case J9_FFI_UPCALL_SIG_TYPE_STRUCT_AGGREGATE_ALL_SP:
 				if (argSize <= (I_32)(4 * sizeof(float))) {
 					I_32 structRegs = argSize/sizeof(float);
-					if (useMoreFPRs && (fprIdx + structRegs <= MAX_PARAM_FPR_NUM)) {
+					if (fprIdx + structRegs <= MAX_PARAM_FPR_NUM) {
 						stackOffset = stackOffset1;
 						stackOffset1 += adjustAlignment(argSize, 8);
 						fprIdx += structRegs;
@@ -722,12 +715,12 @@ getArgPointer(J9UpcallNativeSignature *nativeSig, void *argListPtr, I_32 argIdx)
 #elif defined(LINUX)
 						stackOffset2 += adjustAlignment(argSize, 8);
 #endif /* defined(OSX) */
-						useMoreFPRs = false;
+						fprIdx = MAX_PARAM_FPR_NUM; /* Use no more FPRs */
 					}
 				} else {
 					/* Passed as pointer */
 					isPointerToStruct = true;
-					if (useMoreGPRs && (gprIdx < MAX_PARAM_GPR_NUM)) {
+					if (gprIdx < MAX_PARAM_GPR_NUM) {
 						stackOffset = stackOffset1;
 						stackOffset1 += 8;
 						gprIdx++;
@@ -743,7 +736,7 @@ getArgPointer(J9UpcallNativeSignature *nativeSig, void *argListPtr, I_32 argIdx)
 			case J9_FFI_UPCALL_SIG_TYPE_STRUCT_AGGREGATE_ALL_DP:
 				if (argSize <= (I_32)(4 * sizeof(double))) {
 					I_32 structRegs = argSize/sizeof(double);
-					if (useMoreFPRs && (fprIdx + structRegs <= MAX_PARAM_FPR_NUM)) {
+					if (fprIdx + structRegs <= MAX_PARAM_FPR_NUM) {
 						stackOffset = stackOffset1;
 						stackOffset1 += argSize;
 						fprIdx += structRegs;
@@ -754,12 +747,12 @@ getArgPointer(J9UpcallNativeSignature *nativeSig, void *argListPtr, I_32 argIdx)
 #endif /* defined(OSX) */
 						stackOffset = stackOffset2;
 						stackOffset2 += argSize;
-						useMoreFPRs = false;
+						fprIdx = MAX_PARAM_FPR_NUM; /* Use no more FPRs */
 					}
 				} else {
 					/* Passed as pointer */
 					isPointerToStruct = true;
-					if (useMoreGPRs && (gprIdx < MAX_PARAM_GPR_NUM)) {
+					if (gprIdx < MAX_PARAM_GPR_NUM) {
 						stackOffset = stackOffset1;
 						stackOffset1 += 8;
 						gprIdx++;
@@ -784,7 +777,7 @@ getArgPointer(J9UpcallNativeSignature *nativeSig, void *argListPtr, I_32 argIdx)
 			case J9_FFI_UPCALL_SIG_TYPE_STRUCT_AGGREGATE_MISC:
 				if (argSize <= (I_32)(2 * sizeof(I_64))) {
 					I_32 structRegs = ROUND_UP_SLOT(argSize);
-					if (useMoreGPRs && (gprIdx + structRegs <= MAX_PARAM_GPR_NUM)) {
+					if (gprIdx + structRegs <= MAX_PARAM_GPR_NUM) {
 						stackOffset = stackOffset1;
 						stackOffset1 += structRegs * 8;
 						gprIdx += structRegs;
@@ -795,12 +788,12 @@ getArgPointer(J9UpcallNativeSignature *nativeSig, void *argListPtr, I_32 argIdx)
 #endif /* defined(OSX) */
 						stackOffset = stackOffset2;
 						stackOffset2 += structRegs * 8;
-						useMoreGPRs = false;
+						gprIdx = MAX_PARAM_GPR_NUM; /* Use no more GPRs */
 					}
 				} else {
 					/* Passed as pointer */
 					isPointerToStruct = true;
-					if (useMoreGPRs && (gprIdx < MAX_PARAM_GPR_NUM)) {
+					if (gprIdx < MAX_PARAM_GPR_NUM) {
 						stackOffset = stackOffset1;
 						stackOffset1 += 8;
 						gprIdx++;
