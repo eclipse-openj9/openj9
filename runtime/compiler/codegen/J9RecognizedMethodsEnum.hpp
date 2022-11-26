@@ -457,6 +457,7 @@
    jdk_internal_vm_vector_VectorSupport_binaryOp,
    jdk_internal_vm_vector_VectorSupport_blend,
    jdk_internal_vm_vector_VectorSupport_compare,
+   jdk_internal_vm_vector_VectorSupport_convert,
    jdk_internal_vm_vector_VectorSupport_fromBitsCoerced,
    jdk_internal_vm_vector_VectorSupport_maskReductionCoerced,
    jdk_internal_vm_vector_VectorSupport_reductionCoerced,
