@@ -42,7 +42,6 @@ target_link_libraries(j9criu
 		j9vm_gc_includes
 		j9util
 		j9thr
-		criu
 		dl
 )
 
