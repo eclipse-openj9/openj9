@@ -683,7 +683,6 @@ if(NOT JAVA_SPEC_VERSION LESS 19)
 		Java_java_lang_Thread_getThreads
 		Java_java_lang_Thread_setExtentLocalCache
 		Java_java_lang_Thread_registerNatives
-		Java_jdk_internal_vm_Continuation_createContinuationImpl
 		Java_jdk_internal_vm_Continuation_pin
 		Java_jdk_internal_vm_Continuation_unpin
 	)

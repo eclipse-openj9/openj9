@@ -59,6 +59,7 @@ createContinuation(J9VMThread *currentThread, j9object_t continuationObject)
 
 	if ((stack = allocateJavaStack(vm, VMTHR_INITIAL_STACK_SIZE, NULL)) == NULL) {
 		vm->internalVMFunctions->setNativeOutOfMemoryError(currentThread, 0, 0);
+		j9mem_free_memory(continuation);
 		result = FALSE;
 		goto end;
 	}
@@ -119,6 +120,15 @@ enterContinuation(J9VMThread *currentThread, j9object_t continuationObject)
 	jboolean started = J9VMJDKINTERNALVMCONTINUATION_STARTED(currentThread, continuationObject);
 	J9VMContinuation *continuation = J9VMJDKINTERNALVMCONTINUATION_VMREF(currentThread, continuationObject);
 	Assert_VM_Null(currentThread->currentContinuation);
+
+	if ((!started) && (NULL == continuation)) {
+		result = createContinuation(currentThread, continuationObject);
+		if (!result) {
+			/* Directly return result if the create code failed, exception is already set. */
+			return result;
+		}
+		continuation = J9VMJDKINTERNALVMCONTINUATION_VMREF(currentThread, continuationObject);
+	}
 	Assert_VM_notNull(continuation);
 
 	/* let GC know we are mounting, so they don't need to scan us, or if there is already ongoing scan wait till it's complete. */
