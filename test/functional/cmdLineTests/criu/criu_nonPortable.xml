@@ -39,7 +39,12 @@
     <output type="required" caseSensitive="yes" regex="no">Post-checkpoint</output>
     <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
     <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
-    <output type="failure" caseSensitive="yes" regex="no">ERR</output>
+    <!-- If CRIU can't acquire the original thread IDs, this test will fail. Nothing can be done about this failure. -->
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
   </test>
 
   <test id="Create and Restore Criu Checkpoint Image twice">
@@ -51,7 +56,12 @@
     <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
     <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
     <output type="failure" caseSensitive="yes" regex="no">Post-checkpoint 2</output>
-    <output type="required" caseSensitive="yes" regex="no">Error</output>
+    <!-- If CRIU can't acquire the original thread IDs, this test will fail. Nothing can be done about this failure. -->
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
   </test>
 
 <!--
@@ -75,7 +85,12 @@
     <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
     <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
     <output type="failure" caseSensitive="yes" regex="no">FAILED: System.nanoTime() after CRIU restore:</output>
-    <output type="required" caseSensitive="yes" regex="no">Error</output>
+    <!-- If CRIU can't acquire the original thread IDs, this test will fail. Nothing can be done about this failure. -->
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
   </test>
 
   <test id="Create CRIU checkpoint image and restore three times - testSystemNanoTimeJitPostCheckpointCompile">
@@ -86,7 +101,12 @@
     <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
     <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
     <output type="failure" caseSensitive="yes" regex="no">FAILED: System.nanoTime() after CRIU restore:</output>
-    <output type="required" caseSensitive="yes" regex="no">Error</output>
+    <!-- If CRIU can't acquire the original thread IDs, this test will fail. Nothing can be done about this failure. -->
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
   </test>
 
   <test id="Create CRIU checkpoint image and restore three times - testMillisDelayBeforeCheckpointDone">
@@ -97,7 +117,12 @@
     <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
     <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
     <output type="failure" caseSensitive="yes" regex="no">FAILED: expected MILLIS_DELAY</output>
-    <output type="required" caseSensitive="yes" regex="no">Error</output>
+    <!-- If CRIU can't acquire the original thread IDs, this test will fail. Nothing can be done about this failure. -->
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
   </test>
 
   <test id="Create CRIU checkpoint image and restore three times - testMillisDelayBeforeCheckpointDone">
@@ -108,7 +133,12 @@
     <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
     <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
     <output type="failure" caseSensitive="yes" regex="no">FAILED: expected MILLIS_DELAY</output>
-    <output type="required" caseSensitive="yes" regex="no">Error</output>
+    <!-- If CRIU can't acquire the original thread IDs, this test will fail. Nothing can be done about this failure. -->
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
   </test>
 
   <test id="Create CRIU checkpoint image and restore three times - testDateScheduledBeforeCheckpointDone">
@@ -119,7 +149,12 @@
     <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
     <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
     <output type="failure" caseSensitive="yes" regex="no">FAILED: expected to run after timeMillisScheduledBeforeCheckpointDone</output>
-    <output type="required" caseSensitive="yes" regex="no">Error</output>
+    <!-- If CRIU can't acquire the original thread IDs, this test will fail. Nothing can be done about this failure. -->
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
   </test>
 
   <test id="Create CRIU checkpoint image and restore three times - testDateScheduledAfterCheckpointDone">
@@ -130,7 +165,12 @@
     <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
     <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
     <output type="failure" caseSensitive="yes" regex="no">FAILED: expected to run after timeMillisScheduledAfterCheckpointDone</output>
-    <output type="required" caseSensitive="yes" regex="no">Error</output>
+    <!-- If CRIU can't acquire the original thread IDs, this test will fail. Nothing can be done about this failure. -->
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
   </test>
 
   <test id="Create Criu Checkpoint Image once and no restore - TestSingleThreadModeCheckpointException">
@@ -141,7 +181,12 @@
     <output type="failure" caseSensitive="no" regex="no">Killed</output>
     <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
     <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
-    <output type="failure" caseSensitive="yes" regex="no">ERR</output>
+    <!-- If CRIU can't acquire the original thread IDs, this test will fail. Nothing can be done about this failure. -->
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
   </test>
 
   <test id="Create and Restore Criu Checkpoint Image once - TestSingleThreadModeRestoreException">
@@ -151,7 +196,10 @@
     <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
     <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
     <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
-    <output type="failure" caseSensitive="yes" regex="no">ERR</output>
+    <!-- If CRIU can't acquire the original thread IDs, this test will fail. Nothing can be done about this failure. -->
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
   </test>
 
   <test id="Create and Restore Criu Checkpoint Image once - CheckpointDeadlock">
@@ -161,8 +209,13 @@
     <output type="failure" caseSensitive="no" regex="no">Killed</output>
     <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
     <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
-    <output type="failure" caseSensitive="yes" regex="no">ERR</output>
+    <!-- If CRIU can't acquire the original thread IDs, this test will fail. Nothing can be done about this failure. -->
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <output type="failure" caseSensitive="yes" regex="no">TEST FAILED</output>
+    <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
   </test>
 
   <test id="Create and Restore Criu Checkpoint Image once - NotCheckpointSafeDeadlock">
@@ -173,8 +226,11 @@
     <output type="failure" caseSensitive="no" regex="no">Killed</output>
     <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
     <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
-    <output type="failure" caseSensitive="yes" regex="no">ERR</output>
+    <!-- If CRIU can't acquire the original thread IDs, this test will fail. Nothing can be done about this failure. -->
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <output type="failure" caseSensitive="yes" regex="no">TEST FAILED</output>
+    <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
   </test>
 
   <test id="Create and Restore Criu Checkpoint Image once - MethodTypeDeadlockTest">
@@ -185,8 +241,13 @@
     <output type="required" caseSensitive="no" regex="no">Killed</output>
     <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
     <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
-    <output type="failure" caseSensitive="yes" regex="no">ERR</output>
+    <!-- If CRIU can't acquire the original thread IDs, this test will fail. Nothing can be done about this failure. -->
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <output type="failure" caseSensitive="yes" regex="no">TEST FAILED</output>
+    <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
   </test>
 
   <test id="Create and Restore Criu Checkpoint Image once - TestDelayedOperations">
@@ -197,7 +258,12 @@
     <output type="failure" caseSensitive="no" regex="no">TestDelayedOperations.testDelayedThreadInterrupt(): FAILED</output>
     <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
     <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
-    <output type="failure" caseSensitive="yes" regex="no">ERR</output>
+    <!-- If CRIU can't acquire the original thread IDs, this test will fail. Nothing can be done about this failure. -->
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
   </test>
 
   <test id="Create and Restore Criu Checkpoint Image once with javacore generation">
@@ -207,6 +273,11 @@
     <output type="required" caseSensitive="yes" regex="no">Post-checkpoint</output>
     <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
     <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
-    <output type="failure" caseSensitive="yes" regex="no">ERR</output>
+    <!-- If CRIU can't acquire the original thread IDs, this test will fail. Nothing can be done about this failure. -->
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
   </test>
 </suite>
