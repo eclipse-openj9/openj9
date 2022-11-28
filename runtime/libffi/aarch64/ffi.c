@@ -19,6 +19,12 @@ CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
 TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.  */
 
+/*
+ * ===========================================================================
+ * Copyright (c) 2022, 2022 IBM Corp. and others
+ * ===========================================================================
+ */
+
 #if defined(__aarch64__) || defined(__arm64__)|| defined (_M_ARM64)
 #include <stdio.h>
 #include <stdlib.h>
@@ -792,7 +798,14 @@ ffi_call_int (ffi_cif *cif, void (*fn)(void), void *orig_rvalue,
 		       adjusted and the argument is copied to memory at the
 		       adjusted NSAA.  */
 		    state.ngrn = N_X_ARG_REG;
+#if defined (__APPLE__)
+		    dest = allocate_to_stack (&state, stack,
+					      (ty->alignment < 8) ? 8 : ty->alignment,
+					      s);
+		    state.nsaa = FFI_ALIGN (state.nsaa, 8);
+#else
 		    dest = allocate_to_stack (&state, stack, ty->alignment, s);
+#endif
 		  }
 		}
 	      memcpy (dest, a, s);
