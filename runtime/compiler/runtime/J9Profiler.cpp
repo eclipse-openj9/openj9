@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1733,6 +1733,7 @@ TR_BlockFrequencyInfo::getFrequencyInfo(
          callStackInfo.push_back(std::make_pair(comp->fe()->getInlinedCallSiteMethod(callSite), bciCheck));
          bciCheck = callSite->_byteCodeInfo;
          }
+      callStackInfo.push_back(std::make_pair(comp->getCurrentMethod()->getPersistentIdentifier(), bciCheck));
       isMatchingBCI = _callSiteInfo->computeEffectiveCallerIndex(comp, callStackInfo, queriedCallerIndex);
       }
    TR_ByteCodeInfo bciCheck(bci);
@@ -1773,7 +1774,8 @@ TR_BlockFrequencyInfo::getFrequencyInfo(
 
       while (!callStack.empty())
          {
-         bciToCheck = callStack.back().second;
+         auto extraCaller = callStack.back();
+         bciToCheck = extraCaller.second;
          callStack.pop_back();
          int32_t callerIndex = bciToCheck.getCallerIndex();
          TR_ResolvedMethod *resolvedMethod = callerIndex > -1 ? comp->getInlinedResolvedMethod(callerIndex) : comp->getCurrentMethod();
@@ -1800,7 +1802,15 @@ TR_BlockFrequencyInfo::getFrequencyInfo(
                      traceMsg(comp, "  method has profiling\n");
                   int32_t effectiveCallerIndex = -1;
                   TR_BlockFrequencyInfo *bfi = info->getBlockFrequencyInfo();
-                  if (callStack.empty() || info->getCallSiteInfo()->computeEffectiveCallerIndex(comp, callStack, effectiveCallerIndex))
+                  bool computeFrequency = callStack.empty();
+                  if (!computeFrequency)
+                     {
+                     callStack.push_back(extraCaller);
+                     computeFrequency = info->getCallSiteInfo()->computeEffectiveCallerIndex(comp, callStack, effectiveCallerIndex);
+                     callStack.pop_back();
+                     }
+
+                  if (computeFrequency)
                      {
                      TR_ByteCodeInfo callee(bci);
                      callee.setCallerIndex(effectiveCallerIndex);
@@ -2398,16 +2408,25 @@ TR_CallSiteInfo::computeEffectiveCallerIndex(TR::Compilation *comp, TR::list<std
 
       TR_InlinedCallSite *cursor = &_callSites[i];
       auto itr = callStack.begin(), end = callStack.end();
-      while (cursor && itr != end)
+      if (itr != end)
          {
-         if (comp->fe()->getInlinedCallSiteMethod(cursor) != itr->first)
-            break;
+         auto next = itr;
+         next++;
+         while (cursor && next != end)
+            {
+            if (comp->fe()->getInlinedCallSiteMethod(cursor) != itr->first || (cursor->_byteCodeInfo.getByteCodeIndex() != next->second.getByteCodeIndex()))
+               {
+               break;
+               }
 
-         if (cursor->_byteCodeInfo.getCallerIndex() > -1)
-            cursor = &_callSites[cursor->_byteCodeInfo.getCallerIndex()];
-         else
-            cursor = NULL;
-         itr++;
+            if (cursor->_byteCodeInfo.getCallerIndex() > -1)
+               cursor = &_callSites[cursor->_byteCodeInfo.getCallerIndex()];
+            else
+               cursor = NULL;
+
+            next++;
+            itr++;
+            }
          }
 
       // both have terminated at the same time means we have a match for our callstack fragment
@@ -2418,6 +2437,7 @@ TR_CallSiteInfo::computeEffectiveCallerIndex(TR::Compilation *comp, TR::list<std
          return true;
          }
       }
+
    return false;
    }
 
