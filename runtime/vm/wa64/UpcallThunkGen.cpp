@@ -50,6 +50,7 @@ extern "C" {
 typedef enum StructPassingMechanismEnum {
 	PASS_STRUCT_IN_MEMORY_POINTER_IN_REG,
 	PASS_STRUCT_IN_MEMORY_POINTER_ON_STACK,
+	PASS_STRUCT_IN_MEMORY_ON_STACK,
 	PASS_STRUCT_IN_ONE_GPR,
 	PASS_STRUCT_UNKNOWN
 } X64StructPassingMechanism;
@@ -583,6 +584,8 @@ analyzeStructParm(I_32 parm, J9UpcallSigType structParm) {
 			}
 	}
 
+	// All structs considered below are guaranteed to be 1, 2, 4, or 8 bytes in length
+	//
 	switch (structParm.type) {
 		case J9_FFI_UPCALL_SIG_TYPE_STRUCT_AGGREGATE_ALL_SP:   // Fall through
 		case J9_FFI_UPCALL_SIG_TYPE_STRUCT_AGGREGATE_ALL_DP:   // Fall through
@@ -594,7 +597,7 @@ analyzeStructParm(I_32 parm, J9UpcallSigType structParm) {
 			if (parm < MAX_PARMS_PASSED_IN_REGS) {
 				return PASS_STRUCT_IN_ONE_GPR;
 			} else {
-				return PASS_STRUCT_IN_MEMORY_POINTER_ON_STACK;
+				return PASS_STRUCT_IN_MEMORY_ON_STACK;
 			}
 		}
 		case J9_FFI_UPCALL_SIG_TYPE_STRUCT_AGGREGATE_SP_DP:    // Fall through
@@ -716,6 +719,7 @@ createUpcallThunk(J9UpcallMetaData *metaData)
 					prepareStructReturnInstructionsLength += L8_TREG_mSREGm_LENGTH;
 					break;
 
+				case PASS_STRUCT_IN_MEMORY_ON_STACK:         // Fall through
 				case PASS_STRUCT_IN_MEMORY_POINTER_ON_STACK: // Fall through
 				default:
 					Assert_VM_unreachable();
@@ -797,6 +801,14 @@ createUpcallThunk(J9UpcallMetaData *metaData)
 					case PASS_STRUCT_IN_ONE_GPR:
 						// Parm must be spilled from parm register to argList
 						gprRegSpillInstructionCount += 1;
+						break;
+
+					case PASS_STRUCT_IN_MEMORY_ON_STACK:
+						// Maximum sizeof struct passed on stack is 8 bytes and
+						// slot size is always 8 bytes.
+						copyStructInstructionsByteCount +=
+							L8_TREG_mRSP_DISP32m_LENGTH +
+							S8_mRSP_DISP32m_SREG_LENGTH;
 						break;
 
 					default:
@@ -1019,6 +1031,17 @@ createUpcallThunk(J9UpcallMetaData *metaData)
 						frameOffsetCursor += STACK_SLOT_SIZE;
 						break;
 					}
+					case PASS_STRUCT_IN_MEMORY_ON_STACK:
+					{
+						// Parm must be filled from frame and spilled to argList.
+						// Use rax as the intermediary register since it is volatile
+						L8_TREG_mRSP_DISP32m(thunkCursor, rax, frameSize + preservedRegisterAreaSize + 8 + GUARANTEED_PARM_BACKFILL_AREA_SIZE + memParmCursor)
+						S8_mRSP_DISP32m_SREG(thunkCursor, frameOffsetCursor, rax)
+						memParmCursor += STACK_SLOT_SIZE;
+						frameOffsetCursor += STACK_SLOT_SIZE;
+						break;
+
+					}
 					default:
 						Assert_VM_unreachable();
 				}
@@ -1077,6 +1100,7 @@ createUpcallThunk(J9UpcallMetaData *metaData)
 					L8_TREG_mSREGm(thunkCursor, rax, rax)
 					break;
 				case PASS_STRUCT_IN_MEMORY_POINTER_ON_STACK:  // Fall through
+				case PASS_STRUCT_IN_MEMORY_ON_STACK:          // Fall through
 				default:
 					Assert_VM_unreachable();
 			}
