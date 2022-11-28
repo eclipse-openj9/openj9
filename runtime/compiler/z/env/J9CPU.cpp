@@ -106,7 +106,7 @@ J9::Z::CPU::customize(OMRProcessorDesc processorDescription)
       omrsysinfo_processor_set_feature(&processorDescription, OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL_ENHANCEMENT_FACILITY, FALSE);
       }
 
-   if (processorDescription.processor < OMR_PROCESSOR_S390_ZNEXT)
+   if (processorDescription.processor < OMR_PROCESSOR_S390_Z16)
       {
       omrsysinfo_processor_set_feature(&processorDescription, OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL_ENHANCEMENT_FACILITY_2, FALSE);
       }

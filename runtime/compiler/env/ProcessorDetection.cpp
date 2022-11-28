@@ -312,8 +312,10 @@ TR_J9VM::initializeProcessorType()
          processorDescription.processor = OMR_PROCESSOR_S390_Z13;
       else if (processorDescription.processor >= OMR_PROCESSOR_S390_Z15 && TR::Options::getCmdLineOptions()->getOption(TR_DisableZ15))
          processorDescription.processor = OMR_PROCESSOR_S390_Z14;
-      else if (processorDescription.processor >= OMR_PROCESSOR_S390_ZNEXT && TR::Options::getCmdLineOptions()->getOption(TR_DisableZNext))
+      else if (processorDescription.processor >= OMR_PROCESSOR_S390_Z16 && TR::Options::getCmdLineOptions()->getOption(TR_DisableZ16))
          processorDescription.processor = OMR_PROCESSOR_S390_Z15;
+      else if (processorDescription.processor >= OMR_PROCESSOR_S390_ZNEXT && TR::Options::getCmdLineOptions()->getOption(TR_DisableZNext))
+         processorDescription.processor = OMR_PROCESSOR_S390_Z16;
 
       TR::Compiler->target.cpu = TR::CPU::customize(processorDescription);
 #if defined(J9ZOS390)
