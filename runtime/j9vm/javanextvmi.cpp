@@ -325,49 +325,25 @@ JVM_VirtualThreadMountEnd(JNIEnv *env, jobject thread, jboolean firstMount)
 	}
 
 	if (firstMount) {
-		if (NULL == vm->liveVirtualThreadList) {
-			J9Class *virtualThreadClass = J9OBJECT_CLAZZ(currentThread, J9_JNI_UNWRAP_REFERENCE(thread));
-			J9MemoryManagerFunctions *mmFuncs = vm->memoryManagerFunctions;
+		/* vm->liveVirtualThreadList should be initialized in stdinit.c::standardInit. */
+		Assert_SC_true(NULL != vm->liveVirtualThreadList);
 
-			/* Allocate empty virtual thread and create a global reference to it as root for the linked list.
-			 * This prevents the root reference from becoming stale if the GC moves the object.
-			 */
-			j9object_t rootVirtualThread = mmFuncs->J9AllocateObject(currentThread, virtualThreadClass, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
-			if (NULL != rootVirtualThread) {
-				/* The global ref will be freed at vm death. */
-				jobject globalRef = vmFuncs->j9jni_createGlobalRef((JNIEnv *)currentThread, rootVirtualThread, JNI_FALSE);
-				if (NULL != globalRef) {
-					vm->liveVirtualThreadList = (j9object_t *)globalRef;
+		j9object_t threadPrev = J9OBJECT_OBJECT_LOAD(currentThread, threadObj, vm->virtualThreadLinkPreviousOffset);
+		j9object_t threadNext = J9OBJECT_OBJECT_LOAD(currentThread, threadObj, vm->virtualThreadLinkNextOffset);
 
-					/* Set linkNext/linkPrevious to itself. */
-					J9OBJECT_OBJECT_STORE(currentThread, rootVirtualThread, vm->virtualThreadLinkNextOffset, rootVirtualThread);
-					J9OBJECT_OBJECT_STORE(currentThread, rootVirtualThread, vm->virtualThreadLinkPreviousOffset, rootVirtualThread);
-				} else {
-					vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
-				}
-			} else {
-				vmFuncs->setHeapOutOfMemoryError(currentThread);
-			}
-		}
+		/* Non-null previous and next elements in the list suggest that the thread has
+		 * already been added to the list. Only add to the list if the previous and
+		 * next elements in the list are null.
+		 */
+		Assert_SC_true((NULL == threadPrev) && (NULL == threadNext));
+		j9object_t root = *(vm->liveVirtualThreadList);
+		j9object_t rootPrev = J9OBJECT_OBJECT_LOAD(currentThread, root, vm->virtualThreadLinkPreviousOffset);
 
-		if (NULL != vm->liveVirtualThreadList) {
-			j9object_t threadPrev = J9OBJECT_OBJECT_LOAD(currentThread, threadObj, vm->virtualThreadLinkPreviousOffset);
-			j9object_t threadNext = J9OBJECT_OBJECT_LOAD(currentThread, threadObj, vm->virtualThreadLinkNextOffset);
-
-			/* Non-null previous and next elements in the list suggest that the thread has
-			 * already been added to the list. Only add to the list if the previous and
-			 * next elements in the list are null.
-			 */
-			Assert_SC_true((NULL == threadPrev) && (NULL == threadNext));
-			j9object_t root = *(vm->liveVirtualThreadList);
-			j9object_t rootPrev = J9OBJECT_OBJECT_LOAD(currentThread, root, vm->virtualThreadLinkPreviousOffset);
-
-			/* Add thread to the end of the list. */
-			J9OBJECT_OBJECT_STORE(currentThread, threadObj, vm->virtualThreadLinkNextOffset, root);
-			J9OBJECT_OBJECT_STORE(currentThread, threadObj, vm->virtualThreadLinkPreviousOffset, rootPrev);
-			J9OBJECT_OBJECT_STORE(currentThread, rootPrev, vm->virtualThreadLinkNextOffset, threadObj);
-			J9OBJECT_OBJECT_STORE(currentThread, root, vm->virtualThreadLinkPreviousOffset, threadObj);
-		}
+		/* Add thread to the end of the list. */
+		J9OBJECT_OBJECT_STORE(currentThread, threadObj, vm->virtualThreadLinkNextOffset, root);
+		J9OBJECT_OBJECT_STORE(currentThread, threadObj, vm->virtualThreadLinkPreviousOffset, rootPrev);
+		J9OBJECT_OBJECT_STORE(currentThread, rootPrev, vm->virtualThreadLinkNextOffset, threadObj);
+		J9OBJECT_OBJECT_STORE(currentThread, root, vm->virtualThreadLinkPreviousOffset, threadObj);
 
 		TRIGGER_J9HOOK_VM_VIRTUAL_THREAD_STARTED(vm->hookInterface, currentThread);
 	}
@@ -439,23 +415,24 @@ JVM_VirtualThreadUnmountBegin(JNIEnv *env, jobject thread, jboolean lastUnmount)
 	J9OBJECT_I64_STORE(currentThread, threadObj, vm->virtualThreadInspectorCountOffset, -1);
 
 	if (lastUnmount) {
-		if (NULL != vm->liveVirtualThreadList) {
-			j9object_t threadPrev = J9OBJECT_OBJECT_LOAD(currentThread, threadObj, vm->virtualThreadLinkPreviousOffset);
-			j9object_t threadNext = J9OBJECT_OBJECT_LOAD(currentThread, threadObj, vm->virtualThreadLinkNextOffset);
+		/* vm->liveVirtualThreadList should be initialized in stdinit.c::standardInit. */
+		Assert_SC_true(NULL != vm->liveVirtualThreadList);
 
-			/* Non-null previous and next elements in the list suggest that the thread has
-			 * been added to the list. Only remove from the list if the previous and next
-			 * elements in the list are non-null.
-			 */
-			Assert_SC_true((NULL != threadPrev) && (NULL != threadNext));
-			/* Remove thread from the list. The root will never be removed. */
-			J9OBJECT_OBJECT_STORE(currentThread, threadPrev, vm->virtualThreadLinkNextOffset, threadNext);
-			J9OBJECT_OBJECT_STORE(currentThread, threadNext, vm->virtualThreadLinkPreviousOffset, threadPrev);
+		j9object_t threadPrev = J9OBJECT_OBJECT_LOAD(currentThread, threadObj, vm->virtualThreadLinkPreviousOffset);
+		j9object_t threadNext = J9OBJECT_OBJECT_LOAD(currentThread, threadObj, vm->virtualThreadLinkNextOffset);
 
-			/* Reset previous and next fields in the thread object to null. */
-			J9OBJECT_OBJECT_STORE(currentThread, threadObj, vm->virtualThreadLinkNextOffset, NULL);
-			J9OBJECT_OBJECT_STORE(currentThread, threadObj, vm->virtualThreadLinkPreviousOffset, NULL);
-		}
+		/* Non-null previous and next elements in the list suggest that the thread has
+		 * been added to the list. Only remove from the list if the previous and next
+		 * elements in the list are non-null.
+		 */
+		Assert_SC_true((NULL != threadPrev) && (NULL != threadNext));
+		/* Remove thread from the list. The root will never be removed. */
+		J9OBJECT_OBJECT_STORE(currentThread, threadPrev, vm->virtualThreadLinkNextOffset, threadNext);
+		J9OBJECT_OBJECT_STORE(currentThread, threadNext, vm->virtualThreadLinkPreviousOffset, threadPrev);
+
+		/* Reset previous and next fields in the thread object to null. */
+		J9OBJECT_OBJECT_STORE(currentThread, threadObj, vm->virtualThreadLinkNextOffset, NULL);
+		J9OBJECT_OBJECT_STORE(currentThread, threadObj, vm->virtualThreadLinkPreviousOffset, NULL);
 
 		TRIGGER_J9HOOK_VM_VIRTUAL_THREAD_END(vm->hookInterface, currentThread);
 	}

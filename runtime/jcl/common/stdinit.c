@@ -319,6 +319,39 @@ standardInit(J9JavaVM *vm, char *dllName)
 		} else {
 			goto _fail;
 		}
+
+		/* vm->liveVirtualThreadList should not be set at this point. */
+		if (NULL != vm->liveVirtualThreadList) {
+			goto _fail;
+		}
+
+		/* vm->liveVirtualThreadList is maintained in javanextvmi.cpp::JVM_VirtualThread* functions. */
+		clazz = (*(JNIEnv*)vmThread)->FindClass((JNIEnv*)vmThread, "java/lang/VirtualThread");
+		if (NULL != clazz) {
+			J9Class *virtualThreadClass = J9VM_J9CLASS_FROM_JCLASS(vmThread, clazz);
+
+			/* Allocate empty virtual thread and create a global reference to it as root for the linked list.
+			 * This prevents the root reference from becoming stale if the GC moves the object.
+			 */
+			j9object_t rootVirtualThread = vm->memoryManagerFunctions->J9AllocateObject(vmThread, virtualThreadClass, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
+			if (NULL != rootVirtualThread) {
+				/* The global ref will be freed at VM death. */
+				jobject globalRef = vmFuncs->j9jni_createGlobalRef((JNIEnv*)vmThread, rootVirtualThread, JNI_FALSE);
+				if (NULL != globalRef) {
+					vm->liveVirtualThreadList = (j9object_t*)globalRef;
+
+					/* Set linkNext/linkPrevious to itself. */
+					J9OBJECT_OBJECT_STORE(vmThread, rootVirtualThread, vm->virtualThreadLinkNextOffset, rootVirtualThread);
+					J9OBJECT_OBJECT_STORE(vmThread, rootVirtualThread, vm->virtualThreadLinkPreviousOffset, rootVirtualThread);
+				}
+			}
+			(*(JNIEnv*)vmThread)->DeleteLocalRef((JNIEnv*)vmThread, clazz);
+			if (NULL == vm->liveVirtualThreadList) {
+				goto _fail;
+			}
+		} else {
+			goto _fail;
+		}
 #endif /* JAVA_SPEC_VERSION >= 19 */
 #endif /* !J9VM_IVE_RAW_BUILD */
 	}
