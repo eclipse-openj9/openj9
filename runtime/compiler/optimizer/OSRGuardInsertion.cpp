@@ -386,9 +386,8 @@ void TR_OSRGuardInsertion::removeHCRGuards(TR_BitVector &fearGeneratingNodes, TR
 
             // if virtual guards kill fear we can short cut additional analysis if the method still has a guard
             // we can mark that guard as an OSR guard and continue without needing a data flow analysis
-            if (TR_FearPointAnalysis::virtualGuardsKillFear(comp())
-                && additionalVirtualGuard
-                && comp()->cg()->supportsMergingGuards())
+            if (additionalVirtualGuard
+                  && TR_FearPointAnalysis::virtualGuardKillsFear(comp(), potentialGuard))
                {
                TR_VirtualGuard *additionalGuardInfo = comp()->findVirtualGuardInfo(potentialGuard);
                TR_ASSERT(additionalGuardInfo, "guard info should exist for a virtual guard");
@@ -412,7 +411,7 @@ void TR_OSRGuardInsertion::removeHCRGuards(TR_BitVector &fearGeneratingNodes, TR
             {
             comp()->addClassForOSRRedefinition(guardInfo->getThisClass());
             guardInfo->setMergedWithHCRGuard(false);
-            if (TR_FearPointAnalysis::virtualGuardsKillFear(comp()))
+            if (TR_FearPointAnalysis::virtualGuardKillsFear(comp(), node))
                guardInfo->setMergedWithOSRGuard();
             else
                {
@@ -475,9 +474,8 @@ int32_t TR_OSRGuardInsertion::insertOSRGuards(TR_BitVector &fearGeneratingNodes)
          continue;
          }
 
-      if (TR_FearPointAnalysis::virtualGuardsKillFear(comp())
-          && cursor->getNode()->isTheVirtualGuardForAGuardedInlinedCall()
-          && comp()->cg()->supportsMergingGuards())
+      if (cursor->getNode()->isTheVirtualGuardForAGuardedInlinedCall()
+            && TR_FearPointAnalysis::virtualGuardKillsFear(comp(), cursor->getNode()))
          {
          TR::DebugCounter::prependDebugCounter(comp(), TR::DebugCounter::debugCounterName(comp(), "osrGuardSummary/patch/vguard/%s/=%d", comp()->getHotnessName(comp()->getMethodHotness()), block->getFrequency()), cursor);
          TR::DebugCounter::prependDebugCounter(comp(), TR::DebugCounter::debugCounterName(comp(), "osrGuardVGLocation/%s/(%s)/block_%d@%d", comp()->getHotnessName(comp()->getMethodHotness()), comp()->signature(), block->getNumber(), block->getFrequency()), cursor);
