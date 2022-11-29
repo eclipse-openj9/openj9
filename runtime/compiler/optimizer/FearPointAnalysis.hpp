@@ -41,7 +41,7 @@ class TR_FearPointAnalysis : public TR_BackwardUnionSingleBitContainerAnalysis
    virtual bool postInitializationProcessing();
    TR_SingleBitContainer *generatedFear(TR::Node *node);
 
-   static bool virtualGuardsKillFear(TR::Compilation *comp);
+   static bool virtualGuardKillsFear(TR::Compilation *comp, TR::Node *virtualGuardNode);
 
    private:
    void computeFear(TR::Compilation *comp, TR::Node *node, TR::NodeChecklist &checklist);
