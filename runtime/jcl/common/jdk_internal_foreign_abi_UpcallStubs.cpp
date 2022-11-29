@@ -48,36 +48,35 @@ extern "C" {
  * to be allocated on the heap for thunk (especially on AIX only with 4KB virtual memory).
  */
 jboolean JNICALL
-Java_jdk_internal_foreign_abi_UpcallStubs_freeUpcallStub0(JNIEnv *env, jobject receiver, jlong address)
+Java_jdk_internal_foreign_abi_UpcallStubs_freeUpcallStub0(JNIEnv *env, jclass clazz, jlong address)
 {
 	J9VMThread *currentThread = (J9VMThread *)env;
 	J9JavaVM *vm = currentThread->javaVM;
 	const J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
-#if defined(AIXPPC) || (defined(S390) && defined(zOS))
+#if defined(AIXPPC) || defined(J9ZOS390)
 	/* The first element of the function pointer holds the thunk memory address,
-	 * as specified in vm/ap64/UpcallThunkGen.cpp
+	 * as specified in vm/ap64/UpcallThunkGen.cpp and vm/mz64/UpcallThunkGen.cpp.
 	 */
-	UDATA *functionPtr = (UDATA *)address;
-	void *thunkAddr = (void *)functionPtr[0];
-#else /* defined(AIXPPC) || (defined(S390) && defined(zOS)) */
-	void *thunkAddr = (void *)(UDATA)address;
-#endif /* defined(AIXPPC) || (defined(S390) && defined(zOS)) */
+	void **functionPtr = (void **)(intptr_t)address;
+	void *thunkAddr = *functionPtr;
+#else /* defined(AIXPPC) || defined(J9ZOS390) */
+	void *thunkAddr = (void *)(intptr_t)address;
+#endif /* defined(AIXPPC) || defined(J9ZOS390) */
 
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
-	omrthread_monitor_enter(vm->thunkHeapWrapperMutex);
+	omrthread_monitor_enter(vm->thunkHeapListMutex);
 	if (NULL != thunkAddr) {
-		J9UpcallThunkHeapWrapper *thunkHeapWrapper = vm->thunkHeapWrapper;
-		J9HashTable *metaDataHashTable = thunkHeapWrapper->metaDataHashTable;
-		J9Heap *thunkHeap = thunkHeapWrapper->heap;
+		J9HashTable *metaDataHashTable = vm->thunkHeapHead->metaDataHashTable;
 
 		if (NULL != metaDataHashTable) {
 			J9UpcallMetaDataEntry metaDataEntry = {0};
-			metaDataEntry.thunkAddrValue = (UDATA)(uintptr_t)thunkAddr;
+			metaDataEntry.thunkAddrValue = (UDATA)thunkAddr;
 			metaDataEntry.upcallMetaData = NULL;
 			J9UpcallMetaDataEntry * result = (J9UpcallMetaDataEntry *)hashTableFind(metaDataHashTable, &metaDataEntry);
 			if (NULL != result) {
 				J9UpcallMetaData *metaData = result->upcallMetaData;
+				J9Heap *thunkHeap = metaData->thunkHeapWrapper->heap;
 				J9UpcallNativeSignature *nativeFuncSig = metaData->nativeFuncSignature;
 				if (NULL != nativeFuncSig) {
 					j9mem_free_memory(nativeFuncSig->sigArray);
@@ -93,18 +92,18 @@ Java_jdk_internal_foreign_abi_UpcallStubs_freeUpcallStub0(JNIEnv *env, jobject r
 				if (NULL != thunkHeap) {
 #if defined(OSX) && defined(AARCH64)
 					pthread_jit_write_protect_np(0);
-#endif
+#endif /* defined(OSX) && defined(AARCH64) */
 					j9heap_free(thunkHeap, thunkAddr);
 #if defined(OSX) && defined(AARCH64)
 					pthread_jit_write_protect_np(1);
-#endif
+#endif /* defined(OSX) && defined(AARCH64) */
 				}
 			}
 		}
 	}
-	omrthread_monitor_exit(vm->thunkHeapWrapperMutex);
+	omrthread_monitor_exit(vm->thunkHeapListMutex);
 
-	return true;
+	return JNI_TRUE;
 }
 
 /**
