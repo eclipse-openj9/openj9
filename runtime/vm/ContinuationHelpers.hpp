@@ -69,6 +69,7 @@ public:
 		SWAP_MEMBER(stackObject, J9JavaStack*, vmThread, continuation);
 		SWAP_MEMBER(decompilationStack, J9JITDecompilationInfo*, vmThread, continuation);
 		SWAP_MEMBER(j2iFrame, UDATA*, vmThread, continuation);
+		SWAP_MEMBER(dropFlags, UDATA, vmThread, continuation);
 
 		J9VMEntryLocalStorage *threadELS = vmThread->entryLocalStorage;
 		/* Swap the JIT GPR registers data referenced by ELS */

@@ -6476,19 +6476,6 @@ static void jitReleaseCodeStackWalk(OMR_VMThread *omrVMThread, condYieldFromGCFu
    if (isRealTimeGC && !TR::Options::getCmdLineOptions()->getOption(TR_DisableIncrementalCCR))
       {
       bool yieldHappened = false;
-
-      /* Set inspectingLiveVirtualThreadList to true to prevent any continuation mount/unmount */
-      /* Is this monitor enter/wait needed? we should have exclusiveVMAccess here? */
-      j9thread_monitor_enter(vm->liveVirtualThreadListMutex);
-      while (vm->inspectingLiveVirtualThreadList) {
-         /* Virtual thread list is being inspected, wait. */
-         vmFuncs->internalExitVMToJNI(vmThread);
-         j9thread_monitor_wait(vm->liveVirtualThreadListMutex);
-         vmFuncs->internalEnterVMFromJNI(vmThread);
-      }
-      vm->inspectingLiveVirtualThreadList = true;
-      j9thread_monitor_exit(vm->liveVirtualThreadListMutex);
-
       do
          {
          J9VMThread *thread = vmThread;
@@ -6504,9 +6491,20 @@ static void jitReleaseCodeStackWalk(OMR_VMThread *omrVMThread, condYieldFromGCFu
                walkState.walkThread = thread;
                vm->walkStackFrames(vmThread, &walkState);
                thread->dropFlags |= 0x1;
-
-               yieldHappened = condYield(omrVMThread, J9_GC_METRONOME_UTILIZATION_COMPONENT_JIT);
                }
+
+            if ((NULL!= thread->currentContinuation) && ((thread->currentContinuation->dropFlags & 0x1) ? false : true))
+               /* If a continuation is mounted, always walk the continuation as that represent the CarrierThread */
+               {
+                  J9StackWalkState walkState;
+                  walkState.flags     = J9_STACKWALK_ITERATE_HIDDEN_JIT_FRAMES | J9_STACKWALK_ITERATE_FRAMES | J9_STACKWALK_SKIP_INLINES;
+                  walkState.skipCount = 0;
+                  walkState.frameWalkFunction = jitReleaseCodeStackWalkFrame;
+                  vmFuncs->walkContinuationStackFrames(vmThread, thread->currentContinuation, &walkState);
+                  thread->currentContinuation->dropFlags |= 0x1;
+               }
+
+            yieldHappened = condYield(omrVMThread, J9_GC_METRONOME_UTILIZATION_COMPONENT_JIT);
 
             if (!yieldHappened)
                thread = thread->linkNext;
@@ -6665,6 +6663,11 @@ static void jitReleaseCodeStackWalk(OMR_VMThread *omrVMThread, condYieldFromGCFu
       do
          {
          thr->dropFlags &=0x0;
+#if JAVA_SPEC_VERSION >= 19
+         if (NULL != thr->currentContinuation) {
+            thr->currentContinuation->dropFlags &=0x0;
+         }
+#endif /* JAVA_SPEC_VERSION >= 19 */
          thr = thr->linkNext;
          }
       while (thr != vmThread);
@@ -6681,10 +6684,6 @@ static void jitReleaseCodeStackWalk(OMR_VMThread *omrVMThread, condYieldFromGCFu
             walkVirtualThread = J9OBJECT_OBJECT_LOAD(vmThread, walkVirtualThread, vm->virtualThreadLinkNextOffset);
             }
          }
-      j9thread_monitor_enter(vm->liveVirtualThreadListMutex);
-		vm->inspectingLiveVirtualThreadList = FALSE;
-		j9thread_monitor_notify_all(vm->liveVirtualThreadListMutex);
-		j9thread_monitor_exit(vm->liveVirtualThreadListMutex);
 #endif /* JAVA_SPEC_VERSION >= 19 */
       }
 
