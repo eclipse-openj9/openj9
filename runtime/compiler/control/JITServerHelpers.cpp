@@ -896,7 +896,7 @@ JITServerHelpers::romMethodOfRamMethod(J9Method* method)
    }
 
 void
-JITServerHelpers::postStreamFailure(OMRPortLibrary *portLibrary, TR::CompilationInfo *compInfo, bool retryConnectionImmediately)
+JITServerHelpers::postStreamFailure(OMRPortLibrary *portLibrary, TR::CompilationInfo *compInfo, bool retryConnectionImmediately, bool connectionFailure)
    {
    OMR::CriticalSection postStreamFailure(getClientStreamMonitor());
 
@@ -915,28 +915,44 @@ JITServerHelpers::postStreamFailure(OMRPortLibrary *portLibrary, TR::Compilation
       _nextConnectionRetryTime = current_time + _waitTimeMs;
       }
 
-
-   if (_serverAvailable && TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseJITServerConns))
+   // If this is a connection failure, set the global flag _serverAvailable to false
+   // so that other threads can see it and avoid trying too often.
+   // If there was another networking problem (read/write error), the client stream
+   // will be deleted, the socket will be closed and the client will be forced to
+   // reconnect again. The client will discover if the server is down during the connection attempt.
+   if (connectionFailure && !retryConnectionImmediately)
       {
-      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
-                                     "t=%6u Lost connection to the server (serverUID=%llu). Retry immediately: %d.",
-                                     (uint32_t)compInfo->getPersistentInfo()->getElapsedTime(),
-                                     (unsigned long long)compInfo->getPersistentInfo()->getServerUID(),
-                                     retryConnectionImmediately);
+      if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseJITServerConns))
+         {
+         if (compInfo->getPersistentInfo()->getServerUID() != 0)
+            {
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+                                           "t=%6u Lost connection to the server (serverUID=%llu). Next attempt in %llu ms.",
+                                           (uint32_t)compInfo->getPersistentInfo()->getElapsedTime(),
+                                           (unsigned long long)compInfo->getPersistentInfo()->getServerUID(),
+                                           _waitTimeMs);
+            }
+         else // Was not connected to a server
+            {
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+                                           "t=%6u Could not connect to a server. Next attempt in %llu ms.",
+                                           (uint32_t)compInfo->getPersistentInfo()->getElapsedTime(),
+                                           _waitTimeMs);
+            }
+         }
       compInfo->getPersistentInfo()->setServerUID(0);
-      }
+      _serverAvailable = false;
 
-   _serverAvailable = false;
-
-   // Reset the activation policy flag in case we never reconnect to the server
-   // and client compiles locally or connects to a new server
-   compInfo->setCompThreadActivationPolicy(JITServer::CompThreadActivationPolicy::AGGRESSIVE);
-   if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompilationThreads) ||
-       TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseJITServer))
-      {
-      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
-                                     "t=%6u client has lost connection, resetting activation policy to AGGRESSIVE",
-                                     (uint32_t)compInfo->getPersistentInfo()->getElapsedTime());
+      // Reset the activation policy flag in case we never reconnect to the server
+      // and client compiles locally or connects to a new server
+      compInfo->setCompThreadActivationPolicy(JITServer::CompThreadActivationPolicy::AGGRESSIVE);
+      if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompilationThreads) ||
+          TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseJITServer))
+         {
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+                                        "t=%6u Resetting activation policy to AGGRESSIVE because client has lost connection to server",
+                                        (uint32_t)compInfo->getPersistentInfo()->getElapsedTime());
+         }
       }
    }
 
