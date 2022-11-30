@@ -4123,6 +4123,29 @@ typedef struct J9CRIUCheckpointState {
 	 */
 	I_64 checkpointRestoreTimeDelta;
 	UDATA maxRetryForNotCheckpointSafe;
+	jclass criuJVMCheckpointExceptionClass;
+	jclass criuSystemCheckpointExceptionClass;
+	jclass criuJVMRestoreExceptionClass;
+	jclass criuSystemRestoreExceptionClass;
+	jmethodID criuJVMCheckpointExceptionInit;
+	jmethodID criuSystemCheckpointExceptionInit;
+	jmethodID criuJVMRestoreExceptionInit;
+	jmethodID criuSystemRestoreExceptionInit;
+	void (*criuSetUnprivilegedFunctionPointerType)(BOOLEAN unprivileged);
+	void (*criuSetImagesDirFdFunctionPointerType)(int fd);
+	void (*criuSetShellJobFunctionPointerType)(BOOLEAN shellJob);
+	void (*criuSetLogLevelFunctionPointerType)(int logLevel);
+	void (*criuSetLogFileFunctionPointerType)(const char* logFileChars);
+	void (*criuSetLeaveRunningFunctionPointerType)(BOOLEAN leaveRunning);
+	void (*criuSetExtUnixSkFunctionPointerType)(BOOLEAN extUnixSupport);
+	void (*criuSetFileLocksFunctionPointerType)(BOOLEAN fileLocks);
+	void (*criuSetTcpEstablishedFunctionPointerType)(BOOLEAN tcpEstablished);
+	void (*criuSetAutoDedupFunctionPointerType)(BOOLEAN autoDedup);
+	void (*criuSetTrackMemFunctionPointerType)(BOOLEAN trackMemory);
+	void (*criuSetWorkDirFdFunctionPointerType)(int workDirFD);
+	int (*criuInitOptsFunctionPointerType)(void);
+	int (*criuDumpFunctionPointerType)(void);
+	UDATA libCRIUHandle;
 } J9CRIUCheckpointState;
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
@@ -5776,14 +5799,6 @@ typedef struct J9JavaVM {
 	U_32 javaVM31PadTo8; /* Possible to optimize with future guarded U_32 member in ENV_DATA64. */
 #endif /* defined(J9VM_ZOS_3164_INTEROPERABILITY) */
 #if defined(J9VM_OPT_CRIU_SUPPORT)
-	jclass criuJVMCheckpointExceptionClass;
-	jclass criuSystemCheckpointExceptionClass;
-	jclass criuJVMRestoreExceptionClass;
-	jclass criuSystemRestoreExceptionClass;
-	jmethodID criuJVMCheckpointExceptionInit;
-	jmethodID criuSystemCheckpointExceptionInit;
-	jmethodID criuJVMRestoreExceptionInit;
-	jmethodID criuSystemRestoreExceptionInit;
 	J9CRIUCheckpointState checkpointState;
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 #if JAVA_SPEC_VERSION >= 16
