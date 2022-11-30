@@ -6457,8 +6457,76 @@ static UDATA jitReleaseCodeStackWalkFrame(J9VMThread *vmThread, J9StackWalkState
    return J9_STACKWALK_KEEP_ITERATING;
    }
 
-static void jitReleaseCodeStackWalk(OMR_VMThread *omrVMThread, condYieldFromGCFunctionPtr condYield = NULL)
 
+/**
+ * @brief Setup and initiate a stack walk to scan a thread stack for live compiled
+ *        method bodies.
+ *
+ * @param[in] currentThread : \c J9VMThread * of thread initiating the walk
+ * @param[in] walkThread : \c J9VMThread * of thread to walk
+ */
+static void innerJitReleaseCodeStackWalkFrame(J9VMThread *currentThread, J9VMThread *walkThread)
+   {
+   J9StackWalkState walkState;
+   walkState.flags = J9_STACKWALK_ITERATE_HIDDEN_JIT_FRAMES | J9_STACKWALK_ITERATE_FRAMES | J9_STACKWALK_SKIP_INLINES;
+   walkState.skipCount = 0;
+   walkState.frameWalkFunction = jitReleaseCodeStackWalkFrame;
+   walkState.walkThread = walkThread;
+   currentThread->javaVM->walkStackFrames(currentThread, &walkState);
+   }
+
+
+#if (JAVA_SPEC_VERSION >= 19)
+/**
+ * @brief Walk all virtual thread stacks looking for live compiled method bodies.
+ *
+ * @param[in] currentThread : \c J9VMThread * of thread initiating the walk
+ */
+static void scanVirtualThreadStacksForLiveCompiledMethods(J9VMThread *currentThread)
+   {
+   J9JavaVM *vm = currentThread->javaVM;
+   const J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+
+   omrthread_monitor_enter(vm->liveVirtualThreadListMutex);
+   while (vm->inspectingLiveVirtualThreadList)
+      {
+      /* Virtual thread list is being inspected, wait. */
+      vmFuncs->internalExitVMToJNI(currentThread);
+      omrthread_monitor_wait(vm->liveVirtualThreadListMutex);
+      vmFuncs->internalEnterVMFromJNI(currentThread);
+      }
+
+   vm->inspectingLiveVirtualThreadList = TRUE;
+   omrthread_monitor_exit(vm->liveVirtualThreadListMutex);
+   if (NULL != vm->liveVirtualThreadList)
+      {
+      j9object_t root = *(vm->liveVirtualThreadList);
+      /* Skip the root, which is a dummy virtual thread and global ref. */
+      j9object_t walkVirtualThread = J9OBJECT_OBJECT_LOAD(currentThread, root, vm->virtualThreadLinkNextOffset);
+      do
+         {
+         J9VMThread stackThread = {0};
+         J9VMEntryLocalStorage els = {0};
+         j9object_t contObject = (j9object_t)J9VMJAVALANGVIRTUALTHREAD_CONT(currentThread, walkVirtualThread);
+         J9VMContinuation *continuation = J9VMJDKINTERNALVMCONTINUATION_VMREF(currentThread, contObject);
+         vm->internalVMFunctions->copyFieldsFromContinuation(currentThread, &stackThread, &els, continuation);
+
+         innerJitReleaseCodeStackWalkFrame(currentThread, &stackThread);
+
+         walkVirtualThread = J9OBJECT_OBJECT_LOAD(currentThread, walkVirtualThread, vm->virtualThreadLinkNextOffset);
+         }
+      while (root != walkVirtualThread);
+      }
+
+   omrthread_monitor_enter(vm->liveVirtualThreadListMutex);
+   vm->inspectingLiveVirtualThreadList = FALSE;
+   omrthread_monitor_notify_all(vm->liveVirtualThreadListMutex);
+   omrthread_monitor_exit(vm->liveVirtualThreadListMutex);
+   }
+#endif
+
+
+static void jitReleaseCodeStackWalk(OMR_VMThread *omrVMThread, condYieldFromGCFunctionPtr condYield = NULL)
    {
    J9VMThread *vmThread = (J9VMThread *)omrVMThread->_language_vmthread;
    J9JITConfig *jitConfig = vmThread->javaVM->jitConfig;
@@ -6467,7 +6535,6 @@ static void jitReleaseCodeStackWalk(OMR_VMThread *omrVMThread, condYieldFromGCFu
 
    if (!jitConfig->methodsToDelete)
       return; // nothing to do
-
 
    bool yieldHappened = false;
    bool doStackWalkForThread = true;
@@ -6484,17 +6551,11 @@ static void jitReleaseCodeStackWalk(OMR_VMThread *omrVMThread, condYieldFromGCFu
 
          if (doStackWalkForThread)
             {
-            J9StackWalkState walkState;
-            walkState.flags     = J9_STACKWALK_ITERATE_HIDDEN_JIT_FRAMES | J9_STACKWALK_ITERATE_FRAMES | J9_STACKWALK_SKIP_INLINES;
-            walkState.skipCount = 0;
-            walkState.frameWalkFunction = jitReleaseCodeStackWalkFrame;
-            walkState.walkThread = thread;
-            vmThread->javaVM->walkStackFrames(vmThread, &walkState);
-
+            innerJitReleaseCodeStackWalkFrame(vmThread, thread);
             if (isRealTimeGC && !TR::Options::getCmdLineOptions()->getOption(TR_DisableIncrementalCCR))
                {
                thread->dropFlags |= 0x1;
-               yieldHappened = condYield(omrVMThread, J9_GC_METRONOME_UTILIZATION_COMPONENT_JIT);
+               yieldHappened = condYield(vmThread->omrVMThread, J9_GC_METRONOME_UTILIZATION_COMPONENT_JIT);
                }
             }
 
@@ -6505,9 +6566,15 @@ static void jitReleaseCodeStackWalk(OMR_VMThread *omrVMThread, condYieldFromGCFu
       }
    while (yieldHappened);
 
+#if (JAVA_SPEC_VERSION >= 19)
+   // Virtual thread stacks must also be scanned for live methods.
+   //
+   scanVirtualThreadStacksForLiveCompiledMethods(vmThread);
+#endif
 
    TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
    TR_RuntimeAssumptionTable * rat = compInfo->getPersistentInfo()->getRuntimeAssumptionTable();
+
    // Now walk all the faint blocks, and collect the ones that are not still live
    //
    OMR::FaintCacheBlock *cursor = (OMR::FaintCacheBlock *)jitConfig->methodsToDelete;
@@ -6587,7 +6654,6 @@ static void jitReleaseCodeStackWalk(OMR_VMThread *omrVMThread, condYieldFromGCFu
          }
       while (thr != vmThread);
       }
-
 
    }
 
