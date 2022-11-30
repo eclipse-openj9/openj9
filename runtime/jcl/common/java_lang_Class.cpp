@@ -403,11 +403,11 @@ Java_java_lang_Class_getGenericSignature(JNIEnv *env, jobject recv)
 }
 
 /**
- * Determines if a method is a normal method (not <clinit>, <init>, or <new>).
+ * Determines if a method is a normal method (not <clinit>, <init>, or <vnew>).
  *
  * @param romMethod[in] the ROM method
  *
- * @returns true if the method is <init>, <clinit> or <new>, false if not
+ * @returns true if the method is <init>, <clinit> or <vnew>, false if not
  */
 static VMINLINE bool
 isSpecialMethod(J9ROMMethod *romMethod)
@@ -439,7 +439,7 @@ isConstructor(J9ROMMethod *romMethod)
  *
  * @param romMethod[in] the ROM method
  *
- * @returns true if this is public, static and not <clinit> or <new>, false if not
+ * @returns true if this is public, static and not <clinit> or <vnew>, false if not
  */
 static VMINLINE bool
 isNormalStaticMethod(J9ROMMethod *romMethod)
