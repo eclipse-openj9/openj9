@@ -971,6 +971,8 @@ freeJavaVM(J9JavaVM * vm)
 			pool_kill(hookRecords);
 			vm->checkpointState.hookRecords = NULL;
 		}
+
+		j9sl_close_shared_library(vm->checkpointState.libCRIUHandle);
 	}
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
