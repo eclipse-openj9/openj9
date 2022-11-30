@@ -525,8 +525,13 @@ jvmtiGetThreadInfo(jvmtiEnv *env,
 						group = J9_JNI_UNWRAP_REFERENCE(vm->vthreadGroup);
 					}
 				} else {
-					/* For platform threads, a NULL vmthread indicates that a thread is terminated. */
-					if ((NULL != targetThread) && (NULL != threadHolder)) {
+					/* For platform threads, a NULL vmthread indicates that a thread is either unstarted or terminated.
+					 * As per the JVMTI spec, the thread group should be NULL IFF the thread is terminated.
+					 */
+					if (((NULL != targetThread)
+						|| !(jboolean)J9VMJAVALANGTHREAD_STARTED(currentThread, threadObject))
+					&& (NULL != threadHolder)
+					) {
 						group = (j9object_t)J9VMJAVALANGTHREADFIELDHOLDER_GROUP(currentThread, threadHolder);
 					}
 				}
