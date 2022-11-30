@@ -1497,8 +1497,8 @@ J9NLS_CFR_ERR_NON_STATIC_SYNCHRONIZED_VALUE_TYPE_METHOD.system_action=The JVM wi
 J9NLS_CFR_ERR_NON_STATIC_SYNCHRONIZED_VALUE_TYPE_METHOD.user_response=Contact the provider of the class file for a corrected version.
 # END NON-TRANSLATABLE
 
-# <new> is not translatable
-J9NLS_CFR_ERR_INVALID_FLAGS_ON_NEW=\uc774\ub984\uc774 <new>\uc778 \uba54\uc18c\ub4dc\ub294 \uc815\uc801\uc774\uc5b4\uc57c \ud558\uba70 \ucd5c\uc885(final), \ub3d9\uae30\ud654(synchronized), \ub124\uc774\ud2f0\ube0c(native) \ub610\ub294 \ucd94\uc0c1(abstract)\uc77c \uc218 \uc5c6\uc74c
+# <vnew> is not translatable
+J9NLS_CFR_ERR_INVALID_FLAGS_ON_NEW=\uc774\ub984\uc774 <vnew>\uc778 \uba54\uc18c\ub4dc\ub294 \uc815\uc801\uc774\uc5b4\uc57c \ud558\uba70 \ucd5c\uc885(final), \ub3d9\uae30\ud654(synchronized), \ub124\uc774\ud2f0\ube0c(native) \ub610\ub294 \ucd94\uc0c1(abstract)\uc77c \uc218 \uc5c6\uc74c
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_INVALID_FLAGS_ON_NEW.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_INVALID_FLAGS_ON_NEW.system_action=The JVM will throw a verification or classloading related exception such as java.lang.ClassFormatError.

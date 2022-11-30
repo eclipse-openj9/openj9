@@ -356,8 +356,8 @@ prepareVerificationTypeBuffer(StackMapFrame* stackMapFrame, MethodContextInfo* m
 		cpInfo.bytes = (U_8*)methodInfo->signature.bytes;
 		cpInfo.slot1 = (U_32)methodInfo->signature.length;
 
-		/* Calls isInitOrClinitOrNewImpl() to determine whether the method is "<init>", "<clinit>", or "<new>".
-		 * It returns 0 if name is a normal name, CFR_METHOD_NAME_INIT if '<init>', CFR_METHOD_NAME_CLINIT if '<clinit>', and CFR_METHOD_NAME_NEW if '<new>'
+		/* Calls isInitOrClinitOrNewImpl() to determine whether the method is "<init>", "<clinit>", or "<vnew>".
+		 * It returns 0 if name is a normal name, CFR_METHOD_NAME_INIT if '<init>', CFR_METHOD_NAME_CLINIT if '<clinit>', and CFR_METHOD_NAME_NEW if '<vnew>'
 		 */
 		if (CFR_METHOD_NAME_INIT == bcvIsInitOrClinitOrNew(&cpInfo)) {
 			vrfyType = CFR_STACKMAP_TYPE_INIT_OBJECT;  /* "this" of an <init> method (cfreader.h) */
