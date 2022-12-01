@@ -336,9 +336,9 @@ JVM_VirtualThreadMountEnd(JNIEnv *env, jobject thread, jboolean firstMount)
 			 */
 			j9object_t rootVirtualThread = mmFuncs->J9AllocateObject(currentThread, virtualThreadClass, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
 
-			J9VMJAVALANGVIRTUALTHREAD_SET_STATE(currentThread, rootVirtualThread, J9VM_VIRTUALTHREAD_ROOT_NODE_STATE);
-
 			if (NULL != rootVirtualThread) {
+				J9VMJAVALANGVIRTUALTHREAD_SET_STATE(currentThread, rootVirtualThread, J9VM_VIRTUALTHREAD_ROOT_NODE_STATE);
+
 				/* The global ref will be freed at vm death. */
 				jobject globalRef = vmFuncs->j9jni_createGlobalRef((JNIEnv *)currentThread, rootVirtualThread, JNI_FALSE);
 				if (NULL != globalRef) {
