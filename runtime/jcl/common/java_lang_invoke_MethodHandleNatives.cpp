@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2021, 2022 IBM Corp. and others
+ * Copyright (c) 2021, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1008,11 +1008,11 @@ Java_java_lang_invoke_MethodHandleNatives_resolve(
 							J9BytecodeVerificationData *verifyData = vm->bytecodeVerificationData;
 							U_16 sigOffset = 0;
 
-							/* Skip the '[', 'L' prefix */
+							/* Skip the '[', 'L', or 'Q' prefix */
 							while ('[' == J9UTF8_DATA(signature)[sigOffset]) {
 								sigOffset += 1;
 							}
-							if ('L' == J9UTF8_DATA(signature)[sigOffset]) {
+							if (IS_REF_OR_VAL_SIGNATURE(J9UTF8_DATA(signature)[sigOffset])) {
 								sigOffset += 1;
 								omrthread_monitor_enter(vm->classTableMutex);
 								UDATA clConstraintResult = verifyData->checkClassLoadingConstraintForNameFunction(

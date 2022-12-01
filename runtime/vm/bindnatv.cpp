@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2022 IBM Corp. and others
+ * Copyright (c) 1991, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -650,7 +650,10 @@ nativeSignature(J9Method* nativeMethod, char *resultBuffer)
 				parsingReturnType = TRUE;
 				continue;
 			case 'L':
-				nextType = 'L';
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+			case 'Q':
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+				nextType = (char)ch;
 				while(J9UTF8_DATA(methodSig)[i++] != ';') {}		/* a type string - loop scanning for ';' to end it - i points past ';' when done loop */
 				break;
 			case 'Z':

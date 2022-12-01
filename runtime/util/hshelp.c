@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -518,7 +518,7 @@ iterateToNextArgument(U_32 sigIndex, U_32 sigLength, U_8* sigData)
 	if (sigIndex >= sigLength) return sigIndex;
 
 	/* check for object */
-	if ('L' == sigData[sigIndex]) {
+	if (IS_REF_OR_VAL_SIGNATURE(sigData[sigIndex])) {
 		while ((sigIndex < sigLength) && (';' != sigData[sigIndex])) {
 			sigIndex += 1;
 		}

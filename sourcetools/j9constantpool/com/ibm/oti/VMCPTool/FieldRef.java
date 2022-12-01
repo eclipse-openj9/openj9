@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2004, 2021 IBM Corp. and others
+ * Copyright (c) 2004, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -124,6 +124,7 @@ public class FieldRef extends PrimaryItem implements Constants {
 		switch (((Alias) primary).nas.signature.data.charAt(0)) {
 		case '[':
 		case 'L':
+		case 'Q':
 			return "OBJECT";
 		default:
 			// Do nothing
@@ -153,6 +154,7 @@ public class FieldRef extends PrimaryItem implements Constants {
 		switch (((Alias) primary).nas.signature.data.charAt(0)) {
 		case '[':
 		case 'L':
+		case 'Q':
 			return "OBJECT";
 		case 'J':
 			return "I64";

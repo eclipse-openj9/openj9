@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2020 IBM Corp. and others
+ * Copyright (c) 2010, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -221,13 +221,16 @@ public class J9ObjectStructureFormatter extends BaseStructureFormatter
 				}
 				break;
 			case 'L':
+			/*[IF INLINE-TYPES]*/
+			case 'Q':
+			/*[ENDIF] INLINE-TYPES */
 			case '[':
 				if (ValueTypeHelper.getValueTypeHelper().isJ9ClassIsFlattened(localClazz)) {
 					formatFlattenedObjectArray(out, tabLevel, begin, finish, array);
 				} else {
 					formatReferenceObjectArray(out, tabLevel, localClazz, begin, finish, array);
 				}
-			break;
+				break;
 			}
 		}
 

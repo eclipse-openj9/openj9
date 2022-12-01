@@ -1,6 +1,6 @@
 /*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 /*******************************************************************************
- * Copyright (c) 1998, 2022 IBM Corp. and others
+ * Copyright (c) 1998, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -507,7 +507,7 @@ final class J9VMInternals {
 	 */
 	static native int identityHashCode(Object anObject);
 
-	/*[IF INLINE-TYPES] */
+	/*[IF INLINE-TYPES]*/
 	/**
 	 * Answers an integer hash code for the parameter.
 	 * The caller must ensure that the parameter is a value type.

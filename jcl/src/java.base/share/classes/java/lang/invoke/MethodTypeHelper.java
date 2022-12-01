@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2020, 2022 IBM Corp. and others
+ * Copyright (c) 2020, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -195,13 +195,17 @@ final class MethodTypeHelper {
 	/*
 	 * Convert the string from bytecode format to the format needed for ClassLoader#loadClass().
 	 * Change all '/' to '.'.
-	 * Remove the 'L' & ';' from objects, unless they are array classes.
+	 * Remove the 'L', 'Q', and ';' from objects, unless they are array classes.
 	 */
 	private static final Class<?> nonPrimitiveClassFromString(String name, ClassLoader classLoader) {
 		try {
 			name = name.replace('/', '.');
-			if (name.indexOf('L') == 0) {
-				// Remove the 'L' and ';'
+			if ((name.charAt(0) == 'L')
+				/*[IF INLINE-TYPES]*/
+				|| (name.charAt(0) == 'Q')
+				/*[ENDIF] INLINE-TYPES */
+			) {
+				// Remove the 'L'/'Q' and ';'.
 				name = name.substring(1, name.length() - 1);
 			}
 			return Class.forName(name, false, classLoader);
@@ -218,13 +222,21 @@ final class MethodTypeHelper {
 		char current = signature[index];
 		Class<?> c;
 
-		if ((current == 'L') || (current == '[')) {
+		if ((current == 'L') || (current == '[')
+			/*[IF INLINE-TYPES]*/
+			|| (current == 'Q')
+			/*[ENDIF] INLINE-TYPES */
+		) {
 			int start = index;
 			while(signature[index] == '[') {
 				index++;
 			}
 			String name;
-			if (signature[index] != 'L') {
+			if ((signature[index] != 'L')
+				/*[IF INLINE-TYPES]*/
+				&& (signature[index] != 'Q')
+				/*[ENDIF] INLINE-TYPES */
+			) {
 				name = descriptor.substring(start, index + 1);
 			} else {
 				int end = descriptor.indexOf(';', index);

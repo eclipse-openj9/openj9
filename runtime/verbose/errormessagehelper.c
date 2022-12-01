@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2022 IBM Corp. and others
+ * Copyright (c) 2015, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -651,11 +651,11 @@ convertBcvToCfrType(MethodContextInfo* methodInfo, StackMapFrame* stackMapFrame,
 	default:
 		{
 			U_8 objTypeTag = CFR_STACKMAP_TYPE_OBJECT;
-	#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 			if (J9_ARE_ALL_BITS_SET(bcvType, BCV_PRIMITIVE_VALUETYPE)) {
 				objTypeTag = CFR_STACKMAP_TYPE_PRIMITIVE_OBJECT;
 			}
-	#endif /* #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 			*currentVerificationTypeEntry = pushVerificationTypeInfo(methodInfo, stackMapFrame, *currentVerificationTypeEntry, objTypeTag, INDEX_CLASSNAMELIST, bcvType);
 			break;
 		}
@@ -870,7 +870,7 @@ mapDataTypeToUTF8String(J9UTF8Ref* dataType, StackMapFrame* stackMapFrame, Metho
 	case CFR_STACKMAP_TYPE_OBJECT:
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 	case CFR_STACKMAP_TYPE_PRIMITIVE_OBJECT:
-#endif /* #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	{
 		/* Set the name string for object reference.
 		 * Identify what the type index value is according to the index attribute.
@@ -889,8 +889,8 @@ mapDataTypeToUTF8String(J9UTF8Ref* dataType, StackMapFrame* stackMapFrame, Metho
 
 			dataType->bytes = methodInfo->signature.bytes + typeValue;
 			dataType->length = typeLength;
-			/* Ignore 'L' and ';' to get the full string of argument in signature */
-			if ('L' == *dataType->bytes) {
+			/* Ignore 'L', 'Q', and ';' to get the full string of argument in signature */
+			if (IS_REF_OR_VAL_SIGNATURE(*dataType->bytes)) {
 				dataType->bytes += 1;
 				dataType->length -= 2;
 			}
@@ -1019,7 +1019,7 @@ printTypeInfoToBuffer(MessageBuffer* buf, U_8 tag, J9UTF8Ref* dataType, BOOLEAN 
 				 1, ";"	/* class suffix ';' */
 				);
 		break;
-#endif /* #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	default:
 		Assert_VRB_ShouldNeverHappen();
 		break;

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2022 IBM Corp. and others
+ * Copyright (c) 1991, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -77,13 +77,13 @@
 #define	CFR_STACKMAP_TYPE_BOOL_ARRAY			0x10
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 #define CFR_STACKMAP_TYPE_PRIMITIVE_OBJECT		0x11
-#endif /* #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 #define	CFR_METHOD_NAME_INIT	1
 #define	CFR_METHOD_NAME_CLINIT	2
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 #define	CFR_METHOD_NAME_NEW		3
-#endif /* #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 #define	CFR_METHOD_NAME_INVALID	-1
 
 /* Macros. */

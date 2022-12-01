@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2022 IBM Corp. and others
+ * Copyright (c) 1991, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -159,7 +159,7 @@ bcvIsInitOrClinitOrNew (J9CfrConstantPoolInfo * info);
 */
 BOOLEAN
 bcvIsReferenceTypeDescriptor(J9CfrConstantPoolInfo * info);
-#endif /* #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 /* ---------------- clconstraints.c ---------------- */
 

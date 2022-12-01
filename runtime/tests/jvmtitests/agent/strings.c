@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -202,6 +202,9 @@ getTypeString(agentEnv * env, jthread currentThread, JNIEnv * jni_env, char sign
 			sprintf(typeStr, "(jdouble) %f", jvaluePtr->d);
 			break;
 		case 'L':
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		case 'Q':
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 			if (jvaluePtr->l == NULL) {
 				sprintf(typeStr, "(jobject) null");
 			} else {

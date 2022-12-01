@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2022 IBM Corp. and others
+ * Copyright (c) 2019, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -259,9 +259,9 @@ getDefaultValueSlotAddress(J9Class* clazz)
 	j9object_t* result = &clazz->flattenedClassCache->defaultValue;
 	Assert_VM_notNull(*result);
 	return result;
-#else /* #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	return NULL;
-#endif /* #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 }
 
 } /* extern "C" */

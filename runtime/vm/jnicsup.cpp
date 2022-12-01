@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2022 IBM Corp. and others
+ * Copyright (c) 1991, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -543,7 +543,10 @@ UDATA JNICALL pushArguments(J9VMThread *vmThread, J9Method* method, void *args) 
 					sigChar += 1;
 				}
 				skipSignature = ('L' == *sigChar++);
-			case 'L': /* FALLTHROUGH */
+			case 'L':
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+			case 'Q':
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 				/* skip the rest of the signature */
 				if (skipSignature) {
 					while (';' != *sigChar) {
@@ -594,7 +597,7 @@ UDATA JNICALL pushArguments(J9VMThread *vmThread, J9Method* method, void *args) 
 				break;
 			case ')':
 				vmThread->sp = sp;
-				return (*sigChar == 'L' || *sigChar == '[') ? J9_SSF_RETURNS_OBJECT : 0;
+				return (IS_REF_OR_VAL_SIGNATURE(*sigChar) || *sigChar == '[') ? J9_SSF_RETURNS_OBJECT : 0;
 		}
 	}
 }
