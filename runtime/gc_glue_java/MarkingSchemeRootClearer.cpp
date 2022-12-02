@@ -331,7 +331,7 @@ MM_MarkingSchemeRootClearer::scanContinuationObjects(MM_EnvironmentBase *env)
 							} else {
 								/* object was not previously marked */
 								gcEnv->_markJavaStats._continuationCleared += 1;
-								VM_VMHelpers::cleanupContinuationObject((J9VMThread *)env->getLanguageVMThread(), object);
+								_extensions->releaseNativesForContinuationObject(env, object);
 							}
 							object = next;
 						}

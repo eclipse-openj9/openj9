@@ -241,7 +241,7 @@ MM_ScavengerRootClearer::scavengeContinuationObjects(MM_EnvironmentStandard *env
 							if (!forwardedHeader.isForwardedPointer()) {
 								Assert_GC_true_with_message2(env, _scavenger->isObjectInEvacuateMemory(object), "Continuation object  %p should be a dead object, forwardedHeader=%p\n", object, &forwardedHeader);
 								gcEnv->_scavengerJavaStats._continuationCleared += 1;
-								VM_VMHelpers::cleanupContinuationObject((J9VMThread *)env->getLanguageVMThread(), object);
+								_extensions->releaseNativesForContinuationObject(env, object);
 							} else {
 								omrobjectptr_t forwardedPtr = forwardedHeader.getForwardedObject();
 								Assert_GC_true_with_message(env, NULL != forwardedPtr, "Continuation object  %p should be forwarded\n", object);
