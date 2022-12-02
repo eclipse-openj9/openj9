@@ -4309,16 +4309,6 @@ getJavaThreadPriority(struct J9JavaVM *vm, J9VMThread* thread );
 /* ---------------- ContinuationHelpers.cpp ---------------- */
 
 /**
- * @brief Create the native J9VMContinuation structure for Continuation.
- *
- * @param currentThread
- * @param continuationObject
- * @return BOOLEAN
- */
-BOOLEAN
-createContinuation(J9VMThread *currentThread, j9object_t continuationObject);
-
-/**
  * @brief Enters the Continuation runnable.
  * If the Continuation has not started, start the runnable task via callin to interpreter on the method Continuation.execute.
  * If the Continuation has already started, resume the execution with a new interpreter instance on the stack.

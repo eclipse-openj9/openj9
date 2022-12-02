@@ -65,20 +65,4 @@ Java_jdk_internal_vm_Continuation_unpin(JNIEnv *env, jclass unused)
 	}
 }
 
-jboolean JNICALL
-Java_jdk_internal_vm_Continuation_createContinuationImpl(JNIEnv *env, jobject continuation)
-{
-	J9VMThread *currentThread = (J9VMThread *)env;
-	J9InternalVMFunctions *vmFuncs = currentThread->javaVM->internalVMFunctions;
-
-	vmFuncs->internalEnterVMFromJNI(currentThread);
-
-	j9object_t continuationObject = J9_JNI_UNWRAP_REFERENCE(continuation);
-	BOOLEAN result = vmFuncs->createContinuation(currentThread, continuationObject);
-
-	vmFuncs->internalExitVMToJNI(currentThread);
-
-	return result ? JNI_TRUE : JNI_FALSE;
-}
-
 } /* extern "C" */

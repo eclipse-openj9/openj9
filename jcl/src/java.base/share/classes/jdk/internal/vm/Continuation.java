@@ -104,7 +104,6 @@ public class Continuation {
 	public Continuation(ContinuationScope scope, Runnable target) {
 		this.scope = scope;
 		this.runnable = target;
-		createContinuationImpl();
 		if (JLA == null) {
 			JLA = SharedSecrets.getJavaLangAccess();
 		}
@@ -268,7 +267,6 @@ public class Continuation {
 	}
 
 	/* Continuation Native APIs */
-	private native boolean createContinuationImpl();
 	private native boolean enterImpl();
 	private static native boolean yieldImpl();
 

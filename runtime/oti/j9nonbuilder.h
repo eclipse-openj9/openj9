@@ -4934,7 +4934,6 @@ typedef struct J9InternalVMFunctions {
 #endif /* JAVA_SPEC_VERSION >= 16 */
 #if JAVA_SPEC_VERSION >= 19
 	void (*copyFieldsFromContinuation)(struct J9VMThread *currentThread, struct J9VMThread *vmThread, struct J9VMEntryLocalStorage *els, struct J9VMContinuation *continuation);
-	BOOLEAN (*createContinuation)(struct J9VMThread *currentThread, j9object_t continuationObject);
 	void (*freeContinuation)(struct J9VMThread *currentThread, j9object_t continuationObject);
 	void (*freeTLS)(struct J9VMThread *currentThread, j9object_t threadObj);
 	UDATA (*walkContinuationStackFrames)(struct J9VMThread *currentThread, struct J9VMContinuation *continuation, J9StackWalkState *walkState);
