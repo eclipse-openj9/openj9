@@ -305,12 +305,13 @@ JVM_VirtualThreadMountEnd(JNIEnv *env, jobject thread, jboolean firstMount)
 	J9VMThread *currentThread = (J9VMThread *)env;
 	J9JavaVM *vm = currentThread->javaVM;
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+	j9object_t rootVirtualThread = NULL;
+	j9object_t threadObj = NULL;
 
 	Trc_SC_VirtualThreadMountEnd_Entry(currentThread, thread, firstMount);
 
 	vmFuncs->internalEnterVMFromJNI(currentThread);
-	f_monitorEnter(vm->liveVirtualThreadListMutex);
-	j9object_t threadObj = J9_JNI_UNWRAP_REFERENCE(thread);
+	threadObj = J9_JNI_UNWRAP_REFERENCE(thread);
 
 	Assert_SC_true(IS_JAVA_LANG_VIRTUALTHREAD(currentThread, threadObj));
 
@@ -326,34 +327,42 @@ JVM_VirtualThreadMountEnd(JNIEnv *env, jobject thread, jboolean firstMount)
 				J9VMJDKINTERNALVMCONTINUATION_VMREF(currentThread, continuationObj));
 	}
 
+	/* On some occassions, J9AllocateObject acquires exclusive VM access. It is invoked without acquiring
+	 * liveVirtualThreadListMutex to prevent a deadlock.
+	 */
+	if (NULL == vm->liveVirtualThreadList) {
+		Assert_SC_true(firstMount);
+		J9Class *virtualThreadClass = J9OBJECT_CLAZZ(currentThread, J9_JNI_UNWRAP_REFERENCE(thread));
+		J9MemoryManagerFunctions *mmFuncs = vm->memoryManagerFunctions;
+
+		/* Allocate empty virtual thread and create a global reference to it as root for the linked list.
+		 * This prevents the root reference from becoming stale if the GC moves the object.
+		 */
+		rootVirtualThread = mmFuncs->J9AllocateObject(currentThread, virtualThreadClass, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
+		if (NULL == rootVirtualThread) {
+			vmFuncs->setHeapOutOfMemoryError(currentThread);
+			goto release1;
+		}
+		J9VMJAVALANGVIRTUALTHREAD_SET_STATE(currentThread, rootVirtualThread, J9VM_VIRTUALTHREAD_ROOT_NODE_STATE);
+	}
+
+	f_monitorEnter(vm->liveVirtualThreadListMutex);
+
 	if (firstMount) {
 		if (NULL == vm->liveVirtualThreadList) {
-			J9Class *virtualThreadClass = J9OBJECT_CLAZZ(currentThread, J9_JNI_UNWRAP_REFERENCE(thread));
-			J9MemoryManagerFunctions *mmFuncs = vm->memoryManagerFunctions;
+			Assert_SC_true(NULL != rootVirtualThread);
 
-			/* Allocate empty virtual thread and create a global reference to it as root for the linked list.
-			 * This prevents the root reference from becoming stale if the GC moves the object.
-			 */
-			j9object_t rootVirtualThread = mmFuncs->J9AllocateObject(currentThread, virtualThreadClass, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
-
-			J9VMJAVALANGVIRTUALTHREAD_SET_STATE(currentThread, rootVirtualThread, J9VM_VIRTUALTHREAD_ROOT_NODE_STATE);
-
-			if (NULL != rootVirtualThread) {
-				/* The global ref will be freed at vm death. */
-				jobject globalRef = vmFuncs->j9jni_createGlobalRef((JNIEnv *)currentThread, rootVirtualThread, JNI_FALSE);
-				if (NULL != globalRef) {
-					Trc_SC_VirtualThread_RootNodeSet(currentThread, globalRef);
-					vm->liveVirtualThreadList = (j9object_t *)globalRef;
-
-					/* Set linkNext/linkPrevious to itself. */
-					J9OBJECT_OBJECT_STORE(currentThread, rootVirtualThread, vm->virtualThreadLinkNextOffset, rootVirtualThread);
-					J9OBJECT_OBJECT_STORE(currentThread, rootVirtualThread, vm->virtualThreadLinkPreviousOffset, rootVirtualThread);
-				} else {
-					vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
-				}
-			} else {
-				vmFuncs->setHeapOutOfMemoryError(currentThread);
+			jobject globalRef = vmFuncs->j9jni_createGlobalRef((JNIEnv *)currentThread, rootVirtualThread, JNI_FALSE);
+			if (NULL == globalRef) {
+				vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
+				goto release2;
 			}
+
+			Trc_SC_VirtualThread_RootNodeSet(currentThread, globalRef);
+			vm->liveVirtualThreadList = (j9object_t *)globalRef;
+			/* Set linkNext/linkPrevious to itself. */
+			J9OBJECT_OBJECT_STORE(currentThread, rootVirtualThread, vm->virtualThreadLinkNextOffset, rootVirtualThread);
+			J9OBJECT_OBJECT_STORE(currentThread, rootVirtualThread, vm->virtualThreadLinkPreviousOffset, rootVirtualThread);
 		}
 
 		if (NULL != vm->liveVirtualThreadList) {
@@ -392,8 +401,9 @@ JVM_VirtualThreadMountEnd(JNIEnv *env, jobject thread, jboolean firstMount)
 	}
 
 	f_monitorNotifyAll(vm->liveVirtualThreadListMutex);
+release2:
 	f_monitorExit(vm->liveVirtualThreadListMutex);
-
+release1:
 	vmFuncs->internalExitVMToJNI(currentThread);
 
 	Trc_SC_VirtualThreadMountEnd_Exit(currentThread, thread, firstMount);
