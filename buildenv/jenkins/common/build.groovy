@@ -285,7 +285,7 @@ def checkoutRef (REF) {
 def build() {
     stage('Compile') {
        def make_target = ''
-       if (SDK_VERSION == "17") {
+       if ((SDK_VERSION == "17") && SPEC.contains('zos')) {
             make_target = 'images'
         } else {
            make_target = 'all'
