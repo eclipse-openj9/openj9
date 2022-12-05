@@ -108,9 +108,10 @@ const U_64 jclConfig = J9CONST64(0x7363617237306200);		/* 'scar70b' */
 #define	FIPS_HOME_PROP_NAME	"com.ibm.fips.home"
 #define	FIPS_MODE_PROP_NAME	"com.ibm.fips.mode"
 
-#define	FIPS140_3_PROP_VALUE	"fips140-3"
-#define	FIPS140_2_PROP_VALUE	"fips140-2"
-#define	FIPS140_3_DIR		( DIR_SEPARATOR_STR FIPS140_3_PROP_VALUE )
+#define	FIPS140_3_PROP_VALUE	"140-3"
+#define	FIPS140_2_PROP_VALUE	"140-2"
+#define	FIPS140_3_DIR		( DIR_SEPARATOR_STR "fips" FIPS140_3_PROP_VALUE )
+
 
 jint scarInit(J9JavaVM *vm);
 jint scarPreconfigure(J9JavaVM *vm);
