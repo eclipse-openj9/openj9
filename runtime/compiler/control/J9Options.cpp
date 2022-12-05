@@ -135,6 +135,8 @@ int32_t J9::Options::_highActiveThreadThreshold = -1;
 int32_t J9::Options::_veryHighActiveThreadThreshold = -1;
 int32_t J9::Options::_aotCachePersistenceMinDeltaMethods = 200;
 int32_t J9::Options::_aotCachePersistenceMinPeriodMs = 10000; // ms
+TR::CompilationFilters *J9::Options::_JITServerAOTCacheStoreFilters = NULL;
+TR::CompilationFilters *J9::Options::_JITServerAOTCacheLoadFilters = NULL;
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
 #if defined(J9VM_OPT_CRIU_SUPPORT)
@@ -645,6 +647,39 @@ Options::loadLimitfileOption(char * option, void * base, TR::OptionTable *entry)
       }
    }
 
+#if defined(J9VM_OPT_JITSERVER)
+char *
+Options::JITServerAOTCacheLimitOption(char *option, void *base, TR::OptionTable *entry, TR::CompilationFilters *&filters, const char *optName)
+   {
+   if (!TR::Options::getDebug() && !TR::Options::createDebug())
+      return NULL;
+   if (TR::Options::getJITCmdLineOptions() == NULL)
+      {
+      // if JIT options are NULL, means we're processing AOT options now
+      return TR::Options::getDebug()->limitOption(option, base, entry, TR::Options::getAOTCmdLineOptions(), filters);
+      }
+   else
+      {
+      // otherwise, we're processing JIT options
+      J9JITConfig * jitConfig = (J9JITConfig*)base;
+      PORT_ACCESS_FROM_JAVAVM(jitConfig->javaVM);
+      j9tty_printf(PORTLIB, "<JIT: %s option should be specified on -Xaot --> '%s'>\n", optName, option);
+      return option;
+      }
+   }
+
+char *
+Options::JITServerAOTCacheStoreLimitOption(char *option, void *base, TR::OptionTable *entry)
+   {
+   return JITServerAOTCacheLimitOption(option, base, entry, _JITServerAOTCacheStoreFilters, "jitserverAOTCacheStoreExclude");
+   }
+
+char *
+Options::JITServerAOTCacheLoadLimitOption(char *option, void *base, TR::OptionTable *entry)
+   {
+   return JITServerAOTCacheLimitOption(option, base, entry, _JITServerAOTCacheLoadFilters, "jitserverAOTCacheLoadExclude");
+   }
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
 char *
 Options::tprofOption(char * option, void * base, TR::OptionTable *entry)
@@ -898,6 +933,12 @@ TR::OptionTable OMR::Options::_feOptions[] = {
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_iprofilerSamplesBeforeTurningOff, 0, "P%d", NOT_IN_SUBSET},
    {"itFileNamePrefix=",  "L<filename>\tprefix for itrace filename",
         TR::Options::setStringForPrivateBase, offsetof(TR_JitPrivateConfig,itraceFileNamePrefix), 0, "P%s"},
+#if defined(J9VM_OPT_JITSERVER)
+   {"jitserverAOTCacheLoadExclude=", "D{regex}\tdo not load methods matching regex from the JITServer AOT cache",
+        TR::Options::JITServerAOTCacheLoadLimitOption, 1, 0, "P%s"},
+   {"jitserverAOTCacheStoreExclude=", "D{regex}\tdo not store methods matching regex in the JITServer AOT cache",
+        TR::Options::JITServerAOTCacheStoreLimitOption, 1, 0, "P%s"},
+#endif /* defined(J9VM_OPT_JITSERVER) */
    {"jProfilingEnablementSampleThreshold=", "M<nnn>\tNumber of global samples to allow generation of JProfiling bodies",
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_jProfilingEnablementSampleThreshold, 0, "F%d", NOT_IN_SUBSET },
    {"kcaoffsets",         "I\tGenerate a header file with offset data for use with KCA", TR::Options::kcaOffsets, 0, 0, "F" },

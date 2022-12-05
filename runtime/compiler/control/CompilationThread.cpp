@@ -13037,4 +13037,30 @@ TR::CompilationInfo::requeueOutOfProcessEntry(TR_MethodToBeCompiled *entry)
       getCompilationMonitor()->notifyAll();
       }
    }
+
+static bool
+queryJITServerAOTCacheFilter(const char *methodSig, TR::Method::Type ty, TR::CompilationFilters *filters)
+   {
+   if (!filters)
+      return true;
+
+   TR_Debug *debug = TR::Options::getDebug();
+   if (!debug)
+      return true;
+
+   TR_FilterBST *filter = NULL;
+   return debug->methodSigCanBeFound(methodSig, filters, filter, ty);
+   }
+
+bool
+TR::CompilationInfo::methodCanBeJITServerAOTCacheStored(const char *methodSig, TR::Method::Type ty)
+   {
+   return queryJITServerAOTCacheFilter(methodSig, ty, TR::Options::_JITServerAOTCacheStoreFilters);
+   }
+
+bool
+TR::CompilationInfo::methodCanBeJITServerAOTCacheLoaded(const char *methodSig, TR::Method::Type ty)
+   {
+   return queryJITServerAOTCacheFilter(methodSig, ty, TR::Options::_JITServerAOTCacheLoadFilters);
+   }
 #endif /* defined(J9VM_OPT_JITSERVER) */
