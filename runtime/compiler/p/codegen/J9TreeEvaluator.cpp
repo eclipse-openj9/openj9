@@ -4090,15 +4090,14 @@ TR::Register *J9::Power::TreeEvaluator::VMinstanceOfEvaluator(TR::Node *node, TR
             break;
          }
 
-      genInstanceOfTransitionToNextSequence(node, iter, nextSequenceLabel, doneLabel, cr0Reg, resultReg, initialResult, oppositeResultLabel, profiledClassIsInstanceOf, cg);
-
-      --numSequencesRemaining;
-      ++iter;
-
-      if (*iter != HelperCall)
+      if (--numSequencesRemaining > 0)
          {
-         generateLabelInstruction(cg, TR::InstOpCode::label, node, nextSequenceLabel);
-         nextSequenceLabel = generateLabelSymbol(cg);
+         genInstanceOfTransitionToNextSequence(node, iter, nextSequenceLabel, doneLabel, cr0Reg, resultReg, initialResult, oppositeResultLabel, profiledClassIsInstanceOf, cg);
+         if (*++iter != HelperCall)
+            {
+            generateLabelInstruction(cg, TR::InstOpCode::label, node, nextSequenceLabel);
+            nextSequenceLabel = generateLabelSymbol(cg);
+            }
          }
       }
 
