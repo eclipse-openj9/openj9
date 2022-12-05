@@ -504,6 +504,7 @@ adjustStackTopForWrongDataType(J9BytecodeVerificationData *verifyData)
 	case BCV_ERR_STACKMAP_FRAME_LOCALS_UNDERFLOW:	/* FALLTHROUGH */
 	case BCV_ERR_STACKMAP_FRAME_LOCALS_OVERFLOW:	/* FALLTHROUGH */
 	case BCV_ERR_STACKMAP_FRAME_STACK_OVERFLOW:		/* FALLTHROUGH */
+	case BCV_ERR_INIT_FLAGS_MISMATCH:				/* FALLTHROUGH */
 	case BCV_ERR_INIT_NOT_CALL_INIT:				/* FALLTHROUGH */
 	case BCV_ERR_WRONG_TOP_TYPE:					/* FALLTHROUGH */
 	case BCV_ERR_INVALID_ARRAY_REFERENCE:			/* FALLTHROUGH */
@@ -772,14 +773,13 @@ printReasonForFlagMismatch(MessageBuffer *msgBuf, J9BytecodeVerificationData *ve
 				goto exit;
 			}
 
-			/* Compare the flag value if the bci value matches */
-			if (currentFrame->bci == targetFrame->bci) {
-				BOOLEAN matchFlag = compareStackMapFrameFlag(currentFrame, targetFrame);
-				if (!matchFlag) {
-					printMessage(msgBuf, "Current frame's flags are not assignable to stack map frame's.");
-					result = TRUE;
-					goto exit;
-				}
+			/* Compare the flag value regardless of the bci value as the comparison
+			 * might happen to the branch bytecode specified in the stackmap frame.
+			 */
+			if (FALSE == compareStackMapFrameFlag(currentFrame, targetFrame)) {
+				printMessage(msgBuf, "Current frame's flags are not assignable to stack map frame's.");
+				result = TRUE;
+				goto exit;
 			}
 		}
 	}
@@ -871,6 +871,7 @@ generateJ9RtvExceptionDetails(J9BytecodeVerificationData* verifyData, U_8* initM
 		printMessage(&msgBuf, "Current frame's stack size doesn't match stackmap.");
 		printStackFrame = setStackMapFrameWithIndex(verifyData, &methodInfo, &stackMapFrameTarget);
 		break;
+	case BCV_ERR_INIT_FLAGS_MISMATCH: /* FALLTHROUGH */
 	case BCV_ERR_INIT_NOT_CALL_INIT:
 		printStackFrame = printReasonForFlagMismatch(&msgBuf, verifyData, &methodInfo, &stackMapFrameCurrent, &stackMapFrameTarget);
 		printCurrentStack = printStackFrame;
