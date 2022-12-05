@@ -343,6 +343,10 @@ JVM_VirtualThreadMountEnd(JNIEnv *env, jobject thread, jboolean firstMount)
 			vmFuncs->setHeapOutOfMemoryError(currentThread);
 			goto release1;
 		}
+
+		/* Re-fetch as the memory allocation above may have moved the object. */
+		threadObj = J9_JNI_UNWRAP_REFERENCE(thread);
+
 		J9VMJAVALANGVIRTUALTHREAD_SET_STATE(currentThread, rootVirtualThread, J9VM_VIRTUALTHREAD_ROOT_NODE_STATE);
 	}
 
