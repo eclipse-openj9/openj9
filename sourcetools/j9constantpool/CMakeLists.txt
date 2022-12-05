@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2021 IBM Corp. and others
+# Copyright (c) 2017, 2022 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,15 +20,12 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ################################################################################
 
-# CMake doesn't properly handle directory separators when building in cygwin
-# but using a windows java binary. IE it uses ':' as a directory separator,
-# rather than required ';'
-# Note: this isn't required for JDKs after JDK11 as fixpath will convert the path separators for us.
-
-# WIN32 will be true when the build is targeting windows, but CMAKE_HOST_WIN32 is false on cygwin
-if((WIN32 AND NOT CMAKE_HOST_WIN32) AND (NOT JAVA_SPEC_VERSION GREATER 11))
-	# put  "-cp <Path_to_objectmodel_jar>" into a text file we will pass in with '@file'
-	file(GENERATE OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/cygwin_classpath" CONTENT "-cp\n$<TARGET_PROPERTY:objectmodel,JAR_FILE>\n")
+# CMake uses ':' as the path separator when building in cygwin which isn't
+# appropriate for a Windows java executable (which expects path elements to
+# be separated by ';'). In JDK11+, fixpath.sh will compensate, but for JDK8,
+# we need to put the classpath in a file in a form that fixpath will support.
+if(WIN32 AND (NOT CMAKE_HOST_WIN32) AND (JAVA_SPEC_VERSION EQUAL 8))
+	file(GENERATE OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/cygwin_classpath" CONTENT "-classpath\n$<TARGET_PROPERTY:objectmodel,JAR_FILE>\n")
 	set(CYGWIN_CP "@${CMAKE_CURRENT_BINARY_DIR}/cygwin_classpath")
 else()
 	set(CYGWIN_CP)
