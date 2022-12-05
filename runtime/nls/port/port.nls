@@ -344,7 +344,7 @@ J9NLS_PORT_LINUXDUMP_PIPE_CORE=%s setting \"%s\" specifies that the core dump is
 J9NLS_PORT_LINUXDUMP_PIPE_CORE.sample_input_1=/proc/sys/kernel/core_pattern
 J9NLS_PORT_LINUXDUMP_PIPE_CORE.sample_input_2=|/usr/lib/systemd/systemd-coredump %P %u %g %s %t %c %h
 J9NLS_PORT_LINUXDUMP_PIPE_CORE.sample_input_3=12345
-J9NLS_PORT_LINUXDUMP_PIPE_CORE.explanation=Tools such as systemd-coredump use /proc/sys/kernel/core_pattern to process the core dump, for example to send it to a different directory and manage total core dump disk usage, or to suppress it.
+J9NLS_PORT_LINUXDUMP_PIPE_CORE.explanation=/proc/sys/kernel/core_pattern starting with | is used to redirect the core file to tools such as systemd-coredump which processes the core dump, for example to send it to a different directory and manage total core dump disk usage, or to suppress it.
 J9NLS_PORT_LINUXDUMP_PIPE_CORE.system_action=The VM will look in the current directory for a file called either core or core.<process ID>, depending on the contents of /proc/sys/kernel/core_uses_pid.
 J9NLS_PORT_LINUXDUMP_PIPE_CORE.user_response=Refer to the documentation for the external program specified in /proc/sys/kernel/core_pattern.
 
@@ -501,7 +501,7 @@ J9NLS_PORT_LINUXDUMP_PIPE_CORE_NOT_FOUND=The core file created by child process 
 J9NLS_PORT_LINUXDUMP_PIPE_CORE_NOT_FOUND.sample_input_1=12345
 J9NLS_PORT_LINUXDUMP_PIPE_CORE_NOT_FOUND.sample_input_2=/proc/sys/kernel/core_pattern
 J9NLS_PORT_LINUXDUMP_PIPE_CORE_NOT_FOUND.sample_input_3=|/usr/lib/systemd/systemd-coredump %P %u %g %s %t %c %h
-J9NLS_PORT_LINUXDUMP_PIPE_CORE_NOT_FOUND.explanation=Tools such as systemd-coredump use /proc/sys/kernel/core_pattern to process the core dump, for example to send it to a different directory and manage total core dump disk usage, or to suppress it.
+J9NLS_PORT_LINUXDUMP_PIPE_CORE_NOT_FOUND.explanation=/proc/sys/kernel/core_pattern starting with | is used to redirect the core file to tools such as systemd-coredump which processes the core dump, for example to send it to a different directory and manage total core dump disk usage, or to suppress it.
 J9NLS_PORT_LINUXDUMP_PIPE_CORE_NOT_FOUND.system_action=The VM could not find the core dump in the current directory most likely because the external program sent it elsewhere or suppressed it.
 J9NLS_PORT_LINUXDUMP_PIPE_CORE_NOT_FOUND.user_response=Refer to the documentation for the external program specified in /proc/sys/kernel/core_pattern to find the core dump and review the program's configuration to ensure the dump is not truncated.
 # END NON-TRANSLATABLE
