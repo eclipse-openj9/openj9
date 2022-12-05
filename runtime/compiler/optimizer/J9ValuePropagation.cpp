@@ -2798,6 +2798,7 @@ J9::ValuePropagation::getParmValues()
       else if (dataType == TR::Aggregate)
          {
          constraint = NULL;
+         bool isClassErased = false;
 
          TR_OpaqueClassBlock *opaqueClass = parmIterator->getOpaqueClass();
          if (opaqueClass)
@@ -2865,7 +2866,10 @@ J9::ValuePropagation::getParmValues()
                {
                TR_OpaqueClassBlock *erased = NULL;
                if (isUnreliableSignatureType(opaqueClass, erased))
+                  {
+                  isClassErased = true;
                   opaqueClass = erased;
+                  }
 
                if (opaqueClass != NULL)
                   {
@@ -2882,20 +2886,15 @@ J9::ValuePropagation::getParmValues()
                   }
                }
             }
-         else if (0) //added here since an unresolved parm could be an interface in which case nothing is known
+
+         if (!opaqueClass || isClassErased)
             {
-            char *sig;
-            uint32_t len;
-            sig = parmIterator->getUnresolvedJavaClassSignature(len);
-            constraint = TR::VPUnresolvedClass::create(this, sig, len, method);
-            if (usePreexistence() && parmIterator->isClass())
-               {
-               classObject = constraint->getClass();
-               if (classObject && !fe()->classHasBeenExtended(classObject))
-                  constraint = TR::VPFixedClass::create(this, classObject);
-               constraint = constraint->intersect(TR::VPPreexistentObject::create(this, classObject), this);
-               TR_ASSERT(constraint, "Cannot intersect constraints");
-               }
+            int32_t len;
+            const char *sig = p->getTypeSignature(len);
+            TR::VPConstraint *typeHintConstraint = createTypeHintConstraint(method, sig, len);
+
+            if (typeHintConstraint)
+               constraint = constraint ? constraint->intersect(typeHintConstraint, this) : typeHintConstraint;
             }
 
          _parmValues[parmIndex++] = constraint;
@@ -3340,8 +3339,17 @@ J9::ValuePropagation::innerConstrainAcall(TR::Node *node)
    TR_ResolvedMethod *owningMethod = symRef->getOwningMethod(comp());
    TR_OpaqueClassBlock *classBlock = fe()->getClassFromSignature(sig, len, owningMethod);
    TR_OpaqueClassBlock *erased = NULL;
-   if (isUnreliableSignatureType(classBlock, erased))
+
+   if (!classBlock || isUnreliableSignatureType(classBlock, erased))
+      {
       classBlock = erased;
+
+      TR::VPConstraint *constraint = createTypeHintConstraint(owningMethod, sig, len);
+      if (constraint)
+         {
+         addGlobalConstraint(node, constraint);
+         }
+      }
 
    if (classBlock)
       {
@@ -3362,4 +3370,104 @@ J9::ValuePropagation::innerConstrainAcall(TR::Node *node)
       }
 
    return node;
+   }
+
+TR_OpaqueClassBlock *
+J9::ValuePropagation::findLikelySubtype(TR_OpaqueClassBlock *klass)
+   {
+   if (!klass || TR::VPConstraint::isSpecialClass((uintptr_t)klass) || comp()->compileRelocatableCode())
+      return NULL;
+
+   int32_t numDims = 0;
+   klass = ((TR_J9VM *)fe())->getBaseComponentClass(klass, numDims);
+
+   // If the returned base component class is still an array, it's a primitive array
+   if (TR::Compiler->cls.isClassArray(comp(), klass))
+      return NULL; // primitive array, should be fixed-type anyway
+
+   if (TR::Compiler->cls.isInterfaceClass(comp(), klass)
+       || TR::Compiler->cls.isAbstractClass(comp(), klass))
+      {
+      TR::ClassTableCriticalSection lock(fe());
+      auto *chTable = comp()->getPersistentInfo()->getPersistentCHTable();
+      klass = chTable->findSingleConcreteSubClass(klass, comp());
+      }
+   // If it's a concrete class and it has been extended, there is no particularly likely type
+   else if (fe()->classHasBeenExtended(klass)
+            || TR::Compiler->vm.isVMInStartupPhase(comp()))
+      {
+      return NULL;
+      }
+
+   while (klass != NULL && numDims > 0)
+      {
+      klass = fe()->getArrayClassFromComponentClass(klass);
+      numDims--;
+      }
+
+   return klass;
+   }
+
+TR_OpaqueClassBlock *
+J9::ValuePropagation::findLikelySubtype(const char *sig, int32_t len, TR_ResolvedMethod *owningMethod)
+   {
+   if (!sig || !owningMethod || comp()->compileRelocatableCode())
+      return NULL;
+
+   TR_OpaqueClassBlock *clazz = fe()->getClassFromSignature(sig, len, owningMethod);
+   if (clazz)
+      return findLikelySubtype(clazz);
+
+   // If InterfaceA is implemented by ConcreteB, "[LInterface" might not exist.
+   // Try to see if "[LConcreteB" exists.
+   if (sig[0] == '[')
+      {
+      int32_t numDims=0;
+      while ((numDims < len) && (sig[numDims] == '['))
+         ++numDims;
+
+      clazz = fe()->getClassFromSignature(sig+numDims, len-numDims, owningMethod);
+
+      if (clazz)
+         {
+         TR_OpaqueClassBlock *likelySubtype = findLikelySubtype(clazz);
+         TR_OpaqueClassBlock *arrayClass = likelySubtype;
+
+         while (arrayClass && (numDims > 0))
+            {
+            arrayClass = fe()->getArrayClassFromComponentClass(arrayClass);
+            numDims--;
+            }
+         return arrayClass;
+         }
+      }
+
+   return NULL;
+   }
+
+TR::VPConstraint *
+J9::ValuePropagation::createTypeHintConstraint(TR_ResolvedMethod *owningMethod, const char *sig, int32_t len)
+   {
+   if (!sig)
+      return NULL;
+
+   TR::VPConstraint *constraint = NULL;
+   TR_OpaqueClassBlock *likelySubtype = findLikelySubtype(sig, len, owningMethod);
+
+   if (likelySubtype)
+      {
+      constraint = TR::VPClass::create(this, NULL, NULL, NULL, NULL, NULL, likelySubtype);
+
+      if (trace())
+         {
+         int32_t length;
+         const char *signature = TR::Compiler->cls.classSignature_DEPRECATED(comp(), likelySubtype, length, comp()->trMemory());
+         traceMsg(comp(), "%s: %.*s constraint %s: ", __FUNCTION__, length, signature, constraint ? constraint->name() : "NULL");
+         if (constraint)
+            constraint->print(comp(), comp()->getOutFile());
+         traceMsg(comp(), "\n");
+         }
+      }
+
+   return constraint;
    }
