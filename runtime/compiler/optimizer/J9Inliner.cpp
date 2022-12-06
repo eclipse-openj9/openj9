@@ -686,6 +686,14 @@ static TR_ResolvedMethod * findSingleImplementer(
 
 bool TR_J9InterfaceCallSite::findCallSiteTarget (TR_CallStack *callStack, TR_InlinerBase* inliner)
    {
+   // First make sure that we can get the interface named at this call site. It
+   // may be missing in AOT, since it comes from getClassFromSignature(), which
+   // needs validation, and rememberClass() can fail at any time. Without this,
+   // it's not possible to check the assertions below.
+   TR_OpaqueClassBlock *iface = getClassFromMethod();
+   if (iface == NULL)
+      return false;
+
    bool result = findCallSiteTargetImpl(callStack, inliner);
 
    // A passing vgnop-based interface guard can guarantee the receiver type is
@@ -725,7 +733,6 @@ bool TR_J9InterfaceCallSite::findCallSiteTarget (TR_CallStack *callStack, TR_Inl
    // against the interface will be expensive, so there would have to be a
    // considerable benefit to the inlining to motivate such a change.
    //
-   TR_OpaqueClassBlock *iface = getClassFromMethod();
    if (_receiverClass != NULL
        && !TR::Compiler->cls.isInterfaceClass(comp(), _receiverClass))
       {
