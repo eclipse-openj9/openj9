@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1635,4 +1635,19 @@ MM_MemorySubSpaceTarok::adjustExpansionWithinFreeLimits(MM_EnvironmentBase *env,
 		}	
 	}
 	return result;
+}
+
+uintptr_t
+MM_MemorySubSpaceTarok::releaseFreeMemoryPages(MM_EnvironmentBase* env, uintptr_t memoryType)
+{
+	GC_MemorySubSpaceRegionIterator regionIterator(this);
+	MM_HeapRegionDescriptorVLHGC *region = NULL;
+	uintptr_t releasedPages = 0;
+
+	while (NULL != (region = (MM_HeapRegionDescriptorVLHGC*)regionIterator.nextRegion())) {
+		if (NULL != region->getMemoryPool()) {
+			releasedPages += region->getMemoryPool()->releaseFreeMemoryPages(env);
+		}
+	}
+	return releasedPages;
 }
