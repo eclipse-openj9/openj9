@@ -41,9 +41,9 @@ extern void restoreCallInFrameHelper(J9VMThread *currentThread);
 static U_64 JNICALL native2InterpJavaUpcallImpl(J9UpcallMetaData *data, void *argsListPointer);
 static J9VMThread * getCurrentThread(J9UpcallMetaData *data, bool *isCurThrdAllocated);
 static void convertUpcallReturnValue(J9UpcallMetaData *data, U_8 returnType, U_64 *returnStorage);
+static bool storeMemArgObjectsToJavaArray(J9UpcallMetaData *data, void *argsListPointer, J9VMThread *currentThread);
 static j9object_t createMemAddressObject(J9UpcallMetaData *data, I_64 offset);
-static j9object_t createMemSegmentObject(J9UpcallMetaData *data, I_64 offset, U_32 sigTypeSize, j9object_t sessionOrScopeObject);
-static j9object_t getSessionOrScopeObject(J9UpcallMetaData *data);
+static j9object_t createMemSegmentObject(J9UpcallMetaData *data, I_64 offset, U_32 sigTypeSize);
 static I_64 getNativeAddrFromMemAddressObject(J9UpcallMetaData *data, j9object_t memAddrObject);
 static I_64 getNativeAddrFromMemSegmentObject(J9UpcallMetaData *data, j9object_t memAddrObject);
 
@@ -223,9 +223,7 @@ native2InterpJavaUpcallImpl(J9UpcallMetaData *data, void *argsListPointer)
 	J9VMThread *currentThread = NULL;
 	bool isCurThrdAllocated = false;
 	bool throwOOM = false;
-	J9Method* thrLiterals = NULL;
 	U_64 returnStorage = 0;
-	j9object_t sessionOrScopeObject = NULL;
 
 	/* Determine whether to use the current thread or create a new one
 	 * when there is no java thread attached to the native thread
@@ -244,20 +242,21 @@ native2InterpJavaUpcallImpl(J9UpcallMetaData *data, void *argsListPointer)
 	returnsObject = (J9NtcPointer == returnType) || (J9NtcStruct == returnType);
 
 	if (buildCallInStackFrameHelper(currentThread, &newELS, returnsObject)) {
+		j9object_t mhMetaData = NULL;
+		j9object_t nativeArgArray = NULL;
 
-		/* Save the current executing method and restore later after the memory allocation
-		 * for pointer/struct in the argument list.
-		 */
-		thrLiterals = currentThread->literals;
+		/* Store the allocated memory objects for the struct/pointer arguments to the java array */
+		if (!storeMemArgObjectsToJavaArray(data, argsListPointer, currentThread)) {
+			throwOOM = true;
+			goto done;
+		}
 
+		mhMetaData = J9_JNI_UNWRAP_REFERENCE(data->mhMetaData);
+		nativeArgArray = J9VMOPENJ9INTERNALFOREIGNABIUPCALLMHMETADATA_NATIVEARGARRAY(currentThread, mhMetaData);
 		/* The argument list of the upcall method handle on the stack includes the target method handle,
 		 * the method arguments and the appendix which is set via MethodHandleResolver.upcallLinkCallerMethod().
-		 *
-		 * Note: push the target method handle on the special frame so as to avoid updating the address
-		 * on the stack by GC when allocating memory for the next pointer/struct of the argument list.
 		 */
-		j9object_t calleeHandle = J9VMOPENJ9INTERNALFOREIGNABIUPCALLMHMETADATA_CALLEEMH(currentThread, J9_JNI_UNWRAP_REFERENCE(data->mhMetaData));
-		PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, calleeHandle);
+		*(j9object_t*)--currentThread->sp = J9VMOPENJ9INTERNALFOREIGNABIUPCALLMHMETADATA_CALLEEMH(currentThread, mhMetaData);
 
 		for (I_32 argIndex = 0; argIndex < paramCount; argIndex++) {
 			U_8 argSigType = sigArray[argIndex].type & J9_FFI_UPCALL_SIG_TYPE_MASK;
@@ -306,50 +305,15 @@ native2InterpJavaUpcallImpl(J9UpcallMetaData *data, void *argsListPointer)
 				currentThread->sp -= 2;
 				*(I_64*)currentThread->sp = *(I_64*)getArgPointer(nativeSig, argsListPointer, argIndex);
 				break;
-			case J9_FFI_UPCALL_SIG_TYPE_POINTER:
-			{
-				I_64 offset = *(I_64*)getArgPointer(nativeSig, argsListPointer, argIndex);
-				j9object_t memAddrObject = createMemAddressObject(data, offset);
-				if (NULL == memAddrObject) {
-					/* The OOM exception set in createMemAddressObject() will be thrown in the interpreter
-					 * after returning from the native function in downcall.
-					 */
-					throwOOM = true;
-					goto done;
-				}
-				/* Push the object on the special frame so as to avoid updating the address on the stack
-				 * by GC when allocating memory for the next pointer/struct of the argument list.
-				 */
-				PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, memAddrObject);
-				break;
-			}
+			case J9_FFI_UPCALL_SIG_TYPE_POINTER: /* Fall through */
 			case J9_FFI_UPCALL_SIG_TYPE_STRUCT:
-			{
-				I_64 offset = (I_64)(intptr_t)getArgPointer(nativeSig, argsListPointer, argIndex);
-				j9object_t memSegmtObject = createMemSegmentObject(data, offset, sigArray[argIndex].sizeInByte, sessionOrScopeObject);
-				if (NULL == memSegmtObject) {
-					/* The OOM exception set in createMemSegmentObject() will be thrown in the interpreter
-					 * after returning from the native function in downcall.
-					 */
-					throwOOM = true;
-					goto done;
-				}
-				/* Push the object on the special frame so as to avoid updating the address on the stack
-				 * by GC when allocating memory for the next pointer/struct of the argument list.
-				 */
-				PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, memSegmtObject);
+				*(j9object_t*)--currentThread->sp = J9JAVAARRAYOFOBJECT_LOAD(currentThread, nativeArgArray, argIndex);
 				break;
-			}
 			default:
 				Assert_VM_unreachable();
 				break;
 			}
 		}
-		/* Only restore the literals and keep the unchanged arguments on the stack which
-		 * are passed over to native2InterpreterTransition() in the interpreter so as to
-		 * invoke the upcall method handle.
-		 */
-		currentThread->literals = thrLiterals;
 
 		/* Place mhMetaData as the return value to native2InterpreterTransition() when calling into
 		 * the interpreter so as to set the invoke cache array (MemberName and appendix)
@@ -362,7 +326,9 @@ native2InterpJavaUpcallImpl(J9UpcallMetaData *data, void *argsListPointer)
 done:
 		restoreCallInFrameHelper(currentThread);
 	}
+
 	VM_VMAccess::inlineExitVMToJNI(currentThread);
+
 	/* Transfer the exception from the locally created upcall thread to the downcall thread
 	 * as the upcall thread will be cleaned up before the dispatcher exits; otherwise
 	 * the current thread's exception can be brought back to the interpreter in downcall.
@@ -403,7 +369,7 @@ doneAndExit:
  * The function is to handle the situation when there is no Java thread for the current native thread
  * which is directly created in native code without a Java thread attached to it.
  *
- * @param vm a pointer to J9UpcallMetaData
+ * @param data a pointer to J9UpcallMetaData
  * @param isCurThrdAllocated a pointer to a flag indicating whether the current thread is allocated locally
  * @return a pointer to J9VMThread
  */
@@ -490,6 +456,63 @@ convertUpcallReturnValue(J9UpcallMetaData *data, U_8 returnType, U_64 *returnSto
 }
 
 /**
+ * @brief Allocate memory related objects for the struct/pointer arguments
+ * to store them to the java array before placing them on the java stack
+ * for upcall.
+ *
+ * @param data a pointer to J9UpcallMetaData
+ * @param argsListPointer a pointer to the argument list
+ * @param currentThread a pointer to J9VMThread
+ * @return true if the storing operation is completed; otherwise return false;
+ */
+static bool
+storeMemArgObjectsToJavaArray(J9UpcallMetaData *data, void *argsListPointer, J9VMThread *currentThread)
+{
+	J9UpcallNativeSignature *nativeSig = data->nativeFuncSignature;
+	J9UpcallSigType *sigArray = nativeSig->sigArray;
+	I_32 paramCount = (I_32)(nativeSig->numSigs - 1); /* The last element is for the return type. */
+	bool result = true;
+
+	for (I_32 argIndex = 0; argIndex < paramCount; argIndex++) {
+		U_8 argSigType = sigArray[argIndex].type & J9_FFI_UPCALL_SIG_TYPE_MASK;
+		j9object_t memArgObject = NULL;
+		j9object_t nativeArgArray = NULL;
+
+		if ((J9_FFI_UPCALL_SIG_TYPE_POINTER == argSigType)
+			|| (J9_FFI_UPCALL_SIG_TYPE_STRUCT == argSigType)
+		) {
+			if (J9_FFI_UPCALL_SIG_TYPE_POINTER == argSigType) {
+				I_64 offset = *(I_64*)getArgPointer(nativeSig, argsListPointer, argIndex);
+				memArgObject = createMemAddressObject(data, offset);
+			} else { /* J9_FFI_UPCALL_SIG_TYPE_STRUCT */
+				I_64 offset = (I_64)(intptr_t)getArgPointer(nativeSig, argsListPointer, argIndex);
+				memArgObject = createMemSegmentObject(data, offset, sigArray[argIndex].sizeInByte);
+			}
+
+			if (NULL == memArgObject) {
+				/* The OOM exception set in createMemAddressObject/createMemSegmentObject will be
+				 * thrown in the interpreter after returning from the native function in downcall.
+				 */
+				result = false;
+				goto done;
+			}
+		}
+
+		/* Store the struct/pointer object (or null in the case of the primitive types) in the
+		 * java array so as to avoid being updated by GC(which is triggered by J9AllocateObject
+		 * in createMemAddressObject/createMemSegmentObject) when allocating memory for the next
+		 * struct/pointer of the argument list.
+		 */
+		nativeArgArray = J9VMOPENJ9INTERNALFOREIGNABIUPCALLMHMETADATA_NATIVEARGARRAY(currentThread,
+				J9_JNI_UNWRAP_REFERENCE(data->mhMetaData));
+		J9JAVAARRAYOFOBJECT_STORE(currentThread, nativeArgArray, argIndex, memArgObject);
+	}
+
+done:
+	return result;
+}
+
+/**
  * @brief Generate an object of the MemoryAddress's subclass on the heap
  * with the specified native address to the value.
  *
@@ -541,28 +564,18 @@ done:
  * @param data a pointer to J9UpcallMetaData
  * @param offset the native address to the requested struct
  * @param sigTypeSize the byte size of the requested struct
- * @param sessionOrScopeObject the session/scope object intended for MemorySegment related arguments
  * @return a MemorySegment object
  */
 static j9object_t
-createMemSegmentObject(J9UpcallMetaData *data, I_64 offset, U_32 sigTypeSize, j9object_t sessionOrScopeObject)
+createMemSegmentObject(J9UpcallMetaData *data, I_64 offset, U_32 sigTypeSize)
 {
 	J9JavaVM *vm = data->vm;
 	J9VMThread *downCallThread = data->downCallThread;
 	J9VMThread *currentThread = currentVMThread(vm);
 	MM_ObjectAllocationAPI objectAllocate(currentThread);
 	j9object_t memSegmtObject = NULL;
+	j9object_t mhMetaData = NULL;
 	J9Class *memSegmtClass = J9VMJDKINTERNALFOREIGNNATIVEMEMORYSEGMENTIMPL(vm);
-
-	if (NULL == sessionOrScopeObject) {
-		sessionOrScopeObject = getSessionOrScopeObject(data);
-		if (NULL == sessionOrScopeObject) {
-			/* The OOM exception will be thrown when returning back to the interpreter
-			 * after returning from the native function in downcall.
-			 */
-			goto done;
-		}
-	}
 
 	/* To wrap up an object of the MemorySegment's subclass as an argument on the java stack,
 	 * this object is directly allocated on the heap with the passed-in native address(offset)
@@ -570,9 +583,7 @@ createMemSegmentObject(J9UpcallMetaData *data, I_64 offset, U_32 sigTypeSize, j9
 	 */
 	memSegmtObject = objectAllocate.inlineAllocateObject(currentThread, memSegmtClass, true, false);
 	if (NULL == memSegmtObject) {
-		PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, sessionOrScopeObject);
 		memSegmtObject = vm->memoryManagerFunctions->J9AllocateObject(currentThread, memSegmtClass, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
-		sessionOrScopeObject = POP_OBJECT_IN_SPECIAL_FRAME(currentThread);
 		if (NULL == memSegmtObject) {
 			/* Directly set the OOM error to the downcall thread to bring it up back to the interpreter
 			 * in downcall when the upcall thread is the same as the downcall thread; otherwise, the OOM
@@ -583,72 +594,20 @@ createMemSegmentObject(J9UpcallMetaData *data, I_64 offset, U_32 sigTypeSize, j9
 			goto done;
 		}
 	}
+	mhMetaData = J9_JNI_UNWRAP_REFERENCE(data->mhMetaData);
 
 	J9VMJDKINTERNALFOREIGNNATIVEMEMORYSEGMENTIMPL_SET_MIN(currentThread, memSegmtObject, offset);
 	J9VMJDKINTERNALFOREIGNNATIVEMEMORYSEGMENTIMPL_SET_LENGTH(currentThread, memSegmtObject, sigTypeSize);
 #if JAVA_SPEC_VERSION >= 19
-	J9VMJDKINTERNALFOREIGNNATIVEMEMORYSEGMENTIMPL_SET_SESSION(currentThread, memSegmtObject, sessionOrScopeObject);
+	J9VMJDKINTERNALFOREIGNNATIVEMEMORYSEGMENTIMPL_SET_SESSION(currentThread, memSegmtObject,
+					J9VMOPENJ9INTERNALFOREIGNABIUPCALLMHMETADATA_SESSION(currentThread, mhMetaData));
 #else /* JAVA_SPEC_VERSION >= 19 */
-	J9VMJDKINTERNALFOREIGNNATIVEMEMORYSEGMENTIMPL_SET_SCOPE(currentThread, memSegmtObject, sessionOrScopeObject);
+	J9VMJDKINTERNALFOREIGNNATIVEMEMORYSEGMENTIMPL_SET_SCOPE(currentThread, memSegmtObject,
+					J9VMOPENJ9INTERNALFOREIGNABIUPCALLMHMETADATA_SCOPE(currentThread, mhMetaData));
 #endif /* JAVA_SPEC_VERSION >= 19 */
 
 done:
 	return memSegmtObject;
-}
-
-/**
- * @brief Get the surrounding session/scope owned by the current thread;
- * otherwise, create a shared session/scope object if the surrounding
- * session/scope is null or the current thread is created locally.
- *
- * @param data a pointer to J9UpcallMetaData
- * @return a MemorySession(JDK19+)/ResourceScope(JDK17/18) object
- */
-static j9object_t
-getSessionOrScopeObject(J9UpcallMetaData *data)
-{
-	J9JavaVM *vm = data->vm;
-	J9VMThread *downCallThread = data->downCallThread;
-	J9VMThread *currentThread = currentVMThread(vm);
-	j9object_t mhMetaData = J9_JNI_UNWRAP_REFERENCE(data->mhMetaData);
-	j9object_t sessionOrScopeObject = NULL;
-
-	/* Get the confined session/scope of the current thread in java if the thread is not created locally in native. */
-	if (J9_ARE_NO_BITS_SET(currentThread->privateFlags, J9_PRIVATE_FLAGS_FFI_UPCALL_THREAD)) {
-#if JAVA_SPEC_VERSION >= 19
-		sessionOrScopeObject = J9VMOPENJ9INTERNALFOREIGNABIUPCALLMHMETADATA_SESSION(currentThread, mhMetaData);
-#else /* JAVA_SPEC_VERSION >= 19 */
-		sessionOrScopeObject = J9VMOPENJ9INTERNALFOREIGNABIUPCALLMHMETADATA_SCOPE(currentThread, mhMetaData);
-#endif /* JAVA_SPEC_VERSION >= 19 */
-	}
-
-	/* The object of the MemorySession's(JDK19+)/ResourceScope's(JDK17/18) subclass is set as a field value
-	 * of the MemorySegment object created in native, which is validated in OpenJDK before returning the
-	 * native memory address from MemorySegment.address() in java.
-	 */
-	if (NULL == sessionOrScopeObject) {
-#if JAVA_SPEC_VERSION >= 19
-		J9Class *sessionOrScopeClass = J9VMJDKINTERNALFOREIGNSHAREDSESSION(vm);
-#else /* JAVA_SPEC_VERSION >= 19 */
-		J9Class *sessionOrScopeClass = J9VMJDKINTERNALFOREIGNSHAREDSCOPE(vm);
-#endif /* JAVA_SPEC_VERSION >= 19 */
-		MM_ObjectAllocationAPI objectAllocate(currentThread);
-
-		sessionOrScopeObject = objectAllocate.inlineAllocateObject(currentThread, sessionOrScopeClass, true, false);
-		if (NULL == sessionOrScopeObject) {
-			sessionOrScopeObject = vm->memoryManagerFunctions->J9AllocateObject(currentThread, sessionOrScopeClass, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
-			if (NULL == sessionOrScopeObject) {
-				/* Directly set the OOM error to the downcall thread to bring it up back to the interpreter
-				 * in downcall when the upcall thread is the same as the downcall thread; otherwise, the OOM
-				 * error should be still set to the downcall thread given the locally created native thread
-				 * in upcall will be cleaned up before the dispatcher exists and returns to the interpreter.
-				 */
-				setHeapOutOfMemoryError(downCallThread);
-			}
-		}
-	}
-
-	return sessionOrScopeObject;
 }
 
 /**
