@@ -1,6 +1,6 @@
 /*[INCLUDE-IF JAVA_SPEC_VERSION > 8]*/
 /*******************************************************************************
- * Copyright (c) 2017, 2022 IBM Corp. and others
+ * Copyright (c) 2017, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -62,6 +62,7 @@ exports com.ibm.gpu.spi to
     openj9.gpu;
 /*[IF CRIU_SUPPORT]*/
 exports openj9.internal.criu to
+    jdk.crypto.ec,
     openj9.criu;
 exports openj9.internal.criu.security to
     openj9.criu;
