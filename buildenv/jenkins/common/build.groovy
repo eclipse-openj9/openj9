@@ -21,6 +21,9 @@
  *******************************************************************************/
 import groovy.json.JsonSlurper;
 import groovy.json.JsonOutput;
+import java.util.regex.Matcher
+import java.util.regex.Pattern
+
 pipelineFunctions = load 'buildenv/jenkins/common/pipeline-functions.groovy'
 
 def get_source() {
@@ -284,22 +287,29 @@ def checkoutRef (REF) {
 
 def build() {
     stage('Compile') {
-       def make_target = ''
-       if ((SDK_VERSION == "17") && SPEC.contains('zos')) {
+        def freemarker_option = FREEMARKER ? "--with-freemarker-jar=${FREEMARKER}" : ""
+        def make_target = ''
+        if ((SDK_VERSION == "17") && SPEC.contains('zos')) {
             make_target = 'images'
         } else {
-           make_target = 'all'
+            make_target = 'all'
         }
         OPENJDK_CLONE_DIR = "${env.WORKSPACE}/${OPENJDK_CLONE_DIR}"
 
         withEnv(BUILD_ENV_VARS_LIST) {
             dir(OPENJDK_CLONE_DIR) {
                 try {
-                    def freemarker_option = FREEMARKER ? "--with-freemarker-jar=${FREEMARKER}" : ""
-                    sh "${BUILD_ENV_CMD} bash configure ${freemarker_option} --with-boot-jdk=${BOOT_JDK} ${EXTRA_CONFIGURE_OPTIONS} && make ${EXTRA_MAKE_OPTIONS} ${make_target}"
-                } catch (e) {
-                    archive_diagnostics()
-                    throw e
+                    sh "${BUILD_ENV_CMD} bash configure ${freemarker_option} --with-boot-jdk=${BOOT_JDK} ${EXTRA_CONFIGURE_OPTIONS} && ${get_compile_command()}"
+                } catch (Exception e) {
+                    // last 5000 console output lines
+                    LOG_MAX_LINES = params.LOG_MAX_LINES ? params.LOG_MAX_LINES.toInteger() : 5000
+                    LOG_LINES = currentBuild.getRawBuild().getLog(LOG_MAX_LINES)
+                    if (match_fail_pattern(LOG_LINES)) {
+                        recompile()
+                    } else {
+                        archive_diagnostics()
+                        throw e
+                    }
                 }
             }
         }
@@ -309,6 +319,10 @@ def build() {
             sh "build/$RELEASE/images/$JDK_FOLDER/bin/java -Xjit -version"
         }
     }
+}
+
+def get_compile_command() {
+	return "make ${EXTRA_MAKE_OPTIONS} all"
 }
 
 def archive_sdk() {
@@ -721,6 +735,51 @@ def build_all() {
                 }
             }
             upload_artifactory_post()
+        }
+    }
+}
+
+def match_fail_pattern(outputLines) {
+    if (!FAIL_PATTERN) {
+        return false
+    }
+
+    println("Build failure, searching fail pattern in the last ${outputLines.size()} output lines")
+    Pattern pattern = Pattern.compile(FAIL_PATTERN)
+    for (line in outputLines) {
+        Matcher matcher = pattern.matcher(line)
+        if (matcher.find()) {
+            return true
+        }
+    }
+
+    println("Fail pattern not found!")
+    return false
+}
+
+def recompile() {
+    def maxRetry = 3
+    def retryCounter = 0
+    def doRetry = true
+
+    while ((maxRetry > retryCounter) && doRetry) {
+        retryCounter++
+        println("Attempt to recompile, retry: ${retryCounter}")
+
+        try {
+            sh "make clean && ${get_compile_command()}"
+            doRetry = false
+        } catch (Exception f) {
+            // crop console output, search only new output
+            def newLines = currentBuild.getRawBuild().getLog(LOG_MAX_LINES).minus(LOG_LINES)
+            // cache log
+            LOG_LINES.addAll(newLines)
+
+            if (!match_fail_pattern(newLines)) {
+                //different error
+                archive_diagnostics()
+                throw f
+            }
         }
     }
 }
