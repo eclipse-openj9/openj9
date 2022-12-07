@@ -290,7 +290,7 @@ def build() {
         def freemarker_option = FREEMARKER ? "--with-freemarker-jar=${FREEMARKER}" : ""
         def make_target = ''
         if ((SDK_VERSION == "17") && SPEC.contains('zos')) {
-            make_target = 'images'
+            make_target = 'images test-image'
         } else {
             make_target = 'all'
         }
