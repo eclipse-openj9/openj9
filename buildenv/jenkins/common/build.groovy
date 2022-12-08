@@ -288,12 +288,6 @@ def checkoutRef (REF) {
 def build() {
     stage('Compile') {
         def freemarker_option = FREEMARKER ? "--with-freemarker-jar=${FREEMARKER}" : ""
-        def make_target = ''
-        if ((SDK_VERSION == "17") && SPEC.contains('zos')) {
-            make_target = 'images test-image'
-        } else {
-            make_target = 'all'
-        }
         OPENJDK_CLONE_DIR = "${env.WORKSPACE}/${OPENJDK_CLONE_DIR}"
 
         withEnv(BUILD_ENV_VARS_LIST) {
@@ -322,7 +316,13 @@ def build() {
 }
 
 def get_compile_command() {
-	return "make ${EXTRA_MAKE_OPTIONS} all"
+    def make_target = ''
+    if ((SDK_VERSION == "17") && SPEC.contains('zos')) {
+         make_target = 'images test-image'
+    } else {
+         make_target = 'all'
+    }
+    return "make ${EXTRA_MAKE_OPTIONS} ${make_target}"
 }
 
 def archive_sdk() {
