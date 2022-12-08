@@ -923,3 +923,5 @@ TraceEvent=Trc_VM_allocateThunkHeap_create_metadata_hash_table_failed NoEnv Over
 TraceEvent=Trc_VM_allocateThunkHeap_reserve_memory_failed NoEnv Overhead=1 Level=3 Template="allocateThunkHeap - Failed to allocate reserve the memory with the requested page size(%zu)"
 TraceEvent=Trc_VM_allocateThunkHeap_create_heap_failed NoEnv Overhead=1 Level=3 Template="allocateThunkHeap - Failed to create a heap from the reserved memory (%p) with the requested page size(%zu)"
 TraceExit=Trc_VM_allocateThunkHeap_Exit NoEnv Overhead=1 Level=3 Template="Exit allocateThunkHeap - The suballocated thunk heap is %p"
+
+TraceEvent=Trc_VM_allocateThunkHeap_allocate_thunk_heap_node_failed NoEnv Overhead=1 Level=3 Template="allocateThunkHeap - Failed to allocate memory for the thunk heap node"

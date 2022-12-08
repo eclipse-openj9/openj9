@@ -55,14 +55,6 @@ public final class InternalUpcallHandler {
 	private final long thunkAddr;
 	private UpcallMHMetaData metaData;
 
-	/* The generated thunk address are cached & shared in multiple upcalls/threads within the same session/scope */
-	private static final HashMap<Integer, Long> cachedUpcallThunkAddr = new HashMap<>();
-
-	private static final class PrivateUpcallClassLock {
-		PrivateUpcallClassLock() {}
-	}
-	private static final Object privateUpcallClassLock = new PrivateUpcallClassLock();
-
 	/*[IF JAVA_SPEC_VERSION >= 19]*/
 	/**
 	 * The constructor creates an upcall handler specific to the requested java method
@@ -131,7 +123,7 @@ public final class InternalUpcallHandler {
 	/*[ENDIF] JAVA_SPEC_VERSION >= 19 */
 	{
 		int argLayoutCount = argLayoutArray.length;
-		/* The last element of the native signature array is for the return type */
+		/* The last element of the native signature array is for the return type. */
 		String[] nativeSignatureStrs = new String[argLayoutCount + 1];
 		for (int argIndex = 0; argIndex < argLayoutCount; argIndex++) {
 			MemoryLayout argLayout = argLayoutArray[argIndex];
@@ -148,31 +140,12 @@ public final class InternalUpcallHandler {
 			nativeSignatureStrs[argLayoutCount] = LayoutStrPreprocessor.getSimplifiedLayoutString(realReturnLayout, false);
 		}
 
-		long addr = 0;
-		synchronized(privateUpcallClassLock) {
-			/* The generated thunks are shared across upcalls or threads only when
-			 * the target method handles are identical within the same session/scope
-			 * given a thunk plus the associated metadata is released automatically
-			 * in native via freeUpcallStub() in OpenJDK when the corresponding
-			 * session/scope is terminated.
-			 */
-			String targetHashScopeStr = target.hashCode() + "#" + sessionOrScope.toString(); //$NON-NLS-1$
-			Integer upcallThunkAddrKey = Integer.valueOf(targetHashScopeStr.hashCode());
-			Long upcallThunkAddr = cachedUpcallThunkAddr.get(upcallThunkAddrKey);
-			if (upcallThunkAddr != null) {
-				addr = upcallThunkAddr.longValue();
-			} else {
-				/* The thunk must be created for each upcall handler given the UpcallMHMetaData object uniquely bound to the thunk
-				 * is only alive for a MemorySession(JDK19)/ResourceScope(JDK17/18) specified in java, which means the upcall handler
-				 * and its UpcallMHMetaData object will be cleaned up automatically once their session/scope is closed.
-				 */
-				metaData = new UpcallMHMetaData(target, sessionOrScope);
-				addr = allocateUpcallStub(metaData, nativeSignatureStrs);
-				cachedUpcallThunkAddr.put(upcallThunkAddrKey, Long.valueOf(addr));
-			}
-		}
-
-		return addr;
+		/* The thunk must be created for each upcall handler given the UpcallMHMetaData object uniquely bound to the thunk
+		 * is only alive for a MemorySession(JDK19)/ResourceScope(JDK17/18) specified in java, which means the upcall handler
+		 * and its UpcallMHMetaData object will be cleaned up automatically once their session/scope is closed.
+		 */
+		metaData = new UpcallMHMetaData(target, sessionOrScope);
+		return allocateUpcallStub(metaData, nativeSignatureStrs);
 	}
 
 	/* This native requests the JIT to generate an upcall thunk of the specified java method
