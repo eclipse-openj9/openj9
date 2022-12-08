@@ -256,7 +256,7 @@ native2InterpJavaUpcallImpl(J9UpcallMetaData *data, void *argsListPointer)
 		/* The argument list of the upcall method handle on the stack includes the target method handle,
 		 * the method arguments and the appendix which is set via MethodHandleResolver.upcallLinkCallerMethod().
 		 */
-		*(j9object_t*)--currentThread->sp = J9VMOPENJ9INTERNALFOREIGNABIUPCALLMHMETADATA_CALLEEMH(currentThread, mhMetaData);
+		*(j9object_t*)--(currentThread->sp) = J9VMOPENJ9INTERNALFOREIGNABIUPCALLMHMETADATA_CALLEEMH(currentThread, mhMetaData);
 
 		for (I_32 argIndex = 0; argIndex < paramCount; argIndex++) {
 			U_8 argSigType = sigArray[argIndex].type & J9_FFI_UPCALL_SIG_TYPE_MASK;
@@ -269,13 +269,13 @@ native2InterpJavaUpcallImpl(J9UpcallMetaData *data, void *argsListPointer)
 			case J9_FFI_UPCALL_SIG_TYPE_CHAR:
 			{
 				I_8 argValue = *(I_8*)getArgPointer(nativeSig, argsListPointer, argIndex);
-				*(I_32*)--currentThread->sp = (I_32)argValue;
+				*(I_32*)--(currentThread->sp) = (I_32)argValue;
 				break;
 			}
 			case J9_FFI_UPCALL_SIG_TYPE_SHORT:
 			{
 				I_16 argValue = *(I_16*)getArgPointer(nativeSig, argsListPointer, argIndex);
-				*(I_32*)--currentThread->sp = (I_32)argValue;
+				*(I_32*)--(currentThread->sp) = (I_32)argValue;
 				break;
 			}
 #else
@@ -297,17 +297,17 @@ native2InterpJavaUpcallImpl(J9UpcallMetaData *data, void *argsListPointer)
 					argValue = argValue >> J9_FFI_UPCALL_SIG_TYPE_32_BIT;
 				}
 #endif /* !defined(J9VM_ENV_LITTLE_ENDIAN) */
-				*(I_32*)--currentThread->sp = (I_32)argValue;
+				*(I_32*)--(currentThread->sp) = (I_32)argValue;
 				break;
 			}
 			case J9_FFI_UPCALL_SIG_TYPE_INT64: /* Fall through */
 			case J9_FFI_UPCALL_SIG_TYPE_DOUBLE:
 				currentThread->sp -= 2;
-				*(I_64*)currentThread->sp = *(I_64*)getArgPointer(nativeSig, argsListPointer, argIndex);
+				*(I_64*)(currentThread->sp) = *(I_64*)getArgPointer(nativeSig, argsListPointer, argIndex);
 				break;
 			case J9_FFI_UPCALL_SIG_TYPE_POINTER: /* Fall through */
 			case J9_FFI_UPCALL_SIG_TYPE_STRUCT:
-				*(j9object_t*)--currentThread->sp = J9JAVAARRAYOFOBJECT_LOAD(currentThread, nativeArgArray, argIndex);
+				*(j9object_t*)--(currentThread->sp) = J9JAVAARRAYOFOBJECT_LOAD(currentThread, nativeArgArray, argIndex);
 				break;
 			default:
 				Assert_VM_unreachable();
