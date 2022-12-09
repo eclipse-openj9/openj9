@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -238,6 +238,11 @@ public:
 	void setGCCode(MM_GCCode gcCode) {_gcCode = gcCode;}
 
 	void collectorInitialized(MM_RealtimeGC *gc);
+
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+	virtual bool expandThreadPool(MM_EnvironmentBase *env) { return true; }
+	virtual void contractThreadPool(MM_EnvironmentBase *env, uintptr_t newThreadCount) {};
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
 	MM_Scheduler(MM_EnvironmentBase *env, omrsig_handler_fn handler, void* handler_arg, uintptr_t defaultOSStackSize) :
 		MM_ParallelDispatcher(env, handler, handler_arg, defaultOSStackSize),

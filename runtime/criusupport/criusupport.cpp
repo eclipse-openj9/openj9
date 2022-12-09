@@ -33,6 +33,7 @@
 #include "j9jclnls.h"
 #include "jni.h"
 #include "jvmtinls.h"
+#include "modronnls.h"
 #include "omrlinkedlist.h"
 #include "omrthread.h"
 #include "ut_j9criu.h"
@@ -550,9 +551,7 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 		Trc_CRIU_checkpoint_nano_times(currentThread, checkpointNanoTimeMonotonic, checkpointNanoUTCTime);
 		TRIGGER_J9HOOK_VM_PREPARING_FOR_CHECKPOINT(vm->hookInterface, currentThread);
 
-		/* trigger a GC to disclaim memory */
-		vm->memoryManagerFunctions->j9gc_modron_global_collect_with_overrides(currentThread, J9MMCONSTANT_EXPLICIT_GC_SYSTEM_GC);
-		vm->memoryManagerFunctions->j9gc_modron_global_collect_with_overrides(currentThread, J9MMCONSTANT_EXPLICIT_GC_PREPARE_FOR_CHECKPOINT);
+		vm->memoryManagerFunctions->j9gc_prepare_for_checkpoint(currentThread);
 
 		acquireSafeOrExcusiveVMAccess(currentThread, vmFuncs, safePoint);
 
@@ -650,6 +649,14 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 		}
 
 		releaseSafeOrExcusiveVMAccess(currentThread, vmFuncs, safePoint);
+
+		if (FALSE == vm->memoryManagerFunctions->j9gc_reinitialize_for_restore(currentThread)) {
+			currentExceptionClass = vm->checkpointState.criuJVMRestoreExceptionClass;
+			/* The only way for j9gc_reinitialize_for_restore to fail is if GC dispatcher failed to startup threads. */
+			nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
+					J9NLS_GC_FAILED_TO_INSTANTIATE_TASK_DISPATCHER, NULL);
+			goto wakeJavaThreads;
+		}
 
 		VM_VMHelpers::setVMState(currentThread, J9VMSTATE_CRIU_SUPPORT_RESTORE_PHASE_INTERNAL_HOOKS);
 
