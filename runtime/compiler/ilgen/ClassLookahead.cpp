@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -55,7 +55,15 @@ TR_ClassLookahead::TR_ClassLookahead(
 int32_t
 TR_ClassLookahead::perform()
    {
+   static bool allowClassLookahead = feGetEnv("TR_AllowClassLookahead") ? true : false;
    TR_J9VMBase *fej9 = (TR_J9VMBase *)fe();
+
+   // Static analysis of static final fields is not possible because there are ways for
+   // such fields to change after initialization. The staticFinalFieldFolding opt is the
+   // safe way since it uses OSR to invalidate code after some operation changes a static
+   // final field. Therefore we are disabling this code by default!
+   if (!allowClassLookahead)
+      return 0;
 
    if ((fej9->getNumInnerClasses(_classPointer) > 0) ||
        _classInfo->cannotTrustStaticFinal())
@@ -593,26 +601,36 @@ TR_ClassLookahead::examineNode(TR::TreeTop *nextTree, TR::Node *grandParent, TR:
                  isConstantLengthArrayAllocation &&
                  (numberOfDimensions <= 2))
                 {
-                int32_t oldNumDimensions = arrayFieldInfo->getNumDimensions();
-                if (oldNumDimensions > -1)
+                if (_inFirstBlock &&
+                    _inInitializerMethod)
                    {
-                   if (arrayFieldInfo->isDimensionInfoValid())
+                   int32_t oldNumDimensions = arrayFieldInfo->getNumDimensions();
+                   if (oldNumDimensions > -1)
                       {
-                      if (oldNumDimensions != numberOfDimensions)
+                      if (arrayFieldInfo->isDimensionInfoValid())
                          {
-                         // Same field is assigned different dimension arrays
-                         // at different program points within this class.
-                         //
-                         if (_traceIt)
-                             traceMsg(comp(), "0Invalidating dimension info for symbol %x at node %x\n", sym, node);
-                         arrayFieldInfo->setIsDimensionInfoValid(INVALID);
+                         if (oldNumDimensions != numberOfDimensions)
+                            {
+                            // Same field is assigned different dimension arrays
+                            // at different program points within this class.
+                            //
+                            if (_traceIt)
+                               traceMsg(comp(), "0Invalidating dimension info for symbol %x at node %x\n", sym, node);
+                            arrayFieldInfo->setIsDimensionInfoValid(INVALID);
+                            }
                          }
+                      }
+                   else
+                      {
+                      isInitialized = true;
+                      arrayFieldInfo->prepareArrayFieldInfo(numberOfDimensions, comp());
                       }
                    }
                 else
                    {
-                   isInitialized = true;
-                   arrayFieldInfo->prepareArrayFieldInfo(numberOfDimensions, comp());
+                   if (_traceIt)
+                      traceMsg(comp(), "00Invalidating dimension info for symbol %x at node %x\n", sym, node);
+                      arrayFieldInfo->setIsDimensionInfoValid(INVALID);
                    }
 
                 if (arrayFieldInfo->isDimensionInfoValid())
