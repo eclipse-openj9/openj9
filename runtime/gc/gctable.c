@@ -257,5 +257,9 @@ J9MemoryManagerFunctions MemoryManagerFunctions = {
 	j9gc_get_jit_string_dedup_policy,
 	j9gc_stringHashFn,
 	j9gc_stringHashEqualFn,
-	j9gc_ensureLockedSynchronizersIntegrity
+	j9gc_ensureLockedSynchronizersIntegrity,
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+	j9gc_prepare_for_checkpoint,
+	j9gc_reinitialize_for_restore
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 };

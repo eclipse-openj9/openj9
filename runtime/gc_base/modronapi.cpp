@@ -30,6 +30,9 @@
 #include "modronapi.hpp"
 #include "modronopt.h"
 
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+#include "Configuration.hpp"
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 #include "EnvironmentBase.hpp"
 #include "GCExtensions.hpp"
 #include "HeapMemorySnapshot.hpp"
@@ -1088,6 +1091,30 @@ j9gc_notifyGCOfClassReplacement(J9VMThread *vmThread, J9Class *oldClass, J9Class
 		}
 	}
 }
+
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+void
+j9gc_prepare_for_checkpoint(J9VMThread *vmThread)
+{
+	MM_EnvironmentBase *env = MM_EnvironmentBase::getEnvironment(vmThread->omrVMThread);
+	MM_GCExtensionsBase *extensions = env->getExtensions();
+
+	/* trigger a GC to disclaim memory */
+	j9gc_modron_global_collect_with_overrides(vmThread, J9MMCONSTANT_EXPLICIT_GC_SYSTEM_GC);
+	j9gc_modron_global_collect_with_overrides(vmThread, J9MMCONSTANT_EXPLICIT_GC_PREPARE_FOR_CHECKPOINT);
+
+	extensions->configuration->adjustGCThreadCountOnCheckpoint(env);
+}
+
+BOOLEAN
+j9gc_reinitialize_for_restore(J9VMThread *vmThread)
+{
+	MM_EnvironmentBase *env = MM_EnvironmentBase::getEnvironment(vmThread->omrVMThread);
+	MM_GCExtensionsBase *extensions = env->getExtensions();
+
+	return extensions->configuration->reinitializeGCThreadCountOnRestore(env);
+}
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
 /* JAZZ 90354 Temporarily move obsolete GC table exported functions, to be removed shortly. */
 /* These calls remain, due to legacy symbol names - see Jazz 13097 for more information */

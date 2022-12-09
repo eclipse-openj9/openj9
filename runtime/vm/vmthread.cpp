@@ -442,10 +442,15 @@ void threadCleanup(J9VMThread * vmThread, UDATA forkedByVM)
 	omrthread_monitor_exit(vm->vmThreadListMutex);
 
 	/* Do the java dance to indicate thread death */
-
-	acquireVMAccess(vmThread);
-	cleanUpAttachedThread(vmThread);
-	releaseVMAccess(vmThread);
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+	/* Dont allow non-java threads to run cleanup code in single thread mode */
+	if (!VM_CRIUHelpers::isJVMInSingleThreadMode(vm) && VM_VMHelpers::threadCanRunJavaCode(vmThread))
+#endif
+	{
+		acquireVMAccess(vmThread);
+		cleanUpAttachedThread(vmThread);
+		releaseVMAccess(vmThread);
+	}
 	
 #if defined(OMR_GC_CONCURRENT_SCAVENGER) && defined(J9VM_ARCH_S390)
 	/* Concurrent scavenge enabled and JIT loaded implies running on supported h/w.

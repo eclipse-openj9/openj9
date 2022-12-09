@@ -1305,7 +1305,38 @@ gcParseXXArguments(J9JavaVM *vm)
 		}
 	}
 
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+	{
+		IDATA index = -1;
+		IDATA result = 0;
+
+		PORT_ACCESS_FROM_JAVAVM(vm);
+
+		if (-1 != FIND_ARG_IN_VMARGS(EXACT_MEMORY_MATCH, "-XX:CheckpointGCThreads=", NULL)) {
+			result = option_set_to_opt_integer(vm, "-XX:CheckpointGCThreads=", &index, EXACT_MEMORY_MATCH, &extensions->checkpointGCthreadCount);
+			if (OPTION_OK != result) {
+				if (OPTION_MALFORMED == result) {
+					j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_MUST_BE_NUMBER, "-XX:CheckpointGCThreads=");
+				} else {
+					j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_VALUE_OVERFLOWED, "-XX:CheckpointGCThreads=");
+				}
+				goto _error;
+			}
+
+			if (0 == extensions->checkpointGCthreadCount) {
+				j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_VALUE_MUST_BE_ABOVE, "-XX:CheckpointGCThreads=", (UDATA)0);
+				goto _error;
+			}
+		}
+	}
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+
 	return 1;
+
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+_error:
+	return 0;
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 }
 
 /**
