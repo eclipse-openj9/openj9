@@ -2913,6 +2913,21 @@ bool TR_EscapeAnalysis::checkAllNewsOnRHSInLoopWithAliasing(int32_t defIndex, TR
                      }
                   }
                }
+            // Another special case when it is certain that the rhs of the def is not a candidate allocation from a prior iteration
+            // In this case we are loading a value through a call to jitLoadFlattenableArrayElement.  Such a value must be something
+            // that has already escaped and has nothing to do with the candidate allocation
+            //
+            else if (firstChild->getOpCode().isCall()
+                     && ((firstChild->getSymbolReference()->getReferenceNumber() == TR_ldFlattenableArrayElement)
+                         || comp()->getSymRefTab()->isNonHelper(firstChild->getSymbolReference(),
+                                                                TR::SymbolReferenceTable::loadFlattenableArrayElementNonHelperSymbol)))
+               {
+               if (trace())
+                  {
+                  traceMsg(comp(), "         rhs is harmless for defNode2 [%p] - call to jitLoadFlattenableArrayElement\n", defNode2);
+                  }
+               rhsIsHarmless = true;
+               }
             }
 
          if (!rhsIsHarmless)
