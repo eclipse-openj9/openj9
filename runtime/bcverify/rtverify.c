@@ -312,6 +312,7 @@ matchStack(J9BytecodeVerificationData * verifyData, J9BranchTargetStack *liveSta
 	/* Note: Target stack frame flag needs to be subset of ours. See JVM sepc 4.10.1.4 */
 	if (liveStack->uninitializedThis && !targetStack->uninitializedThis) {
 		rc = BCV_FAIL;
+		verifyData->errorDetailCode = BCV_ERR_INIT_FLAGS_MISMATCH;
 		goto _finished;
 	}
 

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -107,8 +107,19 @@ setInitializedThisStatus(J9BytecodeVerificationData *verifyData)
 		if (currentStack->stackBaseIndex != -1) {
 			BOOLEAN flag_uninitialized = FALSE;
 			IDATA i = 0;
-			for (; i < currentStack->stackTopIndex; i++) {
-				if ((currentStack->stackElements[i] & BCV_SPECIAL_INIT) == BCV_SPECIAL_INIT) {
+			/* The operation stack frame in the Verifier is as follows:
+			 * |-------- Locals --------|-------- Stacks ----------|
+			 * 0                        stackBaseIndex             stackTopIndex
+			 * which means 'Locals' starts from 0 to stackBaseIndex while 'Stacks' starts from stackBaseIndex
+			 * to stackTopIndex.
+			 *
+			 * The JVM Spec at 4.10.1.4 Stack Map Frame Representation says that if any local variable in 'Locals'
+			 * has the type 'uninitializedThis', then 'Flags' has the single element 'flagThisUninit'; otherwise
+			 * 'Flags' is an empty list. That is to say, we only check the elements of 'Locals' rather than the
+			 * whole operation stack frame to determine whether to set the flags.
+			 */
+			for (; i < currentStack->stackBaseIndex; i++) {
+				if (J9_ARE_ALL_BITS_SET(currentStack->stackElements[i], BCV_SPECIAL_INIT)) {
 					flag_uninitialized = TRUE;
 					break;
 				}

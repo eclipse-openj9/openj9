@@ -567,6 +567,7 @@ extern "C" {
 #define BCV_ERR_INACCESSIBLE_CLASS						-33
 #define BCV_ERR_BYTECODE_ERROR							-34
 #define BCV_ERR_NEW_OJBECT_MISMATCH						-35
+#define BCV_ERR_INIT_FLAGS_MISMATCH						-36
 
 #define J9_GC_OBJ_HEAP_HOLE 0x1
 #define J9_GC_MULTI_SLOT_HOLE 0x1
