@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -298,6 +298,8 @@ public:
 	 * @return true if the bytes were available, false if the threshold has been reached
 	 */
 	bool consumeFromTaxationThreshold(MM_EnvironmentBase *env, uintptr_t bytesToConsume);
+
+	virtual uintptr_t releaseFreeMemoryPages(MM_EnvironmentBase* env, uintptr_t memoryType);
 
 	/**
 	 * Create a MemorySubSpaceGeneric object
