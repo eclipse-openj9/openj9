@@ -803,7 +803,7 @@ class TR_LocalFlushElimination
    TR_LocalFlushElimination(TR_EscapeAnalysis *, int32_t numAllocations);
 
    virtual int32_t perform();
-   bool examineNode(TR::Node *, TR::TreeTop *, TR::NodeChecklist& visited);
+   bool examineNode(TR::Node *, TR::TreeTop *, TR::Block *, TR::NodeChecklist& visited);
 
    TR::Optimizer *        optimizer()                     { return _escapeAnalysis->optimizer(); }
    TR::Compilation *        comp()                          { return _escapeAnalysis->comp(); }
