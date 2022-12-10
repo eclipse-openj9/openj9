@@ -424,6 +424,8 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<fieldref class="openj9/internal/foreign/abi/UpcallMHMetaData" name="calleeMH" signature="Ljava/lang/invoke/MethodHandle;" flags="opt_openjdkFfi" versions="16-"/>
 	<fieldref class="openj9/internal/foreign/abi/UpcallMHMetaData" name="calleeType" signature="Ljava/lang/invoke/MethodType;" flags="opt_openjdkFfi" versions="16-"/>
 	<fieldref class="openj9/internal/foreign/abi/UpcallMHMetaData" name="invokeCache" signature="[Ljava/lang/Object;" flags="opt_openjdkFfi" versions="16-"/>
+	<fieldref class="openj9/internal/foreign/abi/UpcallMHMetaData" name="nativeArgArray" signature="[Ljava/lang/Object;" flags="opt_openjdkFfi" versions="16-"/>
+
 	<fieldref class="openj9/internal/foreign/abi/UpcallMHMetaData" name="scope" signature="Ljdk/incubator/foreign/ResourceScope;" flags="opt_openjdkFfi" versions="16-18"/>
 	<fieldref class="openj9/internal/foreign/abi/UpcallMHMetaData" name="session" signature="Ljava/lang/foreign/MemorySession;" flags="opt_openjdkFfi" versions="19-"/>
 

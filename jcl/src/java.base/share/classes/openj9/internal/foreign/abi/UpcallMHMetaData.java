@@ -50,6 +50,11 @@ final class UpcallMHMetaData {
 	 * by MethodHandleResolver.upcallLinkCallerMethod().
 	 */
 	private Object[] invokeCache;
+	/* The argument array stores the memory specific argument(struct/pointer) object
+	 * being allocated in native for upcall to stop GC from updating the previously
+	 * allocated argument reference when allocating the next argument.
+	 */
+	private Object[] nativeArgArray;
 
 	/*[IF JAVA_SPEC_VERSION >= 19]*/
 	private MemorySession session;
@@ -68,21 +73,22 @@ final class UpcallMHMetaData {
 	}
 
 	/*[IF JAVA_SPEC_VERSION >= 19]*/
-	UpcallMHMetaData(MethodHandle targetHandle, MemorySession session)
+	UpcallMHMetaData(MethodHandle targetHandle, int nativeArgCount, MemorySession session)
 	/*[ELSE] JAVA_SPEC_VERSION >= 19 */
-	UpcallMHMetaData(MethodHandle targetHandle, ResourceScope scope)
+	UpcallMHMetaData(MethodHandle targetHandle, int nativeArgCount, ResourceScope scope)
 	/*[ENDIF] JAVA_SPEC_VERSION >= 19 */
 	{
 		calleeMH = targetHandle;
 		calleeType = targetHandle.type();
+		nativeArgArray = new Object[nativeArgCount];
 		/* Only hold the confined session/scope (owned by the current thread)
-		 * will be used to construct a MemorySegment object for argument in
-		 * the native dispatcher in upcall.
+		 * or the shared session/scope will be used to construct a MemorySegment
+		 * object for argument in the native dispatcher in upcall.
 		 */
 		/*[IF JAVA_SPEC_VERSION >= 19]*/
-		this.session = ((session != null) && (session.ownerThread() != null)) ? session : null;
+		this.session = ((session != null) && (session.ownerThread() != null)) ? session : MemorySession.openShared();
 		/*[ELSE] JAVA_SPEC_VERSION >= 19 */
-		this.scope = ((scope != null) && (scope.ownerThread() != null)) ? scope : null;;
+		this.scope = ((scope != null) && (scope.ownerThread() != null)) ? scope : ResourceScope.newSharedScope();
 		/*[ENDIF] JAVA_SPEC_VERSION >= 19 */
 	}
 }
