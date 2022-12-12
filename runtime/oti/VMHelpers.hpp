@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2022 IBM Corp. and others
+ * Copyright (c) 1991, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2124,37 +2124,6 @@ exit:
 		}
 #endif /* JAVA_SPEC_VERSION >= 19 */
 		return rc;
-	}
-
-	/**
-	 * Check if we need to scan the java stack for the Continuation Object
-	 * Used during main scan phase of GC (object graph traversal) or heap object iteration (in sliding compact).
-	 * Not meant to be used during root scanning (neither strong roots nor weak roots)!
-	 * @param[in] vmThread the current J9VMThread
-	 * @param[in] continuationObject the continuation object
-	 * @param[in] scanOnlyUnmounted if it is true, only scan unmounted continuation object, default is false
-	 * @return true if we need to scan the java stack
-	 */
-	static VMINLINE bool
-	needScanStacksForContinuation(J9VMThread *vmThread, j9object_t continuationObject)
-	{
-		bool needScan = false;
-#if JAVA_SPEC_VERSION >= 19
-		jboolean started = J9VMJDKINTERNALVMCONTINUATION_STARTED(vmThread, continuationObject);
-		J9VMContinuation *continuation = J9VMJDKINTERNALVMCONTINUATION_VMREF(vmThread, continuationObject);
-		/**
-		 * We don't scan mounted continuations:
-		 *
-		 * for concurrent GCs, since stack is actively changing. Instead, we scan them during preMount or during root scanning if already mounted at cycle start or during postUnmount (might be indirectly via card cleaning) or during final STW (via root re-scan) if still mounted at cycle end
-		 * for sliding compacts to avoid double slot fixups
-		 *
-		 * For fully STW GCs, there is no harm to scan them, but it's a waste of time since they are scanned during root scanning already.
-		 *
-		 * We don't scan currently scanned either - one scan is enough.
-		 */
-		needScan = started && (NULL != continuation) && (!isContinuationMountedOrConcurrentlyScanned(continuation));
-#endif /* JAVA_SPEC_VERSION >= 19 */
-		return needScan;
 	}
 
 	static VMINLINE UDATA
