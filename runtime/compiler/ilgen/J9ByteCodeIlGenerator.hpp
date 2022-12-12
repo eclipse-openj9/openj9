@@ -217,10 +217,7 @@ private:
    //
    TR::TreeTop * genTreeTop(TR::Node *);
 
-   TR::Node    * loadConstantValueIfPossible(TR::Node *, uintptr_t, TR::DataType type = TR::Int32, bool isArrayLength = true);
-
-   void         genArrayLength();
-   void         genContiguousArrayLength(int32_t width);
+   void         genArrayLength(bool contiguous = false);
    void         genArrayBoundsCheck(TR::Node *, int32_t);
    void         genDivCheck();
    void         genIDiv();
