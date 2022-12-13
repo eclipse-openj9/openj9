@@ -9153,7 +9153,7 @@ int32_t TR_LocalFlushElimination::perform()
          _allocationInfo->empty();
          }
 
-      examineNode(node, treeTop, visited);
+      examineNode(node, treeTop, block, visited);
       }
 
    FlushCandidate *flushCandidate;
@@ -9174,7 +9174,7 @@ int32_t TR_LocalFlushElimination::perform()
    }
 
 
-bool TR_LocalFlushElimination::examineNode(TR::Node *node, TR::TreeTop *tt, TR::NodeChecklist& visited)
+bool TR_LocalFlushElimination::examineNode(TR::Node *node, TR::TreeTop *tt, TR::Block *currBlock, TR::NodeChecklist& visited)
    {
    if (visited.contains(node))
       return true;
@@ -9356,7 +9356,7 @@ bool TR_LocalFlushElimination::examineNode(TR::Node *node, TR::TreeTop *tt, TR::
                   {
                   if (reachingFlushCandidate->isOptimallyPlaced() ||
                      reachingFlushCandidate->getFlush()->getNode()->getAllocation() == NULL ||
-                     reachingFlushCandidate->getBlockNum() != tt->getEnclosingBlock()->getNumber())
+                     reachingFlushCandidate->getBlockNum() != currBlock->getNumber())
                      continue;
                   reachingCandidate = getCandidate(_candidates, reachingFlushCandidate);
                   if (!reachingCandidate)
@@ -9531,7 +9531,7 @@ bool TR_LocalFlushElimination::examineNode(TR::Node *node, TR::TreeTop *tt, TR::
       {
       TR::Node *child = node->getChild(i);
 
-      if (!examineNode(child, tt, visited))
+      if (!examineNode(child, tt, currBlock, visited))
          return false;
       }
 
