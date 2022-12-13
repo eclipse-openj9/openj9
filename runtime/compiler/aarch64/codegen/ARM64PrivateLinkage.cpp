@@ -1135,17 +1135,17 @@ int32_t J9::ARM64::PrivateLinkage::buildPrivateLinkageArgs(TR::Node *callNode,
             else
                {
                argSize += TR::Compiler->om.sizeofReferenceAddress() * ((childType == TR::Int64) ? 2 : 1);
+               if (!cg()->canClobberNodesRegister(child, 0))
+                  {
+                  if (argRegister->containsCollectedReference())
+                     tempReg = cg()->allocateCollectedReferenceRegister();
+                  else
+                     tempReg = cg()->allocateRegister();
+                  generateMovInstruction(cg(), callNode, tempReg, argRegister);
+                  argRegister = tempReg;
+                  }
                if (numIntegerArgs < numIntArgRegs)
                   {
-                  if (!cg()->canClobberNodesRegister(child, 0))
-                     {
-                     if (argRegister->containsCollectedReference())
-                        tempReg = cg()->allocateCollectedReferenceRegister();
-                     else
-                        tempReg = cg()->allocateRegister();
-                     generateMovInstruction(cg(), callNode, tempReg, argRegister);
-                     argRegister = tempReg;
-                     }
                   if (numIntegerArgs == firstExplicitArg)
                      {
                      // the first integer argument
@@ -1184,15 +1184,15 @@ int32_t J9::ARM64::PrivateLinkage::buildPrivateLinkageArgs(TR::Node *callNode,
                argSize += TR::Compiler->om.sizeofReferenceAddress() * 2;
                argRegister = pushDoubleArg(child);
                }
+            if (!cg()->canClobberNodesRegister(child, 0))
+               {
+               tempReg = cg()->allocateRegister(TR_FPR);
+               op = (childType == TR::Float) ? TR::InstOpCode::fmovs : TR::InstOpCode::fmovd;
+               generateTrg1Src1Instruction(cg(), op, callNode, tempReg, argRegister);
+               argRegister = tempReg;
+               }
             if (numFloatArgs < numFloatArgRegs)
                {
-               if (!cg()->canClobberNodesRegister(child, 0))
-                  {
-                  tempReg = cg()->allocateRegister(TR_FPR);
-                  op = (childType == TR::Float) ? TR::InstOpCode::fmovs : TR::InstOpCode::fmovd;
-                  generateTrg1Src1Instruction(cg(), op, callNode, tempReg, argRegister);
-                  argRegister = tempReg;
-                  }
                if (numFloatArgs == 0 && resType.isFloatingPoint())
                   {
                   TR::Register *resultReg;
