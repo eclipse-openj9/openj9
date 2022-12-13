@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -121,6 +121,13 @@ public:
 
 	static MM_VerboseManagerOld *newInstance(MM_EnvironmentBase *env, OMR_VM* vm);
 	virtual void kill(MM_EnvironmentBase *env);
+
+	virtual bool openStreams(MM_EnvironmentBase *env) { return false; }
+
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+	virtual void prepareForCheckpoint(MM_EnvironmentBase *env) {};
+	virtual bool reinitializeForRestore(MM_EnvironmentBase *env) { return false; }
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
 	/**
 	 * Close all output mechanisms on the receiver.
