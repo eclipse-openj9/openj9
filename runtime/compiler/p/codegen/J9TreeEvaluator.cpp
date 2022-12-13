@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2022 IBM Corp. and others
+ * Copyright (c) 2000, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -9393,6 +9393,7 @@ static TR::Register *inlineAtomicOperation(TR::Node *node, TR::CodeGenerator *cg
          className = "Ljava/util/concurrent/atomic/AtomicBoolean;";
          classNameLen = 43;
          fieldSig = "I"; // not a type, the field is int
+         break;
       case TR::java_util_concurrent_atomic_AtomicInteger_addAndGet:
       case TR::java_util_concurrent_atomic_AtomicInteger_decrementAndGet:
       case TR::java_util_concurrent_atomic_AtomicInteger_getAndAdd:
