@@ -3014,6 +3014,21 @@ bool J9::Options::feLatePostProcess(void * base, TR::OptionSet * optionSet)
    //
    self()->setOption(TR_DisableEDO);
 #endif
+#if defined(TR_HOST_RISCV)
+   // ArraySet support is not available in RISC-V yet.
+   //
+   self()->setOption(TR_DisableArraySetOpts);
+
+   // EDO catch block profiling support is not available in RISC-V yet.
+   //
+   self()->setOption(TR_DisableEDO);
+
+   // Support for shuffling linkage registers to GRA registers is not
+   // available on RISC-V yet.
+   //
+   self()->setOption(TR_DisableLinkageRegisterAllocation);
+#endif
+
 
    return true;
    }

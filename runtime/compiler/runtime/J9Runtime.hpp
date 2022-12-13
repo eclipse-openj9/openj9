@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -89,7 +89,7 @@ void replaceFirstTwoBytesWithData(void *startPC, int32_t startPCToData);
 #define  OFFSET_COUNTING_BRANCH_FROM_JITENTRY            (9*ARM64_INSTRUCTION_LENGTH)
 #endif
 
-#if defined(TR_HOST_POWER) || defined(TR_HOST_ARM64)
+#if defined(TR_HOST_POWER) || defined(TR_HOST_ARM64) || defined(TR_HOST_RISCV)
 inline uint32_t getJitEntryOffset(J9::PrivateLinkage::LinkageInfo *linkageInfo)
    {
    return linkageInfo->getReservedWord() & 0x0ffff;
@@ -97,7 +97,7 @@ inline uint32_t getJitEntryOffset(J9::PrivateLinkage::LinkageInfo *linkageInfo)
 #endif
 
 /* Functions used by AOT runtime to fixup recompilation info for AOT */
-#if defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64)
+#if defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64) || defined(TR_HOST_RISCV)
 uint32_t *getLinkageInfo(void * startPC);
 uint32_t isRecompMethBody(void *li);
 void fixPersistentMethodInfo(void *table, bool isJITClientAOTLoad = false);

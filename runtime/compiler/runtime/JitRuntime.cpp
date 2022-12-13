@@ -62,7 +62,7 @@
 #include "ilgen/IlGeneratorMethodDetails_inlines.hpp"
 #include "omrformatconsts.h"
 
-#if defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64)
+#if defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64) || defined(TR_HOST_RISCV)
 #include "codegen/PicHelpers.hpp"
 #include "control/Recompilation.hpp"
 #endif
@@ -1355,7 +1355,7 @@ void platformUnlock(uint32_t *ptr)
    }
 }
 
-#if defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64)
+#if defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64) || defined(TR_HOST_RISCV)
 uint32_t *getLinkageInfo(void *startPC)
    {
    return (uint32_t *)J9::PrivateLinkage::LinkageInfo::get(startPC);
