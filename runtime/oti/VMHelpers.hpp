@@ -2157,14 +2157,6 @@ exit:
 		return needScan;
 	}
 
-	static VMINLINE void
-	cleanupContinuationObject(J9VMThread *vmThread, J9Object *objectPtr)
-	{
-#if JAVA_SPEC_VERSION >= 19
-		vmThread->javaVM->internalVMFunctions->freeContinuation(vmThread, objectPtr);
-#endif /* JAVA_SPEC_VERSION >= 19 */
-	}
-
 	static VMINLINE UDATA
 	setVMState(J9VMThread *currentThread, UDATA newState)
 	{

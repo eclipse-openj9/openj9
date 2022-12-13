@@ -28,6 +28,7 @@
 #include "j9memcategories.h"
 #include "j9nongenerated.h"
 #include "j9port.h"
+#include "ModronAssertions.h"
 #include "util_api.h"
 
 #include "EnvironmentBase.hpp"
@@ -294,4 +295,19 @@ MM_GCExtensions::registerScavenger(MM_Scavenger *scavenger)
 	Assert_MM_true(isStandardGC());
 	Assert_MM_true(isScavengerEnabled());
 	((MM_StandardAccessBarrier *)accessBarrier)->registerScavenger(scavenger);
+}
+
+void
+MM_GCExtensions::releaseNativesForContinuationObject(MM_EnvironmentBase* env, j9object_t objectPtr)
+{
+#if JAVA_SPEC_VERSION >= 19
+	J9VMThread *vmThread = (J9VMThread *)env->getLanguageVMThread();
+
+	if (verify_continuation_list == continuationListOption) {
+		J9VMContinuation *continuation = J9VMJDKINTERNALVMCONTINUATION_VMREF(vmThread, objectPtr);
+		Assert_MM_true(NULL == continuation);
+	} else {
+		getJavaVM()->internalVMFunctions->freeContinuation(vmThread, objectPtr);
+	}
+#endif /* JAVA_SPEC_VERSION >= 19 */
 }

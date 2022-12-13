@@ -1515,6 +1515,20 @@ gcParseXXgcArguments(J9JavaVM *vm, char *optArg)
 			continue;
 		}
 
+		if (try_scan(&scan_start, "disableContinuationList")) {
+			extensions->continuationListOption = MM_GCExtensions::disable_continuation_list;
+			continue;
+		}
+
+		if (try_scan(&scan_start, "enableContinuationList")) {
+			extensions->continuationListOption = MM_GCExtensions::enable_continuation_list;
+			continue;
+		}
+
+		if (try_scan(&scan_start, "verifyContinuationList")) {
+			extensions->continuationListOption = MM_GCExtensions::verify_continuation_list;
+			continue;
+		}
 
 		/* Couldn't find a match for arguments */
 		j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTION_UNKNOWN, error_scan);

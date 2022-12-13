@@ -1111,8 +1111,8 @@ MM_GlobalMarkingScheme::scanContinuationObjects(MM_EnvironmentVLHGC *env)
 						if (isMarked(object)) {
 							env->getGCEnvironment()->_continuationObjectBuffer->add(env, object);
 						} else {
-							VM_VMHelpers::cleanupContinuationObject((J9VMThread *)env->getLanguageVMThread(), object);
 							env->_markVLHGCStats._continuationCleared += 1;
+							_extensions->releaseNativesForContinuationObject(env, object);
 						}
 						object = next;
 					}
