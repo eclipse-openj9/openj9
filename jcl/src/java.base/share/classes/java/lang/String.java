@@ -1,6 +1,6 @@
 /*[INCLUDE-IF JAVA_SPEC_VERSION < 17]*/
 /*******************************************************************************
- * Copyright (c) 1998, 2022 IBM Corp. and others
+ * Copyright (c) 1998, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -3352,9 +3352,16 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			} else {
 				int rLength = regex.lengthInternal();
 
-				byte[] splitChars = regex.value;
+				byte[] splitChars;
+				// if regex is compressed and this string isn't, decompress regex string
+				if (!compressed && regex.isCompressed()) {
+					splitChars = new byte[rLength << 1];
+					decompress(regex.value, 0, splitChars, 0, rLength);
+				} else {
+					splitChars = regex.value;
+				}
 
-				char firstChar = charAtInternal(0, regex.value);
+				char firstChar = charAtInternal(0, splitChars);
 				while (current < end) {
 					if (charAtInternal(current, chars) == firstChar) {
 						int idx = current + 1;
@@ -7740,9 +7747,16 @@ written authorization of the copyright holder.
 			} else {
 				int rLength = regex.lengthInternal();
 
-				char[] splitChars = regex.value;
+				char[] splitChars;
+				// if regex is compressed and this string isn't, decompress regex string
+				if (!compressed && regex.isCompressed()) {
+					splitChars = new char[rLength];
+					decompress(regex.value, 0, splitChars, 0, rLength);
+				} else {
+					splitChars = regex.value;
+				}
 
-				char firstChar = charAtInternal(0, regex.value);
+				char firstChar = charAtInternal(0, splitChars);
 				while (current < end) {
 					if (charAtInternal(current, chars) == firstChar) {
 						int idx = current + 1;
