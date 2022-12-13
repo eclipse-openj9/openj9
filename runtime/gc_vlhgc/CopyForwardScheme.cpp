@@ -3549,7 +3549,7 @@ MM_CopyForwardScheme::scanContinuationObjects(MM_EnvironmentVLHGC *env)
 					if (NULL == forwardedPtr) {
 						/* object was not previously marked, clean up */
 						env->_copyForwardStats._continuationCleared += 1;
-						VM_VMHelpers::cleanupContinuationObject((J9VMThread *)env->getLanguageVMThread(), pointer);
+						_extensions->releaseNativesForContinuationObject(env, pointer);
 					} else {
 						env->getGCEnvironment()->_continuationObjectBuffer->add(env, forwardedPtr);
 					}
