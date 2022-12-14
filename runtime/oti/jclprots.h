@@ -1258,6 +1258,13 @@ Java_com_ibm_oti_vm_VM_markCurrentThreadAsSystemImpl(JNIEnv *env);
  */
 jlong JNICALL
 Java_com_ibm_oti_vm_VM_getJ9ConstantPoolFromJ9Class(JNIEnv *env, jclass unused, jlong j9clazz);
+/**
+ * Queries whether the JVM is running in single threaded mode.
+ *
+ * @return JNI_TRUE if JVM is in single threaded mode, JNI_FALSE otherwise
+ */
+jboolean JNICALL
+Java_com_ibm_oti_vm_VM_isJVMInSingleThreadedMode(JNIEnv *env, jclass unused);
 
 #if JAVA_SPEC_VERSION >= 16
 jboolean JNICALL

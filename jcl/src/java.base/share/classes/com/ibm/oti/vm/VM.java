@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar16]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 
 package com.ibm.oti.vm;
 /*******************************************************************************
@@ -577,4 +577,10 @@ private static native int markCurrentThreadAsSystemImpl();
  */
 public static native long getJ9ConstantPoolFromJ9Class(long j9clazz);
 
+/**
+ * Queries whether the JVM is running in single threaded mode.
+ *
+ * @return true if JVM is in single threaded mode, false otherwise
+ */
+public static native boolean isJVMInSingleThreadedMode();
 }
