@@ -2213,13 +2213,6 @@ TR_RelocationRecordClassAddress::applyRelocation(TR_RelocationRuntime *reloRunti
 
    if (!newAddress) return TR_RelocationErrorCode::classValidationFailure;
 
-   if (TR::CodeGenerator::wantToPatchClassPointer(reloRuntime->comp(), newAddress, reloLocation))
-      {
-      createClassRedefinitionPicSite((void *)newAddress, (void *)reloLocation, sizeof(UDATA), 0,
-                                     getMetadataAssumptionList(reloRuntime->exceptionTable()));
-      RELO_LOG(reloRuntime->reloLogger(), 6, "\t\tapplyRelocation: hcr enabled, registered class redefinition site\n");
-      }
-
    reloTarget->storeAddressSequence((uint8_t *)newAddress, reloLocation, reloFlags(reloTarget));
    return TR_RelocationErrorCode::relocationOK;
    }
@@ -2232,14 +2225,6 @@ TR_RelocationRecordClassAddress::applyRelocation(TR_RelocationRuntime *reloRunti
    TR_OpaqueClassBlock *newAddress = computeNewClassAddress(reloRuntime, newConstantPool, inlinedSiteIndex(reloTarget), cpIndex(reloTarget));
 
    if (!newAddress) return TR_RelocationErrorCode::classValidationFailure;
-
-   if (TR::CodeGenerator::wantToPatchClassPointer(reloRuntime->comp(), newAddress, reloLocationHigh))
-      {
-      // This looks wrong
-      createClassRedefinitionPicSite((void *)newAddress, (void *)reloLocationHigh, sizeof(UDATA), 0,
-         getMetadataAssumptionList(reloRuntime->exceptionTable()));
-      RELO_LOG(reloRuntime->reloLogger(), 6, "\t\tapplyRelocation: hcr enabled, registered class redefinition site\n");
-      }
 
    reloTarget->storeAddress((uint8_t *) newAddress, reloLocationHigh, reloLocationLow, reloFlags(reloTarget));
    return TR_RelocationErrorCode::relocationOK;
@@ -5480,7 +5465,7 @@ TR_RelocationRecordSymbolFromManager::needsRedefinitionAssumption(TR_RelocationR
    switch (symbolType)
       {
       case TR::SymbolType::typeClass:
-         needsAssumptions =  TR::CodeGenerator::wantToPatchClassPointer(reloRuntime->comp(), clazz, reloLocation);
+         needsAssumptions = false;
          break;
 
       case TR::SymbolType::typeMethod:
@@ -5780,8 +5765,6 @@ TR_RelocationRecordClassPointer::activatePointer(TR_RelocationRuntime *reloRunti
    TR_RelocationRecordPointer::activatePointer(reloRuntime, reloTarget, reloLocation);
    TR_RelocationRecordPointerPrivateData *reloPrivateData = &(privateData()->pointer);
    TR_ASSERT((void*)reloPrivateData->_pointer == (void*)reloPrivateData->_clazz, "Pointer differs from class pointer");
-   if (TR::CodeGenerator::wantToPatchClassPointer(reloRuntime->comp(), reloPrivateData->_clazz, reloLocation))
-      registerHCRAssumption(reloRuntime, reloLocation);
    }
 
 // TR_ArbitraryClassAddress

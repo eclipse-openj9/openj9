@@ -6752,10 +6752,6 @@ static void genInitObjectHeader(TR::Node             *node,
          {
          instr = generateMemImmInstruction(TR::InstOpCode::S4MemImm4, node, generateX86MemoryReference(objectReg, TR::Compiler->om.offsetOfObjectVftField(), cg), (int32_t)((uintptr_t)clazz|orFlagsClass), cg);
          }
-
-      // HCR in genInitObjectHeader
-      if (instr && cg->wantToPatchClassPointer(clazz, node))
-         comp->getStaticHCRPICSites()->push_front(instr);
       }
    else
       {
@@ -8200,10 +8196,6 @@ J9::X86::TreeEvaluator::VMarrayStoreCHKEvaluator(
 
          generateLabelInstruction(TR::InstOpCode::JE4, node, wrtbarLabel, cg);
 
-         // HCR in VMarrayStoreCHKEvaluator
-         if (cg->wantToPatchClassPointer(objectClass, node))
-            comp->getStaticHCRPICSites()->push_front(instr);
-
          // here we may have to convert the TR_OpaqueClassBlock into a J9Class pointer
          // and store it in destComponentClassReg
          // ..
@@ -8303,10 +8295,6 @@ J9::X86::TreeEvaluator::VMarrayStoreCHKEvaluator(
          }
 
       generateLabelInstruction(TR::InstOpCode::JE4, node, wrtbarLabel, cg);
-
-      // HCR in VMarrayStoreCHKEvaluator
-      if (cg->wantToPatchClassPointer(objectClass, node))
-         comp->getStaticHCRPICSites()->push_front(instr);
       */
 
 
@@ -8359,11 +8347,6 @@ J9::X86::TreeEvaluator::VMarrayStoreCHKEvaluator(
             }
 
          generateLabelInstruction(TR::InstOpCode::JE4, node, wrtbarLabel, cg);
-
-         // HCR in VMarrayStoreCHKEvaluator
-         if (cg->wantToPatchClassPointer(arrayComponentClass, node))
-            comp->getStaticHCRPICSites()->push_front(instr);
-
          }
 
 

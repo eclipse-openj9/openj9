@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -145,11 +145,6 @@ uint8_t *J9::Power::UnresolvedDataSnippet::emitSnippetBody()
                           __FILE__,
                           __LINE__,
                           getNode());
-   if (getDataSymbol()->isClassObject() && cg()->wantToPatchClassPointer(NULL, getAddressOfDataReference()))
-      {
-      uintptr_t dis = cursor - getAddressOfDataReference();
-      cg()->jitAddUnresolvedAddressMaterializationToPatchOnClassRedefinition((void *) getAddressOfDataReference());
-      }
    cursor += 4;
 
    *(intptr_t *)cursor = (intptr_t)getAddressOfDataReference();   // Code Cache RA
