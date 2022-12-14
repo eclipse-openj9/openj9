@@ -266,8 +266,11 @@ int32_t J9::Options::_numCodeCachesToCreateAtStartup = 0; // 0 means no change f
 int32_t J9::Options::_dataCacheQuantumSize = 64;
 int32_t J9::Options::_dataCacheMinQuanta = 2;
 
+#if defined(TR_TARGET_POWER)
+int32_t J9::Options::_updateFreeMemoryMinPeriod = 300;  // 300 ms
+#else
 int32_t J9::Options::_updateFreeMemoryMinPeriod = 50;  // 50 ms
-
+#endif /* defined(TR_TARGET_POWER) */
 size_t J9::Options::_scratchSpaceLimitKBWhenLowVirtualMemory = 64*1024; // 64MB; currently, only used on 32 bit Windows
 
 int32_t J9::Options::_scratchSpaceFactorWhenJSR292Workload = JSR292_SCRATCH_SPACE_FACTOR;
