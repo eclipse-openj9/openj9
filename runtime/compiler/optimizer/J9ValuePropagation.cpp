@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2022 IBM Corp. and others
+ * Copyright (c) 2000, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -897,10 +897,11 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
             }
          }
 
-      // If the array is known to be of a primitive value type that is not flattened,
-      // transform the helper call to regular aaload and aastore.
-      bool canTransformUnflattenedVTArrayElementLoadStore = false;
-      if (arrayConstraint &&
+      // Transform the helper call to regular aaload and aastore if array flattening is not enabled,
+      // or the array is known to be of a primitive value type that is not flattened.
+      bool canTransformUnflattenedVTArrayElementLoadStore = TR::Compiler->om.isValueTypeArrayFlatteningEnabled() ? false : true;
+      if (!canTransformUnflattenedVTArrayElementLoadStore &&
+          arrayConstraint &&
           (isCompTypePrimVT == TR_yes) &&
           (TR::Compiler->cls.isValueTypeClassFlattened(arrayConstraint->getClass()) == TR_no))
          {
