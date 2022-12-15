@@ -561,19 +561,8 @@ bool J9::ValuePropagation::transformUnsafeCopyMemoryCall(TR::Node *arraycopyNode
    return false;
    }
 
-/**
- * Determine whether the type is, or might be, a value type.  Note that
- * a null reference can be cast to a value type that is not a primitive
- * value type, but for the purposes of this method, a null reference is
- * not considered to be a value type.
- *
- * @param[IN] constraint The \ref TR::VPConstraint type constraint for a node
- * @param[OUT] clazz The \ref TR_OpaqueClassBlock type class of the constraint
- * @return \c TR_yes if the type is definitely a value type;\n
- *         \c TR_no if it is definitely not a value type; or\n
- *         \c TR_maybe otherwise.
- */
-static TR_YesNoMaybe isValue(TR::VPConstraint *constraint, TR_OpaqueClassBlock *& clazz)
+TR_YesNoMaybe
+J9::ValuePropagation::isValue(TR::VPConstraint *constraint, TR_OpaqueClassBlock *& clazz)
    {
    // If there's no information is available about the class of the operand,
    // VP has to assume that it might be a value type
@@ -616,6 +605,11 @@ static TR_YesNoMaybe isValue(TR::VPConstraint *constraint, TR_OpaqueClassBlock *
    // that class, it's not a value type; if it's not fixed, it could
    // any subtype of java/lang/Object, which includes all value types
    //
+   if (type->isJavaLangObject(this))
+      {
+      return type->isFixedClass() ? TR_no : TR_maybe;
+      }
+
    TR::Compilation *comp = TR::comp();
    clazz = type->getClass();
 
@@ -623,11 +617,6 @@ static TR_YesNoMaybe isValue(TR::VPConstraint *constraint, TR_OpaqueClassBlock *
    if (TR::Compiler->cls.classHasIdentity(clazz))
       {
       return TR_no;
-      }
-
-   if (clazz == comp->getObjectClassPointer())
-      {
-      return type->isFixedClass() ? TR_no : TR_maybe;
       }
 
    // Is the type either an abstract class or an interface (i.e., not a

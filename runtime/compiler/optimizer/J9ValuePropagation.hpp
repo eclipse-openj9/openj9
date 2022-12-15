@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2022 IBM Corp. and others
+ * Copyright (c) 2000, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -60,6 +60,20 @@ class ValuePropagation : public OMR::ValuePropagation
    uintptr_t* getObjectLocationFromConstraint(TR::VPConstraint *constraint);
    bool isKnownStringObject(TR::VPConstraint *constraint);
    TR_YesNoMaybe isStringObject(TR::VPConstraint *constraint);
+
+   /**
+    * Determine whether the type is, or might be, a value type.  Note that
+    * a null reference can be cast to a value type that is not a primitive
+    * value type, but for the purposes of this method, a null reference is
+    * not considered to be a value type.
+    *
+    * @param[IN] constraint The \ref TR::VPConstraint type constraint for a node
+    * @param[OUT] clazz The \ref TR_OpaqueClassBlock type class of the constraint
+    * @return \c TR_yes if the type is definitely a value type;\n
+    *         \c TR_no if it is definitely not a value type; or\n
+    *         \c TR_maybe otherwise.
+    */
+   virtual TR_YesNoMaybe isValue(TR::VPConstraint *constraint, TR_OpaqueClassBlock *& clazz);
 
    /**
     * Determine whether the component type of an array is, or might be, a primitive value
