@@ -1143,14 +1143,15 @@ redefineClassesCommon(jvmtiEnv* env,
 
 	rc = verifyClassesCanBeReplaced(currentThread, class_count, class_definitions);
 	if (rc != JVMTI_ERROR_NONE) {
-		return rc;
+		goto failed;
 	}
 
 	/* Allocate a buffer to hold the new versions of the classes */
 
 	specifiedClasses = j9mem_allocate_memory(class_count * sizeof(J9JVMTIClassPair), J9MEM_CATEGORY_JVMTI);
 	if (specifiedClasses == NULL) {
-		return JVMTI_ERROR_OUT_OF_MEMORY;
+		rc = JVMTI_ERROR_OUT_OF_MEMORY;
+		goto failed;
 	}
 	memset(specifiedClasses, 0, class_count * sizeof(J9JVMTIClassPair));
 	
@@ -1364,6 +1365,10 @@ failed:
 		jitEventFree(vm, &jitEventData);
 	}
 #endif
+
+	/* Clear any pending exception - any error is represented solely by the return code */
+	currentThread->currentException = NULL;
+	currentThread->privateFlags &= ~(UDATA)J9_PRIVATE_FLAGS_REPORT_EXCEPTION_THROW;
 
 	return rc;
 }
