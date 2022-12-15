@@ -93,7 +93,7 @@ char *TR_RelocationRuntime::_reloErrorCodeNames[] =
    "unknownRelocation",                                // 3
    "unknownReloAction",                                // 4
    "invalidRelocation",                                // 5
-   "exceptionThrown"                                   // 6
+   "exceptionThrown",                                  // 6
 
    "methodEnterValidationFailure",                     // 7
    "methodExitValidationFailure",                      // 8
