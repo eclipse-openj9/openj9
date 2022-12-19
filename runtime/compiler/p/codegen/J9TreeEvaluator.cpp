@@ -3704,7 +3704,7 @@ TR::Register *J9::Power::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node *node, T
    if (comp->getOption(TR_TraceCG))
       {
       traceMsg(comp, "%s: Creating and evaluating the following tree to generate the necessary helper call for this node\n", node->getOpCode().getName());
-      cg->getDebug()->print(comp->getOutFile(), helperCallNode);
+      cg->getDebug()->print(comp->log(), helperCallNode);
       }
 
    TR::Register *srcReg, *dstReg;
@@ -7576,11 +7576,12 @@ static bool simpleReadMonitor(TR::Node *node, TR::CodeGenerator *cg, TR::Node *o
    // evaluating them here
    if (comp->getOption(TR_TraceCG) || debug("traceGRA"))
       {
-      trfprintf(comp->getOutFile(), "\n");
-      comp->getDebug()->dumpSingleTreeWithInstrs(nextTreeTop, NULL, true, false, true, comp->getOption(TR_TraceRegisterPressureDetails));
-      trfprintf(comp->getOutFile(), "\n");
-      comp->getDebug()->dumpSingleTreeWithInstrs(secondNextTreeTop, NULL, true, false, true, comp->getOption(TR_TraceRegisterPressureDetails));
-      trfflush(comp->getOutFile());
+      OMR::Logger *log = comp->log();
+      log->println();
+      comp->getDebug()->dumpSingleTreeWithInstrs(log, nextTreeTop, NULL, true, false, true, comp->getOption(TR_TraceRegisterPressureDetails));
+      log->println();
+      comp->getDebug()->dumpSingleTreeWithInstrs(log, secondNextTreeTop, NULL, true, false, true, comp->getOption(TR_TraceRegisterPressureDetails));
+      log->flush();
       }
 
    if (liveMonitorEnterStore)

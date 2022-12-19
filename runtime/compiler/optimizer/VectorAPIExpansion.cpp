@@ -36,6 +36,7 @@
 #include "il/SymbolReference.hpp"
 #include "optimizer/VectorAPIExpansion.hpp"
 #include "optimizer/TransformUtil.hpp"
+#include "ras/Logger.hpp"
 
 
 const char *
@@ -752,10 +753,10 @@ TR_VectorAPIExpansion::findAllAliases(int32_t classId, int32_t id,
       return;
       }
 
-   if (_trace)
+   if (_trace && comp()->getLoggingEnabled())
       {
       traceMsg(comp(), "Iterating through %s aliases for #%d:\n", tempAliases ? "temp" : "whole", id);
-      (_aliasTable[id].*aliasesField)->print(comp());
+      (_aliasTable[id].*aliasesField)->print(comp()->log(), comp());
       traceMsg(comp(), "\n");
       }
 
@@ -1267,7 +1268,7 @@ TR_VectorAPIExpansion::validateVectorAliasClasses(TR_BitVector *vectorAliasTable
 
          if (_aliasTable[id].*aliasesField)
             {
-            (_aliasTable[id].*aliasesField)->print(comp());
+            (_aliasTable[id].*aliasesField)->print(comp()->log(), comp());
             traceMsg(comp(), "\n");
             }
          }

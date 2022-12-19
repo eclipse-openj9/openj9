@@ -58,6 +58,7 @@
 #include "runtime/J9Profiler.hpp"
 #include "runtime/J9ValueProfiler.hpp"
 #include "OMR/Bytes.hpp"
+#include "ras/Logger.hpp"
 
 #ifdef TR_TARGET_64BIT
 #include "x/amd64/codegen/AMD64GuardedDevirtualSnippet.hpp"
@@ -1442,7 +1443,7 @@ void TR::X86CallSite::computeProfiledTargets()
          if (p)
             {
             traceMsg(comp(), "Value profile info for callNode %p in %s\n", callNode, comp()->signature());
-            addressInfo->getProfiler()->dumpInfo(comp()->getOutFile());
+            addressInfo->getProfiler()->dumpInfo(comp()->log());
             traceMsg(comp(), "\n");
             }
 

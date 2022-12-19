@@ -57,6 +57,7 @@
 #include "optimizer/Optimization_inlines.hpp"
 #include "optimizer/Optimizations.hpp"
 #include "optimizer/TransformUtil.hpp"
+#include "ras/Logger.hpp"
 
 #define OPT_DETAILS "O^O PROFILE GENERATOR: "
 #define MAX_NUMBER_OF_ALLOWED_NODES 90000
@@ -215,7 +216,7 @@ int32_t TR_ProfileGenerator::perform()
    if (trace())
       {
       traceMsg(comp(), "Starting Profile Generation for %s\n", comp()->signature());
-      comp()->dumpMethodTrees("Trees before Profile Generation");
+      comp()->dumpMethodTrees(comp()->log(), "Trees before Profile Generation");
       }
 
    {
@@ -244,7 +245,7 @@ int32_t TR_ProfileGenerator::perform()
 
    if (trace())
       {
-      comp()->dumpMethodTrees("Trees after Profile Generation");
+      comp()->dumpMethodTrees(comp()->log(), "Trees after Profile Generation");
       traceMsg(comp(), "Ending Profile Generation");
       }
 

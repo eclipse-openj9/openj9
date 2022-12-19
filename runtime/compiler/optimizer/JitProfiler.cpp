@@ -55,6 +55,7 @@
 #include "runtime/J9Runtime.hpp"
 #include "control/Recompilation.hpp"
 #include "control/RecompilationInfo.hpp"
+#include "ras/Logger.hpp"
 
 #define OPT_DETAILS "O^O JIT PROFILER: "
 #define CLASS_POINTER_MASK 1
@@ -94,7 +95,7 @@ int32_t TR_JitProfiler::perform()
    _checklist = new (trStackMemory()) TR::NodeChecklist(comp());
 
    if (trace())
-      comp()->dumpMethodTrees("Before JIT Profiling");
+      comp()->dumpMethodTrees(comp()->log(), "Before JIT Profiling");
 
    if (_cfg->getStructure() != NULL)
       _cfg->setStructure(NULL);
@@ -114,7 +115,7 @@ int32_t TR_JitProfiler::perform()
       }
 
    if (trace())
-      comp()->dumpMethodTrees("After JIT Profiling");
+      comp()->dumpMethodTrees(comp()->log(), "After JIT Profiling");
 
    } // scope for stack memory region
 

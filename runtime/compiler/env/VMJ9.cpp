@@ -106,6 +106,7 @@
 #include "infra/SimpleRegex.hpp"
 #include "optimizer/Optimizer.hpp"
 #include "optimizer/TransformUtil.hpp"
+#include "ras/Logger.hpp"
 #include "runtime/asmprotos.h"
 #include "runtime/CodeCache.hpp"
 #include "runtime/CodeCacheManager.hpp"
@@ -4483,7 +4484,7 @@ getEquivalentVirtualCallNode(TR::Node *callNode, int argsToSkip, const char *des
    if (comp->getOption(TR_TraceCG))
       {
       traceMsg(comp, "JSR292: j2i-thunk call node for %s is %p:\n", description, j2iThunkCall);
-      comp->getDebug()->print(comp->getOutFile(), j2iThunkCall, 2, true);
+      comp->getDebug()->print(comp->log(), j2iThunkCall, 2, true);
       }
    return j2iThunkCall;
    }
@@ -7746,13 +7747,13 @@ TR_J9VM::inlineNativeCall(TR::Compilation * comp, TR::TreeTop * callNodeTreeTop,
          if (  comp->cg()->supportsInliningOfIsInstance()
             && performTransformation(comp, "O^O inlineNativeCall: generate instanceof [%p] for Class.isInstance at bytecode %d\n", callNode, callNode->getByteCodeInfo().getByteCodeIndex()) )
             {
-            if (comp->getOption(TR_TraceILGen) && comp->getDebug())
+            if (comp->getOption(TR_TraceILGen))
                {
                TR_BitVector nodeChecklistBeforeDump(comp->getNodeCount(), comp->trMemory(), stackAlloc, growable);
                traceMsg(comp, "   /--- Class.isInstance call tree --\n");
 
                comp->getDebug()->saveNodeChecklist(nodeChecklistBeforeDump);
-               comp->getDebug()->dumpSingleTreeWithInstrs(callNodeTreeTop, NULL, true, false, true, false);
+               comp->getDebug()->dumpSingleTreeWithInstrs(comp->log(), callNodeTreeTop, NULL, true, false, true, false);
                comp->getDebug()->restoreNodeChecklist(nodeChecklistBeforeDump);
 
                traceMsg(comp, "\n");

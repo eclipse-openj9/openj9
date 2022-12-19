@@ -51,6 +51,7 @@
 #include "ilgen/J9ByteCodeIlGenerator.hpp"
 #include "infra/Bit.hpp"               //for trailingZeroes
 #include "env/JSR292Methods.h"
+#include "ras/Logger.hpp"
 
 #if defined(J9VM_OPT_JITSERVER)
 #include "env/j9methodServer.hpp"
@@ -110,7 +111,7 @@
 
 static TR::SymbolReference * createLoadFieldSymRef(TR::Compilation * comp, TR_OpaqueClassBlock * fieldClass, const char * fieldname, bool nullIfNotFound = false);
 
-static void printStack(TR::Compilation *comp, TR_Stack<TR::Node*> *stack, const char *message)
+static void printStack(OMR::Logger *log, TR::Compilation *comp, TR_Stack<TR::Node*> *stack, const char *message)
    {
    // TODO: This should be in the debug DLL
    if (stack->isEmpty())
@@ -128,13 +129,13 @@ static void printStack(TR::Compilation *comp, TR_Stack<TR::Node*> *stack, const 
          TR::Node *node = stack->element(i);
          traceMsg(comp, "\n");
          snprintf(buf, sizeof(buf), "   @%-2d", i);
-         comp->getDebug()->printWithFixedPrefix(comp->getOutFile(), node, 1, false, true, buf);
+         comp->getDebug()->printWithFixedPrefix(log, node, 1, false, true, buf);
          if (!nodesAlreadyPrinted.isSet(node->getGlobalIndex()))
             {
             for (int j = 0; j < node->getNumChildren(); ++j)
                {
                traceMsg(comp, "\n");
-               comp->getDebug()->printWithFixedPrefix(comp->getOutFile(), node->getChild(j), 3, true, true, "      ");
+               comp->getDebug()->printWithFixedPrefix(log, node->getChild(j), 3, true, true, "      ");
                }
             }
          }
@@ -142,7 +143,7 @@ static void printStack(TR::Compilation *comp, TR_Stack<TR::Node*> *stack, const 
       }
    }
 
-static void printTrees(TR::Compilation *comp, TR::TreeTop *firstTree, TR::TreeTop *stopTree, const char *message)
+static void printTrees(OMR::Logger *log, TR::Compilation *comp, TR::TreeTop *firstTree, TR::TreeTop *stopTree, const char *message)
    {
    // TODO: This should be in the debug DLL
    if (firstTree == stopTree)
@@ -155,7 +156,7 @@ static void printTrees(TR::Compilation *comp, TR::TreeTop *firstTree, TR::TreeTo
       for (TR::TreeTop *tt = firstTree; tt && tt != stopTree; tt = tt->getNextTreeTop())
          {
          traceMsg(comp, "\n");
-         comp->getDebug()->printWithFixedPrefix(comp->getOutFile(), tt->getNode(), 1, true, true, "      ");
+         comp->getDebug()->printWithFixedPrefix(log, tt->getNode(), 1, true, true, "      ");
          }
       traceMsg(comp, "\n");
       }
@@ -569,7 +570,7 @@ TR::Block * TR_J9ByteCodeIlGenerator::walker(TR::Block * prevBlock)
          TR_BitVector afterTreesInserted (comp()->getNodeCount(), trMemory(), stackAlloc, growable);
 
          comp()->getDebug()->saveNodeChecklist(beforeTreesInserted);
-         printTrees(comp(), traceStart->getNextTreeTop(), traceStop, "trees inserted");
+         printTrees(comp()->log(), comp(), traceStart->getNextTreeTop(), traceStop, "trees inserted");
          comp()->getDebug()->saveNodeChecklist(afterTreesInserted);
 
          // Commoning in the "stack after" printout should match that in the
@@ -583,7 +584,7 @@ TR::Block * TR_J9ByteCodeIlGenerator::walker(TR::Block * prevBlock)
          // be commoned, but this overall clarity seems to favour the terser format.
          //
          //comp()->getDebug()->restoreNodeChecklist(beforeTreesInserted);
-         printStack(comp(), _stack, "stack after");
+         printStack(comp()->log(), comp(), _stack, "stack after");
 
          traceMsg(comp(), "  ============================================================\n");
 
@@ -1059,7 +1060,7 @@ TR_J9ByteCodeIlGenerator::genNodeAndPopChildren(TR::ILOpCodes opcode, int32_t nu
          TR::StackMemoryRegion stackMemoryRegion(*comp()->trMemory());
 
          TR_BitVector before(comp()->getNodeCount(), trMemory(), stackAlloc, growable);
-         printStack(comp(), _stack, "stack after expandPlaceholderCalls");
+         printStack(comp()->log(), comp(), _stack, "stack after expandPlaceholderCalls");
          comp()->getDebug()->restoreNodeChecklist(before);
          }
       }
@@ -3289,7 +3290,7 @@ TR_J9ByteCodeIlGenerator::genInvokeDynamic(int32_t callSiteIndex)
       loadInvokeCacheArrayElements(callSiteTableEntrySymRef, invokeCacheArray, isUnresolved);
 
    if (comp()->getOption(TR_TraceILGen))
-      printStack(comp(), _stack, "(Stack after load from callsite table)");
+      printStack(comp()->log(), comp(), _stack, "(Stack after load from callsite table)");
 
    /* We need to get the expected number of parameters from the signature. There is a case where findOrCreateDynamicMethodSymbol()
     * returns an error-throwing MethodHandle that takes 0 arguments (occurs when an error is caught during resolveInvokeDynamic()). We cannot use
@@ -3333,7 +3334,7 @@ TR_J9ByteCodeIlGenerator::genInvokeDynamic(int32_t callSiteIndex)
    TR::Node *receiver = pop();
 
    if (comp()->getOption(TR_TraceILGen))
-      printStack(comp(), _stack, "(Stack after load from callsite table)");
+      printStack(comp()->log(), comp(), _stack, "(Stack after load from callsite table)");
 
    // If the receiver handle is resolved, we can use a more specific symref
    //
@@ -3414,7 +3415,7 @@ TR_J9ByteCodeIlGenerator::genInvokeHandle(int32_t cpIndex)
       loadInvokeCacheArrayElements(methodTypeTableEntrySymRef, invokeCacheArray, isUnresolved);
 
    if (comp()->getOption(TR_TraceILGen))
-      printStack(comp(), _stack, "(Stack after load from method type table)");
+      printStack(comp()->log(), comp(), _stack, "(Stack after load from method type table)");
 
    TR::Node* callNode = genInvokeDirect(targetMethodSymRef);
 
@@ -3440,7 +3441,7 @@ TR::Node *
 TR_J9ByteCodeIlGenerator::genInvokeHandle(TR::SymbolReference *invokeExactSymRef, TR::Node *invokedynamicReceiver)
    {
    if (comp()->getOption(TR_TraceILGen))
-      printStack(comp(), _stack, "(Stack before genInvokeHandle)");
+      printStack(comp()->log(), comp(), _stack, "(Stack before genInvokeHandle)");
 
    TR::Node* tmpTargetAddress = TR::Node::lconst(0);
    TR::Node *callNode = genInvoke(invokeExactSymRef, tmpTargetAddress, invokedynamicReceiver);

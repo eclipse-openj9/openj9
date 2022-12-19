@@ -42,6 +42,7 @@
 #include "p/codegen/PPCEvaluator.hpp"
 #include "p/codegen/PPCInstruction.hpp"
 #include "p/codegen/GenerateInstructions.hpp"
+#include "ras/Logger.hpp"
 #include "runtime/CodeCache.hpp"
 #include "runtime/CodeCacheManager.hpp"
 
@@ -216,13 +217,13 @@ uint8_t *TR::PPCReadMonitorSnippet::emitSnippetBody()
    }
 
 void
-TR::PPCReadMonitorSnippet::print(TR::FILE *pOutFile, TR_Debug *debug)
+TR::PPCReadMonitorSnippet::print(OMR::Logger *log, TR_Debug *debug)
    {
    TR::Compilation *comp = cg()->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg()->fe());
    uint8_t *cursor = getRecurCheckLabel()->getCodeLocation();
 
-   debug->printSnippetLabel(pOutFile, getRecurCheckLabel(), cursor, "Read Monitor Snippet");
+   debug->printSnippetLabel(log, getRecurCheckLabel(), cursor, "Read Monitor Snippet");
 
    TR::RegisterDependencyConditions *deps = getRestartLabel()->getInstruction()->getDependencyConditions();
 
@@ -233,49 +234,49 @@ TR::PPCReadMonitorSnippet::print(TR::FILE *pOutFile, TR_Debug *debug)
    TR::RealRegister *loadResultReg  = machine->getRealRegister(deps->getPostConditions()->getRegisterDependency(3)->getRealRegister());
    TR::RealRegister *loadBaseReg  = machine->getRealRegister(deps->getPostConditions()->getRegisterDependency(4)->getRealRegister());
 
-   debug->printPrefix(pOutFile, NULL, cursor, 4);
+   debug->printPrefix(log, NULL, cursor, 4);
    if (comp->target().is64Bit())
-      trfprintf(pOutFile, "rldicr \t%s, %s, 0, " INT64_PRINTF_FORMAT_HEX "\t; Get owner thread value", debug->getName(monitorReg), debug->getName(monitorReg), (int64_t) LOCK_THREAD_PTR_MASK);
+      log->printf("rldicr \t%s, %s, 0, " INT64_PRINTF_FORMAT_HEX "\t; Get owner thread value", debug->getName(monitorReg), debug->getName(monitorReg), (int64_t) LOCK_THREAD_PTR_MASK);
    else
-      trfprintf(pOutFile, "rlwinm \t%s, %s, 0, 0x%x\t; Get owner thread value", debug->getName(monitorReg), debug->getName(monitorReg), LOCK_THREAD_PTR_MASK);
+      log->printf("rlwinm \t%s, %s, 0, 0x%x\t; Get owner thread value", debug->getName(monitorReg), debug->getName(monitorReg), LOCK_THREAD_PTR_MASK);
    cursor+= 4;
 
-   debug->printPrefix(pOutFile, NULL, cursor, 4);
+   debug->printPrefix(log, NULL, cursor, 4);
    if (comp->target().is64Bit())
-      trfprintf(pOutFile, "cmp8 \t%s, %s, %s\t; Compare VMThread to owner thread", debug->getName(condReg), debug->getName(metaReg), debug->getName(monitorReg));
+      log->printf("cmp8 \t%s, %s, %s\t; Compare VMThread to owner thread", debug->getName(condReg), debug->getName(metaReg), debug->getName(monitorReg));
    else
-      trfprintf(pOutFile, "cmp4 \t%s, %s, %s\t; Compare VMThread to owner thread", debug->getName(condReg), debug->getName(metaReg), debug->getName(monitorReg));
+      log->printf("cmp4 \t%s, %s, %s\t; Compare VMThread to owner thread", debug->getName(condReg), debug->getName(metaReg), debug->getName(monitorReg));
    cursor+= 4;
 
-   debug->printPrefix(pOutFile, NULL, cursor, 4);
+   debug->printPrefix(log, NULL, cursor, 4);
    int32_t distance = *((int32_t *) cursor) & 0x0000fffc;
    distance = (distance << 16) >> 16;   // sign extend
-   trfprintf(pOutFile, "bne %s, " POINTER_PRINTF_FORMAT "\t; Use Helpers", debug->getName(condReg), (intptr_t)cursor + distance);
+   log->printf("bne %s, " POINTER_PRINTF_FORMAT "\t; Use Helpers", debug->getName(condReg), (intptr_t)cursor + distance);
    cursor+= 4;
 
-   debug->printPrefix(pOutFile, NULL, cursor, 4);
-   trfprintf(pOutFile, "%s \t%s, [%s, %d]\t; Load", TR::InstOpCode::metadata[getLoadOpCode()].name, debug->getName(loadResultReg), debug->getName(loadBaseReg), getLoadOffset());
+   debug->printPrefix(log, NULL, cursor, 4);
+   log->printf("%s \t%s, [%s, %d]\t; Load", TR::InstOpCode::metadata[getLoadOpCode()].name, debug->getName(loadResultReg), debug->getName(loadBaseReg), getLoadOffset());
    cursor+= 4;
 
-   debug->printPrefix(pOutFile, NULL, cursor, 4);
+   debug->printPrefix(log, NULL, cursor, 4);
    distance = *((int32_t *) cursor) & 0x03fffffc;
    distance = (distance << 6) >> 6;   // sign extend
-   trfprintf(pOutFile, "b \t" POINTER_PRINTF_FORMAT "\t\t; ", (intptr_t)cursor + distance);
-   debug->print(pOutFile, getRestartLabel());
+   log->printf("b \t" POINTER_PRINTF_FORMAT "\t\t; ", (intptr_t)cursor + distance);
+   debug->print(log, getRestartLabel());
    cursor+= 4;
 
-   debug->printPrefix(pOutFile, NULL, cursor, 4);
+   debug->printPrefix(log, NULL, cursor, 4);
    distance = *((int32_t *) cursor) & 0x03fffffc;
    distance = (distance << 6) >> 6;   // sign extend
-   trfprintf(pOutFile, "bl \t" POINTER_PRINTF_FORMAT "\t\t; %s", (intptr_t)cursor + distance, debug->getName(getMonitorEnterHelper()));
+   log->printf("bl \t" POINTER_PRINTF_FORMAT "\t\t; %s", (intptr_t)cursor + distance, debug->getName(getMonitorEnterHelper()));
    if (debug->isBranchToTrampoline(getMonitorEnterHelper(), cursor, distance))
-      trfprintf(pOutFile, " Through trampoline");
+      log->prints(" Through trampoline");
    cursor+= 4;
 
-   debug->printPrefix(pOutFile, NULL, cursor, 4);
-   trfprintf(pOutFile, "%s \t%s, [%s, %d]\t; Load", TR::InstOpCode::metadata[getLoadOpCode()].name, debug->getName(loadResultReg), debug->getName(loadBaseReg), getLoadOffset());
+   debug->printPrefix(log, NULL, cursor, 4);
+   log->printf("%s \t%s, [%s, %d]\t; Load", TR::InstOpCode::metadata[getLoadOpCode()].name, debug->getName(loadResultReg), debug->getName(loadBaseReg), getLoadOffset());
 
-   debug->print(pOutFile, (TR::PPCHelperCallSnippet *)this);
+   debug->print(log, (TR::PPCHelperCallSnippet *)this);
    }
 
 uint32_t TR::PPCReadMonitorSnippet::getLength(int32_t estimatedSnippetStart)
@@ -1193,19 +1194,19 @@ uint8_t *TR::PPCAllocPrefetchSnippet::emitSnippetBody()
    }
 
 void
-TR::PPCAllocPrefetchSnippet::print(TR::FILE *pOutFile, TR_Debug * debug)
+TR::PPCAllocPrefetchSnippet::print(OMR::Logger *log, TR_Debug * debug)
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg()->fe());
    uint8_t *cursor = getSnippetLabel()->getCodeLocation();
 
-   debug->printSnippetLabel(pOutFile, getSnippetLabel(), cursor, "Allocation Prefetch Snippet");
+   debug->printSnippetLabel(log, getSnippetLabel(), cursor, "Allocation Prefetch Snippet");
 
    int32_t  distance;
 
-   debug->printPrefix(pOutFile, NULL, cursor, 4);
+   debug->printPrefix(log, NULL, cursor, 4);
    distance = *((int32_t *) cursor) & 0x03fffffc;
    distance = (distance << 6) >> 6;   // sign extend
-   trfprintf(pOutFile, "b \t" POINTER_PRINTF_FORMAT "\t\t", (intptr_t)cursor + distance);
+   log->printf("b \t" POINTER_PRINTF_FORMAT "\t\t", (intptr_t)cursor + distance);
    }
 
 uint32_t TR::PPCAllocPrefetchSnippet::getLength(int32_t estimatedCodeStart)
@@ -1246,19 +1247,19 @@ uint8_t *TR::PPCNonZeroAllocPrefetchSnippet::emitSnippetBody()
    }
 
 void
-TR::PPCNonZeroAllocPrefetchSnippet::print(TR::FILE *pOutFile, TR_Debug * debug)
+TR::PPCNonZeroAllocPrefetchSnippet::print(OMR::Logger *log, TR_Debug * debug)
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg()->fe());
    uint8_t *cursor = getSnippetLabel()->getCodeLocation();
 
-   debug->printSnippetLabel(pOutFile, getSnippetLabel(), cursor, "Non Zero TLH Allocation Prefetch Snippet");
+   debug->printSnippetLabel(log, getSnippetLabel(), cursor, "Non Zero TLH Allocation Prefetch Snippet");
 
    int32_t  distance;
 
-   debug->printPrefix(pOutFile, NULL, cursor, 4);
+   debug->printPrefix(log, NULL, cursor, 4);
    distance = *((int32_t *) cursor) & 0x03fffffc;
    distance = (distance << 6) >> 6;   // sign extend
-   trfprintf(pOutFile, "b \t" POINTER_PRINTF_FORMAT "\t\t", (intptr_t)cursor + distance);
+   log->printf("b \t" POINTER_PRINTF_FORMAT "\t\t", (intptr_t)cursor + distance);
    }
 
 uint32_t TR::PPCNonZeroAllocPrefetchSnippet::getLength(int32_t estimatedCodeStart)

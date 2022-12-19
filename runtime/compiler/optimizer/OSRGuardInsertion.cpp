@@ -32,6 +32,7 @@
 #include "optimizer/RematTools.hpp"
 #include "optimizer/TransformUtil.hpp"
 #include "ras/DebugCounter.hpp"
+#include "ras/Logger.hpp"
 #include "infra/Checklist.hpp"
 
 TR_Structure* fakeRegion(TR::Compilation *comp);
@@ -175,7 +176,7 @@ void TR_OSRGuardInsertion::removeRedundantPotentialOSRPointHelperCalls(TR_HCRGua
 
    if (trace())
       {
-      comp()->dumpMethodTrees("Trees after redundant potentialOSRPointHelper call removal", comp()->getMethodSymbol());
+      comp()->dumpMethodTrees(comp()->log(), "Trees after redundant potentialOSRPointHelper call removal", comp()->getMethodSymbol());
       }
    }
 
