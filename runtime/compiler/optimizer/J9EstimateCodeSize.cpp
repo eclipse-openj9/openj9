@@ -39,6 +39,7 @@
 #include "optimizer/J9CallGraph.hpp"
 #include "optimizer/J9EstimateCodeSize.hpp"
 #include "optimizer/InterpreterEmulator.hpp"
+#include "ras/Logger.hpp"
 #include "ras/LogTracer.hpp"
 #include "runtime/J9Profiler.hpp"
 
@@ -1019,7 +1020,7 @@ TR_J9EstimateCodeSize::processBytecodeAndGenerateCFG(TR_CallTarget *calltarget, 
             flags[i].set(InterpreterEmulator::BytecodePropertyFlag::isUnsanitizeable);
             break;
          default:
-         	break;
+            break;
          }
 
       if (flags[i].testAny(InterpreterEmulator::BytecodePropertyFlag::isUnsanitizeable))
@@ -1472,13 +1473,13 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
    cfg.propagateColdInfo(callGraphEnabled); // propagate coldness but also generate frequency information
    // for blocks if call graph profiling is enabled
 
-   if (tracer()->heuristicLevel())
+   if (tracer()->heuristicLevel() && comp()->getLoggingEnabled())
       {
       heuristicTrace(tracer(), "After propagating the coldness info\n");
       heuristicTrace(tracer(), "<cfg>");
       for (TR::CFGNode* node = cfg.getFirstNode(); node; node = node->getNext())
          {
-         comp()->findOrCreateDebug()->print(comp()->getOutFile(), node, 6);
+         comp()->findOrCreateDebug()->print(comp()->log(), node, 6);
          }
       heuristicTrace(tracer(), "</cfg>");
       }
@@ -2258,8 +2259,7 @@ TR_J9EstimateCodeSize::labelGraph(TR::CFG *cfg,
          TR::Block *dest = (*e)->getFrom()->asBlock();
          nodesToBeEvaluated.enqueue(dest);
          }
-      for (auto e = currentBlock->getExceptionPredecessors().begin(); e != currentBlock->getExceptionPredecessors().end();
-    		  ++e)
+      for (auto e = currentBlock->getExceptionPredecessors().begin(); e != currentBlock->getExceptionPredecessors().end(); ++e)
          {
          TR::Block *dest = (*e)->getFrom()->asBlock();
          nodesToBeEvaluated.enqueue(dest);
@@ -2298,7 +2298,7 @@ TR_J9EstimateCodeSize::trimBlocksForPartialInlining(TR_CallTarget *calltarget, T
    if (tracer()->partialLevel())
       {
       partialTrace(tracer(),"Dumping CFG for calltarget %p", calltarget);
-      comp()->dumpFlowGraph(calltarget->_cfg);
+      comp()->dumpFlowGraph(comp()->log(), calltarget->_cfg);
       }
 
    int32_t minpartialsize = MIN_PARTIAL_SIZE;

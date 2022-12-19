@@ -63,6 +63,7 @@ class TR_PersistentMethodInfo;
 struct TR_ByteCodeInfo;
 struct TR_InlinedCallSite;
 template <typename ListKind> class List;
+namespace OMR { class Logger; }
 
 //////////////////////////
 // PersistentProfileInfos
@@ -171,7 +172,7 @@ class TR_PersistentProfileInfo
 
    TR_CallSiteInfo          *getCallSiteInfo() {return _callSiteInfo;}
 
-   void dumpInfo(TR::FILE *);
+   void dumpInfo(OMR::Logger *log);
 
    /**
     * @brief Determines the size of the serialized data for this object
@@ -490,9 +491,9 @@ class TR_ValueProfileInfo
    TR_AbstractProfilerInfo *getOrCreateProfilerInfo(TR_ByteCodeInfo &bcInfo, TR::Compilation *comp, TR_ValueInfoKind kind,
       TR_ValueInfoSource source, uint64_t initialValue = CONSTANT64(0xdeadf00ddeadf00d));
 
-   void resetLowFreqValues(TR::FILE *);
+   void resetLowFreqValues(OMR::Logger *log);
 
-   void dumpInfo(TR::FILE *);
+   void dumpInfo(OMR::Logger *log);
 
    private:
    TR_AbstractProfilerInfo *_values[LastProfiler];
@@ -695,7 +696,7 @@ class TR_BlockFrequencyInfo
 
    TR::Node* generateBlockRawCountCalculationSubTree(TR::Compilation *comp, int32_t blockNumber, TR::Node *node);
    TR::Node* generateBlockRawCountCalculationSubTree(TR::Compilation *comp, TR::Node *node, bool trace);
-   void dumpInfo(TR::FILE *);
+   void dumpInfo(OMR::Logger *log);
 
    int32_t getCallCount();
    int32_t getMaxRawCount(int32_t callerIndex);
@@ -822,7 +823,7 @@ class TR_CatchBlockProfileInfo
    uint32_t & getCatchCounter() { return _catchCounter; }
    uint32_t & getThrowCounter() { return _throwCounter; }
 
-   void dumpInfo(TR::FILE *);
+   void dumpInfo(OMR::Logger *log);
 
    private:
 
@@ -870,7 +871,7 @@ class TR_CallSiteInfo
    int32_t hasSamePartialBytecodeInfo(TR_ByteCodeInfo & persistentBytecodeInfo, TR_ByteCodeInfo & currentBytecodeInfo, TR::Compilation *comp);
    size_t getNumCallSites() { return _numCallSites;}
    TR_OpaqueMethodBlock *inlinedMethod(TR_ByteCodeInfo & persistentByteCodeInfo, TR::Compilation *comp);
-   void dumpInfo(TR::FILE *);
+   void dumpInfo(OMR::Logger *log);
 
    /**
     * @brief Determines the size of the serialized data for this object

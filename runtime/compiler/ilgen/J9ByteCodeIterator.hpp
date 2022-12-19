@@ -36,6 +36,8 @@
 #include "env/VMJ9.h"
 #include "ilgen/J9ByteCode.hpp"
 
+namespace OMR { class Logger; }
+
 class TR_J9ByteCodeIterator : public TR_ByteCodeIterator<TR_J9ByteCode, TR_ResolvedJ9Method>
    {
    typedef TR_ByteCodeIterator<TR_J9ByteCode, TR_ResolvedJ9Method> Base;
@@ -149,16 +151,16 @@ public:
 protected:
    void stepOverVariableSizeBC();
 
-   void printFirst(int32_t i);
-   void printCPIndex(int32_t i);
-   void printConstant(int32_t i);
-   void printConstant(double d);
-   void printFirstAndConstant(int32_t i, int32_t j);
-   void printJumpIndex(int32_t offset);
+   void printFirst(OMR::Logger *log, int32_t i);
+   void printCPIndex(OMR::Logger *log, int32_t i);
+   void printConstant(OMR::Logger *log, int32_t i);
+   void printConstant(OMR::Logger *log, double d);
+   void printFirstAndConstant(OMR::Logger *log, int32_t i, int32_t j);
+   void printJumpIndex(OMR::Logger *log, int32_t offset);
 
-   void printByteCodePrologue();
-   void printByteCode();
-   void printByteCodeEpilogue();
+   void printByteCodePrologue(OMR::Logger *log);
+   void printByteCode(OMR::Logger *log);
+   void printByteCodeEpilogue(OMR::Logger *log);
 
    TR_J9VMBase *fe()             { return _fe; }
    //TR_ResolvedJ9Method *method() { return _method; }

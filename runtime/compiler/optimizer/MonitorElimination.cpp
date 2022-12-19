@@ -72,6 +72,7 @@
 #include "optimizer/UseDefInfo.hpp"
 #include "optimizer/ValueNumberInfo.hpp"
 #include "ras/LogTracer.hpp"
+#include "ras/Logger.hpp"
 
 class TR_OpaqueClassBlock;
 
@@ -355,7 +356,7 @@ int32_t TR::MonitorElimination::perform()
          "Starting Monitor Elimination for %s\n"
          "Warning: limiting lastOptSubIndex in Monitor Elimination may leave monitors in an unbalanced state.\n",
          comp()->signature());
-      comp()->dumpMethodTrees("Trees before Monitor Elimination");
+      comp()->dumpMethodTrees(comp()->log(), "Trees before Monitor Elimination");
       }
 
    TR_ValueNumberInfo *valueNumberInfo = optimizer()->getValueNumberInfo();
@@ -474,7 +475,7 @@ int32_t TR::MonitorElimination::perform()
 
    if (trace())
       {
-      comp()->dumpMethodTrees("Trees after Monitor Elimination");
+      comp()->dumpMethodTrees(comp()->log(), "Trees after Monitor Elimination");
       traceMsg(comp(), "Ending Monitor Elimination\n");
 
       if (firstPass() && !_hasTMOpportunities)
@@ -2931,7 +2932,7 @@ void TR::MonitorElimination::coarsenMonitorRanges()
    if (trace())
       {
       traceMsg(comp(), "Guarded virtual call blocks : \n");
-      _guardedVirtualCallBlocks->print(comp());
+      _guardedVirtualCallBlocks->print(comp()->log(), comp());
       traceMsg(comp(), "\n");
       }
 
@@ -3136,7 +3137,7 @@ void TR::MonitorElimination::coarsenMonitor(int32_t origBlockNum, int32_t prevLo
          {
          traceMsg(comp(), "Successors of block_%d\n", blockNum);
 
-         _temp->print(comp());
+         _temp->print(comp()->log(), comp());
          traceMsg(comp(), "\n");
          }
 
@@ -3145,12 +3146,13 @@ void TR::MonitorElimination::coarsenMonitor(int32_t origBlockNum, int32_t prevLo
 
       if (trace())
          {
+         OMR::Logger *log = comp()->log();
          traceMsg(comp(), "Blocks At Same Nesting Level\n");
-         getBlocksAtSameNestingLevel(block)->print(comp());
+         getBlocksAtSameNestingLevel(block)->print(log, comp());
          traceMsg(comp(), "\nBlocks containing monents\n");
-         _containsMonents->print(comp());
+         _containsMonents->print(log, comp());
          traceMsg(comp(), "\nSuccessors containing monents (possible coarsening candidates) :\n");
-         _temp->print(comp());
+         _temp->print(log, comp());
          traceMsg(comp(), "\n");
          }
 
@@ -3246,7 +3248,7 @@ void TR::MonitorElimination::coarsenMonitor(int32_t origBlockNum, int32_t prevLo
          if (trace())
             {
             traceMsg(comp(), "Closure of common preds and succs : \n");
-            _closureIntersection->print(comp());
+            _closureIntersection->print(comp()->log(), comp());
             traceMsg(comp(), "\n");
             }
 
@@ -3347,7 +3349,7 @@ void TR::MonitorElimination::coarsenMonitor(int32_t origBlockNum, int32_t prevLo
             if (trace())
                {
                traceMsg(comp(), "Guarded virtual call blocks to be adjusted : \n");
-               _guardedVirtualCallBlocks->print(comp());
+               _guardedVirtualCallBlocks->print(comp()->log(), comp());
                traceMsg(comp(), "\n");
                }
 
@@ -3525,7 +3527,7 @@ void TR::MonitorElimination::collectSuccessors(int32_t blockNum, TR_BitVector *m
          if (trace())
             {
             traceMsg(comp(), "Predecessors for block_%d\n", nextSucc);
-            predecessors->print(comp());
+            predecessors->print(comp()->log(), comp());
             traceMsg(comp(), "\n");
             }
 
@@ -3577,14 +3579,15 @@ void TR::MonitorElimination::collectSuccessors(int32_t blockNum, TR_BitVector *m
 
          if (trace())
             {
+            OMR::Logger *log = comp()->log();
             traceMsg(comp(), "Intersection for block_%d\n", nextSucc);
-            _intersection->print(comp());
+            _intersection->print(log, comp());
             traceMsg(comp(), "\n");
             traceMsg(comp(), "Subtraction for block_%d\n", nextSucc);
-            _subtraction->print(comp());
+            _subtraction->print(log, comp());
             traceMsg(comp(), "\n");
             traceMsg(comp(), "ContainsCalls for block_%d\n", nextSucc);
-            _containsCalls->print(comp());
+            _containsCalls->print(log, comp());
             traceMsg(comp(), "\n");
             }
 
@@ -3800,7 +3803,7 @@ void TR::MonitorElimination::collectPredecessors(int32_t blockNum, TR_BitVector 
          if (trace())
             {
             traceMsg(comp(), "Successors for block_%d\n", nextPred);
-            successors->print(comp());
+            successors->print(comp()->log(), comp());
             traceMsg(comp(), "\n");
             }
 
@@ -3848,14 +3851,15 @@ void TR::MonitorElimination::collectPredecessors(int32_t blockNum, TR_BitVector 
 
          if (trace())
             {
+            OMR::Logger *log = comp()->log();
             traceMsg(comp(), "Intersection for block_%d\n", nextPred);
-            _intersection->print(comp());
+            _intersection->print(log, comp());
             traceMsg(comp(), "\n");
             traceMsg(comp(), "Subtraction for block_%d\n", nextPred);
-            _subtraction->print(comp());
+            _subtraction->print(log, comp());
             traceMsg(comp(), "\n");
             traceMsg(comp(), "ContainsCalls for block_%d\n", nextPred);
-            _containsCalls->print(comp());
+            _containsCalls->print(log, comp());
             traceMsg(comp(), "\n");
             }
 

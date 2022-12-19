@@ -43,6 +43,8 @@
 #define LOCK_RES_PRESERVE_ENTER_COMPLEMENT                (OBJECT_HEADER_LOCK_RECURSION_MASK & ~OBJECT_HEADER_LOCK_LAST_RECURSION_BIT)
 #define LOCK_RES_CONTENDED_VALUE                          (OBJECT_HEADER_LOCK_FIRST_RECURSION_BIT|OBJECT_HEADER_LOCK_RESERVED|OBJECT_HEADER_LOCK_FLC)
 
+namespace OMR { class Logger; }
+
 namespace TR {
 
 class S390HeapAllocSnippet : public TR::Snippet
@@ -68,7 +70,7 @@ class S390HeapAllocSnippet : public TR::Snippet
 
    virtual uint32_t getLength(int32_t estimatedSnippetStart);
 
-   virtual void print(TR::FILE *, TR_Debug *debug);
+   virtual void print(OMR::Logger *log, TR_Debug *debug);
 
    TR::LabelSymbol      *getRestartLabel() { return _restartLabel; }
    TR::SymbolReference *getDestination() {return _destination;}

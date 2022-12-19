@@ -30,6 +30,7 @@
 #include "optimizer/EscapeAnalysisTools.hpp"
 #include "optimizer/Optimizer.hpp"
 #include "optimizer/OptimizationManager.hpp"
+#include "ras/Logger.hpp"
 
 int32_t TR_PreEscapeAnalysis::perform()
    {
@@ -106,7 +107,7 @@ int32_t TR_PreEscapeAnalysis::perform()
 
    if (comp()->trace(OMR::escapeAnalysis))
       {
-      comp()->dumpMethodTrees("Trees after Pre-Escape Analysis");
+      comp()->dumpMethodTrees(comp()->log(), "Trees after Pre-Escape Analysis");
       }
 
    return 1;

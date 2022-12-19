@@ -27,6 +27,7 @@
 #include "il/TreeTop.hpp"
 #include "il/SymbolReference.hpp"
 #include "il/AutomaticSymbol.hpp"
+#include "ras/Logger.hpp"
 
 TR_EscapeAnalysisTools::TR_EscapeAnalysisTools(TR::Compilation *comp)
    {
@@ -83,7 +84,7 @@ void TR_EscapeAnalysisTools::insertFakeEscapeForOSR(TR::Block *block, TR::Node *
       if (induceDefiningMap)
          {
          traceMsg(_comp, "insertFakeEscapeForOSR:  definingMap at induceCall n%dn %d:%d\n", induceCall->getGlobalIndex(), inlinedIndex, byteCodeIndex);
-         _comp->getOSRCompilationData()->printMap(induceDefiningMap);
+         _comp->getOSRCompilationData()->printMap(_comp->log(), induceDefiningMap);
          }
       else
          {
@@ -135,7 +136,7 @@ void TR_EscapeAnalysisTools::processAutosAndPendingPushes(TR::ResolvedMethodSymb
 
       if (deadSymRefs)
          {
-         deadSymRefs->print(_comp);
+         deadSymRefs->print(_comp->log(), _comp);
          traceMsg(_comp, "\n");
          }
       else

@@ -47,6 +47,7 @@
 #include "ilgen/IlGeneratorMethodDetails.hpp"
 #include "optimizer/Optimization_inlines.hpp"
 #include "optimizer/J9ValuePropagation.hpp"
+#include "ras/Logger.hpp"
 #include "runtime/RuntimeAssumptions.hpp"
 
 // ***************************************************************************
@@ -222,10 +223,10 @@ TR::VPConstraint *TR::VP_BCDSign::intersect1(TR::VPConstraint *other, OMR::Value
       // Tracer makes this redundant really
       traceMsg(vp->comp(),"\nTR::VP_BCDSign::intersect1\n");
       traceMsg(vp->comp(),"this  %p: ",this);
-      print(vp->comp(), vp->comp()->getOutFile());
+      print(vp->comp()->log(), vp->comp());
       traceMsg(vp->comp(), "\n");
       traceMsg(vp->comp(),"other %p: ",other);
-      other->print(vp->comp(), vp->comp()->getOutFile());
+      other->print(vp->comp()->log(), vp->comp());
       traceMsg(vp->comp(), "\n");
       }
 
@@ -246,10 +247,9 @@ TR::VPConstraint *TR::VP_BCDSign::merge1(TR::VPConstraint *other, OMR::ValueProp
       // Tracer makes this redundant really
       traceMsg(vp->comp(),"\nTR::VP_BCDSign::merge1\n");
       traceMsg(vp->comp(),"this  %p: ",this);
-      print(vp->comp(), vp->comp()->getOutFile());
-      traceMsg(vp->comp(), "\n");
-      traceMsg(vp->comp(),"other %p (isBCDSign=%d): ",other,other->asBCDSign()?1:0);
-      other->print(vp->comp(), vp->comp()->getOutFile());
+      print(vp->comp()->log(), vp->comp());
+      traceMsg(vp->comp(),"\nother %p (isBCDSign=%d): ",other,other->asBCDSign()?1:0);
+      other->print(vp->comp()->log(), vp->comp());
       traceMsg(vp->comp(), "\n");
       }
 
@@ -285,7 +285,7 @@ TR::VPConstraint *TR::VP_BCDSign::merge1(TR::VPConstraint *other, OMR::ValueProp
          if (vp->trace())
             {
             traceMsg(vp->comp(),"\treturn mergedSignConstraint %p of sign %s: ",mergedSignConstraint,mergedSignConstraint->getName());
-            mergedSignConstraint->print(vp->comp(), vp->comp()->getOutFile());
+            mergedSignConstraint->print(vp->comp()->log(), vp->comp());
             traceMsg(vp->comp(), "\n\n");
             }
          return mergedSignConstraint;
@@ -294,16 +294,16 @@ TR::VPConstraint *TR::VP_BCDSign::merge1(TR::VPConstraint *other, OMR::ValueProp
 
    if (vp->trace())
       traceMsg(vp->comp(),"\tcannot merge BCDSign constraints -- return NULL\n\n");
+
    return NULL;
    }
 
-void TR::VP_BCDSign::print(TR::Compilation *comp, TR::FILE *outFile)
+void TR::VP_BCDSign::print(OMR::Logger *log, TR::Compilation *comp)
    {
-   if (outFile == NULL)
-      return;
-    trfprintf(outFile, "%s (%s)", getName(), TR::DataType::getName(getDataType()));
+   log->printf("%s (%s)", getName(), TR::DataType::getName(getDataType()));
    }
 
-const char *TR::VP_BCDSign::name()                   { return "BCDSign";              }
-
-
+const char *TR::VP_BCDSign::name()
+   {
+   return "BCDSign";
+   }

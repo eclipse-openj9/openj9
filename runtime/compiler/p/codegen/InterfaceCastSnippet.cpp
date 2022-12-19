@@ -31,6 +31,7 @@
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
 #include "p/codegen/PPCTableOfConstants.hpp"
+#include "ras/Logger.hpp"
 
 TR::PPCInterfaceCastSnippet::PPCInterfaceCastSnippet(TR::CodeGenerator * cg, TR::Node * n, TR::LabelSymbol *restartLabel, TR::LabelSymbol *snippetLabel, TR::LabelSymbol *trueLabel, TR::LabelSymbol *falseLabel, TR::LabelSymbol *doneLabel, TR::LabelSymbol *callLabel, bool testCastClassIsSuper, bool checkCast, int32_t offsetClazz, int32_t offsetCastClassCache, bool needsResult)
    : TR::Snippet(cg, n, snippetLabel, false), _restartLabel(restartLabel), _trueLabel(trueLabel), _falseLabel(falseLabel), _doneLabel(doneLabel), _callLabel(callLabel), _testCastClassIsSuper(testCastClassIsSuper), _checkCast(checkCast), _offsetClazz(offsetClazz), _offsetCastClassCache(offsetCastClassCache), _needsResult(needsResult)
@@ -401,7 +402,7 @@ TR::PPCInterfaceCastSnippet::emitSnippetBody()
 
 
 void
-TR_Debug::print(TR::FILE *pOutFile, TR::PPCInterfaceCastSnippet * snippet)
+TR_Debug::print(OMR::Logger *log, TR::PPCInterfaceCastSnippet * snippet)
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(_cg->fe());
    uint8_t *cursor = snippet->getSnippetLabel()->getCodeLocation();
@@ -409,7 +410,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::PPCInterfaceCastSnippet * snippet)
 
    if (checkcast)
       {
-      printSnippetLabel(pOutFile, snippet->getSnippetLabel(), cursor, "Interface Cast Snippet for Checkcast");
+      printSnippetLabel(log, snippet->getSnippetLabel(), cursor, "Interface Cast Snippet for Checkcast");
 
       TR::RegisterDependencyConditions *deps = snippet->getDoneLabel()->getInstruction()->getDependencyConditions();
       TR::RealRegister *objReg       = _cg->machine()->getRealRegister(deps->getPostConditions()->getRegisterDependency(0)->getRealRegister());
@@ -420,64 +421,64 @@ TR_Debug::print(TR::FILE *pOutFile, TR::PPCInterfaceCastSnippet * snippet)
 
       int32_t value;
 
-      printPrefix(pOutFile, NULL, cursor, 4);
+      printPrefix(log, NULL, cursor, 4);
       value = *((int32_t *) cursor) & 0x0ffff;
       if (_comp->target().is64Bit() && !TR::Compiler->om.generateCompressedObjectHeaders())
-         trfprintf(pOutFile, "ld \t%s, [%s, %d]\t; Load object class", getName(scratch1Reg), getName(objReg), value );
+         log->printf("ld \t%s, [%s, %d]\t; Load object class", getName(scratch1Reg), getName(objReg), value );
       else
-         trfprintf(pOutFile, "lwz \t%s, [%s, %d]\t; Load object class", getName(scratch1Reg), getName(objReg), value );
+         log->printf("lwz \t%s, [%s, %d]\t; Load object class", getName(scratch1Reg), getName(objReg), value );
       cursor+=4;
 
-      printPrefix(pOutFile, NULL, cursor, 4);
+      printPrefix(log, NULL, cursor, 4);
       value = *((int32_t *) cursor) & 0x0ffff;
       if (_comp->target().is64Bit())
-         trfprintf(pOutFile, "ld \t%s, [%s, %d]\t; Load castClassCache", getName(scratch1Reg), getName(scratch1Reg), value );
+         log->printf("ld \t%s, [%s, %d]\t; Load castClassCache", getName(scratch1Reg), getName(scratch1Reg), value );
       else
-         trfprintf(pOutFile, "lwz \t%s, [%s, %d]\t; Load castClassCache", getName(scratch1Reg), getName(scratch1Reg), value );
+         log->printf("lwz \t%s, [%s, %d]\t; Load castClassCache", getName(scratch1Reg), getName(scratch1Reg), value );
       cursor+=4;
 
-      printPrefix(pOutFile, NULL, cursor, 4);
-      trfprintf(pOutFile, "cmpl \t%s, %s, %s\t; Compare with type to cast", getName(cndReg), getName(castClassReg), getName(scratch1Reg) );
+      printPrefix(log, NULL, cursor, 4);
+      log->printf("cmpl \t%s, %s, %s\t; Compare with type to cast", getName(cndReg), getName(castClassReg), getName(scratch1Reg) );
       cursor+=4;
 
       if (snippet->getTestCastClassIsSuper())
          {
-         printPrefix(pOutFile, NULL, cursor, 4);
+         printPrefix(log, NULL, cursor, 4);
          value = *((int32_t *) cursor) & 0xfffc;
          value = (value << 16) >> 16;   // sign extend
-         trfprintf(pOutFile, "beq \t%s, 0x%p\t;", getName(cndReg), (intptr_t)cursor + value);
+         log->printf("beq \t%s, 0x%p\t;", getName(cndReg), (intptr_t)cursor + value);
          cursor += 4;
 
-         printPrefix(pOutFile, NULL, cursor, 4);
+         printPrefix(log, NULL, cursor, 4);
          value = *((int32_t *) cursor) & 0x03fffffc;
          value = (value << 6) >> 6;   // sign extend
-         trfprintf(pOutFile, "b \t" POINTER_PRINTF_FORMAT "\t;", (intptr_t)cursor + value);
+         log->printf("b \t" POINTER_PRINTF_FORMAT "\t;", (intptr_t)cursor + value);
          cursor += 4;
 
-         printPrefix(pOutFile, NULL, cursor, 4);
+         printPrefix(log, NULL, cursor, 4);
          value = *((int32_t *) cursor) & 0x03fffffc;
          value = (value << 6) >> 6;   // sign extend
-         trfprintf(pOutFile, "b \t" POINTER_PRINTF_FORMAT "\t;", (intptr_t)cursor + value);
+         log->printf("b \t" POINTER_PRINTF_FORMAT "\t;", (intptr_t)cursor + value);
          cursor += 4;
          }
       else
          {
-         printPrefix(pOutFile, NULL, cursor, 4);
+         printPrefix(log, NULL, cursor, 4);
          value = *((int32_t *) cursor) & 0xfffc;
          value = (value << 16) >> 16;   // sign extend
-         trfprintf(pOutFile, "bne \t%s, 0x%p\t;", getName(cndReg), (intptr_t)cursor + value);
+         log->printf("bne \t%s, 0x%p\t;", getName(cndReg), (intptr_t)cursor + value);
          cursor += 4;
 
-         printPrefix(pOutFile, NULL, cursor, 4);
+         printPrefix(log, NULL, cursor, 4);
          value = *((int32_t *) cursor) & 0x03fffffc;
          value = (value << 6) >> 6;   // sign extend
-         trfprintf(pOutFile, "b \t" POINTER_PRINTF_FORMAT "\t;", (intptr_t)cursor + value);
+         log->printf("b \t" POINTER_PRINTF_FORMAT "\t;", (intptr_t)cursor + value);
          cursor += 4;
 
-         printPrefix(pOutFile, NULL, cursor, 4);
+         printPrefix(log, NULL, cursor, 4);
          value = *((int32_t *) cursor) & 0x03fffffc;
          value = (value << 6) >> 6;   // sign extend
-         trfprintf(pOutFile, "b \t" POINTER_PRINTF_FORMAT "\t;", (intptr_t)cursor + value);
+         log->printf("b \t" POINTER_PRINTF_FORMAT "\t;", (intptr_t)cursor + value);
          cursor += 4;
          }
       }
@@ -487,9 +488,9 @@ TR_Debug::print(TR::FILE *pOutFile, TR::PPCInterfaceCastSnippet * snippet)
       // in ifInstanceOf, trueLabel != falseLabel
 
       if (snippet->getTrueLabel() == snippet->getFalseLabel())
-         printSnippetLabel(pOutFile, snippet->getSnippetLabel(), cursor, "Interface Cast Snippet for instanceOf");
+         printSnippetLabel(log, snippet->getSnippetLabel(), cursor, "Interface Cast Snippet for instanceOf");
       else
-         printSnippetLabel(pOutFile, snippet->getSnippetLabel(), cursor, "Interface Cast Snippet for ifInstanceOf");
+         printSnippetLabel(log, snippet->getSnippetLabel(), cursor, "Interface Cast Snippet for ifInstanceOf");
 
       TR::RegisterDependencyConditions *deps = snippet->getDoneLabel()->getInstruction()->getDependencyConditions();
       TR::RealRegister *castClassReg = _cg->machine()->getRealRegister(TR::RealRegister::gr3);
@@ -501,94 +502,94 @@ TR_Debug::print(TR::FILE *pOutFile, TR::PPCInterfaceCastSnippet * snippet)
 
       int32_t value;
 
-      printPrefix(pOutFile, NULL, cursor, 4);
+      printPrefix(log, NULL, cursor, 4);
       value = *((int32_t *) cursor) & 0x0ffff;
       if (_comp->target().is64Bit() && !TR::Compiler->om.generateCompressedObjectHeaders())
-         trfprintf(pOutFile, "ld \t%s, [%s, %d]\t; Load castClassCache", getName(scratch2Reg), getName(objClassReg), value );
+         log->printf("ld \t%s, [%s, %d]\t; Load castClassCache", getName(scratch2Reg), getName(objClassReg), value );
       else
-         trfprintf(pOutFile, "lwz \t%s, [%s, %d]\t; Load castClassCache", getName(scratch2Reg), getName(objClassReg), value );
+         log->printf("lwz \t%s, [%s, %d]\t; Load castClassCache", getName(scratch2Reg), getName(objClassReg), value );
       cursor+=4;
 
-      printPrefix(pOutFile, NULL, cursor, 4);
+      printPrefix(log, NULL, cursor, 4);
       if (_comp->target().is64Bit())
-         trfprintf(pOutFile, "rldicr \t%s, %s, 0, 0x3D; Clean last bit (cached result)", getName(scratch1Reg), getName(scratch2Reg));
+         log->printf("rldicr \t%s, %s, 0, 0x3D; Clean last bit (cached result)", getName(scratch1Reg), getName(scratch2Reg));
       else
-         trfprintf(pOutFile, "rlwinm \t%s, %s, 0, 0xFFFFFFFE; Clean last bit (cached result)", getName(scratch1Reg), getName(scratch2Reg));
+         log->printf("rlwinm \t%s, %s, 0, 0xFFFFFFFE; Clean last bit (cached result)", getName(scratch1Reg), getName(scratch2Reg));
       cursor+= 4;
 
-      printPrefix(pOutFile, NULL, cursor, 4);
-      trfprintf(pOutFile, "cmpl \t%s, %s, %s\t; Compare with type to cast", getName(cndReg), getName(scratch1Reg), getName(castClassReg) );
+      printPrefix(log, NULL, cursor, 4);
+      log->printf("cmpl \t%s, %s, %s\t; Compare with type to cast", getName(cndReg), getName(scratch1Reg), getName(castClassReg) );
       cursor+=4;
 
       if (snippet->getTestCastClassIsSuper())
          {
-         printPrefix(pOutFile, NULL, cursor, 4);
+         printPrefix(log, NULL, cursor, 4);
          value = *((int32_t *) cursor) & 0xfffc;
          value = (value << 16) >> 16;   // sign extend
-         trfprintf(pOutFile, "beq \t%s, 0x%p\t;", getName(cndReg), (intptr_t)cursor + value);
+         log->printf("beq \t%s, 0x%p\t;", getName(cndReg), (intptr_t)cursor + value);
          cursor += 4;
 
-         printPrefix(pOutFile, NULL, cursor, 4);
+         printPrefix(log, NULL, cursor, 4);
          value = *((int32_t *) cursor) & 0x03fffffc;
          value = (value << 6) >> 6;   // sign extend
-         trfprintf(pOutFile, "b \t" POINTER_PRINTF_FORMAT "\t;", (intptr_t)cursor + value);
+         log->printf("b \t" POINTER_PRINTF_FORMAT "\t;", (intptr_t)cursor + value);
          cursor += 4;
          }
       else
          {
-         printPrefix(pOutFile, NULL, cursor, 4);
+         printPrefix(log, NULL, cursor, 4);
          value = *((int32_t *) cursor) & 0xfffc;
          value = (value << 16) >> 16;   // sign extend
-         trfprintf(pOutFile, "beq \t%s, 0x%p\t;", getName(cndReg), (intptr_t)cursor + value);
+         log->printf("beq \t%s, 0x%p\t;", getName(cndReg), (intptr_t)cursor + value);
          cursor += 4;
 
-         printPrefix(pOutFile, NULL, cursor, 4);
+         printPrefix(log, NULL, cursor, 4);
          value = *((int32_t *) cursor) & 0x03fffffc;
          value = (value << 6) >> 6;   // sign extend
-         trfprintf(pOutFile, "b \t" POINTER_PRINTF_FORMAT "\t;", (intptr_t)cursor + value);
+         log->printf("b \t" POINTER_PRINTF_FORMAT "\t;", (intptr_t)cursor + value);
          cursor += 4;
          }
 
       if (snippet->getNeedsResult())
          {
-         printPrefix(pOutFile, NULL, cursor, 4);
-         trfprintf(pOutFile, "li \t%s, %d", getName(scratch1Reg), *((int32_t *) cursor) & 0x0000ffff);
+         printPrefix(log, NULL, cursor, 4);
+         log->printf("li \t%s, %d", getName(scratch1Reg), *((int32_t *) cursor) & 0x0000ffff);
          cursor += 4;
 
-         printPrefix(pOutFile, NULL, cursor, 4);
-         trfprintf(pOutFile, "or \t%s, %s, %s; Set the last bit", getName(scratch1Reg), getName(scratch1Reg), getName(scratch2Reg));
+         printPrefix(log, NULL, cursor, 4);
+         log->printf("or \t%s, %s, %s; Set the last bit", getName(scratch1Reg), getName(scratch1Reg), getName(scratch2Reg));
          cursor+= 4;
 
-         printPrefix(pOutFile, NULL, cursor, 4);
-         trfprintf(pOutFile, "xor. \t%s, %s, %s; Check if last bit is set in the cache", getName(resultReg), getName(scratch1Reg), getName(scratch2Reg));
+         printPrefix(log, NULL, cursor, 4);
+         log->printf("xor. \t%s, %s, %s; Check if last bit is set in the cache", getName(resultReg), getName(scratch1Reg), getName(scratch2Reg));
          cursor+= 4;
 
          if (snippet->getFalseLabel() != snippet->getTrueLabel())
             {
-            printPrefix(pOutFile, NULL, cursor, 4);
+            printPrefix(log, NULL, cursor, 4);
             value = *((int32_t *) cursor) & 0xfffc;
             value = (value << 16) >> 16;   // sign extend
-            trfprintf(pOutFile, "bne \t%s, 0x%p\t;", getName(cndReg), (intptr_t)cursor + value);
+            log->printf("bne \t%s, 0x%p\t;", getName(cndReg), (intptr_t)cursor + value);
             cursor += 4;
 
-            printPrefix(pOutFile, NULL, cursor, 4);
+            printPrefix(log, NULL, cursor, 4);
             value = *((int32_t *) cursor) & 0x03fffffc;
             value = (value << 6) >> 6;   // sign extend
-            trfprintf(pOutFile, "b \t" POINTER_PRINTF_FORMAT "\t;", (intptr_t)cursor + value);
+            log->printf("b \t" POINTER_PRINTF_FORMAT "\t;", (intptr_t)cursor + value);
             cursor += 4;
 
-            printPrefix(pOutFile, NULL, cursor, 4);
+            printPrefix(log, NULL, cursor, 4);
             value = *((int32_t *) cursor) & 0x03fffffc;
             value = (value << 6) >> 6;   // sign extend
-            trfprintf(pOutFile, "b \t" POINTER_PRINTF_FORMAT "\t;", (intptr_t)cursor + value);
+            log->printf("b \t" POINTER_PRINTF_FORMAT "\t;", (intptr_t)cursor + value);
             cursor += 4;
             }
          else
             {
-            printPrefix(pOutFile, NULL, cursor, 4);
+            printPrefix(log, NULL, cursor, 4);
             value = *((int32_t *) cursor) & 0x03fffffc;
             value = (value << 6) >> 6;   // sign extend
-            trfprintf(pOutFile, "b \t" POINTER_PRINTF_FORMAT "\t;", (intptr_t)cursor + value);
+            log->printf("b \t" POINTER_PRINTF_FORMAT "\t;", (intptr_t)cursor + value);
             cursor += 4;
             }
          }
@@ -596,38 +597,38 @@ TR_Debug::print(TR::FILE *pOutFile, TR::PPCInterfaceCastSnippet * snippet)
          {
          if (snippet->getFalseLabel() != snippet->getTrueLabel())
             {
-            printPrefix(pOutFile, NULL, cursor, 4);
-            trfprintf(pOutFile, "li \t%s, %d", getName(scratch1Reg), *((int32_t *) cursor) & 0x0000ffff);
+            printPrefix(log, NULL, cursor, 4);
+            log->printf("li \t%s, %d", getName(scratch1Reg), *((int32_t *) cursor) & 0x0000ffff);
             cursor += 4;
 
-            printPrefix(pOutFile, NULL, cursor, 4);
-            trfprintf(pOutFile, "and. \t%s, %s, %s; Check if last bit is set in the cache", getName(scratch1Reg), getName(scratch1Reg), getName(scratch2Reg));
+            printPrefix(log, NULL, cursor, 4);
+            log->printf("and. \t%s, %s, %s; Check if last bit is set in the cache", getName(scratch1Reg), getName(scratch1Reg), getName(scratch2Reg));
             cursor+= 4;
 
-            printPrefix(pOutFile, NULL, cursor, 4);
+            printPrefix(log, NULL, cursor, 4);
             value = *((int32_t *) cursor) & 0xfffc;
             value = (value << 16) >> 16;   // sign extend
-            trfprintf(pOutFile, "bne \t%s, 0x%p\t;", getName(cndReg), (intptr_t)cursor + value);
+            log->printf("bne \t%s, 0x%p\t;", getName(cndReg), (intptr_t)cursor + value);
             cursor += 4;
 
-            printPrefix(pOutFile, NULL, cursor, 4);
+            printPrefix(log, NULL, cursor, 4);
             value = *((int32_t *) cursor) & 0x03fffffc;
             value = (value << 6) >> 6;   // sign extend
-            trfprintf(pOutFile, "b \t" POINTER_PRINTF_FORMAT "\t;", (intptr_t)cursor + value);
+            log->printf("b \t" POINTER_PRINTF_FORMAT "\t;", (intptr_t)cursor + value);
             cursor += 4;
 
-            printPrefix(pOutFile, NULL, cursor, 4);
+            printPrefix(log, NULL, cursor, 4);
             value = *((int32_t *) cursor) & 0x03fffffc;
             value = (value << 6) >> 6;   // sign extend
-            trfprintf(pOutFile, "b \t" POINTER_PRINTF_FORMAT "\t;", (intptr_t)cursor + value);
+            log->printf("b \t" POINTER_PRINTF_FORMAT "\t;", (intptr_t)cursor + value);
             cursor += 4;
             }
          else
             {
-            printPrefix(pOutFile, NULL, cursor, 4);
+            printPrefix(log, NULL, cursor, 4);
             value = *((int32_t *) cursor) & 0x03fffffc;
             value = (value << 6) >> 6;   // sign extend
-            trfprintf(pOutFile, "b \t" POINTER_PRINTF_FORMAT "\t;", (intptr_t)cursor + value);
+            log->printf("b \t" POINTER_PRINTF_FORMAT "\t;", (intptr_t)cursor + value);
             cursor += 4;
             }
          }

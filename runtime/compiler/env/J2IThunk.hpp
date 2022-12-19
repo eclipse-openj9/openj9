@@ -28,6 +28,7 @@
 #include "env/IO.hpp"
 
 class TR_MHJ2IThunkTable;
+namespace OMR { class Logger; }
 namespace TR { class CodeGenerator; }
 namespace TR { class Monitor; }
 
@@ -88,7 +89,7 @@ class TR_MHJ2IThunkTable
 
       Node *get(char *terseSignature, TR_PersistentArray<Node> &nodeArray, bool createIfMissing);
 
-      void dumpTo(TR_FrontEnd *fe, TR::FILE *file, TR_PersistentArray<Node> &nodeArray, int indent);
+      void dumpTo(OMR::Logger *log, TR_FrontEnd *fe, TR_PersistentArray<Node> &nodeArray, int indent);
       };
 
    private: // Fields
@@ -118,7 +119,7 @@ class TR_MHJ2IThunkTable
    TR_MHJ2IThunkTable(TR_PersistentMemory *m, const char *name);
    TR_PERSISTENT_ALLOC(TR_Memory::JSR292)
 
-   void dumpTo(TR_FrontEnd *fe, TR::FILE *file);
+   void dumpTo(OMR::Logger *log, TR_FrontEnd *fe);
 
    private:
 

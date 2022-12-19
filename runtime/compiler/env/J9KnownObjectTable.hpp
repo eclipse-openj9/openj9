@@ -43,6 +43,7 @@ namespace J9 { typedef J9::KnownObjectTable KnownObjectTableConnector; }
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
 namespace J9 { class Compilation; }
+namespace OMR { class Logger; }
 namespace TR { class Compilation; }
 class TR_J9VMBase;
 namespace J9 { class ObjectModel; }
@@ -98,7 +99,7 @@ public:
    uintptr_t *getPointerLocation(Index index);
    bool isNull(Index index);
 
-   void dumpTo(TR::FILE *file, TR::Compilation *comp);
+   void dumpTo(OMR::Logger *log, TR::Compilation *comp);
 
    Index getOrCreateIndexAt(uintptr_t *objectReferenceLocation);
    Index getOrCreateIndexAt(uintptr_t *objectReferenceLocation, bool isArrayWithConstantElements);
@@ -117,7 +118,7 @@ public:
 
 private:
 
-   void dumpObjectTo(TR::FILE *file, Index i, const char *fieldName, const char *sep,  TR::Compilation *comp, TR_BitVector &visited, TR_VMFieldsInfo **fieldsInfoByIndex, int32_t depth);
+   void dumpObjectTo(OMR::Logger *log, Index i, const char *fieldName, const char *sep,  TR::Compilation *comp, TR_BitVector &visited, TR_VMFieldsInfo **fieldsInfoByIndex, int32_t depth);
    };
 
 }

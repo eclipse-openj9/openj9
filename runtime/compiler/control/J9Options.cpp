@@ -52,6 +52,7 @@
 #include "infra/SimpleRegex.hpp"
 #include "control/CompilationRuntime.hpp"
 #include "control/CompilationThread.hpp"
+#include "ras/Logger.hpp"
 #include "runtime/IProfiler.hpp"
 #if defined(J9VM_OPT_JITSERVER)
 #include "env/j9methodServer.hpp"
@@ -3564,6 +3565,12 @@ bool J9::Options::feLatePostProcess(void * base, TR::OptionSet * optionSet)
    }
 
 
+OMR::Logger *
+J9::Options::createLoggerForLogFile(TR::FILE *file)
+   {
+   return OMR::CStdIOStreamLogger::create(file->_stream);
+   }
+
 void
 J9::Options::printPID()
    {
@@ -3689,6 +3696,7 @@ J9::Options::packOptions(const TR::Options *origOptions)
    options->_startOptions = NULL;
    options->_envOptions = NULL;
    options->_logFile = NULL;
+   options->_logger = NULL;
    options->_optFileName = NULL;
    options->_customStrategy = NULL;
    options->_customStrategySize = 0;
@@ -3848,7 +3856,7 @@ J9::Options::writeLogFileFromServer(const std::string& logFileContent)
 TR_Debug *createDebugObject(TR::Compilation *);
 
 // JITServer: Create a log file for each client compilation request
-// Side effect: set _logFile
+// Side effect: set _logFile, _logger
 // At the client: Triggered when a remote compilation is followed by a local compilation.
 //                suffixNumber is the compilationSequenceNumber used for the remote compilation.
 // At the server: suffixNumber is set as 0.
@@ -3882,6 +3890,12 @@ J9::Options::setLogFileForClientOptions(int suffixNumber)
          }
       _fe->releaseLogMonitor();
       }
+   else
+      {
+      // Must install a default Logger if a log file is not provided
+      //
+      self()->setLogger(TR::Options::getDefaultLogger());
+      }
    }
 
 void
@@ -3889,8 +3903,9 @@ J9::Options::closeLogFileForClientOptions()
    {
    if (_logFile)
       {
-      TR::Options::closeLogFile(_fe, _logFile);
+      TR::Options::closeLogFile(_fe, _logFile, _logger);
       _logFile = NULL;
+      _logger = NULL;
       }
    }
 #endif /* defined(J9VM_OPT_JITSERVER) */

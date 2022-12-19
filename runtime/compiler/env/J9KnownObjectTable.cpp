@@ -29,6 +29,7 @@
 #include "env/VMAccessCriticalSection.hpp"
 #include "env/VMJ9.h"
 #include "infra/Assert.hpp"
+#include "ras/Logger.hpp"
 #include "j9.h"
 #if defined(J9VM_OPT_JITSERVER)
 #include "control/CompilationRuntime.hpp"
@@ -273,7 +274,15 @@ static int32_t simpleNameOffset(const char *className, int32_t len)
    }
 
 void
-J9::KnownObjectTable::dumpObjectTo(TR::FILE *file, Index i, const char *fieldName, const char *sep, TR::Compilation *comp, TR_BitVector &visited, TR_VMFieldsInfo **fieldsInfoByIndex, int32_t depth)
+J9::KnownObjectTable::dumpObjectTo(
+      OMR::Logger *log,
+      Index i,
+      const char *fieldName,
+      const char *sep,
+      TR::Compilation *comp,
+      TR_BitVector &visited,
+      TR_VMFieldsInfo **fieldsInfoByIndex,
+      int32_t depth)
    {
    TR_ASSERT_FATAL(!comp->isOutOfProcessCompilation(), "dumpObjectTo() should not be executed at the server.");
 
@@ -282,12 +291,12 @@ J9::KnownObjectTable::dumpObjectTo(TR::FILE *file, Index i, const char *fieldNam
    if (comp->getKnownObjectTable()->isNull(i))
       {
       // Usually don't care about null fields
-      // trfprintf(file, "%*s%s%snull\n", indent, "", fieldName, sep);
+      // log->printf("%*s%s%snull\n", indent, "", fieldName, sep);
       return;
       }
    else if (visited.isSet(i))
       {
-      trfprintf(file, "%*s%s%sobj%d\n", indent, "", fieldName, sep, i);
+      log->printf("%*s%s%sobj%d\n", indent, "", fieldName, sep, i);
       return;
       }
    else
@@ -302,7 +311,7 @@ J9::KnownObjectTable::dumpObjectTo(TR::FILE *file, Index i, const char *fieldNam
       // Shorten the class name for legibility.  The full name is still in the ordinary known-object table dump.
       //
       int32_t offs = simpleNameOffset(className, len);
-      trfprintf(file, "%*s%s%sobj%d @ %p hash %8x %.*s", indent, "", fieldName, sep, i, *ref, hashCode, len-offs, className+offs);
+      log->printf("%*s%s%sobj%d @ %p hash %8x %.*s", indent, "", fieldName, sep, i, *ref, hashCode, len-offs, className+offs);
 
 #if defined(J9VM_OPT_METHOD_HANDLE)
       if (len == 29 && !strncmp("java/lang/invoke/DirectHandle", className, 29))
@@ -311,7 +320,7 @@ J9::KnownObjectTable::dumpObjectTo(TR::FILE *file, Index i, const char *fieldNam
          J9UTF8   *className = J9ROMCLASS_CLASSNAME(J9_CLASS_FROM_METHOD(j9method)->romClass);
          J9UTF8   *methName  = J9ROMMETHOD_NAME(static_cast<TR_J9VM *>(j9fe)->getROMMethodFromRAMMethod(j9method));
          int32_t offs = simpleNameOffset(utf8Data(className), J9UTF8_LENGTH(className));
-         trfprintf(file, "  vmSlot: %.*s.%.*s",
+         log->printf("  vmSlot: %.*s.%.*s",
             J9UTF8_LENGTH(className)-offs, utf8Data(className)+offs,
             J9UTF8_LENGTH(methName),       utf8Data(methName));
          }
@@ -326,9 +335,9 @@ J9::KnownObjectTable::dumpObjectTo(TR::FILE *file, Index i, const char *fieldNam
             if (field->isReference())
                continue;
             if (!strcmp(field->signature, "I"))
-               trfprintf(file, "  %s: %d", field->name, j9fe->getInt32Field(*ref, field->name));
+               log->printf("  %s: %d", field->name, j9fe->getInt32Field(*ref, field->name));
             }
-         trfprintf(file, "\n");
+         log->prints("\n");
          ListIterator<TR_VMField> refIter(fieldsInfo->getFields());
          for (TR_VMField *field = refIter.getFirst(); field; field = refIter.getNext())
             {
@@ -337,13 +346,13 @@ J9::KnownObjectTable::dumpObjectTo(TR::FILE *file, Index i, const char *fieldNam
                uintptr_t target = j9fe->getReferenceField(*ref, field->name, field->signature);
                Index targetIndex = self()->getExistingIndexAt(&target);
                if (targetIndex != UNKNOWN)
-                  self()->dumpObjectTo(file, targetIndex, field->name, (field->modifiers & J9AccFinal)? " is " : " = ", comp, visited, fieldsInfoByIndex, depth+1);
+                  self()->dumpObjectTo(log, targetIndex, field->name, (field->modifiers & J9AccFinal)? " is " : " = ", comp, visited, fieldsInfoByIndex, depth+1);
                }
             }
          }
       else
          {
-         trfprintf(file, "\n");
+         log->prints("\n");
          }
       }
    }
@@ -389,7 +398,7 @@ J9::KnownObjectTable::getKnownObjectTableDumpInfo(std::vector<TR_KnownObjectTabl
 
 
 void
-J9::KnownObjectTable::dumpTo(TR::FILE *file, TR::Compilation *comp)
+J9::KnownObjectTable::dumpTo(OMR::Logger *log, TR::Compilation *comp)
    {
    TR::KnownObjectTable::Index endIndex = self()->getEndIndex();
 #if defined(J9VM_OPT_JITSERVER)
@@ -404,18 +413,18 @@ J9::KnownObjectTable::dumpTo(TR::FILE *file, TR::Compilation *comp)
       uint32_t numOfEntries = knotDumpInfoList.size();
       TR_ASSERT_FATAL((numOfEntries == endIndex), "The client table size %u is different from the server table size %u", numOfEntries, endIndex);
 
-      trfprintf(file, "<knownObjectTable size=\"%u\"> // ", numOfEntries);
-      int32_t pointerLen = trfprintf(file, "%p", this);
-      trfprintf(file, "\n  %-6s   %-*s   %-*s %-8s   Class\n", "id", pointerLen, "JNI Ref", pointerLen, "Address", "Hash");
+      log->printf("<knownObjectTable size=\"%u\"> // ", numOfEntries);
+      int32_t pointerLen = log->printf("%p", this);
+      log->printf("\n  %-6s   %-*s   %-*s %-8s   Class\n", "id", pointerLen, "JNI Ref", pointerLen, "Address", "Hash");
 
       for (uint32_t i = 0; i < numOfEntries; i++)
          {
-         trfprintf(file, "  obj%-3d", i);
+         log->printf("  obj%-3d", i);
          if (!std::get<0>(knotDumpInfoList[i]).ref)
-            trfprintf(file, "   %*s   NULL\n", pointerLen, "");
+            log->printf("   %*s   NULL\n", pointerLen, "");
          else
             {
-            trfprintf(file, "   %p   %p %8x   %.*s\n",
+            log->printf("   %p   %p %8x   %.*s\n",
                   std::get<0>(knotDumpInfoList[i]).ref,
                   std::get<0>(knotDumpInfoList[i]).objectPointer,
                   std::get<0>(knotDumpInfoList[i]).hashCode,
@@ -423,13 +432,13 @@ J9::KnownObjectTable::dumpTo(TR::FILE *file, TR::Compilation *comp)
                   std::get<1>(knotDumpInfoList[i]).c_str());
             }
          }
-      trfprintf(file, "</knownObjectTable>\n");
+      log->prints("</knownObjectTable>\n");
 
       if (comp->getOption(TR_TraceKnownObjectGraph))
          {
-         trfprintf(file, "<knownObjectGraph>\n");
+         log->prints("<knownObjectGraph>\n");
          // JITServer KOT TODO
-         trfprintf(file, "</knownObjectGraph>\n");
+         log->prints("</knownObjectGraph>\n");
          }
       }
    else
@@ -443,32 +452,32 @@ J9::KnownObjectTable::dumpTo(TR::FILE *file, TR::Compilation *comp)
 
       if (j9KnownObjectTableDumpToCriticalSection.hasVMAccess())
          {
-         trfprintf(file, "<knownObjectTable size=\"%d\"> // ", endIndex);
-         int32_t pointerLen = trfprintf(file, "%p", this);
-         trfprintf(file, "\n  %-6s   %-*s   %-*s %-8s   Class\n", "id", pointerLen, "JNI Ref", pointerLen, "Address", "Hash");
+         log->printf("<knownObjectTable size=\"%d\"> // ", endIndex);
+         int32_t pointerLen = log->printf("%p", this);
+         log->printf("\n  %-6s   %-*s   %-*s %-8s   Class\n", "id", pointerLen, "JNI Ref", pointerLen, "Address", "Hash");
          for (Index i = 0; i < endIndex; i++)
             {
-            trfprintf(file, "  obj%-3d", i);
+            log->printf("  obj%-3d", i);
             if (self()->isNull(i))
-               trfprintf(file, "   %*s   NULL\n", pointerLen, "");
+               log->printf("   %*s   NULL\n", pointerLen, "");
             else
                {
                uintptr_t *ref = self()->getPointerLocation(i);
                int32_t len; char *className = TR::Compiler->cls.classNameChars(comp, j9fe->getObjectClass(*ref), len);
                int32_t hashCode = mmf->j9gc_objaccess_getObjectHashCode(jitConfig->javaVM, (J9Object*)(*ref));
-               trfprintf(file, "   %p   %p %8x   %.*s", ref, *ref, hashCode, len, className);
+               log->printf("   %p   %p %8x   %.*s", ref, *ref, hashCode, len, className);
 
                if (isArrayWithStableElements(i))
-                  trfprintf(file, " (%d dimension stable array)", getArrayWithStableElementsRank(i));
+                  log->printf(" (%d dimension stable array)", getArrayWithStableElementsRank(i));
 
-               trfprintf(file, "\n");
+               log->println();
                }
             }
-         trfprintf(file, "</knownObjectTable>\n");
+         log->prints("</knownObjectTable>\n");
 
          if (comp->getOption(TR_TraceKnownObjectGraph))
             {
-            trfprintf(file, "<knownObjectGraph>\n");
+            log->prints("<knownObjectGraph>\n");
 
             Index i;
 
@@ -512,17 +521,17 @@ J9::KnownObjectTable::dumpTo(TR::FILE *file, TR::Compilation *comp)
             for (i = 1; i < endIndex; i++)
                {
                if (!reachable.isSet(i) && !visited.isSet(i))
-                  self()->dumpObjectTo(file, i, "", "", comp, visited, fieldsInfoByIndex, 0);
+                  self()->dumpObjectTo(log, i, "", "", comp, visited, fieldsInfoByIndex, 0);
                }
 
             } // scope of the stack memory region
 
-            trfprintf(file, "</knownObjectGraph>\n");
+            log->prints("</knownObjectGraph>\n");
             }
          }
       else
          {
-         trfprintf(file, "<knownObjectTable size=\"%d\"/> // unable to acquire VM access to print table contents\n", endIndex);
+         log->printf("<knownObjectTable size=\"%d\"/> // unable to acquire VM access to print table contents\n", endIndex);
          }
       }
    }

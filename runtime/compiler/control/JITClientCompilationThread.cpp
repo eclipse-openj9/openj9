@@ -4036,10 +4036,27 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
          if (compiler->getOption(TR_JITServerFollowRemoteCompileWithLocalCompile) && compilationSequenceNumber)
             {
             compiler->getOptions()->setLogFileForClientOptions(compilationSequenceNumber);
-            auto logFile = compiler->getOptions()->getLogFile();
+
+            // Copy the log file and Logger that was created on the Options object
+            // to the Compilation object
+            //
+            compiler->setOutFile(compiler->getOptions()->getLogFile());
+            compiler->setLogger(compiler->getOptions()->getLogger());
+
+            TR::FILE *logFile = compiler->getOutFile();
             auto debug = compiler->getDebug();
-            if (logFile && debug)
-               debug->setFile(logFile);
+            if (debug)
+               {
+               if (logFile)
+                  {
+                  debug->setOutFile(logFile);
+
+                  OMR::Logger *log = compiler->log();
+                  TR_ASSERT_FATAL(log, "Expecting a OMR::Logger with a log file");
+                  debug->setLogger(log);
+                  }
+               }
+
             bool compileWithoutVMAccess = !compiler->getOption(TR_DisableNoVMAccess);
             if (compileWithoutVMAccess)
                {
