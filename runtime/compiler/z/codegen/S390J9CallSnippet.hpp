@@ -28,11 +28,13 @@
 #include "z/codegen/S390Instruction.hpp"
 
 class TR_MHJ2IThunk;
+namespace OMR { class Logger; }
 namespace TR { class CodeGenerator; }
 namespace TR { class LabelSymbol; }
 namespace TR { class Node; }
 
 namespace TR {
+
 
 class S390J9CallSnippet : public TR::S390CallSnippet
    {
@@ -64,7 +66,7 @@ class S390J9CallSnippet : public TR::S390CallSnippet
    uint32_t getPICBinaryLength();
    virtual uint32_t getLength(int32_t estimatedSnippetStart);
 
-   virtual void print(TR::FILE *pOutFile, TR_Debug *debug);
+   virtual void print(OMR::Logger *log, TR_Debug *debug);
 
    virtual uint8_t *emitSnippetBody();
    };
@@ -212,7 +214,7 @@ class S390JNICallDataSnippet : public TR::S390ConstantDataSnippet
 
    virtual Kind getKind() { return IsJNICallData; }
    virtual uint8_t *emitSnippetBody();
-   virtual void print(TR::FILE *, TR_Debug*);
+   virtual void print(OMR::Logger *log, TR_Debug*);
    void setBaseRegister(TR::Register * aValue){ _baseRegister = aValue; }
    TR::Register * getBaseRegister() { return _baseRegister; }
 

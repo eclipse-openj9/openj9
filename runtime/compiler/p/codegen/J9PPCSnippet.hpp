@@ -32,6 +32,8 @@
 #define LOCK_THREAD_PTR_MASK                              (~OBJECT_HEADER_LOCK_BITS_MASK)
 #define LOCK_LAST_RECURSION_BIT_NUMBER                    leadingZeroes(OBJECT_HEADER_LOCK_LAST_RECURSION_BIT)
 
+namespace OMR { class Logger; }
+
 namespace TR {
 
 class PPCReadMonitorSnippet : public TR::PPCHelperCallSnippet
@@ -59,7 +61,7 @@ class PPCReadMonitorSnippet : public TR::PPCHelperCallSnippet
    virtual uint8_t *emitSnippetBody();
 
    virtual uint32_t getLength(int32_t estimatedSnippetStart);
-   virtual void print(TR::FILE *, TR_Debug*);
+   virtual void print(OMR::Logger *log, TR_Debug*);
 
    virtual int32_t setEstimatedCodeLocation(int32_t p);
 
@@ -84,7 +86,7 @@ class PPCAllocPrefetchSnippet : public TR::Snippet
    virtual Kind getKind() { return IsAllocPrefetch; }
 
    virtual uint8_t *emitSnippetBody();
-   virtual void print(TR::FILE *, TR_Debug*);
+   virtual void print(OMR::Logger *log, TR_Debug*);
 
    virtual uint32_t getLength(int32_t estimatedSnippetStart);
    };
@@ -101,7 +103,7 @@ class PPCNonZeroAllocPrefetchSnippet : public TR::Snippet
    virtual Kind getKind() { return IsNonZeroAllocPrefetch; }
 
    virtual uint8_t *emitSnippetBody();
-   virtual void print(TR::FILE *, TR_Debug*);
+   virtual void print(OMR::Logger *log, TR_Debug*);
 
    virtual uint32_t getLength(int32_t estimatedSnippetStart);
    };

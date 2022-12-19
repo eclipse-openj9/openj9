@@ -63,6 +63,7 @@
 #include "infra/Monitor.hpp"
 #include "infra/MonitorTable.hpp"
 #include "infra/SimpleRegex.hpp"
+#include "ras/Logger.hpp"
 #include "runtime/J9Runtime.hpp"
 #include "runtime/J9VMAccess.hpp"
 #include "runtime/RelocationRuntime.hpp"
@@ -118,29 +119,24 @@ static uint32_t memoryConsumed = 0;
 TR::PersistentAllocator * TR_IProfiler::_allocator = NULL;
 
 static
-void printHashedCallSite ( TR_IPHashedCallSite * hcs, ::FILE* fout = stderr, void* tag = NULL) {
-
+void printHashedCallSite(OMR::Logger *log, TR_IPHashedCallSite *hcs, void *tag = NULL)
+   {
    J9UTF8 * nameUTF8;
    J9UTF8 * signatureUTF8;
    J9UTF8 * methodClazzUTRF8;
 
    getClassNameSignatureFromMethod(hcs->_method, methodClazzUTRF8, nameUTF8, signatureUTF8);
-   fprintf(fout, "%p %.*s.%.*s%.*s %p %d\n", tag,
+   log->printf("%p %.*s.%.*s%.*s %p %d\n", tag,
       J9UTF8_LENGTH(methodClazzUTRF8), J9UTF8_DATA(methodClazzUTRF8),
       J9UTF8_LENGTH(nameUTF8), J9UTF8_DATA(nameUTF8),
       J9UTF8_LENGTH(signatureUTF8), J9UTF8_DATA(signatureUTF8),
       hcs->_method,
       hcs->_offset);
-   fflush(fout);
+   log->flush();
+   }
 
-}
-
-
-
-
-
-static bool matchesRegularExpression (TR::Compilation* comp) {
-
+static bool matchesRegularExpression (TR::Compilation* comp)
+   {
    static const char *cRegex = feGetEnv ("TR_printIfRegex");
    if (cRegex && comp->getOptions())
       {
@@ -152,7 +148,7 @@ static bool matchesRegularExpression (TR::Compilation* comp) {
       }
 
    return false;
-}
+   }
 
 
 //__declspec( thread ) int tlsdata;
@@ -424,7 +420,7 @@ TR_IProfiler::persistIprofileInfo(TR::ResolvedMethodSymbol *resolvedMethodSymbol
          if (!found)
             {
             if (traceIProfiling && resolvedMethodSymbol)
-               comp->dumpMethodTrees("Pre Iprofiler Walk", resolvedMethodSymbol);
+               comp->dumpMethodTrees(comp->log(), "Pre Iprofiler Walk", resolvedMethodSymbol);
 
             if (comp->getOption(TR_DumpPersistedIProfilerMethodNamesAndCounts))
                {
@@ -1935,12 +1931,13 @@ TR_IProfiler::getSearchPCFromMethodAndBCIndex(TR_OpaqueMethodBlock *method, uint
 
 
 uintptr_t
-TR_IProfiler::getSearchPCFromMethodAndBCIndex(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, TR::Compilation * comp)
+TR_IProfiler::getSearchPCFromMethodAndBCIndex(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, TR::Compilation *comp)
    {
    uintptr_t pc = getSearchPCFromMethodAndBCIndex(method, byteCodeIndex);
    // Diagnostic in case of error
-   if (pc == 0 && comp->getOutFile())
+   if (pc == 0 && comp->getLoggingEnabled())
       {
+      OMR::Logger *log = comp->log();
       TR_Stack<int32_t> & stack = comp->getInlinedCallStack();
       int len = comp->getInlinedCallStack().size();
       traceMsg(comp, "CSI : INLINER STACK :\n");
@@ -1950,9 +1947,9 @@ TR_IProfiler::getSearchPCFromMethodAndBCIndex(TR_OpaqueMethodBlock *method, uint
          TR_InlinedCallSite& callsite = comp->getInlinedCallSite(stack[len - i - 1]);
          hcs._method = (J9Method*)callsite._methodInfo;
          hcs._offset = callsite._byteCodeInfo.getByteCodeIndex();
-         printHashedCallSite(&hcs, comp->getOutFile()->_stream, comp);
+         printHashedCallSite(log, &hcs, comp);
          }
-      comp->dumpMethodTrees("CSI Trees : byteCodeIndex < methodSize");
+      comp->dumpMethodTrees(log, "CSI Trees : byteCodeIndex < methodSize");
       }
    return pc;
    }

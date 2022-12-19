@@ -51,6 +51,7 @@
 #include "optimizer/VectorAPIExpansion.hpp"
 #include "optimizer/Inliner.hpp"
 #include "optimizer/PreExistence.hpp"
+#include "ras/Logger.hpp"
 
 
 #define OPT_DETAILS "O^O VALUE PROPAGATION: "
@@ -4487,7 +4488,7 @@ J9::ValuePropagation::createTypeHintConstraint(TR_ResolvedMethod *owningMethod, 
          const char *signature = TR::Compiler->cls.classSignature_DEPRECATED(comp(), likelySubtype, length, comp()->trMemory());
          traceMsg(comp(), "%s: %.*s constraint %s: ", __FUNCTION__, length, signature, constraint ? constraint->name() : "NULL");
          if (constraint)
-            constraint->print(comp(), comp()->getOutFile());
+            constraint->print(comp()->log(), comp());
          traceMsg(comp(), "\n");
          }
       }

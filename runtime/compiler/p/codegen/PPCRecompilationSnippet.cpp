@@ -40,6 +40,7 @@
 #include "il/Symbol.hpp"
 #include "p/codegen/PPCInstruction.hpp"
 #include "p/codegen/PPCRecompilation.hpp"
+#include "ras/Logger.hpp"
 #include "runtime/CodeCacheManager.hpp"
 
 uint8_t *TR::PPCRecompilationSnippet::emitSnippetBody()
@@ -87,31 +88,31 @@ uint8_t *TR::PPCRecompilationSnippet::emitSnippetBody()
 
 
 void
-TR_Debug::print(TR::FILE *pOutFile, TR::PPCRecompilationSnippet * snippet)
+TR_Debug::print(OMR::Logger *log, TR::PPCRecompilationSnippet * snippet)
    {
    uint8_t             *cursor        = snippet->getSnippetLabel()->getCodeLocation();
 
-   printSnippetLabel(pOutFile, snippet->getSnippetLabel(), cursor, "Counting Recompilation Snippet");
+   printSnippetLabel(log, snippet->getSnippetLabel(), cursor, "Counting Recompilation Snippet");
 
    const char *info = "";
    int32_t    distance;
    if (isBranchToTrampoline(_cg->getSymRef(TR_PPCcountingRecompileMethod), cursor, distance))
       info = " Through trampoline";
 
-   printPrefix(pOutFile, NULL, cursor, 4);
+   printPrefix(log, NULL, cursor, 4);
    distance = *((int32_t *) cursor) & 0x03fffffc;
    distance = (distance << 6) >> 6;   // sign extend
-   trfprintf(pOutFile, "bl \t" POINTER_PRINTF_FORMAT "\t\t;%s", (intptr_t)cursor + distance, info);
+   log->printf("bl \t" POINTER_PRINTF_FORMAT "\t\t;%s", (intptr_t)cursor + distance, info);
    cursor += 4;
 
    // methodInfo
-   printPrefix(pOutFile, NULL, cursor, 4);
-   trfprintf(pOutFile, ".long \t0x%08x\t\t;%s", _comp->getRecompilationInfo()->getMethodInfo(), "methodInfo");
+   printPrefix(log, NULL, cursor, 4);
+   log->printf(".long \t0x%08x\t\t;%s", _comp->getRecompilationInfo()->getMethodInfo(), "methodInfo");
    cursor += 4;
 
    // startPC
-   printPrefix(pOutFile, NULL, cursor, 4);
-   trfprintf(pOutFile, ".long \t0x%08x\t\t; startPC | longPrologue", _cg->getCodeStart());
+   printPrefix(log, NULL, cursor, 4);
+   log->printf(".long \t0x%08x\t\t; startPC | longPrologue", _cg->getCodeStart());
    }
 
 

@@ -30,6 +30,7 @@
 #include "il/Node_inlines.hpp"
 #include "il/ILOpCodes.hpp"
 #include "infra/BitVector.hpp"
+#include "ras/Logger.hpp"
 
 
 J9::AliasBuilder::AliasBuilder(TR::SymbolReferenceTable *symRefTab, size_t sizeHint, TR::Compilation *c) :
@@ -70,10 +71,10 @@ J9::AliasBuilder::methodAliases(TR::SymbolReference *symRef)
       id = symRefTab()->userFieldMethodId(method);
       if (id >= 0)
          {
-         if (comp()->getOption(TR_TraceAliases))
+         if (comp()->getOption(TR_TraceAliases) && comp()->getLoggingEnabled())
             {
             traceMsg(comp(), "For method sym %d aliases\n", symRef->getReferenceNumber());
-            _userFieldMethodDefAliases[id]->print(comp());
+            _userFieldMethodDefAliases[id]->print(comp()->log(), comp());
             traceMsg(comp(), "\n");
             }
          return _userFieldMethodDefAliases[id];
@@ -98,10 +99,10 @@ J9::AliasBuilder::methodAliases(TR::SymbolReference *symRef)
                    !strncmp(immutableClassName, clazzName, clazzNameLen))
                   {
                   TR_BitVector *symrefsToInclude = immutableClassInfo->_immutableConstructorDefAliases;
-                  if (comp()->getOption(TR_TraceAliases))
+                  if (comp()->getOption(TR_TraceAliases) && comp()->getLoggingEnabled())
                      {
                      traceMsg(comp(), "Method sym %d includes aliases for %.*s.<init>\n", symRef->getReferenceNumber(), clazzNameLen, clazzName);
-                     symrefsToInclude->print(comp());
+                     symrefsToInclude->print(comp()->log(), comp());
                      traceMsg(comp(), "\n");
                      }
                   if (allocatedResult)
@@ -134,10 +135,10 @@ J9::AliasBuilder::methodAliases(TR::SymbolReference *symRef)
          break;
       }
 
-   if (comp()->getOption(TR_TraceAliases))
+   if (comp()->getOption(TR_TraceAliases) && comp()->getLoggingEnabled())
       {
       traceMsg(comp(), "For method sym %d default aliases without immutable\n", symRef->getReferenceNumber());
-      defaultMethodDefAliasesWithoutImmutable().print(comp());
+      defaultMethodDefAliasesWithoutImmutable().print(comp()->log(), comp());
       traceMsg(comp(), "\n");
       }
 
@@ -314,9 +315,9 @@ J9::AliasBuilder::createAliasInfo()
       callAliases->_methodSymbol->setHasVeryRefinedAliasSets(false);
    _callAliases.setFirst(0);
 
-   if (comp()->getOption(TR_TraceAliases))
+   if (comp()->getOption(TR_TraceAliases) && comp()->getLoggingEnabled())
       {
-      comp()->getDebug()->printAliasInfo(comp()->getOutFile(), symRefTab());
+      comp()->getDebug()->printAliasInfo(comp()->log(), symRefTab());
       }
 
    }

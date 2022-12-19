@@ -30,6 +30,7 @@
 #include "codegen/GCStackMap.hpp"
 #include "compile/Compilation.hpp"
 #include "codegen/CodeGenerator.hpp"
+#include "ras/Logger.hpp"
 
 
 void
@@ -42,7 +43,7 @@ J9::GCStackAtlas::close(TR::CodeGenerator *cg)
 
    if (comp->getOption(TR_TraceCG))
       {
-      comp->getDebug()->print(comp->getOutFile(), self());
+      comp->getDebug()->print(comp->log(), self());
       }
 
    TR_GCStackMap * parameterMap = 0;
@@ -99,7 +100,7 @@ J9::GCStackAtlas::close(TR::CodeGenerator *cg)
              traceMsg(comp,
                      "Map with code offset range starting at [%08x] is identical to the previous map [%08x], merging and eliminating previous\n",
                      nextMap->getLowestCodeOffset(), map->getLowestCodeOffset());
-             
+
          map->setLowestCodeOffset(nextMap->getLowestCodeOffset());
          self()->getStackMapList().removeNext(mapEntry);
          self()->decNumberOfMaps();

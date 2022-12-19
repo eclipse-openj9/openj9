@@ -315,7 +315,6 @@ TR::Node *TR_arraysetSequentialStores::checkArrayStore(TR::Node* storeNode, bool
                 }
              else
                 {
-                //traceMsg(_comp, "1 Returning null at store %p \n", storeNode);
                 return NULL;
                 }
 
@@ -323,7 +322,6 @@ TR::Node *TR_arraysetSequentialStores::checkArrayStore(TR::Node* storeNode, bool
                 {
                 if (_indexBase != first)
                    {
-                   //traceMsg(_comp, "2 Returning null at store %p \n", storeNode);
                    return NULL;
                    }
                 }
@@ -332,12 +330,10 @@ TR::Node *TR_arraysetSequentialStores::checkArrayStore(TR::Node* storeNode, bool
              }
           else
              {
-             //traceMsg(_comp, "3 Returning null at store %p \n", storeNode);
              if (getProcessedRefs())
                 {
                 if (_indexBase != offset)
                    {
-                   //traceMsg(_comp, "2 Returning null at store %p \n", storeNode);
                    return NULL;
                    }
                 }
@@ -356,7 +352,6 @@ TR::Node *TR_arraysetSequentialStores::checkArrayStore(TR::Node* storeNode, bool
          }
       if (offsetValue != _activeOffset)
          {
-         //traceMsg(_comp, "4 Returning null at store %p offset %d active %d \n", storeNode, offsetValue, _activeOffset);
          return NULL;
          }
 
@@ -364,7 +359,6 @@ TR::Node *TR_arraysetSequentialStores::checkArrayStore(TR::Node* storeNode, bool
          {
          if (((_activeOffset + storeNode->getSize()) - _baseOffset) > 8)
             {
-            //traceMsg(_comp, "5 Returning null at store %p \n", storeNode);
             return NULL;
             }
          }
@@ -1571,8 +1565,6 @@ bool TR_ShiftedValueTree::process(TR::Node* loadNode)
       default: return false;
       }
 
-//   dumpOptDetails(comp(), "arraycopy sequential store - check load node %p\n", loadNode);
-
    if (shift)
       {
       if (loadNode->getFirstChild()->getOpCodeValue() != shiftCode && loadNode->getFirstChild()->getOpCodeValue() != altShiftCode)
@@ -1620,7 +1612,6 @@ bool TR_ShiftedValueTree::process(TR::Node* loadNode)
 
 bool TR_arraycopySequentialStores::checkAiadd(TR::TreeTop * currentTree, TR::Node* aiaddNode)
    {
-//   dumpOptDetails(comp(), "arraycopy sequential store - check aiadd node %p\n", aiaddNode);
    _activeAddrTree = new (trStackMemory()) TR_AddressTree(stackAlloc, comp());
    _activeTreeTop = currentTree;
    if (_activeAddrTree->process(aiaddNode, _comp->cg()->getSupportsAlignedAccessOnly()))
@@ -1632,7 +1623,6 @@ bool TR_arraycopySequentialStores::checkAiadd(TR::TreeTop * currentTree, TR::Nod
 
 void TR_arraycopySequentialStores::insertTree(int entry)
    {
-//   dumpOptDetails(comp(), " insert nodes %p,%p into entry %d\n",
 //      _activeAddrTree->getRootNode(), _activeValueTree->getRootNode(), entry);
    if ((_addrTree[entry] != NULL) && (entry < _maxAddressTrees))
       {
@@ -1664,7 +1654,6 @@ bool TR_arraycopySequentialStores::insertConsistentTree()
 
    if (_addrTree[0] == NULL)
       {
-//      dumpOptDetails(comp(), " insertTree: first tree inserted successfully with offset: %d\n", _activeAddrTree->getOffset());
       insertTree(0);
       return true;
       }
@@ -1714,7 +1703,6 @@ bool TR_arraycopySequentialStores::insertConsistentTree()
       return false;
       }
 
-//   dumpOptDetails(comp(), " insertTree: tree inserted successfully. offset:%d\n", _activeAddrTree->getOffset());
    int entry;
    for (entry=0; entry < _maxAddressTrees && _addrTree[entry] != NULL; ++entry)
       {
@@ -1746,7 +1734,6 @@ int TR_arraycopySequentialStores::numValidTrees(int maxEntries)
    int dir = (_bigEndian) ? -1 : 1;
    int entry;
 
-//   dumpOptDetails(comp(), "...check if valid entries\n");
    for (entry=1; (_addrTree[entry] != NULL) && (entry < maxEntries); ++entry)
       {
       if (_addrTree[entry]->getOffset() != _addrTree[0]->getOffset() + entry)
@@ -1760,7 +1747,6 @@ int TR_arraycopySequentialStores::numValidTrees(int maxEntries)
       }
    if ((entry == 1) && !hasConstValue() && _comp->cg()->supportsByteswap())
       {
-//      dumpOptDetails(comp(), "...no valid entries forward\n...see if reverse store finds any entries\n");
       _alternateDir = true;
       // repeat process for reversed store
       dir = (_bigEndian) ? 1 : -1;
@@ -2988,7 +2974,6 @@ bool TR_arraysetSequentialStores::checkConstant(TR::Node* constExpr)
          break;
       }
 
-   //traceMsg(comp, "arrayset check const %d %d %d %d\n", isValidConst, getProcessedRefs(), _initValue, bv);
    if (isValidConst)
       {
       if (getProcessedRefs())
@@ -3070,7 +3055,6 @@ bool TR_arraysetSequentialStores::checkArrayStoreConstant(TR::Node* constExpr)
          break;
       }
 
-   //traceMsg(comp, "arrayset check const %d %d %d %d\n", isValidConst, getProcessedRefs(), _initValue, bv);
    if (isValidConst)
       {
       if (getProcessedRefs())
@@ -3094,7 +3078,6 @@ static bool useArraySet(int32_t numBytes, TR::CodeGenerator *codeGen)
    {
    if (!codeGen->getSupportsArraySet())
       {
-      //traceMsg(comp, "arrayset not enabled for this platform\n");
       return false;
       }
    if (numBytes < codeGen->arrayInitMinimumNumberOfBytes())
@@ -3139,7 +3122,6 @@ static TR::TreeTop* generateArraysetFromSequentialStores(TR::Compilation* comp, 
       }
 
    int32_t numBytes = arrayset.getNumBytes();
-   //traceMsg("orig numBytes = %d for node %p\n", numBytes, istoreNode);
 
    //TR_ScratchList<TR::TreeTop> seqStores(comp->trMemory());
    TR::Node *baseNode = NULL;
@@ -3195,12 +3177,10 @@ static TR::TreeTop* generateArraysetFromSequentialStores(TR::Compilation* comp, 
          }
       else if (comp->target().cpu.isPower() && numBytes < 32) // tm - The threshold needs to be adjusted for PPC
          {
-         //traceMsg(comp, "arrayset istore did not encounter large enough storage range. Range is: %d\n", numBytes);
          return istoreTreeTop;
          }
       else if ((numBytes < 8)  || ((numBytes < 12) && comp->target().is64Bit())) // msf - change to codeGen->arrayInitMinimumNumberOfBytes())
          {
-         //traceMsg(comp, "arrayset istore did not encounter large enough storage range. Range is: %d\n", numBytes);
          return istoreTreeTop;
          }
 
@@ -3217,17 +3197,12 @@ static TR::TreeTop* generateArraysetFromSequentialStores(TR::Compilation* comp, 
       {
       if (!useArraySet(numBytes, codeGen))
          {
-         //traceMsg(comp, "arrayset not enabled for this platform\n");
          return istoreTreeTop;
          }
       }
 
    if (!performTransformation(comp, "%sReducing arrayset sequential stores starting from n%un\n", OPT_DETAILS, istoreNode->getGlobalIndex()))
       return istoreTreeTop;
-
-   //printf("Reduced arrayset in %s\n", comp->signature()); fflush(stdout);
-
-   //traceMsg(comp, " First store in sequence %p Load Ref:%p Number of bytes: %d. Offset range:%d to %d. Byte Value:%d\n", istoreNode, arrayset.getALoadRef(), numBytes, arrayset.getBaseOffset(), arrayset.getBaseOffset() + numBytes - 1, arrayset.getConstant());
 
    //
    // break the istorei trees into tree_tops of the aload and const
@@ -3335,7 +3310,6 @@ static TR::TreeTop* generateArraysetFromSequentialStores(TR::Compilation* comp, 
       //
       // delete the bstorei trees and replace them with a new, improved iXstore tree
       //
-      //dumpOptDetails(comp, " Remove trees %p to %p\n", istoreTreeTop->getNode(), curTreeTop->getNode());
       //TR::TreeTop::removeDeadTrees(comp, istoreTreeTop, curTreeTop);
 
       TR::Node* aiaddNode = istoreNode->getFirstChild();
@@ -3366,9 +3340,7 @@ static TR::TreeTop* generateArraysetFromSequentialStores(TR::Compilation* comp, 
             numBytesLeft = 0;
             }
 
-         //traceMsg("num bytes left %d num bytes to be stored %d num of stores %d\n", numBytesLeft, numBytesToBeStored, totalNumOfStores);
-
-        TR::Node* constValueNode;
+         TR::Node* constValueNode;
          TR::ILOpCodes opcode;
          switch(numBytesToBeStored)
             {
@@ -3446,7 +3418,6 @@ static TR::TreeTop* generateArraysetFromSequentialStores(TR::Compilation* comp, 
             default: TR_ASSERT(0, " number of bytes unexpected\n"); break;
             }
 
-         //printf("Did seq store in %s\n", comp->signature()); fflush(stdout);
          TR::SymbolReference * symRef = comp->getSymRefTab()->findOrCreateGenericIntShadowSymbolReference(curOffset);
 
          bool canHoistConstant = false;
@@ -3728,7 +3699,6 @@ bool TR_ArrayShiftTreeCollection::insertTree(TR::TreeTop * currTree)
             }
          }
 
-      //dumpOptDetails(comp(), "Store tree[%p] added to collection\n", _storeTrees[_numTrees]->getRootNode());
       _numTrees++;
       return true;
       }

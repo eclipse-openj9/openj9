@@ -43,6 +43,7 @@
 #include "il/ResolvedMethodSymbol.hpp"
 #include "il/StaticSymbol.hpp"
 #include "il/Symbol.hpp"
+#include "ras/Logger.hpp"
 #include "runtime/CodeCacheManager.hpp"
 #include "z/codegen/SystemLinkage.hpp"
 
@@ -406,17 +407,12 @@ TR::S390StackCheckFailureSnippet::getLength(int32_t)
    }
 
 void
-TR_Debug::print(TR::FILE *pOutFile, TR::S390StackCheckFailureSnippet * snippet)
+TR_Debug::print(OMR::Logger *log, TR::S390StackCheckFailureSnippet * snippet)
    {
-   if (pOutFile == NULL)
-      {
-      return;
-      }
-
    TR::Linkage   *linkage      = _cg->getLinkage();
 
    uint8_t * bufferPos = snippet->getSnippetLabel()->getCodeLocation();
-   printSnippetLabel(pOutFile, snippet->getSnippetLabel(), bufferPos, "Stack Check Failure/Overflow  Snippet",
+   printSnippetLabel(log, snippet->getSnippetLabel(), bufferPos, "Stack Check Failure/Overflow  Snippet",
       getName(snippet->getDestination()));
 
    bool is64BitTarget = _comp->target().is64Bit();
@@ -432,14 +428,14 @@ TR_Debug::print(TR::FILE *pOutFile, TR::S390StackCheckFailureSnippet * snippet)
          {
          if (is64BitTarget)
             {
-            printPrefix(pOutFile, NULL, bufferPos, 6);
-            trfprintf(pOutFile, "STG \tGPR14,%d(,GPR5)",frameSize);
+            printPrefix(log, NULL, bufferPos, 6);
+            log->printf("STG \tGPR14,%d(,GPR5)", frameSize);
             bufferPos += 6;
             }
          else
             {
-            printPrefix(pOutFile, NULL, bufferPos, 4);
-            trfprintf(pOutFile, "ST   \tGPR14,%d(,GPR5)",frameSize);
+            printPrefix(log, NULL, bufferPos, 4);
+            log->printf("ST   \tGPR14,%d(,GPR5)", frameSize);
             bufferPos += 4;
             }
          requireRAStore = false;
@@ -448,22 +444,22 @@ TR_Debug::print(TR::FILE *pOutFile, TR::S390StackCheckFailureSnippet * snippet)
 
       if (is64BitTarget)
          {
-         printPrefix(pOutFile, NULL, bufferPos, 4);
-         trfprintf(pOutFile, "LGHI \tGPR0,%d", frameSize);
+         printPrefix(log, NULL, bufferPos, 4);
+         log->printf("LGHI \tGPR0,%d", frameSize);
          bufferPos += 4;
 
-         printPrefix(pOutFile, NULL, bufferPos, 4);
-         trfprintf(pOutFile, "AGHI \tGPR5,%d", frameSize);
+         printPrefix(log, NULL, bufferPos, 4);
+         log->printf("AGHI \tGPR5,%d", frameSize);
          bufferPos += 4;
          }
       else
          {
-         printPrefix(pOutFile, NULL, bufferPos, 4);
-         trfprintf(pOutFile, "LHI \tGPR0,%d", frameSize);
+         printPrefix(log, NULL, bufferPos, 4);
+         log->printf("LHI \tGPR0,%d", frameSize);
          bufferPos += 4;
 
-         printPrefix(pOutFile, NULL, bufferPos, 4);
-         trfprintf(pOutFile, "AHI \tGPR5,%d", frameSize);
+         printPrefix(log, NULL, bufferPos, 4);
+         log->printf("AHI \tGPR5,%d", frameSize);
          bufferPos += 4;
          }
       }
@@ -471,55 +467,55 @@ TR_Debug::print(TR::FILE *pOutFile, TR::S390StackCheckFailureSnippet * snippet)
       {
       if (is64BitTarget)
          {
-         printPrefix(pOutFile, NULL, bufferPos, 4);
-         trfprintf(pOutFile, "AGHI \tGPR5,%d", frameSize);
+         printPrefix(log, NULL, bufferPos, 4);
+         log->printf("AGHI \tGPR5,%d", frameSize);
          bufferPos += 4;
 
-         printPrefix(pOutFile, NULL, bufferPos, 4);
-         trfprintf(pOutFile, "LGHI \tGPR0,%d", frameSize);
+         printPrefix(log, NULL, bufferPos, 4);
+         log->printf("LGHI \tGPR0,%d", frameSize);
          bufferPos += 4;
          }
       else
          {
-         printPrefix(pOutFile, NULL, bufferPos, 4);
-         trfprintf(pOutFile, "AHI \tGPR5,%d", frameSize);
+         printPrefix(log, NULL, bufferPos, 4);
+         log->printf("AHI \tGPR5,%d", frameSize);
          bufferPos += 4;
 
-         printPrefix(pOutFile, NULL, bufferPos, 4);
-         trfprintf(pOutFile, "LHI \tGPR0,%d", frameSize);
+         printPrefix(log, NULL, bufferPos, 4);
+         log->printf("LHI \tGPR0,%d", frameSize);
          bufferPos += 4;
          }
       }
    else
       {
-      trfprintf(pOutFile, "...Large stack detected...");
+      log->prints("...Large stack detected...");
 
-      printPrefix(pOutFile, NULL, bufferPos, 4);
-      trfprintf(pOutFile, "BRAS \tGPR_EP, *+%d <%p>", 4 + sizeof(intptr_t), bufferPos + 4 + sizeof(intptr_t));
+      printPrefix(log, NULL, bufferPos, 4);
+      log->printf("BRAS \tGPR_EP, *+%d <%p>", 4 + sizeof(intptr_t), bufferPos + 4 + sizeof(intptr_t));
       bufferPos += 4;
 
-      printPrefix(pOutFile, NULL, bufferPos, sizeof(intptr_t));
-      trfprintf(pOutFile, "DC \t0x%p \t\t# Frame Size", snippet->getFrameSize());
+      printPrefix(log, NULL, bufferPos, sizeof(intptr_t));
+      log->printf("DC \t0x%p \t\t# Frame Size", snippet->getFrameSize());
       bufferPos += sizeof(intptr_t);
 
       if (is64BitTarget)
          {
-         printPrefix(pOutFile, NULL, bufferPos, 6);
-         trfprintf(pOutFile, "AG   \tGPR5, 0(,GPR_EP)");
+         printPrefix(log, NULL, bufferPos, 6);
+         log->prints("AG   \tGPR5, 0(,GPR_EP)");
          bufferPos += 6;
 
-         printPrefix(pOutFile, NULL, bufferPos, 6);
-         trfprintf(pOutFile, "LG   \tGPR0, 0(,GPR_EP)");
+         printPrefix(log, NULL, bufferPos, 6);
+         log->prints("LG   \tGPR0, 0(,GPR_EP)");
          bufferPos += 6;
          }
       else
          {
-         printPrefix(pOutFile, NULL, bufferPos, 4);
-         trfprintf(pOutFile, "A   \tGPR5, 0(,GPR_EP)");
+         printPrefix(log, NULL, bufferPos, 4);
+         log->prints("A   \tGPR5, 0(,GPR_EP)");
          bufferPos += 4;
 
-         printPrefix(pOutFile, NULL, bufferPos, 4);
-         trfprintf(pOutFile, "L   \tGPR0, 0(,GPR_EP)");
+         printPrefix(log, NULL, bufferPos, 4);
+         log->prints("L   \tGPR0, 0(,GPR_EP)");
          bufferPos += 4;
          }
       }
@@ -527,8 +523,8 @@ TR_Debug::print(TR::FILE *pOutFile, TR::S390StackCheckFailureSnippet * snippet)
    if (_comp->getOption(TR_FullSpeedDebug))
       {
       // TODO: need to print out the actual instructions
-      printPrefix(pOutFile, NULL, bufferPos, snippet->getSizeOfArguments());
-      trfprintf(pOutFile, "Store Arguments on Stack for FSD: %d",snippet->getSizeOfArguments());
+      printPrefix(log, NULL, bufferPos, snippet->getSizeOfArguments());
+      log->printf("Store Arguments on Stack for FSD: %d", snippet->getSizeOfArguments());
       bufferPos += snippet->getSizeOfArguments();
       }
 
@@ -536,59 +532,59 @@ TR_Debug::print(TR::FILE *pOutFile, TR::S390StackCheckFailureSnippet * snippet)
       {
       if (is64BitTarget)
          {
-         printPrefix(pOutFile, NULL, bufferPos, 6);
-         trfprintf(pOutFile, "STG \tGPR14, 0(,GPR5)");
+         printPrefix(log, NULL, bufferPos, 6);
+         log->prints("STG \tGPR14, 0(,GPR5)");
          bufferPos += 6;
          }
       else
          {
-         printPrefix(pOutFile, NULL, bufferPos, 4);
-         trfprintf(pOutFile, "ST    \tGPR14, 0(,GPR5)");
+         printPrefix(log, NULL, bufferPos, 4);
+         log->prints("ST    \tGPR14, 0(,GPR5)");
          bufferPos += 4;
          }
       }
 
-   bufferPos = printRuntimeInstrumentationOnOffInstruction(pOutFile, bufferPos, false); // RIOFF
+   bufferPos = printRuntimeInstrumentationOnOffInstruction(log, bufferPos, false); // RIOFF
 
-   printPrefix(pOutFile, NULL, bufferPos, 6);
-   trfprintf(pOutFile, "BRASL \tGPR14, <%p>\t# Branch to Helper Method %s",
+   printPrefix(log, NULL, bufferPos, 6);
+   log->printf("BRASL \tGPR14, <%p>\t# Branch to Helper Method %s",
                        snippet->getSnippetDestAddr(),
                        snippet->usedTrampoline()?"- Trampoline Used.":"");
    bufferPos += 6;
 
-   bufferPos = printRuntimeInstrumentationOnOffInstruction(pOutFile, bufferPos, true); // RION
+   bufferPos = printRuntimeInstrumentationOnOffInstruction(log, bufferPos, true); // RION
 
    if (requireRALoad)
       {
       if (is64BitTarget)
          {
-         printPrefix(pOutFile, NULL, bufferPos, 6);
-         trfprintf(pOutFile, "LG    \tGPR14, 0(,GPR5)");
+         printPrefix(log, NULL, bufferPos, 6);
+         log->prints("LG    \tGPR14, 0(,GPR5)");
          bufferPos += 6;
          }
       else
          {
-         printPrefix(pOutFile, NULL, bufferPos, 4);
-         trfprintf(pOutFile, "L     \tGPR14, 0(,GPR5)");
+         printPrefix(log, NULL, bufferPos, 4);
+         log->prints("L     \tGPR14, 0(,GPR5)");
          bufferPos += 4;
          }
       }
 
    if (is64BitTarget)
       {
-      printPrefix(pOutFile, NULL, bufferPos, 4);
-      trfprintf(pOutFile, "SGR \tGPR5, GPR0");
+      printPrefix(log, NULL, bufferPos, 4);
+      log->prints("SGR \tGPR5, GPR0");
       bufferPos += 4;
       }
    else
       {
-      printPrefix(pOutFile, NULL, bufferPos, 2);
-      trfprintf(pOutFile, "SR  \tGPR5, GPR0");
+      printPrefix(log, NULL, bufferPos, 2);
+      log->prints("SR  \tGPR5, GPR0");
       bufferPos += 2;
       }
 
-   printPrefix(pOutFile, NULL, bufferPos, 6);
-   trfprintf(pOutFile, "BRCL \t<%p>\t# Return to Main Code",
+   printPrefix(log, NULL, bufferPos, 6);
+   log->printf("BRCL \t<%p>\t# Return to Main Code",
                     snippet->getReStartLabel()->getCodeLocation());
    }
 

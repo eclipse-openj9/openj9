@@ -31,6 +31,7 @@
 #include "env/j9method.h"
 #include "env/VMJ9.h"
 #include "env/VerboseLog.hpp"
+#include "ras/Logger.hpp"
 
 static int32_t
 computeSignatureLength(char *signature)
@@ -178,9 +179,10 @@ TR_MHJ2IThunkTable::getThunk(char *signature, TR_FrontEnd *fe, bool isForCurrent
    if (!result)
       {
       char terseSignature[260]; // 256 args + 1 return type + null terminator
-      dumpTo(fe, TR::IO::Stderr);
+      OMR::Logger *log = OMR::CStdIOStreamLogger::Stderr;
+      dumpTo(log, fe);
       getTerseSignature(terseSignature, sizeof(terseSignature), signature);
-      trfprintf(TR::IO::Stderr, "\nERROR: Failed to find J2I thunk for %s signature %.*s\n", terseSignature, computeSignatureLength(signature), signature);
+      log->printf("\nERROR: Failed to find J2I thunk for %s signature %.*s\n", terseSignature, computeSignatureLength(signature), signature);
       TR_ASSERT(result != NULL, "Expected a J2I thunk for %s signature %.*s", terseSignature, computeSignatureLength(signature), signature);
       }
    return result;
@@ -245,31 +247,31 @@ TR_MHJ2IThunkTable::addThunk(
 
 void
 TR_MHJ2IThunkTable::Node::dumpTo(
+      OMR::Logger *log,
       TR_FrontEnd *fe,
-      TR::FILE *file,
       TR_PersistentArray<Node> &nodeArray,
       int indent)
    {
    static const char typeChars[] = "VIJFDL";
    if (_thunk)
-      trfprintf(file, " %s @%p\n", _thunk->terseSignature(), _thunk);
+      log->printf(" %s @%p\n", _thunk->terseSignature(), _thunk);
    else
-      trfprintf(file, "\n");
+      log->prints("\n");
    for (int32_t typeIndex = 0; typeIndex < NUM_TYPE_CHARS; typeIndex++)
       {
       if (_children[typeIndex])
          {
-         trfprintf(file, "%*s%c @%d:", indent*3, "", typeChars[typeIndex], _children[typeIndex]);
-         nodeArray[_children[typeIndex]].dumpTo(fe, file, nodeArray, indent+1);
+         log->printf("%*s%c @%d:", indent*3, "", typeChars[typeIndex], _children[typeIndex]);
+         nodeArray[_children[typeIndex]].dumpTo(log, fe, nodeArray, indent+1);
          }
       }
    }
 
 
 void
-TR_MHJ2IThunkTable::dumpTo(TR_FrontEnd *fe, TR::FILE *file)
+TR_MHJ2IThunkTable::dumpTo(OMR::Logger *log, TR_FrontEnd *fe)
    {
    OMR::CriticalSection criticalSection(_monitor);
-   trfprintf(file, "J2IThunkTable \"%s\":", _name);
-   root()->dumpTo(fe, file, _nodes, 1);
+   log->printf("J2IThunkTable \"%s\":", _name);
+   root()->dumpTo(log, fe, _nodes, 1);
    }

@@ -63,6 +63,7 @@
 #include "optimizer/TransformUtil.hpp"
 #include "ras/Delimiter.hpp"
 #include "ras/DebugCounter.hpp"
+#include "ras/Logger.hpp"
 #include "runtime/CodeCache.hpp"
 #include "runtime/CodeCacheExceptions.hpp"
 #include "runtime/CodeCacheManager.hpp"
@@ -1598,8 +1599,8 @@ J9::CodeGenerator::doInstructionSelection()
    if (self()->comp()->getOption(TR_TraceCG))
       diagnostic("\n<selection>");
 
-   if (self()->comp()->getOption(TR_TraceCG) || debug("traceGRA"))
-      self()->comp()->getDebug()->setupToDumpTreesAndInstructions("Performing Instruction Selection");
+   if (self()->comp()->getOption(TR_TraceCG))
+      self()->comp()->getDebug()->setupToDumpTreesAndInstructions(self()->comp()->log(), "Performing Instruction Selection");
 
    self()->beginInstructionSelection();
 
@@ -2075,14 +2076,16 @@ J9::CodeGenerator::doInstructionSelection()
       self()->setLiveLocals(liveLocals);
       self()->setLiveMonitors(liveMonitors);
 
-      if (self()->comp()->getOption(TR_TraceCG) || debug("traceGRA"))
+      if (self()->comp()->getOption(TR_TraceCG))
          {
+         OMR::Logger *log = self()->comp()->log();
+
          // any evaluator that handles multiple trees will need to dump
          // the others
          self()->comp()->getDebug()->saveNodeChecklist(nodeChecklistBeforeDump);
-         self()->comp()->getDebug()->dumpSingleTreeWithInstrs(tt, NULL, true, false, true, true);
-         trfprintf(self()->comp()->getOutFile(),"\n------------------------------\n");
-         trfflush(self()->comp()->getOutFile());
+         self()->comp()->getDebug()->dumpSingleTreeWithInstrs(log, tt, NULL, true, false, true, true);
+         log->prints("\n------------------------------\n");
+         log->flush();
          }
 
       self()->setLastInstructionBeforeCurrentEvaluationTreeTop(self()->getAppendInstruction());
@@ -2360,32 +2363,37 @@ J9::CodeGenerator::doInstructionSelection()
             }
          }
 
-      if (self()->comp()->getOption(TR_TraceCG) || debug("traceGRA"))
+      if (self()->comp()->getOption(TR_TraceCG))
          {
+         OMR::Logger *log = self()->comp()->log();
+
          self()->comp()->getDebug()->restoreNodeChecklist(nodeChecklistBeforeDump);
+
          if (tt == self()->getCurrentEvaluationTreeTop())
             {
-            trfprintf(self()->comp()->getOutFile(),"------------------------------\n");
-            self()->comp()->getDebug()->dumpSingleTreeWithInstrs(tt, prevInstr->getNext(), true, true, true, false);
+            log->prints("------------------------------\n");
+            self()->comp()->getDebug()->dumpSingleTreeWithInstrs(log, tt, prevInstr->getNext(), true, true, true, false);
             }
          else
             {
             // dump all the trees that the evaluator handled
-            trfprintf(self()->comp()->getOutFile(),"------------------------------");
+            log->prints("------------------------------");
             for (TR::TreeTop *dumptt = tt; dumptt != self()->getCurrentEvaluationTreeTop()->getNextTreeTop(); dumptt = dumptt->getNextTreeTop())
                {
-               trfprintf(self()->comp()->getOutFile(),"\n");
-               self()->comp()->getDebug()->dumpSingleTreeWithInstrs(dumptt, NULL, true, false, true, false);
+               log->prints("\n");
+               self()->comp()->getDebug()->dumpSingleTreeWithInstrs(log, dumptt, NULL, true, false, true, false);
                }
+
             // all instructions are on the tt tree
-            self()->comp()->getDebug()->dumpSingleTreeWithInstrs(tt, prevInstr->getNext(), false, true, false, false);
+            self()->comp()->getDebug()->dumpSingleTreeWithInstrs(log, tt, prevInstr->getNext(), false, true, false, false);
             }
-         trfflush(self()->comp()->getOutFile());
+
+         log->flush();
          }
       }
 
    if (self()->traceBCDCodeGen())
-      traceMsg(self()->comp(),"\tinstruction selection is complete so free all symbols in the _variableSizeSymRefPendingFreeList\n");
+      traceMsg(self()->comp(), "\tinstruction selection is complete so free all symbols in the _variableSizeSymRefPendingFreeList\n");
 
    self()->freeAllVariableSizeSymRefs();
 
@@ -3153,7 +3161,7 @@ J9::CodeGenerator::compressedReferenceRematerialization()
          !disableRematforCP)
       {
       if (self()->comp()->getOption(TR_TraceCG))
-         self()->comp()->dumpMethodTrees("Trees before this remat phase", self()->comp()->getMethodSymbol());
+         self()->comp()->dumpMethodTrees(self()->comp()->log(), "Trees before this remat phase", self()->comp()->getMethodSymbol());
 
       List<TR::Node> rematerializedNodes(self()->trMemory());
       vcount_t visitCount = self()->comp()->incVisitCount();
@@ -3246,7 +3254,7 @@ J9::CodeGenerator::compressedReferenceRematerialization()
             }
          }
       if (self()->comp()->getOption(TR_TraceCG))
-         self()->comp()->dumpMethodTrees("Trees after this remat phase", self()->comp()->getMethodSymbol());
+         self()->comp()->dumpMethodTrees(self()->comp()->log(), "Trees after this remat phase", self()->comp()->getMethodSymbol());
 
       if (self()->shouldYankCompressedRefs())
          {
@@ -3261,7 +3269,7 @@ J9::CodeGenerator::compressedReferenceRematerialization()
             }
 
          if (self()->comp()->getOption(TR_TraceCG))
-            self()->comp()->dumpMethodTrees("Trees after this yank phase", self()->comp()->getMethodSymbol());
+            self()->comp()->dumpMethodTrees(self()->comp()->log(), "Trees after this yank phase", self()->comp()->getMethodSymbol());
          }
       }
 
@@ -4304,10 +4312,11 @@ J9::CodeGenerator::allocateLinkageRegisters()
             }
          }
       }
-   if (self()->comp()->getOption(TR_TraceOptDetails))
+
+   if (self()->comp()->getOption(TR_TraceOptDetails) && self()->comp()->getLoggingEnabled())
       {
       dumpOptDetails(self()->comp(), "  Initial globalRegsWithRegLoad: ");
-      self()->getDebug()->print(self()->comp()->getOptions()->getLogFile(), &globalRegsWithRegLoad);
+      self()->getDebug()->print(self()->comp()->log(), &globalRegsWithRegLoad);
       dumpOptDetails(self()->comp(), "\n");
       }
 
@@ -4325,10 +4334,10 @@ J9::CodeGenerator::allocateLinkageRegisters()
       if (node->getOpCode().isStoreDirect() && node->getSymbol()->isParm())
          {
          killedParms.set(node->getSymbol()->getParmSymbol()->getOrdinal());
-         if (self()->comp()->getOption(TR_TraceOptDetails))
+         if (self()->comp()->getOption(TR_TraceOptDetails) && self()->comp()->getLoggingEnabled())
             {
             dumpOptDetails(self()->comp(), "  Found store %s\n  killedParms is now ", self()->comp()->getDebug()->getName(node));
-            self()->getDebug()->print(self()->comp()->getOptions()->getLogFile(), &killedParms);
+            self()->getDebug()->print(self()->comp()->log(), &killedParms);
             dumpOptDetails(self()->comp(), "\n");
             }
          }
@@ -4427,10 +4436,10 @@ J9::CodeGenerator::changeParmLoadsToRegLoads(TR::Node *node, TR::Node **regLoads
    if (node->getOpCode().isLoadAddr() && node->getOpCode().hasSymbolReference() && node->getSymbol()->isParm())
       {
       killedParms.set(node->getSymbol()->getParmSymbol()->getOrdinal());
-      if (self()->comp()->getOption(TR_TraceOptDetails))
+      if (self()->comp()->getOption(TR_TraceOptDetails) && self()->comp()->getLoggingEnabled())
          {
          dumpOptDetails(self()->comp(), "  Found loadaddr %s\n  killedParms is now ", self()->comp()->getDebug()->getName(node));
-         self()->getDebug()->print(self()->comp()->getOptions()->getLogFile(), &killedParms);
+         self()->getDebug()->print(self()->comp()->log(), &killedParms);
          dumpOptDetails(self()->comp(), "\n");
          }
       }

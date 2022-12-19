@@ -28,6 +28,7 @@
 #include "il/Block_inlines.hpp"
 #include "infra/ILWalk.hpp"
 #include "optimizer/J9TransformUtil.hpp"
+#include "ras/Logger.hpp"
 
 const char *
 TR::TreeLowering::optDetailString() const throw()
@@ -45,7 +46,7 @@ TR::TreeLowering::perform()
 
    if (trace())
       {
-      comp()->dumpMethodTrees("Trees before Tree Lowering Optimization");
+      comp()->dumpMethodTrees(comp()->log(), "Trees before Tree Lowering Optimization");
       }
 
    TransformationManager transformations(comp()->region());
@@ -63,7 +64,7 @@ TR::TreeLowering::perform()
 
    if (trace())
       {
-      comp()->dumpMethodTrees("Trees after Tree Lowering Optimization");
+      comp()->dumpMethodTrees(comp()->log(), "Trees after Tree Lowering Optimization");
       }
 
    return 0;

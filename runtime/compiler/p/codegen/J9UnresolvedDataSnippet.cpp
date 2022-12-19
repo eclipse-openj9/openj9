@@ -52,6 +52,7 @@
 #include "infra/Assert.hpp"
 #include "p/codegen/PPCTableOfConstants.hpp"
 #include "ras/Debug.hpp"
+#include "ras/Logger.hpp"
 #include "runtime/CodeCacheManager.hpp"
 #include "runtime/J9Runtime.hpp"
 #include "env/CompilerEnv.hpp"
@@ -262,11 +263,11 @@ uint8_t *J9::Power::UnresolvedDataSnippet::emitSnippetBody()
 
 
 void
-TR_Debug::print(TR::FILE *pOutFile, TR::UnresolvedDataSnippet * snippet)
+TR_Debug::print(OMR::Logger *log, TR::UnresolvedDataSnippet * snippet)
    {
    uint8_t            *cursor = snippet->getSnippetLabel()->getCodeLocation();
 
-   printSnippetLabel(pOutFile, snippet->getSnippetLabel(), cursor, "Unresolved Data Snippet");
+   printSnippetLabel(log, snippet->getSnippetLabel(), cursor, "Unresolved Data Snippet");
 
    TR::SymbolReference *glueRef;
 
@@ -321,44 +322,44 @@ TR_Debug::print(TR::FILE *pOutFile, TR::UnresolvedDataSnippet * snippet)
    if (isBranchToTrampoline(glueRef, cursor, distance))
       info = " Through Trampoline";
 
-   printPrefix(pOutFile, NULL, cursor, 4);
+   printPrefix(log, NULL, cursor, 4);
    distance = *((int32_t *) cursor) & 0x03fffffc;
    distance = (distance << 6) >> 6;   // sign extend
-   trfprintf(pOutFile, "bl \t" POINTER_PRINTF_FORMAT "\t\t;%s", (intptr_t)cursor + distance, info);
+   log->printf("bl \t" POINTER_PRINTF_FORMAT "\t\t;%s", (intptr_t)cursor + distance, info);
    cursor += 4;
 
-   printPrefix(pOutFile, NULL, cursor, sizeof(intptr_t));
-   trfprintf(pOutFile, ".long \t" POINTER_PRINTF_FORMAT "\t\t; Code cache return address", *(intptr_t *)cursor);
+   printPrefix(log, NULL, cursor, sizeof(intptr_t));
+   log->printf(".long \t" POINTER_PRINTF_FORMAT "\t\t; Code cache return address", *(intptr_t *)cursor);
    cursor += sizeof(intptr_t);
 
-   printPrefix(pOutFile, NULL, cursor, 4);
-   trfprintf(pOutFile, ".long \t0x%08x\t\t; pTOC|VD|SY|IX|cpIndex of the data reference", *(int32_t *)cursor);
+   printPrefix(log, NULL, cursor, 4);
+   log->printf(".long \t0x%08x\t\t; pTOC|VD|SY|IX|cpIndex of the data reference", *(int32_t *)cursor);
    cursor += 4;
 
-   printPrefix(pOutFile, NULL, cursor, sizeof(intptr_t));
-   trfprintf(pOutFile, ".long \t" POINTER_PRINTF_FORMAT "\t\t; Constant pool address", *(intptr_t *)cursor);
+   printPrefix(log, NULL, cursor, sizeof(intptr_t));
+   log->printf(".long \t" POINTER_PRINTF_FORMAT "\t\t; Constant pool address", *(intptr_t *)cursor);
    cursor += sizeof(intptr_t);
 
-   printPrefix(pOutFile, NULL, cursor, 4);
-   trfprintf(pOutFile, ".long \t0x%08x\t\t; Offset to be merged", *(int32_t *)cursor);
+   printPrefix(log, NULL, cursor, 4);
+   log->printf(".long \t0x%08x\t\t; Offset to be merged", *(int32_t *)cursor);
    cursor += 4;
 
-   printPrefix(pOutFile, NULL, cursor, 4);
-   trfprintf(pOutFile, ".long \t0x%08x\t\t; Instruction template", *(int32_t *)cursor);
+   printPrefix(log, NULL, cursor, 4);
+   log->printf(".long \t0x%08x\t\t; Instruction template", *(int32_t *)cursor);
    cursor += 4;
 
-   printPrefix(pOutFile, NULL, cursor, 4);
-   trfprintf(pOutFile, ".long \t0x%08x\t\t; Lock word initialized to 0", *(int32_t *)cursor);
+   printPrefix(log, NULL, cursor, 4);
+   log->printf(".long \t0x%08x\t\t; Lock word initialized to 0", *(int32_t *)cursor);
    cursor += 4;
 
-   printPrefix(pOutFile, NULL, cursor, 4);
-   trfprintf(pOutFile, ".long \t0x%08x\t\t; <clinit> case - 1st instruction (0xdeadbeef)", *(int32_t *)cursor);
+   printPrefix(log, NULL, cursor, 4);
+   log->printf(".long \t0x%08x\t\t; <clinit> case - 1st instruction (0xdeadbeef)", *(int32_t *)cursor);
    cursor += 4;
 
-   printPrefix(pOutFile, NULL, cursor, 4);
+   printPrefix(log, NULL, cursor, 4);
    distance = *((int32_t *) cursor) & 0x03fffffc;
    distance = (distance << 6) >> 6;   // sign extend
-   trfprintf(pOutFile, "b \t" POINTER_PRINTF_FORMAT "\t\t; <clinit> case - Branch back to main line code", (intptr_t)cursor + distance);
+   log->printf("b \t" POINTER_PRINTF_FORMAT "\t\t; <clinit> case - Branch back to main line code", (intptr_t)cursor + distance);
    }
 
 uint32_t J9::Power::UnresolvedDataSnippet::getLength(int32_t estimatedSnippetStart)

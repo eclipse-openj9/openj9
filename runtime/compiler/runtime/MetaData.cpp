@@ -70,6 +70,7 @@
 #include "control/CompilationRuntime.hpp"
 #include "runtime/HWProfiler.hpp"
 #include "omrformatconsts.h"
+#include "ras/Logger.hpp"
 
 typedef std::set<TR_GCStackMap*, std::less<TR_GCStackMap*>, TR::typed_allocator<TR_GCStackMap*, TR::Region&>> GCStackMapSet;
 
@@ -1828,9 +1829,9 @@ createMethodMetaData(
       }
 #endif
 
-   if (comp->getOption(TR_TraceCG) && comp->getOutFile() != NULL)
+   if (comp->getOption(TR_TraceCG))
       {
-      comp->getDebug()->print(data, vmMethod, fourByteOffsets);
+      comp->getDebug()->print(comp->log(), data, vmMethod, fourByteOffsets);
       }
 
    return data;
