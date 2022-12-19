@@ -29,6 +29,7 @@
 #include "codegen/Machine.hpp"
 #include "il/ParameterSymbol.hpp"
 #include "il/ResolvedMethodSymbol.hpp"
+#include "ras/Logger.hpp"
 
 uint8_t *
 TR::ARM64StackCheckFailureSnippet::emitSnippetBody()
@@ -130,13 +131,13 @@ TR::ARM64StackCheckFailureSnippet::emitSnippetBody()
    }
 
 void
-TR_Debug::print(TR::FILE *pOutFile, TR::ARM64StackCheckFailureSnippet * snippet)
+TR_Debug::print(TR::Logger *log, TR::ARM64StackCheckFailureSnippet * snippet)
    {
    TR::ResolvedMethodSymbol *bodySymbol = _comp->getJittedMethodSymbol();
    TR::SymbolReference *sofRef = _comp->getSymRefTab()->findOrCreateStackOverflowSymbolRef(bodySymbol);
    uint8_t *bufferPos  = snippet->getSnippetLabel()->getCodeLocation();
 
-   printSnippetLabel(pOutFile, snippet->getSnippetLabel(), bufferPos, getName(snippet));
+   printSnippetLabel(log, snippet->getSnippetLabel(), bufferPos, getName(snippet));
 
    TR::Machine *machine = _cg->machine();
    TR::RealRegister *x9 = machine->getRealRegister(TR::RealRegister::x9);
@@ -147,10 +148,10 @@ TR_Debug::print(TR::FILE *pOutFile, TR::ARM64StackCheckFailureSnippet * snippet)
    if (frameSize <= 0xffff)
       {
       // mov x9, #frameSize
-      printPrefix(pOutFile, NULL, bufferPos, 4);
-      trfprintf(pOutFile, "movzx \t");
-      print(pOutFile, x9, TR_WordReg);
-      trfprintf(pOutFile, ", 0x%04x", frameSize);
+      printPrefix(log, NULL, bufferPos, 4);
+      log->prints("movzx \t");
+      print(log, x9, TR_WordReg);
+      log->printf(", 0x%04x", frameSize);
       bufferPos += ARM64_INSTRUCTION_LENGTH;
       }
    else
@@ -158,19 +159,19 @@ TR_Debug::print(TR::FILE *pOutFile, TR::ARM64StackCheckFailureSnippet * snippet)
       TR_ASSERT(false, "Frame size too big.  Not supported yet");
       }
 
-   printPrefix(pOutFile, NULL, bufferPos, 4);
-   trfprintf(pOutFile, "addx \t");
-   print(pOutFile, stackPtr, TR_WordReg); trfprintf(pOutFile, ", ");
-   print(pOutFile, stackPtr, TR_WordReg); trfprintf(pOutFile, ", ");
-   print(pOutFile, x9, TR_WordReg);
+   printPrefix(log, NULL, bufferPos, 4);
+   log->prints("addx \t");
+   print(log, stackPtr, TR_WordReg); log->prints(", ");
+   print(log, stackPtr, TR_WordReg); log->prints(", ");
+   print(log, x9, TR_WordReg);
    bufferPos += ARM64_INSTRUCTION_LENGTH;
 
-   printPrefix(pOutFile, NULL, bufferPos, 4);
-   trfprintf(pOutFile, "strimmx \t");
-   print(pOutFile, lr, TR_WordReg);
-   trfprintf(pOutFile, ", [");
-   print(pOutFile, stackPtr, TR_WordReg);
-   trfprintf(pOutFile, "]");
+   printPrefix(log, NULL, bufferPos, 4);
+   log->prints("strimmx \t");
+   print(log, lr, TR_WordReg);
+   log->prints(", [");
+   print(log, stackPtr, TR_WordReg);
+   log->printc(']');
    bufferPos += ARM64_INSTRUCTION_LENGTH;
 
    char *info = "";
@@ -181,30 +182,30 @@ TR_Debug::print(TR::FILE *pOutFile, TR::ARM64StackCheckFailureSnippet * snippet)
       target = (intptr_t)distance + (intptr_t)bufferPos;
       info = " Through trampoline";
       }
-   printPrefix(pOutFile, NULL, bufferPos, 4);
-   trfprintf(pOutFile, "bl \t" POINTER_PRINTF_FORMAT "\t\t;%s", target, info);
+   printPrefix(log, NULL, bufferPos, 4);
+   log->printf("bl \t" POINTER_PRINTF_FORMAT "\t\t;%s", target, info);
    bufferPos += ARM64_INSTRUCTION_LENGTH;
 
-   printPrefix(pOutFile, NULL, bufferPos, 4);
-   trfprintf(pOutFile, "ldrimmx \t");
-   print(pOutFile, lr, TR_WordReg);
-   trfprintf(pOutFile, ", [");
-   print(pOutFile, stackPtr, TR_WordReg);
-   trfprintf(pOutFile, "]");
+   printPrefix(log, NULL, bufferPos, 4);
+   log->prints("ldrimmx \t");
+   print(log, lr, TR_WordReg);
+   log->prints(", [");
+   print(log, stackPtr, TR_WordReg);
+   log->printc(']');
    bufferPos += ARM64_INSTRUCTION_LENGTH;
 
-   printPrefix(pOutFile, NULL, bufferPos, 4);
-   trfprintf(pOutFile, "subx \t");
-   print(pOutFile, stackPtr, TR_WordReg); trfprintf(pOutFile, ", ");
-   print(pOutFile, stackPtr, TR_WordReg); trfprintf(pOutFile, ", ");
-   print(pOutFile, x9, TR_WordReg);
+   printPrefix(log, NULL, bufferPos, 4);
+   log->prints("subx \t");
+   print(log, stackPtr, TR_WordReg); log->prints(", ");
+   print(log, stackPtr, TR_WordReg); log->prints(", ");
+   print(log, x9, TR_WordReg);
    bufferPos += ARM64_INSTRUCTION_LENGTH;
 
    intptr_t destination = (intptr_t)snippet->getReStartLabel()->getCodeLocation();
    // assuming that the distance to the destination is in the range +/- 128MB
-   printPrefix(pOutFile, NULL, bufferPos, 4);
-   trfprintf(pOutFile, "b \t" POINTER_PRINTF_FORMAT "\t\t; Back to ", destination);
-   print(pOutFile, snippet->getReStartLabel());
+   printPrefix(log, NULL, bufferPos, 4);
+   log->printf("b \t" POINTER_PRINTF_FORMAT "\t\t; Back to ", destination);
+   print(log, snippet->getReStartLabel());
    }
 
 uint32_t

@@ -891,7 +891,7 @@ void J9::ARM64::PrivateLinkage::createPrologue(TR::Instruction *cursor)
          TR::RealRegister *zeroReg = machine->getRealRegister(TR::RealRegister::RegNum::xzr);
          TR::RealRegister *baseReg = machine->getRealRegister(TR::RealRegister::RegNum::x10);
 
-         cursor = initializeLocals(cursor, numLocalsToBeInitialized, initializedLocalsOffsetFromAdjustedJavaSP, 
+         cursor = initializeLocals(cursor, numLocalsToBeInitialized, initializedLocalsOffsetFromAdjustedJavaSP,
                               zeroReg, baseReg, javaSP, cg());
 
          if (atlas->getInternalPointerMap())
@@ -902,7 +902,7 @@ void J9::ARM64::PrivateLinkage::createPrologue(TR::Instruction *cursor)
             int32_t numSlotsToBeInitialized = atlas->getNumberOfDistinctPinningArrays() + atlas->getInternalPointerMap()->getNumInternalPointers();
             int32_t offsetToFirstInternalPointerFromAdjustedJavaSP = alignedFrameSizeIncludingReturnAddress + atlas->getOffsetOfFirstInternalPointer() + firstLocalOffset;
 
-            cursor = initializeLocals(cursor, numSlotsToBeInitialized, offsetToFirstInternalPointerFromAdjustedJavaSP, 
+            cursor = initializeLocals(cursor, numSlotsToBeInitialized, offsetToFirstInternalPointerFromAdjustedJavaSP,
                               zeroReg, baseReg, javaSP, cg());
             }
          }
@@ -1529,7 +1529,7 @@ static bool getProfiledCallSiteInfo(TR::CodeGenerator *cg, TR::Node *callNode, u
    if (tracePIC && comp->getOption(TR_TraceCG))
       {
       traceMsg(comp, "Value profile info for callNode %p in %s\n", callNode, comp->signature());
-      info->getProfiler()->dumpInfo(comp->getOutFile());
+      info->getProfiler()->dumpInfo(comp->log());
       traceMsg(comp, "\n");
       }
    uint32_t totalFreq = info->getTotalFrequency();
@@ -1626,7 +1626,7 @@ static TR::Instruction* buildStaticPICCall(TR::CodeGenerator *cg, TR::Node *call
 
       if (isUnloadAssumptionRequired)
          {
-         loadAddressConstantInSnippet(cg, callNode, reinterpret_cast<intptr_t>(profiledClass), tempReg, TR_NoRelocation, true); 
+         loadAddressConstantInSnippet(cg, callNode, reinterpret_cast<intptr_t>(profiledClass), tempReg, TR_NoRelocation, true);
          }
       else
          {

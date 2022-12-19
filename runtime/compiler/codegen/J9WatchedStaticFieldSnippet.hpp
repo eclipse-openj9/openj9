@@ -26,6 +26,8 @@
 #include "codegen/Snippet.hpp"
 #include "codegen/CodeGenerator.hpp"
 
+namespace TR { class Logger; }
+
 namespace TR {
 
 class J9WatchedStaticFieldSnippet : public TR::Snippet
@@ -46,7 +48,7 @@ class J9WatchedStaticFieldSnippet : public TR::Snippet
    virtual uint8_t *emitSnippetBody();
    virtual uint32_t getLength(int32_t val) { return sizeof(J9JITWatchedStaticFieldData); }
 
-   virtual void print(TR::FILE *pOutFile, TR_Debug *debug);
+   virtual void print(TR::Logger *log, TR_Debug *debug);
    };
 }
 

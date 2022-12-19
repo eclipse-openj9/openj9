@@ -35,7 +35,7 @@
 #include "ilgen/IlGeneratorMethodDetails_inlines.hpp"
 #include "ilgen/J9ByteCodeIlGenerator.hpp"
 #include "env/VMJ9.h"
-
+#include "ras/Logger.hpp"
 
 
 namespace J9
@@ -203,21 +203,22 @@ IlGeneratorMethodDetails::getIlGenerator(TR::ResolvedMethodSymbol *methodSymbol,
 
 
 void
-IlGeneratorMethodDetails::print(TR_FrontEnd *fe, TR::FILE *file)
+IlGeneratorMethodDetails::print(TR::Logger *log, TR_FrontEnd *fe)
    {
-   if (file == NULL)
-      return;
-
-   trfprintf(file, "%s(", self()->name());
-   self()->printDetails(fe, file);
-   trfprintf(file, ")");
+   log->printf("%s(", self()->name());
+   self()->printDetails(log, fe);
+   log->printc(')');
    }
 
 
 void
-IlGeneratorMethodDetails::printDetails(TR_FrontEnd *fe, TR::FILE *file)
+IlGeneratorMethodDetails::printDetails(TR::Logger *log, TR_FrontEnd *fe)
    {
-   trfprintf(file, "%s", fe->sampleSignature((TR_OpaqueMethodBlock *)(self()->getMethod())));
+   const char *sig = fe->sampleSignature((TR_OpaqueMethodBlock *)(self()->getMethod()));
+   if (sig)
+      log->prints(sig);
+   else
+      log->printf("<Unknown method %p>", self()->getMethod());
    }
 
 J9Class *
@@ -237,19 +238,19 @@ IlGeneratorMethodDetailsOverrideForReplay::changeMethod(
 
 
 void
-NewInstanceThunkDetails::printDetails(TR_FrontEnd *fe, TR::FILE *file)
+NewInstanceThunkDetails::printDetails(TR::Logger *log, TR_FrontEnd *fe)
    {
    int32_t len;
    TR_J9VMBase *fej9 = (TR_J9VMBase *)fe;
    char *className = fej9->getClassNameChars((TR_OpaqueClassBlock *)getClass(), len);
-   trfprintf(file, "%.*s.newInstancePrototype(Ljava/lang/Class;)Ljava/lang/Object;", len, className);
+   log->printf("%.*s.newInstancePrototype(Ljava/lang/Class;)Ljava/lang/Object;", len, className);
    }
 
 
 void
-MethodInProgressDetails::printDetails(TR_FrontEnd *fe, TR::FILE *file)
+MethodInProgressDetails::printDetails(TR::Logger *log, TR_FrontEnd *fe)
    {
-   trfprintf(file, "DLT %d,%s", getByteCodeIndex(), fe->sampleSignature((TR_OpaqueMethodBlock *)getMethod()));
+   log->printf("DLT %d,%s", getByteCodeIndex(), fe->sampleSignature((TR_OpaqueMethodBlock *)getMethod()));
    }
 
 
@@ -283,16 +284,16 @@ ArchetypeSpecimenDetails::getIlGenerator(TR::ResolvedMethodSymbol *methodSymbol,
 
 
 void
-MethodHandleThunkDetails::printDetails(TR_FrontEnd *fe, TR::FILE *file)
+MethodHandleThunkDetails::printDetails(TR::Logger *log, TR_FrontEnd *fe)
    {
 #if 0
    // annoying: knot can only be accessed from the compilation object which isn't always handy: wait for thread locals
    TR::KnownObjectTable *knot = fe->getKnownObjectTable();
    if (knot)
-      trfprintf(file, "obj%d,%s", knot->getOrCreateIndexAt(getHandleRef()), fe->sampleSignature((TR_OpaqueMethodBlock *)getMethod()));
+      log->printf("obj%d,%s", knot->getOrCreateIndexAt(getHandleRef()), fe->sampleSignature((TR_OpaqueMethodBlock *)getMethod()));
    else
 #endif
-      trfprintf(file, "%p,%s", getHandleRef(), fe->sampleSignature((TR_OpaqueMethodBlock *)getMethod()));
+      log->printf("%p,%s", getHandleRef(), fe->sampleSignature((TR_OpaqueMethodBlock *)getMethod()));
    }
 
 

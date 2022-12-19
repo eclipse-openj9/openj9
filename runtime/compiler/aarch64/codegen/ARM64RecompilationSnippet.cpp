@@ -53,25 +53,25 @@ uint32_t TR::ARM64RecompilationSnippet::getLength(int32_t estimatedSnippetStart)
    }
 
 void
-TR_Debug::print(TR::FILE *pOutFile, TR::ARM64RecompilationSnippet *snippet)
+TR_Debug::print(TR::Logger *log, TR::ARM64RecompilationSnippet *snippet)
    {
    uint8_t *cursor = snippet->getSnippetLabel()->getCodeLocation();
 
-   printSnippetLabel(pOutFile, snippet->getSnippetLabel(), cursor, getName(snippet));
+   printSnippetLabel(log, snippet->getSnippetLabel(), cursor, getName(snippet));
 
    int32_t distance;
    distance = *((int32_t *)cursor) & 0x03ffffff; // imm26
    distance = (distance << 6) >> 4; // sign extend and add two 0 bits
 
-   printPrefix(pOutFile, NULL, cursor, ARM64_INSTRUCTION_LENGTH);
-   trfprintf(pOutFile, "bl \t" POINTER_PRINTF_FORMAT "\t\t; %s",
+   printPrefix(log, NULL, cursor, ARM64_INSTRUCTION_LENGTH);
+   log->printf("bl \t" POINTER_PRINTF_FORMAT "\t\t; %s",
              (intptr_t)cursor + distance, getRuntimeHelperName(TR_ARM64countingRecompileMethod));
    cursor += ARM64_INSTRUCTION_LENGTH;
 
-   printPrefix(pOutFile, NULL, cursor, sizeof(intptr_t));
-   trfprintf(pOutFile, ".dword \t" POINTER_PRINTF_FORMAT "\t\t; BodyInfo", *(intptr_t *)cursor);
+   printPrefix(log, NULL, cursor, sizeof(intptr_t));
+   log->printf(".dword \t" POINTER_PRINTF_FORMAT "\t\t; BodyInfo", *(intptr_t *)cursor);
    cursor += sizeof(intptr_t);
 
-   printPrefix(pOutFile, NULL, cursor, sizeof(intptr_t));
-   trfprintf(pOutFile, ".dword \t" POINTER_PRINTF_FORMAT "\t\t; startPC", *(intptr_t *)cursor);
+   printPrefix(log, NULL, cursor, sizeof(intptr_t));
+   log->printf(".dword \t" POINTER_PRINTF_FORMAT "\t\t; startPC", *(intptr_t *)cursor);
    }

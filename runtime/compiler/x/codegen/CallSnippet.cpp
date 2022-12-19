@@ -39,6 +39,7 @@
 #include "il/ResolvedMethodSymbol.hpp"
 #include "il/StaticSymbol.hpp"
 #include "il/Symbol.hpp"
+#include "ras/Logger.hpp"
 
 bool TR::X86PicDataSnippet::shouldEmitJ2IThunkPointer()
    {
@@ -477,11 +478,8 @@ uint8_t *TR::X86PicDataSnippet::emitSnippetBody()
 
 
 void
-TR_Debug::print(TR::FILE *pOutFile, TR::X86PicDataSnippet *snippet)
+TR_Debug::print(TR::Logger *log, TR::X86PicDataSnippet *snippet)
    {
-   if (pOutFile == NULL)
-      return;
-
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(_cg->fe());
 
    uint8_t *bufferPos = snippet->getSnippetLabel()->getCodeLocation();
@@ -502,11 +500,11 @@ TR_Debug::print(TR::FILE *pOutFile, TR::X86PicDataSnippet *snippet)
          }
 
       uint32_t offset = bufferPos - _cg->getCodeStart();
-      trfprintf(pOutFile, "\n\n" POINTER_PRINTF_FORMAT " %08x %*s", bufferPos, offset, 65, " <<< VPic Data >>>");
+      log->printf("\n\n" POINTER_PRINTF_FORMAT " %08x %*s", bufferPos, offset, 65, " <<< VPic Data >>>");
       }
    else
       {
-      printSnippetLabel(pOutFile, snippet->getSnippetLabel(), bufferPos, getName(snippet));
+      printSnippetLabel(log, snippet->getSnippetLabel(), bufferPos, getName(snippet));
       }
 
    TR::SymbolReference *methodSymRef = snippet->getMethodSymRef();
@@ -516,8 +514,8 @@ TR_Debug::print(TR::FILE *pOutFile, TR::X86PicDataSnippet *snippet)
       {
       // Call lookup dispatch.
       //
-      printPrefix(pOutFile, NULL, bufferPos, 5);
-      trfprintf(pOutFile, "call\t%s \t\t%s " POINTER_PRINTF_FORMAT,
+      printPrefix(log, NULL, bufferPos, 5);
+      log->printf("call\t%s \t\t%s " POINTER_PRINTF_FORMAT,
                     getName(dispatchSymRef),
                     commentString(),
                     dispatchSymRef->getMethodAddress());
@@ -525,44 +523,40 @@ TR_Debug::print(TR::FILE *pOutFile, TR::X86PicDataSnippet *snippet)
 
       // Restart JMP (always 5 bytes).
       //
-      printPrefix(pOutFile, NULL, bufferPos, 5);
-      printLabelInstruction(pOutFile, "jmp", snippet->getDoneLabel());
+      printPrefix(log, NULL, bufferPos, 5);
+      printLabelInstruction(log, "jmp", snippet->getDoneLabel());
       bufferPos += 5;
 
       if (methodSymRef->isUnresolved())
          {
          const char *op = (sizeof(uintptr_t) == 4) ? "DD" : "DQ";
 
-         printPrefix(pOutFile, NULL, bufferPos, sizeof(uintptr_t));
-         trfprintf(
-            pOutFile,
+         printPrefix(log, NULL, bufferPos, sizeof(uintptr_t));
+         log->printf(
             "%s\t" POINTER_PRINTF_FORMAT "\t\t%s owning method cpAddr",
             op,
             (void*)*(uintptr_t*)bufferPos,
             commentString());
          bufferPos += sizeof(uintptr_t);
 
-         printPrefix(pOutFile, NULL, bufferPos, sizeof(uintptr_t));
-         trfprintf(
-            pOutFile,
+         printPrefix(log, NULL, bufferPos, sizeof(uintptr_t));
+         log->printf(
             "%s\t" POINTER_PRINTF_FORMAT "\t\t%s cpIndex",
             op,
             (void*)*(uintptr_t*)bufferPos,
             commentString());
          bufferPos += sizeof(uintptr_t);
 
-         printPrefix(pOutFile, NULL, bufferPos, sizeof(uintptr_t));
-         trfprintf(
-            pOutFile,
+         printPrefix(log, NULL, bufferPos, sizeof(uintptr_t));
+         log->printf(
             "%s\t" POINTER_PRINTF_FORMAT "\t\t%s interface class (initially null)",
             op,
             (void*)*(uintptr_t*)bufferPos,
             commentString());
          bufferPos += sizeof(uintptr_t);
 
-         printPrefix(pOutFile, NULL, bufferPos, sizeof(uintptr_t));
-         trfprintf(
-            pOutFile,
+         printPrefix(log, NULL, bufferPos, sizeof(uintptr_t));
+         log->printf(
             "%s\t" POINTER_PRINTF_FORMAT "\t\t%s itable offset%s (initially zero)",
             op,
             (void*)*(uintptr_t*)bufferPos,
@@ -574,8 +568,8 @@ TR_Debug::print(TR::FILE *pOutFile, TR::X86PicDataSnippet *snippet)
             {
             // REX+MOV of MOVRegImm64 instruction
             //
-            printPrefix(pOutFile, NULL, bufferPos, 1);
-            trfprintf(pOutFile, "%s\t%s%02x%s\t\t\t\t\t\t\t\t%s REX of MOVRegImm64",
+            printPrefix(log, NULL, bufferPos, 1);
+            log->printf("%s\t%s%02x%s\t\t\t\t\t\t\t\t%s REX of MOVRegImm64",
                           dbString(),
                           hexPrefixString(),
                           *bufferPos,
@@ -583,8 +577,8 @@ TR_Debug::print(TR::FILE *pOutFile, TR::X86PicDataSnippet *snippet)
                           commentString());
             bufferPos += 1;
 
-            printPrefix(pOutFile, NULL, bufferPos, 1);
-            trfprintf(pOutFile, "%s\t%02x\t\t\t\t\t\t\t\t%s MOV opcode of MOVRegImm64",
+            printPrefix(log, NULL, bufferPos, 1);
+            log->printf("%s\t%02x\t\t\t\t\t\t\t\t%s MOV opcode of MOVRegImm64",
                           dbString(),
                           *bufferPos,
                           commentString());
@@ -592,9 +586,8 @@ TR_Debug::print(TR::FILE *pOutFile, TR::X86PicDataSnippet *snippet)
 
             if (snippet->hasJ2IThunkInPicData())
                {
-               printPrefix(pOutFile, NULL, bufferPos, sizeof(uintptr_t));
-               trfprintf(
-                  pOutFile,
+               printPrefix(log, NULL, bufferPos, sizeof(uintptr_t));
+               log->printf(
                   "%s\t" POINTER_PRINTF_FORMAT "\t\t%s j2i virtual thunk",
                   op,
                   (void*)*(uintptr_t*)bufferPos,
@@ -606,8 +599,8 @@ TR_Debug::print(TR::FILE *pOutFile, TR::X86PicDataSnippet *snippet)
             {
             // ModRM of TR::InstOpCode::CMPRegImm4
             //
-            printPrefix(pOutFile, NULL, bufferPos, 1);
-            trfprintf(pOutFile, "%s\t%s%02x%s\t\t\t\t\t\t\t\t%s ModRM of CMP",
+            printPrefix(log, NULL, bufferPos, 1);
+            log->printf("%s\t%s%02x%s\t\t\t\t\t\t\t\t%s ModRM of CMP",
                           dbString(),
                           hexPrefixString(),
                           *bufferPos,
@@ -627,30 +620,30 @@ TR_Debug::print(TR::FILE *pOutFile, TR::X86PicDataSnippet *snippet)
 
          if (_comp->target().is64Bit())
             {
-            printPrefix(pOutFile, NULL, bufferPos, 1);
-            trfprintf(pOutFile, "%s\t%02x\t\t\t\t\t\t\t\t%s REX of MOVRegImm64",
+            printPrefix(log, NULL, bufferPos, 1);
+            log->printf("%s\t%02x\t\t\t\t\t\t\t\t%s REX of MOVRegImm64",
                           dbString(),
                           *bufferPos,
                           commentString());
             bufferPos += 1;
 
-            printPrefix(pOutFile, NULL, bufferPos, 1);
-            trfprintf(pOutFile, "%s\t%02x\t\t\t\t\t\t\t\t%s MOV opcode of MOVRegImm64",
+            printPrefix(log, NULL, bufferPos, 1);
+            log->printf("%s\t%02x\t\t\t\t\t\t\t\t%s MOV opcode of MOVRegImm64",
                           dbString(),
                           *bufferPos,
                           commentString());
             bufferPos += 1;
 
-            printPrefix(pOutFile, NULL, bufferPos, 1);
-            trfprintf(pOutFile, "%s\t%02x\t\t\t\t\t\t\t\t%s REX of CallMem",
+            printPrefix(log, NULL, bufferPos, 1);
+            log->printf("%s\t%02x\t\t\t\t\t\t\t\t%s REX of CallMem",
                           dbString(),
                           *bufferPos,
                           commentString());
             bufferPos += 1;
 
             callModRM = *bufferPos;
-            printPrefix(pOutFile, NULL, bufferPos, 1);
-            trfprintf(pOutFile, "%s\t%02x\t\t\t\t\t\t\t\t%s ModRM for TR::InstOpCode::CALLMem",
+            printPrefix(log, NULL, bufferPos, 1);
+            log->printf("%s\t%02x\t\t\t\t\t\t\t\t%s ModRM for TR::InstOpCode::CALLMem",
                           dbString(),
                           *bufferPos,
                           commentString());
@@ -658,34 +651,32 @@ TR_Debug::print(TR::FILE *pOutFile, TR::X86PicDataSnippet *snippet)
             }
          else
             {
-            printPrefix(pOutFile, NULL, bufferPos, 1);
-            trfprintf(pOutFile, "%s\t%02x\t\t\t\t\t\t\t\t%s ModRM for TR::InstOpCode::CMPRegImm4",
+            printPrefix(log, NULL, bufferPos, 1);
+            log->printf("%s\t%02x\t\t\t\t\t\t\t\t%s ModRM for TR::InstOpCode::CMPRegImm4",
                           dbString(),
                           *bufferPos,
                           commentString());
             bufferPos += 1;
             }
 
-         printPrefix(pOutFile, NULL, bufferPos, sizeof(uintptr_t));
-         trfprintf(
-            pOutFile,
+         printPrefix(log, NULL, bufferPos, sizeof(uintptr_t));
+         log->printf(
             "%s\t" POINTER_PRINTF_FORMAT "\t\t%s owning method cpAddr",
             op,
             (void*)*(uintptr_t*)bufferPos,
             commentString());
          bufferPos += sizeof(uintptr_t);
 
-         printPrefix(pOutFile, NULL, bufferPos, sizeof(uintptr_t));
-         trfprintf(
-            pOutFile,
+         printPrefix(log, NULL, bufferPos, sizeof(uintptr_t));
+         log->printf(
             "%s\t" POINTER_PRINTF_FORMAT "\t\t%s cpIndex",
             op,
             (void*)*(uintptr_t*)bufferPos,
             commentString());
          bufferPos += sizeof(uintptr_t);
 
-         printPrefix(pOutFile, NULL, bufferPos, sizeof(uintptr_t));
-         trfprintf(pOutFile,
+         printPrefix(log, NULL, bufferPos, sizeof(uintptr_t));
+         log->printf(
             "%s\t" POINTER_PRINTF_FORMAT "\t\t%s direct J9Method (initially null)",
             op,
             (void*)*(uintptr_t*)bufferPos,
@@ -694,9 +685,8 @@ TR_Debug::print(TR::FILE *pOutFile, TR::X86PicDataSnippet *snippet)
 
          if (_comp->target().is64Bit())
             {
-            printPrefix(pOutFile, NULL, bufferPos, sizeof(uintptr_t));
-            trfprintf(
-               pOutFile,
+            printPrefix(log, NULL, bufferPos, sizeof(uintptr_t));
+            log->printf(
                "%s\t" POINTER_PRINTF_FORMAT "\t\t%s j2i virtual thunk",
                op,
                (void*)*(uintptr_t*)bufferPos,
@@ -706,7 +696,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::X86PicDataSnippet *snippet)
          }
 
       if (_comp->target().is64Bit())
-         printSnippetLabel(pOutFile, snippet->getSnippetLabel(), bufferPos, getName(snippet));
+         printSnippetLabel(log, snippet->getSnippetLabel(), bufferPos, getName(snippet));
 
       // Call through vtable.
       //
@@ -723,8 +713,8 @@ TR_Debug::print(TR::FILE *pOutFile, TR::X86PicDataSnippet *snippet)
          length = 6;
          }
 
-      printPrefix(pOutFile, NULL, bufferPos, length);
-      trfprintf(pOutFile, "call\t%s \t\t%s " POINTER_PRINTF_FORMAT "\tpatched with vtable call",
+      printPrefix(log, NULL, bufferPos, length);
+      log->printf("call\t%s \t\t%s " POINTER_PRINTF_FORMAT "\tpatched with vtable call",
                     getName(dispatchSymRef),
                     commentString(),
                     dispatchSymRef->getMethodAddress());
@@ -732,10 +722,9 @@ TR_Debug::print(TR::FILE *pOutFile, TR::X86PicDataSnippet *snippet)
 
       // Restart JMP (always 5 bytes).
       //
-      printPrefix(pOutFile, NULL, bufferPos, 5);
-      printLabelInstruction(pOutFile, "jmp", snippet->getDoneLabel());
+      printPrefix(log, NULL, bufferPos, 5);
+      printLabelInstruction(log, "jmp", snippet->getDoneLabel());
       bufferPos += 5;
-
       }
    }
 

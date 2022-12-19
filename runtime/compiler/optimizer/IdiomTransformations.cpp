@@ -57,6 +57,7 @@
 #include "optimizer/Structure.hpp"
 #include "optimizer/UseDefInfo.hpp"
 #include "ras/Debug.hpp"
+#include "ras/Logger.hpp"
 
 #define OPT_DETAILS "O^O NEWLOOPREDUCER: "
 #define DISPTRACE(OBJ) ((OBJ)->trace())
@@ -303,10 +304,10 @@ ChangeAlignmentOfRegion(TR_CISCTransformer *trans)
    // Move the region ("from" - "to") to the last
    trans->moveCISCNodes(from, to, NULL);
 
-   if (disptrace && changed)
+   if (disptrace && changed && comp->getLoggingEnabled())
       {
       traceMsg(comp,"After ChangeAlignmentOfRegion\n");
-      T->dump(comp->getOutFile(), comp);
+      T->dump(comp->log(), comp);
       }
    return changed;
    }
@@ -532,10 +533,10 @@ reorderTargetNodesInBB(TR_CISCTransformer *trans)
          }
       if (!anyChanged) break;
       }
-   if (disptrace && changed)
+   if (disptrace && changed && comp->getLoggingEnabled())
       {
       traceMsg(comp,"After reorderTargetNodesInBB\n");
-      T->dump(comp->getOutFile(), comp);
+      T->dump(comp->log(), comp);
       }
    return changed;
    }

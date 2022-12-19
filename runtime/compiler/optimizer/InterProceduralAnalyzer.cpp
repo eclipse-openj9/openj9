@@ -54,6 +54,7 @@
 #include "infra/List.hpp"
 #include "infra/Stack.hpp"
 #include "ras/Debug.hpp"
+#include "ras/Logger.hpp"
 #include "runtime/RuntimeAssumptions.hpp"
 
 #define MAX_SNIFF_BYTECODE_SIZE             1000
@@ -521,7 +522,7 @@ List<OMR::RuntimeAssumption> *TR::InterProceduralAnalyzer::analyzeMethod(TR::Nod
          {
 	 //comp()->setVisitCount(1);
          for (TR::TreeTop *tt = resolvedMethodSymbol->getFirstTreeTop(); tt; tt = tt->getNextTreeTop())
-            comp()->getDebug()->print(comp()->getOutFile(), tt);
+            comp()->getDebug()->print(comp()->log(), tt);
          //comp()->setVisitCount(visitCount);
          }
       }

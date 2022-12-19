@@ -29,6 +29,7 @@
 #include "compile/ResolvedMethod.hpp"
 #include "env/jittypes.h"
 #include "env/VMJ9.h"
+#include "ras/Logger.hpp"
 #include "runtime/asmprotos.h"
 #include "runtime/J9Runtime.hpp"
 #include "runtime/J9ValueProfiler.hpp"
@@ -183,20 +184,20 @@ TR_AddressInfo::getMethodsList(TR::Compilation *comp, TR_ResolvedMethod *callerM
    }
 
 template <> void
-TR_LinkedListProfilerInfo<TR_ByteInfo>::dumpInfo(TR::FILE *logFile)
+TR_LinkedListProfilerInfo<TR_ByteInfo>::dumpInfo(TR::Logger *log)
    {
    OMR::CriticalSection lock(vpMonitor);
 
-   trfprintf(logFile, "   Linked List Profiling Info %p\n", this);
-   trfprintf(logFile, "   Kind: %d BCI: %d:%d\n Values:\n", _kind,
+   log->printf("   Linked List Profiling Info %p\n", this);
+   log->printf("   Kind: %d BCI: %d:%d\n Values:\n", _kind,
       TR_AbstractProfilerInfo::getByteCodeInfo().getCallerIndex(),
       TR_AbstractProfilerInfo::getByteCodeInfo().getByteCodeIndex());
 
    size_t count = 0;
    for (auto iter = getFirst(); iter; iter = iter->getNext())
-      trfprintf(logFile, "    %d: %d %s", count++, iter->_frequency, iter->_value.chars);
+      log->printf("    %d: %d %s", count++, iter->_frequency, iter->_value.chars);
 
-   trfprintf(logFile, "   Num: %d Total Frequency: %d\n", count, getTotalFrequency());
+   log->printf("   Num: %d Total Frequency: %d\n", count, getTotalFrequency());
    }
 
 /**

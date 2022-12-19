@@ -62,6 +62,7 @@
 #include "optimizer/TransformUtil.hpp"
 #include "optimizer/ValueNumberInfo.hpp"
 #include "ras/Debug.hpp"
+#include "ras/Logger.hpp"
 
 class TR_OpaqueClassBlock;
 namespace TR { class MethodSymbol; }
@@ -109,7 +110,7 @@ int32_t TR_NewInitialization::performAnalysis(bool doGlobalAnalysis)
    // the "quiet" option set in the limit file
    //
    static char *nonQuiet = feGetEnv("TR_NonQuietNew");
-   if (nonQuiet && comp()->getOutFile() == NULL)
+   if (nonQuiet && !comp()->getLoggingEnabled())
       return 0;
 
    if (trace())
@@ -597,23 +598,17 @@ TR::ResolvedMethodSymbol *TR_NewInitialization::findInlinableMethod(TR::TreeTop 
     uint32_t bytecodeSize = method->maxBytecodeIndex();
     if (bytecodeSize > (uint32_t) _maxInlinedBytecodeSize)
       {
-      /////if (trace())
-      /////   printf("secs Single inline too big in %s\n", comp()->signature());
       return NULL;
       }
     if (_totalInlinedBytecodeSize + bytecodeSize > (uint32_t) _maxTotalInlinedBytecodeSize)
       {
-      /////if (trace())
-      /////   printf("secs Total inline too big in %s\n", comp()->signature());
       return NULL;
       }
 
    // Make sure the inliner will be able to inline this call
    //
    vcount_t visitCount = comp()->getVisitCount();
-   //comp()->setVisitCount(1);
 
-   //TR_VirtualGuardKind guardKind = TR_NoGuard;
    TR_VirtualGuardSelection *guard = 0;
    TR_InlineCall newInlineCall(optimizer(), this);
    newInlineCall.setSizeThreshold(_maxInlinedBytecodeSize);
@@ -622,17 +617,10 @@ TR::ResolvedMethodSymbol *TR_NewInitialization::findInlinableMethod(TR::TreeTop 
    TR::MethodSymbol *calleeMethodSymbol = symRef->getSymbol()->castToMethodSymbol();
    TR::Node * parent = callTree->getNode();
 
-   //TR_CallSite *callsite = TR_CallSite::create(callTree, parent, callNode, thisClass, symRef,  0, comp(), trStackMemory());
-
    TR_CallSite *callsite = TR_CallSite::create(callTree, parent, callNode, thisClass, symRef,  0, comp(), comp()->trMemory(), stackAlloc);
-
-	//TR_CallSite *callsite = new (trStackMemory()) TR_CallSite (symRef->getOwningMethod(comp()),callTree,parent,callNode,calleeMethodSymbol->getMethod(),thisClass,(int32_t)symRef->getOffset(),symRef->getCPIndex(),0,calleeMethodSymbol->getResolvedMethodSymbol(),callNode->getOpCode().isCallIndirect(),calleeMethodSymbol->isInterface(),callNode->getByteCodeInfo(),comp());
 
    newInlineCall.getSymbolAndFindInlineTargets(NULL,callsite);
    bool canSniff = callsite->numTargets() ? true : false;
-
-// (newInlineCall.isInlineable(NULL, callNode, guard, thisClass, callTree) != NULL);
-   //comp()->setVisitCount(visitCount);
 
    if (!canSniff)
       {
@@ -648,10 +636,7 @@ TR::ResolvedMethodSymbol *TR_NewInitialization::findInlinableMethod(TR::TreeTop 
 
    dumpOptDetails(comp(), "O^O NEW INITIALIZATION: Peeking into the IL to check for inlineable calls \n");
 
-   //comp()->setVisitCount(1);
-
    canSniff = (calleeSymbol->getResolvedMethod()->genMethodILForPeeking(calleeSymbol, comp()) != NULL);
-   //comp()->setVisitCount(visitCount);
 
    if (!canSniff)
       {
@@ -662,10 +647,8 @@ TR::ResolvedMethodSymbol *TR_NewInitialization::findInlinableMethod(TR::TreeTop 
 
    if (trace())
       {
-      //comp()->setVisitCount(1);
       for (TR::TreeTop *tt = calleeSymbol->getFirstTreeTop(); tt; tt = tt->getNextTreeTop())
-         comp()->getDebug()->print(comp()->getOutFile(), tt);
-      //comp()->setVisitCount(visitCount);
+         comp()->getDebug()->print(comp()->log(), tt);
       }
 
    _totalInlinedBytecodeSize += bytecodeSize;
@@ -1227,7 +1210,7 @@ void TR_NewInitialization::findUninitializedWords()
          traceMsg(comp(), "Uninitialized words for candidate [%p] = %d/%d : ", c->node, c->numUninitializedWords, c->size/4);
          if (c->uninitializedWords)
             {
-            c->uninitializedWords->print(comp());
+            c->uninitializedWords->print(comp()->log(), comp());
             traceMsg(comp(), "\n");
             }
          else if (c->numUninitializedWords)

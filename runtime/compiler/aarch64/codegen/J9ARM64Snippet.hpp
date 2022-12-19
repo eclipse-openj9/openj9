@@ -27,6 +27,8 @@
 #include "codegen/ARM64HelperCallSnippet.hpp"
 #include "j9cfg.h"
 
+namespace TR { class Logger; }
+
 #define LOCK_INC_DEC_VALUE OBJECT_HEADER_LOCK_FIRST_RECURSION_BIT
 
 namespace TR {
@@ -61,7 +63,7 @@ class ARM64MonitorEnterSnippet : public TR::ARM64HelperCallSnippet
    /**
     * @brief Prints the Snippet
     */
-   virtual void print(TR::FILE *, TR_Debug *);
+   virtual void print(TR::Logger *log, TR_Debug *);
 
    /**
     * @brief Answers the Snippet length
@@ -112,7 +114,7 @@ class ARM64MonitorExitSnippet : public TR::ARM64HelperCallSnippet
    /**
     * @brief Prints the Snippet
     */
-   virtual void print(TR::FILE *, TR_Debug *);
+   virtual void print(TR::Logger *log, TR_Debug *);
 
    /**
     * @brief Answers the Snippet length

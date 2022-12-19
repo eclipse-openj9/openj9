@@ -25,6 +25,7 @@
 #include "compile/Method.hpp"
 #include "env/VMJ9.h"
 #include "ras/Debug.hpp"
+#include "ras/Logger.hpp"
 #include "env/IO.hpp"
 
 void
@@ -186,9 +187,9 @@ TR_J9ByteCodeIterator::findFloatingPointInstruction()
    }
 
 void
-TR_J9ByteCodeIterator::printByteCodePrologue()
+TR_J9ByteCodeIterator::printByteCodePrologue(TR::Logger *log)
    {
-   trfprintf(comp()->getOutFile(), "\n"
+   log->prints("\n"
       "        +------------- Byte Code Index\n"
       "        |  +-------------------- OpCode\n"
       "        |  |                        +------------- First Field\n"
@@ -200,72 +201,73 @@ TR_J9ByteCodeIterator::printByteCodePrologue()
    }
 
 void
-TR_J9ByteCodeIterator::printByteCodeEpilogue()
+TR_J9ByteCodeIterator::printByteCodeEpilogue(TR::Logger *log)
    {
-   trfprintf(comp()->getOutFile(), "\n\n"); comp()->getDebug()->printByteCodeAnnotations();
+   log->prints("\n\n");
+   comp()->getDebug()->printByteCodeAnnotations(log);
    }
 
 void
-TR_J9ByteCodeIterator::printFirst(int32_t i)
+TR_J9ByteCodeIterator::printFirst(TR::Logger *log, int32_t i)
    {
-   trfprintf(comp()->getOutFile(), "%5i", i);
+   log->printf("%5i", i);
    }
 
 void
-TR_J9ByteCodeIterator::printCPIndex(int32_t i)
+TR_J9ByteCodeIterator::printCPIndex(TR::Logger *log, int32_t i)
    {
-   trfprintf(comp()->getOutFile(), "%13s%5i", "", i);
+   log->printf("%13s%5i", "", i);
    }
 
 void
-TR_J9ByteCodeIterator::printConstant(int32_t i)
+TR_J9ByteCodeIterator::printConstant(TR::Logger *log, int32_t i)
    {
-   trfprintf(comp()->getOutFile(), "%11s%12i  ", "", i);
+   log->printf("%11s%12i  ", "", i);
    }
 
 void
-TR_J9ByteCodeIterator::printConstant(double d)
+TR_J9ByteCodeIterator::printConstant(TR::Logger *log, double d)
    {
-   trfprintf(comp()->getOutFile(), "%11s%12e  ", "", d);
+   log->printf("%11s%12e  ", "", d);
    }
 
 void
-TR_J9ByteCodeIterator::printFirstAndConstant(int32_t i, int32_t j)
+TR_J9ByteCodeIterator::printFirstAndConstant(TR::Logger *log, int32_t i, int32_t j)
    {
-   trfprintf(comp()->getOutFile(), "%5i%6s%12i  ", i, "", j);
+   log->printf("%5i%6s%12i  ", i, "", j);
    }
 
 void
-TR_J9ByteCodeIterator::printJumpIndex(int32_t offset)
+TR_J9ByteCodeIterator::printJumpIndex(TR::Logger *log, int32_t offset)
    {
-   trfprintf(comp()->getOutFile(), "%5i,%5d,%11s ", offset, offset + bcIndex(), "");
+   log->printf("%5i,%5d,%11s ", offset, offset + bcIndex(), "");
    }
 
 void
-TR_J9ByteCodeIterator::printByteCode()
+TR_J9ByteCodeIterator::printByteCode(TR::Logger *log)
    {
    uint8_t opcode = nextByte(0);
 
-   trfprintf(comp()->getOutFile(), "\n   %6i, %-15s      ", bcIndex(), ((TR_J9VMBase *)fe())->getByteCodeName(opcode));
+   log->printf("\n   %6i, %-15s      ", bcIndex(), ((TR_J9VMBase *)fe())->getByteCodeName(opcode));
 
    TR_J9ByteCode bc = convertOpCodeToByteCodeEnum(opcode);
    switch (bc)
       {
       case J9BCbipush:
-         printConstant(nextByteSigned());
+         printConstant(log, nextByteSigned());
          break;
 
       case J9BCsipush:
-         printConstant(next2BytesSigned());
+         printConstant(log, next2BytesSigned());
          break;
 
       case J9BCiload: case J9BClload: case J9BCfload: case J9BCdload: case J9BCaload:
       case J9BCistore: case J9BClstore: case J9BCfstore: case J9BCdstore: case J9BCastore:
-         printFirst(nextByte());
+         printFirst(log, nextByte());
          break;
 
       case J9BCiinc:
-         printFirstAndConstant(nextByte(), nextByteSigned(2));
+         printFirstAndConstant(log, nextByte(), nextByteSigned(2));
          break;
 
       case J9BCinvokevirtual:
@@ -277,32 +279,32 @@ TR_J9ByteCodeIterator::printByteCode()
       case J9BCinvokehandlegeneric:
       case J9BCinvokespecialsplit:
       case J9BCinvokestaticsplit:
-         printFirst(next2Bytes());
+         printFirst(log, next2Bytes());
          break;
 
       case J9BCgetstatic: case J9BCgetfield: case J9BCputstatic: case J9BCputfield:
       case J9BCcheckcast: case J9BCinstanceof:
       case J9BCnew: case J9BCanewarray:
-         printCPIndex(next2Bytes());
+         printCPIndex(log, next2Bytes());
          break;
 
       case J9BCnewarray:
-         printCPIndex(nextByte());
+         printCPIndex(log, nextByte());
          break;
 
       case J9BCmultianewarray:
-         printCPIndex(next2Bytes());
-         printConstant(nextByte(3));
+         printCPIndex(log, next2Bytes());
+         printConstant(log, nextByte(3));
          break;
 
       case J9BCifeq: case J9BCifne: case J9BCiflt: case J9BCifge: case J9BCifgt: case J9BCifle: case J9BCifnull: case J9BCifnonnull:
       case J9BCificmpeq: case J9BCificmpne: case J9BCificmplt: case J9BCificmpge: case J9BCificmpgt: case J9BCificmple: case J9BCifacmpeq: case J9BCifacmpne:
       case J9BCgoto:
-         printJumpIndex(next2BytesSigned());
+         printJumpIndex(log, next2BytesSigned());
          break;
 
       case J9BCgotow:
-         printJumpIndex(next4BytesSigned());
+         printJumpIndex(log, next4BytesSigned());
          break;
       default:
       	break;

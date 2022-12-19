@@ -28,6 +28,7 @@
 #include "codegen/J9ARM64Snippet.hpp"
 #include "codegen/Relocation.hpp"
 #include "codegen/SnippetGCMap.hpp"
+#include "ras/Logger.hpp"
 #include "runtime/CodeCacheManager.hpp"
 
 TR::ARM64MonitorEnterSnippet::ARM64MonitorEnterSnippet(
@@ -121,11 +122,11 @@ TR::ARM64MonitorEnterSnippet::emitSnippetBody()
    }
 
 void
-TR::ARM64MonitorEnterSnippet::print(TR::FILE *pOutFile, TR_Debug *debug)
+TR::ARM64MonitorEnterSnippet::print(TR::Logger *log, TR_Debug *debug)
    {
    uint8_t *cursor = getIncLabel()->getCodeLocation();
 
-   debug->printSnippetLabel(pOutFile, getIncLabel(), cursor, "Inc Monitor Counter");
+   debug->printSnippetLabel(log, getIncLabel(), cursor, "Inc Monitor Counter");
    }
 
 uint32_t TR::ARM64MonitorEnterSnippet::getLength(int32_t estimatedSnippetStart)
@@ -231,10 +232,10 @@ TR::ARM64MonitorExitSnippet::emitSnippetBody()
    }
 
 void
-TR::ARM64MonitorExitSnippet::print(TR::FILE *pOutFile, TR_Debug *debug)
+TR::ARM64MonitorExitSnippet::print(TR::Logger *log, TR_Debug *debug)
    {
    uint8_t *cursor = getDecLabel()->getCodeLocation();
-   debug->printSnippetLabel(pOutFile, getDecLabel(), cursor, "Dec Monitor Counter");
+   debug->printSnippetLabel(log, getDecLabel(), cursor, "Dec Monitor Counter");
    }
 
 uint32_t
