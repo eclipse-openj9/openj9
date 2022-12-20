@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <!--
-  Copyright (c) 2016, 2021 IBM Corp. and others
+  Copyright (c) 2016, 2022 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -52,13 +52,6 @@
 	</test>
 	<test>
 		<testCaseName>SCURLClassLoaderTests</testCaseName>
-		<disables>
-			<disable>
-				<comment>https://github.com/eclipse-openj9/openj9/issues/11965#issuecomment-778413238</comment>
-				<variation>Mode110</variation>
-				<platform>.*aarch.*</platform>
-			</disable>
-		</disables>
 		<variations>
 			<variation>Mode110</variation>
 			<variation>Mode610</variation>
