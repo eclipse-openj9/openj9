@@ -3052,9 +3052,10 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
    TR::PersistentInfo *persistentInfo = compInfo->getPersistentInfo();
    bool useAotCompilation = entry->_useAotCompilation;
 
-   bool aotCacheStore = useAotCompilation && persistentInfo->getJITServerUseAOTCache();
-   bool aotCacheLoad = useAotCompilation && persistentInfo->getJITServerUseAOTCache() &&
-                       !entry->_doNotLoadFromJITServerAOTCache;
+   bool aotCacheStore = useAotCompilation && persistentInfo->getJITServerUseAOTCache() &&
+                        compInfo->methodCanBeJITServerAOTCacheStored(compiler->signature(), compilee->convertToMethod()->methodType());
+   bool aotCacheLoad = aotCacheStore && !entry->_doNotLoadFromJITServerAOTCache &&
+                       compInfo->methodCanBeJITServerAOTCacheLoaded(compiler->signature(), compilee->convertToMethod()->methodType());
    auto deserializer = compInfo->getJITServerAOTDeserializer();
    if (!aotCacheLoad && deserializer)
       deserializer->incNumCacheBypasses();

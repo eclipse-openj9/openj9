@@ -1262,6 +1262,9 @@ public:
 
    JITServerAOTDeserializer *getJITServerAOTDeserializer() const { return _JITServerAOTDeserializer; }
    void setJITServerAOTDeserializer(JITServerAOTDeserializer *deserializer) { _JITServerAOTDeserializer = deserializer; }
+
+   bool methodCanBeJITServerAOTCacheStored(const char *methodSig, TR::Method::Type ty);
+   bool methodCanBeJITServerAOTCacheLoaded(const char *methodSig, TR::Method::Type ty);
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
    static void replenishInvocationCount(J9Method* method, TR::Compilation* comp);
