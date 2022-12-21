@@ -101,6 +101,9 @@ Note, detecting regressions will be difficult in the open project
 given the limited hardware resources available.  Work is being done at
 Adoptium to enable performance testing.
 
+## Deprecation
+See [Eclipse OpenJ9 Deprecation Process](deprecation.md).
+
 # Release Process
 
 1. Pick a candidate OpenJ9 level to mark as the initial release candidate.  This
