@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2022 IBM Corp. and others
+ * Copyright (c) 2000, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -290,6 +290,83 @@ int32_t J9::Options::_expensiveCompWeight = TR::CompilationInfo::JSR292_WEIGHT;
 int32_t J9::Options::_jProfilingEnablementSampleThreshold = 10000;
 
 bool J9::Options::_aggressiveLockReservation = false;
+
+/**
+ * This string array should be kept in sync with the
+ * J9::ExternalOptions enum in J9Options.hpp
+ */
+char * J9::Options::_externalOptionStrings[J9::ExternalOptions::TR_NumExternalOptions] =
+   {
+   // TR_FirstExternalOption                 = 0
+   "-Xnodfpbd",                           // = 0
+   "-Xdfpbd",                             // = 1
+   "-Xhysteresis",                        // = 2
+   "-Xnoquickstart",                      // = 3
+   "-Xquickstart",                        // = 4
+   "-Xtune:elastic",                      // = 5
+   "-XtlhPrefetch",                       // = 6
+   "-XnotlhPrefetch",                     // = 7
+   "-Xlockword",                          // = 8
+   "-XlockReservation",                   // = 9
+   "-XjniAcc:",                           // = 10
+   "-Xlp",                                // = 11
+   "-Xlp:codecache:",                     // = 12
+   "-Xcodecache",                         // = 13
+   "-Xcodecachetotal",                    // = 14
+   "-XX:codecachetotal=",                 // = 15
+   "-XX:+PrintCodeCache",                 // = 16
+   "-XX:-PrintCodeCache",                 // = 17
+   "-XsamplingExpirationTime",            // = 18
+   "-XcompilationThreads",                // = 19
+   "-XaggressivenessLevel",               // = 20
+   "-Xnoclassgc",                         // = 21
+   VMOPT_XJIT,                            // = 22
+   VMOPT_XNOJIT,                          // = 23
+   VMOPT_XJIT_COLON,                      // = 24
+   VMOPT_XAOT,                            // = 25
+   VMOPT_XNOAOT,                          // = 26
+   VMOPT_XAOT_COLON,                      // = 27
+   "-XX:deterministic=",                  // = 28
+   "-XX:+RuntimeInstrumentation",         // = 29
+   "-XX:-RuntimeInstrumentation",         // = 30
+   "-XX:+PerfTool",                       // = 31
+   "-XX:-PerfTool",                       // = 32
+   "-XX:doNotProcessJitEnvVars",          // = 33
+   "-XX:+MergeCompilerOptions",           // = 34
+   "-XX:-MergeCompilerOptions",           // = 35
+   "-XX:LateSCCDisclaimTime=",            // = 36
+   "-XX:+UseJITServer",                   // = 37
+   "-XX:-UseJITServer",                   // = 38
+   "-XX:+JITServerTechPreviewMessage",    // = 39
+   "-XX:-JITServerTechPreviewMessage",    // = 40
+   "-XX:JITServerAddress=",               // = 41
+   "-XX:JITServerPort=",                  // = 42
+   "-XX:JITServerTimeout=",               // = 43
+   "-XX:JITServerSSLKey=",                // = 44
+   "-XX:JITServerSSLCert=",               // = 45
+   "-XX:JITServerSSLRootCerts=",          // = 46
+   "-XX:+JITServerUseAOTCache",           // = 47
+   "-XX:-JITServerUseAOTCache",           // = 48
+   "-XX:+RequireJITServer",               // = 49
+   "-XX:-RequireJITServer",               // = 50
+   "-XX:+JITServerLogConnections",        // = 51
+   "-XX:-JITServerLogConnections",        // = 52
+   "-XX:JITServerAOTmx=",                 // = 53
+   "-XX:+JITServerLocalSyncCompiles",     // = 54
+   "-XX:-JITServerLocalSyncCompiles",     // = 55
+   "-XX:+JITServerMetrics",               // = 56
+   "-XX:-JITServerMetrics",               // = 57
+   "-XX:JITServerMetricsPort=",           // = 58
+   "-XX:JITServerMetricsSSLKey=",         // = 59
+   "-XX:JITServerMetricsSSLCert=",        // = 60
+   "-XX:+JITServerShareROMClasses",       // = 61
+   "-XX:-JITServerShareROMClasses",       // = 62
+   "-XX:+JITServerAOTCachePersistence",   // = 63
+   "-XX:-JITServerAOTCachePersistence",   // = 64
+   "-XX:JITServerAOTCacheDir=",           // = 65
+   "-XX:JITServerAOTCacheName=",          // = 66
+   // TR_NumExternalOptions                  = 67
+   };
 
 //************************************************************************
 //
