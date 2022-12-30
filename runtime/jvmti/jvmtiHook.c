@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2022 IBM Corp. and others
+ * Copyright (c) 1991, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -148,6 +148,8 @@ static UDATA methodExists(J9Class * methodClass, U_8 * nameData, UDATA nameLengt
 static void jvmtiHookVirtualThreadStarted (J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData);
 static void jvmtiHookVirtualThreadEnd (J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData);
 static void jvmtiHookVirtualThreadDestroy (J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData);
+static void jvmtiHookVirtualThreadMount (J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData);
+static void jvmtiHookVirtualThreadUnmount (J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData);
 #endif /* JAVA_SPEC_VERSION >= 19 */
 
 static void
@@ -421,6 +423,86 @@ jvmtiHookVirtualThreadDestroy(J9HookInterface **hook, UDATA eventNum, void *even
 
 	TRACE_JVMTI_EVENT_RETURN(jvmtiHookVirtualThreadDestroy);
 }
+
+/**
+ * Virtual thread mount event.
+ *
+ * @param hook Hook interface used by the JVM.
+ * @param eventNum The hook event number
+ * @param eventData hook specific event data.
+ * @param userData pointer to J9VMRuntimeStateListener
+ * @return void.
+ */
+static void
+jvmtiHookVirtualThreadMount(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData)
+{
+	J9VMVirtualThreadMountEvent *data = eventData;
+	J9JVMTIEnv *j9env = userData;
+	J9VMThread *currentThread = data->currentThread;
+	jvmtiExtensionEvent callback = *J9JVMTI_EXTENSION_CALLBACK(j9env, J9JVMTI_EVENT_COM_SUN_HOTSPOT_EVENTS_VIRTUAL_THREAD_MOUNT);
+
+	Trc_JVMTI_jvmtiHookVirtualThreadMount_Entry();
+
+	ENSURE_EVENT_PHASE_LIVE(jvmtiHookVirtualThreadMount, j9env);
+
+	/* Call the event callback */
+
+	if (NULL != callback) {
+		jthread threadRef = NULL;
+		UDATA hadVMAccess = 0;
+		UDATA javaOffloadOldState = 0;
+		if (prepareForEvent(
+			j9env, currentThread, currentThread, J9JVMTI_EVENT_COM_SUN_HOTSPOT_EVENTS_VIRTUAL_THREAD_MOUNT,
+			&threadRef, &hadVMAccess, TRUE, 0, &javaOffloadOldState)
+		) {
+			callback((jvmtiEnv *)j9env, (JNIEnv *)currentThread, threadRef);
+			finishedEvent(currentThread, J9JVMTI_EVENT_COM_SUN_HOTSPOT_EVENTS_VIRTUAL_THREAD_MOUNT, hadVMAccess, javaOffloadOldState);
+		}
+	}
+
+	TRACE_JVMTI_EVENT_RETURN(jvmtiHookVirtualThreadMount);
+}
+
+/**
+ * Virtual thread unmount event.
+ *
+ * @param hook Hook interface used by the JVM.
+ * @param eventNum The hook event number
+ * @param eventData hook specific event data.
+ * @param userData pointer to J9VMRuntimeStateListener
+ * @return void.
+ */
+static void
+jvmtiHookVirtualThreadUnmount(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData)
+{
+	J9VMVirtualThreadUnmountEvent *data = eventData;
+	J9JVMTIEnv *j9env = userData;
+	jvmtiExtensionEvent callback = *J9JVMTI_EXTENSION_CALLBACK(j9env, J9JVMTI_EVENT_COM_SUN_HOTSPOT_EVENTS_VIRTUAL_THREAD_UNMOUNT);
+	J9VMThread *currentThread = data->currentThread;
+
+	Trc_JVMTI_jvmtiHookVirtualThreadUnmount_Entry();
+
+	ENSURE_EVENT_PHASE_LIVE(jvmtiHookVirtualThreadUnmount, j9env);
+
+	/* Call the event callback */
+
+	if (NULL != callback) {
+		jthread threadRef = NULL;
+		UDATA hadVMAccess = 0;
+		UDATA javaOffloadOldState = 0;
+
+		if (prepareForEvent(
+			j9env, currentThread, currentThread, J9JVMTI_EVENT_COM_SUN_HOTSPOT_EVENTS_VIRTUAL_THREAD_UNMOUNT,
+			&threadRef, &hadVMAccess, TRUE, 0, &javaOffloadOldState)
+		) {
+			callback((jvmtiEnv *)j9env, (JNIEnv *)currentThread, threadRef);
+			finishedEvent(data->currentThread, J9JVMTI_EVENT_COM_SUN_HOTSPOT_EVENTS_VIRTUAL_THREAD_UNMOUNT, hadVMAccess, javaOffloadOldState);
+		}
+	}
+
+	TRACE_JVMTI_EVENT_RETURN(jvmtiHookVirtualThreadUnmount);
+}
+
 #endif /* JAVA_SPEC_VERSION >= 19 */
 
 static IDATA
@@ -618,6 +700,14 @@ processEvent(J9JVMTIEnv* j9env, jint event, J9HookRedirectorFunction redirectorF
 			} else {
 				return 0;
 			}
+#if JAVA_SPEC_VERSION >= 19
+		case J9JVMTI_EVENT_COM_SUN_HOTSPOT_EVENTS_VIRTUAL_THREAD_MOUNT:
+			return redirectorFunction(vmHook, J9HOOK_VM_VIRTUAL_THREAD_MOUNT, jvmtiHookVirtualThreadMount, OMR_GET_CALLSITE(), j9env);
+
+		case J9JVMTI_EVENT_COM_SUN_HOTSPOT_EVENTS_VIRTUAL_THREAD_UNMOUNT:
+			return redirectorFunction(vmHook, J9HOOK_VM_VIRTUAL_THREAD_UNMOUNT, jvmtiHookVirtualThreadUnmount, OMR_GET_CALLSITE(), j9env);
+#endif /* JAVA_SPEC_VERSION >= 19 */
+
 	}
 
 	return 0;

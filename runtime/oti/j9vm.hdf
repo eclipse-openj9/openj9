@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-Copyright (c) 2006, 2022 IBM Corp. and others
+Copyright (c) 2006, 2023 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1349,6 +1349,26 @@ typedef UDATA (* lookupNativeAddressCallback)(struct J9VMThread *currentThread, 
 			Triggered when a virtual thread is about to die.
 		</description>
 		<struct>J9VirtualThreadEndEvent</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
+	</event>
+
+	<event>
+		<name>J9HOOK_VM_VIRTUAL_THREAD_MOUNT</name>
+		<description>
+			Triggered whenever a virtual thread mounts.
+			currentThread->threadObject is the virtual thread at the point of trigger.
+		</description>
+		<struct>J9VMVirtualThreadMountEvent</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
+	</event>
+
+	<event>
+		<name>J9HOOK_VM_VIRTUAL_THREAD_UNMOUNT</name>
+		<description>
+			Triggered whenever a virtual thread unmounts.
+			currentThread->threadObject is the virtual thread at the point of trigger.
+		</description>
+		<struct>J9VMVirtualThreadUnmountEvent</struct>
 		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
 	</event>
 </interface>
