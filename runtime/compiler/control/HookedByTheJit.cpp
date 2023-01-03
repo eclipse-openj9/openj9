@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2022 IBM Corp. and others
+ * Copyright (c) 2000, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -5740,7 +5740,7 @@ void samplerThreadStateLogic(TR::CompilationInfo *compInfo, TR_FrontEnd *fe, int
             break;
 
          case TR::CompilationInfo::SAMPLER_DEEPIDLE: // we may go IDLE or directly DEFAULT
-            if (numActiveThreads > 2)
+            if (numActiveThreads >= 2)
                {
                newSamplerState = TR::CompilationInfo::SAMPLER_DEFAULT;
                jitConfig->samplingFrequency = TR::Options::getCmdLineOptions()->getSamplingFrequency();
