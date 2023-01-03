@@ -2470,13 +2470,13 @@ J9::TransformUtil::knownObjectFromFinalStatic(
 #if defined(J9VM_OPT_JITSERVER)
    if (comp->isOutOfProcessCompilation())
       {
-      TR_ResolvedJ9JITServerMethod *serverMethod = static_cast<TR_ResolvedJ9JITServerMethod*>(owningMethod);
+      TR_ResolvedJ9JITServerMethod *serverMethod = static_cast<TR_ResolvedJ9JITServerMethod *>(owningMethod);
       TR_ResolvedMethod *clientMethod = serverMethod->getRemoteMirror();
 
-      auto stream = TR::CompilationInfo::getStream();
+      auto stream = comp->getStream();
       stream->write(JITServer::MessageType::KnownObjectTable_symbolReferenceTableCreateKnownObject, dataAddress, clientMethod, cpIndex);
 
-      auto recv = stream->read<TR::KnownObjectTable::Index, uintptr_t*>();
+      auto recv = stream->read<TR::KnownObjectTable::Index, uintptr_t *>();
       TR::KnownObjectTable::Index knownObjectIndex = std::get<0>(recv);
       uintptr_t *objectPointerReference = std::get<1>(recv);
 
