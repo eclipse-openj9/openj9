@@ -193,7 +193,7 @@ class CompilationInfoPerThreadBase
                                 );
 #endif
 
-   static void storeHintsInTheSCC(CompilationInfoPerThreadBase *compilationInfo, TR_J9VMBase *vm, TR_J9VMBase *fej9, TR_MethodMetaData *metaData, TR_CatchBlockProfileInfo *profileInfo, TR::SegmentAllocator &scratchSegmentProvider);
+   static void storeHintsInTheSCC(TR::Compilation *compiler, CompilationInfoPerThreadBase *compilationInfo, TR_J9VMBase *vm, TR_MethodMetaData *metaData, TR::SegmentAllocator &scratchSegmentProvider);
    static void initializeCompiler(CompilationInfoPerThreadBase *compilationInfo, CompileParameters *compileParameters, TR_ResolvedMethod *&compilee, TR::Compilation *&compiler, TR::IlGeneratorMethodDetails &methodDetails, TR::Options *&options, TR_J9VMBase *vm, TR_RelocationRuntime *reloRuntime, uint64_t &proposedScratchMemoryLimit, TR::SegmentAllocator &scratchSegmentProvider);
    static void setJitDumpSpecificOptions(CompilationInfoPerThreadBase *compilationInfo, TR::IlGeneratorMethodDetails &methodDetails, TR::Options *&options, uint64_t &proposedScratchMemoryLimit);
    static void processSamplingJProfiling(CompilationInfoPerThreadBase *compilationInfo, CompileParameters *compileParameters, TR::IlGeneratorMethodDetails &methodDetails, TR_J9VMBase *vm, TR::Options *&options);

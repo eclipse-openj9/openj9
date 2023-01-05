@@ -8532,7 +8532,7 @@ TR::CompilationInfoPerThreadBase::compile(J9VMThread * vmThread,
    }
 
 void
-TR::CompilationInfoPerThreadBase::storeHintsInTheSCC(CompilationInfoPerThreadBase *compilationInfo, TR_J9VMBase *vm, TR_J9VMBase *fej9, TR_MethodMetaData *metaData, TR_CatchBlockProfileInfo *profileInfo, TR::SegmentAllocator &scratchSegmentProvider)
+TR::CompilationInfoPerThreadBase::storeHintsInTheSCC(TR::Compilation *compiler, CompilationInfoPerThreadBase *compilationInfo, TR_J9VMBase *vm, TR_MethodMetaData *metaData, TR::SegmentAllocator &scratchSegmentProvider)
    {
    // Store hints in the SCC
    TR_J9SharedCache *sc = (TR_J9SharedCache *) (vm->sharedCache());
@@ -8543,10 +8543,11 @@ TR::CompilationInfoPerThreadBase::storeHintsInTheSCC(CompilationInfoPerThreadBas
        sc) // skip AOT loads
       {
       J9Method *method = compilationInfo->_methodBeingCompiled->getMethodDetails().getMethod();
+      TR_J9VMBase *fej9 = (TR_J9VMBase *)(compiler->fej9());
       if (!fej9->isAOT_DEPRECATED_DO_NOT_USE())
          {
          bool isEDOCompilation = false;
-         // TR_CatchBlockProfileInfo * profileInfo = TR_CatchBlockProfileInfo::get(compiler);
+         TR_CatchBlockProfileInfo * profileInfo = TR_CatchBlockProfileInfo::get(compiler);
          if (profileInfo && profileInfo->getCatchCounter() >= TR_CatchBlockProfileInfo::EDOThreshold)
             {
             isEDOCompilation = true;
@@ -9670,9 +9671,7 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
 
    try
       {
-      TR_J9VMBase *fej9 = (TR_J9VMBase *)(compiler->fej9());
-      TR_CatchBlockProfileInfo * profileInfo = TR_CatchBlockProfileInfo::get(compiler);
-      storeHintsInTheSCC(compilationInfo, vm, fej9, metaData, profileInfo, scratchSegmentProvider);
+      storeHintsInTheSCC(compiler, compilationInfo, vm, metaData, scratchSegmentProvider);
       }
 #if defined(J9VM_OPT_JITSERVER)
    catch (const JITServer::StreamFailure &e)
