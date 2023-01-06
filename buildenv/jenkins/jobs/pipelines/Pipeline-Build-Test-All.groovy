@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2022 IBM Corp. and others
+ * Copyright (c) 2018, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -66,7 +66,7 @@
  *   ENABLE_SUMMARY_AUTO_REFRESH: Boolean - flag to enable the downstream summary auto-refresh, default: false
  */
 
-CURRENT_RELEASES = ['8', '11', '17', '18', '19', 'next']
+CURRENT_RELEASES = ['8', '11', '17', '19', '20', 'next']
 
 SPECS = ['ppc64_aix' : CURRENT_RELEASES,
          'ppc64le_linux'  : CURRENT_RELEASES,
@@ -77,7 +77,7 @@ SPECS = ['ppc64_aix' : CURRENT_RELEASES,
          's390x_linux_criu' : CURRENT_RELEASES,
          's390x_linux_gcc11': CURRENT_RELEASES,
          's390x_linux_jit' : CURRENT_RELEASES,
-         's390x_zos'      : ['11', '17'],
+         's390x_zos'      : CURRENT_RELEASES,
          'x86-64_linux'   : CURRENT_RELEASES,
          'x86-64_linux_criu': CURRENT_RELEASES,
          'x86-64_linux_gcc11': CURRENT_RELEASES,
