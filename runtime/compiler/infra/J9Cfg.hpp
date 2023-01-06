@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -39,6 +39,7 @@ namespace J9 { typedef J9::CFG CFGConnector; }
 #include "cs2/listof.h"
 #include "env/TRMemory.hpp"
 #include "il/Node.hpp"
+#include "ilgen/J9ByteCode.hpp"
 #include "infra/Assert.hpp"
 #include "infra/List.hpp"
 #include "infra/TRCfgEdge.hpp"
@@ -86,10 +87,10 @@ public:
 
    void setBlockAndEdgeFrequenciesBasedOnStructure();
    TR_BitVector *setBlockAndEdgeFrequenciesBasedOnJITProfiler();
-   void setBlockFrequenciesBasedOnInterpreterProfiler();
+   void setBlockFrequenciesBasedOnInterpreterProfiler(bool mjit); // mjit set to true for MicroJIT compilations; false otherwise
    void computeInitialBlockFrequencyBasedOnExternalProfiler(TR::Compilation *comp);
    void propagateFrequencyInfoFromExternalProfiler(TR_ExternalProfiler *profiler);
-   void getInterpreterProfilerBranchCountersOnDoubleton(TR::CFGNode *cfgNode, int32_t *taken, int32_t *nottaken);
+   void getInterpreterProfilerBranchCountersOnDoubleton(TR::CFGNode *cfgNode, int32_t *taken, int32_t *nottaken, bool mjitFlag);
    void setSwitchEdgeFrequenciesOnNode(TR::CFGNode *node, TR::Compilation *comp);
    void setBlockFrequency(TR::CFGNode *node, int32_t frequency, bool addFrequency = false);
    int32_t scanForFrequencyOnSimpleMethod(TR::TreeTop *tt, TR::TreeTop *endTT);
@@ -98,6 +99,11 @@ public:
    void getBranchCountersFromProfilingData(TR::Node *node, TR::Block *block, int32_t *taken, int32_t *notTaken);
 
    bool emitVerbosePseudoRandomFrequencies();
+   bool isBranch(TR_J9ByteCode bc);
+   bool isTableOp(TR_J9ByteCode bc);
+   TR_J9ByteCode getBytecodeFromIndex(int32_t index); // Helper for getting bytecode from an index
+   TR_J9ByteCode getLastRealBytecodeOfBlock(TR::CFGNode *start); // Helper for getting last byteode in the CFGNode's block
+   bool continueLoop(TR::CFGNode *temp);
 
 protected:
 

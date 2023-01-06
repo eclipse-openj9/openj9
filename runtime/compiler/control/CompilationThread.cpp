@@ -97,6 +97,15 @@
 #include "env/J9SegmentCache.hpp"
 #include "env/SystemSegmentProvider.hpp"
 #include "env/DebugSegmentProvider.hpp"
+#include "ilgen/J9ByteCodeIterator.hpp"
+#include "ilgen/J9ByteCodeIteratorWithState.hpp"
+#if defined(J9VM_OPT_MICROJIT)
+#include "microjit/x/amd64/AMD64Codegen.hpp"
+#include "microjit/x/amd64/AMD64CodegenGC.hpp"
+#include "microjit/SideTables.hpp"
+#include "microjit/utils.hpp"
+#include "codegen/OMRLinkage_inlines.hpp"
+#endif /* J9VM_OPT_MICROJIT */
 #if defined(J9VM_OPT_JITSERVER)
 #include "control/JITClientCompilationThread.hpp"
 #include "control/JITServerCompilationThread.hpp"
@@ -161,6 +170,24 @@ extern TR::OptionSet *findOptionSet(J9Method *, bool);
 #define COMPRESSION_FAILED -1
 #define DECOMPRESSION_FAILED -1
 #define DECOMPRESSION_SUCCEEDED 0
+
+#if defined(J9VM_OPT_MICROJIT)
+static bool
+shouldCompileWithMicroJIT(J9Method *method, J9JITConfig *jitConfig, J9VMThread *vmThread)
+   {
+   // If MicroJIT is disabled, return early and avoid overhead
+   bool compileWithMicroJIT = TR::Options::getJITCmdLineOptions()->_mjitEnabled;
+   if (!compileWithMicroJIT)
+      return false;
+
+   TR_J9VMBase *fe = TR_J9VMBase::get(jitConfig, vmThread);
+   UDATA extra = (UDATA)method->extra;
+   uint8_t *extendedFlags = fe->fetchMethodExtendedFlagsPointer(method);
+   return (J9_ARE_ALL_BITS_SET(extra, J9_STARTPC_NOT_TRANSLATED)           // MicroJIT is not a target for recompilation
+   && !(J9_ROM_METHOD_FROM_RAM_METHOD(method)->modifiers & J9AccNative)    // MicroJIT does not compile native methods
+   && !(*extendedFlags & J9_MJIT_FAILED_COMPILE));                       // MicroJIT failed to compile this method already
+   }
+#endif
 
 #if defined(WINDOWS)
 void setThreadAffinity(unsigned _int64 handle, unsigned long mask)
@@ -2341,6 +2368,14 @@ bool TR::CompilationInfo::shouldRetryCompilation(TR_MethodToBeCompiled *entry, T
                entry->_optimizationPlan->setDisableGCR(); // GCR isn't needed
                tryCompilingAgain = true;
                break;
+#if defined(J9VM_OPT_MICROJIT)
+            case mjitCompilationFailure:
+               /* MicroJIT generates this failure when it fails to compile.
+                  The next time this method is queued for compilation,
+                  it will be compiled by the regular JIT compiler, Testarossa. */
+               tryCompilingAgain = true;
+               break;
+#endif
             case compilationNullSubstituteCodeCache:
             case compilationCodeMemoryExhausted:
             case compilationCodeCacheError:
@@ -9260,9 +9295,17 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
       Trc_JIT_compileStart(vmThread, hotnessString, compiler->signature());
 
       TR_ASSERT(compiler->getMethodHotness() != unknownHotness, "Trying to compile at unknown hotness level");
-
-      metaData = that->compile(vmThread, compiler, compilee, *vm, p->_optimizationPlan, scratchSegmentProvider);
-
+#if defined(J9VM_OPT_MICROJIT)
+         J9Method *method = that->_methodBeingCompiled->getMethodDetails().getMethod();
+         if (shouldCompileWithMicroJIT(method, jitConfig, vmThread))
+            {
+            metaData = that->mjit(vmThread, compiler, compilee, *vm, p->_optimizationPlan, scratchSegmentProvider, p->trMemory());
+            }
+         else
+#endif
+            {
+            metaData = that->compile(vmThread, compiler, compilee, *vm, p->_optimizationPlan, scratchSegmentProvider);
+            }
       }
 
    try
@@ -11106,6 +11149,13 @@ TR::CompilationInfoPerThreadBase::processException(
       _methodBeingCompiled->_compErrCode = compilationHeapLimitExceeded;
       }
    /* Allocation Exceptions End */
+#if defined(J9VM_OPT_MICROJIT)
+   catch (const MJIT::MJITCompilationFailure &e)
+      {
+      shouldProcessExceptionCommonTasks = false;
+      _methodBeingCompiled->_compErrCode = mjitCompilationFailure;
+      }
+#endif
 
    /* IL Gen Exceptions Start */
    catch (const J9::AOTHasInvokeHandle &e)

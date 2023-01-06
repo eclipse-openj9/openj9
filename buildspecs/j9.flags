@@ -1788,6 +1788,10 @@ Only available on zOS</description>
 		<description>Enables common dependencies between OpenJ9 and OpenJDK MethodHandles.</description>
 		<ifRemoved>Disables common dependencies between OpenJ9 and OpenJDK MethodHandles.</ifRemoved>
 	</flag>
+	<flag id="opt_microjit">
+		<description>Enables MicroJIT support.</description>
+		<ifRemoved></ifRemoved>
+	</flag>
 	<flag id="opt_module">
 		<description>Turns on module support</description>
 		<ifRemoved></ifRemoved>

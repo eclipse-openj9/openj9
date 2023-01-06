@@ -676,11 +676,49 @@ public:
 #if defined(J9VM_OPT_JITSERVER)
       TR_ASSERT_FATAL(!TR::CompilationInfo::getStream(), "not yet implemented for JITServer");
 #endif /* defined(J9VM_OPT_JITSERVER) */
-      value = (value << 1) | J9_STARTPC_NOT_TRANSLATED;
-      if (value < 0)
-          value = INT_MAX;
-      method->extra = reinterpret_cast<void *>(static_cast<intptr_t>(value));
+#if defined(J9VM_OPT_MICROJIT)
+      TR::Options *options = TR::Options::getJITCmdLineOptions();
+      /* Setting MicroJIT invocation count to 0
+         causes some methods to not get compiled.
+         Hence we generally set it to a non-zero value.
+         20 has been proven to be a good estimate for count value
+         for similar template-based JITs.
+       */
+      if (options->_mjitEnabled && value)
+         {
+         return;
+         }
+      else
+#endif
+         {
+         value = (value << 1) | J9_STARTPC_NOT_TRANSLATED;
+         if (value < 0)
+            value = INT_MAX;
+         method->extra = reinterpret_cast<void *>(static_cast<intptr_t>(value));
+         }
       }
+
+#if defined(J9VM_OPT_MICROJIT)
+   static void setInitialMJITCountUnsynchronized(J9Method *method, int32_t mjitThreshold, int32_t trCount, J9JITConfig *jitConfig, J9VMThread *vmThread)
+      {
+      if (TR::Options::getJITCmdLineOptions()->_mjitEnabled)
+         {
+         intptr_t value;
+         if (trCount < mjitThreshold)
+            {
+            value = (intptr_t)((trCount << 1) | J9_STARTPC_NOT_TRANSLATED);
+            TR_J9VMBase *fe = TR_J9VMBase::get(jitConfig, vmThread);
+            uint8_t *extendedFlags = fe->fetchMethodExtendedFlagsPointer(method);
+            *extendedFlags = *extendedFlags | J9_MJIT_FAILED_COMPILE;
+            }
+         else
+            {
+            value = (intptr_t)((mjitThreshold << 1) | J9_STARTPC_NOT_TRANSLATED);
+            }
+         method->extra = reinterpret_cast<void *>(static_cast<intptr_t>(value));
+         }
+      }
+#endif
 
    static uint32_t getMethodBytecodeSize(const J9ROMMethod * romMethod);
    static uint32_t getMethodBytecodeSize(J9Method* method);

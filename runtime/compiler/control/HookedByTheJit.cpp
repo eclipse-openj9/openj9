@@ -610,7 +610,16 @@ static void jitHookInitializeSendTarget(J9HookInterface * * hook, UDATA eventNum
       TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "Setting count=%d for %s", count, buffer);
       }
 
-   TR::CompilationInfo::setInitialInvocationCountUnsynchronized(method,count);
+#if defined(J9VM_OPT_MICROJIT)
+   if (optionsJIT->_mjitEnabled)
+      {
+      int32_t mjitCount = optionsJIT->_mjitInitialCount;
+      if (mjitCount && !(TR::Options::sharedClassCache() && jitConfig->javaVM->sharedClassConfig->existsCachedCodeForROMMethod(vmThread, romMethod)))
+         TR::CompilationInfo::setInitialMJITCountUnsynchronized(method, mjitCount, count, jitConfig, vmThread);
+      }
+#endif
+
+   TR::CompilationInfo::setInitialInvocationCountUnsynchronized(method, count);
 
    if (TR::Options::getJITCmdLineOptions()->getOption(TR_DumpInitialMethodNamesAndCounts) || TR::Options::getAOTCmdLineOptions()->getOption(TR_DumpInitialMethodNamesAndCounts))
       {

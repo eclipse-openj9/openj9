@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -158,6 +158,9 @@ protected:
 
    void printByteCodePrologue();
    void printByteCode();
+   void printByteCodes();
+   const char *currentMnemonic();
+   uint8_t currentOpcode();
    void printByteCodeEpilogue();
 
    TR_J9VMBase *fe()             { return _fe; }

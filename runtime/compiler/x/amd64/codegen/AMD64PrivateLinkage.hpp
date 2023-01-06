@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -38,6 +38,7 @@ namespace X86
 
 namespace AMD64
 {
+void setProperties(TR::CodeGenerator *cg,TR::X86LinkageProperties *properties);
 
 class PrivateLinkage : public J9::X86::PrivateLinkage
    {

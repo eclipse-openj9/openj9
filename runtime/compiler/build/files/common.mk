@@ -418,6 +418,12 @@ JIT_PRODUCT_SOURCE_FILES+=\
     compiler/runtime/MetricsServer.cpp
 endif
 
+ifneq ($(J9VM_OPT_MICROJIT),)
+JIT_PRODUCT_SOURCE_FILES+=\
+    compiler/microjit/ExceptionTable.cpp
+    compiler/microjit/CompilationInfoPerThreadBase.cpp
+endif
+
 -include $(JIT_MAKE_DIR)/files/extra.mk
 include $(JIT_MAKE_DIR)/files/host/$(HOST_ARCH).mk
 include $(JIT_MAKE_DIR)/files/target/$(TARGET_ARCH).mk
