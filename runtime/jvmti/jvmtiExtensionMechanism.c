@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2022 IBM Corp. and others
+ * Copyright (c) 1991, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -113,6 +113,11 @@ static jvmtiError JNICALL jvmtiGetJ9method(jvmtiEnv *env, ...);
 
 static jvmtiError JNICALL jvmtiRegisterTracePointSubscriber(jvmtiEnv *env, ...);
 static jvmtiError JNICALL jvmtiDeregisterTracePointSubscriber(jvmtiEnv *env, ...);
+
+#if JAVA_SPEC_VERSION >= 19
+static jvmtiError JNICALL jvmtiGetVirtualThread(jvmtiEnv* jvmti_env, ...);
+static jvmtiError JNICALL jvmtiGetCarrierThread(jvmtiEnv* jvmti_env, ...);
+#endif /* JAVA_SPEC_VERSION >= 19 */
 
 /*
  * Struct to encapsulate the details of a verbose GC subscriber
@@ -346,6 +351,20 @@ static const jvmtiParamInfo jvmtiDeregisterTracepointSubscriber_params[] = {
 	{ "subscriptionID", JVMTI_KIND_IN_PTR, JVMTI_TYPE_CVOID, JNI_FALSE }
 };
 
+#if JAVA_SPEC_VERSION >= 19
+/* (jvmtiEnv *jvmti_env, jthread carrier_thread, jthread *virtual_thread_ptr) */
+static const jvmtiParamInfo jvmtiGetVirtualThread_params[] = {
+	{ "carrier_thread", JVMTI_KIND_IN, JVMTI_TYPE_JTHREAD, JNI_FALSE },
+	{ "virtual_thread_ptr", JVMTI_KIND_OUT, JVMTI_TYPE_JTHREAD, JNI_FALSE },
+};
+
+/* (jvmtiEnv *jvmti_env, jthread virtual_thread, jthread *carrier_thread_ptr) */
+static const jvmtiParamInfo jvmtiGetCarrierThread_params[] = {
+	{ "virtual_thread", JVMTI_KIND_IN, JVMTI_TYPE_JTHREAD, JNI_FALSE },
+	{ "carrier_thread_ptr", JVMTI_KIND_OUT, JVMTI_TYPE_JTHREAD, JNI_FALSE },
+};
+#endif /* JAVA_SPEC_VERSION >= 19 */
+
 /*
  * Error lists for extended functions
  */
@@ -500,6 +519,18 @@ static const jvmtiError jvmtiDeregisterTracePointSubscriber_errors[] = {
 	JVMTI_ERROR_NOT_AVAILABLE,
 	JVMTI_ERROR_INTERNAL
 };	
+
+#if JAVA_SPEC_VERSION >= 19
+static const jvmtiError get_virtual_thread_errors[] = {
+	JVMTI_ERROR_INVALID_THREAD,
+	JVMTI_ERROR_MUST_POSSESS_CAPABILITY
+};
+
+static const jvmtiError get_carrier_thread_errors[] = {
+	JVMTI_ERROR_INVALID_THREAD,
+	JVMTI_ERROR_MUST_POSSESS_CAPABILITY
+};
+#endif /* JAVA_SPEC_VERSION >= 19 */
 
 #define SIZE_AND_TABLE(table) (sizeof(table) / sizeof(table[0])) , (table)
 #define EMPTY_SIZE_AND_TABLE 0, NULL
@@ -726,6 +757,22 @@ static const J9JVMTIExtensionFunctionInfo J9JVMTIExtensionFunctionInfoTable[] = 
 		SIZE_AND_TABLE(jvmtiDeregisterTracepointSubscriber_params),
 		SIZE_AND_TABLE(jvmtiDeregisterTracePointSubscriber_errors)
 	},
+#if JAVA_SPEC_VERSION >= 19
+	{
+		(jvmtiExtensionFunction)jvmtiGetVirtualThread,
+		COM_SUN_HOTSPOT_FUNCTIONS_GET_VIRTUAL_THREAD,
+		J9NLS_JVMTI_COM_SUN_HOTSPOT_FUNCTIONS_GET_VIRTUAL_THREAD,
+		SIZE_AND_TABLE(jvmtiGetVirtualThread_params),
+		SIZE_AND_TABLE(get_virtual_thread_errors)
+	},
+	{
+		(jvmtiExtensionFunction)jvmtiGetCarrierThread,
+		COM_SUN_HOTSPOT_FUNCTIONS_GET_CARRIER_THREAD,
+		J9NLS_JVMTI_COM_SUN_HOTSPOT_FUNCTIONS_GET_CARRIER_THREAD,
+		SIZE_AND_TABLE(jvmtiGetCarrierThread_params),
+		SIZE_AND_TABLE(get_carrier_thread_errors)
+	},
+#endif /* JAVA_SPEC_VERSION >= 19 */
 };
 
 #define NUM_EXTENSION_FUNCTIONS (sizeof(J9JVMTIExtensionFunctionInfoTable) / sizeof(J9JVMTIExtensionFunctionInfoTable[0]))
@@ -3683,3 +3730,131 @@ jvmtiDeregisterTracePointSubscriber(jvmtiEnv* env, ...)
 	done:
 	TRACE_JVMTI_RETURN(jvmtiDeregisterTracePointSubscriber);
 }
+
+#if JAVA_SPEC_VERSION >= 19
+/**
+ * Get the virtual thread corresponding to a carrier thread.
+ *
+ * @param[in] jvmti_env the jvmti env.
+ * @param[in] carrier_thread the carrier thread.
+ * @param[out] virtual_thread_ptr the pointer to the virtual threaed.
+ * @return JVMTI_ERROR_NONE on success, or a JVMTI error on failure.
+ */
+static jvmtiError JNICALL
+jvmtiGetVirtualThread(jvmtiEnv* jvmti_env, ...)
+{
+	J9JavaVM *vm = JAVAVM_FROM_ENV(jvmti_env);
+	jvmtiError rc = JVMTI_ERROR_NONE;
+	J9VMThread *currentThread = NULL;
+	jthread rv_virtual_thread = NULL;
+
+	jthread carrier_thread = NULL;
+	jthread *virtual_thread_ptr = NULL;
+	va_list args;
+	va_start(args, jvmti_env);
+	carrier_thread = va_arg(args, jthread);
+	virtual_thread_ptr = va_arg(args, jthread*);
+	va_end(args);
+
+	Trc_JVMTI_jvmtiGetVirtualThread_Entry(jvmti_env);
+
+	rc = getCurrentVMThread(vm, &currentThread);
+	if (JVMTI_ERROR_NONE == rc) {
+		J9VMThread *targetThread = NULL;
+
+		vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
+
+		ENSURE_PHASE_START_OR_LIVE(jvmti_env);
+		ENSURE_NON_NULL(virtual_thread_ptr);
+
+		if (((NULL == carrier_thread)
+			&& IS_JAVA_LANG_VIRTUALTHREAD(currentThread, currentThread->carrierThreadObject))
+		|| ((NULL != carrier_thread)
+			&& IS_JAVA_LANG_VIRTUALTHREAD(currentThread, J9_JNI_UNWRAP_REFERENCE(carrier_thread)))
+		) {
+			JVMTI_ERROR(JVMTI_ERROR_INVALID_THREAD);
+		}
+
+		rc = getVMThread(
+				currentThread, carrier_thread, &targetThread, JVMTI_ERROR_NONE,
+				J9JVMTI_GETVMTHREAD_ERROR_ON_DEAD_THREAD);
+		if (JVMTI_ERROR_NONE == rc) {
+			if (NULL != targetThread->threadObject) {
+				rv_virtual_thread = (jthread)vm->internalVMFunctions->j9jni_createLocalRef(
+												(JNIEnv *)currentThread,
+												(j9object_t)targetThread->threadObject);
+			}
+			releaseVMThread(currentThread, targetThread, carrier_thread);
+		}
+done:
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
+	}
+
+	if (NULL != virtual_thread_ptr) {
+		*virtual_thread_ptr = rv_virtual_thread;
+	}
+	TRACE_JVMTI_RETURN(jvmtiGetVirtualThread);
+}
+
+/**
+ * Get the carrier thread corresponding to a virtual thread.
+ *
+ * @param[in] jvmti_env the jvmti env.
+ * @param[in] virtual_thread the virtual thread.
+ * @param[out] carrier_thread_ptr the pointer to the carrier threaed.
+ * @return JVMTI_ERROR_NONE on success, or a JVMTI error on failure.
+ */
+static jvmtiError JNICALL
+jvmtiGetCarrierThread(jvmtiEnv* jvmti_env, ...)
+{
+	J9JavaVM *vm = JAVAVM_FROM_ENV(jvmti_env);
+	jvmtiError rc = JVMTI_ERROR_NONE;
+	J9VMThread *currentThread = NULL;
+	jthread rv_carrier_thread = NULL;
+
+	jthread virtual_thread = NULL;
+	jthread *carrier_thread_ptr = NULL;
+	va_list args;
+	va_start(args, jvmti_env);
+	virtual_thread = va_arg(args, jthread);
+	carrier_thread_ptr = va_arg(args, jthread*);
+	va_end(args);
+
+	Trc_JVMTI_jvmtiGetCarrierThread_Entry(jvmti_env);
+
+	rc = getCurrentVMThread(vm, &currentThread);
+	if (JVMTI_ERROR_NONE == rc) {
+		J9VMThread *targetThread = NULL;
+
+		vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
+
+		ENSURE_PHASE_START_OR_LIVE(jvmti_env);
+		ENSURE_NON_NULL(carrier_thread_ptr);
+
+		if ((NULL != virtual_thread)
+		&& !IS_JAVA_LANG_VIRTUALTHREAD(currentThread, J9_JNI_UNWRAP_REFERENCE(virtual_thread))
+		) {
+			JVMTI_ERROR(JVMTI_ERROR_INVALID_THREAD);
+		}
+
+		rc = getVMThread(
+				currentThread, virtual_thread, &targetThread, JVMTI_ERROR_NONE,
+				J9JVMTI_GETVMTHREAD_ERROR_ON_DEAD_THREAD | J9JVMTI_GETVMTHREAD_ERROR_ON_NULL_JTHREAD);
+		if (JVMTI_ERROR_NONE == rc) {
+			if (NULL != targetThread->carrierThreadObject) {
+				rv_carrier_thread = (jthread)vm->internalVMFunctions->j9jni_createLocalRef(
+												(JNIEnv *)currentThread,
+												(j9object_t)targetThread->carrierThreadObject);
+			}
+			releaseVMThread(currentThread, targetThread, virtual_thread);
+		}
+done:
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
+	}
+
+	if (NULL != carrier_thread_ptr) {
+		*carrier_thread_ptr = rv_carrier_thread;
+	}
+	TRACE_JVMTI_RETURN(jvmtiGetCarrierThread);
+}
+#endif /* JAVA_SPEC_VERSION >= 19 */
