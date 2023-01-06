@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2022 IBM Corp. and others
+ * Copyright (c) 1991, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2297,6 +2297,7 @@ VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved)
 
 			/* Enable -XX:+UseContainerSupport by default */
 			if (argIndex >= argIndex2) {
+				vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_USE_CONTAINER_SUPPORT;
 				uint64_t subsystemsEnabled = omrsysinfo_cgroup_enable_subsystems(OMR_CGROUP_SUBSYSTEM_ALL);
 
 				if (OMR_CGROUP_SUBSYSTEM_ALL != subsystemsEnabled) {
