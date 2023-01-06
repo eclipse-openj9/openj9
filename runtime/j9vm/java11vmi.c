@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2022 IBM Corp. and others
+ * Copyright (c) 2015, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1659,9 +1659,15 @@ JVM_IsSharingEnabled(JNIEnv *env)
 JNIEXPORT jboolean JNICALL
 JVM_IsUseContainerSupport(JNIEnv *env)
 {
-	PORT_ACCESS_FROM_ENV(env);
-	OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
-	BOOLEAN inContainer = omrsysinfo_is_running_in_container();
+	J9VMThread *const currentThread = (J9VMThread *)env;
+	J9JavaVM *vm = currentThread->javaVM;
+	BOOLEAN inContainer = FALSE;
+
+	if (J9_ARE_ALL_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_USE_CONTAINER_SUPPORT)) {
+		PORT_ACCESS_FROM_ENV(env);
+		OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
+		inContainer = omrsysinfo_is_running_in_container();
+	}
 
 	return inContainer ? JNI_TRUE : JNI_FALSE;
 }
