@@ -2297,13 +2297,14 @@ VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved)
 
 			/* Enable -XX:+UseContainerSupport by default */
 			if (argIndex >= argIndex2) {
-				vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_USE_CONTAINER_SUPPORT;
 				uint64_t subsystemsEnabled = omrsysinfo_cgroup_enable_subsystems(OMR_CGROUP_SUBSYSTEM_ALL);
 
 				if (OMR_CGROUP_SUBSYSTEM_ALL != subsystemsEnabled) {
 					uint64_t subsystemsAvailable = omrsysinfo_cgroup_get_available_subsystems();
 					Trc_VM_CgroupSubsystemsNotEnabled(vm->mainThread, subsystemsAvailable, subsystemsEnabled);
 				}
+
+				vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_USE_CONTAINER_SUPPORT;
 			}
 
 			argIndex = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXDEEP_SCAN, NULL);
