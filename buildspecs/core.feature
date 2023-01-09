@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-Copyright (c) 2006, 2022 IBM Corp. and others
+Copyright (c) 2006, 2023 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -117,7 +117,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<flag id="opt_newRomClassBuilder" value="true"/>
 		<flag id="opt_openjdkFfi" value="true"/>
 		<flag id="opt_openjdkMethodhandle" value="false"/>
-		<flag id="opt_openjdkThreadSupport" value="false"/>
 		<flag id="opt_phpSupport" value="false"/>
 		<flag id="opt_romImageSupport" value="true"/>
 		<flag id="opt_useOmrDdr" value="false"/>
