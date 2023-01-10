@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2022 IBM Corp. and others
+ * Copyright (c) 2019, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,10 +28,6 @@
 #include "env/VMJ9.h"
 #include "runtime/CodeCacheManager.hpp"
 #include "runtime/J9Runtime.hpp"
-
-#if defined(OSX)
-#include <pthread.h> // for pthread_jit_write_protect_np
-#endif
 
 extern void arm64CodeSync(uint8_t *, uint32_t);
 
@@ -117,9 +113,7 @@ void J9::Recompilation::fixUpMethodCode(void *startPC)
                 newInstr, jitEntry, *jitEntry); fflush(stdout);
          }
 
-#if defined(OSX)
-      pthread_jit_write_protect_np(0);
-#endif
+      omrthread_jit_write_protect_disable();
       // Other thread might try to do the same thing at the same time.
       while ((preserved & B_INSTR_MASK) != TR::InstOpCode::getOpCodeBinaryEncoding(TR::InstOpCode::b))
          {
@@ -147,9 +141,7 @@ void J9::Recompilation::fixUpMethodCode(void *startPC)
 #endif
          preserved = *jitEntry;
          }
-#if defined(OSX)
-      pthread_jit_write_protect_np(1);
-#endif
+      omrthread_jit_write_protect_enable();
       }
    }
 
@@ -187,14 +179,10 @@ void J9::Recompilation::methodHasBeenRecompiled(void *oldStartPC, void *newStart
          printf("\tsampling recomp, change instruction location (%p) of sampling branch to branch encoding 0x%x (to TR_ARM64samplingPatchCallSite)\n",
                   patchAddr, newInstr); fflush(stdout);
          }
-#if defined(OSX)
-      pthread_jit_write_protect_np(0);
-#endif
+      omrthread_jit_write_protect_disable();
       *patchAddr = newInstr;
       arm64CodeSync((uint8_t *)patchAddr, ARM64_INSTRUCTION_LENGTH);
-#if defined(OSX)
-      pthread_jit_write_protect_np(1);
-#endif
+      omrthread_jit_write_protect_enable();
 
       fixUpMethodCode(oldStartPC);
 
@@ -202,13 +190,9 @@ void J9::Recompilation::methodHasBeenRecompiled(void *oldStartPC, void *newStart
       }
 
    bool codeMemoryWasAlreadyReleased = linkageInfo->hasBeenRecompiled(); // HCR - can recompile the same body twice
-#if defined(OSX)
-      pthread_jit_write_protect_np(0);
-#endif
+   omrthread_jit_write_protect_disable();
    linkageInfo->setHasBeenRecompiled();
-#if defined(OSX)
-      pthread_jit_write_protect_np(1);
-#endif
+   omrthread_jit_write_protect_enable();
 
    if (linkageInfo->isSamplingMethodBody() && !codeMemoryWasAlreadyReleased)
       {
@@ -251,14 +235,10 @@ void J9::Recompilation::methodCannotBeRecompiled(void *oldStartPC, TR_FrontEnd *
          printf("oldStartPC %p, patchAddr %p, target %lx\n", oldStartPC, patchAddr, target); fflush(stdout);
          }
 
-#if defined(OSX)
-      pthread_jit_write_protect_np(0);
-#endif
+      omrthread_jit_write_protect_disable();
       *patchAddr = encodeDistanceInBranchInstruction(TR::InstOpCode::b, distance);
       arm64CodeSync((uint8_t *)patchAddr, ARM64_INSTRUCTION_LENGTH);
-#if defined(OSX)
-      pthread_jit_write_protect_np(1);
-#endif
+      omrthread_jit_write_protect_enable();
 
       if (!methodInfo->hasBeenReplaced()) // HCR: VM presumably already has the method in its proper state
          fej9->revertToInterpreted(methodInfo->getMethodInfo());
@@ -280,24 +260,16 @@ void J9::Recompilation::methodCannotBeRecompiled(void *oldStartPC, TR_FrontEnd *
             printf("MethodCannotBeRecompiled sampling recomp sync compilation restoring preserved jitEntry of 0x%x at location %p\n",
                    *((int32_t *)((uint8_t *)oldStartPC + OFFSET_SAMPLING_PRESERVED_FROM_STARTPC)), startByte); fflush(stdout);
             }
-#if defined(OSX)
-         pthread_jit_write_protect_np(0);
-#endif
+         omrthread_jit_write_protect_disable();
          *startByte = *((int32_t *)((uint8_t *)oldStartPC + OFFSET_SAMPLING_PRESERVED_FROM_STARTPC));
          arm64CodeSync((uint8_t *)startByte, 4);
-#if defined(OSX)
-         pthread_jit_write_protect_np(1);
-#endif
+         omrthread_jit_write_protect_enable();
          }
       }
 
-#if defined(OSX)
-   pthread_jit_write_protect_np(0);
-#endif
+   omrthread_jit_write_protect_disable();
    linkageInfo->setHasFailedRecompilation();
-#if defined(OSX)
-   pthread_jit_write_protect_np(1);
-#endif
+   omrthread_jit_write_protect_enable();
    }
 
 void J9::Recompilation::invalidateMethodBody(void *startPC, TR_FrontEnd *fe)

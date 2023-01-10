@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2022 IBM Corp. and others
+ * Copyright (c) 2000, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -39,10 +39,6 @@
 #include "runtime/JITClientSession.hpp"
 #endif
 #include "omrformatconsts.h"
-
-#if defined(OSX) && defined(AARCH64)
-#include <pthread.h> // for pthread_jit_write_protect_np
-#endif
 
 extern TR::Monitor *assumptionTableMutex;
 
@@ -744,14 +740,10 @@ void TR_UnloadedClassPicSite::compensate(TR_FrontEnd *, bool isSMP, void *)
 #elif defined(TR_HOST_ARM64)
    // On aarch64, we use constant data snippet for class unloading pic site
    extern void arm64CodeSync(unsigned char *codeStart, unsigned int codeSize);
-#if defined(OSX)
-   pthread_jit_write_protect_np(0);
-#endif
+   omrthread_jit_write_protect_disable();
    *(int64_t *)_picLocation = -1;
    arm64CodeSync(_picLocation, 8);
-#if defined(OSX)
-   pthread_jit_write_protect_np(1);
-#endif
+   omrthread_jit_write_protect_enable();
 #else
    //   TR_ASSERT(0, "unloaded class PIC patching is not implemented on this platform yet");
 #endif
@@ -920,13 +912,9 @@ TR_RuntimeAssumptionTable::notifyClassRedefinitionEvent(TR_FrontEnd *vm, bool is
                if (reportDetails)
                   TR_VerboseLog::writeLineLocked(TR_Vlog_RA, "old=%p resolved=%p @ %p patching new=%p", initialKey, resolvedKey, pic_cursor->getPicLocation(), *(uintptr_t *)(pic_cursor->getPicLocation()));
 
-#if defined(OSX) && defined(AARCH64)
-               pthread_jit_write_protect_np(0);
-#endif
+               omrthread_jit_write_protect_disable();
                *(uintptr_t *)(pic_cursor->getPicLocation()) = (uintptr_t)newKey;
-#if defined(OSX) && defined(AARCH64)
-               pthread_jit_write_protect_np(1);
-#endif
+               omrthread_jit_write_protect_enable();
                }
             }
          pic_cursor = pic_next;
@@ -1189,13 +1177,9 @@ void TR_RedefinedClassPicSite::compensate(TR_FrontEnd *, bool isSMP, void *newKe
 #elif defined(TR_HOST_ARM)
    *(int32_t *)_picLocation = (uintptr_t)newKey;
 #elif defined(TR_HOST_ARM64)
-#if defined(OSX)
-   pthread_jit_write_protect_np(0);
-#endif
+   omrthread_jit_write_protect_disable();
    *(int64_t *)_picLocation = (uintptr_t)newKey;
-#if defined(OSX)
-   pthread_jit_write_protect_np(1);
-#endif
+   omrthread_jit_write_protect_enable();
 #else
    //   TR_ASSERT(0, "redefined class PIC patching is not implemented on this platform yet");
 #endif

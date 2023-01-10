@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2022 IBM Corp. and others
+ * Copyright (c) 2000, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -54,10 +54,6 @@
 #include "runtime/HookHelpers.hpp"
 #include "env/VerboseLog.hpp"
 #include "omrformatconsts.h"
-
-#if defined(OSX) && defined(AARCH64)
-#include <pthread.h> // for pthread_jit_write_protect_np
-#endif
 
 OMR::CodeCacheMethodHeader *getCodeCacheMethodHeader(char *p, int searchLimit, J9JITExceptionTable * metaData);
 
@@ -334,25 +330,17 @@ J9::CodeCache::addFreeBlock(OMR::FaintCacheBlock *block)
    size_t endPtr = (size_t) warmBlock+warmBlock->_size;
    if (endPtr > realStartPC+sizeof(OMR::CodeCacheFreeCacheBlock))
       {
-#if defined(OSX) && defined(AARCH64)
-      pthread_jit_write_protect_np(0);
-#endif
+      omrthread_jit_write_protect_disable();
       warmBlock->_size = realStartPC - (UDATA)warmBlock;
-#if defined(OSX) && defined(AARCH64)
-      pthread_jit_write_protect_np(1);
-#endif
+      omrthread_jit_write_protect_enable();
       }
 
    if (self()->addFreeBlock2((uint8_t *) realStartPC, (uint8_t *)endPtr))
       {
       // Update the block size to reflect the remaining stub
-#if defined(OSX) && defined(AARCH64)
-      pthread_jit_write_protect_np(0);
-#endif
+      omrthread_jit_write_protect_disable();
       warmBlock->_size = realStartPC - (UDATA)warmBlock;
-#if defined(OSX) && defined(AARCH64)
-      pthread_jit_write_protect_np(1);
-#endif
+      omrthread_jit_write_protect_enable();
       }
    else
       {

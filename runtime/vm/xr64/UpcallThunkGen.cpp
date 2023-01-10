@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2021, 2022 IBM Corp. and others
+ * Copyright (c) 2021, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,10 +30,6 @@
  * Given an upcallMetaData, an upcall thunk/adaptor will be generated;
  * Given an upcallSignature, argListPtr, and argIndex, a pointer to that specific arg will be returned
  */
-
-#if defined(OSX)
-#include <pthread.h> /* for pthread_jit_write_protect_np */
-#endif /* defined(OSX) */
 
 extern "C" {
 
@@ -416,9 +412,7 @@ createUpcallThunk(J9UpcallMetaData *metaData)
 	const I_32 LR_OFFSET = 8; /* offset for saving the return address */
 	const I_32 HIDDEN_PARAM_OFFSET = 16; /* offset for saving the hidden param */
 
-#if defined(OSX)
-	pthread_jit_write_protect_np(0); /* Start writing instructions to memory */
-#endif /* defined(OSX) */
+	omrthread_jit_write_protect_disable();
 
 	thunkMem[instrIdx++] = SUB(C_SP, C_SP, frameSize);
 	thunkMem[instrIdx++] = STR(LR, C_SP, LR_OFFSET);
@@ -613,9 +607,7 @@ createUpcallThunk(J9UpcallMetaData *metaData)
 
 	Assert_VM_true(instrIdx == instrCount);
 
-#if defined(OSX)
-	pthread_jit_write_protect_np(1); /* Stop writing instructions to memory */
-#endif /* defined(OSX) */
+	omrthread_jit_write_protect_enable();
 
 	/* Finish up before returning */
 	vmFuncs->doneUpcallThunkGeneration(metaData, (void *)(metaData->thunkAddress));

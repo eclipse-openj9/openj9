@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2021, 2022 IBM Corp. and others
+ * Copyright (c) 2021, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,10 +30,6 @@
 extern "C" {
 
 #if JAVA_SPEC_VERSION >= 16
-
-#if defined(OSX) && defined(AARCH64)
-#include <pthread.h> /* for pthread_jit_write_protect_np */
-#endif
 
 /**
  * A memory segment is associated with a native scope/session owned by a thread, in which case
@@ -90,13 +86,9 @@ Java_jdk_internal_foreign_abi_UpcallStubs_freeUpcallStub0(JNIEnv *env, jclass cl
 				hashTableRemove(metaDataHashTable, result);
 
 				if (NULL != thunkHeap) {
-#if defined(OSX) && defined(AARCH64)
-					pthread_jit_write_protect_np(0);
-#endif /* defined(OSX) && defined(AARCH64) */
+					omrthread_jit_write_protect_disable();
 					j9heap_free(thunkHeap, thunkAddr);
-#if defined(OSX) && defined(AARCH64)
-					pthread_jit_write_protect_np(1);
-#endif /* defined(OSX) && defined(AARCH64) */
+					omrthread_jit_write_protect_enable();
 				}
 			}
 		}
