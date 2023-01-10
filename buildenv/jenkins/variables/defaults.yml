@@ -313,6 +313,7 @@ x86-64_linux:
       # use default gcc for 8, 11 (v7.5)
     vars: 'OPENJ9_JAVA_OPTIONS=-Xdump:system+java:events=systhrow,filter=java/lang/ClassCastException,request=exclusive+prepwalk+preempt'
   extra_test_labels:
+    11: '!sw.os.cent.6'
     17: '!sw.os.cent.6'
     19: '!sw.os.cent.6'
     20: '!sw.os.cent.6'
