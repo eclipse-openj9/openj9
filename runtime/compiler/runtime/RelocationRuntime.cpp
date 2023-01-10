@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2022 IBM Corp. and others
+ * Copyright (c) 2000, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -79,10 +79,6 @@
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
 #include "exceptions/AOTFailure.hpp"
-
-#if defined(OSX) && defined(AARCH64)
-#include <pthread.h> // for pthread_jit_write_protect_np
-#endif
 
 char *TR_RelocationRuntime::_reloErrorCodeNames[] =
    {
@@ -434,16 +430,12 @@ TR_RelocationRuntime::prepareRelocateAOTCodeAndData(J9VMThread* vmThread,
                // Before copying, memorize the real size of the block returned by the code cache manager
                // and fix it later
                U_32 blockSize = ((OMR::CodeCacheMethodHeader*)newCodeStart)->_size;
-#if defined(OSX) && defined(AARCH64)
-               pthread_jit_write_protect_np(0);
-#endif
+               omrthread_jit_write_protect_disable();
                memcpy(newCodeStart, tempCodeStart, codeSize);  // the real size may have been overwritten
                ((OMR::CodeCacheMethodHeader*)newCodeStart)->_size = blockSize; // fix it
                // Must fix the pointer to the metadata which is stored in the OMR::CodeCacheMethodHeader
                ((OMR::CodeCacheMethodHeader*)newCodeStart)->_metaData = _exceptionTable;
-#if defined(OSX) && defined(AARCH64)
-               pthread_jit_write_protect_np(1);
-#endif
+               omrthread_jit_write_protect_enable();
                }
             else
                {

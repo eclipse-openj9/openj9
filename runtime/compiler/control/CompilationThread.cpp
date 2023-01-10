@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2022 IBM Corp. and others
+ * Copyright (c) 2000, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -145,10 +145,6 @@ static void printCompFailureInfo(TR::Compilation * comp, const char * reason);
 
 #if defined(J9VM_INTERP_PROFILING_BYTECODES)
 #include "runtime/IProfiler.hpp"
-#endif
-
-#if defined(OSX) && defined(AARCH64)
-#include <pthread.h> // for pthread_jit_write_protect_np
 #endif
 
 IDATA J9THREAD_PROC compilationThreadProc(void *jitconfig);
@@ -5061,13 +5057,9 @@ TR::CompilationInfo::addMethodToBeCompiled(TR::IlGeneratorMethodDetails & detail
       if (pc)
          {
          J9::PrivateLinkage::LinkageInfo *linkageInfo = J9::PrivateLinkage::LinkageInfo::get(pc);
-#if defined(OSX) && defined(AARCH64)
-         pthread_jit_write_protect_np(0);
-#endif
+         omrthread_jit_write_protect_disable();
          linkageInfo->setIsBeingRecompiled(); // mark that we try to compile it
-#if defined(OSX) && defined(AARCH64)
-         pthread_jit_write_protect_np(1);
-#endif
+         omrthread_jit_write_protect_enable();
 
          // Update persistentMethodInfo with the level we want to compile to
          //
@@ -8303,11 +8295,9 @@ TR::CompilationInfoPerThreadBase::compile(J9VMThread * vmThread,
                                      reloRuntime);
       }
 
-#if defined(OSX) && defined(AARCH64)
    // Re-acquire execution permission of JIT code cache for this thread
    // regardless of the previous protection status
-   pthread_jit_write_protect_np(1);
-#endif
+   omrthread_jit_write_protect_enable();
 
    vmThread->omrVMThread->vmState = oldState;
    vmThread->jitMethodToBeCompiled = NULL;
@@ -9413,9 +9403,7 @@ TR::CompilationInfoPerThreadBase::performAOTLoad(
          );
       }
 
-#if defined(OSX) && defined(AARCH64)
-   pthread_jit_write_protect_np(0);
-#endif
+   omrthread_jit_write_protect_disable();
    TR_MethodMetaData *metaData = installAotCachedMethod(
       vmThread,
       _methodBeingCompiled->_aotCodeToBeRelocated,
@@ -9426,9 +9414,7 @@ TR::CompilationInfoPerThreadBase::performAOTLoad(
       _methodBeingCompiled,
       compiler
       );
-#if defined(OSX) && defined(AARCH64)
-   pthread_jit_write_protect_np(1);
-#endif
+   omrthread_jit_write_protect_enable();
 
    _methodBeingCompiled->_newStartPC = metaData ? reinterpret_cast<void *>(metaData->startPC) : 0;
 
@@ -9896,10 +9882,7 @@ TR::CompilationInfoPerThreadBase::compile(
                );
             }
 
-
-#if defined(OSX) && defined(AARCH64)
-         pthread_jit_write_protect_np(0);
-#endif
+         omrthread_jit_write_protect_disable();
          // Put a metaData pointer into the Code Cache Header(s).
          //
          uint8_t *warmMethodHeader = compiler->cg()->getBinaryBufferStart() - sizeof(OMR::CodeCacheMethodHeader);
@@ -9917,9 +9900,7 @@ TR::CompilationInfoPerThreadBase::compile(
          // and in fact it would be wrong to do so because code during chtable.commit is
          // expecting something in the compiler object
          }
-#if defined(OSX) && defined(AARCH64)
-         pthread_jit_write_protect_np(1);
-#endif
+      omrthread_jit_write_protect_enable();
 
       setMetadata(metaData);
 
