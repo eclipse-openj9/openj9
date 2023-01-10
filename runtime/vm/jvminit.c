@@ -43,9 +43,6 @@
 #include "util_api.h"
 #if JAVA_SPEC_VERSION >= 16
 #include "vm_internal.h"
-#if defined(OSX) && defined(AARCH64)
-#include <pthread.h> /* for pthread_jit_write_protect_np */
-#endif
 #endif /* JAVA_SPEC_VERSION >= 16 */
 
 #if !defined(stdout)
@@ -8443,13 +8440,9 @@ freeUpcallMetaDataDoFn(J9UpcallMetaDataEntry *entry, void *userData)
 		metaData = NULL;
 
 		if (NULL != thunkHeap) {
-#if defined(OSX) && defined(AARCH64)
-			pthread_jit_write_protect_np(0);
-#endif /* defined(OSX) && defined(AARCH64) */
+			omrthread_jit_write_protect_disable();
 			j9heap_free(thunkHeap, thunkAddr);
-#if defined(OSX) && defined(AARCH64)
-			pthread_jit_write_protect_np(1);
-#endif /* defined(OSX) && defined(AARCH64) */
+			omrthread_jit_write_protect_enable();
 		}
 		entry->thunkAddrValue = 0;
 	}

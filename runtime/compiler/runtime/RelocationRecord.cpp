@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2022 IBM Corp. and others
+ * Copyright (c) 2000, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -61,10 +61,6 @@
 #include "control/CompilationThread.hpp"
 #include "control/MethodToBeCompiled.hpp"
 #endif /* defined(J9VM_OPT_JITSERVER) */
-
-#if defined(OSX) && defined(AARCH64)
-#include <pthread.h> // for pthread_jit_write_protect_np
-#endif
 
 // TODO: move this someplace common for RuntimeAssumptions.cpp and here
 #if defined(__IBMCPP__) && !defined(AIXPPC) && !defined(LINUXPPC)
@@ -1040,13 +1036,9 @@ TR_RelocationRecord::applyRelocationAtAllOffsets(TR_RelocationRuntime *reloRunti
             uint8_t *reloLocationHigh = reloOrigin + offsetHigh + 2; // Add 2 to skip the first 16 bits of instruction
             uint8_t *reloLocationLow = reloOrigin + offsetLow + 2; // Add 2 to skip the first 16 bits of instruction
             RELO_LOG(reloRuntime->reloLogger(), 6, "\treloLocation: from %p high %p low %p (offsetHigh %x offsetLow %x)\n", offsetPtr, reloLocationHigh, reloLocationLow, offsetHigh, offsetLow);
-#if defined(OSX) && defined(AARCH64)
-            pthread_jit_write_protect_np(0);
-#endif
+            omrthread_jit_write_protect_disable();
             TR_RelocationErrorCode rc = applyRelocation(reloRuntime, reloTarget, reloLocationHigh, reloLocationLow);
-#if defined(OSX) && defined(AARCH64)
-            pthread_jit_write_protect_np(1);
-#endif
+            omrthread_jit_write_protect_enable();
             if (rc != TR_RelocationErrorCode::relocationOK)
                {
                RELO_LOG(reloRuntime->reloLogger(), 6, "\tapplyRelocationAtAllOffsets: rc = %s\n", reloRuntime->getReloErrorCodeName(rc));
@@ -1065,13 +1057,9 @@ TR_RelocationRecord::applyRelocationAtAllOffsets(TR_RelocationRuntime *reloRunti
             uint8_t *reloLocationHigh = reloOrigin + offsetHigh + 2; // Add 2 to skip the first 16 bits of instruction
             uint8_t *reloLocationLow = reloOrigin + offsetLow + 2; // Add 2 to skip the first 16 bits of instruction
             RELO_LOG(reloRuntime->reloLogger(), 6, "\treloLocation: from %p high %p low %p (offsetHigh %x offsetLow %x)\n", offsetPtr, reloLocationHigh, reloLocationLow, offsetHigh, offsetLow);
-#if defined(OSX) && defined(AARCH64)
-            pthread_jit_write_protect_np(0);
-#endif
+            omrthread_jit_write_protect_disable();
             TR_RelocationErrorCode rc = applyRelocation(reloRuntime, reloTarget, reloLocationHigh, reloLocationLow);
-#if defined(OSX) && defined(AARCH64)
-            pthread_jit_write_protect_np(1);
-#endif
+            omrthread_jit_write_protect_enable();
             if (rc != TR_RelocationErrorCode::relocationOK)
                {
                RELO_LOG(reloRuntime->reloLogger(), 6, "\tapplyRelocationAtAllOffsets: rc = %s\n", reloRuntime->getReloErrorCodeName(rc));
@@ -1091,13 +1079,9 @@ TR_RelocationRecord::applyRelocationAtAllOffsets(TR_RelocationRuntime *reloRunti
             int32_t offset = *offsetPtr;
             uint8_t *reloLocation = reloOrigin + offset;
             RELO_LOG(reloRuntime->reloLogger(), 6, "\treloLocation: from %p at %p (offset %x)\n", offsetPtr, reloLocation, offset);
-#if defined(OSX) && defined(AARCH64)
-            pthread_jit_write_protect_np(0);
-#endif
+            omrthread_jit_write_protect_disable();
             TR_RelocationErrorCode rc = applyRelocation(reloRuntime, reloTarget, reloLocation);
-#if defined(OSX) && defined(AARCH64)
-            pthread_jit_write_protect_np(1);
-#endif
+            omrthread_jit_write_protect_enable();
             if (rc != TR_RelocationErrorCode::relocationOK)
                {
                RELO_LOG(reloRuntime->reloLogger(), 6, "\tapplyRelocationAtAllOffsets: rc = %s\n", reloRuntime->getReloErrorCodeName(rc));
@@ -1114,13 +1098,9 @@ TR_RelocationRecord::applyRelocationAtAllOffsets(TR_RelocationRuntime *reloRunti
             int16_t offset = *offsetPtr;
             uint8_t *reloLocation = reloOrigin + offset;
             RELO_LOG(reloRuntime->reloLogger(), 6, "\treloLocation: from %p at %p (offset %x)\n", offsetPtr, reloLocation, offset);
-#if defined(OSX) && defined(AARCH64)
-            pthread_jit_write_protect_np(0);
-#endif
+            omrthread_jit_write_protect_disable();
             TR_RelocationErrorCode rc = applyRelocation(reloRuntime, reloTarget, reloLocation);
-#if defined(OSX) && defined(AARCH64)
-            pthread_jit_write_protect_np(1);
-#endif
+            omrthread_jit_write_protect_enable();
             if (rc != TR_RelocationErrorCode::relocationOK)
                {
                RELO_LOG(reloRuntime->reloLogger(), 6, "\tapplyRelocationAtAllOffsets: rc = %s\n", reloRuntime->getReloErrorCodeName(rc));
@@ -2366,9 +2346,7 @@ static TR_RelocationErrorCode relocateAndRegisterThunk(
       // the old cache (which is not switched) will fail
       U_8 *thunkStart = TR::CodeCacheManager::instance()->allocateCodeMemory(firstDescriptor.length, 0, &codeCache, &coldCode, true);
       U_8 *thunkAddress;
-#if defined(OSX) && defined(AARCH64)
-      pthread_jit_write_protect_np(0);
-#endif
+      omrthread_jit_write_protect_disable();
       if (thunkStart)
          {
          // Relocate the thunk
