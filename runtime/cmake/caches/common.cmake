@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 1991, 2022 IBM Corp. and others
+# Copyright (c) 1991, 2023 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -201,7 +201,6 @@ set(J9VM_OPT_JXE_LOAD_SUPPORT ON CACHE BOOL "")
 set(J9VM_OPT_MEMORY_CHECK_SUPPORT ON CACHE BOOL "")
 set(J9VM_OPT_METHOD_HANDLE ON CACHE BOOL "")
 set(J9VM_OPT_METHOD_HANDLE_COMMON ON CACHE BOOL "")
-set(J9VM_OPT_MODULE ON CACHE BOOL "")
 set(J9VM_OPT_MULTI_VM ON CACHE BOOL "")
 set(J9VM_OPT_NEW_OBJECT_HASH ON CACHE BOOL "")
 set(J9VM_OPT_NEW_ROM_CLASS_BUILDER ON CACHE BOOL "")
