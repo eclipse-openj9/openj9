@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2022 IBM Corp. and others
+ * Copyright (c) 2000, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -688,13 +688,14 @@ bool TR_J9InterfaceCallSite::findCallSiteTarget (TR_CallStack *callStack, TR_Inl
    {
    // First make sure that we can get the interface named at this call site. It
    // may be missing in AOT, since it comes from getClassFromSignature(), which
-   // needs validation, and rememberClass() can fail at any time. Without this,
-   // it's not possible to check the assertions below.
+   // needs validation, and rememberClass() can fail at any time. The interface
+   // is necessary for safety conditions in findCallSiteTargetImpl() and also
+   // for the assertions below.
    TR_OpaqueClassBlock *iface = getClassFromMethod();
    if (iface == NULL)
       return false;
 
-   bool result = findCallSiteTargetImpl(callStack, inliner);
+   bool result = findCallSiteTargetImpl(callStack, inliner, iface);
 
    // A passing vgnop-based interface guard can guarantee the receiver type is
    // as expected by the inlined body, but only if we already know before the
@@ -793,8 +794,11 @@ bool TR_J9InterfaceCallSite::findCallSiteTarget (TR_CallStack *callStack, TR_Inl
    return result;
    }
 
-bool TR_J9InterfaceCallSite::findCallSiteTargetImpl(TR_CallStack *callStack, TR_InlinerBase* inliner)
+bool TR_J9InterfaceCallSite::findCallSiteTargetImpl(
+   TR_CallStack *callStack, TR_InlinerBase *inliner, TR_OpaqueClassBlock *iface)
    {
+   TR_ASSERT_FATAL(iface != NULL, "no declaring interface");
+
    static char *minimizedInlineJIT = feGetEnv("TR_JITInlineMinimized");
 
    if (minimizedInlineJIT)
@@ -877,7 +881,6 @@ bool TR_J9InterfaceCallSite::findCallSiteTargetImpl(TR_CallStack *callStack, TR_
          //
          TR_OpaqueClassBlock *defClass = calleeResolvedMethod->containingClass();
          thisClass = defClass;
-         TR_OpaqueClassBlock *iface = getClassFromMethod();
          if (fe()->isInstanceOf(defClass, iface, true, true, true) != TR_yes)
             {
             calleeResolvedMethod = NULL; // hope to get a VFT test from profiling
