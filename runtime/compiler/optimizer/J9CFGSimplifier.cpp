@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2022 IBM Corp. and others
+ * Copyright (c) 2019, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,9 +34,8 @@
 
 bool J9::CFGSimplifier::simplifyIfPatterns(bool needToDuplicateTree)
    {
-   static char *disableCFGSimplification = feGetEnv("TR_disableCFGSimplificaiton");
-
-   if (disableCFGSimplification != NULL)
+   static char *enableCFGSimplification = feGetEnv("TR_enableCFGSimplificaiton");
+   if (enableCFGSimplification == NULL)
       return false;
 
    return OMR::CFGSimplifier::simplifyIfPatterns(needToDuplicateTree)
