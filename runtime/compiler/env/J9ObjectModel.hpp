@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2022 IBM Corp. and others
+ * Copyright (c) 2000, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -67,6 +67,10 @@ public:
    * @brief Whether the check is enabled on monitor object being value based class type
    */
    bool areValueBasedMonitorChecksEnabled();
+   /**
+   * @brief Whether the array flattening is enabled for value types
+   */
+   bool isValueTypeArrayFlatteningEnabled();
 
    int32_t sizeofReferenceField();
    bool isHotReferenceFieldRequired();
