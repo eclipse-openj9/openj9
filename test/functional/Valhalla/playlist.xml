@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <!--
-  Copyright (c) 2017, 2022 IBM Corp. and others
+  Copyright (c) 2017, 2023 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -144,6 +144,16 @@
 			<variation>-Xjit:count=1,disableAsyncCompilation -Xnocompressedrefs -Xgcpolicy:optthruput -XX:ValueTypeFlatteningThreshold=99999 -XX:+EnableArrayFlattening</variation>
 			<variation>-Xjit:count=1,disableAsyncCompilation -Xnocompressedrefs -Xgcpolicy:gencon -XX:ValueTypeFlatteningThreshold=99999 -XX:+EnableArrayFlattening</variation>
 			<variation>-Xjit:count=1,disableAsyncCompilation -Xnocompressedrefs -Xgcpolicy:gencon</variation>
+			<!-- Test the above options with initialOptLevel=warm -->
+			<variation>-Xjit:count=1,disableAsyncCompilation,initialOptLevel=warm -Xgcpolicy:optthruput</variation>
+			<variation>-Xjit:count=1,disableAsyncCompilation,initialOptLevel=warm -Xgcpolicy:optthruput -XX:ValueTypeFlatteningThreshold=99999 -XX:-EnableArrayFlattening</variation>
+			<variation>-Xjit:count=1,disableAsyncCompilation,initialOptLevel=warm -Xgcpolicy:optthruput -XX:ValueTypeFlatteningThreshold=99999 -XX:+EnableArrayFlattening</variation>
+			<variation>-Xjit:count=1,disableAsyncCompilation,initialOptLevel=warm -Xgcpolicy:gencon -XX:ValueTypeFlatteningThreshold=12 -XX:-EnableArrayFlattening</variation>
+			<variation>-Xjit:count=1,disableAsyncCompilation,initialOptLevel=warm -Xgcpolicy:gencon -XX:ValueTypeFlatteningThreshold=99999 -XX:-EnableArrayFlattening</variation>
+			<variation>-Xjit:count=1,disableAsyncCompilation,initialOptLevel=warm -Xgcpolicy:gencon -XX:ValueTypeFlatteningThreshold=99999 -XX:+EnableArrayFlattening</variation>
+			<variation>-Xjit:count=1,disableAsyncCompilation,initialOptLevel=warm -Xnocompressedrefs -Xgcpolicy:optthruput -XX:ValueTypeFlatteningThreshold=99999 -XX:+EnableArrayFlattening</variation>
+			<variation>-Xjit:count=1,disableAsyncCompilation,initialOptLevel=warm -Xnocompressedrefs -Xgcpolicy:gencon -XX:ValueTypeFlatteningThreshold=99999 -XX:+EnableArrayFlattening</variation>
+			<variation>-Xjit:count=1,disableAsyncCompilation,initialOptLevel=warm -Xnocompressedrefs -Xgcpolicy:gencon</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 		--add-opens java.base/jdk.internal.misc=ALL-UNNAMED \

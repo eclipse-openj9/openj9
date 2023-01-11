@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2022, 2022 IBM Corp. and others
+ * Copyright (c) 2022, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -357,49 +357,155 @@ public class ValueTypeArrayTests {
 		}
 	}
 
-   static primitive class SomeClassWithDoubleField{
+   static primitive class SomeVTClassWithDoubleField{
       public double d;
 
-		SomeClassWithDoubleField(double x) {
+		SomeVTClassWithDoubleField(double x) {
 			this.d = x;
 		}
    }
 
-   static primitive class SomeClassWithFloatField{
+   static primitive class SomeVTClassWithFloatField{
       public float f;
 
-		SomeClassWithFloatField(float x) {
+		SomeVTClassWithFloatField(float x) {
 			this.f = x;
 		}
    }
 
-   static primitive class SomeClassWithLongField{
+   static primitive class SomeVTClassWithLongField{
       public long l;
 
-		SomeClassWithLongField(long x) {
+		SomeVTClassWithLongField(long x) {
 			this.l = x;
 		}
    }
 
-   static void readArrayElementWithDoubleField(SomeClassWithDoubleField[] data) throws Throwable {
+   static class SomeIdentityClassWithDoubleField{
+      public double d;
+
+		SomeIdentityClassWithDoubleField(double x) {
+			this.d = x;
+		}
+   }
+
+   static class SomeIdentityClassWithFloatField{
+      public float f;
+
+		SomeIdentityClassWithFloatField(float x) {
+			this.f = x;
+		}
+   }
+
+   static class SomeIdentityClassWithLongField{
+      public long l;
+
+		SomeIdentityClassWithLongField(long x) {
+			this.l = x;
+		}
+   }
+
+   interface SomeInterface1WithSingleImplementer {}
+
+   interface SomeInterface2WithSingleImplementer {}
+
+   static primitive class SomeVTClassImplIf implements SomeInterface1WithSingleImplementer {
+      public double d;
+      public long l;
+
+		SomeVTClassImplIf(double val1, long val2) {
+			this.d = val1;
+			this.l = val2;
+		}
+   }
+
+   static class SomeIdentityClassImplIf implements SomeInterface2WithSingleImplementer {
+      public double d;
+      public long l;
+
+		SomeIdentityClassImplIf(double val1, long val2) {
+			this.d = val1;
+			this.l = val2;
+		}
+   }
+
+   static class SomeClassHolder {
+      public static int ARRAY_LENGTH = 10;
+      SomeInterface1WithSingleImplementer[] data_1;
+      SomeInterface1WithSingleImplementer[] data_2;
+
+      SomeInterface2WithSingleImplementer[] data_3;
+      SomeInterface2WithSingleImplementer[] data_4;
+      SomeInterface2WithSingleImplementer   data_5;
+
+		SomeClassHolder() {
+         data_1 = new SomeVTClassImplIf[ARRAY_LENGTH];
+         data_2 = new SomeVTClassImplIf[ARRAY_LENGTH];
+
+         data_3 = new SomeIdentityClassImplIf[ARRAY_LENGTH];
+         data_4 = new SomeIdentityClassImplIf[ARRAY_LENGTH];
+
+         data_5 = new SomeIdentityClassImplIf((double)(12345), (long)(12345));
+
+         for (int i = 0; i < ARRAY_LENGTH; i++) {
+            data_1[i] = new SomeVTClassImplIf((double)i, (long)i);
+            data_2[i] = new SomeVTClassImplIf((double)(i+1), (long)(i+1));
+
+            data_3[i] = data_5;
+            data_4[i] = new SomeIdentityClassImplIf((double)(i+1), (long)(i+1));
+         }
+      }
+   }
+
+   static void readArrayElementWithDoubleField(SomeVTClassWithDoubleField[] data) throws Throwable {
       for (int i=0; i<data.length; ++i) {
          assertEquals(data[i].d, (double)i);
       }
    }
 
-   static void readArrayElementWithFloatField(SomeClassWithFloatField[] data) throws Throwable {
+   static void readArrayElementWithFloatField(SomeVTClassWithFloatField[] data) throws Throwable {
       for (int i=0; i<data.length; ++i) {
          assertEquals(data[i].f, (float)i);
       }
    }
 
-   static void readArrayElementWithLongField(SomeClassWithLongField[] data) throws Throwable {
+   static void readArrayElementWithLongField(SomeVTClassWithLongField[] data) throws Throwable {
       for (int i=0; i<data.length; ++i) {
          assertEquals(data[i].l, (long)i);
       }
    }
 
-   static void writeArrayElementWithDoubleField(SomeClassWithDoubleField[] srcData, SomeClassWithDoubleField[] dstData) throws Throwable {
+   static void readArrayElementWithDoubleField(SomeIdentityClassWithDoubleField[] data) throws Throwable {
+      for (int i=0; i<data.length; ++i) {
+         assertEquals(data[i].d, (double)i);
+      }
+   }
+
+   static void readArrayElementWithFloatField(SomeIdentityClassWithFloatField[] data) throws Throwable {
+      for (int i=0; i<data.length; ++i) {
+         assertEquals(data[i].f, (float)i);
+      }
+   }
+
+   static void readArrayElementWithLongField(SomeIdentityClassWithLongField[] data) throws Throwable {
+      for (int i=0; i<data.length; ++i) {
+         assertEquals(data[i].l, (long)i);
+      }
+   }
+
+   static void readArrayElementWithSomeVTClassImplIf(SomeClassHolder holder) throws Throwable {
+      for (int i=0; i<holder.data_1.length; ++i) {
+         assertEquals(holder.data_1[i], new SomeVTClassImplIf((double)i, (long)i));
+      }
+   }
+
+   static void readArrayElementWithSomeIdentityClassImplIf(SomeClassHolder holder) throws Throwable {
+      for (int i=0; i<holder.data_3.length; ++i) {
+         assertEquals(holder.data_3[i], holder.data_5);
+      }
+   }
+
+   static void writeArrayElementWithDoubleField(SomeVTClassWithDoubleField[] srcData, SomeVTClassWithDoubleField[] dstData) throws Throwable {
       for (int i=0; i<dstData.length; ++i) {
          dstData[i] = srcData[i];
       }
@@ -409,7 +515,7 @@ public class ValueTypeArrayTests {
       }
    }
 
-   static void writeArrayElementWithFloatField(SomeClassWithFloatField[] srcData, SomeClassWithFloatField[] dstData) throws Throwable {
+   static void writeArrayElementWithFloatField(SomeVTClassWithFloatField[] srcData, SomeVTClassWithFloatField[] dstData) throws Throwable {
       for (int i=0; i<dstData.length; ++i) {
          dstData[i] = srcData[i];
       }
@@ -419,7 +525,7 @@ public class ValueTypeArrayTests {
       }
    }
 
-   static void writeArrayElementWithLongField(SomeClassWithLongField[] srcData, SomeClassWithLongField[] dstData) throws Throwable {
+   static void writeArrayElementWithLongField(SomeVTClassWithLongField[] srcData, SomeVTClassWithLongField[] dstData) throws Throwable {
       for (int i=0; i<dstData.length; ++i) {
          dstData[i] = srcData[i];
       }
@@ -429,46 +535,137 @@ public class ValueTypeArrayTests {
       }
    }
 
+   static void writeArrayElementWithDoubleField(SomeIdentityClassWithDoubleField[] srcData, SomeIdentityClassWithDoubleField[] dstData) throws Throwable {
+      for (int i=0; i<dstData.length; ++i) {
+         dstData[i] = srcData[i];
+      }
+
+      for (int i=0; i<dstData.length; ++i) {
+         assertEquals(dstData[i].d, (double)(i+1));
+      }
+   }
+
+   static void writeArrayElementWithFloatField(SomeIdentityClassWithFloatField[] srcData, SomeIdentityClassWithFloatField[] dstData) throws Throwable {
+      for (int i=0; i<dstData.length; ++i) {
+         dstData[i] = srcData[i];
+      }
+
+      for (int i=0; i<dstData.length; ++i) {
+         assertEquals(dstData[i].f, (float)(i+1));
+      }
+   }
+
+   static void writeArrayElementWithLongField(SomeIdentityClassWithLongField[] srcData, SomeIdentityClassWithLongField[] dstData) throws Throwable {
+      for (int i=0; i<dstData.length; ++i) {
+         dstData[i] = srcData[i];
+      }
+
+      for (int i=0; i<dstData.length; ++i) {
+         assertEquals(dstData[i].l, (long)(i+1));
+      }
+   }
+
+   static void writeArrayElementWithSomeVTClassImplIf(SomeClassHolder holder) throws Throwable {
+      for (int i=0; i<holder.data_1.length; ++i) {
+         holder.data_1[i] = holder.data_2[i];
+      }
+
+      for (int i=0; i<holder.data_1.length; ++i) {
+         assertEquals(holder.data_1[i], new SomeVTClassImplIf((double)(i+1), (long)(i+1)));
+      }
+   }
+
+   static void writeArrayElementWithSomeIdentityClassImplIf(SomeClassHolder holder) throws Throwable {
+      for (int i=0; i<holder.data_3.length; ++i) {
+         holder.data_3[i] = holder.data_4[i];
+      }
+
+      for (int i=0; i<holder.data_3.length; ++i) {
+         assertEquals(holder.data_3[i], holder.data_4[i]);
+      }
+   }
+
    @Test(priority=1,invocationCount=2)
 	static public void testValueTypeAaload() throws Throwable {
       int ARRAY_LENGTH = 10;
-      SomeClassWithDoubleField[] data1 = new SomeClassWithDoubleField[ARRAY_LENGTH];
-      SomeClassWithFloatField[]  data2 = new SomeClassWithFloatField[ARRAY_LENGTH];
-      SomeClassWithLongField[]   data3 = new SomeClassWithLongField[ARRAY_LENGTH];
+      SomeVTClassWithDoubleField[] data1  = new SomeVTClassWithDoubleField[ARRAY_LENGTH];
+      SomeVTClassWithFloatField[]  data2  = new SomeVTClassWithFloatField[ARRAY_LENGTH];
+      SomeVTClassWithLongField[]   data3  = new SomeVTClassWithLongField[ARRAY_LENGTH];
+
+      SomeIdentityClassWithDoubleField[] data4  = new SomeIdentityClassWithDoubleField[ARRAY_LENGTH];
+      SomeIdentityClassWithFloatField[]  data5  = new SomeIdentityClassWithFloatField[ARRAY_LENGTH];
+      SomeIdentityClassWithLongField[]   data6  = new SomeIdentityClassWithLongField[ARRAY_LENGTH];
+
+      SomeClassHolder holder = new SomeClassHolder();
 
       for (int i=0; i<ARRAY_LENGTH; ++i) {
-         data1[i] = new SomeClassWithDoubleField((double)i);
-         data2[i] = new SomeClassWithFloatField((float)i);
-         data3[i] = new SomeClassWithLongField((long)i);
+         data1[i] = new SomeVTClassWithDoubleField((double)i);
+         data2[i] = new SomeVTClassWithFloatField((float)i);
+         data3[i] = new SomeVTClassWithLongField((long)i);
+
+         data4[i] = new SomeIdentityClassWithDoubleField((double)i);
+         data5[i] = new SomeIdentityClassWithFloatField((float)i);
+         data6[i] = new SomeIdentityClassWithLongField((long)i);
       }
 
       readArrayElementWithDoubleField(data1);
       readArrayElementWithFloatField(data2);
       readArrayElementWithLongField(data3);
+
+      readArrayElementWithDoubleField(data4);
+      readArrayElementWithFloatField(data5);
+      readArrayElementWithLongField(data6);
+
+      readArrayElementWithSomeVTClassImplIf(holder);
+      readArrayElementWithSomeIdentityClassImplIf(holder);
    }
 
    @Test(priority=1,invocationCount=2)
 	static public void testValueTypeAastore() throws Throwable {
       int ARRAY_LENGTH = 10;
-      SomeClassWithDoubleField[] srcData1 = new SomeClassWithDoubleField[ARRAY_LENGTH];
-      SomeClassWithDoubleField[] dstData1 = new SomeClassWithDoubleField[ARRAY_LENGTH];
-      SomeClassWithFloatField[]  srcData2 = new SomeClassWithFloatField[ARRAY_LENGTH];
-      SomeClassWithFloatField[]  dstData2 = new SomeClassWithFloatField[ARRAY_LENGTH];
-      SomeClassWithLongField[]   srcData3 = new SomeClassWithLongField[ARRAY_LENGTH];
-      SomeClassWithLongField[]   dstData3 = new SomeClassWithLongField[ARRAY_LENGTH];
+      SomeVTClassWithDoubleField[] srcData1 = new SomeVTClassWithDoubleField[ARRAY_LENGTH];
+      SomeVTClassWithDoubleField[] dstData1 = new SomeVTClassWithDoubleField[ARRAY_LENGTH];
+      SomeVTClassWithFloatField[]  srcData2 = new SomeVTClassWithFloatField[ARRAY_LENGTH];
+      SomeVTClassWithFloatField[]  dstData2 = new SomeVTClassWithFloatField[ARRAY_LENGTH];
+      SomeVTClassWithLongField[]   srcData3 = new SomeVTClassWithLongField[ARRAY_LENGTH];
+      SomeVTClassWithLongField[]   dstData3 = new SomeVTClassWithLongField[ARRAY_LENGTH];
+
+      SomeIdentityClassWithDoubleField[] srcData4  = new SomeIdentityClassWithDoubleField[ARRAY_LENGTH];
+      SomeIdentityClassWithDoubleField[] dstData4  = new SomeIdentityClassWithDoubleField[ARRAY_LENGTH];
+      SomeIdentityClassWithFloatField[]  srcData5  = new SomeIdentityClassWithFloatField[ARRAY_LENGTH];
+      SomeIdentityClassWithFloatField[]  dstData5  = new SomeIdentityClassWithFloatField[ARRAY_LENGTH];
+      SomeIdentityClassWithLongField[]   srcData6  = new SomeIdentityClassWithLongField[ARRAY_LENGTH];
+      SomeIdentityClassWithLongField[]   dstData6  = new SomeIdentityClassWithLongField[ARRAY_LENGTH];
+
+      SomeClassHolder holder   = new SomeClassHolder();
 
       for (int i=0; i<ARRAY_LENGTH; ++i) {
-         srcData1[i] = new SomeClassWithDoubleField((double)(i+1));
-         srcData2[i] = new SomeClassWithFloatField((float)(i+1));
-         srcData3[i] = new SomeClassWithLongField((long)(i+1));
+         srcData1[i] = new SomeVTClassWithDoubleField((double)(i+1));
+         srcData2[i] = new SomeVTClassWithFloatField((float)(i+1));
+         srcData3[i] = new SomeVTClassWithLongField((long)(i+1));
 
-         dstData1[i] = new SomeClassWithDoubleField((double)i);
-         dstData2[i] = new SomeClassWithFloatField((float)i);
-         dstData3[i] = new SomeClassWithLongField((long)i);
+         dstData1[i] = new SomeVTClassWithDoubleField((double)i);
+         dstData2[i] = new SomeVTClassWithFloatField((float)i);
+         dstData3[i] = new SomeVTClassWithLongField((long)i);
+
+         srcData4[i] = new SomeIdentityClassWithDoubleField((double)(i+1));
+         srcData5[i] = new SomeIdentityClassWithFloatField((float)(i+1));
+         srcData6[i] = new SomeIdentityClassWithLongField((long)(i+1));
+
+         dstData4[i] = new SomeIdentityClassWithDoubleField((double)i);
+         dstData5[i] = new SomeIdentityClassWithFloatField((float)i);
+         dstData6[i] = new SomeIdentityClassWithLongField((long)i);
       }
 
       writeArrayElementWithDoubleField(srcData1, dstData1);
       writeArrayElementWithFloatField(srcData2, dstData2);
       writeArrayElementWithLongField(srcData3, dstData3);
+
+      writeArrayElementWithDoubleField(srcData4, dstData4);
+      writeArrayElementWithFloatField(srcData5, dstData5);
+      writeArrayElementWithLongField(srcData6, dstData6);
+
+      writeArrayElementWithSomeVTClassImplIf(holder);
+      writeArrayElementWithSomeIdentityClassImplIf(holder);
    }
 }
