@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2022 IBM Corp. and others
+ * Copyright (c) 2000, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -378,20 +378,30 @@ static bool isArrayWithConstantElements(TR::SymbolReference *symRef, TR::Compila
    return false;
    }
 
-static int32_t isArrayWithStableElements(TR::SymbolReference *symRef, TR::Compilation *comp)
+static int32_t isArrayWithStableElements(int32_t cpIndex, TR_ResolvedMethod *owningMethod, TR::Compilation *comp)
    {
    TR_J9VMBase *fej9 = comp->fej9();
-   if (fej9->isStable(symRef->getCPIndex(), symRef->getOwningMethod(comp), comp))
+   if (fej9->isStable(cpIndex, owningMethod, comp))
       {
       int32_t signatureLength = 0;
-      char *signature = symRef->getOwningMethod(comp)->classSignatureOfFieldOrStatic(symRef->getCPIndex(), signatureLength);
-      // Support only one dimension for now (rank 1)
-      if (signature && signature[0] == '[')
+      char *signature = owningMethod->classSignatureOfFieldOrStatic(cpIndex, signatureLength);
+
+      if (signature)
          {
-         traceMsg(comp, "Stable array: signature %.*s\n", signatureLength, signature);
-         return 1;
+         int32_t rank = 0;
+         for (int32_t i = 0; i < signatureLength; i++)
+            {
+            if (signature[i] != '[') break;
+            rank++;
+            }
+
+         if (comp->getOption(TR_TraceOptDetails) && rank > 0)
+            traceMsg(comp, "Stable array with rank %d: %.*s\n", rank, signatureLength, signature);
+
+         return rank;
          }
       }
+
    return 0;
    }
 
@@ -1310,7 +1320,7 @@ J9::TransformUtil::transformIndirectLoadChainAt(TR::Compilation *comp, TR::Node 
       {
       baseAddress = *baseReferenceLocation;
       }
-   bool result = TR::TransformUtil::transformIndirectLoadChainImpl(comp, node, baseExpression, (void*)baseAddress, false, removedNode);
+   bool result = TR::TransformUtil::transformIndirectLoadChainImpl(comp, node, baseExpression, (void*)baseAddress, 0, removedNode);
    return result;
    }
 
@@ -1336,7 +1346,9 @@ J9::TransformUtil::transformIndirectLoadChain(TR::Compilation *comp, TR::Node *n
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
    TR::VMAccessCriticalSection transformIndirectLoadChain(comp->fej9());
-   bool result = TR::TransformUtil::transformIndirectLoadChainImpl(comp, node, baseExpression, (void*)comp->getKnownObjectTable()->getPointer(baseKnownObject), comp->getKnownObjectTable()->isArrayWithStableElements(baseKnownObject), removedNode);
+   int32_t stableArrayRank = comp->getKnownObjectTable()->getArrayWithStableElementsRank(baseKnownObject);
+
+   bool result = TR::TransformUtil::transformIndirectLoadChainImpl(comp, node, baseExpression, (void*)comp->getKnownObjectTable()->getPointer(baseKnownObject), stableArrayRank, removedNode);
    return result;
    }
 
@@ -1404,8 +1416,10 @@ J9::TransformUtil::transformIndirectLoadChain(TR::Compilation *comp, TR::Node *n
  *
  */
 bool
-J9::TransformUtil::transformIndirectLoadChainImpl(TR::Compilation *comp, TR::Node *node, TR::Node *baseExpression, void *baseAddress, bool isBaseStableArray, TR::Node **removedNode)
+J9::TransformUtil::transformIndirectLoadChainImpl(TR::Compilation *comp, TR::Node *node, TR::Node *baseExpression, void *baseAddress, int32_t baseStableArrayRank, TR::Node **removedNode)
    {
+   bool isBaseStableArray = baseStableArrayRank > 0;
+
    TR_J9VMBase *fej9 = comp->fej9();
 
    TR_ASSERT(TR::Compiler->vm.hasAccess(comp), "transformIndirectLoadChain requires VM access");
@@ -1564,7 +1578,6 @@ J9::TransformUtil::transformIndirectLoadChainImpl(TR::Compilation *comp, TR::Nod
             if (value)
                {
                TR::SymbolReference *improvedSymRef = comp->getSymRefTab()->findOrCreateSymRefWithKnownObject(symRef, &value, isArrayWithConstantElements(symRef, comp));
-               int32_t stableArrayRank = isArrayWithStableElements(symRef, comp);
 
                if (improvedSymRef->hasKnownObjectIndex()
                   && performTransformation(comp, "O^O transformIndirectLoadChain: %s [%p] with fieldOffset %d is obj%d referenceAddr is %p\n", node->getOpCode().getName(), node, improvedSymRef->getKnownObjectIndex(), symRef->getOffset(), value))
@@ -1572,6 +1585,12 @@ J9::TransformUtil::transformIndirectLoadChainImpl(TR::Compilation *comp, TR::Nod
                   node->setSymbolReference(improvedSymRef);
                   node->setIsNull(false);
                   node->setIsNonNull(true);
+
+                  int32_t stableArrayRank = isArrayWithStableElements(symRef->getCPIndex(),
+                                                                      symRef->getOwningMethod(comp),
+                                                                      comp);
+                  if (isBaseStableArray)
+                     stableArrayRank = baseStableArrayRank - 1;
 
                   if (stableArrayRank > 0)
                      {
@@ -2527,5 +2546,12 @@ J9::TransformUtil::knownObjectFromFinalStatic(
    if (!createKnownObject)
       return TR::KnownObjectTable::UNKNOWN;
 
-   return knot->getOrCreateIndexAt((uintptr_t*)dataAddress);
+   TR::KnownObjectTable::Index index = knot->getOrCreateIndexAt((uintptr_t*)dataAddress);
+
+   int32_t stableArrayRank = isArrayWithStableElements(cpIndex, owningMethod, comp);
+
+   if (stableArrayRank > 0)
+      knot->addStableArray(index, stableArrayRank);
+
+   return index;
    }

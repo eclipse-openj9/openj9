@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -452,8 +452,12 @@ J9::KnownObjectTable::dumpTo(TR::FILE *file, TR::Compilation *comp)
                uintptr_t *ref = self()->getPointerLocation(i);
                int32_t len; char *className = TR::Compiler->cls.classNameChars(comp, j9fe->getObjectClass(*ref), len);
                int32_t hashCode = mmf->j9gc_objaccess_getObjectHashCode(jitConfig->javaVM, (J9Object*)(*ref));
-               trfprintf(file, "   %p   %p %8x   %.*s %s\n", ref, *ref, hashCode, len, className,
-                         isArrayWithStableElements(i) ? "(stable array)" : "");
+               trfprintf(file, "   %p   %p %8x   %.*s", ref, *ref, hashCode, len, className);
+
+               if (isArrayWithStableElements(i))
+                  trfprintf(file, " (%d dimension stable array)", getArrayWithStableElementsRank(i));
+
+               trfprintf(file, "\n");
                }
             }
          trfprintf(file, "</knownObjectTable>\n");
@@ -539,4 +543,13 @@ J9::KnownObjectTable::isArrayWithStableElements(Index index)
    TR_ASSERT_FATAL(index != UNKNOWN && 0 <= index && index < self()->getEndIndex(), "isArrayWithStableElements(%d): index must be in range 0..%d", index, self()->getEndIndex());
 
    return (index < _stableArrayRanks.size() && _stableArrayRanks[index] > 0);
+   }
+
+
+int32_t
+J9::KnownObjectTable::getArrayWithStableElementsRank(Index index)
+   {
+   TR_ASSERT_FATAL(index != UNKNOWN && 0 <= index && index < self()->getEndIndex(), "getArrayWithStableElementsRank(%d): index must be in range 0..%d", index, self()->getEndIndex());
+
+   return ((index < _stableArrayRanks.size()) ? _stableArrayRanks[index] : 0);
    }
