@@ -79,6 +79,8 @@
 
 #define IS_VARIABLE_PD2I(callNode) (!isChildConst(callNode, 2) || !isChildConst(callNode, 3))
 
+#define OPT_DETAILS "O^O TR_DataAccessAccelerator: "
+
 TR_DataAccessAccelerator::TR_DataAccessAccelerator(TR::OptimizationManager* manager)
    :
       TR::Optimization(manager)
@@ -608,7 +610,7 @@ TR::Node* TR_DataAccessAccelerator::insertDecimalGetIntrinsic(TR::TreeTop* callT
       return NULL;
       }
 
-   if (performTransformation(comp(), "O^O TR_DataAccessAccelerator: insertDecimalGetIntrinsic on callNode %p\n", callNode))
+   if (performTransformation(comp(), "%sinsertDecimalGetIntrinsic on callNode %p\n", OPT_DETAILS, callNode))
       {
       insertByteArrayNULLCHK(callTreeTop, callNode, byteArrayNode);
 
@@ -704,7 +706,7 @@ TR::Node* TR_DataAccessAccelerator::insertDecimalSetIntrinsic(TR::TreeTop* callT
       return NULL;
       }
 
-   if (performTransformation(comp(), "O^O TR_DataAccessAccelerator: insertDecimalSetIntrinsic on callNode %p\n", callNode))
+   if (performTransformation(comp(), "%sinsertDecimalSetIntrinsic on callNode %p\n", OPT_DETAILS, callNode))
       {
       insertByteArrayNULLCHK(callTreeTop, callNode, byteArrayNode);
 
@@ -787,7 +789,7 @@ bool TR_DataAccessAccelerator::inlineCheckPackedDecimal(TR::TreeTop *callTreeTop
       return printInliningStatus (false, callNode, failMsg);
       }
 
-   if (performTransformation(comp(), "O^O TR_DataAccessAccelerator: inlineCheckPackedDecimal on callNode %p\n", callNode))
+   if (performTransformation(comp(), "%sinlineCheckPackedDecimal on callNode %p\n", OPT_DETAILS, callNode))
       {
       TR::DebugCounter::incStaticDebugCounter(comp(),
                                               TR::DebugCounter::debugCounterName(comp(),
@@ -1026,7 +1028,7 @@ TR::Node* TR_DataAccessAccelerator::insertIntegerGetIntrinsic(TR::TreeTop* callT
       return NULL;
       }
 
-   if (performTransformation(comp(), "O^O TR_DataAccessAccelerator: genSimpleGetBinary call: %p inlined.\n", callNode))
+   if (performTransformation(comp(), "%sgenSimpleGetBinary call: %p inlined.\n", OPT_DETAILS, callNode))
       {
       insertByteArrayNULLCHK(callTreeTop, callNode, byteArrayNode);
 
@@ -1143,7 +1145,7 @@ TR::Node* TR_DataAccessAccelerator::insertIntegerSetIntrinsic(TR::TreeTop* callT
       return NULL;
       }
 
-   if (performTransformation(comp(), "O^O TR_DataAccessAccelerator: genSimplePutBinary call: %p inlined.\n", callNode))
+   if (performTransformation(comp(), "%sgenSimplePutBinary call: %p inlined.\n", OPT_DETAILS, callNode))
       {
       insertByteArrayNULLCHK(callTreeTop, callNode, byteArrayNode);
 
@@ -1269,7 +1271,7 @@ bool TR_DataAccessAccelerator::genComparisionIntrinsic(TR::TreeTop* treeTop, TR:
       return printInliningStatus(false, callNode, "Invalid precisions. Valid precisions are in range [1, 31]");
       }
 
-   if (!performTransformation(comp(), "O^O TR_DataAccessAccelerator: genComparison call: %p, Comparison type: %d inlined.\n", callNode, ops))
+   if (!performTransformation(comp(), "%sgenComparison call: %p, Comparison type: %d inlined.\n", OPT_DETAILS, callNode, ops))
       {
       return false;
       }
@@ -1365,7 +1367,7 @@ bool TR_DataAccessAccelerator::generateI2PD(TR::TreeTop *treeTop, TR::Node *call
    bool needsBCDCHK = (isI2PD && (precision < 10)) || (!isI2PD && (precision < 19));
 
    //still need to check bounds of pdNode
-   if (performTransformation(comp(), "O^O TR_DataAccessAccelerator: %s call: %p inlined.\n", (isI2PD)?"generateI2PD":"generateL2PD", callNode))
+   if (performTransformation(comp(), "%s%s call: %p inlined.\n", OPT_DETAILS, (isI2PD)?"generateI2PD":"generateL2PD", callNode))
       {
       TR::DebugCounter::incStaticDebugCounter(comp(),
                                               TR::DebugCounter::debugCounterName(comp(),
@@ -1741,7 +1743,7 @@ TR_DataAccessAccelerator::generatePD2IConstantParameter(TR::TreeTop *treeTop, TR
       return printInliningStatus(false, callNode, failMsg);
       }
 
-   if (performTransformation(comp(), "O^O TR_DataAccessAccelerator: %s call: %p inlined.\n", (isPD2i)?"generatePD2I":"generatePD2L", callNode))
+   if (performTransformation(comp(), "%s%s call: %p inlined.\n", OPT_DETAILS, (isPD2i)?"generatePD2I":"generatePD2L", callNode))
       {
       TR::DebugCounter::incStaticDebugCounter(comp(),
                                               TR::DebugCounter::debugCounterName(comp(),
@@ -1986,7 +1988,7 @@ TR_DataAccessAccelerator::generatePD2IVariableParameter(TR::TreeTop* treeTop, TR
    TR::Node* precisionNode = callNode->getChild(2);
 
    if (comp()->getOption(TR_DisableVariablePrecisionDAA) ||
-         !performTransformation(comp(), "O^O TR_DataAccessAccelerator: [DAA] Generating variable %s for node %p \n", isPD2i ? "PD2I" : "PD2L", callNode))
+         !performTransformation(comp(), "%s[DAA] Generating variable %s for node %p \n", OPT_DETAILS, isPD2i ? "PD2I" : "PD2L", callNode))
       {
       TR::DebugCounter::incStaticDebugCounter(comp(),
                                               TR::DebugCounter::debugCounterName(comp(),
@@ -2102,7 +2104,7 @@ bool TR_DataAccessAccelerator::genArithmeticIntrinsic(TR::TreeTop* treeTop, TR::
       return printInliningStatus(false, callNode, "Invalid precisions. Valid precisions are in range [1, 15]");
       }
 
-   if (performTransformation(comp(), "O^O TR_DataAccessAccelerator: genArithmetics call: %p inlined, with opcode:%d \n", callNode, opCode))
+   if (performTransformation(comp(), "%sgenArithmetics call: %p inlined, with opcode:%d \n", OPT_DETAILS, callNode, opCode))
       {
       //create loading
       // loading The first operand
@@ -2250,7 +2252,7 @@ bool TR_DataAccessAccelerator::genShiftRightIntrinsic(TR::TreeTop *treeTop, TR::
    else if (dstPrec < srcPrec - shiftAmount)
       failMsg = "Invalid shift amount. Precision is too low to contain shifted Packed Decimal";
 
-   if (!performTransformation(comp(), "O^O TR_DataAccessAccelerator: genShiftRight call: %p inlined.\n", callNode) && !failMsg)
+   if (!performTransformation(comp(), "%sgenShiftRight call: %p inlined.\n", OPT_DETAILS, callNode) && !failMsg)
       failMsg = "Not allowed";
 
    if (failMsg)
@@ -2356,7 +2358,7 @@ bool TR_DataAccessAccelerator::genShiftLeftIntrinsic(TR::TreeTop *treeTop, TR::N
    else if (shiftAmount < 0)
       failMsg = "Invalid shift amount. Shift amount can not be less than 0";
 
-   if (!performTransformation(comp(), "O^O TR_DataAccessAccelerator: genShiftLeft call: %p inlined.\n", callNode) && !failMsg)
+   if (!performTransformation(comp(), "%sgenShiftLeft call: %p inlined.\n", OPT_DETAILS, callNode) && !failMsg)
       failMsg = "Not allowed";
 
    if (failMsg)
@@ -2456,7 +2458,7 @@ bool TR_DataAccessAccelerator::generateUD2PD(TR::TreeTop *treeTop, TR::Node *cal
       return printInliningStatus(false, callNode, failMsg);
       }
 
-   if (performTransformation(comp(), "O^O TR_DataAccessAccelerator: generate UD2PD/ED2PD call: %p inlined.\n", callNode))
+   if (performTransformation(comp(), "%sgenerate UD2PD/ED2PD call: %p inlined.\n", OPT_DETAILS, callNode))
       {
       TR::DebugCounter::incStaticDebugCounter(comp(),
                                               TR::DebugCounter::debugCounterName(comp(),
@@ -2663,7 +2665,7 @@ bool TR_DataAccessAccelerator::generatePD2UD(TR::TreeTop *treeTop, TR::Node *cal
       return printInliningStatus(false, callNode, failMsg);
       }
 
-   if (performTransformation(comp(), "O^O TR_DataAccessAccelerator: generate PD2UD/PD2ED call: %p inlined.\n", callNode))
+   if (performTransformation(comp(), "%sgenerate PD2UD/PD2ED call: %p inlined.\n", OPT_DETAILS, callNode))
       {
       TR::DebugCounter::incStaticDebugCounter(comp(),
                                               TR::DebugCounter::debugCounterName(comp(),

@@ -34,6 +34,9 @@
 #include "ras/DebugCounter.hpp"
 #include "infra/Checklist.hpp"
 
+#define OPT_DETAILS "O^O HCR GUARD REMOVAL: "
+#define OPT_DETAILS_GUARDED_CALL_REMAT "O^O GUARDED CALL REMAT: "
+
 TR_Structure* fakeRegion(TR::Compilation *comp);
 
 static bool generatesFear(TR::Compilation *comp, TR_FearPointAnalysis &fearAnalysis, TR::Block *block)
@@ -353,7 +356,7 @@ void TR_OSRGuardInsertion::removeHCRGuards(TR_BitVector &fearGeneratingNodes, TR
       if (!guardAnalysis || guardAnalysis->_blockAnalysisInfo[cursor->getNextBlock()->getNumber()]->isEmpty())
          {
          if (guardInfo->getKind() == TR_HCRGuard
-             && performTransformation(comp(), "O^O HCR GUARD REMOVAL: removing HCRGuard node n%dn\n", node->getGlobalIndex()))
+             && performTransformation(comp(), "%sremoving HCRGuard node n%dn\n", OPT_DETAILS, node->getGlobalIndex()))
             {
             comp()->addClassForOSRRedefinition(guardInfo->getThisClass());
 
@@ -408,7 +411,8 @@ void TR_OSRGuardInsertion::removeHCRGuards(TR_BitVector &fearGeneratingNodes, TR
          else if (guardInfo->mergedWithHCRGuard()
             && performTransformation(
                   comp(),
-                  "O^O HCR GUARD REMOVAL: removing HCR guard merged into node n%un\n",
+                  "%sremoving HCR guard merged into node n%un\n",
+                  OPT_DETAILS_GUARDED_CALL_REMAT,
                   node->getGlobalIndex()))
             {
             comp()->addClassForOSRRedefinition(guardInfo->getThisClass());
@@ -850,7 +854,7 @@ void TR_OSRGuardInsertion::performRemat(TR::TreeTop *osrPoint, TR::TreeTop *osrG
          if (rematTree == storeTree)
             {
             TR::Node *duplicateStore = store->duplicateTree();
-            if (performTransformation(comp(), "O^O GUARDED CALL REMAT: Rematerialize [%p] as [%p]\n", store, duplicateStore))
+            if (performTransformation(comp(), "%sRematerialize [%p] as [%p]\n", OPT_DETAILS_GUARDED_CALL_REMAT, store, duplicateStore))
                {
                rematDest = TR::TreeTop::create(comp(), rematDest, duplicateStore);
                }
@@ -859,7 +863,7 @@ void TR_OSRGuardInsertion::performRemat(TR::TreeTop *osrPoint, TR::TreeTop *osrG
             {
             TR::Node *duplicateStore = TR::Node::createStore(store->getSymbolReference(), TR::Node::createLoad(store, rematTree->getNode()->getSymbolReference()));
             duplicateStore->setByteCodeInfo(store->getByteCodeInfo());
-            if (performTransformation(comp(), "O^O GUARDED CALL REMAT: Partial rematerialize of [%p] as [%p] - load of [%d]\n", store,
+            if (performTransformation(comp(), "%sPartial rematerialize of [%p] as [%p] - load of [%d]\n", OPT_DETAILS_GUARDED_CALL_REMAT, store,
                 duplicateStore, rematTree->getNode()->getSymbolReference()->getReferenceNumber()))
                {
                rematDest = TR::TreeTop::create(comp(), rematDest, duplicateStore);

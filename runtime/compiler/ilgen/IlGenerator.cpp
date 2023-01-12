@@ -45,6 +45,7 @@
 #include "env/JSR292Methods.h"
 
 #define OPT_DETAILS "O^O ILGEN: "
+#define OPT_DETAILS_ILGENERATOR "O^O IlGenerator: "
 
 TR_J9ByteCodeIlGenerator::TR_J9ByteCodeIlGenerator(
    TR::IlGeneratorMethodDetails & methodDetails, TR::ResolvedMethodSymbol * methodSymbol, TR_J9VMBase * fe, TR::Compilation * comp,
@@ -320,7 +321,7 @@ bool TR_J9ByteCodeIlGenerator::internalGenIL()
       {
       if (recognizedMethod == TR::com_ibm_jit_JITHelpers_supportsIntrinsicCaseConversion && !TR::Compiler->om.canGenerateArraylets())
          {
-         if (performTransformation(comp(), "O^O IlGenerator: Generate com/ibm/jit/JITHelpers.supportsIntrinsicCaseConversion\n"))
+         if (performTransformation(comp(), "%sGenerate com/ibm/jit/JITHelpers.supportsIntrinsicCaseConversion\n", OPT_DETAILS_ILGENERATOR))
             {
             genHWOptimizedStrProcessingAvailable();
             return true;
@@ -329,7 +330,7 @@ bool TR_J9ByteCodeIlGenerator::internalGenIL()
 
       if (recognizedMethod == TR::com_ibm_dataaccess_DecimalData_JITIntrinsicsEnabled)
          {
-         if (performTransformation(comp(), "O^O IlGenerator: Generate com/ibm/dataaccess/DecimalData.JITIntrinsicsEnabled\n"))
+         if (performTransformation(comp(), "%sGenerate com/ibm/dataaccess/DecimalData.JITIntrinsicsEnabled\n", OPT_DETAILS_ILGENERATOR))
             {
             genJITIntrinsicsEnabled();
             return true;
@@ -338,7 +339,7 @@ bool TR_J9ByteCodeIlGenerator::internalGenIL()
 
       if (recognizedMethod == TR::com_ibm_rmi_io_FastPathForCollocated_isVMDeepCopySupported)
          {
-         if (performTransformation(comp(), "O^O IlGenerator: Generate com/ibm/rmi/io/FastPathForCollocated/isVMDeepCopySupported\n"))
+         if (performTransformation(comp(), "%sGenerate com/ibm/rmi/io/FastPathForCollocated/isVMDeepCopySupported\n", OPT_DETAILS_ILGENERATOR))
             {
             genIsORBDeepCopyAvailable();
             return true;

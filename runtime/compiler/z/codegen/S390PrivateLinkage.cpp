@@ -55,6 +55,8 @@
 
 #define MIN_PROFILED_CALL_FREQUENCY (.075f)
 
+#define OPT_DETAILS "O^O COMPACT LOCALS: "
+
 ////////////////////////////////////////////////////////////////////////////////
 // J9::Z::PrivateLinkage for J9
 ////////////////////////////////////////////////////////////////////////////////
@@ -392,7 +394,7 @@ J9::Z::PrivateLinkage::mapCompactedStack(TR::ResolvedMethodSymbol * method)
                }
             else
                {
-                  traceMsg(comp(), "O^O COMPACT LOCALS: Sharing slot for local %p (colour = %d)\n",localCursor, colour);
+                  traceMsg(comp(), "%sSharing slot for local %p (colour = %d)\n",OPT_DETAILS, localCursor, colour);
                   localCursor->setOffset(colourToOffsetMap[colour]);
                }
             }
@@ -465,7 +467,7 @@ J9::Z::PrivateLinkage::mapCompactedStack(TR::ResolvedMethodSymbol * method)
                   }
                else // share local with already mapped stack slot
                   {
-                     traceMsg(comp(), "O^O COMPACT LOCALS: Sharing slot for local %p (colour = %d)\n",localCursor, colour);
+                     traceMsg(comp(), "%sSharing slot for local %p (colour = %d)\n", OPT_DETAILS, localCursor, colour);
                      localCursor->setOffset(colourToOffsetMap[colour]);
                   }
 #ifdef DEBUG
@@ -539,7 +541,7 @@ J9::Z::PrivateLinkage::mapCompactedStack(TR::ResolvedMethodSymbol * method)
                   }
                else // share local with already mapped stack slot
                   {
-                     traceMsg(comp(), "O^O COMPACT LOCALS: Sharing slot for local %p (colour = %d)\n",localCursor, colour);
+                     traceMsg(comp(), "%sSharing slot for local %p (colour = %d)\n", OPT_DETAILS, localCursor, colour);
                      localCursor->setOffset(colourToOffsetMap[colour]);
                   }
 #ifdef DEBUG

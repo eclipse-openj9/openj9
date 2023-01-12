@@ -51,6 +51,10 @@
 #include "optimizer/Structure.hpp"
 #include "optimizer/HCRGuardAnalysis.hpp"
 
+#define OPT_DETAILS "O^O transformIndirectLoadChain: "
+#define OPT_DETAILS_FOLD_STATIC_FINAL_FIELD "O^O foldStaticFinalField: "
+#define OPT_DETAILS_TRANSFORM_DIRECT_LOAD "O^O transformDirectLoad: "
+
 /**
  * Walks the TR_RegionStructure counting loops to get the nesting depth of the block
  */
@@ -884,7 +888,7 @@ static bool changeIndirectLoadIntoConst(TR::Node *node, TR::ILOpCodes opCode, TR
    // constant value / symref / anything else that may be necessary.
    //
    TR::ILOpCode opCodeObject; opCodeObject.setOpCodeValue(opCode);
-   if (performTransformation(comp, "O^O transformIndirectLoadChain: change %s [%p] into %s\n", node->getOpCode().getName(), node, opCodeObject.getName()))
+   if (performTransformation(comp, "%schange %s [%p] into %s\n", OPT_DETAILS, node->getOpCode().getName(), node, opCodeObject.getName()))
       {
       *removedChild = node->getFirstChild();
       node->setNumChildren(0);
@@ -1609,7 +1613,7 @@ J9::TransformUtil::foldStaticFinalFieldImpl(TR::Compilation *comp, TR::Node *nod
 
    if (typeIsConstible)
       {
-      if (performTransformation(comp, "O^O foldStaticFinalField: turn [%p] %s %s into load const\n", node, node->getOpCode().getName(), symRef->getName(comp->getDebug())))
+      if (performTransformation(comp, "%sturn [%p] %s %s into load const\n", OPT_DETAILS_FOLD_STATIC_FINAL_FIELD, node, node->getOpCode().getName(), symRef->getName(comp->getDebug())))
          {
          prepareNodeToBeLoadConst(node);
          switch (loadType)
@@ -2183,7 +2187,7 @@ J9::TransformUtil::transformIndirectLoadChainImpl(TR::Compilation *comp,
                   comp->getSymRefTab()->findOrCreateSymRefWithKnownObject(symRef, knotIndex);
 
                if (improvedSymRef->hasKnownObjectIndex()
-                  && performTransformation(comp, "O^O transformIndirectLoadChain: %s [%p] with fieldOffset %d is obj%d referenceAddr is %p\n", node->getOpCode().getName(), node, improvedSymRef->getKnownObjectIndex(), symRef->getOffset(), (void*)value))
+                  && performTransformation(comp, "%s%s [%p] with fieldOffset %d is obj%d referenceAddr is %p\n", OPT_DETAILS, node->getOpCode().getName(), node, improvedSymRef->getKnownObjectIndex(), symRef->getOffset(), (void*)value))
                   {
                   node->setSymbolReference(improvedSymRef);
                   node->setIsNull(false);

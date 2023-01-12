@@ -69,7 +69,8 @@
 #include "env/PersistentCHTable.hpp"
 
 #define OPT_DETAILS "O^O CODE GENERATION: "
-
+#define OPT_DETAILS_CALL_ARRAYCOPY_INSTEAD_OF_UNSAFE_COPYMEMORY "O^O Call arraycopy instead of Unsafe.copyMemory: "
+#define OPT_DETAILS_LINKAGE_REGISTER_ALLOCATION "O^O LINKAGE REGISTER ALLOCATION: "
 
 J9::CodeGenerator::CodeGenerator(TR::Compilation *comp) :
       OMR::CodeGeneratorConnector(comp),
@@ -893,7 +894,7 @@ J9::CodeGenerator::lowerTreeIfNeeded(
       TR::RecognizedMethod rm = node->getSymbol()->castToMethodSymbol()->getRecognizedMethod();
 
       if ((rm == TR::sun_misc_Unsafe_copyMemory || rm == TR::jdk_internal_misc_Unsafe_copyMemory0) &&
-            performTransformation(self()->comp(), "O^O Call arraycopy instead of Unsafe.copyMemory: %s\n", self()->getDebug()->getName(node)))
+            performTransformation(self()->comp(), "%s%s\n", OPT_DETAILS_CALL_ARRAYCOPY_INSTEAD_OF_UNSAFE_COPYMEMORY, self()->getDebug()->getName(node)))
          {
 
 #if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
@@ -4469,7 +4470,7 @@ J9::CodeGenerator::changeParmLoadsToRegLoads(TR::Node *node, TR::Node **regLoads
                TR_GlobalRegisterNumber highReg = self()->getLinkageGlobalRegisterNumber(highLRI, node->getDataType());
 
                if (lowReg != -1 && highReg != -1 && !globalRegsWithRegLoad->isSet(lowReg) && !globalRegsWithRegLoad->isSet(highReg)
-                  && performTransformation(self()->comp(), "O^O LINKAGE REGISTER ALLOCATION: transforming %s into %s\n", self()->comp()->getDebug()->getName(node), self()->comp()->getDebug()->getName(regLoadOp)))
+                  && performTransformation(self()->comp(), "%stransforming %s into %s\n", OPT_DETAILS_LINKAGE_REGISTER_ALLOCATION, self()->comp()->getDebug()->getName(node), self()->comp()->getDebug()->getName(regLoadOp)))
                   {
                   // Both halves are in regs, and both regs are available.
                   // Transmute load into regload
@@ -4517,7 +4518,7 @@ J9::CodeGenerator::changeParmLoadsToRegLoads(TR::Node *node, TR::Node **regLoads
                TR_GlobalRegisterNumber highReg = self()->getLinkageGlobalRegisterNumber(lri, dt);
 
                if (lowReg != -1 && highReg != -1 && !globalRegsWithRegLoad->isSet(lowReg) && !globalRegsWithRegLoad->isSet(highReg) &&
-                   performTransformation(self()->comp(), "O^O LINKAGE REGISTER ALLOCATION: transforming aggregate parm %s into xRegLoad\n", self()->comp()->getDebug()->getName(node)))
+                   performTransformation(self()->comp(), "%stransforming aggregate parm %s into xRegLoad\n", OPT_DETAILS_LINKAGE_REGISTER_ALLOCATION, self()->comp()->getDebug()->getName(node)))
                   {
                   TR::Node::recreate(node, self()->comp()->il.opCodeForRegisterLoad(dt));
 
@@ -4536,7 +4537,7 @@ J9::CodeGenerator::changeParmLoadsToRegLoads(TR::Node *node, TR::Node **regLoads
                TR_GlobalRegisterNumber reg = self()->getLinkageGlobalRegisterNumber(lri, dt);
 
                if (reg != -1 && !globalRegsWithRegLoad->isSet(reg) &&
-                   performTransformation(self()->comp(), "O^O LINKAGE REGISTER ALLOCATION: transforming aggregate parm %s into xRegLoad\n", self()->comp()->getDebug()->getName(node)))
+                   performTransformation(self()->comp(), "%stransforming aggregate parm %s into xRegLoad\n", OPT_DETAILS_LINKAGE_REGISTER_ALLOCATION, self()->comp()->getDebug()->getName(node)))
                   {
                   TR::Node::recreate(node, self()->comp()->il.opCodeForRegisterLoad(dt));
 
@@ -4552,7 +4553,7 @@ J9::CodeGenerator::changeParmLoadsToRegLoads(TR::Node *node, TR::Node **regLoads
             {
             TR_GlobalRegisterNumber reg = self()->getLinkageGlobalRegisterNumber(parm->getLinkageRegisterIndex(), node->getDataType());
             if (reg != -1 && !globalRegsWithRegLoad->isSet(reg)
-               && performTransformation(self()->comp(), "O^O LINKAGE REGISTER ALLOCATION: transforming %s into %s\n", self()->comp()->getDebug()->getName(node), self()->comp()->getDebug()->getName(regLoadOp)))
+               && performTransformation(self()->comp(), "%stransforming %s into %s\n", OPT_DETAILS_LINKAGE_REGISTER_ALLOCATION, self()->comp()->getDebug()->getName(node), self()->comp()->getDebug()->getName(regLoadOp)))
                {
                // Transmute load into regload
                //
