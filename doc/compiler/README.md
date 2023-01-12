@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2022, 2022 IBM Corp. and others
+Copyright (c) 2022, 2023 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -140,6 +140,7 @@ In the end code generators perform binary encoding to write the appropriate bits
 * <details><summary><b>5. Compilation Control</b></summary>
 
   * [Overview of Compilation Control](control/CompilationControl.md)
+  * [Options Processing](control/OptionsProcessing.md)
 </details>
 
 * <details><summary><b>6. Profiling</b></summary>
