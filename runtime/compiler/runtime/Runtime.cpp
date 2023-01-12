@@ -997,11 +997,13 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    SET(TR_checkCast,                  (void *)jitCheckCast,              TR_Helper);
    SET(TR_checkCastForArrayStore,     (void *)jitCheckCastForArrayStore, TR_Helper);
 #endif
-#if defined(TR_HOST_X86) || defined(TR_HOST_POWER) || (defined(TR_HOST_S390) && defined(J9VM_JIT_NEW_DUAL_HELPERS))
+#if defined(TR_HOST_X86) || defined(TR_HOST_POWER) || (defined(TR_HOST_S390) && defined(J9VM_JIT_NEW_DUAL_HELPERS)) || defined(TR_HOST_ARM64)
    SET(TR_instanceOf,                 (void *)fast_jitInstanceOf,        TR_CHelper);
-   SET(TR_checkAssignable,            (void *)fast_jitCheckAssignable,   TR_CHelper);
 #else
    SET(TR_instanceOf,                 (void *)jitInstanceOf,             TR_Helper);
+#endif
+#if defined(TR_HOST_X86) || defined(TR_HOST_POWER) || (defined(TR_HOST_S390) && defined(J9VM_JIT_NEW_DUAL_HELPERS))
+   SET(TR_checkAssignable,            (void *)fast_jitCheckAssignable,   TR_CHelper);
 #endif
    SET(TR_induceOSRAtCurrentPC,       (void *)jitInduceOSRAtCurrentPC,   TR_Helper);
    SET(TR_induceOSRAtCurrentPCAndRecompile,       (void *)jitInduceOSRAtCurrentPCAndRecompile,   TR_Helper);
