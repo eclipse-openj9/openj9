@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2022 IBM Corp. and others
+ * Copyright (c) 2000, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1002,7 +1002,7 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
 #else
    SET(TR_instanceOf,                 (void *)jitInstanceOf,             TR_Helper);
 #endif
-#if defined(TR_HOST_X86) || defined(TR_HOST_POWER) || (defined(TR_HOST_S390) && defined(J9VM_JIT_NEW_DUAL_HELPERS))
+#if defined(TR_HOST_X86) || defined(TR_HOST_POWER) || (defined(TR_HOST_S390) && defined(J9VM_JIT_NEW_DUAL_HELPERS)) || defined(TR_HOST_ARM64)
    SET(TR_checkAssignable,            (void *)fast_jitCheckAssignable,   TR_CHelper);
 #endif
    SET(TR_induceOSRAtCurrentPC,       (void *)jitInduceOSRAtCurrentPC,   TR_Helper);
