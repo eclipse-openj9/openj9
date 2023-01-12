@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2022 IBM Corp. and others
+ * Copyright (c) 1991, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2449,6 +2449,14 @@ _compatibleError:
 	}
 
 _verifyError:
+	/* Update the top index of the live stack with the current top index given it is
+	 * required to compute the number of elements on 'stack' in generating the detailed
+	 * error messages in pushLiveStackToVerificationTypeBuffer() at errormessageframeworkrtv.c,
+	 * especially when errorStackIndex points to the data type on 'locals' in terms of the
+	 * loading operations.
+	 */
+	SAVE_STACKTOP(liveStack, stackTop);
+
 	/* Jazz 82615: Store the error code in the case of CHECK_STACK_UNDERFLOW */
 	if ((stackTop < stackBase) && (J9NLS_BCV_ERR_STACK_UNDERFLOW__ID == errorType)) {
 		/* Reset to the location of the 1st data type on 'stack' in the case of stack underflow to show up */
