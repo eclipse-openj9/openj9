@@ -43,6 +43,7 @@
 #include "ReferenceChainWalkerMarkMap.hpp"
 #include "SublistPool.hpp"
 #include "Wildcard.hpp"
+#include "VMHelpers.hpp"
 
 MM_GCExtensions *
 MM_GCExtensions::newInstance(MM_EnvironmentBase *env)
@@ -310,4 +311,31 @@ MM_GCExtensions::releaseNativesForContinuationObject(MM_EnvironmentBase* env, j9
 		getJavaVM()->internalVMFunctions->freeContinuation(vmThread, objectPtr);
 	}
 #endif /* JAVA_SPEC_VERSION >= 19 */
+}
+
+bool
+MM_GCExtensions::needScanStacksForContinuationObject(J9VMThread *vmThread, j9object_t objectPtr)
+{
+	bool needScan = false;
+#if JAVA_SPEC_VERSION >= 19
+	jboolean started = J9VMJDKINTERNALVMCONTINUATION_STARTED(vmThread, objectPtr);
+	jboolean finished = J9VMJDKINTERNALVMCONTINUATION_FINISHED(vmThread, objectPtr);
+	J9VMContinuation *continuation = J9VMJDKINTERNALVMCONTINUATION_VMREF(vmThread, objectPtr);
+	/**
+	 * We don't scan mounted continuations:
+	 *
+	 * for concurrent GCs, since stack is actively changing. Instead, we scan them during preMount or during root scanning if already mounted at cycle start or during postUnmount (might be indirectly via card cleaning) or during final STW (via root re-scan) if still mounted at cycle end
+	 * for sliding compacts to avoid double slot fixups
+	 *
+	 * For fully STW GCs, there is no harm to scan them, but it's a waste of time since they are scanned during root scanning already.
+	 *
+	 * We don't scan currently scanned either - one scan is enough.
+	 * we don't scan the continuation object before started and after finished - java stack does not exist.
+	 */
+	if (started && !finished) {
+		Assert_MM_true(NULL != continuation);
+		needScan = !VM_VMHelpers::isContinuationMountedOrConcurrentlyScanned(continuation);
+	}
+#endif /* JAVA_SPEC_VERSION >= 19 */
+	return needScan;
 }

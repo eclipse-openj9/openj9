@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2022 IBM Corp. and others
+ * Copyright (c) 2017, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -261,7 +261,7 @@ void
 MM_MarkingDelegate::scanContinuationNativeSlots(MM_EnvironmentBase *env, omrobjectptr_t objectPtr)
 {
 	J9VMThread *currentThread = (J9VMThread *)env->getLanguageVMThread();
-	if (VM_VMHelpers::needScanStacksForContinuation(currentThread, objectPtr)) {
+	if (MM_GCExtensions::needScanStacksForContinuationObject(currentThread, objectPtr)) {
 		StackIteratorData4MarkingDelegate localData;
 		localData.markingDelegate = this;
 		localData.env = env;
