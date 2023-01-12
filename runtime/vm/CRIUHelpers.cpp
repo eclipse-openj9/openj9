@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2021, 2022 IBM Corp. and others
+ * Copyright (c) 2021, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -190,9 +190,9 @@ juRandomReseed(J9VMThread *currentThread, void *userData)
 			if (-1 != valueOffset) {
 				PORT_ACCESS_FROM_JAVAVM(vm);
 				pool_state walkState = {0};
-				J9Object *objectRecord = (J9Object*)pool_startDo(hookRecord->instanceObjects, &walkState);
+				j9object_t *objectRecord = (j9object_t*)pool_startDo(hookRecord->instanceObjects, &walkState);
 				while (NULL != objectRecord) {
-					j9object_t object = (j9object_t)objectRecord->clazz;
+					j9object_t object = *objectRecord;
 					j9object_t seedObject = objectAccessBarrier.inlineMixedObjectReadObject(currentThread, object, seedOffset, FALSE);
 					I_64 valueLong = objectAccessBarrier.inlineMixedObjectReadI64(currentThread, seedObject, valueOffset, TRUE);
 
@@ -201,7 +201,7 @@ juRandomReseed(J9VMThread *currentThread, void *userData)
 					valueLong ^= j9time_nano_time();
 					objectAccessBarrier.inlineMixedObjectStoreI64(currentThread, seedObject, valueOffset, valueLong, TRUE);
 
-					objectRecord = (J9Object*)pool_nextDo(&walkState);
+					objectRecord = (j9object_t*)pool_nextDo(&walkState);
 				}
 			} else {
 				Trc_VM_criu_jur_invalid_valueOffset(currentThread, jucaAtomicLongClass);
@@ -319,19 +319,19 @@ fillinHookRecords(J9VMThread *currentThread, j9object_t object)
 			|| (hookRecord->includeSubClass && isSameOrSuperClassOf(hookRecord->instanceType, clazz))
 		) {
 			if (NULL == hookRecord->instanceObjects) {
-				hookRecord->instanceObjects = pool_new(sizeof(J9Object), 0, 0, 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(vm->portLibrary));
+				hookRecord->instanceObjects = pool_new(sizeof(j9object_t), 0, 0, 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(vm->portLibrary));
 				if (NULL == hookRecord->instanceObjects) {
 					setNativeOutOfMemoryError(currentThread, 0, 0);
 					result = FALSE;
 					break;
 				}
 			}
-			J9Object *objectRecord = (J9Object*)pool_newElement(hookRecord->instanceObjects);
+			j9object_t *objectRecord = (j9object_t*)pool_newElement(hookRecord->instanceObjects);
 			if (NULL == objectRecord) {
 				result = FALSE;
 				setNativeOutOfMemoryError(currentThread, 0, 0);
 			} else {
-				objectRecord->clazz = (j9objectclass_t)object;
+				*objectRecord = object;
 			}
 		}
 
