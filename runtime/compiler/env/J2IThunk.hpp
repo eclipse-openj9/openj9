@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,21 +27,21 @@
 #include "env/TRMemory.hpp"
 #include "env/IO.hpp"
 
-class TR_J2IThunkTable;
+class TR_MHJ2IThunkTable;
 namespace TR { class CodeGenerator; }
 namespace TR { class Monitor; }
 
-class TR_J2IThunk
+class TR_MHJ2IThunk
    {
    int16_t _totalSize;
    int16_t _codeSize;
 
    public:
 
-   static TR_J2IThunk *allocate(int16_t codeSize, char *signature, TR::CodeGenerator *cg, TR_J2IThunkTable *thunkTable);
+   static TR_MHJ2IThunk *allocate(int16_t codeSize, char *signature, TR::CodeGenerator *cg, TR_MHJ2IThunkTable *thunkTable);
 
-   static TR_J2IThunk *get(uint8_t *entryPoint)
-      { return ((TR_J2IThunk*)entryPoint)-1; }
+   static TR_MHJ2IThunk *get(uint8_t *entryPoint)
+      { return ((TR_MHJ2IThunk*)entryPoint)-1; }
 
    int16_t totalSize() { return _totalSize; }
    int16_t codeSize() { return _codeSize; }
@@ -49,7 +49,7 @@ class TR_J2IThunk
    char *terseSignature() { return (char*)(entryPoint() + codeSize()); }
    };
 
-class TR_J2IThunkTable
+class TR_MHJ2IThunkTable
    {
    enum TypeChars
       {
@@ -84,7 +84,7 @@ class TR_J2IThunkTable
       {
       typedef int32_t ChildIndex; // sad -- how many nodes are there really going to be in this array?  uint8_t would suffice for some workloads!
 
-      TR_J2IThunk *_thunk;
+      TR_MHJ2IThunk *_thunk;
       ChildIndex _children[NUM_TYPE_CHARS];
 
       Node *get(char *terseSignature, TR_PersistentArray<Node> &nodeArray, bool createIfMissing);
@@ -104,19 +104,19 @@ class TR_J2IThunkTable
    // can always tell where the end is from the Java signature string format,
    // and does not rely on null-termination.
 
-   TR_J2IThunk *findThunk(char *signature, TR_FrontEnd *frontend, bool isForCurrentRun=false); // may return NULL
-   TR_J2IThunk *getThunk (char *signature, TR_FrontEnd *frontend, bool isForCurrentRun=false); // same as findThunk but asserts !NULL
+   TR_MHJ2IThunk *findThunk(char *signature, TR_FrontEnd *frontend, bool isForCurrentRun=false); // may return NULL
+   TR_MHJ2IThunk *getThunk (char *signature, TR_FrontEnd *frontend, bool isForCurrentRun=false); // same as findThunk but asserts !NULL
 
    // Note: the 'isForCurrentRun' flag is meant for AOT-aware code.
    // If you don't know what this should be, you probably want to use its default value.
    //
-   void addThunk(TR_J2IThunk *thunk, TR_FrontEnd *fe, bool isForCurrentRun=false);
+   void addThunk(TR_MHJ2IThunk *thunk, TR_FrontEnd *fe, bool isForCurrentRun=false);
 
    char terseTypeChar(char *type);
    int16_t terseSignatureLength(char *signature);
    void getTerseSignature(char *buf, int16_t bufLength, char *signature);
 
-   TR_J2IThunkTable(TR_PersistentMemory *m, char *name);
+   TR_MHJ2IThunkTable(TR_PersistentMemory *m, char *name);
    TR_PERSISTENT_ALLOC(TR_Memory::JSR292)
 
    void dumpTo(TR_FrontEnd *fe, TR::FILE *file);
@@ -124,7 +124,7 @@ class TR_J2IThunkTable
    private:
 
    Node *root() { return &_nodes[0]; }
-   TR_J2IThunk *findThunkFromTerseSignature(char *terseSignature, TR_FrontEnd *frontend, bool isForCurrentRun);
+   TR_MHJ2IThunk *findThunkFromTerseSignature(char *terseSignature, TR_FrontEnd *frontend, bool isForCurrentRun);
    };
 
 #endif

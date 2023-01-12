@@ -964,13 +964,13 @@ uint8_t *TR::ARM64CallSnippet::generateVIThunk(TR::Node *callNode, int32_t argSi
    return returnValue;
    }
 
-TR_J2IThunk *TR::ARM64CallSnippet::generateInvokeExactJ2IThunk(TR::Node *callNode, int32_t argSize, TR::CodeGenerator *cg, char *signature)
+TR_MHJ2IThunk *TR::ARM64CallSnippet::generateInvokeExactJ2IThunk(TR::Node *callNode, int32_t argSize, TR::CodeGenerator *cg, char *signature)
    {
    int32_t codeSize = 4 * (instructionCountForArguments(callNode, cg) + 5); // 5 instructions for branch
    uintptr_t dispatcher;
    TR::Compilation *comp = cg->comp();
-   TR_J2IThunkTable *thunkTable = comp->getPersistentInfo()->getInvokeExactJ2IThunkTable();
-   TR_J2IThunk *thunk = TR_J2IThunk::allocate(codeSize, signature, cg, thunkTable);
+   TR_MHJ2IThunkTable *thunkTable = comp->getPersistentInfo()->getInvokeExactJ2IThunkTable();
+   TR_MHJ2IThunk *thunk = TR_MHJ2IThunk::allocate(codeSize, signature, cg, thunkTable);
    uint8_t *buffer = thunk->entryPoint();
 
    TR_RuntimeHelper helper;

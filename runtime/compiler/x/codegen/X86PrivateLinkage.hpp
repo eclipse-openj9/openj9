@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,7 +29,7 @@
 #include "codegen/RegisterDependency.hpp"
 #include "x/codegen/X86Register.hpp"
 
-class TR_J2IThunk;
+class TR_MHJ2IThunk;
 class TR_ResolvedMethod;
 namespace TR { class Instruction; }
 
@@ -276,7 +276,7 @@ class PrivateLinkage : public J9::PrivateLinkage
    // the vTable slot for the called method.
    //
    virtual uint8_t *generateVirtualIndirectThunk(TR::Node *callNode){ TR_ASSERT(0, "Thunks not implemented in X86Linkage"); return NULL; }
-   virtual TR_J2IThunk *generateInvokeExactJ2IThunk(TR::Node *callNode, char *signature){ TR_ASSERT(0, "Thunks not implemented in X86Linkage"); return NULL; }
+   virtual TR_MHJ2IThunk *generateInvokeExactJ2IThunk(TR::Node *callNode, char *signature){ TR_ASSERT(0, "Thunks not implemented in X86Linkage"); return NULL; }
 
    struct TR::PicParameters IPicParameters;
    struct TR::PicParameters VPicParameters;

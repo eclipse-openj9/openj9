@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,7 +31,7 @@
 #include "runtime/RelocationRecord.hpp"
 
 #if defined(J9VM_OPT_JITSERVER)
-class TR_J2IThunk;
+class TR_MHJ2IThunk;
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
 /* Mfence patching constants */
@@ -63,21 +63,21 @@ class TR_X86RelocationTarget : public TR_RelocationTarget
       virtual void storeRelativeTarget(uintptr_t callTarget, uint8_t *reloLocation);
       virtual uint8_t *loadAddressSequence(uint8_t *reloLocation);
       virtual void storeAddressSequence(uint8_t *address, uint8_t *reloLocation, uint32_t seqNumber);
-      
-      virtual void storeRelativeAddressSequence(uint8_t *address, uint8_t *reloLocation, uint32_t seqNumber) 
+
+      virtual void storeRelativeAddressSequence(uint8_t *address, uint8_t *reloLocation, uint32_t seqNumber)
          {
          address = (uint8_t *)((intptr_t)address - (intptr_t)(reloLocation + 4));
          storeAddressSequence(address, reloLocation, seqNumber);
          }
-      
+
       virtual uint32_t loadCPIndex(uint8_t *reloLocation);
       virtual uintptr_t loadThunkCPIndex(uint8_t *reloLocation);
-      
-      
+
+
 
       virtual void performThunkRelocation(uint8_t *thunkAddress, uintptr_t vmHelper);
 #if defined(J9VM_OPT_JITSERVER)
-      virtual void performInvokeExactJ2IThunkRelocation(TR_J2IThunk *thunk);
+      virtual void performInvokeExactJ2IThunkRelocation(TR_MHJ2IThunk *thunk);
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
       virtual bool useTrampoline(uint8_t * helperAddress, uint8_t *baseLocation) { return false; }
@@ -94,8 +94,8 @@ class TR_AMD64RelocationTarget : public TR_X86RelocationTarget
       TR_ALLOC(TR_Memory::Relocation)
       void * operator new(size_t, J9JITConfig *);
       TR_AMD64RelocationTarget(TR_RelocationRuntime *reloRuntime) : TR_X86RelocationTarget(reloRuntime) {}
-      
-      virtual void storeRelativeAddressSequence(uint8_t *address, uint8_t *reloLocation, uint32_t seqNumber) 
+
+      virtual void storeRelativeAddressSequence(uint8_t *address, uint8_t *reloLocation, uint32_t seqNumber)
          {
          storeAddressSequence(address, reloLocation, seqNumber);
          }

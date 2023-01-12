@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2022 IBM Corp. and others
+ * Copyright (c) 2000, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1709,12 +1709,12 @@ void *initialInvokeExactThunk(j9object_t methodHandle, J9VMThread *vmThread)
 
    TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
    TR::PersistentInfo *persistentInfo = compInfo->getPersistentInfo();
-   TR_J2IThunkTable *j2iThunks = persistentInfo->getInvokeExactJ2IThunkTable();
+   TR_MHJ2IThunkTable *j2iThunks = persistentInfo->getInvokeExactJ2IThunkTable();
 
    void *addressToDispatch = NULL;
    if (j2iThunks)
       {
-      TR_J2IThunk *thunk = j2iThunks->getThunk(thunkSignature, fej9);
+      TR_MHJ2IThunk *thunk = j2iThunks->getThunk(thunkSignature, fej9);
       addressToDispatch = thunk->entryPoint();
       if (details)
          TR_VerboseLog::writeLineLocked(TR_Vlog_MHD, "%p   J2I thunk is %p %s", vmThread, addressToDispatch, thunk->terseSignature());

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2022 IBM Corp. and others
+ * Copyright (c) 2000, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1765,7 +1765,7 @@ TR::Register *J9::X86::PrivateLinkage::buildIndirectDispatch(TR::Node *callNode)
             default:
                if (fej9->needsInvokeExactJ2IThunk(callNode, comp()))
                   {
-                  TR_J2IThunk *thunk = generateInvokeExactJ2IThunk(callNode, methodSymbol->getMethod()->signatureChars());
+                  TR_MHJ2IThunk *thunk = generateInvokeExactJ2IThunk(callNode, methodSymbol->getMethod()->signatureChars());
                   fej9->setInvokeExactJ2IThunk(thunk, comp());
                   }
                break;

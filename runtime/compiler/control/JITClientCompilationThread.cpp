@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2022 IBM Corp. and others
+ * Copyright (c) 2019, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -756,8 +756,8 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          auto recv = client->getRecvData<std::string>();
          auto &signature = std::get<0>(recv);
 
-         TR_J2IThunkTable *thunkTable = comp->getPersistentInfo()->getInvokeExactJ2IThunkTable();
-         TR_J2IThunk *thunk = thunkTable->findThunk((char *)signature.data(), fe);
+         TR_MHJ2IThunkTable *thunkTable = comp->getPersistentInfo()->getInvokeExactJ2IThunkTable();
+         TR_MHJ2IThunk *thunk = thunkTable->findThunk((char *)signature.data(), fe);
          client->write(response, thunk == NULL);
          }
          break;

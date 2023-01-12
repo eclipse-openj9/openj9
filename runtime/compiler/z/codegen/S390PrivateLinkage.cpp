@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2022 IBM Corp. and others
+ * Copyright (c) 2000, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1581,7 +1581,7 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
          default:
             if (fej9->needsInvokeExactJ2IThunk(callNode, comp()))
                {
-               TR_J2IThunk *thunk = TR::S390J9CallSnippet::generateInvokeExactJ2IThunk(callNode, sizeOfArguments, methodSymbol->getMethod()->signatureChars(), cg());
+               TR_MHJ2IThunk *thunk = TR::S390J9CallSnippet::generateInvokeExactJ2IThunk(callNode, sizeOfArguments, methodSymbol->getMethod()->signatureChars(), cg());
                fej9->setInvokeExactJ2IThunk(thunk, comp());
                }
             break;

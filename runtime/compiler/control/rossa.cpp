@@ -1823,7 +1823,7 @@ onLoadInternal(
 
    if (!TR::Compiler->target.cpu.isI386())
       {
-      TR_J2IThunkTable *ieThunkTable = new (PERSISTENT_NEW) TR_J2IThunkTable(persistentMemory, "InvokeExactJ2IThunkTable");
+      TR_MHJ2IThunkTable *ieThunkTable = new (PERSISTENT_NEW) TR_MHJ2IThunkTable(persistentMemory, "InvokeExactJ2IThunkTable");
       if (ieThunkTable == NULL)
          return -1;
       persistentMemory->getPersistentInfo()->setInvokeExactJ2IThunkTable(ieThunkTable);

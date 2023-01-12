@@ -43,26 +43,26 @@ computeSignatureLength(char *signature)
    }
 
 
-TR_J2IThunk *
-TR_J2IThunk::allocate(
+TR_MHJ2IThunk *
+TR_MHJ2IThunk::allocate(
       int16_t codeSize,
       char *signature,
       TR::CodeGenerator *cg,
-      TR_J2IThunkTable *thunkTable)
+      TR_MHJ2IThunkTable *thunkTable)
    {
    int16_t terseSignatureBufLength = thunkTable->terseSignatureLength(signature)+1;
-   int16_t totalSize = (int16_t)sizeof(TR_J2IThunk) + codeSize + terseSignatureBufLength;
-   TR_J2IThunk *result;
+   int16_t totalSize = (int16_t)sizeof(TR_MHJ2IThunk) + codeSize + terseSignatureBufLength;
+   TR_MHJ2IThunk *result;
 #if defined(J9VM_OPT_JITSERVER)
    if (cg->comp()->isOutOfProcessCompilation())
       {
       // Don't need to use code cache because the entire thunk will be copied and sent to the client
-      result = (TR_J2IThunk*)cg->comp()->trMemory()->allocateMemory(totalSize, heapAlloc);
+      result = (TR_MHJ2IThunk*)cg->comp()->trMemory()->allocateMemory(totalSize, heapAlloc);
       }
    else
 #endif /* defined(J9VM_OPT_JITSERVER) */
       {
-      result = (TR_J2IThunk*)cg->allocateCodeMemory(totalSize, true, false);
+      result = (TR_MHJ2IThunk*)cg->allocateCodeMemory(totalSize, true, false);
       }
    omrthread_jit_write_protect_disable();
    result->_codeSize  = codeSize;
@@ -73,7 +73,7 @@ TR_J2IThunk::allocate(
    }
 
 
-TR_J2IThunkTable::TR_J2IThunkTable(TR_PersistentMemory *m, char *name):
+TR_MHJ2IThunkTable::TR_MHJ2IThunkTable(TR_PersistentMemory *m, char *name):
    _name(name),
    _monitor(TR::Monitor::create(name)),
    _nodes(m)
@@ -83,7 +83,7 @@ TR_J2IThunkTable::TR_J2IThunkTable(TR_PersistentMemory *m, char *name):
 
 
 int16_t
-TR_J2IThunkTable::terseSignatureLength(char *signature)
+TR_MHJ2IThunkTable::terseSignatureLength(char *signature)
    {
    int16_t numArgs = 0;
    for (char *currentArgument = signature+1; currentArgument[0] != ')'; currentArgument = nextSignatureArgument(currentArgument))
@@ -92,7 +92,7 @@ TR_J2IThunkTable::terseSignatureLength(char *signature)
    }
 
 
-void TR_J2IThunkTable::getTerseSignature(char *buf, int16_t bufLength, char *signature)
+void TR_MHJ2IThunkTable::getTerseSignature(char *buf, int16_t bufLength, char *signature)
    {
    int16_t i=0;
    char *currentArgument;
@@ -104,7 +104,7 @@ void TR_J2IThunkTable::getTerseSignature(char *buf, int16_t bufLength, char *sig
    }
 
 
-char TR_J2IThunkTable::terseTypeChar(char *type)
+char TR_MHJ2IThunkTable::terseTypeChar(char *type)
    {
    switch (type[0])
       {
@@ -123,8 +123,8 @@ char TR_J2IThunkTable::terseTypeChar(char *type)
    }
 
 
-TR_J2IThunkTable::Node *
-TR_J2IThunkTable::Node::get(
+TR_MHJ2IThunkTable::Node *
+TR_MHJ2IThunkTable::Node::get(
       char *terseSignature,
       TR_PersistentArray<Node> &nodeArray,
       bool createIfMissing)
@@ -159,8 +159,8 @@ TR_J2IThunkTable::Node::get(
    }
 
 
-TR_J2IThunk *
-TR_J2IThunkTable::findThunk(
+TR_MHJ2IThunk *
+TR_MHJ2IThunkTable::findThunk(
       char *signature,
       TR_FrontEnd *fe,
       bool isForCurrentRun)
@@ -171,10 +171,10 @@ TR_J2IThunkTable::findThunk(
    }
 
 
-TR_J2IThunk *
-TR_J2IThunkTable::getThunk(char *signature, TR_FrontEnd *fe, bool isForCurrentRun)
+TR_MHJ2IThunk *
+TR_MHJ2IThunkTable::getThunk(char *signature, TR_FrontEnd *fe, bool isForCurrentRun)
    {
-   TR_J2IThunk *result = findThunk(signature, fe, isForCurrentRun);
+   TR_MHJ2IThunk *result = findThunk(signature, fe, isForCurrentRun);
    if (!result)
       {
       char terseSignature[260]; // 256 args + 1 return type + null terminator
@@ -187,19 +187,19 @@ TR_J2IThunkTable::getThunk(char *signature, TR_FrontEnd *fe, bool isForCurrentRu
    }
 
 
-TR_J2IThunk *
-TR_J2IThunkTable::findThunkFromTerseSignature(
+TR_MHJ2IThunk *
+TR_MHJ2IThunkTable::findThunkFromTerseSignature(
       char *terseSignature,
       TR_FrontEnd *fe,
       bool isForCurrentRun)
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe);
-   TR_J2IThunk *returnThunk = NULL;
+   TR_MHJ2IThunk *returnThunk = NULL;
 
    if (fej9->isAOT_DEPRECATED_DO_NOT_USE() && !isForCurrentRun)
       {
       // Must use persistent thunks for compiles that will persist
-      return (TR_J2IThunk *)fej9->findPersistentJ2IThunk(terseSignature);
+      return (TR_MHJ2IThunk *)fej9->findPersistentJ2IThunk(terseSignature);
       }
    else
       {
@@ -214,8 +214,8 @@ TR_J2IThunkTable::findThunkFromTerseSignature(
 
 
 void
-TR_J2IThunkTable::addThunk(
-      TR_J2IThunk *thunk,
+TR_MHJ2IThunkTable::addThunk(
+      TR_MHJ2IThunk *thunk,
       TR_FrontEnd *fe, bool
       isForCurrentRun)
    {
@@ -236,7 +236,7 @@ TR_J2IThunkTable::addThunk(
       match->_thunk = thunk;
 
       // This assume must be in the monitor or else another thread could break it
-      TR_ASSERT(findThunkFromTerseSignature(thunk->terseSignature(), fe, isForCurrentRun) == thunk, "TR_J2IThunkTable: setThunk must cause findThunk(%s) to return %p", thunk->terseSignature(), thunk);
+      TR_ASSERT(findThunkFromTerseSignature(thunk->terseSignature(), fe, isForCurrentRun) == thunk, "TR_MHJ2IThunkTable: setThunk must cause findThunk(%s) to return %p", thunk->terseSignature(), thunk);
       if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseJ2IThunks))
          TR_VerboseLog::writeLineLocked(TR_Vlog_J2I,"add %s @%p", thunk->terseSignature(), thunk);
       }
@@ -244,7 +244,7 @@ TR_J2IThunkTable::addThunk(
 
 
 void
-TR_J2IThunkTable::Node::dumpTo(
+TR_MHJ2IThunkTable::Node::dumpTo(
       TR_FrontEnd *fe,
       TR::FILE *file,
       TR_PersistentArray<Node> &nodeArray,
@@ -267,7 +267,7 @@ TR_J2IThunkTable::Node::dumpTo(
 
 
 void
-TR_J2IThunkTable::dumpTo(TR_FrontEnd *fe, TR::FILE *file)
+TR_MHJ2IThunkTable::dumpTo(TR_FrontEnd *fe, TR::FILE *file)
    {
    OMR::CriticalSection criticalSection(_monitor);
    trfprintf(file, "J2IThunkTable \"%s\":", _name);

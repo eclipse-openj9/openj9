@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,7 +27,7 @@
 #include "z/codegen/ConstantDataSnippet.hpp"
 #include "z/codegen/S390Instruction.hpp"
 
-class TR_J2IThunk;
+class TR_MHJ2IThunk;
 namespace TR { class CodeGenerator; }
 namespace TR { class LabelSymbol; }
 namespace TR { class Node; }
@@ -56,7 +56,7 @@ class S390J9CallSnippet : public TR::S390CallSnippet
 
 
    static uint8_t *generateVIThunk(TR::Node *callNode, int32_t argSize, TR::CodeGenerator *cg);
-   static TR_J2IThunk *generateInvokeExactJ2IThunk(TR::Node *callNode, int32_t argSize, char* signature, TR::CodeGenerator *cg);
+   static TR_MHJ2IThunk *generateInvokeExactJ2IThunk(TR::Node *callNode, int32_t argSize, char* signature, TR::CodeGenerator *cg);
 
    TR_RuntimeHelper getInterpretedDispatchHelper(TR::SymbolReference *methodSymRef, TR::DataType type);
 
@@ -65,7 +65,7 @@ class S390J9CallSnippet : public TR::S390CallSnippet
    virtual uint32_t getLength(int32_t estimatedSnippetStart);
 
    virtual void print(TR::FILE *pOutFile, TR_Debug *debug);
-                                                 
+
    virtual uint8_t *emitSnippetBody();
    };
 

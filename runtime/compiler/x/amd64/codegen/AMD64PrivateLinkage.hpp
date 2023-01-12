@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -83,7 +83,7 @@ class PrivateLinkage : public J9::X86::PrivateLinkage
    virtual TR::Instruction *buildPICSlot(TR::X86PICSlot picSlot, TR::LabelSymbol *mismatchLabel, TR::LabelSymbol *doneLabel, TR::X86CallSite &site);
    virtual void buildIPIC(TR::X86CallSite &site, TR::LabelSymbol *entryLabel, TR::LabelSymbol *doneLabel, uint8_t *thunk);
    virtual uint8_t *generateVirtualIndirectThunk(TR::Node *callNode);
-   virtual TR_J2IThunk *generateInvokeExactJ2IThunk(TR::Node *callNode, char *signature);
+   virtual TR_MHJ2IThunk *generateInvokeExactJ2IThunk(TR::Node *callNode, char *signature);
 
    TR::Instruction *generateFlushInstruction(
          TR::Instruction *prev,

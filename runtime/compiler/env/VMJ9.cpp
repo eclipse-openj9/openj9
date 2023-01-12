@@ -4249,7 +4249,7 @@ TR_J9VMBase::setJ2IThunk(char *signatureChars, uint32_t signatureLength, void *t
 void
 TR_J9VMBase::setInvokeExactJ2IThunk(void *thunkptr, TR::Compilation *comp)
    {
-   comp->getPersistentInfo()->getInvokeExactJ2IThunkTable()->addThunk((TR_J2IThunk*) thunkptr, this);
+   comp->getPersistentInfo()->getInvokeExactJ2IThunkTable()->addThunk((TR_MHJ2IThunk*) thunkptr, this);
    }
 
 void *
@@ -4339,8 +4339,8 @@ TR_J9VMBase::needsInvokeExactJ2IThunk(TR::Node *callNode, TR::Compilation *comp)
       // We need a j2i thunk when this call executes, in case the target MH has
       // no invokeExact thunk yet.
 
-      TR_J2IThunkTable *thunkTable = comp->getPersistentInfo()->getInvokeExactJ2IThunkTable();
-      TR_J2IThunk      *thunk      = thunkTable->findThunk(methodSymbol->getMethod()->signatureChars(), this);
+      TR_MHJ2IThunkTable *thunkTable = comp->getPersistentInfo()->getInvokeExactJ2IThunkTable();
+      TR_MHJ2IThunk      *thunk      = thunkTable->findThunk(methodSymbol->getMethod()->signatureChars(), this);
       return (thunk == NULL);
       }
    else
@@ -9238,7 +9238,7 @@ TR_J9SharedCacheVM::setJ2IThunk(char *signatureChars, uint32_t signatureLength, 
 void *
 TR_J9SharedCacheVM::persistJ2IThunk(void *thunk)
    {
-   return persistThunk(((TR_J2IThunk *)thunk)->terseSignature(), strlen(((TR_J2IThunk *)thunk)->terseSignature()), (uint8_t*)thunk, ((TR_J2IThunk *)thunk)->totalSize());
+   return persistThunk(((TR_MHJ2IThunk *)thunk)->terseSignature(), strlen(((TR_MHJ2IThunk *)thunk)->terseSignature()), (uint8_t*)thunk, ((TR_MHJ2IThunk *)thunk)->totalSize());
    }
 
 void *
