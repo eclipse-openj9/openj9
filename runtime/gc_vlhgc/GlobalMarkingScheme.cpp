@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2022 IBM Corp. and others
+ * Copyright (c) 1991, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -792,7 +792,7 @@ void
 MM_GlobalMarkingScheme::scanContinuationNativeSlots(MM_EnvironmentVLHGC *env, J9Object *objectPtr, ScanReason reason)
 {
 	J9VMThread *currentThread = (J9VMThread *)env->getLanguageVMThread();
-	if (VM_VMHelpers::needScanStacksForContinuation(currentThread, objectPtr)) {
+	if (MM_GCExtensions::needScanStacksForContinuationObject(currentThread, objectPtr)) {
 		StackIteratorData4GlobalMarkingScheme localData;
 		localData.globalMarkingScheme = this;
 		localData.env = env;

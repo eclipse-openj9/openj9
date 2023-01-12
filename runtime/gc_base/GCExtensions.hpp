@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2022 IBM Corp. and others
+ * Copyright (c) 1991, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -298,6 +298,16 @@ public:
 	MMINLINE void setContinuationObjectLists(MM_ContinuationObjectList* newContinuationObjectLists) { continuationObjectLists = newContinuationObjectLists; }
 
 	void releaseNativesForContinuationObject(MM_EnvironmentBase* env, j9object_t objectPtr);
+
+	/**
+	 * Check if we need to scan the java stack for the Continuation Object
+	 * Used during main scan phase of GC (object graph traversal) or heap object iteration (in sliding compact).
+	 * Not meant to be used during root scanning (neither strong roots nor weak roots)!
+	 * @param[in] vmThread the current J9VMThread
+	 * @param[in] continuationObject the continuation object
+	 * @return true if we need to scan the java stack
+	 */
+	static bool needScanStacksForContinuationObject(J9VMThread *vmThread, j9object_t objectPtr);
 
 	/**
 	 * Create a GCExtensions object
