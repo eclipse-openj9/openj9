@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -57,11 +57,11 @@ extern J9_CFUNC void   jitDecompileMethodForFramePop (J9VMThread * currentThread
 extern J9_CFUNC void   jitExceptionCaught (J9VMThread * currentThread);
 extern J9_CFUNC void   jitSingleStepRemoved (J9VMThread * currentThread);
 extern J9_CFUNC void   jitDataBreakpointAdded (J9VMThread * currentThread);
-extern J9_CFUNC void  
+extern J9_CFUNC void
 jitBreakpointedMethodCompiled (J9VMThread * currentThread, J9Method * method, void * startAddress);
 extern J9_CFUNC UDATA
 initializeFSD (J9JavaVM * vm);
-extern J9_CFUNC void 
+extern J9_CFUNC void
 induceOSROnCurrentThread(J9VMThread * currentThread);
 #if (defined(J9VM_INTERP_HOT_CODE_REPLACEMENT)) /* priv. proto (autogen) */
 extern J9_CFUNC void   jitHotswapOccurred (J9VMThread * currentThread);
@@ -83,6 +83,8 @@ extern J9_CFUNC void   c_jitReportExceptionCatch(J9VMThread * currentThread);
 extern J9_CFUNC void   c_jitDecompileOnReturn(J9VMThread * currentThread);
 
 extern J9_CFUNC void * j9ThunkLookupNameAndSig (void * jitConfig, void *parm);
+extern J9_CFUNC const void * j9ThunkPersist(J9JITConfig *jitConfig, char *signatureChars, U_32 signatureLength, U_8 *thunkStart, U_32 totalSize);
+extern J9_CFUNC void * j9ThunkFindPersistentThunk(J9JITConfig *jitConfig, char *signatureChars, U_32 signatureLength, UDATA *thunkSize);
 
 extern J9_CFUNC J9JITHashTable *avl_jit_artifact_insert_existing_table (J9AVLTree * tree, J9JITHashTable * hashTable);
 extern J9_CFUNC J9AVLTree * jit_allocate_artifacts (J9PortLibrary * portLibrary);
@@ -97,7 +99,7 @@ extern J9_CFUNC UDATA  jitWalkStackFrames (J9StackWalkState *walkState);
  *
  * @return         The metadata corresponding to the method which was JIT compiled at the specified PC if such a method
  *                 exists; NULL if no such method can be found.
- * 
+ *
  * @note           If jitPC is NULL this function will return NULL.
  */
 extern J9_CFUNC J9JITExceptionTable * jitGetExceptionTableFromPC (J9VMThread * vmThread, UDATA jitPC);
@@ -115,6 +117,8 @@ extern J9_CFUNC UDATA jit_artifact_remove (J9PortLibrary * portLibrary, J9AVLTre
 
 /* prototypes from thunkcrt.c */
 void * j9ThunkLookupNameAndSig(void * jitConfig, void *parm);
+const void * j9ThunkPersist(J9JITConfig *jitConfig, char *signatureChars, U_32 signatureLength, U_8 *thunkStart, U_32 totalSize);
+void * j9ThunkFindPersistentThunk(J9JITConfig *jitConfig, char *signatureChars, U_32 signatureLength, UDATA *thunkSize);
 UDATA j9ThunkTableAllocate(J9JavaVM * vm);
 void j9ThunkTableFree(J9JavaVM * vm);
 void * j9ThunkLookupSignature(void * jitConfig, UDATA signatureLength, char *signatureChars);
