@@ -279,6 +279,8 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
    static const uint32_t DEFAULT_JITSERVER_TIMEOUT = 30000; // ms
    static int32_t _aotCachePersistenceMinDeltaMethods;
    static int32_t _aotCachePersistenceMinPeriodMs;
+   static TR::CompilationFilters *_JITServerAOTCacheStoreFilters;
+   static TR::CompilationFilters *_JITServerAOTCacheLoadFilters;
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
 #if defined(J9VM_OPT_CRIU_SUPPORT)
@@ -356,6 +358,11 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
    static char *loadLimitOption(char *option, void *, TR::OptionTable *entry);
 
    static char *loadLimitfileOption(char *option, void *, TR::OptionTable *entry);
+
+#if defined(J9VM_OPT_JITSERVER)
+   static char *JITServerAOTCacheStoreLimitOption(char *option, void *, TR::OptionTable *entry);
+   static char *JITServerAOTCacheLoadLimitOption(char *option, void *, TR::OptionTable *entry);
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
    static char *vmStateOption(char *option, void *, TR::OptionTable *entry);
 
@@ -518,6 +525,12 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
    int writeLogFileFromServer(const std::string& logFileContent);
    void setLogFileForClientOptions(int suffixNumber = 0);
    void closeLogFileForClientOptions();
+#endif /* defined(J9VM_OPT_JITSERVER) */
+
+   private:
+
+#if defined(J9VM_OPT_JITSERVER)
+   static char *JITServerAOTCacheLimitOption(char *option, void *base, TR::OptionTable *entry, TR::CompilationFilters *&filters, const char *optName);
 #endif /* defined(J9VM_OPT_JITSERVER) */
    };
 

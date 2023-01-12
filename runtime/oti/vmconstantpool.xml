@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-Copyright (c) 2006, 2022 IBM Corp. and others
+Copyright (c) 2006, 2023 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -62,7 +62,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<classref name="java/lang/ThreadDeath"/>
 	<classref name="java/lang/IllegalAccessException"/>
 	<classref name="java/lang/IllegalArgumentException"/>
-	<classref name="java/lang/LayerInstantiationException" flags="opt_module" versions="9-"/>
+	<classref name="java/lang/LayerInstantiationException" versions="9-"/>
 	<classref name="java/lang/reflect/Method" flags="opt_reflect"/>
 	<classref name="java/lang/reflect/Field" flags="opt_reflect"/>
 	<classref name="java/lang/reflect/RecordComponent" flags="opt_reflect" versions="14-"/>
@@ -126,7 +126,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<classref name="com/ibm/oti/util/WeakReferenceNode"/>
 	<classref name="com/ibm/oti/vm/VM"/>
 	<classref name="java/lang/System"/>
-	<classref name="java/lang/Module" flags="opt_module" versions="9-"/>
+	<classref name="java/lang/Module" versions="9-"/>
 	<classref name="java/lang/invoke/VarHandleInvokeHandle" versions="9-" flags="opt_methodHandle"/>
 	<classref name="java/lang/invoke/FieldVarHandle" versions="9-" flags="opt_methodHandle"/>
 
@@ -180,8 +180,8 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<fieldref class="java/lang/ClassLoader" name="parent" signature="Ljava/lang/ClassLoader;"/>
 	<fieldref class="java/lang/ClassLoader" name="vmRef" signature="J" cast="struct J9ClassLoader *"/>
 	<fieldref class="java/lang/ClassLoader" name="isParallelCapable" signature="Z"/>
-	<fieldref class="java/lang/ClassLoader" name="unnamedModule" signature="Ljava/lang/Module;" flags="opt_module" versions="9-"/>
-	<fieldref class="java/lang/ClassLoader" name="classLoaderName" signature="Ljava/lang/String;" flags="opt_module" versions="9-"/>
+	<fieldref class="java/lang/ClassLoader" name="unnamedModule" signature="Ljava/lang/Module;" versions="9-"/>
+	<fieldref class="java/lang/ClassLoader" name="classLoaderName" signature="Ljava/lang/String;" versions="9-"/>
 	<fieldref class="java/lang/Class" name="reflectCache" signature="Ljava/lang/Class$ReflectCache;"/>
 	<fieldref class="java/lang/Class" name="classLoader" signature="Ljava/lang/ClassLoader;"/>
 	<fieldref class="java/lang/Class" name="vmRef" signature="J" cast="struct J9Class *"/>
@@ -190,7 +190,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<fieldref class="java/lang/Class" name="classNameString" signature="Ljava/lang/String;"/>
 	<fieldref class="java/lang/Class" name="fileNameString" signature="Ljava/lang/String;"/>
 	<fieldref class="java/lang/Class" name="annotationCache" signature="Ljava/lang/Class$AnnotationCache;"/>
-	<fieldref class="java/lang/Class" name="module" signature="Ljava/lang/Module;" flags="opt_module" versions="9-"/>
+	<fieldref class="java/lang/Class" name="module" signature="Ljava/lang/Module;" versions="9-"/>
 	<fieldref class="java/lang/Class" name="methodHandleCache" signature="Ljava/lang/Object;" flags="opt_methodHandle"/>
 	<fieldref class="java/lang/Class" name="classData" signature="Ljava/lang/Object;" versions="15-"/>
 
@@ -201,12 +201,12 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<fieldref class="java/lang/String" name="count" signature="I" versions="8"/>
 	<fieldref class="java/lang/String" name="hash" signature="I"/>
 	<fieldref class="java/lang/String" name="coder" signature="B" versions="9-"/>
-	<fieldref class="java/lang/StackTraceElement" name="moduleName" signature="Ljava/lang/String;" flags="opt_module" versions="9-"/>
-	<fieldref class="java/lang/StackTraceElement" name="moduleVersion" signature="Ljava/lang/String;" flags="opt_module" versions="9-"/>
+	<fieldref class="java/lang/StackTraceElement" name="moduleName" signature="Ljava/lang/String;" versions="9-"/>
+	<fieldref class="java/lang/StackTraceElement" name="moduleVersion" signature="Ljava/lang/String;" versions="9-"/>
 	<fieldref class="java/lang/StackTraceElement" name="declaringClass" signature="Ljava/lang/String;"/>
-	<fieldref class="java/lang/StackTraceElement" name="classLoaderName" signature="Ljava/lang/String;" flags="opt_module" versions="9-"/>
-	<fieldref class="java/lang/StackTraceElement" name="includeClassLoaderName" signature="Z" flags="opt_module" versions="9-"/>
-	<fieldref class="java/lang/StackTraceElement" name="includeModuleVersion" signature="Z" flags="opt_module" versions="9-"/>
+	<fieldref class="java/lang/StackTraceElement" name="classLoaderName" signature="Ljava/lang/String;" versions="9-"/>
+	<fieldref class="java/lang/StackTraceElement" name="includeClassLoaderName" signature="Z" versions="9-"/>
+	<fieldref class="java/lang/StackTraceElement" name="includeModuleVersion" signature="Z" versions="9-"/>
 	<fieldref class="java/lang/StackTraceElement" name="methodName" signature="Ljava/lang/String;"/>
 	<fieldref class="java/lang/StackTraceElement" name="fileName" signature="Ljava/lang/String;"/>
 	<fieldref class="java/lang/StackTraceElement" name="lineNumber" signature="I"/>
@@ -385,8 +385,8 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<fieldref class="java/lang/invoke/VarHandleInvokeHandle" name="accessModeType" signature="Ljava/lang/invoke/MethodType;" versions="9-" flags="opt_methodHandle"/>
 	<fieldref class="java/lang/invoke/FieldVarHandle" name="definingClass" signature="Ljava/lang/Class;" versions="9-" flags="opt_methodHandle"/>
 
-	<fieldref class="java/lang/Module" name="loader" signature="Ljava/lang/ClassLoader;" flags="opt_module" versions="9-"/>
-	<fieldref class="java/lang/Module" name="name" signature="Ljava/lang/String;" flags="opt_module" versions="9-"/>
+	<fieldref class="java/lang/Module" name="loader" signature="Ljava/lang/ClassLoader;" versions="9-"/>
+	<fieldref class="java/lang/Module" name="name" signature="Ljava/lang/String;" versions="9-"/>
 
 	<fieldref class="java/lang/InternalConstantPool" name="vmRef" signature="J" cast="struct J9ConstantPool *"/>
 
@@ -424,6 +424,8 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<fieldref class="openj9/internal/foreign/abi/UpcallMHMetaData" name="calleeMH" signature="Ljava/lang/invoke/MethodHandle;" flags="opt_openjdkFfi" versions="16-"/>
 	<fieldref class="openj9/internal/foreign/abi/UpcallMHMetaData" name="calleeType" signature="Ljava/lang/invoke/MethodType;" flags="opt_openjdkFfi" versions="16-"/>
 	<fieldref class="openj9/internal/foreign/abi/UpcallMHMetaData" name="invokeCache" signature="[Ljava/lang/Object;" flags="opt_openjdkFfi" versions="16-"/>
+	<fieldref class="openj9/internal/foreign/abi/UpcallMHMetaData" name="nativeArgArray" signature="[Ljava/lang/Object;" flags="opt_openjdkFfi" versions="16-"/>
+
 	<fieldref class="openj9/internal/foreign/abi/UpcallMHMetaData" name="scope" signature="Ljdk/incubator/foreign/ResourceScope;" flags="opt_openjdkFfi" versions="16-18"/>
 	<fieldref class="openj9/internal/foreign/abi/UpcallMHMetaData" name="session" signature="Ljava/lang/foreign/MemorySession;" flags="opt_openjdkFfi" versions="19-"/>
 

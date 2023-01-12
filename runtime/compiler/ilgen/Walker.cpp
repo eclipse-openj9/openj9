@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2022 IBM Corp. and others
+ * Copyright (c) 2000, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1802,130 +1802,6 @@ TR_J9ByteCodeIlGenerator::valueMayBeModified(TR::Node * sideEffect, TR::Node * n
    return false;
    }
 
-
-TR::Node *
-TR_J9ByteCodeIlGenerator::loadConstantValueIfPossible(TR::Node *topNode, uintptr_t topFieldOffset,  TR::DataType type, bool isArrayLength)
-   {
-   TR::Node *constNode = NULL;
-   TR::Node *parent = topNode;
-   TR::SymbolReference *symRef = NULL;
-   uintptr_t fieldOffset = 0;
-   if (topNode->getOpCode().hasSymbolReference())
-      {
-      symRef = topNode->getSymbolReference();
-      if (symRef->getSymbol()->isShadow() &&
-         symRef->getSymbol()->isFinal() &&
-         !symRef->isUnresolved())
-         {
-         fieldOffset = symRef->getOffset();
-         TR::Node *child = topNode->getFirstChild();
-         if (child->getOpCode().hasSymbolReference())
-            {
-            topNode = child;
-            symRef = child->getSymbolReference();
-            }
-         }
-      }
-
-   if (symRef && symRef->getSymbol()->isStatic() && !symRef->isUnresolved() && symRef->getSymbol()->isFinal() && !symRef->getSymbol()->isConstObjectRef() && _method->isSameMethod(symRef->getOwningMethod(comp())))
-      {
-      TR::StaticSymbol *symbol = symRef->getSymbol()->castToStaticSymbol();
-      TR_J9VMBase *fej9 = (TR_J9VMBase *)fe();
-
-
-      bool isResolved = !symRef->isUnresolved();
-      TR_OpaqueClassBlock * classOfStatic = isResolved ? _method->classOfStatic(topNode->getSymbolReference()->getCPIndex()) : 0;
-      if (classOfStatic == NULL)
-         {
-         int len = 0;
-         char * classNameOfFieldOrStatic = NULL;
-         classNameOfFieldOrStatic = symRef->getOwningMethod(comp())->classNameOfFieldOrStatic(symRef->getCPIndex(), len);
-         if (classNameOfFieldOrStatic)
-            {
-            classNameOfFieldOrStatic = TR::Compiler->cls.classNameToSignature(classNameOfFieldOrStatic, len, comp());
-            TR_OpaqueClassBlock * curClass = fej9->getClassFromSignature(classNameOfFieldOrStatic, len, symRef->getOwningMethod(comp()));
-            TR_OpaqueClassBlock * owningClass = comp()->getJittedMethodSymbol()->getResolvedMethod()->containingClass();
-            if (owningClass == curClass)
-               classOfStatic = curClass;
-            }
-         }
-
-      bool isClassInitialized = false;
-      TR_PersistentClassInfo * classInfo = _noLookahead ? 0 :
-         comp()->getPersistentInfo()->getPersistentCHTable()->findClassInfoAfterLocking(classOfStatic, comp());
-      if (classInfo && classInfo->isInitialized())
-         isClassInitialized = true;
-
-      bool canOptimizeFinalStatic = false;
-      if (isResolved && symbol->isFinal() && !symRef->isUnresolved() &&
-          classOfStatic != comp()->getSystemClassPointer() &&
-          isClassInitialized)
-         {
-       //if (symbol->getDataType() == TR::Address)
-            {
-            // todo: figure out why classInfo would be NULL here?
-            if (!classInfo->getFieldInfo())
-               performClassLookahead(classInfo);
-            }
-
-         if (classInfo->getFieldInfo() && !classInfo->cannotTrustStaticFinal())
-             canOptimizeFinalStatic = true;
-         }
-
-      if (canOptimizeFinalStatic)
-         {
-         TR::VMAccessCriticalSection loadConstantValueCriticalSection(fej9,
-                                                                       TR::VMAccessCriticalSection::tryToAcquireVMAccess,
-                                                                       comp());
-
-         if (loadConstantValueCriticalSection.hasVMAccess())
-            {
-            uintptr_t objectPointer = comp()->fej9()->getStaticReferenceFieldAtAddress((uintptr_t)symbol->getStaticAddress());
-            if (objectPointer)
-               {
-               switch (symbol->getDataType())
-                  {
-                  case TR::Address:
-                     {
-                     if (parent != topNode)
-                        objectPointer = fej9->getReferenceFieldAt(objectPointer, fieldOffset);
-                     if ((type == TR::Int32) ||
-                         (type == TR::Int16) ||
-                         (type == TR::Int8))
-                        {
-                        int32_t val;
-                        if (isArrayLength)
-                           val = (int32_t)(fej9->getArrayLengthInElements(objectPointer));
-                        else
-                           val = *(int32_t*)(objectPointer + topFieldOffset);
-                        loadConstant(TR::iconst, val);
-                        constNode = _stack->top();
-                        }
-                     else if (type == TR::Int64)
-                        {
-                        int64_t val;
-                        if (isArrayLength)
-                           val = (int64_t)(fej9->getArrayLengthInElements(objectPointer));
-                        else
-                           val = *(int64_t*)(objectPointer + topFieldOffset);
-                        loadConstant(TR::lconst, val);
-                        constNode = _stack->top();
-                        }
-                     break;
-                     }
-                  default:
-                     break;
-                  }
-               }
-            }
-
-         } // VM Access Critical Section
-
-      }
-
-   return constNode;
-   }
-
 /**
  * @brief Abort compilation due to unsupported unresolved value type operation
  *
@@ -1979,66 +1855,24 @@ TR_J9ByteCodeIlGenerator::loadConstantValueIfPossible(TR::Node *topNode, uintptr
 // gen array
 //----------------------------------------------
 void
-TR_J9ByteCodeIlGenerator::genArrayLength()
+TR_J9ByteCodeIlGenerator::genArrayLength(bool contiguous)
    {
    TR::Node * node = NULL;
    TR::Node * topNode = pop();
 
-   TR::Node *loadedConst = loadConstantValueIfPossible(topNode, fej9()->getOffsetOfContiguousArraySizeField());
+   if ( comp()->cg()->getDisableNullCheckOfArrayLength() )
+      node = TR::Node::create(TR::PassThrough, 1, topNode);
+   else
+      node = TR::Node::create((contiguous) ? TR::contigarraylength : TR::arraylength, 1, topNode);
 
-   if (!loadedConst)
-     {
-     if ( comp()->cg()->getDisableNullCheckOfArrayLength() )
-        node = TR::Node::create(TR::PassThrough, 1, topNode);
-     else
-        node = TR::Node::create(TR::arraylength, 1, topNode);
+   genTreeTop(genNullCheck(node));
 
-     genTreeTop(genNullCheck(node));
-
-     if ( comp()->cg()->getDisableNullCheckOfArrayLength() )
-        {
-        node = TR::Node::create(TR::arraylength, 1, topNode);
-        }
-
-      push(node);
-      }
-   }
-
-void
-TR_J9ByteCodeIlGenerator::genContiguousArrayLength(int32_t width)
-   {
-   TR::Node * node = NULL;
-   TR::Node * topNode = pop();
-
-   TR::Node *loadedConst = loadConstantValueIfPossible(topNode, fej9()->getOffsetOfContiguousArraySizeField());
-
-   // Discontiguous arrays still require the contiguity check and can't be folded.
-   //
-   if (loadedConst)
+   if ( comp()->cg()->getDisableNullCheckOfArrayLength() )
       {
-      if (TR::Compiler->om.isDiscontiguousArray(loadedConst->getInt(), width))
-         {
-         pop();
-         loadedConst = NULL;
-         }
+      node = TR::Node::create((contiguous) ? TR::contigarraylength : TR::arraylength, 1, topNode);
       }
 
-   if (!loadedConst)
-      {
-      if ( comp()->cg()->getDisableNullCheckOfArrayLength() )
-         node = TR::Node::create(TR::PassThrough, 1, topNode);
-      else
-         node = TR::Node::create(TR::contigarraylength, 1, topNode);
-
-      genTreeTop(genNullCheck(node));
-
-      if ( comp()->cg()->getDisableNullCheckOfArrayLength() )
-         {
-         node = TR::Node::create(TR::contigarraylength, 1, topNode);
-         }
-
-      push(node);
-      }
+   push(node);
    }
 
 void
@@ -2099,10 +1933,7 @@ TR_J9ByteCodeIlGenerator::genArrayBoundsCheck(TR::Node * offset, int32_t width)
       TR::Node *arrayLength = 0;
       if (!canSkipArrayLengthCalc)
          {
-         if (!comp()->requiresSpineChecks())
-            genArrayLength();
-         else
-            genContiguousArrayLength(width);
+         genArrayLength(comp()->requiresSpineChecks());
 
          arrayLength = pop();
          if (arrayLength->getOpCode().isArrayLength())
@@ -5154,25 +4985,11 @@ TR_J9ByteCodeIlGenerator::loadInstance(TR::SymbolReference * symRef)
    {
    TR::Symbol * symbol = symRef->getSymbol();
    TR::DataType type = symbol->getDataType();
-
    TR::Node * address = pop();
-
-   if (!symRef->isUnresolved() &&
-       symRef->getSymbol()->isFinal())
-      {
-      TR::Node *constValue =  loadConstantValueIfPossible(address, symRef->getOffset(), type, false);
-      if (constValue)
-         {
-         return;
-         }
-      }
-
    TR::Node * load, *dummyLoad;
-
+   TR::Node * treeTopNode = 0;
    TR::ILOpCodes op = _generateReadBarriersForFieldWatch ? comp()->il.opCodeForIndirectReadBarrier(type): comp()->il.opCodeForIndirectLoad(type);
    dummyLoad = load = TR::Node::createWithSymRef(op, 1, 1, address, symRef);
-
-   TR::Node * treeTopNode = 0;
 
    if (symRef->isUnresolved())
       {
@@ -5355,6 +5172,8 @@ TR_J9ByteCodeIlGenerator::loadFlattenableInstance(int32_t cpIndex)
 
    TR::Node * newValueNode = genNodeAndPopChildren(TR::newvalue, flattenedFieldCount + 1, symRefTab()->findOrCreateNewValueSymbolRef(_methodSymbol));
    newValueNode->setIdentityless(true);
+   _methodSymbol->setHasNews(true);
+
    genTreeTop(newValueNode);
    push(newValueNode);
    genFlush(0);
@@ -6086,7 +5905,11 @@ TR_J9ByteCodeIlGenerator::loadArrayElement(TR::DataType dataType, TR::ILOpCodes 
    // we won't have flattening, so no call to flattenable array element access
    // helper is needed.
    //
-   if (mayBeValueType && TR::Compiler->om.areValueTypesEnabled() && !TR::Compiler->om.canGenerateArraylets() && dataType == TR::Address)
+   if (mayBeValueType &&
+       TR::Compiler->om.areValueTypesEnabled() &&
+       TR::Compiler->om.isValueTypeArrayFlatteningEnabled() &&
+       !TR::Compiler->om.canGenerateArraylets() &&
+       dataType == TR::Address)
       {
       TR::Node* elementIndex = pop();
       TR::Node* arrayBaseAddress = pop();
@@ -6439,6 +6262,8 @@ TR_J9ByteCodeIlGenerator::genWithField(TR::SymbolReference * symRef, TR_OpaqueCl
 
    TR::Node *newValueNode = genNodeAndPopChildren(TR::newvalue, fieldCount+1, symRefTab()->findOrCreateNewValueSymbolRef(_methodSymbol));
    newValueNode->setIdentityless(true);
+   _methodSymbol->setHasNews(true);
+
    genTreeTop(newValueNode);
    push(newValueNode);
    genFlush(0);
@@ -6608,10 +6433,11 @@ TR_J9ByteCodeIlGenerator::genFlattenableWithField(int32_t fieldCpIndex, TR_Opaqu
 
       TR::Node *newValueNode = genNodeAndPopChildren(TR::newvalue, fieldCount+1, symRefTab()->findOrCreateNewValueSymbolRef(_methodSymbol));
       newValueNode->setIdentityless(true);
+      _methodSymbol->setHasNews(true);
+
       genTreeTop(newValueNode);
       push(newValueNode);
       genFlush(0);
-
       return;
       }
    else
@@ -6779,6 +6605,7 @@ TR_J9ByteCodeIlGenerator::genAconst_init(TR_OpaqueClassBlock *valueTypeClass, in
 
          newValueNode = genNodeAndPopChildren(TR::newvalue, fieldCount+1, symRefTab()->findOrCreateNewValueSymbolRef(_methodSymbol));
          newValueNode->setIdentityless(true);
+         _methodSymbol->setHasNews(true);
       }
 
    genTreeTop(newValueNode);

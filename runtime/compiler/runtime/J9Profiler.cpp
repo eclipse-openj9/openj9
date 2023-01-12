@@ -2408,9 +2408,9 @@ TR_CallSiteInfo::computeEffectiveCallerIndex(TR::Compilation *comp, TR::list<std
 
       TR_InlinedCallSite *cursor = &_callSites[i];
       auto itr = callStack.begin(), end = callStack.end();
+      auto next = itr;
       if (itr != end)
          {
-         auto next = itr;
          next++;
          while (cursor && next != end)
             {
@@ -2431,7 +2431,7 @@ TR_CallSiteInfo::computeEffectiveCallerIndex(TR::Compilation *comp, TR::list<std
 
       // both have terminated at the same time means we have a match for our callstack fragment
       // so return it
-      if (itr == end && cursor == NULL)
+      if (next == end && cursor == NULL)
          {
          effectiveCallerIndex = i;
          return true;

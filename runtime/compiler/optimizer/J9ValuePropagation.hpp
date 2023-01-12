@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2022 IBM Corp. and others
+ * Copyright (c) 2000, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -60,6 +60,20 @@ class ValuePropagation : public OMR::ValuePropagation
    uintptr_t* getObjectLocationFromConstraint(TR::VPConstraint *constraint);
    bool isKnownStringObject(TR::VPConstraint *constraint);
    TR_YesNoMaybe isStringObject(TR::VPConstraint *constraint);
+
+   /**
+    * Determine whether the type is, or might be, a value type.  Note that
+    * a null reference can be cast to a value type that is not a primitive
+    * value type, but for the purposes of this method, a null reference is
+    * not considered to be a value type.
+    *
+    * @param[IN] constraint The \ref TR::VPConstraint type constraint for a node
+    * @param[OUT] clazz The \ref TR_OpaqueClassBlock type class of the constraint
+    * @return \c TR_yes if the type is definitely a value type;\n
+    *         \c TR_no if it is definitely not a value type; or\n
+    *         \c TR_maybe otherwise.
+    */
+   virtual TR_YesNoMaybe isValue(TR::VPConstraint *constraint, TR_OpaqueClassBlock *& clazz);
 
    /**
     * Determine whether the component type of an array is, or might be, a primitive value
@@ -125,6 +139,114 @@ class ValuePropagation : public OMR::ValuePropagation
 
    /**
     * \brief
+    *    Transforms jit{Load|Store}FlattenableArrayElement helper calls to use sym refs to access
+    *    the array elements based on the type hint class of the array constraint. A runtime guard is
+    *    inserted to check if the array class is indeed the type hint class before proceeding to
+    *    access it using sym refs.
+    *
+    * \param typeHintClass
+    *    The type hint class of the array constraint
+    *
+    * \param callNode
+    *    The call node for jit{Load|Store}FlattenableArrayElement
+    *
+    * \param callTree
+    *    The call tree for jit{Load|Store}FlattenableArrayElement
+    *
+    * \param isLoad
+    *    Set to \c true if it is jitLoadFlattenableArrayElement
+    *
+    * \param needsNullValueCheck
+    *    Set to \c true if a null check needs to be added on the value that is being store into the array. Only
+    *    checked if it is jitStoreFlattenableArrayElement
+    *
+    */
+   void transformFlattenedArrayElementLoadStoreUseTypeHint(TR_OpaqueClassBlock *typeHintClass, TR::Node *callNode, TR::TreeTop *callTree, bool isLoad, bool needsNullValueCheck);
+
+   /**
+    * \brief
+    *    Transforms jit{Load|Store}FlattenableArrayElement helper calls to regular aaload/aastore
+    *    based on the type hint class of the array constraint. A runtime guard is
+    *    inserted to check if the array class is indeed the type hint class before proceeding to
+    *    inlined IL aaload/aastore.
+    *
+    * \param typeHintClass
+    *    The type hint class of the array constraint
+    *
+    * \param callNode
+    *    The call node for jit{Load|Store}FlattenableArrayElement
+    *
+    * \param callTree
+    *    The call tree for jit{Load|Store}FlattenableArrayElement
+    *
+    * \param isLoad
+    *    True if it is jitLoadFlattenableArrayElement
+    *
+    * \param needsNullValueCheck
+    *    Set to \c true if a null check needs to be added on the value that is being store into the array. Only
+    *    checked if it is jitStoreFlattenableArrayElement
+    *
+    * \param needsStoreCheck
+    *    Set to \c true if ArrayStoreCHK needs to be added. Only checked if it is jitStoreFlattenableArrayElement
+    *
+    * \param storeClassForArrayStoreCHK
+    *    The store value class used for ArrayStoreCHK. Only used if it is jitStoreFlattenableArrayElement
+    *
+    * \param componentClassForArrayStoreCHK
+    *    The component class used for ArrayStoreCHK. Only used if it is jitStoreFlattenableArrayElement
+    */
+   void transformUnflattenedArrayElementLoadStoreUseTypeHint(TR_OpaqueClassBlock *typeHintClass,
+                                                             TR::Node *callNode,
+                                                             TR::TreeTop *callTree,
+                                                             bool isLoad,
+                                                             bool needsNullValueCheck,
+                                                             bool needsStoreCheck,
+                                                             TR_OpaqueClassBlock *storeClassForArrayStoreCHK,
+                                                             TR_OpaqueClassBlock *componentClassForArrayStoreCHK);
+   /**
+    * \brief
+    *    Transforms jitLoadFlattenableArrayElement helper call to regular aaload
+    *
+    * \param callTree
+    *    The call tree for jitLoadFlattenableArrayElement
+    *
+    * \param callNode
+    *    The call node for jitLoadFlattenableArrayElement
+    *
+    */
+  void transformIntoRegularArrayElementLoad(TR::TreeTop *callTree, TR::Node *callNode);
+
+   /**
+    * \brief
+    *    Transforms jitStoreFlattenableArrayElement helper call to regular aastore
+    *
+    * \param callTree
+    *    The call tree for jitStoreFlattenableArrayElement
+    *
+    * \param callNode
+    *    The call node for jitStoreFlattenableArrayElement
+    *
+    * \param needsNullValueCheck
+    *    Set to \c true if a null check needs to be added on the value that is being store into the array
+    *
+    * \param needsStoreCheck
+    *    Set to \c true if ArrayStoreCHK needs to be added
+    *
+    * \param storeClassForArrayStoreCHK
+    *    The store value class used for ArrayStoreCHK
+    *
+    * \param componentClassForArrayStoreCHK
+    *    The component class used for ArrayStoreCHK
+    */
+   void transformIntoRegularArrayElementStore(TR::TreeTop *callTree,
+                                              TR::Node *callNode,
+                                              bool needsNullValueCheck,
+                                              bool needsStoreCheck,
+                                              TR_OpaqueClassBlock *storeClassForArrayStoreCHK,
+                                              TR_OpaqueClassBlock *componentClassForArrayStoreCHK);
+
+   /**
+    * \brief
     *    Transforms object{Inequality|Equality}Comparison helper call if
     *    (1) field count is 0, fold the helper call into a constant
     *    (2) field count is 1 and the field is integral or identity class reference,
@@ -167,6 +289,35 @@ class ValuePropagation : public OMR::ValuePropagation
     * @return Resulting node with constraints applied.
     */
    virtual TR::Node *innerConstrainAcall(TR::Node *node);
+
+   /**
+    * @brief Look for a likely sub type for a given class
+    *
+    * @param[in] klass : The class to be used to look for its sub type
+    *
+    * @return Resulting sub type class
+    */
+   virtual TR_OpaqueClassBlock *findLikelySubtype(TR_OpaqueClassBlock *klass);
+   /**
+    * @brief Look for a likely sub type for a given class signature
+    *
+    * @param[in] sig : The class signature to be used to look for its sub type
+    * @param[in] len : The class signature length
+    * @param[in] owningMethod : The owning method
+    *
+    * @return Resulting sub type class
+    */
+   virtual TR_OpaqueClassBlock *findLikelySubtype(const char *sig, int32_t len, TR_ResolvedMethod *owningMethod);
+   /**
+    * @brief Create a constraint if a likely sub type for a given class signature is found
+    *
+    * @param[in] owningMethod : The owning method
+    * @param[in] sig : The class signature to be used to look for its sub type
+    * @param[in] len : The class signature length
+    *
+    * @return Resulting constraint
+    */
+   virtual TR::VPConstraint* createTypeHintConstraint(TR_ResolvedMethod *owningMethod, const char *sig, int32_t len);
 
    private:
 
@@ -239,14 +390,14 @@ class ValuePropagation : public OMR::ValuePropagation
 
       enum // flag bits
          {
-         unused1                   = 0x01,
-         unused2                   = 0x02,
-         InlineVTCompare           = 0x04,
-         InsertDebugCounter        = 0x08,
-         RequiresBoundCheck        = 0x10,
-         RequiresStoreCheck        = 0x20,
-         RequiresNullValueCheck    = 0x40,
-         IsFlattenedElement        = 0x80, // Indicates whether or not the array elements are flattened in array load or array store.
+         InlineVTCompare                 = 0x01,
+         InsertDebugCounter              = 0x02,
+         RequiresBoundCheck              = 0x04,
+         RequiresStoreCheck              = 0x08,
+         RequiresNullValueCheck          = 0x10,
+         IsFlattenedElement              = 0x20, // Indicates whether or not the array elements are flattened in array load or array store.
+         IsFlattenedElementUseTypeHint   = 0x40,
+         IsUnflattenedElementUseTypeHint = 0x80,
          };
 
       ValueTypesHelperCallTransform(TR::TreeTop *tree, TR::Node *callNode, flags8_t flags)

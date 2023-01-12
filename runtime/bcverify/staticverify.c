@@ -887,20 +887,18 @@ checkBytecodeStructure (J9CfrClassFile * classfile, UDATA methodIndex, UDATA len
 			info = &(classfile->constantPool[classfile->constantPool[index].slot1]);
 			U_16 returnChar = getReturnTypeFromSignature(classfile->constantPool[classfile->constantPool[index].slot2].bytes, classfile->constantPool[classfile->constantPool[index].slot2].slot1, NULL);
 			if (info->bytes[0] == '<') {
-				if ((info->tag != CFR_CONSTANT_Utf8)
-					|| !J9UTF8_DATA_EQUALS("<init>", 6, info->bytes, info->slot1)
+				BOOLEAN legal = FALSE;
+				if (CFR_CONSTANT_Utf8 == info->tag) {
+					if (CFR_BC_invokespecial == bc) {
+						legal = J9UTF8_DATA_EQUALS("<init>", 6, info->bytes, info->slot1);
+					}
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-#if defined(J9VM_OPT_VALHALLA_NEW_FACTORY_METHOD)
-					|| (J9UTF8_DATA_EQUALS("<new>", 5, info->bytes, info->slot1) && (bc != CFR_BC_invokestatic))
-					|| (!J9UTF8_DATA_EQUALS("<new>", 5, info->bytes, info->slot1) && (bc != CFR_BC_invokespecial))
-#else /* #if defined(J9VM_OPT_VALHALLA_NEW_FACTORY_METHOD) */
-					|| ((IS_QTYPE(returnChar) || IS_LTYPE(returnChar)) && (bc != CFR_BC_invokestatic))
-					|| (!(IS_QTYPE(returnChar) || IS_LTYPE(returnChar)) && (bc != CFR_BC_invokespecial))
-#endif /* #if defined(J9VM_OPT_VALHALLA_NEW_FACTORY_METHOD) */
-#else /* #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
-					|| (bc != CFR_BC_invokespecial)
-#endif /* #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
-				) {
+					else if (CFR_BC_invokestatic == bc) {
+						legal = J9UTF8_DATA_EQUALS("<vnew>", 6, info->bytes, info->slot1);
+					}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+				}
+				if (!legal) {
 					errorType = J9NLS_CFR_ERR_BC_METHOD_INVALID__ID;
 					goto _verifyError;
 				}
@@ -1565,11 +1563,6 @@ checkMethodStructure (J9PortLibrary * portLib, J9CfrClassFile * classfile, UDATA
 	/* Throw a class format error if we are given a static <init> method (otherwise later we will throw a verify error due to back stack shape) */
 	info = &(classfile->constantPool[method->nameIndex]);
 	if ((method->accessFlags & CFR_ACC_STATIC)
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-#if !defined(J9VM_OPT_VALHALLA_NEW_FACTORY_METHOD)
-		&& (!J9_IS_CLASSFILE_VALUETYPE(classfile))
-#endif /* !defined(J9VM_OPT_VALHALLA_NEW_FACTORY_METHOD) */
-#endif /* #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	) {
 		if (CFR_CONSTANT_Utf8 == info->tag) {
 			if (J9UTF8_DATA_EQUALS("<init>", 6, info->bytes, info->slot1)) {
@@ -1794,13 +1787,20 @@ j9bcv_verifyClassStructure (J9PortLibrary * portLib, J9CfrClassFile * classfile,
 			&& !isConstantInvokeDynamic
 #endif /* JAVA_SPEC_VERSION >= 18 */
 			) {
-/* This #if !defined check should be removed (along with all other code that references J9VM_OPT_VALHALLA_NEW_FACTORY_METHOD) once the <vnew> method is introduced */
-#if !defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-				if (info->bytes[info->slot1 - 1] != 'V') {
-					errorType = J9NLS_CFR_ERR_BC_METHOD_INVALID_SIG__ID;
-					goto _formatError;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+				if (CFR_METHOD_NAME_NEW == isInit) {
+					if ('V' == info->bytes[info->slot1 - 1]) {
+						errorType = J9NLS_CFR_ERR_BC_METHOD_INVALID_SIG__ID;
+						goto _formatError;
+					}
+				} else
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+				{
+					if (info->bytes[info->slot1 - 1] != 'V') {
+						errorType = J9NLS_CFR_ERR_BC_METHOD_INVALID_SIG__ID;
+						goto _formatError;
+					}
 				}
-#endif /* #if !defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 			}
 			if (argCount > 255) {
 				errorType = J9NLS_CFR_ERR_TOO_MANY_ARGS__ID;
@@ -1830,25 +1830,18 @@ j9bcv_verifyClassStructure (J9PortLibrary * portLib, J9CfrClassFile * classfile,
 				if (CFR_METHOD_NAME_INIT == isInit) {
 					if (
 						(info->slot1 != MH_REF_NEWINVOKESPECIAL)
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-#if !defined(J9VM_OPT_VALHALLA_NEW_FACTORY_METHOD)
-						&& (info->slot1 != MH_REF_INVOKESTATIC)
-#endif /* #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
-#endif /* #if !defined(J9VM_OPT_VALHALLA_NEW_FACTORY_METHOD) */
 					) {
 						errorType = J9NLS_CFR_ERR_BAD_METHOD_NAME__ID;
 						goto _formatError;
 					}
 				}
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-#if defined(J9VM_OPT_VALHALLA_NEW_FACTORY_METHOD)
 				if (CFR_METHOD_NAME_NEW == isInit) {
 					if (info->slot1 != MH_REF_INVOKESTATIC) {
 						errorType = J9NLS_CFR_ERR_BAD_METHOD_NAME__ID;
 						goto _formatError;
 					}
 				}
-#endif /* #if defined(J9VM_OPT_VALHALLA_NEW_FACTORY_METHOD) */
 #endif /* #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 			}
 			break;
@@ -1925,12 +1918,7 @@ j9bcv_verifyClassStructure (J9PortLibrary * portLib, J9CfrClassFile * classfile,
 			BOOLEAN invalidRetType = FALSE;
 			if (
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-#if defined(J9VM_OPT_VALHALLA_NEW_FACTORY_METHOD)
 				(CFR_METHOD_NAME_NEW == isInit)
-#else /* #if defined(J9VM_OPT_VALHALLA_NEW_FACTORY_METHOD) */
-				/* Check if classfile is a valuetype to differentiate between a regular <init> and an <init> that behaves like a <new> */
-				(CFR_METHOD_NAME_INIT == isInit) && J9_IS_CLASSFILE_VALUETYPE(classfile)
-#endif /* #if defined(J9VM_OPT_VALHALLA_NEW_FACTORY_METHOD) */
 #else /* #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 				FALSE
 #endif /* #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2021 IBM Corp. and others
+ * Copyright (c) 1998, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -172,4 +172,21 @@ Java_com_ibm_oti_vm_VM_getJ9ConstantPoolFromJ9Class(JNIEnv *env, jclass unused, 
 	 * are different sizes.
 	 */
 	return (jlong)(UDATA)clazz->ramConstantPool;
+}
+
+/**
+ * Queries whether the JVM is running in single threaded mode.
+ *
+ * @return JNI_TRUE if JVM is in single threaded mode, JNI_FALSE otherwise
+ */
+jboolean JNICALL
+Java_com_ibm_oti_vm_VM_isJVMInSingleThreadedMode(JNIEnv *env, jclass unused)
+{
+	jboolean result = JNI_FALSE;
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+	if (J9_IS_SINGLE_THREAD_MODE(((J9VMThread*)env)->javaVM)) {
+		result = JNI_TRUE;
+	}
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+	return result;
 }

@@ -3512,9 +3512,10 @@ J9::Z::TreeEvaluator::pdloadVectorEvaluatorHelper(TR::Node *node, TR::CodeGenera
    traceMsg(cg->comp(), "pdload Vector Evaluator, node=%p %d\n", node, __LINE__);
 
    TR::Register* vTargetReg = vTargetReg = cg->allocateRegister(TR_VRF);
-   TR::Node* addressNode = node->getFirstChild();
 
-   // No need to evaluate the address node of the pdloadi.
+   // No need to evaluate the address node (first child) of the pdloadi.
+   // TR::MemoryReference::create(...) will call populateMemoryReference(...)
+   // to evaluate address node and decrement its reference count.
    // generateVSIInstruction() API will call separateIndexRegister() to separate the index
    // register by emitting an LA instruction. If there's a need for large displacement adjustment,
    // LAY will be emitted instead.
@@ -3543,7 +3544,6 @@ J9::Z::TreeEvaluator::pdloadVectorEvaluatorHelper(TR::Node *node, TR::CodeGenera
    generateVSIInstruction(cg, TR::InstOpCode::VLRL, node, vTargetReg, sourceMR, indexFromTheRight);
 
    node->setRegister(vTargetReg);
-   cg->decReferenceCount(addressNode);
    return vTargetReg;
    }
 
@@ -4556,7 +4556,6 @@ J9::Z::TreeEvaluator::pdstoreVectorEvaluatorHelper(TR::Node *node, TR::CodeGener
    traceMsg(cg->comp(), "DAA: Entering pdstoreVectorEvaluator %d\n", __LINE__);
    TR::Compilation *comp = cg->comp();
    TR::Node * valueChild = node->getValueChild();
-   TR::Node* addressNode = node->getChild(0);
    // evaluate valueChild (which is assumed by the OMR layer to be the second child) to Vector register.
    // for this "pdStore" we assume if we evaluate value node we get Vector Register
    TR::Register* pdValueReg = cg->evaluate(valueChild);
@@ -4569,11 +4568,13 @@ J9::Z::TreeEvaluator::pdstoreVectorEvaluatorHelper(TR::Node *node, TR::CodeGener
       traceMsg(comp,"generating VSTRL for pdstore node->size = %d.\n", node->getSize());
       }
 
-   // No need to evaluate the address node of the pdstorei.
+   // No need to evaluate the address node (first child) of the pdstorei.
+   // TR::MemoryReference::create(...) will call populateMemoryReference(...)
+   // to evaluate address node and decrement its reference count.
    // generateVSIInstruction() API will call separateIndexRegister() to separate the index
    // register by emitting an LA instruction. If there's a need for large displacement adjustment,
    // LAY will be emitted instead.
-   TR::MemoryReference * targetMR = TR::MemoryReference::create(cg, node);;
+   TR::MemoryReference * targetMR = TR::MemoryReference::create(cg, node);
 
    // 0 we store 1 byte, 15 we store 16 bytes
    uint8_t lengthToStore = TR_VECTOR_REGISTER_SIZE - 1;
@@ -4588,7 +4589,6 @@ J9::Z::TreeEvaluator::pdstoreVectorEvaluatorHelper(TR::Node *node, TR::CodeGener
 
    generateVSIInstruction(cg, TR::InstOpCode::VSTRL, node, pdValueReg, targetMR, lengthToStore);
    cg->decReferenceCount(valueChild);
-   cg->decReferenceCount(addressNode);
 
    traceMsg(comp, "DAA: Exiting pdstoreVectorEvaluator %d\n", __LINE__);
    return NULL;
@@ -6409,7 +6409,9 @@ J9::Z::TreeEvaluator::zdstoreiVectorEvaluatorHelper(TR::Node *node, TR::CodeGene
    TR_ASSERT_FATAL_WITH_NODE(pdloadiNode, (pdValueReg->getKind() == TR_FPR || pdValueReg->getKind() == TR_VRF),
             "vectorized zdstore is expecting the packed decimal to be in a vector register.");
 
-   // No need to evaluate the address node of the zdstorei.
+   // No need to evaluate the address node (first child) of the zdstorei.
+   // TR::MemoryReference::create(...) will call populateMemoryReference(...)
+   // to evaluate address node and decrement its reference count.
    // generateVSIInstruction() API will call separateIndexRegister() to separate the index
    // register by emitting an LA instruction. If there's a need for large displacement adjustment,
    // LAY will be emitted instead.
@@ -6438,14 +6440,8 @@ J9::Z::TreeEvaluator::zdstoreiVectorEvaluatorHelper(TR::Node *node, TR::CodeGene
 
    pd2zdSignFixup(node, targetMR, cg, false);
 
-   // This would have been decremented in pd2zdVectorEvaluatorHelper
-   // but since we skip that evaluator we decrement it here.
    cg->decReferenceCount(pdloadiNode);
-
-   for (int32_t i = 0; i < node->getNumChildren(); ++i)
-      {
-      cg->decReferenceCount(node->getChild(i));
-      }
+   cg->decReferenceCount(pd2zdNode);
 
    cg->stopUsingRegister(zonedDecimalHigh);
    cg->stopUsingRegister(zonedDecimalLow);

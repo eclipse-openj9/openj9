@@ -3052,9 +3052,10 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
    TR::PersistentInfo *persistentInfo = compInfo->getPersistentInfo();
    bool useAotCompilation = entry->_useAotCompilation;
 
-   bool aotCacheStore = useAotCompilation && persistentInfo->getJITServerUseAOTCache();
-   bool aotCacheLoad = useAotCompilation && persistentInfo->getJITServerUseAOTCache() &&
-                       !entry->_doNotLoadFromJITServerAOTCache;
+   bool aotCacheStore = useAotCompilation && persistentInfo->getJITServerUseAOTCache() &&
+                        compInfo->methodCanBeJITServerAOTCacheStored(compiler->signature(), compilee->convertToMethod()->methodType());
+   bool aotCacheLoad = aotCacheStore && !entry->_doNotLoadFromJITServerAOTCache &&
+                       compInfo->methodCanBeJITServerAOTCacheLoaded(compiler->signature(), compilee->convertToMethod()->methodType());
    auto deserializer = compInfo->getJITServerAOTDeserializer();
    if (!aotCacheLoad && deserializer)
       deserializer->incNumCacheBypasses();
@@ -3090,11 +3091,12 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
          }
       catch (const JITServer::StreamFailure &e)
          {
-         JITServerHelpers::postStreamFailure(OMRPORT_FROM_J9PORT(compInfoPT->getJitConfig()->javaVM->portLibrary), compInfo,
-                                             e.retryConnectionImmediately());
          if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJITServer, TR_VerboseCompilationDispatch))
             TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE,
                "JITServer::StreamFailure: %s for %s @ %s", e.what(), compiler->signature(), compiler->getHotnessName());
+
+         JITServerHelpers::postStreamFailure(OMRPORT_FROM_J9PORT(compInfoPT->getJitConfig()->javaVM->portLibrary), compInfo,
+                                             e.retryConnectionImmediately(), true);
 
          Trc_JITServerStreamFailure(vmThread, compInfoPT->getCompThreadId(), __FUNCTION__,
                compiler->signature(), compiler->getHotnessName(), e.what());
@@ -3357,7 +3359,7 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
             }
 
          // Since server has crashed, all compilations will switch to local
-         JITServerHelpers::postStreamFailure(OMRPORT_FROM_J9PORT(compInfoPT->getJitConfig()->javaVM->portLibrary), compInfo, false);
+         JITServerHelpers::postStreamFailure(OMRPORT_FROM_J9PORT(compInfoPT->getJitConfig()->javaVM->portLibrary), compInfo, false, false);
          entry->_compErrCode = compilationFailure;
          compiler->failCompilation<JITServer::ServerCompilationFailure>("JITServer compilation thread has crashed.");
          }
@@ -3387,8 +3389,12 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
       }
    catch (const JITServer::StreamFailure &e)
       {
+      if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJITServer, TR_VerboseCompilationDispatch))
+          TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE,
+            "JITServer::StreamFailure: %s for %s @ %s", e.what(), compiler->signature(), compiler->getHotnessName());
+
       JITServerHelpers::postStreamFailure(OMRPORT_FROM_J9PORT(compInfoPT->getJitConfig()->javaVM->portLibrary), compInfo,
-                                          e.retryConnectionImmediately());
+                                          e.retryConnectionImmediately(), false);
 
       if (!details.isJitDumpMethod())
          {
@@ -3396,10 +3402,6 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
          TR_Memory::jitPersistentFree(client);
          compInfoPT->setClientStream(NULL);
          }
-
-      if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJITServer, TR_VerboseCompilationDispatch))
-          TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE,
-            "JITServer::StreamFailure: %s for %s @ %s", e.what(), compiler->signature(), compiler->getHotnessName());
 
       Trc_JITServerStreamFailure(vmThread, compInfoPT->getCompThreadId(), __FUNCTION__,
                compiler->signature(), compiler->getHotnessName(), e.what());

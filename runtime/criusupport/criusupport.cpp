@@ -20,7 +20,6 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 #if defined(LINUX)
-#include <criu/criu.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <dlfcn.h>
@@ -34,18 +33,17 @@
 #include "j9jclnls.h"
 #include "jni.h"
 #include "jvmtinls.h"
+#include "modronnls.h"
 #include "omrlinkedlist.h"
 #include "omrthread.h"
 #include "ut_j9criu.h"
 
 extern "C" {
 
-typedef void (*criuSetUnprivilegedFunctionPointerType)(bool unprivileged);
-
 #define STRING_BUFFER_SIZE 256
 
-static void
-setupJNIFieldIDs(JNIEnv *env)
+static bool
+setupJNIFieldIDsAndCRIUAPI(JNIEnv *env, jclass *currentExceptionClass, IDATA *systemReturnCode, const char **nlsMsgFormat)
 {
 	J9VMThread *currentThread = (J9VMThread*)env;
 	J9JavaVM *vm = currentThread->javaVM;
@@ -54,46 +52,94 @@ setupJNIFieldIDs(JNIEnv *env)
 	jclass criuSystemCheckpointExceptionClass = NULL;
 	jclass criuJVMRestoreExceptionClass = NULL;
 	jclass criuSystemRestoreExceptionClass = NULL;
+	bool returnCode = true;
+	PORT_ACCESS_FROM_VMC(currentThread);
+	IDATA libCRIUReturnCode = 0;
 
 	UT_MODULE_LOADED(J9_UTINTERFACE_FROM_VM(vm));
 
 	criuJVMCheckpointExceptionClass = env->FindClass("org/eclipse/openj9/criu/JVMCheckpointException");
 	Assert_CRIU_notNull(criuJVMCheckpointExceptionClass);
-	vm->criuJVMCheckpointExceptionClass = (jclass) env->NewGlobalRef(criuJVMCheckpointExceptionClass);
+	vm->checkpointState.criuJVMCheckpointExceptionClass = (jclass) env->NewGlobalRef(criuJVMCheckpointExceptionClass);
 
-	vm->criuJVMCheckpointExceptionInit = env->GetMethodID(criuJVMCheckpointExceptionClass, "<init>", "(Ljava/lang/String;I)V");
-	Assert_CRIU_notNull(vm->criuJVMCheckpointExceptionInit);
+	vm->checkpointState.criuJVMCheckpointExceptionInit = env->GetMethodID(criuJVMCheckpointExceptionClass, "<init>", "(Ljava/lang/String;I)V");
 
 	criuSystemCheckpointExceptionClass = env->FindClass("org/eclipse/openj9/criu/SystemCheckpointException");
 	Assert_CRIU_notNull(criuSystemCheckpointExceptionClass);
-	vm->criuSystemCheckpointExceptionClass = (jclass) env->NewGlobalRef(criuSystemCheckpointExceptionClass);
+	vm->checkpointState.criuSystemCheckpointExceptionClass = (jclass) env->NewGlobalRef(criuSystemCheckpointExceptionClass);
 
-	vm->criuSystemCheckpointExceptionInit = env->GetMethodID(criuSystemCheckpointExceptionClass, "<init>", "(Ljava/lang/String;I)V");
-	Assert_CRIU_notNull(vm->criuSystemCheckpointExceptionInit);
+	vm->checkpointState.criuSystemCheckpointExceptionInit = env->GetMethodID(criuSystemCheckpointExceptionClass, "<init>", "(Ljava/lang/String;I)V");
 
 	criuJVMRestoreExceptionClass = env->FindClass("org/eclipse/openj9/criu/JVMRestoreException");
 	Assert_CRIU_notNull(criuJVMRestoreExceptionClass);
-	vm->criuJVMRestoreExceptionClass = (jclass) env->NewGlobalRef(criuJVMRestoreExceptionClass);
+	vm->checkpointState.criuJVMRestoreExceptionClass = (jclass) env->NewGlobalRef(criuJVMRestoreExceptionClass);
 
-	vm->criuJVMRestoreExceptionInit = env->GetMethodID(criuJVMRestoreExceptionClass, "<init>", "(Ljava/lang/String;I)V");
-	Assert_CRIU_notNull(vm->criuJVMRestoreExceptionInit);
+	vm->checkpointState.criuJVMRestoreExceptionInit = env->GetMethodID(criuJVMRestoreExceptionClass, "<init>", "(Ljava/lang/String;I)V");
 
 	criuSystemRestoreExceptionClass = env->FindClass("org/eclipse/openj9/criu/SystemRestoreException");
 	Assert_CRIU_notNull(criuSystemRestoreExceptionClass);
-	vm->criuSystemRestoreExceptionClass = (jclass) env->NewGlobalRef(criuSystemRestoreExceptionClass);
+	vm->checkpointState.criuSystemRestoreExceptionClass = (jclass) env->NewGlobalRef(criuSystemRestoreExceptionClass);
 
-	vm->criuSystemRestoreExceptionInit = env->GetMethodID(criuSystemRestoreExceptionClass, "<init>", "(Ljava/lang/String;I)V");
-	Assert_CRIU_notNull(vm->criuSystemRestoreExceptionInit);
+	vm->checkpointState.criuSystemRestoreExceptionInit = env->GetMethodID(criuSystemRestoreExceptionClass, "<init>", "(Ljava/lang/String;I)V");
 
-	if ((NULL == vm->criuJVMCheckpointExceptionClass)
-		|| (NULL == vm->criuSystemCheckpointExceptionClass)
-		|| (NULL == vm->criuJVMRestoreExceptionClass)
-		|| (NULL == vm->criuSystemRestoreExceptionClass)
+	if ((NULL == vm->checkpointState.criuSystemRestoreExceptionInit)
+		|| (NULL == vm->checkpointState.criuJVMRestoreExceptionInit)
+		|| (NULL == vm->checkpointState.criuSystemCheckpointExceptionInit)
+		|| (NULL == vm->checkpointState.criuJVMCheckpointExceptionInit)
+	) {
+		/* pending exception already set */
+		returnCode = false;
+		goto done;
+	}
+
+	if ((NULL == vm->checkpointState.criuJVMCheckpointExceptionClass)
+		|| (NULL == vm->checkpointState.criuSystemCheckpointExceptionClass)
+		|| (NULL == vm->checkpointState.criuJVMRestoreExceptionClass)
+		|| (NULL == vm->checkpointState.criuSystemRestoreExceptionClass)
 	) {
 		vmFuncs->internalEnterVMFromJNI(currentThread);
 		vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
 		vmFuncs->internalExitVMToJNI(currentThread);
+		returnCode = false;
+		goto done;
 	}
+
+	libCRIUReturnCode = j9sl_open_shared_library((char*)"criu", &vm->checkpointState.libCRIUHandle, OMRPORT_SLOPEN_DECORATE | OMRPORT_SLOPEN_LAZY);
+
+	if (libCRIUReturnCode != OMRPORT_SL_FOUND) {
+		*currentExceptionClass = criuSystemCheckpointExceptionClass;
+		*systemReturnCode = libCRIUReturnCode;
+		*nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_JCL_CRIU_LOADING_LIBCRIU_FAILED, NULL);
+		returnCode = false;
+		goto done;
+	}
+
+	/* the older criu libraries do not contain the criu_set_unprivileged function so we can do a NULL check before calling it */
+	j9sl_lookup_name(vm->checkpointState.libCRIUHandle, (char*)"criu_set_unprivileged", (UDATA *)&vm->checkpointState.criuSetUnprivilegedFunctionPointerType, "Z");
+
+	if (j9sl_lookup_name(vm->checkpointState.libCRIUHandle, (char*)"criu_set_images_dir_fd", (UDATA *)&vm->checkpointState.criuSetImagesDirFdFunctionPointerType, "P")
+		|| j9sl_lookup_name(vm->checkpointState.libCRIUHandle, (char*)"criu_set_shell_job", (UDATA *)&vm->checkpointState.criuSetShellJobFunctionPointerType, "Z")
+		|| j9sl_lookup_name(vm->checkpointState.libCRIUHandle, (char*)"criu_set_log_level", (UDATA *)&vm->checkpointState.criuSetLogLevelFunctionPointerType, "I")
+		|| j9sl_lookup_name(vm->checkpointState.libCRIUHandle, (char*)"criu_set_log_file", (UDATA *)&vm->checkpointState.criuSetLogFileFunctionPointerType, "P")
+		|| j9sl_lookup_name(vm->checkpointState.libCRIUHandle, (char*)"criu_set_leave_running", (UDATA *)&vm->checkpointState.criuSetLeaveRunningFunctionPointerType, "Z")
+		|| j9sl_lookup_name(vm->checkpointState.libCRIUHandle, (char*)"criu_set_ext_unix_sk", (UDATA *)&vm->checkpointState.criuSetExtUnixSkFunctionPointerType, "Z")
+		|| j9sl_lookup_name(vm->checkpointState.libCRIUHandle, (char*)"criu_set_file_locks", (UDATA *)&vm->checkpointState.criuSetFileLocksFunctionPointerType, "Z")
+		|| j9sl_lookup_name(vm->checkpointState.libCRIUHandle, (char*)"criu_set_tcp_established", (UDATA *)&vm->checkpointState.criuSetTcpEstablishedFunctionPointerType, "Z")
+		|| j9sl_lookup_name(vm->checkpointState.libCRIUHandle, (char*)"criu_set_auto_dedup", (UDATA *)&vm->checkpointState.criuSetAutoDedupFunctionPointerType, "Z")
+		|| j9sl_lookup_name(vm->checkpointState.libCRIUHandle, (char*)"criu_set_track_mem", (UDATA *)&vm->checkpointState.criuSetTrackMemFunctionPointerType, "Z")
+		|| j9sl_lookup_name(vm->checkpointState.libCRIUHandle, (char*)"criu_set_work_dir_fd", (UDATA *)&vm->checkpointState.criuSetWorkDirFdFunctionPointerType, "P")
+		|| j9sl_lookup_name(vm->checkpointState.libCRIUHandle, (char*)"criu_init_opts", (UDATA *)&vm->checkpointState.criuInitOptsFunctionPointerType, "V")
+		|| j9sl_lookup_name(vm->checkpointState.libCRIUHandle, (char*)"criu_dump", (UDATA *)&vm->checkpointState.criuDumpFunctionPointerType, "V")
+	) {
+		*currentExceptionClass = criuSystemCheckpointExceptionClass;
+		*systemReturnCode = 1;
+		*nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_JCL_CRIU_LOADING_LIBCRIU_FUNCTIONS_FAILED, NULL);
+		returnCode = false;
+		goto done;
+	}
+
+done:
+	return returnCode;
 }
 
 #define J9_NATIVE_STRING_NO_ERROR 0
@@ -321,18 +367,18 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 	const char *nlsMsgFormat = NULL;
 	UDATA msgCharLength = 0;
 	IDATA systemReturnCode = 0;
-	criuSetUnprivilegedFunctionPointerType criuSetUnprivileged = NULL;
 	const char *dlerrorReturnString = NULL;
+	bool setupCRIU = true;
 	PORT_ACCESS_FROM_VMC(currentThread);
 
-	if (NULL == vm->criuJVMCheckpointExceptionClass) {
-		setupJNIFieldIDs(env);
+	if (NULL == vm->checkpointState.criuJVMCheckpointExceptionClass) {
+		setupCRIU = setupJNIFieldIDsAndCRIUAPI(env, &currentExceptionClass, &systemReturnCode, &nlsMsgFormat);
 	}
 
 	vm->checkpointState.checkpointThread = currentThread;
 
 	Trc_CRIU_checkpointJVMImpl_Entry(currentThread);
-	if (vmFuncs->isCheckpointAllowed(currentThread)) {
+	if (vmFuncs->isCheckpointAllowed(currentThread) && setupCRIU) {
 #if defined(LINUX)
 		j9object_t cpDir = NULL;
 		j9object_t log = NULL;
@@ -370,7 +416,7 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 			vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
 			goto freeDir;
 		case J9_NATIVE_STRING_FAIL_TO_CONVERT:
-			currentExceptionClass = vm->criuJVMCheckpointExceptionClass;
+			currentExceptionClass = vm->checkpointState.criuJVMCheckpointExceptionClass;
 			nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_JCL_CRIU_FAILED_TO_CONVERT_JAVA_STRING, NULL);
 			goto freeDir;
 		}
@@ -385,7 +431,7 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 				vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
 				goto freeLog;
 			case J9_NATIVE_STRING_FAIL_TO_CONVERT:
-				currentExceptionClass = vm->criuJVMCheckpointExceptionClass;
+				currentExceptionClass = vm->checkpointState.criuJVMCheckpointExceptionClass;
 				nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_JCL_CRIU_FAILED_TO_CONVERT_JAVA_STRING, NULL);
 				goto freeLog;
 			}
@@ -401,7 +447,7 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 				vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
 				goto freeWorkDir;
 			case J9_NATIVE_STRING_FAIL_TO_CONVERT:
-				currentExceptionClass = vm->criuJVMCheckpointExceptionClass;
+				currentExceptionClass = vm->checkpointState.criuJVMCheckpointExceptionClass;
 				nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_JCL_CRIU_FAILED_TO_CONVERT_JAVA_STRING, NULL);
 				goto freeWorkDir;
 			}
@@ -410,7 +456,7 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 		dirFD = open(directoryChars, O_DIRECTORY);
 		if (dirFD < 0) {
 			systemReturnCode = errno;
-			currentExceptionClass = vm->criuJVMCheckpointExceptionClass;
+			currentExceptionClass = vm->checkpointState.criuJVMCheckpointExceptionClass;
 			nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_JCL_CRIU_FAILED_TO_OPEN_DIR, NULL);
 			goto freeWorkDir;
 		}
@@ -419,59 +465,48 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 			workDirFD = open(workDirChars, O_DIRECTORY);
 			if (workDirFD < 0) {
 				systemReturnCode = errno;
-				currentExceptionClass = vm->criuJVMCheckpointExceptionClass;
+				currentExceptionClass = vm->checkpointState.criuJVMCheckpointExceptionClass;
 				nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_JCL_CRIU_FAILED_TO_OPEN_WORK_DIR, NULL);
 				goto closeDirFD;
 			}
 		}
 
-		systemReturnCode = criu_init_opts();
+		systemReturnCode = vm->checkpointState.criuInitOptsFunctionPointerType();
 		if (0 != systemReturnCode) {
-			currentExceptionClass = vm->criuSystemCheckpointExceptionClass;
+			currentExceptionClass = vm->checkpointState.criuSystemCheckpointExceptionClass;
 			nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_JCL_CRIU_INIT_FAILED, NULL);
 			goto closeWorkDirFD;
 		}
 
 		if (JNI_TRUE == unprivileged) {
-			/*
-			 * dlsym() can return NULL in case of error or if the specified symbol's value is actually NULL.
-			 * In order to distinguish between the two cases we need to check for (and thereby clear) any pending errors by first calling dlerror(),
-			 * then calling dlsym(), then calling dlerror() again to check for any new error. We can then call our function
-			 * via the pointer returned by dlsym(), assuming it is not NULL.
-			 */
-			dlerrorReturnString = dlerror();
-			if (NULL == dlerrorReturnString) {
-				criuSetUnprivileged = (criuSetUnprivilegedFunctionPointerType)dlsym(RTLD_DEFAULT, "criu_set_unprivileged");
-				dlerrorReturnString = dlerror();
-			}
-			if ((NULL == dlerrorReturnString) && (NULL != criuSetUnprivileged)) {
+			if (NULL != vm->checkpointState.criuSetUnprivilegedFunctionPointerType) {
 				systemReturnCode = J9_CRIU_UNPRIVILEGED_NO_ERROR;
-				criuSetUnprivileged(JNI_FALSE != unprivileged);
+				vm->checkpointState.criuSetUnprivilegedFunctionPointerType(JNI_FALSE != unprivileged);
 			} else {
-				currentExceptionClass = vm->criuSystemCheckpointExceptionClass;
+				currentExceptionClass = vm->checkpointState.criuSystemCheckpointExceptionClass;
 				systemReturnCode = (NULL != dlerrorReturnString) ? J9_CRIU_UNPRIVILEGED_DLSYM_ERROR : J9_CRIU_UNPRIVILEGED_DLSYM_NULL_SYMBOL;
 				nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_JCL_CRIU_CANNOT_SET_UNPRIVILEGED, NULL);
 				goto closeWorkDirFD;
 			}
 		}
 
-		criu_set_images_dir_fd(dirFD);
-		criu_set_shell_job(JNI_FALSE != shellJob);
+		vm->checkpointState.criuSetImagesDirFdFunctionPointerType(dirFD);
+		vm->checkpointState.criuSetShellJobFunctionPointerType(JNI_FALSE != shellJob);
 		if (logLevel > 0) {
-			criu_set_log_level((int)logLevel);
+			vm->checkpointState.criuSetLogLevelFunctionPointerType((int)logLevel);
 		}
 		if (NULL != logFile) {
-			criu_set_log_file(logFileChars);
+			vm->checkpointState.criuSetLogFileFunctionPointerType(logFileChars);
 		}
-		criu_set_leave_running(JNI_FALSE != leaveRunning);
-		criu_set_ext_unix_sk(JNI_FALSE != extUnixSupport);
-		criu_set_file_locks(JNI_FALSE != fileLocks);
-		criu_set_tcp_established(JNI_FALSE != tcpEstablished);
-		criu_set_auto_dedup(JNI_FALSE != autoDedup);
-		criu_set_track_mem(JNI_FALSE != trackMemory);
+		vm->checkpointState.criuSetLeaveRunningFunctionPointerType(JNI_FALSE != leaveRunning);
+		vm->checkpointState.criuSetExtUnixSkFunctionPointerType(JNI_FALSE != extUnixSupport);
+		vm->checkpointState.criuSetFileLocksFunctionPointerType(JNI_FALSE != fileLocks);
+		vm->checkpointState.criuSetTcpEstablishedFunctionPointerType(JNI_FALSE != tcpEstablished);
+		vm->checkpointState.criuSetAutoDedupFunctionPointerType(JNI_FALSE != autoDedup);
+		vm->checkpointState.criuSetTrackMemFunctionPointerType(JNI_FALSE != trackMemory);
 
 		if (NULL != workDir) {
-			criu_set_work_dir_fd(workDirFD);
+			vm->checkpointState.criuSetWorkDirFdFunctionPointerType(workDirFD);
 		}
 
 		acquireSafeOrExcusiveVMAccess(currentThread, vmFuncs, safePoint);
@@ -482,7 +517,7 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 			omrthread_nanosleep(1000);
 			vmFuncs->internalEnterVMFromJNI(currentThread);
 			if (i == vm->checkpointState.maxRetryForNotCheckpointSafe) {
-				currentExceptionClass = vm->criuJVMCheckpointExceptionClass;
+				currentExceptionClass = vm->checkpointState.criuJVMCheckpointExceptionClass;
 				systemReturnCode = vm->checkpointState.maxRetryForNotCheckpointSafe;
 				nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_JCL_CRIU_MAX_RETRY_FOR_NOTCHECKPOINTSAFE_REACHED, NULL);
 				goto closeWorkDirFD;
@@ -509,16 +544,14 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 		checkpointNanoUTCTime = j9time_current_time_nanos(&success);
 		if (0 == success) {
 			systemReturnCode = errno;
-			currentExceptionClass = vm->criuJVMCheckpointExceptionClass;
+			currentExceptionClass = vm->checkpointState.criuJVMCheckpointExceptionClass;
 			nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_JCL_CRIU_J9_CURRENT_TIME_NANOS_FAILURE, NULL);
 			goto wakeJavaThreadsWithExclusiveVMAccess;
 		}
 		Trc_CRIU_checkpoint_nano_times(currentThread, checkpointNanoTimeMonotonic, checkpointNanoUTCTime);
 		TRIGGER_J9HOOK_VM_PREPARING_FOR_CHECKPOINT(vm->hookInterface, currentThread);
 
-		/* trigger a GC to disclaim memory */
-		vm->memoryManagerFunctions->j9gc_modron_global_collect_with_overrides(currentThread, J9MMCONSTANT_EXPLICIT_GC_SYSTEM_GC);
-		vm->memoryManagerFunctions->j9gc_modron_global_collect_with_overrides(currentThread, J9MMCONSTANT_EXPLICIT_GC_PREPARE_FOR_CHECKPOINT);
+		vm->memoryManagerFunctions->j9gc_prepare_for_checkpoint(currentThread);
 
 		acquireSafeOrExcusiveVMAccess(currentThread, vmFuncs, safePoint);
 
@@ -526,7 +559,7 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 
 		/* Run internal checkpoint hooks, after iterating heap objects */
 		if (FALSE == vmFuncs->runInternalJVMCheckpointHooks(currentThread)) {
-			currentExceptionClass = vm->criuJVMCheckpointExceptionClass;
+			currentExceptionClass = vm->checkpointState.criuJVMCheckpointExceptionClass;
 			nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
 				J9NLS_JCL_CRIU_FAILED_TO_RUN_INTERNAL_CHECKPOINT_HOOKS, NULL);
 			goto wakeJavaThreadsWithExclusiveVMAccess;
@@ -540,7 +573,7 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 		}
 		systemReturnCode = vmFuncs->queryLogOptions(vm, STRING_BUFFER_SIZE, syslogOptions, &syslogBufferSize);
 		if (JVMTI_ERROR_NONE != systemReturnCode) {
-			currentExceptionClass = vm->criuJVMCheckpointExceptionClass;
+			currentExceptionClass = vm->checkpointState.criuJVMCheckpointExceptionClass;
 			nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_JVMTI_COM_IBM_LOG_QUERY_OPT_ERROR, NULL);
 			j9mem_free_memory(syslogOptions);
 			goto wakeJavaThreadsWithExclusiveVMAccess;
@@ -555,7 +588,7 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 		malloc_trim(0);
 		Trc_CRIU_before_checkpoint(currentThread, j9time_nano_time(), j9time_current_time_nanos(&success));
 		VM_VMHelpers::setVMState(currentThread, J9VMSTATE_CRIU_SUPPORT_CHECKPOINT_PHASE_END);
-		systemReturnCode = criu_dump();
+		systemReturnCode = vm->checkpointState.criuDumpFunctionPointerType();
 		VM_VMHelpers::setVMState(currentThread, J9VMSTATE_CRIU_SUPPORT_RESTORE_PHASE_START);
 		restoreNanoTimeMonotonic = j9time_nano_time();
 		restoreNanoUTCTime = j9time_current_time_nanos(&success);
@@ -567,13 +600,13 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 		}
 		j9mem_free_memory(syslogOptions);
 		if (systemReturnCode < 0) {
-			currentExceptionClass = vm->criuSystemCheckpointExceptionClass;
+			currentExceptionClass = vm->checkpointState.criuSystemCheckpointExceptionClass;
 			nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_JCL_CRIU_DUMP_FAILED, NULL);
 			goto wakeJavaThreadsWithExclusiveVMAccess;
 		}
 		if (0 == success) {
 			systemReturnCode = errno;
-			currentExceptionClass = vm->criuJVMRestoreExceptionClass;
+			currentExceptionClass = vm->checkpointState.criuJVMRestoreExceptionClass;
 			nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_JCL_CRIU_J9_CURRENT_TIME_NANOS_FAILURE, NULL);
 			goto wakeJavaThreadsWithExclusiveVMAccess;
 		}
@@ -587,7 +620,7 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 			 * Currently OpenJ9 CRIU only supports 64-bit systems, and IDATA is equivalent to int64_t here.
 			 */
 			systemReturnCode = (IDATA)vm->checkpointState.checkpointRestoreTimeDelta;
-			currentExceptionClass = vm->criuJVMRestoreExceptionClass;
+			currentExceptionClass = vm->checkpointState.criuJVMRestoreExceptionClass;
 			nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
 					J9NLS_JCL_CRIU_NEGATIVE_CHECKPOINT_RESTORE_TIME_DELTA, NULL);
 			goto wakeJavaThreadsWithExclusiveVMAccess;
@@ -609,13 +642,21 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 
 		/* Run internal restore hooks, and cleanup */
 		if (FALSE == vmFuncs->runInternalJVMRestoreHooks(currentThread)) {
-			currentExceptionClass = vm->criuJVMRestoreExceptionClass;
+			currentExceptionClass = vm->checkpointState.criuJVMRestoreExceptionClass;
 			nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
 				J9NLS_JCL_CRIU_FAILED_TO_RUN_INTERNAL_RESTORE_HOOKS, NULL);
 			goto wakeJavaThreadsWithExclusiveVMAccess;
 		}
 
 		releaseSafeOrExcusiveVMAccess(currentThread, vmFuncs, safePoint);
+
+		if (FALSE == vm->memoryManagerFunctions->j9gc_reinitialize_for_restore(currentThread)) {
+			currentExceptionClass = vm->checkpointState.criuJVMRestoreExceptionClass;
+			/* The only way for j9gc_reinitialize_for_restore to fail is if GC dispatcher failed to startup threads. */
+			nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
+					J9NLS_GC_FAILED_TO_INSTANTIATE_TASK_DISPATCHER, NULL);
+			goto wakeJavaThreads;
+		}
 
 		VM_VMHelpers::setVMState(currentThread, J9VMSTATE_CRIU_SUPPORT_RESTORE_PHASE_INTERNAL_HOOKS);
 
@@ -625,7 +666,7 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 		}
 
 		if (FALSE == vmFuncs->runDelayedLockRelatedOperations(currentThread)) {
-			currentExceptionClass = vm->criuJVMRestoreExceptionClass;
+			currentExceptionClass = vm->checkpointState.criuJVMRestoreExceptionClass;
 			systemReturnCode = 0;
 			nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
 					J9NLS_JCL_CRIU_FAILED_DELAY_LOCK_RELATED_OPS, NULL);
@@ -647,9 +688,9 @@ closeWorkDirFD:
 		if ((0 != close(workDirFD)) && (NULL == currentExceptionClass)) {
 			systemReturnCode = errno;
 			if (isAfterCheckpoint) {
-				currentExceptionClass = vm->criuSystemRestoreExceptionClass;
+				currentExceptionClass = vm->checkpointState.criuSystemRestoreExceptionClass;
 			} else {
-				currentExceptionClass = vm->criuSystemCheckpointExceptionClass;
+				currentExceptionClass = vm->checkpointState.criuSystemCheckpointExceptionClass;
 			}
 			nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_JCL_CRIU_FAILED_TO_CLOSE_WORK_DIR, NULL);
 		}
@@ -657,9 +698,9 @@ closeDirFD:
 		if ((0 != close(dirFD)) && (NULL == currentExceptionClass)) {
 			systemReturnCode = errno;
 			if (isAfterCheckpoint) {
-				currentExceptionClass = vm->criuSystemRestoreExceptionClass;
+				currentExceptionClass = vm->checkpointState.criuSystemRestoreExceptionClass;
 			} else {
-				currentExceptionClass = vm->criuSystemCheckpointExceptionClass;
+				currentExceptionClass = vm->checkpointState.criuSystemCheckpointExceptionClass;
 			}
 			nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_JCL_CRIU_FAILED_TO_CLOSE_DIR, NULL);
 		}
@@ -691,14 +732,14 @@ freeDir:
 		j9str_printf(PORTLIB, exceptionMsg, msgCharLength, nlsMsgFormat, systemReturnCode);
 
 		jmethodID init = NULL;
-		if (vm->criuJVMCheckpointExceptionClass == currentExceptionClass) {
-			init = vm->criuJVMCheckpointExceptionInit;
-		} else if (vm->criuSystemCheckpointExceptionClass == currentExceptionClass) {
-			init = vm->criuSystemCheckpointExceptionInit;
-		} else if (vm->criuSystemRestoreExceptionClass == currentExceptionClass) {
-			init = vm->criuSystemRestoreExceptionInit;
+		if (vm->checkpointState.criuJVMCheckpointExceptionClass == currentExceptionClass) {
+			init = vm->checkpointState.criuJVMCheckpointExceptionInit;
+		} else if (vm->checkpointState.criuSystemCheckpointExceptionClass == currentExceptionClass) {
+			init = vm->checkpointState.criuSystemCheckpointExceptionInit;
+		} else if (vm->checkpointState.criuSystemRestoreExceptionClass == currentExceptionClass) {
+			init = vm->checkpointState.criuSystemRestoreExceptionInit;
 		} else {
-			init = vm->criuJVMRestoreExceptionInit;
+			init = vm->checkpointState.criuJVMRestoreExceptionInit;
 		}
 		jstring jExceptionMsg = env->NewStringUTF(exceptionMsg);
 

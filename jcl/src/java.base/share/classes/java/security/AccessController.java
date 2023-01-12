@@ -22,14 +22,13 @@
  *******************************************************************************/
 package java.security;
 
-import java.security.AccessControlContext.AccessCache;
 import sun.security.util.SecurityConstants;
 
-/*[IF Sidecar19-SE]
+/*[IF JAVA_SPEC_VERSION >= 9]
 import jdk.internal.reflect.CallerSensitive;
-/*[ELSE]*/
+/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 import sun.reflect.CallerSensitive;
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 /**
  * Checks access to system resources. Supports marking of code
@@ -41,6 +40,7 @@ import sun.reflect.CallerSensitive;
  */
 /*[IF JAVA_SPEC_VERSION >= 17]*/
 @Deprecated(since="17", forRemoval=true)
+@SuppressWarnings("removal")
 /*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 public final class AccessController {
 	static {
@@ -204,7 +204,7 @@ private static void throwACE(boolean debug, Permission perm, ProtectionDomain pD
  *
  * @return true if access is granted by a limited permission, otherwise return false
  */
-private static boolean checkPermissionHelper(Permission perm, AccessControlContext acc, DomainCombiner activeDC, Object[] objects, int frame, AccessCache checked, Object[] objPDomains, int debug, int startPos) {
+private static boolean checkPermissionHelper(Permission perm, AccessControlContext acc, DomainCombiner activeDC, Object[] objects, int frame, AccessControlContext.AccessCache checked, Object[] objPDomains, int debug, int startPos) {
 	boolean limitedPermImplied = false;
 	boolean debugEnabled = (debug & AccessControlContext.DEBUG_ENABLED) != 0;
 	ProtectionDomain[] pDomains = generatePDarray(activeDC, acc, objPDomains, debugEnabled, startPos);
@@ -240,7 +240,7 @@ private static boolean checkPermissionHelper(Permission perm, AccessControlConte
 
 	if (2 == startPos) { // Pre-JEP140 format
 		if (null != acc && (null != acc.doPrivilegedAcc || null != acc.nextStackAcc || acc.isLimitedContext)) {
-			checked = new AccessCache(); /* checked was null initially when Pre-JEP140 format */
+			checked = new AccessControlContext.AccessCache(); /* checked was null initially when Pre-JEP140 format */
 			return AccessControlContext.checkPermissionWithCache(perm, activeDC, pDomains, debug, acc, false, null, null, checked);
 		} else {
 			if (pDomains != null) {
@@ -392,7 +392,7 @@ public static void checkPermission(Permission perm) throws AccessControlExceptio
 		 */
 		activeDC = topACC.domainCombiner;
 	}
-	
+
 	if (isPreJEP140Format) {
 		if ((debug != AccessControlContext.DEBUG_DISABLED) && !debugHelperPreJEP140(objects, perm)) {
 			debug = AccessControlContext.DEBUG_ACCESS_DENIED; // Disable DEBUG_ENABLED
@@ -406,7 +406,7 @@ public static void checkPermission(Permission perm) throws AccessControlExceptio
 			debug = AccessControlContext.DEBUG_ACCESS_DENIED; // Disable DEBUG_ENABLED
 		}
 
-		AccessCache checked = new AccessCache();
+		AccessControlContext.AccessCache checked = new AccessControlContext.AccessCache();
 		for (int j = 0; j < frameNbr; ++j) {
 			AccessControlContext acc = (AccessControlContext) objects[j * OBJS_ARRAY_SIZE];
 			Object[] objPDomains = (Object[]) objects[j * OBJS_ARRAY_SIZE + OBJS_INDEX_PDS];
@@ -572,7 +572,7 @@ private static ProtectionDomain[] generatePDarray(DomainCombiner activeDC, Acces
 			actDC = acc.domainCombiner;
 		}
 	}
-	
+
 	if (actDC != null) {
 		if (debug) {
 			DebugRecursionDetection.getTlDebug().set(""); //$NON-NLS-1$

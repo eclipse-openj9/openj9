@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2022 IBM Corp. and others
+ * Copyright (c) 1991, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -358,6 +358,7 @@ extern "C" {
 #define J9_EXTENDED_RUNTIME2_TUNE_QUICKSTART 0x40000
 #define J9_EXTENDED_RUNTIME2_DISABLE_FINALIZATION 0x80000
 #define J9_EXTENDED_RUNTIME2_CRIU_SINGLE_THREAD_MODE 0x100000
+#define J9_EXTENDED_RUNTIME2_USE_CONTAINER_SUPPORT 0x200000
 
 #define J9_OBJECT_HEADER_AGE_DEFAULT 0xA /* OBJECT_HEADER_AGE_DEFAULT */
 #define J9_OBJECT_HEADER_SHAPE_MASK 0xE /* OBJECT_HEADER_SHAPE_MASK */
@@ -567,6 +568,7 @@ extern "C" {
 #define BCV_ERR_INACCESSIBLE_CLASS						-33
 #define BCV_ERR_BYTECODE_ERROR							-34
 #define BCV_ERR_NEW_OJBECT_MISMATCH						-35
+#define BCV_ERR_INIT_FLAGS_MISMATCH						-36
 
 #define J9_GC_OBJ_HEAP_HOLE 0x1
 #define J9_GC_MULTI_SLOT_HOLE 0x1

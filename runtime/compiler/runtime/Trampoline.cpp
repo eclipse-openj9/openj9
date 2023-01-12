@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2022 IBM Corp. and others
+ * Copyright (c) 2000, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,10 +32,6 @@
 #include "runtime/CodeRuntime.hpp"
 #include "runtime/J9Runtime.hpp"
 #include "control/CompilationRuntime.hpp"
-
-#if defined(OSX) && defined(AARCH64)
-#include <pthread.h> // for pthread_jit_write_protect_np
-#endif
 
 #define PPC_INSTRUCTION_LENGTH 4
 
@@ -960,9 +956,8 @@ void arm64CodeCacheConfig(int32_t ccSizeInByte, int32_t *numTempTrampolines)
 void arm64CreateHelperTrampolines(void *trampPtr, int32_t numHelpers)
    {
    uint32_t *buffer = (uint32_t *)((uint8_t *)trampPtr + TRAMPOLINE_SIZE);
-#if defined(OSX) && defined(AARCH64)
-   pthread_jit_write_protect_np(0);
-#endif
+   omrthread_jit_write_protect_disable();
+
    for (int32_t i=1; i<numHelpers; i++)
       {
       *((int32_t *)buffer) = 0x58000050; //LDR R16 PC+8
@@ -976,9 +971,7 @@ void arm64CreateHelperTrampolines(void *trampPtr, int32_t numHelpers)
 #if defined(TR_HOST_ARM64)
    arm64CodeSync((uint8_t*)trampPtr, TRAMPOLINE_SIZE * numHelpers);
 #endif
-#if defined(OSX) && defined(AARCH64)
-   pthread_jit_write_protect_np(1);
-#endif
+   omrthread_jit_write_protect_enable();
    }
 
 void arm64CreateMethodTrampoline(void *trampPtr, void *startPC, void *method)
@@ -987,9 +980,7 @@ void arm64CreateMethodTrampoline(void *trampPtr, void *startPC, void *method)
    J9::PrivateLinkage::LinkageInfo *linkInfo = J9::PrivateLinkage::LinkageInfo::get(startPC);
    intptr_t dispatcher = (intptr_t)((uint8_t *)startPC + linkInfo->getReservedWord());
 
-#if defined(OSX) && defined(AARCH64)
-   pthread_jit_write_protect_np(0);
-#endif
+   omrthread_jit_write_protect_disable();
    *buffer = 0x58000050; //LDR R16 PC+8
    buffer += 1;
    *buffer = 0xD61F0200; //BR R16
@@ -999,9 +990,7 @@ void arm64CreateMethodTrampoline(void *trampPtr, void *startPC, void *method)
 #if defined(TR_HOST_ARM64)
    arm64CodeSync((uint8_t*)trampPtr, TRAMPOLINE_SIZE);
 #endif
-#if defined(OSX) && defined(AARCH64)
-   pthread_jit_write_protect_np(1);
-#endif
+   omrthread_jit_write_protect_enable();
    }
 
 #define ARM64_INSTRUCTION_LENGTH 4
@@ -1108,16 +1097,12 @@ bool arm64CodePatching(void *callee, void *callSite, void *currentPC, void *curr
                }
             else
                {
-#if defined(OSX) && defined(AARCH64)
-               pthread_jit_write_protect_np(0);
-#endif
+               omrthread_jit_write_protect_disable();
                *((uint64_t*)currentTramp+1) = (uint64_t)entryAddress;
 #if defined(TR_HOST_ARM64)
                arm64CodeSync((uint8_t*)currentTramp+8, 8);
 #endif
-#if defined(OSX) && defined(AARCH64)
-               pthread_jit_write_protect_np(1);
-#endif
+               omrthread_jit_write_protect_enable();
                }
             }
 
@@ -1127,16 +1112,12 @@ bool arm64CodePatching(void *callee, void *callSite, void *currentPC, void *curr
       if (currentDistance != distance)
          {
          branchInstr |= (distance >> 2) & 0x03ffffff;
-#if defined(OSX) && defined(AARCH64)
-         pthread_jit_write_protect_np(0);
-#endif
+         omrthread_jit_write_protect_disable();
          *(int32_t *)callSite = branchInstr;
 #if defined(TR_HOST_ARM64)
          arm64CodeSync((uint8_t*)callSite, 4);
 #endif
-#if defined(OSX) && defined(AARCH64)
-         pthread_jit_write_protect_np(1);
-#endif
+         omrthread_jit_write_protect_enable();
          }
       }
    else if (isInterfaceCallSite(static_cast<uint8_t *>(callSite), addrOfFirstClassSlot))
@@ -1150,9 +1131,7 @@ bool arm64CodePatching(void *callee, void *callSite, void *currentPC, void *curr
       // Throwing away the flag bits in CLASS slot
       currentReceiverJ9Class &= TR::Compiler->om.maskOfObjectVftField();
 
-#if defined(OSX) && defined(AARCH64)
-      pthread_jit_write_protect_np(0);
-#endif
+      omrthread_jit_write_protect_disable();
       if (*reinterpret_cast<intptr_t *>(addrOfFirstClassSlot) == currentReceiverJ9Class)
          {
          *reinterpret_cast<intptr_t *>(addrOfFirstClassSlot + sizeof(intptr_t)) = reinterpret_cast<intptr_t>(entryAddress);
@@ -1161,9 +1140,7 @@ bool arm64CodePatching(void *callee, void *callSite, void *currentPC, void *curr
          {
          *reinterpret_cast<intptr_t *>(addrOfFirstClassSlot + sizeof(intptr_t) * 3) = reinterpret_cast<intptr_t>(entryAddress);
          }
-#if defined(OSX) && defined(AARCH64)
-      pthread_jit_write_protect_np(1);
-#endif
+      omrthread_jit_write_protect_enable();
       }
 
    return true;

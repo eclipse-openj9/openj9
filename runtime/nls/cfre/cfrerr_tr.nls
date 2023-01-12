@@ -1497,8 +1497,8 @@ J9NLS_CFR_ERR_NON_STATIC_SYNCHRONIZED_VALUE_TYPE_METHOD.system_action=The JVM wi
 J9NLS_CFR_ERR_NON_STATIC_SYNCHRONIZED_VALUE_TYPE_METHOD.user_response=Contact the provider of the class file for a corrected version.
 # END NON-TRANSLATABLE
 
-# <new> is not translatable
-J9NLS_CFR_ERR_INVALID_FLAGS_ON_NEW=<new> olarak adland\u0131r\u0131lan y\u00f6ntemler dura\u011fan olmal\u0131d\u0131r ve son, e\u015fitlenmi\u015f, yerel ya da soyut olmayabilir
+# <vnew> is not translatable
+J9NLS_CFR_ERR_INVALID_FLAGS_ON_NEW=<vnew> olarak adland\u0131r\u0131lan y\u00f6ntemler dura\u011fan olmal\u0131d\u0131r ve son, e\u015fitlenmi\u015f, yerel ya da soyut olmayabilir
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_INVALID_FLAGS_ON_NEW.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_INVALID_FLAGS_ON_NEW.system_action=The JVM will throw a verification or classloading related exception such as java.lang.ClassFormatError.

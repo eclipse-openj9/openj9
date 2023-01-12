@@ -429,7 +429,6 @@ J9InternalVMFunctions J9InternalFunctions = {
 #endif /* JAVA_SPEC_VERSION >= 16 */
 #if JAVA_SPEC_VERSION >= 19
 	copyFieldsFromContinuation,
-	createContinuation,
 	freeContinuation,
 	freeTLS,
 	walkContinuationStackFrames,

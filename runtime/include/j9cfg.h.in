@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2022 IBM Corp. and others
+ * Copyright (c) 1998, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -226,7 +226,6 @@ extern "C" {
 #cmakedefine J9VM_OPT_MEMORY_CHECK_SUPPORT
 #cmakedefine J9VM_OPT_METHOD_HANDLE
 #cmakedefine J9VM_OPT_METHOD_HANDLE_COMMON
-#cmakedefine J9VM_OPT_MODULE
 #cmakedefine J9VM_OPT_MULTI_VM
 #cmakedefine J9VM_OPT_NATIVE_CHARACTER_CONVERTER
 #cmakedefine J9VM_OPT_NATIVE_LOCALE_SUPPORT
@@ -235,7 +234,6 @@ extern "C" {
 #cmakedefine J9VM_OPT_NO_CLASSLOADERS
 #cmakedefine J9VM_OPT_NRR
 #cmakedefine J9VM_OPT_OPENJDK_METHODHANDLE
-#cmakedefine J9VM_OPT_OPENJDK_THREAD_SUPPORT
 #cmakedefine J9VM_OPT_PACKED
 #cmakedefine J9VM_OPT_PANAMA
 #cmakedefine J9VM_OPT_PHP_SUPPORT

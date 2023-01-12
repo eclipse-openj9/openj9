@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-Copyright (c) 2006, 2022 IBM Corp. and others
+Copyright (c) 2006, 2023 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1788,10 +1788,6 @@ Only available on zOS</description>
 		<description>Enables common dependencies between OpenJ9 and OpenJDK MethodHandles.</description>
 		<ifRemoved>Disables common dependencies between OpenJ9 and OpenJDK MethodHandles.</ifRemoved>
 	</flag>
-	<flag id="opt_module">
-		<description>Turns on module support</description>
-		<ifRemoved></ifRemoved>
-	</flag>
 	<flag id="opt_multiVm">
 		<description>Decides if multiple VMs can be created in the same address space</description>
 		<ifRemoved>Only one VM per address space (process) allowed</ifRemoved>
@@ -1835,10 +1831,6 @@ Only available on zOS</description>
 	<flag id="opt_openjdkFfi">
 		<description>Enables support for Foreign Linker API (part of Project Panama) such as native invocations to ffi_call</description>
 		<ifRemoved>No support for Foreign Linker API</ifRemoved>
-	</flag>
-	<flag id="opt_openjdkThreadSupport">
-		<description>Enables OpenJDK Thread support for Project Loom</description>
-		<ifRemoved>No OpenJDK Thread support for Project Loom</ifRemoved>
 	</flag>
 	<flag id="opt_valhallaValueTypes">
 		<description>Enables support for Project Valhalla L-World Value Types</description>

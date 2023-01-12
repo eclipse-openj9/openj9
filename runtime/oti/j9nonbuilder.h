@@ -4123,6 +4123,29 @@ typedef struct J9CRIUCheckpointState {
 	 */
 	I_64 checkpointRestoreTimeDelta;
 	UDATA maxRetryForNotCheckpointSafe;
+	jclass criuJVMCheckpointExceptionClass;
+	jclass criuSystemCheckpointExceptionClass;
+	jclass criuJVMRestoreExceptionClass;
+	jclass criuSystemRestoreExceptionClass;
+	jmethodID criuJVMCheckpointExceptionInit;
+	jmethodID criuSystemCheckpointExceptionInit;
+	jmethodID criuJVMRestoreExceptionInit;
+	jmethodID criuSystemRestoreExceptionInit;
+	void (*criuSetUnprivilegedFunctionPointerType)(BOOLEAN unprivileged);
+	void (*criuSetImagesDirFdFunctionPointerType)(int fd);
+	void (*criuSetShellJobFunctionPointerType)(BOOLEAN shellJob);
+	void (*criuSetLogLevelFunctionPointerType)(int logLevel);
+	void (*criuSetLogFileFunctionPointerType)(const char* logFileChars);
+	void (*criuSetLeaveRunningFunctionPointerType)(BOOLEAN leaveRunning);
+	void (*criuSetExtUnixSkFunctionPointerType)(BOOLEAN extUnixSupport);
+	void (*criuSetFileLocksFunctionPointerType)(BOOLEAN fileLocks);
+	void (*criuSetTcpEstablishedFunctionPointerType)(BOOLEAN tcpEstablished);
+	void (*criuSetAutoDedupFunctionPointerType)(BOOLEAN autoDedup);
+	void (*criuSetTrackMemFunctionPointerType)(BOOLEAN trackMemory);
+	void (*criuSetWorkDirFdFunctionPointerType)(int workDirFD);
+	int (*criuInitOptsFunctionPointerType)(void);
+	int (*criuDumpFunctionPointerType)(void);
+	UDATA libCRIUHandle;
 } J9CRIUCheckpointState;
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
@@ -4511,6 +4534,10 @@ typedef struct J9MemoryManagerFunctions {
 	UDATA ( *j9gc_stringHashFn)(void *key, void *userData);
 	BOOLEAN ( *j9gc_stringHashEqualFn)(void *leftKey, void *rightKey, void *userData);
 	void  ( *j9gc_ensureLockedSynchronizersIntegrity)(struct J9VMThread *vmThread) ;
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+	void  ( *j9gc_prepare_for_checkpoint)(struct J9VMThread *vmThread) ;
+	BOOLEAN  ( *j9gc_reinitialize_for_restore)(struct J9VMThread *vmThread) ;
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 } J9MemoryManagerFunctions;
 
 typedef struct J9InternalVMFunctions {
@@ -4911,7 +4938,6 @@ typedef struct J9InternalVMFunctions {
 #endif /* JAVA_SPEC_VERSION >= 16 */
 #if JAVA_SPEC_VERSION >= 19
 	void (*copyFieldsFromContinuation)(struct J9VMThread *currentThread, struct J9VMThread *vmThread, struct J9VMEntryLocalStorage *els, struct J9VMContinuation *continuation);
-	BOOLEAN (*createContinuation)(struct J9VMThread *currentThread, j9object_t continuationObject);
 	void (*freeContinuation)(struct J9VMThread *currentThread, j9object_t continuationObject);
 	void (*freeTLS)(struct J9VMThread *currentThread, j9object_t threadObj);
 	UDATA (*walkContinuationStackFrames)(struct J9VMThread *currentThread, struct J9VMContinuation *continuation, J9StackWalkState *walkState);
@@ -5768,14 +5794,6 @@ typedef struct J9JavaVM {
 	U_32 javaVM31PadTo8; /* Possible to optimize with future guarded U_32 member in ENV_DATA64. */
 #endif /* defined(J9VM_ZOS_3164_INTEROPERABILITY) */
 #if defined(J9VM_OPT_CRIU_SUPPORT)
-	jclass criuJVMCheckpointExceptionClass;
-	jclass criuSystemCheckpointExceptionClass;
-	jclass criuJVMRestoreExceptionClass;
-	jclass criuSystemRestoreExceptionClass;
-	jmethodID criuJVMCheckpointExceptionInit;
-	jmethodID criuSystemCheckpointExceptionInit;
-	jmethodID criuJVMRestoreExceptionInit;
-	jmethodID criuSystemRestoreExceptionInit;
 	J9CRIUCheckpointState checkpointState;
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 #if JAVA_SPEC_VERSION >= 16

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2021, 2022 IBM Corp. and others
+ * Copyright (c) 2021, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,10 +28,6 @@
 extern "C" {
 
 #if JAVA_SPEC_VERSION >= 16
-
-#if defined(OSX) && defined(AARCH64)
-#include <pthread.h> // for pthread_jit_write_protect_np
-#endif
 
 static void * subAllocateThunkFromHeap(J9UpcallMetaData *data);
 static J9UpcallThunkHeapList * allocateThunkHeap(J9UpcallMetaData *data);
@@ -105,9 +101,7 @@ retry:
 	}
 	thunkHeapNode = thunkHeapHead;
 
-#if defined(OSX) && defined(AARCH64)
-	pthread_jit_write_protect_np(0);
-#endif /* defined(OSX) && defined(AARCH64) */
+	omrthread_jit_write_protect_disable();
 	while (!succeeded) {
 		J9UpcallThunkHeapWrapper *thunkHeapWrapper = thunkHeapNode->thunkHeapWrapper;
 		J9Heap *thunkHeap = thunkHeapWrapper->heap;
@@ -147,17 +141,13 @@ retry:
 				thunkHeapNode = thunkHeapNode->next;
 			} else {
 				/* Attempt to allocate a new thunk heap given all thunk heaps are out of memory. */
-#if defined(OSX) && defined(AARCH64)
-				pthread_jit_write_protect_np(1);
-#endif /* defined(OSX) && defined(AARCH64) */
+				omrthread_jit_write_protect_enable();
 				goto retry;
 			}
 
 		}
 	}
-#if defined(OSX) && defined(AARCH64)
-	pthread_jit_write_protect_np(1);
-#endif /* defined(OSX) && defined(AARCH64) */
+	omrthread_jit_write_protect_enable();
 
 done:
 
@@ -212,9 +202,7 @@ allocateThunkHeap(J9UpcallMetaData *data)
 		goto freeAllMemoryThenExit;
 	}
 
-#if defined(OSX) && defined(AARCH64)
-	pthread_jit_write_protect_np(0);
-#endif /* defined(OSX) && defined(AARCH64) */
+	omrthread_jit_write_protect_disable();
 
 	/* Initialize the allocated memory as a J9Heap */
 	thunkHeap = j9heap_create(allocMemPtr, pageSize, 0);
@@ -250,9 +238,7 @@ allocateThunkHeap(J9UpcallMetaData *data)
 		vm->thunkHeapHead = thunkHeapNode;
 	}
 
-#if defined(OSX) && defined(AARCH64)
-	pthread_jit_write_protect_np(1);
-#endif /* defined(OSX) && defined(AARCH64) */
+	omrthread_jit_write_protect_enable();
 
 done:
 	Trc_VM_allocateThunkHeap_Exit(thunkHeap);
@@ -271,9 +257,7 @@ freeAllMemoryThenExit:
 		thunkHeapWrapper = NULL;
 	}
 	if (NULL != allocMemPtr) {
-#if defined(OSX) && defined(AARCH64)
-		pthread_jit_write_protect_np(1);
-#endif /* defined(OSX) && defined(AARCH64) */
+		omrthread_jit_write_protect_enable();
 		j9vmem_free_memory(allocMemPtr, pageSize, &vmemID);
 		allocMemPtr = NULL;
 	}

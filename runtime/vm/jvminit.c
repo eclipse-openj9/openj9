@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2022 IBM Corp. and others
+ * Copyright (c) 1991, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -43,9 +43,6 @@
 #include "util_api.h"
 #if JAVA_SPEC_VERSION >= 16
 #include "vm_internal.h"
-#if defined(OSX) && defined(AARCH64)
-#include <pthread.h> /* for pthread_jit_write_protect_np */
-#endif
 #endif /* JAVA_SPEC_VERSION >= 16 */
 
 #if !defined(stdout)
@@ -971,6 +968,8 @@ freeJavaVM(J9JavaVM * vm)
 			pool_kill(hookRecords);
 			vm->checkpointState.hookRecords = NULL;
 		}
+
+		j9sl_close_shared_library(vm->checkpointState.libCRIUHandle);
 	}
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
@@ -2301,6 +2300,8 @@ VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved)
 					uint64_t subsystemsAvailable = omrsysinfo_cgroup_get_available_subsystems();
 					Trc_VM_CgroupSubsystemsNotEnabled(vm->mainThread, subsystemsAvailable, subsystemsEnabled);
 				}
+
+				vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_USE_CONTAINER_SUPPORT;
 			}
 
 			argIndex = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXDEEP_SCAN, NULL);
@@ -8426,13 +8427,9 @@ freeUpcallMetaDataDoFn(J9UpcallMetaDataEntry *entry, void *userData)
 		metaData = NULL;
 
 		if (NULL != thunkHeap) {
-#if defined(OSX) && defined(AARCH64)
-			pthread_jit_write_protect_np(0);
-#endif /* defined(OSX) && defined(AARCH64) */
+			omrthread_jit_write_protect_disable();
 			j9heap_free(thunkHeap, thunkAddr);
-#if defined(OSX) && defined(AARCH64)
-			pthread_jit_write_protect_np(1);
-#endif /* defined(OSX) && defined(AARCH64) */
+			omrthread_jit_write_protect_enable();
 		}
 		entry->thunkAddrValue = 0;
 	}

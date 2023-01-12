@@ -1342,7 +1342,7 @@ MM_MetronomeDelegate::scanContinuationObjects(MM_EnvironmentRealtime *env)
 						buffer->add(env, object);
 					} else {
 						gcEnv->_markJavaStats._continuationCleared += 1;
-						VM_VMHelpers::cleanupContinuationObject((J9VMThread *)env->getLanguageVMThread(), object);
+						_extensions->releaseNativesForContinuationObject(env, object);
 					}
 					object = next;
 

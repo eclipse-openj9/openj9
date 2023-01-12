@@ -1799,25 +1799,22 @@ checkMethods(J9PortLibrary* portLib, J9CfrClassFile* classfile, U_8* segment, U_
 		} 
 
 		if (nameIndexOK && utf8Equal(&classfile->constantPool[method->nameIndex], "<init>", 6)) {
-			BOOLEAN classfileIsValuetype = J9_IS_CLASSFILE_VALUETYPE(classfile);
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-#if defined(J9VM_OPT_VALHALLA_NEW_FACTORY_METHOD)
-			if (classfileIsValuetype) {
+			/**
+			 * The spec says a method of a value class cannot be <init>. A method of an abstract class cannot be <vnew>.
+			 * For a value abstract class, its constructor is compiled into <init> now, so allow <init> in abstract classes.
+			 */
+			if (J9_IS_CLASSFILE_VALUETYPE(classfile) && J9_ARE_NO_BITS_SET(classfile->accessFlags, CFR_ACC_ABSTRACT)) {
 				errorCode = J9NLS_CFR_ERR_INIT_ON_VALUE_CLASS__ID;
 				goto _errorFound;
-			}
-#else /* #if defined(J9VM_OPT_VALHALLA_NEW_FACTORY_METHOD) */
-			if (classfileIsValuetype && (value & ~CFR_INIT_VT_METHOD_ACCESS_MASK)) {
-				errorCode = J9NLS_CFR_ERR_INIT_METHOD__ID;
-				goto _errorFound;
-			}
-#endif /* #if defined(J9VM_OPT_VALHALLA_NEW_FACTORY_METHOD) */
-#endif /* #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
-
-			/* check no invalid flags set */
-			if ((!classfileIsValuetype) && (value & ~CFR_INIT_METHOD_ACCESS_MASK)) {
-				errorCode = J9NLS_CFR_ERR_INIT_METHOD__ID;
-				goto _errorFound;
+			} else
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+			{
+				/* check no invalid flags set */
+				if (value & ~CFR_INIT_METHOD_ACCESS_MASK) {
+					errorCode = J9NLS_CFR_ERR_INIT_METHOD__ID;
+					goto _errorFound;
+				}
 			}
 
 			/* Java SE 9 Edition:
@@ -1833,18 +1830,20 @@ checkMethods(J9PortLibrary* portLib, J9CfrClassFile* classfile, U_8* segment, U_
 		}
 
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-#if defined(J9VM_OPT_VALHALLA_NEW_FACTORY_METHOD)
-		if (nameIndexOK && utf8Equal(&classfile->constantPool[method->nameIndex], "<new>", 5)) {
+		if (nameIndexOK && utf8Equal(&classfile->constantPool[method->nameIndex], "<vnew>", 6)) {
+			if (J9_ARE_ANY_BITS_SET(classfile->accessFlags, CFR_ACC_ABSTRACT | CFR_ACC_IDENTITY | CFR_ACC_INTERFACE)) {
+				errorCode = J9NLS_CFR_ERR_INVALID_CLASS_FLAGS_ON_VNEW__ID;
+				goto _errorFound;
+			}
 			if (J9_ARE_NO_BITS_SET(value, CFR_ACC_STATIC)) {
 				errorCode = J9NLS_CFR_ERR_INVALID_FLAGS_ON_NEW__ID;
 				goto _errorFound;
 			}
-			if (J9_ARE_ANY_BITS_SET(value, ~CFR_INIT_VT_METHOD_ACCESS_MASK)) {
+			if (J9_ARE_ANY_BITS_SET(value, ~CFR_VNEW_METHOD_ACCESS_MASK)) {
 				errorCode = J9NLS_CFR_ERR_INVALID_FLAGS_ON_NEW__ID;
 				goto _errorFound;
 			}
 		}
-#endif /* #if defined(J9VM_OPT_VALHALLA_NEW_FACTORY_METHOD) */
 #endif /* #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 		/* Check interface-method-only access flag constraints. */

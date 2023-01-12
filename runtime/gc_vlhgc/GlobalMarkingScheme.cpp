@@ -805,7 +805,7 @@ MM_GlobalMarkingScheme::scanContinuationNativeSlots(MM_EnvironmentVLHGC *env, J9
 		/* In STW GC there are no racing carrier threads doing mount and no need for the synchronization. */
 		bool syncWithContinuationMounting = (MM_VLHGCIncrementStats::mark_concurrent == static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._globalMarkIncrementType);
 
-		GC_VMThreadStackSlotIterator::scanSlots(currentThread, objectPtr, (void *)&localData, stackSlotIteratorForGlobalMarkingScheme, stackFrameClassWalkNeeded, syncWithContinuationMounting);
+		GC_VMThreadStackSlotIterator::scanSlots(currentThread, objectPtr, (void *)&localData, stackSlotIteratorForGlobalMarkingScheme, stackFrameClassWalkNeeded, false, syncWithContinuationMounting);
 	}
 }
 
@@ -1111,8 +1111,8 @@ MM_GlobalMarkingScheme::scanContinuationObjects(MM_EnvironmentVLHGC *env)
 						if (isMarked(object)) {
 							env->getGCEnvironment()->_continuationObjectBuffer->add(env, object);
 						} else {
-							VM_VMHelpers::cleanupContinuationObject((J9VMThread *)env->getLanguageVMThread(), object);
 							env->_markVLHGCStats._continuationCleared += 1;
+							_extensions->releaseNativesForContinuationObject(env, object);
 						}
 						object = next;
 					}

@@ -5717,8 +5717,8 @@ SecurityException {
 	 * present. For a primitive type or void, the PUBLIC and FINAL access flags should always
 	 * be present, and the PROTECTED and PRIVATE access flags should always be absent.
 	 *
-	 * {@return an unmodifiable set of the {@linkplain AccessFlag access flags} for this
-	 * class, possibly empty}
+	 * @return an unmodifiable set of the {@linkplain AccessFlag access flags} for this
+	 * class, possibly empty
 	 *
 	 * @since 20
 	 */

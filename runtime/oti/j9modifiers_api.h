@@ -120,16 +120,9 @@
 #define J9ROMMETHOD_IS_STATIC(romMethod)	_J9ROMMETHOD_J9MODIFIER_IS_SET((romMethod), J9AccStatic)
 
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-#if defined(J9VM_OPT_VALHALLA_NEW_FACTORY_METHOD)
 #define J9ROMMETHOD_IS_UNNAMED_FACTORY(romMethod) \
 	(J9ROMMETHOD_IS_STATIC((romMethod)) \
-	&& (J9UTF8_LITERAL_EQUALS(J9UTF8_DATA(J9ROMMETHOD_NAME((romMethod))), J9UTF8_LENGTH(J9ROMMETHOD_NAME((romMethod))), "<new>")))
-#else /* #if defined(J9VM_OPT_VALHALLA_NEW_FACTORY_METHOD) */
-/* Currently value type's constructor is static <init>, it will be changed to static <new>. The check for <init> can be removed once OpenJDK is updated on this. */
-#define J9ROMMETHOD_IS_UNNAMED_FACTORY(romMethod) \
-	(J9ROMMETHOD_IS_STATIC((romMethod)) \
-	&& (J9UTF8_LITERAL_EQUALS(J9UTF8_DATA(J9ROMMETHOD_NAME((romMethod))), J9UTF8_LENGTH(J9ROMMETHOD_NAME((romMethod))), "<init>")))
-#endif /* #if defined(J9VM_OPT_VALHALLA_NEW_FACTORY_METHOD) */
+	&& (J9UTF8_LITERAL_EQUALS(J9UTF8_DATA(J9ROMMETHOD_NAME((romMethod))), J9UTF8_LENGTH(J9ROMMETHOD_NAME((romMethod))), "<vnew>")))
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 
 #define J9ROMFIELD_IS_CONTENDED(romField)	J9_ARE_ALL_BITS_SET((romField)->modifiers, J9FieldFlagIsContended)

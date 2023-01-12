@@ -344,29 +344,32 @@ void J9::RecognizedCallTransformer::process_java_lang_StrictMath_and_Math_sqrt(T
 Transform an Unsafe atomic call to diamonds with equivalent semantics
 
                           yes
-isObjectNull ------------------------------------------>
-    |                                                  |
-    | no                                               |
-    |                     yes                          |
-isNotLowTagged ---------------------------------------->
-    |                                                  |
-    |  no                                              |
-    |           no                                     |
-isFinal ---------------------->                        |
-    |                         |                        |
-    | yes                     |                        |
-    |                         |                        |
-call the                calculate address      calculate address
-original method         for static field       for instance field
-    |                         |                and absolute address
-    |                         |                        |
-    |                         |________________________|
-    |                                     |
-    |                         xcall atomic method helper
-    |                                     |
-    |_____________________________________|
-                    |
-      program after the original call
+isObjectNull [A] ------------------------------------------>
+    |                                                      |
+    | no                                                   |
+    |                     yes                              |
+isNotLowTagged [B] ---------------------------------------->
+    |                                                      |
+    |  no                                                  |
+    |           no                                         |
+isFinal [C] -------------------->                          |
+    |                           |                          |
+    | yes                       |                          |
+jitReportFinalFieldModified [F] |                          |
+    |                           |                          |
+    +--------------------------->                          |
+                                |                          |
+                       calculate address [D]       calculate address
+                        for static field           for instance field
+                      (non collected reference)    and absolute address
+                                |                 (collected reference)
+                                |                          |
+                  xcall atomic method helper [G]     xcall atomic method helper [E]
+                                |                          |
+                                +-----------+--------------+
+                                            |
+                                            v
+                             program after the original call [H]
 
 Block before the transformation: ===>
 
@@ -374,14 +377,19 @@ start Block_A
   ...
 xcall Unsafe.xxx
   ...
+  <load of unsafe call argX>
+  ...
 end Block_A
 
 Blocks after the transformation: ===>
 
 start Block_A
 ...
+ astore  object-1
+   <load of unsafe call argX>
+...
 ifacmpeq -> <Block_E>
-  object
+  object-1
   aconst null
 end Block_A
 
@@ -402,29 +410,50 @@ iflcmpeq -> <Block_F>
 end Block_C
 
 start Block_D
-astore <object>
+astore <object-2>
   aloadi ramStaticsFromClass
-   ...
+    aloadi  <classFromJavaLangClass>
+      aload  <object-1>
 lstore <offset>
   land
     lload <offset>
     lconst ~J9_SUN_FIELD_OFFSET_MASK
 end Block_D
 
+start Block_G
+xcall atomic method helper
+  aladd
+    aload <object-2>
+    lload <offset>
+  xload value
+xstore
+  ==>xcall
+goto --> block_H
+end Block_G
+
 start Block_E
 xcall atomic method helper
   aladd
-    aload <object>
+    aload <object-1>
     lload <offset>
   xload value
+xstore
+  ==>xcall
 end Block_E
 
+start Block_H
+xreturn
+  xload
+end Block_H
 ...
 
 start Block_F
 call jitReportFinalFieldModified
-go to <Block_E>
+  aloadi  <classFromJavaLangClass>
+    aload <object-1>
+go to <Block_D>
 end Block_F
+
 */
 void J9::RecognizedCallTransformer::processUnsafeAtomicCall(TR::TreeTop* treetop, TR::SymbolReferenceTable::CommonNonhelperSymbol helper, bool needsNullCheck)
    {
@@ -435,6 +464,13 @@ void J9::RecognizedCallTransformer::processUnsafeAtomicCall(TR::TreeTop* treetop
    TR::Node* objectNode = unsafeCall->getChild(1);
    TR::Node* offsetNode = unsafeCall->getChild(2);
    TR::Node* address = NULL;
+
+   TR::SymbolReference* newSymbolReference = NULL;
+   TR::CFG*     cfg = comp()->getMethodSymbol()->getFlowGraph();
+   TR::Node*    isObjectNullNode = NULL;
+   TR::TreeTop* isObjectNullTreeTop = NULL;
+   TR::Node*    isNotLowTaggedNode = NULL;
+   TR::TreeTop* isNotLowTaggedTreeTop = NULL;
 
    // Preserve null check on the unsafe object
    if (treetop->getNode()->getOpCode().isNullCheck())
@@ -464,7 +500,6 @@ void J9::RecognizedCallTransformer::processUnsafeAtomicCall(TR::TreeTop* treetop
       // Save all the children to temps before splitting the block
       TR::TransformUtil::createTempsForCall(this, treetop);
 
-      auto cfg = comp()->getMethodSymbol()->getFlowGraph();
       objectNode = unsafeCall->getChild(1);
       offsetNode = unsafeCall->getChild(2);
 
@@ -480,8 +515,8 @@ void J9::RecognizedCallTransformer::processUnsafeAtomicCall(TR::TreeTop* treetop
          }
 
       // Test if object is null
-      auto isObjectNullNode = TR::Node::createif(TR::ifacmpeq, objectNode->duplicateTree(), TR::Node::aconst(0), NULL);
-      auto isObjectNullTreeTop = TR::TreeTop::create(comp(), isObjectNullNode);
+      isObjectNullNode = TR::Node::createif(TR::ifacmpeq, objectNode->duplicateTree(), TR::Node::aconst(0), NULL);
+      isObjectNullTreeTop = TR::TreeTop::create(comp(), isObjectNullNode);
       treetop->insertBefore(isObjectNullTreeTop);
       treetop->getEnclosingBlock()->split(treetop, cfg, fixupCommoning);
 
@@ -489,11 +524,11 @@ void J9::RecognizedCallTransformer::processUnsafeAtomicCall(TR::TreeTop* treetop
          traceMsg(comp(), "Created isObjectNull test node n%dn, non-null object will fall through to Block_%d\n", isObjectNullNode->getGlobalIndex(), treetop->getEnclosingBlock()->getNumber());
 
       // Test if low tag is set
-      auto isNotLowTaggedNode = TR::Node::createif(TR::iflcmpne,
+      isNotLowTaggedNode = TR::Node::createif(TR::iflcmpne,
                                                TR::Node::create(TR::land, 2, offsetNode->duplicateTree(), TR::Node::lconst(J9_SUN_STATIC_FIELD_OFFSET_TAG)),
                                                TR::Node::lconst(J9_SUN_STATIC_FIELD_OFFSET_TAG),
                                                NULL);
-      auto isNotLowTaggedTreeTop = TR::TreeTop::create(comp(), isNotLowTaggedNode);
+      isNotLowTaggedTreeTop = TR::TreeTop::create(comp(), isNotLowTaggedNode);
       treetop->insertBefore(isNotLowTaggedTreeTop);
       treetop->getEnclosingBlock()->split(treetop, cfg, fixupCommoning);
 
@@ -529,6 +564,10 @@ void J9::RecognizedCallTransformer::processUnsafeAtomicCall(TR::TreeTop* treetop
 
          }
 
+      // ramStatics is not collected. We cannot reuse objectNode->getSymbolReference()
+      newSymbolReference = comp()->getSymRefTab()->createTemporary(comp()->getMethodSymbol(), TR::Address);
+      newSymbolReference->getSymbol()->setNotCollected();
+
       // Calculate static address
       auto objectAdjustmentNode = TR::Node::createWithSymRef(TR::astore, 1, 1,
                                                              TR::Node::createWithSymRef(TR::aloadi, 1, 1,
@@ -536,7 +575,7 @@ void J9::RecognizedCallTransformer::processUnsafeAtomicCall(TR::TreeTop* treetop
                                                                                                                    objectNode->duplicateTree(),
                                                                                                                    comp()->getSymRefTab()->findOrCreateClassFromJavaLangClassSymbolRef()),
                                                                                         comp()->getSymRefTab()->findOrCreateRamStaticsFromClassSymbolRef()),
-                                                             objectNode->getSymbolReference());
+                                                             newSymbolReference);
       auto offsetAdjustmentNode = TR::Node::createWithSymRef(TR::lstore, 1, 1,
                                                              TR::Node::create(TR::land, 2,
                                                                               offsetNode->duplicateTree(),
@@ -544,20 +583,14 @@ void J9::RecognizedCallTransformer::processUnsafeAtomicCall(TR::TreeTop* treetop
                                                              offsetNode->getSymbolReference());
 
       if (enableTrace)
-         traceMsg(comp(), "Created node n%dn and n%dn to adjust object and offset for static field\n", objectAdjustmentNode->getGlobalIndex(), offsetAdjustmentNode->getGlobalIndex());
+         traceMsg(comp(), "Created node objectAdjustmentNode n%dn #%d and offsetAdjustmentNode #%d n%dn to adjust object and offset for static field\n",
+               objectAdjustmentNode->getGlobalIndex(), objectAdjustmentNode->getOpCode().hasSymbolReference() ? objectAdjustmentNode->getSymbolReference()->getReferenceNumber() : -1,
+               offsetAdjustmentNode->getGlobalIndex(), offsetAdjustmentNode->getOpCode().hasSymbolReference() ? offsetAdjustmentNode->getSymbolReference()->getReferenceNumber() : -1);
 
       treetop->insertBefore(TR::TreeTop::create(comp(), objectAdjustmentNode));
       treetop->insertBefore(TR::TreeTop::create(comp(), offsetAdjustmentNode));
       treetop->getEnclosingBlock()->split(treetop, cfg, fixupCommoning);
 
-      if (enableTrace)
-         traceMsg(comp(), "Block_%d contains call to atomic method helper, and is the target of isObjectNull and isNotLowTagged tests\n", treetop->getEnclosingBlock()->getNumber());
-
-      // Setup CFG edges
-      isObjectNullNode->setBranchDestination(treetop->getEnclosingBlock()->getEntry());
-      cfg->addEdge(TR::CFGEdge::createEdge(isObjectNullTreeTop->getEnclosingBlock(), treetop->getEnclosingBlock(), comp()->trMemory()));
-      isNotLowTaggedNode->setBranchDestination(treetop->getEnclosingBlock()->getEntry());
-      cfg->addEdge(TR::CFGEdge::createEdge(isNotLowTaggedTreeTop->getEnclosingBlock(), treetop->getEnclosingBlock(), comp()->trMemory()));
       address = comp()->target().is32Bit() ? TR::Node::create(TR::aiadd, 2, objectNode->duplicateTree(), TR::Node::create(TR::l2i, 1, offsetNode->duplicateTree())) :
                                               TR::Node::create(TR::aladd, 2, objectNode->duplicateTree(), offsetNode->duplicateTree());
       }
@@ -568,6 +601,78 @@ void J9::RecognizedCallTransformer::processUnsafeAtomicCall(TR::TreeTop* treetop
    unsafeCall->removeChild(2); // remove offset node
    unsafeCall->removeChild(1); // remove object node
    unsafeCall->setSymbolReference(comp()->getSymRefTab()->findOrCreateCodeGenInlinedHelper(helper));
+
+   if (!isNotStaticField)
+      {
+      // Split so that the return value from the atomic method helper call will be stored into a temp if required
+      TR::TreeTop *nextTreeTop = treetop->getNextTreeTop();
+      TR::Block *returnBlock = nextTreeTop->getEnclosingBlock()->split(nextTreeTop, cfg, fixupCommoning);
+
+      // Check if the return value from the atomic method helper call is stored into a temp
+      nextTreeTop = treetop->getNextTreeTop();
+      TR::Node *storeReturnNode = NULL;
+      if (nextTreeTop)
+         {
+         storeReturnNode = nextTreeTop->getNode();
+         if (!storeReturnNode->getOpCode().isStore() || !(storeReturnNode->getFirstChild() == unsafeCall))
+            {
+            storeReturnNode = NULL;
+            }
+         else if (enableTrace)
+            {
+            traceMsg(comp(), "storeNode n%dn #%d for the return value of atomic method helper\n", storeReturnNode->getGlobalIndex(), storeReturnNode->getSymbolReference()->getReferenceNumber());
+            }
+         }
+
+      /* Example of the atomic method helper
+       * n92n  treetop
+       * n93n    icall  <atomicFetchAndAdd>
+       * n94n      aladd
+       * n95n        aload  <temp slot 5>
+       * n96n        lload  <temp slot 3>
+       * n97n      iload  <temp slot 4>
+       */
+      // Create another helper call that loads from ramStatics
+      TR::TreeTop *unsafeCallRamStaticsTT = treetop->duplicateTree();
+      TR::Node *unsafeCallRamStaticsNode = unsafeCallRamStaticsTT->getNode()->getFirstChild();
+      TR::Node *addressNode = unsafeCallRamStaticsNode->getFirstChild();
+      TR::Node *loadNode = addressNode->getFirstChild();
+
+      loadNode->setSymbolReference(newSymbolReference); // Use the same symRef as the objectAdjustmentNode
+      treetop->insertBefore(unsafeCallRamStaticsTT);
+
+      // Store the return value from the helper call that loads from ramStatics
+      if (storeReturnNode)
+         {
+         TR::Node *storeNode = TR::Node::createStore(unsafeCall, storeReturnNode->getSymbolReference(), unsafeCallRamStaticsNode);
+         treetop->insertBefore(TR::TreeTop::create(comp(), storeNode));
+         }
+
+      // Insert goto from the helper call that loads from ramStatics to the final return block
+      TR::Node *gotoNode = TR::Node::create(unsafeCall, TR::Goto);
+      gotoNode->setBranchDestination(returnBlock->getEntry());
+      treetop->insertBefore(TR::TreeTop::create(comp(), gotoNode));
+
+      if (enableTrace)
+         traceMsg(comp(), "Created atomic method helper block_%d that loads from ramStatics treetop n%dn. returnBlock block_%d\n",
+            unsafeCallRamStaticsTT->getEnclosingBlock()->getNumber(), unsafeCallRamStaticsTT->getNode()->getGlobalIndex(), returnBlock->getNumber());
+
+      // Split the block that contains the original helper call into a separate block
+      treetop->getEnclosingBlock()->split(treetop, cfg, fixupCommoning);
+
+      // Setup CFG edges
+      cfg->addEdge(unsafeCallRamStaticsTT->getEnclosingBlock(), returnBlock);
+
+      if (enableTrace)
+         traceMsg(comp(), "Block_%d contains call to atomic method helper, and is the target of isObjectNull and isNotLowTagged tests\n", treetop->getEnclosingBlock()->getNumber());
+
+      isObjectNullNode->setBranchDestination(treetop->getEnclosingBlock()->getEntry());
+      cfg->addEdge(TR::CFGEdge::createEdge(isObjectNullTreeTop->getEnclosingBlock(), treetop->getEnclosingBlock(), comp()->trMemory()));
+      isNotLowTaggedNode->setBranchDestination(treetop->getEnclosingBlock()->getEntry());
+      cfg->addEdge(TR::CFGEdge::createEdge(isNotLowTaggedTreeTop->getEnclosingBlock(), treetop->getEnclosingBlock(), comp()->trMemory()));
+
+      cfg->removeEdge(unsafeCallRamStaticsTT->getEnclosingBlock(), treetop->getEnclosingBlock());
+      }
    }
 
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
