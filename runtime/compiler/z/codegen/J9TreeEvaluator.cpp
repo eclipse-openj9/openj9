@@ -3560,30 +3560,15 @@ VMnonNullSrcWrtBarCardCheckEvaluator(
       TR::InstOpCode::Mnemonic opSubtractReg = TR::InstOpCode::getSubstractRegOpCode();
       TR::InstOpCode::Mnemonic opSubtract = TR::InstOpCode::getSubstractOpCode();
       TR::InstOpCode::Mnemonic opCmpLog = TR::InstOpCode::getCmpLogicalOpCode();
-      bool disableSrcObjCheck = true; //comp->getOption(TR_DisableWrtBarSrcObjCheck);
       bool constantHeapCase = ((!comp->compileRelocatableCode()) && isConstantHeapBase && isConstantHeapSize && shiftAmount == 0 && (!is64Bit || TR::Compiler->om.generateCompressedObjectHeaders()));
       if (constantHeapCase)
          {
          // these return uintptr_t but because of the if(constantHeapCase) they are guaranteed to be <= MAX(uint32_t). The uses of heapSize, heapBase, and heapSum need to be uint32_t.
          uint32_t heapSize = comp->getOptions()->getHeapSizeForBarrierRange0();
          uint32_t heapBase = comp->getOptions()->getHeapBaseForBarrierRange0();
-
-         if (!doCrdMrk && !disableSrcObjCheck)
-            {
-            uint32_t heapSum = heapBase + heapSize;
-            generateRRInstruction(cg, opLoadReg, node, temp1Reg, owningObjectReg);
-            generateRILInstruction(cg, TR::InstOpCode::IILF, node, temp2Reg, heapSum);
-            generateRRInstruction(cg, opSubtractReg, node, temp1Reg, temp2Reg);
-            generateRRInstruction(cg, opSubtractReg, node, temp2Reg, srcReg);
-            generateRRInstruction(cg, is64Bit ? TR::InstOpCode::NGR : TR::InstOpCode::NR, node, temp1Reg, temp2Reg);
-            generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC1, node, doneLabel);
-            }
-         else
-            {
-            generateRRInstruction(cg, opLoadReg, node, temp1Reg, owningObjectReg); //copy owning into temp
-            generateRILInstruction(cg, is64Bit ? TR::InstOpCode::SLGFI : TR::InstOpCode::SLFI, node, temp1Reg, heapBase); //temp = temp - heapbase
-            generateS390CompareAndBranchInstruction(cg, is64Bit ? TR::InstOpCode::CLG : TR::InstOpCode::CL, node, temp1Reg, static_cast<int64_t>(heapSize), TR::InstOpCode::COND_BH, doneLabel, false, false, NULL, conditions);
-            }
+         generateRRInstruction(cg, opLoadReg, node, temp1Reg, owningObjectReg); //copy owning into temp
+         generateRILInstruction(cg, is64Bit ? TR::InstOpCode::SLGFI : TR::InstOpCode::SLFI, node, temp1Reg, heapBase); //temp = temp - heapbase
+         generateS390CompareAndBranchInstruction(cg, is64Bit ? TR::InstOpCode::CLG : TR::InstOpCode::CL, node, temp1Reg, static_cast<int64_t>(heapSize), TR::InstOpCode::COND_BH, doneLabel, false, false, NULL, conditions);
          }
       else
          {
@@ -3644,8 +3629,6 @@ VMnonNullSrcWrtBarCardCheckEvaluator(
             // Store the flag to the card's byte.
             generateSIInstruction(cg, TR::InstOpCode::MVI, node, generateS390MemoryReference(cardOffReg,0x0,cg), CARD_DIRTY);
 
-            if (!disableSrcObjCheck)
-               generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, noChkLabel);
             // If condition is NULL, the early assignment is handled by caller.
             // If not, early assignment handled here
             generateS390LabelInstruction(cg, TR::InstOpCode::label, node, srcObjChkLabel, conditions);
@@ -3654,30 +3637,6 @@ VMnonNullSrcWrtBarCardCheckEvaluator(
       else
          TR_ASSERT(0, "card marking not supported for RT");
 
-      //Either if cardmarking is not on at compile time or runtime, we want to test srcobj because if its not in nursery, then
-      //we don't have to do wrtbarrier
-      if (!disableSrcObjCheck && !(!doCrdMrk && constantHeapCase))
-         {
-         generateRRInstruction(cg, opLoadReg, node, temp1Reg, srcReg);
-         if (constantHeapCase)
-            {
-            // these return uintptr_t but because of the if(constantHeapCase) they are guaranteed to be <= MAX(uint32_t). The uses of heapSize, heapBase, and heapSum need to be uint32_t.
-            uint32_t heapBase = comp->getOptions()->getHeapBaseForBarrierRange0();
-            uint32_t heapSize = comp->getOptions()->getHeapSizeForBarrierRange0();
-            generateRILInstruction(cg, is64Bit ? TR::InstOpCode::SLGFI : TR::InstOpCode::SLFI, node, temp1Reg, heapBase);
-            generateS390CompareAndBranchInstruction(cg, is64Bit ? TR::InstOpCode::CLG : TR::InstOpCode::CL, node, temp1Reg, static_cast<int64_t>(heapSize), TR::InstOpCode::COND_BL, doneLabel, false);
-            }
-         else
-            {
-            TR::MemoryReference *offset = generateS390MemoryReference(cg->getMethodMetaDataRealRegister(),
-                  offsetof(J9VMThread, heapBaseForBarrierRange0), cg);
-            TR::MemoryReference *size = generateS390MemoryReference(cg->getMethodMetaDataRealRegister(),
-                  offsetof(J9VMThread, heapSizeForBarrierRange0), cg);
-            generateRXInstruction(cg, opSubtract, node, temp1Reg, offset);
-            generateRXInstruction(cg, opCmpLog, node, temp1Reg, size);
-            generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BL, node, doneLabel);
-            }
-         }
       //If cardmarking is on at compile time (mode=wrtbaroldcrdmrkcheck) then need a label for when cardmarking is done
       //in which case we need to skip the srcobj check
       if (doCrdMrk)
