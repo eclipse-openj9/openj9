@@ -803,7 +803,6 @@ public:
    virtual void setInvokeExactJ2IThunk(void *thunkptr, TR::Compilation *comp);
 
    virtual void *findPersistentMHJ2IThunk(char *signatureChars);
-   virtual void *findPersistentThunk(char *signatureChars, uint32_t signatureLength);
    virtual void * persistMHJ2IThunk(void *thunk);
 
 
@@ -1541,7 +1540,6 @@ public:
    virtual void *setJ2IThunk(char *signatureChars, uint32_t signatureLength, void *thunkptr,  TR::Compilation *comp);
 
    virtual void * persistMHJ2IThunk(void *thunk);
-   virtual void *persistThunk(char *signatureChars, uint32_t signatureLength, uint8_t *thunkStart, uint32_t totalSize);
 
    virtual TR_ResolvedMethod * getObjectNewInstanceImplMethod(TR_Memory *);
    virtual bool                   supportAllocationInlining( TR::Compilation *comp, TR::Node *node);

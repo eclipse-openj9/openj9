@@ -4255,23 +4255,19 @@ TR_J9VMBase::setInvokeExactJ2IThunk(void *thunkptr, TR::Compilation *comp)
 void *
 TR_J9VMBase::findPersistentMHJ2IThunk(char *signatureChars)
    {
-   return findPersistentThunk(signatureChars, strlen(signatureChars));
-   }
+   void *thunk = NULL;
 
-void *
-TR_J9VMBase::findPersistentThunk(char *signatureChars, uint32_t signatureLength)
-   {
 #if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64))
    J9SharedDataDescriptor firstDescriptor;
    J9VMThread *curThread = getCurrentVMThread();
    firstDescriptor.address = NULL;
 
-   _jitConfig->javaVM->sharedClassConfig->findSharedData(curThread, signatureChars, signatureLength,
+   _jitConfig->javaVM->sharedClassConfig->findSharedData(curThread, signatureChars, strlen(signatureChars),
                                                          J9SHR_DATA_TYPE_AOTTHUNK, false, &firstDescriptor, NULL);
-   return firstDescriptor.address;
-#else
-   return NULL;
+   thunk = firstDescriptor.address;
 #endif
+
+   return thunk;
    }
 
 void *
@@ -9238,12 +9234,12 @@ TR_J9SharedCacheVM::setJ2IThunk(char *signatureChars, uint32_t signatureLength, 
 void *
 TR_J9SharedCacheVM::persistMHJ2IThunk(void *thunk)
    {
-   return persistThunk(((TR_MHJ2IThunk *)thunk)->terseSignature(), strlen(((TR_MHJ2IThunk *)thunk)->terseSignature()), (uint8_t*)thunk, ((TR_MHJ2IThunk *)thunk)->totalSize());
-   }
+   TR_MHJ2IThunk *mhj2iThunk = reinterpret_cast<TR_MHJ2IThunk *>(thunk);
+   char *signatureChars = mhj2iThunk->terseSignature();
+   uint32_t signatureLength = strlen(mhj2iThunk->terseSignature());
+   uint8_t *thunkStart = reinterpret_cast<uint8_t *>(thunk);
+   uint32_t totalSize = mhj2iThunk->totalSize();
 
-void *
-TR_J9SharedCacheVM::persistThunk(char *signatureChars, uint32_t signatureLength, uint8_t *thunkStart, uint32_t totalSize)
-   {
 #if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64))
    J9SharedDataDescriptor dataDescriptor;
    J9VMThread *curThread = getCurrentVMThread();
@@ -9256,11 +9252,8 @@ TR_J9SharedCacheVM::persistThunk(char *signatureChars, uint32_t signatureLength,
    if (TR::Options::getAOTCmdLineOptions()->getOption(TR_TraceRelocatableDataDetailsCG))
       {
       TR_VerboseLog::writeLine("<relocatableDataThunksDetailsCG>");
-
-      TR_VerboseLog::writeLine("%.*s", signatureLength, signatureChars);
+      TR_VerboseLog::writeLine("MH J2I Thunk %.*s", signatureLength, signatureChars);
       TR_VerboseLog::writeLine("thunkAddress: %p, thunkSize: %x", dataDescriptor.address, dataDescriptor.length);
-      TR_VerboseLog::writeLine("thunkStart: %p", thunkStart);
-
       TR_VerboseLog::writeLine("</relocatableDataThunksDetailsCG>");
       }
 
@@ -9273,8 +9266,8 @@ TR_J9SharedCacheVM::persistThunk(char *signatureChars, uint32_t signatureLength,
       else
          throw TR::CompilationException();
       }
-
 #endif
+
    return thunkStart;
    }
 

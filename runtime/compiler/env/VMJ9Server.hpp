@@ -347,8 +347,7 @@ public:
    virtual intptr_t methodTrampolineLookup(TR::Compilation *, TR::SymbolReference *symRef, void *callSite) override { TR_ASSERT_FATAL(0, "methodTrampolineLookup not implemented for AOT");  return 0; }
    virtual TR::CodeCache * getDesignatedCodeCache(TR::Compilation *comp) override;
    virtual void * persistMHJ2IThunk(void *thunk) override { TR_ASSERT_FATAL(0, "persistMHJ2IThunk should not be called on the server"); return NULL; }
-   virtual void * persistThunk(char *signatureChars, uint32_t signatureLength, uint8_t *thunkStart, uint32_t totalSize) { TR_ASSERT_FATAL(0, "persistThunk should not be called on the server"); return NULL; }
-   virtual void *findPersistentThunk(char *signatureChars, uint32_t signatureLength) override { TR_ASSERT_FATAL(0, "findPersistentThunk should not be called on the server"); return NULL; }
+   virtual void * findPersistentMHJ2IThunk(char *signatureChars) override { TR_ASSERT_FATAL(0, "findPersistentMHJ2IThunk should not be called on the server"); return NULL; }
    virtual J9Class * getClassForAllocationInlining(TR::Compilation *comp, TR::SymbolReference *classSymRef) override;
    virtual bool ensureOSRBufferSize(TR::Compilation *comp, uintptr_t osrFrameSizeInBytes, uintptr_t osrScratchBufferSizeInBytes, uintptr_t osrStackFrameSizeInBytes) override;
    virtual TR_OpaqueMethodBlock *getMethodFromName(char *className, char *methodName, char *signature) override;
