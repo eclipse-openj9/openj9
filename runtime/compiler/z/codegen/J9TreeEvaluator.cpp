@@ -1159,7 +1159,7 @@ J9::Z::TreeEvaluator::inlineVectorizedStringIndexOf(TR::Node* node, TR::CodeGene
       generateVRXInstruction(cg, TR::InstOpCode::VL, node, stringVReg, generateS390MemoryReference(stringValueReg, stringIndexReg, headerSize, cg));
       generateRIInstruction(cg, TR::InstOpCode::getLoadHalfWordImmOpCode(), node, loadLenReg, vectorSize);
       cursor = generateS390LabelInstruction(cg, TR::InstOpCode::label, node, labelLoadStringLenDone);
-      iComment("16 bytes of the string have been loaded");
+      iComment("bytes of the string have been loaded");
 
       // VSTRS sets CC with the following values:
       // CC = 0, no match or partial match, AND (zs = 0 OR no zero byte in source VRF)
@@ -1190,6 +1190,18 @@ J9::Z::TreeEvaluator::inlineVectorizedStringIndexOf(TR::Node* node, TR::CodeGene
       cursor = generateVRScInstruction(cg, TR::InstOpCode::VLGV, node, matchIndexReg, searchResultVReg, generateS390MemoryReference(7, cg), 0);
       iComment("check 7th index of search result vec for byte index");
       generateRRInstruction(cg, TR::InstOpCode::getAddRegOpCode(), node, matchIndexReg, stringIndexReg);
+
+      // An edge case failure can occur when the string we would like to search in is smaller than 16 characters and -XX:+CompactStrings is enabled.
+      // The scenario can be illustrated by the example below:
+      //    If V2 = "teststring", then vector representation of V2 = {116, 101, 115, 116, 83, 116, 114, 105, 110, 103, 0, 0, 0, 0, 0, 0}.
+      //    If V3 = "\0", then vector representation of V3 = {0}.
+      //    Therefore, V4 = {0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0}. (i.e. substring length is 1).
+
+      // In the above example, V1 would have the result 10 (i.e. pointing to the first occurrence of 0 in V2). This is obviously incorrect as an index
+      // value of 10 is out of range in the string we are searching.
+      // Therefore, we conditionally jump to labelPatternNotFound using the instruction below if matchIndexReg > maxIndexReg.
+      cursor = generateRIEInstruction(cg, TR::InstOpCode::getCmpRegAndBranchRelOpCode(), node, matchIndexReg, maxIndexReg, labelPatternNotFound, TR::InstOpCode::COND_BH);
+      iComment("Jump if pattern match found beyond end of string (i.e. we matched 0s in unused vector register slots).");
       cursor = generateRIEInstruction(cg, TR::InstOpCode::getCmpImmBranchRelOpCode(), node, patternLenReg, (int8_t)vectorSize, labelLoadResult, TR::InstOpCode::COND_BNH);
       iComment("if patternLen <= 16 then we are done, otherwise we continue to check the rest of pattern");
       cursor = generateRIEInstruction(cg, TR::InstOpCode::getCmpRegAndBranchRelOpCode(), node, stringIndexReg, maxIndexReg, labelPatternNotFound, TR::InstOpCode::COND_BH);
@@ -1206,7 +1218,7 @@ J9::Z::TreeEvaluator::inlineVectorizedStringIndexOf(TR::Node* node, TR::CodeGene
       // Starting from the beginning of the partial match, load the next 16 bytes from string and redo pattern header search.
       // This implies that the partial match will be re-matched by the next VSTRS. This can potentially benefit string
       // search cases where pattern is shorter than 16 bytes. For short string strings, string search can potentially be done in
-      // the next VSTRS and can we avoid residue matching which requires several index adjustments that do not provide
+      // the next VSTRS and we can avoid residue matching which requires several index adjustments that do not provide
       // performance benefits.
       cursor = generateVRScInstruction(cg, TR::InstOpCode::VLGV, node, matchIndexReg, searchResultVReg, generateS390MemoryReference(7, cg), 0);
       iComment("check 7th index of search result vec for byte index");
