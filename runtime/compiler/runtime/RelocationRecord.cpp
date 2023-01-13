@@ -2319,21 +2319,12 @@ static TR_RelocationErrorCode relocateAndRegisterThunk(
       return TR_RelocationErrorCode::relocationOK; // return successful
       }
 
-   // search shared cache for thunk, copy it over and create thunk entry
-   J9SharedDataDescriptor firstDescriptor;
-   firstDescriptor.address = NULL;
-
-   javaVM->sharedClassConfig->findSharedData(reloRuntime->currentThread(),
-                                             signatureString,
-                                             signatureLength,
-                                             J9SHR_DATA_TYPE_AOTTHUNK,
-                                             false,
-                                             &firstDescriptor,
-                                             NULL);
+   uintptr_t thunkSize;
+   uint8_t *persistentThunk = (uint8_t *)j9ThunkFindPersistentThunk(jitConfig, signatureString, signatureLength, &thunkSize);
 
    // if found thunk, then need to copy thunk into code cache, create thunk mapping, and register thunk mapping
    //
-   if (firstDescriptor.address)
+   if (persistentThunk)
       {
       //Copy thunk from shared cache into local memory and relocate target address
       //
@@ -2344,7 +2335,7 @@ static TR_RelocationErrorCode relocateAndRegisterThunk(
       // allocate in the current code cache. The reason is that, when a new code cache is needed
       // the reservation of the old cache is cancelled and further allocation attempts from
       // the old cache (which is not switched) will fail
-      U_8 *thunkStart = TR::CodeCacheManager::instance()->allocateCodeMemory(firstDescriptor.length, 0, &codeCache, &coldCode, true);
+      U_8 *thunkStart = TR::CodeCacheManager::instance()->allocateCodeMemory(thunkSize, 0, &codeCache, &coldCode, true);
       U_8 *thunkAddress;
       omrthread_jit_write_protect_disable();
       if (thunkStart)
@@ -2352,7 +2343,7 @@ static TR_RelocationErrorCode relocateAndRegisterThunk(
          // Relocate the thunk
          //
          RELO_LOG(reloRuntime->reloLogger(), 7, "\t\t\trelocateAndRegisterThunk: thunkStart from cache %p\n", thunkStart);
-         memcpy(thunkStart, firstDescriptor.address, firstDescriptor.length);
+         memcpy(thunkStart, persistentThunk, thunkSize);
 
          thunkAddress = thunkStart + 2*sizeof(I_32);
 
