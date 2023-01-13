@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2022 IBM Corp. and others
+ * Copyright (c) 2018, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -346,7 +346,7 @@ public:
    virtual TR::CodeCache * getResolvedTrampoline(TR::Compilation *, TR::CodeCache* curCache, J9Method * method, bool inBinaryEncoding) override { return 0; }
    virtual intptr_t methodTrampolineLookup(TR::Compilation *, TR::SymbolReference *symRef, void *callSite) override { TR_ASSERT_FATAL(0, "methodTrampolineLookup not implemented for AOT");  return 0; }
    virtual TR::CodeCache * getDesignatedCodeCache(TR::Compilation *comp) override;
-   virtual void * persistJ2IThunk(void *thunk) override { TR_ASSERT_FATAL(0, "persistJ2IThunk should not be called on the server"); return NULL; }
+   virtual void * persistMHJ2IThunk(void *thunk) override { TR_ASSERT_FATAL(0, "persistMHJ2IThunk should not be called on the server"); return NULL; }
    virtual void * persistThunk(char *signatureChars, uint32_t signatureLength, uint8_t *thunkStart, uint32_t totalSize) { TR_ASSERT_FATAL(0, "persistThunk should not be called on the server"); return NULL; }
    virtual void *findPersistentThunk(char *signatureChars, uint32_t signatureLength) override { TR_ASSERT_FATAL(0, "findPersistentThunk should not be called on the server"); return NULL; }
    virtual J9Class * getClassForAllocationInlining(TR::Compilation *comp, TR::SymbolReference *classSymRef) override;

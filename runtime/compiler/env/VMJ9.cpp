@@ -4253,7 +4253,7 @@ TR_J9VMBase::setInvokeExactJ2IThunk(void *thunkptr, TR::Compilation *comp)
    }
 
 void *
-TR_J9VMBase::findPersistentJ2IThunk(char *signatureChars)
+TR_J9VMBase::findPersistentMHJ2IThunk(char *signatureChars)
    {
    return findPersistentThunk(signatureChars, strlen(signatureChars));
    }
@@ -4275,7 +4275,7 @@ TR_J9VMBase::findPersistentThunk(char *signatureChars, uint32_t signatureLength)
    }
 
 void *
-TR_J9VMBase::persistJ2IThunk(void *thunk)
+TR_J9VMBase::persistMHJ2IThunk(void *thunk)
    {
    return NULL;  // only needed for AOT compilations
    }
@@ -9236,7 +9236,7 @@ TR_J9SharedCacheVM::setJ2IThunk(char *signatureChars, uint32_t signatureLength, 
    }
 
 void *
-TR_J9SharedCacheVM::persistJ2IThunk(void *thunk)
+TR_J9SharedCacheVM::persistMHJ2IThunk(void *thunk)
    {
    return persistThunk(((TR_MHJ2IThunk *)thunk)->terseSignature(), strlen(((TR_MHJ2IThunk *)thunk)->terseSignature()), (uint8_t*)thunk, ((TR_MHJ2IThunk *)thunk)->totalSize());
    }

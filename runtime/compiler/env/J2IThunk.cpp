@@ -199,7 +199,7 @@ TR_MHJ2IThunkTable::findThunkFromTerseSignature(
    if (fej9->isAOT_DEPRECATED_DO_NOT_USE() && !isForCurrentRun)
       {
       // Must use persistent thunks for compiles that will persist
-      return (TR_MHJ2IThunk *)fej9->findPersistentJ2IThunk(terseSignature);
+      return (TR_MHJ2IThunk *)fej9->findPersistentMHJ2IThunk(terseSignature);
       }
    else
       {
@@ -224,7 +224,7 @@ TR_MHJ2IThunkTable::addThunk(
    if (fej9->isAOT_DEPRECATED_DO_NOT_USE() && !isForCurrentRun)
       {
       // Must use persistent thunks for compiles that will persist
-      fej9->persistJ2IThunk(thunk);
+      fej9->persistMHJ2IThunk(thunk);
       if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseJ2IThunks))
          TR_VerboseLog::writeLineLocked(TR_Vlog_J2I,"persist %s @%p", thunk->terseSignature(), thunk);
       }
