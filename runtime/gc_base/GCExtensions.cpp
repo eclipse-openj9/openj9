@@ -306,7 +306,13 @@ MM_GCExtensions::releaseNativesForContinuationObject(MM_EnvironmentBase* env, j9
 
 	if (verify_continuation_list == continuationListOption) {
 		J9VMContinuation *continuation = J9VMJDKINTERNALVMCONTINUATION_VMREF(vmThread, objectPtr);
-		Assert_GC_true_with_message2(env, (NULL == continuation), "Continuation expected to be NULL, but it is %p, from Continuation object %p\n", continuation, objectPtr);
+		jboolean finished = J9VMJDKINTERNALVMCONTINUATION_FINISHED(vmThread, objectPtr);
+		/* there might be potential case that GC would happen between JVM_VirtualThreadUnmountBegin() and JVM_VirtualThreadUnmountEnd() and
+		 * last unmounted continuation Object is marked as "dead", but the related J9VMContinuation has not been freed up.
+		 */
+		if (!finished) {
+			Assert_GC_true_with_message2(env, (NULL == continuation), "Continuation expected to be NULL, but it is %p, from Continuation object %p\n", continuation, objectPtr);
+		}
 	} else {
 		getJavaVM()->internalVMFunctions->freeContinuation(vmThread, objectPtr);
 	}
