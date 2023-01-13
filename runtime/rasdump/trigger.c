@@ -349,11 +349,11 @@ matchesExceptionFilter(J9VMThread *vmThread, J9RASdumpEventData *eventData, UDAT
 	UDATA buflen = 0;
 	char *buf = NULL;
 	const char *needleString = NULL;
-	UDATA needleLength;
-	U_32 matchFlag;
+	UDATA needleLength = 0;
+	U_32 matchFlag = 0;
 	UDATA retCode = J9RAS_DUMP_NO_MATCH;
 
-   	if (eventData->exceptionRef && filter != NULL) {
+	if ((NULL != eventData->exceptionRef) && (NULL != filter)) {
 		j9object_t exception = *((j9object_t *) eventData->exceptionRef);
 		char *hashSignInFilter = NULL;
 		char *stackOffsetFilter = NULL;
@@ -365,7 +365,7 @@ matchesExceptionFilter(J9VMThread *vmThread, J9RASdumpEventData *eventData, UDAT
 		throwSite.desiredOffset = 0;
 
 		/* Filter an exception event on throw/catch site if the new filter syntax is used */
-		hashSignInFilter = strrchr((const char *) filter, '#');
+		hashSignInFilter = strrchr(filter, '#');
 		if (NULL != hashSignInFilter) {
 			hashSignInFilter++;
 			if (*hashSignInFilter >= '0' && *hashSignInFilter <= '9') {
@@ -447,25 +447,36 @@ matchesExceptionFilter(J9VMThread *vmThread, J9RASdumpEventData *eventData, UDAT
 		buflen = 0;
 	}
 
-	if (subFilter && parseWildcard(subFilter, strlen(subFilter), &needleString, &needleLength, &matchFlag) == 0) {
-		if (eventData->exceptionRef && *eventData->exceptionRef) {
-			char stackBuffer[256];
+	if ((J9RAS_DUMP_MATCH != retCode) || (NULL == subFilter)) {
+		/* If the exception class didn't match, or there's no sub-filter, we're done. */
+	} else if (0 == parseWildcard(subFilter, strlen(subFilter), &needleString, &needleLength, &matchFlag)) {
+		/* Assume the sub-filter will not match. If the exception doesn't have a message, it can't match. */
+		retCode = J9RAS_DUMP_NO_MATCH;
+
+		if ((NULL != eventData->exceptionRef) && (NULL != *eventData->exceptionRef)) {
 			j9object_t emessage = J9VMJAVALANGTHROWABLE_DETAILMESSAGE(vmThread, *eventData->exceptionRef);
 
 			if (NULL != emessage) {
-				buf = vmThread->javaVM->internalVMFunctions->copyStringToUTF8WithMemAlloc(vmThread, emessage, J9_STR_NULL_TERMINATE_RESULT, "", 0, stackBuffer, 256, &buflen);
+				char stackBuffer[256];
+
+				buf = vmThread->javaVM->internalVMFunctions->copyStringToUTF8WithMemAlloc(
+						vmThread,
+						emessage,
+						J9_STR_NULL_TERMINATE_RESULT,
+						"",
+						0,
+						stackBuffer,
+						sizeof(stackBuffer),
+						&buflen);
 
 				if (NULL != buf) {
 					if (wildcardMatch(matchFlag, needleString, needleLength, buf, buflen)) {
 						retCode = J9RAS_DUMP_MATCH;
-					} else {
-						retCode = J9RAS_DUMP_NO_MATCH;
+					}
+					if (stackBuffer != buf) {
+						j9mem_free_memory(buf);
 					}
 				}
-			}
-
-			if (buf != stackBuffer) {
-				j9mem_free_memory(buf);
 			}
 		}
 	}
