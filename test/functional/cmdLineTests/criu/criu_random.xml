@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
 
 <!--
-  Copyright (c) 2022, 2022 IBM Corp. and others
+  Copyright (c) 2022, 2023 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,7 +27,7 @@
 <suite id="J9 Criu Command-Line Option Tests" timeout="300">
 
   <test id="Create Criu Checkpoint Image">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ $JVM_OPTIONS$ "Checkpoint"</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" "Checkpoint"</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
     <output type="success" caseSensitive="yes" regex="no">Pre-checkpoint</output>
     <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
@@ -41,7 +41,7 @@
   </test>
 
   <test id="First Restore of Criu Checkpoint Image">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ $JVM_OPTIONS$ "FirstRestore"</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" "FirstRestore"</command>
     <output type="success" caseSensitive="yes" regex="no">First Restore</output>
     <output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>
     <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
@@ -56,7 +56,7 @@
   </test>
 
   <test id="Second Restore of Criu Checkpoint Image">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ $JVM_OPTIONS$ "SecondRestore"</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" "SecondRestore"</command>
     <output type="success" caseSensitive="yes" regex="no">Different random values</output>
     <output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>
     <output type="required" caseSensitive="yes" regex="no">Second Restore</output>
