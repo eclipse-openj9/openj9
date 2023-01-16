@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2022 IBM Corp. and others
+ * Copyright (c) 2000, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -3682,6 +3682,16 @@ J9::Z::CodeGenerator::suppressInliningOfRecognizedMethod(TR::RecognizedMethod me
       return true;
       }
 
+   static bool disableCRC32CAcceleration = (feGetEnv("TR_DisableCRC32CAcceleration") != NULL);
+   if (!disableCRC32CAcceleration && self()->getSupportsVectorRegisters())
+      {
+      if (method == TR::java_util_zip_CRC32C_updateBytes ||
+         method == TR::java_util_zip_CRC32C_updateDirectByteBuffer)
+         {
+         return true;
+         }
+      }
+
    if (method == TR::java_lang_Integer_highestOneBit ||
        method == TR::java_lang_Integer_numberOfLeadingZeros ||
        method == TR::java_lang_Integer_numberOfTrailingZeros ||
@@ -4064,6 +4074,22 @@ J9::Z::CodeGenerator::inlineDirectCall(
 
       default:
          break;
+      }
+
+   static bool disableCRC32CAcceleration = (feGetEnv("TR_DisableCRC32CAcceleration") != NULL);
+   if (!disableCRC32CAcceleration && self()->getSupportsVectorRegisters())
+      {
+      switch (methodSymbol->getRecognizedMethod())
+         {
+         case TR::java_util_zip_CRC32C_updateBytes:
+            resultReg = TR::TreeEvaluator::inlineCRC32CUpdateBytes(node, cg, false);
+            return true;
+         case TR::java_util_zip_CRC32C_updateDirectByteBuffer:
+            resultReg = TR::TreeEvaluator::inlineCRC32CUpdateBytes(node, cg, true);
+            return true;
+         default:
+            break;
+         }
       }
 
    TR::MethodSymbol * symbol = node->getSymbol()->castToMethodSymbol();
