@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2022 IBM Corp. and others
+ * Copyright (c) 2000, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -576,6 +576,13 @@ public:
    virtual bool                    hasBackwardBranches();
    virtual bool                    isObjectConstructor();
    virtual bool                    isNonEmptyObjectConstructor();
+
+   /**
+    * @brief Check if method is a compilable method
+    *
+    * @param[in] TR_Memory *
+    */
+   virtual bool                    isCompilable(TR_Memory *);
 
    virtual void *                  startAddressForJittedMethod();
    virtual void *                  startAddressForJNIMethod( TR::Compilation *);
