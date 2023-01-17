@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2022, 2022 IBM Corp. and others
+ * Copyright (c) 2022, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -71,8 +71,12 @@ public class VirtualThreadTests {
 	@Test
 	public void test_VirtualthreadYieldResume() {
 		try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
-			int[] results = new int[6];
-			IntStream.range(0, 6).forEach(i -> {
+			int numThreads = 6;
+			int expectedThreadResult = 3;
+			long estimatedThreadCompletionTime = 5L; /* seconds */
+			int[] results = new int[numThreads];
+
+			IntStream.range(0, numThreads).forEach(i -> {
 					executor.submit(() -> {
 							results[i] = 1;
 							Thread.sleep(Duration.ofSeconds(1));
@@ -82,9 +86,27 @@ public class VirtualThreadTests {
 							return i;
 					});
 			});
-			executor.awaitTermination(5L, TimeUnit.SECONDS);
-			for (int i = 0; i < 6; i++) {
-				AssertJUnit.assertTrue("Virtual Thread " + i + ": incorrect result of " + results[i], (results[i] == 3));
+
+			/* Wait incrementally for the worst-case scenario where all virtual threads are
+			 * executed sequentially. Exit the wait loop if the virtual threads finish early.
+			 */
+			for (int i = 0; i < numThreads; i++) {
+				executor.awaitTermination(estimatedThreadCompletionTime, TimeUnit.SECONDS);
+				boolean exit = true;
+				for (int j = 0; j < numThreads; j++) {
+					if (results[j] != expectedThreadResult) {
+						exit = false;
+					}
+				}
+				if (exit) {
+					break;
+				}
+			}
+
+			for (int i = 0; i < numThreads; i++) {
+				AssertJUnit.assertTrue(
+						"Virtual Thread " + i + ": incorrect result of " + results[i],
+						(results[i] == expectedThreadResult));
 			}
 		} catch (Exception e) {
 			Assert.fail("Unexpected exception occured : " + e.getMessage() , e);
