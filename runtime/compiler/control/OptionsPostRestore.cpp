@@ -24,9 +24,14 @@
 
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 
+#include "jvminit.h"
+#include "env/TRMemory.hpp"
 #include "control/CompilationRuntime.hpp"
 #include "control/Options.hpp"
 #include "control/OptionsPostRestore.hpp"
+
+#define FIND_AND_CONSUME_RESTORE_ARG(match, optionName, optionValue) FIND_AND_CONSUME_ARG(vm->checkpointState.restoreArgsList, match, optionName, optionValue)
+#define FIND_ARG_IN_RESTORE_ARGS(match, optionName, optionValue) FIND_ARG_IN_ARGS(vm->checkpointState.restoreArgsList, match, optionName, optionValue)
 
 J9::OptionsPostRestore::OptionsPostRestore(J9JITConfig *jitConfig, TR::CompilationInfo *compInfo)
    :
@@ -390,17 +395,56 @@ J9::OptionsPostRestore::processJitServerOptions()
    }
 
 void
+J9::OptionsPostRestore::processInternalCompilerOptions(bool enabled, bool isAOT)
+   {
+   // Needed for FIND_ARG_IN_RESTORE_ARGS
+   J9JavaVM *vm = _jitConfig->javaVM;
+
+   char *commandLineOptions = NULL;
+   bool mergeCompilerOptions = (_argIndexMergeOptionsEnabled > _argIndexMergeOptionsDisabled);
+
+   // TODO: ensure the global cmdline options exist
+   TR::Options *options = isAOT ? TR::Options::getAOTCmdLineOptions() : TR::Options::getCmdLineOptions();
+
+   int32_t argIndex;
+   if (isAOT)
+      argIndex = FIND_ARG_IN_RESTORE_ARGS( STARTSWITH_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::Xaotcolon], 0);
+   else
+      argIndex = FIND_ARG_IN_RESTORE_ARGS( STARTSWITH_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::Xjitcolon], 0);
+
+   if (enabled && argIndex >= 0)
+      {
+      intptr_t rc = initializeCompilerArgsPostRestore(_jitConfig->javaVM, argIndex, &commandLineOptions, !isAOT, mergeCompilerOptions);
+      if (rc)
+         {
+         // TODO: Error condition
+         }
+      }
+
+   if (commandLineOptions)
+      {
+      char *remainder = TR::Options::processOptionSetPostRestore(_jitConfig, commandLineOptions, options, isAOT);
+      if (*remainder)
+         {
+         // TODO: Error condition
+         }
+      }
+   }
+
+void
 J9::OptionsPostRestore::processCompilerOptions()
    {
+   // Needed for FIND_AND_CONSUME_RESTORE_ARG
+   J9JavaVM *vm = _jitConfig->javaVM;
+
    // TODO: Check existing config from before checkpoint
    bool jitEnabled = true;
    bool aotEnabled = true;
 
-   // TODO: find and consume
-   // - J9::ExternalOptions::Xjit
-   // - J9::ExternalOptions::Xnojit
-   // - J9::ExternalOptions::Xaot
-   // - J9::ExternalOptions::Xnoaot
+   _argIndexXjit = FIND_AND_CONSUME_RESTORE_ARG(OPTIONAL_LIST_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::Xjit], 0);
+   _argIndexXnojit = FIND_AND_CONSUME_RESTORE_ARG(OPTIONAL_LIST_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::Xnojit], 0);
+   _argIndexXaot = FIND_AND_CONSUME_RESTORE_ARG(OPTIONAL_LIST_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::Xaot], 0);
+   _argIndexXnoaot = FIND_AND_CONSUME_RESTORE_ARG(OPTIONAL_LIST_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::Xnoaot], 0);
 
    if (_argIndexXjit < _argIndexXnojit)
       jitEnabled = false;
@@ -408,9 +452,25 @@ J9::OptionsPostRestore::processCompilerOptions()
    if (_argIndexXaot < _argIndexXnoaot)
       aotEnabled = false;
 
+   // TODO: Look into what needs to be done if both -Xnojit and -Xaot
+
+   if (!aotEnabled)
+      {
+      // do necessary work to disable aot compilation
+      }
+
+   if (!jitEnabled)
+      {
+      // do necessary work to disable jit compilation
+      }
+
    if (jitEnabled || aotEnabled)
       {
-      // TODO: Process -Xjit:/-Xaot: options
+      _argIndexMergeOptionsEnabled = FIND_AND_CONSUME_RESTORE_ARG(EXACT_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::XXplusMergeCompilerOptions], 0);
+      _argIndexMergeOptionsDisabled = FIND_AND_CONSUME_RESTORE_ARG(EXACT_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::XXminusMergeCompilerOptions], 0);
+
+      processInternalCompilerOptions(aotEnabled, true);
+      processInternalCompilerOptions(jitEnabled, false);
 
       // TODO: Based on whether the following is enabled, do necessary compensation
       // - exclude=
@@ -418,10 +478,13 @@ J9::OptionsPostRestore::processCompilerOptions()
       // - compilationThreads=
       // - disableAsyncCompilation
       // - disabling recompilation (optLevel=, inhibit recomp, etc)
+      // - OMR::Options::_logFile (both global and subsets)
+      //    - May have to close an existing file and open a new one?
 
       // TODO: Look into
       // - -Xrs
       // - -Xtune:virtualized
+      // - TR::Compiler->target.numberOfProcessors
 
       iterateOverExternalOptions();
 
@@ -433,20 +496,6 @@ J9::OptionsPostRestore::processCompilerOptions()
       if (jitEnabled)
          {
          processJitServerOptions();
-         }
-      }
-   else
-      {
-      // TODO: Look into what needs to be done if both -Xnojit and -Xaot
-
-      if (!aotEnabled)
-         {
-         // do necessary work to disable aot compilation
-         }
-
-      if (!jitEnabled)
-         {
-         // do necessary work to disable jit compilation
          }
       }
    }

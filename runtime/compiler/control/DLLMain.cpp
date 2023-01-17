@@ -57,6 +57,7 @@ extern bool isQuickstart;
 
 static IDATA initializeCompilerArgs(J9JavaVM* vm,
                                     J9VMDllLoadInfo* loadInfo,
+                                    J9VMInitArgs* j9vmArgs,
                                     IDATA argIndex,
                                     char** xCommandLineOptionsPtr,
                                     bool isXjit,
@@ -86,13 +87,13 @@ static IDATA initializeCompilerArgs(J9JavaVM* vm,
       bool firstOpt = true;
 
       /* Find first option with colon */
-      argIndex = FIND_ARG_IN_VMARGS_FORWARD(STARTSWITH_MATCH, VMOPT_WITH_COLON, NULL);
+      argIndex = FIND_ARG_IN_ARGS_FORWARD(j9vmArgs, STARTSWITH_MATCH, VMOPT_WITH_COLON, NULL);
 
       /* Determine size of xCommandLineOptions string */
       while (argIndex >= 0)
          {
          CONSUME_ARG(vm->vmArgsArray, argIndex);
-         GET_OPTION_VALUE(argIndex, ':', &xOptions);
+         GET_OPTION_VALUE_ARGS(j9vmArgs, argIndex, ':', &xOptions);
 
          size_t partialOptLen = 0;
 
@@ -111,7 +112,7 @@ static IDATA initializeCompilerArgs(J9JavaVM* vm,
             firstOpt = false;
 
          /* Find next option with colon */
-         argIndex = FIND_NEXT_ARG_IN_VMARGS_FORWARD(STARTSWITH_MATCH, VMOPT_WITH_COLON, NULL, argIndex);
+         argIndex = FIND_NEXT_ARG_IN_ARGS_FORWARD(j9vmArgs, STARTSWITH_MATCH, VMOPT_WITH_COLON, NULL, argIndex);
          }
 
       /* Concatenate options into xCommandLineOptions string */
@@ -127,11 +128,11 @@ static IDATA initializeCompilerArgs(J9JavaVM* vm,
          firstOpt = true;
 
          /* Find first option with colon */
-         argIndex = FIND_ARG_IN_VMARGS_FORWARD(STARTSWITH_MATCH, VMOPT_WITH_COLON, NULL);
+         argIndex = FIND_ARG_IN_ARGS_FORWARD(j9vmArgs, STARTSWITH_MATCH, VMOPT_WITH_COLON, NULL);
          while (argIndex >= 0)
             {
-            CONSUME_ARG(vm->vmArgsArray, argIndex);
-            GET_OPTION_VALUE(argIndex, ':', &xOptions);
+            CONSUME_ARG(j9vmArgs, argIndex);
+            GET_OPTION_VALUE_ARGS(j9vmArgs, argIndex, ':', &xOptions);
 
             partialOptLen = 0;
 
@@ -163,7 +164,7 @@ static IDATA initializeCompilerArgs(J9JavaVM* vm,
                firstOpt = false;
 
             /* Find next option with colon */
-            argIndex = FIND_NEXT_ARG_IN_VMARGS_FORWARD(STARTSWITH_MATCH, VMOPT_WITH_COLON, NULL, argIndex);
+            argIndex = FIND_NEXT_ARG_IN_ARGS_FORWARD(j9vmArgs, STARTSWITH_MATCH, VMOPT_WITH_COLON, NULL, argIndex);
             }
 
          /* At this point, the cursor should be at exactly the last array entry */
@@ -191,7 +192,7 @@ static IDATA initializeCompilerArgs(J9JavaVM* vm,
             j9mem_free_memory(xCommandLineOptions);
          if (!(xCommandLineOptions = (char*)j9mem_allocate_memory(size * sizeof(char), J9MEM_CATEGORY_JIT)))
             return J9VMDLLMAIN_FAILED;
-         returnVal = GET_COMPOUND_VALUE(argIndex, ':', &xCommandLineOptions, size);
+         returnVal = GET_COMPOUND_VALUE_ARGS(j9vmArgs, argIndex, ':', &xCommandLineOptions, size);
          } while (returnVal == OPTION_BUFFER_OVERFLOW);
 
       if (!* xCommandLineOptions)
@@ -205,6 +206,15 @@ static IDATA initializeCompilerArgs(J9JavaVM* vm,
    *xCommandLineOptionsPtr = xCommandLineOptions;
    return 0;
    }
+
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+uintptr_t
+initializeCompilerArgsPostRestore(J9JavaVM* vm, intptr_t argIndex, char** xCommandLineOptionsPtr, bool isXjit, bool mergeCompilerOptions)
+   {
+   J9VMDllLoadInfo* loadInfo = FIND_DLL_TABLE_ENTRY( THIS_DLL_NAME );
+   return initializeCompilerArgs(vm, loadInfo, vm->checkpointState.restoreArgsList, argIndex, xCommandLineOptionsPtr, isXjit, mergeCompilerOptions);
+   }
+#endif
 
 IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void * reserved)
    {
@@ -425,7 +435,7 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void * reserved)
                /* do initializations for -Xjit options */
                if (isJIT && argIndexXjit >= 0)
                   {
-                  IDATA rc = initializeCompilerArgs(vm, loadInfo, argIndexXjit, &xjitCommandLineOptions, true, mergeCompilerOptions);
+                  IDATA rc = initializeCompilerArgs(vm, loadInfo, vm->vmArgsArray, argIndexXjit, &xjitCommandLineOptions, true, mergeCompilerOptions);
                   if (rc)
                      return rc;
                   }
@@ -435,7 +445,7 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void * reserved)
                /* do initializations for -Xaot options */
                if (isAOT && argIndexXaot >= 0)
                   {
-                  IDATA rc = initializeCompilerArgs(vm, loadInfo, argIndexXaot, &xaotCommandLineOptions, false, mergeCompilerOptions);
+                  IDATA rc = initializeCompilerArgs(vm, loadInfo, vm->vmArgsArray, argIndexXaot, &xaotCommandLineOptions, false, mergeCompilerOptions);
                   if (rc)
                      return rc;
                   }

@@ -54,15 +54,21 @@ class OptionsPostRestore
    private:
 
    /**
-    * Method to iterate and set indices of external options found in
-    * the Restore VM Args Array
+    * Helper Method to iterate and set indices of external options
+    * found in the Restore VM Args Array
     */
    void iterateOverExternalOptions();
 
    /**
-    * Method to process JITServer options post restore.
+    * Helper method to process JITServer options post restore.
     */
    void processJitServerOptions();
+
+   /**
+    * Helper method to get compiler options (such as -Xjit, -Xaot, etc.)
+    * from the Restore VM Args Array and process them.
+    */
+   void processInternalCompilerOptions(bool enabled, bool isAOT);
 
    /**
     * Method to process compiler options post restore.
