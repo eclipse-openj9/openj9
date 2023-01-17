@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2021 IBM Corp. and others
+ * Copyright (c) 2019, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -105,6 +105,12 @@ public:
     * @return true if isInstance inline fast helper is supported
     */
    bool supportsInliningOfIsInstance();
+
+   /**
+    * @brief Answers whether isAssignableFrom inline fast helper is supported
+    * @return true if AssignableFrom inline fast helper is supported
+    */
+   bool supportsInliningOfIsAssignableFrom();
 
    /**
     * @brief Answers whether inlining of the specified recognized method should be suppressed
