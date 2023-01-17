@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2021, 2022 IBM Corp. and others
+ * Copyright (c) 2021, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1853,7 +1853,7 @@ public class UpcallMethodHandles {
 
 	public static double addDoubleAndIntDoubleLongFromStruct(double arg1, MemorySegment arg2) {
 		int structElem1 = arg2.get(JAVA_INT, 0);
-		/* The size of [int, double, long] on AIX/PPC 64-bit is 16 bytes without padding by default
+		/* The size of [int, double, long] on AIX/PPC 64-bit is 20 bytes without padding by default
 		 * while the same struct is 24 bytes with padding on other platforms.
 		 */
 		double structElem2 = (isAixOS) ? arg2.get(JAVA_DOUBLE.withBitAlignment(32), 4) : arg2.get(JAVA_DOUBLE, 8);

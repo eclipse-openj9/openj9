@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2021, 2022 IBM Corp. and others
+ * Copyright (c) 2021, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -859,12 +859,12 @@ public class UpcallMHWithMixedSigStruTests {
 
 	@Test
 	public void test_addDoubleAndIntDoubleLongFromStructByUpcallMH() throws Throwable {
-		/* The size of [int, double, long] on AIX/PPC 64-bit is 16 bytes without padding by default
+		/* The size of [int, double, long] on AIX/PPC 64-bit is 20 bytes without padding by default
 		 * while the same struct is 24 bytes with padding on other platforms.
 		 */
-		GroupLayout structLayout = isAixOS ? MemoryLayout.structLayout(C_INT.withName("elem1"),
-				C_DOUBLE.withName("elem2"), longLayout.withName("elem3")) : MemoryLayout.structLayout(C_INT.withName("elem1"),
-						MemoryLayout.paddingLayout(32), C_DOUBLE.withName("elem2"), longLayout.withName("elem3"));
+		GroupLayout structLayout = isAixOS ? MemoryLayout.structLayout(C_INT.withName("elem1"), C_DOUBLE.withName("elem2"),
+								longLayout.withName("elem3").withBitAlignment(32)) : MemoryLayout.structLayout(C_INT.withName("elem1"),
+								MemoryLayout.paddingLayout(32), C_DOUBLE.withName("elem2"), longLayout.withName("elem3"));
 		VarHandle elemHandle1 = structLayout.varHandle(int.class, PathElement.groupElement("elem1"));
 		VarHandle elemHandle2 = structLayout.varHandle(double.class, PathElement.groupElement("elem2"));
 		VarHandle elemHandle3 = structLayout.varHandle(long.class, PathElement.groupElement("elem3"));
