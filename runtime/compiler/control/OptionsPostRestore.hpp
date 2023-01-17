@@ -26,17 +26,82 @@
 
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 
+struct J9JITConfig;
+namespace TR { class CompilationInfo; }
+
 namespace J9
 {
 
 class OptionsPostRestore
    {
    public:
-   OptionsPostRestore() {};
-   static void processOptionsPostRestore();
+   /**
+    * \brief OptionsPostRestore constructor
+    *
+    * \param jitConfig The J9JITConfig
+    * \param compInfo The TR::CompilationInfo
+    */
+   OptionsPostRestore(J9JITConfig *jitConfig, TR::CompilationInfo *compInfo);
+
+   /**
+    * Public API to process options post restore
+    *
+    * \param jitConfig The J9JITConfig
+    * \param compInfo The TR::CompilationInfo
+    */
+   static void processOptionsPostRestore(J9JITConfig *jitConfig, TR::CompilationInfo *compInfo);
 
    private:
+
+   /**
+    * Method to iterate and set indices of external options found in
+    * the Restore VM Args Array
+    */
+   void iterateOverExternalOptions();
+
+   /**
+    * Method to process JITServer options post restore.
+    */
+   void processJitServerOptions();
+
+   /**
+    * Method to process compiler options post restore.
+    */
    void processCompilerOptions();
+
+   J9JITConfig *_jitConfig;
+   TR::CompilationInfo *_compInfo;
+
+   int32_t _argIndexXjit;
+   int32_t _argIndexXjitcolon;
+   int32_t _argIndexXnojit;
+   int32_t _argIndexXaot;
+   int32_t _argIndexXaotcolon;
+   int32_t _argIndexXnoaot;
+   int32_t _argIndexMergeOptionsEnabled;
+   int32_t _argIndexMergeOptionsDisabled;
+   int32_t _argIndexPrintCodeCache;
+   int32_t _argIndexDisablePrintCodeCache;
+   int32_t _argIndexUseJITServer;
+   int32_t _argIndexDisableUseJITServer;
+   int32_t _argIndexJITServerSSLKey;
+   int32_t _argIndexJITServerSSLCert;
+   int32_t _argIndexJITServerUseAOTCache;
+   int32_t _argIndexDisableJITServerUseAOTCache;
+   int32_t _argIndexRequireJITServer;
+   int32_t _argIndexDisableRequireJITServer;
+   int32_t _argIndexJITServerLogConnections;
+   int32_t _argIndexDisableJITServerLogConnections;
+   int32_t _argIndexJITServerAOTmx;
+   int32_t _argIndexJITServerLocalSyncCompiles;
+   int32_t _argIndexDisableJITServerLocalSyncCompiles;
+   int32_t _argIndexJITServerAOTCachePersistence;
+   int32_t _argIndexDisableJITServerAOTCachePersistence;
+   int32_t _argIndexJITServerAOTCacheDir;
+   int32_t _argIndexJITServerAOTCacheName;
+   int32_t _argIndexJITServerAddress;
+   int32_t _argIndexJITServerPort;
+   int32_t _argIndexJITServerTimeout;
    };
 
 }
