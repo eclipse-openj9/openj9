@@ -29,7 +29,7 @@
 #include "env/PersistentCollections.hpp"
 #include "runtime/JITServerAOTSerializationRecords.hpp"
 
-static const uint32_t JITSERVER_AOTCACHE_VERSION = 0;
+static const uint32_t JITSERVER_AOTCACHE_VERSION = 1;
 static const char JITSERVER_AOTCACHE_EYECATCHER[] = "AOTCACHE";
 // the eye-catcher is not null-terminated in the snapshot files
 static const size_t JITSERVER_AOTCACHE_EYECATCHER_LENGTH = sizeof(JITSERVER_AOTCACHE_EYECATCHER) - 1;
@@ -57,6 +57,7 @@ struct JITServerAOTCacheHeader
    size_t _numClassChainRecords;
    size_t _numWellKnownClassesRecords;
    size_t _numAOTHeaderRecords;
+   size_t _numThunkRecords;
    size_t _numCachedAOTMethods;
    size_t _nextClassLoaderId;
    size_t _nextClassId;
@@ -64,6 +65,7 @@ struct JITServerAOTCacheHeader
    size_t _nextClassChainId;
    size_t _nextWellKnownClassesId;
    size_t _nextAOTHeaderId;
+   size_t _nextThunkId;
    };
 
 struct AOTCacheClassLoaderRecord;
