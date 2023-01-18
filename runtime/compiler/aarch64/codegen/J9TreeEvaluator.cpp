@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2022 IBM Corp. and others
+ * Copyright (c) 2019, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -5270,11 +5270,577 @@ static TR::Register *inlineFPTrg1Src3(TR::Node *node, TR::InstOpCode::Mnemonic o
    return targetRegister;
    }
 
+/**
+ * @brief Generates instruction sequence for inlining java/util/zip/CRC32C.updateBytes and updateDirectByteBuffer
+ *
+ * @param[in] node: node
+ * @param[in] cg: CodeGenerator
+ * @param[in] isRawAddress: true if this is the call to updateDirectByteBuffer
+ * @return the result register
+ */
+static TR::Register *inlineCRC32CUpdateBytes(TR::Node *node, TR::CodeGenerator *cg, bool isRawAddress)
+   {
+   TR::Node *firstChild = node->getFirstChild();
+   TR::Node *secondChild = node->getSecondChild();
+   TR::Node *thirdChild = node->getThirdChild();
+   TR::Node *fourthChild = node->getChild(3);
+
+   const bool isConstEnd = fourthChild->getOpCode().isLoadConst();
+   const bool isConstOff = thirdChild->getOpCode().isLoadConst();
+
+   TR::Register *inputReg = cg->gprClobberEvaluate(firstChild);
+   TR::Register *arrayReg = cg->evaluate(secondChild);
+   TR_ARM64ScratchRegisterManager *srm = cg->generateScratchRegisterManager();
+
+   if (isConstEnd && isConstOff && !isRawAddress)
+      {
+      const uint32_t end = fourthChild->getInt();
+      const uint32_t off = thirdChild->getInt();
+      const uint32_t len = end - off;
+      static const char *pCRC32ConstLenLoopUnrollThreshold = feGetEnv("TR_AArch64CRC32ConstLenLoopUnrollThreshold");
+      /* The default value of loopUnrollThreshold is set to 64. The minimum is 64 and the maximum is 128. */
+      static const uint32_t loopUnrollThreshold = std::min(std::max(((pCRC32ConstLenLoopUnrollThreshold != NULL) ? atoi(pCRC32ConstLenLoopUnrollThreshold) : 64), 64), 128);
+
+      if (len > 0)
+         {
+         /*
+          * The code below assumes that the start address of the array data is 8 bytes aligned.
+          * If the array header size plus offset is a multiple of 8, the base address is 8 bytes aligned.
+          */
+         uint32_t index = off + TR::Compiler->om.contiguousArrayHeaderSizeInBytes();
+         /*
+          * If the length is large enough, unroll the loop of 8 bytes loads and crc32 calculations.
+          * We make sure that index is 8 bytes aligned for 8 bytes loads if unrolling.
+          * If we do not unroll the loop, we perform unaligned access.
+          */
+         const bool unrollLoop = (len >= loopUnrollThreshold) && ((len - ((8 - (index & 7)) & 7)) >= loopUnrollThreshold);
+         const bool useAdjustedBaseReg = unrollLoop || (!constantIsImm9(index + len));
+         TR::Register *baseReg = useAdjustedBaseReg ? srm->findOrCreateScratchRegister() : arrayReg;
+         if (useAdjustedBaseReg)
+            {
+            const uint32_t advance = index & (~7);
+            if (constantIsUnsignedImm12(advance))
+               {
+               generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addimmx, node, baseReg, arrayReg, advance);
+               }
+            else
+               {
+               TR::Register *advanceReg = srm->findOrCreateScratchRegister();
+               loadConstant32(cg, node, advance, advanceReg);
+               generateTrg1Src2Instruction(cg, TR::InstOpCode::addx, node, baseReg, arrayReg, advanceReg);
+               srm->reclaimScratchRegister(advanceReg);
+               }
+            index -= advance;
+            }
+
+         TR::Register *tmpReg = srm->findOrCreateScratchRegister();
+         uint32_t sizeLeft = len;
+         if (unrollLoop)
+            {
+            /*
+             * Make sure that access is aligned when loop is unrolled.
+             */
+            if ((index & 1) != 0)
+               {
+               TR::MemoryReference *mref = TR::MemoryReference::createWithDisplacement(cg, baseReg, index);
+               generateTrg1MemInstruction(cg, TR::InstOpCode::ldrbimm, node, tmpReg, mref);
+               generateTrg1Src2Instruction(cg, TR::InstOpCode::crc32cb, node, inputReg, inputReg, tmpReg);
+               index++;
+               sizeLeft--;
+               }
+            if ((index & 2) != 0)
+               {
+               TR::MemoryReference *mref = TR::MemoryReference::createWithDisplacement(cg, baseReg, index);
+               generateTrg1MemInstruction(cg, TR::InstOpCode::ldrhimm, node, tmpReg, mref);
+               generateTrg1Src2Instruction(cg, TR::InstOpCode::crc32ch, node, inputReg, inputReg, tmpReg);
+               index += 2;
+               sizeLeft -= 2;
+               }
+            if ((index & 4) != 0)
+               {
+               TR::MemoryReference *mref = TR::MemoryReference::createWithDisplacement(cg, baseReg, index);
+               generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmw, node, tmpReg, mref);
+               generateTrg1Src2Instruction(cg, TR::InstOpCode::crc32cw, node, inputReg, inputReg, tmpReg);
+               index += 4;
+               sizeLeft -= 4;
+               }
+            TR_ASSERT_FATAL(index <= 8, "index (%d) must be <= 8 if sizeLeft >= 64", index);
+            /*
+             * 8 byte loads, unroll 4 times
+             *
+             * sub         baseReg, baseReg, #8 - index; subtract 8 for pre-bias
+             * movz        counterReg, #(sizeLeft / 32)
+             * loopLabel:
+             * ldr         tmpReg, [baseReg, #8]
+             * crc32cx     inputReg, inputReg, tmpReg
+             * ldr         tmpReg, [baseReg, #16]
+             * crc32cx     inputReg, inputReg, tmpReg
+             * ldr         tmpReg, [baseReg, #24]
+             * crc32cx     inputReg, inputReg, tmpReg
+             * ldr         tmpReg, [baseReg, #32]!   ; pre index
+             * crc32cx     inputReg, inputReg, tmpReg
+             * subs        counterReg, counterReg, #1
+             * b.gt        loopLabel
+             * add         baseReg, baseReg, #8
+             */
+            if (index != 8)
+               {
+               /* baseReg is modifiable if we unroll the loop */
+               generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::subimmx, node, baseReg, baseReg, 8 - index);
+               }
+
+            TR::Register *counterReg = srm->findOrCreateScratchRegister();
+            loadConstant32(cg, node, sizeLeft >> 5, counterReg);
+            TR::LabelSymbol *loopLabel = generateLabelSymbol(cg);
+            generateLabelInstruction(cg, TR::InstOpCode::label, node, loopLabel);
+            for (int32_t i = 0; i < 4; i++)
+               {
+               TR::MemoryReference *mref = TR::MemoryReference::createWithDisplacement(cg, baseReg, (i + 1) * 8);
+               generateTrg1MemInstruction(cg, (i == 3) ? TR::InstOpCode::ldrprex : TR::InstOpCode::ldrimmx, node, tmpReg, mref);
+               generateTrg1Src2Instruction(cg, TR::InstOpCode::crc32cx, node, inputReg, inputReg, tmpReg);
+               }
+            generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::subsimmw, node, counterReg, counterReg, 1);
+            generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, loopLabel, TR::CC_GT);
+            sizeLeft &= 0x1f;
+            if (sizeLeft > 0)
+               {
+               generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addimmx, node, baseReg, baseReg, 8);
+               }
+            index = 0;
+            /* residuals */
+            while (sizeLeft >= 8)
+               {
+               TR::MemoryReference *mref = TR::MemoryReference::createWithDisplacement(cg, baseReg, index);
+               generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmx, node, tmpReg, mref);
+               generateTrg1Src2Instruction(cg, TR::InstOpCode::crc32cx, node, inputReg, inputReg, tmpReg);
+               index += 8;
+               sizeLeft -= 8;
+               }
+            if (sizeLeft >= 4)
+               {
+               TR::MemoryReference *mref = TR::MemoryReference::createWithDisplacement(cg, baseReg, index);
+               generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmw, node, tmpReg, mref);
+               generateTrg1Src2Instruction(cg, TR::InstOpCode::crc32cw, node, inputReg, inputReg, tmpReg);
+               index += 4;
+               sizeLeft -= 4;
+               }
+            if (sizeLeft >= 2)
+               {
+               TR::MemoryReference *mref = TR::MemoryReference::createWithDisplacement(cg, baseReg, index);
+               generateTrg1MemInstruction(cg, TR::InstOpCode::ldrhimm, node, tmpReg, mref);
+               generateTrg1Src2Instruction(cg, TR::InstOpCode::crc32ch, node, inputReg, inputReg, tmpReg);
+               index += 2;
+               sizeLeft -= 2;
+               }
+            if (sizeLeft == 1)
+               {
+               TR::MemoryReference *mref = TR::MemoryReference::createWithDisplacement(cg, baseReg, index);
+               generateTrg1MemInstruction(cg, TR::InstOpCode::ldrbimm, node, tmpReg, mref);
+               generateTrg1Src2Instruction(cg, TR::InstOpCode::crc32cb, node, inputReg, inputReg, tmpReg);
+               sizeLeft--;
+               }
+            TR::LabelSymbol *doneLabel = generateLabelSymbol(cg);
+
+            TR::RegisterDependencyConditions *conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, (useAdjustedBaseReg ?  1 : 2) + srm->numAvailableRegisters(), cg->trMemory());
+            conditions->addPostCondition(inputReg, TR::RealRegister::NoReg);
+            if (!useAdjustedBaseReg)
+               {
+               conditions->addPostCondition(arrayReg, TR::RealRegister::NoReg);
+               }
+            srm->addScratchRegistersToDependencyList(conditions);
+            generateLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel, conditions);
+            }
+         else
+            {
+            if (((index & 1) !=0) && ((sizeLeft & 1) != 0))
+               {
+               TR::MemoryReference *mref = TR::MemoryReference::createWithDisplacement(cg, baseReg, index);
+               generateTrg1MemInstruction(cg, TR::InstOpCode::ldrbimm, node, tmpReg, mref);
+               generateTrg1Src2Instruction(cg, TR::InstOpCode::crc32cb, node, inputReg, inputReg, tmpReg);
+               index++;
+               sizeLeft--;
+               }
+            if (((index & 3) == 2) && ((sizeLeft & 3) == 2))
+               {
+               TR::MemoryReference *mref = TR::MemoryReference::createWithDisplacement(cg, baseReg, index);
+               generateTrg1MemInstruction(cg, TR::InstOpCode::ldrhimm, node, tmpReg, mref);
+               generateTrg1Src2Instruction(cg, TR::InstOpCode::crc32ch, node, inputReg, inputReg, tmpReg);
+               index += 2;
+               sizeLeft -= 2;
+               }
+            if (((index & 7) == 4) && ((sizeLeft & 7) == 4))
+               {
+               TR::MemoryReference *mref = TR::MemoryReference::createWithDisplacement(cg, baseReg, index);
+               generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmw, node, tmpReg, mref);
+               generateTrg1Src2Instruction(cg, TR::InstOpCode::crc32cw, node, inputReg, inputReg, tmpReg);
+               index += 4;
+               sizeLeft -= 4;
+               }
+            bool unaligned = (index & 7) != 0;
+            while (sizeLeft >= 8)
+               {
+               TR::MemoryReference *mref = TR::MemoryReference::createWithDisplacement(cg, baseReg, index);
+               generateTrg1MemInstruction(cg, unaligned ? TR::InstOpCode::ldurx : TR::InstOpCode::ldrimmx, node, tmpReg, mref);
+               generateTrg1Src2Instruction(cg, TR::InstOpCode::crc32cx, node, inputReg, inputReg, tmpReg);
+               index += 8;
+               sizeLeft -= 8;
+               }
+            if (sizeLeft >= 4)
+               {
+               unaligned = (index & 3) != 0;
+               TR::MemoryReference *mref = TR::MemoryReference::createWithDisplacement(cg, baseReg, index);
+               generateTrg1MemInstruction(cg, unaligned ? TR::InstOpCode::ldurw : TR::InstOpCode::ldrimmw, node, tmpReg, mref);
+               generateTrg1Src2Instruction(cg, TR::InstOpCode::crc32cw, node, inputReg, inputReg, tmpReg);
+               index += 4;
+               sizeLeft -= 4;
+               }
+            if (sizeLeft >= 2)
+               {
+               unaligned = (index & 1) != 0;
+               TR::MemoryReference *mref = TR::MemoryReference::createWithDisplacement(cg, baseReg, index);
+               generateTrg1MemInstruction(cg, unaligned ? TR::InstOpCode::ldurh : TR::InstOpCode::ldrhimm, node, tmpReg, mref);
+               generateTrg1Src2Instruction(cg, TR::InstOpCode::crc32ch, node, inputReg, inputReg, tmpReg);
+               index += 2;
+               sizeLeft -= 2;
+               }
+            if (sizeLeft == 1)
+               {
+               TR::MemoryReference *mref = TR::MemoryReference::createWithDisplacement(cg, baseReg, index);
+               generateTrg1MemInstruction(cg, TR::InstOpCode::ldrbimm, node, tmpReg, mref);
+               generateTrg1Src2Instruction(cg, TR::InstOpCode::crc32cb, node, inputReg, inputReg, tmpReg);
+               sizeLeft--;
+               }
+            }
+
+         TR_ASSERT_FATAL(sizeLeft == 0, "unexpected sizeLeft = %d", sizeLeft);
+         }
+      }
+   else
+      {
+      TR::Register *baseReg = srm->findOrCreateScratchRegister();
+      TR::Register *sizeLeftReg = srm->findOrCreateScratchRegister();
+      TR::Register *endReg = cg->evaluate(fourthChild);
+      bool alignmentCheckNeeded = true;
+      if (isConstOff && (!isRawAddress))
+         {
+         const uint32_t off = thirdChild->getInt();
+         uint32_t realoff = off + TR::Compiler->om.contiguousArrayHeaderSizeInBytes();
+         /*
+          * Assuming array address is 8 bytes aligned,
+          * we do not have to test alignment of baseReg if offset is 8 bytes aligned.
+          */
+         alignmentCheckNeeded = (realoff % 8) != 0;
+
+         if (constantIsUnsignedImm12(realoff))
+            {
+            generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addimmx, node, baseReg, arrayReg, realoff);
+            }
+         else
+            {
+            TR::Register *realoffReg = srm->findOrCreateScratchRegister();
+            loadConstant32(cg, node, realoff, realoffReg);
+            generateTrg1Src2Instruction(cg, TR::InstOpCode::addx, node, baseReg, arrayReg, realoffReg);
+            srm->reclaimScratchRegister(realoffReg);
+            }
+         if (constantIsUnsignedImm12(off))
+            {
+            generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::subsimmw, node, sizeLeftReg, endReg, off);
+            }
+         else
+            {
+            TR::Register *offReg = srm->findOrCreateScratchRegister();
+            loadConstant32(cg, node, off, offReg);
+            generateTrg1Src2Instruction(cg, TR::InstOpCode::subw, node, sizeLeftReg, endReg, offReg);
+            srm->reclaimScratchRegister(offReg);
+            }
+         }
+      else
+         {
+         TR::Register *offReg = cg->evaluate(thirdChild);
+         if (!isRawAddress)
+            {
+            generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addimmx, node, baseReg, arrayReg, TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
+            }
+         generateTrg1Src2Instruction(cg, TR::InstOpCode::addx, node, baseReg, isRawAddress ? arrayReg : baseReg, offReg);
+         generateTrg1Src2Instruction(cg, TR::InstOpCode::subw, node, sizeLeftReg, endReg, offReg);
+         }
+
+      TR::LabelSymbol *doneLabel = generateLabelSymbol(cg);
+      TR::LabelSymbol *align8Label = generateLabelSymbol(cg);
+      TR::LabelSymbol *loopHeaderLabel = generateLabelSymbol(cg);
+      TR::LabelSymbol *residualLabel = generateLabelSymbol(cg);
+      TR::LabelSymbol *residual1Label = generateLabelSymbol(cg);
+      TR::LabelSymbol *residual2Label = generateLabelSymbol(cg);
+      TR::Register *tmpReg = srm->findOrCreateScratchRegister();
+      TR_Debug * debugObj = cg->getDebug();
+
+      /* If length == 0 then go to done */
+      auto cbzwInstr = generateCompareBranchInstruction(cg, TR::InstOpCode::cbzw, node, sizeLeftReg, doneLabel);
+      if (debugObj)
+         {
+         debugObj->addInstructionComment(cbzwInstr, "Jump to doneLabel if length is 0");
+         }
+
+      if (alignmentCheckNeeded)
+         {
+         /*
+          * cmp         sizeLeftReg, #32
+          * b.lt        residualLabel
+          * tst         baseReg, #7
+          * b.eq        loopHeaderLabel
+          */
+         generateCompareImmInstruction(cg, node, sizeLeftReg, 32, false);
+         auto branchToResidualInstr = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, residualLabel, TR::CC_LT);
+         /* immr = 0, imms = 2 for 0x7 */
+         generateTestImmInstruction(cg, node, baseReg, 2, true, true);
+         auto branchToLoopHeaderInstr = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, loopHeaderLabel, TR::CC_EQ);
+         if (debugObj)
+            {
+            debugObj->addInstructionComment(branchToResidualInstr, "Jump to residualLabel if length < 32");
+            debugObj->addInstructionComment(branchToLoopHeaderInstr, "Jump to loopHeaderLabel if baseReg is 8 bytes aligned");
+            }
+
+         TR::LabelSymbol *align2Label = generateLabelSymbol(cg);
+         /*
+          * tbz         baseReg, 0, align2Label
+          * ldrb        tmpReg, [baseReg], #1 ; post index
+          * crc32cb     inputReg, inputReg, tmpReg
+          * sub         sizeLeftReg, sizeLeftReg, #1
+          */
+         auto tbzToAlign2Instr = generateTestBitBranchInstruction(cg, TR::InstOpCode::tbz, node, baseReg, 0, align2Label);
+         if (debugObj)
+            {
+            debugObj->addInstructionComment(tbzToAlign2Instr, "If baseReg is 2 bytes aligned, jump to align2Label");
+            }
+         generateTrg1MemInstruction(cg, TR::InstOpCode::ldrbpost, node, tmpReg, TR::MemoryReference::createWithDisplacement(cg, baseReg, 1));
+         generateTrg1Src2Instruction(cg, TR::InstOpCode::crc32cb, node, inputReg, inputReg, tmpReg);
+         generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::subimmw, node, sizeLeftReg, sizeLeftReg, 1);
+
+         TR::LabelSymbol *align4Label = generateLabelSymbol(cg);
+         /*
+          * align2Label:
+          * tbz         baseReg, 1, align4Label
+          * ldrh        tmpReg, [baseReg], #2 ; post index
+          * crc32ch     inputReg, inputReg, tmpReg
+          * sub         sizeLeftReg, sizeLeftReg, #2
+          */
+         auto align2LabelInstr = generateLabelInstruction(cg, TR::InstOpCode::label, node, align2Label);
+         auto tbzToAlign4Instr = generateTestBitBranchInstruction(cg, TR::InstOpCode::tbz, node, baseReg, 1, align4Label);
+         if (debugObj)
+            {
+            debugObj->addInstructionComment(align2LabelInstr, "align2Label");
+            debugObj->addInstructionComment(tbzToAlign4Instr, "If baseReg is 4 bytes aligned, jump to align4Label");
+            }
+         generateTrg1MemInstruction(cg, TR::InstOpCode::ldrhpost, node, tmpReg, TR::MemoryReference::createWithDisplacement(cg, baseReg, 2));
+         generateTrg1Src2Instruction(cg, TR::InstOpCode::crc32ch, node, inputReg, inputReg, tmpReg);
+         generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::subimmw, node, sizeLeftReg, sizeLeftReg, 2);
+
+         /*
+          * align4Label:
+          * tbz         baseReg, 2, align8Label
+          * ldr         tmpReg, [baseReg], #4 ; post index
+          * crc32cw     inputReg, inputReg, tmpReg
+          * sub         sizeLeftReg, sizeLeftReg, #4
+          */
+         auto align4LabelInstr = generateLabelInstruction(cg, TR::InstOpCode::label, node, align4Label);
+         auto tbzToAlign8Instr = generateTestBitBranchInstruction(cg, TR::InstOpCode::tbz, node, baseReg, 2, align8Label);
+         if (debugObj)
+            {
+            debugObj->addInstructionComment(align4LabelInstr, "align4Label");
+            debugObj->addInstructionComment(tbzToAlign8Instr, "If baseReg is 8 bytes aligned, jump to align8Label");
+            }
+         generateTrg1MemInstruction(cg, TR::InstOpCode::ldrpostw, node, tmpReg, TR::MemoryReference::createWithDisplacement(cg, baseReg, 4));
+         generateTrg1Src2Instruction(cg, TR::InstOpCode::crc32cw, node, inputReg, inputReg, tmpReg);
+         generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::subimmw, node, sizeLeftReg, sizeLeftReg, 4);
+         }
+
+      /*
+       * 8 byte loads, unroll 4 times
+       *
+       * align8Label:
+       * cmp         sizeLeftReg, #32
+       * b.lt        residualLabel
+       * loopHeaderLabel:
+       * sub         baseReg, baseReg, #8; subtract 8 for pre-bias
+       * sub         sizeLeftReg, sizeLeftReg, #32
+       * loopStartLabel:
+       * ldr         tmpReg, [baseReg, #8]
+       * crc32cx     inputReg, inputReg, tmpReg
+       * ldr         tmpReg, [baseReg, #16]
+       * crc32cx     inputReg, inputReg, tmpReg
+       * ldr         tmpReg, [baseReg, #24]
+       * crc32cx     inputReg, inputReg, tmpReg
+       * ldr         tmpReg, [baseReg, #32]!   ; pre index
+       * crc32cx     inputReg, inputReg, tmpReg
+       * subs        sizeLeftReg, sizeLeftReg, #32
+       * b.ge        loopStartLabel
+       * ands        sizeLeftReg, sizeLeftReg, #0x1f
+       * b.eq        doneLabel
+       * add         baseReg, baseReg, #8
+       * residualLabel:
+       */
+      auto align8LabelInstr = generateLabelInstruction(cg, TR::InstOpCode::label, node, align8Label);
+
+      TR::LabelSymbol *loopStartLabel = generateLabelSymbol(cg);
+
+      generateCompareImmInstruction(cg, node, sizeLeftReg, 32, false);
+      generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, residualLabel, TR::CC_LT);
+      auto loopHeaderLabelInstr = generateLabelInstruction(cg, TR::InstOpCode::label, node, loopHeaderLabel);
+      auto preBiasInstr = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::subimmx, node, baseReg, baseReg, 8);
+      generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::subimmw, node, sizeLeftReg, sizeLeftReg, 32);
+      auto loopStartLabelInstr = generateLabelInstruction(cg, TR::InstOpCode::label, node, loopStartLabel);
+      for (int32_t i = 0; i < 4; i++)
+         {
+         TR::MemoryReference *mref = TR::MemoryReference::createWithDisplacement(cg, baseReg, (i + 1) * 8);
+         /* Using pre-index load for the last one. */
+         generateTrg1MemInstruction(cg, (i == 3) ? TR::InstOpCode::ldrprex : TR::InstOpCode::ldrimmx, node, tmpReg, mref);
+         generateTrg1Src2Instruction(cg, TR::InstOpCode::crc32cx, node, inputReg, inputReg, tmpReg);
+         }
+      generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::subsimmw, node, sizeLeftReg, sizeLeftReg, 32);
+      generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, loopStartLabel, TR::CC_GE);
+      /* sizeLeft &= 0x1f. immr = 0, imms = 4 for 0x1f */
+      generateLogicalImmInstruction(cg, TR::InstOpCode::andsimmw, node, sizeLeftReg, sizeLeftReg, false, 4);
+      auto branchToDoneInstr = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, doneLabel, TR::CC_EQ);
+      generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addimmx, node, baseReg, baseReg, 8);
+      auto residualLabelInstr = generateLabelInstruction(cg, TR::InstOpCode::label, node, residualLabel);
+      if (debugObj)
+         {
+         debugObj->addInstructionComment(align8LabelInstr, "align8Label");
+         debugObj->addInstructionComment(loopHeaderLabelInstr, "loopHeaderLabel");
+         debugObj->addInstructionComment(loopStartLabelInstr, "loopStartLabel");
+         debugObj->addInstructionComment(preBiasInstr, "pre-bias base register by 8");
+         debugObj->addInstructionComment(branchToDoneInstr, "If sizeLeft is 0, jump to doneLabel");
+         debugObj->addInstructionComment(residualLabelInstr, "residualLabel");
+         }
+
+      /*
+       * residual 8 byte loads
+       *
+       * cmp         sizeLeftReg, #8
+       * b.lt        residual4Label
+       * tbz         sizeLeftReg, #4, left8_15
+       * tbz         sizeLeftReg, #3, left16_23
+       * left24_31:
+       * ldr         tmpReg, [baseReg], #8
+       * crc32cx     inputReg, inputReg, tmpReg
+       * left16_23:
+       * ldr         tmpReg, [baseReg], #8
+       * crc32cx     inputReg, inputReg, tmpReg
+       * left8_15:
+       * ldr         tmpReg, [baseReg], #8
+       * crc32cx     inputReg, inputReg, tmpReg
+       * and         sizeLeftReg, sizeLeftReg, #7
+       */
+      TR::LabelSymbol *residual4Label = generateLabelSymbol(cg);
+      TR::LabelSymbol *left16_23Label = generateLabelSymbol(cg);
+      TR::LabelSymbol *left8_15Label = generateLabelSymbol(cg);
+
+      generateCompareImmInstruction(cg, node, sizeLeftReg, 8, false);
+      auto branchToResidual4Instr = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, residual4Label, TR::CC_LT);
+      auto tbzToLeft8_15Instr = generateTestBitBranchInstruction(cg, TR::InstOpCode::tbz, node, sizeLeftReg, 4, left8_15Label);
+      auto tbzToLeft16_23Instr = generateTestBitBranchInstruction(cg, TR::InstOpCode::tbz, node, sizeLeftReg, 3, left16_23Label);
+      generateTrg1MemInstruction(cg, TR::InstOpCode::ldrpostx, node, tmpReg, TR::MemoryReference::createWithDisplacement(cg, baseReg, 8));
+      generateTrg1Src2Instruction(cg, TR::InstOpCode::crc32cx, node, inputReg, inputReg, tmpReg);
+      auto left16_23LabelInstr = generateLabelInstruction(cg, TR::InstOpCode::label, node, left16_23Label);
+      generateTrg1MemInstruction(cg, TR::InstOpCode::ldrpostx, node, tmpReg, TR::MemoryReference::createWithDisplacement(cg, baseReg, 8));
+      generateTrg1Src2Instruction(cg, TR::InstOpCode::crc32cx, node, inputReg, inputReg, tmpReg);
+      auto left8_15LabelInstr = generateLabelInstruction(cg, TR::InstOpCode::label, node, left8_15Label);
+      generateTrg1MemInstruction(cg, TR::InstOpCode::ldrpostx, node, tmpReg, TR::MemoryReference::createWithDisplacement(cg, baseReg, 8));
+      generateTrg1Src2Instruction(cg, TR::InstOpCode::crc32cx, node, inputReg, inputReg, tmpReg);
+      generateLogicalImmInstruction(cg, TR::InstOpCode::andimmw, node, sizeLeftReg, sizeLeftReg, false, 2);
+
+      if (debugObj)
+         {
+         debugObj->addInstructionComment(branchToResidual4Instr, "If sizeLeft < 8, jump to residual4Label");
+         debugObj->addInstructionComment(tbzToLeft8_15Instr, "If (sizeLeft & 16) == 0, jump to left8_15Label");
+         debugObj->addInstructionComment(tbzToLeft16_23Instr, "If (sizeLeft & 8) == 0, jump to left16_23Label");
+         debugObj->addInstructionComment(left16_23LabelInstr, "left16_23Label");
+         debugObj->addInstructionComment(left8_15LabelInstr, "left8_15Label");
+         }
+
+      /*
+       * residual 4 byte load
+       *
+       * residual4Label:
+       * tbz         sizeLeftReg, #2, residual2Label
+       * ldr         tmpReg, [baseReg], #4
+       * crc32cw     inputReg, inputReg, tmpReg
+       * subimmw     sizeLeftReg sizeLeftReg, #4
+       */
+      auto residual4LabelInstr = generateLabelInstruction(cg, TR::InstOpCode::label, node, residual4Label);
+      auto tbzToResidual2Instr = generateTestBitBranchInstruction(cg, TR::InstOpCode::tbz, node, sizeLeftReg, 2, residual2Label);
+      generateTrg1MemInstruction(cg, TR::InstOpCode::ldrpostw, node, tmpReg, TR::MemoryReference::createWithDisplacement(cg, baseReg, 4));
+      generateTrg1Src2Instruction(cg, TR::InstOpCode::crc32cw, node, inputReg, inputReg, tmpReg);
+      generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::subimmw, node, sizeLeftReg, sizeLeftReg, 4);
+      if (debugObj)
+         {
+         debugObj->addInstructionComment(residual4LabelInstr, "residual4Label");
+         debugObj->addInstructionComment(tbzToResidual2Instr, "If (sizeLeft & 4) == 0, jump to residual2Label");
+         }
+
+      /*
+       * residual 2 byte load
+       *
+       * residual2Label:
+       * tbz         sizeLeftReg, #1, residual1Label
+       * ldr         tmpReg, [baseReg], #2
+       * crc32ch     inputReg, inputReg, tmpReg
+       * subimmw     sizeLeftReg sizeLeftReg, #2
+       */
+      auto residual2LabelInstr = generateLabelInstruction(cg, TR::InstOpCode::label, node, residual2Label);
+      auto tbzToResidual1Instr = generateTestBitBranchInstruction(cg, TR::InstOpCode::tbz, node, sizeLeftReg, 1, residual1Label);
+      generateTrg1MemInstruction(cg, TR::InstOpCode::ldrhpost, node, tmpReg, TR::MemoryReference::createWithDisplacement(cg, baseReg, 2));
+      generateTrg1Src2Instruction(cg, TR::InstOpCode::crc32ch, node, inputReg, inputReg, tmpReg);
+      generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::subimmw, node, sizeLeftReg, sizeLeftReg, 2);
+      if (debugObj)
+         {
+         debugObj->addInstructionComment(residual2LabelInstr, "residual2Label");
+         debugObj->addInstructionComment(tbzToResidual1Instr, "If (sizeLeft & 2) == 0, jump to residual1Label");
+         }
+
+      /*
+       * residual 1 byte load
+       *
+       * residual4Label:
+       * cbz         sizeLeftReg, doneLabel
+       * ldr         tmpReg, [baseReg], #1
+       * crc32cb     inputReg, inputReg, tmpReg
+       */
+      auto residual1LabelInstr = generateLabelInstruction(cg, TR::InstOpCode::label, node, residual1Label);
+      auto cbzwInstr2 = generateCompareBranchInstruction(cg, TR::InstOpCode::cbzw, node, sizeLeftReg, doneLabel);
+      generateTrg1MemInstruction(cg, TR::InstOpCode::ldrbpost, node, tmpReg, TR::MemoryReference::createWithDisplacement(cg, baseReg, 1));
+      generateTrg1Src2Instruction(cg, TR::InstOpCode::crc32cb, node, inputReg, inputReg, tmpReg);
+      if (debugObj)
+         {
+         debugObj->addInstructionComment(residual1LabelInstr, "residual1Label");
+         debugObj->addInstructionComment(cbzwInstr2, "If sizeLeft is 0, jump to doneLabel");
+         }
+
+      TR::RegisterDependencyConditions *conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 1 + srm->numAvailableRegisters(), cg->trMemory());
+      conditions->addPostCondition(inputReg, TR::RealRegister::NoReg);
+      srm->addScratchRegistersToDependencyList(conditions);
+      auto donesLabelInstr = generateLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel, conditions);
+      if (debugObj)
+         {
+         debugObj->addInstructionComment(donesLabelInstr, "doneLabel");
+         }
+      }
+   srm->stopUsingRegisters();
+   node->setRegister(inputReg);
+   cg->decReferenceCount(firstChild);
+   cg->decReferenceCount(secondChild);
+   cg->decReferenceCount(thirdChild);
+   cg->decReferenceCount(fourthChild);
+
+   return inputReg;
+   }
+
 bool
 J9::ARM64::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&resultReg)
    {
    TR::CodeGenerator *cg = self();
    TR::MethodSymbol * methodSymbol = node->getSymbol()->getMethodSymbol();
+   static const bool disableCRC32 = feGetEnv("TR_aarch64DisableCRC32") != NULL;
 
    if (OMR::CodeGeneratorConnector::inlineDirectCall(node, resultReg))
       {
@@ -5384,6 +5950,27 @@ J9::ARM64::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
                }
             break;
             }
+
+         case TR::java_util_zip_CRC32C_updateBytes:
+            {
+            if ((!TR::Compiler->om.canGenerateArraylets()) && cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_ARM64_CRC32) && (!disableCRC32))
+               {
+               resultReg = inlineCRC32CUpdateBytes(node, cg, false);
+               return true;
+               }
+            break;
+            }
+
+         case TR::java_util_zip_CRC32C_updateDirectByteBuffer:
+            {
+            if ((!TR::Compiler->om.canGenerateArraylets()) && cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_ARM64_CRC32) && (!disableCRC32))
+               {
+               resultReg = inlineCRC32CUpdateBytes(node, cg, true);
+               return true;
+               }
+            break;
+            }
+
          default:
             break;
          }

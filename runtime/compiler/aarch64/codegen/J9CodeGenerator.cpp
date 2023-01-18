@@ -222,6 +222,9 @@ J9::ARM64::CodeGenerator::supportsInliningOfIsAssignableFrom()
 bool
 J9::ARM64::CodeGenerator::suppressInliningOfRecognizedMethod(TR::RecognizedMethod method)
    {
+   TR::Compilation *comp = self()->comp();
+   static const bool disableCRC32 = feGetEnv("TR_aarch64DisableCRC32") != NULL;
+
    if (method == TR::java_lang_Math_min_F ||
        method == TR::java_lang_Math_max_F ||
        method == TR::java_lang_Math_fma_D ||
@@ -230,6 +233,11 @@ J9::ARM64::CodeGenerator::suppressInliningOfRecognizedMethod(TR::RecognizedMetho
        method == TR::java_lang_StrictMath_fma_F)
       {
       return true;
+      }
+   if (method == TR::java_util_zip_CRC32C_updateBytes ||
+       method == TR::java_util_zip_CRC32C_updateDirectByteBuffer)
+      {
+      return (!TR::Compiler->om.canGenerateArraylets()) && comp->target().cpu.supportsFeature(OMR_FEATURE_ARM64_CRC32) && (!disableCRC32);
       }
    return false;
    }
