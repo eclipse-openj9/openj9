@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2021, 2022 IBM Corp. and others
+ * Copyright (c) 2021, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -480,17 +480,17 @@ error:
    }
 
 bool
-JITServerAOTCache::ClassLoaderKey::operator==(const ClassLoaderKey &k) const
+JITServerAOTCache::StringKey::operator==(const StringKey &k) const
    {
-   return J9UTF8_DATA_EQUALS(_name, _nameLength, k._name, k._nameLength);
+   return J9UTF8_DATA_EQUALS(_string, _stringLength, k._string, k._stringLength);
    }
 
 size_t
-JITServerAOTCache::ClassLoaderKey::Hash::operator()(const ClassLoaderKey &k) const noexcept
+JITServerAOTCache::StringKey::Hash::operator()(const StringKey &k) const noexcept
    {
    size_t h = 0;
-   for (size_t i = 0; i < k._nameLength; ++i)
-      h = (h << 5) - h + k._name[i];
+   for (size_t i = 0; i < k._stringLength; ++i)
+      h = (h << 5) - h + k._string[i];
    return h;
    }
 
@@ -677,6 +677,11 @@ JITServerAOTCache::JITServerAOTCache(const std::string &name) :
    _aotHeaderTail(NULL),
    _nextAOTHeaderId(1),// ID 0 is invalid
    _aotHeaderMonitor(TR::Monitor::create("JIT-JITServerAOTCacheAOTHeaderMonitor")),
+   _thunkMap(decltype(_thunkMap)::allocator_type(TR::Compiler->persistentGlobalAllocator())),
+   _thunkHead(NULL),
+   _thunkTail(NULL),
+   _nextThunkId(1),// ID 0 is invalid
+   _thunkMonitor(TR::Monitor::create("JIT-JITServerAOTCacheThunkMonitor")),
    _cachedMethodMap(decltype(_cachedMethodMap)::allocator_type(TR::Compiler->persistentGlobalAllocator())),
    _cachedMethodHead(NULL),
    _cachedMethodTail(NULL),
@@ -703,6 +708,7 @@ JITServerAOTCache::~JITServerAOTCache()
    freeMapValues(_classChainMap);
    freeMapValues(_wellKnownClassesMap);
    freeMapValues(_aotHeaderMap);
+   freeMapValues(_thunkMap);
    freeMapValues(_cachedMethodMap);
 
    TR::Monitor::destroy(_classMonitor);
@@ -711,6 +717,7 @@ JITServerAOTCache::~JITServerAOTCache()
    TR::Monitor::destroy(_classChainMonitor);
    TR::Monitor::destroy(_wellKnownClassesMonitor);
    TR::Monitor::destroy(_aotHeaderMonitor);
+   TR::Monitor::destroy(_thunkMonitor);
    TR::Monitor::destroy(_cachedMethodMonitor);
    }
 

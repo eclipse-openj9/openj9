@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2021, 2022 IBM Corp. and others
+ * Copyright (c) 2021, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -310,6 +310,34 @@ private:
    };
 
 
+class AOTCacheThunkRecord final : public AOTCacheRecord
+{
+public:
+   const ThunkSerializationRecord &data() const { return _data; }
+   const AOTSerializationRecord *dataAddr() const override { return &_data; }
+
+   static const char *getRecordName() { return "thunk"; }
+   static AOTCacheThunkRecord *create(uintptr_t id, const uint8_t *signature, uint32_t signatureSize, const uint8_t *thunkCode, uint32_t thunkCodeSize);
+
+private:
+   using SerializationRecord = ThunkSerializationRecord;
+
+   friend AOTCacheThunkRecord *AOTCacheRecord::readRecord<>(FILE *f, const JITServerAOTCacheReadContext &context);
+
+   AOTCacheThunkRecord(uintptr_t id, const uint8_t *signature, uint32_t signatureSize, const uint8_t *thunkCode, uint32_t thunkCodeSize);
+   AOTCacheThunkRecord(const JITServerAOTCacheReadContext &context, const ThunkSerializationRecord &header) {}
+
+   static size_t size(uint32_t signatureSize, uint32_t thunkCodeSize)
+      {
+      return offsetof(AOTCacheThunkRecord, _data) + ThunkSerializationRecord::size(signatureSize, thunkCodeSize);
+      }
+
+   static size_t size(const ThunkSerializationRecord &header) { return size(header.signatureSize(), header.thunkCodeSize()); }
+
+   const ThunkSerializationRecord _data;
+};
+
+
 // Wrapper class for serialized AOT methods stored in the cache at the server.
 // Serves the same purpose as AOTCacheRecord (serialization record wrappers).
 class CachedAOTMethod
@@ -465,14 +493,16 @@ public:
    bool isAOTCacheBetterThanSnapshot(const std::string &cacheFileName, size_t numExtraMethods);
 
 private:
-   struct ClassLoaderKey
+   struct StringKey
       {
-      bool operator==(const ClassLoaderKey &k) const;
-      struct Hash { size_t operator()(const ClassLoaderKey &k) const noexcept; };
+      bool operator==(const StringKey &k) const;
+      struct Hash { size_t operator()(const StringKey &k) const noexcept; };
 
-      const uint8_t *const _name;
-      const size_t _nameLength;
+      const uint8_t *const _string;
+      const size_t _stringLength;
       };
+
+   using ClassLoaderKey = StringKey;
 
    static ClassLoaderKey getRecordKey(const AOTCacheClassLoaderRecord *record)
       { return { record->data().name(), record->data().nameLength() }; }
@@ -530,6 +560,11 @@ private:
    static AOTHeaderKey getRecordKey(const AOTCacheAOTHeaderRecord *record)
       { return { record->data().header() }; }
 
+   using ThunkKey = StringKey;
+
+   static ThunkKey getRecordKey(const AOTCacheThunkRecord *record)
+      { return { record->data().signature(), record->data().signatureSize() }; }
+
    //NOTE: Current implementation doesn't support compatible differences in AOT headers.
    //      A cached method can only be sent to a client with the exact same AOT header.
    using CachedMethodKey = std::tuple<const AOTCacheClassChainRecord *, uint32_t/*index*/,
@@ -585,6 +620,12 @@ private:
    AOTCacheAOTHeaderRecord *_aotHeaderTail;
    uintptr_t _nextAOTHeaderId;
    TR::Monitor *const _aotHeaderMonitor;
+
+   PersistentUnorderedMap<ThunkKey, AOTCacheThunkRecord *, ThunkKey::Hash> _thunkMap;
+   uintptr_t _nextThunkId;
+   AOTCacheThunkRecord *_thunkHead;
+   AOTCacheThunkRecord *_thunkTail;
+   TR::Monitor *const _thunkMonitor;
 
    PersistentUnorderedMap<CachedMethodKey, CachedAOTMethod *> _cachedMethodMap;
    CachedAOTMethod *_cachedMethodHead;
