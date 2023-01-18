@@ -75,6 +75,7 @@
 #include "infra/Link.hpp"
 #include "infra/List.hpp"
 #include "infra/SimpleRegex.hpp"
+#include "infra/String.hpp"
 #include "infra/TRCfgEdge.hpp"
 #include "infra/TRCfgNode.hpp"
 #include "optimizer/Inliner.hpp"
@@ -1233,6 +1234,33 @@ int32_t TR_EscapeAnalysis::performAnalysisOnce()
          rememoize(candidate);
          _candidates.remove(candidate);
          continue;
+         }
+      }
+
+   // Suppress stack allocation for any candidates that match the regular
+   // expression specified with the suppressEA option.
+   TR::SimpleRegex * suppressAtRegex = comp()->getOptions()->getSuppressEARegex();
+   if (suppressAtRegex != NULL && !_candidates.isEmpty())
+      {
+      for (candidate = _candidates.getFirst(); candidate; candidate = next)
+         {
+         next = candidate->getNext();
+
+         if (!candidate->isLocalAllocation())
+            {
+            continue;
+            }
+
+         TR_ByteCodeInfo &bcInfo = candidate->_node->getByteCodeInfo();
+         if (TR::SimpleRegex::match(suppressAtRegex, bcInfo))
+            {
+            candidate->setLocalAllocation(false);
+
+            if (trace())
+               {
+               traceMsg(comp(), "  Suppressing stack allocation of candidate node [%p] - matched suppressEA option\n", candidate->_node);
+               }
+            }
          }
       }
 
