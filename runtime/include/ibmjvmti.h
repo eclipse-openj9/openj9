@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -99,6 +99,9 @@
 
 #define COM_IBM_REGISTER_TRACEPOINT_SUBSCRIBER "com.ibm.RegisterTracePointSubscriber"
 #define COM_IBM_DEREGISTER_TRACEPOINT_SUBSCRIBER "com.ibm.DeregisterTracePointSubscriber"
+
+#define COM_SUN_HOTSPOT_FUNCTIONS_GET_VIRTUAL_THREAD "com.sun.hotspot.functions.GetVirtualThread"
+#define COM_SUN_HOTSPOT_FUNCTIONS_GET_CARRIER_THREAD "com.sun.hotspot.functions.GetCarrierThread"
 
 #define COM_IBM_SHARED_CACHE_MODLEVEL_JAVA5 1
 #define COM_IBM_SHARED_CACHE_MODLEVEL_JAVA6 2
