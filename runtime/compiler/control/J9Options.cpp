@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2022 IBM Corp. and others
+ * Copyright (c) 2000, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1225,7 +1225,7 @@ static bool JITServerParseCommonOptions(J9JavaVM *vm, TR::CompilationInfo *compI
 
    if (xxJITServerPortArgIndex >= 0)
       {
-      uint32_t port=0;
+      UDATA port=0;
       IDATA ret = GET_INTEGER_VALUE(xxJITServerPortArgIndex, xxJITServerPortOption, port);
       if (ret == OPTION_OK)
          compInfo->getPersistentInfo()->setJITServerPort(port);
@@ -1242,7 +1242,7 @@ static bool JITServerParseCommonOptions(J9JavaVM *vm, TR::CompilationInfo *compI
 
    if (xxJITServerTimeoutArgIndex >= 0)
       {
-      uint32_t timeoutMs=0;
+      UDATA timeoutMs=0;
       IDATA ret = GET_INTEGER_VALUE(xxJITServerTimeoutArgIndex, xxJITServerTimeoutOption, timeoutMs);
       if (ret == OPTION_OK)
          compInfo->getPersistentInfo()->setSocketTimeout(timeoutMs);
@@ -2103,7 +2103,7 @@ bool J9::Options::preProcessJitServer(J9JavaVM *vm, J9JITConfig *jitConfig)
             int32_t xxJITServerMetricsPortArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxJITServerMetricsPortOption, 0);
             if (xxJITServerMetricsPortArgIndex >= 0)
                {
-               uint32_t port = 0;
+               UDATA port = 0;
                IDATA ret = GET_INTEGER_VALUE(xxJITServerMetricsPortArgIndex, xxJITServerMetricsPortOption, port);
                if (ret == OPTION_OK)
                   compInfo->getPersistentInfo()->setJITServerMetricsPort(port);
@@ -2330,7 +2330,7 @@ J9::Options::fePreProcess(void * base)
    int32_t xxLateSCCDisclaimTime = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxLateSCCDisclaimTimeOption, 0);
    if (xxLateSCCDisclaimTime >= 0)
       {
-      uint32_t disclaimMs = 0;
+      UDATA disclaimMs = 0;
       IDATA ret = GET_INTEGER_VALUE(xxLateSCCDisclaimTime, xxLateSCCDisclaimTimeOption, disclaimMs);
       if (ret == OPTION_OK)
          {
