@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2022 IBM Corp. and others
+ * Copyright (c) 1998, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -570,5 +570,27 @@ Java_java_lang_Thread_registerNatives(JNIEnv *env, jclass clazz)
 #endif /* J9VM_OPT_JAVA_OFFLOAD_SUPPORT */
 }
 #endif /* JAVA_SPEC_VERSION >= 19 */
+
+#if JAVA_SPEC_VERSION >= 20
+
+/* static native void ensureMaterializedForStackWalk(Object o);
+ *
+ * This is expected to invoke JVM_EnsureMaterializedForStackWalk and ensure
+ * that the stackwalk code sees a materialized value.
+ *
+ * @param env instance of JNIEnv
+ * @param unusedClass
+ * @param obj the object to be checked
+ */
+void JNICALL
+Java_java_lang_Thread_ensureMaterializedForStackWalk(JNIEnv *env, jclass unusedClass, jobject obj)
+{
+	/* An empty implementation is sufficient since the hotspot
+	 * JVM_EnsureMaterializedForStackWalk() does nothing.
+	 * https://github.com/eclipse-openj9/openj9/issues/16577
+	 */
+}
+
+#endif /* JAVA_SPEC_VERSION >= 20 */
 
 }
