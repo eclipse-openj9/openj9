@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2022 IBM Corp. and others
+ * Copyright (c) 2001, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -43,23 +43,27 @@ void setCurrentCacheVersion(J9JavaVM *vm, UDATA j2seVersion, J9PortShcVersion *v
 IDATA j9shr_createCacheSnapshot(J9JavaVM* vm, const char* cacheName);
 
 void
-getCacheDir(J9JavaVM *vm, char *cacheDir)
+getCacheDir(J9JavaVM *vm, char *cacheDir, size_t bufLen)
 {
 	PORT_ACCESS_FROM_JAVAVM(vm);
-	IDATA rc;
-	char cacheDirNoTestBasedir[J9SH_MAXPATH];
-	U_32 flags = J9SHMEM_GETDIR_APPEND_BASEDIR;
 
+	cacheDir[0] = '\0';
+
+	if (bufLen <= LITERAL_STRLEN(TEST_BASEDIR)) {
+		j9tty_printf(PORTLIB, "Buffer too small to get directory\n");
+	} else {
+		U_32 flags = J9SHMEM_GETDIR_APPEND_BASEDIR
 #if defined(OPENJ9_BUILD) && !defined(J9ZOS390)
-	flags |= J9SHMEM_GETDIR_USE_USERHOME;
+				| J9SHMEM_GETDIR_USE_USERHOME
 #endif /* defined(OPENJ9_BUILD) && !defined(J9ZOS390) */
-
-	rc = j9shmem_getDir(NULL, flags, cacheDirNoTestBasedir, J9SH_MAXPATH);
-	if (rc < 0) {
-		j9tty_printf(PORTLIB, "Cannot get a directory\n");
+				;
+		IDATA rc = j9shmem_getDir(NULL, flags, cacheDir, bufLen - LITERAL_STRLEN(TEST_BASEDIR));
+		if (rc < 0) {
+			j9tty_printf(PORTLIB, "Cannot get a directory\n");
+		} else {
+			strcat(cacheDir, TEST_BASEDIR);
+		}
 	}
-
-	sprintf(cacheDir, "%s%s", cacheDirNoTestBasedir, TEST_BASEDIR);
 }
 
 void
@@ -435,7 +439,7 @@ testSharedCacheAPI(J9JavaVM* vm)
 		rc = FAIL;
 		goto cleanup;
 	}
-	getCacheDir(vm, cacheDir);
+	getCacheDir(vm, cacheDir, J9SH_MAXPATH);
 
 	piconfig = (J9SharedClassPreinitConfig *) j9mem_allocate_memory(sizeof(J9SharedClassPreinitConfig), J9MEM_CATEGORY_CLASSES);
 	if (NULL == piconfig) {
