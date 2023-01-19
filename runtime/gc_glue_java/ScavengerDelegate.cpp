@@ -323,7 +323,7 @@ MM_ScavengerDelegate::doStackSlot(MM_EnvironmentStandard *env, omrobjectptr_t *s
 			}
 			break;
 		case SCAN_REASON_SHOULDREMEMBER:
-			*shouldRemember = scavenger->shouldRememberSlot(slotPtr);
+			*shouldRemember |= scavenger->shouldRememberSlot(slotPtr);
 			break;
 		}
 	}
