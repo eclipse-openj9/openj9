@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2022 IBM Corp. and others
+ * Copyright (c) 1991, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -574,6 +574,7 @@ typedef struct J9JITExceptionTable {
 #define JIT_METADATA_NOT_INITIALIZED 0x8
 #define JIT_METADATA_IS_REMOTE_COMP 0x10
 #define JIT_METADATA_IS_DESERIALIZED_COMP 0x20
+#define JIT_METADATA_IS_PRECHECKPOINT_COMP 0x40
 
 typedef struct J9JIT16BitExceptionTableEntry {
 	U_16 startPC;

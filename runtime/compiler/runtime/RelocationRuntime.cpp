@@ -1095,7 +1095,7 @@ TR_SharedCacheRelocationRuntime::checkAOTHeaderFlags(const TR_AOTHeader *hdrInCa
 uint32_t
 TR_SharedCacheRelocationRuntime::getCurrentLockwordOptionHashValue(J9JavaVM *vm) const
    {
-   IDATA currentLockwordArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, "-Xlockword", NULL);
+   IDATA currentLockwordArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::Xlockword], NULL);
    uint32_t currentLockwordOptionHashValue = 0;
    if (currentLockwordArgIndex >= 0)
       {
