@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2022 IBM Corp. and others
+ * Copyright (c) 2000, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -179,7 +179,6 @@ class CompilationInfoPerThreadBase
                               bool eligibleForRelocatableCompile,
                               TR_RelocationRuntime *reloRuntime);
    const void* findAotBodyInSCC(J9VMThread *vmThread, const J9ROMMethod *romMethod);
-   bool isMethodIneligibleForAot(J9Method *method);
 
 #if defined(J9VM_OPT_SHARED_CLASSES) && defined(J9VM_INTERP_AOT_RUNTIME_SUPPORT)
    TR_MethodMetaData *installAotCachedMethod(
