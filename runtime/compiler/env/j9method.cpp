@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2022 IBM Corp. and others
+ * Copyright (c) 2000, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1127,6 +1127,17 @@ bool
 TR_ResolvedRelocatableJ9Method::isInterpretedForHeuristics()
    {
    return TR_ResolvedJ9Method::isInterpreted();
+   }
+
+bool
+TR_ResolvedRelocatableJ9Method::isCompilable(TR_Memory * trMemory)
+   {
+   TR::CompilationInfo *compInfo = TR::CompilationInfo::get(fej9()->_jitConfig);
+
+   if (compInfo->isMethodIneligibleForAot(ramMethod()))
+      return false;
+
+   return TR_ResolvedJ9Method::isCompilable(trMemory);
    }
 
 void *

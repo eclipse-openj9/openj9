@@ -616,6 +616,28 @@ bool TR::CompilationInfo::importantMethodForStartup(J9Method *method)
    return false;
    }
 
+bool
+TR::CompilationInfo::isMethodIneligibleForAot(J9Method *method)
+   {
+   const J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
+   const J9ROMClass *romClass = J9_CLASS_FROM_METHOD(method)->romClass;
+   J9UTF8 *className = J9ROMCLASS_CLASSNAME(romClass);
+
+   // Don't AOT-compile anything in j/l/i for now
+   if (strncmp(utf8Data(className), "java/lang/invoke/", sizeof("java/lang/invoke/") - 1) == 0)
+      return true;
+
+   if (J9UTF8_LENGTH(className) == 36 &&
+      0 == memcmp(utf8Data(className), "com/ibm/rmi/io/FastPathForCollocated", 36))
+      {
+      J9UTF8 *utf8 = J9ROMMETHOD_NAME(romMethod);
+      if (J9UTF8_LENGTH(utf8) == 21 &&
+         0 == memcmp(J9UTF8_DATA(utf8), "isVMDeepCopySupported", 21))
+         return true;
+      }
+   return false;
+   }
+
 
 bool TR::CompilationInfo::shouldDowngradeCompReq(TR_MethodToBeCompiled *entry)
    {
@@ -7147,28 +7169,6 @@ TR::CompilationInfoPerThreadBase::findAotBodyInSCC(J9VMThread *vmThread, const J
       return NULL;
    }
 
-bool
-TR::CompilationInfoPerThreadBase::isMethodIneligibleForAot(J9Method *method)
-   {
-   const J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
-   const J9ROMClass *romClass = J9_CLASS_FROM_METHOD(method)->romClass;
-   J9UTF8 *className = J9ROMCLASS_CLASSNAME(romClass);
-
-   // Don't AOT-compile anything in j/l/i for now
-   if (strncmp(utf8Data(className), "java/lang/invoke/", sizeof("java/lang/invoke/") - 1) == 0)
-      return true;
-
-   if (J9UTF8_LENGTH(className) == 36 &&
-      0 == memcmp(utf8Data(className), "com/ibm/rmi/io/FastPathForCollocated", 36))
-      {
-      J9UTF8 *utf8 = J9ROMMETHOD_NAME(romMethod);
-      if (J9UTF8_LENGTH(utf8) == 21 &&
-         0 == memcmp(J9UTF8_DATA(utf8), "isVMDeepCopySupported", 21))
-         return true;
-      }
-   return false;
-   }
-
 #if defined(J9VM_OPT_JITSERVER)
 
 bool
@@ -7585,7 +7585,7 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
             // Eligibility checks
             && !entry->_doNotUseAotCodeFromSharedCache
             && fe->sharedCache()->isROMClassInSharedCache(J9_CLASS_FROM_METHOD(method)->romClass)
-            && !isMethodIneligibleForAot(method)
+            && !_compInfo.isMethodIneligibleForAot(method)
             && (!TR::Options::getAOTCmdLineOptions()->getOption(TR_AOTCompileOnlyFromBootstrap)
                 || fe->isClassLibraryMethod((TR_OpaqueMethodBlock *)method), true)
 
