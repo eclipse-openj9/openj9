@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2022 IBM Corp. and others
+ * Copyright (c) 2000, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1531,6 +1531,13 @@ createMethodMetaData(
    if (comp->isDeserializedAOTMethod())
       {
       data->flags |= JIT_METADATA_IS_DESERIALIZED_COMP;
+      }
+#endif
+
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+   if (comp->fej9()->inSnapshotMode())
+      {
+      data->flags |= JIT_METADATA_IS_PRECHECKPOINT_COMP;
       }
 #endif
 

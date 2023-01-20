@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2022 IBM Corp. and others
+ * Copyright (c) 2000, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -43,6 +43,82 @@ namespace TR { class CompilationInfoPerThreadBase; }
 
 namespace J9
 {
+/**
+ * This enum and the associated string array _externalOptionStrings
+ * in J9Options.cpp should be kept in sync.
+ */
+enum ExternalOptions
+   {
+   TR_FirstExternalOption                      = 0,
+   Xnodfpbd                                    = 0,
+   Xdfpbd                                      = 1,
+   Xhysteresis                                 = 2,
+   Xnoquickstart                               = 3,
+   Xquickstart                                 = 4,
+   Xtuneelastic                                = 5,
+   XtlhPrefetch                                = 6,
+   XnotlhPrefetch                              = 7,
+   Xlockword                                   = 8,
+   XlockReservation                            = 9,
+   XjniAcc                                     = 10,
+   Xlp                                         = 11,
+   Xlpcodecache                                = 12,
+   Xcodecache                                  = 13,
+   Xcodecachetotal                             = 14,
+   XXcodecachetotal                            = 15,
+   XXplusPrintCodeCache                        = 16,
+   XXminusPrintCodeCache                       = 17,
+   XsamplingExpirationTime                     = 18,
+   XcompilationThreads                         = 19,
+   XaggressivenessLevel                        = 20,
+   Xnoclassgc                                  = 21,
+   Xjit                                        = 22,
+   Xnojit                                      = 23,
+   Xjitcolon                                   = 24,
+   Xaot                                        = 25,
+   Xnoaot                                      = 26,
+   Xaotcolon                                   = 27,
+   XXdeterministic                             = 28,
+   XXplusRuntimeInstrumentation                = 29,
+   XXminusRuntimeInstrumentation               = 30,
+   XXplusPerfTool                              = 31,
+   XXminusPerfTool                             = 32,
+   XXdoNotProcessJitEnvVars                    = 33,
+   XXplusMergeCompilerOptions                  = 34,
+   XXminusMergeCompilerOptions                 = 35,
+   XXLateSCCDisclaimTimeOption                 = 36,
+   XXplusUseJITServerOption                    = 37,
+   XXminusUseJITServerOption                   = 38,
+   XXplusJITServerTechPreviewMessageOption     = 39,
+   XXminusJITServerTechPreviewMessageOption    = 40,
+   XXJITServerAddressOption                    = 41,
+   XXJITServerPortOption                       = 42,
+   XXJITServerTimeoutOption                    = 43,
+   XXJITServerSSLKeyOption                     = 44,
+   XXJITServerSSLCertOption                    = 45,
+   XXJITServerSSLRootCertsOption               = 46,
+   XXplusJITServerUseAOTCacheOption            = 47,
+   XXminusJITServerUseAOTCacheOption           = 48,
+   XXplusRequireJITServerOption                = 49,
+   XXminusRequireJITServerOption               = 50,
+   XXplusJITServerLogConnections               = 51,
+   XXminusJITServerLogConnections              = 52,
+   XXJITServerAOTmxOption                      = 53,
+   XXplusJITServerLocalSyncCompilesOption      = 54,
+   XXminusJITServerLocalSyncCompilesOption     = 55,
+   XXplusMetricsServer                         = 56,
+   XXminusMetricsServer                        = 57,
+   XXJITServerMetricsPortOption                = 58,
+   XXJITServerMetricsSSLKeyOption              = 59,
+   XXJITServerMetricsSSLCertOption             = 60,
+   XXplusJITServerShareROMClassesOption        = 61,
+   XXminusJITServerShareROMClassesOption       = 62,
+   XXplusJITServerAOTCachePersistenceOption    = 63,
+   XXminusJITServerAOTCachePersistenceOption   = 64,
+   XXJITServerAOTCacheDirOption                = 65,
+   XXJITServerAOTCacheNameOption               = 66,
+   TR_NumExternalOptions                       = 67
+   };
 
 class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
    {
@@ -341,6 +417,8 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
    static int32_t _jProfilingEnablementSampleThreshold;
 
    static bool _aggressiveLockReservation;
+
+   static char * _externalOptionStrings[ExternalOptions::TR_NumExternalOptions];
 
    static void  printPID();
 
