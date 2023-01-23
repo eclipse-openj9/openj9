@@ -454,7 +454,7 @@ CachedAOTMethod::setSubrecordPointers(const JITServerAOTCacheReadContext &contex
          case AOTSerializationRecordType::ClassLoader:
             if ((subrecordId >= context._classLoaderRecords.size()) || !context._classLoaderRecords[subrecordId])
                {
-               invalidSubrecordName = "class loader";
+               invalidSubrecordName = AOTCacheClassLoaderRecord::getRecordName();
                goto error;
                }
             records()[i] = context._classLoaderRecords[subrecordId];
@@ -462,7 +462,7 @@ CachedAOTMethod::setSubrecordPointers(const JITServerAOTCacheReadContext &contex
          case AOTSerializationRecordType::Class:
             if ((subrecordId >= context._classRecords.size()) || !context._classRecords[subrecordId])
                {
-               invalidSubrecordName = "class";
+               invalidSubrecordName = AOTCacheClassRecord::getRecordName();
                goto error;
                }
             records()[i] = context._classRecords[subrecordId];
@@ -470,7 +470,7 @@ CachedAOTMethod::setSubrecordPointers(const JITServerAOTCacheReadContext &contex
          case AOTSerializationRecordType::Method:
             if ((subrecordId >= context._methodRecords.size()) || !context._methodRecords[subrecordId])
                {
-               invalidSubrecordName = "method";
+               invalidSubrecordName = AOTCacheMethodRecord::getRecordName();
                goto error;
                }
             records()[i] = context._methodRecords[subrecordId];
@@ -478,7 +478,7 @@ CachedAOTMethod::setSubrecordPointers(const JITServerAOTCacheReadContext &contex
          case AOTSerializationRecordType::ClassChain:
             if ((subrecordId >= context._classChainRecords.size()) || !context._classChainRecords[subrecordId])
                {
-               invalidSubrecordName = "class chain";
+               invalidSubrecordName = AOTCacheClassChainRecord::getRecordName();
                goto error;
                }
             records()[i] = context._classChainRecords[subrecordId];
@@ -486,18 +486,18 @@ CachedAOTMethod::setSubrecordPointers(const JITServerAOTCacheReadContext &contex
          case AOTSerializationRecordType::WellKnownClasses:
             if ((subrecordId >= context._wellKnownClassesRecords.size()) || !context._wellKnownClassesRecords[subrecordId])
                {
-               invalidSubrecordName = "well-known classes";
+               invalidSubrecordName = AOTCacheWellKnownClassesRecord::getRecordName();
                goto error;
                }
             records()[i] = context._wellKnownClassesRecords[subrecordId];
             break;
          case AOTSerializationRecordType::AOTHeader: // never associated with an SCC offset
-            invalidSubrecordName = "AOT header";
+            invalidSubrecordName = AOTCacheAOTHeaderRecord::getRecordName();
             goto error;
          case AOTSerializationRecordType::Thunk:
             if ((subrecordId >= context._thunkRecords.size()) || !context._thunkRecords[subrecordId])
                {
-               invalidSubrecordName = "thunk";
+               invalidSubrecordName = AOTCacheThunkRecord::getRecordName();
                goto error;
                }
             records()[i] = context._thunkRecords[subrecordId];
