@@ -59,7 +59,7 @@
     <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" "SecondRestore"</command>
     <output type="success" caseSensitive="yes" regex="no">Different random values</output>
     <output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>
-    <output type="required" caseSensitive="yes" regex="no">Second Restore</output>
+    <output type="success" caseSensitive="yes" regex="no">Second Restore</output>
     <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
     <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
     <!-- If CRIU can't acquire the original thread IDs, this test will fail. Nothing can be done about this failure. -->
