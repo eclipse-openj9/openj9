@@ -68,7 +68,6 @@
 namespace TR { class SimpleRegex; }
 
 #define OPT_DETAILS "O^O INLINER: "
-#define OPT_DETAILS_INLINER "O^O Inliner: "
 #define OPT_DETAILS_VIRTUAL_GUARD_IMPROVE "O^O VIRTUAL GUARD IMPROVE: "
 
 // == Hack markers ==
@@ -558,7 +557,7 @@ TR_J9InlinerPolicy::genCompressedRefs(TR::Node * address, bool genTT, int32_t is
    {
    static char *pEnv = feGetEnv("TR_UseTranslateInTrees");
 
-   if (performTransformation(comp(), "%sGenerating compressedRefs anchor for node [%p]\n", OPT_DETAILS_INLINER, address))
+   if (performTransformation(comp(), "%sGenerating compressedRefs anchor for node [%p]\n", OPT_DETAILS, address))
       {
       TR::Node *value = address;
       if (pEnv && (isLoad < 0)) // store

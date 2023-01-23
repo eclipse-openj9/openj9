@@ -2670,7 +2670,7 @@ TR::Register *J9::X86::TreeEvaluator::ZEROCHKEvaluator(TR::Node *node, TR::CodeG
    if ( valueToCheck->getOpCode().isBooleanCompare()
      && isInteger(valueToCheck->getChild(0)->getOpCode(), cg)
      && isInteger(valueToCheck->getChild(1)->getOpCode(), cg)
-     && performTransformation(comp, "O^O CODEGEN Optimizing ZEROCHK+%s %s\n", valueToCheck->getOpCode().getName(), valueToCheck->getName(cg->getDebug())))
+     && performTransformation(comp, "%sCODEGEN Optimizing ZEROCHK+%s %s\n", OPT_DETAILS_TREE_EVALUATION, valueToCheck->getOpCode().getName(), valueToCheck->getName(cg->getDebug())))
       {
       if (valueToCheck->getOpCode().isCompareForOrder())
          {
@@ -2732,7 +2732,7 @@ bool isConditionCodeSetForCompare(TR::Node *node, bool *jumpOnOppositeCondition,
              (((prevInstrSourceRegister == firstChildReg) && (prevInstrTargetRegister == secondChildReg)) ||
               ((prevInstrSourceRegister == secondChildReg) && (prevInstrTargetRegister == firstChildReg))))
             {
-            if (performTransformation(comp, "O^O SKIP BOUND CHECK COMPARISON at node %p\n", node))
+            if (performTransformation(comp, "%sSKIP BOUND CHECK COMPARISON at node %p\n", OPT_DETAILS_TREE_EVALUATION, node))
                {
                if (prevInstrTargetRegister == secondChildReg)
                   *jumpOnOppositeCondition = true;
@@ -7740,7 +7740,7 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
    allocationSize = objectSize;
 
    static long count = 0;
-   if (!performTransformation(comp, "O^O <%3d> Inlining Allocation of %s [0x%p].\n", count++, node->getOpCode().getName(), node))
+   if (!performTransformation(comp, "%s<%3d> Inlining Allocation of %s [0x%p].\n", OPT_DETAILS_TREE_EVALUATION, count++, node->getOpCode().getName(), node))
       return NULL;
 
    if (node->getOpCodeValue() == TR::New)

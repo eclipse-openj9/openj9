@@ -69,7 +69,6 @@
 #include "env/PersistentCHTable.hpp"
 
 #define OPT_DETAILS "O^O CODE GENERATION: "
-#define OPT_DETAILS_CALL_ARRAYCOPY_INSTEAD_OF_UNSAFE_COPYMEMORY "O^O Call arraycopy instead of Unsafe.copyMemory: "
 #define OPT_DETAILS_LINKAGE_REGISTER_ALLOCATION "O^O LINKAGE REGISTER ALLOCATION: "
 
 J9::CodeGenerator::CodeGenerator(TR::Compilation *comp) :
@@ -894,7 +893,7 @@ J9::CodeGenerator::lowerTreeIfNeeded(
       TR::RecognizedMethod rm = node->getSymbol()->castToMethodSymbol()->getRecognizedMethod();
 
       if ((rm == TR::sun_misc_Unsafe_copyMemory || rm == TR::jdk_internal_misc_Unsafe_copyMemory0) &&
-            performTransformation(self()->comp(), "%s%s\n", OPT_DETAILS_CALL_ARRAYCOPY_INSTEAD_OF_UNSAFE_COPYMEMORY, self()->getDebug()->getName(node)))
+            performTransformation(self()->comp(), "%sCall arraycopy instead of Unsafe.copyMemory for %s\n", OPT_DETAILS, self()->getDebug()->getName(node)))
          {
 
 #if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)

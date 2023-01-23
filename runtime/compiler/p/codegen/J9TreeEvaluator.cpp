@@ -6328,7 +6328,7 @@ TR::Register *J9::Power::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeG
       }
 
    static int count = 0;
-   doInline = doInline && performTransformation(comp, "O^O <%3d> Inlining Allocation of %s [0x%p].\n", count++, node->getOpCode().getName(), node);
+   doInline = doInline && performTransformation(comp, "%s<%3d> Inlining Allocation of %s [0x%p].\n", OPT_DETAILS, count++, node->getOpCode().getName(), node);
 
    if (doInline)
       {

@@ -37,7 +37,7 @@
 #include "env/PersistentCHTable.hpp"
 #include "env/VMJ9.h"
 
-#define OPT_DETAILS "O^O CLASS LOOKAHEAD: "
+#define OPT_DETAILS_CLASS_LOOKAHEAD "O^O CLASS LOOKAHEAD: "
 
 namespace J9
 {
@@ -206,7 +206,7 @@ SymbolReference::getTypeSignature(int32_t & len, TR_AllocationKind allocKind, bo
                   fieldInfo->isTypeInfoValid() &&
                   (fieldInfo->getNumChars() > 0) &&
                   performTransformation(comp,"%sReturning type %s info for symbol %p based on class file examination\n",
-                                          OPT_DETAILS, fieldInfo->getClassPointer(), _symbol))
+                                          OPT_DETAILS_CLASS_LOOKAHEAD, fieldInfo->getClassPointer(), _symbol))
                   {
                   if (isFixed)
                      *isFixed = true;
@@ -217,7 +217,7 @@ SymbolReference::getTypeSignature(int32_t & len, TR_AllocationKind allocKind, bo
               if (fieldInfo &&
                   fieldInfo->isBigDecimalType() &&
                   performTransformation(comp,"%sReturning type %s info for symbol %p based on class file examination\n",
-                                          OPT_DETAILS, "Ljava/math/BigDecimal;", _symbol))
+                                          OPT_DETAILS_CLASS_LOOKAHEAD, "Ljava/math/BigDecimal;", _symbol))
                  {
                  len = 22;
                  return "Ljava/math/BigDecimal;";
@@ -226,7 +226,7 @@ SymbolReference::getTypeSignature(int32_t & len, TR_AllocationKind allocKind, bo
              if (fieldInfo &&
                   fieldInfo->isBigIntegerType() &&
                   performTransformation(comp,"%sReturning type %s info for symbol %p based on class file examination\n",
-                                          OPT_DETAILS, "Ljava/math/BigInteger;", _symbol))
+                                          OPT_DETAILS_CLASS_LOOKAHEAD, "Ljava/math/BigInteger;", _symbol))
                  {
                  len = 22;
                  return "Ljava/math/BigInteger;";
@@ -364,7 +364,7 @@ SymbolReference::getTypeSignature(int32_t & len, TR_AllocationKind allocKind, bo
                 fieldInfo->isTypeInfoValid() &&
                 (fieldInfo->getNumChars() > 0) &&
                 performTransformation(comp, "%sReturning type %s info for symbol %p based on class file examination\n",
-                                      OPT_DETAILS, fieldInfo->getClassPointer(), _symbol))
+                                      OPT_DETAILS_CLASS_LOOKAHEAD, fieldInfo->getClassPointer(), _symbol))
                {
                if (isFixed)
                   *isFixed = true;
@@ -375,7 +375,7 @@ SymbolReference::getTypeSignature(int32_t & len, TR_AllocationKind allocKind, bo
             if (fieldInfo &&
                 fieldInfo->isBigDecimalType() &&
                 performTransformation(comp,"%sReturning type %s info for symbol %p based on class file examination\n",
-                                      OPT_DETAILS, "Ljava/math/BigDecimal;", _symbol))
+                                      OPT_DETAILS_CLASS_LOOKAHEAD, "Ljava/math/BigDecimal;", _symbol))
                {
                len = 22;
                return "Ljava/math/BigDecimal;";
@@ -384,7 +384,7 @@ SymbolReference::getTypeSignature(int32_t & len, TR_AllocationKind allocKind, bo
             if (fieldInfo &&
                 fieldInfo->isBigIntegerType() &&
                 performTransformation(comp,"%sReturning type %s info for symbol %p based on class file examination\n",
-                                          OPT_DETAILS, "Ljava/math/BigInteger;", _symbol))
+                                          OPT_DETAILS_CLASS_LOOKAHEAD, "Ljava/math/BigInteger;", _symbol))
                {
                len = 22;
                return "Ljava/math/BigInteger;";

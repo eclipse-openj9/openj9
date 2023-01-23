@@ -67,7 +67,6 @@ class TR_OpaqueClassBlock;
 namespace TR { class MethodSymbol; }
 
 #define OPT_DETAILS "O^O EXPLICIT NEW INITIALIZATION: "
-#define OPT_DETAILS_NEW_INITIALIZATION "O^O NEW INITIALIZATION: "
 
 TR_NewInitialization::TR_NewInitialization(TR::OptimizationManager *manager)
    : TR::Optimization(manager)
@@ -647,7 +646,7 @@ TR::ResolvedMethodSymbol *TR_NewInitialization::findInlinableMethod(TR::TreeTop 
       traceMsg(comp(), "\nGenerating trees for call at [%p] to %s\n", callTree->getNode()->getFirstChild(), calleeSymbol->getResolvedMethod()->signature(trMemory()));
       }
 
-   dumpOptDetails(comp(), "%sPeeking into the IL to check for inlineable calls \n", OPT_DETAILS_NEW_INITIALIZATION);
+   dumpOptDetails(comp(), "%sPeeking into the IL to check for inlineable calls \n", OPT_DETAILS);
 
    //comp()->setVisitCount(1);
 

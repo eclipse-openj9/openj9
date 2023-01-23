@@ -51,7 +51,8 @@
 #include "optimizer/Structure.hpp"
 #include "optimizer/HCRGuardAnalysis.hpp"
 
-#define OPT_DETAILS "O^O transformIndirectLoadChain: "
+#define OPT_DETAILS "O^O J9 TRANSFORM UTIL: "
+#define OPT_DETAILS_TRANSFORM_INDIRECT_LOAD "O^O transformIndirectLoadChain: "
 #define OPT_DETAILS_FOLD_STATIC_FINAL_FIELD "O^O foldStaticFinalField: "
 #define OPT_DETAILS_TRANSFORM_DIRECT_LOAD "O^O transformDirectLoad: "
 
@@ -888,7 +889,7 @@ static bool changeIndirectLoadIntoConst(TR::Node *node, TR::ILOpCodes opCode, TR
    // constant value / symref / anything else that may be necessary.
    //
    TR::ILOpCode opCodeObject; opCodeObject.setOpCodeValue(opCode);
-   if (performTransformation(comp, "%schange %s [%p] into %s\n", OPT_DETAILS, node->getOpCode().getName(), node, opCodeObject.getName()))
+   if (performTransformation(comp, "%schange %s [%p] into %s\n", OPT_DETAILS_TRANSFORM_INDIRECT_LOAD, node->getOpCode().getName(), node, opCodeObject.getName()))
       {
       *removedChild = node->getFirstChild();
       node->setNumChildren(0);
@@ -2187,7 +2188,7 @@ J9::TransformUtil::transformIndirectLoadChainImpl(TR::Compilation *comp,
                   comp->getSymRefTab()->findOrCreateSymRefWithKnownObject(symRef, knotIndex);
 
                if (improvedSymRef->hasKnownObjectIndex()
-                  && performTransformation(comp, "%s%s [%p] with fieldOffset %d is obj%d referenceAddr is %p\n", OPT_DETAILS, node->getOpCode().getName(), node, improvedSymRef->getKnownObjectIndex(), symRef->getOffset(), (void*)value))
+                  && performTransformation(comp, "%s%s [%p] with fieldOffset %d is obj%d referenceAddr is %p\n", OPT_DETAILS_TRANSFORM_INDIRECT_LOAD, node->getOpCode().getName(), node, improvedSymRef->getKnownObjectIndex(), symRef->getOffset(), (void*)value))
                   {
                   node->setSymbolReference(improvedSymRef);
                   node->setIsNull(false);
@@ -2877,7 +2878,7 @@ J9::TransformUtil::refineMethodHandleInvokeBasic(TR::Compilation* comp, TR::Tree
    auto symRef = node->getSymbolReference();
    // Refine the call
    auto refinedMethod = fej9->createResolvedMethod(comp->trMemory(), targetMethod, symRef->getOwningMethod(comp));
-   if (!performTransformation(comp, "O^O Refine invokeBasic n%dn %p with known MH object\n", node->getGlobalIndex(), node))
+   if (!performTransformation(comp, "%sRefine invokeBasic n%dn %p with known MH object\n", OPT_DETAILS, node->getGlobalIndex(), node))
       return false;
 
    // Preserve NULLCHK
