@@ -2,7 +2,7 @@
  * Licensed Materials - Property of IBM
  * "Restricted Materials of IBM"
  *
- * (c) Copyright IBM Corp. 2020, 2022 All Rights Reserved
+ * (c) Copyright IBM Corp. 2020, 2023 All Rights Reserved
  *
  * US Government Users Restricted Rights - Use, duplication or disclosure
  * restricted by GSA ADP Schedule Contract with IBM Corp.
@@ -83,7 +83,9 @@ loadCryptoLib(J9VMThread *currentThread)
 		CIPHER_t* CIPHER_decryptFinal = NULL;
 		z_kmc_native_t* z_kmc_native = NULL;
 		J9PortLibrary * portLib = currentThread->javaVM->portLibrary;
-		char* dir = currentThread->javaVM->j2seRootDirectory;
+		J9JavaVM* vm = currentThread->javaVM;
+		BOOLEAN fips140_2 = vm->fipsHome == vm->javaHome;
+		char* dir = fips140_2 ? vm->j2seRootDirectory : (char *)vm->fipsHome;
 		char correctPath[PATH_MAX] = "";
 		char *correctPathPtr = correctPath;
 
@@ -93,18 +95,34 @@ loadCryptoLib(J9VMThread *currentThread)
 			/* Attempting to load the crypto library and needed functions
 			 * vm assert if the library does not load correctly
 			 * the crypto library is part of the jdk and a incorrect loading
-			 * indicates a corruption or a bug in the jdk */ 	
+			 * indicates a corruption or a bug in the jdk */
 			if (NULL != dir) {
-				/* expectedPathLength - %s/../%s - +3 includes .. and NUL terminator */
-				UDATA expectedPathLength = strlen(dir) + strlen(J9_CRYPTO_DLL_NAME) + (strlen(DIR_SEPARATOR_STR) * 2) + 3;
-				if (expectedPathLength > PATH_MAX) {
-					correctPathPtr = (char*)j9mem_allocate_memory(expectedPathLength, J9MEM_CATEGORY_VM_JCL);
-					if (NULL == correctPathPtr) {
-						setNativeOutOfMemoryError(currentThread, J9NLS_VM_NATIVE_OOM);
+				if (fips140_2) {
+					/* expectedPathLength - %s/../%s - +3 includes .. and NUL terminator */
+					UDATA expectedPathLength = strlen(dir) + strlen(J9_CRYPTO_DLL_NAME) + (strlen(DIR_SEPARATOR_STR) * 2) + 3;
+					if (expectedPathLength > PATH_MAX) {
+						correctPathPtr = (char*)j9mem_allocate_memory(expectedPathLength, J9MEM_CATEGORY_VM_JCL);
+						if (NULL == correctPathPtr) {
+							setNativeOutOfMemoryError(currentThread, J9NLS_VM_NATIVE_OOM);
+						}
+					}
+					if (NULL != correctPathPtr) {
+						j9str_printf(portLib, correctPathPtr, expectedPathLength, "%s%s..%s%s", dir, DIR_SEPARATOR_STR, DIR_SEPARATOR_STR, J9_CRYPTO_DLL_NAME);
+					}
+				} else {
+					/* expectedPathLength - %s/lib/icc/%s - +7 includes "lib", "icc" and NUL terminator */
+					UDATA expectedPathLength = strlen(dir) + strlen(J9_CRYPTO_DLL_NAME) + (strlen(DIR_SEPARATOR_STR) * 3) + 7;
+					if (expectedPathLength > PATH_MAX) {
+						correctPathPtr = (char*)j9mem_allocate_memory(expectedPathLength, J9MEM_CATEGORY_VM_JCL);
+						if (NULL == correctPathPtr) {
+							setNativeOutOfMemoryError(currentThread, J9NLS_VM_NATIVE_OOM);
+						}
+					}
+					if (NULL != correctPathPtr) {
+						j9str_printf(portLib, correctPathPtr, expectedPathLength, "%s%slib%sicc%s%s", dir, DIR_SEPARATOR_STR, DIR_SEPARATOR_STR, DIR_SEPARATOR_STR, J9_CRYPTO_DLL_NAME);
 					}
 				}
 				if (NULL != correctPathPtr) {
-					j9str_printf(portLib, correctPathPtr, expectedPathLength, "%s%s..%s%s", dir, DIR_SEPARATOR_STR, DIR_SEPARATOR_STR, J9_CRYPTO_DLL_NAME);
 #if defined(CRYPTO_DEBUG)
 					fprintf(stderr,"** Attempting to load crypto lib from %s\n", correctPathPtr); 
 #endif /* CRYPTO_DEBUG */
@@ -167,7 +185,7 @@ loadCryptoLib(J9VMThread *currentThread)
 			cryptFuncs->CIPHER_decryptFinalPtr.CIPHER_op = CIPHER_decryptFinal;
 			cryptFuncs->CIPHER_decryptUpdatePtr.CIPHER_op = cryptFuncs->CIPHER_decryptUpdate;
 			cryptFuncs->z_kmc_nativePtr.z_kmc_native = z_kmc_native;
-			currentThread->javaVM->jniCryptoFunctions = (void*)cryptFuncs;
+			vm->jniCryptoFunctions = (void*)cryptFuncs;
 			if ((correctPath != correctPathPtr) && (NULL != correctPathPtr)) {
 				j9mem_free_memory(correctPathPtr);
 			}
