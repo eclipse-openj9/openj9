@@ -625,8 +625,8 @@ enum INIT_STAGE {
 #define VMOPT_ILLEGAL_ACCESS "--illegal-access="
 #define VMOPT_ENABLE_NATIVE_ACCESS "--enable-native-access"
 
-#define VMOPT_XFIPS_140_2 "-Xfips140-2"
-#define VMOPT_XFIPS_140_3 "-Xfips140-3"
+#define VMOPT_XDISABLEFIPS140_3 "-Xdisablefips140-3"
+#define VMOPT_XENABLEFIPS140_3 "-Xenablefips140-3"
 
 /* JEP 421: Deprecate Finalization for Removal */
 #define VMOPT_DISABLE_FINALIZATION "--finalization="
