@@ -303,6 +303,11 @@ walkAllStackFrames(J9VMThread *currentThread, J9StackWalkState *walkState)
 		localWalkState = *walkState;
 		localWalkState.walkThread = targetThread;
 		rc = vm->walkStackFrames(currentThread, &localWalkState);
+
+		if (NULL != targetThread->currentContinuation) {
+			localWalkState = *walkState;
+			walkContinuationStackFrames(currentThread, targetThread->currentContinuation, &localWalkState);
+		}
 		targetThread = targetThread->linkNext;
 	} while (targetThread != vm->mainThread);
 
