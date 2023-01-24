@@ -24,19 +24,31 @@
 
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 
+#include "j9.h"
+#include "j9nonbuilder.h"
 #include "jvminit.h"
 #include "env/TRMemory.hpp"
+#include "compile/Method.hpp"
 #include "control/CompilationRuntime.hpp"
 #include "control/Options.hpp"
 #include "control/OptionsPostRestore.hpp"
+#include "control/J9Recompilation.hpp"
+#include "env/SystemSegmentProvider.hpp"
+#include "env/RawAllocator.hpp"
+#include "env/Region.hpp"
+#include "env/VerboseLog.hpp"
+#include "env/TRMemory.hpp"
+#include "env/VMJ9.h"
 
 #define FIND_AND_CONSUME_RESTORE_ARG(match, optionName, optionValue) FIND_AND_CONSUME_ARG(vm->checkpointState.restoreArgsList, match, optionName, optionValue)
 #define FIND_ARG_IN_RESTORE_ARGS(match, optionName, optionValue) FIND_ARG_IN_ARGS(vm->checkpointState.restoreArgsList, match, optionName, optionValue)
 
-J9::OptionsPostRestore::OptionsPostRestore(J9JITConfig *jitConfig, TR::CompilationInfo *compInfo)
+J9::OptionsPostRestore::OptionsPostRestore(J9VMThread *vmThread, J9JITConfig *jitConfig, TR::CompilationInfo *compInfo, TR::Region &region)
    :
    _jitConfig(jitConfig),
+   _vmThread(vmThread),
    _compInfo(compInfo),
+   _region(region),
    _argIndexXjit(-1),
    _argIndexXjitcolon(-1),
    _argIndexXnojit(-1),
@@ -432,6 +444,84 @@ J9::OptionsPostRestore::processInternalCompilerOptions(bool enabled, bool isAOT)
    }
 
 void
+J9::OptionsPostRestore::filterMethod(TR_J9VMBase *fej9, J9Method *method)
+   {
+   if (TR::CompilationInfo::isCompiled(method))
+      {
+      J9ROMMethod * romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
+      J9UTF8 *className;
+      J9UTF8 *name;
+      J9UTF8 *signature;
+      getClassNameSignatureFromMethod(method, className, name, signature);
+      char *methodSignature;
+      char arr[1024];
+      int32_t len = J9UTF8_LENGTH(className) + J9UTF8_LENGTH(name) + J9UTF8_LENGTH(signature) + 3;
+      if (len < 1024)
+         methodSignature = arr;
+      else
+         methodSignature = (char *)_region.allocate(len);
+
+      if (methodSignature)
+         {
+         sprintf(methodSignature, "%.*s.%.*s%.*s",
+                 J9UTF8_LENGTH(className), utf8Data(className),
+                 J9UTF8_LENGTH(name), utf8Data(name),
+                 J9UTF8_LENGTH(signature), utf8Data(signature));
+
+         TR_FilterBST *filter = NULL;
+         if (!TR::Options::getDebug()->methodSigCanBeCompiled(methodSignature, filter, TR::Method::J9))
+            {
+            if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCheckpointRestoreDetails))
+               TR_VerboseLog::writeLineLocked(TR_Vlog_CHECKPOINT_RESTORE, "Invalidating %s (%p)", methodSignature, method);
+
+            TR::Recompilation::invalidateMethodBody(method->extra, fej9);
+            // TODO: add method to a list to check the stack of java threads to print out message
+            }
+         }
+      }
+   }
+
+void
+J9::OptionsPostRestore::filterMethods()
+   {
+   PORT_ACCESS_FROM_JITCONFIG(_jitConfig);
+   J9JavaVM *javaVM = _jitConfig->javaVM;
+   TR_J9VMBase *fej9 = TR_J9VMBase::get(_jitConfig, _vmThread);
+   TR_Memory trMemory(*_compInfo->persistentMemory(), _region);
+
+   J9ClassWalkState classWalkState;
+   J9Class *j9clazz = javaVM->internalVMFunctions->allClassesStartDo(&classWalkState, javaVM, NULL);
+   while (j9clazz)
+      {
+      TR_OpaqueClassBlock *clazz = reinterpret_cast<TR_OpaqueClassBlock *>(j9clazz);
+      uint32_t numMethods = fej9->getNumMethods(clazz);
+      J9Method *ramMethods = reinterpret_cast<J9Method *>(fej9->getMethods(clazz));
+
+      for (uint32_t index = 0; index < numMethods; index++)
+         {
+         filterMethod(fej9, &ramMethods[index]);
+         }
+
+      j9clazz = javaVM->internalVMFunctions->allClassesNextDo(&classWalkState);
+      }
+   javaVM->internalVMFunctions->allClassesEndDo(&classWalkState);
+   }
+
+void
+J9::OptionsPostRestore::postProcessInternalCompilerOptions()
+   {
+   // TODO: Based on whether the following is enabled, do necessary compensation
+   // - compilationThreads=
+   // - disableAsyncCompilation
+   // - disabling recompilation (optLevel=, inhibit recomp, etc)
+   // - OMR::Options::_logFile (both global and subsets)
+   //    - May have to close an existing file and open a new one?
+
+   if (TR::Options::getDebug())
+      filterMethods();
+   }
+
+void
 J9::OptionsPostRestore::processCompilerOptions()
    {
    // Needed for FIND_AND_CONSUME_RESTORE_ARG
@@ -472,14 +562,7 @@ J9::OptionsPostRestore::processCompilerOptions()
       processInternalCompilerOptions(aotEnabled, true);
       processInternalCompilerOptions(jitEnabled, false);
 
-      // TODO: Based on whether the following is enabled, do necessary compensation
-      // - exclude=
-      // - limit=
-      // - compilationThreads=
-      // - disableAsyncCompilation
-      // - disabling recompilation (optLevel=, inhibit recomp, etc)
-      // - OMR::Options::_logFile (both global and subsets)
-      //    - May have to close an existing file and open a new one?
+      postProcessInternalCompilerOptions();
 
       // TODO: Look into
       // - -Xrs
@@ -501,10 +584,29 @@ J9::OptionsPostRestore::processCompilerOptions()
    }
 
 void
-J9::OptionsPostRestore::processOptionsPostRestore(J9JITConfig *jitConfig, TR::CompilationInfo *compInfo)
+J9::OptionsPostRestore::processOptionsPostRestore(J9VMThread *vmThread, J9JITConfig *jitConfig, TR::CompilationInfo *compInfo)
    {
-   J9::OptionsPostRestore optsPostRestore = J9::OptionsPostRestore(jitConfig, compInfo);
-   optsPostRestore.processCompilerOptions();
+   try
+      {
+      TR::RawAllocator rawAllocator(jitConfig->javaVM);
+      J9::SegmentAllocator segmentAllocator(MEMORY_TYPE_JIT_SCRATCH_SPACE | MEMORY_TYPE_VIRTUAL, *jitConfig->javaVM);
+      J9::SystemSegmentProvider regionSegmentProvider(
+         1 << 20,
+         1 << 20,
+         TR::Options::getScratchSpaceLimit(),
+         segmentAllocator,
+         rawAllocator
+         );
+      TR::Region postRestoreOptionsRegion(regionSegmentProvider, rawAllocator);
+
+      J9::OptionsPostRestore optsPostRestore = J9::OptionsPostRestore(vmThread, jitConfig, compInfo, postRestoreOptionsRegion);
+      optsPostRestore.processCompilerOptions();
+      }
+   catch (const std::exception &e)
+      {
+      if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCheckpointRestore))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_CHECKPOINT_RESTORE, "Failed to process options post restore");
+      }
    }
 
 #endif // J9VM_OPT_CRIU_SUPPORT
