@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2022 IBM Corp. and others
+ * Copyright (c) 1991, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1027,12 +1027,15 @@ addExtDir(J9PortLibrary *portLib, J9JavaVMArgInfoList *vmArgumentsList, char *jr
 	char *optionsArgumentBuffer = NULL;
 	J9JavaVMArgInfo *optArg = NULL;
 	const char *libExt = DIR_SEPARATOR_STR "lib" DIR_SEPARATOR_STR "ext";
-	const char *libExtFips = useFips140_3
-					? (DIR_SEPARATOR_STR "fips140-3" DIR_SEPARATOR_STR "lib" DIR_SEPARATOR_STR "ext")
-					: (DIR_SEPARATOR_STR "fips140-2" DIR_SEPARATOR_STR "lib" DIR_SEPARATOR_STR "ext");
 	I_32 optIndex = 0;
 	OMRPORT_ACCESS_FROM_J9PORT(portLib);
 	PORT_ACCESS_FROM_PORT(portLib);
+
+#if defined(FIPS_PREVIEW_PLATFORM)
+	const char *libExtFips = useFips140_3
+					? (DIR_SEPARATOR_STR "fips140-3" DIR_SEPARATOR_STR "lib" DIR_SEPARATOR_STR "ext")
+					: (DIR_SEPARATOR_STR "fips140-2" DIR_SEPARATOR_STR "lib" DIR_SEPARATOR_STR "ext");
+#endif /* defined(FIPS_PREVIEW_PLATFORM) */
 
 	Assert_Util_notNull(javaHomeEnd);
 	Assert_Util_true(javaHomeLength < strlen(jrelibPath));
@@ -1040,29 +1043,33 @@ addExtDir(J9PortLibrary *portLib, J9JavaVMArgInfoList *vmArgumentsList, char *jr
 	/* start with length of property name assignment */
 	argumentLength += strlen(JAVA_EXT_DIRS_EQUALS);
 
+#if defined(FIPS_PREVIEW_PLATFORM)
 	/* add length of FIPS specific directory to the ext dirs list */
-	argumentLength += javaHomeLength;
-	argumentLength += strlen(libExtFips);
-
-	/* add length of path separator */
-	argumentLength += strlen(J9JAVA_PATH_SEPARATOR);
+	argumentLength += javaHomeLength + strlen(libExtFips) + strlen(J9JAVA_PATH_SEPARATOR);
+#endif /* defined(FIPS_PREVIEW_PLATFORM) */
 
 	/* add length of common extension directory */
-	argumentLength += javaHomeLength;
-	argumentLength += strlen(libExt);
+	argumentLength += javaHomeLength + strlen(libExt);
 
 	optionsArgumentBuffer = j9mem_allocate_memory(argumentLength, OMRMEM_CATEGORY_VM);
 	if (NULL == optionsArgumentBuffer) {
 		return -1;
 	}
 
+#if defined(FIPS_PREVIEW_PLATFORM)
 	writtenLength = omrstr_printf(optionsArgumentBuffer, argumentLength, "%s%.*s%s%s%.*s%s",
 					JAVA_EXT_DIRS_EQUALS,
 					javaHomeLength, jrelibPath,
-					libExtFips,
-					J9JAVA_PATH_SEPARATOR,
+					libExtFips, J9JAVA_PATH_SEPARATOR,
 					javaHomeLength, jrelibPath,
 					libExt);
+#else /* defined(FIPS_PREVIEW_PLATFORM) */
+	writtenLength = omrstr_printf(optionsArgumentBuffer, argumentLength, "%s%.*s%s",
+					JAVA_EXT_DIRS_EQUALS,
+					javaHomeLength, jrelibPath,
+					libExt);
+#endif /* defined(FIPS_PREVIEW_PLATFORM) */
+
 	Assert_Util_true(writtenLength == (argumentLength - 1));
 
 	optArg = newJavaVMArgInfo(vmArgumentsList, optionsArgumentBuffer, ARG_MEMORY_ALLOCATION | CONSUMABLE_ARG);

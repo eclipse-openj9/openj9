@@ -1596,10 +1596,12 @@ initialArgumentScan(JavaVMInitArgs *args, J9SpecialArguments *specialArgs)
 			specialArgs->captureCommandLine = TRUE;
 		} else if (0 == strcmp(args->options[argCursor].optionString, VMOPT_XXNOOPENJ9COMMANDLINEENV)) {
 			specialArgs->captureCommandLine = FALSE;
+#if defined(FIPS_PREVIEW_OPTIONS_ACCEPTED_PLATFORM)
 		} else if (0 == strcmp(args->options[argCursor].optionString, VMOPT_XDISABLEFIPS140_3)) {
 			specialArgs->fips140_3 = FALSE;
 		} else if (0 == strcmp(args->options[argCursor].optionString, VMOPT_XENABLEFIPS140_3)) {
 			specialArgs->fips140_3 = TRUE;
+#endif /* defined(FIPS_PREVIEW_OPTIONS_ACCEPTED_PLATFORM) */
 		}
 	}
 
