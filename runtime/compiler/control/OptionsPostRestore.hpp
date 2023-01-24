@@ -27,7 +27,12 @@
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 
 struct J9JITConfig;
+struct J9VMThread;
+struct J9Method;
 namespace TR { class CompilationInfo; }
+namespace TR { struct Region; }
+struct TR_Memory;
+struct TR_J9VMBase;
 
 namespace J9
 {
@@ -38,18 +43,21 @@ class OptionsPostRestore
    /**
     * \brief OptionsPostRestore constructor
     *
+    * \param vmThread The J9VMThread
     * \param jitConfig The J9JITConfig
     * \param compInfo The TR::CompilationInfo
+    * \param region Reference to a TR::Region
     */
-   OptionsPostRestore(J9JITConfig *jitConfig, TR::CompilationInfo *compInfo);
+   OptionsPostRestore(J9VMThread *vmThread, J9JITConfig *jitConfig, TR::CompilationInfo *compInfo, TR::Region &region);
 
    /**
     * Public API to process options post restore
     *
+    * \param vmThread The J9VMThread
     * \param jitConfig The J9JITConfig
     * \param compInfo The TR::CompilationInfo
     */
-   static void processOptionsPostRestore(J9JITConfig *jitConfig, TR::CompilationInfo *compInfo);
+   static void processOptionsPostRestore(J9VMThread *vmThread, J9JITConfig *jitConfig, TR::CompilationInfo *compInfo);
 
    private:
 
@@ -58,6 +66,26 @@ class OptionsPostRestore
     * found in the Restore VM Args Array
     */
    void iterateOverExternalOptions();
+
+   /**
+    * Invalidate existing method bodies if they can no longer be
+    * executed based on the exclude/include filters.
+    *
+    * \param fej9 The TR_J9VMBase front end
+    * \param method The J9Method of the method to be filtered
+    */
+   void filterMethod(TR_J9VMBase *fej9, J9Method *method);
+
+   /**
+    * Helper method to filter methods based on the
+    * exclude/include filters.
+    */
+   void filterMethods();
+
+   /**
+    * Helper method to post process internal compiler options.
+    */
+   void postProcessInternalCompilerOptions();
 
    /**
     * Helper method to process JITServer options post restore.
@@ -76,7 +104,9 @@ class OptionsPostRestore
    void processCompilerOptions();
 
    J9JITConfig *_jitConfig;
+   J9VMThread *_vmThread;
    TR::CompilationInfo *_compInfo;
+   TR::Region &_region;
 
    int32_t _argIndexXjit;
    int32_t _argIndexXjitcolon;
