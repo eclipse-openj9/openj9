@@ -320,7 +320,7 @@ MM_GCExtensions::releaseNativesForContinuationObject(MM_EnvironmentBase* env, j9
 }
 
 bool
-MM_GCExtensions::needScanStacksForContinuationObject(J9VMThread *vmThread, j9object_t objectPtr)
+MM_GCExtensions::needScanStacksForContinuationObject(J9VMThread *vmThread, j9object_t objectPtr, bool isGlobalGC)
 {
 	bool needScan = false;
 #if JAVA_SPEC_VERSION >= 19
@@ -335,12 +335,14 @@ MM_GCExtensions::needScanStacksForContinuationObject(J9VMThread *vmThread, j9obj
 	 *
 	 * For fully STW GCs, there is no harm to scan them, but it's a waste of time since they are scanned during root scanning already.
 	 *
-	 * We don't scan currently scanned either - one scan is enough.
+	 * We don't scan currently scanned for the same collector either - one scan is enough for the same collector, but there could be concurrent scavenger(local collector) and concurrent marking(global collector) overlapping,
+	 * they are irrelevant and both are concurrent, we handle them independently and separately, they are not blocked or ignored each other.
+	 *
 	 * we don't scan the continuation object before started and after finished - java stack does not exist.
 	 */
 	if (started && !finished) {
 		Assert_MM_true(NULL != continuation);
-		needScan = !VM_VMHelpers::isContinuationMountedOrConcurrentlyScanned(continuation);
+		needScan = !VM_VMHelpers::isContinuationMountedOrConcurrentlyScanned(continuation, isGlobalGC);
 	}
 #endif /* JAVA_SPEC_VERSION >= 19 */
 	return needScan;

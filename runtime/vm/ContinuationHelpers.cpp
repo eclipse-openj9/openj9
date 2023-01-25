@@ -198,7 +198,7 @@ yieldContinuation(J9VMThread *currentThread)
 	 * must be maintained for weakly ordered CPUs, to unsure that once the continuation is again available for GC scan (on potentially remote CPUs), all CPUs see up-to-date stack .
 	 */
 	Assert_VM_true((uintptr_t)currentThread == continuation->state);
-	continuation->state = J9_GC_CONTINUATION_STATE_INITIAL;
+	continuation->state = J9_GC_CONTINUATION_STATE_CONCURRENT_SCAN_NONE;
 
 	return result;
 }

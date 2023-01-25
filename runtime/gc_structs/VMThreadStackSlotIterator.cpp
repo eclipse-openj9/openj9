@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2022 IBM Corp. and others
+ * Copyright (c) 1991, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -137,13 +137,14 @@ GC_VMThreadStackSlotIterator::scanSlots(
 			J9MODRON_OSLOTITERATOR *oSlotIterator,
 			bool includeStackFrameClassReferences,
 			bool trackVisibleFrameDepth,
-			bool syncWithContinuationMounting
+			bool isConcurrentGC,
+			bool isGlobalGC
 		)
 {
 	J9StackWalkState stackWalkState;
 
 	initializeStackWalkState(&stackWalkState, vmThread, userData, oSlotIterator, includeStackFrameClassReferences, trackVisibleFrameDepth);
-	VM_VMHelpers::walkContinuationStackFramesWrapper(vmThread, continuationObjectPtr, &stackWalkState, syncWithContinuationMounting);
+	VM_VMHelpers::walkContinuationStackFramesWrapper(vmThread, continuationObjectPtr, &stackWalkState, isConcurrentGC, isGlobalGC);
 }
 
 #if JAVA_SPEC_VERSION >= 19

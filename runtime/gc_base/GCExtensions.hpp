@@ -303,11 +303,13 @@ public:
 	 * Check if we need to scan the java stack for the Continuation Object
 	 * Used during main scan phase of GC (object graph traversal) or heap object iteration (in sliding compact).
 	 * Not meant to be used during root scanning (neither strong roots nor weak roots)!
+	 *
 	 * @param[in] vmThread the current J9VMThread
 	 * @param[in] continuationObject the continuation object
+	 * @param[in] isGlobalGC
 	 * @return true if we need to scan the java stack
 	 */
-	static bool needScanStacksForContinuationObject(J9VMThread *vmThread, j9object_t objectPtr);
+	static bool needScanStacksForContinuationObject(J9VMThread *vmThread, j9object_t objectPtr, bool isGlobalGC);
 
 	/**
 	 * Create a GCExtensions object
