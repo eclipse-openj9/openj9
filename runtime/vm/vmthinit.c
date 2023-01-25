@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2022 IBM Corp. and others
+ * Copyright (c) 1991, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -96,6 +96,9 @@ UDATA initializeVMThreading(J9JavaVM *vm)
 		omrthread_monitor_init_with_name(&vm->tlsFinalizersMutex, 0, "TLS finalizers mutex") ||
 		omrthread_monitor_init_with_name(&vm->tlsPoolMutex, 0, "TLS pool mutex") ||
 #endif /* JAVA_SPEC_VERSION >= 19 */
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+		omrthread_monitor_init_with_name(&vm->delayedLockingOperationsMutex, 0, "Delayed locking operations mutex") ||
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
 		initializeMonitorTable(vm)
 	)

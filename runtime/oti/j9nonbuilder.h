@@ -5822,6 +5822,9 @@ typedef struct J9JavaVM {
 	omrthread_monitor_t tlsPoolMutex;
 	jobject vthreadGroup;
 #endif /* JAVA_SPEC_VERSION >= 19 */
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+	omrthread_monitor_t delayedLockingOperationsMutex;
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 } J9JavaVM;
 
 #define J9VM_PHASE_STARTUP  1
