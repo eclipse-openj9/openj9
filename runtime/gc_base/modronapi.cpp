@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2022 IBM Corp. and others
+ * Copyright (c) 1991, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,6 +32,7 @@
 
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 #include "Configuration.hpp"
+#include "VerboseManager.hpp"
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 #include "EnvironmentBase.hpp"
 #include "GCExtensions.hpp"
@@ -1102,12 +1103,17 @@ j9gc_prepare_for_checkpoint(J9VMThread *vmThread)
 {
 	MM_EnvironmentBase *env = MM_EnvironmentBase::getEnvironment(vmThread->omrVMThread);
 	MM_GCExtensionsBase *extensions = env->getExtensions();
+	MM_VerboseManagerBase *verboseGCManager = extensions->verboseGCManager;
 
 	/* trigger a GC to disclaim memory */
 	j9gc_modron_global_collect_with_overrides(vmThread, J9MMCONSTANT_EXPLICIT_GC_SYSTEM_GC);
 	j9gc_modron_global_collect_with_overrides(vmThread, J9MMCONSTANT_EXPLICIT_GC_PREPARE_FOR_CHECKPOINT);
 
-	extensions->configuration->adjustGCThreadCountOnCheckpoint(env);
+	if (NULL != verboseGCManager) {
+		verboseGCManager->prepareForCheckpoint(env);
+	}
+
+	extensions->configuration->adjustGCThreadCountForCheckpoint(env);
 }
 
 BOOLEAN
@@ -1115,8 +1121,16 @@ j9gc_reinitialize_for_restore(J9VMThread *vmThread)
 {
 	MM_EnvironmentBase *env = MM_EnvironmentBase::getEnvironment(vmThread->omrVMThread);
 	MM_GCExtensionsBase *extensions = env->getExtensions();
+	MM_VerboseManagerBase *verboseGCManager = extensions->verboseGCManager;
 
-	return extensions->configuration->reinitializeGCThreadCountOnRestore(env);
+	bool result = extensions->configuration->reinitializeGCThreadCountForRestore(env);
+
+	if (NULL != verboseGCManager) {
+		/* Verbose gc reinit failure can be ignored, it is safe for restore to continue on. */
+		verboseGCManager->reinitializeForRestore(env);
+	}
+
+	return result;
 }
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
