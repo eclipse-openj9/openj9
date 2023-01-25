@@ -5271,32 +5271,79 @@ static TR::Register *inlineFPTrg1Src3(TR::Node *node, TR::InstOpCode::Mnemonic o
    }
 
 /**
- * @brief Generates instruction sequence for inlining java/util/zip/CRC32C.updateBytes and updateDirectByteBuffer
+ * @brief Generates instruction sequence for inlining CRC32.update(int crc, int b)
+ *
+ * @param[in] node: node
+ * @param[in] cg: CodeGenerator
+ * @return the result register
+ */
+static TR::Register *inlineCRC32UpdateOneByte(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   TR::Node *inputNode = node->getFirstChild();
+   TR::Node *byteNode = node->getSecondChild();
+   TR::Register *inputReg = cg->gprClobberEvaluate(inputNode);
+   TR::Register *byteReg = cg->evaluate(byteNode);
+
+   generateMvnInstruction(cg, node, inputReg, inputReg, false);
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::crc32b, node, inputReg, inputReg, byteReg);
+   generateMvnInstruction(cg, node, inputReg, inputReg, false);
+
+   node->setRegister(inputReg);
+   cg->decReferenceCount(inputNode);
+   cg->decReferenceCount(byteNode);
+
+   return inputReg;
+   }
+
+/**
+ * @brief Generates instruction sequence for inlining CRC32 and CRC32C methods
+ * @details Generates instruction sequence for inlining following methods:
+ *          - java/util/zip/CRC32C.updateBytes
+ *          - java/util/zip/CRC32C.updateDirectByteBuffer
+ *          For Java 9 or later:
+ *          - java/util/zip/CRC32.updateBytes0
+ *          - java/util/zip/CRC32.updateByteBuffer0
+ *          For Java 8
+ *          - java/util/zip/CRC32.updateBytes
+ *          - java/util/zip/CRC32.updateByteBuffer
  *
  * @param[in] node: node
  * @param[in] cg: CodeGenerator
  * @param[in] isRawAddress: true if this is the call to updateDirectByteBuffer
+ * @param[in] isCRC32C: true if calculating CRC32C checksum. false for CRC32 checksum.
  * @return the result register
  */
-static TR::Register *inlineCRC32CUpdateBytes(TR::Node *node, TR::CodeGenerator *cg, bool isRawAddress)
+static TR::Register *inlineCRC32CUpdateBytes(TR::Node *node, TR::CodeGenerator *cg, bool isRawAddress, bool isCRC32C)
    {
-   TR::Node *firstChild = node->getFirstChild();
-   TR::Node *secondChild = node->getSecondChild();
-   TR::Node *thirdChild = node->getThirdChild();
-   TR::Node *fourthChild = node->getChild(3);
+   /*
+    * Arguments are the same for CRC32 and CRC32C methods except for the last argument. It is length for CRC32 and (offset + length) for CRC32C.
+    */
+   TR::Node *inputNode = node->getFirstChild();
+   TR::Node *arrayNode = node->getSecondChild();
+   TR::Node *offsetNode = node->getThirdChild();
+   TR::Node *endOrLenNode = node->getChild(3);
 
-   const bool isConstEnd = fourthChild->getOpCode().isLoadConst();
-   const bool isConstOff = thirdChild->getOpCode().isLoadConst();
+   const bool isConstEndOrLen = endOrLenNode->getOpCode().isLoadConst();
+   const bool isConstOff = offsetNode->getOpCode().isLoadConst();
+   const TR::InstOpCode::Mnemonic crc32ByteOp = isCRC32C ? TR::InstOpCode::crc32cb : TR::InstOpCode::crc32b;
+   const TR::InstOpCode::Mnemonic crc32HalfWordOp = isCRC32C ? TR::InstOpCode::crc32ch : TR::InstOpCode::crc32h;
+   const TR::InstOpCode::Mnemonic crc32WordOp = isCRC32C ? TR::InstOpCode::crc32cw : TR::InstOpCode::crc32w;
+   const TR::InstOpCode::Mnemonic crc32DoubleWordOp = isCRC32C ? TR::InstOpCode::crc32cx : TR::InstOpCode::crc32x;
 
-   TR::Register *inputReg = cg->gprClobberEvaluate(firstChild);
-   TR::Register *arrayReg = cg->evaluate(secondChild);
+   TR::Register *inputReg = cg->gprClobberEvaluate(inputNode);
+   TR::Register *arrayReg = cg->evaluate(arrayNode);
    TR_ARM64ScratchRegisterManager *srm = cg->generateScratchRegisterManager();
 
-   if (isConstEnd && isConstOff && !isRawAddress)
+   if (!isCRC32C)
       {
-      const uint32_t end = fourthChild->getInt();
-      const uint32_t off = thirdChild->getInt();
-      const uint32_t len = end - off;
+      generateMvnInstruction(cg, node, inputReg, inputReg, false);
+      }
+
+   if (isConstEndOrLen && isConstOff && !isRawAddress)
+      {
+      const uint32_t endOrLen = endOrLenNode->getInt();
+      const uint32_t off = offsetNode->getInt();
+      const uint32_t len = isCRC32C ? endOrLen - off : endOrLen;
       static const char *pCRC32ConstLenLoopUnrollThreshold = feGetEnv("TR_AArch64CRC32ConstLenLoopUnrollThreshold");
       /* The default value of loopUnrollThreshold is set to 64. The minimum is 64 and the maximum is 128. */
       static const uint32_t loopUnrollThreshold = std::min(std::max(((pCRC32ConstLenLoopUnrollThreshold != NULL) ? atoi(pCRC32ConstLenLoopUnrollThreshold) : 64), 64), 128);
@@ -5344,7 +5391,7 @@ static TR::Register *inlineCRC32CUpdateBytes(TR::Node *node, TR::CodeGenerator *
                {
                TR::MemoryReference *mref = TR::MemoryReference::createWithDisplacement(cg, baseReg, index);
                generateTrg1MemInstruction(cg, TR::InstOpCode::ldrbimm, node, tmpReg, mref);
-               generateTrg1Src2Instruction(cg, TR::InstOpCode::crc32cb, node, inputReg, inputReg, tmpReg);
+               generateTrg1Src2Instruction(cg, crc32ByteOp, node, inputReg, inputReg, tmpReg);
                index++;
                sizeLeft--;
                }
@@ -5352,7 +5399,7 @@ static TR::Register *inlineCRC32CUpdateBytes(TR::Node *node, TR::CodeGenerator *
                {
                TR::MemoryReference *mref = TR::MemoryReference::createWithDisplacement(cg, baseReg, index);
                generateTrg1MemInstruction(cg, TR::InstOpCode::ldrhimm, node, tmpReg, mref);
-               generateTrg1Src2Instruction(cg, TR::InstOpCode::crc32ch, node, inputReg, inputReg, tmpReg);
+               generateTrg1Src2Instruction(cg, crc32HalfWordOp, node, inputReg, inputReg, tmpReg);
                index += 2;
                sizeLeft -= 2;
                }
@@ -5360,7 +5407,7 @@ static TR::Register *inlineCRC32CUpdateBytes(TR::Node *node, TR::CodeGenerator *
                {
                TR::MemoryReference *mref = TR::MemoryReference::createWithDisplacement(cg, baseReg, index);
                generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmw, node, tmpReg, mref);
-               generateTrg1Src2Instruction(cg, TR::InstOpCode::crc32cw, node, inputReg, inputReg, tmpReg);
+               generateTrg1Src2Instruction(cg, crc32WordOp, node, inputReg, inputReg, tmpReg);
                index += 4;
                sizeLeft -= 4;
                }
@@ -5397,7 +5444,7 @@ static TR::Register *inlineCRC32CUpdateBytes(TR::Node *node, TR::CodeGenerator *
                {
                TR::MemoryReference *mref = TR::MemoryReference::createWithDisplacement(cg, baseReg, (i + 1) * 8);
                generateTrg1MemInstruction(cg, (i == 3) ? TR::InstOpCode::ldrprex : TR::InstOpCode::ldrimmx, node, tmpReg, mref);
-               generateTrg1Src2Instruction(cg, TR::InstOpCode::crc32cx, node, inputReg, inputReg, tmpReg);
+               generateTrg1Src2Instruction(cg, crc32DoubleWordOp, node, inputReg, inputReg, tmpReg);
                }
             generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::subsimmw, node, counterReg, counterReg, 1);
             generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, loopLabel, TR::CC_GT);
@@ -5412,7 +5459,7 @@ static TR::Register *inlineCRC32CUpdateBytes(TR::Node *node, TR::CodeGenerator *
                {
                TR::MemoryReference *mref = TR::MemoryReference::createWithDisplacement(cg, baseReg, index);
                generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmx, node, tmpReg, mref);
-               generateTrg1Src2Instruction(cg, TR::InstOpCode::crc32cx, node, inputReg, inputReg, tmpReg);
+               generateTrg1Src2Instruction(cg, crc32DoubleWordOp, node, inputReg, inputReg, tmpReg);
                index += 8;
                sizeLeft -= 8;
                }
@@ -5420,7 +5467,7 @@ static TR::Register *inlineCRC32CUpdateBytes(TR::Node *node, TR::CodeGenerator *
                {
                TR::MemoryReference *mref = TR::MemoryReference::createWithDisplacement(cg, baseReg, index);
                generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmw, node, tmpReg, mref);
-               generateTrg1Src2Instruction(cg, TR::InstOpCode::crc32cw, node, inputReg, inputReg, tmpReg);
+               generateTrg1Src2Instruction(cg, crc32WordOp, node, inputReg, inputReg, tmpReg);
                index += 4;
                sizeLeft -= 4;
                }
@@ -5428,7 +5475,7 @@ static TR::Register *inlineCRC32CUpdateBytes(TR::Node *node, TR::CodeGenerator *
                {
                TR::MemoryReference *mref = TR::MemoryReference::createWithDisplacement(cg, baseReg, index);
                generateTrg1MemInstruction(cg, TR::InstOpCode::ldrhimm, node, tmpReg, mref);
-               generateTrg1Src2Instruction(cg, TR::InstOpCode::crc32ch, node, inputReg, inputReg, tmpReg);
+               generateTrg1Src2Instruction(cg, crc32HalfWordOp, node, inputReg, inputReg, tmpReg);
                index += 2;
                sizeLeft -= 2;
                }
@@ -5436,7 +5483,7 @@ static TR::Register *inlineCRC32CUpdateBytes(TR::Node *node, TR::CodeGenerator *
                {
                TR::MemoryReference *mref = TR::MemoryReference::createWithDisplacement(cg, baseReg, index);
                generateTrg1MemInstruction(cg, TR::InstOpCode::ldrbimm, node, tmpReg, mref);
-               generateTrg1Src2Instruction(cg, TR::InstOpCode::crc32cb, node, inputReg, inputReg, tmpReg);
+               generateTrg1Src2Instruction(cg, crc32ByteOp, node, inputReg, inputReg, tmpReg);
                sizeLeft--;
                }
             TR::LabelSymbol *doneLabel = generateLabelSymbol(cg);
@@ -5456,7 +5503,7 @@ static TR::Register *inlineCRC32CUpdateBytes(TR::Node *node, TR::CodeGenerator *
                {
                TR::MemoryReference *mref = TR::MemoryReference::createWithDisplacement(cg, baseReg, index);
                generateTrg1MemInstruction(cg, TR::InstOpCode::ldrbimm, node, tmpReg, mref);
-               generateTrg1Src2Instruction(cg, TR::InstOpCode::crc32cb, node, inputReg, inputReg, tmpReg);
+               generateTrg1Src2Instruction(cg, crc32ByteOp, node, inputReg, inputReg, tmpReg);
                index++;
                sizeLeft--;
                }
@@ -5464,7 +5511,7 @@ static TR::Register *inlineCRC32CUpdateBytes(TR::Node *node, TR::CodeGenerator *
                {
                TR::MemoryReference *mref = TR::MemoryReference::createWithDisplacement(cg, baseReg, index);
                generateTrg1MemInstruction(cg, TR::InstOpCode::ldrhimm, node, tmpReg, mref);
-               generateTrg1Src2Instruction(cg, TR::InstOpCode::crc32ch, node, inputReg, inputReg, tmpReg);
+               generateTrg1Src2Instruction(cg, crc32HalfWordOp, node, inputReg, inputReg, tmpReg);
                index += 2;
                sizeLeft -= 2;
                }
@@ -5472,7 +5519,7 @@ static TR::Register *inlineCRC32CUpdateBytes(TR::Node *node, TR::CodeGenerator *
                {
                TR::MemoryReference *mref = TR::MemoryReference::createWithDisplacement(cg, baseReg, index);
                generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmw, node, tmpReg, mref);
-               generateTrg1Src2Instruction(cg, TR::InstOpCode::crc32cw, node, inputReg, inputReg, tmpReg);
+               generateTrg1Src2Instruction(cg, crc32WordOp, node, inputReg, inputReg, tmpReg);
                index += 4;
                sizeLeft -= 4;
                }
@@ -5481,7 +5528,7 @@ static TR::Register *inlineCRC32CUpdateBytes(TR::Node *node, TR::CodeGenerator *
                {
                TR::MemoryReference *mref = TR::MemoryReference::createWithDisplacement(cg, baseReg, index);
                generateTrg1MemInstruction(cg, unaligned ? TR::InstOpCode::ldurx : TR::InstOpCode::ldrimmx, node, tmpReg, mref);
-               generateTrg1Src2Instruction(cg, TR::InstOpCode::crc32cx, node, inputReg, inputReg, tmpReg);
+               generateTrg1Src2Instruction(cg, crc32DoubleWordOp, node, inputReg, inputReg, tmpReg);
                index += 8;
                sizeLeft -= 8;
                }
@@ -5490,7 +5537,7 @@ static TR::Register *inlineCRC32CUpdateBytes(TR::Node *node, TR::CodeGenerator *
                unaligned = (index & 3) != 0;
                TR::MemoryReference *mref = TR::MemoryReference::createWithDisplacement(cg, baseReg, index);
                generateTrg1MemInstruction(cg, unaligned ? TR::InstOpCode::ldurw : TR::InstOpCode::ldrimmw, node, tmpReg, mref);
-               generateTrg1Src2Instruction(cg, TR::InstOpCode::crc32cw, node, inputReg, inputReg, tmpReg);
+               generateTrg1Src2Instruction(cg, crc32WordOp, node, inputReg, inputReg, tmpReg);
                index += 4;
                sizeLeft -= 4;
                }
@@ -5499,7 +5546,7 @@ static TR::Register *inlineCRC32CUpdateBytes(TR::Node *node, TR::CodeGenerator *
                unaligned = (index & 1) != 0;
                TR::MemoryReference *mref = TR::MemoryReference::createWithDisplacement(cg, baseReg, index);
                generateTrg1MemInstruction(cg, unaligned ? TR::InstOpCode::ldurh : TR::InstOpCode::ldrhimm, node, tmpReg, mref);
-               generateTrg1Src2Instruction(cg, TR::InstOpCode::crc32ch, node, inputReg, inputReg, tmpReg);
+               generateTrg1Src2Instruction(cg, crc32HalfWordOp, node, inputReg, inputReg, tmpReg);
                index += 2;
                sizeLeft -= 2;
                }
@@ -5507,7 +5554,7 @@ static TR::Register *inlineCRC32CUpdateBytes(TR::Node *node, TR::CodeGenerator *
                {
                TR::MemoryReference *mref = TR::MemoryReference::createWithDisplacement(cg, baseReg, index);
                generateTrg1MemInstruction(cg, TR::InstOpCode::ldrbimm, node, tmpReg, mref);
-               generateTrg1Src2Instruction(cg, TR::InstOpCode::crc32cb, node, inputReg, inputReg, tmpReg);
+               generateTrg1Src2Instruction(cg, crc32ByteOp, node, inputReg, inputReg, tmpReg);
                sizeLeft--;
                }
             }
@@ -5519,11 +5566,11 @@ static TR::Register *inlineCRC32CUpdateBytes(TR::Node *node, TR::CodeGenerator *
       {
       TR::Register *baseReg = srm->findOrCreateScratchRegister();
       TR::Register *sizeLeftReg = srm->findOrCreateScratchRegister();
-      TR::Register *endReg = cg->evaluate(fourthChild);
+      TR::Register *endOrLenReg = cg->evaluate(endOrLenNode);
       bool alignmentCheckNeeded = true;
       if (isConstOff && (!isRawAddress))
          {
-         const uint32_t off = thirdChild->getInt();
+         const uint32_t off = offsetNode->getInt();
          uint32_t realoff = off + TR::Compiler->om.contiguousArrayHeaderSizeInBytes();
          /*
           * Assuming array address is 8 bytes aligned,
@@ -5542,27 +5589,41 @@ static TR::Register *inlineCRC32CUpdateBytes(TR::Node *node, TR::CodeGenerator *
             generateTrg1Src2Instruction(cg, TR::InstOpCode::addx, node, baseReg, arrayReg, realoffReg);
             srm->reclaimScratchRegister(realoffReg);
             }
-         if (constantIsUnsignedImm12(off))
+         if (isCRC32C)
             {
-            generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::subsimmw, node, sizeLeftReg, endReg, off);
+            if (constantIsUnsignedImm12(off))
+               {
+               generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::subsimmw, node, sizeLeftReg, endOrLenReg, off);
+               }
+            else
+               {
+               TR::Register *offReg = srm->findOrCreateScratchRegister();
+               loadConstant32(cg, node, off, offReg);
+               generateTrg1Src2Instruction(cg, TR::InstOpCode::subw, node, sizeLeftReg, endOrLenReg, offReg);
+               srm->reclaimScratchRegister(offReg);
+               }
             }
          else
             {
-            TR::Register *offReg = srm->findOrCreateScratchRegister();
-            loadConstant32(cg, node, off, offReg);
-            generateTrg1Src2Instruction(cg, TR::InstOpCode::subw, node, sizeLeftReg, endReg, offReg);
-            srm->reclaimScratchRegister(offReg);
+            generateMovInstruction(cg, node, sizeLeftReg, endOrLenReg, false);
             }
          }
       else
          {
-         TR::Register *offReg = cg->evaluate(thirdChild);
+         TR::Register *offReg = cg->evaluate(offsetNode);
          if (!isRawAddress)
             {
             generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addimmx, node, baseReg, arrayReg, TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
             }
          generateTrg1Src2Instruction(cg, TR::InstOpCode::addx, node, baseReg, isRawAddress ? arrayReg : baseReg, offReg);
-         generateTrg1Src2Instruction(cg, TR::InstOpCode::subw, node, sizeLeftReg, endReg, offReg);
+         if (isCRC32C)
+            {
+            generateTrg1Src2Instruction(cg, TR::InstOpCode::subw, node, sizeLeftReg, endOrLenReg, offReg);
+            }
+         else
+            {
+            generateMovInstruction(cg, node, sizeLeftReg, endOrLenReg, false);
+            }
          }
 
       TR::LabelSymbol *doneLabel = generateLabelSymbol(cg);
@@ -5613,7 +5674,7 @@ static TR::Register *inlineCRC32CUpdateBytes(TR::Node *node, TR::CodeGenerator *
             debugObj->addInstructionComment(tbzToAlign2Instr, "If baseReg is 2 bytes aligned, jump to align2Label");
             }
          generateTrg1MemInstruction(cg, TR::InstOpCode::ldrbpost, node, tmpReg, TR::MemoryReference::createWithDisplacement(cg, baseReg, 1));
-         generateTrg1Src2Instruction(cg, TR::InstOpCode::crc32cb, node, inputReg, inputReg, tmpReg);
+         generateTrg1Src2Instruction(cg, crc32ByteOp, node, inputReg, inputReg, tmpReg);
          generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::subimmw, node, sizeLeftReg, sizeLeftReg, 1);
 
          TR::LabelSymbol *align4Label = generateLabelSymbol(cg);
@@ -5632,7 +5693,7 @@ static TR::Register *inlineCRC32CUpdateBytes(TR::Node *node, TR::CodeGenerator *
             debugObj->addInstructionComment(tbzToAlign4Instr, "If baseReg is 4 bytes aligned, jump to align4Label");
             }
          generateTrg1MemInstruction(cg, TR::InstOpCode::ldrhpost, node, tmpReg, TR::MemoryReference::createWithDisplacement(cg, baseReg, 2));
-         generateTrg1Src2Instruction(cg, TR::InstOpCode::crc32ch, node, inputReg, inputReg, tmpReg);
+         generateTrg1Src2Instruction(cg, crc32HalfWordOp, node, inputReg, inputReg, tmpReg);
          generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::subimmw, node, sizeLeftReg, sizeLeftReg, 2);
 
          /*
@@ -5650,7 +5711,7 @@ static TR::Register *inlineCRC32CUpdateBytes(TR::Node *node, TR::CodeGenerator *
             debugObj->addInstructionComment(tbzToAlign8Instr, "If baseReg is 8 bytes aligned, jump to align8Label");
             }
          generateTrg1MemInstruction(cg, TR::InstOpCode::ldrpostw, node, tmpReg, TR::MemoryReference::createWithDisplacement(cg, baseReg, 4));
-         generateTrg1Src2Instruction(cg, TR::InstOpCode::crc32cw, node, inputReg, inputReg, tmpReg);
+         generateTrg1Src2Instruction(cg, crc32WordOp, node, inputReg, inputReg, tmpReg);
          generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::subimmw, node, sizeLeftReg, sizeLeftReg, 4);
          }
 
@@ -5694,7 +5755,7 @@ static TR::Register *inlineCRC32CUpdateBytes(TR::Node *node, TR::CodeGenerator *
          TR::MemoryReference *mref = TR::MemoryReference::createWithDisplacement(cg, baseReg, (i + 1) * 8);
          /* Using pre-index load for the last one. */
          generateTrg1MemInstruction(cg, (i == 3) ? TR::InstOpCode::ldrprex : TR::InstOpCode::ldrimmx, node, tmpReg, mref);
-         generateTrg1Src2Instruction(cg, TR::InstOpCode::crc32cx, node, inputReg, inputReg, tmpReg);
+         generateTrg1Src2Instruction(cg, crc32DoubleWordOp, node, inputReg, inputReg, tmpReg);
          }
       generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::subsimmw, node, sizeLeftReg, sizeLeftReg, 32);
       generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, loopStartLabel, TR::CC_GE);
@@ -5740,13 +5801,13 @@ static TR::Register *inlineCRC32CUpdateBytes(TR::Node *node, TR::CodeGenerator *
       auto tbzToLeft8_15Instr = generateTestBitBranchInstruction(cg, TR::InstOpCode::tbz, node, sizeLeftReg, 4, left8_15Label);
       auto tbzToLeft16_23Instr = generateTestBitBranchInstruction(cg, TR::InstOpCode::tbz, node, sizeLeftReg, 3, left16_23Label);
       generateTrg1MemInstruction(cg, TR::InstOpCode::ldrpostx, node, tmpReg, TR::MemoryReference::createWithDisplacement(cg, baseReg, 8));
-      generateTrg1Src2Instruction(cg, TR::InstOpCode::crc32cx, node, inputReg, inputReg, tmpReg);
+      generateTrg1Src2Instruction(cg, crc32DoubleWordOp, node, inputReg, inputReg, tmpReg);
       auto left16_23LabelInstr = generateLabelInstruction(cg, TR::InstOpCode::label, node, left16_23Label);
       generateTrg1MemInstruction(cg, TR::InstOpCode::ldrpostx, node, tmpReg, TR::MemoryReference::createWithDisplacement(cg, baseReg, 8));
-      generateTrg1Src2Instruction(cg, TR::InstOpCode::crc32cx, node, inputReg, inputReg, tmpReg);
+      generateTrg1Src2Instruction(cg, crc32DoubleWordOp, node, inputReg, inputReg, tmpReg);
       auto left8_15LabelInstr = generateLabelInstruction(cg, TR::InstOpCode::label, node, left8_15Label);
       generateTrg1MemInstruction(cg, TR::InstOpCode::ldrpostx, node, tmpReg, TR::MemoryReference::createWithDisplacement(cg, baseReg, 8));
-      generateTrg1Src2Instruction(cg, TR::InstOpCode::crc32cx, node, inputReg, inputReg, tmpReg);
+      generateTrg1Src2Instruction(cg, crc32DoubleWordOp, node, inputReg, inputReg, tmpReg);
       generateLogicalImmInstruction(cg, TR::InstOpCode::andimmw, node, sizeLeftReg, sizeLeftReg, false, 2);
 
       if (debugObj)
@@ -5770,7 +5831,7 @@ static TR::Register *inlineCRC32CUpdateBytes(TR::Node *node, TR::CodeGenerator *
       auto residual4LabelInstr = generateLabelInstruction(cg, TR::InstOpCode::label, node, residual4Label);
       auto tbzToResidual2Instr = generateTestBitBranchInstruction(cg, TR::InstOpCode::tbz, node, sizeLeftReg, 2, residual2Label);
       generateTrg1MemInstruction(cg, TR::InstOpCode::ldrpostw, node, tmpReg, TR::MemoryReference::createWithDisplacement(cg, baseReg, 4));
-      generateTrg1Src2Instruction(cg, TR::InstOpCode::crc32cw, node, inputReg, inputReg, tmpReg);
+      generateTrg1Src2Instruction(cg, crc32WordOp, node, inputReg, inputReg, tmpReg);
       generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::subimmw, node, sizeLeftReg, sizeLeftReg, 4);
       if (debugObj)
          {
@@ -5790,7 +5851,7 @@ static TR::Register *inlineCRC32CUpdateBytes(TR::Node *node, TR::CodeGenerator *
       auto residual2LabelInstr = generateLabelInstruction(cg, TR::InstOpCode::label, node, residual2Label);
       auto tbzToResidual1Instr = generateTestBitBranchInstruction(cg, TR::InstOpCode::tbz, node, sizeLeftReg, 1, residual1Label);
       generateTrg1MemInstruction(cg, TR::InstOpCode::ldrhpost, node, tmpReg, TR::MemoryReference::createWithDisplacement(cg, baseReg, 2));
-      generateTrg1Src2Instruction(cg, TR::InstOpCode::crc32ch, node, inputReg, inputReg, tmpReg);
+      generateTrg1Src2Instruction(cg, crc32HalfWordOp, node, inputReg, inputReg, tmpReg);
       generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::subimmw, node, sizeLeftReg, sizeLeftReg, 2);
       if (debugObj)
          {
@@ -5809,7 +5870,7 @@ static TR::Register *inlineCRC32CUpdateBytes(TR::Node *node, TR::CodeGenerator *
       auto residual1LabelInstr = generateLabelInstruction(cg, TR::InstOpCode::label, node, residual1Label);
       auto cbzwInstr2 = generateCompareBranchInstruction(cg, TR::InstOpCode::cbzw, node, sizeLeftReg, doneLabel);
       generateTrg1MemInstruction(cg, TR::InstOpCode::ldrbpost, node, tmpReg, TR::MemoryReference::createWithDisplacement(cg, baseReg, 1));
-      generateTrg1Src2Instruction(cg, TR::InstOpCode::crc32cb, node, inputReg, inputReg, tmpReg);
+      generateTrg1Src2Instruction(cg, crc32ByteOp, node, inputReg, inputReg, tmpReg);
       if (debugObj)
          {
          debugObj->addInstructionComment(residual1LabelInstr, "residual1Label");
@@ -5825,12 +5886,17 @@ static TR::Register *inlineCRC32CUpdateBytes(TR::Node *node, TR::CodeGenerator *
          debugObj->addInstructionComment(donesLabelInstr, "doneLabel");
          }
       }
+
+   if (!isCRC32C)
+      {
+      generateMvnInstruction(cg, node, inputReg, inputReg, false);
+      }
    srm->stopUsingRegisters();
    node->setRegister(inputReg);
-   cg->decReferenceCount(firstChild);
-   cg->decReferenceCount(secondChild);
-   cg->decReferenceCount(thirdChild);
-   cg->decReferenceCount(fourthChild);
+   cg->decReferenceCount(inputNode);
+   cg->decReferenceCount(arrayNode);
+   cg->decReferenceCount(offsetNode);
+   cg->decReferenceCount(endOrLenNode);
 
    return inputReg;
    }
@@ -5951,21 +6017,63 @@ J9::ARM64::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
             break;
             }
 
-         case TR::java_util_zip_CRC32C_updateBytes:
+#ifndef OSX
+         case TR::java_util_zip_CRC32_update:
             {
-            if ((!TR::Compiler->om.canGenerateArraylets()) && cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_ARM64_CRC32) && (!disableCRC32))
+            if (cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_ARM64_CRC32) && (!disableCRC32))
                {
-               resultReg = inlineCRC32CUpdateBytes(node, cg, false);
+               resultReg = inlineCRC32UpdateOneByte(node, cg);
                return true;
                }
             break;
             }
 
+#if JAVA_SPEC_VERSION >= 9
+         case TR::java_util_zip_CRC32_updateBytes0:
+#else
+         case TR::java_util_zip_CRC32_updateBytes:
+#endif
+            {
+            if ((!TR::Compiler->om.canGenerateArraylets()) && cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_ARM64_CRC32) && (!disableCRC32))
+               {
+               resultReg = inlineCRC32CUpdateBytes(node, cg, false, false);
+               return true;
+               }
+            break;
+            }
+#endif /* OSX */
+
+         case TR::java_util_zip_CRC32C_updateBytes:
+            {
+            if ((!TR::Compiler->om.canGenerateArraylets()) && cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_ARM64_CRC32) && (!disableCRC32))
+               {
+               resultReg = inlineCRC32CUpdateBytes(node, cg, false, true);
+               return true;
+               }
+            break;
+            }
+
+#ifndef OSX
+#if JAVA_SPEC_VERSION >= 9
+         case TR::java_util_zip_CRC32_updateByteBuffer0:
+#else
+         case TR::java_util_zip_CRC32_updateByteBuffer:
+#endif
+            {
+            if ((!TR::Compiler->om.canGenerateArraylets()) && cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_ARM64_CRC32) && (!disableCRC32))
+               {
+               resultReg = inlineCRC32CUpdateBytes(node, cg, true, false);
+               return true;
+               }
+            break;
+            }
+#endif /* OSX */
+
          case TR::java_util_zip_CRC32C_updateDirectByteBuffer:
             {
             if ((!TR::Compiler->om.canGenerateArraylets()) && cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_ARM64_CRC32) && (!disableCRC32))
                {
-               resultReg = inlineCRC32CUpdateBytes(node, cg, true);
+               resultReg = inlineCRC32CUpdateBytes(node, cg, true, true);
                return true;
                }
             break;
