@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <!--
-  Copyright (c) 2022, 2022 IBM Corp. and others
+  Copyright (c) 2022, 2023 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -87,6 +87,18 @@
 	</test>
 	<test>
 		<testCaseName>cmdLineTester_criu_nonPortableRestore</testCaseName>
+		<disables>
+			<disable>
+				<comment>Metronome GC policy is not supported on IBM Z</comment>
+				<variation>-Xgcpolicy:metronome</variation>
+				<platform>s390x_.*</platform>
+			</disable>
+			<disable>
+				<comment>Metronome GC policy is not supported on Power PC for Linux</comment>
+				<variation>-Xgcpolicy:metronome</variation>
+				<platform>ppc64le_linux.*</platform>
+			</disable>
+		</disables>
 		<variations>
 			<variation>-Xjit -XX:+CRIURestoreNonPortableMode</variation>
 			<variation>-Xint -XX:+CRIURestoreNonPortableMode</variation>
