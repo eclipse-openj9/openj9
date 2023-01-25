@@ -319,22 +319,22 @@ public:
    const AOTSerializationRecord *dataAddr() const override { return &_data; }
 
    static const char *getRecordName() { return "thunk"; }
-   static AOTCacheThunkRecord *create(uintptr_t id, const uint8_t *signature, uint32_t signatureSize, const uint8_t *thunkCode, uint32_t thunkCodeSize);
+   static AOTCacheThunkRecord *create(uintptr_t id, const uint8_t *signature, uint32_t signatureSize, const uint8_t *thunkStart, uint32_t thunkSize);
 
 private:
    using SerializationRecord = ThunkSerializationRecord;
 
    friend AOTCacheThunkRecord *AOTCacheRecord::readRecord<>(FILE *f, const JITServerAOTCacheReadContext &context);
 
-   AOTCacheThunkRecord(uintptr_t id, const uint8_t *signature, uint32_t signatureSize, const uint8_t *thunkCode, uint32_t thunkCodeSize);
+   AOTCacheThunkRecord(uintptr_t id, const uint8_t *signature, uint32_t signatureSize, const uint8_t *thunkStart, uint32_t thunkSize);
    AOTCacheThunkRecord(const JITServerAOTCacheReadContext &context, const ThunkSerializationRecord &header) {}
 
-   static size_t size(uint32_t signatureSize, uint32_t thunkCodeSize)
+   static size_t size(uint32_t signatureSize, uint32_t thunkSize)
       {
-      return offsetof(AOTCacheThunkRecord, _data) + ThunkSerializationRecord::size(signatureSize, thunkCodeSize);
+      return offsetof(AOTCacheThunkRecord, _data) + ThunkSerializationRecord::size(signatureSize, thunkSize);
       }
 
-   static size_t size(const ThunkSerializationRecord &header) { return size(header.signatureSize(), header.thunkCodeSize()); }
+   static size_t size(const ThunkSerializationRecord &header) { return size(header.signatureSize(), header.thunkSize()); }
 
    const ThunkSerializationRecord _data;
 };

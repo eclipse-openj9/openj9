@@ -292,28 +292,29 @@ struct ThunkSerializationRecord : public AOTSerializationRecord
 {
 public:
    uint32_t signatureSize() const { return _signatureSize; }
-   uint32_t thunkCodeSize() const { return _thunkCodeSize; }
+   uint32_t thunkSize() const { return _thunkSize; }
    const uint8_t *signature() const { return _varSizedData; }
-   const uint8_t *thunkCode() const { return _varSizedData + _signatureSize; }
+   const uint8_t *thunkStart() const { return _varSizedData + _signatureSize; }
+   void *thunkAddress() const { return (void *)(thunkStart() + 8); }
 
 private:
    friend class AOTCacheRecord;
    friend class AOTCacheThunkRecord;
 
-   ThunkSerializationRecord(uintptr_t id, const uint8_t *signature, uint32_t signatureSize, const uint8_t *thunkCode,  uint32_t thunkCodeSize);
+   ThunkSerializationRecord(uintptr_t id, const uint8_t *signature, uint32_t signatureSize, const uint8_t *thunkStart,  uint32_t thunkSize);
    ThunkSerializationRecord();
 
-   static size_t size(uint32_t signatureSize, uint32_t thunkCodeSize)
+   static size_t size(uint32_t signatureSize, uint32_t thunkSize)
       {
-      return sizeof(ThunkSerializationRecord) + OMR::alignNoCheck(signatureSize + thunkCodeSize, sizeof(size_t));
+      return sizeof(ThunkSerializationRecord) + OMR::alignNoCheck(signatureSize + thunkSize, sizeof(size_t));
       }
 
    bool isValidHeader(const JITServerAOTCacheReadContext &context) const
       { return AOTSerializationRecord::isValidHeader(AOTSerializationRecordType::Thunk); }
 
    const uint32_t _signatureSize;
-   const uint32_t _thunkCodeSize;
-   // Layout: uint8_t _signature[_signatureSize], uint8_t _thunkCode[_thunkCodeSize]
+   const uint32_t _thunkSize;
+   // Layout: uint8_t _signature[_signatureSize], uint8_t _thunkStart[_thunkSize]
    uint8_t _varSizedData[];
 };
 
