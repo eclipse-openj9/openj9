@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2022 IBM Corp. and others
+ * Copyright (c) 2000, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,6 +22,7 @@
 
 #include "codegen/PPCPrivateLinkage.hpp"
 
+#include "codegen/OMRLinkage_inlines.hpp"
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/CodeGeneratorUtils.hpp"
 #include "codegen/Linkage_inlines.hpp"
@@ -2677,17 +2678,14 @@ void buildCRC32CCall(TR::Node *callNode,
                bool crc32m2, bool crc32m3)
    {
    TR::Compilation *comp = cg->comp();
-   uintptr_t targetAddress;
-   TR::Register        *gr2Reg;
+   TR::Register *gr2Reg;
+   TR::Register *gr12Reg = deps->searchPreConditionRegister(TR::RealRegister::gr12);
    bool aix_style_linkage = comp->target().isAIX() || (comp->target().is64Bit() && comp->target().isLinux());
 
    if (aix_style_linkage)
       {
       gr2Reg = deps->searchPreConditionRegister(TR::RealRegister::gr2);
       }
-
-   // Argument changes are needed
-   targetAddress = (uintptr_t)((comp->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P8) && comp->target().cpu.supportsFeature(OMR_FEATURE_PPC_HAS_VSX))?crc32_vpmsum:crc32_no_vpmsum);
 
    // Assuming pre/postCondition have the same index, we use preCondition to map
    OMR::RegisterDependencyMap map(deps->getPreConditions()->getRegisterDependency(0), deps->getAddCursorForPre());
@@ -2738,29 +2736,69 @@ void buildCRC32CCall(TR::Node *callNode,
       deps->getPostConditions()->setDependencyInfo(map.getTargetIndex(TR::RealRegister::gr7), wasteArg, TR::RealRegister::gr7, UsesDependentRegister);
       }
 
-   TR::Register *gr0Reg = deps->searchPreConditionRegister(TR::RealRegister::gr0);
-   TR::Register *gr11Reg = deps->searchPreConditionRegister(TR::RealRegister::gr11);
-   TR::Register *gr12Reg = deps->searchPreConditionRegister(TR::RealRegister::gr12);
-
-   loadConstant(cg, callNode, (int64_t)targetAddress, gr12Reg);
-   if (aix_style_linkage &&
-      !((comp)->target().is64Bit()  && ((comp)->target().isLinux()) && (comp)->target().cpu.isLittleEndian()))
+   if (comp->compileRelocatableCode())
       {
-      // get the target address
-      generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, callNode, gr0Reg, TR::MemoryReference::createWithDisplacement(cg, gr12Reg, 0, TR::Compiler->om.sizeofReferenceAddress()));
-      // put the target address into the count register
-      generateSrc1Instruction(cg, TR::InstOpCode::mtctr, callNode, gr0Reg);
-      // load the toc register
-      generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, callNode, gr2Reg, TR::MemoryReference::createWithDisplacement(cg, gr12Reg, TR::Compiler->om.sizeofReferenceAddress(), TR::Compiler->om.sizeofReferenceAddress()));
-      // load the environment register
-      generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, callNode, gr11Reg, TR::MemoryReference::createWithDisplacement(cg, gr12Reg, 2*TR::Compiler->om.sizeofReferenceAddress(), TR::Compiler->om.sizeofReferenceAddress()));
+
+      TR::SymbolReference * vpmsumSymRef = (comp)->getSymRefTab()->findOrCreateRuntimeHelper(TR_PPCcrc32_vpmsum,false,false,false);
+      TR::LabelSymbol *vpmsumSnippetLabel = cg->lookUpSnippet(TR::Snippet::IsHelperCall, vpmsumSymRef);
+
+      if (vpmsumSnippetLabel == NULL)
+         {
+         vpmsumSnippetLabel = generateLabelSymbol(cg);
+         cg->addSnippet(new (cg->trHeapMemory()) TR::PPCHelperCallSnippet(cg, callNode, vpmsumSnippetLabel, vpmsumSymRef));
+         }
+
+      callNode->setSymbolReference(vpmsumSymRef);
+      if(comp->target().isLinux() && comp->target().is64Bit() && comp->target().cpu.isLittleEndian())
+         {
+         if (!comp->getOption(TR_DisableTOC) && !comp->compilePortableCode())
+            {
+            int32_t helperOffset = (callNode->getSymbolReference()->getReferenceNumber() - 1)*sizeof(intptr_t);
+            generateTrg1MemInstruction(cg, TR::InstOpCode::Op_load, callNode, gr12Reg,
+                                      TR::MemoryReference::createWithDisplacement(cg, cg->getTOCBaseRegister(), helperOffset, TR::Compiler->om.sizeofReferenceAddress()));
+            }
+            else
+            {
+            loadAddressConstant(cg, callNode, (int64_t)runtimeHelperValue((TR_RuntimeHelper)vpmsumSymRef->getReferenceNumber()),
+                                gr12Reg, NULL, false, TR_AbsoluteHelperAddress);
+            }
+         }
+         else if (comp->target().isAIX() || (comp->target().isLinux() && comp->target().is64Bit()))
+         {
+         generateTrg1MemInstruction(cg, TR::InstOpCode::Op_load, callNode, gr2Reg,
+                                    TR::MemoryReference::createWithDisplacement(cg, cg->getMethodMetaDataRegister(), offsetof(J9VMThread, jitTOC), TR::Compiler->om.sizeofReferenceAddress()));
+         }
+
+      generateDepLabelInstruction(cg, TR::InstOpCode::bl, callNode, vpmsumSnippetLabel, deps);
       }
-      else {
-      // put the target address into the count register
-      generateSrc1Instruction(cg, TR::InstOpCode::mtctr, callNode, gr12Reg);
+  else
+      {
+
+      TR::Register *gr0Reg = deps->searchPreConditionRegister(TR::RealRegister::gr0);
+      TR::Register *gr11Reg = deps->searchPreConditionRegister(TR::RealRegister::gr11);
+
+      loadConstant(cg, callNode, (int64_t)crc32_vpmsum, gr12Reg);
+      if (aix_style_linkage &&
+         !((comp)->target().is64Bit()  && ((comp)->target().isLinux()) && (comp)->target().cpu.isLittleEndian()))
+         {
+         // get the target address
+         generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, callNode, gr0Reg, TR::MemoryReference::createWithDisplacement(cg, gr12Reg, 0, TR::Compiler->om.sizeofReferenceAddress()));
+         // put the target address into the count register
+         generateSrc1Instruction(cg, TR::InstOpCode::mtctr, callNode, gr0Reg);
+         // load the toc register
+         generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, callNode, gr2Reg, TR::MemoryReference::createWithDisplacement(cg, gr12Reg, TR::Compiler->om.sizeofReferenceAddress(), TR::Compiler->om.sizeofReferenceAddress()));
+         // load the environment register
+         generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, callNode, gr11Reg, TR::MemoryReference::createWithDisplacement(cg, gr12Reg, 2*TR::Compiler->om.sizeofReferenceAddress(), TR::Compiler->om.sizeofReferenceAddress()));
+         }
+      else
+         {
+         // put the target address into the count register
+         generateSrc1Instruction(cg, TR::InstOpCode::mtctr, callNode, gr12Reg);
+         }
+      generateInstruction(cg, TR::InstOpCode::bctrl, callNode);
+      generateDepLabelInstruction(cg, TR::InstOpCode::label, callNode, returnLabel, deps);
       }
-   generateInstruction(cg, TR::InstOpCode::bctrl, callNode);
-   generateDepLabelInstruction(cg, TR::InstOpCode::label, callNode, returnLabel, deps);
+
    }
 
 void J9::Power::PrivateLinkage::buildDirectCall(TR::Node *callNode,
