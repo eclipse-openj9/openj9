@@ -4091,6 +4091,7 @@ typedef struct J9JITConfig {
 } J9JITConfig;
 
 #if defined(J9VM_OPT_CRIU_SUPPORT)
+typedef BOOLEAN (*classIterationRestoreHookFunc)(struct J9VMThread *currentThread, J9Class *clazz);
 typedef BOOLEAN (*hookFunc)(struct J9VMThread *currentThread, void *userData);
 typedef struct J9InternalHookRecord {
 	BOOLEAN isRestore;
@@ -4099,6 +4100,10 @@ typedef struct J9InternalHookRecord {
 	hookFunc hookFunc;
 	struct J9Pool *instanceObjects;
 } J9InternalHookRecord;
+
+typedef struct J9InternalClassIterationRestoreHookRecord {
+	classIterationRestoreHookFunc hookFunc;
+} J9InternalClassIterationRestoreHookRecord;
 
 typedef struct J9DelayedLockingOpertionsRecord {
 	jobject globalObjectRef;
@@ -4117,6 +4122,7 @@ typedef struct J9CRIUCheckpointState {
 	BOOLEAN isNonPortableRestoreMode;
 	struct J9DelayedLockingOpertionsRecord *delayedLockingOperationsRoot;
 	struct J9Pool *hookRecords;
+	struct J9Pool *classIterationRestoreHookRecords;
 	struct J9Pool *delayedLockingOperationsRecords;
 	struct J9VMThread *checkpointThread;
 	/* The delta between Checkpoint and Restore of j9time_current_time_nanos() return values.
@@ -4924,6 +4930,7 @@ typedef struct J9InternalVMFunctions {
 	BOOLEAN (*runInternalJVMRestoreHooks)(struct J9VMThread *currentThread);
 	BOOLEAN (*runDelayedLockRelatedOperations)(struct J9VMThread *currentThread);
 	BOOLEAN (*delayedLockingOperation)(struct J9VMThread *currentThread, j9object_t instance, UDATA operation);
+	void (*addInternalJVMClassIterationRestoreHook)(struct J9VMThread *currentThread, classIterationRestoreHookFunc hookFunc);
 	void (*setCRIUSingleThreadModeJVMCRIUException)(struct J9VMThread *vmThread, U_32 moduleName, U_32 messageNumber);
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 	j9object_t (*getClassNameString)(struct J9VMThread *currentThread, j9object_t classObject, jboolean internAndAssign);
