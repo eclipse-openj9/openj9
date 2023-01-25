@@ -1,4 +1,4 @@
-// Copyright (c) 2006, 2022 IBM Corp. and others
+// Copyright (c) 2006, 2023 IBM Corp. and others
 //
 // This program and the accompanying materials are made available under
 // the terms of the Eclipse Public License 2.0 which accompanies this
@@ -886,7 +886,7 @@ TraceEntry=Trc_VM_WalkStackFrames_Entry Overhead=1 Level=1 Template="WalkStackFr
 TraceExit=Trc_VM_WalkStackFrames_Exit Overhead=1 Level=1 Template="WalkStackFrames - walkThread=%p, rc=%d"
 
 TraceEntry=Trc_VM_criu_initHooks_Entry Overhead=1 Level=5 Template="initializeCriuHooks"
-TraceExit=Trc_VM_criu_initHooks_Exit Overhead=1 Level=5 Template="initializeCriuHooks - checkpointState.hookRecords (%p)"
+TraceExit=Trc_VM_criu_initHooks_Exit Obsolete Overhead=1 Level=5 Template="initializeCriuHooks - checkpointState.hookRecords (%p)"
 TraceException=Trc_VM_criu_jur_invalid_seedOffset Overhead=1 Level=3 Template="juRandomReseed instanceType (%p) - invalid seedOffset"
 TraceException=Trc_VM_criu_jur_AtomicLong_CNF Overhead=1 Level=3 Template="juRandomReseed java.util.concurrent.atomic.AtomicLong not found"
 TraceException=Trc_VM_criu_jur_invalid_valueOffset Overhead=1 Level=3 Template="juRandomReseed jucaAtomicLongClass (%p) - invalid valueOffset"
@@ -925,3 +925,5 @@ TraceEvent=Trc_VM_allocateThunkHeap_create_heap_failed NoEnv Overhead=1 Level=3 
 TraceExit=Trc_VM_allocateThunkHeap_Exit NoEnv Overhead=1 Level=3 Template="Exit allocateThunkHeap - The suballocated thunk heap is %p"
 
 TraceEvent=Trc_VM_allocateThunkHeap_allocate_thunk_heap_node_failed NoEnv Overhead=1 Level=3 Template="allocateThunkHeap - Failed to allocate memory for the thunk heap node"
+
+TraceExit=Trc_VM_criu_initHooks_Exit Overhead=1 Level=5 Template="initializeCriuHooks - checkpointState.hookRecords (%p), classIterationRestoreHookRecords (%p), delayedLockingOperationsRecords (%p)"

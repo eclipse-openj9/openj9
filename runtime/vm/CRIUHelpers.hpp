@@ -97,6 +97,18 @@ throwOOM:
 		vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
 		goto done;
 	}
+
+	static VMINLINE void
+	addInternalJVMClassIterationRestoreHook(J9VMThread *currentThread, classIterationRestoreHookFunc hookFunc)
+	{
+		J9JavaVM *vm = currentThread->javaVM;
+		J9InternalClassIterationRestoreHookRecord *newHook = (J9InternalClassIterationRestoreHookRecord*)pool_newElement(vm->checkpointState.classIterationRestoreHookRecords);
+		if (NULL == newHook) {
+			setNativeOutOfMemoryError(currentThread, 0, 0);
+		} else {
+			newHook->hookFunc = hookFunc;
+		}
+	}
 };
 
 #endif /* CRIUHELPERS_HPP_ */
