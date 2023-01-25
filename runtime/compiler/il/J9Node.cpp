@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2022 IBM Corp. and others
+ * Copyright (c) 2000, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -334,6 +334,30 @@ J9::Node::processJNICall(TR::TreeTop *callNodeTreeTop, TR::ResolvedMethodSymbol 
       // || (methodSymbol->isVirtualMethod() && !virtualMethodIsOverridden(resolvedMethod))))
       return self();
       }
+
+#if defined(TR_TARGET_ARM64) && !defined(OSX)
+   /*
+    * On Apple Silicon Mac, zlib implementation of CRC32 is faster.
+    * See OpenJ9 issue #16584.
+    */
+   static const bool disableCRC32 = feGetEnv("TR_aarch64DisableCRC32") != NULL;
+   // Recognizing these methods on AArch46 allows us to accelerate CRC32 calculation
+   // by inlining these methods using CRC32 instructions.
+   if (comp->target().cpu.supportsFeature(OMR_FEATURE_ARM64_CRC32) && (!disableCRC32) &&
+        ((methodSymbol->getRecognizedMethod() == TR::java_util_zip_CRC32_update) ||
+         (
+#if JAVA_SPEC_VERSION <= 8
+          ((methodSymbol->getRecognizedMethod() == TR::java_util_zip_CRC32_updateBytes) ||
+           (methodSymbol->getRecognizedMethod() == TR::java_util_zip_CRC32_updateByteBuffer)) &&
+#else
+          ((methodSymbol->getRecognizedMethod() == TR::java_util_zip_CRC32_updateBytes0) ||
+           (methodSymbol->getRecognizedMethod() == TR::java_util_zip_CRC32_updateByteBuffer0)) &&
+#endif
+          (!TR::Compiler->om.canGenerateArraylets()))))
+      {
+      return self();
+      }
+#endif
 
 #if defined(TR_TARGET_POWER)
    // Recognizing these methods on Power allows us to take a shortcut
