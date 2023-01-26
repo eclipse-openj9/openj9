@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2021, 2022 IBM Corp. and others
+ * Copyright (c) 2021, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -42,6 +42,8 @@ enum AOTSerializationRecordType
    ClassChain,
    // Associated with an SCC "well-known classes" object
    WellKnownClasses,
+   // Associated with a thunk
+   Thunk,
    // Not associated with an SCC entity; corresponds to TR_AOTHeader struct used for checking AOT code compatibility
    AOTHeader,
 
@@ -284,6 +286,36 @@ private:
 
    const TR_AOTHeader _header;
    };
+
+
+struct ThunkSerializationRecord : public AOTSerializationRecord
+{
+public:
+   uint32_t signatureSize() const { return _signatureSize; }
+   uint32_t thunkCodeSize() const { return _thunkCodeSize; }
+   const uint8_t *signature() const { return _varSizedData; }
+   const uint8_t *thunkCode() const { return _varSizedData + _signatureSize; }
+
+private:
+   friend class AOTCacheRecord;
+   friend class AOTCacheThunkRecord;
+
+   ThunkSerializationRecord(uintptr_t id, const uint8_t *signature, uint32_t signatureSize, const uint8_t *thunkCode,  uint32_t thunkCodeSize);
+   ThunkSerializationRecord();
+
+   static size_t size(uint32_t signatureSize, uint32_t thunkCodeSize)
+      {
+      return sizeof(ThunkSerializationRecord) + OMR::alignNoCheck(signatureSize + thunkCodeSize, sizeof(size_t));
+      }
+
+   bool isValidHeader(const JITServerAOTCacheReadContext &context) const
+      { return AOTSerializationRecord::isValidHeader(AOTSerializationRecordType::Thunk); }
+
+   const uint32_t _signatureSize;
+   const uint32_t _thunkCodeSize;
+   // Layout: uint8_t _signature[_signatureSize], uint8_t _thunkCode[_thunkCodeSize]
+   uint8_t _varSizedData[];
+};
 
 
 // Represents an SCC offset stored in AOT method relocation data that will be updated during deserialization
