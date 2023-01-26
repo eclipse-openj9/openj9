@@ -6337,10 +6337,12 @@ J9::Z::TreeEvaluator::pdshlVectorEvaluatorHelper(TR::Node *node, TR::CodeGenerat
 
       if (cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL_ENHANCEMENT_FACILITY) && cg->getIgnoreDecimalOverflowException())
          {
+         // Write 1 to most significant bit to suppress HW overflow program interrupt
          decimalPrecision |= 0x80;
          }
 
       targetReg = cg->allocateRegister(TR_VRF);
+      // Perform shift and set condition code on overflows
       generateVRIgInstruction(cg, TR::InstOpCode::VSRP, node, targetReg, sourceReg, decimalPrecision, shiftAmount, 0x01);
       }
 
@@ -6382,6 +6384,7 @@ J9::Z::TreeEvaluator::pdshrVectorEvaluatorHelper(TR::Node *node, TR::CodeGenerat
 
    if (cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL_ENHANCEMENT_FACILITY) && cg->getIgnoreDecimalOverflowException())
       {
+      // Write 1 to most significant bit to suppress HW overflow program interrupt
       decimalPrecision |= 0x80;
       }
 
