@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2021, 2022 IBM Corp. and others
+ * Copyright (c) 2021, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -40,6 +40,7 @@ struct JITServerAOTCacheReadContext
    Vector<AOTCacheClassChainRecord *> _classChainRecords;
    Vector<AOTCacheWellKnownClassesRecord *> _wellKnownClassesRecords;
    Vector<AOTCacheAOTHeaderRecord *> _aotHeaderRecords;
+   Vector<AOTCacheThunkRecord *> _thunkRecords;
    };
 
 size_t JITServerAOTCacheMap::_cacheMaxBytes = 300 * 1024 * 1024;
@@ -341,6 +342,37 @@ AOTCacheAOTHeaderRecord::create(uintptr_t id, const TR_AOTHeader *header)
    return new (ptr) AOTCacheAOTHeaderRecord(id, header);
    }
 
+ThunkSerializationRecord::ThunkSerializationRecord(uintptr_t id, const uint8_t *signature, uint32_t signatureSize,
+                                                   const uint8_t *thunkCode,  uint32_t thunkCodeSize) :
+   AOTSerializationRecord(size(signatureSize, thunkCodeSize), id, AOTSerializationRecordType::Thunk),
+   _signatureSize(signatureSize),
+   _thunkCodeSize(thunkCodeSize)
+   {
+   memcpy((void *)this->signature(), signature, signatureSize);
+   memcpy((void *)this->thunkCode(), thunkCode, thunkCodeSize);
+   }
+
+ThunkSerializationRecord::ThunkSerializationRecord() :
+   AOTSerializationRecord(0, 0, AOTSerializationRecordType::Thunk),
+   _signatureSize(0),
+   _thunkCodeSize(0)
+   {
+   }
+
+AOTCacheThunkRecord::AOTCacheThunkRecord(uintptr_t id, const uint8_t *signature, uint32_t signatureSize,
+                                         const uint8_t *thunkCode, uint32_t thunkCodeSize) :
+   _data(id, signature, signatureSize, thunkCode, thunkCodeSize)
+   {
+   }
+
+AOTCacheThunkRecord *
+AOTCacheThunkRecord::create(uintptr_t id, const uint8_t *signature, uint32_t signatureSize, const uint8_t *thunkCode, uint32_t thunkCodeSize)
+   {
+   void *ptr = AOTCacheRecord::allocate(size(signatureSize, thunkCodeSize));
+   return new (ptr) AOTCacheThunkRecord(id, signature, signatureSize, thunkCode, thunkCodeSize);
+   }
+
+
 SerializedAOTMethod::SerializedAOTMethod(uintptr_t definingClassChainId, uint32_t index,
                                          TR_Hotness optLevel, uintptr_t aotHeaderId, size_t numRecords,
                                          const void *code, size_t codeSize, const void *data, size_t dataSize) :
@@ -422,7 +454,7 @@ CachedAOTMethod::setSubrecordPointers(const JITServerAOTCacheReadContext &contex
          case AOTSerializationRecordType::ClassLoader:
             if ((subrecordId >= context._classLoaderRecords.size()) || !context._classLoaderRecords[subrecordId])
                {
-               invalidSubrecordName = "class loader";
+               invalidSubrecordName = AOTCacheClassLoaderRecord::getRecordName();
                goto error;
                }
             records()[i] = context._classLoaderRecords[subrecordId];
@@ -430,7 +462,7 @@ CachedAOTMethod::setSubrecordPointers(const JITServerAOTCacheReadContext &contex
          case AOTSerializationRecordType::Class:
             if ((subrecordId >= context._classRecords.size()) || !context._classRecords[subrecordId])
                {
-               invalidSubrecordName = "class";
+               invalidSubrecordName = AOTCacheClassRecord::getRecordName();
                goto error;
                }
             records()[i] = context._classRecords[subrecordId];
@@ -438,7 +470,7 @@ CachedAOTMethod::setSubrecordPointers(const JITServerAOTCacheReadContext &contex
          case AOTSerializationRecordType::Method:
             if ((subrecordId >= context._methodRecords.size()) || !context._methodRecords[subrecordId])
                {
-               invalidSubrecordName = "method";
+               invalidSubrecordName = AOTCacheMethodRecord::getRecordName();
                goto error;
                }
             records()[i] = context._methodRecords[subrecordId];
@@ -446,7 +478,7 @@ CachedAOTMethod::setSubrecordPointers(const JITServerAOTCacheReadContext &contex
          case AOTSerializationRecordType::ClassChain:
             if ((subrecordId >= context._classChainRecords.size()) || !context._classChainRecords[subrecordId])
                {
-               invalidSubrecordName = "class chain";
+               invalidSubrecordName = AOTCacheClassChainRecord::getRecordName();
                goto error;
                }
             records()[i] = context._classChainRecords[subrecordId];
@@ -454,14 +486,22 @@ CachedAOTMethod::setSubrecordPointers(const JITServerAOTCacheReadContext &contex
          case AOTSerializationRecordType::WellKnownClasses:
             if ((subrecordId >= context._wellKnownClassesRecords.size()) || !context._wellKnownClassesRecords[subrecordId])
                {
-               invalidSubrecordName = "well-known classes";
+               invalidSubrecordName = AOTCacheWellKnownClassesRecord::getRecordName();
                goto error;
                }
             records()[i] = context._wellKnownClassesRecords[subrecordId];
             break;
          case AOTSerializationRecordType::AOTHeader: // never associated with an SCC offset
-            invalidSubrecordName = "AOT header";
+            invalidSubrecordName = AOTCacheAOTHeaderRecord::getRecordName();
             goto error;
+         case AOTSerializationRecordType::Thunk:
+            if ((subrecordId >= context._thunkRecords.size()) || !context._thunkRecords[subrecordId])
+               {
+               invalidSubrecordName = AOTCacheThunkRecord::getRecordName();
+               goto error;
+               }
+            records()[i] = context._thunkRecords[subrecordId];
+            break;
          default:
             invalidSubrecordName = "invalid";
             goto error;
@@ -480,17 +520,17 @@ error:
    }
 
 bool
-JITServerAOTCache::ClassLoaderKey::operator==(const ClassLoaderKey &k) const
+JITServerAOTCache::StringKey::operator==(const StringKey &k) const
    {
-   return J9UTF8_DATA_EQUALS(_name, _nameLength, k._name, k._nameLength);
+   return J9UTF8_DATA_EQUALS(_string, _stringLength, k._string, k._stringLength);
    }
 
 size_t
-JITServerAOTCache::ClassLoaderKey::Hash::operator()(const ClassLoaderKey &k) const noexcept
+JITServerAOTCache::StringKey::Hash::operator()(const StringKey &k) const noexcept
    {
    size_t h = 0;
-   for (size_t i = 0; i < k._nameLength; ++i)
-      h = (h << 5) - h + k._name[i];
+   for (size_t i = 0; i < k._stringLength; ++i)
+      h = (h << 5) - h + k._string[i];
    return h;
    }
 
@@ -677,6 +717,11 @@ JITServerAOTCache::JITServerAOTCache(const std::string &name) :
    _aotHeaderTail(NULL),
    _nextAOTHeaderId(1),// ID 0 is invalid
    _aotHeaderMonitor(TR::Monitor::create("JIT-JITServerAOTCacheAOTHeaderMonitor")),
+   _thunkMap(decltype(_thunkMap)::allocator_type(TR::Compiler->persistentGlobalAllocator())),
+   _thunkHead(NULL),
+   _thunkTail(NULL),
+   _nextThunkId(1),// ID 0 is invalid
+   _thunkMonitor(TR::Monitor::create("JIT-JITServerAOTCacheThunkMonitor")),
    _cachedMethodMap(decltype(_cachedMethodMap)::allocator_type(TR::Compiler->persistentGlobalAllocator())),
    _cachedMethodHead(NULL),
    _cachedMethodTail(NULL),
@@ -703,6 +748,7 @@ JITServerAOTCache::~JITServerAOTCache()
    freeMapValues(_classChainMap);
    freeMapValues(_wellKnownClassesMap);
    freeMapValues(_aotHeaderMap);
+   freeMapValues(_thunkMap);
    freeMapValues(_cachedMethodMap);
 
    TR::Monitor::destroy(_classMonitor);
@@ -711,6 +757,7 @@ JITServerAOTCache::~JITServerAOTCache()
    TR::Monitor::destroy(_classChainMonitor);
    TR::Monitor::destroy(_wellKnownClassesMonitor);
    TR::Monitor::destroy(_aotHeaderMonitor);
+   TR::Monitor::destroy(_thunkMonitor);
    TR::Monitor::destroy(_cachedMethodMonitor);
    }
 
@@ -720,7 +767,8 @@ JITServerAOTCacheReadContext::JITServerAOTCacheReadContext(const JITServerAOTCac
    _methodRecords(header._nextMethodId, NULL, stackMemoryRegion),
    _classChainRecords(header._nextClassChainId, NULL, stackMemoryRegion),
    _wellKnownClassesRecords(header._nextWellKnownClassesId, NULL, stackMemoryRegion),
-   _aotHeaderRecords(header._nextAOTHeaderId, NULL, stackMemoryRegion)
+   _aotHeaderRecords(header._nextAOTHeaderId, NULL, stackMemoryRegion),
+   _thunkRecords(header._nextThunkId, NULL, stackMemoryRegion)
    {
    }
 
@@ -1153,6 +1201,11 @@ JITServerAOTCache::writeCache(FILE *f) const
       return 0;
       }
       {
+      OMR::CriticalSection cs(_thunkMonitor);
+      header._numThunkRecords = _thunkMap.size();
+      header._nextThunkId = _nextThunkId;
+      }
+      {
       OMR::CriticalSection cs(_aotHeaderMonitor);
       header._numAOTHeaderRecords = _aotHeaderMap.size();
       header._nextAOTHeaderId = _nextAOTHeaderId;
@@ -1201,6 +1254,8 @@ JITServerAOTCache::writeCache(FILE *f) const
    if (!writeRecordList(f, _wellKnownClassesHead, header._numWellKnownClassesRecords))
       return 0;
    if (!writeRecordList(f, _aotHeaderHead, header._numAOTHeaderRecords))
+      return 0;
+   if (!writeRecordList(f, _thunkHead, header._numThunkRecords))
       return 0;
    if (!writeCachedMethodList(f, _cachedMethodHead, header._numCachedAOTMethods))
       return 0;
@@ -1332,6 +1387,7 @@ JITServerAOTCache::readCache(FILE *f, const JITServerAOTCacheHeader &header, TR_
    _classChainMap.reserve(header._numClassChainRecords);
    _wellKnownClassesMap.reserve(header._numWellKnownClassesRecords);
    _aotHeaderMap.reserve(header._numAOTHeaderRecords);
+   _thunkMap.reserve(header._numThunkRecords);
    _cachedMethodMap.reserve(header._numCachedAOTMethods);
 
    _nextClassLoaderId = header._nextClassLoaderId;
@@ -1340,6 +1396,7 @@ JITServerAOTCache::readCache(FILE *f, const JITServerAOTCacheHeader &header, TR_
    _nextClassChainId = header._nextClassChainId;
    _nextWellKnownClassesId = header._nextWellKnownClassesId;
    _nextAOTHeaderId = header._nextAOTHeaderId;
+   _nextThunkId = header._nextThunkId;
 
    TR::StackMemoryRegion stackMemoryRegion(trMemory);
    JITServerAOTCacheReadContext context(header, stackMemoryRegion);
@@ -1356,6 +1413,8 @@ JITServerAOTCache::readCache(FILE *f, const JITServerAOTCacheHeader &header, TR_
                     _wellKnownClassesTail, context._wellKnownClassesRecords))
       return false;
    if (!readRecords(f, context, header._numAOTHeaderRecords, _aotHeaderMap, _aotHeaderHead, _aotHeaderTail, context._aotHeaderRecords))
+      return false;
+   if (!readRecords(f, context, header._numThunkRecords, _thunkMap, _thunkHead, _thunkTail, context._thunkRecords))
       return false;
 
    for (size_t i = 0; i < header._numCachedAOTMethods; ++i)
