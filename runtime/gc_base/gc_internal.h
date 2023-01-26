@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2022 IBM Corp. and others
+ * Copyright (c) 1991, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -262,6 +262,7 @@ extern J9_CFUNC void j9gc_ensureLockedSynchronizersIntegrity(J9VMThread *vmThrea
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 extern J9_CFUNC void j9gc_prepare_for_checkpoint(J9VMThread *vmThread);
 extern J9_CFUNC BOOLEAN j9gc_reinitialize_for_restore(J9VMThread *vmThread);
+extern J9_CFUNC BOOLEAN j9gc_reinitializeDefaults(J9VMThread *vmThread);
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
 /* J9VMFinalizeSupport*/

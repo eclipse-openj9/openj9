@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2022 IBM Corp. and others
+ * Copyright (c) 1991, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -3029,6 +3029,25 @@ error:
 	}
 	return J9VMDLLMAIN_FAILED;
 }
+
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+/**
+ * Initialize GC parameters for Restore.
+ * Initialize GC parameters with default values, parse the command line, massage values
+ * as required and finally verify values.
+ * @return
+ */
+BOOLEAN
+j9gc_reinitializeDefaults(J9VMThread* vmThread)
+{
+	MM_GCExtensions* extensions = MM_GCExtensions::getExtensions(vmThread);
+
+	/* TODO: Parse restore options to set gc thread count */
+	extensions->gcThreadCountForced = false;
+
+	return true;
+}
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
 #if defined(OMR_GC_CONCURRENT_SCAVENGER)
 static void

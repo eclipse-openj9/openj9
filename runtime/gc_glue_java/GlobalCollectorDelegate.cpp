@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2021 IBM Corp. and others
+ * Copyright (c) 2017, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -183,13 +183,12 @@ MM_GlobalCollectorDelegate::mainThreadGarbageCollectFinished(MM_EnvironmentBase 
 	/* Check that all reference object lists are empty:
 	 * lists must be processed at Mark and nothing should be flushed after
 	 */
-	UDATA listCount = _extensions->gcThreadCount;
 	MM_HeapRegionDescriptorStandard *region = NULL;
 	GC_HeapRegionIteratorStandard regionIterator(_extensions->heap->getHeapRegionManager());
 	while(NULL != (region = regionIterator.nextRegion())) {
 		/* check all lists for regions, they should be empty */
 		MM_HeapRegionDescriptorStandardExtension *regionExtension =  MM_ConfigurationDelegate::getHeapRegionDescriptorStandardExtension(env, region);
-		for (UDATA i = 0; i < listCount; i++) {
+		for (UDATA i = 0; i < regionExtension->_maxListIndex; i++) {
 			MM_ReferenceObjectList *list = &regionExtension->_referenceObjectLists[i];
 			Assert_MM_true(list->isWeakListEmpty());
 			Assert_MM_true(list->isSoftListEmpty());
