@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2021, 2022 IBM Corp. and others
+ * Copyright (c) 2021, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,6 +20,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
+#include "AtomicSupport.hpp"
 #include "control/JITServerHelpers.hpp"
 #include "compile/Compilation.hpp"
 #include "env/ClassLoaderTable.hpp"
@@ -284,6 +285,8 @@ JITServerAOTDeserializer::cacheRecord(const AOTSerializationRecord *record, TR::
          return cacheRecord((const ClassChainSerializationRecord *)record, comp, isNew, wasReset);
       case WellKnownClasses:
          return cacheRecord((const WellKnownClassesSerializationRecord *)record, comp, isNew, wasReset);
+      case Thunk:
+         return cacheRecord((const ThunkSerializationRecord *)record, comp, isNew, wasReset);
       default:
          TR_ASSERT_FATAL(false, "Invalid record type: %u", record->type());
          return false;
@@ -640,6 +643,31 @@ JITServerAOTDeserializer::cacheRecord(const WellKnownClassesSerializationRecord 
    }
 
 
+bool
+JITServerAOTDeserializer::cacheRecord(const ThunkSerializationRecord *record,
+                                      TR::Compilation *comp, bool &isNew, bool &wasReset)
+   {
+   // Unlike the rest of the cacheRecord functions, we do not need to acquire a monitor here, as we can rely on
+   // the internal synchronization of getJ2IThunk and setJ2IThunk. We use a read barrier here for isResetInProgress.
+   VM_AtomicSupport::readBarrier();
+   if (isResetInProgress(wasReset))
+      return false;
+
+   auto fej9vm = comp->fej9vm();
+   void *thunk = fej9vm->getJ2IThunk((char *)record->signature(), record->signatureSize(), comp);
+   if (thunk)
+      return true;
+   isNew = true;
+
+   fej9vm->setJ2IThunk((char *)record->signature(), record->signatureSize(), record->thunkAddress(), comp);
+
+   if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Cached thunk record ID %zu -> for thunk %.*s",
+                                     record->id(), record->signatureSize(), record->signature());
+   return true;
+   }
+
+
 J9ClassLoader *
 JITServerAOTDeserializer::getClassLoader(uintptr_t id, uintptr_t &loaderSCCOffset, bool &wasReset)
    {
@@ -853,6 +881,11 @@ JITServerAOTDeserializer::updateSCCOffsets(SerializedAOTMethod *method, TR::Comp
       {
       // Get the SCC offset of the corresponding entity in the local SCC
       const SerializedSCCOffset &serializedOffset = method->offsets()[i];
+
+      // Thunks do not use their SCC offset entries
+      if (serializedOffset.recordType() == AOTSerializationRecordType::Thunk)
+         continue;
+
       uintptr_t sccOffset = getSCCOffset(serializedOffset.recordType(), serializedOffset.recordId(), wasReset);
       if (sccOffset == (uintptr_t)-1)
          return false;
