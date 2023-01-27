@@ -266,7 +266,7 @@ ppc64_aix:
     8: 'aix-ppc64-normal-server-release'
     11: 'aix-ppc64-normal-server-release'
   node_labels:
-    build: 'ci.role.build && hw.arch.ppc64 && sw.os.aix'
+    build: 'ci.role.build && hw.arch.ppc64 && sw.os.aix.7_2'
   extra_configure_options:
     all: '--with-cups-include=/opt/freeware/include'
     8: ' --disable-ccache'
