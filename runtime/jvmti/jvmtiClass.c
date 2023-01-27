@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2022 IBM Corp. and others
+ * Copyright (c) 1991, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -296,6 +296,7 @@ done:
 }
 
 
+#if JAVA_SPEC_VERSION >= 17
 void fixHiddenOrAnonSignature(char* signature, UDATA signatureLength) {
 	if (signatureLength >= (ROM_ADDRESS_LENGTH + 2)) {
 		IDATA lastSeparatorIndex = signatureLength - (ROM_ADDRESS_LENGTH + 2);
@@ -309,6 +310,7 @@ void fixHiddenOrAnonSignature(char* signature, UDATA signatureLength) {
 		}
 	}
 }
+#endif /* JAVA_SPEC_VERSION >= 17 */
 
 
 jvmtiError JNICALL
@@ -382,9 +384,11 @@ jvmtiGetClassSignature(jvmtiEnv* env,
 					memcpy(signature + arity + 1, J9UTF8_DATA(utf), utfLength);
 					signature[allocSize - 1] = ';';
 
+#if JAVA_SPEC_VERSION >= 17
 					if (J9ROMCLASS_IS_ANON_OR_HIDDEN(leafType->romClass)) {
 						fixHiddenOrAnonSignature(signature, allocSize);
 					}
+#endif /* JAVA_SPEC_VERSION >= 17 */
 				}
 				signature[allocSize] = '\0';
 			} else {
@@ -401,9 +405,11 @@ jvmtiGetClassSignature(jvmtiEnv* env,
 				signature[utfLength + 1] = ';';
 				signature[utfLength + 2] = '\0';
 
+#if JAVA_SPEC_VERSION >= 17
 				if (J9ROMCLASS_IS_ANON_OR_HIDDEN(clazz->romClass)) {
 					fixHiddenOrAnonSignature(signature, utfLength + 2);
 				}
+#endif /* JAVA_SPEC_VERSION >= 17 */
 			}
 		}
 
