@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2022 IBM Corp. and others
+ * Copyright (c) 1991, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -106,6 +106,7 @@ static UDATA j9ThunkEncodeSignature(char *signatureData, U_8 * encodedSignature)
 static UDATA j9ThunkTableHash(void *key, void *userData);
 static UDATA j9ThunkTableEquals(void *leftKey, void *rightKey, void *userData);
 
+typedef UDATA (*encodeByteFn)(UDATA encodedTypeByteStored, U_8 *encodedTypeBytePtr, U_8 encodedType);
 
 void *
 j9ThunkLookupNameAndSig(void * jitConfig, void *parm)
@@ -297,21 +298,22 @@ j9ThunkNewSignature(void * jitConfig, int signatureLength, char *signatureChars,
 	return 0;
 }
 
-/* Returns the total number of bytes used in the encodedSignature buffer */
-
 static UDATA
-j9ThunkEncodeSignature(char *signatureData, U_8 * encodedSignature)
+j9ThunkEncodeByte(UDATA encodedTypeByteStored, U_8 *encodedTypeBytePtr, U_8 encodedType)
 {
-	U_8 * encodedTypes = encodedSignature + 1;
-	U_8 argCount = 0;
+	*encodedTypeBytePtr = ((*encodedTypeBytePtr) << 4) | encodedType;
+	return !encodedTypeByteStored;
+}
+
+static void
+j9ThunkIterateAndEncode(char ** signatureDataPtr, U_8 ** encodedTypesPtr, U_8 * argCountPtr, encodeByteFn encodeByte)
+{
+	UDATA done = FALSE;
 	U_8 encodedTypeByte = 0;
 	UDATA encodedTypeByteStored = TRUE;
-	UDATA done = FALSE;
-	UDATA totalSize;
-#ifdef DEBUG
-	char * origSig = signatureData;
-	UDATA i;
-#endif
+	U_8 * encodedTypes = *encodedTypesPtr;
+	char * signatureData = *signatureDataPtr;
+	U_8 argCount = *argCountPtr;
 
 	/* Skip opening bracket */
 	++signatureData;
@@ -365,10 +367,9 @@ j9ThunkEncodeSignature(char *signatureData, U_8 * encodedSignature)
 				break;
 		}
 
-		/* Store encoded value into nybble */
+		/* Store encoded value */
 
-		encodedTypeByte = (encodedTypeByte << 4) | encodedType;
-		encodedTypeByteStored = !encodedTypeByteStored;
+		encodedTypeByteStored = encodeByte(encodedTypeByteStored, &encodedTypeByte, encodedType);
 		if (encodedTypeByteStored) {
 			*encodedTypes++ = encodedTypeByte;
 		}
@@ -377,8 +378,32 @@ j9ThunkEncodeSignature(char *signatureData, U_8 * encodedSignature)
 	/* Store the final byte if necessary */
 
 	if (!encodedTypeByteStored) {
-		*encodedTypes++ = (encodedTypeByte << 4) | J9_THUNK_TYPE_FILL;
+		encodedTypeByteStored = encodeByte(encodedTypeByteStored, &encodedTypeByte, J9_THUNK_TYPE_FILL);
+		*encodedTypes++ = encodedTypeByte;
 	}
+
+	*argCountPtr = argCount;
+	*encodedTypesPtr = encodedTypes;
+	*signatureDataPtr = signatureData;
+}
+
+/* Returns the total number of bytes used in the encodedSignature buffer */
+
+static UDATA
+j9ThunkEncodeSignature(char *signatureData, U_8 * encodedSignature)
+{
+	/* Leave room for storing argCount */
+	U_8 * encodedTypes = encodedSignature + 1;
+	U_8 argCount = 0;
+	UDATA totalSize;
+#ifdef DEBUG
+	char * origSig = signatureData;
+	UDATA i;
+#endif
+
+	/* Iterate and encode the signature from signatureData into encodedTypes */
+
+	j9ThunkIterateAndEncode(&signatureData, &encodedTypes, &argCount, j9ThunkEncodeByte);
 
 	/* Store arg count and compute total size */
 
