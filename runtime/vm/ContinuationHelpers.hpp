@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2022, 2022 IBM Corp. and others
+ * Copyright (c) 2022, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -69,6 +69,7 @@ public:
 		SWAP_MEMBER(stackObject, J9JavaStack*, vmThread, continuation);
 		SWAP_MEMBER(decompilationStack, J9JITDecompilationInfo*, vmThread, continuation);
 		SWAP_MEMBER(j2iFrame, UDATA*, vmThread, continuation);
+		SWAP_MEMBER(dropFlags, UDATA, vmThread, continuation);
 
 		J9VMEntryLocalStorage *threadELS = vmThread->entryLocalStorage;
 		/* Swap the JIT GPR registers data referenced by ELS */

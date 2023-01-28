@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2022 IBM Corp. and others
+ * Copyright (c) 1991, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -4367,6 +4367,16 @@ copyFieldsFromContinuation(J9VMThread *currentThread, J9VMThread *vmThread, J9VM
  */
 UDATA
 walkContinuationStackFrames(J9VMThread *currentThread, J9VMContinuation *continuation, J9StackWalkState *walkState);
+
+/**
+ * @brief Walk all stackframes in the VM.
+ *
+ * @param currentThread
+ * @param walkState walkstate holding initial walk parameters to be used in each stackwalk
+ * @return 0 on success and non-zero on failure
+ */
+UDATA
+walkAllStackFrames(J9VMThread *currentThread, J9StackWalkState *walkState);
 #endif /* JAVA_SPEC_VERSION >= 19 */
 
 /* ---------------- hookableAsync.c ---------------- */
