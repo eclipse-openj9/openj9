@@ -970,6 +970,11 @@ freeJavaVM(J9JavaVM * vm)
 		}
 
 		j9sl_close_shared_library(vm->checkpointState.libCRIUHandle);
+
+		if (NULL != vm->delayedLockingOperationsMutex) {
+			omrthread_monitor_destroy(vm->delayedLockingOperationsMutex);
+			vm->delayedLockingOperationsMutex = NULL;
+		}
 	}
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 

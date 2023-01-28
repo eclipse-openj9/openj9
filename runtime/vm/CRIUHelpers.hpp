@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2022 IBM Corp. and others
+ * Copyright (c) 2019, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -63,7 +63,8 @@ public:
 		J9JavaVM *vm = currentThread->javaVM;
 		J9InternalVMFunctions* vmFuncs = vm->internalVMFunctions;
 
-		Assert_VM_true(vm->checkpointState.checkpointThread == currentThread);
+		/* This is only contended when the GC is shutting down threads. */
+		omrthread_monitor_enter(vm->delayedLockingOperationsMutex);
 
 		jobject globalRef = vmFuncs->j9jni_createGlobalRef((JNIEnv*) currentThread, instance, JNI_FALSE);
 		if (NULL == globalRef) {
@@ -88,6 +89,7 @@ public:
 
 		Trc_VM_criu_delayedLockingOperation_delayOperation(currentThread, operation, instance);
 done:
+		omrthread_monitor_exit(vm->delayedLockingOperationsMutex);
 		return rc;
 
 throwOOM:
