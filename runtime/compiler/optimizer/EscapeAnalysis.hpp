@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2022 IBM Corp. and others
+ * Copyright (c) 2000, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -508,8 +508,8 @@ class TR_EscapeAnalysis : public TR::Optimization
 
    int32_t  performAnalysisOnce();
    void     findCandidates();
-   void     findIgnoreableUses();
-   void     findIgnoreableUses(TR::Node *node, TR::NodeChecklist& visited);
+   void     findIgnorableUses();
+   void     markUsesAsIgnorable(TR::Node *node, TR::NodeChecklist& visited);
    void     findLocalObjectsValueNumbers();
    void     findLocalObjectsValueNumbers(TR::Node *node, TR::NodeChecklist& visited);
 
@@ -585,7 +585,6 @@ class TR_EscapeAnalysis : public TR::Optimization
     */
    void     collectAliasesOfAllocations(TR::Node *node, TR::Node *allocNode);
 
-   bool     checkAllNewsOnRHSInLoop(TR::Node *defNode, TR::Node *useNode, Candidate *candidate);
    bool     checkAllNewsOnRHSInLoopWithAliasing(int32_t defIndex, TR::Node *useNode, Candidate *candidate);
    bool     usesValueNumber(Candidate *candidate, int32_t valueNumber);
    Candidate *findCandidate(int32_t valueNumber);
@@ -709,7 +708,7 @@ class TR_EscapeAnalysis : public TR::Optimization
    TR_UseDefInfo             *_useDefInfo;
    bool                      _invalidateUseDefInfo;
    TR_BitVector              *_otherDefsForLoopAllocation;
-   TR_BitVector              *_ignoreableUses;
+   TR_BitVector              *_ignorableUses;
    TR_BitVector              *_nonColdLocalObjectsValueNumbers;
    TR_BitVector              *_allLocalObjectsValueNumbers;
    TR_BitVector              *_notOptimizableLocalObjectsValueNumbers;
@@ -769,7 +768,6 @@ class TR_EscapeAnalysis : public TR::Optimization
 #endif
    bool                       _repeatAnalysis;
    bool                       _somethingChanged;
-   bool                       _doLoopAllocationAliasChecking;
    TR_ScratchList<TR_DependentAllocations> _dependentAllocations;
    TR_BitVector *             _vnTemp;
    TR_BitVector *             _vnTemp2;
