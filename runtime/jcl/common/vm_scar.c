@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2022 IBM Corp. and others
+ * Copyright (c) 1998, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -72,8 +72,8 @@
  */
 const char* jclBootstrapClassPath[MAX_BOOTPATH_ENTRIES+1]; /* +1 for null-term */
 
-/* Array of memory-allocated bootpath entries, NULL-terminated. 
- * We need this because in the jclBootstrapClassPath array some entries are 
+/* Array of memory-allocated bootpath entries, NULL-terminated.
+ * We need this because in the jclBootstrapClassPath array some entries are
  * allocated and some are statically declared and this second arrays keeps track
  * of which ones were allocated so that we can free them when appropriate */
 char* jclBootstrapClassPathAllocated[MAX_BOOTPATH_ENTRIES+1] = {NULL}; /* +1 for null-term */
@@ -141,7 +141,7 @@ addBFUSystemProperties(J9JavaVM* javaVM)
 			j9sysinfo_get_env(JAVA_FONTS_STR, fontPathBuffer, fontPathSize);
 		}
 	}
-	
+
 #ifdef WIN32
 	if (J9SYSPROP_ERROR_NOT_FOUND == vmfunc->getSystemProperty(javaVM, "java.awt.fonts", NULL)) {
 		rc = vmfunc->addSystemProperty(javaVM, "java.awt.fonts", fontPathBuffer, 0);
@@ -164,7 +164,7 @@ addBFUSystemProperties(J9JavaVM* javaVM)
 			return rc;
 		}
 	}
-	
+
 	if (J9SYSPROP_ERROR_NOT_FOUND == vmfunc->getSystemProperty(javaVM, "java.awt.printerjob", NULL)) {
 		rc = vmfunc->addSystemProperty(javaVM, "java.awt.printerjob", J9_AWTPRINTERJOB_VALUE, 0);
 		if (J9SYSPROP_ERROR_NONE != rc) {
@@ -244,7 +244,7 @@ addBFUSystemProperties(J9JavaVM* javaVM)
 		}
 	}
 #endif
-	
+
 	return J9SYSPROP_ERROR_NONE;
 }
 
@@ -297,7 +297,7 @@ scarInit(J9JavaVM * vm)
 		j9nls_printf(PORTLIB, J9NLS_WARNING, J9NLS_JCL_WARNING_DLL_COULDNOT_BE_REGISTERED_AS_BOOTSTRAP_LIB, dbgwrapperStr, result);
 	}
 #endif /* defined(WIN32) && !defined(OPENJ9_BUILD) */
-	
+
 #if defined(J9VM_INTERP_MINIMAL_JCL)
 	result = standardInit(vm, J9_DLL_NAME);
 #else /* J9VM_INTERP_MINIMAL_JCL */
@@ -339,15 +339,15 @@ J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 
 			/* TODO: Can this be removed? */
 			vm->jclFlags |=
-				J9_JCL_FLAG_REFERENCE_OBJECTS | 
-				J9_JCL_FLAG_FINALIZATION | 
+				J9_JCL_FLAG_REFERENCE_OBJECTS |
+				J9_JCL_FLAG_FINALIZATION |
 				J9_JCL_FLAG_THREADGROUPS;
 			vm->jclSysPropBuffer = NULL;
-			
-			/* give outside modules a crack at doing the preconfigure.  If there is no hook then 
+
+			/* give outside modules a crack at doing the preconfigure.  If there is no hook then
 			 * run scarPreconfigure directly */
 			TRIGGER_J9HOOK_VM_SCAR_PRECONFIGURE(vm->hookInterface, vm, returnValuePointer, returnPointer);
-			if (result == 0 ){	
+			if (result == 0 ){
 				/* no hook ran so call scarPreconfigure directly */
 				if (scarPreconfigure(vm) != JNI_OK) {
 					returnVal = J9VMDLLMAIN_FAILED;
@@ -364,7 +364,7 @@ J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 			break;
 
 		case ALL_VM_ARGS_CONSUMED :
-			FIND_AND_CONSUME_ARG(STARTSWITH_MATCH, VMOPT_XJCL_COLON, NULL);
+			FIND_AND_CONSUME_VMARG(STARTSWITH_MATCH, VMOPT_XJCL_COLON, NULL);
 			break;
 
 		case JCL_INITIALIZED :
@@ -390,7 +390,7 @@ J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 				}
 			}
 			break;
-			
+
 		case VM_INITIALIZATION_COMPLETE :
 			returnVal = SunVMI_LifecycleEvent(vm, VM_INITIALIZATION_COMPLETE, NULL);
 			break;
@@ -409,7 +409,7 @@ J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 			}
 			freeUnsafeMemory(vm);
 			break;
-			
+
 		case OFFLOAD_JCL_PRECONFIGURE:
 			if (scarPreconfigure(vm) != JNI_OK) {
 				returnVal = J9VMDLLMAIN_FAILED;
@@ -535,7 +535,7 @@ loadClasslibPropertiesFile(J9JavaVM *vm, UDATA *cursor)
 		/* File not found is not an error. */
 		return 0;
 	}
-	
+
 	bootpath = props_file_get(classlibProps, "bootpath");
 	if ((NULL != bootpath) && ('\0' != bootpath[0])) {
 		char* currentEntry = NULL;

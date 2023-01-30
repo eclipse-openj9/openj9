@@ -260,46 +260,46 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void * reserved)
             }
 
          /* Find and consume these before the library might be unloaded */
-         FIND_AND_CONSUME_ARG(EXACT_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::Xnodfpbd], 0);
+         FIND_AND_CONSUME_VMARG(EXACT_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::Xnodfpbd], 0);
          if (FIND_ARG_IN_VMARGS(EXACT_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::Xdfpbd], 0) >= 0)
             {
-            FIND_AND_CONSUME_ARG( EXACT_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::Xhysteresis], 0);
+            FIND_AND_CONSUME_VMARG( EXACT_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::Xhysteresis], 0);
             }
-         FIND_AND_CONSUME_ARG( EXACT_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::Xnoquickstart], 0); // deprecated
-         FIND_AND_CONSUME_ARG(STARTSWITH_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::Xtuneelastic], 0);
-         argIndexQuickstart = FIND_AND_CONSUME_ARG( EXACT_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::Xquickstart], 0);
-         tlhPrefetch = FIND_AND_CONSUME_ARG(EXACT_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::XtlhPrefetch], 0);
-         notlhPrefetch = FIND_AND_CONSUME_ARG(EXACT_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::XnotlhPrefetch], 0);
-         lockReservation = FIND_AND_CONSUME_ARG(EXACT_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::XlockReservation], 0);
-         FIND_AND_CONSUME_ARG(EXACT_MEMORY_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::Xcodecache], 0);
-         FIND_AND_CONSUME_ARG(STARTSWITH_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::XjniAcc], 0);
-         FIND_AND_CONSUME_ARG(EXACT_MEMORY_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::Xcodecachetotal], 0);
-         FIND_AND_CONSUME_ARG(EXACT_MEMORY_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::XXcodecachetotal], 0);
+         FIND_AND_CONSUME_VMARG( EXACT_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::Xnoquickstart], 0); // deprecated
+         FIND_AND_CONSUME_VMARG(STARTSWITH_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::Xtuneelastic], 0);
+         argIndexQuickstart = FIND_AND_CONSUME_VMARG( EXACT_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::Xquickstart], 0);
+         tlhPrefetch = FIND_AND_CONSUME_VMARG(EXACT_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::XtlhPrefetch], 0);
+         notlhPrefetch = FIND_AND_CONSUME_VMARG(EXACT_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::XnotlhPrefetch], 0);
+         lockReservation = FIND_AND_CONSUME_VMARG(EXACT_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::XlockReservation], 0);
+         FIND_AND_CONSUME_VMARG(EXACT_MEMORY_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::Xcodecache], 0);
+         FIND_AND_CONSUME_VMARG(STARTSWITH_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::XjniAcc], 0);
+         FIND_AND_CONSUME_VMARG(EXACT_MEMORY_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::Xcodecachetotal], 0);
+         FIND_AND_CONSUME_VMARG(EXACT_MEMORY_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::XXcodecachetotal], 0);
 
-         FIND_AND_CONSUME_ARG(STARTSWITH_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::Xlpcodecache], 0);
+         FIND_AND_CONSUME_VMARG(STARTSWITH_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::Xlpcodecache], 0);
 
-         FIND_AND_CONSUME_ARG(EXACT_MEMORY_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::XsamplingExpirationTime], 0);
-         FIND_AND_CONSUME_ARG(EXACT_MEMORY_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::XcompilationThreads], 0);
-         FIND_AND_CONSUME_ARG(EXACT_MEMORY_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::XaggressivenessLevel], 0);
-         argIndexXjit = FIND_AND_CONSUME_ARG(OPTIONAL_LIST_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::Xjit], 0);
-         argIndexXaot = FIND_AND_CONSUME_ARG(OPTIONAL_LIST_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::Xaot], 0);
-         argIndexXnojit = FIND_AND_CONSUME_ARG(OPTIONAL_LIST_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::Xnojit], 0);
+         FIND_AND_CONSUME_VMARG(EXACT_MEMORY_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::XsamplingExpirationTime], 0);
+         FIND_AND_CONSUME_VMARG(EXACT_MEMORY_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::XcompilationThreads], 0);
+         FIND_AND_CONSUME_VMARG(EXACT_MEMORY_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::XaggressivenessLevel], 0);
+         argIndexXjit = FIND_AND_CONSUME_VMARG(OPTIONAL_LIST_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::Xjit], 0);
+         argIndexXaot = FIND_AND_CONSUME_VMARG(OPTIONAL_LIST_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::Xaot], 0);
+         argIndexXnojit = FIND_AND_CONSUME_VMARG(OPTIONAL_LIST_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::Xnojit], 0);
 
-         argIndexRIEnabled = FIND_AND_CONSUME_ARG(EXACT_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::XXplusRuntimeInstrumentation], 0);
-         argIndexRIDisabled = FIND_AND_CONSUME_ARG(EXACT_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::XXminusRuntimeInstrumentation], 0);
+         argIndexRIEnabled = FIND_AND_CONSUME_VMARG(EXACT_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::XXplusRuntimeInstrumentation], 0);
+         argIndexRIDisabled = FIND_AND_CONSUME_VMARG(EXACT_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::XXminusRuntimeInstrumentation], 0);
 
          // Determine if user disabled Runtime Instrumentation
          if (argIndexRIEnabled >= 0 || argIndexRIDisabled >= 0)
             TR::Options::_hwProfilerEnabled = (argIndexRIDisabled > argIndexRIEnabled) ? TR_no : TR_yes;
 
-         argIndexPerfEnabled = FIND_AND_CONSUME_ARG(EXACT_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::XXplusPerfTool], 0);
-         argIndexPerfDisabled = FIND_AND_CONSUME_ARG(EXACT_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::XXminusPerfTool], 0);
+         argIndexPerfEnabled = FIND_AND_CONSUME_VMARG(EXACT_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::XXplusPerfTool], 0);
+         argIndexPerfDisabled = FIND_AND_CONSUME_VMARG(EXACT_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::XXminusPerfTool], 0);
 
          // Determine if user disabled PerfTool
          if (argIndexPerfEnabled >= 0 || argIndexPerfDisabled >= 0)
             TR::Options::_perfToolEnabled = (argIndexPerfDisabled > argIndexPerfEnabled) ? TR_no : TR_yes;
 
-         TR::Options::_doNotProcessEnvVars = (FIND_AND_CONSUME_ARG(EXACT_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::XXdoNotProcessJitEnvVars], 0) >= 0);
+         TR::Options::_doNotProcessEnvVars = (FIND_AND_CONSUME_VMARG(EXACT_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::XXdoNotProcessJitEnvVars], 0) >= 0);
 
          isQuickstart = J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_TUNE_QUICKSTART);
 
@@ -408,8 +408,8 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void * reserved)
             /* We need to initialize the following if we allow JIT compilation, AOT compilation or AOT relocation to be done */
             try
                {
-               argIndexMergeOptionsEnabled = FIND_AND_CONSUME_ARG(EXACT_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::XXplusMergeCompilerOptions], 0);
-               argIndexMergeOptionsDisabled = FIND_AND_CONSUME_ARG(EXACT_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::XXminusMergeCompilerOptions], 0);
+               argIndexMergeOptionsEnabled = FIND_AND_CONSUME_VMARG(EXACT_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::XXplusMergeCompilerOptions], 0);
+               argIndexMergeOptionsDisabled = FIND_AND_CONSUME_VMARG(EXACT_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::XXminusMergeCompilerOptions], 0);
 
                // Determine if user wants to merge compiler options
                bool mergeCompilerOptions = false;
