@@ -1,6 +1,5 @@
-/*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 /*******************************************************************************
- * Copyright (c) 2005, 2023 IBM Corp. and others
+ * Copyright (c) 2023, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,48 +19,9 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-package com.ibm.lang.management.internal;
 
-/**
- * A thread hooked as a VM shutdown hook to tell an OperatingSystemNotificationThread
- * to terminate.
- *
- * @since 1.5
- */
-final class OperatingSystemNotificationThreadShutdown extends Thread {
-
-	private final Thread myVictim;
-
-	/**
-	 * Basic constructor
-	 * @param victim The thread to notify on shutdown
-	 */
-	OperatingSystemNotificationThreadShutdown(Thread victim) {
-		super("OperatingSystemNotificationThreadShutdown"); //$NON-NLS-1$
-		myVictim = victim;
+public class ThreadName {
+	public static void main(String[] args) throws Exception {
+		System.out.println(new Thread().getName());
 	}
-
-	/**
-	 * Shutdown hook code that coordinates the termination of a memory
-	 * notification thread.
-	 */
-	@Override
-	public void run() {
-		sendShutdownNotification();
-
-		try {
-			// wait for the notification thread to terminate
-			myVictim.join();
-		} catch (InterruptedException e) {
-			// don't care
-		}
-	}
-
-	/**
-	 * Unregisters the SIGRECONFIG handler, then wipes any pending
-	 * notifications and puts a shutdown request on an internal notification
-	 * queue.
-	 */
-	private native void sendShutdownNotification();
-
 }

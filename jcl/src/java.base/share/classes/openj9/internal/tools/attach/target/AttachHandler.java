@@ -1,6 +1,6 @@
 /*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 /*******************************************************************************
- * Copyright (c) 2009, 2022 IBM Corp. and others
+ * Copyright (c) 2009, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -123,8 +123,8 @@ public class AttachHandler extends Thread {
 	 * Keep the constructor private
 	 */
 	private AttachHandler() {
+		super("Attach API initializer"); //$NON-NLS-1$
 		setDaemon(true);
-		setName("Attach API initializer"); //$NON-NLS-1$
 	}
 
 	/**
@@ -518,12 +518,14 @@ public class AttachHandler extends Thread {
 	 * wind up the attach API on termination
 	 */
 	static final class teardownHook extends Thread {
+		teardownHook() {
+			super("Attach API teardown"); //$NON-NLS-1$)
+		}
 
 		@Override
 		public void run() {
 			/*[PR CMVC 188652]  Suppress OOM messages from attach API*/
 			try {
-				Thread.currentThread().setName("Attach API teardown"); //$NON-NLS-1$
 				/* Set  the current thread as a System Thread */
 				com.ibm.oti.vm.VM.markCurrentThreadAsSystem();
 				if (LOGGING_DISABLED != loggingStatus) {

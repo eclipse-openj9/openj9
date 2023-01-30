@@ -1,6 +1,6 @@
-/*[INCLUDE-IF Sidecar18-SE]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 /*******************************************************************************
- * Copyright (c) 2004, 2017 IBM Corp. and others
+ * Copyright (c) 2004, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -36,6 +36,7 @@ public class BuilderShutdownHook extends Thread
 	
 	public BuilderShutdownHook()
 	{
+		super("BuilderShutdownHook"); //$NON-NLS-1$
 		_openFiles = new Vector();
 	}
 	
