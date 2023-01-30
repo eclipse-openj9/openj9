@@ -1135,6 +1135,10 @@ TR::CompilationInfo::CompilationInfo(J9JITConfig *jitConfig) :
    _samplingThreadWaitTimeInDeepIdleToNotifyVM(-1),
    _numDiagnosticThreads(0),
    _numCompThreads(0),
+   _firstCompThreadID(0),
+   _firstDiagnosticThreadID(0),
+   _lastCompThreadID(0),
+   _lastDiagnosticTheadID(0),
    _arrayOfCompilationInfoPerThread(NULL)
    {
    // The object is zero-initialized before this method is called
