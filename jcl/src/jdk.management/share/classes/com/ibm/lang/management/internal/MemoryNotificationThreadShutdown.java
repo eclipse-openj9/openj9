@@ -1,6 +1,6 @@
-/*[INCLUDE-IF Sidecar17]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 /*******************************************************************************
- * Copyright (c) 2005, 2020 IBM Corp. and others
+ * Copyright (c) 2005, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -37,7 +37,7 @@ final class MemoryNotificationThreadShutdown extends Thread {
 	 * @param victim The thread to notify on shutdown
 	 */
 	MemoryNotificationThreadShutdown(Thread victim) {
-		super();
+		super("MemoryNotificationThreadShutdown"); //$NON-NLS-1$
 		myVictim = victim;
 	}
 
