@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2021, 2022 IBM Corp. and others
+ * Copyright (c) 2021, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -252,8 +252,9 @@ public class UpcallMHWithStructTests {
 	@Test
 	public void test_addBoolAndBoolsFromStructWithNestedBoolArrayByUpcallMH() throws Throwable {
 		SequenceLayout boolArray = MemoryLayout.sequenceLayout(2, JAVA_BOOLEAN);
-		GroupLayout structLayout = MemoryLayout.structLayout(boolArray.withName("array_elem1"),
-				JAVA_BOOLEAN.withName("elem2"), MemoryLayout.paddingLayout(8));
+		GroupLayout structLayout = isStructPaddingNotRequired ? MemoryLayout.structLayout(boolArray.withName("array_elem1"),
+				JAVA_BOOLEAN.withName("elem2")) : MemoryLayout.structLayout(boolArray.withName("array_elem1"),
+						JAVA_BOOLEAN.withName("elem2"), MemoryLayout.paddingLayout(8));
 		FunctionDescriptor fd = FunctionDescriptor.of(JAVA_BOOLEAN, JAVA_BOOLEAN, structLayout, ADDRESS);
 		Addressable functionSymbol = nativeLibLookup.lookup("addBoolAndBoolsFromStructWithNestedBoolArrayByUpcallMH").get();
 		MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
@@ -275,7 +276,8 @@ public class UpcallMHWithStructTests {
 	@Test
 	public void test_addBoolAndBoolsFromStructWithNestedBoolArray_reverseOrderByUpcallMH() throws Throwable {
 		SequenceLayout boolArray = MemoryLayout.sequenceLayout(2, JAVA_BOOLEAN);
-		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_BOOLEAN.withName("elem1"),
+		GroupLayout structLayout = isStructPaddingNotRequired ? MemoryLayout.structLayout(JAVA_BOOLEAN.withName("elem1"),
+				boolArray.withName("array_elem2")) : MemoryLayout.structLayout(JAVA_BOOLEAN.withName("elem1"),
 				boolArray.withName("array_elem2"), MemoryLayout.paddingLayout(8));
 		FunctionDescriptor fd = FunctionDescriptor.of(JAVA_BOOLEAN, JAVA_BOOLEAN, structLayout, ADDRESS);
 		Addressable functionSymbol = nativeLibLookup.lookup("addBoolAndBoolsFromStructWithNestedBoolArray_reverseOrderByUpcallMH").get();

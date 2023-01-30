@@ -816,10 +816,6 @@ public class UpcallMethodHandles {
 	}
 
 	public static boolean addBoolAndBoolsFromNestedStructWithXor(boolean arg1, MemorySegment arg2) {
-		GroupLayout nestedStructLayout = MemoryLayout.structLayout(C_CHAR.withName("elem1"), C_CHAR.withName("elem2"));
-		GroupLayout structLayout = MemoryLayout.structLayout(nestedStructLayout.withName("struct_elem1"),
-				C_CHAR.withName("elem2"), MemoryLayout.paddingLayout(16));
-
 		boolean nestedStructElem1 = byteToBool(MemoryAccess.getByteAtOffset(arg2, 0));
 		boolean nestedStructElem2 = byteToBool(MemoryAccess.getByteAtOffset(arg2, 1));
 		boolean structElem2 = byteToBool(MemoryAccess.getByteAtOffset(arg2, 2));
@@ -828,10 +824,6 @@ public class UpcallMethodHandles {
 	}
 
 	public static boolean addBoolAndBoolsFromNestedStructWithXor_reverseOrder(boolean arg1, MemorySegment arg2) {
-		GroupLayout nestedStructLayout = MemoryLayout.structLayout(C_CHAR.withName("elem1"), C_CHAR.withName("elem2"));
-		GroupLayout structLayout = MemoryLayout.structLayout(C_CHAR.withName("elem1"),
-				nestedStructLayout.withName("struct_elem2"), MemoryLayout.paddingLayout(16));
-
 		boolean structElem1 = byteToBool(MemoryAccess.getByteAtOffset(arg2, 0));
 		boolean nestedStructElem1 = byteToBool(MemoryAccess.getByteAtOffset(arg2, 1));
 		boolean nestedStructElem2 = byteToBool(MemoryAccess.getByteAtOffset(arg2, 2));
@@ -840,10 +832,6 @@ public class UpcallMethodHandles {
 	}
 
 	public static boolean addBoolAndBoolsFromStructWithNestedBoolArray(boolean arg1, MemorySegment arg2) {
-		SequenceLayout byteArray = MemoryLayout.sequenceLayout(2, C_CHAR);
-		GroupLayout structLayout = MemoryLayout.structLayout(byteArray.withName("array_elem1"),
-				C_CHAR.withName("elem2"), MemoryLayout.paddingLayout(16));
-
 		boolean nestedBoolArrayElem1 = byteToBool(MemoryAccess.getByteAtOffset(arg2, 0));
 		boolean nestedBoolArrayElem2 = byteToBool(MemoryAccess.getByteAtOffset(arg2, 1));
 		boolean structElem2 = byteToBool(MemoryAccess.getByteAtOffset(arg2, 2));
@@ -853,10 +841,6 @@ public class UpcallMethodHandles {
 	}
 
 	public static boolean addBoolAndBoolsFromStructWithNestedBoolArray_reverseOrder(boolean arg1, MemorySegment arg2) {
-		SequenceLayout byteArray = MemoryLayout.sequenceLayout(2, C_CHAR);
-		GroupLayout structLayout = MemoryLayout.structLayout(C_CHAR.withName("elem1"),
-				byteArray.withName("array_elem2"), MemoryLayout.paddingLayout(16));
-
 		boolean structElem1 = byteToBool(MemoryAccess.getByteAtOffset(arg2, 0));
 		boolean nestedBoolArrayElem1 = byteToBool(MemoryAccess.getByteAtOffset(arg2, 1));
 		boolean nestedBoolArrayElem2 = byteToBool(MemoryAccess.getByteAtOffset(arg2, 2));
@@ -866,11 +850,6 @@ public class UpcallMethodHandles {
 	}
 
 	public static boolean addBoolAndBoolsFromStructWithNestedStructArray(boolean arg1, MemorySegment arg2) {
-		GroupLayout byteStruct = MemoryLayout.structLayout(C_CHAR.withName("elem1"), C_CHAR.withName("elem2"));
-		SequenceLayout structArray = MemoryLayout.sequenceLayout(2, byteStruct);
-		GroupLayout structLayout = MemoryLayout.structLayout(structArray.withName("struct_array_elem1"),
-				C_CHAR.withName("elem2"), MemoryLayout.paddingLayout(C_CHAR.bitSize() * 3));
-
 		boolean nestedStructArrayElem1_Elem1 = byteToBool(MemoryAccess.getByteAtOffset(arg2, 0));
 		boolean nestedStructArrayElem1_Elem2 = byteToBool(MemoryAccess.getByteAtOffset(arg2, 1));
 		boolean nestedStructArrayElem2_Elem1 = byteToBool(MemoryAccess.getByteAtOffset(arg2, 2));
@@ -884,11 +863,6 @@ public class UpcallMethodHandles {
 	}
 
 	public static boolean addBoolAndBoolsFromStructWithNestedStructArray_reverseOrder(boolean arg1, MemorySegment arg2) {
-		GroupLayout byteStruct = MemoryLayout.structLayout(C_CHAR.withName("elem1"), C_CHAR.withName("elem2"));
-		SequenceLayout structArray = MemoryLayout.sequenceLayout(2, byteStruct);
-		GroupLayout structLayout = MemoryLayout.structLayout(C_CHAR.withName("elem1"),
-				structArray.withName("struct_array_elem2"), MemoryLayout.paddingLayout(C_CHAR.bitSize() * 3));
-
 		boolean structElem1 = byteToBool(MemoryAccess.getByteAtOffset(arg2, 0));
 		boolean nestedStructArrayElem1_Elem1 = byteToBool(MemoryAccess.getByteAtOffset(arg2, 1));
 		boolean nestedStructArrayElem1_Elem2 = byteToBool(MemoryAccess.getByteAtOffset(arg2, 2));
@@ -1025,10 +999,6 @@ public class UpcallMethodHandles {
 	}
 
 	public static byte addByteAndBytesFromNestedStruct(byte arg1, MemorySegment arg2) {
-		GroupLayout nestedStructLayout = MemoryLayout.structLayout(C_CHAR.withName("elem1"), C_CHAR.withName("elem2"));
-		GroupLayout structLayout = MemoryLayout.structLayout(nestedStructLayout.withName("struct_elem1"),
-				C_CHAR.withName("elem2"), MemoryLayout.paddingLayout(16));
-
 		byte nestedStructElem1 = MemoryAccess.getByteAtOffset(arg2, 0);
 		byte nestedStructElem2 = MemoryAccess.getByteAtOffset(arg2, 1);
 		byte structElem2 = MemoryAccess.getByteAtOffset(arg2, 2);
@@ -1038,10 +1008,6 @@ public class UpcallMethodHandles {
 	}
 
 	public static byte addByteAndBytesFromNestedStruct_reverseOrder(byte arg1, MemorySegment arg2) {
-		GroupLayout nestedStructLayout = MemoryLayout.structLayout(C_CHAR.withName("elem1"), C_CHAR.withName("elem2"));
-		GroupLayout structLayout = MemoryLayout.structLayout(C_CHAR.withName("elem1"),
-				nestedStructLayout.withName("struct_elem2"), MemoryLayout.paddingLayout(16));
-
 		byte structElem1 = MemoryAccess.getByteAtOffset(arg2, 0);
 		byte nestedStructElem1 = MemoryAccess.getByteAtOffset(arg2, 1);
 		byte nestedStructElem2 = MemoryAccess.getByteAtOffset(arg2, 2);
@@ -1051,10 +1017,6 @@ public class UpcallMethodHandles {
 	}
 
 	public static byte addByteAndBytesFromStructWithNestedByteArray(byte arg1, MemorySegment arg2) {
-		SequenceLayout byteArray = MemoryLayout.sequenceLayout(2, C_CHAR);
-		GroupLayout structLayout = MemoryLayout.structLayout(byteArray.withName("array_elem1"),
-				C_CHAR.withName("elem2"), MemoryLayout.paddingLayout(16));
-
 		byte nestedByteArrayElem1 = MemoryAccess.getByteAtOffset(arg2, 0);
 		byte nestedByteArrayElem2 = MemoryAccess.getByteAtOffset(arg2, 1);
 		byte structElem2 = MemoryAccess.getByteAtOffset(arg2, 2);
@@ -1064,10 +1026,6 @@ public class UpcallMethodHandles {
 	}
 
 	public static byte addByteAndBytesFromStructWithNestedByteArray_reverseOrder(byte arg1, MemorySegment arg2) {
-		SequenceLayout byteArray = MemoryLayout.sequenceLayout(2, C_CHAR);
-		GroupLayout structLayout = MemoryLayout.structLayout(C_CHAR.withName("elem1"),
-				byteArray.withName("array_elem2"), MemoryLayout.paddingLayout(16));
-
 		byte structElem1 = MemoryAccess.getByteAtOffset(arg2, 0);
 		byte nestedByteArrayElem1 = MemoryAccess.getByteAtOffset(arg2, 1);
 		byte nestedByteArrayElem2 = MemoryAccess.getByteAtOffset(arg2, 2);
@@ -1077,11 +1035,6 @@ public class UpcallMethodHandles {
 	}
 
 	public static byte addByteAndBytesFromStructWithNestedStructArray(byte arg1, MemorySegment arg2) {
-		GroupLayout byteStruct = MemoryLayout.structLayout(C_CHAR.withName("elem1"), C_CHAR.withName("elem2"));
-		SequenceLayout structArray = MemoryLayout.sequenceLayout(2, byteStruct);
-		GroupLayout structLayout = MemoryLayout.structLayout(structArray.withName("struct_array_elem1"),
-				C_CHAR.withName("elem2"), MemoryLayout.paddingLayout(C_CHAR.bitSize() * 3));
-
 		byte nestedStructArrayElem1_Elem1 = MemoryAccess.getByteAtOffset(arg2, 0);
 		byte nestedStructArrayElem1_Elem2 = MemoryAccess.getByteAtOffset(arg2, 1);
 		byte nestedStructArrayElem2_Elem1 = MemoryAccess.getByteAtOffset(arg2, 2);
@@ -1095,11 +1048,6 @@ public class UpcallMethodHandles {
 	}
 
 	public static byte addByteAndBytesFromStructWithNestedStructArray_reverseOrder(byte arg1, MemorySegment arg2) {
-		GroupLayout byteStruct = MemoryLayout.structLayout(C_CHAR.withName("elem1"), C_CHAR.withName("elem2"));
-		SequenceLayout structArray = MemoryLayout.sequenceLayout(2, byteStruct);
-		GroupLayout structLayout = MemoryLayout.structLayout(C_CHAR.withName("elem1"),
-				structArray.withName("struct_array_elem2"), MemoryLayout.paddingLayout(C_CHAR.bitSize() * 3));
-
 		byte structElem1 = MemoryAccess.getByteAtOffset(arg2, 0);
 		byte nestedStructArrayElem1_Elem1 = MemoryAccess.getByteAtOffset(arg2, 1);
 		byte nestedStructArrayElem1_Elem2 = MemoryAccess.getByteAtOffset(arg2, 2);
@@ -1231,10 +1179,6 @@ public class UpcallMethodHandles {
 	}
 
 	public static char addCharAndCharsFromNestedStruct(char arg1, MemorySegment arg2) {
-		GroupLayout nestedStructLayout = MemoryLayout.structLayout(C_SHORT.withName("elem1"), C_SHORT.withName("elem2"));
-		GroupLayout structLayout = MemoryLayout.structLayout(nestedStructLayout.withName("struct_elem1"),
-				C_SHORT.withName("elem2"), MemoryLayout.paddingLayout(16));
-
 		char nestedStructElem1 = MemoryAccess.getCharAtOffset(arg2, 0);
 		char nestedStructElem2 = MemoryAccess.getCharAtOffset(arg2, 2);
 		char structElem2 = MemoryAccess.getCharAtOffset(arg2, 4);
@@ -1244,10 +1188,6 @@ public class UpcallMethodHandles {
 	}
 
 	public static char addCharAndCharsFromNestedStruct_reverseOrder(char arg1, MemorySegment arg2) {
-		GroupLayout nestedStructLayout = MemoryLayout.structLayout(C_SHORT.withName("elem1"), C_SHORT.withName("elem2"));
-		GroupLayout structLayout = MemoryLayout.structLayout(C_SHORT.withName("elem1"),
-				nestedStructLayout.withName("struct_elem2"), MemoryLayout.paddingLayout(16));
-
 		char structElem1 = MemoryAccess.getCharAtOffset(arg2, 0);
 		char nestedStructElem1 = MemoryAccess.getCharAtOffset(arg2, 2);
 		char nestedStructElem2 = MemoryAccess.getCharAtOffset(arg2, 4);
@@ -1257,10 +1197,6 @@ public class UpcallMethodHandles {
 	}
 
 	public static char addCharAndCharsFromStructWithNestedCharArray(char arg1, MemorySegment arg2) {
-		SequenceLayout charArray = MemoryLayout.sequenceLayout(2, C_SHORT);
-		GroupLayout structLayout = MemoryLayout.structLayout(charArray.withName("array_elem1"),
-				C_SHORT.withName("elem2"), MemoryLayout.paddingLayout(16));
-
 		char nestedCharArrayElem1 = MemoryAccess.getCharAtOffset(arg2, 0);
 		char nestedCharArrayElem2 = MemoryAccess.getCharAtOffset(arg2, 2);
 		char structElem2 = MemoryAccess.getCharAtOffset(arg2, 4);
@@ -1270,10 +1206,6 @@ public class UpcallMethodHandles {
 	}
 
 	public static char addCharAndCharsFromStructWithNestedCharArray_reverseOrder(char arg1, MemorySegment arg2) {
-		SequenceLayout charArray = MemoryLayout.sequenceLayout(2, C_SHORT);
-		GroupLayout structLayout = MemoryLayout.structLayout(C_SHORT.withName("elem1"),
-				charArray.withName("array_elem2"), MemoryLayout.paddingLayout(16));
-
 		char structElem1 = MemoryAccess.getCharAtOffset(arg2, 0);
 		char nestedCharArrayElem1 = MemoryAccess.getCharAtOffset(arg2, 2);
 		char nestedCharArrayElem2 = MemoryAccess.getCharAtOffset(arg2, 4);
@@ -1283,10 +1215,6 @@ public class UpcallMethodHandles {
 	}
 
 	public static char addCharAndCharsFromStructWithNestedStructArray(char arg1, MemorySegment arg2) {
-		GroupLayout charStruct = MemoryLayout.structLayout(C_SHORT.withName("elem1"), C_SHORT.withName("elem2"));
-		SequenceLayout structArray = MemoryLayout.sequenceLayout(2, charStruct);
-		GroupLayout structLayout = MemoryLayout.structLayout(structArray.withName("struct_array_elem1"), C_SHORT.withName("elem2"));
-
 		char nestedStructArrayElem1_Elem1 = MemoryAccess.getCharAtOffset(arg2, 0);
 		char nestedStructArrayElem1_Elem2 = MemoryAccess.getCharAtOffset(arg2, 2);
 		char nestedStructArrayElem2_Elem1 = MemoryAccess.getCharAtOffset(arg2, 4);
@@ -1300,11 +1228,6 @@ public class UpcallMethodHandles {
 	}
 
 	public static char addCharAndCharsFromStructWithNestedStructArray_reverseOrder(char arg1, MemorySegment arg2) {
-		GroupLayout charStruct = MemoryLayout.structLayout(C_SHORT.withName("elem1"), C_SHORT.withName("elem2"));
-		SequenceLayout structArray = MemoryLayout.sequenceLayout(2, charStruct);
-		GroupLayout structLayout = MemoryLayout.structLayout(C_SHORT.withName("elem1"),
-				structArray.withName("struct_array_elem2"), MemoryLayout.paddingLayout(16));
-
 		char structElem1 = MemoryAccess.getCharAtOffset(arg2, 0);
 		char nestedStructArrayElem1_Elem1 = MemoryAccess.getCharAtOffset(arg2, 2);
 		char nestedStructArrayElem1_Elem2 = MemoryAccess.getCharAtOffset(arg2, 4);
@@ -1426,10 +1349,6 @@ public class UpcallMethodHandles {
 	}
 
 	public static short addShortAndShortsFromNestedStruct(short arg1, MemorySegment arg2) {
-		GroupLayout nestedStructLayout = MemoryLayout.structLayout(C_SHORT.withName("elem1"), C_SHORT.withName("elem2"));
-		GroupLayout structLayout = MemoryLayout.structLayout(nestedStructLayout.withName("struct_elem1"),
-				C_SHORT.withName("elem2"), MemoryLayout.paddingLayout(16));
-
 		short nestedStructElem1 = MemoryAccess.getShortAtOffset(arg2, 0);
 		short nestedStructElem2 = MemoryAccess.getShortAtOffset(arg2, 2);
 		short structElem2 = MemoryAccess.getShortAtOffset(arg2, 4);
@@ -1439,10 +1358,6 @@ public class UpcallMethodHandles {
 	}
 
 	public static short addShortAndShortsFromNestedStruct_reverseOrder(short arg1, MemorySegment arg2) {
-		GroupLayout nestedStructLayout = MemoryLayout.structLayout(C_SHORT.withName("elem1"), C_SHORT.withName("elem2"));
-		GroupLayout structLayout = MemoryLayout.structLayout(C_SHORT.withName("elem1"),
-				nestedStructLayout.withName("struct_elem2"), MemoryLayout.paddingLayout(16));
-
 		short structElem1 = MemoryAccess.getShortAtOffset(arg2, 0);
 		short nestedStructElem1 = MemoryAccess.getShortAtOffset(arg2, 2);
 		short nestedStructElem2 = MemoryAccess.getShortAtOffset(arg2, 4);
@@ -1452,10 +1367,6 @@ public class UpcallMethodHandles {
 	}
 
 	public static short addShortAndShortsFromStructWithNestedShortArray(short arg1, MemorySegment arg2) {
-		SequenceLayout shortArray = MemoryLayout.sequenceLayout(2, C_SHORT);
-		GroupLayout structLayout = MemoryLayout.structLayout(shortArray.withName("array_elem1"),
-				C_SHORT.withName("elem2"), MemoryLayout.paddingLayout(16));
-
 		short nestedShortArrayElem1 = MemoryAccess.getShortAtOffset(arg2, 0);
 		short nestedShortArrayElem2 = MemoryAccess.getShortAtOffset(arg2, 2);
 		short structElem2 = MemoryAccess.getShortAtOffset(arg2, 4);
@@ -1465,10 +1376,6 @@ public class UpcallMethodHandles {
 	}
 
 	public static short addShortAndShortsFromStructWithNestedShortArray_reverseOrder(short arg1, MemorySegment arg2) {
-		SequenceLayout shortArray = MemoryLayout.sequenceLayout(2, C_SHORT);
-		GroupLayout structLayout = MemoryLayout.structLayout(C_SHORT.withName("elem1"),
-				shortArray.withName("array_elem2"), MemoryLayout.paddingLayout(16));
-
 		short structElem1 = MemoryAccess.getShortAtOffset(arg2, 0);
 		short nestedShortArrayElem1 = MemoryAccess.getShortAtOffset(arg2, 2);
 		short nestedShortArrayElem2 = MemoryAccess.getShortAtOffset(arg2, 4);
@@ -1478,10 +1385,6 @@ public class UpcallMethodHandles {
 	}
 
 	public static short addShortAndShortsFromStructWithNestedStructArray(short arg1, MemorySegment arg2) {
-		GroupLayout shortStruct = MemoryLayout.structLayout(C_SHORT.withName("elem1"), C_SHORT.withName("elem2"));
-		SequenceLayout structArray = MemoryLayout.sequenceLayout(2, shortStruct);
-		GroupLayout structLayout = MemoryLayout.structLayout(structArray.withName("struc_array_elem1"), C_SHORT.withName("elem2"));
-
 		short nestedStructArrayElem1_Elem1 = MemoryAccess.getShortAtOffset(arg2, 0);
 		short nestedStructArrayElem1_Elem2 = MemoryAccess.getShortAtOffset(arg2, 2);
 		short nestedStructArrayElem2_Elem1 = MemoryAccess.getShortAtOffset(arg2, 4);
@@ -1495,10 +1398,6 @@ public class UpcallMethodHandles {
 	}
 
 	public static short addShortAndShortsFromStructWithNestedStructArray_reverseOrder(short arg1, MemorySegment arg2) {
-		GroupLayout shortStruct = MemoryLayout.structLayout(C_SHORT.withName("elem1"), C_SHORT.withName("elem2"));
-		SequenceLayout structArray = MemoryLayout.sequenceLayout(2, shortStruct);
-		GroupLayout structLayout = MemoryLayout.structLayout(C_SHORT.withName("elem1"), structArray.withName("struc_array_elem2"));
-
 		short structElem1 = MemoryAccess.getShortAtOffset(arg2, 0);
 		short nestedStructArrayElem1_Elem1 = MemoryAccess.getShortAtOffset(arg2, 2);
 		short nestedStructArrayElem1_Elem2 = MemoryAccess.getShortAtOffset(arg2, 4);
@@ -1611,9 +1510,6 @@ public class UpcallMethodHandles {
 	}
 
 	public static int addIntAndIntsFromNestedStruct(int arg1, MemorySegment arg2) {
-		GroupLayout nestedStructLayout = MemoryLayout.structLayout(C_INT.withName("elem1"), C_INT.withName("elem2"));
-		GroupLayout structLayout = MemoryLayout.structLayout(nestedStructLayout.withName("struct_elem1"), C_INT.withName("elem2"));
-
 		int nestedStructElem1 = MemoryAccess.getIntAtOffset(arg2, 0);
 		int nestedStructElem2 = MemoryAccess.getIntAtOffset(arg2, 4);
 		int structElem2 = MemoryAccess.getIntAtOffset(arg2, 8);
@@ -1623,9 +1519,6 @@ public class UpcallMethodHandles {
 	}
 
 	public static int addIntAndIntsFromNestedStruct_reverseOrder(int arg1, MemorySegment arg2) {
-		GroupLayout nestedStructLayout = MemoryLayout.structLayout(C_INT.withName("elem1"), C_INT.withName("elem2"));
-		GroupLayout structLayout = MemoryLayout.structLayout(C_INT.withName("elem1"), nestedStructLayout.withName("struct_elem2"));
-
 		int structElem1 = MemoryAccess.getIntAtOffset(arg2, 0);
 		int nestedStructElem1 = MemoryAccess.getIntAtOffset(arg2, 4);
 		int nestedStructElem2 = MemoryAccess.getIntAtOffset(arg2, 8);
@@ -1635,9 +1528,6 @@ public class UpcallMethodHandles {
 	}
 
 	public static int addIntAndIntsFromStructWithNestedIntArray(int arg1, MemorySegment arg2) {
-		SequenceLayout intArray = MemoryLayout.sequenceLayout(2, C_INT);
-		GroupLayout structLayout = MemoryLayout.structLayout(intArray.withName("array_elem1"), C_INT.withName("elem2"));
-
 		int nestedIntArrayElem1 = MemoryAccess.getIntAtOffset(arg2, 0);
 		int nestedIntArrayElem2 = MemoryAccess.getIntAtOffset(arg2, 4);
 		int structElem2 = MemoryAccess.getIntAtOffset(arg2, 8);
@@ -1647,9 +1537,6 @@ public class UpcallMethodHandles {
 	}
 
 	public static int addIntAndIntsFromStructWithNestedIntArray_reverseOrder(int arg1, MemorySegment arg2) {
-		SequenceLayout intArray = MemoryLayout.sequenceLayout(2, C_INT);
-		GroupLayout structLayout = MemoryLayout.structLayout(C_INT.withName("elem1"), intArray.withName("array_elem2"));
-
 		int structElem1 = MemoryAccess.getIntAtOffset(arg2, 0);
 		int nestedIntArrayElem1 = MemoryAccess.getIntAtOffset(arg2, 4);
 		int nestedIntArrayElem2 = MemoryAccess.getIntAtOffset(arg2, 8);
@@ -1659,10 +1546,6 @@ public class UpcallMethodHandles {
 	}
 
 	public static int addIntAndIntsFromStructWithNestedStructArray(int arg1, MemorySegment arg2) {
-		GroupLayout intStruct = MemoryLayout.structLayout(C_INT.withName("elem1"), C_INT.withName("elem2"));
-		SequenceLayout structArray = MemoryLayout.sequenceLayout(2, intStruct);
-		GroupLayout structLayout = MemoryLayout.structLayout(structArray.withName("struct_array_elem1"), C_INT.withName("elem2"));
-
 		int nestedStructArrayElem1_Elem1 = MemoryAccess.getIntAtOffset(arg2, 0);
 		int nestedStructArrayElem1_Elem2 = MemoryAccess.getIntAtOffset(arg2, 4);
 		int nestedStructArrayElem2_Elem1 = MemoryAccess.getIntAtOffset(arg2, 8);
@@ -1676,10 +1559,6 @@ public class UpcallMethodHandles {
 	}
 
 	public static int addIntAndIntsFromStructWithNestedStructArray_reverseOrder(int arg1, MemorySegment arg2) {
-		GroupLayout intStruct = MemoryLayout.structLayout(C_INT.withName("elem1"), C_INT.withName("elem2"));
-		SequenceLayout structArray = MemoryLayout.sequenceLayout(2, intStruct);
-		GroupLayout structLayout = MemoryLayout.structLayout(C_INT.withName("elem1"), structArray.withName("struct_array_elem2"));
-
 		int structElem1 = MemoryAccess.getIntAtOffset(arg2, 0);
 		int nestedStructArrayElem1_Elem1 = MemoryAccess.getIntAtOffset(arg2, 4);
 		int nestedStructArrayElem1_Elem2 = MemoryAccess.getIntAtOffset(arg2, 8);
@@ -1777,9 +1656,6 @@ public class UpcallMethodHandles {
 	}
 
 	public static long addLongAndLongsFromNestedStruct(long arg1, MemorySegment arg2) {
-		GroupLayout nestedStructLayout = MemoryLayout.structLayout(longLayout.withName("elem1"), longLayout.withName("elem2"));
-		GroupLayout structLayout = MemoryLayout.structLayout(longLayout.withName("elem1"), nestedStructLayout.withName("struct_elem2"));
-
 		long nestedStructElem1 = MemoryAccess.getLongAtOffset(arg2, 0);
 		long nestedStructElem2 = MemoryAccess.getLongAtOffset(arg2, 8);
 		long structElem2 = MemoryAccess.getLongAtOffset(arg2, 16);
@@ -1789,9 +1665,6 @@ public class UpcallMethodHandles {
 	}
 
 	public static long addLongAndLongsFromNestedStruct_reverseOrder(long arg1, MemorySegment arg2) {
-		GroupLayout nestedStructLayout = MemoryLayout.structLayout(longLayout.withName("elem1"), longLayout.withName("elem2"));
-		GroupLayout structLayout = MemoryLayout.structLayout(longLayout.withName("elem1"), nestedStructLayout.withName("struct_elem2"));
-
 		long structElem1 = MemoryAccess.getLongAtOffset(arg2, 0);
 		long nestedStructElem1 = MemoryAccess.getLongAtOffset(arg2, 8);
 		long nestedStructElem2 = MemoryAccess.getLongAtOffset(arg2, 16);
@@ -1801,9 +1674,6 @@ public class UpcallMethodHandles {
 	}
 
 	public static long addLongAndLongsFromStructWithNestedLongArray(long arg1, MemorySegment arg2) {
-		SequenceLayout longArray = MemoryLayout.sequenceLayout(2, longLayout);
-		GroupLayout structLayout = MemoryLayout.structLayout(longArray.withName("array_elem1"), longLayout.withName("elem2"));
-
 		long nestedLongrrayElem1 = MemoryAccess.getLongAtOffset(arg2, 0);
 		long nestedLongrrayElem2 = MemoryAccess.getLongAtOffset(arg2, 8);
 		long structElem2 = MemoryAccess.getLongAtOffset(arg2, 16);
@@ -1813,9 +1683,6 @@ public class UpcallMethodHandles {
 	}
 
 	public static long addLongAndLongsFromStructWithNestedLongArray_reverseOrder(long arg1, MemorySegment arg2) {
-		SequenceLayout longArray = MemoryLayout.sequenceLayout(2, longLayout);
-		GroupLayout structLayout = MemoryLayout.structLayout(longLayout.withName("elem1"), longArray.withName("array_elem2"));
-
 		long structElem1 = MemoryAccess.getLongAtOffset(arg2, 0);
 		long nestedLongrrayElem1 = MemoryAccess.getLongAtOffset(arg2, 8);
 		long nestedLongrrayElem2 = MemoryAccess.getLongAtOffset(arg2, 16);
@@ -1825,10 +1692,6 @@ public class UpcallMethodHandles {
 	}
 
 	public static long addLongAndLongsFromStructWithNestedStructArray(long arg1, MemorySegment arg2) {
-		GroupLayout longStruct = MemoryLayout.structLayout(longLayout.withName("elem1"), longLayout.withName("elem2"));
-		SequenceLayout structArray = MemoryLayout.sequenceLayout(2, longStruct);
-		GroupLayout structLayout = MemoryLayout.structLayout(structArray.withName("struct_array_elem1"), longLayout.withName("elem2"));
-
 		long nestedStructArrayElem1_Elem1 = MemoryAccess.getLongAtOffset(arg2, 0);
 		long nestedStructArrayElem1_Elem2 = MemoryAccess.getLongAtOffset(arg2, 8);
 		long nestedStructArrayElem2_Elem1 = MemoryAccess.getLongAtOffset(arg2, 16);
@@ -1842,10 +1705,6 @@ public class UpcallMethodHandles {
 	}
 
 	public static long addLongAndLongsFromStructWithNestedStructArray_reverseOrder(long arg1, MemorySegment arg2) {
-		GroupLayout longStruct = MemoryLayout.structLayout(longLayout.withName("elem1"), longLayout.withName("elem2"));
-		SequenceLayout structArray = MemoryLayout.sequenceLayout(2, longStruct);
-		GroupLayout structLayout = MemoryLayout.structLayout(longLayout.withName("elem1"), structArray.withName("struct_array_elem2"));
-
 		long structElem1 = MemoryAccess.getLongAtOffset(arg2, 0);
 		long nestedStructArrayElem1_Elem1 = MemoryAccess.getLongAtOffset(arg2, 8);
 		long nestedStructArrayElem1_Elem2 = MemoryAccess.getLongAtOffset(arg2, 16);
@@ -1957,9 +1816,6 @@ public class UpcallMethodHandles {
 	}
 
 	public static float addFloatAndFloatsFromNestedStruct(float arg1, MemorySegment arg2) {
-		GroupLayout nestedStructLayout = MemoryLayout.structLayout(C_FLOAT.withName("elem1"), C_FLOAT.withName("elem2"));
-		GroupLayout structLayout = MemoryLayout.structLayout(nestedStructLayout.withName("struct_elem1"), C_FLOAT.withName("elem2"));
-
 		float nestedStructElem1 = MemoryAccess.getFloatAtOffset(arg2, 0);
 		float nestedStructElem2 = MemoryAccess.getFloatAtOffset(arg2, 4);
 		float structElem2 = MemoryAccess.getFloatAtOffset(arg2, 8);
@@ -1969,9 +1825,6 @@ public class UpcallMethodHandles {
 	}
 
 	public static float addFloatAndFloatsFromNestedStruct_reverseOrder(float arg1, MemorySegment arg2) {
-		GroupLayout nestedStructLayout = MemoryLayout.structLayout(C_FLOAT.withName("elem1"), C_FLOAT.withName("elem2"));
-		GroupLayout structLayout = MemoryLayout.structLayout(C_FLOAT.withName("elem1"), nestedStructLayout.withName("struct_elem2"));
-
 		float structElem1 = MemoryAccess.getFloatAtOffset(arg2, 0);
 		float nestedStructElem1 = MemoryAccess.getFloatAtOffset(arg2, 4);
 		float nestedStructElem2 = MemoryAccess.getFloatAtOffset(arg2, 8);
@@ -1981,9 +1834,6 @@ public class UpcallMethodHandles {
 	}
 
 	public static float addFloatAndFloatsFromStructWithNestedFloatArray(float arg1, MemorySegment arg2) {
-		SequenceLayout floatArray = MemoryLayout.sequenceLayout(2, C_FLOAT);
-		GroupLayout structLayout = MemoryLayout.structLayout(floatArray.withName("array_elem1"), C_FLOAT.withName("elem2"));
-
 		float nestedFloatArrayElem1 = MemoryAccess.getFloatAtOffset(arg2, 0);
 		float nestedFloatArrayElem2 = MemoryAccess.getFloatAtOffset(arg2, 4);
 		float structElem2 = MemoryAccess.getFloatAtOffset(arg2, 8);
@@ -1993,9 +1843,6 @@ public class UpcallMethodHandles {
 	}
 
 	public static float addFloatAndFloatsFromStructWithNestedFloatArray_reverseOrder(float arg1, MemorySegment arg2) {
-		SequenceLayout floatArray = MemoryLayout.sequenceLayout(2, C_FLOAT);
-		GroupLayout structLayout = MemoryLayout.structLayout(C_FLOAT.withName("elem1"), floatArray.withName("array_elem2"));
-
 		float structElem1 = MemoryAccess.getFloatAtOffset(arg2, 0);
 		float nestedFloatArrayElem1 = MemoryAccess.getFloatAtOffset(arg2, 4);
 		float nestedFloatArrayElem2 = MemoryAccess.getFloatAtOffset(arg2, 8);
@@ -2005,10 +1852,6 @@ public class UpcallMethodHandles {
 	}
 
 	public static float addFloatAndFloatsFromStructWithNestedStructArray(float arg1, MemorySegment arg2) {
-		GroupLayout floatStruct = MemoryLayout.structLayout(C_FLOAT.withName("elem1"), C_FLOAT.withName("elem2"));
-		SequenceLayout structArray = MemoryLayout.sequenceLayout(2, floatStruct);
-		GroupLayout structLayout = MemoryLayout.structLayout(structArray.withName("struct_array_elem1"), C_FLOAT.withName("elem2"));
-
 		float nestedStructArrayElem1_Elem1 = MemoryAccess.getFloatAtOffset(arg2, 0);
 		float nestedStructArrayElem1_Elem2 = MemoryAccess.getFloatAtOffset(arg2, 4);
 		float nestedStructArrayElem2_Elem1 = MemoryAccess.getFloatAtOffset(arg2, 8);
@@ -2022,10 +1865,6 @@ public class UpcallMethodHandles {
 	}
 
 	public static float addFloatAndFloatsFromStructWithNestedStructArray_reverseOrder(float arg1, MemorySegment arg2) {
-		GroupLayout floatStruct = MemoryLayout.structLayout(C_FLOAT.withName("elem1"), C_FLOAT.withName("elem2"));
-		SequenceLayout structArray = MemoryLayout.sequenceLayout(2, floatStruct);
-		GroupLayout structLayout = MemoryLayout.structLayout(C_FLOAT.withName("elem1"), structArray.withName("struct_array_elem2"));
-
 		float structElem1 = MemoryAccess.getFloatAtOffset(arg2, 0);
 		float nestedStructArrayElem1_Elem1 = MemoryAccess.getFloatAtOffset(arg2, 4);
 		float nestedStructArrayElem1_Elem2 = MemoryAccess.getFloatAtOffset(arg2, 8);
@@ -2123,9 +1962,6 @@ public class UpcallMethodHandles {
 	}
 
 	public static double addDoubleAndDoublesFromNestedStruct(double arg1, MemorySegment arg2) {
-		GroupLayout nestedStructLayout = MemoryLayout.structLayout(C_DOUBLE.withName("elem1"), C_DOUBLE.withName("elem2"));
-		GroupLayout structLayout = MemoryLayout.structLayout(nestedStructLayout.withName("struct_elem1"), C_DOUBLE.withName("elem2"));
-
 		double nestedStructElem1 = MemoryAccess.getDoubleAtOffset(arg2, 0);
 		double nestedStructElem2 = MemoryAccess.getDoubleAtOffset(arg2, 8);
 		double structElem2 = MemoryAccess.getDoubleAtOffset(arg2, 16);
@@ -2135,9 +1971,6 @@ public class UpcallMethodHandles {
 	}
 
 	public static double addDoubleAndDoublesFromNestedStruct_reverseOrder(double arg1, MemorySegment arg2) {
-		GroupLayout nestedStructLayout = MemoryLayout.structLayout(C_DOUBLE.withName("elem1"), C_DOUBLE.withName("elem2"));
-		GroupLayout structLayout = MemoryLayout.structLayout(C_DOUBLE.withName("elem1"), nestedStructLayout.withName("struct_elem2"));
-
 		double structElem1 = MemoryAccess.getDoubleAtOffset(arg2, 0);
 		double nestedStructElem1 = MemoryAccess.getDoubleAtOffset(arg2, 8);
 		double nestedStructElem2 = MemoryAccess.getDoubleAtOffset(arg2, 16);
@@ -2147,9 +1980,6 @@ public class UpcallMethodHandles {
 	}
 
 	public static double addDoubleAndDoublesFromStructWithNestedDoubleArray(double arg1, MemorySegment arg2) {
-		SequenceLayout doubleArray = MemoryLayout.sequenceLayout(2, C_DOUBLE);
-		GroupLayout structLayout = MemoryLayout.structLayout(doubleArray.withName("array_elem1"), C_DOUBLE.withName("elem2"));
-
 		double nestedDoubleArrayElem1 = MemoryAccess.getDoubleAtOffset(arg2, 0);
 		double nestedDoubleArrayElem2 = MemoryAccess.getDoubleAtOffset(arg2, 8);
 		double structElem2 = MemoryAccess.getDoubleAtOffset(arg2, 16);
@@ -2159,9 +1989,6 @@ public class UpcallMethodHandles {
 	}
 
 	public static double addDoubleAndDoublesFromStructWithNestedDoubleArray_reverseOrder(double arg1, MemorySegment arg2) {
-		SequenceLayout doubleArray = MemoryLayout.sequenceLayout(2, C_DOUBLE);
-		GroupLayout structLayout = MemoryLayout.structLayout(C_DOUBLE.withName("elem1"), doubleArray.withName("array_elem2"));
-
 		double structElem1 = MemoryAccess.getDoubleAtOffset(arg2, 0);
 		double nestedDoubleArrayElem1 = MemoryAccess.getDoubleAtOffset(arg2, 8);
 		double nestedDoubleArrayElem2 = MemoryAccess.getDoubleAtOffset(arg2, 16);
@@ -2171,10 +1998,6 @@ public class UpcallMethodHandles {
 	}
 
 	public static double addDoubleAndDoublesFromStructWithNestedStructArray(double arg1, MemorySegment arg2) {
-		GroupLayout doubleStruct = MemoryLayout.structLayout(C_DOUBLE.withName("elem1"), C_DOUBLE.withName("elem2"));
-		SequenceLayout structArray = MemoryLayout.sequenceLayout(2, doubleStruct);
-		GroupLayout structLayout = MemoryLayout.structLayout(structArray.withName("struct_array_elem1"), C_DOUBLE.withName("elem2"));
-
 		double nestedStructArrayElem1_Elem1 = MemoryAccess.getDoubleAtOffset(arg2, 0);
 		double nestedStructArrayElem1_Elem2 = MemoryAccess.getDoubleAtOffset(arg2, 8);
 		double nestedStructArrayElem2_Elem1 = MemoryAccess.getDoubleAtOffset(arg2, 16);
@@ -2188,10 +2011,6 @@ public class UpcallMethodHandles {
 	}
 
 	public static double addDoubleAndDoublesFromStructWithNestedStructArray_reverseOrder(double arg1, MemorySegment arg2) {
-		GroupLayout doubleStruct = MemoryLayout.structLayout(C_DOUBLE.withName("elem1"), C_DOUBLE.withName("elem2"));
-		SequenceLayout structArray = MemoryLayout.sequenceLayout(2, doubleStruct);
-		GroupLayout structLayout = MemoryLayout.structLayout(C_DOUBLE.withName("elem1"), structArray.withName("struct_array_elem2"));
-
 		double structElem1 = MemoryAccess.getDoubleAtOffset(arg2, 0);
 		double nestedStructArrayElem1_Elem1 = MemoryAccess.getDoubleAtOffset(arg2, 8);
 		double nestedStructArrayElem1_Elem2 = MemoryAccess.getDoubleAtOffset(arg2, 16);
