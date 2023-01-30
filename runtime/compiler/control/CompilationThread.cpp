@@ -3131,6 +3131,16 @@ TR::CompilationInfo::startCompilationThread(int32_t priority, int32_t threadId, 
    if (compInfoPT->getCompilationThreadState() == COMPTHREAD_ABORT)
       return 3;
 
+   if (isDiagnosticThread)
+      {
+      _lastDiagnosticTheadID = threadId;
+      }
+   else
+      {
+      _lastCompThreadID = threadId;
+      _firstDiagnosticThreadID = _lastCompThreadID + 1;
+      }
+
    return 0;
    }
 
