@@ -1,6 +1,6 @@
 /*[INCLUDE-IF (JAVA_SPEC_VERSION >= 8) & (JAVA_SPEC_VERSION < 19)]*/
 /*******************************************************************************
- * Copyright (c) 1998, 2022 IBM Corp. and others
+ * Copyright (c) 1998, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -654,8 +654,7 @@ public ClassLoader getContextClassLoader() {
  * @return		the receiver's name (a java.lang.String)
  */
 public final String getName() {
-	/*[PR 1FIGT59] Return name as a String. If null, return "null" */
-	return String.valueOf(name);
+	return name;
 }
 
 /**
