@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2022 IBM Corp. and others
+# Copyright (c) 2000, 2023 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2096,4 +2096,12 @@ J9NLS_ENSUREHASHED_CONFIG_OUT_OF_MEM=\ud574\uc2dc\ub41c \ud074\ub798\uc2a4 \ud14
 J9NLS_ENSUREHASHED_CONFIG_OUT_OF_MEM.explanation=There was a failure to allocate native memory to store the hashed classes options.
 J9NLS_ENSUREHASHED_CONFIG_OUT_OF_MEM.system_action=The JVM prints this message and terminates.
 J9NLS_ENSUREHASHED_CONFIG_OUT_OF_MEM.user_response=Check the system memory configuration.
+# END NON-TRANSLATABLE
+
+# JVMCRIUException is thrown to indicate that blocking operation is not allowed in CRIU single thread mode
+J9NLS_VM_CRIU_SINGLETHREADMODE_JVMCRIUEXCEPTION=CRIU \ub2e8\uc77c \uc2a4\ub808\ub4dc \ubaa8\ub4dc\uc5d0\uc11c\ub294 \ucc28\ub2e8 \uc870\uc791\uc774 \ud5c8\uc6a9\ub418\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4.
+# START NON-TRANSLATABLE
+J9NLS_VM_CRIU_SINGLETHREADMODE_JVMCRIUEXCEPTION.explanation=Blocking operation is not allowed in CRIU single thread mode.
+J9NLS_VM_CRIU_SINGLETHREADMODE_JVMCRIUEXCEPTION.system_action=The JVM will throw a JVMCRIUException.
+J9NLS_VM_CRIU_SINGLETHREADMODE_JVMCRIUEXCEPTION.user_response=View CRIU documentation to determine how to resolve the exception.
 # END NON-TRANSLATABLE
