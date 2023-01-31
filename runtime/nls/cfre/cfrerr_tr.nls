@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2022 IBM Corp. and others
+# Copyright (c) 2000, 2023 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1498,7 +1498,7 @@ J9NLS_CFR_ERR_NON_STATIC_SYNCHRONIZED_VALUE_TYPE_METHOD.user_response=Contact th
 # END NON-TRANSLATABLE
 
 # <vnew> is not translatable
-J9NLS_CFR_ERR_INVALID_FLAGS_ON_NEW=<vnew> olarak adland\u0131r\u0131lan y\u00f6ntemler dura\u011fan olmal\u0131d\u0131r ve son, e\u015fitlenmi\u015f, yerel ya da soyut olmayabilir
+J9NLS_CFR_ERR_INVALID_FLAGS_ON_NEW=<vnew> adl\u0131 y\u00f6ntemler dura\u011fan olmal\u0131 ve son, e\u015fitlenmi\u015f, yerel ya da soyut olmamal\u0131d\u0131r
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_INVALID_FLAGS_ON_NEW.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_INVALID_FLAGS_ON_NEW.system_action=The JVM will throw a verification or classloading related exception such as java.lang.ClassFormatError.
@@ -1589,4 +1589,115 @@ J9NLS_CFR_ERR_PREVIEW_VERSION2.sample_input_6=6
 J9NLS_CFR_ERR_PREVIEW_VERSION2.explanation=Classfiles with minor version 65535 must have the same major version as the VM runtime version and preview must be enabled
 J9NLS_CFR_ERR_PREVIEW_VERSION2.system_action=The JVM will throw a verification or classloading related exception.
 J9NLS_CFR_ERR_PREVIEW_VERSION2.user_response=Run with the correct Java runtime version and use --enable-preview, or re-compile the code with the same version of the runtime.
+# END NON-TRANSLATABLE
+
+# ReferenceType is not translatable
+# this_class is not translatable
+J9NLS_INVALID_REFERENCETYPE_DESCRIPTOR_ON_CLASS=This_class \u00f6\u011fesini temsil eden bir CONSTANT_Class_info yap\u0131s\u0131yla bir ReferenceType tan\u0131mlay\u0131c\u0131s\u0131na g\u00f6nderme yap\u0131lamaz
+# START NON-TRANSLATABLE
+J9NLS_INVALID_REFERENCETYPE_DESCRIPTOR_ON_CLASS.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
+J9NLS_INVALID_REFERENCETYPE_DESCRIPTOR_ON_CLASS.system_action=The JVM will throw a verification or class loading-related exception such as java.lang.ClassFormatError.
+J9NLS_INVALID_REFERENCETYPE_DESCRIPTOR_ON_CLASS.user_response=Contact the provider of the class file for a corrected version.
+# END NON-TRANSLATABLE
+
+# ReferenceType is not translatable
+# super_class is not translatable
+J9NLS_INVALID_REFERENCETYPE_DESCRIPTOR_ON_SUPER_CLASS=super_class \u00f6\u011fesini temsil eden bir CONSTANT_Class_info yap\u0131s\u0131yla bir ReferenceType tan\u0131mlay\u0131c\u0131s\u0131na g\u00f6nderme yap\u0131lamaz
+# START NON-TRANSLATABLE
+J9NLS_INVALID_REFERENCETYPE_DESCRIPTOR_ON_SUPER_CLASS.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
+J9NLS_INVALID_REFERENCETYPE_DESCRIPTOR_ON_SUPER_CLASS.system_action=The JVM will throw a verification or class loading-related exception such as java.lang.ClassFormatError.
+J9NLS_INVALID_REFERENCETYPE_DESCRIPTOR_ON_SUPER_CLASS.user_response=Contact the provider of the class file for a corrected version.
+# END NON-TRANSLATABLE
+
+# ReferenceType is not translatable
+J9NLS_INVALID_REFERENCETYPE_DESCRIPTOR_ON_INTERFACE=Aray\u00fczde bir giri\u015fi temsil eden CONSTANT_Class_info yap\u0131s\u0131yla bir ReferenceType tan\u0131mlay\u0131c\u0131s\u0131na g\u00f6nderme yap\u0131lamaz
+# START NON-TRANSLATABLE
+J9NLS_INVALID_REFERENCETYPE_DESCRIPTOR_ON_INTERFACE.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
+J9NLS_INVALID_REFERENCETYPE_DESCRIPTOR_ON_INTERFACE.system_action=The JVM will throw a verification or class loading-related exception such as java.lang.ClassFormatError.
+J9NLS_INVALID_REFERENCETYPE_DESCRIPTOR_ON_INTERFACE.user_response=Contact the provider of the class file for a corrected version.
+# END NON-TRANSLATABLE
+
+# ReferenceType is not translatable
+J9NLS_CFR_ERR_CATCH_IS_REFERENCETYPE_DESCRIPTOR=Kural d\u0131\u015f\u0131 durum i\u015fleyici tipi bir ReferenceType tan\u0131mlay\u0131c\u0131s\u0131 olamaz
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_CATCH_IS_REFERENCETYPE_DESCRIPTOR.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
+J9NLS_CFR_ERR_CATCH_IS_REFERENCETYPE_DESCRIPTOR.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_CATCH_IS_REFERENCETYPE_DESCRIPTOR.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+# ReferenceType is not translatable
+J9NLS_CFR_ERR_EXCEPTION_IS_REFERENCETYPE_DESCRIPTOR=Kural d\u0131\u015f\u0131 durum tipi bir ReferenceType tan\u0131mlay\u0131c\u0131s\u0131 olamaz
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_EXCEPTION_IS_REFERENCETYPE_DESCRIPTOR.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
+J9NLS_CFR_ERR_EXCEPTION_IS_REFERENCETYPE_DESCRIPTOR.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_EXCEPTION_IS_REFERENCETYPE_DESCRIPTOR.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+# ReferenceType is not translatable
+# CONSTANT_Class_info is not translatable
+# inner_class_info_index is not translatable
+J9NLS_CFR_ERR_INNER_CLASS_REFERENCETYPE=inner_class_info_index i\u00e7indeki CONSTANT_Class_info, bir ReferenceType tan\u0131mlay\u0131c\u0131s\u0131 olamaz
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_INNER_CLASS_REFERENCETYPE.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
+J9NLS_CFR_ERR_INNER_CLASS_REFERENCETYPE.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_INNER_CLASS_REFERENCETYPE.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+# ReferenceType is not translatable
+J9NLS_CFR_ERR_ENCLOSING_METHOD_CLASS_INDEX_IS_REFERENCETYPE=Kapsayan bir y\u00f6ntemin s\u0131n\u0131f dizini bir ReferenceType tan\u0131mlay\u0131c\u0131s\u0131 olamaz
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_ENCLOSING_METHOD_CLASS_INDEX_IS_REFERENCETYPE.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
+J9NLS_CFR_ERR_ENCLOSING_METHOD_CLASS_INDEX_IS_REFERENCETYPE.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_ENCLOSING_METHOD_CLASS_INDEX_IS_REFERENCETYPE.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+# ReferenceType is not translatable
+# CONSTANT_Class_info is not translatable
+# host_class_index is not translatable
+J9NLS_CFR_ERR_NEST_HOST_INVALID_REFERENCETYPE_DESCRIPTOR=host_class_index i\u00e7indeki CONSTANT_Class_info, bir ReferenceType tan\u0131mlay\u0131c\u0131s\u0131 olamaz
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_NEST_HOST_INVALID_REFERENCETYPE_DESCRIPTOR.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
+J9NLS_CFR_ERR_NEST_HOST_INVALID_REFERENCETYPE_DESCRIPTOR.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_NEST_HOST_INVALID_REFERENCETYPE_DESCRIPTOR.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+# ReferenceType is not translatable
+# new is not translatable
+J9NLS_CFR_ERR_NEW_INVALID_REFERENCETYPE_DESCRIPTOR=Yeni y\u00f6nerge bir ReferenceType tan\u0131mlay\u0131c\u0131s\u0131nda \u00e7al\u0131\u015famaz
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_NEW_INVALID_REFERENCETYPE_DESCRIPTOR.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
+J9NLS_CFR_ERR_NEW_INVALID_REFERENCETYPE_DESCRIPTOR.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_NEW_INVALID_REFERENCETYPE_DESCRIPTOR.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+# aconst_init is not translatable
+J9NLS_CFR_ERR_ACONST_INIT_INVALID_ARRAY=aconst_init y\u00f6nergesi bir dizi \u00fczerinde \u00e7al\u0131\u015famaz
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_ACONST_INIT_INVALID_ARRAY.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
+J9NLS_CFR_ERR_ACONST_INIT_INVALID_ARRAY.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_ACONST_INIT_INVALID_ARRAY.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+# ReferenceType is not translatable
+J9NLS_CFR_ERR_OUTER_CLASS_REFERENCETYPE_DESCRIPTOR=D\u0131\u015f s\u0131n\u0131f, bir InnerClasses \u00f6zniteli\u011findeki bir ReferenceType tan\u0131mlay\u0131c\u0131s\u0131d\u0131r
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_OUTER_CLASS_REFERENCETYPE_DESCRIPTOR.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
+J9NLS_CFR_ERR_OUTER_CLASS_REFERENCETYPE_DESCRIPTOR.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_OUTER_CLASS_REFERENCETYPE_DESCRIPTOR.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+# ReferenceType is not translatable
+J9NLS_CFR_ERR_NEST_MEMBER_INVALID_REFERENCETYPE_DESCRIPTOR=\u0130\u00e7 i\u00e7e \u00fcye s\u0131n\u0131flar\u0131 ReferenceType tan\u0131mlay\u0131c\u0131lar\u0131 olamaz
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_NEST_MEMBER_INVALID_REFERENCETYPE_DESCRIPTOR.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
+J9NLS_CFR_ERR_NEST_MEMBER_INVALID_REFERENCETYPE_DESCRIPTOR.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_NEST_MEMBER_INVALID_REFERENCETYPE_DESCRIPTOR.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+# <vnew> is not translatable
+J9NLS_CFR_ERR_INVALID_CLASS_FLAGS_ON_VNEW=<vnew> y\u00f6ntemi, soyut bir s\u0131n\u0131fta, bir kimlik s\u0131n\u0131f\u0131nda ya da arabirimde olamaz.
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_INVALID_CLASS_FLAGS_ON_VNEW.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
+J9NLS_CFR_ERR_INVALID_CLASS_FLAGS_ON_VNEW.system_action=The JVM will throw a verification or classloading related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_INVALID_CLASS_FLAGS_ON_VNEW.user_response=Contact the provider of the class file for a corrected version.
 # END NON-TRANSLATABLE
