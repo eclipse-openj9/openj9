@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2019 IBM Corp. and others
+# Copyright (c) 2000, 2023 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -339,12 +339,12 @@ J9NLS_PORT_MMAP_INVALID_FILE_HANDLE.user_response=Contact your service represent
 
 # END NON-TRANSLATABLE
 
-J9NLS_PORT_LINUXDUMP_PIPE_CORE=Nastaven\u00ed %s \"%s\" ur\u010duje, \u017ee v\u00fdpis j\u00e1dra m\u00e1 b\u00fdt p\u0159ed\u00e1n extern\u00edmu programu prost\u0159ednictv\u00edm propojen\u00ed proces\u016f. Prob\u00edh\u00e1 pokus o p\u0159ejmenov\u00e1n\u00ed souboru core nebo core.%d.\n
+J9NLS_PORT_LINUXDUMP_PIPE_CORE=Nastaven\u00ed %s \"%s\" uv\u00e1d\u00ed, \u017ee m\u00e1 b\u00fdt v\u00fdpis j\u00e1dra propojen s extern\u00edm programem.  Prob\u00edh\u00e1 pokus o p\u0159ejmenov\u00e1n\u00ed j\u00e1dra nebo j\u00e1dra.%d.  P\u0159ezkoumejte p\u0159\u00edru\u010dku pro extern\u00ed program, abyste zjistili, kde je v\u00fdpis j\u00e1dra zaps\u00e1n, a ujist\u011bte se, \u017ee jej program neo\u0159\u00edzne.\n
 # START NON-TRANSLATABLE
 J9NLS_PORT_LINUXDUMP_PIPE_CORE.sample_input_1=/proc/sys/kernel/core_pattern
-J9NLS_PORT_LINUXDUMP_PIPE_CORE.sample_input_2=|/usr/libexec/abrt-hook-ccpp /var/spool/abrt %p %s %u %c
+J9NLS_PORT_LINUXDUMP_PIPE_CORE.sample_input_2=|/usr/lib/systemd/systemd-coredump %P %u %g %s %t %c %h
 J9NLS_PORT_LINUXDUMP_PIPE_CORE.sample_input_3=12345
-J9NLS_PORT_LINUXDUMP_PIPE_CORE.explanation=Tools such as ABRT use /proc/sys/kernel/core_pattern to redirect the core file to an external program, for example to create bug reports.
+J9NLS_PORT_LINUXDUMP_PIPE_CORE.explanation=/proc/sys/kernel/core_pattern starting with | is used to redirect the core file to tools such as systemd-coredump which processes the core dump, for example to send it to a different directory and manage total core dump disk usage, or to suppress it.
 J9NLS_PORT_LINUXDUMP_PIPE_CORE.system_action=The VM will look in the current directory for a file called either core or core.<process ID>, depending on the contents of /proc/sys/kernel/core_uses_pid.
 J9NLS_PORT_LINUXDUMP_PIPE_CORE.user_response=Refer to the documentation for the external program specified in /proc/sys/kernel/core_pattern.
 
@@ -494,4 +494,14 @@ J9NLS_PORT_DUMP_PATH_EXISTS.sample_input_1=/home/user/core
 J9NLS_PORT_DUMP_PATH_EXISTS.explanation=The JVM was unable to produce a system dump because a non-regular file (for example a directory, symbolic link, pipe or socket) exists with the same name as the expected system dump file.
 J9NLS_PORT_DUMP_PATH_EXISTS.system_action=The JVM continues, the requested system dump is not produced.
 J9NLS_PORT_DUMP_PATH_EXISTS.user_response=Check whether the name of a non-regular file (for example a directory, symbolic link, pipe or socket) in the current working directory of the Java application clashes with the default system dump file name (core or core.<process ID>) or with the setting of /proc/sys/kernel/core_pattern and /proc/sys/kernel/core_uses_pid. Either rename the subdirectory, or change the settings of /proc/sys/kernel/core_pattern and /proc/sys/kernel/core_uses_pid so that the names do not clash.
+# END NON-TRANSLATABLE
+
+J9NLS_PORT_LINUXDUMP_PIPE_CORE_NOT_FOUND=Soubor core vytvo\u0159en\u00fd pod\u0159\u00edzen\u00fdm procesem s pid = %i nebyl nalezen. P\u0159ezkoumejte dokumentaci k programu %s \"%s\", abyste zjistili, kde je soubor core zaps\u00e1n, a ujist\u011bte se, \u017ee jej tento program nezkr\u00e1t\u00ed.\n
+# START NON-TRANSLATABLE
+J9NLS_PORT_LINUXDUMP_PIPE_CORE_NOT_FOUND.sample_input_1=12345
+J9NLS_PORT_LINUXDUMP_PIPE_CORE_NOT_FOUND.sample_input_2=/proc/sys/kernel/core_pattern
+J9NLS_PORT_LINUXDUMP_PIPE_CORE_NOT_FOUND.sample_input_3=|/usr/lib/systemd/systemd-coredump %P %u %g %s %t %c %h
+J9NLS_PORT_LINUXDUMP_PIPE_CORE_NOT_FOUND.explanation=/proc/sys/kernel/core_pattern starting with | is used to redirect the core file to tools such as systemd-coredump which processes the core dump, for example to send it to a different directory and manage total core dump disk usage, or to suppress it.
+J9NLS_PORT_LINUXDUMP_PIPE_CORE_NOT_FOUND.system_action=The VM could not find the core dump in the current directory most likely because the external program sent it elsewhere or suppressed it.
+J9NLS_PORT_LINUXDUMP_PIPE_CORE_NOT_FOUND.user_response=Refer to the documentation for the external program specified in /proc/sys/kernel/core_pattern to find the core dump and review the program's configuration to ensure the dump is not truncated.
 # END NON-TRANSLATABLE

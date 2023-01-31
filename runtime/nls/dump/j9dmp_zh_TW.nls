@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2021 IBM Corp. and others
+# Copyright (c) 2000, 2023 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -598,4 +598,18 @@ J9NLS_DMP_JIT_TRACE_IL_CRASHED_THREAD.system_action=The JVM continues.
 J9NLS_DMP_JIT_TRACE_IL_CRASHED_THREAD.user_response=Diagnostic information, provide this information to your service representative.
 J9NLS_DMP_JIT_TRACE_IL_CRASHED_THREAD.link=
 
+# END NON-TRANSLATABLE
+
+J9NLS_DMP_PROCESSING_DETAILED_EVENT_TIME=\u6b63\u5728\u8655\u7406\u50be\u51fa\u4e8b\u4ef6 \"%1$s\"\uff0c\u8a73\u7d30\u8cc7\u6599 \"%3$.*2$s\"\uff0c\u7570\u5e38\u72c0\u6cc1 \"%5$.*4$s\"\uff0c\u4f4d\u65bc %6$s - \u8acb\u7a0d\u5019\u3002
+# START NON-TRANSLATABLE
+J9NLS_DMP_PROCESSING_DETAILED_EVENT_TIME.explanation=A dump event has occurred and is being handled.
+J9NLS_DMP_PROCESSING_DETAILED_EVENT_TIME.system_action=The JVM generates dumps as configured for the event by the -Xdump option.
+J9NLS_DMP_PROCESSING_DETAILED_EVENT_TIME.user_response=No response is required.
+J9NLS_DMP_PROCESSING_DETAILED_EVENT_TIME.sample_input_1=throw
+J9NLS_DMP_PROCESSING_DETAILED_EVENT_TIME.sample_input_2=9
+J9NLS_DMP_PROCESSING_DETAILED_EVENT_TIME.sample_input_3=#00000000
+J9NLS_DMP_PROCESSING_DETAILED_EVENT_TIME.sample_input_4=12
+J9NLS_DMP_PROCESSING_DETAILED_EVENT_TIME.sample_input_5=No such file
+J9NLS_DMP_PROCESSING_DETAILED_EVENT_TIME.sample_input_6=20220919.114434
+J9NLS_DMP_PROCESSING_DETAILED_EVENT_TIME.link=dita:///diag/tools/dump_agents.dita
 # END NON-TRANSLATABLE
