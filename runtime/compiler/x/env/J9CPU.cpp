@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2022 IBM Corp. and others
+ * Copyright (c) 2000, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -82,7 +82,8 @@ J9::X86::CPU::enableFeatureMasks()
                                         OMR_FEATURE_X86_AESNI, OMR_FEATURE_X86_OSXSAVE, OMR_FEATURE_X86_AVX,
                                         OMR_FEATURE_X86_FMA, OMR_FEATURE_X86_HLE, OMR_FEATURE_X86_RTM,
                                         OMR_FEATURE_X86_SSE3, OMR_FEATURE_X86_AVX2, OMR_FEATURE_X86_AVX512F,
-                                        OMR_FEATURE_X86_AVX512VL, OMR_FEATURE_X86_AVX512BW, OMR_FEATURE_X86_AVX512DQ};
+                                        OMR_FEATURE_X86_AVX512VL, OMR_FEATURE_X86_AVX512BW, OMR_FEATURE_X86_AVX512DQ,
+                                        OMR_FEATURE_X86_SSE4_2};
 
    memset(_supportedFeatureMasks.features, 0, OMRPORT_SYSINFO_FEATURES_SIZE*sizeof(uint32_t));
    OMRPORT_ACCESS_FROM_OMRPORT(TR::Compiler->omrPortLib);

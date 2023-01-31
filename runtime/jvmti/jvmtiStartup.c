@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -131,7 +131,7 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 				goto _error;
 			}
 
-			agentIndex = FIND_AND_CONSUME_ARG_FORWARD( STARTSWITH_MATCH, OPT_AGENTLIB_COLON, NULL);
+			agentIndex = FIND_AND_CONSUME_VMARG_FORWARD( STARTSWITH_MATCH, OPT_AGENTLIB_COLON, NULL);
 			while (agentIndex >= 0) {
 				UDATA libraryLength;
 				char *options;
@@ -167,7 +167,7 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 				optionsPtr = NULL;
 			}
 
-			agentIndex = FIND_AND_CONSUME_ARG_FORWARD( STARTSWITH_MATCH, OPT_AGENTPATH_COLON, NULL);
+			agentIndex = FIND_AND_CONSUME_VMARG_FORWARD( STARTSWITH_MATCH, OPT_AGENTPATH_COLON, NULL);
 			optionsPtr = (char*)optionsBuf;
 			buflen = OPTIONSBUFF_LEN;
 			while (agentIndex >= 0) {
@@ -324,7 +324,7 @@ prependSystemAgentPath(J9JavaVM * vm, J9JVMTIAgentLibrary * agentLibrary, char *
 
 	return localBuffer;
 }
-    
+
 
 static jint
 issueAgentOnLoadAttach(J9JavaVM * vm, J9JVMTIAgentLibrary * agentLibrary, const char* options, char *loadFunctionName, BOOLEAN * foundLoadFn)
@@ -409,7 +409,7 @@ issueAgentOnLoadAttach(J9JavaVM * vm, J9JVMTIAgentLibrary * agentLibrary, const 
 	rc = agentInitFunction(invocationJavaVM, jarPath, NULL);
 	if (JNI_OK != rc) {
 		/* If the load function returned failure (non-zero), we still close the library, but retain emitting
-		 * the error message (moving this up the chain is NOT required as the caller loadAgentLibrary() will 
+		 * the error message (moving this up the chain is NOT required as the caller loadAgentLibrary() will
 		 * no longer attempt at looking this up, having "found" the function already)!
 		 */
 		j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_JVMTI_AGENT_INITIALIZATION_FAILED, loadFunctionName, agentLibrary->nativeLib.name, rc);
@@ -425,7 +425,7 @@ closeLibrary:
 			agentLibrary->nativeLib.handle = 0;
 		}
 		Trc_JVMTI_issueAgentOnLoadAttach_Exit(agentLibrary->nativeLib.name, rc);
-		
+
 		if ((NULL != invocationJavaVM) && (invocationJavaVM != (J9InvocationJavaVM *)vm)) {
 			j9mem_free_memory(invocationJavaVM);
 			agentLibrary->invocationJavaVM = NULL;
@@ -464,7 +464,7 @@ loadAgentLibraryGeneric(J9JavaVM * vm, J9JVMTIAgentLibrary * agentLibrary, char 
 	if (NULL == agentLibrary->xRunLibrary) {
 		jint i = 0;
 		char * fullLibName = NULL;
-		const char * systemAgentName;		
+		const char * systemAgentName;
 		UDATA openFlags = agentLibrary->decorate ? J9PORT_SLOPEN_DECORATE | J9PORT_SLOPEN_LAZY : J9PORT_SLOPEN_LAZY;
 		char * agentPath = NULL; /* Don't free agentPath; may point at persistent, system areas. */
 
@@ -506,7 +506,7 @@ loadAgentLibraryGeneric(J9JavaVM * vm, J9JVMTIAgentLibrary * agentLibrary, char 
 			Trc_JVMTI_loadAgentLibraryGeneric_Exit(agentPath);
 			return JNI_ERR;
 		}
-		Trc_JVMTI_loadAgentLibraryGeneric_openedAgentLibrary(agentPath, 
+		Trc_JVMTI_loadAgentLibraryGeneric_openedAgentLibrary(agentPath,
 															 nativeLib->handle,
 															 loadStatically ? "[statically]" : "[dynamically]");
 		if (NULL != fullLibName) {
@@ -559,11 +559,11 @@ loadAgentLibraryGeneric(J9JavaVM * vm, J9JVMTIAgentLibrary * agentLibrary, char 
  * @param options options, if any.  May be null.
  * @return JNI_ERR, JNI_OK
  */
-I_32 JNICALL 
+I_32 JNICALL
 loadAgentLibraryOnAttach(struct J9JavaVM * vm, const char * library, const char *options, UDATA decorate)
 {
 	PORT_ACCESS_FROM_JAVAVM(vm);
-	UDATA rc;	
+	UDATA rc;
 	UDATA optionsLength = 0;
 	UDATA libraryLength;
 	J9JVMTIAgentLibrary *agentLibrary = NULL;
@@ -586,7 +586,7 @@ loadAgentLibraryOnAttach(struct J9JavaVM * vm, const char * library, const char 
 	omrthread_monitor_enter(jvmtiData->mutex);
 	agentLibrary = findAgentLibrary(vm, library, libraryLength);
 	if (NULL != agentLibrary) {
-		/* Current thread may need to wait() until the linking thread has linked the library 
+		/* Current thread may need to wait() until the linking thread has linked the library
 		 * and initialized linkMode, before notify()ing.  Loop, in order to wake up on spurious
 		 * notification, until the linkMode has actually been set.
 		 */
@@ -651,12 +651,12 @@ loadAgentLibraryOnAttach(struct J9JavaVM * vm, const char * library, const char 
 			omrthread_monitor_enter(jvmtiData->mutex);
 			agentLibrary->nativeLib.linkMode = J9NATIVELIB_LINK_MODE_STATIC; /* Indicate linking mode. */
 		} else /* if (!found) */ {
-			/* Either agent could not be linked statically or running j2se version less than 1.8; 
-			 * try dynamic linking. 
+			/* Either agent could not be linked statically or running j2se version less than 1.8;
+			 * try dynamic linking.
 			 */
-			rc = loadAgentLibraryGeneric(vm, 
-										 agentLibrary, 
-										 J9JVMTI_AGENT_ONATTACH, 
+			rc = loadAgentLibraryGeneric(vm,
+										 agentLibrary,
+										 J9JVMTI_AGENT_ONATTACH,
 										 FALSE, /* link dynamically. */
 										 &found,
 										 &errorMessage);
@@ -701,7 +701,7 @@ loadAgentLibrary(J9JavaVM * vm, J9JVMTIAgentLibrary * agentLibrary)
 
 	Trc_JVMTI_loadAgentLibrary_Entry(agentLibrary->nativeLib.name);
 
-	/* Attempt linking the agent statically, looking for Agent_OnLoad_L.  
+	/* Attempt linking the agent statically, looking for Agent_OnLoad_L.
 	 * If this is not found, fall back on the regular, dynamic linking way.
 	 */
 	nameBufferLengh = j9str_printf(
@@ -718,13 +718,13 @@ loadAgentLibrary(J9JavaVM * vm, J9JVMTIAgentLibrary * agentLibrary)
 
 	result = loadAgentLibraryGeneric(vm, agentLibrary, nameBuffer, TRUE, &found, &errorMessage);
 
-	/* Set this TRUE; if it wasn't actually found, the next check will set this FALSE, 
+	/* Set this TRUE; if it wasn't actually found, the next check will set this FALSE,
 	 * or else this indicates to Agent_OnUnload that the agent was loaded via static linking.
 	 */
 	omrthread_monitor_enter(jvmtiData->mutex);
 	agentLibrary->nativeLib.linkMode = J9NATIVELIB_LINK_MODE_STATIC;
 	omrthread_monitor_exit(jvmtiData->mutex);
- 
+
 	/* If the initializer "Agent_OnLoad_L" was /not/ found (either not defined OR running
 	 * running j2se version less than 1.8), fallback on dynamic linking, with "Agent_OnLoad".
 	 */
@@ -779,9 +779,9 @@ shutDownAgentLibraries(J9JavaVM * vm, UDATA closeLibrary)
 				 * Agent_OnUnload, or else invoke Agent_OnUnload_L.
 				 */
 				if (J9NATIVELIB_LINK_MODE_STATIC == agentLibrary->nativeLib.linkMode) {
-					j9str_printf(PORTLIB, 
-								 nameBuffer, 
-								 sizeof(nameBuffer), 
+					j9str_printf(PORTLIB,
+								 nameBuffer,
+								 sizeof(nameBuffer),
 								 "%s_%s",
 								 J9JVMTI_AGENT_ONUNLOAD,
 								 agentLibrary->nativeLib.name);
@@ -791,7 +791,7 @@ shutDownAgentLibraries(J9JavaVM * vm, UDATA closeLibrary)
 
 				if (j9sl_lookup_name(agentLibrary->nativeLib.handle, nameBuffer, (void *) &onUnload, "VL") == 0) {
 					UDATA loadCount;
-					
+
 					Trc_JVMTI_shutDownAgentLibraries_invokingAgentShutDown(nameBuffer);
 					for (loadCount = 0; loadCount < agentLibrary->loadCount; loadCount++) {
 						onUnload(vm);
@@ -1064,7 +1064,7 @@ findAgentLibrary(J9JavaVM * vm, const char *libraryAndOptions, UDATA libraryLeng
 				Trc_JVMTI_findAgentLibrary_successExit(nativeLibrary->name);
 				return agentLibrary;
 			}
-		} 
+		}
 		agentLibrary = pool_nextDo(&state);
 	}
 	Trc_JVMTI_findAgentLibrary_failureExit(libraryAndOptions);

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2022 IBM Corp. and others
+ * Copyright (c) 2000, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1180,7 +1180,7 @@ onLoadInternal(
 
 #if defined(J9ZOS390) && !defined(TR_TARGET_64BIT)
     // zOS 31-bit
-    J9JavaVM * vm = javaVM; //macro FIND_AND_CONSUME_ARG refers to javaVM as vm
+    J9JavaVM * vm = javaVM; //macro FIND_AND_CONSUME_VMARG refers to javaVM as vm
     if (isQuickstart)
        {
        jitConfig->codeCacheKB = 1024;

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2022 IBM Corp. and others
+ * Copyright (c) 1991, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -93,7 +93,7 @@ static IDATA setVerifyState ( J9JavaVM *vm, char *option, char **errorString );
  * uninitialized_this object.
  * NOTE: This is only necessary for <init> methods.
  */
-static void 
+static void
 setInitializedThisStatus(J9BytecodeVerificationData *verifyData)
 {
 	J9BranchTargetStack * currentStack = NULL;
@@ -204,7 +204,7 @@ mergeClasses(J9BytecodeVerificationData *verifyData, U_8* firstClass, UDATA firs
 		BCV_ERR_INTERNAL_ERROR for any unexpected error
 */
 
-static IDATA 
+static IDATA
 buildBranchMap (J9BytecodeVerificationData * verifyData)
 {
 	J9ROMMethod *romMethod = verifyData->romMethod;
@@ -343,7 +343,7 @@ buildBranchMap (J9BytecodeVerificationData * verifyData)
 		BCV_SUCCESS on success,
 		BCV_FAIL on verification error
 */
-static IDATA 
+static IDATA
 decompressStackMaps (J9BytecodeVerificationData * verifyData, IDATA localsCount, U_8 * stackMapData)
 {
 	J9ROMMethod *romMethod = verifyData->romMethod;
@@ -366,7 +366,7 @@ decompressStackMaps (J9BytecodeVerificationData * verifyData, IDATA localsCount,
 	for (i = 0; i < (UDATA) verifyData->stackMapsCount; i++) {
 		IDATA localDelta = 0;
 		UDATA stackCount = 0;
-		
+
 		NEXT_U8(mapType, stackMapData);
 		mapPC++;
 
@@ -464,7 +464,7 @@ decompressStackMaps (J9BytecodeVerificationData * verifyData, IDATA localsCount,
 		/* Point to the next stack */
 		branchTargetStack = BCV_NEXT_STACK (branchTargetStack);
 	}
-	
+
 	Trc_BCV_decompressStackMaps_Exit(verifyData->vmStruct, rc);
 	return rc;
 }
@@ -618,7 +618,7 @@ parseStack (J9BytecodeVerificationData * verifyData, U_8** stackMapData, J9Branc
 static UDATA
 parseElement (J9BytecodeVerificationData * verifyData, U_8** stackMapData)
 {
-	J9ROMClass * romClass = verifyData->romClass; 
+	J9ROMClass * romClass = verifyData->romClass;
 	U_8 entryType;
 	U_8 *mapData = *stackMapData;
 	U_16 cpIndex;
@@ -642,7 +642,7 @@ parseElement (J9BytecodeVerificationData * verifyData, U_8** stackMapData)
 		NEXT_U16(cpIndex, mapData);
 		utf8string = J9ROMSTRINGREF_UTF8DATA((J9ROMStringRef *) (&constantPool[cpIndex]));
 		pushClassType(verifyData, utf8string, &stackEntry);
-		
+
 	} else if (entryType == CFR_STACKMAP_TYPE_NEW_OBJECT) {
 		NEXT_U16(cpIndex, mapData);
 		stackEntry = BCV_SPECIAL_NEW | (((UDATA) cpIndex) << BCV_CLASS_INDEX_SHIFT);
@@ -655,15 +655,15 @@ parseElement (J9BytecodeVerificationData * verifyData, U_8** stackMapData)
 		NEXT_U16(arity, mapData);
 		stackEntry |= (((UDATA) arity) << BCV_ARITY_SHIFT);
 	}
-	
+
 	*stackMapData = mapData;
 	return stackEntry;
 }
- 
 
 
-static void 
-copyStack (J9BranchTargetStack *source, J9BranchTargetStack *destination) 
+
+static void
+copyStack (J9BranchTargetStack *source, J9BranchTargetStack *destination)
 {
 	UDATA pc = destination->pc;
 
@@ -678,12 +678,12 @@ copyStack (J9BranchTargetStack *source, J9BranchTargetStack *destination)
  * 	BCV_FAIL  : cause a rewalk
  * 	BCV_ERR_INSUFFICIENT_MEMORY    : OOM - no rewalk
  */
-static IDATA 
+static IDATA
 mergeObjectTypes (J9BytecodeVerificationData *verifyData, UDATA sourceType, UDATA * targetTypePointer)
-{ 
+{
 	J9ROMClass * romClass = verifyData->romClass;
 	UDATA targetType = *targetTypePointer;
-	UDATA sourceIndex, targetIndex;  
+	UDATA sourceIndex, targetIndex;
 	J9UTF8 *name;
 	UDATA classArity, targetArity, classIndex;
 	IDATA rc = BCV_SUCCESS;
@@ -846,7 +846,7 @@ mergeObjectTypes (J9BytecodeVerificationData *verifyData, UDATA sourceType, UDAT
 				(UDATA) J9UTF8_LENGTH(J9ROMMETHOD_SIGNATURE(verifyData->romMethod)),
 				J9UTF8_DATA(J9ROMMETHOD_SIGNATURE(verifyData->romMethod)),
 				classArity, targetArity);
-		/* Find minimum common arity of arrays */ 
+		/* Find minimum common arity of arrays */
 		if( targetArity < classArity ) {
 			classArity = targetArity;
 		}
@@ -870,7 +870,7 @@ mergeObjectTypes (J9BytecodeVerificationData *verifyData, UDATA sourceType, UDAT
  * returns BCV_SUCCESS on success
  * returns BCV_FAIL on failure
  * returns BCV_ERR_INSUFFICIENT_MEMORY on OOM */
-static IDATA 
+static IDATA
 mergeStacks (J9BytecodeVerificationData * verifyData, UDATA target)
 {
 	J9ROMClass *romClass = verifyData->romClass;
@@ -1001,7 +1001,7 @@ mergeStacks (J9BytecodeVerificationData * verifyData, UDATA target)
 										if (j9localmap_LocalBitsForPC(verifyData->portLib, romClass, romMethod, mergePC, &resultArrayBase, NULL, NULL, NULL) != 0) {
 											/* local map error - force a full merge */
 											resultArrayBase = (U_32) -1;
-										} 
+										}
 									}
 
 									if (resultArrayBase & (1 << index)) {
@@ -1110,7 +1110,7 @@ _finished:
 
 
 #ifdef DEBUG_BCV
-static void 
+static void
 printMethod (J9BytecodeVerificationData * verifyData)
 {
 	J9ROMClass *romClass = verifyData->romCLass;
@@ -1119,8 +1119,8 @@ printMethod (J9BytecodeVerificationData * verifyData)
 #if 0
 	J9CfrAttributeExceptions* exceptions;
 #endif
-	IDATA arity, i, j; 
- 
+	IDATA arity, i, j;
+
 	string = J9UTF8_DATA(J9ROMCLASS_CLASSNAME(romClass));
 	printf("<");
 	for( i=0; i< J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(romClass)); i++ )
@@ -1132,7 +1132,7 @@ printMethod (J9BytecodeVerificationData * verifyData)
 	if( strncmp( string, "java/util/Arrays", i ) == 0 ) {
 		printf("stop");
 	}
-  
+
 	/* Return type. */
 	string = J9UTF8_DATA(J9ROMMETHOD_SIGNATURE(method));
 	i = 0;
@@ -1220,7 +1220,7 @@ printMethod (J9BytecodeVerificationData * verifyData)
 			case 'J':
 				printf( "long");
 				break;
-		
+
 			case 'L':
 				i++;
 				while(string[i] != ';')
@@ -1282,7 +1282,7 @@ printMethod (J9BytecodeVerificationData * verifyData)
 
 			i = method->attributesCount;
 		}
-	}	
+	}
 #endif
 	printf( ";\n");
 	return;
@@ -1298,7 +1298,7 @@ printMethod (J9BytecodeVerificationData * verifyData)
 
 */
 
-static IDATA 
+static IDATA
 simulateStack (J9BytecodeVerificationData * verifyData)
 {
 
@@ -1436,7 +1436,7 @@ simulateStack (J9BytecodeVerificationData * verifyData)
 
 		start = (IDATA) pc;
 
-		/* Merge all branchTargets encountered */	
+		/* Merge all branchTargets encountered */
 		if (bytecodeMap[pc] & BRANCH_TARGET) {
 			/* Don't try to merge a stack we just loaded */
 			if (!justLoadedStack) {
@@ -1449,7 +1449,7 @@ simulateStack (J9BytecodeVerificationData * verifyData)
 			}
 		}
 		justLoadedStack = FALSE;
-		
+
 		bcIndex = code + pc;
 		bc = *bcIndex;
 #ifdef DEBUG_BCV
@@ -1464,8 +1464,8 @@ simulateStack (J9BytecodeVerificationData * verifyData)
 		if ((stackTop - popCount) < stackBase) {
 			errorType = J9NLS_BCV_ERR_STACK_UNDERFLOW__ID;
 			verboseErrorCode = BCV_ERR_STACK_UNDERFLOW;
-			/* Given that the actual data type involved has not yet been located through pop operation 
-			 * when stack underflow occurs, it needs to step back by 1 slot to the actual data type 
+			/* Given that the actual data type involved has not yet been located through pop operation
+			 * when stack underflow occurs, it needs to step back by 1 slot to the actual data type
 			 * to be manipulated by the opcode.
 			 */
 			errorStackIndex = (U_32)(stackTop - liveStack->stackElements - 1);
@@ -1492,7 +1492,7 @@ simulateStack (J9BytecodeVerificationData * verifyData)
 				/* Only set for wide Objects - primitives don't read temps */
 				wideIndex = TRUE;
 			}	/* Fall through case !!! */
-			
+
 		case RTV_LOAD_TEMP_PUSH:
 			if (type1 == BCV_GENERIC_OBJECT) {
 				/* aload family */
@@ -1510,7 +1510,7 @@ simulateStack (J9BytecodeVerificationData * verifyData)
 			}	/* Fall through case !!! */
 
 		case RTV_PUSH_CONSTANT:
-		
+
 		_pushConstant:
 			PUSH(type1);
 			if (type1 & BCV_WIDE_TYPE_MASK) {
@@ -1566,9 +1566,9 @@ simulateStack (J9BytecodeVerificationData * verifyData)
 					wideIndex = FALSE;
 				}
 			}
-			
+
 			tempStoreChange = FALSE;
-			
+
 			if (type1 == BCV_GENERIC_OBJECT) {
 				/* astore family */
 				type = POP;
@@ -1584,7 +1584,7 @@ simulateStack (J9BytecodeVerificationData * verifyData)
 				tempStoreChange |= (type1 != temps[index]);
 				STORE_TEMP(index, type1);
 			}
-			
+
 			if (checkIfInsideException && tempStoreChange) {
 				/* For all exception handlers covering this instruction */
 				handler = J9EXCEPTIONINFO_HANDLERS(exceptionData);
@@ -1604,7 +1604,7 @@ simulateStack (J9BytecodeVerificationData * verifyData)
 #endif
 						stackIndex = bytecodeMap[handler->handlerPC] >> BRANCH_INDEX_SHIFT;
 						branch = BCV_INDEX_STACK (stackIndex);
-							
+
 						/* "push" the exception object */
 						classIndex = BCV_JAVA_LANG_THROWABLE_INDEX;
 						if (handler->exceptionClassIndex) {
@@ -1638,7 +1638,7 @@ simulateStack (J9BytecodeVerificationData * verifyData)
 				/* shift family */
 				popCount = 1;
 			}	/* fall through */
-			
+
 		case RTV_ARRAY_STORE:
 			DROP(popCount);
 			break;
@@ -1690,7 +1690,7 @@ simulateStack (J9BytecodeVerificationData * verifyData)
 				/* field bytecode receiver */
 				DROP(1);
 			}
-			
+
 			if (bc & 1) {
 				/* JBputfield/JBpustatic - odd bc's */
 				DROP(1);
@@ -1724,11 +1724,11 @@ simulateStack (J9BytecodeVerificationData * verifyData)
 			}
 			stackTop -= getSendSlotsFromSignature(J9UTF8_DATA(utf8string));
 
-			if ((JBinvokestatic != bc) 
+			if ((JBinvokestatic != bc)
 			&& (JBinvokedynamic != bc)
 			&& (JBinvokestaticsplit != bc)
 			) {
-				if ((JBinvokespecial == bc) 
+				if ((JBinvokespecial == bc)
 				|| (JBinvokespecialsplit == bc)
 				) {
 
@@ -1754,7 +1754,7 @@ simulateStack (J9BytecodeVerificationData * verifyData)
 					}
 				} else { /* virtual or interface */
 					DROP(1);
-				} 
+				}
 			}
 
 			stackTop = pushReturnType(verifyData, utf8string, stackTop);
@@ -1995,7 +1995,7 @@ _checkFinished:
 			copyStack(branch, liveStack);
 			RELOAD_LIVESTACK;
 			justLoadedStack = TRUE;
-			Trc_BCV_simulateStack_NewWalkFrom(verifyData->vmStruct, 
+			Trc_BCV_simulateStack_NewWalkFrom(verifyData->vmStruct,
 					(UDATA) J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(verifyData->romClass)),
 					J9UTF8_DATA(J9ROMCLASS_CLASSNAME(verifyData->romClass)),
 					(UDATA) J9UTF8_LENGTH(J9ROMMETHOD_NAME(romMethod)),
@@ -2016,7 +2016,7 @@ _checkFinished:
 			copyStack(branch, liveStack);
 			RELOAD_LIVESTACK;
 			justLoadedStack = TRUE;
-			Trc_BCV_simulateStack_RewalkFrom(verifyData->vmStruct, 
+			Trc_BCV_simulateStack_RewalkFrom(verifyData->vmStruct,
 					(UDATA) J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(verifyData->romClass)),
 					J9UTF8_DATA(J9ROMCLASS_CLASSNAME(verifyData->romClass)),
 					(UDATA) J9UTF8_LENGTH(J9ROMMETHOD_NAME(romMethod)),
@@ -2125,7 +2125,7 @@ allocateVerifyBuffers (J9PortLibrary * portLib, J9BytecodeVerificationData *veri
 
 	verifyData->portLib = portLib;
 
-	if (!(verifyData->classNameList && verifyData->classNameSegment && verifyData->bytecodeMap 
+	if (!(verifyData->classNameList && verifyData->classNameSegment && verifyData->bytecodeMap
 			&& verifyData->stackMaps && verifyData->unwalkedQueue && verifyData->rewalkQueue && verifyData->liveStack)) {
 		freeVerifyBuffers (portLib, verifyData);
 		Trc_BCV_allocateVerifyBuffers_allocFailure(verifyData->vmStruct);
@@ -2143,7 +2143,7 @@ allocateVerifyBuffers (J9PortLibrary * portLib, J9BytecodeVerificationData *veri
 	@note Does not deallocate the internal buffer
 */
 
-void*  
+void*
 bcvalloc (J9BytecodeVerificationData * verifyData, UDATA byteCount)
 {
 	UDATA *returnVal = 0;
@@ -2171,7 +2171,7 @@ bcvalloc (J9BytecodeVerificationData * verifyData, UDATA byteCount)
 
 	if ((UDATA *) temp2 >= verifyData->internalBufferEnd) {
 		returnVal = j9mem_allocate_memory(byteCount, J9MEM_CATEGORY_CLASSES);
-		Trc_BCV_bcvalloc_ExternalAlloc(verifyData->vmStruct, 
+		Trc_BCV_bcvalloc_ExternalAlloc(verifyData->vmStruct,
 				(UDATA) J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(verifyData->romClass)),
 				J9UTF8_DATA(J9ROMCLASS_CLASSNAME(verifyData->romClass)),
 				byteCount, returnVal);
@@ -2194,7 +2194,7 @@ bcvalloc (J9BytecodeVerificationData * verifyData, UDATA byteCount)
 	BCV interface to j9mem_allocate_memory.
 */
 
-void  
+void
 bcvfree (J9BytecodeVerificationData * verifyData, void* address)
 {
 	J9BCVAlloc *temp1, *temp2;
@@ -2232,7 +2232,7 @@ bcvfree (J9BytecodeVerificationData * verifyData, void* address)
 }
 
 
-void  
+void
 freeVerifyBuffers (J9PortLibrary * portLib, J9BytecodeVerificationData *verifyData)
 {
 	Trc_BCV_freeVerifyBuffers_Event1(verifyData->vmStruct);
@@ -2279,7 +2279,7 @@ freeVerifyBuffers (J9PortLibrary * portLib, J9BytecodeVerificationData *verifyDa
 
 
 
-void  
+void
 j9bcv_freeVerificationData (J9PortLibrary * portLib, J9BytecodeVerificationData * verifyData)
 {
 	PORT_ACCESS_FROM_PORT(portLib);
@@ -2301,7 +2301,7 @@ j9bcv_freeVerificationData (J9PortLibrary * portLib, J9BytecodeVerificationData 
  * returns J9BytecodeVerificationData* on success
  * returns NULL on OOM
  */
-J9BytecodeVerificationData *  
+J9BytecodeVerificationData *
 j9bcv_initializeVerificationData(J9JavaVM* javaVM)
 {
 	J9BytecodeVerificationData * verifyData;
@@ -2341,7 +2341,7 @@ j9bcv_initializeVerificationData(J9JavaVM* javaVM)
 	}
 
 	/* default verification options */
-	verifyData->verificationFlags = J9_VERIFY_SKIP_BOOTSTRAP_CLASSES | J9_VERIFY_OPTIMIZE; 	
+	verifyData->verificationFlags = J9_VERIFY_SKIP_BOOTSTRAP_CLASSES | J9_VERIFY_OPTIMIZE;
 
 	return verifyData;
 
@@ -2369,7 +2369,7 @@ error_no_memory:
 		name##Size = needed; \
 	}
 
-/* 
+/*
  * Sequence the 2 verification passes - flow based type inference stack map generation
  * and linear stack map verification
  *
@@ -2377,7 +2377,7 @@ error_no_memory:
  * returns BCV_ERR_INSUFFICIENT_MEMORY on OOM
  */
 
-IDATA 
+IDATA
 j9bcv_verifyBytecodes (J9PortLibrary * portLib, J9Class * clazz, J9ROMClass * romClass,
 		   J9BytecodeVerificationData * verifyData)
 {
@@ -2401,7 +2401,7 @@ j9bcv_verifyBytecodes (J9PortLibrary * portLib, J9Class * clazz, J9ROMClass * ro
 	BOOLEAN verboseVerification = (J9_VERIFY_VERBOSE_VERIFICATION == (verifyData->verificationFlags & J9_VERIFY_VERBOSE_VERIFICATION));
 
 	PORT_ACCESS_FROM_PORT(portLib);
-	
+
 	Trc_BCV_j9bcv_verifyBytecodes_Entry(verifyData->vmStruct,
 									(UDATA) J9UTF8_LENGTH((J9ROMCLASS_CLASSNAME(romClass))),
 									J9UTF8_DATA(J9ROMCLASS_CLASSNAME(romClass)));
@@ -2412,7 +2412,7 @@ j9bcv_verifyBytecodes (J9PortLibrary * portLib, J9Class * clazz, J9ROMClass * ro
 
 	verifyData->romClass = romClass;
 	verifyData->errorPC = 0;
-	
+
 	verifyData->romClassInSharedClasses = j9shr_Query_IsAddressInCache(verifyData->javaVM, romClass, romClass->romSize);
 
 	/* List is used for the whole class */
@@ -2429,7 +2429,7 @@ j9bcv_verifyBytecodes (J9PortLibrary * portLib, J9Class * clazz, J9ROMClass * ro
 	for (i = 0; i < (UDATA) romClass->romMethodCount; i++) {
 
 		UDATA createStackMaps;
-		
+
 		verifyData->ignoreStackMaps = (verifyData->verificationFlags & J9_VERIFY_IGNORE_STACK_MAPS) != 0;
 		verifyData->createdStackMap = FALSE;
 		verifyData->romMethod = romMethod;
@@ -2455,30 +2455,30 @@ j9bcv_verifyBytecodes (J9PortLibrary * portLib, J9Class * clazz, J9ROMClass * ro
 									+ J9_TEMP_COUNT_FROM_ROM_METHOD(romMethod)
 									+ BCV_TARGET_STACK_HEADER_UDATA_SIZE
 									+ BCV_STACK_OVERFLOW_BUFFER_UDATA_SIZE) * sizeof(UDATA);
-						
+
 			ALLOC_BUFFER(verifyData->liveStack, verifyData->stackSize);
 
 			length = (UDATA) (J9_BYTECODE_SIZE_FROM_ROM_METHOD(romMethod));
 			mapLength = length * sizeof(U_32);
-			
+
 			ALLOC_BUFFER(verifyData->bytecodeMap, mapLength);
 			bytecodeMap = verifyData->bytecodeMap;
-			
+
 _fallBack:
 			memset(bytecodeMap, 0, mapLength);
-							
+
 			createStackMaps = !classVersionRequiresStackmaps && (verifyData->ignoreStackMaps || !hasStackMaps);
 
 			if (createStackMaps) {
 				verifyData->stackMapsCount = buildBranchMap(verifyData);
-				
+
 				if (verifyData->stackMapsCount == (UDATA)BCV_ERR_INTERNAL_ERROR) {
 					BUILD_VERIFY_ERROR(J9NLS_BCV_ERR_BYTECODES_INVALID__MODULE, J9NLS_BCV_ERR_BYTECODES_INVALID__ID);
 					result = BCV_ERR_INTERNAL_ERROR;
 					break;
 				}
 			} else {
-				
+
 				U_32 *stackMapMethod = getStackMapInfoForROMMethod(romMethod);
 
 				verifyData->stackMapsCount = 0;
@@ -2490,16 +2490,16 @@ _fallBack:
 					NEXT_U16(verifyData->stackMapsCount, stackMapData);
 				}
 			}
-		
+
 			stackMapsSize = (verifyData->stackSize) * (verifyData->stackMapsCount);
-	
+
 			ALLOC_BUFFER(verifyData->stackMaps, stackMapsSize);
-		
+
 			if (createStackMaps && verifyData->stackMapsCount) {
 				UDATA mapIndex = 0;
 				/* Non-empty internal stackMap created */
 				verifyData->createdStackMap = TRUE;
-	
+
 				liveStack = BCV_FIRST_STACK ();
 				/* Initialize stackMaps */
 				for (j = 0; j < length; j++) {
@@ -2512,7 +2512,7 @@ _fallBack:
 						mapIndex++;
 					}
 				}
-	
+
 				rootQueueSize = (verifyData->stackMapsCount + 1) * sizeof(UDATA);
 
 				if (rootQueueSize > verifyData->rootQueueSize) {
@@ -2530,12 +2530,12 @@ _fallBack:
 
 			liveStack = (J9BranchTargetStack *) verifyData->liveStack;
 			stackTop = &(liveStack->stackElements[0]);
-	
+
 			isInitMethod = buildStackFromMethodSignature(verifyData, &stackTop, &argCount);
-	
+
 			SAVE_STACKTOP(liveStack, stackTop);
 			liveStack->stackBaseIndex = liveStack->stackTopIndex;
-		
+
 			result = 0;
 			if (verifyData->stackMapsCount) {
 				if (createStackMaps) {
@@ -2544,7 +2544,7 @@ _fallBack:
 					result = decompressStackMaps (verifyData, argCount, stackMapData);
 				}
 			}
-			
+
 			if (BCV_ERR_INSUFFICIENT_MEMORY == result) {
 				goto _done;
 			}
@@ -2597,7 +2597,7 @@ _fallBack:
 					RESET_VERIFY_ERROR(verifyData);
 					verifyData->errorPC = (UDATA) 0;
 					verifyData->errorModule = 0;
-					verifyData->errorCode = 0;				
+					verifyData->errorCode = 0;
 
 					Trc_BCV_j9bcv_verifyBytecodes_ReverifyMethod(verifyData->vmStruct,
 							(UDATA) J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(romClass)),
@@ -2619,14 +2619,14 @@ _fallBack:
 				}
 			}
 		}
-		
+
 		romMethod = J9_NEXT_ROM_METHOD(romMethod);
 	}
 
 _done:
 	verifyData->vmStruct->omrVMThread->vmState = oldState;
 	if (result == BCV_ERR_INSUFFICIENT_MEMORY) {
-		Trc_BCV_j9bcv_verifyBytecodes_OutOfMemory(verifyData->vmStruct, 
+		Trc_BCV_j9bcv_verifyBytecodes_OutOfMemory(verifyData->vmStruct,
 				(UDATA) J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(verifyData->romClass)),
 				J9UTF8_DATA(J9ROMCLASS_CLASSNAME(verifyData->romClass)),
 				(UDATA) J9UTF8_LENGTH(J9ROMMETHOD_NAME(romMethod)),
@@ -2650,7 +2650,7 @@ _done:
  * returns J9VMDLLMAIN_OK on success
  * returns J9VMDLLMAIN_FAILED on error
  */
-IDATA  
+IDATA
 j9bcv_J9VMDllMain (J9JavaVM* vm, IDATA stage, void* reserved)
 {
 	J9BytecodeVerificationData* verifyData = NULL;
@@ -2675,7 +2675,7 @@ j9bcv_J9VMDllMain (J9JavaVM* vm, IDATA stage, void* reserved)
 	switch(stage) {
 
 		case ALL_VM_ARGS_CONSUMED :
-			FIND_AND_CONSUME_ARG( OPTIONAL_LIST_MATCH, OPT_XVERIFY, NULL);
+			FIND_AND_CONSUME_VMARG( OPTIONAL_LIST_MATCH, OPT_XVERIFY, NULL);
 			break;
 
 		case BYTECODE_TABLE_SET :
@@ -2690,7 +2690,7 @@ j9bcv_J9VMDllMain (J9JavaVM* vm, IDATA stage, void* reserved)
 			vm->bytecodeVerificationData = verifyData;
 			vm->runtimeFlags |= J9_RUNTIME_VERIFY;
 
-#if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING) 
+#if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
 			if ((*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_CLASSES_UNLOAD, bcvHookClassesUnload, OMR_GET_CALLSITE(), vm)) {
 				returnVal = J9VMDLLMAIN_FAILED;
 				break;
@@ -2729,21 +2729,21 @@ j9bcv_J9VMDllMain (J9JavaVM* vm, IDATA stage, void* reserved)
 				xVerifyColonIndex = FIND_NEXT_ARG_IN_VMARGS_FORWARD(STARTSWITH_MATCH, OPT_XVERIFY_COLON, NULL, xVerifyColonIndex);
 			}
 
-			verboseVerificationIndex = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXVERBOSEVERIFICATION, NULL);
-			noVerboseVerificationIndex = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXNOVERBOSEVERIFICATION, NULL);
+			verboseVerificationIndex = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXVERBOSEVERIFICATION, NULL);
+			noVerboseVerificationIndex = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXNOVERBOSEVERIFICATION, NULL);
 			if (verboseVerificationIndex > noVerboseVerificationIndex) {
 				vm->bytecodeVerificationData->verificationFlags |= J9_VERIFY_VERBOSE_VERIFICATION;
 			}
 
-			verifyErrorDetailsIndex = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXVERIFYERRORDETAILS, NULL);
-			noVerifyErrorDetailsIndex = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXNOVERIFYERRORDETAILS, NULL);
+			verifyErrorDetailsIndex = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXVERIFYERRORDETAILS, NULL);
+			noVerifyErrorDetailsIndex = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXNOVERIFYERRORDETAILS, NULL);
 			if (verifyErrorDetailsIndex >= noVerifyErrorDetailsIndex) {
 				vm->bytecodeVerificationData->verificationFlags |= J9_VERIFY_ERROR_DETAILS;
 			}
 
 			/* Set runtime flag for -XX:+ClassRelationshipVerifier */
-			classRelationshipVerifierIndex = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXCLASSRELATIONSHIPVERIFIER, NULL);
-			noClassRelationshipVerifierIndex = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXNOCLASSRELATIONSHIPVERIFIER, NULL);
+			classRelationshipVerifierIndex = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXCLASSRELATIONSHIPVERIFIER, NULL);
+			noClassRelationshipVerifierIndex = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXNOCLASSRELATIONSHIPVERIFIER, NULL);
 			if (classRelationshipVerifierIndex > noClassRelationshipVerifierIndex) {
 				if (J9_ARE_ANY_BITS_SET(vm->runtimeFlags, J9_RUNTIME_XFUTURE)) {
 					loadInfo->fatalErrorStr = "-XX:+ClassRelationshipVerifier cannot be used if -Xfuture or if -Xverify:all is enabled";
@@ -2758,7 +2758,7 @@ j9bcv_J9VMDllMain (J9JavaVM* vm, IDATA stage, void* reserved)
 		case LIBRARIES_ONUNLOAD :
 			if (vm->bytecodeVerificationData) {
 				j9bcv_freeVerificationData(PORTLIB, vm->bytecodeVerificationData);
-#if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING) 
+#if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
 				(*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_VM_CLASSES_UNLOAD, bcvHookClassesUnload, vm);
 #endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
 			}
@@ -2768,7 +2768,7 @@ j9bcv_J9VMDllMain (J9JavaVM* vm, IDATA stage, void* reserved)
 }
 
 
-static IDATA 
+static IDATA
 setVerifyState(J9JavaVM *vm, char *option, char **errorString)
 {
 	PORT_ACCESS_FROM_JAVAVM(vm);
@@ -2816,8 +2816,8 @@ setVerifyState(J9JavaVM *vm, char *option, char **errorString)
 
 
 
-static IDATA 
-parseOptions(J9JavaVM *vm, char *optionValues, char **errorString) 
+static IDATA
+parseOptions(J9JavaVM *vm, char *optionValues, char **errorString)
 {
 	char *optionValue = optionValues;			/* Values are separated by single NULL characters. */
 
@@ -2832,11 +2832,11 @@ parseOptions(J9JavaVM *vm, char *optionValues, char **errorString)
 }
 
 
-#if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING) 
+#if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
 /**
  * Unlink any constraints related to dying classloaders
  */
-static void 
+static void
 bcvHookClassesUnload(J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData)
 {
 	J9JavaVM *javaVM = userData;
