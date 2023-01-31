@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 1998, 2022 IBM Corp. and others
+ * Copyright (c) 1998, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -370,27 +370,35 @@ public final class System {
 		 */
 		String enableSharingInSubstringWhenOffsetIsZeroProperty = internalGetProperties().getProperty("java.lang.string.substring.nocopy"); //$NON-NLS-1$
 		String.enableSharingInSubstringWhenOffsetIsZero = enableSharingInSubstringWhenOffsetIsZeroProperty == null || enableSharingInSubstringWhenOffsetIsZeroProperty.equalsIgnoreCase("false"); //$NON-NLS-1$
-
-		// Set up standard in, out, and err.
-		/*[PR CMVC 193070] - OTT:Java 8 Test_JITHelpers test_getSuperclass NoSuchMet*/
-		/*[PR JAZZ 58297] - continue with the rules defined by JAZZ 57070 - Build a Java 8 J9 JCL using the SIDECAR18 preprocessor configuration */
-		// Check the default encoding
-		/*[Bug 102075] J2SE Setting -Dfile.encoding=junk fails to run*/
-		/*[IF JAVA_SPEC_VERSION >= 11]*/
-		StringCoding.encode(String.LATIN1, new byte[1]);
-		/*[ELSE]*/
-		StringCoding.encode(new char[1], 0, 1);
-		/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 		/*[ENDIF] JAVA_SPEC_VERSION < 17 */
 
+		/*[IF JAVA_SPEC_VERSION == 8]*/
+		// Check the default encoding
+		/*[Bug 102075] J2SE Setting -Dfile.encoding=junk fails to run*/
+		StringCoding.encode(new char[1], 0, 1);
+		/*[ENDIF] JAVA_SPEC_VERSION == 8 */
+
+		// Set up standard in, out, and err.
 		/*[IF Sidecar18-SE-OpenJ9]*/
 		Properties props = internalGetProperties();
 		/*[IF JAVA_SPEC_VERSION >= 11]*/
 		/*[IF JAVA_SPEC_VERSION >= 18]*/
 		consoleDefaultEncoding = props.getProperty("native.encoding"); //$NON-NLS-1$
-		consoleDefaultCharset = Charset.forName(consoleDefaultEncoding, sun.nio.cs.US_ASCII.INSTANCE);
+		consoleDefaultCharset = Charset.forName(consoleDefaultEncoding, sun.nio.cs.UTF_8.INSTANCE);
 		/*[ELSE] JAVA_SPEC_VERSION >= 18 */
-		consoleDefaultCharset = Charset.defaultCharset();
+		String fileEncodingProp = props.getProperty("file.encoding"); //$NON-NLS-1$
+		// Do not call Charset.defaultEncoding() since this would initialize the default encoding
+		// before the jdk.charset module is loaded.
+		try {
+			if (Charset.isSupported(fileEncodingProp)) {
+				consoleDefaultCharset = Charset.forName(fileEncodingProp);
+			}
+		} catch (IllegalArgumentException e) {
+			// ignore
+		}
+		if (consoleDefaultCharset == null) {
+			consoleDefaultCharset = sun.nio.cs.UTF_8.INSTANCE;
+		}
 		/*[IF PLATFORM-mz31|PLATFORM-mz64]*/
 		try {
 			consoleDefaultEncoding = props.getProperty("console.encoding"); //$NON-NLS-1$
@@ -402,7 +410,7 @@ public final class System {
 			// use the defaultCharset()
 		}
 		/*[ELSE] PLATFORM-mz31|PLATFORM-mz64 */
-		consoleDefaultEncoding = props.getProperty("file.encoding"); //$NON-NLS-1$
+		consoleDefaultEncoding = fileEncodingProp;
 		/*[ENDIF] PLATFORM-mz31|PLATFORM-mz64 */
 		/*[ENDIF] JAVA_SPEC_VERSION >= 18 */
 		/* consoleDefaultCharset must be initialized before calling getCharset() */
