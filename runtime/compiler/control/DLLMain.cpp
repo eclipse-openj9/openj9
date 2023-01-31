@@ -621,7 +621,7 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void * reserved)
             TR::CompilationInfoPerThread * const *arrayOfCompInfoPT = compInfo->getArrayOfCompilationInfoPerThread();
             TR_ASSERT(arrayOfCompInfoPT, "TR::CompilationInfo::_arrayOfCompilationInfoPerThread is null\n");
 
-            for (int32_t i = 0; i < compInfo->getNumTotalCompilationThreads(); i++)
+            for (int32_t i = 0; i < compInfo->getNumTotalAllocatedCompilationThreads(); i++)
                {
                TR::CompilationInfoPerThread *curCompThreadInfoPT = arrayOfCompInfoPT[i];
                TR_ASSERT(curCompThreadInfoPT, "a thread's compinfo is missing\n");

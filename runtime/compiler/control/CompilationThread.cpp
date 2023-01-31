@@ -828,7 +828,7 @@ TR::CompilationInfo::freeAllCompilationThreads()
 
    if (_arrayOfCompilationInfoPerThread)
       {
-      for (int32_t i=0; i < getNumTotalCompilationThreads(); ++i)
+      for (int32_t i=0; i < getNumTotalAllocatedCompilationThreads(); ++i)
          {
             if (_arrayOfCompilationInfoPerThread[i])
                _arrayOfCompilationInfoPerThread[i]->freeAllResources();
@@ -1010,9 +1010,9 @@ TR::CompilationInfoPerThreadBase::CompilationInfoPerThreadBase(TR::CompilationIn
    _addToJProfilingQueue(false)
    {
    // At this point, compilation threads have not been fully started yet. getNumTotalCompilationThreads()
-   // would not return a correct value. Need to use TR::Options::_numUsableCompilationThreads
-   TR_ASSERT_FATAL(_compThreadId < (TR::Options::_numUsableCompilationThreads + TR::CompilationInfo::MAX_DIAGNOSTIC_COMP_THREADS),
-             "Cannot have a compId %d greater than %u", _compThreadId, (TR::Options::_numUsableCompilationThreads + TR::CompilationInfo::MAX_DIAGNOSTIC_COMP_THREADS));
+   // would not return a correct value. Need to use TR::Options::_numAllocatedCompilationThreads
+   TR_ASSERT_FATAL(_compThreadId < (TR::Options::_numAllocatedCompilationThreads + TR::CompilationInfo::MAX_DIAGNOSTIC_COMP_THREADS),
+             "Cannot have a compId %d greater than %u", _compThreadId, (TR::Options::_numAllocatedCompilationThreads + TR::CompilationInfo::MAX_DIAGNOSTIC_COMP_THREADS));
    }
 
 TR::CompilationInfoPerThread::CompilationInfoPerThread(TR::CompilationInfo &compInfo, J9JITConfig *jitConfig, int32_t id, bool isDiagnosticThread)
@@ -1135,10 +1135,12 @@ TR::CompilationInfo::CompilationInfo(J9JITConfig *jitConfig) :
    _samplingThreadWaitTimeInDeepIdleToNotifyVM(-1),
    _numDiagnosticThreads(0),
    _numCompThreads(0),
+   _numAllocatedCompThreads(0),
    _firstCompThreadID(0),
    _firstDiagnosticThreadID(0),
    _lastCompThreadID(0),
    _lastDiagnosticTheadID(0),
+   _lastAllocatedCompThreadID(0),
    _arrayOfCompilationInfoPerThread(NULL)
    {
    // The object is zero-initialized before this method is called
@@ -1242,9 +1244,44 @@ TR::CompilationInfo::CompilationInfo(J9JITConfig *jitConfig) :
 #endif /* defined(J9VM_OPT_JITSERVER) */
    }
 
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+void
+TR::CompilationInfo::setNumUsableCompilationThreadsPostRestore(int32_t &numUsableCompThreads)
+   {
+#if defined(J9VM_OPT_JITSERVER)
+   J9JavaVM *vm = getJITConfig()->javaVM;
+   if (vm->internalVMFunctions->isJITServerEnabled(vm))
+      {
+      TR_ASSERT_FATAL(false, "setNumUsableCompilationThreadsPostRestore should not be called in JITServer mode\n");
+      }
+   else
+#endif // #if defined(J9VM_OPT_JITSERVER)
+      {
+      int32_t numAllocatedThreads = TR::Options::_numAllocatedCompilationThreads;
+      if (numUsableCompThreads <= 0)
+         {
+         numUsableCompThreads = (DEFAULT_CLIENT_USABLE_COMP_THREADS > numAllocatedThreads) ? numAllocatedThreads : DEFAULT_CLIENT_USABLE_COMP_THREADS;
+         }
+      else if (numUsableCompThreads > numAllocatedThreads)
+         {
+         fprintf(stderr, "Requested number of compilation threads is over the limit of %u. Will use %u threads.\n",
+               numAllocatedThreads, numAllocatedThreads);
+         numUsableCompThreads = numAllocatedThreads;
+         }
+
+      _numCompThreads = numUsableCompThreads;
+      _lastCompThreadID = _firstCompThreadID + numUsableCompThreads - 1;
+
+      TR_ASSERT_FATAL(_lastCompThreadID < _firstDiagnosticThreadID,
+                     "_lastCompThreadID %d >= _firstDiagnosticThreadID %d\n",
+                     _lastCompThreadID, _firstDiagnosticThreadID);
+      }
+   }
+#endif // #if defined(J9VM_OPT_CRIU_SUPPORT)
+
 TR::CompilationInfoPerThreadBase *TR::CompilationInfo::getCompInfoWithID(int32_t ID)
    {
-   for (int32_t i = 0; i < getNumTotalCompilationThreads(); i++)
+   for (int32_t i = 0; i < getNumTotalAllocatedCompilationThreads(); i++)
       {
       TR::CompilationInfoPerThread *curCompThreadInfoPT = _arrayOfCompilationInfoPerThread[i];
       TR_ASSERT(curCompThreadInfoPT, "a thread's compinfo is missing\n");
@@ -2892,7 +2929,7 @@ int TR::CompilationInfo::computeCompilationThreadPriority(J9JavaVM *vm)
 
 TR::CompilationInfoPerThread* TR::CompilationInfo::getCompInfoForThread(J9VMThread *vmThread)
    {
-   for (int32_t i = 0; i < getNumTotalCompilationThreads(); i++)
+   for (int32_t i = 0; i < getNumTotalAllocatedCompilationThreads(); i++)
       {
       TR::CompilationInfoPerThread *curCompThreadInfoPT = _arrayOfCompilationInfoPerThread[i];
       TR_ASSERT(curCompThreadInfoPT, "a thread's compinfo is missing\n");
@@ -2947,7 +2984,7 @@ void TR::CompilationInfo::updateNumUsableCompThreads(int32_t &numUsableCompThrea
    }
 
 bool
-TR::CompilationInfo::allocateCompilationThreads(int32_t numUsableCompThreads)
+TR::CompilationInfo::allocateCompilationThreads(int32_t numCompThreads)
    {
    if (_compThreadActivationThresholds ||
        _compThreadSuspensionThresholds ||
@@ -2958,23 +2995,23 @@ TR::CompilationInfo::allocateCompilationThreads(int32_t numUsableCompThreads)
       return false;
       }
 
-   TR_ASSERT((numUsableCompThreads == TR::Options::_numUsableCompilationThreads),
-             "numUsableCompThreads %d is not equal to the Option value %d", numUsableCompThreads, TR::Options::_numUsableCompilationThreads);
+   TR_ASSERT_FATAL((numCompThreads == TR::Options::_numAllocatedCompilationThreads),
+                   "numCompThreads %d is not equal to the Option value %d", numCompThreads, TR::Options::_numAllocatedCompilationThreads);
 
 #if defined(J9VM_OPT_JITSERVER)
    if (getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
       {
-      TR_ASSERT((0 < numUsableCompThreads) && (numUsableCompThreads <= MAX_SERVER_USABLE_COMP_THREADS),
-               "numUsableCompThreads %d is greater than supported %d", numUsableCompThreads, MAX_SERVER_USABLE_COMP_THREADS);
+      TR_ASSERT((0 < numCompThreads) && (numCompThreads <= MAX_SERVER_USABLE_COMP_THREADS),
+               "numCompThreads %d is greater than supported %d", numCompThreads, MAX_SERVER_USABLE_COMP_THREADS);
       }
    else
 #endif /* defined(J9VM_OPT_JITSERVER) */
       {
-      TR_ASSERT((0 < numUsableCompThreads) && (numUsableCompThreads <= MAX_CLIENT_USABLE_COMP_THREADS),
-               "numUsableCompThreads %d is greater than supported %d", numUsableCompThreads, MAX_CLIENT_USABLE_COMP_THREADS);
+      TR_ASSERT((0 < numCompThreads) && (numCompThreads <= MAX_CLIENT_USABLE_COMP_THREADS),
+               "numCompThreads %d is greater than supported %d", numCompThreads, MAX_CLIENT_USABLE_COMP_THREADS);
       }
 
-   uint32_t numTotalCompThreads = numUsableCompThreads + MAX_DIAGNOSTIC_COMP_THREADS;
+   uint32_t numTotalCompThreads = numCompThreads + MAX_DIAGNOSTIC_COMP_THREADS;
 
    TR::MonitorTable *table = TR::MonitorTable::get();
    if ((!table) ||
@@ -3055,8 +3092,11 @@ TR::CompilationInfo::startCompilationThread(int32_t priority, int32_t threadId, 
 
    if (!isDiagnosticThread)
       {
-      if (_numCompThreads >= TR::Options::_numUsableCompilationThreads)
+      if ((_numCompThreads > TR::Options::_numUsableCompilationThreads)
+          || (_numAllocatedCompThreads >= TR::Options::_numAllocatedCompilationThreads))
+         {
          return 1;
+         }
       }
    else
       {
@@ -3119,7 +3159,11 @@ TR::CompilationInfo::startCompilationThread(int32_t priority, int32_t threadId, 
    else
       {
       getCompilationMonitor()->enter();
-      _numCompThreads++;
+      if (_numCompThreads < TR::Options::_numUsableCompilationThreads)
+         {
+         _numCompThreads++;
+         }
+      _numAllocatedCompThreads++;
       getCompilationMonitor()->exit();
       }
 
@@ -3155,8 +3199,13 @@ TR::CompilationInfo::startCompilationThread(int32_t priority, int32_t threadId, 
       }
    else
       {
-      _lastCompThreadID = threadId;
-      _firstDiagnosticThreadID = _lastCompThreadID + 1;
+      // _numCompThreads was incremented above
+      if (_numAllocatedCompThreads <= TR::Options::_numUsableCompilationThreads)
+         {
+         _lastCompThreadID = threadId;
+         }
+      _lastAllocatedCompThreadID = threadId;
+      _firstDiagnosticThreadID = _lastAllocatedCompThreadID + 1;
       }
 
    return 0;
@@ -4955,7 +5004,7 @@ TR::CompilationInfo::addMethodToBeCompiled(TR::IlGeneratorMethodDetails & detail
    TR_J9VMBase * fe = TR_J9VMBase::get(_jitConfig, vmThread);
 
    // search among the threads
-   for (int32_t i = 0; i < getNumTotalCompilationThreads(); i++)
+   for (int32_t i = 0; i < getNumTotalAllocatedCompilationThreads(); i++)
       {
       TR::CompilationInfoPerThread *curCompThreadInfoPT = _arrayOfCompilationInfoPerThread[i];
       TR_ASSERT(curCompThreadInfoPT, "a thread's compinfo is missing\n");
@@ -5255,6 +5304,7 @@ TR::CompilationInfo::addMethodToBeCompiled(TR::IlGeneratorMethodDetails & detail
                }
             fprintf(stderr, "Number of active compilation threads: %d", getNumCompThreadsActive());
             fprintf(stderr, "Number of usable compilation threads: %d", getNumUsableCompilationThreads());
+            fprintf(stderr, "Number of allocated compilation threads: %d", getNumAllocatedCompilationThreads());
             for (int32_t i = getFirstCompThreadID(); i <= getLastCompThreadID(); i++)
                {
                TR::CompilationInfoPerThread *curCompThreadInfoPT = _arrayOfCompilationInfoPerThread[i];
@@ -11630,7 +11680,7 @@ TR::CompilationInfo::printQueue()
    fprintf(stderr, "\t\t\tActive: ");
    bool activeMethods = false;
 
-   for (int32_t i = 0; i < getNumTotalCompilationThreads(); i++)
+   for (int32_t i = 0; i < getNumTotalAllocatedCompilationThreads(); i++)
       {
       TR::CompilationInfoPerThread *curCompThreadInfoPT = _arrayOfCompilationInfoPerThread[i];
       TR_ASSERT(curCompThreadInfoPT, "a thread's compinfo is missing\n");
