@@ -257,8 +257,8 @@ addBFUSystemProperties(J9JavaVM* vm)
 
 	if (J9SYSPROP_ERROR_NOT_FOUND == vmfunc->getSystemProperty(vm, FIPS_HOME_PROP_NAME, NULL)) {
 		size_t fipsHomePropertyFlags = 0;
-		IDATA fips140_2 = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XFIPS_140_2, NULL);
-		IDATA fips140_3 = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XFIPS_140_3, NULL);
+		IDATA fips140_2 = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XFIPS_140_2, NULL);
+		IDATA fips140_3 = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XFIPS_140_3, NULL);
 		if (fips140_2 >= fips140_3) {
 			/* FIPS 140-2 mode: set com.ibm.fips.home to same as JAVA_HOME */
 			fipsHomePropertyFlags = 0;
@@ -576,7 +576,7 @@ loadClasslibPropertiesFile(J9JavaVM *vm, UDATA *cursor)
 	UDATA startCount = *cursor;
 	UDATA count = 0;
 
-#define RELATIVE_PROPSPATH	DIR_SEPARATOR_STR "lib" DIR_SEPARATOR_STR "classlib.properties"
+#define RELATIVE_PROPSPATH DIR_SEPARATOR_STR "lib" DIR_SEPARATOR_STR "classlib.properties"
 
 	j9str_printf(PORTLIB, propsPath, sizeof(propsPath), "%s" RELATIVE_PROPSPATH, vm->fipsHome);
 
