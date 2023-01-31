@@ -1538,20 +1538,43 @@ onLoadInternal(
          );
          return -1;
          }
-#endif /* defined(J9VM_OPT_JITSERVER) */
+#endif // defined(J9VM_OPT_JITSERVER)
       TR::Options::_numUsableCompilationThreads = maxNumberOfCodeCaches;
       }
 
    compInfo->updateNumUsableCompThreads(TR::Options::_numUsableCompilationThreads);
 
-   if (!compInfo->allocateCompilationThreads(TR::Options::_numUsableCompilationThreads))
+#if defined(J9VM_OPT_JITSERVER)
+   if (persistentMemory->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
       {
-      fprintf(stderr, "onLoadInternal: Failed to set up %d compilation threads\n", TR::Options::_numUsableCompilationThreads);
+      TR::Options::_numAllocatedCompilationThreads = TR::Options::_numUsableCompilationThreads;
+      }
+   else
+#endif // defined(J9VM_OPT_JITSERVER)
+      {
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+      if (javaVM->internalVMFunctions->isCheckpointAllowed(curThread))
+         {
+         if (TR::Options::_numAllocatedCompilationThreads > maxNumberOfCodeCaches)
+            {
+            TR::Options::_numAllocatedCompilationThreads = maxNumberOfCodeCaches;
+            }
+         }
+      else
+#endif // defined(J9VM_OPT_CRIU_SUPPORT)
+         {
+         TR::Options::_numAllocatedCompilationThreads = TR::Options::_numUsableCompilationThreads;
+         }
+      }
+
+   if (!compInfo->allocateCompilationThreads(TR::Options::_numAllocatedCompilationThreads))
+      {
+      fprintf(stderr, "onLoadInternal: Failed to set up %d compilation threads\n", TR::Options::_numAllocatedCompilationThreads);
       return -1;
       }
 
    // create regular compilation threads
-   for (int32_t threadNum = 0; threadNum < TR::Options::_numUsableCompilationThreads; threadNum++)
+   for (int32_t threadNum = 0; threadNum < TR::Options::_numAllocatedCompilationThreads; threadNum++)
       {
       // Convert threadNum in iteration to thread ID
       int32_t threadID = threadNum + compInfo->getFirstCompThreadID();

@@ -42,6 +42,7 @@
 
 #define FIND_AND_CONSUME_RESTORE_ARG(match, optionName, optionValue) FIND_AND_CONSUME_ARG(vm->checkpointState.restoreArgsList, match, optionName, optionValue)
 #define FIND_ARG_IN_RESTORE_ARGS(match, optionName, optionValue) FIND_ARG_IN_ARGS(vm->checkpointState.restoreArgsList, match, optionName, optionValue)
+#define GET_INTEGER_VALUE_RESTORE_ARGS(element, optname, result) GET_INTEGER_VALUE_ARGS(vm->checkpointState.restoreArgsList, element, optname, result)
 
 J9::OptionsPostRestore::OptionsPostRestore(J9VMThread *vmThread, J9JITConfig *jitConfig, TR::CompilationInfo *compInfo, TR::Region &region)
    :
@@ -84,6 +85,9 @@ J9::OptionsPostRestore::OptionsPostRestore(J9VMThread *vmThread, J9JITConfig *ji
 void
 J9::OptionsPostRestore::iterateOverExternalOptions()
    {
+   // Needed for FIND_AND_CONSUME_RESTORE_ARG
+   J9JavaVM *vm = _jitConfig->javaVM;
+
    int32_t start = static_cast<int32_t>(J9::ExternalOptions::TR_FirstExternalOption);
    int32_t end = static_cast<int32_t>(J9::ExternalOptions::TR_NumExternalOptions);
    for (int32_t option = start; option < end; option++)
@@ -150,7 +154,16 @@ J9::OptionsPostRestore::iterateOverExternalOptions()
 
          case J9::ExternalOptions::XcompilationThreads:
             {
-            // Need to allocate more if needed
+            char *compThreadsOption = J9::Options::_externalOptionStrings[J9::ExternalOptions::XcompilationThreads];
+            int32_t argIndex = FIND_AND_CONSUME_RESTORE_ARG(EXACT_MEMORY_MATCH, compThreadsOption, 0);
+            if (argIndex >= 0)
+               {
+               UDATA numCompThreads;
+               IDATA ret = GET_INTEGER_VALUE_RESTORE_ARGS(argIndex, compThreadsOption, numCompThreads);
+
+               if (ret == OPTION_OK && numCompThreads > 0)
+                  TR::Options::_numUsableCompilationThreads = numCompThreads;
+               }
             }
             break;
 
@@ -511,7 +524,6 @@ void
 J9::OptionsPostRestore::postProcessInternalCompilerOptions()
    {
    // TODO: Based on whether the following is enabled, do necessary compensation
-   // - compilationThreads=
    // - disableAsyncCompilation
    // - disabling recompilation (optLevel=, inhibit recomp, etc)
    // - OMR::Options::_logFile (both global and subsets)
@@ -519,6 +531,9 @@ J9::OptionsPostRestore::postProcessInternalCompilerOptions()
 
    if (TR::Options::getDebug())
       filterMethods();
+
+   if (TR::Options::_numUsableCompilationThreads != _compInfo->getNumUsableCompilationThreads())
+      _compInfo->setNumUsableCompilationThreadsPostRestore(TR::Options::_numUsableCompilationThreads);
    }
 
 void
@@ -562,8 +577,6 @@ J9::OptionsPostRestore::processCompilerOptions()
       processInternalCompilerOptions(aotEnabled, true);
       processInternalCompilerOptions(jitEnabled, false);
 
-      postProcessInternalCompilerOptions();
-
       // TODO: Look into
       // - -Xrs
       // - -Xtune:virtualized
@@ -580,6 +593,8 @@ J9::OptionsPostRestore::processCompilerOptions()
          {
          processJitServerOptions();
          }
+
+      postProcessInternalCompilerOptions();
       }
    }
 

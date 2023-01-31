@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2022 IBM Corp. and others
+ * Copyright (c) 2018, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -102,7 +102,7 @@ static int32_t J9THREAD_PROC statisticsThreadProc(void * entryarg)
             }
 
          // Print operational statistics to vlog if enabled
-         CpuUtilization *cpuUtil = compInfo->getCpuUtil(); 
+         CpuUtilization *cpuUtil = compInfo->getCpuUtil();
          if ((statsThreadObj->getStatisticsFrequency() != 0) && (crtTime - lastStatsTime > statsThreadObj->getStatisticsFrequency()))
             {
             int32_t cpuUsage = 0, avgCpuUsage = 0, vmCpuUsage = 0;
@@ -115,7 +115,7 @@ static int32_t J9THREAD_PROC statisticsThreadProc(void * entryarg)
                vmCpuUsage = cpuUtil->getVmCpuUsage();
                }
             omrstr_ftime_ex(timestamp, sizeof(timestamp), "%b %d %H:%M:%S %Y", crtTime, OMRSTR_FTIME_FLAG_LOCAL);
-            
+
             TR_VerboseLog::CriticalSection vlogLock;
             TR_VerboseLog::writeLine(TR_Vlog_JITServer, "CurrentTime: %s", timestamp);
             TR_VerboseLog::writeLine(TR_Vlog_JITServer, "Compilation Queue Size: %d", compInfo->getMethodQueueSize());
@@ -132,7 +132,7 @@ static int32_t J9THREAD_PROC statisticsThreadProc(void * entryarg)
                }
             lastStatsTime = crtTime;
             }
-            
+
          if (cpuUtil->isFunctional() && TR::Options::isAnyVerboseOptionSet() && ((crtTime - lastCpuUpdate) >= 500))
             {
             lastCpuUpdate = crtTime;

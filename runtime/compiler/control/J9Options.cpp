@@ -2712,6 +2712,15 @@ J9::Options::fePostProcessJIT(void * base)
          }
       }
 
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
+   if (!javaVM->internalVMFunctions->isJITServerEnabled(javaVM))
+#endif
+      {
+      _numAllocatedCompilationThreads = TR::CompilationInfo::MAX_CLIENT_USABLE_COMP_THREADS;
+      }
+#endif // defined(J9VM_OPT_CRIU_SUPPORT)
+
    // patch Lock OR if mfence is not being used
    //
    if (!self()->getOption(TR_X86UseMFENCE) && (jitConfig->runtimeFlags & J9JIT_PATCHING_FENCE_TYPE))
