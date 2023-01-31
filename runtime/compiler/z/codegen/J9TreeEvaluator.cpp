@@ -2078,7 +2078,10 @@ J9::Z::TreeEvaluator::inlineCRC32CUpdateBytes(TR::Node *node, TR::CodeGenerator 
 
    // If less than 16B of input, branch to bytewise path
    // The vectorized path only works for multiples of 16B
-   TR::RegisterDependencyConditions* dependencies = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 19, cg);
+   TR::LabelSymbol* startICF = generateLabelSymbol(cg);
+   generateS390LabelInstruction(cg, TR::InstOpCode::label, node, startICF);
+   startICF->setStartInternalControlFlow();
+   TR::RegisterDependencyConditions* dependencies = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 23, cg);
    TR::LabelSymbol* callJava = generateLabelSymbol(cg);
    TR::Instruction* cursor = generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::getCmpLogicalOpCode(), node, remaining, 16, TR::InstOpCode::COND_BL, callJava, false, false, NULL, dependencies);
    TR_Debug* debugObj = cg->getDebug();
@@ -2145,9 +2148,6 @@ J9::Z::TreeEvaluator::inlineCRC32CUpdateBytes(TR::Node *node, TR::CodeGenerator 
    generateVRSbInstruction(cg, TR::InstOpCode::VLVG, node, vScratch, crc, generateS390MemoryReference(3, cg), 2);
 
    // Jump to 16-byte processing path if less than 64 bytes of data
-   TR::LabelSymbol* startICF = generateLabelSymbol(cg);
-   generateS390LabelInstruction(cg, TR::InstOpCode::label, node, startICF);
-   startICF->setStartInternalControlFlow();
    TR::LabelSymbol* foldBy1 = generateLabelSymbol(cg);
    cursor = generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::getCmpLogicalOpCode(), node, remaining, 64, TR::InstOpCode::COND_BL, foldBy1, false, false, NULL, dependencies);
    if (debugObj)
@@ -2282,16 +2282,10 @@ J9::Z::TreeEvaluator::inlineCRC32CUpdateBytes(TR::Node *node, TR::CodeGenerator 
    // Check whether to continue with 16-bit folding
    generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::getCmpLogicalOpCode(), node, remaining, 16, TR::InstOpCode::COND_BNL, foldBy1Loop, false, false, NULL, dependencies);
 
-   // Set up the rest of dependencies for ICF
-   dependencies->addPostCondition(vScratch, TR::RealRegister::AssignAny);
-   dependencies->addPostCondition(buffer, TR::RealRegister::AssignAny);
-   dependencies->addPostCondition(remaining, TR::RealRegister::AssignAny);
-
    /************************************** final reduction of 128 bits ******************************************/
-   cursor = generateS390LabelInstruction(cg, TR::InstOpCode::label, node, finalReduction, dependencies);
+   cursor = generateS390LabelInstruction(cg, TR::InstOpCode::label, node, finalReduction);
    if (debugObj)
       debugObj->addInstructionComment(cursor, "Reduce vector into 32-bit CRC-32C value");
-   finalReduction->setEndInternalControlFlow();
 
    // Set up a vector register for byte shifts.
    // The shift value must be loaded in bits 1-4 in byte element 7 of the vector.
@@ -2412,15 +2406,16 @@ J9::Z::TreeEvaluator::inlineCRC32CUpdateBytes(TR::Node *node, TR::CodeGenerator 
    cg->stopUsingRegister(end);
    cg->stopUsingRegister(remaining);
 
-   // Dependencies common between main line and OOL
-   dependencies = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 5, cg);
    dependencies->addPostCondition(array, TR::RealRegister::AssignAny);
    dependencies->addPostCondition(offset, TR::RealRegister::AssignAny);
    dependencies->addPostCondition(end, TR::RealRegister::AssignAny);
-   dependencies->addPostCondition(remaining, TR::RealRegister::AssignAny);
    dependencies->addPostCondition(crc, TR::RealRegister::AssignAny);
+   dependencies->addPostCondition(vScratch, TR::RealRegister::AssignAny);
+   dependencies->addPostCondition(buffer, TR::RealRegister::AssignAny);
+   dependencies->addPostCondition(remaining, TR::RealRegister::AssignAny);
 
    generateS390LabelInstruction(cg, TR::InstOpCode::label, node, done, dependencies);
+   done->setEndInternalControlFlow();
 
    node->setRegister(crc);
    cg->decReferenceCount(node->getChild(0));
