@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2022 IBM Corp. and others
+ * Copyright (c) 1998, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -490,7 +490,7 @@ jobject getPropertyList(JNIEnv *env)
 
 #if defined(OPENJ9_BUILD) && JAVA_SPEC_VERSION == 8
 	/* Set the maximum direct byte buffer allocation property if it has not been set manually */
-	if ((UDATA) -1 == javaVM->directByteBufferMemoryMax) {
+	if ((~(UDATA)0) == javaVM->directByteBufferMemoryMax) {
 		UDATA heapSize = javaVM->memoryManagerFunctions->j9gc_get_maximum_heap_size(javaVM);
 		/* allow up to 7/8 of the heap to be direct byte buffers */
 		javaVM->directByteBufferMemoryMax = heapSize - (heapSize / 8);
@@ -498,12 +498,12 @@ jobject getPropertyList(JNIEnv *env)
 #endif /* defined(OPENJ9_BUILD) && JAVA_SPEC_VERSION == 8 */
 #if !defined(OPENJ9_BUILD)
 	/* Don't set a default value for IBM Java 8. */
-	if ((UDATA) -1 != javaVM->directByteBufferMemoryMax)
+	if ((~(UDATA)0) != javaVM->directByteBufferMemoryMax)
 #endif /* !defined(OPENJ9_BUILD) */
 	{
 		strings[propIndex] = "sun.nio.MaxDirectMemorySize";
 		propIndex += 1;
-		if ((UDATA) -1 == javaVM->directByteBufferMemoryMax) {
+		if ((~(UDATA)0) == javaVM->directByteBufferMemoryMax) {
 			strcpy(maxDirectMemBuff, "-1");
 		} else {
 			j9str_printf(PORTLIB, maxDirectMemBuff, sizeof(maxDirectMemBuff), "%zu", javaVM->directByteBufferMemoryMax);

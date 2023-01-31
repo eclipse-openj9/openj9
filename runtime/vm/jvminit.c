@@ -2319,7 +2319,7 @@ VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved)
 			}
 
 			parseError = setMemoryOptionToOptElse(vm, &(vm->directByteBufferMemoryMax),
-					VMOPT_XXMAXDIRECTMEMORYSIZEEQUALS, (UDATA) -1, TRUE);
+					VMOPT_XXMAXDIRECTMEMORYSIZEEQUALS, ~(UDATA)0, TRUE);
 			if (OPTION_OK != parseError) {
 				parseErrorOption = VMOPT_XXMAXDIRECTMEMORYSIZEEQUALS;
 				goto _memParseError;
@@ -7283,7 +7283,7 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 		IDATA disabled = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXPRINTFLAGSFINALDISABLE, NULL);
 		if (enabled > disabled) {
 			size_t maxHeapSize = (size_t) (vm->memoryManagerFunctions->j9gc_get_maximum_heap_size(vm));
-			uint64_t maxDirectMemorySize = (uint64_t) (vm->directByteBufferMemoryMax);
+			uint64_t maxDirectMemorySize = (uint64_t) (((~(UDATA)0) == vm->directByteBufferMemoryMax) ? 0 : vm->directByteBufferMemoryMax);
 			const char *howset = NULL;
 
 			/*
