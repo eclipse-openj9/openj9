@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -151,13 +151,13 @@ J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 
 			j9nls_printf(PORTLIB, J9NLS_INFO, J9NLS_JNICHK_INSTALLED);
 			break;
-		
+
 		case JIT_INITIALIZED :
 			/* Register this module with trace */
 			UT_MODULE_LOADED(J9_UTINTERFACE_FROM_VM(vm));
 			Trc_JNI_VMInitStages_Event1(NULL);
 			break;
-		
+
 		case GC_SHUTDOWN_COMPLETE:
 			if (NULL != vm->checkJNIData.jniGlobalRefHashTab) {
 				/* free the hash table */
@@ -192,11 +192,11 @@ jniCheckProcessCommandLine(J9JavaVM* vm, J9VMDllLoadInfo* loadInfo)
 	 * -Xcheck:nabounds is a RI-compatibility option. It is equivalent to -Xcheck:jni.
 	 * No sub-options are permitted for -Xcheck:nabounds
 	 */
-	FIND_AND_CONSUME_ARG( EXACT_MATCH, "-Xcheck:nabounds", NULL );
+	FIND_AND_CONSUME_VMARG( EXACT_MATCH, "-Xcheck:nabounds", NULL );
 
-	xcheckJNIIndex = FIND_AND_CONSUME_ARG( OPTIONAL_LIST_MATCH, "-Xcheck:jni", NULL );
+	xcheckJNIIndex = FIND_AND_CONSUME_VMARG( OPTIONAL_LIST_MATCH, "-Xcheck:jni", NULL );
 
-	levelIndex = FIND_AND_CONSUME_ARG( STARTSWITH_MATCH, "-Xcheck:level=", NULL );
+	levelIndex = FIND_AND_CONSUME_VMARG( STARTSWITH_MATCH, "-Xcheck:level=", NULL );
 
 	if (xcheckJNIIndex >= 0) {
 		GET_OPTION_VALUE(xcheckJNIIndex, ':', &options);
@@ -317,7 +317,7 @@ jniCheckParseOptions(J9JavaVM* vm, char* options)
 			vm->checkJNIData.options |= JNICHK_INCLUDEBOOT;
 			continue;
 		}
-		
+
 		if (try_scan(&scan_start, "alwayscopy")) {
 			vm->checkJNIData.options |= JNICHK_ALWAYSCOPY;
 			continue;
@@ -1046,7 +1046,7 @@ void
 jniVerboseGetID(const char *function, JNIEnv *env, jclass classRef, const char *name, const char *sig)
 {
 	J9VMThread *vmThread = (J9VMThread *)env;
-	
+
 	if ( vmThread->javaVM->checkJNIData.options & JNICHK_VERBOSE) {
 		J9UTF8 *className;
 		PORT_ACCESS_FROM_VMC(vmThread);
@@ -2112,7 +2112,7 @@ jniCheckPrintJNIOnLoad(JNIEnv *env, U_32 level)
 		j9nls_printf(PORTLIB, level, J9NLS_JNICHK_ADVICE_IN_ONLOAD, size, data);
 		break;
 	}
-	
+
 	if (alloc == TRUE) {
 		j9mem_free_memory(data);
 	}

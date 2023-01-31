@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2022 IBM Corp. and others
+ * Copyright (c) 1991, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -82,7 +82,7 @@ copySystemProperties(J9JavaVM* vm)
 		/* copy the name */
 		if ((property->flags & J9SYSPROP_FLAG_NAME_ALLOCATED) == 0) {
 			copied = copyToMem(vm, property->name);
-			
+
 			if (copied == NULL) {
 				/* Give up at this point as the memory allocation will probably continue to fail */
 				return;
@@ -90,7 +90,7 @@ copySystemProperties(J9JavaVM* vm)
 			property->name = copied;
 			property->flags |= J9SYSPROP_FLAG_NAME_ALLOCATED;
 		}
-		
+
 		/* copy the value */
 		if ((property->flags & J9SYSPROP_FLAG_VALUE_ALLOCATED) == 0) {
 			copied = copyToMem(vm, property->value);
@@ -187,7 +187,7 @@ static UDATA
 addPropertyForOptionWithEqualsArg(J9JavaVM *vm, const char *optionName, UDATA optionNameLen, const char *propName)
 {
 	UDATA rc = J9SYSPROP_ERROR_NONE;
-	IDATA argIndex = FIND_AND_CONSUME_ARG(STARTSWITH_MATCH, optionName, NULL);
+	IDATA argIndex = FIND_AND_CONSUME_VMARG(STARTSWITH_MATCH, optionName, NULL);
 
 	if (argIndex >= 0) {
 		/* option name includes the '=' so go back one to get the option arg */
@@ -231,7 +231,7 @@ addPropertyForOptionWithPathArg(J9JavaVM *vm, const char *optionName, UDATA opti
 	UDATA rc = J9SYSPROP_ERROR_NONE;
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
-	argIndex = FIND_AND_CONSUME_ARG(OPTIONAL_LIST_MATCH_USING_EQUALS, optionName, NULL);
+	argIndex = FIND_AND_CONSUME_VMARG(OPTIONAL_LIST_MATCH_USING_EQUALS, optionName, NULL);
 	if (argIndex >= 0) {
 		char *optionArg = getOptionArg(vm, argIndex, optionNameLen);
 
@@ -840,7 +840,7 @@ initializeSystemProperties(J9JavaVM * vm)
 	}
 #endif /* JAVA_SPEC_VERSION < 18 */
 
-	/* Create the -D properties. This may override any of the writeable properties above. 
+	/* Create the -D properties. This may override any of the writeable properties above.
 	    Should the command line override read-only props? */
 	for (i = 0; i < initArgs->nOptions; ++i) {
 		char * optionString = initArgs->options[i].optionString;
@@ -922,7 +922,7 @@ initializeSystemProperties(J9JavaVM * vm)
 			}
 		}
 	}
-	
+
 	if (j2seVersion >= J2SE_V11) {
 		/* On Java 9 support for java.endorsed.dirs is disabled. If java.home/lib/endorsed dir is found, JVM fails to startup. *
 		 * Similarly, support for java.ext.dirs is disabled. If java.home/lib/ext dir is found, JVM fails to startup.

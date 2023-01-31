@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,7 +31,7 @@
 #define SHRCLSSUP_ERR_TRACE(verbose, var) if (verbose) j9nls_printf(PORTLIB, J9NLS_ERROR, var)
 #define SHRCLSSUP_ERR_TRACE1(verbose, var, p1) if (verbose) j9nls_printf(PORTLIB, J9NLS_ERROR, var, p1)
 
-IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved) 
+IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 {
 	IDATA returnVal = J9VMDLLMAIN_OK;
 	UDATA rc = 0;
@@ -129,12 +129,12 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 
 				/* Check for -XX:ShareClassesEnableBCI and -XX:ShareClassesDisableBCI; whichever comes later wins.
 				 * These options should be checked before parseArgs() to allow -Xshareclasses:[enable|disable]BCI to override this option.
-				 * 
+				 *
 				 * Note: Please also change the function checkArgsConsumed() in runtime/vm/jvminit.c when adding new options,
 				 * in order to quietly consume the options if it is used without -Xshareclasses
 				 */
-				argIndex1 = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXSHARECLASSESENABLEBCI, NULL);
-				argIndex2 = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXSHARECLASSESDISABLEBCI, NULL);
+				argIndex1 = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXSHARECLASSESENABLEBCI, NULL);
+				argIndex2 = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXSHARECLASSESDISABLEBCI, NULL);
 				if (argIndex1 > argIndex2) {
 					runtimeFlags |= J9SHR_RUNTIMEFLAG_ENABLE_BCI;
 				} else if (argIndex2 > argIndex1) {
@@ -142,19 +142,19 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 				}
 
 				/* Check for -XX:+ShareAnonymousClasses and -XX:-ShareAnonymousClasses; whichever comes later wins. Enable is set by default so we just need to disable when that's the case. */
-				argIndex1 = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXENABLESHAREANONYMOUSCLASSES, NULL);
-				argIndex2 = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXDISABLESHAREANONYMOUSCLASSES, NULL);
+				argIndex1 = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXENABLESHAREANONYMOUSCLASSES, NULL);
+				argIndex2 = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXDISABLESHAREANONYMOUSCLASSES, NULL);
 				if (argIndex2 > argIndex1) {
 					runtimeFlags &= (~J9SHR_RUNTIMEFLAG_ENABLE_SHAREANONYMOUSCLASSES);
 				}
 
 				/* Check for -XX:+ShareUnsafeClasses and -XX:-ShareUnsafeClasses; whichever comes later wins. Enable is set by default so we just need to disable when that's the case. */
-				argIndex1 = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXENABLESHAREUNSAFECLASSES, NULL);
-				argIndex2 = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXDISABLESHAREUNSAFECLASSES, NULL);
+				argIndex1 = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXENABLESHAREUNSAFECLASSES, NULL);
+				argIndex2 = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXDISABLESHAREUNSAFECLASSES, NULL);
 				if (argIndex2 > argIndex1) {
 					runtimeFlags &= (~J9SHR_RUNTIMEFLAG_ENABLE_SHAREUNSAFECLASSES);
 				}
-								
+
 				vm->sharedCacheAPI->parseResult = parseArgs(vm, optionsBufferPtr, &runtimeFlags, &verboseFlags, &cacheName, &modContext,
 								&expireTime, &ctrlDirName, &cacheDirPermStr, &methodSpecs, &printStatsOptions, &storageKeyTesting);
 				if ((RESULT_PARSE_FAILED == vm->sharedCacheAPI->parseResult)
@@ -305,7 +305,7 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 	}
 
 	case ALL_VM_ARGS_CONSUMED :
-		FIND_AND_CONSUME_ARG( OPTIONAL_LIST_MATCH, OPT_XSHARECLASSES, NULL );
+		FIND_AND_CONSUME_VMARG( OPTIONAL_LIST_MATCH, OPT_XSHARECLASSES, NULL );
 		vm->sharedClassConfig = NULL;
 		break;
 
@@ -354,7 +354,7 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 	/* MUST run before JCL_INITIALIZED, but as late as possible */
 	case ABOUT_TO_BOOTSTRAP :
 	{
-		/*Note: 
+		/*Note:
 		 * j9shr_sharedClassesFinishInitialization() is called by jvminit.c before this stage of startup.
 		 */
 		break;
@@ -362,7 +362,7 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 
 	case LIBRARIES_ONUNLOAD :
 	case JVM_EXIT_STAGE :
-		j9shr_guaranteed_exit(vm, FALSE);	
+		j9shr_guaranteed_exit(vm, FALSE);
 		break;
 
 	case HEAP_STRUCTURES_FREED :

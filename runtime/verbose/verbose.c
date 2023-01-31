@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -102,7 +102,7 @@
 		(clazz)->superclasses[J9CLASS_DEPTH(clazz) - 1])
 
 static void verboseStackDump (J9VMThread * vmThread, const char * msg);
-#if (defined(J9VM_OPT_DYNAMIC_LOAD_SUPPORT)) 
+#if (defined(J9VM_OPT_DYNAMIC_LOAD_SUPPORT))
 void hookDynamicLoadReporting (J9TranslationBufferSet *dynamicLoadBuffers);
 #endif /* J9VM_OPT_DYNAMIC_LOAD_SUPPORT */
 static void printClass (J9VMThread* vmThread, J9Class* clazz, char* message, UDATA bootLoaderOnly);
@@ -116,10 +116,10 @@ static void verboseHookClassLoad (J9HookInterface** hook, UDATA eventNum, void* 
 #if (defined(J9VM_OPT_ZIP_SUPPORT))
 static void zipCachePoolHookCallback(J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData);
 #endif
-#if (defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)) 
+#if (defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING))
 static void verboseHookClassUnload (J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData);
 #endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
-#if (defined(J9VM_OPT_DYNAMIC_LOAD_SUPPORT)) 
+#if (defined(J9VM_OPT_DYNAMIC_LOAD_SUPPORT))
 void reportDynloadStatistics (struct J9JavaVM *javaVM, struct J9ClassLoader *loader, struct J9ROMClass *romClass, struct J9TranslationLocalBuffer *localBuffer);
 #endif /* J9VM_OPT_DYNAMIC_LOAD_SUPPORT */
 static void dumpQualifiedSize (J9PortLibrary* portLib, UDATA byteSize, const char* optionName, U_32 module_name, U_32 message_num);
@@ -168,7 +168,7 @@ jint JNICALL JVM_OnUnload(JavaVM * jvm, void *reserved0)
 
 
 /* Output is intentionally ordered the same as "j9 -X" */
-static void 
+static void
 dumpMemorySizes(J9JavaVM *jvm)
 {
 	PORT_ACCESS_FROM_JAVAVM(jvm);
@@ -189,8 +189,8 @@ dumpMemorySizes(J9JavaVM *jvm)
 
 #if defined(J9VM_OPT_SHARED_CLASSES)
 	if (J2SE_VERSION(jvm) && jvm->sharedClassPreinitConfig) {				/* Only show for J2SE */
-		/* Init updatedWithDefaults to the current values in jvm->sharedClassPreinitConfig, 
-		 * b/c if new members are added to J9SharedClassPreinitConfig this will cause the 
+		/* Init updatedWithDefaults to the current values in jvm->sharedClassPreinitConfig,
+		 * b/c if new members are added to J9SharedClassPreinitConfig this will cause the
 		 * default value (set by VMInitStages() in jvminit.c) to be used.
 		 */
 		J9JavaVM *vm = jvm;
@@ -305,7 +305,7 @@ dumpXlpCodeCache(J9JavaVM *jvm)
 	}
 }
 
-static void 
+static void
 dumpQualifiedSize(J9PortLibrary* portLib, UDATA byteSize, const char* optionName, U_32 module_name, U_32 message_num)
 {
 	char buffer[16];
@@ -318,9 +318,9 @@ dumpQualifiedSize(J9PortLibrary* portLib, UDATA byteSize, const char* optionName
 
 	optionDescription = OMRPORT_FROM_J9PORT(PORTLIB)->nls_lookup_message(
 		OMRPORT_FROM_J9PORT(PORTLIB),
-		J9NLS_DO_NOT_APPEND_NEWLINE | J9NLS_DO_NOT_PRINT_MESSAGE_TAG, 
-		module_name, 
-		message_num, 
+		J9NLS_DO_NOT_APPEND_NEWLINE | J9NLS_DO_NOT_PRINT_MESSAGE_TAG,
+		module_name,
+		message_num,
 		NULL);
 
 	paramSize = j9str_printf(PORTLIB, buffer, 16, "%zu%s", size, qualifier);
@@ -333,7 +333,7 @@ dumpQualifiedSize(J9PortLibrary* portLib, UDATA byteSize, const char* optionName
 }
 
 #if 0
-static void 
+static void
 printClassShape(J9VMThread* vmThread, J9Class* clazz)
 {
 	J9ROMClass* romClass;
@@ -348,11 +348,11 @@ printClassShape(J9VMThread* vmThread, J9Class* clazz)
 		if (shape != NULL) {
 			memset(shape, '?', len);
 			shape[len] = '\0';
-			
+
 			while (clazz != NULL) {
 				J9ROMFieldWalkState walkState;
 				J9ROMFieldShape* romField = romFieldsStartDo(clazz->romClass, &walkState);
-				
+
 				while (romField != NULL) {
 					if (0 == (romField->modifiers & J9AccStatic)) {
 						J9UTF8* name = J9ROMFIELDSHAPE_NAME(romField);
@@ -367,9 +367,9 @@ printClassShape(J9VMThread* vmThread, J9Class* clazz)
 							NULL, /* defining class return value */
 							NULL, /* romFieldShape return value */
 							J9_LOOK_NO_JAVA);
-							
+
 						offset /= sizeof(U_32);
-							
+
 						switch (J9UTF8_DATA(signature)[0]) {
 						case 'B':
 						case 'Z':
@@ -389,14 +389,14 @@ printClassShape(J9VMThread* vmThread, J9Class* clazz)
 							break;
 						}
 					}
-				
-					romField = romFieldsNextDo(&walkState);	
+
+					romField = romFieldsNextDo(&walkState);
 				}
-			
-				clazz = GET_SUPERCLASS(clazz);	
-			}	
+
+				clazz = GET_SUPERCLASS(clazz);
+			}
 		}
-		
+
 		j9tty_printf(PORTLIB, "\tSHAPE: %s\n", shape);
 		j9mem_free_memory(shape);
 	}
@@ -421,9 +421,9 @@ static void zipCachePoolHookCallback(J9HookInterface** hook, UDATA eventNum, voi
 {
 	J9VMZipLoadEvent* event = eventData;
 	I_32 rc = event->returnCode;
-	
+
 	PORT_ACCESS_FROM_PORT(event->portlib);
-	
+
 	switch (rc) {
 		case 0:
 			return;
@@ -448,7 +448,7 @@ static void zipCachePoolHookCallback(J9HookInterface** hook, UDATA eventNum, voi
 }
 #endif
 
-#if (defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)) 
+#if (defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING))
 static void
 verboseHookClassUnload(J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData)
 {
@@ -459,7 +459,7 @@ verboseHookClassUnload(J9HookInterface** hook, UDATA eventNum, void* eventData, 
 #endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
 
 
-#if (defined(J9VM_OPT_DYNAMIC_LOAD_SUPPORT)) 
+#if (defined(J9VM_OPT_DYNAMIC_LOAD_SUPPORT))
 void reportDynloadStatistics(struct J9JavaVM *javaVM, struct J9ClassLoader *loader, struct J9ROMClass *romClass, struct J9TranslationLocalBuffer *localBuffer)
 {
 	J9DynamicLoadStats *dynamicLoadStats = javaVM->dynamicLoadBuffers->dynamicLoadStats;
@@ -533,7 +533,7 @@ void reportDynloadStatistics(struct J9JavaVM *javaVM, struct J9ClassLoader *load
 #endif /* J9VM_OPT_DYNAMIC_LOAD_SUPPORT */
 
 
-#if (defined(J9VM_OPT_DYNAMIC_LOAD_SUPPORT)) 
+#if (defined(J9VM_OPT_DYNAMIC_LOAD_SUPPORT))
 void hookDynamicLoadReporting(J9TranslationBufferSet *dynamicLoadBuffers)
 {
 	if(dynamicLoadBuffers) {
@@ -585,10 +585,10 @@ printClass(J9VMThread* vmThread, J9Class* clazz, char* message, UDATA bootLoader
  * @return 0 if error, 1 if success
  */
 
-static UDATA 
+static UDATA
 parseVerboseArgument(char* options, J9VerboseSettings* verboseOptions, char** errorString) {
 	UDATA result = TRUE;
-	
+
 	if (!options || !*options) {
 		verboseOptions->vclass = VERBOSE_SETTINGS_SET; /* default argument is OPT_CLASS */
 	} else while (*options) {
@@ -622,7 +622,7 @@ parseVerboseArgument(char* options, J9VerboseSettings* verboseOptions, char** er
 		} else if(strcmp(options, OPT_STACKWALK)==0) {
 			verboseOptions->stackwalk = VERBOSE_SETTINGS_SET;
 			verboseOptions->stackWalkVerboseLevel = DEFAULT_STACKWALK_VERBOSE_LEVEL;
-		} else if(strcmp(options, OPT_SIZES)==0) {	
+		} else if(strcmp(options, OPT_SIZES)==0) {
 			verboseOptions->sizes = VERBOSE_SETTINGS_SET;
 		} else if(strcmp(options, OPT_JNI)==0) {
 			verboseOptions->jni = VERBOSE_SETTINGS_SET;
@@ -636,7 +636,7 @@ parseVerboseArgument(char* options, J9VerboseSettings* verboseOptions, char** er
 			verboseOptions->debug = VERBOSE_SETTINGS_SET;
 		} else if(strcmp(options, OPT_INIT)==0) {
 			verboseOptions->init = VERBOSE_SETTINGS_SET;
-		} else if(strcmp(options, OPT_RELOCATIONS)==0) { 
+		} else if(strcmp(options, OPT_RELOCATIONS)==0) {
 			verboseOptions->relocations = VERBOSE_SETTINGS_SET;
 		} else if(strcmp(options, OPT_ROMCLASS)==0) {
 			verboseOptions->romclass = VERBOSE_SETTINGS_SET;
@@ -667,7 +667,7 @@ parseVerboseArgument(char* options, J9VerboseSettings* verboseOptions, char** er
  */
 
 #define VERBOSE_OPTION_BUF_SIZE 256
-UDATA 
+UDATA
 parseVerboseArgumentList(J9JavaVM* vm, J9VMDllLoadInfo* loadInfo, char **errorString) {
 	char valuesBuffer[VERBOSE_OPTION_BUF_SIZE];				/* Should be long enough to cope with all possible options */
 	char* valuesBufferPtr = valuesBuffer;
@@ -679,13 +679,13 @@ parseVerboseArgumentList(J9JavaVM* vm, J9VMDllLoadInfo* loadInfo, char **errorSt
 	IDATA xnoverbvrfyIndex = -1;
 	IDATA verifyErrorDetailsIndex = -1;
 	IDATA noVerifyErrorDetailsIndex = -1;
-	
+
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
 	memset(valuesBuffer, '\0', VERBOSE_OPTION_BUF_SIZE);
 	memset(&verboseOptions, 0, sizeof(J9VerboseSettings));
 	do {
-		verboseIndex = FIND_AND_CONSUME_ARG( SEARCH_FORWARD | OPTIONAL_LIST_MATCH | (verboseIndex << STOP_AT_INDEX_SHIFT), OPT_VERBOSE, NULL );
+		verboseIndex = FIND_AND_CONSUME_VMARG( SEARCH_FORWARD | OPTIONAL_LIST_MATCH | (verboseIndex << STOP_AT_INDEX_SHIFT), OPT_VERBOSE, NULL );
 		/* start the search from where we left off last time */
 		if (verboseIndex >= 0) {
 			foundArg = 1;
@@ -730,7 +730,7 @@ parseVerboseArgumentList(J9JavaVM* vm, J9VMDllLoadInfo* loadInfo, char **errorSt
 IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved) {
 	IDATA returnVal = J9VMDLLMAIN_OK;
 	J9VMDllLoadInfo* loadInfo;
-	IDATA verbosegclogIndex; 
+	IDATA verbosegclogIndex;
 
 #define VERBOSE_INIT_STAGE DLL_LOAD_TABLE_FINALIZED	/* defined separately for consistency of dependencies */
 #define VERBOSE_EXIT_STAGE JVM_EXIT_STAGE	/* defined separately for consistency of dependencies */
@@ -739,7 +739,7 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved) {
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
 	J9MemoryManagerVerboseInterface *mmFuncTable = (J9MemoryManagerVerboseInterface *) ((vm->memoryManagerFunctions == NULL) ? NULL : vm->memoryManagerFunctions->getVerboseGCFunctionTable(vm));
-	
+
 	switch(stage) {
 		case ALL_DEFAULT_LIBRARIES_LOADED:
 			if (0 != initZipLibrary(vm->portLibrary, vm->j2seRootDirectory)) {
@@ -761,7 +761,7 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved) {
 			/* Note - verboseStruct not needed for modron verbose gc */
 			initializeVerboseFunctionTable(vm);
 
-			verbosegclogIndex = FIND_AND_CONSUME_ARG( OPTIONAL_LIST_MATCH, OPT_XVERBOSEGCLOG, NULL );
+			verbosegclogIndex = FIND_AND_CONSUME_VMARG( OPTIONAL_LIST_MATCH, OPT_XVERBOSEGCLOG, NULL );
 			if (verbosegclogIndex >= 0) {
 				if (!initializeVerbosegclog(vm, verbosegclogIndex)) {
 					loadInfo->fatalErrorStr =  (char*)j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG|J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_VERB_FAILED_TO_INITIALIZE,"Failed to initialize.");
@@ -773,7 +773,7 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved) {
 				goto _error;
 			}
 
-			if (FIND_AND_CONSUME_ARG(EXACT_MATCH, OPT_XSNW, NULL) >= 0) {
+			if (FIND_AND_CONSUME_VMARG(EXACT_MATCH, OPT_XSNW, NULL) >= 0) {
 				J9HookInterface ** gcOmrHook = vm->memoryManagerFunctions->j9gc_get_omr_hook_interface(vm->omrVM);
 
 				(*gcOmrHook)->J9HookRegisterWithCallSite(gcOmrHook, J9HOOK_MM_OMR_GLOBAL_GC_START, sniffAndWhackHookGC, OMR_GET_CALLSITE(), NULL);
@@ -846,9 +846,9 @@ initializeVerbosegclogFromOptions(J9JavaVM* vm, char* vbgclogBuffer, UDATA buffe
 	UDATA scanResult;
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	J9MemoryManagerVerboseInterface *mmFuncTable;
-	
+
 	vbgclogBufferPtr = vbgclogBuffer;
-	
+
 	if ('\0' != *vbgclogBufferPtr) {
 		/* User might not specify the filename, so we may be assigning a NULL value here */
 		gclogName = vbgclogBufferPtr;
@@ -868,7 +868,7 @@ initializeVerbosegclogFromOptions(J9JavaVM* vm, char* vbgclogBuffer, UDATA buffe
 		}
 	}
 
-	/* Now look for blockCount */	
+	/* Now look for blockCount */
 	vbgclogBufferPtr += strlen(vbgclogBufferPtr) + 1;
 	/* if vbgclogBufferPtr point to behind bufferSize, there is no blockCount option */
 	if ((vbgclogBufferPtr < (vbgclogBuffer + bufferSize)) && ('\0' != *vbgclogBufferPtr)) {
@@ -898,8 +898,8 @@ initializeVerbosegclogFromOptions(J9JavaVM* vm, char* vbgclogBuffer, UDATA buffe
 	return mmFuncTable->gcDebugVerboseStartupLogging(vm, gclogName, fileCount, blockCount);
 }
 
-static IDATA 
-initializeVerbosegclog(J9JavaVM* vm, IDATA vbgclogIndex) 
+static IDATA
+initializeVerbosegclog(J9JavaVM* vm, IDATA vbgclogIndex)
 {
 	char* vbgclogBuffer = NULL;
 	UDATA bufferSize = 128;
@@ -916,9 +916,9 @@ initializeVerbosegclog(J9JavaVM* vm, IDATA vbgclogIndex)
 	} while (OPTION_BUFFER_OVERFLOW == GET_OPTION_VALUES(vbgclogIndex, ':', ',', &vbgclogBuffer, bufferSize));
 
 	result = initializeVerbosegclogFromOptions(vm, vbgclogBuffer, bufferSize);
-	
+
 	j9mem_free_memory(vbgclogBuffer);
-	
+
 	return result;
 }
 
@@ -963,7 +963,7 @@ static void verboseEmptyOSlotIterator(J9VMThread * currentThread, J9StackWalkSta
 {
 }
 
-static void 
+static void
 verboseHookGC(J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData)
 {
 	PORT_ACCESS_FROM_PORT(userData);
@@ -1033,7 +1033,7 @@ setVerboseState( J9JavaVM *vm, J9VerboseSettings *verboseOptions, char **errorSt
 			(*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_CLASS_UNLOAD, verboseHookClassUnload, OMR_GET_CALLSITE(), NULL);
 #endif
 		}
-	} 
+	}
 	if(VERBOSE_SETTINGS_SET == verboseOptions->gcterse) {
 		gcOmrHooks = vm->memoryManagerFunctions->j9gc_get_omr_hook_interface(vm->omrVM);
 
@@ -1070,8 +1070,8 @@ setVerboseState( J9JavaVM *vm, J9VerboseSettings *verboseOptions, char **errorSt
 	if(VERBOSE_SETTINGS_SET == verboseOptions->stackwalk) {
 		vm->stackWalkVerboseLevel=verboseOptions->stackWalkVerboseLevel;
 		installVerboseStackWalker(vm);
-	} 
-	if(VERBOSE_SETTINGS_SET == verboseOptions->sizes) {	
+	}
+	if(VERBOSE_SETTINGS_SET == verboseOptions->sizes) {
 		vm->verboseLevel |= VERBOSE_DUMPSIZES;
 	}
 	if(VERBOSE_SETTINGS_SET == verboseOptions->jni) {
@@ -1083,7 +1083,7 @@ setVerboseState( J9JavaVM *vm, J9VerboseSettings *verboseOptions, char **errorSt
 		vm->verboseLevel |= VERBOSE_STACK;
 	} else if(VERBOSE_SETTINGS_CLEAR == verboseOptions->stack) {
 		vm->verboseLevel &= ~VERBOSE_STACK;
-	} 
+	}
 	if(VERBOSE_SETTINGS_SET == verboseOptions->stacktrace) {
 		vm->verboseLevel |= VERBOSE_STACKTRACE;
 	} else if(VERBOSE_SETTINGS_CLEAR == verboseOptions->stacktrace) {
@@ -1104,9 +1104,9 @@ setVerboseState( J9JavaVM *vm, J9VerboseSettings *verboseOptions, char **errorSt
 	} else if(VERBOSE_SETTINGS_CLEAR == verboseOptions->init) {
 		vm->verboseLevel &= ~VERBOSE_INIT;
 	}
-	if(VERBOSE_SETTINGS_SET == verboseOptions->relocations) { 
+	if(VERBOSE_SETTINGS_SET == verboseOptions->relocations) {
 		vm->verboseLevel |= VERBOSE_RELOCATIONS;
-	} else if(VERBOSE_SETTINGS_CLEAR == verboseOptions->relocations) { 
+	} else if(VERBOSE_SETTINGS_CLEAR == verboseOptions->relocations) {
 		vm->verboseLevel &= ~VERBOSE_RELOCATIONS;
 	}
 	if(VERBOSE_SETTINGS_SET == verboseOptions->romclass) {
@@ -1129,7 +1129,7 @@ setVerboseState( J9JavaVM *vm, J9VerboseSettings *verboseOptions, char **errorSt
 		(*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_VM_METHOD_VERIFICATION_START, verboseMethodVerificationStart, NULL);
 		(*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_VM_STACKMAPFRAME_VERIFICATION, verboseStackMapFrameVerification, NULL);
 	}
-	
+
 	/* Jazz 82615: Register the callback functions for the error message framework if the VerifyErrorDetails option is specified */
 	if(VERBOSE_SETTINGS_SET == verboseOptions->verifyErrorDetails) {
 		vm->verboseStruct->getCfrExceptionDetails = generateJ9CfrExceptionDetails;
@@ -1149,7 +1149,7 @@ setVerboseState( J9JavaVM *vm, J9VerboseSettings *verboseOptions, char **errorSt
 	return result;
 }
 
-static void 
+static void
 sniffAndWhackHookGC(J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData)
 {
 	/* Assume all gc start/end events have currentThread in the same position */
@@ -1648,7 +1648,7 @@ printVerificationInfo(J9PortLibrary* portLibrary, VerboseVerificationBuffer* buf
 	UDATA msgLen = 0;
 
 	va_list args;
-	
+
 	if ((NULL == msgFormat) || ('\0' == msgFormat[0])) {
 		return;
 	}

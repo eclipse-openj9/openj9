@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2022 IBM Corp. and others
+ * Copyright (c) 1991, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,7 +20,7 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
- 
+
 /**
  * @file
  * @ingroup GCChk
@@ -63,12 +63,12 @@ void hookInvokeGCCheck(J9HookInterface** hook, UDATA eventNum, void* eventData, 
 static IDATA OnLoad(J9JavaVM * javaVM, const char *options);
 static IDATA OnUnload(J9JavaVM * javaVM);
 
-IDATA 
-J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved) 
+IDATA
+J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 {
 	if (stage == ALL_VM_ARGS_CONSUMED) {
 		const char* options = "";
-		IDATA xcheckGCIndex = FIND_AND_CONSUME_ARG( OPTIONAL_LIST_MATCH, "-Xcheck:gc", NULL );
+		IDATA xcheckGCIndex = FIND_AND_CONSUME_VMARG( OPTIONAL_LIST_MATCH, "-Xcheck:gc", NULL );
 
 		if (xcheckGCIndex >= 0) {
 			GET_OPTION_VALUE(xcheckGCIndex, ':', &options);
@@ -79,8 +79,8 @@ J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 				options++;
 			}
 		}
-		
-		return OnLoad(vm, options);	
+
+		return OnLoad(vm, options);
 	} else if (stage == LIBRARIES_ONUNLOAD) {
 		return OnUnload(vm);
 	} else {
@@ -90,7 +90,7 @@ J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 
 /**
  * Perform the actions required by GCCheck on JVM load.
- * 
+ *
  * Initialize a GC_CheckEngine object, parse the J9 command line for the prefered
  * options and install the appropriate hooks.
  */
@@ -103,7 +103,7 @@ OnLoad(J9JavaVM *javaVM, const char *options)
 	J9HookInterface** mmOmrHooks = J9_HOOK_INTERFACE((MM_GCExtensions::getExtensions(javaVM))->omrHookInterface);
 	PORT_ACCESS_FROM_JAVAVM(javaVM);
 	MM_Forge *forge = MM_GCExtensions::getExtensions(javaVM)->getForge();
-	
+
 	/* catch just outputting the help text */
 	if(!strcmp(options, "help")) {
 		GC_CheckCycle::printHelp(PORTLIB);
@@ -120,13 +120,13 @@ OnLoad(J9JavaVM *javaVM, const char *options)
 	/* Instantiate the reporter, check, and command-line cycle objects */
 	reporter = GC_CheckReporterTTY::newInstance(javaVM);
 	if (!reporter) {
-		goto error_no_memory;	
+		goto error_no_memory;
 	}
 	extensions->checkEngine = (void *)GC_CheckEngine::newInstance(javaVM, reporter);
 	if (!extensions->checkEngine) {
-		goto error_no_memory;	
+		goto error_no_memory;
 	}
-	
+
 	extensions->checkCycle = (void *)GC_CheckCycle::newInstance(javaVM, (GC_CheckEngine *)extensions->checkEngine, options);
 	if(!extensions->checkCycle) {
 		goto error_no_memory;
@@ -141,15 +141,15 @@ OnLoad(J9JavaVM *javaVM, const char *options)
 		/* Install scavengerBackOut hooks */
 		(*mmPrivateHooks)->J9HookRegisterWithCallSite(mmPrivateHooks, J9HOOK_MM_PRIVATE_SCAVENGER_BACK_OUT, hookScavengerBackOut, OMR_GET_CALLSITE(), NULL);
 #endif /* J9VM_GC_MODRON_SCAVENGER */
-	
+
 #if defined(J9VM_GC_GENERATIONAL)
 		(*mmPrivateHooks)->J9HookRegisterWithCallSite(mmPrivateHooks, J9HOOK_MM_PRIVATE_REMEMBEREDSET_OVERFLOW, hookRememberedSetOverflow, OMR_GET_CALLSITE(), NULL);
 #endif /* J9VM_GC_GENERATIONAL */
 	}
 
-	/* Install handler to run GCCheck from anywhere in GC code. */ 
+	/* Install handler to run GCCheck from anywhere in GC code. */
 	(*mmPrivateHooks)->J9HookRegisterWithCallSite(mmPrivateHooks, J9HOOK_MM_PRIVATE_INVOKE_GC_CHECK, hookInvokeGCCheck, OMR_GET_CALLSITE(), NULL);
-	
+
 	/* Set the ALLOW_USER_HEAP_WALK bit in the requiredDebugAttributes flag so GC Check can walk the heap */
 	javaVM->requiredDebugAttributes |= J9VM_DEBUG_ATTRIBUTE_ALLOW_USER_HEAP_WALK;
 
@@ -158,14 +158,14 @@ OnLoad(J9JavaVM *javaVM, const char *options)
 	}
 
 	return J9VMDLLMAIN_OK;
-	
+
 error_no_memory:
 	if (extensions) {
 		if (extensions->checkEngine) {
 			((GC_CheckEngine *)extensions->checkEngine)->kill();
 		} else if (reporter) {
 			/* CheckEngine will kill the reporter if the CheckEngine was created */
-			reporter->kill();	
+			reporter->kill();
 		}
 
 		if(extensions->checkCycle) {
@@ -183,7 +183,7 @@ error_no_memory:
  * Free any OS resources created by OnLoad.
  */
 static IDATA
-OnUnload(J9JavaVM *javaVM ) 
+OnUnload(J9JavaVM *javaVM )
 {
 	GCCHK_Extensions *extensions = (GCCHK_Extensions *)(MM_GCExtensions::getExtensions(javaVM))->gcchkExtensions;
 	MM_Forge *forge = MM_GCExtensions::getExtensions(javaVM)->getForge();
@@ -201,13 +201,13 @@ OnUnload(J9JavaVM *javaVM )
 #if (defined(J9VM_GC_MODRON_SCAVENGER)) /* priv. proto (autogen) */
 /**
  * Determine whether the next local GC should be excluded from checking.
- * 
- * @return false if we SHOULD perform a check before the next local 
+ *
+ * @return false if we SHOULD perform a check before the next local
  * GC, i.e. the next local GC should NOT be excluded
  * @return true if we should NOT perform a check
  */
 bool
-excludeLocalGc(J9JavaVM *javaVM) 
+excludeLocalGc(J9JavaVM *javaVM)
 {
 	MM_GCExtensions *gcExtensions = MM_GCExtensions::getExtensions(javaVM);
 	GCCHK_Extensions *extensions = (GCCHK_Extensions *)gcExtensions->gcchkExtensions;
@@ -215,7 +215,7 @@ excludeLocalGc(J9JavaVM *javaVM)
 	GC_CheckCycle *cycle = (GC_CheckCycle *)extensions->checkCycle;
 	bool ret = false;
 
-	/* User either requested that localGC be suppressed, or inform them only on remembered set overflow.  
+	/* User either requested that localGC be suppressed, or inform them only on remembered set overflow.
 	 * Either way, local information is not provided.
 	 */
 	if ((cycle->getMiscFlags() & J9MODRON_GCCHK_SUPPRESS_LOCAL) ||
@@ -276,8 +276,8 @@ hookScavengerBackOut(J9HookInterface** hook, UDATA eventNum, void* eventData, vo
 
 /**
  * Determine whether the next global GC should be excluded from checking.
- * 
- * @return false if we SHOULD perform a check before the next global 
+ *
+ * @return false if we SHOULD perform a check before the next global
  * GC, i.e. the next global GC should NOT be excluded
  * @return true if we should NOT perform a check
  */
@@ -298,8 +298,8 @@ excludeGlobalGc(J9VMThread* vmThread)
 		return true;
 	}
 
-	/* User either requested that globalGC be suppressed, or inform them only on 
-	 * scavenger backout or remembered set overflow.  
+	/* User either requested that globalGC be suppressed, or inform them only on
+	 * scavenger backout or remembered set overflow.
 	 * Either way, global information is not provided.
 	 */
 	if ((cycle->getMiscFlags() & J9MODRON_GCCHK_SUPPRESS_GLOBAL) ||
@@ -440,7 +440,7 @@ hookGcCycleEnd(J9HookInterface** hook, UDATA eventNum, void* eventData, void* us
 			if (cycle->getMiscFlags() & J9MODRON_GCCHK_VERBOSE) {
 				j9tty_printf(PORTLIB, "<gc check: start verifying slots after local gc (%zu)>\n", extensions->localGcCount);
 			}
-	
+
 			cycle->run(invocation_local_end);
 
 			if (cycle->getMiscFlags() & J9MODRON_GCCHK_VERBOSE) {
@@ -485,12 +485,12 @@ hookRememberedSetOverflow(J9HookInterface** hook, UDATA eventNum, void* eventDat
 
 /**
  * Manually initiate a GCCheck run (as opposed to having one triggered by a GC).
- * Users wishing to manually start GCCheck should add code like the following 
+ * Users wishing to manually start GCCheck should add code like the following
  * <pre>
 #include "mmhook_internal.h"
 
 	PORT_ACCESS_FROM_JAVAVM(javaVM);
-	
+
 	TRIGGER_J9HOOK_MM_PRIVATE_INVOKE_GC_CHECK(_extensions->hookInterface, _javaVM, PORTLIB, "all:all:verbose", 0);
 }
  * </pre>
@@ -498,12 +498,12 @@ hookRememberedSetOverflow(J9HookInterface** hook, UDATA eventNum, void* eventDat
  * GCCheck does not run for any GC event.  Thus all output is controlled by the user placed invocations.  Users
  * can specify other options on the command line if they wish.  These options are not passed to user invoked
  * invocations.
- * 
+ *
  * @param javaVM the javaVM
  * @param portLibrary where to output results
  * @param options what events to invoke GCCheck on
  * @param invocationNumber uniquely identifies which manual invocation has triggered the GCCheck
- * 
+ *
  * @return void
  */
 void
