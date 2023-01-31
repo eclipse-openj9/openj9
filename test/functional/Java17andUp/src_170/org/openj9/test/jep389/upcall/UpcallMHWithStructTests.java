@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2021, 2022 IBM Corp. and others
+ * Copyright (c) 2021, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -271,9 +271,10 @@ public class UpcallMHWithStructTests {
 
 	@Test
 	public void test_addBoolAndBoolsFromStructWithNestedBoolArrayByUpcallMH() throws Throwable {
-		SequenceLayout intArray = MemoryLayout.sequenceLayout(2, C_CHAR);
-		GroupLayout structLayout = MemoryLayout.structLayout(intArray.withName("array_elem1"),
-				C_CHAR.withName("elem2"), MemoryLayout.paddingLayout(16));
+		SequenceLayout boolArray = MemoryLayout.sequenceLayout(2, C_CHAR);
+		GroupLayout structLayout = isStructPaddingNotRequired ? MemoryLayout.structLayout(boolArray.withName("array_elem1"),
+				C_CHAR.withName("elem2")): MemoryLayout.structLayout(boolArray.withName("array_elem1"),
+				C_CHAR.withName("elem2"), MemoryLayout.paddingLayout(8));
 		MethodType mt = MethodType.methodType(boolean.class, boolean.class, MemorySegment.class, MemoryAddress.class);
 		FunctionDescriptor fd = FunctionDescriptor.of(C_CHAR, C_CHAR, structLayout, C_POINTER);
 		Addressable functionSymbol = nativeLibLookup.lookup("addBoolAndBoolsFromStructWithNestedBoolArrayByUpcallMH").get();
@@ -295,9 +296,10 @@ public class UpcallMHWithStructTests {
 
 	@Test
 	public void test_addBoolAndBoolsFromStructWithNestedBoolArray_reverseOrderByUpcallMH() throws Throwable {
-		SequenceLayout intArray = MemoryLayout.sequenceLayout(2, C_CHAR);
-		GroupLayout structLayout = MemoryLayout.structLayout(C_CHAR.withName("elem1"),
-				intArray.withName("array_elem2"), MemoryLayout.paddingLayout(16));
+		SequenceLayout boolArray = MemoryLayout.sequenceLayout(2, C_CHAR);
+		GroupLayout structLayout = isStructPaddingNotRequired ? MemoryLayout.structLayout(C_CHAR.withName("elem1"),
+				boolArray.withName("array_elem2")): MemoryLayout.structLayout(C_CHAR.withName("elem1"),
+				boolArray.withName("array_elem2"), MemoryLayout.paddingLayout(8));
 		MethodType mt = MethodType.methodType(boolean.class, boolean.class, MemorySegment.class, MemoryAddress.class);
 		FunctionDescriptor fd = FunctionDescriptor.of(C_CHAR, C_CHAR, structLayout, C_POINTER);
 		Addressable functionSymbol = nativeLibLookup.lookup("addBoolAndBoolsFromStructWithNestedBoolArray_reverseOrderByUpcallMH").get();
@@ -319,8 +321,8 @@ public class UpcallMHWithStructTests {
 
 	@Test
 	public void test_addBoolAndBoolsFromStructWithNestedStructArrayByUpcallMH() throws Throwable {
-		GroupLayout intStruct = MemoryLayout.structLayout(C_CHAR.withName("elem1"), C_CHAR.withName("elem2"));
-		SequenceLayout structArray = MemoryLayout.sequenceLayout(2, intStruct);
+		GroupLayout boolStruct = MemoryLayout.structLayout(C_CHAR.withName("elem1"), C_CHAR.withName("elem2"));
+		SequenceLayout structArray = MemoryLayout.sequenceLayout(2, boolStruct);
 		GroupLayout structLayout = isStructPaddingNotRequired ? MemoryLayout.structLayout(structArray.withName("struct_array_elem1"),
 				C_CHAR.withName("elem2")) : MemoryLayout.structLayout(structArray.withName("struct_array_elem1"),
 				C_CHAR.withName("elem2"), MemoryLayout.paddingLayout(C_CHAR.bitSize() * 3));
@@ -347,8 +349,8 @@ public class UpcallMHWithStructTests {
 
 	@Test
 	public void test_addBoolAndBoolsFromStructWithNestedStructArray_reverseOrderByUpcallMH() throws Throwable {
-		GroupLayout intStruct = MemoryLayout.structLayout(C_CHAR.withName("elem1"), C_CHAR.withName("elem2"));
-		SequenceLayout structArray = MemoryLayout.sequenceLayout(2, intStruct);
+		GroupLayout boolStruct = MemoryLayout.structLayout(C_CHAR.withName("elem1"), C_CHAR.withName("elem2"));
+		SequenceLayout structArray = MemoryLayout.sequenceLayout(2, boolStruct);
 		GroupLayout structLayout = isStructPaddingNotRequired ? MemoryLayout.structLayout(C_CHAR.withName("elem1"),
 				structArray.withName("struct_array_elem2")) : MemoryLayout.structLayout(C_CHAR.withName("elem1"),
 				structArray.withName("struct_array_elem2"), MemoryLayout.paddingLayout(C_CHAR.bitSize() * 3));
