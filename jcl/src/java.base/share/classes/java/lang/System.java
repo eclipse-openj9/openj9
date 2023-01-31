@@ -480,9 +480,9 @@ static void completeInitialization() {
 	/*[IF (Sidecar18-SE-OpenJ9|Sidecar19-SE)&!(PLATFORM-mz31|PLATFORM-mz64)]*/
 	InputStream tempIn = new BufferedInputStream(new FileInputStream(FileDescriptor.in));
 	setIn(tempIn);
-/*[IF JAVA_SPEC_VERSION >= 20]*/
+	/*[IF JAVA_SPEC_VERSION >= 20]*/
 	initialIn = tempIn;
-/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
+	/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
 	/*[ELSE]*/
 	/*[PR 100718] Initialize System.in after the main thread*/
 	setIn(com.ibm.jvm.io.ConsoleInputStream.localize(new BufferedInputStream(new FileInputStream(FileDescriptor.in))));
