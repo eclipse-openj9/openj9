@@ -964,6 +964,8 @@ freeJavaVM(J9JavaVM * vm)
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 	{
 		J9Pool *hookRecords = vm->checkpointState.hookRecords;
+		J9VMInitArgs *restoreArgsList = vm->checkpointState.restoreArgsList;
+
 		if (NULL != hookRecords) {
 			pool_kill(hookRecords);
 			vm->checkpointState.hookRecords = NULL;
@@ -974,6 +976,12 @@ freeJavaVM(J9JavaVM * vm)
 		if (NULL != vm->delayedLockingOperationsMutex) {
 			omrthread_monitor_destroy(vm->delayedLockingOperationsMutex);
 			vm->delayedLockingOperationsMutex = NULL;
+		}
+
+		while (NULL != restoreArgsList) {
+			J9VMInitArgs *previousArgs = restoreArgsList->previousArgs;
+			destroyJvmInitArgs(vm->portLibrary, restoreArgsList);
+			restoreArgsList = previousArgs;
 		}
 	}
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */

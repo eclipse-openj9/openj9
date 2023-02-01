@@ -892,6 +892,7 @@ typedef struct J9VMInitArgs {
 	JavaVMInitArgs* actualVMArgs;
 	struct J9CmdLineOption* j9Options;
 	UDATA nOptions;
+	struct J9VMInitArgs *previousArgs;
 } J9VMInitArgs;
 
 /* @ddr_namespace: map_to_type=J9IdentityHashData */
@@ -4147,6 +4148,7 @@ typedef struct J9CRIUCheckpointState {
 	int (*criuInitOptsFunctionPointerType)(void);
 	int (*criuDumpFunctionPointerType)(void);
 	UDATA libCRIUHandle;
+	struct J9VMInitArgs *restoreArgsList;
 } J9CRIUCheckpointState;
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 

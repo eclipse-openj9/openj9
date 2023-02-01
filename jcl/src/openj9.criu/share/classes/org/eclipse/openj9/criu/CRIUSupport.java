@@ -1,6 +1,6 @@
 /*[INCLUDE-IF CRIU_SUPPORT]*/
 /*******************************************************************************
- * Copyright (c) 2021, 2022 IBM Corp. and others
+ * Copyright (c) 2021, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -40,6 +40,7 @@ import java.util.Properties;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -72,7 +73,8 @@ public final class CRIUSupport {
 			boolean tcpEstablished,
 			boolean autoDedup,
 			boolean trackMemory,
-			boolean unprivileged);
+			boolean unprivileged,
+			String optionsFile);
 
 	static {
 		AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
@@ -199,6 +201,7 @@ public final class CRIUSupport {
 	 * first in post restore hooks.
 	 */
 	private static final int RESTORE_ENVIRONMENT_VARIABLES_PRIORITY = 100;
+	private static final int RESTORE_OPTIONS_FILE_PRIORITY = 100;
 	private static final int USER_HOOKS_PRIORITY = 1;
 	/* RESET_CRIUSEC_PRIORITY and RESTORE_SECURITY_PROVIDERS_PRIORITY need to
 	 * be higher than any other JVM hook that may require security providers.
@@ -219,6 +222,7 @@ public final class CRIUSupport {
 	private boolean trackMemory;
 	private boolean unprivileged;
 	private Path envFile;
+	private String optionsFile;
 
 	/**
 	 * Sets the directory that will hold the images upon checkpoint. This must be
@@ -439,6 +443,49 @@ public final class CRIUSupport {
 	}
 
 	/**
+	 * Add new JVM options upon restore. The options will be specified in an options
+	 * file with the form specified in https://www.eclipse.org/openj9/docs/xoptionsfile/
+	 *
+	 * TODO: The first iteration will only support -D options. Subsequent iterations will add more functionality.
+	 *
+	 * @param optionsFile The file that contains the new JVM options to be added on restore
+	 *
+	 * @return this
+	 */
+	public CRIUSupport registerRestoreOptionsFile(Path optionsFile) {
+		String optionsFilePath = optionsFile.toAbsolutePath().toString();
+		this.optionsFile = "-Xoptionsfile=" + optionsFilePath; //$NON-NLS-1$
+
+		J9InternalCheckpointHookAPI.registerPostRestoreHook(RESTORE_OPTIONS_FILE_PRIORITY,
+				"Restore options via options file:" + optionsFilePath, () -> { //$NON-NLS-1$
+					try (BufferedReader optionsFileReader = new BufferedReader(new FileReader(optionsFilePath))) {
+						String entry = null;
+						while ((entry = optionsFileReader.readLine()) != null) {
+							entry = entry.trim();
+							if (!entry.isEmpty()) {
+								if (entry.startsWith("-D")) { //$NON-NLS-1$
+									String entrySplit[] = entry.split("=", 2); //$NON-NLS-1$
+									String propertyValue = entrySplit[1];
+									while (propertyValue.endsWith("\\")) { //$NON-NLS-1$
+										/* line continuation */
+										propertyValue = propertyValue.substring(0, propertyValue.length() - 1);
+										propertyValue = propertyValue.trim();
+										String nextLine = optionsFileReader.readLine();
+										propertyValue += nextLine.trim();
+									}
+									System.setProperty(entrySplit[0].substring(2), propertyValue);
+								}
+							}
+						}
+					} catch (IOException | NullPointerException e) {
+						throw new JVMRestoreException("Failed to load options from the options file", 0, e); //$NON-NLS-1$
+					}
+		});
+
+		return this;
+	}
+
+	/**
 	 * User hook that is run after restoring a checkpoint image.
 	 *
 	 * Hooks will be run in single threaded mode, no other application threads
@@ -600,7 +647,7 @@ public final class CRIUSupport {
 
 				try {
 					checkpointJVMImpl(imageDir, leaveRunning, shellJob, extUnixSupport, logLevel, logFile, fileLocks,
-							workDir, tcpEstablished, autoDedup, trackMemory, unprivileged);
+							workDir, tcpEstablished, autoDedup, trackMemory, unprivileged, optionsFile);
 				} catch (UnsatisfiedLinkError ule) {
 					errorMsg = ule.getMessage();
 					throw new InternalError("There is a problem with libj9criu in the JDK"); //$NON-NLS-1$

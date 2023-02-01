@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2021, 2022 IBM Corp. and others
+ * Copyright (c) 2021, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,6 +26,8 @@
 #include <malloc.h>
 #endif /* defined(LINUX) */
 
+extern "C" {
+
 #include "criusupport.hpp"
 #include "VMHelpers.hpp"
 
@@ -37,10 +39,14 @@
 #include "omrlinkedlist.h"
 #include "omrthread.h"
 #include "ut_j9criu.h"
-
-extern "C" {
+#include "util_api.h"
+#include "vmargs_api.h"
 
 #define STRING_BUFFER_SIZE 256
+
+#define RESTORE_ARGS_RETURN_OK 0
+#define RESTORE_ARGS_RETURN_OOM 1
+#define RESTORE_ARGS_RETURN_OPTIONS_FILE_FAILED 2
 
 static bool
 setupJNIFieldIDsAndCRIUAPI(JNIEnv *env, jclass *currentExceptionClass, IDATA *systemReturnCode, const char **nlsMsgFormat)
@@ -341,6 +347,36 @@ releaseSafeOrExcusiveVMAccess(J9VMThread *currentThread, J9InternalVMFunctions *
 	}
 }
 
+static UDATA
+loadRestoreArguments(J9VMThread *currentThread, const char *optionsFile)
+{
+	UDATA result = RESTORE_ARGS_RETURN_OK;
+	J9JavaVM *vm = currentThread->javaVM;
+	J9JavaVMArgInfoList vmArgumentsList;
+	UDATA ignored = 0;
+	J9VMInitArgs *previousArgs = vm->checkpointState.restoreArgsList;
+
+	vmArgumentsList.pool = pool_new(sizeof(J9JavaVMArgInfo), 0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(vm->portLibrary));
+	if (NULL == vmArgumentsList.pool) {
+		vm->internalVMFunctions->setNativeOutOfMemoryError(currentThread, 0, 0);
+		result = RESTORE_ARGS_RETURN_OOM;
+		goto done;
+	}
+	vmArgumentsList.head = NULL;
+	vmArgumentsList.tail = NULL;
+
+	if (0 != addXOptionsFile(vm->portLibrary, optionsFile, &vmArgumentsList, 0)) {
+		result = RESTORE_ARGS_RETURN_OPTIONS_FILE_FAILED;
+		goto done;
+	}
+
+	vm->checkpointState.restoreArgsList = createJvmInitArgs(vm->portLibrary, vm->vmArgsArray->actualVMArgs, &vmArgumentsList, &ignored);
+	vm->checkpointState.restoreArgsList->previousArgs = previousArgs;
+done:
+	pool_kill(vmArgumentsList.pool);
+	return result;
+}
+
 void JNICALL
 Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 		jclass unused,
@@ -355,7 +391,8 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 		jboolean tcpEstablished,
 		jboolean autoDedup,
 		jboolean trackMemory,
-		jboolean unprivileged)
+		jboolean unprivileged,
+		jstring optionsFile)
 {
 	J9VMThread *currentThread = (J9VMThread*)env;
 	J9JavaVM *vm = currentThread->javaVM;
@@ -383,6 +420,7 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 		j9object_t cpDir = NULL;
 		j9object_t log = NULL;
 		j9object_t wrkDir = NULL;
+		j9object_t optFile = NULL;
 		IDATA dirFD = 0;
 		IDATA workDirFD = 0;
 		char directoryBuf[STRING_BUFFER_SIZE];
@@ -391,6 +429,8 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 		char *logFileChars = logFileBuf;
 		char workDirBuf[STRING_BUFFER_SIZE];
 		char *workDirChars = workDirBuf;
+		char optionsFileBuf[STRING_BUFFER_SIZE];
+		char *optionsFileChars = optionsFileBuf;
 		BOOLEAN isAfterCheckpoint = FALSE;
 		I_64 checkpointNanoTimeMonotonic = 0;
 		I_64 restoreNanoTimeMonotonic = 0;
@@ -434,6 +474,22 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 				currentExceptionClass = vm->checkpointState.criuJVMCheckpointExceptionClass;
 				nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_JCL_CRIU_FAILED_TO_CONVERT_JAVA_STRING, NULL);
 				goto freeLog;
+			}
+		}
+
+		if (NULL != optionsFile) {
+			optFile = J9_JNI_UNWRAP_REFERENCE(optionsFile);
+			systemReturnCode = getNativeString(currentThread, optFile, &optionsFileChars, STRING_BUFFER_SIZE);
+			switch (systemReturnCode) {
+			case J9_NATIVE_STRING_NO_ERROR:
+				break;
+			case J9_NATIVE_STRING_OUT_OF_MEMORY:
+				vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
+				goto freeOptionsFile;
+			case J9_NATIVE_STRING_FAIL_TO_CONVERT:
+				currentExceptionClass = vm->checkpointState.criuJVMCheckpointExceptionClass;
+				nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_JCL_CRIU_FAILED_TO_CONVERT_JAVA_STRING, NULL);
+				goto freeOptionsFile;
 			}
 		}
 
@@ -638,6 +694,19 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 		/* We can only end up here if the CRIU restore was successful */
 		isAfterCheckpoint = TRUE;
 
+		switch (loadRestoreArguments(currentThread, optionsFileChars)) {
+		case RESTORE_ARGS_RETURN_OPTIONS_FILE_FAILED:
+			currentExceptionClass = vm->checkpointState.criuJVMRestoreExceptionClass;
+			nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
+				J9NLS_JCL_CRIU_LOADING_OPTIONS_FILE_FAILED, NULL);
+				/* fallthrough */
+		case RESTORE_ARGS_RETURN_OOM:
+			/* exception is already set */
+			goto wakeJavaThreadsWithExclusiveVMAccess;
+		case RESTORE_ARGS_RETURN_OK:
+			break;
+		}
+
 		VM_VMHelpers::setVMState(currentThread, J9VMSTATE_CRIU_SUPPORT_RESTORE_PHASE_JAVA_HOOKS);
 
 		/* Run internal restore hooks, and cleanup */
@@ -707,6 +776,10 @@ closeDirFD:
 freeWorkDir:
 		if (workDirBuf != workDirChars) {
 			j9mem_free_memory(workDirChars);
+		}
+freeOptionsFile:
+		if (optionsFileBuf != optionsFileChars) {
+			j9mem_free_memory(optionsFileChars);
 		}
 freeLog:
 		if (logFileBuf != logFileChars) {
