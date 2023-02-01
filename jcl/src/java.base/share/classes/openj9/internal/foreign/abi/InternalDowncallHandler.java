@@ -228,9 +228,7 @@ public class InternalDowncallHandler {
 	private final void addMemArgScope(ResourceScope memArgSessionOrScope)
 	/*[ENDIF] JAVA_SPEC_VERSION >= 19 */
 	{
-		if ((memArgSessionOrScope.ownerThread() != null)
-		&& !sessionOrScopeSet.contains(memArgSessionOrScope)
-		) {
+		if (!sessionOrScopeSet.contains(memArgSessionOrScope)) {
 			sessionOrScopeSet.add(memArgSessionOrScope);
 		}
 	}
@@ -645,7 +643,10 @@ public class InternalDowncallHandler {
 			 */
 			if (memArgSession.isAlive()) {
 				Thread owner = memArgSession.ownerThread();
-				if (owner == Thread.currentThread()) { // For the confined session
+				/* The check is intended for the confined session or
+				 * the shared session(e.g. implicit/global session).
+				 */
+				if ((owner == Thread.currentThread()) || (owner == null)) {
 					MemorySessionImpl memArgSessionImpl = (MemorySessionImpl)memArgSession;
 					memArgSessionImpl.acquire0();
 					session.addCloseAction(memArgSessionImpl::release0);
@@ -663,7 +664,10 @@ public class InternalDowncallHandler {
 		for (ResourceScope memArgScope : sessionOrScopeSet) {
 			if (memArgScope.isAlive()) {
 				Thread owner = memArgScope.ownerThread();
-				if (owner == Thread.currentThread()) { // For the confined scope
+				/* The check is intended for the confined scope or
+				 * the shared scope(e.g. implicit/global scope).
+				 */
+				if ((owner == Thread.currentThread()) || (owner == null)) {
 					scope.keepAlive(memArgScope); // keepAlive() is only used in JDK18
 				}
 			}
@@ -676,7 +680,10 @@ public class InternalDowncallHandler {
 		for (ResourceScope memArgScope : sessionOrScopeSet) {
 			if (memArgScope.isAlive()) {
 				Thread owner = memArgScope.ownerThread();
-				if (owner == Thread.currentThread()) { // For the confined scope
+				/* The check is intended for the confined scope or
+				 * the shared scope(e.g. implicit/global scope).
+				 */
+				if ((owner == Thread.currentThread()) || (owner == null)) {
 					Handle scopeHandle = memArgScope.acquire();
 					scopeHandleMap.put(memArgScope, scopeHandle);
 				}
@@ -689,7 +696,10 @@ public class InternalDowncallHandler {
 		for (ResourceScope memArgScope : sessionOrScopeSet) {
 			if (memArgScope.isAlive()) {
 				Thread owner = memArgScope.ownerThread();
-				if (owner == Thread.currentThread()) { // For the confined scope
+				/* The check is intended for the confined scope or
+				 * the shared scope(e.g. implicit/global scope).
+				 */
+				if ((owner == Thread.currentThread()) || (owner == null)) {
 					Handle scopeHandle = scopeHandleMap.get(memArgScope);
 					memArgScope.release(scopeHandle);
 				}
