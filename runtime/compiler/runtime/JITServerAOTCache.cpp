@@ -967,6 +967,43 @@ JITServerAOTCache::getAOTHeaderRecord(const TR_AOTHeader *header, uint64_t clien
    return record;
    }
 
+const AOTCacheThunkRecord *
+JITServerAOTCache::getThunkRecord(const uint8_t *signature, uint32_t signatureSize)
+   {
+   OMR::CriticalSection cs(_thunkMonitor);
+
+   auto it = _thunkMap.find({ signature, signatureSize });
+   if (it != _thunkMap.end())
+      return it->second;
+
+   return NULL;
+   }
+
+const AOTCacheThunkRecord *
+JITServerAOTCache::createAndStoreThunk(const uint8_t *signature, uint32_t signatureSize, const uint8_t *thunkStart, uint32_t thunkSize)
+   {
+   OMR::CriticalSection cs(_thunkMonitor);
+
+   auto it = _thunkMap.find({ signature, signatureSize });
+   if (it != _thunkMap.end())
+      return it->second;
+
+   if (!JITServerAOTCacheMap::cacheHasSpace())
+      return NULL;
+
+   auto record = AOTCacheThunkRecord::create(_nextThunkId, signature, signatureSize, thunkStart, thunkSize);
+   addToMap(_thunkMap, _thunkHead, _thunkTail, it, getRecordKey(record), record);
+   ++_nextThunkId;
+
+   if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+         "AOT cache %s: created thunk ID %zu -> %.*s thunkSize %u",
+         _name.c_str(), record->data().id(), signatureSize, signature, thunkSize
+      );
+
+   return record;
+   }
+
 
 bool
 JITServerAOTCache::storeMethod(const AOTCacheClassChainRecord *definingClassChainRecord, uint32_t index,

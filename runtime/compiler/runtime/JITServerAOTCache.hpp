@@ -409,9 +409,10 @@ public:
 
    const std::string &name() const { return _name; }
 
-   // Each get{Type}Record() method returns the record for given parameters (which fully identify
+   // Each get{Type}Record() method except getThunkRecord returns the record for given parameters (which fully identify
    // the unique record), by either looking up the existing record or creating a new one if there is sufficient
-   // space.
+   // space. The getThunkRecord method instead has an accompanying createAndStoreThunk method that will create and store
+   // a new thunk record if there is sufficient space.
    const AOTCacheClassLoaderRecord *getClassLoaderRecord(const uint8_t *name, size_t nameLength);
    const AOTCacheClassRecord *getClassRecord(const AOTCacheClassLoaderRecord *loaderRecord, const J9ROMClass *romClass);
    const AOTCacheMethodRecord *getMethodRecord(const AOTCacheClassRecord *definingClassRecord,
@@ -419,6 +420,8 @@ public:
    const AOTCacheClassChainRecord *getClassChainRecord(const AOTCacheClassRecord *const *classRecords, size_t length);
    const AOTCacheWellKnownClassesRecord *getWellKnownClassesRecord(const AOTCacheClassChainRecord *const *chainRecords,
                                                                    size_t length, uintptr_t includedClasses);
+   const AOTCacheThunkRecord *getThunkRecord(const uint8_t *signature, uint32_t signatureSize);
+   const AOTCacheThunkRecord *createAndStoreThunk(const uint8_t *signature, uint32_t signatureSize, const uint8_t *thunkCode, uint32_t thunkCodeSize);
    const AOTCacheAOTHeaderRecord *getAOTHeaderRecord(const TR_AOTHeader *header, uint64_t clientUID);
 
    // Add a serialized AOT method to the cache. The key identifying the method is a combination of:
@@ -427,6 +430,8 @@ public:
    // - AOT header record for the TR_AOTHeader of the client JVM this method was compiled for;
    // - optimization level.
    // Each item in the `records` vector corresponds to an SCC offset stored in the AOT method's relocation data.
+   // Note that the SCC offsets corresponding to AOTCacheThunkRecord records will not be used, as thunks are defined
+   // globally in each client and are addressed by signature.
    // Returns true if the method was successfully added, false otherwise (if a method already exists for this key).
    bool storeMethod(const AOTCacheClassChainRecord *definingClassChainRecord, uint32_t index,
                     TR_Hotness optLevel, const AOTCacheAOTHeaderRecord *aotHeaderRecord,
