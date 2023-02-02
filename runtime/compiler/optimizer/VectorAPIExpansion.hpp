@@ -192,6 +192,7 @@ class TR_VectorAPIExpansion : public TR::Optimization
       MaskReduction,
       Reduction,
       Test,
+      Blend,
       Other
       };
 
