@@ -1665,7 +1665,7 @@ TR::Node *TR_VectorAPIExpansion::naryIntrinsicHandler(TR_VectorAPIExpansion *opt
    TR::Node *opcodeNode = node->getFirstChild();
    int firstOperand = 5;
 
-   if (opCodeType == Test || opCodeType == MaskReduction)
+   if (opCodeType == Test || opCodeType == MaskReduction || opCodeType == Blend)
       firstOperand = 4;
 
    bool withMask = false;
@@ -1678,13 +1678,20 @@ TR::Node *TR_VectorAPIExpansion::naryIntrinsicHandler(TR_VectorAPIExpansion *opt
 
    if (withMask) numChildren++;
 
-   if (!opcodeNode->getOpCode().isLoadConst())
+   int32_t vectorAPIOpcode;
+
+   //skip when opCodeType is Blend since VectorSupport.blend doesn't have an opcode as its first argument
+   if (opCodeType != Blend)
       {
-      if (opt->_trace) traceMsg(comp, "Unknown opcode in node %p\n", node);
-      return NULL;
+      if (!opcodeNode->getOpCode().isLoadConst())
+         {
+         if (opt->_trace) traceMsg(comp, "Unknown opcode in node %p\n", node);
+         return NULL;
+         }
+
+      vectorAPIOpcode = opcodeNode->get32bitIntegralValue();
       }
 
-   int32_t vectorAPIOpcode = opcodeNode->get32bitIntegralValue();
    TR::DataType opType = elementType;
 
    TR::ILOpCodes scalarOpCode = TR::BadILOp;
@@ -1762,31 +1769,7 @@ TR::Node *TR_VectorAPIExpansion::blendIntrinsicHandler(TR_VectorAPIExpansion *op
                                                        TR::DataType elementType, TR::VectorLength vectorLength, int32_t numLanes,
                                                        handlerMode mode)
    {
-   return NULL; // WIP
-
-   TR::Compilation *comp = opt->comp();
-
-   if (opt->_trace)
-      traceMsg(comp, "blendIntrinsicHandler for node %p\n", node);
-
-   TR::ILOpCodes scalarOpCode = TR::BadILOp;
-   TR::ILOpCodes vectorOpCode = TR::BadILOp;
-
-   if (mode == checkScalarization)
-      return NULL;
-
-   if (mode == checkVectorization)
-      {
-      vectorOpCode = TR::ILOpCode::createVectorOpCode(TR::vbitselect, TR::DataType::createVectorType(elementType, vectorLength));
-
-      if (!comp->cg()->getSupportsOpCodeForAutoSIMD(vectorOpCode))
-         return NULL;
-
-      return node;
-      }
-
-   return transformNary(opt, treeTop, node, elementType, vectorLength, numLanes, mode, scalarOpCode, vectorOpCode,
-                        4/*first operand*/, 3, Other);
+   return naryIntrinsicHandler(opt, treeTop, node, elementType, vectorLength, numLanes, mode, 3, Blend);
    }
 
 TR::Node *TR_VectorAPIExpansion::fromBitsCoercedIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node,
@@ -1914,7 +1897,14 @@ TR::ILOpCodes TR_VectorAPIExpansion::ILOpcodeFromVectorAPIOpcode(int32_t vectorA
    bool scalar = (vectorLength == TR::NoVectorLength);
    TR::DataType vectorType = scalar ? TR::NoType : TR::DataType::createVectorType(elementType, vectorLength);
 
-   if ((opCodeType == Test) && withMask)
+   if (opCodeType == Blend)
+      {
+      if (scalar)
+         return TR::BadILOp;
+      else
+         return TR::ILOpCode::createVectorOpCode(TR::vbitselect, vectorType);
+      }
+   else if ((opCodeType == Test) && withMask)
       {
       switch (vectorAPIOpCode)
          {
