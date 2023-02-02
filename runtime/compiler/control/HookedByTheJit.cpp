@@ -5188,15 +5188,16 @@ static void DoCalculateOverallCompCPUUtilization(TR::CompilationInfo *compInfo, 
    //TODO: Is getArrayOfCompilationInfoPerThread() called after setupCompilationThreads()
    TR::CompilationInfoPerThread * const *arrayOfCompInfoPT = compInfo->getArrayOfCompilationInfoPerThread();
 
-   for (int32_t i = 0; i < compInfo->getNumUsableCompilationThreads(); i++)
+   for (int32_t i = compInfo->getFirstCompThreadID(); i <= compInfo->getLastCompThreadID(); i++)
       {
+      int32_t cpuArrIndex = i - compInfo->getFirstCompThreadID();
       const CpuSelfThreadUtilization& cpuUtil = arrayOfCompInfoPT[i]->getCompThreadCPU();
       if (cpuUtil.isFunctional())
          {
          // If the last interval ended more than 1.5 second ago, do not include it
          // in the calculations.
          int32_t cpuUtilValue = cpuUtil.computeThreadCpuUtilOverLastNns(1500000000);
-         cpuUtilizationValues[i] = cpuUtilValue; // memorize for later
+         cpuUtilizationValues[cpuArrIndex] = cpuUtilValue; // memorize for later
          if (cpuUtilValue >= 0) // if first interval is not done, we read -1
             totalCompCPUUtilization += cpuUtilValue;
          }
@@ -5215,10 +5216,11 @@ static void DoCalculateOverallCompCPUUtilization(TR::CompilationInfo *compInfo, 
       TR_VerboseLog::CriticalSection vlogLock;
       TR_VerboseLog::write(TR_Vlog_INFO, "t=%6u TotalCompCpuUtil=%3d%%.", static_cast<uint32_t>(crtTime), totalCompCPUUtilization);
       TR::CompilationInfoPerThread * const *arrayOfCompInfoPT = compInfo->getArrayOfCompilationInfoPerThread();
-      for (int32_t i = 0; i < compInfo->getNumUsableCompilationThreads(); i++)
+      for (int32_t i = compInfo->getFirstCompThreadID(); i <= compInfo->getLastCompThreadID(); i++)
          {
+         int32_t cpuArrIndex = i - compInfo->getFirstCompThreadID();
          const CpuSelfThreadUtilization& cpuUtil = arrayOfCompInfoPT[i]->getCompThreadCPU();
-         TR_VerboseLog::write(" compThr%d:%3d%% (%2d%%, %2d%%) ", i, cpuUtilizationValues[i], cpuUtil.getThreadLastCpuUtil(), cpuUtil.getThreadPrevCpuUtil());
+         TR_VerboseLog::write(" compThr%d:%3d%% (%2d%%, %2d%%) ", i, cpuUtilizationValues[cpuArrIndex], cpuUtil.getThreadLastCpuUtil(), cpuUtil.getThreadPrevCpuUtil());
          if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompilationThreadsDetails))
             TR_VerboseLog::write("(%dms, %dms, lastCheckpoint=%u) ",
                static_cast<int32_t>(cpuUtil.getLastMeasurementInterval()) / 1000000,

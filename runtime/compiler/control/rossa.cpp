@@ -1551,10 +1551,12 @@ onLoadInternal(
       }
 
    // create regular compilation threads
-   int32_t highestThreadID = 0;
-   for (; highestThreadID < TR::Options::_numUsableCompilationThreads; highestThreadID++)
+   for (int32_t threadNum = 0; threadNum < TR::Options::_numUsableCompilationThreads; threadNum++)
       {
-      if (compInfo->startCompilationThread(-1, highestThreadID, /* isDiagnosticThread */ false) != 0)
+      // Convert threadNum in iteration to thread ID
+      int32_t threadID = threadNum + compInfo->getFirstCompThreadID();
+
+      if (compInfo->startCompilationThread(-1, threadID, /* isDiagnosticThread */ false) != 0)
          {
          // Failed to start compilation thread.
          Trc_JIT_startCompThreadFailed(curThread);
@@ -1564,11 +1566,10 @@ onLoadInternal(
 
    // If more than one diagnostic compilation thread is created, MAX_DIAGNOSTIC_COMP_THREADS needs to be updated
    // create diagnostic compilation thread
-   if (compInfo->startCompilationThread(-1, highestThreadID, /* isDiagnosticThread */ true) != 0)
+   if (compInfo->startCompilationThread(-1, compInfo->getFirstDiagThreadID(), /* isDiagnosticThread */ true) != 0)
       {
       // Failed to start compilation thread.
       Trc_JIT_startCompThreadFailed(curThread);
-      highestThreadID++;
       return -1;
       }
 
