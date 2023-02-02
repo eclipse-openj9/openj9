@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2019, 2022 IBM Corp. and others
+# Copyright (c) 2019, 2023 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -686,5 +686,12 @@ if(NOT JAVA_SPEC_VERSION LESS 19)
 		Java_java_lang_Thread_registerNatives
 		Java_jdk_internal_vm_Continuation_pin
 		Java_jdk_internal_vm_Continuation_unpin
+	)
+endif()
+
+# Java 20+
+if(NOT JAVA_SPEC_VERSION LESS 20)
+	omr_add_exports(jclse
+		Java_java_lang_Thread_ensureMaterializedForStackWalk
 	)
 endif()

@@ -1,6 +1,6 @@
-/*[INCLUDE-IF (JAVA_SPEC_VERSION >= 8) & CRIU_SUPPORT]*/
+/*[INCLUDE-IF CRIU_SUPPORT]*/
 /*******************************************************************************
- * Copyright (c) 2022, 2022 IBM Corp. and others
+ * Copyright (c) 2022, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,7 +29,7 @@ package openj9.internal.criu;
 @SuppressWarnings({ "deprecation", "removal" })
 /*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 public final class InternalCRIUSupport {
-	private static boolean criuSupportEnabled = isCRIUSupportEnabledImpl();
+	private static final boolean criuSupportEnabled = isCRIUSupportEnabledImpl();
 	private static long checkpointRestoreNanoTimeDelta;
 
 	private static native boolean isCRIUSupportEnabledImpl();
