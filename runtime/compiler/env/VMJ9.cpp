@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2022 IBM Corp. and others
+ * Copyright (c) 2000, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -9195,13 +9195,44 @@ TR_J9SharedCacheVM::getDesignatedCodeCache(TR::Compilation *comp)
 void *
 TR_J9SharedCacheVM::getJ2IThunk(char *signatureChars, uint32_t signatureLength, TR::Compilation *comp)
    {
-   return (void *)findPersistentThunk(signatureChars, signatureLength);
+   void *thunk = NULL;
+
+#if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64))
+   uintptr_t length;
+   thunk = j9ThunkFindPersistentThunk(_jitConfig, signatureChars, signatureLength, &length);
+#endif
+
+   return thunk;
    }
 
 void *
 TR_J9SharedCacheVM::setJ2IThunk(char *signatureChars, uint32_t signatureLength, void *thunkptr, TR::Compilation *comp)
    {
-   return persistThunk(signatureChars, signatureLength, (U_8*)thunkptr - 8 /* start of thunk */, *((U_32 *)((U_8*)thunkptr -8)) + 8 /* size of thunk */);
+   uint8_t *thunkStart = (uint8_t *)thunkptr - 8;
+   uint32_t totalSize = *((uint32_t *)((uint8_t *)thunkptr - 8)) + 8;
+
+#if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64))
+   if (TR::Options::getAOTCmdLineOptions()->getOption(TR_TraceRelocatableDataDetailsCG))
+      {
+      TR_VerboseLog::writeLine("<relocatableDataThunksDetailsCG>");
+      TR_VerboseLog::writeLine("%.*s", signatureLength, signatureChars);
+      TR_VerboseLog::writeLine("thunkAddress: %p, thunkSize: %x", thunkStart, totalSize);
+      TR_VerboseLog::writeLine("</relocatableDataThunksDetailsCG>");
+      }
+
+   thunkStart = (uint8_t *)j9ThunkPersist(_jitConfig, signatureChars, signatureLength, thunkStart, totalSize);
+
+   if (!thunkStart)
+      {
+      TR::Compilation* comp = _compInfoPT->getCompilation();
+      if (comp)
+         comp->failCompilation<TR::CompilationException>("Failed to persist thunk");
+      else
+         throw TR::CompilationException();
+      }
+#endif
+
+   return thunkStart;
    }
 
 void *

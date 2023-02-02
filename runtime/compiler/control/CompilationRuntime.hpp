@@ -1059,10 +1059,13 @@ public:
    TR::CompilationInfoPerThread *getCompInfoForThread(J9VMThread *vmThread);
    int32_t getNumUsableCompilationThreads() const { return _numCompThreads; }
    int32_t getNumTotalCompilationThreads() const { return _numCompThreads + _numDiagnosticThreads; }
+   int32_t getFirstCompThreadID() const { return _firstCompThreadID; }
+   int32_t getFirstDiagThreadID() const { return _firstDiagnosticThreadID; }
+   int32_t getLastCompThreadID() const { return _lastCompThreadID; }
+   int32_t getLastDiagThreadID() const { return _lastDiagnosticTheadID; }
    TR::CompilationInfoPerThreadBase *getCompInfoWithID(int32_t ID);
    TR::Compilation *getCompilationWithID(int32_t ID);
    TR::CompilationInfoPerThread *getFirstSuspendedCompilationThread();
-   bool useMultipleCompilationThreads() { return (getNumUsableCompilationThreads() + _numDiagnosticThreads) > 1; }
    bool getRampDownMCT() const { return _rampDownMCT; }
    void setRampDownMCT() { _rampDownMCT = true; } // cannot be reset
    static void printMethodNameToVlog(J9Method *method);
@@ -1435,6 +1438,10 @@ private:
    bool                   _isInShutdownMode;
    int32_t                _numCompThreads; // Number of usable compilation threads that does not include the diagnostic thread
    int32_t                _numDiagnosticThreads;
+   int32_t                _firstCompThreadID;
+   int32_t                _firstDiagnosticThreadID;
+   int32_t                _lastCompThreadID;
+   int32_t                _lastDiagnosticTheadID;
    int32_t                _iprofilerMaxCount;
    int32_t                _numGCRQueued; // how many GCR requests are in the queue
                                          // We should disable GCR counting if too many
