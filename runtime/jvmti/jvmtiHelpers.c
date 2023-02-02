@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2022 IBM Corp. and others
+ * Copyright (c) 1991, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -75,6 +75,8 @@ static const UDATA reasonCodeFromJVMTIEvent[] = {
 	J9_JNI_OFFLOAD_SWITCH_J9JVMTI_VM_DUMP_END,							/* J9JVMTI_EVENT_COM_IBM_VM_DUMP_END */
 	J9_JNI_OFFLOAD_SWITCH_J9JVMTI_GC_CYCLE_START,						/* J9JVMTI_EVENT_COM_IBM_GARBAGE_COLLECTION_CYCLE_START */
 	J9_JNI_OFFLOAD_SWITCH_J9JVMTI_GC_CYCLE_FINISH,						/* J9JVMTI_EVENT_COM_IBM_GARBAGE_COLLECTION_CYCLE_FINISH */
+	J9_JNI_OFFLOAD_SWITCH_J9JVMTI_VIRTUAL_THREAD_MOUNT,					/* J9JVMTI_EVENT_COM_SUN_HOTSPOT_EVENTS_VIRTUAL_THREAD_MOUNT */
+	J9_JNI_OFFLOAD_SWITCH_J9JVMTI_VIRTUAL_THREAD_UNMOUNT,					/* J9JVMTI_EVENT_COM_SUN_HOTSPOT_EVENTS_VIRTUAL_THREAD_UNMOUNT */
 };
 #endif /* J9VM_OPT_JAVA_OFFLOAD_SUPPORT */
 

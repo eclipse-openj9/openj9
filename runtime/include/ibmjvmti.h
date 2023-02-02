@@ -103,6 +103,9 @@
 #define COM_SUN_HOTSPOT_FUNCTIONS_GET_VIRTUAL_THREAD "com.sun.hotspot.functions.GetVirtualThread"
 #define COM_SUN_HOTSPOT_FUNCTIONS_GET_CARRIER_THREAD "com.sun.hotspot.functions.GetCarrierThread"
 
+#define COM_SUN_HOTSPOT_EVENTS_VIRTUAL_THREAD_MOUNT "com.sun.hotspot.events.VirtualThreadMount"
+#define COM_SUN_HOTSPOT_EVENTS_VIRTUAL_THREAD_UNMOUNT "com.sun.hotspot.events.VirtualThreadUnmount"
+
 #define COM_IBM_SHARED_CACHE_MODLEVEL_JAVA5 1
 #define COM_IBM_SHARED_CACHE_MODLEVEL_JAVA6 2
 #define COM_IBM_SHARED_CACHE_MODLEVEL_JAVA7 3
