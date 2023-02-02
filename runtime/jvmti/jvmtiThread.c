@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2022 IBM Corp. and others
+ * Copyright (c) 1991, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1345,8 +1345,12 @@ jvmtiSuspendAllVirtualThreads(jvmtiEnv *env,
 				}
 				if (suspend) {
 					BOOLEAN currentThreadSuspended = FALSE;
+					JNIEnv *jniEnv = (JNIEnv *)currentThread;
+					jobject virtualThreadRef = vmFuncs->j9jni_createLocalRef(jniEnv, walkVirtualThread);
 					/* Ignore errors if the virtual thread is already suspended. */
-					suspendThread(currentThread, (jthread)&walkVirtualThread, FALSE, &currentThreadSuspended);
+					suspendThread(currentThread, (jthread)virtualThreadRef, FALSE, &currentThreadSuspended);
+					walkVirtualThread = J9_JNI_UNWRAP_REFERENCE(virtualThreadRef);
+					vmFuncs->j9jni_deleteLocalRef(jniEnv, virtualThreadRef);
 					currentThreadEverSuspended |= currentThreadSuspended;
 				}
 				walkVirtualThread = J9OBJECT_OBJECT_LOAD(currentThread, walkVirtualThread, vm->virtualThreadLinkNextOffset);
