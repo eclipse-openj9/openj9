@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2002, 2022 IBM Corp. and others
+ * Copyright (c) 2002, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1596,10 +1596,12 @@ initialArgumentScan(JavaVMInitArgs *args, J9SpecialArguments *specialArgs)
 			specialArgs->captureCommandLine = TRUE;
 		} else if (0 == strcmp(args->options[argCursor].optionString, VMOPT_XXNOOPENJ9COMMANDLINEENV)) {
 			specialArgs->captureCommandLine = FALSE;
-		} else if (0 == strcmp(args->options[argCursor].optionString, VMOPT_XFIPS_140_2)) {
+#if defined(FIPS_PREVIEW_OPTIONS_ACCEPTED_PLATFORM)
+		} else if (0 == strcmp(args->options[argCursor].optionString, VMOPT_XDISABLEFIPS140_3)) {
 			specialArgs->fips140_3 = FALSE;
-		} else if (0 == strcmp(args->options[argCursor].optionString, VMOPT_XFIPS_140_3)) {
+		} else if (0 == strcmp(args->options[argCursor].optionString, VMOPT_XENABLEFIPS140_3)) {
 			specialArgs->fips140_3 = TRUE;
+#endif /* defined(FIPS_PREVIEW_OPTIONS_ACCEPTED_PLATFORM) */
 		}
 	}
 

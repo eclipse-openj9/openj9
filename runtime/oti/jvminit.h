@@ -625,8 +625,8 @@ enum INIT_STAGE {
 #define VMOPT_ILLEGAL_ACCESS "--illegal-access="
 #define VMOPT_ENABLE_NATIVE_ACCESS "--enable-native-access"
 
-#define VMOPT_XFIPS_140_2 "-Xfips140-2"
-#define VMOPT_XFIPS_140_3 "-Xfips140-3"
+#define VMOPT_XDISABLEFIPS140_3 "-Xdisablefips140-3"
+#define VMOPT_XENABLEFIPS140_3 "-Xenablefips140-3"
 
 /* JEP 421: Deprecate Finalization for Removal */
 #define VMOPT_DISABLE_FINALIZATION "--finalization="
@@ -706,6 +706,32 @@ enum INIT_STAGE {
 #ifndef JVMINIT_VERBOSE_INIT_TRACE_WORKING_SET
 #define JVMINIT_VERBOSE_INIT_TRACE_WORKING_SET(vm)
 #endif
+
+/* The FIPS 140-3 command-line options should not be accepted anywhere the preview is not enabled.
+ * Tech preview is enabled on (all 64-bit platforms only, not enabled on any 31/32 bit platform):
+ *	Windows on x86-64
+ *	Linux on x86-64
+ *	AIX on 64-bit POWER
+ *	Linux on 64-bit POWER LE
+ */
+#if (defined(J9VM_ENV_DATA64) && (defined(J9VM_ARCH_X86) || defined(AIXPPC) || \
+                                 (defined(LINUXPPC64) && defined(J9VM_ENV_LITTLE_ENDIAN))))
+#define FIPS_PREVIEW_OPTIONS_ACCEPTED_PLATFORM 1
+#endif /* (defined(J9VM_ENV_DATA64) && (defined(J9VM_ARCH_X86) || defined(AIXPPC) ||
+                                 (defined(LINUXPPC64) && defined(J9VM_ENV_LITTLE_ENDIAN)))) */
+
+/* For this platform, the system properties need to be set and classpaths updated but command line
+ * options rejected. This platform will always use the FIPS 140-2 settings because there is no
+ * way to enable the preview:
+ *	Linux on 64-bit Z    (will eventually join the list above, along with 64-bit zOS)
+ *
+ * A FIPS preview platform is one where the system properties should be set and the
+ * bootclasspath and extended classpath should be modified (whether or not the command-line
+ * options should be respected).
+ */
+#if (defined(FIPS_PREVIEW_OPTIONS_ACCEPTED_PLATFORM) || (defined(J9VM_ENV_DATA64) && defined(LINUX) && defined(S39064)))
+#define FIPS_PREVIEW_PLATFORM 1
+#endif /* (defined(FIPS_PREVIEW_OPTIONS_ACCEPTED_PLATFORM) || (defined(J9VM_ENV_DATA64) && defined(LINUX) && defined(S39064))) */
 
 #ifdef __cplusplus
 }

@@ -140,8 +140,6 @@ addBFUSystemProperties(J9JavaVM* vm)
 	char* propValue = NULL;
 	UDATA rc = 0;
 	const J9InternalVMFunctions* vmfunc = vm->internalVMFunctions;
-
-	OMRPORT_ACCESS_FROM_OMRVM(vm->omrVM);
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
 	if ( (fontPathSize = (int)j9sysinfo_get_env(JAVA_FONTS_STR, NULL, 0)) > 0 ) {
@@ -255,12 +253,22 @@ addBFUSystemProperties(J9JavaVM* vm)
 	}
 #endif
 
+#if defined(FIPS_PREVIEW_PLATFORM)
 	if (J9SYSPROP_ERROR_NOT_FOUND == vmfunc->getSystemProperty(vm, FIPS_HOME_PROP_NAME, NULL)) {
+		OMRPORT_ACCESS_FROM_OMRVM(vm->omrVM);
 		size_t fipsHomePropertyFlags = 0;
-		IDATA fips140_2 = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XFIPS_140_2, NULL);
-		IDATA fips140_3 = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XFIPS_140_3, NULL);
-		if (fips140_2 >= fips140_3) {
-			/* FIPS 140-2 mode: set com.ibm.fips.home to same as JAVA_HOME */
+
+		/* not all PREVIEW platforms should accept the options */
+		#if defined(FIPS_PREVIEW_OPTIONS_ACCEPTED_PLATFORM)
+			IDATA disabled = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XDISABLEFIPS140_3, NULL);
+			IDATA enabled = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XENABLEFIPS140_3, NULL);
+		#else /* defined(FIPS_PREVIEW_OPTIONS_ACCEPTED_PLATFORM) */
+			IDATA disabled = 0;
+			IDATA enabled = -1; /* any value <= disabled to force 140-2 path */
+		#endif /* defined(FIPS_PREVIEW_OPTIONS_ACCEPTED_PLATFORM) */
+
+		if (disabled >= enabled) {
+			/* FIPS 140-2 (default) mode: set com.ibm.fips.home to same as JAVA_HOME */
 			fipsHomePropertyFlags = 0;
 			vm->fipsHome = vm->javaHome;
 			vm->fipsMode = (U_8 *)FIPS140_2_PROP_VALUE;
@@ -296,6 +304,10 @@ addBFUSystemProperties(J9JavaVM* vm)
 			return rc;
 		}
 	}
+#else /* defined(FIPS_PREVIEW_PLATFORM) */
+	vm->fipsHome = vm->javaHome;
+	vm->fipsMode = (U_8 *)"";
+#endif /* defined(FIPS_PREVIEW_PLATFORM) */
 
 	return J9SYSPROP_ERROR_NONE;
 }
