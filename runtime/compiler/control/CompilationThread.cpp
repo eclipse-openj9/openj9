@@ -7524,6 +7524,13 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
       vmThread
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
    );
+   if (TR::Options::getDebug() && !cannotDoRemoteCompilation  && _compInfo.getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
+      {
+      setCompilationShouldBeInterrupted(0); // zero the flag because createResolvedMethod can
+					   // acquire/releaseVMaccessIfNeeded and may see the flag set by previous compilation
+      TR_ResolvedMethod *resolvedMethod = fe->createResolvedMethod(&trMemory, (TR_OpaqueMethodBlock *)method);
+      cannotDoRemoteCompilation = !_compInfo.methodCanBeRemotelyCompiled(resolvedMethod->signature(&trMemory),resolvedMethod->convertToMethod()->methodType());
+      }
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
    if (!entry->isAotLoad()) // We don't/can't relocate this method
@@ -7712,7 +7719,6 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
       if ((_compInfo.getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT) &&
           TR::Options::canJITCompile())
          {
-         bool forcedLocal = false;
          bool doLocalCompilation = entry->isAotLoad() || cannotDoRemoteCompilation || preferLocalComp(entry);
 
          // If this is a remote sync compilation, change it to a local sync compilation.
@@ -13019,7 +13025,7 @@ TR::CompilationInfo::requeueOutOfProcessEntry(TR_MethodToBeCompiled *entry)
    }
 
 static bool
-queryJITServerAOTCacheFilter(const char *methodSig, TR::Method::Type ty, TR::CompilationFilters *filters)
+queryJITServerFilter(const char *methodSig, TR::Method::Type ty, TR::CompilationFilters *filters)
    {
    if (!filters)
       return true;
@@ -13035,12 +13041,18 @@ queryJITServerAOTCacheFilter(const char *methodSig, TR::Method::Type ty, TR::Com
 bool
 TR::CompilationInfo::methodCanBeJITServerAOTCacheStored(const char *methodSig, TR::Method::Type ty)
    {
-   return queryJITServerAOTCacheFilter(methodSig, ty, TR::Options::_JITServerAOTCacheStoreFilters);
+   return queryJITServerFilter(methodSig, ty, TR::Options::_JITServerAOTCacheStoreFilters);
    }
 
 bool
 TR::CompilationInfo::methodCanBeJITServerAOTCacheLoaded(const char *methodSig, TR::Method::Type ty)
    {
-   return queryJITServerAOTCacheFilter(methodSig, ty, TR::Options::_JITServerAOTCacheLoadFilters);
+   return queryJITServerFilter(methodSig, ty, TR::Options::_JITServerAOTCacheLoadFilters);
+   }
+
+bool
+TR::CompilationInfo::methodCanBeRemotelyCompiled(const char *methodSig, TR::Method::Type ty)
+   {
+   return queryJITServerFilter(methodSig, ty, TR::Options::_JITServerRemoteExcludeFilters);
    }
 #endif /* defined(J9VM_OPT_JITSERVER) */

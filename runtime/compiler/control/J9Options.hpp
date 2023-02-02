@@ -357,6 +357,7 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
    static int32_t _aotCachePersistenceMinPeriodMs;
    static TR::CompilationFilters *_JITServerAOTCacheStoreFilters;
    static TR::CompilationFilters *_JITServerAOTCacheLoadFilters;
+   static TR::CompilationFilters *_JITServerRemoteExcludeFilters;
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
 #if defined(J9VM_OPT_CRIU_SUPPORT)
@@ -440,6 +441,7 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
 #if defined(J9VM_OPT_JITSERVER)
    static char *JITServerAOTCacheStoreLimitOption(char *option, void *, TR::OptionTable *entry);
    static char *JITServerAOTCacheLoadLimitOption(char *option, void *, TR::OptionTable *entry);
+   static char *JITServerRemoteExclude(char *option, void *base, TR::OptionTable *entry);
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
    static char *vmStateOption(char *option, void *, TR::OptionTable *entry);

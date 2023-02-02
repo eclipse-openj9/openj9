@@ -1269,6 +1269,8 @@ public:
 
    bool methodCanBeJITServerAOTCacheStored(const char *methodSig, TR::Method::Type ty);
    bool methodCanBeJITServerAOTCacheLoaded(const char *methodSig, TR::Method::Type ty);
+
+   bool methodCanBeRemotelyCompiled(const char *methodSig, TR::Method::Type ty);
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
    static void replenishInvocationCount(J9Method* method, TR::Compilation* comp);
