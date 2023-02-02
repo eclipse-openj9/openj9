@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar18-SE]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 /*******************************************************************************
  * Copyright (c) 1998, 2023 IBM Corp. and others
  *
@@ -79,6 +79,11 @@ public final class System {
 	 * Default input stream
 	 */
 	public static final InputStream in = null;
+
+/*[IF JAVA_SPEC_VERSION >= 20]*/
+	static InputStream initialIn;
+/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
+
 	/**
 	 * Default output stream
 	 */
@@ -481,7 +486,11 @@ static void completeInitialization() {
 	/*[ENDIF]*/ // Sidecar18-SE-OpenJ9
 
 	/*[IF (Sidecar18-SE-OpenJ9|Sidecar19-SE)&!(PLATFORM-mz31|PLATFORM-mz64)]*/
-	setIn(new BufferedInputStream(new FileInputStream(FileDescriptor.in)));
+	InputStream tempIn = new BufferedInputStream(new FileInputStream(FileDescriptor.in));
+	setIn(tempIn);
+	/*[IF JAVA_SPEC_VERSION >= 20]*/
+	initialIn = tempIn;
+	/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
 	/*[ELSE]*/
 	/*[PR 100718] Initialize System.in after the main thread*/
 	setIn(com.ibm.jvm.io.ConsoleInputStream.localize(new BufferedInputStream(new FileInputStream(FileDescriptor.in))));

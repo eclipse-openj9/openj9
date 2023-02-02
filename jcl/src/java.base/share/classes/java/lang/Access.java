@@ -1,6 +1,6 @@
 /*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 /*
- * Copyright (c) 2007, 2022 IBM Corp. and others
+ * Copyright (c) 2007, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -39,6 +39,9 @@ import com.ibm.oti.reflect.AnnotationParser;
 import com.ibm.oti.reflect.TypeAnnotationParser;
 
 /*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 20]*/
+import java.io.InputStream;
+/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
 import java.io.IOException;
 import java.lang.module.ModuleDescriptor;
 import java.net.URL;
@@ -487,6 +490,15 @@ final class Access implements JavaLangAccess {
 		return String.join(prefix, suffix, delimiter, elements, size);
 	}
 
+/*[IF JAVA_SPEC_VERSION >= 20]*/
+	public void ensureNativeAccess(Module mod, Class<?> clsOwner, String methodName) {
+		mod.ensureNativeAccess(clsOwner, methodName);
+	}
+
+	public void addEnableNativeAccessToAllUnnamed() {
+		Module.implAddEnableNativeAccessToAllUnnamed();
+	}
+/*[ELSE] JAVA_SPEC_VERSION >= 20 */
 	public boolean isEnableNativeAccess(Module mod) {
 		return mod.implIsEnableNativeAccess();
 	}
@@ -494,6 +506,7 @@ final class Access implements JavaLangAccess {
 	public void addEnableNativeAccessAllUnnamed() {
 		Module.implAddEnableNativeAccessAllUnnamed();
 	}
+/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
 
 	public Module addEnableNativeAccess(Module mod) {
 		return mod.implAddEnableNativeAccess();
@@ -543,6 +556,35 @@ final class Access implements JavaLangAccess {
 		thread.setContinuation(c);
 	}
 
+/*[IF JAVA_SPEC_VERSION >= 20]*/
+	public Object[] scopedValueCache() {
+		return Thread.scopedValueCache();
+	}
+
+	public void setScopedValueCache(Object[] cache) {
+		Thread.setScopedValueCache(cache);
+	}
+
+	public Object scopedValueBindings() {
+		return Thread.scopedValueBindings();
+	}
+
+	public Object findScopedValueBindings() {
+		return Thread.findScopedValueBindings();
+	}
+
+	public void setScopedValueBindings(Object scopeValueBindings) {
+		Thread.setScopedValueBindings(scopeValueBindings);
+	}
+
+	public void ensureMaterializedForStackWalk(Object obj) {
+		Thread.ensureMaterializedForStackWalk(obj);
+	}
+
+	public InputStream initialSystemIn() {
+		return System.initialIn;
+	}
+/*[ELSE] JAVA_SPEC_VERSION >= 20 */
 	public Object[] extentLocalCache() {
 		return Thread.extentLocalCache();
 	}
@@ -558,6 +600,7 @@ final class Access implements JavaLangAccess {
 	public void setExtentLocalBindings(Object bindings) {
 		Thread.setExtentLocalBindings(bindings);
 	}
+/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
 
 	public StackableScope headStackableScope(Thread thread) {
 		return thread.headStackableScopes();

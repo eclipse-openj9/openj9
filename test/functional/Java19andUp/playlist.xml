@@ -52,7 +52,7 @@
 			<impl>openj9</impl>
 		</impls>
 		<versions>
-			<version>19+</version>
+			<version>19</version>
 		</versions>
 	</test>
 
@@ -81,7 +81,7 @@
 			<impl>openj9</impl>
 		</impls>
 		<versions>
-			<version>19+</version>
+			<version>19</version>
 		</versions>
 	</test>
 
@@ -110,7 +110,7 @@
 			<impl>openj9</impl>
 		</impls>
 		<versions>
-			<version>19+</version>
+			<version>19</version>
 		</versions>
 	</test>
 
@@ -139,7 +139,7 @@
 			<impl>openj9</impl>
 		</impls>
 		<versions>
-			<version>19+</version>
+			<version>19</version>
 		</versions>
 	</test>
 </playlist>
