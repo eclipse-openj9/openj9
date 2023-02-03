@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2018, 2022 IBM Corp. and others
+Copyright (c) 2018, 2023 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -242,7 +242,7 @@ The following instructions guide you through the process of building an **OpenJD
 ### 1. Prepare your system
 :blue_book:
 You must install the following AIX Licensed Program Products (LPPs):
-- [xlc/C++ 13.1.3](https://www.ibm.com/developerworks/downloads/r/xlcplusaix/)
+- [xlc/C++ 16](https://www.ibm.com/developerworks/downloads/r/xlcplusaix/)
 - x11.adt.ext
 
 You must also install the boot JDK: [Java11_AIX_PPC64](https://api.adoptopenjdk.net/v3/binary/latest/11/ga/aix/ppc64/jdk/openj9/normal/adoptopenjdk).
