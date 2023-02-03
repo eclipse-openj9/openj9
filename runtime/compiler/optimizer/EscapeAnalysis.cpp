@@ -75,6 +75,7 @@
 #include "infra/Link.hpp"
 #include "infra/List.hpp"
 #include "infra/SimpleRegex.hpp"
+#include "infra/String.hpp"
 #include "infra/TRCfgEdge.hpp"
 #include "infra/TRCfgNode.hpp"
 #include "optimizer/Inliner.hpp"
@@ -139,9 +140,6 @@ TR_EscapeAnalysis::TR_EscapeAnalysis(TR::OptimizationManager *manager)
    /* monitors */
    _removeMonitors           = true;
 #endif
-
-   static char *disableLoopAliasAllocationChecking = feGetEnv("TR_disableEALoopAliasAllocationChecking");
-   _doLoopAllocationAliasChecking = (disableLoopAliasAllocationChecking == NULL);
    }
 
 char *TR_EscapeAnalysis::getClassName(TR::Node *classNode)
@@ -657,7 +655,7 @@ int32_t TR_EscapeAnalysis::performAnalysisOnce()
    _fixedVirtualCallSites.setFirst(NULL);
 
    _parms = NULL;
-   _ignoreableUses = NULL;
+   _ignorableUses = NULL;
    _nonColdLocalObjectsValueNumbers = NULL;
    _allLocalObjectsValueNumbers = NULL;
    _visitedNodes = NULL;
@@ -678,12 +676,8 @@ int32_t TR_EscapeAnalysis::performAnalysisOnce()
       _useDefInfo = optimizer()->getUseDefInfo();
       _blocksWithFlushOnEntry = new (trStackMemory()) TR_BitVector(comp()->getFlowGraph()->getNextNodeNumber(), trMemory(), stackAlloc);
       _visitedNodes = new (trStackMemory()) TR_BitVector(comp()->getNodeCount(), trMemory(), stackAlloc, growable);
-      _aliasesOfAllocNode =
-          _doLoopAllocationAliasChecking
-                 ? new (trStackMemory()) TR_BitVector(0, trMemory(), stackAlloc, growable) : NULL;
-      _aliasesOfOtherAllocNode =
-          _doLoopAllocationAliasChecking
-                 ? new (trStackMemory()) TR_BitVector(0, trMemory(), stackAlloc, growable) : NULL;
+      _aliasesOfAllocNode = new (trStackMemory()) TR_BitVector(0, trMemory(), stackAlloc, growable);
+      _aliasesOfOtherAllocNode = new (trStackMemory()) TR_BitVector(0, trMemory(), stackAlloc, growable);
 
       if (!_useDefInfo)
          {
@@ -701,7 +695,7 @@ int32_t TR_EscapeAnalysis::performAnalysisOnce()
          }
       else
          {
-         _ignoreableUses = new (trStackMemory()) TR_BitVector(0, trMemory(), stackAlloc);
+         _ignorableUses = new (trStackMemory()) TR_BitVector(0, trMemory(), stackAlloc);
          _nonColdLocalObjectsValueNumbers = new (trStackMemory()) TR_BitVector(_valueNumberInfo->getNumberOfValues(), trMemory(), stackAlloc);
          _allLocalObjectsValueNumbers = new (trStackMemory()) TR_BitVector(_valueNumberInfo->getNumberOfValues(), trMemory(), stackAlloc);
          _notOptimizableLocalObjectsValueNumbers = new (trStackMemory()) TR_BitVector(_valueNumberInfo->getNumberOfValues(), trMemory(), stackAlloc);
@@ -712,7 +706,7 @@ int32_t TR_EscapeAnalysis::performAnalysisOnce()
    if ( !_candidates.isEmpty())
       {
       findLocalObjectsValueNumbers();
-      findIgnoreableUses();
+      findIgnorableUses();
       }
 
    // Complete the candidate info by finding all uses and defs that are reached
@@ -1243,6 +1237,33 @@ int32_t TR_EscapeAnalysis::performAnalysisOnce()
          }
       }
 
+   // Suppress stack allocation for any candidates that match the regular
+   // expression specified with the suppressEA option.
+   TR::SimpleRegex * suppressAtRegex = comp()->getOptions()->getSuppressEARegex();
+   if (suppressAtRegex != NULL && !_candidates.isEmpty())
+      {
+      for (candidate = _candidates.getFirst(); candidate; candidate = next)
+         {
+         next = candidate->getNext();
+
+         if (!candidate->isLocalAllocation())
+            {
+            continue;
+            }
+
+         TR_ByteCodeInfo &bcInfo = candidate->_node->getByteCodeInfo();
+         if (TR::SimpleRegex::match(suppressAtRegex, bcInfo))
+            {
+            candidate->setLocalAllocation(false);
+
+            if (trace())
+               {
+               traceMsg(comp(), "  Suppressing stack allocation of candidate node [%p] - matched suppressEA option\n", candidate->_node);
+               }
+            }
+         }
+      }
+
    // Check for size limits on total object allocation size.
    //
    if (!_candidates.isEmpty())
@@ -1410,7 +1431,7 @@ int32_t TR_EscapeAnalysis::performAnalysisOnce()
    return cost; // actual cost
    }
 
-void TR_EscapeAnalysis::findIgnoreableUses()
+void TR_EscapeAnalysis::findIgnorableUses()
    {
    if (comp()->getOSRMode() != TR::voluntaryOSR)
       return;
@@ -1418,7 +1439,7 @@ void TR_EscapeAnalysis::findIgnoreableUses()
    TR::NodeChecklist visited(comp());
    bool inOSRCodeBlock = false;
 
-   // Gather all uses under fake prepareForOSR calls - they will be tracked as ignoreable
+   // Gather all uses under fake prepareForOSR calls - they will be tracked as ignorable
    for (TR::TreeTop *treeTop = comp()->getStartTree(); treeTop; treeTop = treeTop->getNextTreeTop())
        {
        if (treeTop->getNode()->getOpCodeValue() == TR::BBStart)
@@ -1427,28 +1448,30 @@ void TR_EscapeAnalysis::findIgnoreableUses()
                 && treeTop->getNode()->getNumChildren() > 0
                 && treeTop->getNode()->getFirstChild()->getOpCodeValue() == TR::call
                 && treeTop->getNode()->getFirstChild()->getSymbolReference()->getReferenceNumber() == TR_prepareForOSR)
-           {
-           TR::Node *callNode = treeTop->getNode()->getFirstChild();
-           for (int i = 0; i < callNode->getNumChildren(); ++i)
-              findIgnoreableUses(callNode->getChild(i), visited);
-           }
+          {
+          TR::Node *callNode = treeTop->getNode()->getFirstChild();
+          for (int i = 0; i < callNode->getNumChildren(); ++i)
+             {
+             markUsesAsIgnorable(callNode->getChild(i), visited);
+             }
+          }
        }
    }
 
-void TR_EscapeAnalysis::findIgnoreableUses(TR::Node *node, TR::NodeChecklist &visited)
+void TR_EscapeAnalysis::markUsesAsIgnorable(TR::Node *node, TR::NodeChecklist &visited)
    {
    if (visited.contains(node))
       return;
    visited.add(node);
    if (trace())
-      traceMsg(comp(), "Marking n%dn as an ignoreable use\n", node->getGlobalIndex());
-   _ignoreableUses->set(node->getGlobalIndex());
+      traceMsg(comp(), "Marking n%dn as an ignorable use\n", node->getGlobalIndex());
+   _ignorableUses->set(node->getGlobalIndex());
 
    int32_t i;
    for (i = 0; i < node->getNumChildren(); i++)
       {
       TR::Node *child = node->getChild(i);
-      findIgnoreableUses(child, visited);
+      markUsesAsIgnorable(child, visited);
       }
    }
 
@@ -2494,7 +2517,7 @@ bool TR_EscapeAnalysis::checkDefsAndUses(TR::Node *node, Candidate *candidate)
                   TR::Node *useNode = _useDefInfo->getNode(useIndex+_useDefInfo->getFirstUseIndex());
 
                   // Only add this value number if it's not to be ignored
-                  if (_ignoreableUses->get(useNode->getGlobalIndex()))
+                  if (_ignorableUses->get(useNode->getGlobalIndex()))
                      {
                      continue;
                      }
@@ -2622,16 +2645,7 @@ bool TR_EscapeAnalysis::checkOtherDefsOfLoopAllocation(TR::Node *useNode, Candid
       if (trace())
          traceMsg(comp(), "      Look at def node [%p] for use node [%p]\n", defNode, useNode);
 
-      bool allnewsonrhs;
-
-      if (_doLoopAllocationAliasChecking)
-         {
-         allnewsonrhs = checkAllNewsOnRHSInLoopWithAliasing(defIndex, useNode, candidate);
-         }
-      else
-         {
-         allnewsonrhs = checkAllNewsOnRHSInLoop(defNode, useNode, candidate);
-         }
+      bool allnewsonrhs = checkAllNewsOnRHSInLoopWithAliasing(defIndex, useNode, candidate);
 
 
       if (!allnewsonrhs &&
@@ -2673,8 +2687,6 @@ bool TR_EscapeAnalysis::checkOtherDefsOfLoopAllocation(TR::Node *useNode, Candid
 
 bool TR_EscapeAnalysis::checkAllNewsOnRHSInLoopWithAliasing(int32_t defIndex, TR::Node *useNode, Candidate *candidate)
    {
-   TR_ASSERT(_doLoopAllocationAliasChecking, "Reached checkAllNewsOnRHSInLoopWithAliasing unexpectedly");
-
    // _aliasesOfAllocNode contains sym refs that are just aliases for a fresh allocation
    // i.e. it is just a simple attempt at tracking allocations in cases such as :
    // ...
@@ -2760,7 +2772,7 @@ bool TR_EscapeAnalysis::checkAllNewsOnRHSInLoopWithAliasing(int32_t defIndex, TR
 
             if (trace())
                {
-               traceMsg(comp(), "         Look at defNode2 [%p] with otherAllocNode [%p]\n", defNode2, otherAllocNode);
+               traceMsg(comp(), "         Look at defNode2 [%p] with otherAllocNode [%p]\n", defNode2, otherAllocNode->_node);
                }
 
             if (!rhsIsHarmless &&
@@ -2800,7 +2812,7 @@ bool TR_EscapeAnalysis::checkAllNewsOnRHSInLoopWithAliasing(int32_t defIndex, TR
                   {
                   if (trace())
                      {
-                     traceMsg(comp(), "      rhs is harmless for defNode2 [%p] with otherAllocNode [%p]\n", defNode2, otherAllocNode);
+                     traceMsg(comp(), "      rhs is harmless for defNode2 [%p] with otherAllocNode [%p]\n", defNode2, otherAllocNode->_node);
                      }
                   rhsIsHarmless = true;
                   break;
@@ -2880,83 +2892,6 @@ bool TR_EscapeAnalysis::checkAllNewsOnRHSInLoopWithAliasing(int32_t defIndex, TR
    return allnewsonrhs;
    }
 
-bool TR_EscapeAnalysis::checkAllNewsOnRHSInLoop(TR::Node *defNode, TR::Node *useNode, Candidate *candidate)
-   {
-   TR_ASSERT(!_doLoopAllocationAliasChecking, "Reached checkAllNewsOnRHSInLoop unexpectedly");
-
-   int32_t useIndex = useNode->getUseDefIndex();
-   bool allnewsonrhs = false;
-
-   if ((_valueNumberInfo->getValueNumber(defNode) == _valueNumberInfo->getValueNumber(candidate->_node)))
-      {
-      if ((defNode->getFirstChild() == candidate->_node) &&
-          (_valueNumberInfo->getValueNumber(defNode) == _valueNumberInfo->getValueNumber(useNode)))
-         allnewsonrhs = true;
-      else
-         {
-         allnewsonrhs = true;
-         TR_UseDefInfo::BitVector defs2(comp()->allocator());
-         _useDefInfo->getUseDef(defs2, useIndex);
-         TR_UseDefInfo::BitVector::Cursor cursor2(defs2);
-         for (cursor2.SetToFirstOne(); cursor2.Valid(); cursor2.SetToNextOne())
-            {
-            int32_t defIndex2 = cursor2;
-            if (defIndex2 == 0)
-               {
-               allnewsonrhs = false;
-               break;
-               }
-
-            TR::Node *defNode2 = _useDefInfo->getNode(defIndex2);
-            TR::Node *firstChild = defNode2->getFirstChild();
-            bool rhsIsHarmless = false;
-            for (Candidate *candidate = _candidates.getFirst(); candidate; candidate = candidate->getNext())
-               {
-               if (candidate->_node == firstChild)
-                  {
-                  rhsIsHarmless = true;
-                  break;
-                  }
-               }
-
-
-            if (!rhsIsHarmless)
-               {
-               if (firstChild->getOpCode().hasSymbolReference() &&
-                   firstChild->getSymbol()->isArrayShadowSymbol())
-                  {
-                  TR::Node *addr = firstChild->getFirstChild();
-                  if (addr->getOpCode().isArrayRef())
-                     {
-                     TR::Node *underlyingArray = addr->getFirstChild();
-
-                     int32_t fieldNameLen = -1;
-                     char *fieldName = NULL;
-                     if (underlyingArray && underlyingArray->getOpCode().hasSymbolReference() &&
-                         underlyingArray->getSymbolReference()->getSymbol()->isStaticField())
-                        {
-                        fieldName = underlyingArray->getSymbolReference()->getOwningMethod(comp())->staticName(underlyingArray->getSymbolReference()->getCPIndex(), fieldNameLen, comp()->trMemory());
-                        }
-
-                     if (fieldName && (fieldNameLen > 0) &&
-                        !strncmp(fieldName, "java/lang/Integer$IntegerCache.cache", 36))
-                        rhsIsHarmless = true;
-                     }
-                  }
-               }
-
-            if (!rhsIsHarmless)
-               {
-               allnewsonrhs = false;
-               break;
-               }
-            }
-         }
-      }
-
-   return allnewsonrhs;
-   }
-
 bool TR_EscapeAnalysis::checkOverlappingLoopAllocation(TR::Node *useNode, Candidate *candidate)
    {
    // The allocation is inside a loop and a use has been found that has other
@@ -2968,10 +2903,7 @@ bool TR_EscapeAnalysis::checkOverlappingLoopAllocation(TR::Node *useNode, Candid
    //
    TR::TreeTop *treeTop;
    _visitedNodes->empty();
-   if (_doLoopAllocationAliasChecking)
-      {
-      _aliasesOfAllocNode->empty();
-      }
+   _aliasesOfAllocNode->empty();
    rcount_t     numReferences = 0; //candidate->_node->getReferenceCount()-1;
    for (treeTop = candidate->_treeTop->getEnclosingBlock()->getEntry(); treeTop; treeTop = treeTop->getNextTreeTop())
       {
@@ -2998,8 +2930,7 @@ bool TR_EscapeAnalysis::checkOverlappingLoopAllocation(TR::Node *node, TR::Node 
 
    _visitedNodes->set(node->getGlobalIndex());
 
-   if (_doLoopAllocationAliasChecking
-          && node->getOpCode().isStore() && node->getSymbol()->isAutoOrParm())
+   if (node->getOpCode().isStore() && node->getSymbol()->isAutoOrParm())
       {
       if (node->getFirstChild() == allocNode)
          {
@@ -3021,10 +2952,9 @@ bool TR_EscapeAnalysis::checkOverlappingLoopAllocation(TR::Node *node, TR::Node 
    if ((node != allocNode)
           && (_valueNumberInfo->getValueNumber(node) == _valueNumberInfo->getValueNumber(useNode)))
       {
-      if (!_doLoopAllocationAliasChecking
-            || (!(node->getOpCode().isLoadVarDirect()
-                    && _aliasesOfAllocNode->get(node->getSymbolReference()->getReferenceNumber()))
-                  && (numReferences > 0)))
+      if (!(node->getOpCode().isLoadVarDirect()
+            && _aliasesOfAllocNode->get(node->getSymbolReference()->getReferenceNumber()))
+          && (numReferences > 0))
          {
          return false;
          }
@@ -3060,7 +2990,6 @@ void TR_EscapeAnalysis::visitTree(TR::Node *node)
 
 void TR_EscapeAnalysis::collectAliasesOfAllocations(TR::Node *node, TR::Node *allocNode)
    {
-   TR_ASSERT(_doLoopAllocationAliasChecking, "Reached collectAliasesOfAllocations unexpectedly");
    if (_visitedNodes->get(node->getGlobalIndex()))
       {
       return;
@@ -6607,6 +6536,15 @@ void TR_EscapeAnalysis::makeLocalObject(Candidate *candidate)
    TR::Node::recreate(allocationNode, TR::loadaddr);
    allocationNode->setSymbolReference(symRef);
 
+   // Insert debug counter for a contiguous allocation.  Counter name is of the form:
+   //
+   //    escapeAnalysis/contiguous-allocation/<hotness>/<outermost-method-sig>/(<inlined-method-sig>)/(<bc-caller-index,bc-offset>)
+   //
+   // If the node is not from an inlined method, <inlined-method-sig> repeats the outermost method signature
+   //
+   TR_ByteCodeInfo bcInfo = allocationNode->getByteCodeInfo();
+   TR::DebugCounter::prependDebugCounter(comp(), TR::DebugCounter::debugCounterName(comp(), "escapeAnalysis/contiguous-allocation/%s/%s/(%s)/(%d,%d)", comp()->getHotnessName(comp()->getMethodHotness()), comp()->signature(), bcInfo.getCallerIndex() > -1 ? comp()->getInlinedResolvedMethod(bcInfo.getCallerIndex())->signature(trMemory()): comp()->signature(), bcInfo.getCallerIndex(), bcInfo.getByteCodeIndex()), candidate->_treeTop);
+
    if (candidate->_seenArrayCopy || candidate->_argToCall || candidate->_seenSelfStore || candidate->_seenStoreToLocalObject)
       {
       allocationNode->setCannotTrackLocalUses(true);
@@ -7078,6 +7016,14 @@ void TR_EscapeAnalysis::makeNonContiguousLocalAllocation(Candidate *candidate)
 
   else
       {
+      // Insert debug counter for a noncontiguous allocation.  Counter name is of the form:
+      //
+      //    escapeAnalysis/noncontiguous-allocation/<hotness>/<outermost-method-sig>/(<inlined-method-sig>)/(<bc-caller-index,bc-offset>)
+      //
+      // If the node is not from an inlined method, <inlined-method-sig> repeats the outermost method signature
+      //
+      TR_ByteCodeInfo bcInfo = candidate->_node->getByteCodeInfo();
+      TR::DebugCounter::prependDebugCounter(comp(), TR::DebugCounter::debugCounterName(comp(), "escapeAnalysis/noncontiguous-allocation/%s/%s/(%s)/(%d,%d)", comp()->getHotnessName(comp()->getMethodHotness()), comp()->signature(), bcInfo.getCallerIndex() > -1 ? comp()->getInlinedResolvedMethod(bcInfo.getCallerIndex())->signature(trMemory()): comp()->signature(), bcInfo.getCallerIndex(), bcInfo.getByteCodeIndex()), candidate->_treeTop);
       // Remove the tree containing the allocation node. All uses of the node
       // should have been removed by now
       //
