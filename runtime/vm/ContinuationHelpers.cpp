@@ -265,6 +265,11 @@ copyFieldsFromContinuation(J9VMThread *currentThread, J9VMThread *vmThread, J9VM
 	els->jitGlobalStorageBase = (UDATA*)&continuation->jitGPRs;
 	els->i2jState = continuation->i2jState;
 	vmThread->entryLocalStorage = els;
+
+	/* Disable the JIT artifact cache on the walk thread.  It provides little performance
+	 * benefit to a single walk and the cache memory must be managed.
+	 */
+	vmThread->jitArtifactSearchCache = (void*)((UDATA)vmThread->jitArtifactSearchCache | J9_STACKWALK_NO_JIT_CACHE);
 }
 
 UDATA
