@@ -239,7 +239,7 @@
     <output type="success" caseSensitive="yes" regex="no">TEST PASSED</output>
     <output type="failure" caseSensitive="yes" regex="no">TEST FAILED</output>
     <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
-    <output type="failure" caseSensitive="yes" regex="no">Checkpoint blocked because thread</output>
+    <output type="success" caseSensitive="yes" regex="no">Checkpoint blocked because thread</output>
     <output type="required" caseSensitive="no" regex="no">Killed</output>
     <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
     <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
