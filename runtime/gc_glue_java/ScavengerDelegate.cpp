@@ -345,16 +345,17 @@ MM_ScavengerDelegate::scanContinuationNativeSlots(MM_EnvironmentStandard *env, o
 	bool shouldRemember = false;
 
 	J9VMThread *currentThread = (J9VMThread *)env->getLanguageVMThread();
-	if (MM_GCExtensions::needScanStacksForContinuationObject(currentThread, objectPtr)) {
+	const bool isGlobalGC = false;
+	if (MM_GCExtensions::needScanStacksForContinuationObject(currentThread, objectPtr, isGlobalGC)) {
 		StackIteratorData4Scavenge localData;
 		localData.scavengerDelegate = this;
 		localData.env = env;
 		localData.reason = reason;
 		localData.shouldRemember = &shouldRemember;
 		/* In STW GC there are no racing carrier threads doing mount and no need for the synchronization. */
-		bool  syncWithContinuationMounting = _extensions->isConcurrentScavengerInProgress();
+		bool isConcurrentGC = _extensions->isConcurrentScavengerInProgress();
 
-		GC_VMThreadStackSlotIterator::scanSlots(currentThread, objectPtr, (void *)&localData, stackSlotIteratorForScavenge, false, false, syncWithContinuationMounting);
+		GC_VMThreadStackSlotIterator::scanSlots(currentThread, objectPtr, (void *)&localData, stackSlotIteratorForScavenge, false, false, isConcurrentGC, isGlobalGC);
 	}
 	return 	shouldRemember;
 }
