@@ -189,12 +189,7 @@ static void genInlineTest(TR::Node * node, TR_OpaqueClassBlock* castClassAddr, T
    for (i = 0; i < num_PICS - 1; i++)
       {
       // Load the cached value in scratch1Reg
-      // HCR in genInlineTest for checkcast and instanceof
-      if (cg->wantToPatchClassPointer(guessClassArray[i], node))
-         {
-         iCursor = loadAddressConstantInSnippet(cg, node, (intptr_t) (guessClassArray[i]), scratch1Reg, scratch2Reg,TR::InstOpCode::Op_load, true, iCursor);
-         }
-      else if (comp->compileRelocatableCode() && comp->getOption(TR_UseSymbolValidationManager))
+      if (comp->compileRelocatableCode() && comp->getOption(TR_UseSymbolValidationManager))
          {
          TR::StaticSymbol *sym = TR::StaticSymbol::create(comp->trHeapMemory(), TR::Address);
          sym->setStaticAddress(guessClassArray[i]);
@@ -216,11 +211,7 @@ static void genInlineTest(TR::Node * node, TR_OpaqueClassBlock* castClassAddr, T
       }
 
    // Load the cached value in scratch1Reg
-   if (cg->wantToPatchClassPointer(guessClassArray[num_PICS - 1], node))
-      {
-      iCursor = loadAddressConstantInSnippet(cg, node, (intptr_t) (guessClassArray[num_PICS - 1]), scratch1Reg, scratch2Reg,TR::InstOpCode::Op_load, true, iCursor);
-      }
-   else if (comp->compileRelocatableCode() && comp->getOption(TR_UseSymbolValidationManager))
+   if (comp->compileRelocatableCode() && comp->getOption(TR_UseSymbolValidationManager))
       {
       TR::StaticSymbol *sym = TR::StaticSymbol::create(comp->trHeapMemory(), TR::Address);
       sym->setStaticAddress(guessClassArray[num_PICS - 1]);
@@ -2980,10 +2971,7 @@ static void VMoutlinedHelperArrayStoreCHKEvaluator(TR::Node *node, TR::Register 
    deps.addDependency(cg, rootClassReg, TR::RealRegister::gr11);
 
    TR_OpaqueClassBlock *rootClass = fej9->getSystemClassFromClassName("java/lang/Object", 16);
-   if (cg->wantToPatchClassPointer(rootClass, node))
-      loadAddressConstantInSnippet(cg, node, (intptr_t) rootClass, rootClassReg, scratchReg,TR::InstOpCode::Op_load, false, NULL);
-   else
-      loadAddressConstant(cg, comp->compileRelocatableCode(), node, (intptr_t) rootClass, rootClassReg);
+   loadAddressConstant(cg, comp->compileRelocatableCode(), node, (intptr_t) rootClass, rootClassReg);
 
    TR_CCPreLoadedCode helper = TR_arrayStoreCHK;
    uintptr_t helperAddr = (uintptr_t) codeCache->getCCPreLoadedCodeAddress(helper, cg);
@@ -3119,11 +3107,7 @@ static void VMarrayStoreCHKEvaluator(TR::Node *node, TR::Register *src, TR::Regi
       {
       TR_OpaqueClassBlock *rootClass = fej9->getSystemClassFromClassName("java/lang/Object", 16);
 
-      if (cg->wantToPatchClassPointer(rootClass, node))
-         {
-         loadAddressConstantInSnippet(cg, node, (intptr_t) rootClass, t3Reg, t4Reg, TR::InstOpCode::Op_load, false, NULL);
-         }
-      else if (comp->compileRelocatableCode())
+      if (comp->compileRelocatableCode())
          {
          TR::StaticSymbol *sym = TR::StaticSymbol::create(comp->trHeapMemory(), TR::Address);
          sym->setStaticAddress(rootClass);
@@ -3155,12 +3139,7 @@ static void VMarrayStoreCHKEvaluator(TR::Node *node, TR::Register *src, TR::Regi
    if ((!comp->getOption(TR_DisableArrayStoreCheckOpts)) && node->getArrayComponentClassInNode())
       {
       TR_OpaqueClassBlock *castClass = (TR_OpaqueClassBlock *) node->getArrayComponentClassInNode();
-
-      if (cg->wantToPatchClassPointer(castClass, node))
-         loadAddressConstantInSnippet(cg, node, (intptr_t) castClass, t3Reg, t4Reg,TR::InstOpCode::Op_load, false, NULL);
-      else
-         loadAddressConstant(cg, comp->compileRelocatableCode(), node, (intptr_t) castClass, t3Reg);
-
+      loadAddressConstant(cg, comp->compileRelocatableCode(), node, (intptr_t) castClass, t3Reg);
       generateTrg1Src2Instruction(cg,TR::InstOpCode::Op_cmpl, node, cndReg, t1Reg, t3Reg);
       generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, toWB, cndReg);
       }
@@ -6105,48 +6084,40 @@ static void genInitObjectHeader(TR::Node *node, TR::Instruction *&iCursor, TR_Op
    // Store the class
    if (clzReg == NULL)
       {
-      // HCR in genInitObjectHeader
-      if (cg->wantToPatchClassPointer(clazz, node))
-         {
-         iCursor = loadAddressConstantInSnippet(cg, node, (int64_t) clazz, temp1Reg, temp2Reg,TR::InstOpCode::Op_load, false, iCursor);
-         iCursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::ori, node, temp1Reg, temp1Reg, orFlag, iCursor);
-         }
-      else
-         {
 #ifdef TR_TARGET_64BIT
-         int32_t offset;
-         intptr_t classPtr = (intptr_t)clazz;
+      int32_t offset;
+      intptr_t classPtr = (intptr_t)clazz;
 
-         offset = TR_PPCTableOfConstants::lookUp((int8_t *)&classPtr, sizeof(intptr_t), true, 0, cg);
+      offset = TR_PPCTableOfConstants::lookUp((int8_t *)&classPtr, sizeof(intptr_t), true, 0, cg);
 
-         if (offset != PTOC_FULL_INDEX)
+      if (offset != PTOC_FULL_INDEX)
+         {
+         offset *= TR::Compiler->om.sizeofReferenceAddress();
+         if (TR_PPCTableOfConstants::getTOCSlot(offset) == 0)
+         TR_PPCTableOfConstants::setTOCSlot(offset, (int64_t)clazz);
+         if (offset<LOWER_IMMED||offset>UPPER_IMMED)
             {
-            offset *= TR::Compiler->om.sizeofReferenceAddress();
-            if (TR_PPCTableOfConstants::getTOCSlot(offset) == 0)
-            TR_PPCTableOfConstants::setTOCSlot(offset, (int64_t)clazz);
-            if (offset<LOWER_IMMED||offset>UPPER_IMMED)
-               {
-               TR_ASSERT_FATAL_WITH_NODE(node, 0x00008000 != HI_VALUE(offset), "TOC offset (0x%x) is unexpectedly high. Can not encode upper 16 bits into an addis instruction.", offset);
-               iCursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addis, node, temp1Reg, cg->getTOCBaseRegister(), HI_VALUE(offset), iCursor);
-               iCursor = generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, node, temp1Reg, TR::MemoryReference::createWithDisplacement(cg, temp1Reg, LO_VALUE(offset), TR::Compiler->om.sizeofReferenceAddress()), iCursor);
-               }
-            else
-               {
-               iCursor = generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, node, temp1Reg, TR::MemoryReference::createWithDisplacement(cg, cg->getTOCBaseRegister(), offset, TR::Compiler->om.sizeofReferenceAddress()), iCursor);
-               }
-            if (orFlag != 0)
-               {
-               iCursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::ori, node, temp1Reg, temp1Reg, orFlag, iCursor);
-               }
+            TR_ASSERT_FATAL_WITH_NODE(node, 0x00008000 != HI_VALUE(offset), "TOC offset (0x%x) is unexpectedly high. Can not encode upper 16 bits into an addis instruction.", offset);
+            iCursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addis, node, temp1Reg, cg->getTOCBaseRegister(), HI_VALUE(offset), iCursor);
+            iCursor = generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, node, temp1Reg, TR::MemoryReference::createWithDisplacement(cg, temp1Reg, LO_VALUE(offset), TR::Compiler->om.sizeofReferenceAddress()), iCursor);
             }
          else
             {
-            iCursor = loadConstant(cg, node, (int64_t)clazz|(int64_t)orFlag, temp1Reg, iCursor);
+            iCursor = generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, node, temp1Reg, TR::MemoryReference::createWithDisplacement(cg, cg->getTOCBaseRegister(), offset, TR::Compiler->om.sizeofReferenceAddress()), iCursor);
             }
-#else
-         iCursor = loadConstant(cg, node, (int32_t) clazz | (int32_t) orFlag, temp1Reg, iCursor);
-#endif /* TR_TARGET_64BIT */
+         if (orFlag != 0)
+            {
+            iCursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::ori, node, temp1Reg, temp1Reg, orFlag, iCursor);
+            }
          }
+      else
+         {
+         iCursor = loadConstant(cg, node, (int64_t)clazz|(int64_t)orFlag, temp1Reg, iCursor);
+         }
+#else
+      iCursor = loadConstant(cg, node, (int32_t) clazz | (int32_t) orFlag, temp1Reg, iCursor);
+#endif /* TR_TARGET_64BIT */
+
       if (TR::Compiler->om.compressObjectReferences())
          // must store only 32 bits
          iCursor = generateMemSrc1Instruction(cg, TR::InstOpCode::stw, node,

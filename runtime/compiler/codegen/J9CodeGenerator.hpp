@@ -346,37 +346,6 @@ private:
 
    uint16_t changeParmLoadsToRegLoads(TR::Node*node, TR::Node **regLoads, TR_BitVector *globalRegsWithRegLoad, TR_BitVector &killedParms, vcount_t visitCount); // returns number of RegLoad nodes created
 
-   static bool wantToPatchClassPointer(TR::Compilation *comp,
-                                       const TR_OpaqueClassBlock *allegedClassPointer,
-                                       const char *locationDescription,
-                                       const void *location)
-      {
-      // If we have a class pointer to consider, it should look like one.
-      const uintptr_t j9classEyecatcher = 0x99669966;
-#if defined(J9VM_OPT_JITSERVER)
-      if (allegedClassPointer != NULL && !comp->isOutOfProcessCompilation())
-#else
-      if (allegedClassPointer != NULL)
-#endif /* defined(J9VM_OPT_JITSERVER) */
-         {
-         TR_ASSERT(*(const uintptr_t*)allegedClassPointer == j9classEyecatcher,
-                   "expected a J9Class* for omitted runtime assumption");
-         }
-
-      // Class pointer patching is restricted to HCR mode.
-      if (!comp->getOption(TR_EnableHCR))
-         return false;
-
-      // -Xjit:HCRPatchClassPointers re-enables all class pointer assumptions
-      if (comp->getOption(TR_HCRPatchClassPointers))
-         return true;
-
-      return !performTransformation(comp,
-                                    "O^O OMIT HCR CLASS POINTER ASSUMPTION: class=" POINTER_PRINTF_FORMAT ", %s " POINTER_PRINTF_FORMAT "\n", allegedClassPointer,
-                                    locationDescription,
-                                    location);
-      }
-
    uint32_t _stackLimitOffsetInMetaData;
 
    /*
@@ -407,14 +376,6 @@ protected:
    TR::Node *_dummyTempStorageRefNode;
 
 public:
-
-   static bool wantToPatchClassPointer(TR::Compilation *comp,
-                                       const TR_OpaqueClassBlock *allegedClassPointer,
-                                       const uint8_t *inCodeAt);
-
-   bool wantToPatchClassPointer(const TR_OpaqueClassBlock *allegedClassPointer, const uint8_t *inCodeAt);
-
-   bool wantToPatchClassPointer(const TR_OpaqueClassBlock *allegedClassPointer, const TR::Node *forNode);
 
    bool getSupportsBigDecimalLongLookasideVersioning() { return _flags3.testAny(SupportsBigDecimalLongLookasideVersioning);}
    void setSupportsBigDecimalLongLookasideVersioning() { _flags3.set(SupportsBigDecimalLongLookasideVersioning);}
