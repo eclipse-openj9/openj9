@@ -792,7 +792,8 @@ void
 MM_GlobalMarkingScheme::scanContinuationNativeSlots(MM_EnvironmentVLHGC *env, J9Object *objectPtr, ScanReason reason)
 {
 	J9VMThread *currentThread = (J9VMThread *)env->getLanguageVMThread();
-	if (MM_GCExtensions::needScanStacksForContinuationObject(currentThread, objectPtr)) {
+	const bool isGlobalGC = true;
+	if (MM_GCExtensions::needScanStacksForContinuationObject(currentThread, objectPtr, isGlobalGC)) {
 		StackIteratorData4GlobalMarkingScheme localData;
 		localData.globalMarkingScheme = this;
 		localData.env = env;
@@ -801,11 +802,10 @@ MM_GlobalMarkingScheme::scanContinuationNativeSlots(MM_EnvironmentVLHGC *env, J9
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
 		stackFrameClassWalkNeeded = isDynamicClassUnloadingEnabled();
 #endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
-
 		/* In STW GC there are no racing carrier threads doing mount and no need for the synchronization. */
-		bool syncWithContinuationMounting = (MM_VLHGCIncrementStats::mark_concurrent == static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._globalMarkIncrementType);
+		bool isConcurrentGC = (MM_VLHGCIncrementStats::mark_concurrent == static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._globalMarkIncrementType);
 
-		GC_VMThreadStackSlotIterator::scanSlots(currentThread, objectPtr, (void *)&localData, stackSlotIteratorForGlobalMarkingScheme, stackFrameClassWalkNeeded, false, syncWithContinuationMounting);
+		GC_VMThreadStackSlotIterator::scanSlots(currentThread, objectPtr, (void *)&localData, stackSlotIteratorForGlobalMarkingScheme, stackFrameClassWalkNeeded, false, isConcurrentGC, isGlobalGC);
 	}
 }
 

@@ -2322,7 +2322,8 @@ MMINLINE void
 MM_CopyForwardScheme::scanContinuationNativeSlots(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, J9Object *objectPtr, ScanReason reason)
 {
 	J9VMThread *currentThread = (J9VMThread *)env->getLanguageVMThread();
-	if (MM_GCExtensions::needScanStacksForContinuationObject(currentThread, objectPtr)) {
+	const bool isGlobalGC = false;
+	if (MM_GCExtensions::needScanStacksForContinuationObject(currentThread, objectPtr, isGlobalGC)) {
 		StackIteratorData4CopyForward localData;
 		localData.copyForwardScheme = this;
 		localData.env = env;
@@ -2332,7 +2333,9 @@ MM_CopyForwardScheme::scanContinuationNativeSlots(MM_EnvironmentVLHGC *env, MM_A
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
 		stackFrameClassWalkNeeded = isDynamicClassUnloadingEnabled();
 #endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
-		GC_VMThreadStackSlotIterator::scanSlots(currentThread, objectPtr, (void *)&localData, stackSlotIteratorForCopyForwardScheme, stackFrameClassWalkNeeded, false);
+		const bool isConcurrentGC = false;
+
+		GC_VMThreadStackSlotIterator::scanSlots(currentThread, objectPtr, (void *)&localData, stackSlotIteratorForCopyForwardScheme, stackFrameClassWalkNeeded, false, isConcurrentGC, isGlobalGC);
 	}
 }
 
