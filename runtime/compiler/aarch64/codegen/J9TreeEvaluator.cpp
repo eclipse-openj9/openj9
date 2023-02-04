@@ -4089,7 +4089,7 @@ static void VMarrayStoreCHKEvaluator(TR::Node *node, TR::Register *srcReg, TR::R
       cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "ArrayStoreCHKEvaluator:010VMarrayStoreCHKEvaluator:02JavaLangObjectCheck"), *srm);
 
       TR::Register *javaLangObjectClassReg = srm->findOrCreateScratchRegister();
-      if (cg->wantToPatchClassPointer(objectClass, node) || cg->needClassAndMethodPointerRelocations())
+      if (cg->needClassAndMethodPointerRelocations())
          {
          loadAddressConstantInSnippet(cg, node, reinterpret_cast<intptr_t>(objectClass), javaLangObjectClassReg, TR_ClassPointer);
          }
@@ -4135,7 +4135,7 @@ static void VMarrayStoreCHKEvaluator(TR::Node *node, TR::Register *srcReg, TR::R
       TR_OpaqueClassBlock *arrayComponentClass = node->getArrayComponentClassInNode();
       cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "ArrayStoreCHKEvaluator:010VMarrayStoreCHKEvaluator:06ArrayComponentClassCheck"), *srm);
 
-      if (cg->wantToPatchClassPointer(arrayComponentClass, node) || cg->needClassAndMethodPointerRelocations())
+      if (cg->needClassAndMethodPointerRelocations())
          {
          loadAddressConstantInSnippet(cg, node, reinterpret_cast<intptr_t>(arrayComponentClass), arrayComponentClassReg, TR_ClassPointer);
          }

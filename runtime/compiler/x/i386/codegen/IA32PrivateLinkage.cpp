@@ -384,15 +384,7 @@ TR::Register *J9::X86::I386::PrivateLinkage::pushIntegerWordArg(TR::Node *child)
                {
                // Must pass symbol reference so that aot can put out a relocation for it
                //
-               TR::Instruction *instr = generateImmSymInstruction(TR::InstOpCode::PUSHImm4, child, (uintptr_t)sym->getStaticAddress(), symRef, cg());
-
-               // HCR register the class passed as a parameter
-               //
-               if ((sym->isClassObject() || sym->isAddressOfClassObject())
-                   && cg()->wantToPatchClassPointer((TR_OpaqueClassBlock*)sym->getStaticAddress(), child))
-                  {
-                  comp()->getStaticHCRPICSites()->push_front(instr);
-                  }
+               generateImmSymInstruction(TR::InstOpCode::PUSHImm4, child, (uintptr_t)sym->getStaticAddress(), symRef, cg());
                }
 
             cg()->decReferenceCount(child);

@@ -4690,26 +4690,6 @@ J9::CodeGenerator::setUpForInstructionSelection()
    }
 
 bool
-J9::CodeGenerator::wantToPatchClassPointer(TR::Compilation *comp,
-                             const TR_OpaqueClassBlock *allegedClassPointer,
-                             const uint8_t *inCodeAt)
-   {
-   return TR::CodeGenerator::wantToPatchClassPointer(comp, allegedClassPointer, "in code at", inCodeAt);
-   }
-
-bool
-J9::CodeGenerator::wantToPatchClassPointer(const TR_OpaqueClassBlock *allegedClassPointer, const uint8_t *inCodeAt)
-   {
-   return TR::CodeGenerator::wantToPatchClassPointer(self()->comp(), allegedClassPointer, inCodeAt);
-   }
-
-bool
-J9::CodeGenerator::wantToPatchClassPointer(const TR_OpaqueClassBlock *allegedClassPointer, const TR::Node *forNode)
-   {
-   return TR::CodeGenerator::wantToPatchClassPointer(self()->comp(), allegedClassPointer, "for node", forNode);
-   }
-
-bool
 J9::CodeGenerator::supportsJitMethodEntryAlignment()
    {
    return self()->fej9()->supportsJitMethodEntryAlignment();

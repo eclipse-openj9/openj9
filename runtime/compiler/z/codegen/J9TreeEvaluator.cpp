@@ -3436,9 +3436,6 @@ static bool generateInlineTest(TR::CodeGenerator * cg, TR::Node * node, TR::Node
       if (fej9->isUnloadAssumptionRequired((TR_OpaqueClassBlock *)(guessClassArray[i]), comp->getCurrentMethod()))
          comp->getStaticPICSites()->push_front(unloadableConstInstr[i]);
 
-      if (cg->wantToPatchClassPointer(guessClassArray[i], node))
-         comp->getStaticHCRPICSites()->push_front(unloadableConstInstr[i]);
-
       result_bool = fej9->instanceOfOrCheckCast((J9Class*)(guessClassArray[i]), (J9Class*)castClassAddr);
       result_label = (falseLabel != trueLabel ) ? (result_bool ? trueLabel : falseLabel) : doneLabel;
 
@@ -4411,9 +4408,6 @@ J9::Z::TreeEvaluator::checkcastEvaluator(TR::Node * node, TR::CodeGenerator * cg
                // Adding profiled classes to static PIC sites
                if (fej9->isUnloadAssumptionRequired((TR_OpaqueClassBlock *)(profiledClassesList[numPICs].profiledClass), comp->getCurrentMethod()))
                   comp->getStaticPICSites()->push_front(temp);
-               // Adding profiled classes to HCR PIC sites
-               if (cg->wantToPatchClassPointer(profiledClassesList[numPICs].profiledClass, node))
-                  comp->getStaticHCRPICSites()->push_front(temp);
 
                temp = generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::getCmpRegOpCode(), node, arbitraryClassReg1, objClassReg, TR::InstOpCode::COND_BE, resultLabel, false, false);
                numPICs++;
@@ -6794,7 +6788,7 @@ VMarrayStoreCHKEvaluator(
     */
    bool doObjectArrayCheck = objectClass != 0;
 
-   if (doObjectArrayCheck && (cg->wantToPatchClassPointer((TR_OpaqueClassBlock*)objectClass, node) || cg->needClassAndMethodPointerRelocations()))
+   if (doObjectArrayCheck && cg->needClassAndMethodPointerRelocations())
       {
       if (cg->isLiteralPoolOnDemandOn())
          {
@@ -8746,9 +8740,6 @@ J9::Z::TreeEvaluator::VMgenCoreInstanceofEvaluator(TR::Node * node, TR::CodeGene
                // Adding profiled class to the static PIC slots.
                if (fej9->isUnloadAssumptionRequired((TR_OpaqueClassBlock *)(profiledClassesList[numPICs].profiledClass), comp->getCurrentMethod()))
                   comp->getStaticPICSites()->push_front(temp);
-               // Adding profiled class to static HCR PIC sites.
-               if (cg->wantToPatchClassPointer(profiledClassesList[numPICs].profiledClass, node))
-                  comp->getStaticHCRPICSites()->push_front(temp);
 
                if (profiledClassesList[numPICs].isProfiledClassInstanceOfCastClass)
                   generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::getCmpRegOpCode(), node, arbitraryClassReg1, objClassReg, TR::InstOpCode::COND_BE, trueLabel, false, false);
@@ -10202,40 +10193,22 @@ genInitObjectHeader(TR::Node * node, TR::Instruction *& iCursor, TR_OpaqueClassB
       // Store the class
       if (clzReg == NULL)
          {
-         if (cg->wantToPatchClassPointer(classAddress, node))
-            {
-            iCursor = genLoadAddressConstantInSnippet(cg, node, (intptr_t) classAddress | (intptr_t)orFlag, temp1Reg, iCursor, conditions, litPoolBaseReg, true);
-            if (orFlag != 0)
-               {
-               if (TR::Compiler->om.compressObjectReferences())
-                  iCursor = generateS390ImmOp(cg, TR::InstOpCode::O, node, temp1Reg, temp1Reg, (int32_t)orFlag, conditions, litPoolBaseReg);
-               else
-                  {
-                  if (comp->target().is64Bit())
-                     iCursor = generateS390ImmOp(cg, TR::InstOpCode::OG, node, temp1Reg, temp1Reg, (int64_t)orFlag, conditions, litPoolBaseReg);
-                  else
-                     iCursor = generateS390ImmOp(cg, TR::InstOpCode::O, node, temp1Reg, temp1Reg, (int32_t)orFlag, conditions, litPoolBaseReg);
-                  }
-               }
-            }
-         else
-            {
-            //case for arraynew and anewarray for compressedrefs and 31 bit
-            /*
-             * node->getOpCodeValue() == TR::newarray
-             [0x484DF88C20]   LGFI    GPR15,674009856
-             [0x484DF88DD8]   ST      GPR15,#613 0(GPR3)
-             [0x484DF88F60]   ST      GPR2,#614 4(GPR3)
+         //case for arraynew and anewarray for compressedrefs and 31 bit
+         /*
+          * node->getOpCodeValue() == TR::newarray
+          [0x484DF88C20]   LGFI    GPR15,674009856
+          [0x484DF88DD8]   ST      GPR15,#613 0(GPR3)
+          [0x484DF88F60]   ST      GPR2,#614 4(GPR3)
 
-            to
-            IIHF
-            STG      GPR2,#614 0(GPR3)
+         to
+         IIHF
+         STG      GPR2,#614 0(GPR3)
 
-             */
+          */
 
-            if (!canUseIIHF)
-               iCursor = genLoadAddressConstant(cg, node, (intptr_t) classAddress | (intptr_t)orFlag, temp1Reg, iCursor, conditions, litPoolBaseReg);
-            }
+         if (!canUseIIHF)
+            iCursor = genLoadAddressConstant(cg, node, (intptr_t) classAddress | (intptr_t)orFlag, temp1Reg, iCursor, conditions, litPoolBaseReg);
+
          if (canUseIIHF)
             {
             iCursor = generateRILInstruction(cg, TR::InstOpCode::IIHF, node, enumReg, static_cast<uint32_t>(reinterpret_cast<uintptr_t>(classAddress)) | orFlag, iCursor);
