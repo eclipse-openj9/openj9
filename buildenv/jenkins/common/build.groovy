@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2022 IBM Corp. and others
+ * Copyright (c) 2017, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -310,7 +310,13 @@ def build() {
     }
     stage('Java Version') {
         dir(OPENJDK_CLONE_DIR) {
-            sh "build/$RELEASE/images/$JDK_FOLDER/bin/java -Xjit -version"
+            def jdkImageDir = "build/${RELEASE}/images/${JDK_FOLDER}"
+            try {
+                sh "${jdkImageDir}/bin/java -Xjit -version"
+            } catch (e) {
+                archive_diagnostics(jdkImageDir)
+                throw e
+            }
         }
     }
 }
@@ -516,9 +522,18 @@ def fetchFile(src, dest) {
     sh "tso DELETE ${fileToMove}"
 }
 
-def archive_diagnostics() {
+def archive_diagnostics(javaVersionJdkImageDir = null) {
     def datestamp = variableFile.get_date()
     def diagnosticsFilename = "${JOB_NAME}-${BUILD_NUMBER}-${datestamp}-diagnostics.tar.gz"
+
+    def archiveCmd = "tar -zcvf ${diagnosticsFilename} -T -"
+
+    def findCrashDataCmd = "find ."
+    findCrashDataCmd += " -name 'core.*.dmp'"
+    findCrashDataCmd += " -o -name 'javacore.*.txt'"
+    findCrashDataCmd += " -o -name 'jitdump.*.dmp'"
+    findCrashDataCmd += " -o -name 'Snap.*.trc'"
+
     if (SPEC.contains('zos')) {
         def logContent = currentBuild.rawBuild.getLog()
         // search for each occurrence of IEATDUMP success for DSN=
@@ -548,10 +563,59 @@ def archive_diagnostics() {
             }
         }
         // Note: to preserve the files ACLs set _OS390_USTAR=Y env variable (see variable files)
-        sh "find . -name 'core.*.dmp' -o -name 'javacore.*.txt' -o -name 'Snap.*.trc' -o -name 'jitdump.*.dmp' | sed 's#^./##' | pax -wzf ${diagnosticsFilename}"
-    } else {
-        sh "find . -name 'core.*.dmp' -o -name 'javacore.*.txt' -o -name 'Snap.*.trc' -o -name 'jitdump.*.dmp' -o -name ddr_info -o -name j9ddr.dat -o -name superset.dat -o -name '*.annt.h' -o -name '*.stub.h' -o -name '*.dSYM' -o -path '*/make-support/failure-logs/*' | sed 's#^./##' | tar -zcvf ${diagnosticsFilename} -T -"
+        archiveCmd = "pax -wzf ${diagnosticsFilename}"
     }
+
+    def tgt = "./build/${RELEASE}"
+
+    def findDiagnosticsCmd = findCrashDataCmd
+    findDiagnosticsCmd += " -o -type d -name ddr_info -prune"
+    findDiagnosticsCmd += " -o -type d -path '${tgt}/make-support/failure-logs' -prune"
+
+    // If the JVM crashed while building, then include the binaries we may have
+    // been running and any separate debug info in the diagnostics archive to
+    // help debug.
+    if (sh(returnStatus: true, script: "${findCrashDataCmd} | grep -q .") == 0) {
+        def j2reImage = "${tgt}/images/j2re-image"
+        if (sh(returnStatus: true, script: "test -d '${j2reImage}'") == 0) {
+            // Java 8. The build does not run anything from jdk/ (and it seems
+            // that the binaries there can't be run from that location). But it
+            // does run images/j2re-image/bin/java -version, so instead of jdk/
+            // get images/j2re-image/.
+            findDiagnosticsCmd += " -o -type d -path '${j2reImage}' -prune"
+        } else {
+            // Java 11+. The build runs binaries from jdk/.
+            findDiagnosticsCmd += " -o -type d -path '${tgt}/jdk' -prune"
+
+            // The jdk/ directory may contain relative symlinks pointing into
+            // support/modules_libs/ for files required to run the JVM, and
+            // also for separate debug info.
+            findDiagnosticsCmd += " -o -type d -path '${tgt}/support/modules_libs' -prune"
+        }
+
+        if (javaVersionJdkImageDir != null) {
+            // Crashed while running $javaVersionJdkImageDir/bin/java -version.
+            // Make sure to pick up the binaries from there as well.
+            //
+            // In Java 8, this should be images/j2sdk-image/. Usually we only
+            // get images/j2re-image/.
+            //
+            // In Java 11+, it should be images/jdk/. Usually we only get jdk/
+            // (i.e. outside of images/).
+            //
+            // Make sure this path starts with ./ so that it's possible for
+            // -path to match when running find . [...].
+            //
+            if (!javaVersionJdkImageDir.startsWith("./")) {
+                javaVersionJdkImageDir = "./${javaVersionJdkImageDir}";
+            }
+
+            findDiagnosticsCmd += " -o -type d -path '${javaVersionJdkImageDir}' -prune"
+        }
+    }
+
+    sh "${findDiagnosticsCmd} | sed 's#^./##' | ${archiveCmd}"
+
     if (ARTIFACTORY_CONFIG) {
         def uploadSpec = """{
             "files":[
