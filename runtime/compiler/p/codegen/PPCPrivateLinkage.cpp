@@ -2288,7 +2288,7 @@ void J9::Power::PrivateLinkage::buildVirtualDispatch(TR::Node                   
          default:
             if (fej9->needsInvokeExactJ2IThunk(callNode, comp()))
                {
-               TR_J2IThunk *thunk = TR::PPCCallSnippet::generateInvokeExactJ2IThunk(callNode, sizeOfArguments, cg(), methodSymbol->getMethod()->signatureChars());
+               TR_MHJ2IThunk *thunk = TR::PPCCallSnippet::generateInvokeExactJ2IThunk(callNode, sizeOfArguments, cg(), methodSymbol->getMethod()->signatureChars());
                fej9->setInvokeExactJ2IThunk(thunk, comp());
                }
             break;

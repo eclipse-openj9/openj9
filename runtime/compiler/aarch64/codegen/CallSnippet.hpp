@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2021 IBM Corp. and others
+ * Copyright (c) 2019, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,7 +27,7 @@
 #include "env/VMJ9.h"
 
 namespace TR { class CodeGenerator; }
-class TR_J2IThunk;
+class TR_MHJ2IThunk;
 
 extern void arm64CodeSync(uint8_t *codePointer, uint32_t codeSize);
 
@@ -60,7 +60,7 @@ class ARM64CallSnippet : public TR::Snippet
    uint8_t *setCallRA(uint8_t *ra) {return (callRA=ra);}
 
    static uint8_t *generateVIThunk(TR::Node *callNode, int32_t argSize, TR::CodeGenerator *cg);
-   static TR_J2IThunk *generateInvokeExactJ2IThunk(TR::Node *callNode, int32_t argSize, TR::CodeGenerator *cg, char *signature);
+   static TR_MHJ2IThunk *generateInvokeExactJ2IThunk(TR::Node *callNode, int32_t argSize, TR::CodeGenerator *cg, char *signature);
    };
 
 class ARM64UnresolvedCallSnippet : public TR::ARM64CallSnippet

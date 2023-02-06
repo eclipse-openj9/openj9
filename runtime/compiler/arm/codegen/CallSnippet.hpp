@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,7 +26,7 @@
 #include "codegen/Snippet.hpp"
 #include "codegen/ARMInstruction.hpp"
 
-class TR_J2IThunk;
+class TR_MHJ2IThunk;
 
 extern void     armCodeSync(uint8_t *codePointer, uint32_t codeSize);
 
@@ -57,7 +57,7 @@ class ARMCallSnippet : public TR::Snippet
    TR_RuntimeHelper getHelper();
 
    static uint8_t *generateVIThunk(TR::Node *callNode, int32_t argSize, TR::CodeGenerator *cg);
-   static TR_J2IThunk *generateInvokeExactJ2IThunk(TR::Node *callNode, int32_t argSize, TR::CodeGenerator *cg, char *signature);
+   static TR_MHJ2IThunk *generateInvokeExactJ2IThunk(TR::Node *callNode, int32_t argSize, TR::CodeGenerator *cg, char *signature);
    };
 
 class ARMUnresolvedCallSnippet : public TR::ARMCallSnippet

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2022 IBM Corp. and others
+ * Copyright (c) 2000, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -135,7 +135,7 @@ TR::S390J9CallSnippet::generateVIThunk(TR::Node * callNode, int32_t argSize, TR:
    return returnValue;
    }
 
-TR_J2IThunk *
+TR_MHJ2IThunk *
 TR::S390J9CallSnippet::generateInvokeExactJ2IThunk(TR::Node * callNode, int32_t argSize, char* signature, TR::CodeGenerator * cg)
    {
    uint32_t rEP = (uint32_t) cg->getEntryPointRegister() - 1;
@@ -147,8 +147,8 @@ TR::S390J9CallSnippet::generateInvokeExactJ2IThunk(TR::Node * callNode, int32_t 
    int32_t codeSize = instructionCountForArguments(callNode, cg) + lengthOfIEThunk;
    // TODO:JSR292: VI thunks have code to ensure they are double-word aligned.  Do we need that here?
 
-   TR_J2IThunkTable *thunkTable = comp->getPersistentInfo()->getInvokeExactJ2IThunkTable();
-   TR_J2IThunk      *thunk      = TR_J2IThunk::allocate(codeSize, signature, cg, thunkTable);
+   TR_MHJ2IThunkTable *thunkTable = comp->getPersistentInfo()->getInvokeExactJ2IThunkTable();
+   TR_MHJ2IThunk      *thunk      = TR_MHJ2IThunk::allocate(codeSize, signature, cg, thunkTable);
    uint8_t          *cursor     = thunk->entryPoint();
 
    TR::SymbolReference *dispatcherSymbol;
