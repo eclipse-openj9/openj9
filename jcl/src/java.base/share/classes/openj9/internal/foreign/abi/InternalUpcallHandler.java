@@ -1,4 +1,4 @@
-/*[INCLUDE-IF JAVA_SPEC_VERSION == 19]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 19]*/
 /*******************************************************************************
  * Copyright IBM Corp. and others 2022
  *
@@ -32,7 +32,11 @@ import java.lang.invoke.MethodType;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
+/*[IF JAVA_SPEC_VERSION >= 20]*/
+import java.lang.foreign.SegmentScope;
+/*[ELSE] JAVA_SPEC_VERSION >= 20 */
 import java.lang.foreign.MemorySession;
+/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
 /*[ELSE] JAVA_SPEC_VERSION >= 19 */
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryLayout;
@@ -55,7 +59,19 @@ public final class InternalUpcallHandler {
 	private final long thunkAddr;
 	private UpcallMHMetaData metaData;
 
-	/*[IF JAVA_SPEC_VERSION >= 19]*/
+	/*[IF JAVA_SPEC_VERSION >= 20]*/
+	/**
+	 * The constructor creates an upcall handler specific to the requested java method
+	 * by generating a native thunk in upcall on a given platform.
+	 *
+	 * @param target The target method handle in upcall
+	 * @param mt The method type of the target method handle
+	 * @param cDesc The function descriptor of the target method handle
+	 * @param session The segment scope related to the upcall handler
+	 * @return an internal upcall handler with the thunk address
+	 */
+	public InternalUpcallHandler(MethodHandle target, MethodType mt, FunctionDescriptor cDesc, SegmentScope session)
+	/*[ELSEIF JAVA_SPEC_VERSION == 19] */
 	/**
 	 * The constructor creates an upcall handler specific to the requested java method
 	 * by generating a native thunk in upcall on a given platform.
@@ -67,7 +83,7 @@ public final class InternalUpcallHandler {
 	 * @return an internal upcall handler with the thunk address
 	 */
 	public InternalUpcallHandler(MethodHandle target, MethodType mt, FunctionDescriptor cDesc, MemorySession session)
-	/*[ELSE] JAVA_SPEC_VERSION >= 19 */
+	/*[ELSE] JAVA_SPEC_VERSION == 19 */
 	/**
 	 * The constructor creates an upcall handler specific to the requested java method
 	 * by generating a native thunk in upcall on a given platform.
@@ -79,7 +95,7 @@ public final class InternalUpcallHandler {
 	 * @return an internal upcall handler with the thunk address
 	 */
 	public InternalUpcallHandler(MethodHandle target, MethodType mt, FunctionDescriptor cDesc, ResourceScope scope)
-	/*[ENDIF] JAVA_SPEC_VERSION >= 19 */
+	/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
 	{
 		List<MemoryLayout> argLayouts = cDesc.argumentLayouts();
 		argLayoutArray = argLayouts.toArray(new MemoryLayout[argLayouts.size()]);
@@ -116,11 +132,13 @@ public final class InternalUpcallHandler {
 	 * otherwise, call the native to request the JIT to generate an upcall thunk for this
 	 * java method.
 	 */
-	/*[IF JAVA_SPEC_VERSION >= 19]*/
+	/*[IF JAVA_SPEC_VERSION >= 20]*/
+	private long getUpcallThunkAddr(MethodHandle target, SegmentScope sessionOrScope)
+	/*[ELSEIF JAVA_SPEC_VERSION == 19] */
 	private long getUpcallThunkAddr(MethodHandle target, MemorySession sessionOrScope)
-	/*[ELSE] JAVA_SPEC_VERSION >= 19 */
+	/*[ELSE] JAVA_SPEC_VERSION == 19 */
 	private long getUpcallThunkAddr(MethodHandle target, ResourceScope sessionOrScope)
-	/*[ENDIF] JAVA_SPEC_VERSION >= 19 */
+	/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
 	{
 		int argLayoutCount = argLayoutArray.length;
 		/* The last element of the native signature array is for the return type. */
@@ -140,9 +158,10 @@ public final class InternalUpcallHandler {
 			nativeSignatureStrs[argLayoutCount] = LayoutStrPreprocessor.getSimplifiedLayoutString(realReturnLayout, false);
 		}
 
-		/* The thunk must be created for each upcall handler given the UpcallMHMetaData object uniquely bound to the thunk
-		 * is only alive for a MemorySession(JDK19)/ResourceScope(JDK17/18) specified in java, which means the upcall handler
-		 * and its UpcallMHMetaData object will be cleaned up automatically once their session/scope is closed.
+		/* The thunk must be created for each upcall handler given the UpcallMHMetaData object uniquely bound
+		 * to the thunk is only alive for a SegmentScope(JDK20+)/MemorySession(JDK19)/ResourceScope(JDK17/18)
+		 * specified in java, which means the upcall handler and its UpcallMHMetaData object will be cleaned
+		 * up automatically once their session/scope is closed.
 		 */
 		metaData = new UpcallMHMetaData(target, argLayoutCount, sessionOrScope);
 		return allocateUpcallStub(metaData, nativeSignatureStrs);

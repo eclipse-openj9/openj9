@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright IBM Corp. and others 2022
+ * Copyright IBM Corp. and others 2023
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,8 +26,8 @@ import org.testng.Assert;
 import org.testng.AssertJUnit;
 import static org.testng.Assert.fail;
 
-import java.lang.Thread;
 import java.lang.reflect.*;
+import java.lang.Thread;
 import java.time.Duration;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -113,13 +113,13 @@ public class VirtualThreadTests {
 		}
 	}
 
-	private static volatile boolean testSyncThread_ready = false;
+	private static volatile boolean testSyncThread_ready;
 
 	@Test
 	public void test_synchronizedBlockFromVirtualthread() {
 		try {
 			Thread t = Thread.ofVirtual().name("synchronized").unstarted(() -> {
-				synchronized(VirtualThreadTests.class) {
+				synchronized (VirtualThreadTests.class) {
 					testSyncThread_ready = true;
 					LockSupport.park();
 				}
@@ -131,7 +131,7 @@ public class VirtualThreadTests {
 			}
 			/* Let virtual thread park */
 			Thread.sleep(500);
-			AssertJUnit.assertTrue("Virtual Thread state should be WAITING", (t.getState() == Thread.State.WAITING));
+			Assert.assertEquals(t.getState(), Thread.State.WAITING);
 			LockSupport.unpark(t);
 			t.join();
 		} catch (Exception e) {
@@ -139,7 +139,7 @@ public class VirtualThreadTests {
 		}
 	}
 
-	private static volatile boolean testJNIThread_ready = false;
+	private static volatile boolean testJNIThread_ready;
 
 	@Test
 	public void test_jniFromVirtualthread() {
@@ -155,7 +155,7 @@ public class VirtualThreadTests {
 			}
 			/* Let virtual thread park */
 			Thread.sleep(500);
-			AssertJUnit.assertTrue("Virtual Thread state should be WAITING", (t.getState() == Thread.State.WAITING));
+			Assert.assertEquals(t.getState(), Thread.State.WAITING);
 			LockSupport.unpark(t);
 			t.join();
 		} catch (Exception e) {
@@ -188,8 +188,8 @@ public class VirtualThreadTests {
 					System.out.println(st);
 				}
 			}
-			AssertJUnit.assertTrue("Expected " + expected_frames + " frames, got " + ste.length, (expected_frames == ste.length));
-			AssertJUnit.assertTrue("Expected top frame to be yieldImpl, got " + ste[0].getMethodName(), ste[0].getMethodName().equals("yieldImpl"));
+			Assert.assertEquals(ste.length, expected_frames);
+			Assert.assertEquals(ste[0].getMethodName(), "yieldImpl");
 			LockSupport.unpark(t);
 			t.join();
 		} catch (Exception e) {
@@ -211,8 +211,8 @@ public class VirtualThreadTests {
 			}
 
 			StackTraceElement[] ste = t.getStackTrace();
-			AssertJUnit.assertTrue("Expected 4 frames, got " + ste.length, (4 == ste.length));
-			AssertJUnit.assertTrue("Expected top frame to be VirtualThreadTests class, got " + ste[0].toString(), ste[0].getClassName().equals("org.openj9.test.jep425.VirtualThreadTests"));
+			Assert.assertEquals(ste.length, 4);
+			Assert.assertEquals(ste[0].getClassName(), "org.openj9.test.jep425.VirtualThreadTests");
 
 			testThread2_state = false;
 			t.join();

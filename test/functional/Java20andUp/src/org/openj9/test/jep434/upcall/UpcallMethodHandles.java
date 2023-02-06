@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright IBM Corp. and others 2021
+ * Copyright IBM Corp. and others 2023
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,7 +19,7 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-package org.openj9.test.jep424.upcall;
+package org.openj9.test.jep434.upcall;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -28,18 +28,16 @@ import java.lang.invoke.MethodType;
 import static java.lang.invoke.MethodType.methodType;
 import java.lang.invoke.VarHandle;
 
-import java.lang.foreign.Addressable;
+import java.lang.foreign.Arena;
+import static java.lang.foreign.Linker.*;
 import java.lang.foreign.GroupLayout;
-import java.lang.foreign.MemoryAddress;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemoryLayout.PathElement;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.MemorySession;
 import java.lang.foreign.SegmentAllocator;
+import java.lang.foreign.SegmentScope;
 import java.lang.foreign.SequenceLayout;
 import java.lang.foreign.ValueLayout;
-
-import static java.lang.foreign.Linker.*;
 import static java.lang.foreign.ValueLayout.*;
 
 /**
@@ -48,28 +46,28 @@ import static java.lang.foreign.ValueLayout.*;
  */
 public class UpcallMethodHandles {
 	private static final Lookup lookup = MethodHandles.lookup();
-	private static MemorySession session = MemorySession.openImplicit();
-	private static SegmentAllocator allocator = SegmentAllocator.newNativeArena(session);
+	private static SegmentScope scope = SegmentScope.auto();
+	private static SegmentAllocator allocator = SegmentAllocator.nativeAllocator(scope);
 	private static boolean isAixOS = System.getProperty("os.name").toLowerCase().contains("aix");
 
 	static final MethodType MT_Bool_Bool_MemSegmt = methodType(boolean.class, boolean.class, MemorySegment.class);
-	static final MethodType MT_Addr_Bool_MemAddr = methodType(Addressable.class, boolean.class, MemoryAddress.class);
+	static final MethodType MT_Segmt_Bool_MemSegmt = methodType(MemorySegment.class, boolean.class, MemorySegment.class);
 	static final MethodType MT_Char_Char_MemSegmt = methodType(char.class, char.class, MemorySegment.class);
-	static final MethodType MT_Addr_MemAddr_Char = methodType(Addressable.class, MemoryAddress.class, char.class);
+	static final MethodType MT_Segmt_MemSegmt_Char = methodType(MemorySegment.class, MemorySegment.class, char.class);
 	static final MethodType MT_Byte_Byte_MemSegmt = methodType(byte.class, byte.class, MemorySegment.class);
-	static final MethodType MT_Addr_Byte_MemAddr = methodType(Addressable.class, byte.class, MemoryAddress.class);
+	static final MethodType MT_Segmt_Byte_MemSegmt = methodType(MemorySegment.class, byte.class, MemorySegment.class);
 	static final MethodType MT_Short_Short_MemSegmt = methodType(short.class, short.class, MemorySegment.class);
-	static final MethodType MT_Addr_MemAddr_Short = methodType(Addressable.class, MemoryAddress.class, short.class);
+	static final MethodType MT_Segmt_MemSegmt_Short = methodType(MemorySegment.class, MemorySegment.class, short.class);
 	static final MethodType MT_Int_Int_MemSegmt = methodType(int.class, int.class, MemorySegment.class);
-	static final MethodType MT_Addr_Int_MemAddr = methodType(Addressable.class, int.class, MemoryAddress.class);
+	static final MethodType MT_Segmt_Int_MemSegmt = methodType(MemorySegment.class, int.class, MemorySegment.class);
 	static final MethodType MT_Long_Long_MemSegmt = methodType(long.class, long.class, MemorySegment.class);
-	static final MethodType MT_Addr_MemAddr_Long = methodType(Addressable.class, MemoryAddress.class, long.class);
+	static final MethodType MT_Segmt_MemSegmt_Long = methodType(MemorySegment.class, MemorySegment.class, long.class);
 	static final MethodType MT_Long_Int_MemSegmt = methodType(long.class, int.class, MemorySegment.class);
 	static final MethodType MT_Float_Float_MemSegmt = methodType(float.class, float.class, MemorySegment.class);
-	static final MethodType MT_Addr_Float_MemAddr = methodType(Addressable.class, float.class, MemoryAddress.class);
+	static final MethodType MT_Segmt_Float_MemSegmt = methodType(MemorySegment.class, float.class, MemorySegment.class);
 	static final MethodType MT_Double_Double_MemSegmt = methodType(double.class, double.class, MemorySegment.class);
-	static final MethodType MT_Addr_MemAddr_Double = methodType(Addressable.class, MemoryAddress.class, double.class);
-	static final MethodType MT_Addr_MemAddr_MemSegmt = methodType(Addressable.class, MemoryAddress.class, MemorySegment.class);
+	static final MethodType MT_Segmt_MemSegmt_Double = methodType(MemorySegment.class, MemorySegment.class, double.class);
+	static final MethodType MT_Segmt_MemSegmt_MemSegmt = methodType(MemorySegment.class, MemorySegment.class, MemorySegment.class);
 	static final MethodType MT_MemSegmt_MemSegmt_MemSegmt = methodType(MemorySegment.class, MemorySegment.class, MemorySegment.class);
 	static final MethodType MT_MemSegmt = methodType(MemorySegment.class);
 
@@ -265,55 +263,55 @@ public class UpcallMethodHandles {
 	static {
 		try {
 			MH_add2BoolsWithOr = lookup.findStatic(UpcallMethodHandles.class, "add2BoolsWithOr", methodType(boolean.class, boolean.class, boolean.class)); //$NON-NLS-1$
-			MH_addBoolAndBoolFromPointerWithOr = lookup.findStatic(UpcallMethodHandles.class, "addBoolAndBoolFromPointerWithOr", methodType(boolean.class, boolean.class, MemoryAddress.class)); //$NON-NLS-1$
-			MH_addBoolAndBoolFromPtrWithOr_RetPtr = lookup.findStatic(UpcallMethodHandles.class, "addBoolAndBoolFromPtrWithOr_RetPtr", MT_Addr_Bool_MemAddr); //$NON-NLS-1$
-			MH_addBoolAndBoolFromPtrWithOr_RetArgPtr = lookup.findStatic(UpcallMethodHandles.class, "addBoolAndBoolFromPtrWithOr_RetArgPtr", MT_Addr_Bool_MemAddr); //$NON-NLS-1$
+			MH_addBoolAndBoolFromPointerWithOr = lookup.findStatic(UpcallMethodHandles.class, "addBoolAndBoolFromPointerWithOr", methodType(boolean.class, boolean.class, MemorySegment.class)); //$NON-NLS-1$
+			MH_addBoolAndBoolFromPtrWithOr_RetPtr = lookup.findStatic(UpcallMethodHandles.class, "addBoolAndBoolFromPtrWithOr_RetPtr", MT_Segmt_Bool_MemSegmt); //$NON-NLS-1$
+			MH_addBoolAndBoolFromPtrWithOr_RetArgPtr = lookup.findStatic(UpcallMethodHandles.class, "addBoolAndBoolFromPtrWithOr_RetArgPtr", MT_Segmt_Bool_MemSegmt); //$NON-NLS-1$
 
 			MH_createNewCharFrom2Chars = lookup.findStatic(UpcallMethodHandles.class, "createNewCharFrom2Chars", methodType(char.class, char.class, char.class)); //$NON-NLS-1$
-			MH_createNewCharFromCharAndCharFromPointer = lookup.findStatic(UpcallMethodHandles.class, "createNewCharFromCharAndCharFromPointer", methodType(char.class, MemoryAddress.class, char.class)); //$NON-NLS-1$
-			MH_createNewCharFromCharAndCharFromPtr_RetPtr = lookup.findStatic(UpcallMethodHandles.class, "createNewCharFromCharAndCharFromPtr_RetPtr", MT_Addr_MemAddr_Char); //$NON-NLS-1$
-			MH_createNewCharFromCharAndCharFromPtr_RetArgPtr = lookup.findStatic(UpcallMethodHandles.class, "createNewCharFromCharAndCharFromPtr_RetArgPtr", MT_Addr_MemAddr_Char); //$NON-NLS-1$
+			MH_createNewCharFromCharAndCharFromPointer = lookup.findStatic(UpcallMethodHandles.class, "createNewCharFromCharAndCharFromPointer", methodType(char.class, MemorySegment.class, char.class)); //$NON-NLS-1$
+			MH_createNewCharFromCharAndCharFromPtr_RetPtr = lookup.findStatic(UpcallMethodHandles.class, "createNewCharFromCharAndCharFromPtr_RetPtr", MT_Segmt_MemSegmt_Char); //$NON-NLS-1$
+			MH_createNewCharFromCharAndCharFromPtr_RetArgPtr = lookup.findStatic(UpcallMethodHandles.class, "createNewCharFromCharAndCharFromPtr_RetArgPtr", MT_Segmt_MemSegmt_Char); //$NON-NLS-1$
 
 			MH_add2Bytes = lookup.findStatic(UpcallMethodHandles.class, "add2Bytes", methodType(byte.class, byte.class, byte.class)); //$NON-NLS-1$
-			MH_addByteAndByteFromPointer = lookup.findStatic(UpcallMethodHandles.class, "addByteAndByteFromPointer", methodType(byte.class, byte.class, MemoryAddress.class)); //$NON-NLS-1$
-			MH_addByteAndByteFromPtr_RetPtr = lookup.findStatic(UpcallMethodHandles.class, "addByteAndByteFromPtr_RetPtr", MT_Addr_Byte_MemAddr); //$NON-NLS-1$
-			MH_addByteAndByteFromPtr_RetArgPtr = lookup.findStatic(UpcallMethodHandles.class, "addByteAndByteFromPtr_RetArgPtr", MT_Addr_Byte_MemAddr); //$NON-NLS-1$
+			MH_addByteAndByteFromPointer = lookup.findStatic(UpcallMethodHandles.class, "addByteAndByteFromPointer", methodType(byte.class, byte.class, MemorySegment.class)); //$NON-NLS-1$
+			MH_addByteAndByteFromPtr_RetPtr = lookup.findStatic(UpcallMethodHandles.class, "addByteAndByteFromPtr_RetPtr", MT_Segmt_Byte_MemSegmt); //$NON-NLS-1$
+			MH_addByteAndByteFromPtr_RetArgPtr = lookup.findStatic(UpcallMethodHandles.class, "addByteAndByteFromPtr_RetArgPtr", MT_Segmt_Byte_MemSegmt); //$NON-NLS-1$
 
 			MH_add2Shorts = lookup.findStatic(UpcallMethodHandles.class, "add2Shorts", methodType(short.class, short.class, short.class)); //$NON-NLS-1$
-			MH_addShortAndShortFromPointer = lookup.findStatic(UpcallMethodHandles.class, "addShortAndShortFromPointer", methodType(short.class, MemoryAddress.class, short.class)); //$NON-NLS-1$
-			MH_addShortAndShortFromPtr_RetPtr = lookup.findStatic(UpcallMethodHandles.class, "addShortAndShortFromPtr_RetPtr", MT_Addr_MemAddr_Short); //$NON-NLS-1$
-			MH_addShortAndShortFromPtr_RetArgPtr = lookup.findStatic(UpcallMethodHandles.class, "addShortAndShortFromPtr_RetArgPtr", MT_Addr_MemAddr_Short); //$NON-NLS-1$
+			MH_addShortAndShortFromPointer = lookup.findStatic(UpcallMethodHandles.class, "addShortAndShortFromPointer", methodType(short.class, MemorySegment.class, short.class)); //$NON-NLS-1$
+			MH_addShortAndShortFromPtr_RetPtr = lookup.findStatic(UpcallMethodHandles.class, "addShortAndShortFromPtr_RetPtr", MT_Segmt_MemSegmt_Short); //$NON-NLS-1$
+			MH_addShortAndShortFromPtr_RetArgPtr = lookup.findStatic(UpcallMethodHandles.class, "addShortAndShortFromPtr_RetArgPtr", MT_Segmt_MemSegmt_Short); //$NON-NLS-1$
 
 			MH_add2Ints = lookup.findStatic(UpcallMethodHandles.class, "add2Ints", methodType(int.class, int.class, int.class)); //$NON-NLS-1$
-			MH_addIntAndIntFromPointer = lookup.findStatic(UpcallMethodHandles.class, "addIntAndIntFromPointer", methodType(int.class, int.class, MemoryAddress.class)); //$NON-NLS-1$
-			MH_addIntAndIntFromPtr_RetPtr = lookup.findStatic(UpcallMethodHandles.class, "addIntAndIntFromPtr_RetPtr", MT_Addr_Int_MemAddr); //$NON-NLS-1$
-			MH_addIntAndIntFromPtr_RetArgPtr = lookup.findStatic(UpcallMethodHandles.class, "addIntAndIntFromPtr_RetArgPtr", MT_Addr_Int_MemAddr); //$NON-NLS-1$
+			MH_addIntAndIntFromPointer = lookup.findStatic(UpcallMethodHandles.class, "addIntAndIntFromPointer", methodType(int.class, int.class, MemorySegment.class)); //$NON-NLS-1$
+			MH_addIntAndIntFromPtr_RetPtr = lookup.findStatic(UpcallMethodHandles.class, "addIntAndIntFromPtr_RetPtr", MT_Segmt_Int_MemSegmt); //$NON-NLS-1$
+			MH_addIntAndIntFromPtr_RetArgPtr = lookup.findStatic(UpcallMethodHandles.class, "addIntAndIntFromPtr_RetArgPtr", MT_Segmt_Int_MemSegmt); //$NON-NLS-1$
 			MH_add3Ints = lookup.findStatic(UpcallMethodHandles.class, "add3Ints", methodType(int.class, int.class, int.class, int.class)); //$NON-NLS-1$
 			MH_addIntAndChar = lookup.findStatic(UpcallMethodHandles.class, "addIntAndChar", methodType(int.class, int.class, char.class)); //$NON-NLS-1$
 			MH_add2IntsReturnVoid = lookup.findStatic(UpcallMethodHandles.class, "add2IntsReturnVoid", methodType(void.class, int.class, int.class)); //$NON-NLS-1$
 
 			MH_add2Longs = lookup.findStatic(UpcallMethodHandles.class, "add2Longs", methodType(long.class, long.class, long.class)); //$NON-NLS-1$
-			MH_addLongAndLongFromPointer = lookup.findStatic(UpcallMethodHandles.class, "addLongAndLongFromPointer", methodType(long.class, MemoryAddress.class, long.class)); //$NON-NLS-1$
-			MH_addLongAndLongFromPtr_RetPtr = lookup.findStatic(UpcallMethodHandles.class, "addLongAndLongFromPtr_RetPtr", MT_Addr_MemAddr_Long); //$NON-NLS-1$
-			MH_addLongAndLongFromPtr_RetArgPtr = lookup.findStatic(UpcallMethodHandles.class, "addLongAndLongFromPtr_RetArgPtr", MT_Addr_MemAddr_Long); //$NON-NLS-1$
+			MH_addLongAndLongFromPointer = lookup.findStatic(UpcallMethodHandles.class, "addLongAndLongFromPointer", methodType(long.class, MemorySegment.class, long.class)); //$NON-NLS-1$
+			MH_addLongAndLongFromPtr_RetPtr = lookup.findStatic(UpcallMethodHandles.class, "addLongAndLongFromPtr_RetPtr", MT_Segmt_MemSegmt_Long); //$NON-NLS-1$
+			MH_addLongAndLongFromPtr_RetArgPtr = lookup.findStatic(UpcallMethodHandles.class, "addLongAndLongFromPtr_RetArgPtr", MT_Segmt_MemSegmt_Long); //$NON-NLS-1$
 
 			MH_add2Floats = lookup.findStatic(UpcallMethodHandles.class, "add2Floats", methodType(float.class, float.class, float.class)); //$NON-NLS-1$
-			MH_addFloatAndFloatFromPointer = lookup.findStatic(UpcallMethodHandles.class, "addFloatAndFloatFromPointer", methodType(float.class, float.class, MemoryAddress.class)); //$NON-NLS-1$
-			MH_addFloatAndFloatFromPtr_RetPtr = lookup.findStatic(UpcallMethodHandles.class, "addFloatAndFloatFromPtr_RetPtr", MT_Addr_Float_MemAddr); //$NON-NLS-1$
-			MH_addFloatAndFloatFromPtr_RetArgPtr = lookup.findStatic(UpcallMethodHandles.class, "addFloatAndFloatFromPtr_RetArgPtr", MT_Addr_Float_MemAddr); //$NON-NLS-1$
+			MH_addFloatAndFloatFromPointer = lookup.findStatic(UpcallMethodHandles.class, "addFloatAndFloatFromPointer", methodType(float.class, float.class, MemorySegment.class)); //$NON-NLS-1$
+			MH_addFloatAndFloatFromPtr_RetPtr = lookup.findStatic(UpcallMethodHandles.class, "addFloatAndFloatFromPtr_RetPtr", MT_Segmt_Float_MemSegmt); //$NON-NLS-1$
+			MH_addFloatAndFloatFromPtr_RetArgPtr = lookup.findStatic(UpcallMethodHandles.class, "addFloatAndFloatFromPtr_RetArgPtr", MT_Segmt_Float_MemSegmt); //$NON-NLS-1$
 
 			MH_add2Doubles = lookup.findStatic(UpcallMethodHandles.class, "add2Doubles", methodType(double.class, double.class, double.class)); //$NON-NLS-1$
-			MH_addDoubleAndDoubleFromPointer = lookup.findStatic(UpcallMethodHandles.class, "addDoubleAndDoubleFromPointer", methodType(double.class, MemoryAddress.class, double.class)); //$NON-NLS-1$
-			MH_addDoubleAndDoubleFromPtr_RetPtr = lookup.findStatic(UpcallMethodHandles.class, "addDoubleAndDoubleFromPtr_RetPtr", MT_Addr_MemAddr_Double); //$NON-NLS-1$
-			MH_addDoubleAndDoubleFromPtr_RetArgPtr = lookup.findStatic(UpcallMethodHandles.class, "addDoubleAndDoubleFromPtr_RetArgPtr", MT_Addr_MemAddr_Double); //$NON-NLS-1$
+			MH_addDoubleAndDoubleFromPointer = lookup.findStatic(UpcallMethodHandles.class, "addDoubleAndDoubleFromPointer", methodType(double.class, MemorySegment.class, double.class)); //$NON-NLS-1$
+			MH_addDoubleAndDoubleFromPtr_RetPtr = lookup.findStatic(UpcallMethodHandles.class, "addDoubleAndDoubleFromPtr_RetPtr", MT_Segmt_MemSegmt_Double); //$NON-NLS-1$
+			MH_addDoubleAndDoubleFromPtr_RetArgPtr = lookup.findStatic(UpcallMethodHandles.class, "addDoubleAndDoubleFromPtr_RetArgPtr", MT_Segmt_MemSegmt_Double); //$NON-NLS-1$
 
-			MH_compare = lookup.findStatic(UpcallMethodHandles.class, "compare", methodType(int.class, MemoryAddress.class, MemoryAddress.class)); //$NON-NLS-1$
+			MH_compare = lookup.findStatic(UpcallMethodHandles.class, "compare", methodType(int.class, MemorySegment.class, MemorySegment.class)); //$NON-NLS-1$
 
 			MH_addBoolAndBoolsFromStructWithXor = lookup.findStatic(UpcallMethodHandles.class, "addBoolAndBoolsFromStructWithXor", MT_Bool_Bool_MemSegmt); //$NON-NLS-1$
 			MH_addBoolAnd20BoolsFromStructWithXor = lookup.findStatic(UpcallMethodHandles.class, "addBoolAnd20BoolsFromStructWithXor", MT_Bool_Bool_MemSegmt); //$NON-NLS-1$
-			MH_addBoolFromPointerAndBoolsFromStructWithXor = lookup.findStatic(UpcallMethodHandles.class, "addBoolFromPointerAndBoolsFromStructWithXor", methodType(boolean.class, MemoryAddress.class, MemorySegment.class)); //$NON-NLS-1$
-			MH_addBoolFromPointerAndBoolsFromStructWithXor_returnBoolPointer = lookup.findStatic(UpcallMethodHandles.class, "addBoolFromPointerAndBoolsFromStructWithXor_returnBoolPointer", MT_Addr_MemAddr_MemSegmt); //$NON-NLS-1$
-			MH_addBoolAndBoolsFromStructPointerWithXor = lookup.findStatic(UpcallMethodHandles.class, "addBoolAndBoolsFromStructPointerWithXor", methodType(boolean.class, boolean.class, MemoryAddress.class)); //$NON-NLS-1$
+			MH_addBoolFromPointerAndBoolsFromStructWithXor = lookup.findStatic(UpcallMethodHandles.class, "addBoolFromPointerAndBoolsFromStructWithXor", methodType(boolean.class, MemorySegment.class, MemorySegment.class)); //$NON-NLS-1$
+			MH_addBoolFromPointerAndBoolsFromStructWithXor_returnBoolPointer = lookup.findStatic(UpcallMethodHandles.class, "addBoolFromPointerAndBoolsFromStructWithXor_returnBoolPointer", MT_Segmt_MemSegmt_MemSegmt); //$NON-NLS-1$
+			MH_addBoolAndBoolsFromStructPointerWithXor = lookup.findStatic(UpcallMethodHandles.class, "addBoolAndBoolsFromStructPointerWithXor", methodType(boolean.class, boolean.class, MemorySegment.class)); //$NON-NLS-1$
 			MH_addBoolAndBoolsFromNestedStructWithXor = lookup.findStatic(UpcallMethodHandles.class, "addBoolAndBoolsFromNestedStructWithXor", MT_Bool_Bool_MemSegmt); //$NON-NLS-1$
 			MH_addBoolAndBoolsFromNestedStructWithXor_reverseOrder = lookup.findStatic(UpcallMethodHandles.class, "addBoolAndBoolsFromNestedStructWithXor_reverseOrder", MT_Bool_Bool_MemSegmt); //$NON-NLS-1$
 			MH_addBoolAndBoolsFromStructWithNestedBoolArray = lookup.findStatic(UpcallMethodHandles.class, "addBoolAndBoolsFromStructWithNestedBoolArray", MT_Bool_Bool_MemSegmt); //$NON-NLS-1$
@@ -321,14 +319,14 @@ public class UpcallMethodHandles {
 			MH_addBoolAndBoolsFromStructWithNestedStructArray = lookup.findStatic(UpcallMethodHandles.class, "addBoolAndBoolsFromStructWithNestedStructArray", MT_Bool_Bool_MemSegmt); //$NON-NLS-1$
 			MH_addBoolAndBoolsFromStructWithNestedStructArray_reverseOrder = lookup.findStatic(UpcallMethodHandles.class, "addBoolAndBoolsFromStructWithNestedStructArray_reverseOrder", MT_Bool_Bool_MemSegmt); //$NON-NLS-1$
 			MH_add2BoolStructsWithXor_returnStruct = lookup.findStatic(UpcallMethodHandles.class, "add2BoolStructsWithXor_returnStruct", MT_MemSegmt_MemSegmt_MemSegmt); //$NON-NLS-1$
-			MH_add2BoolStructsWithXor_returnStructPointer = lookup.findStatic(UpcallMethodHandles.class, "add2BoolStructsWithXor_returnStructPointer", MT_Addr_MemAddr_MemSegmt); //$NON-NLS-1$
+			MH_add2BoolStructsWithXor_returnStructPointer = lookup.findStatic(UpcallMethodHandles.class, "add2BoolStructsWithXor_returnStructPointer", MT_Segmt_MemSegmt_MemSegmt); //$NON-NLS-1$
 			MH_add3BoolStructsWithXor_returnStruct = lookup.findStatic(UpcallMethodHandles.class, "add3BoolStructsWithXor_returnStruct", MT_MemSegmt_MemSegmt_MemSegmt); //$NON-NLS-1$
 
 			MH_addByteAndBytesFromStruct = lookup.findStatic(UpcallMethodHandles.class, "addByteAndBytesFromStruct", MT_Byte_Byte_MemSegmt); //$NON-NLS-1$
 			MH_addByteAnd20BytesFromStruct = lookup.findStatic(UpcallMethodHandles.class, "addByteAnd20BytesFromStruct", MT_Byte_Byte_MemSegmt); //$NON-NLS-1$
-			MH_addByteFromPointerAndBytesFromStruct = lookup.findStatic(UpcallMethodHandles.class, "addByteFromPointerAndBytesFromStruct", methodType(byte.class, MemoryAddress.class, MemorySegment.class)); //$NON-NLS-1$
-			MH_addByteFromPointerAndBytesFromStruct_returnBytePointer = lookup.findStatic(UpcallMethodHandles.class, "addByteFromPointerAndBytesFromStruct_returnBytePointer", MT_Addr_MemAddr_MemSegmt); //$NON-NLS-1$
-			MH_addByteAndBytesFromStructPointer = lookup.findStatic(UpcallMethodHandles.class, "addByteAndBytesFromStructPointer", methodType(byte.class, byte.class, MemoryAddress.class)); //$NON-NLS-1$
+			MH_addByteFromPointerAndBytesFromStruct = lookup.findStatic(UpcallMethodHandles.class, "addByteFromPointerAndBytesFromStruct", methodType(byte.class, MemorySegment.class, MemorySegment.class)); //$NON-NLS-1$
+			MH_addByteFromPointerAndBytesFromStruct_returnBytePointer = lookup.findStatic(UpcallMethodHandles.class, "addByteFromPointerAndBytesFromStruct_returnBytePointer", MT_Segmt_MemSegmt_MemSegmt); //$NON-NLS-1$
+			MH_addByteAndBytesFromStructPointer = lookup.findStatic(UpcallMethodHandles.class, "addByteAndBytesFromStructPointer", methodType(byte.class, byte.class, MemorySegment.class)); //$NON-NLS-1$
 			MH_addByteAndBytesFromNestedStruct = lookup.findStatic(UpcallMethodHandles.class, "addByteAndBytesFromNestedStruct", MT_Byte_Byte_MemSegmt); //$NON-NLS-1$
 			MH_addByteAndBytesFromNestedStruct_reverseOrder = lookup.findStatic(UpcallMethodHandles.class, "addByteAndBytesFromNestedStruct_reverseOrder", MT_Byte_Byte_MemSegmt); //$NON-NLS-1$
 			MH_addByteAndBytesFromStructWithNestedByteArray = lookup.findStatic(UpcallMethodHandles.class, "addByteAndBytesFromStructWithNestedByteArray", MT_Byte_Byte_MemSegmt); //$NON-NLS-1$
@@ -337,14 +335,14 @@ public class UpcallMethodHandles {
 			MH_addByteAndBytesFromStructWithNestedStructArray_reverseOrder = lookup.findStatic(UpcallMethodHandles.class, "addByteAndBytesFromStructWithNestedStructArray_reverseOrder", MT_Byte_Byte_MemSegmt); //$NON-NLS-1$
 			MH_add1ByteStructs_returnStruct = lookup.findStatic(UpcallMethodHandles.class, "add1ByteStructs_returnStruct", MT_MemSegmt_MemSegmt_MemSegmt); //$NON-NLS-1$
 			MH_add2ByteStructs_returnStruct = lookup.findStatic(UpcallMethodHandles.class, "add2ByteStructs_returnStruct", MT_MemSegmt_MemSegmt_MemSegmt); //$NON-NLS-1$
-			MH_add2ByteStructs_returnStructPointer = lookup.findStatic(UpcallMethodHandles.class, "add2ByteStructs_returnStructPointer", MT_Addr_MemAddr_MemSegmt); //$NON-NLS-1$
+			MH_add2ByteStructs_returnStructPointer = lookup.findStatic(UpcallMethodHandles.class, "add2ByteStructs_returnStructPointer", MT_Segmt_MemSegmt_MemSegmt); //$NON-NLS-1$
 			MH_add3ByteStructs_returnStruct = lookup.findStatic(UpcallMethodHandles.class, "add3ByteStructs_returnStruct", MT_MemSegmt_MemSegmt_MemSegmt); //$NON-NLS-1$
 
 			MH_addCharAndCharsFromStruct = lookup.findStatic(UpcallMethodHandles.class, "addCharAndCharsFromStruct", MT_Char_Char_MemSegmt); //$NON-NLS-1$
 			MH_addCharAnd10CharsFromStruct = lookup.findStatic(UpcallMethodHandles.class, "addCharAnd10CharsFromStruct", MT_Char_Char_MemSegmt); //$NON-NLS-1$
-			MH_addCharFromPointerAndCharsFromStruct = lookup.findStatic(UpcallMethodHandles.class, "addCharFromPointerAndCharsFromStruct", methodType(char.class, MemoryAddress.class, MemorySegment.class)); //$NON-NLS-1$
-			MH_addCharFromPointerAndCharsFromStruct_returnCharPointer = lookup.findStatic(UpcallMethodHandles.class, "addCharFromPointerAndCharsFromStruct_returnCharPointer", MT_Addr_MemAddr_MemSegmt); //$NON-NLS-1$
-			MH_addCharAndCharsFromStructPointer = lookup.findStatic(UpcallMethodHandles.class, "addCharAndCharsFromStructPointer", methodType(char.class, char.class, MemoryAddress.class)); //$NON-NLS-1$
+			MH_addCharFromPointerAndCharsFromStruct = lookup.findStatic(UpcallMethodHandles.class, "addCharFromPointerAndCharsFromStruct", methodType(char.class, MemorySegment.class, MemorySegment.class)); //$NON-NLS-1$
+			MH_addCharFromPointerAndCharsFromStruct_returnCharPointer = lookup.findStatic(UpcallMethodHandles.class, "addCharFromPointerAndCharsFromStruct_returnCharPointer", MT_Segmt_MemSegmt_MemSegmt); //$NON-NLS-1$
+			MH_addCharAndCharsFromStructPointer = lookup.findStatic(UpcallMethodHandles.class, "addCharAndCharsFromStructPointer", methodType(char.class, char.class, MemorySegment.class)); //$NON-NLS-1$
 			MH_addCharAndCharsFromNestedStruct = lookup.findStatic(UpcallMethodHandles.class, "addCharAndCharsFromNestedStruct", MT_Char_Char_MemSegmt); //$NON-NLS-1$
 			MH_addCharAndCharsFromNestedStruct_reverseOrder = lookup.findStatic(UpcallMethodHandles.class, "addCharAndCharsFromNestedStruct_reverseOrder", MT_Char_Char_MemSegmt); //$NON-NLS-1$
 			MH_addCharAndCharsFromStructWithNestedCharArray = lookup.findStatic(UpcallMethodHandles.class, "addCharAndCharsFromStructWithNestedCharArray", MT_Char_Char_MemSegmt); //$NON-NLS-1$
@@ -352,14 +350,14 @@ public class UpcallMethodHandles {
 			MH_addCharAndCharsFromStructWithNestedStructArray = lookup.findStatic(UpcallMethodHandles.class, "addCharAndCharsFromStructWithNestedStructArray", MT_Char_Char_MemSegmt); //$NON-NLS-1$
 			MH_addCharAndCharsFromStructWithNestedStructArray_reverseOrder = lookup.findStatic(UpcallMethodHandles.class, "addCharAndCharsFromStructWithNestedStructArray_reverseOrder", MT_Char_Char_MemSegmt); //$NON-NLS-1$
 			MH_add2CharStructs_returnStruct = lookup.findStatic(UpcallMethodHandles.class, "add2CharStructs_returnStruct", MT_MemSegmt_MemSegmt_MemSegmt); //$NON-NLS-1$
-			MH_add2CharStructs_returnStructPointer = lookup.findStatic(UpcallMethodHandles.class, "add2CharStructs_returnStructPointer", MT_Addr_MemAddr_MemSegmt); //$NON-NLS-1$
+			MH_add2CharStructs_returnStructPointer = lookup.findStatic(UpcallMethodHandles.class, "add2CharStructs_returnStructPointer", MT_Segmt_MemSegmt_MemSegmt); //$NON-NLS-1$
 			MH_add3CharStructs_returnStruct = lookup.findStatic(UpcallMethodHandles.class, "add3CharStructs_returnStruct", MT_MemSegmt_MemSegmt_MemSegmt); //$NON-NLS-1$
 
 			MH_addShortAndShortsFromStruct = lookup.findStatic(UpcallMethodHandles.class, "addShortAndShortsFromStruct", MT_Short_Short_MemSegmt); //$NON-NLS-1$
 			MH_addShortAnd10ShortsFromStruct = lookup.findStatic(UpcallMethodHandles.class, "addShortAnd10ShortsFromStruct", MT_Short_Short_MemSegmt); //$NON-NLS-1$
-			MH_addShortFromPointerAndShortsFromStruct = lookup.findStatic(UpcallMethodHandles.class, "addShortFromPointerAndShortsFromStruct", methodType(short.class, MemoryAddress.class, MemorySegment.class)); //$NON-NLS-1$
-			MH_addShortFromPointerAndShortsFromStruct_returnShortPointer = lookup.findStatic(UpcallMethodHandles.class, "addShortFromPointerAndShortsFromStruct_returnShortPointer", MT_Addr_MemAddr_MemSegmt); //$NON-NLS-1$
-			MH_addShortAndShortsFromStructPointer = lookup.findStatic(UpcallMethodHandles.class, "addShortAndShortsFromStructPointer", methodType(short.class, short.class, MemoryAddress.class)); //$NON-NLS-1$
+			MH_addShortFromPointerAndShortsFromStruct = lookup.findStatic(UpcallMethodHandles.class, "addShortFromPointerAndShortsFromStruct", methodType(short.class, MemorySegment.class, MemorySegment.class)); //$NON-NLS-1$
+			MH_addShortFromPointerAndShortsFromStruct_returnShortPointer = lookup.findStatic(UpcallMethodHandles.class, "addShortFromPointerAndShortsFromStruct_returnShortPointer", MT_Segmt_MemSegmt_MemSegmt); //$NON-NLS-1$
+			MH_addShortAndShortsFromStructPointer = lookup.findStatic(UpcallMethodHandles.class, "addShortAndShortsFromStructPointer", methodType(short.class, short.class, MemorySegment.class)); //$NON-NLS-1$
 			MH_addShortAndShortsFromNestedStruct = lookup.findStatic(UpcallMethodHandles.class, "addShortAndShortsFromNestedStruct", MT_Short_Short_MemSegmt); //$NON-NLS-1$
 			MH_addShortAndShortsFromNestedStruct_reverseOrder = lookup.findStatic(UpcallMethodHandles.class, "addShortAndShortsFromNestedStruct_reverseOrder", MT_Short_Short_MemSegmt); //$NON-NLS-1$
 			MH_addShortAndShortsFromStructWithNestedShortArray = lookup.findStatic(UpcallMethodHandles.class, "addShortAndShortsFromStructWithNestedShortArray", MT_Short_Short_MemSegmt); //$NON-NLS-1$
@@ -367,14 +365,14 @@ public class UpcallMethodHandles {
 			MH_addShortAndShortsFromStructWithNestedStructArray = lookup.findStatic(UpcallMethodHandles.class, "addShortAndShortsFromStructWithNestedStructArray", MT_Short_Short_MemSegmt); //$NON-NLS-1$
 			MH_addShortAndShortsFromStructWithNestedStructArray_reverseOrder = lookup.findStatic(UpcallMethodHandles.class, "addShortAndShortsFromStructWithNestedStructArray_reverseOrder", MT_Short_Short_MemSegmt); //$NON-NLS-1$
 			MH_add2ShortStructs_returnStruct = lookup.findStatic(UpcallMethodHandles.class, "add2ShortStructs_returnStruct", MT_MemSegmt_MemSegmt_MemSegmt); //$NON-NLS-1$
-			MH_add2ShortStructs_returnStructPointer = lookup.findStatic(UpcallMethodHandles.class, "add2ShortStructs_returnStructPointer", MT_Addr_MemAddr_MemSegmt); //$NON-NLS-1$
+			MH_add2ShortStructs_returnStructPointer = lookup.findStatic(UpcallMethodHandles.class, "add2ShortStructs_returnStructPointer", MT_Segmt_MemSegmt_MemSegmt); //$NON-NLS-1$
 			MH_add3ShortStructs_returnStruct = lookup.findStatic(UpcallMethodHandles.class, "add3ShortStructs_returnStruct", MT_MemSegmt_MemSegmt_MemSegmt); //$NON-NLS-1$
 
 			MH_addIntAndIntsFromStruct = lookup.findStatic(UpcallMethodHandles.class, "addIntAndIntsFromStruct", MT_Int_Int_MemSegmt); //$NON-NLS-1$
 			MH_addIntAnd5IntsFromStruct = lookup.findStatic(UpcallMethodHandles.class, "addIntAnd5IntsFromStruct", MT_Int_Int_MemSegmt); //$NON-NLS-1$
-			MH_addIntFromPointerAndIntsFromStruct = lookup.findStatic(UpcallMethodHandles.class, "addIntFromPointerAndIntsFromStruct", methodType(int.class, MemoryAddress.class, MemorySegment.class)); //$NON-NLS-1$
-			MH_addIntFromPointerAndIntsFromStruct_returnIntPointer = lookup.findStatic(UpcallMethodHandles.class, "addIntFromPointerAndIntsFromStruct_returnIntPointer", MT_Addr_MemAddr_MemSegmt); //$NON-NLS-1$
-			MH_addIntAndIntsFromStructPointer = lookup.findStatic(UpcallMethodHandles.class, "addIntAndIntsFromStructPointer", methodType(int.class, int.class, MemoryAddress.class)); //$NON-NLS-1$
+			MH_addIntFromPointerAndIntsFromStruct = lookup.findStatic(UpcallMethodHandles.class, "addIntFromPointerAndIntsFromStruct", methodType(int.class, MemorySegment.class, MemorySegment.class)); //$NON-NLS-1$
+			MH_addIntFromPointerAndIntsFromStruct_returnIntPointer = lookup.findStatic(UpcallMethodHandles.class, "addIntFromPointerAndIntsFromStruct_returnIntPointer", MT_Segmt_MemSegmt_MemSegmt); //$NON-NLS-1$
+			MH_addIntAndIntsFromStructPointer = lookup.findStatic(UpcallMethodHandles.class, "addIntAndIntsFromStructPointer", methodType(int.class, int.class, MemorySegment.class)); //$NON-NLS-1$
 			MH_addIntAndIntsFromNestedStruct = lookup.findStatic(UpcallMethodHandles.class, "addIntAndIntsFromNestedStruct", MT_Int_Int_MemSegmt); //$NON-NLS-1$
 			MH_addIntAndIntsFromNestedStruct_reverseOrder = lookup.findStatic(UpcallMethodHandles.class, "addIntAndIntsFromNestedStruct_reverseOrder", MT_Int_Int_MemSegmt); //$NON-NLS-1$
 			MH_addIntAndIntsFromStructWithNestedIntArray = lookup.findStatic(UpcallMethodHandles.class, "addIntAndIntsFromStructWithNestedIntArray", MT_Int_Int_MemSegmt); //$NON-NLS-1$
@@ -383,13 +381,13 @@ public class UpcallMethodHandles {
 			MH_addIntAndIntsFromStructWithNestedStructArray_reverseOrder = lookup.findStatic(UpcallMethodHandles.class, "addIntAndIntsFromStructWithNestedStructArray_reverseOrder", MT_Int_Int_MemSegmt); //$NON-NLS-1$
 			MH_add2IntStructs_returnStruct = lookup.findStatic(UpcallMethodHandles.class, "add2IntStructs_returnStruct", MT_MemSegmt_MemSegmt_MemSegmt); //$NON-NLS-1$
 			MH_add2IntStructs_returnStruct_throwException = lookup.findStatic(UpcallMethodHandles.class, "add2IntStructs_returnStruct_throwException", MT_MemSegmt_MemSegmt_MemSegmt); //$NON-NLS-1$
-			MH_add2IntStructs_returnStructPointer = lookup.findStatic(UpcallMethodHandles.class, "add2IntStructs_returnStructPointer", MT_Addr_MemAddr_MemSegmt); //$NON-NLS-1$
+			MH_add2IntStructs_returnStructPointer = lookup.findStatic(UpcallMethodHandles.class, "add2IntStructs_returnStructPointer", MT_Segmt_MemSegmt_MemSegmt); //$NON-NLS-1$
 			MH_add3IntStructs_returnStruct = lookup.findStatic(UpcallMethodHandles.class, "add3IntStructs_returnStruct", MT_MemSegmt_MemSegmt_MemSegmt); //$NON-NLS-1$
 
 			MH_addLongAndLongsFromStruct = lookup.findStatic(UpcallMethodHandles.class, "addLongAndLongsFromStruct", MT_Long_Long_MemSegmt); //$NON-NLS-1$
-			MH_addLongFromPointerAndLongsFromStruct = lookup.findStatic(UpcallMethodHandles.class, "addLongFromPointerAndLongsFromStruct", methodType(long.class, MemoryAddress.class, MemorySegment.class)); //$NON-NLS-1$
-			MH_addLongFromPointerAndLongsFromStruct_returnLongPointer = lookup.findStatic(UpcallMethodHandles.class, "addLongFromPointerAndLongsFromStruct_returnLongPointer", MT_Addr_MemAddr_MemSegmt); //$NON-NLS-1$
-			MH_addLongAndLongsFromStructPointer = lookup.findStatic(UpcallMethodHandles.class, "addLongAndLongsFromStructPointer", methodType(long.class, long.class, MemoryAddress.class)); //$NON-NLS-1$
+			MH_addLongFromPointerAndLongsFromStruct = lookup.findStatic(UpcallMethodHandles.class, "addLongFromPointerAndLongsFromStruct", methodType(long.class, MemorySegment.class, MemorySegment.class)); //$NON-NLS-1$
+			MH_addLongFromPointerAndLongsFromStruct_returnLongPointer = lookup.findStatic(UpcallMethodHandles.class, "addLongFromPointerAndLongsFromStruct_returnLongPointer", MT_Segmt_MemSegmt_MemSegmt); //$NON-NLS-1$
+			MH_addLongAndLongsFromStructPointer = lookup.findStatic(UpcallMethodHandles.class, "addLongAndLongsFromStructPointer", methodType(long.class, long.class, MemorySegment.class)); //$NON-NLS-1$
 			MH_addLongAndLongsFromNestedStruct = lookup.findStatic(UpcallMethodHandles.class, "addLongAndLongsFromNestedStruct", MT_Long_Long_MemSegmt); //$NON-NLS-1$
 			MH_addLongAndLongsFromNestedStruct_reverseOrder = lookup.findStatic(UpcallMethodHandles.class, "addLongAndLongsFromNestedStruct_reverseOrder", MT_Long_Long_MemSegmt); //$NON-NLS-1$
 			MH_addLongAndLongsFromStructWithNestedLongArray = lookup.findStatic(UpcallMethodHandles.class, "addLongAndLongsFromStructWithNestedLongArray", MT_Long_Long_MemSegmt); //$NON-NLS-1$
@@ -397,14 +395,14 @@ public class UpcallMethodHandles {
 			MH_addLongAndLongsFromStructWithNestedStructArray = lookup.findStatic(UpcallMethodHandles.class, "addLongAndLongsFromStructWithNestedStructArray", MT_Long_Long_MemSegmt); //$NON-NLS-1$
 			MH_addLongAndLongsFromStructWithNestedStructArray_reverseOrder = lookup.findStatic(UpcallMethodHandles.class, "addLongAndLongsFromStructWithNestedStructArray_reverseOrder", MT_Long_Long_MemSegmt); //$NON-NLS-1$
 			MH_add2LongStructs_returnStruct = lookup.findStatic(UpcallMethodHandles.class, "add2LongStructs_returnStruct", MT_MemSegmt_MemSegmt_MemSegmt); //$NON-NLS-1$
-			MH_add2LongStructs_returnStructPointer = lookup.findStatic(UpcallMethodHandles.class, "add2LongStructs_returnStructPointer", MT_Addr_MemAddr_MemSegmt); //$NON-NLS-1$
+			MH_add2LongStructs_returnStructPointer = lookup.findStatic(UpcallMethodHandles.class, "add2LongStructs_returnStructPointer", MT_Segmt_MemSegmt_MemSegmt); //$NON-NLS-1$
 			MH_add3LongStructs_returnStruct = lookup.findStatic(UpcallMethodHandles.class, "add3LongStructs_returnStruct", MT_MemSegmt_MemSegmt_MemSegmt); //$NON-NLS-1$
 
 			MH_addFloatAndFloatsFromStruct = lookup.findStatic(UpcallMethodHandles.class, "addFloatAndFloatsFromStruct", MT_Float_Float_MemSegmt); //$NON-NLS-1$
 			MH_addFloatAnd5FloatsFromStruct = lookup.findStatic(UpcallMethodHandles.class, "addFloatAnd5FloatsFromStruct", MT_Float_Float_MemSegmt); //$NON-NLS-1$
-			MH_addFloatFromPointerAndFloatsFromStruct = lookup.findStatic(UpcallMethodHandles.class, "addFloatFromPointerAndFloatsFromStruct", methodType(float.class, MemoryAddress.class, MemorySegment.class)); //$NON-NLS-1$
-			MH_addFloatFromPointerAndFloatsFromStruct_returnFloatPointer = lookup.findStatic(UpcallMethodHandles.class, "addFloatFromPointerAndFloatsFromStruct_returnFloatPointer", MT_Addr_MemAddr_MemSegmt); //$NON-NLS-1$
-			MH_addFloatAndFloatsFromStructPointer = lookup.findStatic(UpcallMethodHandles.class, "addFloatAndFloatsFromStructPointer", methodType(float.class, float.class, MemoryAddress.class)); //$NON-NLS-1$
+			MH_addFloatFromPointerAndFloatsFromStruct = lookup.findStatic(UpcallMethodHandles.class, "addFloatFromPointerAndFloatsFromStruct", methodType(float.class, MemorySegment.class, MemorySegment.class)); //$NON-NLS-1$
+			MH_addFloatFromPointerAndFloatsFromStruct_returnFloatPointer = lookup.findStatic(UpcallMethodHandles.class, "addFloatFromPointerAndFloatsFromStruct_returnFloatPointer", MT_Segmt_MemSegmt_MemSegmt); //$NON-NLS-1$
+			MH_addFloatAndFloatsFromStructPointer = lookup.findStatic(UpcallMethodHandles.class, "addFloatAndFloatsFromStructPointer", methodType(float.class, float.class, MemorySegment.class)); //$NON-NLS-1$
 			MH_addFloatAndFloatsFromNestedStruct = lookup.findStatic(UpcallMethodHandles.class, "addFloatAndFloatsFromNestedStruct", MT_Float_Float_MemSegmt); //$NON-NLS-1$
 			MH_addFloatAndFloatsFromNestedStruct_reverseOrder = lookup.findStatic(UpcallMethodHandles.class, "addFloatAndFloatsFromNestedStruct_reverseOrder", MT_Float_Float_MemSegmt); //$NON-NLS-1$
 			MH_addFloatAndFloatsFromStructWithNestedFloatArray = lookup.findStatic(UpcallMethodHandles.class, "addFloatAndFloatsFromStructWithNestedFloatArray", MT_Float_Float_MemSegmt); //$NON-NLS-1$
@@ -412,13 +410,13 @@ public class UpcallMethodHandles {
 			MH_addFloatAndFloatsFromStructWithNestedStructArray = lookup.findStatic(UpcallMethodHandles.class, "addFloatAndFloatsFromStructWithNestedStructArray", MT_Float_Float_MemSegmt); //$NON-NLS-1$
 			MH_addFloatAndFloatsFromStructWithNestedStructArray_reverseOrder = lookup.findStatic(UpcallMethodHandles.class, "addFloatAndFloatsFromStructWithNestedStructArray_reverseOrder", MT_Float_Float_MemSegmt); //$NON-NLS-1$
 			MH_add2FloatStructs_returnStruct = lookup.findStatic(UpcallMethodHandles.class, "add2FloatStructs_returnStruct", MT_MemSegmt_MemSegmt_MemSegmt); //$NON-NLS-1$
-			MH_add2FloatStructs_returnStructPointer = lookup.findStatic(UpcallMethodHandles.class, "add2FloatStructs_returnStructPointer", MT_Addr_MemAddr_MemSegmt); //$NON-NLS-1$
+			MH_add2FloatStructs_returnStructPointer = lookup.findStatic(UpcallMethodHandles.class, "add2FloatStructs_returnStructPointer", MT_Segmt_MemSegmt_MemSegmt); //$NON-NLS-1$
 			MH_add3FloatStructs_returnStruct = lookup.findStatic(UpcallMethodHandles.class, "add3FloatStructs_returnStruct", MT_MemSegmt_MemSegmt_MemSegmt); //$NON-NLS-1$
 
 			MH_addDoubleAndDoublesFromStruct = lookup.findStatic(UpcallMethodHandles.class, "addDoubleAndDoublesFromStruct", MT_Double_Double_MemSegmt); //$NON-NLS-1$
-			MH_addDoubleFromPointerAndDoublesFromStruct = lookup.findStatic(UpcallMethodHandles.class, "addDoubleFromPointerAndDoublesFromStruct", methodType(double.class, MemoryAddress.class, MemorySegment.class)); //$NON-NLS-1$
-			MH_addDoubleFromPointerAndDoublesFromStruct_returnDoublePointer = lookup.findStatic(UpcallMethodHandles.class, "addDoubleFromPointerAndDoublesFromStruct_returnDoublePointer", MT_Addr_MemAddr_MemSegmt); //$NON-NLS-1$
-			MH_addDoubleAndDoublesFromStructPointer = lookup.findStatic(UpcallMethodHandles.class, "addDoubleAndDoublesFromStructPointer", methodType(double.class, double.class, MemoryAddress.class)); //$NON-NLS-1$
+			MH_addDoubleFromPointerAndDoublesFromStruct = lookup.findStatic(UpcallMethodHandles.class, "addDoubleFromPointerAndDoublesFromStruct", methodType(double.class, MemorySegment.class, MemorySegment.class)); //$NON-NLS-1$
+			MH_addDoubleFromPointerAndDoublesFromStruct_returnDoublePointer = lookup.findStatic(UpcallMethodHandles.class, "addDoubleFromPointerAndDoublesFromStruct_returnDoublePointer", MT_Segmt_MemSegmt_MemSegmt); //$NON-NLS-1$
+			MH_addDoubleAndDoublesFromStructPointer = lookup.findStatic(UpcallMethodHandles.class, "addDoubleAndDoublesFromStructPointer", methodType(double.class, double.class, MemorySegment.class)); //$NON-NLS-1$
 			MH_addDoubleAndDoublesFromNestedStruct = lookup.findStatic(UpcallMethodHandles.class, "addDoubleAndDoublesFromNestedStruct", MT_Double_Double_MemSegmt); //$NON-NLS-1$
 			MH_addDoubleAndDoublesFromNestedStruct_reverseOrder = lookup.findStatic(UpcallMethodHandles.class, "addDoubleAndDoublesFromNestedStruct_reverseOrder", MT_Double_Double_MemSegmt); //$NON-NLS-1$
 			MH_addDoubleAndDoublesFromStructWithNestedDoubleArray = lookup.findStatic(UpcallMethodHandles.class, "addDoubleAndDoublesFromStructWithNestedDoubleArray", MT_Double_Double_MemSegmt); //$NON-NLS-1$
@@ -426,7 +424,7 @@ public class UpcallMethodHandles {
 			MH_addDoubleAndDoublesFromStructWithNestedStructArray = lookup.findStatic(UpcallMethodHandles.class, "addDoubleAndDoublesFromStructWithNestedStructArray", MT_Double_Double_MemSegmt); //$NON-NLS-1$
 			MH_addDoubleAndDoublesFromStructWithNestedStructArray_reverseOrder = lookup.findStatic(UpcallMethodHandles.class, "addDoubleAndDoublesFromStructWithNestedStructArray_reverseOrder", MT_Double_Double_MemSegmt); //$NON-NLS-1$
 			MH_add2DoubleStructs_returnStruct = lookup.findStatic(UpcallMethodHandles.class, "add2DoubleStructs_returnStruct", MT_MemSegmt_MemSegmt_MemSegmt); //$NON-NLS-1$
-			MH_add2DoubleStructs_returnStructPointer = lookup.findStatic(UpcallMethodHandles.class, "add2DoubleStructs_returnStructPointer", MT_Addr_MemAddr_MemSegmt); //$NON-NLS-1$
+			MH_add2DoubleStructs_returnStructPointer = lookup.findStatic(UpcallMethodHandles.class, "add2DoubleStructs_returnStructPointer", MT_Segmt_MemSegmt_MemSegmt); //$NON-NLS-1$
 			MH_add3DoubleStructs_returnStruct = lookup.findStatic(UpcallMethodHandles.class, "add3DoubleStructs_returnStruct", MT_MemSegmt_MemSegmt_MemSegmt); //$NON-NLS-1$
 
 			MH_addIntAndIntShortFromStruct = lookup.findStatic(UpcallMethodHandles.class, "addIntAndIntShortFromStruct", MT_Int_Int_MemSegmt); //$NON-NLS-1$
@@ -471,22 +469,25 @@ public class UpcallMethodHandles {
 		return result;
 	}
 
-	public static boolean addBoolAndBoolFromPointerWithOr(boolean boolArg1, MemoryAddress boolArg2Addr) {
-		boolean result = boolArg1 || boolArg2Addr.get(JAVA_BOOLEAN, 0);
+	public static boolean addBoolAndBoolFromPointerWithOr(boolean boolArg1, MemorySegment boolArg2Addr) {
+		MemorySegment boolArg2Segmt = MemorySegment.ofAddress(boolArg2Addr.address(), JAVA_BOOLEAN.byteSize(), scope);
+		boolean result = boolArg1 || boolArg2Segmt.get(JAVA_BOOLEAN, 0);
 		return result;
 	}
 
-	public static Addressable addBoolAndBoolFromPtrWithOr_RetPtr(boolean boolArg1, MemoryAddress boolArg2Addr) {
-		boolean result = boolArg1 || boolArg2Addr.get(JAVA_BOOLEAN, 0);
-		MemorySegment resultSegmt = MemorySegment.allocateNative(JAVA_BOOLEAN, session);
+	public static MemorySegment addBoolAndBoolFromPtrWithOr_RetPtr(boolean boolArg1, MemorySegment boolArg2Addr) {
+		MemorySegment boolArg2Segmt = MemorySegment.ofAddress(boolArg2Addr.address(), JAVA_BOOLEAN.byteSize(), scope);
+		boolean result = boolArg1 || boolArg2Segmt.get(JAVA_BOOLEAN, 0);
+		MemorySegment resultSegmt = MemorySegment.allocateNative(JAVA_BOOLEAN, scope);
 		resultSegmt.set(JAVA_BOOLEAN, 0, result);
-		return resultSegmt.address();
+		return resultSegmt;
 	}
 
-	public static Addressable addBoolAndBoolFromPtrWithOr_RetArgPtr(boolean boolArg1, MemoryAddress boolArg2Addr) {
-		boolean result = boolArg1 || boolArg2Addr.get(JAVA_BOOLEAN, 0);
-		boolArg2Addr.set(JAVA_BOOLEAN, 0, result);
-		return boolArg2Addr;
+	public static MemorySegment addBoolAndBoolFromPtrWithOr_RetArgPtr(boolean boolArg1, MemorySegment boolArg2Addr) {
+		MemorySegment boolArg2Segmt = MemorySegment.ofAddress(boolArg2Addr.address(), JAVA_BOOLEAN.byteSize(), scope);
+		boolean result = boolArg1 || boolArg2Segmt.get(JAVA_BOOLEAN, 0);
+		boolArg2Segmt.set(JAVA_BOOLEAN, 0, result);
+		return boolArg2Segmt;
 	}
 
 	public static char createNewCharFrom2Chars(char charArg1, char charArg2) {
@@ -496,31 +497,34 @@ public class UpcallMethodHandles {
 		return result;
 	}
 
-	public static char createNewCharFromCharAndCharFromPointer(MemoryAddress charArg1Addr, char charArg2) {
-		char charArg1 = charArg1Addr.get(JAVA_CHAR, 0);
+	public static char createNewCharFromCharAndCharFromPointer(MemorySegment charArg1Addr, char charArg2) {
+		MemorySegment charArg1Segmt = MemorySegment.ofAddress(charArg1Addr.address(), JAVA_CHAR.byteSize(), scope);
+		char charArg1 = charArg1Segmt.get(JAVA_CHAR, 0);
 		int diff = (charArg2 >= charArg1) ? (charArg2 - charArg1) : (charArg1 - charArg2);
 		diff = (diff > 5) ? 5 : diff;
 		char result = (char)(diff + 'A');
 		return result;
 	}
 
-	public static Addressable createNewCharFromCharAndCharFromPtr_RetPtr(MemoryAddress charArg1Addr, char charArg2) {
-		char charArg1 = charArg1Addr.get(JAVA_CHAR, 0);
+	public static MemorySegment createNewCharFromCharAndCharFromPtr_RetPtr(MemorySegment charArg1Addr, char charArg2) {
+		MemorySegment charArg1Segmt = MemorySegment.ofAddress(charArg1Addr.address(), JAVA_CHAR.byteSize(), scope);
+		char charArg1 = charArg1Segmt.get(JAVA_CHAR, 0);
 		int diff = (charArg2 >= charArg1) ? (charArg2 - charArg1) : (charArg1 - charArg2);
 		diff = (diff > 5) ? 5 : diff;
 		char result = (char)(diff + 'A');
-		MemorySegment resultSegmt = MemorySegment.allocateNative(JAVA_CHAR.byteSize(), session);
+		MemorySegment resultSegmt = MemorySegment.allocateNative(JAVA_CHAR.byteSize(), scope);
 		resultSegmt.set(JAVA_CHAR, 0, result);
-		return resultSegmt.address();
+		return resultSegmt;
 	}
 
-	public static Addressable createNewCharFromCharAndCharFromPtr_RetArgPtr(MemoryAddress charArg1Addr, char charArg2) {
-		char charArg1 = charArg1Addr.get(JAVA_CHAR, 0);
+	public static MemorySegment createNewCharFromCharAndCharFromPtr_RetArgPtr(MemorySegment charArg1Addr, char charArg2) {
+		MemorySegment charArg1Segmt = MemorySegment.ofAddress(charArg1Addr.address(), JAVA_CHAR.byteSize(), scope);
+		char charArg1 = charArg1Segmt.get(JAVA_CHAR, 0);
 		int diff = (charArg2 >= charArg1) ? (charArg2 - charArg1) : (charArg1 - charArg2);
 		diff = (diff > 5) ? 5 : diff;
 		char result = (char)(diff + 'A');
-		charArg1Addr.set(JAVA_CHAR, 0, result);
-		return charArg1Addr;
+		charArg1Segmt.set(JAVA_CHAR, 0, result);
+		return charArg1Segmt;
 	}
 
 	public static byte add2Bytes(byte byteArg1, byte byteArg2) {
@@ -528,25 +532,28 @@ public class UpcallMethodHandles {
 		return byteSum;
 	}
 
-	public static byte addByteAndByteFromPointer(byte byteArg1, MemoryAddress byteArg2Addr) {
-		byte byteArg2 = byteArg2Addr.get(JAVA_BYTE, 0);
+	public static byte addByteAndByteFromPointer(byte byteArg1, MemorySegment byteArg2Addr) {
+		MemorySegment byteArg2Segmt = MemorySegment.ofAddress(byteArg2Addr.address(), JAVA_BYTE.byteSize(), scope);
+		byte byteArg2 = byteArg2Segmt.get(JAVA_BYTE, 0);
 		byte byteSum = (byte)(byteArg1 + byteArg2);
 		return byteSum;
 	}
 
-	public static Addressable addByteAndByteFromPtr_RetPtr(byte byteArg1, MemoryAddress byteArg2Addr) {
-		byte byteArg2 = byteArg2Addr.get(JAVA_BYTE, 0);
+	public static MemorySegment addByteAndByteFromPtr_RetPtr(byte byteArg1, MemorySegment byteArg2Addr) {
+		MemorySegment byteArg2Segmt = MemorySegment.ofAddress(byteArg2Addr.address(), JAVA_BYTE.byteSize(), scope);
+		byte byteArg2 = byteArg2Segmt.get(JAVA_BYTE, 0);
 		byte byteSum = (byte)(byteArg1 + byteArg2);
-		MemorySegment resultSegmt = MemorySegment.allocateNative(JAVA_BYTE.byteSize(), session);
+		MemorySegment resultSegmt = MemorySegment.allocateNative(JAVA_BYTE.byteSize(), scope);
 		resultSegmt.set(JAVA_BYTE, 0, byteSum);
-		return resultSegmt.address();
+		return resultSegmt;
 	}
 
-	public static Addressable addByteAndByteFromPtr_RetArgPtr(byte byteArg1, MemoryAddress byteArg2Addr) {
-		byte byteArg2 = byteArg2Addr.get(JAVA_BYTE, 0);
+	public static MemorySegment addByteAndByteFromPtr_RetArgPtr(byte byteArg1, MemorySegment byteArg2Addr) {
+		MemorySegment byteArg2Segmt = MemorySegment.ofAddress(byteArg2Addr.address(), JAVA_BYTE.byteSize(), scope);
+		byte byteArg2 = byteArg2Segmt.get(JAVA_BYTE, 0);
 		byte byteSum = (byte)(byteArg1 + byteArg2);
-		byteArg2Addr.set(JAVA_BYTE, 0, byteSum);
-		return byteArg2Addr;
+		byteArg2Segmt.set(JAVA_BYTE, 0, byteSum);
+		return byteArg2Segmt;
 	}
 
 	public static short add2Shorts(short shortArg1, short shortArg2) {
@@ -554,25 +561,28 @@ public class UpcallMethodHandles {
 		return shortSum;
 	}
 
-	public static short addShortAndShortFromPointer(MemoryAddress shortArg1Addr, short shortArg2) {
-		short shortArg1 = shortArg1Addr.get(JAVA_SHORT, 0);
+	public static short addShortAndShortFromPointer(MemorySegment shortArg1Addr, short shortArg2) {
+		MemorySegment shortArg1Segmt = MemorySegment.ofAddress(shortArg1Addr.address(), JAVA_SHORT.byteSize(), scope);
+		short shortArg1 = shortArg1Segmt.get(JAVA_SHORT, 0);
 		short shortSum = (short)(shortArg1 + shortArg2);
 		return shortSum;
 	}
 
-	public static Addressable addShortAndShortFromPtr_RetPtr(MemoryAddress shortArg1Addr, short shortArg2) {
-		short shortArg1 = shortArg1Addr.get(JAVA_SHORT, 0);
+	public static MemorySegment addShortAndShortFromPtr_RetPtr(MemorySegment shortArg1Addr, short shortArg2) {
+		MemorySegment shortArg1Segmt = MemorySegment.ofAddress(shortArg1Addr.address(), JAVA_SHORT.byteSize(), scope);
+		short shortArg1 = shortArg1Segmt.get(JAVA_SHORT, 0);
 		short shortSum = (short)(shortArg1 + shortArg2);
-		MemorySegment resultSegmt = MemorySegment.allocateNative(JAVA_SHORT.byteSize(), session);
+		MemorySegment resultSegmt = MemorySegment.allocateNative(JAVA_SHORT.byteSize(), scope);
 		resultSegmt.set(JAVA_SHORT, 0, shortSum);
-		return resultSegmt.address();
+		return resultSegmt;
 	}
 
-	public static Addressable addShortAndShortFromPtr_RetArgPtr(MemoryAddress shortArg1Addr, short shortArg2) {
-		short shortArg1 = shortArg1Addr.get(JAVA_SHORT, 0);
+	public static MemorySegment addShortAndShortFromPtr_RetArgPtr(MemorySegment shortArg1Addr, short shortArg2) {
+		MemorySegment shortArg1Segmt = MemorySegment.ofAddress(shortArg1Addr.address(), JAVA_SHORT.byteSize(), scope);
+		short shortArg1 = shortArg1Segmt.get(JAVA_SHORT, 0);
 		short shortSum = (short)(shortArg1 + shortArg2);
-		shortArg1Addr.set(JAVA_SHORT, 0, shortSum);
-		return shortArg1Addr;
+		shortArg1Segmt.set(JAVA_SHORT, 0, shortSum);
+		return shortArg1Segmt;
 	}
 
 	public static int add2Ints(int intArg1, int intArg2) {
@@ -580,25 +590,28 @@ public class UpcallMethodHandles {
 		return intSum;
 	}
 
-	public static int addIntAndIntFromPointer(int intArg1, MemoryAddress intArg2Addr) {
-		int intArg2 = intArg2Addr.get(JAVA_INT, 0);
+	public static int addIntAndIntFromPointer(int intArg1, MemorySegment intArg2Addr) {
+		MemorySegment intArg2Segmt = MemorySegment.ofAddress(intArg2Addr.address(), JAVA_INT.byteSize(), scope);
+		int intArg2 = intArg2Segmt.get(JAVA_INT, 0);
 		int intSum = intArg1 + intArg2;
 		return intSum;
 	}
 
-	public static Addressable addIntAndIntFromPtr_RetPtr(int intArg1, MemoryAddress intArg2Addr) {
-		int intArg2 = intArg2Addr.get(JAVA_INT, 0);
+	public static MemorySegment addIntAndIntFromPtr_RetPtr(int intArg1, MemorySegment intArg2Addr) {
+		MemorySegment intArg2Segmt = MemorySegment.ofAddress(intArg2Addr.address(), JAVA_INT.byteSize(), scope);
+		int intArg2 = intArg2Segmt.get(JAVA_INT, 0);
 		int intSum = intArg1 + intArg2;
-		MemorySegment resultSegmt = MemorySegment.allocateNative(JAVA_INT.byteSize(), session);
+		MemorySegment resultSegmt = MemorySegment.allocateNative(JAVA_INT.byteSize(), scope);
 		resultSegmt.set(JAVA_INT, 0, intSum);
-		return resultSegmt.address();
+		return resultSegmt;
 	}
 
-	public static Addressable addIntAndIntFromPtr_RetArgPtr(int intArg1, MemoryAddress intArg2Addr) {
-		int intArg2 = intArg2Addr.get(JAVA_INT, 0);
+	public static MemorySegment addIntAndIntFromPtr_RetArgPtr(int intArg1, MemorySegment intArg2Addr) {
+		MemorySegment intArg2Segmt = MemorySegment.ofAddress(intArg2Addr.address(), JAVA_INT.byteSize(), scope);
+		int intArg2 = intArg2Segmt.get(JAVA_INT, 0);
 		int intSum = intArg1 + intArg2;
-		intArg2Addr.set(JAVA_INT, 0, intSum);
-		return intArg2Addr;
+		intArg2Segmt.set(JAVA_INT, 0, intSum);
+		return intArg2Segmt;
 	}
 
 	public static int add3Ints(int intArg1, int intArg2, int intArg3) {
@@ -621,25 +634,28 @@ public class UpcallMethodHandles {
 		return longSum;
 	}
 
-	public static long addLongAndLongFromPointer(MemoryAddress longArg1Addr, long longArg2) {
-		long longArg1 = longArg1Addr.get(JAVA_LONG, 0);
+	public static long addLongAndLongFromPointer(MemorySegment longArg1Addr, long longArg2) {
+		MemorySegment longArg1Segmt = MemorySegment.ofAddress(longArg1Addr.address(), JAVA_LONG.byteSize(), scope);
+		long longArg1 = longArg1Segmt.get(JAVA_LONG, 0);
 		long longSum = longArg1 + longArg2;
 		return longSum;
 	}
 
-	public static Addressable addLongAndLongFromPtr_RetPtr(MemoryAddress longArg1Addr, long longArg2) {
-		long longArg1 = longArg1Addr.get(JAVA_LONG, 0);
+	public static MemorySegment addLongAndLongFromPtr_RetPtr(MemorySegment longArg1Addr, long longArg2) {
+		MemorySegment longArg1Segmt = MemorySegment.ofAddress(longArg1Addr.address(), JAVA_LONG.byteSize(), scope);
+		long longArg1 = longArg1Segmt.get(JAVA_LONG, 0);
 		long longSum = longArg1 + longArg2;
-		MemorySegment resultSegmt = MemorySegment.allocateNative(JAVA_LONG.byteSize(), session);
+		MemorySegment resultSegmt = MemorySegment.allocateNative(JAVA_LONG.byteSize(), scope);
 		resultSegmt.set(JAVA_LONG, 0, longSum);
-		return resultSegmt.address();
+		return resultSegmt;
 	}
 
-	public static Addressable addLongAndLongFromPtr_RetArgPtr(MemoryAddress longArg1Addr, long longArg2) {
-		long longArg1 = longArg1Addr.get(JAVA_LONG, 0);
+	public static MemorySegment addLongAndLongFromPtr_RetArgPtr(MemorySegment longArg1Addr, long longArg2) {
+		MemorySegment longArg1Segmt = MemorySegment.ofAddress(longArg1Addr.address(), JAVA_LONG.byteSize(), scope);
+		long longArg1 = longArg1Segmt.get(JAVA_LONG, 0);
 		long longSum = longArg1 + longArg2;
-		longArg1Addr.set(JAVA_LONG, 0, longSum);
-		return longArg1Addr;
+		longArg1Segmt.set(JAVA_LONG, 0, longSum);
+		return longArg1Segmt;
 	}
 
 	public static float add2Floats(float floatArg1, float floatArg2) {
@@ -647,25 +663,28 @@ public class UpcallMethodHandles {
 		return floatSum;
 	}
 
-	public static float addFloatAndFloatFromPointer(float floatArg1, MemoryAddress floatArg2Addr) {
-		float floatArg2 = floatArg2Addr.get(JAVA_FLOAT, 0);
+	public static float addFloatAndFloatFromPointer(float floatArg1, MemorySegment floatArg2Addr) {
+		MemorySegment floatArg2Segmt = MemorySegment.ofAddress(floatArg2Addr.address(), JAVA_FLOAT.byteSize(), scope);
+		float floatArg2 = floatArg2Segmt.get(JAVA_FLOAT, 0);
 		float floatSum = floatArg1 + floatArg2;
 		return floatSum;
 	}
 
-	public static Addressable addFloatAndFloatFromPtr_RetPtr(float floatArg1, MemoryAddress floatArg2Addr) {
-		float floatArg2 = floatArg2Addr.get(JAVA_FLOAT, 0);
+	public static MemorySegment addFloatAndFloatFromPtr_RetPtr(float floatArg1, MemorySegment floatArg2Addr) {
+		MemorySegment floatArg2Segmt = MemorySegment.ofAddress(floatArg2Addr.address(), JAVA_FLOAT.byteSize(), scope);
+		float floatArg2 = floatArg2Segmt.get(JAVA_FLOAT, 0);
 		float floatSum = floatArg1 + floatArg2;
-		MemorySegment resultSegmt = MemorySegment.allocateNative(JAVA_FLOAT.byteSize(), session);
+		MemorySegment resultSegmt = MemorySegment.allocateNative(JAVA_FLOAT.byteSize(), scope);
 		resultSegmt.set(JAVA_FLOAT, 0, floatSum);
-		return resultSegmt.address();
+		return resultSegmt;
 	}
 
-	public static Addressable addFloatAndFloatFromPtr_RetArgPtr(float floatArg1, MemoryAddress floatArg2Addr) {
-		float floatArg2 = floatArg2Addr.get(JAVA_FLOAT, 0);
+	public static MemorySegment addFloatAndFloatFromPtr_RetArgPtr(float floatArg1, MemorySegment floatArg2Addr) {
+		MemorySegment floatArg2Segmt = MemorySegment.ofAddress(floatArg2Addr.address(), JAVA_FLOAT.byteSize(), scope);
+		float floatArg2 = floatArg2Segmt.get(JAVA_FLOAT, 0);
 		float floatSum = floatArg1 + floatArg2;
-		floatArg2Addr.set(JAVA_FLOAT, 0, floatSum);
-		return floatArg2Addr;
+		floatArg2Segmt.set(JAVA_FLOAT, 0, floatSum);
+		return floatArg2Segmt;
 	}
 
 	public static double add2Doubles(double doubleArg1, double doubleArg2) {
@@ -673,30 +692,35 @@ public class UpcallMethodHandles {
 		return doubleSum;
 	}
 
-	public static double addDoubleAndDoubleFromPointer(MemoryAddress doubleArg1Addr, double doubleArg2) {
-		double doubleArg1 = doubleArg1Addr.get(JAVA_DOUBLE, 0);
+	public static double addDoubleAndDoubleFromPointer(MemorySegment doubleArg1Addr, double doubleArg2) {
+		MemorySegment doubleArg1Segmt = MemorySegment.ofAddress(doubleArg1Addr.address(), JAVA_DOUBLE.byteSize(), scope);
+		double doubleArg1 = doubleArg1Segmt.get(JAVA_DOUBLE, 0);
 		double doubleSum = doubleArg1 + doubleArg2;
 		return doubleSum;
 	}
 
-	public static Addressable addDoubleAndDoubleFromPtr_RetPtr(MemoryAddress doubleArg1Addr, double doubleArg2) {
-		double doubleArg1 = doubleArg1Addr.get(JAVA_DOUBLE, 0);
+	public static MemorySegment addDoubleAndDoubleFromPtr_RetPtr(MemorySegment doubleArg1Addr, double doubleArg2) {
+		MemorySegment doubleArg1Segmt = MemorySegment.ofAddress(doubleArg1Addr.address(), JAVA_DOUBLE.byteSize(), scope);
+		double doubleArg1 = doubleArg1Segmt.get(JAVA_DOUBLE, 0);
 		double doubleSum = doubleArg1 + doubleArg2;
-		MemorySegment resultSegmt = MemorySegment.allocateNative(JAVA_DOUBLE.byteSize(), session);
+		MemorySegment resultSegmt = MemorySegment.allocateNative(JAVA_DOUBLE.byteSize(), scope);
 		resultSegmt.set(JAVA_DOUBLE, 0, doubleSum);
-		return resultSegmt.address();
+		return resultSegmt;
 	}
 
-	public static Addressable addDoubleAndDoubleFromPtr_RetArgPtr(MemoryAddress doubleArg1Addr, double doubleArg2) {
-		double doubleArg1 = doubleArg1Addr.get(JAVA_DOUBLE, 0);
+	public static MemorySegment addDoubleAndDoubleFromPtr_RetArgPtr(MemorySegment doubleArg1Addr, double doubleArg2) {
+		MemorySegment doubleArg1Segmt = MemorySegment.ofAddress(doubleArg1Addr.address(), JAVA_DOUBLE.byteSize(), scope);
+		double doubleArg1 = doubleArg1Segmt.get(JAVA_DOUBLE, 0);
 		double doubleSum = doubleArg1 + doubleArg2;
-		doubleArg1Addr.set(JAVA_DOUBLE, 0, doubleSum);
-		return doubleArg1Addr;
+		doubleArg1Segmt.set(JAVA_DOUBLE, 0, doubleSum);
+		return doubleArg1Segmt;
 	}
 
-	public static int compare(MemoryAddress argAddr1, MemoryAddress argAddr2) {
-		int intArg1 = argAddr1.get(JAVA_INT, 0);
-		int intArg2 = argAddr2.get(JAVA_INT, 0);
+	public static int compare(MemorySegment argAddr1, MemorySegment argAddr2) {
+		MemorySegment arg1Segmt = MemorySegment.ofAddress(argAddr1.address(), JAVA_INT.byteSize(), scope);
+		MemorySegment arg2Segmt = MemorySegment.ofAddress(argAddr2.address(), JAVA_INT.byteSize(), scope);
+		int intArg1 = arg1Segmt.get(JAVA_INT, 0);
+		int intArg2 = arg2Segmt.get(JAVA_INT, 0);
 		return (intArg1 - intArg2);
 	}
 
@@ -716,19 +740,23 @@ public class UpcallMethodHandles {
 		return boolSum;
 	}
 
-	public static boolean addBoolFromPointerAndBoolsFromStructWithXor(MemoryAddress arg1Addr, MemorySegment arg2) {
-		boolean boolSum = arg1Addr.get(JAVA_BOOLEAN, 0) ^ arg2.get(JAVA_BOOLEAN, 0) ^ arg2.get(JAVA_BOOLEAN, 1);
+	public static boolean addBoolFromPointerAndBoolsFromStructWithXor(MemorySegment arg1Addr, MemorySegment arg2) {
+		MemorySegment arg1Segmt = MemorySegment.ofAddress(arg1Addr.address(), JAVA_BOOLEAN.byteSize(), scope);
+		boolean boolSum = arg1Segmt.get(JAVA_BOOLEAN, 0) ^ arg2.get(JAVA_BOOLEAN, 0) ^ arg2.get(JAVA_BOOLEAN, 1);
 		return boolSum;
 	}
 
-	public static Addressable addBoolFromPointerAndBoolsFromStructWithXor_returnBoolPointer(MemoryAddress arg1Addr, MemorySegment arg2) {
-		boolean boolSum = arg1Addr.get(JAVA_BOOLEAN, 0) ^ arg2.get(JAVA_BOOLEAN, 0) ^ arg2.get(JAVA_BOOLEAN, 1);
-		arg1Addr.set(JAVA_BOOLEAN, 0, boolSum);
+	public static MemorySegment addBoolFromPointerAndBoolsFromStructWithXor_returnBoolPointer(MemorySegment arg1Addr, MemorySegment arg2) {
+		MemorySegment arg1Segmt = MemorySegment.ofAddress(arg1Addr.address(), JAVA_BOOLEAN.byteSize(), scope);
+		boolean boolSum = arg1Segmt.get(JAVA_BOOLEAN, 0) ^ arg2.get(JAVA_BOOLEAN, 0) ^ arg2.get(JAVA_BOOLEAN, 1);
+		arg1Segmt.set(JAVA_BOOLEAN, 0, boolSum);
 		return arg1Addr;
 	}
 
-	public static boolean addBoolAndBoolsFromStructPointerWithXor(boolean arg1, MemoryAddress arg2Addr) {
-		boolean boolSum = arg1 ^ arg2Addr.get(JAVA_BOOLEAN, 0) ^ arg2Addr.get(JAVA_BOOLEAN, 1);
+	public static boolean addBoolAndBoolsFromStructPointerWithXor(boolean arg1, MemorySegment arg2Addr) {
+		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_BOOLEAN.withName("elem1"), JAVA_BOOLEAN.withName("elem2"));
+		MemorySegment arg2Segmt = MemorySegment.ofAddress(arg2Addr.address(), structLayout.byteSize(), scope);
+		boolean boolSum = arg1 ^ arg2Segmt.get(JAVA_BOOLEAN, 0) ^ arg2Segmt.get(JAVA_BOOLEAN, 1);
 		return boolSum;
 	}
 
@@ -794,7 +822,7 @@ public class UpcallMethodHandles {
 
 	public static MemorySegment add2BoolStructsWithXor_returnStruct(MemorySegment arg1, MemorySegment arg2) {
 		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_BOOLEAN.withName("elem1"), JAVA_BOOLEAN.withName("elem2"));
-		MemorySegment boolStructSegmt = MemorySegment.allocateNative(structLayout, session);
+		MemorySegment boolStructSegmt = MemorySegment.allocateNative(structLayout, scope);
 		boolean boolStruct_Elem1 = arg1.get(JAVA_BOOLEAN, 0) ^ arg2.get(JAVA_BOOLEAN, 0);
 		boolean boolStruct_Elem2 = arg1.get(JAVA_BOOLEAN, 1) ^ arg2.get(JAVA_BOOLEAN, 1);
 		boolStructSegmt.set(JAVA_BOOLEAN, 0, boolStruct_Elem1);
@@ -802,18 +830,20 @@ public class UpcallMethodHandles {
 		return boolStructSegmt;
 	}
 
-	public static Addressable add2BoolStructsWithXor_returnStructPointer(MemoryAddress arg1Addr, MemorySegment arg2) {
-		boolean boolStruct_Elem1 = arg1Addr.get(JAVA_BOOLEAN, 0) ^ arg2.get(JAVA_BOOLEAN, 0);
-		boolean boolStruct_Elem2 = arg1Addr.get(JAVA_BOOLEAN, 1) ^ arg2.get(JAVA_BOOLEAN, 1);
-		arg1Addr.set(JAVA_BOOLEAN, 0, boolStruct_Elem1);
-		arg1Addr.set(JAVA_BOOLEAN, 1, boolStruct_Elem2);
+	public static MemorySegment add2BoolStructsWithXor_returnStructPointer(MemorySegment arg1Addr, MemorySegment arg2) {
+		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_BOOLEAN.withName("elem1"), JAVA_BOOLEAN.withName("elem2"));
+		MemorySegment arg1Segmt = MemorySegment.ofAddress(arg1Addr.address(), structLayout.byteSize(), scope);
+		boolean boolStruct_Elem1 = arg1Segmt.get(JAVA_BOOLEAN, 0) ^ arg2.get(JAVA_BOOLEAN, 0);
+		boolean boolStruct_Elem2 = arg1Segmt.get(JAVA_BOOLEAN, 1) ^ arg2.get(JAVA_BOOLEAN, 1);
+		arg1Segmt.set(JAVA_BOOLEAN, 0, boolStruct_Elem1);
+		arg1Segmt.set(JAVA_BOOLEAN, 1, boolStruct_Elem2);
 		return arg1Addr;
 	}
 
 	public static MemorySegment add3BoolStructsWithXor_returnStruct(MemorySegment arg1, MemorySegment arg2) {
 		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_BOOLEAN.withName("elem1"),
 				JAVA_BOOLEAN.withName("elem2"), JAVA_BOOLEAN.withName("elem3"), MemoryLayout.paddingLayout(8));
-		MemorySegment boolStructSegmt = MemorySegment.allocateNative(structLayout, session);
+		MemorySegment boolStructSegmt = MemorySegment.allocateNative(structLayout, scope);
 		boolean boolStruct_Elem1 = arg1.get(JAVA_BOOLEAN, 0) ^ arg2.get(JAVA_BOOLEAN, 0);
 		boolean boolStruct_Elem2 = arg1.get(JAVA_BOOLEAN, 1) ^ arg2.get(JAVA_BOOLEAN, 1);
 		boolean boolStruct_Elem3 = arg1.get(JAVA_BOOLEAN, 2) ^ arg2.get(JAVA_BOOLEAN, 2);
@@ -839,19 +869,23 @@ public class UpcallMethodHandles {
 		return byteSum;
 	}
 
-	public static byte addByteFromPointerAndBytesFromStruct(MemoryAddress arg1Addr, MemorySegment arg2) {
-		byte byteSum = (byte)(arg1Addr.get(JAVA_BYTE, 0) + arg2.get(JAVA_BYTE, 0) + arg2.get(JAVA_BYTE, 1));
+	public static byte addByteFromPointerAndBytesFromStruct(MemorySegment arg1Addr, MemorySegment arg2) {
+		MemorySegment arg1Segmt = MemorySegment.ofAddress(arg1Addr.address(), JAVA_BYTE.byteSize(), scope);
+		byte byteSum = (byte)(arg1Segmt.get(JAVA_BYTE, 0) + arg2.get(JAVA_BYTE, 0) + arg2.get(JAVA_BYTE, 1));
 		return byteSum;
 	}
 
-	public static Addressable addByteFromPointerAndBytesFromStruct_returnBytePointer(MemoryAddress arg1Addr, MemorySegment arg2) {
-		byte byteSum = (byte)(arg1Addr.get(JAVA_BYTE, 0) + arg2.get(JAVA_BYTE, 0) + arg2.get(JAVA_BYTE, 1));
-		arg1Addr.set(JAVA_BYTE, 0, byteSum);
+	public static MemorySegment addByteFromPointerAndBytesFromStruct_returnBytePointer(MemorySegment arg1Addr, MemorySegment arg2) {
+		MemorySegment arg1Segmt = MemorySegment.ofAddress(arg1Addr.address(), JAVA_BYTE.byteSize(), scope);
+		byte byteSum = (byte)(arg1Segmt.get(JAVA_BYTE, 0) + arg2.get(JAVA_BYTE, 0) + arg2.get(JAVA_BYTE, 1));
+		arg1Segmt.set(JAVA_BYTE, 0, byteSum);
 		return arg1Addr;
 	}
 
-	public static byte addByteAndBytesFromStructPointer(byte arg1, MemoryAddress arg2Addr) {
-		byte byteSum = (byte)(arg1 + arg2Addr.get(JAVA_BYTE, 0) + arg2Addr.get(JAVA_BYTE, 1));
+	public static byte addByteAndBytesFromStructPointer(byte arg1, MemorySegment arg2Addr) {
+		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_BYTE.withName("elem1"), JAVA_BYTE.withName("elem2"));
+		MemorySegment arg2Segmt = MemorySegment.ofAddress(arg2Addr.address(), structLayout.byteSize(), scope);
+		byte byteSum = (byte)(arg1 + arg2Segmt.get(JAVA_BYTE, 0) + arg2Segmt.get(JAVA_BYTE, 1));
 		return byteSum;
 	}
 
@@ -919,7 +953,7 @@ public class UpcallMethodHandles {
 
 	public static MemorySegment add1ByteStructs_returnStruct(MemorySegment arg1, MemorySegment arg2) {
 		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_BYTE.withName("elem1"));
-		MemorySegment byteStructSegmt = MemorySegment.allocateNative(structLayout, session);
+		MemorySegment byteStructSegmt = MemorySegment.allocateNative(structLayout, scope);
 		byte byteStruct_Elem1 = (byte)(arg1.get(JAVA_BYTE, 0) + arg2.get(JAVA_BYTE, 0));
 		byteStructSegmt.set(JAVA_BYTE, 0, byteStruct_Elem1);
 		return byteStructSegmt;
@@ -927,7 +961,7 @@ public class UpcallMethodHandles {
 
 	public static MemorySegment add2ByteStructs_returnStruct(MemorySegment arg1, MemorySegment arg2) {
 		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_BYTE.withName("elem1"), JAVA_BYTE.withName("elem2"));
-		MemorySegment byteStructSegmt = MemorySegment.allocateNative(structLayout, session);
+		MemorySegment byteStructSegmt = MemorySegment.allocateNative(structLayout, scope);
 		byte byteStruct_Elem1 = (byte)(arg1.get(JAVA_BYTE, 0) + arg2.get(JAVA_BYTE, 0));
 		byte byteStruct_Elem2 = (byte)(arg1.get(JAVA_BYTE, 1) + arg2.get(JAVA_BYTE, 1));
 		byteStructSegmt.set(JAVA_BYTE, 0, byteStruct_Elem1);
@@ -935,18 +969,20 @@ public class UpcallMethodHandles {
 		return byteStructSegmt;
 	}
 
-	public static Addressable add2ByteStructs_returnStructPointer(MemoryAddress arg1Addr, MemorySegment arg2) {
-		byte byteStruct_Elem1 = (byte)(arg1Addr.get(JAVA_BYTE, 0) + arg2.get(JAVA_BYTE, 0));
-		byte byteStruct_Elem2 = (byte)(arg1Addr.get(JAVA_BYTE, 1) + arg2.get(JAVA_BYTE, 1));
-		arg1Addr.set(JAVA_BYTE, 0, byteStruct_Elem1);
-		arg1Addr.set(JAVA_BYTE, 1, byteStruct_Elem2);
+	public static MemorySegment add2ByteStructs_returnStructPointer(MemorySegment arg1Addr, MemorySegment arg2) {
+		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_BYTE.withName("elem1"), JAVA_BYTE.withName("elem2"));
+		MemorySegment arg1Segmt = MemorySegment.ofAddress(arg1Addr.address(), structLayout.byteSize(), scope);
+		byte byteStruct_Elem1 = (byte)(arg1Segmt.get(JAVA_BYTE, 0) + arg2.get(JAVA_BYTE, 0));
+		byte byteStruct_Elem2 = (byte)(arg1Segmt.get(JAVA_BYTE, 1) + arg2.get(JAVA_BYTE, 1));
+		arg1Segmt.set(JAVA_BYTE, 0, byteStruct_Elem1);
+		arg1Segmt.set(JAVA_BYTE, 1, byteStruct_Elem2);
 		return arg1Addr;
 	}
 
 	public static MemorySegment add3ByteStructs_returnStruct(MemorySegment arg1, MemorySegment arg2) {
 		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_BYTE.withName("elem1"), JAVA_BYTE.withName("elem2"),
 				JAVA_BYTE.withName("elem3"), MemoryLayout.paddingLayout(8));
-		MemorySegment byteStructSegmt = MemorySegment.allocateNative(structLayout, session);
+		MemorySegment byteStructSegmt = MemorySegment.allocateNative(structLayout, scope);
 		byte byteStruct_Elem1 = (byte)(arg1.get(JAVA_BYTE, 0) + arg2.get(JAVA_BYTE, 0));
 		byte byteStruct_Elem2 = (byte)(arg1.get(JAVA_BYTE, 1) + arg2.get(JAVA_BYTE, 1));
 		byte byteStruct_Elem3 = (byte)(arg1.get(JAVA_BYTE, 2) + arg2.get(JAVA_BYTE, 2));
@@ -969,19 +1005,23 @@ public class UpcallMethodHandles {
 		return result;
 	}
 
-	public static char addCharFromPointerAndCharsFromStruct(MemoryAddress arg1Addr, MemorySegment arg2) {
-		char result = (char)(arg1Addr.get(JAVA_CHAR, 0) + arg2.get(JAVA_CHAR, 0) + arg2.get(JAVA_CHAR, 2) - 2 * 'A');
+	public static char addCharFromPointerAndCharsFromStruct(MemorySegment arg1Addr, MemorySegment arg2) {
+		MemorySegment arg1Segmt = MemorySegment.ofAddress(arg1Addr.address(), JAVA_CHAR.byteSize(), scope);
+		char result = (char)(arg1Segmt.get(JAVA_CHAR, 0) + arg2.get(JAVA_CHAR, 0) + arg2.get(JAVA_CHAR, 2) - 2 * 'A');
 		return result;
 	}
 
-	public static Addressable addCharFromPointerAndCharsFromStruct_returnCharPointer(MemoryAddress arg1Addr, MemorySegment arg2) {
-		char result = (char)(arg1Addr.get(JAVA_CHAR, 0) + arg2.get(JAVA_CHAR, 0) + arg2.get(JAVA_CHAR, 2) - 2 * 'A');
-		arg1Addr.set(JAVA_CHAR, 0, result);
+	public static MemorySegment addCharFromPointerAndCharsFromStruct_returnCharPointer(MemorySegment arg1Addr, MemorySegment arg2) {
+		MemorySegment arg1Segmt = MemorySegment.ofAddress(arg1Addr.address(), JAVA_CHAR.byteSize(), scope);
+		char result = (char)(arg1Segmt.get(JAVA_CHAR, 0) + arg2.get(JAVA_CHAR, 0) + arg2.get(JAVA_CHAR, 2) - 2 * 'A');
+		arg1Segmt.set(JAVA_CHAR, 0, result);
 		return arg1Addr;
 	}
 
-	public static char addCharAndCharsFromStructPointer(char arg1, MemoryAddress arg2Addr) {
-		char result = (char)(arg1 + arg2Addr.get(JAVA_CHAR, 0) + arg2Addr.get(JAVA_CHAR, 2) - 2 * 'A');
+	public static char addCharAndCharsFromStructPointer(char arg1, MemorySegment arg2Addr) {
+		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_CHAR.withName("elem1"), JAVA_CHAR.withName("elem2"));
+		MemorySegment arg2Segmt = MemorySegment.ofAddress(arg2Addr.address(), structLayout.byteSize(), scope);
+		char result = (char)(arg1 + arg2Segmt.get(JAVA_CHAR, 0) + arg2Segmt.get(JAVA_CHAR, 2) - 2 * 'A');
 		return result;
 	}
 
@@ -1049,7 +1089,7 @@ public class UpcallMethodHandles {
 
 	public static MemorySegment add2CharStructs_returnStruct(MemorySegment arg1, MemorySegment arg2) {
 		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_CHAR.withName("elem1"), JAVA_CHAR.withName("elem2"));
-		MemorySegment charStructSegmt = MemorySegment.allocateNative(structLayout, session);
+		MemorySegment charStructSegmt = MemorySegment.allocateNative(structLayout, scope);
 		char charStruct_Elem1 = (char)(arg1.get(JAVA_CHAR, 0) + arg2.get(JAVA_CHAR, 0) - 'A');
 		char charStruct_Elem2 = (char)(arg1.get(JAVA_CHAR, 2) + arg2.get(JAVA_CHAR, 2) - 'A');
 		charStructSegmt.set(JAVA_CHAR, 0, charStruct_Elem1);
@@ -1057,18 +1097,20 @@ public class UpcallMethodHandles {
 		return charStructSegmt;
 	}
 
-	public static Addressable add2CharStructs_returnStructPointer(MemoryAddress arg1Addr, MemorySegment arg2) {
-		char charStruct_Elem1 = (char)(arg1Addr.get(JAVA_CHAR, 0) + arg2.get(JAVA_CHAR, 0) - 'A');
-		char charStruct_Elem2 = (char)(arg1Addr.get(JAVA_CHAR, 2) + arg2.get(JAVA_CHAR, 2) - 'A');
-		arg1Addr.set(JAVA_CHAR, 0, charStruct_Elem1);
-		arg1Addr.set(JAVA_CHAR, 2, charStruct_Elem2);
+	public static MemorySegment add2CharStructs_returnStructPointer(MemorySegment arg1Addr, MemorySegment arg2) {
+		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_CHAR.withName("elem1"), JAVA_CHAR.withName("elem2"));
+		MemorySegment arg1Segmt = MemorySegment.ofAddress(arg1Addr.address(), structLayout.byteSize(), scope);
+		char charStruct_Elem1 = (char)(arg1Segmt.get(JAVA_CHAR, 0) + arg2.get(JAVA_CHAR, 0) - 'A');
+		char charStruct_Elem2 = (char)(arg1Segmt.get(JAVA_CHAR, 2) + arg2.get(JAVA_CHAR, 2) - 'A');
+		arg1Segmt.set(JAVA_CHAR, 0, charStruct_Elem1);
+		arg1Segmt.set(JAVA_CHAR, 2, charStruct_Elem2);
 		return arg1Addr;
 	}
 
 	public static MemorySegment add3CharStructs_returnStruct(MemorySegment arg1, MemorySegment arg2) {
 		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_CHAR.withName("elem1"), JAVA_CHAR.withName("elem2"),
 				JAVA_CHAR.withName("elem3"), MemoryLayout.paddingLayout(16));
-		MemorySegment charStructSegmt = MemorySegment.allocateNative(structLayout, session);
+		MemorySegment charStructSegmt = MemorySegment.allocateNative(structLayout, scope);
 		char charStruct_Elem1 = (char)(arg1.get(JAVA_CHAR, 0) + arg2.get(JAVA_CHAR, 0) - 'A');
 		char charStruct_Elem2 = (char)(arg1.get(JAVA_CHAR, 2) + arg2.get(JAVA_CHAR, 2) - 'A');
 		char charStruct_Elem3 = (char)(arg1.get(JAVA_CHAR, 4) + arg2.get(JAVA_CHAR, 4) - 'A');
@@ -1091,19 +1133,23 @@ public class UpcallMethodHandles {
 		return shortSum;
 	}
 
-	public static short addShortFromPointerAndShortsFromStruct(MemoryAddress arg1Addr, MemorySegment arg2) {
-		short shortSum = (short)(arg1Addr.get(JAVA_SHORT, 0) + arg2.get(JAVA_SHORT, 0) + arg2.get(JAVA_SHORT, 2));
+	public static short addShortFromPointerAndShortsFromStruct(MemorySegment arg1Addr, MemorySegment arg2) {
+		MemorySegment arg1Segmt = MemorySegment.ofAddress(arg1Addr.address(), JAVA_SHORT.byteSize(), scope);
+		short shortSum = (short)(arg1Segmt.get(JAVA_SHORT, 0) + arg2.get(JAVA_SHORT, 0) + arg2.get(JAVA_SHORT, 2));
 		return shortSum;
 	}
 
-	public static Addressable addShortFromPointerAndShortsFromStruct_returnShortPointer(MemoryAddress arg1Addr, MemorySegment arg2) {
-		short shortSum = (short)(arg1Addr.get(JAVA_SHORT, 0) + arg2.get(JAVA_SHORT, 0) + arg2.get(JAVA_SHORT, 2));
-		arg1Addr.set(JAVA_SHORT, 0, shortSum);
+	public static MemorySegment addShortFromPointerAndShortsFromStruct_returnShortPointer(MemorySegment arg1Addr, MemorySegment arg2) {
+		MemorySegment arg1Segmt = MemorySegment.ofAddress(arg1Addr.address(), JAVA_SHORT.byteSize(), scope);
+		short shortSum = (short)(arg1Segmt.get(JAVA_SHORT, 0) + arg2.get(JAVA_SHORT, 0) + arg2.get(JAVA_SHORT, 2));
+		arg1Segmt.set(JAVA_SHORT, 0, shortSum);
 		return arg1Addr;
 	}
 
-	public static short addShortAndShortsFromStructPointer(short arg1, MemoryAddress arg2Addr) {
-		short shortSum = (short)(arg1 + arg2Addr.get(JAVA_SHORT, 0) + arg2Addr.get(JAVA_SHORT, 2));
+	public static short addShortAndShortsFromStructPointer(short arg1, MemorySegment arg2Addr) {
+		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_SHORT.withName("elem1"), JAVA_SHORT.withName("elem2"));
+		MemorySegment arg2Segmt = MemorySegment.ofAddress(arg2Addr.address(), structLayout.byteSize(), scope);
+		short shortSum = (short)(arg1 + arg2Segmt.get(JAVA_SHORT, 0) + arg2Segmt.get(JAVA_SHORT, 2));
 		return shortSum;
 	}
 
@@ -1171,7 +1217,7 @@ public class UpcallMethodHandles {
 
 	public static MemorySegment add2ShortStructs_returnStruct(MemorySegment arg1, MemorySegment arg2) {
 		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_SHORT.withName("elem1"), JAVA_SHORT.withName("elem2"));
-		MemorySegment shortStructSegmt = MemorySegment.allocateNative(structLayout, session);
+		MemorySegment shortStructSegmt = MemorySegment.allocateNative(structLayout, scope);
 		short shortStruct_Elem1 = (short)(arg1.get(JAVA_SHORT, 0) + arg2.get(JAVA_SHORT, 0));
 		short shortStruct_Elem2 = (short)(arg1.get(JAVA_SHORT, 2) + arg2.get(JAVA_SHORT, 2));
 		shortStructSegmt.set(JAVA_SHORT, 0, shortStruct_Elem1);
@@ -1179,18 +1225,20 @@ public class UpcallMethodHandles {
 		return shortStructSegmt;
 	}
 
-	public static Addressable add2ShortStructs_returnStructPointer(MemoryAddress arg1Addr, MemorySegment arg2) {
-		short shortStruct_Elem1 = (short)(arg1Addr.get(JAVA_SHORT, 0) + arg2.get(JAVA_SHORT, 0));
-		short shortStruct_Elem2 = (short)(arg1Addr.get(JAVA_SHORT, 2) + arg2.get(JAVA_SHORT, 2));
-		arg1Addr.set(JAVA_SHORT, 0, shortStruct_Elem1);
-		arg1Addr.set(JAVA_SHORT, 2, shortStruct_Elem2);
+	public static MemorySegment add2ShortStructs_returnStructPointer(MemorySegment arg1Addr, MemorySegment arg2) {
+		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_SHORT.withName("elem1"), JAVA_SHORT.withName("elem2"));
+		MemorySegment arg1Segmt = MemorySegment.ofAddress(arg1Addr.address(), structLayout.byteSize(), scope);
+		short shortStruct_Elem1 = (short)(arg1Segmt.get(JAVA_SHORT, 0) + arg2.get(JAVA_SHORT, 0));
+		short shortStruct_Elem2 = (short)(arg1Segmt.get(JAVA_SHORT, 2) + arg2.get(JAVA_SHORT, 2));
+		arg1Segmt.set(JAVA_SHORT, 0, shortStruct_Elem1);
+		arg1Segmt.set(JAVA_SHORT, 2, shortStruct_Elem2);
 		return arg1Addr;
 	}
 
 	public static MemorySegment add3ShortStructs_returnStruct(MemorySegment arg1, MemorySegment arg2) {
 		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_SHORT.withName("elem1"), JAVA_SHORT.withName("elem2"),
 				JAVA_SHORT.withName("elem3"), MemoryLayout.paddingLayout(16));
-		MemorySegment shortStructSegmt = MemorySegment.allocateNative(structLayout, session);
+		MemorySegment shortStructSegmt = MemorySegment.allocateNative(structLayout, scope);
 		short shortStruct_Elem1 = (short)(arg1.get(JAVA_SHORT, 0) + arg2.get(JAVA_SHORT, 0));
 		short shortStruct_Elem2 = (short)(arg1.get(JAVA_SHORT, 2) + arg2.get(JAVA_SHORT, 2));
 		short shortStruct_Elem3 = (short)(arg1.get(JAVA_SHORT, 4) + arg2.get(JAVA_SHORT, 4));
@@ -1211,19 +1259,23 @@ public class UpcallMethodHandles {
 		return intSum;
 	}
 
-	public static int addIntFromPointerAndIntsFromStruct(MemoryAddress arg1Addr, MemorySegment arg2) {
-		int intSum = arg1Addr.get(JAVA_INT, 0) + arg2.get(JAVA_INT, 0) + arg2.get(JAVA_INT, 4);
+	public static int addIntFromPointerAndIntsFromStruct(MemorySegment arg1Addr, MemorySegment arg2) {
+		MemorySegment arg1Segmt = MemorySegment.ofAddress(arg1Addr.address(), JAVA_INT.byteSize(), scope);
+		int intSum = arg1Segmt.get(JAVA_INT, 0) + arg2.get(JAVA_INT, 0) + arg2.get(JAVA_INT, 4);
 		return intSum;
 	}
 
-	public static Addressable addIntFromPointerAndIntsFromStruct_returnIntPointer(MemoryAddress arg1Addr, MemorySegment arg2) {
-		int intSum = arg1Addr.get(JAVA_INT, 0) + arg2.get(JAVA_INT, 0) + arg2.get(JAVA_INT, 4);
-		arg1Addr.set(JAVA_INT, 0, intSum);
+	public static MemorySegment addIntFromPointerAndIntsFromStruct_returnIntPointer(MemorySegment arg1Addr, MemorySegment arg2) {
+		MemorySegment arg1Segmt = MemorySegment.ofAddress(arg1Addr.address(), JAVA_INT.byteSize(), scope);
+		int intSum = arg1Segmt.get(JAVA_INT, 0) + arg2.get(JAVA_INT, 0) + arg2.get(JAVA_INT, 4);
+		arg1Segmt.set(JAVA_INT, 0, intSum);
 		return arg1Addr;
 	}
 
-	public static int addIntAndIntsFromStructPointer(int arg1, MemoryAddress arg2Addr) {
-		int intSum = arg1 + arg2Addr.get(JAVA_INT, 0) + arg2Addr.get(JAVA_INT, 4);
+	public static int addIntAndIntsFromStructPointer(int arg1, MemorySegment arg2Addr) {
+		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_INT.withName("elem1"), JAVA_INT.withName("elem2"));
+		MemorySegment arg2Segmt = MemorySegment.ofAddress(arg2Addr.address(), structLayout.byteSize(), scope);
+		int intSum = arg1 + arg2Segmt.get(JAVA_INT, 0) + arg2Segmt.get(JAVA_INT, 4);
 		return intSum;
 	}
 
@@ -1291,7 +1343,7 @@ public class UpcallMethodHandles {
 
 	public static MemorySegment add2IntStructs_returnStruct(MemorySegment arg1, MemorySegment arg2) {
 		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_INT.withName("elem1"), JAVA_INT.withName("elem2"));
-		MemorySegment intStructSegmt = MemorySegment.allocateNative(structLayout, session);
+		MemorySegment intStructSegmt = MemorySegment.allocateNative(structLayout, scope);
 		int intStruct_Elem1 = arg1.get(JAVA_INT, 0) + arg2.get(JAVA_INT, 0);
 		int intStruct_Elem2 = arg1.get(JAVA_INT, 4) + arg2.get(JAVA_INT, 4);
 		intStructSegmt.set(JAVA_INT, 0, intStruct_Elem1);
@@ -1303,17 +1355,19 @@ public class UpcallMethodHandles {
 		throw new IllegalArgumentException("An exception is thrown from the upcall method");
 	}
 
-	public static Addressable add2IntStructs_returnStructPointer(MemoryAddress arg1Addr, MemorySegment arg2) {
-		int intSum_Elem1 = arg1Addr.get(JAVA_INT, 0) + arg2.get(JAVA_INT, 0);
-		int intSum_Elem2 = arg1Addr.get(JAVA_INT, 4) + arg2.get(JAVA_INT, 4);
-		arg1Addr.set(JAVA_INT, 0, intSum_Elem1);
-		arg1Addr.set(JAVA_INT, 4, intSum_Elem2);
+	public static MemorySegment add2IntStructs_returnStructPointer(MemorySegment arg1Addr, MemorySegment arg2) {
+		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_INT.withName("elem1"), JAVA_INT.withName("elem2"));
+		MemorySegment arg1Segmt = MemorySegment.ofAddress(arg1Addr.address(), structLayout.byteSize(), scope);
+		int intSum_Elem1 = arg1Segmt.get(JAVA_INT, 0) + arg2.get(JAVA_INT, 0);
+		int intSum_Elem2 = arg1Segmt.get(JAVA_INT, 4) + arg2.get(JAVA_INT, 4);
+		arg1Segmt.set(JAVA_INT, 0, intSum_Elem1);
+		arg1Segmt.set(JAVA_INT, 4, intSum_Elem2);
 		return arg1Addr;
 	}
 
 	public static MemorySegment add3IntStructs_returnStruct(MemorySegment arg1, MemorySegment arg2) {
 		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_INT.withName("elem1"), JAVA_INT.withName("elem2"), JAVA_INT.withName("elem3"));
-		MemorySegment intStructSegmt = MemorySegment.allocateNative(structLayout, session);
+		MemorySegment intStructSegmt = MemorySegment.allocateNative(structLayout, scope);
 		int intStruct_Elem1 = arg1.get(JAVA_INT, 0) + arg2.get(JAVA_INT, 0);
 		int intStruct_Elem2 = arg1.get(JAVA_INT, 4) + arg2.get(JAVA_INT, 4);
 		int intStruct_Elem3 = arg1.get(JAVA_INT, 8) + arg2.get(JAVA_INT, 8);
@@ -1328,19 +1382,23 @@ public class UpcallMethodHandles {
 		return longSum;
 	}
 
-	public static long addLongFromPointerAndLongsFromStruct(MemoryAddress arg1Addr, MemorySegment arg2) {
-		long longSum = arg1Addr.get(JAVA_LONG, 0) + arg2.get(JAVA_LONG, 0) + arg2.get(JAVA_LONG, 8);
+	public static long addLongFromPointerAndLongsFromStruct(MemorySegment arg1Addr, MemorySegment arg2) {
+		MemorySegment arg1Segmt = MemorySegment.ofAddress(arg1Addr.address(), JAVA_LONG.byteSize(), scope);
+		long longSum = arg1Segmt.get(JAVA_LONG, 0) + arg2.get(JAVA_LONG, 0) + arg2.get(JAVA_LONG, 8);
 		return longSum;
 	}
 
-	public static Addressable addLongFromPointerAndLongsFromStruct_returnLongPointer(MemoryAddress arg1Addr, MemorySegment arg2) {
-		long longSum = arg1Addr.get(JAVA_LONG, 0) + arg2.get(JAVA_LONG, 0) + arg2.get(JAVA_LONG, 8);
-		arg1Addr.set(JAVA_LONG, 0, longSum);
+	public static MemorySegment addLongFromPointerAndLongsFromStruct_returnLongPointer(MemorySegment arg1Addr, MemorySegment arg2) {
+		MemorySegment arg1Segmt = MemorySegment.ofAddress(arg1Addr.address(), JAVA_LONG.byteSize(), scope);
+		long longSum = arg1Segmt.get(JAVA_LONG, 0) + arg2.get(JAVA_LONG, 0) + arg2.get(JAVA_LONG, 8);
+		arg1Segmt.set(JAVA_LONG, 0, longSum);
 		return arg1Addr;
 	}
 
-	public static long addLongAndLongsFromStructPointer(long arg1, MemoryAddress arg2Addr) {
-		long longSum = arg1 + arg2Addr.get(JAVA_LONG, 0) + arg2Addr.get(JAVA_LONG, 8);
+	public static long addLongAndLongsFromStructPointer(long arg1, MemorySegment arg2Addr) {
+		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_LONG.withName("elem1"), JAVA_LONG.withName("elem2"));
+		MemorySegment arg2Segmt = MemorySegment.ofAddress(arg2Addr.address(), structLayout.byteSize(), scope);
+		long longSum = arg1 + arg2Segmt.get(JAVA_LONG, 0) + arg2Segmt.get(JAVA_LONG, 8);
 		return longSum;
 	}
 
@@ -1408,7 +1466,7 @@ public class UpcallMethodHandles {
 
 	public static MemorySegment add2LongStructs_returnStruct(MemorySegment arg1, MemorySegment arg2) {
 		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_LONG.withName("elem1"), JAVA_LONG.withName("elem2"));
-		MemorySegment longStructSegmt = MemorySegment.allocateNative(structLayout, session);
+		MemorySegment longStructSegmt = MemorySegment.allocateNative(structLayout, scope);
 		long longStruct_Elem1 = arg1.get(JAVA_LONG, 0) + arg2.get(JAVA_LONG, 0);
 		long longStruct_Elem2 = arg1.get(JAVA_LONG, 8) + arg2.get(JAVA_LONG, 8);
 		longStructSegmt.set(JAVA_LONG, 0, longStruct_Elem1);
@@ -1416,17 +1474,19 @@ public class UpcallMethodHandles {
 		return longStructSegmt;
 	}
 
-	public static Addressable add2LongStructs_returnStructPointer(MemoryAddress arg1Addr, MemorySegment arg2) {
-		long longSum_Elem1 = arg1Addr.get(JAVA_LONG, 0) + arg2.get(JAVA_LONG, 0);
-		long longSum_Elem2 = arg1Addr.get(JAVA_LONG, 8) + arg2.get(JAVA_LONG, 8);
-		arg1Addr.set(JAVA_LONG, 0, longSum_Elem1);
-		arg1Addr.set(JAVA_LONG, 8, longSum_Elem2);
+	public static MemorySegment add2LongStructs_returnStructPointer(MemorySegment arg1Addr, MemorySegment arg2) {
+		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_LONG.withName("elem1"), JAVA_LONG.withName("elem2"));
+		MemorySegment arg1Segmt = MemorySegment.ofAddress(arg1Addr.address(), structLayout.byteSize(), scope);
+		long longSum_Elem1 = arg1Segmt.get(JAVA_LONG, 0) + arg2.get(JAVA_LONG, 0);
+		long longSum_Elem2 = arg1Segmt.get(JAVA_LONG, 8) + arg2.get(JAVA_LONG, 8);
+		arg1Segmt.set(JAVA_LONG, 0, longSum_Elem1);
+		arg1Segmt.set(JAVA_LONG, 8, longSum_Elem2);
 		return arg1Addr;
 	}
 
 	public static MemorySegment add3LongStructs_returnStruct(MemorySegment arg1, MemorySegment arg2) {
 		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_LONG.withName("elem1"), JAVA_LONG.withName("elem2"), JAVA_LONG.withName("elem3"));
-		MemorySegment longStructSegmt = MemorySegment.allocateNative(structLayout, session);
+		MemorySegment longStructSegmt = MemorySegment.allocateNative(structLayout, scope);
 		long longStruct_Elem1 = arg1.get(JAVA_LONG, 0) + arg2.get(JAVA_LONG, 0);
 		long longStruct_Elem2 = arg1.get(JAVA_LONG, 8) + arg2.get(JAVA_LONG, 8);
 		long longStruct_Elem3 = arg1.get(JAVA_LONG, 16) + arg2.get(JAVA_LONG, 16);
@@ -1447,19 +1507,23 @@ public class UpcallMethodHandles {
 		return floatSum;
 	}
 
-	public static float addFloatFromPointerAndFloatsFromStruct(MemoryAddress arg1Addr, MemorySegment arg2) {
-		float floatSum = arg1Addr.get(JAVA_FLOAT, 0) + arg2.get(JAVA_FLOAT, 0) + arg2.get(JAVA_FLOAT, 4);
+	public static float addFloatFromPointerAndFloatsFromStruct(MemorySegment arg1Addr, MemorySegment arg2) {
+		MemorySegment arg1Segmt = MemorySegment.ofAddress(arg1Addr.address(), JAVA_FLOAT.byteSize(), scope);
+		float floatSum = arg1Segmt.get(JAVA_FLOAT, 0) + arg2.get(JAVA_FLOAT, 0) + arg2.get(JAVA_FLOAT, 4);
 		return floatSum;
 	}
 
-	public static Addressable addFloatFromPointerAndFloatsFromStruct_returnFloatPointer(MemoryAddress arg1Addr, MemorySegment arg2) {
-		float floatSum = arg1Addr.get(JAVA_FLOAT, 0) + arg2.get(JAVA_FLOAT, 0) + arg2.get(JAVA_FLOAT, 4);
-		arg1Addr.set(JAVA_FLOAT, 0, floatSum);
+	public static MemorySegment addFloatFromPointerAndFloatsFromStruct_returnFloatPointer(MemorySegment arg1Addr, MemorySegment arg2) {
+		MemorySegment arg1Segmt = MemorySegment.ofAddress(arg1Addr.address(), JAVA_FLOAT.byteSize(), scope);
+		float floatSum = arg1Segmt.get(JAVA_FLOAT, 0) + arg2.get(JAVA_FLOAT, 0) + arg2.get(JAVA_FLOAT, 4);
+		arg1Segmt.set(JAVA_FLOAT, 0, floatSum);
 		return arg1Addr;
 	}
 
-	public static float addFloatAndFloatsFromStructPointer(float arg1, MemoryAddress arg2Addr) {
-		float floatSum = arg1 + arg2Addr.get(JAVA_FLOAT, 0) + arg2Addr.get(JAVA_FLOAT, 4);
+	public static float addFloatAndFloatsFromStructPointer(float arg1, MemorySegment arg2Addr) {
+		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_FLOAT.withName("elem1"), JAVA_FLOAT.withName("elem2"));
+		MemorySegment arg2Segmt = MemorySegment.ofAddress(arg2Addr.address(), structLayout.byteSize(), scope);
+		float floatSum = arg1 + arg2Segmt.get(JAVA_FLOAT, 0) + arg2Segmt.get(JAVA_FLOAT, 4);
 		return floatSum;
 	}
 
@@ -1527,7 +1591,7 @@ public class UpcallMethodHandles {
 
 	public static MemorySegment add2FloatStructs_returnStruct(MemorySegment arg1, MemorySegment arg2) {
 		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_FLOAT.withName("elem1"), JAVA_FLOAT.withName("elem2"));
-		MemorySegment floatStructSegmt = MemorySegment.allocateNative(structLayout, session);
+		MemorySegment floatStructSegmt = MemorySegment.allocateNative(structLayout, scope);
 		float floatStruct_Elem1 = arg1.get(JAVA_FLOAT, 0) + arg2.get(JAVA_FLOAT, 0);
 		float floatStruct_Elem2 = arg1.get(JAVA_FLOAT, 4) + arg2.get(JAVA_FLOAT, 4);
 		floatStructSegmt.set(JAVA_FLOAT, 0, floatStruct_Elem1);
@@ -1535,11 +1599,13 @@ public class UpcallMethodHandles {
 		return floatStructSegmt;
 	}
 
-	public static Addressable add2FloatStructs_returnStructPointer(MemoryAddress arg1Addr, MemorySegment arg2) {
-		float floatSum_Elem1 = arg1Addr.get(JAVA_FLOAT, 0) + arg2.get(JAVA_FLOAT, 0);
-		float floatSum_Elem2 = arg1Addr.get(JAVA_FLOAT, 4) + arg2.get(JAVA_FLOAT, 4);
-		arg1Addr.set(JAVA_FLOAT, 0, floatSum_Elem1);
-		arg1Addr.set(JAVA_FLOAT, 4, floatSum_Elem2);
+	public static MemorySegment add2FloatStructs_returnStructPointer(MemorySegment arg1Addr, MemorySegment arg2) {
+		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_FLOAT.withName("elem1"), JAVA_FLOAT.withName("elem2"));
+		MemorySegment arg1Segmt = MemorySegment.ofAddress(arg1Addr.address(), structLayout.byteSize(), scope);
+		float floatSum_Elem1 = arg1Segmt.get(JAVA_FLOAT, 0) + arg2.get(JAVA_FLOAT, 0);
+		float floatSum_Elem2 = arg1Segmt.get(JAVA_FLOAT, 4) + arg2.get(JAVA_FLOAT, 4);
+		arg1Segmt.set(JAVA_FLOAT, 0, floatSum_Elem1);
+		arg1Segmt.set(JAVA_FLOAT, 4, floatSum_Elem2);
 		return arg1Addr;
 	}
 
@@ -1549,7 +1615,7 @@ public class UpcallMethodHandles {
 		VarHandle floatHandle2 = structLayout.varHandle(PathElement.groupElement("elem2"));
 		VarHandle floatHandle3 = structLayout.varHandle(PathElement.groupElement("elem3"));
 
-		MemorySegment floatStructSegmt = MemorySegment.allocateNative(structLayout, session);
+		MemorySegment floatStructSegmt = MemorySegment.allocateNative(structLayout, scope);
 		float floatStruct_Elem1 = arg1.get(JAVA_FLOAT, 0) + arg2.get(JAVA_FLOAT, 0);
 		float floatStruct_Elem2 = arg1.get(JAVA_FLOAT, 4) + arg2.get(JAVA_FLOAT, 4);
 		float floatStruct_Elem3 = arg1.get(JAVA_FLOAT, 8) + arg2.get(JAVA_FLOAT, 8);
@@ -1564,19 +1630,23 @@ public class UpcallMethodHandles {
 		return doubleSum;
 	}
 
-	public static double addDoubleFromPointerAndDoublesFromStruct(MemoryAddress arg1Addr, MemorySegment arg2) {
-		double doubleSum = arg1Addr.get(JAVA_DOUBLE, 0) + arg2.get(JAVA_DOUBLE, 0) + arg2.get(JAVA_DOUBLE, 8);
+	public static double addDoubleFromPointerAndDoublesFromStruct(MemorySegment arg1Addr, MemorySegment arg2) {
+		MemorySegment arg1Segmt = MemorySegment.ofAddress(arg1Addr.address(), JAVA_DOUBLE.byteSize(), scope);
+		double doubleSum = arg1Segmt.get(JAVA_DOUBLE, 0) + arg2.get(JAVA_DOUBLE, 0) + arg2.get(JAVA_DOUBLE, 8);
 		return doubleSum;
 	}
 
-	public static Addressable addDoubleFromPointerAndDoublesFromStruct_returnDoublePointer(MemoryAddress arg1Addr, MemorySegment arg2) {
-		double doubleSum = arg1Addr.get(JAVA_DOUBLE, 0) + arg2.get(JAVA_DOUBLE, 0) + arg2.get(JAVA_DOUBLE, 8);
-		arg1Addr.set(JAVA_DOUBLE, 0, doubleSum);
+	public static MemorySegment addDoubleFromPointerAndDoublesFromStruct_returnDoublePointer(MemorySegment arg1Addr, MemorySegment arg2) {
+		MemorySegment arg1Segmt = MemorySegment.ofAddress(arg1Addr.address(), JAVA_DOUBLE.byteSize(), scope);
+		double doubleSum = arg1Segmt.get(JAVA_DOUBLE, 0) + arg2.get(JAVA_DOUBLE, 0) + arg2.get(JAVA_DOUBLE, 8);
+		arg1Segmt.set(JAVA_DOUBLE, 0, doubleSum);
 		return arg1Addr;
 	}
 
-	public static double addDoubleAndDoublesFromStructPointer(double arg1, MemoryAddress arg2Addr) {
-		double doubleSum = arg1 + arg2Addr.get(JAVA_DOUBLE, 0) + arg2Addr.get(JAVA_DOUBLE, 8);
+	public static double addDoubleAndDoublesFromStructPointer(double arg1, MemorySegment arg2Addr) {
+		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_DOUBLE.withName("elem1"), JAVA_DOUBLE.withName("elem2"));
+		MemorySegment arg2Segmt = MemorySegment.ofAddress(arg2Addr.address(), structLayout.byteSize(), scope);
+		double doubleSum = arg1 + arg2Segmt.get(JAVA_DOUBLE, 0) + arg2Segmt.get(JAVA_DOUBLE, 8);
 		return doubleSum;
 	}
 
@@ -1644,7 +1714,7 @@ public class UpcallMethodHandles {
 
 	public static MemorySegment add2DoubleStructs_returnStruct(MemorySegment arg1, MemorySegment arg2) {
 		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_DOUBLE.withName("elem1"), JAVA_DOUBLE.withName("elem2"));
-		MemorySegment doubleStructSegmt = MemorySegment.allocateNative(structLayout, session);
+		MemorySegment doubleStructSegmt = MemorySegment.allocateNative(structLayout, scope);
 		double doubleStruct_Elem1 = arg1.get(JAVA_DOUBLE, 0) + arg2.get(JAVA_DOUBLE, 0);
 		double doubleStruct_Elem2 = arg1.get(JAVA_DOUBLE, 8) + arg2.get(JAVA_DOUBLE, 8);
 		doubleStructSegmt.set(JAVA_DOUBLE, 0, doubleStruct_Elem1);
@@ -1652,17 +1722,19 @@ public class UpcallMethodHandles {
 		return doubleStructSegmt;
 	}
 
-	public static Addressable add2DoubleStructs_returnStructPointer(MemoryAddress arg1Addr, MemorySegment arg2) {
-		double doubleSum_Elem1 = arg1Addr.get(JAVA_DOUBLE, 0) + arg2.get(JAVA_DOUBLE, 0);
-		double doubleSum_Elem2 = arg1Addr.get(JAVA_DOUBLE, 8) + arg2.get(JAVA_DOUBLE, 8);
-		arg1Addr.set(JAVA_DOUBLE, 0, doubleSum_Elem1);
-		arg1Addr.set(JAVA_DOUBLE, 8, doubleSum_Elem2);
+	public static MemorySegment add2DoubleStructs_returnStructPointer(MemorySegment arg1Addr, MemorySegment arg2) {
+		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_DOUBLE.withName("elem1"), JAVA_DOUBLE.withName("elem2"));
+		MemorySegment arg1Segmt = MemorySegment.ofAddress(arg1Addr.address(), structLayout.byteSize(), scope);
+		double doubleSum_Elem1 = arg1Segmt.get(JAVA_DOUBLE, 0) + arg2.get(JAVA_DOUBLE, 0);
+		double doubleSum_Elem2 = arg1Segmt.get(JAVA_DOUBLE, 8) + arg2.get(JAVA_DOUBLE, 8);
+		arg1Segmt.set(JAVA_DOUBLE, 0, doubleSum_Elem1);
+		arg1Segmt.set(JAVA_DOUBLE, 8, doubleSum_Elem2);
 		return arg1Addr;
 	}
 
 	public static MemorySegment add3DoubleStructs_returnStruct(MemorySegment arg1, MemorySegment arg2) {
 		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_DOUBLE.withName("elem1"), JAVA_DOUBLE.withName("elem2"), JAVA_DOUBLE.withName("elem3"));
-		MemorySegment doubleStructSegmt = MemorySegment.allocateNative(structLayout, session);
+		MemorySegment doubleStructSegmt = MemorySegment.allocateNative(structLayout, scope);
 		double doubleStruct_Elem1 = arg1.get(JAVA_DOUBLE, 0) + arg2.get(JAVA_DOUBLE, 0);
 		double doubleStruct_Elem2 = arg1.get(JAVA_DOUBLE, 8) + arg2.get(JAVA_DOUBLE, 8);
 		double doubleStruct_Elem3 = arg1.get(JAVA_DOUBLE, 16) + arg2.get(JAVA_DOUBLE, 16);
@@ -1874,7 +1946,7 @@ public class UpcallMethodHandles {
 	public static MemorySegment return254BytesFromStruct() {
 		SequenceLayout byteArray = MemoryLayout.sequenceLayout(254, JAVA_BYTE);
 		GroupLayout structLayout = MemoryLayout.structLayout(byteArray);
-		MemorySegment byteArrStruSegment = MemorySegment.allocateNative(structLayout, session);
+		MemorySegment byteArrStruSegment = MemorySegment.allocateNative(structLayout, scope);
 
 		for (int i = 0; i < 254; i++) {
 			byteArrStruSegment.set(JAVA_BYTE, i, (byte)i);
@@ -1885,7 +1957,7 @@ public class UpcallMethodHandles {
 	public static MemorySegment return4KBytesFromStruct() {
 		SequenceLayout byteArray = MemoryLayout.sequenceLayout(4096, JAVA_BYTE);
 		GroupLayout structLayout = MemoryLayout.structLayout(byteArray);
-		MemorySegment byteArrStruSegment = MemorySegment.allocateNative(structLayout, session);
+		MemorySegment byteArrStruSegment = MemorySegment.allocateNative(structLayout, scope);
 
 		for (int i = 0; i < 4096; i++) {
 			byteArrStruSegment.set(JAVA_BYTE, i, (byte)i);
