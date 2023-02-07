@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -564,12 +564,12 @@ uint8_t *TR::ARMCallSnippet::generateVIThunk(TR::Node *callNode, int32_t argSize
    return(returnValue);
    }
 
-TR_J2IThunk *TR::ARMCallSnippet::generateInvokeExactJ2IThunk(TR::Node *callNode, int32_t argSize, TR::CodeGenerator *cg, char *signature)
+TR_MHJ2IThunk *TR::ARMCallSnippet::generateInvokeExactJ2IThunk(TR::Node *callNode, int32_t argSize, TR::CodeGenerator *cg, char *signature)
    {
    int32_t  codeSize = 4*(instructionCountForArguments(callNode, cg) + 2) + 8; // Additional 4 bytes to hold size of thunk
    int32_t  dispatcher;
-   TR_J2IThunkTable *thunkTable = TR::comp()->getPersistentInfo()->getInvokeExactJ2IThunkTable();
-   TR_J2IThunk      *thunk      = TR_J2IThunk::allocate(codeSize, signature, cg, thunkTable);
+   TR_MHJ2IThunkTable *thunkTable = TR::comp()->getPersistentInfo()->getInvokeExactJ2IThunkTable();
+   TR_MHJ2IThunk      *thunk      = TR_MHJ2IThunk::allocate(codeSize, signature, cg, thunkTable);
    uint8_t          *buffer     = thunk->entryPoint();
 
    TR_RuntimeHelper helper;

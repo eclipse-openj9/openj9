@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -134,7 +134,7 @@ j9ThunkInvokeExactHelperFromTerseSignature(UDATA signatureLength, char *signatur
    }
 
 void
-TR_X86RelocationTarget::performInvokeExactJ2IThunkRelocation(TR_J2IThunk *thunk)
+TR_X86RelocationTarget::performInvokeExactJ2IThunkRelocation(TR_MHJ2IThunk *thunk)
    {
    char *signature = thunk->terseSignature();
    void *vmHelper = j9ThunkInvokeExactHelperFromTerseSignature(strlen(signature), signature, reloRuntime());

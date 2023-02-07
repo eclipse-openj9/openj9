@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2022 IBM Corp. and others
+ * Copyright (c) 2000, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -42,7 +42,7 @@ class TR_FrontEnd;
 class TR_PersistentMemory;
 class TR_PersistentCHTable;
 class TR_PersistentClassLoaderTable;
-class TR_J2IThunkTable;
+class TR_MHJ2IThunkTable;
 namespace J9 { class Options; }
 
 enum JitStates {
@@ -281,8 +281,8 @@ class PersistentInfo : public OMR::PersistentInfoConnector
    void incNumGCRBodies() { _statNumGCRBodies++; }
    void incNumGCRSaves() { _statNumGCRSaves++; }
 
-   TR_J2IThunkTable *getInvokeExactJ2IThunkTable(){ return _invokeExactJ2IThunkTable; } // NULL if the platform needs no thunks, so J2I helpers can be called directly
-   void setInvokeExactJ2IThunkTable(TR_J2IThunkTable *table){ _invokeExactJ2IThunkTable = table; }
+   TR_MHJ2IThunkTable *getInvokeExactJ2IThunkTable(){ return _invokeExactJ2IThunkTable; } // NULL if the platform needs no thunks, so J2I helpers can be called directly
+   void setInvokeExactJ2IThunkTable(TR_MHJ2IThunkTable *table){ _invokeExactJ2IThunkTable = table; }
 
 
    TR_PersistentCHTable * getPersistentCHTable();
@@ -432,7 +432,7 @@ class PersistentInfo : public OMR::PersistentInfoConnector
    int32_t _statNumGCRBodies;
    int32_t _statNumGCRSaves;
 
-   TR_J2IThunkTable *_invokeExactJ2IThunkTable;
+   TR_MHJ2IThunkTable *_invokeExactJ2IThunkTable;
 
    TR::Monitor *_gpuInitMonitor;
 

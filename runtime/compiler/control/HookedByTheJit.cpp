@@ -4374,7 +4374,7 @@ void JitShutdown(J9JITConfig * jitConfig)
    // TODO:JSR292: Delete or protect with env var
    /*
    TR_FrontEnd *fe = TR_J9VMBase::get(jitConfig, vmThread);
-   TR_J2IThunkTable *thunkTable = TR::CompilationInfo::get(jitConfig)->getPersistentInfo()->getInvokeExactJ2IThunkTable();
+   TR_MHJ2IThunkTable *thunkTable = TR::CompilationInfo::get(jitConfig)->getPersistentInfo()->getInvokeExactJ2IThunkTable();
    if (thunkTable)
    thunkTable->dumpTo(fe, TR::IO::Stdout);
    */

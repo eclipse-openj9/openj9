@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2022 IBM Corp. and others
+ * Copyright (c) 2000, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -608,7 +608,7 @@ uint8_t *J9::X86::AMD64::PrivateLinkage::generateVirtualIndirectThunk(TR::Node *
    return thunkEntry;
    }
 
-TR_J2IThunk *J9::X86::AMD64::PrivateLinkage::generateInvokeExactJ2IThunk(TR::Node *callNode, char *signature)
+TR_MHJ2IThunk *J9::X86::AMD64::PrivateLinkage::generateInvokeExactJ2IThunk(TR::Node *callNode, char *signature)
    {
    TR::Compilation *comp = cg()->comp();
 
@@ -624,8 +624,8 @@ TR_J2IThunk *J9::X86::AMD64::PrivateLinkage::generateInvokeExactJ2IThunk(TR::Nod
    else
       codeSize += 2; // TR::InstOpCode::JMPReg
 
-   TR_J2IThunkTable *thunkTable = comp->getPersistentInfo()->getInvokeExactJ2IThunkTable();
-   TR_J2IThunk      *thunk      = TR_J2IThunk::allocate(codeSize, signature, cg(), thunkTable);
+   TR_MHJ2IThunkTable *thunkTable = comp->getPersistentInfo()->getInvokeExactJ2IThunkTable();
+   TR_MHJ2IThunk      *thunk      = TR_MHJ2IThunk::allocate(codeSize, signature, cg(), thunkTable);
    uint8_t          *cursor     = thunk->entryPoint();
 
    TR::SymbolReference  *glueSymRef;

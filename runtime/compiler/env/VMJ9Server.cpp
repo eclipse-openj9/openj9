@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2022 IBM Corp. and others
+ * Copyright (c) 2018, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1691,14 +1691,14 @@ TR_J9ServerVM::isClassLoadedBySystemClassLoader(TR_OpaqueClassBlock *clazz)
 void
 TR_J9ServerVM::setInvokeExactJ2IThunk(void *thunkptr, TR::Compilation *comp)
    {
-   std::string serializedThunk((char *) thunkptr, ((TR_J2IThunk *) thunkptr)->totalSize());
+   std::string serializedThunk((char *) thunkptr, ((TR_MHJ2IThunk *) thunkptr)->totalSize());
    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    stream->write(JITServer::MessageType::VM_setInvokeExactJ2IThunk, serializedThunk);
    stream->read<JITServer::Void>();
 
    // Add terse signature of the thunk to the set of registered thunks
    OMR::CriticalSection thunkMonitor(_compInfoPT->getClientData()->getThunkSetMonitor());
-   TR_J2IThunk *thunk = reinterpret_cast<TR_J2IThunk *>(thunkptr);
+   TR_MHJ2IThunk *thunk = reinterpret_cast<TR_MHJ2IThunk *>(thunkptr);
    std::string signature(thunk->terseSignature(), strlen(thunk->terseSignature()));
    auto &thunkSet = _compInfoPT->getClientData()->getRegisteredInvokeExactJ2IThunkSet();
    thunkSet.insert(std::make_pair(signature, comp->compileRelocatableCode()));
@@ -1716,7 +1716,7 @@ TR_J9ServerVM::needsInvokeExactJ2IThunk(TR::Node *callNode, TR::Compilation *com
          || method->isArchetypeSpecimen()))
       {
       char terseSignature[260]; // 256 args + 1 return type + null terminator
-      TR_J2IThunkTable *thunkTable = comp->getPersistentInfo()->getInvokeExactJ2IThunkTable();
+      TR_MHJ2IThunkTable *thunkTable = comp->getPersistentInfo()->getInvokeExactJ2IThunkTable();
       thunkTable->getTerseSignature(terseSignature, sizeof(terseSignature), methodSymbol->getMethod()->signatureChars());
       std::string terseSignatureStr(terseSignature, strlen(terseSignature));
          {

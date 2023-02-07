@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2022 IBM Corp. and others
+ * Copyright (c) 2000, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -802,9 +802,8 @@ public:
    virtual bool     needsInvokeExactJ2IThunk(TR::Node *node,  TR::Compilation *comp);
    virtual void setInvokeExactJ2IThunk(void *thunkptr, TR::Compilation *comp);
 
-   virtual void *findPersistentJ2IThunk(char *signatureChars);
-   virtual void *findPersistentThunk(char *signatureChars, uint32_t signatureLength);
-   virtual void * persistJ2IThunk(void *thunk);
+   virtual void *findPersistentMHJ2IThunk(char *signatureChars);
+   virtual void * persistMHJ2IThunk(void *thunk);
 
 
    // Object manipulation
@@ -1540,8 +1539,7 @@ public:
    virtual void *getJ2IThunk(char *signatureChars, uint32_t signatureLength,  TR::Compilation *comp);
    virtual void *setJ2IThunk(char *signatureChars, uint32_t signatureLength, void *thunkptr,  TR::Compilation *comp);
 
-   virtual void * persistJ2IThunk(void *thunk);
-   virtual void *persistThunk(char *signatureChars, uint32_t signatureLength, uint8_t *thunkStart, uint32_t totalSize);
+   virtual void * persistMHJ2IThunk(void *thunk);
 
    virtual TR_ResolvedMethod * getObjectNewInstanceImplMethod(TR_Memory *);
    virtual bool                   supportAllocationInlining( TR::Compilation *comp, TR::Node *node);
