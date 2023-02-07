@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2019 IBM Corp. and others
+ * Copyright (c) 2015, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -68,20 +68,20 @@ abstract class AttachApiTest {
 	}
 
 	protected static void log(String outLine) {
-		logger.debug(outLine);
+		logger.info(outLine);
 	}
 	
 	protected static void logOutput(List<String> output, String utilName) {
 		PrintStream stream = StringPrintStream.factory();
 		stream.println(utilName + " output:");
 		output.forEach(s -> stream.println(s));
-		logger.debug(stream.toString());
+		logger.info(stream.toString());
 	}
 	
 	public void logProperties(Properties props) {
 		PrintStream stream = StringPrintStream.factory();
 		props.keySet().stream().sorted().forEach(k -> stream.println(k + "=" + props.getProperty((String)k))); //$NON-NLS-1$ 
-		logger.debug(stream.toString());
+		logger.info(stream.toString());
 	}
 
 	void setVmOptions(String option) {
