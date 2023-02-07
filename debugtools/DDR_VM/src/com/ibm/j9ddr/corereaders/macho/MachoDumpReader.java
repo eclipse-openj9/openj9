@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2022 IBM Corp. and others
+ * Copyright (c) 2019, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -78,9 +78,7 @@ import com.ibm.j9ddr.corereaders.osthread.IRegister;
 import com.ibm.j9ddr.corereaders.osthread.Register;
 
 /**
- * There is an implicit assumption in this core reader that the Mach-O cores
- * are generated on a 64-bit Mac OSX machine, since OpenJ9 only supports OSX
- * out of the platforms using the Mach-O format.
+ * This dump reader supports Mach-O core files generated on 64-bit macOS systems.
  */
 public class MachoDumpReader extends AbstractCoreReader implements ILibraryDependentCore
 {
@@ -231,7 +229,7 @@ public class MachoDumpReader extends AbstractCoreReader implements ILibraryDepen
 		//TODO: unwind stack from the stack pointer
 		public List<? extends IOSStackFrame> getStackFrames()
 		{
-			return null;
+			return Collections.emptyList();
 		}
 
 		public Collection<? extends IRegister> getRegisters()
@@ -240,7 +238,7 @@ public class MachoDumpReader extends AbstractCoreReader implements ILibraryDepen
 			for (String regName : registers.keySet()) {
 				Number value = registers.get(regName);
 
-				regList.add(new Register(regName,value));
+				regList.add(new Register(regName, value));
 			}
 			return regList;
 		}
@@ -360,11 +358,11 @@ public class MachoDumpReader extends AbstractCoreReader implements ILibraryDepen
 	public Properties getProperties()
 	{
 		Properties props = new Properties();
-		
+
 		props.setProperty(ICore.SYSTEM_TYPE_PROPERTY, "OSX");
 		props.setProperty(ICore.PROCESSOR_TYPE_PROPERTY, getCpuType());
 		props.setProperty(ICore.PROCESSOR_SUBTYPE_PROPERTY, "");
-		
+
 		return props;
 	}
 
@@ -461,19 +459,19 @@ public class MachoDumpReader extends AbstractCoreReader implements ILibraryDepen
 				if (isMACHO(magic)) {
 					MachFile64 innerFile = readMachFile(segment.fileOffset);
 					switch (innerFile.header.fileType) {
-						case MH_EXECUTE:
-							executableMachFile = innerFile;
-							_executable = processExecutableFile(innerFile, segment);
-							break;
-						case MH_DYLIB:
-							dylibMachFiles.add(innerFile);
-							_modules.add(processModuleFile(innerFile, segment));
-							break;
-						case MH_DYLINKER:
-							dylinkerMachFile = innerFile;
-							break;
-						default:
-							break;
+					case MH_EXECUTE:
+						executableMachFile = innerFile;
+						_executable = processExecutableFile(innerFile, segment);
+						break;
+					case MH_DYLIB:
+						dylibMachFiles.add(innerFile);
+						_modules.add(processModuleFile(innerFile, segment));
+						break;
+					case MH_DYLINKER:
+						dylinkerMachFile = innerFile;
+						break;
+					default:
+						break;
 					}
 				}
 			} catch (EOFException e) {
@@ -497,10 +495,9 @@ public class MachoDumpReader extends AbstractCoreReader implements ILibraryDepen
 		for (int i = 0; i < machfile.header.numCommands; i++) {
 			LoadCommand command = LoadCommand.readFullCommand(_fileReader, currentOffset, fileOffset, machfile.header.cpuType);
 			if (command instanceof SegmentCommand64) {
-				SegmentCommand64 segment = (SegmentCommand64) command;
-				machfile.segments.add(segment);
+				machfile.segments.add((SegmentCommand64) command);
 			} else if (command instanceof ThreadCommand) {
-				machfile.threads.add((ThreadCommand)command);
+				machfile.threads.add((ThreadCommand) command);
 			} else {
 				machfile.otherLoads.add(command);
 			}
@@ -519,8 +516,7 @@ public class MachoDumpReader extends AbstractCoreReader implements ILibraryDepen
 	{
 		List<ISymbol> symbols = new ArrayList<>();
 		Collection<? extends IMemoryRange> memoryRanges = executableFile.getMemoryRangesWithOffset(container.vmaddr);
-		Module m = new Module(_process, "executable", symbols, memoryRanges, executableFile.streamOffset, new Properties());
-		return m;
+		return new Module(_process, "executable", symbols, memoryRanges, executableFile.streamOffset, new Properties());
 	}
 
 	private IModule processModuleFile(MachFile64 moduleFile, SegmentCommand64 container) throws IOException, InvalidDumpFormatException
@@ -529,8 +525,7 @@ public class MachoDumpReader extends AbstractCoreReader implements ILibraryDepen
 		String moduleName = dylib.dylib.name.value;
 		List<ISymbol> symbols = new ArrayList<>();
 		Collection<? extends IMemoryRange> memoryRanges = moduleFile.getMemoryRangesWithOffset(container.vmaddr);
-		Module m = new Module(_process, moduleName, symbols, memoryRanges, moduleFile.streamOffset, new Properties());
-		return m;
+		return new Module(_process, moduleName, symbols, memoryRanges, moduleFile.streamOffset, new Properties());
 	}
 
 	public MachHeader64 readHeader(long offset) throws IOException, InvalidDumpFormatException
@@ -553,13 +548,11 @@ public class MachoDumpReader extends AbstractCoreReader implements ILibraryDepen
 
 	private String getCpuType()
 	{
-		if (dumpFile.header.cpuType == CPU_TYPE_X86_64) {
-			return "X86_64";
-		}
-		else if (dumpFile.header.cpuType == CPU_TYPE_AARCH64) {
+		if (dumpFile.header.cpuType == CPU_TYPE_AARCH64) {
 			return "AARCH64";
-		}
-		else {
+		} else if (dumpFile.header.cpuType == CPU_TYPE_X86_64) {
+			return "X86_64";
+		} else {
 			return "";
 		}
 	}
