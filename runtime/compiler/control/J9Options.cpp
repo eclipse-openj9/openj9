@@ -137,6 +137,7 @@ int32_t J9::Options::_aotCachePersistenceMinDeltaMethods = 200;
 int32_t J9::Options::_aotCachePersistenceMinPeriodMs = 10000; // ms
 TR::CompilationFilters *J9::Options::_JITServerAOTCacheStoreFilters = NULL;
 TR::CompilationFilters *J9::Options::_JITServerAOTCacheLoadFilters = NULL;
+TR::CompilationFilters *J9::Options::_JITServerRemoteExcludeFilters = NULL;
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
 #if defined(J9VM_OPT_CRIU_SUPPORT)
@@ -759,6 +760,26 @@ Options::JITServerAOTCacheLoadLimitOption(char *option, void *base, TR::OptionTa
    {
    return JITServerAOTCacheLimitOption(option, base, entry, _JITServerAOTCacheLoadFilters, "jitserverAOTCacheLoadExclude");
    }
+
+char *
+Options::JITServerRemoteExclude(char *option, void *base, TR::OptionTable *entry)
+   {
+   if (!TR::Options::getDebug() && !TR::Options::createDebug())
+      return 0;
+   if (TR::Options::getJITCmdLineOptions() != NULL)
+      {
+      // this should be specified as a JIT option
+      return TR::Options::getDebug()->limitOption(option, base, entry, TR::Options::getJITCmdLineOptions(), _JITServerRemoteExcludeFilters);
+      }
+   else
+      {
+      // This should have been specified as a JIT option
+      J9JITConfig * jitConfig = (J9JITConfig*)base;
+      PORT_ACCESS_FROM_JAVAVM(jitConfig->javaVM);
+      j9tty_printf(PORTLIB, "<JIT: remoteCompileExclude option should be specified on -Xjit --> '%s'>\n", option);
+      return option;
+      }
+   }
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
 char *
@@ -1082,6 +1103,10 @@ TR::OptionTable OMR::Options::_feOptions[] = {
    {"regmap",             0, SET_JITCONFIG_RUNTIME_FLAG(J9JIT_CG_REGISTER_MAPS) },
    {"relaxedCompilationLimitsSampleThreshold=", "R<nnn>\tGlobal samples below this threshold means we can use higher compilation limits",
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_relaxedCompilationLimitsSampleThreshold, 0, "F%d", NOT_IN_SUBSET },
+#if defined(J9VM_OPT_JITSERVER)
+   {"remoteCompileExclude=", "D{regex}\tdo not send remote compilation request for methods matching regex to the JITServer",
+        TR::Options::JITServerRemoteExclude, 1, 0, "P%s"},
+#endif /* defined(J9VM_OPT_JITSERVER) */
    {"resetCountThreshold=", "R<nnn>\tThe number of global samples which if exceed during a method's sampling interval will cause the method's sampling counter to be incremented by the number of samples in a sampling interval",
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_resetCountThreshold, 0, "F%d", NOT_IN_SUBSET},
    {"rtlog=",             "L<filename>\twrite verbose run-time output to filename",
