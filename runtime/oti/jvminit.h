@@ -712,13 +712,12 @@ enum INIT_STAGE {
  *	Windows on x86-64
  *	Linux on x86-64
  *	AIX on 64-bit POWER
+ *	Linux on 64-bit POWER BE
  *	Linux on 64-bit POWER LE
  */
-#if (defined(J9VM_ENV_DATA64) && (defined(J9VM_ARCH_X86) || defined(AIXPPC) || \
-                                 (defined(LINUXPPC64) && defined(J9VM_ENV_LITTLE_ENDIAN))))
+#if (defined(J9VM_ENV_DATA64) && (defined(J9VM_ARCH_X86) || defined(AIXPPC) || defined(LINUXPPC64)))
 #define FIPS_PREVIEW_OPTIONS_ACCEPTED_PLATFORM 1
-#endif /* (defined(J9VM_ENV_DATA64) && (defined(J9VM_ARCH_X86) || defined(AIXPPC) ||
-                                 (defined(LINUXPPC64) && defined(J9VM_ENV_LITTLE_ENDIAN)))) */
+#endif /* (defined(J9VM_ENV_DATA64) && (defined(J9VM_ARCH_X86) || defined(AIXPPC) || defined(LINUXPPC64))) */
 
 /* For this platform, the system properties need to be set and classpaths updated but command line
  * options rejected. This platform will always use the FIPS 140-2 settings because there is no
