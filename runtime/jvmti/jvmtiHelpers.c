@@ -663,7 +663,7 @@ skipSignature(U_8 ** pUtfData)
 
 	/* Skip to the end of Object type signatures */
 
-	if (utfChar == 'L') {
+	if (IS_REF_OR_VAL_SIGNATURE(utfChar)) {
 		do {
 			utfChar = nextUTFChar(pUtfData);
 		} while (utfChar != ';');
@@ -923,6 +923,9 @@ fillInJValue(char signatureType, jvalue * jvaluePtr, void * valueAddress, j9obje
 			memcpy(&(jvaluePtr->d), valueAddress, 8);
 			break;
 		case 'L':
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		case 'Q':
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 			object = *((j9object_t*) valueAddress);
 			if (object == NULL) {
 				jvaluePtr->l = NULL;

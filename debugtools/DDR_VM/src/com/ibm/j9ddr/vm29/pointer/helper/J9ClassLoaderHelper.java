@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,6 +31,7 @@ import com.ibm.j9ddr.vm29.j9.walkers.ClassIterator;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ClassLoaderPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ClassPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9JavaVMPointer;
+import com.ibm.j9ddr.vm29.pointer.helper.J9ClassHelper;
 
 public class J9ClassLoaderHelper
 {
@@ -68,8 +69,8 @@ public class J9ClassLoaderHelper
 		Iterator<J9ClassPointer> classIterator = ClassIterator.fromJ9Classloader(classLoader);
 		
 		int arity = calculateClassArity(signature);
-		
-		if (arity > 0 && signature.charAt(arity) != 'L') {
+
+		if ((arity > 0) && !J9ClassHelper.isRefOrValSignature(signature.charAt(arity))) {
 			return PRIMITIVE_TO_CLASS.get(signature.charAt(arity));			
 		} else {		
 			while (classIterator.hasNext()) {

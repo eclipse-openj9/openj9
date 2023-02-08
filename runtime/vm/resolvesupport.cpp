@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2022 IBM Corp. and others
+ * Copyright (c) 1991, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -245,8 +245,8 @@ findFieldSignatureClass(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA field
 	if ('[' == J9UTF8_DATA(signature)[0]) {
 		resolvedClass = internalFindClassUTF8(vmStruct, J9UTF8_DATA(signature), J9UTF8_LENGTH(signature), classLoader, J9_FINDCLASS_FLAG_THROW_ON_FAIL);
 	} else {
-		Assert_VM_true('L' == J9UTF8_DATA(signature)[0]);
-		/* skip fieldSignature's L and ; to have only CLASSNAME required for internalFindClassUTF8 */
+		Assert_VM_true(IS_REF_OR_VAL_SIGNATURE(J9UTF8_DATA(signature)[0]));
+		/* skip fieldSignature's L/Q and ; to have only CLASSNAME required for internalFindClassUTF8 */
 		resolvedClass = internalFindClassUTF8(vmStruct, &J9UTF8_DATA(signature)[1], J9UTF8_LENGTH(signature)-2, classLoader, J9_FINDCLASS_FLAG_THROW_ON_FAIL);
 	}
 

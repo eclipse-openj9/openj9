@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2021 IBM Corp. and others
+ * Copyright (c) 2016, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -51,7 +51,7 @@ accessCheckFieldType(J9VMThread *currentThread, J9Class* lookupClass, J9Class* t
 	if (NULL != verifyData) {
 		U_8 *lookupSigData = J9UTF8_DATA(lookupSig);
 		/* Only check reference types (not primitive types) */
-		if ('L' == *lookupSigData) {
+		if (IS_REF_OR_VAL_SIGNATURE(*lookupSigData)) {
 			J9ClassLoader *lookupClassloader = lookupClass->classLoader;
 			J9ClassLoader *typeClassloader = type->classLoader;
 			if (typeClassloader != lookupClassloader) {

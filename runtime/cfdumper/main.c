@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2022 IBM Corp. and others
+ * Copyright (c) 1991, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1107,6 +1107,9 @@ static void printMethod(J9CfrClassFile* classfile, J9CfrMethod* method)
 			break;
 
 		case 'L':
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		case 'Q':
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 			i++;
 			while(string[i] != ';')
 			{
@@ -1163,6 +1166,9 @@ static void printMethod(J9CfrClassFile* classfile, J9CfrMethod* method)
 				break;
 
 			case 'L':
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+			case 'Q':
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 				i++;
 				while(string[i] != ';')
 				{
@@ -1277,8 +1283,10 @@ static void printField(J9CfrClassFile* classfile, J9CfrField* field)
 		case 'J':
 			j9tty_printf( PORTLIB, "long");
 			break;
-
 		case 'L':
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		case 'Q':
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 			i++;
 			while(string[i] != ';')
 			{
@@ -1373,6 +1381,9 @@ static void printDisassembledMethod(J9CfrClassFile* classfile, J9CfrMethod* meth
 			break;
 
 		case 'L':
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		case 'Q':
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 			i++;
 			while(string[i] != ';')
 			{
@@ -1429,6 +1440,9 @@ static void printDisassembledMethod(J9CfrClassFile* classfile, J9CfrMethod* meth
 				break;
 
 			case 'L':
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+			case 'Q':
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 				i++;
 				while(string[i] != ';')
 				{
@@ -4428,6 +4442,9 @@ static void sun_formatField(J9CfrClassFile* classfile, J9CfrField* field, char *
 						switch(string[j++])
 						{
 							case 'L':
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+							case 'Q':
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 								while((ch2 = string[j++]) != ';')
 								{
 									if(ch2 == '/') j9tty_output_char('.');
@@ -4675,6 +4692,9 @@ static void sun_formatMethod(J9CfrClassFile* classfile, J9CfrMethod* method, cha
 						switch(string[j++])
 						{
 							case 'L':
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+							case 'Q':
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 								while((ch2 = string[j++]) != ';')
 								{
 									if(ch2 == '/') j9tty_output_char('.');
@@ -4740,6 +4760,9 @@ static void sun_formatMethod(J9CfrClassFile* classfile, J9CfrMethod* method, cha
 							switch(string[j++])
 							{
 								case 'L':
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+								case 'Q':
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 									while((ch2 = string[j++]) != ';')
 									{
 										if(ch2 == '/') j9tty_output_char('.');
@@ -5193,6 +5216,9 @@ static void j9_formatField(J9ROMClass* romClass, J9ROMFieldShape* field, char *f
 						switch(string[j++])
 						{
 							case 'L':
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+							case 'Q':
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 								while((ch2 = string[j++]) != ';')
 								{
 									if(ch2 == '/') j9tty_output_char('.');
@@ -5465,6 +5491,9 @@ static void j9_formatMethod(J9ROMClass* romClass, J9ROMMethod* method, char *for
 						switch(string[j++])
 						{
 							case 'L':
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+							case 'Q':
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 								while((ch2 = string[j++]) != ';')
 								{
 									if(ch2 == '/') j9tty_output_char('.');
@@ -5531,6 +5560,9 @@ static void j9_formatMethod(J9ROMClass* romClass, J9ROMMethod* method, char *for
 							switch(string[j++])
 							{
 								case 'L':
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+								case 'Q':
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 									while((ch2 = string[j++]) != ';')
 									{
 										if(ch2 == '/') j9tty_output_char('.');

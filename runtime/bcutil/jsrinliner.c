@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1159,11 +1159,11 @@ _nextBranch:
 					stackError |= popStack (jsrData);
 					if (args[step] == '[') {
 						while (args[++step] == '[');
-						if (args[step] != 'L') {
+						if (!IS_REF_OR_VAL_SIGNATURE(args[step])) {
 							continue;
 						}
 					}
-					if (args[step] == 'L') {
+					if (IS_REF_OR_VAL_SIGNATURE(args[step])) {
 						while (args[++step] != ';');
 						continue;
 					}

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2014 IBM Corp. and others
+ * Copyright (c) 2009, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,6 +22,7 @@
 package com.ibm.j9ddr.vm29.j9;
 
 import java.util.Arrays;
+import com.ibm.j9ddr.vm29.pointer.helper.J9ClassHelper;
 
 /**
  * @author andhall
@@ -49,7 +50,7 @@ public class ArgBits
 		/* Parse the signature inside the ()'s */
 		char thisChar;
 		while ((thisChar = signature.charAt(++stringPtr)) != ')') {
-			if ((thisChar == '[') || (thisChar == 'L')) {
+			if ((thisChar == '[') || J9ClassHelper.isRefOrValSignature(thisChar)) {
 				/* Mark a bit for objects or arrays */
 				resultArray[writePtr] |= argBit;
 				
@@ -58,7 +59,7 @@ public class ArgBits
 					stringPtr++;
 				}
 
-				if (thisChar == 'L' ) {
+				if (J9ClassHelper.isRefOrValSignature(thisChar)) {
 					/* Walk past the name of the object class */
 					while ((thisChar = signature.charAt(stringPtr)) != ';') {
 						stringPtr++;

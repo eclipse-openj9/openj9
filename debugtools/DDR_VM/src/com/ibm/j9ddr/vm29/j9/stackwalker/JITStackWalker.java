@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2022 IBM Corp. and others
+ * Copyright (c) 2009, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -555,10 +555,10 @@ public class JITStackWalker
 					while ((sigChar = jitNextSigChar(signatureString)) != ')') {
 						
 						switch (sigChar) {
-							/*[IF INLINE-TYPES]*/
-							case 'Q': /* fall through */
-							/*[ENDIF] INLINE-TYPES*/
 							case 'L':
+							/*[IF INLINE-TYPES]*/
+							case 'Q':
+							/*[ENDIF] INLINE-TYPES */
 								if (J9SW_ARGUMENT_REGISTER_COUNT_DEFINED && ! stackSpillCount.eq(0) ) {
 									if ((walkState.flags & J9_STACKWALK_ITERATE_O_SLOTS) != 0) {
 										try {
@@ -635,10 +635,10 @@ public class JITStackWalker
 				}
 				/* Fall through to consume type name, utfChar == 'L' for return value */
 
-			/*[IF INLINE-TYPES]*/
-			case 'Q': /* fall through */
-			/*[ENDIF] INLINE-TYPES*/
 			case 'L':
+			/*[IF INLINE-TYPES]*/
+			case 'Q':
+			/*[ENDIF] INLINE-TYPES */
 				while (signatureString.charAt(charIndex++) != ';') ;
 			}
 			return utfChar;

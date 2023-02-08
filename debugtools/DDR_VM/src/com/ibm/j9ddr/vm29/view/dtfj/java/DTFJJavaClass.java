@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -326,8 +326,8 @@ public class DTFJJavaClass implements JavaClass {
 				if (isArray()) {
 					J9ArrayClassPointer arrayClass = J9ArrayClassPointer.cast(j9class);
 					
-					//Any multi-dimensional array is an object array, as is any single dimensional array with an object type (i.e. [Lwhatever;)
-					if(arrayClass.arity().gt(1) || getName().charAt(1) == 'L') {
+					// Any multi-dimensional array is an object array, as is any single dimensional array with an object type (i.e. [Lwhatever; or [Qwhatever;).
+					if (arrayClass.arity().gt(1) || J9ClassHelper.isRefOrValSignature(getName().charAt(1))) {
 						isObjectArray = true;
 					} else {
 						isObjectArray = false;

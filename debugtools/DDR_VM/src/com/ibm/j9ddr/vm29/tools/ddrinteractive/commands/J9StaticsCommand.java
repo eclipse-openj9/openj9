@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -84,6 +84,9 @@ public class J9StaticsCommand extends Command {
 
 				switch (sig.charAt(0)) {
 				case 'L':
+				/*[IF INLINE-TYPES]*/
+				case 'Q':
+				/*[ENDIF] INLINE-TYPES */
 				case '[':
 					CommandUtils.dbgPrint(out, "\t%s %s %s (!j9romstaticfieldshape %s) = !j9object %s\n",
 							fieldAddress.getHexAddress(), name, sig, field.getHexAddress(), fieldAddress.at(0).getHexValue());

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2014 IBM Corp. and others
+ * Copyright (c) 2009, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,6 +23,7 @@ package com.ibm.j9ddr.vm29.j9;
 
 import com.ibm.j9ddr.CorruptDataException;
 import com.ibm.j9ddr.vm29.pointer.generated.J9UTF8Pointer;
+import com.ibm.j9ddr.vm29.pointer.helper.J9ClassHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9UTF8Helper;
 import com.ibm.j9ddr.vm29.types.UDATA;
 
@@ -46,13 +47,17 @@ public class SendSlot
 			case '[':
 				/* skip all '['s */
 				for (i++; J9UTF8Helper.stringValue(signature).charAt(i) == '['; i++);
-				if (J9UTF8Helper.stringValue(signature).charAt(i) == 'L') {
+				char charAti = J9UTF8Helper.stringValue(signature).charAt(i);
+				if (J9ClassHelper.isRefOrValSignature(charAti)) {
 					/* FALL THRU */
 				} else {
 					sendArgs = sendArgs.add(1);
 					break;
 				}
 			case 'L':
+			/*[IF INLINE-TYPES]*/
+			case 'Q':
+			/*[ENDIF] INLINE-TYPES */
 				for (i++; J9UTF8Helper.stringValue(signature).charAt(i) != ';'; i++);
 				sendArgs = sendArgs.add(1);
 				break;

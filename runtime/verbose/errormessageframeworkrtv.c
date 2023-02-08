@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2022 IBM Corp. and others
+ * Copyright (c) 2015, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -437,9 +437,9 @@ getBCVDataType(J9BytecodeVerificationData* verifyData, MethodContextInfo* method
 
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 		if (J9_ARE_ALL_BITS_SET(bcvType, BCV_PRIMITIVE_VALUETYPE)) {
-		   typeNameIndex = CFR_STACKMAP_TYPE_PRIMITIVE_OBJECT;
+			typeNameIndex = CFR_STACKMAP_TYPE_PRIMITIVE_OBJECT;
 		}
-#endif /* #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 		/* Set the expected type to 'reference' if the type data extracted from bytecode is 'reference' type.
 		 * Note: according to the JVM Specification, the expected type for aastore is 'java/lang/Object' rather than 'reference'.

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2022 IBM Corp. and others
+ * Copyright (c) 1991, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1005,7 +1005,7 @@ checkBytecodeStructure (J9CfrClassFile * classfile, UDATA methodIndex, UDATA len
 				errorType = J9NLS_CFR_ERR_ACONST_INIT_INVALID_ARRAY__ID;
 				goto _verifyError;
 			}
-#endif /* #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 			break;
 
 		case CFR_BC_newarray:
@@ -1680,10 +1680,10 @@ j9bcv_verifyClassStructure (J9PortLibrary * portLib, J9CfrClassFile * classfile,
 				end = utf8->slot1;
 
 				switch (utf8->bytes[arity]) {
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-				case 'Q':		/* fall through */
-#endif /* #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 				case 'L':		/* object array */
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+				case 'Q':
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 					if (utf8->bytes[--end] != ';') {
 						errorType = J9NLS_CFR_ERR_BAD_CLASS_NAME__ID;
 						goto _formatError;
@@ -1842,7 +1842,7 @@ j9bcv_verifyClassStructure (J9PortLibrary * portLib, J9CfrClassFile * classfile,
 						goto _formatError;
 					}
 				}
-#endif /* #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 			}
 			break;
 
@@ -1919,9 +1919,9 @@ j9bcv_verifyClassStructure (J9PortLibrary * portLib, J9CfrClassFile * classfile,
 			if (
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 				(CFR_METHOD_NAME_NEW == isInit)
-#else /* #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 				FALSE
-#endif /* #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 			) {
 				U_16 returnChar = getReturnTypeFromSignature(info->bytes, info->slot1, NULL);
 				if (J9_IS_CLASSFILE_PRIMITIVE_VALUETYPE(classfile)) {

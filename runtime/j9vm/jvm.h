@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2002, 2018 IBM Corp. and others
+ * Copyright (c) 2002, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -42,7 +42,7 @@ extern "C" {
 /* There is a collision between J9's definition of BOOLEAN and WIN32 headers */
 #define BOOLEAN_COLLISION_DETECTED BOOLEAN
 #undef BOOLEAN
-#endif /* #ifdef BOOLEAN */
+#endif /* BOOLEAN */
 
 /* Undefine the winsockapi because winsock2 defines it.  Removes warnings. */
 #if defined(_WINSOCKAPI_) && !defined(_WINSOCK2API_)
@@ -54,7 +54,7 @@ extern "C" {
 #ifdef BOOLEAN_COLLISION_DETECTED
 #define BOOLEAN UDATA
 #undef BOOLEAN_COLLISION_DETECTED
-#endif /* #ifdef BOOLEAN_COLLISION_DETECTED */
+#endif /* BOOLEAN_COLLISION_DETECTED */
 
 #endif /* WIN32 */
 

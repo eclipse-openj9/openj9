@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2021 IBM Corp. and others
+ * Copyright (c) 2001, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -167,8 +167,11 @@ public class J9ClassHelper
 		case 'S': return "void" + aritySuffix;
 		case 'V': return "void" + aritySuffix;
 		case 'Z': return "boolean" + aritySuffix;
-		
-		case 'L': 
+
+		case 'L':
+		/*[IF INLINE-TYPES]*/
+		case 'Q':
+		/*[ENDIF] INLINE-TYPES */
 			return getName(arrayClass.leafComponentType()) + aritySuffix;
 		}
 		
@@ -526,4 +529,18 @@ public class J9ClassHelper
 		return J9ROMClassHelper.isAnonymousClass(clazz.romClass());
 	}
 
+	/**
+	 * Queries if a given char is the first character of a reference or value type signature.
+	 * Equivalent to J9's IS_REF_OR_VAL_SIGNATURE macro.
+	 *
+	 * @param firstChar the first character of the signature being checked
+	 * @return true if the character indicates the beginning of a reference or value signature, false otherwise
+	 */
+	public static boolean isRefOrValSignature(char firstChar) {
+		return firstChar == 'L'
+			/*[IF INLINE-TYPES]*/
+			|| (firstChar == 'Q')
+			/*[ENDIF] INLINE-TYPES */
+			;
+	}
 }

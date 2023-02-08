@@ -1,6 +1,6 @@
 /*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 /*******************************************************************************
- * Copyright (c) 1998, 2022 IBM Corp. and others
+ * Copyright (c) 1998, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -134,7 +134,7 @@ public final native Class<? extends Object> getClass();
  * @see	#equals
  */
 public int hashCode() {
-	/*[IF INLINE-TYPES] */
+	/*[IF INLINE-TYPES]*/
 	if (this.getClass().isValue()) {
 		return J9VMInternals.valueHashCode(this);
 	}
