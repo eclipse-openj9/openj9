@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2018, 2021 IBM Corp. and others
+Copyright (c) 2018, 2023 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -69,7 +69,9 @@ but by a series of them, which makes debugging even harder.
 Tracing method compilation is the same as for non-JITServer - use `-Xjit:{<method_name_regex>}(traceFull,log=<log_name>)` in the client options and both client
 and server will produce trace logs. Passing options for limit files and other tracing options also works in the same way.
 
-One useful technique to find JITServer-specific issues in compiled code is to compare trace log for a remotely compiled method
+To find if a problem is happening at the client side due to JITServer-specific issues in compiled code, remote compilation of the identified methods can be excluded by specifying `-Xjit:remoteCompileExclude={<method_name_regex>}`. Passing this option at the client side ensures that only local compilations will be performed on methods matching the specified regex pattern.
+
+Another useful technique to find JITServer-specific issues in compiled code is to compare trace log for a remotely compiled method
 with a trace log for the same method but compiled locally.
 Differences in logs may reveal bugs when JITServer takes incorrect optimizer/codegen paths.
 Passing `-Xjit:enableJITServerFollowRemoteCompileWithLocalCompile` to the client makes every compilation take place both on the server
@@ -86,3 +88,11 @@ we usually go for the latter solution, as it is easier to implement.
 - **Missing VM information**: client needs to inform the server about some VM options that can affect compilation, e.g. GC mode.
 If some information about the VM setup is missing, server might compile something that will not run correctly. Usually, such information
 should go into the `VMInfo` object on the server.
+
+
+For debugging JITServer AOT Cache related issues, there are two options that can be useful to determine whether a problem with a given method is caused by an AOT compiler issue or by a JITServer AOT cache method serialization/deserialization issue:
+
+- `-Xaot:jitserverLoadExclude={<method_name_regex>}` option prevents the specified method(s) from being loaded from the JITServer AOT cache.
+- `-Xaot:jitserverStoreExclude={<method_name_regex>}` option prevents the specified method(s) from being stored to the JITServer AOT cache.
+
+Note that these options should be specified on the client side.
