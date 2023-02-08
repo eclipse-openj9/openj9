@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2022 IBM Corp. and others
+ * Copyright (c) 2018, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1461,16 +1461,16 @@ TR_J9ServerVM::getJ2IThunk(char *signatureChars, uint32_t signatureLength, TR::C
 
    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    stream->write(JITServer::MessageType::VM_getJ2IThunk, signature);
-   void *thunkPtr = std::get<0>(stream->read<void *>());
-   if (thunkPtr)
+   void *clientThunkPtr = std::get<0>(stream->read<void *>());
+   if (clientThunkPtr)
       {
       // Cache client-side pointer to the thunk
       OMR::CriticalSection thunkMonitor(_compInfoPT->getClientData()->getThunkSetMonitor());
       auto &thunkMap = _compInfoPT->getClientData()->getRegisteredJ2IThunkMap();
-      thunkMap.insert(std::make_pair(std::make_pair(signature, comp->compileRelocatableCode()), thunkPtr));
+      thunkMap.insert(std::make_pair(std::make_pair(signature, comp->compileRelocatableCode()), clientThunkPtr));
       }
 
-   return thunkPtr;
+   return clientThunkPtr;
    }
 
 void *
@@ -1494,7 +1494,7 @@ TR_J9ServerVM::setJ2IThunk(char *signatureChars, uint32_t signatureLength, void 
       auto &thunkMap = _compInfoPT->getClientData()->getRegisteredJ2IThunkMap();
       thunkMap.insert(std::make_pair(std::make_pair(signature, comp->compileRelocatableCode()), clientThunkPtr));
       }
-   return thunkptr;
+   return clientThunkPtr;
    }
 
 void
