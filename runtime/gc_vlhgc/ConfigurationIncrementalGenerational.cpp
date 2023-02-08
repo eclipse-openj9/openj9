@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -76,6 +76,16 @@ MM_ConfigurationIncrementalGenerational::newInstance(MM_EnvironmentBase *env)
  */
 MM_GlobalCollector *
 MM_ConfigurationIncrementalGenerational::createGlobalCollector(MM_EnvironmentBase *envBase)
+{
+	MM_GCExtensionsBase *extensions = envBase->getExtensions();
+	MM_EnvironmentVLHGC *env = MM_EnvironmentVLHGC::getEnvironment(envBase);
+	MM_HeapRegionManager *heapRegionManager = extensions->heapRegionManager;
+
+	return MM_IncrementalGenerationalGC::newInstance(env, heapRegionManager);
+}
+
+MM_GlobalCollector *
+MM_ConfigurationIncrementalGenerational::createCollectors(MM_EnvironmentBase *envBase)
 {
 	MM_GCExtensionsBase *extensions = envBase->getExtensions();
 	MM_EnvironmentVLHGC *env = MM_EnvironmentVLHGC::getEnvironment(envBase);

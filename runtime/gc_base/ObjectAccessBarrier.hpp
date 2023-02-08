@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2022 IBM Corp. and others
+ * Copyright (c) 1991, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -605,8 +605,8 @@ public:
 	}
 
 	MM_ObjectAccessBarrier(MM_EnvironmentBase *env) : MM_BaseVirtual()
-		, _extensions(NULL) 
-		, _heap(NULL)
+		, _extensions(MM_GCExtensions::getExtensions(env))
+		, _heap(_extensions->heap)
 #if defined(OMR_GC_COMPRESSED_POINTERS)
 #if defined(OMR_GC_FULL_POINTERS)
 		, _compressObjectReferences(false)
