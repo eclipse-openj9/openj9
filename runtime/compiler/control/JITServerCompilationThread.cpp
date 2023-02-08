@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2022 IBM Corp. and others
+ * Copyright (c) 2018, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -948,7 +948,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       }
    catch (const JITServer::StreamVersionIncompatible &e)
       {
-      if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+      if (TR::Options::getVerboseOption(TR_VerboseJITServer) || TR::Options::getVerboseOption(TR_VerboseJITServerConns))
          TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "compThreadID=%d stream version incompatible: %s", getCompThreadId(), e.what());
 
       Trc_JITServerStreamVersionIncompatible(compThread,  getCompThreadId(), __FUNCTION__, "", "", e.what());

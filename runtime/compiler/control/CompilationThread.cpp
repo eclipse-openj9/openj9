@@ -11266,7 +11266,7 @@ TR::CompilationInfoPerThreadBase::processException(
       }
    catch (const JITServer::StreamVersionIncompatible &e)
       {
-      if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+      if (TR::Options::getVerboseOption(TR_VerboseJITServer) || TR::Options::getVerboseOption(TR_VerboseJITServerConns))
          TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "compThreadID=%d JITServer StreamVersionIncompatible: %s", getCompThreadId(), e.what());
       Trc_JITServerStreamVersionIncompatible(vmThread, getCompThreadId(),  __FUNCTION__, compiler->signature(), compiler->getHotnessName(), e.what());
       _methodBeingCompiled->_compErrCode = compilationStreamVersionIncompatible;
