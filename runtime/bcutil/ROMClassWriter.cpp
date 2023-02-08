@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2021 IBM Corp. and others
+ * Copyright (c) 2001, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2146,7 +2146,7 @@ ROMClassWriter::writeNativeSignature(Cursor *cursor, U_8 *methodDescriptor, U_8 
 		} else {
 			cursor->writeU8(nativeArgCharConversion[methodDescriptor[index] - 'A'], Cursor::GENERIC);
 		}
-		if ('L' == methodDescriptor[index]) {
+		if (IS_REF_OR_VAL_SIGNATURE(methodDescriptor[index])) {
 			while (';' != methodDescriptor[index]) {
 				++index;
 			}

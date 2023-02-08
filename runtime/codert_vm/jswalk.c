@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2022 IBM Corp. and others
+ * Copyright (c) 1991, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1225,10 +1225,10 @@ static void jitWalkResolveMethodFrame(J9StackWalkState *walkState)
 		while ((sigChar = jitNextSigChar(&sigData)) != ')') {
 
 			switch (sigChar) {
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-				case 'Q': /* fall through */
-#endif /* #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 				case 'L':
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+				case 'Q':
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 #ifdef J9SW_ARGUMENT_REGISTER_COUNT
 					if (stackSpillCount) {
 
@@ -1335,10 +1335,10 @@ static UDATA jitNextSigChar(U_8 ** utfData)
 			}
 			/* Fall through to consume type name, utfChar == 'L' for return value */
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-		case 'Q': /* fall through */
-#endif /* #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 		case 'L':
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		case 'Q':
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 			while (jitNextUTFChar(utfData) != ';') ;
 	}
 

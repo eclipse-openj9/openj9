@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2022 IBM Corp. and others
+ * Copyright (c) 2001, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -345,7 +345,7 @@ accessCheckFieldSignature(J9VMThread *currentThread, J9Class* lookupClass, UDATA
 			sigOffset += 1;
 		}
 	
-		if ('L' == lookupSigData[sigOffset]) {
+		if (IS_REF_OR_VAL_SIGNATURE(lookupSigData[sigOffset])) {
 			BOOLEAN isVirtual = (0 == (((J9ROMFieldShape*)romField)->modifiers & J9AccStatic));
 			j9object_t argsArray = J9VMJAVALANGINVOKEMETHODTYPE_PTYPES(currentThread, methodType);
 			U_32 numParameters = J9INDEXABLEOBJECT_SIZE(currentThread, argsArray);
@@ -433,7 +433,7 @@ accessCheckMethodSignature(J9VMThread *currentThread, J9Method *method, j9object
 			endIndex = index;
 
 			/* If this entry is a class type, we need to do a classloader check on it */
-			if ('L' == lookupSigData[index]) {
+			if (IS_REF_OR_VAL_SIGNATURE(lookupSigData[index])) {
 				index += 1;
 
 				clazz = J9JAVAARRAYOFOBJECT_LOAD(currentThread, argsArray, i);
@@ -462,7 +462,7 @@ accessCheckMethodSignature(J9VMThread *currentThread, J9Method *method, j9object
 		while ('[' == lookupSigData[index]) {
 			index += 1;
 		}
-		if('L' == lookupSigData[index]) {
+		if(IS_REF_OR_VAL_SIGNATURE(lookupSigData[index])) {
 			J9Class *returnRamClass = NULL;
 			/* Grab the MethodType returnType */
 			clazz = J9VMJAVALANGINVOKEMETHODTYPE_RTYPE(currentThread, methodType);

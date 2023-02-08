@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2019 IBM Corp. and others
+ * Copyright (c) 2009, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -75,6 +75,7 @@ import com.ibm.j9ddr.vm29.pointer.generated.J9ROMFieldRefPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ROMMethodPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ROMMethodRefPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9UTF8Pointer;
+import com.ibm.j9ddr.vm29.pointer.helper.J9ClassHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9UTF8Helper;
 import com.ibm.j9ddr.vm29.types.I16;
 import com.ibm.j9ddr.vm29.types.I32;
@@ -502,7 +503,7 @@ public class StackMap
 						utf8Signature = J9ROMFieldRefPointer.cast(pool.add(index)).nameAndSignature().signature();
 						
 						signature = J9UTF8Helper.stringValue(utf8Signature).charAt(0);
-						if ((signature == 'L') || (signature == '[')) {
+						if (J9ClassHelper.isRefOrValSignature(signature) || (signature == '[')) {
 							PUSH(OBJ);
 						} else {
 							PUSH(INT);
@@ -515,7 +516,7 @@ public class StackMap
 						utf8Signature = J9ROMFieldRefPointer.cast(pool.add(index)).nameAndSignature().signature();
 						
 						signature = J9UTF8Helper.stringValue(utf8Signature).charAt(0);
-						if ((signature == 'L') || (signature == '[')) {
+						if (J9ClassHelper.isRefOrValSignature(signature) || (signature == '[')) {
 							PUSH(OBJ);
 						} else {
 							PUSH(INT);
@@ -568,11 +569,11 @@ public class StackMap
 							POP();
 							if (args[i] == '[') {
 								while (args[++i] == '[');
-								if (args[i] != 'L') {
+								if (J9ClassHelper.isRefOrValSignature(args[i])) {
 									continue;
 								}
 							}
-							if (args[i] == 'L') {
+							if (J9ClassHelper.isRefOrValSignature(args[i])) {
 								while (args[++i] != ';');
 								continue;
 							}
@@ -583,7 +584,7 @@ public class StackMap
 
 						signature = args[i + 1];
 						if (signature != 'V') {
-							if ((signature == 'L') || (signature == '[')) {
+							if (J9ClassHelper.isRefOrValSignature(signature) || (signature == '[')) {
 								PUSH(OBJ);
 							} else {
 								PUSH(INT);
@@ -612,11 +613,11 @@ public class StackMap
 							POP();
 							if (args[i] == '[') {
 								while (args[++i] == '[');
-								if (args[i] != 'L') {
+								if (J9ClassHelper.isRefOrValSignature(args[i])) {
 									continue;
 								}
 							}
-							if (args[i] == 'L') {
+							if (J9ClassHelper.isRefOrValSignature(args[i])) {
 								while (args[++i] != ';');
 								continue;
 							}
@@ -627,7 +628,7 @@ public class StackMap
 
 						signature = args[i + 1];
 						if (signature != 'V') {
-							if ((signature == 'L') || (signature == '[')) {
+							if (J9ClassHelper.isRefOrValSignature(signature) || (signature == '[')) {
 								PUSH(OBJ);
 							} else {
 								PUSH(INT);

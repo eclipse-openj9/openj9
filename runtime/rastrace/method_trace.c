@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -488,11 +488,14 @@ traceMethodArguments(J9VMThread* thr, J9UTF8* signature, UDATA* arg0EA, char* bu
 		switch (*sigChar) {
 		case '[':
 		case 'L':
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		case 'Q':
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 			traceMethodArgObject(thr, arg0EA--, cursor, endOfBuf - cursor);
 			while (*sigChar == '[') {
 				sigChar++;
 			}
-			if (*sigChar == 'L' ) {
+			if (IS_REF_OR_VAL_SIGNATURE(*sigChar)) {
 				while (*sigChar != ';') {
 					sigChar++;
 				}
@@ -567,6 +570,9 @@ traceMethodReturnVal(J9VMThread* thr, J9UTF8* signature, void* returnValuePtr, c
 	switch (*(++sigChar)) {
 	case '[':
 	case 'L':
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	case 'Q':
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 		traceMethodArgObject(thr, returnValuePtr, cursor, endOfBuf - cursor);
 		break;
 	case 'J':

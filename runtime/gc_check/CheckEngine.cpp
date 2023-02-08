@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -897,9 +897,9 @@ GC_CheckEngine::checkClassStatics(J9JavaVM* vm, J9Class* clazz)
 						U_8* toSearchString = J9UTF8_DATA(sigUTF);
 						UDATA toSearchLength = J9UTF8_LENGTH(sigUTF);
 
-						if ('L' == J9UTF8_DATA(sigUTF)[0]) {
+						if (IS_REF_OR_VAL_SIGNATURE(toSearchString[0])) {
 							/*  Convert signature to class name:
-							 *  Entering 'L' as well as closing ';' must be removed to get a proper class name
+							 *  Entering 'L'/'Q' as well as closing ';' must be removed to get a proper class name
 							 */
 							toSearchString += 1;
 							toSearchLength -= 2;

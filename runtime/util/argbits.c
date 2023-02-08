@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -40,12 +40,12 @@ argBitsFromSignature(U_8 * signature, U_32 * resultArrayBase, UDATA resultArrayS
 	
 	/* Parse the signature inside the ()'s */
 	while (*(++signature) != ')') {
-		if ((*signature == '[') || (*signature == 'L')) {
+		if ((*signature == '[') || IS_REF_OR_VAL_SIGNATURE(*signature)) {
 			*resultArrayBase |= argBit;
 			while (*signature == '[') {
 				signature++;
 			}
-			if (*signature == 'L' ) {
+			if (IS_REF_OR_VAL_SIGNATURE(*signature)) {
 				while (*signature != ';') {
 					signature++;
 				}

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2020, 2022 IBM Corp. and others
+ * Copyright (c) 2020, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -213,7 +213,11 @@ convertMethodSignature(J9VMThread *vmThread, J9UTF8 *methodSig)
 			/* int */
 			bufferSize += 3;
 			break;
-		case 'L': {
+		case 'L':
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		case 'Q':
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+		{
 			i += 1;
 			UDATA objSize = 0;
 			while (';' != string[i]) {
@@ -257,7 +261,7 @@ convertMethodSignature(J9VMThread *vmThread, J9UTF8 *methodSig)
 				i += 1;
 			}
 			const char *elementType = NULL;
-			if ('L' == string[i]) {
+			if (IS_REF_OR_VAL_SIGNATURE(string[i])) {
 				i += 1;
 
 				UDATA objSize = 0;

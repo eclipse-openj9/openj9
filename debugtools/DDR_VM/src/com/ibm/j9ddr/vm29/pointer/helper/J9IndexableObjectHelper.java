@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2021 IBM Corp. and others
+ * Copyright (c) 2001, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -291,8 +291,11 @@ public class J9IndexableObjectHelper extends J9ObjectHelper
 			getBooleanData(objPointer, (boolean[])dst, start, length, destStart);
 			break;
 		}
-			
+
 		case 'L':
+		/*[IF INLINE-TYPES]*/
+		case 'Q':
+		/*[ENDIF] INLINE-TYPES */
 		case '[':
 		{
 			if (! (dst instanceof J9ObjectPointer[])) {
@@ -462,8 +465,11 @@ public class J9IndexableObjectHelper extends J9ObjectHelper
 			getBooleanData(objPointer, data, 0, arraySize, 0);
 			return data;			
 		}
-			
+
 		case 'L':
+		/*[IF INLINE-TYPES]*/
+		case 'Q':
+		/*[ENDIF] INLINE-TYPES */
 		case '[':
 		{
 			J9ObjectPointer[] data = new J9ObjectPointer[arraySize];			
@@ -540,6 +546,9 @@ public class J9IndexableObjectHelper extends J9ObjectHelper
 				break;								
 
 			case 'L':
+			/*[IF INLINE-TYPES]*/
+			case 'Q':
+			/*[ENDIF] INLINE-TYPES */
 			case '[':
 			{
 				J9ObjectPointer item = ((J9ObjectPointer[])data)[i];
