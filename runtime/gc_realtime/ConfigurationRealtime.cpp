@@ -228,12 +228,6 @@ MM_ConfigurationRealtime::newInstance(MM_EnvironmentBase *env)
 }
 
 MM_GlobalCollector *
-MM_ConfigurationRealtime::createGlobalCollector(MM_EnvironmentBase *env)
-{
-	return MM_RealtimeGC::newInstance(env);
-}
-
-MM_GlobalCollector *
 MM_ConfigurationRealtime::createCollectors(MM_EnvironmentBase *env)
 {
 	return MM_RealtimeGC::newInstance(env);

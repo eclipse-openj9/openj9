@@ -290,15 +290,6 @@ MM_GCExtensions::getContinuationObjectListsExternal(J9VMThread *vmThread)
 
 
 void
-MM_GCExtensions::registerScavenger(MM_Scavenger *scavenger)
-{
-	MM_GCExtensionsBase::registerScavenger(scavenger);
-	Assert_MM_true(isStandardGC());
-	Assert_MM_true(isScavengerEnabled());
-	((MM_StandardAccessBarrier *)accessBarrier)->registerScavenger(scavenger);
-}
-
-void
 MM_GCExtensions::releaseNativesForContinuationObject(MM_EnvironmentBase* env, j9object_t objectPtr)
 {
 #if JAVA_SPEC_VERSION >= 19

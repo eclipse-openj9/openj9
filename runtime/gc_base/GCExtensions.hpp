@@ -216,8 +216,6 @@ public:
 
 	void computeDefaultMaxHeapForJava(bool enableOriginalJDK8HeapSizeCompatibilityOption);
 
-	virtual void registerScavenger(MM_Scavenger *scavenger);
-
 	MMINLINE J9HookInterface** getHookInterface() { return J9_HOOK_INTERFACE(hookInterface); };
 
 	/**

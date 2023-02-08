@@ -75,16 +75,6 @@ MM_ConfigurationIncrementalGenerational::newInstance(MM_EnvironmentBase *env)
  * Create the global collector for a Tarok configuration
  */
 MM_GlobalCollector *
-MM_ConfigurationIncrementalGenerational::createGlobalCollector(MM_EnvironmentBase *envBase)
-{
-	MM_GCExtensionsBase *extensions = envBase->getExtensions();
-	MM_EnvironmentVLHGC *env = MM_EnvironmentVLHGC::getEnvironment(envBase);
-	MM_HeapRegionManager *heapRegionManager = extensions->heapRegionManager;
-
-	return MM_IncrementalGenerationalGC::newInstance(env, heapRegionManager);
-}
-
-MM_GlobalCollector *
 MM_ConfigurationIncrementalGenerational::createCollectors(MM_EnvironmentBase *envBase)
 {
 	MM_GCExtensionsBase *extensions = envBase->getExtensions();
