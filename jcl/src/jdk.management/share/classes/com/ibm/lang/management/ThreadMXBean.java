@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2015, 2020 IBM Corp. and others
+ * Copyright (c) 2015, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,7 +28,7 @@ package com.ibm.lang.management;
  * APIs specific to {@link com.ibm.lang.management}, exposing additional
  * information than what the standard ThreadMXBean does.
  */
-public interface ThreadMXBean extends java.lang.management.ThreadMXBean 
+public interface ThreadMXBean extends com.sun.management.ThreadMXBean
 {
 	/**
      * Fetches an array of the native (operating system assigned) identifiers 
