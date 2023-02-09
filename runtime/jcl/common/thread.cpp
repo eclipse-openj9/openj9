@@ -452,28 +452,6 @@ Java_java_lang_Thread_currentCarrierThread(JNIEnv *env, jclass clazz)
 	return result;
 }
 
-/* static native Object[] extentLocalCache(); */
-jobjectArray JNICALL
-Java_java_lang_Thread_extentLocalCache(JNIEnv *env, jclass clazz)
-{
-	J9VMThread *currentThread = (J9VMThread*)env;
-	VM_VMAccess::inlineEnterVMFromJNI(currentThread);
-	jobjectArray result = (jobjectArray)VM_VMHelpers::createLocalRef(env, currentThread->extentLocalCache);
-	VM_VMAccess::inlineExitVMToJNI(currentThread);
-
-	return result;
-}
-
-/* static native void setExtentLocalCache(Object[] cache); */
-void JNICALL
-Java_java_lang_Thread_setExtentLocalCache(JNIEnv *env, jclass clazz, jobjectArray cache)
-{
-	J9VMThread *currentThread = (J9VMThread*)env;
-	VM_VMAccess::inlineEnterVMFromJNI(currentThread);
-	currentThread->extentLocalCache = J9_JNI_UNWRAP_REFERENCE(cache);
-	VM_VMAccess::inlineExitVMToJNI(currentThread);
-}
-
 /* private static native StackTraceElement[][] dumpThreads(Thread[] threads); */
 jobjectArray JNICALL
 Java_java_lang_Thread_dumpThreads(JNIEnv *env, jclass clazz, jobjectArray threads)
@@ -569,11 +547,106 @@ Java_java_lang_Thread_registerNatives(JNIEnv *env, jclass clazz)
 	clearNonZAAPEligibleBit(env, clazz, natives, numNatives);
 #endif /* J9VM_OPT_JAVA_OFFLOAD_SUPPORT */
 }
+
+#if JAVA_SPEC_VERSION >= 20
+/**
+ * static native Object[] scopedValueCache();
+ *
+ * Get the scoped value cache.
+ *
+ * @param env instance of JNIEnv
+ * @param unusedClass
+ * @return jobjectArray the scoped value cache object array
+ */
+jobjectArray JNICALL
+Java_java_lang_Thread_scopedValueCache(JNIEnv *env, jclass unusedClass)
+{
+	J9VMThread *currentThread = (J9VMThread*)env;
+	VM_VMAccess::inlineEnterVMFromJNI(currentThread);
+	jobjectArray result = (jobjectArray)VM_VMHelpers::createLocalRef(env, currentThread->scopedValueCache);
+	VM_VMAccess::inlineExitVMToJNI(currentThread);
+
+	return result;
+}
+
+/**
+ * static native void setScopedValueCache(Object[] cache);
+ *
+ * Set the scoped value cache.
+ *
+ * @param env instance of JNIEnv
+ * @param unusedClass
+ * @param cache the scoped value cache object array
+ */
+void JNICALL
+Java_java_lang_Thread_setScopedValueCache(JNIEnv *env, jclass unusedClass, jobjectArray cache)
+{
+	J9VMThread *currentThread = (J9VMThread*)env;
+	VM_VMAccess::inlineEnterVMFromJNI(currentThread);
+	currentThread->scopedValueCache = J9_JNI_UNWRAP_REFERENCE(cache);
+	VM_VMAccess::inlineExitVMToJNI(currentThread);
+}
+#else /* JAVA_SPEC_VERSION >= 20 */
+/**
+ * static native Object[] extentLocalCache();
+ *
+ * Get the extent local cache.
+ *
+ * @param env instance of JNIEnv
+ * @param unusedClass
+ * @return jobjectArray
+ */
+jobjectArray JNICALL
+Java_java_lang_Thread_extentLocalCache(JNIEnv *env, jclass unusedClass)
+{
+	J9VMThread *currentThread = (J9VMThread*)env;
+	VM_VMAccess::inlineEnterVMFromJNI(currentThread);
+	jobjectArray result = (jobjectArray)VM_VMHelpers::createLocalRef(env, currentThread->scopedValueCache);
+	VM_VMAccess::inlineExitVMToJNI(currentThread);
+
+	return result;
+}
+
+/**
+ * static native void setExtentLocalCache(Object[] cache);
+ *
+ * Set the extent local cache.
+ *
+ * @param env instance of JNIEnv
+ * @param unusedClass
+ * @param cache the extent local cache object array
+ */
+void JNICALL
+Java_java_lang_Thread_setExtentLocalCache(JNIEnv *env, jclass unusedClass, jobjectArray cache)
+{
+	J9VMThread *currentThread = (J9VMThread*)env;
+	VM_VMAccess::inlineEnterVMFromJNI(currentThread);
+	currentThread->scopedValueCache = J9_JNI_UNWRAP_REFERENCE(cache);
+	VM_VMAccess::inlineExitVMToJNI(currentThread);
+}
+#endif /* JAVA_SPEC_VERSION >= 20 */
 #endif /* JAVA_SPEC_VERSION >= 19 */
 
 #if JAVA_SPEC_VERSION >= 20
+/**
+ * static native Object findScopedValueBindings();
+ *
+ * Find the most recent scoped value bindings in the stack.
+ * TODO: Complete the function description.
+ *
+ * @param env instance of JNIEnv
+ * @param unusedClass
+ * @return jobject
+ */
+jobject JNICALL
+Java_java_lang_Thread_findScopedValueBindings(JNIEnv *env, jclass unusedClass)
+{
+	/* TODO: Implement. See https://github.com/eclipse-openj9/openj9/issues/16677. */
+	return NULL;
+}
 
-/* static native void ensureMaterializedForStackWalk(Object o);
+/**
+ * static native void ensureMaterializedForStackWalk(Object o);
  *
  * This is expected to invoke JVM_EnsureMaterializedForStackWalk and ensure
  * that the stackwalk code sees a materialized value.
@@ -590,7 +663,6 @@ Java_java_lang_Thread_ensureMaterializedForStackWalk(JNIEnv *env, jclass unusedC
 	 * https://github.com/eclipse-openj9/openj9/issues/16577
 	 */
 }
-
 #endif /* JAVA_SPEC_VERSION >= 20 */
 
 }
