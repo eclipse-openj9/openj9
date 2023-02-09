@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2007, 2016 IBM Corp. and others
+ * Copyright (c) 2007, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -67,4 +67,95 @@ public final class ExtendedThreadMXBeanImpl extends ThreadMXBeanImpl implements 
 		return resultArray;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public long getThreadAllocatedBytes(long threadId) {
+		throw new UnsupportedOperationException();
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public long[] getThreadAllocatedBytes(long[] threadIds) {
+		throw new UnsupportedOperationException();
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public long[] getThreadCpuTime(long[] threadIds) {
+		long[] result = new long[threadIds.length];
+		for (int i = 0; i < threadIds.length; i++) {
+			if (threadIds[i] <= 0) {
+				/*[MSG "K05F7", "Thread id must be greater than 0."]*/
+				throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K05F7")); //$NON-NLS-1$
+			}
+			result[i] = -1;
+		}
+		if (isCurrentThreadCpuTimeSupported()) {
+			if (isThreadCpuTimeEnabled()) {
+				for (int i = 0; i < threadIds.length; i++) {
+					result[i] = getThreadCpuTime(threadIds[i]);
+				}
+			}
+		} else {
+			/*[MSG "K05F6", "CPU time measurement is not supported on this virtual machine."]*/
+			throw new UnsupportedOperationException(com.ibm.oti.util.Msg.getString("K05F6")); //$NON-NLS-1$
+		}
+		return result;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public long[] getThreadUserTime(long[] threadIds) {
+		long[] result = new long[threadIds.length];
+		for (int i = 0; i < threadIds.length; i++) {
+			if (threadIds[i] <= 0) {
+				/*[MSG "K05F7", "Thread id must be greater than 0."]*/
+				throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K05F7")); //$NON-NLS-1$
+			}
+			result[i] = -1;
+		}
+		if (isCurrentThreadCpuTimeSupported()) {
+			if (isThreadCpuTimeEnabled()) {
+				for (int i = 0; i < threadIds.length; i++) {
+					result[i] = getThreadUserTime(threadIds[i]);
+				}
+			}
+		} else {
+			/*[MSG "K05F6", "CPU time measurement is not supported on this virtual machine."]*/
+			throw new UnsupportedOperationException(com.ibm.oti.util.Msg.getString("K05F6")); //$NON-NLS-1$
+		}
+		return result;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public boolean isThreadAllocatedMemorySupported() {
+		return false;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public boolean isThreadAllocatedMemoryEnabled() {
+		throw new UnsupportedOperationException();
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public void setThreadAllocatedMemoryEnabled(boolean value) {
+		throw new UnsupportedOperationException();
+	}
 }
