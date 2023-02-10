@@ -1240,15 +1240,16 @@ MM_WriteOnceCompactor::fixupContinuationNativeSlots(MM_EnvironmentVLHGC* env, J9
 	 * mounted Virtual threads later during root fixup, we will skip it during this heap fixup pass
 	 * (hence passing true for scanOnlyUnmounted parameter).
 	 */
+	const bool isConcurrentGC = false;
 	const bool isGlobalGC = MM_CycleState::CT_GLOBAL_GARBAGE_COLLECTION == env->_cycleState->_collectionType;
-	if (MM_GCExtensions::needScanStacksForContinuationObject(currentThread, objectPtr, isGlobalGC)) {
+	const bool beingMounted = false;
+	if (MM_GCExtensions::needScanStacksForContinuationObject(currentThread, objectPtr, isConcurrentGC, isGlobalGC, beingMounted)) {
 		StackIteratorData4WriteOnceCompactor localData;
 		localData.writeOnceCompactor = this;
 		localData.env = env;
 		localData.fromObject = objectPtr;
-		const bool isConcurrentGC = false;
 
-		GC_VMThreadStackSlotIterator::scanSlots(currentThread, objectPtr, (void *)&localData, stackSlotIteratorForWriteOnceCompactor, false, false, isConcurrentGC, isGlobalGC);
+		GC_VMThreadStackSlotIterator::scanContinuationSlots(currentThread, objectPtr, (void *)&localData, stackSlotIteratorForWriteOnceCompactor, false, false);
 	}
 }
 

@@ -307,7 +307,7 @@ public:
 	 * @param[in] isGlobalGC
 	 * @return true if we need to scan the java stack
 	 */
-	static bool needScanStacksForContinuationObject(J9VMThread *vmThread, j9object_t objectPtr, bool isGlobalGC);
+	static bool needScanStacksForContinuationObject(J9VMThread *vmThread, j9object_t objectPtr, bool isConcurrentGC, bool isGlobalGC, bool beingMounted);
 
 	/**
 	 * Create a GCExtensions object

@@ -130,21 +130,22 @@ GC_VMThreadStackSlotIterator::scanSlots(
 }
 
 void
-GC_VMThreadStackSlotIterator::scanSlots(
+GC_VMThreadStackSlotIterator::scanContinuationSlots(
 			J9VMThread *vmThread,
 			j9object_t continuationObjectPtr,
 			void *userData,
 			J9MODRON_OSLOTITERATOR *oSlotIterator,
 			bool includeStackFrameClassReferences,
-			bool trackVisibleFrameDepth,
-			bool isConcurrentGC,
-			bool isGlobalGC
+			bool trackVisibleFrameDepth
 		)
 {
 	J9StackWalkState stackWalkState;
-
 	initializeStackWalkState(&stackWalkState, vmThread, userData, oSlotIterator, includeStackFrameClassReferences, trackVisibleFrameDepth);
-	VM_VMHelpers::walkContinuationStackFramesWrapper(vmThread, continuationObjectPtr, &stackWalkState, isConcurrentGC, isGlobalGC);
+
+#if JAVA_SPEC_VERSION >= 19
+	J9VMContinuation *continuation = J9VMJDKINTERNALVMCONTINUATION_VMREF(vmThread, continuationObjectPtr);
+	vmThread->javaVM->internalVMFunctions->walkContinuationStackFrames(vmThread, continuation, &stackWalkState);
+#endif /* JAVA_SPEC_VERSION >= 19 */
 }
 
 #if JAVA_SPEC_VERSION >= 19
