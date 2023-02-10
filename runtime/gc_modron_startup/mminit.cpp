@@ -447,7 +447,7 @@ j9gc_initialize_heap(J9JavaVM *vm, IDATA *memoryParameterTable, UDATA heapBytesR
 	GC_OMRVMInterface::initializeExtensions(extensions);
 
 	/* Initialize the global collector */
-	globalCollector = extensions->configuration->createGlobalCollector(&env);
+	globalCollector = extensions->configuration->createCollectors(&env);
 	if (NULL == globalCollector) {
 		if(MM_GCExtensionsBase::HEAP_INITIALIZATION_FAILURE_REASON_METRONOME_DOES_NOT_SUPPORT_4BIT_SHIFT == extensions->heapInitializationFailureReason) {
 			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTION_OVERFLOW, displayXmxOrMaxRAMPercentage(memoryParameterTable));

@@ -79,13 +79,6 @@ public:
 		_typeId = __FUNCTION__;
 	}
 
-	void registerScavenger(MM_Scavenger *scavenger)
-	{
-#if defined(J9VM_GC_GENERATIONAL)
-		_scavenger = scavenger;
-#endif /* J9VM_GC_GENERATIONAL */
-	}
-
 	virtual J9Object* asConstantPoolObject(J9VMThread *vmThread, J9Object* toConvert, UDATA allocationFlags);
 
 	virtual void rememberObjectImpl(MM_EnvironmentBase *env, J9Object* object);
