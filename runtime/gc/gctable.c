@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2022 IBM Corp. and others
+ * Copyright (c) 1991, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -260,6 +260,7 @@ J9MemoryManagerFunctions MemoryManagerFunctions = {
 	j9gc_ensureLockedSynchronizersIntegrity,
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 	j9gc_prepare_for_checkpoint,
-	j9gc_reinitialize_for_restore
+	j9gc_reinitialize_for_restore,
+	j9gc_reinitializeDefaults
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 };

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2022 IBM Corp. and others
+ * Copyright (c) 2017, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -61,7 +61,7 @@ class MM_ConfigurationDelegate
  * Member data and types
  */
 private:
-	static const uintptr_t _maximumDefaultNumberOfGCThreads = 64;
+	uintptr_t _maximumDefaultNumberOfGCThreads = 64;
 	const MM_GCPolicy _gcPolicy;
 
 protected:
@@ -352,6 +352,11 @@ public:
 	uintptr_t getMaxGCThreadCount(MM_EnvironmentBase* env)
 	{
 		return _maximumDefaultNumberOfGCThreads;
+	}
+
+	void setMaxGCThreadCount(MM_EnvironmentBase* env, uintptr_t maxGCThreads)
+	{
+		_maximumDefaultNumberOfGCThreads = maxGCThreads;
 	}
 
 	MM_GCPolicy getGCPolicy() { return _gcPolicy; }
