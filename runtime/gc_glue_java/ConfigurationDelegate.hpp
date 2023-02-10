@@ -61,7 +61,7 @@ class MM_ConfigurationDelegate
  * Member data and types
  */
 private:
-	uintptr_t _maximumDefaultNumberOfGCThreads = 64;
+	uintptr_t _maximumDefaultNumberOfGCThreads;
 	const MM_GCPolicy _gcPolicy;
 
 protected:
@@ -364,8 +364,9 @@ public:
 	/**
 	 * Constructor.
 	 */
-	MM_ConfigurationDelegate(MM_GCPolicy gcPolicy)
-		: _gcPolicy(gcPolicy)
+	MM_ConfigurationDelegate(MM_GCPolicy gcPolicy) :
+		_maximumDefaultNumberOfGCThreads(64)
+		, _gcPolicy(gcPolicy)
 	{}
 };
 
