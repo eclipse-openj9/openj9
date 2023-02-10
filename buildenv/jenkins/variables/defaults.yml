@@ -361,9 +361,9 @@ x86-64_windows:
     8: '--with-toolchain-version=2017'
     11: '--with-toolchain-version=2019'
     17: '--with-toolchain-version=2019'
-    19: '--with-toolchain-version=2019'
-    20: '--with-toolchain-version=2019'
-    next: '--with-toolchain-version=2019'
+    19: '--with-toolchain-version=2022'
+    20: '--with-toolchain-version=2022'
+    next: '--with-toolchain-version=2022'
   node_labels:
     build: 'ci.role.build && hw.arch.x86 && sw.os.windows'
   build_env:
