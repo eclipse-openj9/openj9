@@ -60,15 +60,13 @@ public:
 			bool includeStackFrameClassReferences,
 			bool trackVisibleFrameDepth);
 
-	static void scanSlots(
+	static void scanContinuationSlots(
 			J9VMThread *vmThread,
 			j9object_t continuationObjectPtr,
 			void *userData,
 			J9MODRON_OSLOTITERATOR *oSlotIterator,
 			bool includeStackFrameClassReferences,
-			bool trackVisibleFrameDepth,
-			bool isConcurrentGC,
-			bool isGlobalGC);
+			bool trackVisibleFrameDepth);
 
 #if JAVA_SPEC_VERSION >= 19
 	static void scanSlots(

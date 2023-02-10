@@ -1644,11 +1644,12 @@ stackSlotIteratorForRealtimeGC(J9JavaVM *javaVM, J9Object **slotPtr, void *local
 }
 
 void
-MM_MetronomeDelegate::scanContinuationNativeSlots(MM_EnvironmentRealtime *env, J9Object *objectPtr)
+MM_MetronomeDelegate::scanContinuationNativeSlots(MM_EnvironmentRealtime *env, J9Object *objectPtr, bool beingMounted)
 {
 	J9VMThread *currentThread = (J9VMThread *)env->getLanguageVMThread();
+	bool isConcurrentGC = _realtimeGC->isCollectorConcurrentTracing();
 	const bool isGlobalGC = true;
-	if (MM_GCExtensions::needScanStacksForContinuationObject(currentThread, objectPtr, isGlobalGC)) {
+	if (MM_GCExtensions::needScanStacksForContinuationObject(currentThread, objectPtr, isConcurrentGC, isGlobalGC, beingMounted)) {
 		StackIteratorData4RealtimeMarkingScheme localData;
 		localData.realtimeMarkingScheme = _markingScheme;
 		localData.env = env;
@@ -1659,9 +1660,11 @@ MM_MetronomeDelegate::scanContinuationNativeSlots(MM_EnvironmentRealtime *env, J
 		stackFrameClassWalkNeeded = isDynamicClassUnloadingEnabled();
 #endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
 		/* In STW GC there are no racing carrier threads doing mount and no need for the synchronization. */
-		bool isConcurrentGC = _realtimeGC->isCollectorConcurrentTracing();
 
-		GC_VMThreadStackSlotIterator::scanSlots(currentThread, objectPtr, (void *)&localData, stackSlotIteratorForRealtimeGC, stackFrameClassWalkNeeded, false, isConcurrentGC, isGlobalGC);
+		GC_VMThreadStackSlotIterator::scanContinuationSlots(currentThread, objectPtr, (void *)&localData, stackSlotIteratorForRealtimeGC, stackFrameClassWalkNeeded, false);
+		if (isConcurrentGC) {
+			VM_VMHelpers::exitConcurrentGCScan(currentThread, objectPtr, isGlobalGC);
+		}
 	}
 }
 

@@ -5035,6 +5035,8 @@ typedef struct J9JITGPRSpillArea {
 } J9JITGPRSpillArea;
 
 #if JAVA_SPEC_VERSION >= 19
+typedef uintptr_t ContinuationState;
+
 typedef struct J9VMContinuation {
 	UDATA* arg0EA;
 	UDATA* bytecodes;
@@ -5049,7 +5051,10 @@ typedef struct J9VMContinuation {
 	struct J9JITGPRSpillArea jitGPRs;
 	struct J9I2JState i2jState;
 	struct J9VMEntryLocalStorage* oldEntryLocalStorage;
-	volatile UDATA state; /* it's a bit-wise struct of CarrierThread ID and ConcurrentlyScanned flag bit0:localConcurrentScan-J9_GC_CONTINUATION_STATE_CONCURRENT_SCAN_LOCAL, bit1:globalConcurrentScan-J9_GC_CONTINUATION_STATE_CONCURRENT_SCAN_GLOBAL */
+	/* it's a bit-wise struct of CarrierThread ID and continuation flags
+	 * low 8 bits are reserved for flags and the rest are the carrier thread ID.
+	 */
+	volatile ContinuationState state;
 	UDATA dropFlags;
 } J9VMContinuation;
 #endif /* JAVA_SPEC_VERSION >= 19 */
