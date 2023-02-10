@@ -30,10 +30,6 @@
 #include "modronapi.hpp"
 #include "modronopt.h"
 
-#if defined(J9VM_OPT_CRIU_SUPPORT)
-#include "Configuration.hpp"
-#include "VerboseManager.hpp"
-#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 #include "EnvironmentBase.hpp"
 #include "GCExtensions.hpp"
 #include "HeapMemorySnapshot.hpp"
@@ -53,6 +49,12 @@
 #include "VMInterface.hpp"
 #include "VMThreadListIterator.hpp"
 #include "VMAccess.hpp"
+
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+#include "Configuration.hpp"
+#include "VerboseManager.hpp"
+#include "vmaccess.h"
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
 extern "C" {
 
@@ -1123,7 +1125,13 @@ j9gc_reinitialize_for_restore(J9VMThread *vmThread)
 	MM_GCExtensionsBase *extensions = env->getExtensions();
 	MM_VerboseManagerBase *verboseGCManager = extensions->verboseGCManager;
 
+	j9gc_reinitializeDefaults(vmThread);
+
+	/* The checkpoint thread must release VM access for the duration of reinitializeGCThreadCountForRestore,
+	 * since new GC threads could be started and the startup/attach of a new GC thread involves allocation and may trigger GC. */
+	releaseVMAccess(vmThread);
 	bool result = extensions->configuration->reinitializeGCThreadCountForRestore(env);
+	acquireVMAccess(vmThread);
 
 	if (NULL != verboseGCManager) {
 		/* Verbose gc reinit failure can be ignored, it is safe for restore to continue on. */
