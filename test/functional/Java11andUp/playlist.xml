@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <!--
-  Copyright (c) 2018, 2022 IBM Corp. and others
+  Copyright (c) 2018, 2023 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -277,6 +277,33 @@
 		</command>
 		<levels>
 			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<versions>
+			<version>11+</version>
+		</versions>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
+	</test>
+	<test>
+		<testCaseName>TestJavaUtilZipCRC32C</testCaseName>
+		<variations>
+			<variation>-Xjit:'disableAsyncCompilation,{*testCRC32C*}(count=1,optlevel=scorching)'</variation>
+		</variations>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+			-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
+			org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames TestJavaUtilZipCRC32C \
+			-groups $(TEST_GROUP) \
+			-excludegroups $(DEFAULT_EXCLUDE); \
+			$(TEST_STATUS)
+		</command>
+		<platformRequirements>arch.390</platformRequirements>
+		<levels>
+			<level>sanity</level>
 		</levels>
 		<groups>
 			<group>functional</group>
