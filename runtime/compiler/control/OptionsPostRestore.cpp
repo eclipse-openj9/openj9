@@ -43,6 +43,7 @@
 #define FIND_AND_CONSUME_RESTORE_ARG(match, optionName, optionValue) FIND_AND_CONSUME_ARG(vm->checkpointState.restoreArgsList, match, optionName, optionValue)
 #define FIND_ARG_IN_RESTORE_ARGS(match, optionName, optionValue) FIND_ARG_IN_ARGS(vm->checkpointState.restoreArgsList, match, optionName, optionValue)
 #define GET_INTEGER_VALUE_RESTORE_ARGS(element, optname, result) GET_INTEGER_VALUE_ARGS(vm->checkpointState.restoreArgsList, element, optname, result)
+#define GET_OPTION_VALUE_RESTORE_ARGS(element, delimChar, resultPtr) GET_OPTION_VALUE_ARGS(vm->checkpointState.restoreArgsList, element, delimChar, resultPtr)
 
 J9::OptionsPostRestore::OptionsPostRestore(J9VMThread *vmThread, J9JITConfig *jitConfig, TR::CompilationInfo *compInfo, TR::Region &region)
    :
@@ -62,24 +63,8 @@ J9::OptionsPostRestore::OptionsPostRestore(J9VMThread *vmThread, J9JITConfig *ji
    _argIndexDisablePrintCodeCache(-1),
    _argIndexUseJITServer(-1),
    _argIndexDisableUseJITServer(-1),
-   _argIndexJITServerSSLKey(-1),
-   _argIndexJITServerSSLCert(-1),
-   _argIndexJITServerUseAOTCache(-1),
-   _argIndexDisableJITServerUseAOTCache(-1),
-   _argIndexRequireJITServer(-1),
-   _argIndexDisableRequireJITServer(-1),
-   _argIndexJITServerLogConnections(-1),
-   _argIndexDisableJITServerLogConnections(-1),
-   _argIndexJITServerAOTmx(-1),
-   _argIndexJITServerLocalSyncCompiles(-1),
-   _argIndexDisableJITServerLocalSyncCompiles(-1),
-   _argIndexJITServerAOTCachePersistence(-1),
-   _argIndexDisableJITServerAOTCachePersistence(-1),
-   _argIndexJITServerAOTCacheDir(-1),
-   _argIndexJITServerAOTCacheName(-1),
    _argIndexJITServerAddress(-1),
-   _argIndexJITServerPort(-1),
-   _argIndexJITServerTimeout(-1)
+   _argIndexJITServerAOTCacheName(-1)
    {}
 
 void
@@ -92,6 +77,7 @@ J9::OptionsPostRestore::iterateOverExternalOptions()
    int32_t end = static_cast<int32_t>(J9::ExternalOptions::TR_NumExternalOptions);
    for (int32_t option = start; option < end; option++)
       {
+      const char *optString = J9::Options::_externalOptionStrings[option];
       switch (option)
          {
          case J9::ExternalOptions::Xjit:
@@ -104,6 +90,25 @@ J9::OptionsPostRestore::iterateOverExternalOptions()
          case J9::ExternalOptions::XXminusMergeCompilerOptions:
             {
             // These will have already been consumed
+            }
+            break;
+
+         case J9::ExternalOptions::XXJITServerPortOption:
+         case J9::ExternalOptions::XXJITServerTimeoutOption:
+         case J9::ExternalOptions::XXJITServerSSLKeyOption:
+         case J9::ExternalOptions::XXJITServerSSLCertOption:
+         case J9::ExternalOptions::XXJITServerSSLRootCertsOption:
+         case J9::ExternalOptions::XXplusJITServerUseAOTCacheOption:
+         case J9::ExternalOptions::XXminusJITServerUseAOTCacheOption:
+         case J9::ExternalOptions::XXplusRequireJITServerOption:
+         case J9::ExternalOptions::XXminusRequireJITServerOption:
+         case J9::ExternalOptions::XXplusJITServerLogConnections:
+         case J9::ExternalOptions::XXminusJITServerLogConnections:
+         case J9::ExternalOptions::XXJITServerAOTmxOption:
+         case J9::ExternalOptions::XXplusJITServerLocalSyncCompilesOption:
+         case J9::ExternalOptions::XXminusJITServerLocalSyncCompilesOption:
+            {
+            // These will be processed in processJitServerOptions
             }
             break;
 
@@ -135,8 +140,12 @@ J9::OptionsPostRestore::iterateOverExternalOptions()
          case J9::ExternalOptions::XXJITServerMetricsSSLCertOption:
          case J9::ExternalOptions::XXplusJITServerShareROMClassesOption:
          case J9::ExternalOptions::XXminusJITServerShareROMClassesOption:
+         case J9::ExternalOptions::XXplusJITServerAOTCachePersistenceOption:
+         case J9::ExternalOptions::XXminusJITServerAOTCachePersistenceOption:
+         case J9::ExternalOptions::XXJITServerAOTCacheDirOption:
             {
             // do nothing, maybe consume them to prevent errors
+            FIND_AND_CONSUME_RESTORE_ARG(OPTIONAL_LIST_MATCH, optString, 0);
             }
             break;
 
@@ -154,12 +163,11 @@ J9::OptionsPostRestore::iterateOverExternalOptions()
 
          case J9::ExternalOptions::XcompilationThreads:
             {
-            char *compThreadsOption = J9::Options::_externalOptionStrings[J9::ExternalOptions::XcompilationThreads];
-            int32_t argIndex = FIND_AND_CONSUME_RESTORE_ARG(EXACT_MEMORY_MATCH, compThreadsOption, 0);
+            int32_t argIndex = FIND_AND_CONSUME_RESTORE_ARG(EXACT_MEMORY_MATCH, optString, 0);
             if (argIndex >= 0)
                {
                UDATA numCompThreads;
-               IDATA ret = GET_INTEGER_VALUE_RESTORE_ARGS(argIndex, compThreadsOption, numCompThreads);
+               IDATA ret = GET_INTEGER_VALUE_RESTORE_ARGS(argIndex, optString, numCompThreads);
 
                if (ret == OPTION_OK && numCompThreads > 0)
                   TR::Options::_numUsableCompilationThreads = numCompThreads;
@@ -199,127 +207,25 @@ J9::OptionsPostRestore::iterateOverExternalOptions()
 
          case J9::ExternalOptions::XXplusUseJITServerOption:
             {
-            // set xxUseJITServerArgIndex
+            _argIndexUseJITServer = FIND_ARG_IN_RESTORE_ARGS(EXACT_MATCH, optString, 0);
             }
             break;
 
          case J9::ExternalOptions::XXminusUseJITServerOption:
             {
-            // set xxDisableUseJITServerArgIndex
+            _argIndexDisableUseJITServer = FIND_ARG_IN_RESTORE_ARGS(EXACT_MATCH, optString, 0);
             }
             break;
 
          case J9::ExternalOptions::XXJITServerAddressOption:
             {
-            // set _argIndexJITServerAddress
-            }
-            break;
-
-         case J9::ExternalOptions::XXJITServerPortOption:
-            {
-            // set _argIndexJITServerPort
-            }
-            break;
-
-         case J9::ExternalOptions::XXJITServerTimeoutOption:
-            {
-            // set _argIndexJITServerTimeout
-            }
-            break;
-
-         case J9::ExternalOptions::XXJITServerSSLKeyOption:
-            {
-            // set xxJITServerSSLKeyArgIndex
-            }
-            break;
-
-         case J9::ExternalOptions::XXJITServerSSLCertOption:
-            {
-            // set xxJITServerSSLCertArgIndex
-            }
-            break;
-
-         case J9::ExternalOptions::XXJITServerSSLRootCertsOption:
-            {
-            // set compInfo->setJITServerSslRootCerts
-            }
-            break;
-
-         case J9::ExternalOptions::XXplusJITServerUseAOTCacheOption:
-            {
-            // set xxJITServerUseAOTCacheArgIndex
-            }
-            break;
-
-         case J9::ExternalOptions::XXminusJITServerUseAOTCacheOption:
-            {
-            // set xxDisableJITServerUseAOTCacheArgIndex
-            }
-            break;
-
-         case J9::ExternalOptions::XXplusRequireJITServerOption:
-            {
-            // set xxRequireJITServerArgIndex
-            }
-            break;
-
-         case J9::ExternalOptions::XXminusRequireJITServerOption:
-            {
-            // set xxDisableRequireJITServerArgIndex
-            }
-            break;
-
-         case J9::ExternalOptions::XXplusJITServerLogConnections:
-            {
-            // set xxJITServerLogConnectionsArgIndex
-            }
-            break;
-
-         case J9::ExternalOptions::XXminusJITServerLogConnections:
-            {
-            // set xxDisableJITServerLogConnectionsArgIndex
-            }
-            break;
-
-         case J9::ExternalOptions::XXJITServerAOTmxOption:
-            {
-            // set xxJITServerAOTmxArgIndex
-            }
-            break;
-
-         case J9::ExternalOptions::XXplusJITServerLocalSyncCompilesOption:
-            {
-            // set xxJITServerLocalSyncCompilesArgIndex
-            }
-            break;
-
-         case J9::ExternalOptions::XXminusJITServerLocalSyncCompilesOption:
-            {
-            // set xxDisableJITServerLocalSyncCompilesArgIndex
-            }
-            break;
-
-         case J9::ExternalOptions::XXplusJITServerAOTCachePersistenceOption:
-            {
-            // set xxJITServerAOTCachePersistenceArgIndex
-            }
-            break;
-
-         case J9::ExternalOptions::XXminusJITServerAOTCachePersistenceOption:
-            {
-            // set xxDisableJITServerAOTCachePersistenceArgIndex
-            }
-            break;
-
-         case J9::ExternalOptions::XXJITServerAOTCacheDirOption:
-            {
-            // set xxJITServerAOTCacheDirArgIndex
+            _argIndexJITServerAddress = FIND_ARG_IN_RESTORE_ARGS(STARTSWITH_MATCH, optString, 0);
             }
             break;
 
          case J9::ExternalOptions::XXJITServerAOTCacheNameOption:
             {
-            // set xxJITServerAOTCacheNameArgIndex
+            _argIndexJITServerAOTCacheName = FIND_ARG_IN_RESTORE_ARGS(STARTSWITH_MATCH, optString, 0);
             }
             break;
 
@@ -344,79 +250,45 @@ J9::OptionsPostRestore::iterateOverExternalOptions()
 void
 J9::OptionsPostRestore::processJitServerOptions()
    {
+#if defined(J9VM_OPT_JITSERVER)
    if (_argIndexUseJITServer >= _argIndexDisableUseJITServer)
       {
-      // Do JITServer init
+      // Needed for GET_OPTION_VALUE_RESTORE_ARGS
+      J9JavaVM *vm = _jitConfig->javaVM;
+
+      // TODO: Determine what other JITServer init is required
+
+      // Parse common options
+      if (!TR::Options::JITServerParseCommonOptions(vm->checkpointState.restoreArgsList, vm, _compInfo))
+         {
+         // TODO: Error condition
+         }
+
+      // Parse local sync compiles
+      TR::Options::JITServerParseLocalSyncCompiles(vm->checkpointState.restoreArgsList,
+                                                   vm,
+                                                   _compInfo,
+                                                   TR::Options::getCmdLineOptions()->getOption(TR_FullSpeedDebug));
 
       if (_argIndexJITServerAddress >= 0)
          {
-         // set compInfo->getPersistentInfo()->setJITServerAddress
-         }
-
-      if (_argIndexJITServerPort >= 0)
-         {
-         // set compInfo->getPersistentInfo()->setJITServerPort
-         }
-
-      if (_argIndexJITServerTimeout >= 0)
-         {
-         // set compInfo->getPersistentInfo()->setSocketTimeout
-         }
-
-      if ((_argIndexJITServerSSLKey >= 0) && (_argIndexJITServerSSLCert >= 0))
-         {
-         // Init SSL key and cert
-         }
-
-      if (_argIndexJITServerUseAOTCache > _argIndexDisableJITServerUseAOTCache)
-         {
-         // compInfo->getPersistentInfo()->setJITServerUseAOTCache(true);
-         }
-      else
-         {
-         // compInfo->getPersistentInfo()->setJITServerUseAOTCache(false);
-         }
-
-      if (_argIndexRequireJITServer > _argIndexDisableRequireJITServer)
-         {
-         // compInfo->getPersistentInfo()->setRequireJITServer(true);
-         // compInfo->getPersistentInfo()->setSocketTimeout(60000);
-         }
-
-      if (_argIndexJITServerLogConnections > _argIndexDisableJITServerLogConnections)
-         {
-         TR::Options::setVerboseOption(TR_VerboseJITServerConns);
-         }
-
-      if (_argIndexJITServerAOTmx > 0)
-         {
-         // JITServerAOTCacheMap::setCacheMaxBytes
-         }
-
-      if (_argIndexJITServerLocalSyncCompiles > _argIndexDisableJITServerLocalSyncCompiles)
-         {
-         // compInfo->getPersistentInfo()->setLocalSyncCompiles
-         }
-
-      if (_argIndexJITServerAOTCachePersistence > _argIndexDisableJITServerAOTCachePersistence)
-         {
-         // compInfo->getPersistentInfo()->setJITServerUseAOTCachePersistence(true);
-
-         if (_argIndexJITServerAOTCacheDir > 0)
-            {
-            // compInfo->getPersistentInfo()->setJITServerAOTCacheDir(directory);
-            }
+         char *address = NULL;
+         GET_OPTION_VALUE_RESTORE_ARGS(_argIndexJITServerAddress, '=', &address);
+         _compInfo->getPersistentInfo()->setJITServerAddress(address);
          }
 
       if (_argIndexJITServerAOTCacheName >= 0)
          {
-         // compInfo->getPersistentInfo()->setJITServerAOTCacheName(name);
+         char *name = NULL;
+         GET_OPTION_VALUE_RESTORE_ARGS(_argIndexJITServerAOTCacheName, '=', &name);
+         _compInfo->getPersistentInfo()->setJITServerAOTCacheName(name);
          }
       }
    else
       {
-      // Disable JITServer
+      // TODO: Disable JITServer
       }
+#endif // defined(J9VM_OPT_JITSERVER)
    }
 
 void
