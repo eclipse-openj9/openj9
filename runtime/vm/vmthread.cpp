@@ -266,7 +266,7 @@ allocateVMThread(J9JavaVM * vm, omrthread_t osThread, UDATA privateFlags, void *
 	newThread->ownedMonitorCount = 0;
 	newThread->callOutCount = 0;
 	newThread->carrierThreadObject = threadObject;
-	newThread->extentLocalCache = NULL;
+	newThread->scopedValueCache = NULL;
 #endif /* JAVA_SPEC_VERSION >= 19 */
 
 	/* If an exclusive access request is in progress, mark this thread */
