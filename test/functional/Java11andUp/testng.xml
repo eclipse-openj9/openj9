@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-  Copyright (c) 2018, 2019 IBM Corp. and others
+  Copyright (c) 2018, 2023 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,7 +32,7 @@
 			<class name="org.openj9.test.java_lang.Test_String" />
 		</classes>
 	</test>
-	
+
 	<test name="NestmatesTest">
 		<classes>
 			<class name="org.openj9.test.nestmates.NestmatesTest" />
@@ -58,6 +58,12 @@
 	<test name="JCL_TEST_Java-Lang-Invoke">
 		<classes>
 			<class name="org.openj9.test.varhandle.TestVarHandleInfo"/>
+		</classes>
+	</test>
+
+	<test name="TestJavaUtilZipCRC32C">
+		<classes>
+			<class name="org.openj9.test.crc32c.TestJavaUtilZipCRC32C" />
 		</classes>
 	</test>
 </suite>
