@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2022 IBM Corp. and others
+ * Copyright (c) 2000, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -65,6 +65,11 @@
    java_lang_Class_isInstance,
    java_lang_Class_isInterface,
    java_lang_Class_cast,
+   java_lang_Class_isHidden,
+   java_lang_Class_isAnonymousClass,
+   java_lang_Class_isEnum,
+   java_lang_Class_isSynthetic,
+   java_lang_Class_isAnnotation,
    java_lang_ClassLoader_callerClassLoader,
    java_lang_ClassLoader_getCallerClassLoader,
    java_lang_ClassLoader_getStackClassLoader,

@@ -2086,6 +2086,11 @@ void TR_ResolvedJ9Method::construct()
       {x(TR::java_lang_Class_isInstance,           "isInstance",           "(Ljava/lang/Object;)Z")},
       {x(TR::java_lang_Class_isInterface,          "isInterface",          "()Z")},
       {x(TR::java_lang_Class_cast,                 "cast",                 "(Ljava/lang/Object;)Ljava/lang/Object;")},
+      {x(TR::java_lang_Class_isHidden,             "isHidden",             "()Z")},
+      {x(TR::java_lang_Class_isEnum,               "isEnum",               "()Z")},
+      {x(TR::java_lang_Class_isAnonymousClass,     "isAnonymousClass",     "()Z")},
+      {x(TR::java_lang_Class_isSynthetic,          "isSynthetic",          "()Z")},
+      {x(TR::java_lang_Class_isAnnotation,         "isAnnotation",         "()Z")},
       {  TR::unknownMethod}
       };
 
