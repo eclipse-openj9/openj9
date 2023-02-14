@@ -673,16 +673,22 @@ if(J9VM_OPT_CRIU_SUPPORT)
 	)
 endif()
 
-# java 19+
+# Java 19 only
+if(JAVA_SPEC_VERSION EQUAL 19)
+	omr_add_exports(jclse
+		Java_java_lang_Thread_extentLocalCache
+		Java_java_lang_Thread_setExtentLocalCache
+	)
+endif()
+
+# Java 19+
 if(NOT JAVA_SPEC_VERSION LESS 19)
 	omr_add_exports(jclse
 		Java_java_lang_StackWalker_walkContinuationImpl
 		Java_java_lang_Thread_currentCarrierThread
 		Java_java_lang_Thread_dumpThreads
-		Java_java_lang_Thread_extentLocalCache
 		Java_java_lang_Thread_getNextThreadIdOffset
 		Java_java_lang_Thread_getThreads
-		Java_java_lang_Thread_setExtentLocalCache
 		Java_java_lang_Thread_registerNatives
 		Java_jdk_internal_vm_Continuation_pin
 		Java_jdk_internal_vm_Continuation_unpin
@@ -693,5 +699,8 @@ endif()
 if(NOT JAVA_SPEC_VERSION LESS 20)
 	omr_add_exports(jclse
 		Java_java_lang_Thread_ensureMaterializedForStackWalk
+		Java_java_lang_Thread_findScopedValueBindings
+		Java_java_lang_Thread_scopedValueCache
+		Java_java_lang_Thread_setScopedValueCache
 	)
 endif()

@@ -5281,7 +5281,7 @@ typedef struct J9VMThread {
 	UDATA ownedMonitorCount;
 	UDATA callOutCount;
 	j9object_t carrierThreadObject;
-	j9object_t extentLocalCache;
+	j9object_t scopedValueCache;
 #endif /* JAVA_SPEC_VERSION >= 19 */
 } J9VMThread;
 
