@@ -40,6 +40,9 @@
 #include "RememberedSetSATB.hpp"
 #endif /* OMR_GC_REALTIME */
 
+class MM_MarkingScheme;
+class MM_Scavenger;
+
 /**
  * Access barrier for Modron collector.
  */
