@@ -120,6 +120,7 @@ J9::OptionsPostRestore::iterateOverExternalOptions()
          case J9::ExternalOptions::XtlhPrefetch:
          case J9::ExternalOptions::XnotlhPrefetch:
          case J9::ExternalOptions::XlockReservation:
+         case J9::ExternalOptions::XjniAcc:
          case J9::ExternalOptions::Xnoclassgc:
          case J9::ExternalOptions::Xlp:
          case J9::ExternalOptions::Xlpcodecache:
@@ -131,6 +132,7 @@ J9::OptionsPostRestore::iterateOverExternalOptions()
          case J9::ExternalOptions::XXminusRuntimeInstrumentation:
          case J9::ExternalOptions::XXplusPerfTool:
          case J9::ExternalOptions::XXminusPerfTool:
+         case J9::ExternalOptions::XXdoNotProcessJitEnvVars:
          case J9::ExternalOptions::XXplusJITServerTechPreviewMessageOption:
          case J9::ExternalOptions::XXminusJITServerTechPreviewMessageOption:
          case J9::ExternalOptions::XXplusMetricsServer:
@@ -144,20 +146,21 @@ J9::OptionsPostRestore::iterateOverExternalOptions()
          case J9::ExternalOptions::XXminusJITServerAOTCachePersistenceOption:
          case J9::ExternalOptions::XXJITServerAOTCacheDirOption:
             {
-            // do nothing, maybe consume them to prevent errors
+            // do nothing, consume them to prevent errors
             FIND_AND_CONSUME_RESTORE_ARG(OPTIONAL_LIST_MATCH, optString, 0);
-            }
-            break;
-
-         case J9::ExternalOptions::XjniAcc:
-            {
-            // call preProcessJniAccelerator
             }
             break;
 
          case J9::ExternalOptions::XsamplingExpirationTime:
             {
-            // call preProcessSamplingExpirationTime
+            int32_t argIndex = FIND_AND_CONSUME_RESTORE_ARG(EXACT_MEMORY_MATCH, optString, 0);
+            if (argIndex >= 0)
+               {
+               UDATA expirationTime;
+               IDATA ret = GET_INTEGER_VALUE_RESTORE_ARGS(argIndex, optString, expirationTime);
+               if (ret == OPTION_OK)
+                  TR::Options::_samplingThreadExpirationTime = expirationTime;
+               }
             }
             break;
 
@@ -183,25 +186,28 @@ J9::OptionsPostRestore::iterateOverExternalOptions()
 
          case J9::ExternalOptions::XXLateSCCDisclaimTimeOption:
             {
-            // set compInfo->getPersistentInfo()->setLateSCCDisclaimTime
+            int32_t argIndex = FIND_AND_CONSUME_RESTORE_ARG(STARTSWITH_MATCH, optString, 0);
+            if (argIndex >= 0)
+               {
+               UDATA disclaimMs = 0;
+               IDATA ret = GET_INTEGER_VALUE_RESTORE_ARGS(argIndex, optString, disclaimMs);
+               if (ret == OPTION_OK)
+                  {
+                  _compInfo->getPersistentInfo()->setLateSCCDisclaimTime(((uint64_t) disclaimMs) * 1000000);
+                  }
+               }
             }
             break;
 
          case J9::ExternalOptions::XXplusPrintCodeCache:
             {
-            // set xxPrintCodeCacheArgIndex
+            _argIndexPrintCodeCache = FIND_ARG_IN_RESTORE_ARGS(EXACT_MATCH, optString, 0);
             }
             break;
 
          case J9::ExternalOptions::XXminusPrintCodeCache:
             {
-            // set xxDisablePrintCodeCacheArgIndex
-            }
-            break;
-
-         case J9::ExternalOptions::XXdoNotProcessJitEnvVars:
-            {
-            // set _doNotProcessEnvVars;
+            _argIndexDisablePrintCodeCache = FIND_ARG_IN_RESTORE_ARGS(EXACT_MATCH, optString, 0);
             }
             break;
 
@@ -462,7 +468,7 @@ J9::OptionsPostRestore::processCompilerOptions()
 
       if (_argIndexPrintCodeCache > _argIndexDisablePrintCodeCache)
          {
-         // self()->setOption(TR_PrintCodeCacheUsage);
+         TR::Options::getCmdLineOptions()->setOption(TR_PrintCodeCacheUsage);
          }
 
       if (jitEnabled)
