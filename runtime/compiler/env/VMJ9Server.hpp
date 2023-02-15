@@ -248,6 +248,8 @@ public:
 private:
    bool instanceOfOrCheckCastHelper(J9Class *instanceClass, J9Class* castClass, bool cacheUpdate);
    bool checkCHTableIfClassInfoExistsAndHasBeenExtended(TR_OpaqueClassBlock *clazz, bool &bClassHasBeenExtended);
+   void *getClientJ2IThunk(const std::string &signature, TR::Compilation *comp);
+   void *sendJ2IThunkToClient(const std::string &signature, const uint8_t *thunkStart, const uint32_t thunkSize, TR::Compilation *comp);
 
 protected:
    void getResolvedMethodsAndMethods(TR_Memory *trMemory, TR_OpaqueClassBlock *classPointer, List<TR_ResolvedMethod> *resolvedMethodsInClass, J9Method **methods, uint32_t *numMethods);

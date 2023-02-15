@@ -1442,15 +1442,14 @@ TR_J9ServerVM::isClassVisible(TR_OpaqueClassBlock *sourceClass, TR_OpaqueClassBl
    return std::get<0>(stream->read<bool>());
    }
 
+// Check a map of registered thunks for this client.
+// If a pointer to client-side thunk is there, return it.
+// If a thunk is not registered, send a message to the client to check if it's registered there,
+// cache the result if it is. Note that it's possible to have a thunk registered on the client
+// but not in this map, when client reconnects to a different server.
 void *
-TR_J9ServerVM::getJ2IThunk(char *signatureChars, uint32_t signatureLength, TR::Compilation *comp)
+TR_J9ServerVM::getClientJ2IThunk(const std::string &signature, TR::Compilation *comp)
    {
-   // Check a map of registered thunks for this client.
-   // If a pointer to client-side thunk is there, return it.
-   // If a thunk is not registered, send a message to the client to check if it's registered there,
-   // cache the result if it is. Note that it's possible to have a thunk registered on the client
-   // but not in this map, when client reconnects to a different server.
-   std::string signature(signatureChars, signatureLength);
       {
       OMR::CriticalSection thunkMonitor(_compInfoPT->getClientData()->getThunkSetMonitor());
       auto &thunkMap = _compInfoPT->getClientData()->getRegisteredJ2IThunkMap();
@@ -1474,16 +1473,38 @@ TR_J9ServerVM::getJ2IThunk(char *signatureChars, uint32_t signatureLength, TR::C
    }
 
 void *
-TR_J9ServerVM::setJ2IThunk(char *signatureChars, uint32_t signatureLength, void *thunkptr, TR::Compilation *comp)
+TR_J9ServerVM::getJ2IThunk(char *signatureChars, uint32_t signatureLength, TR::Compilation *comp)
    {
-   // Serialize thunk and send it to the client to be registered with the VM.
-   // Also add this thunk to a per-client set of registered thunks, so that we don't
-   // register duplicate thunks.
    std::string signature(signatureChars, signatureLength);
-   uint8_t *thunkStart = reinterpret_cast<uint8_t *>(thunkptr) - 8;
-   uint32_t thunkSize = *reinterpret_cast<uint32_t *>(thunkStart) + 8;
-   std::string serializedThunk(reinterpret_cast<char *>(thunkStart), thunkSize);
+   void *clientThunkPtr = NULL;
 
+   if (comp->isAOTCacheStore())
+      {
+      auto record = comp->getClientData()->getAOTCache()->getThunkRecord((uint8_t *)signatureChars, signatureLength);
+      if (record)
+         {
+         comp->addThunkRecord(record);
+
+         clientThunkPtr = getClientJ2IThunk(signature, comp);
+         if (!clientThunkPtr)
+            clientThunkPtr = sendJ2IThunkToClient(signature, record->data().thunkStart(), record->data().thunkSize(), comp);
+         }
+      }
+   else
+      {
+      clientThunkPtr = getClientJ2IThunk(signature, comp);
+      }
+
+   return clientThunkPtr;
+   }
+
+// Serialize thunk and send it to the client to be registered with the VM.
+// Also add the client thunk pointer to a per-client set of registered thunks, so that we don't
+// register duplicate thunks.
+void *
+TR_J9ServerVM::sendJ2IThunkToClient(const std::string &signature, const uint8_t *thunkStart, const uint32_t thunkSize, TR::Compilation *comp)
+   {
+   std::string serializedThunk(reinterpret_cast<const char *>(thunkStart), thunkSize);
    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    stream->write(JITServer::MessageType::VM_setJ2IThunk, signature, serializedThunk);
    void *clientThunkPtr = std::get<0>(stream->read<void *>());
@@ -1494,6 +1515,31 @@ TR_J9ServerVM::setJ2IThunk(char *signatureChars, uint32_t signatureLength, void 
       auto &thunkMap = _compInfoPT->getClientData()->getRegisteredJ2IThunkMap();
       thunkMap.insert(std::make_pair(std::make_pair(signature, comp->compileRelocatableCode()), clientThunkPtr));
       }
+   return clientThunkPtr;
+   }
+
+void *
+TR_J9ServerVM::setJ2IThunk(char *signatureChars, uint32_t signatureLength, void *thunkptr, TR::Compilation *comp)
+   {
+   std::string signature(signatureChars, signatureLength);
+   uint8_t *thunkStart = reinterpret_cast<uint8_t *>(thunkptr) - 8;
+   uint32_t thunkSize = *reinterpret_cast<uint32_t *>(thunkStart) + 8;
+
+   void *clientThunkPtr = NULL;
+   if (comp->isAOTCacheStore())
+      {
+      auto record = comp->getClientData()->getAOTCache()->createAndStoreThunk((uint8_t *)signatureChars, signatureLength, thunkStart, thunkSize);
+      comp->addThunkRecord(record);
+
+      clientThunkPtr = getClientJ2IThunk(signature, comp);
+      if (!clientThunkPtr)
+         clientThunkPtr = sendJ2IThunkToClient(signature, thunkStart, thunkSize, comp);
+      }
+   else
+      {
+      clientThunkPtr = sendJ2IThunkToClient(signature, thunkStart, thunkSize, comp);
+      }
+
    return clientThunkPtr;
    }
 
