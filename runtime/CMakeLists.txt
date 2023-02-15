@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2022 IBM Corp. and others
+# Copyright (c) 2017, 2023 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,6 +28,11 @@
 include(cmake/version.cmake)
 
 project(j9vm VERSION ${J9VM_VERSION} LANGUAGES CXX C)
+
+# Tell newer versions of CMake that we expect the old behavior of CMP0079
+if(POLICY CMP0079)
+	cmake_policy(SET CMP0079 OLD)
+endif()
 
 set(J9VM_OMR_DIR "${CMAKE_CURRENT_SOURCE_DIR}/omr" CACHE PATH "Path to the OMR directory")
 set(CMAKE_MODULE_PATH "${j9vm_SOURCE_DIR}/cmake/modules" "${J9VM_OMR_DIR}/cmake/modules" ${CMAKE_MODULE_PATH})
