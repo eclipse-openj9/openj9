@@ -343,33 +343,33 @@ AOTCacheAOTHeaderRecord::create(uintptr_t id, const TR_AOTHeader *header)
    }
 
 ThunkSerializationRecord::ThunkSerializationRecord(uintptr_t id, const uint8_t *signature, uint32_t signatureSize,
-                                                   const uint8_t *thunkCode,  uint32_t thunkCodeSize) :
-   AOTSerializationRecord(size(signatureSize, thunkCodeSize), id, AOTSerializationRecordType::Thunk),
+                                                   const uint8_t *thunkStart,  uint32_t thunkSize) :
+   AOTSerializationRecord(size(signatureSize, thunkSize), id, AOTSerializationRecordType::Thunk),
    _signatureSize(signatureSize),
-   _thunkCodeSize(thunkCodeSize)
+   _thunkSize(thunkSize)
    {
    memcpy((void *)this->signature(), signature, signatureSize);
-   memcpy((void *)this->thunkCode(), thunkCode, thunkCodeSize);
+   memcpy((void *)this->thunkStart(), thunkStart, thunkSize);
    }
 
 ThunkSerializationRecord::ThunkSerializationRecord() :
    AOTSerializationRecord(0, 0, AOTSerializationRecordType::Thunk),
    _signatureSize(0),
-   _thunkCodeSize(0)
+   _thunkSize(0)
    {
    }
 
 AOTCacheThunkRecord::AOTCacheThunkRecord(uintptr_t id, const uint8_t *signature, uint32_t signatureSize,
-                                         const uint8_t *thunkCode, uint32_t thunkCodeSize) :
-   _data(id, signature, signatureSize, thunkCode, thunkCodeSize)
+                                         const uint8_t *thunkStart, uint32_t thunkSize) :
+   _data(id, signature, signatureSize, thunkStart, thunkSize)
    {
    }
 
 AOTCacheThunkRecord *
-AOTCacheThunkRecord::create(uintptr_t id, const uint8_t *signature, uint32_t signatureSize, const uint8_t *thunkCode, uint32_t thunkCodeSize)
+AOTCacheThunkRecord::create(uintptr_t id, const uint8_t *signature, uint32_t signatureSize, const uint8_t *thunkStart, uint32_t thunkSize)
    {
-   void *ptr = AOTCacheRecord::allocate(size(signatureSize, thunkCodeSize));
-   return new (ptr) AOTCacheThunkRecord(id, signature, signatureSize, thunkCode, thunkCodeSize);
+   void *ptr = AOTCacheRecord::allocate(size(signatureSize, thunkSize));
+   return new (ptr) AOTCacheThunkRecord(id, signature, signatureSize, thunkStart, thunkSize);
    }
 
 
@@ -962,6 +962,43 @@ JITServerAOTCache::getAOTHeaderRecord(const TR_AOTHeader *header, uint64_t clien
       TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
          "AOT cache %s: created AOT header ID %zu for clientUID %llu",
          _name.c_str(), record->data().id(), (unsigned long long)clientUID
+      );
+
+   return record;
+   }
+
+const AOTCacheThunkRecord *
+JITServerAOTCache::getThunkRecord(const uint8_t *signature, uint32_t signatureSize)
+   {
+   OMR::CriticalSection cs(_thunkMonitor);
+
+   auto it = _thunkMap.find({ signature, signatureSize });
+   if (it != _thunkMap.end())
+      return it->second;
+
+   return NULL;
+   }
+
+const AOTCacheThunkRecord *
+JITServerAOTCache::createAndStoreThunk(const uint8_t *signature, uint32_t signatureSize, const uint8_t *thunkStart, uint32_t thunkSize)
+   {
+   OMR::CriticalSection cs(_thunkMonitor);
+
+   auto it = _thunkMap.find({ signature, signatureSize });
+   if (it != _thunkMap.end())
+      return it->second;
+
+   if (!JITServerAOTCacheMap::cacheHasSpace())
+      return NULL;
+
+   auto record = AOTCacheThunkRecord::create(_nextThunkId, signature, signatureSize, thunkStart, thunkSize);
+   addToMap(_thunkMap, _thunkHead, _thunkTail, it, getRecordKey(record), record);
+   ++_nextThunkId;
+
+   if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+         "AOT cache %s: created thunk ID %zu -> %.*s thunkSize %u",
+         _name.c_str(), record->data().id(), signatureSize, signature, thunkSize
       );
 
    return record;

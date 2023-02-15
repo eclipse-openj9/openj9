@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -64,6 +64,7 @@ namespace TR { class IlGenRequest; }
 struct SerializedRuntimeAssumption;
 class ClientSessionData;
 class AOTCacheRecord;
+class AOTCacheThunkRecord;
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
 #define COMPILATION_AOT_HAS_INVOKEHANDLE -9
@@ -362,6 +363,12 @@ class OMR_EXTENSIBLE Compilation : public OMR::CompilationConnector
    // will be used when the result of this out-of-process compilation is serialized and stored in
    // JITServer AOT cache. If record is NULL, fails serialization by setting _aotCacheStore to false.
    void addSerializationRecord(const AOTCacheRecord *record, uintptr_t reloDataOffset);
+
+   UnorderedSet<const AOTCacheThunkRecord *> &getThunkRecords() { return _thunkRecords; }
+   // Adds an AOT cache thunk record to the set of thunks that this compilation depends on, and also adds it
+   // to the list of records that this compilation depends on if the thunk record is new. If the record is NULL,
+   // fails serialization by setting _aotCacheStore to false.
+   void addThunkRecord(const AOTCacheThunkRecord *record);
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
    TR::SymbolValidationManager *getSymbolValidationManager() { return _symbolValidationManager; }
@@ -489,6 +496,8 @@ private:
    // List of AOT cache records and corresponding offsets into AOT relocation data that will
    // be used to store the result of this compilation in AOT cache; always empty at the client
    Vector<std::pair<const AOTCacheRecord *, uintptr_t>> _serializationRecords;
+   // Set of AOT cache thunk records that this compilation depends on; always empty at the client
+   UnorderedSet<const AOTCacheThunkRecord *> _thunkRecords;
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
    TR::SymbolValidationManager *_symbolValidationManager;
