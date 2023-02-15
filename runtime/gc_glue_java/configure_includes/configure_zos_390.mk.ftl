@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2016, 2020 IBM Corp. and others
+# Copyright (c) 2016, 2023 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -42,9 +42,16 @@ ifeq (zos_390-64_cmprssptrs, $(SPEC))
 		--enable-OMR_GC_IDLE_HEAP_MANAGER \
 		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS \
 		OMR_GC_POINTER_MODE=compressed
-ifneq (8,$(VERSION_MAJOR))
+ifeq (8,$(VERSION_MAJOR))
+	CONFIGURE_ARGS += \
+		OMR_ZOS_COMPILE_ARCHITECTURE=7 \
+		OMR_ZOS_COMPILE_TUNE=10 \
+		OMR_ZOS_COMPILE_TARGET=zOSV1R13 \
+		OMR_ZOS_LINK_COMPAT=ZOSV1R13
+else
 	CONFIGURE_ARGS += \
 		OMR_ZOS_COMPILE_ARCHITECTURE=10 \
+		OMR_ZOS_COMPILE_TUNE=12 \
 		OMR_ZOS_COMPILE_TARGET=zOSV2R3 \
 		OMR_ZOS_LINK_COMPAT=ZOSV2R3
 endif
@@ -59,9 +66,16 @@ ifeq (zos_390-64, $(SPEC))
 		--enable-OMR_GC_IDLE_HEAP_MANAGER \
 		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS \
 		OMR_GC_POINTER_MODE=full
-ifneq (8,$(VERSION_MAJOR))
+ifeq (8,$(VERSION_MAJOR))
+	CONFIGURE_ARGS += \
+		OMR_ZOS_COMPILE_ARCHITECTURE=7 \
+		OMR_ZOS_COMPILE_TUNE=10 \
+		OMR_ZOS_COMPILE_TARGET=zOSV1R13 \
+		OMR_ZOS_LINK_COMPAT=ZOSV1R13
+else
 	CONFIGURE_ARGS += \
 		OMR_ZOS_COMPILE_ARCHITECTURE=10 \
+		OMR_ZOS_COMPILE_TUNE=12 \
 		OMR_ZOS_COMPILE_TARGET=zOSV2R3 \
 		OMR_ZOS_LINK_COMPAT=ZOSV2R3
 endif
@@ -74,6 +88,13 @@ ifeq (zos_390, $(SPEC))
 		--enable-OMR_PORT_ZOS_CEEHDLRSUPPORT \
 		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS \
 		OMR_GC_POINTER_MODE=full
+ifeq (8,$(VERSION_MAJOR))
+	CONFIGURE_ARGS += \
+		OMR_ZOS_COMPILE_ARCHITECTURE=7 \
+		OMR_ZOS_COMPILE_TUNE=10 \
+		OMR_ZOS_COMPILE_TARGET=zOSV1R13 \
+		OMR_ZOS_LINK_COMPAT=ZOSV1R13
+endif
 endif
 
 CONFIGURE_ARGS += libprefix=lib exeext= solibext=.so arlibext=.a objext=.o
