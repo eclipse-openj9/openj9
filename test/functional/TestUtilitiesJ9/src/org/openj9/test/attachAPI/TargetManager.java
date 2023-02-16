@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2020 IBM Corp. and others
+ * Copyright (c) 2001, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -116,13 +116,13 @@ class TargetManager {
 		int tries = 100;
 		RuntimeMXBean bean = (RuntimeMXBean) ManagementFactory.getRuntimeMXBean();
 		while (tries > 0) {
-			logger.debug("Poll attach API status");
+			logger.info("Poll attach API status");
 			if (bean.isAttachApiInitialized()) {
 				result = true;
-				logger.debug("attach API initialized");
+				logger.info("attach API initialized");
 				break;
 			} else if (bean.isAttachApiTerminated()) {
-				logger.debug("attach API terminated");
+				logger.info("attach API terminated");
 				result = false;
 				break;
 			} 
@@ -184,7 +184,7 @@ class TargetManager {
 					targetLog.append(tgtOutput);
 					targetLog.append('\n');
 				} else {
-					logger.debug("TargetVM stdout closed unexpectedly");
+					logger.info("TargetVM stdout closed unexpectedly");
 					while (targetErrReader.ready()) {
 						String currentLine = targetErrReader.readLine();
 						if (null != currentLine) {
@@ -194,7 +194,7 @@ class TargetManager {
 					tgtStatus = TargetStatus.INIT_FAILURE;
 					break;
 				}
-				logger.debug("TargetVM output: " + tgtOutput);
+				logger.info("TargetVM output: " + tgtOutput);
 				if (tgtOutput.startsWith(PID_PREAMBLE)) {
 					targetPid = tgtOutput.substring(PID_PREAMBLE.length());
 				}
@@ -217,14 +217,14 @@ class TargetManager {
 				}
 			} while (!done);
 			if (null == targetPid) {
-				logger.debug("Target PID not set");
+				logger.info("Target PID not set");
 				tgtStatus = TargetStatus.INIT_FAILURE;
 			}
 		} catch (IOException e) {
 			StringPrintStream.logStackTrace(e, logger);
 		}
 		if (TargetStatus.INIT_SUCCESS != tgtStatus) {
-			logger.debug("TargetVM initialization failed with status "+tgtStatus.toString()+"\nTarget output:\n"+targetLog.toString());			
+			logger.info("TargetVM initialization failed with status "+tgtStatus.toString()+"\nTarget output:\n"+targetLog.toString());
 		}
 		return tgtStatus;
 	}
@@ -267,7 +267,7 @@ class TargetManager {
 		char fs = File.separatorChar;
 		String javaExec = System.getProperty("java.home") + fs + "bin" + fs
 				+ "java";
-		logger.debug("javaExec="+javaExec);
+		logger.info("javaExec="+javaExec);
 		String sideCar = System.getProperty("java.sidecar");
 		String myClasspath = System.getProperty("java.class.path");
 		argBuffer.add(javaExec);
@@ -307,7 +307,7 @@ class TargetManager {
 			debugBuffer.append(" ");
 		}
 		debugBuffer.append("\n");
-		logger.debug(debugBuffer.toString());
+		logger.info(debugBuffer.toString());
 		try {
 			target = me.exec(args);
 		} catch (IOException e) {
@@ -333,7 +333,7 @@ class TargetManager {
 	boolean syncWithTarget() {
 		targetVmStatus = readTargetPidAndStatus();
 		if (!TargetStatus.INIT_SUCCESS.equals(targetVmStatus)) {
-			logger.debug("TargetManager.syncWithTarget() failed!");
+			logger.info("TargetManager.syncWithTarget() failed!");
 			return false;
 		}
 		if (null == targetId) {
@@ -345,7 +345,7 @@ class TargetManager {
 	static void listIpcDir() {
 		String tmpdir = System.getProperty("java.io.tmpdir")
 				+ File.separatorChar + DEFAULT_IPC_DIR;
-		logger.debug("DEBUG:" + tmpdir);
+		logger.info("DEBUG:" + tmpdir);
 		File ipcDir = new File(tmpdir);
 		if (ipcDir.exists()) {
 			listRecursive(System.getProperty("java.io.tmpdir"), ipcDir);
@@ -354,7 +354,7 @@ class TargetManager {
 
 	static void listRecursive(String prefix, File root) {
 		String myPath = prefix + "/" + root.getName();
-		logger.debug(myPath);
+		logger.info(myPath);
 		if (root.isDirectory()) {
 			File[] children = root.listFiles();
 			if (null != children) {
@@ -453,7 +453,7 @@ class TargetManager {
 		if (waitForTermination) {
 			try {
 				status = proc.waitFor();
-				logger.debug("waitFor status = " + status);
+				logger.info("waitFor status = " + status);
 				return status;
 			} catch (InterruptedException e) {
 				return 1;
@@ -500,7 +500,7 @@ class TargetManager {
 	public static void dumpLogs(boolean printLogs) {
 		try {
 			Class<?> attachHandlerClass = Class.forName(OPENJ9_INTERNAL_TOOLS_ATTACH_TARGET_ATTACH_HANDLER);
-			logger.debug("Dumping attach API logs");
+			logger.info("Dumping attach API logs");
 			File pwd = new File(System.getProperty("user.dir"));
 			File[] logFiles = pwd.listFiles();
 			final Method getVmId = attachHandlerClass.getMethod("getVmId");
@@ -513,7 +513,7 @@ class TargetManager {
 				if (logName.endsWith(".log")) {
 					if (printLogs) {
 						try {
-							logger.debug("Log file " + f.getName()+":\n" 
+							logger.info("Log file " + f.getName()+":\n"
 									+ (new String(Files.readAllBytes(Paths.get(f.toURI())))));
 						} catch (IOException e) {
 							StringPrintStream.logStackTrace(e, logger);
