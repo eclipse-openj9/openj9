@@ -179,6 +179,13 @@ public class VirtualThreadTests {
 			Thread.sleep(500);
 
 			StackTraceElement[] ste = t.getStackTrace();
+
+			// If stacktrace doesn't match expected result, print out stacktrace for debuggging.
+			if ((11 != ste.length) || !ste[0].getMethodName().equals("yieldImpl")) {
+				for (StackTraceElement st : ste) {
+					System.out.println(st);
+				}
+			}
 			AssertJUnit.assertTrue("Expected 11 frames, got " + ste.length, (11 == ste.length));
 			AssertJUnit.assertTrue("Expected top frame to be yieldImpl, got " + ste[0].getMethodName(), ste[0].getMethodName().equals("yieldImpl"));
 			LockSupport.unpark(t);
