@@ -47,6 +47,7 @@
 #include "compile/CompilationTypes.hpp"
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 #include "control/CompileBeforeCheckpoint.hpp"
+#include "control/OptionsPostRestore.hpp"
 #endif
 #include "compile/ResolvedMethod.hpp"
 #include "control/JitDump.hpp"
@@ -2891,8 +2892,13 @@ void TR::CompilationInfo::prepareForCheckpoint()
 
 void TR::CompilationInfo::prepareForRestore()
    {
+   J9JavaVM   *vm       = _jitConfig->javaVM;
+   J9VMThread *vmThread = vm->internalVMFunctions->currentVMThread(vm);
+
    if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCheckpointRestore))
       TR_VerboseLog::writeLineLocked(TR_Vlog_CHECKPOINT_RESTORE, "Preparing for restore");
+
+   J9::OptionsPostRestore::processOptionsPostRestore(vmThread, _jitConfig, this);
 
    {
    OMR::CriticalSection resumeCompThreadsCriticalSection(getCompilationMonitor());
