@@ -22,6 +22,66 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 -->
 <playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../TKG/playlist.xsd">
 	<test>
+		<testCaseName>testSupportedFips140-3_win_x86-64</testCaseName>
+		<variations>
+			<variation>NoOptions</variation>
+		</variations>
+		<command>$(JAVA_COMMAND) -DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS)$(SQ) -jar $(CMDLINETESTER_JAR) \
+	-config $(Q)$(TEST_RESROOT)$(D)supportedfips140-3.xml$(Q) \
+	-nonZeroExitWhenError; \
+	$(TEST_STATUS)</command>
+		<platformRequirements>bits.64,os.win,arch.x86</platformRequirements>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<impls>
+			<impl>ibm</impl>
+		</impls>
+	</test>
+	<test>
+		<testCaseName>testSupportedFips140-3_lin_x86-64</testCaseName>
+		<variations>
+			<variation>NoOptions</variation>
+		</variations>
+		<command>$(JAVA_COMMAND) -DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS)$(SQ) -jar $(CMDLINETESTER_JAR) \
+	-config $(Q)$(TEST_RESROOT)$(D)supportedfips140-3.xml$(Q) \
+	-nonZeroExitWhenError; \
+	$(TEST_STATUS)</command>
+		<platformRequirements>bits.64,os.linux,arch.x86</platformRequirements>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<impls>
+			<impl>ibm</impl>
+		</impls>
+	</test>
+	<test>
+		<testCaseName>testSupportedFips140-3_ppc64</testCaseName>
+		<variations>
+			<variation>NoOptions</variation>
+		</variations>
+		<command>$(JAVA_COMMAND) -DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS)$(SQ) -jar $(CMDLINETESTER_JAR) \
+	-config $(Q)$(TEST_RESROOT)$(D)supportedfips140-3.xml$(Q) \
+	-nonZeroExitWhenError; \
+	$(TEST_STATUS)</command>
+		<platformRequirements>bits.64,arch.ppc</platformRequirements>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<impls>
+			<impl>ibm</impl>
+		</impls>
+	</test>
+	<test>
 		<testCaseName>testUnsupportedFips140-3_non64bit</testCaseName>
 		<variations>
 			<variation>NoOptions</variation>
