@@ -87,25 +87,12 @@
 	</test>
 	<test>
 		<testCaseName>cmdLineTester_criu_nonPortableRestore</testCaseName>
-		<disables>
-			<disable>
-				<comment>Metronome GC policy is not supported on IBM Z</comment>
-				<variation>-Xgcpolicy:metronome</variation>
-				<platform>s390x_.*</platform>
-			</disable>
-			<disable>
-				<comment>Metronome GC policy is not supported on Power PC for Linux</comment>
-				<variation>-Xgcpolicy:metronome</variation>
-				<platform>ppc64le_linux.*</platform>
-			</disable>
-		</disables>
 		<variations>
 			<variation>-Xjit -XX:+CRIURestoreNonPortableMode</variation>
 			<variation>-Xint -XX:+CRIURestoreNonPortableMode</variation>
 			<variation>-Xjit:count=0 -XX:+CRIURestoreNonPortableMode</variation>
-			<variation>-Xgcpolicy:balanced</variation>
 			<variation>-Xgcpolicy:optthruput</variation>
-			<variation>-Xgcpolicy:metronome</variation>
+			<variation>-Xgcpolicy:optavgpause</variation>
 		</variations>
 		<command>
 			TR_Options=$(Q)exclude={org/openj9/criu/TimeChangeTest.nanoTimeInt()J},dontInline={org/openj9/criu/TimeChangeTest.nanoTimeInt()J|org/openj9/criu/TimeChangeTest.nanoTimeJit()J},{org/openj9/criu/TimeChangeTest.nanoTimeJit()J}(count=1)$(Q) \
