@@ -2,7 +2,7 @@
  * Licensed Materials - Property of IBM
  * "Restricted Materials of IBM"
  *
- * (c) Copyright IBM Corp. 2020, 2021 All Rights Reserved
+ * (c) Copyright IBM Corp. 2020, 2023 All Rights Reserved
  *
  * US Government Users Restricted Rights - Use, duplication or disclosure
  * restricted by GSA ADP Schedule Contract with IBM Corp.
@@ -16,6 +16,7 @@ def set_extra_options() {
 def set_gskit() {
     if (EXTRA_GETSOURCE_OPTIONS.contains("-openjceplus-repo") && (!EXTRA_CONFIGURE_OPTIONS.contains("--with-gskit"))) {
         // required by OpenJCEPlus for IBM Java 11 builds
+		println("Fetch gskit")
 
         def gskitSDKDownloadUrl = buildspec.getScalarField("gskit.sdk", SDK_VERSION)
         def gskitLibDownloadUrl = buildspec.getScalarField("gskit.lib", SDK_VERSION)
@@ -23,12 +24,16 @@ def set_gskit() {
         if  (gskitSDKDownloadUrl && gskitLibDownloadUrl) {
             def gskitDir = "${WORKSPACE}/gskit"
             def gskitLibDir = "${gskitDir}/lib/"
-            def gskitCredentialsId = variableFile.get_user_credentials_id('gsa')
 
-            // download GSKIT
-            withCredentials([usernamePassword(credentialsId: "${gskitCredentialsId}", usernameVariable: "GSA_USERNAME", passwordVariable: "GSA_PASSWORD")]) {
-                sh "_ENCODE_FILE_NEW=UNTAGGED curl -sSkL -u ${GSA_USERNAME}:${GSA_PASSWORD} ${gskitSDKDownloadUrl} -o gskit_sdk.tar"
-                sh "_ENCODE_FILE_NEW=UNTAGGED curl -sSkL -u ${GSA_USERNAME}:${GSA_PASSWORD} ${gskitLibDownloadUrl} -o gskit_lib.tar"
+            //env.ARTIFACTORY_SERVER should be already set in build.groovy
+            //see set_basic_artifactory_config() in variables-functions.groovy
+            def server = Artifactory.server env.ARTIFACTORY_SERVER
+            def artifactoryCredentialsID = server.getCredentialsId()
+
+			// download GSKIT
+			withCredentials([usernamePassword(credentialsId: "${artifactoryCredentialsID}", usernameVariable: "ARTIFACTORY_USERNAME", passwordVariable: "ARTIFACTORY_PASSWORD_TOKEN")]) {
+                sh "_ENCODE_FILE_NEW=UNTAGGED curl -sSkL -u \$ARTIFACTORY_USERNAME:\$ARTIFACTORY_PASSWORD_TOKEN ${gskitSDKDownloadUrl} -o gskit_sdk.tar"
+                sh "_ENCODE_FILE_NEW=UNTAGGED curl -sSkL -u \$ARTIFACTORY_USERNAME:\$ARTIFACTORY_PASSWORD_TOKEN ${gskitLibDownloadUrl} -o gskit_lib.tar"
             }
 
             def extractCommand = "tar -xf"
