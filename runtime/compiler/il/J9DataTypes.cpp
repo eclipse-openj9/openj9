@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2022 IBM Corp. and others
+ * Copyright (c) 2000, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -180,7 +180,7 @@ J9::ILOpCode::getDataTypeConversion(TR::DataType t1, TR::DataType t2)
 
    if (t1.isMask() || t2.isMask()) return TR::BadILOp;
 
-   if (t1.isVector() && t2.isVector()) return TR::ILOpCode::createVectorOpCode(TR::vcast, t1, t2);
+   if (t1.isVector() && t2.isVector()) return TR::ILOpCode::createVectorOpCode(TR::vconv, t1, t2);
 
    if (t1.isVector() || t2.isVector()) return TR::BadILOp;
 
