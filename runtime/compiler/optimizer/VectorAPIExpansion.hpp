@@ -193,6 +193,7 @@ class TR_VectorAPIExpansion : public TR::Optimization
       Reduction,
       Test,
       Blend,
+      Convert,
       Other
       };
 
@@ -204,6 +205,11 @@ class TR_VectorAPIExpansion : public TR::Optimization
       {
       TR::Node * (* _methodHandler)(TR_VectorAPIExpansion *, TR::TreeTop *, TR::Node *, TR::DataType, TR::VectorLength, int32_t, handlerMode);
       vapiObjType  _returnType;
+      int32_t      _elementTypeIndex;
+      int32_t      _numLanesIndex;
+      int32_t      _firstOperandIndex;
+      int32_t      _numOperands;
+      int32_t      _maskIndex;
       vapiObjType  _argumentTypes[_maxNumberArguments];
       };
 
@@ -233,7 +239,8 @@ class TR_VectorAPIExpansion : public TR::Optimization
 
       vectorAliasTableElement() : _symRef(NULL), _vecSymRef(NULL),
                                   _vecLen(vec_len_default), _elementType(TR::NoType), _aliases(NULL), _classId(0),
-                                  _cantVectorize(false), _cantScalarize(false), _objectType(Unknown) {}
+                                  _cantVectorize(false), _cantScalarize(false), _objectType(Unknown),
+                                  _tempAliases(NULL), _tempClassId(0) {}
 
       TR::SymbolReference *_symRef;
       union
@@ -252,6 +259,9 @@ class TR_VectorAPIExpansion : public TR::Optimization
       bool                 _cantVectorize;
       bool                 _cantScalarize;
       vapiObjType          _objectType;
+
+      TR_BitVector        *_tempAliases;
+      int32_t              _tempClassId;
       };
 
 
@@ -354,22 +364,73 @@ class TR_VectorAPIExpansion : public TR::Optimization
 
 
   /** \brief
-   *     Checks if method's argument is one the \c vapiObjType types
+   *     Returns index of a child node that contains element type
    *
    *  \param methodSymbol
    *     Method symbol
    *
-   *  \param i
-   *     argument's number
+   *  \return
+   *     Index of a child node that contains element type
+   */
+   int32_t getElementTypeIndex(TR::MethodSymbol *methodSymbol);
+
+  /** \brief
+   *     Returns index of a child node that contains number of lanes
    *
-   *  \param type
-   *     \c vapiObjType
+   *  \param methodSymbol
+   *     Method symbol
    *
    *  \return
-   *     \c true if the argument is the same as \c type,
-   *     \c false otherwise
+   *     Index of a child node that contains number of lanes
    */
-   bool isArgType(TR::MethodSymbol *methodSymbol, int32_t i, vapiObjType type);
+   int32_t getNumLanesIndex(TR::MethodSymbol *methodSymbol);
+
+  /** \brief
+   *     Returns index of a child node that contains first operand
+   *
+   *  \param methodSymbol
+   *     Method symbol
+   *
+   *  \return
+   *     Index of a child node that contains first operand
+   */
+   int32_t getFirstOperandIndex(TR::MethodSymbol *methodSymbol);
+
+  /** \brief
+   *     Returns number of operands
+   *
+   *  \param methodSymbol
+   *     Method symbol
+   *
+   *  \return
+   *     Number of operands
+   */
+   int32_t getNumOperands(TR::MethodSymbol *methodSymbol);
+
+  /** \brief
+   *     Returns index of a child node that contains mask
+   *
+   *  \param methodSymbol
+   *     Method symbol
+   *
+   *  \return
+   *     Index of a child node that contains mask
+   */
+   int32_t getMaskIndex(TR::MethodSymbol *methodSymbol);
+
+  /** \brief
+   *     Determines element type and number of lanes of a node
+   *
+   *  \param node
+   *     Call node
+   *
+   *  \param elementType
+   *     Element type
+   *
+   *  \param numLanes
+   *     Number of lanes
+   */
+   void getElementTypeAndNumLanes(TR::Node *node, TR::DataType &elementType, int32_t &numLanes);
 
   /** \brief
    *     Aliases symbol references with each other as described above
@@ -395,13 +456,25 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *
    *   \param id
    *     Symbol reference for which all transitive aliases need to be found
+   *
+   *   \param aliasesField
+   *     Pointer to the struct member that contains aliases
+   *
+   *   \param classField
+   *     Pointer to the struct member that contains class
    */
-   void findAllAliases(int32_t classId, int32_t id);
+   void findAllAliases(int32_t classId, int32_t id, TR_BitVector * vectorAliasTableElement::* aliasesField, int32_t vectorAliasTableElement::* classField);
 
   /** \brief
    *     Validates classes found by \c buildAliasClasses()
+   *
+   *   \param aliasesField
+   *     Pointer to the struct member that contains aliases
+   *
+   *   \param classField
+   *     Pointer to the struct member that contains class
    */
-   void validateVectorAliasClasses();
+   void validateVectorAliasClasses(TR_BitVector * vectorAliasTableElement::* aliasesField, int32_t vectorAliasTableElement::* classField);
 
   /** \brief
    *     Used by \c validateVectorAliasClasses() to check individual symbol reference
@@ -418,8 +491,11 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *  \param classType
    *     Element type of the class
    *
+   *  \param classField
+   *     Pointer to the struct member that contains class
+   *
    */
-   bool validateSymRef(int32_t classId, int32_t i, vec_sz_t &classLength, TR::DataType &classType);
+   bool validateSymRef(int32_t classId, int32_t i, vec_sz_t &classLength, TR::DataType &classType, int32_t vectorAliasTableElement::* classField);
 
   /** \brief
    *     Sets \c _classId of a symbol reference to -1 to indicate it's invalid
@@ -438,8 +514,11 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *
    *  \param node2
    *     Second node
+   *
+   *  \param aliasTemps
+   *     true if aliasing is caused by storing one temp into another
    */
-   void alias(TR::Node *node1, TR::Node *node2);
+   void alias(TR::Node *node1, TR::Node *node2, bool aliasTemps = false);
 
   /** \brief
    *     Finds vector length from SPECIES node if it's a known object
@@ -521,6 +600,9 @@ class TR_VectorAPIExpansion : public TR::Optimization
   /** \brief
    *     Maps Vector API opcode enum into scalar or vector TR::ILOpCodes
    *
+   *  \param comp
+   *     Compilation
+   *
    *  \param vectorOpCode
    *     Vector API opcode enum
    *
@@ -536,11 +618,19 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *  \param withMask
    *     true if mask is present, false otherwise
    *
+   *  \param resultElementType
+   *     Result element type
+   *
+   *  \param resultVectorLength
+   *     Result vector length
+   *
    *  \return
    *     scalar TR::IL opcode if scalar is true, otherwise vector opcode
    */
-   static TR::ILOpCodes ILOpcodeFromVectorAPIOpcode(int32_t vectorOpCode, TR::DataType elementType,
-                                                    TR::VectorLength vectorLength, vapiOpCodeType opCodeType, bool withMask);
+   static TR::ILOpCodes ILOpcodeFromVectorAPIOpcode(TR::Compilation *comp, int32_t vectorOpCode, TR::DataType elementType,
+                                                    TR::VectorLength vectorLength, vapiOpCodeType opCodeType, bool withMask,
+                                                    TR::DataType resultElementType = TR::NoType,
+                                                    TR::VectorLength resultVectorLength = TR::NoVectorLength);
 
   /** \brief
    *    For the node's symbol reference, creates and records(if it does not exist yet)
@@ -1106,7 +1196,7 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *      Transformed node
    */
    static TR::Node *convertIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, TR::VectorLength vectorLength, int32_t numLanes, handlerMode mode);
-   
+
 
   /** \brief
    *    Helper method to transform a load from array node
