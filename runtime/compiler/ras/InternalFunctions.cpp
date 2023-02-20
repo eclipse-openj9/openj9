@@ -20,6 +20,12 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
+#if defined(J9ZTPF)
+#if !defined(__TPF_DO_NOT_MAP_ATOE)
+#define __TPF_DO_NOT_MAP_ATOE
+#endif /* !defined(__TPF_DO_NOT_MAP_ATOE) */
+#endif /* defined(J9ZTPF) */
+
 #include "ras/InternalFunctions.hpp"
 
 #include <stdarg.h>
