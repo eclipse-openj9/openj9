@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2022 IBM Corp. and others
+# Copyright (c) 2017, 2023 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,9 +35,7 @@ if(WIN32 AND (NOT CMAKE_HOST_WIN32) AND (NOT JAVA_SPEC_VERSION LESS 11))
 	set(CMAKE_JAVA_INCLUDE_PATH_FINAL "${CMAKE_CURRENT_SOURCE_DIR}")
 endif()
 
-# TODO this needs to be named and handled better
-set(SPEC_LEVEL 7 CACHE STRING "")
-set(CMAKE_JAVA_COMPILE_FLAGS -nowarn -source ${SPEC_LEVEL} -target ${SPEC_LEVEL})
+set(CMAKE_JAVA_COMPILE_FLAGS -nowarn)
 
 # Note add_jar isn't as good at tracking target dependencies as regular cmake.
 # In particular it will not let you link against a target which will be defined later.
