@@ -500,6 +500,8 @@ class CompilationInfoPerThread : public TR::CompilationInfoPerThreadBase
    bool                   isDiagnosticThread() const { return _isDiagnosticThread; }
    CpuSelfThreadUtilization& getCompThreadCPU() { return _compThreadCPU; }
    TR::FILE              *getRTLogFile() { return _rtLogFile; }
+   void                   closeRTLogFile();
+   void                   openRTLogFile();
    virtual void           freeAllResources();
 
 #if defined(J9VM_OPT_JITSERVER)

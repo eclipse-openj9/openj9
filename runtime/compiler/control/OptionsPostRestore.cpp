@@ -30,6 +30,7 @@
 #include "env/TRMemory.hpp"
 #include "compile/Method.hpp"
 #include "control/CompilationRuntime.hpp"
+#include "control/CompilationThread.hpp"
 #include "control/Options.hpp"
 #include "control/OptionsPostRestore.hpp"
 #include "control/J9Recompilation.hpp"
@@ -39,6 +40,7 @@
 #include "env/VerboseLog.hpp"
 #include "env/TRMemory.hpp"
 #include "env/VMJ9.h"
+#include "runtime/CodeRuntime.hpp"
 
 #define FIND_AND_CONSUME_RESTORE_ARG(match, optionName, optionValue) FIND_AND_CONSUME_ARG(vm->checkpointState.restoreArgsList, match, optionName, optionValue)
 #define FIND_ARG_IN_RESTORE_ARGS(match, optionName, optionValue) FIND_ARG_IN_ARGS(vm->checkpointState.restoreArgsList, match, optionName, optionValue)
@@ -51,6 +53,9 @@ J9::OptionsPostRestore::OptionsPostRestore(J9VMThread *vmThread, J9JITConfig *ji
    _vmThread(vmThread),
    _compInfo(compInfo),
    _region(region),
+   _privateConfig((TR_JitPrivateConfig*)_jitConfig->privateConfig),
+   _oldVLogFileName(_privateConfig->vLogFileName),
+   _oldRtLogFileName(_privateConfig->rtLogFileName),
    _argIndexXjit(-1),
    _argIndexXjitcolon(-1),
    _argIndexXnojit(-1),
@@ -399,6 +404,93 @@ J9::OptionsPostRestore::filterMethods()
    }
 
 void
+J9::OptionsPostRestore::openNewVlog(char *vLogFileName)
+   {
+   TR_VerboseLog::vlogAcquire();
+
+   if (_oldVLogFileName)
+      {
+      TR_ASSERT_FATAL(vLogFileName,
+                      "vlogFileName cannot be NULL if _oldVLogFileName (%s) is not NULL\n",
+                      _oldVLogFileName);
+
+      TR_ASSERT_FATAL(_privateConfig->vLogFile,
+                      "_privateConfig->vLogFile should not be NULL if _oldVLogFileName (%s) is not NULL\n",
+                      _oldVLogFileName);
+
+      j9jit_fclose(_privateConfig->vLogFile);
+      TR::Options::jitPersistentFree(_oldVLogFileName);
+      _oldVLogFileName = NULL;
+      }
+
+   _privateConfig->vLogFile = fileOpen(TR::Options::getCmdLineOptions(), _jitConfig, vLogFileName, "wb", true);
+   TR::Options::setVerboseOptions(_privateConfig->verboseFlags);
+
+   TR_VerboseLog::vlogRelease();
+   }
+
+void
+J9::OptionsPostRestore::openNewRTLog(char *rtLogFileName)
+   {
+   bool closeOldFile = (_oldRtLogFileName != NULL);
+
+   JITRT_LOCK_LOG(_jitConfig);
+
+   if (closeOldFile)
+      {
+      TR_ASSERT_FATAL(rtLogFileName,
+                      "rtLogFileName cannot be NULL if _oldRtLogFileName (%s) is not NULL\n",
+                      _oldRtLogFileName);
+
+      TR_ASSERT_FATAL(_privateConfig->rtLogFile,
+                      "_privateConfig->rtLogFile should not be NULL if _oldRtLogFileName (%s) is not NULL\n",
+                      _oldRtLogFileName);
+
+      j9jit_fclose(_privateConfig->rtLogFile);
+      TR::Options::jitPersistentFree(_oldRtLogFileName);
+      _oldRtLogFileName = NULL;
+      }
+
+   _privateConfig->rtLogFile = fileOpen(TR::Options::getCmdLineOptions(), _jitConfig, rtLogFileName, "wb", true);
+
+   JITRT_UNLOCK_LOG(_jitConfig);
+
+   TR::CompilationInfoPerThread * const * arrayOfCompInfoPT = _compInfo->getArrayOfCompilationInfoPerThread();
+   for (int32_t i = _compInfo->getFirstCompThreadID(); i <= _compInfo->getLastCompThreadID(); i++)
+      {
+      TR::CompilationInfoPerThread *compThreadInfoPT = arrayOfCompInfoPT[i];
+      if (closeOldFile)
+         {
+         compThreadInfoPT->closeRTLogFile();
+         }
+      compThreadInfoPT->openRTLogFile();
+      }
+   }
+
+void
+J9::OptionsPostRestore::openLogFilesIfNeeded()
+   {
+   _privateConfig->vLogFileName = _jitConfig->vLogFileName;
+
+   char *vLogFileName = _privateConfig->vLogFileName;
+   char *rtLogFileName = _privateConfig->rtLogFileName;
+
+   // if _oldVLogFileName != vLogFileName, it is not possible that
+   // _oldVLogFileName != NULL && vLogFileName == NULL
+   if (_oldVLogFileName != vLogFileName)
+      {
+      openNewVlog(vLogFileName);
+      }
+
+   // if _oldRtLogFileName != rtLogFileName, it is not possible that
+   // _oldRtLogFileName != NULL && rtLogFileName == NULL
+   if (_oldRtLogFileName != rtLogFileName)
+      {
+      openNewRTLog(rtLogFileName);
+      }
+   }
+
+void
 J9::OptionsPostRestore::postProcessInternalCompilerOptions()
    {
    // TODO: Based on whether the following is enabled, do necessary compensation
@@ -411,11 +503,16 @@ J9::OptionsPostRestore::postProcessInternalCompilerOptions()
    if (TR::Options::requiresDebugObject())
       TR::Options::suppressLogFileBecauseDebugObjectNotCreated(false);
 
-   if (TR::Options::getDebug())
-      filterMethods();
-
+   // Need to set number of usable threads before opening logs;
+   // there is one rtLog per comp thread
    if (TR::Options::_numUsableCompilationThreads != _compInfo->getNumUsableCompilationThreads())
       _compInfo->setNumUsableCompilationThreadsPostRestore(TR::Options::_numUsableCompilationThreads);
+
+   // Open vlog and rtLog if applicable
+   openLogFilesIfNeeded();
+
+   if (TR::Options::getDebug())
+      filterMethods();
    }
 
 void

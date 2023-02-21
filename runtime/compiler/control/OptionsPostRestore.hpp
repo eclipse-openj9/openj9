@@ -33,6 +33,7 @@ namespace TR { class CompilationInfo; }
 namespace TR { struct Region; }
 struct TR_Memory;
 struct TR_J9VMBase;
+struct TR_JitPrivateConfig;
 
 namespace J9
 {
@@ -51,7 +52,7 @@ class OptionsPostRestore
    OptionsPostRestore(J9VMThread *vmThread, J9JITConfig *jitConfig, TR::CompilationInfo *compInfo, TR::Region &region);
 
    /**
-    * Public API to process options post restore
+    * \brief  API to process options post restore
     *
     * \param vmThread The J9VMThread
     * \param jitConfig The J9JITConfig
@@ -62,14 +63,39 @@ class OptionsPostRestore
    private:
 
    /**
-    * Helper Method to iterate and set indices of external options
-    * found in the Restore VM Args Array
+    * \brief Close the old vlog if needed and open the vlog.
+    *
+    * \param vLogFileName The name of the vlog specified in the
+    *                     post restore options
+    */
+   void openNewVlog(char *vLogFileName);
+
+   /**
+    * \brief Close the old RT log if needed (including the RT log
+    *        per compilation thread), and open the new RT log
+    *        (including the RT log per compilation thread).
+    *
+    * \param rtLogFileName The name of the rtLog specified in the
+    *                      post restore options
+    */
+   void openNewRTLog(char *rtLogFileName);
+
+   /**
+    * \brief Open vlog and rtLog if specified in the restore run options.
+    *        If specified in both, the old log file is closed, and the
+    *        new log file is opened.
+    */
+   void openLogFilesIfNeeded();
+
+   /**
+    * \brief Method to iterate and set indices of external options
+    *        found in the Restore VM Args Array
     */
    void iterateOverExternalOptions();
 
    /**
-    * Invalidate existing method bodies if they can no longer be
-    * executed based on the exclude/include filters.
+    * \brief Invalidate existing method bodies if they can no longer be
+    *        executed based on the exclude/include filters.
     *
     * \param fej9 The TR_J9VMBase front end
     * \param method The J9Method of the method to be filtered
@@ -77,29 +103,29 @@ class OptionsPostRestore
    void filterMethod(TR_J9VMBase *fej9, J9Method *method);
 
    /**
-    * Helper method to filter methods based on the
-    * exclude/include filters.
+    * \brief Helper method to filter methods based on the
+    *        exclude/include filters.
     */
    void filterMethods();
 
    /**
-    * Helper method to post process internal compiler options.
+    * \brief Helper method to post process internal compiler options.
     */
    void postProcessInternalCompilerOptions();
 
    /**
-    * Helper method to process JITServer options post restore.
+    * \brief Helper method to process JITServer options post restore.
     */
    void processJitServerOptions();
 
    /**
-    * Helper method to get compiler options (such as -Xjit, -Xaot, etc.)
-    * from the Restore VM Args Array and process them.
+    * \brief Helper method to get compiler options (such as -Xjit, -Xaot, etc.)
+    *        from the Restore VM Args Array and process them.
     */
    void processInternalCompilerOptions(bool enabled, bool isAOT);
 
    /**
-    * Method to process compiler options post restore.
+    * \brief Method to process compiler options post restore.
     */
    void processCompilerOptions();
 
@@ -107,6 +133,10 @@ class OptionsPostRestore
    J9VMThread *_vmThread;
    TR::CompilationInfo *_compInfo;
    TR::Region &_region;
+   TR_JitPrivateConfig *_privateConfig;
+
+   char *_oldVLogFileName;
+   char *_oldRtLogFileName;
 
    int32_t _argIndexXjit;
    int32_t _argIndexXjitcolon;
