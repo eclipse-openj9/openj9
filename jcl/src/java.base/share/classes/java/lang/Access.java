@@ -584,6 +584,16 @@ final class Access implements JavaLangAccess {
 	public InputStream initialSystemIn() {
 		return System.initialIn;
 	}
+
+/*[IF JAVA_SPEC_VERSION >= 21]*/
+	public char getUTF16Char(byte[] val, int index) {
+		return StringUTF16.getChar(val, index);
+	}
+
+	public int countPositives(byte[] ba, int off, int len) {
+		return StringCoding.countPositives(ba, off, len);
+	}
+/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 /*[ELSE] JAVA_SPEC_VERSION >= 20 */
 	public Object[] extentLocalCache() {
 		return Thread.extentLocalCache();
