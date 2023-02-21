@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2022 IBM Corp. and others
+ * Copyright (c) 2000, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1741,7 +1741,7 @@ J9::SymbolReferenceTable::isFieldClassObject(TR::SymbolReference *symRef)
    {
    int32_t len;
    const char *fieldName = symRef->getOwningMethod(comp())->fieldSignatureChars(symRef->getCPIndex(), len);
-   dumpOptDetails(comp(), "got fieldsig as %s\n", fieldName);
+   dumpOptDetails(comp(), "got fieldsig as %.*s\n", len, fieldName);
    return false;
    }
 
@@ -1762,7 +1762,7 @@ J9::SymbolReferenceTable::isFieldTypeBool(TR::SymbolReference *symRef)
    {
    int32_t len;
    const char *fieldSignature = symRef->getOwningMethod(comp())->fieldSignatureChars(symRef->getCPIndex(), len);
-   dumpOptDetails(comp(), "got field signature as %s\n", fieldSignature);
+   dumpOptDetails(comp(), "got field signature as %.*s\n", len, fieldSignature);
    return isSignatureTypeBool(fieldSignature, len);
    }
 
@@ -1771,7 +1771,7 @@ J9::SymbolReferenceTable::isStaticTypeBool(TR::SymbolReference *symRef)
    {
    int32_t len;
    const char *fieldSignature = symRef->getOwningMethod(comp())->staticSignatureChars(symRef->getCPIndex(), len);
-   dumpOptDetails(comp(), "got static signature as %s\n", fieldSignature);
+   dumpOptDetails(comp(), "got static signature as %.*s\n", len, fieldSignature);
    return isSignatureTypeBool(fieldSignature, len);
    }
 
