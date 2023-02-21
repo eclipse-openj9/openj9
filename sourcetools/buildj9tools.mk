@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2021 IBM Corp. and others
+# Copyright (c) 2017, 2023 IBM Corp. and others
 #
 #  This program and the accompanying materials are made available under
 #  the terms of the Eclipse Public License 2.0 which accompanies this
@@ -57,8 +57,7 @@ endif
 JAVAC       := $(JAVA_BIN)javac
 JAR         := $(JAVA_BIN)jar
 
-SPEC_LEVEL  ?= 7
-JAVAC_FLAGS := -nowarn -source $(SPEC_LEVEL) -target $(SPEC_LEVEL)
+JAVAC_FLAGS := -nowarn
 
 JAR_TARGETS :=
 
