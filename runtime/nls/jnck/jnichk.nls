@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2021 IBM Corp. and others
+# Copyright (c) 2000, 2023 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1039,4 +1039,13 @@ J9NLS_JNICHK_HELP_16=\tabortonerror   cause an abort on fatal errors
 J9NLS_JNICHK_HELP_15.explanation=NOTAG
 J9NLS_JNICHK_HELP_15.system_action=
 J9NLS_JNICHK_HELP_15.user_response=
+# END NON-TRANSLATABLE
+
+# JNI, -Xcheck:jni:nonfatal and JVM are not translatable
+J9NLS_JNICHK_THREAD_NOT_ATTACHED_TO_VM=JNI error in %s: There is currently no thread attached to the VM
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_THREAD_NOT_ATTACHED_TO_VM.sample_input_1=methodName
+J9NLS_JNICHK_THREAD_NOT_ATTACHED_TO_VM.explanation=There is no Java thread running.
+J9NLS_JNICHK_THREAD_NOT_ATTACHED_TO_VM.system_action=If -Xcheck:jni:nonfatal has been specified, the JVM continues, otherwise it terminates.
+J9NLS_JNICHK_THREAD_NOT_ATTACHED_TO_VM.user_response=Ensure there is a Java thread currently running.
 # END NON-TRANSLATABLE

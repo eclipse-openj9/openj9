@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,6 +26,7 @@
 #include "jnichk_internal.h"
 
 IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved);
+extern J9JavaVM* globalJavaVM;
 
 #endif     /* jnicheck_h */
 
