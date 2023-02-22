@@ -716,13 +716,13 @@ gcShutdownHeapManagement(J9JavaVM *javaVM)
 	j9gc_finalizer_shutdown(javaVM);
 #endif /* J9VM_GC_FINALIZATION */
 
+	if (extensions->dispatcher) {
+		extensions->dispatcher->shutDownThreads();
+	}
+
 	/* Kickoff shutdown of global collector */
 	if (NULL != globalCollector) {
 		globalCollector->collectorShutdown(extensions);
-	}
-
-	if (extensions->dispatcher) {
-		extensions->dispatcher->shutDownThreads();
 	}
 }
 
