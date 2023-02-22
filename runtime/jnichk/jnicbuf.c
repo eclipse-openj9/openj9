@@ -46,12 +46,12 @@ computeStringCRC(const char* buf)
 }
 
 void 
-checkStringCRC(JNIEnv* env, const char* function, U_32 argNum, const char* buf, U_32 oldCRC)
+checkStringCRC(const char* function, U_32 argNum, const char* buf, U_32 oldCRC)
 {
 	U_32 newCRC = computeStringCRC(buf);
 
 	if (newCRC != oldCRC) {
-		jniCheckFatalErrorNLS(env, J9NLS_JNICHK_BUFFER_MODIFIED, function, argNum, function, function);
+		jniCheckFatalErrorNLS(J9NLS_JNICHK_BUFFER_MODIFIED, function, argNum, function, function);
 	}
 }
 
@@ -70,12 +70,12 @@ computeDataCRC(const void* buf, IDATA len)
 }
 
 void 
-checkDataCRC(JNIEnv* env, const char* function, U_32 argNum, const void* buf, IDATA len, U_32 oldCRC)
+checkDataCRC(const char* function, U_32 argNum, const void* buf, IDATA len, U_32 oldCRC)
 {
 	U_32 newCRC = computeDataCRC(buf, len);
 
 	if (newCRC != oldCRC) {
-		jniCheckFatalErrorNLS(env, J9NLS_JNICHK_BUFFER_MODIFIED, function, argNum, function, function);
+		jniCheckFatalErrorNLS(J9NLS_JNICHK_BUFFER_MODIFIED, function, argNum, function, function);
 	}
 }
 
@@ -128,12 +128,12 @@ computeArgsCRC(const jvalue *args, jmethodID methodID)
 }
 
 void 
-checkArgsCRC(JNIEnv* env, const char* function, U_32 argNum, const jvalue *args, jmethodID methodID, U_32 oldCRC)
+checkArgsCRC(const char* function, U_32 argNum, const jvalue *args, jmethodID methodID, U_32 oldCRC)
 {
 	U_32 newCRC = computeArgsCRC(args, methodID);
 
 	if (newCRC != oldCRC) {
-		jniCheckFatalErrorNLS(env, J9NLS_JNICHK_BUFFER_MODIFIED, function, argNum, function, function);
+		jniCheckFatalErrorNLS(J9NLS_JNICHK_BUFFER_MODIFIED, function, argNum, function, function);
 	}
 }
 
