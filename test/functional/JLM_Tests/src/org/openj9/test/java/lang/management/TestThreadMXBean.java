@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2005, 2020 IBM Corp. and others
+ * Copyright (c) 2005, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -70,20 +70,23 @@ public class TestThreadMXBean {
 		ignoredAttributes.add("ObjectName");
 		attribs = new Hashtable<String, AttributeData>();
 		attribs.put("AllThreadIds", new AttributeData("[J", true, false, false));
+		attribs.put("CurrentThreadAllocatedBytes", new AttributeData(Long.TYPE.getName(), true, false, false));
 		attribs.put("CurrentThreadCpuTime", new AttributeData(Long.TYPE.getName(), true, false, false));
+		attribs.put("CurrentThreadCpuTimeSupported", new AttributeData(Boolean.TYPE.getName(), true, false, true));
 		attribs.put("CurrentThreadUserTime", new AttributeData(Long.TYPE.getName(), true, false, false));
 		attribs.put("DaemonThreadCount", new AttributeData(Integer.TYPE.getName(), true, false, false));
+		attribs.put("ObjectMonitorUsageSupported", new AttributeData(Boolean.TYPE.getName(), true, false, true));
 		attribs.put("PeakThreadCount", new AttributeData(Integer.TYPE.getName(), true, false, false));
-		attribs.put("ThreadCount", new AttributeData(Integer.TYPE.getName(), true, false, false));
-		attribs.put("TotalStartedThreadCount", new AttributeData(Long.TYPE.getName(), true, false, false));
-		attribs.put("CurrentThreadCpuTimeSupported", new AttributeData(Boolean.TYPE.getName(), true, false, true));
+		attribs.put("SynchronizerUsageSupported", new AttributeData(Boolean.TYPE.getName(), true, false, true));
+		attribs.put("ThreadAllocatedMemoryEnabled", new AttributeData(Boolean.TYPE.getName(), true, true, true));
+		attribs.put("ThreadAllocatedMemorySupported", new AttributeData(Boolean.TYPE.getName(), true, false, true));
 		attribs.put("ThreadContentionMonitoringEnabled", new AttributeData(Boolean.TYPE.getName(), true, true, true));
 		attribs.put("ThreadContentionMonitoringSupported",
 				new AttributeData(Boolean.TYPE.getName(), true, false, true));
+		attribs.put("ThreadCount", new AttributeData(Integer.TYPE.getName(), true, false, false));
 		attribs.put("ThreadCpuTimeEnabled", new AttributeData(Boolean.TYPE.getName(), true, true, true));
 		attribs.put("ThreadCpuTimeSupported", new AttributeData(Boolean.TYPE.getName(), true, false, true));
-		attribs.put("ObjectMonitorUsageSupported", new AttributeData(Boolean.TYPE.getName(), true, false, true));
-		attribs.put("SynchronizerUsageSupported", new AttributeData(Boolean.TYPE.getName(), true, false, true));
+		attribs.put("TotalStartedThreadCount", new AttributeData(Long.TYPE.getName(), true, false, false));
 	} // end static initializer
 
 	private ThreadMXBean tb;
@@ -350,16 +353,70 @@ public class TestThreadMXBean {
 					AssertJUnit.assertTrue(e instanceof IllegalArgumentException);
 				}
 
+				// test getThreadCpuTime(long[])
+				try {
+					tb.getThreadCpuTime(null);
+					Assert.fail("Should have thrown NullPointerException");
+				} catch (NullPointerException e) {
+					// expected
+				}
+				try {
+					long[] badIds = new long[] {-1};
+					tb.getThreadCpuTime(badIds);
+					Assert.fail("Should have thrown IllegalArgumentException");
+				} catch (IllegalArgumentException e) {
+					// expected
+				}
+				Object sync = new Object();
+				Thread t1 = new Thread(new Runnable() {
+					@Override
+					public void run() {
+						try  {
+							Thread.sleep(100);
+							synchronized (sync) {
+								sync.notify();
+								sync.wait();
+							}
+						} catch (InterruptedException e) {
+							// ignore
+						}
+					}
+				});
+				try {
+					synchronized (sync) {
+						t1.start();
+						sync.wait();
+					}
+					long[] ids = new long[] {Thread.currentThread().getId(), t1.getId()};
+					long[] times = tb.getThreadCpuTime(ids);
+					AssertJUnit.assertEquals(2, times.length);
+					for (int i = 0; i < times.length; i++) {
+						AssertJUnit.assertTrue(ids[i] > -1);
+					}
+					synchronized (sync) {
+						sync.notify();
+					}
+				} catch (InterruptedException e) {
+					throw new RuntimeException(e);
+				}
 			} else {
 				// Should return -1 if CPU time measurement is currently
 				// disabled.
 				AssertJUnit.assertTrue(tb.getThreadCpuTime(Thread.currentThread().getId()) == -1);
+				AssertJUnit.assertTrue(tb.getThreadCpuTime(new long[] {Thread.currentThread().getId()})[0] == -1);
 			}
 		} else {
 			try {
 				long tmp = tb.getThreadCpuTime(100);
-				Assert.fail("Should have thrown an exception!");
+				Assert.fail("getThreadCpuTime(long) should have thrown UnsupportedOperationException");
 			} catch (UnsupportedOperationException e) {
+				// expected
+			}
+			try {
+				long[] tmp = tb.getThreadCpuTime(new long[] {100});
+				Assert.fail("getThreadCpuTime(long[]) should have thrown UnsupportedOperationException");
+			} catch (UnsupportedOperationException e) {
+				// expected
 			}
 		}
 	}
@@ -524,17 +581,70 @@ public class TestThreadMXBean {
 					AssertJUnit.assertTrue(e instanceof IllegalArgumentException);
 				}
 
+				// test getThreadUserTime(long[])
+				try {
+					tb.getThreadUserTime(null);
+					Assert.fail("Should have thrown NullPointerException");
+				} catch (NullPointerException e) {
+					// expected
+				}
+				try {
+					long[] badIds = new long[] {-1};
+					tb.getThreadUserTime(badIds);
+					Assert.fail("Should have thrown IllegalArgumentException");
+				} catch (IllegalArgumentException e) {
+					// expected
+				}
+				Object sync = new Object();
+				Thread t1 = new Thread(new Runnable() {
+					@Override
+					public void run() {
+						try  {
+							Thread.sleep(100);
+							synchronized (sync) {
+								sync.notify();
+								sync.wait();
+							}
+						} catch (InterruptedException e) {
+							// ignore
+						}
+					}
+				});
+				try {
+					synchronized (sync) {
+						t1.start();
+						sync.wait();
+					}
+					long[] ids = new long[]{Thread.currentThread().getId(), t1.getId()};
+					long[] times = tb.getThreadUserTime(ids);
+					AssertJUnit.assertEquals(2, times.length);
+					for (int i = 0; i < times.length; i++) {
+						AssertJUnit.assertTrue(ids[i] > -1);
+					}
+					synchronized (sync) {
+						sync.notify();
+					}
+				} catch (InterruptedException e) {
+					throw new RuntimeException(e);
+				}
 			} else {
 				// Should return -1 if CPU time measurement is currently
 				// disabled.
 				AssertJUnit.assertTrue(tb.getThreadUserTime(Thread.currentThread().getId()) == -1);
+				AssertJUnit.assertTrue(tb.getThreadUserTime(new long[] {Thread.currentThread().getId()})[0] == -1);
 			}
 		} else {
 			try {
 				long tmp = tb.getThreadUserTime(100);
-				Assert.fail("Should have thrown an exception!");
-			} catch (Exception e) {
-				AssertJUnit.assertTrue(e instanceof UnsupportedOperationException);
+				Assert.fail("getThreadUserTime(long) should have thrown UnsupportedOperationException");
+			} catch (UnsupportedOperationException e) {
+				// expected
+			}
+			try {
+				long[] tmp = tb.getThreadUserTime(new long[] {100});
+				Assert.fail("getThreadUserTime(long[]) should have thrown UnsupportedOperationException");
+			} catch (UnsupportedOperationException e) {
+				// expected
 			}
 		}
 	}
@@ -1318,13 +1428,7 @@ public class TestThreadMXBean {
 		AssertJUnit.assertNotNull(constructors);
 		AssertJUnit.assertEquals(0, constructors.length);
 
-		int opNbr;
-		if (org.openj9.test.util.VersionCheck.major() >= 10) {
-			opNbr = 16;
-		} else {
-			// Java 8 - 9
-			opNbr = 14;
-		}
+		int opNbr = 20;
 		MBeanOperationInfo[] operations = mbi.getOperations();
 		AssertJUnit.assertNotNull(operations);
 		AssertJUnit.assertEquals(opNbr, operations.length);
@@ -1337,15 +1441,20 @@ public class TestThreadMXBean {
 		// Print description and the class name (not necessarily identical).
 		logger.debug("MBean description for " + tb.getClass().getName() + ": " + mbi.getDescription());
 
-		// 14 attributes
 		MBeanAttributeInfo[] attributes = mbi.getAttributes();
 		AssertJUnit.assertNotNull(attributes);
-		AssertJUnit.assertEquals(15, attributes.length);
-		for (int i = 0; i < attributes.length; i++) {
-			MBeanAttributeInfo info = attributes[i];
+		AssertJUnit.assertEquals(18, attributes.length);
+		HashSet<String> attributeNames = new HashSet<>();
+		for (MBeanAttributeInfo info : attributes) {
 			AssertJUnit.assertNotNull(info);
 			AllManagementTests.validateAttributeInfo(info, TestThreadMXBean.ignoredAttributes, attribs);
-		} // end for
+			attributeNames.add(info.getName());
+		}
+		for (String name : attribs.keySet()) {
+			if (!attributeNames.contains(name)) {
+				Assert.fail("Missing attribute name: " + name);
+			}
+		}
 	}
 
 	//    /**
