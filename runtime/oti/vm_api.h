@@ -606,6 +606,9 @@ delayedLockingOperation(J9VMThread *currentThread, j9object_t instance, UDATA op
  */
 void
 addInternalJVMClassIterationRestoreHook(J9VMThread *currentThread, classIterationRestoreHookFunc hookFunc);
+
+jobject
+getRestoreSystemProperites(J9VMThread *currentThread);
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
 /* ---------------- classloadersearch.c ---------------- */
@@ -1647,6 +1650,18 @@ printBytecodePairs(J9JavaVM *vm);
 BOOLEAN
 areValueTypesEnabled(J9JavaVM *vm);
 
+/**
+ * Checks if args in specified args array have been consumed by the JVM, if not it outputs a warning message
+ * and returns FALSE. This function consults the -XXvm:ignoreUnrecognized, -XX:[+|-]IgnoreUnrecognizedVMOptions
+ * and -XX:[-|+]IgnoreUnrecognizedXXColonOptions to determine if args are consumed or not.
+ *
+ * @param vm vm token
+ * @param portLibrary port lib token
+ * @param j9vm_args the VM args array
+ * @return TRUE if all args are consumed, FALSE otherwise
+ */
+UDATA
+checkArgsConsumed(J9JavaVM * vm, J9PortLibrary* portLibrary, J9VMInitArgs* j9vm_args);
 
 /**
  * @brief Queries if -XX:DiagnoseSyncOnValueBasedClasses=1 or -XX:DiagnoseSyncOnValueBasedClasses=2 are found in the CML
@@ -3999,6 +4014,15 @@ jvmPhaseChange(J9JavaVM* vm, UDATA phase);
 void
 freeSystemProperties(J9JavaVM * vm);
 
+/**
+ * return a null-terminated modified UTF-8 version of charSequence.  Transliteration depends on the original encoding.
+ * @param vm Java VM
+ * @param userString system property value as provided by the user.  May contain embedded zero bytes.
+ * @return copy of the string in Modified UTF-8, NULL if the string is invalid.
+ * @note the return value must be freed by the caller.
+ */
+U_8*
+getMUtf8String(J9JavaVM * vm, const char *userString, UDATA stringLength);
 
 /**
 * @brief
