@@ -3041,11 +3041,16 @@ BOOLEAN
 j9gc_reinitializeDefaults(J9VMThread* vmThread)
 {
 	MM_GCExtensions* extensions = MM_GCExtensions::getExtensions(vmThread);
+	J9JavaVM* vm = vmThread->javaVM;
+	bool result = true;
 
-	/* TODO: Parse restore options to set gc thread count */
 	extensions->gcThreadCountForced = false;
 
-	return true;
+	if (!gcParseReconfigurableArguments(vm, vm->checkpointState.restoreArgsList)) {
+		result = false;
+	}
+
+	return result;
 }
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
