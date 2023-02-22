@@ -35,7 +35,6 @@ extern "C" {
 #include "j9jclnls.h"
 #include "jni.h"
 #include "jvmtinls.h"
-#include "modronnls.h"
 #include "omrlinkedlist.h"
 #include "omrthread.h"
 #include "ut_j9criu.h"
@@ -719,11 +718,8 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 
 		releaseSafeOrExcusiveVMAccess(currentThread, vmFuncs, safePoint);
 
-		if (FALSE == vm->memoryManagerFunctions->j9gc_reinitialize_for_restore(currentThread)) {
+		if (FALSE == vm->memoryManagerFunctions->j9gc_reinitialize_for_restore(currentThread, &nlsMsgFormat)) {
 			currentExceptionClass = vm->checkpointState.criuJVMRestoreExceptionClass;
-			/* The only way for j9gc_reinitialize_for_restore to fail is if GC dispatcher failed to startup threads. */
-			nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
-					J9NLS_GC_FAILED_TO_INSTANTIATE_TASK_DISPATCHER, NULL);
 			goto wakeJavaThreads;
 		}
 
