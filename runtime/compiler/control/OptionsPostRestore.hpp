@@ -109,6 +109,12 @@ class OptionsPostRestore
    void filterMethods();
 
    /**
+    * \brief Helper method to perform tasks prior to processing
+    *        the internal compiler options.
+    */
+   void preProcessInternalCompilerOptions();
+
+   /**
     * \brief Helper method to post process internal compiler options.
     */
    void postProcessInternalCompilerOptions();
