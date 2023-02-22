@@ -34,6 +34,7 @@ extern "C" {
 #include "j9.h"
 #include "j9jclnls.h"
 #include "jni.h"
+#include "jvminit.h"
 #include "jvmtinls.h"
 #include "omrlinkedlist.h"
 #include "omrthread.h"
@@ -42,10 +43,14 @@ extern "C" {
 #include "vmargs_api.h"
 
 #define STRING_BUFFER_SIZE 256
+#define ENV_FILE_BUFFER 1024
 
 #define RESTORE_ARGS_RETURN_OK 0
 #define RESTORE_ARGS_RETURN_OOM 1
 #define RESTORE_ARGS_RETURN_OPTIONS_FILE_FAILED 2
+#define RESTORE_ARGS_RETURN_ENV_VAR_FILE_FAILED 3
+
+#define OPENJ9_RESTORE_OPTS_VAR "OPENJ9_RESTORE_JAVA_OPTIONS="
 
 static bool
 setupJNIFieldIDsAndCRIUAPI(JNIEnv *env, jclass *currentExceptionClass, IDATA *systemReturnCode, const char **nlsMsgFormat)
@@ -346,8 +351,165 @@ releaseSafeOrExcusiveVMAccess(J9VMThread *currentThread, J9InternalVMFunctions *
 	}
 }
 
+/**
+ * Read buffer pointed to by cursor and add replace the characters sequences "\r\n"
+ * and "\n" with a null terminator "\0". The input buffer must be NULL terminated.
+ *
+ * @param cursor pointer to buffer
+ *
+ * @return cursor position at the end of the line
+ */
+static char*
+endLine(char *cursor)
+{
+	while(true) {
+		switch (*cursor) {
+		case '\r':
+			cursor[0] = '\0';
+			if (cursor[1] == '\n') {
+				cursor++;
+				cursor[0] = '\0';
+			}
+			goto done;
+		case '\n':
+			cursor[0] = '\0';
+			goto done;
+		case '\0':
+			goto done;
+		default:
+			break;
+		}
+		cursor++;
+	}
+done:
+	return cursor;
+}
+
 static UDATA
-loadRestoreArguments(J9VMThread *currentThread, const char *optionsFile)
+parseEnvVarsForOptions(J9VMThread *currentThread, J9JavaVMArgInfoList *vmArgumentsList, char *envFileChars, I_64 fileLength)
+{
+	UDATA returnCode = RESTORE_ARGS_RETURN_OK;
+	char *cursor = envFileChars;
+	char *optString = NULL;
+	bool keepSearching = false;
+	IDATA result = 0;
+
+	do {
+		keepSearching = false;
+
+		optString = strstr(cursor, OPENJ9_RESTORE_OPTS_VAR);
+
+		if (NULL != optString) {
+			/* Check that variable name is not a substring of another variable */
+			if (envFileChars != optString) {
+				char preceedingChar = *(optString - 1);
+				if ('\n' != preceedingChar) {
+					keepSearching = true;
+				}
+			}
+			optString += LITERAL_STRLEN(OPENJ9_RESTORE_OPTS_VAR);
+			cursor = optString;
+		}
+	} while (keepSearching);
+
+	if (NULL != optString) {
+		PORT_ACCESS_FROM_VMC(currentThread);
+		UDATA len = endLine(optString) - optString;
+		/* +1 for the \0 */
+		len++;
+		char *restoreArgsChars = (char*) j9mem_allocate_memory(len, OMRMEM_CATEGORY_VM);
+
+		if (NULL == restoreArgsChars) {
+			returnCode = RESTORE_ARGS_RETURN_OOM;
+			goto done;
+		}
+
+		memcpy(restoreArgsChars, optString, len);
+		currentThread->javaVM->checkpointState.restoreArgsChars = restoreArgsChars;
+
+		/* parseOptionsBuffer() will free buffer if no options were added, otherwise free at shutdown */
+		result = parseOptionsBuffer(currentThread->javaVM->portLibrary, restoreArgsChars, vmArgumentsList, 0, FALSE);
+		if (0 == result) {
+			 /* no options found, buffer free'd */
+			currentThread->javaVM->checkpointState.restoreArgsChars = NULL;
+		} else if (result < 0) {
+			j9mem_free_memory(restoreArgsChars);
+			currentThread->javaVM->checkpointState.restoreArgsChars = NULL;
+			returnCode = RESTORE_ARGS_RETURN_ENV_VAR_FILE_FAILED;
+		}
+	}
+done:
+	return returnCode;
+}
+
+static UDATA
+loadRestoreArgsFromEnvVariable(J9VMThread *currentThread, J9JavaVMArgInfoList *vmArgumentsList, char *envFile)
+{
+	PORT_ACCESS_FROM_VMC(currentThread);
+	IDATA fileDescriptor = -1;
+	UDATA returnCode = RESTORE_ARGS_RETURN_OK;
+	char envFileBuf[ENV_FILE_BUFFER];
+	char *envFileChars = envFileBuf;
+	UDATA allocLength = 0;
+	IDATA bytesRead = 0;
+	IDATA readResult = 0;
+
+	I_64 fileLength = j9file_length(envFile);
+	/* Restrict file size to < 2G */
+	if (fileLength > J9CONST64(0x7FFFFFFF)) {
+		returnCode = RESTORE_ARGS_RETURN_ENV_VAR_FILE_FAILED;
+		goto done;
+	}
+
+	if ((fileDescriptor = j9file_open(envFile, EsOpenRead, 0)) == -1) {
+		returnCode = RESTORE_ARGS_RETURN_ENV_VAR_FILE_FAILED;
+		goto done;
+	}
+
+	allocLength = fileLength + 1;
+	if (allocLength > ENV_FILE_BUFFER) {
+		envFileChars = (char*) j9mem_allocate_memory(allocLength, OMRMEM_CATEGORY_VM);
+		if (NULL == envFileChars) {
+			returnCode = RESTORE_ARGS_RETURN_OOM;
+			goto close;
+		}
+	}
+
+	/* read all data in a loop */
+	while (bytesRead < fileLength) {
+		readResult = j9file_read(fileDescriptor, envFileChars + bytesRead, (IDATA)(fileLength - bytesRead));
+		if (-1 == readResult) {
+			returnCode = RESTORE_ARGS_RETURN_ENV_VAR_FILE_FAILED;
+			goto freeEnvFile;
+		}
+		bytesRead += readResult;
+	}
+	envFileChars[fileLength] = '\0';
+
+	returnCode = parseEnvVarsForOptions(currentThread, vmArgumentsList, envFileChars, fileLength);
+
+freeEnvFile:
+	if (envFileBuf != envFileChars) {
+		j9mem_free_memory(envFileChars);
+	}
+close:
+	j9file_close(fileDescriptor);
+done:
+	return returnCode;
+}
+
+static void
+traceRestoreArgs(J9VMThread *currentThread, J9VMInitArgs *restoreArgs)
+{
+	JavaVMInitArgs *args = restoreArgs->actualVMArgs;
+
+	for (IDATA i = 0; i < args->nOptions; i++) {
+		Trc_CRIU_restoreArg(currentThread, args->options[i].optionString);
+	}
+}
+
+static UDATA
+loadRestoreArguments(J9VMThread *currentThread, const char *optionsFile, char *envFile)
 {
 	UDATA result = RESTORE_ARGS_RETURN_OK;
 	J9JavaVM *vm = currentThread->javaVM;
@@ -364,13 +526,27 @@ loadRestoreArguments(J9VMThread *currentThread, const char *optionsFile)
 	vmArgumentsList.head = NULL;
 	vmArgumentsList.tail = NULL;
 
-	if (0 != addXOptionsFile(vm->portLibrary, optionsFile, &vmArgumentsList, 0)) {
-		result = RESTORE_ARGS_RETURN_OPTIONS_FILE_FAILED;
-		goto done;
+	if (NULL != optionsFile) {
+		/* addXOptionsFile() adds the options file name to the args list, if its null it adds a null character to the args list */
+		if (0 != addXOptionsFile(vm->portLibrary, optionsFile, &vmArgumentsList, 0)) {
+			result = RESTORE_ARGS_RETURN_OPTIONS_FILE_FAILED;
+			goto done;
+		}
+	}
+
+	if (NULL != envFile) {
+		result = loadRestoreArgsFromEnvVariable(currentThread, &vmArgumentsList, envFile);
+		if (RESTORE_ARGS_RETURN_OK != result) {
+			goto done;
+		}
 	}
 
 	vm->checkpointState.restoreArgsList = createJvmInitArgs(vm->portLibrary, vm->vmArgsArray->actualVMArgs, &vmArgumentsList, &ignored);
 	vm->checkpointState.restoreArgsList->previousArgs = previousArgs;
+
+	if (TrcEnabled_Trc_CRIU_restoreArg) {
+		traceRestoreArgs(currentThread, vm->checkpointState.restoreArgsList);
+	}
 done:
 	pool_kill(vmArgumentsList.pool);
 	return result;
@@ -391,7 +567,8 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 		jboolean autoDedup,
 		jboolean trackMemory,
 		jboolean unprivileged,
-		jstring optionsFile)
+		jstring optionsFile,
+		jstring environmentFile)
 {
 	J9VMThread *currentThread = (J9VMThread*)env;
 	J9JavaVM *vm = currentThread->javaVM;
@@ -420,6 +597,7 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 		j9object_t log = NULL;
 		j9object_t wrkDir = NULL;
 		j9object_t optFile = NULL;
+		j9object_t envFile = NULL;
 		IDATA dirFD = 0;
 		IDATA workDirFD = 0;
 		char directoryBuf[STRING_BUFFER_SIZE];
@@ -430,6 +608,8 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 		char *workDirChars = workDirBuf;
 		char optionsFileBuf[STRING_BUFFER_SIZE];
 		char *optionsFileChars = optionsFileBuf;
+		char envFileBuf[STRING_BUFFER_SIZE];
+		char *envFileChars = envFileBuf;
 		BOOLEAN isAfterCheckpoint = FALSE;
 		I_64 checkpointNanoTimeMonotonic = 0;
 		I_64 restoreNanoTimeMonotonic = 0;
@@ -490,6 +670,26 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 				nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_JCL_CRIU_FAILED_TO_CONVERT_JAVA_STRING, NULL);
 				goto freeOptionsFile;
 			}
+		} else {
+			optionsFileChars = NULL;
+		}
+
+		if (NULL != environmentFile) {
+			envFile = J9_JNI_UNWRAP_REFERENCE(environmentFile);
+			systemReturnCode = getNativeString(currentThread, envFile, &envFileChars, STRING_BUFFER_SIZE);
+			switch (systemReturnCode) {
+			case J9_NATIVE_STRING_NO_ERROR:
+				break;
+			case J9_NATIVE_STRING_OUT_OF_MEMORY:
+				vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
+				goto freeEnvFile;
+			case J9_NATIVE_STRING_FAIL_TO_CONVERT:
+				currentExceptionClass = vm->checkpointState.criuJVMCheckpointExceptionClass;
+				nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_JCL_CRIU_FAILED_TO_CONVERT_JAVA_STRING, NULL);
+				goto freeEnvFile;
+			}
+		} else {
+			envFileChars = NULL;
 		}
 
 		if (NULL != workDir) {
@@ -693,7 +893,7 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 		/* We can only end up here if the CRIU restore was successful */
 		isAfterCheckpoint = TRUE;
 
-		switch (loadRestoreArguments(currentThread, optionsFileChars)) {
+		switch (loadRestoreArguments(currentThread, optionsFileChars, envFileChars)) {
 		case RESTORE_ARGS_RETURN_OPTIONS_FILE_FAILED:
 			currentExceptionClass = vm->checkpointState.criuJVMRestoreExceptionClass;
 			nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
@@ -737,6 +937,18 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 					J9NLS_JCL_CRIU_FAILED_DELAY_LOCK_RELATED_OPS, NULL);
 		}
 
+		if (NULL != vm->checkpointState.restoreArgsList) {
+			bool dontIgnoreUnsupportedRestoreOptions = FIND_AND_CONSUME_ARG(vm->checkpointState.restoreArgsList, EXACT_MATCH, VMOPT_XXIGNOREUNRECOGNIZEDRESTOREOPTIONSENABLE, NULL) < 0;
+
+			if ((FALSE == vmFuncs->checkArgsConsumed(vm, vm->portLibrary, vm->checkpointState.restoreArgsList)) && dontIgnoreUnsupportedRestoreOptions) {
+				currentExceptionClass = vm->checkpointState.criuJVMRestoreExceptionClass;
+				systemReturnCode = 0;
+				nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
+					J9NLS_JCL_CRIU_FAILED_TO_ENABLE_ALL_RESTORE_OPTIONS, NULL);
+			}
+		}
+
+
 wakeJavaThreads:
 		acquireSafeOrExcusiveVMAccess(currentThread, vmFuncs, safePoint);
 
@@ -772,6 +984,10 @@ closeDirFD:
 freeWorkDir:
 		if (workDirBuf != workDirChars) {
 			j9mem_free_memory(workDirChars);
+		}
+freeEnvFile:
+		if (envFileBuf != envFileChars) {
+			j9mem_free_memory(envFileChars);
 		}
 freeOptionsFile:
 		if (optionsFileBuf != optionsFileChars) {
@@ -827,6 +1043,20 @@ freeDir:
 	vm->checkpointState.checkpointThread = NULL;
 
 	Trc_CRIU_checkpointJVMImpl_Exit(currentThread);
+}
+
+jobject JNICALL
+Java_org_eclipse_openj9_criu_CRIUSupport_getRestoreSystemProperites(JNIEnv *env, jclass unused)
+{
+	J9VMThread *currentThread = (J9VMThread*)env;
+	J9JavaVM *vm = currentThread->javaVM;
+	jobject systemProperties = NULL;
+
+	if (NULL != vm->checkpointState.restoreArgsList) {
+		systemProperties = vm->internalVMFunctions->getRestoreSystemProperites(currentThread);
+	}
+
+	return systemProperties;
 }
 
 } /* extern "C" */

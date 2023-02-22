@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2022, 2022 IBM Corp. and others
+ * Copyright (c) 2022, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,6 +26,7 @@ import java.nio.file.Path;
 import java.nio.file.Files;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Date;
 
@@ -89,5 +90,24 @@ public class CRIUTestUtils {
 		System.out.println(logStr + ", current thread name: " + Thread.currentThread().getName() + ", " + new Date()
 				+ ", System.currentTimeMillis(): " + System.currentTimeMillis() + ", System.nanoTime(): "
 				+ System.nanoTime());
+	}
+
+
+	public static Path createOptionsFile(String name, String contents) {
+		try {
+			File options = new File(name);
+			if (!options.createNewFile()) {
+				System.out.println("WARN: File already exists but should not");
+			}
+
+			try (FileWriter writer = new FileWriter(options)) {
+				writer.write(contents);
+			}
+			options.deleteOnExit();
+			return options.toPath();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return null;
 	}
 }
