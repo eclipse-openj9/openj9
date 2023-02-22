@@ -1217,6 +1217,8 @@ public:
    bool getSuspendThreadDueToLowPhysicalMemory() const { return _suspendThreadDueToLowPhysicalMemory; }
    void setSuspendThreadDueToLowPhysicalMemory(bool b) { _suspendThreadDueToLowPhysicalMemory = b; }
 
+   void initCPUEntitlement();
+
    bool getLowCompDensityMode() const { return _lowCompDensityMode; }
    void enterLowCompDensityMode() { _lowCompDensityMode = true; _hasEnteredLowCompDensityModeInThePast = true;}
    void exitLowCompDensityMode() { _lowCompDensityMode = false; }

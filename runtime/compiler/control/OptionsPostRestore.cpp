@@ -27,6 +27,7 @@
 #include "j9.h"
 #include "j9nonbuilder.h"
 #include "jvminit.h"
+#include "env/CompilerEnv.hpp"
 #include "env/TRMemory.hpp"
 #include "compile/Method.hpp"
 #include "control/CompilationRuntime.hpp"
@@ -491,6 +492,24 @@ J9::OptionsPostRestore::openLogFilesIfNeeded()
    }
 
 void
+J9::OptionsPostRestore::preProcessInternalCompilerOptions()
+   {
+   // Needed for FIND_AND_CONSUME_RESTORE_ARG
+   J9JavaVM *vm = _jitConfig->javaVM;
+
+   // Re-initialize the number of processors
+   _compInfo->initCPUEntitlement();
+   uint32_t numProc = _compInfo->getNumTargetCPUs();
+   TR::Compiler->host.setNumberOfProcessors(numProc);
+   TR::Compiler->target.setNumberOfProcessors(numProc);
+   TR::Compiler->relocatableTarget.setNumberOfProcessors(numProc);
+
+   // Find and consume -XX:[+|-]MergeCompilerOptions
+   _argIndexMergeOptionsEnabled = FIND_AND_CONSUME_RESTORE_ARG(EXACT_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::XXplusMergeCompilerOptions], 0);
+   _argIndexMergeOptionsDisabled = FIND_AND_CONSUME_RESTORE_ARG(EXACT_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::XXminusMergeCompilerOptions], 0);
+   }
+
+void
 J9::OptionsPostRestore::postProcessInternalCompilerOptions()
    {
    // TODO: Based on whether the following is enabled, do necessary compensation
@@ -513,6 +532,10 @@ J9::OptionsPostRestore::postProcessInternalCompilerOptions()
 
    if (TR::Options::getDebug())
       filterMethods();
+
+   // Set option to print code cache if necessary
+   if (_argIndexPrintCodeCache > _argIndexDisablePrintCodeCache)
+      TR::Options::getCmdLineOptions()->setOption(TR_PrintCodeCacheUsage);
    }
 
 void
@@ -550,29 +573,25 @@ J9::OptionsPostRestore::processCompilerOptions()
 
    if (jitEnabled || aotEnabled)
       {
-      _argIndexMergeOptionsEnabled = FIND_AND_CONSUME_RESTORE_ARG(EXACT_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::XXplusMergeCompilerOptions], 0);
-      _argIndexMergeOptionsDisabled = FIND_AND_CONSUME_RESTORE_ARG(EXACT_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::XXminusMergeCompilerOptions], 0);
+      // Preprocess compiler options
+      preProcessInternalCompilerOptions();
 
+      // Process -Xjit / -Xaot options
       processInternalCompilerOptions(aotEnabled, true);
       processInternalCompilerOptions(jitEnabled, false);
 
       // TODO: Look into
       // - -Xrs
       // - -Xtune:virtualized
-      // - TR::Compiler->target.numberOfProcessors
 
+      // Iterate over external options
       iterateOverExternalOptions();
 
-      if (_argIndexPrintCodeCache > _argIndexDisablePrintCodeCache)
-         {
-         TR::Options::getCmdLineOptions()->setOption(TR_PrintCodeCacheUsage);
-         }
-
+      // Process JITServer Options
       if (jitEnabled)
-         {
          processJitServerOptions();
-         }
 
+      // Postprocess compiler options
       postProcessInternalCompilerOptions();
       }
    }

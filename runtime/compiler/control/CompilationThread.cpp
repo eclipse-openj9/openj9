@@ -1237,7 +1237,7 @@ TR::CompilationInfo::CompilationInfo(J9JITConfig *jitConfig) :
    setSamplerState(TR::CompilationInfo::SAMPLER_NOT_INITIALIZED);
 
    setIsWarmSCC(TR_maybe);
-   _cpuEntitlement.init(jitConfig);
+   initCPUEntitlement();
    _lowPriorityCompilationScheduler.setCompInfo(this);
    _JProfilingQueue.setCompInfo(this);
    _interpSamplTrackingInfo = new (PERSISTENT_NEW) TR_InterpreterSamplingTracking(this);
@@ -1256,6 +1256,12 @@ TR::CompilationInfo::CompilationInfo(J9JITConfig *jitConfig) :
    _JITServerAOTCacheMap = NULL;
    _JITServerAOTDeserializer = NULL;
 #endif /* defined(J9VM_OPT_JITSERVER) */
+   }
+
+void
+TR::CompilationInfo::initCPUEntitlement()
+   {
+   _cpuEntitlement.init(_jitConfig);
    }
 
 #if defined(J9VM_OPT_CRIU_SUPPORT)
