@@ -31,6 +31,7 @@
 #include "j2sever.h"
 #include "jvminit.h"
 #include "mmparse.h"
+#include "modronnls.h"
 
 #include "Configuration.hpp"
 #include "GCExtensions.hpp"
@@ -82,6 +83,15 @@ isSubpoolAliasGCPolicySupported(MM_GCExtensions *extensions)
 bool MMINLINE
 isMetronomeGCPolicySupported(MM_GCExtensions *extensions)
 {
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+	J9JavaVM *vm = extensions->getJavaVM();
+	if (TRUE == vm->checkpointState.isCheckPointEnabled) {
+		PORT_ACCESS_FROM_JAVAVM(vm);
+		j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_POLICY_NOT_SUPPOURTED_CRIU, "metronome");
+		return false;
+	}
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+
 #if defined(J9VM_GC_REALTIME)
 #if defined(AIXPPC)
 	return true;
@@ -95,6 +105,15 @@ isMetronomeGCPolicySupported(MM_GCExtensions *extensions)
 bool MMINLINE
 isBalancedGCPolicySupported(MM_GCExtensions *extensions)
 {
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+	J9JavaVM *vm = extensions->getJavaVM();
+	if (TRUE == vm->checkpointState.isCheckPointEnabled) {
+		PORT_ACCESS_FROM_JAVAVM(vm);
+		j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_POLICY_NOT_SUPPOURTED_CRIU, "balanced");
+		return false;
+	}
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+
 #if defined (J9VM_GC_VLHGC) && defined (J9VM_ENV_DATA64)
 	return true;
 #endif /* J9VM_GC_VLHGC && J9VM_ENV_DATA64 */

@@ -107,6 +107,7 @@ In the end code generators perform binary encoding to write the appropriate bits
       * [Escape Analysis Optimization in OpenJ9 (YouTube)](https://youtu.be/694S8Tblfcg)
     * [Data-Flow Engine (OMR)](https://github.com/eclipse/omr/blob/master/doc/compiler/optimizer/DataFlowEngine.md)
   * [Control Flow Optimizations](optimizer/ControlFlowOptimizationsSummary.md)
+    * [Exception Directed Optimization (EDO)](optimizer/EdoOptimization.md)
   * Inlining
     * [Overview of Inlining (OMR)](https://github.com/eclipse/omr/blob/master/doc/compiler/optimizer/Inliner.md)
     * [BenefitInliner (OMR)](https://github.com/eclipse/omr/blob/master/doc/compiler/optimizer/BenefitInliner.md)
