@@ -619,4 +619,8 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
 
 }
 
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+uintptr_t initializeCompilerArgsPostRestore(J9JavaVM* vm, intptr_t argIndex, char** xCommandLineOptionsPtr, bool isXjit, bool mergeCompilerOptions);
+#endif
+
 #endif
