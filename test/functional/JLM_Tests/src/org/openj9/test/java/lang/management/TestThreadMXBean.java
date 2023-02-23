@@ -426,7 +426,7 @@ public class TestThreadMXBean {
 	 */
 	@Test
 	public final void testGetThreadInfolong() {
-		// Should throw exception if a Thread id of 0 or less is input
+		// Should throw exception if a Thread id of 0 or less is input.
 		try {
 			ThreadInfo tmp = tb.getThreadInfo(0);
 			Assert.fail("Should have thrown an exception");
@@ -491,11 +491,11 @@ public class TestThreadMXBean {
 	}
 
 	/*
-	 * Class under test for ThreadInfo[] getThreadInfo(long[])
+	 * Class under test for ThreadInfo[] getThreadInfo(long[]).
 	 */
 	@Test
 	public final void testGetThreadInfolongArray() {
-		// Should throw exception if a Thread id of 0 or less is input
+		// Should throw exception if a Thread id of 0 or less is input.
 		try {
 			long[] input = new long[] { 0 };
 			ThreadInfo[] tmp = tb.getThreadInfo(input);
@@ -511,11 +511,11 @@ public class TestThreadMXBean {
 	}
 
 	/*
-	 * Class under test for ThreadInfo[] getThreadInfo(long[], int)
+	 * Class under test for ThreadInfo[] getThreadInfo(long[], int).
 	 */
 	@Test
 	public final void testGetThreadInfolongArrayint() {
-		// Should throw exception if a Thread id of 0 or less is input
+		// Should throw exception if a Thread id of 0 or less is input.
 		try {
 			long[] input = new long[] { 0 };
 			ThreadInfo[] tmp = tb.getThreadInfo(input, 0);
@@ -524,7 +524,7 @@ public class TestThreadMXBean {
 			AssertJUnit.assertTrue(e instanceof IllegalArgumentException);
 		}
 
-		// Should throw exception if maxDepth is negative
+		// Should throw exception if maxDepth is negative.
 		try {
 			long[] input = new long[] { Thread.currentThread().getId() };
 			ThreadInfo[] tmp = tb.getThreadInfo(input, -2445);
@@ -540,11 +540,11 @@ public class TestThreadMXBean {
 	}
 
 	/*
-	 * Class under test for ThreadInfo getThreadInfo(long, int)
+	 * Class under test for ThreadInfo getThreadInfo(long, int).
 	 */
 	@Test
 	public final void testGetThreadInfolongint() {
-		// Should throw exception if a Thread id of 0 or less is input
+		// Should throw exception if a Thread id of 0 or less is input.
 		try {
 			ThreadInfo tmp = tb.getThreadInfo(0, 0);
 			Assert.fail("Should have thrown an exception");
@@ -552,7 +552,7 @@ public class TestThreadMXBean {
 			AssertJUnit.assertTrue(e instanceof IllegalArgumentException);
 		}
 
-		// Should throw exception if maxDepth is negative
+		// Should throw exception if maxDepth is negative.
 		try {
 			ThreadInfo tmp = tb.getThreadInfo(0, -44);
 			Assert.fail("Should have thrown an exception");
@@ -877,14 +877,14 @@ public class TestThreadMXBean {
 			Assert.fail("Unexpected InstanceNotFoundException : " + e.getMessage());
 		}
 
-		// A nonexistent attribute should throw an AttributeNotFoundException
+		// A nonexistent attribute should throw an AttributeNotFoundException.
 		try {
 			long rpm = ((Long)(mbs.getAttribute(objName, "RPM")));
 			Assert.fail("Should have thrown an AttributeNotFoundException.");
 		} catch (Exception e1) {
 		}
 
-		// Type mismatch should result in a casting exception
+		// Type mismatch should result in a casting exception.
 		try {
 			String bad = (String)(mbs.getAttribute(objName, "CurrentThreadUserTime"));
 			Assert.fail("Should have thrown a ClassCastException");
@@ -936,7 +936,7 @@ public class TestThreadMXBean {
 			}
 		}
 
-		// The rest of the attempted sets should fail
+		// The rest of the attempted sets should fail.
 		attr = new Attribute("AllThreadIds", new long[] { 1L, 2L, 3L, 4L });
 		try {
 			mbs.setAttribute(objName, attr);
@@ -1070,7 +1070,7 @@ public class TestThreadMXBean {
 		AssertJUnit.assertNotNull(attributes);
 		AssertJUnit.assertTrue(attribs.size() >= attributes.size());
 
-		// Check through the returned values
+		// Check through the returned values.
 		Iterator<?> it = attributes.iterator();
 		while (it.hasNext()) {
 			Attribute element = (Attribute)it.next();
@@ -1095,11 +1095,11 @@ public class TestThreadMXBean {
 						// getCurrentThreadCpuTime()
 						// if CPU time measurement is currently disabled.
 						AssertJUnit.assertTrue(((Integer)(value)) > -2);
-					} // end else a long expected
+					} // end else an int expected
 					else if (attribs.get(name).type.equals("[J")) {
 						long[] tmp = (long[])value;
 						AssertJUnit.assertNotNull(tmp);
-					} // end else a String array expected
+					} // end else a long array expected
 					else {
 						Assert.fail("Unexpected attribute type returned! : " + name + " , value = " + value);
 					}
@@ -1239,7 +1239,7 @@ public class TestThreadMXBean {
 			Assert.fail("Unexpected exception: " + e.getMessage());
 		}
 
-		// Force exception by passing in a negative Thread id
+		// Force exception by passing in a negative Thread id.
 		try {
 			Object retVal = mbs.invoke(objName, "getThreadCpuTime", new Object[] { Long.valueOf(-757) },
 					new String[] { Long.TYPE.getName() });
@@ -1380,7 +1380,7 @@ public class TestThreadMXBean {
 			Assert.fail("Unexpected exception.");
 		}
 
-		// Force exception by passing in a negative Thread id
+		// Force exception by passing in a negative Thread id.
 		try {
 			Object retVal = mbs.invoke(objName, "getThreadUserTime", new Object[] { Long.valueOf(-757) },
 					new String[] { Long.TYPE.getName() });
@@ -1420,10 +1420,10 @@ public class TestThreadMXBean {
 
 		// Now make sure that what we got back is what we expected.
 
-		// Class name
+		// Class name.
 		AssertJUnit.assertTrue(mbi.getClassName().equals(tb.getClass().getName()));
 
-		// No public constructors
+		// No public constructors.
 		MBeanConstructorInfo[] constructors = mbi.getConstructors();
 		AssertJUnit.assertNotNull(constructors);
 		AssertJUnit.assertEquals(0, constructors.length);
@@ -1433,7 +1433,7 @@ public class TestThreadMXBean {
 		AssertJUnit.assertNotNull(operations);
 		AssertJUnit.assertEquals(opNbr, operations.length);
 
-		// No notifications
+		// No notifications.
 		MBeanNotificationInfo[] notifications = mbi.getNotifications();
 		AssertJUnit.assertNotNull(notifications);
 		AssertJUnit.assertEquals(0, notifications.length);
