@@ -1,6 +1,6 @@
 /*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 /*******************************************************************************
- * Copyright (c) 2012, 2022 IBM Corp. and others
+ * Copyright (c) 2012, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -149,5 +149,20 @@ public class ClassScanner extends ClassVisitor {
 
 		}
 	}
+
+	/*[IF JAVA_SPEC_VERSION == 17]*/
+	@Deprecated
+	@Override
+	public void visitPermittedSubclassExperimental(String className) {
+		/*
+		 * Sealed classes (JEP 409) were introduced as a preview feature in Java 15
+		 * and (supposedly) completed in Java 17. Unfortunately, the ClassReader and
+		 * ClassVisitor classes in Java 17 still consider the "PermittedSubclasses"
+		 * attribute experimental. On the other hand, the Java 17 compiler generates
+		 * the attribute in some classes (e.g. com.ibm.dtfj.utils.file.ImageSourceType).
+		 * To avoid throwing UnsupportedOperationException, we just ignore them.
+		 */
+	}
+	/*[ENDIF] JAVA_SPEC_VERSION == 17 */
 
 }
