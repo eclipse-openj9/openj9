@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2022, 2022 IBM Corp. and others
+Copyright (c) 2022, 2023 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -71,6 +71,7 @@ they are present in the same method) into gotos to the catch block, thereby
 eliminating the allocation of the thrown exception object completely (if it
 can be proven that the throw definitely reaches the catch block only and the
 thrown object is never used in code reachable from the catch block).
+See [this document](EdoOptimization.md) for an explanation of the mechanics involved.
 
 Note that [Value Propagation](https://github.com/eclipse/omr/blob/master/doc/compiler/optimizer/ValuePropagation.md)
 (which propagates type information) is required
