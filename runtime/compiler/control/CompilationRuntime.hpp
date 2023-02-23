@@ -119,6 +119,7 @@ class TR_LowPriorityCompQueue
       bool createLowPriorityCompReqAndQueueIt(TR::IlGeneratorMethodDetails &details, void *startPC, uint8_t reason);
       bool addFirstTimeCompReqToLPQ(J9Method *j9method, uint8_t reason);
       bool addUpgradeReqToLPQ(TR_MethodToBeCompiled*, uint8_t reason = TR_MethodToBeCompiled::REASON_UPGRADE);
+      bool addUpgradeReqToLPQ(J9Method *j9method, void *startPC, uint8_t reason);
       int32_t getLowPriorityQueueSize() const { return _sizeLPQ; }
       int32_t getLPQWeight() const { return _LPQWeight; }
       void increaseLPQWeightBy(uint8_t weight) { _LPQWeight += (int32_t)weight; }
@@ -1211,6 +1212,13 @@ public:
    bool getSuspendThreadDueToLowPhysicalMemory() const { return _suspendThreadDueToLowPhysicalMemory; }
    void setSuspendThreadDueToLowPhysicalMemory(bool b) { _suspendThreadDueToLowPhysicalMemory = b; }
 
+   bool getLowCompDensityMode() const { return _lowCompDensityMode; }
+   void enterLowCompDensityMode() { _lowCompDensityMode = true; _hasEnteredLowCompDensityModeInThePast = true;}
+   void exitLowCompDensityMode() { _lowCompDensityMode = false; }
+   bool hasEnteredLowCompDensityModeInThePast() const { return _hasEnteredLowCompDensityModeInThePast; }
+   bool compileFromLPQRegardlessOfCPU() const { return _compileFromLPQRegardlessOfCPU; }
+   void setCompileFromLPQRegardlessOfCPU(bool b) { _compileFromLPQRegardlessOfCPU = b; }
+
 #if defined(J9VM_OPT_JITSERVER)
    ClientSessionHT *getClientSessionHT() const { return _clientSessionHT; }
    void setClientSessionHT(ClientSessionHT *ht) { _clientSessionHT = ht; }
@@ -1272,6 +1280,8 @@ public:
 
    bool methodCanBeRemotelyCompiled(const char *methodSig, TR::Method::Type ty);
 #endif /* defined(J9VM_OPT_JITSERVER) */
+   uint32_t getNumTotalCompilations() const { return _numSyncCompilations + _numAsyncCompilations; }
+   uint32_t getNumCompsUsedForCompDensityCalculations() const { return _numCompsUsedForCompDensityCalculations; }
 
    static void replenishInvocationCount(J9Method* method, TR::Compilation* comp);
 
@@ -1358,8 +1368,9 @@ private:
    TR::Monitor *_iprofilerBufferArrivalMonitor;
    TR::MonitorTable *_j9MonitorTable; // used only for RAS (debuggerExtensions); no accessor; use TR_J9MonitorTable::get() everywhere else
    TR_LinkHead0<TR_ClassHolder> _classesToCompileList; // used by compileClasses; adjusted by unload hooks
-   intptr_t               _numSyncCompilations;
-   intptr_t               _numAsyncCompilations;
+   uint32_t               _numSyncCompilations;
+   uint32_t               _numAsyncCompilations;
+   uint32_t               _numCompsUsedForCompDensityCalculations;
    int32_t                _numCompThreadsActive;
    int32_t                _numCompThreadsJobless; // threads are not suspended, but have no work to do
    int32_t                _numCompThreadsCompilingHotterMethods; // allow only one at a time; use compQmonitor to change
@@ -1475,6 +1486,10 @@ private:
    // freeing scratch segments it holds to
    bool _suspendThreadDueToLowPhysicalMemory;
    TR_InterpreterSamplingTracking *_interpSamplTrackingInfo;
+
+   bool _lowCompDensityMode; // set to true when compilations occur infrequently and are unlikely to contribute to JVM performance
+   bool _hasEnteredLowCompDensityModeInThePast; // set to true when _lowCompDensityMode is set to true at least once
+   bool _compileFromLPQRegardlessOfCPU;
 
 #if defined(J9VM_OPT_JITSERVER)
    ClientSessionHT               *_clientSessionHT; // JITServer hashtable that holds session information about JITClients
