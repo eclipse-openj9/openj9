@@ -4091,8 +4091,8 @@ typedef struct J9JITConfig {
 } J9JITConfig;
 
 #if defined(J9VM_OPT_CRIU_SUPPORT)
-typedef BOOLEAN (*classIterationRestoreHookFunc)(struct J9VMThread *currentThread, J9Class *clazz);
-typedef BOOLEAN (*hookFunc)(struct J9VMThread *currentThread, void *userData);
+typedef BOOLEAN (*classIterationRestoreHookFunc)(struct J9VMThread *currentThread, J9Class *clazz, const char **nlsMsgFormat);
+typedef BOOLEAN (*hookFunc)(struct J9VMThread *currentThread, void *userData, const char **nlsMsgFormat);
 typedef struct J9InternalHookRecord {
 	BOOLEAN isRestore;
 	J9Class *instanceType;
@@ -4928,8 +4928,8 @@ typedef struct J9InternalVMFunctions {
 	BOOLEAN (*isCRIUSupportEnabled)(struct J9VMThread *currentThread);
 	BOOLEAN (*isCheckpointAllowed)(struct J9VMThread *currentThread);
 	BOOLEAN (*isNonPortableRestoreMode)(struct J9VMThread *currentThread);
-	BOOLEAN (*runInternalJVMCheckpointHooks)(struct J9VMThread *currentThread);
-	BOOLEAN (*runInternalJVMRestoreHooks)(struct J9VMThread *currentThread);
+	BOOLEAN (*runInternalJVMCheckpointHooks)(struct J9VMThread *currentThread, const char **nlsMsgFormat);
+	BOOLEAN (*runInternalJVMRestoreHooks)(struct J9VMThread *currentThread, const char **nlsMsgFormat);
 	BOOLEAN (*runDelayedLockRelatedOperations)(struct J9VMThread *currentThread);
 	BOOLEAN (*delayedLockingOperation)(struct J9VMThread *currentThread, j9object_t instance, UDATA operation);
 	void (*addInternalJVMClassIterationRestoreHook)(struct J9VMThread *currentThread, classIterationRestoreHookFunc hookFunc);

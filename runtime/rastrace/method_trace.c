@@ -311,22 +311,30 @@ traceMethodExitX(J9VMThread *thr, J9Method *method, UDATA isCompiled, void* exce
 
 }
 
-static void
-hookRAMClassLoad(J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData)
+BOOLEAN
+setRAMClassExtendedMethodFlagsHelper(J9VMThread *thr, J9Class *clazz, const char **nlsMsgFormat)
 {
-	J9VMInternalClassLoadEvent* event = (J9VMInternalClassLoadEvent *)eventData;
-	J9VMThread* thr = event->currentThread;
 	J9JavaVM *vm = thr->javaVM;
-	J9Class* clazz = event->clazz;
-	J9ROMClass* romClass = clazz->romClass;
-	U_32 i;
+	J9Method *method = clazz->ramMethods;
+	U_32 i = 0;
+	U_32 romMethodCount = clazz->romClass->romMethodCount;
 
-	J9Method * method = clazz->ramMethods;
-	for (i = 0; i < romClass->romMethodCount; i++) {
+	for (i = 0; i < romMethodCount; i++) {
 		U_8 *mtFlag = fetchMethodExtendedFlagsPointer(method);
-		setExtendedMethodFlags(vm, mtFlag, (checkMethod(thr, method) | rasSetTriggerTrace(thr, method) ) );
+		setExtendedMethodFlags(vm, mtFlag, (checkMethod(thr, method) | rasSetTriggerTrace(thr, method)));
 		method++;
 	}
+
+	/* a return value is required to match classIterationRestoreHookFunc definition */
+	return TRUE;
+}
+
+static void
+hookRAMClassLoad(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData)
+{
+	J9VMInternalClassLoadEvent *event = (J9VMInternalClassLoadEvent *)eventData;
+
+	setRAMClassExtendedMethodFlagsHelper(event->currentThread, event->clazz, NULL);
 }
 
 /* External entry point for method trace, exposed via J9UtServerInterface. */
@@ -388,8 +396,8 @@ enableMethodTraceHooks(J9JavaVM *vm)
 {
 	J9HookInterface** hook = vm->internalVMFunctions->getVMHookInterface(vm);
 
-	/* Called from J9VMDLLMain, single threaded at startup so no
-	 * need to protect with vm->runtimeFlagsMutex
+	/* Called from J9VMDLLMain at startup, or CRIU restore,
+	 * single threaded so no need to protect with vm->runtimeFlagsMutex.
 	 */
 	vm->extendedRuntimeFlags |= J9_EXTENDED_RUNTIME_METHOD_TRACE_ENABLED;
 
