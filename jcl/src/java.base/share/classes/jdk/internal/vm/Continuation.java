@@ -1,6 +1,6 @@
 /*[INCLUDE-IF JAVA_SPEC_VERSION >= 19]*/
 /*******************************************************************************
- * Copyright (c) 2022, 2022 IBM Corp. and others
+ * Copyright (c) 2022, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -217,6 +217,11 @@ public class Continuation {
 		/* TODO find matching scope to yield */
 		Thread carrierThread = JLA.currentCarrierThread();
 		Continuation cont = JLA.getContinuation(carrierThread);
+
+		return cont.yield0();
+	}
+
+	private boolean yield0() {
 		int rcPinned = isPinnedImpl();
 		if (rcPinned != 0) {
 			Pinned reason = null;
@@ -229,10 +234,10 @@ public class Continuation {
 			} else {
 				throw new AssertionError("Unknown pinned error code: " + rcPinned);
 			}
-			cont.onPinned(reason);
+			onPinned(reason);
 		} else {
 			yieldImpl();
-			cont.onContinue();
+			onContinue();
 		}
 		return (rcPinned == 0);
 	}

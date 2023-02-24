@@ -167,6 +167,8 @@ public class VirtualThreadTests {
 
 	@Test
 	public void test_YieldedVirtualThreadGetStackTrace() {
+		// Expected frame count is based on test's callstack and OpenJ9's implementation of Continuation.yield().
+		int expected_frames = 12;
 		try {
 			Thread t = Thread.ofVirtual().name("yielded-stackwalker").start(() -> {
 					testThread1_ready = true;
@@ -181,12 +183,12 @@ public class VirtualThreadTests {
 			StackTraceElement[] ste = t.getStackTrace();
 
 			// If stacktrace doesn't match expected result, print out stacktrace for debuggging.
-			if ((11 != ste.length) || !ste[0].getMethodName().equals("yieldImpl")) {
+			if ((expected_frames != ste.length) || !ste[0].getMethodName().equals("yieldImpl")) {
 				for (StackTraceElement st : ste) {
 					System.out.println(st);
 				}
 			}
-			AssertJUnit.assertTrue("Expected 11 frames, got " + ste.length, (11 == ste.length));
+			AssertJUnit.assertTrue("Expected " + expected_frames + " frames, got " + ste.length, (expected_frames == ste.length));
 			AssertJUnit.assertTrue("Expected top frame to be yieldImpl, got " + ste[0].getMethodName(), ste[0].getMethodName().equals("yieldImpl"));
 			LockSupport.unpark(t);
 			t.join();
