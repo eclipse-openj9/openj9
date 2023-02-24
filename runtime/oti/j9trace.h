@@ -40,6 +40,9 @@ extern "C" {
  * rastrace options (-Xtrace:trigger etc.) as well as tracepoints
  */
 typedef omr_error_t (*ConfigureTraceFunction)(void *,const char *);
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+typedef BOOLEAN (*CRIURestoreInitializeTrace)(void *);
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
 typedef struct RasGlobalStorage {
 	/* The utGlobalData reference here is unused by all Java code and inaccessible to OMR code
@@ -61,6 +64,9 @@ typedef struct RasGlobalStorage {
 	int     stackdepth;
 	unsigned int    stackCompressionLevel;
 	ConfigureTraceFunction configureTraceEngine;
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+	CRIURestoreInitializeTrace criuRestoreInitializeTrace;
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 } RasGlobalStorage;
 
 #define RAS_GLOBAL(x) ((RasGlobalStorage *)thr->javaVM->j9rasGlobalStorage)->x 
