@@ -57,6 +57,7 @@ J9::OptionsPostRestore::OptionsPostRestore(J9VMThread *vmThread, J9JITConfig *ji
    _privateConfig((TR_JitPrivateConfig*)_jitConfig->privateConfig),
    _oldVLogFileName(_privateConfig->vLogFileName),
    _oldRtLogFileName(_privateConfig->rtLogFileName),
+   _asyncCompilationPreCheckpoint(_compInfo->asynchronousCompilation()),
    _argIndexXjit(-1),
    _argIndexXjitcolon(-1),
    _argIndexXnojit(-1),
@@ -513,7 +514,6 @@ void
 J9::OptionsPostRestore::postProcessInternalCompilerOptions()
    {
    // TODO: Based on whether the following is enabled, do necessary compensation
-   // - disableAsyncCompilation
    // - disabling recompilation (optLevel=, inhibit recomp, etc)
    // - OMR::Options::_logFile (both global and subsets)
    //    - May have to close an existing file and open a new one?
@@ -536,6 +536,21 @@ J9::OptionsPostRestore::postProcessInternalCompilerOptions()
    // Set option to print code cache if necessary
    if (_argIndexPrintCodeCache > _argIndexDisablePrintCodeCache)
       TR::Options::getCmdLineOptions()->setOption(TR_PrintCodeCacheUsage);
+
+   // If pre-checkpoint, the JVM was run with count=0, then if post-restore
+   // the count is > 0, compilations will still happen synchronously. Also,
+   // because there is no enableAsyncCompilation, if pre-checkpoint the JVM
+   // was run with disableAsyncCompilation, post-restore will continue to have
+   // sync compilations.
+   //
+   // On the other hand, if pre-checkpoint the JVM was NOT run with
+   // disableAsyncCompilation OR count=0, then post-restore if these options
+   // are specified, they will NOT (for now) result in synchronous compilations.
+   if (_asyncCompilationPreCheckpoint)
+      {
+      if (TR::Options::getCmdLineOptions()->getOption(TR_DisableAsyncCompilation))
+         TR::Options::getCmdLineOptions()->setOption(TR_DisableAsyncCompilation, false);
+      }
    }
 
 void

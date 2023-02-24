@@ -144,6 +144,8 @@ class OptionsPostRestore
    char *_oldVLogFileName;
    char *_oldRtLogFileName;
 
+   bool _asyncCompilationPreCheckpoint;
+
    int32_t _argIndexXjit;
    int32_t _argIndexXjitcolon;
    int32_t _argIndexXnojit;

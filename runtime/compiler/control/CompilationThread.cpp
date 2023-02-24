@@ -1352,6 +1352,9 @@ void TR::CompilationInfo::setAllCompilationsShouldBeInterrupted()
 
 bool TR::CompilationInfo::asynchronousCompilation()
    {
+   // Because answer below is a static, this expression is only evaluated once during runtime.
+   // Therefore, in a checkpoint/restore scenario, post-restore this value will remain what it
+   // was pre-checkpoint.
    static bool answer = (!TR::Options::getJITCmdLineOptions()->getOption(TR_DisableAsyncCompilation) &&
                         TR::Options::getJITCmdLineOptions()->getInitialBCount() &&
                         TR::Options::getJITCmdLineOptions()->getInitialCount() &&
