@@ -369,7 +369,7 @@ JVM_VirtualThreadMountEnd(JNIEnv *env, jobject thread, jboolean firstMount)
 			J9OBJECT_OBJECT_STORE(currentThread, rootVirtualThread, vm->virtualThreadLinkPreviousOffset, rootVirtualThread);
 		}
 
-		if (NULL != vm->liveVirtualThreadList) {
+		{
 			j9object_t threadPrev = J9OBJECT_OBJECT_LOAD(currentThread, threadObj, vm->virtualThreadLinkPreviousOffset);
 			j9object_t threadNext = J9OBJECT_OBJECT_LOAD(currentThread, threadObj, vm->virtualThreadLinkNextOffset);
 
