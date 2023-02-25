@@ -3285,6 +3285,7 @@ J9::Options::packOptions(const TR::Options *origOptions)
    uint8_t *curPos = ((uint8_t *)options) + sizeof(TR::Options);
 
    options->_optionSets = NULL;
+   options->_postRestoreOptionSets = NULL;
    options->_startOptions = NULL;
    options->_envOptions = NULL;
    options->_logFile = NULL;
