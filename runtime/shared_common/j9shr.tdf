@@ -2992,3 +2992,5 @@ TraceExit-Exception=Trc_SHR_CMI_Update_Exit5 Overhead=1 Level=2 Template="CMI Up
 TraceExit-Exception=Trc_SHR_CMI_validate_Exit_IdentifiedMutex_Failed Overhead=1 Level=2 Template="CMI validate: Failed to acquire _identifiedMutex. Returning -1."
 TraceException=Trc_SHR_CC_changePartialPageProtection_NotDone_V1 Overhead=1 Level=1 Template="CC changePartialPageProtection: Returning without changing page protection for address %p to %s"
 TraceEvent=Trc_SHR_CC_freeBlockBytes_info NoEnv Overhead=1 Level=10 Template="CC getFreeBlockBytes: case %d, retVal %d, freeBytes %d, minAOT %d, aotBytes %d, minJIT %d, jitBytes %d"
+
+TraceExit-Exception=Trc_SHR_CM_getCachedUTFString_exit4 Overhead=1 Level=2 Template="CM getCachedUTFString: Exiting due to memory allocation failed"
