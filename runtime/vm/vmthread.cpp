@@ -258,6 +258,7 @@ allocateVMThread(J9JavaVM * vm, omrthread_t osThread, UDATA privateFlags, void *
 #if JAVA_SPEC_VERSION >= 16
 	newThread->ffiArgs = NULL;
 	newThread->ffiArgCount = 0;
+	newThread->jmpBufEnvPtr = NULL;
 #endif /* JAVA_SPEC_VERSION >= 16 */
 
 #if JAVA_SPEC_VERSION >= 19
