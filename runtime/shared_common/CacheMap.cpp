@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2022 IBM Corp. and others
+ * Copyright (c) 2001, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -5465,10 +5465,10 @@ SH_CacheMap::getCachedUTFString(J9VMThread* currentThread, const char* local, U_
 	const char* fnName = "getCachedUTFString";
 	const J9UTF8* pathUTF = NULL;
 	U_8 temp[J9SH_MAXPATH + sizeof(J9UTF8)];
-	J9UTF8* temputf = (J9UTF8*)&temp;
-	char* tempstr = (char*)J9UTF8_DATA(temputf);
+	J9UTF8* temputf = (J9UTF8*)temp;
 	SH_ScopeManager* localSCM;
 	bool allowUpdate = true;
+	PORT_ACCESS_FROM_VMC(currentThread);
 
 	Trc_SHR_Assert_False(_ccHead->hasWriteMutex(currentThread));
 
@@ -5495,9 +5495,16 @@ SH_CacheMap::getCachedUTFString(J9VMThread* currentThread, const char* local, U_
 		allowUpdate = false;
 	}
 
-	J9UTF8_SET_LENGTH(temputf, localLen);
-	strncpy(tempstr, local, J9UTF8_LENGTH(temputf));
+	if (localLen > J9SH_MAXPATH) {
+		temputf = (J9UTF8 *)j9mem_allocate_memory(localLen + sizeof(J9UTF8), J9MEM_CATEGORY_CLASSES);
+		if (NULL == temputf) {
+			Trc_SHR_CM_getCachedUTFString_exit4(currentThread);
+			return NULL;
+		}
+	}
 
+	memcpy(J9UTF8_DATA(temputf), local, localLen);
+	J9UTF8_SET_LENGTH(temputf, localLen);
 	pathUTF = localSCM->findScopeForUTF(currentThread, temputf);
 	_ccHead->exitReadMutex(currentThread, fnName);
 	if (NULL == pathUTF) {
@@ -5509,6 +5516,9 @@ SH_CacheMap::getCachedUTFString(J9VMThread* currentThread, const char* local, U_
 				 */
 				if ((itemsRead = runEntryPointChecks(currentThread, NULL, NULL)) == -1) {
 					_ccHead->exitWriteMutex(currentThread, fnName);
+					if ((J9UTF8 *)temp != temputf) {
+						j9mem_free_memory(temputf);
+					}
 					Trc_SHR_CM_getCachedUTFString_exit3(currentThread);
 					return NULL;
 				}
@@ -5523,6 +5533,9 @@ SH_CacheMap::getCachedUTFString(J9VMThread* currentThread, const char* local, U_
 		}
 	}
 
+	if ((J9UTF8 *)temp != temputf) {
+		j9mem_free_memory(temputf);
+	}
 	Trc_SHR_CM_getCachedUTFString_exit2(currentThread, pathUTF);
 
 	return pathUTF;
