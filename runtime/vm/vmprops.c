@@ -44,6 +44,15 @@ static UDATA getLibSubDir(J9JavaVM *VM, const char *subDir, char **value);
 
 #define JAVA_ENDORSED_DIRS "java.endorsed.dirs"
 #define JAVA_EXT_DIRS "java.ext.dirs"
+#define FIPS140 "fips140"
+
+#if !defined(J9JAVA_PATH_SEPARATOR_CHAR)
+#if defined(WIN32)
+#define J9JAVA_PATH_SEPARATOR_CHAR ';'
+#else
+#define J9JAVA_PATH_SEPARATOR_CHAR ':'
+#endif
+#endif /* !defined(J9JAVA_PATH_SEPARATOR_CHAR) */
 
 UDATA addSystemProperty(J9JavaVM * vm, const char* propName,  const char* propValue, UDATA flags);
 static char * getOptionArg(J9JavaVM *vm, IDATA argIndex, UDATA optionNameLen);
@@ -549,6 +558,12 @@ initializeSystemProperties(J9JavaVM * vm)
 	UDATA rc = J9SYSPROP_ERROR_NONE;
 	const char *specificationVersion = NULL;
 	BOOLEAN addManagementModule = FALSE;
+#if defined(FIPS_PREVIEW_PLATFORM)
+	char *javaExtDirValue = NULL;
+	char *fipsExtDir = NULL;
+	UDATA javaExtDirValueLen = 0;
+	UDATA fipsExtDirLen = 0;
+#endif /* defined(FIPS_PREVIEW_PLATFORM) */
 
 	if (omrthread_monitor_init(&(vm->systemPropertiesMutex), 0) != 0) {
 		return J9SYSPROP_ERROR_OUT_OF_MEMORY;
@@ -850,6 +865,7 @@ initializeSystemProperties(J9JavaVM * vm)
 			char *propNameCopy = NULL;
 			char *propValueCopy = NULL;
 			UDATA propNameLen = 0;
+			UDATA propValueLen = 0;
 
 			propValue = strchr(optionString + 2, '=');
 			if (propValue == NULL) {
@@ -861,20 +877,104 @@ initializeSystemProperties(J9JavaVM * vm)
 			}
 
 			{
-				UDATA valueLength = strlen(propValue);
+				propValueLen = strlen(propValue);
 
 				propNameCopy = (char *)getMUtf8String(vm, optionString + 2, propNameLen); /* get a copy of the property name */
 				if (NULL == propNameCopy) {
 					rc = J9SYSPROP_ERROR_OUT_OF_MEMORY;
 					goto fail;
 				}
-				propValueCopy = (char *)getMUtf8String(vm, propValue, valueLength); /* get a copy of the property value */
+				propValueCopy = (char *)getMUtf8String(vm, propValue, propValueLen); /* get a copy of the property value */
 				if (NULL == propValueCopy) {
 					j9mem_free_memory(propNameCopy);
 					rc = J9SYSPROP_ERROR_OUT_OF_MEMORY;
 					goto fail;
 				}
 			}
+
+#if defined(FIPS_PREVIEW_PLATFORM)
+			/*
+			 * In case the user has specified their own "java.ext.dirs" property value,
+			 * we need to ensure that the FIPS directory is updated in the value given
+			 * by the user, or else the JDK may fail to start with misleading error
+			 * messages. Because this change is being made very late in the cycle,
+			 * this change purposefully only engages when the user has specified
+			 * their own "java.ext.dirs" option to mitigate the risk of this late change.
+			 *
+			 * A better overall approach would be to abandon updating "java.ext.dirs"
+			 * earlier (when the VM is initializing its value) and simply move the
+			 * code to assemble the FIPS directory here and append it to the last
+			 * "-Djava.ext.dirs=" option found in this loop. For now, however, we
+			 * implement the safer approach...
+			 *
+			 * To find this FIPS directory, we search for the first "java.ext.dirs" setting
+			 * that contains "fips140" because that's very likely to be the FIPS
+			 * directory from the default setting provided by the VM. Once we find that
+			 * directory, we remember it in javaExtDirValue so that when we see later
+			 * options that set "java.ext.dirs", we can grab that FIPS directory and
+			 * append it. For any such later option that sets "java.ext.dirs", we allocate
+			 * new memory for the property value and copy the user's value followed by
+			 * J9JAVA_PATH_SEPARATOR_CHAR followed by the earlier recorded FIPS-specific
+			 * ext directory. If this succeeds, we free the earlier memory allocated to
+			 * hold the user's value.
+			 */
+			if ((LITERAL_STRLEN(JAVA_EXT_DIRS) == propNameLen)
+			&& (0 == strncmp(propNameCopy, JAVA_EXT_DIRS, LITERAL_STRLEN(JAVA_EXT_DIRS)))
+			) {
+				if (NULL == javaExtDirValue) {
+					/* Find the first "java.ext.dirs" setting that contains "fips140"
+					 * which is likely to be the FIPS specific ext directory.
+					 */
+					if (NULL != strstr(propValueCopy, FIPS140)) {
+						javaExtDirValue = propValueCopy;
+						javaExtDirValueLen = propValueLen;
+					}
+				} else {
+					UDATA newValueLen = 0;
+					char *newValue = NULL;
+
+					/* This is a second or subsequent "java.ext.dirs" setting which
+					 * must come from user. Extract the first directory (ext under
+					 * fips140-2 or fips140-3) from the saved javaExtDirValue string
+					 * then append that directory to the user's property value
+					 * and use this longer path to set "java.ext.dirs".
+					 */
+
+					if (NULL == fipsExtDir) {
+						/* Only need to do this once for second "java.ext.dirs" setting. */
+						char *sep = (char *) memchr(javaExtDirValue, J9JAVA_PATH_SEPARATOR_CHAR, javaExtDirValueLen);
+						fipsExtDir = javaExtDirValue; /* Remember this directory. */
+						if (NULL == sep) { /* This shouldn't happen but can just use entire "java.ext.dirs" setting. */
+							fipsExtDirLen = javaExtDirValueLen;
+						} else { /* Capture just the first directory. */
+							fipsExtDirLen = sep - javaExtDirValue;
+						}
+					}
+
+					/* Add 2 for the path separator and the terminating zero. */
+					newValueLen = propValueLen + fipsExtDirLen + 2;
+					newValue = (char *) j9mem_allocate_memory(newValueLen, J9MEM_CATEGORY_VM);
+					if (NULL == newValue) {
+						j9mem_free_memory(propValueCopy);
+						j9mem_free_memory(propNameCopy);
+						rc = J9SYSPROP_ERROR_OUT_OF_MEMORY;
+						goto fail;
+					}
+					memcpy(newValue, propValueCopy, propValueLen);
+					newValue[propValueLen] = J9JAVA_PATH_SEPARATOR_CHAR;
+					memcpy(newValue + propValueLen + 1, fipsExtDir, fipsExtDirLen);
+					newValue[newValueLen - 1] = 0;
+
+					/* We're done with the previous propValueCopy now. */
+					j9mem_free_memory(propValueCopy);
+
+					/* Replace propValueCopy with newValue. */
+					propValueCopy = newValue;
+					propValueLen = newValueLen;
+				}
+			}
+#endif /* defined(FIPS_PREVIEW_PLATFORM) */
+
 			if (j2seVersion >= J2SE_V11) {
 				/* defining any system property starting with "com.sun.management" should
 				 * cause the jdk.management.agent module to be loaded. This occurs in
