@@ -42,6 +42,7 @@
 	</test>
 	<test name="Jep389Tests_testClinkerFfi_UpCall">
 		<classes>
+			<class name="org.openj9.test.jep389.upcall.InvalidUpCallTests"/>
 			<class name="org.openj9.test.jep389.upcall.MultiUpcallMHTests"/>
 			<class name="org.openj9.test.jep389.upcall.MultiUpcallThrdsMHTests1"/>
 			<class name="org.openj9.test.jep389.upcall.MultiUpcallThrdsMHTests2"/>

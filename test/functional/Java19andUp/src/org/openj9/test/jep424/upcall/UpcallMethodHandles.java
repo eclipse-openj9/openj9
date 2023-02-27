@@ -182,6 +182,7 @@ public class UpcallMethodHandles {
 	public static final MethodHandle MH_addIntAndIntsFromStructWithNestedStructArray;
 	public static final MethodHandle MH_addIntAndIntsFromStructWithNestedStructArray_reverseOrder;
 	public static final MethodHandle MH_add2IntStructs_returnStruct;
+	public static final MethodHandle MH_add2IntStructs_returnStruct_throwException;
 	public static final MethodHandle MH_add2IntStructs_returnStructPointer;
 	public static final MethodHandle MH_add3IntStructs_returnStruct;
 
@@ -380,6 +381,7 @@ public class UpcallMethodHandles {
 			MH_addIntAndIntsFromStructWithNestedStructArray = lookup.findStatic(UpcallMethodHandles.class, "addIntAndIntsFromStructWithNestedStructArray", MT_Int_Int_MemSegmt); //$NON-NLS-1$
 			MH_addIntAndIntsFromStructWithNestedStructArray_reverseOrder = lookup.findStatic(UpcallMethodHandles.class, "addIntAndIntsFromStructWithNestedStructArray_reverseOrder", MT_Int_Int_MemSegmt); //$NON-NLS-1$
 			MH_add2IntStructs_returnStruct = lookup.findStatic(UpcallMethodHandles.class, "add2IntStructs_returnStruct", MT_MemSegmt_MemSegmt_MemSegmt); //$NON-NLS-1$
+			MH_add2IntStructs_returnStruct_throwException = lookup.findStatic(UpcallMethodHandles.class, "add2IntStructs_returnStruct_throwException", MT_MemSegmt_MemSegmt_MemSegmt); //$NON-NLS-1$
 			MH_add2IntStructs_returnStructPointer = lookup.findStatic(UpcallMethodHandles.class, "add2IntStructs_returnStructPointer", MT_Addr_MemAddr_MemSegmt); //$NON-NLS-1$
 			MH_add3IntStructs_returnStruct = lookup.findStatic(UpcallMethodHandles.class, "add3IntStructs_returnStruct", MT_MemSegmt_MemSegmt_MemSegmt); //$NON-NLS-1$
 
@@ -1294,6 +1296,10 @@ public class UpcallMethodHandles {
 		intStructSegmt.set(JAVA_INT, 0, intStruct_Elem1);
 		intStructSegmt.set(JAVA_INT, 4, intStruct_Elem2);
 		return intStructSegmt;
+	}
+
+	public static MemorySegment add2IntStructs_returnStruct_throwException(MemorySegment arg1, MemorySegment arg2) {
+		throw new IllegalArgumentException("An exception is thrown from the upcall method");
 	}
 
 	public static Addressable add2IntStructs_returnStructPointer(MemoryAddress arg1Addr, MemorySegment arg2) {

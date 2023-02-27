@@ -5289,6 +5289,7 @@ typedef struct J9VMThread {
 #if JAVA_SPEC_VERSION >= 16
 	U_64 *ffiArgs;
 	UDATA ffiArgCount;
+	void *jmpBufEnvPtr;
 #endif /* JAVA_SPEC_VERSION >= 16 */
 #if JAVA_SPEC_VERSION >= 19
 	J9VMContinuation *currentContinuation;

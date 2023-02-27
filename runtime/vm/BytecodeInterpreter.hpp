@@ -129,6 +129,17 @@ extern void CEEJNIWrapper(J9VMThread *currentThread);
 }
 #endif /* J9VM_PORT_ZOS_CEEHDLRSUPPORT */
 
+#if JAVA_SPEC_VERSION >= 16
+extern "C" {
+extern void
+#if FFI_NATIVE_RAW_API
+ffiCallWithSetJmpForUpcall(J9VMThread *currentThread, ffi_cif *cif, void *function, UDATA *returnStorage, void **values, ffi_raw *values_raw);
+#else /* FFI_NATIVE_RAW_API */
+ffiCallWithSetJmpForUpcall(J9VMThread *currentThread, ffi_cif *cif, void *function, UDATA *returnStorage, void **values);
+#endif /* FFI_NATIVE_RAW_API */
+}
+#endif /* JAVA_SPEC_VERSION >= 16 */
+
 class INTERPRETER_CLASS
 {
 /*
@@ -5141,10 +5152,9 @@ done:
 		VM_VMAccess::inlineExitVMToJNI(_currentThread);
 		VM_VMHelpers::beforeJNICall(_currentThread);
 #if FFI_NATIVE_RAW_API
-		ffi_ptrarray_to_raw(cif, values, values_raw);
-		ffi_raw_call(cif, FFI_FN(function), returnStorage, values_raw);
+		ffiCallWithSetJmpForUpcall(_currentThread, cif, function, returnStorage, values, values_raw);
 #else /* FFI_NATIVE_RAW_API */
-		ffi_call(cif, FFI_FN(function), returnStorage, values);
+		ffiCallWithSetJmpForUpcall(_currentThread, cif, function, returnStorage, values);
 #endif /* FFI_NATIVE_RAW_API */
 		VM_VMHelpers::afterJNICall(_currentThread);
 		VM_VMAccess::inlineEnterVMFromJNI(_currentThread);
