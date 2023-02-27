@@ -166,7 +166,7 @@ public class Continuation {
 		isAccessible = true;
 	}
 
-	private static void execute(Continuation cont) {
+	private static void enter(Continuation cont) {
 		try {
 			cont.runnable.run();
 		} finally {
