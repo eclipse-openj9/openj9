@@ -25,8 +25,8 @@
 <project name="MicroJIT" default="build" basedir=".">
 	<taskdef resource="net/sf/antcontrib/antlib.xml" />
 	<description>
-    	MicroJIT
-    </description>
+		MicroJIT
+	</description>
 
 	<!-- set global properties for this build -->
 	<property name="DEST" value="${BUILD_ROOT}/functional/MicroJIT" />
