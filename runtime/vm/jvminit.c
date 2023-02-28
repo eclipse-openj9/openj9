@@ -965,13 +965,13 @@ freeJavaVM(J9JavaVM * vm)
 	{
 		J9Pool *hookRecords = vm->checkpointState.hookRecords;
 		J9VMInitArgs *restoreArgsList = vm->checkpointState.restoreArgsList;
+		J9Pool *classIterationRestoreHookRecords = vm->checkpointState.classIterationRestoreHookRecords;
 
 		if (NULL != hookRecords) {
 			pool_kill(hookRecords);
 			vm->checkpointState.hookRecords = NULL;
 		}
 
-		J9Pool *classIterationRestoreHookRecords = vm->checkpointState.classIterationRestoreHookRecords;
 		if (NULL != classIterationRestoreHookRecords) {
 			pool_kill(classIterationRestoreHookRecords);
 			vm->checkpointState.classIterationRestoreHookRecords = NULL;
