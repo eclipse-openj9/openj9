@@ -707,6 +707,8 @@ enum INIT_STAGE {
 #define JVMINIT_VERBOSE_INIT_TRACE_WORKING_SET(vm)
 #endif
 
+#if JAVA_SPEC_VERSION == 8
+
 /* The FIPS 140-3 command-line options should not be accepted anywhere the preview is not enabled.
  * Tech preview is enabled on (all 64-bit platforms only, not enabled on any 31/32 bit platform):
  *	Windows on x86-64
@@ -714,6 +716,9 @@ enum INIT_STAGE {
  *	AIX on 64-bit POWER
  *	Linux on 64-bit POWER BE
  *	Linux on 64-bit POWER LE
+ *
+ * This is a Java 8 specific feature.
+ *
  */
 #if (defined(J9VM_ENV_DATA64) && (defined(J9VM_ARCH_X86) || defined(AIXPPC) || defined(LINUXPPC64)))
 #define FIPS_PREVIEW_OPTIONS_ACCEPTED_PLATFORM 1
@@ -731,6 +736,8 @@ enum INIT_STAGE {
 #if (defined(FIPS_PREVIEW_OPTIONS_ACCEPTED_PLATFORM) || (defined(J9VM_ENV_DATA64) && defined(LINUX) && defined(S39064)))
 #define FIPS_PREVIEW_PLATFORM 1
 #endif /* (defined(FIPS_PREVIEW_OPTIONS_ACCEPTED_PLATFORM) || (defined(J9VM_ENV_DATA64) && defined(LINUX) && defined(S39064))) */
+
+#endif /* JAVA_SPEC_VERSION == 8 */
 
 #ifdef __cplusplus
 }
