@@ -4077,7 +4077,7 @@ J9::Z::CodeGenerator::inlineDirectCall(
       }
 
    static bool disableCRC32CAcceleration = (feGetEnv("TR_DisableCRC32CAcceleration") != NULL);
-   if (!disableCRC32CAcceleration && self()->getSupportsVectorRegisters())
+   if (!disableCRC32CAcceleration && self()->getSupportsVectorRegisters() && !TR::Compiler->om.canGenerateArraylets())
       {
       switch (methodSymbol->getRecognizedMethod())
          {
