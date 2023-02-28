@@ -234,7 +234,7 @@ class TR_PersistentMethodInfo
       RecompDueToRI                        = 0x000A0000,
       RecompDueToJProfiling                = 0x000B0000,
       RecompDueToInlinedMethodRedefinition = 0x000C0000,
-      // NOTE: recompilations due to EDO decrementation cannot be tracked
+      // NOTE: recompilations due to EDO decrementation cannot be tracked precisely
       // because they are triggered from a snippet (must change the code for snippet)
       // Also, the recompilations after a profiling step cannot be marked as such.
       // NOTE: recompilations can be triggered by invalidations too, but this
@@ -332,6 +332,8 @@ class TR_PersistentJittedBodyInfo
    static TR_PersistentJittedBodyInfo *get(void *startPC);
 
    bool getHasLoops()               { return _flags.testAny(HasLoops); }
+   bool getHasEdoSnippet()          { return _flags.testAny(HasEdoSnippet); }
+   void setHasEdoSnippet()          { _flags.set(HasEdoSnippet, true); } // set by codegen when the recompilation snippet is created
    bool getUsesPreexistence()       { return _flags.testAny(UsesPreexistence); }
    bool getDisableSampling()        { return _flags.testAny(DisableSampling);  }
    void setDisableSampling(bool b)  { _flags.set(DisableSampling, b); }
@@ -410,7 +412,7 @@ class TR_PersistentJittedBodyInfo
    enum
       {
       HasLoops                = 0x0001,
-      //HasManyIterationsLoops  = 0x0002, // Available
+      HasEdoSnippet           = 0x0002,
       UsesPreexistence        = 0x0004,
       DisableSampling         = 0x0008, // This flag disables sampling of this method even though its recompilable
       IsProfilingBody         = 0x0010,
