@@ -220,8 +220,8 @@ juRandomReseed(J9VMThread *currentThread, void *userData)
 }
 
 /**
- * This cleans up the instanceObjects associated with each J9JavaVM->checkpointState.hookRecords
- * and the hookRecords as well if checkpointState.isNonPortableRestoreMode is TRUE.
+ * This cleans up the instanceObjects associated with each J9JavaVM->checkpointState.hookRecords,
+ * the hookRecords and classIterationRestoreHookRecords as well if checkpointState.isNonPortableRestoreMode is TRUE.
  *
  * @param[in] currentThread vmThread token
  *
@@ -247,11 +247,18 @@ cleanupCriuHooks(J9VMThread *currentThread)
 			vm->checkpointState.hookRecords = NULL;
 		}
 	}
+
+	J9Pool *classIterationRestoreHookRecords = vm->checkpointState.classIterationRestoreHookRecords;
+	if ((NULL != classIterationRestoreHookRecords) && (vm->checkpointState.isNonPortableRestoreMode)) {
+		/* No more checkpoint, cleanup hook records. */
+		pool_kill(vm->checkpointState.classIterationRestoreHookRecords);
+		vm->checkpointState.classIterationRestoreHookRecords = NULL;
+	}
 }
 
 /**
- * This initializes J9JavaVM->checkpointState.hookRecords and
- * adds an internal JVMCheckpointHook to re-seed java.util.Random.seed.value.
+ * This initializes J9JavaVM->checkpointState.hookRecords, classIterationRestoreHookRecords and
+ * delayedLockingOperationsRecords, adds an internal JVMCheckpointHook to re-seed java.util.Random.seed.value.
  *
  * @param[in] currentThread vmThread token
  *
@@ -267,6 +274,14 @@ initializeCriuHooks(J9VMThread *currentThread)
 	if (NULL == vm->checkpointState.hookRecords) {
 		vm->checkpointState.hookRecords = pool_new(sizeof(J9InternalHookRecord), 0, 0, 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(vm->portLibrary));
 		if (NULL == vm->checkpointState.hookRecords) {
+			setNativeOutOfMemoryError(currentThread, 0, 0);
+			goto done;
+		}
+	}
+
+	if (NULL == vm->checkpointState.classIterationRestoreHookRecords) {
+		vm->checkpointState.classIterationRestoreHookRecords = pool_new(sizeof(J9InternalClassIterationRestoreHookRecord), 0, 0, 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(vm->portLibrary));
+		if (NULL == vm->checkpointState.classIterationRestoreHookRecords) {
 			setNativeOutOfMemoryError(currentThread, 0, 0);
 			goto done;
 		}
@@ -291,7 +306,8 @@ initializeCriuHooks(J9VMThread *currentThread)
 	}
 
 done:
-	Trc_VM_criu_initHooks_Exit(currentThread, vm->checkpointState.hookRecords);
+	Trc_VM_criu_initHooks_Exit(currentThread, vm->checkpointState.hookRecords,
+		vm->checkpointState.classIterationRestoreHookRecords, vm->checkpointState.delayedLockingOperationsRecords);
 }
 
 /**
@@ -385,6 +401,7 @@ runInternalJVMRestoreHooks(J9VMThread *currentThread)
 {
 	J9JavaVM *vm = currentThread->javaVM;
 	J9Pool *hookRecords = vm->checkpointState.hookRecords;
+	J9Pool *classIterationRestoreHookRecords = vm->checkpointState.classIterationRestoreHookRecords;
 	pool_state walkState = {0};
 	BOOLEAN result = TRUE;
 
@@ -392,12 +409,31 @@ runInternalJVMRestoreHooks(J9VMThread *currentThread)
 	J9InternalHookRecord *hookRecord = (J9InternalHookRecord*)pool_startDo(hookRecords, &walkState);
 	while (NULL != hookRecord) {
 		if (hookRecord->isRestore) {
-			if (FALSE == hookRecord->hookFunc(currentThread, hookRecord)) {
-				result = FALSE;
+			result = hookRecord->hookFunc(currentThread, hookRecord);
+			if (!result) {
 				break;
 			}
 		}
 		hookRecord = (J9InternalHookRecord*)pool_nextDo(&walkState);
+	}
+
+	if (result) {
+		if ((NULL != classIterationRestoreHookRecords) && (pool_numElements(classIterationRestoreHookRecords)) > 0) {
+			J9ClassWalkState j9ClassWalkState = {0};
+			J9Class *clazz = vm->internalVMFunctions->allClassesStartDo(&j9ClassWalkState, vm, NULL);
+			while (NULL != clazz) {
+				J9InternalClassIterationRestoreHookRecord *hookRecord = (J9InternalClassIterationRestoreHookRecord*)pool_startDo(classIterationRestoreHookRecords, &walkState);
+				while (NULL != hookRecord) {
+					result = hookRecord->hookFunc(currentThread, clazz);
+					if (!result) {
+						break;
+					}
+					hookRecord = (J9InternalClassIterationRestoreHookRecord*)pool_nextDo(&walkState);
+				}
+				clazz = vm->internalVMFunctions->allClassesNextDo(&j9ClassWalkState);
+			}
+			vm->internalVMFunctions->allClassesEndDo(&j9ClassWalkState);
+		}
 	}
 
 	/* Cleanup at restore. */
@@ -492,6 +528,12 @@ BOOLEAN
 delayedLockingOperation(J9VMThread *currentThread, j9object_t instance, UDATA operation)
 {
 	return VM_CRIUHelpers::delayedLockingOperation(currentThread, instance, operation);
+}
+
+void
+addInternalJVMClassIterationRestoreHook(J9VMThread *currentThread, classIterationRestoreHookFunc hookFunc)
+{
+	VM_CRIUHelpers::addInternalJVMClassIterationRestoreHook(currentThread, hookFunc);
 }
 
 } /* extern "C" */

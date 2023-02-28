@@ -971,6 +971,12 @@ freeJavaVM(J9JavaVM * vm)
 			vm->checkpointState.hookRecords = NULL;
 		}
 
+		J9Pool *classIterationRestoreHookRecords = vm->checkpointState.classIterationRestoreHookRecords;
+		if (NULL != classIterationRestoreHookRecords) {
+			pool_kill(classIterationRestoreHookRecords);
+			vm->checkpointState.classIterationRestoreHookRecords = NULL;
+		}
+
 		j9sl_close_shared_library(vm->checkpointState.libCRIUHandle);
 
 		if (NULL != vm->delayedLockingOperationsMutex) {

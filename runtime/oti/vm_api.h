@@ -594,6 +594,18 @@ runDelayedLockRelatedOperations(J9VMThread *currentThread);
  */
 BOOLEAN
 delayedLockingOperation(J9VMThread *currentThread, j9object_t instance, UDATA operation);
+
+/**
+ * This adds an internal CRIU restore hook to be invoked for each class iterated
+ * via allClassesStartDo/allClassesNextDo.
+ *
+ * @param[in] currentThread vmThread token
+ * @param[in] hookFunc The hook function to be invoked for the hook record
+ *
+ * @return void
+ */
+void
+addInternalJVMClassIterationRestoreHook(J9VMThread *currentThread, classIterationRestoreHookFunc hookFunc);
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
 /* ---------------- classloadersearch.c ---------------- */
