@@ -2636,6 +2636,20 @@ public native boolean isValue();
 public native boolean isIdentity();
 
 /**
+ * Return class file version (minorVersion << 16 + majorVersion) in an int.
+ *
+ * @return	the class file version
+ */
+int getClassFileVersion() {
+	Class<?> thisObject = this;
+	while (thisObject.isArray()) {
+		thisObject = thisObject.getComponentType();
+	}
+	return thisObject.getClassFileVersion0();
+}
+private native int getClassFileVersion0();
+
+/**
  * ToDo: add comments for public methods - https://github.com/eclipse-openj9/openj9/issues/13615
  */
 Class<?> asPrimaryType() {

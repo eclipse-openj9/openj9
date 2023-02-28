@@ -243,22 +243,31 @@ option_set_to_opt_percent(J9JavaVM* vm, const char* option, IDATA* optionIndex, 
  * @note optionIndex contains position of argument on command line if success returned, else -1
  */
 static IDATA
-option_set_to_opt_integer(J9JavaVM* vm, const char* option, IDATA* optionIndex, IDATA match, UDATA* address)
+option_set_to_opt_integer_args(J9JavaVM* vm, const char* option, IDATA* optionIndex, IDATA match, UDATA* address, J9VMInitArgs* args)
 {
 	IDATA element;
 	IDATA returnCode = OPTION_OK;
 	IDATA value;
 
-	element = FIND_AND_CONSUME_VMARG2(match, option, NULL);
+	element = FIND_AND_CONSUME_ARG2(args, match, option, NULL);
 	*optionIndex = element;
 
 	if (element >= 0) {
-		returnCode = GET_INTEGER_VALUE(element, option, value);
+		returnCode = GET_INTEGER_VALUE_ARGS(args, element, option, value);
 		if (OPTION_OK == returnCode) {
 			*address = value;
 		}
 	}
 	return returnCode;
+}
+
+/**
+ * option_set_to_opt_integer_args wrapper that uses vmArgsArray for parsing.
+ */
+static IDATA
+option_set_to_opt_integer(J9JavaVM* vm, const char* option, IDATA* optionIndex, IDATA match, UDATA* address)
+{
+	return option_set_to_opt_integer_args(vm, option, optionIndex, match, address, vm->vmArgsArray);
 }
 
 /**
@@ -949,26 +958,6 @@ gcParseSovereignArguments(J9JavaVM *vm)
 		extensions->heapContractionGCRatioThreshold._wasSpecified = true;
 	}
 
-
-	if(-1 != FIND_ARG_IN_VMARGS(EXACT_MEMORY_MATCH, VMOPT_XGCTHREADS, NULL)) {
-		result = option_set_to_opt_integer(vm, VMOPT_XGCTHREADS, &index, EXACT_MEMORY_MATCH, &extensions->gcThreadCount);
-		if (OPTION_OK != result) {
-			if (OPTION_MALFORMED == result) {
-				j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_MUST_BE_NUMBER, VMOPT_XGCTHREADS);
-			} else {
-				j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_VALUE_OVERFLOWED, VMOPT_XGCTHREADS);
-			}
-			goto _error;
-		}
-
-		if(0 == extensions->gcThreadCount) {
-			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_VALUE_MUST_BE_ABOVE, VMOPT_XGCTHREADS, (UDATA)0);
-			goto _error;
-		}
-
-		extensions->gcThreadCountForced = true;
-	}
-
 	/* Handling VMOPT_XGCMAXTHREADS is equivalent to VMOPT_XGCTHREADS (above), except it sets gcThreadCountForced to false rather than true. */
 	if (-1 != FIND_ARG_IN_VMARGS(EXACT_MEMORY_MATCH, VMOPT_XGCMAXTHREADS, NULL)) {
 		result = option_set_to_opt_integer(vm, VMOPT_XGCMAXTHREADS, &index, EXACT_MEMORY_MATCH, &extensions->gcThreadCount);
@@ -1241,11 +1230,49 @@ gcParseSovereignArguments(J9JavaVM *vm)
 		}
 	}
 
+	if (!gcParseReconfigurableArguments(vm, vm->vmArgsArray)) {
+		goto _error;
+	}
+
 	return 1;
 
 _error:
 	return 0;
 
+}
+
+bool
+gcParseReconfigurableArguments(J9JavaVM* vm, J9VMInitArgs* args)
+{
+	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(vm);
+	IDATA index = -1;
+	IDATA result = 0;
+
+	PORT_ACCESS_FROM_JAVAVM(vm);
+
+	if (-1 != FIND_ARG_IN_ARGS(args, EXACT_MEMORY_MATCH, VMOPT_XGCTHREADS, NULL)) {
+		result = option_set_to_opt_integer_args(vm, VMOPT_XGCTHREADS, &index, EXACT_MEMORY_MATCH, &extensions->gcThreadCount, args);
+		if (OPTION_OK != result) {
+			if (OPTION_MALFORMED == result) {
+				j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_MUST_BE_NUMBER, VMOPT_XGCTHREADS);
+			} else {
+				j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_VALUE_OVERFLOWED, VMOPT_XGCTHREADS);
+			}
+			goto _error;
+		}
+
+		if (0 == extensions->gcThreadCount) {
+			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_VALUE_MUST_BE_ABOVE, VMOPT_XGCTHREADS, (UDATA)0);
+			goto _error;
+		}
+
+		extensions->gcThreadCountForced = true;
+	}
+
+	return true;
+
+_error:
+	return false;
 }
 
 static UDATA
