@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -161,6 +161,9 @@ class TR_PersistentMethodInfo
 
    TR_OptimizationPlan * getOptimizationPlan() {return _optimizationPlan;}
    void setOptimizationPlan(TR_OptimizationPlan *optPlan) { _optimizationPlan = optPlan; }
+   uint32_t getCatchBlockCounter() const { return _catchBlockCounter; }
+   uint32_t *getCatchBlockCounterAddress() { return &_catchBlockCounter; }
+   void incrementCatchBlockCounter() { _catchBlockCounter++; }
    uint8_t getNumberOfInvalidations() {return _numberOfInvalidations;}
    void incrementNumberOfInvalidations() {_numberOfInvalidations++;}
    uint8_t getNumberOfInlinedMethodRedefinition() {return _numberOfInlinedMethodRedefinition;}
@@ -280,7 +283,7 @@ class TR_PersistentMethodInfo
 
 
    TR_OptimizationPlan            *_optimizationPlan;
-
+   uint32_t                        _catchBlockCounter; // how many times a catch block was executed
    uint16_t                        _timeStamp;
    uint8_t                         _numberOfInvalidations; // how many times this method has been invalidated
    uint8_t                         _numberOfInlinedMethodRedefinition; // how many times this method triggers recompilation because of its inlined callees being redefined
