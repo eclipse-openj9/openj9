@@ -497,7 +497,7 @@ J9::Recompilation::getExistingMethodInfo(TR_ResolvedMethod *method)
 /**
  * This method can extract a value profiler from the current list of
  * recompilation profilers.
- * 
+ *
  * \return The first TR_ValueProfiler in the current list of profilers, NULL if there are none.
  */
 TR_ValueProfiler *
@@ -600,14 +600,6 @@ TR_PersistentMethodInfo::TR_PersistentMethodInfo(TR::Compilation *comp) :
       {
       setDisableProfiling();
       }
-
-   // Start cpoSampleCounter at 1.  Because the method sample count
-   // is stored in the compiled method info, we can't start counting
-   // until already compiled once, thus we missed the first sample.
-   // (not particularly clean solution.  Should really attach the
-   // counter to the method, not the compiled-method)
-   //
-   _cpoSampleCounter = 1;
 
    uint64_t tempTimeStamp = comp->getPersistentInfo()->getElapsedTime();
    if (tempTimeStamp < (uint64_t)0x0FFFF)
@@ -739,7 +731,7 @@ TR_PersistentMethodInfo::setForSharedInfo(TR_PersistentProfileInfo** ptr, TR_Per
    // Before it can be accessed, inc ref count on new info
    if (newInfo)
       TR_PersistentProfileInfo::incRefCount(newInfo);
-   
+
    // Update ptr as if it was unlocked
    // Doesn't matter what the old info was, as long as it was unlocked
    do {

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2022 IBM Corp. and others
+ * Copyright (c) 2000, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -235,26 +235,4 @@ class DefaultCompilationStrategy : public TR::CompilationStrategy
    };
 } // namespace TR
 
-//----------------------- TR::ThresholdCompilationStrategy ---------------------
-namespace TR
-{
-
-class ThresholdCompilationStrategy : public TR::CompilationStrategy
-   {
-   public:
-   TR_PERSISTENT_ALLOC(TR_Memory::PersistentInfo); // Do I need this ?
-   ThresholdCompilationStrategy();
-   TR_OptimizationPlan *processEvent(TR_MethodEvent *event, bool *newPlanCreated);
-   TR_OptimizationPlan *processJittedSample(TR_MethodEvent *event);
-   TR_Hotness getInitialOptLevel();
-   int32_t getSamplesNeeded(TR_Hotness optLevel) { TR_ASSERT(_samplesNeededToMoveTo[optLevel] >= 0, "must be valid entry"); return _samplesNeededToMoveTo[optLevel]; }
-   bool getPerformInstrumentation(TR_Hotness optLevel) { return _performInstrumentation[optLevel]; }
-   TR_Hotness getNextOptLevel(TR_Hotness curOptLevel) { TR_ASSERT(_nextLevel[curOptLevel] != unknownHotness, "must be valid opt level"); return _nextLevel[curOptLevel]; }
-
-   private:
-   TR_Hotness _nextLevel[numHotnessLevels+1];
-   int32_t _samplesNeededToMoveTo[numHotnessLevels+1];
-   bool    _performInstrumentation[numHotnessLevels+1];
-   };
-} // namespace TR
 #endif // ifndef COMPILATIONCONTROLLER_INCL

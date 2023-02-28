@@ -67,7 +67,6 @@ static int32_t profilingFreqTable  [] = {  19,  29,   47,   47,   47,    53 }; /
 #define DEFAULT_PROFILING_COUNT     (profilingCountsTable[MAX_BACKEDGES])
 
 namespace TR { class DefaultCompilationStrategy; }
-namespace TR { class ThresholdCompilationStrategy; }
 namespace OMR { class Recompilation; }
 namespace J9 { class Recompilation; }
 
@@ -81,7 +80,6 @@ class TR_PersistentMethodInfo
    friend class TR_S390Recompilation;  // FIXME: ugly
    friend class ::OMR::Options;
    friend class TR::DefaultCompilationStrategy;
-   friend class TR::ThresholdCompilationStrategy;
 
    public:
    TR_PERSISTENT_ALLOC(TR_Memory::PersistentMethodInfo);
@@ -158,15 +156,6 @@ class TR_PersistentMethodInfo
    void setDoesntKillEverything(bool b) { _flags.set(DoesntKillEverything, b); }
 
    bool doesntKillAnything() { return _flags.testAll(RefinedAliasesMask); }
-
-   // Accessor methods for the "cpoCounter".  This does not really
-   // need to be its own counter, as it is conceptually the same as
-   // "_counter".  However, the original _counter is still during instrumentation, so
-   // it was simplest to keep them separate
-   //
-   int32_t cpoGetCounter()                {return _cpoSampleCounter;}
-   int32_t cpoIncCounter()                {return ++_cpoSampleCounter;}
-   int32_t cpoSetCounter(int newCount)    {return _cpoSampleCounter = newCount;}
 
    uint16_t getTimeStamp() { return _timeStamp; }
 
@@ -292,7 +281,6 @@ class TR_PersistentMethodInfo
 
    TR_OptimizationPlan            *_optimizationPlan;
 
-   int32_t                         _cpoSampleCounter; // TODO remove this field
    uint16_t                        _timeStamp;
    uint8_t                         _numberOfInvalidations; // how many times this method has been invalidated
    uint8_t                         _numberOfInlinedMethodRedefinition; // how many times this method triggers recompilation because of its inlined callees being redefined
