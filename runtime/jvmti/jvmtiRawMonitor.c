@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2022 IBM Corp. and others
+ * Copyright (c) 1991, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -134,6 +134,9 @@ block:
 					}
 				}
 			}
+#if JAVA_SPEC_VERSION >= 19
+			currentThread->ownedMonitorCount += 1;
+#endif /* JAVA_SPEC_VERSION >= 19 */
 		} else {
 #if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
 			if (currentThread->inNative)
@@ -169,6 +172,10 @@ jvmtiRawMonitorExit(jvmtiEnv* env,
 	if (rc == JVMTI_ERROR_NONE) {
 		if (omrthread_monitor_exit((omrthread_monitor_t) monitor) != 0) {
 			rc = JVMTI_ERROR_NOT_MONITOR_OWNER;
+#if JAVA_SPEC_VERSION >= 19
+		} else {
+			currentThread->ownedMonitorCount -= 1;
+#endif /* JAVA_SPEC_VERSION >= 19 */
 		}
 
 		/* JDK blocks here if the current thread is suspended - don't do VM access stuff if the current thread has exclusive */
