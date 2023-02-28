@@ -29,6 +29,7 @@
 
 #include "modronapi.hpp"
 #include "modronopt.h"
+#include "modronnls.h"
 
 #include "EnvironmentBase.hpp"
 #include "GCExtensions.hpp"
@@ -1119,18 +1120,29 @@ j9gc_prepare_for_checkpoint(J9VMThread *vmThread)
 }
 
 BOOLEAN
-j9gc_reinitialize_for_restore(J9VMThread *vmThread)
+j9gc_reinitialize_for_restore(J9VMThread *vmThread, const char **nlsMsgFormat)
 {
 	MM_EnvironmentBase *env = MM_EnvironmentBase::getEnvironment(vmThread->omrVMThread);
 	MM_GCExtensionsBase *extensions = env->getExtensions();
 	MM_VerboseManagerBase *verboseGCManager = extensions->verboseGCManager;
 
-	j9gc_reinitializeDefaults(vmThread);
+	PORT_ACCESS_FROM_JAVAVM(vmThread->javaVM);
+
+	if (!j9gc_reinitializeDefaults(vmThread)) {
+		*nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
+				J9NLS_GC_FAILED_TO_REINITIALIZE_PARSING_RESTORE_OPTIONS, NULL);
+		goto _error;
+	}
 
 	/* The checkpoint thread must release VM access for the duration of reinitializeGCThreadCountForRestore,
 	 * since new GC threads could be started and the startup/attach of a new GC thread involves allocation and may trigger GC. */
 	releaseVMAccess(vmThread);
-	bool result = extensions->configuration->reinitializeGCThreadCountForRestore(env);
+	if (!extensions->configuration->reinitializeGCThreadCountForRestore(env)) {
+		*nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
+				J9NLS_GC_FAILED_TO_INSTANTIATE_TASK_DISPATCHER, NULL);
+		acquireVMAccess(vmThread);
+		goto _error;
+	}
 	acquireVMAccess(vmThread);
 
 	if (NULL != verboseGCManager) {
@@ -1138,7 +1150,10 @@ j9gc_reinitialize_for_restore(J9VMThread *vmThread)
 		verboseGCManager->reinitializeForRestore(env);
 	}
 
-	return result;
+	return true;
+
+_error:
+	return false;
 }
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 

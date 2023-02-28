@@ -962,3 +962,11 @@ J9NLS_GC_POLICY_NOT_SUPPOURTED_CRIU.system_action=The JVM will terminate
 J9NLS_GC_POLICY_NOT_SUPPOURTED_CRIU.user_response=Adjust the garbage collector policy option (-Xgcpolicy) with one of the following supported policies: gencon, optavgpause or optthruput
 
 # END NON-TRANSLATABLE
+
+J9NLS_GC_FAILED_TO_REINITIALIZE_PARSING_RESTORE_OPTIONS=Failed to initialize; unable to parse GC restore options
+# START NON-TRANSLATABLE
+J9NLS_GC_FAILED_TO_REINITIALIZE_PARSING_RESTORE_OPTIONS.explanation=The garbage collector failed to initialize because of an error in the restore options
+J9NLS_GC_FAILED_TO_REINITIALIZE_PARSING_RESTORE_OPTIONS.system_action=The JVM will terminate
+J9NLS_GC_FAILED_TO_REINITIALIZE_PARSING_RESTORE_OPTIONS.user_response=Check that all of the GC options are correctly specified
+
+# END NON-TRANSLATABLE
