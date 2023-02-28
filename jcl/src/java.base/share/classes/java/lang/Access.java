@@ -714,6 +714,11 @@ final class Access implements JavaLangAccess {
 	public boolean isPrimitiveValueType(Class<?> c) {
 		return c.isPrimitiveValueType();
 	}
+
+	@Override
+	public int classFileFormatVersion(Class<?> c) {
+		return c.getClassFileVersion();
+	}
 /*[ENDIF] INLINE-TYPES */
 
 /*[ENDIF] Sidecar19-SE */

@@ -34,6 +34,7 @@
 #include "rommeth.h"
 #include "stackwalk.h"
 #include "ut_j9vm.h"
+#include "util_api.h"
 #include "vm_internal.h"
 #include "jni.h"
 #define FFI_BUILDING /* Needed on Windows to link libffi statically */ 
@@ -2842,6 +2843,16 @@ done:
 	{
 		bool positiveOnlyHashcodes = J9_ARE_ANY_BITS_SET(_vm->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_POSITIVE_HASHCODE);
 		returnSingleFromINL(REGISTER_ARGS, positiveOnlyHashcodes, 0);
+		return EXECUTE_BYTECODE;
+	}
+
+	/* java.lang.Class: private native int getClassFileVersion0(); */
+	VMINLINE VM_BytecodeAction
+	inlGetClassFileVersion(REGISTER_ARGS_LIST)
+	{
+		J9Class *receiverClazz = J9VM_J9CLASS_FROM_HEAPCLASS(_currentThread, *(j9object_t*)_sp);
+		U_32 classFileVersion = getClassFileVersion(_currentThread, receiverClazz);
+		returnSingleFromINL(REGISTER_ARGS, classFileVersion, 1);
 		return EXECUTE_BYTECODE;
 	}
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
@@ -9970,6 +9981,7 @@ public:
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_CLASS_IS_VALUE),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_CLASS_IS_IDENTITY),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_INTERNALS_POSITIVE_ONLY_HASHCODES),
+		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_CLASS_GET_CLASS_FILEVERSION),
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_CLASS_GET_MODIFIERS_IMPL),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_CLASS_GET_COMPONENT_TYPE),
@@ -10497,6 +10509,8 @@ runMethod: {
 		PERFORM_ACTION(inlClassIsIdentity(REGISTER_ARGS));
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_INTERNALS_POSITIVE_ONLY_HASHCODES):
 		PERFORM_ACTION(inlPositiveOnlyHashcodes(REGISTER_ARGS));
+	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_CLASS_GET_CLASS_FILEVERSION):
+		PERFORM_ACTION(inlGetClassFileVersion(REGISTER_ARGS));
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_CLASS_GET_MODIFIERS_IMPL):
 		PERFORM_ACTION(inlClassGetModifiersImpl(REGISTER_ARGS));

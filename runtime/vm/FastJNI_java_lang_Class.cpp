@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2022 IBM Corp. and others
+ * Copyright (c) 2001, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,6 +25,7 @@
 #include "j9protos.h"
 #include "j9consts.h"
 #include "objhelp.h"
+#include "util_api.h"
 #include "VMHelpers.hpp"
 
 extern "C" {
@@ -148,6 +149,14 @@ Fast_java_lang_Class_isIdentity(J9VMThread *currentThread, j9object_t classObjec
 	bool isIdentity = J9ROMCLASS_HAS_IDENTITY(receiverClazz->romClass);
 	return isIdentity ? JNI_TRUE : JNI_FALSE;
 }
+
+/* java.lang.Class: private native int getClassFileVersion0(); */
+jint JNICALL
+Fast_java_lang_Class_getClassFileVersion0(J9VMThread *currentThread, j9object_t classObject)
+{
+	J9Class *receiverClazz = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, classObject);
+	return (jint)getClassFileVersion(currentThread, receiverClazz);
+}
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 
 /* java.lang.Class: public native boolean isInstance(Object object); */
@@ -256,6 +265,9 @@ J9_FAST_JNI_METHOD_TABLE(java_lang_Class)
 		J9_FAST_JNI_RETAIN_VM_ACCESS | J9_FAST_JNI_NOT_GC_POINT | J9_FAST_JNI_NO_NATIVE_METHOD_FRAME | J9_FAST_JNI_NO_EXCEPTION_THROW |
 		J9_FAST_JNI_NO_SPECIAL_TEAR_DOWN | J9_FAST_JNI_DO_NOT_WRAP_OBJECTS)
 	J9_FAST_JNI_METHOD("isIdentity", "()Z", Fast_java_lang_Class_isIdentity,
+		J9_FAST_JNI_RETAIN_VM_ACCESS | J9_FAST_JNI_NOT_GC_POINT | J9_FAST_JNI_NO_NATIVE_METHOD_FRAME | J9_FAST_JNI_NO_EXCEPTION_THROW |
+		J9_FAST_JNI_NO_SPECIAL_TEAR_DOWN | J9_FAST_JNI_DO_NOT_WRAP_OBJECTS)
+	J9_FAST_JNI_METHOD("getClassFileVersion0", "()I", Fast_java_lang_Class_getClassFileVersion0,
 		J9_FAST_JNI_RETAIN_VM_ACCESS | J9_FAST_JNI_NOT_GC_POINT | J9_FAST_JNI_NO_NATIVE_METHOD_FRAME | J9_FAST_JNI_NO_EXCEPTION_THROW |
 		J9_FAST_JNI_NO_SPECIAL_TEAR_DOWN | J9_FAST_JNI_DO_NOT_WRAP_OBJECTS)
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */

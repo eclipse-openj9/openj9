@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2022 IBM Corp. and others
+ * Copyright (c) 1991, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1728,6 +1728,18 @@ getOriginalROMMethod(J9Method * method);
 J9ROMMethod *
 getOriginalROMMethodUnchecked(J9Method * method);
 
+#if JAVA_SPEC_VERSION >= 20
+/**
+ * Return class file version (minorVersion << 16 + majorVersion) in an int.
+ *
+ * @param[in] currentThread the current thread.
+ * @param[in] cls the class
+ *
+ * @return	the class file version
+ */
+U_32
+getClassFileVersion(J9VMThread *currentThread, J9Class *cls);
+#endif /* JAVA_SPEC_VERSION >= 20 */
 /* ---------------- subclass.c ---------------- */
 
 /**
