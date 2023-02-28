@@ -26,6 +26,7 @@
 #include "j9cfg.h"
 #include "rommeth.h"
 #include "ut_j9scar.h"
+#include "util_api.h"
 
 #if JAVA_SPEC_VERSION >= 19
 #include "VMHelpers.hpp"
@@ -550,13 +551,7 @@ JVM_GetClassFileVersion(JNIEnv *env, jclass cls)
 		vmFuncs->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, NULL);
 	} else {
 		J9Class *clazz = J9VM_J9CLASS_FROM_JCLASS(currentThread, cls);
-		J9ROMClass *romClass = clazz->romClass;
-
-		if (J9ROMCLASS_IS_PRIMITIVE_OR_ARRAY(romClass)) {
-			version = BCT_JavaMaxMajorVersionUnshifted;
-		} else {
-			version = (jint)((romClass->minorVersion << 16) + romClass->majorVersion);
-		}
+		version = (jint)getClassFileVersion(currentThread, clazz);
 	}
 
 	vmFuncs->internalExitVMToJNI(currentThread);

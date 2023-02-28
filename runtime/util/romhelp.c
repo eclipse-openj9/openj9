@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -73,5 +73,20 @@ getOriginalROMMethod(J9Method * method)
 	return romMethod;
 }
 
+#if JAVA_SPEC_VERSION >= 20
+/* J9VM_OPT_VALHALLA_VALUE_TYPES is enabled for Java 21 and up. */
+U_32
+getClassFileVersion(J9VMThread *currentThread, J9Class *cls)
+{
+	U_32 version = 0;
 
+	J9ROMClass *romClass = cls->romClass;
+	if (J9ROMCLASS_IS_PRIMITIVE_OR_ARRAY(romClass)) {
+		version = BCT_JavaMaxMajorVersionUnshifted;
+	} else {
+		version = (romClass->minorVersion << 16) + romClass->majorVersion;
+	}
 
+	return version;
+}
+#endif /* JAVA_SPEC_VERSION >= 20 */
