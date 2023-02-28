@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2022 IBM Corp. and others
+ * Copyright (c) 2019, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1058,7 +1058,7 @@ ClientSessionHT::allocate()
 ClientSessionHT::ClientSessionHT() :
    _clientSessionMap(decltype(_clientSessionMap)::allocator_type(TR::Compiler->persistentGlobalAllocator())),
    TIME_BETWEEN_PURGES(TR::Options::_timeBetweenPurges),
-   OLD_AGE(TR::Options::_oldAge), // 1000 minutes
+   OLD_AGE(TR::Options::_oldAge), // 90 minutes
    OLD_AGE_UNDER_LOW_MEMORY(TR::Options::_oldAgeUnderLowMemory), // 5 minutes
    _compInfo(TR::CompilationController::getCompilationInfo())
    {
@@ -1219,7 +1219,7 @@ ClientSessionHT::purgeOldDataIfNeeded()
       uint64_t freePhysicalMemory = _compInfo->computeAndCacheFreePhysicalMemory(incomplete); //check if memory is free
       if (freePhysicalMemory != OMRPORT_MEMINFO_NOT_AVAILABLE && !incomplete)
          {
-         if (freePhysicalMemory < TR::Options::getSafeReservePhysicalMemoryValue())
+         if (freePhysicalMemory < TR::Options::getSafeReservePhysicalMemoryValue() + 4 * TR::Options::getScratchSpaceLowerBound())
             {
             oldAge = OLD_AGE_UNDER_LOW_MEMORY; //memory is low
             }
@@ -1233,8 +1233,8 @@ ClientSessionHT::purgeOldDataIfNeeded()
             crtTime - iter->second->getTimeOflastAccess() > oldAge)
             {
             if (TR::Options::getVerboseOption(TR_VerboseJITServer))
-               TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Server will purge session data for clientUID %llu of age %lld",
-               (unsigned long long)iter->first, (long long)oldAge);
+               TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "t=%u Server will purge session data for clientUID %llu of age %lld. Number of clients before purge: %u",
+                  (uint32_t)_compInfo->getPersistentInfo()->getElapsedTime(), (unsigned long long)iter->first, (long long)oldAge, size());
             ClientSessionData::destroy(iter->second); // delete the client data
             _clientSessionMap.erase(iter); // delete the mapping from the hashtable
             }

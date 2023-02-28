@@ -5868,7 +5868,58 @@ void inlinerAggressivenessLogic(TR::CompilationInfo *compInfo)
        }
     }
 
+// Every N seconds read the CPU and if that exceeds M seconds write it into a circular buffer
+// together with the number of compilations
+class CompilationDensity
+   {
+   struct Entry
+      {
+      uint32_t _cpuConsumed; // in ms
+      uint32_t _numComp;
+      Entry() : _cpuConsumed(0), _numComp(0) {}
+      };
+   static const size_t BUF_SZ = 21;
+   Entry _circularBuffer[BUF_SZ]; // sliding window of CPU readings and number of compilations
+   int _crtBufPos;
+   uint32_t _lastCpuValue;
+   static const uint32_t CPU_INCREMENT = 1000 * 30; // 30 sec
 
+public:
+   CompilationDensity() : _crtBufPos(0), _lastCpuValue(0) {}
+
+   uint64_t getCpuSpanForSlidingWindow() const { return (BUF_SZ-1) * CPU_INCREMENT; }
+
+   bool update(TR::CompilationInfo *compInfo)
+      {
+      if (compInfo->getCpuUtil()->isFunctional())
+         {
+         uint32_t crtCpu = static_cast<uint32_t>(compInfo->getCpuUtil()->getVmTotalCpuTime()/1000000); // convert from ns to ms
+         if (crtCpu >= _lastCpuValue + CPU_INCREMENT)
+            {
+            if (++_crtBufPos == BUF_SZ)
+               _crtBufPos = 0;
+            _circularBuffer[_crtBufPos]._cpuConsumed = crtCpu;
+            _circularBuffer[_crtBufPos]._numComp = compInfo->getNumCompsUsedForCompDensityCalculations();
+            _lastCpuValue = crtCpu;
+            return true;
+            }
+          }
+      return false;
+      }
+
+   // Computes and returns the CPU consumed by the JVM and the number
+   // of compilations between the oldest and the newest entry in our circular buffer
+   void getDensity(uint32_t &cpuConsumed, uint32_t &numComps) const
+      {
+      // Newest entry has index _crtBufPos
+      // Oldest entry has index (_crtBufPos + 1)
+      int oldestPos = _crtBufPos + 1;
+      if (oldestPos == BUF_SZ)
+         oldestPos = 0;
+      cpuConsumed = _circularBuffer[_crtBufPos]._cpuConsumed - _circularBuffer[oldestPos]._cpuConsumed;
+      numComps = _circularBuffer[_crtBufPos]._numComp - _circularBuffer[oldestPos]._numComp;
+      }
+   }; // class CompilationDensity
 
 static int32_t J9THREAD_PROC samplerThreadProc(void * entryarg)
    {
@@ -6038,6 +6089,10 @@ static int32_t J9THREAD_PROC samplerThreadProc(void * entryarg)
    if (vm->javaOffloadSwitchOnWithReasonFunc != 0)
       (*vm->javaOffloadSwitchOnWithReasonFunc)(samplerThread, J9_JNI_OFFLOAD_SWITCH_JIT_SAMPLER_THREAD);
 #endif
+
+#if defined(J9VM_OPT_JITSERVER)
+   CompilationDensity compDensity;
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
    TR_J9VMBase *fe = TR_J9VMBase::get(jitConfig, 0);
 
@@ -6295,6 +6350,64 @@ static int32_t J9THREAD_PROC samplerThreadProc(void * entryarg)
                {
                CalculateOverallCompCPUUtilization(compInfo, crtTime, samplerThread);
                }
+
+#if defined(J9VM_OPT_JITSERVER)
+            if (persistentInfo->getRemoteCompilationMode() == JITServer::CLIENT &&
+                TR::Options::_lowCompDensityModeEnterThreshold > 0 && // A value of 0 disables this feature
+                !TR::Options::getCmdLineOptions()->getOption(TR_FullSpeedDebug) && // FSD interferes with recompilations in LPQ
+                compInfo->getJvmCpuEntitlement() <= 800) // More than 8 CPUs can consume CPU too fast
+               {
+               // Compute the density of compilations relative to the CPU consumed by the JVM
+               // This code needs to stay after the code that updates the CPU utilization so that we can get fresh values
+               if (compDensity.update(compInfo))
+                  {
+                  uint32_t cpuConsumed; // ms
+                  uint32_t numComps;
+                  compDensity.getDensity(cpuConsumed, numComps);
+
+                  if (!compInfo->getLowCompDensityMode())
+                     {
+                     // If the LPQ has been drained, don't be so aggressive with its processing
+                     if (compInfo->getLowPriorityCompQueue().getLowPriorityQueueSize() == 0)
+                        compInfo->setCompileFromLPQRegardlessOfCPU(false);
+
+                     // If density of compilations is lower than N every 10 minutes of CPU, we want to enter the lowCompDensityMode
+                     if (numComps * compDensity.getCpuSpanForSlidingWindow() < J9::Options::_lowCompDensityModeEnterThreshold * cpuConsumed)
+                        {
+                        compInfo->enterLowCompDensityMode();
+                        compInfo->setCompileFromLPQRegardlessOfCPU(false);
+                        if (TR::Options::isAnyVerboseOptionSet(TR_VerbosePerformance, TR_VerboseJITServer))
+                           {
+                           TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "t=%6u Entering low compilation density mode. Will suppress most remote compilations. numComps=%u cpuConsumed=%llu ms LPQsize=%d",
+                                                          (uint32_t)crtTime, numComps, cpuConsumed, compInfo->getLowPriorityCompQueue().getLowPriorityQueueSize());
+                           }
+                        }
+                     }
+                  else // Check whether we need to exit the lowCompDensityMode
+                     {
+                     // Exit lowCompDensityMode if
+                     // (1) The density of compilations in the last 10 minutes of CPU window exceeds `J9::Options::_lowCompDensityModeExitThreshold`
+                     // or
+                     // (2) We have accumulated a large backlog of recompilations in the LPQ
+                     if (numComps * compDensity.getCpuSpanForSlidingWindow() > J9::Options::_lowCompDensityModeExitThreshold * cpuConsumed ||
+                         compInfo->getLowPriorityCompQueue().getLowPriorityQueueSize() > J9::Options::_lowCompDensityModeExitLPQSize)
+                        {
+                        compInfo->exitLowCompDensityMode();
+                        // Typically, we take process entries from LPQ only when there is spare CPU available
+                        // Ignore this rule if JITServer is available because remote compilations
+                        // will not steal CPU from the running JVM
+                        if (JITServerHelpers::isServerAvailable() && compInfo->getLowPriorityCompQueue().getLowPriorityQueueSize() > 0)
+                           compInfo->setCompileFromLPQRegardlessOfCPU(true);
+                        if (TR::Options::isAnyVerboseOptionSet(TR_VerbosePerformance, TR_VerboseJITServer))
+                           {
+                           TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "t=%6u Exiting low compilation density mode. Will re-enable remote compilations. numComps=%u cpuConsumed=%llu ms LPQsize=%d",
+                                                          (uint32_t)crtTime, numComps, cpuConsumed, compInfo->getLowPriorityCompQueue().getLowPriorityQueueSize());
+                           }
+                        }
+                     }
+                  }
+               }
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
             // Update information about global samples
             if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableDynamicSamplingWindow))
