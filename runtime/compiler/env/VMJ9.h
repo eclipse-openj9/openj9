@@ -270,9 +270,6 @@ public:
    virtual bool sameClassLoaders(TR_OpaqueClassBlock *, TR_OpaqueClassBlock *);
    virtual bool jitStaticsAreSame(TR_ResolvedMethod *, int32_t, TR_ResolvedMethod *, int32_t);
    virtual bool jitFieldsAreSame(TR_ResolvedMethod *, int32_t, TR_ResolvedMethod *, int32_t, int32_t);
-   virtual bool isHiddenClass(TR_OpaqueClassBlock * clazzPointer);
-   virtual bool isSyntheticClass(TR_OpaqueClassBlock * clazzPointer);
-   virtual bool isAnnotationClass(TR_OpaqueClassBlock * clazzPointer);
 
    virtual uintptr_t getPersistentClassPointerFromClassPointer(TR_OpaqueClassBlock * clazz);//d169771 [2177]
 

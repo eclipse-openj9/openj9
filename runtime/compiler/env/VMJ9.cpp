@@ -6778,23 +6778,6 @@ TR_J9VMBase::isEnumClass(TR_OpaqueClassBlock * clazzPointer, TR_ResolvedMethod *
    return (isModFlagSet && (enumClass == superClass));
    }
 
-bool
-TR_J9VMBase::isHiddenClass(TR_OpaqueClassBlock * clazzPointer)
-   {
-   return (TR::Compiler->cls.romClassOf(clazzPointer)->modifiers & J9AccClassHidden) ? true : false;
-   }
-
-bool
-TR_J9VMBase::isSyntheticClass(TR_OpaqueClassBlock * clazzPointer)
-   {
-   return (TR::Compiler->cls.romClassOf(clazzPointer)->modifiers & J9AccSynthetic) ? true : false;
-   }
-
-bool
-TR_J9VMBase::isAnnotationClass(TR_OpaqueClassBlock * clazzPointer)
-   {
-   return (TR::Compiler->cls.romClassOf(clazzPointer)->modifiers & J9AccAnnotation) ? true : false;
-   }
 
 bool
 TR_J9VMBase::isAbstractClass(TR_OpaqueClassBlock * clazzPointer)
