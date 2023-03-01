@@ -4639,6 +4639,7 @@ typedef struct J9InternalVMFunctions {
 	struct J9MemorySegment*  ( *romImageNewSegment)(struct J9JavaVM *vm, struct J9ROMImageHeader *header, UDATA isBaseType, struct J9ClassLoader *classLoader ) ;
 #endif /* J9VM_IVE_ROM_IMAGE_HELPERS || (J9VM_OPT_DYNAMIC_LOAD_SUPPORT && J9VM_OPT_ROM_IMAGE_SUPPORT) */
 	void  (JNICALL *runCallInMethod)(JNIEnv *env, jobject receiver, jclass clazz, jmethodID methodID, void* args) ;
+	void (JNICALL *runStaticMethod)(struct J9VMThread *currentThread, U_8 *className, struct J9NameAndSignature *selector, UDATA argCount, UDATA *arguments) ;
 	j9object_t  ( *catUtfToString4)(struct J9VMThread * vmThread, const U_8 *data1, UDATA length1, const U_8 *data2, UDATA length2, const U_8 *data3, UDATA length3, const U_8 *data4, UDATA length4) ;
 	struct J9MemorySegmentList*  ( *allocateMemorySegmentList)(struct J9JavaVM * javaVM, U_32 numberOfMemorySegments, U_32 memoryCategory) ;
 	struct J9MemorySegmentList*  ( *allocateMemorySegmentListWithFlags)(struct J9JavaVM * javaVM, U_32 numberOfMemorySegments, UDATA flags, U_32 memoryCategory) ;

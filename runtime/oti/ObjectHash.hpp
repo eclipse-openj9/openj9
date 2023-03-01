@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -36,6 +36,7 @@
 #include "j9.h"
 #include "j9accessbarrier.h"
 #include "j9consts.h"
+#include "j9protos.h"
 #include "AtomicSupport.hpp"
 #include "VMHelpers.hpp"
 
@@ -200,9 +201,29 @@ public:
 	static VMINLINE I_32
 	inlineComputeObjectAddressToHash(J9JavaVM *vm, j9object_t objectPointer)
 	{
-		return inlineConvertValueToHash(vm, (UDATA)objectPointer);
+		return convertObjectToHash(vm, objectPointer);
 	}
 
+	static VMINLINE I_32
+	convertObjectToHash(J9JavaVM *vm, j9object_t objectPointer)
+	{
+		I_32 hashValue = 0;
+		J9Class *receiverClazz = J9OBJECT_CLAZZ(vm->internalVMFunctions->currentVMThread(vm), objectPointer);
+
+		if ((NULL != receiverClazz) && J9_IS_J9CLASS_VALUETYPE(receiverClazz)) {
+			J9VMThread *currentThread = vm->internalVMFunctions->currentVMThread(vm);
+			J9_DECLARE_CONSTANT_UTF8(methodName, "primitiveObjectHashCode");
+			J9_DECLARE_CONSTANT_UTF8(methodSig, "(Ljava/lang/Object;)I");
+			J9NameAndSignature nas = { (J9UTF8 *)&methodName, (J9UTF8 *)&methodSig };
+			UDATA args[] = { (UDATA) objectPointer };
+			vm->internalVMFunctions->runStaticMethod(currentThread, (U_8 *)"java/lang/runtime/PrimitiveObjectMethods", &nas, 1, args);
+			hashValue = (I_32)currentThread->returnValue;
+		} else {
+			hashValue = inlineConvertValueToHash(vm, (UDATA)objectPointer);
+		}
+
+		return hashValue;
+	}
 
 	/**
 	 * Fetch objectPointer's hashcode
@@ -266,10 +287,10 @@ public:
 				if (J9_ARE_NO_BITS_SET(flags, OBJECT_HEADER_HAS_BEEN_HASHED_IN_CLASS)) {
 					setHasBeenHashed(vm, objectPointer);
 				}
-				hashValue = inlineConvertValueToHash(vm, (UDATA)objectPointer);
+				hashValue = convertObjectToHash(vm, objectPointer);
 			}
 #else /* defined(J9VM_GC_MODRON_COMPACTION) || defined(J9VM_GC_GENERATIONAL) */
-			hashValue = inlineConvertValueToHash(vm, (UDATA)objectPointer);
+			hashValue = convertObjectToHash(vm, objectPointer);
 #endif /* defined(J9VM_GC_MODRON_COMPACTION) || defined(J9VM_GC_GENERATIONAL) */
 		}
 		return hashValue;
