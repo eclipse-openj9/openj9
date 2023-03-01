@@ -401,6 +401,10 @@ J9::OptionsPostRestore::postProcessInternalCompilerOptions()
    // - OMR::Options::_logFile (both global and subsets)
    //    - May have to close an existing file and open a new one?
 
+   // Ensure that log files are not suppressed if tracing is enabled post restore
+   if (TR::Options::requiresDebugObject())
+      TR::Options::suppressLogFileBecauseDebugObjectNotCreated(false);
+
    if (TR::Options::getDebug())
       filterMethods();
 
