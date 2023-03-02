@@ -3812,7 +3812,7 @@ jvmtiGetVirtualThread(jvmtiEnv* jvmti_env, ...)
 			) {
 				rv_virtual_thread = (jthread)vm->internalVMFunctions->j9jni_createLocalRef(
 												(JNIEnv *)currentThread,
-												(j9object_t)threadObject);
+												threadObject);
 			}
 			releaseVMThread(currentThread, targetThread, carrier_thread);
 		}
