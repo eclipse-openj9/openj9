@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -141,8 +141,8 @@ public class StructureReader {
 	 */
 	private void setStream() {
 		StructureDescriptor version = structures.get(DDRALGORITHM_STRUCTURE_NAME);
-		long vmMajorVersion = 2; // default: stream 23
-		long vmMinorVersion = 3;
+		long vmMajorVersion = 2; // default stream: 29
+		long vmMinorVersion = 9;
 
 		/* JAZZ 103906 : A hack was introduced when we split jvm.29 for ARM development.
 		 * The goal was to keep using the same values of VM_MAJOR_VERSION and
