@@ -124,7 +124,7 @@ void reportDynloadStatistics (struct J9JavaVM *javaVM, struct J9ClassLoader *loa
 #endif /* J9VM_OPT_DYNAMIC_LOAD_SUPPORT */
 static void dumpQualifiedSize (J9PortLibrary* portLib, UDATA byteSize, const char* optionName, U_32 module_name, U_32 message_num);
 static void verboseEmptyOSlotIterator (J9VMThread * currentThread, J9StackWalkState * walkState, j9object_t * objectSlot, const void * stackLocation);
-static IDATA initializeVerbosegclog (J9JavaVM* vm, IDATA vbgclogIndex);
+static IDATA initializeVerbosegclog (J9JavaVM* vm, IDATA vbgclogIndex, J9VMInitArgs* args);
 
 static void verboseClassVerificationStart(J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData);
 static void verboseClassVerificationFallback(J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData);
@@ -727,10 +727,36 @@ parseVerboseArgumentList(J9JavaVM* vm, J9VMDllLoadInfo* loadInfo, char **errorSt
 	return 1;
 }
 
+BOOLEAN
+checkOptsAndInitVerbosegclog(J9JavaVM* vm, J9VMInitArgs* args)
+{
+	IDATA verbosegclogIndex = FIND_AND_CONSUME_ARG(args, OPTIONAL_LIST_MATCH, OPT_XVERBOSEGCLOG, NULL);
+
+	if (verbosegclogIndex >= 0) {
+		if (!initializeVerbosegclog(vm, verbosegclogIndex, args)) {
+			return FALSE;
+		}
+		vm->verboseLevel |= VERBOSE_GC;
+	}
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+	else {
+		/* In the absence of restore verbose log opts, the VM startup args must be checked to reinit verbose gc.
+		 * This path will be useless for non-CRIU cases. */
+		IDATA verbosegclogIndexStartupOpts = FIND_ARG_IN_VMARGS(OPTIONAL_LIST_MATCH, OPT_XVERBOSEGCLOG, NULL);
+
+		if ((verbosegclogIndexStartupOpts >= 0) && (vm->verboseLevel & VERBOSE_GC)) {
+			if (!initializeVerbosegclog(vm, verbosegclogIndexStartupOpts, vm->vmArgsArray)) {
+				return FALSE;
+			}
+		}
+	}
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+	return TRUE;
+}
+
 IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved) {
 	IDATA returnVal = J9VMDLLMAIN_OK;
 	J9VMDllLoadInfo* loadInfo;
-	IDATA verbosegclogIndex;
 
 #define VERBOSE_INIT_STAGE DLL_LOAD_TABLE_FINALIZED	/* defined separately for consistency of dependencies */
 #define VERBOSE_EXIT_STAGE JVM_EXIT_STAGE	/* defined separately for consistency of dependencies */
@@ -761,13 +787,9 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved) {
 			/* Note - verboseStruct not needed for modron verbose gc */
 			initializeVerboseFunctionTable(vm);
 
-			verbosegclogIndex = FIND_AND_CONSUME_VMARG( OPTIONAL_LIST_MATCH, OPT_XVERBOSEGCLOG, NULL );
-			if (verbosegclogIndex >= 0) {
-				if (!initializeVerbosegclog(vm, verbosegclogIndex)) {
-					loadInfo->fatalErrorStr =  (char*)j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG|J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_VERB_FAILED_TO_INITIALIZE,"Failed to initialize.");
-					goto _error;
-				}
-				vm->verboseLevel |= VERBOSE_GC;
+			if (!checkOptsAndInitVerbosegclog(vm, vm->vmArgsArray)) {
+				loadInfo->fatalErrorStr =  (char*)j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG|J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_VERB_FAILED_TO_INITIALIZE,"Failed to initialize.");
+				goto _error;
 			}
 			if (!parseVerboseArgumentList(vm, loadInfo, &loadInfo->fatalErrorStr)) {
 				goto _error;
@@ -899,7 +921,7 @@ initializeVerbosegclogFromOptions(J9JavaVM* vm, char* vbgclogBuffer, UDATA buffe
 }
 
 static IDATA
-initializeVerbosegclog(J9JavaVM* vm, IDATA vbgclogIndex)
+initializeVerbosegclog(J9JavaVM* vm, IDATA vbgclogIndex, J9VMInitArgs* args)
 {
 	char* vbgclogBuffer = NULL;
 	UDATA bufferSize = 128;
@@ -913,7 +935,7 @@ initializeVerbosegclog(J9JavaVM* vm, IDATA vbgclogIndex)
 		if (NULL == vbgclogBuffer) {
 			return J9VMDLLMAIN_FAILED;
 		}
-	} while (OPTION_BUFFER_OVERFLOW == GET_OPTION_VALUES(vbgclogIndex, ':', ',', &vbgclogBuffer, bufferSize));
+	} while (OPTION_BUFFER_OVERFLOW == GET_OPTION_VALUES_ARGS(args, vbgclogIndex, ':', ',', &vbgclogBuffer, bufferSize));
 
 	result = initializeVerbosegclogFromOptions(vm, vbgclogBuffer, bufferSize);
 
