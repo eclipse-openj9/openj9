@@ -109,7 +109,11 @@ jvmtiGetThreadState(jvmtiEnv *env,
 				} else {
 					vm->internalVMFunctions->haltThreadForInspection(currentThread, targetThread);
 					/* The VM thread can't be recycled because getVMThread() prevented it from exiting. */
+#if JAVA_SPEC_VERSION >= 19
+					rv_thread_state = getThreadState(currentThread, targetThread->carrierThreadObject);
+#else /* JAVA_SPEC_VERSION >= 19 */
 					rv_thread_state = getThreadState(currentThread, targetThread->threadObject);
+#endif /* JAVA_SPEC_VERSION >= 19 */
 					vm->internalVMFunctions->resumeThreadForInspection(currentThread, targetThread);
 				}
 				releaseVMThread(currentThread, targetThread, thread);
