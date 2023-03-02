@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2022 IBM Corp. and others
+ * Copyright (c) 2000, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -11249,6 +11249,8 @@ VMgenerateCatchBlockBBStartPrologue(
       generateLabelInstruction(TR::InstOpCode::JE4, node, snippetLabel, cg);
       generateLabelInstruction(TR::InstOpCode::label, node, restartLabel, cg);
       cg->addSnippet(new (cg->trHeapMemory()) TR::X86ForceRecompilationSnippet(cg, node, restartLabel, snippetLabel));
+      TR_ASSERT_FATAL(cg->comp()->getRecompilationInfo(), "Recompilation info should be available");
+      cg->comp()->getRecompilationInfo()->getJittedBodyInfo()->setHasEdoSnippet();
       }
 
    }

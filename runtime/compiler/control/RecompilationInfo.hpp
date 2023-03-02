@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -67,7 +67,6 @@ static int32_t profilingFreqTable  [] = {  19,  29,   47,   47,   47,    53 }; /
 #define DEFAULT_PROFILING_COUNT     (profilingCountsTable[MAX_BACKEDGES])
 
 namespace TR { class DefaultCompilationStrategy; }
-namespace TR { class ThresholdCompilationStrategy; }
 namespace OMR { class Recompilation; }
 namespace J9 { class Recompilation; }
 
@@ -81,7 +80,6 @@ class TR_PersistentMethodInfo
    friend class TR_S390Recompilation;  // FIXME: ugly
    friend class ::OMR::Options;
    friend class TR::DefaultCompilationStrategy;
-   friend class TR::ThresholdCompilationStrategy;
 
    public:
    TR_PERSISTENT_ALLOC(TR_Memory::PersistentMethodInfo);
@@ -159,19 +157,13 @@ class TR_PersistentMethodInfo
 
    bool doesntKillAnything() { return _flags.testAll(RefinedAliasesMask); }
 
-   // Accessor methods for the "cpoCounter".  This does not really
-   // need to be its own counter, as it is conceptually the same as
-   // "_counter".  However, the original _counter is still during instrumentation, so
-   // it was simplest to keep them separate
-   //
-   int32_t cpoGetCounter()                {return _cpoSampleCounter;}
-   int32_t cpoIncCounter()                {return ++_cpoSampleCounter;}
-   int32_t cpoSetCounter(int newCount)    {return _cpoSampleCounter = newCount;}
-
    uint16_t getTimeStamp() { return _timeStamp; }
 
    TR_OptimizationPlan * getOptimizationPlan() {return _optimizationPlan;}
    void setOptimizationPlan(TR_OptimizationPlan *optPlan) { _optimizationPlan = optPlan; }
+   uint32_t getCatchBlockCounter() const { return _catchBlockCounter; }
+   uint32_t *getCatchBlockCounterAddress() { return &_catchBlockCounter; }
+   void incrementCatchBlockCounter() { _catchBlockCounter++; }
    uint8_t getNumberOfInvalidations() {return _numberOfInvalidations;}
    void incrementNumberOfInvalidations() {_numberOfInvalidations++;}
    uint8_t getNumberOfInlinedMethodRedefinition() {return _numberOfInlinedMethodRedefinition;}
@@ -234,7 +226,7 @@ class TR_PersistentMethodInfo
       RecompDueToRI                        = 0x000A0000,
       RecompDueToJProfiling                = 0x000B0000,
       RecompDueToInlinedMethodRedefinition = 0x000C0000,
-      // NOTE: recompilations due to EDO decrementation cannot be tracked
+      // NOTE: recompilations due to EDO decrementation cannot be tracked precisely
       // because they are triggered from a snippet (must change the code for snippet)
       // Also, the recompilations after a profiling step cannot be marked as such.
       // NOTE: recompilations can be triggered by invalidations too, but this
@@ -291,8 +283,7 @@ class TR_PersistentMethodInfo
 
 
    TR_OptimizationPlan            *_optimizationPlan;
-
-   int32_t                         _cpoSampleCounter; // TODO remove this field
+   uint32_t                        _catchBlockCounter; // how many times a catch block was executed
    uint16_t                        _timeStamp;
    uint8_t                         _numberOfInvalidations; // how many times this method has been invalidated
    uint8_t                         _numberOfInlinedMethodRedefinition; // how many times this method triggers recompilation because of its inlined callees being redefined
@@ -332,6 +323,8 @@ class TR_PersistentJittedBodyInfo
    static TR_PersistentJittedBodyInfo *get(void *startPC);
 
    bool getHasLoops()               { return _flags.testAny(HasLoops); }
+   bool getHasEdoSnippet()          { return _flags.testAny(HasEdoSnippet); }
+   void setHasEdoSnippet()          { _flags.set(HasEdoSnippet, true); } // set by codegen when the recompilation snippet is created
    bool getUsesPreexistence()       { return _flags.testAny(UsesPreexistence); }
    bool getDisableSampling()        { return _flags.testAny(DisableSampling);  }
    void setDisableSampling(bool b)  { _flags.set(DisableSampling, b); }
@@ -410,7 +403,7 @@ class TR_PersistentJittedBodyInfo
    enum
       {
       HasLoops                = 0x0001,
-      //HasManyIterationsLoops  = 0x0002, // Available
+      HasEdoSnippet           = 0x0002,
       UsesPreexistence        = 0x0004,
       DisableSampling         = 0x0008, // This flag disables sampling of this method even though its recompilable
       IsProfilingBody         = 0x0010,

@@ -314,6 +314,8 @@ void induceRecompilation_unwrapper(void **argsPtr, void **resultPtr)
    TR_PersistentJittedBodyInfo *bodyInfo = TR::Recompilation::getJittedBodyInfoFromPC(startPC);
    TR_ASSERT(bodyInfo, "A method that can be recompiled must have bodyInfo");
    TR_PersistentMethodInfo  *methodInfo = bodyInfo->getMethodInfo();
+   if (bodyInfo->getHasEdoSnippet())
+      methodInfo->setReasonForRecompilation(TR_PersistentMethodInfo::RecompDueToEdo);
    TR_Hotness level = TR::Options::getJITCmdLineOptions()->getNextHotnessLevel(bodyInfo->getHasLoops(), bodyInfo->getHotness());
    // If there is no next level, lets keep the current one
    if (level == unknownHotness)
