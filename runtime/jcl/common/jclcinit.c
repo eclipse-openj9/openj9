@@ -650,16 +650,6 @@ initializeRequiredClasses(J9VMThread *vmThread, char* dllName)
 		return 1;
 	}
 
-	/* Points to the next VirtualThread in the liveVirtualThreadList. */
-	if (0 != vmFuncs->addHiddenInstanceField(vm, "java/lang/VirtualThread", "linkNext", "Ljava/lang/VirtualThread;", &vm->virtualThreadLinkNextOffset)) {
-		return 1;
-	}
-
-	/* Points to the previous VirtualThread in the liveVirtualThreadList. */
-	if (0 != vmFuncs->addHiddenInstanceField(vm, "java/lang/VirtualThread", "linkPrevious", "Ljava/lang/VirtualThread;", &vm->virtualThreadLinkPreviousOffset)) {
-		return 1;
-	}
-
 	/* Counter to track if the virtual thread is being inspected by JVMTI. */
 	if (0 != vmFuncs->addHiddenInstanceField(vm, "java/lang/VirtualThread", "inspectorCount", "J", &vm->virtualThreadInspectorCountOffset)) {
 		return 1;

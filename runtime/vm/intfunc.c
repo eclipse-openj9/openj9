@@ -433,5 +433,7 @@ J9InternalVMFunctions J9InternalFunctions = {
 	freeTLS,
 	walkContinuationStackFrames,
 	walkAllStackFrames,
+	acquireVThreadInspector,
+	releaseVThreadInspector,
 #endif /* JAVA_SPEC_VERSION >= 19 */
 };
