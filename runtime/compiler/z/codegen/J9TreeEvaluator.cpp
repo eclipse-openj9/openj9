@@ -13193,6 +13193,8 @@ VMgenerateCatchBlockBBStartPrologue(
       TR::Snippet * snippet = new (cg->trHeapMemory()) TR::S390ForceRecompilationSnippet(cg, node, restartLabel, snippetLabel);
       cg->addSnippet(snippet);
       generateS390LabelInstruction(cg, TR::InstOpCode::label, node, restartLabel, dependencies);
+      TR_ASSERT_FATAL(cg->comp()->getRecompilationInfo(), "Recompilation info should be available");
+      cg->comp()->getRecompilationInfo()->getJittedBodyInfo()->setHasEdoSnippet();
 
       cg->stopUsingRegister(tempReg1);
       cg->stopUsingRegister(tempReg2);

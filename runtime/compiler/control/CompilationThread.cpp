@@ -10921,7 +10921,8 @@ void TR::CompilationInfoPerThreadBase::logCompilationSuccess(
                         recompReason = 'G';// Guarded counting recompilation
                      _compInfo._statNumGCRInducedCompilations++;
                      break;
-                     // TODO: add here the EDO case if we ever modify the codegen to track that
+                  case TR_PersistentMethodInfo::RecompDueToEdo:
+                     recompReason = 'E'; break;
                   } // end switch
                bodyInfo->getMethodInfo()->setReasonForRecompilation(0); // reset the flags
                }
