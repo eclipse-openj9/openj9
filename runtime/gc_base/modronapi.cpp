@@ -55,6 +55,7 @@
 #include "Configuration.hpp"
 #include "VerboseManager.hpp"
 #include "vmaccess.h"
+#include "verbosenls.h"
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
 extern "C" {
@@ -1127,9 +1128,10 @@ j9gc_reinitialize_for_restore(J9VMThread *vmThread, const char **nlsMsgFormat)
 {
 	MM_EnvironmentBase *env = MM_EnvironmentBase::getEnvironment(vmThread->omrVMThread);
 	MM_GCExtensionsBase *extensions = env->getExtensions();
-	MM_VerboseManagerBase *verboseGCManager = extensions->verboseGCManager;
+	J9JavaVM *vm = vmThread->javaVM;
+	J9MemoryManagerVerboseInterface *mmFuncTable = (J9MemoryManagerVerboseInterface *)vm->memoryManagerFunctions->getVerboseGCFunctionTable(vm);
 
-	PORT_ACCESS_FROM_JAVAVM(vmThread->javaVM);
+	PORT_ACCESS_FROM_JAVAVM(vm);
 
 	if (!j9gc_reinitializeDefaults(vmThread)) {
 		*nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
@@ -1148,10 +1150,13 @@ j9gc_reinitialize_for_restore(J9VMThread *vmThread, const char **nlsMsgFormat)
 	}
 	acquireVMAccess(vmThread);
 
-	if (NULL != verboseGCManager) {
-		/* Verbose gc reinit failure can be ignored, it is safe for restore to continue on. */
-		verboseGCManager->reinitializeForRestore(env);
+	if (!mmFuncTable->checkOptsAndInitVerbosegclog(vm, vm->checkpointState.restoreArgsList)) {
+		*nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
+				J9NLS_VERB_FAILED_TO_INITIALIZE, NULL);
+		goto _error;
 	}
+
+	TRIGGER_J9HOOK_MM_OMR_REINITIALIZED( extensions->omrHookInterface, vmThread->omrVMThread, j9time_hires_clock());
 
 	return true;
 
