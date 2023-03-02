@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -255,14 +255,13 @@ void jniCallInReturn_void(JNIEnv* env, void * vaptr);
 
 /**
 * @brief
-* @param env
 * @param nlsModule
 * @param nlsIndex
 * @param ...
 * @return void
 */
 void 
-jniCheckAdviceNLS(JNIEnv* env, U_32 nlsModule, U_32 nlsIndex, ...);
+jniCheckAdviceNLS(U_32 nlsModule, U_32 nlsIndex, ...);
 
 
 /**
@@ -349,13 +348,12 @@ jniCheckDirectBuffer(JNIEnv* env, const char* function, IDATA argNum, jobject aJ
 
 /**
 * @brief
-* @param env
 * @param nlsModule
 * @param nlsIndex
 * @param ...
 * @return void
 */
-void jniCheckFatalErrorNLS(JNIEnv* env, U_32 nlsModule, U_32 nlsIndex, ...);
+void jniCheckFatalErrorNLS(U_32 nlsModule, U_32 nlsIndex, ...);
 
 
 /**
@@ -422,7 +420,6 @@ jniCheckPopLocalFrame(JNIEnv* env, const char* function);
 
 /**
 * @brief
-* @param env
 * @param function
 * @param type
 * @param arg
@@ -432,7 +429,7 @@ jniCheckPopLocalFrame(JNIEnv* env, const char* function);
 * @return void
 */
 void 
-jniCheckRange(JNIEnv* env,  const char* function, const char* type, IDATA arg, IDATA argNum, IDATA min, IDATA max);
+jniCheckRange(const char* function, const char* type, IDATA arg, IDATA argNum, IDATA min, IDATA max);
 
 
 /**
@@ -519,14 +516,13 @@ void jniCheckSubclass2(JNIEnv* env, const char* function, IDATA argNum, jobject 
 
 /**
 * @brief
-* @param env
 * @param nlsModule
 * @param nlsIndex
 * @param ...
 * @return void
 */
 void 
-jniCheckWarningNLS(JNIEnv* env, U_32 nlsModule, U_32 nlsIndex, ...);
+jniCheckWarningNLS(U_32 nlsModule, U_32 nlsIndex, ...);
 
 
 /**
@@ -632,14 +628,13 @@ U_32 computeStringCRC(const char* buf);
 /**
  * Check that the specified buffer has not changed since its CRC was initially computed.
  * If it has, issue a -Xcheck:jni error.
- * @param env The JNIEnv pointer for the current thread
  * @param fnName The name of the JNI function being checked
  * @param argNum The index of the buffer argument in the JNI function's argument list
  * @param buf A NUL-terminated string
  * @param oldCRC The CRC value computed by computeStringCRC
  * @return void
  */
-void checkStringCRC(JNIEnv* env, const char* fnName, U_32 argNum, const char* buf, U_32 oldCRC);
+void checkStringCRC(const char* fnName, U_32 argNum, const char* buf, U_32 oldCRC);
 
 
 /**
@@ -656,7 +651,6 @@ U_32 computeDataCRC(const void* buf, IDATA len);
 /**
  * Check that the specified buffer has not changed since its CRC was initially computed.
  * If it has, issue a -Xcheck:jni error.
- * @param env The JNIEnv pointer for the current thread
  * @param fnName The name of the JNI function being checked
  * @param argNum The index of the buffer argument in the JNI function's argument list
  * @param buf The data pointer
@@ -664,7 +658,7 @@ U_32 computeDataCRC(const void* buf, IDATA len);
  * @param oldCRC The CRC value computed by computeDataCRC
  * @return void
  */
-void checkDataCRC(JNIEnv* env, const char* fnName, U_32 argNum, const void* buf, IDATA len, U_32 oldCRC);
+void checkDataCRC(const char* fnName, U_32 argNum, const void* buf, IDATA len, U_32 oldCRC);
 
 /**
  * Compute the CRC of a buffer.
@@ -680,7 +674,6 @@ U_32 computeArgsCRC(const jvalue *args, jmethodID methodID);
 /**
  * Check that the specified buffer has not changed since its CRC was initially computed.
  * If it has, issue a -Xcheck:jni error.
- * @param env The JNIEnv pointer for the current thread
  * @param fnName The name of the JNI function being checked
  * @param argNum The index of the buffer argument in the JNI function's argument list
  * @param buf The data pointer
@@ -688,7 +681,7 @@ U_32 computeArgsCRC(const jvalue *args, jmethodID methodID);
  * @param oldCRC The CRC value computed by computeArgsCRC
  * @return void
  */
-void checkArgsCRC(JNIEnv* env, const char* fnName, U_32 argNum, const jvalue *args, jmethodID methodID, U_32 oldCRC);
+void checkArgsCRC(const char* fnName, U_32 argNum, const jvalue *args, jmethodID methodID, U_32 oldCRC);
 
 /**
  * Check if the class making the JNI call is in a System library class or not.
