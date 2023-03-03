@@ -1308,7 +1308,8 @@ static std::string readFileToString(char *fileName)
       }
    }
 
-static bool JITServerParseCommonOptions(J9JavaVM *vm, TR::CompilationInfo *compInfo)
+bool
+J9::Options::JITServerParseCommonOptions(J9VMInitArgs *vmArgsArray, J9JavaVM *vm, TR::CompilationInfo *compInfo)
    {
    const char *xxJITServerPortOption = J9::Options::_externalOptionStrings[J9::ExternalOptions::XXJITServerPortOption];
    const char *xxJITServerTimeoutOption = J9::Options::_externalOptionStrings[J9::ExternalOptions::XXJITServerTimeoutOption];
@@ -1323,23 +1324,23 @@ static bool JITServerParseCommonOptions(J9JavaVM *vm, TR::CompilationInfo *compI
    const char *xxDisableJITServerLogConnections = J9::Options::_externalOptionStrings[J9::ExternalOptions::XXminusJITServerLogConnections];
    const char *xxJITServerAOTmxOption = J9::Options::_externalOptionStrings[J9::ExternalOptions::XXJITServerAOTmxOption];
 
-   int32_t xxJITServerPortArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxJITServerPortOption, 0);
-   int32_t xxJITServerTimeoutArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxJITServerTimeoutOption, 0);
-   int32_t xxJITServerSSLKeyArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxJITServerSSLKeyOption, 0);
-   int32_t xxJITServerSSLCertArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxJITServerSSLCertOption, 0);
-   int32_t xxJITServerSSLRootCertsArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxJITServerSSLRootCertsOption, 0);
-   int32_t xxJITServerUseAOTCacheArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxJITServerUseAOTCacheOption, 0);
-   int32_t xxDisableJITServerUseAOTCacheArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxDisableJITServerUseAOTCacheOption, 0);
-   int32_t xxRequireJITServerArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxRequireJITServerOption, 0);
-   int32_t xxDisableRequireJITServerArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxDisableRequireJITServerOption, 0);
-   int32_t xxJITServerLogConnectionsArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxJITServerLogConnections, 0);
-   int32_t xxDisableJITServerLogConnectionsArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxDisableJITServerLogConnections, 0);
-   int32_t xxJITServerAOTmxArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxJITServerAOTmxOption, 0);
+   int32_t xxJITServerPortArgIndex = FIND_ARG_IN_ARGS(vmArgsArray, STARTSWITH_MATCH, xxJITServerPortOption, 0);
+   int32_t xxJITServerTimeoutArgIndex = FIND_ARG_IN_ARGS(vmArgsArray, STARTSWITH_MATCH, xxJITServerTimeoutOption, 0);
+   int32_t xxJITServerSSLKeyArgIndex = FIND_ARG_IN_ARGS(vmArgsArray, STARTSWITH_MATCH, xxJITServerSSLKeyOption, 0);
+   int32_t xxJITServerSSLCertArgIndex = FIND_ARG_IN_ARGS(vmArgsArray, STARTSWITH_MATCH, xxJITServerSSLCertOption, 0);
+   int32_t xxJITServerSSLRootCertsArgIndex = FIND_ARG_IN_ARGS(vmArgsArray, STARTSWITH_MATCH, xxJITServerSSLRootCertsOption, 0);
+   int32_t xxJITServerUseAOTCacheArgIndex = FIND_ARG_IN_ARGS(vmArgsArray, EXACT_MATCH, xxJITServerUseAOTCacheOption, 0);
+   int32_t xxDisableJITServerUseAOTCacheArgIndex = FIND_ARG_IN_ARGS(vmArgsArray, EXACT_MATCH, xxDisableJITServerUseAOTCacheOption, 0);
+   int32_t xxRequireJITServerArgIndex = FIND_ARG_IN_ARGS(vmArgsArray, EXACT_MATCH, xxRequireJITServerOption, 0);
+   int32_t xxDisableRequireJITServerArgIndex = FIND_ARG_IN_ARGS(vmArgsArray, EXACT_MATCH, xxDisableRequireJITServerOption, 0);
+   int32_t xxJITServerLogConnectionsArgIndex = FIND_ARG_IN_ARGS(vmArgsArray, EXACT_MATCH, xxJITServerLogConnections, 0);
+   int32_t xxDisableJITServerLogConnectionsArgIndex = FIND_ARG_IN_ARGS(vmArgsArray, EXACT_MATCH, xxDisableJITServerLogConnections, 0);
+   int32_t xxJITServerAOTmxArgIndex = FIND_ARG_IN_ARGS(vmArgsArray, STARTSWITH_MATCH, xxJITServerAOTmxOption, 0);
 
    if (xxJITServerPortArgIndex >= 0)
       {
       UDATA port=0;
-      IDATA ret = GET_INTEGER_VALUE(xxJITServerPortArgIndex, xxJITServerPortOption, port);
+      IDATA ret = GET_INTEGER_VALUE_ARGS(vmArgsArray, xxJITServerPortArgIndex, xxJITServerPortOption, port);
       if (ret == OPTION_OK)
          compInfo->getPersistentInfo()->setJITServerPort(port);
       }
@@ -1356,7 +1357,7 @@ static bool JITServerParseCommonOptions(J9JavaVM *vm, TR::CompilationInfo *compI
    if (xxJITServerTimeoutArgIndex >= 0)
       {
       UDATA timeoutMs=0;
-      IDATA ret = GET_INTEGER_VALUE(xxJITServerTimeoutArgIndex, xxJITServerTimeoutOption, timeoutMs);
+      IDATA ret = GET_INTEGER_VALUE_ARGS(vmArgsArray, xxJITServerTimeoutArgIndex, xxJITServerTimeoutOption, timeoutMs);
       if (ret == OPTION_OK)
          compInfo->getPersistentInfo()->setSocketTimeout(timeoutMs);
       }
@@ -1366,8 +1367,8 @@ static bool JITServerParseCommonOptions(J9JavaVM *vm, TR::CompilationInfo *compI
       {
       char *keyFileName = NULL;
       char *certFileName = NULL;
-      GET_OPTION_VALUE(xxJITServerSSLKeyArgIndex, '=', &keyFileName);
-      GET_OPTION_VALUE(xxJITServerSSLCertArgIndex, '=', &certFileName);
+      GET_OPTION_VALUE_ARGS(vmArgsArray, xxJITServerSSLKeyArgIndex, '=', &keyFileName);
+      GET_OPTION_VALUE_ARGS(vmArgsArray, xxJITServerSSLCertArgIndex, '=', &certFileName);
       std::string key = readFileToString(keyFileName);
       std::string cert = readFileToString(certFileName);
 
@@ -1385,7 +1386,7 @@ static bool JITServerParseCommonOptions(J9JavaVM *vm, TR::CompilationInfo *compI
    if (xxJITServerSSLRootCertsArgIndex >= 0)
       {
       char *fileName = NULL;
-      GET_OPTION_VALUE(xxJITServerSSLRootCertsArgIndex, '=', &fileName);
+      GET_OPTION_VALUE_ARGS(vmArgsArray, xxJITServerSSLRootCertsArgIndex, '=', &fileName);
       std::string cert = readFileToString(fileName);
       if (!cert.empty())
          compInfo->setJITServerSslRootCerts(cert);
@@ -1406,7 +1407,7 @@ static bool JITServerParseCommonOptions(J9JavaVM *vm, TR::CompilationInfo *compI
    if (xxJITServerAOTmxArgIndex >= 0)
       {
       uint32_t aotMaxBytes = 0;
-      if (GET_MEMORY_VALUE(xxJITServerAOTmxArgIndex, xxJITServerAOTmxOption, aotMaxBytes) == OPTION_OK)
+      if (GET_MEMORY_VALUE_ARGS(vmArgsArray, xxJITServerAOTmxArgIndex, xxJITServerAOTmxOption, aotMaxBytes) == OPTION_OK)
          {
          JITServerAOTCacheMap::setCacheMaxBytes(aotMaxBytes);
          }
@@ -1415,13 +1416,14 @@ static bool JITServerParseCommonOptions(J9JavaVM *vm, TR::CompilationInfo *compI
    return true;
    }
 
-static void JITServerParseLocalSyncCompiles(J9JavaVM *vm, TR::CompilationInfo *compInfo, bool isFSDEnabled)
+void
+J9::Options::JITServerParseLocalSyncCompiles(J9VMInitArgs *vmArgsArray, J9JavaVM *vm, TR::CompilationInfo *compInfo, bool isFSDEnabled)
    {
    const char *xxJITServerLocalSyncCompilesOption = J9::Options::_externalOptionStrings[J9::ExternalOptions::XXplusJITServerLocalSyncCompilesOption];
    const char *xxDisableJITServerLocalSyncCompilesOption = J9::Options::_externalOptionStrings[J9::ExternalOptions::XXminusJITServerLocalSyncCompilesOption];
 
-   int32_t xxJITServerLocalSyncCompilesArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxJITServerLocalSyncCompilesOption, 0);
-   int32_t xxDisableJITServerLocalSyncCompilesArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxDisableJITServerLocalSyncCompilesOption, 0);
+   int32_t xxJITServerLocalSyncCompilesArgIndex = FIND_ARG_IN_ARGS(vmArgsArray, EXACT_MATCH, xxJITServerLocalSyncCompilesOption, 0);
+   int32_t xxDisableJITServerLocalSyncCompilesArgIndex = FIND_ARG_IN_ARGS(vmArgsArray, EXACT_MATCH, xxDisableJITServerLocalSyncCompilesOption, 0);
 
    // We either obey the command line option, or make sure to disable LocalSyncCompiles if
    // something is set that interferes with remote async recompilations.
@@ -2355,7 +2357,7 @@ bool J9::Options::preProcessJitServer(J9JavaVM *vm, J9JITConfig *jitConfig)
                }
             }
          }
-      if (!JITServerParseCommonOptions(vm, compInfo))
+      if (!JITServerParseCommonOptions(vm->vmArgsArray, vm, compInfo))
          {
          // Could not parse JITServer options successfully
          return false;
@@ -2712,6 +2714,15 @@ J9::Options::fePostProcessJIT(void * base)
          }
       }
 
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
+   if (!javaVM->internalVMFunctions->isJITServerEnabled(javaVM))
+#endif
+      {
+      _numAllocatedCompilationThreads = TR::CompilationInfo::MAX_CLIENT_USABLE_COMP_THREADS;
+      }
+#endif // defined(J9VM_OPT_CRIU_SUPPORT)
+
    // patch Lock OR if mfence is not being used
    //
    if (!self()->getOption(TR_X86UseMFENCE) && (jitConfig->runtimeFlags & J9JIT_PATCHING_FENCE_TYPE))
@@ -2942,7 +2953,7 @@ bool J9::Options::feLatePostProcess(void * base, TR::OptionSet * optionSet)
       _highActiveThreadThreshold  = _veryHighActiveThreadThreshold;
 
    // This option needs to be parsed late so that we can account for FullSpeedDebug
-   JITServerParseLocalSyncCompiles(javaVM, compInfo, self()->getOption(TR_FullSpeedDebug));
+   JITServerParseLocalSyncCompiles(javaVM->vmArgsArray, javaVM, compInfo, self()->getOption(TR_FullSpeedDebug));
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
    // Determine whether or not to inline monitor enter/exit

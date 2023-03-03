@@ -120,24 +120,8 @@ class OptionsPostRestore
    int32_t _argIndexDisablePrintCodeCache;
    int32_t _argIndexUseJITServer;
    int32_t _argIndexDisableUseJITServer;
-   int32_t _argIndexJITServerSSLKey;
-   int32_t _argIndexJITServerSSLCert;
-   int32_t _argIndexJITServerUseAOTCache;
-   int32_t _argIndexDisableJITServerUseAOTCache;
-   int32_t _argIndexRequireJITServer;
-   int32_t _argIndexDisableRequireJITServer;
-   int32_t _argIndexJITServerLogConnections;
-   int32_t _argIndexDisableJITServerLogConnections;
-   int32_t _argIndexJITServerAOTmx;
-   int32_t _argIndexJITServerLocalSyncCompiles;
-   int32_t _argIndexDisableJITServerLocalSyncCompiles;
-   int32_t _argIndexJITServerAOTCachePersistence;
-   int32_t _argIndexDisableJITServerAOTCachePersistence;
-   int32_t _argIndexJITServerAOTCacheDir;
-   int32_t _argIndexJITServerAOTCacheName;
    int32_t _argIndexJITServerAddress;
-   int32_t _argIndexJITServerPort;
-   int32_t _argIndexJITServerTimeout;
+   int32_t _argIndexJITServerAOTCacheName;
    };
 
 }
