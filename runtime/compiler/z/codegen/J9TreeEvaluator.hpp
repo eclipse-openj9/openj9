@@ -407,7 +407,7 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
    static TR::Register *pdshiftEvaluatorHelper(TR::Node *node, TR::CodeGenerator *cg, bool isRightShift);
 
    static TR::Register *pdModifyPrecisionEvaluator(TR::Node * node, TR::CodeGenerator * cg);
-   static TR::Register *pdshlVectorEvaluatorHelper(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *pdshlVectorEvaluatorHelper(TR::Node *node, TR::CodeGenerator *cg, bool isSkipShift);
 
    /** \brief
     *     Helper to generate a VPSOP instruction.
