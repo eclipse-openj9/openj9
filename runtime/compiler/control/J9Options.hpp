@@ -38,8 +38,11 @@ namespace J9 { typedef J9::Options OptionsConnector; }
 #include "control/OptionsUtil.hpp"
 #include "env/jittypes.h"
 #if defined(J9VM_OPT_JITSERVER)
+namespace TR { class CompilationInfo; }
 namespace TR { class CompilationInfoPerThreadBase; }
 #endif /* defined(J9VM_OPT_JITSERVER) */
+
+struct J9VMInitArgs;
 
 namespace J9
 {
@@ -445,6 +448,8 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
    static char *JITServerAOTCacheStoreLimitOption(char *option, void *, TR::OptionTable *entry);
    static char *JITServerAOTCacheLoadLimitOption(char *option, void *, TR::OptionTable *entry);
    static char *JITServerRemoteExclude(char *option, void *base, TR::OptionTable *entry);
+   static bool JITServerParseCommonOptions(J9VMInitArgs *vmArgsArray, J9JavaVM *vm, TR::CompilationInfo *compInfo);
+   static void JITServerParseLocalSyncCompiles(J9VMInitArgs *vmArgsArray, J9JavaVM *vm, TR::CompilationInfo *compInfo, bool isFSDEnabled);
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
    static char *vmStateOption(char *option, void *, TR::OptionTable *entry);
