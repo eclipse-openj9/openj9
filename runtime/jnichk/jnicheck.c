@@ -364,10 +364,10 @@ void jniCheckSubclass(JNIEnv* env, const char* function, IDATA argNum, jobject a
 	jclass superclazz = j9vm->EsJNIFunctions->FindClass(env, type);
 
 	if (NULL == superclazz) {
-		jniCheckFatalErrorNLS(env, J9NLS_JNICHK_ARGUMENT_CLASS_NOT_FOUND, function, argNum, type);
+		jniCheckFatalErrorNLS(J9NLS_JNICHK_ARGUMENT_CLASS_NOT_FOUND, function, argNum, type);
 	}
 	if (!j9vm->EsJNIFunctions->IsInstanceOf(env, aJobject, superclazz)) {
-		jniCheckFatalErrorNLS(env, J9NLS_JNICHK_ARGUMENT_IS_NOT_SUBCLASS, function, argNum, type);
+		jniCheckFatalErrorNLS(J9NLS_JNICHK_ARGUMENT_IS_NOT_SUBCLASS, function, argNum, type);
 	}
 }
 
@@ -378,25 +378,25 @@ void jniCheckSubclass2(JNIEnv* env, const char* function, IDATA argNum, jobject 
 	jclass superclazz2 = j9vm->EsJNIFunctions->FindClass(env, type2);
 
 	if (NULL == superclazz1) {
-		jniCheckFatalErrorNLS(env, J9NLS_JNICHK_ARGUMENT_CLASS_NOT_FOUND, function, argNum, type1);
+		jniCheckFatalErrorNLS(J9NLS_JNICHK_ARGUMENT_CLASS_NOT_FOUND, function, argNum, type1);
 	}
 	if (NULL == superclazz2) {
-		jniCheckFatalErrorNLS(env, J9NLS_JNICHK_ARGUMENT_CLASS_NOT_FOUND, function, argNum, type2);
+		jniCheckFatalErrorNLS(J9NLS_JNICHK_ARGUMENT_CLASS_NOT_FOUND, function, argNum, type2);
 	}
 	if (!(j9vm->EsJNIFunctions->IsInstanceOf(env, aJobject, superclazz1)
 		|| j9vm->EsJNIFunctions->IsInstanceOf(env, aJobject, superclazz2))
 	) {
-		jniCheckFatalErrorNLS(env, J9NLS_JNICHK_ARGUMENT_IS_NOT_SUBCLASS2, function, argNum, type1, type2);
+		jniCheckFatalErrorNLS(J9NLS_JNICHK_ARGUMENT_IS_NOT_SUBCLASS2, function, argNum, type1, type2);
 	}
 }
 
 void
-jniCheckRange(JNIEnv* env,  const char* function, const char* type, IDATA arg, IDATA argNum, IDATA min, IDATA max)
+jniCheckRange(const char* function, const char* type, IDATA arg, IDATA argNum, IDATA min, IDATA max)
 {
 	if (arg < min) {
-		jniCheckFatalErrorNLS(env, J9NLS_JNICHK_ARGUMENT_IS_TOO_LOW, function, argNum, type, arg, min);
+		jniCheckFatalErrorNLS(J9NLS_JNICHK_ARGUMENT_IS_TOO_LOW, function, argNum, type, arg, min);
 	} else if (arg > max) {
-		jniCheckFatalErrorNLS(env, J9NLS_JNICHK_ARGUMENT_IS_TOO_HIGH, function, argNum, type, arg, max);
+		jniCheckFatalErrorNLS(J9NLS_JNICHK_ARGUMENT_IS_TOO_HIGH, function, argNum, type, arg, max);
 	}
 }
 
@@ -405,9 +405,9 @@ void jniCheckNull(JNIEnv* env, const char* function, IDATA argNum, jobject obj) 
 	J9JavaVM* j9vm = ((J9VMThread*)env)->javaVM;
 
 	if ( j9vm->EsJNIFunctions->IsSameObject(env, NULL, obj) ) {
-		jniCheckFatalErrorNLS(env, J9NLS_JNICHK_ARGUMENT_IS_NULL, function, argNum);
+		jniCheckFatalErrorNLS(J9NLS_JNICHK_ARGUMENT_IS_NULL, function, argNum);
 	} else if ( jniIsWeakGlobalRef(env, obj) ) {
-		jniCheckWarningNLS(env, J9NLS_JNICHK_WEAK_GLOBAL_REF_COULD_BE_NULL, function, argNum, function);
+		jniCheckWarningNLS(J9NLS_JNICHK_WEAK_GLOBAL_REF_COULD_BE_NULL, function, argNum, function);
 	}
 }
 
@@ -415,7 +415,7 @@ void jniCheckNull(JNIEnv* env, const char* function, IDATA argNum, jobject obj) 
 void jniCheckClass(JNIEnv* env, const char* function, IDATA argNum, jobject aJobject, J9Class* expectedClass, const char* expectedType) {
 
 	if ( jnichk_getObjectClazz(env, aJobject) != expectedClass) {
-		jniCheckFatalErrorNLS(env, J9NLS_JNICHK_ARGUMENT_IS_NOT_X, function, argNum, expectedType);
+		jniCheckFatalErrorNLS(J9NLS_JNICHK_ARGUMENT_IS_NOT_X, function, argNum, expectedType);
 	}
 }
 
@@ -432,7 +432,7 @@ void jniCheckClass(JNIEnv* env, const char* function, IDATA argNum, jobject aJob
 static void jniCheckJClassSubclass(JNIEnv* env, const char* function, IDATA argNum, jclass aJclass, J9Class* expectedSupclass, const char* expectedType)
 {
 	if (!isSameOrSuperClassOf(expectedSupclass, J9VM_J9CLASS_FROM_HEAPCLASS((J9VMThread*)env, J9_JNI_UNWRAP_REFERENCE(aJclass)))) {
-		jniCheckFatalErrorNLS(env, J9NLS_JNICHK_ARGUMENT_IS_NOT_X, function, argNum, expectedType);
+		jniCheckFatalErrorNLS(J9NLS_JNICHK_ARGUMENT_IS_NOT_X, function, argNum, expectedType);
 	}
 }
 
@@ -454,7 +454,7 @@ jniCheckCallV(const char* function, JNIEnv* env, jobject receiver, UDATA methodT
 
 	if (!novalist) {
 		if (*((U_32 *) VA_PTR(originalArgs)) == BAD_VA_LIST) {
-			jniCheckFatalErrorNLS(env, J9NLS_JNICHK_VA_LIST_REUSE, function);
+			jniCheckFatalErrorNLS(J9NLS_JNICHK_VA_LIST_REUSE, function);
 		}
 	}
 
@@ -554,34 +554,33 @@ jniCheckCallA(const char* function, JNIEnv* env, jobject receiver, UDATA methodT
 void
 jniCheckArgs(const char *function, int exceptionSafe, int criticalSafe, J9JniCheckLocalRefState *refTracking, const U_32 *descriptor, JNIEnv *env, ...)
 {
-	J9JavaVM *vm = ((J9VMThread*)env)->javaVM;
-	PORT_ACCESS_FROM_JAVAVM(vm);
+	PORT_ACCESS_FROM_JAVAVM(globalJavaVM);
 	va_list va;
 	const U_32 *code;
 	int argNum = 2;
-	UDATA trace = vm->checkJNIData.options & JNICHK_TRACE;
-	UDATA warn = (0 == (vm->checkJNIData.options & JNICHK_NOWARN));
-	J9VMThread * vmThread = (J9VMThread*)env;
+	UDATA trace = globalJavaVM->checkJNIData.options & JNICHK_TRACE;
+	UDATA warn = (0 == (globalJavaVM->checkJNIData.options & JNICHK_NOWARN));
+	J9VMThread *vmThread = (J9VMThread*)env;
+	J9VMThread *currentVMThread = globalJavaVM->internalVMFunctions->currentVMThread(globalJavaVM);
 
-	if (vm->reserved1_identifier != (void*)J9VM_IDENTIFIER) {
-		jniCheckFatalErrorNLS(env, J9NLS_JNICHK_INVALID_ENV, function);
+	if (NULL == currentVMThread) {
+		jniCheckFatalErrorNLS(J9NLS_JNICHK_THREAD_NOT_ATTACHED_TO_VM, function);
 	}
 
-	if (vm->internalVMFunctions->currentVMThread(vm) != vmThread) {
-		jniCheckFatalErrorNLS(env, J9NLS_JNICHK_WRONG_ENV, function);
+	if (currentVMThread != vmThread) {
+		jniCheckFatalErrorNLS(J9NLS_JNICHK_WRONG_ENV, function);
 	}
 
 	if (exceptionSafe == 0) {
 		const char* exceptionSetter;
 
 		if ( vmThread->currentException ) {
-			jniCheckFatalErrorNLS(env, J9NLS_JNICHK_PENDING_EXCEPTION, function);
+			jniCheckFatalErrorNLS(J9NLS_JNICHK_PENDING_EXCEPTION, function);
 		}
 
 		exceptionSetter = jniCheckGetPotentialPendingException();
 		if (exceptionSetter != NULL) {
-			jniCheckWarningNLS(env,
-				J9NLS_JNICHK_MISSING_EXCEPTION_CHECK,
+			jniCheckWarningNLS(J9NLS_JNICHK_MISSING_EXCEPTION_CHECK,
 				function,
 				exceptionSetter,
 				function);
@@ -596,7 +595,7 @@ jniCheckArgs(const char *function, int exceptionSafe, int criticalSafe, J9JniChe
 /*					jniCheckPrintMethod(env); */
 				}
 			} else {
-				jniCheckFatalErrorNLS(env, J9NLS_JNICHK_CRITICAL_UNSAFE_ERROR, function);
+				jniCheckFatalErrorNLS(J9NLS_JNICHK_CRITICAL_UNSAFE_ERROR, function);
 			}
 		}
 	}
@@ -634,7 +633,7 @@ jniCheckArgs(const char *function, int exceptionSafe, int criticalSafe, J9JniChe
 		case JNIC_JMETHODID:
 			aJmethodID = va_arg(va, jmethodID);
 			if (NULL == aJmethodID) {
-				jniCheckFatalErrorNLS(env, J9NLS_JNICHK_NULL_ARGUMENT, function, argNum);
+				jniCheckFatalErrorNLS(J9NLS_JNICHK_NULL_ARGUMENT, function, argNum);
 			}
 			if (trace) {
 				jniTraceMethodID(env, aJmethodID);
@@ -647,17 +646,17 @@ jniCheckArgs(const char *function, int exceptionSafe, int criticalSafe, J9JniChe
 
 			aJfieldID = va_arg(va, jfieldID);
 			if (NULL == aJfieldID) {
-				jniCheckFatalErrorNLS(env, J9NLS_JNICHK_NULL_ARGUMENT, function, argNum);
+				jniCheckFatalErrorNLS(J9NLS_JNICHK_NULL_ARGUMENT, function, argNum);
 			}
 			code += 1;
 			argNum += 1;
 			aJboolean = va_arg(va, int);
-			jniCheckRange(env, function, "jboolean", (IDATA)aJboolean, argNum, 0, 1);
+			jniCheckRange(function, "jboolean", (IDATA)aJboolean, argNum, 0, 1);
 			modifiers = ((J9JNIFieldID*)aJfieldID)->field->modifiers;
 			if ((0 != (modifiers & J9AccStatic)) && !aJboolean) {
-				jniCheckFatalErrorNLS(env, J9NLS_JNICHK_STATIC_FIELDID_PASSED, function, argNum);
+				jniCheckFatalErrorNLS(J9NLS_JNICHK_STATIC_FIELDID_PASSED, function, argNum);
 			} else if ((0 == (modifiers & J9AccStatic)) && aJboolean) {
-				jniCheckFatalErrorNLS(env, J9NLS_JNICHK_NON_STATIC_FIELDID_PASSED, function, argNum);
+				jniCheckFatalErrorNLS(J9NLS_JNICHK_NON_STATIC_FIELDID_PASSED, function, argNum);
 			}
 			if (trace) {
 				jniTraceFieldID(env, aJfieldID);
@@ -672,13 +671,13 @@ jniCheckArgs(const char *function, int exceptionSafe, int criticalSafe, J9JniChe
 			U_32 modifiers = 0;
 			aJfieldID = va_arg(va, jfieldID);
 			if (NULL == aJfieldID) {
-				jniCheckFatalErrorNLS(env, J9NLS_JNICHK_NULL_ARGUMENT, function, argNum);
+				jniCheckFatalErrorNLS(J9NLS_JNICHK_NULL_ARGUMENT, function, argNum);
 			}
 			modifiers = ((J9JNIFieldID*)aJfieldID)->field->modifiers;
 			if ((JNIC_JFIELDINSTANCEID == asciiCode) && (0 != (modifiers & J9AccStatic))) {
-				jniCheckFatalErrorNLS(env, J9NLS_JNICHK_STATIC_FIELDID_PASSED, function, argNum);
+				jniCheckFatalErrorNLS(J9NLS_JNICHK_STATIC_FIELDID_PASSED, function, argNum);
 			} else if ((JNIC_JFIELDSTATICID == asciiCode) && (0 == (modifiers & J9AccStatic))) {
-				jniCheckFatalErrorNLS(env, J9NLS_JNICHK_NON_STATIC_FIELDID_PASSED, function, argNum);
+				jniCheckFatalErrorNLS(J9NLS_JNICHK_NON_STATIC_FIELDID_PASSED, function, argNum);
 			}
 			if (trace) {
 				jniTraceFieldID(env, aJfieldID);
@@ -693,7 +692,7 @@ jniCheckArgs(const char *function, int exceptionSafe, int criticalSafe, J9JniChe
 			break;
 		case JNIC_JSIZE:
 			aJsize = va_arg(va, jsize);
-			jniCheckRange(env, function, "jsize", aJsize, argNum, 0, 0x7FFFFFFF);
+			jniCheckRange(function, "jsize", aJsize, argNum, 0, 0x7FFFFFFF);
 			if (trace) {
 				j9tty_printf(PORTLIB, "(jsize)%d", (jint)aJsize);
 			}
@@ -720,10 +719,10 @@ jniCheckArgs(const char *function, int exceptionSafe, int criticalSafe, J9JniChe
 		case JNIC_CLASSNAME:
 			aPointer = va_arg(va, char*);
 			if (NULL == aPointer) {
-				jniCheckFatalErrorNLS(env, J9NLS_JNICHK_NULL_ARGUMENT, function, argNum);
+				jniCheckFatalErrorNLS(J9NLS_JNICHK_NULL_ARGUMENT, function, argNum);
 			} else if (warn) {
 				if (!verifyClassnameUtf8(aPointer, strlen(aPointer))) {
-					jniCheckWarningNLS(env, J9NLS_JNICHK_MALFORMED_IDENTIFIER, function, argNum, aPointer);
+					jniCheckWarningNLS(J9NLS_JNICHK_MALFORMED_IDENTIFIER, function, argNum, aPointer);
 				}
 			}
 			if (trace) {
@@ -734,7 +733,7 @@ jniCheckArgs(const char *function, int exceptionSafe, int criticalSafe, J9JniChe
 		case JNIC_JVALUE:
 			aPointer = va_arg(va, char*);
 			if (NULL == aPointer) {
-				jniCheckFatalErrorNLS(env, J9NLS_JNICHK_NULL_ARGUMENT, function, argNum);
+				jniCheckFatalErrorNLS(J9NLS_JNICHK_NULL_ARGUMENT, function, argNum);
 			}
 			if (trace) {
 				j9tty_printf(PORTLIB, "(jvalue*)%p", aPointer);
@@ -744,10 +743,10 @@ jniCheckArgs(const char *function, int exceptionSafe, int criticalSafe, J9JniChe
 		case JNIC_MEMBERNAME:
 			aPointer = va_arg(va, char*);
 			if (NULL == aPointer) {
-				jniCheckFatalErrorNLS(env, J9NLS_JNICHK_NULL_ARGUMENT, function, argNum);
+				jniCheckFatalErrorNLS(J9NLS_JNICHK_NULL_ARGUMENT, function, argNum);
 			} else if (warn) {
 				if (!verifyIdentifierUtf8(aPointer, strlen(aPointer))) {
-					jniCheckWarningNLS(env, J9NLS_JNICHK_MALFORMED_IDENTIFIER, function, argNum, aPointer);
+					jniCheckWarningNLS(J9NLS_JNICHK_MALFORMED_IDENTIFIER, function, argNum, aPointer);
 				}
 			}
 			if (trace) {
@@ -758,10 +757,10 @@ jniCheckArgs(const char *function, int exceptionSafe, int criticalSafe, J9JniChe
 		case JNIC_METHODSIGNATURE:
 			aPointer = va_arg(va, char*);
 			if (aPointer == NULL) {
-				jniCheckFatalErrorNLS(env, J9NLS_JNICHK_NULL_ARGUMENT, function, argNum);
+				jniCheckFatalErrorNLS(J9NLS_JNICHK_NULL_ARGUMENT, function, argNum);
 			} else if (warn) {
 				if (verifyMethodSignatureUtf8(aPointer, strlen(aPointer)) < 0) {
-					jniCheckWarningNLS(env, J9NLS_JNICHK_MALFORMED_METHOD_SIGNATURE, function, argNum, aPointer);
+					jniCheckWarningNLS(J9NLS_JNICHK_MALFORMED_METHOD_SIGNATURE, function, argNum, aPointer);
 				}
 			}
 			if (trace) {
@@ -772,10 +771,10 @@ jniCheckArgs(const char *function, int exceptionSafe, int criticalSafe, J9JniChe
 		case JNIC_FIELDSIGNATURE:
 			aPointer = va_arg(va, char*);
 			if (aPointer == NULL) {
-				jniCheckFatalErrorNLS(env, J9NLS_JNICHK_NULL_ARGUMENT, function, argNum);
+				jniCheckFatalErrorNLS(J9NLS_JNICHK_NULL_ARGUMENT, function, argNum);
 			} else if (warn) {
 				if (verifyFieldSignatureUtf8(aPointer, strlen(aPointer), 0) < 0) {
-					jniCheckWarningNLS(env, J9NLS_JNICHK_MALFORMED_FIELD_SIGNATURE, function, argNum, aPointer);
+					jniCheckWarningNLS(J9NLS_JNICHK_MALFORMED_FIELD_SIGNATURE, function, argNum, aPointer);
 				}
 			}
 			if (trace) {
@@ -788,7 +787,7 @@ jniCheckArgs(const char *function, int exceptionSafe, int criticalSafe, J9JniChe
 			jniCheckNull(env, function, argNum, aJobject);
 			jniCheckRef(env, function, argNum, aJobject);
 			if (!jnichk_isObjectArray(env, aJobject)) {
-				jniCheckFatalErrorNLS(env, J9NLS_JNICHK_ARGUMENT_IS_NOT_JOBJECTARRAY, function, argNum);
+				jniCheckFatalErrorNLS(J9NLS_JNICHK_ARGUMENT_IS_NOT_JOBJECTARRAY, function, argNum);
 			}
 			if (trace) jniTraceObject(env, aJobject);
 			break;
@@ -798,7 +797,7 @@ jniCheckArgs(const char *function, int exceptionSafe, int criticalSafe, J9JniChe
 			jniCheckNull(env, function, argNum, aJobject);
 			jniCheckRef(env, function, argNum, aJobject);
 			if (!jnichk_isIndexable(env, aJobject)) {
-				jniCheckFatalErrorNLS(env, J9NLS_JNICHK_ARGUMENT_IS_NOT_JARRAY, function, argNum);
+				jniCheckFatalErrorNLS(J9NLS_JNICHK_ARGUMENT_IS_NOT_JARRAY, function, argNum);
 			}
 			if (trace) jniTraceObject(env, aJobject);
 			break;
@@ -807,7 +806,7 @@ jniCheckArgs(const char *function, int exceptionSafe, int criticalSafe, J9JniChe
 			aJobject = va_arg(va, jobject);
 			jniCheckNull(env, function, argNum, aJobject);
 			jniCheckRef(env, function, argNum, aJobject);
-			jniCheckClass(env, function, argNum, aJobject, vm->intArrayClass, "jintArray");
+			jniCheckClass(env, function, argNum, aJobject, globalJavaVM->intArrayClass, "jintArray");
 			if (trace) jniTraceObject(env, aJobject);
 			break;
 
@@ -815,7 +814,7 @@ jniCheckArgs(const char *function, int exceptionSafe, int criticalSafe, J9JniChe
 			aJobject = va_arg(va, jobject);
 			jniCheckNull(env, function, argNum, aJobject);
 			jniCheckRef(env, function, argNum, aJobject);
-			jniCheckClass(env, function, argNum, aJobject, vm->doubleArrayClass, "jdoubleArray");
+			jniCheckClass(env, function, argNum, aJobject, globalJavaVM->doubleArrayClass, "jdoubleArray");
 			if (trace) jniTraceObject(env, aJobject);
 			break;
 
@@ -823,7 +822,7 @@ jniCheckArgs(const char *function, int exceptionSafe, int criticalSafe, J9JniChe
 			aJobject = va_arg(va, jobject);
 			jniCheckNull(env, function, argNum, aJobject);
 			jniCheckRef(env, function, argNum, aJobject);
-			jniCheckClass(env, function, argNum, aJobject, vm->charArrayClass, "jcharArray");
+			jniCheckClass(env, function, argNum, aJobject, globalJavaVM->charArrayClass, "jcharArray");
 			if (trace) jniTraceObject(env, aJobject);
 			break;
 
@@ -831,7 +830,7 @@ jniCheckArgs(const char *function, int exceptionSafe, int criticalSafe, J9JniChe
 			aJobject = va_arg(va, jobject);
 			jniCheckNull(env, function, argNum, aJobject);
 			jniCheckRef(env, function, argNum, aJobject);
-			jniCheckClass(env, function, argNum, aJobject, vm->shortArrayClass, "jshortArray");
+			jniCheckClass(env, function, argNum, aJobject, globalJavaVM->shortArrayClass, "jshortArray");
 			if (trace) jniTraceObject(env, aJobject);
 			break;
 
@@ -839,7 +838,7 @@ jniCheckArgs(const char *function, int exceptionSafe, int criticalSafe, J9JniChe
 			aJobject = va_arg(va, jobject);
 			jniCheckNull(env, function, argNum, aJobject);
 			jniCheckRef(env, function, argNum, aJobject);
-			jniCheckClass(env, function, argNum, aJobject, vm->byteArrayClass, "jbyteArray");
+			jniCheckClass(env, function, argNum, aJobject, globalJavaVM->byteArrayClass, "jbyteArray");
 			if (trace) jniTraceObject(env, aJobject);
 			break;
 
@@ -847,7 +846,7 @@ jniCheckArgs(const char *function, int exceptionSafe, int criticalSafe, J9JniChe
 			aJobject = va_arg(va, jobject);
 			jniCheckNull(env, function, argNum, aJobject);
 			jniCheckRef(env, function, argNum, aJobject);
-			jniCheckClass(env, function, argNum, aJobject, vm->booleanArrayClass, "jbooleanArray");
+			jniCheckClass(env, function, argNum, aJobject, globalJavaVM->booleanArrayClass, "jbooleanArray");
 			if (trace) jniTraceObject(env, aJobject);
 			break;
 
@@ -855,7 +854,7 @@ jniCheckArgs(const char *function, int exceptionSafe, int criticalSafe, J9JniChe
 			aJobject = va_arg(va, jobject);
 			jniCheckNull(env, function, argNum, aJobject);
 			jniCheckRef(env, function, argNum, aJobject);
-			jniCheckClass(env, function, argNum, aJobject, vm->floatArrayClass, "jfloatArray");
+			jniCheckClass(env, function, argNum, aJobject, globalJavaVM->floatArrayClass, "jfloatArray");
 			if (trace) jniTraceObject(env, aJobject);
 			break;
 
@@ -863,7 +862,7 @@ jniCheckArgs(const char *function, int exceptionSafe, int criticalSafe, J9JniChe
 			aJobject = va_arg(va, jobject);
 			jniCheckNull(env, function, argNum, aJobject);
 			jniCheckRef(env, function, argNum, aJobject);
-			jniCheckClass(env, function, argNum, aJobject, vm->longArrayClass, "jlongArray");
+			jniCheckClass(env, function, argNum, aJobject, globalJavaVM->longArrayClass, "jlongArray");
 			if (trace) jniTraceObject(env, aJobject);
 			break;
 
@@ -871,7 +870,7 @@ jniCheckArgs(const char *function, int exceptionSafe, int criticalSafe, J9JniChe
 			aJobject = va_arg(va, jobject);
 			jniCheckNull(env, function, argNum, aJobject);
 			jniCheckRef(env, function, argNum, aJobject);
-			jniCheckClass(env, function, argNum, aJobject, J9VMJAVALANGCLASS_OR_NULL(vm), "jclass");
+			jniCheckClass(env, function, argNum, aJobject, J9VMJAVALANGCLASS_OR_NULL(globalJavaVM), "jclass");
 			jniCheckValidClass(env, function, argNum, aJobject);
 			if (trace) jniTraceObject(env, aJobject);
 			break;
@@ -880,7 +879,7 @@ jniCheckArgs(const char *function, int exceptionSafe, int criticalSafe, J9JniChe
 			aJobject = va_arg(va, jobject);
 			jniCheckNull(env, function, argNum, aJobject);
 			jniCheckRef(env, function, argNum, aJobject);
-			jniCheckClass(env, function, argNum, aJobject, J9VMJAVALANGSTRING_OR_NULL(vm), "jstring");
+			jniCheckClass(env, function, argNum, aJobject, J9VMJAVALANGSTRING_OR_NULL(globalJavaVM), "jstring");
 			if (trace) jniTraceObject(env, aJobject);
 			break;
 
@@ -900,7 +899,7 @@ jniCheckArgs(const char *function, int exceptionSafe, int criticalSafe, J9JniChe
 			if (trace) {
 				jniTraceObject(env, aJobject);
 			}
-			jniCheckJClassSubclass(env, function, argNum, aJobject, J9VMJAVALANGTHROWABLE_OR_NULL(vm), "java/lang/Throwable");
+			jniCheckJClassSubclass(env, function, argNum, aJobject, J9VMJAVALANGTHROWABLE_OR_NULL(globalJavaVM), "java/lang/Throwable");
 			break;
 
 		case JNIC_DIRECTBUFFER:
@@ -967,7 +966,7 @@ jniCheckArgs(const char *function, int exceptionSafe, int criticalSafe, J9JniChe
 			break;
 
 		default:
-			jniCheckFatalErrorNLS(env, J9NLS_JNICHK_BAD_DESCRIPTOR, function, (UDATA)*code);
+			jniCheckFatalErrorNLS(J9NLS_JNICHK_BAD_DESCRIPTOR, function, (UDATA)*code);
 		}
 
 		code += 1;
@@ -1348,9 +1347,9 @@ jniCheckRef(JNIEnv* env,  const char* function, IDATA argNum, jobject reference)
 	} else {
 		/* -1 means it's the return value rather than a parameter */
 		if (argNum == -1) {
-			jniCheckFatalErrorNLS(env, J9NLS_JNICHK_RETURN_IS_NOT_REF, reference, getRefType(env, reference));
+			jniCheckFatalErrorNLS(J9NLS_JNICHK_RETURN_IS_NOT_REF, reference, getRefType(env, reference));
 		} else {
-			jniCheckFatalErrorNLS(env, J9NLS_JNICHK_ARGUMENT_IS_NOT_REF, function, argNum, reference, getRefType(env, reference));
+			jniCheckFatalErrorNLS(J9NLS_JNICHK_ARGUMENT_IS_NOT_REF, function, argNum, reference, getRefType(env, reference));
 		}
 	}
 }
@@ -1428,7 +1427,7 @@ void jniCheckLocalRef(JNIEnv* env,  const char* function, IDATA argNum, jobject 
 	if (jniIsLocalRef(env, env, reference)) {
 		return;
 	} else {
-		jniCheckFatalErrorNLS(env, J9NLS_JNICHK_ARGUMENT_IS_NOT_LOCAL_REF, function, argNum, reference, getRefType(env, reference));
+		jniCheckFatalErrorNLS(J9NLS_JNICHK_ARGUMENT_IS_NOT_LOCAL_REF, function, argNum, reference, getRefType(env, reference));
 	}
 }
 
@@ -1438,7 +1437,7 @@ void jniCheckGlobalRef(JNIEnv* env,  const char* function, IDATA argNum, jobject
 	if (jniIsGlobalRef(env, reference)) {
 		return;
 	} else {
-		jniCheckFatalErrorNLS(env, J9NLS_JNICHK_ARGUMENT_IS_NOT_GLOBAL_REF, function, argNum, reference, getRefType(env, reference));
+		jniCheckFatalErrorNLS(J9NLS_JNICHK_ARGUMENT_IS_NOT_GLOBAL_REF, function, argNum, reference, getRefType(env, reference));
 	}
 }
 
@@ -1448,7 +1447,7 @@ void jniCheckWeakGlobalRef(JNIEnv* env,  const char* function, IDATA argNum, job
 	if (jniIsWeakGlobalRef(env, reference)) {
 		return;
 	} else {
-		jniCheckFatalErrorNLS(env, J9NLS_JNICHK_ARGUMENT_IS_NOT_WEAK_GLOBAL_REF, function, argNum, reference, getRefType(env, reference));
+		jniCheckFatalErrorNLS(J9NLS_JNICHK_ARGUMENT_IS_NOT_WEAK_GLOBAL_REF, function, argNum, reference, getRefType(env, reference));
 	}
 }
 
@@ -1524,16 +1523,16 @@ jniCheckObjectRange(JNIEnv* env, const char* function, jsize actualLen, jint sta
 
 	if (len > 0) {
 		if (start < 0) {
-			jniCheckWarningNLS(env, J9NLS_JNICHK_NEGATIVE_INDEX, function, start);
+			jniCheckWarningNLS(J9NLS_JNICHK_NEGATIVE_INDEX, function, start);
 		}
 		if (start >= actualLen) {
-			jniCheckWarningNLS(env, J9NLS_JNICHK_INDEX_OUT_OF_RANGE, function, start, actualLen);
+			jniCheckWarningNLS(J9NLS_JNICHK_INDEX_OUT_OF_RANGE, function, start, actualLen);
 		}
 		if (start + len > actualLen) {
-			jniCheckWarningNLS(env, J9NLS_JNICHK_END_OUT_OF_RANGE, function, start, len, actualLen);
+			jniCheckWarningNLS(J9NLS_JNICHK_END_OUT_OF_RANGE, function, start, len, actualLen);
 		}
 	} else if (len < 0) {
-		jniCheckWarningNLS(env, J9NLS_JNICHK_NEGATIVE_LENGTH, function, len);
+		jniCheckWarningNLS(J9NLS_JNICHK_NEGATIVE_LENGTH, function, len);
 	}
 }
 
@@ -1597,7 +1596,7 @@ static void jniCheckValidClass(JNIEnv* env, const char* function, UDATA argNum, 
 
 	if (classDepthAndFlags & J9AccClassHotSwappedOut) {
 		J9UTF8* className = J9ROMCLASS_CLASSNAME(romClass);
-		jniCheckFatalErrorNLS(env, J9NLS_JNICHK_OBSOLETE_CLASS, function, J9UTF8_LENGTH(className), J9UTF8_DATA(className));
+		jniCheckFatalErrorNLS(J9NLS_JNICHK_OBSOLETE_CLASS, function, J9UTF8_LENGTH(className), J9UTF8_DATA(className));
 	}
 }
 
@@ -1619,28 +1618,28 @@ jniCheckScalarArg(const char* function, JNIEnv* env, va_list* va, char code, UDA
 	switch (code) {
 		case 'B':	/* jbyte */
 			aJbyte = va_arg(*va, int);
-			jniCheckRange(env, function, "jbyte", (IDATA)aJbyte, argNum, -0x80, 0x7F);
+			jniCheckRange(function, "jbyte", (IDATA)aJbyte, argNum, -0x80, 0x7F);
 			if (trace) {
 				j9tty_printf(PORTLIB, "(jbyte)%d", (jint)aJbyte);
 			}
 			break;
 		case 'Z':	/* jboolean */
 			aJboolean = va_arg(*va, int);
-			jniCheckRange(env, function, "jboolean", (IDATA)aJboolean, argNum, 0, 1);
+			jniCheckRange(function, "jboolean", (IDATA)aJboolean, argNum, 0, 1);
 			if (trace) {
 				j9tty_printf(PORTLIB, "%s", aJboolean ? "true" : "false");
 			}
 			break;
 		case 'C':	/* jchar */
 			aJchar = va_arg(*va, int);
-			jniCheckRange(env, function, "jchar", (IDATA)aJchar, argNum, 0, 0xFFFF);
+			jniCheckRange(function, "jchar", (IDATA)aJchar, argNum, 0, 0xFFFF);
 			if (trace) {
 				j9tty_printf(PORTLIB, "(jchar)%d", (jint)aJchar);
 			}
 			break;
 		case 'S':	/* jshort */
 			aJshort = va_arg(*va, int);
-			jniCheckRange(env, function, "jshort", (IDATA)aJshort, argNum, -0x8000, 0x7FFF);
+			jniCheckRange(function, "jshort", (IDATA)aJshort, argNum, -0x8000, 0x7FFF);
 			if (trace) {
 				j9tty_printf(PORTLIB, "(jshort)%d", (jint)aJshort);
 			}
@@ -1648,7 +1647,7 @@ jniCheckScalarArg(const char* function, JNIEnv* env, va_list* va, char code, UDA
 		case 'I':	/* jint */
 			aJint = va_arg(*va, jint);
 #ifdef J9VM_ENV_DATA64
-			jniCheckRange(env, function, "jint", (IDATA)aJint, argNum, -0x80000000LL, 0x7FFFFFFFLL);
+			jniCheckRange(function, "jint", (IDATA)aJint, argNum, -0x80000000LL, 0x7FFFFFFFLL);
 #endif
 			if (trace) {
 				j9tty_printf(PORTLIB, "(jint)%d", (jint)aJint);
@@ -1674,7 +1673,7 @@ jniCheckScalarArg(const char* function, JNIEnv* env, va_list* va, char code, UDA
 			break;
 
 		default:
-			jniCheckFatalErrorNLS(env, J9NLS_JNICHK_BAD_DESCRIPTOR, function, (UDATA)code);
+			jniCheckFatalErrorNLS(J9NLS_JNICHK_BAD_DESCRIPTOR, function, (UDATA)code);
 		}
 
 }
@@ -1694,15 +1693,13 @@ void jniCheckLocalRefTracking(JNIEnv* env, const char* function, J9JniCheckLocal
 
 	/* check the global pools first */
 	if (currentState.globalRefCapacity > savedState->globalRefCapacity) {
-		jniCheckWarningNLS(env,
-			J9NLS_JNICHK_GREW_GLOBAL_REF_POOL,
+		jniCheckWarningNLS(J9NLS_JNICHK_GREW_GLOBAL_REF_POOL,
 			function,
 			savedState->globalRefCapacity,
 			currentState.globalRefCapacity);
 	}
 	if (currentState.weakRefCapacity > savedState->weakRefCapacity) {
-		jniCheckWarningNLS(env,
-			J9NLS_JNICHK_GREW_WEAK_GLOBAL_REF_POOL,
+		jniCheckWarningNLS(J9NLS_JNICHK_GREW_WEAK_GLOBAL_REF_POOL,
 			function,
 			savedState->weakRefCapacity,
 			currentState.weakRefCapacity);
@@ -1722,8 +1719,7 @@ void jniCheckLocalRefTracking(JNIEnv* env, const char* function, J9JniCheckLocal
 		return;
 	}
 
-	jniCheckWarningNLS(env,
-		J9NLS_JNICHK_GREW_LOCAL_REF_FRAME,
+	jniCheckWarningNLS(J9NLS_JNICHK_GREW_LOCAL_REF_FRAME,
 		function,
 		savedState->numLocalRefs,
 		currentState.topFrameCapacity + J9_SSF_CO_REF_SLOT_CNT,
@@ -1836,7 +1832,7 @@ methodExitHook(J9HookInterface** hook, UDATA eventNum, void* eventData, void* us
 	jniCheckForUnreleasedMemory( (JNIEnv*)vmThread );
 
 	if ((vmThread->jniCriticalCopyCount != 0) || (vmThread->jniCriticalDirectCount != 0)) {
-		jniCheckFatalErrorNLS((JNIEnv*)vmThread, J9NLS_JNICHK_UNRELEASED_CRITICAL_SECTION);
+		jniCheckFatalErrorNLS(J9NLS_JNICHK_UNRELEASED_CRITICAL_SECTION);
 	}
 
 	/* clear the potential pending exception (Java will now throw it) */
@@ -2138,7 +2134,7 @@ static void jniCheckPushCount(JNIEnv* env, const char* function) {
 	UDATA refBytes = (((J9SFMethodFrame*)((U_8*)vmThread->sp + (UDATA)vmThread->literals))->specialFrameFlags & J9_SSF_JNI_PUSHED_REF_COUNT_MASK) * sizeof(UDATA);
 
 	if ((UDATA) vmThread->literals < refBytes) {
-		jniCheckFatalErrorNLS(env, J9NLS_JNICHK_INCORRECT_PUSH_COUNT, function, vmThread->literals, refBytes);
+		jniCheckFatalErrorNLS(J9NLS_JNICHK_INCORRECT_PUSH_COUNT, function, vmThread->literals, refBytes);
 	}
 }
 
@@ -2217,19 +2213,19 @@ jniCheckPopLocalFrame(JNIEnv* env, const char* function)
 		}
 	}
 
-	jniCheckFatalErrorNLS(env, J9NLS_JNICHK_NO_LOCAL_FRAME_ON_STACK, function);
+	jniCheckFatalErrorNLS(J9NLS_JNICHK_NO_LOCAL_FRAME_ON_STACK, function);
 }
 
 
 void
-jniCheckFatalErrorNLS(JNIEnv* env, U_32 nlsModule, U_32 nlsIndex, ...)
+jniCheckFatalErrorNLS(U_32 nlsModule, U_32 nlsIndex, ...)
 {
-	J9VMThread *currentThread = (J9VMThread*)env;
-	J9JavaVM* vm = currentThread->javaVM;
-	UDATA options = vm->checkJNIData.options;
+	J9VMThread *currentThread = globalJavaVM->internalVMFunctions->currentVMThread(globalJavaVM);
+	JNIEnv* env = (JNIEnv*)currentThread;
+	UDATA options = globalJavaVM->checkJNIData.options;
 
 	if ( (options & JNICHK_INCLUDEBOOT) || !inBootstrapClass(env)) {
-		PORT_ACCESS_FROM_JAVAVM(vm);
+		PORT_ACCESS_FROM_JAVAVM(globalJavaVM);
 		va_list args;
 
 		va_start(args, nlsIndex);
@@ -2244,23 +2240,23 @@ jniCheckFatalErrorNLS(JNIEnv* env, U_32 nlsModule, U_32 nlsIndex, ...)
 			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_JNICHK_FATAL_ERROR);
 			j9nls_printf(PORTLIB, J9NLS_INFO, J9NLS_JNICHK_FATAL_ERROR_ADVICE);
 			if (J9_ARE_ANY_BITS_SET(options, JNICHK_ABORTONERROR)) {
-				vm->j9rasDumpFunctions->triggerDumpAgents(vm, currentThread, J9RAS_DUMP_ON_ABORT_SIGNAL, NULL);
+				globalJavaVM->j9rasDumpFunctions->triggerDumpAgents(globalJavaVM, currentThread, J9RAS_DUMP_ON_ABORT_SIGNAL, NULL);
 			}
-			vm->EsJNIFunctions->FatalError(env, "JNI error");
+			globalJavaVM->EsJNIFunctions->FatalError(env, "JNI error");
 		}
 	}
 }
 
 
 void
-jniCheckWarningNLS(JNIEnv* env, U_32 nlsModule, U_32 nlsIndex, ...)
+jniCheckWarningNLS(U_32 nlsModule, U_32 nlsIndex, ...)
 {
-	J9JavaVM* vm = ((J9VMThread*)env)->javaVM;
-	UDATA options = vm->checkJNIData.options;
+	JNIEnv* env = (JNIEnv*)globalJavaVM->internalVMFunctions->currentVMThread(globalJavaVM);
+	UDATA options = globalJavaVM->checkJNIData.options;
 
 	if ( 0 == (options & JNICHK_NOWARN)) {
 		if ( (options & JNICHK_INCLUDEBOOT) || !inBootstrapClass(env)) {
-			PORT_ACCESS_FROM_JAVAVM(vm);
+			PORT_ACCESS_FROM_JAVAVM(globalJavaVM);
 			va_list args;
 
 			va_start(args, nlsIndex);
@@ -2274,14 +2270,14 @@ jniCheckWarningNLS(JNIEnv* env, U_32 nlsModule, U_32 nlsIndex, ...)
 
 
 void
-jniCheckAdviceNLS(JNIEnv* env, U_32 nlsModule, U_32 nlsIndex, ...)
+jniCheckAdviceNLS(U_32 nlsModule, U_32 nlsIndex, ...)
 {
-	J9JavaVM* vm = ((J9VMThread*)env)->javaVM;
-	UDATA options = vm->checkJNIData.options;
+	JNIEnv* env = (JNIEnv*)globalJavaVM->internalVMFunctions->currentVMThread(globalJavaVM);
+	UDATA options = globalJavaVM->checkJNIData.options;
 
 	if ( 0 == (options & JNICHK_NOADVICE)) {
 		if ( (options & JNICHK_INCLUDEBOOT) || !inBootstrapClass(env)) {
-			PORT_ACCESS_FROM_JAVAVM(vm);
+			PORT_ACCESS_FROM_JAVAVM(globalJavaVM);
 			va_list args;
 
 			va_start(args, nlsIndex);
@@ -2308,7 +2304,7 @@ jniCheckDirectBuffer(JNIEnv* env, const char* function, IDATA argNum, jobject aJ
 	}
 
 	/* either we failed to find java/nio/Buffer or aJobject is not a java/nio/Buffer. Either way, it can't be a java/nio/Buffer */
-	jniCheckWarningNLS(env, J9NLS_JNICHK_ARGUMENT_IS_NOT_DIRECTBUFFER, function, argNum);
+	jniCheckWarningNLS(J9NLS_JNICHK_ARGUMENT_IS_NOT_DIRECTBUFFER, function, argNum);
 }
 
 
@@ -2335,7 +2331,7 @@ jniCheckReflectMethod(JNIEnv* env, const char* function, IDATA argNum, jobject a
 	}
 
 	/* either we failed to find java/nio/Buffer or aJobject is not a java/nio/Buffer. Either way, it can't be a java/nio/Buffer */
-	jniCheckFatalErrorNLS(env, J9NLS_JNICHK_ARGUMENT_IS_NOT_REFLECTMETHOD, function, argNum);
+	jniCheckFatalErrorNLS(J9NLS_JNICHK_ARGUMENT_IS_NOT_REFLECTMETHOD, function, argNum);
 }
 
 
@@ -2360,21 +2356,21 @@ jniCheckCall(const char* function, JNIEnv* env, jobject receiver, UDATA methodTy
 	if (methodType == METHOD_CONSTRUCTOR) {
 		J9UTF8* name = J9ROMMETHOD_NAME(romMethod);
 		if ( (J9UTF8_DATA(name)[0] != '<') || (J9UTF8_LENGTH(name) != sizeof("<init>") - 1) ) {
-			jniCheckFatalErrorNLS(env, J9NLS_JNICHK_METHOD_IS_NOT_CONSTRUCTOR, function);
+			jniCheckFatalErrorNLS(J9NLS_JNICHK_METHOD_IS_NOT_CONSTRUCTOR, function);
 		}
 	}
 
 	if ( ((romMethod->modifiers & J9AccStatic) == J9AccStatic) != (methodType == METHOD_STATIC) ) {
 		if (methodType == METHOD_STATIC) {
-			jniCheckFatalErrorNLS(env, J9NLS_JNICHK_METHOD_IS_NOT_STATIC, function);
+			jniCheckFatalErrorNLS(J9NLS_JNICHK_METHOD_IS_NOT_STATIC, function);
 		} else {
-			jniCheckFatalErrorNLS(env, J9NLS_JNICHK_METHOD_IS_STATIC, function);
+			jniCheckFatalErrorNLS(J9NLS_JNICHK_METHOD_IS_STATIC, function);
 		}
 	}
 
 	returnSig = strchr((const char*)J9UTF8_DATA(sig), ')') + 1;
 	if ( (UDATA)*returnSig != returnType && ((UDATA)*returnSig != '[' || returnType != 'L') ) {
-		jniCheckFatalErrorNLS(env, J9NLS_JNICHK_METHOD_HAS_WRONG_RETURN_TYPE, function, *returnSig);
+		jniCheckFatalErrorNLS(J9NLS_JNICHK_METHOD_HAS_WRONG_RETURN_TYPE, function, *returnSig);
 	}
 
 
@@ -2383,17 +2379,17 @@ jniCheckCall(const char* function, JNIEnv* env, jobject receiver, UDATA methodTy
 	switch (methodType) {
 		case METHOD_STATIC:
 			if (!vm->EsJNIFunctions->IsAssignableFrom(env, receiver, declaringClassRef)) {
-				jniCheckFatalErrorNLS(env, J9NLS_JNICHK_METHOD_INCORRECT_CLAZZ, function);
+				jniCheckFatalErrorNLS(J9NLS_JNICHK_METHOD_INCORRECT_CLAZZ, function);
 			}
 			break;
 		case METHOD_INSTANCE:
 			if (!vm->EsJNIFunctions->IsInstanceOf(env, receiver, declaringClassRef)) {
-				jniCheckFatalErrorNLS(env, J9NLS_JNICHK_METHOD_INELIGIBLE_RECEIVER, function);
+				jniCheckFatalErrorNLS(J9NLS_JNICHK_METHOD_INELIGIBLE_RECEIVER, function);
 			}
 			break;
 		case METHOD_CONSTRUCTOR:
 			if (!vm->EsJNIFunctions->IsSameObject(env, receiver, declaringClassRef)) {
-				jniCheckFatalErrorNLS(env, J9NLS_JNICHK_METHOD_INCORRECT_CLAZZ, function);
+				jniCheckFatalErrorNLS(J9NLS_JNICHK_METHOD_INCORRECT_CLAZZ, function);
 			}
 			break;
 	}
@@ -2414,7 +2410,7 @@ jniCheckScalarArgA(const char* function, JNIEnv* env, jvalue* arg, char code, UD
 			}
 			break;
 		case 'Z':	/* jboolean */
-			jniCheckRange(env, function, "jboolean", (IDATA)arg->z, argNum, 0, 1);
+			jniCheckRange(function, "jboolean", (IDATA)arg->z, argNum, 0, 1);
 			if (trace) {
 				j9tty_printf(PORTLIB, "%s", arg->z ? "true" : "false");
 			}
@@ -2451,7 +2447,7 @@ jniCheckScalarArgA(const char* function, JNIEnv* env, jvalue* arg, char code, UD
 			break;
 
 		default:
-			jniCheckFatalErrorNLS(env, J9NLS_JNICHK_BAD_DESCRIPTOR, function, (UDATA)code);
+			jniCheckFatalErrorNLS(J9NLS_JNICHK_BAD_DESCRIPTOR, function, (UDATA)code);
 		}
 
 }
