@@ -342,9 +342,47 @@ J9::OptionsPostRestore::processInternalCompilerOptions(bool enabled, bool isAOT)
    }
 
 void
-J9::OptionsPostRestore::filterMethod(TR_J9VMBase *fej9, J9Method *method)
+J9::OptionsPostRestore::invalidateCompiledMethod(J9Method *method, TR_J9VMBase *fej9)
    {
-   if (TR::CompilationInfo::isCompiled(method))
+   void *startPC = _compInfo->getPCIfCompiled(method);
+   TR_PersistentJittedBodyInfo *bodyInfo = TR::Recompilation::getJittedBodyInfoFromPC(startPC);
+
+   if (bodyInfo)
+      {
+      if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCheckpointRestoreDetails))
+         {
+         TR_VerboseLog::CriticalSection();
+         TR_VerboseLog::write(TR_Vlog_CHECKPOINT_RESTORE, "Invalidating ");
+         _compInfo->printMethodNameToVlog(method);
+         TR_VerboseLog::writeLine(" (%p)", method);
+         }
+
+      TR_PersistentMethodInfo *pmi = bodyInfo->getMethodInfo();
+      pmi->setIsExcludedPostRestore();
+
+      TR::Recompilation::invalidateMethodBody(startPC, fej9);
+
+      // TODO: add method to a list to check the stack of java threads to print out message
+      }
+   else
+      {
+      bool isNative =_J9ROMMETHOD_J9MODIFIER_IS_SET((J9_ROM_METHOD_FROM_RAM_METHOD(method)), J9AccNative);
+      if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCheckpointRestoreDetails))
+         {
+         TR_VerboseLog::CriticalSection();
+         TR_VerboseLog::write(TR_Vlog_CHECKPOINT_RESTORE, "Unable to invalidate %smethod ", isNative ? "native " : "");
+         _compInfo->printMethodNameToVlog(method);
+         TR_VerboseLog::writeLine(" (%p)", method);
+         }
+      }
+   }
+
+bool
+J9::OptionsPostRestore::shouldInvalidateCompiledMethod(J9Method *method, TR_J9VMBase *fej9, bool compilationFiltersExist)
+   {
+   bool shouldFilterMethod = false;
+
+   if (compilationFiltersExist)
       {
       J9ROMMethod * romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
       J9UTF8 *className;
@@ -362,47 +400,54 @@ J9::OptionsPostRestore::filterMethod(TR_J9VMBase *fej9, J9Method *method)
       if (methodSignature)
          {
          sprintf(methodSignature, "%.*s.%.*s%.*s",
-                 J9UTF8_LENGTH(className), utf8Data(className),
-                 J9UTF8_LENGTH(name), utf8Data(name),
-                 J9UTF8_LENGTH(signature), utf8Data(signature));
+               J9UTF8_LENGTH(className), utf8Data(className),
+               J9UTF8_LENGTH(name), utf8Data(name),
+               J9UTF8_LENGTH(signature), utf8Data(signature));
 
          TR_FilterBST *filter = NULL;
-         if (!TR::Options::getDebug()->methodSigCanBeCompiled(methodSignature, filter, TR::Method::J9))
-            {
-            if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCheckpointRestoreDetails))
-               TR_VerboseLog::writeLineLocked(TR_Vlog_CHECKPOINT_RESTORE, "Invalidating %s (%p)", methodSignature, method);
-
-            TR::Recompilation::invalidateMethodBody(method->extra, fej9);
-            // TODO: add method to a list to check the stack of java threads to print out message
-            }
+         shouldFilterMethod = !TR::Options::getDebug()->methodSigCanBeCompiled(methodSignature, filter, TR::Method::J9);
          }
       }
+
+   return shouldFilterMethod;
    }
 
 void
-J9::OptionsPostRestore::filterMethods()
+J9::OptionsPostRestore::invalidateCompiledMethodsIfNeeded(bool invalidateAll)
    {
-   PORT_ACCESS_FROM_JITCONFIG(_jitConfig);
-   J9JavaVM *javaVM = _jitConfig->javaVM;
    TR_J9VMBase *fej9 = TR_J9VMBase::get(_jitConfig, _vmThread);
-   TR_Memory trMemory(*_compInfo->persistentMemory(), _region);
+   bool compilationFiltersExist = (TR::Options::getDebug() && TR::Options::getDebug()->getCompilationFilters());
 
-   J9ClassWalkState classWalkState;
-   J9Class *j9clazz = javaVM->internalVMFunctions->allClassesStartDo(&classWalkState, javaVM, NULL);
-   while (j9clazz)
+   if (invalidateAll || compilationFiltersExist)
       {
-      TR_OpaqueClassBlock *clazz = reinterpret_cast<TR_OpaqueClassBlock *>(j9clazz);
-      uint32_t numMethods = fej9->getNumMethods(clazz);
-      J9Method *ramMethods = reinterpret_cast<J9Method *>(fej9->getMethods(clazz));
+      J9JavaVM *javaVM = _jitConfig->javaVM;
+      TR_Memory trMemory(*_compInfo->persistentMemory(), _region);
 
-      for (uint32_t index = 0; index < numMethods; index++)
+      J9ClassWalkState classWalkState;
+      J9Class *j9clazz = javaVM->internalVMFunctions->allClassesStartDo(&classWalkState, javaVM, NULL);
+      while (j9clazz)
          {
-         filterMethod(fej9, &ramMethods[index]);
-         }
+         TR_OpaqueClassBlock *clazz = reinterpret_cast<TR_OpaqueClassBlock *>(j9clazz);
+         uint32_t numMethods = fej9->getNumMethods(clazz);
+         J9Method *ramMethods = reinterpret_cast<J9Method *>(fej9->getMethods(clazz));
 
-      j9clazz = javaVM->internalVMFunctions->allClassesNextDo(&classWalkState);
+         for (uint32_t index = 0; index < numMethods; index++)
+            {
+            J9Method *method = &ramMethods[index];
+            if (TR::CompilationInfo::isCompiled(method))
+               {
+               if (invalidateAll ||
+                   shouldInvalidateCompiledMethod(method, fej9, compilationFiltersExist))
+                  {
+                  invalidateCompiledMethod(method, fej9);
+                  }
+               }
+            }
+
+         j9clazz = javaVM->internalVMFunctions->allClassesNextDo(&classWalkState);
+         }
+      javaVM->internalVMFunctions->allClassesEndDo(&classWalkState);
       }
-   javaVM->internalVMFunctions->allClassesEndDo(&classWalkState);
    }
 
 void
@@ -530,8 +575,8 @@ J9::OptionsPostRestore::postProcessInternalCompilerOptions()
    // Open vlog and rtLog if applicable
    openLogFilesIfNeeded();
 
-   if (TR::Options::getDebug())
-      filterMethods();
+   // Invalidate method bodies if needed
+   invalidateCompiledMethodsIfNeeded();
 
    // Set option to print code cache if necessary
    if (_argIndexPrintCodeCache > _argIndexDisablePrintCodeCache)
