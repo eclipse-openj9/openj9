@@ -435,4 +435,5 @@ J9InternalVMFunctions J9InternalFunctions = {
 	walkContinuationStackFrames,
 	walkAllStackFrames,
 #endif /* JAVA_SPEC_VERSION >= 19 */
+	findJ9ClassInFlattenedClassCache,
 };
