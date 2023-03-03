@@ -141,8 +141,11 @@ class OptionsPostRestore
    /**
     * \brief Helper method to get compiler options (such as -Xjit, -Xaot, etc.)
     *        from the Restore VM Args Array and process them.
+    *
+    * \param isAOT bool to determine whether the AOT or JIT options should be
+    *              processed.
     */
-   void processInternalCompilerOptions(bool enabled, bool isAOT);
+   void processInternalCompilerOptions(bool isAOT);
 
    /**
     * \brief Method to process compiler options post restore.

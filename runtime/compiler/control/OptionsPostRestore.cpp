@@ -305,7 +305,7 @@ J9::OptionsPostRestore::processJitServerOptions()
    }
 
 void
-J9::OptionsPostRestore::processInternalCompilerOptions(bool enabled, bool isAOT)
+J9::OptionsPostRestore::processInternalCompilerOptions(bool isAOT)
    {
    // Needed for FIND_ARG_IN_RESTORE_ARGS
    J9JavaVM *vm = _jitConfig->javaVM;
@@ -322,7 +322,7 @@ J9::OptionsPostRestore::processInternalCompilerOptions(bool enabled, bool isAOT)
    else
       argIndex = FIND_ARG_IN_RESTORE_ARGS( STARTSWITH_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::Xjitcolon], 0);
 
-   if (enabled && argIndex >= 0)
+   if (argIndex >= 0)
       {
       intptr_t rc = initializeCompilerArgsPostRestore(_jitConfig->javaVM, argIndex, &commandLineOptions, !isAOT, mergeCompilerOptions);
       if (rc)
@@ -604,31 +604,46 @@ J9::OptionsPostRestore::processCompilerOptions()
    // Needed for FIND_AND_CONSUME_RESTORE_ARG
    J9JavaVM *vm = _jitConfig->javaVM;
 
-   // TODO: Check existing config from before checkpoint
-   bool jitEnabled = true;
-   bool aotEnabled = true;
+   bool jitEnabled = TR::Options::canJITCompile();
+   bool aotEnabled = TR::Options::sharedClassCache();
 
    _argIndexXjit = FIND_AND_CONSUME_RESTORE_ARG(OPTIONAL_LIST_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::Xjit], 0);
    _argIndexXnojit = FIND_AND_CONSUME_RESTORE_ARG(OPTIONAL_LIST_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::Xnojit], 0);
    _argIndexXaot = FIND_AND_CONSUME_RESTORE_ARG(OPTIONAL_LIST_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::Xaot], 0);
    _argIndexXnoaot = FIND_AND_CONSUME_RESTORE_ARG(OPTIONAL_LIST_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::Xnoaot], 0);
 
-   if (_argIndexXjit < _argIndexXnojit)
-      jitEnabled = false;
+   if (_argIndexXjit != _argIndexXnojit)
+      jitEnabled = (_argIndexXjit > _argIndexXnojit);
 
-   if (_argIndexXaot < _argIndexXnoaot)
-      aotEnabled = false;
+   // If -Xnoaot was specified pre-checkpoint, there is a lot of infrastructure
+   // that needs to be set up, including validating the existing SCC. For now,
+   // Ignore -Xaot post-restore if -Xnoaot was specified pre-checkpoint.
+   if (aotEnabled)
+      aotEnabled = (_argIndexXaot >= _argIndexXnoaot);
 
-   // TODO: Look into what needs to be done if both -Xnojit and -Xaot
-
+   // Ideally when disabling AOT, the vmThread->aotVMwithThreadInfo->_sharedCache
+   // would also be freed and set to NULL. However, it isn't obvious whether non
+   // compilation and java threads that could be running at the moment could make
+   // use of it, in which case there could be a race. To avoid this, it's safer
+   // to just leave _sharedCache alone; at worst some SCC API could be invoked,
+   // but not during a compilation as all compilation threads are suspended at
+   // this point, and so it won't impact AOT code.
    if (!aotEnabled)
       {
-      // do necessary work to disable aot compilation
+      TR::Options::getAOTCmdLineOptions()->setOption(TR_NoLoadAOT);
+      TR::Options::getAOTCmdLineOptions()->setOption(TR_NoStoreAOT);
+      TR::Options::setSharedClassCache(false);
+      TR_J9SharedCache::setSharedCacheDisabledReason(TR_J9SharedCache::AOT_DISABLED);
       }
 
    if (!jitEnabled)
       {
-      // do necessary work to disable jit compilation
+      TR::Options::setCanJITCompile(false);
+      invalidateCompiledMethodsIfNeeded(true);
+      }
+   else
+      {
+      TR::Options::setCanJITCompile(true);
       }
 
    if (jitEnabled || aotEnabled)
@@ -637,8 +652,10 @@ J9::OptionsPostRestore::processCompilerOptions()
       preProcessInternalCompilerOptions();
 
       // Process -Xjit / -Xaot options
-      processInternalCompilerOptions(aotEnabled, true);
-      processInternalCompilerOptions(jitEnabled, false);
+      if (aotEnabled)
+         processInternalCompilerOptions(true);
+      if (jitEnabled)
+         processInternalCompilerOptions(false);
 
       // TODO: Look into
       // - -Xrs
