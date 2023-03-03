@@ -9364,6 +9364,7 @@ static TR::Register *inlineAtomicOperation(TR::Node *node, TR::CodeGenerator *cg
          className = "Ljava/util/concurrent/atomic/AtomicBoolean;";
          classNameLen = 43;
          fieldSig = "I"; // not a type, the field is int
+         break;
       case TR::java_util_concurrent_atomic_AtomicInteger_addAndGet:
       case TR::java_util_concurrent_atomic_AtomicInteger_decrementAndGet:
       case TR::java_util_concurrent_atomic_AtomicInteger_getAndAdd:
