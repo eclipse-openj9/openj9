@@ -104,7 +104,7 @@
 		  outputpath="JAVA11/src"
 		  flags="Sidecar18-SE-OpenJ9,DAA,Sidecar19-SE,Sidecar19-SE-OpenJ9"
 		  dependencies="SIDECAR18-SE"
-		  jdkcompliance="1.8">
+		  jdkcompliance="11">
 		<classpathentry kind="src" path="src/java.base/share/classes"/>
 		<classpathentry kind="src" path="src/java.management/share/classes"/>
 		<classpathentry kind="src" path="src/jdk.attach/share/classes"/>
@@ -133,7 +133,7 @@
 		  outputpath="JAVA17/src"
 		  flags="OPENJDK_METHODHANDLES"
 		  dependencies="JAVA11"
-		  jdkcompliance="1.8">
+		  jdkcompliance="17">
 		<classpathentry kind="src" path="src/java.base/share/classes"/>
 		<classpathentry kind="src" path="src/java.management/share/classes"/>
 		<classpathentry kind="src" path="src/jdk.attach/share/classes"/>
@@ -161,7 +161,7 @@
 		  label="JAVA19"
 		  outputpath="JAVA19/src"
 		  dependencies="JAVA17"
-		  jdkcompliance="1.8">
+		  jdkcompliance="19">
 		<classpathentry kind="src" path="src/java.base/share/classes"/>
 		<classpathentry kind="src" path="src/java.management/share/classes"/>
 		<classpathentry kind="src" path="src/jdk.attach/share/classes"/>
@@ -189,7 +189,7 @@
 		  label="JAVA20"
 		  outputpath="JAVA20/src"
 		  dependencies="JAVA19"
-		  jdkcompliance="1.8">
+		  jdkcompliance="19">
 		<classpathentry kind="src" path="src/java.base/share/classes"/>
 		<classpathentry kind="src" path="src/java.management/share/classes"/>
 		<classpathentry kind="src" path="src/jdk.attach/share/classes"/>
@@ -217,7 +217,7 @@
 		  label="JAVA21"
 		  outputpath="JAVA21/src"
 		  dependencies="JAVA20"
-		  jdkcompliance="1.8">
+		  jdkcompliance="19">
 		<classpathentry kind="src" path="src/java.base/share/classes"/>
 		<classpathentry kind="src" path="src/java.management/share/classes"/>
 		<classpathentry kind="src" path="src/jdk.attach/share/classes"/>
