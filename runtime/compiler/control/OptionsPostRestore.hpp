@@ -94,19 +94,33 @@ class OptionsPostRestore
    void iterateOverExternalOptions();
 
    /**
-    * \brief Invalidate existing method bodies if they can no longer be
-    *        executed based on the exclude/include filters.
+    * \brief Invalidate an existing method body if possible. JNI methods
+    *        do not have a bodyinfo/methodinfo and therefore cannot be
+    *        invalidated.
     *
-    * \param fej9 The TR_J9VMBase front end
     * \param method The J9Method of the method to be filtered
+    * \param fej9 The TR_J9VMBase front end
     */
-   void filterMethod(TR_J9VMBase *fej9, J9Method *method);
+   void invalidateCompiledMethod(J9Method *method, TR_J9VMBase *fej9);
 
    /**
-    * \brief Helper method to filter methods based on the
-    *        exclude/include filters.
+    * \brief Determine whether a method should be invalidated because the
+    *        method should be excluded because of the -Xjit:exclude option
+    *
+    * \param method The J9Method of the method to be filtered
+    * \param fej9 The TR_J9VMBase front end
+    * \param compilationFiltersExist bool to indicate whether there are any
+    *                                compilation filters
+    *
+    * \return true if the method should be invalidated, false otherwise.
     */
-   void filterMethods();
+   bool shouldInvalidateCompiledMethod(J9Method *method, TR_J9VMBase *fej9, bool compilationFiltersExist);
+
+   /**
+    * \brief Invalidate methods if needed.
+    */
+   void invalidateCompiledMethodsIfNeeded(bool invalidateAll = false);
+
 
    /**
     * \brief Helper method to perform tasks prior to processing
