@@ -764,7 +764,7 @@ public:
    // It makes sure the number of usable compilation threads is within allowed bounds.
    // If not, set it to the upper bound based on the mode: JITClient/non-JITServer or JITServer.
    void updateNumUsableCompThreads(int32_t &numUsableCompThreads);
-   bool allocateCompilationThreads(int32_t numUsableCompThreads);
+   bool allocateCompilationThreads(int32_t numCompThreads);
    void freeAllCompilationThreads();
    void freeAllResources();
 
@@ -1060,10 +1060,15 @@ public:
    TR::CompilationInfoPerThread *getCompInfoForThread(J9VMThread *vmThread);
    int32_t getNumUsableCompilationThreads() const { return _numCompThreads; }
    int32_t getNumTotalCompilationThreads() const { return _numCompThreads + _numDiagnosticThreads; }
+   int32_t getNumAllocatedCompilationThreads() const { return _numAllocatedCompThreads; }
+   int32_t getNumTotalAllocatedCompilationThreads() const { return _numAllocatedCompThreads + _numDiagnosticThreads; }
    int32_t getFirstCompThreadID() const { return _firstCompThreadID; }
    int32_t getFirstDiagThreadID() const { return _firstDiagnosticThreadID; }
    int32_t getLastCompThreadID() const { return _lastCompThreadID; }
    int32_t getLastDiagThreadID() const { return _lastDiagnosticTheadID; }
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+   void setNumUsableCompilationThreadsPostRestore(int32_t &numUsableCompThreads);
+#endif
    TR::CompilationInfoPerThreadBase *getCompInfoWithID(int32_t ID);
    TR::Compilation *getCompilationWithID(int32_t ID);
    TR::CompilationInfoPerThread *getFirstSuspendedCompilationThread();
@@ -1451,10 +1456,12 @@ private:
    bool                   _isInShutdownMode;
    int32_t                _numCompThreads; // Number of usable compilation threads that does not include the diagnostic thread
    int32_t                _numDiagnosticThreads;
+   int32_t                _numAllocatedCompThreads; // Number of allocated compilation threads that does not include the diagnostic thread
    int32_t                _firstCompThreadID;
    int32_t                _firstDiagnosticThreadID;
    int32_t                _lastCompThreadID;
    int32_t                _lastDiagnosticTheadID;
+   int32_t                _lastAllocatedCompThreadID;
    int32_t                _iprofilerMaxCount;
    int32_t                _numGCRQueued; // how many GCR requests are in the queue
                                          // We should disable GCR counting if too many
