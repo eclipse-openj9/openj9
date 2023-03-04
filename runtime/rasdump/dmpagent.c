@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2022 IBM Corp. and others
+ * Copyright (c) 1991, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -57,6 +57,9 @@
 #include "j9dump.h"
 #include "omrthread.h"
 
+#if defined(J9ZTPF)
+#include <tpf/cujvm.h>
+#endif /* defined(J9ZTPF) */
 
 /* Possible command line actions */
 enum
@@ -2755,10 +2758,48 @@ runDumpAgent(struct J9JavaVM *vm, J9RASdumpAgent * agent, J9RASdumpContext * con
 		/* If the dump is a heap dump and exclusive access hasn't been obtained, refuse to do the dump */
 		/* This might be encapsulated more neatly if the triggering code were moved down into the dump functions themselves */
 		if (gotExclusive || (agent->dumpFn != doHeapDump)) {
+#if defined(J9ZTPF)
+			struct cujvm_dmpagent_prehook_input preHookInputParms;
+			struct cujvm_dmpagent_prehook_output preHookOutputParms;
+			struct cujvm_dmpagent_posthook_input postHookInputParms;
+			struct cujvm_dmpagent_posthook_output postHookOutputParms;
+
+			memset(&preHookInputParms, '\0', sizeof(preHookInputParms));
+			memset(&preHookOutputParms, '\0', sizeof(preHookOutputParms));
+			memset(&postHookInputParms, '\0', sizeof(postHookInputParms));
+			memset(&postHookOutputParms, '\0', sizeof(postHookOutputParms));
+
+			preHookInputParms.agentInfo = (jvmDumpAgentInfo *)agent;
+			preHookInputParms.dumpPath = label;
+			preHookInputParms.context = (jvmDumpContext *)context;
+			preHookInputParms.vm_args = (jvmInitArgs *)vm->vmArgsArray->actualVMArgs;
+
+			cjvm_dumpagent_preHook(&preHookInputParms, &preHookOutputParms);
+
+			if (NULL != preHookOutputParms.dumpPath)  {
+				if (localLabel != label) {
+					free(label);
+				}
+				label = preHookOutputParms.dumpPath;
+			}
+#endif /* defined(J9ZTPF) */
+
 			agent->prepState = *state;
 			TRIGGER_J9HOOK_VM_DUMP_START(vm->hookInterface, vm->internalVMFunctions->currentVMThread(vm), label, detail);
+
 			retVal = runDumpFunction( agent, label, context );
+
 			TRIGGER_J9HOOK_VM_DUMP_END(vm->hookInterface, vm->internalVMFunctions->currentVMThread(vm), label, detail);
+
+#if defined(J9ZTPF)
+			postHookInputParms.agentInfo = (jvmDumpAgentInfo *)agent;
+			postHookInputParms.dumpPath = label;
+			postHookInputParms.context = (jvmDumpContext *)context;
+			postHookInputParms.vm_args = (jvmInitArgs *)vm->vmArgsArray->actualVMArgs;
+			cjvm_dumpagent_postHook(&postHookInputParms, &postHookOutputParms);
+			/* cjvm_dumpagent_finished_hook will be removed in the future (currently deprecated). */
+			cjvm_dumpagent_finished_hook((jvmDumpAgentInfo *)agent, label, (jvmDumpContext *)context);
+#endif /* defined(J9ZTPF) */
 			
 			if (context->dumpList) {
 				if (agent->dumpFn == doHeapDump) {
