@@ -100,8 +100,9 @@ public class TestJps extends AttachApiTest {
 		TargetManager tgtMgr = new TargetManager(TARGET_VM_CLASS, null, targetArgs);
 		assertTrue(CHILD_PROCESS_DID_NOT_LAUNCH, tgtMgr.syncWithTarget());
 		List<String> jpsOutput = runCommandAndLogOutput(Collections.singletonList("-m")); //$NON-NLS-1$
-		Optional<String> searchResult = StringUtilities.searchSubstring(tgtMgr.targetId, jpsOutput);
-		assertTrue(CHILD_IS_MISSING, StringUtilities.searchSubstring(tgtMgr.targetId, jpsOutput).isPresent());
+		String needle = tgtMgr.targetId + " TargetVM";
+		Optional<String> searchResult = StringUtilities.searchPrefixSubstring(needle, jpsOutput);
+		assertTrue(CHILD_IS_MISSING, searchResult.isPresent());
 		for (String a: targetArgs) {
 			assertTrue(MISSING_ARGUMENT + a, searchResult.get().contains(a));
 		}
@@ -114,8 +115,9 @@ public class TestJps extends AttachApiTest {
 		TargetManager tgtMgr = new TargetManager(TARGET_VM_CLASS, null, null, vmArgs, null);
 		assertTrue(CHILD_PROCESS_DID_NOT_LAUNCH, tgtMgr.syncWithTarget());
 		List<String> jpsOutput = runCommandAndLogOutput(Collections.singletonList("-v")); //$NON-NLS-1$
-		Optional<String> searchResult = StringUtilities.searchSubstring(tgtMgr.targetId, jpsOutput);
-		assertTrue(CHILD_IS_MISSING, StringUtilities.searchSubstring(tgtMgr.targetId, jpsOutput).isPresent());
+		String needle = tgtMgr.targetId + " TargetVM";
+		Optional<String> searchResult = StringUtilities.searchPrefixSubstring(needle, jpsOutput);
+		assertTrue(CHILD_IS_MISSING, searchResult.isPresent());
 		for (String a: vmArgs) {
 			assertTrue(MISSING_ARGUMENT + a, searchResult.get().contains(a));
 		}
@@ -128,7 +130,8 @@ public class TestJps extends AttachApiTest {
 		TargetManager tgtMgr = new TargetManager(TARGET_VM_CLASS, null, targetArgs);
 		assertTrue(CHILD_PROCESS_DID_NOT_LAUNCH, tgtMgr.syncWithTarget());
 		List<String> jpsOutput = runCommandAndLogOutput(Collections.singletonList("-ml")); //$NON-NLS-1$
-		Optional<String> searchResult = StringUtilities.searchSubstring(tgtMgr.targetId, jpsOutput);
+		String needle = tgtMgr.targetId + " org.openj9.test.attachAPI.TargetVM";
+		Optional<String> searchResult = StringUtilities.searchPrefixSubstring(needle, jpsOutput);
 		assertTrue(CHILD_IS_MISSING, searchResult.isPresent());
 		for (String a: targetArgs) {
 			assertTrue(MISSING_ARGUMENT + a, searchResult.get().contains(a));
