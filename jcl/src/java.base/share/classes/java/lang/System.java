@@ -1197,6 +1197,12 @@ static void initSecurityManager(ClassLoader applicationClassLoader) {
 @CallerSensitive
 /*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 public static void setSecurityManager(final SecurityManager s) {
+/*[IF CRIU_SUPPORT]*/
+	if (openj9.internal.criu.InternalCRIUSupport.isCRIUSupportEnabled()) {
+		/*[MSG "K0B02", "Enabling a SecurityManager currently unsupported when -XX:+EnableCRIUSupport is specified"]*/
+		throw new UnsupportedOperationException(Msg.getString("K0B02")); //$NON-NLS-1$
+	}
+/*[ENDIF] CRIU_SUPPORT */
 	/*[PR 113606] security field could be modified by another Thread */
 	@SuppressWarnings("removal")
 	final SecurityManager currentSecurity = security;
