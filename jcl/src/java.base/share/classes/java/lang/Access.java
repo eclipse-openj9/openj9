@@ -383,7 +383,11 @@ final class Access implements JavaLangAccess {
 		/*[IF JAVA_SPEC_VERSION < 17]*/
 		return StringCoding.newStringUTF8NoRepl(bytes, offset, length);
 		/*[ELSE] JAVA_SPEC_VERSION < 17 */
+		/*[IF JAVA_SPEC_VERSION < 21]*/
 		return String.newStringUTF8NoRepl(bytes, offset, length);
+		/*[ELSE] JAVA_SPEC_VERSION < 21 */
+		return String.newStringUTF8NoRepl(bytes, offset, length, true);
+		/*[ENDIF] JAVA_SPEC_VERSION < 21 */
 		/*[ENDIF] JAVA_SPEC_VERSION < 17 */
 	}
 	public byte[] getBytesUTF8NoRepl(String str) {
