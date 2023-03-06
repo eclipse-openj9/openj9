@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -116,7 +116,7 @@ MM_Scheduler::getParameter(uintptr_t which, char *keyBuffer, I_32 keyBufferSize,
 		}
 		case 2:
 			omrstr_printf(keyBuffer, keyBufferSize, "Time Window");
-			omrstr_printf(valueBuffer, valueBufferSize, "%6.2f ms", window * 1.0e3);
+			omrstr_printf(valueBuffer, valueBufferSize, "%6.2f ms", _window * 1.0e3);
 			return 1;
 		case 3:
 			omrstr_printf(keyBuffer, keyBufferSize, "Target Utilization");
@@ -124,7 +124,7 @@ MM_Scheduler::getParameter(uintptr_t which, char *keyBuffer, I_32 keyBufferSize,
 			return 1;
 		case 4:
 			omrstr_printf(keyBuffer, keyBufferSize, "Beat Size");
-			omrstr_printf(valueBuffer, valueBufferSize, "%4.2f ms", beat * 1.0e3);
+			omrstr_printf(valueBuffer, valueBufferSize, "%4.2f ms", _beat * 1.0e3);
 			return 1;
 		case 5:
 			omrstr_printf(keyBuffer, keyBufferSize, "Heap Size");
@@ -184,12 +184,53 @@ MM_Scheduler::initialize(MM_EnvironmentBase *env)
 		return false;
 	}
 
+	if (_extensions->gcTrigger == 0) {
+		_extensions->gcTrigger = (_extensions->memoryMax / 2);
+		_extensions->gcInitialTrigger = (_extensions->memoryMax / 2);
+	}
+
+	_extensions->distanceToYieldTimeCheck = 0;
+
+	/* Maintain window-beat ratio of 20x, unless window specified explicitly */
+	if (METRONOME_DEFAULT_TIME_WINDOW_MICRO == _extensions->timeWindowMicro) {
+		_extensions->timeWindowMicro = 20 * _extensions->beatMicro;
+	}
+
+	/* Currently all supported SRT platforms - AIX and Linux, can only use HRT for alarm thread implementation.
+	 * The default value for HRT period is 1/3 of the default quanta: 1 msec for HRT period and 3 msec quanta,
+	 * we will attempt to adjust the HRT period to 1/3 of the specified quanta.
+	 */
+	uintptr_t hrtPeriodMicro = _extensions->beatMicro / 3;
+	if ((hrtPeriodMicro < METRONOME_DEFAULT_HRT_PERIOD_MICRO) && (METRONOME_DEFAULT_HRT_PERIOD_MICRO < _extensions->beatMicro)) {
+		/* If the adjusted value is too small for the hires clock resolution, we will use the default HRT period provided that
+		 * the default period is smaller than the quanta time specified.
+		 * Otherwise we fail to initialize the alarm thread with an error message.
+		 */
+		hrtPeriodMicro = METRONOME_DEFAULT_HRT_PERIOD_MICRO;
+	}
+	Assert_MM_true(0 != hrtPeriodMicro);
+	_extensions->hrtPeriodMicro = hrtPeriodMicro;
+
+	/* On Windows SRT we still use interrupt-based alarm. Set the interrupt period the same as hires timer period.
+	 * We will fail to init the alarm if this is too small a resolution for Windows.
+	 */
+	_extensions->itPeriodMicro = _extensions->hrtPeriodMicro;
+
+	/* if the pause time user specified is larger than the default value, calculate if there is opportunity
+	 * for the GC to do time checking less often inside condYieldFromGC.
+	 */
+	if (METRONOME_DEFAULT_BEAT_MICRO < _extensions->beatMicro) {
+		uintptr_t intervalToSkipYieldCheckMicro = _extensions->beatMicro - METRONOME_DEFAULT_BEAT_MICRO;
+		uintptr_t maxInterYieldTimeMicro = INTER_YIELD_MAX_NS / 1000;
+		_extensions->distanceToYieldTimeCheck = (U_32)(intervalToSkipYieldCheckMicro / maxInterYieldTimeMicro);
+	}
+
 	/* Show GC parameters here before we enter real execution */
-	window = _extensions->timeWindowMicro / 1e6;
-	beat = _extensions->beatMicro / 1e6;
-	beatNanos = (U_64) (_extensions->beatMicro * 1e3);
+	_window = _extensions->timeWindowMicro / 1e6;
+	_beat = _extensions->beatMicro / 1e6;
+	_beatNanos = (U_64) (_extensions->beatMicro * 1e3);
 	_staticTargetUtilization = _extensions->targetUtilizationPercentage / 1e2;
-	_utilTracker = MM_UtilizationTracker::newInstance(env, window, beatNanos, _staticTargetUtilization);
+	_utilTracker = MM_UtilizationTracker::newInstance(env, _window, _beatNanos, _staticTargetUtilization);
 	if (NULL == _utilTracker) {
 		goto error_no_memory;
 	}
@@ -308,7 +349,7 @@ MM_Scheduler::continueGC(MM_EnvironmentRealtime *env, GCReason reason, uintptr_t
 		default: /* WORK_TRIGGER or TIME_TRIGGER */ {
 			if(_threadWaitingOnMainThreadMonitor != NULL) {
 				/* Check your timer again incase another thread beat you to checking for shouldMutatorDoubleBeat */
-				if (env->getTimer()->hasTimeElapsed(getStartTimeOfCurrentMutatorSlice(), beatNanos)) {
+				if (env->getTimer()->hasTimeElapsed(getStartTimeOfCurrentMutatorSlice(), _beatNanos)) {
 					if (shouldMutatorDoubleBeat(_threadWaitingOnMainThreadMonitor, env->getTimer())) {
 						/*
 						 * Since the mutator should double beat signal the mutator threads to update their
@@ -462,8 +503,8 @@ MM_Scheduler::shouldGCDoubleBeat(MM_EnvironmentRealtime *env)
 	/* Note that shouldGCDoubleBeat is only called by the main thread, this means we
 	 * can call addTimeSlice without checking for isMainThread() */
 	_utilTracker->addTimeSlice(env, env->getTimer(), false);
-	double excessTime = (_utilTracker->getCurrentUtil() - targetUtilization) * window;
-	double excessBeats = excessTime / beat;
+	double excessTime = (_utilTracker->getCurrentUtil() - targetUtilization) * _window;
+	double excessBeats = excessTime / _beat;
 	return (excessBeats >= 2.0);
 }
 
@@ -475,8 +516,8 @@ MM_Scheduler::shouldMutatorDoubleBeat(MM_EnvironmentRealtime *env, MM_Timer *tim
 	/* The call to currentUtil will modify the timeSlice array, so calls to shouldMutatorDoubleBeat
 	 * must be protected by a mutex (which is indeed currently the case) */
 	double curUtil = _utilTracker->getCurrentUtil();
-	double excessTime = (curUtil - _utilTracker->getTargetUtilization()) * window;
-	double excessBeats = excessTime / beat;
+	double excessTime = (curUtil - _utilTracker->getTargetUtilization()) * _window;
+	double excessBeats = excessTime / _beat;
 	return (excessBeats <= 1.0);
 }
 
@@ -1037,7 +1078,7 @@ MM_Scheduler::shutDownMainThread()
 }
 
 /**
- * Check to see if it is time to do the next GC increment.  If beatNanos time
+ * Check to see if it is time to do the next GC increment.  If _beatNanos time
  * has elapsed since the end of the last GC increment then start the next
  * increment now.
  */
@@ -1045,7 +1086,7 @@ void
 MM_Scheduler::startGCIfTimeExpired(MM_EnvironmentBase *envModron)
 {
 	MM_EnvironmentRealtime *env = MM_EnvironmentRealtime::getEnvironment(envModron);
-	if (isInitialized() && isGCOn() && env->getTimer()->hasTimeElapsed(getStartTimeOfCurrentMutatorSlice(), beatNanos)) {
+	if (isInitialized() && isGCOn() && env->getTimer()->hasTimeElapsed(getStartTimeOfCurrentMutatorSlice(), _beatNanos)) {
 		continueGC(env, TIME_TRIGGER, 0, env->getOmrVMThread(), true);
 	}
 }
