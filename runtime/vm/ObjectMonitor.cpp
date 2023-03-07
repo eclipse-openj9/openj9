@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2022 IBM Corp. and others
+ * Copyright (c) 2001, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -316,19 +316,22 @@ objectMonitorEnterNonBlocking(J9VMThread *currentThread, j9object_t object)
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES) || (JAVA_SPEC_VERSION >= 16)
 	J9Class * objClass = J9OBJECT_CLAZZ(currentThread, object);
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) || (JAVA_SPEC_VERSION >= 16) */
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+	BOOLEAN retry = FALSE;
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 	if (J9_IS_J9CLASS_VALUETYPE(objClass)) {
 		result = J9_OBJECT_MONITOR_VALUE_TYPE_IMSE;
 		goto done;
 	}
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */	
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 #if JAVA_SPEC_VERSION >= 16
 	if (J9_IS_J9CLASS_VALUEBASED(objClass)) {
 		U_32 runtimeFlags2 = vm->extendedRuntimeFlags2;
 		if (J9_ARE_ALL_BITS_SET(runtimeFlags2, J9_EXTENDED_RUNTIME2_VALUE_BASED_EXCEPTION)) {
 			result = J9_OBJECT_MONITOR_VALUE_TYPE_IMSE;
-			goto done;	
+			goto done;
 		} else if (J9_ARE_ALL_BITS_SET(runtimeFlags2, J9_EXTENDED_RUNTIME2_VALUE_BASED_WARNING)) {
 			PORT_ACCESS_FROM_VMC(currentThread);
 			const J9UTF8* className = J9ROMCLASS_CLASSNAME(J9OBJECT_CLAZZ(currentThread, object)->romClass);
@@ -336,7 +339,7 @@ objectMonitorEnterNonBlocking(J9VMThread *currentThread, j9object_t object)
 		}
 	}
 #endif /* JAVA_SPEC_VERSION >= 16 */
-	
+
 restart:
 	if (NULL == lwEA) {
 		/* out of memory */
@@ -493,6 +496,11 @@ wouldBlock:
 	J9VMTHREAD_SET_BLOCKINGENTEROBJECT(currentThread, currentThread, object);
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 	if (J9_IS_SINGLE_THREAD_MODE(vm)) {
+		if (OBJECT_HEADER_LOCK_RESERVED == (J9_LOAD_LOCKWORD(currentThread, lwEA) & (OBJECT_HEADER_LOCK_RESERVED + OBJECT_HEADER_LOCK_INFLATED)) && !retry) {
+			cancelLockReservation(currentThread);
+			retry = TRUE;
+			goto restart;
+		}
 		result = J9_OBJECT_MONITOR_CRIU_SINGLE_THREAD_MODE_THROW;
 	} else
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
