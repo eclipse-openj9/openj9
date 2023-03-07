@@ -3182,7 +3182,12 @@ bool J9::Options::feLatePostProcess(void * base, TR::OptionSet * optionSet)
    //
    self()->setOption(TR_DisableEDO);
 #endif
-
+   if (TR::Options::_catchSamplingSizeThreshold == -1) // not yet set
+      {
+      TR::Options::_catchSamplingSizeThreshold = 1100; // in number of nodes
+      if (TR::Compiler->target.numberOfProcessors() <= 2)
+         TR::Options::_catchSamplingSizeThreshold = 850;
+      }
    return true;
    }
 
