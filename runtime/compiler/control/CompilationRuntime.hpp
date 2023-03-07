@@ -724,6 +724,9 @@ public:
    void setReadyForCheckpointRestore()      {        _checkpointStatus  = TR_CheckpointStatus::READY_FOR_CHECKPOINT_RESTORE;   }
    bool shouldCheckpointBeInterrupted()     { return _checkpointStatus == TR_CheckpointStatus::INTERRUPT_CHECKPOINT;           }
    void interruptCheckpoint()               {        _checkpointStatus  = TR_CheckpointStatus::INTERRUPT_CHECKPOINT;           }
+
+   void setVMMethodTraceEnabled(bool trace) { _vmMethodTraceEnabled = trace; }
+   bool isVMMethodTraceEnabled()            { return _vmMethodTraceEnabled;  }
 #endif
 
    TR_PersistentMemory *     persistentMemory() { return _persistentMemory; }
@@ -1368,6 +1371,7 @@ private:
 #if defined(J9VM_OPT_CRIU_SUPPORT)
    TR::Monitor *_crMonitor;
    TR_CheckpointStatus _checkpointStatus;
+   bool _vmMethodTraceEnabled;
 #endif
 
    TR::Monitor *_vlogMonitor;
