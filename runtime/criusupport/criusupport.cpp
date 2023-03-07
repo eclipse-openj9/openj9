@@ -34,9 +34,11 @@ extern "C" {
 #include "j9.h"
 #include "j9jclnls.h"
 #include "jni.h"
+#include "jvminit.h"
 #include "jvmtinls.h"
 #include "omrlinkedlist.h"
 #include "omrthread.h"
+#include "omrutil.h"
 #include "ut_j9criu.h"
 #include "util_api.h"
 #include "vmargs_api.h"
@@ -143,6 +145,9 @@ setupJNIFieldIDsAndCRIUAPI(JNIEnv *env, jclass *currentExceptionClass, IDATA *sy
 		goto done;
 	}
 
+	vm->checkpointState.isJdwpEnabled = (FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, MAPOPT_AGENTLIB_JDWP_EQUALS, NULL) >= 0)
+		|| (FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, MAPOPT_XRUNJDWP, NULL) >= 0);
+
 done:
 	return returnCode;
 }
@@ -245,10 +250,41 @@ free:
 }
 
 /**
- * Caller must first acquire exclusive safepoint or exclusive VMAccess
+ * Checks if a thread should be suspended or resumed for checkpoint/restore. If JDWP is not
+ * enabled, then all threads will return true. Otherwise, if toggleDebugThreads is true, then all
+ * JDWP debug threads will be toggled. If toggleDebugThreads is false, then all non-debug threads
+ * will be toggled.
+ *
+ * @param[in] currentThread the thread being checked
+ * @param[in] toggleDebugThreads if only JWDP debug threads should be toggled
+ *
+ * @return true if the thread should be suspended or resumed, false if not
+ */
+static bool
+shouldToggleJavaThread(J9VMThread *currentThread, BOOLEAN toggleDebugThreads)
+{
+	J9JavaVM *vm = currentThread->javaVM;
+	bool result = true;
+	if (vm->checkpointState.isJdwpEnabled) {
+		char *threadName = getOMRVMThreadName(currentThread->omrVMThread);
+		releaseOMRVMThreadName(currentThread->omrVMThread);
+		/* all threads started by JDWP begin with "JDWP" in their name */
+		bool isJdwpThread = 0 == strncmp("JDWP", threadName, 4);
+		result = (toggleDebugThreads) ? isJdwpThread : !isJdwpThread;
+	}
+	return result;
+}
+
+/**
+ * Suspends or resumes Java threads for checkpoint and restore.
+ * Caller must first acquire exclusive safepoint or exclusive VMAccess.
+ *
+ * @param[in] suspend set to true to suspend threads, and false to resume them
+ * @param[in] toggleDebugThreads only useful if JDWP is enabled, determines whether to toggle
+ * the debug threads or all other threads
  */
 static void
-toggleSuspendOnJavaThreads(J9VMThread *currentThread, BOOLEAN suspend)
+toggleSuspendOnJavaThreads(J9VMThread *currentThread, BOOLEAN suspend, BOOLEAN toggleDebugThreads)
 {
 	J9JavaVM *vm = currentThread->javaVM;
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
@@ -260,10 +296,12 @@ toggleSuspendOnJavaThreads(J9VMThread *currentThread, BOOLEAN suspend)
 		if (VM_VMHelpers::threadCanRunJavaCode(walkThread)
 		&& (currentThread != walkThread)
 		) {
-			if (suspend) {
-				vmFuncs->setHaltFlag(walkThread, J9_PUBLIC_FLAGS_HALT_THREAD_FOR_CHECKPOINT);
-			} else {
-				vmFuncs->clearHaltFlag(walkThread, J9_PUBLIC_FLAGS_HALT_THREAD_FOR_CHECKPOINT);
+			if (shouldToggleJavaThread(walkThread, toggleDebugThreads)) {
+				if (suspend) {
+					vmFuncs->setHaltFlag(walkThread, J9_PUBLIC_FLAGS_HALT_THREAD_FOR_CHECKPOINT);
+				} else {
+					vmFuncs->clearHaltFlag(walkThread, J9_PUBLIC_FLAGS_HALT_THREAD_FOR_CHECKPOINT);
+				}
 			}
 		}
 		walkThread = J9_LINKED_LIST_NEXT_DO(vm->mainThread, walkThread);
@@ -580,7 +618,7 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 			acquireSafeOrExcusiveVMAccess(currentThread, vmFuncs, safePoint);
 		}
 
-		toggleSuspendOnJavaThreads(currentThread, TRUE);
+		toggleSuspendOnJavaThreads(currentThread, TRUE, FALSE);
 
 		vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_CRIU_SINGLE_THREAD_MODE;
 
@@ -592,6 +630,7 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 			/* throw the pending exception */
 			goto wakeJavaThreads;
 		}
+
 		/* At this point, Java threads are all finished, and JVM is considered paused before taking the checkpoint. */
 		vm->checkpointState.checkpointRestoreTimeDelta = 0;
 		portLibrary->nanoTimeMonotonicClockDelta = 0;
@@ -618,6 +657,10 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 			nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
 				J9NLS_JCL_CRIU_FAILED_TO_RUN_INTERNAL_CHECKPOINT_HOOKS, NULL);
 			goto wakeJavaThreadsWithExclusiveVMAccess;
+		}
+
+		if (vm->checkpointState.isJdwpEnabled) {
+			toggleSuspendOnJavaThreads(currentThread, TRUE, TRUE);
 		}
 
 		syslogOptions = (char *)j9mem_allocate_memory(STRING_BUFFER_SIZE, J9MEM_CATEGORY_VM);
@@ -716,6 +759,10 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 			goto wakeJavaThreadsWithExclusiveVMAccess;
 		}
 
+		if (vm->checkpointState.isJdwpEnabled) {
+			toggleSuspendOnJavaThreads(currentThread, FALSE, TRUE);
+		}
+
 		releaseSafeOrExcusiveVMAccess(currentThread, vmFuncs, safePoint);
 
 		if (FALSE == vm->memoryManagerFunctions->j9gc_reinitialize_for_restore(currentThread, &nlsMsgFormat)) {
@@ -744,7 +791,7 @@ wakeJavaThreadsWithExclusiveVMAccess:
 
 		vm->extendedRuntimeFlags2 &= ~J9_EXTENDED_RUNTIME2_CRIU_SINGLE_THREAD_MODE;
 
-		toggleSuspendOnJavaThreads(currentThread, FALSE);
+		toggleSuspendOnJavaThreads(currentThread, FALSE, FALSE);
 
 		releaseSafeOrExcusiveVMAccess(currentThread, vmFuncs, safePoint);
 
