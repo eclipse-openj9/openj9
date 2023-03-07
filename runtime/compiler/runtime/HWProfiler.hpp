@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -415,14 +415,6 @@ public:
    uintptr_t getPCFromMethodAndBCIndex(TR_OpaqueMethodBlock *method, 
                                         uint32_t byteCodeIndex, 
                                         TR::Compilation * comp);
-   
-   /**
-    * Used to get the Ram Method from the Bytecode Info.
-    * @param bcInfo the TR_ByteCodeInfo passed in by reference
-    * @param comp The TR::Compilation object
-    * @returns the ram method (TR_OpaqueMethodBlock)
-    */
-   TR_OpaqueMethodBlock *getMethodFromBCInfo(TR_ByteCodeInfo &bcInfo, TR::Compilation *comp);
    
    /**
     * Used to create HW Profiler Records that will be registered against the HW Profiler

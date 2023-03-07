@@ -691,21 +691,9 @@ uintptr_t
 TR_HWProfiler::getPCFromBCInfo(TR::Node *node, TR::Compilation *comp)
    {
    TR_ByteCodeInfo bcInfo = node->getByteCodeInfo();
-   TR_OpaqueMethodBlock* method = getMethodFromBCInfo(bcInfo, comp);
+   TR_OpaqueMethodBlock* method = TR::Node::getOwningMethod(comp, bcInfo);
 
    return getPCFromMethodAndBCIndex(method, bcInfo.getByteCodeIndex(), comp);
-   }
-
-TR_OpaqueMethodBlock *
-TR_HWProfiler::getMethodFromBCInfo(TR_ByteCodeInfo &bcInfo, TR::Compilation *comp)
-   {
-   TR_OpaqueMethodBlock *method = NULL;
-   if (bcInfo.getCallerIndex() >= 0)
-      method = comp->getInlinedCallSite(bcInfo.getCallerIndex())._methodInfo;
-   else
-      method = comp->getCurrentMethod()->getPersistentIdentifier();
-
-   return method;
    }
 
 TR_HWPBytecodePCToIAMap
