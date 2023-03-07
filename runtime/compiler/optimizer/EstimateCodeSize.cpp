@@ -23,13 +23,14 @@
 #include "env/StackMemoryRegion.hpp"
 #include "optimizer/EstimateCodeSize.hpp"
 
-#include "env/FrontEnd.hpp"
 #include "compile/Compilation.hpp"
+#include "control/Recompilation.hpp"
+#include "env/FrontEnd.hpp"
+#include "env/VMJ9.h"
 #include "il/ResolvedMethodSymbol.hpp"
 #include "infra/Assert.hpp"
 #include "optimizer/CallInfo.hpp"
 #include "ras/LogTracer.hpp"
-#include "env/VMJ9.h"
 #include "runtime/J9Profiler.hpp"
 
 TR_EstimateCodeSize *
@@ -44,13 +45,21 @@ TR_EstimateCodeSize::get(TR_InlinerBase * inliner, TR_InlinerTracer *tracer, int
    estimator->_isLeaf = false;
    estimator->_foundThrow = false;
    estimator->_hasExceptionHandlers = false;
-   estimator->_throwCount = 0;
    estimator->_mayHaveVirtualCallProfileInfo = false;
 
-   TR_CatchBlockProfileInfo * catchInfo = TR_CatchBlockProfileInfo::get(comp);
-   estimator->_aggressivelyInlineThrows = catchInfo && catchInfo->getCatchCounter()
-         >= TR_CatchBlockProfileInfo::EDOThreshold;
 
+   if (comp->getOption(TR_EnableOldEDO))
+      {
+      TR_CatchBlockProfileInfo * catchInfo = TR_CatchBlockProfileInfo::get(comp);
+      estimator->_aggressivelyInlineThrows = catchInfo && catchInfo->getCatchCounter() >= comp->getOptions()->getCatchBlockCounterThreshold();
+      }
+   else
+      {
+      TR::Recompilation *recomp = comp->getRecompilationInfo();
+      estimator->_aggressivelyInlineThrows = !comp->getOption(TR_DisableEDO) &&
+                                             recomp &&
+                                             recomp->getMethodInfo()->getCatchBlockCounter() >= comp->getOptions()->getCatchBlockCounterThreshold();
+      }
    estimator->_recursionDepth = 0;
    estimator->_recursedTooDeep = false;
 
@@ -81,7 +90,6 @@ TR_EstimateCodeSize::calculateCodeSize(TR_CallTarget *calltarget, TR_CallStack *
    _isLeaf = true;
    _foundThrow = false;
    _hasExceptionHandlers = false;
-   _throwCount = 0;
 
    _mayHaveVirtualCallProfileInfo = (TR_ValueProfileInfoManager::get(comp()) != NULL);
 

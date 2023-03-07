@@ -23,6 +23,7 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     compiler/env/CHTable.cpp \
     compiler/env/PersistentCHTable.cpp \
     compiler/optimizer/AllocationSinking.cpp \
+    compiler/optimizer/CatchBlockProfiler.cpp \
     compiler/optimizer/DataAccessAccelerator.cpp \
     compiler/optimizer/DynamicLiteralPool.cpp \
     compiler/optimizer/EscapeAnalysis.cpp \
