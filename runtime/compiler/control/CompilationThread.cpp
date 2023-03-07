@@ -1184,6 +1184,11 @@ TR::CompilationInfo::CompilationInfo(J9JITConfig *jitConfig) :
 #if defined(J9VM_OPT_CRIU_SUPPORT)
    _crMonitor = TR::Monitor::create("JIT-CheckpointRestoreMonitor");
    _checkpointStatus = TR_CheckpointStatus::NO_CHECKPOINT_IN_PROGRESS;
+
+   // TR::CompilationInfo is initialized in the JIT_INITIALIZED bootstrap
+   // stage, whereas J9_EXTENDED_RUNTIME_METHOD_TRACE_ENABLED is set in the
+   // TRACE_ENGINE_INITIALIZED stage, which happens first.
+   _vmMethodTraceEnabled = jitConfig->javaVM->extendedRuntimeFlags & J9_EXTENDED_RUNTIME_METHOD_TRACE_ENABLED;
 #endif
    _iprofilerBufferArrivalMonitor = TR::Monitor::create("JIT-IProfilerBufferArrivalMonitor");
    _classUnloadMonitor = TR::MonitorTable::get()->getClassUnloadMonitor(); // by this time this variable is initialized
