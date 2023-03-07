@@ -2266,6 +2266,50 @@ TR::ILOpCodes TR_VectorAPIExpansion::ILOpcodeFromVectorAPIOpcode(TR::Compilation
          case VECTOR_OP_OR:  return scalar ? TR::ILOpCode::orOpCode(elementType)  : TR::ILOpCode::createVectorOpCode(TR::vor, vectorType);
          case VECTOR_OP_XOR: return scalar ? TR::ILOpCode::xorOpCode(elementType) : TR::ILOpCode::createVectorOpCode(TR::vxor, vectorType);
          case VECTOR_OP_FMA: return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vfma, vectorType);
+
+         case VECTOR_OP_LSHIFT:  return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vlshift, vectorType); // binary, lanewise, int only, VectorBroadcastIntOp() intrinsic
+         case VECTOR_OP_RSHIFT:  return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vrshift, vectorType); // binary, lanewise, int only, VectorBroadcastIntOp() intrinsic
+         case VECTOR_OP_URSHIFT: return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vurshift, vectorType);// binary, lanewise, int only, VectorBroadcastIntOp() intrinsic
+   
+         case VECTOR_OP_BIT_COUNT:     return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vbitCount, vectorType); // unary, lanewise, int only
+
+         case VECTOR_OP_LROTATE:       return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vlrotate, vectorType);  // binary, lanewise, int only, VectorBroadcastIntOp() intrinsic
+         case VECTOR_OP_RROTATE:       return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vrrotate, vectorType);
+
+         case VECTOR_OP_COMPRESS:      return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vcompress, vectorType); // compressExpandOp() intrinsic, compress() method
+         case VECTOR_OP_EXPAND:        return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vexpand, vectorType);
+         case VECTOR_OP_MASK_COMPRESS: return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vmaskCompress, vectorType); // compressExpandOp() intrinsic, compress() method for masks (returns mask)
+
+         case VECTOR_OP_TZ_COUNT:      return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vtzCount, vectorType); // unary lanewise, int only
+         case VECTOR_OP_LZ_COUNT:      return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vlzCount, vectorType);
+
+         case VECTOR_OP_REVERSE:       return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vreverse, vectorType); //unary, lanewise, int only (Integer.reverse())
+         case VECTOR_OP_REVERSE_BYTES: return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vreverseBytes, vectorType); //unary, lanewise, int only (Integer.reverseBytes())
+
+         case VECTOR_OP_COMPRESS_BITS: return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vcompressBits, vectorType); // binary, lanewise, int only (Integer.compress())
+         case VECTOR_OP_EXPAND_BITS:   return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vexpandBits, vectorType);
+
+         /* to be added            
+         case VECTOR_OP_TAN:           return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vtan, vectorType);
+         case VECTOR_OP_TANH:          return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vtanh, vectorType);
+         case VECTOR_OP_SIN:           return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vsin, vectorType);
+         case VECTOR_OP_SINH:          return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vsinh, vectorType);
+         case VECTOR_OP_COS:           return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vcos, vectorType);
+         case VECTOR_OP_COSH:          return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vcosh, vectorType);
+         case VECTOR_OP_ASIN:          return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vasin, vectorType);
+         case VECTOR_OP_ACOS:          return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vacos, vectorType);
+         case VECTOR_OP_ATAN:          return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vatan, vectorType);
+         case VECTOR_OP_ATAN2:         return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vatan2, vectorType);
+         case VECTOR_OP_CBRT:          return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vcbrt, vectorType); 
+         case VECTOR_OP_LOG:           return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vlog, vectorType);
+         case VECTOR_OP_LOG10:         return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vlog10, vectorType);
+         case VECTOR_OP_LOG1P:         return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vlog1p, vectorType);
+         case VECTOR_OP_POW:           return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vpow, vectorType);
+         case VECTOR_OP_EXP:           return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vexp, vectorType);
+         case VECTOR_OP_EXPM1:         return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vexpm1, vectorType);
+         case VECTOR_OP_HYPOT:         return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vhypot, vectorType);
+         */
+            
          default:
             return TR::BadILOp;
          // shiftLeftOpCode

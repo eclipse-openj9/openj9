@@ -92,12 +92,13 @@ class TR_VectorAPIExpansion : public TR::Optimization
 
    public:
 
-   // TODO: get up to date values from VectorSupport class
+   // Start of opcodes from VectorSupport.java (have to be kept up-to-date)
 
    // Unary
    static int32_t const VECTOR_OP_ABS  = 0;
    static int32_t const VECTOR_OP_NEG  = 1;
    static int32_t const VECTOR_OP_SQRT = 2;
+   static int32_t const VECTOR_OP_BIT_COUNT = 3;
 
    // Binary
    static int32_t const VECTOR_OP_ADD  = 4;
@@ -129,7 +130,48 @@ class TR_VectorAPIExpansion : public TR::Optimization
    static int32_t const VECTOR_OP_MASK_LASTTRUE  = 22;
    static int32_t const VECTOR_OP_MASK_TOLONG    = 23;
 
-   // Compare
+   // Rotate operations
+   static int32_t const VECTOR_OP_LROTATE = 24;
+   static int32_t const VECTOR_OP_RROTATE = 25;
+
+   // Compression expansion operations
+   static int32_t const VECTOR_OP_COMPRESS = 26;
+   static int32_t const VECTOR_OP_EXPAND = 27;
+   static int32_t const VECTOR_OP_MASK_COMPRESS = 28;
+
+   // Leading/Trailing zeros count operations
+   static int32_t const VECTOR_OP_TZ_COUNT  = 29;
+   static int32_t const VECTOR_OP_LZ_COUNT  = 30;
+
+   // Reverse operation
+   static int32_t const VECTOR_OP_REVERSE   = 31;
+   static int32_t const VECTOR_OP_REVERSE_BYTES = 32;
+
+   // Compress and Expand Bits operation
+   static int32_t const VECTOR_OP_COMPRESS_BITS = 33;
+   static int32_t const VECTOR_OP_EXPAND_BITS = 34;
+
+   // Math routines
+   static int32_t const VECTOR_OP_TAN = 101;
+   static int32_t const VECTOR_OP_TANH = 102;
+   static int32_t const VECTOR_OP_SIN = 103;
+   static int32_t const VECTOR_OP_SINH = 104;
+   static int32_t const VECTOR_OP_COS = 105;
+   static int32_t const VECTOR_OP_COSH = 106;
+   static int32_t const VECTOR_OP_ASIN = 107;
+   static int32_t const VECTOR_OP_ACOS = 108;
+   static int32_t const VECTOR_OP_ATAN = 109;
+   static int32_t const VECTOR_OP_ATAN2 = 110;
+   static int32_t const VECTOR_OP_CBRT = 111;
+   static int32_t const VECTOR_OP_LOG = 112;
+   static int32_t const VECTOR_OP_LOG10 = 113;
+   static int32_t const VECTOR_OP_LOG1P = 114;
+   static int32_t const VECTOR_OP_POW = 115;
+   static int32_t const VECTOR_OP_EXP = 116;
+   static int32_t const VECTOR_OP_EXPM1 = 117;
+   static int32_t const VECTOR_OP_HYPOT = 118;
+   
+   // Compare opcodes
    static int32_t const BT_eq = 0;
    static int32_t const BT_ne = 4;
    static int32_t const BT_le = 5;
@@ -148,6 +190,8 @@ class TR_VectorAPIExpansion : public TR::Optimization
    static int32_t const MODE_BROADCAST = 0;
    static int32_t const MODE_BITS_COERCED_LONG_TO_MASK = 1;
 
+   // End of opcodes from VectorSupport.java
+   
    // Position of the parameters in the intrinsics.
    static int32_t const BROADCAST_TYPE_CHILD = 4;
 
