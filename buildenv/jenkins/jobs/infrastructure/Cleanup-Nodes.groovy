@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2021 IBM Corp. and others
+ * Copyright (c) 2018, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -97,30 +97,57 @@ timeout(time: TIMEOUT_TIME.toInteger(), unit: TIMEOUT_UNITS) {
     timestamps {
         node(SETUP_LABEL) {
             try {
-                def cleanDirs = ['NoEntryTest*.zip',
-                                 'auth*.login',
-                                 'tmp*',
-                                 'classes*',
+                def cleanDirs = ['*policy',
+                                 '*props',
+                                 '.com_ibm_tools_attach',
+                                 '..*.temp',
                                  'aci*',
                                  'append*',
-                                 'mlib*',
-                                 'resource-*',
-                                 'openj9tr_resources*',
-                                 'testParentDir',
-                                 'jni-*',
-                                 'mauve',
-                                 'test*',
-                                 'blah-*.tmp',
-                                 'lines*.tmp',
-                                 'prefix*.json',
-                                 'sink*.tmp',
-                                 'source*.tmp',
-                                 'target*.tmp',
-                                 'sharedcacheapi',
+                                 'auth*.login',
+                                 'blah*.tmp',
+                                 'buffer*txt',
+                                 'classes*',
+                                 'Compression*.jpg',
+                                 'core*',
+                                 'dst*.dat',
+                                 'exp*tmp',
+                                 'foo*',
+                                 'heapdump*',
+                                 'imageio*.tmp',
                                  'intermediateClassCreateTest',
+                                 'javacore*',
+                                 'javasharedresources',
+                                 'jffi*.dll',
+                                 'jitdump*',
+                                 'jna-*',
+                                 'jni-*',
+                                 'lines*.tmp',
+                                 'mauve',
+                                 'mlib*',
+                                 'name*',
+                                 'NoEntryTest*.zip',
+                                 'openj9tr_resources*',
+                                 'packsrv*'
+                                 'prefix*.json',
+                                 'readString_file*.tmp',
+                                 'resource-*',
+                                 'rmid-err*.tmp',
                                  'sh-np.*',
-                                 'xlc*',
-                                 'sh-np-*']
+                                 'sh-np-*',
+                                 'sharedcacheapi',
+                                 'sink*.tmp',
+                                 'Snap*',
+                                 'source*.tmp',
+                                 'SpecialTempFile',
+                                 'target*.tmp',
+                                 'temp*.tif',
+                                 'test*',
+                                 'testParentDir',
+                                 'tmp*',
+                                 'unpacksrv*',
+                                 'work*'
+                                 'xfer.fch.*',
+                                 'xlc*']
 
                 for (aNode in jenkins.model.Jenkins.instance.getLabel(LABEL).getNodes()) {
                     def nodeName = aNode.getDisplayName()
@@ -151,32 +178,34 @@ timeout(time: TIMEOUT_TIME.toInteger(), unit: TIMEOUT_UNITS) {
                             if (MODES.contains('cleanup')) {
                                 stage("${nodeName} - Cleanup Workspaces") {
                                     def buildWorkspace = "${env.WORKSPACE}"
-                                    if (nodeLabels.contains('sw.os.windows')) {
-                                        // convert windows path to unix path
-                                        buildWorkspace = sh(script: "cygpath -u '${env.WORKSPACE}'", returnStdout: true).trim()
-                                    }
 
                                     def cleanDirsStr = "/tmp/${cleanDirs.join(' /tmp/')}"
                                     if (nodeLabels.contains('sw.os.windows')) {
+                                        // convert windows path to unix path
+                                        buildWorkspace = sh(script: "cygpath -u '${env.WORKSPACE}'", returnStdout: true).trim()
                                         // test resources
                                         cleanDirsStr += " ${buildWorkspace}/../../"
                                         cleanDirsStr += cleanDirs.join(" ${buildWorkspace}/../../")
-                                        // shared classes cache
-                                        cleanDirsStr += " ${buildWorkspace}/../../javasharedresources /tmp/javasharedresources /temp/javasharedresources"
+                                        windowsTemp = sh(script: "cygpath -u '${env.TEMP}'", returnStdout: true).trim()
+                                        cleanDirsStr += cleanDirs.join(" ${windowsTemp}/")
+                                    } else {
+                                        cleanDirsStr += " ${WORKSPACE}/../../"
+                                        cleanDirsStr += cleanDirs.join(" ${WORKSPACE}/../../")
                                     }
 
                                     // cleanup test results
                                     sh "rm -fr ${cleanDirsStr}"
 
                                     // Cleanup OSX shared memory and content in /cores
-                                    if (nodeLabels.contains('sw.os.osx')) {
+                                    if (nodeLabels.contains('sw.os.osx'||'sw.os.mac')) {
                                         retry(2) {
                                             sh """
                                                 ipcs -ma
                                                 ipcs -ma | awk '/^m / { if (\$9 == 0) { print \$2 }}' | xargs -n 1 ipcrm -m
                                                 ipcs -ma
                                                 du -sh /cores
-                                                rm -rf /cores/*
+                                                cd /cores
+                                                rm `ls -al | grep 'myid' | awk ' { print \$9 } '`
                                                 du -sh /cores
                                             """
                                         }
