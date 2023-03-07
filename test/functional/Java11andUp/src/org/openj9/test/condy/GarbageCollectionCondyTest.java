@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2018 IBM Corp. and others
+ * Copyright (c) 2018, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -45,11 +45,16 @@ public class GarbageCollectionCondyTest {
 		return;
 	}
 
-
 	@Test(groups = { "level.sanity" })
 	public void testExceptionCondyUnloading() {
 		byte[] classBytes = DefineCondyClass.getExceptionCondyClassBytes("test/exceptionClass");
 		runTest(classBytes, "exceptionClass");
+		return;
+	}
+
+	@Test(groups = { "level.sanity" })
+	public void testCondyStackMap() {
+		PrimitiveCondyMethods.stackmapTest();
 		return;
 	}
 	

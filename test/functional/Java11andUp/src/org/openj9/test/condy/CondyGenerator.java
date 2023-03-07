@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2018 IBM Corp. and others
+ * Copyright (c) 2018, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,7 +28,8 @@ import static org.objectweb.asm.Opcodes.ALOAD;
 import static org.objectweb.asm.Opcodes.ARETURN;
 import static org.objectweb.asm.Opcodes.H_INVOKESTATIC;
 import static org.objectweb.asm.Opcodes.H_INVOKEVIRTUAL;
-import static org.objectweb.asm.Opcodes.ILOAD;
+import static org.objectweb.asm.Opcodes.ICONST_1;
+import static org.objectweb.asm.Opcodes.INVOKESTATIC;
 import static org.objectweb.asm.Opcodes.IRETURN;
 import static org.objectweb.asm.Opcodes.RETURN;
 import static org.objectweb.asm.Opcodes.LRETURN;
@@ -166,6 +167,47 @@ public class CondyGenerator extends ClassLoader{
 				)
 			);
 			mv.visitInsn( ARETURN );
+			mv.visitMaxs( 0, 0 );
+			mv.visitEnd();
+		}
+
+		{
+			mv = cw.visitMethod( ACC_PUBLIC | ACC_STATIC, "triggerGC", "()I", null, null );
+			mv.visitCode();
+			mv.visitMethodInsn(INVOKESTATIC, "java/lang/System", "gc", "()V", false);
+			mv.visitMethodInsn(INVOKESTATIC, "java/lang/System", "gc", "()V", false);
+			mv.visitInsn( ICONST_1 );
+			mv.visitInsn( IRETURN );
+			mv.visitMaxs( 0, 0 );
+			mv.visitEnd();
+		}
+
+		{
+			mv = cw.visitMethod( ACC_PUBLIC | ACC_STATIC, "wrapper", "(II)V", null, null );
+			mv.visitCode();
+			mv.visitInsn( RETURN );
+			mv.visitMaxs( 0, 0 );
+			mv.visitEnd();
+		}
+
+		{
+			mv = cw.visitMethod( ACC_PUBLIC | ACC_STATIC, "stackmapTest", "()V", null, null );
+			mv.visitCode();
+			mv.visitLdcInsn(
+				new ConstantDynamic( "constant_int", "I",
+					new Handle(
+							H_INVOKESTATIC,
+							"org/openj9/test/condy/BootstrapMethods",
+							"bootstrap_constant_int",
+							Type.getType(
+									"(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/Class;I)I"
+									).getDescriptor() ),
+									123432
+					)
+				);
+			mv.visitMethodInsn(INVOKESTATIC, "org/openj9/test/condy/PrimitiveCondyMethods", "triggerGC", "()I", false);
+			mv.visitMethodInsn(INVOKESTATIC, "org/openj9/test/condy/PrimitiveCondyMethods", "wrapper", "(II)V", false);
+			mv.visitInsn( RETURN );
 			mv.visitMaxs( 0, 0 );
 			mv.visitEnd();
 		}
