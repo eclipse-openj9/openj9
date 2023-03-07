@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -50,12 +50,14 @@ public:
    float floatDivideFloat(float a, float b);
    float floatRemainderFloat(float a, float b);
    float floatNegate(float a);
+   int32_t floatComparefloat(float a, float b);
    double doubleAddDouble(double a, double b);
    double doubleSubtractDouble(double a, double b);
    double doubleMultiplyDouble(double a, double b);
    double doubleDivideDouble(double a, double b);
    double doubleRemainderDouble(double a, double b);
    double doubleNegate(double a);
+   int32_t doubleComparedouble(double a, double b);
    double floatToDouble(float a);
    float doubleToFloat(double a);
    int64_t longRemainderLong(int64_t a, int64_t b);

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -65,6 +65,14 @@ J9::ArithEnv::floatNegate(float a)
    return c;
    }
 
+int32_t
+J9::ArithEnv::floatComparefloat(float a, float b)
+   {
+   int32_t result;
+   result = helperCFloatCompareFloat(a, b);
+   return result;
+   }
+
 double
 J9::ArithEnv::doubleAddDouble(double a, double b)
    {
@@ -101,6 +109,15 @@ J9::ArithEnv::doubleNegate(double a)
    helperNegateDouble(&a, &c);
    return c;
    }
+
+int32_t
+J9::ArithEnv::doubleComparedouble(double a, double b)
+   {
+   int32_t result;
+   result = helperCDoubleCompareDouble(a, b);
+   return result;
+   }
+
 
 double
 J9::ArithEnv::floatToDouble(float a)
