@@ -1116,7 +1116,10 @@ j9gc_prepare_for_checkpoint(J9VMThread *vmThread)
 		verboseGCManager->prepareForCheckpoint(env);
 	}
 
+	/* Threads being terminated may trigger a hook that may acquire exclusive VM access via JVMTI callback */
+	releaseVMAccess(vmThread);
 	extensions->configuration->adjustGCThreadCountForCheckpoint(env);
+	acquireVMAccess(vmThread);
 }
 
 BOOLEAN
