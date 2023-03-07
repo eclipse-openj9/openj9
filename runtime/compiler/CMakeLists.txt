@@ -159,7 +159,6 @@ endif()
 set(REMOVED_OMR_FILES
 	${omr_SOURCE_DIR}/compiler/codegen/CCData.cpp
 	${omr_SOURCE_DIR}/compiler/control/CompileMethod.cpp
-	${omr_SOURCE_DIR}/compiler/control/CompilationController.cpp
 	${omr_SOURCE_DIR}/compiler/env/FEBase.cpp
 	${omr_SOURCE_DIR}/compiler/optimizer/FEInliner.cpp
 	${omr_SOURCE_DIR}/compiler/env/JitConfig.cpp

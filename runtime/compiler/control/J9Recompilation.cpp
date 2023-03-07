@@ -25,6 +25,8 @@
 #include "control/CompilationRuntime.hpp"
 #include "control/Recompilation.hpp"
 #include "control/RecompilationInfo.hpp"
+#include "control/CompilationController.hpp"
+#include "control/CompilationStrategy.hpp"
 #include "compile/Compilation.hpp"
 #include "control/Options.hpp"
 #include "compile/SymbolReferenceTable.hpp"

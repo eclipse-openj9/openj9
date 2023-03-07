@@ -87,6 +87,7 @@
 #include "control/rossa.h"
 #include "control/OptimizationPlan.hpp"
 #include "control/CompilationController.hpp"
+#include "control/CompilationStrategy.hpp"
 #include "runtime/IProfiler.hpp"
 
 #define _UTE_STATIC_

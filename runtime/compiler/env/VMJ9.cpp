@@ -66,6 +66,7 @@
 #include "compile/VirtualGuard.hpp"
 #include "control/OptionsUtil.hpp"
 #include "control/CompilationController.hpp"
+#include "control/CompilationStrategy.hpp"
 #include "env/StackMemoryRegion.hpp"
 #include "compile/CompilationException.hpp"
 #include "runtime/CodeCacheExceptions.hpp"

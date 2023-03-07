@@ -55,6 +55,8 @@
 #include "control/RecompilationInfo.hpp"
 #include "control/MethodToBeCompiled.hpp"
 #include "control/OptimizationPlan.hpp"
+#include "control/CompilationController.hpp"
+#include "control/CompilationStrategy.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/IO.hpp"
 #include "env/PersistentInfo.hpp"

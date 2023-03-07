@@ -36,7 +36,7 @@ namespace J9 { typedef J9::Recompilation RecompilationConnector; }
 #include "control/RecompilationInfo.hpp"
 #include <stdint.h>
 
-namespace TR { class DefaultCompilationStrategy; }
+namespace J9 { class CompilationStrategy; }
 class TR_ValueProfiler;
 class TR_RecompilationProfiler;
 
@@ -45,7 +45,7 @@ namespace J9
 
 class Recompilation : public OMR::RecompilationConnector
    {
-   friend class TR::DefaultCompilationStrategy;
+   friend class J9::CompilationStrategy;
 
 public:
 

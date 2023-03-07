@@ -278,11 +278,11 @@ JIT_PRODUCT_SOURCE_FILES+=\
     compiler/compile/J9Compilation.cpp \
     compiler/compile/J9Method.cpp \
     compiler/compile/J9SymbolReferenceTable.cpp \
-    compiler/control/CompilationController.cpp \
     compiler/control/CompilationThread.cpp \
     compiler/control/CompileBeforeCheckpoint.cpp \
     compiler/control/DLLMain.cpp \
     compiler/control/HookedByTheJit.cpp \
+    compiler/control/J9CompilationStrategy.cpp \
     compiler/control/J9Options.cpp \
     compiler/control/JitDump.cpp \
     compiler/control/MethodToBeCompiled.cpp \
@@ -380,6 +380,7 @@ JIT_PRODUCT_SOURCE_FILES+=\
     compiler/runtime/ValueProfiler.cpp \
     compiler/runtime/codertinit.cpp \
     compiler/runtime/emfloat.c \
+    omr/compiler/control/CompilationController.cpp \
     omr/compiler/env/Globals.cpp \
     omr/compiler/env/OMRCompilerEnv.cpp \
     omr/compiler/env/OMRIO.cpp \

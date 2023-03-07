@@ -32,7 +32,7 @@
 #include "net/ServerStream.hpp" // for JITServer::ServerStream
 #include "runtime/JITServerSharedROMClassCache.hpp"
 #include "runtime/RuntimeAssumptions.hpp" // for TR_AddressSet
-
+#include "control/CompilationController.hpp"
 
 TR_OpaqueClassBlock * const ClientSessionData::mustClearCachesFlag = reinterpret_cast<TR_OpaqueClassBlock *>(~0);
 
