@@ -727,6 +727,9 @@ public:
 
    void setVMMethodTraceEnabled(bool trace) { _vmMethodTraceEnabled = trace; }
    bool isVMMethodTraceEnabled()            { return _vmMethodTraceEnabled;  }
+
+   bool resetStartAndElapsedTime()              { return _resetStartAndElapsedTime;  }
+   void setResetStartAndElapsedTime(bool reset) { _resetStartAndElapsedTime = reset; }
 #endif
 
    TR_PersistentMemory *     persistentMemory() { return _persistentMemory; }
@@ -1372,6 +1375,7 @@ private:
    TR::Monitor *_crMonitor;
    TR_CheckpointStatus _checkpointStatus;
    bool _vmMethodTraceEnabled;
+   bool _resetStartAndElapsedTime;
 #endif
 
    TR::Monitor *_vlogMonitor;
