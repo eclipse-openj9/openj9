@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -314,7 +314,8 @@ J9::Recompilation::methodCannotBeRecompiled(void * oldStartPC, TR_FrontEnd * fe)
 
    if (bodyInfo->getUsesPreexistence()
        || methodInfo->hasBeenReplaced()
-       || (linkageInfo->isSamplingMethodBody() && ! fej9->isAsyncCompilation())) // go interpreted for failed recomps in sync mode
+       || (linkageInfo->isSamplingMethodBody() && ! fej9->isAsyncCompilation()) // go interpreted for failed recomps in sync mode
+       || methodInfo->isExcludedPostRestore()) // go interpreted if method is excluded post restore
       {
       bool usesSampling = linkageInfo->isSamplingMethodBody();
       // We need to switch the method to interpreted.  Change the first instruction of the
