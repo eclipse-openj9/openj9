@@ -862,12 +862,45 @@ void TR::CompilationInfo::freeCompilationInfo(J9JITConfig *jitConfig)
    rawAllocator.deallocate(compilationRuntime);
    }
 
-void TR::CompilationInfoPerThread::freeAllResources()
+void
+TR::CompilationInfoPerThread::closeRTLogFile()
    {
    if (_rtLogFile)
       {
       j9jit_fclose(_rtLogFile);
+      _rtLogFile = NULL;
       }
+   }
+
+void
+TR::CompilationInfoPerThread::openRTLogFile()
+   {
+   char *rtLogFileName = ((TR_JitPrivateConfig*)jitConfig->privateConfig)->rtLogFileName;
+   if (rtLogFileName)
+      {
+      char fn[1024];
+
+      bool truncated = TR::snprintfTrunc(fn, sizeof(fn), "%s.%i", rtLogFileName, getCompThreadId());
+
+      if (!truncated)
+         {
+         _rtLogFile = fileOpen(TR::Options::getAOTCmdLineOptions(), jitConfig, fn, "wb", true);
+         }
+      else
+         {
+         fprintf(stderr, "Did not attempt to open comp thread rtlog %s because filename was truncated\n", fn);
+         _rtLogFile = NULL;
+         }
+      }
+   else
+      {
+      _rtLogFile = NULL;
+      }
+   }
+
+void TR::CompilationInfoPerThread::freeAllResources()
+   {
+   closeRTLogFile();
 
 #if defined(J9VM_OPT_JITSERVER)
    if (_classesThatShouldNotBeNewlyExtended)
@@ -1085,27 +1118,7 @@ TR::CompilationInfoPerThread::CompilationInfoPerThread(TR::CompilationInfo &comp
    _lastTimeThreadWasSuspended = 0;
    _lastTimeThreadWentToSleep = 0;
 
-   char *rtLogFileName = ((TR_JitPrivateConfig*)jitConfig->privateConfig)->rtLogFileName;
-   if (rtLogFileName)
-      {
-      char fn[1024];
-
-      bool truncated = TR::snprintfTrunc(fn, sizeof(fn), "%s.%i", rtLogFileName, getCompThreadId());
-
-      if (!truncated)
-         {
-         _rtLogFile = fileOpen(TR::Options::getAOTCmdLineOptions(), jitConfig, fn, "wb", true);
-         }
-      else
-         {
-         fprintf(stderr, "Did not attempt to open comp thread rtlog %s because filename was truncated\n", fn);
-         _rtLogFile = NULL;
-         }
-      }
-   else
-      {
-      _rtLogFile = NULL;
-      }
+   openRTLogFile();
 
 #if defined(J9VM_OPT_JITSERVER)
    _serverVM = NULL;
@@ -1224,7 +1237,7 @@ TR::CompilationInfo::CompilationInfo(J9JITConfig *jitConfig) :
    setSamplerState(TR::CompilationInfo::SAMPLER_NOT_INITIALIZED);
 
    setIsWarmSCC(TR_maybe);
-   _cpuEntitlement.init(jitConfig);
+   initCPUEntitlement();
    _lowPriorityCompilationScheduler.setCompInfo(this);
    _JProfilingQueue.setCompInfo(this);
    _interpSamplTrackingInfo = new (PERSISTENT_NEW) TR_InterpreterSamplingTracking(this);
@@ -1243,6 +1256,12 @@ TR::CompilationInfo::CompilationInfo(J9JITConfig *jitConfig) :
    _JITServerAOTCacheMap = NULL;
    _JITServerAOTDeserializer = NULL;
 #endif /* defined(J9VM_OPT_JITSERVER) */
+   }
+
+void
+TR::CompilationInfo::initCPUEntitlement()
+   {
+   _cpuEntitlement.init(_jitConfig);
    }
 
 #if defined(J9VM_OPT_CRIU_SUPPORT)
@@ -1333,6 +1352,9 @@ void TR::CompilationInfo::setAllCompilationsShouldBeInterrupted()
 
 bool TR::CompilationInfo::asynchronousCompilation()
    {
+   // Because answer below is a static, this expression is only evaluated once during runtime.
+   // Therefore, in a checkpoint/restore scenario, post-restore this value will remain what it
+   // was pre-checkpoint.
    static bool answer = (!TR::Options::getJITCmdLineOptions()->getOption(TR_DisableAsyncCompilation) &&
                         TR::Options::getJITCmdLineOptions()->getInitialBCount() &&
                         TR::Options::getJITCmdLineOptions()->getInitialCount() &&

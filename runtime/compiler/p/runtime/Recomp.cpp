@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -206,7 +206,8 @@ void J9::Recompilation::methodCannotBeRecompiled(void *oldStartPC, TR_FrontEnd *
 
    if (bodyInfo->getUsesPreexistence()  // TODO: reconsider whether this is a race cond for info
        || methodInfo->hasBeenReplaced()
-       || (linkageInfo->isSamplingMethodBody() && ! fej9->isAsyncCompilation())) // go interpreted for failed recomps in sync mode
+       || (linkageInfo->isSamplingMethodBody() && ! fej9->isAsyncCompilation()) // go interpreted for failed recomps in sync mode
+       || methodInfo->isExcludedPostRestore()) // go interpreted if method is excluded post restore
       {
       // Patch the first instruction regardless of counting or sampling
       // TODO: We may need to cross-check with Invalidation to avoid racing cond
