@@ -214,8 +214,6 @@ ppc64le_linux:
     11: 'linux-ppc64le-normal-server-release'
   node_labels:
     build: 'ci.role.build && hw.arch.ppc64le && sw.os.cent.7'
-  extra_configure_options:
-    all: '--enable-jitserver'
   build_env:
     cmd:
       all: 'source /home/jenkins/set_gcc_11.2.0_env'
@@ -311,8 +309,6 @@ x86-64_linux:
     docker_image:
       8: 'eclipseopenj9/jenkins-agent-x86-centos6:24'
       11: 'eclipseopenj9/jenkins-agent-x86-centos6:24'
-  extra_configure_options:
-    all: '--enable-jitserver'
   build_env:
     cmd:
       all: 'source /home/jenkins/set_gcc_11.2.0_env'
