@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -159,6 +159,9 @@ class TR_PersistentMethodInfo
 
    bool doesntKillAnything() { return _flags.testAll(RefinedAliasesMask); }
 
+   bool isExcludedPostRestore() { return _flags.testAny(IsExcludedPostRestore); }
+   void setIsExcludedPostRestore(bool b = true) { _flags.set(IsExcludedPostRestore, b); }
+
    // Accessor methods for the "cpoCounter".  This does not really
    // need to be its own counter, as it is conceptually the same as
    // "_counter".  However, the original _counter is still during instrumentation, so
@@ -247,6 +250,11 @@ class TR_PersistentMethodInfo
                                                        // Attention: this is not always accurate
       WasScannedForInlining                = 0x00400000, // New scanning for warm method inlining
       IsInDataCache                        = 0x00800000, // This TR_PersistentMethodInfo is stored in the datacache for AOT
+
+      IsExcludedPostRestore                = 0x01000000, // Post-restore, if a method should be excluded, this bit will allow
+                                                         // J9::Recompilation::methodCannotBeRecompiled to patch the startPC
+                                                         // to call the interpreter
+
       lastFlag                             = 0x80000000
       };
 
