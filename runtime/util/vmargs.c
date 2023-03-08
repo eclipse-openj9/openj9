@@ -95,7 +95,7 @@ findArgInVMArgs(J9PortLibrary *portLibrary, J9VMInitArgs* j9vm_args, UDATA match
 
 	PORT_ACCESS_FROM_PORT(portLibrary);
 
-	if (optionName==NULL || 0==j9vm_args->nOptions) {
+	if ((NULL == optionName) || (NULL == j9vm_args) || (0 == j9vm_args->nOptions)) {
 		return returnVal;
 	}
 
@@ -648,7 +648,7 @@ optionValueOperations(J9PortLibrary *portLibrary, J9VMInitArgs* j9vm_args, IDATA
 	return OPTION_OK;
 }
 
-static char * 
+static char *
 getStartOfOptionValue(J9VMInitArgs* j9vm_args, IDATA element, const char *optionName)
 {
 	const char *option = optionName;
@@ -659,7 +659,7 @@ getStartOfOptionValue(J9VMInitArgs* j9vm_args, IDATA element, const char *option
 	}
 
 	Assert_Util_true(NULL != option);
-	
+
 	value = j9vm_args->actualVMArgs->options[element].optionString + strlen(option);
 
 	return value;
@@ -690,7 +690,7 @@ addXjcl(J9PortLibrary * portLib, J9JavaVMArgInfoList *vmArgumentsList, UDATA j2s
 	char *argString = NULL;
 	UDATA j2seReleaseValue = j2seVersion & J2SE_RELEASE_MASK;
 	J9JavaVMArgInfo *optArg = NULL;
-	
+
 	PORT_ACCESS_FROM_PORT(portLib);
 #ifdef J9VM_IVE_RAW_BUILD /* J9VM_IVE_RAW_BUILD is not enabled by default */
 	Assert_Util_unreachable();
@@ -1082,7 +1082,7 @@ addExtDir(J9PortLibrary *portLib, J9JavaVMArgInfoList *vmArgumentsList, char *jr
 }
 
 IDATA
-addUserDir(J9PortLibrary * portLib, J9JavaVMArgInfoList *vmArgumentsList, char *cwd) 
+addUserDir(J9PortLibrary * portLib, J9JavaVMArgInfoList *vmArgumentsList, char *cwd)
 {
 	size_t argumentLength = 1; /* space for the \0 */
 	char *optionsArgumentBuffer = NULL;
@@ -1326,7 +1326,7 @@ addJarArguments(J9PortLibrary * portLib, J9JavaVMArgInfoList *vmArgumentsList, c
  * @return 0 on success, negative on failure
  */
 static IDATA
-mapEnvVarToArgument(J9PortLibrary* portLibrary, const char* envVar, const char* j9opt, J9JavaVMArgInfoList *vmArgumentsList, UDATA mapType, UDATA verboseFlags) 
+mapEnvVarToArgument(J9PortLibrary* portLibrary, const char* envVar, const char* j9opt, J9JavaVMArgInfoList *vmArgumentsList, UDATA mapType, UDATA verboseFlags)
 {
 	J9JavaVMArgInfo *optArg = NULL;
 	IDATA valueSize = 0;
@@ -1387,7 +1387,7 @@ mapEnvVarToArgument(J9PortLibrary* portLibrary, const char* envVar, const char* 
 
 
 IDATA
-addEnvironmentVariableArguments(J9PortLibrary *portLib, const char *envVarName, J9JavaVMArgInfoList *vmArgumentsList, UDATA verboseFlags) 
+addEnvironmentVariableArguments(J9PortLibrary *portLib, const char *envVarName, J9JavaVMArgInfoList *vmArgumentsList, UDATA verboseFlags)
 {
 	PORT_ACCESS_FROM_PORT(portLib);
 	IDATA envVarSize = j9sysinfo_get_env(envVarName, NULL, 0);
@@ -1407,7 +1407,7 @@ addEnvironmentVariableArguments(J9PortLibrary *portLib, const char *envVarName, 
 }
 
 IDATA
-addEnvironmentVariables(J9PortLibrary *portLib, JavaVMInitArgs *launcherArgs, J9JavaVMArgInfoList *vmArgumentsList, UDATA verboseFlags) 
+addEnvironmentVariables(J9PortLibrary *portLib, JavaVMInitArgs *launcherArgs, J9JavaVMArgInfoList *vmArgumentsList, UDATA verboseFlags)
 {
 	IDATA status = 0;
 	if (
@@ -1560,7 +1560,7 @@ addLauncherArgs(J9PortLibrary * portLib, JavaVMInitArgs *launcherArgs, UDATA lau
 }
 
 IDATA
-addXserviceArgs(J9PortLibrary * portLib, J9JavaVMArgInfoList *vmArgumentsList, char *xServiceBuffer, UDATA verboseFlags) 
+addXserviceArgs(J9PortLibrary * portLib, J9JavaVMArgInfoList *vmArgumentsList, char *xServiceBuffer, UDATA verboseFlags)
 {
 
 	PORT_ACCESS_FROM_PORT(portLib);
