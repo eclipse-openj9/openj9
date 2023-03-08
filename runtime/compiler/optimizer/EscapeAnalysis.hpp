@@ -502,6 +502,14 @@ class TR_EscapeAnalysis : public TR::Optimization
    virtual int32_t perform();
    virtual const char * optDetailString() const throw();
 
+   /**
+    * Indicates whether stack allocation of \c newvalue operations may be
+    * performed.  If the value is set to \c true, \c newvalue operations
+    * will not be considered as candidates for stack allocation; otherwise,
+    * they will be considered as candidates.
+    */
+   bool                       _disableValueTypeStackAllocation;
+
    protected:
 
    enum restrictionType { MakeNonLocal, MakeContiguous, MakeObjectReferenced };
@@ -703,6 +711,7 @@ class TR_EscapeAnalysis : public TR::Optimization
    bool findCallSiteFixed(TR::TreeTop * virtualCallSite);
 
    TR::SymbolReference        *_newObjectNoZeroInitSymRef;
+   TR::SymbolReference        *_newValueSymRef;
    TR::SymbolReference        *_newArrayNoZeroInitSymRef;
    TR::SymbolReference        *_aNewArrayNoZeroInitSymRef;
    TR_UseDefInfo             *_useDefInfo;
@@ -844,12 +853,3 @@ class TR_MonitorStructureChecker
 
 #endif
 #endif
-
-
-
-
-
-
-
-
-
