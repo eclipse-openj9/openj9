@@ -41,6 +41,9 @@
 #include "StandardAccessBarrier.hpp"
 #include "ObjectModel.hpp"
 #include "ReferenceChainWalkerMarkMap.hpp"
+#if defined(OMR_GC_MODRON_SCAVENGER)
+#include "Scavenger.hpp"
+#endif /* OMR_GC_MODRON_SCAVENGER */
 #include "SublistPool.hpp"
 #include "Wildcard.hpp"
 #include "VMHelpers.hpp"
@@ -337,4 +340,20 @@ MM_GCExtensions::needScanStacksForContinuationObject(J9VMThread *vmThread, j9obj
 	}
 #endif /* JAVA_SPEC_VERSION >= 19 */
 	return needScan;
+}
+
+bool
+MM_GCExtensions::isCurrentScavengerPhaseConcurrent(MM_EnvironmentBase* env)
+{
+	bool isConcurrent = false;
+#if defined(OMR_GC_CONCURRENT_SCAVENGER)
+	if (MUTATOR_THREAD == env->getThreadType()) {
+		J9VMThread *currentThread = (J9VMThread *)env->getLanguageVMThread();
+		isConcurrent = 0 != currentThread->readBarrierRangeCheckTop;
+	} else {
+		Assert_MM_true(NULL != scavenger);
+		isConcurrent = scavenger->isCurrentPhaseConcurrent();
+	}
+#endif
+	return isConcurrent;
 }

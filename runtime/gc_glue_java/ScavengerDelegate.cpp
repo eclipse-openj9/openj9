@@ -352,8 +352,9 @@ MM_ScavengerDelegate::scanContinuationNativeSlots(MM_EnvironmentStandard *env, o
 		localData.env = env;
 		localData.reason = reason;
 		localData.shouldRemember = &shouldRemember;
+
 		/* In STW GC there are no racing carrier threads doing mount and no need for the synchronization. */
-		bool isConcurrentGC = _extensions->isConcurrentScavengerInProgress();
+		bool isConcurrentGC = _extensions->isCurrentScavengerPhaseConcurrent(env);
 
 		GC_VMThreadStackSlotIterator::scanSlots(currentThread, objectPtr, (void *)&localData, stackSlotIteratorForScavenge, false, false, isConcurrentGC, isGlobalGC);
 	}

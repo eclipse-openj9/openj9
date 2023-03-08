@@ -309,6 +309,9 @@ public:
 	 */
 	static bool needScanStacksForContinuationObject(J9VMThread *vmThread, j9object_t objectPtr, bool isGlobalGC);
 
+	/* isCurrentScavengerPhaseConcurrent() is valid to use this from both mutator threads and GC threads */
+	bool isCurrentScavengerPhaseConcurrent(MM_EnvironmentBase* env);
+
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 	MMINLINE virtual bool reinitializationInProgress() { return (NULL != ((J9JavaVM*)_omrVM->_language_vm)->checkpointState.checkpointThread); }
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
