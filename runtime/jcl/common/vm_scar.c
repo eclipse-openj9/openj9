@@ -140,6 +140,10 @@ addBFUSystemProperties(J9JavaVM* vm)
 	char* propValue = NULL;
 	UDATA rc = 0;
 	const J9InternalVMFunctions* vmfunc = vm->internalVMFunctions;
+#if defined(FIPS_PREVIEW_PLATFORM)
+	J9VMSystemProperty *fipsHomeProperty = NULL;
+	J9VMSystemProperty *fipsModeProperty = NULL;
+#endif /* defined(FIPS_PREVIEW_PLATFORM) */
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
 	if ( (fontPathSize = (int)j9sysinfo_get_env(JAVA_FONTS_STR, NULL, 0)) > 0 ) {
@@ -254,18 +258,18 @@ addBFUSystemProperties(J9JavaVM* vm)
 #endif
 
 #if defined(FIPS_PREVIEW_PLATFORM)
-	if (J9SYSPROP_ERROR_NOT_FOUND == vmfunc->getSystemProperty(vm, FIPS_HOME_PROP_NAME, NULL)) {
+	if (J9SYSPROP_ERROR_NOT_FOUND == vmfunc->getSystemProperty(vm, FIPS_HOME_PROP_NAME, &fipsHomeProperty)) {
 		OMRPORT_ACCESS_FROM_OMRVM(vm->omrVM);
 		size_t fipsHomePropertyFlags = 0;
 
 		/* not all PREVIEW platforms should accept the options */
-		#if defined(FIPS_PREVIEW_OPTIONS_ACCEPTED_PLATFORM)
-			IDATA disabled = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XDISABLEFIPS140_3, NULL);
-			IDATA enabled = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XENABLEFIPS140_3, NULL);
-		#else /* defined(FIPS_PREVIEW_OPTIONS_ACCEPTED_PLATFORM) */
-			IDATA disabled = 0;
-			IDATA enabled = -1; /* any value <= disabled to force 140-2 path */
-		#endif /* defined(FIPS_PREVIEW_OPTIONS_ACCEPTED_PLATFORM) */
+#if defined(FIPS_PREVIEW_OPTIONS_ACCEPTED_PLATFORM)
+		IDATA disabled = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XDISABLEFIPS140_3, NULL);
+		IDATA enabled = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XENABLEFIPS140_3, NULL);
+#else /* defined(FIPS_PREVIEW_OPTIONS_ACCEPTED_PLATFORM) */
+		IDATA disabled = 0;
+		IDATA enabled = -1; /* any value <= disabled to force 140-2 path */
+#endif /* defined(FIPS_PREVIEW_OPTIONS_ACCEPTED_PLATFORM) */
 
 		if (disabled >= enabled) {
 			/* FIPS 140-2 (default) mode: set com.ibm.fips.home to same as JAVA_HOME */
@@ -297,13 +301,66 @@ addBFUSystemProperties(J9JavaVM* vm)
 		if (J9SYSPROP_ERROR_NONE != rc) {
 			return rc;
 		}
+	} else {
+		/* Somebody explicitly set com.ibm.fips.home so make a copy of its value and record into vm->fipsHome. */
+		char *fipsHomeString = fipsHomeProperty->value;
+		size_t fipsHomeBytes = strlen(fipsHomeString) + 1;
+		U_8 *fipsHomeBuffer = (U_8 *)j9mem_allocate_memory(fipsHomeBytes, J9MEM_CATEGORY_VM_JCL);
+		if (NULL == fipsHomeBuffer) {
+			return J9SYSPROP_ERROR_OUT_OF_MEMORY;
+		}
+		memcpy(fipsHomeBuffer, fipsHomeString, fipsHomeBytes);
+		vm->fipsHome = fipsHomeBuffer;
 	}
-	if (J9SYSPROP_ERROR_NOT_FOUND == vmfunc->getSystemProperty(vm, FIPS_MODE_PROP_NAME, NULL)) {
+
+	if (J9SYSPROP_ERROR_NOT_FOUND == vmfunc->getSystemProperty(vm, FIPS_MODE_PROP_NAME, &fipsModeProperty)) {
 		rc = vmfunc->addSystemProperty(vm, FIPS_MODE_PROP_NAME, FIPS140_2_PROP_VALUE, 0);
 		if (J9SYSPROP_ERROR_NONE != rc) {
 			return rc;
 		}
+	} else {
+		/* Somebody explicitly set "com.ibm.fips.mode".
+		 * Validate that the value set is one of FIPS140_2_PROP_VALUE or FIPS140_3_PROP_VALUE.
+		 * FIPS140_2_PROP_VALUE is ok only if the preview isn't enabled or cannot be enabled.
+		 * FIPS140_3_PROP_VALUE is ok only if the preview is actually enabled.
+		 */
+		char *fipsModeString = fipsModeProperty->value;
+		U_8 *fipsModeBuffer = NULL;
+		size_t fipsModeBytes = 0;
+
+		/* Validate that the mode setting is consistent with command-line option to enable/disable. */
+#if defined(FIPS_PREVIEW_OPTIONS_ACCEPTED_PLATFORM)
+		IDATA disabled = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XDISABLEFIPS140_3, NULL);
+		IDATA enabled = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XENABLEFIPS140_3, NULL);
+#else /* defined(FIPS_PREVIEW_OPTIONS_ACCEPTED_PLATFORM) */
+		IDATA disabled = 0;
+		IDATA enabled = -1; /* any value <= disabled to force 140-2 path */
+#endif /* defined(FIPS_PREVIEW_OPTIONS_ACCEPTED_PLATFORM) */
+
+		if (disabled >= enabled) { /* Allow only FIPS140_2_PROP_VALUE to be set. */
+			if (0 != strcmp(fipsModeString, FIPS140_2_PROP_VALUE)) {
+				/* should be an NLS message but very late fix so just print an error */
+				j9tty_err_printf(PORTLIB, "Error: com.ibm.fips.mode cannot be set to %s\n", fipsModeString);
+				return J9SYSPROP_ERROR_UNSUPPORTED_PROP;
+			}
+		} else { /* Allow only FIPS140_3_PROP_VALUE to be set. */
+			if (0 != strcmp(fipsModeString, FIPS140_3_PROP_VALUE)) {
+				/* should be an NLS message but very late fix so just print an error */
+				j9tty_err_printf(PORTLIB, "Error: com.ibm.fips.mode cannot be set to %s\n", fipsModeString);
+				return J9SYSPROP_ERROR_UNSUPPORTED_PROP;
+			}
+		}
+
+		/* Make a copy of the validated value and record into vm->fipsMode. */
+		fipsModeBytes = strlen(fipsModeString) + 1;
+		fipsModeBuffer = (U_8 *)j9mem_allocate_memory(fipsModeBytes, J9MEM_CATEGORY_VM_JCL);
+		if (NULL == fipsModeBuffer) {
+			return J9SYSPROP_ERROR_OUT_OF_MEMORY;
+		}
+		memcpy(fipsModeBuffer, fipsModeString, fipsModeBytes);
+		vm->fipsMode = fipsModeBuffer;
 	}
+
 #else /* defined(FIPS_PREVIEW_PLATFORM) */
 	vm->fipsHome = vm->javaHome;
 	vm->fipsMode = (U_8 *)"";
