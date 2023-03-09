@@ -278,6 +278,7 @@ private :
 	void writeTitleSection(void);
 	void writeProcessorSection(void);
 	void writeEnvironmentSection(void);
+	void writeEnvUserArgsHelper(J9VMInitArgs* vmArgs);
 	void writeMemorySection(void);
 	void writeMemoryCountersSection(void);
 	void writeMonitorSection(void);
@@ -1208,41 +1209,12 @@ JavaCoreDumpWriter::writeEnvironmentSection(void)
 	_OutputStream.writeCharacters("\n");
 
 	/* Write the user arguments section */
-	J9VMInitArgs *j9args = _VirtualMachine->vmArgsArray;
-	JavaVMInitArgs *args = j9args->actualVMArgs;
+	writeEnvUserArgsHelper(_VirtualMachine->vmArgsArray);
 
-	_OutputStream.writeCharacters("1CIUSERARGS    UserArgs:\n");
-
-	for (jint i = 0; i < args->nOptions; i++) {
-		_OutputStream.writeCharacters("2CIUSERARG               ");
-		_OutputStream.writeCharacters(args->options[i].optionString);
-
-		if (NULL != args->options[i].extraInfo) {
-			_OutputStream.writeCharacters(" ");
-			_OutputStream.writePointer(args->options[i].extraInfo);
-		}
-
-		_OutputStream.writeCharacters("\n");
-	}
-
-	{
-		/* write ignored options */
-		bool anyIgnored = false;
-
-		for (jint i = 0; i < args->nOptions; i++) {
-			if (IS_CONSUMABLE(j9args, i) && !IS_CONSUMED(j9args, i)) {
-				if (!anyIgnored) {
-					_OutputStream.writeCharacters("NULL\n");
-					_OutputStream.writeCharacters("1CIIGNOREDARGS Ignored Args:\n");
-					anyIgnored = true;
-				}
-
-				_OutputStream.writeCharacters("2CIIGNOREDARG            ");
-				_OutputStream.writeCharacters(args->options[i].optionString);
-				_OutputStream.writeCharacters("\n");
-			}
-		}
-	}
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+	/* write restore args if they exist */
+	writeEnvUserArgsHelper(_VirtualMachine->checkpointState.restoreArgsList);
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
 	/* Write the user limits */
 	J9SysinfoLimitIteratorState limitState;
@@ -1419,6 +1391,66 @@ JavaCoreDumpWriter::writeEnvironmentSection(void)
 		"NULL\n"
 		"NULL           ------------------------------------------------------------------------\n"
 	);
+}
+
+void
+JavaCoreDumpWriter::writeEnvUserArgsHelper(J9VMInitArgs *vmArgs)
+{
+	if (NULL == vmArgs) {
+		return;
+	}
+
+	const char *argsHeader = "1CIUSERARGS    UserArgs:\n";
+	const char *singleArgHeader = "2CIUSERARG               ";
+	const char *ignoredArgsHeader = "1CIIGNOREDARGS Ignored Args:\n";
+	const char *singleIgnoredArgHeader = "2CIIGNOREDARG            ";
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+	if (vmArgs == _VirtualMachine->checkpointState.restoreArgsList) {
+		argsHeader = "1CIRESTARGS    Restore UserArgs:\n";
+		singleArgHeader = "2CIRESTARG               ";
+		ignoredArgsHeader = "1CIIGNRESTARGS Ignored Restore Args:\n";
+		singleIgnoredArgHeader = "2CIIGNRESTARG            ";
+	}
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+
+	JavaVMInitArgs *args = vmArgs->actualVMArgs;
+
+	_OutputStream.writeCharacters(argsHeader);
+
+	if (0 == args->nOptions) {
+		_OutputStream.writeCharacters("NULL                     None\n");
+	}
+
+	for (jint i = 0; i < args->nOptions; i++) {
+		_OutputStream.writeCharacters(singleArgHeader);
+		_OutputStream.writeCharacters(args->options[i].optionString);
+
+		if (NULL != args->options[i].extraInfo) {
+			_OutputStream.writeCharacters(" ");
+			_OutputStream.writePointer(args->options[i].extraInfo);
+		}
+
+		_OutputStream.writeCharacters("\n");
+	}
+
+	{
+		/* write ignored options */
+		bool anyIgnored = false;
+
+		for (jint i = 0; i < args->nOptions; i++) {
+			if (IS_CONSUMABLE(vmArgs, i) && !IS_CONSUMED(vmArgs, i)) {
+				if (!anyIgnored) {
+					_OutputStream.writeCharacters("NULL\n");
+					_OutputStream.writeCharacters(ignoredArgsHeader);
+					anyIgnored = true;
+				}
+
+				_OutputStream.writeCharacters(singleIgnoredArgHeader);
+				_OutputStream.writeCharacters(args->options[i].optionString);
+				_OutputStream.writeCharacters("\n");
+			}
+		}
+	}
 }
 
 /**************************************************************************************************/
