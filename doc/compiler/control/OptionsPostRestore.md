@@ -60,7 +60,7 @@ Finally, `postProcessInternalCompilerOptions` performs tasks that need
 to be done after the `-Xjit:`, `-Xaot:`, and external options have all
 been processed.
 
-# Subtleties
+# Important Notes
 
 ### JIT and AOT compiled code
 
@@ -138,3 +138,20 @@ file(s) are closed and the post-restore file(s) are opened. A
 consequence of this is that if the same file name is specified then a
 new file will be opened. This can have the consequence of overwriting
 the previous file if the PID of the restored process is the same.
+
+### Start and Elapsed Time
+
+The Checkpoint phase is conceptually part of building the application;
+therefore it does not make sense to expect a user who specifies an
+option such as `-XsamplingExpirationTime` to take into account the time
+spent executing in the Checkpoint phase. Therefore, on restore, both
+the start and elapsed time are reset.
+
+### `-Xrs`, `-Xtrace`, `-Xjit:disableTraps`, `-Xjit:noResumableTrapHandler`
+
+Currently, unless specified pre-checkpoint, the compiler generates will
+generate code assuming these options are not set. If these options are
+then specified post-restore, the options processing code will
+invalidate all JIT code in the code cache, as well as prevent further
+AOT compilation (since the AOT method header would have already been
+validated).

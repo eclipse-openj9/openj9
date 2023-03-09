@@ -425,6 +425,8 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
 
    static bool _aggressiveLockReservation;
 
+   static bool _xrsSync;
+
    static char * _externalOptionStrings[ExternalOptions::TR_NumExternalOptions];
 
    static void  printPID();

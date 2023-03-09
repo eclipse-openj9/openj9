@@ -121,6 +121,10 @@ class OptionsPostRestore
     */
    void invalidateCompiledMethodsIfNeeded(bool invalidateAll = false);
 
+   /**
+    * \brief Helper method to disable further AOT compilation.
+    */
+   void disableAOTCompilation();
 
    /**
     * \brief Helper method to perform tasks prior to processing
@@ -162,6 +166,7 @@ class OptionsPostRestore
    char *_oldRtLogFileName;
 
    bool _asyncCompilationPreCheckpoint;
+   bool _disableTrapsPreCheckpoint;
 
    int32_t _argIndexXjit;
    int32_t _argIndexXjitcolon;
