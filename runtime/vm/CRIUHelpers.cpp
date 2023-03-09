@@ -547,15 +547,16 @@ getRestoreSystemProperites(J9VMThread *currentThread)
 
 	if (NULL != vm->checkpointState.restoreArgsList) {
 		JavaVMInitArgs *restorArgs = vm->checkpointState.restoreArgsList->actualVMArgs;
-		 J9CmdLineOption* j9Options = vm->checkpointState.restoreArgsList->j9Options;
-		J9MemoryManagerFunctions * mmfns = vm->memoryManagerFunctions;
+		 J9CmdLineOption *j9Options = vm->checkpointState.restoreArgsList->j9Options;
+		J9MemoryManagerFunctions *mmfns = vm->memoryManagerFunctions;
 		J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 		PORT_ACCESS_FROM_JAVAVM(vm);
 
 		UDATA count = 0;
+		JavaVMOption *restorArgOptions = restorArgs->options;
 
 		for (IDATA i = 0; i < restorArgs->nOptions; ++i) {
-			char * optionString = restorArgs->options[i].optionString;
+			char *optionString = restorArgOptions[i].optionString;
 
 			if (strncmp("-D", optionString, 2) == 0) {
 				count++;
@@ -572,17 +573,17 @@ getRestoreSystemProperites(J9VMThread *currentThread)
 			goto done;
 		}
 
-		for (IDATA i = 0, index = 0; i < restorArgs->nOptions; ++i, ++index) {
-			char * optionString = restorArgs->options[i].optionString;
+		for (IDATA i = 0, index = 0; i < restorArgs->nOptions; ++i) {
+			char *optionString = restorArgOptions[i].optionString;
 
-			if (strncmp("-D", optionString, 2) == 0) {
-				char* propValue = NULL;
-				char* propValueCopy = NULL;
-				char* propNameCopy = NULL;
+			if (0 == strncmp("-D", optionString, 2)) {
+				char *propValue = NULL;
+				char *propValueCopy = NULL;
+				char *propNameCopy = NULL;
 				UDATA propNameLen = 0;
 
 				propValue = strchr(optionString + 2, '=');
-				if (propValue == NULL) {
+				if (NULL == propValue) {
 					propNameLen = strlen(optionString) - 2;
 					propValue = optionString + 2 + propNameLen;
 				} else {
@@ -614,7 +615,7 @@ getRestoreSystemProperites(J9VMThread *currentThread)
 				newArray = POP_OBJECT_IN_SPECIAL_FRAME(currentThread);
 
 				J9JAVAARRAYOFOBJECT_STORE(currentThread, newArray, index, newObject);
-				index++;
+				index += 1;
 
 				PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, (j9object_t)newArray);
 				newObject = mmfns->j9gc_createJavaLangString(currentThread, (U_8 *)propValueCopy, valueLength, J9_STR_TENURE);
@@ -627,6 +628,7 @@ getRestoreSystemProperites(J9VMThread *currentThread)
 				newArray = POP_OBJECT_IN_SPECIAL_FRAME(currentThread);
 
 				J9JAVAARRAYOFOBJECT_STORE(currentThread, newArray, index, newObject);
+				index += 1;
 
 				j9mem_free_memory(propNameCopy);
 				j9mem_free_memory(propValueCopy);
@@ -645,7 +647,6 @@ done:
 	}
 
 	return returnProperties;
-
 }
 
 
