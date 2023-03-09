@@ -1096,7 +1096,7 @@ void generateReportFieldAccessOutlinedInstructions(TR::Node *node, TR::LabelSymb
    if (isWrite)
       {
       TR::DataType dt = node->getDataType();
-      int32_t elementSize = dt == TR::Address ? TR::Compiler->om.sizeofReferenceField() : TR::Symbol::convertTypeToSize(dt);
+      int32_t elementSize = TR::Symbol::convertTypeToSize(dt);
       TR::InstOpCode::Mnemonic storeOp = getLoadOrStoreFromDataType(cg, dt, elementSize, node->getOpCode().isUnsigned(), false);
       TR::SymbolReference *location = cg->allocateLocalTemp(dt);
       TR::MemoryReference *valueMR = TR::MemoryReference::createWithSymRef(cg, node, location, node->getSize());
@@ -1263,7 +1263,7 @@ J9::Power::TreeEvaluator::generateTestAndReportFieldWatchInstructions(TR::CodeGe
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::andi_r, node, scratchReg, scratchReg, cndReg, J9ClassHasWatchedFields);
    generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, fieldReportLabel, cndReg);
 
-	generateReportOOL->swapInstructionListsWithCompilation();
+   generateReportOOL->swapInstructionListsWithCompilation();
 
    generateLabelInstruction(cg, TR::InstOpCode::label, node, fieldReportLabel);
    generateReportFieldAccessOutlinedInstructions(node, endLabel, dataSnippetRegister, isWrite, cg, sideEffectRegister, valueReg);
