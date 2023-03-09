@@ -307,6 +307,7 @@ JVM_VirtualThreadMountEnd(JNIEnv *env, jobject thread, jboolean firstMount)
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 	j9object_t rootVirtualThread = NULL;
 	j9object_t threadObj = NULL;
+	BOOLEAN runJ9Hooks = FALSE;
 
 	Trc_SC_VirtualThreadMountEnd_Entry(currentThread, thread, firstMount);
 
@@ -387,10 +388,7 @@ JVM_VirtualThreadMountEnd(JNIEnv *env, jobject thread, jboolean firstMount)
 			J9OBJECT_OBJECT_STORE(currentThread, rootPrev, vm->virtualThreadLinkNextOffset, threadObj);
 			J9OBJECT_OBJECT_STORE(currentThread, root, vm->virtualThreadLinkPreviousOffset, threadObj);
 		}
-
-		TRIGGER_J9HOOK_VM_VIRTUAL_THREAD_STARTED(vm->hookInterface, currentThread);
 	}
-	TRIGGER_J9HOOK_VM_VIRTUAL_THREAD_MOUNT(vm->hookInterface, currentThread);
 
 	/* Allow thread to be inspected again. */
 	Assert_SC_true(-1 == J9OBJECT_I64_LOAD(currentThread, threadObj, vm->virtualThreadInspectorCountOffset));
@@ -406,9 +404,18 @@ JVM_VirtualThreadMountEnd(JNIEnv *env, jobject thread, jboolean firstMount)
 	}
 
 	f_monitorNotifyAll(vm->liveVirtualThreadListMutex);
+
+	/* J9Hooks can be run since no errors were encountered. */
+	runJ9Hooks = TRUE;
 release2:
 	f_monitorExit(vm->liveVirtualThreadListMutex);
 release1:
+	if (runJ9Hooks) {
+		if (firstMount) {
+			TRIGGER_J9HOOK_VM_VIRTUAL_THREAD_STARTED(vm->hookInterface, currentThread);
+		}
+		TRIGGER_J9HOOK_VM_VIRTUAL_THREAD_MOUNT(vm->hookInterface, currentThread);
+	}
 	vmFuncs->internalExitVMToJNI(currentThread);
 
 	Trc_SC_VirtualThreadMountEnd_Exit(currentThread, thread, firstMount);
@@ -461,7 +468,6 @@ JVM_VirtualThreadUnmountBegin(JNIEnv *env, jobject thread, jboolean lastUnmount)
 	 */
 	J9OBJECT_I64_STORE(currentThread, threadObj, vm->virtualThreadInspectorCountOffset, -1);
 
-	TRIGGER_J9HOOK_VM_VIRTUAL_THREAD_UNMOUNT(vm->hookInterface, currentThread);
 	if (lastUnmount) {
 		if (NULL != vm->liveVirtualThreadList) {
 			j9object_t threadPrev = J9OBJECT_OBJECT_LOAD(currentThread, threadObj, vm->virtualThreadLinkPreviousOffset);
@@ -480,11 +486,14 @@ JVM_VirtualThreadUnmountBegin(JNIEnv *env, jobject thread, jboolean lastUnmount)
 			J9OBJECT_OBJECT_STORE(currentThread, threadObj, vm->virtualThreadLinkNextOffset, NULL);
 			J9OBJECT_OBJECT_STORE(currentThread, threadObj, vm->virtualThreadLinkPreviousOffset, NULL);
 		}
-
-		TRIGGER_J9HOOK_VM_VIRTUAL_THREAD_END(vm->hookInterface, currentThread);
 	}
 
 	f_monitorExit(vm->liveVirtualThreadListMutex);
+
+	TRIGGER_J9HOOK_VM_VIRTUAL_THREAD_UNMOUNT(vm->hookInterface, currentThread);
+	if (lastUnmount) {
+		TRIGGER_J9HOOK_VM_VIRTUAL_THREAD_END(vm->hookInterface, currentThread);
+	}
 	vmFuncs->internalExitVMToJNI(currentThread);
 
 	Trc_SC_VirtualThreadUnmountBegin_Exit(currentThread, thread, lastUnmount);
