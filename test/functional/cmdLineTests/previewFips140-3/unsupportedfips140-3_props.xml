@@ -42,4 +42,39 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<output type="failure" caseSensitive="no" regex="no">com.ibm.fips.mode</output>
 		<output type="failure" caseSensitive="no" regex="no">com.ibm.fips.home</output>
 	</test>
+	<test id="Ensure -Dcom.ibm.fips.mode=140-2 is accepted on unsupported platforms">
+		<command>$EXE$ -Dcom.ibm.fips.mode=140-2 -XshowSettings -version</command>
+		<output type="required" caseSensitive="no" regex="no">java version</output>
+		<output type="success" caseSensitive="no" regex="no">com.ibm.fips.mode = 140-2</output>
+		<output type="failure" caseSensitive="no" regex="no">com.ibm.fips.mode cannot be set</output>
+	</test>
+	<test id="Ensure -Dcom.ibm.fips.mode=140-3 is not accepted on unsupported platforms">
+		<command>$EXE$ -Dcom.ibm.fips.mode=140-3 -XshowSettings -version</command>
+		<output type="success" caseSensitive="no" regex="no">com.ibm.fips.mode cannot be set</output>
+		<output type="failure" caseSensitive="no" regex="no">java version</output>
+		<output type="failure" caseSensitive="no" regex="no">com.ibm.fips.mode = 140-</output>
+	</test>
+	<test id="Ensure -Dcom.ibm.fips.mode=140- is rejected on unsupported platforms">
+		<command>$EXE$ -Dcom.ibm.fips.mode=140- -XshowSettings -version</command>
+		<output type="success" caseSensitive="no" regex="no">com.ibm.fips.mode cannot be set</output>
+		<output type="failure" caseSensitive="no" regex="no">java version</output>
+		<output type="failure" caseSensitive="no" regex="no">com.ibm.fips.mode = 140-</output>
+	</test>
+	<test id="Ensure -Dcom.ibm.fips.mode=140-32 is rejected on unsupported platforms">
+		<command>$EXE$ -Dcom.ibm.fips.mode=140-32 -XshowSettings -version</command>
+		<output type="success" caseSensitive="no" regex="no">com.ibm.fips.mode cannot be set</output>
+		<output type="failure" caseSensitive="no" regex="no">java version</output>
+		<output type="failure" caseSensitive="no" regex="no">com.ibm.fips.mode = 140-32</output>
+	</test>
+	<test id="Ensure -Dcom.ibm.fips.mode=140-23 is rejected on unsupported platforms">
+		<command>$EXE$ -Dcom.ibm.fips.mode=140-23 -XshowSettings -version</command>
+		<output type="success" caseSensitive="no" regex="no">com.ibm.fips.mode cannot be set</output>
+		<output type="failure" caseSensitive="no" regex="no">java version</output>
+		<output type="failure" caseSensitive="no" regex="no">com.ibm.fips.mode = 140-23</output>
+	</test>
+	<test id="Ensure -Dcom.ibm.fips.home=<java.home> works on unsupported platforms">
+		<command>$EXE$ -Dcom.ibm.fips.home=$TEST_JAVA_HOME$ -XshowSettings -version</command>
+		<output type="required" caseSensitive="no" regex="no">java version</output>
+		<output type="success" caseSensitive="no" regex="no">com.ibm.fips.home = $TEST_JAVA_HOME$</output>
+	</test>
 </suite>
