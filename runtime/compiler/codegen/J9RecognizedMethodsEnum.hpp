@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2022 IBM Corp. and others
+ * Copyright (c) 2000, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -457,6 +457,7 @@
    jdk_internal_vm_vector_VectorSupport_binaryOp,
    jdk_internal_vm_vector_VectorSupport_blend,
    jdk_internal_vm_vector_VectorSupport_compare,
+   jdk_internal_vm_vector_VectorSupport_convert,
    jdk_internal_vm_vector_VectorSupport_fromBitsCoerced,
    jdk_internal_vm_vector_VectorSupport_maskReductionCoerced,
    jdk_internal_vm_vector_VectorSupport_reductionCoerced,
