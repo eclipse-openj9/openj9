@@ -4155,6 +4155,7 @@ typedef struct J9CRIUCheckpointState {
 	int (*criuDumpFunctionPointerType)(void);
 	UDATA libCRIUHandle;
 	struct J9VMInitArgs *restoreArgsList;
+	char *restoreArgsChars;
 } J9CRIUCheckpointState;
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
@@ -4932,6 +4933,7 @@ typedef struct J9InternalVMFunctions {
 	BOOLEAN (*delayedLockingOperation)(struct J9VMThread *currentThread, j9object_t instance, UDATA operation);
 	void (*addInternalJVMClassIterationRestoreHook)(struct J9VMThread *currentThread, classIterationRestoreHookFunc hookFunc);
 	void (*setCRIUSingleThreadModeJVMCRIUException)(struct J9VMThread *vmThread, U_32 moduleName, U_32 messageNumber);
+	jobject (*getRestoreSystemProperites)(struct J9VMThread *currentThread);
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 	j9object_t (*getClassNameString)(struct J9VMThread *currentThread, j9object_t classObject, jboolean internAndAssign);
 	j9object_t* (*getDefaultValueSlotAddress)(struct J9Class *clazz);
@@ -4954,6 +4956,7 @@ typedef struct J9InternalVMFunctions {
 	UDATA (*walkContinuationStackFrames)(struct J9VMThread *currentThread, struct J9VMContinuation *continuation, J9StackWalkState *walkState);
 	UDATA (*walkAllStackFrames)(struct J9VMThread *currentThread, J9StackWalkState *walkState);
 #endif /* JAVA_SPEC_VERSION >= 19 */
+	UDATA (*checkArgsConsumed)(struct J9JavaVM * vm, struct J9PortLibrary* portLibrary, struct J9VMInitArgs* j9vm_args);
 } J9InternalVMFunctions;
 
 /* Jazz 99339: define a new structure to replace JavaVM so as to pass J9NativeLibrary to JVMTIEnv  */
