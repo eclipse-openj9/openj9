@@ -24,7 +24,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 
 <!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
 <suite id="unsupportedfips140-3.xml" timeout="1000">
-	<test id="Ensure no fips.mode or fips.home setting on unsupported platforms">
+	<test id="Ensure no fips.mode or fips.home set by default on unsupported platforms">
 		<command>$EXE$ -XshowSettings -version</command>
 		<output type="success" caseSensitive="no" regex="no">java version</output>
 		<output type="failure" caseSensitive="no" regex="no">com.ibm.fips.mode</output>
