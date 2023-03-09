@@ -1080,14 +1080,6 @@ int32_t TR_EscapeAnalysis::performAnalysisOnce()
                traceMsg(comp(), "   Make [%p] non-local because we can't have locking when candidate escapes in cold blocks\n", candidate->_node);
             }
 
-         // TODO:  Add support for cold block heapification of value types
-         if (candidate->_kind == TR::newvalue && candidate->isLocalAllocation() && candidate->escapesInColdBlocks())
-            {
-            candidate->setLocalAllocation(false);
-            if (trace())
-               traceMsg(comp(), "   Make [%p] non-local because cold block heapification of value types is not yet available\n", candidate->_node);
-            }
-
          // Primitive value type fields of objects created with a NEW bytecode must be initialized
          // with their default values.  EA is not yet set up to perform such iniitialization
          // if the value type's own fields have not been inlined into the class that
@@ -3711,16 +3703,12 @@ bool FieldInfo::hasBadFieldSymRef()
    return !_badFieldSymrefs->isEmpty();
    }
 
-void FieldInfo::rememberFieldSymRef(TR::Node *fieldNode, int32_t fieldOffset, Candidate *candidate, TR_EscapeAnalysis *ea)
+void FieldInfo::rememberFieldSymRef(TR::Node *fieldNode, Candidate *candidate, TR_EscapeAnalysis *ea)
    {
    TR_ASSERT(!ea->_parms, "rememberFieldSymRef: cannot remember peeked field SymRefs");
 
    TR::SymbolReference *symRef = fieldNode->getSymbolReference();
-   if (_goodFieldSymrefs->find(symRef) || _badFieldSymrefs->find(symRef))
-      {
-      // Nothing to do
-      }
-   else
+   if (!_goodFieldSymrefs->find(symRef) && !_badFieldSymrefs->find(symRef))
       {
       bool isGood = false;
       switch (candidateHasField(candidate, fieldNode, _offset, ea))
@@ -3749,6 +3737,21 @@ void FieldInfo::rememberFieldSymRef(TR::Node *fieldNode, int32_t fieldOffset, Ca
          {
          _badFieldSymrefs->add(symRef);
          }
+      }
+   }
+
+void FieldInfo::rememberFieldSymRef(TR::SymbolReference *symRef, TR_EscapeAnalysis *ea)
+   {
+   TR_ASSERT(!ea->_parms, "rememberFieldSymRef: cannot remember peeked field SymRefs");
+
+   if (!_goodFieldSymrefs->find(symRef) && !_badFieldSymrefs->find(symRef))
+      {
+      int32_t fieldSize = symRef->getSymbol()->getSize();
+      if (ea->comp()->useCompressedPointers() && symRef->getSymbol()->getDataType() == TR::Address)
+         fieldSize = TR::Compiler->om.sizeofReferenceField();
+
+      _size = fieldSize;
+      _goodFieldSymrefs->add(symRef);
       }
    }
 
@@ -3847,61 +3850,10 @@ void TR_EscapeAnalysis::referencedField(TR::Node *base, TR::Node *field, bool is
                }
             }
 
-         TR::DataType refType = symRef->getSymbol()->getDataType();
-         TR::DataType fieldType = refType;
-         int N = 1;
-         if (refType.isVector())
-            {
-            fieldType = refType.getVectorElementType();
-            N = TR::Symbol::convertTypeToSize(refType)/TR::Symbol::convertTypeToSize(fieldType) ;
-            }
-         for (int j = 0; j < N; j++)
-            {
-            const bool isPeeking = (_parms != NULL);
-
-            int32_t i;
-            if (!candidate->_fields)
-               {
-               candidate->_fields = new (trStackMemory()) TR_Array<FieldInfo>(trMemory(), 8, false, stackAlloc);
-               i = -1;
-               }
-            else
-               {
-               for (i = candidate->_fields->size()-1; i >= 0; i--)
-                  {
-                  if (candidate->_fields->element(i)._offset == fieldOffset)
-                     {
-                     checkForDifferentSymRefs(candidate, i, symRef, this, isPeeking);
-                     break;
-                     }
-                  }
-               }
-            if (i < 0)
-               {
-               i = candidate->_fields->size();
-               (*candidate->_fields)[i]._offset = fieldOffset;
-               int32_t fieldSize = field->getSize();
-               if (comp()->useCompressedPointers() && field->getDataType() == TR::Address)
-                  fieldSize = TR::Compiler->om.sizeofReferenceField();
-               (*candidate->_fields)[i]._symRef = NULL;
-               (*candidate->_fields)[i]._size = fieldSize;
-               (*candidate->_fields)[i]._vectorElem = 0;
-               (*candidate->_fields)[i]._goodFieldSymrefs = new (trStackMemory()) TR_ScratchList<TR::SymbolReference>(trMemory());
-               (*candidate->_fields)[i]._badFieldSymrefs  = new (trStackMemory()) TR_ScratchList<TR::SymbolReference>(trMemory());
-               }
-            if (!isPeeking)
-               (*candidate->_fields)[i].rememberFieldSymRef(field, fieldOffset, candidate, this);
-
-            if (N > 1) // vector
-               {
-               (*candidate->_fields)[i]._vectorElem = j+1;
-               fieldOffset += TR::Symbol::convertTypeToSize(fieldType);
-               }
-            }
+         candidate->findOrSetFieldInfo(field, symRef, fieldOffset, field->getSize(), field->getDataType(), this);
          }
       }
    }
-
 
 
 // Resolve the node if it is a parameter reference
@@ -5663,7 +5615,7 @@ bool TR_EscapeAnalysis::fixupNode(TR::Node *node, TR::Node *parent, TR::NodeChec
                            {
                            if (candidate->_fields->element(i)._offset == fieldOffset)
                               {
-                              candidate->_fields->element(i).rememberFieldSymRef(node, fieldOffset, candidate, this);
+                              candidate->_fields->element(i).rememberFieldSymRef(node, candidate, this);
                               if (candidate->isContiguousAllocation())
                                  candidate->_fields->element(i)._symRef = symRef;
                               candidate->_fields->element(i)._vectorElem = 0;
@@ -6203,7 +6155,7 @@ bool TR_EscapeAnalysis::fixupFieldAccessForContiguousAllocation(TR::Node *node, 
             {
             if (candidate->_fields->element(i)._offset == fieldOffset)
                {
-               candidate->_fields->element(i).rememberFieldSymRef(node, fieldOffset, candidate, this);
+               candidate->_fields->element(i).rememberFieldSymRef(node, candidate, this);
                candidate->_fields->element(i)._symRef = symRef;
                candidate->_fields->element(i)._vectorElem = 0;
                break;
@@ -6366,7 +6318,7 @@ bool TR_EscapeAnalysis::fixupFieldAccessForNonContiguousAllocation(TR::Node *nod
          {
          autoSymRef = getSymRefTab()->createTemporary(comp()->getMethodSymbol(), newOpType);
          autoSymRef->getSymbol()->setBehaveLikeNonTemp();
-         candidate->_fields->element(i).rememberFieldSymRef(node, fieldOffset, candidate, this);
+         candidate->_fields->element(i).rememberFieldSymRef(node, candidate, this);
          candidate->_fields->element(i)._symRef = autoSymRef;
          }
 
@@ -6613,7 +6565,15 @@ void TR_EscapeAnalysis::makeLocalObject(Candidate *candidate)
    // If the node is not from an inlined method, <inlined-method-sig> repeats the outermost method signature
    //
    TR_ByteCodeInfo bcInfo = allocationNode->getByteCodeInfo();
-   TR::DebugCounter::prependDebugCounter(comp(), TR::DebugCounter::debugCounterName(comp(), "escapeAnalysis/contiguous-allocation/%s/%s/(%s)/(%d,%d)", comp()->getHotnessName(comp()->getMethodHotness()), comp()->signature(), bcInfo.getCallerIndex() > -1 ? comp()->getInlinedResolvedMethod(bcInfo.getCallerIndex())->signature(trMemory()): comp()->signature(), bcInfo.getCallerIndex(), bcInfo.getByteCodeIndex()), candidate->_treeTop);
+
+   const char *dbgCntName = TR::DebugCounter::debugCounterName(comp(), "escapeAnalysis/contiguous-allocation/%s/%s/(%s)/(%d,%d)",
+                                 comp()->getHotnessName(comp()->getMethodHotness()), comp()->signature(),
+                                 (bcInfo.getCallerIndex() > -1)
+                                    ? comp()->getInlinedResolvedMethod(bcInfo.getCallerIndex())->signature(trMemory())
+                                    : comp()->signature(),
+                                 bcInfo.getCallerIndex(), bcInfo.getByteCodeIndex());
+
+   TR::DebugCounter::prependDebugCounter(comp(), dbgCntName, candidate->_treeTop);
 
    if (candidate->_seenArrayCopy || candidate->_argToCall || candidate->_seenSelfStore || candidate->_seenStoreToLocalObject)
       {
@@ -6786,6 +6746,18 @@ void TR_EscapeAnalysis::makeContiguousLocalAllocation(Candidate *candidate)
                                                                           fieldEntry._fieldname,
                                                                           fieldEntry._typeSignature
                                                                           );
+
+         int32_t fieldSize = TR::Symbol::convertTypeToSize(fieldEntry._datatype);
+
+         if (fieldEntry._datatype.getDataType() == TR::Address && comp()->useCompressedPointers())
+            {
+            fieldSize = TR::Compiler->om.sizeofReferenceField();
+            }
+
+         FieldInfo &field = candidate->findOrSetFieldInfo(NULL, symref, fieldEntry._offset, fieldSize, fieldEntry._datatype, this);
+
+         field._symRef = symref;
+         field._vectorElem = 0;
 
          const TR::ILOpCodes storeOpCode = (fieldValueNode->getDataType() != TR::Address)
                                               ? comp()->il.opCodeForIndirectStore(fieldValueNode->getDataType())
@@ -7076,6 +7048,14 @@ void TR_EscapeAnalysis::makeNonContiguousLocalAllocation(Candidate *candidate)
       TR::TreeTop *fieldValueTreeTopCursor = candidate->_treeTop->getPrevTreeTop();
       TR::TreeTop *fieldStoreTreeTopCursor = candidate->_treeTop;
 
+
+      // If the non-contiguous value type candidate escapes, all fields must be known
+      // (i.e., candidate->_fields for newvalue must not be NULL or the newvalue
+      // must be known to have no fields) so that the values of all fields can be set
+      // properly for heapification at the escape point.
+      // Ensure symbol references for all the fields are included in the list
+      // associated with the candidate for stack allocation.
+      //
       for (int i = 1; i < candidate->_node->getNumChildren(); i++)
          {
          TR::Node *fieldValueNode = candidate->_node->getChild(i);
@@ -7096,24 +7076,27 @@ void TR_EscapeAnalysis::makeNonContiguousLocalAllocation(Candidate *candidate)
                                                                           fieldEntry._typeSignature
                                                                           );
 
+         int32_t fieldSize = TR::Symbol::convertTypeToSize(fieldEntry._datatype);
 
-         if (candidate->_fields)
+         if ((fieldEntry._datatype.getDataType() == TR::Address) && comp()->useCompressedPointers())
             {
-            for (int32_t i = candidate->_fields->size()-1; i >= 0; i--)
-               {
-               FieldInfo &autoField = candidate->_fields->element(i);
-
-               if (autoField._symRef && autoField._symRef->getSymbol()->isAuto()
-                   && (autoField._offset == fieldEntry._offset))
-                  {
-                  TR::DataType type = autoField._symRef->getSymbol()->getDataType();
-                  TR::Node *storeNode = TR::Node::createWithSymRef(comp()->il.opCodeForDirectStore(type), 1, 1, fieldValueNode, autoField._symRef);
-                  fieldStoreTreeTopCursor = TR::TreeTop::create(comp(), fieldStoreTreeTopCursor, storeNode);
-
-                  break;
-                  }
-               }
+            fieldSize = TR::Compiler->om.sizeofReferenceField();
             }
+
+         FieldInfo &autoField = candidate->findOrSetFieldInfo(NULL, symref, fieldEntry._offset, fieldSize, fieldEntry._datatype, this);
+         TR::SymbolReference *autoSymRef = autoField._symRef;
+
+         if (autoSymRef == NULL || !autoSymRef->getSymbol()->isAuto())
+            {
+            autoSymRef = getSymRefTab()->createTemporary(comp()->getMethodSymbol(), fieldEntry._datatype);
+            autoSymRef->getSymbol()->setBehaveLikeNonTemp();
+            autoField.rememberFieldSymRef(symref, this);
+            autoField._symRef = autoSymRef;
+            }
+
+         TR::DataType type = autoSymRef->getSymbol()->getDataType();
+         TR::Node *storeNode = TR::Node::createWithSymRef(comp()->il.opCodeForDirectStore(type), 1, 1, fieldValueNode, autoSymRef);
+         fieldStoreTreeTopCursor = TR::TreeTop::create(comp(), fieldStoreTreeTopCursor, storeNode);
          }
       }
    else if (candidate->_fields)
@@ -7152,16 +7135,43 @@ void TR_EscapeAnalysis::makeNonContiguousLocalAllocation(Candidate *candidate)
       }
 
    if (candidate->escapesInColdBlocks())
-     {
-     candidate->_originalAllocationNode = candidate->_node->duplicateTree();
-     }
+      {
+      // For newvalue operations, heapification should be performed with a newvalue
+      // that specifies the field values, so the object can be created correctly
+      candidate->_originalAllocationNode = candidate->_node->duplicateTree();
+      }
 
-   // If the object was referenced we will need to create a local object for it
-   // too. In this case, a local object of type "java/lang/Object" is created.
+   // If the object was referenced we will need to create a local object for it too - it's
+   // used to locate all references to the local object at the point of heapification
+   //
+   //   - For TR::New and TR::newvalue, a local object of type "java/lang/Object" is created;
+   //   - For arrays, a local array of length zero is created
    //
    if (candidate->objectIsReferenced())
       {
-      if ((candidate->_kind != TR::New) && (candidate->_kind != TR::newvalue))
+      if ((candidate->_kind == TR::New) || (candidate->_kind == TR::newvalue))
+         {
+         // Change the node so that it allocates a java/lang/Object object
+         //
+         TR::ResolvedMethodSymbol *owningMethodSymbol = candidate->_node->getSymbolReference()->getOwningMethodSymbol(comp());
+         TR_OpaqueClassBlock *classObject = comp()->getObjectClassPointer();
+
+         // the call to findOrCreateClassSymbol is safe even though we pass CPI of -1 it is guarded by another check
+         // (see the first occurrence of findOrCreateClassSymbol in EA; dememoizedConstructorCall)
+         //
+         TR::SymbolReference *classSymRef = getSymRefTab()->findOrCreateClassSymbol(owningMethodSymbol, -1, classObject, false);
+         TR::Node *classNode = TR::Node::createWithSymRef(candidate->_node, TR::loadaddr, 0, classSymRef);
+         candidate->_node->removeAllChildren();
+         candidate->_node->setAndIncChild(0, classNode);
+         TR::Node::recreate(candidate->_node, TR::New);
+         candidate->_node->setNumChildren(1);
+         candidate->_class = classObject;
+         candidate->_origSize = candidate->_size;
+         candidate->_origKind = candidate->_kind;
+         candidate->_size = comp()->fej9()->getObjectHeaderSizeInBytes() + TR::Compiler->cls.classInstanceSize(classObject);
+         candidate->_kind = TR::New;
+         }
+      else
          {
          candidate->_origSize = candidate->_size;
          candidate->_origKind = candidate->_kind;
@@ -7182,27 +7192,8 @@ void TR_EscapeAnalysis::makeNonContiguousLocalAllocation(Candidate *candidate)
             sizeChild->decReferenceCount();
             }
          }
-      else
-         {
-         TR_ASSERT_FATAL(candidate->_kind != TR::newvalue, "Don't know how to handle TR::newvalue here");
-         // Change the node so that it allocates a java/lang/Object object
-         //
-         TR::ResolvedMethodSymbol *owningMethodSymbol = candidate->_node->getSymbolReference()->getOwningMethodSymbol(comp());
-         TR_OpaqueClassBlock *classObject = comp()->getObjectClassPointer();
-         ////the call to findOrCreateClassSymbol is safe even though we pass CPI of -1 it is guarded by another check (see the first occurrence of findOrCreateClassSymbol in EA; dememoizedConstructorCall
-         TR::SymbolReference *classSymRef = getSymRefTab()->findOrCreateClassSymbol(owningMethodSymbol, -1, classObject, false);
-         TR::Node *classNode = TR::Node::createWithSymRef(candidate->_node, TR::loadaddr, 0, classSymRef);
-         candidate->_node->removeAllChildren();
-         candidate->_node->setAndIncChild(0, classNode);
-         TR::Node::recreate(candidate->_node, TR::New);
-         candidate->_node->setNumChildren(1);
-         candidate->_class = classObject;
-         candidate->_origSize = candidate->_size;
-         candidate->_origKind = candidate->_kind;
-         candidate->_size = comp()->fej9()->getObjectHeaderSizeInBytes() + TR::Compiler->cls.classInstanceSize(classObject);
-         candidate->_kind = TR::New;
-         }
       candidate->setExplicitlyInitialized(false);
+
       makeLocalObject(candidate);
       }
 
@@ -7215,7 +7206,16 @@ void TR_EscapeAnalysis::makeNonContiguousLocalAllocation(Candidate *candidate)
       // If the node is not from an inlined method, <inlined-method-sig> repeats the outermost method signature
       //
       TR_ByteCodeInfo bcInfo = candidate->_node->getByteCodeInfo();
-      TR::DebugCounter::prependDebugCounter(comp(), TR::DebugCounter::debugCounterName(comp(), "escapeAnalysis/noncontiguous-allocation/%s/%s/(%s)/(%d,%d)", comp()->getHotnessName(comp()->getMethodHotness()), comp()->signature(), bcInfo.getCallerIndex() > -1 ? comp()->getInlinedResolvedMethod(bcInfo.getCallerIndex())->signature(trMemory()): comp()->signature(), bcInfo.getCallerIndex(), bcInfo.getByteCodeIndex()), candidate->_treeTop);
+
+      const char *dbgCntName = TR::DebugCounter::debugCounterName(comp(), "escapeAnalysis/noncontiguous-allocation/%s/%s/(%s)/(%d,%d)",
+                                     comp()->getHotnessName(comp()->getMethodHotness()), comp()->signature(),
+                                     (bcInfo.getCallerIndex() > -1)
+                                        ? comp()->getInlinedResolvedMethod(bcInfo.getCallerIndex())->signature(trMemory())
+                                        : comp()->signature(),
+                                     bcInfo.getCallerIndex(), bcInfo.getByteCodeIndex());
+
+      TR::DebugCounter::prependDebugCounter(comp(), dbgCntName, candidate->_treeTop);
+
       // Remove the tree containing the allocation node. All uses of the node
       // should have been removed by now
       //
@@ -7279,7 +7279,7 @@ void TR_EscapeAnalysis::heapifyForColdBlocks(Candidate *candidate)
       heapAllocation->getFirstChild()->setHeapificationAlloc(true);
 
       if (trace())
-         traceMsg(comp(), "heapifying %p:  isContiguousAllocation == %d; _dememoizedMethodSymRef %d; new heapAllocation treetop %p\n", candidate->_node, candidate->isContiguousAllocation(), candidate->_dememoizedMethodSymRef, heapAllocation);
+         traceMsg(comp(), "heapifying %p:  isContiguousAllocation %d; _dememoizedMethodSymRef %d; new heapAllocation treetop %p\n", candidate->_node, candidate->isContiguousAllocation(), candidate->_dememoizedMethodSymRef, heapAllocation);
 
       if (!candidate->isContiguousAllocation() && _dememoizedAllocs.find(candidate->_node))
          {
@@ -7360,6 +7360,17 @@ void TR_EscapeAnalysis::heapifyForColdBlocks(Candidate *candidate)
       heapAllocationTree->join(heapStoreTree);
       heapStoreTree->join(heapAllocationExitTree);
 
+      TR_ByteCodeInfo bcInfo = candidate->_node->getByteCodeInfo();
+
+      const char *dbgCntName = TR::DebugCounter::debugCounterName(comp(), "escapeAnalysis/heapification/%s/%s/(%s)/(%d,%d)",
+                                     comp()->getHotnessName(comp()->getMethodHotness()), comp()->signature(),
+                                     (bcInfo.getCallerIndex() > -1)
+                                        ? comp()->getInlinedResolvedMethod(bcInfo.getCallerIndex())->signature(trMemory())
+                                        : comp()->signature(),
+                                     bcInfo.getCallerIndex(), bcInfo.getByteCodeIndex());
+
+      TR::DebugCounter::prependDebugCounter(comp(), dbgCntName, heapAllocationTree);
+
       heapAllocationExitTree->join(insertionPoint);
 
       if (treeBeforeInsertionPoint)
@@ -7370,117 +7381,198 @@ void TR_EscapeAnalysis::heapifyForColdBlocks(Candidate *candidate)
       treeBeforeInsertionPoint = heapStoreTree;
       TR::Node *stackAllocation = candidate->_node->duplicateTree();
 
-      // Copy all the slots, using field symbol references where possible.
-      //
-      int32_t headerSize = ((candidate->_origKind == TR::New) || (candidate->_origKind == TR::newvalue)) ?
-         comp()->fej9()->getObjectHeaderSizeInBytes() :
-         TR::Compiler->om.contiguousArrayHeaderSizeInBytes();
-      int32_t i;
-      int32_t size = candidate->_size;
-      if (!candidate->isContiguousAllocation())
-         size = candidate->_origSize;
-      // Changes for new 64-bit object model
-      int32_t refIncrVal = TR::Symbol::convertTypeToSize(TR::Address);
-      int32_t intIncrVal = 4; // TR::Symbol::convertTypeToSize(TR_SInt32);
-      i = headerSize;
-      //for (i = headerSize; i < size; i += _cg->sizeOfJavaPointer())
-      while (i < size)
+      if (candidate->_origKind != TR::newvalue)
          {
+         // Copy all the slots, using field symbol references where possible.
          //
-         // See if the slot can be initialized using a field reference
-         //
-         if (candidate->_fields)
+         int32_t headerSize = (candidate->_origKind == TR::New) ?
+            comp()->fej9()->getObjectHeaderSizeInBytes() :
+            TR::Compiler->om.contiguousArrayHeaderSizeInBytes();
+         int32_t i;
+         int32_t size = candidate->_size;
+         if (!candidate->isContiguousAllocation())
+            size = candidate->_origSize;
+         // Changes for new 64-bit object model
+         int32_t refIncrVal = TR::Symbol::convertTypeToSize(TR::Address);
+         int32_t intIncrVal = 4; // TR::Symbol::convertTypeToSize(TR_SInt32);
+         i = headerSize;
+         //for (i = headerSize; i < size; i += _cg->sizeOfJavaPointer())
+         while (i < size)
             {
+            //
+            // See if the slot can be initialized using a field reference
+            //
+            if (candidate->_fields)
+               {
+               int32_t j;
+               int32_t fieldSize = 0;
+               for (j = candidate->_fields->size()-1; j >= 0; j--)
+                  {
+                  FieldInfo &field = candidate->_fields->element(j);
+                  fieldSize = field._size;
+                  if (field._offset == i &&
+                      field._symRef &&
+                      (candidate->isContiguousAllocation() || field._symRef->getSymbol()->isAuto()) &&
+                      (candidate->_origKind == TR::New || candidate->_origKind == TR::newvalue))
+                     {
+                     TR::DataType type = field._symRef->getSymbol()->getDataType();
+
+                     TR::Node *stackFieldLoad = NULL;
+                     if (!candidate->isContiguousAllocation())
+                        stackFieldLoad = TR::Node::createWithSymRef(heapAllocation, comp()->il.opCodeForDirectLoad(type), 0, field._symRef);
+                     else
+                        stackFieldLoad = TR::Node::createWithSymRef(comp()->il.opCodeForIndirectLoad(type), 1, 1, stackAllocation, field._symRef);
+
+                     TR::Node *heapFieldStore = NULL;
+                     TR::TreeTop *translateTT = NULL;
+                     if (stackFieldLoad->getDataType() == TR::Address)
+                        {
+                        heapFieldStore = TR::Node::createWithSymRef(TR::awrtbari, 3, 3, heapAllocation->getFirstChild(), stackFieldLoad, heapAllocation->getFirstChild(), field.fieldSymRef());
+                        if (comp()->useCompressedPointers())
+                           {
+                           translateTT = TR::TreeTop::create(comp(), TR::Node::createCompressedRefsAnchor(heapFieldStore), NULL, NULL);
+                           }
+                        }
+                     else
+                        heapFieldStore = TR::Node::createWithSymRef(comp()->il.opCodeForIndirectStore(type), 2, 2, heapAllocation->getFirstChild(), stackFieldLoad, field.fieldSymRef());
+                     TR::TreeTop *heapFieldStoreTree = NULL;
+                     //comp()->useCompressedPointers()
+                     if (translateTT)
+                        heapFieldStoreTree = translateTT;
+                     else
+                        heapFieldStoreTree = TR::TreeTop::create(comp(), heapFieldStore, NULL, NULL);
+                     treeBeforeInsertionPoint->join(heapFieldStoreTree);
+                     heapFieldStoreTree->join(heapAllocationExitTree);
+                     treeBeforeInsertionPoint = heapFieldStoreTree;
+                     break;
+                     }
+                  }
+               if (j >= 0)
+                  {
+                  i += fieldSize;
+                  continue;
+                  }
+               }
+
+            // If not, use a generic int shadow to initialize.
+            //
+            // don't exceed the object size
+//             if ((i + refIncrVal) <= size)
+//                {
+//                TR::SymbolReference *intShadow = getSymRefTab()->findOrCreateGenericIntShadowSymbolReference(i);
+
+//                TR::Node *stackFieldLoad = NULL;
+//                if (candidate->isContiguousAllocation())
+//                   stackFieldLoad = TR::Node::create(TR::aloadi, 1, stackAllocation, intShadow);
+//                else
+//                   stackFieldLoad = TR::Node::aconst(heapAllocation, 0);
+
+//                TR::Node *heapFieldStore = TR::Node::create(TR::astorei, 2, heapAllocation->getFirstChild(), stackFieldLoad, intShadow);
+//                TR::TreeTop *heapFieldStoreTree = TR::TreeTop::create(comp(), heapFieldStore, NULL, NULL);
+//                treeBeforeInsertionPoint->join(heapFieldStoreTree);
+//                heapFieldStoreTree->join(heapAllocationExitTree);
+//                treeBeforeInsertionPoint = heapFieldStoreTree;
+//                i += refIncrVal;
+//                }
+//             else
+//                {
+               TR::SymbolReference *intShadow;
+               if (candidate->_origKind == TR::New || candidate->_origKind == TR::newvalue)
+                  intShadow = getSymRefTab()->findOrCreateGenericIntNonArrayShadowSymbolReference(i);
+               else
+                  intShadow = getSymRefTab()->findOrCreateGenericIntArrayShadowSymbolReference(i);
+
+               TR::Node *stackFieldLoad = NULL;
+               if (candidate->isContiguousAllocation())
+                  stackFieldLoad = TR::Node::createWithSymRef(TR::iloadi, 1, 1, stackAllocation, intShadow);
+               else
+                  stackFieldLoad = TR::Node::create(heapAllocation, TR::iconst, 0);
+               TR::Node *heapFieldStore = TR::Node::createWithSymRef(TR::istorei, 2, 2, heapAllocation->getFirstChild(), stackFieldLoad, intShadow);
+               TR::TreeTop *heapFieldStoreTree = TR::TreeTop::create(comp(), heapFieldStore, NULL, NULL);
+               treeBeforeInsertionPoint->join(heapFieldStoreTree);
+               heapFieldStoreTree->join(heapAllocationExitTree);
+               treeBeforeInsertionPoint = heapFieldStoreTree;
+               i += intIncrVal;
+//                }
+            }
+         }
+      else // if (candidate->_origKind == TR::newvalue)
+         {
+         // candidate->_class will be set to java/lang/Object for non-contiguous stack allocation
+         // of value type instances that are referenced, so we must rely on the candidate->_origClass
+         // field to get the actual value class for heapification
+         //
+         TR_OpaqueClassBlock *valueClass = (TR_OpaqueClassBlock*)candidate->_origClass;
+         const TR::TypeLayout* typeLayout = comp()->typeLayout(valueClass);
+         size_t fieldCount = typeLayout->count();
+
+         TR_ASSERT_FATAL(candidate->_fields != NULL || fieldCount == 0, "candidate %p of kind newvalue is expected to have non-NULL candidate->_fields if it has a non-zero fieldCount %d\n", candidate->_node, fieldCount);
+
+         TR::Node *newValueHeapificationNode = heapAllocation->getFirstChild();
+
+         // Generate IL to recreate newvalue on heap using values from stack allocated fields.
+         // For a contiguous stack allocated instance, this might look like the following
+         // where field values are loaded from the stack allocated aggregate.
+         //
+         //   n164n     treetop
+         //   n160n       newvalue  jitNewValue
+         //   n161n         loadaddr  Pair
+         //   n178n         iloadi  Pair.x I[#425  final Shadow +4]
+         //   n177n           loadaddr  <temp slot 6>[#439  Auto]
+         //   n179n         iloadi  Pair.y I[#427  final Shadow +8]
+         //   n177n           ==>loadaddr
+         //
+         // For a non-contiguous stack allocated instance, this might look like the following
+         // where field values are loaded from the individual temporaries for each field.
+         //
+         //   n181n     treetop
+         //   n177n       newvalue  jitNewValue
+         //   n178n         loadaddr  Pair
+         //   n179n         iload  <temp slot 8>[#440  Auto]
+         //   n180n         iload  <temp slot 8>[#441  Auto]
+
+
+         if (trace())
+            {
+            traceMsg(comp(), "Updating heap allocation node %p with fieldCount == %d\n", newValueHeapificationNode, fieldCount);
+            }
+
+         for (size_t idx = 0; idx < fieldCount; idx++)
+            {
+            const TR::TypeLayoutEntry &fieldEntry = typeLayout->entry(idx);
+
+            TR::Node *stackFieldLoad = NULL;
             int32_t j;
-            int32_t fieldSize = 0;
+
             for (j = candidate->_fields->size()-1; j >= 0; j--)
                {
                FieldInfo &field = candidate->_fields->element(j);
-               fieldSize = field._size;
-               if (field._offset == i &&
+
+               if (field._offset == fieldEntry._offset &&
                    field._symRef &&
-                   (candidate->isContiguousAllocation() || field._symRef->getSymbol()->isAuto()) &&
-                   (candidate->_origKind == TR::New || candidate->_origKind == TR::newvalue))
+                   (candidate->isContiguousAllocation() || field._symRef->getSymbol()->isAuto()))
                   {
                   TR::DataType type = field._symRef->getSymbol()->getDataType();
 
-                  TR::Node *stackFieldLoad = NULL;
                   if (!candidate->isContiguousAllocation())
-                     stackFieldLoad = TR::Node::createWithSymRef(heapAllocation, comp()->il.opCodeForDirectLoad(type), 0, field._symRef);
-                  else
-                     stackFieldLoad = TR::Node::createWithSymRef(comp()->il.opCodeForIndirectLoad(type), 1, 1, stackAllocation, field._symRef);
-
-                  TR::Node *heapFieldStore = NULL;
-                  TR::TreeTop *translateTT = NULL;
-                  if (stackFieldLoad->getDataType() == TR::Address)
                      {
-                     heapFieldStore = TR::Node::createWithSymRef(TR::awrtbari, 3, 3, heapAllocation->getFirstChild(), stackFieldLoad, heapAllocation->getFirstChild(), field.fieldSymRef());
-                     if (comp()->useCompressedPointers())
-                        {
-                        translateTT = TR::TreeTop::create(comp(), TR::Node::createCompressedRefsAnchor(heapFieldStore), NULL, NULL);
-                        }
+                     stackFieldLoad = TR::Node::createWithSymRef(newValueHeapificationNode, comp()->il.opCodeForDirectLoad(type), 0, field._symRef);
                      }
                   else
-                     heapFieldStore = TR::Node::createWithSymRef(comp()->il.opCodeForIndirectStore(type), 2, 2, heapAllocation->getFirstChild(), stackFieldLoad, field.fieldSymRef());
-                  TR::TreeTop *heapFieldStoreTree = NULL;
-                  //comp()->useCompressedPointers()
-                  if (translateTT)
-                     heapFieldStoreTree = translateTT;
-                  else
-                     heapFieldStoreTree = TR::TreeTop::create(comp(), heapFieldStore, NULL, NULL);
-                  treeBeforeInsertionPoint->join(heapFieldStoreTree);
-                  heapFieldStoreTree->join(heapAllocationExitTree);
-                  treeBeforeInsertionPoint = heapFieldStoreTree;
+                     {
+                     stackFieldLoad = TR::Node::createWithSymRef(comp()->il.opCodeForIndirectLoad(type), 1, 1, stackAllocation, field._symRef);
+                     }
                   break;
                   }
                }
-            if (j >= 0)
+
+            TR_ASSERT_FATAL(stackFieldLoad != NULL, "newvalue candidate %p was missing an entry in candidate->_fields for its field number %d at offset %d", candidate->_node, idx, fieldEntry._offset);
+            newValueHeapificationNode->setAndIncChild(idx+1, stackFieldLoad);
+            if (trace())
                {
-               i += fieldSize;
-               continue;
+               traceMsg(comp(), "Updating heap allocation node %p child %d with field load node %p\n", newValueHeapificationNode, idx+1, stackFieldLoad);
                }
             }
-
-         // If not, use a generic int shadow to initialize.
-         //
-         // don't exceed the object size
-//          if ((i + refIncrVal) <= size)
-//             {
-//             TR::SymbolReference *intShadow = getSymRefTab()->findOrCreateGenericIntShadowSymbolReference(i);
-
-//             TR::Node *stackFieldLoad = NULL;
-//             if (candidate->isContiguousAllocation())
-//                stackFieldLoad = TR::Node::create(TR::aloadi, 1, stackAllocation, intShadow);
-//             else
-//                stackFieldLoad = TR::Node::aconst(heapAllocation, 0);
-
-//             TR::Node *heapFieldStore = TR::Node::create(TR::astorei, 2, heapAllocation->getFirstChild(), stackFieldLoad, intShadow);
-//             TR::TreeTop *heapFieldStoreTree = TR::TreeTop::create(comp(), heapFieldStore, NULL, NULL);
-//             treeBeforeInsertionPoint->join(heapFieldStoreTree);
-//             heapFieldStoreTree->join(heapAllocationExitTree);
-//             treeBeforeInsertionPoint = heapFieldStoreTree;
-//             i += refIncrVal;
-//             }
-//          else
-//             {
-            TR::SymbolReference *intShadow;
-            if (candidate->_origKind == TR::New || candidate->_origKind == TR::newvalue)
-               intShadow = getSymRefTab()->findOrCreateGenericIntNonArrayShadowSymbolReference(i);
-            else
-               intShadow = getSymRefTab()->findOrCreateGenericIntArrayShadowSymbolReference(i);
-
-            TR::Node *stackFieldLoad = NULL;
-            if (candidate->isContiguousAllocation())
-               stackFieldLoad = TR::Node::createWithSymRef(TR::iloadi, 1, 1, stackAllocation, intShadow);
-            else
-               stackFieldLoad = TR::Node::create(heapAllocation, TR::iconst, 0);
-            TR::Node *heapFieldStore = TR::Node::createWithSymRef(TR::istorei, 2, 2, heapAllocation->getFirstChild(), stackFieldLoad, intShadow);
-            TR::TreeTop *heapFieldStoreTree = TR::TreeTop::create(comp(), heapFieldStore, NULL, NULL);
-            treeBeforeInsertionPoint->join(heapFieldStoreTree);
-            heapFieldStoreTree->join(heapAllocationExitTree);
-            treeBeforeInsertionPoint = heapFieldStoreTree;
-            i += intIncrVal;
-//             }
          }
 
       insertionPoint = coldBlock->getEntry();
@@ -8097,6 +8189,76 @@ bool TR_EscapeAnalysis::findCallSiteFixed(TR::TreeTop * virtualCallSite)
    }
 
 
+FieldInfo& Candidate::findOrSetFieldInfo(TR::Node *fieldRefNode, TR::SymbolReference *symRef, int32_t fieldOffset, int32_t fieldSize, TR::DataType fieldStoreType, TR_EscapeAnalysis *ea)
+   {
+   int32_t resultIdx = -1;
+
+   TR::DataType refType = symRef->getSymbol()->getDataType();
+   TR::DataType fieldType = refType;
+   int N = 1;
+   if (refType.isVector())
+      {
+      fieldType = refType.getVectorElementType();
+      N = TR::Symbol::convertTypeToSize(refType)/TR::Symbol::convertTypeToSize(fieldType) ;
+      }
+   for (int j = 0; j < N; j++)
+      {
+      const bool isPeeking = (ea->_parms != NULL);
+
+      int32_t i;
+      if (!this->_fields)
+         {
+         this->_fields = new (trStackMemory()) TR_Array<FieldInfo>(trMemory(), 8, false, stackAlloc);
+         i = -1;
+         }
+      else
+         {
+         for (i = this->_fields->size()-1; i >= 0; i--)
+            {
+            if (this->_fields->element(i)._offset == fieldOffset)
+               {
+               checkForDifferentSymRefs(this, i, symRef, ea, isPeeking);
+               break;
+               }
+            }
+         }
+      if (i < 0)
+         {
+         i = this->_fields->size();
+         (*this->_fields)[i]._offset = fieldOffset;
+         if (comp()->useCompressedPointers() && fieldStoreType == TR::Address)
+            fieldSize = TR::Compiler->om.sizeofReferenceField();
+         (*this->_fields)[i]._symRef = NULL;
+         (*this->_fields)[i]._size = fieldSize;
+         (*this->_fields)[i]._vectorElem = 0;
+         (*this->_fields)[i]._goodFieldSymrefs = new (trStackMemory()) TR_ScratchList<TR::SymbolReference>(trMemory());
+         (*this->_fields)[i]._badFieldSymrefs  = new (trStackMemory()) TR_ScratchList<TR::SymbolReference>(trMemory());
+         }
+      if (resultIdx < 0)
+         {
+         resultIdx = i;
+         }
+      if (!isPeeking)
+         {
+         if (fieldRefNode != NULL)
+            {
+            (*this->_fields)[i].rememberFieldSymRef(fieldRefNode, this, ea);
+            }
+         else
+            {
+            (*this->_fields)[i].rememberFieldSymRef(symRef, ea);
+            }
+         }
+
+      if (N > 1) // vector
+         {
+         (*this->_fields)[i]._vectorElem = j+1;
+         fieldOffset += TR::Symbol::convertTypeToSize(fieldType);
+         }
+      }
+
+   return this->_fields->element(resultIdx);
+   }
 
 
 void TR_EscapeAnalysis::printCandidates(char *title)

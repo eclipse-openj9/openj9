@@ -119,7 +119,8 @@ struct FieldInfo
    TR_ScratchList<TR::SymbolReference> *_badFieldSymrefs;
    char                                  _vectorElem;
 
-   void                rememberFieldSymRef(TR::Node *node, int32_t fieldOffset, Candidate *candidate, TR_EscapeAnalysis *ea);
+   void                rememberFieldSymRef(TR::Node *node, Candidate *candidate, TR_EscapeAnalysis *ea);
+   void                rememberFieldSymRef(TR::SymbolReference *symRef, TR_EscapeAnalysis *ea);
    bool                symRefIsForFieldInAllocatedClass(TR::SymbolReference *symRef);
    bool                hasBadFieldSymRef();
    TR::SymbolReference *fieldSymRef(); // Any arbitrary good field symref
@@ -133,6 +134,7 @@ class Candidate : public TR_Link<Candidate>
       : _kind(node->getOpCodeValue()), _node(node), _treeTop(treeTop), _origKind(node->getOpCodeValue()), _stringCopyNode(NULL), _stringCopyCallTree(NULL),
         _block(block),
         _class(classInfo),
+        _origClass(classInfo),
         _size(size), _fieldSize(0), _valueNumbers(0), _fields(0), _origSize(size),
         _initializedWords(0),
         _maxInlineDepth(0), _inlineBytecodeSize(0), _seenFieldStore(false), _seenSelfStore(false), _seenStoreToLocalObject(false), _seenArrayCopy(false), _argToCall(false), _usedInNonColdBlock(false), _lockedInNonColdBlock(false),_isImmutable(false),
@@ -248,6 +250,8 @@ class Candidate : public TR_Link<Candidate>
          }
       }
 
+     FieldInfo & findOrSetFieldInfo(TR::Node *fieldRefNode, TR::SymbolReference *symRef, int32_t fieldOffset, int32_t fieldSize, TR::DataType fieldStoreType, TR_EscapeAnalysis *ea);
+
      void print();
 
      TR::ILOpCodes            _kind;
@@ -259,6 +263,7 @@ class Candidate : public TR_Link<Candidate>
      TR_Array<FieldInfo>    *_fields;
      TR_BitVector           *_initializedWords;
      void                   *_class;
+     void                   *_origClass;
      TR::Node                *_originalAllocationNode;
      TR::Compilation *        _comp;
      TR_Memory *             _trMemory;
@@ -797,6 +802,7 @@ class TR_EscapeAnalysis : public TR::Optimization
    friend class TR_FlowSensitiveEscapeAnalysis;
    friend class TR_LocalFlushElimination;
    friend struct FieldInfo;
+   friend class Candidate;
    };
 
 //class Candidate;
