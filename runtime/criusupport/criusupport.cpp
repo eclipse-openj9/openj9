@@ -938,6 +938,8 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 		}
 
 		if (NULL != vm->checkpointState.restoreArgsList) {
+			/* mark -Xoptionsfile= as consumed */
+			FIND_AND_CONSUME_ARG(vm->checkpointState.restoreArgsList, STARTSWITH_MATCH, VMOPT_XOPTIONSFILE_EQUALS, NULL);
 			bool dontIgnoreUnsupportedRestoreOptions = FIND_AND_CONSUME_ARG(vm->checkpointState.restoreArgsList, EXACT_MATCH, VMOPT_XXIGNOREUNRECOGNIZEDRESTOREOPTIONSENABLE, NULL) < 0;
 
 			if ((FALSE == vmFuncs->checkArgsConsumed(vm, vm->portLibrary, vm->checkpointState.restoreArgsList)) && dontIgnoreUnsupportedRestoreOptions) {
