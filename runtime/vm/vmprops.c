@@ -39,7 +39,6 @@ static void copySystemProperties(J9JavaVM* vm);
 #endif /* defined(LINUX) */
 
 static U_8*  unicodeEscapeStringToMUtf8(J9JavaVM * vm, const char* escapeString, UDATA escapeLength);
-static U_8* getMUtf8String(J9JavaVM * vm, const char *userString, UDATA stringLength);
 static UDATA getLibSubDir(J9JavaVM *VM, const char *subDir, char **value);
 
 #define JAVA_ENDORSED_DIRS "java.endorsed.dirs"
@@ -1363,14 +1362,8 @@ containsBackslashU(const char *userString, UDATA stringLength) {
 	return FALSE; /* hit the end of the string without encountering \u sequence */
 }
 
-/**
- * return a null-terminated modified UTF-8 version of charSequence.  Transliteration depends on the original encoding.
- * @param vm Java VM
- * @param userString system property value as provided by the user.  May contain embedded zero bytes.
- * @return copy of the string in Modified UTF-8, NULL if the string is invalid.
- * @note the return value must be freed by the caller.
- */
-static U_8*
+
+U_8*
 getMUtf8String(J9JavaVM * vm, const char *userString, UDATA stringLength) {
 
 	PORT_ACCESS_FROM_JAVAVM(vm);
