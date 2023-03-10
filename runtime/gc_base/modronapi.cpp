@@ -1150,6 +1150,14 @@ j9gc_reinitialize_for_restore(J9VMThread *vmThread, const char **nlsMsgFormat)
 	}
 	acquireVMAccess(vmThread);
 
+	Assert_MM_true(NULL != extensions->getGlobalCollector());
+
+	if (!extensions->getGlobalCollector()->reinitializeForRestore(env)) {
+		*nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
+				J9NLS_GC_FAILED_TO_INSTANTIATE_GLOBAL_GARBAGE_COLLECTOR, NULL);
+		goto _error;
+	}
+
 	if (!mmFuncTable->checkOptsAndInitVerbosegclog(vm, vm->checkpointState.restoreArgsList)) {
 		*nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
 				J9NLS_VERB_FAILED_TO_INITIALIZE, NULL);
