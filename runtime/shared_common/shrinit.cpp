@@ -1816,10 +1816,21 @@ j9shr_findSharedData(J9VMThread* currentThread, const char* key, UDATA keylen, U
 	U_64 localRuntimeFlags = sharedClassConfig->runtimeFlags;
 	UDATA localVerboseFlags = sharedClassConfig->verboseFlags;
 
-	if (!(localRuntimeFlags & J9SHR_RUNTIMEFLAG_CACHE_INITIALIZATION_COMPLETE) ||
-		(localRuntimeFlags & J9SHR_RUNTIMEFLAG_DENY_CACHE_ACCESS)) {
+	if (!(localRuntimeFlags & J9SHR_RUNTIMEFLAG_CACHE_INITIALIZATION_COMPLETE)) {
 		Trc_SHR_INIT_findSharedData_exit_Noop(currentThread);
 		return -1;
+	}
+
+	if (localRuntimeFlags & J9SHR_RUNTIMEFLAG_DENY_CACHE_ACCESS) {
+
+		/* if SCC has been disabled by CRIU restore options then behave as if the cache is empty rather than throwing an error */
+		if (vm->sharedCacheAPI->xShareClassCacheDisabledOnCRIURestore) {
+			Trc_SHR_INIT_findSharedData_exit_Noop(currentThread);
+			return 0;
+		} else {
+			Trc_SHR_INIT_findSharedData_exit_Noop(currentThread);
+			return -1;
+		}
 	}
 
 	/* jcl calls from shared.c set the vmState, but bootstrap calls do not */
@@ -3517,6 +3528,7 @@ j9shr_init(J9JavaVM *vm, UDATA loadFlags, UDATA* nonfatal)
 		config->findGCHints = j9shr_findGCHints;
 		config->storeGCHints = j9shr_storeGCHints;
 		config->updateClasspathOpenState = j9shr_updateClasspathOpenState;
+		config->disableSharedClassCacheForCriuRestore = j9shr_disableSharedClassCacheForCriuRestore;
 
 		config->sharedAPIObject = initializeSharedAPI(vm);
 		if (config->sharedAPIObject == NULL) {
@@ -5342,6 +5354,18 @@ findExistingCacheLayerNumbers(J9JavaVM* vm, const char* ctrlDirName, const char*
 		*maxLayerNo = maxLayer;
 	}
 	return;
+}
+
+/**
+ * Disables reads/writes to the shared class cache and marks the shared class cache as disabled during a CRIU restore
+ *
+ * @param [in] vm  The Java VM
+**/
+void
+j9shr_disableSharedClassCacheForCriuRestore(J9JavaVM* vm)
+{
+	vm->sharedClassConfig->runtimeFlags |= J9SHR_RUNTIMEFLAG_DENY_CACHE_ACCESS | J9SHR_RUNTIMEFLAG_DENY_CACHE_UPDATES;
+	vm->sharedCacheAPI->xShareClassCacheDisabledOnCRIURestore = TRUE;
 }
 
 } /* extern "C" */
