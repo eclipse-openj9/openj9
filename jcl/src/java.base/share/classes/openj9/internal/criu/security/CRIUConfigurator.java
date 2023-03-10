@@ -46,10 +46,7 @@ public final class CRIUConfigurator {
 	private static final HashMap<String, String> oldProviders = new HashMap<>();
 	/** Tracing for CRIUSEC. */
 	private static final boolean debug = Boolean.parseBoolean(
-			GetPropertyAction.privilegedGetProperty("enable.j9internal.checkpoint.security.api.debug", "false"));
-	private static final boolean speculativeAlgorithms = Boolean.parseBoolean(
-			GetPropertyAction.privilegedGetProperty("criu.speculative.security.getalgorithms", "false"));
-	   
+		 GetPropertyAction.privilegedGetProperty("enable.j9internal.checkpoint.security.api.debug", "false"));
 	private static HashMap<String, Set<String>> cachedAlgorithms = new HashMap<>();
 	private static boolean isCacheEligible = false;
 
@@ -60,42 +57,51 @@ public final class CRIUConfigurator {
 	 */
 	public static void setCRIUSecMode(Properties props) {
 		systemProps = props;
-
-		if (speculativeAlgorithms) {
-			// Get all configured security providers and save all unique services and their associated algorithms
-			// into a cache of type HashMap. When cache has been populated remove all the providers we loaded.
-			Provider[] providerList = Security.getProviders();
-			for (Provider provider: providerList) {
-				if (debug) {
-					System.out.println("Name: "  + provider.getName());
-					System.out.println("Information:\n" + provider.getInfo());
-				}
-				Set<Service> serviceList = provider.getServices();
-				for (Service service: serviceList) {
-					String serviceName = service.getType();
-					if (cachedAlgorithms.get(serviceName) == null) {
-						Set<String> algs = Security.getAlgorithms(serviceName);
-						cachedAlgorithms.put(serviceName, algs);
-						if (debug) {
-							System.out.println("Cached algorithms with service name <" + serviceName + ">:\n" + algs);
-						}
+		
+		// Get all configured security providers and save all unique services and their associated algorithms
+		// into a cache of type HashMap. When cache has been populated remove all the providers we loaded.
+		Provider[] providerList = Security.getProviders();
+		for (Provider provider: providerList) {
+			if (debug) {
+				System.out.println("Name: "  + provider.getName());
+				System.out.println("Information:\n" + provider.getInfo());
+			}
+			// If the SunPKCS11 provider is configured we do not want to populate an algorithm cache. The
+			// reason being that the algorithms associated with the SunPKCS11 provider are based upon the 
+			// reported mechanisms available in the systems PKCS11 interface. For CRIU we will avoid caching 
+			// all the various algorithms and their services since the cache will not be accurate on a 
+			// CRIU restore on a different system where we have potentially different PKCS11 mechanisms configured.
+			if (provider.getName().equalsIgnoreCase("SunPKCS11")) {
+				if (provider.isConfigured()) {
+					if (debug) {
+						System.out.println("SunPKCS11 provider is configured. Disable algorithm caching.");
+					}
+					cachedAlgorithms.clear();
+					break;
+				} else {
+					if (debug) {
+						System.out.println("SunPKCS11 provider is not configured. Allow algorithm caching.");
 					}
 				}
 			}
-
-			//Remove all providers we just loaded and add in the CRIUSECProvider.
-			for (Provider provider: providerList) {
-				Security.removeProvider(provider.getName());
+			Set<Service> serviceList = provider.getServices();
+			for (Service service: serviceList) {
+				String serviceName = service.getType();
+				if (cachedAlgorithms.get(serviceName) == null) {
+					Set<String> algs = Security.getAlgorithms(serviceName);
+					cachedAlgorithms.put(serviceName, algs);
+					if (debug) {
+						System.out.println("Cached algorithms with service name <" + serviceName + ">:\n" + algs);
+					}
+				}
 			}
-			Security.insertProviderAt(new CRIUSECProvider(),1);
-
-			// Allow callers to get values from this cache.
-			if (debug) {
-				System.out.println("Algorithm cache enabled.");
-			}
-			validateAlgorithmCache();
 		}
 
+		//Remove all providers.
+		for (Provider provider: providerList) {
+			Security.removeProvider(provider.getName());
+		}
+		
 		// Save the old security.provider key such that when we later perform a CRIU restore we know what providers
 		// to restore.
 		for (Map.Entry<Object, Object> entry : props.entrySet()) {
@@ -108,7 +114,7 @@ public final class CRIUConfigurator {
 			props.remove(provider);
 		}
 		props.put("security.provider.1", "openj9.internal.criu.CRIUSECProvider");
-
+		Security.insertProviderAt(new CRIUSECProvider(),1);
 		if (debug) {
 			System.out.println("CRIUSEC provider added and all other security providers removed.");
 		}
@@ -119,7 +125,6 @@ public final class CRIUConfigurator {
 	 * back.
 	 */
 	public static void setCRIURestoreMode() {
-		invalidateAlgorithmCache();
 		if (null != systemProps) {
 			Security.removeProvider("CRIUSEC");
 			// Note that CRIUSEC was set as security.provider.1 in the method
@@ -128,7 +133,6 @@ public final class CRIUConfigurator {
 			if (debug) {
 				System.out.println("CRIUSEC provider removed.");
 			}
-
 			for (Map.Entry<String, String> entry : oldProviders.entrySet()) {
 				systemProps.put(entry.getKey(), entry.getValue());
 			}
@@ -147,6 +151,14 @@ public final class CRIUConfigurator {
 				for (String provider : oldProviders.values()) {
 					System.out.println(provider + " restored.");
 				}
+			}
+			// If any algorithms are available from when we took a checkpoint in our algorithm cache
+			// we can now allow callers to get values from this cache.
+			if (cachedAlgorithms.size() > 0) {
+				if (debug) {
+					System.out.println("Algorithm cache enabled.");
+				}
+			    isCacheEligible = true;
 			}
 		}
 	}
@@ -168,53 +180,10 @@ public final class CRIUConfigurator {
 	}
 
 	/**
-	 * Append any new algorithms to our algorithm cache. This method is typically called when 
-	 * providers are inserted or deleted within the Security class.
-	 * 
-	 */
-	public static void appendAlgorithms() {
-		if (speculativeAlgorithms) {
-			// Get current security providers and their associated algorithms and append them to the HashMap.
-			invalidateAlgorithmCache();
-			Provider[] providerList = Security.getProviders();
-			for (Provider provider: providerList) {
-				if (debug) {
-					System.out.println("Name: "  + provider.getName());
-					System.out.println("Information:\n" + provider.getInfo());
-				}
-				Set<Service> serviceList = provider.getServices();
-				
-				for (Service service: serviceList) {
-					String serviceName = service.getType();
-					if (cachedAlgorithms.get(serviceName) == null) {
-						Set<String> algs = Security.getAlgorithms(serviceName);
-						cachedAlgorithms.put(serviceName, algs);
-						if (debug) {
-							System.out.println("Caching new algorithms with service name <" + serviceName + ">:\n" + algs);
-						}
-					} else {
-						Set<String> mergedSet = new HashSet<>(cachedAlgorithms.get(serviceName));
-						mergedSet.addAll(Security.getAlgorithms(serviceName));
-						
-						if (debug) {
-							System.out.println("Appending algorithms list for service name <" + serviceName + ">:\n" + Security.getAlgorithms(serviceName));
-							System.out.println("Replacing new merged algorithm list for service name <" + serviceName + ">:\n" + mergedSet);
-						}
-						cachedAlgorithms.replace(serviceName, mergedSet);
-					}
-				}
-			}
-			// Allow callers to get values from this cache.
-			if (debug) {
-				System.out.println("Algorithm cache enabled.");
-			}
-			validateAlgorithmCache();
-		}
-	}
-
-	/**
-	 * Checks if the speculative algorithm cache populated during a checkpoint is available. This cache is
-	 * available when there is data in the cache and we are in the process of doing a CRIU checkpoint.
+	 * Checks if the algorithm cache populated during a checkpoint is available. This cache is
+	 * available when there is data in the cache and we have completed a CRIU restore. The cache
+	 * may also become invalid when any security providers were inserted or removed from the provider list
+	 * as dictated by the logic in the Security class.
 	 * @return boolean value true when the cache is available, false otherwise.
 	 */
 	public static boolean isCachedAlgorithmsPresentAndReady() {
@@ -224,22 +193,11 @@ public final class CRIUConfigurator {
 	/**
 	 * Invalidates the CRIU algorithm cache.
 	 */
-	private static void invalidateAlgorithmCache() {
+	public static void invalidateAlgorithmCache() {
 		if (debug) {
 			System.out.println("Algorithm cache set to disabled.");
 		}
 
 		isCacheEligible = false;
- 	}
-
-	/**
-	 * Invalidates the CRIU algorithm cache.
-	 */
-	private static void validateAlgorithmCache() {
-		if (debug) {
-			System.out.println("Algorithm cache set to enabled.");
-		}
-
-		isCacheEligible = true;
  	}
 }
