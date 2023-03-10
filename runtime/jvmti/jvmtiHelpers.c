@@ -845,6 +845,8 @@ getVirtualThreadState(J9VMThread *currentThread, jthread thread)
 					rc = JVMTI_JAVA_LANG_THREAD_STATE_RUNNABLE;
 				}
 				vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
+				/* Re-fetch object to correctly set the isSuspendedByJVMTI field. */
+				vThreadObject = J9_JNI_UNWRAP_REFERENCE(thread);
 				break;
 			}
 			case JVMTI_VTHREAD_STATE_RUNNABLE:
