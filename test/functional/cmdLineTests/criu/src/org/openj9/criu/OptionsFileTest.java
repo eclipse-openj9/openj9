@@ -109,7 +109,7 @@ public class OptionsFileTest {
 	}
 
 	static void propertiesTest3() {
-		String optionsContents = "-Dprop1=val1\n-Dprop2=\\\nval2\n-Dprop3=v \\ \n a \\     \n  l3";
+		String optionsContents = "-Dprop1=val1\n-Dprop2=\\\nval2\n-Dprop3=v \\\n a \\\n  l3";
 		Path optionsFilePath = CRIUTestUtils.createOptionsFile("options", optionsContents);
 
 		Path imagePath = Paths.get("cpData");
