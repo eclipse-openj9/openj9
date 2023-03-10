@@ -27,6 +27,7 @@
 #include "j9.h"
 #include "j9nonbuilder.h"
 #include "jvminit.h"
+#include "j9comp.h"
 #include "env/CompilerEnv.hpp"
 #include "env/TRMemory.hpp"
 #include "compile/Method.hpp"
@@ -72,7 +73,13 @@ J9::OptionsPostRestore::OptionsPostRestore(J9VMThread *vmThread, J9JITConfig *ji
    _argIndexDisableUseJITServer(-1),
    _argIndexJITServerAddress(-1),
    _argIndexJITServerAOTCacheName(-1)
-   {}
+   {
+   TR::Options *options = TR::Options::getCmdLineOptions();
+   _disableTrapsPreCheckpoint
+      = J9::Options::_xrsSync
+        || options->getOption(TR_NoResumableTrapHandler)
+        || options->getOption(TR_DisableTraps);
+   }
 
 void
 J9::OptionsPostRestore::iterateOverExternalOptions()
@@ -451,6 +458,23 @@ J9::OptionsPostRestore::invalidateCompiledMethodsIfNeeded(bool invalidateAll)
    }
 
 void
+J9::OptionsPostRestore::disableAOTCompilation()
+   {
+   // Ideally when disabling AOT, the vmThread->aotVMwithThreadInfo->_sharedCache
+   // would also be freed and set to NULL. However, it isn't obvious whether non
+   // compilation and java threads that could be running at the moment could make
+   // use of it, in which case there could be a race. To avoid this, it's safer
+   // to just leave _sharedCache alone; at worst some SCC API could be invoked,
+   // but not during a compilation as all compilation threads are suspended at
+   // this point, and so it won't impact AOT code.
+
+   TR::Options::getAOTCmdLineOptions()->setOption(TR_NoLoadAOT);
+   TR::Options::getAOTCmdLineOptions()->setOption(TR_NoStoreAOT);
+   TR::Options::setSharedClassCache(false);
+   TR_J9SharedCache::setSharedCacheDisabledReason(TR_J9SharedCache::AOT_DISABLED);
+   }
+
+void
 J9::OptionsPostRestore::openNewVlog(char *vLogFileName)
    {
    TR_VerboseLog::vlogAcquire();
@@ -558,6 +582,7 @@ J9::OptionsPostRestore::preProcessInternalCompilerOptions()
 void
 J9::OptionsPostRestore::postProcessInternalCompilerOptions()
    {
+   J9JavaVM *vm = _jitConfig->javaVM;
    // TODO: Based on whether the following is enabled, do necessary compensation
    // - disabling recompilation (optLevel=, inhibit recomp, etc)
    // - OMR::Options::_logFile (both global and subsets)
@@ -575,8 +600,33 @@ J9::OptionsPostRestore::postProcessInternalCompilerOptions()
    // Open vlog and rtLog if applicable
    openLogFilesIfNeeded();
 
+   // If -Xrs, -Xtrace, or disabling traps is specified post-restore,
+   // invalidate all method bodies
+   bool invalidateAll = false;
+   bool disableAOT = false;
+   if (!_disableTrapsPreCheckpoint
+       && (J9_ARE_ALL_BITS_SET(vm->sigFlags, J9_SIG_XRS_SYNC)
+           || TR::Options::getCmdLineOptions()->getOption(TR_NoResumableTrapHandler)
+           || TR::Options::getCmdLineOptions()->getOption(TR_DisableTraps)))
+      {
+      J9:Options::_xrsSync = J9_ARE_ALL_BITS_SET(vm->sigFlags, J9_SIG_XRS_SYNC);
+      invalidateAll = true;
+      disableAOT = true;
+      }
+   else if (!_compInfo->isVMMethodTraceEnabled()
+            && (vm->extendedRuntimeFlags & J9_EXTENDED_RUNTIME_METHOD_TRACE_ENABLED))
+      {
+      _compInfo->setVMMethodTraceEnabled(true);
+      invalidateAll = true;
+      disableAOT = true;
+      }
+
    // Invalidate method bodies if needed
-   invalidateCompiledMethodsIfNeeded();
+   invalidateCompiledMethodsIfNeeded(invalidateAll);
+
+   // Disable AOT compilation if needed
+   if (disableAOT)
+      disableAOTCompilation();
 
    // Set option to print code cache if necessary
    if (_argIndexPrintCodeCache > _argIndexDisablePrintCodeCache)
@@ -621,19 +671,9 @@ J9::OptionsPostRestore::processCompilerOptions()
    if (aotEnabled)
       aotEnabled = (_argIndexXaot >= _argIndexXnoaot);
 
-   // Ideally when disabling AOT, the vmThread->aotVMwithThreadInfo->_sharedCache
-   // would also be freed and set to NULL. However, it isn't obvious whether non
-   // compilation and java threads that could be running at the moment could make
-   // use of it, in which case there could be a race. To avoid this, it's safer
-   // to just leave _sharedCache alone; at worst some SCC API could be invoked,
-   // but not during a compilation as all compilation threads are suspended at
-   // this point, and so it won't impact AOT code.
    if (!aotEnabled)
       {
-      TR::Options::getAOTCmdLineOptions()->setOption(TR_NoLoadAOT);
-      TR::Options::getAOTCmdLineOptions()->setOption(TR_NoStoreAOT);
-      TR::Options::setSharedClassCache(false);
-      TR_J9SharedCache::setSharedCacheDisabledReason(TR_J9SharedCache::AOT_DISABLED);
+      disableAOTCompilation();
       }
 
    if (!jitEnabled)

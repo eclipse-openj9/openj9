@@ -1184,6 +1184,12 @@ TR::CompilationInfo::CompilationInfo(J9JITConfig *jitConfig) :
 #if defined(J9VM_OPT_CRIU_SUPPORT)
    _crMonitor = TR::Monitor::create("JIT-CheckpointRestoreMonitor");
    _checkpointStatus = TR_CheckpointStatus::NO_CHECKPOINT_IN_PROGRESS;
+
+   // TR::CompilationInfo is initialized in the JIT_INITIALIZED bootstrap
+   // stage, whereas J9_EXTENDED_RUNTIME_METHOD_TRACE_ENABLED is set in the
+   // TRACE_ENGINE_INITIALIZED stage, which happens first.
+   _vmMethodTraceEnabled = jitConfig->javaVM->extendedRuntimeFlags & J9_EXTENDED_RUNTIME_METHOD_TRACE_ENABLED;
+   _resetStartAndElapsedTime = false;
 #endif
    _iprofilerBufferArrivalMonitor = TR::Monitor::create("JIT-IProfilerBufferArrivalMonitor");
    _classUnloadMonitor = TR::MonitorTable::get()->getClassUnloadMonitor(); // by this time this variable is initialized
@@ -2890,18 +2896,18 @@ void TR::CompilationInfo::prepareForCheckpoint()
       acquireCompMonitor(vmThread);
       }
 
-   /* Check if the checkpoint is interrupted */
+   // Check if the checkpoint is interrupted
    if (shouldCheckpointBeInterrupted())
       return;
 
    TR_ASSERT_FATAL(!isCheckpointInProgress(), "Checkpoint already in progress!\n");
 
-   /* Compile methods for checkpoint */
+   // Compile methods for checkpoint
    if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableCompilationBeforeCheckpoint))
       if (!compileMethodsForCheckpoint(vmThread))
          return;
 
-   /* Suspend compilation threads for checkpoint */
+   // Suspend compilation threads for checkpoint
    if (!suspendCompThreadsForCheckpoint(vmThread))
       return;
 
@@ -2920,6 +2926,10 @@ void TR::CompilationInfo::prepareForRestore()
    if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCheckpointRestore))
       TR_VerboseLog::writeLineLocked(TR_Vlog_CHECKPOINT_RESTORE, "Preparing for restore");
 
+   // Inform the Sampler Thread to reset the start and elapsed time it maintains
+   setResetStartAndElapsedTime(true);
+
+   // Process the post-restore options
    J9::OptionsPostRestore::processOptionsPostRestore(vmThread, _jitConfig, this);
 
    {
@@ -2927,10 +2937,10 @@ void TR::CompilationInfo::prepareForRestore()
 
    TR_ASSERT_FATAL(readyForCheckpointRestore(), "Not ready for Checkpoint Restore\n");
 
-   /* Reset the checkpoint in progress flag. */
+   // Reset the checkpoint in progress flag.
    resetCheckpointInProgress();
 
-   /* Resume suspended compilation threads. */
+   // Resume suspended compilation threads.
    resumeCompilationThread();
    }
 
