@@ -165,6 +165,7 @@ final class Access implements JavaLangAccess {
 	}
 
 	/*[PR CMVC 199693] Prevent trusted method chain attack. */
+	@SuppressWarnings("removal")
 	public Thread newThreadWithAcc(Runnable runnable, AccessControlContext acc) {
 		return new Thread(runnable, acc);
 	}
@@ -290,6 +291,7 @@ final class Access implements JavaLangAccess {
 		}
 	}
 
+	@SuppressWarnings("removal")
 	public void invalidatePackageAccessCache() {
 /*[IF JAVA_SPEC_VERSION >= 10]*/
 		java.lang.SecurityManager.invalidatePackageAccessCache();
@@ -351,6 +353,7 @@ final class Access implements JavaLangAccess {
 		return ml.getServicesCatalog();
 	}
 
+	@SuppressWarnings("removal")
 	public void addNonExportedPackages(ModuleLayer ml) {
 		SecurityManager.addNonExportedPackages(ml);
 	}
@@ -692,6 +695,26 @@ final class Access implements JavaLangAccess {
 		asThreadLocal(carrierThreadlocal).setCarrierThreadLocal(carrierThreadLocalvalue);
 	}
 /*[ENDIF] JAVA_SPEC_VERSION >= 19 */
+
+/*[IF JAVA_SPEC_VERSION >= 21]*/
+	@Override
+	public String getLoaderNameID(ClassLoader loader) {
+		StringBuilder buffer = new StringBuilder();
+		String name = loader.getName();
+
+		if (name != null) {
+			buffer.append("'").append(name).append("'");
+		} else {
+			buffer.append(loader.getClass().getName());
+		}
+
+		if (false == loader instanceof jdk.internal.loader.BuiltinClassLoader) {
+			buffer.append(" @").append(Integer.toHexString(System.identityHashCode(loader)));
+		}
+
+		return buffer.toString();
+	}
+/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 
 /*[IF INLINE-TYPES]*/
 	@Override
