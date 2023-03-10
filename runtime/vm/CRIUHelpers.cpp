@@ -51,6 +51,7 @@ static void initializeCriuHooks(J9VMThread *currentThread);
 static BOOLEAN juRandomReseed(J9VMThread *currentThread, void *userData, const char **nlsMsgFormat);
 static BOOLEAN criuRestoreInitializeTrace(J9VMThread *currentThread, void *userData, const char **nlsMsgFormat);
 static BOOLEAN criuRestoreInitializeXrs(J9VMThread *currentThread, void *userData, const char **nlsMsgFormat);
+static BOOLEAN criuRestoreDisableSharedClassCache(J9VMThread *currentThread, void *userData, const char **nlsMsgFormat);
 static jvmtiIterationControl objectIteratorCallback(J9JavaVM *vm, J9MM_IterateObjectDescriptor *objectDesc, void *userData);
 
 BOOLEAN
@@ -321,6 +322,30 @@ criuRestoreInitializeXrs(J9VMThread *currentThread, void *userData, const char *
 }
 
 /**
+ * An internal JVM checkpoint hook to disable the shared class cache if the -Xshareclasses:disableOnRestore is present
+ *
+ * @param[in] currentThread vmThread token
+ * @param[in] userData J9InternalHookRecord pointer
+ *
+ * @return TRUE (there will never be an error in this function)
+*/
+static BOOLEAN
+criuRestoreDisableSharedClassCache(J9VMThread *currentThread, void *userData, const char **nlsMsgFormat)
+{
+	J9JavaVM *vm = currentThread->javaVM;
+
+	if (NULL != vm->checkpointState.restoreArgsList) {
+		if (FIND_AND_CONSUME_ARG(vm->checkpointState.restoreArgsList, EXACT_MATCH, VMOPT_XSHARECLASSES_DISABLEONRESTORE, NULL) >= 0) {
+			if (NULL != vm->sharedClassConfig) {
+				vm->sharedClassConfig->disableSharedClassCacheForCriuRestore(vm);
+			}
+		}
+	}
+
+	return TRUE;
+}
+
+/**
  * This cleans up the instanceObjects associated with each J9JavaVM->checkpointState.hookRecords,
  * the hookRecords and classIterationRestoreHookRecords as well if checkpointState.isNonPortableRestoreMode is TRUE.
  *
@@ -407,6 +432,8 @@ initializeCriuHooks(J9VMThread *currentThread)
 		addInternalJVMCheckpointHook(currentThread, TRUE, NULL, FALSE, criuRestoreInitializeTrace);
 		addInternalJVMCheckpointHook(currentThread, TRUE, NULL, FALSE, criuRestoreInitializeXrs);
 	}
+
+	addInternalJVMCheckpointHook(currentThread, TRUE, NULL, FALSE, criuRestoreDisableSharedClassCache);
 
 done:
 	Trc_VM_criu_initHooks_Exit(currentThread, vm->checkpointState.hookRecords,
