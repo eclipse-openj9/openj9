@@ -21,7 +21,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.  */
 
 /*
  * ===========================================================================
- * Copyright (c) 2022, 2022 IBM Corp. and others
+ * Copyright IBM Corp. and others 2022
  * ===========================================================================
  */
 

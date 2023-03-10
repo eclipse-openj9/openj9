@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2017, 2022 IBM Corp. and others
+Copyright IBM Corp. and others 2017
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -120,4 +120,4 @@ Videos and Presentations
 - [Under the hood of the Testarossa JIT Compiler](https://www.slideshare.net/MarkStoodley/under-the-hood-of-the-testarossa-jit-compiler)
 - [Class sharing In Eclipse OpenJ9](https://developer.ibm.com/tutorials/j-class-sharing-openj9/)
 
-Copyright (c) 2017, 2022 IBM Corp. and others
+Copyright IBM Corp. and others 2017
