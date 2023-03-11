@@ -1,4 +1,4 @@
-dnl Copyright (c) 2017, 2021 IBM Corp. and others
+dnl Copyright IBM Corp. and others 2017
 dnl
 dnl This program and the accompanying materials are made available under
 dnl the terms of the Eclipse Public License 2.0 which accompanies this

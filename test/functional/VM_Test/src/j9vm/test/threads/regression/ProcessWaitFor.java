@@ -1,7 +1,7 @@
 package j9vm.test.threads.regression;
 
 /*******************************************************************************
- * Copyright (c) 2008, 2021 IBM Corp. and others
+ * Copyright IBM Corp. and others 2008
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this

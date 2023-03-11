@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright IBM Corp. and others 1991
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -419,10 +419,8 @@ public class StructureStubGenerator {
 	}
 
 	private static void writeCopyright(PrintWriter writer) {
-		int year = Calendar.getInstance().get(Calendar.YEAR);
-
 		writer.println("/*******************************************************************************");
-		writer.println(" * Copyright (c) 1991, " + year + " IBM Corp. and others");
+		writer.println(" * Copyright IBM Corp. and others 1991");
 		writer.println(" *");
 		writer.println(" * This program and the accompanying materials are made available under");
 		writer.println(" * the terms of the Eclipse Public License 2.0 which accompanies this");

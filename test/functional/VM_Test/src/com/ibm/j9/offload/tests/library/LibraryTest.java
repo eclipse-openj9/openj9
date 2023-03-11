@@ -1,7 +1,7 @@
 package com.ibm.j9.offload.tests.library;
 
 /*******************************************************************************
- * Copyright (c) 2008, 2019 IBM Corp. and others
+ * Copyright IBM Corp. and others 2008
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this

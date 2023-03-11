@@ -14,7 +14,7 @@ import com.ibm.dtfj.java.JavaVMOption;
 import com.ibm.j9ddr.view.dtfj.image.J9DDRImageFactory;
 
 /*******************************************************************************
- * Copyright (c) 2009, 2014 IBM Corp. and others
+ * Copyright IBM Corp. and others 2009
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
