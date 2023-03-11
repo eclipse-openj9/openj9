@@ -2152,6 +2152,8 @@ bool TR_DataAccessAccelerator::genShiftRightIntrinsic(TR::TreeTop* treeTop, TR::
       failMsg = "Invalid precision. Source precision can not be greater than 15";
    else if (dstPrec > 15)
       failMsg = "Invalid precision. Destination precision can not be greater than 15";
+   else if (shiftAmount < 0)
+      failMsg = "Invalid shift amount. Shift amount can not be less than 0";
    else if (dstPrec < srcPrec - shiftAmount)
       failMsg = "Invalid shift amount. Precision is too low to contain shifted Packed Decimal";
 
