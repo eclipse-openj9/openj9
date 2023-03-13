@@ -1,6 +1,6 @@
 /*[INCLUDE-IF (JAVA_SPEC_VERSION >= 8) & (JAVA_SPEC_VERSION < 19)]*/
 /*******************************************************************************
- * Copyright (c) 1998, 2023 IBM Corp. and others
+ * Copyright IBM Corp. and others 1998
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this

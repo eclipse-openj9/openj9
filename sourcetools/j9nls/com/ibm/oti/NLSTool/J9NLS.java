@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2004, 2019 IBM Corp. and others
+ * Copyright IBM Corp. and others 2004
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -776,7 +776,7 @@ public class J9NLS implements NLSConstants {
 		public void writeHeader(String headerName, String moduleName) {
 			String header = headerName.replace('.', '_');
 			append("/*\n");
-			append(" * Copyright (c) 1991, 2017 IBM Corp. and others\n");
+			append(" * Copyright IBM Corp. and others 1991\n");
 			append(" *\n");
 			append(" * This program and the accompanying materials are made available under\n");
 			append(" * the terms of the Eclipse Public License 2.0 which accompanies this\n");

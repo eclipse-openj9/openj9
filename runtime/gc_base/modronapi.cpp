@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2023 IBM Corp. and others
+ * Copyright IBM Corp. and others 1991
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1116,7 +1116,10 @@ j9gc_prepare_for_checkpoint(J9VMThread *vmThread)
 		verboseGCManager->prepareForCheckpoint(env);
 	}
 
+	/* Threads being terminated may trigger a hook that may acquire exclusive VM access via JVMTI callback */
+	releaseVMAccess(vmThread);
 	extensions->configuration->adjustGCThreadCountForCheckpoint(env);
+	acquireVMAccess(vmThread);
 }
 
 BOOLEAN

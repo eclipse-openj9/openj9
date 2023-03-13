@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2017, 2021 IBM Corp. and others
+Copyright IBM Corp. and others 2017
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -69,7 +69,6 @@ Following these guidelines will help us merge your pull requests smoothly:
    copyright/license requirements outlined below.
 
 6. Ensure your changes are compatible with the checks that will be applied to your pull request.
-   - The second year in each copyright notice should be the current year.
    - Text files should use the proper line-endings and there should be no unwanted whitespace. You can enable the sample `pre-commit` hook created by `git init` to ensure you adhere to expectations.
 
 ## Building and testing
@@ -224,7 +223,7 @@ under the same license.
 The template for the copyright notice and dual-license is as follows:
 ```
 /*******************************************************************************
- * Copyright (c) %s, %s IBM Corp. and others
+ * Copyright IBM Corp. and others %s
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this

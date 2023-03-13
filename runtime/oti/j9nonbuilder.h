@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2023 IBM Corp. and others
+ * Copyright IBM Corp. and others 1991
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -4120,6 +4120,7 @@ typedef struct J9CRIUCheckpointState {
 	BOOLEAN isCheckPointEnabled;
 	BOOLEAN isCheckPointAllowed;
 	BOOLEAN isNonPortableRestoreMode;
+	BOOLEAN isJdwpEnabled;
 	struct J9DelayedLockingOpertionsRecord *delayedLockingOperationsRoot;
 	struct J9Pool *hookRecords;
 	struct J9Pool *classIterationRestoreHookRecords;

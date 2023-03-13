@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright IBM Corp. and others 2001
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,8 +27,6 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.Calendar;
-import java.util.GregorianCalendar;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
@@ -308,14 +306,8 @@ public class ConfigurationImpl implements IConfiguration, ISinglePredicateEvalua
 		return platform;
 	}
 
-	String rawCopyrightNotice;
-
 	public String getRawCopyrightNotice() throws UMAException {
-		if (rawCopyrightNotice == null) {
-			GregorianCalendar calendar = new GregorianCalendar();
-			rawCopyrightNotice = "Copyright (c) 2000, " + calendar.get(Calendar.YEAR) + " IBM Corp. and others";
-		}
-		return rawCopyrightNotice;
+		return "Copyright IBM Corp. and others 2000";
 	}
 
 	String makefileCopyrightNotice;

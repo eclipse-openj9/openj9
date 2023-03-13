@@ -12,7 +12,7 @@ import com.ibm.dtfj.image.ImageSection;
 import com.ibm.j9ddr.view.dtfj.image.J9DDRImageFactory;
 
 /*******************************************************************************
- * Copyright (c) 2010, 2014 IBM Corp. and others
+ * Copyright IBM Corp. and others 2010
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
