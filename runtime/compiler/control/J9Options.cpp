@@ -3182,12 +3182,6 @@ bool J9::Options::feLatePostProcess(void * base, TR::OptionSet * optionSet)
       TR::Options::_coldUpgradeSampleThreshold = 10;
       }
 
-#if defined(TR_HOST_ARM64)
-   // ArraySet support is not available in AArch64 yet.
-   // OpenJ9 issue #6443 tracks the work to enable.
-   //
-   self()->setOption(TR_DisableArraySetOpts);
-#endif
    if (TR::Options::_catchSamplingSizeThreshold == -1) // not yet set
       {
       TR::Options::_catchSamplingSizeThreshold = 1100; // in number of nodes
