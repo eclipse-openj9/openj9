@@ -294,8 +294,37 @@ define({CINTERP},{
     J LABEL_NAME(L_CINTERP)
 })
 
-dnl Runtime helpers
+dnl Helpers that are at a method invocation point.
+dnl
+dnl See definition of SAVE_C_VOLATILE_REGS in zhelpers.m4
+dnl for details.
 
+define({METHOD_INVOCATION})
+
+PICBUILDER_SLOW_PATH_ONLY_HELPER(jitResolveInterfaceMethod,2)
+PICBUILDER_SLOW_PATH_ONLY_HELPER(jitResolveSpecialMethod,3)
+PICBUILDER_SLOW_PATH_ONLY_HELPER(jitResolveStaticMethod,3)
+PICBUILDER_SLOW_PATH_ONLY_HELPER(jitResolveVirtualMethod,2)
+
+SLOW_PATH_ONLY_HELPER(jitRetranslateMethod,3)
+SLOW_PATH_ONLY_HELPER(jitInduceOSRAtCurrentPC,0)
+SLOW_PATH_ONLY_HELPER(jitInduceOSRAtCurrentPCAndRecompile,0)
+
+dnl jitStackOverflow is special case in that the frame size argument
+dnl is implicit (in the register file) rather than being passed as
+dnl an argument in the usual way.
+
+SLOW_PATH_ONLY_HELPER_NO_RETURN_VALUE(jitStackOverflow,0)
+
+
+dnl Helpers that are not at a method invocation point.
+dnl
+dnl See definition of SAVE_C_VOLATILE_REGS in zhelpers.m4
+dnl for details.
+
+undefine({METHOD_INVOCATION})
+
+PICBUILDER_DUAL_MODE_HELPER(jitLookupInterfaceMethod,3)
 DUAL_MODE_HELPER(jitNewValue,1)
 DUAL_MODE_HELPER(jitNewValueNoZeroInit,1)
 DUAL_MODE_HELPER(jitNewObject,1)
@@ -305,13 +334,6 @@ DUAL_MODE_HELPER(jitANewArrayNoZeroInit,2)
 DUAL_MODE_HELPER(jitNewArray,2)
 DUAL_MODE_HELPER(jitNewArrayNoZeroInit,2)
 SLOW_PATH_ONLY_HELPER(jitAMultiNewArray,3)
-
-dnl jitStackOverflow is special case in that the frame size argument
-dnl is implicit (in the register file) rather than being passed as
-dnl an argument in the usual way.
-
-SLOW_PATH_ONLY_HELPER_NO_RETURN_VALUE(jitStackOverflow,0)
-
 SLOW_PATH_ONLY_HELPER_NO_RETURN_VALUE(jitCheckAsyncMessages,0)
 DUAL_MODE_HELPER_NO_RETURN_VALUE(jitCheckCast,2)
 DUAL_MODE_HELPER_NO_RETURN_VALUE(jitCheckCastForArrayStore,2)
@@ -359,7 +381,6 @@ dnl Only called from PicBuilder
 PICBUILDER_FAST_PATH_ONLY_HELPER(jitMethodIsNative,1)
 PICBUILDER_FAST_PATH_ONLY_HELPER(jitMethodIsSync,1)
 PICBUILDER_FAST_PATH_ONLY_HELPER(jitResolvedFieldIsVolatile,3)
-PICBUILDER_DUAL_MODE_HELPER(jitLookupInterfaceMethod,3)
 PICBUILDER_SLOW_PATH_ONLY_HELPER(jitResolveString,3)
 PICBUILDER_SLOW_PATH_ONLY_HELPER(jitResolveClass,3)
 PICBUILDER_SLOW_PATH_ONLY_HELPER(jitResolveClassFromStaticField,3)
@@ -367,10 +388,6 @@ PICBUILDER_SLOW_PATH_ONLY_HELPER(jitResolveField,3)
 PICBUILDER_SLOW_PATH_ONLY_HELPER(jitResolveFieldSetter,3)
 PICBUILDER_SLOW_PATH_ONLY_HELPER(jitResolveStaticField,3)
 PICBUILDER_SLOW_PATH_ONLY_HELPER(jitResolveStaticFieldSetter,3)
-PICBUILDER_SLOW_PATH_ONLY_HELPER(jitResolveInterfaceMethod,2)
-PICBUILDER_SLOW_PATH_ONLY_HELPER(jitResolveSpecialMethod,3)
-PICBUILDER_SLOW_PATH_ONLY_HELPER(jitResolveStaticMethod,3)
-PICBUILDER_SLOW_PATH_ONLY_HELPER(jitResolveVirtualMethod,2)
 PICBUILDER_SLOW_PATH_ONLY_HELPER(jitResolveMethodType,3)
 PICBUILDER_SLOW_PATH_ONLY_HELPER(jitResolveMethodHandle,3)
 PICBUILDER_SLOW_PATH_ONLY_HELPER(jitResolveInvokeDynamic,3)
@@ -388,7 +405,6 @@ dnl Recompilation helpers
 
 SLOW_PATH_ONLY_HELPER(jitRetranslateCaller,2)
 SLOW_PATH_ONLY_HELPER(jitRetranslateCallerWithPreparation,3)
-SLOW_PATH_ONLY_HELPER(jitRetranslateMethod,3)
 
 dnl Exception throw helpers
 
@@ -422,8 +438,6 @@ FAST_PATH_ONLY_HELPER_NO_RETURN_VALUE(jitWriteBarrierStoreMetronome,3)
 
 dnl Misc
 
-SLOW_PATH_ONLY_HELPER(jitInduceOSRAtCurrentPC,0)
-SLOW_PATH_ONLY_HELPER(jitInduceOSRAtCurrentPCAndRecompile,0)
 SLOW_PATH_ONLY_HELPER(jitNewInstanceImplAccessCheck,3)
 SLOW_PATH_ONLY_HELPER_NO_EXCEPTION_NO_RETURN_VALUE(jitCallCFunction,3)
 SLOW_PATH_ONLY_HELPER_NO_EXCEPTION_NO_RETURN_VALUE(jitCallJitAddPicToPatchOnClassUnload,2)

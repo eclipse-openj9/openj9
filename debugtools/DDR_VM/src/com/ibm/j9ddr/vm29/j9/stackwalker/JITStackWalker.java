@@ -69,6 +69,7 @@ import com.ibm.j9ddr.vm29.structure.J9JITFrame;
 import com.ibm.j9ddr.vm29.structure.J9SFJ2IFrame;
 import com.ibm.j9ddr.vm29.structure.J9SFNativeMethodFrame;
 import com.ibm.j9ddr.vm29.structure.J9SFSpecialFrame;
+import com.ibm.j9ddr.vm29.structure.J9SFStackFrame;
 import com.ibm.j9ddr.vm29.types.U8;
 import com.ibm.j9ddr.vm29.types.UDATA;
 
@@ -648,7 +649,7 @@ public class JITStackWalker
 		{
 			U64Pointer base = U64Pointer.cast(walkState.walkedEntryLocalStorage.jitFPRegisterStorageBase());
 
-			if (J9BuildFlags.arch_s390) {
+			if (J9BuildFlags.arch_s390 && (J9SFStackFrame.J9SF_CompactVectorState == 0)) {
 				/* 390 uses FPR0/2/4/6 for arguments, so double fpParmNumber to get the right register */
 				fpParmNumber = fpParmNumber.add(fpParmNumber);
 				/* On 390, either vector or floating point registers are preserved in the ELS, not both.

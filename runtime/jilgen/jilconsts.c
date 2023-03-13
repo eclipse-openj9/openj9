@@ -339,7 +339,6 @@ writeConstants(OMRPortLibrary *OMRPORTLIB, IDATA fd)
 			/* S390 */
 			writeConstant(OMRPORTLIB, fd, "J9TR_cframe_jitGPRs", offsetof(J9CInterpreterStackFrame, jitGPRs)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_cframe_jitFPRs", offsetof(J9CInterpreterStackFrame, jitFPRs)) |
-			writeConstant(OMRPORTLIB, fd, "J9TR_cframe_jitVRs", offsetof(J9CInterpreterStackFrame, jitVRs)) |
 #if defined(J9ZOS390)
 			/* Z/OS */
 			writeConstant(OMRPORTLIB, fd, "J9TR_cframe_argRegisterSave", offsetof(J9CInterpreterStackFrame, argRegisterSave)) |

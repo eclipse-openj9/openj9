@@ -488,8 +488,9 @@ define({JIT_GPR_SAVE_OFFSET},{eval(STACK_BIAS+J9TR_cframe_jitGPRs+(($1)*J9TR_poi
 define({JIT_GPR_SAVE_SLOT},{JIT_GPR_SAVE_OFFSET($1)(CSP)})
 define({JIT_FPR_SAVE_OFFSET},{eval(STACK_BIAS+J9TR_cframe_jitFPRs+(($1)*8))})
 define({JIT_FPR_SAVE_SLOT},{JIT_FPR_SAVE_OFFSET($1)(CSP)})
-define({JIT_VR_SAVE_OFFSET},{eval(STACK_BIAS+J9TR_cframe_jitVRs+(($1)*16))})
+define({JIT_VR_SAVE_OFFSET},{eval(STACK_BIAS+J9TR_cframe_jitFPRs+(($1)*16))})
 define({JIT_VR_SAVE_SLOT},{JIT_VR_SAVE_OFFSET($1)(CSP)})
+
 
 define({SAVE_LR},{ST_GPR r14,JIT_GPR_SAVE_SLOT(14)})
 define({RESTORE_LR},{L_GPR r14,JIT_GPR_SAVE_SLOT(14)})
@@ -638,58 +639,7 @@ define({RESTORE_C_NONVOLATILE_REGS}, )
 
 },{
 
-define({SAVE_C_VOLATILE_FPRS},{
-    std fpr0,JIT_FPR_SAVE_OFFSET(0)(CSP)
-    std fpr1,JIT_FPR_SAVE_OFFSET(1)(CSP)
-    std fpr2,JIT_FPR_SAVE_OFFSET(2)(CSP)
-    std fpr3,JIT_FPR_SAVE_OFFSET(3)(CSP)
-    std fpr5,JIT_FPR_SAVE_OFFSET(5)(CSP)
-    std fpr7,JIT_FPR_SAVE_OFFSET(7)(CSP)
-    std fpr8,JIT_FPR_SAVE_OFFSET(8)(CSP)
-    std fpr9,JIT_FPR_SAVE_OFFSET(9)(CSP)
-    std fpr10,JIT_FPR_SAVE_OFFSET(10)(CSP)
-    std fpr11,JIT_FPR_SAVE_OFFSET(11)(CSP)
-    std fpr12,JIT_FPR_SAVE_OFFSET(12)(CSP)
-    std fpr13,JIT_FPR_SAVE_OFFSET(13)(CSP)
-    std fpr14,JIT_FPR_SAVE_OFFSET(14)(CSP)
-    std fpr15,JIT_FPR_SAVE_OFFSET(15)(CSP)
-})
 
-define({RESTORE_C_VOLATILE_FPRS},{
-    ld fpr0,JIT_FPR_SAVE_OFFSET(0)(CSP)
-    ld fpr1,JIT_FPR_SAVE_OFFSET(1)(CSP)
-    ld fpr2,JIT_FPR_SAVE_OFFSET(2)(CSP)
-    ld fpr3,JIT_FPR_SAVE_OFFSET(3)(CSP)
-    ld fpr5,JIT_FPR_SAVE_OFFSET(5)(CSP)
-    ld fpr7,JIT_FPR_SAVE_OFFSET(7)(CSP)
-    ld fpr8,JIT_FPR_SAVE_OFFSET(8)(CSP)
-    ld fpr9,JIT_FPR_SAVE_OFFSET(9)(CSP)
-    ld fpr10,JIT_FPR_SAVE_OFFSET(10)(CSP)
-    ld fpr11,JIT_FPR_SAVE_OFFSET(11)(CSP)
-    ld fpr12,JIT_FPR_SAVE_OFFSET(12)(CSP)
-    ld fpr13,JIT_FPR_SAVE_OFFSET(13)(CSP)
-    ld fpr14,JIT_FPR_SAVE_OFFSET(14)(CSP)
-    ld fpr15,JIT_FPR_SAVE_OFFSET(15)(CSP)
-})
-
-dnl No need to save/restore non-volatile FPRs.
-dnl The stack walker will never need to read or
-dnl modify them (no preserved FPRs in the JIT
-dnl private linkage).
-dnl The exception to this is fpr4 and fpr6, which are JIT
-dnl argument registers which may need to be seen by the
-dnl decompiler.  When vector registers are in use, they
-dnl will already have been preserved.
-dnl If vector registers are not in use, it's harmless to
-dnl preserve them in the FPR save area(which is distinct
-dnl from the VR save area).
-
-define({SAVE_C_NONVOLATILE_REGS},{
-    std fpr4,JIT_FPR_SAVE_OFFSET(4)(CSP)
-    std fpr6,JIT_FPR_SAVE_OFFSET(6)(CSP)
-})
-
-define({RESTORE_C_NONVOLATILE_REGS}, )
 
 })
 
@@ -701,24 +651,30 @@ END_CURRENT
 })
 
 define({SAVE_C_VOLATILE_REGS},{
-    L_GPR r8,J9TR_VMThread_javaVM(J9VMTHREAD)
-    l r8,J9TR_JavaVM_extendedRuntimeFlags(r8)
-    lhi r9,J9TR_J9_EXTENDED_RUNTIME_USE_VECTOR_REGISTERS
-    nr r9,r8
-    jz LABEL_NAME(CONCAT(L_SF,SYM_COUNT))
-    SAVE_C_VOLATILE_VRS
-    J LABEL_NAME(CONCAT(L_SV,SYM_COUNT))
+    ifdef({METHOD_INVOCATION},{
+    },{
+        L_GPR r8,J9TR_VMThread_javaVM(J9VMTHREAD)
+        l r8,J9TR_JavaVM_extendedRuntimeFlags(r8)
+        lhi r9,J9TR_J9_EXTENDED_RUNTIME_USE_VECTOR_REGISTERS
+        nr r9,r8
+        jz LABEL_NAME(CONCAT(L_SF,SYM_COUNT))
+        SAVE_C_VOLATILE_VRS
+        J LABEL_NAME(CONCAT(L_SV,SYM_COUNT))
 PLACE_LABEL(CONCAT(L_SF,SYM_COUNT))
+    })
     SAVE_C_VOLATILE_FPRS
 PLACE_LABEL(CONCAT(L_SV,SYM_COUNT))
 })
 
 define({RESTORE_C_VOLATILE_REGS},{
-    nr r9,r8
-    jz LABEL_NAME(CONCAT(L_RF,SYM_COUNT))
-    RESTORE_C_VOLATILE_VRS
-    J LABEL_NAME(CONCAT(L_RV,SYM_COUNT))
+    ifdef({METHOD_INVOCATION},{
+    },{
+        nr r9,r8
+        jz LABEL_NAME(CONCAT(L_RF,SYM_COUNT))
+        RESTORE_C_VOLATILE_VRS
+        J LABEL_NAME(CONCAT(L_RV,SYM_COUNT))
 PLACE_LABEL(CONCAT(L_RF,SYM_COUNT))
+    })
     RESTORE_C_VOLATILE_FPRS
 PLACE_LABEL(CONCAT(L_RV,SYM_COUNT))
 })
