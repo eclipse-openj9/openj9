@@ -2271,7 +2271,8 @@ bool TR_DataAccessAccelerator::genShiftLeftIntrinsic(TR::TreeTop* treeTop, TR::N
       TR::DebugCounter::incStaticDebugCounter(comp(),
                                                TR::DebugCounter::debugCounterName(comp(),
                                                                                   "DAA/rejected/shl"));
-      return printInliningStatus(false, callNode, failMsg);
+      printf("%s\n", failMsg);
+      return printInliningStatus(false, callNode, failMsg); // TODO: investigate why this doesn't work
       }
 
    TR::DebugCounter::incStaticDebugCounter(comp(),
