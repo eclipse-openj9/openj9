@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2022 IBM Corp. and others
+ * Copyright IBM Corp. and others 2018
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2750,7 +2750,7 @@ J9::Z::TreeEvaluator::generateVectorPackedToBinaryConversion(TR::Node * node, TR
    TR_ASSERT( op == TR::InstOpCode::VCVB || op == TR::InstOpCode::VCVBG,"unexpected opcode in gen vector pd2i\n");
    bool isPDToLong = (op == TR::InstOpCode::VCVBG);
 
-   TR::Register *rResultReg = (isPDToLong) ? cg->allocateRegister() : cg->allocateRegister();
+   TR::Register *rResultReg = cg->allocateRegister();
 
    // evaluate pdload
    TR::Node *pdValueNode = node->getFirstChild();
@@ -6362,14 +6362,14 @@ J9::Z::TreeEvaluator::pdshrVectorEvaluatorHelper(TR::Node *node, TR::CodeGenerat
               "expecting a <= 4 size integral constant PD shift amount\n");
 
    int32_t shiftAmount = (int32_t)shiftAmountNode->get32bitIntegralValue();
-   TR_ASSERT((shiftAmount >=0 || shiftAmount <= 31),"unexpected TR::pdshr shift amount of %d\n",shiftAmount);
+   TR_ASSERT((shiftAmount >=0 && shiftAmount <= 31), "unexpected TR::pdshr shift amount of %d\n", shiftAmount);
 
    //set shift amount and round amount
    shiftAmount *= -1;                 // right shift is negative
    shiftAmount &= 0x0000007F;         // clear off top bits
 
    TR::Node *roundAmountNode = node->getChild(2);
-   TR_ASSERT( roundAmountNode->getOpCode().isLoadConst(),"excepting pdshr round amount to be a const\n");
+   TR_ASSERT(roundAmountNode->getOpCode().isLoadConst(), "excepting pdshr round amount to be a const\n");
    int32_t roundAmount = roundAmountNode->get32bitIntegralValue();
    TR_ASSERT(roundAmount == 0 || roundAmount == 5, "round amount should be 0 or 5 and not %d\n",roundAmount);
    if (roundAmount)
