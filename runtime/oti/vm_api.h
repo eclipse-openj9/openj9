@@ -555,23 +555,27 @@ jvmRestoreHooks(J9VMThread *currentThread);
  * ExclusiveVMAccess is required since J9InternalHookRecord holds live object references
  * and GC is not allowed while running these hook functions.
  *
- * @param currentThread vmthread token
+ * @param[in] currentThread vmthread token
+ * @param[in/out] nlsMsgFormat an NLS message
+ *
  * @return BOOLEAN TRUE if no error, otherwise FALSE
  */
 BOOLEAN
-runInternalJVMCheckpointHooks(J9VMThread *currentThread);
+runInternalJVMCheckpointHooks(J9VMThread *currentThread, const char **nlsMsgFormat);
 
 /**
  * @brief This runs the restore hook function, and cleanup.
  * ExclusiveVMAccess is required since J9InternalHookRecord hold live object references
  * and GC are not allowed while running these hook functions.
  *
- * @param currentThread vmthread token
- * @param isRestore If FALSE, run the hook specified for checkpoint, otherwise run the hook specified for restore
+ * @param[in] currentThread vmthread token
+ * @param[in] isRestore If FALSE, run the hook specified for checkpoint, otherwise run the hook specified for restore
+ * @param[in/out] nlsMsgFormat an NLS message
+ *
  * @return BOOLEAN TRUE if no error, otherwise FALSE
  */
 BOOLEAN
-runInternalJVMRestoreHooks(J9VMThread *currentThread);
+runInternalJVMRestoreHooks(J9VMThread *currentThread, const char **nlsMsgFormat);
 
 /**
  * @brief This function runs the identity operations that were delayed
