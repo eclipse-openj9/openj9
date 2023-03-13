@@ -36,6 +36,7 @@
 #include "control/Options.hpp"
 #include "control/OptionsPostRestore.hpp"
 #include "control/J9Recompilation.hpp"
+#include "env/J9PersistentInfo.hpp"
 #include "env/SystemSegmentProvider.hpp"
 #include "env/RawAllocator.hpp"
 #include "env/Region.hpp"
@@ -306,7 +307,11 @@ J9::OptionsPostRestore::processJitServerOptions()
       }
    else
       {
-      // TODO: Disable JITServer
+      _compInfo->getPersistentInfo()->setClientUID(0);
+      _compInfo->getPersistentInfo()->setServerUID(0);
+      _jitConfig->clientUID = 0;
+      _jitConfig->serverUID = 0;
+      J9::PersistentInfo::_remoteCompilationMode = JITServer::NONE;
       }
 #endif // defined(J9VM_OPT_JITSERVER)
    }
