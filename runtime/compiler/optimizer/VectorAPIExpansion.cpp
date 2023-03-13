@@ -1889,13 +1889,6 @@ TR::Node *TR_VectorAPIExpansion::compareIntrinsicHandler(TR_VectorAPIExpansion *
    return naryIntrinsicHandler(opt, treeTop, node, elementType, vectorLength, numLanes, mode, 2, Compare);
    }
 
-TR::Node *TR_VectorAPIExpansion::convertIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node,
-                                                         TR::DataType elementType, TR::VectorLength vectorLength, int32_t numLanes,
-                                                         handlerMode mode)
-   {
-   return NULL;
-   }
-
 TR::ILOpCodes TR_VectorAPIExpansion::ILOpcodeFromVectorAPIOpcode(int32_t vectorAPIOpCode, TR::DataType elementType,
                                                                  TR::VectorLength vectorLength, vapiOpCodeType opCodeType, bool withMask)
    {
@@ -2180,7 +2173,6 @@ TR_VectorAPIExpansion::methodTable[] =
    {binaryIntrinsicHandler,               Vector,  {Unknown, Unknown, Unknown, ElementType, NumLanes, Vector, Vector, Mask}},   // jdk_internal_vm_vector_VectorSupport_binaryOp
    {blendIntrinsicHandler,                Vector,  {Unknown, Unknown, ElementType, NumLanes, Vector, Vector, Vector, Unknown}}, // jdk_internal_vm_vector_VectorSupport_blend
    {compareIntrinsicHandler,              Mask,    {Unknown, Unknown, Unknown, ElementType, NumLanes, Vector, Vector, Mask}},   // jdk_internal_vm_vector_VectorSupport_compare
-   {convertIntrinsicHandler,              Mask,    {Unknown, Unknown, Unknown, ElementType, NumLanes, Vector, Vector, Mask}},   // jdk_internal_vm_vector_VectorSupport_convert
    {fromBitsCoercedIntrinsicHandler,      Unknown, {Unknown, ElementType, NumLanes, Unknown, Unknown, Unknown}},                // jdk_internal_vm_vector_VectorSupport_fromBitsCoerced
    {maskReductionCoercedIntrinsicHandler, Scalar,  {Unknown, Unknown, ElementType, NumLanes, Mask}},                            // jdk_internal_vm_vector_VectorSupport_maskReductionCoerced
    {reductionCoercedIntrinsicHandler,     Scalar,  {Unknown, Unknown, Unknown, ElementType, NumLanes, Vector, Mask}},           // jdk_internal_vm_vector_VectorSupport_reductionCoerced
