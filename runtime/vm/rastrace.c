@@ -26,8 +26,6 @@
 #include <string.h>
 #include "vm_internal.h"
 
-
-#define VMOPT_XTRACE		 "-Xtrace"
 #define VMOPT_XTRACE_NONE	 "-Xtrace:none"
 
 #define VMOPT_XTRACE_DEFAULT VMOPT_XTRACE

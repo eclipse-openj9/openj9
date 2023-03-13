@@ -119,6 +119,7 @@ extern "C" {
 #define FIND_NEXT_ARG_IN_ARGS_FORWARD(argsArray, match, optionName, optionValue, lastArgIndex) vm->internalVMFunctions->findArgInVMArgs(vm->portLibrary, (argsArray), ((match | ((lastArgIndex+1) << STOP_AT_INDEX_SHIFT)) | SEARCH_FORWARD), optionName, optionValue, FALSE)
 #define FIND_AND_CONSUME_VMARG_FORWARD(match, optionName, optionValue) vm->internalVMFunctions->findArgInVMArgs(vm->portLibrary, vm->vmArgsArray, (match | SEARCH_FORWARD), optionName, optionValue, TRUE)
 #define FIND_AND_CONSUME_ARG_FORWARD(argsArray, match, optionName, optionValue) vm->internalVMFunctions->findArgInVMArgs(vm->portLibrary, (argsArray), (match | SEARCH_FORWARD), optionName, optionValue, TRUE)
+#define FIND_AND_CONSUME_NEXT_ARG_FORWARD(argsArray, match, optionName, optionValue, lastArgIndex) vm->internalVMFunctions->findArgInVMArgs(vm->portLibrary, (argsArray), ((match | ((lastArgIndex+1) << STOP_AT_INDEX_SHIFT)) | SEARCH_FORWARD), optionName, optionValue, TRUE)
 
 /* REMOVE - FOR BACKWARDS COMPATIBILITY */
 #define FIND_AND_CONSUME_VMARG2(match, optionName, optionValue) vm->internalVMFunctions->findArgInVMArgs(vm->portLibrary, vm->vmArgsArray, match, optionName, optionValue, TRUE)
@@ -666,6 +667,8 @@ enum INIT_STAGE {
 #define JAVA_BASE_MODULE "java.base"
 
 #define SYSPROP_COM_SUN_MANAGEMENT "-Dcom.sun.management."
+
+#define VMOPT_XTRACE "-Xtrace"
 
 #ifdef J9VM_INTERP_VERBOSE
 

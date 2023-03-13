@@ -44,14 +44,12 @@
 
 #include <string.h>
 
-#define VMOPT_XTRACE            "-Xtrace"
-
 #define UT_MAX_OPTS 55
 
 #define DUMP_CALLER_NAME "-Xtrace:trigger"
 
 static void displayTraceHelp (J9JavaVM *vm);
-static IDATA initializeTraceOptions (J9JavaVM *vm, char* opts[]);
+static IDATA initializeTraceOptions(J9JavaVM *vm, J9VMInitArgs *vmArgs, char *opts[]);
 static UtInterface *initializeUtInterface(void);
 jint JNICALL JVM_OnUnload(JavaVM *vm, void *reserved);
 static void requestTraceCleanup(J9JavaVM* vm, J9VMThread * vmThread);
@@ -59,6 +57,9 @@ static void reportVMTermination (J9JavaVM* vm, J9VMThread * vmThread);
 jint JNICALL JVM_OnLoad(JavaVM *vm, char *options, void *reserved);
 static IDATA parseTraceOptions (J9JavaVM *vm,const char *optionString, IDATA optionsLength);
 static omr_error_t runtimeSetTraceOptions(J9VMThread * thr,const char * traceOptions);
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+static BOOLEAN criuRestoreInitializeTrace(J9VMThread *thr);
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
 static void hookThreadAboutToStart (J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData);
 static void hookVmInitialized (J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData);
@@ -146,7 +147,12 @@ static struct RasTriggerAction j9vmTriggerActions[] =
 
 #define NUM_J9VM_TRIGGER_ACTIONS (sizeof(j9vmTriggerActions) / sizeof(j9vmTriggerActions[0]))
 
-static const struct RasTriggerType methodTriggerType = { "method", processTriggerMethodClause, FALSE };
+static const struct RasTriggerType methodTriggerType = {"method", processTriggerMethodClause,
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+	TRUE};
+#else /* defined(J9VM_OPT_CRIU_SUPPORT) */
+	FALSE};
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
 /* Global lock for J9VM trace operations. */
 omrthread_monitor_t j9TraceLock = NULL;
@@ -161,47 +167,117 @@ static UtModuleInterface    omrUtModuleIntfS;
  */
 J9JavaVM* globalVM;
 
+/**
+ * A helper method for VM startup initialization and CRIU restore using an options file.
+ *
+ * @param[in] vm pointer to the J9JavaVM
+ * @param[in] tempThr pointer to UtThreadData
+ * @param[in] vmArgs a J9VMInitArgs
+ * @param[in] isCRIURestore if it is VM startup initialization or CRIU restore
+ *
+ * @return return J9VMDLLMAIN_OK if success, otherwise failures
+ */
+static IDATA
+traceInitializationHelper(J9JavaVM *vm, UtThreadData **tempThr, J9VMInitArgs *vmArgs, BOOLEAN isCRIURestore)
+{
+	IDATA returnVal = J9VMDLLMAIN_OK;
+	char *opts[UT_MAX_OPTS] = {0};
+	int i = 0;
+	PORT_ACCESS_FROM_JAVAVM(vm);
+
+	returnVal = initializeTraceOptions(vm, vmArgs, opts);
+	if (J9VMDLLMAIN_OK != returnVal) {
+		goto done;
+	}
+
+	for (i = 0; NULL != opts[i]; i += 2) {
+		if (0 == j9_cmdla_stricmp(opts[i], "HELP")) {
+			displayTraceHelp(vm);
+			returnVal = J9VMDLLMAIN_SILENT_EXIT_VM;
+			goto done;
+		}
+	}
+
+	if (!isCRIURestore) {
+		registerj9trc_auxWithTrace(((RasGlobalStorage *)vm->j9rasGlobalStorage)->utIntf, NULL);
+		if (NULL == j9trc_aux_UtModuleInfo.intf) {
+			dbg_err_printf(1, PORTLIB, "<UT> Trace engine failed to register j9trc_aux module, trace not enabled\n");
+			j9nls_printf(PORTLIB, J9NLS_ERROR | J9NLS_STDERR, J9NLS_TRC_TRACE_INIT_FAILED);
+			returnVal = J9VMDLLMAIN_FAILED;
+			goto done;
+		}
+	}
+
+	if (OMR_ERROR_NONE != setOptions(tempThr, (const char **)opts, FALSE)) {
+		displayTraceHelp(vm);
+		returnVal = J9VMDLLMAIN_SILENT_EXIT_VM;
+		goto done;
+	}
+
+	/* needs to occur after setOptions because setOptions sets the default opts */
+	for (i = 0; NULL != opts[i]; i += 2) {
+		if (0 == j9_cmdla_stricmp(opts[i], "WHAT")) {
+			printTraceWhat(PORTLIB);
+			/* just print this out once then carry on, do not exit vm */
+			break;
+		}
+	}
+
+done:
+	/* free up allocated options */
+	for (i = 0; NULL != opts[i]; i++) {
+		j9mem_free_memory(opts[i]);
+	}
+
+	return returnVal;
+}
+
 IDATA
 J9VMDllMain(J9JavaVM *vm, IDATA stage, void *reserved)
 {
 	IDATA returnVal = J9VMDLLMAIN_OK;
 	omr_error_t rc = OMR_ERROR_NONE;
 
-	char *ignore[] = { "INITIALIZATION", "METHODS", "WHAT", "STACKDEPTH", "STACKCOMPRESSIONLEVEL", NULL };
-	char *opts[UT_MAX_OPTS];
-	int i;
+	char *ignore[] = {"INITIALIZATION", "METHODS", "WHAT", "STACKDEPTH", "STACKCOMPRESSIONLEVEL", NULL};
+	char *opts[UT_MAX_OPTS] = {0};
+	int i = 0;
 	UtThreadData **tempThr = NULL;
-	J9VMThread *thr;
-	RasGlobalStorage *tempRasGbl;
-	void ** tempGbl;
-	char tempPath[MAX_IMAGE_PATH_LENGTH];
+	J9VMThread *thr = NULL;
+	RasGlobalStorage *tempRasGbl = (RasGlobalStorage *)vm->j9rasGlobalStorage;
+	void **tempGbl = NULL;
+	char tempPath[MAX_IMAGE_PATH_LENGTH] = {0};
 	char *javahome = NULL;
-	J9VMSystemProperty * javaHomeProperty = NULL;
-	UDATA getPropertyResult;
-	J9HookInterface** hook = vm->internalVMFunctions->getVMHookInterface(vm);
-	OMRTraceLanguageInterface languageIntf;
+	J9VMSystemProperty *javaHomeProperty = NULL;
+	UDATA getPropertyResult = 0;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+	J9HookInterface **hook = vmFuncs->getVMHookInterface(vm);
+	OMRTraceLanguageInterface languageIntf = {0};
 
 	PORT_ACCESS_FROM_JAVAVM( vm );
 
 	switch(stage) {
 	case ALL_LIBRARIES_LOADED:
-		if (vm->j9rasGlobalStorage == NULL) {
+		if (NULL == tempRasGbl) {
 			/* RAS init may happen in either dump or trace */
 			vm->j9rasGlobalStorage = j9mem_allocate_memory(sizeof(RasGlobalStorage), OMRMEM_CATEGORY_TRACE);
-			if (vm->j9rasGlobalStorage != NULL) {
-				memset (vm->j9rasGlobalStorage, '\0', sizeof(RasGlobalStorage));
+			tempRasGbl = (RasGlobalStorage *)vm->j9rasGlobalStorage;
+			if (NULL != tempRasGbl) {
+				memset(tempRasGbl, '\0', sizeof(RasGlobalStorage));
 			}
 		}
 
-		if (vm->j9rasGlobalStorage != NULL) {
+		if (NULL != tempRasGbl) {
 			vm->runtimeFlags |= J9_RUNTIME_EXTENDED_METHOD_BLOCK;
 			RAS_GLOBAL_FROM_JAVAVM(stackdepth,vm) = -1;
-			((RasGlobalStorage *)vm->j9rasGlobalStorage)->configureTraceEngine = (ConfigureTraceFunction)runtimeSetTraceOptions;
+			tempRasGbl->configureTraceEngine = (ConfigureTraceFunction)runtimeSetTraceOptions;
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+			tempRasGbl->criuRestoreInitializeTrace = (CRIURestoreInitializeTrace)criuRestoreInitializeTrace;
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 		}
 
 		break;
 	case TRACE_ENGINE_INITIALIZED:
-		if (vm->j9rasGlobalStorage == NULL) {
+		if (NULL == tempRasGbl) {
 			 /* Storage for RasGlobalStorage not available, trace not enabled */
 			 j9nls_printf(PORTLIB, J9NLS_ERROR | J9NLS_STDERR, J9NLS_TRC_RAS_GLOBAL_STORAGE);
 			 return J9VMDLLMAIN_FAILED;
@@ -212,8 +288,8 @@ J9VMDllMain(J9JavaVM *vm, IDATA stage, void *reserved)
 		vm->globalEventFlags |= J9_METHOD_ENTER_RASTRACE;
 		thr = vm->mainThread;
 		do {
-				thr->eventFlags |= J9_METHOD_ENTER_RASTRACE;
-				thr = thr->linkNext;
+			thr->eventFlags |= J9_METHOD_ENTER_RASTRACE;
+			thr = thr->linkNext;
 		} while (thr != vm->mainThread);
 
 		if (0 != omrthread_monitor_init_with_name(&j9TraceLock, 0, "J9VM Trace Lock")) {
@@ -224,12 +300,11 @@ J9VMDllMain(J9JavaVM *vm, IDATA stage, void *reserved)
 		/*
 		 *  Find the java.home property
 		 */
-		getPropertyResult = vm->internalVMFunctions->getSystemProperty(vm, "java.home", &javaHomeProperty);
-
-		if ( getPropertyResult != J9SYSPROP_ERROR_NOT_FOUND
-				&& javaHomeProperty != NULL
-				&& javaHomeProperty->value != NULL
-			) {
+		getPropertyResult = vmFuncs->getSystemProperty(vm, "java.home", &javaHomeProperty);
+		if ((J9SYSPROP_ERROR_NOT_FOUND != getPropertyResult)
+			&& (NULL != javaHomeProperty)
+			&& (NULL != javaHomeProperty->value)
+		) {
 			javahome = javaHomeProperty->value;
 		} else {
 			javahome = ".";
@@ -240,7 +315,7 @@ J9VMDllMain(J9JavaVM *vm, IDATA stage, void *reserved)
 		 *  utIntf to our global pointer.
 		 */
 		globalVM = vm;
-		((RasGlobalStorage *)vm->j9rasGlobalStorage)->utIntf = initializeUtInterface();
+		tempRasGbl->utIntf = initializeUtInterface();
 
 		/*
 		 *  Set up the early options
@@ -248,7 +323,6 @@ J9VMDllMain(J9JavaVM *vm, IDATA stage, void *reserved)
 		 *  are processed so it's Ok to use stack space.
 		 */
 		opts[0] = UT_FORMAT_KEYWORD;
-
 		j9str_printf(PORTLIB, tempPath, sizeof(tempPath), "%s" DIR_SEPARATOR_STR "lib;.", javahome);
 
 		opts[1] = tempPath;
@@ -258,9 +332,7 @@ J9VMDllMain(J9JavaVM *vm, IDATA stage, void *reserved)
 		 * Find UTE thread slot inside VM thread structure
 		 */
 		tempThr = UT_THREAD_FROM_VM_THREAD(vm->mainThread);
-		tempRasGbl = (RasGlobalStorage *)vm->j9rasGlobalStorage;
 		tempGbl = &tempRasGbl->utGlobalData;
-
 
 		/* Add Java trace trigger types to the default OMR set */
 		rc = addTriggerType(thr->omrVMThread, &methodTriggerType);
@@ -294,92 +366,49 @@ J9VMDllMain(J9JavaVM *vm, IDATA stage, void *reserved)
 			return J9VMDLLMAIN_FAILED;
 		}
 
-		/* Clear the early options set above before we re-use opts */
-		opts[0] = NULL;
-		opts[1] = NULL;
-
 		if (OMR_ERROR_NONE != (threadStart(tempThr, vm->mainThread, "Initialization thread", vm->mainThread->osThread, vm->mainThread->omrVMThread))) {
 			dbg_err_printf(1, PORTLIB, "<UT> Trace engine failed to register initialization thread, trace not enabled\n");
 			j9nls_printf(PORTLIB, J9NLS_ERROR | J9NLS_STDERR, J9NLS_TRC_TRACE_INIT_FAILED);
 			return J9VMDLLMAIN_FAILED;
 		}
 
-		if ((returnVal = initializeTraceOptions(vm, opts)) != J9VMDLLMAIN_OK) {
+		returnVal = traceInitializationHelper(vm, tempThr, vm->vmArgsArray, FALSE);
+		if (J9VMDLLMAIN_OK != returnVal) {
 			return returnVal;
 		}
 
-
-		for (i = 0; opts[i] != NULL; i += 2) {
-			if (j9_cmdla_stricmp(opts[i], "HELP") == 0) {
-				displayTraceHelp(vm);
-				return J9VMDLLMAIN_SILENT_EXIT_VM;
-			}
-		}
-
-
-		registerj9trc_auxWithTrace( ((RasGlobalStorage *)vm->j9rasGlobalStorage)->utIntf, NULL);
-		if( NULL == j9trc_aux_UtModuleInfo.intf ) {
-			dbg_err_printf(1, PORTLIB, "<UT> Trace engine failed to register j9trc_aux module, trace not enabled\n");
-			j9nls_printf(PORTLIB, J9NLS_ERROR | J9NLS_STDERR, J9NLS_TRC_TRACE_INIT_FAILED);
-			return J9VMDLLMAIN_FAILED;
-		}
-
-		if (OMR_ERROR_NONE != setOptions(tempThr, (const char **)opts, FALSE)) {
-			displayTraceHelp(vm);
-			return J9VMDLLMAIN_SILENT_EXIT_VM;
-		}
-
-		/* needs to occur after setOptions because setOptions sets the default opts! */
-		for (i = 0; opts[i] != NULL; i += 2) {
-			if (j9_cmdla_stricmp(opts[i], "WHAT") == 0) {
-				printTraceWhat(PORTLIB);
-				/* just print this out once then carry on, do not exit vm */
-				break;
-			}
-		}
-
-		/*
-		 *  Free up allocated options
-		 */
-		for (i = 0; opts[i] != NULL; i += 2) {
-			j9mem_free_memory(opts[i]);
-			if (opts[i + 1] != NULL) {
-				j9mem_free_memory(opts[i + 1]);
-			}
-		}
-
-		if (((RasGlobalStorage *)vm->j9rasGlobalStorage)->jvmriInterface == NULL) {
+		if (NULL == tempRasGbl->jvmriInterface) {
 			/* JVMRI init may happen in either dump or trace */
-			((RasGlobalStorage *)vm->j9rasGlobalStorage)->jvmriInterface = j9mem_allocate_memory(sizeof(DgRasInterface), OMRMEM_CATEGORY_TRACE);
-			if (((RasGlobalStorage *)vm->j9rasGlobalStorage)->jvmriInterface == NULL) {
+			tempRasGbl->jvmriInterface = j9mem_allocate_memory(sizeof(DgRasInterface), OMRMEM_CATEGORY_TRACE);
+			if (NULL == tempRasGbl->jvmriInterface) {
 				dbg_err_printf(1, PORTLIB, "<UT> Storage for jvmri interface not available, trace not enabled\n");
 				j9nls_printf(PORTLIB, J9NLS_ERROR | J9NLS_STDERR, J9NLS_TRC_TRACE_INIT_FAILED);
 				return J9VMDLLMAIN_FAILED;
 			}
 
-			if (JNI_OK != vm->internalVMFunctions->fillInDgRasInterface( ((RasGlobalStorage *)vm->j9rasGlobalStorage)->jvmriInterface )) {
+			if (JNI_OK != vmFuncs->fillInDgRasInterface(tempRasGbl->jvmriInterface )) {
 				dbg_err_printf(1, PORTLIB, "<UT> Error initializing jvmri interface not available, trace not enabled\n");
 				j9nls_printf(PORTLIB, J9NLS_ERROR | J9NLS_STDERR, J9NLS_TRC_TRACE_INIT_FAILED);
 				return J9VMDLLMAIN_FAILED;
 			}
 		}
 
-		if (JNI_OK != vm->internalVMFunctions->initJVMRI(vm)) {
+		if (JNI_OK != vmFuncs->initJVMRI(vm)) {
 			dbg_err_printf(1, PORTLIB, "<UT> Error initializing jvmri interface, trace not enabled\n");
 			j9nls_printf(PORTLIB, J9NLS_ERROR | J9NLS_STDERR, J9NLS_TRC_TRACE_INIT_FAILED);
 			return J9VMDLLMAIN_FAILED;
 		}
 
-		registerj9trcWithTrace(((RasGlobalStorage *)vm->j9rasGlobalStorage)->utIntf, NULL);
-		if( NULL == j9trc_UtModuleInfo.intf ) {
+		registerj9trcWithTrace(tempRasGbl->utIntf, NULL);
+		if (NULL == j9trc_UtModuleInfo.intf) {
 			dbg_err_printf(1, PORTLIB, "<UT> Trace engine failed to register main module, trace not enabled\n");
 			j9nls_printf(PORTLIB, J9NLS_ERROR | J9NLS_STDERR, J9NLS_TRC_TRACE_INIT_FAILED);
 			return J9VMDLLMAIN_FAILED;
 		}
 		Trc_trcengine_J9VMDllMain_Event1(vm);
 
-		registermtWithTrace(((RasGlobalStorage *)vm->j9rasGlobalStorage)->utIntf, NULL);
-		if( NULL == mt_UtModuleInfo.intf ) {
+		registermtWithTrace(tempRasGbl->utIntf, NULL);
+		if (NULL == mt_UtModuleInfo.intf) {
 			dbg_err_printf(1, PORTLIB, "<UT> Trace engine failed to register method trace module, trace not enabled\n");
 			j9nls_printf(PORTLIB, J9NLS_ERROR | J9NLS_STDERR, J9NLS_TRC_TRACE_INIT_FAILED);
 			return J9VMDLLMAIN_FAILED;
@@ -404,8 +433,9 @@ J9VMDllMain(J9JavaVM *vm, IDATA stage, void *reserved)
 			return J9VMDLLMAIN_FAILED;
 		}
 
-		if ( ((RasGlobalStorage *)vm->j9rasGlobalStorage)->traceMethodTable != NULL ||
-		     ((RasGlobalStorage *)vm->j9rasGlobalStorage)->triggerOnMethods != NULL) {
+		if ((NULL != tempRasGbl->traceMethodTable)
+			|| (NULL != tempRasGbl->triggerOnMethods)
+		) {
 			if (OMR_ERROR_INTERNAL == enableMethodTraceHooks(vm)) {
 				dbg_err_printf(1, PORTLIB, "<UT> Trace engine failed to hook VM Method events, trace not enabled\n");
 				j9nls_printf(PORTLIB, J9NLS_ERROR | J9NLS_STDERR, J9NLS_TRC_TRACE_INIT_FAILED);
@@ -421,29 +451,27 @@ J9VMDllMain(J9JavaVM *vm, IDATA stage, void *reserved)
 		}
 
 		/* initialize tracing in the port library as soon as possible */
-		j9port_control(J9PORT_CTLDATA_TRACE_START, (UDATA) ((RasGlobalStorage *)vm->j9rasGlobalStorage)->utIntf);
+		j9port_control(J9PORT_CTLDATA_TRACE_START, (UDATA)tempRasGbl->utIntf);
 
 		/* initialize tracing in the thread library */
-		omrthread_lib_control(J9THREAD_LIB_CONTROL_TRACE_START, (UDATA) ((RasGlobalStorage *)vm->j9rasGlobalStorage)->utIntf);
+		omrthread_lib_control(J9THREAD_LIB_CONTROL_TRACE_START, (UDATA)tempRasGbl->utIntf);
 
 		/* Load module for hookable library tracepoints */
-		omrhook_lib_control(J9HOOK_LIB_CONTROL_TRACE_START, (UDATA) ((RasGlobalStorage *)vm->j9rasGlobalStorage)->utIntf);
+		omrhook_lib_control(J9HOOK_LIB_CONTROL_TRACE_START, (UDATA)tempRasGbl->utIntf);
 
 		break;
 
 	case VM_INITIALIZATION_COMPLETE:
 		tempThr = UT_THREAD_FROM_VM_THREAD(vm->mainThread);
-#ifdef J9VM_OPT_SIDECAR
-		if (J2SE_VERSION(vm)) {
+		{
 			/* Force loading of the Trace class. See defect 162723, this is required because of some nuance
 			 * in the early initialization of DB/2 (which uses the Trace class).
 			 */
-			JNIEnv * env = (JNIEnv *)vm->mainThread;
+			JNIEnv *env = (JNIEnv *)vm->mainThread;
 			(*env)->FindClass(env, "com/ibm/jvm/Trace");
 			/* fail silently if can't load - probably a small platform */
 			(*env)->ExceptionClear(env);
 		}
-#endif
 		/* overwrite the header settings now that we have full vm->j2seVersion info */
 		if (OMR_ERROR_NONE != populateTraceHeaderInfo(vm)) {
 			return J9VMDLLMAIN_FAILED;
@@ -455,39 +483,42 @@ J9VMDllMain(J9JavaVM *vm, IDATA stage, void *reserved)
 
 	case JVM_EXIT_STAGE:
 		/* CMVC 108664 - do not free trace resources on System.exit() */
-		if (NULL != ((RasGlobalStorage *)vm->j9rasGlobalStorage)->utIntf) {
-			thr = vm->internalVMFunctions->currentVMThread(vm);
+		if (NULL != tempRasGbl->utIntf) {
+			thr = vmFuncs->currentVMThread(vm);
 			/* stop tracing the portlib */
-			j9port_control(J9PORT_CTLDATA_TRACE_STOP, (UDATA) ((RasGlobalStorage *)vm->j9rasGlobalStorage)->utIntf);
+			j9port_control(J9PORT_CTLDATA_TRACE_STOP, (UDATA)tempRasGbl->utIntf);
 			/* stop tracing in the thread library */
-			omrthread_lib_control(J9THREAD_LIB_CONTROL_TRACE_STOP, (UDATA) ((RasGlobalStorage *)vm->j9rasGlobalStorage)->utIntf);
+			omrthread_lib_control(J9THREAD_LIB_CONTROL_TRACE_STOP, (UDATA)tempRasGbl->utIntf);
 			/* stop tracing in the hookable library */
-			omrhook_lib_control(J9HOOK_LIB_CONTROL_TRACE_STOP, (UDATA) ((RasGlobalStorage *)vm->j9rasGlobalStorage)->utIntf);
+			omrhook_lib_control(J9HOOK_LIB_CONTROL_TRACE_STOP, (UDATA)tempRasGbl->utIntf);
 			reportVMTermination(vm, thr);
 		}
 		break;
 
 	case INTERPRETER_SHUTDOWN:
 
-		thr = vm->internalVMFunctions->currentVMThread(vm);
+		thr = vmFuncs->currentVMThread(vm);
 
 		/* if command line argument parsing failed we don't want to try to use an uninitialized trace engine */
-		if (((RasGlobalStorage *)vm->j9rasGlobalStorage != NULL) &&
-			(((RasGlobalStorage *)vm->j9rasGlobalStorage)->utIntf != NULL)) {
+		if ((NULL != tempRasGbl)
+			&& (NULL != tempRasGbl->utIntf)
+		) {
 			/* stop tracing the portlib */
-			j9port_control(J9PORT_CTLDATA_TRACE_STOP, (UDATA) ((RasGlobalStorage *)vm->j9rasGlobalStorage)->utIntf);
+			j9port_control(J9PORT_CTLDATA_TRACE_STOP, (UDATA)tempRasGbl->utIntf);
 			/* stop tracing in the thread library */
-			omrthread_lib_control(J9THREAD_LIB_CONTROL_TRACE_STOP, (UDATA) ((RasGlobalStorage *)vm->j9rasGlobalStorage)->utIntf);
+			omrthread_lib_control(J9THREAD_LIB_CONTROL_TRACE_STOP, (UDATA)tempRasGbl->utIntf);
 			/* stop tracing in the hookable library */
-			omrhook_lib_control(J9HOOK_LIB_CONTROL_TRACE_STOP, (UDATA) ((RasGlobalStorage *)vm->j9rasGlobalStorage)->utIntf);
+			omrhook_lib_control(J9HOOK_LIB_CONTROL_TRACE_STOP, (UDATA)tempRasGbl->utIntf);
 
 			reportVMTermination(vm, thr);
 			requestTraceCleanup(vm, thr);
 		}
 
 		{
-			J9VMDllLoadInfo *loadInfo = FIND_DLL_TABLE_ENTRY( J9_RAS_TRACE_DLL_NAME );
-			if ( loadInfo && (IS_STAGE_COMPLETED(loadInfo->completedBits, VM_INITIALIZATION_COMPLETE)) ) {
+			J9VMDllLoadInfo *loadInfo = FIND_DLL_TABLE_ENTRY(J9_RAS_TRACE_DLL_NAME);
+			if ((NULL != loadInfo)
+				&& IS_STAGE_COMPLETED(loadInfo->completedBits, VM_INITIALIZATION_COMPLETE)
+			) {
 				/* now force the main thread to end */
 				reportTraceEvent(vm, thr, J9RAS_TRACE_ON_THREAD_END);
 			}
@@ -496,21 +527,20 @@ J9VMDllMain(J9JavaVM *vm, IDATA stage, void *reserved)
 		/* Normal exit - its not safe to free this stuff if we are ab'ending.
 		 * Blank global pointer before freeing struct (safer?)
 		 */
-		if (vm->j9rasGlobalStorage != NULL) {
-			tempRasGbl = (RasGlobalStorage *)vm->j9rasGlobalStorage;
+		if (NULL != tempRasGbl) {
 			vm->j9rasGlobalStorage = NULL;
 
-			if ( tempRasGbl->jvmriInterface != NULL ) {
-				j9mem_free_memory( tempRasGbl->jvmriInterface );
+			if (NULL != tempRasGbl->jvmriInterface) {
+				j9mem_free_memory(tempRasGbl->jvmriInterface);
 			}
-			j9mem_free_memory( tempRasGbl );
+			j9mem_free_memory(tempRasGbl);
 		}
 
-		if( j9TraceLock != NULL ) {
+		if (NULL != j9TraceLock) {
 			omrthread_monitor_destroy(j9TraceLock);
 		}
 
-		vm->internalVMFunctions->shutdownJVMRI(vm);
+		vmFuncs->shutdownJVMRI(vm);
 
 		break;
 	case LIBRARIES_ONUNLOAD:
@@ -617,21 +647,28 @@ processTraceOptionString(J9JavaVM *vm, char * opts[], IDATA * optIndex, const ch
 	return rc;
 }
 
-/*
+/**
  * Initialize the trace options from the defaults for the J9VM and any
- * options that were passed in on the command line.
+ * options that were passed through the incoming J9VMInitArgs.
  *
  * Returns them as newly allocated string key/value pairs in the even/odd elements of opts.
  * The strings in opts will need to be freed.
+ *
+ * @param[in] vm pointer to the J9JavaVM
+ * @param[in] vmArgs a J9VMInitArgs
+ * @param[in,out] opts string key/value pairs
+ *
+ * @return return J9VMDLLMAIN_OK if success, otherwise failures
  */
 static IDATA
-initializeTraceOptions(J9JavaVM *vm, char* opts[])
+initializeTraceOptions(J9JavaVM *vm, J9VMInitArgs *vmArgs, char *opts[])
 {
-	IDATA xtraceIndex;
-	char *optionString;
+	IDATA xtraceIndex = 0;
+	char *optionString = NULL;
 	IDATA i = 0;
-	IDATA optionsLength;
+	IDATA optionsLength = 0;
 	IDATA rc =  J9VMDLLMAIN_OK;
+	JavaVMOption *options = vmArgs->actualVMArgs->options;
 
 #define trace_option_helper(option) \
 		splitCommandLineOption(vm, option, LITERAL_STRLEN(option), opts + i)
@@ -639,7 +676,7 @@ initializeTraceOptions(J9JavaVM *vm, char* opts[])
 	/* set up the default options */
 	rc = trace_option_helper(UT_MAXIMAL_KEYWORD "=all{level1}");
 	i += 2;
-	if (rc != J9VMDLLMAIN_FAILED) {
+	if (J9VMDLLMAIN_FAILED != rc) {
 		rc = trace_option_helper(UT_EXCEPTION_KEYWORD "=j9mm{gclogger}");
 		i += 2;
 	}
@@ -649,7 +686,7 @@ initializeTraceOptions(J9JavaVM *vm, char* opts[])
 	 *  them to the trace engine. Note that trace args are formatted forwards
 	 *  (left to right) so as to be consistent with dump.
 	 */
-	xtraceIndex = FIND_ARG_IN_VMARGS_FORWARD(OPTIONAL_LIST_MATCH, VMOPT_XTRACE, NULL);
+	xtraceIndex = FIND_AND_CONSUME_ARG_FORWARD(vmArgs, OPTIONAL_LIST_MATCH, VMOPT_XTRACE, NULL);
 	/* A trace option has been set. We need to check if the level 2 trace points have been
 	 * enabled yet and if not enable them *before* processing the users trace options.
 	 * (If we switch on level 2 after doing the users options then they won't get the
@@ -660,7 +697,7 @@ initializeTraceOptions(J9JavaVM *vm, char* opts[])
 		i += 2;
 	}
 	while (xtraceIndex >= 0) {
-		optionString = vm->vmArgsArray->actualVMArgs->options[xtraceIndex].optionString;
+		optionString = options[xtraceIndex].optionString;
 		optionsLength = strlen(optionString) - strlen(VMOPT_XTRACE);
 		if (optionsLength > 0) {
 			if (optionString[strlen(VMOPT_XTRACE)] == ':') {
@@ -674,7 +711,7 @@ initializeTraceOptions(J9JavaVM *vm, char* opts[])
 				rc = J9VMDLLMAIN_FAILED;
 			}
 		}
-		xtraceIndex = FIND_NEXT_ARG_IN_VMARGS_FORWARD(OPTIONAL_LIST_MATCH, VMOPT_XTRACE, NULL, xtraceIndex);
+		xtraceIndex = FIND_AND_CONSUME_NEXT_ARG_FORWARD(vmArgs, OPTIONAL_LIST_MATCH, VMOPT_XTRACE, NULL, xtraceIndex);
 	}
 	opts[i++] = NULL;
 	return rc;
@@ -960,6 +997,36 @@ requestTraceCleanup(J9JavaVM* vm, J9VMThread * vmThread)
 		freeTrace(traceThread);
 	}
 }
+
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+/**
+ * CRIU restore initializes the trace options using an option file.
+ *
+ * @param[in] thr vmThread token
+ *
+ * @return return TRUE if success, otherwise FALSE
+ */
+static BOOLEAN
+criuRestoreInitializeTrace(J9VMThread *thr)
+{
+	J9JavaVM *vm = thr->javaVM;
+	BOOLEAN result = FALSE;
+
+	if (J9VMDLLMAIN_OK == traceInitializationHelper(vm, UT_THREAD_FROM_VM_THREAD(thr), vm->checkpointState.restoreArgsList, TRUE)) {
+		RasGlobalStorage *j9ras = (RasGlobalStorage *)vm->j9rasGlobalStorage;
+		if ((NULL != j9ras->traceMethodTable)
+			|| (NULL != j9ras->triggerOnMethods)
+		) {
+			if (OMR_ERROR_NONE == enableMethodTraceHooks(vm)) {
+				vm->internalVMFunctions->addInternalJVMClassIterationRestoreHook(thr, setRAMClassExtendedMethodFlagsHelper);
+				result = TRUE;
+			}
+		}
+	}
+
+	return result;
+}
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
 /*
  * Reconfigure trace at runtime.
