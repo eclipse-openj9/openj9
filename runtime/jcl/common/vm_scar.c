@@ -347,7 +347,7 @@ addBFUSystemProperties(J9JavaVM* vm)
 				vm->fipsMode = (U_8 *)FIPS140_2_PROP_VALUE;
 			} else {
 				/* should be an NLS message but very late fix so just print an error */
-				j9tty_err_printf(PORTLIB, "Error: com.ibm.fips.mode cannot be set to %s\n", fipsModeString);
+				j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_JCL_FIPS_MODE_SET_TO_INVALID_VALUE, fipsModeString);
 				return J9SYSPROP_ERROR_UNSUPPORTED_PROP;
 			}
 		} else { /* Allow only FIPS140_3_PROP_VALUE to be set. */
@@ -355,7 +355,7 @@ addBFUSystemProperties(J9JavaVM* vm)
 				vm->fipsMode = (U_8 *)FIPS140_3_PROP_VALUE;
 			} else {
 				/* should be an NLS message but very late fix so just print an error */
-				j9tty_err_printf(PORTLIB, "Error: com.ibm.fips.mode cannot be set to %s\n", fipsModeString);
+				j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_JCL_FIPS_MODE_SET_TO_INVALID_VALUE, fipsModeString);
 				return J9SYSPROP_ERROR_UNSUPPORTED_PROP;
 			}
 		}
