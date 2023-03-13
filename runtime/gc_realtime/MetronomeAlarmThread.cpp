@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright IBM Corp. and others 1991
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -172,7 +172,7 @@ MM_MetronomeAlarmThread::run(MM_EnvironmentRealtime *env)
 
 		_alarm->sleep();
 
-		if (env->getTimer()->hasTimeElapsed(_scheduler->getStartTimeOfCurrentMutatorSlice(), _scheduler->beatNanos)) {
+		if (env->getTimer()->hasTimeElapsed(_scheduler->getStartTimeOfCurrentMutatorSlice(), _scheduler->_beatNanos)) {
 			_scheduler->continueGC(env, TIME_TRIGGER, 0, NULL, true);
 		}
 

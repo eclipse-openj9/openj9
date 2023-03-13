@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------*-C-*-
    ffitarget.h - Copyright (c) 2012  Anthony Green
                  Copyright (c) 1996-2003  Red Hat, Inc.
-                 Copyright (c) 2021, 2021 IBM Corp.
+                 Copyright IBM Corp. 2021
    Target configuration macros for S390.
 
    Permission is hereby granted, free of charge, to any person obtaining

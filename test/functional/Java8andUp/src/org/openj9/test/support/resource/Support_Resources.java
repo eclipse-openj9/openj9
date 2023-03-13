@@ -14,7 +14,7 @@ import org.openj9.test.support.Support_ExtendedTestEnvironment;
 import org.testng.log4testng.Logger;
 
 /*******************************************************************************
- * Copyright (c) 2005, 2018 IBM Corp. and others
+ * Copyright IBM Corp. and others 2005
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this

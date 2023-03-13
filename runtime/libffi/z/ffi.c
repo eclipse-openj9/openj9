@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
    ffi.c - Copyright (c) 2000, 2007 Software AG
            Copyright (c) 2008 Red Hat, Inc
-           Copyright (c) 2016, 2018 IBM Corp.
+           Copyright IBM Corp. 2016
  
    S390 Foreign Function Interface
  

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2023 IBM Corp. and others
+ * Copyright IBM Corp. and others 1991
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -845,6 +845,8 @@ getVirtualThreadState(J9VMThread *currentThread, jthread thread)
 					rc = JVMTI_JAVA_LANG_THREAD_STATE_RUNNABLE;
 				}
 				vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
+				/* Re-fetch object to correctly set the isSuspendedByJVMTI field. */
+				vThreadObject = J9_JNI_UNWRAP_REFERENCE(thread);
 				break;
 			}
 			case JVMTI_VTHREAD_STATE_RUNNABLE:

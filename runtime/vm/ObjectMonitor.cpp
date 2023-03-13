@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2023 IBM Corp. and others
+ * Copyright IBM Corp. and others 2001
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,6 +32,7 @@
 #include "VMHelpers.hpp"
 #include "AtomicSupport.hpp"
 #include "ObjectMonitor.hpp"
+#include "VMAccess.hpp"
 
 extern "C" {
 
@@ -172,14 +173,20 @@ objectMonitorEnterBlocking(J9VMThread *currentThread)
 		IDATA waitTime = 1;
 		if (J9_EVENT_IS_HOOKED(vm->hookInterface, J9HOOK_VM_MONITOR_CONTENDED_ENTER)) {
 			bool frameBuilt = saveBlockingEnterObject(currentThread);
+			VM_VMAccess::setPublicFlags(currentThread, J9_PUBLIC_FLAGS_THREAD_BLOCKED);
 			ALWAYS_TRIGGER_J9HOOK_VM_MONITOR_CONTENDED_ENTER(vm->hookInterface, currentThread, monitor);
 			restoreBlockingEnterObject(currentThread, frameBuilt);
 		}
 		omrthread_t const osThread = currentThread->osThread;
 		/* Update j.l.management info */
 		currentThread->mgmtBlockedCount += 1;
+		if (J9_ARE_ALL_BITS_SET(currentThread->publicFlags, J9_PUBLIC_FLAGS_THREAD_BLOCKED)) {
+			internalReleaseVMAccess(currentThread);
+			goto releasedAccess;
+		}
 restart:
 		internalReleaseVMAccessSetStatus(currentThread, J9_PUBLIC_FLAGS_THREAD_BLOCKED);
+releasedAccess:
 		omrthread_monitor_enter_using_threadId(monitor, osThread);
 #if defined(J9VM_THR_SMART_DEFLATION)
 		/* Update the anti-deflation vote because we had to block */

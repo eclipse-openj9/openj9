@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2023 IBM Corp. and others
+ * Copyright IBM Corp. and others 1991
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -53,8 +53,9 @@ jvmtiGetThreadState(jvmtiEnv *env,
 		J9VMThread *targetThread = NULL;
 		j9object_t threadObject = NULL;
 		jboolean threadStartedFlag = JNI_FALSE;
+		J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 
-		vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
+		vmFuncs->internalEnterVMFromJNI(currentThread);
 
 		ENSURE_PHASE_LIVE(env);
 		ENSURE_NON_NULL(thread_state_ptr);
@@ -71,21 +72,31 @@ jvmtiGetThreadState(jvmtiEnv *env,
 			/* If thread is NULL, the current thread is used which cannot be a virtual thread.
 			 * There is an assertion inside getVirtualThreadState() that thread is not NULL.
 			 */
-			rv_thread_state = getVirtualThreadState(currentThread, (jthread)&threadObject);
+			if (NULL != thread) {
+				rv_thread_state = getVirtualThreadState(currentThread, thread);
+			} else {
+				/* Create a local ref to pass the currentThread's threadObject since
+				 * getVirtualThreadState releases and re-acquires VM access.
+				 */
+				JNIEnv *jniEnv = (JNIEnv *)currentThread;
+				jobject virtualThreadRef = vmFuncs->j9jni_createLocalRef(jniEnv, threadObject);
+				rv_thread_state = getVirtualThreadState(currentThread, (jthread)virtualThreadRef);
+				vmFuncs->j9jni_deleteLocalRef(jniEnv, virtualThreadRef);
+			}
 		} else
 #endif /* JAVA_SPEC_VERSION >= 19 */
 		{
 			rc = getVMThread(currentThread, thread, &targetThread, JVMTI_ERROR_NONE, 0);
 			if (JVMTI_ERROR_NONE == rc) {
 				/* Get the lock for the object. */
-				j9object_t threadObjectLock = J9VMJAVALANGTHREAD_LOCK(currentThread,threadObject);
+				j9object_t threadObjectLock = J9VMJAVALANGTHREAD_LOCK(currentThread, threadObject);
 				if (NULL != threadObjectLock) {
 					threadStartedFlag = (jboolean)J9VMJAVALANGTHREAD_STARTED(currentThread, threadObject);
 				} else {
 					/* In this case, we must be early in the thread creation. We still need to call getVMThread so that
-					* the inspection count etc. are handled correctly, however, we just want to fall into the case were
-					* we return that the thread is NEW so we set the targetThread and threadStartedFlag to false.
-					*/
+					 * the inspection count etc. are handled correctly, however, we just want to fall into the case were
+					 * we return that the thread is NEW so we set the targetThread and threadStartedFlag to false.
+					 */
 					targetThread = NULL;
 					threadStartedFlag = JNI_FALSE;
 				}
@@ -107,20 +118,20 @@ jvmtiGetThreadState(jvmtiEnv *env,
 						rv_thread_state = 0;
 					}
 				} else {
-					vm->internalVMFunctions->haltThreadForInspection(currentThread, targetThread);
+					vmFuncs->haltThreadForInspection(currentThread, targetThread);
 					/* The VM thread can't be recycled because getVMThread() prevented it from exiting. */
 #if JAVA_SPEC_VERSION >= 19
 					rv_thread_state = getThreadState(currentThread, targetThread->carrierThreadObject);
 #else /* JAVA_SPEC_VERSION >= 19 */
 					rv_thread_state = getThreadState(currentThread, targetThread->threadObject);
 #endif /* JAVA_SPEC_VERSION >= 19 */
-					vm->internalVMFunctions->resumeThreadForInspection(currentThread, targetThread);
+					vmFuncs->resumeThreadForInspection(currentThread, targetThread);
 				}
 				releaseVMThread(currentThread, targetThread, thread);
 			}
 		}
 done:
-		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
+		vmFuncs->internalExitVMToJNI(currentThread);
 	}
 
 	if (NULL != thread_state_ptr) {

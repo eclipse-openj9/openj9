@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2023 IBM Corp. and others
+ * Copyright IBM Corp. and others 2000
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -294,6 +294,8 @@ int32_t J9::Options::_expensiveCompWeight = TR::CompilationInfo::JSR292_WEIGHT;
 int32_t J9::Options::_jProfilingEnablementSampleThreshold = 10000;
 
 bool J9::Options::_aggressiveLockReservation = false;
+
+bool J9::Options::_xrsSync = false;
 
 /**
  * This string array should be kept in sync with the
@@ -2975,7 +2977,8 @@ bool J9::Options::feLatePostProcess(void * base, TR::OptionSet * optionSet)
    // -Xrs Ignore all signals (J9_SIG_XRS_SYNC, J9_SIG_XRS_ASYNC)
    // -Xrs:sync Ignore synchronous signals (J9_SIG_XRS_SYNC)
    // -Xrs:async Ignore asynchronous signals (J9_SIG_XRS_ASYNC)
-   if (J9_ARE_ALL_BITS_SET(javaVM->sigFlags, J9_SIG_XRS_SYNC))
+   _xrsSync = J9_ARE_ALL_BITS_SET(javaVM->sigFlags, J9_SIG_XRS_SYNC);
+   if (_xrsSync)
       {
       self()->setOption(TR_NoResumableTrapHandler);
       self()->setOption(TR_DisablePackedDecimalIntrinsics);

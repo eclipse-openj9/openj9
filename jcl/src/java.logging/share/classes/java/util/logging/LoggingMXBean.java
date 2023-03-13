@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17 & !Sidecar19-SE]*/
 /*******************************************************************************
- * Copyright (c) 2005, 2017 IBM Corp. and others
+ * Copyright IBM Corp. and others 2005
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this

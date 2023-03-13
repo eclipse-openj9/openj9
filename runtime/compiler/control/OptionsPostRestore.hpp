@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2023, 2023 IBM Corp. and others
+ * Copyright IBM Corp. and others 2023
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,6 +33,7 @@ namespace TR { class CompilationInfo; }
 namespace TR { struct Region; }
 struct TR_Memory;
 struct TR_J9VMBase;
+struct TR_JitPrivateConfig;
 
 namespace J9
 {
@@ -51,7 +52,7 @@ class OptionsPostRestore
    OptionsPostRestore(J9VMThread *vmThread, J9JITConfig *jitConfig, TR::CompilationInfo *compInfo, TR::Region &region);
 
    /**
-    * Public API to process options post restore
+    * \brief  API to process options post restore
     *
     * \param vmThread The J9VMThread
     * \param jitConfig The J9JITConfig
@@ -62,44 +63,96 @@ class OptionsPostRestore
    private:
 
    /**
-    * Helper Method to iterate and set indices of external options
-    * found in the Restore VM Args Array
+    * \brief Close the old vlog if needed and open the vlog.
+    *
+    * \param vLogFileName The name of the vlog specified in the
+    *                     post restore options
+    */
+   void openNewVlog(char *vLogFileName);
+
+   /**
+    * \brief Close the old RT log if needed (including the RT log
+    *        per compilation thread), and open the new RT log
+    *        (including the RT log per compilation thread).
+    *
+    * \param rtLogFileName The name of the rtLog specified in the
+    *                      post restore options
+    */
+   void openNewRTLog(char *rtLogFileName);
+
+   /**
+    * \brief Open vlog and rtLog if specified in the restore run options.
+    *        If specified in both, the old log file is closed, and the
+    *        new log file is opened.
+    */
+   void openLogFilesIfNeeded();
+
+   /**
+    * \brief Method to iterate and set indices of external options
+    *        found in the Restore VM Args Array
     */
    void iterateOverExternalOptions();
 
    /**
-    * Invalidate existing method bodies if they can no longer be
-    * executed based on the exclude/include filters.
+    * \brief Invalidate an existing method body if possible. JNI methods
+    *        do not have a bodyinfo/methodinfo and therefore cannot be
+    *        invalidated.
     *
-    * \param fej9 The TR_J9VMBase front end
     * \param method The J9Method of the method to be filtered
+    * \param fej9 The TR_J9VMBase front end
     */
-   void filterMethod(TR_J9VMBase *fej9, J9Method *method);
+   void invalidateCompiledMethod(J9Method *method, TR_J9VMBase *fej9);
 
    /**
-    * Helper method to filter methods based on the
-    * exclude/include filters.
+    * \brief Determine whether a method should be invalidated because the
+    *        method should be excluded because of the -Xjit:exclude option
+    *
+    * \param method The J9Method of the method to be filtered
+    * \param fej9 The TR_J9VMBase front end
+    * \param compilationFiltersExist bool to indicate whether there are any
+    *                                compilation filters
+    *
+    * \return true if the method should be invalidated, false otherwise.
     */
-   void filterMethods();
+   bool shouldInvalidateCompiledMethod(J9Method *method, TR_J9VMBase *fej9, bool compilationFiltersExist);
 
    /**
-    * Helper method to post process internal compiler options.
+    * \brief Invalidate methods if needed.
+    */
+   void invalidateCompiledMethodsIfNeeded(bool invalidateAll = false);
+
+   /**
+    * \brief Helper method to disable further AOT compilation.
+    */
+   void disableAOTCompilation();
+
+   /**
+    * \brief Helper method to perform tasks prior to processing
+    *        the internal compiler options.
+    */
+   void preProcessInternalCompilerOptions();
+
+   /**
+    * \brief Helper method to post process internal compiler options.
     */
    void postProcessInternalCompilerOptions();
 
    /**
-    * Helper method to process JITServer options post restore.
+    * \brief Helper method to process JITServer options post restore.
     */
    void processJitServerOptions();
 
    /**
-    * Helper method to get compiler options (such as -Xjit, -Xaot, etc.)
-    * from the Restore VM Args Array and process them.
+    * \brief Helper method to get compiler options (such as -Xjit, -Xaot, etc.)
+    *        from the Restore VM Args Array and process them.
+    *
+    * \param isAOT bool to determine whether the AOT or JIT options should be
+    *              processed.
     */
-   void processInternalCompilerOptions(bool enabled, bool isAOT);
+   void processInternalCompilerOptions(bool isAOT);
 
    /**
-    * Method to process compiler options post restore.
+    * \brief Method to process compiler options post restore.
     */
    void processCompilerOptions();
 
@@ -107,6 +160,13 @@ class OptionsPostRestore
    J9VMThread *_vmThread;
    TR::CompilationInfo *_compInfo;
    TR::Region &_region;
+   TR_JitPrivateConfig *_privateConfig;
+
+   char *_oldVLogFileName;
+   char *_oldRtLogFileName;
+
+   bool _asyncCompilationPreCheckpoint;
+   bool _disableTrapsPreCheckpoint;
 
    int32_t _argIndexXjit;
    int32_t _argIndexXjitcolon;

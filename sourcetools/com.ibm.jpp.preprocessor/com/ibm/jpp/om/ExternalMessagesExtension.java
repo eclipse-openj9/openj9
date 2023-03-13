@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1999, 2017 IBM Corp. and others
+ * Copyright IBM Corp. and others 1999
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,8 +26,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
-import java.util.Calendar;
-import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -207,7 +205,7 @@ public class ExternalMessagesExtension extends BuilderExtension {
 					 * TreeMap is used for this reason
 					 */
 					put.println("#");
-					put.println("#     Copyright (c) 2000, " + new GregorianCalendar().get(Calendar.YEAR) + " IBM Corp. and others");
+					put.println("#     Copyright IBM Corp. and others 2000");
 					put.println("#");
 					put.println("#     This program and the accompanying materials are made available under");
 					put.println("#     the terms of the Eclipse Public License 2.0 which accompanies this");

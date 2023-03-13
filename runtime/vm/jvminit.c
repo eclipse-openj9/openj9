@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2023 IBM Corp. and others
+ * Copyright IBM Corp. and others 1991
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -270,7 +270,6 @@ static IDATA checkDjavacompiler (J9PortLibrary *portLibrary, J9VMInitArgs* j9vm_
 #endif /* J9VM_OPT_SIDECAR */
 static void* getOptionExtraInfo (J9PortLibrary *portLibrary, J9VMInitArgs* j9vm_args, IDATA match, char* optionName);
 static void closeAllDLLs (J9JavaVM* vm);
-static UDATA checkArgsConsumed (J9JavaVM * vm, J9PortLibrary* portLibrary, J9VMInitArgs* j9vm_args);
 
 #if (defined(J9VM_INTERP_VERBOSE))
 static const char* getNameForStage (IDATA stage);
@@ -966,6 +965,8 @@ freeJavaVM(J9JavaVM * vm)
 		J9Pool *hookRecords = vm->checkpointState.hookRecords;
 		J9VMInitArgs *restoreArgsList = vm->checkpointState.restoreArgsList;
 		J9Pool *classIterationRestoreHookRecords = vm->checkpointState.classIterationRestoreHookRecords;
+
+		j9mem_free_memory(vm->checkpointState.restoreArgsChars);
 
 		if (NULL != hookRecords) {
 			pool_kill(hookRecords);
@@ -2896,7 +2897,7 @@ VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved)
 
 /* Run after all command-line args should have been consumed. Returns TRUE or FALSE. */
 
-static UDATA
+UDATA
 checkArgsConsumed(J9JavaVM * vm, J9PortLibrary* portLibrary, J9VMInitArgs* j9vm_args)
 {
 	UDATA i = 0;

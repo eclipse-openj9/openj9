@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2023, 2023 IBM Corp. and others
+ * Copyright IBM Corp. and others 2023
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,9 +27,12 @@
 #include "j9.h"
 #include "j9nonbuilder.h"
 #include "jvminit.h"
+#include "j9comp.h"
+#include "env/CompilerEnv.hpp"
 #include "env/TRMemory.hpp"
 #include "compile/Method.hpp"
 #include "control/CompilationRuntime.hpp"
+#include "control/CompilationThread.hpp"
 #include "control/Options.hpp"
 #include "control/OptionsPostRestore.hpp"
 #include "control/J9Recompilation.hpp"
@@ -39,6 +42,7 @@
 #include "env/VerboseLog.hpp"
 #include "env/TRMemory.hpp"
 #include "env/VMJ9.h"
+#include "runtime/CodeRuntime.hpp"
 
 #define FIND_AND_CONSUME_RESTORE_ARG(match, optionName, optionValue) FIND_AND_CONSUME_ARG(vm->checkpointState.restoreArgsList, match, optionName, optionValue)
 #define FIND_ARG_IN_RESTORE_ARGS(match, optionName, optionValue) FIND_ARG_IN_ARGS(vm->checkpointState.restoreArgsList, match, optionName, optionValue)
@@ -51,6 +55,10 @@ J9::OptionsPostRestore::OptionsPostRestore(J9VMThread *vmThread, J9JITConfig *ji
    _vmThread(vmThread),
    _compInfo(compInfo),
    _region(region),
+   _privateConfig((TR_JitPrivateConfig*)_jitConfig->privateConfig),
+   _oldVLogFileName(_privateConfig->vLogFileName),
+   _oldRtLogFileName(_privateConfig->rtLogFileName),
+   _asyncCompilationPreCheckpoint(_compInfo->asynchronousCompilation()),
    _argIndexXjit(-1),
    _argIndexXjitcolon(-1),
    _argIndexXnojit(-1),
@@ -65,7 +73,13 @@ J9::OptionsPostRestore::OptionsPostRestore(J9VMThread *vmThread, J9JITConfig *ji
    _argIndexDisableUseJITServer(-1),
    _argIndexJITServerAddress(-1),
    _argIndexJITServerAOTCacheName(-1)
-   {}
+   {
+   TR::Options *options = TR::Options::getCmdLineOptions();
+   _disableTrapsPreCheckpoint
+      = J9::Options::_xrsSync
+        || options->getOption(TR_NoResumableTrapHandler)
+        || options->getOption(TR_DisableTraps);
+   }
 
 void
 J9::OptionsPostRestore::iterateOverExternalOptions()
@@ -120,6 +134,7 @@ J9::OptionsPostRestore::iterateOverExternalOptions()
          case J9::ExternalOptions::XtlhPrefetch:
          case J9::ExternalOptions::XnotlhPrefetch:
          case J9::ExternalOptions::XlockReservation:
+         case J9::ExternalOptions::XjniAcc:
          case J9::ExternalOptions::Xnoclassgc:
          case J9::ExternalOptions::Xlp:
          case J9::ExternalOptions::Xlpcodecache:
@@ -131,6 +146,7 @@ J9::OptionsPostRestore::iterateOverExternalOptions()
          case J9::ExternalOptions::XXminusRuntimeInstrumentation:
          case J9::ExternalOptions::XXplusPerfTool:
          case J9::ExternalOptions::XXminusPerfTool:
+         case J9::ExternalOptions::XXdoNotProcessJitEnvVars:
          case J9::ExternalOptions::XXplusJITServerTechPreviewMessageOption:
          case J9::ExternalOptions::XXminusJITServerTechPreviewMessageOption:
          case J9::ExternalOptions::XXplusMetricsServer:
@@ -144,20 +160,21 @@ J9::OptionsPostRestore::iterateOverExternalOptions()
          case J9::ExternalOptions::XXminusJITServerAOTCachePersistenceOption:
          case J9::ExternalOptions::XXJITServerAOTCacheDirOption:
             {
-            // do nothing, maybe consume them to prevent errors
+            // do nothing, consume them to prevent errors
             FIND_AND_CONSUME_RESTORE_ARG(OPTIONAL_LIST_MATCH, optString, 0);
-            }
-            break;
-
-         case J9::ExternalOptions::XjniAcc:
-            {
-            // call preProcessJniAccelerator
             }
             break;
 
          case J9::ExternalOptions::XsamplingExpirationTime:
             {
-            // call preProcessSamplingExpirationTime
+            int32_t argIndex = FIND_AND_CONSUME_RESTORE_ARG(EXACT_MEMORY_MATCH, optString, 0);
+            if (argIndex >= 0)
+               {
+               UDATA expirationTime;
+               IDATA ret = GET_INTEGER_VALUE_RESTORE_ARGS(argIndex, optString, expirationTime);
+               if (ret == OPTION_OK)
+                  TR::Options::_samplingThreadExpirationTime = expirationTime;
+               }
             }
             break;
 
@@ -183,25 +200,28 @@ J9::OptionsPostRestore::iterateOverExternalOptions()
 
          case J9::ExternalOptions::XXLateSCCDisclaimTimeOption:
             {
-            // set compInfo->getPersistentInfo()->setLateSCCDisclaimTime
+            int32_t argIndex = FIND_AND_CONSUME_RESTORE_ARG(STARTSWITH_MATCH, optString, 0);
+            if (argIndex >= 0)
+               {
+               UDATA disclaimMs = 0;
+               IDATA ret = GET_INTEGER_VALUE_RESTORE_ARGS(argIndex, optString, disclaimMs);
+               if (ret == OPTION_OK)
+                  {
+                  _compInfo->getPersistentInfo()->setLateSCCDisclaimTime(((uint64_t) disclaimMs) * 1000000);
+                  }
+               }
             }
             break;
 
          case J9::ExternalOptions::XXplusPrintCodeCache:
             {
-            // set xxPrintCodeCacheArgIndex
+            _argIndexPrintCodeCache = FIND_ARG_IN_RESTORE_ARGS(EXACT_MATCH, optString, 0);
             }
             break;
 
          case J9::ExternalOptions::XXminusPrintCodeCache:
             {
-            // set xxDisablePrintCodeCacheArgIndex
-            }
-            break;
-
-         case J9::ExternalOptions::XXdoNotProcessJitEnvVars:
-            {
-            // set _doNotProcessEnvVars;
+            _argIndexDisablePrintCodeCache = FIND_ARG_IN_RESTORE_ARGS(EXACT_MATCH, optString, 0);
             }
             break;
 
@@ -292,7 +312,7 @@ J9::OptionsPostRestore::processJitServerOptions()
    }
 
 void
-J9::OptionsPostRestore::processInternalCompilerOptions(bool enabled, bool isAOT)
+J9::OptionsPostRestore::processInternalCompilerOptions(bool isAOT)
    {
    // Needed for FIND_ARG_IN_RESTORE_ARGS
    J9JavaVM *vm = _jitConfig->javaVM;
@@ -309,7 +329,7 @@ J9::OptionsPostRestore::processInternalCompilerOptions(bool enabled, bool isAOT)
    else
       argIndex = FIND_ARG_IN_RESTORE_ARGS( STARTSWITH_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::Xjitcolon], 0);
 
-   if (enabled && argIndex >= 0)
+   if (argIndex >= 0)
       {
       intptr_t rc = initializeCompilerArgsPostRestore(_jitConfig->javaVM, argIndex, &commandLineOptions, !isAOT, mergeCompilerOptions);
       if (rc)
@@ -329,9 +349,47 @@ J9::OptionsPostRestore::processInternalCompilerOptions(bool enabled, bool isAOT)
    }
 
 void
-J9::OptionsPostRestore::filterMethod(TR_J9VMBase *fej9, J9Method *method)
+J9::OptionsPostRestore::invalidateCompiledMethod(J9Method *method, TR_J9VMBase *fej9)
    {
-   if (TR::CompilationInfo::isCompiled(method))
+   void *startPC = _compInfo->getPCIfCompiled(method);
+   TR_PersistentJittedBodyInfo *bodyInfo = TR::Recompilation::getJittedBodyInfoFromPC(startPC);
+
+   if (bodyInfo)
+      {
+      if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCheckpointRestoreDetails))
+         {
+         TR_VerboseLog::CriticalSection();
+         TR_VerboseLog::write(TR_Vlog_CHECKPOINT_RESTORE, "Invalidating ");
+         _compInfo->printMethodNameToVlog(method);
+         TR_VerboseLog::writeLine(" (%p)", method);
+         }
+
+      TR_PersistentMethodInfo *pmi = bodyInfo->getMethodInfo();
+      pmi->setIsExcludedPostRestore();
+
+      TR::Recompilation::invalidateMethodBody(startPC, fej9);
+
+      // TODO: add method to a list to check the stack of java threads to print out message
+      }
+   else
+      {
+      bool isNative =_J9ROMMETHOD_J9MODIFIER_IS_SET((J9_ROM_METHOD_FROM_RAM_METHOD(method)), J9AccNative);
+      if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCheckpointRestoreDetails))
+         {
+         TR_VerboseLog::CriticalSection();
+         TR_VerboseLog::write(TR_Vlog_CHECKPOINT_RESTORE, "Unable to invalidate %smethod ", isNative ? "native " : "");
+         _compInfo->printMethodNameToVlog(method);
+         TR_VerboseLog::writeLine(" (%p)", method);
+         }
+      }
+   }
+
+bool
+J9::OptionsPostRestore::shouldInvalidateCompiledMethod(J9Method *method, TR_J9VMBase *fej9, bool compilationFiltersExist)
+   {
+   bool shouldFilterMethod = false;
+
+   if (compilationFiltersExist)
       {
       J9ROMMethod * romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
       J9UTF8 *className;
@@ -349,63 +407,245 @@ J9::OptionsPostRestore::filterMethod(TR_J9VMBase *fej9, J9Method *method)
       if (methodSignature)
          {
          sprintf(methodSignature, "%.*s.%.*s%.*s",
-                 J9UTF8_LENGTH(className), utf8Data(className),
-                 J9UTF8_LENGTH(name), utf8Data(name),
-                 J9UTF8_LENGTH(signature), utf8Data(signature));
+               J9UTF8_LENGTH(className), utf8Data(className),
+               J9UTF8_LENGTH(name), utf8Data(name),
+               J9UTF8_LENGTH(signature), utf8Data(signature));
 
          TR_FilterBST *filter = NULL;
-         if (!TR::Options::getDebug()->methodSigCanBeCompiled(methodSignature, filter, TR::Method::J9))
-            {
-            if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCheckpointRestoreDetails))
-               TR_VerboseLog::writeLineLocked(TR_Vlog_CHECKPOINT_RESTORE, "Invalidating %s (%p)", methodSignature, method);
-
-            TR::Recompilation::invalidateMethodBody(method->extra, fej9);
-            // TODO: add method to a list to check the stack of java threads to print out message
-            }
+         shouldFilterMethod = !TR::Options::getDebug()->methodSigCanBeCompiled(methodSignature, filter, TR::Method::J9);
          }
+      }
+
+   return shouldFilterMethod;
+   }
+
+void
+J9::OptionsPostRestore::invalidateCompiledMethodsIfNeeded(bool invalidateAll)
+   {
+   TR_J9VMBase *fej9 = TR_J9VMBase::get(_jitConfig, _vmThread);
+   bool compilationFiltersExist = (TR::Options::getDebug() && TR::Options::getDebug()->getCompilationFilters());
+
+   if (invalidateAll || compilationFiltersExist)
+      {
+      J9JavaVM *javaVM = _jitConfig->javaVM;
+      TR_Memory trMemory(*_compInfo->persistentMemory(), _region);
+
+      J9ClassWalkState classWalkState;
+      J9Class *j9clazz = javaVM->internalVMFunctions->allClassesStartDo(&classWalkState, javaVM, NULL);
+      while (j9clazz)
+         {
+         TR_OpaqueClassBlock *clazz = reinterpret_cast<TR_OpaqueClassBlock *>(j9clazz);
+         uint32_t numMethods = fej9->getNumMethods(clazz);
+         J9Method *ramMethods = reinterpret_cast<J9Method *>(fej9->getMethods(clazz));
+
+         for (uint32_t index = 0; index < numMethods; index++)
+            {
+            J9Method *method = &ramMethods[index];
+            if (TR::CompilationInfo::isCompiled(method))
+               {
+               if (invalidateAll ||
+                   shouldInvalidateCompiledMethod(method, fej9, compilationFiltersExist))
+                  {
+                  invalidateCompiledMethod(method, fej9);
+                  }
+               }
+            }
+
+         j9clazz = javaVM->internalVMFunctions->allClassesNextDo(&classWalkState);
+         }
+      javaVM->internalVMFunctions->allClassesEndDo(&classWalkState);
       }
    }
 
 void
-J9::OptionsPostRestore::filterMethods()
+J9::OptionsPostRestore::disableAOTCompilation()
    {
-   PORT_ACCESS_FROM_JITCONFIG(_jitConfig);
-   J9JavaVM *javaVM = _jitConfig->javaVM;
-   TR_J9VMBase *fej9 = TR_J9VMBase::get(_jitConfig, _vmThread);
-   TR_Memory trMemory(*_compInfo->persistentMemory(), _region);
+   // Ideally when disabling AOT, the vmThread->aotVMwithThreadInfo->_sharedCache
+   // would also be freed and set to NULL. However, it isn't obvious whether non
+   // compilation and java threads that could be running at the moment could make
+   // use of it, in which case there could be a race. To avoid this, it's safer
+   // to just leave _sharedCache alone; at worst some SCC API could be invoked,
+   // but not during a compilation as all compilation threads are suspended at
+   // this point, and so it won't impact AOT code.
 
-   J9ClassWalkState classWalkState;
-   J9Class *j9clazz = javaVM->internalVMFunctions->allClassesStartDo(&classWalkState, javaVM, NULL);
-   while (j9clazz)
+   TR::Options::getAOTCmdLineOptions()->setOption(TR_NoLoadAOT);
+   TR::Options::getAOTCmdLineOptions()->setOption(TR_NoStoreAOT);
+   TR::Options::setSharedClassCache(false);
+   TR_J9SharedCache::setSharedCacheDisabledReason(TR_J9SharedCache::AOT_DISABLED);
+   }
+
+void
+J9::OptionsPostRestore::openNewVlog(char *vLogFileName)
+   {
+   TR_VerboseLog::vlogAcquire();
+
+   if (_oldVLogFileName)
       {
-      TR_OpaqueClassBlock *clazz = reinterpret_cast<TR_OpaqueClassBlock *>(j9clazz);
-      uint32_t numMethods = fej9->getNumMethods(clazz);
-      J9Method *ramMethods = reinterpret_cast<J9Method *>(fej9->getMethods(clazz));
+      TR_ASSERT_FATAL(vLogFileName,
+                      "vlogFileName cannot be NULL if _oldVLogFileName (%s) is not NULL\n",
+                      _oldVLogFileName);
 
-      for (uint32_t index = 0; index < numMethods; index++)
-         {
-         filterMethod(fej9, &ramMethods[index]);
-         }
+      TR_ASSERT_FATAL(_privateConfig->vLogFile,
+                      "_privateConfig->vLogFile should not be NULL if _oldVLogFileName (%s) is not NULL\n",
+                      _oldVLogFileName);
 
-      j9clazz = javaVM->internalVMFunctions->allClassesNextDo(&classWalkState);
+      j9jit_fclose(_privateConfig->vLogFile);
+      TR::Options::jitPersistentFree(_oldVLogFileName);
+      _oldVLogFileName = NULL;
       }
-   javaVM->internalVMFunctions->allClassesEndDo(&classWalkState);
+
+   _privateConfig->vLogFile = fileOpen(TR::Options::getCmdLineOptions(), _jitConfig, vLogFileName, "wb", true);
+   TR::Options::setVerboseOptions(_privateConfig->verboseFlags);
+
+   TR_VerboseLog::vlogRelease();
+   }
+
+void
+J9::OptionsPostRestore::openNewRTLog(char *rtLogFileName)
+   {
+   bool closeOldFile = (_oldRtLogFileName != NULL);
+
+   JITRT_LOCK_LOG(_jitConfig);
+
+   if (closeOldFile)
+      {
+      TR_ASSERT_FATAL(rtLogFileName,
+                      "rtLogFileName cannot be NULL if _oldRtLogFileName (%s) is not NULL\n",
+                      _oldRtLogFileName);
+
+      TR_ASSERT_FATAL(_privateConfig->rtLogFile,
+                      "_privateConfig->rtLogFile should not be NULL if _oldRtLogFileName (%s) is not NULL\n",
+                      _oldRtLogFileName);
+
+      j9jit_fclose(_privateConfig->rtLogFile);
+      TR::Options::jitPersistentFree(_oldRtLogFileName);
+      _oldRtLogFileName = NULL;
+      }
+
+   _privateConfig->rtLogFile = fileOpen(TR::Options::getCmdLineOptions(), _jitConfig, rtLogFileName, "wb", true);
+
+   JITRT_UNLOCK_LOG(_jitConfig);
+
+   TR::CompilationInfoPerThread * const * arrayOfCompInfoPT = _compInfo->getArrayOfCompilationInfoPerThread();
+   for (int32_t i = _compInfo->getFirstCompThreadID(); i <= _compInfo->getLastCompThreadID(); i++)
+      {
+      TR::CompilationInfoPerThread *compThreadInfoPT = arrayOfCompInfoPT[i];
+      if (closeOldFile)
+         {
+         compThreadInfoPT->closeRTLogFile();
+         }
+      compThreadInfoPT->openRTLogFile();
+      }
+   }
+
+void
+J9::OptionsPostRestore::openLogFilesIfNeeded()
+   {
+   _privateConfig->vLogFileName = _jitConfig->vLogFileName;
+
+   char *vLogFileName = _privateConfig->vLogFileName;
+   char *rtLogFileName = _privateConfig->rtLogFileName;
+
+   // if _oldVLogFileName != vLogFileName, it is not possible that
+   // _oldVLogFileName != NULL && vLogFileName == NULL
+   if (_oldVLogFileName != vLogFileName)
+      {
+      openNewVlog(vLogFileName);
+      }
+
+   // if _oldRtLogFileName != rtLogFileName, it is not possible that
+   // _oldRtLogFileName != NULL && rtLogFileName == NULL
+   if (_oldRtLogFileName != rtLogFileName)
+      {
+      openNewRTLog(rtLogFileName);
+      }
+   }
+
+void
+J9::OptionsPostRestore::preProcessInternalCompilerOptions()
+   {
+   // Needed for FIND_AND_CONSUME_RESTORE_ARG
+   J9JavaVM *vm = _jitConfig->javaVM;
+
+   // Re-initialize the number of processors
+   _compInfo->initCPUEntitlement();
+   uint32_t numProc = _compInfo->getNumTargetCPUs();
+   TR::Compiler->host.setNumberOfProcessors(numProc);
+   TR::Compiler->target.setNumberOfProcessors(numProc);
+   TR::Compiler->relocatableTarget.setNumberOfProcessors(numProc);
+
+   // Find and consume -XX:[+|-]MergeCompilerOptions
+   _argIndexMergeOptionsEnabled = FIND_AND_CONSUME_RESTORE_ARG(EXACT_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::XXplusMergeCompilerOptions], 0);
+   _argIndexMergeOptionsDisabled = FIND_AND_CONSUME_RESTORE_ARG(EXACT_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::XXminusMergeCompilerOptions], 0);
    }
 
 void
 J9::OptionsPostRestore::postProcessInternalCompilerOptions()
    {
+   J9JavaVM *vm = _jitConfig->javaVM;
    // TODO: Based on whether the following is enabled, do necessary compensation
-   // - disableAsyncCompilation
    // - disabling recompilation (optLevel=, inhibit recomp, etc)
    // - OMR::Options::_logFile (both global and subsets)
    //    - May have to close an existing file and open a new one?
 
-   if (TR::Options::getDebug())
-      filterMethods();
+   // Ensure that log files are not suppressed if tracing is enabled post restore
+   if (TR::Options::requiresDebugObject())
+      TR::Options::suppressLogFileBecauseDebugObjectNotCreated(false);
 
+   // Need to set number of usable threads before opening logs;
+   // there is one rtLog per comp thread
    if (TR::Options::_numUsableCompilationThreads != _compInfo->getNumUsableCompilationThreads())
       _compInfo->setNumUsableCompilationThreadsPostRestore(TR::Options::_numUsableCompilationThreads);
+
+   // Open vlog and rtLog if applicable
+   openLogFilesIfNeeded();
+
+   // If -Xrs, -Xtrace, or disabling traps is specified post-restore,
+   // invalidate all method bodies
+   bool invalidateAll = false;
+   bool disableAOT = false;
+   if (!_disableTrapsPreCheckpoint
+       && (J9_ARE_ALL_BITS_SET(vm->sigFlags, J9_SIG_XRS_SYNC)
+           || TR::Options::getCmdLineOptions()->getOption(TR_NoResumableTrapHandler)
+           || TR::Options::getCmdLineOptions()->getOption(TR_DisableTraps)))
+      {
+      J9:Options::_xrsSync = J9_ARE_ALL_BITS_SET(vm->sigFlags, J9_SIG_XRS_SYNC);
+      invalidateAll = true;
+      disableAOT = true;
+      }
+   else if (!_compInfo->isVMMethodTraceEnabled()
+            && (vm->extendedRuntimeFlags & J9_EXTENDED_RUNTIME_METHOD_TRACE_ENABLED))
+      {
+      _compInfo->setVMMethodTraceEnabled(true);
+      invalidateAll = true;
+      disableAOT = true;
+      }
+
+   // Invalidate method bodies if needed
+   invalidateCompiledMethodsIfNeeded(invalidateAll);
+
+   // Disable AOT compilation if needed
+   if (disableAOT)
+      disableAOTCompilation();
+
+   // Set option to print code cache if necessary
+   if (_argIndexPrintCodeCache > _argIndexDisablePrintCodeCache)
+      TR::Options::getCmdLineOptions()->setOption(TR_PrintCodeCacheUsage);
+
+   // If pre-checkpoint, the JVM was run with count=0, then if post-restore
+   // the count is > 0, compilations will still happen synchronously. Also,
+   // because there is no enableAsyncCompilation, if pre-checkpoint the JVM
+   // was run with disableAsyncCompilation, post-restore will continue to have
+   // sync compilations.
+   //
+   // On the other hand, if pre-checkpoint the JVM was NOT run with
+   // disableAsyncCompilation OR count=0, then post-restore if these options
+   // are specified, they will NOT (for now) result in synchronous compilations.
+   if (_asyncCompilationPreCheckpoint)
+      {
+      if (TR::Options::getCmdLineOptions()->getOption(TR_DisableAsyncCompilation))
+         TR::Options::getCmdLineOptions()->setOption(TR_DisableAsyncCompilation, false);
+      }
    }
 
 void
@@ -414,58 +654,61 @@ J9::OptionsPostRestore::processCompilerOptions()
    // Needed for FIND_AND_CONSUME_RESTORE_ARG
    J9JavaVM *vm = _jitConfig->javaVM;
 
-   // TODO: Check existing config from before checkpoint
-   bool jitEnabled = true;
-   bool aotEnabled = true;
+   bool jitEnabled = TR::Options::canJITCompile();
+   bool aotEnabled = TR::Options::sharedClassCache();
 
    _argIndexXjit = FIND_AND_CONSUME_RESTORE_ARG(OPTIONAL_LIST_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::Xjit], 0);
    _argIndexXnojit = FIND_AND_CONSUME_RESTORE_ARG(OPTIONAL_LIST_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::Xnojit], 0);
    _argIndexXaot = FIND_AND_CONSUME_RESTORE_ARG(OPTIONAL_LIST_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::Xaot], 0);
    _argIndexXnoaot = FIND_AND_CONSUME_RESTORE_ARG(OPTIONAL_LIST_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::Xnoaot], 0);
 
-   if (_argIndexXjit < _argIndexXnojit)
-      jitEnabled = false;
+   if (_argIndexXjit != _argIndexXnojit)
+      jitEnabled = (_argIndexXjit > _argIndexXnojit);
 
-   if (_argIndexXaot < _argIndexXnoaot)
-      aotEnabled = false;
-
-   // TODO: Look into what needs to be done if both -Xnojit and -Xaot
+   // If -Xnoaot was specified pre-checkpoint, there is a lot of infrastructure
+   // that needs to be set up, including validating the existing SCC. For now,
+   // Ignore -Xaot post-restore if -Xnoaot was specified pre-checkpoint.
+   if (aotEnabled)
+      aotEnabled = (_argIndexXaot >= _argIndexXnoaot);
 
    if (!aotEnabled)
       {
-      // do necessary work to disable aot compilation
+      disableAOTCompilation();
       }
 
    if (!jitEnabled)
       {
-      // do necessary work to disable jit compilation
+      TR::Options::setCanJITCompile(false);
+      invalidateCompiledMethodsIfNeeded(true);
+      }
+   else
+      {
+      TR::Options::setCanJITCompile(true);
       }
 
    if (jitEnabled || aotEnabled)
       {
-      _argIndexMergeOptionsEnabled = FIND_AND_CONSUME_RESTORE_ARG(EXACT_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::XXplusMergeCompilerOptions], 0);
-      _argIndexMergeOptionsDisabled = FIND_AND_CONSUME_RESTORE_ARG(EXACT_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::XXminusMergeCompilerOptions], 0);
+      // Preprocess compiler options
+      preProcessInternalCompilerOptions();
 
-      processInternalCompilerOptions(aotEnabled, true);
-      processInternalCompilerOptions(jitEnabled, false);
+      // Process -Xjit / -Xaot options
+      if (aotEnabled)
+         processInternalCompilerOptions(true);
+      if (jitEnabled)
+         processInternalCompilerOptions(false);
 
       // TODO: Look into
       // - -Xrs
       // - -Xtune:virtualized
-      // - TR::Compiler->target.numberOfProcessors
 
+      // Iterate over external options
       iterateOverExternalOptions();
 
-      if (_argIndexPrintCodeCache > _argIndexDisablePrintCodeCache)
-         {
-         // self()->setOption(TR_PrintCodeCacheUsage);
-         }
-
+      // Process JITServer Options
       if (jitEnabled)
-         {
          processJitServerOptions();
-         }
 
+      // Postprocess compiler options
       postProcessInternalCompilerOptions();
       }
    }

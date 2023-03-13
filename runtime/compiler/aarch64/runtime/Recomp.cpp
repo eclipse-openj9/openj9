@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2023 IBM Corp. and others
+ * Copyright IBM Corp. and others 2019
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -219,7 +219,8 @@ void J9::Recompilation::methodCannotBeRecompiled(void *oldStartPC, TR_FrontEnd *
 
    if (bodyInfo->getUsesPreexistence()
        || methodInfo->hasBeenReplaced()
-       || (linkageInfo->isSamplingMethodBody() && !fej9->isAsyncCompilation())) // go interpreted for failed recomps in sync mode
+       || (linkageInfo->isSamplingMethodBody() && !fej9->isAsyncCompilation()) // go interpreted for failed recomps in sync mode
+       || methodInfo->isExcludedPostRestore()) // go interpreted if method is excluded post restore
       {
       // Patch the first instruction regardless of counting or sampling
       patchAddr = (int32_t *)((uint8_t *)oldStartPC + getJitEntryOffset(linkageInfo));

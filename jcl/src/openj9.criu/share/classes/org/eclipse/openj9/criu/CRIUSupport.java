@@ -1,6 +1,6 @@
 /*[INCLUDE-IF CRIU_SUPPORT]*/
 /*******************************************************************************
- * Copyright (c) 2021, 2023 IBM Corp. and others
+ * Copyright IBM Corp. and others 2021
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -74,7 +74,10 @@ public final class CRIUSupport {
 			boolean autoDedup,
 			boolean trackMemory,
 			boolean unprivileged,
-			String optionsFile);
+			String optionsFile,
+			String envFile);
+
+	private static native String[] getRestoreSystemProperites();
 
 	static {
 		AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
@@ -201,7 +204,7 @@ public final class CRIUSupport {
 	 * first in post restore hooks.
 	 */
 	private static final int RESTORE_ENVIRONMENT_VARIABLES_PRIORITY = 100;
-	private static final int RESTORE_OPTIONS_FILE_PRIORITY = 100;
+	private static final int RESTORE_SYSTEM_PROPERTIES_PRIORITY = 100;
 	private static final int USER_HOOKS_PRIORITY = 1;
 	/* RESET_CRIUSEC_PRIORITY and RESTORE_SECURITY_PROVIDERS_PRIORITY need to
 	 * be higher than any other JVM hook that may require security providers.
@@ -456,32 +459,6 @@ public final class CRIUSupport {
 		String optionsFilePath = optionsFile.toAbsolutePath().toString();
 		this.optionsFile = "-Xoptionsfile=" + optionsFilePath; //$NON-NLS-1$
 
-		J9InternalCheckpointHookAPI.registerPostRestoreHook(RESTORE_OPTIONS_FILE_PRIORITY,
-				"Restore options via options file:" + optionsFilePath, () -> { //$NON-NLS-1$
-					try (BufferedReader optionsFileReader = new BufferedReader(new FileReader(optionsFilePath))) {
-						String entry = null;
-						while ((entry = optionsFileReader.readLine()) != null) {
-							entry = entry.trim();
-							if (!entry.isEmpty()) {
-								if (entry.startsWith("-D")) { //$NON-NLS-1$
-									String entrySplit[] = entry.split("=", 2); //$NON-NLS-1$
-									String propertyValue = entrySplit[1];
-									while (propertyValue.endsWith("\\")) { //$NON-NLS-1$
-										/* line continuation */
-										propertyValue = propertyValue.substring(0, propertyValue.length() - 1);
-										propertyValue = propertyValue.trim();
-										String nextLine = optionsFileReader.readLine();
-										propertyValue += nextLine.trim();
-									}
-									System.setProperty(entrySplit[0].substring(2), propertyValue);
-								}
-							}
-						}
-					} catch (IOException | NullPointerException e) {
-						throw new JVMRestoreException("Failed to load options from the options file", 0, e); //$NON-NLS-1$
-					}
-		});
-
 		return this;
 	}
 
@@ -623,6 +600,16 @@ public final class CRIUSupport {
 		throw new JVMRestoreException("Failed to setup new environment variables", 0, cause); //$NON-NLS-1$
 	}
 
+	private static void setRestoreJavaProperties() {
+		String properties[] = getRestoreSystemProperites();
+
+		if (properties != null) {
+			for (int i = 0; i < properties.length; i += 2) {
+				System.setProperty(properties[i], properties[i + 1]);
+			}
+		}
+	}
+
 	/**
 	 * Checkpoint the JVM. This operation will use the CRIU options set by the
 	 * options setters.
@@ -640,14 +627,21 @@ public final class CRIUSupport {
 		if (isCRIUSupportEnabled()) {
 			if (InternalCRIUSupport.isCheckpointAllowed()) {
 				/* Add env variables restore hook. */
-				registerRestoreEnvVariables();
+				String envFilePath = null;
+				if (envFile != null) {
+					envFilePath = envFile.toAbsolutePath().toString();
+					registerRestoreEnvVariables();
+				}
+
+				J9InternalCheckpointHookAPI.registerPostRestoreHook(RESTORE_ENVIRONMENT_VARIABLES_PRIORITY, "Restore system properties", CRIUSupport::setRestoreJavaProperties);
+
 				/* Add security provider hooks. */
 				SecurityProviders.registerResetCRIUState();
 				SecurityProviders.registerRestoreSecurityProviders();
 
 				try {
 					checkpointJVMImpl(imageDir, leaveRunning, shellJob, extUnixSupport, logLevel, logFile, fileLocks,
-							workDir, tcpEstablished, autoDedup, trackMemory, unprivileged, optionsFile);
+							workDir, tcpEstablished, autoDedup, trackMemory, unprivileged, optionsFile, envFilePath);
 				} catch (UnsatisfiedLinkError ule) {
 					errorMsg = ule.getMessage();
 					throw new InternalError("There is a problem with libj9criu in the JDK"); //$NON-NLS-1$

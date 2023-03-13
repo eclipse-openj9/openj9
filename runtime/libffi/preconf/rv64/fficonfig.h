@@ -2,7 +2,7 @@
 /* fficonfig.h.in.  Generated from configure.ac by autoheader.  */
 /*
  * ===========================================================================
- * Copyright (c) 2019, 2020 IBM Corp. and others
+ * Copyright IBM Corp. and others 2019
  * ===========================================================================
  */
 

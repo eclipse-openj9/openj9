@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2023 IBM Corp. and others
+ * Copyright IBM Corp. and others 1991
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -413,6 +413,7 @@ J9InternalVMFunctions J9InternalFunctions = {
 	delayedLockingOperation,
 	addInternalJVMClassIterationRestoreHook,
 	setCRIUSingleThreadModeJVMCRIUException,
+	getRestoreSystemProperites,
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 	getClassNameString,
 	getDefaultValueSlotAddress,
@@ -435,4 +436,5 @@ J9InternalVMFunctions J9InternalFunctions = {
 	walkContinuationStackFrames,
 	walkAllStackFrames,
 #endif /* JAVA_SPEC_VERSION >= 19 */
+	checkArgsConsumed,
 };

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2022 IBM Corp. and others
+ * Copyright IBM Corp. and others 1991
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -123,9 +123,9 @@ public:
 	MM_OSInterface *_osInterface;
 
 	/* Params generated from command-line options from mmparse */
-	double window;
-	double beat;
-	U_64 beatNanos;
+	double _window;
+	double _beat;
+	U_64 _beatNanos;
 	double _staticTargetUtilization;
 
 	MM_UtilizationTracker* _utilTracker;
@@ -272,9 +272,9 @@ public:
 		_completeCurrentGCSynchronouslyReasonParameter(0),
 		_mainThreadMonitor(NULL),
 		_osInterface(NULL),
-		window(),
-		beat(),
-		beatNanos(),
+		_window(),
+		_beat(),
+		_beatNanos(),
 		_staticTargetUtilization(),
 		_utilTracker(NULL)
 	{

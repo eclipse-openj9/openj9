@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2022 IBM Corp. and others
+ * Copyright IBM Corp. and others 2019
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -942,6 +942,11 @@ JITServerHelpers::postStreamFailure(OMRPortLibrary *portLibrary, TR::Compilation
          }
       compInfo->getPersistentInfo()->setServerUID(0);
       _serverAvailable = false;
+
+      // Ensure that log files are not supressed if methods are now
+      // going to be compiled locally
+      if (TR::Options::requiresDebugObject())
+         TR::Options::suppressLogFileBecauseDebugObjectNotCreated(false);
 
       // Reset the activation policy flag in case we never reconnect to the server
       // and client compiles locally or connects to a new server

@@ -1,4 +1,4 @@
-* Copyright (c) 2016, 2019 IBM Corp. and others
+* Copyright IBM Corp. and others 2016
   ACONTROL AFPR
 ffi_closure_SYSV  EDCXPRLG
 *ffi_closure_SYSV  CSECT

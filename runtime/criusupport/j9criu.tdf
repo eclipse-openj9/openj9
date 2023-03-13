@@ -1,5 +1,5 @@
 //*******************************************************************************
-// Copyright (c) 2021, 2022 IBM Corp. and others
+// Copyright IBM Corp. and others 2021
 //
 // This program and the accompanying materials are made available under
 // the terms of the Eclipse Public License 2.0 which accompanies this
@@ -42,3 +42,4 @@ TraceEvent=Trc_CRIU_checkpointJVMImpl_syslogOptions Overhead=1 Level=3 Template=
 TraceEvent=Trc_CRIU_checkpoint_nano_times Overhead=1 Level=2 Template="Before checkpoint, checkpointNanoTimeMonotonic = %lld, checkpointNanoUTCTime = %llu"
 TraceEvent=Trc_CRIU_restore_nano_times Overhead=1 Level=2 Template="After restore, restoreNanoUTCTime = %llu, checkpointNanoUTCTime = %llu, checkpointRestoreTimeDelta = %lld, restoreNanoTimeMonotonic = %lld, checkpointNanoTimeMonotonic = %lld, nanoTimeMonotonicClockDelta = %lld"
 TraceEvent=Trc_CRIU_after_checkpoint Overhead=1 Level=2 Template="After checkpoint criu_dump(), j9time_nano_time() returns %lld, j9time_current_time_nanos() returns %llu"
+TraceEvent=Trc_CRIU_restoreArg Overhead=1 Level=5 Test Template="Restore arg: %s"

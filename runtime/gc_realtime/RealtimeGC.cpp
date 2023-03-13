@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright IBM Corp. and others 1991
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -105,47 +105,6 @@ MM_RealtimeGC::initialize(MM_EnvironmentBase *env)
 	_extensions->realtimeGC = this;
 	_allowGrowth = false;
 	
-	if (_extensions->gcTrigger == 0) {
-		_extensions->gcTrigger = (_extensions->memoryMax / 2);
-		_extensions->gcInitialTrigger = (_extensions->memoryMax / 2);
-	}
-
-	_extensions->distanceToYieldTimeCheck = 0;
-
-	/* Only SRT passes this check as the commandline option to specify beatMicro is only enabled on SRT */
-	if (METRONOME_DEFAULT_BEAT_MICRO != _extensions->beatMicro) {
-		/* User-specified quanta time, adjust related parameters */
-		_extensions->timeWindowMicro = 20 * _extensions->beatMicro;
-		/* Currently all supported SRT platforms - AIX and Linux, can only use HRT for alarm thread implementation.
-		 * The default value for HRT period is 1/3 of the default quanta: 1 msec for HRT period and 3 msec quanta,
-		 * we will attempt to adjust the HRT period to 1/3 of the specified quanta.
-		 */
-		uintptr_t hrtPeriodMicro = _extensions->beatMicro / 3;
-		if ((hrtPeriodMicro < METRONOME_DEFAULT_HRT_PERIOD_MICRO) && (METRONOME_DEFAULT_HRT_PERIOD_MICRO < _extensions->beatMicro)) {
-			/* If the adjusted value is too small for the hires clock resolution, we will use the default HRT period provided that
-			 * the default period is smaller than the quanta time specified.
-			 * Otherwise we fail to initialize the alarm thread with an error message.
-			 */
-			hrtPeriodMicro = METRONOME_DEFAULT_HRT_PERIOD_MICRO;
-		}
-		Assert_MM_true(0 != hrtPeriodMicro);
-		_extensions->hrtPeriodMicro = hrtPeriodMicro;
-
-		/* On Windows SRT we still use interrupt-based alarm. Set the interrupt period the same as hires timer period.
-		 * We will fail to init the alarm if this is too small a resolution for Windows.
-		 */
-		_extensions->itPeriodMicro = _extensions->hrtPeriodMicro;
-
-		/* if the pause time user specified is larger than the default value, calculate if there is opportunity
-		 * for the GC to do time checking less often inside condYieldFromGC.
-		 */
-		if (METRONOME_DEFAULT_BEAT_MICRO < _extensions->beatMicro) {
-			uintptr_t intervalToSkipYieldCheckMicro = _extensions->beatMicro - METRONOME_DEFAULT_BEAT_MICRO;
-			uintptr_t maxInterYieldTimeMicro = INTER_YIELD_MAX_NS / 1000;
-			_extensions->distanceToYieldTimeCheck = (U_32)(intervalToSkipYieldCheckMicro / maxInterYieldTimeMicro);
-		}
-	}
-
 	_osInterface = MM_OSInterface::newInstance(env);
 	if (_osInterface == NULL) {
 		return false;

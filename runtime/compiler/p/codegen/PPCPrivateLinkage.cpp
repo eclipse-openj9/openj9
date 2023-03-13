@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2023 IBM Corp. and others
+ * Copyright IBM Corp. and others 2000
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2891,7 +2891,8 @@ TR::Register *J9::Power::PrivateLinkage::buildDirectDispatch(TR::Node *callNode)
          }
       }
 
-   if (comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P8) &&
+   if (!comp()->requiresSpineChecks() &&
+       comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P8) &&
        comp()->target().cpu.supportsFeature(OMR_FEATURE_PPC_HAS_VSX) &&
        (callNode->getSymbol()->castToMethodSymbol()->getRecognizedMethod() == TR::java_util_zip_CRC32C_updateBytes ||
 	callNode->getSymbol()->castToMethodSymbol()->getRecognizedMethod() == TR::java_util_zip_CRC32C_updateDirectByteBuffer)) {

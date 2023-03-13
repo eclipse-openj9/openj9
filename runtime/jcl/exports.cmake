@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2019, 2023 IBM Corp. and others
+# Copyright IBM Corp. and others 2019
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -66,7 +66,7 @@ omr_add_exports(jclse
 	Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_setSharedClassCacheMinJitDataBytesImpl
 	Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_setSharedClassCacheSoftmxBytesImpl
 	Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_setVerboseImpl
-	Java_com_ibm_java_lang_management_internal_MemoryManagerMXBeanImpl_isManagedPoolImpl	
+	Java_com_ibm_java_lang_management_internal_MemoryManagerMXBeanImpl_isManagedPoolImpl
 	Java_com_ibm_java_lang_management_internal_MemoryPoolMXBeanImpl_getCollectionUsageImpl
 	Java_com_ibm_java_lang_management_internal_MemoryPoolMXBeanImpl_getCollectionUsageThresholdCountImpl
 	Java_com_ibm_java_lang_management_internal_MemoryPoolMXBeanImpl_getCollectionUsageThresholdImpl

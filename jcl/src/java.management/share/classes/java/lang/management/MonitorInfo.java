@@ -1,7 +1,7 @@
 /*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 /*
  *******************************************************************************
- * Copyright (c) 2007, 2022 IBM Corp. and others
+ * Copyright IBM Corp. and others 2007
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this

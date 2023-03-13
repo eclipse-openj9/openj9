@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2023 IBM Corp. and others
+ * Copyright IBM Corp. and others 1991
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -327,6 +327,8 @@ enum INIT_STAGE {
 #define VMOPT_XXIGNOREUNRECOGNIZEDVMOPTIONSDISABLE "-XX:-IgnoreUnrecognizedVMOptions"
 #define VMOPT_XXIGNOREUNRECOGNIZEDXXCOLONOPTIONSENABLE "-XX:+IgnoreUnrecognizedXXColonOptions"
 #define VMOPT_XXIGNOREUNRECOGNIZEDXXCOLONOPTIONSDISABLE "-XX:-IgnoreUnrecognizedXXColonOptions"
+#define VMOPT_XXIGNOREUNRECOGNIZEDRESTOREOPTIONSENABLE "-XX:+IgnoreUnrecognizedRestoreOptions"
+#define VMOPT_XXIGNOREUNRECOGNIZEDRESTOREOPTIONSDISABLE "-XX:-IgnoreUnrecognizedRestoreOptions"
 #define VMOPT_X142BOOSTGCTHRPRIO "-X142BoostGCThrPrio"
 #define VMOPT_XREALTIME "-Xrealtime"
 #define VMOPT_XNORTSJ "-Xnortsj"
@@ -539,6 +541,7 @@ enum INIT_STAGE {
 #define VMOPT_XXNODYNAMICHEAPIFICATION "-XX:-DynamicHeapification"
 
 #define MAPOPT_AGENTLIB_JDWP_EQUALS "-agentlib:jdwp="
+#define MAPOPT_XRUNJDWP "-Xrunjdwp:"
 
 #define MAPOPT_XCOMP "-Xcomp"
 #define MAPOPT_XDISABLEJAVADUMP "-Xdisablejavadump"

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2023 IBM Corp. and others
+ * Copyright IBM Corp. and others 2000
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -724,6 +724,12 @@ public:
    void setReadyForCheckpointRestore()      {        _checkpointStatus  = TR_CheckpointStatus::READY_FOR_CHECKPOINT_RESTORE;   }
    bool shouldCheckpointBeInterrupted()     { return _checkpointStatus == TR_CheckpointStatus::INTERRUPT_CHECKPOINT;           }
    void interruptCheckpoint()               {        _checkpointStatus  = TR_CheckpointStatus::INTERRUPT_CHECKPOINT;           }
+
+   void setVMMethodTraceEnabled(bool trace) { _vmMethodTraceEnabled = trace; }
+   bool isVMMethodTraceEnabled()            { return _vmMethodTraceEnabled;  }
+
+   bool resetStartAndElapsedTime()              { return _resetStartAndElapsedTime;  }
+   void setResetStartAndElapsedTime(bool reset) { _resetStartAndElapsedTime = reset; }
 #endif
 
    TR_PersistentMemory *     persistentMemory() { return _persistentMemory; }
@@ -1217,6 +1223,8 @@ public:
    bool getSuspendThreadDueToLowPhysicalMemory() const { return _suspendThreadDueToLowPhysicalMemory; }
    void setSuspendThreadDueToLowPhysicalMemory(bool b) { _suspendThreadDueToLowPhysicalMemory = b; }
 
+   void initCPUEntitlement();
+
    bool getLowCompDensityMode() const { return _lowCompDensityMode; }
    void enterLowCompDensityMode() { _lowCompDensityMode = true; _hasEnteredLowCompDensityModeInThePast = true;}
    void exitLowCompDensityMode() { _lowCompDensityMode = false; }
@@ -1366,6 +1374,8 @@ private:
 #if defined(J9VM_OPT_CRIU_SUPPORT)
    TR::Monitor *_crMonitor;
    TR_CheckpointStatus _checkpointStatus;
+   bool _vmMethodTraceEnabled;
+   bool _resetStartAndElapsedTime;
 #endif
 
    TR::Monitor *_vlogMonitor;

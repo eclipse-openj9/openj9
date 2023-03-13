@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2023 IBM Corp. and others
+ * Copyright IBM Corp. and others 2000
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -500,6 +500,8 @@ class CompilationInfoPerThread : public TR::CompilationInfoPerThreadBase
    bool                   isDiagnosticThread() const { return _isDiagnosticThread; }
    CpuSelfThreadUtilization& getCompThreadCPU() { return _compThreadCPU; }
    TR::FILE              *getRTLogFile() { return _rtLogFile; }
+   void                   closeRTLogFile();
+   void                   openRTLogFile();
    virtual void           freeAllResources();
 
 #if defined(J9VM_OPT_JITSERVER)

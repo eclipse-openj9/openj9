@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2017, 2022 IBM Corp. and others
+Copyright IBM Corp. and others 2017
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -148,9 +148,6 @@ You can request a Pull Request build from the Eclipse OpenJ9 repository - [openj
 - To trigger a Line Endings Check
     - `Jenkins line endings check`
 
-- To trigger a Copyright Check
-    - `Jenkins copyright check`
-
 - To trigger a SignedOffBy Check (Only applicable to the Extensions repos)
     - `Jenkins signed off by check`
 
@@ -181,13 +178,6 @@ Other PR jobs
     - Trigger:
         - Automatically builds on every PR
         - Retrigger with `Jenkins line endings check`
-
-- PullRequest-CopyrightCheck-`<repo>`
-    - Description:
-        - Checks the files modified in a pull request have copyright with current year
-    - Trigger:
-        - Automatically builds on every PR
-        - Retrigger with `Jenkins copyright check`
 
 - PullRequest-signedOffByCheck-`<repo>`
     - Description:
