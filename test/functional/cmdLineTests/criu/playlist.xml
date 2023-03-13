@@ -93,6 +93,8 @@
 			<variation>-Xjit:count=0 -XX:+CRIURestoreNonPortableMode</variation>
 			<variation>-Xgcpolicy:optthruput</variation>
 			<variation>-Xgcpolicy:optavgpause</variation>
+			<variation>-Xgcpolicy:gencon -Xgcthreads64 -XX:CheckpointGCThreads=1</variation>
+			<variation>-Xgcpolicy:gencon -Xgcthreads1</variation>
 		</variations>
 		<command>
 			TR_Options=$(Q)exclude={org/openj9/criu/TimeChangeTest.nanoTimeInt()J},dontInline={org/openj9/criu/TimeChangeTest.nanoTimeInt()J|org/openj9/criu/TimeChangeTest.nanoTimeJit()J},{org/openj9/criu/TimeChangeTest.nanoTimeJit()J}(count=1)$(Q) \
