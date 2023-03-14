@@ -4120,6 +4120,7 @@ typedef struct J9CRIUCheckpointState {
 	BOOLEAN isCheckPointEnabled;
 	BOOLEAN isCheckPointAllowed;
 	BOOLEAN isNonPortableRestoreMode;
+	BOOLEAN isJdwpEnabled;
 	struct J9DelayedLockingOpertionsRecord *delayedLockingOperationsRoot;
 	struct J9Pool *hookRecords;
 	struct J9Pool *classIterationRestoreHookRecords;
