@@ -27,6 +27,7 @@
 #include "vm_api.h"
 #include "AtomicSupport.hpp"
 #include "ContinuationHelpers.hpp"
+#include "HeapIteratorAPI.h"
 #include "OutOfLineINL.hpp"
 #include "VMHelpers.hpp"
 
@@ -292,6 +293,19 @@ walkContinuationStackFrames(J9VMThread *currentThread, J9VMContinuation *continu
 	return rc;
 }
 
+
+jvmtiIterationControl
+walkContinuationCallBack(J9VMThread *vmThread, J9MM_IterateObjectDescriptor *object, void *userData)
+{
+	J9VMContinuation *continuation = J9VMJDKINTERNALVMCONTINUATION_VMREF(vmThread, object->object);
+	if (NULL != continuation) {
+		J9StackWalkState localWalkState = *(J9StackWalkState*)userData;
+		/* Walk non-null continuation's stack */
+		walkContinuationStackFrames(vmThread, continuation, &localWalkState);
+	}
+	return JVMTI_ITERATION_CONTINUE;
+}
+
 UDATA
 walkAllStackFrames(J9VMThread *currentThread, J9StackWalkState *walkState)
 {
@@ -309,47 +323,17 @@ walkAllStackFrames(J9VMThread *currentThread, J9StackWalkState *walkState)
 		localWalkState.walkThread = targetThread;
 		rc = vm->walkStackFrames(currentThread, &localWalkState);
 
-		if (NULL != targetThread->currentContinuation) {
-			localWalkState = *walkState;
-			walkContinuationStackFrames(currentThread, targetThread->currentContinuation, &localWalkState);
-		}
 		targetThread = targetThread->linkNext;
 	} while (targetThread != vm->mainThread);
 
-	/* Walk all contination stacks */
-	if (NULL != vm->liveVirtualThreadList) {
-		j9object_t rootNode = J9_JNI_UNWRAP_REFERENCE(vm->liveVirtualThreadList);
-		j9object_t nextVThread = J9OBJECT_OBJECT_LOAD(currentThread, rootNode, vm->virtualThreadLinkNextOffset);
-		J9VMContinuation *continuation = NULL;
-		while (nextVThread != rootNode) {
-			j9object_t cont = J9VMJAVALANGVIRTUALTHREAD_CONT(currentThread, nextVThread);
-			continuation = J9VMJDKINTERNALVMCONTINUATION_VMREF(currentThread, cont);
-			if (NULL != continuation) {
-				/* Reset localWalkState */
-				localWalkState = *walkState;
-				/* walk live continuation's stack */
-				rc = walkContinuationStackFrames(currentThread, continuation, &localWalkState);
-			}
-			nextVThread = J9OBJECT_OBJECT_LOAD(currentThread, nextVThread, vm->virtualThreadLinkNextOffset);
-		}
-	}
-	/* Alternate approach to rely on GC Continuation object iterator
-		GC_ContinuationIterator iter = getContinuationIterator();
-		J9VMContinuation *continuation = NULL;
-		while(NULL != iter) {
-			continuation = J9VMJDKINTERNALVMCONTINUATION_VMREF(currentThread, nextCont);
-			if (NULL != continuation) {
-				// Reset localWalkState
-				localWalkState = *walkState;
-				// walk live continuation's stack
-				rc = walkContinuationStackFrames(currentThread, continuation, &localWalkState);
-				if (J9_STACKWALK_RC_NONE != rc) {
-					goto exit;
-				}
-			}
-			iter = iter.next();
-		}
-	 */
+	/* Walk all live continuation stacks using the GC Continuation object iterator */
+	PORT_ACCESS_FROM_VMC(currentThread);
+	vm->memoryManagerFunctions->j9mm_iterate_all_continuation_objects(
+									currentThread,
+									privatePortLibrary,
+									0,
+									walkContinuationCallBack,
+									(void*)walkState);
 	return rc;
 }
 } /* extern "C" */
