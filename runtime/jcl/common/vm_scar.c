@@ -112,6 +112,9 @@ const U_64 jclConfig = J9CONST64(0x7363617237306200);		/* 'scar70b' */
 #define	FIPS140_2_PROP_VALUE	"140-2"
 #define	FIPS140_3_DIR		( DIR_SEPARATOR_STR "fips" FIPS140_3_PROP_VALUE )
 
+#if defined(FIPS_PREVIEW_PLATFORM)
+static U_8 *allocatedFipsHome = NULL;
+#endif /* defined(FIPS_PREVIEW_PLATFORM) */
 
 jint scarInit(J9JavaVM *vm);
 jint scarPreconfigure(J9JavaVM *vm);
@@ -309,6 +312,10 @@ addBFUSystemProperties(J9JavaVM* vm)
 		if (NULL == fipsHomeBuffer) {
 			return J9SYSPROP_ERROR_OUT_OF_MEMORY;
 		}
+		if (NULL != allocatedFipsHome) {
+			j9mem_free_memory(allocatedFipsHome);
+		}
+		allocatedFipsHome = fipsHomeBuffer;
 		memcpy(fipsHomeBuffer, fipsHomeString, fipsHomeBytes);
 		vm->fipsHome = fipsHomeBuffer;
 	}
@@ -325,8 +332,6 @@ addBFUSystemProperties(J9JavaVM* vm)
 		 * FIPS140_3_PROP_VALUE is ok only if the preview is actually enabled.
 		 */
 		char *fipsModeString = fipsModeProperty->value;
-		U_8 *fipsModeBuffer = NULL;
-		size_t fipsModeBytes = 0;
 
 		/* Validate that the mode setting is consistent with command-line option to enable/disable. */
 #if defined(FIPS_PREVIEW_OPTIONS_ACCEPTED_PLATFORM)
@@ -338,27 +343,22 @@ addBFUSystemProperties(J9JavaVM* vm)
 #endif /* defined(FIPS_PREVIEW_OPTIONS_ACCEPTED_PLATFORM) */
 
 		if (disabled >= enabled) { /* Allow only FIPS140_2_PROP_VALUE to be set. */
-			if (0 != strcmp(fipsModeString, FIPS140_2_PROP_VALUE)) {
+			if (0 == strcmp(fipsModeString, FIPS140_2_PROP_VALUE)) {
+				vm->fipsMode = (U_8 *)FIPS140_2_PROP_VALUE;
+			} else {
 				/* should be an NLS message but very late fix so just print an error */
-				j9tty_err_printf(PORTLIB, "Error: com.ibm.fips.mode cannot be set to %s\n", fipsModeString);
+				j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_JCL_FIPS_MODE_SET_TO_INVALID_VALUE, fipsModeString);
 				return J9SYSPROP_ERROR_UNSUPPORTED_PROP;
 			}
 		} else { /* Allow only FIPS140_3_PROP_VALUE to be set. */
-			if (0 != strcmp(fipsModeString, FIPS140_3_PROP_VALUE)) {
+			if (0 == strcmp(fipsModeString, FIPS140_3_PROP_VALUE)) {
+				vm->fipsMode = (U_8 *)FIPS140_3_PROP_VALUE;
+			} else {
 				/* should be an NLS message but very late fix so just print an error */
-				j9tty_err_printf(PORTLIB, "Error: com.ibm.fips.mode cannot be set to %s\n", fipsModeString);
+				j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_JCL_FIPS_MODE_SET_TO_INVALID_VALUE, fipsModeString);
 				return J9SYSPROP_ERROR_UNSUPPORTED_PROP;
 			}
 		}
-
-		/* Make a copy of the validated value and record into vm->fipsMode. */
-		fipsModeBytes = strlen(fipsModeString) + 1;
-		fipsModeBuffer = (U_8 *)j9mem_allocate_memory(fipsModeBytes, J9MEM_CATEGORY_VM_JCL);
-		if (NULL == fipsModeBuffer) {
-			return J9SYSPROP_ERROR_OUT_OF_MEMORY;
-		}
-		memcpy(fipsModeBuffer, fipsModeString, fipsModeBytes);
-		vm->fipsMode = fipsModeBuffer;
 	}
 
 #else /* defined(FIPS_PREVIEW_PLATFORM) */
@@ -529,6 +529,12 @@ J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 				iniBootpath = NULL;
 			}
 			freeUnsafeMemory(vm);
+#if defined(FIPS_PREVIEW_PLATFORM)
+			if (NULL != allocatedFipsHome) {
+				j9mem_free_memory(allocatedFipsHome);
+				allocatedFipsHome = NULL;
+			}
+#endif /* defined(FIPS_PREVIEW_PLATFORM) */
 			break;
 
 		case INTERPRETER_SHUTDOWN:
