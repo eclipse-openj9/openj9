@@ -1331,7 +1331,6 @@ public:
    virtual void markHotField( TR::Compilation *, TR::SymbolReference *, TR_OpaqueClassBlock *, bool);
    virtual void reportHotField(int32_t reducedCpuUtil, J9Class* clazz, uint8_t fieldOffset,  uint32_t reducedFrequency);
    virtual bool isHotReferenceFieldRequired();
-   virtual bool isIndexableDataAddrPresent();
    virtual void markClassForTenuredAlignment( TR::Compilation *comp, TR_OpaqueClassBlock *opclazz, uint32_t alignFromStart);
 
    virtual bool shouldDelayAotLoad() { return false; }

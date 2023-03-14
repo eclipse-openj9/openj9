@@ -66,7 +66,7 @@ typedef enum TR_AOTFeatureFlags
    TR_FeatureFlag_sanityCheckBegin                   = 0x00000001,
    TR_FeatureFlag_IsSMP                              = 0x00000002,
    TR_FeatureFlag_UsesCompressedPointers             = 0x00000004,
-   // Available                                      = 0x00000008,
+   TR_FeatureFlag_ArrayHeaderShape                   = 0x00000008,
    TR_FeatureFlag_DisableTraps                       = 0x00000010,
    TR_FeatureFlag_TLHPrefetch                        = 0x00000020,
    TR_FeatureFlag_MethodTrampolines                  = 0x00000040,

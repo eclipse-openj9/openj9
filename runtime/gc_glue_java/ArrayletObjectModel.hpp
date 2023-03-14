@@ -256,7 +256,7 @@ public:
 
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
 	/**
-	 * Checks if arraylet falls into corner case of discontigous data
+	 * Checks if arraylet falls into corner case of discontiguous data
 	 * Arraylet possible cases:
 	 * 0: Empty arraylets, in this case the array is represented as
 	 *		an arraylet however it does not contain any data, but it
