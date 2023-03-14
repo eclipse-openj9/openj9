@@ -213,9 +213,7 @@ enum INIT_STAGE {
 	INTERPRETER_SHUTDOWN,
 	LIBRARIES_ONUNLOAD,
 	HEAP_STRUCTURES_FREED,
-	GC_SHUTDOWN_COMPLETE,
-	/* this stage will only be invoked for the jcl shared library when it is being run remotely */
-	OFFLOAD_JCL_PRECONFIGURE
+	GC_SHUTDOWN_COMPLETE
 };
 
 #define VMOPT_EXIT "exit"

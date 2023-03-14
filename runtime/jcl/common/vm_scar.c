@@ -531,12 +531,6 @@ J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 			freeUnsafeMemory(vm);
 			break;
 
-		case OFFLOAD_JCL_PRECONFIGURE:
-			if (scarPreconfigure(vm) != JNI_OK) {
-				returnVal = J9VMDLLMAIN_FAILED;
-			}
-			break;
-
 		case INTERPRETER_SHUTDOWN:
 			break;
 	}
