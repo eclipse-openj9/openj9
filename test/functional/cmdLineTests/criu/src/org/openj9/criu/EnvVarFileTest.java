@@ -68,6 +68,21 @@ public class EnvVarFileTest {
 		case "EnvVarFileTest11":
 			envVarFileTest11();
 			break;
+		case "EnvVarFileTest12":
+			envVarFileTest12();
+			break;
+		case "EnvVarFileTest13":
+			envVarFileTest13();
+			break;
+		case "EnvVarFileTest14":
+			envVarFileTest14();
+			break;
+		case "EnvVarFileTest15":
+			envVarFileTest15();
+			break;
+		case "EnvVarFileTest16":
+			envVarFileTest16();
+			break;
 		default:
 			throw new RuntimeException("incorrect parameters");
 		}
@@ -330,4 +345,63 @@ public class EnvVarFileTest {
 			System.out.println("ERR: failed properties test");
 		}
 	}
+
+	static void envVarFileTest13() {
+		String optionsContents = RESTORE_ENV_VAR + "=-Xrs\n";
+		Path optionsFilePath = CRIUTestUtils.createOptionsFile("options", optionsContents);
+
+		Path imagePath = Paths.get("cpData");
+		CRIUTestUtils.createCheckpointDirectory(imagePath);
+		CRIUSupport criuSupport = new CRIUSupport(imagePath);
+		criuSupport.registerRestoreEnvFile(optionsFilePath);
+
+		System.out.println("Pre-checkpoint");
+		CRIUTestUtils.checkPointJVM(criuSupport, imagePath, true);
+		System.out.println("Post-checkpoint");
+		System.out.println("ERR: failed properties test");
+	}
+
+	static void envVarFileTest14() {
+		String optionsContents = RESTORE_ENV_VAR + "=-Xrs:sync\n";
+		Path optionsFilePath = CRIUTestUtils.createOptionsFile("options", optionsContents);
+
+		Path imagePath = Paths.get("cpData");
+		CRIUTestUtils.createCheckpointDirectory(imagePath);
+		CRIUSupport criuSupport = new CRIUSupport(imagePath);
+		criuSupport.registerRestoreEnvFile(optionsFilePath);
+
+		System.out.println("Pre-checkpoint");
+		CRIUTestUtils.checkPointJVM(criuSupport, imagePath, true);
+		System.out.println("Post-checkpoint");
+		System.out.println("ERR: failed properties test");
+	}
+
+	static void envVarFileTest15() {
+		String optionsContents = RESTORE_ENV_VAR + "=-Xrs:onRestore\n";
+		Path optionsFilePath = CRIUTestUtils.createOptionsFile("options", optionsContents);
+
+		Path imagePath = Paths.get("cpData");
+		CRIUTestUtils.createCheckpointDirectory(imagePath);
+		CRIUSupport criuSupport = new CRIUSupport(imagePath);
+		criuSupport.registerRestoreEnvFile(optionsFilePath);
+
+		System.out.println("Pre-checkpoint");
+		CRIUTestUtils.checkPointJVM(criuSupport, imagePath, true);
+		System.out.println("Post-checkpoint");
+	}
+
+	static void envVarFileTest16() {
+		String optionsContents = RESTORE_ENV_VAR + "=-Xrs:syncOnRestore\n";
+		Path optionsFilePath = CRIUTestUtils.createOptionsFile("options", optionsContents);
+
+		Path imagePath = Paths.get("cpData");
+		CRIUTestUtils.createCheckpointDirectory(imagePath);
+		CRIUSupport criuSupport = new CRIUSupport(imagePath);
+		criuSupport.registerRestoreEnvFile(optionsFilePath);
+
+		System.out.println("Pre-checkpoint");
+		CRIUTestUtils.checkPointJVM(criuSupport, imagePath, true);
+		System.out.println("Post-checkpoint");
+	}
+
 }
