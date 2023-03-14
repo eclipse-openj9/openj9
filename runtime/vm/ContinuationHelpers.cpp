@@ -330,7 +330,7 @@ walkAllStackFrames(J9VMThread *currentThread, J9StackWalkState *walkState)
 	PORT_ACCESS_FROM_VMC(currentThread);
 	vm->memoryManagerFunctions->j9mm_iterate_all_continuation_objects(
 									currentThread,
-									privatePortLibrary,
+									PORTLIB,
 									0,
 									walkContinuationCallBack,
 									(void*)walkState);
