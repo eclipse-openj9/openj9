@@ -2750,7 +2750,7 @@ J9::Z::TreeEvaluator::generateVectorPackedToBinaryConversion(TR::Node * node, TR
    TR_ASSERT( op == TR::InstOpCode::VCVB || op == TR::InstOpCode::VCVBG,"unexpected opcode in gen vector pd2i\n");
    bool isPDToLong = (op == TR::InstOpCode::VCVBG);
 
-   TR::Register *rResultReg = (isPDToLong) ? cg->allocateRegister() : cg->allocateRegister();
+   TR::Register *rResultReg = cg->allocateRegister();
 
    // evaluate pdload
    TR::Node *pdValueNode = node->getFirstChild();
@@ -5700,12 +5700,17 @@ J9::Z::TreeEvaluator::pdshrEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    cg->traceBCDEntry("pdshr",node);
    cg->generateDebugCounter("PD-Op/pdshr", 1, TR::DebugCounter::Cheap);
 
+   TR::Node *shiftAmountNode = node->getNumChildren() > 1 ? node->getChild(1) : NULL;
+   TR_ASSERT(shiftAmountNode, "shift amount node should not be null\n");
+   int32_t shiftAmount = shiftAmountNode->get32bitIntegralValue();
+   TR_ASSERT(shiftAmount >= 0, "unexpected PD shift amount of %d\n", shiftAmount);
+
    TR::Register* targetReg = NULL;
 
    static char* isEnableVectorBCD = feGetEnv("TR_enableVectorBCD");
    if(cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL) &&
-           !cg->comp()->getOption(TR_DisableVectorBCD) ||
-           isEnableVectorBCD)
+      (!cg->comp()->getOption(TR_DisableVectorBCD) || isEnableVectorBCD) &&
+      shiftAmount <= 31)
       {
       targetReg = pdshrVectorEvaluatorHelper(node, cg);
       }
@@ -5968,14 +5973,33 @@ J9::Z::TreeEvaluator::pdshlEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    cg->traceBCDEntry("pdshl",node);
    cg->generateDebugCounter("PD-Op/pdshl", 1, TR::DebugCounter::Cheap);
 
+   TR::Node *shiftAmountNode = node->getNumChildren() > 1 ? node->getChild(1) : NULL;
+   TR_ASSERT(shiftAmountNode, "shift amount node should not be null\n");
+   int32_t shiftAmount = shiftAmountNode->get32bitIntegralValue();
+   TR_ASSERT(shiftAmount >= 0, "unexpected PD shift amount of %d\n", shiftAmount);
+
+   TR::Node *firstChild = node->getChild(0);
+   // If this is a pdshlOverflow with i2pd and other pd-arithmetic operations under it, the vector instructions will
+   // truncate the resulting PD by the amount specified by 'decimalPrecision'.
+   bool isSkipShift = node->getOpCodeValue() == TR::pdshlOverflow &&
+           (firstChild->getOpCodeValue() == TR::i2pd ||
+            firstChild->getOpCodeValue() == TR::l2pd ||
+            firstChild->getOpCodeValue() == TR::pdadd ||
+            firstChild->getOpCodeValue() == TR::pdsub ||
+            firstChild->getOpCodeValue() == TR::pdmul ||
+            firstChild->getOpCodeValue() == TR::pddiv ||
+            firstChild->getOpCodeValue() == TR::pdrem) &&
+            firstChild->getReferenceCount() == 1 &&
+            firstChild->getRegister() == NULL;
+
    TR::Register* targetReg = NULL;
 
    static char* isEnableVectorBCD = feGetEnv("TR_enableVectorBCD");
-   if(cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL) &&
-           !cg->comp()->getOption(TR_DisableVectorBCD) ||
-           isEnableVectorBCD)
+   if(cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL)
+      && (!cg->comp()->getOption(TR_DisableVectorBCD) || isEnableVectorBCD)
+      && (isSkipShift || shiftAmount <= 31))
       {
-      targetReg = pdshlVectorEvaluatorHelper(node, cg);
+      targetReg = pdshlVectorEvaluatorHelper(node, cg, isSkipShift);
       }
    else
       {
@@ -5998,14 +6022,7 @@ J9::Z::TreeEvaluator::pdshiftEvaluatorHelper(TR::Node *node, TR::CodeGenerator *
    TR::Node* shiftAmountNode = node->getChild(1);
    TR::Compilation *comp     = cg->comp();
    int32_t roundAmount = 0;
-   int32_t shiftAmount = 0;
-
-   TR_ASSERT(shiftAmountNode, "expecting a shiftAmountNode\n");
-   TR_ASSERT(shiftAmountNode->getOpCode().isLoadConst() &&
-             shiftAmountNode->getOpCode().getSize() <= 4,
-             "expecting a <= 4 size integral constant PD shift amount\n");
-   shiftAmount = (int32_t)shiftAmountNode->get64bitIntegralValue();
-   TR_ASSERT(shiftAmount >= 0, "unexpected PD shift amount of %d\n", shiftAmount);
+   int32_t shiftAmount = shiftAmountNode->get32bitIntegralValue();
 
    if(isRightShift)
       {
@@ -6292,30 +6309,13 @@ J9::Z::TreeEvaluator::generateVectorBinaryToPackedConversion(TR::Node * node, TR
    }
 
 TR::Register *
-J9::Z::TreeEvaluator::pdshlVectorEvaluatorHelper(TR::Node *node, TR::CodeGenerator * cg)
+J9::Z::TreeEvaluator::pdshlVectorEvaluatorHelper(TR::Node *node, TR::CodeGenerator * cg, bool isSkipShift)
    {
    TR::Register * targetReg = NULL;
    TR::Node *firstChild = node->getChild(0);
-   TR::Node *shiftAmountNode = node->getNumChildren() > 1 ? node->getSecondChild() : NULL;
-   TR_ASSERT(shiftAmountNode, "shift amount node should not be null");
-   TR_ASSERT(shiftAmountNode->getOpCode().isLoadConst() && shiftAmountNode->getOpCode().getSize() <= 4,
-               "expecting a <= 4 size integral constant PD shift amount\n");
+   TR::Node *shiftAmountNode = node->getSecondChild();
 
-   // If this is a pdshlOverflow with i2pd and other pd-arithmetic operations under it, these vector instructions will
-   // truncate the resulting PD by the amount specified by 'decimalPrecision'. Therefore, we can
-   // skip the shift and just return i2pd results.
-   bool isSkipShift = node->getOpCodeValue() == TR::pdshlOverflow &&
-           (firstChild->getOpCodeValue() == TR::i2pd ||
-            firstChild->getOpCodeValue() == TR::l2pd ||
-            firstChild->getOpCodeValue() == TR::pdadd ||
-            firstChild->getOpCodeValue() == TR::pdsub ||
-            firstChild->getOpCodeValue() == TR::pdmul ||
-            firstChild->getOpCodeValue() == TR::pddiv ||
-            firstChild->getOpCodeValue() == TR::pdrem) &&
-            firstChild->getReferenceCount() == 1 &&
-            firstChild->getRegister() == NULL;
-
-   int32_t shiftAmount = (int32_t)shiftAmountNode->get64bitIntegralValue();
+   int32_t shiftAmount = shiftAmountNode->get32bitIntegralValue();
    uint8_t decimalPrecision = node->getDecimalPrecision();
 
    if (isSkipShift)
@@ -6327,13 +6327,13 @@ J9::Z::TreeEvaluator::pdshlVectorEvaluatorHelper(TR::Node *node, TR::CodeGenerat
 
    if (isSkipShift)
       {
+      // if isSkipShift is true we can skip the shift and just return i2pd results.
       // Passthrough. Assign register to node before decrementing refCount of the firstChild
       // to avoid killing this live register
       targetReg = sourceReg;
       }
    else
       {
-      TR_ASSERT_FATAL((shiftAmount >= -32 && shiftAmount <= 31), "TR::pdshl/r shift amount (%d )not in range [-32, 31]", shiftAmount);
 
       if (cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL_ENHANCEMENT_FACILITY) && cg->getIgnoreDecimalOverflowException())
          {
@@ -6356,20 +6356,14 @@ TR::Register *
 J9::Z::TreeEvaluator::pdshrVectorEvaluatorHelper(TR::Node *node, TR::CodeGenerator * cg)
    {
    TR::Node *srcNode = node->getChild(0);
-   TR::Node *shiftAmountNode = node->getNumChildren() > 1 ? node->getChild(1) : NULL;
-   TR_ASSERT(shiftAmountNode != NULL, "pdshrVectorEvaluatorHelper is expecting a shiftAmountNode as child-1\n");
-   TR_ASSERT(shiftAmountNode->getOpCode().isLoadConst() && shiftAmountNode->getOpCode().getSize() <= 4,
-              "expecting a <= 4 size integral constant PD shift amount\n");
-
-   int32_t shiftAmount = (int32_t)shiftAmountNode->get32bitIntegralValue();
-   TR_ASSERT((shiftAmount >=0 || shiftAmount <= 31),"unexpected TR::pdshr shift amount of %d\n",shiftAmount);
+   TR::Node *shiftAmountNode = node->getChild(1);
+   int32_t shiftAmount = shiftAmountNode->get32bitIntegralValue();
 
    //set shift amount and round amount
    shiftAmount *= -1;                 // right shift is negative
    shiftAmount &= 0x0000007F;         // clear off top bits
 
    TR::Node *roundAmountNode = node->getChild(2);
-   TR_ASSERT( roundAmountNode->getOpCode().isLoadConst(),"excepting pdshr round amount to be a const\n");
    int32_t roundAmount = roundAmountNode->get32bitIntegralValue();
    TR_ASSERT(roundAmount == 0 || roundAmount == 5, "round amount should be 0 or 5 and not %d\n",roundAmount);
    if (roundAmount)

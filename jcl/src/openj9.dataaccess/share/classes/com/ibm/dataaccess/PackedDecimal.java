@@ -1549,7 +1549,7 @@ public final class PackedDecimal {
         int highDigit = sourcePrecision - 1;
         int lowDigit = 0;
         int precDiff = sourcePrecision - destinationPrecision;
-        ;
+
         int newSrcOffset;
         int newSrcEnd;
         boolean evenPrecision = sourcePrecision % 2 == 0;
