@@ -107,19 +107,19 @@ extern "C" {
 
 #define FIND_DLL_TABLE_ENTRY(name) vm->internalVMFunctions->findDllLoadInfo(vm->dllLoadTable, name)
 #define FIND_ARG_IN_VMARGS(match, optionName, optionValue) vm->internalVMFunctions->findArgInVMArgs(vm->portLibrary, vm->vmArgsArray, match, optionName, optionValue, FALSE)
-#define FIND_ARG_IN_ARGS(argsArray, match, optionName, optionValue) vm->internalVMFunctions->findArgInVMArgs(vm->portLibrary, (argsArray), match, optionName, optionValue, FALSE)
-#define FIND_NEXT_ARG_IN_VMARGS(match, optionName, optionValue, lastArgIndex) ((lastArgIndex==0) ? -1 : vm->internalVMFunctions->findArgInVMArgs(vm->portLibrary, vm->vmArgsArray, (match | (lastArgIndex << STOP_AT_INDEX_SHIFT)), optionName, optionValue, FALSE))
-#define FIND_NEXT_ARG_IN_ARGS(argsArray, match, optionName, optionValue, lastArgIndex) ((lastArgIndex==0) ? -1 : vm->internalVMFunctions->findArgInVMArgs(vm->portLibrary, (argsArray), (match | (lastArgIndex << STOP_AT_INDEX_SHIFT)), optionName, optionValue, FALSE))
-#define FIND_AND_CONSUME_VMARG(match, optionName, optionValue) vm->internalVMFunctions->findArgInVMArgs(vm->portLibrary, vm->vmArgsArray, match, optionName, optionValue, TRUE)
-#define FIND_AND_CONSUME_ARG(argsArray, match, optionName, optionValue) vm->internalVMFunctions->findArgInVMArgs(vm->portLibrary, (argsArray), match, optionName, optionValue, TRUE)
+#define FIND_ARG_IN_ARGS(argsArray, match, optionName, optionValue) vm->internalVMFunctions->findArgInVMArgs(vm->portLibrary, (argsArray), (match), optionName, optionValue, FALSE)
+#define FIND_NEXT_ARG_IN_VMARGS(match, optionName, optionValue, lastArgIndex) ((0 == (lastArgIndex)) ? -1 : vm->internalVMFunctions->findArgInVMArgs(vm->portLibrary, vm->vmArgsArray, ((match) | ((lastArgIndex) << STOP_AT_INDEX_SHIFT)), optionName, optionValue, FALSE))
+#define FIND_NEXT_ARG_IN_ARGS(argsArray, match, optionName, optionValue, lastArgIndex) ((0 == (lastArgIndex)) ? -1 : vm->internalVMFunctions->findArgInVMArgs(vm->portLibrary, (argsArray), ((match) | ((lastArgIndex) << STOP_AT_INDEX_SHIFT)), optionName, optionValue, FALSE))
+#define FIND_AND_CONSUME_VMARG(match, optionName, optionValue) vm->internalVMFunctions->findArgInVMArgs(vm->portLibrary, vm->vmArgsArray, (match), optionName, optionValue, TRUE)
+#define FIND_AND_CONSUME_ARG(argsArray, match, optionName, optionValue) vm->internalVMFunctions->findArgInVMArgs(vm->portLibrary, (argsArray), (match), optionName, optionValue, TRUE)
 
-#define FIND_ARG_IN_VMARGS_FORWARD(match, optionName, optionValue) vm->internalVMFunctions->findArgInVMArgs(vm->portLibrary, vm->vmArgsArray, (match | SEARCH_FORWARD), optionName, optionValue, FALSE)
-#define FIND_ARG_IN_ARGS_FORWARD(argsArray, match, optionName, optionValue) vm->internalVMFunctions->findArgInVMArgs(vm->portLibrary, (argsArray), (match | SEARCH_FORWARD), optionName, optionValue, FALSE)
-#define FIND_NEXT_ARG_IN_VMARGS_FORWARD(match, optionName, optionValue, lastArgIndex) vm->internalVMFunctions->findArgInVMArgs(vm->portLibrary, vm->vmArgsArray, ((match | ((lastArgIndex+1) << STOP_AT_INDEX_SHIFT)) | SEARCH_FORWARD), optionName, optionValue, FALSE)
-#define FIND_NEXT_ARG_IN_ARGS_FORWARD(argsArray, match, optionName, optionValue, lastArgIndex) vm->internalVMFunctions->findArgInVMArgs(vm->portLibrary, (argsArray), ((match | ((lastArgIndex+1) << STOP_AT_INDEX_SHIFT)) | SEARCH_FORWARD), optionName, optionValue, FALSE)
-#define FIND_AND_CONSUME_VMARG_FORWARD(match, optionName, optionValue) vm->internalVMFunctions->findArgInVMArgs(vm->portLibrary, vm->vmArgsArray, (match | SEARCH_FORWARD), optionName, optionValue, TRUE)
-#define FIND_AND_CONSUME_ARG_FORWARD(argsArray, match, optionName, optionValue) vm->internalVMFunctions->findArgInVMArgs(vm->portLibrary, (argsArray), (match | SEARCH_FORWARD), optionName, optionValue, TRUE)
-#define FIND_AND_CONSUME_NEXT_ARG_FORWARD(argsArray, match, optionName, optionValue, lastArgIndex) vm->internalVMFunctions->findArgInVMArgs(vm->portLibrary, (argsArray), ((match | ((lastArgIndex+1) << STOP_AT_INDEX_SHIFT)) | SEARCH_FORWARD), optionName, optionValue, TRUE)
+#define FIND_ARG_IN_VMARGS_FORWARD(match, optionName, optionValue) vm->internalVMFunctions->findArgInVMArgs(vm->portLibrary, vm->vmArgsArray, ((match) | SEARCH_FORWARD), optionName, optionValue, FALSE)
+#define FIND_ARG_IN_ARGS_FORWARD(argsArray, match, optionName, optionValue) vm->internalVMFunctions->findArgInVMArgs(vm->portLibrary, (argsArray), ((match) | SEARCH_FORWARD), optionName, optionValue, FALSE)
+#define FIND_NEXT_ARG_IN_VMARGS_FORWARD(match, optionName, optionValue, lastArgIndex) vm->internalVMFunctions->findArgInVMArgs(vm->portLibrary, vm->vmArgsArray, (((match) | (((lastArgIndex) + 1) << STOP_AT_INDEX_SHIFT)) | SEARCH_FORWARD), optionName, optionValue, FALSE)
+#define FIND_NEXT_ARG_IN_ARGS_FORWARD(argsArray, match, optionName, optionValue, lastArgIndex) vm->internalVMFunctions->findArgInVMArgs(vm->portLibrary, (argsArray), (((match) | ((lastArgIndex + 1) << STOP_AT_INDEX_SHIFT)) | SEARCH_FORWARD), optionName, optionValue, FALSE)
+#define FIND_AND_CONSUME_VMARG_FORWARD(match, optionName, optionValue) vm->internalVMFunctions->findArgInVMArgs(vm->portLibrary, vm->vmArgsArray, ((match) | SEARCH_FORWARD), optionName, optionValue, TRUE)
+#define FIND_AND_CONSUME_ARG_FORWARD(argsArray, match, optionName, optionValue) vm->internalVMFunctions->findArgInVMArgs(vm->portLibrary, (argsArray), ((match) | SEARCH_FORWARD), optionName, optionValue, TRUE)
+#define FIND_AND_CONSUME_NEXT_ARG_FORWARD(argsArray, match, optionName, optionValue, lastArgIndex) vm->internalVMFunctions->findArgInVMArgs(vm->portLibrary, (argsArray), (((match) | (((lastArgIndex) + 1) << STOP_AT_INDEX_SHIFT)) | SEARCH_FORWARD), optionName, optionValue, TRUE)
 
 /* REMOVE - FOR BACKWARDS COMPATIBILITY */
 #define FIND_AND_CONSUME_VMARG2(match, optionName, optionValue) vm->internalVMFunctions->findArgInVMArgs(vm->portLibrary, vm->vmArgsArray, match, optionName, optionValue, TRUE)
@@ -130,8 +130,8 @@ extern "C" {
 #define GET_OPTION_VALUE2_ARGS(argsArray, element, delimChar, resultPtr) vm->internalVMFunctions->optionValueOperations(vm->portLibrary, (argsArray), element, GET_OPTION, resultPtr, 0, delimChar, 0, NULL)
 /* *** */
 
-#define GET_OPTION_VALUE(element, delimChar, resultPtr) vm->internalVMFunctions->optionValueOperations(vm->portLibrary, vm->vmArgsArray, element, GET_OPTION, (char**)resultPtr, 0, delimChar, 0, NULL)
-#define GET_OPTION_VALUE_ARGS(argsArray, element, delimChar, resultPtr) vm->internalVMFunctions->optionValueOperations(vm->portLibrary, (argsArray), element, GET_OPTION, (char**)resultPtr, 0, delimChar, 0, NULL)
+#define GET_OPTION_VALUE(element, delimChar, resultPtr) vm->internalVMFunctions->optionValueOperations(vm->portLibrary, vm->vmArgsArray, element, GET_OPTION, (char**)(resultPtr), 0, delimChar, 0, NULL)
+#define GET_OPTION_VALUE_ARGS(argsArray, element, delimChar, resultPtr) vm->internalVMFunctions->optionValueOperations(vm->portLibrary, (argsArray), element, GET_OPTION, (char**)(resultPtr), 0, delimChar, 0, NULL)
 #define COPY_OPTION_VALUE(element, delimChar, buffer, bufSize) vm->internalVMFunctions->optionValueOperations(vm->portLibrary, vm->vmArgsArray, element, GET_OPTION, buffer, bufSize, delimChar, 0, NULL)
 #define COPY_OPTION_VALUE_ARGS(argsArray, element, delimChar, buffer, bufSize) vm->internalVMFunctions->optionValueOperations(vm->portLibrary, (argsArray), element, GET_OPTION, buffer, bufSize, delimChar, 0, NULL)
 #define GET_OPTION_VALUES(element, delimChar, sepChar, buffer, bufSize) vm->internalVMFunctions->optionValueOperations(vm->portLibrary, vm->vmArgsArray, element, GET_OPTIONS, buffer, bufSize, delimChar, sepChar, NULL)
@@ -151,19 +151,19 @@ extern "C" {
 #define GET_DOUBLE_VALUE(element, optname, result) vm->internalVMFunctions->optionValueOperations(vm->portLibrary, vm->vmArgsArray, (element), GET_DBL_VALUE, (char **) &(optname), 0, 0, 0, &(result))
 #define GET_DOUBLE_VALUE_ARGS(argsArray, element, optname, result) vm->internalVMFunctions->optionValueOperations(vm->portLibrary, (argsArray), (element), GET_DBL_VALUE, (char **) &(optname), 0, 0, 0, &(result))
 
-#define HAS_MAPPING(args, element) (args->j9Options[element].mapping!=NULL)
-#define MAPPING_FLAGS(args, element) (args->j9Options[element].mapping->flags)
-#define MAPPING_J9NAME(args, element) (args->j9Options[element].mapping->j9Name)
-#define MAPPING_MAPNAME(args, element) (args->j9Options[element].mapping->mapName)
-#define FROM_ENVVAR(args, element) (args->j9Options[element].fromEnvVar!=NULL)
+#define HAS_MAPPING(args, element) (NULL != (args)->j9Options[element].mapping)
+#define MAPPING_FLAGS(args, element) ((args)->j9Options[element].mapping->flags)
+#define MAPPING_J9NAME(args, element) ((args)->j9Options[element].mapping->j9Name)
+#define MAPPING_MAPNAME(args, element) ((args)->j9Options[element].mapping->mapName)
+#define FROM_ENVVAR(args, element) (NULL != (args)->j9Options[element].fromEnvVar)
 
-#define CONSUME_ARG(j9vm_args, element) (j9vm_args->j9Options[element].flags |= ARG_CONSUMED)
-#define IS_CONSUMED(j9vm_args, element) (j9vm_args->j9Options[element].flags & ARG_CONSUMED)
-#define IS_CONSUMABLE(j9vm_args, element) (j9vm_args->j9Options[element].flags & CONSUMABLE_ARG)
-#define REQUIRES_LIBRARY(j9vm_args, element) (j9vm_args->j9Options[element].flags & ARG_REQUIRES_LIBRARY)
+#define CONSUME_ARG(j9vm_args, element) ((j9vm_args)->j9Options[element].flags |= ARG_CONSUMED)
+#define IS_CONSUMED(j9vm_args, element) J9_ARE_ANY_BITS_SET((j9vm_args)->j9Options[element].flags, ARG_CONSUMED)
+#define IS_CONSUMABLE(j9vm_args, element) J9_ARE_ANY_BITS_SET((j9vm_args)->j9Options[element].flags, CONSUMABLE_ARG)
+#define REQUIRES_LIBRARY(j9vm_args, element) J9_ARE_ANY_BITS_SET((j9vm_args)->j9Options[element].flags, ARG_REQUIRES_LIBRARY)
 
-#define COMPLETE_STAGE(flags, stage) (flags |= ((UDATA)1 << stage))
-#define IS_STAGE_COMPLETED(flags, stage) (flags & ((UDATA)1 << stage))
+#define COMPLETE_STAGE(flags, stage) ((flags) |= (((UDATA)1) << (stage)))
+#define IS_STAGE_COMPLETED(flags, stage) ((flags) & (((UDATA)1) << (stage)))
 
 #define J9_ADDRMODE_64 64
 
