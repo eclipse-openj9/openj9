@@ -974,7 +974,7 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
       bool canTransformUnflattenedArrayElementLoadStoreUseTypeHint = false;
       bool canTransformIdentityArrayElementLoadStoreUseTypeHint = false;
       static const char *disableFlattenedArrayElementTypeHintXForm = feGetEnv("TR_DisableFlattenedArrayElementTypeHintXForm");
-      static const char *disableUnflattenedArrayElementTypeHintXForm = feGetEnv("TR_DisableUnflattenedArrayElementTypeHintXForm");
+      static const char *enableUnflattenedArrayElementTypeHintXForm = feGetEnv("TR_EnableUnflattenedArrayElementTypeHintXForm");
       TR_OpaqueClassBlock *typeHintClass = arrayConstraint ? arrayConstraint->getTypeHintClass() : NULL;
 
       if (typeHintClass &&
@@ -984,7 +984,7 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
          {
          TR_OpaqueClassBlock *hintComponentClass = comp()->fej9()->getComponentClassFromArrayClass(typeHintClass);
 
-         if (!disableUnflattenedArrayElementTypeHintXForm &&
+         if (enableUnflattenedArrayElementTypeHintXForm &&
              TR::Compiler->cls.classHasIdentity(hintComponentClass))
             {
             canTransformIdentityArrayElementLoadStoreUseTypeHint = true;
@@ -1017,7 +1017,7 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
                      }
                   }
                }
-            else if (!disableUnflattenedArrayElementTypeHintXForm)
+            else if (enableUnflattenedArrayElementTypeHintXForm)
                {
                canTransformUnflattenedArrayElementLoadStoreUseTypeHint = true;
                }
@@ -2195,6 +2195,7 @@ J9::ValuePropagation::transformFlattenedArrayElementLoad(TR_OpaqueClassBlock *ar
    TR::Node *newValueNode = TR::Node::recreateWithoutProperties(callNode, TR::newvalue, fieldCount+1, classNode, comp()->getSymRefTab()->findOrCreateNewValueSymbolRef(method));
    newValueNode->setIdentityless(true);
    method->setHasNews(true);
+   comp()->getMethodSymbol()->setHasNews(true);
 
    // If the array element contains zero field, the newvalue will contain only loadaddr
    if (fieldCount == 0)
@@ -2470,6 +2471,10 @@ J9::ValuePropagation::transformFlattenedArrayElementLoadStoreUseTypeHint(TR_Opaq
    // "elseTree" is the fast path that uses sym ref to access array elements through "newvalue"
    TR::TreeTop *elseTree = TR::TreeTop::create(comp(), callTree->getNode()->duplicateTree());
 
+   if (trace())
+      traceMsg(comp(), "%s: ifTree n%dn (%p). slow path helper call treetop n%dn (%p). fast path newvalue treetop n%dn (%p)\n", __FUNCTION__,
+         ifTree->getNode()->getGlobalIndex(), ifTree->getNode(), thenTree->getNode()->getGlobalIndex(), thenTree->getNode(), elseTree->getNode()->getGlobalIndex(), elseTree->getNode());
+
    J9::TransformUtil::createDiamondForCall(this,
                                           callTree,
                                           ifTree   /* The tree containing the if node */,
@@ -2538,6 +2543,10 @@ J9::ValuePropagation::transformUnflattenedArrayElementLoadStoreUseTypeHint(TR_Op
 
    // "elseTree" is the fast path that uses regular aaload and aastore to access array elements
    TR::TreeTop *elseTree = TR::TreeTop::create(comp(), callTree->getNode()->duplicateTree());
+
+   if (trace())
+      traceMsg(comp(), "%s: ifTree n%dn (%p). slow path helper call treetop n%dn (%p). fast path treetop n%dn (%p)\n", __FUNCTION__,
+         ifTree->getNode()->getGlobalIndex(), ifTree->getNode(), thenTree->getNode()->getGlobalIndex(), thenTree->getNode(), elseTree->getNode()->getGlobalIndex(), elseTree->getNode());
 
    J9::TransformUtil::createDiamondForCall(this,
                                           callTree,
