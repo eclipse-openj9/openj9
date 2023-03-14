@@ -413,6 +413,7 @@ J9InternalVMFunctions J9InternalFunctions = {
 	delayedLockingOperation,
 	addInternalJVMClassIterationRestoreHook,
 	setCRIUSingleThreadModeJVMCRIUException,
+	getRestoreSystemProperites,
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 	getClassNameString,
 	getDefaultValueSlotAddress,
@@ -435,4 +436,5 @@ J9InternalVMFunctions J9InternalFunctions = {
 	walkContinuationStackFrames,
 	walkAllStackFrames,
 #endif /* JAVA_SPEC_VERSION >= 19 */
+	checkArgsConsumed,
 };

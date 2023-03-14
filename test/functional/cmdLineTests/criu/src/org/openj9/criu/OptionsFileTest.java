@@ -54,7 +54,7 @@ public class OptionsFileTest {
 
 	static void propertiesTest1() {
 		String optionsContents = "-Dprop1=val1\n-Dprop2=val2\n-Dprop3=val3";
-		Path optionsFilePath = createOptionsFile("options", optionsContents);
+		Path optionsFilePath = CRIUTestUtils.createOptionsFile("options", optionsContents);
 
 		Path imagePath = Paths.get("cpData");
 		CRIUTestUtils.createCheckpointDirectory(imagePath);
@@ -80,7 +80,7 @@ public class OptionsFileTest {
 
 	static void propertiesTest2() {
 		String optionsContents = "-Dprop1=valA\n-Dprop2=valB\n-Dprop3=valC";
-		Path optionsFilePath = createOptionsFile("options", optionsContents);
+		Path optionsFilePath = CRIUTestUtils.createOptionsFile("options", optionsContents);
 
 		Path imagePath = Paths.get("cpData");
 		CRIUTestUtils.createCheckpointDirectory(imagePath);
@@ -109,8 +109,8 @@ public class OptionsFileTest {
 	}
 
 	static void propertiesTest3() {
-		String optionsContents = "-Dprop1=val1\n-Dprop2=\\\nval2\n-Dprop3=v \\ \n a \\     \n  l3";
-		Path optionsFilePath = createOptionsFile("options", optionsContents);
+		String optionsContents = "-Dprop1=val1\n-Dprop2=\\\nval2\n-Dprop3=v \\\n a \\\n  l3";
+		Path optionsFilePath = CRIUTestUtils.createOptionsFile("options", optionsContents);
 
 		Path imagePath = Paths.get("cpData");
 		CRIUTestUtils.createCheckpointDirectory(imagePath);
@@ -136,7 +136,7 @@ public class OptionsFileTest {
 
 	static void propertiesTest4() {
 		String optionsContents = "-Dprop1=val1\n-Dprop2=\\\nval2\n-Dprop3=v \\ \n a \\     \n  l3 \\";
-		Path optionsFilePath = createOptionsFile("options", optionsContents);
+		Path optionsFilePath = CRIUTestUtils.createOptionsFile("options", optionsContents);
 
 		Path imagePath = Paths.get("cpData");
 		CRIUTestUtils.createCheckpointDirectory(imagePath);
@@ -149,23 +149,5 @@ public class OptionsFileTest {
 
 		//shouldnt get here
 		System.out.println("ERR: failed properties test");
-	}
-
-	static Path createOptionsFile(String name, String contents) {
-		try {
-			File options = new File(name);
-			if (!options.createNewFile()) {
-				System.out.println("WARN: File already exists but should not");
-			}
-
-			try (FileWriter writer = new FileWriter(options)) {
-				writer.write(contents);
-			}
-			options.deleteOnExit();
-			return options.toPath();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		return null;
 	}
 }
