@@ -19,6 +19,8 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
+#include <string.h>
+
 #include "objhelp.h"
 #include "j9.h"
 #include "j9comp.h"
@@ -48,6 +50,7 @@ static IDATA findinstanceFieldOffsetHelper(J9VMThread *currentThread, J9Class *i
 static void initializeCriuHooks(J9VMThread *currentThread);
 static BOOLEAN juRandomReseed(J9VMThread *currentThread, void *userData, const char **nlsMsgFormat);
 static BOOLEAN criuRestoreInitializeTrace(J9VMThread *currentThread, void *userData, const char **nlsMsgFormat);
+static BOOLEAN criuRestoreInitializeXrs(J9VMThread *currentThread, void *userData, const char **nlsMsgFormat);
 static jvmtiIterationControl objectIteratorCallback(J9JavaVM *vm, J9MM_IterateObjectDescriptor *objectDesc, void *userData);
 
 BOOLEAN
@@ -232,7 +235,7 @@ juRandomReseed(J9VMThread *currentThread, void *userData, const char **nlsMsgFor
 }
 
 /**
- * An internal JVM checkpoint hook is to initialize trace after restore.
+ * An internal JVM checkpoint hook to initialize trace after restore.
  *
  * @param[in] currentThread vmThread token
  * @param[in] userData J9InternalHookRecord pointer
@@ -261,6 +264,60 @@ criuRestoreInitializeTrace(J9VMThread *currentThread, void *userData, const char
 		}
 	}
 	return result;
+}
+
+/**
+ * An internal JVM checkpoint hook to initialize -Xrs after restore. This only
+ * supports -Xrs options with "onRestore" appended to it.
+ *
+ * @param[in] currentThread vmThread token
+ * @param[in] userData J9InternalHookRecord pointer
+ * @param[in/out] nlsMsgFormat an NLS message
+ *
+ * @return Always returns TRUE
+ */
+static BOOLEAN
+criuRestoreInitializeXrs(J9VMThread *currentThread, void *userData, const char **nlsMsgFormat)
+{
+	J9JavaVM *vm = currentThread->javaVM;
+	J9VMInitArgs *args = vm->checkpointState.restoreArgsList;
+
+	if (NULL != args) {
+		IDATA argIndex = 0;
+		if ((argIndex = FIND_ARG_IN_ARGS(args, OPTIONAL_LIST_MATCH, VMOPT_XRS, NULL)) >= 0) {
+			bool argProcessed = false;
+			char* optionValue = NULL;
+			U_32 sigOptions = 0;
+
+			GET_OPTION_VALUE_ARGS(args, argIndex, ':', &optionValue);
+			if (NULL != optionValue) {
+				if (0 == strcmp(optionValue, "syncOnRestore")) {
+					vm->sigFlags |= J9_SIG_XRS_SYNC;
+					sigOptions |= J9PORT_SIG_OPTIONS_REDUCED_SIGNALS_SYNCHRONOUS;
+					argProcessed = true;
+				} else if (0 == strcmp(optionValue, "asyncOnRestore")) {
+					vm->sigFlags |= (J9_SIG_XRS_ASYNC | J9_SIG_NO_SIG_QUIT | J9_SIG_NO_SIG_USR2);
+					sigOptions |= J9PORT_SIG_OPTIONS_REDUCED_SIGNALS_ASYNCHRONOUS;
+					argProcessed = true;
+				} else if (0 == strcmp(optionValue, "onRestore")) {
+					vm->sigFlags |= (J9_SIG_XRS_SYNC | J9_SIG_XRS_ASYNC | J9_SIG_NO_SIG_QUIT | J9_SIG_NO_SIG_USR2);
+					sigOptions |= (J9PORT_SIG_OPTIONS_REDUCED_SIGNALS_SYNCHRONOUS | J9PORT_SIG_OPTIONS_REDUCED_SIGNALS_ASYNCHRONOUS);
+					argProcessed = true;
+				}
+			}
+
+			if (argProcessed) {
+				PORT_ACCESS_FROM_VMC(currentThread);
+				CONSUME_ARG(args, argIndex);
+				j9sig_set_options(sigOptions);
+			}
+		}
+	}
+
+	/* In cases of error (arg options are not supported) the entire args is not consumed.
+	 * Return TRUE as checkpointJVMImpl will throw an exception if any arg is not consumed.
+	 */
+	return TRUE;
 }
 
 /**
@@ -348,6 +405,7 @@ initializeCriuHooks(J9VMThread *currentThread)
 			addInternalJVMCheckpointHook(currentThread, TRUE, juRandomClass, FALSE, juRandomReseed);
 		}
 		addInternalJVMCheckpointHook(currentThread, TRUE, NULL, FALSE, criuRestoreInitializeTrace);
+		addInternalJVMCheckpointHook(currentThread, TRUE, NULL, FALSE, criuRestoreInitializeXrs);
 	}
 
 done:
