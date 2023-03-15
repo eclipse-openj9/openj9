@@ -167,6 +167,7 @@ class OptionsPostRestore
 
    bool _asyncCompilationPreCheckpoint;
    bool _disableTrapsPreCheckpoint;
+   bool _disableAOTPostRestore;
 
    int32_t _argIndexXjit;
    int32_t _argIndexXjitcolon;
