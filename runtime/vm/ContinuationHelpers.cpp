@@ -252,7 +252,10 @@ yieldContinuation(J9VMThread *currentThread, BOOLEAN isFinished)
 	 * missed due to the continuation still is stated as mounted(we don't scan any mounted continuation, it should be scanned during root scanning via J9VMThread->currentContinuation).
 	 * so calling postUnmountContinuation() after resetContinuationCarrierID() to avoid the missing scan case.
 	 */
-	if (!isFinished) {
+	if (isFinished) {
+		/* Cleanup the native structure allocated */
+		freeContinuation(currentThread, continuationObject);
+	} else {
 		/* Notify GC of Continuation stack swap */
 		currentThread->javaVM->memoryManagerFunctions->postUnmountContinuation(currentThread, continuationObject);
 	}
