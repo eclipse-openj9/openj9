@@ -52,6 +52,7 @@ static BOOLEAN juRandomReseed(J9VMThread *currentThread, void *userData, const c
 static BOOLEAN criuRestoreInitializeTrace(J9VMThread *currentThread, void *userData, const char **nlsMsgFormat);
 static BOOLEAN criuRestoreInitializeXrs(J9VMThread *currentThread, void *userData, const char **nlsMsgFormat);
 static BOOLEAN criuRestoreDisableSharedClassCache(J9VMThread *currentThread, void *userData, const char **nlsMsgFormat);
+static BOOLEAN criuRestoreInitializeDump(J9VMThread *currentThread, void *userData, const char **nlsMsgFormat);
 static jvmtiIterationControl objectIteratorCallback(J9JavaVM *vm, J9MM_IterateObjectDescriptor *objectDesc, void *userData);
 
 BOOLEAN
@@ -346,6 +347,34 @@ criuRestoreDisableSharedClassCache(J9VMThread *currentThread, void *userData, co
 }
 
 /**
+ * An internal JVM checkpoint hook to initialize dump after restore.
+ *
+ * @param[in] currentThread vmThread token
+ * @param[in] userData J9InternalHookRecord pointer
+ * @param[in/out] nlsMsgFormat an NLS message
+ *
+ * @return BOOLEAN TRUE if no error, otherwise FALSE
+ */
+static BOOLEAN
+criuRestoreInitializeDump(J9VMThread *currentThread, void *userData, const char **nlsMsgFormat)
+{
+	BOOLEAN result = TRUE;
+	J9JavaVM *vm = currentThread->javaVM;
+
+	if (NULL != vm->checkpointState.restoreArgsList) {
+		if (FIND_ARG_IN_ARGS_FORWARD(vm->checkpointState.restoreArgsList, OPTIONAL_LIST_MATCH, VMOPT_XDUMP, NULL) >= 0) {
+			if (J9VMDLLMAIN_OK != vm->j9rasDumpFunctions->criuReloadXDumpAgents(vm, vm->checkpointState.restoreArgsList)) {
+				PORT_ACCESS_FROM_VMC(currentThread);
+				*nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
+						J9NLS_VM_CRIU_RESTORE_INITIALIZE_DUMP_FAILED, NULL);
+				result = FALSE;
+			}
+		}
+	}
+	return result;
+}
+
+/**
  * This cleans up the instanceObjects associated with each J9JavaVM->checkpointState.hookRecords,
  * the hookRecords and classIterationRestoreHookRecords as well if checkpointState.isNonPortableRestoreMode is TRUE.
  *
@@ -431,6 +460,7 @@ initializeCriuHooks(J9VMThread *currentThread)
 		}
 		addInternalJVMCheckpointHook(currentThread, TRUE, NULL, FALSE, criuRestoreInitializeTrace);
 		addInternalJVMCheckpointHook(currentThread, TRUE, NULL, FALSE, criuRestoreInitializeXrs);
+		addInternalJVMCheckpointHook(currentThread, TRUE, NULL, FALSE, criuRestoreInitializeDump);
 	}
 
 	addInternalJVMCheckpointHook(currentThread, TRUE, NULL, FALSE, criuRestoreDisableSharedClassCache);
