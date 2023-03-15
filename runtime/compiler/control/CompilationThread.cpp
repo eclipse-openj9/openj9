@@ -7402,6 +7402,10 @@ TR::CompilationInfoPerThreadBase::cannotPerformRemoteComp(
           // after the process is restored. In portable restore mode checkpoints are always possible
           // so there's no point to delaying remote compilations.
           (_jitConfig->javaVM->internalVMFunctions->isCheckpointAllowed(vmThread) && _jitConfig->javaVM->internalVMFunctions->isNonPortableRestoreMode(vmThread)) ||
+
+          // If -XX:-UseJITServer is specified post-restore, then the Remote Compilation Mode will
+          // be set to JITServer::NONE
+          _compInfo.getPersistentInfo()->getRemoteCompilationMode() == JITServer::NONE ||
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
           !JITServer::ClientStream::isServerCompatible(OMRPORT_FROM_J9PORT(_jitConfig->javaVM->portLibrary)) ||
           (!JITServerHelpers::isServerAvailable() && !JITServerHelpers::shouldRetryConnection(OMRPORT_FROM_J9PORT(_jitConfig->javaVM->portLibrary))) ||
