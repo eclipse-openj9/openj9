@@ -77,6 +77,8 @@ public:
 
 	virtual void handleFileOpenError(MM_EnvironmentBase *env, char *fileName);
 
+	virtual int32_t fileOpenMode(MM_EnvironmentBase *env);
+
 	MM_VerboseManagerJava(OMR_VM *omrVM)
 		: MM_VerboseManager(omrVM)
 		, _mmHooks(NULL)

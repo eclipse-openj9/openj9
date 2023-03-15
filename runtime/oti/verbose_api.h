@@ -121,6 +121,7 @@ typedef struct J9VerboseSettings {
 
 IDATA setVerboseState ( J9JavaVM *vm, J9VerboseSettings *verboseOptions, char **errorString );
 
+BOOLEAN checkOptsAndInitVerbosegclog(J9JavaVM* vm, J9VMInitArgs* args);
 #ifdef __cplusplus
 }
 #endif
