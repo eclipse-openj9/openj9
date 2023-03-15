@@ -2883,12 +2883,20 @@ bool J9::Options::feLatePostProcess(void * base, TR::OptionSet * optionSet)
       }
 
    bool exceptionEventHooked = false;
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+   if (J9_EVENT_IS_HOOKED(javaVM->hookInterface, J9HOOK_VM_EXCEPTION_CATCH) || J9_EVENT_IS_RESERVED(javaVM->hookInterface, J9HOOK_VM_EXCEPTION_CATCH))
+#else /* defined(J9VM_OPT_CRIU_SUPPORT) */
    if ((*vmHooks)->J9HookDisable(vmHooks, J9HOOK_VM_EXCEPTION_CATCH))
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
       {
       jitConfig->jitExceptionCaught = jitExceptionCaught;
       exceptionEventHooked = true;
       }
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+   if (J9_EVENT_IS_HOOKED(javaVM->hookInterface, J9HOOK_VM_EXCEPTION_THROW) || J9_EVENT_IS_RESERVED(javaVM->hookInterface, J9HOOK_VM_EXCEPTION_THROW))
+#else /* defined(J9VM_OPT_CRIU_SUPPORT) */
    if ((*vmHooks)->J9HookDisable(vmHooks, J9HOOK_VM_EXCEPTION_THROW))
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
       {
       exceptionEventHooked = true;
       }

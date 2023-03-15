@@ -132,7 +132,7 @@
 			$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump \
 			-DSCRIPPATH=$(TEST_RESROOT)$(D)criuScript.sh -DTEST_RESROOT=$(TEST_RESROOT) \
 			-DJAVA_COMMAND=$(JAVA_COMMAND) -DJVM_OPTIONS=$(Q)$(JVM_OPTIONS) -Xtrace:print={j9jcl.219}$(Q) \
-			-jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)criu_nonPortable_Xtrace.xml$(Q) \
+			-jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)criu_nonPortable_RAS.xml$(Q) \
 			-explainExcludes -xids all,$(PLATFORM),$(VARIATION) -nonZeroExitWhenError; \
 			$(TEST_STATUS)
 		</command>
@@ -163,7 +163,7 @@
 			$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump \
 			-DSCRIPPATH=$(TEST_RESROOT)$(D)criuScript.sh -DTEST_RESROOT=$(TEST_RESROOT) \
 			-DJAVA_COMMAND=$(JAVA_COMMAND) -DJVM_OPTIONS=$(Q)$(JVM_OPTIONS) -Xtrace:print=mt,methods=org/eclipse/openj9/criu/CRIUSupport.registerRestoreOptionsFile()$(Q) \
-			-jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)criu_nonPortable_Xtrace.xml$(Q) \
+			-jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)criu_nonPortable_RAS.xml$(Q) \
 			-explainExcludes -xids all,$(PLATFORM),$(VARIATION) -nonZeroExitWhenError; \
 			$(TEST_STATUS)
 		</command>
@@ -194,7 +194,38 @@
 			$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump \
 			-DSCRIPPATH=$(TEST_RESROOT)$(D)criuScript.sh -DTEST_RESROOT=$(TEST_RESROOT) \
 			-DJAVA_COMMAND=$(JAVA_COMMAND) -DJVM_OPTIONS=$(Q)$(JVM_OPTIONS) -Xtrace:maximal=mt,methods=org/eclipse/openj9/criu/CRIUSupport.registerRestoreOptionsFile,output=beforeCheckpoint.txt$(Q) \
-			-jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)criu_nonPortable_Xtrace.xml$(Q) \
+			-jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)criu_nonPortable_RAS.xml$(Q) \
+			-explainExcludes -xids all,$(PLATFORM),$(VARIATION) -nonZeroExitWhenError; \
+			$(TEST_STATUS)
+		</command>
+		<features>
+			<feature>CRIU:required</feature>
+		</features>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<impls>
+			<impl>openj9</impl>
+		</impls>
+	</test>
+	<test>
+		<testCaseName>cmdLineTester_criu_nonPortableRestore_Xdump_events</testCaseName>
+		<variations>
+			<variation>-Xjit -XX:+CRIURestoreNonPortableMode</variation>
+			<variation>-Xint -XX:+CRIURestoreNonPortableMode</variation>
+			<variation>-Xjit:count=0 -XX:+CRIURestoreNonPortableMode</variation>
+			<variation>-Xgcpolicy:optthruput</variation>
+			<variation>-Xgcpolicy:optavgpause</variation>
+		</variations>
+		<command>
+			TR_Options=$(Q)exclude={org/openj9/criu/TimeChangeTest.nanoTimeInt()J},dontInline={org/openj9/criu/TimeChangeTest.nanoTimeInt()J|org/openj9/criu/TimeChangeTest.nanoTimeJit()J},{org/openj9/criu/TimeChangeTest.nanoTimeJit()J}(count=1)$(Q) \
+			$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump \
+			-DSCRIPPATH=$(TEST_RESROOT)$(D)criuScript.sh -DTEST_RESROOT=$(TEST_RESROOT) \
+			-DJAVA_COMMAND=$(JAVA_COMMAND) -DJVM_OPTIONS=$(Q)$(JVM_OPTIONS) -Xdump:java:events=vmstart$(Q) \
+			-jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)criu_nonPortable_RAS.xml$(Q) \
 			-explainExcludes -xids all,$(PLATFORM),$(VARIATION) -nonZeroExitWhenError; \
 			$(TEST_STATUS)
 		</command>
