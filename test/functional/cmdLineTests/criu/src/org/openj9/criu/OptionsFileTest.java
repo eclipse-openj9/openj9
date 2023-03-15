@@ -46,6 +46,9 @@ public class OptionsFileTest {
 		case "PropertiesTest4":
 			propertiesTest4();
 			break;
+		case "TraceOptionsTest":
+			traceOptionsTest();
+			break;
 		default:
 			throw new RuntimeException("incorrect parameters");
 		}
@@ -149,5 +152,20 @@ public class OptionsFileTest {
 
 		//shouldnt get here
 		System.out.println("ERR: failed properties test");
+	}
+
+	static void traceOptionsTest() {
+		String optionsContents = "-Xtrace:print={j9vm.40}\n-Xtrace:print=mt,methods=java/lang/System.getProperties()\n-Xtrace:trigger=method{java/lang/System.getProperties,javadump}";
+		Path optionsFilePath = CRIUTestUtils.createOptionsFile("options", optionsContents);
+
+		Path imagePath = Paths.get("cpData");
+		CRIUTestUtils.createCheckpointDirectory(imagePath);
+		CRIUSupport criuSupport = new CRIUSupport(imagePath);
+		criuSupport.registerRestoreOptionsFile(optionsFilePath);
+
+		System.out.println("Pre-checkpoint");
+		CRIUTestUtils.checkPointJVM(criuSupport, imagePath, true);
+		System.getProperties();
+		System.out.println("Post-checkpoint");
 	}
 }

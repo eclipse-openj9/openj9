@@ -23,6 +23,7 @@
 #include "j9.h"
 #include "j9comp.h"
 #include "j9protos.h"
+#include "jvminit.h"
 #include "ut_j9vm.h"
 #include "vm_api.h"
 #include "vmargs_core_api.h"
@@ -45,7 +46,8 @@ static void cleanupCriuHooks(J9VMThread *currentThread);
 static BOOLEAN fillinHookRecords(J9VMThread *currentThread, j9object_t object);
 static IDATA findinstanceFieldOffsetHelper(J9VMThread *currentThread, J9Class *instanceType, const char *fieldName, const char *fieldSig);
 static void initializeCriuHooks(J9VMThread *currentThread);
-static BOOLEAN juRandomReseed(J9VMThread *currentThread, void *userData);
+static BOOLEAN juRandomReseed(J9VMThread *currentThread, void *userData, const char **nlsMsgFormat);
+static BOOLEAN criuRestoreInitializeTrace(J9VMThread *currentThread, void *userData, const char **nlsMsgFormat);
 static jvmtiIterationControl objectIteratorCallback(J9JavaVM *vm, J9MM_IterateObjectDescriptor *objectDesc, void *userData);
 
 BOOLEAN
@@ -170,16 +172,18 @@ findinstanceFieldOffsetHelper(J9VMThread *currentThread, J9Class *instanceType, 
  *
  * @param[in] currentThread vmThread token
  * @param[in] userData J9InternalHookRecord pointer
+ * @param[in/out] nlsMsgFormat an NLS message
  *
  * @return BOOLEAN TRUE if no error, otherwise FALSE
  */
 static BOOLEAN
-juRandomReseed(J9VMThread *currentThread, void *userData)
+juRandomReseed(J9VMThread *currentThread, void *userData, const char **nlsMsgFormat)
 {
 	BOOLEAN result = TRUE;
 	J9JavaVM *vm = currentThread->javaVM;
 	J9InternalHookRecord *hookRecord = (J9InternalHookRecord*)userData;
 	MM_ObjectAccessBarrierAPI objectAccessBarrier = MM_ObjectAccessBarrierAPI(currentThread);
+	PORT_ACCESS_FROM_VMC(currentThread);
 
 	/* Assuming this hook record is to re-seed java.util.Random.seed.value. */
 	IDATA seedOffset = findinstanceFieldOffsetHelper(currentThread, hookRecord->instanceType, "seed", "Ljava/util/concurrent/atomic/AtomicLong;");
@@ -208,16 +212,54 @@ juRandomReseed(J9VMThread *currentThread, void *userData)
 			} else {
 				Trc_VM_criu_jur_invalid_valueOffset(currentThread, jucaAtomicLongClass);
 				result = FALSE;
+				*nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
+						J9NLS_VM_CRIU_RESTORE_RESEED_INVALID_VALUEOFFSET, NULL);
 			}
 		} else {
 			Trc_VM_criu_jur_AtomicLong_CNF(currentThread);
 			result = FALSE;
+			*nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
+					J9NLS_VM_CRIU_RESTORE_RESEED_ATOMICLONG_CNF, NULL);
 		}
 	} else {
 		Trc_VM_criu_jur_invalid_seedOffset(currentThread, hookRecord->instanceType);
 		result = FALSE;
+		*nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
+				J9NLS_VM_CRIU_RESTORE_RESEED_INVALID_SEEDOFFSET, NULL);
 	}
 
+	return result;
+}
+
+/**
+ * An internal JVM checkpoint hook is to initialize trace after restore.
+ *
+ * @param[in] currentThread vmThread token
+ * @param[in] userData J9InternalHookRecord pointer
+ * @param[in/out] nlsMsgFormat an NLS message
+ *
+ * @return BOOLEAN TRUE if no error, otherwise FALSE
+ */
+static BOOLEAN
+criuRestoreInitializeTrace(J9VMThread *currentThread, void *userData, const char **nlsMsgFormat)
+{
+	BOOLEAN result = TRUE;
+	J9JavaVM *vm = currentThread->javaVM;
+
+	if (NULL != vm->checkpointState.restoreArgsList) {
+		if (FIND_ARG_IN_ARGS_FORWARD(vm->checkpointState.restoreArgsList, OPTIONAL_LIST_MATCH, VMOPT_XTRACE, NULL) >= 0) {
+			RasGlobalStorage *j9ras = (RasGlobalStorage *)vm->j9rasGlobalStorage;
+			if ((NULL == j9ras)
+				|| (NULL == j9ras->criuRestoreInitializeTrace)
+				|| !j9ras->criuRestoreInitializeTrace(currentThread)
+			) {
+				PORT_ACCESS_FROM_VMC(currentThread);
+				*nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
+						J9NLS_VM_CRIU_RESTORE_INITIALIZE_TRACE_FAILED, NULL);
+				result = FALSE;
+			}
+		}
+	}
 	return result;
 }
 
@@ -305,6 +347,7 @@ initializeCriuHooks(J9VMThread *currentThread)
 		if (NULL != juRandomClass) {
 			addInternalJVMCheckpointHook(currentThread, TRUE, juRandomClass, FALSE, juRandomReseed);
 		}
+		addInternalJVMCheckpointHook(currentThread, TRUE, NULL, FALSE, criuRestoreInitializeTrace);
 	}
 
 done:
@@ -371,7 +414,7 @@ objectIteratorCallback(J9JavaVM *vm, J9MM_IterateObjectDescriptor *objectDesc, v
 }
 
 BOOLEAN
-runInternalJVMCheckpointHooks(J9VMThread *currentThread)
+runInternalJVMCheckpointHooks(J9VMThread *currentThread, const char **nlsMsgFormat)
 {
 	J9JavaVM *vm = currentThread->javaVM;
 	J9Pool *hookRecords = vm->checkpointState.hookRecords;
@@ -386,7 +429,7 @@ runInternalJVMCheckpointHooks(J9VMThread *currentThread)
 	J9InternalHookRecord *hookRecord = (J9InternalHookRecord*)pool_startDo(hookRecords, &walkState);
 	while (NULL != hookRecord) {
 		if (!hookRecord->isRestore) {
-			if (FALSE == hookRecord->hookFunc(currentThread, hookRecord)) {
+			if (FALSE == hookRecord->hookFunc(currentThread, hookRecord, nlsMsgFormat)) {
 				result = FALSE;
 				break;
 			}
@@ -399,7 +442,7 @@ runInternalJVMCheckpointHooks(J9VMThread *currentThread)
 }
 
 BOOLEAN
-runInternalJVMRestoreHooks(J9VMThread *currentThread)
+runInternalJVMRestoreHooks(J9VMThread *currentThread, const char **nlsMsgFormat)
 {
 	J9JavaVM *vm = currentThread->javaVM;
 	J9Pool *hookRecords = vm->checkpointState.hookRecords;
@@ -411,7 +454,7 @@ runInternalJVMRestoreHooks(J9VMThread *currentThread)
 	J9InternalHookRecord *hookRecord = (J9InternalHookRecord*)pool_startDo(hookRecords, &walkState);
 	while (NULL != hookRecord) {
 		if (hookRecord->isRestore) {
-			result = hookRecord->hookFunc(currentThread, hookRecord);
+			result = hookRecord->hookFunc(currentThread, hookRecord, nlsMsgFormat);
 			if (!result) {
 				break;
 			}
@@ -426,7 +469,7 @@ runInternalJVMRestoreHooks(J9VMThread *currentThread)
 			while (NULL != clazz) {
 				J9InternalClassIterationRestoreHookRecord *hookRecord = (J9InternalClassIterationRestoreHookRecord*)pool_startDo(classIterationRestoreHookRecords, &walkState);
 				while (NULL != hookRecord) {
-					result = hookRecord->hookFunc(currentThread, clazz);
+					result = hookRecord->hookFunc(currentThread, clazz, nlsMsgFormat);
 					if (!result) {
 						break;
 					}
