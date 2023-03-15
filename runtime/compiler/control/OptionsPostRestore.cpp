@@ -28,6 +28,7 @@
 #include "j9nonbuilder.h"
 #include "jvminit.h"
 #include "j9comp.h"
+#include "jitprotos.h"
 #include "env/CompilerEnv.hpp"
 #include "env/TRMemory.hpp"
 #include "compile/Method.hpp"
@@ -616,10 +617,17 @@ J9::OptionsPostRestore::postProcessInternalCompilerOptions()
    // Open vlog and rtLog if applicable
    openLogFilesIfNeeded();
 
-   // If -Xrs, -Xtrace, or disabling traps is specified post-restore,
-   // invalidate all method bodies
+   // If -Xrs, -Xtrace, -Xdump, or disabling traps is specified
+   // post-restore (and not pre-checkpoint), invalidate all method bodies
    bool invalidateAll = false;
    bool disableAOT = _disableAOTPostRestore;
+   bool exceptionCatchEventHooked
+      = J9_EVENT_IS_HOOKED(vm->hookInterface, J9HOOK_VM_EXCEPTION_CATCH)
+        || J9_EVENT_IS_RESERVED(vm->hookInterface, J9HOOK_VM_EXCEPTION_CATCH);
+   bool exceptionThrowEventHooked
+      = J9_EVENT_IS_HOOKED(vm->hookInterface, J9HOOK_VM_EXCEPTION_THROW)
+        || J9_EVENT_IS_RESERVED(vm->hookInterface, J9HOOK_VM_EXCEPTION_THROW);
+
    if (!_disableTrapsPreCheckpoint
        && (J9_ARE_ALL_BITS_SET(vm->sigFlags, J9_SIG_XRS_SYNC)
            || TR::Options::getCmdLineOptions()->getOption(TR_NoResumableTrapHandler)
@@ -633,6 +641,15 @@ J9::OptionsPostRestore::postProcessInternalCompilerOptions()
             && (vm->extendedRuntimeFlags & J9_EXTENDED_RUNTIME_METHOD_TRACE_ENABLED))
       {
       _compInfo->setVMMethodTraceEnabled(true);
+      invalidateAll = true;
+      disableAOT = true;
+      }
+   else if (!_compInfo->isVMExceptionEventsHooked()
+            && (exceptionCatchEventHooked || exceptionThrowEventHooked))
+      {
+      if (exceptionCatchEventHooked)
+         _jitConfig->jitExceptionCaught = jitExceptionCaught;
+      _compInfo->setVMExceptionEventsHooked(true);
       invalidateAll = true;
       disableAOT = true;
       }
