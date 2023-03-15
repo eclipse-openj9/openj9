@@ -2191,7 +2191,7 @@ bool TR_DataAccessAccelerator::genShiftRightIntrinsic(TR::TreeTop* treeTop, TR::
    pdshrNode->setDecimalPrecision(dstPrec);
 
    TR::SymbolReference* bcdChkSymRef = callNode->getSymbolReference();
-   TR::Node* bcdchkNode = TR::Node::createWithSymRef(TR::BCDCHK, 11, 11,
+   TR::Node* bcdchkNode = TR::Node::createWithSymRef(TR::BCDCHK, 11, 11, // check how we verify input pd values
                                            pdshrNode, outOfLineCopyBackAddr,
                                            callNode->getChild(0), callNode->getChild(1),
                                            callNode->getChild(2), callNode->getChild(3),
