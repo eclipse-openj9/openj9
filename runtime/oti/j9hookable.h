@@ -25,4 +25,6 @@
 
 #include "omrhookable.h"
 
+#define J9_EVENT_CAN_BE_HOOKED(javaVM, J9_EVENT_MASK) (J9_EVENT_IS_HOOKED(javaVM->hookInterface, J9_EVENT_MASK) || J9_EVENT_IS_RESERVED(javaVM->hookInterface, J9_EVENT_MASK))
+
 #endif /* J9HOOKABLE_H_ */

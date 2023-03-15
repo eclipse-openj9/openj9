@@ -34,6 +34,7 @@
 #include "j9cfg.h"
 #include "j9modron.h"
 #include "jvminit.h"
+#include "j9hookable.h"
 #if defined(J9VM_OPT_JITSERVER)
 #include "j9vmnls.h"
 #include "omrformatconsts.h"
@@ -2812,7 +2813,6 @@ bool J9::Options::feLatePostProcess(void * base, TR::OptionSet * optionSet)
 
    J9JITConfig * jitConfig = (J9JITConfig*)base;
    J9JavaVM * javaVM = jitConfig->javaVM;
-   J9HookInterface * * vmHooks = javaVM->internalVMFunctions->getVMHookInterface(javaVM);
 
    TR_J9VMBase * vm = TR_J9VMBase::get(jitConfig, 0);
    TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
@@ -2847,16 +2847,16 @@ bool J9::Options::feLatePostProcess(void * base, TR::OptionSet * optionSet)
        (javaVM->requiredDebugAttributes & J9VM_DEBUG_ATTRIBUTE_CAN_ACCESS_LOCALS) ||
 #endif
 #if defined (J9VM_INTERP_HOT_CODE_REPLACEMENT)
-       (*vmHooks)->J9HookDisable(vmHooks, J9HOOK_VM_POP_FRAMES_INTERRUPT) ||
+       J9_EVENT_CAN_BE_HOOKED(javaVM, J9HOOK_VM_POP_FRAMES_INTERRUPT) ||
 #endif
-       (*vmHooks)->J9HookDisable(vmHooks, J9HOOK_VM_BREAKPOINT) ||
-       (*vmHooks)->J9HookDisable(vmHooks, J9HOOK_VM_FRAME_POPPED) ||
-       (*vmHooks)->J9HookDisable(vmHooks, J9HOOK_VM_FRAME_POP) ||
-       (*vmHooks)->J9HookDisable(vmHooks, J9HOOK_VM_GET_FIELD) ||
-       (*vmHooks)->J9HookDisable(vmHooks, J9HOOK_VM_PUT_FIELD) ||
-       (*vmHooks)->J9HookDisable(vmHooks, J9HOOK_VM_GET_STATIC_FIELD) ||
-       (*vmHooks)->J9HookDisable(vmHooks, J9HOOK_VM_PUT_STATIC_FIELD) ||
-       (*vmHooks)->J9HookDisable(vmHooks, J9HOOK_VM_SINGLE_STEP))
+       J9_EVENT_CAN_BE_HOOKED(javaVM, J9HOOK_VM_BREAKPOINT) ||
+       J9_EVENT_CAN_BE_HOOKED(javaVM, J9HOOK_VM_FRAME_POPPED) ||
+       J9_EVENT_CAN_BE_HOOKED(javaVM, J9HOOK_VM_FRAME_POP) ||
+       J9_EVENT_CAN_BE_HOOKED(javaVM, J9HOOK_VM_GET_FIELD) ||
+       J9_EVENT_CAN_BE_HOOKED(javaVM, J9HOOK_VM_PUT_FIELD) ||
+       J9_EVENT_CAN_BE_HOOKED(javaVM, J9HOOK_VM_GET_STATIC_FIELD) ||
+       J9_EVENT_CAN_BE_HOOKED(javaVM, J9HOOK_VM_PUT_STATIC_FIELD) ||
+       J9_EVENT_CAN_BE_HOOKED(javaVM, J9HOOK_VM_SINGLE_STEP))
       {
          static bool TR_DisableFullSpeedDebug = (feGetEnv("TR_DisableFullSpeedDebug") != NULL);
          static bool TR_DisableFullSpeedDebugAOT = (feGetEnv("TR_DisableFullSpeedDebugAOT") != NULL);
@@ -2883,20 +2883,12 @@ bool J9::Options::feLatePostProcess(void * base, TR::OptionSet * optionSet)
       }
 
    bool exceptionEventHooked = false;
-#if defined(J9VM_OPT_CRIU_SUPPORT)
-   if (J9_EVENT_IS_HOOKED(javaVM->hookInterface, J9HOOK_VM_EXCEPTION_CATCH) || J9_EVENT_IS_RESERVED(javaVM->hookInterface, J9HOOK_VM_EXCEPTION_CATCH))
-#else /* defined(J9VM_OPT_CRIU_SUPPORT) */
-   if ((*vmHooks)->J9HookDisable(vmHooks, J9HOOK_VM_EXCEPTION_CATCH))
-#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+   if (J9_EVENT_CAN_BE_HOOKED(javaVM, J9HOOK_VM_EXCEPTION_CATCH))
       {
       jitConfig->jitExceptionCaught = jitExceptionCaught;
       exceptionEventHooked = true;
       }
-#if defined(J9VM_OPT_CRIU_SUPPORT)
-   if (J9_EVENT_IS_HOOKED(javaVM->hookInterface, J9HOOK_VM_EXCEPTION_THROW) || J9_EVENT_IS_RESERVED(javaVM->hookInterface, J9HOOK_VM_EXCEPTION_THROW))
-#else /* defined(J9VM_OPT_CRIU_SUPPORT) */
-   if ((*vmHooks)->J9HookDisable(vmHooks, J9HOOK_VM_EXCEPTION_THROW))
-#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+   if (J9_EVENT_CAN_BE_HOOKED(javaVM, J9HOOK_VM_EXCEPTION_THROW))
       {
       exceptionEventHooked = true;
       }
@@ -2908,14 +2900,14 @@ bool J9::Options::feLatePostProcess(void * base, TR::OptionSet * optionSet)
 
    // Determine whether or not to generate method enter and exit hooks
    //
-   if ((*vmHooks)->J9HookDisable(vmHooks, J9HOOK_VM_METHOD_ENTER))
+   if (J9_EVENT_CAN_BE_HOOKED(javaVM, J9HOOK_VM_METHOD_ENTER))
       {
       self()->setOption(TR_ReportMethodEnter);
 #if !defined(TR_HOST_S390) && !defined(TR_HOST_POWER) && !defined(TR_HOST_X86)
       doAOT = false;
 #endif
       }
-   if ((*vmHooks)->J9HookDisable(vmHooks, J9HOOK_VM_METHOD_RETURN))
+   if (J9_EVENT_CAN_BE_HOOKED(javaVM, J9HOOK_VM_METHOD_RETURN))
       {
       self()->setOption(TR_ReportMethodExit);
 #if !defined(TR_HOST_S390) && !defined(TR_HOST_POWER) && !defined(TR_HOST_X86)
@@ -3031,7 +3023,7 @@ bool J9::Options::feLatePostProcess(void * base, TR::OptionSet * optionSet)
 
    // Check NextGenHCR is supported by the VM
    if (!(javaVM->extendedRuntimeFlags & J9_EXTENDED_RUNTIME_OSR_SAFE_POINT) ||
-       (*vmHooks)->J9HookDisable(vmHooks, J9HOOK_VM_OBJECT_ALLOCATE_INSTRUMENTABLE) || disableHCR)
+       J9_EVENT_CAN_BE_HOOKED(javaVM, J9HOOK_VM_OBJECT_ALLOCATE_INSTRUMENTABLE) || disableHCR)
       {
       self()->setOption(TR_DisableNextGenHCR);
       }

@@ -50,6 +50,7 @@
 #include "stackwalk.h"
 #include "thrtypes.h"
 #include "vmaccess.h"
+#include "j9hookable.h"
 #undef min
 #undef max
 #include "codegen/AheadOfTimeCompile.hpp"
@@ -2935,18 +2936,16 @@ bool
 TR_J9VMBase::canMethodEnterEventBeHooked()
    {
    J9JavaVM * javaVM = _jitConfig->javaVM;
-   J9HookInterface * * vmHooks = javaVM->internalVMFunctions->getVMHookInterface(javaVM);
 
-   return ((*vmHooks)->J9HookDisable(vmHooks, J9HOOK_VM_METHOD_ENTER) != 0);
+   return J9_EVENT_CAN_BE_HOOKED(javaVM, J9HOOK_VM_METHOD_ENTER);
    }
 
 bool
 TR_J9VMBase::canMethodExitEventBeHooked()
    {
    J9JavaVM * javaVM = _jitConfig->javaVM;
-   J9HookInterface * * vmHooks = javaVM->internalVMFunctions->getVMHookInterface(javaVM);
 
-   return ((*vmHooks)->J9HookDisable(vmHooks, J9HOOK_VM_METHOD_RETURN) != 0);
+   return J9_EVENT_CAN_BE_HOOKED(javaVM, J9HOOK_VM_METHOD_RETURN);
    }
 
 bool
@@ -2959,20 +2958,9 @@ bool
 TR_J9VMBase::canExceptionEventBeHooked()
    {
    J9JavaVM * javaVM = _jitConfig->javaVM;
-   J9HookInterface * * vmHooks = javaVM->internalVMFunctions->getVMHookInterface(javaVM);
 
-   bool catchCanBeHooked =
-#if defined(J9VM_OPT_CRIU_SUPPORT)
-      J9_EVENT_IS_HOOKED(javaVM->hookInterface, J9HOOK_VM_EXCEPTION_CATCH) || J9_EVENT_IS_RESERVED(javaVM->hookInterface, J9HOOK_VM_EXCEPTION_CATCH);
-#else /* defined(J9VM_OPT_CRIU_SUPPORT) */
-      ((*vmHooks)->J9HookDisable(vmHooks, J9HOOK_VM_EXCEPTION_CATCH) != 0);
-#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
-   bool throwCanBeHooked =
-#if defined(J9VM_OPT_CRIU_SUPPORT)
-      J9_EVENT_IS_HOOKED(javaVM->hookInterface, J9HOOK_VM_EXCEPTION_THROW) || J9_EVENT_IS_RESERVED(javaVM->hookInterface, J9HOOK_VM_EXCEPTION_THROW);
-#else /* defined(J9VM_OPT_CRIU_SUPPORT) */
-      ((*vmHooks)->J9HookDisable(vmHooks, J9HOOK_VM_EXCEPTION_THROW) != 0);
-#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+   bool catchCanBeHooked = J9_EVENT_CAN_BE_HOOKED(javaVM, J9HOOK_VM_EXCEPTION_CATCH);
+   bool throwCanBeHooked = J9_EVENT_CAN_BE_HOOKED(javaVM, J9HOOK_VM_EXCEPTION_THROW);
 
    return (catchCanBeHooked || throwCanBeHooked);
    }

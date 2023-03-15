@@ -28,6 +28,7 @@
 #include "j9nonbuilder.h"
 #include "jvminit.h"
 #include "j9comp.h"
+#include "j9hookable.h"
 #include "jitprotos.h"
 #include "env/CompilerEnv.hpp"
 #include "env/TRMemory.hpp"
@@ -621,12 +622,8 @@ J9::OptionsPostRestore::postProcessInternalCompilerOptions()
    // post-restore (and not pre-checkpoint), invalidate all method bodies
    bool invalidateAll = false;
    bool disableAOT = _disableAOTPostRestore;
-   bool exceptionCatchEventHooked
-      = J9_EVENT_IS_HOOKED(vm->hookInterface, J9HOOK_VM_EXCEPTION_CATCH)
-        || J9_EVENT_IS_RESERVED(vm->hookInterface, J9HOOK_VM_EXCEPTION_CATCH);
-   bool exceptionThrowEventHooked
-      = J9_EVENT_IS_HOOKED(vm->hookInterface, J9HOOK_VM_EXCEPTION_THROW)
-        || J9_EVENT_IS_RESERVED(vm->hookInterface, J9HOOK_VM_EXCEPTION_THROW);
+   bool exceptionCatchEventHooked = J9_EVENT_CAN_BE_HOOKED(vm, J9HOOK_VM_EXCEPTION_CATCH);
+   bool exceptionThrowEventHooked = J9_EVENT_CAN_BE_HOOKED(vm, J9HOOK_VM_EXCEPTION_THROW);
 
    if (!_disableTrapsPreCheckpoint
        && (J9_ARE_ALL_BITS_SET(vm->sigFlags, J9_SIG_XRS_SYNC)
