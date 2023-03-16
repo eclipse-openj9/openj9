@@ -68,6 +68,7 @@ import com.ibm.j9ddr.vm29.pointer.generated.J9ClassPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9JITConfigPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ObjectMonitorPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ObjectPointer;
+import com.ibm.j9ddr.vm29.pointer.generated.J9RASPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ThreadAbstractMonitorPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9VMThreadPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.MM_MemorySpacePointer;
@@ -932,7 +933,17 @@ public class DTFJJavaRuntime implements JavaRuntime {
 		try {
 			//starting with 26 stream, RAS structure contains the JRE version which avoids the potential pitfall
 			//of using system properties which may have their name and/or value stored in native libraries
-			return DTFJContext.getVm().j9ras().serviceLevel().getCStringAtOffset(0);
+			J9RASPointer ras = DTFJContext.getVm().j9ras();
+			String version = ras.serviceLevel().getCStringAtOffset(0);
+			try {
+				U8Pointer productName = ras.productName();
+				if (productName.notNull()) {
+					version = version + " " + productName.getCStringAtOffset(0);
+				}
+			} catch (NoSuchFieldException e) {
+				// ignore if the product name doesn't exist
+			}
+			return version;
 		} catch (Throwable t) {
 			throw J9DDRDTFJUtils.handleAsCorruptDataException(DTFJContext.getProcess(), t);
 		}
