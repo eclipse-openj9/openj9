@@ -28,6 +28,7 @@
 #include "j9nonbuilder.h"
 #include "jvminit.h"
 #include "j9comp.h"
+#include "jitprotos.h"
 #include "env/CompilerEnv.hpp"
 #include "env/TRMemory.hpp"
 #include "compile/Method.hpp"
@@ -36,6 +37,7 @@
 #include "control/Options.hpp"
 #include "control/OptionsPostRestore.hpp"
 #include "control/J9Recompilation.hpp"
+#include "env/J9PersistentInfo.hpp"
 #include "env/SystemSegmentProvider.hpp"
 #include "env/RawAllocator.hpp"
 #include "env/Region.hpp"
@@ -59,6 +61,7 @@ J9::OptionsPostRestore::OptionsPostRestore(J9VMThread *vmThread, J9JITConfig *ji
    _oldVLogFileName(_privateConfig->vLogFileName),
    _oldRtLogFileName(_privateConfig->rtLogFileName),
    _asyncCompilationPreCheckpoint(_compInfo->asynchronousCompilation()),
+   _disableAOTPostRestore(false),
    _argIndexXjit(-1),
    _argIndexXjitcolon(-1),
    _argIndexXnojit(-1),
@@ -261,6 +264,13 @@ J9::OptionsPostRestore::iterateOverExternalOptions()
             }
             break;
 
+         case J9::ExternalOptions::XShareclassesDisableOnRestore:
+            {
+            if (FIND_ARG_IN_RESTORE_ARGS(OPTIONAL_LIST_MATCH, optString, 0) >= 0)
+               _disableAOTPostRestore = true;
+            }
+            break;
+
          default:
             TR_ASSERT_FATAL(false, "Option %s not addressed post restore\n", TR::Options::_externalOptionStrings[option]);
          }
@@ -306,7 +316,11 @@ J9::OptionsPostRestore::processJitServerOptions()
       }
    else
       {
-      // TODO: Disable JITServer
+      _compInfo->getPersistentInfo()->setClientUID(0);
+      _compInfo->getPersistentInfo()->setServerUID(0);
+      _jitConfig->clientUID = 0;
+      _jitConfig->serverUID = 0;
+      J9::PersistentInfo::_remoteCompilationMode = JITServer::NONE;
       }
 #endif // defined(J9VM_OPT_JITSERVER)
    }
@@ -468,6 +482,9 @@ J9::OptionsPostRestore::disableAOTCompilation()
    // but not during a compilation as all compilation threads are suspended at
    // this point, and so it won't impact AOT code.
 
+   if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCheckpointRestore))
+      TR_VerboseLog::writeLineLocked(TR_Vlog_CHECKPOINT_RESTORE, "Disabling AOT Compilation and Load");
+
    TR::Options::getAOTCmdLineOptions()->setOption(TR_NoLoadAOT);
    TR::Options::getAOTCmdLineOptions()->setOption(TR_NoStoreAOT);
    TR::Options::setSharedClassCache(false);
@@ -600,10 +617,17 @@ J9::OptionsPostRestore::postProcessInternalCompilerOptions()
    // Open vlog and rtLog if applicable
    openLogFilesIfNeeded();
 
-   // If -Xrs, -Xtrace, or disabling traps is specified post-restore,
-   // invalidate all method bodies
+   // If -Xrs, -Xtrace, -Xdump, or disabling traps is specified
+   // post-restore (and not pre-checkpoint), invalidate all method bodies
    bool invalidateAll = false;
-   bool disableAOT = false;
+   bool disableAOT = _disableAOTPostRestore;
+   bool exceptionCatchEventHooked
+      = J9_EVENT_IS_HOOKED(vm->hookInterface, J9HOOK_VM_EXCEPTION_CATCH)
+        || J9_EVENT_IS_RESERVED(vm->hookInterface, J9HOOK_VM_EXCEPTION_CATCH);
+   bool exceptionThrowEventHooked
+      = J9_EVENT_IS_HOOKED(vm->hookInterface, J9HOOK_VM_EXCEPTION_THROW)
+        || J9_EVENT_IS_RESERVED(vm->hookInterface, J9HOOK_VM_EXCEPTION_THROW);
+
    if (!_disableTrapsPreCheckpoint
        && (J9_ARE_ALL_BITS_SET(vm->sigFlags, J9_SIG_XRS_SYNC)
            || TR::Options::getCmdLineOptions()->getOption(TR_NoResumableTrapHandler)
@@ -617,6 +641,15 @@ J9::OptionsPostRestore::postProcessInternalCompilerOptions()
             && (vm->extendedRuntimeFlags & J9_EXTENDED_RUNTIME_METHOD_TRACE_ENABLED))
       {
       _compInfo->setVMMethodTraceEnabled(true);
+      invalidateAll = true;
+      disableAOT = true;
+      }
+   else if (!_compInfo->isVMExceptionEventsHooked()
+            && (exceptionCatchEventHooked || exceptionThrowEventHooked))
+      {
+      if (exceptionCatchEventHooked)
+         _jitConfig->jitExceptionCaught = jitExceptionCaught;
+      _compInfo->setVMExceptionEventsHooked(true);
       invalidateAll = true;
       disableAOT = true;
       }
@@ -673,11 +706,15 @@ J9::OptionsPostRestore::processCompilerOptions()
 
    if (!aotEnabled)
       {
+      _disableAOTPostRestore = true;
       disableAOTCompilation();
       }
 
    if (!jitEnabled)
       {
+      if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCheckpointRestore))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_CHECKPOINT_RESTORE, "Disabling JIT Compilation");
+
       TR::Options::setCanJITCompile(false);
       invalidateCompiledMethodsIfNeeded(true);
       }

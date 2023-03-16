@@ -1189,6 +1189,18 @@ TR::CompilationInfo::CompilationInfo(J9JITConfig *jitConfig) :
    // stage, whereas J9_EXTENDED_RUNTIME_METHOD_TRACE_ENABLED is set in the
    // TRACE_ENGINE_INITIALIZED stage, which happens first.
    _vmMethodTraceEnabled = jitConfig->javaVM->extendedRuntimeFlags & J9_EXTENDED_RUNTIME_METHOD_TRACE_ENABLED;
+
+   // TR::CompilationInfo is initialized in the JIT_INITIALIZED bootstrap
+   // stage, whereas dump agents are initialized in the
+   // PORT_LIBRARY_GUARANTEED stage, which happens first.
+   bool exceptionCatchEventHooked
+      = J9_EVENT_IS_HOOKED(jitConfig->javaVM->hookInterface, J9HOOK_VM_EXCEPTION_CATCH)
+        || J9_EVENT_IS_RESERVED(jitConfig->javaVM->hookInterface, J9HOOK_VM_EXCEPTION_CATCH);
+   bool exceptionThrowEventHooked
+      = J9_EVENT_IS_HOOKED(jitConfig->javaVM->hookInterface, J9HOOK_VM_EXCEPTION_THROW)
+        || J9_EVENT_IS_RESERVED(jitConfig->javaVM->hookInterface, J9HOOK_VM_EXCEPTION_THROW);
+   _vmExceptionEventsHooked = exceptionCatchEventHooked || exceptionThrowEventHooked;
+
    _resetStartAndElapsedTime = false;
 #endif
    _iprofilerBufferArrivalMonitor = TR::Monitor::create("JIT-IProfilerBufferArrivalMonitor");
@@ -7402,6 +7414,10 @@ TR::CompilationInfoPerThreadBase::cannotPerformRemoteComp(
           // after the process is restored. In portable restore mode checkpoints are always possible
           // so there's no point to delaying remote compilations.
           (_jitConfig->javaVM->internalVMFunctions->isCheckpointAllowed(vmThread) && _jitConfig->javaVM->internalVMFunctions->isNonPortableRestoreMode(vmThread)) ||
+
+          // If -XX:-UseJITServer is specified post-restore, then the Remote Compilation Mode will
+          // be set to JITServer::NONE
+          _compInfo.getPersistentInfo()->getRemoteCompilationMode() == JITServer::NONE ||
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
           !JITServer::ClientStream::isServerCompatible(OMRPORT_FROM_J9PORT(_jitConfig->javaVM->portLibrary)) ||
           (!JITServerHelpers::isServerAvailable() && !JITServerHelpers::shouldRetryConnection(OMRPORT_FROM_J9PORT(_jitConfig->javaVM->portLibrary))) ||

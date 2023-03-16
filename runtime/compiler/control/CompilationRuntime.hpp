@@ -728,6 +728,9 @@ public:
    void setVMMethodTraceEnabled(bool trace) { _vmMethodTraceEnabled = trace; }
    bool isVMMethodTraceEnabled()            { return _vmMethodTraceEnabled;  }
 
+   void setVMExceptionEventsHooked(bool trace) { _vmExceptionEventsHooked = trace; }
+   bool isVMExceptionEventsHooked()            { return _vmExceptionEventsHooked;  }
+
    bool resetStartAndElapsedTime()              { return _resetStartAndElapsedTime;  }
    void setResetStartAndElapsedTime(bool reset) { _resetStartAndElapsedTime = reset; }
 #endif
@@ -1375,6 +1378,7 @@ private:
    TR::Monitor *_crMonitor;
    TR_CheckpointStatus _checkpointStatus;
    bool _vmMethodTraceEnabled;
+   bool _vmExceptionEventsHooked;
    bool _resetStartAndElapsedTime;
 #endif
 
