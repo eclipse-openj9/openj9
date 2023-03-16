@@ -544,9 +544,9 @@
   <test id="Restore trace options test with no trace options specified before checkpoint">
     <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ TraceOptionsTest 1</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
-    <output type="success" caseSensitive="yes" regex="no">Pre-checkpoint</output>
+    <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
     <output type="success" caseSensitive="yes" regex="no">terminateRemainingThreads</output>
-    <output type="success" caseSensitive="yes" regex="no">java/lang/System.getProperties()Ljava/util/Properties; bytecode static method</output>
+    <output type="success" caseSensitive="yes" regex="no">java/lang/System.getProperties()Ljava/util/Properties;</output>
     <output type="success" caseSensitive="yes" regex="no">User requested Java dump</output>
     <output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>
     <output type="failure" caseSensitive="yes" regex="no">org.eclipse.openj9.criu.JVMRestoreException</output>
