@@ -1398,6 +1398,7 @@ typedef struct J9RAS {
 	UDATA pid;
 	UDATA tid;
 	char* serviceLevel;
+	const char *productName;
 	struct J9RASSystemInfo* systemInfo;
 	I_64 startTimeMillis;
 	I_64 startTimeNanos;

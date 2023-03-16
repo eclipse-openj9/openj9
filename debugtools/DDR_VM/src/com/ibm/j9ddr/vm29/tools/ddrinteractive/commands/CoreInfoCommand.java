@@ -35,6 +35,7 @@ import com.ibm.j9ddr.tools.ddrinteractive.Context;
 import com.ibm.j9ddr.tools.ddrinteractive.DDRInteractiveCommandException;
 import com.ibm.j9ddr.view.dtfj.image.J9DDRImageProcess;
 import com.ibm.j9ddr.vm29.j9.DataType;
+import com.ibm.j9ddr.vm29.pointer.U8Pointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9JavaVMPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9RASPointer;
 import com.ibm.j9ddr.vm29.pointer.helper.J9JavaVMHelper;
@@ -110,6 +111,15 @@ public class CoreInfoCommand extends Command
 			/* Print VM service level info */
 			out.println("JAVA SERVICE LEVEL INFO");
 			out.println(ras.serviceLevel().getCStringAtOffset(0));
+			try {
+				U8Pointer productName = ras.productName();
+				if (productName.notNull()) {
+					out.println("JAVA PRODUCT INFO");
+					out.println(productName.getCStringAtOffset(0));
+				}
+			} catch (NoSuchFieldException e) {
+				// ignore if the product name doesn't exist
+			}
 			/* Print Java Version Info */
 			out.println("JAVA VERSION INFO");
 			out.println(properties.get("java.fullversion"));

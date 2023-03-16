@@ -387,6 +387,7 @@ J9RAS.osarch = required
 J9RAS.osname = required
 J9RAS.osversion = required
 J9RAS.pid = required
+J9RAS.productName = U8*
 J9RAS.serviceLevel = required
 J9RAS.startTimeMillis = required
 J9RAS.startTimeNanos = required
