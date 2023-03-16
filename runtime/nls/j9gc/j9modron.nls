@@ -976,5 +976,6 @@ J9NLS_GC_THREAD_VALUE_MUST_BE_ABOVE_WARN=-Xgcthreads will be ignored. The specif
 J9NLS_GC_THREAD_VALUE_MUST_BE_ABOVE_WARN.explanation=-Xgcthreads must be greater than the specified value
 J9NLS_GC_THREAD_VALUE_MUST_BE_ABOVE_WARN.system_action=The JVM will terminate
 J9NLS_GC_THREAD_VALUE_MUST_BE_ABOVE_WARN.user_response=Refer to the OpenJ9 documentation and adjust -Xgcthreads to specify a GC thread count greater than the checkpoint GC thread count
+J9NLS_GC_THREAD_VALUE_MUST_BE_ABOVE_WARN.sample_input_1=4
 
 # END NON-TRANSLATABLE
