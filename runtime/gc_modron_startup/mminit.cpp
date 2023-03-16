@@ -3044,10 +3044,20 @@ j9gc_reinitializeDefaults(J9VMThread* vmThread)
 	J9JavaVM* vm = vmThread->javaVM;
 	bool result = true;
 
+	PORT_ACCESS_FROM_JAVAVM(vm);
+
 	extensions->gcThreadCountForced = false;
+	extensions->parSweepChunkSize = 0;
 
 	if (!gcParseReconfigurableArguments(vm, vm->checkpointState.restoreArgsList)) {
 		result = false;
+	}
+
+	/* Verify the GC thread count based on current restore limitation - threads don't shutdown at restore. */
+	if (extensions->gcThreadCountForced && (extensions->gcThreadCount < extensions->dispatcher->threadCountMaximum())) {
+		j9nls_printf(PORTLIB, J9NLS_WARNING, J9NLS_GC_THREAD_VALUE_MUST_BE_ABOVE_WARN, (UDATA)extensions->dispatcher->threadCountMaximum());
+		extensions->gcThreadCountForced = false;
+		extensions->gcThreadCount = extensions->dispatcher->threadCountMaximum();
 	}
 
 	return result;
