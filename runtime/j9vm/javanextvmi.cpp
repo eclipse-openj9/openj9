@@ -333,6 +333,15 @@ JVM_VirtualThreadMountEnd(JNIEnv *env, jobject thread, jboolean firstMount)
 				J9VMJDKINTERNALVMCONTINUATION_VMREF(currentThread, continuationObj));
 	}
 
+	/* If isSuspendedByJVMTI is non-zero, J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND is set
+	 * in currentThread->publicFlags while resetting isSuspendedByJVMTI to zero. During
+	 * mount, this suspends the thread if the thread was unmounted when JVMTI suspended it.
+	 */
+	if (0 != J9OBJECT_U32_LOAD(currentThread, threadObj, vm->isSuspendedByJVMTIOffset)) {
+		vmFuncs->setHaltFlag(currentThread, J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND);
+		J9OBJECT_U32_STORE(currentThread, threadObj, vm->isSuspendedByJVMTIOffset, 0);
+	}
+
 	/* Allow thread to be inspected again. */
 	exitVThreadTransitionCritical(currentThread, threadObj);
 
@@ -340,15 +349,6 @@ JVM_VirtualThreadMountEnd(JNIEnv *env, jobject thread, jboolean firstMount)
 		TRIGGER_J9HOOK_VM_VIRTUAL_THREAD_STARTED(vm->hookInterface, currentThread);
 	}
 	TRIGGER_J9HOOK_VM_VIRTUAL_THREAD_MOUNT(vm->hookInterface, currentThread);
-
-	/* If isSuspendedByJVMTI is non-zero, J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND is set
-	 * in currentThread->publicFlags while resetting isSuspendedByJVMTI to zero. During
-	 * mount, this suspends the thread if the thread was unmounted when JVMTI suspended it.
-	 */
-	if (0 != J9OBJECT_U32_LOAD(currentThread, threadObj, vm->isSuspendedByJVMTIOffset)) {
-		J9OBJECT_U32_STORE(currentThread, threadObj, vm->isSuspendedByJVMTIOffset, 0);
-		vmFuncs->setHaltFlag(currentThread, J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND);
-	}
 
 	vmFuncs->internalExitVMToJNI(currentThread);
 
