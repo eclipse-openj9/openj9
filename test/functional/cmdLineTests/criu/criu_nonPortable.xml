@@ -495,7 +495,7 @@
     <output type="success" caseSensitive="yes" regex="no">Restore arg: -Dprop2=val2</output>
     <output type="success" caseSensitive="yes" regex="no">Restore arg: -Dprop3=val3</output>
   </test>
-  <test id="Properties test9">
+  <test id="Envvar test9">
     <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_ENVVAR_TEST$ EnvVarFileTest9 1</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
     <output type="failure" caseSensitive="yes" regex="no">failed properties test</output>
@@ -510,7 +510,7 @@
     <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
   </test>
-  <test id="Properties test10">
+  <test id="Envvar test10">
     <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_ENVVAR_TEST$ EnvVarFileTest10 1</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
     <output type="failure" caseSensitive="yes" regex="no">failed properties test</output>
@@ -525,7 +525,7 @@
     <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
   </test>
-  <test id="Properties test11">
+  <test id="Envvar test11">
     <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_ENVVAR_TEST$ EnvVarFileTest11 1</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
     <output type="failure" caseSensitive="yes" regex="no">failed properties test</output>
@@ -540,7 +540,88 @@
     <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
   </test>
-
+  <test id="Envvar test12">
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ -Xtrace:print=j9criu.16" $MAINCLASS_ENVVAR_TEST$ EnvVarFileTest12 1</command>
+    <output type="success" caseSensitive="no" regex="no">Killed</output>
+    <output type="failure" caseSensitive="yes" regex="no">failed properties test</output>
+    <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
+    <output type="success" caseSensitive="yes" regex="no">Failed to load options from the options file</output>
+    <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
+    <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
+    <!-- If CRIU can't acquire the original thread IDs, this test will fail. Nothing can be done about this failure. -->
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="success" caseSensitive="yes" regex="no">Restore arg: -Dprop1=val1</output>
+    <output type="success" caseSensitive="yes" regex="no">Restore arg: -Dprop2=val2</output>
+    <output type="success" caseSensitive="yes" regex="no">Restore arg: -Dprop3=val3</output>
+  </test>
+  <test id="Envvar test13">
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_ENVVAR_TEST$ EnvVarFileTest13 1</command>
+    <output type="success" caseSensitive="no" regex="no">Killed</output>
+    <output type="failure" caseSensitive="yes" regex="no">failed properties test</output>
+    <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
+    <output type="success" caseSensitive="yes" regex="no">Failed to load options from the options file</output>
+    <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
+    <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
+    <!-- If CRIU can't acquire the original thread IDs, this test will fail. Nothing can be done about this failure. -->
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="success" caseSensitive="yes" regex="no">org.eclipse.openj9.criu.JVMRestoreException</output>
+  </test>
+  <test id="Envvar test14">
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_ENVVAR_TEST$ EnvVarFileTest14 1</command>
+    <output type="success" caseSensitive="no" regex="no">Killed</output>
+    <output type="failure" caseSensitive="yes" regex="no">failed properties test</output>
+    <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
+    <output type="success" caseSensitive="yes" regex="no">Failed to load options from the options file</output>
+    <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
+    <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
+    <!-- If CRIU can't acquire the original thread IDs, this test will fail. Nothing can be done about this failure. -->
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="success" caseSensitive="yes" regex="no">org.eclipse.openj9.criu.JVMRestoreException</output>
+  </test>
+  <test id="Envvar test15">
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_ENVVAR_TEST$ EnvVarFileTest15 1</command>
+    <output type="success" caseSensitive="no" regex="no">Killed</output>
+    <output type="failure" caseSensitive="yes" regex="no">failed properties test</output>
+    <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
+    <output type="success" caseSensitive="yes" regex="no">Failed to load options from the options file</output>
+    <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
+    <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
+    <!-- If CRIU can't acquire the original thread IDs, this test will fail. Nothing can be done about this failure. -->
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="success" caseSensitive="yes" regex="no">org.eclipse.openj9.criu.JVMRestoreException</output>
+  </test>
+  <test id="Envvar test16">
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_ENVVAR_TEST$ EnvVarFileTest16 1</command>
+    <output type="success" caseSensitive="no" regex="no">Killed</output>
+    <output type="failure" caseSensitive="yes" regex="no">failed properties test</output>
+    <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
+    <output type="success" caseSensitive="yes" regex="no">Failed to load options from the options file</output>
+    <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
+    <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
+    <!-- If CRIU can't acquire the original thread IDs, this test will fail. Nothing can be done about this failure. -->
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">org.eclipse.openj9.criu.JVMRestoreException</output>
+  </test>
   <test id="Restore trace options test with no trace options specified before checkpoint">
     <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ TraceOptionsTest 1</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
