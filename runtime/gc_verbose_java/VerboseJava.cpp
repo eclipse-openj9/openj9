@@ -22,6 +22,7 @@
 #include "j9.h"
 #include "j9cfg.h"
 #include "mmhook.h"
+#include "verbose_api.h"
 
 #include "AtomicOperations.hpp"
 #include "Base.hpp"
@@ -55,7 +56,8 @@ J9MemoryManagerVerboseInterface functionTable = {
 	gcDebugVerboseShutdownLogging,
 	gcDumpMemorySizes,
 	configureVerbosegc,
-	queryVerbosegc
+	queryVerbosegc,
+	checkOptsAndInitVerbosegclog
 };
 
 /**
@@ -74,6 +76,7 @@ initializeVerboseFunctionTable(J9JavaVM *javaVM)
 	mmFuncTable->gcDumpMemorySizes = verboseTable->gcDumpMemorySizes;
 	mmFuncTable->configureVerbosegc = verboseTable->configureVerbosegc;
 	mmFuncTable->queryVerbosegc = verboseTable->queryVerbosegc;
+	mmFuncTable->checkOptsAndInitVerbosegclog = verboseTable->checkOptsAndInitVerbosegclog;
 }
 
 static UDATA
