@@ -22,7 +22,8 @@
 package com.ibm.j9ddr.vm29.tools.ddrinteractive.commands;
 
 import java.io.PrintStream;
-import java.util.Enumeration;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Properties;
 
 import com.ibm.dtfj.image.DataUnavailable;
@@ -115,7 +116,6 @@ public class CoreInfoCommand extends Command
 			out.println(properties.get("java.fullversion"));
 			out.println(); 
 
-			
 			/* Print Platform Info */
 			boolean is64BitPlatform = (process.bytesPerPointer() == 8) ? true : false;
 			ICore core = vm.getProcess().getAddressSpace().getCore();
@@ -131,15 +131,23 @@ public class CoreInfoCommand extends Command
 			out.println("Processors -");
 			out.println("  Architecture\t: " + ras.osarchEA().getCStringAtOffset(0));
 			out.println("  How Many\t: " + ras.cpus().longValue());
-			
+
+			out.println();
+			out.println("VM PROPERTIES (these are not Java system properties)");
+			ArrayList<String> propNames = new ArrayList(properties.stringPropertyNames());
+			Collections.sort(propNames);
+			for (String key : propNames) {
+				out.println("  " + key + " = " + properties.get(key));
+			}
+
 			try {
-				properties = ddrProcess.getEnvironment();
-				Enumeration processPropEnum = properties.keys();
+				Properties environment = ddrProcess.getEnvironment();
+				ArrayList<String> envNames = new ArrayList(environment.stringPropertyNames());
+				Collections.sort(envNames);
 				out.println();
 				out.println("ENVIRONMENT VARIABLES");
-				while (processPropEnum.hasMoreElements()) {
-					String key = (String)processPropEnum.nextElement();
-					out.println(key + "=" + properties.get(key));
+				for (String key : envNames) {
+					out.println("  " + key + "=" + environment.get(key));
 				}
 			} catch (com.ibm.dtfj.image.CorruptDataException e) {
 				throw new DDRInteractiveCommandException("CorruptDataException occured while getting the environment variables from process");
