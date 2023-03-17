@@ -74,6 +74,7 @@ IDATA j9shr_findGCHints(J9VMThread* currentThread, UDATA *heapSize1, UDATA *heap
 const U_8* storeStartupHintsToSharedCache(J9VMThread* currentThread);
 IDATA j9shr_getCacheDir(J9JavaVM* vm, const char* ctrlDirName, char* buffer, UDATA bufferSize, U_32 cacheType);
 U_32 getCacheTypeFromRuntimeFlags(U_64 runtimeFlags);
+void j9shr_disableSharedClassCacheForCriuRestore(J9JavaVM* vm);
 
 typedef struct J9SharedClassesHelpText {
 	const char* option;
