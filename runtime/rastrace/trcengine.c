@@ -24,6 +24,7 @@
 #include "jvminit.h"
 
 #include "j9rastrace.h"
+#include "rastrace_internal.h"
 #include "ute.h"
 
 #define  _UTE_STATIC_
@@ -1011,13 +1012,16 @@ criuRestoreInitializeTrace(J9VMThread *thr)
 {
 	J9JavaVM *vm = thr->javaVM;
 	BOOLEAN result = FALSE;
+	UtThreadData **tempThr = UT_THREAD_FROM_VM_THREAD(thr);
 
-	if (J9VMDLLMAIN_OK == traceInitializationHelper(vm, UT_THREAD_FROM_VM_THREAD(thr), vm->checkpointState.restoreArgsList, TRUE)) {
+	if (J9VMDLLMAIN_OK == traceInitializationHelper(vm, tempThr, vm->checkpointState.restoreArgsList, TRUE)) {
 		RasGlobalStorage *j9ras = (RasGlobalStorage *)vm->j9rasGlobalStorage;
 		if ((NULL != j9ras->traceMethodTable)
 			|| (NULL != j9ras->triggerOnMethods)
 		) {
-			if (OMR_ERROR_NONE == enableMethodTraceHooks(vm)) {
+			if (OMR_ERROR_NONE == enableMethodTraceHooks(vm)
+				&& (OMR_ERROR_NONE == setupTraceWorkerThread(tempThr))
+			) {
 				vm->internalVMFunctions->addInternalJVMClassIterationRestoreHook(thr, setRAMClassExtendedMethodFlagsHelper);
 				result = TRUE;
 			}

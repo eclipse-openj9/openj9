@@ -158,7 +158,11 @@ public class OptionsFileTest {
 	}
 
 	static void traceOptionsTest() {
-		String optionsContents = "-Xtrace:print={j9vm.40}\n-Xtrace:print=mt,methods=java/lang/System.getProperties()\n-Xtrace:trigger=method{java/lang/System.getProperties,javadump}";
+		String traceOutput = "traceOutput.txt";
+		String optionsContents = "-Xtrace:print={j9vm.40}\n"
+				+ "-Xtrace:print=mt,methods=java/lang/System.getProperties()\n"
+				+ "-Xtrace:trigger=method{java/lang/System.getProperties,javadump}\n"
+				+ "-Xtrace:maximal=mt,methods=java/lang/System.getProperties(),output=" + traceOutput;
 		Path optionsFilePath = CRIUTestUtils.createOptionsFile("options", optionsContents);
 
 		Path imagePath = Paths.get("cpData");
@@ -170,6 +174,11 @@ public class OptionsFileTest {
 		CRIUTestUtils.checkPointJVM(criuSupport, imagePath, true);
 		System.getProperties();
 		System.out.println("Post-checkpoint");
+		if (new File(traceOutput).exists()) {
+			System.out.println("TEST PASSED - " + traceOutput + "was created successfully");
+		} else {
+			System.out.println("TEST FAILED - " + traceOutput + "was NOT created");
+		}
 	}
 
 	static void dumpOptionsTest() {
