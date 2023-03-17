@@ -2666,41 +2666,6 @@ void TR_ResolvedJ9Method::construct()
       {    TR::unknownMethod}
       };
 
-   static X PrefetchMethods[] =
-      {
-      {x(TR::com_ibm_Compiler_Internal__TR_Prefetch,     "_TR_Prefetch_Load",              "(Ljava/lang/Object;I)V")},
-      {x(TR::com_ibm_Compiler_Internal__TR_Prefetch,     "_TR_Prefetch_Load_L1",           "(Ljava/lang/Object;I)V")},
-      {x(TR::com_ibm_Compiler_Internal__TR_Prefetch,     "_TR_Prefetch_Load_L2",           "(Ljava/lang/Object;I)V")},
-      {x(TR::com_ibm_Compiler_Internal__TR_Prefetch,     "_TR_Prefetch_Load_L3",           "(Ljava/lang/Object;I)V")},
-      {x(TR::com_ibm_Compiler_Internal__TR_Prefetch,     "_TR_Prefetch_Store",             "(Ljava/lang/Object;I)V")},
-      {x(TR::com_ibm_Compiler_Internal__TR_Prefetch,     "_TR_Prefetch_LoadNTA",           "(Ljava/lang/Object;I)V")},
-      {x(TR::com_ibm_Compiler_Internal__TR_Prefetch,     "_TR_Prefetch_StoreNTA",          "(Ljava/lang/Object;I)V")},
-      {x(TR::com_ibm_Compiler_Internal__TR_Prefetch,     "_TR_Prefetch_StoreConditional",  "(Ljava/lang/Object;I)V")},
-      {x(TR::com_ibm_Compiler_Internal__TR_Prefetch,     "_TR_Release_StoreOnly",          "(Ljava/lang/Object;I)V")},
-      {x(TR::com_ibm_Compiler_Internal__TR_Prefetch,     "_TR_Release_All",                "(Ljava/lang/Object;I)V")},
-      {x(TR::com_ibm_Compiler_Internal__TR_Prefetch,     "_TR_Prefetch_Load",              "(Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;)V")},
-      {x(TR::com_ibm_Compiler_Internal__TR_Prefetch,     "_TR_Prefetch_Load_L1",           "(Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;)V")},
-      {x(TR::com_ibm_Compiler_Internal__TR_Prefetch,     "_TR_Prefetch_Load_L2",           "(Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;)V")},
-      {x(TR::com_ibm_Compiler_Internal__TR_Prefetch,     "_TR_Prefetch_Load_L3",           "(Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;)V")},
-      {x(TR::com_ibm_Compiler_Internal__TR_Prefetch,     "_TR_Prefetch_Store",             "(Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;)V")},
-      {x(TR::com_ibm_Compiler_Internal__TR_Prefetch,     "_TR_Prefetch_LoadNTA",           "(Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;)V")},
-      {x(TR::com_ibm_Compiler_Internal__TR_Prefetch,     "_TR_Prefetch_StoreNTA",          "(Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;)V")},
-      {x(TR::com_ibm_Compiler_Internal__TR_Prefetch,     "_TR_Prefetch_StoreConditional",  "(Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;)V")},
-      {x(TR::com_ibm_Compiler_Internal__TR_Prefetch,     "_TR_Release_StoreOnly",          "(Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;)V")},
-      {x(TR::com_ibm_Compiler_Internal__TR_Prefetch,     "_TR_Release_All",                "(Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;)V")},
-      {x(TR::com_ibm_Compiler_Internal__TR_Prefetch,     "_TR_Prefetch_Load",              "(Ljava/lang/String;Ljava/lang/String;)V")},
-      {x(TR::com_ibm_Compiler_Internal__TR_Prefetch,     "_TR_Prefetch_Load_L1",           "(Ljava/lang/String;Ljava/lang/String;)V")},
-      {x(TR::com_ibm_Compiler_Internal__TR_Prefetch,     "_TR_Prefetch_Load_L2",           "(Ljava/lang/String;Ljava/lang/String;)V")},
-      {x(TR::com_ibm_Compiler_Internal__TR_Prefetch,     "_TR_Prefetch_Load_L3",           "(Ljava/lang/String;Ljava/lang/String;)V")},
-      {x(TR::com_ibm_Compiler_Internal__TR_Prefetch,     "_TR_Prefetch_Store",             "(Ljava/lang/String;Ljava/lang/String;)V")},
-      {x(TR::com_ibm_Compiler_Internal__TR_Prefetch,     "_TR_Prefetch_LoadNTA",           "(Ljava/lang/String;Ljava/lang/String;)V")},
-      {x(TR::com_ibm_Compiler_Internal__TR_Prefetch,     "_TR_Prefetch_StoreNTA",          "(Ljava/lang/String;Ljava/lang/String;)V")},
-      {x(TR::com_ibm_Compiler_Internal__TR_Prefetch,     "_TR_Prefetch_StoreConditional",  "(Ljava/lang/String;Ljava/lang/String;)V")},
-      {x(TR::com_ibm_Compiler_Internal__TR_Prefetch,     "_TR_Release_StoreOnly",          "(Ljava/lang/String;Ljava/lang/String;)V")},
-      {x(TR::com_ibm_Compiler_Internal__TR_Prefetch,     "_TR_Release_All",                "(Ljava/lang/String;Ljava/lang/String;)V")},
-      {    TR::unknownMethod}
-      };
-
    static X OSMemoryMethods[] =
       {
       {x(TR::org_apache_harmony_luni_platform_OSMemory_putByte_JB_V,                  "putByte",    "(JB)V")},
@@ -4285,7 +4250,6 @@ void TR_ResolvedJ9Method::construct()
    static Y class34[] =
       {
       { "java/util/Hashtable$HashEnumerator", HashtableHashEnumeratorMethods },
-      { "com/ibm/Compiler/Internal/Prefetch", PrefetchMethods },
       { "java/lang/invoke/VarHandleInternal", VarHandleMethods },
       { 0 }
       };
