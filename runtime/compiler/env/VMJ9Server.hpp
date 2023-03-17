@@ -209,7 +209,6 @@ public:
 
    virtual intptr_t getVFTEntry(TR_OpaqueClassBlock *clazz, int32_t offset) override;
    virtual bool isClassArray(TR_OpaqueClassBlock *klass) override;
-   virtual uintptr_t getFieldOffset(TR::Compilation * comp, TR::SymbolReference* classRef, TR::SymbolReference* fieldRef) override { return 0; } // safe answer
 // The base version should be safe, no need to override.
 //   virtual bool canDereferenceAtCompileTime(TR::SymbolReference *fieldRef,  TR::Compilation *comp) override; // safe answer, might change in the future
    virtual bool instanceOfOrCheckCast(J9Class *instanceClass, J9Class* castClass) override;

@@ -1061,7 +1061,6 @@ public:
     */
    virtual bool isMethodHandleExpectedType(TR::Compilation *comp, TR::KnownObjectTable::Index mhIndex, TR::KnownObjectTable::Index expectedTypeIndex);
 
-   virtual uintptr_t getFieldOffset( TR::Compilation * comp, TR::SymbolReference* classRef, TR::SymbolReference* fieldRef);
    /*
     * \brief
     *    tell whether it's possible to dereference a field given the field symbol reference at compile time
