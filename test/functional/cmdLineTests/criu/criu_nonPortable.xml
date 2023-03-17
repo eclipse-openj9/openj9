@@ -628,9 +628,11 @@
     <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
     <output type="success" caseSensitive="yes" regex="no">terminateRemainingThreads</output>
     <output type="success" caseSensitive="yes" regex="no">java/lang/System.getProperties()Ljava/util/Properties;</output>
+    <output type="success" caseSensitive="yes" regex="no">TEST PASSED</output>
     <output type="success" caseSensitive="yes" regex="no">User requested Java dump</output>
     <output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>
     <output type="failure" caseSensitive="yes" regex="no">org.eclipse.openj9.criu.JVMRestoreException</output>
+    <output type="failure" caseSensitive="yes" regex="no">TEST FAILED</output>
     <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
     <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
     <!-- If CRIU can't acquire the original thread IDs, this test will fail. Nothing can be done about this failure. -->
