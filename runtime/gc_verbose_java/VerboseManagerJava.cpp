@@ -177,3 +177,17 @@ MM_VerboseManagerJava::handleFileOpenError(MM_EnvironmentBase *env, char *fileNa
 	omrnls_printf(J9NLS_ERROR, J9NLS_GC_UNABLE_TO_OPEN_FILE, fileName);
 }
 
+int32_t
+MM_VerboseManagerJava::fileOpenMode(MM_EnvironmentBase *env)
+{
+	int32_t mode = EsOpenTruncate;
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env->getOmrVM());
+	if (extensions->reinitializationInProgress()) {
+		mode = EsOpenAppend;
+	}
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+
+	return mode;
+}
+

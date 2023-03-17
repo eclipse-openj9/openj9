@@ -104,6 +104,16 @@ dummygcDumpMemorySizes(J9JavaVM *javaVM)
 }
 
 /**
+ * Dummy function for verbose function table.
+ */
+BOOLEAN
+dummyCheckOptsAndInitVerbosegclog(J9JavaVM *javaVM, J9VMInitArgs* args)
+{
+	return TRUE;
+}
+
+
+/**
  * Initialises the verbose function table with the dummy routines.
  * @param table Pointer to the Verbose function table.
  */
@@ -115,6 +125,7 @@ initializeVerboseFunctionTableWithDummies(J9MemoryManagerVerboseInterface *table
 	table->gcDumpMemorySizes = dummygcDumpMemorySizes;
 	table->configureVerbosegc = dummyconfigureVerbosegc;
 	table->queryVerbosegc = dummyQueryVerbosegc;
+	table->checkOptsAndInitVerbosegclog = dummyCheckOptsAndInitVerbosegclog;
 }
 
 } /* extern "C" */

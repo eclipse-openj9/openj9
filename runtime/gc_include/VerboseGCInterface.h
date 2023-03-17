@@ -45,6 +45,7 @@ typedef struct J9MemoryManagerVerboseInterface {
 	void (*gcDumpMemorySizes)(J9JavaVM *javaVM);
 	UDATA (*configureVerbosegc)(J9JavaVM *javaVM, int enable, char* filename, UDATA numFiles, UDATA numCycles);
 	UDATA (*queryVerbosegc)(J9JavaVM *javaVM);
+	BOOLEAN (*checkOptsAndInitVerbosegclog)(J9JavaVM *javaVM, J9VMInitArgs* args);
 } J9MemoryManagerVerboseInterface;
 
 #ifdef __cplusplus
