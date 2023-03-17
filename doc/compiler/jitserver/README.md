@@ -58,4 +58,4 @@ or those who want to learn in more detail how the technology actually works.
 - [CHTable](CHTable.md)
 - [IProfiler](IProfiler.md)
 - [Handling Options](OptionsDev.md)
-- [Problem Determination](Probleddm.md)
+- [Problem Determination](Problem.md)
