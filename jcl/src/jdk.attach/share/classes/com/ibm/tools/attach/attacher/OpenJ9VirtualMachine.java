@@ -349,7 +349,8 @@ public final class OpenJ9VirtualMachine extends VirtualMachine implements Respon
 					IPC.logMessage("lockAllAttachNotificationSyncFiles locking targetLocks[", vmdIndex, "] ", attachSyncFile); //$NON-NLS-1$ //$NON-NLS-2$
 					targetLocks[vmdIndex] = new FileLock(attachSyncFile, TargetDirectory.SYNC_FILE_PERMISSIONS);
 					try {
-						targetLocks[vmdIndex].lockFile(true, "OpenJ9VirtualMachine.lockAllAttachNotificationSyncFiles"); //$NON-NLS-1$
+						/* use FileLockWatchdogTask for non-CommonControlFile */
+						targetLocks[vmdIndex].lockFile(true, "OpenJ9VirtualMachine.lockAllAttachNotificationSyncFiles", true); //$NON-NLS-1$
 					} catch (IOException e) {
 						targetLocks[vmdIndex] = null;
 						IPC.logMessage("lockAllAttachNotificationSyncFiles locking targetLocks[", vmdIndex, "] ", "already locked"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$

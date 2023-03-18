@@ -42,7 +42,7 @@ public class NativeFileLock extends GenericFileLock {
 		nflConstructor.setAccessible(true);
 		fileLockObject = nflConstructor.newInstance(lockFile.getAbsolutePath(), Integer.valueOf(mode));
 		lockFileMethod = nativeFileLock.getDeclaredMethod("lockFile",
-				boolean.class, String.class);
+				boolean.class, String.class, boolean.class);
 		lockFileMethod.setAccessible(true);
 		unlockFileMethod = nativeFileLock.getDeclaredMethod("unlockFile", String.class);
 		unlockFileMethod.setAccessible(true);
@@ -53,7 +53,8 @@ public class NativeFileLock extends GenericFileLock {
 	public boolean lockFile(boolean blocking) throws Exception {
 		Boolean result = Boolean.valueOf(true);
 		TestFileLocking.logger.debug("lockfile blocking =" + blocking);
-		result = (Boolean) lockFileMethod.invoke(fileLockObject, Boolean.valueOf(blocking), "NativeFileLock.lockFile()");
+		// The test has no different user involved, always locks file with FileLockWatchdogTask.
+		result = (Boolean) lockFileMethod.invoke(fileLockObject, Boolean.valueOf(blocking), "NativeFileLock.lockFile()", true);
 		return result.booleanValue();
 	}
 

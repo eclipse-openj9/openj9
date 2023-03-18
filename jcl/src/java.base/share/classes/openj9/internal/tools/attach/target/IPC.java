@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar18-SE]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 /*******************************************************************************
  * Copyright IBM Corp. and others 2009
  *
@@ -21,6 +21,8 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 package openj9.internal.tools.attach.target;
+
+import com.ibm.oti.vm.VM;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -53,6 +55,7 @@ import static openj9.internal.tools.attach.target.DiagnosticProperties.OPENJ9_DI
 public class IPC {
 
 	private static final String JAVA_IO_TMPDIR = "java.io.tmpdir"; //$NON-NLS-1$
+	private static final String COM_IBM_TOOLS_ATTACH_USE_FILELOCK_WATCHDOG = "com.ibm.tools.attach.useFileLockWatchdog"; //$NON-NLS-1$
 	/**
 	 * Successful return code from natives.
 	 */
@@ -85,8 +88,17 @@ public class IPC {
 	 */
 	public static final boolean isZOS;
 
+	/**
+	 * Controls use of the FileLockWatchdogTask.
+	 * Setting -Dcom.ibm.tools.attach.useFileLockWatchdog=[true|false] takes
+	 * precedence, if no such system property is specified, always set false on
+	 * z/OS, defaults to true on non-z/OS platforms.
+	 */
+	public static final boolean useFileLockWatchdog;
+
 	static {
-		String osName = com.ibm.oti.vm.VM.getVMLangAccess().internalGetProperties().getProperty("os.name"); //$NON-NLS-1$
+		Properties props = VM.getVMLangAccess().internalGetProperties();
+		String osName = props.getProperty("os.name"); //$NON-NLS-1$
 		boolean tempIsZos = false;
 		boolean tempIsWindows = false;
 		if (null != osName) {
@@ -98,6 +110,14 @@ public class IPC {
 		}
 		isZOS = tempIsZos;
 		isWindows = tempIsWindows;
+
+		String propUseFileLockWatchdog = props.getProperty(COM_IBM_TOOLS_ATTACH_USE_FILELOCK_WATCHDOG);
+		if (propUseFileLockWatchdog == null) {
+			// no system property com.ibm.tools.attach.useFileLockWatchdog is specified
+			useFileLockWatchdog = !isZOS;
+		} else {
+			useFileLockWatchdog = "true".equalsIgnoreCase(propUseFileLockWatchdog);
+		}
 	}
 
 	private static Random randomGen; /* Cleanup. this is used by multiple threads */
@@ -325,7 +345,7 @@ public class IPC {
 		String tmpDir = getTempDirImpl();
 		if (null == tmpDir) {
 			logMessage("Could not get system temporary directory. Trying " + JAVA_IO_TMPDIR); //$NON-NLS-1$
-			tmpDir = com.ibm.oti.vm.VM.getVMLangAccess().internalGetProperties().getProperty(JAVA_IO_TMPDIR);
+			tmpDir = VM.getVMLangAccess().internalGetProperties().getProperty(JAVA_IO_TMPDIR);
 		}
 		return tmpDir;
 	}
