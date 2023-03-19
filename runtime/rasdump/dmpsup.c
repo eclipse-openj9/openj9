@@ -101,7 +101,10 @@ static omr_error_t shutdownDumpAgents (J9JavaVM *vm);
 static omr_error_t popDumpFacade (J9JavaVM *vm);
 static omr_error_t installAbortHandler (J9JavaVM *vm);
 static omr_error_t showDumpAgents (J9JavaVM *vm);
-static IDATA configureDumpAgents (J9JavaVM *vm);
+static IDATA configureDumpAgents(J9JavaVM *vm, J9VMInitArgs *j9vm_args, BOOLEAN isBootup);
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+static IDATA criuReloadXDumpAgents(J9JavaVM *vm, J9VMInitArgs *j9vm_args);
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 static omr_error_t printDumpUsage (J9JavaVM *vm);
 static omr_error_t pushDumpFacade (J9JavaVM *vm);
 static void abortHandler (int sig);
@@ -391,20 +394,46 @@ storeDefaultData(J9JavaVM *vm)
 	return OMR_ERROR_NONE;
 }
 
-/* Function for configuring the RAS dump agents. Since Java 6 SR2 (VMDESIGN 1477), in increasing
- * order of precedence:
- * 		Default agents
- * 		DISABLE_JAVADUMP, IBM_HEAPDUMP, IBM_HEAP_DUMP
- * 		IBM_JAVADUMP_OUTOFMEMORY, IBM_HEAPDUMP_OUTOFMEMORY
- * 		JAVA_DUMP_OPTS environment variable (including dump count parameter)
- * 		-Xdump command-line options
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+/**
+ * CRIU restore loads dump agents using an option file.
+ *
+ * @param[in] vm pointer to the J9JavaVM
+ * @param[in] vmArgs a J9VMInitArgs
+ *
+ * @return return J9VMDLLMAIN_OK if success, otherwise failures
  */
 static IDATA
-configureDumpAgents(J9JavaVM *vm)
+criuReloadXDumpAgents(J9JavaVM *vm, J9VMInitArgs *vmArgs)
+{
+	/* similar with startup except at CRIU restore */
+	IDATA result = configureDumpAgents(vm, vmArgs, FALSE);
+	unlockConfig();
+
+	return result;
+}
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+
+/**
+ * A helper method for configuring the RAS dump agents.
+ * Since Java 6 SR2 (VMDESIGN 1477), in increasing order of precedence:
+ *    Default agents
+ *    DISABLE_JAVADUMP, IBM_HEAPDUMP, IBM_HEAP_DUMP
+ *    IBM_JAVADUMP_OUTOFMEMORY, IBM_HEAPDUMP_OUTOFMEMORY
+ *    JAVA_DUMP_OPTS environment variable (including dump count parameter)
+ *    -Xdump command-line options
+
+ * @param[in] vm pointer to the J9JavaVM
+ * @param[in] vmArgs a J9VMInitArgs
+ * @param[in] isBootup if this is bootup or CRIUR restore
+ *
+ * @return return J9VMDLLMAIN_OK if success, otherwise failures
+ */
+static IDATA
+configureDumpAgents(J9JavaVM *vm, J9VMInitArgs *j9vm_args, BOOLEAN isBootup)
 {
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
-	J9VMInitArgs *j9vm_args = vm->vmArgsArray;
 	IDATA i;
 	IDATA xdumpIndex = 0;
 	IDATA showAgents = 0;
@@ -571,7 +600,7 @@ configureDumpAgents(J9JavaVM *vm)
 	 * Treat -XX:[+-]HeapDumpOnOutOfMemoryError as an alias of -Xdump.
 	 */
 
-	xdumpIndex = FIND_ARG_IN_VMARGS_FORWARD(OPTIONAL_LIST_MATCH, VMOPT_XDUMP, NULL);
+	xdumpIndex = FIND_ARG_IN_ARGS_FORWARD(j9vm_args, OPTIONAL_LIST_MATCH, VMOPT_XDUMP, NULL);
 	while (xdumpIndex >= 0)
 	{
 		if (agentNum >= MAX_DUMP_OPTS) {
@@ -599,7 +628,7 @@ configureDumpAgents(J9JavaVM *vm)
 				if (NULL != toolCursor) {
 					char *optionValue = NULL;
 					/* The mapped option specifies the tool command to run after the equals */
-					GET_OPTION_VALUE(xdumpIndex, '=', &optionValue);
+					GET_OPTION_VALUE_ARGS(j9vm_args, xdumpIndex, '=', &optionValue);
 
 					/* Move toolCursor past ":tool:" */
 					toolCursor += strlen(toolString);
@@ -623,10 +652,10 @@ configureDumpAgents(J9JavaVM *vm)
 						}
 					}
 				} else {
-					GET_OPTION_VALUE(xdumpIndex, ':', &optionString);
+					GET_OPTION_VALUE_ARGS(j9vm_args, xdumpIndex, ':', &optionString);
 				}
 			} else {
-				GET_OPTION_VALUE(xdumpIndex, ':', &optionString);
+				GET_OPTION_VALUE_ARGS(j9vm_args, xdumpIndex, ':', &optionString);
 			}
 			if (!optionString) {
 				/* ... silent option ... */
@@ -677,7 +706,7 @@ configureDumpAgents(J9JavaVM *vm)
 			CONSUME_ARG(j9vm_args, xdumpIndex);
 		}
 
-		xdumpIndex = FIND_NEXT_ARG_IN_VMARGS_FORWARD(OPTIONAL_LIST_MATCH, VMOPT_XDUMP, NULL, xdumpIndex);
+		xdumpIndex = FIND_NEXT_ARG_IN_ARGS_FORWARD(j9vm_args, OPTIONAL_LIST_MATCH, VMOPT_XDUMP, NULL, xdumpIndex);
 	}
 	/* handle the case of no -Xdump options */
 	if (processXXHeapDump) {
@@ -1086,6 +1115,9 @@ pushDumpFacade(J9JavaVM *vm)
 		queue->facade.setDumpOption		= setDumpOption;
 		queue->facade.resetDumpOptions	= resetDumpOptions;
 		queue->facade.queryVmDump		= queryVmDump;
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+		queue->facade.criuReloadXDumpAgents = criuReloadXDumpAgents;
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
 		/* Initialize default settings */
 		queue->settings = initDumpSettings(vm);
@@ -1461,7 +1493,7 @@ J9VMDllMain(J9JavaVM *vm, IDATA stage, void *reserved)
 
 				/* Swap in new dump facade */
 				if (OMR_ERROR_NONE == pushDumpFacade(vm)) {
-					retVal = configureDumpAgents(vm);
+					retVal = configureDumpAgents(vm, vm->vmArgsArray, TRUE);
 					/* Allow configuration updates now that we've done initial setup */
 					unlockConfig();
 				} else {

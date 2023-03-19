@@ -133,6 +133,9 @@ typedef struct J9RASdumpFunctions {
 	omr_error_t  (*setDumpOption)(struct J9JavaVM *vm, char *optionString) ;
 	omr_error_t  (*resetDumpOptions)(struct J9JavaVM *vm) ;
 	omr_error_t  (*queryVmDump)(struct J9JavaVM *vm, int buffer_size, void* options_buffer, int* data_size) ;
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+	IDATA  (*criuReloadXDumpAgents)(struct J9JavaVM *vm, struct J9VMInitArgs *j9vm_args) ;
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 } J9RASdumpFunctions;
 
 #endif /* j9dump_h */

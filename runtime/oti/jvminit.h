@@ -424,6 +424,7 @@ enum INIT_STAGE {
 #define VMOPT_XXDISABLECRIU "-XX:-EnableCRIUSupport"
 #define VMOPT_XXENABLECRIUNONPORTABLEMODE "-XX:+CRIURestoreNonPortableMode"
 #define VMOPT_XXDISABLECRIUNONPORTABLEMODE "-XX:-CRIURestoreNonPortableMode"
+#define VMOPT_XSHARECLASSES_DISABLEONRESTORE "-Xshareclasses:disableOnRestore"
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
 /*
