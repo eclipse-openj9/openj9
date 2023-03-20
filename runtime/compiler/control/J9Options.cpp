@@ -371,8 +371,7 @@ char * J9::Options::_externalOptionStrings[J9::ExternalOptions::TR_NumExternalOp
    "-XX:-JITServerAOTCachePersistence",   // = 64
    "-XX:JITServerAOTCacheDir=",           // = 65
    "-XX:JITServerAOTCacheName=",          // = 66
-   "-Xshareclasses:disableOnRestore",     // = 67
-   // TR_NumExternalOptions                  = 68
+   // TR_NumExternalOptions                  = 67
    };
 
 //************************************************************************
