@@ -349,6 +349,8 @@ enum INIT_STAGE {
 #define VMOPT_XXHANDLESIGXFSZ "-XX:+HandleSIGXFSZ"
 #define VMOPT_XXNOHANDLESIGABRT "-XX:-HandleSIGABRT"
 #define VMOPT_XXHANDLESIGABRT "-XX:+HandleSIGABRT"
+#define VMOPT_XXNOHANDLESIGUSR2 "-XX:-HandleSIGUSR2"
+#define VMOPT_XXHANDLESIGUSR2 "-XX:+HandleSIGUSR2"
 #define VMOPT_XXHEAPDUMPONOOM "-XX:+HeapDumpOnOutOfMemoryError"
 #define VMOPT_XXNOHEAPDUMPONOOM "-XX:-HeapDumpOnOutOfMemoryError"
 #define VMOPT_XDUMP_EXIT_OUTOFMEMORYERROR "-Xdump:exit:events=systhrow,filter=java/lang/OutOfMemoryError"

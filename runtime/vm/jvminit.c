@@ -7527,6 +7527,23 @@ setSignalOptions(J9JavaVM *vm, J9PortLibrary *portLibrary)
 		/* argIndex == argIndex2 i.e. no option supplied. Enable the JVM abort handler by default. */
 	}
 
+	argIndex = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXNOHANDLESIGUSR2, NULL);
+	argIndex2 = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXHANDLESIGUSR2, NULL);
+
+	if (argIndex2 > argIndex) {
+		/* Enable the JVM SIGUSR2 handler since -XX:+HandleSIGUSR2 is seen last. */
+		if (OMR_ARE_ALL_BITS_SET(vm->sigFlags, J9_SIG_XRS_ASYNC)) {
+			/* Throw error message if both -XX:+HandleSIGUSR2 and -Xrs/-Xrs:async are supplied. */
+			j9nls_printf(portLibrary, J9NLS_ERROR, J9NLS_VM_INCOMPATIBLE_CMDLINE_OPTIONS_ERROR, VMOPT_XXHANDLESIGUSR2, VMOPT_XRS);
+			return -1;
+		}
+	} else if (argIndex > argIndex2) {
+		/* Disable the JVM SIGUSR2 handler since -XX:-HandleSIGUSR2 is seen last. */
+		vm->sigFlags |= J9_SIG_NO_SIG_USR2;
+	} else {
+		/* argIndex == argIndex2 i.e. no option supplied. Enable the JVM SIGUSR2 handler by default. */
+	}
+
 #if defined(J9VM_PORT_ZOS_CEEHDLRSUPPORT)
 	if (FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XUSE_CEEHDLR, NULL) >= 0) {
 		sigOptions |= J9PORT_SIG_OPTIONS_ZOS_USE_CEEHDLR;
