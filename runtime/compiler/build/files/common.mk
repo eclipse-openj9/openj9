@@ -209,11 +209,13 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     omr/compiler/optimizer/LoopReducer.cpp \
     omr/compiler/optimizer/LoopReplicator.cpp \
     omr/compiler/optimizer/LoopVersioner.cpp \
+    omr/compiler/optimizer/OMRGlobalRegister.cpp \
     omr/compiler/optimizer/OMRLocalCSE.cpp \
     omr/compiler/optimizer/OMROptimization.cpp \
     omr/compiler/optimizer/OMROptimizationManager.cpp \
     omr/compiler/optimizer/OMROptimizer.cpp \
     omr/compiler/optimizer/OMRRecognizedCallTransformer.cpp \
+    omr/compiler/optimizer/OMRRegisterCandidate.cpp \
     omr/compiler/optimizer/OMRSimplifier.cpp \
     omr/compiler/optimizer/OMRSimplifierHandlers.cpp \
     omr/compiler/optimizer/OMRSimplifierHelpers.cpp \
@@ -227,7 +229,6 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     omr/compiler/optimizer/ReachingDefinitions.cpp \
     omr/compiler/optimizer/RedundantAsyncCheckRemoval.cpp \
     omr/compiler/optimizer/RegDepCopyRemoval.cpp \
-    omr/compiler/optimizer/RegisterCandidate.cpp \
     omr/compiler/optimizer/RematTools.cpp \
     omr/compiler/optimizer/ReorderIndexExpr.cpp \
     omr/compiler/optimizer/SinkStores.cpp \
