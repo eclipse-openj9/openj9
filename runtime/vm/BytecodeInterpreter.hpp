@@ -5237,6 +5237,11 @@ ffi_OOM:
 
 		VMStructHasBeenUpdated(REGISTER_ARGS);
 
+		if (immediateAsyncPending()) {
+			rc = GOTO_ASYNC_CHECK;
+		} else if (VM_VMHelpers::exceptionPending(_currentThread)) {
+			rc = GOTO_THROW_CURRENT_EXCEPTION;
+		}
 		return rc;
 	}
 
