@@ -20,6 +20,9 @@
 
 FROM ubuntu:16.04
 
+# Define default user name
+ARG user=jenkins
+
 # Install required OS tools
 RUN apt-get update \
   && apt-get install -qq -y --no-install-recommends \
@@ -55,27 +58,30 @@ RUN apt-get update \
     zip \
   && rm -rf /var/lib/apt/lists/*
 
+# Add user home
+RUN useradd -ms /bin/bash --uid 1000 --home-dir /home/$user $user
+
 # Create links for c++,g++,cc,gcc
 RUN ln -s g++ /usr/bin/c++ \
   && ln -s g++-4.8 /usr/bin/g++ \
   && ln -s gcc /usr/bin/cc \
   && ln -s gcc-4.8 /usr/bin/gcc
 
-# Download and setup freemarker.jar to /root/freemarker.jar
-RUN cd /root \
+# Download and setup freemarker.jar
+RUN cd /home/$user \
   && wget https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download -O freemarker.tgz \
   && tar -xzf freemarker.tgz freemarker-2.3.8/lib/freemarker.jar --strip=2 \
   && rm -f freemarker.tgz
 
 # Download and install boot JDK from AdoptOpenJDK
-RUN cd /root \
+RUN cd /home/$user \
   && wget -O bootjdk8.tar.gz https://api.adoptopenjdk.net/openjdk8-openj9/releases/x64_linux/latest/binary \
   && tar -xzf bootjdk8.tar.gz \
   && rm -f bootjdk8.tar.gz \
   && ls | grep -i jdk | xargs -I % sh -c 'mv % bootjdk8'
 
 # get the toolchain
-RUN cd /root \
+RUN cd /home/$user \
   && wget https://releases.linaro.org/components/toolchain/binaries/4.9-2017.01/arm-linux-gnueabihf/gcc-linaro-4.9.4-2017.01-x86_64_arm-linux-gnueabihf.tar.xz \
   && tar xf gcc-linaro-4.9.4-2017.01-x86_64_arm-linux-gnueabihf.tar.xz \
   && rm gcc-linaro-4.9.4-2017.01-x86_64_arm-linux-gnueabihf.tar.xz
@@ -115,25 +121,25 @@ ADD \
     http://ftp.us.debian.org/debian/pool/main/x/x11proto-render/x11proto-render-dev_0.11.1-2_all.deb \
     http://ftp.us.debian.org/debian/pool/main/x/x11proto-xext/x11proto-xext-dev_7.3.0-1_all.deb      \
     http://ftp.us.debian.org/debian/pool/main/z/zlib/zlib1g_1.2.8.dfsg-5_armhf.deb                   \
-    /root/debs/
+    /home/$user/
 
 # unpack debs into toolchain libc dir
-RUN cd /root/debs \
+RUN cd /home/$user/debs \
   && for f in *.deb; do dpkg-deb -x $f .; done \
   && cp -r usr/include/* ../gcc-linaro-4.9.4-2017.01-x86_64_arm-linux-gnueabihf/arm-linux-gnueabihf/libc/usr/include/ \
   && cp -r usr/lib/arm-linux-gnueabihf/* ../gcc-linaro-4.9.4-2017.01-x86_64_arm-linux-gnueabihf/arm-linux-gnueabihf/libc/usr/lib/ \
   && cp lib/arm-linux-gnueabihf/* ../gcc-linaro-4.9.4-2017.01-x86_64_arm-linux-gnueabihf/arm-linux-gnueabihf/libc/lib/ \
-  && rm -rf /root/debs
+  && rm -rf /home/$user/debs
 
 # Env vars set here will be visible in the running container, so can be
 # used to convey configuration information to the build scripts.
 
 # Set environment variable JAVA_HOME, and prepend ${JAVA_HOME}/bin to PATH
-ENV JAVA_HOME="/root/bootjdk8"
+ENV JAVA_HOME="/home/$user/bootjdk8"
 ENV PATH="${JAVA_HOME}/bin:${PATH}"
 
 # Directory containing the cross compilation tool chain
-ENV OPENJ9_CC_DIR="/root/gcc-linaro-4.9.4-2017.01-x86_64_arm-linux-gnueabihf"
+ENV OPENJ9_CC_DIR="/home/$user/gcc-linaro-4.9.4-2017.01-x86_64_arm-linux-gnueabihf"
 
 # Prefix for the cross compilation tools (without the trailing '-')
 ENV OPENJ9_CC_PREFIX="arm-linux-gnueabihf"
@@ -141,4 +147,6 @@ ENV OPENJ9_CC_PREFIX="arm-linux-gnueabihf"
 # Add the toolchain bin dir to the PATH for convenience
 ENV PATH="${PATH}:${OPENJ9_CC_DIR}/bin"
 
-WORKDIR /root
+RUN chown -R $user:$user /home/$user
+USER $user
+WORKDIR /home/$user

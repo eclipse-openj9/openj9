@@ -660,16 +660,19 @@ prepare_user() {
 create_user() {
   echo ""
   echo "# Add user home and copy authorized_keys and known_hosts."
-  echo "RUN useradd -ms /bin/bash --uid $userid $user \\"
+  echo "RUN useradd -ms /bin/bash --uid $userid $user --home-dir /home/$user \\"
   echo " && mkdir /home/$user/.ssh \\"
   echo " && chmod 700 /home/$user/.ssh"
   echo "COPY authorized_keys known_hosts /home/$user/.ssh/"
-  echo "RUN chmod -R go= /home/$user/.ssh \\"
-  echo " && echo "ulimit -u 32000 -n 2048" >> /home/$user/.bashrc"
+  echo "RUN chmod -R go= /home/$user/.ssh"
 }
 
 adjust_user_directory_perms() {
   echo "RUN chown -R $user:$user /home/$user"
+}
+
+set_user() {
+  echo "USER $user"
 }
 
 install_freemarker() {
@@ -920,6 +923,7 @@ if [ $gen_git_cache = yes ] ; then
   create_git_cache
 fi
   adjust_user_directory_perms
+  set_user
 }
 
 main() {
