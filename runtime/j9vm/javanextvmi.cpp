@@ -575,6 +575,28 @@ JVM_VirtualThreadHideFrames(JNIEnv *env, jobject vthread, jboolean hide)
 }
 #endif /* JAVA_SPEC_VERSION >= 20 */
 
+#if JAVA_SPEC_VERSION >= 21
+JNIEXPORT void JNICALL
+JVM_VirtualThreadMount(JNIEnv* env, jobject vthread, jboolean hide, jboolean firstMount)
+{
+	if (hide) {
+		JVM_VirtualThreadMountBegin(env, vthread, firstMount);
+	} else {
+		JVM_VirtualThreadMountEnd(env, vthread, firstMount);
+	}
+}
+
+JNIEXPORT void JNICALL
+JVM_VirtualThreadUnmount(JNIEnv* env, jobject vthread, jboolean hide, jboolean lastUnmount)
+{
+	if (hide) {
+		JVM_VirtualThreadUnmountBegin(env, vthread, lastUnmount);
+	} else {
+		JVM_VirtualThreadUnmountEnd(env, vthread, lastUnmount);
+	}
+}
+#endif /* JAVA_SPEC_VERSION >= 21 */
+
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 JNIEXPORT jboolean JNICALL
 JVM_IsValhallaEnabled()

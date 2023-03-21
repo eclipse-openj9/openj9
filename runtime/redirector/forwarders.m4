@@ -404,5 +404,9 @@ _IF([JAVA_SPEC_VERSION >= 20],
 	[_X(JVM_GetClassFileVersion, JNICALL, false, jint, JNIEnv *env, jclass cls)])
 _IF([JAVA_SPEC_VERSION >= 20],
 	[_X(JVM_VirtualThreadHideFrames, JNICALL, false, void, JNIEnv *env, jobject vthread, jboolean hide)])
+_IF([JAVA_SPEC_VERSION >= 21],
+	[_X(JVM_VirtualThreadMount, JNICALL, false, void, JNIEnv *env, jobject vthread, jboolean hide, jboolean firstMount)])
+_IF([JAVA_SPEC_VERSION >= 21],
+	[_X(JVM_VirtualThreadUnmount, JNICALL, false, void, JNIEnv *env, jobject vthread, jboolean hide, jboolean lastUnmount)])
 _IF([defined(J9VM_OPT_VALHALLA_VALUE_TYPES)],
 	[_X(JVM_IsValhallaEnabled, JNICALL, false, jboolean, void)])

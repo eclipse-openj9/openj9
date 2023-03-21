@@ -32,6 +32,9 @@ import java.lang.foreign.SegmentScope;
 /*[ELSE] JAVA_SPEC_VERSION >= 20 */
 import java.lang.foreign.MemorySession;
 /*[ENDIF] JAVA_SPEC_VERSION >= 20 */
+/*[IF JAVA_SPEC_VERSION >= 21]*/
+import jdk.internal.foreign.abi.AbstractLinker.UpcallStubFactory;
+/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 import openj9.internal.foreign.abi.InternalUpcallHandler;
 
 /**
@@ -96,4 +99,19 @@ public final class UpcallLinker {
 		UpcallLinker upcallLinker = new UpcallLinker(target, mt, cDesc, session);
 		return UpcallStubs.makeUpcall(upcallLinker.entryPoint(), session);
 	}
+
+	/*[IF JAVA_SPEC_VERSION >= 21]*/
+	/**
+	 * A stub method to be implemented.
+	 *
+	 * @param targetType
+	 * @param abi
+	 * @param callingSequence
+	 * @return
+	 * @throws UnsupportedOperationException
+	 */
+	public static UpcallStubFactory makeFactory(MethodType targetType, ABIDescriptor abi, CallingSequence callingSequence) {
+		throw new UnsupportedOperationException();
+	}
+	/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 }
