@@ -29,6 +29,7 @@
 #include "j2sever.h"
 #include "omrlinkedlist.h"
 #include "j9version.h"
+#include "vendor_version.h"
 
 #if defined(J9ZOS390)
 #include "atoe.h"
@@ -336,6 +337,10 @@ J9RASInitialize(J9JavaVM* javaVM)
 
 	/* Set the basic service level which may be updated later by java.lang.System.rasInitializeVersion. */
 	j9rasSetServiceLevel(javaVM, NULL);
+
+#if defined(J9PRODUCT_NAME)
+	javaVM->j9ras->productName = J9PRODUCT_NAME;
+#endif /* defined(J9PRODUCT_NAME) */
 }
 
 void
