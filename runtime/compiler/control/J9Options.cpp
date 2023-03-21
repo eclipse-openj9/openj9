@@ -3188,11 +3188,6 @@ bool J9::Options::feLatePostProcess(void * base, TR::OptionSet * optionSet)
    // OpenJ9 issue #6443 tracks the work to enable.
    //
    self()->setOption(TR_DisableArraySetOpts);
-
-   // EDO catch block profiling support is not available in AArch64 yet.
-   // OpenJ9 issue #6538 tracks the work to enable.
-   //
-   self()->setOption(TR_DisableEDO);
 #endif
    if (TR::Options::_catchSamplingSizeThreshold == -1) // not yet set
       {
