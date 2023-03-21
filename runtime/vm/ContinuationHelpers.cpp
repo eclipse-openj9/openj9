@@ -372,6 +372,7 @@ walkAllStackFrames(J9VMThread *currentThread, J9StackWalkState *walkState)
 
 	/* Walk all live continuation stacks using the GC Continuation object iterator */
 	PORT_ACCESS_FROM_VMC(currentThread);
+	vm->memoryManagerFunctions->j9gc_flush_nonAllocationCaches_for_walk(vm);
 	vm->memoryManagerFunctions->j9mm_iterate_all_continuation_objects(
 									currentThread,
 									PORTLIB,
