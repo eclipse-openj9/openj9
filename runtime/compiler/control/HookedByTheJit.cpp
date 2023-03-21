@@ -6557,6 +6557,7 @@ static void jitReleaseCodeStackWalk(OMR_VMThread *omrVMThread, condYieldFromGCFu
 
       do
          {
+         vm->memoryManagerFunctions->j9gc_flush_nonAllocationCaches_for_walk(vm);
          jvmtiIterationControl rc = vm->memoryManagerFunctions->j9mm_iterate_all_continuation_objects(vmThread, PORTLIB, 0, jitWalkContinuationCallBack, (void*)condYield);
          if (JVMTI_ITERATION_ABORT == rc)
             yieldHappened = true;

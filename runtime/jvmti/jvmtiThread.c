@@ -1394,6 +1394,7 @@ jvmtiSuspendAllVirtualThreads(jvmtiEnv *env,
 
 		/* Walk all virtual threads. */
 		vmFuncs->acquireExclusiveVMAccess(currentThread);
+		vm->memoryManagerFunctions->j9gc_flush_nonAllocationCaches_for_walk(vm);
 		vm->memoryManagerFunctions->j9mm_iterate_all_continuation_objects(currentThread, PORTLIB, 0, jvmtiSuspendResumeCallBack, (void*)&data);
 		vmFuncs->releaseExclusiveVMAccess(currentThread);
 
@@ -1450,6 +1451,7 @@ jvmtiResumeAllVirtualThreads(jvmtiEnv *env,
 
 		/* Walk all virtual threads. */
 		vmFuncs->acquireExclusiveVMAccess(currentThread);
+		vm->memoryManagerFunctions->j9gc_flush_nonAllocationCaches_for_walk(vm);
 		vm->memoryManagerFunctions->j9mm_iterate_all_continuation_objects(currentThread, PORTLIB, 0, jvmtiSuspendResumeCallBack, (void*)&data);
 		vmFuncs->releaseExclusiveVMAccess(currentThread);
 done:
