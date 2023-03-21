@@ -33,17 +33,23 @@ namespace TR {
 
 class ARM64ForceRecompilationSnippet : public TR::Snippet
    {
+   TR::LabelSymbol *_restartLabel;
+
    public:
 
    ARM64ForceRecompilationSnippet(
          TR::CodeGenerator *cg,
-         TR::LabelSymbol *snippetlab
+         TR::Node *node,
+         TR::LabelSymbol *snippetLabel,
+         TR::LabelSymbol *restartLabel
          )
-      : TR::Snippet(cg, 0, snippetlab, false)
+      : TR::Snippet(cg, node, snippetLabel, false), _restartLabel(restartLabel)
       {
       }
 
    virtual Kind getKind() { return IsForceRecompilation; }
+
+   TR::LabelSymbol *getRestartLabel() { return _restartLabel; }
 
    virtual uint8_t *emitSnippetBody();
 

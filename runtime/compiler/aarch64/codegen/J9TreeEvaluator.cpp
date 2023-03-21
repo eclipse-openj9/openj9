@@ -29,8 +29,8 @@
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/CodeGenerator_inlines.hpp"
 #include "codegen/CodeGeneratorUtils.hpp"
+#include "codegen/ForceRecompilationSnippet.hpp"
 #include "codegen/GenerateInstructions.hpp"
-#include "codegen/ARM64Instruction.hpp"
 #include "codegen/J9ARM64Snippet.hpp"
 #include "codegen/J9WatchedInstanceFieldSnippet.hpp"
 #include "codegen/J9WatchedStaticFieldSnippet.hpp"
@@ -105,7 +105,45 @@ void VMgenerateCatchBlockBBStartPrologue(TR::Node *node, TR::Instruction *fenceI
 
    if (fej9->shouldPerformEDO(block, comp))
       {
-      TR_UNIMPLEMENTED();
+      TR::Register *biAddrReg = cg->allocateRegister();
+      TR::Register *recompCounterReg = cg->allocateRegister();
+      intptr_t addr = (intptr_t)(comp->getRecompilationInfo()->getCounterAddress());
+      loadAddressConstant(cg, node, addr, biAddrReg);
+      TR::MemoryReference *loadbiMR = TR::MemoryReference::createWithDisplacement(cg, biAddrReg, 0);
+      TR::MemoryReference *storebiMR = TR::MemoryReference::createWithDisplacement(cg, biAddrReg, 0);
+      generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmx, node, recompCounterReg, loadbiMR);
+      generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::subsimmx, node, recompCounterReg, recompCounterReg, 1);
+      generateMemSrc1Instruction(cg, TR::InstOpCode::strimmx, node, storebiMR, recompCounterReg);
+      cg->stopUsingRegister(biAddrReg);
+      cg->stopUsingRegister(recompCounterReg);
+
+      TR::LabelSymbol *snippetLabel = generateLabelSymbol(cg);
+      TR::LabelSymbol *doneLabel = generateLabelSymbol(cg);
+
+      // Registers killed by the call through jitCallCFunction
+      TR::Register *arg1Reg, *arg2Reg, *arg3Reg;
+      arg1Reg = cg->allocateRegister();
+      arg2Reg = cg->allocateRegister();
+      arg3Reg = cg->allocateRegister();
+
+      TR::Snippet *snippet = new (cg->trHeapMemory()) TR::ARM64ForceRecompilationSnippet(cg, node, snippetLabel, doneLabel);
+      cg->addSnippet(snippet);
+      TR_ASSERT_FATAL(cg->comp()->getRecompilationInfo(), "Recompilation info should be available");
+      cg->comp()->getRecompilationInfo()->getJittedBodyInfo()->setHasEdoSnippet();
+
+      TR::RegisterDependencyConditions *conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(3, 3, cg->trMemory());
+      TR::addDependency(conditions, arg1Reg, TR::RealRegister::x0, TR_GPR, cg);
+      TR::addDependency(conditions, arg2Reg, TR::RealRegister::x1, TR_GPR, cg);
+      TR::addDependency(conditions, arg3Reg, TR::RealRegister::x2, TR_GPR, cg);
+
+      TR::Instruction *gcPoint = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, snippetLabel, TR::CC_EQ, conditions);
+      gcPoint->ARM64NeedsGCMap(cg, 0xFFFFFFFF);
+      snippet->gcMap().setGCRegisterMask(0xFFFFFFFF);
+
+      generateLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel, conditions);
+
+      cg->machine()->setLinkRegisterKilled(true);
+      conditions->stopUsingDepRegs(cg);
       }
    }
 
