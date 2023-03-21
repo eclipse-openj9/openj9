@@ -61,7 +61,6 @@ J9::OptionsPostRestore::OptionsPostRestore(J9VMThread *vmThread, J9JITConfig *ji
    _oldVLogFileName(_privateConfig->vLogFileName),
    _oldRtLogFileName(_privateConfig->rtLogFileName),
    _asyncCompilationPreCheckpoint(_compInfo->asynchronousCompilation()),
-   _disableAOTPostRestore(false),
    _argIndexXjit(-1),
    _argIndexXjitcolon(-1),
    _argIndexXnojit(-1),
@@ -77,6 +76,12 @@ J9::OptionsPostRestore::OptionsPostRestore(J9VMThread *vmThread, J9JITConfig *ji
    _argIndexJITServerAddress(-1),
    _argIndexJITServerAOTCacheName(-1)
    {
+   J9JavaVM *vm = jitConfig->javaVM;
+   if (vm->sharedClassConfig)
+      _disableAOTPostRestore = (vm->sharedCacheAPI->xShareClassCacheDisabledOnCRIURestore == TRUE);
+   else
+      _disableAOTPostRestore = false;
+
    TR::Options *options = TR::Options::getCmdLineOptions();
    _disableTrapsPreCheckpoint
       = J9::Options::_xrsSync
@@ -261,13 +266,6 @@ J9::OptionsPostRestore::iterateOverExternalOptions()
          case J9::ExternalOptions::Xtuneelastic:
             {
             // TODO
-            }
-            break;
-
-         case J9::ExternalOptions::XShareclassesDisableOnRestore:
-            {
-            if (FIND_ARG_IN_RESTORE_ARGS(OPTIONAL_LIST_MATCH, optString, 0) >= 0)
-               _disableAOTPostRestore = true;
             }
             break;
 
