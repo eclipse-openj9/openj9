@@ -188,7 +188,7 @@ jstring JNICALL Java_java_lang_System_mapLibraryName(JNIEnv * env, jclass unused
 {
 	PORT_ACCESS_FROM_ENV(env);
 	jboolean isCopy = FALSE;
-	char *outNameUTF;	
+	char *outNameUTF;
 	const char *inNameUTF;
 	jstring result;
 
@@ -367,7 +367,7 @@ jobject getPropertyList(JNIEnv *env)
 		strings[propIndex++] = "true";
 	}
 
-	/* The JCLs use ibm.signalhandling.rs to determine if they should prevent the registration of signal handlers for what 
+	/* The JCLs use ibm.signalhandling.rs to determine if they should prevent the registration of signal handlers for what
 	 * 	we consider to be asynchronous signals.
 	 * The JCLs do not install handlers for any synchronous signals */
 	strings[propIndex++] = "ibm.signalhandling.rs";
@@ -409,10 +409,10 @@ jobject getPropertyList(JNIEnv *env)
 	/*[PR 95709]*/
 
 	/* Get the language, region and variant */
-	language = j9nls_get_language();	
+	language = j9nls_get_language();
 	region = j9nls_get_region();
 	variant = j9nls_get_variant();
-	
+
 	/* CMVC 144405 : Norwegian Bokmal and Nynorsk need special consideration */
 	if ((0 == strcmp(language, "nn")) && (0 == strcmp(region, "NO"))) {
 		variant = "NY";
@@ -422,7 +422,7 @@ jobject getPropertyList(JNIEnv *env)
 	}
 
 	strings[propIndex++] = "user.language";
-	strings[propIndex++] = language;	
+	strings[propIndex++] = language;
 
 	propertyKey = "user.country";
 	strings[propIndex++] = propertyKey;
@@ -439,6 +439,7 @@ jobject getPropertyList(JNIEnv *env)
 	/* Skip j9sysinfo_get_username if a checkpoint can be taken.
 	 * https://github.com/eclipse-openj9/openj9/issues/15800
 	 */
+	result = -1;
 	if (!vmFuncs->isCheckpointAllowed(currentThread))
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 	{
@@ -535,12 +536,12 @@ systemPropertyIterator(char* key, char* value, void* userData)
 	if ( iteratorData->errorOccurred ) {
 		return;
 	}
-	
+
 	if (0 == strcmp("com.ibm.oti.shared.enabled", key)) {
 		/* JAZZ103 85641: Prevent com.ibm.oti.shared.enabled from being overwritten by a command line option */
 		return;
 	}
-	
+
 
 	/* check for overridden system properties, use linear scan for now */
 	for (i=0; i < defaultCount; i+=2) {
@@ -548,7 +549,7 @@ systemPropertyIterator(char* key, char* value, void* userData)
 			defaultValues[i] = NULL;
 			defaultValues[i+1] = NULL;
 			break;
-		} 
+		}
 	}
 
 	/* First do the key */
@@ -576,7 +577,7 @@ Java_java_lang_System_startSNMPAgent(JNIEnv *env, jclass jlClass)
 	if (J9_ARE_ALL_BITS_SET(vm->jclFlags, J9_JCL_FLAG_COM_SUN_MANAGEMENT_PROP)) {
 		jclass smAClass = NULL;
 		jmethodID startAgent = NULL;
-		
+
 		if (J2SE_VERSION(vm) >= J2SE_V11) {
 			smAClass = (*env)->FindClass(env, "jdk/internal/agent/Agent");
 		} else {
