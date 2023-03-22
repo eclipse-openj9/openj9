@@ -22,11 +22,25 @@
 package org.openj9.test.util;
 
 public class PlatformInfo {
+	private static boolean isCRIUBuild;
 	private static final String OS_NAME = "os.name"; //$NON-NLS-1$
 	private static final String osName = System.getProperty(OS_NAME);
 	private static final boolean isPlatformZOS = (osName != null) && osName.toLowerCase().startsWith("z/os"); //$NON-NLS-1$
 	private	static final boolean isOpenJ9Status = 
 			System.getProperty("java.vm.vendor").contains("OpenJ9"); //$NON-NLS-1$ //$NON-NLS-2$
+
+	static {
+		try {
+			Class.forName("openj9.internal.criu.InternalCRIUSupport");
+			isCRIUBuild = true;
+		} catch (ClassNotFoundException cnfe) {
+			// igore, this is not a CRIU build
+		}
+	}
+
+	public static boolean isCRIUBuild() {
+		return isCRIUBuild;
+	}
 
 	public static boolean isWindows() {
 		return ((null != osName) && osName.startsWith("Windows"));

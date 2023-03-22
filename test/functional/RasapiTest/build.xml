@@ -24,14 +24,15 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 
 	<property name="build.jar.tests" value="com.ibm.jvm.ras.tests.jar" />
 	<property name="DEST" value="${BUILD_ROOT}/functional/RasapiTest" />
-	<property name="src.level" value="1.7" />
-	<property name="target.level" value="1.7" />
+	<property name="src.level" value="1.8" />
+	<property name="target.level" value="1.8" />
 	<property name="source.dir" location="src" />
 	<property name="dummy.source.dir" location="dummy_src" />
 	<property name="build.dir" location="build" />
 	<property name="dist.dir" location="dist" />
 	<property name="src" location="." />
 	<property name="LIB" value="junit4" />
+	<property name="TestUtilities" location="../TestUtilities/src" />
 	<import file="${TEST_ROOT}/TKG/scripts/getDependencies.xml" />
 	<!-- <property name="build.cp" value="${BUILD_ROOT}/build/j9jcl/source/ive/lib/jclSC18/classes-vm.zip" /> -->
 
@@ -79,9 +80,13 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 				 dumps so this points to a recent version of dtfj-interface.jar to compile against instead. -->
 			<!-- <compilerarg value="-Xbootclasspath/p:${build.cp}" /> -->
 			<src path="${source.dir}" />
+			<src path="${TestUtilities}" />
 			<!-- The boot compiler, unless it's IBM 1.8, won't have the right API to build all these tests.
 				 We have a hollowed out version in dummy_src for the tests to compile against -->
 			<src path="${dummy.source.dir}" />
+			<classpath>
+				<pathelement location="${LIB_DIR}/testng.jar" />
+			</classpath>
 		</javac>
 
 		<!-- jar the .class files except the dummy source -->

@@ -27,6 +27,7 @@ import junit.framework.TestCase;
 
 import com.ibm.jvm.DumpConfigurationUnavailableException;
 import com.ibm.jvm.InvalidDumpOptionException;
+import org.openj9.test.util.PlatformInfo;
 
 @SuppressWarnings("nls")
 public class DumpAPIQuerySetReset extends TestCase {
@@ -467,33 +468,35 @@ public class DumpAPIQuerySetReset extends TestCase {
 			fail("Dump configuration was unavailable.");
 		}
 
-		for (String agent : badAgents) {
-			try {
-				// System.err.println("Trying: " + agent);
-				com.ibm.jvm.Dump.setDumpOptions(agent);
-				com.ibm.jvm.Dump.setDumpOptions("what"); // We should not reach this so the output will be useful for debugging if we do.
-				fail("Did not expect to be able to set a bad dump option: " + agent + ", queryDumpOptions() found: "
-						+ Arrays.toString(com.ibm.jvm.Dump.queryDumpOptions()));
-			} catch (InvalidDumpOptionException e) {
-				// Pass.
-				// Check exception message.
-			} catch (DumpConfigurationUnavailableException e) {
-				fail("Dump configuration was unavailable.");
-			}
-			// Check we didn't set things anyway.
-			String newOptions[] = com.ibm.jvm.Dump.queryDumpOptions();
-			if (newOptions.length > 0) {
-				// System.err.println(Arrays.toString(newOptions));
+		if (!PlatformInfo.isCRIUBuild()) {
+			for (String agent : badAgents) {
 				try {
-					com.ibm.jvm.Dump.setDumpOptions("what");
+					// System.err.println("Trying: " + agent);
+					com.ibm.jvm.Dump.setDumpOptions(agent);
+					com.ibm.jvm.Dump.setDumpOptions("what"); // We should not reach this so the output will be useful for debugging if we do.
+					fail("Did not expect to be able to set a bad dump option: " + agent + ", queryDumpOptions() found: "
+							+ Arrays.toString(com.ibm.jvm.Dump.queryDumpOptions()));
 				} catch (InvalidDumpOptionException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					// Pass.
+					// Check exception message.
 				} catch (DumpConfigurationUnavailableException e) {
 					fail("Dump configuration was unavailable.");
 				}
+				// Check we didn't set things anyway.
+				String newOptions[] = com.ibm.jvm.Dump.queryDumpOptions();
+				if (newOptions.length > 0) {
+					// System.err.println(Arrays.toString(newOptions));
+					try {
+						com.ibm.jvm.Dump.setDumpOptions("what");
+					} catch (InvalidDumpOptionException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					} catch (DumpConfigurationUnavailableException e) {
+						fail("Dump configuration was unavailable.");
+					}
+				}
+				assertEquals("Expected no options to be set for agent string - " + agent, 0, newOptions.length);
 			}
-			assertEquals("Expected no options to be set for agent string - " + agent, 0, newOptions.length);
 		}
 	}
 
@@ -536,19 +539,21 @@ public class DumpAPIQuerySetReset extends TestCase {
 
 		// None of these should work since uncaught and throw cannot be set at runtime unless -Xdump:dynamic was on the
 		// command line.
-		int count = 0;
-		for (String type : dumpTypes) {
-			for (String event : dumpEvents) {
-				for (String filter : dumpFilters) {
-					// Create agents the dump system can't merge.
-					String options = type + ":events=" + event + ",filter=" + filter + ",label=" + type + count++;
-					try {
-						com.ibm.jvm.Dump.setDumpOptions(options);
-						fail("Expected not to be ablel to set these dump options: " + options);
-					} catch (InvalidDumpOptionException e) {
-						// TODO Auto-generated catch block
-					} catch (DumpConfigurationUnavailableException e) {
-						fail("Dump configuration was unavailable.");
+		if (!PlatformInfo.isCRIUBuild()) {
+			int count = 0;
+			for (String type : dumpTypes) {
+				for (String event : dumpEvents) {
+					for (String filter : dumpFilters) {
+						// Create agents the dump system can't merge.
+						String options = type + ":events=" + event + ",filter=" + filter + ",label=" + type + count++;
+						try {
+							com.ibm.jvm.Dump.setDumpOptions(options);
+							fail("Expected not to be ablel to set these dump options: " + options);
+						} catch (InvalidDumpOptionException e) {
+							// TODO Auto-generated catch block
+						} catch (DumpConfigurationUnavailableException e) {
+							fail("Dump configuration was unavailable.");
+						}
 					}
 				}
 			}
