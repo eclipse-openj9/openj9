@@ -2937,7 +2937,7 @@ gcInitializeDefaults(J9JavaVM* vm)
 				extensions->concurrentScavengerHWSupport = hwSupported
 					&& !extensions->softwareRangeCheckReadBarrierForced
 #if defined(J9VM_OPT_CRIU_SUPPORT)
-					&& !vm->internalVMFunctions->isCRIUSupportEnabled(vm->internalVMFunctions->currentVMThread(vm))
+					&& !vm->internalVMFunctions->isCRIUSupportEnabled_VM(vm)
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 					&& !J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_PORTABLE_SHARED_CACHE);
 			}
