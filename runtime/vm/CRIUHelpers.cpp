@@ -106,7 +106,13 @@ jvmRestoreHooks(J9VMThread *currentThread)
 BOOLEAN
 isCRIUSupportEnabled(J9VMThread *currentThread)
 {
-	return currentThread->javaVM->checkpointState.isCheckPointEnabled;
+	return isCRIUSupportEnabled_VM(currentThread->javaVM);
+}
+
+BOOLEAN
+isCRIUSupportEnabled_VM(J9JavaVM *vm)
+{
+	return vm->checkpointState.isCheckPointEnabled;
 }
 
 BOOLEAN
