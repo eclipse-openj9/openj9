@@ -864,15 +864,14 @@ jvmtiGetCurrentContendedMonitor(jvmtiEnv *env,
 		if (JVMTI_ERROR_NONE == rc) {
 			j9object_t lockObject = NULL;
 			UDATA vmstate = 0;
-			J9VMThread *threadToWalk = targetThread;
 
 #if JAVA_SPEC_VERSION >= 19
-			J9VMThread stackThread = {0};
-			J9VMEntryLocalStorage els = {0};
 			j9object_t threadObject = (NULL == thread) ? currentThread->threadObject : J9_JNI_UNWRAP_REFERENCE(thread);
-			J9VMContinuation *continuation = NULL;
 
-			if ((NULL == targetThread) && IS_JAVA_LANG_VIRTUALTHREAD(currentThread, threadObject)) {
+			/* Unmounted VirtualThread and CarrierThread with VirtualThread mounted cannot be contended. */
+			if (((NULL == targetThread) && IS_JAVA_LANG_VIRTUALTHREAD(currentThread, threadObject))
+			|| ((NULL != targetThread) && (threadObject == targetThread->carrierThreadObject) && (NULL != targetThread->currentContinuation))
+			) {
 				goto release;
 			}
 #endif /* JAVA_SPEC_VERSION >= 19 */
@@ -880,16 +879,7 @@ jvmtiGetCurrentContendedMonitor(jvmtiEnv *env,
 			/* CMVC 184481 - The targetThread should be suspended while we attempt to get its state. */
 			vm->internalVMFunctions->haltThreadForInspection(currentThread, targetThread);
 
-#if JAVA_SPEC_VERSION >= 19
-			continuation = getJ9VMContinuationToWalk(currentThread, targetThread, threadObject);
-			if (NULL != continuation) {
-				memcpy(&stackThread, targetThread, sizeof(J9VMThread));
-				vm->internalVMFunctions->copyFieldsFromContinuation(currentThread, &stackThread, &els, continuation);
-				threadToWalk = &stackThread;
-			}
-#endif /* JAVA_SPEC_VERSION >= 19 */
-
-			vmstate = getVMThreadObjectStatesAll(threadToWalk, &lockObject, NULL, NULL);
+			vmstate = getVMThreadObjectStatesAll(targetThread, &lockObject, NULL, NULL);
 
 			if ((NULL != lockObject)
 			&& (OMR_ARE_NO_BITS_SET(vmstate, J9VMTHREAD_STATE_PARKED | J9VMTHREAD_STATE_PARKED_TIMED))
