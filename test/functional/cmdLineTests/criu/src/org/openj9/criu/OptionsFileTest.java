@@ -46,8 +46,14 @@ public class OptionsFileTest {
 		case "PropertiesTest4":
 			propertiesTest4();
 			break;
-		case "TraceOptionsTest":
-			traceOptionsTest();
+		case "TraceOptionsTest1":
+			traceOptionsTest1();
+			break;
+		case "TraceOptionsTest2":
+			traceOptionsTest2();
+			break;
+		case "TraceOptionsTest3":
+			traceOptionsTest3();
 			break;
 		case "DumpOptionsTest":
 			dumpOptionsTest();
@@ -157,8 +163,8 @@ public class OptionsFileTest {
 		System.out.println("ERR: failed properties test");
 	}
 
-	static void traceOptionsTest() {
-		String traceOutput = "traceOutput.txt";
+	static void traceOptionsTest1() {
+		String traceOutput = "traceOutput1.trc";
 		String optionsContents = "-Xtrace:print={j9vm.40}\n"
 				+ "-Xtrace:print=mt,methods=java/lang/System.getProperties()\n"
 				+ "-Xtrace:trigger=method{java/lang/System.getProperties,javadump}\n"
@@ -175,10 +181,47 @@ public class OptionsFileTest {
 		System.getProperties();
 		System.out.println("Post-checkpoint");
 		if (new File(traceOutput).exists()) {
-			System.out.println("TEST PASSED - " + traceOutput + "was created successfully");
+			System.out.println("TEST PASSED - " + traceOutput + " was created successfully");
 		} else {
-			System.out.println("TEST FAILED - " + traceOutput + "was NOT created");
+			System.out.println("TEST FAILED - " + traceOutput + " was NOT created");
 		}
+	}
+
+	static void traceOptionsTest2() {
+		String traceOutput = "traceOutput2.trc";
+		String optionsContents = "-Xtrace:print={j9vm.40}\n"
+				+ "-Xtrace:none,maximal=j9vm,output={" + traceOutput + ",100m}";
+		Path optionsFilePath = CRIUTestUtils.createOptionsFile("options", optionsContents);
+
+		Path imagePath = Paths.get("cpData");
+		CRIUTestUtils.createCheckpointDirectory(imagePath);
+		CRIUSupport criuSupport = new CRIUSupport(imagePath);
+		criuSupport.registerRestoreOptionsFile(optionsFilePath);
+
+		System.out.println("Pre-checkpoint");
+		CRIUTestUtils.checkPointJVM(criuSupport, imagePath, true);
+		System.getProperties();
+		System.out.println("Post-checkpoint");
+		if (new File(traceOutput).exists()) {
+			System.out.println("TEST PASSED - " + traceOutput + " was created successfully");
+		} else {
+			System.out.println("TEST FAILED - " + traceOutput + " was NOT created");
+		}
+	}
+
+	static void traceOptionsTest3() {
+		String optionsContents = "-Xtrace:print={j9vm.40}\n";
+		Path optionsFilePath = CRIUTestUtils.createOptionsFile("options", optionsContents);
+
+		Path imagePath = Paths.get("cpData");
+		CRIUTestUtils.createCheckpointDirectory(imagePath);
+		CRIUSupport criuSupport = new CRIUSupport(imagePath);
+		criuSupport.registerRestoreOptionsFile(optionsFilePath);
+
+		System.out.println("Pre-checkpoint");
+		CRIUTestUtils.checkPointJVM(criuSupport, imagePath, true);
+		System.getProperties();
+		System.out.println("Post-checkpoint");
 	}
 
 	static void dumpOptionsTest() {
