@@ -667,6 +667,8 @@
     <output type="success" caseSensitive="yes" regex="no">Processing dump event "throw", detail "java/lang/OutOfMemoryError"</output>
     <output type="success" caseSensitive="yes" regex="no">JVM requested Java dump</output>
     <output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>
+    <output type="failure" caseSensitive="yes" regex="no">org.eclipse.openj9.criu.JVMRestoreException</output>
+    <output type="failure" caseSensitive="yes" regex="no">Dump option unrecognized: -Xdump:nofailover</output>
     <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
     <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
     <!-- If CRIU can't acquire the original thread IDs, this test will fail. Nothing can be done about this failure. -->
