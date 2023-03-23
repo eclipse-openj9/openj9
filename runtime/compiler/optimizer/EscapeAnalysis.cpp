@@ -378,7 +378,9 @@ int32_t TR_EscapeAnalysis::perform()
             if (storeNode
                 && storeNode->getOpCodeValue() == TR::astore
                 && nodeLookup->second.first->get(storeNode->getFirstChild()->getGlobalIndex()))
-               nodeLookup->second.second->push_back(TR::Node::createWithSymRef(TR::aload, 0, storeNode->getSymbolReference()));
+               {
+               nodeLookup->second.second->set(storeNode->getSymbolReference()->getReferenceNumber());
+               }
             }
 
          TR::Node *guard = TR_VirtualGuard::createHCRGuard(comp(),
@@ -401,7 +403,7 @@ int32_t TR_EscapeAnalysis::perform()
          cfg->addEdge(heapificationBlock, callBlock);
 
          heapificationBlock->getExit()->insertBefore(TR::TreeTop::create(comp(), TR::Node::create(node, TR::Goto, 0, callBlock->getEntry())));
-         tools.insertFakeEscapeForLoads(heapificationBlock, node, nodeLookup->second.second);
+         tools.insertFakeEscapeForLoads(heapificationBlock, node, *nodeLookup->second.second);
          traceMsg(comp(), "Created heapification block_%d\n", heapificationBlock->getNumber());
 
          ((TR_EscapeAnalysis::PersistentData*)manager()->getOptData())->_peekableCalls->set(node->getGlobalIndex());
@@ -5100,7 +5102,8 @@ int32_t TR_EscapeAnalysis::sniffCall(TR::Node *callNode, TR::ResolvedMethodSymbo
             {
             dumpOptDetails(comp(), "%sAdding call [%p] n%dn to list of calls to protect for peeking to increase opportunities for stack allocation\n", OPT_DETAILS, callNode, callNode->getGlobalIndex());
             TR_BitVector *candidateNodes = new (comp()->trStackMemory()) TR_BitVector(0, trMemory(), stackAlloc);
-            NodeDeque *loads = new (comp()->trMemory()->currentStackRegion()) NodeDeque(NodeDequeAllocator(comp()->trMemory()->currentStackRegion()));
+            TR_BitVector *symRefsToLoad = new (comp()->trStackMemory()) TR_BitVector(0, trMemory(), stackAlloc);
+
             for (int32_t arg = callNode->getFirstArgumentIndex(); arg < callNode->getNumChildren(); ++arg)
                {
                TR::Node *child = callNode->getChild(arg);
@@ -5112,11 +5115,14 @@ int32_t TR_EscapeAnalysis::sniffCall(TR::Node *callNode, TR::ResolvedMethodSymbo
                      candidateNodes->set(candidate->_node->getGlobalIndex());
                      ListIterator<TR::SymbolReference> itr(candidate->getSymRefs());
                      for (TR::SymbolReference *symRef = itr.getFirst(); symRef; symRef = itr.getNext())
-                        loads->push_back(TR::Node::createWithSymRef(TR::aload, 0, symRef));
+                        {
+                        symRefsToLoad->set(symRef->getReferenceNumber());
+                        }
                      }
                   }
                }
-            (*_callsToProtect)[callNode] = std::make_pair(candidateNodes, loads);
+
+            (*_callsToProtect)[callNode] = std::make_pair(candidateNodes, symRefsToLoad);
             }
          return 0;
          }

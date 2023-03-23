@@ -58,9 +58,9 @@ template <class T> class TR_Array;
 typedef TR::typed_allocator<TR::Node *, TR::Region &> NodeDequeAllocator;
 typedef std::deque<TR::Node *, NodeDequeAllocator> NodeDeque;
 
-typedef TR::typed_allocator<std::pair<TR::Node* const, std::pair<TR_BitVector *, NodeDeque*> >, TR::Region&> CallLoadMapAllocator;
+typedef TR::typed_allocator<std::pair<TR::Node* const, std::pair<TR_BitVector *, TR_BitVector*> >, TR::Region&> CallLoadMapAllocator;
 typedef std::less<TR::Node *> CallLoadMapComparator;
-typedef std::map<TR::Node *, std::pair<TR_BitVector *, NodeDeque *>, CallLoadMapComparator, CallLoadMapAllocator> CallLoadMap;
+typedef std::map<TR::Node *, std::pair<TR_BitVector *, TR_BitVector *>, CallLoadMapComparator, CallLoadMapAllocator> CallLoadMap;
 
 typedef TR::typed_allocator<std::pair<TR::Node *const, int32_t>, TR::Region&> RemainingUseCountMapAllocator;
 typedef std::less<TR::Node *> RemainingUseCountMapComparator;
