@@ -183,6 +183,7 @@ public class OptionsFileTest {
 
 	static void dumpOptionsTest() {
 		String optionsContents = "-Xdump:java:events=vmstop\n"
+				+ "-Xdump:nofailover\n"
 				+ "-Xdump:java:events=throw,filter=java/lang/OutOfMemoryError,request=exclusive+prepwalk+serial+preempt";
 		Path optionsFilePath = CRIUTestUtils.createOptionsFile("options", optionsContents);
 
