@@ -80,4 +80,30 @@ public class InvalidUpCallTests {
 			fail("Failed to throw out IllegalArgumentException from the the upcall method");
 		}
 	}
+
+	@Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "An exception is thrown from the upcall method")
+	public void test_nestedUpcall_throwExceptionFromUpcallMethod() throws Throwable {
+		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_INT.withName("elem1"), JAVA_INT.withName("elem2"));
+		VarHandle intHandle1 = structLayout.varHandle(PathElement.groupElement("elem1"));
+		VarHandle intHandle2 = structLayout.varHandle(PathElement.groupElement("elem2"));
+
+		FunctionDescriptor fd = FunctionDescriptor.of(structLayout, structLayout, structLayout, ADDRESS);
+		MemorySegment functionSymbol = nativeLibLookup.find("add2IntStructs_returnStructByUpcallMH").get();
+		MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
+
+		try (Arena arena = Arena.openConfined()) {
+			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_add2IntStructs_returnStruct_nestedUpcall,
+					FunctionDescriptor.of(structLayout, structLayout, structLayout), arena.scope());
+			SegmentAllocator allocator = SegmentAllocator.nativeAllocator(arena.scope());
+			MemorySegment structSegmt1 = allocator.allocate(structLayout);
+			intHandle1.set(structSegmt1, 11223344);
+			intHandle2.set(structSegmt1, 55667788);
+			MemorySegment structSegmt2 = allocator.allocate(structLayout);
+			intHandle1.set(structSegmt2, 99001122);
+			intHandle2.set(structSegmt2, 33445566);
+
+			MemorySegment resultSegmt = (MemorySegment)mh.invoke(allocator, structSegmt1, structSegmt2, upcallFuncAddr);
+			fail("Failed to throw out IllegalArgumentException from the nested upcall");
+		}
+	}
 }
