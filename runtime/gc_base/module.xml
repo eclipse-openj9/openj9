@@ -56,6 +56,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<include path="$(OMR_DIR)/gc/base/standard" type="relativepath"/>
 			<include path="j9modronstandard"/>
 			<include path="j9gcvlhgc"/>
+			<include path="$(OMR_DIR)/gc/verbose" type="relativepath"/>
 			<include path="$(OMR_DIR)/include_core" type="relativepath"/>
 		</includes>
 		<makefilestubs>
