@@ -106,6 +106,7 @@
 #include "runtime/JITServerAOTDeserializer.hpp"
 #include "net/ClientStream.hpp"
 #include "net/ServerStream.hpp"
+#include "net/CommunicationStream.hpp"
 #include "omrformatconsts.h"
 #endif /* defined(J9VM_OPT_JITSERVER) */
 #ifdef COMPRESS_AOT_DATA
@@ -7405,6 +7406,7 @@ TR::CompilationInfoPerThreadBase::cannotPerformRemoteComp(
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
           !JITServer::ClientStream::isServerCompatible(OMRPORT_FROM_J9PORT(_jitConfig->javaVM->portLibrary)) ||
           (!JITServerHelpers::isServerAvailable() && !JITServerHelpers::shouldRetryConnection(OMRPORT_FROM_J9PORT(_jitConfig->javaVM->portLibrary))) ||
+	  (!JITServer::CommunicationStream::shouldReadRetry() && !JITServerHelpers::shouldRetryConnection(OMRPORT_FROM_J9PORT(_jitConfig->javaVM->portLibrary))) ||
           (TR::Compiler->target.cpu.isPower() && _jitConfig->inlineFieldWatches); // Power codegen is missing some FieldWatch relocation support
    }
 

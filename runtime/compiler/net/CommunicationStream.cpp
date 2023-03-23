@@ -33,6 +33,8 @@ uint32_t CommunicationStream::CONFIGURATION_FLAGS = 0;
 
 uint32_t CommunicationStream::_msgTypeCount[] = {0};
 uint64_t CommunicationStream::_totalMsgSize = 0;
+uint32_t CommunicationStream::_lastReadError = 0;
+uint32_t CommunicationStream::_numConsecutiveReadErrorsOfSameType = 0;
 #if defined(MESSAGE_SIZE_STATS)
 TR_Stats CommunicationStream::_msgSizeStats[];
 #endif /* defined(MESSAGE_SIZE_STATS) */
