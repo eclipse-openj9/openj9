@@ -1,0 +1,148 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!--
+  Copyright IBM Corp. and others 2023
+
+This program and the accompanying materials are made available under
+the terms of the Eclipse Public License 2.0 which accompanies this
+distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+or the Apache License, Version 2.0 which accompanies this distribution and
+is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+This Source Code may also be made available under the following
+Secondary Licenses when the conditions for such availability set
+forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+General Public License, version 2 with the GNU Classpath
+Exception [1] and GNU General Public License, version 2 with the
+OpenJDK Assembly Exception [2].
+
+[1] https://www.gnu.org/software/classpath/license.html
+[2] https://openjdk.org/legal/assembly-exception.html
+
+SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+-->
+<playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../TestConfig/playlist.xsd">
+	<test>
+		<testCaseName>Jep425Tests_testVirtualThread</testCaseName>
+		<variations>
+			<variation>--enable-preview -Xgcpolicy:optthruput</variation>
+			<variation>--enable-preview -Xgcpolicy:gencon</variation>
+			<variation>--enable-preview -Xgcpolicy:balanced</variation>
+			<variation>--enable-preview -Xgcpolicy:optavgpause</variation>
+		</variations>
+		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) $(JAVA_COMMAND) $(JVM_OPTIONS) \
+			--add-opens java.base/java.lang=ALL-UNNAMED \
+			-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
+			org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng_200.xml$(Q) \
+			-testnames Jep425Tests_testVirtualThread \
+			-groups $(TEST_GROUP) \
+			-excludegroups $(DEFAULT_EXCLUDE); \
+			$(TEST_STATUS)
+		</command>
+		<platformRequirements>bits.64,^os.zos,^os.sunos</platformRequirements>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<types>
+			<type>native</type>
+		</types>
+		<impls>
+			<impl>openj9</impl>
+		</impls>
+		<versions>
+			<version>20+</version>
+		</versions>
+	</test>
+
+	<test>
+		<testCaseName>Jep434Tests_testLinkerFfi_DownCall</testCaseName>
+		<variations>
+			<variation>--enable-preview</variation>
+		</variations>
+		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) $(JAVA_COMMAND) $(JVM_OPTIONS) \
+			--enable-native-access=ALL-UNNAMED \
+			-Dforeign.restricted=permit \
+			-cp $(Q)$(LIB_DIR)$(D)asm.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
+			org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng_200.xml$(Q) -testnames Jep434Tests_testLinkerFfi_DownCall \
+			-groups $(TEST_GROUP) \
+			-excludegroups $(DEFAULT_EXCLUDE); \
+			$(TEST_STATUS)
+		</command>
+		<platformRequirements>bits.64,^arch.arm,^arch.riscv,^os.zos,^os.sunos</platformRequirements>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<impls>
+			<impl>openj9</impl>
+			<impl>hotspot</impl>
+		</impls>
+		<versions>
+			<version>20+</version>
+		</versions>
+	</test>
+
+	<test>
+		<testCaseName>Jep434Tests_testLinkerFfi_UpCall</testCaseName>
+		<variations>
+			<variation>--enable-preview</variation>
+		</variations>
+		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) $(JAVA_COMMAND) $(JVM_OPTIONS) \
+			--enable-native-access=ALL-UNNAMED \
+			-Dforeign.restricted=permit \
+			-cp $(Q)$(LIB_DIR)$(D)asm.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
+			org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng_200.xml$(Q) -testnames Jep434Tests_testLinkerFfi_UpCall \
+			-groups $(TEST_GROUP) \
+			-excludegroups $(DEFAULT_EXCLUDE); \
+			$(TEST_STATUS)
+		</command>
+		<platformRequirements>bits.64,^arch.arm,^arch.riscv,^os.zos,^os.sunos</platformRequirements>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<impls>
+			<impl>openj9</impl>
+			<impl>hotspot</impl>
+		</impls>
+		<versions>
+			<version>20+</version>
+		</versions>
+	</test>
+
+	<test>
+		<testCaseName>Jep434Tests_testLinkerFfi_VaList</testCaseName>
+		<variations>
+			<variation>--enable-preview</variation>
+		</variations>
+		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) $(JAVA_COMMAND) $(JVM_OPTIONS) \
+			--enable-native-access=ALL-UNNAMED \
+			-Dforeign.restricted=permit \
+			-cp $(Q)$(LIB_DIR)$(D)asm.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
+			org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng_200.xml$(Q) -testnames Jep434Tests_testLinkerFfi_VaList \
+			-groups $(TEST_GROUP) \
+			-excludegroups $(DEFAULT_EXCLUDE); \
+			$(TEST_STATUS)
+		</command>
+		<platformRequirements>bits.64,^arch.aarch64,^arch.arm,^arch.riscv,^os.zos,^os.sunos</platformRequirements>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<impls>
+			<impl>openj9</impl>
+			<impl>hotspot</impl>
+		</impls>
+		<versions>
+			<version>20+</version>
+		</versions>
+	</test>
+</playlist>
