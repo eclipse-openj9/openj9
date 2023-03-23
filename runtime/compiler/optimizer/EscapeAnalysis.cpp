@@ -123,6 +123,7 @@ TR_EscapeAnalysis::TR_EscapeAnalysis(TR::OptimizationManager *manager)
      _inlineCallSites(manager->comp()->trMemory()),
      _dememoizedAllocs(manager->comp()->trMemory()),
      _devirtualizedCallSites(manager->comp()->trMemory()),
+     _initializedHeapifiedTemps(NULL),
      _aNewArrayNoZeroInitSymRef(NULL)
    {
 
@@ -665,6 +666,7 @@ int32_t TR_EscapeAnalysis::performAnalysisOnce()
    _aliasesOfOtherAllocNode = NULL;
    _notOptimizableLocalObjectsValueNumbers = NULL;
    _notOptimizableLocalStringObjectsValueNumbers = NULL;
+   _initializedHeapifiedTemps = NULL;
 
    // Walk the trees and find the "new" nodes.
    // Any that are candidates for local allocation or desynchronization are
@@ -1344,6 +1346,46 @@ int32_t TR_EscapeAnalysis::performAnalysisOnce()
 
             if (candidate->escapesInColdBlocks())
                {
+               if (_initializedHeapifiedTemps == NULL)
+                  {
+                  _initializedHeapifiedTemps = new(trStackMemory()) TR_BitVector(0, trMemory(), stackAlloc, growable);
+
+                  TR::Block *entryBlock = comp()->getStartBlock();
+                  const bool entryHasExceptionSuccessors = entryBlock->hasExceptionSuccessors();
+
+                  // Anything that might hold a reference to a potentially heapified object must be initialized
+                  // on method entry.  Keep track of what is initialized in the first block on method entry to
+                  // avoid redundant initializations that might occur in a large method that has many points at
+                  // which heapification might occur.
+                  //
+                  for (TR::TreeTop *tt = comp()->getStartTree();
+                       tt != NULL && tt->getNode()->getOpCodeValue() != TR::BBEnd;
+                       tt = tt->getNextTreeTop())
+                     {
+                     TR::Node *node = tt->getNode();
+
+                     // If the entry block has exception successors, any local initializations that follow
+                     // a node that might raise an exception is not guaranteed to be executed, so stop
+                     // recording entries in _initializedHeapifiedTemps
+                     //
+                     if (entryHasExceptionSuccessors && node->exceptionsRaised())
+                        {
+                        break;
+                        }
+
+                     if (node->getOpCode().isStore() && !node->getOpCode().isIndirect())
+                        {
+                        TR::SymbolReference *storeSymRef = node->getSymbolReference();
+
+                        if (storeSymRef->getSymbol()->isAuto()
+                            && !_initializedHeapifiedTemps->get(storeSymRef->getReferenceNumber()))
+                           {
+                           _initializedHeapifiedTemps->set(storeSymRef->getReferenceNumber());
+                           }
+                        }
+                     }
+                  }
+
                heapifyForColdBlocks(candidate);
                if (candidate->_fields)
                   {
@@ -7640,7 +7682,7 @@ TR::TreeTop *TR_EscapeAnalysis::storeHeapifiedToTemp(Candidate *candidate, TR::N
       }
    storeNode->setHeapificationStore(true);
 
-   if (!symRef->getSymbol()->isParm())
+   if (!symRef->getSymbol()->isParm() && !_initializedHeapifiedTemps->get(symRef->getReferenceNumber()))
       {
       TR::Node *initStoreNode = TR::Node::createWithSymRef(TR::astore, 1, 1, TR::Node::aconst(candidate->_node, 0), symRef);
       if (symRef->getSymbol()->holdsMonitoredObject())
@@ -7650,6 +7692,7 @@ TR::TreeTop *TR_EscapeAnalysis::storeHeapifiedToTemp(Candidate *candidate, TR::N
       TR::TreeTop *nextToStart = startTree->getNextTreeTop();
            startTree->join(initStoreTree);
       initStoreTree->join(nextToStart);
+      _initializedHeapifiedTemps->set(symRef->getReferenceNumber());
       }
 
    return storeTree;

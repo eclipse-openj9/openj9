@@ -715,6 +715,7 @@ class TR_EscapeAnalysis : public TR::Optimization
    TR_BitVector              *_notOptimizableLocalStringObjectsValueNumbers;
    TR_BitVector              *_blocksWithFlushOnEntry;
    TR_BitVector              *_visitedNodes;
+   TR_BitVector              *_initializedHeapifiedTemps;
 
    CallLoadMap               *_callsToProtect;
 
