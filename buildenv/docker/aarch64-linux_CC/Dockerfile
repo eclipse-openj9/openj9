@@ -24,6 +24,9 @@
 
 FROM ubuntu:16.04
 
+# Define default user name
+ARG user=jenkins
+
 # Install required OS tools
 RUN apt-get update \
   && apt-get install -qq -y --no-install-recommends \
@@ -53,27 +56,30 @@ RUN apt-get update \
     zip \
   && rm -rf /var/lib/apt/lists/*
 
+# Add user home
+RUN useradd -ms /bin/bash --uid 1000 --home-dir /home/$user $user
+
 # Create links for c++,g++,cc,gcc
 RUN ln -s g++ /usr/bin/c++ \
   && ln -s g++-7 /usr/bin/g++ \
   && ln -s gcc /usr/bin/cc \
   && ln -s gcc-7 /usr/bin/gcc
 
-# Download and setup freemarker.jar to /root/freemarker.jar
-RUN cd /root \
+# Download and setup freemarker.jar
+RUN cd /home/$user \
   && wget https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download -O freemarker.tgz \
   && tar -xzf freemarker.tgz freemarker-2.3.8/lib/freemarker.jar --strip=2 \
   && rm -f freemarker.tgz
 
 # Download and install boot JDK from AdoptOpenJDK
-RUN cd /root \
+RUN cd /home/$user \
   && wget -O bootjdk11.tar.gz "https://api.adoptopenjdk.net/v2/binary/releases/openjdk11?openjdk_impl=openj9&os=linux&arch=x64&release=latest&heap_size=normal&type=jdk" \
   && tar -xzf bootjdk11.tar.gz \
   && rm -f bootjdk11.tar.gz \
   && mv $(ls | grep -i jdk) bootjdk11
 
 # get the toolchain
-RUN cd /root \
+RUN cd /home/$user \
   && wget https://releases.linaro.org/components/toolchain/binaries/7.5-2019.12/aarch64-linux-gnu/gcc-linaro-7.5.0-2019.12-x86_64_aarch64-linux-gnu.tar.xz \
   && tar xf gcc-linaro-7.5.0-2019.12-x86_64_aarch64-linux-gnu.tar.xz \
   && rm gcc-linaro-7.5.0-2019.12-x86_64_aarch64-linux-gnu.tar.xz
@@ -121,25 +127,25 @@ ADD \
     http://ftp.us.debian.org/debian/pool/main/x/x11proto-render/x11proto-render-dev_0.11.1-2_all.deb \
     http://ftp.us.debian.org/debian/pool/main/x/x11proto-xext/x11proto-xext-dev_7.3.0-1_all.deb      \
     http://ftp.us.debian.org/debian/pool/main/z/zlib/zlib1g_1.2.8.dfsg-5_arm64.deb                   \
-    /root/debs/
+    /home/$user/debs/
 
 # unpack debs into toolchain libc dir
-RUN cd /root/debs \
+RUN cd /home/$user/debs \
   && for f in *.deb; do dpkg-deb -x $f .; done \
   && cp -r usr/include/* ../gcc-linaro-7.5.0-2019.12-x86_64_aarch64-linux-gnu/aarch64-linux-gnu/libc/usr/include/ \
   && cp -r usr/lib/aarch64-linux-gnu/* ../gcc-linaro-7.5.0-2019.12-x86_64_aarch64-linux-gnu/aarch64-linux-gnu/libc/usr/lib/ \
   && cp lib/aarch64-linux-gnu/* ../gcc-linaro-7.5.0-2019.12-x86_64_aarch64-linux-gnu/aarch64-linux-gnu/libc/lib/ \
-  && rm -rf /root/debs
+  && rm -rf /home/$user/debs
 
 # Env vars set here will be visible in the running container, so can be
 # used to convey configuration information to the build scripts.
 
 # Set environment variable JAVA_HOME, and prepend $JAVA_HOME/bin to PATH
-ENV JAVA_HOME=/root/bootjdk11
+ENV JAVA_HOME=/home/$user/bootjdk11
 ENV PATH="$JAVA_HOME/bin:$PATH"
 
 # Directory containing the cross compilation tool chain
-ENV OPENJ9_CC_DIR=/root/gcc-linaro-7.5.0-2019.12-x86_64_aarch64-linux-gnu
+ENV OPENJ9_CC_DIR=/home/$user/gcc-linaro-7.5.0-2019.12-x86_64_aarch64-linux-gnu
 
 # Prefix for the cross compilation tools (without the trailing '-')
 ENV OPENJ9_CC_PREFIX=aarch64-linux-gnu
@@ -147,4 +153,6 @@ ENV OPENJ9_CC_PREFIX=aarch64-linux-gnu
 # Add the toolchain bin dir to the PATH for convenience
 ENV PATH="$PATH:$OPENJ9_CC_DIR/bin"
 
-WORKDIR /root
+RUN chown -R $user:$user /home/$user
+USER $user
+WORKDIR /home/$user

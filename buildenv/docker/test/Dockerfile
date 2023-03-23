@@ -73,3 +73,6 @@ RUN echo yes | cpan install JSON Text::CSV XML::Parser
 # and openj9/test dir to the Docker image by using cmd:
 #   `docker run -it -v <path_to_openj9_sdk_roots>:/java -v <path_to_openj9_test_dir>:/test openj9-buildandtest`
 VOLUME [ "/test", "/java" ]
+
+# Set the default user
+USER 1000
