@@ -86,7 +86,7 @@ ffiCallWithSetJmpForUpcall(J9VMThread *currentThread, ffi_cif *cif, void *functi
  *
  * @param currentThread[in] The pointer to the current J9VMThread
  */
-void longJumpWrapperForUpall(J9VMThread *currentThread)
+void longJumpWrapperForUpcall(J9VMThread *currentThread)
 {
 	jmp_buf *jmpBufEnvPtr = (jmp_buf *)(currentThread->jmpBufEnvPtr);
 	Assert_VM_notNull(jmpBufEnvPtr);

@@ -2410,13 +2410,14 @@ public class UpcallMethodHandles {
 	}
 
 	public static double addDoubleAndIntDoubleLongFromStruct(double arg1, MemorySegment arg2) {
-		/* The size of [int, double, long] on AIX/PPC 64-bit is 20 bytes without padding by default
-		 * while the same struct is 24 bytes with padding on other platforms.
+		/* The padding in the struct [int, double, long] on AIX/PPC 64-bit is different from
+		 * other platforms as follows:
+		 * 1) there is no padding between int and double.
+		 * 2) there is a 4-byte padding between double and long.
 		 */
-		GroupLayout structLayout = isAixOS ? MemoryLayout.structLayout(C_INT.withName("elem1"),
-				C_DOUBLE.withName("elem2"), longLayout.withName("elem3").withBitAlignment(32))
-				: MemoryLayout.structLayout(C_INT.withName("elem1"), MemoryLayout.paddingLayout(32),
-						C_DOUBLE.withName("elem2"), longLayout.withName("elem3"));
+		GroupLayout structLayout = isAixOS ? MemoryLayout.structLayout(C_INT.withName("elem1"), C_DOUBLE.withName("elem2"),
+				MemoryLayout.paddingLayout(32), longLayout.withName("elem3")) : MemoryLayout.structLayout(C_INT.withName("elem1"),
+				MemoryLayout.paddingLayout(32), C_DOUBLE.withName("elem2"), longLayout.withName("elem3"));
 		VarHandle elemHandle1 = structLayout.varHandle(int.class, PathElement.groupElement("elem1"));
 		VarHandle elemHandle2 = structLayout.varHandle(double.class, PathElement.groupElement("elem2"));
 		VarHandle elemHandle3 = structLayout.varHandle(long.class, PathElement.groupElement("elem3"));

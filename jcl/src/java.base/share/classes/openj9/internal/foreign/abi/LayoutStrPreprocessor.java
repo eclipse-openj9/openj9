@@ -1,4 +1,4 @@
-/*[INCLUDE-IF JAVA_SPEC_VERSION == 19]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 19]*/
 /*******************************************************************************
  * Copyright IBM Corp. and others 2022
  *
@@ -27,10 +27,19 @@ import java.util.List;
 /*[IF JAVA_SPEC_VERSION >= 19]*/
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.GroupLayout;
+/*[IF JAVA_SPEC_VERSION == 19]*/
 import java.lang.foreign.MemoryAddress;
+/*[ENDIF] JAVA_SPEC_VERSION == 19 */
 import java.lang.foreign.MemoryLayout;
+/*[IF JAVA_SPEC_VERSION >= 20]*/
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.PaddingLayout;
+/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
 import java.lang.foreign.SequenceLayout;
 import java.lang.foreign.ValueLayout;
+/*[IF JAVA_SPEC_VERSION >= 20]*/
+import jdk.internal.foreign.abi.LinkerOptions;
+/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
 /*[ELSE] JAVA_SPEC_VERSION >= 19 */
 /*[IF JAVA_SPEC_VERSION <= 17]*/
 import jdk.incubator.foreign.CLinker.TypeKind;
@@ -52,12 +61,13 @@ import jdk.incubator.foreign.ValueLayout;
 final class LayoutStrPreprocessor {
 
 	/*[IF JAVA_SPEC_VERSION <= 17]*/
-	private static final String osName = System.getProperty("os.name").toLowerCase(); //$NON-NLS-1$
-	private static final String arch = System.getProperty("os.arch").toLowerCase(); //$NON-NLS-1$
 	private static final String VARARGS_ATTR_NAME;
 
 	static {
-		/* Note: the attributes intended for the layout with variadic argument are defined in OpenJDK */
+		final String osName = System.getProperty("os.name").toLowerCase(); //$NON-NLS-1$
+		final String arch = System.getProperty("os.arch").toLowerCase(); //$NON-NLS-1$
+
+		/* Note: the attributes intended for the layout with variadic argument are defined in OpenJDK. */
 		if ((arch.equals("amd64") || arch.equals("x86_64"))) { //$NON-NLS-1$ //$NON-NLS-2$
 			if (osName.startsWith("windows")) { //$NON-NLS-1$
 				VARARGS_ATTR_NAME = "abi/windows/varargs"; //$NON-NLS-1$
@@ -84,34 +94,46 @@ final class LayoutStrPreprocessor {
 	}
 	/*[ENDIF] JAVA_SPEC_VERSION <= 17 */
 
-	/* Get the index of the variadic argument layout in the function descriptor if exists */
-	static int getVarArgIndex(FunctionDescriptor funcDesc) {
-		/* -1 is the default value defined in JDK18+ when the function descriptor has no variadic arguments */
+	/* Get the index of the variadic argument layout in the function descriptor if exists. */
+	/*[IF JAVA_SPEC_VERSION >= 20]*/
+	static int getVarArgIndex(FunctionDescriptor funcDesc, LinkerOptions options)
+	/*[ELSE] JAVA_SPEC_VERSION >= 20 */
+	static int getVarArgIndex(FunctionDescriptor funcDesc)
+	/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
+	{
+		List<MemoryLayout> argLayouts = funcDesc.argumentLayouts();
+		int argLayoutsSize = argLayouts.size();
+		/* -1 is the default value defined since JDK18+ when the
+		 * function descriptor has no variadic arguments.
+		 */
 		int varArgIdx = -1;
 
-		/*[IF JAVA_SPEC_VERSION >= 18]*/
+		/*[IF JAVA_SPEC_VERSION == 19]*/
 		varArgIdx = funcDesc.firstVariadicArgumentIndex();
-		/*[ELSE] JAVA_SPEC_VERSION >= 18 */
-		List<MemoryLayout> argLayouts = funcDesc.argumentLayouts();
-		for (int argIndex = 0; argIndex < argLayouts.size(); argIndex++) {
-			MemoryLayout argLayout = argLayouts.get(argIndex);
-			if (argLayout.attribute(VARARGS_ATTR_NAME).isPresent()) {
+		/*[ELSE] JAVA_SPEC_VERSION == 19 */
+		for (int argIndex = 0; argIndex < argLayoutsSize; argIndex++) {
+			/*[IF JAVA_SPEC_VERSION >= 20]*/
+			if (options.isVarargsIndex(argIndex))
+			/*[ELSE] JAVA_SPEC_VERSION >= 20 */
+			if (argLayouts.get(argIndex).attribute(VARARGS_ATTR_NAME).isPresent())
+			/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
+			{
 				varArgIdx = argIndex;
 				break;
 			}
 		}
-		/*[ENDIF] JAVA_SPEC_VERSION >= 18 */
+		/*[ENDIF] JAVA_SPEC_VERSION == 19 */
 
 		return varArgIdx;
 	}
 
-	/* Get the simplified layout string prefixed with layout size by parsing the structure of the layout */
+	/* Get the simplified layout string prefixed with layout size by parsing the structure of the layout. */
 	static String getSimplifiedLayoutString(MemoryLayout targetLayout, boolean isDownCall) {
 		StringBuilder layoutStrBuilder = preprocessLayout(targetLayout, isDownCall);
 		long layoutByteSize = targetLayout.byteSize();
 		if (isDownCall) {
-			/* The padding bytes are not required as they will be handled in native in downcall */
-			int paddingBytes = getCountOfPaddingBytesOfStruct(targetLayout);
+			/* The padding bytes are not required as they will be handled in native in downcall. */
+			long paddingBytes = getTotalPaddingBytesOfStruct(targetLayout);
 			layoutStrBuilder.insert(0, layoutByteSize - paddingBytes);
 		} else {
 			layoutStrBuilder.insert(0, '#').insert(0, layoutByteSize);
@@ -119,15 +141,14 @@ final class LayoutStrPreprocessor {
 		return layoutStrBuilder.toString();
 	}
 
-	/* Compute all padding elements of a struct layout in bytes */
-	private static int getCountOfPaddingBytesOfStruct(MemoryLayout targetLayout) {
-		int paddingBytes = 0;
+	/* Compute all padding elements of a struct layout in bytes. */
+	private static long getTotalPaddingBytesOfStruct(MemoryLayout targetLayout) {
+		long paddingBytes = 0;
 
-		if (targetLayout instanceof GroupLayout) {
-			GroupLayout structLayout = (GroupLayout)targetLayout;
+		if (targetLayout instanceof GroupLayout structLayout) {
 			List<MemoryLayout> elementLayoutList = structLayout.memberLayouts();
 			for (MemoryLayout structElement : elementLayoutList) {
-				if (structElement.isPadding()) {
+				if (isPaddingLayout(structElement)) {
 					long tempPaddingBytes = structElement.byteSize();
 					/* The padding bits must be 8 bits (1 byte), 16 bits (2 bytes), 24 bits (3 bytes)
 					 * or 32 bits (4 bytes) as requested by ffi_call.
@@ -143,7 +164,7 @@ final class LayoutStrPreprocessor {
 					}
 					paddingBytes += tempPaddingBytes;
 				} else {
-					paddingBytes += getCountOfPaddingBytesOfStruct(structElement);
+					paddingBytes += getTotalPaddingBytesOfStruct(structElement);
 				}
 			}
 		}
@@ -190,10 +211,9 @@ final class LayoutStrPreprocessor {
 		StringBuilder targetLayoutString = new StringBuilder(""); //$NON-NLS-1$
 
 		/* Directly obtain the kind symbol of the primitive layout */
-		if (targetLayout instanceof ValueLayout) {
-			targetLayoutString.append(getPrimitiveTypeSymbol((ValueLayout)targetLayout));
-		} else if (targetLayout instanceof SequenceLayout) { // Intended for nested arrays
-			SequenceLayout arrayLayout = (SequenceLayout)targetLayout;
+		if (targetLayout instanceof ValueLayout valueLayout) {
+			targetLayoutString.append(getPrimitiveTypeSymbol(valueLayout));
+		} else if (targetLayout instanceof SequenceLayout arrayLayout) { // Intended for nested arrays
 			MemoryLayout elementLayout = arrayLayout.elementLayout();
 			/*[IF JAVA_SPEC_VERSION >= 19]*/
 			long elementCount = arrayLayout.elementCount();
@@ -201,24 +221,23 @@ final class LayoutStrPreprocessor {
 			long elementCount = arrayLayout.elementCount().getAsLong();
 			/*[ENDIF] JAVA_SPEC_VERSION >= 19 */
 
-			/* The padding bytes is required in the native signature for upcall thunk generation */
-			if (elementLayout.isPadding() && !isDownCall) {
+			/* The padding bytes is required in the native signature for upcall thunk generation. */
+			if (isPaddingLayout(elementLayout) && !isDownCall) {
 				targetLayoutString.append('(').append(arrayLayout.byteSize()).append(')');
 			} else {
 				targetLayoutString.append(elementCount).append(':').append(preprocessLayout(elementLayout, isDownCall));
 			}
-		} else if (targetLayout instanceof GroupLayout) { // Intended for the nested structs
-			GroupLayout structLayout = (GroupLayout)targetLayout;
+		} else if (targetLayout instanceof GroupLayout structLayout) { // Intended for the nested structs
 			List<MemoryLayout> elementLayoutList = structLayout.memberLayouts();
 			int structElementCount = elementLayoutList.size();
 			StringBuilder elementLayoutStrs = new StringBuilder(""); //$NON-NLS-1$
 			int paddingElements = 0;
 			for (int elemIndex = 0; elemIndex < structElementCount; elemIndex++) {
 				MemoryLayout structElement = elementLayoutList.get(elemIndex);
-				/* Ignore any padding element in the struct as it is handled by ffi_call by default */
-				if (structElement.isPadding()) {
+				/* Ignore any padding element in the struct as it is handled by ffi_call by default. */
+				if (isPaddingLayout(structElement)) {
 					paddingElements += 1;
-					/* The padding bytes is required in the native signature for upcall thunk generation */
+					/* The padding bytes is required in the native signature for upcall thunk generation. */
 					if (!isDownCall) {
 						elementLayoutStrs.append('(').append(structElement.byteSize()).append(')');
 					}
@@ -226,7 +245,7 @@ final class LayoutStrPreprocessor {
 					elementLayoutStrs.append(preprocessLayout(structElement, isDownCall));
 				}
 			}
-			/* Prefix "#" to denote the start of this layout string in the case of downcall */
+			/* Prefix "#" to denote the start of this layout string in the case of downcall. */
 			if (isDownCall) {
 				targetLayoutString.append('#').append(structElementCount - paddingElements);
 			}
@@ -234,6 +253,15 @@ final class LayoutStrPreprocessor {
 		}
 
 		return targetLayoutString;
+	}
+
+	/* Determine whether the specfied layout is a padding layout or not. */
+	private static boolean isPaddingLayout(MemoryLayout targetLayout) {
+		/*[IF JAVA_SPEC_VERSION >= 20]*/
+		return targetLayout instanceof PaddingLayout;
+		/*[ELSE] JAVA_SPEC_VERSION >= 20 */
+		return targetLayout.isPadding();
+		/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
 	}
 
 	/* Map the specified primitive layout's kind to the symbol for primitive type in VM Spec
@@ -254,11 +282,17 @@ final class LayoutStrPreprocessor {
 			typeSymbol = "S"; //$NON-NLS-1$
 		} else if (javaType == long.class) { // JAVA_CHAR in Java corresponds to C_SHORT (2 bytes) in native
 			typeSymbol = "J"; //$NON-NLS-1$  // Map JAVA_LONG to 'J' so as to keep consistent with the existing VM Spec
-		} else if (javaType == MemoryAddress.class) {
+		} else
+		/*[IF JAVA_SPEC_VERSION >= 20]*/
+		if (javaType == MemorySegment.class)
+		/*[ELSE] JAVA_SPEC_VERSION >= 20 */
+		if (javaType == MemoryAddress.class)
+		/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
+		{
 			typeSymbol = "P"; //$NON-NLS-1$
 		} else {
-			/* Obtain the 1st character of the type class as the symbol of the native signature */
-			typeSymbol = javaType.getSimpleName().toUpperCase().substring(0, 1);
+			/* Obtain the 1st character of the type class as the symbol of the native signature. */
+			typeSymbol = javaType.getSimpleName().substring(0, 1).toUpperCase();
 		}
 		return typeSymbol;
 	}
@@ -283,7 +317,7 @@ final class LayoutStrPreprocessor {
 			break;
 		case LONG:
 		case LONG_LONG: // A 8-byte long type on 64bit Windows as specified in the Spec.
-			/* Map the long layout to 'J' so as to keep consistent with the existing VM Spec */
+			/* Map the long layout to 'J' so as to keep consistent with the existing VM Spec. */
 			typeSymbol = "J"; //$NON-NLS-1$
 			break;
 		case FLOAT:

@@ -37,16 +37,18 @@ extern "C" {
 extern void c_cInterpreter(J9VMThread *currentThread);
 extern bool buildCallInStackFrameHelper(J9VMThread *currentThread, J9VMEntryLocalStorage *newELS, bool returnsObject);
 extern void restoreCallInFrameHelper(J9VMThread *currentThread);
-extern void longJumpWrapperForUpall(J9VMThread *downCallThread);
+extern void longJumpWrapperForUpcall(J9VMThread *downCallThread);
 
 static U_64 JNICALL native2InterpJavaUpcallImpl(J9UpcallMetaData *data, void *argsListPointer);
 static J9VMThread * getCurrentThread(J9UpcallMetaData *data, bool *isCurThrdAllocated);
 static void convertUpcallReturnValue(J9UpcallMetaData *data, U_8 returnType, U_64 *returnStorage);
 static bool storeMemArgObjectsToJavaArray(J9UpcallMetaData *data, void *argsListPointer, J9VMThread *currentThread);
-static j9object_t createMemAddressObject(J9UpcallMetaData *data, I_64 offset);
 static j9object_t createMemSegmentObject(J9UpcallMetaData *data, I_64 offset, U_32 sigTypeSize);
+static I_64 getNativeAddrFromMemSegmentObject(J9UpcallMetaData *data, j9object_t memSegmtObject);
+#if JAVA_SPEC_VERSION <= 19
+static j9object_t createMemAddressObject(J9UpcallMetaData *data, I_64 offset);
 static I_64 getNativeAddrFromMemAddressObject(J9UpcallMetaData *data, j9object_t memAddrObject);
-static I_64 getNativeAddrFromMemSegmentObject(J9UpcallMetaData *data, j9object_t memAddrObject);
+#endif /* JAVA_SPEC_VERSION <= 19 */
 
 /**
  * @brief Call into the interpreter via native2InterpJavaUpcallImpl to invoke the upcall
@@ -370,7 +372,7 @@ done:
 	 * in BytecodeInterpreter.hpp for details.
 	 */
 	if (VM_VMHelpers::exceptionPending(downCallThread)) {
-		longJumpWrapperForUpall(downCallThread);
+		longJumpWrapperForUpcall(downCallThread);
 	}
 
 doneAndExit:
@@ -453,12 +455,16 @@ convertUpcallReturnValue(J9UpcallMetaData *data, U_8 returnType, U_64 *returnSto
 #endif /* !defined(J9VM_ENV_LITTLE_ENDIAN) */
 		break;
 	}
+#if JAVA_SPEC_VERSION <= 19
 	case J9NtcPointer:
 	{
 		j9object_t memAddrObject = (j9object_t)*returnStorage;
 		*returnStorage = (U_64)getNativeAddrFromMemAddressObject(data, memAddrObject);
 		break;
 	}
+#else /* JAVA_SPEC_VERSION <= 19 */
+	case J9NtcPointer: /* Fall through */
+#endif /* JAVA_SPEC_VERSION <= 19 */
 	case J9NtcStruct:
 	{
 		j9object_t memSegmtObject = (j9object_t)*returnStorage;
@@ -498,7 +504,15 @@ storeMemArgObjectsToJavaArray(J9UpcallMetaData *data, void *argsListPointer, J9V
 		) {
 			if (J9_FFI_UPCALL_SIG_TYPE_POINTER == argSigType) {
 				I_64 offset = *(I_64*)getArgPointer(nativeSig, argsListPointer, argIndex);
+#if JAVA_SPEC_VERSION >= 20
+				/* A pointer argument is wrapped as a zero-sized memory segment given all
+				 * MemoryAdress related classes are removed against the latest APIs as
+				 * specified in JDK20+.
+				 */
+				memArgObject = createMemSegmentObject(data, offset, 0);
+#else /* JAVA_SPEC_VERSION => 20 */
 				memArgObject = createMemAddressObject(data, offset);
+#endif /* JAVA_SPEC_VERSION => 20 */
 			} else { /* J9_FFI_UPCALL_SIG_TYPE_STRUCT */
 				I_64 offset = (I_64)(intptr_t)getArgPointer(nativeSig, argsListPointer, argIndex);
 				memArgObject = createMemSegmentObject(data, offset, sigArray[argIndex].sizeInByte);
@@ -527,6 +541,7 @@ done:
 	return result;
 }
 
+#if JAVA_SPEC_VERSION <= 19
 /**
  * @brief Generate an object of the MemoryAddress's subclass on the heap
  * with the specified native address to the value.
@@ -571,14 +586,15 @@ createMemAddressObject(J9UpcallMetaData *data, I_64 offset)
 done:
 	return memAddrObject;
 }
+#endif /* JAVA_SPEC_VERSION <= 19 */
 
 /**
  * @brief Generate an object of the MemorySegment's subclass on the heap with the specified
- * native address to the requested struct.
+ * native address to the requested struct or pointer(JDK20+).
  *
  * @param data a pointer to J9UpcallMetaData
- * @param offset the native address to the requested struct
- * @param sigTypeSize the byte size of the requested struct
+ * @param offset the native address to the requested struct OR pointer(JDK20+)
+ * @param sigTypeSize the byte size of the requested struct or zero in the case of pointer in JDK20+
  * @return a MemorySegment object
  */
 static j9object_t
@@ -613,18 +629,19 @@ createMemSegmentObject(J9UpcallMetaData *data, I_64 offset, U_32 sigTypeSize)
 
 	J9VMJDKINTERNALFOREIGNNATIVEMEMORYSEGMENTIMPL_SET_MIN(currentThread, memSegmtObject, offset);
 	J9VMJDKINTERNALFOREIGNNATIVEMEMORYSEGMENTIMPL_SET_LENGTH(currentThread, memSegmtObject, sigTypeSize);
-#if JAVA_SPEC_VERSION >= 19
+#if JAVA_SPEC_VERSION == 19
 	J9VMJDKINTERNALFOREIGNNATIVEMEMORYSEGMENTIMPL_SET_SESSION(currentThread, memSegmtObject,
 					J9VMOPENJ9INTERNALFOREIGNABIUPCALLMHMETADATA_SESSION(currentThread, mhMetaData));
-#else /* JAVA_SPEC_VERSION >= 19 */
+#else /* JAVA_SPEC_VERSION == 19 */
 	J9VMJDKINTERNALFOREIGNNATIVEMEMORYSEGMENTIMPL_SET_SCOPE(currentThread, memSegmtObject,
 					J9VMOPENJ9INTERNALFOREIGNABIUPCALLMHMETADATA_SCOPE(currentThread, mhMetaData));
-#endif /* JAVA_SPEC_VERSION >= 19 */
+#endif /* JAVA_SPEC_VERSION == 19 */
 
 done:
 	return memSegmtObject;
 }
 
+#if JAVA_SPEC_VERSION <= 19
 /**
  * @brief Get the native address to the requested value from a MemoryAddress object.
  *
@@ -657,6 +674,7 @@ getNativeAddrFromMemAddressObject(J9UpcallMetaData *data, j9object_t memAddrObje
 	Assert_VM_true(0 != nativePtrValue);
 	return nativePtrValue;
 }
+#endif /* JAVA_SPEC_VERSION <= 19 */
 
 /**
  * @brief Get the native address to the requested struct from a MemorySegment object.

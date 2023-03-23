@@ -19,7 +19,7 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-package org.openj9.test.jep424.upcall;
+package org.openj9.test.jep434.upcall;
 
 import org.testng.annotations.Test;
 import org.testng.Assert;
@@ -29,15 +29,13 @@ import static org.testng.Assert.fail;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.VarHandle;
 
-import java.lang.foreign.Addressable;
+import java.lang.foreign.Arena;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.GroupLayout;
 import java.lang.foreign.Linker;
-import java.lang.foreign.MemoryAddress;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemoryLayout.PathElement;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.MemorySession;
 import java.lang.foreign.SegmentAllocator;
 import java.lang.foreign.SequenceLayout;
 import java.lang.foreign.SymbolLookup;
@@ -45,8 +43,8 @@ import java.lang.foreign.ValueLayout;
 import static java.lang.foreign.ValueLayout.*;
 
 /**
- * Test cases for JEP 424: Foreign Linker API (Preview) for argument/return struct in upcall,
- * which verify the illegal cases specific to the return value.
+ * Test cases for JEP 434: Foreign Linker API (Second Preview) in upcall,
+ * which verify the illegal cases including the returned segment, etc.
  */
 @Test(groups = { "level.sanity" })
 public class InvalidUpCallTests {
@@ -64,13 +62,13 @@ public class InvalidUpCallTests {
 		VarHandle intHandle2 = structLayout.varHandle(PathElement.groupElement("elem2"));
 
 		FunctionDescriptor fd = FunctionDescriptor.of(structLayout, structLayout, structLayout, ADDRESS);
-		Addressable functionSymbol = nativeLibLookup.lookup("add2IntStructs_returnStructByUpcallMH").get();
+		MemorySegment functionSymbol = nativeLibLookup.find("add2IntStructs_returnStructByUpcallMH").get();
 		MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
 
-		try (MemorySession session = MemorySession.openConfined()) {
+		try (Arena arena = Arena.openConfined()) {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_add2IntStructs_returnStruct_throwException,
-					FunctionDescriptor.of(structLayout, structLayout, structLayout), session);
-			SegmentAllocator allocator = SegmentAllocator.newNativeArena(session);
+					FunctionDescriptor.of(structLayout, structLayout, structLayout), arena.scope());
+			SegmentAllocator allocator = SegmentAllocator.nativeAllocator(arena.scope());
 			MemorySegment structSegmt1 = allocator.allocate(structLayout);
 			intHandle1.set(structSegmt1, 11223344);
 			intHandle2.set(structSegmt1, 55667788);

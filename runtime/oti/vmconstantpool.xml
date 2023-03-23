@@ -159,10 +159,10 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<classref name="openj9/internal/foreign/abi/UpcallMHMetaData" flags="opt_openjdkFfi" versions="16-"/>
 
 	<classref name="jdk/incubator/foreign/MemoryAddress" flags="opt_openjdkFfi" versions="16-18"/>
-	<classref name="jdk/lang/foreign/MemoryAddress" flags="opt_openjdkFfi" versions="19-"/>
+	<classref name="java/lang/foreign/MemoryAddress" flags="opt_openjdkFfi" versions="19"/>
 	<classref name="jdk/incubator/foreign/MemorySegment" flags="opt_openjdkFfi" versions="16-18"/>
-	<classref name="jdk/lang/foreign/MemorySegment" flags="opt_openjdkFfi" versions="19-"/>
-	<classref name="jdk/internal/foreign/MemoryAddressImpl" flags="opt_openjdkFfi" versions="16-"/>
+	<classref name="java/lang/foreign/MemorySegment" flags="opt_openjdkFfi" versions="19-"/>
+	<classref name="jdk/internal/foreign/MemoryAddressImpl" flags="opt_openjdkFfi" versions="16-19"/>
 	<classref name="jdk/internal/foreign/AbstractMemorySegmentImpl" flags="opt_openjdkFfi" versions="16-"/>
 	<classref name="jdk/internal/foreign/NativeMemorySegmentImpl" flags="opt_openjdkFfi" versions="16-"/>
 	<classref name="jdk/internal/foreign/SharedScope" flags="opt_openjdkFfi" versions="16-18"/>
@@ -427,15 +427,17 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<fieldref class="openj9/internal/foreign/abi/UpcallMHMetaData" name="nativeArgArray" signature="[Ljava/lang/Object;" flags="opt_openjdkFfi" versions="16-"/>
 
 	<fieldref class="openj9/internal/foreign/abi/UpcallMHMetaData" name="scope" signature="Ljdk/incubator/foreign/ResourceScope;" flags="opt_openjdkFfi" versions="16-18"/>
-	<fieldref class="openj9/internal/foreign/abi/UpcallMHMetaData" name="session" signature="Ljava/lang/foreign/MemorySession;" flags="opt_openjdkFfi" versions="19-"/>
+	<fieldref class="openj9/internal/foreign/abi/UpcallMHMetaData" name="session" signature="Ljava/lang/foreign/MemorySession;" flags="opt_openjdkFfi" versions="19"/>
+	<fieldref class="openj9/internal/foreign/abi/UpcallMHMetaData" name="scope" signature="Ljava/lang/foreign/SegmentScope;" flags="opt_openjdkFfi" versions="20-"/>
 
 	<fieldref class="jdk/internal/foreign/MemoryAddressImpl" name="segment" signature="Ljdk/internal/foreign/AbstractMemorySegmentImpl;" flags="opt_openjdkFfi" versions="16-17"/>
-	<fieldref class="jdk/internal/foreign/MemoryAddressImpl" name="offset" signature="J" flags="opt_openjdkFfi" versions="16-"/>
+	<fieldref class="jdk/internal/foreign/MemoryAddressImpl" name="offset" signature="J" flags="opt_openjdkFfi" versions="16-19"/>
 
 	<fieldref class="jdk/internal/foreign/NativeMemorySegmentImpl" name="min" signature="J" flags="opt_openjdkFfi" versions="16-"/>
 	<fieldref class="jdk/internal/foreign/NativeMemorySegmentImpl" name="length" signature="J" flags="opt_openjdkFfi" versions="16-"/>
 	<fieldref class="jdk/internal/foreign/NativeMemorySegmentImpl" name="scope" signature="Ljdk/internal/foreign/ResourceScopeImpl;" flags="opt_openjdkFfi" versions="16-18"/>
-	<fieldref class="jdk/internal/foreign/NativeMemorySegmentImpl" name="session" signature="Ljava/lang/foreign/MemorySession;" flags="opt_openjdkFfi" versions="19-"/>
+	<fieldref class="jdk/internal/foreign/NativeMemorySegmentImpl" name="session" signature="Ljava/lang/foreign/MemorySession;" flags="opt_openjdkFfi" versions="19"/>
+	<fieldref class="jdk/internal/foreign/NativeMemorySegmentImpl" name="scope" signature="Ljava/lang/foreign/SegmentScope;" flags="opt_openjdkFfi" versions="20-"/>
 
 <!--
 	NOTE: the resolution code in jclcinit.c only looks at the J9ROMClassRef->runtimeFlags to determine
