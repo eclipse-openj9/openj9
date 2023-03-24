@@ -1356,7 +1356,14 @@ J9::SymbolReferenceTable::findOrCreateCurrentThreadSymbolRef()
       TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
       TR::Symbol * sym = TR::RegisterMappedSymbol::createMethodMetaDataSymbol(trHeapMemory(), "CurrentThread");
       sym->setDataType(TR::Address);
-      sym->setImmutableField();
+      if (fej9->isJ9VMThreadCurrentThreadImmutable())
+         {
+         sym->setImmutableField();
+         }
+      else
+         {
+         sym->setVolatile();
+         }
       element(currentThreadSymbol) = new (trHeapMemory()) TR::SymbolReference(self(), currentThreadSymbol, sym);
       element(currentThreadSymbol)->setOffset(fej9->thisThreadGetCurrentThreadOffset());
       }
