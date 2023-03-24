@@ -1361,6 +1361,13 @@ public:
     */
    bool isSnapshotModeEnabled();
 
+   /**
+    * \brief Answers whether or not Thread.currentThread() is immutable.
+    *
+    * \return True if Thread.currentThread() is immutable.
+    */
+   virtual bool isJ9VMThreadCurrentThreadImmutable();
+
 protected:
 
    enum // _flags
