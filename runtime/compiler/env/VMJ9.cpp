@@ -9386,6 +9386,16 @@ TR_J9VMBase::isSnapshotModeEnabled()
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
    }
 
+bool
+TR_J9VMBase::isJ9VMThreadCurrentThreadImmutable()
+   {
+#if JAVA_SPEC_VERSION >= 19
+   return false;
+#else
+   return true;
+#endif /* JAVA_SPEC_VERSION >= 19 */
+   }
+
 // Native method bodies
 //
 #if defined(TR_HOST_X86)
