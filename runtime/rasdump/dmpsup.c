@@ -453,14 +453,14 @@ configureDumpAgents(J9JavaVM *vm, J9VMInitArgs *j9vm_args, BOOLEAN isBootup)
 	BOOLEAN enableXXHeapDump = FALSE; /* -XX:+HeapDumpOnOutOfMemoryError is selected */
 
 	/* -Xdump:help */
-	if ( FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XDUMP ":help", NULL) >= 0 )
+	if ( FIND_AND_CONSUME_ARG(j9vm_args, EXACT_MATCH, VMOPT_XDUMP ":help", NULL) >= 0 )
 	{
 		printDumpUsage(vm);
 		return J9VMDLLMAIN_SILENT_EXIT_VM;
 	}
 
 	/* -Xdump:events */
-	if ( FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XDUMP ":events", NULL) >= 0 )
+	if ( FIND_AND_CONSUME_ARG(j9vm_args, EXACT_MATCH, VMOPT_XDUMP ":events", NULL) >= 0 )
 	{
 		j9tty_err_printf(PORTLIB, "\nTrigger events:\n\n");
 		printDumpEvents( vm, J9RAS_DUMP_ON_ANY, 1 );
@@ -468,7 +468,7 @@ configureDumpAgents(J9JavaVM *vm, J9VMInitArgs *j9vm_args, BOOLEAN isBootup)
 	}
 
 	/* -Xdump:request */
-	if ( FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XDUMP ":request", NULL) >= 0 )
+	if ( FIND_AND_CONSUME_ARG(j9vm_args, EXACT_MATCH, VMOPT_XDUMP ":request", NULL) >= 0 )
 	{
 		j9tty_err_printf(PORTLIB, "\nAdditional VM requests:\n\n");
 		printDumpRequests( vm, (UDATA)-1, 1 );
@@ -476,7 +476,7 @@ configureDumpAgents(J9JavaVM *vm, J9VMInitArgs *j9vm_args, BOOLEAN isBootup)
 	}
 
 	/* -Xdump:tokens */
-	if ( FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XDUMP ":tokens", NULL) >= 0 )
+	if ( FIND_AND_CONSUME_ARG(j9vm_args, EXACT_MATCH, VMOPT_XDUMP ":tokens", NULL) >= 0 )
 	{
 		j9tty_err_printf(PORTLIB, "\nLabel tokens:\n\n");
 		printLabelSpec( vm );
@@ -484,37 +484,37 @@ configureDumpAgents(J9JavaVM *vm, J9VMInitArgs *j9vm_args, BOOLEAN isBootup)
 	}
 
 	/* -Xdump:what */
-	if ( FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XDUMP ":what", NULL) >= 0 )
+	if ( FIND_AND_CONSUME_ARG(j9vm_args, EXACT_MATCH, VMOPT_XDUMP ":what", NULL) >= 0 )
 	{
 		showAgents = 1;
 	}
 
 	/* -Xdump:noprotect */
-	if ( FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XDUMP ":noprotect", NULL) >= 0 )
+	if ( FIND_AND_CONSUME_ARG(j9vm_args, EXACT_MATCH, VMOPT_XDUMP ":noprotect", NULL) >= 0 )
 	{
 		dumpGlobal->noProtect = 1;
 	}
 
 	/* -Xdump:nofailover */
-	if ( FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XDUMP ":nofailover", NULL) >= 0 )
+	if ( FIND_AND_CONSUME_ARG(j9vm_args, EXACT_MATCH, VMOPT_XDUMP ":nofailover", NULL) >= 0 )
 	{
 		dumpGlobal->noFailover = 1;
 	}
 
 	/* -Xdump:dynamic ... grab hooks before the JIT turns them off */
-	if ( FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XDUMP ":dynamic", NULL) >= 0 )
+	if ( FIND_AND_CONSUME_ARG(j9vm_args, EXACT_MATCH, VMOPT_XDUMP ":dynamic", NULL) >= 0 )
 	{
 		rasDumpEnableHooks(vm, J9RAS_DUMP_ON_EXCEPTION_THROW | J9RAS_DUMP_ON_EXCEPTION_CATCH);
 	}
 
 #if defined(OMR_CONFIGURABLE_SUSPEND_SIGNAL)
 	/* -Xdump:suspendwith */
-	xdumpIndex = FIND_AND_CONSUME_VMARG(STARTSWITH_MATCH, VMOPT_XDUMP ":suspendwith", NULL);
+	xdumpIndex = FIND_AND_CONSUME_ARG(j9vm_args, STARTSWITH_MATCH, VMOPT_XDUMP ":suspendwith", NULL);
 	if (xdumpIndex >= 0) {
 		/* Get value of -Xdump:suspendwith */
 		const char *optName = VMOPT_XDUMP ":suspendwith=";
 		UDATA suspendwith = 0;
-		UDATA parseError = GET_INTEGER_VALUE(xdumpIndex, optName, suspendwith);
+		UDATA parseError = GET_INTEGER_VALUE_ARGS(j9vm_args, xdumpIndex, optName, suspendwith);
 		if (OPTION_OK != parseError) {
 			j9nls_printf(PORTLIB, J9NLS_ERROR | J9NLS_STDERR, J9NLS_DMP_INVALID_OR_RESERVED, optName);
 			printDumpUsage(vm);
@@ -537,9 +537,9 @@ configureDumpAgents(J9JavaVM *vm, J9VMInitArgs *j9vm_args, BOOLEAN isBootup)
 
 	/* process options controlling javadump symbol resolution */
 	{
-		IDATA noSymbols = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXNOSHOWNATIVESTACKSYMBOLS, NULL);
-		IDATA allSymbols = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXSHOWNATIVESTACKSYMBOLS_ALL, NULL);
-		IDATA basicSymbols = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXSHOWNATIVESTACKSYMBOLS_BASIC, NULL);
+		IDATA noSymbols = FIND_AND_CONSUME_ARG(j9vm_args, EXACT_MATCH, VMOPT_XXNOSHOWNATIVESTACKSYMBOLS, NULL);
+		IDATA allSymbols = FIND_AND_CONSUME_ARG(j9vm_args, EXACT_MATCH, VMOPT_XXSHOWNATIVESTACKSYMBOLS_ALL, NULL);
+		IDATA basicSymbols = FIND_AND_CONSUME_ARG(j9vm_args, EXACT_MATCH, VMOPT_XXSHOWNATIVESTACKSYMBOLS_BASIC, NULL);
 
 		/* set default */
 		dumpGlobal->showNativeSymbols = J9RAS_JAVADUMP_SHOW_NATIVE_STACK_SYMBOLS_BASIC;
@@ -587,8 +587,8 @@ configureDumpAgents(J9JavaVM *vm, J9VMInitArgs *j9vm_args, BOOLEAN isBootup)
 	 * Set heapDumpIndex to the index of the rightmost option
 	 * and indicate whether enable or disable wins.
 	 */
-	heapDumpIndex = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXNOHEAPDUMPONOOM, NULL);
-	xdumpIndex = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXHEAPDUMPONOOM, NULL);
+	heapDumpIndex = FIND_AND_CONSUME_ARG(j9vm_args, EXACT_MATCH, VMOPT_XXNOHEAPDUMPONOOM, NULL);
+	xdumpIndex = FIND_AND_CONSUME_ARG(j9vm_args, EXACT_MATCH, VMOPT_XXHEAPDUMPONOOM, NULL);
 	processXXHeapDump = ((xdumpIndex >= 0) || (heapDumpIndex >= 0));
 	if (xdumpIndex > heapDumpIndex) {
 		enableXXHeapDump = TRUE;
