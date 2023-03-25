@@ -60,17 +60,17 @@ MM_HeapWalkerDelegate::doContinuationNativeSlots(MM_EnvironmentBase *env, omrobj
 {
 	J9VMThread *currentThread = (J9VMThread *)env->getLanguageVMThread();
 
+	const bool isConcurrentGC = false;
 	const bool isGlobalGC = true;
-	if (MM_GCExtensions::needScanStacksForContinuationObject(currentThread, objectPtr, isGlobalGC)) {
+	const bool beingMounted = false;
+	if (MM_GCExtensions::needScanStacksForContinuationObject(currentThread, objectPtr, isConcurrentGC, isGlobalGC, beingMounted)) {
 		StackIteratorData4HeapWalker localData;
 		localData.heapWalker = _heapWalker;
 		localData.env = env;
 		localData.fromObject = objectPtr;
 		localData.function = function;
 		localData.userData = userData;
-		/* so far there is no case we need ClassWalk for heapwalker, so we set stackFrameClassWalkNeeded = false */
-		const bool isConcurrentGC = false;
 
-		GC_VMThreadStackSlotIterator::scanSlots(currentThread, objectPtr, (void *)&localData, stackSlotIteratorForHeapWalker, false, false, isConcurrentGC, isGlobalGC);
+		GC_VMThreadStackSlotIterator::scanContinuationSlots(currentThread, objectPtr, (void *)&localData, stackSlotIteratorForHeapWalker, false, false);
 	}
 }

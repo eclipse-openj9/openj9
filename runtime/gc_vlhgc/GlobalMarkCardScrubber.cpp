@@ -192,16 +192,17 @@ bool MM_GlobalMarkCardScrubber::scrubContinuationNativeSlots(MM_EnvironmentVLHGC
 {
 	bool doScrub = true;
 	J9VMThread *currentThread = (J9VMThread *)env->getLanguageVMThread();
+	const bool isConcurrentGC = false;
 	const bool isGlobalGC = true;
-	if (MM_GCExtensions::needScanStacksForContinuationObject(currentThread, objectPtr, isGlobalGC)) {
+	const bool beingMounted = false;
+	if (MM_GCExtensions::needScanStacksForContinuationObject(currentThread, objectPtr, isConcurrentGC, isGlobalGC, beingMounted)) {
 		StackIteratorData4GlobalMarkCardScrubber localData;
 		localData.globalMarkCardScrubber = this;
 		localData.env = env;
 		localData.doScrub = &doScrub;
 		localData.fromObject = objectPtr;
-		const bool isConcurrentGC = false;
 
-		GC_VMThreadStackSlotIterator::scanSlots(currentThread, objectPtr, (void *)&localData, stackSlotIteratorForGlobalMarkCardScrubber, false, false, isConcurrentGC, isGlobalGC);
+		GC_VMThreadStackSlotIterator::scanContinuationSlots(currentThread, objectPtr, (void *)&localData, stackSlotIteratorForGlobalMarkCardScrubber, false, false);
 	}
 	return doScrub;
 }

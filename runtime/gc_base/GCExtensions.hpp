@@ -307,7 +307,7 @@ public:
 	 * @param[in] isGlobalGC
 	 * @return true if we need to scan the java stack
 	 */
-	static bool needScanStacksForContinuationObject(J9VMThread *vmThread, j9object_t objectPtr, bool isGlobalGC);
+	static bool needScanStacksForContinuationObject(J9VMThread *vmThread, j9object_t objectPtr, bool isConcurrentGC, bool isGlobalGC, bool beingMounted);
 
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 	MMINLINE virtual bool reinitializationInProgress() { return (NULL != ((J9JavaVM*)_omrVM->_language_vm)->checkpointState.checkpointThread); }
