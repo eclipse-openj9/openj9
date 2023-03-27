@@ -23,7 +23,7 @@
 package org.eclipse.openj9.criu;
 
 /**
- * A CRIU exception representing a failure in the JVM before checkpoint.
+ * An exception representing a failure in the JVM before checkpoint.
  */
 public final class JVMCheckpointException extends JVMCRIUException {
 	private static final long serialVersionUID = 4486137934620495516L;
