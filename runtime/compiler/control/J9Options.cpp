@@ -23,9 +23,6 @@
 #include "control/J9Options.hpp"
 
 #include <algorithm>
-#if defined(J9VM_OPT_JITSERVER)
-#include <random>
-#endif /* defined(J9VM_OPT_JITSERVER) */
 #include <ctype.h>
 #include <stdint.h>
 #include "jitprotos.h"
@@ -2370,16 +2367,7 @@ bool J9::Options::preProcessJitServer(J9JavaVM *vm, J9JITConfig *jitConfig)
           compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
          {
          // Generate a random identifier for this JITServer instance.
-         // Collisions are possible, but very unlikely.
-         // Using more bits for the client UID can reduce the probability of a collision further.
-         std::random_device rd;
-         std::mt19937_64 rng(rd());
-         std::uniform_int_distribution<uint64_t> dist;
-         // Generated uid must not be 0
-         uint64_t uid = dist(rng);
-         while (0 == uid)
-            uid = dist(rng);
-
+         uint64_t uid = JITServerHelpers::generateUID();
          if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
             {
             compInfo->getPersistentInfo()->setClientUID(uid);
@@ -2398,7 +2386,6 @@ bool J9::Options::preProcessJitServer(J9JavaVM *vm, J9JITConfig *jitConfig)
             jitConfig->clientUID = 0;
             jitConfig->serverUID = uid;
             }
-
          }
       else
          {
