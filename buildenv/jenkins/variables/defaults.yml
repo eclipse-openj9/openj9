@@ -307,8 +307,8 @@ x86-64_linux:
       8: 'ci.role.build && hw.arch.x86 && sw.tool.docker'
       11: 'ci.role.build && hw.arch.x86 && sw.tool.docker'
     docker_image:
-      8: 'eclipseopenj9/jenkins-agent-x86-centos6:24'
-      11: 'eclipseopenj9/jenkins-agent-x86-centos6:24'
+      8: 'eclipseopenj9/jenkins-agent-x86-centos6:28'
+      11: 'eclipseopenj9/jenkins-agent-x86-centos6:28'
   build_env:
     cmd:
       all: 'source /home/jenkins/set_gcc_11.2.0_env'
