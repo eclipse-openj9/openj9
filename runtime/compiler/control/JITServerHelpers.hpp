@@ -23,6 +23,7 @@
 #ifndef JITSERVER_HELPERS_H
 #define JITSERVER_HELPERS_H
 
+#include <random>
 #include "net/MessageTypes.hpp"
 #include "runtime/JITClientSession.hpp"
 
@@ -142,6 +143,8 @@ public:
 
    static void cacheRemoteROMClassBatch(ClientSessionData *clientData, const std::vector<J9Class *> &ramClasses,
                                         const std::vector<ClassInfoTuple> &classInfoTuples);
+   // Helper routine to generate a unique ID for the client or server
+   static uint64_t generateUID();
 
 private:
    static void getROMClassData(const ClientSessionData::ClassInfo &classInfo, ClassInfoDataType dataType, void *data);
