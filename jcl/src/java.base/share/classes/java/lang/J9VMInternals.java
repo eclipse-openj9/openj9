@@ -82,6 +82,11 @@ final class J9VMInternals {
 	static boolean initialized;
 	private static Unsafe unsafe;
 
+	/*[IF INLINE-TYPES]*/
+	static boolean positiveOnlyHashcodes = positiveOnlyHashcodes();
+	static Method valueObjectHashCode;
+	/*[ENDIF] INLINE-TYPES */
+
 	/* Ensure this class cannot be instantiated */
 	private J9VMInternals() {
 	}
@@ -525,16 +530,23 @@ final class J9VMInternals {
 	static int valueHashCode(Object anObject) {
 		int hashcode;
 
+		if (null == valueObjectHashCode) {
+			try {
+				Class<?> valueObjectMethods = Class.forName("java.lang.runtime.ValueObjectMethods");
+				valueObjectHashCode = valueObjectMethods.getDeclaredMethod("valueObjectHashCode", Object.class);
+				valueObjectHashCode.setAccessible(true);
+			} catch (ClassNotFoundException | NoSuchMethodException e) {
+				throw new InternalError(e);
+			}
+		}
+
 		try {
-			Class<?> valueObjectMethods = Class.forName("java.lang.runtime.ValueObjectMethods");
-			Method valueObjectHashCode = valueObjectMethods.getDeclaredMethod("valueObjectHashCode", Object.class);
-			valueObjectHashCode.setAccessible(true);
 			hashcode = (Integer)valueObjectHashCode.invoke(null, anObject);
-		} catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+		} catch (IllegalAccessException | InvocationTargetException e) {
 			throw new InternalError(e);
 		}
 
-		if (positiveOnlyHashcodes()) {
+		if (positiveOnlyHashcodes) {
 			hashcode &= 0x7FFF_FFFF;
 		}
 
