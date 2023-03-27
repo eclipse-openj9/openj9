@@ -830,6 +830,31 @@ J9::SymbolReferenceTable::findOrFabricateShadowSymbol(
       qualifiedFieldName,
       TR::Symbol::UnknownField);
 
+   // As yet JITServer does not support getClassFromSignature() based directly
+   // on J9ConstantPool*, but it does support it using TR_OpaqueMethodBlock*.
+   // Find an arbitrary method (if there is one) defined by the same class that
+   // declares the field, and use that method to getClassFromSignature(), since
+   // it will have the desired constant pool.
+   //
+   // The class containing the field is highly likely to declare at least a
+   // constructor, and if it doesn't, then it seems that it's not possible to
+   // instantiate it in the usual way (new, dup, invokespecial <init>), so the
+   // performance of accesses to its instance fields is especially unlikely to
+   // matter.
+   //
+   TR_J9VM *fej9 = reinterpret_cast<TR_J9VM *>(fe());
+   if (fej9->getNumMethods(containingClass) > 0)
+      {
+      auto *firstMethod =
+         static_cast<TR_OpaqueMethodBlock*>(fej9->getMethods(containingClass));
+
+      TR_OpaqueClassBlock *declaredClass = fej9->getClassFromSignature(
+         signature, (int32_t)strlen(signature), firstMethod);
+
+      if (declaredClass != NULL)
+         sym->setDeclaredClass(declaredClass);
+      }
+
    mcount_t methodIndex = mcount_t::valueOf(0);
    int32_t cpIndex = -1;
    symRef = new (trHeapMemory()) TR::SymbolReference(
@@ -1063,6 +1088,31 @@ J9::SymbolReferenceTable::findOrCreateShadowSymbol(TR::ResolvedMethodSymbol * ow
          isFinal,
          NULL,
          recognizedField);
+      }
+
+   if (resolved)
+      {
+      int32_t len = 0;
+      const char *sig = owningMethod->fieldSignatureChars(cpIndex, len);
+      TR_OpaqueClassBlock *declaredClass =
+         fe()->getClassFromSignature(sig, len, owningMethod);
+
+      if (declaredClass != NULL)
+         {
+         TR_OpaqueClassBlock *prevDeclaredClass = sym->getDeclaredClass();
+         if (prevDeclaredClass == NULL)
+            {
+            sym->setDeclaredClass(declaredClass);
+            }
+         else
+            {
+            TR_ASSERT_FATAL(
+               prevDeclaredClass == declaredClass,
+               "declared class mismatch: %p vs. prev %p",
+               declaredClass,
+               prevDeclaredClass);
+            }
+         }
       }
 
    int32_t unresolvedIndex = resolved ? 0 : _numUnresolvedSymbols++;
