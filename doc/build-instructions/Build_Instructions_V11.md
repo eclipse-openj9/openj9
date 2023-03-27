@@ -764,10 +764,8 @@ bash configure --openjdk-target=${OPENJ9_CC_PREFIX} \
                --with-x=${OPENJ9_CC_DIR}/${OPENJ9_CC_PREFIX}/ \
                --with-freetype-include=${OPENJ9_CC_DIR}/${OPENJ9_CC_PREFIX}/libc/usr/include/freetype2 \
                --with-freetype-lib=${OPENJ9_CC_DIR}/${OPENJ9_CC_PREFIX}/libc/usr/lib \
-               --with-freemarker-jar=/root/freemarker.jar \
                --with-boot-jdk=/root/bootjdk11 \
                --with-build-jdk=/root/bootjdk11 \
-               --with-cmake=no \
                --disable-warnings-as-errors \
                --disable-ddr
 ```
