@@ -49,6 +49,13 @@ import openj9.internal.criu.InternalCRIUSupport;
 
 /**
  * CRIU Support API
+ *
+ * A checkpoint is the act of halting the JVM, saving its state and writing it out to a file(s). Restore is reading the saved checkpoint state
+ * and resuming the JVM application from when it was checkpointed. This technology is available via CRIU (checkpoint/restore in user space
+ * see, https://criu.org/Main_Page).
+ *
+ * This API enables the use of CRIU capabilities provided by the OS as well as JVM support for facilitating a successful checkpoint
+ * and restore in varying environments.
  */
 /*[IF JAVA_SPEC_VERSION >= 17]*/
 @SuppressWarnings({ "deprecation", "removal" })
@@ -169,7 +176,8 @@ public final class CRIUSupport {
 	}
 
 	/**
-	 * Queries if CRIU Checkpoint is allowed.
+	 * Queries if CRIU Checkpoint is allowed. With -XX:+CRIURestoreNonPortableMode enabled
+	 * (default policy) only a single checkpoint is allowed.
 	 *
 	 * @return true if Checkpoint is allowed, otherwise false
 	 */
@@ -436,6 +444,9 @@ public final class CRIUSupport {
 	 * Format for envFile is the following: ENV_VAR_NAME1=ENV_VAR_VALUE1 ...
 	 * ENV_VAR_NAMEN=ENV_VAR_VALUEN
 	 *
+	 * OPENJ9_RESTORE_JAVA_OPTIONS is a special environment variable that can be
+	 * used to add JVM options on restore.
+	 *
 	 * @param envFile The file that contains the new environment variables to be
 	 *                added
 	 * @return this
@@ -449,7 +460,8 @@ public final class CRIUSupport {
 	 * Add new JVM options upon restore. The options will be specified in an options
 	 * file with the form specified in https://www.eclipse.org/openj9/docs/xoptionsfile/
 	 *
-	 * TODO: The first iteration will only support -D options. Subsequent iterations will add more functionality.
+	 * Only a subset of JVM options are available on restore. Consult the CRIU Support section of Eclipse OpenJ9 documentation to determine
+	 * which options are supported.
 	 *
 	 * @param optionsFile The file that contains the new JVM options to be added on restore
 	 *
@@ -468,12 +480,12 @@ public final class CRIUSupport {
 	 * Hooks will be run in single threaded mode, no other application threads
 	 * will be active. Users should avoid synchronization of objects that are not owned
 	 * by the thread, terminally blocking operations and launching new threads in the hook.
+	 * If the thread attempts to acquire a lock that it doesn't own, an exception will
+	 * be thrown.
 	 *
 	 * @param hook user hook
 	 *
 	 * @return this
-	 *
-	 * TODO: Additional JVM capabilities will be added to prevent certain deadlock scenarios
 	 */
 	public CRIUSupport registerPostRestoreHook(Runnable hook) {
 		if (hook != null) {
@@ -494,12 +506,13 @@ public final class CRIUSupport {
 	 * Hooks will be run in single threaded mode, no other application threads
 	 * will be active. Users should avoid synchronization of objects that are not owned
 	 * by the thread, terminally blocking operations and launching new threads in the hook.
+	 * If the thread attempts to acquire a lock that it doesn't own, an exception will
+	 * be thrown.
 	 *
 	 * @param hook user hook
 	 *
 	 * @return this
 	 *
-	 * TODO: Additional JVM capabilities will be added to prevent certain deadlock scenarios
 	 */
 	public CRIUSupport registerPreCheckpointHook(Runnable hook) {
 		if (hook != null) {
@@ -619,7 +632,8 @@ public final class CRIUSupport {
 	 *  and we have already checkpointed once.
 	 * @throws JVMCheckpointException        if a JVM error occurred before
 	 *                                       checkpoint
-	 * @throws SystemCheckpointException     if a CRIU operation failed
+	 * @throws SystemCheckpointException     if a System operation failed before checkpoint
+	 * @throws SystemRestoreException        if a System operation failed during or after restore
 	 * @throws JVMRestoreException           if an error occurred during or after
 	 *                                       restore
 	 */
