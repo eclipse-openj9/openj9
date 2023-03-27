@@ -35,6 +35,7 @@
   <variable name="MAINCLASS_TEST_SECURITYMANAGER" value="org.openj9.criu.TestSecurityManager" />
   <variable name="OPTION_SET_SECURITYMANAGER" value="-Djava.security.manager" />
   <variable name="MAINCLASS_ENVVAR_TEST" value="org.openj9.criu.EnvVarFileTest" />
+  <variable name="MAINCLASS_USERNAME_TEST" value="org.openj9.criu.UsernameTest" />
   <variable name="XDUMP_DYNAMIC" value="-Xdump:dynamic" />
 
   <test id="Create and Restore Criu Checkpoint Image once">
@@ -671,6 +672,21 @@
     <output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>
     <output type="failure" caseSensitive="yes" regex="no">org.eclipse.openj9.criu.JVMRestoreException</output>
     <output type="failure" caseSensitive="yes" regex="no">Dump option unrecognized: -Xdump:nofailover</output>
+    <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
+    <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
+    <!-- If CRIU can't acquire the original thread IDs, this test will fail. Nothing can be done about this failure. -->
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+  </test>
+
+  <test id="Username test">
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_USERNAME_TEST$ unusedArgument 1</command>
+    <output type="success" caseSensitive="no" regex="no">Killed</output>
+    <output type="success" caseSensitive="yes" regex="no">SUCCESS</output>
+    <output type="failure" caseSensitive="yes" regex="no">FAILURE</output>
     <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
     <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
     <!-- If CRIU can't acquire the original thread IDs, this test will fail. Nothing can be done about this failure. -->
