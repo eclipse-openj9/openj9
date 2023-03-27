@@ -2962,17 +2962,9 @@ TR_J9VMBase::canExceptionEventBeHooked()
    J9HookInterface * * vmHooks = javaVM->internalVMFunctions->getVMHookInterface(javaVM);
 
    bool catchCanBeHooked =
-#if defined(J9VM_OPT_CRIU_SUPPORT)
-      J9_EVENT_IS_HOOKED(javaVM->hookInterface, J9HOOK_VM_EXCEPTION_CATCH) || J9_EVENT_IS_RESERVED(javaVM->hookInterface, J9HOOK_VM_EXCEPTION_CATCH);
-#else /* defined(J9VM_OPT_CRIU_SUPPORT) */
       ((*vmHooks)->J9HookDisable(vmHooks, J9HOOK_VM_EXCEPTION_CATCH) != 0);
-#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
    bool throwCanBeHooked =
-#if defined(J9VM_OPT_CRIU_SUPPORT)
-      J9_EVENT_IS_HOOKED(javaVM->hookInterface, J9HOOK_VM_EXCEPTION_THROW) || J9_EVENT_IS_RESERVED(javaVM->hookInterface, J9HOOK_VM_EXCEPTION_THROW);
-#else /* defined(J9VM_OPT_CRIU_SUPPORT) */
       ((*vmHooks)->J9HookDisable(vmHooks, J9HOOK_VM_EXCEPTION_THROW) != 0);
-#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
    return (catchCanBeHooked || throwCanBeHooked);
    }

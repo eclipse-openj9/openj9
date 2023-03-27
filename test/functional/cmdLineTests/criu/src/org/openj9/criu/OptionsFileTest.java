@@ -52,6 +52,9 @@ public class OptionsFileTest {
 		case "DumpOptionsTest":
 			dumpOptionsTest();
 			break;
+		case "dumpOptionsTestRequireDynamic":
+			dumpOptionsTestRequireDynamic();
+			break;
 		default:
 			throw new RuntimeException("incorrect parameters");
 		}
@@ -182,6 +185,25 @@ public class OptionsFileTest {
 	}
 
 	static void dumpOptionsTest() {
+		String optionsContents = "-Xdump:java:events=vmstop";
+		Path optionsFilePath = CRIUTestUtils.createOptionsFile("options", optionsContents);
+
+		Path imagePath = Paths.get("cpData");
+		CRIUTestUtils.createCheckpointDirectory(imagePath);
+		CRIUSupport criuSupport = new CRIUSupport(imagePath);
+		criuSupport.registerRestoreOptionsFile(optionsFilePath);
+
+		System.out.println("Pre-checkpoint");
+		CRIUTestUtils.checkPointJVM(criuSupport, imagePath, true);
+		try {
+			throw new OutOfMemoryError("dumpOptionsTest");
+		} catch (OutOfMemoryError ome) {
+			ome.printStackTrace();
+		}
+		System.out.println("Post-checkpoint");
+	}
+
+	static void dumpOptionsTestRequireDynamic() {
 		String optionsContents = "-Xdump:java:events=vmstop\n"
 				+ "-Xdump:java:events=throw,filter=java/lang/OutOfMemoryError,request=exclusive+prepwalk+serial+preempt";
 		Path optionsFilePath = CRIUTestUtils.createOptionsFile("options", optionsContents);
@@ -194,7 +216,7 @@ public class OptionsFileTest {
 		System.out.println("Pre-checkpoint");
 		CRIUTestUtils.checkPointJVM(criuSupport, imagePath, true);
 		try {
-			throw new OutOfMemoryError("dumpOptionsTest");
+			throw new OutOfMemoryError("dumpOptionsTestRequireDynamic");
 		} catch (OutOfMemoryError ome) {
 			ome.printStackTrace();
 		}
