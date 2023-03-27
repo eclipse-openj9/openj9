@@ -77,7 +77,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<target name="build">
 		<if>
 			<not>
-				<matches string="${JDK_VERSION}" pattern="^(8|9|10|11|12|13|14|15|16|17|18|19)$$" />
+				<matches string="${JDK_VERSION}" pattern="^(8|9|10|11|12|13|14|15|16|17|18|19|21)$$" />
 			</not>
 			<then>
 				<antcall target="clean" inheritall="true" />
