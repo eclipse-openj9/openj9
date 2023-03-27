@@ -350,7 +350,9 @@ MM_ScavengerDelegate::scanContinuationNativeSlots(MM_EnvironmentStandard *env, o
 	if (MUTATOR_THREAD == env->getThreadType()) {
 		isConcurrentGC = _extensions->isConcurrentScavengerInProgress();
 	} else {
+#if defined(OMR_GC_CONCURRENT_SCAVENGER)
 		isConcurrentGC = _extensions->scavenger->isCurrentPhaseConcurrent();
+#endif /* defined(OMR_GC_CONCURRENT_SCAVENGER) */
 	}
 	const bool isGlobalGC = false;
 	if (MM_GCExtensions::needScanStacksForContinuationObject(currentThread, objectPtr, isConcurrentGC, isGlobalGC, beingMounted)) {
