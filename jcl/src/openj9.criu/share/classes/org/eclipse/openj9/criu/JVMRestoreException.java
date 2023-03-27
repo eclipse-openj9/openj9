@@ -23,7 +23,7 @@
 package org.eclipse.openj9.criu;
 
 /**
- * A CRIU exception representing a JVM failure after restore.
+ * An exception representing a JVM failure after restore.
  */
 public final class JVMRestoreException extends JVMCRIUException {
 	private static final long serialVersionUID = 1539393473417716292L;
