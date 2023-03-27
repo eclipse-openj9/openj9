@@ -253,7 +253,7 @@ validate_options() {
     esac
   fi
 
-  all_versions="8 11 17 18 19 next"
+  all_versions="8 11 17 19 20 next"
   local -A known_version
   local version
   for version in $all_versions ; do
@@ -695,7 +695,7 @@ bootjdk_dirs() {
 bootjdk_url() {
   local jdk_arch=${arch/x86_64/x64}
   local jdk_version=$1
-  if [ $jdk_version -lt 18 ] ; then
+  if [ $jdk_version -lt 19 ] ; then
     echo https://api.adoptopenjdk.net/v3/binary/latest/$jdk_version/ga/linux/$jdk_arch/jdk/openj9/normal/adoptopenjdk
   else
     echo https://api.adoptium.net/v3/binary/latest/$jdk_version/ga/linux/$jdk_arch/jdk/hotspot/normal/eclipse
@@ -708,10 +708,7 @@ bootjdk_version() {
     8 | 11 | 17)
       echo $jdk_version
       ;;
-    18)
-      echo "17"
-      ;;
-    19 | next)
+    19 | 20 | next)
       echo "18"
       ;;
     *)
@@ -722,17 +719,8 @@ bootjdk_version() {
 }
 
 install_bootjdks() {
-  local bootjdk_versions=
   local version
-  local -A wanted
-  for version in $jdk_versions ; do
-    wanted[$(bootjdk_version $version)]=yes
-  done
-  for version in ${all_versions/next/} ; do
-    if [ "${wanted[$version]}" = yes ] ; then
-      bootjdk_versions="$bootjdk_versions $version"
-    fi
-  done
+  local bootjdk_versions=$(for version in $jdk_versions ; do bootjdk_version $version ; done | sort -n -u)
   echo ""
   echo "# Download and install boot JDKs."
   echo "RUN cd /tmp \\"
