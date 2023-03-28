@@ -278,7 +278,7 @@ MM_MarkingDelegate::scanContinuationNativeSlots(MM_EnvironmentBase *env, omrobje
 
 		GC_VMThreadStackSlotIterator::scanContinuationSlots(currentThread, objectPtr, (void *)&localData, stackSlotIteratorForMarkingDelegate, stackFrameClassWalkNeeded, false);
 		if (isConcurrentGC) {
-			VM_VMHelpers::exitConcurrentGCScan(currentThread, objectPtr, isGlobalGC);
+			MM_GCExtensions::exitContinuationConcurrentGCScan(currentThread, objectPtr, isGlobalGC);
 		}
 	}
 }
