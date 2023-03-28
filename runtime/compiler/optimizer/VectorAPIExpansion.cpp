@@ -250,6 +250,10 @@ TR_VectorAPIExpansion::visitNodeToBuildVectorAliases(TR::Node *node)
 
                getElementTypeAndNumLanes(rhs, elementType, numLanes);
 
+               if (getReturnType(rhs->getSymbolReference()->getSymbol()->castToMethodSymbol()) == Mask &&
+                   (elementType == TR::Float || elementType == TR::Double))
+                  elementType = (elementType == TR::Float) ? TR::Int32 : TR::Int64;
+
                int32_t elementSize = OMR::DataType::getSize(elementType);
                int32_t bitsLength = numLanes*elementSize*8;
 
@@ -379,12 +383,7 @@ TR_VectorAPIExpansion::visitNodeToBuildVectorAliases(TR::Node *node)
             {
             TR::Node *elementTypeNode = node->getChild(i);
             methodElementType = getDataTypeFromClassNode(comp(), elementTypeNode);
-
-            // maskReductionCoerced intrinsic has element type Int for Float vectors and Long for Double vectors.
-            // For the sake of class verification we can leave _elementType field unset
-            // and it will be automatically derived from the child type (since they will be in the same class)
-            if (methodSymbol->getRecognizedMethod() != TR::jdk_internal_vm_vector_VectorSupport_maskReductionCoerced)
-               _aliasTable[methodRefNum]._elementType = methodElementType;
+            _aliasTable[methodRefNum]._elementType = methodElementType;
             }
          else if (i == getNumLanesIndex(methodSymbol))
             {
@@ -744,6 +743,8 @@ bool
 TR_VectorAPIExpansion::validateSymRef(int32_t id, int32_t i, vec_sz_t &classLength, TR::DataType &classType,
                                       int32_t vectorAliasTableElement::* classField)
    {
+   bool tempClasses = &vectorAliasTableElement::_tempClassId == classField;
+
    TR::SymbolReference *symRef = comp()->getSymRefTab()->getSymRef(i);
 
    if (!symRef || !symRef->getSymbol())
@@ -774,33 +775,41 @@ TR_VectorAPIExpansion::validateSymRef(int32_t id, int32_t i, vec_sz_t &classLeng
          return false;
          }
       }
-   else
+   else if (tempClasses)
       {
       vec_sz_t tempLength = _aliasTable[i]._vecLen;
       TR::DataType tempType = _aliasTable[i]._elementType;
 
       if (classLength == vec_len_default)
          {
+         if (_trace)
+            traceMsg(comp(), "%s assigning length to class #%d from symref #%d temp length %d\n",
+                     OPT_DETAILS_VECTOR, id, i, tempLength);
+
          classLength = tempLength;
          }
       else if (tempLength != vec_len_default &&
                tempLength != classLength)
          {
          if (_trace)
-            traceMsg(comp(), "%s invalidating5 class #%d due to symref #%d temp length %d, seen length %d\n",
+            traceMsg(comp(), "%s invalidating5 class #%d due to symref #%d temp length %d, class length %d\n",
                                OPT_DETAILS_VECTOR, id, i, tempLength, classLength);
          return false;
          }
 
       if (classType == TR::NoType)
          {
+         if (_trace)
+            traceMsg(comp(), "%s assigning element type to class #%d from symref #%d temp type %s\n",
+                     OPT_DETAILS_VECTOR, id, i, TR::DataType::getName(tempType));
+
          classType = tempType;
          }
       else if (tempType != TR::NoType &&
                tempType != classType)
          {
          if (_trace)
-            traceMsg(comp(), "%s invalidating6 class #%d due to symref #%d temp type %s, seen type %s\n",
+            traceMsg(comp(), "%s invalidating6 class #%d due to symref #%d temp type %s, class type %s\n",
                      OPT_DETAILS_VECTOR, id, i, TR::DataType::getName(tempType), TR::DataType::getName(classType));
          return false;
          }
@@ -1899,6 +1908,19 @@ TR::Node *TR_VectorAPIExpansion::naryIntrinsicHandler(TR_VectorAPIExpansion *opt
             return NULL;
          }
 
+
+      if (opCodeType == Compare)
+         {
+         resultElementType = elementType;
+         resultVectorLength = vectorLength;
+
+         if (elementType == TR::Float)
+            resultElementType = TR::Int32;
+
+         if (elementType == TR::Double)
+            resultElementType = TR::Int64;
+         }
+
       if (mode == checkVectorization)
          {
          vectorOpCode = ILOpcodeFromVectorAPIOpcode(comp, vectorAPIOpcode, opType, vectorLength, opCodeType, withMask,
@@ -2125,28 +2147,33 @@ TR::ILOpCodes TR_VectorAPIExpansion::ILOpcodeFromVectorAPIOpcode(TR::Compilation
       }
    else if ((opCodeType == Compare) && withMask)
       {
+      TR::DataType resultMaskType = scalar ? TR::NoType : TR::DataType::createMaskType(resultElementType, resultVectorLength);
+
       switch (vectorAPIOpCode)
          {
-         case BT_eq: return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vmcmpeq, vectorType);
-         case BT_ne: return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vmcmpne, vectorType);
-         case BT_le: return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vmcmple, vectorType);
-         case BT_ge: return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vmcmpge, vectorType);
-         case BT_lt: return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vmcmplt, vectorType);
-         case BT_gt: return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vmcmpgt, vectorType);
+         case BT_eq: return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vmcmpeq, vectorType, resultMaskType);
+         case BT_ne: return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vmcmpne, vectorType, resultMaskType);
+         case BT_le: return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vmcmple, vectorType, resultMaskType);
+         case BT_ge: return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vmcmpge, vectorType, resultMaskType);
+         case BT_lt: return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vmcmplt, vectorType, resultMaskType);
+         case BT_gt: return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vmcmpgt, vectorType, resultMaskType);
          default:
             return TR::BadILOp;
          }
       }
    else if (opCodeType == Compare)
       {
+      TR::DataType resultMaskType = scalar ? TR::NoType : TR::DataType::createMaskType(resultElementType, resultVectorLength);
+
       switch (vectorAPIOpCode)
          {
-         case BT_eq: return scalar ? TR::ILOpCode::cmpeqOpCode(elementType) : TR::ILOpCode::createVectorOpCode(TR::vcmpeq, vectorType);
-         case BT_ne: return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vcmpne, vectorType);
-         case BT_le: return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vcmple, vectorType);
-         case BT_ge: return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vcmpge, vectorType);
-         case BT_lt: return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vcmplt, vectorType);
-         case BT_gt: return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vcmpgt, vectorType);
+         case BT_eq: return scalar ? TR::ILOpCode::cmpeqOpCode(elementType)
+                                   : TR::ILOpCode::createVectorOpCode(TR::vcmpeq, vectorType, resultMaskType);
+         case BT_ne: return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vcmpne, vectorType, resultMaskType);
+         case BT_le: return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vcmple, vectorType, resultMaskType);
+         case BT_ge: return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vcmpge, vectorType, resultMaskType);
+         case BT_lt: return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vcmplt, vectorType, resultMaskType);
+         case BT_gt: return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vcmpgt, vectorType, resultMaskType);
          default:
             return TR::BadILOp;
          }
