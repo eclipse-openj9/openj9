@@ -1,5 +1,5 @@
 #
-# Copyright IBM Corp. and others 2000
+# Copyright (c) 2000, 2023 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -533,7 +533,7 @@ J9NLS_JCL_CRIU_CANNOT_SET_UNPRIVILEGED.system_action=The JVM will throw a System
 J9NLS_JCL_CRIU_CANNOT_SET_UNPRIVILEGED.user_response=Ensure that CRIU supports unprivileged mode.
 # END NON-TRANSLATABLE
 
-J9NLS_JCL_CRIU_NEGATIVE_CHECKPOINT_RESTORE_TIME_DELTA=Calcolato un valore negativo calcolato per checkpointRestoreTimeDelta =%zd
+J9NLS_JCL_CRIU_NEGATIVE_CHECKPOINT_RESTORE_TIME_DELTA=Calcolato un valore negativo per checkpointRestoreTimeDelta =%zd
 # START NON-TRANSLATABLE
 J9NLS_JCL_CRIU_NEGATIVE_CHECKPOINT_RESTORE_TIME_DELTA.sample_input_1=1
 J9NLS_JCL_CRIU_NEGATIVE_CHECKPOINT_RESTORE_TIME_DELTA.explanation=checkpointRestoreTimeDelta is expected not to be negative.
@@ -549,7 +549,7 @@ J9NLS_JCL_CRIU_J9_CURRENT_TIME_NANOS_FAILURE.system_action=The JVM will throw a 
 J9NLS_JCL_CRIU_J9_CURRENT_TIME_NANOS_FAILURE.user_response=View CRIU documentation to determine how to resolve the error.
 # END NON-TRANSLATABLE
 
-J9NLS_JCL_CRIU_MAX_RETRY_FOR_NOTCHECKPOINTSAFE_REACHED=La JVM ha tentato di eseguire il checkpoint, ma non \u00e8 riuscita a farlo a causa dell'esecuzione del codice in frame @NotCheckpointSafe. Tentativi: %li
+J9NLS_JCL_CRIU_MAX_RETRY_FOR_NOTCHECKPOINTSAFE_REACHED=La JVM ha tentato di eseguire il checkpoint, ma non \u00e8 riuscita a causa dell'esecuzione del codice in frame @NotCheckpointSafe. Tentativi: %li
 # START NON-TRANSLATABLE
 J9NLS_JCL_CRIU_MAX_RETRY_FOR_NOTCHECKPOINTSAFE_REACHED.sample_input_1=1
 J9NLS_JCL_CRIU_MAX_RETRY_FOR_NOTCHECKPOINTSAFE_REACHED.explanation=CRIUSupport::checkpointJVM failed.
@@ -557,7 +557,7 @@ J9NLS_JCL_CRIU_MAX_RETRY_FOR_NOTCHECKPOINTSAFE_REACHED.system_action=The JVM wil
 J9NLS_JCL_CRIU_MAX_RETRY_FOR_NOTCHECKPOINTSAFE_REACHED.user_response=View CRIU documentation to determine how to resolve the error.
 # END NON-TRANSLATABLE
 
-J9NLS_JCL_CRIU_LOADING_LIBCRIU_FAILED=La JVM ha tentato di caricare libcriu.so, ma non \u00e8 riuscita a farlo: %li
+J9NLS_JCL_CRIU_LOADING_LIBCRIU_FAILED=La JVM ha tentato di caricare libcriu.so, ma non \u00e8 riuscita: %li
 # START NON-TRANSLATABLE
 J9NLS_JCL_CRIU_LOADING_LIBCRIU_FAILED.sample_input_1=1
 J9NLS_JCL_CRIU_LOADING_LIBCRIU_FAILED.explanation=CRIUSupport::checkpointJVM failed.

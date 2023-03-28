@@ -1,5 +1,5 @@
 #
-# Copyright IBM Corp. and others 2000
+# Copyright (c) 2000, 2023 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2003,7 +2003,7 @@ J9NLS_VM_INCOMPATIBLE_CMDLINE_OPTIONS_ERROR.user_response=Remove one of the inco
 
 # Message to use when class is not permitted in PermittedSubclasses attribute of sealed super class
 # argument 1 is the class name
-J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDCLASS=la classe %2$.*1$s non pu\u00f2 essere eredita dalla relativa superclasse autenticata.
+J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDCLASS=la classe %2$.*1$s non pu\u00f2 ereditare dalla relativa superclasse sealed.
 # START NON-TRANSLATABLE
 J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDCLASS.sample_input_1=3
 J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDCLASS.sample_input_2=Foo
@@ -2014,7 +2014,7 @@ J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDCLASS.user_response=Co
 
 # Message to use when class is not permitted in PermittedSubclasses attribute of sealed super interface
 # argument 1 is the class name,
-J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDINTERFACE=la classe %2$.*1$s non pu\u00f2 essere ereditata dalla relativa super-interfaccia autenticata.
+J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDINTERFACE=la classe %2$.*1$s non pu\u00f2 ereditare dalla relativa super-interfaccia sealed.
 # START NON-TRANSLATABLE
 J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDINTERFACE.sample_input_1=3
 J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDINTERFACE.sample_input_2=Foo
@@ -2037,7 +2037,7 @@ J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_BASED.user_response=Contact th
 
 # Message to use when class/interface is not in the same module as its sealed super class/interface
 # argument 1 is the class name
-J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_MODULE=La classe/interfaccia %2$.*1$s non \u00e8 nello stesso modulo della relativa superclasse/interfaccia autenticata.
+J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_MODULE=La classe/interfaccia %2$.*1$s non \u00e8 nello stesso modulo della relativa superclasse/interfaccia sealed.
 # START NON-TRANSLATABLE
 J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_MODULE.sample_input_1=3
 J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_MODULE.sample_input_2=Foo
@@ -2048,7 +2048,7 @@ J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_MODULE.user_response=Cont
 
 # Message to use when non-public class/interface is not in the same package as its sealed super class/interface
 # argument 1 is the class name
-J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_PACKAGE=La classe/interfaccia non pubblica %2$.*1$s non \u00e8 nello stesso pacchetto della superclasse/interfaccia autenticata.
+J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_PACKAGE=La classe/interfaccia non pubblica %2$.*1$s non \u00e8 nello stesso package della superclasse/interfaccia sealed.
 # START NON-TRANSLATABLE
 J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_PACKAGE.sample_input_1=3
 J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_PACKAGE.sample_input_2=Foo

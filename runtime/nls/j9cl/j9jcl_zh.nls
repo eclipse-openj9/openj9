@@ -1,5 +1,5 @@
 #
-# Copyright IBM Corp. and others 2000
+# Copyright (c) 2000, 2023 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -533,7 +533,7 @@ J9NLS_JCL_CRIU_CANNOT_SET_UNPRIVILEGED.system_action=The JVM will throw a System
 J9NLS_JCL_CRIU_CANNOT_SET_UNPRIVILEGED.user_response=Ensure that CRIU supports unprivileged mode.
 # END NON-TRANSLATABLE
 
-J9NLS_JCL_CRIU_NEGATIVE_CHECKPOINT_RESTORE_TIME_DELTA=\u4e3a checkpointRestoreTimeDelta =%zd  \u8ba1\u7b97\u7684\u8d1f\u503c
+J9NLS_JCL_CRIU_NEGATIVE_CHECKPOINT_RESTORE_TIME_DELTA=\u4e3a checkpointRestoreTimeDelta \u8ba1\u7b97\u7684\u8d1f\u503c =%zd
 # START NON-TRANSLATABLE
 J9NLS_JCL_CRIU_NEGATIVE_CHECKPOINT_RESTORE_TIME_DELTA.sample_input_1=1
 J9NLS_JCL_CRIU_NEGATIVE_CHECKPOINT_RESTORE_TIME_DELTA.explanation=checkpointRestoreTimeDelta is expected not to be negative.
@@ -549,7 +549,7 @@ J9NLS_JCL_CRIU_J9_CURRENT_TIME_NANOS_FAILURE.system_action=The JVM will throw a 
 J9NLS_JCL_CRIU_J9_CURRENT_TIME_NANOS_FAILURE.user_response=View CRIU documentation to determine how to resolve the error.
 # END NON-TRANSLATABLE
 
-J9NLS_JCL_CRIU_MAX_RETRY_FOR_NOTCHECKPOINTSAFE_REACHED=JVM \u5c1d\u8bd5\u68c0\u67e5\u70b9\uff0c\u4f46\u7531\u4e8e\u5728 @NotCheckpoint \u5b89\u5168\u5e27\u4e2d\u6267\u884c\u4ee3\u7801\u800c\u65e0\u6cd5\u68c0\u67e5\u70b9\u3002 \u91cd\u8bd5\u6b21\u6570\uff1a%li
+J9NLS_JCL_CRIU_MAX_RETRY_FOR_NOTCHECKPOINTSAFE_REACHED=JVM \u5c1d\u8bd5\u6267\u884c\u68c0\u67e5\u70b9\uff0c\u4f46\u7531\u4e8e\u5728 @NotCheckpointSafe \u5b89\u5168\u5e27\u4e2d\u6267\u884c\u4ee3\u7801\u800c\u65e0\u6cd5\u6267\u884c\u68c0\u67e5\u70b9\u3002 \u91cd\u8bd5\u6b21\u6570\uff1a%li
 # START NON-TRANSLATABLE
 J9NLS_JCL_CRIU_MAX_RETRY_FOR_NOTCHECKPOINTSAFE_REACHED.sample_input_1=1
 J9NLS_JCL_CRIU_MAX_RETRY_FOR_NOTCHECKPOINTSAFE_REACHED.explanation=CRIUSupport::checkpointJVM failed.
@@ -557,7 +557,7 @@ J9NLS_JCL_CRIU_MAX_RETRY_FOR_NOTCHECKPOINTSAFE_REACHED.system_action=The JVM wil
 J9NLS_JCL_CRIU_MAX_RETRY_FOR_NOTCHECKPOINTSAFE_REACHED.user_response=View CRIU documentation to determine how to resolve the error.
 # END NON-TRANSLATABLE
 
-J9NLS_JCL_CRIU_LOADING_LIBCRIU_FAILED=JVM \u5c1d\u8bd5\u88c5\u5165 libcriu.so\u4f46\u65e0\u6cd5\u88c5\u5165\uff1a%li
+J9NLS_JCL_CRIU_LOADING_LIBCRIU_FAILED=JVM \u5c1d\u8bd5\u88c5\u5165 libcriu.so \u4f46\u65e0\u6cd5\u88c5\u5165\uff1a%li
 # START NON-TRANSLATABLE
 J9NLS_JCL_CRIU_LOADING_LIBCRIU_FAILED.sample_input_1=1
 J9NLS_JCL_CRIU_LOADING_LIBCRIU_FAILED.explanation=CRIUSupport::checkpointJVM failed.
@@ -565,7 +565,7 @@ J9NLS_JCL_CRIU_LOADING_LIBCRIU_FAILED.system_action=The JVM will throw a SystemC
 J9NLS_JCL_CRIU_LOADING_LIBCRIU_FAILED.user_response=Make sure libcriu is installed on your system and is on the library load path.
 # END NON-TRANSLATABLE
 
-J9NLS_JCL_CRIU_LOADING_LIBCRIU_FUNCTIONS_FAILED=JVM \u5728 libcriu.so: %li \u4e2d \u627e\u4e0d\u5230\u5173\u952e criu \u51fd\u6570
+J9NLS_JCL_CRIU_LOADING_LIBCRIU_FUNCTIONS_FAILED=JVM \u5728 libcriu.so \u4e2d\u627e\u4e0d\u5230\u5173\u952e criu \u51fd\u6570\uff1a%li
 # START NON-TRANSLATABLE
 J9NLS_JCL_CRIU_LOADING_LIBCRIU_FUNCTIONS_FAILED.sample_input_1=1
 J9NLS_JCL_CRIU_LOADING_LIBCRIU_FUNCTIONS_FAILED.explanation=CRIUSupport::checkpointJVM failed.

@@ -1,5 +1,5 @@
 #
-# Copyright IBM Corp. and others 2000
+# Copyright (c) 2000, 2023 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1498,7 +1498,7 @@ J9NLS_CFR_ERR_NON_STATIC_SYNCHRONIZED_VALUE_TYPE_METHOD.user_response=Contact th
 # END NON-TRANSLATABLE
 
 # <vnew> is not translatable
-J9NLS_CFR_ERR_INVALID_FLAGS_ON_NEW=\u540d\u4e3a <vnew> \u7684\u65b9\u6cd5\u5fc5\u987b\u662f\u9759\u6001\u65b9\u6cd5\uff0c\u4e0d\u80fd\u662f\u6700\u7ec8\u3001\u5df2\u540c\u6b65\u3001\u672c\u673a\u6216\u62bd\u8c61\u65b9\u6cd5
+J9NLS_CFR_ERR_INVALID_FLAGS_ON_NEW=\u540d\u4e3a <vnew> \u7684\u65b9\u6cd5\u5fc5\u987b\u4e3a static\uff0c\u4e0d\u80fd\u4e3a final\u3001synchronized\u3001native \u6216 abstract
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_INVALID_FLAGS_ON_NEW.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_INVALID_FLAGS_ON_NEW.system_action=The JVM will throw a verification or classloading related exception such as java.lang.ClassFormatError.
@@ -1671,7 +1671,7 @@ J9NLS_CFR_ERR_NEW_INVALID_REFERENCETYPE_DESCRIPTOR.user_response=Contact the pro
 # END NON-TRANSLATABLE
 
 # aconst_init is not translatable
-J9NLS_CFR_ERR_ACONST_INIT_INVALID_ARRAY=aconst_init \u6307\u4ee4\u4e0d\u80fd\u5bf9\u6570\u7ec4\u8fdb\u884c\u64cd\u4f5c
+J9NLS_CFR_ERR_ACONST_INIT_INVALID_ARRAY=aconst_init \u6307\u4ee4\u65e0\u6cd5\u5bf9\u6570\u7ec4\u8fdb\u884c\u64cd\u4f5c
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_ACONST_INIT_INVALID_ARRAY.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_ACONST_INIT_INVALID_ARRAY.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.

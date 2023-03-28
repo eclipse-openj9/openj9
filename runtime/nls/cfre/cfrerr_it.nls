@@ -1,5 +1,5 @@
 #
-# Copyright IBM Corp. and others 2000
+# Copyright (c) 2000, 2023 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1374,7 +1374,7 @@ J9NLS_CFR_ERR_MULTIPLE_PERMITTEDSUBCLASSES_ATTRIBUTES.system_action=The JVM will
 J9NLS_CFR_ERR_MULTIPLE_PERMITTEDSUBCLASSES_ATTRIBUTES.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_FINAL_CLASS_CANNOT_BE_SEALED=Impossibile autenticare le classi finali
+J9NLS_CFR_FINAL_CLASS_CANNOT_BE_SEALED=le classi finali non possono essere sealed
 # START NON-TRANSLATABLE
 J9NLS_CFR_FINAL_CLASS_CANNOT_BE_SEALED.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_FINAL_CLASS_CANNOT_BE_SEALED.system_action=The JVM will throw a verification or classloading related exception such as java.lang.ClassFormatError.
@@ -1654,7 +1654,7 @@ J9NLS_CFR_ERR_ENCLOSING_METHOD_CLASS_INDEX_IS_REFERENCETYPE.user_response=Contac
 # ReferenceType is not translatable
 # CONSTANT_Class_info is not translatable
 # host_class_index is not translatable
-J9NLS_CFR_ERR_NEST_HOST_INVALID_REFERENCETYPE_DESCRIPTOR=Non \u00e8 possibile che CONSTANT_Class_info nell'host_class_index sia un descrittore ReferenceType
+J9NLS_CFR_ERR_NEST_HOST_INVALID_REFERENCETYPE_DESCRIPTOR=Non \u00e8 possibile che CONSTANT_Class_info in host_class_index sia un descrittore ReferenceType
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_NEST_HOST_INVALID_REFERENCETYPE_DESCRIPTOR.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_NEST_HOST_INVALID_REFERENCETYPE_DESCRIPTOR.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.

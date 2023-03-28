@@ -1,5 +1,5 @@
 #
-# Copyright IBM Corp. and others 2000
+# Copyright (c) 2000, 2023 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1271,7 +1271,7 @@ J9NLS_VM_CHECK_DUMP_FULLCORE.system_action=The JVM continues to run
 J9NLS_VM_CHECK_DUMP_FULLCORE.user_response=Refer to the IBM SDK documentation
 # END NON-TRANSLATABLE
 
-J9NLS_VM_CHECK_DUMP_COREPATTERN_PIPE=/proc/sys/kernel/core_pattern \u8bbe\u7f6e\u201c%s\u201d\u6307\u5b9a\u5c06\u6838\u5fc3\u8f6c\u50a8\u8f93\u9001\u5230\u5916\u90e8\u7a0b\u5e8f\u3002JVM \u53ef\u80fd\u65e0\u6cd5\u5b9a\u4f4d\u5e76\u91cd\u547d\u540d\u6838\u5fc3\u8f6c\u50a8\u3002
+J9NLS_VM_CHECK_DUMP_COREPATTERN_PIPE=/proc/sys/kernel/core_pattern \u8bbe\u7f6e\u201c%s\u201d\u6307\u5b9a\u5c06\u6838\u5fc3\u8f6c\u50a8\u901a\u8fc7\u7ba1\u9053\u4f20\u9001\u5230\u5916\u90e8\u7a0b\u5e8f\u3002JVM \u53ef\u80fd\u65e0\u6cd5\u5b9a\u4f4d\u5e76\u91cd\u547d\u540d\u6838\u5fc3\u8f6c\u50a8\u3002
 # START NON-TRANSLATABLE
 J9NLS_VM_CHECK_DUMP_COREPATTERN_PIPE.explanation=The JVM has been started on a system with /proc/sys/kernel/core_pattern set to pipe core dumps to the command specified after the | character. The JVM may be unable to locate core dumps and rename them.
 J9NLS_VM_CHECK_DUMP_COREPATTERN_PIPE.system_action=The JVM continues to run. Message JVMPORT030W will be issued when a system dump is taken.

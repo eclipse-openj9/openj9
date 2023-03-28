@@ -1,5 +1,5 @@
 #
-# Copyright IBM Corp. and others 2000
+# Copyright (c) 2000, 2023 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2099,7 +2099,7 @@ J9NLS_ENSUREHASHED_CONFIG_OUT_OF_MEM.user_response=Check the system memory confi
 # END NON-TRANSLATABLE
 
 # JVMCRIUException is thrown to indicate that blocking operation is not allowed in CRIU single thread mode
-J9NLS_VM_CRIU_SINGLETHREADMODE_JVMCRIUEXCEPTION=L'operaci\u00f3 de bloqueig no est\u00e0 permesa en la modalitat de fil \u00fanic de CRIU.
+J9NLS_VM_CRIU_SINGLETHREADMODE_JVMCRIUEXCEPTION=L'operaci\u00f3 de bloqueig no est\u00e0 permesa en la modalitat de fil \u00fanic CRIU.
 # START NON-TRANSLATABLE
 J9NLS_VM_CRIU_SINGLETHREADMODE_JVMCRIUEXCEPTION.explanation=Blocking operation is not allowed in CRIU single thread mode.
 J9NLS_VM_CRIU_SINGLETHREADMODE_JVMCRIUEXCEPTION.system_action=The JVM will throw a JVMCRIUException.

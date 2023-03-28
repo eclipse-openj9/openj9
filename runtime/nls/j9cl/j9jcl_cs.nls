@@ -1,5 +1,5 @@
 #
-# Copyright IBM Corp. and others 2000
+# Copyright (c) 2000, 2023 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -565,7 +565,7 @@ J9NLS_JCL_CRIU_LOADING_LIBCRIU_FAILED.system_action=The JVM will throw a SystemC
 J9NLS_JCL_CRIU_LOADING_LIBCRIU_FAILED.user_response=Make sure libcriu is installed on your system and is on the library load path.
 # END NON-TRANSLATABLE
 
-J9NLS_JCL_CRIU_LOADING_LIBCRIU_FUNCTIONS_FAILED=Prost\u0159ed\u00ed JVM nemohlo naj\u00edt kritick\u00e9 funkce criu v souboru libcriu.so: %li
+J9NLS_JCL_CRIU_LOADING_LIBCRIU_FUNCTIONS_FAILED=Prost\u0159ed\u00ed JVM nena\u0161lo kritick\u00e9 funkce criu v souboru libcriu.so: %li
 # START NON-TRANSLATABLE
 J9NLS_JCL_CRIU_LOADING_LIBCRIU_FUNCTIONS_FAILED.sample_input_1=1
 J9NLS_JCL_CRIU_LOADING_LIBCRIU_FUNCTIONS_FAILED.explanation=CRIUSupport::checkpointJVM failed.
@@ -573,7 +573,7 @@ J9NLS_JCL_CRIU_LOADING_LIBCRIU_FUNCTIONS_FAILED.system_action=The JVM will throw
 J9NLS_JCL_CRIU_LOADING_LIBCRIU_FUNCTIONS_FAILED.user_response=Check your installation of criu with `criu check`.
 # END NON-TRANSLATABLE
 
-J9NLS_JCL_CRIU_LOADING_OPTIONS_FILE_FAILED=Prost\u0159ed\u00ed JVM nemohlo na\u010d\u00edst soubor voleb
+J9NLS_JCL_CRIU_LOADING_OPTIONS_FILE_FAILED=Prost\u0159ed\u00ed JVM nena\u010detlo soubor voleb
 # START NON-TRANSLATABLE
 J9NLS_JCL_CRIU_LOADING_OPTIONS_FILE_FAILED.sample_input_1=1
 J9NLS_JCL_CRIU_LOADING_OPTIONS_FILE_FAILED.explanation=CRIUSupport::checkpointJVM failed.

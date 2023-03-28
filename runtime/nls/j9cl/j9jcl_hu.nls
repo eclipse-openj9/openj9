@@ -1,5 +1,5 @@
 #
-# Copyright IBM Corp. and others 2000
+# Copyright (c) 2000, 2023 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -549,7 +549,7 @@ J9NLS_JCL_CRIU_J9_CURRENT_TIME_NANOS_FAILURE.system_action=The JVM will throw a 
 J9NLS_JCL_CRIU_J9_CURRENT_TIME_NANOS_FAILURE.user_response=View CRIU documentation to determine how to resolve the error.
 # END NON-TRANSLATABLE
 
-J9NLS_JCL_CRIU_MAX_RETRY_FOR_NOTCHECKPOINTSAFE_REACHED=A JVM ellen\u0151rz\u00e9si pontok haszn\u00e1lat\u00e1t k\u00eds\u00e9relte meg, de sikertelen volt a k\u00f6vetkez\u0151 k\u00f3d v\u00e9grehajt\u00e1sa miatt a @NotCheckpointbiztons\u00e1gos keretekben. Pr\u00f3b\u00e1lkoz\u00e1si k\u00eds\u00e9rletek: %li
+J9NLS_JCL_CRIU_MAX_RETRY_FOR_NOTCHECKPOINTSAFE_REACHED=A JVM ellen\u0151rz\u00e9si pontok haszn\u00e1lat\u00e1t k\u00eds\u00e9relte meg, de a @NotCheckpointSafe keretekben v\u00e9grehajtott k\u00f3d miatt nem siker\u00fclt. Pr\u00f3b\u00e1lkoz\u00e1si k\u00eds\u00e9rletek: %li
 # START NON-TRANSLATABLE
 J9NLS_JCL_CRIU_MAX_RETRY_FOR_NOTCHECKPOINTSAFE_REACHED.sample_input_1=1
 J9NLS_JCL_CRIU_MAX_RETRY_FOR_NOTCHECKPOINTSAFE_REACHED.explanation=CRIUSupport::checkpointJVM failed.
