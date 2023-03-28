@@ -64,13 +64,16 @@ public class TestThreadMXBean {
 	private static Logger logger = Logger.getLogger(TestThreadMXBean.class);
 	private static final Map<String, AttributeData> attribs;
 	private static final HashSet<String> ignoredAttributes;
+	private static final boolean isIBMJava8 = System.getProperty("java.vm.vendor").contains("IBM");
 
 	static {
 		ignoredAttributes = new HashSet<>();
 		ignoredAttributes.add("ObjectName");
 		attribs = new Hashtable<String, AttributeData>();
 		attribs.put("AllThreadIds", new AttributeData("[J", true, false, false));
-		attribs.put("CurrentThreadAllocatedBytes", new AttributeData(Long.TYPE.getName(), true, false, false));
+		if (!isIBMJava8) {
+			attribs.put("CurrentThreadAllocatedBytes", new AttributeData(Long.TYPE.getName(), true, false, false));
+		}
 		attribs.put("CurrentThreadCpuTime", new AttributeData(Long.TYPE.getName(), true, false, false));
 		attribs.put("CurrentThreadCpuTimeSupported", new AttributeData(Boolean.TYPE.getName(), true, false, true));
 		attribs.put("CurrentThreadUserTime", new AttributeData(Long.TYPE.getName(), true, false, false));
@@ -1428,10 +1431,18 @@ public class TestThreadMXBean {
 		AssertJUnit.assertNotNull(constructors);
 		AssertJUnit.assertEquals(0, constructors.length);
 
-		int opNbr = 20;
+		int numOperations;
+		int numAttributes;
+		if (isIBMJava8) {
+			numOperations = 18;
+			numAttributes = 17;
+		} else {
+			numOperations = 20;
+			numAttributes = 18;
+		}
 		MBeanOperationInfo[] operations = mbi.getOperations();
 		AssertJUnit.assertNotNull(operations);
-		AssertJUnit.assertEquals(opNbr, operations.length);
+		AssertJUnit.assertEquals(numOperations, operations.length);
 
 		// No notifications.
 		MBeanNotificationInfo[] notifications = mbi.getNotifications();
@@ -1443,7 +1454,7 @@ public class TestThreadMXBean {
 
 		MBeanAttributeInfo[] attributes = mbi.getAttributes();
 		AssertJUnit.assertNotNull(attributes);
-		AssertJUnit.assertEquals(18, attributes.length);
+		AssertJUnit.assertEquals(numAttributes, attributes.length);
 		HashSet<String> attributeNames = new HashSet<>();
 		for (MBeanAttributeInfo info : attributes) {
 			AssertJUnit.assertNotNull(info);
