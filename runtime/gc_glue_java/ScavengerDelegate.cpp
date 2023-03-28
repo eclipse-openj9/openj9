@@ -340,22 +340,32 @@ stackSlotIteratorForScavenge(J9JavaVM *javaVM, J9Object **slotPtr, void *localDa
 }
 
 bool
-MM_ScavengerDelegate::scanContinuationNativeSlots(MM_EnvironmentStandard *env, omrobjectptr_t objectPtr, MM_ScavengeScanReason reason)
+MM_ScavengerDelegate::scanContinuationNativeSlots(MM_EnvironmentStandard *env, omrobjectptr_t objectPtr, MM_ScavengeScanReason reason, bool beingMounted)
 {
 	bool shouldRemember = false;
 
 	J9VMThread *currentThread = (J9VMThread *)env->getLanguageVMThread();
+	/* In STW GC there are no racing carrier threads doing mount and no need for the synchronization. */
+	bool isConcurrentGC = false;
+	if (MUTATOR_THREAD == env->getThreadType()) {
+		isConcurrentGC = _extensions->isConcurrentScavengerInProgress();
+	} else {
+#if defined(OMR_GC_CONCURRENT_SCAVENGER)
+		isConcurrentGC = _extensions->scavenger->isCurrentPhaseConcurrent();
+#endif /* defined(OMR_GC_CONCURRENT_SCAVENGER) */
+	}
 	const bool isGlobalGC = false;
-	if (MM_GCExtensions::needScanStacksForContinuationObject(currentThread, objectPtr, isGlobalGC)) {
+	if (MM_GCExtensions::needScanStacksForContinuationObject(currentThread, objectPtr, isConcurrentGC, isGlobalGC, beingMounted)) {
 		StackIteratorData4Scavenge localData;
 		localData.scavengerDelegate = this;
 		localData.env = env;
 		localData.reason = reason;
 		localData.shouldRemember = &shouldRemember;
-		/* In STW GC there are no racing carrier threads doing mount and no need for the synchronization. */
-		bool isConcurrentGC = _extensions->isConcurrentScavengerInProgress();
 
-		GC_VMThreadStackSlotIterator::scanSlots(currentThread, objectPtr, (void *)&localData, stackSlotIteratorForScavenge, false, false, isConcurrentGC, isGlobalGC);
+		GC_VMThreadStackSlotIterator::scanContinuationSlots(currentThread, objectPtr, (void *)&localData, stackSlotIteratorForScavenge, false, false);
+		if (isConcurrentGC) {
+			VM_VMHelpers::exitConcurrentGCScan(currentThread, objectPtr, isGlobalGC);
+		}
 	}
 	return 	shouldRemember;
 }
