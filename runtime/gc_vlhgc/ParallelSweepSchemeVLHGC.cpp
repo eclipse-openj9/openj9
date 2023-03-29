@@ -1023,7 +1023,7 @@ MM_ParallelSweepSchemeVLHGC::recycleFreeRegions(MM_EnvironmentVLHGC *env)
 					/* Arraylet is dead */
 
 					/* remove arraylet leaf from list */
-					walkRegion->_allocateData.removeFromArrayletLeafList();
+					walkRegion->_allocateData.removeFromArrayletLeafList(env);
 
 					/* recycle */
 					walkRegion->_allocateData.setSpine(NULL);

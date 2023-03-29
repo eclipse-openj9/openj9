@@ -83,6 +83,17 @@ private:
 protected:
 	virtual bool initialize(MM_EnvironmentBase *env);
 	virtual void tearDown(MM_EnvironmentBase *env);
+	void copyArrayCritical(J9VMThread *vmThread, GC_ArrayObjectModel *indexableObjectModel,
+				J9InternalVMFunctions *functions, void **data,
+				J9IndexableObject *arrayObject, jboolean *isCopy);
+	void copyBackArrayCritical(J9VMThread *vmThread, GC_ArrayObjectModel *indexableObjectModel,
+				J9InternalVMFunctions *functions, void *elems,
+				J9IndexableObject **arrayObject, jint mode);
+	void copyStringCritical(J9VMThread *vmThread, GC_ArrayObjectModel *indexableObjectModel,
+				J9InternalVMFunctions *functions, jchar **data, J9JavaVM *javaVM,
+				J9IndexableObject *valueObject, J9Object *stringObject,
+				jboolean *isCopy, bool isCompressed);
+	void freeStringCritical(J9VMThread *vmThread, J9InternalVMFunctions *functions, const jchar *elems);
 
 	/**
 	 * Find the finalize link field in the specified object.
