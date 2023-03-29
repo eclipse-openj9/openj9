@@ -594,7 +594,7 @@ MM_WriteOnceCompactor::compact(MM_EnvironmentVLHGC *env)
 
 	if (J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
 		/* now, correct any leaf pages to point at their moved spines - this must be called AFTER (aka:  post-sync) we are sure to have finished fixing up leaf contents since it relies on knowing exactly which version of the spine pointer it sees */
-		fixupArrayletLeafRegionSpinePointers();
+		fixupArrayletLeafRegionSpinePointers(env);
 	}
 
 	timeTemp = j9time_hires_clock();
@@ -1382,42 +1382,53 @@ MM_WriteOnceCompactor::fixupPointerArrayObject(MM_EnvironmentVLHGC* env, J9Objec
 	_extensions->classLoaderRememberedSet->rememberInstance(env, objectPtr);
 
 	/* arraylet leaves are walked separately in fixupArrayletLeafRegionContentsAndObjectLists(), to increase parallelism. Just walk the spine */
-	GC_ArrayletObjectModel::ArrayLayout layout = _extensions->indexableObjectModel.getArrayLayout((J9IndexableObject*)objectPtr);
-		
+	GC_ArrayObjectModel *indexableObjectModel = &_extensions->indexableObjectModel;
+	GC_ArrayletObjectModel::ArrayLayout layout = indexableObjectModel->getArrayLayout((J9IndexableObject *)objectPtr);
+
 	if (GC_ArrayletObjectModel::InlineContiguous == layout) {
-		UDATA elementsToWalk = _extensions->indexableObjectModel.getSizeInElements((J9IndexableObject*)objectPtr);
-		GC_PointerArrayIterator it(_javaVM, objectPtr);
-		UDATA previous = 0;
-		for (UDATA i = 0; i < elementsToWalk; i++) {
-			GC_SlotObject *slotObject = it.nextSlot();
-			Assert_MM_true(NULL != slotObject);
-			J9Object* pointer = slotObject->readReferenceFromSlot();
-			if (NULL != pointer) {
-				J9Object* forwardedPtr = getForwardWrapper(env, pointer, cache);
-				slotObject->writeReferenceToSlot(forwardedPtr);
-				_interRegionRememberedSet->rememberReferenceForCompact(env, objectPtr, forwardedPtr);
+		/* For offheap we need a special check for the case of a partially offheap allocated array that caused the current GC
+		 * (its dataAddr field will still be NULL), with offheap heap we will fixup camouflaged discontiguous arrays) - DM, like default
+		 * balanced, wants to fixup only truly contiguous arrays
+		 */
+		if (indexableObjectModel->isArrayletDataAdjacentToHeader((J9IndexableObject *)objectPtr)
+#if defined(J9VM_ENV_DATA64)
+		 || (indexableObjectModel->isVirtualLargeObjectHeapEnabled() && (NULL != indexableObjectModel->getDataAddrForContiguous((J9IndexableObject *)objectPtr)))
+#endif /* defined(J9VM_ENV_DATA64) */
+		 ) {
+			uintptr_t elementsToWalk = indexableObjectModel->getSizeInElements((J9IndexableObject *)objectPtr);
+			GC_PointerArrayIterator it(_javaVM, objectPtr);
+			uintptr_t previous = 0;
+			for (uintptr_t i = 0; i < elementsToWalk; i++) {
+				GC_SlotObject *slotObject = it.nextSlot();
+				Assert_MM_true(NULL != slotObject);
+				J9Object *pointer = slotObject->readReferenceFromSlot();
+				if (NULL != pointer) {
+					J9Object *forwardedPtr = getForwardWrapper(env, pointer, cache);
+					slotObject->writeReferenceToSlot(forwardedPtr);
+					_interRegionRememberedSet->rememberReferenceForCompact(env, objectPtr, forwardedPtr);
+				}
+				uintptr_t address = (uintptr_t)slotObject->readAddressFromSlot();
+				Assert_MM_true((0 == previous) || ((address + referenceSize) == previous));
+				previous = address;
 			}
-			UDATA address = (UDATA)slotObject->readAddressFromSlot();
-			Assert_MM_true((0 == previous) || ((address + referenceSize) == previous));
-			previous = address;
+			/* if this is a contiguous array, we must have exhausted the iterator */
+			Assert_MM_true(NULL == it.nextSlot());
 		}
-		/* if this is a contiguous array, we must have exhausted the iterator */
-		Assert_MM_true(NULL == it.nextSlot());
 	} else if (GC_ArrayletObjectModel::Discontiguous == layout) {
 		/* do nothing - no inline pointers */
 	} else if (GC_ArrayletObjectModel::Hybrid == layout) {
-		UDATA numArraylets = _extensions->indexableObjectModel.numArraylets((J9IndexableObject*)objectPtr);
+		uintptr_t numArraylets = indexableObjectModel->numArraylets((J9IndexableObject *)objectPtr);
 		/* hybrid layouts always have at least one arraylet pointer in any configuration */
 		Assert_MM_true(numArraylets > 0);
 		/* ensure that the array has been initialized */
 		if (NULL != GC_PointerArrayIterator(_javaVM, objectPtr).nextSlot()) {
 			/* find the size of the inline component of the spine */
-			UDATA totalElementCount = _extensions->indexableObjectModel.getSizeInElements((J9IndexableObject*)objectPtr);
-			UDATA externalArrayletCount = _extensions->indexableObjectModel.numExternalArraylets((J9IndexableObject*)objectPtr);
-			UDATA fullLeafSizeInBytes = _javaVM->arrayletLeafSize;
-			UDATA elementsPerFullLeaf = fullLeafSizeInBytes / referenceSize;
-			UDATA elementsToWalk = totalElementCount - (externalArrayletCount * elementsPerFullLeaf);
-			UDATA previous = 0;
+			uintptr_t totalElementCount = indexableObjectModel->getSizeInElements((J9IndexableObject *)objectPtr);
+			uintptr_t externalArrayletCount = indexableObjectModel->numExternalArraylets((J9IndexableObject *)objectPtr);
+			uintptr_t fullLeafSizeInBytes = _javaVM->arrayletLeafSize;
+			uintptr_t elementsPerFullLeaf = fullLeafSizeInBytes / referenceSize;
+			uintptr_t elementsToWalk = totalElementCount - (externalArrayletCount * elementsPerFullLeaf);
+			uintptr_t previous = 0;
 			
 			GC_PointerArrayletInlineLeafIterator iterator(_javaVM, objectPtr);
 			GC_SlotObject *slotObject = NULL;
@@ -1431,7 +1442,7 @@ MM_WriteOnceCompactor::fixupPointerArrayObject(MM_EnvironmentVLHGC* env, J9Objec
 					_interRegionRememberedSet->rememberReferenceForCompact(env, objectPtr, forwardedPtr);
 				}
 				
-				UDATA address = (UDATA)slotObject->readAddressFromSlot();
+				uintptr_t address = (uintptr_t)slotObject->readAddressFromSlot();
 				Assert_MM_true((0 == previous) || ((address + referenceSize) == previous));
 				previous = address;
 			}
@@ -1650,6 +1661,19 @@ public:
 #if defined(J9VM_OPT_JVMTI)
 		scanJVMTIObjectTagTables(env);
 #endif /* J9VM_OPT_JVMTI */
+
+/* Are below calls to scanDoubleMappedObjects and scanObjectsInVirtualLargeObjectHeap needed? */
+#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
+	if (_includeDoubleMap) {
+		scanDoubleMappedObjects(env);
+	}
+#endif /* defined(J9VM_GC_ENABLE_DOUBLE_MAP) */
+
+#if defined(J9VM_ENV_DATA64) && !defined(J9VM_GC_DOUBLE_MAPPING_FOR_SPARSE_HEAP_ALLOCATION)
+	if (_includeVirtualLargeObjectHeap) {
+		scanObjectsInVirtualLargeObjectHeap(env);
+	}
+#endif /* defined(J9VM_ENV_DATA64) && !defined(J9VM_GC_DOUBLE_MAPPING_FOR_SPARSE_HEAP_ALLOCATION) */
 
 	}
 	
@@ -1961,7 +1985,7 @@ MM_WriteOnceCompactor::recycleFreeRegionsAndFixFreeLists(MM_EnvironmentVLHGC *en
 }
 
 void
-MM_WriteOnceCompactor::fixupArrayletLeafRegionSpinePointers()
+MM_WriteOnceCompactor::fixupArrayletLeafRegionSpinePointers(MM_EnvironmentVLHGC *env)
 {
 	GC_HeapRegionIteratorVLHGC regionIterator(_regionManager);
 	MM_HeapRegionDescriptorVLHGC *region = NULL;
@@ -1983,7 +2007,7 @@ MM_WriteOnceCompactor::fixupArrayletLeafRegionSpinePointers()
 				Assert_MM_true( newSpineRegion->containsObjects() );
 				if (spineRegion != newSpineRegion) {
 					/* we need to move the leaf to another region's leaf list since its spine has moved */
-					region->_allocateData.removeFromArrayletLeafList();
+					region->_allocateData.removeFromArrayletLeafList(env);
 					region->_allocateData.addToArrayletLeafList(newSpineRegion);
 				}
 				region->_allocateData.setSpine(newSpine);

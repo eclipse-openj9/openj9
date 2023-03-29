@@ -26,11 +26,14 @@
 #include "Math.hpp"
 #include "MemorySpace.hpp"
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
+#include <sys/mman.h>
+#include <errno.h>
 #include "ArrayletLeafIterator.hpp"
 #include "HeapRegionManager.hpp"
 #include "HeapRegionDescriptorVLHGC.hpp"
 #include "Heap.hpp"
 #endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
+#include "SparseVirtualMemory.hpp"
 
 /**
  * Allocation description and layout initialization. This is called before OMR allocates
@@ -58,6 +61,11 @@ MM_IndexableObjectAllocationModel::initializeAllocateDescription(MM_EnvironmentB
 #endif /* defined (J9VM_GC_MODRON_COMPACTION) || defined (J9VM_GC_GENERATIONAL) */
 	spineBytes = extensions->objectModel.adjustSizeInBytes(spineBytes);
 
+	bool isAllIndexableDataContiguousEnabled = extensions->indexableObjectModel.isVirtualLargeObjectHeapEnabled();
+#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
+	isAllIndexableDataContiguousEnabled = isAllIndexableDataContiguousEnabled || extensions->indexableObjectModel.isDoubleMappingEnabled();
+#endif /* defined (J9VM_GC_ENABLE_DOUBLE_MAP) */
+
 	/* determine size of layout overhead (additional to spine bytes) and finalize allocation description */
 	uintptr_t layoutSizeInBytes = 0;
 	switch (_layout) {
@@ -69,9 +77,17 @@ MM_IndexableObjectAllocationModel::initializeAllocateDescription(MM_EnvironmentB
 	case GC_ArrayletObjectModel::InlineContiguous:
 		/* all good */
 		setAllocatable(true);
+		/* If we're dealing with camuflaged discontiguous we must call */
+		if (isAllIndexableDataContiguousEnabled && (!extensions->indexableObjectModel.isArrayletDataAdjacentToHeader(_dataSize))) {
+			layoutSizeInBytes = _dataSize;
+		}
 		break;
 
 	case GC_ArrayletObjectModel::Discontiguous:
+		/* If double map or sparse heap is enabled, the only way to get here is through zero sized arrays. */
+		if (isAllIndexableDataContiguousEnabled) {
+			Assert_MM_true((0 == _dataSize) && (0 == _numberOfArraylets));
+		}
 		/* non-empty discontiguous arrays require slow-path allocate */
 		if (isGCAllowed() || (0 == _numberOfIndexedFields)) {
 			/* _numberOfArraylets discontiguous leaves, all contains leaf size bytes */
@@ -84,6 +100,9 @@ MM_IndexableObjectAllocationModel::initializeAllocateDescription(MM_EnvironmentB
 		break;
 
 	case GC_ArrayletObjectModel::Hybrid:
+		if (isAllIndexableDataContiguousEnabled) {
+			Assert_MM_unreachable();
+		}
 		Assert_MM_true(0 < _numberOfArraylets);
 		/* hybrid arrays always require slow-path allocate */
 		if (isGCAllowed()) {
@@ -122,6 +141,12 @@ MM_IndexableObjectAllocationModel::initializeIndexableObject(MM_EnvironmentBase 
 	GC_ArrayObjectModel *indexableObjectModel = &extensions->indexableObjectModel;
 	J9IndexableObject *spine = (J9IndexableObject*)initializeJavaObject(env, allocatedBytes);
 	_allocateDescription.setSpine(spine);
+	bool isArrayletDataAdjacentToHeader = false;
+	bool isAllIndexableDataContiguousEnabled = extensions->indexableObjectModel.isVirtualLargeObjectHeapEnabled();
+#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
+	isAllIndexableDataContiguousEnabled = isAllIndexableDataContiguousEnabled || extensions->indexableObjectModel.isDoubleMappingEnabled();
+#endif /* defined (J9VM_GC_ENABLE_DOUBLE_MAP) */
+
 	if (NULL != spine) {
 		/* Set the array size */
 		if (getAllocateDescription()->isChunkedArray()) {
@@ -133,11 +158,19 @@ MM_IndexableObjectAllocationModel::initializeIndexableObject(MM_EnvironmentBase 
 #endif /* defined(J9VM_ENV_DATA64) */
 		} else {
 			indexableObjectModel->setSizeInElementsForContiguous(spine, _numberOfIndexedFields);
+			isArrayletDataAdjacentToHeader = indexableObjectModel->isArrayletDataAdjacentToHeader(spine);
+			if (isArrayletDataAdjacentToHeader) {
+				getAllocateDescription()->setDataAdjacentToHeader(true);
 #if defined(J9VM_ENV_DATA64)
 			if (((J9JavaVM *)env->getLanguageVM())->isIndexableDataAddrPresent) {
 				indexableObjectModel->setDataAddrForContiguous(spine);
 			}
 #endif /* defined(J9VM_ENV_DATA64) */
+			} else if (isAllIndexableDataContiguousEnabled) {
+#if defined(J9VM_ENV_DATA64)
+				indexableObjectModel->setDataAddrForContiguous(spine, NULL);
+#endif /* defined(J9VM_ENV_DATA64) */
+			}
 		}
 	}
 
@@ -145,18 +178,37 @@ MM_IndexableObjectAllocationModel::initializeIndexableObject(MM_EnvironmentBase 
 	/* Lay out arraylet and arrayoid pointers */
 	switch (_layout) {
 	case GC_ArrayletObjectModel::InlineContiguous:
-		/**
-		* _numberOfArraylets is set to 0 for 0-stride flattened array, and we
-		* can recognize this case by checking if _dataSize is 0.
-		* Note there are two cases that _dataSize is 0: 0-stride flattened array or 0-length array
-		* But the latter is treated as discontiguous and not following this path
-		*/
-		Assert_MM_true((0 == _dataSize) || (1 == _numberOfArraylets));
+#if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
+		if (!isArrayletDataAdjacentToHeader) {
+			if (indexableObjectModel->isVirtualLargeObjectHeapEnabled()) {
+				/* We still need to create leaves for discontiguous arrays that will be allocated at off-heap */
+				spine = getSparseAddressAndDecommitLeaves(env, spine);
+				if (NULL != spine) {
+					Assert_MM_true(1 <= _numberOfArraylets);
+				}
+			}
+#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
+			else if (indexableObjectModel->isDoubleMappingEnabled()) {
+				/* We still need to create leaves for discontiguous arrays that will be double mapped
+				 * so that we reserve the appropriate regions in the heap.
+				 */
+				spine = reserveLeavesForContiguousArraylet(env, spine);
+				if (NULL != spine) {
+					Assert_MM_true(1 <= _numberOfArraylets);
+				}
+			}
+#endif /* defined (J9VM_GC_ENABLE_DOUBLE_MAP) */
+		}
+#endif /* defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION) */
+		if ((!isAllIndexableDataContiguousEnabled) || isArrayletDataAdjacentToHeader) {
+			Assert_MM_true(1 == _numberOfArraylets);
+		}
 		break;
 
 	case GC_ArrayletObjectModel::Discontiguous:
 	case GC_ArrayletObjectModel::Hybrid:
 		if (NULL != spine) {
+			indexableObjectModel->setSizeInElementsForDiscontiguous(spine, _numberOfIndexedFields);
 			if(0 == _numberOfIndexedFields) {
 				/* Don't try to initialize the arrayoid for an empty NUA */
 				Trc_MM_allocateAndConnectNonContiguousArraylet_Exit(env->getLanguageVMThread(), spine);
@@ -277,26 +329,15 @@ MM_IndexableObjectAllocationModel::layoutDiscontiguousArraylet(MM_EnvironmentBas
 		case GC_ArrayletObjectModel::Discontiguous:
 			indexableObjectModel->AssertArrayletIsDiscontiguous(spine);
 			Assert_MM_true(arrayoidIndex == _numberOfArraylets);
-#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
-			if (indexableObjectModel->isDoubleMappingEnabled()) {
-				/**
-				 * There are some special cases where double mapping an arraylet is
-				 * not necessary; isArrayletDataDiscontiguous() details those cases.
-				 */
-				if (indexableObjectModel->isArrayletDataDiscontiguous(spine)) {
-					doubleMapArraylets(env, (J9Object *)spine, NULL);
-				}
-			}
-#endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
 			break;
 
 		case GC_ArrayletObjectModel::Hybrid:
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
 			/* Unreachable if double map is enabled */
-			if (indexableObjectModel->isDoubleMappingEnabled()) {
+			if (indexableObjectModel->isDoubleMappingEnabled() || indexableObjectModel->isVirtualLargeObjectHeapEnabled()) {
 				Assert_MM_double_map_unreachable();
 			}
-#endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
+#endif /* defined(J9VM_GC_ENABLE_DOUBLE_MAP) */
 			/* last arrayoid points to end of arrayoid array in spine header (object-aligned if
 			 * required). (data size % leaf size) bytes of data are stored here (may be empty).
 			 */
@@ -321,25 +362,20 @@ MM_IndexableObjectAllocationModel::layoutDiscontiguousArraylet(MM_EnvironmentBas
 	return spine;
 }
 
+/**
+ * Only used if double mapping is enabled
+ */
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
-#if !((defined(LINUX) || defined(OSX)) && defined(J9VM_ENV_DATA64))
-/* Double map is only supported on LINUX 64 bit Systems for now */
-#error "Platform not supported by Double Map API"
-#endif /* !((defined(LINUX) || defined(OSX)) && defined(J9VM_ENV_DATA64)) */
-void * 
-MM_IndexableObjectAllocationModel::doubleMapArraylets(MM_EnvironmentBase *env, J9Object *objectPtr, void *preferredAddress)
+MMINLINE J9IndexableObject *
+MM_IndexableObjectAllocationModel::reserveLeavesForContiguousArraylet(MM_EnvironmentBase *env, J9IndexableObject *spine)
 {
+	Assert_MM_true(_numberOfArraylets == _allocateDescription.getNumArraylets());
+
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
-	J9JavaVM *javaVM = extensions->getJavaVM();
-
-	GC_ArrayletLeafIterator arrayletLeafIterator(javaVM, (J9IndexableObject *)objectPtr);
-	MM_Heap *heap = extensions->getHeap();
-	UDATA arrayletLeafSize = env->getOmrVM()->_arrayletLeafSize;
-	UDATA arrayletLeafCount = MM_Math::roundToCeiling(arrayletLeafSize, _dataSize) / arrayletLeafSize;
-	Trc_MM_double_map_Entry(env->getLanguageVMThread(), (void *)objectPtr, arrayletLeafSize, arrayletLeafCount);
-
-	void *result = NULL;
-
+	GC_ArrayObjectModel *indexableObjectModel = &extensions->indexableObjectModel;
+	const uintptr_t arrayletLeafSize = env->getOmrVM()->_arrayletLeafSize;
+	uintptr_t arrayletLeafCount = MM_Math::roundToCeiling(arrayletLeafSize, _dataSize) / arrayletLeafSize;
+	MM_HeapRegionDescriptorVLHGC *firstLeafRegionDescriptor = NULL;
 #define ARRAYLET_ALLOC_THRESHOLD 64
 	void *leaves[ARRAYLET_ALLOC_THRESHOLD];
 	void **arrayletLeaveAddrs = leaves;
@@ -351,22 +387,178 @@ MM_IndexableObjectAllocationModel::doubleMapArraylets(MM_EnvironmentBase *env, J
 		return NULL;
 	}
 
-	GC_SlotObject *slotObject = NULL;
-	uintptr_t count = 0;
+	/* determine how many bytes to allocate outside of the spine (in arraylet leaves) */
+	Assert_MM_true(_allocateDescription.getBytesRequested() >= _allocateDescription.getContiguousBytes());
+	uintptr_t bytesRemaining = _allocateDescription.getBytesRequested() - _allocateDescription.getContiguousBytes();
 
-	while (NULL != (slotObject = arrayletLeafIterator.nextLeafPointer())) {
-		void *currentLeaf = slotObject->readReferenceFromSlot();
-		arrayletLeaveAddrs[count] = currentLeaf;
-		count++;
+	/* allocate leaf for each arraylet and attach it to its leaf pointer in the spine */
+	uintptr_t arrayoidIndex = 0;
+	while (0 < bytesRemaining) {
+		/* allocate the next arraylet leaf */
+		void *leaf = env->_objectAllocationInterface->allocateArrayletLeaf(env, &_allocateDescription,
+				_allocateDescription.getMemorySpace(), true);
+
+		/* if leaf allocation failed set the result to NULL and return */
+		if (NULL == leaf) {
+			/* spine and preceding arraylets are now floating garbage */
+			Trc_MM_allocateAndConnectNonContiguousArraylet_leafFailure(env->getLanguageVMThread());
+			_allocateDescription.setSpine(NULL);
+			spine = NULL;
+			break;
+		}
+
+		arrayletLeaveAddrs[arrayoidIndex] = leaf;
+		if (0 == arrayoidIndex) {
+			firstLeafRegionDescriptor = (MM_HeapRegionDescriptorVLHGC *)extensions->getHeap()->getHeapRegionManager()->tableDescriptorForAddress(leaf);
+		}
+
+		/* refresh the spine -- it might move if we GC while allocating the leaf */
+		spine = _allocateDescription.getSpine();
+
+		bytesRemaining -= OMR_MIN(bytesRemaining, arrayletLeafSize);
+		arrayoidIndex += 1;
 	}
 
-	/* Number of arraylet leaves in the iterator must match the number of leaves calculated */
-	Assert_MM_true(arrayletLeafCount == count);
+	if ((NULL != spine) && (NULL != firstLeafRegionDescriptor)) {
+		Assert_MM_true(_layout == GC_ArrayletObjectModel::InlineContiguous);
+		Assert_MM_true(indexableObjectModel->isDoubleMappingEnabled());
+		/* Number of arraylet leaves in the iterator must match the number of leaves calculated */
+		Assert_MM_true(arrayletLeafCount == arrayoidIndex);
 
-	GC_SlotObject objectSlot(env->getOmrVM(), extensions->indexableObjectModel.getArrayoidPointer((J9IndexableObject *)objectPtr));
-	J9Object *firstLeafSlot = objectSlot.readReferenceFromSlot();
+		void *contiguousAddress = doubleMapArraylets(env, (J9Object *)spine, arrayletLeaveAddrs, firstLeafRegionDescriptor, NULL);
+		if (NULL != contiguousAddress) {
+			indexableObjectModel->setDataAddrForContiguous((J9IndexableObject *)spine, contiguousAddress);
+		}
 
-	MM_HeapRegionDescriptorVLHGC *firstLeafRegionDescriptor = (MM_HeapRegionDescriptorVLHGC *)heap->getHeapRegionManager()->tableDescriptorForAddress(firstLeafSlot);
+		/* Free arraylet leaf addresses if dynamically allocated */
+		if (arrayletLeafCount > ARRAYLET_ALLOC_THRESHOLD) {
+			env->getForge()->free((void *)arrayletLeaveAddrs);
+		}
+	}
+
+	return spine;
+}
+#endif
+
+#if defined(J9VM_ENV_DATA64)
+MMINLINE J9IndexableObject *
+MM_IndexableObjectAllocationModel::getSparseAddressAndDecommitLeaves(MM_EnvironmentBase *env, J9IndexableObject *spine)
+{
+	Assert_MM_true(_numberOfArraylets == _allocateDescription.getNumArraylets());
+
+	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
+	GC_ArrayObjectModel *indexableObjectModel = &extensions->indexableObjectModel;
+	const UDATA arrayletLeafSize = env->getOmrVM()->_arrayletLeafSize;
+	uintptr_t byteAmount = 0;
+	UDATA arrayletLeafCount = MM_Math::roundToCeiling(arrayletLeafSize, _dataSize) / arrayletLeafSize;
+#if defined(J9VM_GC_DOUBLE_MAPPING_FOR_SPARSE_HEAP_ALLOCATION)
+	MM_HeapRegionDescriptorVLHGC *firstLeafRegionDescriptor = NULL;
+#endif /* defined(J9VM_GC_DOUBLE_MAPPING_FOR_SPARSE_HEAP_ALLOCATION) */
+#define ARRAYLET_ALLOC_THRESHOLD 64
+	void *leaves[ARRAYLET_ALLOC_THRESHOLD];
+	void **arrayletLeaveAddrs = leaves;
+	if (arrayletLeafCount > ARRAYLET_ALLOC_THRESHOLD) {
+		arrayletLeaveAddrs = (void **)env->getForge()->allocate(arrayletLeafCount * sizeof(uintptr_t), MM_AllocationCategory::GC_HEAP, J9_GET_CALLSITE());
+	}
+
+	if (NULL == arrayletLeaveAddrs) {
+		return NULL;
+	}
+
+	/* determine how many bytes to allocate outside of the spine (in arraylet leaves) */
+	Assert_MM_true(_allocateDescription.getBytesRequested() >= _allocateDescription.getContiguousBytes());
+	uintptr_t bytesRemaining = _allocateDescription.getBytesRequested() - _allocateDescription.getContiguousBytes();
+
+	/* allocate leaf for each arraylet and attach it to its leaf pointer in the spine */
+	uintptr_t arrayoidIndex = 0;
+	Trc_MM_getSparseAddressAndDecommitLeaves_Entry(env->getLanguageVMThread(), spine, (void *)bytesRemaining, arrayletLeafCount, (void *)arrayletLeafSize);
+	while (0 < bytesRemaining) {
+		/* allocate the next arraylet leaf - leaves are allocated solely for the purpose of decommitting the memory later on in this function */
+		void *leaf = env->_objectAllocationInterface->allocateArrayletLeaf(env, &_allocateDescription,
+				_allocateDescription.getMemorySpace(), true);
+
+		/* if leaf allocation failed set the result to NULL and return */
+		if (NULL == leaf) {
+			/* spine and preceding arraylets are now floating garbage */
+			Trc_MM_allocateAndConnectNonContiguousArraylet_leafFailure(env->getLanguageVMThread());
+			_allocateDescription.setSpine(NULL);
+			spine = NULL;
+			break;
+		}
+
+#if !defined(J9VM_GC_DOUBLE_MAPPING_FOR_SPARSE_HEAP_ALLOCATION)
+		/* Disable region for reads and writes, since that'll be done through the contiguous double mapped region */
+		void *highAddress = (void *)((uintptr_t)leaf + arrayletLeafSize);
+		bool ret = extensions->heap->decommitMemory(leaf, arrayletLeafSize, leaf, highAddress);
+		if (!ret) {
+			Trc_MM_VirtualMemory_decommitMemory_failure(leaf, arrayletLeafSize);
+		}
+#endif /* !defined(J9VM_GC_DOUBLE_MAPPING_FOR_SPARSE_HEAP_ALLOCATION) */
+
+		arrayletLeaveAddrs[arrayoidIndex] = leaf;
+#if defined(J9VM_GC_DOUBLE_MAPPING_FOR_SPARSE_HEAP_ALLOCATION)
+		if (0 == arrayoidIndex) {
+			firstLeafRegionDescriptor = (MM_HeapRegionDescriptorVLHGC *)extensions->getHeap()->getHeapRegionManager()->tableDescriptorForAddress(leaf);
+		}
+#endif /* defined(J9VM_GC_DOUBLE_MAPPING_FOR_SPARSE_HEAP_ALLOCATION) */
+
+		/* refresh the spine -- it might move if we GC while allocating the leaf */
+		spine = _allocateDescription.getSpine();
+
+		bytesRemaining -= OMR_MIN(bytesRemaining, arrayletLeafSize);
+		arrayoidIndex += 1;
+	}
+
+
+	if ((NULL != spine)
+	#if defined(J9VM_GC_DOUBLE_MAPPING_FOR_SPARSE_HEAP_ALLOCATION)
+	&& (NULL != firstLeafRegionDescriptor)
+	#endif /* J9VM_GC_DOUBLE_MAPPING_FOR_SPARSE_HEAP_ALLOCATION */
+	) {
+		Assert_MM_true(_layout == GC_ArrayletObjectModel::InlineContiguous);
+		Assert_MM_true(indexableObjectModel->isVirtualLargeObjectHeapEnabled());
+		/* Number of arraylet leaves in the iterator must match the number of leaves calculated */
+		Assert_MM_true(arrayletLeafCount == arrayoidIndex);
+
+#if defined(J9VM_GC_DOUBLE_MAPPING_FOR_SPARSE_HEAP_ALLOCATION)
+		/* ByteAmount for OSX must be same size as the amount that will be double mapped */
+		byteAmount = arrayletLeafCount * arrayletLeafSize;
+#else
+		byteAmount = _dataSize;
+#endif /* J9VM_GC_DOUBLE_MAPPING_FOR_SPARSE_HEAP_ALLOCATION */
+		void *virtualLargeObjectHeapAddress = extensions->largeObjectVirtualMemory->allocateSparseFreeEntryAndMapToHeapObject(spine, byteAmount);
+		if (NULL != virtualLargeObjectHeapAddress) {
+			indexableObjectModel->setDataAddrForContiguous((J9IndexableObject *)spine, virtualLargeObjectHeapAddress);
+#if defined(J9VM_GC_DOUBLE_MAPPING_FOR_SPARSE_HEAP_ALLOCATION)
+			void *contiguousAddress = doubleMapArraylets(env, (J9Object *)spine, arrayletLeaveAddrs, firstLeafRegionDescriptor, virtualLargeObjectHeapAddress);
+			Assert_MM_true(virtualLargeObjectHeapAddress == contiguousAddress);
+			extensions->largeObjectVirtualMemory->recordDoubleMapIdentifierForData(virtualLargeObjectHeapAddress, &firstLeafRegionDescriptor->_arrayletDoublemapID);
+#endif /* defined(J9VM_GC_DOUBLE_MAPPING_FOR_SPARSE_HEAP_ALLOCATION) */
+		}
+		/* Free arraylet leaf addresses if dynamically allocated */
+		if (arrayletLeafCount > ARRAYLET_ALLOC_THRESHOLD) {
+			env->getForge()->free((void *)arrayletLeaveAddrs);
+		}
+	}
+
+	Trc_MM_getSparseAddressAndDecommitLeaves_Exit(env->getLanguageVMThread(), spine, (void *)bytesRemaining);
+
+	return spine;
+}
+#endif /* defined(J9VM_ENV_DATA64) */
+
+#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
+#if !((defined(LINUX) || defined(OSX)) && defined(J9VM_ENV_DATA64))
+/* Double map is only supported on OSX and LINUX 64 bit Systems for now */
+#error "Platform not supported by Double Map API"
+#endif /* !((defined(LINUX) || defined(OSX)) && defined(J9VM_ENV_DATA64)) */
+void *
+MM_IndexableObjectAllocationModel::doubleMapArraylets(MM_EnvironmentBase *env, J9Object *objectPtr, void **arrayletLeaveAddrs, MM_HeapRegionDescriptorVLHGC *firstLeafRegionDescriptor, void *preferredAddress)
+{
+	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
+	MM_Heap *heap = extensions->getHeap();
+	UDATA arrayletLeafSize = env->getOmrVM()->_arrayletLeafSize;
+	UDATA arrayletLeafCount = MM_Math::roundToCeiling(arrayletLeafSize, _dataSize) / arrayletLeafSize;
 
 	/* Retrieve actual page size */
 	UDATA pageSize = heap->getPageSize();
@@ -374,15 +566,18 @@ MM_IndexableObjectAllocationModel::doubleMapArraylets(MM_EnvironmentBase *env, J
 	/* For now we double map the entire region of all arraylet leaves. This might change in the future if hybrid regions are introduced. */
 	uintptr_t byteAmount = arrayletLeafSize * arrayletLeafCount;
 
+	Trc_MM_double_map_Entry(env->getLanguageVMThread(), (void *)_dataSize, (void *)byteAmount, (void *)objectPtr, (void *)arrayletLeafSize, arrayletLeafCount);
+
+	void *result = NULL;
+	if (NULL == arrayletLeaveAddrs) {
+		return NULL;
+	}
+
 	/* Get heap and from there call an OMR API that will doble map everything */
-	result = heap->doubleMapRegions(env, arrayletLeaveAddrs, count, arrayletLeafSize, byteAmount,
+	result = heap->doubleMapRegions(env, arrayletLeaveAddrs, arrayletLeafCount, arrayletLeafSize, byteAmount,
 				&firstLeafRegionDescriptor->_arrayletDoublemapID,
 				pageSize,
 				preferredAddress);
-
-	if (arrayletLeafCount > ARRAYLET_ALLOC_THRESHOLD) {
-		env->getForge()->free((void *)arrayletLeaveAddrs);
-	}
 
 	/*
 	 * Double map failed.

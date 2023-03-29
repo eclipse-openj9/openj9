@@ -54,6 +54,7 @@ protected:
 	MM_MemorySubSpace * _arrayletSubSpace; /**< The only subspace that is allowed to have discontiguous arraylets. */
 	uintptr_t _largestDesirableArraySpineSize; /**< A cached copy of the subspace's _largestDesirableArraySpineSize to be used when we don't have access to a subspace. */
 #if defined(J9VM_ENV_DATA64)
+	bool _enableVirtualLargeObjectHeap;
 	bool _isIndexableDataAddrPresent;
 #endif /* defined(J9VM_ENV_DATA64) */
 	uintptr_t _contiguousIndexableHeaderSize;
@@ -119,6 +120,24 @@ public:
 			}
 		}
 		return size;
+	}
+
+	/**
+	 * Returns if a indexable object is discontiguous or contiguous.
+	 *
+	 * @param arrayPtr Pointer to the indexable object whose size is required
+	 * @return true if arraylet is discontiguous, false otherwise
+	 */
+	MMINLINE bool
+	isArrayletDiscontiguous(J9IndexableObject *arrayPtr)
+	{
+		uintptr_t size = 0;
+		if (compressObjectReferences()) {
+			size = ((J9IndexableObjectContiguousCompressed *)arrayPtr)->size;
+		} else {
+			size = ((J9IndexableObjectContiguousFull *)arrayPtr)->size;
+		}
+		return 0 == size;
 	}
 
 	/**
@@ -200,6 +219,41 @@ public:
 			((J9IndexableObjectDiscontiguousFull *)arrayPtr)->mustBeZero = 0;
 			((J9IndexableObjectDiscontiguousFull *)arrayPtr)->size = (uint32_t)size;
 		}
+	}
+
+#if defined(J9VM_ENV_DATA64)
+	/**
+	 * Set whether the virtual large object heap (off-heap) allocation for large objects is enabled.
+	 */
+	MMINLINE void
+	setEnableVirtualLargeObjectHeap(bool enableVirtualLargeObjectHeap)
+	{
+		_enableVirtualLargeObjectHeap = enableVirtualLargeObjectHeap;
+	}
+
+	/**
+	 * Set whether the indexable header field dataAddr is present in the header of the indexable object.
+	 */
+	MMINLINE void
+	setIsDataAddressPresent(bool isDataAddressPresent)
+	{
+		_isIndexableDataAddrPresent = isDataAddressPresent;
+	}
+#endif /* defined(J9VM_ENV_DATA64) */
+
+	/**
+	 * Query if virtual large object heap (off-heap) allocation for large objects is enabled.
+	 *
+	 * @return true if virtual large object heap (off-heap) allocation for large objects is enabled, 0 otherwise
+	 */
+	MMINLINE bool
+	isVirtualLargeObjectHeapEnabled()
+	{
+#if defined(J9VM_ENV_DATA64)
+		return _enableVirtualLargeObjectHeap;
+#else /* defined(J9VM_ENV_DATA64) */
+		return false;
+#endif /* defined(J9VM_ENV_DATA64) */
 	}
 
 	/**

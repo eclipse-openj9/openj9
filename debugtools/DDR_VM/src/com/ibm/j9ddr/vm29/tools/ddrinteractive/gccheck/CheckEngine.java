@@ -1199,7 +1199,7 @@ class CheckEngine
 			if (J9BuildFlags.env_data64 && isIndexableDataAddressFlagSet() && ObjectModel.isIndexable(object)) {
 				if (!_javaVM.isIndexableDataAddrPresent().isZero()) {
 					J9IndexableObjectPointer array = J9IndexableObjectPointer.cast(object);
-				
+
 					if (false == J9IndexableObjectHelper.isCorrectDataAddrPointer(array)) {
 						return J9MODRON_GCCHK_RC_INVALID_INDEXABLE_DATA_ADDRESS;
 					}

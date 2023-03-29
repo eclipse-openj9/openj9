@@ -24,6 +24,10 @@
 #include "j9.h"
 #include "j9cfg.h"
 
+#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
+#include <sys/mman.h>
+#include <errno.h>
+#endif
 #include "AllocationContext.hpp"
 #include "CycleState.hpp"
 #include "EnvironmentVLHGC.hpp"
@@ -180,7 +184,7 @@ MM_HeapRegionDataForAllocate::taskAsArrayletLeaf(MM_EnvironmentBase *env)
  * or assigned to a new list immediately.
  */
 void 
-MM_HeapRegionDataForAllocate::removeFromArrayletLeafList()
+MM_HeapRegionDataForAllocate::removeFromArrayletLeafList(MM_EnvironmentVLHGC *env)
 {
 	Assert_MM_true(_region->isArrayletLeaf());
 	
@@ -188,7 +192,15 @@ MM_HeapRegionDataForAllocate::removeFromArrayletLeafList()
 	MM_HeapRegionDescriptorVLHGC *previous = _previousArrayletLeafRegion;
 	
 	Assert_MM_true(NULL != previous);
-	
+
+	/**
+	 * Restore/Recommit arraylet leaves that have been previously decommited
+	 */
+	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
+	const UDATA arrayletLeafSize = env->getOmrVM()->_arrayletLeafSize;
+	void *leafAddress = _region->getLowAddress();
+	extensions->heap->commitMemory(leafAddress, arrayletLeafSize);
+
 	previous->_allocateData._nextArrayletLeafRegion = next;
 	if (NULL != next) {
 		Assert_MM_true(next->isArrayletLeaf());

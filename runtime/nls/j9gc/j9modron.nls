@@ -990,21 +990,18 @@ J9NLS_GC_OPTIONS_HIERARCHICAL_SCAN_ORDERING_NOT_SUPPORTED_WARN.user_response=Ref
 
 # END NON-TRANSLATABLE
 
-J9NLS_CHECKPOINTGCTHREAD_VALUE_MUST_BE_AT_MOST_SPECIFIED_GCTHREAD_VALUE_WARN=-XX:CheckpointGCThreads will be ignored. The specified value %1$zu must not be larger than user specified value of the total GC threads %2$zu set by -Xgcthreads, -Xgcmaxthreads or -Xgc:threads.
+J9NLS_GC_OPTIONS_VIRTUAL_LARGE_OBJECT_HEAP_NOT_SUPPORTED_WARN=Unsupported -XX:enableVirtualLargeObjectHeap option with -Xgcpolicy:%s will be ignored.
 # START NON-TRANSLATABLE
-J9NLS_CHECKPOINTGCTHREAD_VALUE_MUST_BE_AT_MOST_SPECIFIED_GCTHREAD_VALUE_WARN.explanation=-XX:CheckpointGCThreads must be smaller than or equal to the number of gc threads.
-J9NLS_CHECKPOINTGCTHREAD_VALUE_MUST_BE_AT_MOST_SPECIFIED_GCTHREAD_VALUE_WARN.system_action=The JVM ignores the -XX:CheckpointGCThreads option.
-J9NLS_CHECKPOINTGCTHREAD_VALUE_MUST_BE_AT_MOST_SPECIFIED_GCTHREAD_VALUE_WARN.user_response=Refer to the OpenJ9 documentation and adjust -Xgcthreads/-XX:CheckpointGCThreads to make sure number of gc threads is larger than or equal to the number of checkpointgcthreads.
-J9NLS_CHECKPOINTGCTHREAD_VALUE_MUST_BE_AT_MOST_SPECIFIED_GCTHREAD_VALUE_WARN.sample_input_1=6
-J9NLS_CHECKPOINTGCTHREAD_VALUE_MUST_BE_AT_MOST_SPECIFIED_GCTHREAD_VALUE_WARN.sample_input_2=4
+J9NLS_GC_OPTIONS_VIRTUAL_LARGE_OBJECT_HEAP_NOT_SUPPORTED_WARN.explanation=-XX:enableVirtualLargeObjectHeap is currently only supported with -Xgcpolicy:balanced.
+J9NLS_GC_OPTIONS_VIRTUAL_LARGE_OBJECT_HEAP_NOT_SUPPORTED_WARN.system_action=The JVM ignores the -XX:enableVirtualLargeObjectHeap option.
+J9NLS_GC_OPTIONS_VIRTUAL_LARGE_OBJECT_HEAP_NOT_SUPPORTED_WARN.user_response=None
 
 # END NON-TRANSLATABLE
 
-J9NLS_CHECKPOINTGCTHREAD_VALUE_MUST_BE_AT_MOST_HEURISTIC_GCTHREAD_VALUE_WARN=-XX:CheckpointGCThreads will be ignored. The specified value %1$zu must not be larger than calculated value of the total GC threads %2$zu.
+J9NLS_GC_OPTIONS_ARRAYLET_DOUBLE_MAPPING_NOT_SUPPORTED_WARN=Unsupported -Xgc:enableArrayletDoubleMapping option with -Xgcpolicy:%s will be ignored.
 # START NON-TRANSLATABLE
-J9NLS_CHECKPOINTGCTHREAD_VALUE_MUST_BE_AT_MOST_HEURISTIC_GCTHREAD_VALUE_WARN.explanation=-XX:CheckpointGCThreads must be smaller than or equal to the number of gc threads.
-J9NLS_CHECKPOINTGCTHREAD_VALUE_MUST_BE_AT_MOST_HEURISTIC_GCTHREAD_VALUE_WARN.system_action=The JVM ignores the -XX:CheckpointGCThreads option.
-J9NLS_CHECKPOINTGCTHREAD_VALUE_MUST_BE_AT_MOST_HEURISTIC_GCTHREAD_VALUE_WARN.user_response=Refer to the OpenJ9 documentation and adjust -XX:CheckpointGCThreads to make sure number of gc threads is larger than or equal to the number of checkpointgcthreads.
-J9NLS_CHECKPOINTGCTHREAD_VALUE_MUST_BE_AT_MOST_HEURISTIC_GCTHREAD_VALUE_WARN.sample_input_1=6
-J9NLS_CHECKPOINTGCTHREAD_VALUE_MUST_BE_AT_MOST_HEURISTIC_GCTHREAD_VALUE_WARN.sample_input_2=4
+J9NLS_GC_OPTIONS_ARRAYLET_DOUBLE_MAPPING_NOT_SUPPORTED_WARN.explanation=-Xgc:enableArrayletDoubleMapping is currently only supported with -Xgcpolicy:balanced.
+J9NLS_GC_OPTIONS_ARRAYLET_DOUBLE_MAPPING_NOT_SUPPORTED_WARN.system_action=The JVM ignores the -Xgc:enableArrayletDoubleMapping option.
+J9NLS_GC_OPTIONS_ARRAYLET_DOUBLE_MAPPING_NOT_SUPPORTED_WARN.user_response=Refer to the OpenJ9 documentation for -Xgc:enableArrayletDoubleMapping.
+
 # END NON-TRANSLATABLE

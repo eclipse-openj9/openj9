@@ -38,6 +38,7 @@ GC_ArrayletObjectModelBase::initialize(MM_GCExtensionsBase * extensions)
 #endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
 	_largestDesirableArraySpineSize = UDATA_MAX;
 #if defined(J9VM_ENV_DATA64)
+	_enableVirtualLargeObjectHeap = false;
 	_isIndexableDataAddrPresent = false;
 #endif /* defined(J9VM_ENV_DATA64) */
 	_contiguousIndexableHeaderSize = 0;
@@ -60,7 +61,7 @@ GC_ArrayletObjectModelBase::tearDown(MM_GCExtensionsBase * extensions)
 
 
 void
-GC_ArrayletObjectModelBase::expandArrayletSubSpaceRange(MM_MemorySubSpace * subSpace, void * rangeBase, void * rangeTop, UDATA largestDesirableArraySpineSize)
+GC_ArrayletObjectModelBase::expandArrayletSubSpaceRange(MM_MemorySubSpace * subSpace, void * rangeBase, void * rangeTop, uintptr_t largestDesirableArraySpineSize)
 {
 	/* Is this the first expand? */
 	if(NULL == _arrayletSubSpace) {
@@ -79,8 +80,8 @@ GC_ArrayletObjectModelBase::expandArrayletSubSpaceRange(MM_MemorySubSpace * subS
 	}
 }
 
-UDATA
-GC_ArrayletObjectModelBase::getSpineSizeWithoutHeader(ArrayLayout layout, UDATA numberArraylets, UDATA dataSize, bool alignData)
+uintptr_t
+GC_ArrayletObjectModelBase::getSpineSizeWithoutHeader(ArrayLayout layout, uintptr_t numberArraylets, uintptr_t dataSize, bool alignData)
 {
 	/* The spine consists of three (possibly empty) sections, not including the header:
 	 * 1. the alignment word - padding between arrayoid and inline-data
@@ -88,10 +89,10 @@ GC_ArrayletObjectModelBase::getSpineSizeWithoutHeader(ArrayLayout layout, UDATA 
 	 * 3. in-line data
 	 * In hybrid specs, the spine may also include padding for a secondary size field in empty arrays
 	 */
-	UDATA const slotSize = J9GC_REFERENCE_SIZE(this);
+	uintptr_t const slotSize = J9GC_REFERENCE_SIZE(this);
 	MM_GCExtensionsBase* extensions = MM_GCExtensionsBase::getExtensions(_omrVM);
-	UDATA spineArrayoidSize = 0;
-	UDATA spinePaddingSize = 0;
+	uintptr_t spineArrayoidSize = 0;
+	uintptr_t spinePaddingSize = 0;
 	if (InlineContiguous != layout) {
 		if (0 != dataSize) {
 			/* not in-line, so there in an arrayoid */
@@ -99,19 +100,23 @@ GC_ArrayletObjectModelBase::getSpineSizeWithoutHeader(ArrayLayout layout, UDATA 
 			spineArrayoidSize = numberArraylets * slotSize;
 		}
 	}
-	UDATA spineDataSize = 0;
+	bool isAllIndexableDataContiguousEnabled = extensions->indexableObjectModel.isVirtualLargeObjectHeapEnabled();
+#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
+	isAllIndexableDataContiguousEnabled = (isAllIndexableDataContiguousEnabled || extensions->indexableObjectModel.isDoubleMappingEnabled());
+#endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
+
+	uintptr_t spineDataSize = 0;
 	if (InlineContiguous == layout) {
 		spineDataSize = dataSize; // All data in spine
-	} else if (Hybrid == layout) {
-#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
-		if (extensions->indexableObjectModel.isDoubleMappingEnabled()) {
+		if (isAllIndexableDataContiguousEnabled && (!extensions->indexableObjectModel.isArrayletDataAdjacentToHeader(dataSize))) {
 			spineDataSize = 0;
-		} else
-#endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
-		{
-			/* Last arraylet in spine */
-			spineDataSize = (dataSize & (_omrVM->_arrayletLeafSize - 1));
 		}
+	} else if (Hybrid == layout) {
+		if (isAllIndexableDataContiguousEnabled) {
+			extensions->indexableObjectModel.AssertContiguousArrayDataUnreachable();
+		}
+		/* Last arraylet in spine */
+		spineDataSize = (dataSize & (_omrVM->_arrayletLeafSize - 1));
 	}
 
 	return spinePaddingSize + spineArrayoidSize + spineDataSize;

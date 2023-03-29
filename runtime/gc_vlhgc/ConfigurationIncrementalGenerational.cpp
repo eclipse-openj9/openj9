@@ -54,6 +54,7 @@
 #include "PhysicalSubArenaRegionBased.hpp"
 #include "SweepPoolManagerAddressOrderedList.hpp"
 #include "SweepPoolManagerVLHGC.hpp"
+#include  "SparseVirtualMemory.hpp"
 
 #define TAROK_MINIMUM_REGION_SIZE_BYTES (512 * 1024)
 
@@ -93,6 +94,12 @@ MM_ConfigurationIncrementalGenerational::createHeapWithManager(MM_EnvironmentBas
 {
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
 
+#if defined(J9VM_GC_DOUBLE_MAPPING_FOR_SPARSE_HEAP_ALLOCATION)
+	if (extensions->isVirtualLargeObjectHeapRequested) {
+		extensions->isArrayletDoubleMapRequested = true;
+	}
+#endif /* defined(J9VM_GC_DOUBLE_MAPPING_FOR_SPARSE_HEAP_ALLOCATION) */
+
 	MM_Heap *heap = MM_HeapVirtualMemory::newInstance(env, extensions->heapAlignment, heapBytesRequested, regionManager);
 	if (NULL == heap) {
 		return NULL;
@@ -111,8 +118,14 @@ MM_ConfigurationIncrementalGenerational::createHeapWithManager(MM_EnvironmentBas
 	 * want, and that's memfd_create(2); however that's only supported in glibc 2.27. We
 	 * also need to check if region size is a bigger or equal to multiple of page size.
 	 *
+	 * If both double mapping and sparse heap are requested, sparse heap takes precedence
+	 * over double mapping.
 	 */
-	if (extensions->isArrayletDoubleMapRequested && extensions->isArrayletDoubleMapAvailable) {
+#if defined(J9VM_GC_DOUBLE_MAPPING_FOR_SPARSE_HEAP_ALLOCATION)
+	if ((extensions->isArrayletDoubleMapRequested || extensions->isVirtualLargeObjectHeapRequested) && (extensions->isArrayletDoubleMapAvailable)) {
+#else /* defined(J9VM_GC_DOUBLE_MAPPING_FOR_SPARSE_HEAP_ALLOCATION) */
+	if ((extensions->isArrayletDoubleMapRequested) && (!extensions->isVirtualLargeObjectHeapRequested) && (extensions->isArrayletDoubleMapAvailable)) {
+#endif /* defined(J9VM_GC_DOUBLE_MAPPING_FOR_SPARSE_HEAP_ALLOCATION) */
 		uintptr_t pagesize = heap->getPageSize();
 		if (!extensions->memoryManager->isLargePage(env, pagesize) || (pagesize <= extensions->getOmrVM()->_arrayletLeafSize)) {
 			extensions->indexableObjectModel.setEnableDoubleMapping(true);
@@ -154,6 +167,30 @@ MM_ConfigurationIncrementalGenerational::createHeapWithManager(MM_EnvironmentBas
 		}
 	}
 #endif /* defined(OMR_GC_VLHGC_CONCURRENT_COPY_FORWARD) */
+
+#if defined(J9VM_ENV_DATA64)
+	extensions->indexableObjectModel.setIsDataAddressPresent(true);
+	if (extensions->isVirtualLargeObjectHeapRequested) {
+		/* Create off-heap */
+		MM_SparseVirtualMemory *largeObjectVirtualMemory = MM_SparseVirtualMemory::newInstance(env, OMRMEM_CATEGORY_MM_RUNTIME_HEAP, heap);
+		if (NULL != largeObjectVirtualMemory) {
+			extensions->largeObjectVirtualMemory = largeObjectVirtualMemory;
+			extensions->indexableObjectModel.setEnableVirtualLargeObjectHeap(true);
+			extensions->isVirtualLargeObjectHeapEnabled = true;
+		} else {
+#if defined(OMR_GC_VLHGC_CONCURRENT_COPY_FORWARD)
+			extensions->heapRegionStateTable->kill(env->getForge());
+			extensions->heapRegionStateTable = NULL;
+#endif /* defined(OMR_GC_VLHGC_CONCURRENT_COPY_FORWARD) */
+			extensions->compressedCardTable->kill(env);
+			extensions->compressedCardTable = NULL;
+			extensions->cardTable->kill(env);
+			extensions->cardTable = NULL;
+			heap->kill(env);
+			return NULL;
+		}
+	}
+#endif /* defined(J9VM_ENV_DATA64) */
 
 	return heap;
 }

@@ -234,6 +234,10 @@ J9::ObjectModel::isOffHeapAllocationEnabled()
 #endif /* defined(J9VM_OPT_JITSERVER) */
    return TR::Compiler->javaVM->memoryManagerFunctions->j9gc_off_heap_allocation_enabled(TR::Compiler->javaVM);
    }
+<<<<<<< Upstream, based on Upstream/master
+=======
+
+>>>>>>> 2736c22 Introduce Off-Heap Technology for Large Arrays
 
 UDATA
 J9::ObjectModel::elementSizeOfBooleanArray()

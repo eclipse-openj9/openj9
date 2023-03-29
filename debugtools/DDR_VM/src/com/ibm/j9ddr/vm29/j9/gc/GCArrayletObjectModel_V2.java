@@ -100,10 +100,6 @@ class GCArrayletObjectModel_V2 extends GCArrayletObjectModelBase
 			}
 		}
 
-		if (!isCorrectDataAddrPointer) {
-			System.out.printf("arrayPtr: %x headerSize: %d dataAddr: %x calculatedDataAddr: %x \n", VoidPointer.cast(arrayPtr).getAddress(), J9IndexableObjectHelper.contiguousHeaderSize(), dataAddr.getAddress(), VoidPointer.cast(arrayPtr.addOffset(J9IndexableObjectHelper.contiguousHeaderSize())).getAddress());
-		}
-
 		return isCorrectDataAddrPointer;
 	}
 }
