@@ -154,3 +154,4 @@ option(J9VM_PORT_RUNTIME_INSTRUMENTATION "Controls whether runtime instrumentati
 option(J9VM_USE_RDYNAMIC "Link using the -rdynamic option (Linux only)" OFF)
 
 option(J9VM_ZOS_3164_INTEROPERABILITY "Enables support for 64-bit zOS to interoperate with 31-bit JNI native targets.")
+option(J9VM_OPT_SHR_MSYNC_SUPPORT "Enables support for synchronizing memory with physical storage in shared classes cache.")

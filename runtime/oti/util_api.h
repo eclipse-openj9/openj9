@@ -2487,31 +2487,6 @@ const char* props_file_get(j9props_file_t file, const char* key);
  */
 void props_file_do(j9props_file_t file, j9props_file_iterator iterator, void* userData);
 
-
-
-/* ----------------- zosversion.c ---------------- */
-
-/**
- * Function to determine if the zos version is at least a given
- * release and version.  The implementation is based on uname(),
- * NOT on __osname() as the __osname() release numbers are not
- * guaranteed to increase.
- *
- * For release and version numbers, see
- * 	http://publib.boulder.ibm.com/infocenter/zos/v1r10/index.jsp?topic=/com.ibm.zos.r10.bpxbd00/osnm.htm
- *
- * Operating System 	Sysname 	Release 	Version
- * z/OS V1.10			OS/390		20.00		03
- * z/OS 1.9				OS/390		19.00		03
- * z/OS 1.8 or z/OS.e 1.8 	OS/390		18.00		03
- * z/OS 1.7 or z/OS.e 1.7 	OS/390 		17.00 		03
- * z/OS 1.6 or z/OS.e 1.6 	OS/390 		16.00 		03
- */
-BOOLEAN
-zos_version_at_least(double min_release, double min_version);
-
-
-
 /* ----------------- ObjectHash.cpp ---------------- */
 /**
  * Hash an UDATA via murmur3 algorithm

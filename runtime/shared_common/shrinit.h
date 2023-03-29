@@ -195,6 +195,7 @@ typedef struct J9SharedClassesOptions {
 #define OPTION_LAYER_EQUALS "layer="
 #define OPTION_CREATE_LAYER "createLayer"
 #define OPTION_NO_PERSISTENT_DISK_SPACE_CHECK "noPersistentDiskSpaceCheck"
+#define OPTION_MAP31 "map31"
 
 /* public options for printallstats= and printstats=  */
 #define SUB_OPTION_PRINTSTATS_ALL "all"

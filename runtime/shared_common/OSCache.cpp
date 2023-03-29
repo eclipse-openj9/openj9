@@ -1248,6 +1248,10 @@ SH_OSCache::getCacheStatsCommon(J9JavaVM* vm, const char* ctrlDirName, UDATA gro
 		goto done;
 	}
 
+	if (J9PORT_SHR_CACHE_TYPE_PERSISTENT == cacheInfo->versionData.cacheType) {
+		runtimeflags |= J9SHR_RUNTIMEFLAG_ENABLE_PERSISTENT_CACHE;
+	}
+
 	startedForStats = cmStats->startupForStats(currentThread, ctrlDirName, groupPerm, cache, &runtimeflags, lowerLayerList);
 
 	if (startedForStats != CC_STARTUP_OK) {

@@ -862,29 +862,6 @@ void
 SH_CompositeCacheImpl::notifyPagesCommitted(BlockPtr start, BlockPtr end, UDATA expectedDirection)
 {
 	Trc_SHR_CC_notifyPagesCommitted_Entry(start, end, expectedDirection);
-
-#if defined (J9SHR_MSYNC_SUPPORT)
-	if (*_runtimeFlags & J9SHR_RUNTIMEFLAG_ENABLE_MSYNC) {
-		UDATA actualDirection = (start < end) ? DIRECTION_FORWARD : DIRECTION_BACKWARD;
-		BlockPtr syncStart, syncEnd;
-	
-		if ((_osPageSize == 0) || _readOnlyOSCache) {
-			Trc_SHR_Assert_ShouldNeverHappen();
-			return;
-		}
-
-		if (actualDirection == DIRECTION_FORWARD) {
-			syncStart = (BlockPtr)ROUND_DOWN_TO(_osPageSize, (UDATA)start);
-			syncEnd = (BlockPtr)ROUND_UP_TO(_osPageSize, (UDATA)end);
-		} else {
-			syncStart = (BlockPtr)ROUND_DOWN_TO(_osPageSize, (UDATA)end);
-			syncEnd = (BlockPtr)ROUND_UP_TO(_osPageSize, (UDATA)start);
-		}
-		if (syncStart != syncEnd) {
-			_oscache->syncUpdates((void*)syncStart, (syncEnd - syncStart), (J9PORT_MMAP_SYNC_WAIT | J9PORT_MMAP_SYNC_INVALIDATE));
-		}
-	}
-#endif
 	notifyPagesRead(start, end, expectedDirection, true);
 
 	Trc_SHR_CC_notifyPagesCommitted_Exit();
@@ -1044,7 +1021,15 @@ SH_CompositeCacheImpl::startup(J9VMThread* currentThread, J9SharedClassPreinitCo
 		bool OSCStarted = false;
 
 		setCurrentCacheVersion(vm, J2SE_VERSION(currentThread->javaVM), &versionData);
-
+#if defined(J9VM_OPT_SHR_MSYNC_SUPPORT)
+		if (J9_ARE_ANY_BITS_SET(*_runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_PERSISTENT_CACHE)) {
+			/**
+			 * Set J9SHR_RUNTIMEFLAG_ENABLE_MSYNC here rather than in getDefaultRuntimeFlags().
+			 * In unit tests where cacheMemory is not NULL, no mapped file is used. No need to do msync in unit tests.
+			 */
+			*_runtimeFlags |= J9SHR_RUNTIMEFLAG_ENABLE_MSYNC;
+		}
+#endif /* defined(J9VM_OPT_SHR_MSYNC_SUPPORT) */
 		/* Note that OSCache startup does not leave any kind of lock on the cache, so the cache file could in theory
 		 * be recreated by another process whenever we're not holding a lock on it. This can happen until attach() is called */
 
@@ -1396,32 +1381,59 @@ SH_CompositeCacheImpl::startup(J9VMThread* currentThread, J9SharedClassPreinitCo
 					_readWriteAreaStart = NULL;
 					_readWriteAreaBytes = 0;
 				}
-				if (isFirstStart && (!_theca->roundedPagesFlag || _readOnlyOSCache)) {
+				if (isFirstStart) {
+					if ((0 == _theca->roundedPagesFlag) || _readOnlyOSCache) {
 					/* If we don't have rounded pages or if we're running readonly, we can't do mprotect or msync */
-#if defined (J9SHR_MSYNC_SUPPORT)
-					*_runtimeFlags &= ~(J9SHR_RUNTIMEFLAG_ENABLE_MSYNC
+#if defined(J9VM_OPT_SHR_MSYNC_SUPPORT)
+						*_runtimeFlags &= ~(J9SHR_RUNTIMEFLAG_ENABLE_MSYNC
 										| J9SHR_RUNTIMEFLAG_ENABLE_MPROTECT
 										| J9SHR_RUNTIMEFLAG_ENABLE_MPROTECT_ALL
 										| J9SHR_RUNTIMEFLAG_ENABLE_MPROTECT_RW
 										| J9SHR_RUNTIMEFLAG_MPROTECT_PARTIAL_PAGES_ON_STARTUP
 										| J9SHR_RUNTIMEFLAG_ENABLE_MPROTECT_PARTIAL_PAGES
 										| J9SHR_RUNTIMEFLAG_ENABLE_MPROTECT_ONFIND);
-#else
-					*_runtimeFlags &= ~(J9SHR_RUNTIMEFLAG_ENABLE_MPROTECT
+						if (!_readOnlyOSCache) {
+							CC_TRACE(J9SHR_VERBOSEFLAG_ENABLE_VERBOSE, J9NLS_INFO, J9NLS_CC_PAGE_PROTECTION_UNSUPPORTED);
+							CC_TRACE(J9SHR_VERBOSEFLAG_ENABLE_VERBOSE, J9NLS_INFO, J9NLS_CC_MSYNC_UNSUPPORTED);
+						}
+					} else {
+						if (J9_ARE_ALL_BITS_SET(*_runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_PERSISTENT_CACHE)) {
+							int32_t mmapCapabilities = j9mmap_capabilities();
+							if (J9_ARE_NO_BITS_SET(mmapCapabilities, J9PORT_MMAP_CAPABILITY_MSYNC)) {
+								*_runtimeFlags &= ~J9SHR_RUNTIMEFLAG_ENABLE_MSYNC;
+								if (!_readOnlyOSCache) {
+									CC_TRACE(J9SHR_VERBOSEFLAG_ENABLE_VERBOSE, J9NLS_INFO, J9NLS_CC_MSYNC_UNSUPPORTED);
+								}
+							}
+							if (J9_ARE_NO_BITS_SET(mmapCapabilities, J9PORT_MMAP_CAPABILITY_PROTECT)) {
+								*_runtimeFlags &= ~(J9SHR_RUNTIMEFLAG_ENABLE_MPROTECT
+												| J9SHR_RUNTIMEFLAG_ENABLE_MPROTECT_ALL
+												| J9SHR_RUNTIMEFLAG_ENABLE_MPROTECT_RW
+												| J9SHR_RUNTIMEFLAG_MPROTECT_PARTIAL_PAGES_ON_STARTUP
+												| J9SHR_RUNTIMEFLAG_ENABLE_MPROTECT_PARTIAL_PAGES
+												| J9SHR_RUNTIMEFLAG_ENABLE_MPROTECT_ONFIND);
+								if (!_readOnlyOSCache) {
+									CC_TRACE(J9SHR_VERBOSEFLAG_ENABLE_VERBOSE, J9NLS_INFO, J9NLS_CC_PAGE_PROTECTION_UNSUPPORTED);
+								}
+							}
+						}
+#else /* defined(J9VM_OPT_SHR_MSYNC_SUPPORT) */
+						*_runtimeFlags &= ~(J9SHR_RUNTIMEFLAG_ENABLE_MPROTECT
 										| J9SHR_RUNTIMEFLAG_ENABLE_MPROTECT_ALL
 										| J9SHR_RUNTIMEFLAG_ENABLE_MPROTECT_RW
 										| J9SHR_RUNTIMEFLAG_MPROTECT_PARTIAL_PAGES_ON_STARTUP
 										| J9SHR_RUNTIMEFLAG_ENABLE_MPROTECT_PARTIAL_PAGES
 										| J9SHR_RUNTIMEFLAG_ENABLE_MPROTECT_ONFIND);
-#endif 
-					if (!_readOnlyOSCache) {
-						CC_TRACE(J9SHR_VERBOSEFLAG_ENABLE_VERBOSE, J9NLS_INFO, J9NLS_CC_PAGE_PROTECTION_UNSUPPORTED);
+						if (!_readOnlyOSCache) {
+							CC_TRACE(J9SHR_VERBOSEFLAG_ENABLE_VERBOSE, J9NLS_INFO, J9NLS_CC_PAGE_PROTECTION_UNSUPPORTED);
+						}
+#endif /* defined(J9VM_OPT_SHR_MSYNC_SUPPORT) */
 					}
 				}
 
-#if defined (J9SHR_MSYNC_SUPPORT)
+#if defined(J9VM_OPT_SHR_MSYNC_SUPPORT)
 				_doHeaderSync = _doReadWriteSync = _doSegmentSync = _doMetaSync = (*_runtimeFlags & J9SHR_RUNTIMEFLAG_ENABLE_MSYNC);
-#endif
+#endif /* defined(J9VM_OPT_SHR_MSYNC_SUPPORT) */
 				if (J9_ARE_ALL_BITS_SET(*_runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_MPROTECT)) {
 					_doSegmentProtect = !getContainsCachelets();
 					_doMetaProtect = true;
@@ -1533,6 +1545,7 @@ SH_CompositeCacheImpl::startup(J9VMThread* currentThread, J9SharedClassPreinitCo
 				if (_initializingNewCache) {
 					*cacheHasIntegrity = true;
 					_theca->ccInitComplete |= CC_STARTUP_COMPLETE;
+					Trc_SHR_CC_startup_setCacheInitComplete(currentThread);
 				}
 				_maxAOT = _theca->maxAOT;
 				_maxJIT = _theca->maxJIT;
@@ -1907,6 +1920,7 @@ SH_CompositeCacheImpl::enterWriteMutex(J9VMThread* currentThread, bool lockCache
 		rc = omrthread_monitor_enter(_utMutex);
 	}
 	if (rc == 0) {
+		Trc_SHR_Assert_Equals(NULL, _commonCCInfo->hasWriteMutexThread);
 		_commonCCInfo->hasWriteMutexThread = currentThread;
 		if (*_runtimeFlags & J9SHR_RUNTIMEFLAG_DENY_CACHE_UPDATES) {
 			/*Pass doDecWriteCounter=false b/c exitWriteMutex is being called without updating writerCount*/
@@ -1922,9 +1936,9 @@ SH_CompositeCacheImpl::enterWriteMutex(J9VMThread* currentThread, bool lockCache
 			&& (true == _started) && (0 == rc)) {
 		/*This function may be called before _theca is set (e.g SH_CompositeCacheImpl::startup)*/
 		unprotectHeaderReadWriteArea(currentThread, false);
-
 		this->_commonCCInfo->oldWriterCount = _theca->writerCount;
 		_theca->writerCount += 1;
+		Trc_SHR_CC_enterWriteMutex_writerCountInc(currentThread, this->_commonCCInfo->oldWriterCount, _theca->writerCount);
 		protectHeaderReadWriteArea(currentThread, false);
 	}
 	if (rc == -1) {
@@ -1971,10 +1985,10 @@ SH_CompositeCacheImpl::exitWriteMutex(J9VMThread* currentThread, const char* cal
 			&& (true == doDecWriteCounter) && (true == _started)) {
 		/*This function may be called before _theca is set (e.g SH_CompositeCacheImpl::startup)*/
 		unprotectHeaderReadWriteArea(currentThread, false);
-
 		_theca->writerCount -= 1;
-		protectHeaderReadWriteArea(currentThread, false);
+		Trc_SHR_CC_exitWriteMutex_writerCountDec(currentThread, _theca->writerCount);
 		Trc_SHR_Assert_True(this->_commonCCInfo->oldWriterCount == _theca->writerCount);
+		protectHeaderReadWriteArea(currentThread, false);
 	}
 
 	doUnlockCache(currentThread);
@@ -2988,9 +3002,9 @@ SH_CompositeCacheImpl::commitUpdateHelper(J9VMThread* currentThread, bool isCach
 		 * can occur. On at least zOS, the mprotected memory persists across vm invocations.
 		 */
 		if (_doSegmentProtect
-#if defined (J9SHR_MSYNC_SUPPORT)
+#if defined(J9VM_OPT_SHR_MSYNC_SUPPORT)
 				|| _doSegmentSync
-#endif
+#endif /* defined(J9VM_OPT_SHR_MSYNC_SUPPORT) */
 		) {
 			if ((J9_ARE_ALL_BITS_SET(*_runtimeFlags, J9SHR_RUNTIMEFLAG_MPROTECT_PARTIAL_PAGES_ON_STARTUP) || (J9VM_PHASE_NOT_STARTUP == vm->phase)) 
 				&& (true == _doPartialPagesProtect)
@@ -3045,9 +3059,9 @@ SH_CompositeCacheImpl::commitUpdateHelper(J9VMThread* currentThread, bool isCach
 		_theca->jitBytes += _storedJITUsedBytes;
 	}
 	if (_doMetaProtect
-#if defined (J9SHR_MSYNC_SUPPORT)
+#if defined(J9VM_OPT_SHR_MSYNC_SUPPORT)
 			|| _doMetaSync
-#endif
+#endif /* defined(J9VM_OPT_SHR_MSYNC_SUPPORT) */
 	) {
 		/* Note that _scan always points to the next available ShcItemHdr, 
 		 * so the memory between _scan and (_scan + sizeof(ShcItemHdr)) can be modified */
@@ -3737,6 +3751,11 @@ SH_CompositeCacheImpl::runExitCode(J9VMThread *currentThread)
 	if (UnitTest::MINMAX_TEST == UnitTest::unitTest) {
 		return;
 	}
+	/* If J9VM_OPT_SHR_MSYNC_SUPPORT is enabled, syncUpdates() is needed to write the header page to the cache file.
+	 * Call runExitCode() first so that the last detach time can be saved to the file.
+	 */
+	oscacheToUse->runExitCode();
+
 	/* If we're exiting abnormally, a thread may have the write mutex.
 	 * If that's the case, do not attempt to update the cache CRC
 	 * because otherwise we can hang writing the dumps */
@@ -3747,6 +3766,15 @@ SH_CompositeCacheImpl::runExitCode(J9VMThread *currentThread)
 			updateCacheCRC();
 			/* Deny updates so the CRC is not invalidated */
 			*_runtimeFlags |= J9SHR_RUNTIMEFLAG_DENY_CACHE_UPDATES;
+#if defined(J9VM_OPT_SHR_MSYNC_SUPPORT)
+			if (J9_ARE_ALL_BITS_SET(*_runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_MSYNC)) {
+				BlockPtr areaStart = _cacheHeaderPageStart;
+				BlockPtr areaEnd = (BlockPtr)ROUND_UP_TO(_osPageSize, (UDATA)CAEND(_theca));
+				if (NULL != areaStart) {
+					oscacheToUse->syncUpdates(areaStart, areaEnd - areaStart, J9PORT_MMAP_SYNC_WAIT);
+				}
+			}
+#endif /* defined(J9VM_OPT_SHR_MSYNC_SUPPORT) */
 			if ((lockrc = oscacheToUse->releaseWriteLock(_commonCCInfo->writeMutexID)) != 0) {
 				CC_ERR_TRACE1(J9NLS_SHRC_CC_FAILED_EXIT_MUTEX, lockrc);
 			}
@@ -3754,7 +3782,6 @@ SH_CompositeCacheImpl::runExitCode(J9VMThread *currentThread)
 			CC_ERR_TRACE1(J9NLS_SHRC_CC_FAILED_RUN_EXIT_CODE_ACQUIRE_MUTEX, lockrc);
 		}
 	}
-	oscacheToUse->runExitCode();
 	return;
 }
 
@@ -3821,7 +3848,6 @@ SH_CompositeCacheImpl::enterReadWriteAreaMutex(J9VMThread* currentThread, BOOLEA
 
 	if (oscacheToUse && _readWriteAreaBytes) {
 		if (_commonCCInfo->readWriteAreaMutexID != CC_READONLY_LOCK_VALUE) {
-
 			Trc_SHR_Assert_NotEquals(currentThread, _commonCCInfo->hasReadWriteMutexThread);
 			Trc_SHR_Assert_NotEquals(currentThread, _commonCCInfo->hasRefreshMutexThread);
 
@@ -3953,12 +3979,6 @@ SH_CompositeCacheImpl::exitReadWriteAreaMutex(J9VMThread* currentThread, UDATA r
 	Trc_SHR_Assert_NotEquals(currentThread, _commonCCInfo->hasRefreshMutexThread);
 
 	if (oscacheToUse && _readWriteAreaBytes) {
-#if defined (J9SHR_MSYNC_SUPPORT)
-		if (_doReadWriteSync) {
-			oscacheToUse->syncUpdates((void*)_readWriteAreaStart, _readWriteAreaBytes, (J9PORT_MMAP_SYNC_WAIT | J9PORT_MMAP_SYNC_INVALIDATE));
-		}
-#endif
-
 		if (resetReason != J9SHR_STRING_POOL_OK) {
 			UDATA oldNum = _theca->readWriteVerifyCntr;
 			/* The bottom 4 bits are reserved for flags, the count is shifted by 4 */
@@ -5022,7 +5042,14 @@ SH_CompositeCacheImpl::startupForStats(J9VMThread* currentThread, SH_OSCache * o
 		 * take the read lock. The read-write area can also be written since we don't
 		 * have the read-write lock.
 		 */
-		*_runtimeFlags |= J9SHR_RUNTIMEFLAG_ENABLE_MPROTECT;
+		if (J9_ARE_ANY_BITS_SET(*runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_PERSISTENT_CACHE)) {
+			PORT_ACCESS_FROM_VMC(currentThread);
+			if (J9_ARE_ANY_BITS_SET(j9mmap_capabilities(), J9PORT_MMAP_CAPABILITY_PROTECT)) {
+				*_runtimeFlags |= J9SHR_RUNTIMEFLAG_ENABLE_MPROTECT;
+			}
+		} else {
+			*_runtimeFlags |= J9SHR_RUNTIMEFLAG_ENABLE_MPROTECT;
+		}
 		notifyPagesRead(CASTART(_theca), CAEND(_theca), DIRECTION_FORWARD, true);
 	}
 

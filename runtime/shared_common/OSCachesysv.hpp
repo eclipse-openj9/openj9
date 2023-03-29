@@ -141,9 +141,9 @@ public:
 	
 	virtual IDATA detach(void);
 	
-#if defined (J9SHR_MSYNC_SUPPORT)
+#if defined(J9VM_OPT_SHR_MSYNC_SUPPORT)
 	IDATA syncUpdates(void* start, UDATA length, U_32 flags); 
-#endif
+#endif /* defined(J9VM_OPT_SHR_MSYNC_SUPPORT) */
 	
 	IDATA getError(void);
 	
