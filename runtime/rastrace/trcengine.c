@@ -1014,6 +1014,7 @@ criuRestoreInitializeTrace(J9VMThread *thr)
 	BOOLEAN result = FALSE;
 	UtThreadData **tempThr = UT_THREAD_FROM_VM_THREAD(thr);
 
+	Trc_trcengine_criu_criuRestoreInitializeTrace_Entry(thr);
 	if (J9VMDLLMAIN_OK == traceInitializationHelper(vm, tempThr, vm->checkpointState.restoreArgsList, TRUE)) {
 		/* prepare the trace file first if an output is specified */
 		if (OMR_ERROR_NONE == startTraceWorkerThread(tempThr)) {
