@@ -339,7 +339,7 @@ J9NLS_PORT_MMAP_INVALID_FILE_HANDLE.user_response=Contact your service represent
 
 # END NON-TRANSLATABLE
 
-J9NLS_PORT_LINUXDUMP_PIPE_CORE=El par\u00e0metre %s \"%s\" especifica que cal connectar l'abocament de mem\u00f2ria principal a un programa extern.  S'est\u00e0 provant de canviar el nom del nucli.%d.  Reviseu el manual del programa extern per trobar-hi escrit l'abocament de mem\u00f2ria del nucli i assegureu-vos que el programa no el trunca.\n
+J9NLS_PORT_LINUXDUMP_PIPE_CORE=El par\u00e0metre %s \\"%s\\" especifica que cal connectar l'abocament de mem\u00f2ria principal a un programa extern.  S'est\u00e0 provant de canviar el nom de core o de core.%d.  Reviseu el manual del programa extern per trobar on s'escriu l'abocament de mem\u00f2ria de core i assegureu-vos que el programa no el trunca.\n
 # START NON-TRANSLATABLE
 J9NLS_PORT_LINUXDUMP_PIPE_CORE.sample_input_1=/proc/sys/kernel/core_pattern
 J9NLS_PORT_LINUXDUMP_PIPE_CORE.sample_input_2=|/usr/lib/systemd/systemd-coredump %P %u %g %s %t %c %h
@@ -496,7 +496,7 @@ J9NLS_PORT_DUMP_PATH_EXISTS.system_action=The JVM continues, the requested syste
 J9NLS_PORT_DUMP_PATH_EXISTS.user_response=Check whether the name of a non-regular file (for example a directory, symbolic link, pipe or socket) in the current working directory of the Java application clashes with the default system dump file name (core or core.<process ID>) or with the setting of /proc/sys/kernel/core_pattern and /proc/sys/kernel/core_uses_pid. Either rename the subdirectory, or change the settings of /proc/sys/kernel/core_pattern and /proc/sys/kernel/core_uses_pid so that the names do not clash.
 # END NON-TRANSLATABLE
 
-J9NLS_PORT_LINUXDUMP_PIPE_CORE_NOT_FOUND=No s'ha trobat el fitxer core creat per proc\u00e9s fill amb pid = %i. Reviseu la documentaci\u00f3 del programa %s \"%s\" per trobar-hi escrit el fitxer core i assegureu-vos que el programa no el trunca.\n
+J9NLS_PORT_LINUXDUMP_PIPE_CORE_NOT_FOUND=No s'ha trobat el fitxer core creat pel proc\u00e9s fill amb pid = %i. Reviseu la documentaci\u00f3 del programa %s "%s" per trobar on s'escriu el fitxer core i assegureu-vos que el programa no el trunca.\n
 # START NON-TRANSLATABLE
 J9NLS_PORT_LINUXDUMP_PIPE_CORE_NOT_FOUND.sample_input_1=12345
 J9NLS_PORT_LINUXDUMP_PIPE_CORE_NOT_FOUND.sample_input_2=/proc/sys/kernel/core_pattern
