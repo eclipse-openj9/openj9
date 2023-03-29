@@ -30,6 +30,7 @@
 #include "compile/CompilationTypes.hpp"
 #include "control/CompilationController.hpp"
 #include "control/MethodToBeCompiled.hpp"
+#include "control/CompilationStrategy.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/TRMemory.hpp"
 #include "env/jittypes.h"

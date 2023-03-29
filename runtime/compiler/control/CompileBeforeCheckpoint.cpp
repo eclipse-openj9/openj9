@@ -26,6 +26,7 @@
 
 #include "j9protos.h"
 #include "j9nonbuilder.h"
+#include "control/CompilationStrategy.hpp"
 #include "control/CompilationController.hpp"
 #include "control/CompilationRuntime.hpp"
 #include "control/CompileBeforeCheckpoint.hpp"

@@ -46,6 +46,7 @@ class TR_OptimizationPlan;
 class TR_ResolvedMethod;
 namespace TR { class Instruction; }
 namespace TR { class SymbolReference; }
+namespace J9 { class CompilationStrategy; }
 
 // Bits to represent sampling mechanism in method return info field.
 // Bits 3, 4, 5, 6, 7 are reserved for this purpose (could use fewer)
@@ -66,7 +67,6 @@ static int32_t profilingFreqTable  [] = {  19,  29,   47,   47,   47,    53 }; /
 #define DEFAULT_PROFILING_FREQUENCY (profilingFreqTable  [MAX_BACKEDGES])
 #define DEFAULT_PROFILING_COUNT     (profilingCountsTable[MAX_BACKEDGES])
 
-namespace TR { class DefaultCompilationStrategy; }
 namespace OMR { class Recompilation; }
 namespace J9 { class Recompilation; }
 
@@ -79,7 +79,7 @@ class TR_PersistentMethodInfo
    friend class TR::CompilationInfo;
    friend class TR_S390Recompilation;  // FIXME: ugly
    friend class ::OMR::Options;
-   friend class TR::DefaultCompilationStrategy;
+   friend class J9::CompilationStrategy;
 
    public:
    TR_PERSISTENT_ALLOC(TR_Memory::PersistentMethodInfo);
@@ -316,8 +316,7 @@ class TR_PersistentJittedBodyInfo
    friend class J9::Recompilation;
    friend class TR::CompilationInfo;
    friend class TR_S390Recompilation; // FIXME: ugly
-   friend class TR::DefaultCompilationStrategy;
-   friend class TR_EmilyPersistentJittedBodyInfo;
+   friend class J9::CompilationStrategy;
    friend class ::OMR::Options;
    friend class J9::Options;
 
