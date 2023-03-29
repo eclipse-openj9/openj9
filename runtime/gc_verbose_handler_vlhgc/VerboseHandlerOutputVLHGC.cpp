@@ -29,6 +29,8 @@
 #include "EnvironmentBase.hpp"
 #include "GCExtensions.hpp"
 #include "MarkVLHGCStats.hpp"
+#include "SparseVirtualMemory.hpp"
+#include "SparseAddressOrderedFixedSizeDataPool.hpp"
 #include "ReferenceStats.hpp"
 #include "VerboseManager.hpp"
 #include "VerboseWriterChain.hpp"
@@ -337,7 +339,13 @@ MM_VerboseHandlerOutputVLHGC::outputMemoryInfoInnerStanza(MM_EnvironmentBase *en
 				stats->_edenFreeHeapSize, stats->_edenHeapSize,
 				((UDATA)(((U_64)stats->_edenFreeHeapSize*100) / (U_64)stats->_edenHeapSize)));
 	}
-
+#if defined(J9VM_ENV_DATA64)
+	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env->getOmrVM());
+	if (extensions->isVirtualLargeObjectHeapEnabled) {
+		writer->formatAndOutput(env, indent, "<mem type=\"offheap\" allocatedBytes=\"%zu\"/>",
+				extensions->largeObjectVirtualMemory->getSparseDataPool()->getFreeListPoolAllocBytes());
+	}
+#endif /* defined(J9VM_ENV_DATA64) */
 	if (0 != stats->_arrayletReferenceObjects) {
 		writer->formatAndOutput(env, indent, "<arraylet-reference objects=\"%zu\" leaves=\"%zu\" largest=\"%zu\" />",
 				stats->_arrayletReferenceObjects, stats->_arrayletReferenceLeaves, stats->_largestReferenceArraylet);

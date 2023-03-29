@@ -173,11 +173,19 @@ j9gc_hot_reference_field_required(J9JavaVM *javaVM)
 BOOLEAN
 j9gc_off_heap_allocation_enabled(J9JavaVM *javaVM)
 {
+<<<<<<< Upstream, based on Upstream/master
 #if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
 	return MM_GCExtensions::getExtensions(javaVM)->isVirtualLargeObjectHeapEnabled;
 #else /* defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION) */
 	return FALSE;
 #endif /* defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION) */
+=======
+#if defined(J9VM_ENV_DATA64)
+	return MM_GCExtensions::getExtensions(javaVM)->isVirtualLargeObjectHeapEnabled;
+#else /* defined(J9VM_ENV_DATA64) */
+	return FALSE;
+#endif /* defined(J9VM_ENV_DATA64) */
+>>>>>>> 2736c22 Introduce Off-Heap Technology for Large Arrays
 }
 
 /**

@@ -93,7 +93,10 @@ protected:
 	bool _includeJVMTIObjectTagTables; /**< Should the iterator include the JVMTIObjectTagTables. Default true, should set to false when doing JVMTI object walks */
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
 	bool _includeDoubleMap; /**< Enables doublemap should the GC policy be balanced. Default is false. */
-#endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
+#endif /* defined(J9VM_GC_ENABLE_DOUBLE_MAP) */
+#if defined(J9VM_ENV_DATA64)
+	bool _includeVirtualLargeObjectHeap; /**< Enables scanning of objects that has been allocated at sparse heap. Default is false */
+#endif /* defined(J9VM_ENV_DATA64) */
 	bool _trackVisibleStackFrameDepth; /**< Should the stack walker be told to track the visible frame depth. Default false, should set to true when doing JVMTI walks that report stack slots */
 
 	U_64 _entityStartScanTime; /**< The start time of the scan of the current scanning entity, or 0 if no entity is being scanned.  Defaults to 0. */
@@ -319,6 +322,9 @@ public:
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
 		, _includeDoubleMap(_extensions->indexableObjectModel.isDoubleMappingEnabled())
 #endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
+#if defined(J9VM_ENV_DATA64)
+		, _includeVirtualLargeObjectHeap(_extensions->indexableObjectModel.isVirtualLargeObjectHeapEnabled())
+#endif /* defined(J9VM_ENV_DATA64) */
 		, _trackVisibleStackFrameDepth(false)
 		, _entityStartScanTime(0)
 		, _entityIncrementStartTime(0)
@@ -469,16 +475,29 @@ public:
 
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
 	/**
-	 * Scans each heap region for arraylet leaves that contains a not NULL
-	 * contiguous address. This address points to a contiguous representation
-	 * of the arraylet associated with this leaf. Only arraylets that has been
-	 * double mapped will contain such contiguous address, otherwise the
-	 * address will be NULL
+	 * Scans each heap region for arraylet leaves that contains a non-NULL contiguous address
+	 * due to arraylet double mapping. This address points to the contiguous representation
+	 * of the arraylet associated with this leaf. Only arraylets that have been off-heap
+	 * allocated or double-mapped will contain such a contiguous address, otherwise the
+	 * address will be NULL.
 	 * 
 	 * @param env thread GC Environment
 	 */
 	void scanDoubleMappedObjects(MM_EnvironmentBase *env);
-#endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
+#endif /* defined(J9VM_GC_ENABLE_DOUBLE_MAP) */
+
+#if defined(J9VM_ENV_DATA64)
+	/**
+	 * Scans each heap region for arraylet leaves that contains a non-NULL
+	 * contiguous address due to off-heap allocation. This address points to the contiguous representation
+	 * of the arraylet associated with this leaf. Only arraylets that have been off-heap
+	 * allocated or double-mapped will contain such a contiguous address, otherwise the
+	 * address will be NULL.
+	 *
+	 * @param env thread GC Environment
+	 */
+	void scanObjectsInVirtualLargeObjectHeap(MM_EnvironmentBase *env);
+#endif /* defined(J9VM_ENV_DATA64) */
 
 	virtual void doClassLoader(J9ClassLoader *classLoader);
 
@@ -542,15 +561,25 @@ public:
 	virtual void doVMThreadSlot(J9Object **slotPtr, GC_VMThreadIterator *vmThreadIterator);
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
 	/**
-	 * Frees double mapped region associated to objectPtr (arraylet spine) if objectPtr
-	 * is not live
+	 * Frees double mapped region associated to the objectPtr (arraylet spine) if the objectPtr
+	 * is not live.
 	 *
 	 * @param objectPtr[in] indexable object's spine
-	 * @param identifier[in/out] identifier associated with object's spine, which contains
-	 * doble mapped address and size
+	 * @param identifier[in/out] identifier associated with object's spine, which contains the
+	 * double mapped address and size
 	 */
 	virtual void doDoubleMappedObjectSlot(J9Object *objectPtr, struct J9PortVmemIdentifier *identifier);
-#endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
+#endif /* defined(J9VM_GC_ENABLE_DOUBLE_MAP) */
+
+#if defined(J9VM_ENV_DATA64)
+	/**
+	 * Frees the region used for off-heap allocation associated to the objectPtr (arraylet spine) if the objectPtr
+	 * is not live.
+	 *
+	 * @param objectPtr[in] indexable object's spine
+	 */
+	virtual void doObjectInVirtualLargeObjectHeap(J9Object *objectPtr);
+#endif /* defined(J9VM_ENV_DATA64) */
 	
 	/**
 	 * Called for each object stack slot. Subclasses may override.

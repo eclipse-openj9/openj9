@@ -70,10 +70,10 @@ public:
 	uintptr_t _monitorReferenceCleared; /**< The number of monitor references that have been cleared during marking */
 	uintptr_t _monitorReferenceCandidates; /**< The number of monitor references that have been visited in monitor table during marking */
 
-#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
-	uintptr_t _doubleMappedArrayletsCleared; /**< The number of double mapped arraylets that have been cleared durign marking */
-	uintptr_t _doubleMappedArrayletsCandidates; /**< The number of double mapped arraylets that have been visited during marking */
-#endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
+#if defined(J9VM_GC_ENABLE_DOUBLE_MAP) || defined(J9VM_ENV_DATA64)
+	uintptr_t _doubleMappedOrVirtualLargeObjectHeapArrayletsCleared; /**< The number of double mapped or sparse heap allocated arraylets that have been cleared during marking */
+	uintptr_t _doubleMappedOrVirtualLargeObjectHeapArrayletCandidates; /**< The number of double mapped or sparse heap allocated arraylets that have been visited during marking */
+#endif /* defined(J9VM_GC_ENABLE_DOUBLE_MAP) || defined(J9VM_ENV_DATA64) */
 
 	uint64_t _cycleStartTime; /**< The start time of a copy forward cycle */
 
@@ -107,10 +107,10 @@ public:
 		_monitorReferenceCleared = 0;
 		_monitorReferenceCandidates = 0;
 
-#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
-		_doubleMappedArrayletsCleared = 0;
-		_doubleMappedArrayletsCandidates = 0;
-#endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
+#if defined(J9VM_GC_ENABLE_DOUBLE_MAP) || defined(J9VM_ENV_DATA64)
+		_doubleMappedOrVirtualLargeObjectHeapArrayletsCleared = 0;
+		_doubleMappedOrVirtualLargeObjectHeapArrayletCandidates = 0;
+#endif /* defined(J9VM_GC_ENABLE_DOUBLE_MAP) || defined(J9VM_ENV_DATA64) */
 	}
 	
 	/**
@@ -136,10 +136,10 @@ public:
 		_monitorReferenceCleared += stats->_monitorReferenceCleared;
 		_monitorReferenceCandidates += stats->_monitorReferenceCandidates;
 
-#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
-		_doubleMappedArrayletsCleared += stats->_doubleMappedArrayletsCleared;
-		_doubleMappedArrayletsCandidates += stats->_doubleMappedArrayletsCandidates;
-#endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
+#if defined(J9VM_GC_ENABLE_DOUBLE_MAP) || defined(J9VM_ENV_DATA64)
+		_doubleMappedOrVirtualLargeObjectHeapArrayletsCleared += stats->_doubleMappedOrVirtualLargeObjectHeapArrayletsCleared;
+		_doubleMappedOrVirtualLargeObjectHeapArrayletCandidates += stats->_doubleMappedOrVirtualLargeObjectHeapArrayletCandidates;
+#endif /* defined(J9VM_GC_ENABLE_DOUBLE_MAP) || defined(J9VM_ENV_DATA64) */
 	}
 
 	MM_CopyForwardStats() :
@@ -157,10 +157,10 @@ public:
 		, _stringConstantsCandidates(0)
 		, _monitorReferenceCleared(0)
 		, _monitorReferenceCandidates(0)
-#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
-		, _doubleMappedArrayletsCleared(0)
-		, _doubleMappedArrayletsCandidates(0)
-#endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
+#if defined(J9VM_GC_ENABLE_DOUBLE_MAP) || defined(J9VM_ENV_DATA64)
+		, _doubleMappedOrVirtualLargeObjectHeapArrayletsCleared(0)
+		, _doubleMappedOrVirtualLargeObjectHeapArrayletCandidates(0)
+#endif /* defined(J9VM_GC_ENABLE_DOUBLE_MAP) || defined(J9VM_ENV_DATA64) */
 	{}
 };
 
