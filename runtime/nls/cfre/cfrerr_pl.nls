@@ -1679,7 +1679,7 @@ J9NLS_CFR_ERR_ACONST_INIT_INVALID_ARRAY.user_response=Contact the provider of th
 # END NON-TRANSLATABLE
 
 # ReferenceType is not translatable
-J9NLS_CFR_ERR_OUTER_CLASS_REFERENCETYPE_DESCRIPTOR=Klas\u0105 zewn\u0119trzn\u0105 jest to deskryptor ReferenceType w atrybucie InnerClasses
+J9NLS_CFR_ERR_OUTER_CLASS_REFERENCETYPE_DESCRIPTOR=Klas\u0105 zewn\u0119trzn\u0105 jest deskryptor ReferenceType w atrybucie InnerClasses
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_OUTER_CLASS_REFERENCETYPE_DESCRIPTOR.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_OUTER_CLASS_REFERENCETYPE_DESCRIPTOR.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.

@@ -533,7 +533,7 @@ J9NLS_JCL_CRIU_CANNOT_SET_UNPRIVILEGED.system_action=The JVM will throw a System
 J9NLS_JCL_CRIU_CANNOT_SET_UNPRIVILEGED.user_response=Ensure that CRIU supports unprivileged mode.
 # END NON-TRANSLATABLE
 
-J9NLS_JCL_CRIU_NEGATIVE_CHECKPOINT_RESTORE_TIME_DELTA=checkpointRestoreTimeDelta = %zd i\u00e7in hesaplanan negatif de\u011fer
+J9NLS_JCL_CRIU_NEGATIVE_CHECKPOINT_RESTORE_TIME_DELTA=checkpointRestoreTimeDelta = %zd i\u00e7in negatif de\u011fer hesapland\u0131
 # START NON-TRANSLATABLE
 J9NLS_JCL_CRIU_NEGATIVE_CHECKPOINT_RESTORE_TIME_DELTA.sample_input_1=1
 J9NLS_JCL_CRIU_NEGATIVE_CHECKPOINT_RESTORE_TIME_DELTA.explanation=checkpointRestoreTimeDelta is expected not to be negative.

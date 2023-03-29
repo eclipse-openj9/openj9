@@ -600,7 +600,7 @@ J9NLS_DMP_JIT_TRACE_IL_CRASHED_THREAD.link=
 
 # END NON-TRANSLATABLE
 
-J9NLS_DMP_PROCESSING_DETAILED_EVENT_TIME=Zpracov\u00e1n\u00ed ud\u00e1losti v\u00fdpisu pam\u011bti \"%1$s\", podrobnosti \"%3$.*2$s\", v\u00fdjimka \"%5$.*4$s\" na %6$s - \u010dekejte, pros\u00edm.
+J9NLS_DMP_PROCESSING_DETAILED_EVENT_TIME=Zpracov\u00e1n\u00ed ud\u00e1losti v\u00fdpisu pam\u011bti "%1$s", podrobnosti "%3$.*2$s", v\u00fdjimka "%5$.*4$s" na %6$s \u2013 \u010dekejte, pros\u00edm.
 # START NON-TRANSLATABLE
 J9NLS_DMP_PROCESSING_DETAILED_EVENT_TIME.explanation=A dump event has occurred and is being handled.
 J9NLS_DMP_PROCESSING_DETAILED_EVENT_TIME.system_action=The JVM generates dumps as configured for the event by the -Xdump option.
