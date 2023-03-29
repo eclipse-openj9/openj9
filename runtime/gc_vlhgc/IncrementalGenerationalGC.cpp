@@ -2262,9 +2262,8 @@ MM_IncrementalGenerationalGC::exportStats(MM_EnvironmentVLHGC *env, MM_Collectio
 					stats->_nonLocalNumaNodeBytes += usedMemory;
 				}
 			}
-			if (region->isArrayletLeaf()) {
+			if (region->isArrayletLeaf() && !_extensions->isVirtualLargeObjectHeapEnabled) {
 				J9IndexableObject *spine = region->_allocateData.getSpine();
-
 				/* if we recently (end of GMP) unloaded classes, but have not done sweep yet (just about to do it),
 				 * there might be unswept arraylet leaf regions, for which we must not try to access class data (for scan type).
 				 * Therefore, we count these arraylets as 'unknown' type.
@@ -2300,7 +2299,6 @@ MM_IncrementalGenerationalGC::exportStats(MM_EnvironmentVLHGC *env, MM_Collectio
 					}
 				}
 			}
-
 		}
 		/* there would be a case that mutators use more than assigned regions, correct totalRegionEdenSize to avoid inconsistent Exception */
 		if (allocateEdenTotal > stats->_edenHeapSize) {

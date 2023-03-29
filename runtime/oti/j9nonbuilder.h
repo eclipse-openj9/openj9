@@ -3220,7 +3220,7 @@ typedef struct J9IndexableObjectDiscontiguousFull {
 } J9IndexableObjectDiscontiguousFull;
 
 /* Representation of the J9IndexableObjectContiguous structure that includes a pointer to the data address field of the indexable object.
- * This structure will be used in-lieu of J9IndexableObjectContiguous if J9JavaVM flag "isIndexableDataAddrPresent" is TRUE.  */
+ * This structure will be used in-lieu of J9IndexableObjectContiguous if J9JavaVM flag "isVirtualLargeObjectHeapEnabled" is TRUE.  */
 typedef struct J9IndexableObjectWithDataAddressContiguous {
 	j9objectclass_t clazz;
 	U_32 size;
@@ -3233,7 +3233,7 @@ typedef struct J9IndexableObjectWithDataAddressContiguous {
 } J9IndexableObjectWithDataAddressContiguous;
 
 /* Representation of the J9IndexableObjectContiguousCompressed structure that includes a pointer to the data address field of the indexable object.
- * This structure will be used in-lieu of J9IndexableObjectContiguousCompressed if J9JavaVM flag "isIndexableDataAddrPresent" is TRUE.  */
+ * This structure will be used in-lieu of J9IndexableObjectContiguousCompressed if J9JavaVM flag "isVirtualLargeObjectHeapEnabled" is TRUE.  */
 typedef struct J9IndexableObjectWithDataAddressContiguousCompressed {
 	U_32 clazz;
 	U_32 size;
@@ -3243,7 +3243,7 @@ typedef struct J9IndexableObjectWithDataAddressContiguousCompressed {
 } J9IndexableObjectWithDataAddressContiguousCompressed;
 
 /* Representation of the J9IndexableObjectContiguousFull structure that includes a pointer to the data address field of the indexable object.
- * This structure will be used in-lieu of J9IndexableObjectContiguousFull if J9JavaVM flag "isIndexableDataAddrPresent" is TRUE.  */
+ * This structure will be used in-lieu of J9IndexableObjectContiguousFull if J9JavaVM flag "isVirtualLargeObjectHeapEnabled" is TRUE.  */
 typedef struct J9IndexableObjectWithDataAddressContiguousFull {
 	UDATA clazz;
 	U_32 size;
@@ -3254,7 +3254,7 @@ typedef struct J9IndexableObjectWithDataAddressContiguousFull {
 } J9IndexableObjectWithDataAddressContiguousFull;
 
 /* Representation of the J9IndexableObjectDiscontiguous structure that includes a pointer to the data address field of the indexable object.
- * This structure will be used in-lieu of J9IndexableObjectDiscontiguous if J9JavaVM flag "isIndexableDataAddrPresent" is TRUE.  */
+ * This structure will be used in-lieu of J9IndexableObjectDiscontiguous if J9JavaVM flag "isVirtualLargeObjectHeapEnabled" is TRUE.  */
 typedef struct J9IndexableObjectWithDataAddressDiscontiguous {
 	j9objectclass_t clazz;
 	U_32 mustBeZero;
@@ -3268,7 +3268,7 @@ typedef struct J9IndexableObjectWithDataAddressDiscontiguous {
 } J9IndexableObjectWithDataAddressDiscontiguous;
 
 /* Representation of the J9IndexableObjectDiscontiguousCompressed structure that includes a pointer to the data address field of the indexable object.
- * This structure will be used in-lieu of J9IndexableObjectDiscontiguousCompressed if J9JavaVM flag "isIndexableDataAddrPresent" is TRUE.  */
+ * This structure will be used in-lieu of J9IndexableObjectDiscontiguousCompressed if J9JavaVM flag "isVirtualLargeObjectHeapEnabled" is TRUE.  */
 typedef struct J9IndexableObjectWithDataAddressDiscontiguousCompressed {
 	U_32 clazz;
 	U_32 mustBeZero;
@@ -3280,7 +3280,7 @@ typedef struct J9IndexableObjectWithDataAddressDiscontiguousCompressed {
 } J9IndexableObjectWithDataAddressDiscontiguousCompressed;
 
 /* Representation of the J9IndexableObjectDiscontiguousFull structure that includes a pointer to the data address field of the indexable object.
- * This structure will be used in-lieu of J9IndexableObjectDiscontiguousFull if J9JavaVM flag "isIndexableDataAddrPresent" is TRUE.  */
+ * This structure will be used in-lieu of J9IndexableObjectDiscontiguousFull if J9JavaVM flag "isVirtualLargeObjectHeapEnabled" is TRUE.  */
 typedef struct J9IndexableObjectWithDataAddressDiscontiguousFull {
 	UDATA clazz;
 	U_32 mustBeZero;

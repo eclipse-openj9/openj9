@@ -75,6 +75,7 @@ const static char *attributeNames[] = {
 	"monitorlookupcachescomplete", /* RootScannerEntity_MonitorLookupCachesComplete */
 	"monitorreferenceobjectscomplete", /* RootScannerEntity_MonitorReferenceObjectsComplete */
 	"doubleMappedObjects", /* RootScannerEntity_DoubleMappedObjects */
+	"virtualLargeObjectHeapObjects", /* RootScannerEntity_virtualLargeObjectHeapObjects */
 };
 
 bool

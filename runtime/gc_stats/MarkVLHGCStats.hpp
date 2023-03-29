@@ -74,10 +74,6 @@ public:
 	uintptr_t _monitorReferenceCleared; /**< The number of monitor references that have been cleared during marking */
 	uintptr_t _monitorReferenceCandidates; /**< The number of monitor references that have been visited in monitor table during marking */
 
-#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
-	uintptr_t _doubleMappedArrayletsCleared; /**< The number of double mapped arraylets that have been cleared durign marking */
-	uintptr_t _doubleMappedArrayletsCandidates; /**< The number of double mapped arraylets that have been visited during marking */
-#endif /* J9VM_GC_ENABLE_DOUBLE_MAP */	
 #if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
 	uintptr_t _offHeapRegionsCleared; /**< The number of or sparse heap allocated regions that have been cleared during marking */
 	uintptr_t _offHeapRegionCandidates; /**< The number of or sparse heap allocated regions that have been visited during marking */
@@ -118,10 +114,6 @@ public:
 		_monitorReferenceCleared = 0;
 		_monitorReferenceCandidates = 0;
 
-#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
-		_doubleMappedArrayletsCleared = 0;
-		_doubleMappedArrayletsCandidates = 0;
-#endif /* J9VM_GC_ENABLE_DOUBLE_MAP */	
 #if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
 		_offHeapRegionsCleared = 0;
 		_offHeapRegionCandidates = 0;
@@ -160,10 +152,6 @@ public:
 		_monitorReferenceCleared += statsToMerge->_monitorReferenceCleared;
 		_monitorReferenceCandidates += statsToMerge->_monitorReferenceCandidates;
 
-#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
-		_doubleMappedArrayletsCleared += statsToMerge->_doubleMappedArrayletsCleared;
-		_doubleMappedArrayletsCandidates += statsToMerge->_doubleMappedArrayletsCandidates;
-#endif /* J9VM_GC_ENABLE_DOUBLE_MAP */	
 #if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
 		_offHeapRegionsCleared += statsToMerge->_offHeapRegionsCleared;
 		_offHeapRegionCandidates += statsToMerge->_offHeapRegionCandidates;
@@ -195,10 +183,6 @@ public:
 		,_stringConstantsCandidates(0)
 		,_monitorReferenceCleared(0)
 		,_monitorReferenceCandidates(0)
-#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
-		,_doubleMappedArrayletsCleared(0)
-		,_doubleMappedArrayletsCandidates(0)
-#endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
 #if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
 		,_offHeapRegionsCleared(0)
 		,_offHeapRegionCandidates(0)
