@@ -298,6 +298,19 @@ public class J9IndexableObjectHelper extends J9ObjectHelper
 	}
 
 	/**
+	 * Determine the validity of the data address belonging to objPointer.
+	 *
+	 * @param objPointer array object who's data address validity we are checking
+	 * @throws CorruptDataException if there's a problem accessing the indexable object dataAddr field
+	 * @throws NoSuchFieldException if the indexable object dataAddr field does not exist on the build that generated the core file
+	 * @return true if the data address of objPointer is valid, false otherwise
+	 */
+	public static boolean isCorrectDataAddrPointer(J9IndexableObjectPointer objPointer) throws CorruptDataException, NoSuchFieldException
+	{
+		return ObjectModel.isCorrectDataAddrPointer(objPointer);
+	}
+
+	/**
 	 * Get the requested array data elements and output these elements to the dst method parameter.
 	 *
 	 * @param objPointer array object whose elements we are accessing

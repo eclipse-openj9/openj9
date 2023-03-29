@@ -1194,19 +1194,8 @@ class CheckEngine
 			if (J9BuildFlags.J9VM_ENV_DATA64 && isIndexableDataAddressFlagSet() && ObjectModel.isIndexable(object)) {
 				if (!_javaVM.isIndexableDataAddrPresent().isZero()) {
 					J9IndexableObjectPointer array = J9IndexableObjectPointer.cast(object);
-					UDATA dataSizeInBytes = ObjectModel.getDataSizeInBytes(array);
-					VoidPointer dataAddr = J9IndexableObjectHelper.getDataAddrForIndexable(array);
-					boolean isCorrectDataAddrPointer;
-					if (dataSizeInBytes.isZero()) {
-						VoidPointer discontiguousDataAddr = VoidPointer.cast(array.addOffset(J9IndexableObjectHelper.discontiguousHeaderSize()));
-						isCorrectDataAddrPointer = (dataAddr.isNull() || dataAddr.equals(discontiguousDataAddr));
-					} else if (dataSizeInBytes.lt(_javaVM.arrayletLeafSize())) {
-						VoidPointer contiguousDataAddr = VoidPointer.cast(array.addOffset(J9IndexableObjectHelper.contiguousHeaderSize()));
-						isCorrectDataAddrPointer = dataAddr.equals(contiguousDataAddr);
-					} else {
-						isCorrectDataAddrPointer = dataAddr.isNull();
-					}
-					if (false == isCorrectDataAddrPointer) {
+				
+					if (false == J9IndexableObjectHelper.isCorrectDataAddrPointer(array)) {
 						return J9MODRON_GCCHK_RC_INVALID_INDEXABLE_DATA_ADDRESS;
 					}
 				}
