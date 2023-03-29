@@ -43,7 +43,7 @@ module openj9.dtfj {
   exports com.ibm.dtfj.java;
   exports com.ibm.dtfj.runtime;
   exports com.ibm.dtfj.utils.file to openj9.dtfjview;
-  exports com.ibm.java.diagnostics.utils to openj9.dtfjview;
-  exports com.ibm.java.diagnostics.utils.commands to openj9.dtfjview;
-  exports com.ibm.java.diagnostics.utils.plugins to openj9.dtfjview;
+  exports com.ibm.java.diagnostics.utils;
+  exports com.ibm.java.diagnostics.utils.commands;
+  exports com.ibm.java.diagnostics.utils.plugins;
 }
