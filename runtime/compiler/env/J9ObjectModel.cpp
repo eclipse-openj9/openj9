@@ -307,14 +307,14 @@ J9::ObjectModel::generateCompressedObjectHeaders()
 uintptr_t
 J9::ObjectModel::contiguousArrayHeaderSizeInBytes()
    {
-   return compressObjectReferences() ? sizeof(J9IndexableObjectContiguousCompressed) : sizeof(J9IndexableObjectContiguousFull);
+   return TR::Compiler->javaVM->contiguousIndexableHeaderSize;
    }
 
 
 uintptr_t
 J9::ObjectModel::discontiguousArrayHeaderSizeInBytes()
    {
-   return compressObjectReferences() ? sizeof(J9IndexableObjectDiscontiguousCompressed) : sizeof(J9IndexableObjectDiscontiguousFull);
+   return TR::Compiler->javaVM->discontiguousIndexableHeaderSize;
    }
 
 
@@ -531,23 +531,23 @@ J9::ObjectModel::offsetOfDiscontiguousArraySizeField()
    return compressObjectReferences() ? offsetof(J9IndexableObjectDiscontiguousCompressed, size) : offsetof(J9IndexableObjectDiscontiguousFull, size);
    }
 
-#if defined(TR_TARGET_64BIT)
+#if defined(J9VM_ENV_DATA64)
 uintptr_t
 J9::ObjectModel::offsetOfContiguousDataAddrField()
    {
    return compressObjectReferences()
-		? offsetof(J9IndexableObjectContiguousCompressed, dataAddr)
-		: offsetof(J9IndexableObjectContiguousFull, dataAddr);
+		? offsetof(J9IndexableObjectWithDataAddressContiguousCompressed, dataAddr)
+		: offsetof(J9IndexableObjectWithDataAddressContiguousFull, dataAddr);
    }
 
 uintptr_t
 J9::ObjectModel::offsetOfDiscontiguousDataAddrField()
    {
    return compressObjectReferences()
-		? offsetof(J9IndexableObjectDiscontiguousCompressed, dataAddr)
-		: offsetof(J9IndexableObjectDiscontiguousFull, dataAddr);
+		? offsetof(J9IndexableObjectWithDataAddressDiscontiguousCompressed, dataAddr)
+		: offsetof(J9IndexableObjectWithDataAddressDiscontiguousFull, dataAddr);
    }
-#endif /* TR_TARGET_64BIT */
+#endif /* defined(J9VM_ENV_DATA64) */
 
 
 uintptr_t

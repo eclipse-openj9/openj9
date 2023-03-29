@@ -127,13 +127,17 @@ MM_IndexableObjectAllocationModel::initializeIndexableObject(MM_EnvironmentBase 
 		if (getAllocateDescription()->isChunkedArray()) {
 			indexableObjectModel->setSizeInElementsForDiscontiguous(spine, _numberOfIndexedFields);
 #if defined(J9VM_ENV_DATA64)
-			indexableObjectModel->setDataAddrForDiscontiguous(spine, NULL);
-#endif /* J9VM_ENV_DATA64 */
+			if (((J9JavaVM *)env->getLanguageVM())->isIndexableDataAddrPresent) {
+				indexableObjectModel->setDataAddrForDiscontiguous(spine, NULL);
+			}
+#endif /* defined(J9VM_ENV_DATA64) */
 		} else {
 			indexableObjectModel->setSizeInElementsForContiguous(spine, _numberOfIndexedFields);
 #if defined(J9VM_ENV_DATA64)
-			indexableObjectModel->setDataAddrForContiguous(spine);
-#endif /* J9VM_ENV_DATA64 */
+			if (((J9JavaVM *)env->getLanguageVM())->isIndexableDataAddrPresent) {
+				indexableObjectModel->setDataAddrForContiguous(spine);
+			}
+#endif /* defined(J9VM_ENV_DATA64) */
 		}
 	}
 

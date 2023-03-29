@@ -2407,6 +2407,19 @@ TR_J9VMBase::isHotReferenceFieldRequired()
    return TR::Compiler->om.isHotReferenceFieldRequired();
    }
 
+/**
+ * Query if the indexable data address field is present within the indexable object header.
+ * @return true if isIndexableDualHeaderShapeEnabled is false OR if option -Xgcpolicy:balanced is specified at runtime, false otherwise
+ */
+bool
+TR_J9VMBase::isIndexableDataAddrPresent()
+   {
+#if defined(J9VM_ENV_DATA64)
+   return FALSE != _jitConfig->javaVM->isIndexableDataAddrPresent;
+#else
+   return false;
+#endif /* defined(J9VM_ENV_DATA64) */
+   }
 
 bool
 TR_J9VMBase::scanReferenceSlotsInClassForOffset(TR::Compilation * comp, TR_OpaqueClassBlock * classPointer, int32_t offset)
