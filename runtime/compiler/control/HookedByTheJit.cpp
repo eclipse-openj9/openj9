@@ -43,6 +43,7 @@
 #include "control/Recompilation.hpp"
 #include "control/RecompilationInfo.hpp"
 #include "control/CompilationController.hpp"
+#include "control/CompilationStrategy.hpp"
 #include "env/ClassLoaderTable.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/IO.hpp"

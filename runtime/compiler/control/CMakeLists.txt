@@ -21,11 +21,11 @@
 ################################################################################
 
 j9jit_files(
-	control/CompilationController.cpp
 	control/CompilationThread.cpp
 	control/CompileBeforeCheckpoint.cpp
 	control/DLLMain.cpp
 	control/HookedByTheJit.cpp
+	control/J9CompilationStrategy.cpp
 	control/J9Options.cpp
 	control/J9Recompilation.cpp
 	control/JitDump.cpp
