@@ -313,6 +313,10 @@ J9::OptionsPostRestore::processJitServerOptions()
          GET_OPTION_VALUE_RESTORE_ARGS(_argIndexJITServerAOTCacheName, '=', &name);
          _compInfo->getPersistentInfo()->setJITServerAOTCacheName(name);
          }
+      // Re-compute client UID post restore
+      uint64_t clientUID = JITServerHelpers::generateUID();
+      _compInfo->getPersistentInfo()->setClientUID(clientUID);
+      _jitConfig->clientUID = clientUID;
       }
    else
       {
