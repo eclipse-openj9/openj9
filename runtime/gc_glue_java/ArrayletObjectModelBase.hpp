@@ -52,7 +52,12 @@ protected:
 	void * _arrayletRangeBase; /**< The base heap range of where discontiguous arraylets are allowed. */
 	void * _arrayletRangeTop; /**< The top heap range of where discontiguous arraylets are allowed. */
 	MM_MemorySubSpace * _arrayletSubSpace; /**< The only subspace that is allowed to have discontiguous arraylets. */
-	UDATA _largestDesirableArraySpineSize; /**< A cached copy of the subspace's _largestDesirableArraySpineSize to be used when we don't have access to a subspace. */
+	uintptr_t _largestDesirableArraySpineSize; /**< A cached copy of the subspace's _largestDesirableArraySpineSize to be used when we don't have access to a subspace. */
+#if defined(J9VM_ENV_DATA64)
+	bool _isIndexableDataAddrPresent;
+#endif /* defined(J9VM_ENV_DATA64) */
+	uintptr_t _contiguousIndexableHeaderSize;
+	uintptr_t _discontiguousIndexableHeaderSize;
 public:
 	typedef enum ArrayLayout {
 		Illegal = 0,
@@ -77,8 +82,8 @@ protected:
 	 * @param alignData Should the data section be aligned
 	 * @return spineSize The actual size in byte of the spine
 	 */
-	UDATA
-	getSpineSizeWithoutHeader(ArrayLayout layout, UDATA numberArraylets, UDATA dataSize, bool alignData);
+	uintptr_t
+	getSpineSizeWithoutHeader(ArrayLayout layout, uintptr_t numberArraylets, uintptr_t dataSize, bool alignData);
 
 public:
 	/**
@@ -96,10 +101,10 @@ public:
 	 * @param arrayPtr Pointer to the indexable object whose size is required
 	 * @return Size of object in elements
 	 */
-	MMINLINE UDATA
+	MMINLINE uintptr_t
 	getSizeInElements(J9IndexableObject *arrayPtr)
 	{
-		UDATA size = 0;
+		uintptr_t size = 0;
 		if (compressObjectReferences()) {
 			size = ((J9IndexableObjectContiguousCompressed *)arrayPtr)->size;
 			if (0 == size) {
@@ -122,14 +127,37 @@ public:
 	 * @param size Size in elements to set.
 	 */
 	MMINLINE void
-	setSizeInElementsForContiguous(J9IndexableObject *arrayPtr, UDATA size)
+	setSizeInElementsForContiguous(J9IndexableObject *arrayPtr, uintptr_t size)
 	{
 		if (compressObjectReferences()) {
-			((J9IndexableObjectContiguousCompressed *)arrayPtr)->size = (U_32)size;
+			((J9IndexableObjectContiguousCompressed *)arrayPtr)->size = (uint32_t)size;
 		} else {
-			((J9IndexableObjectContiguousFull *)arrayPtr)->size = (U_32)size;
+			((J9IndexableObjectContiguousFull *)arrayPtr)->size = (uint32_t)size;
 		}
 	}
+
+	/**
+	 * Sets the contiguous and discontiguous header size values
+	 * @param vm Java VM
+	 */
+	MMINLINE void
+	setHeaderSizes(J9JavaVM *vm)
+	{
+		_contiguousIndexableHeaderSize = vm->contiguousIndexableHeaderSize;
+		_discontiguousIndexableHeaderSize = vm->discontiguousIndexableHeaderSize;
+	}
+
+#if defined(J9VM_ENV_DATA64)
+	/**
+	 * Sets whether the dataAddr field is present in the indexable object header
+	 * @param vm Java VM
+	 */
+	MMINLINE void
+	setIsIndexableDataAddrPresent(J9JavaVM *vm)
+	{
+		_isIndexableDataAddrPresent = vm->isIndexableDataAddrPresent;
+	}
+#endif /* defined(J9VM_ENV_DATA64) */
 
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
 	/**
@@ -163,14 +191,14 @@ public:
 	 * @param size Size in elements to set.
 	 */
 	MMINLINE void
-	setSizeInElementsForDiscontiguous(J9IndexableObject *arrayPtr, UDATA size)
+	setSizeInElementsForDiscontiguous(J9IndexableObject *arrayPtr, uintptr_t size)
 	{
 		if (compressObjectReferences()) {
 			((J9IndexableObjectDiscontiguousCompressed *)arrayPtr)->mustBeZero = 0;
-			((J9IndexableObjectDiscontiguousCompressed *)arrayPtr)->size = (U_32)size;
+			((J9IndexableObjectDiscontiguousCompressed *)arrayPtr)->size = (uint32_t)size;
 		} else {
 			((J9IndexableObjectDiscontiguousFull *)arrayPtr)->mustBeZero = 0;
-			((J9IndexableObjectDiscontiguousFull *)arrayPtr)->size = (U_32)size;
+			((J9IndexableObjectDiscontiguousFull *)arrayPtr)->size = (uint32_t)size;
 		}
 	}
 
@@ -215,10 +243,10 @@ public:
 	 * @param numArraylets total number of arraylets for the given indexable object
 	 * @return the size of the indexth arraylet
 	 */
-	MMINLINE UDATA
-	arrayletSize(J9IndexableObject *objPtr, UDATA index, UDATA dataSizeInBytes, UDATA numArraylets)
+	MMINLINE uintptr_t
+	arrayletSize(J9IndexableObject *objPtr, uintptr_t index, uintptr_t dataSizeInBytes, uintptr_t numArraylets)
 	{
-		UDATA arrayletLeafSize = _omrVM->_arrayletLeafSize;
+		uintptr_t arrayletLeafSize = _omrVM->_arrayletLeafSize;
 		if (index < numArraylets - 1) {
 			return arrayletLeafSize;
 		} else {
@@ -231,14 +259,14 @@ public:
 	 * @param dataSizeInBytes size of an array in bytes (not elements)
 	 * @return the number of arraylets used for an array of dataSizeInBytes bytes
 	 */
-	MMINLINE UDATA
-	numArraylets(UDATA dataSizeInBytes)
+	MMINLINE uintptr_t
+	numArraylets(uintptr_t dataSizeInBytes)
 	{
-		UDATA leafSize = _omrVM->_arrayletLeafSize;
-		UDATA numberOfArraylets = 1;
+		uintptr_t leafSize = _omrVM->_arrayletLeafSize;
+		uintptr_t numberOfArraylets = 1;
 		if (UDATA_MAX != leafSize) {
-			UDATA leafSizeMask = leafSize - 1;
-			UDATA leafLogSize = _omrVM->_arrayletLeafLogSize;
+			uintptr_t leafSizeMask = leafSize - 1;
+			uintptr_t leafLogSize = _omrVM->_arrayletLeafLogSize;
 
 			/* CMVC 135307 : following logic for calculating the leaf count would not overflow dataSizeInBytes.
 			 * the assumption is leaf size is order of 2. It's identical to:
@@ -260,7 +288,7 @@ public:
 	 * @param largestDesirableArraySpineSize The subspace's _largestDesirableArraySpineSize to be used when we don't have access to a subspace.
 	 */
 	void
-	expandArrayletSubSpaceRange(MM_MemorySubSpace* subSpace, void* rangeBase, void* rangeTop, UDATA largestDesirableArraySpineSize);
+	expandArrayletSubSpaceRange(MM_MemorySubSpace* subSpace, void* rangeBase, void* rangeTop, uintptr_t largestDesirableArraySpineSize);
 };
 
 #endif /* ARRAYLETOBJECTMODELBASE_ */

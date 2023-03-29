@@ -6030,7 +6030,7 @@ static void genHeapAlloc(
             // 1)  class pointer + contig length + dataAddr + one or more elements
             // 2)  class pointer + 0 + 0 (for zero length arrays) + dataAddr
             //
-            TR_ASSERT(J9_GC_MINIMUM_INDEXABLE_OBJECT_SIZE >= 8, "Expecting a minimum indexable object size >= 8 (actual minimum is %d)\n", J9_GC_MINIMUM_INDEXABLE_OBJECT_SIZE);
+            TR_ASSERT(J9_GC_MINIMUM_OBJECT_SIZE >= 8, "Expecting a minimum indexable object size >= 8 (actual minimum is %d)\n", J9_GC_MINIMUM_OBJECT_SIZE);
 
             generateRegMemInstruction(
                TR::InstOpCode::LEARegMem(),

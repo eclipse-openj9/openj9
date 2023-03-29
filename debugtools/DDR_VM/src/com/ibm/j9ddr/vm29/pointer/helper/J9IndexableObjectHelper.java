@@ -24,6 +24,7 @@ package com.ibm.j9ddr.vm29.pointer.helper;
 import java.io.StringWriter;
 
 import com.ibm.j9ddr.CorruptDataException;
+import com.ibm.j9ddr.vm29.j9.DataType;
 import com.ibm.j9ddr.vm29.j9.ObjectModel;
 import com.ibm.j9ddr.vm29.pointer.I16Pointer;
 import com.ibm.j9ddr.vm29.pointer.I32Pointer;
@@ -41,19 +42,36 @@ import com.ibm.j9ddr.vm29.pointer.generated.J9IndexableObjectDiscontiguousPointe
 import com.ibm.j9ddr.vm29.pointer.generated.J9IndexableObjectDiscontiguousCompressedPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9IndexableObjectContiguousFullPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9IndexableObjectDiscontiguousFullPointer;
+import com.ibm.j9ddr.vm29.pointer.generated.J9IndexableObjectWithDataAddressContiguousPointer;
+import com.ibm.j9ddr.vm29.pointer.generated.J9IndexableObjectWithDataAddressContiguousCompressedPointer;
+import com.ibm.j9ddr.vm29.pointer.generated.J9IndexableObjectWithDataAddressDiscontiguousPointer;
+import com.ibm.j9ddr.vm29.pointer.generated.J9IndexableObjectWithDataAddressDiscontiguousCompressedPointer;
+import com.ibm.j9ddr.vm29.pointer.generated.J9IndexableObjectWithDataAddressContiguousFullPointer;
+import com.ibm.j9ddr.vm29.pointer.generated.J9IndexableObjectWithDataAddressDiscontiguousFullPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9IndexableObjectPointer;
+import com.ibm.j9ddr.vm29.pointer.generated.J9JavaVMPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ObjectPointer;
+import com.ibm.j9ddr.vm29.pointer.helper.J9RASHelper;
 import com.ibm.j9ddr.vm29.structure.J9IndexableObjectContiguous;
 import com.ibm.j9ddr.vm29.structure.J9IndexableObjectContiguousCompressed;
 import com.ibm.j9ddr.vm29.structure.J9IndexableObjectContiguousFull;
 import com.ibm.j9ddr.vm29.structure.J9IndexableObjectDiscontiguous;
 import com.ibm.j9ddr.vm29.structure.J9IndexableObjectDiscontiguousCompressed;
 import com.ibm.j9ddr.vm29.structure.J9IndexableObjectDiscontiguousFull;
+import com.ibm.j9ddr.vm29.structure.J9IndexableObjectWithDataAddressContiguous;
+import com.ibm.j9ddr.vm29.structure.J9IndexableObjectWithDataAddressContiguousCompressed;
+import com.ibm.j9ddr.vm29.structure.J9IndexableObjectWithDataAddressContiguousFull;
+import com.ibm.j9ddr.vm29.structure.J9IndexableObjectWithDataAddressDiscontiguous;
+import com.ibm.j9ddr.vm29.structure.J9IndexableObjectWithDataAddressDiscontiguousCompressed;
+import com.ibm.j9ddr.vm29.structure.J9IndexableObjectWithDataAddressDiscontiguousFull;
 import com.ibm.j9ddr.vm29.types.U32;
 import com.ibm.j9ddr.vm29.types.UDATA;
 
 public class J9IndexableObjectHelper extends J9ObjectHelper 
 {
+	private static long contiguousHeaderSize;
+	private static long discontiguousHeaderSize;
+
 	public static U32 flags(J9IndexableObjectPointer objPointer) throws CorruptDataException
 	{		
 		return J9ObjectHelper.flags(J9ObjectPointer.cast(objPointer));
@@ -120,7 +138,30 @@ public class J9IndexableObjectHelper extends J9ObjectHelper
 		return size(J9IndexableObjectPointer.cast(objPointer));
 	}
 
+	/**
+	 * Get the header size of a contiguous indexable object.
+	 */
 	public static long contiguousHeaderSize()
+	{
+		if (0 == contiguousHeaderSize) {
+			try {
+				J9JavaVMPointer javaVM = J9RASHelper.getVM(DataType.getJ9RASPointer());
+				if (J9BuildFlags.env_data64 && !javaVM.isIndexableDataAddrPresent().isZero()) {
+					contiguousHeaderSize = contiguousHeaderSizeWithDataAddress();
+					return contiguousHeaderSize;
+				}
+			} catch (CorruptDataException | NoSuchFieldException e) {
+				// default to legacy
+			}
+			contiguousHeaderSize = contiguousHeaderSizeLegacy();
+		}
+		return contiguousHeaderSize;
+	}
+
+	/**
+	 * Get the header size of the contiguous indexable object without the dataAddress header field.
+	 */
+	private static long contiguousHeaderSizeLegacy()
 	{
 		if (mixedReferenceMode) {
 			if (compressObjectReferences) {
@@ -131,7 +172,43 @@ public class J9IndexableObjectHelper extends J9ObjectHelper
 		return J9IndexableObjectContiguous.SIZEOF;
 	}
 
+	/**
+	 * Get the header size of the contiguous indexable object with the dataAddress header field.
+	 */
+	private static long contiguousHeaderSizeWithDataAddress() {
+		if (mixedReferenceMode) {
+			if (compressObjectReferences) {
+				return J9IndexableObjectWithDataAddressContiguousCompressed.SIZEOF;
+			}
+			return J9IndexableObjectWithDataAddressContiguousFull.SIZEOF;
+		}
+		return J9IndexableObjectWithDataAddressContiguous.SIZEOF;
+	}
+
+	/**
+	 * Get the header size of a discontiguous indexable object.
+	 */
 	public static long discontiguousHeaderSize()
+	{
+		if (0 == discontiguousHeaderSize) {
+			try {
+				J9JavaVMPointer javaVM = J9RASHelper.getVM(DataType.getJ9RASPointer());
+				if (J9BuildFlags.env_data64 && !javaVM.isIndexableDataAddrPresent().isZero()) {
+					discontiguousHeaderSize = discontiguousHeaderSizeWithDataAddress();
+					return discontiguousHeaderSize;
+				}
+			} catch (CorruptDataException | NoSuchFieldException e) {
+				// default to legacy
+			}
+			discontiguousHeaderSize = discontiguousHeaderSizeLegacy();
+		}
+		return discontiguousHeaderSize;
+	}
+
+	/**
+	 * Get the header size of the discontiguous indexable object without the dataAddress header field.
+	 */
+	private static long discontiguousHeaderSizeLegacy()
 	{
 		if (mixedReferenceMode) {
 			if (compressObjectReferences) {
@@ -143,39 +220,73 @@ public class J9IndexableObjectHelper extends J9ObjectHelper
 	}
 
 	/**
-	 * @param objPointer the contiguous array object who's dataAddr field we are accessing
-	 * @throws CorruptDataException If there's a problem accessing the indexable object dataAddr field
-	 * @throws NoSuchFieldException If the indexable object dataAddr field does not exist on the build that generated the core file
+	 * Get the header size of the discontiguous indexable object with the dataAddress header field.
 	 */
-	public static VoidPointer getDataAddrForContiguous(J9IndexableObjectPointer objPointer) throws CorruptDataException, NoSuchFieldException
+	private static long discontiguousHeaderSizeWithDataAddress()
 	{
 		if (mixedReferenceMode) {
 			if (compressObjectReferences) {
-				return VoidPointer.cast((J9IndexableObjectContiguousCompressedPointer.cast(objPointer)).dataAddr());
+				return J9IndexableObjectWithDataAddressDiscontiguousCompressed.SIZEOF;
 			}
-			return VoidPointer.cast((J9IndexableObjectContiguousFullPointer.cast(objPointer)).dataAddr());
+			return J9IndexableObjectWithDataAddressDiscontiguousFull.SIZEOF;
 		}
-		return VoidPointer.cast((J9IndexableObjectContiguousPointer.cast(objPointer)).dataAddr());
+		return J9IndexableObjectWithDataAddressDiscontiguous.SIZEOF;
 	}
 
 	/**
-	 * @param objPointer the discontiguous array object who's dataAddr field we are accessing
-	 * @throws CorruptDataException If there's a problem accessing the indexable object dataAddr field
-	 * @throws NoSuchFieldException If the indexable object dataAddr field does not exist on the build that generated the core file
+	 * Get the dataAddr field for the contiguous array object.
+	 *
+	 * @param objPointer the contiguous array object whose dataAddr field we are accessing
+	 * @throws CorruptDataException if there's a problem accessing the indexable object dataAddr field
+	 * @throws NoSuchFieldException if the indexable object dataAddr field does not exist on the build that generated the core file
 	 */
-	public static VoidPointer getDataAddrForDiscontiguous(J9IndexableObjectPointer objPointer) throws CorruptDataException, NoSuchFieldException
+	private static VoidPointer getDataAddrForContiguous(J9IndexableObjectPointer objPointer) throws CorruptDataException, NoSuchFieldException
 	{
 		if (mixedReferenceMode) {
 			if (compressObjectReferences) {
-				return VoidPointer.cast((J9IndexableObjectDiscontiguousCompressedPointer.cast(objPointer)).dataAddr());
+				return VoidPointer.cast(J9IndexableObjectWithDataAddressContiguousCompressedPointer.cast(objPointer).dataAddr());
 			}
-			return VoidPointer.cast((J9IndexableObjectDiscontiguousFullPointer.cast(objPointer)).dataAddr());
+			return VoidPointer.cast(J9IndexableObjectWithDataAddressContiguousFullPointer.cast(objPointer).dataAddr());
 		}
-		return VoidPointer.cast((J9IndexableObjectDiscontiguousPointer.cast(objPointer)).dataAddr());
+		return VoidPointer.cast(J9IndexableObjectWithDataAddressContiguousPointer.cast(objPointer).dataAddr());
 	}
 
 	/**
-	 * @param objPointer array object who's elements we are outputting to dst
+	 * Get the dataAddr field for the discontiguous array object.
+	 *
+	 * @param objPointer the discontiguous array object whose dataAddr field we are accessing
+	 * @throws CorruptDataException if there's a problem accessing the indexable object dataAddr field
+	 * @throws NoSuchFieldException if the indexable object dataAddr field does not exist on the build that generated the core file
+	 */
+	private static VoidPointer getDataAddrForDiscontiguous(J9IndexableObjectPointer objPointer) throws CorruptDataException, NoSuchFieldException
+	{
+		if (mixedReferenceMode) {
+			if (compressObjectReferences) {
+				return VoidPointer.cast(J9IndexableObjectWithDataAddressDiscontiguousCompressedPointer.cast(objPointer).dataAddr());
+			}
+			return VoidPointer.cast(J9IndexableObjectWithDataAddressDiscontiguousFullPointer.cast(objPointer).dataAddr());
+		}
+		return VoidPointer.cast(J9IndexableObjectWithDataAddressDiscontiguousPointer.cast(objPointer).dataAddr());
+	}
+
+	/**
+	 * Get the dataAddr field for the indexable object.
+	 *
+	 * @param objPointer the array object whose dataAddr field we are accessing
+	 * @throws CorruptDataException if there's a problem accessing the indexable object dataAddr field
+	 * @throws NoSuchFieldException if the indexable object dataAddr field does not exist on the build that generated the core file
+	 */
+	public static VoidPointer getDataAddrForIndexable(J9IndexableObjectPointer objPointer) throws CorruptDataException, NoSuchFieldException
+	{
+		return ObjectModel.isInlineContiguousArraylet(objPointer)
+			? getDataAddrForContiguous(objPointer)
+			: getDataAddrForDiscontiguous(objPointer);
+	}
+
+	/**
+	 * Get the address for the desired element in the array.
+	 *
+	 * @param objPointer array object whose elements we are accessing
 	 * @param index the desired index within then array
 	 * @param dataSize size of the data held in the array
 	 * @return the address for the desired element in the array
@@ -185,22 +296,15 @@ public class J9IndexableObjectHelper extends J9ObjectHelper
 	{
 		return ObjectModel.getElementAddress(objPointer, index, dataSize);
 	}
-	
-	/**
-	 * @param objPointer array object that we are checking if isInlineContiguousArraylet
-	 * @throws CorruptDataException If there's a problem accessing the layout of the indexable object
-	 */
-	public static boolean isInlineContiguousArraylet(J9IndexableObjectPointer objPointer) throws CorruptDataException
-	{
-		return ObjectModel.isInlineContiguousArraylet(objPointer);
-	}
 
 	/**
-	 *  @param objPointer array object who's elements we are outputting to dst
-	 *  @param dst destination array where we will output the elements
-	 *  @param start starting index of the elements we are interested in
-	 *  @param length number of elements to output 
-	 *  @param destStart starting index of destination array where we will start outputting elements 
+	 * Get the requested array data elements and output these elements to the dst method parameter.
+	 *
+	 * @param objPointer array object whose elements we are accessing
+	 * @param dst destination array where we will output the elements
+	 * @param start starting index of the elements we are interested in
+	 * @param length number of elements to output
+	 * @param destStart starting index of destination array where we will start outputting elements
 	 */
 	public static void getData(J9IndexableObjectPointer objPointer, Object dst, int start, int length, int destStart) throws CorruptDataException
 	{

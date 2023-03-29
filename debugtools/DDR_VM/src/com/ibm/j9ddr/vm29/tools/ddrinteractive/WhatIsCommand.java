@@ -347,7 +347,7 @@ public class WhatIsCommand extends Command
 			} catch (InvocationTargetException e) {
 				Throwable cause = e.getCause();
 				
-				if (cause instanceof CorruptDataException || cause instanceof NoSuchFieldError || cause instanceof NoClassDefFoundError) {
+				if (cause instanceof CorruptDataException || cause instanceof NoSuchFieldException || cause instanceof NoSuchFieldError || cause instanceof NoClassDefFoundError) {
 					//Skip this field
 					continue;
 				} else {

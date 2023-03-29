@@ -3051,17 +3051,11 @@ typedef struct J9IndexableObjectContiguous {
 #if defined(J9VM_ENV_DATA64) && defined(OMR_GC_FULL_POINTERS)
 	U_32 padding;
 #endif /* J9VM_ENV_DATA64 && !OMR_GC_COMPRESSED_POINTERS */
-#if defined(J9VM_ENV_DATA64)
-	void *dataAddr;
-#endif /* J9VM_ENV_DATA64 */
 } J9IndexableObjectContiguous;
 
 typedef struct J9IndexableObjectContiguousCompressed {
 	U_32 clazz;
 	U_32 size;
-#if defined(J9VM_ENV_DATA64)
-	void *dataAddr;
-#endif /* J9VM_ENV_DATA64 */
 } J9IndexableObjectContiguousCompressed;
 
 typedef struct J9IndexableObjectContiguousFull {
@@ -3069,7 +3063,6 @@ typedef struct J9IndexableObjectContiguousFull {
 	U_32 size;
 #if defined(J9VM_ENV_DATA64)
 	U_32 padding;
-	void *dataAddr;
 #endif /* J9VM_ENV_DATA64 */
 } J9IndexableObjectContiguousFull;
 
@@ -3080,9 +3073,6 @@ typedef struct J9IndexableObjectDiscontiguous {
 #if defined(OMR_GC_COMPRESSED_POINTERS) || !defined(J9VM_ENV_DATA64)
 	U_32 padding;
 #endif /* OMR_GC_COMPRESSED_POINTERS || !J9VM_ENV_DATA64 */
-#if defined(J9VM_ENV_DATA64)
-	void *dataAddr;
-#endif /* J9VM_ENV_DATA64 */
 } J9IndexableObjectDiscontiguous;
 
 typedef struct J9IndexableObjectDiscontiguousCompressed {
@@ -3090,9 +3080,6 @@ typedef struct J9IndexableObjectDiscontiguousCompressed {
 	U_32 mustBeZero;
 	U_32 size;
 	U_32 padding;
-#if defined(J9VM_ENV_DATA64)
-	void *dataAddr;
-#endif /* J9VM_ENV_DATA64 */
 } J9IndexableObjectDiscontiguousCompressed;
 
 typedef struct J9IndexableObjectDiscontiguousFull {
@@ -3101,10 +3088,82 @@ typedef struct J9IndexableObjectDiscontiguousFull {
 	U_32 size;
 #if !defined(J9VM_ENV_DATA64)
 	U_32 padding;
-#else /* J9VM_ENV_DATA64 */
-	void *dataAddr;
 #endif /* !J9VM_ENV_DATA64 */
 } J9IndexableObjectDiscontiguousFull;
+
+
+/* Representation of the J9IndexableObjectContiguous structure that includes a pointer to the data address field of the indexable object.
+ * This structure will be used in-lieu of J9IndexableObjectContiguous if J9JavaVM flag "isIndexableDataAddrPresent" is TRUE.  */
+typedef struct J9IndexableObjectWithDataAddressContiguous {
+	j9objectclass_t clazz;
+	U_32 size;
+#if defined(J9VM_ENV_DATA64) && defined(OMR_GC_FULL_POINTERS)
+	U_32 padding;
+#endif /* defined(J9VM_ENV_DATA64) && defined(OMR_GC_FULL_POINTERS) */
+#if defined(J9VM_ENV_DATA64)
+	void *dataAddr;
+#endif /* defined(J9VM_ENV_DATA64) */
+} J9IndexableObjectWithDataAddressContiguous;
+
+/* Representation of the J9IndexableObjectContiguousCompressed structure that includes a pointer to the data address field of the indexable object.
+ * This structure will be used in-lieu of J9IndexableObjectContiguousCompressed if J9JavaVM flag "isIndexableDataAddrPresent" is TRUE.  */
+typedef struct J9IndexableObjectWithDataAddressContiguousCompressed {
+	U_32 clazz;
+	U_32 size;
+#if defined(J9VM_ENV_DATA64)
+	void *dataAddr;
+#endif /* defined(J9VM_ENV_DATA64) */
+} J9IndexableObjectWithDataAddressContiguousCompressed;
+
+/* Representation of the J9IndexableObjectContiguousFull structure that includes a pointer to the data address field of the indexable object.
+ * This structure will be used in-lieu of J9IndexableObjectContiguousFull if J9JavaVM flag "isIndexableDataAddrPresent" is TRUE.  */
+typedef struct J9IndexableObjectWithDataAddressContiguousFull {
+	UDATA clazz;
+	U_32 size;
+#if defined(J9VM_ENV_DATA64)
+	U_32 padding;
+	void *dataAddr;
+#endif /* defined(J9VM_ENV_DATA64) */
+} J9IndexableObjectWithDataAddressContiguousFull;
+
+/* Representation of the J9IndexableObjectDiscontiguous structure that includes a pointer to the data address field of the indexable object.
+ * This structure will be used in-lieu of J9IndexableObjectDiscontiguous if J9JavaVM flag "isIndexableDataAddrPresent" is TRUE.  */
+typedef struct J9IndexableObjectWithDataAddressDiscontiguous {
+	j9objectclass_t clazz;
+	U_32 mustBeZero;
+	U_32 size;
+#if defined(OMR_GC_COMPRESSED_POINTERS) || !defined(J9VM_ENV_DATA64)
+	U_32 padding;
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) || !defined(J9VM_ENV_DATA64) */
+#if defined(J9VM_ENV_DATA64)
+	void *dataAddr;
+#endif /* defined(J9VM_ENV_DATA64) */
+} J9IndexableObjectWithDataAddressDiscontiguous;
+
+/* Representation of the J9IndexableObjectDiscontiguousCompressed structure that includes a pointer to the data address field of the indexable object.
+ * This structure will be used in-lieu of J9IndexableObjectDiscontiguousCompressed if J9JavaVM flag "isIndexableDataAddrPresent" is TRUE.  */
+typedef struct J9IndexableObjectWithDataAddressDiscontiguousCompressed {
+	U_32 clazz;
+	U_32 mustBeZero;
+	U_32 size;
+	U_32 padding;
+#if defined(J9VM_ENV_DATA64)
+	void *dataAddr;
+#endif /* defined(J9VM_ENV_DATA64) */
+} J9IndexableObjectWithDataAddressDiscontiguousCompressed;
+
+/* Representation of the J9IndexableObjectDiscontiguousFull structure that includes a pointer to the data address field of the indexable object.
+ * This structure will be used in-lieu of J9IndexableObjectDiscontiguousFull if J9JavaVM flag "isIndexableDataAddrPresent" is TRUE.  */
+typedef struct J9IndexableObjectWithDataAddressDiscontiguousFull {
+	UDATA clazz;
+	U_32 mustBeZero;
+	U_32 size;
+#if !defined(J9VM_ENV_DATA64)
+	U_32 padding;
+#else /* !defined(J9VM_ENV_DATA64) */
+	void *dataAddr;
+#endif /* !defined(J9VM_ENV_DATA64) */
+} J9IndexableObjectWithDataAddressDiscontiguousFull;
 
 typedef struct J9InitializerMethods {
 	struct J9Method* initialStaticMethod;
@@ -5204,6 +5263,11 @@ typedef struct J9VMThread {
 	struct PortlibPTBuffers_struct* ptBuffers;
 	j9object_t blockingEnterObject;
 	void* gcExtensions;
+	UDATA contiguousIndexableHeaderSize;
+	UDATA discontiguousIndexableHeaderSize;
+#if defined(J9VM_ENV_DATA64)
+	UDATA isIndexableDataAddrPresent;
+#endif /* defined(J9VM_ENV_DATA64) */
 	void* gpInfo;
 	void* jitVMwithThreadInfo;
 	U_8* profilingBufferEnd;
@@ -5361,8 +5425,8 @@ typedef struct J9VMThread {
 
 #define J9VMTHREAD_REFERENCE_SIZE(vmThread) (J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread) ? sizeof(U_32) : sizeof(UDATA))
 #define J9VMTHREAD_OBJECT_HEADER_SIZE(vmThread) (J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread) ? sizeof(J9ObjectCompressed) : sizeof(J9ObjectFull))
-#define J9VMTHREAD_CONTIGUOUS_HEADER_SIZE(vmThread) (J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread) ? sizeof(J9IndexableObjectContiguousCompressed) : sizeof(J9IndexableObjectContiguousFull))
-#define J9VMTHREAD_DISCONTIGUOUS_HEADER_SIZE(vmThread) (J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread) ? sizeof(J9IndexableObjectDiscontiguousCompressed) : sizeof(J9IndexableObjectDiscontiguousFull))
+#define J9VMTHREAD_CONTIGUOUS_INDEXABLE_HEADER_SIZE(vmThread) ((vmThread)->contiguousIndexableHeaderSize)
+#define J9VMTHREAD_DISCONTIGUOUS_INDEXABLE_HEADER_SIZE(vmThread) ((vmThread)->discontiguousIndexableHeaderSize)
 
 typedef struct J9ReflectFunctionTable {
 	jobject  ( *idToReflectMethod)(struct J9VMThread* vmThread, jmethodID methodID) ;
@@ -5711,6 +5775,12 @@ typedef struct J9JavaVM {
 	omrthread_monitor_t jclCacheMutex;
 	UDATA arrayletLeafSize;
 	UDATA arrayletLeafLogSize;
+	UDATA contiguousIndexableHeaderSize;
+	UDATA discontiguousIndexableHeaderSize;
+#if defined(J9VM_ENV_DATA64)
+	UDATA isIndexableDataAddrPresent;
+	BOOLEAN isIndexableDualHeaderShapeEnabled;
+#endif /* defined(J9VM_ENV_DATA64) */
 	struct J9VMThread* exclusiveVMAccessQueueHead;
 	struct J9VMThread* exclusiveVMAccessQueueTail;
 	omrthread_monitor_t statisticsMutex;
@@ -5894,8 +5964,8 @@ typedef struct J9JavaVM {
 #endif /* (JAVA_SPEC_VERSION >= 16) || defined(J9VM_OPT_CRIU_SUPPORT) */
 #define J9JAVAVM_REFERENCE_SIZE(vm) (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm) ? sizeof(U_32) : sizeof(UDATA))
 #define J9JAVAVM_OBJECT_HEADER_SIZE(vm) (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm) ? sizeof(J9ObjectCompressed) : sizeof(J9ObjectFull))
-#define J9JAVAVM_CONTIGUOUS_HEADER_SIZE(vm) (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm) ? sizeof(J9IndexableObjectContiguousCompressed) : sizeof(J9IndexableObjectContiguousFull))
-#define J9JAVAVM_DISCONTIGUOUS_HEADER_SIZE(vm) (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm) ? sizeof(J9IndexableObjectDiscontiguousCompressed) : sizeof(J9IndexableObjectDiscontiguousFull))
+#define J9JAVAVM_CONTIGUOUS_INDEXABLE_HEADER_SIZE(vm) ((vm)->contiguousIndexableHeaderSize)
+#define J9JAVAVM_DISCONTIGUOUS_INDEXABLE_HEADER_SIZE(vm) ((vm)->discontiguousIndexableHeaderSize)
 
 #if JAVA_SPEC_VERSION >= 16
 

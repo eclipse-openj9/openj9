@@ -2872,6 +2872,10 @@ gcInitializeDefaults(J9JavaVM* vm)
 	extensions->setOmrVM(vm->omrVM);
 	vm->omrVM->_gcOmrVMExtensions = (void *)extensions;
 	vm->gcExtensions = vm->omrVM->_gcOmrVMExtensions;
+#if defined(J9VM_ENV_DATA64)
+	vm->isIndexableDualHeaderShapeEnabled = FALSE;
+	vm->isIndexableDataAddrPresent = FALSE;
+#endif /* defined(J9VM_ENV_DATA64) */
 
 	/* enable estimateFragmentation for all GCs as default for java, but not the estimated result would not affect concurrentgc kickoff by default */
 	extensions->estimateFragmentation = (GLOBALGC_ESTIMATE_FRAGMENTATION | LOCALGC_ESTIMATE_FRAGMENTATION);
@@ -2953,6 +2957,11 @@ gcInitializeDefaults(J9JavaVM* vm)
 	/* omrVM->gcPolicy is set by configurateGCWithPolicyAndOptions */
 	((J9JavaVM*)env.getLanguageVM())->gcPolicy = vm->omrVM->gcPolicy;
 
+	initializeIndexableObjectHeaderSizes(vm);
+	extensions->indexableObjectModel.setHeaderSizes(vm);
+#if defined(J9VM_ENV_DATA64)
+	extensions->indexableObjectModel.setIsIndexableDataAddrPresent(vm);
+#endif /* defined(J9VM_ENV_DATA64) */
 	if (NULL == extensions->configuration) {
 		loadInfo->fatalErrorStr = (char *)j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_GC_FAILED_TO_INITIALIZE, "Failed to initialize.");
 		goto error;
@@ -3063,6 +3072,47 @@ j9gc_reinitializeDefaults(J9VMThread* vmThread)
 	return result;
 }
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+
+void
+initializeIndexableObjectHeaderSizes(J9JavaVM* vm)
+{
+#if defined(J9VM_ENV_DATA64)
+	if (vm->isIndexableDualHeaderShapeEnabled && (J9_GC_POLICY_BALANCED != ((OMR_VM *)vm->omrVM)->gcPolicy)) {
+		setIndexableObjectHeaderSizeWithoutDataAddress(vm);
+	} else {
+		vm->isIndexableDataAddrPresent = TRUE;
+		setIndexableObjectHeaderSizeWithDataAddress(vm);
+	}
+#else /* defined(J9VM_ENV_DATA64) */
+	setIndexableObjectHeaderSizeWithoutDataAddress(vm);
+#endif /* defined(J9VM_ENV_DATA64) */
+}
+
+#if defined(J9VM_ENV_DATA64)
+void
+setIndexableObjectHeaderSizeWithDataAddress(J9JavaVM* vm)
+{
+	if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm)) {
+		vm->contiguousIndexableHeaderSize = sizeof(J9IndexableObjectWithDataAddressContiguousCompressed);
+		vm->discontiguousIndexableHeaderSize = sizeof(J9IndexableObjectWithDataAddressDiscontiguousCompressed);
+	} else {
+		vm->contiguousIndexableHeaderSize = sizeof(J9IndexableObjectWithDataAddressContiguousFull);
+		vm->discontiguousIndexableHeaderSize = sizeof(J9IndexableObjectWithDataAddressDiscontiguousFull);
+	}
+}
+#endif /* defined(J9VM_ENV_DATA64) */
+
+void
+setIndexableObjectHeaderSizeWithoutDataAddress(J9JavaVM* vm)
+{
+	if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm)) {
+		vm->contiguousIndexableHeaderSize = sizeof(J9IndexableObjectContiguousCompressed);
+		vm->discontiguousIndexableHeaderSize = sizeof(J9IndexableObjectDiscontiguousCompressed);
+	} else {
+		vm->contiguousIndexableHeaderSize = sizeof(J9IndexableObjectContiguousFull);
+		vm->discontiguousIndexableHeaderSize = sizeof(J9IndexableObjectDiscontiguousFull);
+	}
+}
 
 #if defined(OMR_GC_CONCURRENT_SCAVENGER)
 static void

@@ -153,13 +153,13 @@ Java_com_ibm_jit_JITHelpers_identityHashSaltPolicy(JNIEnv *env, jclass ignored)
 jint JNICALL
 Java_com_ibm_jit_JITHelpers_j9ContiguousArrayHeaderSize(JNIEnv *env, jclass ignored)
 {
-	return (jint) J9VMTHREAD_CONTIGUOUS_HEADER_SIZE((J9VMThread*)env);
+	return (jint) J9VMTHREAD_CONTIGUOUS_INDEXABLE_HEADER_SIZE((J9VMThread*)env);
 }
 
 jint JNICALL
 Java_com_ibm_jit_JITHelpers_j9DiscontiguousArrayHeaderSize(JNIEnv *env, jclass ignored)
 {
-	return (jint) J9VMTHREAD_DISCONTIGUOUS_HEADER_SIZE((J9VMThread*)env);
+	return (jint) J9VMTHREAD_DISCONTIGUOUS_INDEXABLE_HEADER_SIZE((J9VMThread*)env);
 }
 
 jint JNICALL
