@@ -31,3 +31,10 @@ TraceEvent=Trc_trcengine_reportTraceEvent_Event2 Overhead=1 Level=1 Template="Th
 TraceEvent=Trc_trcengine_checkMethod Overhead=1 Level=1 Template="Check for method match"
 TraceEvent=Trc_trcengine_reportThreadStart Overhead=1 Level=1 Template="Thread started VMthread = %p, name = %s, nativeID = %p"
 TraceEvent=Trc_trcengine_reportThreadEnd Overhead=1 Level=1 Template="Thread ended VMthread = %p, name = %s, nativeID = %p"
+
+TraceEvent=Trc_trcengine_criu_enableMethodTraceHooks_failed Overhead=1 Level=1 Template="criuRestoreInitializeTrace(): enableMethodTraceHooks() failed"
+TraceEvent=Trc_trcengine_criu_startTraceWorkerThread_failed Overhead=1 Level=1 Template="criuRestoreInitializeTrace(): startTraceWorkerThread() failed"
+TraceEvent=Trc_trcengine_criu_traceInitializationHelper_failed Overhead=1 Level=1 Template="criuRestoreInitializeTrace(): traceInitializationHelper() failed"
+TraceEvent=Trc_trcengine_criu_nomethodentries_succeed Overhead=1 Level=5 Template="criuRestoreInitializeTrace(): no entries within traceMethodTable/triggerOnMethods, returns true"
+TraceExit=Trc_trcengine_criu_criuRestoreInitializeTrace_Exit Overhead=1 Level=5 Template="criuRestoreInitializeTrace() returns %zd"
+TraceEntry=Trc_trcengine_criu_criuRestoreInitializeTrace_Entry Overhead=1 Level=5 Template="criuRestoreInitializeTrace()"

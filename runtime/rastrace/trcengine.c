@@ -1014,20 +1014,33 @@ criuRestoreInitializeTrace(J9VMThread *thr)
 	BOOLEAN result = FALSE;
 	UtThreadData **tempThr = UT_THREAD_FROM_VM_THREAD(thr);
 
+	Trc_trcengine_criu_criuRestoreInitializeTrace_Entry(thr);
 	if (J9VMDLLMAIN_OK == traceInitializationHelper(vm, tempThr, vm->checkpointState.restoreArgsList, TRUE)) {
-		RasGlobalStorage *j9ras = (RasGlobalStorage *)vm->j9rasGlobalStorage;
-		if ((NULL != j9ras->traceMethodTable)
-			|| (NULL != j9ras->triggerOnMethods)
-		) {
-			if (OMR_ERROR_NONE == enableMethodTraceHooks(vm)
-				&& (OMR_ERROR_NONE == setupTraceWorkerThread(tempThr))
+		/* prepare the trace file first if an output is specified */
+		if (OMR_ERROR_NONE == startTraceWorkerThread(tempThr)) {
+			RasGlobalStorage *j9ras = (RasGlobalStorage *)vm->j9rasGlobalStorage;
+			if ((NULL != j9ras->traceMethodTable)
+				|| (NULL != j9ras->triggerOnMethods)
 			) {
-				vm->internalVMFunctions->addInternalJVMClassIterationRestoreHook(thr, setRAMClassExtendedMethodFlagsHelper);
+				if (OMR_ERROR_NONE == enableMethodTraceHooks(vm)) {
+					vm->internalVMFunctions->addInternalJVMClassIterationRestoreHook(thr, setRAMClassExtendedMethodFlagsHelper);
+					result = TRUE;
+				} else {
+					Trc_trcengine_criu_enableMethodTraceHooks_failed(thr);
+				}
+			} else {
+				/* no entries within traceMethodTable/triggerOnMethods */
 				result = TRUE;
+				Trc_trcengine_criu_nomethodentries_succeed(thr);
 			}
+		} else {
+			Trc_trcengine_criu_startTraceWorkerThread_failed(thr);
 		}
+	} else {
+		Trc_trcengine_criu_traceInitializationHelper_failed(thr);
 	}
 
+	Trc_trcengine_criu_criuRestoreInitializeTrace_Exit(thr, result);
 	return result;
 }
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
