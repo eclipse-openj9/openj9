@@ -222,6 +222,19 @@ J9::ObjectModel::isHotReferenceFieldRequired()
    return TR::Compiler->javaVM->memoryManagerFunctions->j9gc_hot_reference_field_required(TR::Compiler->javaVM);
    }
 
+bool
+J9::ObjectModel::isOffHeapAllocationEnabled()
+   {
+#if defined(J9VM_OPT_JITSERVER)
+   if (auto stream = TR::CompilationInfo::getStream())
+      {
+      auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(stream);
+      return vmInfo->_isOffHeapAllocationEnabled;
+      }
+#endif /* defined(J9VM_OPT_JITSERVER) */
+   return TR::Compiler->javaVM->memoryManagerFunctions->j9gc_off_heap_allocation_enabled(TR::Compiler->javaVM);
+   }
+
 
 UDATA
 J9::ObjectModel::elementSizeOfBooleanArray()

@@ -74,10 +74,10 @@ public:
 	uintptr_t _monitorReferenceCleared; /**< The number of monitor references that have been cleared during marking */
 	uintptr_t _monitorReferenceCandidates; /**< The number of monitor references that have been visited in monitor table during marking */
 
-#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
-	uintptr_t _doubleMappedArrayletsCleared; /**< The number of double mapped arraylets that have been cleared durign marking */
-	uintptr_t _doubleMappedArrayletsCandidates; /**< The number of double mapped arraylets that have been visited during marking */
-#endif /* J9VM_GC_ENABLE_DOUBLE_MAP */	
+#if defined(J9VM_GC_ENABLE_DOUBLE_MAP) || defined(J9VM_ENV_DATA64)
+	uintptr_t _doubleMappedOrVirtualLargeObjectHeapArrayletsCleared; /**< The number of double mapped or sparse heap allocated arraylets that have been cleared during marking */
+	uintptr_t _doubleMappedOrVirtualLargeObjectHeapArrayletCandidates; /**< The number of double mapped or sparse heap allocated arraylets that have been visited during marking */
+#endif /* defined(J9VM_GC_ENABLE_DOUBLE_MAP) || defined(J9VM_ENV_DATA64) */
 
 #if defined(J9MODRON_TGC_PARALLEL_STATISTICS)
 	uintptr_t _splitArraysProcessed; /**< The number of array chunks (not counting parts smaller than the split size) processed by this thread */
@@ -114,10 +114,10 @@ public:
 		_monitorReferenceCleared = 0;
 		_monitorReferenceCandidates = 0;
 
-#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
-		_doubleMappedArrayletsCleared = 0;
-		_doubleMappedArrayletsCandidates = 0;
-#endif /* J9VM_GC_ENABLE_DOUBLE_MAP */	
+#if defined(J9VM_GC_ENABLE_DOUBLE_MAP) || defined(J9VM_ENV_DATA64)
+		_doubleMappedOrVirtualLargeObjectHeapArrayletsCleared = 0;
+		_doubleMappedOrVirtualLargeObjectHeapArrayletCandidates = 0;
+#endif /* defined(J9VM_GC_ENABLE_DOUBLE_MAP) || defined(J9VM_ENV_DATA64) */
 
 #if defined(J9MODRON_TGC_PARALLEL_STATISTICS)
 		_splitArraysProcessed = 0;
@@ -152,10 +152,10 @@ public:
 		_monitorReferenceCleared += statsToMerge->_monitorReferenceCleared;
 		_monitorReferenceCandidates += statsToMerge->_monitorReferenceCandidates;
 
-#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
-		_doubleMappedArrayletsCleared += statsToMerge->_doubleMappedArrayletsCleared;
-		_doubleMappedArrayletsCandidates += statsToMerge->_doubleMappedArrayletsCandidates;
-#endif /* J9VM_GC_ENABLE_DOUBLE_MAP */	
+#if defined(J9VM_GC_ENABLE_DOUBLE_MAP) || defined(J9VM_ENV_DATA64)
+		_doubleMappedOrVirtualLargeObjectHeapArrayletsCleared += statsToMerge->_doubleMappedOrVirtualLargeObjectHeapArrayletsCleared;
+		_doubleMappedOrVirtualLargeObjectHeapArrayletCandidates += statsToMerge->_doubleMappedOrVirtualLargeObjectHeapArrayletCandidates;
+#endif /* defined(J9VM_GC_ENABLE_DOUBLE_MAP) || defined(J9VM_ENV_DATA64) */
 
 		_concurrentGCThreadsCPUStartTimeSum += statsToMerge->_concurrentGCThreadsCPUStartTimeSum;
 		_concurrentGCThreadsCPUEndTimeSum += statsToMerge->_concurrentGCThreadsCPUEndTimeSum;
@@ -183,10 +183,10 @@ public:
 		,_stringConstantsCandidates(0)
 		,_monitorReferenceCleared(0)
 		,_monitorReferenceCandidates(0)
-#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
-		,_doubleMappedArrayletsCleared(0)
-		,_doubleMappedArrayletsCandidates(0)
-#endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
+#if defined(J9VM_GC_ENABLE_DOUBLE_MAP) || defined(J9VM_ENV_DATA64)
+		,_doubleMappedOrVirtualLargeObjectHeapArrayletsCleared(0)
+		,_doubleMappedOrVirtualLargeObjectHeapArrayletCandidates(0)
+#endif /* defined(J9VM_GC_ENABLE_DOUBLE_MAP) || defined(J9VM_ENV_DATA64) */
 #if defined(J9MODRON_TGC_PARALLEL_STATISTICS)
 		,_splitArraysProcessed(0)
 #endif /* J9MODRON_TGC_PARALLEL_STATISTICS */

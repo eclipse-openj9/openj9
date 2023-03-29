@@ -81,7 +81,7 @@ public:
 	void taskAsIdlePool(MM_EnvironmentVLHGC *env);
 	
 	void taskAsArrayletLeaf(MM_EnvironmentBase *env);
-	void removeFromArrayletLeafList();
+	void removeFromArrayletLeafList(MM_EnvironmentVLHGC *env);
 	void addToArrayletLeafList(MM_HeapRegionDescriptorVLHGC* spineRegion);
 	MM_HeapRegionDescriptorVLHGC *getNextArrayletLeafRegion() { return _nextArrayletLeafRegion; }
 	J9IndexableObject *getSpine() { return _spine; }

@@ -52,6 +52,8 @@
 #include "ObjectModel.hpp"
 #include "ObjectAccessBarrier.hpp"
 #include "ScanFormatter.hpp"
+#include "SparseAddressOrderedFixedSizeDataPool.hpp"
+#include "SparseVirtualMemory.hpp"
 #include "SublistPool.hpp"
 #include "SublistPuddle.hpp"
 
@@ -463,11 +465,16 @@ GC_CheckEngine::checkJ9Object(J9JavaVM *javaVM, J9Object* objectPtr, J9MM_Iterat
 #if defined(J9VM_ENV_DATA64)
 	if (OMR_ARE_ANY_BITS_SET(_cycle->getMiscFlags(), J9MODRON_GCCHK_VALID_INDEXABLE_DATA_ADDRESS) && extensions->objectModel.isIndexable(objectPtr) && javaVM->isIndexableDataAddrPresent) {
 		/* Check that the indexable object has the correct data address pointer */
-		if (!extensions->indexableObjectModel.isValidDataAddr((J9IndexableObject*)objectPtr)) {
+		void *dataAddr = extensions->indexableObjectModel.getDataAddrForIndexableObject((J9IndexableObject *)objectPtr);
+		bool isValidDataAddr = (extensions->indexableObjectModel.isVirtualLargeObjectHeapEnabled() && extensions->largeObjectVirtualMemory->getSparseDataPool()->isValidDataPtr(dataAddr));
+		#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
+		isValidDataAddr = isValidDataAddr || extensions->indexableObjectModel.isIndexableObjectDoubleMapped(extensions, (J9IndexableObject *)objectPtr);
+		#endif /* defined(J9VM_GC_ENABLE_DOUBLE_MAP) */
+		if (!extensions->indexableObjectModel.isValidDataAddr((J9IndexableObject *)objectPtr, dataAddr, isValidDataAddr)) {
 			return J9MODRON_GCCHK_RC_INVALID_INDEXABLE_DATA_ADDRESS;
 		}
 	}
-#endif /* (J9VM_ENV_DATA64) */
+#endif /* defined(J9VM_ENV_DATA64) */
 
 	if (checkFlags & J9MODRON_GCCHK_VERIFY_RANGE) {
 		UDATA regionEnd = ((UDATA)regionDesc->regionStart) + regionDesc->regionSize;

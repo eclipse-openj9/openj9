@@ -989,3 +989,19 @@ J9NLS_GC_OPTIONS_HIERARCHICAL_SCAN_ORDERING_NOT_SUPPORTED_WARN.system_action=The
 J9NLS_GC_OPTIONS_HIERARCHICAL_SCAN_ORDERING_NOT_SUPPORTED_WARN.user_response=Refer to the OpenJ9 documentation for -Xgc:hierarchicalScanOrdering.
 
 # END NON-TRANSLATABLE
+
+J9NLS_GC_OPTIONS_VIRTUAL_LARGE_OBJECT_HEAP_NOT_SUPPORTED_WARN=Unsupported -XX:enableVirtualLargeObjectHeap option with -Xgcpolicy:%s will be ignored.
+# START NON-TRANSLATABLE
+J9NLS_GC_OPTIONS_VIRTUAL_LARGE_OBJECT_HEAP_NOT_SUPPORTED_WARN.explanation=-XX:enableVirtualLargeObjectHeap is currently only supported with -Xgcpolicy:balanced.
+J9NLS_GC_OPTIONS_VIRTUAL_LARGE_OBJECT_HEAP_NOT_SUPPORTED_WARN.system_action=The JVM ignores the -XX:enableVirtualLargeObjectHeap option.
+J9NLS_GC_OPTIONS_VIRTUAL_LARGE_OBJECT_HEAP_NOT_SUPPORTED_WARN.user_response=None
+
+# END NON-TRANSLATABLE
+
+J9NLS_GC_OPTIONS_ARRAYLET_DOUBLE_MAPPING_NOT_SUPPORTED_WARN=Unsupported -Xgc:enableArrayletDoubleMapping option with -Xgcpolicy:%s will be ignored.
+# START NON-TRANSLATABLE
+J9NLS_GC_OPTIONS_ARRAYLET_DOUBLE_MAPPING_NOT_SUPPORTED_WARN.explanation=-Xgc:enableArrayletDoubleMapping is currently only supported with -Xgcpolicy:balanced.
+J9NLS_GC_OPTIONS_ARRAYLET_DOUBLE_MAPPING_NOT_SUPPORTED_WARN.system_action=The JVM ignores the -Xgc:enableArrayletDoubleMapping option.
+J9NLS_GC_OPTIONS_ARRAYLET_DOUBLE_MAPPING_NOT_SUPPORTED_WARN.user_response=Refer to the OpenJ9 documentation for -Xgc:enableArrayletDoubleMapping.
+
+# END NON-TRANSLATABLE

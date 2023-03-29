@@ -177,7 +177,7 @@ public abstract class GCArrayletObjectModelBase extends GCArrayObjectModel
 		}
 
 		boolean isAllIndexableDataContiguousEnabled = enableDoubleMapping || enableVirtualLargeObjectHeap;
-		
+
 		UDATA spineDataSize = new UDATA(0);
 		if (GC_ArrayletObjectModelBase$ArrayLayout.InlineContiguous == layout) {
 			if (!isAllIndexableDataContiguousEnabled || isArrayletDataAdjacentToHeader(dataSize)) {
