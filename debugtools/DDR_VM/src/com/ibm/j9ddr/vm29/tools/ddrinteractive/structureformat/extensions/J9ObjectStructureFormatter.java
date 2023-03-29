@@ -163,6 +163,19 @@ public class J9ObjectStructureFormatter extends BaseStructureFormatter
 		out.format("    struct J9Class* clazz = !j9arrayclass 0x%X   // %s%n", localClazz.getAddress(), className);
 		out.format("    Object flags = %s;%n", J9IndexableObjectHelper.flags(localObject).getHexValue());
 
+		if (isIndexableDataAddrPresent) {
+			VoidPointer dataAddr = null;
+			try {
+				dataAddr = J9IndexableObjectHelper.getDataAddrForIndexable(localObject);
+				if (dataAddr.isNull()) {
+					dataAddr = null;
+				}
+			} catch (NoSuchFieldException e) {
+				dataAddr = null;
+			}
+			out.format("    U_64 DataAddr = %s, %n", (dataAddr == null)? "NULL" : dataAddr.getHexAddress());
+		}
+
 		U32 size = J9IndexableObjectHelper.size(localObject);
 
 		if (size.anyBitsIn(0x80000000)) {
