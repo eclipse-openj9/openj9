@@ -29,6 +29,8 @@ import static java.lang.invoke.MethodType.methodType;
 import java.lang.invoke.VarHandle;
 
 import java.lang.foreign.Addressable;
+import java.lang.foreign.FunctionDescriptor;
+import java.lang.foreign.Linker;
 import java.lang.foreign.GroupLayout;
 import java.lang.foreign.MemoryAddress;
 import java.lang.foreign.MemoryLayout;
@@ -37,6 +39,7 @@ import java.lang.foreign.MemorySegment;
 import java.lang.foreign.MemorySession;
 import java.lang.foreign.SegmentAllocator;
 import java.lang.foreign.SequenceLayout;
+import java.lang.foreign.SymbolLookup;
 import java.lang.foreign.ValueLayout;
 
 import static java.lang.foreign.Linker.*;
@@ -184,6 +187,7 @@ public class UpcallMethodHandles {
 	public static final MethodHandle MH_addIntAndIntsFromStructWithNestedStructArray_reverseOrder;
 	public static final MethodHandle MH_add2IntStructs_returnStruct;
 	public static final MethodHandle MH_add2IntStructs_returnStruct_throwException;
+	public static final MethodHandle MH_add2IntStructs_returnStruct_nestedUpcall;
 	public static final MethodHandle MH_add2IntStructs_returnStructPointer;
 	public static final MethodHandle MH_add3IntStructs_returnStruct;
 
@@ -262,7 +266,11 @@ public class UpcallMethodHandles {
 	public static final MethodHandle MH_return254BytesFromStruct;
 	public static final MethodHandle MH_return4KBytesFromStruct;
 
+	private static Linker linker = Linker.nativeLinker();
+
 	static {
+		System.loadLibrary("clinkerffitests");
+
 		try {
 			MH_add2BoolsWithOr = lookup.findStatic(UpcallMethodHandles.class, "add2BoolsWithOr", methodType(boolean.class, boolean.class, boolean.class)); //$NON-NLS-1$
 			MH_addBoolAndBoolFromPointerWithOr = lookup.findStatic(UpcallMethodHandles.class, "addBoolAndBoolFromPointerWithOr", methodType(boolean.class, boolean.class, MemoryAddress.class)); //$NON-NLS-1$
@@ -383,6 +391,7 @@ public class UpcallMethodHandles {
 			MH_addIntAndIntsFromStructWithNestedStructArray_reverseOrder = lookup.findStatic(UpcallMethodHandles.class, "addIntAndIntsFromStructWithNestedStructArray_reverseOrder", MT_Int_Int_MemSegmt); //$NON-NLS-1$
 			MH_add2IntStructs_returnStruct = lookup.findStatic(UpcallMethodHandles.class, "add2IntStructs_returnStruct", MT_MemSegmt_MemSegmt_MemSegmt); //$NON-NLS-1$
 			MH_add2IntStructs_returnStruct_throwException = lookup.findStatic(UpcallMethodHandles.class, "add2IntStructs_returnStruct_throwException", MT_MemSegmt_MemSegmt_MemSegmt); //$NON-NLS-1$
+			MH_add2IntStructs_returnStruct_nestedUpcall = lookup.findStatic(UpcallMethodHandles.class, "add2IntStructs_returnStruct_nestedUpcall", MT_MemSegmt_MemSegmt_MemSegmt); //$NON-NLS-1$
 			MH_add2IntStructs_returnStructPointer = lookup.findStatic(UpcallMethodHandles.class, "add2IntStructs_returnStructPointer", MT_Addr_MemAddr_MemSegmt); //$NON-NLS-1$
 			MH_add3IntStructs_returnStruct = lookup.findStatic(UpcallMethodHandles.class, "add3IntStructs_returnStruct", MT_MemSegmt_MemSegmt_MemSegmt); //$NON-NLS-1$
 
@@ -465,6 +474,7 @@ public class UpcallMethodHandles {
 			throw new InternalError(e);
 		}
 	}
+	private static final SymbolLookup nativeLibLookup = SymbolLookup.loaderLookup();
 
 	public static boolean add2BoolsWithOr(boolean boolArg1, boolean boolArg2) {
 		boolean result = boolArg1 || boolArg2;
@@ -1303,6 +1313,22 @@ public class UpcallMethodHandles {
 		throw new IllegalArgumentException("An exception is thrown from the upcall method");
 	}
 
+	public static MemorySegment add2IntStructs_returnStruct_nestedUpcall(MemorySegment arg1, MemorySegment arg2) {
+		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_INT.withName("elem1"), JAVA_INT.withName("elem2"));
+		FunctionDescriptor fd = FunctionDescriptor.of(structLayout, structLayout, structLayout, ADDRESS);
+		Addressable functionSymbol = nativeLibLookup.lookup("add2IntStructs_returnStructByUpcallMH").get();
+		MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
+		MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_add2IntStructs_returnStruct_throwException,
+				FunctionDescriptor.of(structLayout, structLayout, structLayout), session);
+		MemorySegment resultSegmt = null;
+		try {
+			resultSegmt = (MemorySegment)mh.invoke(allocator, arg1, arg2, upcallFuncAddr);
+		} catch (Throwable e) {
+			throw (IllegalArgumentException)e;
+		}
+		return resultSegmt;
+	}
+
 	public static Addressable add2IntStructs_returnStructPointer(MemoryAddress arg1Addr, MemorySegment arg2) {
 		int intSum_Elem1 = arg1Addr.get(JAVA_INT, 0) + arg2.get(JAVA_INT, 0);
 		int intSum_Elem2 = arg1Addr.get(JAVA_INT, 4) + arg2.get(JAVA_INT, 4);
@@ -1860,13 +1886,11 @@ public class UpcallMethodHandles {
 
 	public static double addDoubleAndIntDoubleLongFromStruct(double arg1, MemorySegment arg2) {
 		int structElem1 = arg2.get(JAVA_INT, 0);
-		/* The padding in the struct [int, double, long] on AIX/PPC 64-bit is different from
-		 * other platforms as follows:
-		 * 1) there is no padding between int and double.
-		 * 2) there is a 4-byte padding between double and long.
+		/* The size of [int, double, long] on AIX/PPC 64-bit is 20 bytes without padding by default
+		 * while the same struct is 24 bytes with padding on other platforms.
 		 */
 		double structElem2 = (isAixOS) ? arg2.get(JAVA_DOUBLE.withBitAlignment(32), 4) : arg2.get(JAVA_DOUBLE, 8);
-		double structElem3 = arg2.get(JAVA_LONG, 16);
+		double structElem3 = (isAixOS) ? arg2.get(JAVA_LONG.withBitAlignment(32), 12) : arg2.get(JAVA_LONG, 16);
 		double doubleSum = arg1 + structElem1 + structElem2 + structElem3;
 		return doubleSum;
 	}
