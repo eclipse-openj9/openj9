@@ -1068,3 +1068,18 @@ JITServerHelpers::cacheRemoteROMClassBatch(ClientSessionData *clientData, const 
       cacheRemoteROMClassOrFreeIt(clientData, ramClasses[i], romClass, classInfoTuples[i]);
       }
    }
+
+uint64_t
+JITServerHelpers::generateUID()
+   {
+   // Collisions are possible, but very unlikely.
+   // Using more bits for the UID can reduce the probability of a collision further.
+   std::random_device rd;
+   std::mt19937_64 rng(rd());
+   std::uniform_int_distribution<uint64_t> dist;
+   // Generated uid must not be 0
+   uint64_t uid = dist(rng);
+   while (0 == uid)
+      uid = dist(rng);
+   return uid;
+   }
