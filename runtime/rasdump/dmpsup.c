@@ -407,10 +407,14 @@ static IDATA
 criuReloadXDumpAgents(J9JavaVM *vm, J9VMInitArgs *vmArgs)
 {
 	/* similar with startup except at CRIU restore */
-	IDATA result = configureDumpAgents(vm, vmArgs, FALSE);
+	IDATA result = 0;
+	J9VMThread *vmThread = vm->mainThread;
+
+	Trc_trcengine_criu_criuReloadXDumpAgents_Entry(vmThread);
+	result = configureDumpAgents(vm, vmArgs, FALSE);
 	unlockConfig();
 
-	Trc_trcengine_criu_criuReloadXDumpAgents_Exit(vm->mainThread, result);
+	Trc_trcengine_criu_criuReloadXDumpAgents_Exit(vmThread, result);
 	return result;
 }
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
