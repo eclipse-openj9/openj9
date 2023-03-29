@@ -339,7 +339,7 @@ J9NLS_PORT_MMAP_INVALID_FILE_HANDLE.user_response=Contact your service represent
 
 # END NON-TRANSLATABLE
 
-J9NLS_PORT_LINUXDUMP_PIPE_CORE=%s ustawienie \"%s\" okre\u015bla, \u017ce zrzut pami\u0119ci ma zosta\u0107 przes\u0142any w potoku do programu zewn\u0119trznego.  Pr\u00f3ba zmiany nazwy pliku core lub core.%d.  Przejrzyj podr\u0119cznik dla programu zewn\u0119trznego, aby znale\u017a\u0107 miejsce, w kt\u00f3rym zrzut pami\u0119ci jest zapisywany, oraz upewnij si\u0119, \u017ce program nie obcina tego zrzutu.\n
+J9NLS_PORT_LINUXDUMP_PIPE_CORE=Ustawienie %s na "%s" okre\u015bla, \u017ce zrzut pami\u0119ci ma zosta\u0107 przes\u0142any w potoku do programu zewn\u0119trznego.  Pr\u00f3ba zmiany nazwy pliku core lub core.%d.  Przejrzyj podr\u0119cznik dla programu zewn\u0119trznego, aby znale\u017a\u0107 miejsce, w kt\u00f3rym zrzut pami\u0119ci jest zapisywany, oraz upewnij si\u0119, \u017ce program nie obcina tego zrzutu.\n
 # START NON-TRANSLATABLE
 J9NLS_PORT_LINUXDUMP_PIPE_CORE.sample_input_1=/proc/sys/kernel/core_pattern
 J9NLS_PORT_LINUXDUMP_PIPE_CORE.sample_input_2=|/usr/lib/systemd/systemd-coredump %P %u %g %s %t %c %h
@@ -496,7 +496,7 @@ J9NLS_PORT_DUMP_PATH_EXISTS.system_action=The JVM continues, the requested syste
 J9NLS_PORT_DUMP_PATH_EXISTS.user_response=Check whether the name of a non-regular file (for example a directory, symbolic link, pipe or socket) in the current working directory of the Java application clashes with the default system dump file name (core or core.<process ID>) or with the setting of /proc/sys/kernel/core_pattern and /proc/sys/kernel/core_uses_pid. Either rename the subdirectory, or change the settings of /proc/sys/kernel/core_pattern and /proc/sys/kernel/core_uses_pid so that the names do not clash.
 # END NON-TRANSLATABLE
 
-J9NLS_PORT_LINUXDUMP_PIPE_CORE_NOT_FOUND=Nie znaleziono pliku core utworzonego przez proces potomny o identyfikatorze pid=%i. Przejrzyj dokumentacj\u0119 programu %s \"%s\", aby dowiedzie\u0107 si\u0119, gdzie plik core jest zapisywany, oraz upewnij si\u0119, \u017ce program nie obcina tego zrzutu.\n
+J9NLS_PORT_LINUXDUMP_PIPE_CORE_NOT_FOUND=Nie znaleziono pliku core utworzonego przez proces potomny o identyfikatorze pid=%i. Przejrzyj dokumentacj\u0119 dla pliku specjalnego %s dla "%s", aby dowiedzie\u0107 si\u0119, gdzie plik core jest zapisywany. Upewnij si\u0119 r\u00f3wnie\u017c, \u017ce program nie obcina tego zrzutu.\n
 # START NON-TRANSLATABLE
 J9NLS_PORT_LINUXDUMP_PIPE_CORE_NOT_FOUND.sample_input_1=12345
 J9NLS_PORT_LINUXDUMP_PIPE_CORE_NOT_FOUND.sample_input_2=/proc/sys/kernel/core_pattern

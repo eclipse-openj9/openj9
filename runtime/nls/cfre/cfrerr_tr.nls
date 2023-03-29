@@ -1578,7 +1578,7 @@ J9NLS_CFR_ERR_PREVIEW_VERSION_NOT_ENABLED.system_action=The JVM will throw a ver
 J9NLS_CFR_ERR_PREVIEW_VERSION_NOT_ENABLED.user_response=Run with the correct Java runtime version and use --enable-preview.
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_PREVIEW_VERSION2=%4$.*3$s s\u0131n\u0131f\u0131 %1$u.%2$u s\u00fcr\u00fcm\u00fc, desteklenmeyen bir \u00f6nizleme ana s\u00fcr\u00fcm\u00fcd\u00fcr, \u00e7al\u0131\u015fma zaman\u0131 yaln\u0131zca %5$u.65535 s\u00fcr\u00fcm\u00fcne izin veriyor, ayn\u0131 \u00e7al\u0131\u015fma zaman\u0131 s\u00fcr\u00fcm\u00fcyle kodu yeniden derlemeyi deneyin; offset=%6$u
+J9NLS_CFR_ERR_PREVIEW_VERSION2=%4$.*3$s s\u0131n\u0131f\u0131 %1$u.%2$u s\u00fcr\u00fcm\u00fc, desteklenmeyen bir \u00f6nizleme ana s\u00fcr\u00fcm\u00fcd\u00fcr, \u00e7al\u0131\u015ft\u0131rma zaman\u0131 yaln\u0131zca %5$u.65535 s\u00fcr\u00fcm\u00fcne izin veriyor, ayn\u0131 \u00e7al\u0131\u015ft\u0131rma zaman\u0131 s\u00fcr\u00fcm\u00fcyle kodu yeniden derlemeyi deneyin; offset=%6$u
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_PREVIEW_VERSION2.sample_input_1=60
 J9NLS_CFR_ERR_PREVIEW_VERSION2.sample_input_2=65535

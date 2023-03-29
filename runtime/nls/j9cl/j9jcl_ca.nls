@@ -549,7 +549,7 @@ J9NLS_JCL_CRIU_J9_CURRENT_TIME_NANOS_FAILURE.system_action=The JVM will throw a 
 J9NLS_JCL_CRIU_J9_CURRENT_TIME_NANOS_FAILURE.user_response=View CRIU documentation to determine how to resolve the error.
 # END NON-TRANSLATABLE
 
-J9NLS_JCL_CRIU_MAX_RETRY_FOR_NOTCHECKPOINTSAFE_REACHED=La JVM ha intentat establir un punt de comprovaci\u00f3 per\u00f2 no ha pogut perqu\u00e8 s'ha executat el codi en els marcs segurs de @NotCheckpoint. Reintents: %li
+J9NLS_JCL_CRIU_MAX_RETRY_FOR_NOTCHECKPOINTSAFE_REACHED=La JVM ha intentat establir un punt de comprovaci\u00f3 per\u00f2 no ha pogut perqu\u00e8 el codi s'estava executant en marcs segurs @NotCheckpointSafe. Reintents: %li
 # START NON-TRANSLATABLE
 J9NLS_JCL_CRIU_MAX_RETRY_FOR_NOTCHECKPOINTSAFE_REACHED.sample_input_1=1
 J9NLS_JCL_CRIU_MAX_RETRY_FOR_NOTCHECKPOINTSAFE_REACHED.explanation=CRIUSupport::checkpointJVM failed.
