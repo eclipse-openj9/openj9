@@ -112,6 +112,7 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     omr/compiler/compile/ResolvedMethod.cpp \
     omr/compiler/compile/TLSCompilationManager.cpp \
     omr/compiler/compile/VirtualGuard.cpp \
+    omr/compiler/control/OMRCompilationStrategy.cpp \
     omr/compiler/control/OMROptions.cpp \
     omr/compiler/control/OMRRecompilation.cpp \
     omr/compiler/control/OptimizationPlan.cpp \
