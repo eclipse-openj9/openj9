@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2011, 2017 IBM Corp. and others
+ * Copyright (c) 2011, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,35 +32,38 @@ import com.ibm.java.diagnostics.utils.IContext;
 import com.ibm.java.diagnostics.utils.plugins.PluginConfig;
 
 /**
- * Base command which supplies basic support
- * 
- * @author adam
+ * Base command which supplies basic support.
  *
+ * @author adam
  */
 public abstract class BaseCommand implements ICommand {
+
 	protected static final String nl = System.getProperty("line.separator");
 	protected static final String COMMAND_FORMAT = "%-25s %-20s %s\n";
 	protected static final String SUBCOMMAND_FORMAT = "%25s %-20s %s\n";
 	private static final String KEY_ID = ":";
 
-	private Map<String,CommandDescription> _commands = new LinkedHashMap<String,CommandDescription>();
-	private Map<String,CommandDescription> _subCommands = new LinkedHashMap<String,CommandDescription>();
-	
-	private boolean isDirty = false;				//indicates if a command or subcommand has been added
-	
-	private Set<String> descriptions = new LinkedHashSet<String>();
-	protected PluginConfig config;			//configuration used to generate this command
-	
+	private final Map<String, CommandDescription> _commands = new LinkedHashMap<>();
+	private final Map<String, CommandDescription> _subCommands = new LinkedHashMap<>();
+
+	private boolean isDirty = false; // indicates if a command or subcommand has been added
+
+	private final Set<String> descriptions = new LinkedHashSet<>();
+	protected PluginConfig config; // configuration used to generate this command
+
+	protected BaseCommand() {
+		super();
+	}
+
 	/**
-	 * 
+	 *
 	 * @param name				Command Name
-	 * @param argDescription	Brief name of any optional or required arguments 
-	 * @param helpDescription	One-liner Description of the command
-	 * 
-	 * argDescription should be a word describing the argument name. 
-	 * 	e.g:  <address>    to specify an address argument that is mandatory
-	 *        [address]    to specify an address argument that is optional 
-	 * 	   
+	 * @param argDescription	brief description of any optional or required arguments
+	 * @param helpDescription	one-line description of the command
+	 *
+	 * argDescription should be a word describing the argument name,
+	 * e.g:  &lt;address>    to specify an address argument that is mandatory, or
+	 *       [address]    to specify an address argument that is optional
 	 */
 	public CommandDescription addCommand(String name, String argDescription, String helpDescription)
 	{
@@ -69,7 +72,7 @@ public abstract class BaseCommand implements ICommand {
 		_commands.put(name.toLowerCase(), description);
 		return description;
 	}
-	
+
 	public void addSubCommand(String cmdname, String subname, String argDescription, String help)
 	{
 		isDirty = true;
@@ -81,7 +84,7 @@ public abstract class BaseCommand implements ICommand {
 		}
 		_subCommands.put(cmdname + KEY_ID + subname, subCommand);
 	}
-	
+
 	public boolean recognises(String command, IContext context) {
 		return _commands.containsKey(command.toLowerCase());
 	}
@@ -109,7 +112,7 @@ public abstract class BaseCommand implements ICommand {
 	public PluginConfig getConfig() {
 		return config;
 	}
-	
+
 	public void setConfig(PluginConfig config) {
 		this.config = config;
 	}
