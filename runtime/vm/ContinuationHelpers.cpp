@@ -261,7 +261,7 @@ freeContinuation(J9VMThread *currentThread, j9object_t continuationObject)
 			currentStack = previous;
 		} while (NULL != currentStack);
 
-		Assert_VM_true(VM_VMHelpers::isFinished(continuation->state));
+		Assert_VM_true(!VM_VMHelpers::isConcurrentlyScanned(continuation->state) && (NULL == VM_VMHelpers::getCarrierThread(continuation->state)));
 
 		/* Free the J9VMContinuation struct */
 		j9mem_free_memory(continuation);
