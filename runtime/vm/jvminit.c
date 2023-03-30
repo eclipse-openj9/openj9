@@ -533,6 +533,14 @@ exitJavaVM(J9VMThread * vmThread, IDATA rc)
 		}
 
 		vm->runtimeFlags |= J9_RUNTIME_EXIT_STARTED;
+		/* Wait until the JVM has initialized before exiting the JVM. */
+		while (OMR_ARE_NO_BITS_SET(vm->runtimeFlags, J9_RUNTIME_INITIALIZED)) {
+			if (vm->runtimeFlagsMutex != NULL) {
+				omrthread_monitor_wait(vm->runtimeFlagsMutex);
+			} else {
+				omrthread_yield();
+			}
+		}
 		if(vm->runtimeFlagsMutex != NULL) {
 			omrthread_monitor_exit(vm->runtimeFlagsMutex);
 		}
