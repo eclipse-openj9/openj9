@@ -1886,11 +1886,13 @@ public class UpcallMethodHandles {
 
 	public static double addDoubleAndIntDoubleLongFromStruct(double arg1, MemorySegment arg2) {
 		int structElem1 = arg2.get(JAVA_INT, 0);
-		/* The size of [int, double, long] on AIX/PPC 64-bit is 20 bytes without padding by default
-		 * while the same struct is 24 bytes with padding on other platforms.
+		/* The padding in the struct [int, double, long] on AIX/PPC 64-bit is different from
+		 * other platforms as follows:
+		 * 1) there is no padding between int and double.
+		 * 2) there is a 4-byte padding between double and long.
 		 */
 		double structElem2 = (isAixOS) ? arg2.get(JAVA_DOUBLE.withBitAlignment(32), 4) : arg2.get(JAVA_DOUBLE, 8);
-		double structElem3 = (isAixOS) ? arg2.get(JAVA_LONG.withBitAlignment(32), 12) : arg2.get(JAVA_LONG, 16);
+		double structElem3 = arg2.get(JAVA_LONG, 16);
 		double doubleSum = arg1 + structElem1 + structElem2 + structElem3;
 		return doubleSum;
 	}
