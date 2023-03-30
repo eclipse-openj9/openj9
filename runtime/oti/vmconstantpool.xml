@@ -415,6 +415,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<fieldref class="jdk/internal/vm/Continuation" name="vmRef" signature="J" cast="struct J9VMContinuation *" versions="19-"/>
 	<fieldref class="jdk/internal/vm/Continuation" name="finished" signature="Z" versions="19-"/>
 	<fieldref class="jdk/internal/vm/Continuation" name="started" signature="Z" versions="19-"/>
+	<fieldref class="jdk/internal/vm/Continuation" name="state" signature="J" versions="19-"/>
 	<fieldref class="jdk/internal/vm/Continuation" name="parent" signature="Ljdk/internal/vm/Continuation;" versions="19-"/>
 	<fieldref class="jdk/internal/vm/Continuation" name="vthread" signature="Ljava/lang/Thread;" versions="19-"/>
 

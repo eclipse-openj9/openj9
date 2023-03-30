@@ -297,11 +297,12 @@ MM_GCExtensions::releaseNativesForContinuationObject(MM_EnvironmentBase* env, j9
 
 	if (verify_continuation_list == continuationListOption) {
 		J9VMContinuation *continuation = J9VMJDKINTERNALVMCONTINUATION_VMREF(vmThread, objectPtr);
-		jboolean finished = J9VMJDKINTERNALVMCONTINUATION_FINISHED(vmThread, objectPtr);
+
+		ContinuationState continuationState = *VM_VMHelpers::getContinuationStateAddress(vmThread, objectPtr);
 		/* there might be potential case that GC would happen between JVM_VirtualThreadUnmountBegin() and JVM_VirtualThreadUnmountEnd() and
 		 * last unmounted continuation Object is marked as "dead", but the related J9VMContinuation has not been freed up.
 		 */
-		if (!finished) {
+		if (!VM_VMHelpers::isFinished(continuationState)) {
 			Assert_GC_true_with_message2(env, (NULL == continuation), "Continuation expected to be NULL, but it is %p, from Continuation object %p\n", continuation, objectPtr);
 		}
 	} else {
@@ -315,40 +316,38 @@ MM_GCExtensions::needScanStacksForContinuationObject(J9VMThread *vmThread, j9obj
 {
 	bool needScan = false;
 #if JAVA_SPEC_VERSION >= 19
-	J9VMContinuation *continuation = J9VMJDKINTERNALVMCONTINUATION_VMREF(vmThread, objectPtr);
-	if (NULL != continuation) {
-		/**
-		 * We don't scan mounted continuations:
-		 *
-		 * for concurrent GCs, since stack is actively changing. Instead, we scan them during preMount
-		 * or during root scanning if already mounted at cycle start or during postUnmount (might
-		 * be indirectly via card cleaning) or during final STW (via root re-scan) if still mounted
-		 * at cycle end.
-		 * for sliding compacts to avoid double slot fixups
-		 * If continuation is currently being mounted by this thread, we must be in preMount/postUnmount
-		 * callback and must scan.
-		 *
-		 * For fully STW GCs, there is no harm to scan them, but it's a waste of time since they are
-		 * scanned during root scanning already.
-		 *
-		 * We don't scan currently scanned for the same collector either - one scan is enough for
-		 * the same collector, but there could be concurrent scavenger(local collector) and
-		 * concurrent marking(global collector) overlapping, they are irrelevant and both are
-		 * concurrent, we handle them independently and separately, they are not blocked or ignored
-		 * each other.
-		 *
-		 * we don't scan the continuation object before started and after finished - java stack
-		 * does not exist.
-		 */
-		if (isConcurrentGC) {
-			needScan = VM_VMHelpers::tryWinningConcurrentGCScan(continuation, isGlobalGC, beingMounted);
-		} else {
-			/* for STW GCs */
-			uintptr_t continuationState = continuation->state;
-			Assert_MM_false(beingMounted);
-			Assert_MM_false(VM_VMHelpers::isConcurrentlyScanned(continuationState));
-			needScan = VM_VMHelpers::isActive(continuationState) && !VM_VMHelpers::isContinuationFullyMounted(continuationState);
-		}
+	ContinuationState volatile *continuationStatePtr = VM_VMHelpers::getContinuationStateAddress(vmThread, objectPtr);
+	/**
+	 * We don't scan mounted continuations:
+	 *
+	 * for concurrent GCs, since stack is actively changing. Instead, we scan them during preMount
+	 * or during root scanning if already mounted at cycle start or during postUnmount (might
+	 * be indirectly via card cleaning) or during final STW (via root re-scan) if still mounted
+	 * at cycle end.
+	 * for sliding compacts to avoid double slot fixups
+	 * If continuation is currently being mounted by this thread, we must be in preMount/postUnmount
+	 * callback and must scan.
+	 *
+	 * For fully STW GCs, there is no harm to scan them, but it's a waste of time since they are
+	 * scanned during root scanning already.
+	 *
+	 * We don't scan currently scanned for the same collector either - one scan is enough for
+	 * the same collector, but there could be concurrent scavenger(local collector) and
+	 * concurrent marking(global collector) overlapping, they are irrelevant and both are
+	 * concurrent, we handle them independently and separately, they are not blocked or ignored
+	 * each other.
+	 *
+	 * we don't scan the continuation object before started and after finished - java stack
+	 * does not exist.
+	 */
+	if (isConcurrentGC) {
+		needScan = VM_VMHelpers::tryWinningConcurrentGCScan(continuationStatePtr, isGlobalGC, beingMounted);
+	} else {
+		/* for STW GCs */
+		ContinuationState continuationState = *continuationStatePtr;
+		Assert_MM_false(beingMounted);
+		Assert_MM_false(VM_VMHelpers::isConcurrentlyScanned(continuationState));
+		needScan = VM_VMHelpers::isActive(continuationState) && !VM_VMHelpers::isContinuationFullyMounted(continuationState);
 	}
 #endif /* JAVA_SPEC_VERSION >= 19 */
 	return needScan;
