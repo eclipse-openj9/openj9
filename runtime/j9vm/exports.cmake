@@ -413,6 +413,13 @@ else()
 	)
 endif()
 
+if(NOT JAVA_SPEC_VERSION LESS 21)
+	jvm_add_exports(jvm
+		JVM_VirtualThreadMount
+		JVM_VirtualThreadUnmount
+	)
+endif()
+
 if(J9VM_OPT_JITSERVER)
 	jvm_add_exports(jvm
 		JITServer_CreateServer
