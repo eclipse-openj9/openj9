@@ -431,9 +431,6 @@ allocateEnvironment(J9InvocationJavaVM * invocationJavaVM, jint version, void **
 			if (j9env->breakpoints == NULL) {
 				goto fail;
 			}
-			if (jvmtiTLSAlloc(vm, &j9env->tlsKey)) {
-				goto fail;
-			}
 
 			/* Hook the thread and virtual thread destroy events to clean up any allocated TLS structs. */
 
@@ -1645,8 +1642,7 @@ setEventNotificationMode(J9JVMTIEnv * j9env, J9VMThread * currentThread, jint mo
 #if JAVA_SPEC_VERSION >= 19
 		rc = allocateTLS(vm, threadObject);
 		if (JVMTI_ERROR_NONE != rc) {
-			releaseVMThread(currentThread, targetThread, event_thread);
-			goto done;
+			goto release;
 		}
 		if (NULL == targetThread) {
 			/* targetThread is NULL only for virtual threads, as per the assertion in getVMThread.
@@ -1657,10 +1653,14 @@ setEventNotificationMode(J9JVMTIEnv * j9env, J9VMThread * currentThread, jint mo
 			vmThreadForTLS = currentThread;
 		}
 #endif /* JAVA_SPEC_VERSION >= 19 */
+		if (0 == j9env->tlsKey) {
+			if (0 != jvmtiTLSAlloc(vm, &j9env->tlsKey)) {
+				goto release;
+			}
+		}
 		rc = createThreadData(j9env, vmThreadForTLS, threadObject);
 		if (JVMTI_ERROR_NONE != rc) {
-			releaseVMThread(currentThread, targetThread, event_thread);
-			goto done;
+			goto release;
 		}
 		eventMap = &(jvmtiTLSGet(vmThreadForTLS, threadObject, j9env->tlsKey)->threadEventEnable);
 	}
@@ -1708,6 +1708,7 @@ setEventNotificationMode(J9JVMTIEnv * j9env, J9VMThread * currentThread, jint mo
 	}
 
 	if (NULL != event_thread) {
+release:
 		releaseVMThread(currentThread, targetThread, event_thread);
 	}
 done:

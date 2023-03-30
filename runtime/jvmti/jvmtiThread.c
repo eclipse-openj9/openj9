@@ -1015,6 +1015,11 @@ jvmtiSetThreadLocalStorage(jvmtiEnv *env,
 				goto release;
 			}
 #endif /* JAVA_SPEC_VERSION >= 19 */
+			if (0 == j9env->tlsKey) {
+				if (0 != jvmtiTLSAlloc(vm, &j9env->tlsKey)) {
+					goto release;
+				}
+			}
 			rc = createThreadData(j9env, targetThread, threadObject);
 			if (JVMTI_ERROR_NONE != rc) {
 				goto release;
