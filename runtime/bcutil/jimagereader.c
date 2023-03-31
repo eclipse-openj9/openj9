@@ -26,6 +26,11 @@
 #include "ut_j9bcu.h"
 #include "util_api.h"
 
+
+#if !defined(OMRPORT_MMAP_FLAG_ZOS_READ_MAPFILE)
+#define OMRPORT_MMAP_FLAG_ZOS_READ_MAPFILE 0
+#endif /* !defined(OMRPORT_MMAP_FLAG_ZOS_READ_MAPFILE) */
+
 VMINLINE static U_32 hashFn(const char *name, I_32 baseValue);
 VMINLINE static I_32 getRedirectTableValue(const char *name, I_32 *redirectTable, U_32 redirectTableSize);
 static I_32 verifyJImageHeader(const char *fileName, JImageHeader *header);
@@ -117,6 +122,7 @@ j9bcutil_loadJImage(J9PortLibrary *portlib, const char *fileName, J9JImage **pji
 	UDATA fileNameLen = strlen(fileName);
 	IDATA bytesRead = 0;
 	UDATA byteAmount = 0;
+	U_32 mmapflag = OMRPORT_MMAP_FLAG_READ;
 	I_32 rc = J9JIMAGE_NO_ERROR;
 
 	PORT_ACCESS_FROM_PORT(portlib);
@@ -179,8 +185,13 @@ j9bcutil_loadJImage(J9PortLibrary *portlib, const char *fileName, J9JImage **pji
 	if (0 != pageSize) {
 		mapSize = ROUND_UP_TO(pageSize, mapSize);
 	}
-
-	jimage->jimageMmap = j9mmap_map_file(jimagefd, 0, mapSize, fileName, J9PORT_MMAP_FLAG_READ, J9MEM_CATEGORY_CLASSES);
+#if defined(J9ZOS390)
+	/*
+	 * With OMRPORT_MMAP_FLAG_ZOS_READ_MAPFILE, j9mmap_map_file() has the old bahaviour that reads the file content into allocated private memory.
+	 */
+	mmapflag |= OMRPORT_MMAP_FLAG_ZOS_READ_MAPFILE;
+#endif /* defined(J9ZOS390) */
+	jimage->jimageMmap = j9mmap_map_file(jimagefd, 0, mapSize, fileName, mmapflag, J9MEM_CATEGORY_CLASSES);
 	if (NULL == jimage->jimageMmap) {
 		I_32 portlibErrCode = j9error_last_error_number();
 		const char *portlibErrMsg = j9error_last_error_message();
