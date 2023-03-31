@@ -180,7 +180,7 @@ J9::ILOpCode::getDataTypeConversion(TR::DataType t1, TR::DataType t2)
 
    if (t1.isMask() || t2.isMask()) return TR::BadILOp;
 
-   if (t1.isVector() && t2.isVector()) return TR::ILOpCode::createVectorOpCode(TR::vcast, t1, t2);
+   if (t1.isVector() && t2.isVector()) return TR::ILOpCode::createVectorOpCode(TR::vconv, t1, t2);
 
    if (t1.isVector() || t2.isVector()) return TR::BadILOp;
 
