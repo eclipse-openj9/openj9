@@ -34,7 +34,9 @@
 #include "mmhook.h"
 #include "mmomrhook.h"
 #include "vmaccess.h"
+#if JAVA_SPEC_VERSION >= 19
 #include "HeapIteratorAPI.h"
+#endif /* JAVA_SPEC_VERSION >= 19 */
 #include "codegen/CodeGenerator.hpp"
 #include "compile/CompilationTypes.hpp"
 #include "compile/Method.hpp"
@@ -6598,6 +6600,7 @@ static UDATA jitReleaseCodeStackWalkFrame(J9VMThread *vmThread, J9StackWalkState
    return J9_STACKWALK_KEEP_ITERATING;
    }
 
+#if JAVA_SPEC_VERSION >= 19
 static jvmtiIterationControl jitWalkContinuationCallBack(J9VMThread *vmThread, J9MM_IterateObjectDescriptor *object, void *userData)
    {
    J9InternalVMFunctions *vmFuncs = vmThread->javaVM->internalVMFunctions;
@@ -6636,6 +6639,7 @@ static jvmtiIterationControl jitResetContinuationFlag(J9VMThread *vmThread, J9MM
 
    return JVMTI_ITERATION_CONTINUE;
    }
+#endif /* JAVA_SPEC_VERSION >= 19 */
 
 static void jitReleaseCodeStackWalk(OMR_VMThread *omrVMThread, condYieldFromGCFunctionPtr condYield = NULL)
    {
