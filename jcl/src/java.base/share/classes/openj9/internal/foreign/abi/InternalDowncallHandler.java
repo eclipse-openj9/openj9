@@ -120,11 +120,11 @@ public class InternalDowncallHandler {
 	 * different threads in downcall.
 	 */
 	/*[IF JAVA_SPEC_VERSION >= 20]*/
-	private Set<SegmentScope> sessionOrScopeSet;
+	private Set<SegmentScope> memArgScopeSet;
 	/*[ELSEIF JAVA_SPEC_VERSION == 19] */
-	private Set<MemorySession> sessionOrScopeSet;
+	private Set<MemorySession> memArgScopeSet;
 	/*[ELSE] JAVA_SPEC_VERSION == 19 */
-	private Set<ResourceScope> sessionOrScopeSet;
+	private Set<ResourceScope> memArgScopeSet;
 	/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
 
 	/*[IF JAVA_SPEC_VERSION == 17]*/
@@ -251,20 +251,41 @@ public class InternalDowncallHandler {
 		return Float.floatToIntBits(argValue);
 	}
 
+	/*[IF JAVA_SPEC_VERSION >= 17]*/
 	/* Save the active session of the specified passed-in memory specific argument in the downcall handler
 	 * given the argument might be created within different sessions/scopes.
 	 */
-	/*[IF JAVA_SPEC_VERSION >= 17]*/
 	/*[IF JAVA_SPEC_VERSION >= 20]*/
-	private final void addMemArgSession(SegmentScope memArgSessionOrScope)
+	private final void addMemArgScope(SegmentScope memArgScope) throws IllegalStateException
 	/*[ELSEIF JAVA_SPEC_VERSION == 19]*/
-	private final void addMemArgSession(MemorySession memArgSessionOrScope)
+	private final void addMemArgScope(MemorySession memArgScope) throws IllegalStateException
 	/*[ELSE] JAVA_SPEC_VERSION == 19 */
-	private final void addMemArgScope(ResourceScope memArgSessionOrScope)
+	private final void addMemArgScope(ResourceScope memArgScope) throws IllegalStateException
 	/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
 	{
-		if (!sessionOrScopeSet.contains(memArgSessionOrScope)) {
-			sessionOrScopeSet.add(memArgSessionOrScope);
+		validateMemScope(memArgScope);
+		if (!memArgScopeSet.contains(memArgScope)) {
+			memArgScopeSet.add(memArgScope);
+		}
+	}
+
+	/* Validate the memory related scope to ensure that it is kept alive during the downcall. */
+	/*[IF JAVA_SPEC_VERSION >= 20]*/
+	private void validateMemScope(SegmentScope memScope) throws IllegalStateException
+	/*[ELSEIF JAVA_SPEC_VERSION == 19]*/
+	private void validateMemScope(MemorySession memScope) throws IllegalStateException
+	/*[ELSE] JAVA_SPEC_VERSION == 19 */
+	private void validateMemScope(ResourceScope memScope) throws IllegalStateException
+	/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
+	{
+		if (!memScope.isAlive())
+		{
+			/*[IF JAVA_SPEC_VERSION == 19]*/
+			String scopeName = "session";
+			/*[ELSE] JAVA_SPEC_VERSION == 19 */
+			String scopeName = "scope";
+			/*[ENDIF] JAVA_SPEC_VERSION == 19 */
+			throw new IllegalStateException("Already closed: attempted to access the memory value in a closed " + scopeName);  //$NON-NLS-1$
 		}
 	}
 	/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
@@ -279,46 +300,27 @@ public class InternalDowncallHandler {
 	private final long memAddrToLongArg(Addressable argValue) throws IllegalStateException {
 		/* Only check MemorySegment and VaList given MemoryAddress.scope() doesn't exist in JDK17. */
 		if (argValue instanceof MemorySegment value) {
-			/*[IF JAVA_SPEC_VERSION >= 19]*/
-			if (!value.session().isAlive()) {
-				throw new IllegalStateException("Already closed: attempted to access the memory segment in a closed session");  //$NON-NLS-1$
-			}
-			addMemArgSession(value.session());
-			/*[ELSE] JAVA_SPEC_VERSION >= 19 */
-			if (!value.scope().isAlive()) {
-				throw new IllegalStateException("Already closed: attempted to access the memory segment in a closed scope");  //$NON-NLS-1$
-			}
+			/*[IF JAVA_SPEC_VERSION == 19]*/
+			addMemArgScope(value.session());
+			/*[ELSE] JAVA_SPEC_VERSION == 19 */
 			addMemArgScope(value.scope());
-			/*[ENDIF] JAVA_SPEC_VERSION >= 19 */
+			/*[ENDIF] JAVA_SPEC_VERSION == 19 */
+		} else if (argValue instanceof VaList value) {
+			/*[IF JAVA_SPEC_VERSION == 19]*/
+			addMemArgScope(value.session());
+			/*[ELSE] JAVA_SPEC_VERSION == 19 */
+			addMemArgScope(value.scope());
+			/*[ENDIF] JAVA_SPEC_VERSION == 19 */
 		}
 		/*[IF JAVA_SPEC_VERSION == 18]*/
 		else if (argValue instanceof NativeSymbol value) {
-			if (!value.scope().isAlive()) {
-				throw new IllegalStateException("Already closed: attempted to access the native symbol in a closed scope");  //$NON-NLS-1$
-			}
 			addMemArgScope(value.scope());
 		}
 		/*[ENDIF] JAVA_SPEC_VERSION == 18 */
-		else if (argValue instanceof VaList value) {
-			/*[IF JAVA_SPEC_VERSION >= 19]*/
-			if (!value.session().isAlive()) {
-				throw new IllegalStateException("Already closed: attempted to access the variable argument list in a closed session");  //$NON-NLS-1$
-			}
-			addMemArgSession(value.session());
-			/*[ELSE] JAVA_SPEC_VERSION >= 19 */
-			if (!value.scope().isAlive()) {
-				throw new IllegalStateException("Already closed: attempted to access the variable argument list in a closed scope");  //$NON-NLS-1$
-			}
-			addMemArgScope(value.scope());
-			/*[ENDIF] JAVA_SPEC_VERSION >= 19 */
-		}
 		return argValue.address().toRawLongValue();
 	}
 	/*[ELSEIF JAVA_SPEC_VERSION == 17]*/
 	private final long memAddrToLongArg(MemoryAddress argValue) throws IllegalStateException {
-		if (!argValue.scope().isAlive()) {
-			throw new IllegalStateException("Already closed: attempted to access the memory address in a closed scope");  //$NON-NLS-1$
-		}
 		addMemArgScope(argValue.scope());
 		return argValue.address().toRawLongValue();
 	}
@@ -331,32 +333,11 @@ public class InternalDowncallHandler {
 
 	/* Intended for memSegmtToLongArgFilter that converts the memory segment to long. */
 	private final long memSegmtToLongArg(MemorySegment argValue) throws IllegalStateException {
-		/*[IF JAVA_SPEC_VERSION >= 19]*/
-		/*[IF JAVA_SPEC_VERSION >= 20]*/
-		if (!argValue.scope().isAlive())
-		/*[ELSE] JAVA_SPEC_VERSION >= 20 */
-		if (!argValue.session().isAlive())
-		/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
-		{
-			throw new IllegalStateException("Already closed: attempted to access the memory segment in a closed session");  //$NON-NLS-1$
-		}
-		/*[IF JAVA_SPEC_VERSION >= 20]*/
-		addMemArgSession(argValue.scope());
-		/*[ELSE] JAVA_SPEC_VERSION >= 20 */
-		addMemArgSession(argValue.session());
-		/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
-		/*[ELSE] JAVA_SPEC_VERSION >= 19 */
-		/*[IF JAVA_SPEC_VERSION >= 17]*/
-		if (!argValue.scope().isAlive()) {
-			throw new IllegalStateException("Already closed: attempted to access the memory segment in a closed scope");  //$NON-NLS-1$
-		}
+		/*[IF JAVA_SPEC_VERSION == 19]*/
+		addMemArgScope(argValue.session());
+		/*[ELSE] JAVA_SPEC_VERSION == 19 */
 		addMemArgScope(argValue.scope());
-		/*[ELSE] JAVA_SPEC_VERSION >= 17 */
-		if (!argValue.isAlive()){
-			throw new IllegalStateException("Already closed: attempted to access the closed memory segment");  //$NON-NLS-1$
-		}
-		/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
-		/*[ENDIF] JAVA_SPEC_VERSION >= 19 */
+		/*[ENDIF] JAVA_SPEC_VERSION == 19 */
 
 		/*[IF JAVA_SPEC_VERSION >= 20]*/
 		return argValue.address();
@@ -504,7 +485,7 @@ public class InternalDowncallHandler {
 		cifNativeThunkAddr = 0;
 		argTypesAddr = 0;
 
-		sessionOrScopeSet = ConcurrentHashMap.newKeySet();
+		memArgScopeSet = ConcurrentHashMap.newKeySet();
 		/*[IF JAVA_SPEC_VERSION == 17]*/
 		scopeHandleMap = new ConcurrentHashMap<>();
 		/*[ENDIF] JAVA_SPEC_VERSION == 17 */
@@ -745,9 +726,9 @@ public class InternalDowncallHandler {
 	{
 		Objects.requireNonNull(session);
 		/*[IF JAVA_SPEC_VERSION >= 20]*/
-		for (SegmentScope memArgSession : sessionOrScopeSet)
+		for (SegmentScope memArgSession : memArgScopeSet)
 		/*[ELSE] JAVA_SPEC_VERSION >= 20 */
-		for (MemorySession memArgSession : sessionOrScopeSet)
+		for (MemorySession memArgSession : memArgScopeSet)
 		/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
 		{
 			/* keepAlive() is replaced with whileAlive(Runnable action) since JDK19 in which case
@@ -776,7 +757,7 @@ public class InternalDowncallHandler {
 	 */
 	private void SetDependency(ResourceScope scope) {
 		Objects.requireNonNull(scope);
-		for (ResourceScope memArgScope : sessionOrScopeSet) {
+		for (ResourceScope memArgScope : memArgScopeSet) {
 			if (memArgScope.isAlive()) {
 				Thread owner = memArgScope.ownerThread();
 				/* The check is intended for the confined scope or
@@ -791,7 +772,7 @@ public class InternalDowncallHandler {
 	/*[ELSEIF JAVA_SPEC_VERSION == 17]*/
 	/* Occupy the scope by setting the scope's state in downcall which is similiar to keepAlive() in JDK18. */
 	private void acquireScope() {
-		for (ResourceScope memArgScope : sessionOrScopeSet) {
+		for (ResourceScope memArgScope : memArgScopeSet) {
 			if (memArgScope.isAlive()) {
 				Thread owner = memArgScope.ownerThread();
 				/* The check is intended for the confined scope or
@@ -807,7 +788,7 @@ public class InternalDowncallHandler {
 
 	/* Release the scope with the scope's handle in downcall */
 	private void releaseScope() {
-		for (ResourceScope memArgScope : sessionOrScopeSet) {
+		for (ResourceScope memArgScope : memArgScopeSet) {
 			if (memArgScope.isAlive()) {
 				Thread owner = memArgScope.ownerThread();
 				/* The check is intended for the confined scope or
@@ -825,11 +806,11 @@ public class InternalDowncallHandler {
 	/* The method (bound by the method handle to the native code) intends to invoke the C function via the inlined code. */
 	/*[IF JAVA_SPEC_VERSION >= 17]*/
 	/*[IF JAVA_SPEC_VERSION >= 20]*/
-	Object runNativeMethod(MemorySegment downcallAddr, SegmentAllocator segmtAllocator, long[] args) throws IllegalArgumentException
+	Object runNativeMethod(MemorySegment downcallAddr, SegmentAllocator segmtAllocator, long[] args) throws IllegalArgumentException, IllegalStateException
 	/*[ELSEIF JAVA_SPEC_VERSION == 18]*/
-	Object runNativeMethod(NativeSymbol downcallAddr, SegmentAllocator segmtAllocator, long[] args) throws IllegalArgumentException
+	Object runNativeMethod(NativeSymbol downcallAddr, SegmentAllocator segmtAllocator, long[] args) throws IllegalArgumentException, IllegalStateException
 	/*[ELSE] JAVA_SPEC_VERSION == 18 */
-	Object runNativeMethod(Addressable downcallAddr, SegmentAllocator segmtAllocator, long[] args) throws IllegalArgumentException
+	Object runNativeMethod(Addressable downcallAddr, SegmentAllocator segmtAllocator, long[] args) throws IllegalArgumentException, IllegalStateException
 	/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
 	/*[ELSE] JAVA_SPEC_VERSION >= 17 */
 	Object runNativeMethod(long[] args)
@@ -845,6 +826,14 @@ public class InternalDowncallHandler {
 			throw new IllegalArgumentException("A non-null memory address is expected for downcall"); //$NON-NLS-1$
 		}
 		/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
+
+		/*[IF JAVA_SPEC_VERSION >= 20]*/
+		/* The scope of the downcall function address needs to be validated in OpenJ9
+		 * since the related code and APIs were adjusted in JDK20 in which case the
+		 * validity check on the address's scope in OpenJDK was entirely removed.
+		 */
+		validateMemScope(downcallAddr.scope());
+		/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
 
 		long retMemAddr = 0;
 		MemorySegment retStruSegmt = null;
@@ -875,7 +864,7 @@ public class InternalDowncallHandler {
 
 		long returnVal = 0;
 		/* The session/scope associated with memory specific arguments must be kept alive in downcall since JDK17. */
-		if (!sessionOrScopeSet.isEmpty()) {
+		if (!memArgScopeSet.isEmpty()) {
 			/*[IF JAVA_SPEC_VERSION > 17]*/
 			/*[IF JAVA_SPEC_VERSION >= 20]*/
 			try (Arena arena = Arena.openConfined())
