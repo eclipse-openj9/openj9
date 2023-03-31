@@ -5668,22 +5668,30 @@ void TR_J9InlinerUtil::checkForConstClass(TR_CallTarget *target, TR_LogTracer *t
             }
          }
 
-      if (argument->getOpCode().hasSymbolReference() && (knownObjectClass || argument->getSymbolReference()->hasKnownObjectIndex()))
+      if ((argument->getOpCode().hasSymbolReference() && (knownObjectClass || argument->getSymbolReference()->hasKnownObjectIndex()))
+          || argument->hasKnownObjectIndex())
          {
          if (priorKnowledge < KNOWN_OBJECT)
             {
+            const char *whence = NULL;
             if (knownObjectClass)
                {
-               ecsArgInfo->set(argOrdinal, new (comp->trStackMemory()) TR_PrexArgument(knownObjectIndex, comp));
-               if (tracePrex)
-                  traceMsg(comp, "checkForConstClass: %p: is known object obj%d (knownObjectClass)\n", ecsArgInfo->get(argOrdinal), knownObjectIndex);
+               whence = "constant class";
+               }
+            else if (argument->hasKnownObjectIndex())
+               {
+               knownObjectIndex = argument->getKnownObjectIndex();
+               whence = "node koi";
                }
             else
                {
-               ecsArgInfo->set(argOrdinal, new (comp->trStackMemory()) TR_PrexArgument(argument->getSymbolReference()->getKnownObjectIndex(), comp));
-               if (tracePrex)
-                  traceMsg(comp, "checkForConstClass: %p: is known object obj%d\n", ecsArgInfo->get(argOrdinal), argument->getSymbolReference()->getKnownObjectIndex());
+               knownObjectIndex = argument->getSymbolReference()->getKnownObjectIndex();
+               whence = "symref koi";
                }
+
+            ecsArgInfo->set(argOrdinal, new (comp->trStackMemory()) TR_PrexArgument(knownObjectIndex, comp));
+            if (tracePrex)
+               traceMsg(comp, "checkForConstClass: %p: is known object obj%d (from %s)\n", ecsArgInfo->get(argOrdinal), knownObjectIndex, whence);
             }
          }
 
