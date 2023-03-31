@@ -64,8 +64,8 @@ import java.lang.foreign.SegmentScope;
 import java.lang.foreign.ValueLayout;
 import java.lang.foreign.VaList;
 /*[IF JAVA_SPEC_VERSION >= 20]*/
+import jdk.internal.foreign.Utils;
 import jdk.internal.foreign.abi.LinkerOptions;
-import jdk.internal.foreign.abi.SharedUtils;
 /*[ENDIF] JAVA_SPEC_VERSION >= 20 */
 import jdk.internal.foreign.MemorySessionImpl;
 /*[ELSE] JAVA_SPEC_VERSION >= 19 */
@@ -161,7 +161,7 @@ public class InternalDowncallHandler {
 	private static final MethodHandle longObjToFloatRetFilter;
 	private static final MethodHandle longObjToDoubleRetFilter;
 	/*[IF JAVA_SPEC_VERSION >= 20]*/
-	private static final MethodHandle longObjToMemSegmtRetFilter;
+	private MethodHandle longObjToMemSegmtRetFilter;
 	/*[ELSE] JAVA_SPEC_VERSION >= 20 */
 	private static final MethodHandle longObjToMemAddrRetFilter;
 	/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
@@ -197,11 +197,9 @@ public class InternalDowncallHandler {
 			longObjToLongRetFilter = lookup.findStatic(InternalDowncallHandler.class, "longObjToLongRet", methodType(long.class, Object.class)); //$NON-NLS-1$
 			longObjToFloatRetFilter = lookup.findStatic(InternalDowncallHandler.class, "longObjToFloatRet", methodType(float.class, Object.class)); //$NON-NLS-1$
 			longObjToDoubleRetFilter = lookup.findStatic(InternalDowncallHandler.class, "longObjToDoubleRet", methodType(double.class, Object.class)); //$NON-NLS-1$
-			/*[IF JAVA_SPEC_VERSION >= 20]*/
-			longObjToMemSegmtRetFilter = lookup.findStatic(InternalDowncallHandler.class, "longObjToMemSegmtRet", methodType(MemorySegment.class, Object.class)); //$NON-NLS-1$
-			/*[ELSE] JAVA_SPEC_VERSION >= 20 */
+			/*[IF JAVA_SPEC_VERSION <= 19]*/
 			longObjToMemAddrRetFilter = lookup.findStatic(InternalDowncallHandler.class, "longObjToMemAddrRet", methodType(MemoryAddress.class, Object.class)); //$NON-NLS-1$
-			/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
+			/*[ENDIF] JAVA_SPEC_VERSION <= 19 */
 			objToMemSegmtRetFilter = lookup.findStatic(InternalDowncallHandler.class, "objToMemSegmtRet", methodType(MemorySegment.class, Object.class)); //$NON-NLS-1$
 		} catch (IllegalAccessException | NoSuchMethodException e) {
 			throw new InternalError(e);
@@ -396,9 +394,14 @@ public class InternalDowncallHandler {
 
 	/*[IF JAVA_SPEC_VERSION >= 20]*/
 	/* Intended for longObjToMemSegmtRetFilter that converts the Long object to the memory segment. */
-	private static final MemorySegment longObjToMemSegmtRet(Object retValue) {
+	private MemorySegment longObjToMemSegmtRet(Object retValue) {
 		long tmpValue = ((Long)retValue).longValue();
-		return MemorySegment.ofAddress(tmpValue);
+		/* Utils.pointeeSize() introduced in JDK20 calls isUnbounded() for the ADDRESS layout
+		 * to determine whether the specified address layout is an unbounded address or not.
+		 * For an unbounded address, it returns Long.MAX_VALUE for direct access; otherwise,
+		 * it returns zero in which case the address can't be directly accessed.
+		 */
+		return MemorySegment.ofAddress(tmpValue, Utils.pointeeSize(realReturnLayout));
 	}
 	/*[ELSE] JAVA_SPEC_VERSION >= 20 */
 	/* Intended for longObjToMemAddrRetFilter that converts the Long object to the memory address. */
@@ -491,9 +494,11 @@ public class InternalDowncallHandler {
 		/*[ENDIF] JAVA_SPEC_VERSION == 17 */
 
 		try {
-			/*[IF JAVA_SPEC_VERSION <= 19]*/
+			/*[IF JAVA_SPEC_VERSION >= 20]*/
+			longObjToMemSegmtRetFilter = lookup.bind(this, "longObjToMemSegmtRet", methodType(MemorySegment.class, Object.class)); //$NON-NLS-1$
+			/*[ELSE] JAVA_SPEC_VERSION >= 20 */
 			memAddrToLongArgFilter = lookup.bind(this, "memAddrToLongArg", methodType(long.class, addrClass)); //$NON-NLS-1$
-			/*[ENDIF] JAVA_SPEC_VERSION <= 19 */
+			/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
 			memSegmtToLongArgFilter = lookup.bind(this, "memSegmtToLongArg", methodType(long.class, MemorySegment.class)); //$NON-NLS-1$
 		} catch (ReflectiveOperationException e) {
 			throw new InternalError(e);

@@ -505,11 +505,10 @@ storeMemArgObjectsToJavaArray(J9UpcallMetaData *data, void *argsListPointer, J9V
 			if (J9_FFI_UPCALL_SIG_TYPE_POINTER == argSigType) {
 				I_64 offset = *(I_64*)getArgPointer(nativeSig, argsListPointer, argIndex);
 #if JAVA_SPEC_VERSION >= 20
-				/* A pointer argument is wrapped as a zero-sized memory segment given all
-				 * MemoryAdress related classes are removed against the latest APIs as
-				 * specified in JDK20+.
+				/* A pointer argument is wrapped as an unbounded memory segment in upcall
+				 * to pass the access check on the boundary as specified in JDK20+.
 				 */
-				memArgObject = createMemSegmentObject(data, offset, 0);
+				memArgObject = createMemSegmentObject(data, offset, (U_32)LONG_MAX);
 #else /* JAVA_SPEC_VERSION => 20 */
 				memArgObject = createMemAddressObject(data, offset);
 #endif /* JAVA_SPEC_VERSION => 20 */
@@ -590,11 +589,11 @@ done:
 
 /**
  * @brief Generate an object of the MemorySegment's subclass on the heap with the specified
- * native address to the requested struct or pointer(JDK20+).
+ * native address to the requested struct or the unbounded pointer(JDK20+).
  *
  * @param data a pointer to J9UpcallMetaData
- * @param offset the native address to the requested struct OR pointer(JDK20+)
- * @param sigTypeSize the byte size of the requested struct or zero in the case of pointer in JDK20+
+ * @param offset the native address to the requested struct or the unbounded pointer(JDK20+)
+ * @param sigTypeSize the byte size of the requested struct or the unbounded pointer(JDK20+)
  * @return a MemorySegment object
  */
 static j9object_t
