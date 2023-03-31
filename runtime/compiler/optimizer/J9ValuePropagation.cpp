@@ -2774,15 +2774,17 @@ J9::ValuePropagation::transformVTObjectEqNeCompare(TR_OpaqueClassBlock *containi
        *
        * After transformation:
        * n40n   treetop
-       * n39n     arraycmp  <arraycmp>
-       * n100n      aladd
-       * n30n         aloadi  ACMPWideFieldsPrimitive$Holder._wfp QWideFieldsPrimitive;
-       * n28n           ...
-       * n99n         lconst 4
-       * n101n      aladd
-       * n36n         aload  ACMPWideFieldsPrimitive.VALUE1 QWideFieldsPrimitive;
-       * n99n         ==>lconst 4
-       * n98n       iconst 12
+       * n39n     icmpne
+       * n103n      arraycmp  <arraycmp>
+       * n100n        aladd
+       * n30n           aloadi  ACMPWideFieldsPrimitive$Holder._wfp QWideFieldsPrimitive;
+       * n28n             ...
+       * n99n           lconst 4
+       * n101n        aladd
+       * n36n           aload  ACMPWideFieldsPrimitive.VALUE1 QWideFieldsPrimitive;
+       * n99n           ==>lconst 4
+       * n98n         iconst 12
+       * n102n      iconst 0
        */
       int32_t totalFieldSize = 0;
       for (size_t idx = 0; idx < fieldCount; idx++)
@@ -2817,17 +2819,23 @@ J9::ValuePropagation::transformVTObjectEqNeCompare(TR_OpaqueClassBlock *containi
       lhsOffsetNode->setIsInternalPointer(true);
       rhsOffsetNode->setIsInternalPointer(true);
 
-      if (isObjectEqualityCompare)
-         {
-         TR::Node *arraycmpNode = TR::Node::create(TR::arraycmp, 3, lhsOffsetNode, rhsOffsetNode, totalFieldSizeNode);
-         arraycmpNode->setSymbolReference(comp()->getSymRefTab()->findOrCreateArrayCmpSymbol());
-
-         TR::Node::recreateWithoutProperties(callNode, TR::ixor, 2, arraycmpNode, TR::Node::iconst(callNode, 1));
-         }
-      else
-         {
-         TR::Node::recreateWithoutProperties(callNode, TR::arraycmp, 3, lhsOffsetNode, rhsOffsetNode, totalFieldSizeNode, comp()->getSymRefTab()->findOrCreateArrayCmpSymbol());
-         }
+      // arraycmp returns 0, 1 or 2 - zero, for equality; one or two for inequality
+      // In order to yield a result in {0,1}, so transform <objectEqualityComparison> into
+      //
+      //   icmpeq
+      //     arraycmp
+      //     iconst 0
+      //
+      // and transform <objectInequalityComparison> into
+      //
+      //   icmpne
+      //     arraycmp
+      //     iconst 0
+      //
+      TR::Node *arraycmpNode = TR::Node::createWithSymRef(TR::arraycmp, 3, 3, lhsOffsetNode, rhsOffsetNode,
+                                                totalFieldSizeNode, comp()->getSymRefTab()->findOrCreateArrayCmpSymbol());
+      TR::Node::recreateWithoutProperties(callNode, isObjectEqualityCompare ? TR::icmpeq : TR::icmpne, 2,
+                                          arraycmpNode, TR::Node::iconst(callNode, 0));
 
       if (trace())
          {
