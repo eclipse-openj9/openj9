@@ -5019,6 +5019,8 @@ typedef struct J9InternalVMFunctions {
 	void (*freeTLS)(struct J9VMThread *currentThread, j9object_t threadObj);
 	UDATA (*walkContinuationStackFrames)(struct J9VMThread *currentThread, struct J9VMContinuation *continuation, J9StackWalkState *walkState);
 	UDATA (*walkAllStackFrames)(struct J9VMThread *currentThread, J9StackWalkState *walkState);
+	BOOLEAN (*acquireVThreadInspector)(struct J9VMThread *currentThread, jobject thread, BOOLEAN spin);
+	void (*releaseVThreadInspector)(struct J9VMThread *currentThread, jobject thread);
 #endif /* JAVA_SPEC_VERSION >= 19 */
 	UDATA (*checkArgsConsumed)(struct J9JavaVM * vm, struct J9PortLibrary* portLibrary, struct J9VMInitArgs* j9vm_args);
 } J9InternalVMFunctions;
@@ -5904,11 +5906,6 @@ typedef struct J9JavaVM {
 	struct J9HashTable* ensureHashedClasses;
 #if JAVA_SPEC_VERSION >= 19
 	U_64 nextTID;
-	j9object_t *liveVirtualThreadList;
-	omrthread_monitor_t liveVirtualThreadListMutex;
-	volatile BOOLEAN inspectingLiveVirtualThreadList;
-	UDATA virtualThreadLinkNextOffset;
-	UDATA virtualThreadLinkPreviousOffset;
 	UDATA virtualThreadInspectorCountOffset;
 	UDATA isSuspendedByJVMTIOffset;
 	UDATA tlsOffset;

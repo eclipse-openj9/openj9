@@ -4426,6 +4426,26 @@ walkContinuationStackFrames(J9VMThread *currentThread, J9VMContinuation *continu
  */
 UDATA
 walkAllStackFrames(J9VMThread *currentThread, J9StackWalkState *walkState);
+
+/**
+ * @brief Acquire inspector access on VirtualThread, block until access is acquired.
+ *
+ * @param currentThread
+ * @param thread target VirtualThread to acquire the inspector on
+ * @param spin call should spin until sucessfully acquired access
+ * @return TRUE on success, FALSE on failure
+ */
+BOOLEAN
+acquireVThreadInspector(J9VMThread *currentThread, jobject thread, BOOLEAN spin);
+
+/**
+ * @brief Release the inspector acquired from VirtualThread.
+ *
+ * @param currentThread
+ * @param thread target VirtualThread to release the inspector on
+ */
+void
+releaseVThreadInspector(J9VMThread *currentThread, jobject thread);
 #endif /* JAVA_SPEC_VERSION >= 19 */
 
 /* ---------------- hookableAsync.c ---------------- */

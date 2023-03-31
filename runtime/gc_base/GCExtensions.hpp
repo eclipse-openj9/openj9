@@ -360,7 +360,7 @@ public:
 		, minimumFreeSizeForSurvivor(DEFAULT_SURVIVOR_MINIMUM_FREESIZE)
 		, freeSizeThresholdForSurvivor(DEFAULT_SURVIVOR_THRESHOLD)
 		, recycleRemainders(true)
-		, continuationListOption(verify_continuation_list)
+		, continuationListOption(enable_continuation_list)
 	{
 		_typeId = __FUNCTION__;
 	}
