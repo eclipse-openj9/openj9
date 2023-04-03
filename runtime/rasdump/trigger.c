@@ -681,6 +681,7 @@ prepareForDump(struct J9JavaVM *vm, struct J9RASdumpAgent *agent, struct J9RASdu
 		/* If exclusive access has been obtained, do the requested preparation */
 		if (newState & J9RAS_DUMP_GOT_EXCLUSIVE_VM_ACCESS) {
 			vm->memoryManagerFunctions->j9gc_flush_caches_for_walk(vm);
+			vm->memoryManagerFunctions->j9gc_flush_nonAllocationCaches_for_walk(vm);
 			newState |= J9RAS_DUMP_HEAP_PREPARED;
 		}
 	}
