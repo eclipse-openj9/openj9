@@ -246,6 +246,31 @@ JVM_IsPreviewEnabled(void)
 	return isPreviewEnabled;
 }
 
+static void
+enterVThreadTransitionCritical(J9VMThread *currentThread, jobject thread)
+{
+	J9JavaVM *vm = currentThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+	MM_ObjectAccessBarrierAPI objectAccessBarrier = MM_ObjectAccessBarrierAPI(currentThread);
+	j9object_t threadObj = J9_JNI_UNWRAP_REFERENCE(thread);
+
+	while(!objectAccessBarrier.inlineMixedObjectCompareAndSwapU64(currentThread, threadObj, vm->virtualThreadInspectorCountOffset, 0, (U_64)-1)) {
+		/* Thread is being inspected or unmounted, wait. */
+		vmFuncs->internalExitVMToJNI(currentThread);
+		VM_AtomicSupport::yieldCPU();
+		/* After wait, the thread may suspend here. */
+		vmFuncs->internalEnterVMFromJNI(currentThread);
+		threadObj = J9_JNI_UNWRAP_REFERENCE(thread);
+	}
+}
+
+static void
+exitVThreadTransitionCritical(J9VMThread *currentThread, j9object_t vthread)
+{
+	Assert_SC_true(-1 == J9OBJECT_I64_LOAD(currentThread, vthread, currentThread->javaVM->virtualThreadInspectorCountOffset));
+	J9OBJECT_I64_STORE(currentThread, vthread, currentThread->javaVM->virtualThreadInspectorCountOffset, 0);
+}
+
 JNIEXPORT void JNICALL
 JVM_VirtualThreadMountBegin(JNIEnv *env, jobject thread, jboolean firstMount)
 {
@@ -256,13 +281,12 @@ JVM_VirtualThreadMountBegin(JNIEnv *env, jobject thread, jboolean firstMount)
 	Trc_SC_VirtualThreadMountBegin_Entry(currentThread, thread, firstMount);
 
 	vmFuncs->internalEnterVMFromJNI(currentThread);
-	f_monitorEnter(vm->liveVirtualThreadListMutex);
 	j9object_t threadObj = J9_JNI_UNWRAP_REFERENCE(thread);
-
 	Assert_SC_true(IS_JAVA_LANG_VIRTUALTHREAD(currentThread, threadObj));
 
 	if (TrcEnabled_Trc_SC_VirtualThread_Info) {
 		j9object_t continuationObj = J9VMJAVALANGVIRTUALTHREAD_CONT(currentThread, threadObj);
+		J9VMContinuation *continuation = J9VMJDKINTERNALVMCONTINUATION_VMREF(currentThread, continuationObj);
 		Trc_SC_VirtualThread_Info(
 				currentThread,
 				threadObj,
@@ -270,30 +294,11 @@ JVM_VirtualThreadMountBegin(JNIEnv *env, jobject thread, jboolean firstMount)
 				J9OBJECT_I64_LOAD(currentThread, threadObj, vm->virtualThreadInspectorCountOffset),
 				J9VMJAVALANGVIRTUALTHREAD_CARRIERTHREAD(currentThread, threadObj),
 				continuationObj,
-				J9VMJDKINTERNALVMCONTINUATION_VMREF(currentThread, continuationObj));
+				continuation);
 	}
 
-	while (vm->inspectingLiveVirtualThreadList
-	|| (0 != J9OBJECT_I64_LOAD(currentThread, threadObj, vm->virtualThreadInspectorCountOffset))
-	) {
-		/* Thread is being inspected or unmounted, wait. */
-		vmFuncs->internalExitVMToJNI(currentThread);
-		f_monitorWait(vm->liveVirtualThreadListMutex);
-		/* Release the monitor before suspending. */
-		f_monitorExit(vm->liveVirtualThreadListMutex);
-		/* After wait, the thread may suspend here. */
-		vmFuncs->internalEnterVMFromJNI(currentThread);
-		/* Acquire the monitor after resuming from suspend. */
-		f_monitorEnter(vm->liveVirtualThreadListMutex);
-		threadObj = J9_JNI_UNWRAP_REFERENCE(thread);
-	}
+	enterVThreadTransitionCritical(currentThread, thread);
 
-	/* Prevent inspectors from inspecting this thread during stack swap and mount by locking from notifyJvmtiMountBegin
-	 * to notifyJvmtiMountEnd. See getVMThread() in jvmtiHelpers.c.
-	 */
-	J9OBJECT_I64_STORE(currentThread, threadObj, vm->virtualThreadInspectorCountOffset, -1);
-
-	f_monitorExit(vm->liveVirtualThreadListMutex);
 	vmFuncs->internalExitVMToJNI(currentThread);
 
 	Trc_SC_VirtualThreadMountBegin_Exit(currentThread, thread, firstMount);
@@ -328,94 +333,23 @@ JVM_VirtualThreadMountEnd(JNIEnv *env, jobject thread, jboolean firstMount)
 				J9VMJDKINTERNALVMCONTINUATION_VMREF(currentThread, continuationObj));
 	}
 
-	/* On some occassions, J9AllocateObject acquires exclusive VM access. It is invoked without acquiring
-	 * liveVirtualThreadListMutex to prevent a deadlock.
-	 */
-	if (NULL == vm->liveVirtualThreadList) {
-		Assert_SC_true(firstMount);
-		J9Class *virtualThreadClass = J9OBJECT_CLAZZ(currentThread, J9_JNI_UNWRAP_REFERENCE(thread));
-		J9MemoryManagerFunctions *mmFuncs = vm->memoryManagerFunctions;
-
-		/* Allocate empty virtual thread and create a global reference to it as root for the linked list.
-		 * This prevents the root reference from becoming stale if the GC moves the object.
-		 */
-		rootVirtualThread = mmFuncs->J9AllocateObject(currentThread, virtualThreadClass, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
-		if (NULL == rootVirtualThread) {
-			vmFuncs->setHeapOutOfMemoryError(currentThread);
-			goto release1;
-		}
-
-		/* Re-fetch as the memory allocation above may have moved the object. */
-		threadObj = J9_JNI_UNWRAP_REFERENCE(thread);
-
-		J9VMJAVALANGVIRTUALTHREAD_SET_STATE(currentThread, rootVirtualThread, J9VM_VIRTUALTHREAD_ROOT_NODE_STATE);
-	}
-
-	f_monitorEnter(vm->liveVirtualThreadListMutex);
-
-	if (firstMount) {
-		if (NULL == vm->liveVirtualThreadList) {
-			Assert_SC_true(NULL != rootVirtualThread);
-
-			jobject globalRef = vmFuncs->j9jni_createGlobalRef((JNIEnv *)currentThread, rootVirtualThread, JNI_FALSE);
-			if (NULL == globalRef) {
-				vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
-				goto release2;
-			}
-
-			Trc_SC_VirtualThread_RootNodeSet(currentThread, globalRef);
-			vm->liveVirtualThreadList = (j9object_t *)globalRef;
-			/* Set linkNext/linkPrevious to itself. */
-			J9OBJECT_OBJECT_STORE(currentThread, rootVirtualThread, vm->virtualThreadLinkNextOffset, rootVirtualThread);
-			J9OBJECT_OBJECT_STORE(currentThread, rootVirtualThread, vm->virtualThreadLinkPreviousOffset, rootVirtualThread);
-		}
-
-		if (NULL != vm->liveVirtualThreadList) {
-			j9object_t threadPrev = J9OBJECT_OBJECT_LOAD(currentThread, threadObj, vm->virtualThreadLinkPreviousOffset);
-			j9object_t threadNext = J9OBJECT_OBJECT_LOAD(currentThread, threadObj, vm->virtualThreadLinkNextOffset);
-
-			/* Non-null previous and next elements in the list suggest that the thread has
-			 * already been added to the list. Only add to the list if the previous and
-			 * next elements in the list are null.
-			 */
-			Assert_SC_true((NULL == threadPrev) && (NULL == threadNext));
-			j9object_t root = *(vm->liveVirtualThreadList);
-			j9object_t rootPrev = J9OBJECT_OBJECT_LOAD(currentThread, root, vm->virtualThreadLinkPreviousOffset);
-
-			/* Add thread to the end of the list. */
-			J9OBJECT_OBJECT_STORE(currentThread, threadObj, vm->virtualThreadLinkNextOffset, root);
-			J9OBJECT_OBJECT_STORE(currentThread, threadObj, vm->virtualThreadLinkPreviousOffset, rootPrev);
-			J9OBJECT_OBJECT_STORE(currentThread, rootPrev, vm->virtualThreadLinkNextOffset, threadObj);
-			J9OBJECT_OBJECT_STORE(currentThread, root, vm->virtualThreadLinkPreviousOffset, threadObj);
-		}
-	}
-
-	/* Allow thread to be inspected again. */
-	Assert_SC_true(-1 == J9OBJECT_I64_LOAD(currentThread, threadObj, vm->virtualThreadInspectorCountOffset));
-	J9OBJECT_I64_STORE(currentThread, threadObj, vm->virtualThreadInspectorCountOffset, 0);
-
 	/* If isSuspendedByJVMTI is non-zero, J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND is set
 	 * in currentThread->publicFlags while resetting isSuspendedByJVMTI to zero. During
 	 * mount, this suspends the thread if the thread was unmounted when JVMTI suspended it.
 	 */
 	if (0 != J9OBJECT_U32_LOAD(currentThread, threadObj, vm->isSuspendedByJVMTIOffset)) {
-		J9OBJECT_U32_STORE(currentThread, threadObj, vm->isSuspendedByJVMTIOffset, 0);
 		vmFuncs->setHaltFlag(currentThread, J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND);
+		J9OBJECT_U32_STORE(currentThread, threadObj, vm->isSuspendedByJVMTIOffset, 0);
 	}
 
-	f_monitorNotifyAll(vm->liveVirtualThreadListMutex);
+	/* Allow thread to be inspected again. */
+	exitVThreadTransitionCritical(currentThread, threadObj);
 
-	/* J9Hooks can be run since no errors were encountered. */
-	runJ9Hooks = TRUE;
-release2:
-	f_monitorExit(vm->liveVirtualThreadListMutex);
-release1:
-	if (runJ9Hooks) {
-		if (firstMount) {
-			TRIGGER_J9HOOK_VM_VIRTUAL_THREAD_STARTED(vm->hookInterface, currentThread);
-		}
-		TRIGGER_J9HOOK_VM_VIRTUAL_THREAD_MOUNT(vm->hookInterface, currentThread);
+	if (firstMount) {
+		TRIGGER_J9HOOK_VM_VIRTUAL_THREAD_STARTED(vm->hookInterface, currentThread);
 	}
+	TRIGGER_J9HOOK_VM_VIRTUAL_THREAD_MOUNT(vm->hookInterface, currentThread);
+
 	vmFuncs->internalExitVMToJNI(currentThread);
 
 	Trc_SC_VirtualThreadMountEnd_Exit(currentThread, thread, firstMount);
@@ -431,7 +365,6 @@ JVM_VirtualThreadUnmountBegin(JNIEnv *env, jobject thread, jboolean lastUnmount)
 	Trc_SC_VirtualThreadUnmountBegin_Entry(currentThread, thread, lastUnmount);
 
 	vmFuncs->internalEnterVMFromJNI(currentThread);
-	f_monitorEnter(vm->liveVirtualThreadListMutex);
 	j9object_t threadObj = J9_JNI_UNWRAP_REFERENCE(thread);
 
 	Assert_SC_true(IS_JAVA_LANG_VIRTUALTHREAD(currentThread, threadObj));
@@ -448,51 +381,18 @@ JVM_VirtualThreadUnmountBegin(JNIEnv *env, jobject thread, jboolean lastUnmount)
 				J9VMJDKINTERNALVMCONTINUATION_VMREF(currentThread, continuationObj));
 	}
 
-	while (vm->inspectingLiveVirtualThreadList
-	|| (0 != J9OBJECT_I64_LOAD(currentThread, threadObj, vm->virtualThreadInspectorCountOffset))
-	) {
-		/* Thread is being inspected, wait. */
-		vmFuncs->internalExitVMToJNI(currentThread);
-		f_monitorWait(vm->liveVirtualThreadListMutex);
-		/* Release the monitor before suspending. */
-		f_monitorExit(vm->liveVirtualThreadListMutex);
-		/* After wait, the thread may suspend here. */
-		vmFuncs->internalEnterVMFromJNI(currentThread);
-		/* Acquire the monitor after resuming from suspend. */
-		f_monitorEnter(vm->liveVirtualThreadListMutex);
-		threadObj = J9_JNI_UNWRAP_REFERENCE(thread);
-	}
-
-	/* Prevent inspectors from inspecting this thread during stack swap and unmount by locking from notifyJvmtiUnmountBegin
-	 * to notifyJvmtiUnmountEnd. See getVMThread() in jvmtiHelpers.c.
-	 */
-	J9OBJECT_I64_STORE(currentThread, threadObj, vm->virtualThreadInspectorCountOffset, -1);
-
-	if (lastUnmount) {
-		if (NULL != vm->liveVirtualThreadList) {
-			j9object_t threadPrev = J9OBJECT_OBJECT_LOAD(currentThread, threadObj, vm->virtualThreadLinkPreviousOffset);
-			j9object_t threadNext = J9OBJECT_OBJECT_LOAD(currentThread, threadObj, vm->virtualThreadLinkNextOffset);
-
-			/* Non-null previous and next elements in the list suggest that the thread has
-			 * been added to the list. Only remove from the list if the previous and next
-			 * elements in the list are non-null.
-			 */
-			Assert_SC_true((NULL != threadPrev) && (NULL != threadNext));
-			/* Remove thread from the list. The root will never be removed. */
-			J9OBJECT_OBJECT_STORE(currentThread, threadPrev, vm->virtualThreadLinkNextOffset, threadNext);
-			J9OBJECT_OBJECT_STORE(currentThread, threadNext, vm->virtualThreadLinkPreviousOffset, threadPrev);
-
-			/* Reset previous and next fields in the thread object to null. */
-			J9OBJECT_OBJECT_STORE(currentThread, threadObj, vm->virtualThreadLinkNextOffset, NULL);
-			J9OBJECT_OBJECT_STORE(currentThread, threadObj, vm->virtualThreadLinkPreviousOffset, NULL);
-		}
-	}
-
-	f_monitorExit(vm->liveVirtualThreadListMutex);
-
 	TRIGGER_J9HOOK_VM_VIRTUAL_THREAD_UNMOUNT(vm->hookInterface, currentThread);
 	if (lastUnmount) {
 		TRIGGER_J9HOOK_VM_VIRTUAL_THREAD_END(vm->hookInterface, currentThread);
+	}
+
+	enterVThreadTransitionCritical(currentThread, thread);
+	if (lastUnmount) {
+		/* Re-fetch reference as enterVThreadTransitionCritical may release VMAccess. */
+		threadObj = J9_JNI_UNWRAP_REFERENCE(thread);
+		j9object_t continuationObj = J9VMJAVALANGVIRTUALTHREAD_CONT(currentThread, threadObj);
+		/* Add reverse link from Continuation object to VirtualThread object, this let JVMTI code */
+		J9VMJDKINTERNALVMCONTINUATION_SET_VTHREAD(currentThread, continuationObj, NULL);
 	}
 	vmFuncs->internalExitVMToJNI(currentThread);
 
@@ -509,7 +409,6 @@ JVM_VirtualThreadUnmountEnd(JNIEnv *env, jobject thread, jboolean lastUnmount)
 	Trc_SC_VirtualThreadUnmountEnd_Entry(currentThread, thread, lastUnmount);
 
 	vmFuncs->internalEnterVMFromJNI(currentThread);
-	f_monitorEnter(vm->liveVirtualThreadListMutex);
 	j9object_t threadObj = J9_JNI_UNWRAP_REFERENCE(thread);
 
 	Assert_SC_true(IS_JAVA_LANG_VIRTUALTHREAD(currentThread, threadObj));
@@ -534,11 +433,8 @@ JVM_VirtualThreadUnmountEnd(JNIEnv *env, jobject thread, jboolean lastUnmount)
 	}
 
 	/* Allow thread to be inspected again. */
-	Assert_SC_true(-1 == J9OBJECT_I64_LOAD(currentThread, threadObj, vm->virtualThreadInspectorCountOffset));
-	J9OBJECT_I64_STORE(currentThread, threadObj, vm->virtualThreadInspectorCountOffset, 0);
-	f_monitorNotifyAll(vm->liveVirtualThreadListMutex);
+	exitVThreadTransitionCritical(currentThread, threadObj);
 
-	f_monitorExit(vm->liveVirtualThreadListMutex);
 	vmFuncs->internalExitVMToJNI(currentThread);
 
 	Trc_SC_VirtualThreadUnmountEnd_Exit(currentThread, thread, lastUnmount);

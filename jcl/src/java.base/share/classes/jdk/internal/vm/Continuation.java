@@ -34,6 +34,7 @@ import jdk.internal.misc.Unsafe;
  */
 public class Continuation {
 	private long vmRef; /* J9VMContinuation */
+	protected Thread vthread; /* Parent VirtualThread */
 
 	private final ContinuationScope scope;
 	private final Runnable runnable;

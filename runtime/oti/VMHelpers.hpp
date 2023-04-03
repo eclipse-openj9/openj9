@@ -2251,7 +2251,6 @@ exit:
 			}
 		}
 	}
-
 #endif /* JAVA_SPEC_VERSION >= 19 */
 
 	static VMINLINE void

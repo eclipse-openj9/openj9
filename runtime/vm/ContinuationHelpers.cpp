@@ -261,7 +261,7 @@ freeContinuation(J9VMThread *currentThread, j9object_t continuationObject)
 			currentStack = previous;
 		} while (NULL != currentStack);
 
-		Assert_VM_true(VM_VMHelpers::isFinished(continuation->state));
+		Assert_VM_true(!VM_VMHelpers::isConcurrentlyScanned(continuation->state) && (NULL == VM_VMHelpers::getCarrierThread(continuation->state)));
 
 		/* Free the J9VMContinuation struct */
 		j9mem_free_memory(continuation);
@@ -372,6 +372,7 @@ walkAllStackFrames(J9VMThread *currentThread, J9StackWalkState *walkState)
 
 	/* Walk all live continuation stacks using the GC Continuation object iterator */
 	PORT_ACCESS_FROM_VMC(currentThread);
+	vm->memoryManagerFunctions->j9gc_flush_nonAllocationCaches_for_walk(vm);
 	vm->memoryManagerFunctions->j9mm_iterate_all_continuation_objects(
 									currentThread,
 									PORTLIB,
@@ -379,5 +380,65 @@ walkAllStackFrames(J9VMThread *currentThread, J9StackWalkState *walkState)
 									walkContinuationCallBack,
 									(void*)walkState);
 	return rc;
+}
+
+BOOLEAN
+acquireVThreadInspector(J9VMThread *currentThread, jobject thread, BOOLEAN spin)
+{
+	J9JavaVM *vm = currentThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+	MM_ObjectAccessBarrierAPI objectAccessBarrier = MM_ObjectAccessBarrierAPI(currentThread);
+	j9object_t threadObj = J9_JNI_UNWRAP_REFERENCE(thread);
+	I_64 vthreadInspectorCount;
+retry:
+	vthreadInspectorCount = J9OBJECT_I64_LOAD(currentThread, threadObj, vm->virtualThreadInspectorCountOffset);
+	if (vthreadInspectorCount < 0) {
+		/* Thread is in transition, wait. */
+		vmFuncs->internalExitVMToJNI(currentThread);
+		VM_AtomicSupport::yieldCPU();
+		/* After wait, the thread may suspend here. */
+		vmFuncs->internalEnterVMFromJNI(currentThread);
+		threadObj = J9_JNI_UNWRAP_REFERENCE(thread);
+		if (spin) {
+			goto retry;
+		} else {
+			return FALSE;
+		}
+	} else if (!objectAccessBarrier.inlineMixedObjectCompareAndSwapU64(
+															currentThread,
+															threadObj,
+															vm->virtualThreadInspectorCountOffset,
+															(U_64)vthreadInspectorCount,
+															((U_64)(vthreadInspectorCount + 1)))
+	) {
+		/* Field updated by another thread, try again. */
+		if (spin) {
+			goto retry;
+		} else {
+			return FALSE;
+		}
+	}
+	return TRUE;
+}
+
+void
+releaseVThreadInspector(J9VMThread *currentThread, jobject thread)
+{
+	J9JavaVM *vm = currentThread->javaVM;
+	MM_ObjectAccessBarrierAPI objectAccessBarrier = MM_ObjectAccessBarrierAPI(currentThread);
+	j9object_t threadObj = J9_JNI_UNWRAP_REFERENCE(thread);
+	I_64 vthreadInspectorCount = J9OBJECT_I64_LOAD(currentThread, threadObj, vm->virtualThreadInspectorCountOffset);
+	/* vthreadInspectorCount must be greater than 0 before decrement. */
+	Assert_VM_true(vthreadInspectorCount > 0);
+	while (!objectAccessBarrier.inlineMixedObjectCompareAndSwapU64(
+														currentThread,
+														threadObj,
+														vm->virtualThreadInspectorCountOffset,
+														(U_64)vthreadInspectorCount,
+														((U_64)(vthreadInspectorCount - 1)))
+	) {
+		/* Field updated by another thread, try again. */
+		vthreadInspectorCount = J9OBJECT_I64_LOAD(currentThread, threadObj, vm->virtualThreadInspectorCountOffset);
+	}
 }
 } /* extern "C" */
