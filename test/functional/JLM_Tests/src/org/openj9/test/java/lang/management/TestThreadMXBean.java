@@ -22,6 +22,7 @@
 
 package org.openj9.test.java.lang.management;
 
+import org.openj9.test.util.VersionCheck;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 import org.testng.log4testng.Logger;
@@ -64,7 +65,7 @@ public class TestThreadMXBean {
 	private static Logger logger = Logger.getLogger(TestThreadMXBean.class);
 	private static final Map<String, AttributeData> attribs;
 	private static final HashSet<String> ignoredAttributes;
-	private static final boolean isIBMJava8 = System.getProperty("java.vm.vendor").contains("IBM");
+	private static final boolean isIBMJava8 = System.getProperty("java.vm.vendor").contains("IBM") && (8 == VersionCheck.major());
 
 	static {
 		ignoredAttributes = new HashSet<>();
