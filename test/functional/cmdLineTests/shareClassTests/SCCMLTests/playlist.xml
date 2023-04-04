@@ -21,6 +21,7 @@
   SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 <playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../TKG/playlist.xsd">
+	<include>../../variables.mk</include>
 	<test>
 		<testCaseName>testSCCMLTests1</testCaseName>
 		<variations>
@@ -30,7 +31,7 @@
 		<command>cp $(Q)$(TEST_RESROOT)$(D)..$(D)URLHelperTests$(D)URLHelperTests.jar$(Q) .; \
 	true URLHelperTests.jar ;\
 	$(Q)$(TEST_JDK_HOME)$(D)bin$(D)jar$(EXECUTABLE_SUFFIX)$(Q) xf URLHelperTests.jar; \
-	$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) \
 	-DPATHSEP=$(Q)$(D)$(Q) -DCPDL=$(Q)$(P)$(Q) -DRUN_SCRIPT=$(RUN_SCRIPT) -DPROPS_DIR=$(PROPS_DIR) -DSCRIPT_SUFFIX=$(SCRIPT_SUFFIX) -DEXECUTABLE_SUFFIX=$(EXECUTABLE_SUFFIX) \
 	-DJAVA_EXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS)$(SQ) -DJAVA_HOME=$(SQ)$(TEST_JDK_HOME)$(SQ) -DSCMODE=204 -DJVM_TEST_ROOT=$(Q)$(JVM_TEST_ROOT)$(Q) \
 	-DUTILSJAR=$(Q)$(JVM_TEST_ROOT)$(D)functional$(D)cmdLineTests$(D)utils$(D)utils.jar$(Q) \
@@ -62,7 +63,7 @@
 		<command>cp $(Q)$(TEST_RESROOT)$(D)..$(D)URLHelperTests$(D)URLHelperTests.jar$(Q) .; \
 	true URLHelperTests.jar ;\
 	$(Q)$(TEST_JDK_HOME)$(D)bin$(D)jar$(EXECUTABLE_SUFFIX)$(Q) xf URLHelperTests.jar; \
-	$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) \
 	-DPATHSEP=$(Q)$(D)$(Q) -DCPDL=$(Q)$(P)$(Q) -DRUN_SCRIPT=$(RUN_SCRIPT) -DPROPS_DIR=$(PROPS_DIR) -DSCRIPT_SUFFIX=$(SCRIPT_SUFFIX) -DEXECUTABLE_SUFFIX=$(EXECUTABLE_SUFFIX) \
 	-DJAVA_EXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS)$(SQ) -DJAVA_HOME=$(SQ)$(TEST_JDK_HOME)$(SQ) -DSCMODE=204 -DJVM_TEST_ROOT=$(Q)$(JVM_TEST_ROOT)$(Q) \
 	-DUTILSJAR=$(Q)$(JVM_TEST_ROOT)$(D)functional$(D)cmdLineTests$(D)utils$(D)utils.jar$(Q) \
@@ -94,7 +95,7 @@
 		<command>cp $(Q)$(TEST_RESROOT)$(D)..$(D)URLHelperTests$(D)URLHelperTests.jar$(Q) .; \
 	true URLHelperTests.jar ;\
 	$(Q)$(TEST_JDK_HOME)$(D)bin$(D)jar$(EXECUTABLE_SUFFIX)$(Q) xf URLHelperTests.jar; \
-	$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) \
 	-DPATHSEP=$(Q)$(D)$(Q) -DCPDL=$(Q)$(P)$(Q) -DRUN_SCRIPT=$(RUN_SCRIPT) -DPROPS_DIR=$(PROPS_DIR) -DSCRIPT_SUFFIX=$(SCRIPT_SUFFIX) -DEXECUTABLE_SUFFIX=$(EXECUTABLE_SUFFIX) \
 	-DJAVA_EXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS)$(SQ) -DJAVA_HOME=$(SQ)$(TEST_JDK_HOME)$(SQ) -DSCMODE=204 -DJVM_TEST_ROOT=$(Q)$(JVM_TEST_ROOT)$(Q) \
 	-DUTILSJAR=$(Q)$(JVM_TEST_ROOT)$(D)functional$(D)cmdLineTests$(D)utils$(D)utils.jar$(Q) \
@@ -141,7 +142,7 @@
 	$(CD) $(REPORTDIR); \
 	mv $(Q)$(REPORTDIR_NQ)$(D)datacaching$(D)dataone.contents$(D)dataone.jar$(Q) $(Q)$(REPORTDIR_NQ)$(D)datacaching$(Q); \
 	mv $(Q)$(REPORTDIR_NQ)$(D)datacaching$(D)datatwo.contents$(D)datatwo.jar$(Q) $(Q)$(REPORTDIR_NQ)$(D)datacaching$(Q); \
-	$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) \
 	-DPATHSEP=$(Q)$(D)$(Q) -DCPDL=$(Q)$(P)$(Q) -DRUN_SCRIPT=$(RUN_SCRIPT) -DPROPS_DIR=$(PROPS_DIR) -DSCRIPT_SUFFIX=$(SCRIPT_SUFFIX) -DEXECUTABLE_SUFFIX=$(EXECUTABLE_SUFFIX) \
 	-DJAVA_EXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS)$(SQ) -DJAVA_HOME=$(SQ)$(TEST_JDK_HOME)$(SQ) -DSCMODE=204 -DJVM_TEST_ROOT=$(Q)$(JVM_TEST_ROOT)$(Q) \
 	-DUTILSJAR=$(Q)$(JVM_TEST_ROOT)$(D)functional$(D)cmdLineTests$(D)utils$(D)utils.jar$(Q) \
@@ -173,7 +174,7 @@
 		<command>cp $(Q)$(TEST_RESROOT)$(D)..$(D)URLHelperTests$(D)URLHelperTests.jar$(Q) .; \
 	true URLHelperTests.jar ;\
 	$(Q)$(TEST_JDK_HOME)$(D)bin$(D)jar$(EXECUTABLE_SUFFIX)$(Q) xf URLHelperTests.jar; \
-	$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) \
 	-DPATHSEP=$(Q)$(D)$(Q) -DCPDL=$(Q)$(P)$(Q) -DRUN_SCRIPT=$(RUN_SCRIPT) -DPROPS_DIR=$(PROPS_DIR) -DSCRIPT_SUFFIX=$(SCRIPT_SUFFIX) -DEXECUTABLE_SUFFIX=$(EXECUTABLE_SUFFIX) \
 	-DJAVA_EXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS)$(SQ) -DJAVA_HOME=$(SQ)$(TEST_JDK_HOME)$(SQ) -DSCMODE=204 -DJVM_TEST_ROOT=$(Q)$(JVM_TEST_ROOT)$(Q) \
 	-DJDMPVIEW_EXE=$(Q)$(TEST_JDK_HOME)$(D)bin$(D)jdmpview$(EXECUTABLE_SUFFIX)$(Q) \
@@ -206,7 +207,7 @@
 		<command>cp $(Q)$(TEST_RESROOT)$(D)..$(D)URLHelperTests$(D)URLHelperTests.jar$(Q) .; \
 	true URLHelperTests.jar ;\
 	$(Q)$(TEST_JDK_HOME)$(D)bin$(D)jar$(EXECUTABLE_SUFFIX)$(Q) xf URLHelperTests.jar; \
-	$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) \
 	-DPATHSEP=$(Q)$(D)$(Q) -DCPDL=$(Q)$(P)$(Q) -DRUN_SCRIPT=$(RUN_SCRIPT) -DPROPS_DIR=$(PROPS_DIR) -DSCRIPT_SUFFIX=$(SCRIPT_SUFFIX) -DEXECUTABLE_SUFFIX=$(EXECUTABLE_SUFFIX) \
 	-DJAVA_EXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS)$(SQ) -DJAVA_HOME=$(SQ)$(TEST_JDK_HOME)$(SQ) -DSCMODE=204 -DJVM_TEST_ROOT=$(Q)$(JVM_TEST_ROOT)$(Q) \
 	-DJDMPVIEW_EXE=$(Q)$(TEST_JDK_HOME)$(D)bin$(D)jdmpview$(EXECUTABLE_SUFFIX)$(Q) \
@@ -236,7 +237,7 @@
 			<variation>Mode110</variation>
 			<variation>Mode610</variation>
 		</variations>
-		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+		<command>$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) \
 	-DPATHSEP=$(Q)$(D)$(Q) -DCPDL=$(Q)$(P)$(Q) -DRUN_SCRIPT=$(RUN_SCRIPT) -DPROPS_DIR=$(PROPS_DIR) -DSCRIPT_SUFFIX=$(SCRIPT_SUFFIX) -DEXECUTABLE_SUFFIX=$(EXECUTABLE_SUFFIX) \
 	-DJAVA_EXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS)$(SQ) -DJAVA_HOME=$(SQ)$(TEST_JDK_HOME)$(SQ) -DSCMODE=204 -DJVM_TEST_ROOT=$(Q)$(JVM_TEST_ROOT)$(Q) \
 	-DJDMPVIEW_EXE=$(Q)$(TEST_JDK_HOME)$(D)bin$(D)jdmpview$(EXECUTABLE_SUFFIX)$(Q) \
@@ -266,7 +267,7 @@
 			<variation>Mode110</variation>
 			<variation>Mode610</variation>
 		</variations>
-		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+		<command>$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) \
 	-DPATHSEP=$(Q)$(D)$(Q) -DCPDL=$(Q)$(P)$(Q) -DRUN_SCRIPT=$(RUN_SCRIPT) -DPROPS_DIR=$(PROPS_DIR) -DSCRIPT_SUFFIX=$(SCRIPT_SUFFIX) -DEXECUTABLE_SUFFIX=$(EXECUTABLE_SUFFIX) \
 	-DJAVA_EXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS)$(SQ) -DJAVA_HOME=$(SQ)$(TEST_JDK_HOME)$(SQ) -DSCMODE=204 -DJVM_TEST_ROOT=$(Q)$(JVM_TEST_ROOT)$(Q) \
 	-jar $(CMDLINETESTER_JAR) \
@@ -298,7 +299,7 @@
 		<command>cp $(Q)$(TEST_RESROOT)$(D)..$(D)..$(D)..$(D)cmdline_options_testresources$(D)cmdlinetestresources.jar$(Q) .; \
 	true URLHelperTests.jar ;\
 	$(Q)$(TEST_JDK_HOME)$(D)bin$(D)jar$(EXECUTABLE_SUFFIX)$(Q) xf cmdlinetestresources.jar; \
-	$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) \
 	-DPATHSEP=$(Q)$(D)$(Q) -DCPDL=$(Q)$(P)$(Q) -DRUN_SCRIPT=$(RUN_SCRIPT) -DPROPS_DIR=$(PROPS_DIR) -DSCRIPT_SUFFIX=$(SCRIPT_SUFFIX) -DEXECUTABLE_SUFFIX=$(EXECUTABLE_SUFFIX) \
 	-DJAVA_EXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS)$(SQ) -DJAVA_HOME=$(SQ)$(TEST_JDK_HOME)$(SQ) -DSCMODE=204 -DJVM_TEST_ROOT=$(Q)$(JVM_TEST_ROOT)$(Q) \
 	-DJDMPVIEW_EXE=$(Q)$(TEST_JDK_HOME)$(D)bin$(D)jdmpview$(EXECUTABLE_SUFFIX)$(Q) \
@@ -328,7 +329,7 @@
 			<variation>Mode110</variation>
 			<variation>Mode610</variation>
 		</variations>
-		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+		<command>$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) \
 	-DPATHSEP=$(Q)$(D)$(Q) -DCPDL=$(Q)$(P)$(Q) -DRUN_SCRIPT=$(RUN_SCRIPT) -DPROPS_DIR=$(PROPS_DIR) -DSCRIPT_SUFFIX=$(SCRIPT_SUFFIX) -DEXECUTABLE_SUFFIX=$(EXECUTABLE_SUFFIX) \
 	-DJAVA_EXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS)$(SQ) -DJAVA_HOME=$(SQ)$(TEST_JDK_HOME)$(SQ) -DSCMODE=204 -DJVM_TEST_ROOT=$(Q)$(JVM_TEST_ROOT)$(Q) \
 	-jar $(CMDLINETESTER_JAR) \
@@ -360,7 +361,7 @@
 		<command>cp $(Q)$(JVM_TEST_ROOT)$(D)functional$(D)cmdLineTests$(D)utils$(D)utils.jar$(Q) .; \
 	true utils.jar ;\
 	$(Q)$(TEST_JDK_HOME)$(D)bin$(D)jar$(EXECUTABLE_SUFFIX)$(Q) xf utils.jar; \
-	$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) \
 	-DPATHSEP=$(Q)$(D)$(Q) -DCPDL=$(Q)$(P)$(Q) -DRUN_SCRIPT=$(RUN_SCRIPT) -DPROPS_DIR=$(PROPS_DIR) -DSCRIPT_SUFFIX=$(SCRIPT_SUFFIX) -DEXECUTABLE_SUFFIX=$(EXECUTABLE_SUFFIX) \
 	-DJAVA_EXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS)$(SQ) -DJAVA_HOME=$(SQ)$(TEST_JDK_HOME)$(SQ) -DSCMODE=204 -DJVM_TEST_ROOT=$(Q)$(JVM_TEST_ROOT)$(Q) \
 	-DUTILSJAR=$(Q)$(JVM_TEST_ROOT)$(D)functional$(D)cmdLineTests$(D)utils$(D)utils.jar$(Q) \
@@ -394,7 +395,7 @@
 		</variations>
 		<command>$(MKTREE) $(REPORTDIR); \
 	$(CD) $(REPORTDIR); \
-	$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) \
 	-DPATHSEP=$(Q)$(D)$(Q) -DCPDL=$(Q)$(P)$(Q) -DRUN_SCRIPT=$(RUN_SCRIPT) -DPROPS_DIR=$(PROPS_DIR) -DSCRIPT_SUFFIX=$(SCRIPT_SUFFIX) -DEXECUTABLE_SUFFIX=$(EXECUTABLE_SUFFIX) \
 	-DJAVA_EXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS)$(SQ) -DJAVA_HOME=$(SQ)$(TEST_JDK_HOME)$(SQ) -DSCMODE=204 -DJVM_TEST_ROOT=$(Q)$(JVM_TEST_ROOT)$(Q) \
 	-DUTILSJAR=$(Q)$(JVM_TEST_ROOT)$(D)functional$(D)cmdLineTests$(D)utils$(D)utils.jar$(Q) \
@@ -427,7 +428,7 @@
 		</variations>
 		<command>$(MKTREE) $(REPORTDIR); \
 	$(CD) $(REPORTDIR); \
-	$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) \
 	-DPATHSEP=$(Q)$(D)$(Q) -DCPDL=$(Q)$(P)$(Q) -DRUN_SCRIPT=$(RUN_SCRIPT) -DPROPS_DIR=$(PROPS_DIR) -DSCRIPT_SUFFIX=$(SCRIPT_SUFFIX) -DEXECUTABLE_SUFFIX=$(EXECUTABLE_SUFFIX) \
 	-DJAVA_EXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS)$(SQ) -DJAVA_HOME=$(SQ)$(TEST_JDK_HOME)$(SQ) -DSCMODE=204 -DJVM_TEST_ROOT=$(Q)$(JVM_TEST_ROOT)$(Q) \
 	-DUTILSJAR=$(Q)$(JVM_TEST_ROOT)$(D)functional$(D)cmdLineTests$(D)utils$(D)utils.jar$(Q) \

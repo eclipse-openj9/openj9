@@ -21,12 +21,13 @@
   SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 <playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../TKG/playlist.xsd">
+	<include>../variables.mk</include>
 	<test>
 		<testCaseName>cmdLineTester_ignoreunrecognizedvmoptions</testCaseName>
 		<variations>
 			<variation>NoOptions</variation>
 		</variations>
-		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -DTESTDIR=$(Q)$(TEST_RESROOT)$(Q) -DRESJAR=$(CMDLINETESTER_RESJAR) -DEXE=$(SQ)$(JAVA_COMMAND)$(SQ) -jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)ignoreunrecognizedvmoptions.xml$(Q) -explainExcludes -nonZeroExitWhenError; \
+		<command>$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) -DTESTDIR=$(Q)$(TEST_RESROOT)$(Q) -DRESJAR=$(CMDLINETESTER_RESJAR) -DEXE=$(SQ)$(JAVA_COMMAND)$(SQ) -jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)ignoreunrecognizedvmoptions.xml$(Q) -explainExcludes -nonZeroExitWhenError; \
 	$(TEST_STATUS)</command>
 		<levels>
 			<level>extended</level>
@@ -44,7 +45,7 @@
 		<variations>
 			<variation>NoOptions</variation>
 		</variations>
-		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -DTESTDIR=$(Q)$(TEST_RESROOT)$(Q) -DRESJAR=$(CMDLINETESTER_RESJAR) -DEXE=$(SQ)$(JAVA_COMMAND)$(SQ) -jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)ignoreunrecognizedxxcolonoptions.xml$(Q) -explainExcludes -nonZeroExitWhenError; \
+		<command>$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) -DTESTDIR=$(Q)$(TEST_RESROOT)$(Q) -DRESJAR=$(CMDLINETESTER_RESJAR) -DEXE=$(SQ)$(JAVA_COMMAND)$(SQ) -jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)ignoreunrecognizedxxcolonoptions.xml$(Q) -explainExcludes -nonZeroExitWhenError; \
 	$(TEST_STATUS)</command>
 		<levels>
 			<level>extended</level>

@@ -21,6 +21,7 @@
   SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 <playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../TKG/playlist.xsd">
+	<include>../../variables.mk</include>
 	<include>variables.mk</include>
 	<test>
 		<testCaseName>cmdLineTester_SCHelperCompatTests_win</testCaseName>
@@ -36,7 +37,7 @@
 		</variations>
 		<command>cp $(Q)$(TEST_RESROOT)$(D)HelperCompatibilityTests.jar$(Q) .; \
 	$(Q)$(TEST_JDK_HOME)$(D)bin$(D)jar.exe$(Q) xf HelperCompatibilityTests.jar; \
-	$(JAVA_COMMAND) $(JVM_OPTIONS) -DJAVA_EXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS)$(SQ) -DTEST_JDK_HOME=$(Q)$(TEST_JDK_HOME)$(Q) -DCPDL=$(Q)$(P)$(Q) -DPROPS_DIR=$(Q)$(TEST_RESROOT)$(D)props_win$(Q) -DSCMODE=204 \
+	$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) -DJAVA_EXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS)$(SQ) -DTEST_JDK_HOME=$(Q)$(TEST_JDK_HOME)$(Q) -DCPDL=$(Q)$(P)$(Q) -DPROPS_DIR=$(Q)$(TEST_RESROOT)$(D)props_win$(Q) -DSCMODE=204 \
 	-jar $(CMDLINETESTER_JAR) \
 	-config $(Q)$(TEST_RESROOT)$(D)HelperCompatibilityTests$(XMLSUFFIX).xml$(Q) \
 	-xids all,$(JDK_VERSION) -xlist $(Q)$(TEST_RESROOT)$(D)exclude.xml$(Q) \
@@ -64,7 +65,7 @@
 		<command>cp $(Q)$(TEST_RESROOT)$(D)HelperCompatibilityTests.jar$(Q) .; \
 	$(Q)$(TEST_JDK_HOME)$(D)bin$(D)jar$(Q) xf HelperCompatibilityTests.jar; \
 	$(CONVERT_TO_EBCDIC_CMD) \
-	$(JAVA_COMMAND) $(JVM_OPTIONS) -DJAVA_EXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS)$(SQ) -DTEST_JDK_HOME=$(Q)$(TEST_JDK_HOME)$(Q) -DCPDL=$(Q)$(P)$(Q) -DPROPS_DIR=$(Q)$(TEST_RESROOT)$(D)props_unix$(Q) -DSCMODE=204 \
+	$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) -DJAVA_EXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS)$(SQ) -DTEST_JDK_HOME=$(Q)$(TEST_JDK_HOME)$(Q) -DCPDL=$(Q)$(P)$(Q) -DPROPS_DIR=$(Q)$(TEST_RESROOT)$(D)props_unix$(Q) -DSCMODE=204 \
 	-jar $(CMDLINETESTER_JAR) \
 	-config $(Q)$(TEST_RESROOT)$(D)HelperCompatibilityTests$(XMLSUFFIX).xml$(Q) \
 	-xids all,$(JDK_VERSION),$(JCL_VERSION) -xlist $(Q)$(TEST_RESROOT)$(D)exclude.xml$(Q) \
