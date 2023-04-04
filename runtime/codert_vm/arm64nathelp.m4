@@ -169,6 +169,8 @@ define({NEW_DUAL_MODE_HELPER},{
 	SAVE_FPLR
 	CALL_DIRECT(fast_$1)
 	cbz x0,.L_done_$1
+	ldr x30,JIT_GPR_SAVE_SLOT(30)
+	str x30,[J9VMTHREAD,{#}J9TR_VMThread_jitReturnAddress]
 	SWITCH_TO_C_STACK
 	SAVE_C_NONVOLATILE_REGS
 	mov x1,x0
@@ -192,6 +194,8 @@ define({NEW_DUAL_MODE_HELPER_NO_RETURN_VALUE},{
 	SAVE_FPLR
 	CALL_DIRECT(fast_$1)
 	cbz x0,.L_done_$1
+	ldr x30,JIT_GPR_SAVE_SLOT(30)
+	str x30,[J9VMTHREAD,{#}J9TR_VMThread_jitReturnAddress]
 	SWITCH_TO_C_STACK
 	SAVE_C_NONVOLATILE_REGS
 	mov x1,x0
