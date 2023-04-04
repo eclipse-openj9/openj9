@@ -41,6 +41,11 @@ public class Continuation {
 	private Continuation parent;
 	private boolean started;
 	private boolean finished;
+	/* it's a bit-wise struct of CarrierThread ID and continuation flags(includes started and finished flag)
+	 * low 8 bits are reserved for flags and the rest are the carrier thread ID.
+	 * the state should not be directly accessed from Java
+	 */
+	private volatile long state;
 
 	private static JavaLangAccess JLA = SharedSecrets.getJavaLangAccess();
 
