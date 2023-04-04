@@ -3583,7 +3583,8 @@ void TR_ResolvedJ9Method::construct()
       {
       {x(TR::java_lang_invoke_DirectMethodHandle_internalMemberName,            "internalMemberName",                 "(Ljava/lang/Object;)Ljava/lang/Object;")},
       {x(TR::java_lang_invoke_DirectMethodHandle_internalMemberNameEnsureInit,  "internalMemberNameEnsureInit",       "(Ljava/lang/Object;)Ljava/lang/Object;")},
-      {x(TR::java_lang_invoke_DirectMethodHandle_constructorMethod,             "constructorMethod",       "(Ljava/lang/Object;)Ljava/lang/Object;")},
+      {x(TR::java_lang_invoke_DirectMethodHandle_constructorMethod,             "constructorMethod",                  "(Ljava/lang/Object;)Ljava/lang/Object;")},
+      {x(TR::java_lang_invoke_DirectMethodHandle_checkCast,                     "checkCast",                          "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;")},
       {  TR::unknownMethod}
       };
 
@@ -3812,6 +3813,12 @@ void TR_ResolvedJ9Method::construct()
       {
       {x(TR::java_lang_invoke_ConvertHandleFilterHelpers_object2J,          "object2J",    "(Ljava/lang/Object;)J")},
       {x(TR::java_lang_invoke_ConvertHandleFilterHelpers_number2J,          "number2J",    "(Ljava/lang/Number;)J")},
+      };
+
+   static X DirectMethodHandleAccessorMethods[] =
+      {
+      {x(TR::java_lang_invoke_DirectMethodHandle_Accessor_checkCast,        "checkCast",   "(Ljava/lang/Object;)Ljava/lang/Object;")},
+      {  TR::unknownMethod}
       };
 
    static X CatchHandleMethods[] =
@@ -4202,6 +4209,7 @@ void TR_ResolvedJ9Method::construct()
    static Y class44[] =
       {
       { "java/lang/invoke/ConvertHandle$FilterHelpers", ConvertHandleFilterHelpersMethods },
+      { "java/lang/invoke/DirectMethodHandle$Accessor", DirectMethodHandleAccessorMethods },
       { 0 }
       };
 
