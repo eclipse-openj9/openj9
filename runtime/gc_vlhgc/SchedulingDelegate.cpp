@@ -1358,16 +1358,17 @@ MM_SchedulingDelegate::calculateEdenSize(MM_EnvironmentVLHGC *env)
 	uintptr_t maxEdenRegionCount = _extensions->getHeap()->getHeapRegionManager()->getTableRegionCount();
 	bool edenIsVerySmall = (_edenRegionCount * 64) < maxEdenRegionCount;
 
+	/* Eden will be stealing free regions from the entire heap, without telling the heap to grow.
+	 * Note: the eden sizing logic knows how much free memory is available in the heap, and knows to not grow too much.
+	 * eden size can not be bigger than free region size.
+	 */
+	maxEdenChange = freeRegions - _edenRegionCount;
+
 	if (0 == maxHeapExpansionRegions) {
-		/*
-		 * The heap is fully expanded. Eden will be stealing free regions from the entire heap, without telling the heap to grow.
-		 * Note: When heap is fully expanded, the eden sizing logic knows how much free memory is available in the heap, and knows to not grow too much
-		 */
-		maxEdenChange = freeRegions;
 		_extensions->globalVLHGCStats._heapSizingData.edenRegionChange = 0;
 	} else {
 		/* Eden will inform the total heap resizing logic, that it needs to change total heap size in order to maintain same "tenure" size */
-		maxEdenChange = maxHeapExpansionRegions;
+		maxEdenChange += maxHeapExpansionRegions;
 		intptr_t edenChangeWithSurvivorHeadroom = desiredEdenChangeSize;
 
 		/* Total heap needs to be aware that by changing eden size, the amount of survivor space might also need to change */
