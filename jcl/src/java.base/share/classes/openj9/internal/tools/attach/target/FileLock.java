@@ -61,12 +61,14 @@ public final class FileLock {
 	 * locks a file using the J9 port library functions.
 	 * @param blocking if true, the function waits until the it obtains the file lock or times out.
 	 * @param callSite caller info
+	 * @param useWatchdog use FileLockWatchdogTask or not
 	 * @return true is file lock obtained.
 	 * @throws IOException if the file is already locked.
 	 * @note locking and unlocking must be done by the same thread.
 	 */
-	public boolean lockFile(boolean blocking, String callSite) throws IOException {
-		String lockFileMsg = blocking ? "locking file ": "non-blocking locking file "; //$NON-NLS-1$//$NON-NLS-2$
+	public boolean lockFile(boolean blocking, String callSite, boolean useWatchdog) throws IOException {
+		String lockFileMsg = (blocking ? "locking file " : "non-blocking locking file ") //$NON-NLS-1$//$NON-NLS-2$
+				+ (useWatchdog ? "using watchdog" : "NOT using watchdog"); //$NON-NLS-1$//$NON-NLS-2$
 		IPC.logMessage(callSite + " : " + lockFileMsg, lockFilepath); //$NON-NLS-1$
 		
 		final int FILE_LOCK_TIMEOUT = 20 * 1000; /* time in milliseconds */
@@ -80,26 +82,29 @@ public final class FileLock {
 		locked = (0 <= fileDescriptor); /* negative values indicate error, non-negative values (including 0) are valid FDs */
 		
 		if (!locked && blocking) { /* try again, this time with a blocking lock and a timeout */
-			FileLockWatchdogTask wdog = new FileLockWatchdogTask();
+			FileLockWatchdogTask wdog = null;
 			IPC.logMessage("lock failed, trying blocking lock, fileDescriptor = " + fileDescriptor); //$NON-NLS-1$
-			synchronized (shutdownSync) { /* shutdown is called from a different thread */
-				/*[PR Jazz 30075] inlined createFileLockWatchdogTimer*/
-				if (!terminated && (null == fileLockWatchdogTimer)) {
-					fileLockWatchdogTimer = new FilelockTimer("file lock watchdog"); //$NON-NLS-1$
-				}
-				if (null != fileLockWatchdogTimer) { /* check if the VM is shutting down */
-					/*
-					 * The file lock timeout is to recover from pathological conditions such as a hung process which is holding the file lock.
-					 * Under this condition, the process will break the lock.
-					 * This timeout affects only the operation of the attach API.  It may delay the start of the attach API (but will not affect
-					 * other aspects of the VM or application launch) or delay an attach attempt.  It will not delay the VM or attach API shutdown.
-					 */
-					IPC.logMessage("FileLock.lockFile() FILE_LOCK_TIMEOUT = " + FILE_LOCK_TIMEOUT, new Throwable("")); //$NON-NLS-1$ //$NON-NLS-2$
-					fileLockWatchdogTimer.schedule(wdog, FILE_LOCK_TIMEOUT);
-				}
-				else {
-					IPC.logMessage("FileLock.lockFile() returns false."); //$NON-NLS-1$
-					return false;
+			if (useWatchdog) {
+				wdog = new FileLockWatchdogTask();
+				synchronized (shutdownSync) { /* shutdown is called from a different thread */
+					/*[PR Jazz 30075] inlined createFileLockWatchdogTimer*/
+					if (!terminated && (null == fileLockWatchdogTimer)) {
+						fileLockWatchdogTimer = new FilelockTimer("file lock watchdog"); //$NON-NLS-1$
+					}
+					if (null != fileLockWatchdogTimer) { /* check if the VM is shutting down */
+						/*
+						 * The file lock timeout is to recover from pathological conditions such as a hung process which is holding the file lock.
+						 * Under this condition, the process will break the lock.
+						 * This timeout affects only the operation of the attach API.  It may delay the start of the attach API (but will not affect
+						 * other aspects of the VM or application launch) or delay an attach attempt.  It will not delay the VM or attach API shutdown.
+						 */
+						IPC.logMessage("FileLock.lockFile() FILE_LOCK_TIMEOUT = " + FILE_LOCK_TIMEOUT, new Throwable("")); //$NON-NLS-1$ //$NON-NLS-2$
+						fileLockWatchdogTimer.schedule(wdog, FILE_LOCK_TIMEOUT);
+					}
+					else {
+						IPC.logMessage("FileLock.lockFile() returns false."); //$NON-NLS-1$
+						return false;
+					}
 				}
 			}
 			
@@ -116,9 +121,11 @@ public final class FileLock {
 				unlockFile("lockFile_IOException"); //$NON-NLS-1$
 				IPC.logMessage("FileLock.lockFile() blocking lock failed with lockFilepath = " + lockFilepath + ", exception message: " + e.getMessage()); //$NON-NLS-1$ //$NON-NLS-2$
 			}
-			synchronized (shutdownSync) { 
-				if (null != fileLockWatchdogTimer) { 
-					wdog.cancel();
+			if (useWatchdog) {
+				synchronized (shutdownSync) {
+					if (null != fileLockWatchdogTimer) {
+						wdog.cancel();
+					}
 				}
 			}
 		} else {

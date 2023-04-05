@@ -133,8 +133,8 @@ final class WaitLoop extends Thread {
 		if (LOGGING_DISABLED != loggingStatus) {
 			IPC.logMessage("checkReplyAndCreateAttachment iteration "+ AttachHandler.notificationCount+" waitForNotification obtainLock"); //$NON-NLS-1$ //$NON-NLS-2$
 		}
-		/* the sync file is missing. */
-		if (!AttachHandler.mainHandler.syncFileLock.lockFile(true, "WaitLoop.checkReplyAndCreateAttachment")) { //$NON-NLS-1$ 
+		/* the sync file is missing, use FileLockWatchdogTask for non-CommonControlFile */
+		if (!AttachHandler.mainHandler.syncFileLock.lockFile(true, "WaitLoop.checkReplyAndCreateAttachment", true)) { //$NON-NLS-1$
 			TargetDirectory.createMySyncFile();
 			/* don't bother locking this since the attacher will not have locked it. */
 		} else {

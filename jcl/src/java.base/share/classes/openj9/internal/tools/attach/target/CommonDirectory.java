@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar18-SE]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 /*******************************************************************************
  * Copyright IBM Corp. and others 2009
  *
@@ -150,7 +150,7 @@ public abstract class CommonDirectory {
 			}
 		}
 		if (null != controllerLockCopy) { /* first entry */
-			controllerLockCopy.lockFile(true, callSite + "_obtainControllerLock"); //$NON-NLS-1$
+			controllerLockCopy.lockFile(true, callSite + "_obtainControllerLock", IPC.useFileLockWatchdog); //$NON-NLS-1$
 		}
 	}
 
@@ -166,7 +166,7 @@ public abstract class CommonDirectory {
 			++controllerLockCount; /* optimistically assume we enter the lock */
 			if (1 == controllerLockCount) { /* first time in */
 				try {
-					controllerLockEntered = getControllerLock().lockFile(false, callSite + "_tryObtainControllerLock"); //$NON-NLS-1$
+					controllerLockEntered = getControllerLock().lockFile(false, callSite + "_tryObtainControllerLock", IPC.useFileLockWatchdog); //$NON-NLS-1$
 					if (!controllerLockEntered) { /* lock failed, so revert */
 						--controllerLockCount;
 					}
@@ -205,7 +205,7 @@ public abstract class CommonDirectory {
 	 */
 	 
 	public static void obtainAttachLock(String callSite) throws IOException {
-		getAttachLock().lockFile(true, callSite + "_obtainAttachLock"); //$NON-NLS-1$
+		getAttachLock().lockFile(true, callSite + "_obtainAttachLock", IPC.useFileLockWatchdog); //$NON-NLS-1$
 	}
 
 	/**
