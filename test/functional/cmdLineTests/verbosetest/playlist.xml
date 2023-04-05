@@ -21,6 +21,7 @@
   SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 <playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../TKG/playlist.xsd">
+	<include>../variables.mk</include>
 	<test>
 		<testCaseName>cmdLineTester_verbosetest</testCaseName>
 		<disables>
@@ -38,7 +39,7 @@
 			<variation>Mode351</variation>
 			<variation>Mode551</variation>
 		</variations>
-		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump -DTESTDIR=$(Q)$(TEST_RESROOT)$(Q) -DCPDL=$(Q)$(P)$(Q) -DRESOURCES_DIR=$(Q)$(RESOURCES_DIR)$(Q) -DTESTNG=$(Q)$(TESTNG)$(Q) -DJVM_TEST_ROOT=$(Q)$(JVM_TEST_ROOT)$(Q) -DJDK_VERSION=$(Q)$(JDK_VERSION)$(Q) -DREPORTDIR=$(REPORTDIR) -DTEST_GROUP=$(Q)$(TEST_GROUP)$(Q) -DRESJAR=$(CMDLINETESTER_RESJAR) -DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump$(SQ) -jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)verbosetests.xml$(Q) -explainExcludes -nonZeroExitWhenError; \
+		<command>$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) -Xdump -DTESTDIR=$(Q)$(TEST_RESROOT)$(Q) -DCPDL=$(Q)$(P)$(Q) -DRESOURCES_DIR=$(Q)$(RESOURCES_DIR)$(Q) -DTESTNG=$(Q)$(TESTNG)$(Q) -DJVM_TEST_ROOT=$(Q)$(JVM_TEST_ROOT)$(Q) -DJDK_VERSION=$(Q)$(JDK_VERSION)$(Q) -DREPORTDIR=$(REPORTDIR) -DTEST_GROUP=$(Q)$(TEST_GROUP)$(Q) -DRESJAR=$(CMDLINETESTER_RESJAR) -DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump$(SQ) -jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)verbosetests.xml$(Q) -explainExcludes -nonZeroExitWhenError; \
 	$(TEST_STATUS)</command>
 		<!-- https://github.com/eclipse-openj9/openj9/issues/1608, exclude test on Win temporarily -->
 		<platformRequirements>^arch.arm,^os.win</platformRequirements>
@@ -58,7 +59,7 @@
 		<variations>
 			<variation>NoOptions</variation>
 		</variations>
-		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump -DTESTDIR=$(Q)$(TEST_RESROOT)$(Q) -DCPDL=$(Q)$(P)$(Q) -DRESOURCES_DIR=$(Q)$(RESOURCES_DIR)$(Q) -DTESTNG=$(Q)$(TESTNG)$(Q) -DJVM_TEST_ROOT=$(Q)$(JVM_TEST_ROOT)$(Q) -DJDK_VERSION=$(Q)$(JDK_VERSION)$(Q) -DREPORTDIR=$(REPORTDIR) -DTEST_GROUP=$(Q)$(TEST_GROUP)$(Q) -DRESJAR=$(CMDLINETESTER_RESJAR) -DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump$(SQ) -jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)verbosetests_11.xml$(Q) -explainExcludes -nonZeroExitWhenError; \
+		<command>$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) -Xdump -DTESTDIR=$(Q)$(TEST_RESROOT)$(Q) -DCPDL=$(Q)$(P)$(Q) -DRESOURCES_DIR=$(Q)$(RESOURCES_DIR)$(Q) -DTESTNG=$(Q)$(TESTNG)$(Q) -DJVM_TEST_ROOT=$(Q)$(JVM_TEST_ROOT)$(Q) -DJDK_VERSION=$(Q)$(JDK_VERSION)$(Q) -DREPORTDIR=$(REPORTDIR) -DTEST_GROUP=$(Q)$(TEST_GROUP)$(Q) -DRESJAR=$(CMDLINETESTER_RESJAR) -DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump$(SQ) -jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)verbosetests_11.xml$(Q) -explainExcludes -nonZeroExitWhenError; \
 	$(TEST_STATUS)</command>
 		<!-- https://github.com/eclipse-openj9/openj9/issues/1608, exclude test on Win temporarily -->
 		<platformRequirements>^arch.arm,^os.win</platformRequirements>

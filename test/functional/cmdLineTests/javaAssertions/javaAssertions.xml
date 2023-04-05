@@ -26,65 +26,65 @@
 
 <suite id="J9 Java Assertions Command-Line Option Tests" timeout="300">
  <variable name="JAR" value="-cp $Q$$JARPATH$$Q$ StringAssertionStatus" />
- 
+
   <test id="-ea:java.lang.String">
-	<command>$EXE$ -ea:java.lang.String -XX:+StartupOpts $JAR$</command>
+	<command>$EXE$ -ea:java.lang.String $JAR$</command>
 	<output type="success" regex="no">true</output>
 	<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 	<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 	<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
   </test>
- 
+
   <test id="-enableassertions:java.lang.String">
-	<command>$EXE$ -enableassertions:java.lang.String -XX:+StartupOpts $JAR$</command>
+	<command>$EXE$ -enableassertions:java.lang.String $JAR$</command>
 	<output type="success" regex="no">true</output>
 	<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 	<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 	<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
   </test>
- 
+
   <test id="-esa">
-	<command>$EXE$ -esa -XX:+StartupOpts $JAR$</command>
+	<command>$EXE$ -esa $JAR$</command>
 	<output type="success" regex="no">true</output>
 	<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 	<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 	<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
   </test>
- 
+
   <test id="-enablesystemassertions:java.lang.String">
-	<command>$EXE$ -enablesystemassertions -XX:+StartupOpts $JAR$</command>
+	<command>$EXE$ -enablesystemassertions $JAR$</command>
 	<output type="success" regex="no">true</output>
 	<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 	<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 	<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
   </test>
- 
+
   <test id="-da:java.lang.String">
-	<command>$EXE$ -da:java.lang.String -XX:+StartupOpts $JAR$</command>
+	<command>$EXE$ -da:java.lang.String $JAR$</command>
 	<output type="success" regex="no">false</output>
 	<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 	<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 	<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
   </test>
- 
+
   <test id="-disableassertions:java.lang.String">
-	<command>$EXE$ -disableassertions:java.lang.String -XX:+StartupOpts $JAR$</command>
+	<command>$EXE$ -disableassertions:java.lang.String $JAR$</command>
 	<output type="success" regex="no">false</output>
 	<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 	<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 	<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
   </test>
- 
+
   <test id="-esa">
-	<command>$EXE$ -dsa -XX:+StartupOpts $JAR$</command>
+	<command>$EXE$ -dsa $JAR$</command>
 	<output type="success" regex="no">false</output>
 	<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 	<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 	<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
   </test>
- 
+
   <test id="-disablesystemassertions:java.lang.String">
-	<command>$EXE$ -disablesystemassertions -XX:+StartupOpts $JAR$</command>
+	<command>$EXE$ -disablesystemassertions $JAR$</command>
 	<output type="success" regex="no">false</output>
 	<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 	<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
