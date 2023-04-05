@@ -32,7 +32,6 @@
 #include "IncrementalCardTable.hpp"
 #include "MemoryPool.hpp"
 #include "MemoryPoolAddressOrderedList.hpp"
-#include "MemoryPoolHybrid.hpp"
 #include "MemoryPoolSplitAddressOrderedList.hpp"
 #include "RealtimeMarkingScheme.hpp"
 #include "ScavengerForwardedHeader.hpp"
@@ -68,7 +67,6 @@ GC_DdrDebugLink(MM_HeapRegionDescriptor::RegionType)
 GC_DdrDebugLink(MM_IncrementalCardTable)
 GC_DdrDebugLink(MM_LargeObjectAllocateStats)
 GC_DdrDebugLink(MM_MemoryPoolAddressOrderedList)
-GC_DdrDebugLink(MM_MemoryPoolHybrid)
 GC_DdrDebugLink(MM_MemoryPoolSplitAddressOrderedList)
 GC_DdrDebugLink(MM_RealtimeMarkingScheme)
 GC_DdrDebugLink(MM_ScavengerForwardedHeader)
@@ -113,18 +111,6 @@ MM_HeapRegionDescriptor::RegionType
 DDR_MM_HeapRegionDescriptor::getRegionType()
 {
 	return this->_ddrRegionType;
-}
-
-class DDR_MM_MemoryPoolHybrid : public MM_MemoryPoolHybrid
-{
-public:
-	const char * ddrHelper();
-};
-
-const char *
-DDR_MM_MemoryPoolHybrid::ddrHelper()
-{
-	return this->_typeId;
 }
 
 class DDR_MM_HeapRegionList : public MM_HeapRegionList
