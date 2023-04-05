@@ -5021,9 +5021,12 @@ typedef struct J9JITGPRSpillArea {
 #endif /* J9VM_ARCH_X86 */
 } J9JITGPRSpillArea;
 
-#if JAVA_SPEC_VERSION >= 19
+/* it's a bit-wise struct of CarrierThread ID and continuation flags
+ * low 8 bits are reserved for flags and the rest are the carrier thread ID.
+ */
 typedef uintptr_t ContinuationState;
 
+#if JAVA_SPEC_VERSION >= 19
 typedef struct J9VMContinuation {
 	UDATA* arg0EA;
 	UDATA* bytecodes;
@@ -5038,10 +5041,6 @@ typedef struct J9VMContinuation {
 	struct J9JITGPRSpillArea jitGPRs;
 	struct J9I2JState i2jState;
 	struct J9VMEntryLocalStorage* oldEntryLocalStorage;
-	/* it's a bit-wise struct of CarrierThread ID and continuation flags
-	 * low 8 bits are reserved for flags and the rest are the carrier thread ID.
-	 */
-	volatile ContinuationState state;
 	UDATA dropFlags;
 } J9VMContinuation;
 #endif /* JAVA_SPEC_VERSION >= 19 */
