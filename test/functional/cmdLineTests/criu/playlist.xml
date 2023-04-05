@@ -21,6 +21,7 @@
   SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 <playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../TKG/playlist.xsd">
+	<include>../variables.mk</include>
 	<test>
 		<testCaseName>cmdLineTester_criu</testCaseName>
 		<variations>
@@ -34,7 +35,7 @@
 			</disable>
 		</disables>
 		<command>
-			$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump \
+			$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) -Xdump \
 			-DSCRIPPATH=$(TEST_RESROOT)$(D)criuScript.sh -DTEST_RESROOT=$(TEST_RESROOT) \
 			-DJAVA_COMMAND=$(JAVA_COMMAND) -DJVM_OPTIONS=$(SQ)$(JVM_OPTIONS)$(SQ) \
 			-jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)criu.xml$(Q) \
@@ -65,7 +66,7 @@
 			<variation>-Xjit:count=0 -XX:+CRIURestoreNonPortableMode</variation>
 		</variations>
 		<command>
-			$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump \
+			$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) -Xdump \
 			-DSCRIPPATH=$(TEST_RESROOT)$(D)criuScript.sh -DTEST_RESROOT=$(TEST_RESROOT) \
 			-DJAVA_COMMAND=$(JAVA_COMMAND) -DJVM_OPTIONS=$(SQ)$(JVM_OPTIONS)$(SQ) \
 			-jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)criu_keepCheckpoint.xml$(Q) \
@@ -98,7 +99,7 @@
 		</variations>
 		<command>
 			TR_Options=$(Q)exclude={org/openj9/criu/TimeChangeTest.nanoTimeInt()J},dontInline={org/openj9/criu/TimeChangeTest.nanoTimeInt()J|org/openj9/criu/TimeChangeTest.nanoTimeJit()J},{org/openj9/criu/TimeChangeTest.nanoTimeJit()J}(count=1)$(Q) \
-			$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump \
+			$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) -Xdump \
 			-DSCRIPPATH=$(TEST_RESROOT)$(D)criuScript.sh -DTEST_RESROOT=$(TEST_RESROOT) \
 			-DJAVA_COMMAND=$(JAVA_COMMAND) -DJVM_OPTIONS=$(Q)$(JVM_OPTIONS)$(Q) \
 			-jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)criu_nonPortable.xml$(Q) \
@@ -129,7 +130,7 @@
 		</variations>
 		<command>
 			TR_Options=$(Q)exclude={org/openj9/criu/TimeChangeTest.nanoTimeInt()J},dontInline={org/openj9/criu/TimeChangeTest.nanoTimeInt()J|org/openj9/criu/TimeChangeTest.nanoTimeJit()J},{org/openj9/criu/TimeChangeTest.nanoTimeJit()J}(count=1)$(Q) \
-			$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump \
+			$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) -Xdump \
 			-DSCRIPPATH=$(TEST_RESROOT)$(D)criuScript.sh -DTEST_RESROOT=$(TEST_RESROOT) \
 			-DJAVA_COMMAND=$(JAVA_COMMAND) -DJVM_OPTIONS=$(Q)$(JVM_OPTIONS) -Xtrace:print={j9jcl.219}$(Q) \
 			-jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)criu_nonPortable_RAS.xml$(Q) \
@@ -160,7 +161,7 @@
 		</variations>
 		<command>
 			TR_Options=$(Q)exclude={org/openj9/criu/TimeChangeTest.nanoTimeInt()J},dontInline={org/openj9/criu/TimeChangeTest.nanoTimeInt()J|org/openj9/criu/TimeChangeTest.nanoTimeJit()J},{org/openj9/criu/TimeChangeTest.nanoTimeJit()J}(count=1)$(Q) \
-			$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump \
+			$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) -Xdump \
 			-DSCRIPPATH=$(TEST_RESROOT)$(D)criuScript.sh -DTEST_RESROOT=$(TEST_RESROOT) \
 			-DJAVA_COMMAND=$(JAVA_COMMAND) -DJVM_OPTIONS=$(Q)$(JVM_OPTIONS) -Xtrace:print=mt,methods=org/eclipse/openj9/criu/CRIUSupport.registerRestoreOptionsFile()$(Q) \
 			-jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)criu_nonPortable_RAS.xml$(Q) \
@@ -191,7 +192,7 @@
 		</variations>
 		<command>
 			TR_Options=$(Q)exclude={org/openj9/criu/TimeChangeTest.nanoTimeInt()J},dontInline={org/openj9/criu/TimeChangeTest.nanoTimeInt()J|org/openj9/criu/TimeChangeTest.nanoTimeJit()J},{org/openj9/criu/TimeChangeTest.nanoTimeJit()J}(count=1)$(Q) \
-			$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump \
+			$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) -Xdump \
 			-DSCRIPPATH=$(TEST_RESROOT)$(D)criuScript.sh -DTEST_RESROOT=$(TEST_RESROOT) \
 			-DJAVA_COMMAND=$(JAVA_COMMAND) -DJVM_OPTIONS=$(Q)$(JVM_OPTIONS) -Xtrace:maximal=mt,methods=org/eclipse/openj9/criu/CRIUSupport.registerRestoreOptionsFile,output=beforeCheckpoint.txt$(Q) \
 			-jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)criu_nonPortable_RAS.xml$(Q) \
@@ -222,7 +223,7 @@
 		</variations>
 		<command>
 			TR_Options=$(Q)exclude={org/openj9/criu/TimeChangeTest.nanoTimeInt()J},dontInline={org/openj9/criu/TimeChangeTest.nanoTimeInt()J|org/openj9/criu/TimeChangeTest.nanoTimeJit()J},{org/openj9/criu/TimeChangeTest.nanoTimeJit()J}(count=1)$(Q) \
-			$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump \
+			$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) -Xdump \
 			-DSCRIPPATH=$(TEST_RESROOT)$(D)criuScript.sh -DTEST_RESROOT=$(TEST_RESROOT) \
 			-DJAVA_COMMAND=$(JAVA_COMMAND) -DJVM_OPTIONS=$(Q)$(JVM_OPTIONS) -Xdump:java:events=vmstart$(Q) \
 			-jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)criu_nonPortable_RAS.xml$(Q) \
@@ -250,7 +251,7 @@
 			<variation>-Xjit:count=0 -XX:+CRIURestoreNonPortableMode</variation>
 		</variations>
 		<command>
-			$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump \
+			$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) -Xdump \
 			-DSCRIPPATH=$(TEST_RESROOT)$(D)criuScript.sh -DTEST_RESROOT=$(TEST_RESROOT) \
 			-DJAVA_COMMAND=$(JAVA_COMMAND) -DJVM_OPTIONS=$(Q)$(JVM_OPTIONS)$(Q) \
 			-jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)criu_nonPortableJDK11Up.xml$(Q) \
@@ -279,7 +280,7 @@
 			<variation>-XX:+CRIURestoreNonPortableMode -Denable.j9internal.checkpoint.security.api.debug=true</variation>
 		</variations>
 		<command>
-			$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump \
+			$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) -Xdump \
 			-DSCRIPPATH=$(TEST_RESROOT)$(D)criuSecurityScript.sh -DTEST_RESROOT=$(TEST_RESROOT) \
 			-DJAVA_COMMAND=$(JAVA_COMMAND) -DJVM_OPTIONS=$(Q)$(JVM_OPTIONS)$(Q) \
 			-jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)criu_security.xml$(Q) \
@@ -305,7 +306,7 @@
 			<variation>-Denable.j9internal.checkpoint.security.api.debug=true</variation>
 		</variations>
 		<command>
-			$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump \
+			$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) -Xdump \
 			-DSCRIPPATH=$(TEST_RESROOT)$(D)criuRandomScript.sh -DTEST_RESROOT=$(TEST_RESROOT) \
 			-DJAVA_COMMAND=$(JAVA_COMMAND) -DJVM_OPTIONS=$(Q)$(JVM_OPTIONS)$(Q) \
 			-jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)criu_random.xml$(Q) \

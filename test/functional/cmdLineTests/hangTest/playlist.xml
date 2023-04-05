@@ -21,6 +21,7 @@
   SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 <playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../TKG/playlist.xsd">
+	<include>../variables.mk</include>
 	<test>
 		<testCaseName>cmdLineTester_hangTest</testCaseName>
 		<disables>
@@ -36,7 +37,7 @@
 		<variations>
 			<variation>NoOptions</variation>
 		</variations>
-		<command> $(JAVA_COMMAND) $(JVM_OPTIONS) \
+		<command> $(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) \
 	-DJARPATH=$(Q)$(TEST_RESROOT)$(D)hangTest.jar$(Q) \
 	-DEXE=$(SQ)bash $(TEST_RESROOT)$(D)hang.sh $(JAVA_COMMAND) $(TEST_RESROOT)$(D)hangTest.jar $(JVM_OPTIONS) $(SQ) -jar $(CMDLINETESTER_JAR) \
 	-config $(Q)$(TEST_RESROOT)$(D)hang.xml$(Q) \

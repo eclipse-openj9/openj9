@@ -21,6 +21,7 @@
   SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 <playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../../TKG/playlist.xsd">
+	<include>../variables.mk</include>
 	<test>
 		<testCaseName>cmdLineTester_GCCheck</testCaseName>
 		<variations>
@@ -29,7 +30,7 @@
 			<variation>Mode501</variation>
 			<variation>Mode551</variation>
 		</variations>
-		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -DOPTION_ADDEXPORTS=$(SQ)-showversion$(SQ) \
+		<command>$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) -DOPTION_ADDEXPORTS=$(SQ)-showversion$(SQ) \
 	-DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS)$(SQ) \
 	-DJDMPVIEW_EXE=$(Q)$(TEST_JDK_HOME)$(D)bin$(D)jdmpview$(EXECUTABLE_SUFFIX)$(Q) \
 	-DRESJAR=$(Q)$(CMDLINETESTER_RESJAR)$(P)$(TEST_RESROOT)$(D)gcCheck.jar$(Q) \
@@ -54,7 +55,7 @@
 		<variations>
 			<variation>Mode301</variation>
 		</variations>
-		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -DOPTION_ADDEXPORTS=$(SQ)-showversion$(SQ) \
+		<command>$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) -DOPTION_ADDEXPORTS=$(SQ)-showversion$(SQ) \
 	-DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS)$(SQ) \
 	-DJDMPVIEW_EXE=$(Q)$(TEST_JDK_HOME)$(D)bin$(D)jdmpview$(EXECUTABLE_SUFFIX)$(Q) \
 	-DRESJAR=$(Q)$(CMDLINETESTER_RESJAR)$(P)$(TEST_RESROOT)$(D)gcCheck.jar$(Q) \

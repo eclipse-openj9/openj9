@@ -21,6 +21,7 @@
   SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 <playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../TKG/playlist.xsd">
+	<include>../variables.mk</include>
 	<test>
 		<testCaseName>cmdLineTester_jvmtitests</testCaseName>
 		<variations>
@@ -35,7 +36,7 @@
 			<variation>Mode610</variation>
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
-	$(JAVA_COMMAND) $(JVM_OPTIONS) -Xshareclasses:none \
+	$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) \
 	-DTEST_ROOT=$(Q)$(TEST_RESROOT)$(Q) \
 	-DJAR=$(Q)$(TEST_RESROOT)$(D)jvmtitest.jar$(Q) \
 	-DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump $(SQ) \
@@ -79,7 +80,7 @@
 			<variation>Mode610</variation>
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
-	$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) \
 	-DTEST_ROOT=$(Q)$(TEST_RESROOT)$(Q) \
 	-DJAR=$(Q)$(TEST_RESROOT)$(D)jvmtitest.jar$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
 	-DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump $(SQ) \
@@ -122,7 +123,7 @@
 			<variation>Mode610</variation>
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
-	$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) \
 	-DTEST_ROOT=$(Q)$(TEST_RESROOT)$(Q) \
 	-DJAR=$(Q)$(TEST_RESROOT)$(D)jvmtitest.jar$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
 	-DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump $(SQ) \
@@ -165,7 +166,7 @@
 			<variation>Mode610</variation>
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
-	$(JAVA_COMMAND) $(JVM_OPTIONS) -Xshareclasses:none \
+	$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) \
 	-DTEST_ROOT=$(Q)$(TEST_RESROOT)$(Q) \
 	-DJAR=$(Q)$(TEST_RESROOT)$(D)jvmtitest.jar$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
 	-DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump $(SQ) \
@@ -265,7 +266,7 @@
 			<variation>Mode607-OSR</variation>
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
-	$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) \
 	-DTEST_ROOT=$(Q)$(TEST_RESROOT)$(Q) \
 	-DJAR=$(Q)$(TEST_RESROOT)$(D)jvmtitest.jar$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
 	-DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump $(SQ) \
@@ -362,7 +363,7 @@
 			<variation>Mode607-OSR</variation>
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
-	$(JAVA_COMMAND) $(JVM_OPTIONS) -Xshareclasses:none \
+	$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) \
 	-DTEST_ROOT=$(Q)$(TEST_RESROOT)$(Q) \
 	-DJAR=$(Q)$(TEST_RESROOT)$(D)jvmtitest.jar$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
 	-DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump $(SQ) \
@@ -398,7 +399,7 @@
 			<variation>Mode610</variation>
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
-	$(JAVA_COMMAND) $(JVM_OPTIONS) -Xshareclasses:none \
+	$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) \
 	-DTEST_ROOT=$(Q)$(TEST_RESROOT)$(Q) \
 	-DJAR=$(Q)$(TEST_RESROOT)$(D)jvmtitest.jar$(Q) \
 	-DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump $(SQ) \
@@ -432,7 +433,7 @@
 			<variation>NoOptions</variation>
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
-	$(JAVA_COMMAND) $(JVM_OPTIONS) -Xshareclasses:none \
+	$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) \
 	-DTEST_ROOT=$(Q)$(TEST_RESROOT)$(Q) \
 	-DJAR=$(Q)$(TEST_RESROOT)$(D)jvmtitest.jar$(Q) \
 	-DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump $(SQ) \
@@ -474,7 +475,7 @@
 			<variation>Mode610</variation>
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
-	$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) \
 	-DTEST_ROOT$(Q)$(TEST_RESROOT)$(Q) \
 	-DJAR=$(Q)$(TEST_RESROOT)$(D)jvmtitest.jar$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
 	-DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump $(SQ) \
@@ -517,7 +518,7 @@
 			<variation>Mode610</variation>
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
-	$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) \
 	-DTEST_ROOT$(Q)$(TEST_RESROOT)$(Q) \
 	-DJAR=$(Q)$(TEST_RESROOT)$(D)jvmtitest.jar$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
 	-DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump $(SQ) \
@@ -554,7 +555,7 @@
 			<variation>Mode612-OSRG</variation>
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
-	$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) \
 	-DTEST_ROOT$(Q)$(TEST_RESROOT)$(Q) \
 	-DJAR=$(Q)$(TEST_RESROOT)$(D)jvmtitest.jar$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
 	-DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump $(SQ) \
@@ -596,7 +597,7 @@
 			<variation>Mode612-OSRG</variation>
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
-	$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) \
 	-DTEST_ROOT$(Q)$(TEST_RESROOT)$(Q) \
 	-DJAR=$(Q)$(TEST_RESROOT)$(D)jvmtitest.jar$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
 	-DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump $(SQ) \
@@ -639,7 +640,7 @@
 			<variation>Mode607-OSR</variation>
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
-	$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) \
 	-DTEST_ROOT$(Q)$(TEST_RESROOT)$(Q) \
 	-DJAR=$(Q)$(TEST_RESROOT)$(D)jvmtitest.jar$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
 	-DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump $(SQ) \
@@ -669,7 +670,7 @@
 			<variation>Mode612-OSR</variation>
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
-	$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) \
 	-DTEST_ROOT$(Q)$(TEST_RESROOT)$(Q) \
 	-DJAR=$(Q)$(TEST_RESROOT)$(D)jvmtitest.jar$(Q) \
 	-DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump -Xgcthreads1 $(SQ) \
@@ -701,7 +702,7 @@
 			<variation>Mode610</variation>
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
-	$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) \
 	-DTEST_ROOT$(Q)$(TEST_RESROOT)$(Q) \
 	-DJAR=$(Q)$(TEST_RESROOT)$(D)jvmtitest.jar$(Q) \
 	-DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump -Xgcthreads1 $(SQ) \
@@ -760,7 +761,7 @@
 			<variation>Mode610</variation>
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
-	$(JAVA_COMMAND) $(JVM_OPTIONS) -Xshareclasses:none \
+	$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) \
 	-DTEST_ROOT=$(Q)$(TEST_RESROOT)$(Q) \
 	-DJAR=$(Q)$(TEST_RESROOT)$(D)jvmtitest.jar$(Q) \
 	-DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump $(SQ) \
