@@ -28,7 +28,7 @@
 	<variable name="CLASS" value="-cp $UTILSJAR$ VMBench.FibBench" />
 
  	<test id="Check that static verification is off for the bootclasspath">
-		<command>$EXE$ -Xtrace:print={j9bcverify.14} -XX:+StartupOpts -Xshareclasses:none $CLASS$</command>
+		<command>$EXE$ -Xtrace:print={j9bcverify.14} -Xshareclasses:none $CLASS$</command>
 		<output type="success" regex="no">Fibonacci: iterations</output>
 		<output type="failure" regex="no">j9bcv_verifyClassStructure - class: java/lang/Class</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
@@ -37,7 +37,7 @@
  	</test>
 
  	<test id="Check that static verification is on for the bootclasspath with -Xverify:bootclasspathStatic">
-		<command>$EXE$ -Xtrace:print={j9bcverify.14} -XX:+StartupOpts -Xshareclasses:none -Xverify:bootclasspathstatic $CLASS$</command>
+		<command>$EXE$ -Xtrace:print={j9bcverify.14} -Xshareclasses:none -Xverify:bootclasspathstatic $CLASS$</command>
 		<output type="success" regex="no">Fibonacci: iterations</output>
 		<output type="required" regex="no">j9bcv_verifyClassStructure - class: VMBench/FibBench</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
@@ -46,7 +46,7 @@
  	</test>
 
 	<test id="Check that static verification is on for the bootclasspath with -Xfuture">
-		<command>$EXE$ -Xtrace:print={j9bcverify.14} -XX:+StartupOpts -Xshareclasses:none -Xfuture $CLASS$</command>
+		<command>$EXE$ -Xtrace:print={j9bcverify.14} -Xshareclasses:none -Xfuture $CLASS$</command>
 		<output type="success" regex="no">Fibonacci: iterations</output>
 		<output type="required" regex="no">j9bcv_verifyClassStructure - class: VMBench/FibBench</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
@@ -55,7 +55,7 @@
 	</test>
 
 	<test id="Check that static verification is on for the bootclasspath with -Xverify:all">
-		<command>$EXE$ -Xtrace:print={j9bcverify.14} -XX:+StartupOpts -Xshareclasses:none -Xverify:all $CLASS$</command>
+		<command>$EXE$ -Xtrace:print={j9bcverify.14} -Xshareclasses:none -Xverify:all $CLASS$</command>
 		<output type="success" regex="no">Fibonacci: iterations</output>
 		<output type="required" regex="no">j9bcv_verifyClassStructure - class: VMBench/FibBench</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
@@ -64,7 +64,7 @@
 	</test>
 
 	<test id="Check that static verification is on for the bootclasspath with -Xshareclasses">
-		<command>$EXE$ -Xtrace:print={j9bcverify.14} -XX:+StartupOpts -Xshareclasses:name=testBootStrapStaticVerify $CLASS$</command>
+		<command>$EXE$ -Xtrace:print={j9bcverify.14} -Xshareclasses:name=testBootStrapStaticVerify $CLASS$</command>
 		<output type="success" regex="no">Fibonacci: iterations</output>
 		<output type="required" regex="no">j9bcv_verifyClassStructure - class: VMBench/FibBench</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
