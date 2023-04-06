@@ -386,7 +386,7 @@ final class Access implements JavaLangAccess {
 		/*[IF JAVA_SPEC_VERSION < 17]*/
 		return StringCoding.newStringUTF8NoRepl(bytes, offset, length);
 		/*[ELSE] JAVA_SPEC_VERSION < 17 */
-		/*[IF (JAVA_SPEC_VERSION < 21) | INLINE-TYPES]*/
+		/*[IF JAVA_SPEC_VERSION < 21]*/
 		return String.newStringUTF8NoRepl(bytes, offset, length);
 		/*[ELSE] JAVA_SPEC_VERSION < 21 */
 		return String.newStringUTF8NoRepl(bytes, offset, length, true);
@@ -696,7 +696,7 @@ final class Access implements JavaLangAccess {
 	}
 /*[ENDIF] JAVA_SPEC_VERSION >= 19 */
 
-/*[IF (JAVA_SPEC_VERSION >= 21) & !INLINE-TYPES]*/
+/*[IF JAVA_SPEC_VERSION >= 21]*/
 	@Override
 	public String getLoaderNameID(ClassLoader loader) {
 		StringBuilder buffer = new StringBuilder();
@@ -714,7 +714,7 @@ final class Access implements JavaLangAccess {
 
 		return buffer.toString();
 	}
-/*[ENDIF] (JAVA_SPEC_VERSION >= 21) & !INLINE-TYPES */
+/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 
 /*[IF INLINE-TYPES]*/
 	@Override
