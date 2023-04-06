@@ -7660,18 +7660,25 @@ TR_J9VM::inlineNativeCall(TR::Compilation * comp, TR::TreeTop * callNodeTreeTop,
          return callNode;
 
       case TR::java_lang_Thread_currentThread:
+         {
+         static const char * notInlineCurrentThread = feGetEnv("TR_DisableRecognizeCurrentThread");
          if (comp->cg()->getGRACompleted())
             {
             return 0;
             }
-         else
+         else if (!comp->getOption(TR_DisableRecognizeCurrentThread) && !notInlineCurrentThread)
             {
+            if (comp->getOption(TR_TraceOptDetails) || comp->getOption(TR_TraceILGen))
+               traceMsg(comp, "Inline Thread.currentThread() callNode n%dn 0x%p\n", callNode->getGlobalIndex(), callNode);
+
             comp->cg()->setInlinedGetCurrentThreadMethod();
             TR::Node::recreate(callNode, TR::aload);
             callNode->setSymbolReference(comp->getSymRefTab()->findOrCreateCurrentThreadSymbolRef());
 
             return callNode;
             }
+         return 0;
+         }
       case TR::java_lang_Float_intBitsToFloat:
          if (comp->cg()->getSupportsInliningOfTypeCoersionMethods())
             TR::Node::recreate(callNode, TR::ibits2f);
