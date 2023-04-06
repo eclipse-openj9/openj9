@@ -5220,6 +5220,15 @@ bool TR_J9InlinerPolicy::isJSR292SmallHelperMethod(TR_ResolvedMethod *resolvedMe
       case TR::java_lang_invoke_ConvertHandleFilterHelpers_number2J:
       case TR::java_lang_invoke_MethodHandle_doCustomizationLogic:
       case TR::java_lang_invoke_MethodHandle_undoCustomizationLogic:
+      case TR::java_lang_invoke_MethodHandleImpl_ArrayAccessor_setElementI:
+      case TR::java_lang_invoke_MethodHandleImpl_ArrayAccessor_setElementJ:
+      case TR::java_lang_invoke_MethodHandleImpl_ArrayAccessor_setElementF:
+      case TR::java_lang_invoke_MethodHandleImpl_ArrayAccessor_setElementD:
+      case TR::java_lang_invoke_MethodHandleImpl_ArrayAccessor_setElementZ:
+      case TR::java_lang_invoke_MethodHandleImpl_ArrayAccessor_setElementB:
+      case TR::java_lang_invoke_MethodHandleImpl_ArrayAccessor_setElementS:
+      case TR::java_lang_invoke_MethodHandleImpl_ArrayAccessor_setElementC:
+      case TR::java_lang_invoke_MethodHandleImpl_ArrayAccessor_setElementL:
          return true;
 
       default:
@@ -5240,6 +5249,24 @@ bool TR_J9InlinerPolicy::isJSR292SmallGetterMethod(TR_ResolvedMethod *resolvedMe
       case TR::java_lang_invoke_MethodHandleImpl_CountingWrapper_getTarget:
       case TR::java_lang_invoke_DirectMethodHandle_checkCast:
       case TR::java_lang_invoke_DirectMethodHandle_Accessor_checkCast:
+      case TR::java_lang_invoke_MethodHandleImpl_ArrayAccessor_getElementI:
+      case TR::java_lang_invoke_MethodHandleImpl_ArrayAccessor_getElementJ:
+      case TR::java_lang_invoke_MethodHandleImpl_ArrayAccessor_getElementF:
+      case TR::java_lang_invoke_MethodHandleImpl_ArrayAccessor_getElementD:
+      case TR::java_lang_invoke_MethodHandleImpl_ArrayAccessor_getElementZ:
+      case TR::java_lang_invoke_MethodHandleImpl_ArrayAccessor_getElementB:
+      case TR::java_lang_invoke_MethodHandleImpl_ArrayAccessor_getElementS:
+      case TR::java_lang_invoke_MethodHandleImpl_ArrayAccessor_getElementC:
+      case TR::java_lang_invoke_MethodHandleImpl_ArrayAccessor_getElementL:
+      case TR::java_lang_invoke_MethodHandleImpl_ArrayAccessor_lengthI:
+      case TR::java_lang_invoke_MethodHandleImpl_ArrayAccessor_lengthJ:
+      case TR::java_lang_invoke_MethodHandleImpl_ArrayAccessor_lengthF:
+      case TR::java_lang_invoke_MethodHandleImpl_ArrayAccessor_lengthD:
+      case TR::java_lang_invoke_MethodHandleImpl_ArrayAccessor_lengthZ:
+      case TR::java_lang_invoke_MethodHandleImpl_ArrayAccessor_lengthB:
+      case TR::java_lang_invoke_MethodHandleImpl_ArrayAccessor_lengthS:
+      case TR::java_lang_invoke_MethodHandleImpl_ArrayAccessor_lengthC:
+      case TR::java_lang_invoke_MethodHandleImpl_ArrayAccessor_lengthL:
          return true;
 
       default:
