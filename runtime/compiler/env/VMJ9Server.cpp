@@ -2435,6 +2435,47 @@ TR_J9ServerVM::isPortableSCCEnabled()
    }
 
 bool
+TR_J9ServerVM::inSnapshotMode()
+   {
+   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   auto *vmInfo = _compInfoPT->getClientData()->getOrCacheVMInfo(stream);
+   if (vmInfo->_isSnapshotModeEnabled)
+      {
+      if (vmInfo->_isNonPortableRestoreMode)
+         {
+         // The VM starts in snapshot mode, but after a restore it will exit snapshot mode
+         if (vmInfo->_inSnapshotMode)
+            {
+            // Must ask confirmation from client that it is still running in snapshot mode
+            stream->write(JITServer::MessageType::VM_inSnapshotMode, JITServer::Void());
+            vmInfo->_inSnapshotMode = std::get<0>(stream->read<bool>()); // cache the response
+            return vmInfo->_inSnapshotMode;
+            }
+         else // Once false, it will never be true again
+            {
+            return false;
+            }
+         }
+      else // If we are NOT in portable CRIU mode, then we are always in snapshot mode
+         {
+         return true;
+         }
+      }
+   else // If CRIU is disabled we cannot be in snapshot mode
+      {
+      return false;
+      }
+   }
+
+bool
+TR_J9ServerVM::isSnapshotModeEnabled()
+   {
+   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   auto *vmInfo = _compInfoPT->getClientData()->getOrCacheVMInfo(stream);
+   return vmInfo->_isSnapshotModeEnabled;
+   }
+
+bool
 TR_J9SharedCacheServerVM::isClassLibraryMethod(TR_OpaqueMethodBlock *method, bool vettedForAOT)
    {
    TR_ASSERT(vettedForAOT, "The TR_J9SharedCacheServerVM version of this method is expected to be called only from isClassLibraryMethod.\n"
