@@ -920,7 +920,7 @@ JITServerHelpers::postStreamFailure(OMRPortLibrary *portLibrary, TR::Compilation
    // If there was another networking problem (read/write error), the client stream
    // will be deleted, the socket will be closed and the client will be forced to
    // reconnect again. The client will discover if the server is down during the connection attempt.
-   if (connectionFailure && !retryConnectionImmediately)
+   if ((connectionFailure && !retryConnectionImmediately) || !JITServer::CommunicationStream::shouldReadRetry())
       {
       if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseJITServerConns))
          {
@@ -940,8 +940,13 @@ JITServerHelpers::postStreamFailure(OMRPortLibrary *portLibrary, TR::Compilation
                                            _waitTimeMs);
             }
          }
-      compInfo->getPersistentInfo()->setServerUID(0);
-      _serverAvailable = false;
+
+      // For read failures we should not set the server availbility to false
+      if (connectionFailure)
+         {
+         compInfo->getPersistentInfo()->setServerUID(0);
+         _serverAvailable = false;
+	 }
 
       // Ensure that log files are not supressed if methods are now
       // going to be compiled locally
