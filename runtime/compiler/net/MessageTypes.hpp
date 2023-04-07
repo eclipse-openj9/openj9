@@ -199,6 +199,7 @@ enum MessageType : uint16_t
    VM_delegatingMethodHandleTarget,
    VM_getVMTargetOffset,
    VM_getVMIndexOffset,
+   VM_inSnapshotMode,
 
    // For static TR::CompilationInfo methods
    CompInfo_isCompiled,
