@@ -170,7 +170,7 @@ class TR_VectorAPIExpansion : public TR::Optimization
    static int32_t const VECTOR_OP_EXP = 116;
    static int32_t const VECTOR_OP_EXPM1 = 117;
    static int32_t const VECTOR_OP_HYPOT = 118;
-   
+
    // Compare opcodes
    static int32_t const BT_eq = 0;
    static int32_t const BT_ne = 4;
@@ -191,7 +191,7 @@ class TR_VectorAPIExpansion : public TR::Optimization
    static int32_t const MODE_BITS_COERCED_LONG_TO_MASK = 1;
 
    // End of opcodes from VectorSupport.java
-   
+
    // Position of the parameters in the intrinsics.
    static int32_t const BROADCAST_TYPE_CHILD = 4;
 
@@ -238,6 +238,7 @@ class TR_VectorAPIExpansion : public TR::Optimization
       Test,
       Blend,
       Convert,
+      Compress,
       Other
       };
 
@@ -1208,6 +1209,38 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *      Transformed node
    */
    static TR::Node *compareIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, TR::VectorLength vectorLength, int32_t numLanes, handlerMode mode);
+
+
+  /** \brief
+   *    Scalarizes or vectorizes a node that is a call to \c VectorSupport.compressExpandOp() intrinsic.
+   *    In both cases, the node is modified in place.
+   *    In the case of scalarization, extra nodes are created(number of lanes minus one)
+   *
+   *   \param opt
+   *      This optimization object
+   *
+   *   \param treeTop
+   *      Tree top of the \c node
+   *
+   *   \param node
+   *      Node to transform
+   *
+   *   \param elementType
+   *      Element type
+   *
+   *   \param vectorLength
+   *      Vector length
+   *
+   *   \param numLanes
+   *      Number of elements
+   *
+   *   \param mode
+   *      Handler mode
+   *
+   *   \return
+   *      Transformed node
+   */
+   static TR::Node *compressExpandOpIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, TR::VectorLength vectorLength, int32_t numLanes, handlerMode mode);
 
 
   /** \brief

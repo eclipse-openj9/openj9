@@ -323,6 +323,14 @@ TR_VectorAPIExpansion::visitNodeToBuildVectorAliases(TR::Node *node)
             {
             _aliasTable[methodRefNum]._objectType = getObjectTypeFromClassNode(comp(), node->getFirstChild());
             }
+         if (methodSymbol->getRecognizedMethod() == TR::jdk_internal_vm_vector_VectorSupport_compressExpandOp)
+            {
+            if (node->getFirstChild()->getOpCode().isLoadConst() &&
+                node->getFirstChild()->get32bitIntegralValue() == VECTOR_OP_MASK_COMPRESS)
+               _aliasTable[methodRefNum]._objectType = Mask;
+            else
+               _aliasTable[methodRefNum]._objectType = Vector;
+            }
          else if (methodSymbol->getRecognizedMethod() == TR::jdk_internal_vm_vector_VectorSupport_fromBitsCoerced)
             {
             TR::Node *broadcastTypeNode = node->getChild(BROADCAST_TYPE_CHILD);
@@ -355,12 +363,19 @@ TR_VectorAPIExpansion::visitNodeToBuildVectorAliases(TR::Node *node)
             bool hasSymbolReference = child->getOpCode().hasSymbolReference();
             bool isNullMask = isMask && child->isConstZeroValue();
 
+            bool nullVectorInMaskCompress = false;
+
+            if (methodSymbol->getRecognizedMethod() == TR::jdk_internal_vm_vector_VectorSupport_compressExpandOp &&
+                node->getFirstChild()->getOpCode().isLoadConst() &&
+                node->getFirstChild()->get32bitIntegralValue() == VECTOR_OP_MASK_COMPRESS)
+               nullVectorInMaskCompress = true;
+
             if (hasSymbolReference)
                {
                alias(node, child);
                }
 
-            if (!hasSymbolReference && !isNullMask)
+            if (!hasSymbolReference && !isNullMask && !nullVectorInMaskCompress)
                {
                if (_trace)
                   traceMsg(comp(), "Invalidating #%d due to child %d (%p) in node %p\n",
@@ -1811,6 +1826,8 @@ TR::Node *TR_VectorAPIExpansion::naryIntrinsicHandler(TR_VectorAPIExpansion *opt
    {
    TR::Compilation *comp = opt->comp();
    TR::Node *opcodeNode = node->getFirstChild();
+
+   // TODO: use getFirstOperandIndex()
    int firstOperand = 5;
 
    if (opCodeType == Test || opCodeType == MaskReduction || opCodeType == Blend)
@@ -1819,9 +1836,12 @@ TR::Node *TR_VectorAPIExpansion::naryIntrinsicHandler(TR_VectorAPIExpansion *opt
    if (opCodeType == Convert)
       firstOperand = 7;
 
+   if (opCodeType == Compress && numChildren == 1)  // mask compress
+      firstOperand = 6;
+
    bool withMask = false;
 
-   if (opCodeType != MaskReduction && opCodeType != Convert)
+   if (opCodeType != MaskReduction && opCodeType != Convert && opCodeType != Compress)
       {
       TR::Node *maskNode = node->getChild(firstOperand + numChildren);  // each intrinsic has a mask argument
       withMask = !maskNode->isConstZeroValue();
@@ -2082,6 +2102,22 @@ TR::Node *TR_VectorAPIExpansion::compareIntrinsicHandler(TR_VectorAPIExpansion *
    return naryIntrinsicHandler(opt, treeTop, node, elementType, vectorLength, numLanes, mode, 2, Compare);
    }
 
+TR::Node *TR_VectorAPIExpansion::compressExpandOpIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node,
+                                                         TR::DataType elementType, TR::VectorLength vectorLength, int32_t numLanes,
+                                                         handlerMode mode)
+   {
+   TR::Compilation *comp = opt->comp();
+   vapiObjType objType;
+
+   if (node->getFirstChild()->getOpCode().isLoadConst() &&
+       node->getFirstChild()->get32bitIntegralValue() == VECTOR_OP_MASK_COMPRESS)
+       objType = Mask;
+   else
+       objType = Vector;
+
+   return naryIntrinsicHandler(opt, treeTop, node, elementType, vectorLength, numLanes, mode, objType == Vector ? 2 : 1, Compress);
+   }
+
 TR::Node *TR_VectorAPIExpansion::convertIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node,
                                                          TR::DataType elementType, TR::VectorLength vectorLength, int32_t numLanes,
                                                          handlerMode mode)
@@ -2270,7 +2306,7 @@ TR::ILOpCodes TR_VectorAPIExpansion::ILOpcodeFromVectorAPIOpcode(TR::Compilation
          case VECTOR_OP_LSHIFT:  return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vlshift, vectorType); // binary, lanewise, int only, VectorBroadcastIntOp() intrinsic
          case VECTOR_OP_RSHIFT:  return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vrshift, vectorType); // binary, lanewise, int only, VectorBroadcastIntOp() intrinsic
          case VECTOR_OP_URSHIFT: return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vurshift, vectorType);// binary, lanewise, int only, VectorBroadcastIntOp() intrinsic
-   
+
          case VECTOR_OP_BIT_COUNT:     return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vbitCount, vectorType); // unary, lanewise, int only
 
          case VECTOR_OP_LROTATE:       return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vlrotate, vectorType);  // binary, lanewise, int only, VectorBroadcastIntOp() intrinsic
@@ -2289,7 +2325,7 @@ TR::ILOpCodes TR_VectorAPIExpansion::ILOpcodeFromVectorAPIOpcode(TR::Compilation
          case VECTOR_OP_COMPRESS_BITS: return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vcompressBits, vectorType); // binary, lanewise, int only (Integer.compress())
          case VECTOR_OP_EXPAND_BITS:   return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vexpandBits, vectorType);
 
-         /* to be added            
+         /* to be added
          case VECTOR_OP_TAN:           return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vtan, vectorType);
          case VECTOR_OP_TANH:          return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vtanh, vectorType);
          case VECTOR_OP_SIN:           return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vsin, vectorType);
@@ -2300,7 +2336,7 @@ TR::ILOpCodes TR_VectorAPIExpansion::ILOpcodeFromVectorAPIOpcode(TR::Compilation
          case VECTOR_OP_ACOS:          return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vacos, vectorType);
          case VECTOR_OP_ATAN:          return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vatan, vectorType);
          case VECTOR_OP_ATAN2:         return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vatan2, vectorType);
-         case VECTOR_OP_CBRT:          return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vcbrt, vectorType); 
+         case VECTOR_OP_CBRT:          return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vcbrt, vectorType);
          case VECTOR_OP_LOG:           return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vlog, vectorType);
          case VECTOR_OP_LOG10:         return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vlog10, vectorType);
          case VECTOR_OP_LOG1P:         return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vlog1p, vectorType);
@@ -2309,7 +2345,7 @@ TR::ILOpCodes TR_VectorAPIExpansion::ILOpcodeFromVectorAPIOpcode(TR::Compilation
          case VECTOR_OP_EXPM1:         return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vexpm1, vectorType);
          case VECTOR_OP_HYPOT:         return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vhypot, vectorType);
          */
-            
+
          default:
             return TR::BadILOp;
          // shiftLeftOpCode
@@ -2453,9 +2489,8 @@ TR_VectorAPIExpansion::methodTable[] =
    {binaryIntrinsicHandler,               Vector,  3, 4,  5, 2,  7, {Unknown, Unknown, Unknown, ElementType, NumLanes, Vector, Vector, Mask}},   // jdk_internal_vm_vector_VectorSupport_binaryOp
    {blendIntrinsicHandler,                Vector,  2, 3,  4, 3, -1, {Unknown, Unknown, ElementType, NumLanes, Vector, Vector, Vector, Unknown}}, // jdk_internal_vm_vector_VectorSupport_blend
    {compareIntrinsicHandler,              Mask,    3, 4,  5, 2,  7, {Unknown, Unknown, Unknown, ElementType, NumLanes, Vector, Vector, Mask}},   // jdk_internal_vm_vector_VectorSupport_compare
-
+   {compressExpandOpIntrinsicHandler,     Unknown, 3, 4,  5, 2, -1, {Unknown, Unknown, Unknown, ElementType, NumLanes, Vector, Mask}},           // TR::jdk_internal_vm_vector_VectorSupport_compressExpandOp
    {convertIntrinsicHandler,              Vector,  2, 3,  7, 1, -1, {Unknown, Unknown, ElementType, NumLanes, Unknown, Unknown, Unknown, Vector}},   // jdk_internal_vm_vector_VectorSupport_convert
-
    {fromBitsCoercedIntrinsicHandler,      Unknown, 1, 2, -1, 0, -1, {Unknown, ElementType, NumLanes, Unknown, Unknown, Unknown}},                // jdk_internal_vm_vector_VectorSupport_fromBitsCoerced
    {maskReductionCoercedIntrinsicHandler, Scalar,  2, 3,  4, 1, -1, {Unknown, Unknown, ElementType, NumLanes, Mask}},                            // jdk_internal_vm_vector_VectorSupport_maskReductionCoerced
    {reductionCoercedIntrinsicHandler,     Scalar,  3, 4,  5, 1,  6, {Unknown, Unknown, Unknown, ElementType, NumLanes, Vector, Mask}},           // jdk_internal_vm_vector_VectorSupport_reductionCoerced
