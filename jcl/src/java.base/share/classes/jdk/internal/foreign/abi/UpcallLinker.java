@@ -49,12 +49,12 @@ public final class UpcallLinker {
 	 * by generating a native thunk in upcall on a given platform.
 	 */
 	/*[IF JAVA_SPEC_VERSION >= 20]*/
-	UpcallLinker(MethodHandle target, MethodType mt, FunctionDescriptor cDesc, SegmentScope session)
+	UpcallLinker(MethodHandle target, MethodType methodType, FunctionDescriptor descriptor, SegmentScope session)
 	/*[ELSE] JAVA_SPEC_VERSION >= 20 */
-	UpcallLinker(MethodHandle target, MethodType mt, FunctionDescriptor cDesc, MemorySession session)
+	UpcallLinker(MethodHandle target, MethodType methodType, FunctionDescriptor descriptor, MemorySession session)
 	/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
 	{
-		InternalUpcallHandler internalUpcallHandler = new InternalUpcallHandler(target, mt, cDesc, session);
+		InternalUpcallHandler internalUpcallHandler = new InternalUpcallHandler(target, methodType, descriptor, session);
 		/* The thunk address must be set given entryPoint() is used in OpenJDK. */
 		thunkAddr = internalUpcallHandler.upcallThunkAddr();
 	}
@@ -74,44 +74,67 @@ public final class UpcallLinker {
 	 * a native symbol that holds an entry point to the native function
 	 * intended for the requested java method in upcall.
 	 *
-	 * @param target The upcall method handle to the requested java method
-	 * @param mt The MethodType of the upcall method handle
-	 * @param cDesc The FunctionDescriptor of the upcall method handle
-	 * @param session The SegmentScope of the upcall method handle
+	 * @param target the upcall method handle to the requested java method
+	 * @param methodType the MethodType of the upcall method handle
+	 * @param descriptor the FunctionDescriptor of the upcall method handle
+	 * @param session the SegmentScope of the upcall method handle
 	 * @return the native symbol
 	 */
-	public static MemorySegment make(MethodHandle target, MethodType mt, FunctionDescriptor cDesc, SegmentScope session)
+	public static MemorySegment make(MethodHandle target, MethodType methodType, FunctionDescriptor descriptor, SegmentScope session)
 	/*[ELSE] JAVA_SPEC_VERSION >= 20 */
 	/**
 	 * The method invoked via Clinker generates a native thunk to create
 	 * a native symbol that holds an entry point to the native function
 	 * intended for the requested java method in upcall.
 	 *
-	 * @param target The upcall method handle to the requested java method
-	 * @param mt The MethodType of the upcall method handle
-	 * @param cDesc The FunctionDescriptor of the upcall method handle
-	 * @param session The MemorySession of the upcall method handle
+	 * @param target the upcall method handle to the requested java method
+	 * @param methodType the MethodType of the upcall method handle
+	 * @param descriptor the FunctionDescriptor of the upcall method handle
+	 * @param session the MemorySession of the upcall method handle
 	 * @return the native symbol
 	 */
-	public static MemorySegment make(MethodHandle target, MethodType mt, FunctionDescriptor cDesc, MemorySession session)
+	public static MemorySegment make(MethodHandle target, MethodType methodType, FunctionDescriptor descriptor, MemorySession session)
 	/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
 	{
-		UpcallLinker upcallLinker = new UpcallLinker(target, mt, cDesc, session);
+		UpcallLinker upcallLinker = new UpcallLinker(target, methodType, descriptor, session);
 		return UpcallStubs.makeUpcall(upcallLinker.entryPoint(), session);
 	}
 
 	/*[IF JAVA_SPEC_VERSION >= 21]*/
 	/**
-	 * A stub method to be implemented.
+	 * A stub method intended in OpenJDK to support compilation.
 	 *
-	 * @param targetType
-	 * @param abi
-	 * @param callingSequence
-	 * @return
-	 * @throws UnsupportedOperationException
+	 * Note:
+	 * SharedUtils.arrangeUpcallHelper() (totally featured with the
+	 * signatures intended for OpenJDK) calls this method which
+	 * is specific to the upcall specific code implemented in
+	 * OpenJDK. To work around this case during the compilation,
+	 * this stub method serves as a placeholder to minimize the
+	 * changes in OpenJDK.
+	 *
+	 * @param methodType the MethodType of the upcall method handle
+	 * @param abi the descriptor of the Application Binary Interface (ABI) on a given platform
+	 * @param callingSequence the calling sequence converted by CallArranger from a C FunctionDescriptor
+	 * @return a factory instance that wraps up the upcall specific code
+	 * @throws UnsupportedOperationException in the case of the OpenJDK implementation for upcall
 	 */
-	public static UpcallStubFactory makeFactory(MethodType targetType, ABIDescriptor abi, CallingSequence callingSequence) {
+	public static UpcallStubFactory makeFactory(MethodType methodType, ABIDescriptor abi, CallingSequence callingSequence) {
 		throw new UnsupportedOperationException();
+	}
+
+	/**
+	 * The method constructs a factory instance (introduced in JDK21 to support the
+	 * sharing of function descriptors) which wraps up the existing upcall specific
+	 * code implemented in OpenJ9 to enable the callback in OpenJDK.
+	 *
+	 * @param methodType the MethodType of the upcall method handle
+	 * @param descriptor the FunctionDescriptor of the upcall method handle
+	 * @return a factory instance that wraps up the upcall specific code
+	 */
+	public static UpcallStubFactory makeFactory(MethodType methodType, FunctionDescriptor descriptor) {
+		return (target, session) -> {
+			return UpcallLinker.make(target, methodType, descriptor, session);
+		};
 	}
 	/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 }
