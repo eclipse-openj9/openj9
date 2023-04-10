@@ -1119,7 +1119,7 @@ j9gc_prepare_for_checkpoint(J9VMThread *vmThread)
 
 	/* Threads being terminated may trigger a hook that may acquire exclusive VM access via JVMTI callback */
 	releaseVMAccess(vmThread);
-	extensions->configuration->adjustGCThreadCountForCheckpoint(env);
+	extensions->dispatcher->prepareForCheckpoint(env, extensions->checkpointGCthreadCount);
 	acquireVMAccess(vmThread);
 }
 
@@ -1131,32 +1131,35 @@ j9gc_reinitialize_for_restore(J9VMThread *vmThread, const char **nlsMsgFormat)
 	J9JavaVM *vm = vmThread->javaVM;
 	J9MemoryManagerVerboseInterface *mmFuncTable = (J9MemoryManagerVerboseInterface *)vm->memoryManagerFunctions->getVerboseGCFunctionTable(vm);
 
+	Assert_MM_true(NULL != extensions->getGlobalCollector());
+	Assert_MM_true(NULL != extensions->configuration);
+
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
-	if (!j9gc_reinitializeDefaults(vmThread)) {
+	if (!gcReinitializeDefaultsForRestore(vmThread)) {
 		*nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
 				J9NLS_GC_FAILED_TO_REINITIALIZE_PARSING_RESTORE_OPTIONS, NULL);
 		goto _error;
 	}
 
-	/* The checkpoint thread must release VM access for the duration of reinitializeGCThreadCountForRestore,
-	 * since new GC threads could be started and the startup/attach of a new GC thread involves allocation and may trigger GC. */
-	releaseVMAccess(vmThread);
-	if (!extensions->configuration->reinitializeGCThreadCountForRestore(env)) {
-		*nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
-				J9NLS_GC_FAILED_TO_INSTANTIATE_TASK_DISPATCHER, NULL);
-		acquireVMAccess(vmThread);
-		goto _error;
-	}
-	acquireVMAccess(vmThread);
-
-	Assert_MM_true(NULL != extensions->getGlobalCollector());
+	extensions->configuration->reinitializeForRestore(env);
 
 	if (!extensions->getGlobalCollector()->reinitializeForRestore(env)) {
 		*nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
 				J9NLS_GC_FAILED_TO_INSTANTIATE_GLOBAL_GARBAGE_COLLECTOR, NULL);
 		goto _error;
 	}
+
+	/* The checkpoint thread must release VM access for the duration of dispatcher->reinitializeForRestore,
+	 * since new GC threads could be started and the startup/attach of a new GC thread involves allocation and may trigger GC. */
+	releaseVMAccess(vmThread);
+	if (!extensions->dispatcher->reinitializeForRestore(env)) {
+		*nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
+				J9NLS_GC_FAILED_TO_INSTANTIATE_TASK_DISPATCHER, NULL);
+		acquireVMAccess(vmThread);
+		goto _error;
+	}
+	acquireVMAccess(vmThread);
 
 	if (!mmFuncTable->checkOptsAndInitVerbosegclog(vm, vm->checkpointState.restoreArgsList)) {
 		*nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
