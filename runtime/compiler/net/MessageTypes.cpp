@@ -190,6 +190,7 @@ const char *messageNames[] =
    "VM_delegatingMethodHandleTarget",
    "VM_getVMTargetOffset",
    "VM_getVMIndexOffset",
+   "VM_inSnapshotMode",
    "CompInfo_isCompiled",
    "CompInfo_getPCIfCompiled",
    "CompInfo_getInvocationCount",

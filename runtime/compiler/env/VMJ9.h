@@ -1352,7 +1352,7 @@ public:
     * \return True if snapshots can be taken, false if no snapshots that will include this
     * body are allowed.
     */
-   bool inSnapshotMode();
+   virtual bool inSnapshotMode();
 
    /**
     * \brief Answers whether checkpoint and restore mode is enabled (but not necessarily
@@ -1360,7 +1360,7 @@ public:
     *
     * \return True if checkpoint and restore mode is enabled, false otherwise.
     */
-   bool isSnapshotModeEnabled();
+   virtual bool isSnapshotModeEnabled();
 
    /**
     * \brief Answers whether or not Thread.currentThread() is immutable.
