@@ -143,18 +143,21 @@ J9Class *
 findJ9ClassInFlattenedClassCache(J9FlattenedClassCache *flattenedClassCache, U_8 *className, UDATA classNameLength)
 {
         UDATA length = flattenedClassCache->numberOfEntries;
-        J9Class *clazz = NULL;
+        J9Class *foundClass = NULL;
 
         for (UDATA i = 0; i < length; i++) {
-                J9UTF8* currentClassName = J9ROMCLASS_CLASSNAME(J9_VM_FCC_ENTRY_FROM_FCC(flattenedClassCache, i)->clazz->romClass);
-                if (J9UTF8_DATA_EQUALS(J9UTF8_DATA(currentClassName), J9UTF8_LENGTH(currentClassName), className, classNameLength)) {
-                        clazz = J9_VM_FCC_CLASS_FROM_ENTRY(J9_VM_FCC_ENTRY_FROM_FCC(flattenedClassCache, i));
-                        break;
+                J9Class *currentClass = J9_VM_FCC_CLASS_FROM_ENTRY(J9_VM_FCC_ENTRY_FROM_FCC(flattenedClassCache, i));
+                if (NULL != currentClass) {
+                        J9UTF8* currentClassName = J9ROMCLASS_CLASSNAME(currentClass->romClass);
+                        if (J9UTF8_DATA_EQUALS(J9UTF8_DATA(currentClassName), J9UTF8_LENGTH(currentClassName), className, classNameLength)) {
+                                foundClass = currentClass;
+                                break;
+                        }
                 }
         }
 
-        Assert_VM_notNull(clazz);
-        return clazz;
+        Assert_VM_notNull(foundClass);
+        return foundClass;
 }
 
 UDATA
