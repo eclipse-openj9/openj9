@@ -4383,17 +4383,29 @@ yieldContinuation(struct J9VMThread *currentThread, BOOLEAN isFinished);
 /**
  * @brief Free the native memory allocated by Continuation.
  *
- * @param currentThread the thread unmounting Continuation.
+ * @param currentThread the thread unmounting Continuation
  * @param continuationObject
+ * @param skipLocalCache skip trying to store as local cache
  */
 void
-freeContinuation(J9VMThread *currentThread, j9object_t continuationObject);
+freeContinuation(J9VMThread *currentThread, j9object_t continuationObject, BOOLEAN skipLocalCache);
+
+/**
+ * @brief Recycle the native memory allocated by Continuation.
+ *
+ * @param vm
+ * @param vmThread the thread unmounting Continuation
+ * @param continuationObject
+ * @param skipLocalCache skip trying to store as local cache
+ */
+void
+recycleContinuation(J9JavaVM *vm, J9VMThread *vmThread, J9VMContinuation *continuation, BOOLEAN skipLocalCache);
 
 /**
  * @brief Determine if the current continuation is pinned.
  *
  * @param currentThread
- * @return 0 if not pinned; otherwise, an error code corresponding to the pinned reason.
+ * @return 0 if not pinned; otherwise, an error code corresponding to the pinned reason
  */
 jint
 isPinnedContinuation(J9VMThread *currentThread);
