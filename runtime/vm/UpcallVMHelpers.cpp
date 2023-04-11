@@ -39,6 +39,7 @@ extern bool buildCallInStackFrameHelper(J9VMThread *currentThread, J9VMEntryLoca
 extern void restoreCallInFrameHelper(J9VMThread *currentThread);
 extern void longJumpWrapperForUpcall(J9VMThread *downCallThread);
 
+static U_8 getInternalTypeFromSignature(J9JavaVM *vm, J9Class *typeClass, U_8 sigType);
 static U_64 JNICALL native2InterpJavaUpcallImpl(J9UpcallMetaData *data, void *argsListPointer);
 static J9VMThread * getCurrentThread(J9UpcallMetaData *data, bool *isCurThrdAllocated);
 static void convertUpcallReturnValue(J9UpcallMetaData *data, U_8 returnType, U_64 *returnStorage);
@@ -161,48 +162,99 @@ getReturnTypeFromMetaData(J9UpcallMetaData *data)
 	J9VMThread *currentThread = currentVMThread(vm);
 	j9object_t methodType = J9VMOPENJ9INTERNALFOREIGNABIUPCALLMHMETADATA_CALLEETYPE(currentThread,
 			J9_JNI_UNWRAP_REFERENCE(data->mhMetaData));
-	J9Class *retClass = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread,
+	J9Class *retTypeClass = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread,
 			J9VMJAVALANGINVOKEMETHODTYPE_RTYPE(currentThread, methodType));
 	J9UpcallNativeSignature *nativeSig = data->nativeFuncSignature;
 	J9UpcallSigType *sigArray = nativeSig->sigArray;
 	/* The last element is for the return type. */
 	U_8 retSigType = sigArray[nativeSig->numSigs - 1].type & J9_FFI_UPCALL_SIG_TYPE_MASK;
-	U_8 returnType = 0;
+	U_8 retType = getInternalTypeFromSignature(vm, retTypeClass, retSigType);
 
-	switch (retSigType) {
+	return retType;
+}
+
+/**
+ * @brief Determine the predefined type against the signature type.
+ *
+ * @param vm a pointer to J9JavaVM
+ * @param typeClass a pointer to J9Class
+ * @param sigType the requested signature type
+ * @return a U_8 value for the predefined type
+ */
+static U_8
+getInternalTypeFromSignature(J9JavaVM *vm, J9Class *typeClass, U_8 sigType)
+{
+	U_8 dataType = 0;
+
+	switch (sigType) {
 	case J9_FFI_UPCALL_SIG_TYPE_VOID:
-		returnType = J9NtcVoid;
+		dataType = J9NtcVoid;
 		break;
 	case J9_FFI_UPCALL_SIG_TYPE_CHAR:
-		returnType = (retClass == vm->booleanReflectClass) ? J9NtcBoolean : J9NtcByte;
+		dataType = (typeClass == vm->booleanReflectClass) ? J9NtcBoolean : J9NtcByte;
 		break;
 	case J9_FFI_UPCALL_SIG_TYPE_SHORT:
-		returnType = (retClass == vm->charReflectClass) ? J9NtcChar : J9NtcShort;
+		dataType = (typeClass == vm->charReflectClass) ? J9NtcChar : J9NtcShort;
 		break;
 	case J9_FFI_UPCALL_SIG_TYPE_INT32:
-		returnType = J9NtcInt;
+		dataType = J9NtcInt;
 		break;
 	case J9_FFI_UPCALL_SIG_TYPE_INT64:
-		returnType = J9NtcLong;
+		dataType = J9NtcLong;
 		break;
 	case J9_FFI_UPCALL_SIG_TYPE_FLOAT:
-		returnType = J9NtcFloat;
+		dataType = J9NtcFloat;
 		break;
 	case J9_FFI_UPCALL_SIG_TYPE_DOUBLE:
-		returnType = J9NtcDouble;
+		dataType = J9NtcDouble;
 		break;
 	case J9_FFI_UPCALL_SIG_TYPE_POINTER:
-		returnType = J9NtcPointer;
+		dataType = J9NtcPointer;
 		break;
 	case J9_FFI_UPCALL_SIG_TYPE_STRUCT:
-		returnType = J9NtcStruct;
+		dataType = J9NtcStruct;
 		break;
 	default:
 		Assert_VM_unreachable();
 		break;
 	}
 
-	return returnType;
+	return dataType;
+}
+
+/**
+ * @brief Normalize the argument value based on the predefined signature type.
+ *
+ * @param argType the predefined signature type
+ * @param argValue the requested argument value
+ * @return a U_32 value for the normalized argument
+ *
+ * Note:
+ * The argument normalization is only intended for the type less then 4 bytes
+ * in java, which include boolean(1 byte), byte, char(2 bytes), short.
+ */
+static U_32
+getNormalizedArgValue(U_8 argType, I_32 argValue)
+{
+	I_32 realValue = argValue;
+
+	switch (argType) {
+	case J9NtcBoolean:
+		realValue = ((realValue & J9_FFI_UPCALL_BYTE_TYPE_MASK) > 0) ? 0x1 : 0x0;
+		break;
+	case J9NtcByte:
+		realValue &= J9_FFI_UPCALL_BYTE_TYPE_MASK;
+		break;
+	case J9NtcChar: /* Fall through */
+	case J9NtcShort:
+		realValue &= J9_FFI_UPCALL_SHORT_TYPE_MASK;
+		break;
+	default:
+		/* Do nothing for the int/float type. */
+		break;
+	}
+
+	return realValue;
 }
 
 /**
@@ -246,6 +298,8 @@ native2InterpJavaUpcallImpl(J9UpcallMetaData *data, void *argsListPointer)
 	if (buildCallInStackFrameHelper(currentThread, &newELS, returnsObject)) {
 		j9object_t mhMetaData = NULL;
 		j9object_t nativeArgArray = NULL;
+		j9object_t methodType = NULL;
+		j9object_t argTypes = NULL;
 
 		/* Store the allocated memory objects for the struct/pointer arguments to the java array. */
 		if (!storeMemArgObjectsToJavaArray(data, argsListPointer, currentThread)) {
@@ -254,6 +308,9 @@ native2InterpJavaUpcallImpl(J9UpcallMetaData *data, void *argsListPointer)
 
 		mhMetaData = J9_JNI_UNWRAP_REFERENCE(data->mhMetaData);
 		nativeArgArray = J9VMOPENJ9INTERNALFOREIGNABIUPCALLMHMETADATA_NATIVEARGARRAY(currentThread, mhMetaData);
+		methodType = J9VMOPENJ9INTERNALFOREIGNABIUPCALLMHMETADATA_CALLEETYPE(currentThread, mhMetaData);
+		argTypes = J9VMJAVALANGINVOKEMETHODTYPE_PTYPES(currentThread, methodType);
+
 		/* The argument list of the upcall method handle on the stack includes the target method handle,
 		 * the method arguments and the appendix which is set via MethodHandleResolver.upcallLinkCallerMethod().
 		 */
@@ -261,6 +318,9 @@ native2InterpJavaUpcallImpl(J9UpcallMetaData *data, void *argsListPointer)
 
 		for (I_32 argIndex = 0; argIndex < paramCount; argIndex++) {
 			U_8 argSigType = sigArray[argIndex].type & J9_FFI_UPCALL_SIG_TYPE_MASK;
+			j9object_t argTypeObject = J9JAVAARRAYOFOBJECT_LOAD(currentThread, argTypes, argIndex);
+			J9Class *argTypeClass = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, argTypeObject);
+			U_8 argType = getInternalTypeFromSignature(data->vm, argTypeClass, argSigType);
 
 			switch (argSigType) {
 			/* Small native types are saved at their natural boundaries (1, 2, 4-byte) in the stack on macOS/AArch64
@@ -270,13 +330,13 @@ native2InterpJavaUpcallImpl(J9UpcallMetaData *data, void *argsListPointer)
 			case J9_FFI_UPCALL_SIG_TYPE_CHAR:
 			{
 				I_8 argValue = *(I_8*)getArgPointer(nativeSig, argsListPointer, argIndex);
-				*(I_32*)--(currentThread->sp) = (I_32)argValue;
+				*(I_32*)--(currentThread->sp) = getNormalizedArgValue(argType, (I_32)argValue);
 				break;
 			}
 			case J9_FFI_UPCALL_SIG_TYPE_SHORT:
 			{
 				I_16 argValue = *(I_16*)getArgPointer(nativeSig, argsListPointer, argIndex);
-				*(I_32*)--(currentThread->sp) = (I_32)argValue;
+				*(I_32*)--(currentThread->sp) = getNormalizedArgValue(argType, (I_32)argValue);
 				break;
 			}
 #else
@@ -298,7 +358,7 @@ native2InterpJavaUpcallImpl(J9UpcallMetaData *data, void *argsListPointer)
 					argValue = argValue >> J9_FFI_UPCALL_SIG_TYPE_32_BIT;
 				}
 #endif /* !defined(J9VM_ENV_LITTLE_ENDIAN) */
-				*(I_32*)--(currentThread->sp) = (I_32)argValue;
+				*(I_32*)--(currentThread->sp) = getNormalizedArgValue(argType, (I_32)argValue);
 				break;
 			}
 			case J9_FFI_UPCALL_SIG_TYPE_INT64: /* Fall through */
