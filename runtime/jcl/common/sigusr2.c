@@ -48,7 +48,7 @@ J9SigUsr2Startup(J9JavaVM *vm)
 
 #if defined(SIGUSR2)
 	if (OMR_ARE_ANY_BITS_SET(vm->sigFlags, J9_SIG_NO_SIG_USR2)) {
-		/* Set if -Xrs command-line option. */
+		/* Set if either -Xrs or -XX:-HandleSIGUSR2 command-line options are specified. */
 		Trc_JCL_J9SigUsr2Startup_Disabled();
 		return 0;
 	}
