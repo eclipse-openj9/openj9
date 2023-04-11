@@ -113,7 +113,7 @@ void
 TR::CompileBeforeCheckpoint::collectAndCompileMethodsBeforeCheckpoint()
    {
    /* Read Acquire Class Unload Monitor to prevent class unloading */
-   TR::ClassUnloadMonitorCriticalSection collectMethodsCriticalSection();
+   TR::ClassUnloadMonitorCriticalSection collectMethodsCriticalSection;
 
    collectMethodsForCompilationBeforeCheckpoint();
    queueMethodsForCompilationBeforeCheckpoint();
