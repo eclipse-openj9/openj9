@@ -111,8 +111,8 @@ TR::CompileBeforeCheckpoint::queueMethodsForCompilationBeforeCheckpoint()
 void
 TR::CompileBeforeCheckpoint::collectAndCompileMethodsBeforeCheckpoint()
    {
-   /* Acquire Class Unload Monitor to prevent class unloading */
-   TR::ClassUnloadMonitorCriticalSection collectMethodsCriticalSection(true);
+   /* Read Acquire Class Unload Monitor to prevent class unloading */
+   TR::ClassUnloadMonitorCriticalSection collectMethodsCriticalSection;
 
    collectMethodsForCompilationBeforeCheckpoint();
    queueMethodsForCompilationBeforeCheckpoint();
