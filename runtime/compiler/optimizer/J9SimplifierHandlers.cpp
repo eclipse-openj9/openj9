@@ -355,13 +355,13 @@ static TR::Node *flipCleanAndShift(TR::Node *node, TR::Block * block, TR::Simpli
 
 TR::Node *zdloadSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
    {
-   simplifyChildren(node, block, s);
+   s->simplifyChildren(node, block);
    return node;
    }
 
 TR::Node *zdsleStoreSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
    {
-   simplifyChildren(node, block, s);
+   s->simplifyChildren(node, block);
 
    // It is not good to remove all widenings for zdsle children because then this store node will have to move the sign code from the
    // the narrowed child and clear (0xF0) the intermediate bytes.
@@ -381,7 +381,7 @@ TR::Node *zdsleStoreSimplifier(TR::Node * node, TR::Block * block, TR::Simplifie
 // Handles izdsts, zdsts
 TR::Node *zdstsStoreSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
    {
-   simplifyChildren(node, block, s);
+   s->simplifyChildren(node, block);
 
    TR::Node *valueChild = node->setValueChild(removeOperandWidening(node->getValueChild(), node, block, s));
 
@@ -393,7 +393,7 @@ TR::Node *zdstsStoreSimplifier(TR::Node * node, TR::Block * block, TR::Simplifie
 //
 TR::Node *zd2zdsleSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
    {
-   simplifyChildren(node, block, s);
+   s->simplifyChildren(node, block);
    node->setChild(0,removeOperandWidening(node->getFirstChild(), node, block, s));
 
    propagateSignStateUnaryConversion(node, block, s);
@@ -419,7 +419,7 @@ TR::Node *zd2zdsleSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier 
 
 TR::Node *pd2udSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
    {
-   simplifyChildren(node, block, s);
+   s->simplifyChildren(node, block);
    node->setChild(0, removeShiftTruncationForConversionParent(node, block, s));
 
    TR::Node *child = node->getFirstChild();
@@ -592,7 +592,7 @@ TR::Node *pd2udSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s
 
 TR::Node *ud2pdSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
    {
-   simplifyChildren(node, block, s);
+   s->simplifyChildren(node, block);
 
    if (!node->hasKnownOrAssumedSignCode())
       {
@@ -614,7 +614,7 @@ TR::Node *ud2pdSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s
 // Handles udst2pd, udsl2pd
 TR::Node *udsx2pdSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
    {
-   simplifyChildren(node, block, s);
+   s->simplifyChildren(node, block);
 
    propagateSignStateUnaryConversion(node, block, s);
 
@@ -634,7 +634,7 @@ TR::Node *udsx2pdSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier *
 // Also handles pd2udst
 TR::Node *pd2udslSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
    {
-   simplifyChildren(node, block, s);
+   s->simplifyChildren(node, block);
    node->setChild(0,removeShiftTruncationForConversionParent(node, block, s));
    node->setChild(0,removeOperandWidening(node->getFirstChild(), node, block, s));
 
@@ -665,7 +665,7 @@ TR::Node *pd2udslSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier *
 
 TR::Node *zdsle2pdSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
    {
-   simplifyChildren(node, block, s);
+   s->simplifyChildren(node, block);
    node->setChild(0,removeShiftTruncationForConversionParent(node, block, s));
    node->setChild(0,removeOperandWidening(node->getFirstChild(), node, block, s));
 
@@ -675,7 +675,7 @@ TR::Node *zdsle2pdSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier 
 // Also handles udst2ud
 TR::Node *udsl2udSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
    {
-   simplifyChildren(node, block, s);
+   s->simplifyChildren(node, block);
    node->setChild(0,removeShiftTruncationForConversionParent(node, block, s));
    node->setChild(0,removeOperandWidening(node->getFirstChild(), node, block, s));
 
@@ -685,7 +685,7 @@ TR::Node *udsl2udSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier *
 // Also handles zdsts2zd
 TR::Node *zdsls2zdSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
    {
-   simplifyChildren(node, block, s);
+   s->simplifyChildren(node, block);
    node->setChild(0,removeShiftTruncationForConversionParent(node, block, s));
    node->setChild(0,removeOperandWidening(node->getFirstChild(), node, block, s));
 
@@ -699,7 +699,7 @@ TR::Node *zdsls2zdSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier 
 TR::Node *pd2zdslsSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
    {
    TR_ASSERT(node->getOpCodeValue() == TR::pd2zdsls || node->getOpCodeValue() == TR::pd2zdsts,"pd2zdslsSimplifier only valid for TR::pd2zdsls/TR::pd2zdsts nodes\n");
-   simplifyChildren(node, block, s);
+   s->simplifyChildren(node, block);
 
    propagateSignStateUnaryConversion(node, block, s);
 
@@ -764,7 +764,7 @@ TR::Node *pd2zdslsSetSignSimplifier(TR::Node * node, TR::Block * block, TR::Simp
 TR::Node *zd2zdslsSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
    {
    TR_ASSERT(node->getOpCodeValue() == TR::zd2zdsls || node->getOpCodeValue() == TR::zd2zdsts,"zd2zdslsSimplifier only valid for TR::zd2zdsls/TR::zd2zdsts nodes\n");
-   simplifyChildren(node, block, s);
+   s->simplifyChildren(node, block);
 
    propagateSignStateUnaryConversion(node, block, s);
 
@@ -799,7 +799,7 @@ TR::Node *zd2zdslsSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier 
 // Also handles zdsts2pd
 TR::Node *zdsls2pdSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
    {
-   simplifyChildren(node, block, s);
+   s->simplifyChildren(node, block);
    propagateSignStateUnaryConversion(node, block, s);
 
    return node;
@@ -810,7 +810,7 @@ TR::Node *zdsls2pdSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier 
 //
 TR::Node *zdsle2zdSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
    {
-   simplifyChildren(node, block, s);
+   s->simplifyChildren(node, block);
    propagateSignStateUnaryConversion(node, block, s);
    TR::Node *child = node->getFirstChild();
 
@@ -827,7 +827,7 @@ TR::Node *zdsle2zdSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier 
 //
 TR::Node *zd2pdSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
    {
-   simplifyChildren(node, block, s);
+   s->simplifyChildren(node, block);
 
    TR::Node * firstChild = node->getFirstChild();
 
@@ -852,7 +852,7 @@ TR::Node *zd2pdSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s
 
 TR::Node *pd2zdSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
    {
-   simplifyChildren(node, block, s);
+   s->simplifyChildren(node, block);
 
    TR::Node * firstChild = node->getFirstChild();
 
@@ -1614,7 +1614,7 @@ static bool propagateSignStateLeftShift(TR::Node *node, int32_t shiftAmount, TR:
 
 TR::Node *pd2iSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
    {
-   simplifyChildren(node, block, s);
+   s->simplifyChildren(node, block);
 
    TR::Node * firstChild = node->setChild(0, simplifyPackedArithmeticOperand(node->getFirstChild(), node, block, s));
 
@@ -1649,7 +1649,7 @@ TR::Node *pd2lSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
    {
    TR_ASSERT(node->getOpCodeValue() == TR::pd2l || node->getOpCodeValue() == TR::pd2lu,"expecting nodeOp to be pd2l or pd2lu\n");
 
-   simplifyChildren(node, block, s);
+   s->simplifyChildren(node, block);
 
    TR::Node * firstChild = node->setChild(0, simplifyPackedArithmeticOperand(node->getFirstChild(), node, block, s));
 
@@ -1679,7 +1679,7 @@ TR::Node *pd2lSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
 
 TR::Node *i2pdSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
    {
-   simplifyChildren(node, block, s);
+   s->simplifyChildren(node, block);
 
    TR::Node * firstChild = node->getFirstChild();
 
@@ -1719,7 +1719,7 @@ TR::Node *i2pdSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
 
 TR::Node *pdaddSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
    {
-   simplifyChildren(node, block, s);
+   s->simplifyChildren(node, block);
 
    node = pdaddCommonSimplifier(node, block, s);
 
@@ -1745,7 +1745,7 @@ TR::Node *pdaddSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s
 
 TR::Node *pdsubSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
    {
-   simplifyChildren(node, block, s);
+   s->simplifyChildren(node, block);
 
    TR::Node *firstChild  = node->setChild(0, simplifyPackedArithmeticOperand(node->getFirstChild(), node, block, s));
    TR::Node *secondChild = node->setChild(1, simplifyPackedArithmeticOperand(node->getSecondChild(), node, block, s));
@@ -1786,7 +1786,7 @@ TR::Node *pdsubSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s
 
 TR::Node *pdmulSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
    {
-   simplifyChildren(node, block, s);
+   s->simplifyChildren(node, block);
 
    TR::Node *firstChild  = node->setChild(0, simplifyPackedArithmeticOperand(node->getFirstChild(), node, block, s));
    TR::Node *secondChild = node->setChild(1, simplifyPackedArithmeticOperand(node->getSecondChild(), node, block, s));
@@ -1830,7 +1830,7 @@ TR::Node *pdmulSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s
 
 TR::Node *pddivSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
    {
-   simplifyChildren(node, block, s);
+   s->simplifyChildren(node, block);
 
    TR::Node *firstChild  = node->setChild(0, simplifyPackedArithmeticOperand(node->getFirstChild(), node, block, s));
    TR::Node *secondChild = node->setChild(1, simplifyPackedArithmeticOperand(node->getSecondChild(), node, block, s));
@@ -1864,7 +1864,7 @@ TR::Node *pddivSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s
 
 TR::Node *pdshrSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
    {
-   simplifyChildren(node, block, s);
+   s->simplifyChildren(node, block);
 
    TR::Node *child = node->getFirstChild();
 
@@ -1903,7 +1903,7 @@ TR::Node *pdshrSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s
 
 TR::Node *pdloadSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
    {
-   simplifyChildren(node, block, s);
+   s->simplifyChildren(node, block);
    return node;
    }
 
@@ -1912,7 +1912,7 @@ TR::Node *pdSetSignSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier
    {
    TR_ASSERT(node->getOpCodeValue() == TR::pdSetSign,
       "pdSetSignSimplifier only valid for pdSetSign nodes\n");
-   simplifyChildren(node, block, s);
+   s->simplifyChildren(node, block);
    node->setChild(0,removeOperandWidening(node->getFirstChild(), node, block, s));
    TR::Node *child = node->getFirstChild();
 
@@ -2063,7 +2063,7 @@ TR::Node *pdcleanSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier *
    {
    TR::Node *child = node->setChild(0,removeOperandWidening(node->getFirstChild(), node, block, s));
 
-   simplifyChildren(node, block, s);
+   s->simplifyChildren(node, block);
 
    child = node->setChild(0,removeOperandWidening(node->getFirstChild(), node, block, s));
 
@@ -2183,7 +2183,7 @@ TR::Node *pdcleanSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier *
 
 TR::Node *pdclearSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
    {
-   simplifyChildren(node, block, s);
+   s->simplifyChildren(node, block);
    TR::Node *firstChild = node->setChild(0,removeOperandWidening(node->getFirstChild(), node, block, s));
 
    if (firstChild->getOpCodeValue() == TR::pdSetSign &&
@@ -2204,7 +2204,7 @@ TR::Node *pdclearSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier *
 
 TR::Node *pdclearSetSignSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
    {
-   simplifyChildren(node, block, s);
+   s->simplifyChildren(node, block);
    TR::Node *firstChild = node->setChild(0,removeOperandWidening(node->getFirstChild(), node, block, s));
    trackSetSignValue(node, block, s);
    return node;
@@ -2225,7 +2225,7 @@ static bool isFirstOrOnlyReference(TR::Node *node)
 // Also handles ipdstore, zdstore, izdstore
 TR::Node *pdstoreSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
    {
-   simplifyChildren(node, block, s);
+   s->simplifyChildren(node, block);
    TR::Node *valueChild = node->setValueChild(removeOperandWidening(node->getValueChild(), node, block, s));
 
    if (!s->comp()->getOption(TR_KeepBCDWidening) &&
@@ -2329,7 +2329,7 @@ TR::Node *pdstoreSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier *
 // Handles f2pd, d2pd, e2pd
 TR::Node *f2pdSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
    {
-   simplifyChildren(node, block, s);
+   s->simplifyChildren(node, block);
 
    if (node->getFirstChild()->getOpCode().isLoadConst())
       {
@@ -2344,7 +2344,7 @@ TR::Node *f2pdSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
 // Handles pd2f, pd2d, pd2e
 TR::Node *pd2fSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
    {
-   simplifyChildren(node, block, s);
+   s->simplifyChildren(node, block);
 
    node->setChild(0,removeOperandWidening(node->getFirstChild(), node, block, s));
 
@@ -2360,7 +2360,7 @@ TR::Node *pd2fSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
 
 TR::Node *pdshlSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
    {
-   simplifyChildren(node, block, s);
+   s->simplifyChildren(node, block);
 
    TR::Node * firstChild = node->setChild(0,removeOperandWidening(node->getFirstChild(), node, block, s));
 
@@ -2480,7 +2480,7 @@ TR::Node *pdshlSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s
 
 TR::Node *pdshlSetSignSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
    {
-   simplifyChildren(node, block, s);
+   s->simplifyChildren(node, block);
    node->setChild(0,removeOperandWidening(node->getFirstChild(), node, block, s));
    node->setChild(0, propagateTruncationToConversionChild(node,s,block));
 
@@ -2544,7 +2544,7 @@ TR::Node *pdshlSetSignSimplifier(TR::Node * node, TR::Block * block, TR::Simplif
 
 TR::Node *pdshrSetSignSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
    {
-   simplifyChildren(node, block, s);
+   s->simplifyChildren(node, block);
    node->setChild(0,removeOperandWidening(node->getFirstChild(), node, block, s));
    node->setChild(0, propagateTruncationToConversionChild(node,s,block));
 
@@ -2586,7 +2586,7 @@ TR::Node *pdshrSetSignSimplifier(TR::Node * node, TR::Block * block, TR::Simplif
 
 TR::Node *pdnegSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
    {
-   simplifyChildren(node, block, s);
+   s->simplifyChildren(node, block);
 
    TR::Node *child = node->setChild(0,removeOperandWidening(node->getFirstChild(), node, block, s));
 
