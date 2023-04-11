@@ -92,14 +92,14 @@ public final class System {
 	 * Default error output stream
 	 */
 	public static final PrintStream err = null;
-	/*[IF JAVA_SPEC_VERSION >= 17] */
+	/*[IF JAVA_SPEC_VERSION >= 17]*/
 	// The initial err to print SecurityManager related warning messages
 	static PrintStream initialErr;
 	// Show only one setSecurityManager() warning message for each caller
 	private static Map<Class<?>, Object> setSMCallers;
 	/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 
-	/*[IF JAVA_SPEC_VERSION > 11] */
+	/*[IF JAVA_SPEC_VERSION > 11]*/
 	/**
 	 * setSecurityManager() should throw UnsupportedOperationException
 	 * if throwUOEFromSetSM is set to true.
@@ -434,7 +434,7 @@ public final class System {
 		hasSetOutEncoding = stdoutCharset != null;
 		/* consoleDefaultCharset must be initialized before calling createConsole() */
 		/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
-		/*[IF JAVA_SPEC_VERSION >= 17] */
+		/*[IF JAVA_SPEC_VERSION >= 17]*/
 		initialErr = createConsole(FileDescriptor.err, stderrCharset);
 		setErr(initialErr);
 		/*[ELSE] JAVA_SPEC_VERSION >= 17 */
@@ -451,7 +451,7 @@ public final class System {
 		setOut(createConsole(FileDescriptor.out));
 		/*[ENDIF] Sidecar18-SE-OpenJ9 */
 
-		/*[IF JAVA_SPEC_VERSION >= 17] */
+		/*[IF JAVA_SPEC_VERSION >= 17]*/
 		setSMCallers = Collections.synchronizedMap(new WeakHashMap<>());
 		/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 	}
@@ -1013,9 +1013,9 @@ private static native String getSysPropBeforePropertiesInitialized(int sysPropID
  *
  * @return		the system security manager object.
  */
-/*[IF (JAVA_SPEC_VERSION >= 17) & OPENJDK_METHODHANDLES] */
+/*[IF JAVA_SPEC_VERSION >= 17]*/
 @Deprecated(since="17", forRemoval=true)
-/*[ENDIF] (JAVA_SPEC_VERSION >= 17) & OPENJDK_METHODHANDLES */
+/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 public static SecurityManager getSecurityManager() {
 	return security;
 }
@@ -1102,7 +1102,7 @@ public static void loadLibrary(String libName) {
  * be useful to attempt to perform any outstanding
  * object finalizations.
  */
-/*[IF JAVA_SPEC_VERSION >= 18] */
+/*[IF JAVA_SPEC_VERSION >= 18]*/
 @Deprecated(forRemoval=true, since="18")
 /*[ENDIF] JAVA_SPEC_VERSION >= 18 */
 public static void runFinalization() {
@@ -1190,10 +1190,8 @@ static void initSecurityManager(ClassLoader applicationClassLoader) {
  * 												which indicates that a security manager is not allowed to be set dynamically.
 /*[ENDIF] JAVA_SPEC_VERSION >= 12
  */
-/*[IF JAVA_SPEC_VERSION >= 17] */
-/*[IF OPENJDK_METHODHANDLES] */
+/*[IF JAVA_SPEC_VERSION >= 17]*/
 @Deprecated(since="17", forRemoval=true)
-/*[ENDIF] OPENJDK_METHODHANDLES */
 @CallerSensitive
 /*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 public static void setSecurityManager(final SecurityManager s) {
@@ -1221,7 +1219,7 @@ public static void setSecurityManager(final SecurityManager s) {
 	}
 	/*[ENDIF] JAVA_SPEC_VERSION > 11 */
 
-	/*[IF JAVA_SPEC_VERSION >= 17] */
+	/*[IF JAVA_SPEC_VERSION >= 17]*/
 	Class<?> callerClz = getCallerClass();
 	if (setSMCallers.putIfAbsent(callerClz, Boolean.TRUE) == null) {
 		String callerName = callerClz.getName();
