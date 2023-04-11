@@ -286,6 +286,7 @@ public abstract class ClassLoader {
 		}
 		/*[ENDIF] JAVA_SPEC_VERSION >= 10 */
 		jdk.internal.misc.VM.initLevel(2);
+		System.checkTmpDir();
 		System.initSecurityManager(applicationClassLoader);
 		jdk.internal.misc.VM.initLevel(3);
 		/*[ELSE]*/

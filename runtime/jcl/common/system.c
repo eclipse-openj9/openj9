@@ -100,10 +100,12 @@ Java_java_lang_System_initJCLPlatformEncoding(JNIEnv *env, jclass clazz)
  *    1 - platform encoding
  *    2 - file.encoding
  *    3 - os.encoding
+ *    4 - default value of java.io.tmpDir before any -D options
  */
 jstring JNICALL
 Java_java_lang_System_getSysPropBeforePropertiesInitialized(JNIEnv *env, jclass clazz, jint sysPropID)
 {
+	char *envSpace = NULL;
 	const char *sysPropValue = NULL;
 	/* The sysPropValue points to following property which has to be declared at top level. */
 	char property[128] = {0};
@@ -169,11 +171,18 @@ Java_java_lang_System_getSysPropBeforePropertiesInitialized(JNIEnv *env, jclass 
 		}
 		break;
 
+	case 4: /* default value of java.io.tmpDir before any -D options */
+		sysPropValue = getTmpDir(env, &envSpace);
+		break;
+
 	default:
 		break;
 	}
 	if (NULL != sysPropValue) {
 		result = (*env)->NewStringUTF(env, sysPropValue);
+	}
+	if (NULL != envSpace) {
+		jclmem_free_memory(env, envSpace);
 	}
 
 	return result;
