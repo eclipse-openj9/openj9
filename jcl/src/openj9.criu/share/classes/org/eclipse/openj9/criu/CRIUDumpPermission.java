@@ -26,13 +26,13 @@ import java.security.BasicPermission;
 
 /**
  * The permission class for operations on the org.eclipse.openj9.criu.CRIUSupport class.
- * Allowing code access to this permission will allow applications to trigger 
- * CRIU dumps
- * 
- * A dump file will be a complete image of the applications memory. Code with read
+ * Allowing code access to this permission will allow applications to trigger
+ * CRIU dumps.
+ *
+ * A dump file will be a complete image of the application's memory. Code with read
  * access to dump files produced by org.eclipse.openj9.criu.CRIUSupport should be considered as having
  * access to any information that was within the application at the time the dump
- * was taken. 
+ * was taken.
  */
 public class CRIUDumpPermission extends BasicPermission {
 
@@ -42,7 +42,7 @@ public class CRIUDumpPermission extends BasicPermission {
 	private static final long serialVersionUID = -8218410156654287322L;
 
 	/**
-	 * Creates CRIUDumpPermission
+	 * Creates CRIUDumpPermission.
 	 */
 	public CRIUDumpPermission() {
 		super("CRIUDumpPermission"); //$NON-NLS-1$
