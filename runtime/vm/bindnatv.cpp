@@ -294,9 +294,11 @@ static inlMapping mappings[] = {
 #else /* JAVA_SPEC_VERSION >= 11 */
 	{ "Java_sun_reflect_Reflection_getClassAccessFlags__Ljava_lang_Class_2", J9_BCLOOP_SEND_TARGET_INL_REFLECTION_GETCLASSACCESSFLAGS },
 #endif /* JAVA_SPEC_VERSION >= 11 */
-#if JAVA_SPEC_VERSION >= 16
+#if JAVA_SPEC_VERSION >= 20
+	{ "Java_openj9_internal_foreign_abi_InternalDowncallHandler_invokeNative__JJJJ_3J", J9_BCLOOP_SEND_TARGET_INL_INTERNALDOWNCALLHANDLER_INVOKENATIVE },
+#elif JAVA_SPEC_VERSION >= 16
 	{ "Java_openj9_internal_foreign_abi_InternalDowncallHandler_invokeNative__JJJ_3J", J9_BCLOOP_SEND_TARGET_INL_INTERNALDOWNCALLHANDLER_INVOKENATIVE },
-#endif /* JAVA_SPEC_VERSION >= 16 */
+#endif /* JAVA_SPEC_VERSION >= 20 */
 #if JAVA_SPEC_VERSION >= 19
 	{ "Java_jdk_internal_vm_Continuation_enterImpl__", J9_BCLOOP_SEND_TARGET_ENTER_CONTINUATION },
 	{ "Java_jdk_internal_vm_Continuation_yieldImpl__", J9_BCLOOP_SEND_TARGET_YIELD_CONTINUATION },

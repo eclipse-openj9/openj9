@@ -169,7 +169,11 @@ public class InternalDowncallHandler {
 
 	private static synchronized native void resolveRequiredFields();
 	private native void initCifNativeThunkData(String[] argLayouts, String retLayout, boolean newArgTypes, int varArgIndex);
+	/*[IF JAVA_SPEC_VERSION >= 20]*/
+	private native long invokeNative(long returnStateMemAddr, long returnStructMemAddr, long functionAddress, long calloutThunk, long[] argValues);
+	/*[ELSE] JAVA_SPEC_VERSION >= 20 */
 	private native long invokeNative(long returnStructMemAddr, long functionAddress, long calloutThunk, long[] argValues);
+	/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
 
 	private static final class PrivateClassLock {
 		PrivateClassLock() {}
@@ -588,11 +592,13 @@ public class InternalDowncallHandler {
 			Class<?> downcallAddrClass = Addressable.class;
 			/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
 
-			/*[IF JAVA_SPEC_VERSION >= 17]*/
+			/*[IF JAVA_SPEC_VERSION >= 20]*/
+			MethodType nativeMethodType = methodType(Object.class, downcallAddrClass, SegmentAllocator.class, MemorySegment.class, long[].class);
+			/*[ELSEIF JAVA_SPEC_VERSION >= 17]*/
 			MethodType nativeMethodType = methodType(Object.class, downcallAddrClass, SegmentAllocator.class, long[].class);
 			/*[ELSE] JAVA_SPEC_VERSION >= 17 */
 			MethodType nativeMethodType = methodType(Object.class, long[].class);
-			/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
+			/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
 
 			MethodHandle boundHandle = lookup.bind(this, "runNativeMethod", nativeMethodType); //$NON-NLS-1$
 
@@ -608,11 +614,17 @@ public class InternalDowncallHandler {
 	private MethodHandle permuteMH(MethodHandle targetHandle, MethodType nativeMethodType) throws NullPointerException, WrongMethodTypeException {
 		Class<?>[] argTypeClasses = nativeMethodType.parameterArray();
 		int nativeArgCount = argTypeClasses.length;
-		int argPosition = 0;
-		/*[IF JAVA_SPEC_VERSION >= 17]*/
+		/*[IF JAVA_SPEC_VERSION >= 20]*/
+		/* Skip the native function address, the segment allocator and the segment
+		 * for the execution state to the native function's arguments.
+		 */
+		int argPosition = 3;
+		/*[ELSEIF JAVA_SPEC_VERSION >= 17]*/
 		/* Skip the native function address and the segment allocator to the native function's arguments. */
-		argPosition = 2;
-		/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
+		int argPosition = 2;
+		/*[ELSE] JAVA_SPEC_VERSION >= 17 */
+		int argPosition = 0;
+		/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
 		MethodHandle resultHandle = targetHandle.asCollector(argPosition, long[].class, nativeArgCount);
 
 		/* Convert the argument values to long via filterArguments() prior to the native call. */
@@ -625,6 +637,15 @@ public class InternalDowncallHandler {
 		/* Convert the return value to the specified type via filterReturnValue() after the native call. */
 		MethodHandle retFilter = getReturnValFilter(nativeMethodType.returnType());
 		resultHandle = filterReturnValue(resultHandle, retFilter);
+
+		/*[IF JAVA_SPEC_VERSION >= 20]*/
+		/* Set a placeholder with a NULL segment if there is no request
+		 * for the execution state from downcall in the linker options.
+		 */
+		if (!linkerOpts.hasCapturedCallState()) {
+			resultHandle = insertArguments(resultHandle, 2, MemorySegment.NULL);
+		}
+		/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
 		return resultHandle;
 	}
 
@@ -806,7 +827,7 @@ public class InternalDowncallHandler {
 	/* The method (bound by the method handle to the native code) intends to invoke the C function via the inlined code. */
 	/*[IF JAVA_SPEC_VERSION >= 17]*/
 	/*[IF JAVA_SPEC_VERSION >= 20]*/
-	Object runNativeMethod(MemorySegment downcallAddr, SegmentAllocator segmtAllocator, long[] args) throws IllegalArgumentException, IllegalStateException
+	Object runNativeMethod(MemorySegment downcallAddr, SegmentAllocator segmtAllocator, MemorySegment stateSegmt, long[] args) throws IllegalArgumentException, IllegalStateException
 	/*[ELSEIF JAVA_SPEC_VERSION == 18]*/
 	Object runNativeMethod(NativeSymbol downcallAddr, SegmentAllocator segmtAllocator, long[] args) throws IllegalArgumentException, IllegalStateException
 	/*[ELSE] JAVA_SPEC_VERSION == 18 */
@@ -883,7 +904,7 @@ public class InternalDowncallHandler {
 				/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
 
 				/*[IF JAVA_SPEC_VERSION >= 20]*/
-				returnVal = invokeNative(retMemAddr, downcallAddr.address(), cifNativeThunkAddr, args);
+				returnVal = invokeNative(stateSegmt.address(), retMemAddr, downcallAddr.address(), cifNativeThunkAddr, args);
 				/*[ELSE] JAVA_SPEC_VERSION >= 20 */
 				returnVal = invokeNative(retMemAddr, downcallAddr.address().toRawLongValue(), cifNativeThunkAddr, args);
 				/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
@@ -897,7 +918,7 @@ public class InternalDowncallHandler {
 		else
 		{
 			/*[IF JAVA_SPEC_VERSION >= 20]*/
-			returnVal = invokeNative(retMemAddr, downcallAddr.address(), cifNativeThunkAddr, args);
+			returnVal = invokeNative(stateSegmt.address(), retMemAddr, downcallAddr.address(), cifNativeThunkAddr, args);
 			/*[ELSEIF JAVA_SPEC_VERSION >= 17]*/
 			returnVal = invokeNative(retMemAddr, downcallAddr.address().toRawLongValue(), cifNativeThunkAddr, args);
 			/*[ELSE] JAVA_SPEC_VERSION >= 17 */

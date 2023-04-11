@@ -23,6 +23,10 @@
 #if !defined(BYTECODEINTERPRETER_HPP_)
 #define BYTECODEINTERPRETER_HPP_
 
+#if JAVA_SPEC_VERSION >= 20
+#include <errno.h>
+#endif /* JAVA_SPEC_VERSION >= 20 */
+
 #include "j9.h"
 #include "j9cfg.h"
 #include "j9protos.h"
@@ -5030,9 +5034,15 @@ done:
 	}
 
 #if JAVA_SPEC_VERSION >= 16
+#if JAVA_SPEC_VERSION >= 20
+	/* openj9.internal.foreign.abi.InternalDowncallHandler:
+	 * private native long invokeNative(long returnStateMemAddr, long returnStructMemAddr, long functionAddr, long calloutThunk, long[] argValues);
+	 */
+#else /* JAVA_SPEC_VERSION >= 20 */
 	/* openj9.internal.foreign.abi.InternalDowncallHandler:
 	 * private native long invokeNative(long returnStructMemAddr, long functionAddr, long calloutThunk, long[] argValues);
 	 */
+#endif /* JAVA_SPEC_VERSION >= 20 */
 	VMINLINE VM_BytecodeAction
 	inlInternalDowncallHandlerInvokeNative(REGISTER_ARGS_LIST)
 	{
@@ -5048,7 +5058,7 @@ done:
 #endif /* J9VM_ENV_LITTLE_ENDIAN */
 #if FFI_NATIVE_RAW_API
 		/* Make sure we can fit a double in each sValues_raw[] slot but assuring we end up
-		 * with an int that is a  multiple of sizeof(ffi_raw)
+		 * with an int that is a  multiple of sizeof(ffi_raw).
 		 */
 		const U_8 valRawWorstCaseMulFactor = ((sizeof(double) - 1U) / sizeof(ffi_raw)) + 1U;
 		ffi_raw sValues_raw[valRawWorstCaseMulFactor * 16];
@@ -5061,11 +5071,16 @@ done:
 		UDATA *returnStorage = &(_currentThread->returnValue);
 		U_64 *ffiArgs = _currentThread->ffiArgs;
 		U_64 sFfiArgs[16];
+#if JAVA_SPEC_VERSION >= 20
+		UDATA argSlots = 10;
+		I_32 *returnState = NULL;
+#else /* JAVA_SPEC_VERSION >= 20 */
 		UDATA argSlots = 8;
+#endif /* JAVA_SPEC_VERSION >= 20 */
 
-		j9object_t argValues = *(j9object_t *)_sp; // argValues
-		ffi_cif *cif = (ffi_cif *)(UDATA)*(I_64 *)(_sp + 1); // calloutThunk
-		void *function = (void *)(UDATA)*(I_64 *)(_sp + 3); // functionAddr
+		j9object_t argValues = *(j9object_t *)_sp; /* argValues */
+		ffi_cif *cif = (ffi_cif *)(UDATA)*(I_64 *)(_sp + 1); /* calloutThunk */
+		void *function = (void *)(UDATA)*(I_64 *)(_sp + 3); /* functionAddr */
 		ffi_type *ffiRetType = cif->rtype;
 		UDATA returnTypeSize = ffiRetType->size;
 		U_8 returnType = LayoutFFITypeHelpers::getJ9NativeTypeCodeFromFFIType(ffiRetType);
@@ -5076,9 +5091,14 @@ done:
 		PORT_ACCESS_FROM_JAVAVM(_vm);
 
 		if (J9NtcStruct == returnType) {
-			/* The struct memory is allocated by the memory segment at java level */
-			returnStorage = (UDATA *)(UDATA)*(I_64 *)(_sp + 5); // returnStructMemAddr
+			/* The struct memory is allocated by the memory segment at java level. */
+			returnStorage = (UDATA *)(UDATA)*(I_64 *)(_sp + 5); /* returnStructMemAddr */
 		}
+
+#if JAVA_SPEC_VERSION >= 20
+		/* The native memory is allocated at java level to save the execution state after performing the downcall. */
+		returnState = (I_32 *)(UDATA)*(I_64 *)(_sp + 7); /* returnStateMemAddr */
+#endif /* JAVA_SPEC_VERSION >= 20 */
 
 		if (isMinimal) {
 			values = sValues;
@@ -5098,7 +5118,7 @@ done:
 				goto ffi_OOM;
 			}
 
-			/* Only reallocate if the size of the existing native memory is less than the requested size */
+			/* Only reallocate if the size of the existing native memory is less than the requested size. */
 			if ((NULL != ffiArgs) && (ffiArgCount > _currentThread->ffiArgCount)) {
 				j9mem_free_memory(ffiArgs);
 				ffiArgs = NULL;
@@ -5120,7 +5140,7 @@ done:
 #endif /* FFI_NATIVE_RAW_API */
 		}
 
-		/* Convert the argument array object on the stack to a native memory for access */
+		/* Convert the argument array object on the stack to a native memory for access. */
 		ffiArgs = convertToNativeArgArray(_currentThread, argValues, ffiArgs);
 
 		for (U_8 i = 0; i < ffiArgCount; i++) {
@@ -5129,16 +5149,16 @@ done:
 			if (0 == ffiArgs[i]) {
 				values[i] = &(ffiArgs[i]);
 			} else if (J9NtcPointer == argType) {
-				/* ffi_call expects the address of the pointer is the address of the stackslot */
+				/* ffi_call expects the address of the pointer is the address of the stackslot. */
 				pointerValues[i] = (U_64)ffiArgs[i];
 				values[i] = &pointerValues[i];
 			} else if (J9NtcStruct == argType) {
-				/* ffi_call expects the address of the struct is the address of the native memory that stores the struct */
+				/* ffi_call expects the address of the struct is the address of the native memory that stores the struct. */
 				values[i] = (void *)(U_64)ffiArgs[i];
 			} else {
 				values[i] = &(ffiArgs[i]);
 #if !defined(J9VM_ENV_LITTLE_ENDIAN)
-				/* Note: A float number is converted to int by Float.floatToIntBits() in InternalDowncallHandler */
+				/* Note: A float number is converted to int by Float.floatToIntBits() in InternalDowncallHandler. */
 				if ((J9NtcInt == argType) || (J9NtcFloat == argType)) {
 					values[i] = (void *)((U_64)values[i] + extraBytesOfInt);
 				} else if ((J9NtcShort == argType) || (J9NtcChar == argType)) {
@@ -5181,6 +5201,12 @@ done:
 			restoreSpecialStackFrameLeavingArgs(REGISTER_ARGS, bp);
 		}
 
+#if JAVA_SPEC_VERSION >= 20
+		/* Set the execution state after the downcall as required in the linker options. */
+		if (NULL != returnState) {
+			*returnState = (I_32)errno;
+		}
+#endif /* JAVA_SPEC_VERSION >= 20 */
 		VM_VMHelpers::convertFFIReturnValue(_currentThread, returnType, returnTypeSize, returnStorage);
 		returnDoubleFromINL(REGISTER_ARGS, _currentThread->returnValue, argSlots);
 
