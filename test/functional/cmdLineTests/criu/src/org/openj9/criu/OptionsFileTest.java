@@ -26,6 +26,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 
 import org.eclipse.openj9.criu.*;
 
@@ -60,6 +61,9 @@ public class OptionsFileTest {
 			break;
 		case "dumpOptionsTestRequireDynamic":
 			dumpOptionsTestRequireDynamic();
+			break;
+		case "JitOptionsTest":
+			jitOptionsTest(args);
 			break;
 		default:
 			throw new RuntimeException("incorrect parameters");
@@ -266,4 +270,29 @@ public class OptionsFileTest {
 		}
 		System.out.println("Post-checkpoint");
 	}
+
+	static void jitOptionsTest(String[] args) {
+		String optionsContents = "";
+
+		// index 0 is the test name
+		int startIndex = 1;
+
+		// index args.length-1 is the number of checkpoints
+		int lastIndex = args.length - 1;
+
+		for (int i = startIndex; i < lastIndex; i++) {
+			optionsContents = optionsContents + args[i] + "\n";
+		}
+		Path optionsFilePath = CRIUTestUtils.createOptionsFile("options", optionsContents);
+
+		Path imagePath = Paths.get("cpData");
+		CRIUTestUtils.createCheckpointDirectory(imagePath);
+		CRIUSupport criuSupport = new CRIUSupport(imagePath);
+		criuSupport.registerRestoreOptionsFile(optionsFilePath);
+
+		System.out.println("Pre-checkpoint");
+		CRIUTestUtils.checkPointJVM(criuSupport, imagePath, true);
+		System.out.println("Post-checkpoint");
+	}
+
 }

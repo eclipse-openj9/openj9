@@ -95,8 +95,8 @@ exact type of the API class for each relocation kind can be found in
 |`TR_AbsoluteMethodAddressOrderedPair`|Relocates an address that is within the method being compiled. The exact method of relocation depends on the sequence enum specified.|
 |`TR_FixedSequenceAddress`|Only used on POWER. Relocates the load of a 64 bit address of a label in the method being compiled. The exact method of relocation depends on the sequence enum specified.|
 |`TR_FixedSequenceAddress2`|Relocates the load of an address in the method being compiled. The exact method of relocation depends on the sequence enum specified.|
-|`TR_BodyInfoAddress`|Relocates the address to the `TR_PersistentJittedBodyInfo` for the method being compiled. Also relocates some fields, as well as the `TR_PersistentMethodInfo`.|
-|`TR_BodyInfoAddressLoad`|Relocates the address to the `TR_PersistentJittedBodyInfo` for the method being compiled.|
+|`TR_BodyInfoAddress`|Relocates the address to the `TR_PersistentJittedBodyInfo` for the method being compiled. This is mainly used to relocate the address to the recompilation counter, which is the first field of the `TR_PersistentJittedBodyInfo`. Also relocates some fields, as well as the `TR_PersistentMethodInfo`.|
+|`TR_BodyInfoAddressLoad`|Relocates the address to the `TR_PersistentJittedBodyInfo` for the method being compiled. Like `TR_BodyInfoAddress`, this is mainly used to relocate the address of the recompilation counter, which is the first field of the `TR_PersistentJittedBodyInfo`.|
 |`TR_CheckMethodEnter`|Patches the code if method enter tracing is enabled. Note, the AOT code should have been compiled with the assumption that tracing could be enabled.|
 |`TR_CheckMethodExit`|Patches the code if method enter tracing is enabled. Note, the AOT code should have been compiled with the assumption that tracing could be enabled.|
 |`TR_JNIVirtualTargetAddress`|Relocates the start address of a virtual JNI method.|
