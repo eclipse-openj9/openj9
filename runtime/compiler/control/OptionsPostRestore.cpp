@@ -28,6 +28,7 @@
 #include "j9nonbuilder.h"
 #include "jvminit.h"
 #include "j9comp.h"
+#include "j9jitnls.h"
 #include "jitprotos.h"
 #include "env/CompilerEnv.hpp"
 #include "env/TRMemory.hpp"
@@ -444,6 +445,8 @@ J9::OptionsPostRestore::invalidateCompiledMethodsIfNeeded(bool invalidateAll)
    if (invalidateAll || compilationFiltersExist)
       {
       J9JavaVM *javaVM = _jitConfig->javaVM;
+      PORT_ACCESS_FROM_JAVAVM(javaVM);
+
       TR_Memory trMemory(*_compInfo->persistentMemory(), _region);
 
       J9ClassWalkState classWalkState;
@@ -470,6 +473,8 @@ J9::OptionsPostRestore::invalidateCompiledMethodsIfNeeded(bool invalidateAll)
          j9clazz = javaVM->internalVMFunctions->allClassesNextDo(&classWalkState);
          }
       javaVM->internalVMFunctions->allClassesEndDo(&classWalkState);
+
+      j9nls_printf(PORTLIB, (UDATA) J9NLS_WARNING, J9NLS_JIT_CHECKPOINT_RESTORE_CODE_INVALIDATED);
       }
    }
 
@@ -484,6 +489,8 @@ J9::OptionsPostRestore::disableAOTCompilation()
    // but not during a compilation as all compilation threads are suspended at
    // this point, and so it won't impact AOT code.
 
+   PORT_ACCESS_FROM_JITCONFIG(_jitConfig);
+
    if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCheckpointRestore))
       TR_VerboseLog::writeLineLocked(TR_Vlog_CHECKPOINT_RESTORE, "Disabling AOT Compilation and Load");
 
@@ -491,6 +498,8 @@ J9::OptionsPostRestore::disableAOTCompilation()
    TR::Options::getAOTCmdLineOptions()->setOption(TR_NoStoreAOT);
    TR::Options::setSharedClassCache(false);
    TR_J9SharedCache::setSharedCacheDisabledReason(TR_J9SharedCache::AOT_DISABLED);
+
+   j9nls_printf(PORTLIB, (UDATA) J9NLS_WARNING, J9NLS_JIT_CHECKPOINT_RESTORE_AOT_DISABLED);
    }
 
 void
@@ -688,6 +697,7 @@ J9::OptionsPostRestore::processCompilerOptions()
    {
    // Needed for FIND_AND_CONSUME_RESTORE_ARG
    J9JavaVM *vm = _jitConfig->javaVM;
+   PORT_ACCESS_FROM_JAVAVM(vm);
 
    bool jitEnabled = TR::Options::canJITCompile();
    bool aotEnabled = TR::Options::sharedClassCache();
@@ -719,6 +729,8 @@ J9::OptionsPostRestore::processCompilerOptions()
 
       TR::Options::setCanJITCompile(false);
       invalidateCompiledMethodsIfNeeded(true);
+
+      j9nls_printf(PORTLIB, (UDATA) J9NLS_WARNING, J9NLS_JIT_CHECKPOINT_RESTORE_JIT_COMPILATION_DISABLED);
       }
    else
       {
