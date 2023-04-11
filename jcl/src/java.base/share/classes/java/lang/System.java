@@ -62,7 +62,7 @@ import com.ibm.gpu.spi.GPUAssistHolder;
 import com.ibm.jvm.io.ConsolePrintStream;
 /*[ENDIF] PLATFORM-mz31 | PLATFORM-mz64 | !Sidecar18-SE-OpenJ9 */
 
-/*[IF JAVA_SPEC_VERSION >= 20] */
+/*[IF JAVA_SPEC_VERSION >= 20]*/
 import java.lang.reflect.Field;
 import jdk.internal.util.SystemProps;
 /*[ENDIF] JAVA_SPEC_VERSION >= 20 */
@@ -1152,7 +1152,7 @@ public static void setProperties(Properties p) {
 }
 
 static void checkTmpDir() {
-	/*[IF JAVA_SPEC_VERSION >= 20] */
+	/*[IF JAVA_SPEC_VERSION >= 20]*/
 	String tmpDir = internalGetProperties().getProperty("java.io.tmpdir"); //$NON-NLS-1$
 	if (!defaultTmpDir.equals(tmpDir)) {
 		try {

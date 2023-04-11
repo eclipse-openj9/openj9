@@ -74,7 +74,7 @@ public interface MemoryMXBean extends PlatformManagedObject {
 	 * 
 	 * @return the number of objects awaiting finalization.
 	 */
-	/*[IF JAVA_SPEC_VERSION >= 18] */
+	/*[IF JAVA_SPEC_VERSION >= 18]*/
 	@Deprecated(forRemoval=false, since="18")
 	/*[ENDIF] JAVA_SPEC_VERSION >= 18 */
 	public int getObjectPendingFinalizationCount();

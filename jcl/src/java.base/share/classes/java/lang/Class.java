@@ -5412,7 +5412,7 @@ public boolean isNestmateOf(Class<?> that) {
  */
 @CallerSensitive
 public Class<?>[] getNestMembers() throws
-/*[IF JAVA_SPEC_VERSION < 15] */
+/*[IF JAVA_SPEC_VERSION < 15]*/
 LinkageError,
 /*[ENDIF] JAVA_SPEC_VERSION < 15 */
 SecurityException {

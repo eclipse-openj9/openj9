@@ -416,7 +416,7 @@ private ClassLoader(Void staticMethodHolder, String classLoaderName, ClassLoader
 
 /*[IF JAVA_SPEC_VERSION >= 19]*/
 	this.nativelibs = NativeLibraries.newInstance((this == bootstrapClassLoader) ? null : this);
-/*[ELSEIF JAVA_SPEC_VERSION >= 17] */
+/*[ELSEIF JAVA_SPEC_VERSION >= 17]*/
 	this.nativelibs = NativeLibraries.jniNativeLibraries((this == bootstrapClassLoader) ? null : this);
 /*[ENDIF] JAVA_SPEC_VERSION >= 19 */
 

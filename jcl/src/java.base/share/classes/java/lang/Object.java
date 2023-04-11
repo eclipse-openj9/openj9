@@ -22,7 +22,7 @@
  *******************************************************************************/
 package java.lang;
 
-/*[IF JAVA_SPEC_VERSION >= 19] */
+/*[IF JAVA_SPEC_VERSION >= 19]*/
 import jdk.internal.misc.Blocker;
 /*[ENDIF] JAVA_SPEC_VERSION >= 19 */
 
@@ -107,9 +107,9 @@ public boolean equals(Object o) {
 	but he can still invoke it. Since this method is empty, the space cost for it
 	is negligible, so we leave it in.
 /*[ENDIF]*/
-/*[IF JAVA_SPEC_VERSION >= 18] */
+/*[IF JAVA_SPEC_VERSION >= 18]*/
 @Deprecated(forRemoval=true, since="9")
-/*[ELSEIF JAVA_SPEC_VERSION >= 9] */
+/*[ELSEIF JAVA_SPEC_VERSION >= 9]*/
 @Deprecated(forRemoval=false, since="9")
 /*[ENDIF] JAVA_SPEC_VERSION >= 18 */
 protected void finalize () throws Throwable {
@@ -274,7 +274,7 @@ public final void wait(long time) throws InterruptedException {
  * @see			java.lang.Thread
  */
 public final void wait(long time, int frac) throws InterruptedException {
-/*[IF JAVA_SPEC_VERSION >= 19] */
+/*[IF JAVA_SPEC_VERSION >= 19]*/
 	long blockerRC = Blocker.begin();
 	try {
 		waitImpl(time, frac);
