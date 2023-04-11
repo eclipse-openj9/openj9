@@ -20,6 +20,9 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
+#include "j9cfg.h"
+#include "jitprotos.h"
+#include "vmaccess.h"
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/PicHelpers.hpp"
 #include "control/CompilationRuntime.hpp"
@@ -30,24 +33,22 @@
 #include "env/J2IThunk.hpp"
 #include "env/j9methodServer.hpp"
 #include "env/JITServerPersistentCHTable.hpp"
+#include "env/JSR292Methods.h"
+#include "env/TypeLayout.hpp"
 #include "env/ut_j9jit.h"
+#include "env/VerboseLog.hpp"
 #include "env/VMAccessCriticalSection.hpp"
 #include "env/VMJ9.h"
-#include "env/VerboseLog.hpp"
 #include "net/ClientStream.hpp"
 #include "optimizer/TransformUtil.hpp"
-#include "runtime/CodeCacheExceptions.hpp"
 #include "runtime/CodeCache.hpp"
+#include "runtime/CodeCacheExceptions.hpp"
 #include "runtime/CodeCacheManager.hpp"
 #include "runtime/J9VMAccess.hpp"
 #include "runtime/JITClientSession.hpp"
 #include "runtime/JITServerAOTDeserializer.hpp"
 #include "runtime/JITServerIProfiler.hpp"
 #include "runtime/RelocationTarget.hpp"
-#include "env/TypeLayout.hpp"
-#include "env/JSR292Methods.h"
-#include "jitprotos.h"
-#include "vmaccess.h"
 
 
 extern TR::Monitor *assumptionTableMutex;
@@ -519,7 +520,13 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
             TR_ASSERT_FATAL(header, "Must have valid AOT header stored in SCC by now");
             vmInfo._aotHeader = *header;
             }
-
+         vmInfo._inSnapshotMode = fe->inSnapshotMode();
+         vmInfo._isSnapshotModeEnabled = fe->isSnapshotModeEnabled();
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+         vmInfo._isNonPortableRestoreMode = javaVM->internalVMFunctions->isNonPortableRestoreMode(vmThread);
+#else
+         vmInfo._isNonPortableRestoreMode = false;
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
          client->write(response, vmInfo, listOfCacheDescriptors, comp->getPersistentInfo()->getJITServerAOTCacheName());
          }
          break;
@@ -1205,6 +1212,13 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(response, isStable);
          }
          break;
+      case MessageType::VM_inSnapshotMode:
+         {
+         client->getRecvData<JITServer::Void>();
+         client->write(response, fe->inSnapshotMode());
+         }
+         break;
+
       case MessageType::mirrorResolvedJ9Method:
          {
          // allocate a new TR_ResolvedJ9Method on the heap, to be used as a mirror for performing actions which are only
