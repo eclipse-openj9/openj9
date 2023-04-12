@@ -751,7 +751,11 @@ initDirectByteBufferCacheSun(JNIEnv *env, jclass java_nio_Buffer, jclass java_ni
 		goto fail;
 	}
 
+#if JAVA_SPEC_VERSION < 21
 	java_nio_DirectByteBuffer_init = env->GetMethodID(java_nio_DirectByteBuffer, "<init>", "(JI)V");
+#else /* JAVA_SPEC_VERSION < 21 */
+	java_nio_DirectByteBuffer_init = env->GetMethodID(java_nio_DirectByteBuffer, "<init>", "(JJ)V");
+#endif /* JAVA_SPEC_VERSION < 21 */
 	if (java_nio_DirectByteBuffer_init == NULL) {
 		goto fail;
 	}
@@ -823,7 +827,11 @@ fail:
 static jobject JNICALL newDirectByteBuffer(JNIEnv *env, void *address, jlong capacity)
 {
 	J9JavaVM *javaVM = ((J9VMThread *) env)->javaVM;
+#if JAVA_SPEC_VERSION < 21
 	jint actualCapacity = (jint)capacity;
+#else /* JAVA_SPEC_VERSION < 21 */
+	jlong actualCapacity = capacity;
+#endif /* JAVA_SPEC_VERSION < 21 */
 	jobject result = NULL;
 
 	Trc_VM_JNI_NewDirectByteBuffer_Entry(env, address, capacity);
@@ -832,10 +840,13 @@ static jobject JNICALL newDirectByteBuffer(JNIEnv *env, void *address, jlong cap
 		return NULL;
 	}
 
+#if JAVA_SPEC_VERSION < 21
 	/* if capacity exceeds the range of a jint, pass in a value known to cause IllegalArgumentException */
 	if (actualCapacity != capacity) {
 		actualCapacity = -1;
 	}
+#endif /* JAVA_SPEC_VERSION < 21 */
+
 	result = env->NewObject(javaVM->java_nio_DirectByteBuffer, javaVM->java_nio_DirectByteBuffer_init, (jlong)(UDATA)address, actualCapacity);
 	Trc_VM_JNI_NewDirectByteBuffer_Exit(env, result);
 	return result;
