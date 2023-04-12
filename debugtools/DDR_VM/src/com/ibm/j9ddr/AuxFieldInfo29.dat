@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2021, 2022 IBM Corp. and others
+ * Copyright (c) 2021, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -621,12 +621,15 @@ MM_AllocationContextTarok._allocationContextType = required
 MM_CardTable._cardTableStart = required
 MM_CardTable._cardTableVirtualStart = required
 MM_CardTable._heapBase = required
+MM_ContinuationObjectList._head = J9Object*
+MM_ContinuationObjectList._nextList = MM_ContinuationObjectList*
 MM_CopyScanCache.cacheAlloc = required
 MM_CopyScanCache.cacheTop = required
 MM_EnvironmentStandard._survivorCopyScanCache = required
 MM_EnvironmentStandard._tenureCopyScanCache = required
 MM_GCExtensions.accessBarrier = required
 MM_GCExtensions.collectStringConstants = required
+MM_GCExtensions.continuationObjectLists = MM_ContinuationObjectList*
 MM_GCExtensions.dynamicClassUnloading = required
 MM_GCExtensions.finalizeListManager = required
 MM_GCExtensions.ownableSynchronizerObjectLists = required
@@ -709,6 +712,7 @@ MM_MemorySpace._name = required
 MM_MemorySubSpace._memorySpace = required
 MM_MemorySubSpace._memoryType = required
 MM_MemorySubSpaceGeneric._memoryPool = required
+MM_ObjectAccessBarrier._continuationLinkOffset = UDATA
 MM_ObjectAccessBarrier._ownableSynchronizerLinkOffset = required
 MM_ObjectAccessBarrier._referenceLinkOffset = required
 MM_OwnableSynchronizerObjectList._head = required

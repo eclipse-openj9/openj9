@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2022 IBM Corp. and others
+ * Copyright (c) 2010, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -204,6 +204,7 @@ public class GetCommandsTask extends BaseJVMCommands implements IBootstrapRunnab
 		if (ValueTypeHelper.getValueTypeHelper().areValueTypesSupported()) {
 			toPassBack.add(new FlatObjectCommand());
 		}
+		toPassBack.add(new VirtualThreadsCommand());
 
 		loadPlugins(toPassBack, loader);
 
