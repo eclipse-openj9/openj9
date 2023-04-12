@@ -30,7 +30,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-/*[IF JAVA_SPEC_VERSION == 8] */
+/*[IF JAVA_SPEC_VERSION == 8]*/
 import sun.misc.Unsafe;
 /*[ELSE]
 import jdk.internal.misc.Unsafe;

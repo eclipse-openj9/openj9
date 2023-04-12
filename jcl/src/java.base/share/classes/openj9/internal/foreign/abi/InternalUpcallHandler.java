@@ -71,7 +71,7 @@ public final class InternalUpcallHandler {
 	 * @return an internal upcall handler with the thunk address
 	 */
 	public InternalUpcallHandler(MethodHandle target, MethodType mt, FunctionDescriptor cDesc, SegmentScope session)
-	/*[ELSEIF JAVA_SPEC_VERSION == 19] */
+	/*[ELSEIF JAVA_SPEC_VERSION == 19]*/
 	/**
 	 * The constructor creates an upcall handler specific to the requested java method
 	 * by generating a native thunk in upcall on a given platform.
@@ -134,7 +134,7 @@ public final class InternalUpcallHandler {
 	 */
 	/*[IF JAVA_SPEC_VERSION >= 20]*/
 	private long getUpcallThunkAddr(MethodHandle target, SegmentScope sessionOrScope)
-	/*[ELSEIF JAVA_SPEC_VERSION == 19] */
+	/*[ELSEIF JAVA_SPEC_VERSION == 19]*/
 	private long getUpcallThunkAddr(MethodHandle target, MemorySession sessionOrScope)
 	/*[ELSE] JAVA_SPEC_VERSION == 19 */
 	private long getUpcallThunkAddr(MethodHandle target, ResourceScope sessionOrScope)

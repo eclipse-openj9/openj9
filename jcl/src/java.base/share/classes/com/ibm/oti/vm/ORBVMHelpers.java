@@ -1,5 +1,4 @@
-/*[INCLUDE-IF Sidecar17] */
-package com.ibm.oti.vm;
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 /*******************************************************************************
  * Copyright IBM Corp. and others 2010
  *
@@ -21,6 +20,7 @@ package com.ibm.oti.vm;
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
+package com.ibm.oti.vm;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;

@@ -262,7 +262,7 @@ public interface SharedClassHelperFactory {
 	 *
 	/*[ENDIF]
 	 */
-	/*[IF Sidecar19-SE] */
+	/*[IF Sidecar19-SE]*/
 	@Deprecated(forRemoval=false, since="9")
 	/*[ENDIF]*/
 	public SharedClassHelper findHelperForClassLoader(ClassLoader loader);

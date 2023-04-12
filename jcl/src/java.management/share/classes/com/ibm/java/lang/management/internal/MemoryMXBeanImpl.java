@@ -432,7 +432,7 @@ public class MemoryMXBeanImpl extends LazyDelegatingNotifier implements MemoryMX
 	 * {@inheritDoc}
 	 */
 	@Override
-	/*[IF JAVA_SPEC_VERSION >= 18] */
+	/*[IF JAVA_SPEC_VERSION >= 18]*/
 	@SuppressWarnings("deprecation")
 	/*[ENDIF] JAVA_SPEC_VERSION >= 18 */
 	public int getObjectPendingFinalizationCount() {
