@@ -980,11 +980,15 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 		}
 
 		if (NULL != vm->checkpointState.restoreArgsList) {
+			J9VMInitArgs *restoreArgsList = vm->checkpointState.restoreArgsList;
 			/* mark -Xoptionsfile= as consumed */
-			FIND_AND_CONSUME_ARG(vm->checkpointState.restoreArgsList, STARTSWITH_MATCH, VMOPT_XOPTIONSFILE_EQUALS, NULL);
-			bool dontIgnoreUnsupportedRestoreOptions = FIND_AND_CONSUME_ARG(vm->checkpointState.restoreArgsList, EXACT_MATCH, VMOPT_XXIGNOREUNRECOGNIZEDRESTOREOPTIONSENABLE, NULL) < 0;
+			FIND_AND_CONSUME_ARG(restoreArgsList, STARTSWITH_MATCH, VMOPT_XOPTIONSFILE_EQUALS, NULL);
+			IDATA ignoreEnabled = FIND_AND_CONSUME_ARG(restoreArgsList, EXACT_MATCH, VMOPT_XXIGNOREUNRECOGNIZEDRESTOREOPTIONSENABLE, NULL);
+			IDATA ignoreDisabled = FIND_AND_CONSUME_ARG(restoreArgsList, EXACT_MATCH, VMOPT_XXIGNOREUNRECOGNIZEDRESTOREOPTIONSDISABLE, NULL);
 
-			if ((FALSE == vmFuncs->checkArgsConsumed(vm, vm->portLibrary, vm->checkpointState.restoreArgsList)) && dontIgnoreUnsupportedRestoreOptions) {
+			bool dontIgnoreUnsupportedRestoreOptions = (ignoreEnabled < 0) || (ignoreEnabled < ignoreDisabled);
+
+			if ((FALSE == vmFuncs->checkArgsConsumed(vm, vm->portLibrary, restoreArgsList)) && dontIgnoreUnsupportedRestoreOptions) {
 				currentExceptionClass = vm->checkpointState.criuJVMRestoreExceptionClass;
 				systemReturnCode = 0;
 				nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
