@@ -3605,6 +3605,8 @@ J9::ValuePropagation::innerConstrainAcall(TR::Node *node)
          method->getRecognizedMethod() == TR::jdk_internal_vm_vector_VectorSupport_convert;
          bool isVectorSupportBlend =
          method->getRecognizedMethod() == TR::jdk_internal_vm_vector_VectorSupport_blend;
+         bool isVectorSupportBroadcastInt =
+         method->getRecognizedMethod() == TR::jdk_internal_vm_vector_VectorSupport_broadcastInt;
 
          if (isVectorSupportLoad ||
              isVectorSupportBinaryOp ||
@@ -3614,7 +3616,8 @@ J9::ValuePropagation::innerConstrainAcall(TR::Node *node)
              isVectorSupportCompare ||
              isVectorSupportCompressExpandOp ||
              isVectorSupportConvert ||
-             isVectorSupportBlend)
+             isVectorSupportBlend ||
+             isVectorSupportBroadcastInt)
             {
             bool isGlobal; // dummy
             int typeChildIndex;

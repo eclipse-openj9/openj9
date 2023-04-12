@@ -370,12 +370,21 @@ TR_VectorAPIExpansion::visitNodeToBuildVectorAliases(TR::Node *node)
                 node->getFirstChild()->get32bitIntegralValue() == VECTOR_OP_MASK_COMPRESS)
                nullVectorInMaskCompress = true;
 
+            bool constOperandOfBroadcastInt = false;
+
+            if (methodSymbol->getRecognizedMethod() == TR::jdk_internal_vm_vector_VectorSupport_broadcastInt &&
+                i == (getFirstOperandIndex(methodSymbol) + 1))
+                constOperandOfBroadcastInt = true;
+
             if (hasSymbolReference)
                {
                alias(node, child);
                }
 
-            if (!hasSymbolReference && !isNullMask && !nullVectorInMaskCompress)
+            if (!hasSymbolReference &&
+                !isNullMask &&
+                !nullVectorInMaskCompress &&
+                !constOperandOfBroadcastInt)
                {
                if (_trace)
                   traceMsg(comp(), "Invalidating #%d due to child %d (%p) in node %p\n",
@@ -1985,6 +1994,13 @@ TR::Node *TR_VectorAPIExpansion::blendIntrinsicHandler(TR_VectorAPIExpansion *op
    return naryIntrinsicHandler(opt, treeTop, node, elementType, vectorLength, numLanes, mode, 3, Blend);
    }
 
+TR::Node *TR_VectorAPIExpansion::broadcastIntIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node,
+                                                       TR::DataType elementType, TR::VectorLength vectorLength, int32_t numLanes,
+                                                       handlerMode mode)
+   {
+   return naryIntrinsicHandler(opt, treeTop, node, elementType, vectorLength, numLanes, mode, 2, BroadcastInt);
+   }
+
 TR::Node *TR_VectorAPIExpansion::fromBitsCoercedIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node,
                                                                  TR::DataType elementType, TR::VectorLength vectorLength, int32_t numLanes,
                                                                  handlerMode mode)
@@ -2181,6 +2197,26 @@ TR::ILOpCodes TR_VectorAPIExpansion::ILOpcodeFromVectorAPIOpcode(TR::Compilation
             return TR::BadILOp;
          }
       }
+   else if ((opCodeType == BroadcastInt) && withMask)
+      {
+      switch (vectorAPIOpCode)
+         {
+         // TODO: add masked versions
+         default:
+            return TR::BadILOp;
+         }
+      }
+   else if (opCodeType == BroadcastInt)
+      {
+      switch (vectorAPIOpCode)
+         {
+         case VECTOR_OP_LSHIFT:  return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vlshiftConst, vectorType);
+         case VECTOR_OP_RSHIFT:  return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vrshiftConst, vectorType);
+         case VECTOR_OP_URSHIFT: return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vurshiftConst, vectorType);
+         default:
+            return TR::BadILOp;
+         }
+      }
    else if ((opCodeType == Compare) && withMask)
       {
       TR::DataType resultMaskType = scalar ? TR::NoType : TR::DataType::createMaskType(resultElementType, resultVectorLength);
@@ -2214,6 +2250,12 @@ TR::ILOpCodes TR_VectorAPIExpansion::ILOpcodeFromVectorAPIOpcode(TR::Compilation
             return TR::BadILOp;
          }
       }
+
+
+
+
+
+
    else if ((opCodeType == Reduction) && withMask)
       {
       switch (vectorAPIOpCode)
@@ -2488,6 +2530,9 @@ TR_VectorAPIExpansion::methodTable[] =
    {storeIntrinsicHandler,                Unknown, 1, 2,  5, 1, -1, {Unknown, ElementType, NumLanes, Unknown, Unknown, Vector}},                 // jdk_internal_vm_vector_VectorSupport_store
    {binaryIntrinsicHandler,               Vector,  3, 4,  5, 2,  7, {Unknown, Unknown, Unknown, ElementType, NumLanes, Vector, Vector, Mask}},   // jdk_internal_vm_vector_VectorSupport_binaryOp
    {blendIntrinsicHandler,                Vector,  2, 3,  4, 3, -1, {Unknown, Unknown, ElementType, NumLanes, Vector, Vector, Vector, Unknown}}, // jdk_internal_vm_vector_VectorSupport_blend
+
+   {broadcastIntIntrinsicHandler,         Vector,  3, 4,  5, 2,  7, {Unknown, Unknown, Unknown, ElementType, NumLanes, Vector, Unknown, Mask}},  //jdk_internal_vm_vector_VectorSupport_broadcastInt
+
    {compareIntrinsicHandler,              Mask,    3, 4,  5, 2,  7, {Unknown, Unknown, Unknown, ElementType, NumLanes, Vector, Vector, Mask}},   // jdk_internal_vm_vector_VectorSupport_compare
    {compressExpandOpIntrinsicHandler,     Unknown, 3, 4,  5, 2, -1, {Unknown, Unknown, Unknown, ElementType, NumLanes, Vector, Mask}},           // TR::jdk_internal_vm_vector_VectorSupport_compressExpandOp
    {convertIntrinsicHandler,              Vector,  2, 3,  7, 1, -1, {Unknown, Unknown, ElementType, NumLanes, Unknown, Unknown, Unknown, Vector}},   // jdk_internal_vm_vector_VectorSupport_convert

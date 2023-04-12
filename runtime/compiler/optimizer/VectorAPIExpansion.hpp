@@ -237,6 +237,7 @@ class TR_VectorAPIExpansion : public TR::Optimization
       Reduction,
       Test,
       Blend,
+      BroadcastInt,
       Convert,
       Compress,
       Other
@@ -1147,6 +1148,37 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *      Transformed node
    */
    static TR::Node *blendIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, TR::VectorLength vectorLength, int32_t numLanes, handlerMode mode);
+
+  /** \brief
+   *    Scalarizes or vectorizes a node that is a call to \c VectorSupport.broadcastInt() intrinsic.
+   *    In both cases, the node is modified in place.
+   *    In the case of scalarization, extra nodes are created(number of lanes minus one)
+   *
+   *   \param opt
+   *      This optimization object
+   *
+   *   \param treeTop
+   *      Tree top of the \c node
+   *
+   *   \param node
+   *      Node to transform
+   *
+   *   \param elementType
+   *      Element type
+   *
+   *   \param vectorLength
+   *      Vector length
+   *
+   *   \param numLanes
+   *      Number of elements
+   *
+   *   \param mode
+   *      Handler mode
+   *
+   *   \return
+   *      Transformed node
+   */
+   static TR::Node *broadcastIntIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, TR::VectorLength vectorLength, int32_t numLanes, handlerMode mode);
 
   /** \brief
    *    Scalarizes or vectorizes a node that is a call to \c VectorSupport.fromBitsCoerced() intrinsic.
