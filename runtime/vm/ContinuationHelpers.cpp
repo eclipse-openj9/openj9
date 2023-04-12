@@ -148,9 +148,9 @@ BOOLEAN
 enterContinuation(J9VMThread *currentThread, j9object_t continuationObject)
 {
 	BOOLEAN result = TRUE;
-	jboolean started = J9VMJDKINTERNALVMCONTINUATION_STARTED(currentThread, continuationObject);
 	J9VMContinuation *continuation = J9VMJDKINTERNALVMCONTINUATION_VMREF(currentThread, continuationObject);
 	ContinuationState volatile *continuationStatePtr = VM_VMHelpers::getContinuationStateAddress(currentThread, continuationObject);
+	bool started = VM_VMHelpers::isStarted(*continuationStatePtr);
 	Assert_VM_Null(currentThread->currentContinuation);
 
 	if ((!started) && (NULL == continuation)) {
@@ -185,11 +185,10 @@ enterContinuation(J9VMThread *currentThread, j9object_t continuationObject)
 	if (started) {
 		/* resuming Continuation from yieldImpl */
 		VM_OutOfLineINL_Helpers::restoreInternalNativeStackFrame(currentThread);
-		VM_OutOfLineINL_Helpers::returnSingle(currentThread, JNI_TRUE, 0);
+		VM_OutOfLineINL_Helpers::returnSingle(currentThread, JNI_TRUE, 1);
 		result = FALSE;
 	} else {
 		/* start new Continuation execution */
-		J9VMJDKINTERNALVMCONTINUATION_SET_STARTED(currentThread, continuationObject, JNI_TRUE);
 		VM_VMHelpers::setContinuationStarted(continuationStatePtr);
 
 		/* prepare callin frame, send method will be set by interpreter */
@@ -213,7 +212,7 @@ enterContinuation(J9VMThread *currentThread, j9object_t continuationObject)
 }
 
 BOOLEAN
-yieldContinuation(J9VMThread *currentThread)
+yieldContinuation(J9VMThread *currentThread, BOOLEAN isFinished)
 {
 	BOOLEAN result = TRUE;
 	J9VMContinuation *continuation = currentThread->currentContinuation;
@@ -221,9 +220,8 @@ yieldContinuation(J9VMThread *currentThread)
 	ContinuationState volatile *continuationStatePtr = VM_VMHelpers::getContinuationStateAddress(currentThread, continuationObject);
 	Assert_VM_notNull(currentThread->currentContinuation);
 	Assert_VM_false(VM_VMHelpers::isPendingToBeMounted(*continuationStatePtr));
-	jboolean finished = J9VMJDKINTERNALVMCONTINUATION_FINISHED(currentThread, continuationObject);
 
-	if (finished) {
+	if (isFinished) {
 		VM_VMHelpers::setContinuationFinished(continuationStatePtr);
 	}
 
@@ -254,7 +252,7 @@ yieldContinuation(J9VMThread *currentThread)
 	 * missed due to the continuation still is stated as mounted(we don't scan any mounted continuation, it should be scanned during root scanning via J9VMThread->currentContinuation).
 	 * so calling postUnmountContinuation() after resetContinuationCarrierID() to avoid the missing scan case.
 	 */
-	if (!finished) {
+	if (!isFinished) {
 		/* Notify GC of Continuation stack swap */
 		currentThread->javaVM->memoryManagerFunctions->postUnmountContinuation(currentThread, continuationObject);
 	}

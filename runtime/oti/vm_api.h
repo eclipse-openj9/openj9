@@ -4373,10 +4373,11 @@ enterContinuation(struct J9VMThread *currentThread, j9object_t continuationObjec
  * @brief Suspends the Continuation runnable.
  *
  * @param currentThread
+ * @param isFinished true if it is last unmount
  * @return BOOLEAN
  */
 BOOLEAN
-yieldContinuation(struct J9VMThread *currentThread);
+yieldContinuation(struct J9VMThread *currentThread, BOOLEAN isFinished);
 
 /**
  * @brief Free the native memory allocated by Continuation.
