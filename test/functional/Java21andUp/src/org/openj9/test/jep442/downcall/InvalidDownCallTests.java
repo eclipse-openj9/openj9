@@ -19,7 +19,7 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-package org.openj9.test.jep434.downcall;
+package org.openj9.test.jep442.downcall;
 
 import org.testng.annotations.Test;
 import org.testng.Assert;
@@ -45,7 +45,7 @@ import java.lang.foreign.SymbolLookup;
 import static java.lang.foreign.ValueLayout.*;
 
 /**
- * Test cases for JEP 434: Foreign Linker API (Second Preview) for primitive types in downcall,
+ * Test cases for JEP 442: Foreign Linker API (Third Preview) for primitive types in downcall,
  * which verify the illegal cases including unsupported layouts, etc.
  * Note: the majority of illegal cases are removed given the corresponding method type
  * is deduced from the function descriptor which is verified in OpenJDK.
