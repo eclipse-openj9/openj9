@@ -75,6 +75,7 @@
 			<fileset dir="${src}/../" includes="*.xml" />
 			<fileset dir="${src}/../" includes="*.mk" />
 			<fileset dir="${src}/../" includes="*.sh" />
+			<fileset dir="${src}/../../jitserver" includes="jitserverconfig.sh" />
 		</copy>
 	</target>
 
