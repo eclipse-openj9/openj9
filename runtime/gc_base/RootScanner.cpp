@@ -1042,6 +1042,7 @@ MM_RootScanner::scanClearable(MM_EnvironmentBase *env)
 	}
 
 	scanOwnableSynchronizerObjects(env);
+
 	scanContinuationObjects(env);
 #if JAVA_SPEC_VERSION >= 19
 	J9JavaVM *vm = (J9JavaVM*)env->getOmrVM()->_language_vm;

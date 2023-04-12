@@ -209,6 +209,11 @@ public:
 		onStarted = 1,
 	};
 	TimingAddContinuationInList timingAddContinuationInList;
+	enum TimingPruneContinuationFromList {
+		onGCClearable = 0,
+		onLastUnmount = 1,
+	};
+	TimingPruneContinuationFromList timingPruneContinuationFromList;
 protected:
 private:
 protected:
@@ -338,6 +343,19 @@ public:
 	MMINLINE virtual bool reinitializationInProgress() { return (NULL != ((J9JavaVM*)_omrVM->_language_vm)->checkpointState.checkpointThread); }
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
+	MMINLINE bool needLockForUpdatingContinuationList(MM_EnvironmentBase* env)
+	{
+		uintptr_t cycle_type = OMR_GC_CYCLE_TYPE_DEFAULT;
+		if (NULL != env->_cycleState) {
+			cycle_type = env->_cycleState->_type;
+		}
+		J9VMThread *currentThread = (J9VMThread *)env->getLanguageVMThread();
+		return ((onLastUnmount == timingPruneContinuationFromList) && ((OMR_GC_CYCLE_TYPE_DEFAULT == cycle_type) ||
+																	   ((OMR_GC_CYCLE_TYPE_SCAVENGE == cycle_type) && (MUTATOR_THREAD == env->getThreadType()) && (isConcurrentScavengerInProgress())) ||
+																	   ((OMR_GC_CYCLE_TYPE_GLOBAL == cycle_type) && (J9_ARE_ANY_BITS_SET(currentThread->privateFlags, J9_PRIVATE_FLAGS_CONCURRENT_MARK_ACTIVE)))
+//																	   || ((OMR_GC_CYCLE_TYPE_VLHGC_GLOBAL_GARBAGE_COLLECT == cycle_type) && ((MM_VLHGCIncrementStats::mark_concurrent == static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._globalMarkIncrementType)))
+																	   ));
+	}
 	/**
 	 * Create a GCExtensions object
 	 */
@@ -387,6 +405,7 @@ public:
 		, recycleRemainders(true)
 		, continuationListOption(enable_continuation_list)
 		, timingAddContinuationInList(onCreated)
+		, timingPruneContinuationFromList(onGCClearable)
 	{
 		_typeId = __FUNCTION__;
 	}

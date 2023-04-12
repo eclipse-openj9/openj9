@@ -61,5 +61,6 @@ public:
 	 * @param maxObjectCount the maximum number of objects permitted before a forced flush
 	 */
 	MM_ContinuationObjectBufferRealtime(MM_GCExtensions *extensions, uintptr_t maxObjectCount);
+	virtual void remove(MM_EnvironmentBase *env, j9object_t object);
 };
 #endif /* CONTINUATIONOBJECTBUFFERREALTIME_HPP_ */

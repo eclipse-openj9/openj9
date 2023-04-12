@@ -72,9 +72,26 @@ MM_ContinuationObjectBufferRealtime::flushImpl(MM_EnvironmentBase* env)
 {
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
 	MM_ContinuationObjectList *continuationObjectList = &extensions->getContinuationObjectLists()[_continuationObjectListIndex];
+#if JAVA_SPEC_VERSION >= 19
+	for (j9object_t obj = _head; NULL != obj; ) {
+		J9VMJDKINTERNALVMCONTINUATION_SET_IDXSUBLIST((J9VMThread *)env->getLanguageVMThread(), obj, _continuationObjectListIndex);
+		obj = extensions->accessBarrier->getContinuationLink(obj);
+	}
+#endif /* JAVA_SPEC_VERSION >= 19 */
 	continuationObjectList->addAll(env, _head, _tail);
 	_continuationObjectListIndex += 1;
 	if (extensions->realtimeGC->getRealtimeDelegate()->getContinuationObjectListCount(env) == _continuationObjectListIndex) {
 		_continuationObjectListIndex = 0;
 	}
+}
+
+void
+MM_ContinuationObjectBufferRealtime::remove(MM_EnvironmentBase *env, j9object_t object)
+{
+#if JAVA_SPEC_VERSION >= 19
+	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
+	int continuationObjectListIndex = J9VMJDKINTERNALVMCONTINUATION_IDXSUBLIST((J9VMThread *)env->getLanguageVMThread(), object);
+	MM_ContinuationObjectList *list = &extensions->getContinuationObjectLists()[continuationObjectListIndex];
+	list->remove(env, object);
+#endif /* JAVA_SPEC_VERSION >= 19 */
 }

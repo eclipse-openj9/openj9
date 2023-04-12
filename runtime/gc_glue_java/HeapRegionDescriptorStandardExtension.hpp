@@ -151,6 +151,9 @@ failed:
 		}
 
 		if (NULL != *continuationObjectLists) {
+			for (uintptr_t idx=0; idx <_maxListIndex; idx++) {
+				continuationObjectLists[idx]->tearDown(env);
+			}
 			env->getForge()->free(*continuationObjectLists);
 			*continuationObjectLists = NULL;
 		}

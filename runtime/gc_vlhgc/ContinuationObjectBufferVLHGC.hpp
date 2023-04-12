@@ -70,5 +70,6 @@ public:
 	void addForOnlyCompactedRegion(MM_EnvironmentBase* env, j9object_t object);
 
 	static void iterateAllContinuationObjects(MM_EnvironmentBase *env);
+	virtual void remove(MM_EnvironmentBase *env, j9object_t object);
 };
 #endif /* CONTINUATIONOBJECTBUFFERVLHGC_HPP_ */

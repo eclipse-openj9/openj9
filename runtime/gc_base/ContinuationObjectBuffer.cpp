@@ -74,20 +74,31 @@ MM_ContinuationObjectBuffer::add(MM_EnvironmentBase *env, j9object_t object)
 {
 	Assert_MM_true(object != _head);
 	Assert_MM_true(object != _tail);
-
+//
+//	PORT_ACCESS_FROM_ENVIRONMENT(env);
+//	j9tty_printf(PORTLIB, "MM_ContinuationObjectBuffer::add object=%p, _head=%p, _tail=%p\n", object, _head, _tail);
+//
+	_extensions->accessBarrier->setContinuationLinkPrevious(object, NULL);
 	if ( (_objectCount < _maxObjectCount) && _region->isAddressInRegion(object) ) {
 		/* object is permitted in this buffer */
 		Assert_MM_true(NULL != _head);
 		Assert_MM_true(NULL != _tail);
 
 		_extensions->accessBarrier->setContinuationLink(object, _head);
+		_extensions->accessBarrier->setContinuationLinkPrevious(_head, object);
+
 		_head = object;
 		_objectCount += 1;
 	} else {
 		MM_HeapRegionDescriptor *region = _region;
 
 		/* flush the buffer and start fresh */
-		flush(env);
+		if (!_extensions->needLockForUpdatingContinuationList(env)) {
+			flush(env);
+		} else {
+			Assert_MM_true(NULL == _head);
+			Assert_MM_true(NULL == _tail);
+		}
 		_extensions->accessBarrier->setContinuationLink(object, NULL);
 		_head = object;
 		_tail = object;
@@ -100,9 +111,11 @@ MM_ContinuationObjectBuffer::add(MM_EnvironmentBase *env, j9object_t object)
 			Assert_GC_true_with_message(env, NULL != region, "Attempt to access continuation object located outside of heap (stack allocated?) %p\n", object);
 		}
 		_region = region;
-
+		if (_extensions->needLockForUpdatingContinuationList(env)) {
+			flush(env);
+		}
 	}
-	Assert_MM_true(_region->isAddressInRegion(object));
+//	Assert_MM_true(_region->isAddressInRegion(object));
 }
 
 /*

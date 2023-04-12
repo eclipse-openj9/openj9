@@ -60,7 +60,8 @@ protected:
 #endif /* defined(OMR_GC_COMPRESSED_POINTERS) */
 	UDATA _referenceLinkOffset; /** Offset within java/lang/ref/Reference of the reference link field */
 	UDATA _ownableSynchronizerLinkOffset; /** Offset within java/util/concurrent/locks/AbstractOwnableSynchronizer of the ownable synchronizer link field */
-	UDATA _continuationLinkOffset; /** Offset within java/lang/VirtualThread$VThreadContinuation (jdk/internal/vm/Continuation) of the continuation link field */
+	UDATA _continuationLinkOffset; /** Offset within java/lang/VirtualThread$VThreadContinuation (jdk/internal/vm/Continuation) of the continuation linknext field */
+	UDATA _continuationLinkOffsetPrevious; /** Offset within java/lang/VirtualThread$VThreadContinuation (jdk/internal/vm/Continuation) of the continuation linkprevious field */
 public:
 
 	/* member function */
@@ -500,6 +501,8 @@ public:
 	 */
 	void setContinuationLink(j9object_t object, j9object_t value);
 
+	void setContinuationLinkPrevious(j9object_t object, j9object_t value);
+
 	/**
 	 * Fetch the continuationLink link field of the specified reference object.
 	 * @param object the object to read
@@ -510,6 +513,14 @@ public:
 		UDATA linkOffset = _continuationLinkOffset;
 		fj9object_t *continuationLink = (fj9object_t*)((UDATA)object + linkOffset);
 		GC_SlotObject slot(_extensions->getOmrVM(), continuationLink);
+		return slot.readReferenceFromSlot();
+	}
+
+	j9object_t getContinuationLinkPrevious(j9object_t object)
+	{
+		UDATA linkOffset = _continuationLinkOffsetPrevious;
+		fj9object_t *continuationLinkPrevious = (fj9object_t*)((UDATA)object + linkOffset);
+		GC_SlotObject slot(_extensions->getOmrVM(), continuationLinkPrevious);
 		return slot.readReferenceFromSlot();
 	}
 
@@ -616,6 +627,7 @@ public:
 		, _referenceLinkOffset(UDATA_MAX)
 		, _ownableSynchronizerLinkOffset(UDATA_MAX)
 		, _continuationLinkOffset(UDATA_MAX)
+		, _continuationLinkOffsetPrevious(UDATA_MAX)
 	{
 		_typeId = __FUNCTION__;
 	}

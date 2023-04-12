@@ -1070,6 +1070,10 @@ UDATA
 continuationObjectFinished(J9VMThread *vmThread, j9object_t object)
 {
 	Assert_MM_true(NULL != object);
+	MM_EnvironmentBase *env = MM_EnvironmentBase::getEnvironment(vmThread->omrVMThread);
+	if (MM_GCExtensions::onLastUnmount == MM_GCExtensions::getExtensions(env)->timingPruneContinuationFromList) {
+		env->getGCEnvironment()->_continuationObjectBuffer->remove(env, object);
+	}
 	return 0;
 }
 

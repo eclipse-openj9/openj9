@@ -2804,18 +2804,21 @@ configurateGCWithPolicyAndOptions(OMR_VM* omrVM)
 
 	case gc_policy_metronome:
 		extensions->gcModeString = "-Xgcpolicy:metronome";
+		extensions->timingPruneContinuationFromList = MM_GCExtensions::onGCClearable;
 		omrVM->gcPolicy = J9_GC_POLICY_METRONOME;
 		result = MM_ConfigurationRealtime::newInstance(&env);
 		break;
 
 	case gc_policy_balanced:
 		extensions->gcModeString = "-Xgcpolicy:balanced";
+		extensions->timingPruneContinuationFromList = MM_GCExtensions::onGCClearable;
 		omrVM->gcPolicy = J9_GC_POLICY_BALANCED;
 		result = MM_ConfigurationIncrementalGenerational::newInstance(&env);
 		break;
 
 	case gc_policy_nogc:
 		extensions->gcModeString = "-Xgcpolicy:nogc";
+		extensions->timingPruneContinuationFromList = MM_GCExtensions::onGCClearable;
 		omrVM->gcPolicy = J9_GC_POLICY_NOGC;
 		/* noScavenge, noConcurrentMark, noConcurrentSweep, noLOA */
 		setConfigOptionsForNoGc(extensions);

@@ -75,6 +75,11 @@ MM_ContinuationObjectList::initialize(MM_EnvironmentBase *env)
 {
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
 
+	if (MM_GCExtensions::onLastUnmount == extensions->timingPruneContinuationFromList) {
+		if (!_lock.initialize(env, &extensions->lnrlOptions, "MM_ContinuationObjectList._lock")) {
+			return false;
+		}
+	}
 	setNextList(extensions->getContinuationObjectLists());
 	setPreviousList(NULL);
 	if (NULL != extensions->getContinuationObjectLists()) {
@@ -86,19 +91,77 @@ MM_ContinuationObjectList::initialize(MM_EnvironmentBase *env)
 }
 
 void
+MM_ContinuationObjectList::tearDown(MM_EnvironmentBase *env)
+{
+	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
+	if (MM_GCExtensions::onLastUnmount == extensions->timingPruneContinuationFromList) {
+		_lock.tearDown();
+	}
+}
+
+void
 MM_ContinuationObjectList::addAll(MM_EnvironmentBase* env, j9object_t head, j9object_t tail)
 {
 	Assert_MM_true(NULL != head);
 	Assert_MM_true(NULL != tail);
-
-	j9object_t previousHead = _head;
-	while (previousHead != (j9object_t)MM_AtomicOperations::lockCompareExchange((volatile uintptr_t*)&_head, (uintptr_t)previousHead, (uintptr_t)head)) {
-		previousHead = _head;
-	}
-
-	/* detect trivial cases which can inject cycles into the linked list */
-	Assert_MM_true( (head != previousHead) && (tail != previousHead) );
-
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
-	extensions->accessBarrier->setContinuationLink(tail, previousHead);
+
+	if (!extensions->needLockForUpdatingContinuationList(env)) {
+		j9object_t previousHead = _head;
+		while (previousHead != (j9object_t)MM_AtomicOperations::lockCompareExchange((volatile uintptr_t*)&_head, (uintptr_t)previousHead, (uintptr_t)head)) {
+			previousHead = _head;
+		}
+
+		/* detect trivial cases which can inject cycles into the linked list */
+		Assert_MM_true( (head != previousHead) && (tail != previousHead) );
+
+		extensions->accessBarrier->setContinuationLink(tail, previousHead);
+		if (NULL != previousHead) {
+			extensions->accessBarrier->setContinuationLinkPrevious(previousHead, tail);
+		}
+	} else {
+		_lock.acquire();
+//
+//		PORT_ACCESS_FROM_ENVIRONMENT(env);
+//		j9tty_printf(PORTLIB, "MM_ContinuationObjectList::addAll list=%p, head=%p, tail=%p, _head=%p\n", this, head, tail, _head);
+//
+		j9object_t previousHead = _head;
+		_head = head;
+		extensions->accessBarrier->setContinuationLink(tail, previousHead);
+		if (NULL != previousHead) {
+			extensions->accessBarrier->setContinuationLinkPrevious(previousHead, tail);
+		}
+		_lock.release();
+	}
+}
+
+void
+MM_ContinuationObjectList::remove(MM_EnvironmentBase* env, j9object_t obj)
+{
+	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
+	if (extensions->needLockForUpdatingContinuationList(env)) {
+		_lock.acquire();
+		if (_head == obj) {
+//
+//			PORT_ACCESS_FROM_ENVIRONMENT(env);
+//			j9tty_printf(PORTLIB, "MM_ContinuationObjectList::remove list=%p, obj=%p, _head=%p\n", this, obj, _head);
+//
+			_head = extensions->accessBarrier->getContinuationLink(obj);
+			if (NULL != _head) {
+				extensions->accessBarrier->setContinuationLinkPrevious(_head, NULL);
+			}
+		} else {
+			j9object_t previous = extensions->accessBarrier->getContinuationLinkPrevious(obj);
+			j9object_t next = extensions->accessBarrier->getContinuationLink(obj);
+//
+//			PORT_ACCESS_FROM_ENVIRONMENT(env);
+//			j9tty_printf(PORTLIB, "MM_ContinuationObjectList::remove list=%p, obj=%p, _head=%p, previous=%p, next=%p\n", this, obj, _head, previous, next);
+//
+			extensions->accessBarrier->setContinuationLink(previous, next);
+			if (NULL != next) {
+				extensions->accessBarrier->setContinuationLinkPrevious(next, previous);
+			}
+		}
+		_lock.release();
+	}
 }

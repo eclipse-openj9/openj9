@@ -314,6 +314,7 @@ yieldContinuation(J9VMThread *currentThread, BOOLEAN isFinished)
 	if (isFinished) {
 		/* Cleanup the native structure allocated */
 		freeContinuation(currentThread, continuationObject, FALSE);
+		currentThread->javaVM->memoryManagerFunctions->continuationObjectFinished(currentThread, continuationObject);
 	} else {
 		/* Notify GC of Continuation stack swap */
 		currentThread->javaVM->memoryManagerFunctions->postUnmountContinuation(currentThread, continuationObject);

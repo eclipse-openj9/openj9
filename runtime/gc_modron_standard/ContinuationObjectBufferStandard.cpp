@@ -77,7 +77,17 @@ MM_ContinuationObjectBufferStandard::flushImpl(MM_EnvironmentBase *env)
 	MM_HeapRegionDescriptorStandard *region = (MM_HeapRegionDescriptorStandard*)_region;
 	MM_HeapRegionDescriptorStandardExtension *regionExtension = MM_ConfigurationDelegate::getHeapRegionDescriptorStandardExtension(env, region);
 	MM_ContinuationObjectList *list = &regionExtension->_continuationObjectLists[_continuationObjectListIndex];
-
+#if JAVA_SPEC_VERSION >= 19
+	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
+	for (j9object_t obj = _head; NULL != obj; ) {
+		J9VMJDKINTERNALVMCONTINUATION_SET_IDXSUBLIST((J9VMThread *)env->getLanguageVMThread(), obj, _continuationObjectListIndex);
+		obj = extensions->accessBarrier->getContinuationLink(obj);
+	}
+//
+//	PORT_ACCESS_FROM_ENVIRONMENT(env);
+//	j9tty_printf(PORTLIB, "MM_ContinuationObjectBufferStandard::flushImpl list=%p, _head=%p, _continuationObjectListIndex=%zu, region=%p\n", list, _head, _continuationObjectListIndex, region);
+//
+	#endif /* JAVA_SPEC_VERSION >= 19 */
 	list->addAll(env, _head, _tail);
 	_continuationObjectListIndex += 1;
 	if (_continuationObjectListIndex >= regionExtension->_maxListIndex) {
@@ -137,5 +147,23 @@ MM_ContinuationObjectBufferStandard::iterateAllContinuationObjects(MM_Environmen
 			}
 		}
 	}
+#endif /* JAVA_SPEC_VERSION >= 19 */
+}
+
+void
+MM_ContinuationObjectBufferStandard::remove(MM_EnvironmentBase *env, j9object_t object)
+{
+#if JAVA_SPEC_VERSION >= 19
+	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
+	int continuationObjectListIndex = J9VMJDKINTERNALVMCONTINUATION_IDXSUBLIST((J9VMThread *)env->getLanguageVMThread(), object);
+	MM_HeapRegionManager *regionManager = extensions->getHeap()->getHeapRegionManager();
+	MM_HeapRegionDescriptorStandard *region = (MM_HeapRegionDescriptorStandard*)regionManager->regionDescriptorForAddress(object);
+	MM_HeapRegionDescriptorStandardExtension *regionExtension = MM_ConfigurationDelegate::getHeapRegionDescriptorStandardExtension(env, region);
+	MM_ContinuationObjectList *list = &regionExtension->_continuationObjectLists[continuationObjectListIndex];
+//
+//	PORT_ACCESS_FROM_ENVIRONMENT(env);
+//	j9tty_printf(PORTLIB, "MM_ContinuationObjectBufferStandard::remove list=%p, object=%p, continuationObjectListIndex=%zu, region=%p\n", list, object, continuationObjectListIndex, region);
+//
+	list->remove(env, object);
 #endif /* JAVA_SPEC_VERSION >= 19 */
 }

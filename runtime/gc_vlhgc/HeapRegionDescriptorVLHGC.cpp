@@ -108,13 +108,14 @@ MM_HeapRegionDescriptorVLHGC::initialize(MM_EnvironmentBase *env, MM_HeapRegionM
 	}
 	extensions->setOwnableSynchronizerObjectLists(&_ownableSynchronizerObjectList);
 	
+	_continuationObjectList.initialize(env);
 	/* add our continuation list to the global list (no locking - assumes single threaded initialization) */
-	_continuationObjectList.setNextList(extensions->getContinuationObjectLists());
-	_continuationObjectList.setPreviousList(NULL);
-	if (NULL != extensions->getContinuationObjectLists()) {
-		extensions->getContinuationObjectLists()->setPreviousList(&_continuationObjectList);
-	}
-	extensions->setContinuationObjectLists(&_continuationObjectList);
+//	_continuationObjectList.setNextList(extensions->getContinuationObjectLists());
+//	_continuationObjectList.setPreviousList(NULL);
+//	if (NULL != extensions->getContinuationObjectLists()) {
+//		extensions->getContinuationObjectLists()->setPreviousList(&_continuationObjectList);
+//	}
+//	extensions->setContinuationObjectLists(&_continuationObjectList);
 
 	return true;
 }
@@ -138,6 +139,7 @@ MM_HeapRegionDescriptorVLHGC::tearDown(MM_EnvironmentBase *env)
 	_rememberedSetCardList.tearDown(extensions);
 	extensions->unfinalizedObjectLists = NULL;
 	extensions->setOwnableSynchronizerObjectLists(NULL);
+	_continuationObjectList.tearDown(env);
 	extensions->setContinuationObjectLists(NULL);
 
 	MM_HeapRegionDescriptor::tearDown(env);
