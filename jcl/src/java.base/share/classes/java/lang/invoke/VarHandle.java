@@ -513,7 +513,7 @@ public abstract class VarHandle extends VarHandleInternal
 				}
 			}
 		} catch (IllegalAccessException | NoSuchMethodException e) {
-			/* [MSG "K0623", "Unable to create MethodHandle to VarHandle operation."] */
+			/*[MSG "K0623", "Unable to create MethodHandle to VarHandle operation."]*/
 			InternalError error = new InternalError(com.ibm.oti.util.Msg.getString("K0623")); //$NON-NLS-1$
 			error.initCause(e);
 			throw error;
@@ -626,7 +626,7 @@ public abstract class VarHandle extends VarHandleInternal
 				}
 			}
 		} catch (IllegalAccessException | NoSuchMethodException e) {
-			/* [MSG "K0623", "Unable to create MethodHandle to VarHandle operation."] */
+			/*[MSG "K0623", "Unable to create MethodHandle to VarHandle operation."]*/
 			InternalError error = new InternalError(com.ibm.oti.util.Msg.getString("K0623")); //$NON-NLS-1$
 			error.initCause(e);
 			throw error;

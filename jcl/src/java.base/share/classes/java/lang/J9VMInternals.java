@@ -97,7 +97,7 @@ final class J9VMInternals {
 	static void threadCompleteInitialization() {
 		/*[PR CMVC 99755] Implement -Djava.system.class.loader option */
 		Thread.currentThread().internalSetContextClassLoader(ClassLoader.getSystemClassLoader());
-		/*[IF JAVA_SPEC_VERSION > 8] */
+		/*[IF JAVA_SPEC_VERSION > 8]*/
 		jdk.internal.misc.VM.initLevel(4);
 		/*[ELSE] JAVA_SPEC_VERSION > 8 */
 		sun.misc.VM.booted();
@@ -106,7 +106,7 @@ final class J9VMInternals {
 		System.startSNMPAgent();
 		/*[ENDIF] Sidecar18-SE-OpenJ9 | (JAVA_SPEC_VERSION > 8) */
 
-		/*[IF JAVA_SPEC_VERSION >= 11] */
+		/*[IF JAVA_SPEC_VERSION >= 11]*/
 		System.finalizeConsoleEncoding();
 		/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 	}

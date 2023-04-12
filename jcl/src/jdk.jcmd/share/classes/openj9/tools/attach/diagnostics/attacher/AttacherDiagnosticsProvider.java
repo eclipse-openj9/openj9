@@ -72,7 +72,7 @@ public class AttacherDiagnosticsProvider {
 		try {
 			vm = attachProv.attachVirtualMachine(vmid);
 		} catch (AttachNotSupportedException e) {
-			/*[MSG "K0809", "Exception connecting to {0}"] */
+			/*[MSG "K0809", "Exception connecting to {0}"]*/
 			throw new IOException(getString("K0809", vmid)); //$NON-NLS-1$
 		}
 		IPC.logMessage("DiagnosticsProviderImpl attached to ", vmid); //$NON-NLS-1$
@@ -114,7 +114,7 @@ public class AttacherDiagnosticsProvider {
 
 	private void checkAttached() throws IOException {
 		if (null == vm) {
-			/*[MSG "K0544", "Target not attached"] */
+			/*[MSG "K0544", "Target not attached"]*/
 			throw new IOException(getString("K0554")); //$NON-NLS-1$
 		}
 	}

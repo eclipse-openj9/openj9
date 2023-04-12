@@ -66,11 +66,11 @@ final class SharedClassHelperFactoryImpl extends SharedAbstractHelperFactory imp
 	}
 
 	@Override
-	/*[IF Sidecar19-SE] */
+	/*[IF Sidecar19-SE]*/
 	@Deprecated(forRemoval=false, since="9")
 	/*[ENDIF]*/
 	public SharedClassHelper findHelperForClassLoader(ClassLoader loader) {
-		/*[IF Sidecar19-SE] */
+		/*[IF Sidecar19-SE]*/
 		Set<SharedClassHelper> helperSet = findHelpersForClassLoader(loader);
 		int size = helperSet.size();
 		if (1 == size) {
@@ -87,7 +87,7 @@ final class SharedClassHelperFactoryImpl extends SharedAbstractHelperFactory imp
 		/*[ENDIF] Sidecar19-SE */
 	}
 
-	/*[IF Sidecar19-SE] */
+	/*[IF Sidecar19-SE]*/
 	@Override
 	public Set<SharedClassHelper> findHelpersForClassLoader(ClassLoader loader) {
 		Set<SharedClassHelper> helperSet = new HashSet<>();
@@ -109,7 +109,7 @@ final class SharedClassHelperFactoryImpl extends SharedAbstractHelperFactory imp
 
 	@Override
 	public SharedClassTokenHelper getTokenHelper(ClassLoader loader, SharedClassFilter filter)
-	/*[IF !Sidecar19-SE] */
+	/*[IF !Sidecar19-SE]*/
 			throws HelperAlreadyDefinedException
 	/*[ENDIF] !Sidecar19-SE */
 	{
@@ -122,7 +122,7 @@ final class SharedClassHelperFactoryImpl extends SharedAbstractHelperFactory imp
 
 	@Override
 	public SharedClassTokenHelper getTokenHelper(ClassLoader loader)
-	/*[IF !Sidecar19-SE] */
+	/*[IF !Sidecar19-SE]*/
 			throws HelperAlreadyDefinedException
 	/*[ENDIF] !Sidecar19-SE */
 	{
@@ -168,7 +168,7 @@ final class SharedClassHelperFactoryImpl extends SharedAbstractHelperFactory imp
 
 	@Override
 	public SharedClassURLHelper getURLHelper(ClassLoader loader, SharedClassFilter filter)
-	/*[IF !Sidecar19-SE] */
+	/*[IF !Sidecar19-SE]*/
 			throws HelperAlreadyDefinedException
 	/*[ENDIF] !Sidecar19-SE */
 	{
@@ -181,7 +181,7 @@ final class SharedClassHelperFactoryImpl extends SharedAbstractHelperFactory imp
 
 	@Override
 	public SharedClassURLHelper getURLHelper(ClassLoader loader)
-	/*[IF !Sidecar19-SE] */
+	/*[IF !Sidecar19-SE]*/
 			throws HelperAlreadyDefinedException
 	/*[ENDIF] !Sidecar19-SE */
 	{
@@ -253,7 +253,7 @@ final class SharedClassHelperFactoryImpl extends SharedAbstractHelperFactory imp
 			SharedClassURLClasspathHelperImpl result;
 			boolean found = true;
 			if (helper != null) {
-				/*[IF !Sidecar19-SE] */
+				/*[IF !Sidecar19-SE]*/
 				if (helper instanceof SharedClassURLClasspathHelper) {
 					/*[ENDIF] !Sidecar19-SE */
 					result = (SharedClassURLClasspathHelperImpl) helper;
@@ -270,7 +270,7 @@ final class SharedClassHelperFactoryImpl extends SharedAbstractHelperFactory imp
 						/*[MSG "K059e", "A SharedClassURLClasspathHelper already exists for this classloader with a different classpath"]*/
 						throw new HelperAlreadyDefinedException(Msg.getString("K059e")); //$NON-NLS-1$
 					}
-				/*[IF !Sidecar19-SE] */
+				/*[IF !Sidecar19-SE]*/
 				} else {
 					/*[MSG "K059d", "A different type of helper already exists for this classloader"]*/
 					throw new HelperAlreadyDefinedException(Msg.getString("K059d")); //$NON-NLS-1$

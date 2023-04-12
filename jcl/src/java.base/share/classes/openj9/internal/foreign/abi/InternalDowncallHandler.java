@@ -121,7 +121,7 @@ public class InternalDowncallHandler {
 	 */
 	/*[IF JAVA_SPEC_VERSION >= 20]*/
 	private Set<SegmentScope> memArgScopeSet;
-	/*[ELSEIF JAVA_SPEC_VERSION == 19] */
+	/*[ELSEIF JAVA_SPEC_VERSION == 19]*/
 	private Set<MemorySession> memArgScopeSet;
 	/*[ELSE] JAVA_SPEC_VERSION == 19 */
 	private Set<ResourceScope> memArgScopeSet;
