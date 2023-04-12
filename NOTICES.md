@@ -1,7 +1,16 @@
-# Eclipse Foundation Software User Agreement
+# Notices for Eclipse OpenJ9
+
+* Project home: https://github.com/eclipse-openj9/openj9
+
+
+## Trademarks
+
+Java and all Java-based trademarks are trademarks of Oracle Corporation in the United States, other countries, or both.
+
 
 ## Eclipse Foundation Software User Agreement
 August 31, 2017
+
 
 ### Usage Of Content
 
@@ -11,6 +20,7 @@ CONDITIONS OF LICENSE AGREEMENTS OR NOTICES INDICATED OR REFERENCED BELOW.  BY U
 OF THE CONTENT IS GOVERNED BY THIS AGREEMENT AND/OR THE TERMS AND CONDITIONS OF ANY APPLICABLE LICENSE AGREEMENTS OR
 NOTICES INDICATED OR REFERENCED BELOW.  IF YOU DO NOT AGREE TO THE TERMS AND CONDITIONS OF THIS AGREEMENT AND THE TERMS AND
 CONDITIONS OF ANY APPLICABLE LICENSE AGREEMENTS OR NOTICES INDICATED OR REFERENCED BELOW, THEN YOU MAY NOT USE THE CONTENT.
+
 
 ### Applicable Licenses
 
@@ -82,10 +92,24 @@ Machine in accordance with the Specification. Such Installable Software Agreemen
 the Installable Software and must solicit acceptance by the end user in the manner prescribed in such Installable Software Agreement. Upon such
 indication of agreement by the user, the provisioning Technology will complete installation of the Installable Software.
 
+
 ### Cryptography
 
 Content may contain encryption software. The country in which you are currently may have restrictions on the import, possession, and use, and/or re-export to
 another country, of encryption software. BEFORE using any encryption software, please check the country's laws, regulations and policies concerning the import,
 possession, or use, and re-export of encryption software, to see if this is permitted.
 
-<small>Java and all Java-based trademarks are trademarks of Oracle Corporation in the United States, other countries, or both.</small>
+
+## Third-party Content
+
+Checkpoint/Restore In Userspace (CRIU) (3.17.1)
+
+* License: GPL v2, LGPL v2.1 [https://github.com/checkpoint-restore/criu/blob/criu-dev/COPYING](https://github.com/checkpoint-restore/criu/blob/criu-dev/COPYING)
+* Project: https://criu.org/Main_Page
+* Source: https://github.com/ibmruntimes/criu
+
+OpenSSL 1.1.1
+
+* License: https://github.com/openssl/openssl/blob/OpenSSL_1_1_1-stable/LICENSE
+* Project: https://www.openssl.org/
+* Source: https://github.com/openssl/openssl or https://github.com/ibmruntimes/openssl
