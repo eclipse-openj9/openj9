@@ -186,6 +186,7 @@ J9::Power::AheadOfTimeCompile::initializePlatformSpecificAOTRelocationHeader(TR:
       case TR_ArrayCopyToc:
       case TR_BodyInfoAddressLoad:
       case TR_CatchBlockCounter:
+      case TR_StartPC:
       case TR_RecompQueuedFlag:
          {
          TR_RelocationRecord *rRecord = reinterpret_cast<TR_RelocationRecord *>(reloRecord);

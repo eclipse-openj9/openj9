@@ -135,3 +135,4 @@ exact type of the API class for each relocation kind can be found in
 |`TR_DiscontiguousSymbolFromManager`|Relocates a discontiguous pointer materialized by using its SVM ID.|
 |`TR_MethodCallAddress`|Relocates the address of a call target. Only used in JitServer (in AOT, all other methods are assumed to be interpreted).|
 |`TR_CatchBlockCounter`|Relocates the address of the catch block counter in the `TR_PersistentMethodInfo` of the method being compiled.|
+|`TR_StartPC`|Relocates the startPC of the method being compiled. Only implemented and used on Power.|

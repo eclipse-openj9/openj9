@@ -863,6 +863,9 @@ TR_RelocationRecord::create(TR_RelocationRecord *storage, TR_RelocationRuntime *
       case TR_CatchBlockCounter:
          reloRecord = new (storage) TR_RelocationRecordCatchBlockCounter(reloRuntime, record);
          break;
+      case TR_StartPC:
+         reloRecord = new (storage) TR_RelocationRecordStartPC(reloRuntime, record);
+         break;
       default:
          // TODO: error condition
          printf("Unexpected relo record: %d\n", reloType);fflush(stdout);
@@ -6486,6 +6489,38 @@ TR_RelocationRecordCatchBlockCounter::applyRelocation(TR_RelocationRuntime *relo
    return TR_RelocationErrorCode::relocationOK;
    }
 
+// TR_StartPC
+//
+char *
+TR_RelocationRecordStartPC::name()
+   {
+   return "TR_StartPC";
+   }
+
+void
+TR_RelocationRecordStartPC::preparePrivateData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget)
+   {
+   TR_RelocationRecordWithOffsetPrivateData *reloPrivateData = &(privateData()->offset);
+   reloPrivateData->_addressToPatch = reinterpret_cast<uint8_t *>(reloRuntime->exceptionTable()->startPC);
+   RELO_LOG(reloRuntime->reloLogger(), 6, "\tpreparePrivateData: addressToPatch: %p \n", reloPrivateData->_addressToPatch);
+   }
+
+TR_RelocationErrorCode
+TR_RelocationRecordStartPC::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation)
+   {
+   TR_RelocationRecordWithOffsetPrivateData *reloPrivateData = &(privateData()->offset);
+   reloTarget->storeAddressSequence(reloPrivateData->_addressToPatch, reloLocation, reloFlags(reloTarget));
+   return TR_RelocationErrorCode::relocationOK;
+   }
+
+TR_RelocationErrorCode
+TR_RelocationRecordStartPC::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocationHigh, uint8_t *reloLocationLow)
+   {
+   TR_RelocationRecordWithOffsetPrivateData *reloPrivateData = &(privateData()->offset);
+   reloTarget->storeAddress(reloPrivateData->_addressToPatch, reloLocationHigh, reloLocationLow, reloFlags(reloTarget));
+   return TR_RelocationErrorCode::relocationOK;
+   }
+
 // The _relocationRecordHeaderSizeTable table should be the last thing in this file
 uint32_t TR_RelocationRecord::_relocationRecordHeaderSizeTable[TR_NumExternalRelocationKinds] =
    {
@@ -6603,5 +6638,6 @@ uint32_t TR_RelocationRecord::_relocationRecordHeaderSizeTable[TR_NumExternalRel
    sizeof(TR_RelocationRecordConstantPoolWithIndexBinaryTemplate),                   // TR_StaticDefaultValueInstance                   = 111
    sizeof(TR_RelocationRecordValidateIsClassVisibleBinaryTemplate),                  // TR_ValidateIsClassVisible                       = 112
    sizeof(TR_RelocationRecordBinaryTemplate),                                        // TR_CatchBlockCounter                            = 113
+   sizeof(TR_RelocationRecordBinaryTemplate),                                        // TR_StartPC                                      = 114
    };
 // The _relocationRecordHeaderSizeTable table should be the last thing in this file
