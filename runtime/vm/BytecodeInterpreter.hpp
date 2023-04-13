@@ -41,7 +41,7 @@
 #include "util_api.h"
 #include "vm_internal.h"
 #include "jni.h"
-#define FFI_BUILDING /* Needed on Windows to link libffi statically */ 
+#define FFI_BUILDING /* Needed on Windows to link libffi statically */
 #include "ffi.h"
 #include "jitregmap.h"
 #include "j2sever.h"
@@ -79,9 +79,11 @@
 
 #define DO_INTERPRETER_PROFILING
 #if defined(DEBUG_VERSION)
-#define DO_HOOKS
 #define DO_SINGLE_STEP
 #endif /* DEBUG_VERSION */
+#if defined(DEBUG_VERSION) || defined(J9VM_OPT_CRIU_SUPPORT)
+#define DO_HOOKS
+#endif /* defined(DEBUG_VERSION) || defined(J9VM_OPT_CRIU_SUPPORT) */
 
 typedef enum {
 	VM_NO,
@@ -1104,7 +1106,7 @@ obj:
 	{
 		j9object_t instance = NULL;
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-		if (J9_ARE_NO_BITS_SET(arrayClass->classFlags, J9ClassContainsUnflattenedFlattenables)) 
+		if (J9_ARE_NO_BITS_SET(arrayClass->classFlags, J9ClassContainsUnflattenedFlattenables))
 #endif
 		{
 			instance = VM_VMHelpers::inlineAllocateIndexableObject(_currentThread, &_objectAllocate, arrayClass, size, initializeSlots, memoryBarrier, sizeCheck);
@@ -2202,7 +2204,7 @@ done:
 			bool enterHooked = J9_EVENT_IS_HOOKED(_vm->hookInterface, J9HOOK_VM_NATIVE_METHOD_ENTER);
 			if (tracing || enterHooked) {
 				UDATA relativeBP = _arg0EA - bp;
-				updateVMStruct(REGISTER_ARGS);		
+				updateVMStruct(REGISTER_ARGS);
 				if (tracing) {
 					UTSI_TRACEMETHODENTER_FROMVM(_vm, _currentThread, _sendMethod, _arg0EA, 0);
 				}
@@ -2942,8 +2944,8 @@ done:
 		if (NULL == arrayClazz) {
 			buildInternalNativeStackFrame(REGISTER_ARGS);
 			updateVMStruct(REGISTER_ARGS);
-			arrayClazz = internalCreateArrayClass(_currentThread, 
-				(J9ROMArrayClass *) J9ROMIMAGEHEADER_FIRSTCLASS(_currentThread->javaVM->arrayROMClasses), 
+			arrayClazz = internalCreateArrayClass(_currentThread,
+				(J9ROMArrayClass *) J9ROMIMAGEHEADER_FIRSTCLASS(_currentThread->javaVM->arrayROMClasses),
 				componentClazz);
 			VMStructHasBeenUpdated(REGISTER_ARGS);
 			if (VM_VMHelpers::exceptionPending(_currentThread) || (NULL == arrayClazz)) {
@@ -3931,7 +3933,7 @@ done:
 		j9object_t *value = (j9object_t*)_sp;
 		UDATA offset = (UDATA)*(I_64*)(_sp + 1);
 		j9object_t obj = *(j9object_t*)(_sp + 3);
-		
+
 		buildInternalNativeStackFrame(REGISTER_ARGS);
 		updateVMStruct(REGISTER_ARGS);
 		VM_UnsafeAPI::putObject(_currentThread, &_objectAccessBarrier, obj, offset, isVolatile, value);
@@ -5009,7 +5011,7 @@ done:
 		return EXECUTE_BYTECODE;
 	}
 
-	/* sun.reflect.Reflection (JDK8) 
+	/* sun.reflect.Reflection (JDK8)
 	 * jdk.internal.reflect.Reflection (JDK11+): private static native int getClassAccessFlags(Class<?> cls);
 	 */
 	VMINLINE VM_BytecodeAction
@@ -5443,7 +5445,7 @@ done:
 				updateVMStruct(REGISTER_ARGS);
 
 				resolvedValue = resolveConstantDynamic(_currentThread, ramConstantPool, index, J9_RESOLVE_FLAG_RUNTIME_RESOLVE);
-		
+
 				VMStructHasBeenUpdated(REGISTER_ARGS);
 				restoreGenericSpecialStackFrame(REGISTER_ARGS);
 
@@ -6966,7 +6968,7 @@ retry:
 				break;
 			case J9DescriptionCpTypeConstantDynamic:
 				if (((J9RAMConstantDynamicRef*)ramCPEntry)->exception == _vm->voidReflectClass->classObject) {
-					/* Void.class placed in the exception slot represents a valid null reference returned from resolution 
+					/* Void.class placed in the exception slot represents a valid null reference returned from resolution
 					 * directly restore the special frame and return the null reference
 					 */
 					restoreGenericSpecialStackFrame(REGISTER_ARGS);
@@ -6993,7 +6995,7 @@ retry:
 resolved:
 		_pc += (1 + parmSize);
 		_sp -= 1;
-		
+
 		if ((J9DescriptionCpTypeConstantDynamic == (romCPEntry->cpType & J9DescriptionCpTypeMask))
 		&& (0 != (romCPEntry->cpType >> J9DescriptionReturnTypeShift))
 		) {
@@ -7415,7 +7417,7 @@ done:
 		UDATA methodIndex = methodIndexAndArgCount >> 8;
 		j9object_t receiver = ((j9object_t*)_sp)[methodIndexAndArgCount & 0xFF];
 		if (J9_UNEXPECTED(NULL == receiver)) {
-			/* Resolution exceptions must be thrown first, so check if methodRef 
+			/* Resolution exceptions must be thrown first, so check if methodRef
 			 * is resolved before throwing NPE on receiver.
 			 */
 			if (methodIndex != J9VTABLE_INITIAL_VIRTUAL_OFFSET) {
@@ -7460,7 +7462,7 @@ done:
 		/* argCount was initialized when we initialized the class (i.e. it is non-volatile), so no memory barrier is required */
 		j9object_t receiver = ((j9object_t*)_sp)[ramMethodRef->methodIndexAndArgCount & 0xFF];
 		if (NULL == receiver) {
-			/* Resolution exceptions must be thrown first, so check if methodRef 
+			/* Resolution exceptions must be thrown first, so check if methodRef
 			 * is resolved before throwing NPE on receiver.
 			 */
 			if (!fromBytecode || ((J9Method *)_vm->initialMethods.initialSpecialMethod != _sendMethod)) {
@@ -8210,7 +8212,7 @@ retry:
 			if (J9_EXPECTED(NULL != arrayClass)) {
 				j9object_t instance = NULL;
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-				if (J9_ARE_NO_BITS_SET(arrayClass->classFlags, J9ClassContainsUnflattenedFlattenables)) 
+				if (J9_ARE_NO_BITS_SET(arrayClass->classFlags, J9ClassContainsUnflattenedFlattenables))
 #endif
 				{
 					instance = VM_VMHelpers::inlineAllocateIndexableObject(_currentThread, &_objectAllocate, arrayClass, (U_32) size);
@@ -10166,9 +10168,13 @@ public:
 			goto popFrames; \
 		case FALL_THROUGH: \
 			break;
-#else
+#elif defined(J9VM_OPT_CRIU_SUPPORT) /* defined(DEBUG_VERSION) */
+#define DEBUG_ACTIONS \
+		case REPORT_METHOD_ENTER: \
+			goto methodEnter;
+#else /* defined(J9VM_OPT_CRIU_SUPPORT) */
 #define DEBUG_ACTIONS
-#endif
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
 #if JAVA_SPEC_VERSION >= 16
 #define PERFORM_ACTION_VALUE_TYPE_IMSE \
