@@ -151,6 +151,7 @@ static void jvmtiHookVirtualThreadDestroy (J9HookInterface **hook, UDATA eventNu
 static void jvmtiHookVirtualThreadMount (J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData);
 static void jvmtiHookVirtualThreadUnmount (J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData);
 #endif /* JAVA_SPEC_VERSION >= 19 */
+static BOOLEAN shouldPostEvent(J9VMThread *currentThread, J9Method *method);
 
 static void
 jvmtiHookThreadEnd(J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData)
@@ -325,18 +326,20 @@ jvmtiHookMethodEnter(J9HookInterface** hook, UDATA eventNum, void* eventData, vo
 			method = data->method;
 		}
 
-		if (prepareForEvent(j9env, currentThread, currentThread, JVMTI_EVENT_METHOD_ENTRY, &threadRef, &hadVMAccess, TRUE, 0, &javaOffloadOldState)) {
-			J9JavaVM * vm = currentThread->javaVM;
-			jmethodID methodID;
+		if (shouldPostEvent(currentThread, method)) {
+			if (prepareForEvent(j9env, currentThread, currentThread, JVMTI_EVENT_METHOD_ENTRY, &threadRef, &hadVMAccess, TRUE, 0, &javaOffloadOldState)) {
+				J9JavaVM * vm = currentThread->javaVM;
+				jmethodID methodID;
 
-			methodID = getCurrentMethodID(currentThread, method);
-			vm->internalVMFunctions->internalExitVMToJNI(currentThread);
-			if (methodID != NULL) {
-				if (callback != NULL) {
-					callback((jvmtiEnv *) j9env, (JNIEnv *) currentThread, threadRef, methodID);
+				methodID = getCurrentMethodID(currentThread, method);
+				vm->internalVMFunctions->internalExitVMToJNI(currentThread);
+				if (methodID != NULL) {
+					if (callback != NULL) {
+						callback((jvmtiEnv *) j9env, (JNIEnv *) currentThread, threadRef, methodID);
+					}
 				}
+				finishedEvent(currentThread, JVMTI_EVENT_METHOD_ENTRY, hadVMAccess, javaOffloadOldState);
 			}
-			finishedEvent(currentThread, JVMTI_EVENT_METHOD_ENTRY, hadVMAccess, javaOffloadOldState);
 		}
 	}
 
@@ -838,6 +841,7 @@ jvmtiHookClassLoad(J9HookInterface** hook, UDATA eventNum, void* eventData, void
 {
 	J9VMClassLoadEvent * data = eventData;
 	J9JVMTIEnv * j9env = userData;
+	J9VMThread * currentThread = data->currentThread;
 
 	Trc_JVMTI_jvmtiHookClassLoad_Entry();
 
@@ -845,13 +849,14 @@ jvmtiHookClassLoad(J9HookInterface** hook, UDATA eventNum, void* eventData, void
 
 	/* Do not report the event for arrays or primitive types */
 
-	if (J9ROMCLASS_IS_PRIMITIVE_OR_ARRAY(data->clazz->romClass) == 0) {
+	if (0 == J9ROMCLASS_IS_PRIMITIVE_OR_ARRAY(data->clazz->romClass)
+		&& shouldPostEvent(currentThread, NULL)
+	) {
 		jvmtiEventClassLoad callback = j9env->callbacks.ClassLoad;
 
 		/* Call the event callback */
 
 		if (callback != NULL) {
-			J9VMThread * currentThread = data->currentThread;
 			jthread threadRef;
 			UDATA hadVMAccess;
 			UDATA javaOffloadOldState = 0;
@@ -1018,6 +1023,7 @@ jvmtiHookClassPrepare(J9HookInterface** hook, UDATA eventNum, void* eventData, v
 	J9VMClassPrepareEvent * data = eventData;
 	J9JVMTIEnv * j9env = userData;
 	jvmtiEventClassPrepare callback = j9env->callbacks.ClassPrepare;
+	J9VMThread * currentThread = data->currentThread;
 
 	Trc_JVMTI_jvmtiHookClassPrepare_Entry(
 		data->clazz, 
@@ -1030,8 +1036,7 @@ jvmtiHookClassPrepare(J9HookInterface** hook, UDATA eventNum, void* eventData, v
 
 	/* Call the event callback */
 
-	if (callback != NULL) {
-		J9VMThread * currentThread = data->currentThread;
+	if ((NULL != callback) && shouldPostEvent(currentThread, NULL)) {
 		jthread threadRef;
 		UDATA hadVMAccess;
 		UDATA javaOffloadOldState = 0;
@@ -1056,14 +1061,14 @@ jvmtiHookSingleStep(J9HookInterface** hook, UDATA eventNum, void* eventData, voi
 	J9VMSingleStepEvent * data = eventData;
 	J9JVMTIEnv * j9env = userData;
 	jvmtiEventSingleStep callback = j9env->callbacks.SingleStep;
+	J9VMThread * currentThread = data->currentThread;
 
 	Trc_JVMTI_jvmtiHookSingleStep_Entry();
 
 	ENSURE_EVENT_PHASE_LIVE(jvmtiHookSingleStep, j9env);
 
 	/* Call the event callback */
-	if (callback != NULL) {
-		J9VMThread * currentThread = data->currentThread;
+	if ((NULL != callback) && shouldPostEvent(currentThread, NULL)) {
 		jthread threadRef;
 		UDATA hadVMAccess;
 		UDATA javaOffloadOldState = 0;
@@ -1126,43 +1131,45 @@ jvmtiHookFieldAccess(J9HookInterface** hook, UDATA eventNum, void* eventData, vo
 			currentThread = data->currentThread;
 		}
 
-		/* Current thread has VM access, and the field watch list is only modified under exclusive */
+		if (shouldPostEvent(currentThread, NULL)) {
+			/* Current thread has VM access, and the field watch list is only modified under exclusive */
 
-		fieldID = findWatchedField(currentThread, j9env, FALSE, J9HOOK_VM_GET_FIELD != eventNum, tag, clazz);
+			fieldID = findWatchedField(currentThread, j9env, FALSE, J9HOOK_VM_GET_FIELD != eventNum, tag, clazz);
 
-		/* If the current field is not being watched, do nothing */
+			/* If the current field is not being watched, do nothing */
 
-		if (fieldID != NULL) {
-			jthread threadRef;
-			UDATA hadVMAccess;
-			UDATA javaOffloadOldState = 0;
+			if (fieldID != NULL) {
+				jthread threadRef;
+				UDATA hadVMAccess;
+				UDATA javaOffloadOldState = 0;
 
-			if (prepareForEvent(j9env, currentThread, currentThread, JVMTI_EVENT_FIELD_ACCESS, &threadRef, &hadVMAccess, TRUE, (object == NULL) ? 1 : 2, &javaOffloadOldState)) {
-				J9JavaVM * vm = currentThread->javaVM;
-				jmethodID methodID;
-				j9object_t * classRef = (j9object_t*) currentThread->arg0EA;
-				j9object_t * objectRef;
-				J9Class* clazz;
+				if (prepareForEvent(j9env, currentThread, currentThread, JVMTI_EVENT_FIELD_ACCESS, &threadRef, &hadVMAccess, TRUE, (object == NULL) ? 1 : 2, &javaOffloadOldState)) {
+					J9JavaVM * vm = currentThread->javaVM;
+					jmethodID methodID;
+					j9object_t * classRef = (j9object_t*) currentThread->arg0EA;
+					j9object_t * objectRef;
+					J9Class* clazz;
 
-				if (object == NULL) {
-					objectRef = NULL;
-				} else {
-					objectRef = (j9object_t*) (currentThread->arg0EA - 1);
-					*objectRef = object;
+					if (object == NULL) {
+						objectRef = NULL;
+					} else {
+						objectRef = (j9object_t*) (currentThread->arg0EA - 1);
+						*objectRef = object;
+					}
+					clazz = getCurrentClass(((J9JNIFieldID *) fieldID)->declaringClass);
+					*classRef = J9VM_J9CLASS_TO_HEAPCLASS(clazz);
+					methodID = getCurrentMethodID(currentThread, method);
+					vm->internalVMFunctions->internalExitVMToJNI(currentThread);
+					if (methodID != NULL) {
+						callback((jvmtiEnv *) j9env, (JNIEnv *) currentThread, threadRef, methodID, (jlocation) location, (jclass) classRef, (jobject) objectRef, fieldID);
+					}
+					vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
+					if (NULL != object) {
+						J9VMGetFieldEvent* data = eventData;
+						data->object = *objectRef;
+					}
+					finishedEvent(currentThread, JVMTI_EVENT_FIELD_ACCESS, hadVMAccess, javaOffloadOldState);
 				}
-				clazz = getCurrentClass(((J9JNIFieldID *) fieldID)->declaringClass);
-				*classRef = J9VM_J9CLASS_TO_HEAPCLASS(clazz);
-				methodID = getCurrentMethodID(currentThread, method);
-				vm->internalVMFunctions->internalExitVMToJNI(currentThread);
-				if (methodID != NULL) {
-					callback((jvmtiEnv *) j9env, (JNIEnv *) currentThread, threadRef, methodID, (jlocation) location, (jclass) classRef, (jobject) objectRef, fieldID);
-				}
-				vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
-				if (NULL != object) {
-					J9VMGetFieldEvent* data = eventData;
-					data->object = *objectRef;
-				}
-				finishedEvent(currentThread, JVMTI_EVENT_FIELD_ACCESS, hadVMAccess, javaOffloadOldState);
 			}
 		}
 	}
@@ -1215,64 +1222,66 @@ jvmtiHookFieldModification(J9HookInterface** hook, UDATA eventNum, void* eventDa
 			location = data->location;
 		}
 
-		/* Current thread has VM access, and the field watch list is only modified under exclusive */
+		if (shouldPostEvent(currentThread, NULL)) {
+			/* Current thread has VM access, and the field watch list is only modified under exclusive */
 
-		fieldID = findWatchedField(currentThread, j9env, TRUE, J9HOOK_VM_PUT_FIELD != eventNum, tag, clazz);
+			fieldID = findWatchedField(currentThread, j9env, TRUE, J9HOOK_VM_PUT_FIELD != eventNum, tag, clazz);
 
-		/* If the current field is not being watched, do nothing */
+			/* If the current field is not being watched, do nothing */
 
-		if (fieldID != NULL) {
-			jthread threadRef;
-			UDATA hadVMAccess;
-			char signatureType = J9UTF8_DATA(J9ROMFIELDSHAPE_SIGNATURE(((J9JNIFieldID *) fieldID)->field))[0];
-			UDATA refCount = 1;
-			UDATA javaOffloadOldState = 0;
+			if (fieldID != NULL) {
+				jthread threadRef;
+				UDATA hadVMAccess;
+				char signatureType = J9UTF8_DATA(J9ROMFIELDSHAPE_SIGNATURE(((J9JNIFieldID *) fieldID)->field))[0];
+				UDATA refCount = 1;
+				UDATA javaOffloadOldState = 0;
 
-			if (signatureType == '[') {
-				signatureType = 'L';
-			}
-			if (signatureType == 'L') {
-				if (*((void **) valueAddress) != NULL) {
-					++refCount;
-				}
-			}
-			if (object != NULL) {
-				++refCount;
-			}
-			if (prepareForEvent(j9env, currentThread, currentThread, JVMTI_EVENT_FIELD_MODIFICATION, &threadRef, &hadVMAccess, TRUE, refCount, &javaOffloadOldState)) {
-				J9JavaVM * vm = currentThread->javaVM;
-				jmethodID methodID;
-				j9object_t * classRef = (j9object_t*) currentThread->arg0EA;
-				J9Class* clazz;
-				j9object_t * objectRef;
-				jvalue newValue;
-				j9object_t * jvalueStorage = (j9object_t*) currentThread->arg0EA - 1;
-
-				if (object == NULL) {
-					objectRef = NULL;
-				} else {
-					objectRef = jvalueStorage--;
-					*objectRef = object;
-				}
-				fillInJValue(signatureType, &newValue, valueAddress, jvalueStorage);
-				clazz = getCurrentClass(((J9JNIFieldID *) fieldID)->declaringClass);
-				*classRef = J9VM_J9CLASS_TO_HEAPCLASS(clazz);
-				methodID = getCurrentMethodID(currentThread, method);
-				vm->internalVMFunctions->internalExitVMToJNI(currentThread);
-				if (methodID != NULL) {
-					callback((jvmtiEnv *) j9env, (JNIEnv *) currentThread, threadRef, methodID, (jlocation) location, (jclass) classRef, (jobject) objectRef, fieldID, signatureType, newValue);
-				}
-				vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
-				if (NULL != object) {
-					J9VMPutFieldEvent* data = eventData;
-					data->object = *objectRef;
+				if (signatureType == '[') {
+					signatureType = 'L';
 				}
 				if (signatureType == 'L') {
 					if (*((void **) valueAddress) != NULL) {
-						*(j9object_t*)valueAddress = *jvalueStorage;
+						++refCount;
 					}
 				}
-				finishedEvent(currentThread, JVMTI_EVENT_FIELD_MODIFICATION, hadVMAccess, javaOffloadOldState);
+				if (object != NULL) {
+					++refCount;
+				}
+				if (prepareForEvent(j9env, currentThread, currentThread, JVMTI_EVENT_FIELD_MODIFICATION, &threadRef, &hadVMAccess, TRUE, refCount, &javaOffloadOldState)) {
+					J9JavaVM * vm = currentThread->javaVM;
+					jmethodID methodID;
+					j9object_t * classRef = (j9object_t*) currentThread->arg0EA;
+					J9Class* clazz;
+					j9object_t * objectRef;
+					jvalue newValue;
+					j9object_t * jvalueStorage = (j9object_t*) currentThread->arg0EA - 1;
+
+					if (object == NULL) {
+						objectRef = NULL;
+					} else {
+						objectRef = jvalueStorage--;
+						*objectRef = object;
+					}
+					fillInJValue(signatureType, &newValue, valueAddress, jvalueStorage);
+					clazz = getCurrentClass(((J9JNIFieldID *) fieldID)->declaringClass);
+					*classRef = J9VM_J9CLASS_TO_HEAPCLASS(clazz);
+					methodID = getCurrentMethodID(currentThread, method);
+					vm->internalVMFunctions->internalExitVMToJNI(currentThread);
+					if (methodID != NULL) {
+						callback((jvmtiEnv *) j9env, (JNIEnv *) currentThread, threadRef, methodID, (jlocation) location, (jclass) classRef, (jobject) objectRef, fieldID, signatureType, newValue);
+					}
+					vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
+					if (NULL != object) {
+						J9VMPutFieldEvent* data = eventData;
+						data->object = *objectRef;
+					}
+					if (signatureType == 'L') {
+						if (*((void **) valueAddress) != NULL) {
+							*(j9object_t*)valueAddress = *jvalueStorage;
+						}
+					}
+					finishedEvent(currentThread, JVMTI_EVENT_FIELD_MODIFICATION, hadVMAccess, javaOffloadOldState);
+				}
 			}
 		}
 	}
@@ -1430,6 +1439,7 @@ jvmtiHookBreakpoint(J9HookInterface** hook, UDATA eventNum, void* eventData, voi
 	J9Method * method = data->method;
 	J9JVMTIBreakpointedMethod * breakpointedMethod;
 	IDATA location = data->location;
+	J9VMThread * currentThread = data->currentThread;
 
 	Trc_JVMTI_jvmtiHookBreakpoint_Entry();
 
@@ -1448,8 +1458,7 @@ jvmtiHookBreakpoint(J9HookInterface** hook, UDATA eventNum, void* eventData, voi
 
 	/* Call the event callback */
 
-	if (callback != NULL) {
-		J9VMThread * currentThread = data->currentThread;
+	if ((NULL != callback) && shouldPostEvent(currentThread, NULL)) {
 		jthread threadRef;
 		UDATA hadVMAccess;
 		J9JVMTIAgentBreakpoint * agentBreakpoint;
@@ -1478,6 +1487,7 @@ jvmtiHookExceptionThrow(J9HookInterface** hook, UDATA eventNum, void* eventData,
 	J9VMExceptionThrowEvent * data = eventData;
 	J9JVMTIEnv * j9env = userData;
 	jvmtiEventException callback = j9env->callbacks.Exception;
+	J9VMThread * currentThread = data->currentThread;
 
 	Trc_JVMTI_jvmtiHookExceptionThrow_Entry();
 
@@ -1485,9 +1495,8 @@ jvmtiHookExceptionThrow(J9HookInterface** hook, UDATA eventNum, void* eventData,
 
 	/* Call the event callback */
 
-	if (callback != NULL) {
+	if ((NULL != callback) && shouldPostEvent(currentThread, NULL)) {
 		j9object_t exception = data->exception;
-		J9VMThread * currentThread = data->currentThread;
 		J9JavaVM * vm = currentThread->javaVM;
 		jthread threadRef;
 		UDATA hadVMAccess;
@@ -1605,31 +1614,33 @@ jvmtiHookMethodExit(J9HookInterface** hook, UDATA eventNum, void* eventData, voi
 			valueAddress = data->returnValuePtr;
 		}
 
-		if (!poppedByException) {
-			J9UTF8 * signature = J9ROMMETHOD_SIGNATURE(J9_ROM_METHOD_FROM_RAM_METHOD(method));
+		if (shouldPostEvent(currentThread, method)) {
+			if (!poppedByException) {
+				J9UTF8 * signature = J9ROMMETHOD_SIGNATURE(J9_ROM_METHOD_FROM_RAM_METHOD(method));
 
-			if ((J9UTF8_DATA(signature)[J9UTF8_LENGTH(signature) - 2] == '[') || ((signatureType = J9UTF8_DATA(signature)[J9UTF8_LENGTH(signature) - 1]) == ';')) {
-				signatureType = 'L';
-				if (*((void **) valueAddress) != NULL) {
-					++refCount;
+				if ((J9UTF8_DATA(signature)[J9UTF8_LENGTH(signature) - 2] == '[') || ((signatureType = J9UTF8_DATA(signature)[J9UTF8_LENGTH(signature) - 1]) == ';')) {
+					signatureType = 'L';
+					if (*((void **) valueAddress) != NULL) {
+						++refCount;
+					}
 				}
 			}
-		}
 
-		if (prepareForEvent(j9env, currentThread, currentThread, JVMTI_EVENT_METHOD_EXIT, &threadRef, &hadVMAccess, TRUE, refCount, &javaOffloadOldState)) {
-			J9JavaVM * vm = currentThread->javaVM;
-			jmethodID methodID;
-			jvalue returnValue;
+			if (prepareForEvent(j9env, currentThread, currentThread, JVMTI_EVENT_METHOD_EXIT, &threadRef, &hadVMAccess, TRUE, refCount, &javaOffloadOldState)) {
+				J9JavaVM * vm = currentThread->javaVM;
+				jmethodID methodID;
+				jvalue returnValue;
 
-			if (!poppedByException) {
-				fillInJValue(signatureType, &returnValue, valueAddress,  (j9object_t*) currentThread->arg0EA);
+				if (!poppedByException) {
+					fillInJValue(signatureType, &returnValue, valueAddress,  (j9object_t*) currentThread->arg0EA);
+				}
+				methodID = getCurrentMethodID(currentThread, method);
+				vm->internalVMFunctions->internalExitVMToJNI(currentThread);
+				if (methodID != NULL) {
+					callback((jvmtiEnv *) j9env, (JNIEnv *) currentThread, threadRef, methodID, (jboolean) poppedByException, returnValue);
+				}
+				finishedEvent(currentThread, JVMTI_EVENT_METHOD_EXIT, hadVMAccess, javaOffloadOldState);
 			}
-			methodID = getCurrentMethodID(currentThread, method);
-			vm->internalVMFunctions->internalExitVMToJNI(currentThread);
-			if (methodID != NULL) {
-				callback((jvmtiEnv *) j9env, (JNIEnv *) currentThread, threadRef, methodID, (jboolean) poppedByException, returnValue);
-			}
-			finishedEvent(currentThread, JVMTI_EVENT_METHOD_EXIT, hadVMAccess, javaOffloadOldState);
 		}
 	}
 
@@ -1884,6 +1895,7 @@ jvmtiHookMonitorContendedEnter(J9HookInterface** hook, UDATA eventNum, void* eve
 	J9VMMonitorContendedEnterEvent * data = eventData;
 	J9JVMTIEnv * j9env = userData;
 	jvmtiEventMonitorContendedEnter callback = j9env->callbacks.MonitorContendedEnter;
+	J9VMThread * currentThread = data->currentThread;
 
 	Trc_JVMTI_jvmtiHookMonitorContendedEnter_Entry();
 
@@ -1891,8 +1903,7 @@ jvmtiHookMonitorContendedEnter(J9HookInterface** hook, UDATA eventNum, void* eve
 
 	/* Call the event callback */
 
-	if (callback != NULL) {
-		J9VMThread * currentThread = data->currentThread;
+	if ((NULL != callback) && shouldPostEvent(currentThread, NULL)) {
 		J9ThreadAbstractMonitor * lock = (J9ThreadAbstractMonitor*)data->monitor;
 		jthread threadRef;
 		UDATA hadVMAccess;
@@ -1922,6 +1933,7 @@ jvmtiHookMonitorContendedEntered(J9HookInterface** hook, UDATA eventNum, void* e
 	J9VMMonitorContendedEnteredEvent * data = eventData;
 	J9JVMTIEnv * j9env = userData;
 	jvmtiEventMonitorContendedEntered callback = j9env->callbacks.MonitorContendedEntered;
+	J9VMThread * currentThread = data->currentThread;
 
 	Trc_JVMTI_jvmtiHookMonitorContendedEntered_Entry();
 
@@ -1929,8 +1941,7 @@ jvmtiHookMonitorContendedEntered(J9HookInterface** hook, UDATA eventNum, void* e
 
 	/* Call the event callback */
 
-	if (callback != NULL) {
-		J9VMThread * currentThread = data->currentThread;
+	if ((NULL != callback) && shouldPostEvent(currentThread, NULL)) {
 		J9ThreadAbstractMonitor * lock = (J9ThreadAbstractMonitor*)data->monitor;
 		jthread threadRef;
 		UDATA hadVMAccess;
@@ -1960,6 +1971,7 @@ jvmtiHookMonitorWait(J9HookInterface** hook, UDATA eventNum, void* eventData, vo
 	J9VMMonitorWaitEvent * data = eventData;
 	J9JVMTIEnv * j9env = userData;
 	jvmtiEventMonitorWait callback = j9env->callbacks.MonitorWait;
+	J9VMThread * currentThread = data->currentThread;
 
 	Trc_JVMTI_jvmtiHookMonitorWait_Entry();
 
@@ -1967,8 +1979,7 @@ jvmtiHookMonitorWait(J9HookInterface** hook, UDATA eventNum, void* eventData, vo
 
 	/* Call the event callback */
 
-	if (callback != NULL) {
-		J9VMThread * currentThread = data->currentThread;
+	if ((NULL != callback) && shouldPostEvent(currentThread, NULL)) {
 		J9ThreadAbstractMonitor * lock = (J9ThreadAbstractMonitor*)data->monitor;
 		jlong timeout = data->millis;
 		jthread threadRef;
@@ -1999,6 +2010,7 @@ jvmtiHookMonitorWaited(J9HookInterface** hook, UDATA eventNum, void* eventData, 
 	J9VMMonitorWaitedEvent * data = eventData;
 	J9JVMTIEnv * j9env = userData;
 	jvmtiEventMonitorWaited callback = j9env->callbacks.MonitorWaited;
+	J9VMThread * currentThread = data->currentThread;
 
 	Trc_JVMTI_jvmtiHookMonitorWaited_Entry();
 
@@ -2006,8 +2018,7 @@ jvmtiHookMonitorWaited(J9HookInterface** hook, UDATA eventNum, void* eventData, 
 
 	/* Call the event callback */
 
-	if (callback != NULL) {
-		J9VMThread * currentThread = data->currentThread;
+	if ((NULL != callback) && shouldPostEvent(currentThread, NULL)) {
 		J9ThreadAbstractMonitor * lock = (J9ThreadAbstractMonitor*)data->monitor;
 		jboolean timed_out = (data->reason == J9THREAD_TIMED_OUT);
 		jthread threadRef;
@@ -2075,6 +2086,7 @@ jvmtiHookExceptionCatch(J9HookInterface** hook, UDATA eventNum, void* eventData,
 	J9VMExceptionCatchEvent * data = eventData;
 	J9JVMTIEnv * j9env = userData;
 	jvmtiEventExceptionCatch callback = j9env->callbacks.ExceptionCatch;
+	J9VMThread * currentThread = data->currentThread;
 
 	Trc_JVMTI_jvmtiHookExceptionCatch_Entry();
 
@@ -2082,9 +2094,8 @@ jvmtiHookExceptionCatch(J9HookInterface** hook, UDATA eventNum, void* eventData,
 
 	/* Call the event callback */
 
-	if (callback != NULL) {
+	if ((NULL != callback) && shouldPostEvent(currentThread, NULL)) {
 		j9object_t exception = data->exception;
-		J9VMThread * currentThread = data->currentThread;
 		J9JavaVM * vm = currentThread->javaVM;
 		jthread threadRef;
 		UDATA hadVMAccess;
@@ -2139,8 +2150,10 @@ jvmtiHookPopFramesInterrupt(J9HookInterface** hook, UDATA eventNum, void* eventD
 static void
 jvmtiHookResourceExhausted(J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData)
 {
-	J9JVMTIEnv * j9env = userData;
+	J9JVMTIEnv *j9env = userData;
 	jvmtiEventResourceExhausted callback = j9env->callbacks.ResourceExhausted;
+	J9VMVmResourceExhaustedEvent *data = eventData;
+	J9VMThread *currentThread = data->currentThread;
 	jint flags = 0;
 
 	Trc_JVMTI_jvmtiHookResourceExhausted_Entry();
@@ -2149,9 +2162,7 @@ jvmtiHookResourceExhausted(J9HookInterface** hook, UDATA eventNum, void* eventDa
 
 	/* Call the event callback */
 
-	if (callback != NULL) {
-		J9VMVmResourceExhaustedEvent * data = (J9VMVmResourceExhaustedEvent *) eventData;
-		J9VMThread * currentThread = data->currentThread;
+	if ((NULL != callback) && shouldPostEvent(currentThread, NULL)) {
 		jthread threadRef;
 		UDATA hadVMAccess;
 		UDATA javaOffloadOldState = 0;
@@ -3041,16 +3052,16 @@ jvmtiHookCompilingEnd(J9HookInterface** hook, UDATA eventNum, void* eventData, v
 static void 
 jvmtiHookSampledObjectAlloc(J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData)
 {
-	J9JVMTIEnv * j9env = userData;
+	J9JVMTIEnv *j9env = userData;
 	jvmtiEventSampledObjectAlloc callback = j9env->callbacks.SampledObjectAlloc;
+	MM_ObjectAllocationSamplingEvent *data = eventData;
+	J9VMThread *currentThread = data->currentThread;
 
 	Trc_JVMTI_jvmtiHookSampledObjectAlloc_Entry();
 
 	ENSURE_EVENT_PHASE_LIVE(jvmtiHookSampledObjectAlloc, j9env);
 
-	if (NULL != callback) {
-		MM_ObjectAllocationSamplingEvent *data = eventData;
-		J9VMThread *currentThread = data->currentThread;
+	if ((NULL != callback) && shouldPostEvent(currentThread, NULL)) {
 		jthread threadRef = NULL;
 		UDATA hadVMAccess = 0;
 		UDATA javaOffloadOldState = 0;
@@ -3630,4 +3641,34 @@ jvmtiHookVmDumpEnd(J9HookInterface** hook, UDATA eventNum, void* eventData, void
 	}
 
 	TRACE_JVMTI_EVENT_RETURN(jvmtiHookVmDumpEnd);
+}
+
+/**
+ * Check if a JVMTI event should be dispatched by checking the flag set by
+ * notifyJvmtiHideFrames() and the presence of the JvmtiMountTransition
+ * annotation.
+ *
+ * Note that the method should only be checked for Method Entry and Method Exit event.
+ *
+ * @param currentThread the current thread to be checked
+ * @param method the method to be checked
+ * @return TRUE if the event should be posted
+ */
+static BOOLEAN
+shouldPostEvent(J9VMThread *currentThread, J9Method *method)
+{
+	BOOLEAN shouldPost = TRUE;
+#if JAVA_SPEC_VERSION >= 20
+	if (J9_ARE_ANY_BITS_SET(currentThread->privateFlags, J9_PRIVATE_FLAGS_VIRTUAL_THREAD_HIDDEN_FRAMES)) {
+		shouldPost = FALSE;
+	} else if (NULL != method) {
+		J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
+		U_32 extendedModifiers = getExtendedModifiersDataFromROMMethod(romMethod);
+
+		if (J9_ARE_ANY_BITS_SET(extendedModifiers, CFR_METHOD_EXT_JVMTIMOUNTTRANSITION_ANNOTATION)) {
+			shouldPost = FALSE;
+		}
+	}
+#endif /* JAVA_SPEC_VERSION >= 20 */
+	return shouldPost;
 }

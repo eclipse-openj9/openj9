@@ -86,6 +86,11 @@ ClassFileOracle::KnownAnnotation ClassFileOracle::_knownAnnotations[] = {
 		{NOTCHECKPOINTSAFE_SIGNATURE, sizeof(NOTCHECKPOINTSAFE_SIGNATURE)},
 #undef NOTCHECKPOINTSAFE_SIGNATURE
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+#if JAVA_SPEC_VERSION >= 20
+#define JVMTIMOUNTTRANSITION_SIGNATURE "Ljdk/internal/vm/annotation/JvmtiMountTransition;"
+		{JVMTIMOUNTTRANSITION_SIGNATURE , sizeof(JVMTIMOUNTTRANSITION_SIGNATURE)},
+#undef JVMTIMOUNTTRANSITION_SIGNATURE
+#endif /* JAVA_SPEC_VERSION >= 20 */
 		{0, 0}
 };
 
@@ -937,6 +942,9 @@ ClassFileOracle::walkMethodAttributes(U_16 methodIndex)
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 			knownAnnotations = addAnnotationBit(knownAnnotations, NOT_CHECKPOINT_SAFE_ANNOTATION);
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+#if JAVA_SPEC_VERSION >= 20
+			knownAnnotations = addAnnotationBit(knownAnnotations, JVMTIMOUNTTRANSITION_ANNOTATION);
+#endif /* JAVA_SPEC_VERSION >= 20 */
 
 			J9CfrAttributeRuntimeVisibleAnnotations *attribAnnotations = (J9CfrAttributeRuntimeVisibleAnnotations *)attrib;
 			if (0 == attribAnnotations->rawDataLength) { /* rawDataLength non-zero in case of error in the attribute */
@@ -977,6 +985,12 @@ ClassFileOracle::walkMethodAttributes(U_16 methodIndex)
 					_methodsInfo[methodIndex].extendedModifiers |= CFR_METHOD_EXT_NOT_CHECKPOINT_SAFE_ANNOTATION;
 				}
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+#if JAVA_SPEC_VERSION >= 20
+				if (containsKnownAnnotation(foundAnnotations, JVMTIMOUNTTRANSITION_ANNOTATION)) {
+					/* JvmtiMountTransition annotation is used by OpenJDK to tag methods which should be hidden for JVMTI and stackwalk */
+					_methodsInfo[methodIndex].extendedModifiers |= CFR_METHOD_EXT_JVMTIMOUNTTRANSITION_ANNOTATION;
+				}
+#endif /* JAVA_SPEC_VERSION >= 20 */
 			}
 			_methodsInfo[methodIndex].annotationsAttribute = attribAnnotations;
 			_methodsInfo[methodIndex].modifiers |= J9AccMethodHasMethodAnnotations;
