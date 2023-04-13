@@ -336,6 +336,7 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
       case TR_BodyInfoAddressLoad:
       case TR_RecompQueuedFlag:
       case TR_CatchBlockCounter:
+      case TR_StartPC:
          {
          // Nothing to do
          }
@@ -1418,6 +1419,7 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
       case TR_BodyInfoAddressLoad:
       case TR_RecompQueuedFlag:
       case TR_CatchBlockCounter:
+      case TR_StartPC:
          {
          self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
          }
