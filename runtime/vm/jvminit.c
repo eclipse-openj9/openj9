@@ -3789,7 +3789,6 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 			vm->checkpointState.isCheckPointEnabled = TRUE;
 			vm->checkpointState.isCheckPointAllowed = TRUE;
 			vm->portLibrary->finalRestore = FALSE;
-			vm->extendedRuntimeFlags |= J9_EXTENDED_RUNTIME_DEBUG_MODE;
 			j9port_control(J9PORT_CTLDATA_CRIU_SUPPORT_FLAGS, OMRPORT_CRIU_SUPPORT_ENABLED);
 		}
 	}
