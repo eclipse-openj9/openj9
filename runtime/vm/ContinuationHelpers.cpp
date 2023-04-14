@@ -217,6 +217,11 @@ yieldContinuation(J9VMThread *currentThread)
 	ContinuationState volatile *continuationStatePtr = VM_VMHelpers::getContinuationStateAddress(currentThread, continuationObject);
 	Assert_VM_notNull(currentThread->currentContinuation);
 	Assert_VM_false(VM_VMHelpers::isPendingToBeMounted(*continuationStatePtr));
+	jboolean finished = J9VMJDKINTERNALVMCONTINUATION_FINISHED(currentThread, continuationObject);
+
+	if (finished) {
+		VM_VMHelpers::setContinuationFinished(continuationStatePtr);
+	}
 
 	currentThread->currentContinuation = NULL;
 	VM_ContinuationHelpers::swapFieldsWithContinuation(currentThread, continuation);
@@ -227,22 +232,17 @@ yieldContinuation(J9VMThread *currentThread)
 	 * only time a different virtualThread can run on the underlying j9vmthread.
 	 */
 	VM_AtomicSupport::readWriteBarrier();
-	/* we don't need atomic here, since no GC thread should be able to start scanning while continuation is mounted,
+	/* We don't need atomic to set to state to unmounted (reset carrier ID), since no GC thread should be able to start scanning while continuation is mounted,
 	 * nor should another carrier thread be able to mount before we complete the unmount (hence no risk to overwrite anything in a race).
 	 * Order
 	 *
-	 *	swap-stacks
-	 *	writeBarrier
-	 *	state initial
+	 * swap-stacks and set finished
+	 * writeBarrier
+	 * set unmounted (reset carrier ID)
 	 *
-	 * must be maintained for weakly ordered CPUs, to unsure that once the continuation is again available for GC scan (on potentially remote CPUs), all CPUs see up-to-date stack .
+	 * must be maintained for weakly ordered CPUs, to ensure that once the continuation is again available for GC scan or unavailable because it's finished,
+	 * all remote CPUs see up-to-date stack and finished flag .
 	 */
-	/* Notify GC of Continuation stack swap */
-	jboolean finished = J9VMJDKINTERNALVMCONTINUATION_FINISHED(currentThread, continuationObject);
-
-	if (finished) {
-		VM_VMHelpers::setContinuationFinished(continuationStatePtr);
-	}
 	Assert_VM_true(VM_VMHelpers::isContinuationMountedWithCarrierThread(*continuationStatePtr, currentThread));
 	VM_VMHelpers::resetContinuationCarrierID(continuationStatePtr);
 	/* Logically postUnmountContinuation(), which add the related continuation Object to the rememberedSet or dirty the Card for concurrent marking for future scanning, should be called
@@ -251,6 +251,7 @@ yieldContinuation(J9VMThread *currentThread)
 	 * so calling postUnmountContinuation() after resetContinuationCarrierID() to avoid the missing scan case.
 	 */
 	if (!finished) {
+		/* Notify GC of Continuation stack swap */
 		currentThread->javaVM->memoryManagerFunctions->postUnmountContinuation(currentThread, continuationObject);
 	}
 
