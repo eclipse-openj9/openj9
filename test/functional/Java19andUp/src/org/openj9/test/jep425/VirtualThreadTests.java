@@ -163,33 +163,53 @@ public class VirtualThreadTests {
 		}
 	}
 
-	private static volatile boolean testThread1_ready = false;
+	private static volatile boolean testThread1Ready = false;
 
 	@Test
 	public void test_YieldedVirtualThreadGetStackTrace() {
-		// Expected frame count is based on test's callstack and OpenJ9's implementation of Continuation.yield().
-		int expected_frames = 12;
+		/* The expected frame count is based on test's callstack and OpenJ9's implementation of
+		 * Continuation.yield().
+		 */
+		int expectedFrames = 12;
+		String expectedMethodName = "yieldImpl";
+
 		try {
 			Thread t = Thread.ofVirtual().name("yielded-stackwalker").start(() -> {
-					testThread1_ready = true;
+					testThread1Ready = true;
 					LockSupport.park();
 				});
-			while (!testThread1_ready) {
+			while (!testThread1Ready) {
 				Thread.sleep(10);
 			}
-			/* Let virtual thread park */
-			Thread.sleep(500);
+
+			/* Incrementally wait for 10000 ms. */
+			for (int i = 0; i < 20; i++) {
+				/* Let the virtual thread park. */
+				Thread.sleep(500);
+				if (Thread.State.WAITING == t.getState()) {
+					break;
+				}
+			}
 
 			StackTraceElement[] ste = t.getStackTrace();
 
-			// If stacktrace doesn't match expected result, print out stacktrace for debuggging.
-			if ((expected_frames != ste.length) || !ste[0].getMethodName().equals("yieldImpl")) {
+			/* If the stacktrace doesn't match the expected result, then print out the stacktrace
+			 * for debuggging.
+			 */
+			if ((expectedFrames != ste.length) || !ste[0].getMethodName().equals(expectedMethodName)) {
 				for (StackTraceElement st : ste) {
 					System.out.println(st);
 				}
 			}
-			AssertJUnit.assertTrue("Expected " + expected_frames + " frames, got " + ste.length, (expected_frames == ste.length));
-			AssertJUnit.assertTrue("Expected top frame to be yieldImpl, got " + ste[0].getMethodName(), ste[0].getMethodName().equals("yieldImpl"));
+
+			AssertJUnit.assertTrue(
+					"Expected " + expectedFrames + " frames, got " + ste.length,
+					(expectedFrames == ste.length));
+
+			AssertJUnit.assertTrue(
+					"Expected top frame to be yieldImpl, got " + ste[0].getMethodName(),
+					ste[0].getMethodName().equals(expectedMethodName));
+
 			LockSupport.unpark(t);
 			t.join();
 		} catch (Exception e) {
