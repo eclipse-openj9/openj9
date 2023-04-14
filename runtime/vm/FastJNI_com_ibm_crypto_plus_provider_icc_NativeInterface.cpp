@@ -249,7 +249,7 @@ isCryptoArrayContiguous(J9VMThread *currentThread, UDATA index, UDATA count)
  * @return - if the value is negative, this is a returned error code. otherwise the value is the return length
  */
 static VMINLINE jint
-AESLaunch(J9VMThread *currentThread, jlong iccContextId, jlong iccCipherId, j9object_t input, jint inputOffset, jint inputLen, j9object_t output, jint outputOffset, jboolean needsReinit, CIPHER_t* cbcOpUpdate, cryptoFunc_t cbcOp, jlong paramPointer, jint mode)
+AESLaunch(J9VMThread *currentThread, jlong iccContextId, jlong iccCipherId, jobject input, jint inputOffset, jint inputLen, jobject output, jint outputOffset, jboolean needsReinit, CIPHER_t* cbcOpUpdate, cryptoFunc_t cbcOp, jlong paramPointer, jint mode)
 {
 #if defined(CRYPTO_DEBUG)
 	fprintf(stderr,"** Enter AESLaunch %p %p --- ", input, output);
@@ -375,7 +375,7 @@ AESLaunch(J9VMThread *currentThread, jlong iccContextId, jlong iccCipherId, j9ob
  * @return - if the value is negative, this is a returned error code. otherwise the value is the return length
  */
 static VMINLINE jint
-discontiguousAESLaunch(J9VMThread *currentThread, jlong iccContextId, jlong iccCipherId, j9object_t input, jint inputOffset, jint inputLen, j9object_t output, jint outputOffset, jboolean needsReinit, CIPHER_t* cbcOpUpdate, cryptoFunc_t cbcOp, jlong paramPointer, jint mode)
+discontiguousAESLaunch(J9VMThread *currentThread, jlong iccContextId, jlong iccCipherId, jobject input, jint inputOffset, jint inputLen, jobject output, jint outputOffset, jboolean needsReinit, CIPHER_t* cbcOpUpdate, cryptoFunc_t cbcOp, jlong paramPointer, jint mode)
 {
 	jint ret = 0;
 	j9object_t unwrap_out = J9_JNI_UNWRAP_REFERENCE(output);
@@ -391,7 +391,7 @@ discontiguousAESLaunch(J9VMThread *currentThread, jlong iccContextId, jlong iccC
 
 	if ((NULL != inputNativePtr) && (NULL != outputNativePtr)) {
 		/* copy from input arraylets to native buffer */
-		VM_ArrayCopyHelpers::memcpyFromArray(currentThread, input, inputOffset, inputLen, inputNativePtr);
+		VM_ArrayCopyHelpers::memcpyFromArray(currentThread, J9_JNI_UNWRAP_REFERENCE(input), inputOffset, inputLen, inputNativePtr);
 		/* do crypto operation */
 		if (0 != paramPointer) {
 #if defined(CRYPTO_DEBUG)
@@ -410,7 +410,7 @@ discontiguousAESLaunch(J9VMThread *currentThread, jlong iccContextId, jlong iccC
 		/* negative ret means an error code, don't copy in that case */
 		if (ret > 0) {
 			/* copy back from output native buffer to output arraylets */
-			VM_ArrayCopyHelpers::memcpyToArray(currentThread, output, outputOffset, ret, outputNativePtr);
+			VM_ArrayCopyHelpers::memcpyToArray(currentThread, J9_JNI_UNWRAP_REFERENCE(output), outputOffset, ret, outputNativePtr);
 		}
 		/* release input and output native buffers */
 		j9mem_free_memory(outputNativePtr);
@@ -451,7 +451,7 @@ discontiguousAESLaunch(J9VMThread *currentThread, jlong iccContextId, jlong iccC
  * @return - if the value is negative, this is a returned error code. otherwise the value is the return length
  */
 static VMINLINE jint
-AES(J9VMThread *currentThread, jlong iccContextId, jlong iccCipherId, j9object_t input, jint inputOffset, jint inputLen, j9object_t output, jint outputOffset, jboolean needsReinit, CIPHER_t* cbcOpUpdate, cryptoFunc_t cbcOp, jlong paramPointer, jint mode)
+AES(J9VMThread *currentThread, jlong iccContextId, jlong iccCipherId, jobject input, jint inputOffset, jint inputLen, jobject output, jint outputOffset, jboolean needsReinit, CIPHER_t* cbcOpUpdate, cryptoFunc_t cbcOp, jlong paramPointer, jint mode)
 {
 #if defined(CRYPTO_DEBUG)
 	fprintf(stderr,"** AESLaunch: %d %d %d %d %p %p %p ---- ", inputOffset, inputLen, outputOffset, needsReinit, cbcOpUpdate, input, output);
@@ -515,7 +515,7 @@ AES(J9VMThread *currentThread, jlong iccContextId, jlong iccCipherId, j9object_t
  * @return - if the value is negative, this is a returned error code. otherwise the value is the return length
  */
 static VMINLINE jint
-hmacUpdate(J9VMThread *currentThread, jlong iccContextId, jlong hmacId, j9object_t key, jint keyLength, j9object_t input, jint inputOffset, jint inputLength, jboolean needInit)
+hmacUpdate(J9VMThread *currentThread, jlong iccContextId, jlong hmacId, jobject key, jint keyLength, jobject input, jint inputOffset, jint inputLength, jboolean needInit)
 {
 #if defined(CRYPTO_DEBUG)
 	fprintf(stderr,"** hmacUpdate: %p %d %p %d %d %d ---- ", key, keyLength, input, inputOffset, inputLength, needInit);
@@ -621,8 +621,8 @@ hmacUpdate(J9VMThread *currentThread, jlong iccContextId, jlong hmacId, j9object
 
 		if ((NULL != keyNativePtr) && (NULL != inputNativePtr)) {
 			/* copy from input arraylets to native buffer */
-			VM_ArrayCopyHelpers::memcpyFromArray(currentThread, key, 0, keyLength, keyNativePtr);
-			VM_ArrayCopyHelpers::memcpyFromArray(currentThread, input, inputOffset, inputLength, inputNativePtr);
+			VM_ArrayCopyHelpers::memcpyFromArray(currentThread, J9_JNI_UNWRAP_REFERENCE(key), 0, keyLength, keyNativePtr);
+			VM_ArrayCopyHelpers::memcpyFromArray(currentThread, J9_JNI_UNWRAP_REFERENCE(input), inputOffset, inputLength, inputNativePtr);
 			/* do crypto operation */
 #if defined(CRYPTO_DEBUG)
 			fprintf(stderr,"** Launch discontig HMAC_update with %d bytes, calling %p from %p (%p)\n", (int)inputLength, HMAC_update, inputNativePtr, keyNativePtr);
@@ -661,7 +661,7 @@ hmacUpdate(J9VMThread *currentThread, jlong iccContextId, jlong hmacId, j9object
  * @return - if the value is negative, this is a returned error code. otherwise the value is the return length
  */
 static VMINLINE jint
-hmacFinal(J9VMThread *currentThread, jlong iccContextId, jlong hmacId, j9object_t key, jint keyLength, j9object_t hmac, jboolean needInit)
+hmacFinal(J9VMThread *currentThread, jlong iccContextId, jlong hmacId, jobject key, jint keyLength, jobject hmac, jboolean needInit)
 {
 #if defined(CRYPTO_DEBUG)
 	fprintf(stderr,"** hmacFinal: %d %d %p %p ---- ", keyLength, needInit, key, hmac);
@@ -714,7 +714,7 @@ hmacFinal(J9VMThread *currentThread, jlong iccContextId, jlong hmacId, j9object_
 
 		if ((NULL != keyNativePtr) && (NULL != hmacNativePtr)) {
 			/* copy from input arraylets to native buffer */
-			VM_ArrayCopyHelpers::memcpyFromArray(currentThread, key, 0, keyLength, keyNativePtr);
+			VM_ArrayCopyHelpers::memcpyFromArray(currentThread, J9_JNI_UNWRAP_REFERENCE(key), 0, keyLength, keyNativePtr);
 			/* do crypto operation */
 #if defined(CRYPTO_DEBUG)
 			fprintf(stderr,"** Launch discontig hmacFinal with %d bytes, calling %p from %p to %p\n", (int)keyLength, HMAC_doFinal, keyNativePtr, hmacNativePtr);
@@ -726,7 +726,7 @@ hmacFinal(J9VMThread *currentThread, jlong iccContextId, jlong hmacId, j9object_
 			/* negative ret means an error code, don't copy in that case */
 			if (result > 0) {
 				/* copy back from output native buffer to output arraylets */
-				VM_ArrayCopyHelpers::memcpyToArray(currentThread, hmac, 0, result, hmacNativePtr);
+				VM_ArrayCopyHelpers::memcpyToArray(currentThread, J9_JNI_UNWRAP_REFERENCE(hmac), 0, result, hmacNativePtr);
 			}
 			/* release input and output native buffers */
 			j9mem_free_memory(keyNativePtr);
@@ -757,7 +757,7 @@ hmacFinal(J9VMThread *currentThread, jlong iccContextId, jlong hmacId, j9object_
  * @return - if the value is negative, this is a returned error code. otherwise the value is the return length
  */
 static VMINLINE jint
-digestUpdate(J9VMThread *currentThread, jlong iccContextId, jlong digestId, j9object_t input, jint inputOffset, jint inputLength)
+digestUpdate(J9VMThread *currentThread, jlong iccContextId, jlong digestId, jobject input, jint inputOffset, jint inputLength)
 {
 #if defined(CRYPTO_DEBUG)
 	fprintf(stderr,"** digestUpdate: %p %d %d ---- ", input, inputOffset, inputLength);
@@ -850,7 +850,7 @@ digestUpdate(J9VMThread *currentThread, jlong iccContextId, jlong digestId, j9ob
 
 		if (NULL != inputNativePtr) {
 			/* copy from input arraylets to native buffer */
-			VM_ArrayCopyHelpers::memcpyFromArray(currentThread, input, inputOffset, inputLength, inputNativePtr);
+			VM_ArrayCopyHelpers::memcpyFromArray(currentThread, J9_JNI_UNWRAP_REFERENCE(input), inputOffset, inputLength, inputNativePtr);
 			/* do crypto operation */
 #if defined(CRYPTO_DEBUG)
 			fprintf(stderr,"** Launch discontig DIGEST_update with %d bytes, calling %p using input %p\n", (int)inputLength, DIGEST_update, inputNativePtr);
@@ -885,7 +885,7 @@ digestUpdate(J9VMThread *currentThread, jlong iccContextId, jlong digestId, j9ob
  * @return - if the value is negative, this is a returned error code. otherwise the value is the return length
  */
 static VMINLINE jint
-digestDigest(J9VMThread *currentThread, jlong iccContextId, jlong digestId, j9object_t digest) 
+digestDigest(J9VMThread *currentThread, jlong iccContextId, jlong digestId, jobject digest)
 {
 #if defined(CRYPTO_DEBUG)
 	fprintf(stderr,"** digestDigest: %p ---- ", digest);
@@ -937,7 +937,7 @@ digestDigest(J9VMThread *currentThread, jlong iccContextId, jlong digestId, j9ob
 			/* negative ret means an error code, don't copy in that case */
 			if (result > 0) {
 				/* copy back from output native buffer to output arraylets */
-				VM_ArrayCopyHelpers::memcpyToArray(currentThread, digest, 0, result, digestNativePtr);
+				VM_ArrayCopyHelpers::memcpyToArray(currentThread, J9_JNI_UNWRAP_REFERENCE(digest), 0, result, digestNativePtr);
 			}
 			/* release digest native buffer */
 			j9mem_free_memory(digestNativePtr);
@@ -956,7 +956,7 @@ digestDigest(J9VMThread *currentThread, jlong iccContextId, jlong digestId, j9ob
 
 /* com.ibm.crypto.plus.provider.icc: static public native int CIPHER_encryptFinal(long iccContextId, long iccCipherId, byte[] input, int inOffset, int inLen, byte[] ciphertext, int ciphertextOffset, boolean needsReinit) throws ICCException; */
 jint JNICALL
-Fast_com_ibm_crypto_plus_provider_icc_NativeInterface_CIPHER_encryptFinal(J9VMThread *currentThread, jlong iccContextId, jlong iccCipherId, j9object_t plaintext, jint plaintextOffset, jint plaintextLen, j9object_t ciphertext, jint ciphertextOffset, jboolean needsReinit)
+Fast_com_ibm_crypto_plus_provider_icc_NativeInterface_CIPHER_encryptFinal(J9VMThread *currentThread, jlong iccContextId, jlong iccCipherId, jobject plaintext, jint plaintextOffset, jint plaintextLen, jobject ciphertext, jint ciphertextOffset, jboolean needsReinit)
 {
 #if defined(CRYPTO_DEBUG)
 	fprintf(stderr,"** CIPHER_encryptFinal operation\n");
@@ -971,7 +971,7 @@ Fast_com_ibm_crypto_plus_provider_icc_NativeInterface_CIPHER_encryptFinal(J9VMTh
 
 /* com.ibm.crypto.plus.provider.icc: static public native int CIPHER_decryptFinal(long iccContextId, long iccCipherId, byte[] ciphertext, int cipherOffset, int cipherLen, byte[] plaintext, int plaintextOffset, boolean needsReinit) throws ICCException; */
 jint JNICALL
-Fast_com_ibm_crypto_plus_provider_icc_NativeInterface_CIPHER_decryptFinal(J9VMThread *currentThread, jlong iccContextId, jlong iccCipherId, j9object_t ciphertext, jint ciphertextOffset, jint ciphertextLen, j9object_t plaintext, jint plaintextOffset, jboolean needsReinit)
+Fast_com_ibm_crypto_plus_provider_icc_NativeInterface_CIPHER_decryptFinal(J9VMThread *currentThread, jlong iccContextId, jlong iccCipherId, jobject ciphertext, jint ciphertextOffset, jint ciphertextLen, jobject plaintext, jint plaintextOffset, jboolean needsReinit)
 {
 #if defined(CRYPTO_DEBUG)
 	fprintf(stderr,"** CIPHER_decryptFinal operation\n");
@@ -986,7 +986,7 @@ Fast_com_ibm_crypto_plus_provider_icc_NativeInterface_CIPHER_decryptFinal(J9VMTh
 
 /* com.ibm.crypto.plus.provider.icc: static public native int CIPHER_encryptUpdate(long iccContextId, long iccCipherId, byte[] plaintext, int plaintextOffset, int plaintextLen, byte[] ciphertext, int ciphertextOffset, boolean needsReinit) throws ICCException; */
 jint JNICALL
-Fast_com_ibm_crypto_plus_provider_icc_NativeInterface_CIPHER_encryptUpdate(J9VMThread *currentThread, jlong iccContextId, jlong iccCipherId, j9object_t plaintext, jint plaintextOffset, jint plaintextLen, j9object_t ciphertext, jint ciphertextOffset, jboolean needsReinit)
+Fast_com_ibm_crypto_plus_provider_icc_NativeInterface_CIPHER_encryptUpdate(J9VMThread *currentThread, jlong iccContextId, jlong iccCipherId, jobject plaintext, jint plaintextOffset, jint plaintextLen, jobject ciphertext, jint ciphertextOffset, jboolean needsReinit)
 {
 #if defined(CRYPTO_DEBUG)
 	fprintf(stderr,"** CIPHER_encryptUpdate operation\n");
@@ -1001,7 +1001,7 @@ Fast_com_ibm_crypto_plus_provider_icc_NativeInterface_CIPHER_encryptUpdate(J9VMT
 
 /* com.ibm.crypto.plus.provider.icc: static public native int CIPHER_decryptUpdate(long iccContextId, long iccCipherId, byte[] ciphertext, int cipherOffset, int cipherLen, byte[] plaintext, int plaintextOffset, boolean needsReinit) throws ICCException; */
 jint JNICALL
-Fast_com_ibm_crypto_plus_provider_icc_NativeInterface_CIPHER_decryptUpdate(J9VMThread *currentThread, jlong iccContextId, jlong iccCipherId, j9object_t ciphertext, jint ciphertextOffset, jint ciphertextLen, j9object_t plaintext, jint plaintextOffset, jboolean needsReinit)
+Fast_com_ibm_crypto_plus_provider_icc_NativeInterface_CIPHER_decryptUpdate(J9VMThread *currentThread, jlong iccContextId, jlong iccCipherId, jobject ciphertext, jint ciphertextOffset, jint ciphertextLen, jobject plaintext, jint plaintextOffset, jboolean needsReinit)
 {
 #if defined(CRYPTO_DEBUG)
 	fprintf(stderr,"** CIPHER_decryptUpdate operation\n");
@@ -1016,7 +1016,7 @@ Fast_com_ibm_crypto_plus_provider_icc_NativeInterface_CIPHER_decryptUpdate(J9VMT
 
 /* com.ibm.crypto.plus.provider.icc: static public native int z_kmc_native (byte[] input, int inputOffset, byte[] output, int outputOffset, long paramPointer, int inputLength, int mode); */
 jint JNICALL
-Fast_com_ibm_crypto_plus_provider_icc_NativeInterface_z_kmc_native(J9VMThread *currentThread, j9object_t input, jint inputOffset, j9object_t output, jint outputOffset, jlong paramPointer, jint inputLength, jint mode)
+Fast_com_ibm_crypto_plus_provider_icc_NativeInterface_z_kmc_native(J9VMThread *currentThread, jobject input, jint inputOffset, jobject output, jint outputOffset, jlong paramPointer, jint inputLength, jint mode)
 {
 #if defined(CRYPTO_DEBUG)
 	fprintf(stderr,"** z_kmc_native operation\n");
@@ -1031,7 +1031,7 @@ Fast_com_ibm_crypto_plus_provider_icc_NativeInterface_z_kmc_native(J9VMThread *c
 
 /* com.ibm.crypto.plus.provider.icc: static public native int HMAC_update(long iccContextId, long hmacId, byte[] key, int keyLength, byte[] input, int inputOffset, int inputLength, boolean needInit); */ 
 jint JNICALL
-Fast_com_ibm_crypto_plus_provider_icc_NativeInterface_HMAC_update(J9VMThread *currentThread, jlong iccContextId, jlong hmacId, j9object_t key, jint keyLength, j9object_t input, jint inputOffset, jint inputLength, jboolean needInit)
+Fast_com_ibm_crypto_plus_provider_icc_NativeInterface_HMAC_update(J9VMThread *currentThread, jlong iccContextId, jlong hmacId, jobject key, jint keyLength, jobject input, jint inputOffset, jint inputLength, jboolean needInit)
 {
 #if defined(CRYPTO_DEBUG)
 	fprintf(stderr,"** HMAC_update operation\n");
@@ -1045,7 +1045,7 @@ Fast_com_ibm_crypto_plus_provider_icc_NativeInterface_HMAC_update(J9VMThread *cu
 
 /* com.ibm.crypto.plus.provider.icc: static public native int HMAC_doFinal(long iccContextId, long hmacId, byte[] key, int keyLength, byte[] hmac, boolean needInit) */ 
 jint JNICALL
-Fast_com_ibm_crypto_plus_provider_icc_NativeInterface_HMAC_doFinal(J9VMThread *currentThread, jlong iccContextId, jlong hmacId, j9object_t key, jint keyLength, j9object_t hmac, jboolean needInit)
+Fast_com_ibm_crypto_plus_provider_icc_NativeInterface_HMAC_doFinal(J9VMThread *currentThread, jlong iccContextId, jlong hmacId, jobject key, jint keyLength, jobject hmac, jboolean needInit)
 {
 #if defined(CRYPTO_DEBUG)
 	fprintf(stderr,"** HMAC_doFinal operation\n");
@@ -1059,7 +1059,7 @@ Fast_com_ibm_crypto_plus_provider_icc_NativeInterface_HMAC_doFinal(J9VMThread *c
 
 /* com.ibm.crypto.plus.provider.icc: static public native int DIGEST_update(long iccContextId, long digestId, byte[] input, int offset, int length) */
 jint JNICALL 
-Fast_com_ibm_crypto_plus_provider_icc_NativeInterface_DIGEST_update(J9VMThread *currentThread, jlong iccContextId, jlong digestId, j9object_t input, jint offset, jint length)
+Fast_com_ibm_crypto_plus_provider_icc_NativeInterface_DIGEST_update(J9VMThread *currentThread, jlong iccContextId, jlong digestId, jobject input, jint offset, jint length)
 {
 #if defined(CRYPTO_DEBUG)
 	fprintf(stderr,"** DIGEST_update operation\n");
@@ -1073,7 +1073,7 @@ Fast_com_ibm_crypto_plus_provider_icc_NativeInterface_DIGEST_update(J9VMThread *
 
 /* com.ibm.crypto.plus.provider.icc: static public native int DIGEST_digest_and_reset(long iccContextId, long digestId, byte[] output) */
 jint JNICALL 
-Fast_com_ibm_crypto_plus_provider_icc_NativeInterface_DIGEST_digest(J9VMThread *currentThread, jlong iccContextId, jlong digestId, j9object_t digest)
+Fast_com_ibm_crypto_plus_provider_icc_NativeInterface_DIGEST_digest(J9VMThread *currentThread, jlong iccContextId, jlong digestId, jobject digest)
 {
 #if defined(CRYPTO_DEBUG)
 	fprintf(stderr,"** DIGEST_digest operation\n");
