@@ -783,16 +783,44 @@ void J9::ARM64::PrivateLinkage::createPrologue(TR::Instruction *cursor)
 
       int32_t preservedRegisterOffsetFromJavaSP = outgoingArgsSize;
 
+      TR::RealRegister *pendingRegToStore = NULL;
       for (TR::RealRegister::RegNum regIndex = firstPreservedGPR; regIndex <= lastPreservedGPR; regIndex=(TR::RealRegister::RegNum)((uint32_t)regIndex+1))
          {
          TR::RealRegister *preservedRealReg = machine->getRealRegister(regIndex);
          if (preservedRealReg->getHasBeenAssignedInMethod())
             {
-            TR::MemoryReference *preservedRegMR = TR::MemoryReference::createWithDisplacement(cg(), javaSP, preservedRegisterOffsetFromJavaSP);
-            cursor = generateMemSrc1Instruction(cg(), TR::InstOpCode::strimmx, NULL, preservedRegMR, preservedRealReg, cursor);
-            preservedRegisterOffsetFromJavaSP += 8;
-            numGPRsSaved--;
+            if (pendingRegToStore)
+               {
+               TR::MemoryReference *preservedRegMR = TR::MemoryReference::createWithDisplacement(cg(), javaSP, preservedRegisterOffsetFromJavaSP);
+               // Register pair instruction
+               cursor = generateMemSrc2Instruction(cg(), TR::InstOpCode::stpoffx, NULL, preservedRegMR, pendingRegToStore, preservedRealReg, cursor);
+               preservedRegisterOffsetFromJavaSP += 16;
+               numGPRsSaved -= 2;
+               pendingRegToStore = NULL;
+               }
+            else
+               {
+               if (constantIsImm7(preservedRegisterOffsetFromJavaSP >> 3))
+                  {
+                  pendingRegToStore = preservedRealReg;
+                  }
+               else
+                  {
+                  TR::MemoryReference *preservedRegMR = TR::MemoryReference::createWithDisplacement(cg(), javaSP, preservedRegisterOffsetFromJavaSP);
+                  cursor = generateMemSrc1Instruction(cg(), TR::InstOpCode::strimmx, NULL, preservedRegMR, preservedRealReg, cursor);
+                  preservedRegisterOffsetFromJavaSP += 8;
+                  numGPRsSaved--;
+                  }
+               }
             }
+         }
+      if (pendingRegToStore)
+         {
+         TR::MemoryReference *preservedRegMR = TR::MemoryReference::createWithDisplacement(cg(), javaSP, preservedRegisterOffsetFromJavaSP);
+         cursor = generateMemSrc1Instruction(cg(), TR::InstOpCode::strimmx, NULL, preservedRegMR, pendingRegToStore, cursor);
+         preservedRegisterOffsetFromJavaSP += 8;
+         numGPRsSaved--;
+         pendingRegToStore = NULL;
          }
 
       TR_ASSERT_FATAL(numGPRsSaved == 0, "preserved register mismatch in prologue");
@@ -881,15 +909,41 @@ void J9::ARM64::PrivateLinkage::createEpilogue(TR::Instruction *cursor)
    int32_t preservedRegisterOffsetFromJavaSP = cg()->getLargestOutgoingArgSize() + getOffsetToFirstParm(); // outgoingArgsSize
    TR::RealRegister::RegNum firstPreservedGPR = TR::RealRegister::x21;
    TR::RealRegister::RegNum lastPreservedGPR = TR::RealRegister::x28;
+   TR::RealRegister *pendingRegToLoad = NULL;
    for (TR::RealRegister::RegNum r = firstPreservedGPR; r <= lastPreservedGPR; r = (TR::RealRegister::RegNum)((uint32_t)r+1))
       {
       TR::RealRegister *rr = machine->getRealRegister(r);
       if (rr->getHasBeenAssignedInMethod())
          {
-         TR::MemoryReference *preservedRegMR = TR::MemoryReference::createWithDisplacement(cg(), javaSP, preservedRegisterOffsetFromJavaSP);
-         cursor = generateTrg1MemInstruction(cg(), TR::InstOpCode::ldrimmx, lastNode, rr, preservedRegMR, cursor);
-         preservedRegisterOffsetFromJavaSP += 8;
+         if (pendingRegToLoad)
+            {
+            TR::MemoryReference *preservedRegMR = TR::MemoryReference::createWithDisplacement(cg(), javaSP, preservedRegisterOffsetFromJavaSP);
+            // Register pair instruction
+            cursor = generateTrg2MemInstruction(cg(), TR::InstOpCode::ldpoffx, lastNode, pendingRegToLoad, rr, preservedRegMR, cursor);
+            preservedRegisterOffsetFromJavaSP += 16;
+            pendingRegToLoad = NULL;
+            }
+         else
+            {
+            if (constantIsImm7(preservedRegisterOffsetFromJavaSP >> 3))
+               {
+               pendingRegToLoad = rr;
+               }
+            else
+               {
+               TR::MemoryReference *preservedRegMR = TR::MemoryReference::createWithDisplacement(cg(), javaSP, preservedRegisterOffsetFromJavaSP);
+               cursor = generateTrg1MemInstruction(cg(), TR::InstOpCode::ldrimmx, lastNode, rr, preservedRegMR, cursor);
+               preservedRegisterOffsetFromJavaSP += 8;
+               }
+            }
          }
+      }
+   if (pendingRegToLoad)
+      {
+      TR::MemoryReference *preservedRegMR = TR::MemoryReference::createWithDisplacement(cg(), javaSP, preservedRegisterOffsetFromJavaSP);
+      cursor = generateTrg1MemInstruction(cg(), TR::InstOpCode::ldrimmx, lastNode, pendingRegToLoad, preservedRegMR, cursor);
+      preservedRegisterOffsetFromJavaSP += 8;
+      pendingRegToLoad = NULL;
       }
 
    // remove space for preserved registers
