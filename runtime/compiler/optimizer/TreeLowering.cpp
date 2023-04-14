@@ -1548,6 +1548,15 @@ TR::TreeLowering::lowerValueTypeOperations(TransformationManager& transformation
 
    if (node->getOpCode().isCall())
       {
+      if (symRefTab->isNonHelper(node->getSymbolReference(), TR::SymbolReferenceTable::loadFlattenableArrayElementNonHelperSymbol))
+         {
+         node->setSymbolReference(symRefTab->findOrCreateLoadFlattenableArrayElementSymbolRef());
+         }
+      if (symRefTab->isNonHelper(node->getSymbolReference(), TR::SymbolReferenceTable::storeFlattenableArrayElementNonHelperSymbol))
+         {
+         node->setSymbolReference(symRefTab->findOrCreateStoreFlattenableArrayElementSymbolRef());
+         }
+
       // IL Generation only uses the <objectInequalityComparison> non-helper today,
       // but just in case, make sure TreeLowering can handle both possibilities.
       const bool isObjectEqualityTest = symRefTab->isNonHelper(node->getSymbolReference(), TR::SymbolReferenceTable::objectEqualityComparisonSymbol);

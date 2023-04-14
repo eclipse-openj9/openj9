@@ -389,6 +389,26 @@ class SymbolReferenceTable : public OMR::SymbolReferenceTableConnector
 
    /**
     * \brief
+    *    Finds the <loadFlattenableArrayElementNonHelper> "nonhelper" symbol
+    *    reference, creating it if necessary.
+    *
+    *  \return
+    *     The <loadFlattenableArrayElementNonHelper> symbol reference.
+    */
+   TR::SymbolReference *findOrCreateLoadFlattenableArrayElementNonHelperSymbolRef();
+
+   /**
+    * \brief
+    *    Finds the <storeFlattenableArrayElementNonHelper> "nonhelper" symbol
+    *    reference, creating it if necessary.
+    *
+    *  \return
+    *     The <storeFlattenableArrayElementNonHelper> symbol reference.
+    */
+   TR::SymbolReference *findOrCreateStoreFlattenableArrayElementNonHelperSymbolRef();
+
+   /**
+    * \brief
     *    Creates a new symbol for a parameter within the supplied owning method of the
     *    specified type and slot index.
     *
