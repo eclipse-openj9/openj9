@@ -5919,7 +5919,7 @@ TR_J9ByteCodeIlGenerator::loadArrayElement(TR::DataType dataType, TR::ILOpCodes 
          nullchk = genNullCheck(nullchk);
          genTreeTop(nullchk);
          }
-      auto* helperSymRef = comp()->getSymRefTab()->findOrCreateLoadFlattenableArrayElementSymbolRef();
+      auto* helperSymRef = comp()->getSymRefTab()->findOrCreateLoadFlattenableArrayElementNonHelperSymbolRef();
       auto* helperCallNode = TR::Node::createWithSymRef(TR::acall, 2, 2, elementIndex, arrayBaseAddress, helperSymRef);
 
       TR::TreeTop *loadHelperCallTT = genTreeTop(helperCallNode);
@@ -7427,7 +7427,7 @@ TR_J9ByteCodeIlGenerator::storeArrayElement(TR::DataType dataType, TR::ILOpCodes
          nullchk = genNullCheck(nullchk);
          genTreeTop(nullchk);
          }
-      auto* helperSymRef = comp()->getSymRefTab()->findOrCreateStoreFlattenableArrayElementSymbolRef();
+      auto* helperSymRef = comp()->getSymRefTab()->findOrCreateStoreFlattenableArrayElementNonHelperSymbolRef();
       TR::TreeTop *storeHelperCallTT = genTreeTop(TR::Node::createWithSymRef(TR::call, 3, 3, value, elementIndex, arrayBaseAddress, helperSymRef));
 
       const char *counterName = TR::DebugCounter::debugCounterName(comp(), "vt-helper/generated/aastore/(%s)/bc=%d",

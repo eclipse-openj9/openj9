@@ -645,12 +645,13 @@ static bool owningMethodDoesNotContainBoundChecks(OMR::ValuePropagation *vp, TR:
    return false;
    }
 
-static TR::Node *getStoreValueBaseNode(TR::Node *storeValueNode, TR::SymbolReference *loadFlattenableElementSymRef)
+static TR::Node *getStoreValueBaseNode(TR::Node *storeValueNode, TR::SymbolReferenceTable *symRefTab)
    {
    TR::Node *storeValueBaseNode = NULL;
 
-   // The value might be loaded using inline array access IL or the <jitLoadFlatttenableArrayElement>
-   // helper, so we need to take care of both cases.
+   // The value might be loaded using inline array access IL
+   // or the loadFlattenableArrayElement non-helper or helper,
+   // so we need to take care of all the cases.
    //
    if (storeValueNode->getOpCode().isLoadVar()
        && storeValueNode->getOpCode().isIndirect()
@@ -668,7 +669,8 @@ static TR::Node *getStoreValueBaseNode(TR::Node *storeValueNode, TR::SymbolRefer
             }
          }
    else if (storeValueNode->getOpCode().isCall()
-            && storeValueNode->getSymbolReference() == loadFlattenableElementSymRef)
+            && (symRefTab->isNonHelper(storeValueNode->getSymbolReference(), TR::SymbolReferenceTable::loadFlattenableArrayElementNonHelperSymbol) ||
+                                      (storeValueNode->getSymbolReference()->getReferenceNumber() == TR_ldFlattenableArrayElement)))
       {
       storeValueBaseNode = storeValueNode->getSecondChild();
       }
@@ -841,17 +843,20 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
       return;
       }
 
-   // Check for call to jit{Load|Store}FlattenableArrayElement helpers
-   TR::SymbolReference *loadFlattenableElementSymRef = comp()->getSymRefTab()->findOrCreateLoadFlattenableArrayElementSymbolRef();
+   // Check for call to {load|store}FlattenableArrayElementNonHelper
+   TR::SymbolReferenceTable *symRefTab = comp()->getSymRefTab();
+   TR::SymbolReference *loadFlattenableElementHelperSymRef = symRefTab->findOrCreateLoadFlattenableArrayElementSymbolRef();
+   TR::SymbolReference *storeFlattenableElementHelperSymRef = symRefTab->findOrCreateStoreFlattenableArrayElementSymbolRef();
+   bool isLoadFlattenableArrayElement = false;
+   bool isStoreFlattenableArrayElement = false;
 
-   const bool isLoadFlattenableArrayElement =
-                 node->getOpCode().isCall()
-                 && node->getSymbolReference() == loadFlattenableElementSymRef;
+   isLoadFlattenableArrayElement =
+              node->getOpCode().isCall()
+              && symRefTab->isNonHelper(node->getSymbolReference(), TR::SymbolReferenceTable::loadFlattenableArrayElementNonHelperSymbol);
 
-   const bool isStoreFlattenableArrayElement =
-                 node->getOpCode().isCall()
-                 && node->getSymbolReference()
-                    == comp()->getSymRefTab()->findOrCreateStoreFlattenableArrayElementSymbolRef();
+   isStoreFlattenableArrayElement =
+              node->getOpCode().isCall()
+              && symRefTab->isNonHelper(node->getSymbolReference(), TR::SymbolReferenceTable::storeFlattenableArrayElementNonHelperSymbol);
 
    if (isLoadFlattenableArrayElement || isStoreFlattenableArrayElement)
       {
@@ -860,6 +865,10 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
          {
          return;
          }
+
+      if (trace())
+         traceMsg(comp(), "%s: isLoadFlattenableArrayElement %d isStoreFlattenableArrayElement %d n%dn symRef #%d\n", __FUNCTION__,
+            isLoadFlattenableArrayElement, isStoreFlattenableArrayElement, node->getGlobalIndex(), node->getSymbolReference()->getReferenceNumber());
 
       bool arrayRefGlobal;
       bool storeValueGlobal;
@@ -885,14 +894,14 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
          }
 
       /*
-       * ========== jit{Load|Store}FlattenableArrayElement Transformations ==========
+       * ========== {Load|Store}FlattenableArrayElement Transformations ==========
        *
        * Array flattening is disabled
-       *    - jitLoadFlattenableArrayElement
+       *    - loadFlattenableArrayElementNonHelper
        *         - Transform the helper call to regular aaload
        *               (Transformed in ILGen. VP is still capable of transforming the helper call to regular aaload if encountering one)
        *
-       *    - jitStoreFlattenableArrayElement
+       *    - storeFlattenableArrayElementNonHelper
        *         - Transform the helper call to regular aastore (Transformed in VP: canTransformUnflattenedArrayElementLoadStore)
        *
        * Array flattening is enabled
@@ -1013,6 +1022,10 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
 
                         // If the value that's being stored is not the same as the array hint component type, use helper call.
                         canTransformFlattenedArrayElementLoadStoreUseTypeHint = (isInstanceOfHintComponentType == TR_yes);
+                        }
+                     else if (trace())
+                        {
+                        traceMsg(comp(), "%s: n%dn %s valueClass is NULL storeValueConstraint 0x%p storeValueNode n%dn 0x%p\n", __FUNCTION__, node->getGlobalIndex(), node->getOpCode().getName(), storeValueConstraint, storeValueNode->getGlobalIndex(), storeValueNode);
                         }
                      }
                   }
@@ -1146,7 +1159,7 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
                // of the array element store.  If so, there's no need for an ArrayStoreCHK or a call
                // to the <nonNullableArrayNullStoreCheck> non-helper.
                //
-               TR::Node *storeValueBaseNode = getStoreValueBaseNode(storeValueNode, loadFlattenableElementSymRef);
+               TR::Node *storeValueBaseNode = getStoreValueBaseNode(storeValueNode, symRefTab);
 
                // If the value was loaded from the same array that is the target of the store, no need
                // to perform ArrayStoreCHK or a call to the <nonNullableArrayNullStoreCheck> non-helper
@@ -1193,7 +1206,7 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
 
             if (isStoreFlattenableArrayElement && !owningMethodDoesNotContainStoreChecks(this, node))
                {
-               TR::Node *storeValueBaseNode = getStoreValueBaseNode(storeValueNode, loadFlattenableElementSymRef);
+               TR::Node *storeValueBaseNode = getStoreValueBaseNode(storeValueNode, symRefTab);
 
                // If the value was loaded from the same array that is the target of the store, no need
                // to perform ArrayStoreCHK or a call to the <nonNullableArrayNullStoreCheck> non-helper
@@ -1232,6 +1245,29 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
             }
 
          _valueTypesHelperCallsToBeFolded.add(callToTransform);
+
+         // After the transformations using type hint (canTransform*UseTypeHint), the IL trees will contain
+         // the helper calls (jit{Load|Store}FlattenableArrayElement) to prevent the calls from being transformed
+         // more than once in VP. Therefore, the non-helper calls should be converted into helper calls here.
+         //
+         // After other transformations that do not rely on type hint, there will be no more helper calls.
+         // No need to do any non-helper to helper call conversions here.
+         //
+         // For un-transformed non-helper calls, the non-helper calls will be eventually converted into
+         // helper calls in Optimizer tree lowering.
+         if ((canTransformFlattenedArrayElementLoadStoreUseTypeHint ||
+              canTransformUnflattenedArrayElementLoadStoreUseTypeHint ||
+              canTransformIdentityArrayElementLoadStoreUseTypeHint))
+            {
+            if (isLoadFlattenableArrayElement)
+               {
+               node->setSymbolReference(loadFlattenableElementHelperSymRef);
+               }
+            else // isStoreFlattenableArrayElement
+               {
+               node->setSymbolReference(storeFlattenableElementHelperSymRef);
+               }
+            }
          }
       else
          {
@@ -2937,7 +2973,7 @@ J9::ValuePropagation::doDelayedTransformations()
                             OPT_DETAILS,
                             callNode->getGlobalIndex(),
                             isInlineVTCompare ? "icall of <object{Inequality|Equality}Comparison>"
-                                 : (isLoad ? "acall of <jitLoadFlattenableArrayElement>" : "acall of <jitStoreFlattenableArrayElement>")))
+                                 : (isLoad ? "acall of <loadFlattenableArrayElementNonHelper>" : "call of <storeFlattenableArrayElementNonHelper>")))
          {
          continue;
          }

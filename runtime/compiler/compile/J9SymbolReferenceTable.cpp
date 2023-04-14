@@ -2627,6 +2627,30 @@ J9::SymbolReferenceTable::findOrCreateNonNullableArrayNullStoreCheckSymbolRef()
    return symRef;
    }
 
+TR::SymbolReference *
+J9::SymbolReferenceTable::findOrCreateLoadFlattenableArrayElementNonHelperSymbolRef()
+   {
+   TR::SymbolReference *symRef = element(loadFlattenableArrayElementNonHelperSymbol);
+   if (symRef != NULL)
+      return symRef;
+
+   symRef = self()->findOrCreateCodeGenInlinedHelper(loadFlattenableArrayElementNonHelperSymbol);
+   symRef->setCanGCandExcept();
+   return symRef;
+   }
+
+TR::SymbolReference *
+J9::SymbolReferenceTable::findOrCreateStoreFlattenableArrayElementNonHelperSymbolRef()
+   {
+   TR::SymbolReference *symRef = element(storeFlattenableArrayElementNonHelperSymbol);
+   if (symRef != NULL)
+      return symRef;
+
+   symRef = self()->findOrCreateCodeGenInlinedHelper(storeFlattenableArrayElementNonHelperSymbol);
+   symRef->setCanGCandExcept();
+   return symRef;
+   }
+
 TR::ParameterSymbol *
 J9::SymbolReferenceTable::createParameterSymbol(
       TR::ResolvedMethodSymbol *owningMethodSymbol,
