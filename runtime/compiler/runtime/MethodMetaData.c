@@ -2016,7 +2016,7 @@ void * getInlinedMethod(void * inlinedCallSite)
 static void *getNotUnloadedInlinedCallSiteArrayElement(J9TR_MethodMetaData * methodMetaData, int cix)
    {
    void *inlinedCallSite = getInlinedCallSiteArrayElement(methodMetaData, cix);
-   while (isUnloadedInlinedMethod(getInlinedMethod(inlinedCallSite)))
+   while (inlinedCallSite && isUnloadedInlinedMethod(getInlinedMethod(inlinedCallSite)))
       {
       inlinedCallSite = getNextInlinedCallSite(methodMetaData, inlinedCallSite);
       if (!inlinedCallSite)
@@ -2101,12 +2101,18 @@ UDATA getByteCodeIndexFromStackMap(J9TR_MethodMetaData * methodMetaData, void * 
 
 UDATA getCurrentByteCodeIndexAndIsSameReceiver(J9TR_MethodMetaData * methodMetaData, void * stackMap, void * currentInlinedCallSite, UDATA * isSameReceiver)
    {
-   TR_ByteCodeInfo * byteCodeInfo = (TR_ByteCodeInfo *)getByteCodeInfoFromStackMap(methodMetaData, stackMap);
+   TR_ByteCodeInfo * byteCodeInfo = NULL;
 
-   if (currentInlinedCallSite)
+   if (methodMetaData && stackMap)
+      byteCodeInfo = (TR_ByteCodeInfo *)getByteCodeInfoFromStackMap(methodMetaData, stackMap);
+
+   if (isSameReceiver != 0)
+      *isSameReceiver = FALSE;
+
+   if (byteCodeInfo && currentInlinedCallSite)
       {
       void * inlinedCallSite = getFirstInlinedCallSiteWithByteCodeInfo(methodMetaData, stackMap, byteCodeInfo);
-      if (inlinedCallSite != currentInlinedCallSite)
+      if (inlinedCallSite && inlinedCallSite != currentInlinedCallSite)
          {
          void * previousInlinedCallSite;
          do
@@ -2114,11 +2120,11 @@ UDATA getCurrentByteCodeIndexAndIsSameReceiver(J9TR_MethodMetaData * methodMetaD
             previousInlinedCallSite = inlinedCallSite;
             inlinedCallSite = getNextInlinedCallSite(methodMetaData, inlinedCallSite);
             }
-         while (inlinedCallSite != currentInlinedCallSite);
+         while (inlinedCallSite && inlinedCallSite != currentInlinedCallSite);
          byteCodeInfo = (TR_ByteCodeInfo *)getByteCodeInfo(previousInlinedCallSite);
          }
       }
-   else if (byteCodeInfo->_callerIndex != -1)
+   else if (byteCodeInfo && byteCodeInfo->_callerIndex != -1)
       {
       void * inlinedCallSite = getFirstInlinedCallSiteWithByteCodeInfo(methodMetaData, stackMap, byteCodeInfo);
       void * prevInlinedCallSite = inlinedCallSite;
@@ -2127,15 +2133,21 @@ UDATA getCurrentByteCodeIndexAndIsSameReceiver(J9TR_MethodMetaData * methodMetaD
          prevInlinedCallSite = inlinedCallSite;
          inlinedCallSite = getNextInlinedCallSite(methodMetaData, inlinedCallSite);
          }
-      byteCodeInfo = (TR_ByteCodeInfo *)getByteCodeInfo(prevInlinedCallSite);
+      if (prevInlinedCallSite)
+         byteCodeInfo = (TR_ByteCodeInfo *)getByteCodeInfo(prevInlinedCallSite);
       if (inlinedCallSite)
          byteCodeInfo = (TR_ByteCodeInfo *)getByteCodeInfo(inlinedCallSite);
 
       }
 
-   if (isSameReceiver != 0)
-      *isSameReceiver = byteCodeInfo->_isSameReceiver;
-   return byteCodeInfo->_byteCodeIndex;
+   if (byteCodeInfo)
+      {
+      if (isSameReceiver != 0)
+         *isSameReceiver = byteCodeInfo->_isSameReceiver;
+      return byteCodeInfo->_byteCodeIndex;
+      }
+
+   return UDATA_MAX;
    }
 
 UDATA getJitPCOffsetFromExceptionHandler(J9TR_MethodMetaData * methodMetaData, void *jitPC)
