@@ -2241,21 +2241,28 @@ exit:
 		/* clear CONCURRENTSCANNING flag bit3:LocalConcurrentScanning /bit4:GlobalConcurrentScanning */
 		ContinuationState oldContinuationState = 0;
 		ContinuationState returnContinuationState = 0;
+		J9VMThread *carrierThread = NULL;
+		bool enteredMonitor = false;
 		do {
 			oldContinuationState = *continuationStatePtr;
+			if (!enteredMonitor) {
+				carrierThread = getCarrierThread(oldContinuationState);
+				if (NULL != carrierThread) {
+					omrthread_monitor_enter(carrierThread->publicFlagsMutex);
+					enteredMonitor = true;
+				}
+			}
 			ContinuationState newContinuationState = oldContinuationState;
 			resetConcurrentlyScanned(&newContinuationState, isGlobalGC);
 			returnContinuationState = VM_AtomicSupport::lockCompareExchange(continuationStatePtr, oldContinuationState, newContinuationState);
 		} while (returnContinuationState != oldContinuationState);
 
-		if (!isConcurrentlyScanned(returnContinuationState, !isGlobalGC)) {
-			J9VMThread *carrierThread = getCarrierThread(returnContinuationState);
-			if (NULL != carrierThread) {
-				omrthread_monitor_enter(carrierThread->publicFlagsMutex);
+		if (enteredMonitor) {
+			if (!isConcurrentlyScanned(returnContinuationState, !isGlobalGC)) {
 				/* notify the waiting carrierThread that we just finished scanning and we were the only/last GC to scan it, so that it can proceed with mounting. */
 				omrthread_monitor_notify_all(carrierThread->publicFlagsMutex);
-				omrthread_monitor_exit(carrierThread->publicFlagsMutex);
 			}
+			omrthread_monitor_exit(carrierThread->publicFlagsMutex);
 		}
 	}
 #endif /* JAVA_SPEC_VERSION >= 19 */

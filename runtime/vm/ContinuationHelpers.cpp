@@ -110,23 +110,27 @@ synchronizeWithConcurrentGCScan(J9VMThread *currentThread, j9object_t continuati
 	 * but only up to small finite number of times.
 	 */
 	do {
-		/* Wait till potentially concurrent GC scans are complete */
-		while (VM_VMHelpers::isConcurrentlyScanned(returnContinuationState)) {
-			PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, continuationObject);
-			internalReleaseVMAccess(currentThread);
-
+		if (VM_VMHelpers::isConcurrentlyScanned(returnContinuationState)) {
 			omrthread_monitor_enter(currentThread->publicFlagsMutex);
-			/* Wait for GC thread to notify us when it's done. */
-			omrthread_monitor_wait(currentThread->publicFlagsMutex);
+			/* Wait till potentially concurrent GC scans are complete */
+			do {
+				oldContinuationState = *continuationStatePtr;
+				if (VM_VMHelpers::isConcurrentlyScanned(oldContinuationState)) {
+					PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, continuationObject);
+					internalReleaseVMAccess(currentThread);
+
+					/* Wait for GC thread to notify us when it's done. */
+					omrthread_monitor_wait(currentThread->publicFlagsMutex);
+
+					internalAcquireVMAccess(currentThread);
+					continuationObject = POP_OBJECT_IN_SPECIAL_FRAME(currentThread);
+					/* Object might have moved - update its address and the address of the state slot. */
+					continuationStatePtr = VM_VMHelpers::getContinuationStateAddress(currentThread, continuationObject);
+					continue;
+				}
+			} while (false);
 			omrthread_monitor_exit(currentThread->publicFlagsMutex);
-
-			internalAcquireVMAccess(currentThread);
-			continuationObject = POP_OBJECT_IN_SPECIAL_FRAME(currentThread);
-			/* Object might have moved - update its address and the address of the state slot. */
-			continuationStatePtr = VM_VMHelpers::getContinuationStateAddress(currentThread, continuationObject);
-			returnContinuationState = *continuationStatePtr;
 		}
-
 		/* Remove pending state */
 		oldContinuationState = *continuationStatePtr;
 		Assert_VM_true(VM_VMHelpers::isContinuationMountedWithCarrierThread(oldContinuationState, currentThread));
