@@ -783,12 +783,13 @@ JVM_DefineModule(JNIEnv * env, jobject module, jboolean isOpen, jstring version,
 		vmFuncs->setCurrentExceptionNLS(currentThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, J9NLS_VM_MODULE_IS_NULL);
 	} else {
 		j9object_t modObj = J9_JNI_UNWRAP_REFERENCE(module);
+		J9ClassLoader *systemClassLoader = vm->systemClassLoader;
 
 		J9ClassLoader * const classLoader = getModuleObjectClassLoader(currentThread, modObj);
 		j9object_t moduleName = J9VMJAVALANGMODULE_NAME(currentThread, modObj);
 
 		/* extensionClassLoader holds the platform class loader in Java 11+ */
-		if ((classLoader != vm->systemClassLoader) && (classLoader != vm->extensionClassLoader)) {
+		if ((classLoader != systemClassLoader) && (classLoader != vm->extensionClassLoader)) {
 			jsize pkgIndex = 0;
 			for (pkgIndex = 0; pkgIndex < numPackages; pkgIndex++) {
 				const char *packageName = packages[pkgIndex];
@@ -818,7 +819,7 @@ JVM_DefineModule(JNIEnv * env, jobject module, jboolean isOpen, jstring version,
 				currentThread, moduleName, J9_STR_NULL_TERMINATE_RESULT, "", 0, buf, J9VM_PACKAGE_NAME_BUFFER_LENGTH, NULL);
 			if (NULL == nameUTF) {
 				vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
-			} else if ((classLoader != vm->systemClassLoader) && (0 == strcmp(nameUTF, JAVA_BASE_MODULE))) {
+			} else if ((classLoader != systemClassLoader) && (0 == strcmp(nameUTF, JAVA_BASE_MODULE))) {
 				vmFuncs->setCurrentExceptionNLS(currentThread, J9VMCONSTANTPOOL_JAVALANGLAYERINSTANTIATIONEXCEPTION, J9NLS_VM_ONLY_BOOTCLASSLOADER_LOAD_MODULE_JAVABASE);
 			} else {
 				J9Module *j9mod = createModule(currentThread, modObj, classLoader, moduleName);
@@ -831,7 +832,7 @@ JVM_DefineModule(JNIEnv * env, jobject module, jboolean isOpen, jstring version,
 						/* For "java.base" module setting of jrt URL and patch paths is already done during startup. Avoid doing it here. */
 						if (J9_ARE_ALL_BITS_SET(vm->runtimeFlags, J9_RUNTIME_JAVA_BASE_MODULE_CREATED)) {
 							Trc_MODULE_defineModule(currentThread, nameUTF, j9mod);
-							if (classLoader == vm->systemClassLoader) {
+							if (classLoader == systemClassLoader) {
 								success = vmFuncs->setBootLoaderModulePatchPaths(vm, j9mod, (const char *)nameUTF);
 								if (FALSE == success) {
 									vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
@@ -856,7 +857,7 @@ JVM_DefineModule(JNIEnv * env, jobject module, jboolean isOpen, jstring version,
 
 							Assert_SC_true(0 == strcmp(nameUTF, JAVA_BASE_MODULE));
 
-							clazz = vmFuncs->allClassesStartDo(&classWalkState, vm, vm->systemClassLoader);
+							clazz = vmFuncs->allClassesStartDo(&classWalkState, vm, systemClassLoader);
 							while (NULL != clazz) {
 								Assert_SC_true(clazz->module == vm->javaBaseModule);
 								J9VMJAVALANGCLASS_SET_MODULE(currentThread, clazz->classObject, modObj);
@@ -878,6 +879,15 @@ JVM_DefineModule(JNIEnv * env, jobject module, jboolean isOpen, jstring version,
 								vmFuncs->allClassesEndDo(&classWalkStateAnon);
 							}
 
+#if JAVA_SPEC_VERSION >= 21
+							/* vm->unamedModuleForSystemLoader->moduleObject was saved by JVM_SetBootLoaderUnnamedModule */
+							{
+								j9object_t moduleObject = vm->unamedModuleForSystemLoader->moduleObject;
+								Assert_SC_notNull(moduleObject);
+								J9VMJAVALANGCLASSLOADER_SET_UNNAMEDMODULE(currentThread, systemClassLoader->classLoaderObject, moduleObject);
+								Trc_MODULE_defineModule_setBootloaderUnnamedModule(currentThread);
+							}
+#endif /* JAVA_SPEC_VERSION >= 21 */
 							vm->runtimeFlags |= J9_RUNTIME_JAVA_BASE_MODULE_CREATED;
 							Trc_MODULE_defineModule(currentThread, "java.base", j9mod);
 						}
@@ -1436,6 +1446,8 @@ JVM_WaitForReferencePendingList(JNIEnv *env)
 
 /**
  * Adds an unnamed module to the bootLoader
+ * JDK21+ saves it to J9JavaVM->unamedModuleForSystemLoader->moduleObject,
+ * and delays bootclassloader.unnamedModule setting until java.base module is created.
  *
  * @param module module
  *
@@ -1450,17 +1462,17 @@ void JNICALL
 JVM_SetBootLoaderUnnamedModule(JNIEnv *env, jobject module)
 {
 	J9VMThread * const currentThread = (J9VMThread*)env;
-	J9JavaVM * vm = currentThread->javaVM;
+	J9JavaVM *vm = currentThread->javaVM;
 	J9InternalVMFunctions const * const vmFuncs = vm->internalVMFunctions;
 
 	vmFuncs->internalEnterVMFromJNI(currentThread);
-	if (module == NULL) {
+	if (NULL == module) {
 		vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, "module is null");
 	} else {
 		j9object_t modObj = J9_JNI_UNWRAP_REFERENCE(module);
 		J9ClassLoader *systemClassLoader = vm->systemClassLoader;
 		J9Class *instanceClazz = J9OBJECT_CLAZZ(currentThread, modObj);
-		if (!currentThread->currentException) {
+		if (NULL == currentThread->currentException) {
 			J9Class *moduleClass = vmFuncs->internalFindKnownClass(currentThread,
 					J9VMCONSTANTPOOL_JAVALANGMODULE,
 					J9_FINDKNOWNCLASS_FLAG_INITIALIZE);
@@ -1471,6 +1483,19 @@ JVM_SetBootLoaderUnnamedModule(JNIEnv *env, jobject module)
 			} else if (instanceClazz->classLoader != systemClassLoader) {
 				vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALARGUMENTEXCEPTION, "module was not loaded by the bootclassloader");
 			} else {
+#if JAVA_SPEC_VERSION >= 21
+				J9Module *unamedModuleForSystemLoader = vm->unamedModuleForSystemLoader;
+				/* can't set bootclassloader.unnamedModule since bootclassloader hasn't finished the initialization yet */
+				if (NULL == unamedModuleForSystemLoader) {
+					vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, "unamedModuleForSystemLoader was not initialized");
+				} else if (NULL != unamedModuleForSystemLoader->moduleObject) {
+					vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, "module is already set in the unamedModuleForSystemLoader");
+				} else {
+					J9Module *j9mod = createModule(currentThread, modObj, systemClassLoader, NULL /* NULL name field */);
+					unamedModuleForSystemLoader->moduleObject = modObj;
+					Trc_MODULE_setUnamedModuleForSystemLoaderModuleObject(currentThread, j9mod, unamedModuleForSystemLoader);
+				}
+#else /* JAVA_SPEC_VERSION >= 21 */
 				if (NULL == J9VMJAVALANGCLASSLOADER_UNNAMEDMODULE(currentThread, systemClassLoader->classLoaderObject)) {
 					J9Module *j9mod = createModule(currentThread, modObj, systemClassLoader, NULL /* NULL name field */);
 					J9VMJAVALANGCLASSLOADER_SET_UNNAMEDMODULE(currentThread, systemClassLoader->classLoaderObject, modObj);
@@ -1478,6 +1503,7 @@ JVM_SetBootLoaderUnnamedModule(JNIEnv *env, jobject module)
 				} else {
 					vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, "module is already set in the bootclassloader");
 				}
+#endif /* JAVA_SPEC_VERSION >= 21 */
 			}
 		}
 	}
