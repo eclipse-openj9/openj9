@@ -816,13 +816,15 @@ def match_fail_pattern(outputLines) {
 }
 
 def recompile() {
-    def maxRetry = 3
+    def maxRetry = 6
     def retryCounter = 0
     def doRetry = true
+    def delay = 300 // Seconds before retry a compile.
 
     while ((maxRetry > retryCounter) && doRetry) {
         retryCounter++
         println("Attempt to recompile, retry: ${retryCounter}")
+        sleep delay
 
         try {
             sh "make clean && ${get_compile_command()}"
