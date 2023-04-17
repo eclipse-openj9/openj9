@@ -240,8 +240,8 @@ public:
 	void collectorInitialized(MM_RealtimeGC *gc);
 
 #if defined(J9VM_OPT_CRIU_SUPPORT)
-	virtual bool expandThreadPool(MM_EnvironmentBase *env) { return true; }
-	virtual void contractThreadPool(MM_EnvironmentBase *env, uintptr_t newThreadCount) {};
+	virtual bool reinitializeForRestore(MM_EnvironmentBase *env) { return true; }
+	virtual void prepareForCheckpoint(MM_EnvironmentBase *env, uintptr_t newThreadCount) {};
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
 	MM_Scheduler(MM_EnvironmentBase *env, omrsig_handler_fn handler, void* handler_arg, uintptr_t defaultOSStackSize) :

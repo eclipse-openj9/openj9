@@ -3047,9 +3047,10 @@ error:
  * @return
  */
 BOOLEAN
-j9gc_reinitializeDefaults(J9VMThread* vmThread)
+gcReinitializeDefaultsForRestore(J9VMThread* vmThread)
 {
 	MM_GCExtensions* extensions = MM_GCExtensions::getExtensions(vmThread);
+	MM_EnvironmentBase* env = MM_EnvironmentBase::getEnvironment(vmThread->omrVMThread);
 	J9JavaVM* vm = vmThread->javaVM;
 	bool result = true;
 
@@ -3062,12 +3063,20 @@ j9gc_reinitializeDefaults(J9VMThread* vmThread)
 		result = false;
 	}
 
-	/* Verify the GC thread count based on current restore limitation - threads don't shutdown at restore. */
+	/* Init of thread count will only occur if it is not enforced by gcParseReconfigurableArguments. */
+	extensions->configuration->initializeGCThreadCount(env);
+
+	/* If the thread count is being forced, check its validity and display a warning message if it is invalid, then mark it as invalid (see comment below). */
 	if (extensions->gcThreadCountForced && (extensions->gcThreadCount < extensions->dispatcher->threadCountMaximum())) {
 		j9nls_printf(PORTLIB, J9NLS_WARNING, J9NLS_GC_THREAD_VALUE_MUST_BE_ABOVE_WARN, (UDATA)extensions->dispatcher->threadCountMaximum());
 		extensions->gcThreadCountForced = false;
-		extensions->gcThreadCount = extensions->dispatcher->threadCountMaximum();
 	}
+
+	/* Currently, threads don't shutdown during restore, so ensure thread count doesn't fall below
+	 * the checkpoint thread count. This adjustment can be removed in the future when dispatcher
+	 * thread shutdown is sufficiently tested at restore.
+	 */
+	extensions->gcThreadCount = OMR_MAX(extensions->dispatcher->threadCountMaximum(), extensions->gcThreadCount);
 
 	return result;
 }

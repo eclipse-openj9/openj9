@@ -4610,7 +4610,6 @@ typedef struct J9MemoryManagerFunctions {
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 	void  ( *j9gc_prepare_for_checkpoint)(struct J9VMThread *vmThread) ;
 	BOOLEAN  ( *j9gc_reinitialize_for_restore)(struct J9VMThread *vmThread, const char **nlsMsgFormat) ;
-	BOOLEAN  ( *j9gc_reinitializeDefaults)(struct J9VMThread *vmThread) ;
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 } J9MemoryManagerFunctions;
 
