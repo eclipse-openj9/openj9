@@ -1982,6 +1982,20 @@ aboutToBootstrap(J9JavaVM * javaVM, J9JITConfig * jitConfig)
       }
 #endif
 
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+   /* If the JVM is in CRIU mode and checkpointing is allowed, then the JIT should be
+    * limited to the same processor features as those used in Portable AOT mode. This
+    * is because, the restore run may not be on the same machine as the one that created
+    * the snapshot; thus the JIT code must be portable.
+    */
+   if (javaVM->internalVMFunctions->isCheckpointAllowed(curThread))
+      {
+      TR::Compiler->target.cpu = TR::CPU::detectRelocatable(TR::Compiler->omrPortLib);
+      if (!J9_ARE_ANY_BITS_SET(javaVM->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_PORTABLE_SHARED_CACHE))
+         TR::Compiler->relocatableTarget.cpu = TR::CPU::detectRelocatable(TR::Compiler->omrPortLib);
+      jitConfig->targetProcessor = TR::Compiler->target.cpu.getProcessorDescription();
+      }
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
 #if defined(J9VM_OPT_SHARED_CLASSES)
    if (isSharedAOT)
@@ -2078,19 +2092,6 @@ aboutToBootstrap(J9JavaVM * javaVM, J9JITConfig * jitConfig)
          }
       }
 #endif /* defined(J9VM_OPT_JITSERVER) */
-
-#if defined(J9VM_OPT_CRIU_SUPPORT)
-   /* If the JVM is in CRIU mode and checkpointing is allowed, then the JIT should be
-    * limited to the same processor features as those used in Portable AOT mode. This
-    * is because, the restore run may not be on the same machine as the one that created
-    * the snapshot; thus the JIT code must be portable.
-    */
-   if (javaVM->internalVMFunctions->isCheckpointAllowed(curThread))
-      {
-      TR::Compiler->target.cpu = TR::CPU::detectRelocatable(TR::Compiler->omrPortLib);
-      jitConfig->targetProcessor = TR::Compiler->target.cpu.getProcessorDescription();
-      }
-#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
    #if defined(TR_TARGET_S390)
       uintptr_t * tocBase = (uintptr_t *)jitConfig->pseudoTOC;
