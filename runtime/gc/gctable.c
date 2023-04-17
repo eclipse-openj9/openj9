@@ -261,6 +261,5 @@ J9MemoryManagerFunctions MemoryManagerFunctions = {
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 	j9gc_prepare_for_checkpoint,
 	j9gc_reinitialize_for_restore,
-	j9gc_reinitializeDefaults
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 };
