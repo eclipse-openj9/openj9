@@ -86,7 +86,7 @@ void TR_EscapeAnalysisTools::insertFakeEscapeForOSR(TR::Block *block, TR::Node *
 
    TR_BitVector symRefsToLoad(0, _comp->trMemory()->currentStackRegion(), growable);
 
-   // Gather all live autos and pending pushes at this point for inlined methods in _loads
+   // Gather all live autos and pending pushes at this point for inlined methods in symRefsToLoad.
    // This ensures objects that EA can stack allocate will be heapified if OSR is induced
    while (inlinedIndex > -1)
       {
