@@ -489,6 +489,7 @@ _dblRemain:
         push _rcx
         sub _rsp, 48                              ; _rsp = _rsp - 48(bytes)
         movq QWORD  [_rsp+16], xmm2               ; preserve xmm2
+        movq QWORD  [_rsp+24], xmm4               ; preserve xmm4
         ; Prolog End
         andpd xmm1, [_rel ABSMASK]                ; xmm1 = |divisor|
         movq QWORD  [_rsp], xmm0                  ; store dividend on stack
@@ -581,6 +582,7 @@ L258:
 
         ; Epilog Start
         movq xmm2, QWORD  [_rsp+16]               ; restore xmm2
+        movq xmm4, QWORD  [_rsp+24]               ; restore xmm4
         add _rsp, 48
         pop _rcx
         pop _rbx
@@ -593,6 +595,7 @@ L280:
 
         ; Epilog Start
         movq xmm2, QWORD  [_rsp+16]               ; restore xmm2
+        movq xmm4, QWORD  [_rsp+24]               ; restore xmm4
         add _rsp, 48
         pop _rcx
         pop _rbx
@@ -613,6 +616,7 @@ SMALL_NUMS:
 
         ; Epilog Start
         movq xmm2, QWORD  [_rsp+16]                      ; restore xmm2
+        movq xmm4, QWORD  [_rsp+24]                      ; restore xmm4
         add _rsp, 48
         pop _rcx
         pop _rbx
