@@ -2551,6 +2551,9 @@ jint JNICALL JNI_GetDefaultJavaVMInitArgs(void *vm_args)
 #if JAVA_SPEC_VERSION >= 20
 	case JNI_VERSION_20:
 #endif /* JAVA_SPEC_VERSION >= 20 */
+#if JAVA_SPEC_VERSION >= 21
+	case JNI_VERSION_21:
+#endif /* JAVA_SPEC_VERSION >= 21 */
 		return JNI_OK;
 	}
 
