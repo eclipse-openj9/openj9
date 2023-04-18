@@ -803,11 +803,15 @@ def match_fail_pattern(outputLines) {
     }
 
     println("Build failure, searching fail pattern in the last ${outputLines.size()} output lines")
-    Pattern pattern = Pattern.compile(FAIL_PATTERN)
-    for (line in outputLines) {
-        Matcher matcher = pattern.matcher(line)
-        if (matcher.find()) {
-            return true
+
+    for (failPattern in FAIL_PATTERN.tokenize(' ')) {
+        Pattern pattern = Pattern.compile(failPattern)
+        for (line in outputLines) {
+            Matcher matcher = pattern.matcher(line)
+            if (matcher.find()) {
+                println("Found ${failPattern} fail pattern!")
+                return true
+            }
         }
     }
 
