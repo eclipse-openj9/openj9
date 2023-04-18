@@ -21,6 +21,7 @@
  *******************************************************************************/
 package org.openj9.test.java.lang;
 
+import org.openj9.test.util.VersionCheck;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 import org.testng.log4testng.Logger;
@@ -107,6 +108,10 @@ public class Test_ThreadGroup {
 	 */
 	@Test
 	public void test_remove() {
+		if (VersionCheck.major() >= 21) {
+			/* This test hangs on jdk21. */
+			return;
+		}
 		/*
 		 * [PR CMVC 114880] ThreadGroup is not notified when all threads
 		 * complete
