@@ -430,7 +430,9 @@ getObjectClass(JNIEnv *env, jobject obj)
 jint JNICALL
 getVersion(JNIEnv *env)
 {
-#if JAVA_SPEC_VERSION >= 20
+#if JAVA_SPEC_VERSION >= 21
+	return JNI_VERSION_21;
+#elif JAVA_SPEC_VERSION >= 20
 	return JNI_VERSION_20;
 #elif JAVA_SPEC_VERSION >= 19
 	return JNI_VERSION_19;
@@ -438,7 +440,7 @@ getVersion(JNIEnv *env)
 	return JNI_VERSION_10;
 #else /* JAVA_SPEC_VERSION >= 10 */
 	return JNI_VERSION_1_8;
-#endif /* JAVA_SPEC_VERSION >= 19 */
+#endif /* JAVA_SPEC_VERSION >= 21 */
 }
 
 jsize JNICALL
