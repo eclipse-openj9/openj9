@@ -372,7 +372,7 @@ x86-64_windows:
     build: 'ci.role.build && hw.arch.x86 && sw.os.windows'
   build_env:
     vars: 'PATH+TOOLS=/cygdrive/c/openjdk/LLVM64/bin:/cygdrive/c/openjdk/nasm-2.13.03'
-  fail_pattern: 'C1083'
+  fail_pattern: 'C1083 LNK1181 RC1015'
 #========================================#
 # Windows x86 32bits
 #========================================#
@@ -391,7 +391,7 @@ x86-32_windows:
   build_env:
     vars:
       8: 'PATH+TOOLS=/cygdrive/c/openjdk/LLVM32/bin:/cygdrive/c/openjdk/nasm-2.13.03'
-  fail_pattern: 'C1083'
+  fail_pattern: 'C1083 LNK1181 RC1015'
 #========================================#
 # Mac x86 64bits
 #========================================#
