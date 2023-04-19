@@ -405,9 +405,7 @@ allocateEnvironment(J9InvocationJavaVM * invocationJavaVM, jint version, void **
 			if (j9env->breakpoints == NULL) {
 				goto fail;
 			}
-			if (jvmtiTLSAlloc(vm, &j9env->tlsKey)) {
-				goto fail;
-			}
+			j9env->tlsKey = 0;
 
 			/* Hook the thread and virtual thread destroy events to clean up any allocated TLS structs. */
 
@@ -1565,12 +1563,28 @@ createThreadData(J9JVMTIEnv *j9env, J9VMThread *vmThread, j9object_t thread)
 	jvmtiError rc = JVMTI_ERROR_NONE;
 	Assert_JVMTI_notNull(thread);
 
+	if (0 == j9env->tlsKey) {
+		omrthread_monitor_enter(j9env->threadDataPoolMutex);
+		if (0 == j9env->tlsKey) {
+			rc = jvmtiTLSAlloc(vmThread->javaVM, &j9env->tlsKey);
+			if (JVMTI_ERROR_NONE != rc) {
+				omrthread_monitor_exit(j9env->threadDataPoolMutex);
+				goto exit;
+			}
+			goto allocate_thread_data_locked;
+		}
+		goto check_thread_data_locked;
+	}
+
 	threadData = jvmtiTLSGet(vmThread, thread, j9env->tlsKey);
 	if (NULL == threadData) {
 		omrthread_monitor_enter(j9env->threadDataPoolMutex);
+
+check_thread_data_locked:
 		threadData = jvmtiTLSGet(vmThread, thread, j9env->tlsKey);
 		if (NULL == threadData) {
 			/* We are the first to access the thread data for the given thread. */
+allocate_thread_data_locked:
 			threadData = pool_newElement(j9env->threadDataPool);
 			if (NULL == threadData) {
 				rc = JVMTI_ERROR_OUT_OF_MEMORY;
@@ -1581,6 +1595,7 @@ createThreadData(J9JVMTIEnv *j9env, J9VMThread *vmThread, j9object_t thread)
 		omrthread_monitor_exit(j9env->threadDataPoolMutex);
 	}
 
+exit:
 	return rc;
 }
 
@@ -1906,12 +1921,20 @@ jvmtiTLSGet(J9VMThread *vmThread, j9object_t thread, UDATA key)
 	J9JVMTIThreadData **data = NULL;
 	Assert_JVMTI_notNull(thread);
 
+	if (0 == key) {
+		return NULL;
+	}
+
 	data = (J9JVMTIThreadData **)J9OBJECT_ADDRESS_LOAD_VM(vm, thread, vm->tlsOffset);
 	Assert_JVMTI_notNull(data);
 
 	return data[key - 1];
 #else /* JAVA_SPEC_VERSION >= 19 */
-	return (J9JVMTIThreadData *)omrthread_tls_get(vmThread->osThread, key);
+	J9JVMTIThreadData *data = NULL;
+	if (0 != key) {
+		data = (J9JVMTIThreadData *)omrthread_tls_get(vmThread->osThread, key);
+	}
+	return data;
 #endif /* JAVA_SPEC_VERSION >= 19 */
 }
 
