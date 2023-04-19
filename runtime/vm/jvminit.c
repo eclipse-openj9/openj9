@@ -211,9 +211,6 @@ IDATA threadInitStages (J9JavaVM* vm, IDATA stage, void* reserved);
 IDATA zeroInitStages (J9JavaVM* vm, IDATA stage, void* reserved);
 UDATA runJVMOnLoad (J9JavaVM* vm, J9VMDllLoadInfo* loadInfo, char* options);
 
-#if (defined(J9VM_OPT_JVMTI))
-static IDATA updateJavaAgentClasspath (J9JavaVM * vm);
-#endif /* J9VM_OPT_JVMTI */
 static void consumeVMArgs (J9JavaVM* vm, J9VMInitArgs* j9vm_args);
 static BOOLEAN isEmpty (const char * str);
 
@@ -7022,13 +7019,6 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 		goto error;
 	}
 
-#ifdef J9VM_OPT_JVMTI
-	/* Must be called before -javaagent is mapped below */
-	if (RC_FAILED == updateJavaAgentClasspath(vm)) {
-		goto error;
-	}
-#endif
-
 	if (doParseXlogForCompatibility) {
 		if (JNI_OK != parseXlogForCompatibility(vm)) {
 			parseError = TRUE;
@@ -7667,91 +7657,6 @@ getNameForLoadStage(IDATA stage)
 	}
 }
 #endif /* J9VM_INTERP_VERBOSE */
-
-#if (defined(J9VM_OPT_JVMTI))
-static IDATA
-updateJavaAgentClasspath(J9JavaVM * vm)
-{
-	PORT_ACCESS_FROM_JAVAVM(vm);
-	IDATA index = 0;
-	char* newClassPath;
-
-	index = findArgInVMArgs( PORTLIB, vm->vmArgsArray, (STARTSWITH_MATCH | SEARCH_FORWARD), MAPOPT_JAVAAGENT_COLON, NULL, FALSE);
-	if (index >= 0) {
-		J9VMSystemProperty * classPathProperty;
-		IDATA result;
-		UDATA bufSize;
-		UDATA bufSizeLeft;
-		UDATA origCpLen = 0;
-		UDATA charsToKeep;
-		char* cursor;
-		char* equals;
-		char sep = (char) j9sysinfo_get_classpathSeparator();
-
-		if (getSystemProperty(vm, "java.class.path", &classPathProperty) != J9SYSPROP_ERROR_NONE) {
-			goto fail;
-		}
-
-		bufSize = (origCpLen = strlen(classPathProperty->value)) + LARGE_STRING_BUF_SIZE;
-		if (!(newClassPath = (char*)j9mem_allocate_memory(bufSize * sizeof(char), OMRMEM_CATEGORY_VM))) {
-			goto fail;
-		}
-		if (origCpLen) {
-			strncpy(newClassPath, classPathProperty->value, origCpLen);
-		}
-		cursor = newClassPath + origCpLen;
-		bufSizeLeft = bufSize - origCpLen;
-
-		do {
-			/* Add classpath separator if reqd */
-			if (*newClassPath && (*(cursor-1)!=sep)) {
-				*cursor = sep;
-				++cursor;
-				--bufSizeLeft;
-			}
-			/* copy -javaagent option directly into buffer */
-			result = optionValueOperations(PORTLIB, vm->vmArgsArray, index, GET_OPTION, &cursor, bufSizeLeft, ':', 0, NULL);
-			if (result == OPTION_BUFFER_OVERFLOW) {
-				char* newBuf;
-				UDATA charsUsed = (bufSize - bufSizeLeft);
-
-				if (!(newBuf = (char*)j9mem_allocate_memory((bufSize *= 2), OMRMEM_CATEGORY_VM))) {
-					goto failWithFree;
-				}
-				strncpy(newBuf, newClassPath, charsUsed);
-				j9mem_free_memory(newClassPath);
-				newClassPath = newBuf;
-				bufSizeLeft += (bufSize / 2);
-				cursor = newClassPath + charsUsed;
-				continue;
-			}
-			equals = strchr(cursor, '=');
-			charsToKeep = equals ? (equals - cursor) : strlen(cursor);
-			bufSizeLeft -= charsToKeep;
-			cursor += charsToKeep;
-			/* Monstrous ORing/shifting guff copied from jvminit.h - can't use the macro yet as no internal function table */
-			index = findArgInVMArgs( PORTLIB, vm->vmArgsArray, ((STARTSWITH_MATCH | ((index+1) << STOP_AT_INDEX_SHIFT)) | SEARCH_FORWARD), MAPOPT_JAVAAGENT_COLON, NULL, FALSE);
-		} while (index >= 0);
-
-		*cursor = '\0';		/* potentially remove last '=' */
-		if (setSystemProperty(vm, classPathProperty, newClassPath) != J9SYSPROP_ERROR_NONE) {
-			goto failWithFree;
-		}
-		JVMINIT_VERBOSE_INIT_VM_TRACE1(vm, "-Djava.class.path modified based on -javaagent to %s\n", newClassPath);
-		j9mem_free_memory(newClassPath);
-	}
-	return 0;
-
-failWithFree :
-	if (newClassPath) {
-		j9mem_free_memory(newClassPath);
-	}
-fail:
-	return RC_FAILED;
-}
-
-#endif /* J9VM_OPT_JVMTI */
-
 
 #if (defined(J9VM_OPT_JVMTI))
 /* Detects agent libraries that are being invoked as Xruns */
