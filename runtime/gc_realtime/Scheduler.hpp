@@ -244,6 +244,8 @@ public:
 	virtual void prepareForCheckpoint(MM_EnvironmentBase *env, uintptr_t newThreadCount) {};
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
+	virtual void run(MM_EnvironmentBase *env, MM_Task *task, uintptr_t threadCount = UDATA_MAX);
+
 	MM_Scheduler(MM_EnvironmentBase *env, omrsig_handler_fn handler, void* handler_arg, uintptr_t defaultOSStackSize) :
 		MM_ParallelDispatcher(env, handler, handler_arg, defaultOSStackSize),
 		_mutatorStartTimeInNanos(J9CONST64(0)),
