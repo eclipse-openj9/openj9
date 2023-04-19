@@ -81,7 +81,7 @@
 #if defined(DEBUG_VERSION)
 #define DO_SINGLE_STEP
 #endif /* DEBUG_VERSION */
-#if defined(DEBUG_VERSION) || defined(J9VM_OPT_CRIU_SUPPORT)
+#if defined(DEBUG_VERSION)
 #define DO_HOOKS
 #endif /* defined(DEBUG_VERSION) || defined(J9VM_OPT_CRIU_SUPPORT) */
 
@@ -10168,10 +10168,6 @@ public:
 			goto popFrames; \
 		case FALL_THROUGH: \
 			break;
-#elif defined(J9VM_OPT_CRIU_SUPPORT) /* defined(DEBUG_VERSION) */
-#define DEBUG_ACTIONS \
-		case REPORT_METHOD_ENTER: \
-			goto methodEnter;
 #else /* defined(J9VM_OPT_CRIU_SUPPORT) */
 #define DEBUG_ACTIONS
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
