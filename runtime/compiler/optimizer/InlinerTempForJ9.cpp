@@ -431,6 +431,15 @@ TR_J9InlinerPolicy::alwaysWorthInlining(TR_ResolvedMethod * calleeMethod, TR::No
       return true;
       }
 
+   if (calleeMethod->getRecognizedMethod() == TR::unknownMethod &&
+       comp()->fej9()->isIntrinsicCandidate(calleeMethod) &&
+       !comp()->getOption(TR_DisableInliningUnrecognizedIntrinsics))
+      {
+      if (comp()->trace(OMR::inlining))
+         traceMsg(comp(), "@IntrinsicCandidate was specified for %s, in alwaysWorthInlining\n", calleeMethod->signature(comp()->trMemory()));
+      return true;
+      }
+
    return false;
    }
 
@@ -2177,6 +2186,15 @@ TR_J9InlinerPolicy::tryToInline(TR_CallTarget * calltarget, TR_CallStack * callS
             traceMsg(comp(), "@ForceInline was specified for %s, in tryToInline\n", method->signature(comp()->trMemory()));
          return true;
          }
+
+      if (method->getRecognizedMethod() == TR::unknownMethod &&
+          comp()->fej9()->isIntrinsicCandidate(method) &&
+          !comp()->getOption(TR_DisableInliningUnrecognizedIntrinsics))
+         {
+         if (comp()->trace(OMR::inlining))
+            traceMsg(comp(), "@IntrisicCandidate was specified for %s, in tryToInline\n", method->signature(comp()->trMemory()));
+         return true;
+         }
       }
    else
       {
@@ -2443,6 +2461,16 @@ TR_J9InlinerPolicy::callMustBeInlinedInCold(TR_ResolvedMethod *method)
          return true;
          }
       }
+
+   if (method->getRecognizedMethod() == TR::unknownMethod &&
+       comp()->fej9()->isIntrinsicCandidate(method) &&
+       !comp()->getOption(TR_DisableInliningUnrecognizedIntrinsics))
+      {
+      if (comp()->trace(OMR::inlining))
+         traceMsg(comp(), "@IntrinsicCandidate was specified for %s, in callMustBeInlined\n", method->signature(comp()->trMemory()));
+      return true;
+      }
+
 
    return false;
    }

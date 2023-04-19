@@ -2430,6 +2430,12 @@ TR_J9ServerVM::isForceInline(TR_ResolvedMethod *method)
    }
 
 bool
+TR_J9ServerVM::isIntrinsicCandidate(TR_ResolvedMethod *method)
+   {
+   return static_cast<TR_ResolvedJ9JITServerMethod *>(method)->isIntrinsicCandidate();
+   }
+
+bool
 TR_J9ServerVM::isDontInline(TR_ResolvedMethod *method)
    {
    return static_cast<TR_ResolvedJ9JITServerMethod *>(method)->isDontInline();
