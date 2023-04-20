@@ -39,11 +39,11 @@ public class Continuation {
 	private final ContinuationScope scope;
 	private final Runnable runnable;
 	private Continuation parent;
-	private boolean started;
-	private boolean finished;
+	/* bit flag for finished state, matching native constant J9_GC_CONTINUATION_STATE_FINISHED */
+	public static final long CONTINUATION_FINISHED = 2;
 	/* it's a bit-wise struct of CarrierThread ID and continuation flags(includes started and finished flag)
 	 * low 8 bits are reserved for flags and the rest are the carrier thread ID.
-	 * the state should not be directly accessed from Java
+	 * the state should not be directly accessed from Java, instead using get methods(such as isDone()).
 	 */
 	private volatile long state;
 
@@ -176,8 +176,7 @@ public class Continuation {
 		try {
 			cont.runnable.run();
 		} finally {
-			cont.finished = true;
-			yieldImpl();
+			yieldImpl(true);
 		}
 	}
 
@@ -185,7 +184,7 @@ public class Continuation {
 		if (!trylockAccess()) {
 			throw new IllegalStateException("Continuation inaccessible: mounted or being inspected.");
 		}
-		if (finished) {
+		if (isDone()) {
 			throw new IllegalStateException("Continuation has already finished.");
 		}
 
@@ -242,7 +241,7 @@ public class Continuation {
 			}
 			onPinned(reason);
 		} else {
-			yieldImpl();
+			yieldImpl(false);
 			onContinue();
 		}
 		return (rcPinned == 0);
@@ -256,7 +255,7 @@ public class Continuation {
 	}
 
 	public boolean isDone() {
-		return finished;
+		return 0 != (state & CONTINUATION_FINISHED);
 	}
 
 	public boolean isPreempted() {
@@ -279,6 +278,6 @@ public class Continuation {
 
 	/* Continuation Native APIs */
 	private native boolean enterImpl();
-	private static native boolean yieldImpl();
+	private static native boolean yieldImpl(boolean isFinished);
 
 }
