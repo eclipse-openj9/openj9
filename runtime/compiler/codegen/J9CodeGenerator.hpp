@@ -183,6 +183,7 @@ public:
    bool needRelocationsForStatics();
    bool needRelocationsForHelpers();
    bool needRelocationsForCurrentMethodPC();
+   bool needRelocationsForCurrentMethodStartPC();
 #if defined(J9VM_OPT_JITSERVER)
    bool needRelocationsForBodyInfoData();
    bool needRelocationsForPersistentInfoData();
