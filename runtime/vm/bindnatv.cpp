@@ -301,7 +301,7 @@ static inlMapping mappings[] = {
 #endif /* JAVA_SPEC_VERSION >= 20 */
 #if JAVA_SPEC_VERSION >= 19
 	{ "Java_jdk_internal_vm_Continuation_enterImpl__", J9_BCLOOP_SEND_TARGET_ENTER_CONTINUATION },
-	{ "Java_jdk_internal_vm_Continuation_yieldImpl__", J9_BCLOOP_SEND_TARGET_YIELD_CONTINUATION },
+	{ "Java_jdk_internal_vm_Continuation_yieldImpl__Z", J9_BCLOOP_SEND_TARGET_YIELD_CONTINUATION },
 	{ "Java_jdk_internal_vm_Continuation_isPinnedImpl__", J9_BCLOOP_SEND_TARGET_ISPINNED_CONTINUATION },
 #endif /* JAVA_SPEC_VERSION >= 19 */
 };
