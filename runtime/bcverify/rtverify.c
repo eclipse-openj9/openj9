@@ -2634,12 +2634,11 @@ j9rtv_verifyArguments (J9BytecodeVerificationData *verifyData, J9UTF8 * utf8stri
 
 			/* Object array */
 			if (IS_REF_OR_VAL_SIGNATURE(*signature)) {
-				UDATA type = BCV_GET_TYPE_FROM_CHAR(*signature);
 				signature++;
 				string = signature;	/* remember the start of the string */
 				while (*signature++ != ';');
 				length = (U_16) (signature - string - 1);
-				objectType = convertClassNameToStackMapType(verifyData, string, length, type, arity);
+				objectType = convertClassNameToStackMapType(verifyData, string, length, 0, arity);
 
 			/* Base type array */
 			} else {
