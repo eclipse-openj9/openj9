@@ -763,6 +763,19 @@ void MM_Scheduler::yieldFromGC(MM_EnvironmentRealtime *env, bool distanceChecked
 }
 
 void
+MM_Scheduler::run(MM_EnvironmentBase *env, MM_Task *task, uintptr_t newThreadCount)
+{
+	uintptr_t activeThreads = recomputeActiveThreadCountForTask(env, task, newThreadCount);
+	task->mainSetup(env);
+	prepareThreadsForTask(env, task, activeThreads);
+	acceptTask(env);
+	task->run(env);
+	completeTask(env);
+	cleanupAfterTask(env);
+	task->mainCleanup(env);
+}
+
+void
 MM_Scheduler::prepareThreadsForTask(MM_EnvironmentBase *env, MM_Task *task, uintptr_t threadCount)
 {
 	omrthread_monitor_enter(_workerThreadMutex);
