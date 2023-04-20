@@ -156,7 +156,6 @@ jvm_add_exports(jvm
 	_JVM_GetStackTraceDepth@8
 	_JVM_FillInStackTrace@8
 	_JVM_StartThread@8
-	_JVM_IsThreadAlive@8
 	_JVM_SetThreadPriority@12
 	_JVM_Yield@8
 	_JVM_CurrentThread@8
@@ -389,15 +388,19 @@ endif()
 
 if(NOT JAVA_SPEC_VERSION LESS 19)
 	jvm_add_exports(jvm
-		JVM_LoadZipLibrary
-		JVM_RegisterContinuationMethods
 		JVM_IsContinuationsSupported
 		JVM_IsPreviewEnabled
-		JVM_VirtualThreadMountBegin
-		JVM_VirtualThreadMountEnd
-		JVM_VirtualThreadUnmountBegin
-		JVM_VirtualThreadUnmountEnd
+		JVM_LoadZipLibrary
+		JVM_RegisterContinuationMethods
 	)
+	if(JAVA_SPEC_VERSION LESS 21)
+		jvm_add_exports(jvm
+			JVM_VirtualThreadMountBegin
+			JVM_VirtualThreadMountEnd
+			JVM_VirtualThreadUnmountBegin
+			JVM_VirtualThreadUnmountEnd
+		)
+	endif()
 endif()
 
 if(JAVA_SPEC_VERSION LESS 20)
@@ -413,7 +416,11 @@ else()
 	)
 endif()
 
-if(NOT JAVA_SPEC_VERSION LESS 21)
+if(JAVA_SPEC_VERSION LESS 21)
+	jvm_add_exports(jvm
+		_JVM_IsThreadAlive@8
+	)
+else()
 	jvm_add_exports(jvm
 		JVM_VirtualThreadMount
 		JVM_VirtualThreadUnmount
