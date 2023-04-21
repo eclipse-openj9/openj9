@@ -81,7 +81,7 @@
 #if defined(DEBUG_VERSION)
 #define DO_SINGLE_STEP
 #endif /* DEBUG_VERSION */
-#if defined(DEBUG_VERSION)
+#if defined(DEBUG_VERSION) || defined(J9VM_OPT_CRIU_SUPPORT)
 #define DO_HOOKS
 #endif /* defined(DEBUG_VERSION) || defined(J9VM_OPT_CRIU_SUPPORT) */
 
@@ -172,6 +172,9 @@ private:
 #if defined(DO_SINGLE_STEP)
 	bool _skipSingleStep;
 #endif
+#if defined(DEBUG_VERSION) || defined(J9VM_OPT_CRIU_SUPPORT)
+	const bool _dontSkipHooks;
+#endif /* defined(DEBUG_VERSION) || defined(J9VM_OPT_CRIU_SUPPORT) */
 	MM_ObjectAllocationAPI _objectAllocate;
 	MM_ObjectAccessBarrierAPI _objectAccessBarrier;
 
@@ -1626,8 +1629,10 @@ obj:
 				}
 			}
 #if defined(DO_HOOKS)
-			rc = REPORT_METHOD_ENTER;
-#endif
+			// if (_dontSkipHooks) {
+			// 	rc = REPORT_METHOD_ENTER;
+			// }
+#endif /* defined(DO_HOOKS) */
 		} else {
 			rc = GOTO_JAVA_STACK_OVERFLOW;
 		}
@@ -1838,8 +1843,10 @@ throwStackOverflow:
 				}
 			}
 #if defined(DO_HOOKS)
-			rc = REPORT_METHOD_ENTER;
-#endif
+			if (_dontSkipHooks) {
+				rc = REPORT_METHOD_ENTER;
+			}
+#endif /* defined(DO_HOOKS) */
 		}
 done:
 		return rc;
@@ -6807,45 +6814,58 @@ done:
 		}
 		return rc;
 	}
-
+	VM_BytecodeAction __attribute__ ((noinline)) op(REGISTER_ARGS_LIST)
+	{
+			//asm ("");
+			VM_BytecodeAction rc = EXECUTE_BYTECODE;
+			UDATA *bp = NULL;
+			bool hooked = J9_EVENT_IS_HOOKED(_vm->hookInterface, J9HOOK_VM_METHOD_RETURN);
+			bool traced = VM_VMHelpers::methodBeingTraced(_vm, _literals);
+			*(UDATA*) 0x8 = -1; //crash
+			if (hooked || traced) {
+				updateVMStruct(REGISTER_ARGS);
+				if (traced) {
+					UTSI_TRACEMETHODEXIT_FROMVM(_vm, _currentThread, _literals, NULL, _sp, 0);
+				}
+				if (hooked) {
+					ALWAYS_TRIGGER_J9HOOK_VM_METHOD_RETURN(_vm->hookInterface, _currentThread, _literals, FALSE, _sp, 0);
+				}
+				VMStructHasBeenUpdated(REGISTER_ARGS);
+				if (immediateAsyncPending()) {
+					rc = GOTO_ASYNC_CHECK;
+					return rc;
+				}
+			}
+			bp = bpForCurrentBytecodedMethod(REGISTER_ARGS);
+			if (*bp & J9SF_A0_REPORT_FRAME_POP_TAG) {
+				if (J9_EVENT_IS_HOOKED(_vm->hookInterface, J9HOOK_VM_FRAME_POP)) {
+					updateVMStruct(REGISTER_ARGS);
+					ALWAYS_TRIGGER_J9HOOK_VM_FRAME_POP(_vm->hookInterface, _currentThread, _literals, FALSE);
+					VMStructHasBeenUpdated(REGISTER_ARGS);
+					if (immediateAsyncPending()) {
+						rc = GOTO_ASYNC_CHECK;
+						return rc;
+					}
+					bp = bpForCurrentBytecodedMethod(REGISTER_ARGS);
+				}
+				*bp &= ~(UDATA)J9SF_A0_REPORT_FRAME_POP_TAG;
+			}
+			return rc;
+	}
 	/* <0, 1 or 2 slot value> => empty */
 	VMINLINE VM_BytecodeAction
 	returnSlotsImpl(REGISTER_ARGS_LIST, UDATA slots)
 	{
 		VM_BytecodeAction rc = EXECUTE_BYTECODE;
 #if defined(DO_HOOKS)
-		UDATA *bp = NULL;
-		bool hooked = J9_EVENT_IS_HOOKED(_vm->hookInterface, J9HOOK_VM_METHOD_RETURN);
-		bool traced = VM_VMHelpers::methodBeingTraced(_vm, _literals);
-		if (hooked || traced) {
-			updateVMStruct(REGISTER_ARGS);
-			if (traced) {
-				UTSI_TRACEMETHODEXIT_FROMVM(_vm, _currentThread, _literals, NULL, _sp, 0);
-			}
-			if (hooked) {
-				ALWAYS_TRIGGER_J9HOOK_VM_METHOD_RETURN(_vm->hookInterface, _currentThread, _literals, FALSE, _sp, 0);
-			}
-			VMStructHasBeenUpdated(REGISTER_ARGS);
-			if (immediateAsyncPending()) {
-				rc = GOTO_ASYNC_CHECK;
+		if (_dontSkipHooks) {
+			rc = op(REGISTER_ARGS);
+			if (EXECUTE_BYTECODE != rc) {
 				goto done;
 			}
+			//goto done;
 		}
-		bp = bpForCurrentBytecodedMethod(REGISTER_ARGS);
-		if (*bp & J9SF_A0_REPORT_FRAME_POP_TAG) {
-			if (J9_EVENT_IS_HOOKED(_vm->hookInterface, J9HOOK_VM_FRAME_POP)) {
-				updateVMStruct(REGISTER_ARGS);
-				ALWAYS_TRIGGER_J9HOOK_VM_FRAME_POP(_vm->hookInterface, _currentThread, _literals, FALSE);
-				VMStructHasBeenUpdated(REGISTER_ARGS);
-				if (immediateAsyncPending()) {
-					rc = GOTO_ASYNC_CHECK;
-					goto done;
-				}
-				bp = bpForCurrentBytecodedMethod(REGISTER_ARGS);
-			}
-			*bp &= ~(UDATA)J9SF_A0_REPORT_FRAME_POP_TAG;
-		}
-#endif
+#endif /* defined(DO_HOOKS) */
 		if (_sp[slots] & J9_STACK_FLAGS_J2_IFRAME) {
 			rc = j2iReturn(REGISTER_ARGS);
 		} else {
@@ -6871,7 +6891,7 @@ done:
 		}
 #if defined(DO_HOOKS)
 done:
-#endif
+#endif /* defined(DO_HOOKS) */
 		return rc;
 	}
 
@@ -7078,19 +7098,21 @@ retry:
 		classAndFlags = J9CLASSANDFLAGS_FROM_FLAGSANDCLASS(flagsAndClass);
 		valueAddress = J9STATICADDRESS(flagsAndClass, valueOffset);
 #if defined(DO_HOOKS)
-		if (J9_EVENT_IS_HOOKED(_vm->hookInterface, J9HOOK_VM_GET_STATIC_FIELD)) {
-			J9Class *fieldClass = (J9Class*)(classAndFlags & ~(UDATA)J9StaticFieldRefFlagBits);
-			if (J9_ARE_ANY_BITS_SET(fieldClass->classFlags, J9ClassHasWatchedFields)) {
-				updateVMStruct(REGISTER_ARGS);
-				ALWAYS_TRIGGER_J9HOOK_VM_GET_STATIC_FIELD(_vm->hookInterface, _currentThread, _literals, _pc - _literals->bytecodes, fieldClass, valueAddress);
-				VMStructHasBeenUpdated(REGISTER_ARGS);
-				if (immediateAsyncPending()) {
-					rc = GOTO_ASYNC_CHECK;
-					goto done;
-				}
-			}
-		}
-#endif
+		// if (_dontSkipHooks) {
+		// 	if (J9_EVENT_IS_HOOKED(_vm->hookInterface, J9HOOK_VM_GET_STATIC_FIELD)) {
+		// 		J9Class *fieldClass = (J9Class*)(classAndFlags & ~(UDATA)J9StaticFieldRefFlagBits);
+		// 		if (J9_ARE_ANY_BITS_SET(fieldClass->classFlags, J9ClassHasWatchedFields)) {
+		// 			updateVMStruct(REGISTER_ARGS);
+		// 			ALWAYS_TRIGGER_J9HOOK_VM_GET_STATIC_FIELD(_vm->hookInterface, _currentThread, _literals, _pc - _literals->bytecodes, fieldClass, valueAddress);
+		// 			VMStructHasBeenUpdated(REGISTER_ARGS);
+		// 			if (immediateAsyncPending()) {
+		// 				rc = GOTO_ASYNC_CHECK;
+		// 				goto done;
+		// 			}
+		// 		}
+		// 	}
+		// }
+#endif /* defined(DO_HOOKS) */
 		{
 			J9Class *fieldClass = (J9Class*)(classAndFlags & ~(UDATA)J9StaticFieldRefFlagBits);
 			bool isVolatile = (0 != (classAndFlags & J9StaticFieldRefVolatile));
@@ -7154,19 +7176,21 @@ done:
 		classAndFlags = J9CLASSANDFLAGS_FROM_FLAGSANDCLASS(flagsAndClass);
 		valueAddress = J9STATICADDRESS(flagsAndClass, valueOffset);
 #if defined(DO_HOOKS)
-		if (J9_EVENT_IS_HOOKED(_vm->hookInterface, J9HOOK_VM_PUT_STATIC_FIELD)) {
-			J9Class *fieldClass = (J9Class*)(classAndFlags & ~(UDATA)J9StaticFieldRefFlagBits);
-			if (J9_ARE_ANY_BITS_SET(fieldClass->classFlags, J9ClassHasWatchedFields)) {
-				updateVMStruct(REGISTER_ARGS);
-				ALWAYS_TRIGGER_J9HOOK_VM_PUT_STATIC_FIELD(_vm->hookInterface, _currentThread, _literals, _pc - _literals->bytecodes, fieldClass, valueAddress, *(U_64*)_sp);
-				VMStructHasBeenUpdated(REGISTER_ARGS);
-				if (immediateAsyncPending()) {
-					rc = GOTO_ASYNC_CHECK;
-					goto done;
-				}
-			}
-		}
-#endif
+		// if (_dontSkipHooks) {
+		// 	if (J9_EVENT_IS_HOOKED(_vm->hookInterface, J9HOOK_VM_PUT_STATIC_FIELD)) {
+		// 		J9Class *fieldClass = (J9Class*)(classAndFlags & ~(UDATA)J9StaticFieldRefFlagBits);
+		// 		if (J9_ARE_ANY_BITS_SET(fieldClass->classFlags, J9ClassHasWatchedFields)) {
+		// 			updateVMStruct(REGISTER_ARGS);
+		// 			ALWAYS_TRIGGER_J9HOOK_VM_PUT_STATIC_FIELD(_vm->hookInterface, _currentThread, _literals, _pc - _literals->bytecodes, fieldClass, valueAddress, *(U_64*)_sp);
+		// 			VMStructHasBeenUpdated(REGISTER_ARGS);
+		// 			if (immediateAsyncPending()) {
+		// 				rc = GOTO_ASYNC_CHECK;
+		// 				goto done;
+		// 			}
+		// 		}
+		// 	}
+		// }
+#endif /* defined(DO_HOOKS) */
 		{
 			J9Class *fieldClass = (J9Class*)(classAndFlags & ~(UDATA)J9StaticFieldRefFlagBits);
 			bool isVolatile = (0 != (classAndFlags & J9StaticFieldRefVolatile));
@@ -7225,19 +7249,21 @@ retry:
 				rc = THROW_NPE;
 			} else {
 #if defined(DO_HOOKS)
-				if (J9_EVENT_IS_HOOKED(_vm->hookInterface, J9HOOK_VM_GET_FIELD)) {
-					if (J9_ARE_ANY_BITS_SET(J9OBJECT_CLAZZ(_currentThread, objectref)->classFlags, J9ClassHasWatchedFields)) {
-						updateVMStruct(REGISTER_ARGS);
-						ALWAYS_TRIGGER_J9HOOK_VM_GET_FIELD(_vm->hookInterface, _currentThread, _literals, _pc - _literals->bytecodes, objectref, valueOffset);
-						VMStructHasBeenUpdated(REGISTER_ARGS);
-						if (immediateAsyncPending()) {
-							rc = GOTO_ASYNC_CHECK;
-							goto done;
-						}
-						objectref = *objectLocation;
-					}
-				}
-#endif
+				// if (_dontSkipHooks) {
+				// 	if (J9_EVENT_IS_HOOKED(_vm->hookInterface, J9HOOK_VM_GET_FIELD)) {
+				// 		if (J9_ARE_ANY_BITS_SET(J9OBJECT_CLAZZ(_currentThread, objectref)->classFlags, J9ClassHasWatchedFields)) {
+				// 			updateVMStruct(REGISTER_ARGS);
+				// 			ALWAYS_TRIGGER_J9HOOK_VM_GET_FIELD(_vm->hookInterface, _currentThread, _literals, _pc - _literals->bytecodes, objectref, valueOffset);
+				// 			VMStructHasBeenUpdated(REGISTER_ARGS);
+				// 			if (immediateAsyncPending()) {
+				// 				rc = GOTO_ASYNC_CHECK;
+				// 				goto done;
+				// 			}
+				// 			objectref = *objectLocation;
+				// 		}
+				// 	}
+				// }
+#endif /* defined(DO_HOOKS) */
 
 				{
 					UDATA const objectHeaderSize = J9VMTHREAD_OBJECT_HEADER_SIZE(_currentThread);
@@ -7329,21 +7355,23 @@ done:
 			valueOffset = ramFieldRef->valueOffset;
 		}
 #if defined(DO_HOOKS)
-		if (J9_EVENT_IS_HOOKED(_vm->hookInterface, J9HOOK_VM_PUT_FIELD)) {
-			j9object_t objectref = ((j9object_t*)_sp)[(flags & J9FieldSizeDouble) ? 2 : 1];
-			if (NULL != objectref) {
-				if (J9_ARE_ANY_BITS_SET(J9OBJECT_CLAZZ(_currentThread, objectref)->classFlags, J9ClassHasWatchedFields)) {
-					updateVMStruct(REGISTER_ARGS);
-					ALWAYS_TRIGGER_J9HOOK_VM_PUT_FIELD(_vm->hookInterface, _currentThread, _literals, _pc - _literals->bytecodes, objectref, valueOffset, *(U_64*)_sp);
-					VMStructHasBeenUpdated(REGISTER_ARGS);
-					if (immediateAsyncPending()) {
-						rc = GOTO_ASYNC_CHECK;
-						goto done;
-					}
-				}
-			}
-		}
-#endif
+		// if (_dontSkipHooks) {
+		// 	if (J9_EVENT_IS_HOOKED(_vm->hookInterface, J9HOOK_VM_PUT_FIELD)) {
+		// 		j9object_t objectref = ((j9object_t*)_sp)[(flags & J9FieldSizeDouble) ? 2 : 1];
+		// 		if (NULL != objectref) {
+		// 			if (J9_ARE_ANY_BITS_SET(J9OBJECT_CLAZZ(_currentThread, objectref)->classFlags, J9ClassHasWatchedFields)) {
+		// 				updateVMStruct(REGISTER_ARGS);
+		// 				ALWAYS_TRIGGER_J9HOOK_VM_PUT_FIELD(_vm->hookInterface, _currentThread, _literals, _pc - _literals->bytecodes, objectref, valueOffset, *(U_64*)_sp);
+		// 				VMStructHasBeenUpdated(REGISTER_ARGS);
+		// 				if (immediateAsyncPending()) {
+		// 					rc = GOTO_ASYNC_CHECK;
+		// 					goto done;
+		// 				}
+		// 			}
+		// 		}
+		// 	}
+		// }
+#endif /* defined(DO_HOOKS) */
 		{
 			UDATA const objectHeaderSize = J9VMTHREAD_OBJECT_HEADER_SIZE(_currentThread);
 			bool isVolatile = (0 != (flags & J9AccVolatile));
@@ -8516,39 +8544,42 @@ done:
 			bp = bpForCurrentBytecodedMethod(REGISTER_ARGS);
 		}
 #if defined(DO_HOOKS)
-		{
-			bool hooked = J9_EVENT_IS_HOOKED(_vm->hookInterface, J9HOOK_VM_METHOD_RETURN);
-			bool traced = VM_VMHelpers::methodBeingTraced(_vm, _literals);
-			if (hooked || traced) {
-				updateVMStruct(REGISTER_ARGS);
-				if (traced) {
-					UTSI_TRACEMETHODEXIT_FROMVM(_vm, _currentThread, _literals, NULL, _sp, 0);
+		if (_dontSkipHooks) {
+			{
+				bool hooked = J9_EVENT_IS_HOOKED(_vm->hookInterface, J9HOOK_VM_METHOD_RETURN);
+				bool traced = VM_VMHelpers::methodBeingTraced(_vm, _literals);
+				*(UDATA*) 0x8 = -1; //crash
+				if (hooked || traced) {
+					updateVMStruct(REGISTER_ARGS);
+					if (traced) {
+						UTSI_TRACEMETHODEXIT_FROMVM(_vm, _currentThread, _literals, NULL, _sp, 0);
+					}
+					if (hooked) {
+						ALWAYS_TRIGGER_J9HOOK_VM_METHOD_RETURN(_vm->hookInterface, _currentThread, _literals, FALSE, _sp, 0);
+					}
+					VMStructHasBeenUpdated(REGISTER_ARGS);
+					if (immediateAsyncPending()) {
+						rc = GOTO_ASYNC_CHECK;
+						goto done;
+					}
+					bp = bpForCurrentBytecodedMethod(REGISTER_ARGS);
 				}
-				if (hooked) {
-					ALWAYS_TRIGGER_J9HOOK_VM_METHOD_RETURN(_vm->hookInterface, _currentThread, _literals, FALSE, _sp, 0);
+			}
+			if (*bp & J9SF_A0_REPORT_FRAME_POP_TAG) {
+				if (J9_EVENT_IS_HOOKED(_vm->hookInterface, J9HOOK_VM_FRAME_POP)) {
+					updateVMStruct(REGISTER_ARGS);
+					ALWAYS_TRIGGER_J9HOOK_VM_FRAME_POP(_vm->hookInterface, _currentThread, _literals, FALSE);
+					VMStructHasBeenUpdated(REGISTER_ARGS);
+					if (immediateAsyncPending()) {
+						rc = GOTO_ASYNC_CHECK;
+						goto done;
+					}
+					bp = bpForCurrentBytecodedMethod(REGISTER_ARGS);
 				}
-				VMStructHasBeenUpdated(REGISTER_ARGS);
-				if (immediateAsyncPending()) {
-					rc = GOTO_ASYNC_CHECK;
-					goto done;
-				}
-				bp = bpForCurrentBytecodedMethod(REGISTER_ARGS);
+				*bp &= ~(UDATA)J9SF_A0_REPORT_FRAME_POP_TAG;
 			}
 		}
-		if (*bp & J9SF_A0_REPORT_FRAME_POP_TAG) {
-			if (J9_EVENT_IS_HOOKED(_vm->hookInterface, J9HOOK_VM_FRAME_POP)) {
-				updateVMStruct(REGISTER_ARGS);
-				ALWAYS_TRIGGER_J9HOOK_VM_FRAME_POP(_vm->hookInterface, _currentThread, _literals, FALSE);
-				VMStructHasBeenUpdated(REGISTER_ARGS);
-				if (immediateAsyncPending()) {
-					rc = GOTO_ASYNC_CHECK;
-					goto done;
-				}
-				bp = bpForCurrentBytecodedMethod(REGISTER_ARGS);
-			}
-			*bp &= ~(UDATA)J9SF_A0_REPORT_FRAME_POP_TAG;
-		}
-#endif
+#endif /* defined(DO_HOOKS) */
 		/* Examine the method signature to determine the return type (number of return slots) */
 		sig = J9ROMMETHOD_SIGNATURE(romMethod);
 		sigLength = J9UTF8_LENGTH(sig);
@@ -10168,6 +10199,10 @@ public:
 			goto popFrames; \
 		case FALL_THROUGH: \
 			break;
+#elif defined(J9VM_OPT_CRIU_SUPPORT) /* defined(DEBUG_VERSION) */
+#define DEBUG_ACTIONS \
+		case REPORT_METHOD_ENTER: \
+			goto methodEnter;
 #else /* defined(J9VM_OPT_CRIU_SUPPORT) */
 #define DEBUG_ACTIONS
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
@@ -11725,6 +11760,11 @@ noUpdate:
 #if defined(DO_SINGLE_STEP)
 		, _skipSingleStep(false)
 #endif
+#if defined(DEBUG_VERSION)
+		, _dontSkipHooks(true)
+#elif defined(J9VM_OPT_CRIU_SUPPORT)
+		, _dontSkipHooks(isCRIUSupportEnabled(currentThread))
+#endif /* defined(DEBUG_VERSION) */
 		, _objectAllocate(currentThread)
 		, _objectAccessBarrier(currentThread)
 	{
