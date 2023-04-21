@@ -169,7 +169,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<export name="_JVM_StopThread@12">
 			<exclude-if condition="spec.java20"/>
 		</export>
-		<export name="_JVM_IsThreadAlive@8"/>
+		<export name="_JVM_IsThreadAlive@8">
+			<exclude-if condition="spec.java21"/>
+		</export>
 		<export name="_JVM_SuspendThread@8">
 			<exclude-if condition="spec.java20"/>
 		</export>
@@ -405,13 +407,22 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<export name="JVM_LoadZipLibrary"/>
 
 		<!-- Additions for Java 19 (VirtualThread) -->
-		<export name="JVM_RegisterContinuationMethods"/>
 		<export name="JVM_IsContinuationsSupported"/>
 		<export name="JVM_IsPreviewEnabled"/>
-		<export name="JVM_VirtualThreadMountBegin"/>
-		<export name="JVM_VirtualThreadMountEnd"/>
-		<export name="JVM_VirtualThreadUnmountBegin"/>
-		<export name="JVM_VirtualThreadUnmountEnd"/>
+		<export name="JVM_RegisterContinuationMethods"/>
+		<!-- Removed in Java 21. -->
+		<export name="JVM_VirtualThreadMountBegin">
+			<exclude-if condition="spec.java21"/>
+		</export>
+		<export name="JVM_VirtualThreadMountEnd">
+			<exclude-if condition="spec.java21"/>
+		</export>
+		<export name="JVM_VirtualThreadUnmountBegin">
+			<exclude-if condition="spec.java21"/>
+		</export>
+		<export name="JVM_VirtualThreadUnmountEnd">
+			<exclude-if condition="spec.java21"/>
+		</export>
 	</exports>
 
 	<exports group="jdk20">
