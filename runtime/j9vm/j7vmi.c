@@ -1687,7 +1687,7 @@ JVM_IsSupportedJNIVersion(jint version)
 }
 
 
-
+#if JAVA_SPEC_VERSION < 21
 jboolean JNICALL
 JVM_IsThreadAlive(JNIEnv* jniEnv, jobject targetThread)
 {
@@ -1702,7 +1702,7 @@ JVM_IsThreadAlive(JNIEnv* jniEnv, jobject targetThread)
 	/* Assume that a non-null threadRef indicates the thread is alive */
 	return (NULL == vmThread) ? JNI_FALSE : JNI_TRUE;
 }
-
+#endif /* JAVA_SPEC_VERSION < 21 */
 
 
 jobject JNICALL

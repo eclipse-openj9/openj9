@@ -181,7 +181,8 @@ _X(JVM_IsInterface,JNICALL,true,jboolean,JNIEnv *env, jclass clazz)
 _X(JVM_IsInterrupted,JNICALL,true,jboolean,JNIEnv *env, jobject thread, jboolean unknown)
 _X(JVM_IsPrimitiveClass,JNICALL,true,jboolean,JNIEnv *env, jclass clazz)
 _X(JVM_IsSupportedJNIVersion,JNICALL,true,jboolean,jint jniVersion)
-_X(JVM_IsThreadAlive,JNICALL,true,jboolean,JNIEnv *env, jobject targetThread)
+_IF([JAVA_SPEC_VERSION < 21],
+	[_X(JVM_IsThreadAlive,JNICALL,true,jboolean,JNIEnv *env, jobject targetThread)])
 _X(JVM_NewArray,JNICALL,true,jobject,JNIEnv *env, jclass componentType, jint dimension)
 _X(JVM_NewMultiArray,JNICALL,true,jobject,JNIEnv *env, jclass eltClass, jintArray dim)
 _X(JVM_ResolveClass,JNICALL,true,jobject,jint arg0, jint arg1)
@@ -392,13 +393,13 @@ _IF([JAVA_SPEC_VERSION >= 19],
 	[_X(JVM_IsContinuationsSupported, JNICALL, false, void, void)])
 _IF([JAVA_SPEC_VERSION >= 19],
 	[_X(JVM_IsPreviewEnabled, JNICALL, false, void, void)])
-_IF([JAVA_SPEC_VERSION >= 19],
+_IF([(19 <= JAVA_SPEC_VERSION) && (JAVA_SPEC_VERSION < 21)],
 	[_X(JVM_VirtualThreadMountBegin, JNICALL, false, void, JNIEnv *env, jobject thread, jboolean firstMount)])
-_IF([JAVA_SPEC_VERSION >= 19],
+_IF([(19 <= JAVA_SPEC_VERSION) && (JAVA_SPEC_VERSION < 21)],
 	[_X(JVM_VirtualThreadMountEnd, JNICALL, false, void, JNIEnv *env, jobject thread, jboolean firstMount)])
-_IF([JAVA_SPEC_VERSION >= 19],
+_IF([(19 <= JAVA_SPEC_VERSION) && (JAVA_SPEC_VERSION < 21)],
 	[_X(JVM_VirtualThreadUnmountBegin, JNICALL, false, void, JNIEnv *env, jobject thread, jboolean lastUnmount)])
-_IF([JAVA_SPEC_VERSION >= 19],
+_IF([(19 <= JAVA_SPEC_VERSION) && (JAVA_SPEC_VERSION < 21)],
 	[_X(JVM_VirtualThreadUnmountEnd, JNICALL, false, void, JNIEnv *env, jobject thread, jboolean lastUnmount)])
 _IF([JAVA_SPEC_VERSION >= 20],
 	[_X(JVM_GetClassFileVersion, JNICALL, false, jint, JNIEnv *env, jclass cls)])
