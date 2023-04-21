@@ -526,13 +526,21 @@ bcverify$(UMA_DOT_O) : bcverify.c
 
 ifdef USE_PPC_GCC
 
-# special handling MHInterpreterFull.cpp, MHInterpreterCompressed.cpp, BytecodeInterpreterFull.cpp, BytecodeInterpreterCompressed.cpp, DebugBytecodeInterpreterFull.cpp and DebugBytecodeInterpreterCompressed.cpp
+# special handling MHInterpreterFull.cpp, MHInterpreterCompressed.cpp, BytecodeInterpreterFull.cpp, BytecodeInterpreterCompressed.cpp, CRIUBytecodeInterpreterFull.cpp, CRIUBytecodeInterpreterCompressed.cpp, DebugBytecodeInterpreterFull.cpp and DebugBytecodeInterpreterCompressed.cpp
 
 BytecodeInterpreterFull$(UMA_DOT_O) : BytecodeInterpreterFull.cpp
 	$(PPC_GCC_CXX) $(PPC_GCC_CXXFLAGS) -c $<
 
 BytecodeInterpreterCompressed$(UMA_DOT_O) : BytecodeInterpreterCompressed.cpp
 	$(PPC_GCC_CXX) $(PPC_GCC_CXXFLAGS) -c $<
+
+ifneq ($(J9VM_OPT_CRIU_SUPPORT),)
+CRIUBytecodeInterpreterFull$(UMA_DOT_O) : CRIUBytecodeInterpreterFull.cpp
+	$(PPC_GCC_CXX) $(PPC_GCC_CXXFLAGS) -c $<
+
+CRIUBytecodeInterpreterCompressed$(UMA_DOT_O) : CRIUBytecodeInterpreterCompressed.cpp
+	$(PPC_GCC_CXX) $(PPC_GCC_CXXFLAGS) -c $<
+endif
 
 DebugBytecodeInterpreterFull$(UMA_DOT_O) : DebugBytecodeInterpreterFull.cpp
 	$(PPC_GCC_CXX) $(PPC_GCC_CXXFLAGS) -c $<
