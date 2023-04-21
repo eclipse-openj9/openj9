@@ -537,12 +537,20 @@ CLANG_CXXFLAGS+=-std=c++0x -D_CRT_SUPPRESS_RESTRICT -DVS12AndHigher
 	CLANG_CXXFLAGS+=-D_M_X64
 </#if>
 endif
-# special handling MHInterpreterFull.cpp, MHInterpreterCompressed.cpp, BytecodeInterpreterFull.cpp, BytecodeInterpreterCompressed.cpp, DebugBytecodeInterpreterFull.cpp and DebugBytecodeInterpreterCompressed.cpp
+# special handling MHInterpreterFull.cpp, MHInterpreterCompressed.cpp, BytecodeInterpreterFull.cpp, BytecodeInterpreterCompressed.cpp, CRIUBytecodeInterpreterFull.cpp, CRIUBytecodeInterpreterCompressed.cpp, DebugBytecodeInterpreterFull.cpp and DebugBytecodeInterpreterCompressed.cpp
 BytecodeInterpreterFull$(UMA_DOT_O):BytecodeInterpreterFull.cpp
 	$(CLANG_CXX) $(CLANG_CXXFLAGS) -c $< -o $@
 
 BytecodeInterpreterCompressed$(UMA_DOT_O):BytecodeInterpreterCompressed.cpp
 	$(CLANG_CXX) $(CLANG_CXXFLAGS) -c $< -o $@
+
+ifneq ($(J9VM_OPT_CRIU_SUPPORT),)
+CRIUBytecodeInterpreterFull$(UMA_DOT_O):CRIUBytecodeInterpreterFull.cpp
+	$(CLANG_CXX) $(CLANG_CXXFLAGS) -c $< -o $@
+
+CRIUBytecodeInterpreterCompressed$(UMA_DOT_O):CRIUBytecodeInterpreterCompressed.cpp
+	$(CLANG_CXX) $(CLANG_CXXFLAGS) -c $< -o $@
+endif
 
 DebugBytecodeInterpreterFull$(UMA_DOT_O):DebugBytecodeInterpreterFull.cpp
 	$(CLANG_CXX) $(CLANG_CXXFLAGS) -c $< -o $@
@@ -574,7 +582,7 @@ SharedService$(UMA_DOT_O):SharedService.c
 
 <#if uma.spec.processor.ppc>
 ifndef USE_PPC_GCC
-# special handling BytecodeInterpreterFull.cpp, BytecodeInterpreterCompressed.cpp, DebugBytecodeInterpreterFull.cpp and DebugBytecodeInterpreterCompressed.cpp
+# special handling BytecodeInterpreterFull.cpp, BytecodeInterpreterCompressed.cpp, CRIUBytecodeInterpreterFull.cpp, CRIUBytecodeInterpreterCompressed.cpp, DebugBytecodeInterpreterFull.cpp and DebugBytecodeInterpreterCompressed.cpp
 FLAGS_TO_REMOVE += -O3
 NEW_OPTIMIZATION_FLAG=-O2 -qdebug=lincomm:ptranl:tfbagg
 <#if uma.spec.type.linux>
@@ -588,6 +596,14 @@ BytecodeInterpreterFull$(UMA_DOT_O):BytecodeInterpreterFull.cpp
 
 BytecodeInterpreterCompressed$(UMA_DOT_O):BytecodeInterpreterCompressed.cpp
 	$(CXX) $(SPECIALCXXFLAGS) $(NEW_OPTIMIZATION_FLAG) -c $<
+
+ifneq ($(J9VM_OPT_CRIU_SUPPORT),)
+CRIUBytecodeInterpreterFull$(UMA_DOT_O):CRIUBytecodeInterpreterFull.cpp
+	$(CXX) $(SPECIALCXXFLAGS) $(NEW_OPTIMIZATION_FLAG) -c $<
+
+CRIUBytecodeInterpreterCompressed$(UMA_DOT_O):CRIUBytecodeInterpreterCompressed.cpp
+	$(CXX) $(SPECIALCXXFLAGS) $(NEW_OPTIMIZATION_FLAG) -c $<
+endif
 
 DebugBytecodeInterpreterFull$(UMA_DOT_O):DebugBytecodeInterpreterFull.cpp
 	$(CXX) $(SPECIALCXXFLAGS) $(NEW_OPTIMIZATION_FLAG) -c $<

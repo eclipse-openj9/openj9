@@ -333,13 +333,19 @@ J9_DECLARE_CONSTANT_UTF8(j9_dispatch, "dispatch");
 /* The appropriate bytecodeLoop is selected based on interpreter mode */
 #if defined(OMR_GC_FULL_POINTERS)
 UDATA bytecodeLoopFull(J9VMThread *currentThread);
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+UDATA criuBytecodeLoopFull(J9VMThread *currentThread);
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 UDATA debugBytecodeLoopFull(J9VMThread *currentThread);
-#endif /* OMR_GC_FULL_POINTERS */
+#endif /* defined(OMR_GC_FULL_POINTERS) */
 
 #if defined(OMR_GC_COMPRESSED_POINTERS)
 UDATA bytecodeLoopCompressed(J9VMThread *currentThread);
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+UDATA criuBytecodeLoopCompressed(J9VMThread *currentThread);
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 UDATA debugBytecodeLoopCompressed(J9VMThread *currentThread);
-#endif /* OMR_GC_COMPRESSED_POINTERS */
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) */
 
 #if (defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)) || (defined(LINUX) && defined(J9VM_GC_REALTIME))
 static BOOLEAN isGCPolicyMetronome(J9JavaVM *javaVM);
@@ -2845,28 +2851,41 @@ VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved)
 			if (0 != initializeExclusiveAccess(vm)) {
 				goto _error;
 			}
-#endif /* J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH */
+#endif /* defined(J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH) */
 			TRIGGER_J9HOOK_VM_ABOUT_TO_BOOTSTRAP(vm->hookInterface, vm->mainThread);
 			/* At this point, the decision about which interpreter to use has been made */
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+			if (vm->checkpointState.isCheckPointAllowed) {
+				if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm)) {
+#if defined(OMR_GC_COMPRESSED_POINTERS)
+					vm->bytecodeLoop = criuBytecodeLoopCompressed;
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) */
+				} else {
+#if defined(OMR_GC_FULL_POINTERS)
+					vm->bytecodeLoop = criuBytecodeLoopFull;
+#endif /* defined(OMR_GC_FULL_POINTERS) */
+				}
+			} else
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 			if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_DEBUG_MODE)) {
 				if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm)) {
 #if defined(OMR_GC_COMPRESSED_POINTERS)
 					vm->bytecodeLoop = debugBytecodeLoopCompressed;
-#endif /* OMR_GC_COMPRESSED_POINTERS */
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) */
 				} else {
 #if defined(OMR_GC_FULL_POINTERS)
 					vm->bytecodeLoop = debugBytecodeLoopFull;
-#endif /* OMR_GC_FULL_POINTERS */
+#endif /* defined(OMR_GC_FULL_POINTERS) */
 				}
 			} else {
 				if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm)) {
 #if defined(OMR_GC_COMPRESSED_POINTERS)
 					vm->bytecodeLoop = bytecodeLoopCompressed;
-#endif /* OMR_GC_COMPRESSED_POINTERS */
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) */
 				} else {
 #if defined(OMR_GC_FULL_POINTERS)
 					vm->bytecodeLoop = bytecodeLoopFull;
-#endif /* OMR_GC_FULL_POINTERS */
+#endif /* defined(OMR_GC_FULL_POINTERS) */
 				}
 			}
 			break;
