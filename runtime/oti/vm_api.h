@@ -53,6 +53,7 @@ extern "C" {
 
 typedef struct J9CreateJavaVMParams {
 	UDATA j2seVersion;
+	UDATA threadDllHandle;
 	char* j2seRootDirectory;
 	char* j9libvmDirectory;
 	struct J9VMInitArgs* vm_args;

@@ -232,11 +232,12 @@ static BOOLEAN setZOSThrWeight(void);
 #define J9_MAX_ENV 32767
 #define J9_MAX_PATH _MAX_PATH
 static HINSTANCE j9vm_dllHandle = (HINSTANCE) 0;
+static HINSTANCE thread_dllHandle = (HINSTANCE) 0;
 static HANDLE jvm_dllHandle;
 #else /* WIN32 */
 #define J9_MAX_PATH PATH_MAX
 static void *j9vm_dllHandle = NULL;
-static void *java_dllHandle = NULL;
+static void *thread_dllHandle = NULL;
 #endif /* WIN32 */
 static J9StringBuffer * j9binBuffer = NULL;
 static J9StringBuffer * jrebinBuffer = NULL;
@@ -846,10 +847,8 @@ jint JNICALL DestroyJavaVM(JavaVM * javaVM)
 
 		freeGlobals();
 
-#if defined(J9UNIX) || defined(J9ZOS390)
 		j9vm_dllHandle = 0;
-		java_dllHandle = 0;
-#endif /* defined(J9UNIX) || defined(J9ZOS390) */
+		thread_dllHandle = 0;
 
 		BFUjavaVM = NULL;
 	} else {
@@ -1018,6 +1017,7 @@ preloadLibraries(void)
 		fprintf(stderr,"jvm.dll failed to load: thread library entrypoints not found\n");
 		return FALSE;
 	}
+	thread_dllHandle = threadDLL;
 
 	/* pre-load port library for memorycheck */
 	portDLL = (HINSTANCE) preloadLibrary(J9_PORT_DLL_NAME, TRUE);
@@ -1423,7 +1423,6 @@ preloadLibraries(void)
 	   fprintf(stderr,"libjava.dll failed to load: global entrypoints not found\n");
 	   exit( -1 );     /* failed */
 	}
-	java_dllHandle = javaDLL;
 #endif
 
 	threadDLL = preloadLibrary(J9_THREAD_DLL_NAME, TRUE);
@@ -1452,6 +1451,8 @@ preloadLibraries(void)
 		fprintf(stderr,"libjvm.so failed to load: thread library entrypoints not found\n");
 		exit( -1 );	/* failed */
 	}
+	thread_dllHandle = threadDLL;
+
 	portDLL = preloadLibrary(J9_PORT_DLL_NAME, TRUE);
 	portInitLibrary = (PortInitLibrary) dlsym (portDLL, "j9port_init_library");
 	portGetSizeFn = (PortGetSize) dlsym (portDLL, "j9port_getSize");
@@ -1928,7 +1929,6 @@ destroyJITServer(JITServer **jitServer)
 static jint
 JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITServer)
 {
-	J9JavaVM *j9vm = NULL;
 	jint result = JNI_OK;
 	IDATA xoss = -1;
 	IDATA ibmMallocTraceSet = FALSE;
@@ -2355,6 +2355,7 @@ JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITSer
 	if (jvmInSubdir) {
 		createParams.j2seVersion |= J2SE_LAYOUT_VM_IN_SUBDIR;
 	}
+	createParams.threadDllHandle = (UDATA)thread_dllHandle;
 	createParams.j2seRootDirectory = jvmBufferData(j9binBuffer);
 	createParams.j9libvmDirectory = jvmBufferData(j9libvmBuffer);
 

@@ -5602,7 +5602,7 @@ typedef struct J9JavaVM {
 	UDATA  ( *aotFindAndInitializeMethodEntryPoint)(struct J9JavaVM *javaVM, struct J9ConstantPool *ramCP, struct J9Method *method, struct J9JXEDescription *jxeDescription) ;
 	UDATA  ( *aotInitializeJxeEntryPoint)(struct J9JavaVM *javaVM, struct J9JXEDescription *description, UDATA beforeBootstrap) ;
 	void  ( *freeAotRuntimeInfo)(struct J9JavaVM *javaVM, void * aotRuntimeInfo) ;
-	UDATA aotDllHandle;
+	UDATA threadDllHandle;
 	struct J9ROMImageHeader* arrayROMClasses;
 	struct J9BytecodeVerificationData* bytecodeVerificationData;
 	char* jclDLLName;

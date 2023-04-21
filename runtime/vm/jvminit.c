@@ -1110,6 +1110,7 @@ initializeJavaVM(void * osMainThread, J9JavaVM ** vmPtr, J9CreateJavaVMParams *c
 
 	vm->internalVMLabels = (J9InternalVMLabels*)-1001;
 	vm->cInterpreter = J9_BUILDER_SYMBOL(cInterpreter);
+	vm->threadDllHandle = createParams->threadDllHandle;
 
 #if JAVA_SPEC_VERSION >= 19
 	/* tid 1 will be use by main thread, first usable tid starts at 2 */
@@ -2881,6 +2882,10 @@ VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved)
 			) {
 				startVMRuntimeStateListener(vm);
 			}
+			break;
+
+		case INTERPRETER_SHUTDOWN:
+			vm->threadDllHandle = 0;
 			break;
 	}
 	return returnVal;

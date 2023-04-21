@@ -67,7 +67,6 @@ typedef struct SunVMGlobals {
 	jmethodID jliMethodHandles_Lookup_checkSecurity;
 
 	/* Thread library functions looked up dynamically */
-	UDATA threadLibrary;
 	IDATA (*monitorEnter)(omrthread_monitor_t monitor);
 	IDATA (*monitorExit)(omrthread_monitor_t monitor);
 	
@@ -1178,18 +1177,15 @@ gcDidComplete(J9HookInterface** hook, UDATA eventNum, void* eventData, void* use
 
 
 static BOOLEAN
-initializeThreadFunctions(J9PortLibrary* portLibrary)
+initializeThreadFunctions(J9JavaVM *vm)
 {
-	PORT_ACCESS_FROM_PORT(portLibrary);
+	PORT_ACCESS_FROM_PORT(vm->portLibrary);
 	
-	if (0 != j9sl_open_shared_library(J9_THREAD_DLL_NAME, &VM.threadLibrary, J9PORT_SLOPEN_DECORATE)) {
-		return FALSE;
-	}
-	if (0 != j9sl_lookup_name(VM.threadLibrary, "omrthread_monitor_enter", (UDATA*)&VM.monitorEnter, NULL)) {
+	if (0 != j9sl_lookup_name(vm->threadDllHandle, "omrthread_monitor_enter", (UDATA*)&VM.monitorEnter, NULL)) {
 		return FALSE;		
 	}
 
-	if (0 != j9sl_lookup_name(VM.threadLibrary, "omrthread_monitor_exit", (UDATA*)&VM.monitorExit, NULL)) {
+	if (0 != j9sl_lookup_name(vm->threadDllHandle, "omrthread_monitor_exit", (UDATA*)&VM.monitorExit, NULL)) {
 		return FALSE;		
 	}
 
@@ -1304,7 +1300,7 @@ SunVMI_LifecycleEvent(J9JavaVM* vm, IDATA stage, void* reserved)
 		VM.javaVM = vm;
 
 		/* Look up thread functions */
-		if (!initializeThreadFunctions(vm->portLibrary)) {
+		if (!initializeThreadFunctions(vm)) {
 			return J9VMDLLMAIN_FAILED;
 		}
 
@@ -1334,9 +1330,8 @@ SunVMI_LifecycleEvent(J9JavaVM* vm, IDATA stage, void* reserved)
 
 	case INTERPRETER_SHUTDOWN:
 	{
-		j9sl_close_shared_library(VM.threadLibrary);
-		VM.threadLibrary = 0;
-		VM.monitorEnter = VM.monitorExit = NULL;
+		VM.monitorEnter = NULL;
+		VM.monitorExit = NULL;
 		break;
 	}
 
