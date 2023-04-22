@@ -8975,7 +8975,7 @@ done:
 	invokeBasic(REGISTER_ARGS_LIST)
 	{
 		VM_BytecodeAction rc = GOTO_RUN_METHOD;
-		bool fromJIT = J9_ARE_ANY_BITS_SET(_currentThread->jitStackFrameFlags, J9_SSF_JIT_NATIVE_TRANSITION_FRAME);
+		bool fromJIT = J9_ARE_ANY_BITS_SET(jitStackFrameFlags(REGISTER_ARGS, 0), J9_SSF_JIT_NATIVE_TRANSITION_FRAME);
 		UDATA mhReceiverIndex = 0;
 
 		if (fromJIT) {
@@ -9004,7 +9004,6 @@ done:
 		_sendMethod = (J9Method *)(UDATA)J9OBJECT_U64_LOAD(_currentThread, memberName, _vm->vmtargetOffset);
 
 		if (fromJIT) {
-			_currentThread->jitStackFrameFlags = 0;
 			VM_JITInterface::restoreJITReturnAddress(_currentThread, _sp, (void *)_literals);
 			rc = j2iTransition(REGISTER_ARGS);
 		}
@@ -9016,7 +9015,7 @@ done:
 	linkToStaticSpecial(REGISTER_ARGS_LIST)
 	{
 		VM_BytecodeAction rc = GOTO_RUN_METHOD;
-		bool fromJIT = J9_ARE_ANY_BITS_SET(_currentThread->jitStackFrameFlags, J9_SSF_JIT_NATIVE_TRANSITION_FRAME);
+		bool fromJIT = J9_ARE_ANY_BITS_SET(jitStackFrameFlags(REGISTER_ARGS, 0), J9_SSF_JIT_NATIVE_TRANSITION_FRAME);
 		J9ROMMethod *romMethod = NULL;
 		UDATA methodArgCount = 0;
 
@@ -9073,7 +9072,6 @@ done:
 			memmove(_sp, _sp + stackOffset, methodArgCount * sizeof(UDATA));
 			_sp[methodArgCount] = (UDATA)memberNameObject;
 
-			_currentThread->jitStackFrameFlags = 0;
 			VM_JITInterface::restoreJITReturnAddress(_currentThread, _sp, (void *)_literals);
 			rc = j2iTransition(REGISTER_ARGS);
 		}
@@ -9093,7 +9091,7 @@ throw_npe:
 	linkToVirtual(REGISTER_ARGS_LIST)
 	{
 		VM_BytecodeAction rc = GOTO_RUN_METHOD;
-		bool fromJIT = J9_ARE_ANY_BITS_SET(_currentThread->jitStackFrameFlags, J9_SSF_JIT_NATIVE_TRANSITION_FRAME);
+		bool fromJIT = J9_ARE_ANY_BITS_SET(jitStackFrameFlags(REGISTER_ARGS, 0), J9_SSF_JIT_NATIVE_TRANSITION_FRAME);
 
 		/* Pop memberNameObject from the stack. */
 		j9object_t memberNameObject = *(j9object_t *)_sp++;
@@ -9192,7 +9190,6 @@ foundITable:
 			memmove(_sp, _sp + 1, methodArgCount * sizeof(UDATA));
 			_sp[methodArgCount] = (UDATA)memberNameObject;
 
-			_currentThread->jitStackFrameFlags = 0;
 			VM_JITInterface::restoreJITReturnAddress(_currentThread, _sp, (void *)_literals);
 			rc = j2iTransition(REGISTER_ARGS);
 		}
@@ -9204,7 +9201,7 @@ foundITable:
 	linkToInterface(REGISTER_ARGS_LIST)
 	{
 		VM_BytecodeAction rc = GOTO_RUN_METHOD;
-		bool fromJIT = J9_ARE_ANY_BITS_SET(_currentThread->jitStackFrameFlags, J9_SSF_JIT_NATIVE_TRANSITION_FRAME);
+		bool fromJIT = J9_ARE_ANY_BITS_SET(jitStackFrameFlags(REGISTER_ARGS, 0), J9_SSF_JIT_NATIVE_TRANSITION_FRAME);
 		J9JNIMethodID *methodID = NULL;
 		J9ROMMethod *romMethod = NULL;
 		UDATA methodArgCount = 0;
@@ -9303,7 +9300,6 @@ foundITable:
 			memmove(_sp, _sp + 1, methodArgCount * sizeof(UDATA));
 			_sp[methodArgCount] = (UDATA)memberNameObject;
 
-			_currentThread->jitStackFrameFlags = 0;
 			VM_JITInterface::restoreJITReturnAddress(_currentThread, _sp, (void *)_literals);
 			rc = j2iTransition(REGISTER_ARGS);
 		}
