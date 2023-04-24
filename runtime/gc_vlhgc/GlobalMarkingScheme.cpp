@@ -50,7 +50,6 @@
 #endif /* J9VM_GC_FINALIZATION*/
 #include "ContinuationObjectBuffer.hpp"
 #include "ContinuationObjectList.hpp"
-#include "VMHelpers.hpp"
 #include "GCExtensions.hpp"
 #include "GlobalCollectionCardCleaner.hpp"
 #include "GlobalCollectionNoScanCardCleaner.hpp"
@@ -88,6 +87,9 @@
 #include "WorkPacketsIterator.hpp"
 #include "WorkPacketsVLHGC.hpp"
 #include "WorkStack.hpp"
+#if JAVA_SPEC_VERSION >= 19
+#include "ContinuationHelpers.hpp"
+#endif /* JAVA_SPEC_VERSION >= 19 */
 
 void
 MM_ParallelGlobalMarkTask::mainSetup(MM_EnvironmentBase *env)
@@ -1099,6 +1101,7 @@ MM_GlobalMarkingScheme::scanOwnableSynchronizerObjects(MM_EnvironmentVLHGC *env)
 void
 MM_GlobalMarkingScheme::scanContinuationObjects(MM_EnvironmentVLHGC *env)
 {
+#if JAVA_SPEC_VERSION >= 19
 	MM_HeapRegionDescriptorVLHGC *region = NULL;
 	GC_HeapRegionIteratorVLHGC regionIterator(_heapRegionManager);
 	while (NULL != (region = regionIterator.nextRegion())) {
@@ -1112,7 +1115,7 @@ MM_GlobalMarkingScheme::scanContinuationObjects(MM_EnvironmentVLHGC *env)
 
 						/* read the next link before we add it to the buffer */
 						J9Object* next = _extensions->accessBarrier->getContinuationLink(object);
-						if (isMarked(object)) {
+						if (isMarked(object) && !VM_ContinuationHelpers::isFinished(*VM_ContinuationHelpers::getContinuationStateAddress((J9VMThread *)env->getLanguageVMThread() , object))) {
 							env->getGCEnvironment()->_continuationObjectBuffer->add(env, object);
 						} else {
 							env->_markVLHGCStats._continuationCleared += 1;
@@ -1126,6 +1129,7 @@ MM_GlobalMarkingScheme::scanContinuationObjects(MM_EnvironmentVLHGC *env)
 	}
 	/* restore everything to a flushed state before exiting */
 	env->getGCEnvironment()->_continuationObjectBuffer->flush(env);
+#endif /* JAVA_SPEC_VERSION >= 19 */
 }
 
 /**
