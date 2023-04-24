@@ -80,6 +80,7 @@ typedef enum TR_AOTFeatureFlags
    TR_FeatureFlag_IsVariableHeapBaseForBarrierRange0 = 0x00004000,
    TR_FeatureFlag_IsVariableHeapSizeForBarrierRange0 = 0x00008000,
    TR_FeatureFlag_IsVariableActiveCardTableBase      = 0x00010000,
+   TR_FeatureFlag_CHTableEnabled                     = 0x00020000,
    TR_FeatureFlag_SanityCheckEnd                     = 0x80000000
    } TR_AOTFeatureFlags;
 

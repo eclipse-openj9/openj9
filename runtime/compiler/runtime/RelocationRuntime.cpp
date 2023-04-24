@@ -51,6 +51,7 @@
 #include "runtime/DataCache.hpp"
 #include "env/FrontEnd.hpp"
 #include "infra/Monitor.hpp"
+#include "env/PersistentCHTable.hpp"
 #include "env/PersistentInfo.hpp"
 #include "env/VMAccessCriticalSection.hpp"
 #include "env/CompilerEnv.hpp"
@@ -1085,6 +1086,8 @@ TR_SharedCacheRelocationRuntime::checkAOTHeaderFlags(const TR_AOTHeader *hdrInCa
       defaultMessage = generateError(J9NLS_RELOCATABLE_CODE_ACTIVE_CARD_TABLE_BASE_MISMATCH, "AOT header validation failed: Active Card Table Base feature mismatch.");
    if ((featureFlags & TR_FeatureFlag_ArrayHeaderShape) != (hdrInCache->featureFlags & TR_FeatureFlag_ArrayHeaderShape))
       defaultMessage = generateError(J9NLS_RELOCATABLE_CODE_ARRAY_HEADER_SHAPE_MISMATCH, "AOT header validation failed: Array header shape mismatch.");
+   if ((featureFlags & TR_FeatureFlag_CHTableEnabled) != (hdrInCache->featureFlags & TR_FeatureFlag_CHTableEnabled))
+      defaultMessage = generateError(J9NLS_RELOCATABLE_CODE_CH_TABLE_MISMATCH, "AOT header validation failed: CH Table mismatch.");
    if ((featureFlags & TR_FeatureFlag_SanityCheckEnd) != (hdrInCache->featureFlags & TR_FeatureFlag_SanityCheckEnd))
       defaultMessage = generateError(J9NLS_RELOCATABLE_CODE_HEADER_END_SANITY_BIT_MANGLED, "AOT header validation failed: Trailing sanity bit mismatch.");
 
@@ -1419,6 +1422,14 @@ TR_SharedCacheRelocationRuntime::generateFeatureFlags(TR_FrontEnd *fe)
 
    if (TR::Options::getCmdLineOptions()->isVariableActiveCardTableBase())
       featureFlags |= TR_FeatureFlag_IsVariableActiveCardTableBase;
+
+   TR::CompilationInfo *compInfo = TR::CompilationInfo::get();
+   TR_PersistentCHTable *cht = compInfo->getPersistentInfo()->getPersistentCHTable();
+   if (!TR::Options::getAOTCmdLineOptions()->getOption(TR_DisableCHOpts)
+       && cht && cht->isActive())
+      {
+      featureFlags |= TR_FeatureFlag_CHTableEnabled;
+      }
 
    return featureFlags;
    }
