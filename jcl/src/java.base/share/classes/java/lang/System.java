@@ -37,11 +37,11 @@ import java.lang.reflect.Constructor;
 
 /*[IF Sidecar19-SE]*/
 import jdk.internal.misc.Unsafe;
-/*[IF JAVA_SPEC_VERSION >= 12]*/
+/*[IF JAVA_SPEC_VERSION > 11]*/
 import jdk.internal.access.SharedSecrets;
-/*[ELSE] JAVA_SPEC_VERSION >= 12
+/*[ELSE] JAVA_SPEC_VERSION > 11
 import jdk.internal.misc.SharedSecrets;
-/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
+/*[ENDIF] JAVA_SPEC_VERSION > 11 */
 import jdk.internal.misc.VM;
 import java.lang.StackWalker.Option;
 import jdk.internal.reflect.Reflection;
@@ -672,11 +672,11 @@ private static void ensureProperties(boolean isInitialization) {
 	initProperties(new Properties());
 /*[ENDIF] OpenJ9-RawBuild */
 
-/*[IF JAVA_SPEC_VERSION >= 12]*/
+/*[IF JAVA_SPEC_VERSION > 11]*/
 	Map<String, String> initializedProperties = new Hashtable<String, String>();
-/*[ELSE] JAVA_SPEC_VERSION >= 12
+/*[ELSE] JAVA_SPEC_VERSION > 11
 	Properties initializedProperties = new Properties();
-/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
+/*[ENDIF] JAVA_SPEC_VERSION > 11 */
 
 	/*[IF JAVA_SPEC_VERSION >= 17]*/
 	initializedProperties.put("os.version", sysPropOSVersion); //$NON-NLS-1$
@@ -746,9 +746,9 @@ private static void ensureProperties(boolean isInitialization) {
 	/* java.lang.VersionProps.init() eventually calls into System.setProperty() where propertiesInitialized needs to be true */
 	propertiesInitialized = true;
 
-/*[IF JAVA_SPEC_VERSION >= 12]*/
+/*[IF JAVA_SPEC_VERSION > 11]*/
 	java.lang.VersionProps.init(initializedProperties);
-/*[ELSE] JAVA_SPEC_VERSION >= 12
+/*[ELSE] JAVA_SPEC_VERSION > 11
 	/* VersionProps.init requires systemProperties to be set */
 	systemProperties = initializedProperties;
 
@@ -760,51 +760,52 @@ private static void ensureProperties(boolean isInitialization) {
 	StringBuffer.initFromSystemProperties(systemProperties);
 	StringBuilder.initFromSystemProperties(systemProperties);
 /*[ENDIF] Sidecar19-SE */
-/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
+/*[ENDIF] JAVA_SPEC_VERSION > 11 */
 
-/*[IF JAVA_SPEC_VERSION >= 12]*/
+/*[IF JAVA_SPEC_VERSION > 11]*/
 	String javaRuntimeVersion = initializedProperties.get("java.runtime.version"); //$NON-NLS-1$
-/*[ELSE] JAVA_SPEC_VERSION >= 12
+/*[ELSE] JAVA_SPEC_VERSION > 11
 	String javaRuntimeVersion = initializedProperties.getProperty("java.runtime.version"); //$NON-NLS-1$
-/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
+/*[ENDIF] JAVA_SPEC_VERSION > 11 */
 	if (null != javaRuntimeVersion) {
-	/*[IF JAVA_SPEC_VERSION >= 12]*/
+	/*[IF JAVA_SPEC_VERSION > 11]*/
 		String fullVersion = initializedProperties.get("java.fullversion"); //$NON-NLS-1$
-	/*[ELSE] JAVA_SPEC_VERSION >= 12
+	/*[ELSE] JAVA_SPEC_VERSION > 11
 		String fullVersion = initializedProperties.getProperty("java.fullversion"); //$NON-NLS-1$
-	/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
+	/*[ENDIF] JAVA_SPEC_VERSION > 11 */
 		if (null != fullVersion) {
 			initializedProperties.put("java.fullversion", (javaRuntimeVersion + "\n" + fullVersion)); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 		rasInitializeVersion(javaRuntimeVersion);
 	}
 
-/*[IF JAVA_SPEC_VERSION >= 12]*/
+/*[IF JAVA_SPEC_VERSION > 11]*/
 	lineSeparator = initializedProperties.getOrDefault("line.separator", "\n"); //$NON-NLS-1$
-/*[ELSE] JAVA_SPEC_VERSION >= 12
+/*[ELSE] JAVA_SPEC_VERSION > 11
 	lineSeparator = initializedProperties.getProperty("line.separator", "\n"); //$NON-NLS-1$
-/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
+/*[ENDIF] JAVA_SPEC_VERSION > 11 */
 
 	if (isInitialization) {
 		/*[PR CMVC 179976] System.setProperties(null) throws IllegalStateException */
-		/*[IF JAVA_SPEC_VERSION >= 12]*/
+		/*[IF JAVA_SPEC_VERSION > 11]*/
 		VM.saveProperties(initializedProperties);
-		/*[ELSE] JAVA_SPEC_VERSION >= 12
+		/*[ELSE] JAVA_SPEC_VERSION > 11
 		VM.saveAndRemoveProperties(initializedProperties);
-		/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
+		/*[ENDIF] JAVA_SPEC_VERSION > 11 */
 	}
 
 	/* create systemProperties from properties Map */
-/*[IF JAVA_SPEC_VERSION >= 12]*/
+/*[IF JAVA_SPEC_VERSION > 11]*/
 	initializeSystemProperties(initializedProperties);
-/*[ELSE] JAVA_SPEC_VERSION >= 12
+/*[ELSE] JAVA_SPEC_VERSION > 11
 	systemProperties = initializedProperties;
-/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
+/*[ENDIF] JAVA_SPEC_VERSION > 11 */
 
 	/* Preload system property jdk.serialFilter to prevent later modification */
 	jdk.internal.util.StaticProperty.jdkSerialFilter();
 }
 
+/*[IF JAVA_SPEC_VERSION > 11]*/
 /* Converts a Map<String, String> to a properties object.
  *
  * The system properties will be initialized as a Map<String, String> type to be compatible
@@ -813,9 +814,22 @@ private static void ensureProperties(boolean isInitialization) {
 private static void initializeSystemProperties(Map<String, String> mapProperties) {
 	systemProperties = new Properties();
 	for (Map.Entry<String, String> property : mapProperties.entrySet()) {
-		systemProperties.put(property.getKey(), property.getValue());
+		String key = property.getKey();
+		/* Remove OpenJDK private properties that should not be System properties. */
+		switch (key) {
+		case "java.lang.Integer.IntegerCache.high": //$NON-NLS-1$
+		case "jdk.boot.class.path.append": //$NON-NLS-1$
+		case "sun.java.launcher.diag": //$NON-NLS-1$
+		case "sun.nio.MaxDirectMemorySize": //$NON-NLS-1$
+		case "sun.nio.PageAlignDirectMemory": //$NON-NLS-1$
+			continue;
+		default:
+			break;
+		}
+		systemProperties.put(key, property.getValue());
 	}
 }
+/*[ENDIF] JAVA_SPEC_VERSION > 11 */
 
 private static native void rasInitializeVersion(String javaRuntimeVersion);
 
@@ -1211,10 +1225,10 @@ static void initSecurityManager(ClassLoader applicationClassLoader) {
  * @param		s			the new security manager
  *
  * @throws		SecurityException 	if the security manager has already been set and its checkPermission method doesn't allow it to be replaced.
-/*[IF JAVA_SPEC_VERSION >= 12]
+/*[IF JAVA_SPEC_VERSION > 11]
  * @throws		UnsupportedOperationException 	if s is non-null and a special token "disallow" has been set for system property "java.security.manager"
  * 												which indicates that a security manager is not allowed to be set dynamically.
-/*[ENDIF] JAVA_SPEC_VERSION >= 12
+/*[ENDIF] JAVA_SPEC_VERSION > 11
  */
 /*[IF JAVA_SPEC_VERSION >= 17]*/
 @Deprecated(since="17", forRemoval=true)
