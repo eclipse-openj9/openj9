@@ -428,9 +428,6 @@ JVM_VirtualThreadUnmountEnd(JNIEnv *env, jobject thread, jboolean lastUnmount)
 
 	if (lastUnmount) {
 		vmFuncs->freeTLS(currentThread, threadObj);
-		/* CleanupContinuation */
-		j9object_t contObj = (j9object_t)J9VMJAVALANGVIRTUALTHREAD_CONT(currentThread, threadObj);
-		vmFuncs->freeContinuation(currentThread, contObj);
 	}
 
 	/* Allow thread to be inspected again. */
