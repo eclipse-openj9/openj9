@@ -47,12 +47,12 @@ private:
 protected:
 public:
 	GC_ObjectIteratorState _objectIteratorState; /**< the scan state of the partially scanned object */
-	UDATA _compactGroup; /**< The compact group this cache belongs to */
+	uintptr_t _compactGroup; /**< The compact group this cache belongs to */
 	double _allocationAgeSizeProduct; /**< sum of (age * size) products for each object copied to this copy cache */
-	UDATA _objectSize;   /**< sum of objects sizes copied to this copy cache */
-	U_64 _lowerAgeBound; /**< lowest possible age of any object in this copy cache */
-	U_64 _upperAgeBound; /**< highest possible age of any object in this copy cache */
-	UDATA _arraySplitIndex; /**< The index within the array in scanCurrent to start scanning from (meaningful is J9VM_MODRON_SCAVENGER_CACHE_TYPE_SPLIT_ARRAY is set) */ 
+	uintptr_t _objectSize;   /**< sum of objects sizes copied to this copy cache */
+	uint64_t _lowerAgeBound; /**< lowest possible age of any object in this copy cache */
+	uint64_t _upperAgeBound; /**< highest possible age of any object in this copy cache */
+	uintptr_t _arraySplitIndex; /**< The index within the array in scanCurrent to start scanning from (meaningful is OMR_COPYSCAN_CACHE_TYPE_SPLIT_ARRAY is set) */
 
 	/* Members Function */
 private:
@@ -63,7 +63,7 @@ public:
 	 */
 	MMINLINE void clearSplitArray()
 	{
-		flags &= ~J9VM_MODRON_SCAVENGER_CACHE_TYPE_SPLIT_ARRAY;
+		flags &= ~OMR_COPYSCAN_CACHE_TYPE_SPLIT_ARRAY;
 		_arraySplitIndex = 0;
 	}
 
@@ -74,7 +74,7 @@ public:
 	 */	
 	MMINLINE bool isSplitArray() const
 	{
-		return (J9VM_MODRON_SCAVENGER_CACHE_TYPE_SPLIT_ARRAY == (flags & J9VM_MODRON_SCAVENGER_CACHE_TYPE_SPLIT_ARRAY));
+		return OMR_COPYSCAN_CACHE_TYPE_SPLIT_ARRAY == (flags & OMR_COPYSCAN_CACHE_TYPE_SPLIT_ARRAY);
 	}
 
 	/**

@@ -52,19 +52,19 @@ private:
 		MM_CopyScanCacheVLHGC *_cacheHead;
 		MM_LightweightNonReentrantLock _cacheLock;
 	} *_sublists;
-	UDATA _sublistCount; /**< the number of lists (split for parallelism). Must be at least 1 */
+	uintptr_t _sublistCount; /**< the number of lists (split for parallelism). Must be at least 1 */
 	MM_CopyScanCacheChunkVLHGC *_chunkHead;
-	UDATA _totalEntryCount;
+	uintptr_t _totalEntryCount;
 	bool _containsHeapAllocatedChunks;	/**< True if there are heap-allocated scan cache chunks on the _chunkHead list */
 
 private:
-	bool appendCacheEntries(MM_EnvironmentVLHGC *env, UDATA cacheEntryCount);
+	bool appendCacheEntries(MM_EnvironmentVLHGC *env, uintptr_t cacheEntryCount);
 	
 	/**
 	 * Determine the sublist index for the specified thread.
 	 * @return the index (a valid index into _sublists)
 	 */
-	UDATA getSublistIndex(MM_EnvironmentVLHGC *env) { return env->getEnvironmentId() % _sublistCount; }
+	uintptr_t getSublistIndex(MM_EnvironmentVLHGC *env) { return env->getEnvironmentId() % _sublistCount; }
 	
 	/**
 	 * Add the specified entry to this list. It is the caller's responsibility to provide synchronization.
@@ -92,7 +92,7 @@ public:
 	 * @param env[in] A GC thread
 	 * @param totalCacheEntryCount[in] The number of cache entries which this list should be resized to contain
 	 */
-	bool resizeCacheEntries(MM_EnvironmentVLHGC *env, UDATA totalCacheEntryCount);
+	bool resizeCacheEntries(MM_EnvironmentVLHGC *env, uintptr_t totalCacheEntryCount);
 
 	/**
 	 * Removes any heap-allocated scan cache chunks from the receiver's chunk list (calls tearDown on them after removing them from the list).
@@ -107,7 +107,7 @@ public:
 	 * @param bufferLengthInBytes[in] The length, in bytes, of the memory extent starting at buffer
 	 * @return A new cache entry if the chunk was successfully allocated and inserted into the receiver's chunk list, NULL if a failure occurred
 	 */
-	MM_CopyScanCacheVLHGC * allocateCacheEntriesInExistingMemory(MM_EnvironmentVLHGC *env, void *buffer, UDATA bufferLengthInBytes);
+	MM_CopyScanCacheVLHGC * allocateCacheEntriesInExistingMemory(MM_EnvironmentVLHGC *env, void *buffer, uintptr_t bufferLengthInBytes);
 
 	/**
 	 * Lock the receiver to prevent concurrent modification.
@@ -161,13 +161,13 @@ public:
 	 * The implementation walks all caches, so this should only be used for debugging.
 	 * @return the total number of caches in the receiver's lists
 	 */
-	UDATA countCaches();
+	uintptr_t countCaches();
 	
 	/**
 	 * Answer the total number of caches owned by the receiver, whether or not they are currently in the receiver's lists.
 	 * @return total number of caches
 	 */
-	UDATA getTotalCacheCount() { return _totalEntryCount; }
+	uintptr_t getTotalCacheCount() { return _totalEntryCount; }
 
 	/**
 	 * Create a CopyScanCacheList object.
