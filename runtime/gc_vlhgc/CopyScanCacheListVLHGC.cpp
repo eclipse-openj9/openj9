@@ -50,7 +50,7 @@ MM_CopyScanCacheListVLHGC::initialize(MM_EnvironmentVLHGC *env)
 	_sublistCount = extensions->packetListSplit;
 	Assert_MM_true(0 < _sublistCount);
 	
-	UDATA sublistBytes = sizeof(CopyScanCacheSublist) * _sublistCount;
+	uintptr_t sublistBytes = sizeof(CopyScanCacheSublist) * _sublistCount;
 	_sublists = (CopyScanCacheSublist *)extensions->getForge()->allocate(sublistBytes, MM_AllocationCategory::FIXED, J9_GET_CALLSITE());
 	if (NULL == _sublists) {
 		_sublistCount = 0;
@@ -58,7 +58,7 @@ MM_CopyScanCacheListVLHGC::initialize(MM_EnvironmentVLHGC *env)
 	}
 
 	memset((void *)_sublists, 0, sublistBytes);
-	for (UDATA i = 0; i < _sublistCount; i++) {
+	for (uintptr_t i = 0; i < _sublistCount; i++) {
 		if (!_sublists[i]._cacheLock.initialize(env, &extensions->lnrlOptions, "MM_CopyScanCacheListVLHGC:_sublists[]._cacheLock")) {
 			return false;
 		}
@@ -78,7 +78,7 @@ MM_CopyScanCacheListVLHGC::tearDown(MM_EnvironmentVLHGC *env)
 	}
 	
 	if (NULL != _sublists) {
-		for (UDATA i = 0; i < _sublistCount; i++) {
+		for (uintptr_t i = 0; i < _sublistCount; i++) {
 			_sublists[i]._cacheLock.tearDown();
 		}
 		env->getForge()->free(_sublists);
@@ -88,11 +88,11 @@ MM_CopyScanCacheListVLHGC::tearDown(MM_EnvironmentVLHGC *env)
 }
 
 bool
-MM_CopyScanCacheListVLHGC::appendCacheEntries(MM_EnvironmentVLHGC *env, UDATA cacheEntryCount)
+MM_CopyScanCacheListVLHGC::appendCacheEntries(MM_EnvironmentVLHGC *env, uintptr_t cacheEntryCount)
 {
 	CopyScanCacheSublist *cacheList = &_sublists[getSublistIndex(env)];
 	MM_CopyScanCacheChunkVLHGC *chunk = MM_CopyScanCacheChunkVLHGC::newInstance(env, cacheEntryCount, &cacheList->_cacheHead, _chunkHead);
-	if(NULL != chunk) {
+	if (NULL != chunk) {
 		_chunkHead = chunk;
 		_totalEntryCount += cacheEntryCount;
 	}
@@ -101,7 +101,7 @@ MM_CopyScanCacheListVLHGC::appendCacheEntries(MM_EnvironmentVLHGC *env, UDATA ca
 }
 
 bool
-MM_CopyScanCacheListVLHGC::resizeCacheEntries(MM_EnvironmentVLHGC *env, UDATA totalCacheEntryCount)
+MM_CopyScanCacheListVLHGC::resizeCacheEntries(MM_EnvironmentVLHGC *env, uintptr_t totalCacheEntryCount)
 {
 	MM_GCExtensions *ext = MM_GCExtensions::getExtensions(env);
 	
@@ -136,14 +136,14 @@ MM_CopyScanCacheListVLHGC::removeAllHeapAllocatedChunks(MM_EnvironmentVLHGC *env
 		/*
 		 * Walk caches list first to remove all references to heap allocated caches
 		 */
-		for (UDATA i = 0; i < _sublistCount; i++) {
+		for (uintptr_t i = 0; i < _sublistCount; i++) {
 			CopyScanCacheSublist *cacheList = &_sublists[i];
 
 			MM_CopyScanCacheVLHGC *previousCache = NULL;
 			MM_CopyScanCacheVLHGC *cache = cacheList->_cacheHead;
 	
-			while(cache != NULL) {
-				if (0 != (cache->flags & J9VM_MODRON_SCAVENGER_CACHE_TYPE_HEAP)) {
+			while (cache != NULL) {
+				if (0 != (cache->flags & OMR_COPYSCAN_CACHE_TYPE_HEAP)) {
 					/* this cache is heap allocated - remove it from list */
 					if (NULL == previousCache) {
 						/* remove first element */
@@ -166,10 +166,10 @@ MM_CopyScanCacheListVLHGC::removeAllHeapAllocatedChunks(MM_EnvironmentVLHGC *env
 		MM_CopyScanCacheChunkVLHGC *previousChunk = NULL;
 		MM_CopyScanCacheChunkVLHGC *chunk = _chunkHead;
 
-		while(chunk != NULL) {
+		while (chunk != NULL) {
 			MM_CopyScanCacheChunkVLHGC *nextChunk = chunk->getNext();
 
-			if (0 != (chunk->getBase()->flags & J9VM_MODRON_SCAVENGER_CACHE_TYPE_HEAP)) {
+			if (0 != (chunk->getBase()->flags & OMR_COPYSCAN_CACHE_TYPE_HEAP)) {
 				/* this chunk is heap allocated - remove it from list */
 				if (NULL == previousChunk) {
 					/* still be a first element */
@@ -195,7 +195,7 @@ MM_CopyScanCacheListVLHGC::removeAllHeapAllocatedChunks(MM_EnvironmentVLHGC *env
 }
 
 MM_CopyScanCacheVLHGC *
-MM_CopyScanCacheListVLHGC::allocateCacheEntriesInExistingMemory(MM_EnvironmentVLHGC *env, void *buffer, UDATA bufferLengthInBytes)
+MM_CopyScanCacheListVLHGC::allocateCacheEntriesInExistingMemory(MM_EnvironmentVLHGC *env, void *buffer, uintptr_t bufferLengthInBytes)
 {
 	CopyScanCacheSublist *cacheList = &_sublists[getSublistIndex(env)];
 	MM_CopyScanCacheVLHGC * result = NULL;
@@ -213,7 +213,7 @@ MM_CopyScanCacheListVLHGC::allocateCacheEntriesInExistingMemory(MM_EnvironmentVL
 void 
 MM_CopyScanCacheListVLHGC::lock()
 {
-	for (UDATA i = 0; i < _sublistCount; ++i) {
+	for (uintptr_t i = 0; i < _sublistCount; ++i) {
 		_sublists[i]._cacheLock.acquire();
 	}
 }
@@ -221,7 +221,7 @@ MM_CopyScanCacheListVLHGC::lock()
 void 
 MM_CopyScanCacheListVLHGC::unlock()
 {
-	for (UDATA i = 0; i < _sublistCount; ++i) {
+	for (uintptr_t i = 0; i < _sublistCount; ++i) {
 		_sublists[i]._cacheLock.release();
 	}
 }
@@ -268,11 +268,11 @@ MM_CopyScanCacheListVLHGC::pushCache(MM_EnvironmentVLHGC *env, MM_CopyScanCacheV
 MM_CopyScanCacheVLHGC *
 MM_CopyScanCacheListVLHGC::popCacheNoLock(MM_EnvironmentVLHGC *env)
 {
-	UDATA indexStart = getSublistIndex(env);
+	uintptr_t indexStart = getSublistIndex(env);
 	MM_CopyScanCacheVLHGC *cache = NULL;
 
-	for (UDATA i = 0; (i < _sublistCount) && (NULL == cache); ++i) {
-		UDATA index = (i + indexStart) % _sublistCount;
+	for (uintptr_t i = 0; (i < _sublistCount) && (NULL == cache); ++i) {
+		uintptr_t index = (i + indexStart) % _sublistCount;
 		CopyScanCacheSublist *cacheList = &_sublists[index];
 		cache = popCacheInternal(env, cacheList); 
 	}
@@ -283,10 +283,10 @@ MM_CopyScanCacheListVLHGC::popCacheNoLock(MM_EnvironmentVLHGC *env)
 MM_CopyScanCacheVLHGC *
 MM_CopyScanCacheListVLHGC::popCache(MM_EnvironmentVLHGC *env)
 {
-	UDATA indexStart = getSublistIndex(env);
+	uintptr_t indexStart = getSublistIndex(env);
 	MM_CopyScanCacheVLHGC *cache = NULL;
-	for (UDATA i = 0; (i < _sublistCount) && (NULL == cache); ++i) {
-		UDATA index = (i + indexStart) % _sublistCount;
+	for (uintptr_t i = 0; (i < _sublistCount) && (NULL == cache); ++i) {
+		uintptr_t index = (i + indexStart) % _sublistCount;
 		CopyScanCacheSublist *cacheList = &_sublists[index];
 		if (NULL != cacheList->_cacheHead) {
 			cacheList->_cacheLock.acquire();
@@ -301,17 +301,17 @@ bool
 MM_CopyScanCacheListVLHGC::isEmpty()
 {
 	MM_CopyScanCacheVLHGC *cache = NULL;
-	for (UDATA i = 0; (i < _sublistCount) && (NULL == cache); ++i) {
+	for (uintptr_t i = 0; (i < _sublistCount) && (NULL == cache); ++i) {
 		cache = _sublists[i]._cacheHead;
 	}
 	return NULL == cache;
 }
 
-UDATA
+uintptr_t
 MM_CopyScanCacheListVLHGC::countCaches()
 {
-	UDATA count = 0;
-	for (UDATA i = 0; i < _sublistCount; ++i) {
+	uintptr_t count = 0;
+	for (uintptr_t i = 0; i < _sublistCount; ++i) {
 		MM_CopyScanCacheVLHGC *cache = _sublists[i]._cacheHead;
 		while (NULL != cache) {
 			count++;

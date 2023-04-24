@@ -28,12 +28,12 @@
 #include "CopyScanCacheChunkVLHGCInHeap.hpp"
 
 
-UDATA
+uintptr_t
 MM_CopyScanCacheChunkVLHGCInHeap::numberOfCachesInChunk(MM_EnvironmentVLHGC *env)
 {
-	UDATA tlhMinimumSize = MM_GCExtensions::getExtensions(env)->tlhMinimumSize;
-	UDATA sizeToAllocate = sizeof(MM_CopyScanCacheChunkVLHGCInHeap);
-	UDATA numberOfCaches = 1;
+	uintptr_t tlhMinimumSize = MM_GCExtensions::getExtensions(env)->tlhMinimumSize;
+	uintptr_t sizeToAllocate = sizeof(MM_CopyScanCacheChunkVLHGCInHeap);
+	uintptr_t numberOfCaches = 1;
 
 	if (sizeToAllocate < tlhMinimumSize) {
 		/* calculate number of caches to just barely exceed tlhMinimumSize */
@@ -42,11 +42,11 @@ MM_CopyScanCacheChunkVLHGCInHeap::numberOfCachesInChunk(MM_EnvironmentVLHGC *env
 	return numberOfCaches;
 }
 
-UDATA
+uintptr_t
 MM_CopyScanCacheChunkVLHGCInHeap::bytesRequiredToAllocateChunkInHeap(MM_EnvironmentVLHGC *env)
 {
-	UDATA sizeToAllocate = sizeof(MM_CopyScanCacheChunkVLHGCInHeap);
-	UDATA numberOfCaches = numberOfCachesInChunk(env);
+	uintptr_t sizeToAllocate = sizeof(MM_CopyScanCacheChunkVLHGCInHeap);
+	uintptr_t numberOfCaches = numberOfCachesInChunk(env);
 
 	/* total size required to allocate */
 	sizeToAllocate += numberOfCaches * sizeof(MM_CopyScanCacheVLHGC);
@@ -56,7 +56,7 @@ MM_CopyScanCacheChunkVLHGCInHeap::bytesRequiredToAllocateChunkInHeap(MM_Environm
 }
 
 MM_CopyScanCacheChunkVLHGCInHeap *
-MM_CopyScanCacheChunkVLHGCInHeap::newInstance(MM_EnvironmentVLHGC *env, void *buffer, UDATA bufferLengthInBytes, MM_CopyScanCacheVLHGC **nextCacheAddr, MM_CopyScanCacheChunkVLHGC *nextChunk)
+MM_CopyScanCacheChunkVLHGCInHeap::newInstance(MM_EnvironmentVLHGC *env, void *buffer, uintptr_t bufferLengthInBytes, MM_CopyScanCacheVLHGC **nextCacheAddr, MM_CopyScanCacheChunkVLHGC *nextChunk)
 {
 	/* make sure that the memory extent is exactly the right size to allocate an instance of the receiver */
 	Assert_MM_true(bytesRequiredToAllocateChunkInHeap(env) == bufferLengthInBytes);
@@ -70,13 +70,13 @@ MM_CopyScanCacheChunkVLHGCInHeap::newInstance(MM_EnvironmentVLHGC *env, void *bu
 }
 
 bool
-MM_CopyScanCacheChunkVLHGCInHeap::initialize(MM_EnvironmentVLHGC *env, UDATA cacheEntryCount, MM_CopyScanCacheVLHGC **nextCacheAddr, MM_CopyScanCacheChunkVLHGC *nextChunk)
+MM_CopyScanCacheChunkVLHGCInHeap::initialize(MM_EnvironmentVLHGC *env, uintptr_t cacheEntryCount, MM_CopyScanCacheVLHGC **nextCacheAddr, MM_CopyScanCacheChunkVLHGC *nextChunk)
 {
 	bool success = MM_CopyScanCacheChunkVLHGC::initialize(env, cacheEntryCount, nextCacheAddr, nextChunk);
 	if (success) {
 		MM_CopyScanCacheVLHGC *structureArrayBase = getBase();
-		for (UDATA i = 0; i < cacheEntryCount; i++) {
-			structureArrayBase[i].flags |= J9VM_MODRON_SCAVENGER_CACHE_TYPE_HEAP;
+		for (uintptr_t i = 0; i < cacheEntryCount; i++) {
+			structureArrayBase[i].flags |= OMR_COPYSCAN_CACHE_TYPE_HEAP;
 		}
 	}
 	return success;
