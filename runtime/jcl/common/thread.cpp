@@ -336,45 +336,14 @@ Java_java_lang_Thread_getStackTraceImpl(JNIEnv *env, jobject rcv)
 	/* Assume the thread is alive (guaranteed by java caller). */
 	J9VMThread *targetThread = J9VMJAVALANGTHREAD_THREADREF(currentThread, receiverObject);
 
-#if JAVA_SPEC_VERSION >= 19
-	BOOLEAN releaseInspector = FALSE;
-	if (IS_JAVA_LANG_VIRTUALTHREAD(currentThread, receiverObject)) {
-		/* Do not spin when acquiring access, if acquire failed, return NULL.
-		 * The caller of getStackTraceImpl will handle if should retry or get stack using unmounted path.
-		 */
-		if (!vmFuncs->acquireVThreadInspector(currentThread, rcv, FALSE)) {
-			goto done;
-		}
-		j9object_t carrierThread = (j9object_t)J9VMJAVALANGVIRTUALTHREAD_CARRIERTHREAD(currentThread, receiverObject);
-		/* Ensure virtual thread is mounted and not during transition. */
-		if (NULL != carrierThread) {
-			releaseInspector = TRUE;
-		} else {
-			vmFuncs->releaseVThreadInspector(currentThread, rcv);
-			goto done;
-		}
-		/* Gets targetThread from the carrierThread object. */
-		targetThread = J9VMJAVALANGTHREAD_THREADREF(currentThread, carrierThread);
-		Assert_JCL_notNull(targetThread);
-	}
-	{
-#endif /* JAVA_SPEC_VERSION >= 19 */
+	/* If calling getStackTrace on the current Thread, drop the first element, which is this method. */
+	UDATA skipCount = (currentThread == targetThread) ? 1 : 0;
 
-		/* If calling getStackTrace on the current Thread, drop the first element, which is this method. */
-		UDATA skipCount = (currentThread == targetThread) ? 1 : 0;
+	j9object_t resultObject = getStackTraceForThread(currentThread, targetThread, skipCount, receiverObject);
 
-		j9object_t resultObject = getStackTraceForThread(currentThread, targetThread, skipCount, receiverObject);
+	if (NULL != resultObject) {
 		result = vmFuncs->j9jni_createLocalRef(env, resultObject);
-
-#if JAVA_SPEC_VERSION >= 19
 	}
-	if (releaseInspector) {
-		receiverObject = J9_JNI_UNWRAP_REFERENCE(rcv);
-		/* Release the virtual thread (allow it to die) now that we are no longer inspecting it. */
-		vmFuncs->releaseVThreadInspector(currentThread, rcv);
-	}
-done:
-#endif /* JAVA_SPEC_VERSION >= 19 */
 
 	vmFuncs->internalExitVMToJNI(currentThread);
 	return result;
