@@ -364,7 +364,7 @@ MM_ScavengerDelegate::scanContinuationNativeSlots(MM_EnvironmentStandard *env, o
 
 		GC_VMThreadStackSlotIterator::scanContinuationSlots(currentThread, objectPtr, (void *)&localData, stackSlotIteratorForScavenge, false, false);
 		if (isConcurrentGC) {
-			VM_VMHelpers::exitConcurrentGCScan(currentThread, objectPtr, isGlobalGC);
+			MM_GCExtensions::exitContinuationConcurrentGCScan(currentThread, objectPtr, isGlobalGC);
 		}
 	}
 	return 	shouldRemember;
