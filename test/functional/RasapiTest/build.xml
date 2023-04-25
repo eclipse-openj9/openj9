@@ -24,8 +24,8 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 
 	<property name="build.jar.tests" value="com.ibm.jvm.ras.tests.jar" />
 	<property name="DEST" value="${BUILD_ROOT}/functional/RasapiTest" />
-	<property name="src.level" value="1.7" />
-	<property name="target.level" value="1.7" />
+	<property name="src.level" value="8" />
+	<property name="target.level" value="8" />
 	<property name="source.dir" location="src" />
 	<property name="dummy.source.dir" location="dummy_src" />
 	<property name="build.dir" location="build" />
