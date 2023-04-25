@@ -786,11 +786,16 @@ public class StackMap
 				
 				buffer.append("outputStackMap. bits = ");
 				buffer.append(bits);
-				buffer.append(" resultsArray size = " + resultsArray.length);
-				buffer.append(" result: ");
-				
-				for (int i=0;i < resultsArray.length; i++) {
-					buffer.append(Integer.toHexString(resultsArray[i]));
+				if (resultsArray != null) {
+					buffer.append(" resultsArray size = ");
+					buffer.append(resultsArray.length);
+					buffer.append(" result: ");
+
+					for (int i=0;i < resultsArray.length; i++) {
+						buffer.append(Integer.toHexString(resultsArray[i]));
+					}
+				} else {
+					buffer.append(" resultsArray = null");
 				}
 				
 				logger.logp(FINE,"StackMap_V1","outputStackMap",buffer.toString());
