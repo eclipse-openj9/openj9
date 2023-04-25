@@ -165,6 +165,10 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 	<classref name="jdk/internal/foreign/AbstractMemorySegmentImpl" flags="opt_openjdkFfi" versions="17-"/>
 	<classref name="jdk/internal/foreign/NativeMemorySegmentImpl" flags="opt_openjdkFfi" versions="17-"/>
 
+	<!-- Class references used in Thread.findScopedValueBindings(). -->
+	<classref name="java/lang/ScopedValue$Carrier" versions="20-"/>
+	<classref name="java/lang/ScopedValue$Snapshot" versions="20-"/>
+
 <!--
 	NOTE: the resolution code in jclcinit.c only looks at the J9ROMClassRef->runtimeFlags to determine
 	whether or not to attempt the class load.  The flags sepcified on the fields are ignored.
