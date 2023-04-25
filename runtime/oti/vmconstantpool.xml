@@ -165,6 +165,10 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 	<classref name="jdk/internal/foreign/AbstractMemorySegmentImpl" flags="opt_openjdkFfi" versions="17-"/>
 	<classref name="jdk/internal/foreign/NativeMemorySegmentImpl" flags="opt_openjdkFfi" versions="17-"/>
 
+	<!-- Class references needed to implement Thread.findScopedValueBindings() -->
+	<classref name="java/lang/ScopedValue$Carrier" versions="21-"/>
+	<classref name="java/lang/ScopedValue$Snapshot" versions="21-"/>
+
 <!--
 	NOTE: the resolution code in jclcinit.c only looks at the J9ROMClassRef->runtimeFlags to determine
 	whether or not to attempt the class load.  The flags sepcified on the fields are ignored.
@@ -437,6 +441,10 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 	<fieldref class="jdk/internal/foreign/NativeMemorySegmentImpl" name="scope" signature="Ljdk/internal/foreign/ResourceScopeImpl;" flags="opt_openjdkFfi" versions="17"/>
 	<fieldref class="jdk/internal/foreign/NativeMemorySegmentImpl" name="scope" signature="Ljava/lang/foreign/SegmentScope;" flags="opt_openjdkFfi" versions="20"/>
 	<fieldref class="jdk/internal/foreign/NativeMemorySegmentImpl" name="scope" signature="Ljdk/internal/foreign/MemorySessionImpl;" flags="opt_openjdkFfi" versions="21-"/>
+
+	<!-- Field references needed to implement Thread.findScopedValueBindings() -->
+	<fieldref class="java/lang/ScopedValue$Carrier" name="bitmask" signature="I" versions="21-"/>
+	<fieldref class="java/lang/ScopedValue$Snapshot" name="bitmask" signature="I" versions="21-"/>
 
 <!--
 	NOTE: the resolution code in jclcinit.c only looks at the J9ROMClassRef->runtimeFlags to determine

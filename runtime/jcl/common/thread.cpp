@@ -604,27 +604,110 @@ Java_java_lang_Thread_setExtentLocalCache(JNIEnv *env, jclass unusedClass, jobje
 
 #if JAVA_SPEC_VERSION >= 20
 /**
+ * Frame walk function to find the most recent scoped value binding in the stack.
+ *
+ * @param currentThread the current thread
+ * @param walkState the stack walk state
+ * @return J9_STACKWALK_KEEP_ITERATING or J9_STACKWALK_STOP_ITERATING
+ */
+static UDATA
+findScopedValueBindingsWalkFunction(J9VMThread *currentThread, J9StackWalkState *walkState)
+{
+	UDATA rc = J9_STACKWALK_KEEP_ITERATING;
+
+	if (NULL != walkState->userData1) {
+		J9JavaVM *vm = currentThread->javaVM;
+		J9Method *method = walkState->method;
+		J9Class *methodClass = J9_CLASS_FROM_METHOD(method);
+		J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
+		J9UTF8 *methodName = J9ROMMETHOD_NAME(romMethod);
+		if (((J9VMJAVALANGTHREAD_OR_NULL(vm) == methodClass)
+			|| (J9VMJAVALANGVIRTUALTHREAD_OR_NULL(vm) == methodClass)
+			|| ((J9Class *)walkState->userData3 == methodClass))
+			&& J9UTF8_LITERAL_EQUALS(J9UTF8_DATA(methodName), J9UTF8_LENGTH(methodName), "runWith")
+		) {
+			rc = J9_STACKWALK_STOP_ITERATING;
+		} else if (0 == walkState->inlineDepth) {
+			walkState->userData1 = NULL;
+		}
+	}
+
+	return rc;
+}
+
+/**
+ * Object slot walk function to find the most recent scoped value binding in the object slots.
+ *
+ * @param currentThread the current thread
+ * @param walkState the stack walk state
+ * @param slot pointer to slot containing an object pointer
+ * @param stackLocation pointer to the slot in the stack containing possibly compressed object pointer
+ */
+static void
+findScopedValueBindingOSlotWalkFunction(J9VMThread *currentThread, J9StackWalkState *walkState, j9object_t *slot, const void *stackLocation)
+{
+	j9object_t slotObject = *slot;
+	J9Class *clazz = J9OBJECT_CLAZZ(currentThread, slotObject);
+	J9Class *snapshotClazz = (J9Class *)walkState->userData2;
+
+	if (isSameOrSuperClassOf(snapshotClazz, clazz)) {
+		if (NULL == walkState->userData1) {
+			walkState->userData1 = (void *)slotObject;
+		} else {
+			Assert_JCL_true(0);
+		}
+	}
+}
+
+/**
  * static native Object findScopedValueBindings();
  *
- * Find the most recent scoped value bindings in the stack.
- * TODO: Complete the function description.
+ * Find the most recent scoped value binding in the stack.
  *
  * @param env instance of JNIEnv
  * @param unusedClass
- * @return jobject
+ * @return jobject the found scoped value binding, or null if there is no
+ * scoped value binding in the stack
  */
 jobject JNICALL
 Java_java_lang_Thread_findScopedValueBindings(JNIEnv *env, jclass unusedClass)
 {
-	/* Currently, this method is unused since there is no API or test that
-	 * invokes this method in OpenJ9. If the assertion ever triggers, the
-	 * draft implementation below should be completed and merged.
-	 *
-	 * Issue: https://github.com/eclipse-openj9/openj9/issues/16677.
-	 * Implementation: https://github.com/eclipse-openj9/openj9/pull/17402.
+	J9VMThread *currentThread = (J9VMThread *)env;
+	J9JavaVM *vm = currentThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+	J9StackWalkState walkState = {0};
+	jobject bindings = NULL;
+
+	walkState.walkThread = currentThread;
+	walkState.flags = J9_STACKWALK_ITERATE_FRAMES | J9_STACKWALK_MAINTAIN_REGISTER_MAP
+						| J9_STACKWALK_ITERATE_O_SLOTS | J9_STACKWALK_VISIBLE_ONLY;
+	walkState.skipCount = 0;
+	walkState.userData1 = NULL;
+	walkState.frameWalkFunction = findScopedValueBindingsWalkFunction;
+	/*
+	 * The goal is to find the first argument of the runWith method, which is an
+	 * instance of java.lang.ScopedValue$Snapshot. The first argument cannot be
+	 * reliably retrieved for any compiled method and there is only one argument
+	 * is an instance of java.lang.ScopedValue$Snapshot, so we will look at all
+	 * the argument to find the Snapshot instance.
 	 */
-	Assert_JCL_unimplemented();
-	return NULL;
+	walkState.objectSlotWalkFunction = findScopedValueBindingOSlotWalkFunction;
+
+	vmFuncs->internalEnterVMFromJNI(currentThread);
+	/*
+	 * We cannot load classes from inside the iterator callbacks, so we preload it
+	 * here and store them in the user data fields.
+	 */
+	walkState.userData2 = J9VMJAVALANGSCOPEDVALUESNAPSHOT_OR_NULL(vm);
+	walkState.userData3 = J9VMJAVALANGSCOPEDVALUECARRIER_OR_NULL(vm);
+	vm->walkStackFrames(currentThread, &walkState);
+
+	if (NULL != walkState.userData1) {
+		bindings = VM_VMHelpers::createLocalRef(env, (j9object_t)walkState.userData1);
+	}
+	vmFuncs->internalExitVMToJNI(currentThread);
+
+	return bindings;
 }
 
 /**
