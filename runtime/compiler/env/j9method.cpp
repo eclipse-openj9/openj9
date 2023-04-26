@@ -3368,7 +3368,6 @@ void TR_ResolvedJ9Method::construct()
       {x(TR::java_lang_J9VMInternals_getSuperclass,                       "getSuperclass", "(Ljava/lang/Class;)Ljava/lang/Class;")},
       {x(TR::java_lang_J9VMInternals_identityHashCode,                    "identityHashCode", "(Ljava/lang/Object;)I")},
       {x(TR::java_lang_J9VMInternals_fastIdentityHashCode,                "fastIdentityHashCode", "(Ljava/lang/Object;)I")},
-      {x(TR::java_lang_J9VMInternals_valueHashCode,                       "valueHashCode", "(Ljava/lang/Object;)I")},
       {x(TR::java_lang_J9VMInternals_primitiveClone,                      "primitiveClone", "(Ljava/lang/Object;)Ljava/lang/Object;")},
       {  TR::unknownMethod}
       };

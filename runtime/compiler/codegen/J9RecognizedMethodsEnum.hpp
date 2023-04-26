@@ -1132,7 +1132,6 @@
 
    java_lang_J9VMInternals_identityHashCode,
    java_lang_J9VMInternals_fastIdentityHashCode,
-   java_lang_J9VMInternals_valueHashCode,
 
    java_util_GregorianCalendar_computeFields,
 
