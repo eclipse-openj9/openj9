@@ -79,11 +79,9 @@
 
 #define DO_INTERPRETER_PROFILING
 #if defined(DEBUG_VERSION)
+#define DO_HOOKS
 #define DO_SINGLE_STEP
 #endif /* DEBUG_VERSION */
-#if defined(DEBUG_VERSION) || defined(J9VM_OPT_CRIU_SUPPORT)
-#define DO_HOOKS
-#endif /* defined(DEBUG_VERSION) || defined(J9VM_OPT_CRIU_SUPPORT) */
 
 typedef enum {
 	VM_NO,
@@ -10165,13 +10163,13 @@ public:
 			goto popFrames; \
 		case FALL_THROUGH: \
 			break;
-#elif defined(J9VM_OPT_CRIU_SUPPORT) /* defined(DEBUG_VERSION) */
+#elif defined(DO_HOOKS) /* defined(DEBUG_VERSION) */
 #define DEBUG_ACTIONS \
 		case REPORT_METHOD_ENTER: \
 			goto methodEnter;
-#else /* defined(J9VM_OPT_CRIU_SUPPORT) */
+#else /* defined(DO_HOOKS) */
 #define DEBUG_ACTIONS
-#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+#endif /* defined(DEBUG_VERSION) */
 
 #if JAVA_SPEC_VERSION >= 16
 #define PERFORM_ACTION_VALUE_TYPE_IMSE \
