@@ -207,6 +207,13 @@ set(interpreter_sources
 	DebugBytecodeInterpreterFull.cpp
 )
 
+if(J9VM_OPT_CRIU_SUPPORT)
+	list(APPEND interpreter_sources
+		CRIUBytecodeInterpreterCompressed.cpp
+		CRIUBytecodeInterpreterFull.cpp
+	)
+endif()
+
 if(J9VM_OPT_METHOD_HANDLE)
 	list(APPEND interpreter_sources
 		MHInterpreterCompressed.cpp
