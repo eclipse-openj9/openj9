@@ -107,8 +107,18 @@ protected:
    ServerMessage _sMsg;
    ClientMessage _cMsg;
 
+   // When increasing a version number here (especially MINOR_NUMBER), please
+   // also change the ID comment to a unique value, preferably one that has
+   // been randomly generated, e.g. using
+   //
+   //     $ head -c 15 /dev/random | base64
+   //
+   // This (all but) ensures that two independent increments will conflict,
+   // when otherwise they might have identical diffs, in which case git is
+   // likely to lose an increment when merging/rebasing/etc.
+   //
    static const uint8_t MAJOR_NUMBER = 1;
-   static const uint16_t MINOR_NUMBER = 43;
+   static const uint16_t MINOR_NUMBER = 43; // ID: RzlTAtQTw9o+CKSeiCIc
    static const uint8_t PATCH_NUMBER = 0;
    static uint32_t CONFIGURATION_FLAGS;
 
