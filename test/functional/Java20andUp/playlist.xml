@@ -79,7 +79,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		</groups>
 		<impls>
 			<impl>openj9</impl>
-			<impl>hotspot</impl>
 		</impls>
 		<versions>
 			<version>20</version>
@@ -109,7 +108,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		</groups>
 		<impls>
 			<impl>openj9</impl>
-			<impl>hotspot</impl>
 		</impls>
 		<versions>
 			<version>20</version>
@@ -139,7 +137,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		</groups>
 		<impls>
 			<impl>openj9</impl>
-			<impl>hotspot</impl>
 		</impls>
 		<versions>
 			<version>20</version>
