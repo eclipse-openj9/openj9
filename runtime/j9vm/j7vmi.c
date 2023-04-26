@@ -2338,6 +2338,14 @@ jobject JNICALL JVM_UnloadLibrary(jint arg0)
 {
 #if JAVA_SPEC_VERSION >= 15
 	Trc_SC_UnloadLibrary_Entry(handle);
+
+#if defined(J9VM_OPT_JAVA_OFFLOAD_SUPPORT) && (JAVA_SPEC_VERSION >= 17)
+	{
+		UDATA doSwitching = ((UDATA)handle) & J9_NATIVE_LIBRARY_SWITCH_MASK;
+		handle = (void *)(((UDATA)handle) ^ doSwitching);
+	}
+#endif /* defined(J9VM_OPT_JAVA_OFFLOAD_SUPPORT) && (JAVA_SPEC_VERSION >= 17) */
+
 #if defined(WIN32)
 	FreeLibrary((HMODULE)handle);
 #elif defined(J9UNIX) || defined(J9ZOS390) /* defined(WIN32) */

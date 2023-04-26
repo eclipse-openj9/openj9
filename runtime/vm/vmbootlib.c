@@ -650,6 +650,9 @@ classLoaderRegisterLibrary(void *voidVMThread, J9ClassLoader *classLoader, const
 					if (NULL != libraryPtr) {
 						*libraryPtr = newNativeLibrary;
 					}
+#if defined(J9VM_OPT_JAVA_OFFLOAD_SUPPORT)
+					newNativeLibrary->doSwitching = validateLibrary(javaVM, logicalName, newNativeLibrary->handle, JNI_TRUE);
+#endif /* defined(J9VM_OPT_JAVA_OFFLOAD_SUPPORT) */
 				} else {
 					/* Return value is not 1.8 (or above); could mean either of 2 things:
 					 * 1. JNI_OnLoad_L /was/ defined, but didn't return 1.8 (or above).  Eg. a 
@@ -711,11 +714,11 @@ classLoaderRegisterLibrary(void *voidVMThread, J9ClassLoader *classLoader, const
 		if (NULL != libraryPtr) {
 			*libraryPtr = newNativeLibrary;
 		}
-#ifdef J9VM_OPT_JAVA_OFFLOAD_SUPPORT
+#if defined(J9VM_OPT_JAVA_OFFLOAD_SUPPORT)
 		if (J9NATIVELIB_LOAD_OK == rc) {
-			validateLibrary(javaVM, newNativeLibrary);
+			newNativeLibrary->doSwitching = validateLibrary(javaVM, newNativeLibrary->name, newNativeLibrary->handle, JNI_FALSE);
 		}
-#endif
+#endif /* defined(J9VM_OPT_JAVA_OFFLOAD_SUPPORT) */
 		RELEASE_CLASS_LOADER_BLOCKS_MUTEX(javaVM);
 
 		/* Call JNI_OnLoad to get the required JNI version, only if the library has not

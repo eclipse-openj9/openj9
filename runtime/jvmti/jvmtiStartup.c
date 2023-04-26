@@ -534,7 +534,7 @@ loadAgentLibraryGeneric(J9JavaVM * vm, J9JVMTIAgentLibrary * agentLibrary, char 
 	Trc_JVMTI_loadAgentLibraryGeneric_agentAttachedSuccessfully(agentLibrary->nativeLib.name);
 
 #if defined(J9VM_OPT_JAVA_OFFLOAD_SUPPORT)
-	validateLibrary(vm, &agentLibrary->nativeLib);
+	agentLibrary->nativeLib.doSwitching = validateLibrary(vm, agentLibrary->nativeLib.name, agentLibrary->nativeLib.handle, JNI_FALSE);
 #endif
 
 	/* Add the library to the linked list */
