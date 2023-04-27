@@ -715,7 +715,8 @@ uintptr_t
 J9::ClassEnv::getArrayElementWidthInBytes(TR::Compilation *comp, TR_OpaqueClassBlock* arrayClass)
    {
    TR_ASSERT(TR::Compiler->cls.isClassArray(comp, arrayClass), "Class must be array");
-   int32_t logElementSize = ((J9ROMArrayClass*)((J9Class*)arrayClass)->romClass)->arrayShape & 0x0000FFFF;
+   J9ROMClass *romClass = TR::Compiler->cls.romClassOf(arrayClass);
+   int32_t logElementSize = ((J9ROMArrayClass*)romClass)->arrayShape & 0x0000FFFF;
    return 1 << logElementSize;
    }
 
