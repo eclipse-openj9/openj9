@@ -40,13 +40,6 @@ import com.ibm.dtfj.java.JavaVMInitArgs;
 public class JCJavaVMInitArgs implements JavaVMInitArgs {
 	
 	private Vector fOptions = new Vector();
-	private JCJavaRuntime fRuntime;
-		
-	public JCJavaVMInitArgs(JCJavaRuntime javaRuntime, int version, boolean ignoreUnrecognized) 
-				throws JCInvalidArgumentsException 	{
-		fRuntime = javaRuntime;
-		fRuntime.addJavaVMInitArgs(this);
-	}
 	
 	public int getVersion() throws DataUnavailable, CorruptDataException {
 		// JNI version not available in javacore

@@ -62,6 +62,7 @@ public class JavaRuntimeBuilder extends AbstractBuilderComponent implements IJav
 	private JCJavaRuntime fJavaRuntime = null;
 	private JCImageAddressSpace fAddressSpace = null;
 	private JCJavaVMInitArgs fJavaVMInitArgs = null;
+	private JCJavaVMInitArgs fJavaVMRestoreArgs = null;
 	private HashMap j9ThreadToJNIEnv = new HashMap();
 	private String fId;
 
@@ -354,50 +355,84 @@ public class JavaRuntimeBuilder extends AbstractBuilderComponent implements IJav
 	}
 	
 	/**
-	 * Adds an (empty) JavaVMInitArgs
+	 * Adds an empty JavaVMInitArgs object representing the VM init args.
 	 */	
+	@Override
 	public void addVMInitArgs() throws BuilderFailureException {
 		if (fJavaVMInitArgs != null) {
-			throw new BuilderFailureException("JCJavaVMInitArgs already created for this JavaRuntime");
+			throw new BuilderFailureException("VM Init args already created for this JavaRuntime.");
 		}
 		try {
 			// Create JavaVMInitArgs object. Note that JNI version and ignoreUnrecognized 
 			// flags are not available in javacore - JCJavaVMInitArgs returns DataUnavailable
 			// if those fields are requested.
-			fJavaVMInitArgs = new JCJavaVMInitArgs(getJavaRuntime(), 0, true);
-		} catch (JCInvalidArgumentsException e) {
-			throw new BuilderFailureException(e);
-		}
-	}
-	
-	/**
-	 * Adds an individual VM option to JavaVMInitArgs
-	 */	
-	public void addVMOption(String option) throws BuilderFailureException {
-		if (fJavaVMInitArgs == null) {
-			throw new BuilderFailureException("JCJavaVMInitArgs must be created before options added");
-		}
-		try {
-			fJavaVMInitArgs.addOption( new JCJavaVMOption(option, null));
+			fJavaVMInitArgs = new JCJavaVMInitArgs();
+			getJavaRuntime().addJavaVMInitArgs(fJavaVMInitArgs);
 		} catch (JCInvalidArgumentsException e) {
 			throw new BuilderFailureException(e);
 		}
 	}
 
 	/**
-	 * Adds an individual VM option to JavaVMInitArgs, with 'extra information' field 
-	 */	
-	public void addVMOption(String option, long extraInfo) throws BuilderFailureException {
-		if (fJavaVMInitArgs == null) {
-			throw new BuilderFailureException("JCJavaVMInitArgs must be created before options added");
+	 * Adds an empty JavaVMInitArgs object representing VM restore args.
+	 */
+	@Override
+	public void addVMRestoreArgs() throws BuilderFailureException {
+		if (fJavaVMRestoreArgs != null) {
+			throw new BuilderFailureException("VM Restore args already created for this JavaRuntime.");
 		}
 		try {
-			ImagePointer pointer = fAddressSpace.getPointer(extraInfo);
-			fJavaVMInitArgs.addOption( new JCJavaVMOption(option, pointer));
+			fJavaVMRestoreArgs = new JCJavaVMInitArgs();
+			getJavaRuntime().addJavaVMRestoreArgs(fJavaVMRestoreArgs);
 		} catch (JCInvalidArgumentsException e) {
 			throw new BuilderFailureException(e);
 		}
 	}
+
+	/**
+	 * Adds an individual Java VM option to specified JCJavaVMInitArgs option list.
+	 * @param option text of the VM option
+	 * @param extraInfo IBuilderData.NOT_AVAILABLE if not present
+	 * @param argList VM options list to add option to
+	 * @return void
+	 */	
+	private void addVMOption(String option, long extraInfo, JCJavaVMInitArgs argList) throws BuilderFailureException {
+		try {
+			ImagePointer pointer = (IBuilderData.NOT_AVAILABLE == extraInfo) ? null : fAddressSpace.getPointer(extraInfo);
+			argList.addOption(new JCJavaVMOption(option, pointer));
+		} catch (JCInvalidArgumentsException e) {
+			throw new BuilderFailureException(e);
+		}
+	}
+
+	/**
+	 * Adds an individual Java VM option to VM init args, with optional 'extra info' field.
+	 * @param option text of the VM option
+	 * @param extraInfo IBuilderData.NOT_AVAILABLE if not present
+	 * @return void
+	 */
+	@Override
+	public void addVMInitOption(String option, long extraInfo) throws BuilderFailureException {
+		if (fJavaVMInitArgs == null) {
+			throw new BuilderFailureException("VM init args must be created before options added.");
+		}
+		addVMOption(option, extraInfo, fJavaVMInitArgs);
+	}
+
+	/**
+	 * Adds an individual Java VM option to VM restore args, with optional 'extra info' field.
+	 * @param option text of the VM option
+	 * @param extraInfo IBuilderData.NOT_AVAILABLE if not present
+	 * @return void
+	 */
+	@Override
+	public void addVMRestoreOption(String option, long extraInfo) throws BuilderFailureException {
+		if (fJavaVMRestoreArgs == null) {
+			throw new BuilderFailureException("VM restore args must be created before options added.");
+		}
+		addVMOption(option, extraInfo, fJavaVMRestoreArgs);
+	}
+
 	
 	/**
 	 * Sets the Java version string.
