@@ -346,7 +346,7 @@ getMethodParametersAsArray(JNIEnv *env, jobject jlrExecutable)
 			/* NULL return value from this method eventually JVM_GetMethodParameters triggers j.l.r.Executable.synthesizeAllParams() */
 			goto finished;
 		}
-		
+
 		if (J9_ARE_ANY_BITS_SET(extMods, CFR_METHOD_EXT_INVALID_CP_ENTRY)) {
 			parameterListOkay = FALSE;
 		}
@@ -366,7 +366,7 @@ getMethodParametersAsArray(JNIEnv *env, jobject jlrExecutable)
 			parameterListOkay = FALSE;
 		}
 		for (index = 0; index < numberOfParameters; index++) {
-		
+
 			U_16 flags = (NULL != parameters) ? parameters[index].flags : 0;
 			jstring nameStr = NULL;
 			jobject parameterObject = NULL;
@@ -562,7 +562,7 @@ getArgCountFromSignature(J9UTF8* signature)
 	return argCount;
 }
 
-static j9object_t   
+static j9object_t
 parameterTypesForMethod(struct J9VMThread *vmThread, struct J9Method *ramMethod, struct J9Class **returnType)
 {
 	j9object_t params = NULL;
@@ -616,7 +616,7 @@ parameterTypesForMethod(struct J9VMThread *vmThread, struct J9Method *ramMethod,
 	return params;
 }
 
-static j9object_t   
+static j9object_t
 exceptionTypesForMethod(struct J9VMThread *vmThread, struct J9Method *ramMethod)
 {
 	j9object_t exceptions = NULL;
@@ -669,7 +669,7 @@ exceptionTypesForMethod(struct J9VMThread *vmThread, struct J9Method *ramMethod)
 	return exceptions;
 }
 
-static void   
+static void
 fillInReflectMethod(j9object_t methodObject, struct J9Class *declaringClass, jmethodID methodID, struct J9VMThread *vmThread)
 {
 	J9Class *returnType = NULL;
@@ -763,7 +763,7 @@ fillInReflectMethod(j9object_t methodObject, struct J9Class *declaringClass, jme
 }
 
 
-static j9object_t   
+static j9object_t
 createField(struct J9VMThread *vmThread, jfieldID fieldID)
 {
 	J9JNIFieldID *j9FieldID = (J9JNIFieldID *)fieldID;
@@ -860,7 +860,7 @@ createField(struct J9VMThread *vmThread, jfieldID fieldID)
 	return fieldObject;
 }
 
-static j9object_t   
+static j9object_t
 createMethod(struct J9VMThread *vmThread, J9JNIMethodID *methodID, j9object_t parameterTypes)
 {
 	J9Class *jlrMethodClass = NULL;
@@ -906,7 +906,7 @@ createMethod(struct J9VMThread *vmThread, J9JNIMethodID *methodID, j9object_t pa
 	return methodObject;
 }
 
-static j9object_t   
+static j9object_t
 createConstructor(struct J9VMThread *vmThread, J9JNIMethodID *methodID, j9object_t parameterTypes)
 {
 	j9object_t exceptionTypes = NULL;
@@ -1121,7 +1121,7 @@ createInstanceFieldObject(struct J9ROMFieldShape *romField, struct J9Class *decl
 	return field;
 }
 
-static j9object_t  
+static j9object_t
 createStaticFieldObject(struct J9ROMFieldShape *romField, struct J9Class *declaringClass, struct J9Class *lookupClass, struct J9VMThread* vmThread, UDATA *inconsistentData)
 {
 	const J9InternalVMFunctions *vmFuncs = vmThread->javaVM->internalVMFunctions;
@@ -1250,7 +1250,7 @@ Java_java_lang_reflect_Array_multiNewArrayImpl(JNIEnv *env, jclass unusedClass, 
 			exceptionIsPending = (NULL != vmThread->currentException);
 			count -= 1;
 		}
-		
+
 		if (!exceptionIsPending) {
 			/* make a copy of the dimensions array in non-object memory */
 			I_32 onStackDimensions[J9_ARRAY_DIMENSION_LIMIT];
@@ -1263,7 +1263,7 @@ Java_java_lang_reflect_Array_multiNewArrayImpl(JNIEnv *env, jclass unusedClass, 
 			for (i = 0; i < (UDATA)dimensions; i++) {
 				onStackDimensions[i] = J9JAVAARRAYOFINT_LOAD(vmThread, dimensionsArrayObject, i);
 			}
-			
+
 			directObject = vmThread->javaVM->internalVMFunctions->helperMultiANewArray(vmThread, (J9ArrayClass *)componentTypeClass, (UDATA)dimensions, onStackDimensions, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
 			if (NULL != directObject) {
 				result = vmThread->javaVM->internalVMFunctions->j9jni_createLocalRef(env, directObject);
@@ -1392,7 +1392,7 @@ getDeclaredFieldsHelper(JNIEnv *env, jobject declaringClass)
 	UDATA preCount = 0;
 
 	vmFuncs->internalEnterVMFromJNI(vmThread);
-	
+
 	/* allocate an array of Field objects */
 	fieldClass = J9VMJAVALANGREFLECTFIELD(vm);
 	if (NULL != vmThread->currentException) {
@@ -1403,7 +1403,7 @@ getDeclaredFieldsHelper(JNIEnv *env, jobject declaringClass)
 	if (NULL != vmThread->currentException) {
 		goto done;
 	}
-	
+
 retry:
 	preCount = vm->hotSwapCount;
 	clazz = J9VM_J9CLASS_FROM_JCLASS(vmThread, (jclass)declaringClass);
@@ -1783,7 +1783,7 @@ isRecordComponentAccessorMethodMatch(J9Method *currentMethod, const char* compon
 	return FALSE;
 }
 
-/* Find the accessor method for a record component with name componantName. 
+/* Find the accessor method for a record component with name componantName.
  * componentIndex slot for current record component will be used to optimize search
  */
 static J9Method*
@@ -1798,7 +1798,7 @@ findRecordComponentAccessorMethod(J9VMThread* currentThread, J9Class* clazz, J9R
 	const char* componentSignature = (const char*)J9UTF8_DATA(J9ROMRECORDCOMPONENTSHAPE_SIGNATURE(recordComponent));
 	U_16 componentSignatureLength = J9UTF8_LENGTH(J9ROMRECORDCOMPONENTSHAPE_SIGNATURE(recordComponent));
 
-	/* javac typically generates each of the record components in order as the final recordComponentCount methods in the record class. 
+	/* javac typically generates each of the record components in order as the final recordComponentCount methods in the record class.
 	* Probe the ramMethods array for a match at this point first before iterating through the entire method list. */
 	U_32 testSlot = romMethodCount - recordComponentCount + componentIndex;
 	if ((testSlot < romMethodCount) && isRecordComponentAccessorMethodMatch(currentMethod + testSlot, componentName, componentNameLength, componentSignature, componentSignatureLength)) {
@@ -1817,7 +1817,7 @@ findRecordComponentAccessorMethod(J9VMThread* currentThread, J9Class* clazz, J9R
 }
 
 /* Creates an array of RecordComponents for the given class and sets the following fields:
- * - Class<?> clazz 
+ * - Class<?> clazz
  * - String name
  * - Class<?> type
  * - Method accessor
@@ -2002,7 +2002,7 @@ permittedSubclassesHelper(JNIEnv *env, jobject cls)
 	J9Class *stringClass = NULL;
 	J9Class *stringArrayClass = NULL;
 	U_32 *permittedSubclassesCountPtr = 0;
-	j9array_t stringArrayObject = NULL;
+	j9object_t stringArrayObject = NULL;
 	U_32 index = 0;
 
 	vmFuncs->internalEnterVMFromJNI(vmThread);
@@ -2022,33 +2022,42 @@ permittedSubclassesHelper(JNIEnv *env, jobject cls)
 
 	permittedSubclassesCountPtr = getNumberOfPermittedSubclassesPtr(romClass);
 
-	stringArrayObject = (j9array_t) mmFuncs->J9AllocateIndexableObject(vmThread, stringArrayClass,
+	stringArrayObject = mmFuncs->J9AllocateIndexableObject(vmThread, stringArrayClass,
 				*permittedSubclassesCountPtr, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
 	if (NULL == stringArrayObject) {
 		goto heapoutofmemory;
 	}
-
-	result = vmFuncs->j9jni_createLocalRef(env, (j9object_t)stringArrayObject);
 
 	for (; index < *permittedSubclassesCountPtr; index++) {
 		J9UTF8* nameUTF = NULL;
 		j9object_t nameString = NULL;
 
 		nameUTF = permittedSubclassesNameAtIndex(permittedSubclassesCountPtr, index);
+
+		PUSH_OBJECT_IN_SPECIAL_FRAME(vmThread, stringArrayObject);
+
 		/* Translates string to a dot seperated name which is needed in Java code to get the class object. */
 		nameString = mmFuncs->j9gc_createJavaLangString(vmThread, J9UTF8_DATA(nameUTF), (U_32) J9UTF8_LENGTH(nameUTF), J9_STR_INTERN | J9_STR_XLAT);
+
+		stringArrayObject = POP_OBJECT_IN_SPECIAL_FRAME(vmThread);
+
 		if (NULL == nameString) {
 			goto heapoutofmemory;
 		}
 
 		J9JAVAARRAYOFOBJECT_STORE(vmThread, stringArrayObject, index, nameString);
 	}
-	goto done;
+
+	result = vmFuncs->j9jni_createLocalRef(env, stringArrayObject);
+	if (NULL == result) {
+		vmFuncs->setNativeOutOfMemoryError(vmThread, 0, 0);
+	}
+
+done:
+	vmFuncs->internalExitVMToJNI(vmThread);
+	return result;
 
 heapoutofmemory:
 	vmFuncs->setHeapOutOfMemoryError(vmThread);
 	goto done;
-done:
-	vmFuncs->internalExitVMToJNI(vmThread);
-	return result;
 }
