@@ -22,10 +22,10 @@
 
 #include "j9cfg.h"
 
-#if defined(OMR_GC_COMPRESSED_POINTERS)
+#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(J9VM_OPT_CRIU_SUPPORT)
 #define DO_HOOKS
 #define OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES 1
 #define LOOP_NAME criuBytecodeLoopCompressed
 #define INTERPRETER_CLASS VM_CRIUBytecodeInterpreterCompressed
 #include "BytecodeInterpreter.inc"
-#endif /* defined(OMR_GC_COMPRESSED_POINTERS) */
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(J9VM_OPT_CRIU_SUPPORT) */
