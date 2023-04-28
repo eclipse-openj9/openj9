@@ -61,8 +61,8 @@ class MM_Scheduler : public MM_ParallelDispatcher
 	 * Data members
 	 */
 private:
-	U_64 _mutatorStartTimeInNanos; /**< Time in nanoseconds when the mutator slice started.  This is updated at increment end and when a GC quantum is skipped due to shouldMutatorDoubleBeat */
-	U_64 _incrementStartTimeInNanos; /**< Time in nanoseconds when the last gc increment started */
+	uint64_t _mutatorStartTimeInNanos; /**< Time in nanoseconds when the mutator slice started.  This is updated at increment end and when a GC quantum is skipped due to shouldMutatorDoubleBeat */
+	uint64_t _incrementStartTimeInNanos; /**< Time in nanoseconds when the last gc increment started */
 	MM_GCCode _gcCode; /**< The gc code that will be used for the next GC cycle.  If this is modified during a collect it will be unused.  This variable is reset at the end of every cycle to the default collection type */
 
 protected:
@@ -72,21 +72,16 @@ public:
 
 	MM_YieldCollaborator *_yieldCollaborator;
 
-	/*
-	 * Cached value for shouldGCYield()
-	 */
-	volatile bool _shouldGCYield;
+	volatile bool _shouldGCYield; /**< Cached value for shouldGCYield() */
 
 	/* When utilization is over 50%, multiple consecutive GC beats is not allowed.
 	 * Double-beating is allowed between 33% and 50% utilization and so on.
 	 * We must keep track of the number of consecutive beats dynamically to ensure this.
 	 */
-	I_32 _currentConsecutiveBeats;
+	int32_t _currentConsecutiveBeats;
 
 	bool *_threadResumedTable; /**< Used to keep track of threads taken out of the suspended state when wakeUpThreads is called */
-
 	bool _mainThreadMustShutDown; /**< Set when the main thread must shutdown */
-	
 	bool _exclusiveVMAccessRequired; /**< This flag is used by the main thread to see if it needs to get exclusive vm access */
 
 	MM_MetronomeAlarmThread *_alarmThread;
@@ -98,7 +93,8 @@ public:
 	MM_GCExtensionsBase *_extensions;
  	bool _doSchedulingBarrierEvents;
 
-	U_32 _gcOn;      /* Are we in some long GC cycle? */
+	uint32_t _gcOn; /**< Are we in some long GC cycle? */
+
 	typedef enum {
 		MUTATOR = 0,  /* main blocked on a monitor, mutators running */
 		WAKING_GC,
@@ -108,16 +104,17 @@ public:
 		WAKING_MUTATOR, /* main thread still awake, mutators running */
 		NUM_MODES
 	} Mode;
+
 	Mode _mode;
 	uintptr_t _gcPhaseSet;
-	/* requests (typically by a mutator) to complete GC synchronously */
-	bool _completeCurrentGCSynchronously;
-	/* copy of the request made by Main Thread at the beginning of very next GC increment */
-	bool _completeCurrentGCSynchronouslyMainThreadCopy;
+	bool _completeCurrentGCSynchronously; /**< Requests (typically by a mutator) to complete GC synchronously */
+	bool _completeCurrentGCSynchronouslyMainThreadCopy; /**< Copy of the request made by Main Thread at the beginning of very next GC increment */
 	GCReason _completeCurrentGCSynchronouslyReason;
 	uintptr_t _completeCurrentGCSynchronouslyReasonParameter;
+
 	/* monitor used to suspend/resume main thread,
-	 * but also to ensure atomic access/change of _completeCurrentGCSynchronously/_mode */
+	 * but also to ensure atomic access/change of _completeCurrentGCSynchronously/_mode
+	 */
 	omrthread_monitor_t _mainThreadMonitor;
 
 	MM_OSInterface *_osInterface;
@@ -125,7 +122,7 @@ public:
 	/* Params generated from command-line options from mmparse */
 	double _window;
 	double _beat;
-	U_64 _beatNanos;
+	uint64_t _beatNanos;
 	double _staticTargetUtilization;
 
 	MM_UtilizationTracker* _utilTracker;
@@ -157,7 +154,7 @@ protected:
 	virtual void workerEntryPoint(MM_EnvironmentBase *env);
 	virtual void mainEntryPoint(MM_EnvironmentBase *env);
 
-	bool internalShouldGCYield(MM_EnvironmentRealtime *env, U_64 timeSlack);
+	bool internalShouldGCYield(MM_EnvironmentRealtime *env, uint64_t timeSlack);
 
 	/** @} */
 
@@ -173,11 +170,11 @@ public:
 	void shutDownMainThread();
 	void startGCIfTimeExpired(MM_EnvironmentBase *env);
 
-	virtual bool condYieldFromGCWrapper(MM_EnvironmentBase *env, U_64 timeSlack = 0);
+	virtual bool condYieldFromGCWrapper(MM_EnvironmentBase *env, uint64_t timeSlack = 0);
 
 	uintptr_t incrementMutatorCount();
 
-	uintptr_t getParameter(uintptr_t which, char *keyBuffer, I_32 keyBufferSize, char *valueBuffer, I_32 valueBufferSize);
+	uintptr_t getParameter(uintptr_t which, char *keyBuffer, int32_t keyBufferSize, char *valueBuffer, int32_t valueBufferSize);
 	void showParameters(MM_EnvironmentBase *env);
 
 	/**
@@ -190,7 +187,7 @@ public:
 
 	bool isInitialized() { return _isInitialized; }
 
-	static MM_Scheduler *newInstance(MM_EnvironmentBase *env, omrsig_handler_fn handler, void* handler_arg, uintptr_t defaultOSStackSize);
+	static MM_Scheduler *newInstance(MM_EnvironmentBase *env, omrsig_handler_fn handler, void *handler_arg, uintptr_t defaultOSStackSize);
 	bool initialize(MM_EnvironmentBase *env);
 	virtual void kill(MM_EnvironmentBase *env);
 	void tearDown(MM_EnvironmentBase *env);
@@ -202,7 +199,7 @@ public:
 	virtual void completeTask(MM_EnvironmentBase *env);
 
 	void checkStartGC(MM_EnvironmentRealtime *env);
-	void startGC(MM_EnvironmentBase *env);              /* Call when some space threshold is triggered. */
+	void startGC(MM_EnvironmentBase *env);	/**< Call when some space threshold is triggered. */
 	void stopGC(MM_EnvironmentBase *env);
 	bool isGCOn();
 	bool shouldGCDoubleBeat(MM_EnvironmentRealtime *env);
@@ -210,14 +207,17 @@ public:
 	void reportStartGCIncrement(MM_EnvironmentRealtime *env);
 	void reportStopGCIncrement(MM_EnvironmentRealtime *env, bool isCycleEnd = false);
 	void restartMutatorsAndWait(MM_EnvironmentRealtime *env);
-	bool shouldGCYield(MM_EnvironmentRealtime *env, U_64 timeSlack);
-	bool condYieldFromGC(MM_EnvironmentBase *env, U_64 timeSlack = 0);
+	bool shouldGCYield(MM_EnvironmentRealtime *env, uint64_t timeSlack);
+	bool condYieldFromGC(MM_EnvironmentBase *env, uint64_t timeSlack = 0);
 	/* Low-level yielding from inside the Scheduler */
 	void yieldFromGC(MM_EnvironmentRealtime *env, bool distanceChecked = false);
 	void waitForMutatorsToStop(MM_EnvironmentRealtime *env);
 	void startMutators(MM_EnvironmentRealtime *env);
-	bool continueGC(MM_EnvironmentRealtime *, GCReason reason, uintptr_t reasonParameter, OMR_VMThread *_vmThread, bool doRequestExclusiveVMAccess);  /* Non-blocking and typicallly called by an alarm handler.  Returns 1 if we did resume GC (non-recursive). */
-	void setGCPriority(MM_EnvironmentBase *env, uintptr_t priority); /* sets the priority for all gc threads */
+
+	/* Non-blocking and typicallly called by an alarm handler.  Returns 1 if we did resume GC (non-recursive). */
+	bool continueGC(MM_EnvironmentRealtime *, GCReason reason, uintptr_t reasonParameter, OMR_VMThread *_vmThread, bool doRequestExclusiveVMAccess);
+
+	void setGCPriority(MM_EnvironmentBase *env, uintptr_t priority); /**< Sets the priority for all gc threads */
 	void completeCurrentGCSynchronously(MM_EnvironmentRealtime *env = NULL);
 
 	uintptr_t verbose() { return _extensions->verbose; }
@@ -228,14 +228,14 @@ public:
 	/* Time and Work Statistics */
 	void startGCTime(MM_EnvironmentRealtime *env, bool isDoubleBeat);
 	void stopGCTime(MM_EnvironmentRealtime *env);
-	U_64 getStartTimeOfCurrentMutatorSlice() {return _mutatorStartTimeInNanos;}
-	void setStartTimeOfCurrentMutatorSlice(U_64 time) {_mutatorStartTimeInNanos = time;}
-	U_64 getStartTimeOfCurrentGCSlice() {return _incrementStartTimeInNanos;}
-	void setStartTimeOfCurrentGCSlice(U_64 time) {_incrementStartTimeInNanos = time;}
+	uint64_t getStartTimeOfCurrentMutatorSlice() { return _mutatorStartTimeInNanos; }
+	void setStartTimeOfCurrentMutatorSlice(uint64_t time) { _mutatorStartTimeInNanos = time; }
+	uint64_t getStartTimeOfCurrentGCSlice() { return _incrementStartTimeInNanos; }
+	void setStartTimeOfCurrentGCSlice(uint64_t time) { _incrementStartTimeInNanos = time; }
 
 	uintptr_t getActiveThreadCount() { return _activeThreadCount; }
 	uintptr_t getTaskThreadCount(MM_EnvironmentBase *env);
-	void setGCCode(MM_GCCode gcCode) {_gcCode = gcCode;}
+	void setGCCode(MM_GCCode gcCode) { _gcCode = gcCode; }
 
 	void collectorInitialized(MM_RealtimeGC *gc);
 
@@ -244,9 +244,7 @@ public:
 	virtual void prepareForCheckpoint(MM_EnvironmentBase *env, uintptr_t newThreadCount) {};
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
-	virtual void run(MM_EnvironmentBase *env, MM_Task *task, uintptr_t threadCount = UDATA_MAX);
-
-	MM_Scheduler(MM_EnvironmentBase *env, omrsig_handler_fn handler, void* handler_arg, uintptr_t defaultOSStackSize) :
+	MM_Scheduler(MM_EnvironmentBase *env, omrsig_handler_fn handler, void *handler_arg, uintptr_t defaultOSStackSize) :
 		MM_ParallelDispatcher(env, handler, handler_arg, defaultOSStackSize),
 		_mutatorStartTimeInNanos(J9CONST64(0)),
 		_incrementStartTimeInNanos(J9CONST64(0)),
