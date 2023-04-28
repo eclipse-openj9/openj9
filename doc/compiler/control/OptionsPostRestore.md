@@ -155,3 +155,16 @@ then specified post-restore, the options processing code will
 invalidate all JIT code in the code cache, as well as prevent further
 AOT compilation (since the AOT method header would have already been
 validated).
+
+### JITServer
+
+The following table outlines when a client JVM will connect to a
+JITServer instance.
+
+||Non-Portable CRIU Pre-Checkpoint|Non-Portable CRIU Post-Restore|Portable CRIU Pre-Checkpoint|Portable CRIU Post-Restore|
+|--|--|--|--|--|
+|No Options Pre-Checkpoint; No Options Post-Restore|:x:|:x:|:x:|:x:|
+|No Options Pre-checkpoint; `-XX:+UseJITServer` Post-Restore|:x:|:white_check_mark:|:x:|:white_check_mark:|
+|`-XX:+UseJITServer` Pre-Checkpoint; No Options Post-Restore|:x:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
+|`-XX:+UseJITServer` Pre-Checkpoint; `-XX:-UseJITServer` Post-Restore|:x:|:x:|:white_check_mark:|:x:|
+|`-XX:-UseJITServer` Pre-Checkpoint; `-XX:+UseJITServer` Post-Restore|:x:|:x:|:x:|:x:|

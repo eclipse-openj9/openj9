@@ -280,12 +280,16 @@ void
 J9::OptionsPostRestore::processJitServerOptions()
    {
 #if defined(J9VM_OPT_JITSERVER)
-   if (_argIndexUseJITServer >= _argIndexDisableUseJITServer)
+   bool jitserverEnabled
+      = ((_argIndexUseJITServer > _argIndexDisableUseJITServer)
+          && !_compInfo->remoteCompilationExplicitlyDisabledAtBootstrap())
+        || ((_argIndexUseJITServer == _argIndexDisableUseJITServer)
+             && _compInfo->remoteCompilationRequestedAtBootstrap());
+
+   if (jitserverEnabled)
       {
       // Needed for GET_OPTION_VALUE_RESTORE_ARGS
       J9JavaVM *vm = _jitConfig->javaVM;
-
-      // TODO: Determine what other JITServer init is required
 
       // Parse common options
       if (!TR::Options::JITServerParseCommonOptions(vm->checkpointState.restoreArgsList, vm, _compInfo))
@@ -314,11 +318,14 @@ J9::OptionsPostRestore::processJitServerOptions()
          }
       // Re-compute client UID post restore
       uint64_t clientUID = JITServerHelpers::generateUID();
-      _compInfo->getPersistentInfo()->setClientUID(clientUID);
       _jitConfig->clientUID = clientUID;
+      _compInfo->getPersistentInfo()->setClientUID(clientUID);
+      _compInfo->getPersistentInfo()->setServerUID(0);
+      _compInfo->setCanPerformRemoteCompilationInCRIUMode(true);
       }
    else
       {
+      _compInfo->setCanPerformRemoteCompilationInCRIUMode(false);
       _compInfo->getPersistentInfo()->setClientUID(0);
       _compInfo->getPersistentInfo()->setServerUID(0);
       _jitConfig->clientUID = 0;

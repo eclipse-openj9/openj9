@@ -149,6 +149,76 @@
 		</impls>
 	</test>
 	<test>
+		<testCaseName>cmdLineTester_criu_jitserverAcrossCheckpoint</testCaseName>
+		<variations>
+			<variation>NoOptions</variation>
+		</variations>
+		<command>
+			if [ -x $(Q)$(TEST_JDK_BIN)$(D)jitserver$(Q) ]; \
+			then \
+				TR_Options=$(Q)disableSuffixLogs$(Q) \
+				$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) -Xdump \
+				-DSCRIPPATH=$(TEST_RESROOT)$(D)criuJitServerScript.sh -DTEST_RESROOT=$(TEST_RESROOT) \
+				-DTEST_JDK_BIN=$(TEST_JDK_BIN) -DJVM_OPTIONS=$(Q)$(JVM_OPTIONS)$(Q) \
+				-jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)criu_jitserverAcrossCheckpoint.xml$(Q) \
+				-explainExcludes -xids all,$(PLATFORM),$(VARIATION) -nonZeroExitWhenError; \
+			else \
+				echo; \
+				echo $(Q)$(TEST_JDK_BIN)$(D)jitserver doesn't exist; assuming this JDK does not support JITServer and trivially passing the test.$(Q); \
+			fi; \
+			$(TEST_STATUS)
+		</command>
+		<platformRequirements>os.linux,^arch.arm,^arch.aarch64,bits.64</platformRequirements>
+		<features>
+			<feature>CRIU:required</feature>
+		</features>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<impls>
+			<impl>openj9</impl>
+		</impls>
+	</test>
+	<test>
+		<testCaseName>cmdLineTester_criu_jitserverPostRestore</testCaseName>
+		<variations>
+			<variation>-Xjit</variation>
+			<variation>-Xjit:count=0</variation>
+			<variation>-Xjit:vlog=vlog</variation>
+		</variations>
+		<command>
+			if [ -x $(Q)$(TEST_JDK_BIN)$(D)jitserver$(Q) ]; \
+			then \
+				TR_Options=$(Q)disableSuffixLogs$(Q) \
+				$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) -Xdump \
+				-DSCRIPPATH=$(TEST_RESROOT)$(D)criuJitServerScript.sh -DTEST_RESROOT=$(TEST_RESROOT) \
+				-DTEST_JDK_BIN=$(TEST_JDK_BIN) -DJVM_OPTIONS=$(Q)$(JVM_OPTIONS)$(Q) \
+				-jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)criu_jitserverPostRestore.xml$(Q) \
+				-explainExcludes -xids all,$(PLATFORM),$(VARIATION) -nonZeroExitWhenError; \
+			else \
+				echo; \
+				echo $(Q)$(TEST_JDK_BIN)$(D)jitserver doesn't exist; assuming this JDK does not support JITServer and trivially passing the test.$(Q); \
+			fi; \
+			$(TEST_STATUS)
+		</command>
+		<platformRequirements>os.linux,^arch.arm,^arch.aarch64,bits.64</platformRequirements>
+		<features>
+			<feature>CRIU:required</feature>
+		</features>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<impls>
+			<impl>openj9</impl>
+		</impls>
+	</test>
+	<test>
 		<testCaseName>cmdLineTester_criu_nonPortableRestore_Xtrace_tracepoint</testCaseName>
 		<variations>
 			<variation>-Xjit -XX:+CRIURestoreNonPortableMode</variation>
