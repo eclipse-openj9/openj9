@@ -1184,6 +1184,7 @@ TR::CompilationInfo::CompilationInfo(J9JITConfig *jitConfig) :
 #if defined(J9VM_JIT_DYNAMIC_LOOP_TRANSFER)
    _dltMonitor = TR::Monitor::create("JIT-DLTmonitor");
 #endif
+
 #if defined(J9VM_OPT_CRIU_SUPPORT)
    _crMonitor = TR::Monitor::create("JIT-CheckpointRestoreMonitor");
    _checkpointStatus = TR_CheckpointStatus::NO_CHECKPOINT_IN_PROGRESS;
@@ -1205,7 +1206,15 @@ TR::CompilationInfo::CompilationInfo(J9JITConfig *jitConfig) :
    _vmExceptionEventsHooked = exceptionCatchEventHooked || exceptionThrowEventHooked;
 
    _resetStartAndElapsedTime = false;
+
+#if defined(J9VM_OPT_JITSERVER)
+   _canPerformRemoteCompilationInCRIUMode = false;
+   _remoteCompilationRequestedAtBootstrap = false;
+   _remoteCompilationExplicitlyDisabledAtBootstrap = false;
 #endif
+
+#endif // #if defined(J9VM_OPT_CRIU_SUPPORT)
+
    _iprofilerBufferArrivalMonitor = TR::Monitor::create("JIT-IProfilerBufferArrivalMonitor");
    _classUnloadMonitor = TR::MonitorTable::get()->getClassUnloadMonitor(); // by this time this variable is initialized
                                              // TODO: hang these monitors to something persistent
@@ -7413,14 +7422,7 @@ TR::CompilationInfoPerThreadBase::cannotPerformRemoteComp(
    {
    return
 #if defined(J9VM_OPT_CRIU_SUPPORT)
-          // In non-portable restore (i.e. single checkpoint) mode prevent remote compilations until
-          // after the process is restored. In portable restore mode checkpoints are always possible
-          // so there's no point to delaying remote compilations.
-          (_jitConfig->javaVM->internalVMFunctions->isCheckpointAllowed(vmThread) && _jitConfig->javaVM->internalVMFunctions->isNonPortableRestoreMode(vmThread)) ||
-
-          // If -XX:-UseJITServer is specified post-restore, then the Remote Compilation Mode will
-          // be set to JITServer::NONE
-          _compInfo.getPersistentInfo()->getRemoteCompilationMode() == JITServer::NONE ||
+          (_jitConfig->javaVM->internalVMFunctions->isCheckpointAllowed(vmThread) && !_compInfo.canPerformRemoteCompilationInCRIUMode()) ||
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
           !JITServer::ClientStream::isServerCompatible(OMRPORT_FROM_J9PORT(_jitConfig->javaVM->portLibrary)) ||
           (!JITServerHelpers::isServerAvailable() && !JITServerHelpers::shouldRetryConnection(OMRPORT_FROM_J9PORT(_jitConfig->javaVM->portLibrary))) ||

@@ -2300,26 +2300,35 @@ bool J9::Options::preProcessJitServer(J9JavaVM *vm, J9JITConfig *jitConfig)
          int32_t xxUseJITServerArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxUseJITServerOption, 0);
          int32_t xxDisableUseJITServerArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxDisableUseJITServerOption, 0);
 
-         bool explicitClientMode = xxUseJITServerArgIndex > xxDisableUseJITServerArgIndex;
+         bool useJitServerExplicitlySpecified = xxUseJITServerArgIndex > xxDisableUseJITServerArgIndex;
+
 #if defined(J9VM_OPT_CRIU_SUPPORT)
+         bool useJitServerExplicitlyDisabled = xxDisableUseJITServerArgIndex > xxUseJITServerArgIndex;
+
          struct J9InternalVMFunctions *ifuncs = vm->internalVMFunctions;
          J9VMThread *currentThread = ifuncs->currentVMThread(vm);
+
          // Enable JITServer client mode if
          // 1) CRIU support is enabled
-         // 2) non-portable restore mode is enabled
-         // 3) client mode is not explicitly disabled
-         // In portable restore mode let the user explicitly decide whether to enable JITServer.
-         bool implicitClientMode = ifuncs->isCRIUSupportEnabled(currentThread) &&
-                                   ifuncs->isNonPortableRestoreMode(currentThread) &&
-                                   (xxUseJITServerArgIndex >= xxDisableUseJITServerArgIndex);
+         // 2) client mode is not explicitly disabled
+         bool implicitClientMode = ifuncs->isCRIUSupportEnabled(currentThread) && !useJitServerExplicitlyDisabled;
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
-         if (explicitClientMode
+         if (useJitServerExplicitlySpecified
 #if defined(J9VM_OPT_CRIU_SUPPORT)
              || implicitClientMode
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
          )
             {
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+            if (implicitClientMode && useJitServerExplicitlySpecified)
+               {
+               compInfo->setRemoteCompilationRequestedAtBootstrap(true);
+               if (!ifuncs->isNonPortableRestoreMode(currentThread))
+                   compInfo->setCanPerformRemoteCompilationInCRIUMode(true);
+               }
+#endif
+
             J9::PersistentInfo::_remoteCompilationMode = JITServer::CLIENT;
             compInfo->getPersistentInfo()->setSocketTimeout(DEFAULT_JITCLIENT_TIMEOUT);
 
@@ -2355,7 +2364,14 @@ bool J9::Options::preProcessJitServer(J9JavaVM *vm, J9JITConfig *jitConfig)
                compInfo->getPersistentInfo()->setJITServerAOTCacheName(name);
                }
             }
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+         else if (useJitServerExplicitlyDisabled)
+            {
+            compInfo->setRemoteCompilationExplicitlyDisabledAtBootstrap(true);
+            }
+#endif // #if defined(J9VM_OPT_CRIU_SUPPORT)
          }
+
       if (!JITServerParseCommonOptions(vm->vmArgsArray, vm, compInfo))
          {
          // Could not parse JITServer options successfully

@@ -733,7 +733,19 @@ public:
 
    bool resetStartAndElapsedTime()              { return _resetStartAndElapsedTime;  }
    void setResetStartAndElapsedTime(bool reset) { _resetStartAndElapsedTime = reset; }
+
+#if defined(J9VM_OPT_JITSERVER)
+   bool canPerformRemoteCompilationInCRIUMode()                   { return _canPerformRemoteCompilationInCRIUMode;       }
+   void setCanPerformRemoteCompilationInCRIUMode(bool remoteComp) { _canPerformRemoteCompilationInCRIUMode = remoteComp; }
+
+   bool remoteCompilationRequestedAtBootstrap()                   { return _remoteCompilationRequestedAtBootstrap;       }
+   void setRemoteCompilationRequestedAtBootstrap(bool remoteComp) { _remoteCompilationRequestedAtBootstrap = remoteComp; }
+
+   bool remoteCompilationExplicitlyDisabledAtBootstrap()                   { return _remoteCompilationExplicitlyDisabledAtBootstrap;       }
+   void setRemoteCompilationExplicitlyDisabledAtBootstrap(bool remoteComp) { _remoteCompilationExplicitlyDisabledAtBootstrap = remoteComp; }
 #endif
+
+#endif // #if defined(J9VM_OPT_CRIU_SUPPORT)
 
    TR_PersistentMemory *     persistentMemory() { return _persistentMemory; }
 
@@ -1380,7 +1392,12 @@ private:
    bool _vmMethodTraceEnabled;
    bool _vmExceptionEventsHooked;
    bool _resetStartAndElapsedTime;
+#if defined(J9VM_OPT_JITSERVER)
+   bool _canPerformRemoteCompilationInCRIUMode;
+   bool _remoteCompilationRequestedAtBootstrap;
+   bool _remoteCompilationExplicitlyDisabledAtBootstrap;
 #endif
+#endif // #if defined(J9VM_OPT_CRIU_SUPPORT)
 
    TR::Monitor *_vlogMonitor;
    TR::Monitor *_rtlogMonitor;
