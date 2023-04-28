@@ -203,6 +203,13 @@ J9::AliasBuilder::createAliasInfo()
 
    defaultMethodDefAliases() |= self()->tenantDataMetaSymRefs();
 
+   TR::SymbolReference *currentThreadSymRef = symRefTab()->element(TR::SymbolReferenceTable::currentThreadSymbol);
+   if (currentThreadSymRef && !comp()->fej9()->isJ9VMThreadCurrentThreadImmutable())
+      {
+      // "CurrentThread" could be modified by any method calls
+      defaultMethodDefAliases().set(currentThreadSymRef->getReferenceNumber());
+      }
+
    defaultMethodDefAliasesWithoutImmutable().init(symRefTab()->getNumSymRefs(), comp()->trMemory(), heapAlloc, growable);
    defaultMethodDefAliasesWithoutUserField().init(symRefTab()->getNumSymRefs(), comp()->trMemory(), heapAlloc, growable);
 
