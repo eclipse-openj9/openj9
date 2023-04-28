@@ -1346,6 +1346,16 @@ int32_t TR_EscapeAnalysis::performAnalysisOnce()
 
             if (candidate->escapesInColdBlocks())
                {
+               // _initializedHeapifiedTemps will contain any autos that are initialized in the entry block of
+               // the method.  When the first candidate that escapes in a cold block is encountered, sweep
+               // through the entry block looking for autos that are null initialized up until any potential
+               // GC point or point at which an exception might be thrown, and record their sym refs in
+               // _initializedHeapifiedTemps.  Then any autos that are associated with candidates that need to
+               // be heapified will be explicitly null initialized in the entry block by heapifyForColdBlocks
+               // if they have not already been found to be initialized there (i.e., not already listed in
+               // _initializedHeapifiedTemps).  heapifyForColdBlocks will also add a new entry to
+               // _initializedHeapifiedTemps for each sym ref it is obliged to explicitly null initialize.
+               //
                if (_initializedHeapifiedTemps == NULL)
                   {
                   _initializedHeapifiedTemps = new(trStackMemory()) TR_BitVector(0, trMemory(), stackAlloc, growable);
@@ -1354,9 +1364,9 @@ int32_t TR_EscapeAnalysis::performAnalysisOnce()
                   const bool entryHasExceptionSuccessors = entryBlock->hasExceptionSuccessors();
 
                   // Anything that might hold a reference to a potentially heapified object must be initialized
-                  // on method entry.  Keep track of what is initialized in the first block on method entry to
-                  // avoid redundant initializations that might occur in a large method that has many points at
-                  // which heapification might occur.
+                  // on method entry.  Keep track of what is already null initialized in the first block on
+                  // method entry to avoid redundant initializations that might occur in a large method that
+                  // has many points at which heapification might occur.
                   //
                   for (TR::TreeTop *tt = comp()->getStartTree();
                        tt != NULL && tt->getNode()->getOpCodeValue() != TR::BBEnd;
@@ -1364,16 +1374,21 @@ int32_t TR_EscapeAnalysis::performAnalysisOnce()
                      {
                      TR::Node *node = tt->getNode();
 
-                     // If the entry block has exception successors, any local initializations that follow
+                     // If the entry block has exception successors, any null initializations that follow
                      // a node that might raise an exception is not guaranteed to be executed, so stop
-                     // recording entries in _initializedHeapifiedTemps
+                     // recording entries in _initializedHeapifiedTemps.  Similarly, we need to ensure that
+                     // all local initializations of autos that might hold a reference to a potentially
+                     // heapified object are initialized before any GC might happen, so stop considering
+                     // local initializations that follow a potential GC point.
                      //
-                     if (entryHasExceptionSuccessors && node->exceptionsRaised())
+                     if (node->canCauseGC() || entryHasExceptionSuccessors && node->exceptionsRaised())
                         {
                         break;
                         }
 
-                     if (node->getOpCode().isStore() && !node->getOpCode().isIndirect())
+                     if (node->getOpCode().isStoreDirect()
+                         && (node->getFirstChild()->getOpCodeValue() == TR::aconst)
+                         && (node->getFirstChild()->getConstValue() == 0))
                         {
                         TR::SymbolReference *storeSymRef = node->getSymbolReference();
 
