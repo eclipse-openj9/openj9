@@ -88,13 +88,13 @@ J9::Z::CodeGenerator::initialize()
       cg->setSupportsInlineStringCaseConversion();
 
    if (cg->getSupportsVectorRegisters() && !comp->getOption(TR_DisableFastStringIndexOf) &&
-       !TR::Compiler->om.canGenerateArraylets())
+       !TR::Compiler->om.canGenerateArraylets() && !TR::Compiler->om.isOffHeapAllocationEnabled())
       {
       cg->setSupportsInlineStringIndexOf();
       }
 
    if (cg->getSupportsVectorRegisters() && !comp->getOption(TR_DisableSIMDStringHashCode) &&
-       !TR::Compiler->om.canGenerateArraylets())
+       !TR::Compiler->om.canGenerateArraylets() && !TR::Compiler->om.isOffHeapAllocationEnabled())
       {
       cg->setSupportsInlineStringHashCode();
       cg->setSupportsInlineVectorizedHashCode();
@@ -120,7 +120,7 @@ J9::Z::CodeGenerator::initialize()
       }
 
    static char *disableInlineEncodeASCII = feGetEnv("TR_disableInlineEncodeASCII");
-   if (comp->fej9()->isStringCompressionEnabledVM() && cg->getSupportsVectorRegisters() && !TR::Compiler->om.canGenerateArraylets() && !disableInlineEncodeASCII)
+   if (comp->fej9()->isStringCompressionEnabledVM() && cg->getSupportsVectorRegisters() && !TR::Compiler->om.canGenerateArraylets() && !TR::Compiler->om.isOffHeapAllocationEnabled() && !disableInlineEncodeASCII)
       {
       cg->setSupportsInlineEncodeASCII();
       }
@@ -221,7 +221,7 @@ J9::Z::CodeGenerator::initialize()
       }
 
    static bool disableIntegerToChars = (feGetEnv("TR_DisableIntegerToChars") != NULL);
-   if (cg->getSupportsVectorRegisters() && !TR::Compiler->om.canGenerateArraylets() && !disableIntegerToChars && comp->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z16))
+   if (cg->getSupportsVectorRegisters() && !TR::Compiler->om.canGenerateArraylets() && !TR::Compiler->om.isOffHeapAllocationEnabled() && !disableIntegerToChars && comp->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z16))
       {
       cg->setSupportsIntegerToChars();
       cg->setSupportsIntegerStringSize();
