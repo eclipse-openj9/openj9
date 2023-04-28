@@ -7419,6 +7419,11 @@ TR_J9VM::transformJavaLangClassIsArrayOrIsPrimitive(TR::Compilation * comp, TR::
 TR::Node *
 TR_J9VM::inlineNativeCall(TR::Compilation * comp, TR::TreeTop * callNodeTreeTop, TR::Node * callNode)
    {
+   // Returning NULL from this method signifies that the call must be prepared for a direct JNI call.
+   // In some cases, the method call is not inlined, but the original call node is returned by this
+   // method, signifying that no special preparation is required for a direct JNI call.
+
+
    // Mandatory recognized methods: if we don't handle these specially, we
    // generate incorrect code.
    //
@@ -7781,6 +7786,17 @@ TR_J9VM::inlineNativeCall(TR::Compilation * comp, TR::TreeTop * callNodeTreeTop,
                TR::Node * referentLoadNode = TR::Node::createWithSymRef(comp->il.opCodeForIndirectLoad(TR::Address), 1, 1, thisNode, symRefField);
                callNode->setAndIncChild(0, referentLoadNode);
                thisNode->decReferenceCount();
+               }
+            }
+         else // !comp->getGetImplAndRefersToInlineable()
+            {
+            // java/lang/Reference.getImpl is an INL native method - it requires no special direct JNI
+            // preparation if it cannot be inlined - return the callNode; java/lang/Reference.refersTo
+            // is not an INL native method, so it requires direct JNI call preparation if it cannot be
+            // inlined - return NULL.
+            if (methodID == TR::java_lang_ref_Reference_refersTo)
+               {
+               return NULL;
                }
             }
          return callNode;

@@ -767,7 +767,19 @@ public:
    virtual bool inlineNativeCryptoMethod(TR::Node *callNode, TR::Compilation *comp);
 #endif
 
-   virtual TR::Node * inlineNativeCall(TR::Compilation *,  TR::TreeTop *, TR::Node *) { return 0; }
+   /**
+    * \brief Generates inline IL for recognized native method calls, if possible
+    *
+    * \param[in] comp The current \ref TR::Compilation object
+    * \param[in] callNodeTreeTop The \ref TR::TreeTop that contains the \c callNode
+    * \param[in] callNode The \ref TR::Node for the native call that is to be inlined
+    *
+    * \return A \ref TR::Node representing the result of the call, if the call was
+    *         inlined.  If the call was not inlined, and
+    *         - the call might need to be processed as a direct JNI call, \c NULL is returned;
+    *         - otherwise, \c callNode is returned.
+    */
+   virtual TR::Node * inlineNativeCall(TR::Compilation *comp,  TR::TreeTop * callNodeTreeTop, TR::Node *callNode) { return 0; }
 
    virtual bool               inlinedAllocationsMustBeVerified() { return false; }
 
@@ -1397,7 +1409,17 @@ public:
 
    virtual bool               classHasBeenExtended(TR_OpaqueClassBlock *);
    virtual bool               classHasBeenReplaced(TR_OpaqueClassBlock *);
-   virtual TR::Node *         inlineNativeCall( TR::Compilation *,  TR::TreeTop *, TR::Node *);
+   /**
+    * \brief Generates inline IL for recognized native method calls, if possible
+    * \param[in] comp The current \ref TR::Compilation object
+    * \param[in] callNodeTreeTop The \ref TR::TreeTop that contains the \c callNode
+    * \param[in] callNode The \ref TR::Node for the native call that is to be inlined
+    * \return A \ref TR::Node representing the result of the call, if the call was
+    *         inlined.  If the call was not inlined, and
+    *         - the call might need to be processed as a direct JNI call, \c NULL is returned;
+    *         - otherwise, \c callNode is returned.
+    */
+   virtual TR::Node *         inlineNativeCall( TR::Compilation *comp,  TR::TreeTop *callNodeTreeTop, TR::Node *callNode);
    virtual bool               transformJlrMethodInvoke(J9Method *callerMethod, J9Class *callerClass);
    virtual TR_OpaqueClassBlock *getClassOfMethod(TR_OpaqueMethodBlock *method);
    virtual int32_t            getObjectAlignmentInBytes();
