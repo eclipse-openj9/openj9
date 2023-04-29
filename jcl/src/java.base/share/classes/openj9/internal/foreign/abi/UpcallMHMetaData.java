@@ -1,4 +1,4 @@
-/*[INCLUDE-IF JAVA_SPEC_VERSION >= 19]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION == 20]*/
 /*******************************************************************************
  * Copyright IBM Corp. and others 2022
  *
@@ -30,12 +30,7 @@ import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.SegmentScope;
 import jdk.internal.foreign.MemorySessionImpl;
-/*[ELSEIF JAVA_SPEC_VERSION == 19]*/
-import java.lang.foreign.Addressable;
-import java.lang.foreign.MemoryAddress;
-import java.lang.foreign.MemorySegment;
-import java.lang.foreign.MemorySession;
-/*[ELSE] JAVA_SPEC_VERSION == 19 */
+/*[ELSE] JAVA_SPEC_VERSION >= 20 */
 import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
@@ -46,6 +41,7 @@ import jdk.incubator.foreign.ResourceScope;
  * The meta data consists of the callee MH and a cache of 2 elements for MH resolution,
  * which are used to generate an upcall handler to the requested java method.
  */
+@SuppressWarnings("nls")
 final class UpcallMHMetaData {
 
 	/* The target method handle intended for upcall which is placed on the java stack
@@ -69,9 +65,7 @@ final class UpcallMHMetaData {
 
 	/*[IF JAVA_SPEC_VERSION >= 20]*/
 	private SegmentScope scope;
-	/*[ELSEIF JAVA_SPEC_VERSION == 19]*/
-	private MemorySession session;
-	/*[ELSE] JAVA_SPEC_VERSION == 19 */
+	/*[ELSE] JAVA_SPEC_VERSION >= 20 */
 	private ResourceScope scope;
 	/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
 
@@ -87,24 +81,20 @@ final class UpcallMHMetaData {
 
 	/*[IF JAVA_SPEC_VERSION >= 20]*/
 	UpcallMHMetaData(MethodHandle targetHandle, int nativeArgCount, SegmentScope scope)
-	/*[ELSEIF JAVA_SPEC_VERSION == 19]*/
-	UpcallMHMetaData(MethodHandle targetHandle, int nativeArgCount, MemorySession session)
-	/*[ELSE] JAVA_SPEC_VERSION == 19 */
+	/*[ELSE] JAVA_SPEC_VERSION >= 20 */
 	UpcallMHMetaData(MethodHandle targetHandle, int nativeArgCount, ResourceScope scope)
 	/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
 	{
 		calleeMH = targetHandle;
 		calleeType = targetHandle.type();
 		nativeArgArray = new Object[nativeArgCount];
-		/* Only hold the confined session/scope (owned by the current thread)
-		 * or the shared session/scope will be used to construct a MemorySegment
-		 * object for argument in the native dispatcher in upcall.
+		/* Only hold the confined scope (owned by the current thread) or the shared scope
+		 * will be used to construct a MemorySegment object for argument in the upcall
+		 * dispatcher.
 		 */
 		/*[IF JAVA_SPEC_VERSION >= 20]*/
 		this.scope = ((scope != null) && (((MemorySessionImpl)scope).ownerThread() != null)) ? scope : Arena.openShared().scope();
-		/*[ELSEIF JAVA_SPEC_VERSION == 19]*/
-		this.session = ((session != null) && (session.ownerThread() != null)) ? session : MemorySession.openShared();
-		/*[ELSE] JAVA_SPEC_VERSION == 19 */
+		/*[ELSE] JAVA_SPEC_VERSION >= 20 */
 		this.scope = ((scope != null) && (scope.ownerThread() != null)) ? scope : ResourceScope.newSharedScope();
 		/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
 	}
@@ -127,7 +117,7 @@ final class UpcallMHMetaData {
 		/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
 	}
 
-	/*[IF JAVA_SPEC_VERSION <= 19]*/
+	/*[IF JAVA_SPEC_VERSION == 17]*/
 	/* Determine whether the memory address of the passed-in/returned pointer is allocated
 	 * in the native memory or not and return its native address if valid.
 	 *
@@ -135,19 +125,13 @@ final class UpcallMHMetaData {
 	 * The method is shared in java (downcall) and in native (upcall) via the calling-in from the dispatcher.
 	 */
 	static long getNativeArgRetAddrOfPtr(MemoryAddress argRetAddrOfPtr) {
-		/*[IF JAVA_SPEC_VERSION > 17]*/
-		/* Validate the native address as MemoryAddress.isNative() is removed in JDK18/19. */
-		if (argRetAddrOfPtr.toRawLongValue() == 0)
-		/*[ELSE] JAVA_SPEC_VERSION > 17 */
-		if (!argRetAddrOfPtr.isNative())
-		/*[ENDIF] JAVA_SPEC_VERSION > 17 */
-		{
+		if (!argRetAddrOfPtr.isNative()) {
 			throw new IllegalArgumentException("A heap address is not allowed: " + argRetAddrOfPtr);
 		}
 
 		return argRetAddrOfPtr.toRawLongValue();
 	}
-	/*[ENDIF] JAVA_SPEC_VERSION <= 19 */
+	/*[ENDIF] JAVA_SPEC_VERSION == 17 */
 
 	/* Determine whether the passed-in/returned segment is allocated in the native memory or not
 	 * and return its native address if valid; otherwise, return the address of an newly allocated
@@ -171,9 +155,7 @@ final class UpcallMHMetaData {
 		if (!argRetSegment.isNative()) {
 			/*[IF JAVA_SPEC_VERSION >= 20]*/
 			SegmentScope scope = SegmentScope.global();
-			/*[ELSEIF JAVA_SPEC_VERSION == 19]*/
-			MemorySession scope = MemorySession.global();
-			/*[ELSE] JAVA_SPEC_VERSION == 19 */
+			/*[ELSE] JAVA_SPEC_VERSION >= 20 */
 			ResourceScope scope = ResourceScope.globalScope();
 			/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
 			nativeSegment = MemorySegment.allocateNative(argRetSegment.byteSize(), scope);

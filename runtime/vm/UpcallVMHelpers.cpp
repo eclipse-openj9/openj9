@@ -45,9 +45,9 @@ static J9VMThread * getCurrentThread(J9UpcallMetaData *data, bool *isCurThrdAllo
 static void convertUpcallReturnValue(J9UpcallMetaData *data, U_8 returnType, U_64 *returnStorage);
 static bool storeMemArgObjectsToJavaArray(J9UpcallMetaData *data, void *argsListPointer, J9VMThread *currentThread);
 static j9object_t createMemSegmentObject(J9UpcallMetaData *data, I_64 offset, I_64 sigTypeSize);
-#if JAVA_SPEC_VERSION <= 19
+#if JAVA_SPEC_VERSION == 17
 static j9object_t createMemAddressObject(J9UpcallMetaData *data, I_64 offset);
-#endif /* JAVA_SPEC_VERSION <= 19 */
+#endif /* JAVA_SPEC_VERSION == 17 */
 static bool validateNonNullRetMemObject(J9UpcallMetaData *data, j9object_t retMemObject);
 static U_64 performCallInForRetMemObject(J9UpcallMetaData *data, j9object_t memObject, UDATA callInMethod);
 
@@ -618,7 +618,7 @@ done:
 	return result;
 }
 
-#if JAVA_SPEC_VERSION <= 19
+#if JAVA_SPEC_VERSION == 17
 /**
  * @brief Generate an object of the MemoryAddress's subclass on the heap
  * with the specified native address to the value.
@@ -655,15 +655,13 @@ createMemAddressObject(J9UpcallMetaData *data, I_64 offset)
 		}
 	}
 
-#if JAVA_SPEC_VERSION <= 17
 	J9VMJDKINTERNALFOREIGNMEMORYADDRESSIMPL_SET_SEGMENT(currentThread, memAddrObject, NULL);
-#endif /* JAVA_SPEC_VERSION <= 17 */
 	J9VMJDKINTERNALFOREIGNMEMORYADDRESSIMPL_SET_OFFSET(currentThread, memAddrObject, offset);
 
 done:
 	return memAddrObject;
 }
-#endif /* JAVA_SPEC_VERSION <= 19 */
+#endif /* JAVA_SPEC_VERSION == 17 */
 
 /**
  * @brief Generate an object of the MemorySegment's subclass on the heap with the specified
@@ -706,13 +704,8 @@ createMemSegmentObject(J9UpcallMetaData *data, I_64 offset, I_64 sigTypeSize)
 
 	J9VMJDKINTERNALFOREIGNNATIVEMEMORYSEGMENTIMPL_SET_MIN(currentThread, memSegmtObject, offset);
 	J9VMJDKINTERNALFOREIGNNATIVEMEMORYSEGMENTIMPL_SET_LENGTH(currentThread, memSegmtObject, sigTypeSize);
-#if JAVA_SPEC_VERSION == 19
-	J9VMJDKINTERNALFOREIGNNATIVEMEMORYSEGMENTIMPL_SET_SESSION(currentThread, memSegmtObject,
-					J9VMOPENJ9INTERNALFOREIGNABIUPCALLMHMETADATA_SESSION(currentThread, mhMetaData));
-#else /* JAVA_SPEC_VERSION == 19 */
 	J9VMJDKINTERNALFOREIGNNATIVEMEMORYSEGMENTIMPL_SET_SCOPE(currentThread, memSegmtObject,
 					J9VMOPENJ9INTERNALFOREIGNABIUPCALLMHMETADATA_SCOPE(currentThread, mhMetaData));
-#endif /* JAVA_SPEC_VERSION == 19 */
 
 done:
 	return memSegmtObject;

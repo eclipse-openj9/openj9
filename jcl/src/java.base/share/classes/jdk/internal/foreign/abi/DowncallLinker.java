@@ -1,4 +1,4 @@
-/*[INCLUDE-IF JAVA_SPEC_VERSION >= 19]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 20]*/
 /*******************************************************************************
  * Copyright IBM Corp. and others 2021
  *
@@ -26,17 +26,16 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 
 import java.lang.foreign.FunctionDescriptor;
-/*[IF JAVA_SPEC_VERSION >= 20]*/
 import jdk.internal.foreign.abi.LinkerOptions;
-/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
+/*[IF JAVA_SPEC_VERSION == 20]*/
 import openj9.internal.foreign.abi.InternalDowncallHandler;
+/*[ENDIF] JAVA_SPEC_VERSION == 20 */
 
 /**
  * The counterpart in OpenJDK is replaced with this class that wrap up a method handle
  * enabling the native code to the ffi_call via the libffi interface at runtime.
  */
 public class DowncallLinker {
-	/*[IF JAVA_SPEC_VERSION >= 20]*/
 	/**
 	 * The method is ultimately invoked by Linker on the specific platforms to generate the requested
 	 * method handle to the underlying C function.
@@ -46,20 +45,12 @@ public class DowncallLinker {
 	 * @param options The linker options indicating additional linking requirements to the linker
 	 * @return a method handle bound to the native method
 	 */
+	@SuppressWarnings("nls")
 	public static MethodHandle getBoundMethodHandle(MethodType functionMethodType, FunctionDescriptor funcDesc, LinkerOptions options) {
+		/*[IF JAVA_SPEC_VERSION >= 21]*/
+		throw new InternalError("Downcall is not yet implemented");
+		/*[ELSE] JAVA_SPEC_VERSION >= 21 */
 		return new InternalDowncallHandler(functionMethodType, funcDesc, options).getBoundMethodHandle();
+		/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 	}
-	/*[ELSE] JAVA_SPEC_VERSION >= 20 */
-	/**
-	 * The method is ultimately invoked by Linker on the specific platforms to generate the requested
-	 * method handle to the underlying C function.
-	 *
-	 * @param functionMethodType The MethodType of the specified native function
-	 * @param funcDesc The function descriptor of the specified native function
-	 * @return a method handle bound to the native method
-	 */
-	public static MethodHandle getBoundMethodHandle(MethodType functionMethodType, FunctionDescriptor funcDesc) {
-		return new InternalDowncallHandler(functionMethodType, funcDesc).getBoundMethodHandle();
-	}
-	/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
 }

@@ -432,6 +432,7 @@ if(JAVA_SPEC_VERSION LESS 21)
 	)
 else()
 	jvm_add_exports(jvm
+		JVM_IsForeignLinkerSupported
 		JVM_VirtualThreadMount
 		JVM_VirtualThreadUnmount
 	)

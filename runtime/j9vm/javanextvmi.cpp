@@ -506,6 +506,12 @@ JVM_VirtualThreadUnmount(JNIEnv* env, jobject vthread, jboolean hide, jboolean l
 		JVM_VirtualThreadUnmountEnd(env, vthread, lastUnmount);
 	}
 }
+
+JNIEXPORT jboolean JNICALL
+JVM_IsForeignLinkerSupported()
+{
+	return JNI_TRUE;
+}
 #endif /* JAVA_SPEC_VERSION >= 21 */
 
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)

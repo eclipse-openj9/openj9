@@ -1,4 +1,4 @@
-/*[INCLUDE-IF (JAVA_SPEC_VERSION >= 16) & (JAVA_SPEC_VERSION <= 17)]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION == 17]*/
 /*******************************************************************************
  * Copyright IBM Corp. and others 2022
  *
@@ -40,11 +40,12 @@ import jdk.incubator.foreign.ValueLayout;
  */
 final class TypeLayoutCheckHelper {
 
-	/* Verify whether the specified layout and the corresponding type are valid and match each other */
+	/* Verify whether the specified layout and the corresponding type are valid and match each other. */
+	@SuppressWarnings("nls")
 	static void checkIfValidLayoutAndType(MethodType targetMethodType, MemoryLayout[] argumentLayouts, MemoryLayout returnLayout) {
 		Class<?> retType = targetMethodType.returnType();
 		if (!validateArgRetTypeClass(retType) && (retType != void.class)) {
-			throw new IllegalArgumentException("The return type must be primitive/void, MemoryAddress or MemorySegment" + ": retType = " + retType);  //$NON-NLS-1$ //$NON-NLS-2$
+			throw new IllegalArgumentException("The return type must be primitive/void, MemoryAddress or MemorySegment" + ": retType = " + retType);
 		}
 
 		validateLayoutAgainstType(returnLayout, targetMethodType.returnType());
@@ -53,20 +54,20 @@ final class TypeLayoutCheckHelper {
 		int argTypeCount = argTypes.length;
 		int argLayoutCount = argumentLayouts.length;
 		if (argTypeCount != argLayoutCount) {
-			throw new IllegalArgumentException("The arity (" + argTypeCount //$NON-NLS-1$
-					+ ") of the argument types is inconsistent with the arity ("  //$NON-NLS-1$
-					+ argLayoutCount + ") of the argument layouts");  //$NON-NLS-1$
+			throw new IllegalArgumentException("The arity (" + argTypeCount
+					+ ") of the argument types is inconsistent with the arity ("
+					+ argLayoutCount + ") of the argument layouts");
 		}
 
 		for (int argIndex = 0; argIndex < argLayoutCount; argIndex++) {
 			if (!validateArgRetTypeClass(argTypes[argIndex])) {
-				throw new IllegalArgumentException("The passed-in argument type at index " + argIndex + " is neither primitive nor MemoryAddress nor MemorySegment"); //$NON-NLS-1$ //$NON-NLS-2$
+				throw new IllegalArgumentException("The passed-in argument type at index " + argIndex + " is neither primitive nor MemoryAddress nor MemorySegment");
 			}
 			validateLayoutAgainstType(argumentLayouts[argIndex], argTypes[argIndex]);
 		}
 	}
 
-	/* Verify whether the specified type is primitive, MemoryAddress (for pointer) or MemorySegment (for struct) */
+	/* Verify whether the specified type is primitive, MemoryAddress (pointer) or MemorySegment (struct). */
 	private static boolean validateArgRetTypeClass(Class<?> targetType) {
 		if (!targetType.isPrimitive()
 		&& (targetType != MemoryAddress.class)
@@ -77,48 +78,50 @@ final class TypeLayoutCheckHelper {
 		return true;
 	}
 
-	/* Check the validity of the layout against the corresponding type */
+	/* Check the validity of the layout against the corresponding type. */
+	@SuppressWarnings("nls")
 	private static void validateLayoutAgainstType(MemoryLayout targetLayout, Class<?> targetType) {
 		if (targetLayout != null) {
 			if (!targetLayout.hasSize()) {
-				throw new IllegalArgumentException("The layout's size is expected: layout = " + targetLayout); //$NON-NLS-1$
+				throw new IllegalArgumentException("The layout's size is expected: layout = " + targetLayout);
 			} else if (targetLayout.bitSize() <= 0) {
-				throw new IllegalArgumentException("The layout's size must be greater than zero: layout = " + targetLayout); //$NON-NLS-1$
+				throw new IllegalArgumentException("The layout's size must be greater than zero: layout = " + targetLayout);
 			}
 		}
 
-		/* The struct (specified by GroupLayout) for MemorySegment corresponds to GroupLayout in terms of layout */
+		/* The struct (specified by GroupLayout) for MemorySegment corresponds to GroupLayout in terms of layout. */
 		if (targetType == MemorySegment.class) {
 			if (!GroupLayout.class.isInstance(targetLayout)) {
-				throw new IllegalArgumentException("GroupLayout is expected: layout = " + targetLayout); //$NON-NLS-1$
+				throw new IllegalArgumentException("GroupLayout is expected: layout = " + targetLayout);
 			}
 		/* Check the void layout (null for void) and the void type */
 		} else if (((targetType == void.class) && (targetLayout != null))
 		|| ((targetType != void.class) && (targetLayout == null))
 		) {
-			throw new IllegalArgumentException("Mismatch between the layout and the type: layout = "  //$NON-NLS-1$
-				+ ((targetLayout == null) ? "VOID" : targetLayout) //$NON-NLS-1$
-				+ ", type = " + targetType);  //$NON-NLS-1$
-		/* Check the primitive type and MemoryAddress against the ValueLayout */
+			throw new IllegalArgumentException("Mismatch between the layout and the type: layout = "
+				+ ((targetLayout == null) ? "VOID" : targetLayout)
+				+ ", type = " + targetType);
+		/* Check the primitive type and MemoryAddress against the ValueLayout. */
 		} else if (targetType != void.class) {
 			if (!ValueLayout.class.isInstance(targetLayout)) {
-				throw new IllegalArgumentException("ValueLayout is expected: layout = " + targetLayout); //$NON-NLS-1$
+				throw new IllegalArgumentException("ValueLayout is expected: layout = " + targetLayout);
 			}
-			/* Check the size and kind of the ValueLayout for the primitive types and MemoryAddress */
+			/* Check the size and kind of the ValueLayout for the primitive types and MemoryAddress. */
 			validateValueLayoutSize(targetLayout, targetType);
 			validateValueLayoutKind(targetLayout, targetType);
 		}
 	}
 
-	/* Check the size of the specified primitive layout to determine whether it matches the specified type */
+	/* Check the size of the specified primitive layout to determine whether it matches the specified type. */
+	@SuppressWarnings("nls")
 	private static void validateValueLayoutSize(MemoryLayout TypeLayout, Class<?> targetType) {
 		int layoutSize = (int)TypeLayout.bitSize();
 		boolean mismatchedSize = false;
 
 		switch (layoutSize) {
 		case 8:
-			/* The 8-bit layout is shared by boolean and byte
-			 * given the boolean size specified in Java18 is 8 bits.
+			/* The 8-bit layout is shared by boolean and byte given
+			 * the boolean size specified in Java18 is 8 bits.
 			 */
 			if ((targetType != boolean.class) && (targetType != byte.class)) {
 				mismatchedSize = true;
@@ -141,8 +144,8 @@ final class TypeLayoutCheckHelper {
 			}
 			break;
 		case 64:
-			/* The 64-bit layout size is shared by long, double and MemoryAddress
-			 * given the corresponding pointer size for MemoryAddress is 64 bits in C.
+			/* The 64-bit layout size is shared by long, double and MemoryAddress given
+			 * the corresponding pointer size for MemoryAddress is 64 bits in C.
 			 */
 			if ((targetType != long.class)
 			&& (targetType != double.class)
@@ -157,23 +160,24 @@ final class TypeLayoutCheckHelper {
 		}
 
 		if (mismatchedSize) {
-			throw new IllegalArgumentException("Mismatched size between the layout and the type: layout = " //$NON-NLS-1$
-				+ TypeLayout + ", type = " + targetType.getSimpleName());  //$NON-NLS-1$
+			throw new IllegalArgumentException("Mismatched size between the layout and the type: layout = "
+				+ TypeLayout + ", type = " + targetType.getSimpleName());
 		}
 	}
 
-	/* Check the kind (type) of the specified primitive layout to determine whether it matches the specified type */
+	/* Check the kind (type) of the specified primitive layout to determine whether it matches the specified type. */
+	@SuppressWarnings("nls")
 	private static void validateValueLayoutKind(MemoryLayout targetLayout, Class<?> targetType) {
 		boolean kindAttrFound = false;
 		List<String> layoutAttrList = targetLayout.attributes().toList();
 		for (String attrStr : layoutAttrList) {
-			if (attrStr.equalsIgnoreCase("abi/kind")) { //$NON-NLS-1$
+			if (attrStr.equalsIgnoreCase("abi/kind")) {
 				kindAttrFound = true;
 				break;
 			}
 		}
 		if (!kindAttrFound) {
-			throw new IllegalArgumentException("The layout's ABI Class is undefined: layout = " + targetLayout); //$NON-NLS-1$
+			throw new IllegalArgumentException("The layout's ABI Class is undefined: layout = " + targetLayout);
 		}
 
 		/* Extract the kind from the specified layout with the ATTR_NAME "abi/kind".
@@ -181,41 +185,41 @@ final class TypeLayoutCheckHelper {
 		 */
 		boolean mismatchType = false;
 		TypeKind kind = (TypeKind)targetLayout.attribute(TypeKind.ATTR_NAME)
-				.orElseThrow(() -> new IllegalArgumentException("The layout's ABI class is empty")); //$NON-NLS-1$
+				.orElseThrow(() -> new IllegalArgumentException("The layout's ABI class is empty"));
 		switch (kind) {
 		case CHAR:
-			/* the CHAR layout (8bits) in Java maps to bool or byte in C */
+			/* The CHAR layout (8 bits) in Java maps to bool or byte in C. */
 			break;
 		case SHORT:
-			/* the SHORT layout (16bits) in Java maps to char or short in C */
+			/* The SHORT layout (16 bits) in Java maps to char or short in C. */
 			break;
 		case INT:
-			/* the INT layout (32bits) in Java maps to int in C */
+			/* The INT layout (32 bits) in Java maps to int in C. */
 			if (targetType != int.class) {
 				mismatchType = true;
 			}
 			break;
 		case LONG:
 		case LONG_LONG:
-			/* the LONG/LONG_LONG layout (64bits) in Java only matches long in C */
+			/* The LONG/LONG_LONG layout (64 bits) in Java only matches long in C. */
 			if (targetType != long.class) {
 				mismatchType = true;
 			}
 			break;
 		case FLOAT:
-			/* the FLOAT layout (32bits) in Java only matches float in C */
+			/* The FLOAT layout (32 bits) in Java only matches float in C. */
 			if (targetType != float.class) {
 				mismatchType = true;
 			}
 			break;
 		case DOUBLE:
-			/* the DOUBLE layout (64bits) in Java only matches double in C */
+			/* The DOUBLE layout (64 bits) in Java only matches double in C. */
 			if (targetType != double.class) {
 				mismatchType = true;
 			}
 			break;
 		case POINTER:
-			/* the POINTER layout (64bits) in Java only matches MemoryAddress */
+			/* The POINTER layout (64 bits) in Java only matches MemoryAddress. */
 			if (targetType != MemoryAddress.class) {
 				mismatchType = true;
 			}
@@ -226,7 +230,7 @@ final class TypeLayoutCheckHelper {
 		}
 
 		if (mismatchType) {
-			throw new IllegalArgumentException("Mismatch between the layout and the type: layout = " + targetLayout + ", type = " + targetType);  //$NON-NLS-1$ //$NON-NLS-2$
+			throw new IllegalArgumentException("Mismatch between the layout and the type: layout = " + targetLayout + ", type = " + targetType);
 		}
 	}
 }
