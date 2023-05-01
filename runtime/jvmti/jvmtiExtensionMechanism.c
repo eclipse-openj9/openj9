@@ -3807,9 +3807,7 @@ jvmtiGetVirtualThread(jvmtiEnv* jvmti_env, ...)
 		if (JVMTI_ERROR_NONE == rc) {
 			j9object_t threadObject = targetThread->threadObject;
 			j9object_t carrierThreadObject = targetThread->carrierThreadObject;
-			if ((NULL != threadObject)
-			&& (threadObject != carrierThreadObject)
-			) {
+			if ((NULL != threadObject) && (threadObject != carrierThreadObject)) {
 				rv_virtual_thread = (jthread)vm->internalVMFunctions->j9jni_createLocalRef(
 												(JNIEnv *)currentThread,
 												threadObject);
@@ -3869,12 +3867,14 @@ jvmtiGetCarrierThread(jvmtiEnv* jvmti_env, ...)
 
 		rc = getVMThread(
 				currentThread, virtual_thread, &targetThread, JVMTI_ERROR_NONE,
-				J9JVMTI_GETVMTHREAD_ERROR_ON_DEAD_THREAD | J9JVMTI_GETVMTHREAD_ERROR_ON_NULL_JTHREAD);
+				J9JVMTI_GETVMTHREAD_ERROR_ON_DEAD_THREAD);
 		if (JVMTI_ERROR_NONE == rc) {
-			if (NULL != targetThread->carrierThreadObject) {
+			j9object_t threadObject = targetThread->threadObject;
+			j9object_t carrierThreadObject = targetThread->carrierThreadObject;
+			if ((NULL != carrierThreadObject) && (threadObject != carrierThreadObject)) {
 				rv_carrier_thread = (jthread)vm->internalVMFunctions->j9jni_createLocalRef(
 												(JNIEnv *)currentThread,
-												(j9object_t)targetThread->carrierThreadObject);
+												carrierThreadObject);
 			}
 			releaseVMThread(currentThread, targetThread, virtual_thread);
 		}
