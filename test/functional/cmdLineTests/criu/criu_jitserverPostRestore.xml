@@ -27,7 +27,7 @@
 <suite id="J9 Criu Command-Line Post Restore JIT Option Tests" timeout="300">
 	<variable name="MAINCLASS_OPTIONSFILE_TEST" value="org.openj9.criu.OptionsFileTest" />
 	<variable name="ENABLE_JITSERVER" value="-XX:+UseJITServer" />
-	<variable name="CRIU_VERBOSE" value="-Xjit:verbose={CheckpointRestore},verbose={JITServer},verbose={JITServerConns},vlog=vlog" />
+	<variable name="CRIU_VERBOSE" value="-Xjit:verbose={compilePerformance},verbose={CheckpointRestore},verbose={JITServer},verbose={JITServerConns},vlog=vlog" />
 
 	<test id="Generate Verbose Log">
 		<command>bash $SCRIPPATH$ $TEST_RESROOT$ $TEST_JDK_BIN$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ "JitOptionsTest $ENABLE_JITSERVER$ $CRIU_VERBOSE$" 1 false</command>
