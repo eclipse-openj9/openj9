@@ -62,13 +62,14 @@ jvmtiGetStackTrace(jvmtiEnv* env,
 				currentThread, thread, &targetThread, JVMTI_ERROR_NONE,
 				J9JVMTI_GETVMTHREAD_ERROR_ON_DEAD_THREAD);
 		if (rc == JVMTI_ERROR_NONE) {
-			j9object_t threadObject = (NULL == thread) ? currentThread->threadObject : J9_JNI_UNWRAP_REFERENCE(thread);
+			j9object_t threadObject = NULL;
 #if JAVA_SPEC_VERSION >= 19
 			if (NULL != targetThread)
 #endif /* JAVA_SPEC_VERSION >= 19 */
 			{
 				vmFuncs->haltThreadForInspection(currentThread, targetThread);
 			}
+			threadObject = (NULL == thread) ? currentThread->threadObject : J9_JNI_UNWRAP_REFERENCE(thread);
 			rc = jvmtiInternalGetStackTrace(env, currentThread, targetThread, threadObject, start_depth, (UDATA) max_frame_count, frame_buffer, &rv_count);
 #if JAVA_SPEC_VERSION >= 19
 			if (NULL != targetThread)
