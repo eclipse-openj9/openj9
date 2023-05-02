@@ -200,6 +200,12 @@ if(NOT JAVA_SPEC_VERSION LESS 19)
 	)
 endif()
 
+if(NOT JAVA_SPEC_VERSION LESS 20)
+	list(APPEND main_sources
+		FastJNI_java_lang_VirtualThread.cpp
+	)
+endif()
+
 set(interpreter_sources
 	BytecodeInterpreterCompressed.cpp
 	BytecodeInterpreterFull.cpp
