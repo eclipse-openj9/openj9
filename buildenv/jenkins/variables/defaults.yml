@@ -163,11 +163,12 @@ boot_jdk_default:
       17: '17'
       19: '18'
       20: '18'
-      next: '18'
+      next: '20'
     dir_strip:
       all: '1'
     url:
-      all: "https://api.adoptopenjdk.net/v3/binary/latest/${bootJDKVersion}/ga/${os}/${arch}/jdk/openj9/normal/adoptopenjdk?project=jdk"
+      all: 'https://api.adoptopenjdk.net/v3/binary/latest/${bootJDKVersion}/ga/${os}/${arch}/jdk/openj9/normal/adoptopenjdk?project=jdk'
+      20: 'https://api.adoptium.net/v3/binary/latest/20/ga/${os}/${arch}/jdk/hotspot/normal/eclipse?project=jdk'
 #========================================#
 # CRIU
 #========================================#
@@ -227,8 +228,6 @@ ppc64le_linux_jit:
   extends: ['ppc64le_linux', 'jitserver']
 #========================================#
 # Linux S390 64bits
-# Note: boot_jdk 8 must use an Adopt JDK8 build rather than an
-#       IBM 7 for the bootJDK or compiling corba will fail to find Object.
 #========================================#
 s390x_linux:
   extends: ['boot_jdk_default', 'debuginfo', 'openjdk_reference_repo', 'openssl']
