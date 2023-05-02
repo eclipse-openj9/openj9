@@ -25,7 +25,8 @@
 #include "j9.h"
 #include "j9protos.h"
 #include "j9consts.h"
-#include "vmhook_internal.h"
+#include "mmhook.h"
+#include "vmhook.h"
 #include "ut_j9vm.h"
 #include "vm_internal.h"
 
@@ -116,28 +117,36 @@ hookAboutToBootstrapEvent(J9HookInterface** hook, UDATA eventNum, void* voidEven
 	J9VMAboutToBootstrapEvent* eventData = voidEventData;
 	J9VMThread* vmThread = eventData->currentThread;
 	J9JavaVM* vm = vmThread->javaVM;
-	J9HookInterface** hookInterface = J9_HOOK_INTERFACE(vm->hookInterface);
+	J9HookInterface** vmHook = vm->internalVMFunctions->getVMHookInterface(vm);
+	J9HookInterface** gcHook = vm->memoryManagerFunctions->j9gc_get_hook_interface(vm);
 
 	/* these hooks must be reserved by now. Attempt to disable them so that they're in a well-known state after this */
-	(*hookInterface)->J9HookDisable(hookInterface, J9HOOK_VM_MONITOR_CONTENDED_EXIT);
+	(*vmHook)->J9HookDisable(vmHook, J9HOOK_VM_MONITOR_CONTENDED_EXIT);
 
 	/* The instrumentable object allocate hook disables safepoint OSR */
-	if ((*hookInterface)->J9HookDisable(hookInterface, J9HOOK_VM_OBJECT_ALLOCATE_INSTRUMENTABLE)) {
+	if ((*vmHook)->J9HookDisable(vmHook, J9HOOK_VM_OBJECT_ALLOCATE_INSTRUMENTABLE)) {
 		omrthread_monitor_enter(vm->runtimeFlagsMutex);
 		vm->extendedRuntimeFlags &= ~(UDATA)(J9_EXTENDED_RUNTIME_OSR_SAFE_POINT| J9_EXTENDED_RUNTIME_OSR_SAFE_POINT_FV);
 		omrthread_monitor_exit(vm->runtimeFlagsMutex);
 	}
 
-	if ((*hookInterface)->J9HookDisable(hookInterface, J9HOOK_VM_METHOD_ENTER)
-		|| (*hookInterface)->J9HookDisable(hookInterface, J9HOOK_VM_METHOD_RETURN)
-		|| (*hookInterface)->J9HookDisable(hookInterface, J9HOOK_VM_FRAME_POP)
-		|| (*hookInterface)->J9HookDisable(hookInterface, J9HOOK_VM_POP_FRAMES_INTERRUPT)
-		|| (*hookInterface)->J9HookDisable(hookInterface, J9HOOK_VM_SINGLE_STEP)
-		|| (*hookInterface)->J9HookDisable(hookInterface, J9HOOK_VM_BREAKPOINT)
-		|| (*hookInterface)->J9HookDisable(hookInterface, J9HOOK_VM_GET_FIELD)
-		|| (*hookInterface)->J9HookDisable(hookInterface, J9HOOK_VM_PUT_FIELD)
-		|| (*hookInterface)->J9HookDisable(hookInterface, J9HOOK_VM_GET_STATIC_FIELD)
-		|| (*hookInterface)->J9HookDisable(hookInterface, J9HOOK_VM_PUT_STATIC_FIELD)
+	/* The sampled object allocate hook disables safepoint OSR */
+	if ((*gcHook)->J9HookDisable(gcHook, J9HOOK_MM_OBJECT_ALLOCATION_SAMPLING)) {
+		omrthread_monitor_enter(vm->runtimeFlagsMutex);
+		vm->extendedRuntimeFlags &= ~(UDATA)(J9_EXTENDED_RUNTIME_OSR_SAFE_POINT| J9_EXTENDED_RUNTIME_OSR_SAFE_POINT_FV);
+		omrthread_monitor_exit(vm->runtimeFlagsMutex);
+	}
+
+	if ((*vmHook)->J9HookDisable(vmHook, J9HOOK_VM_METHOD_ENTER)
+		|| (*vmHook)->J9HookDisable(vmHook, J9HOOK_VM_METHOD_RETURN)
+		|| (*vmHook)->J9HookDisable(vmHook, J9HOOK_VM_FRAME_POP)
+		|| (*vmHook)->J9HookDisable(vmHook, J9HOOK_VM_POP_FRAMES_INTERRUPT)
+		|| (*vmHook)->J9HookDisable(vmHook, J9HOOK_VM_SINGLE_STEP)
+		|| (*vmHook)->J9HookDisable(vmHook, J9HOOK_VM_BREAKPOINT)
+		|| (*vmHook)->J9HookDisable(vmHook, J9HOOK_VM_GET_FIELD)
+		|| (*vmHook)->J9HookDisable(vmHook, J9HOOK_VM_PUT_FIELD)
+		|| (*vmHook)->J9HookDisable(vmHook, J9HOOK_VM_GET_STATIC_FIELD)
+		|| (*vmHook)->J9HookDisable(vmHook, J9HOOK_VM_PUT_STATIC_FIELD)
 		|| (vm->extendedRuntimeFlags & J9_EXTENDED_RUNTIME_METHOD_TRACE_ENABLED)
 		|| (vm->requiredDebugAttributes & J9VM_DEBUG_ATTRIBUTE_CAN_ACCESS_LOCALS))
 	{
