@@ -84,56 +84,17 @@ struct TR_RelocationRecordBinaryTemplate
    uint16_t _size;
    uint8_t _type;
    uint8_t _flags;
-
-#if defined(TR_HOST_64BIT)
-   uint32_t _extra;
-#endif
    };
 
-// Generating 32-bit code on a 64-bit machine or vice-versa won't work because the alignment won't
-// be right.  Relying on inheritance in the structures here means padding is automatically inserted
-// at each inheritance boundary: this inserted padding won't match across 32-bit and 64-bit platforms.
-// Making as many fields as possible UDATA should minimize the differences and gives the most freedom
-// in the hierarchy of binary relocation record structures, but the header definitely has an inheritance
-// boundary at offset 4B.
-
-// This struct must be identical to TR_RelocationRecordBinaryTemplate
-// in at least the first three (_size, _type, and _flags) fields
-struct TR_RelocationRecordHelperAddressBinaryTemplate
+struct TR_RelocationRecordHelperAddressBinaryTemplate : public TR_RelocationRecordBinaryTemplate
    {
-   uint16_t _size;
-   uint8_t _type;
-   uint8_t _flags;
    uint32_t _helperID;
    };
-static_assert(offsetof(TR_RelocationRecordBinaryTemplate, _size)
-              == offsetof(TR_RelocationRecordHelperAddressBinaryTemplate, _size),
-              "TR_RelocationRecordHelperAddressBinaryTemplate::_size not the same offset as TR_RelocationRecordBinaryTemplate::_size");
-static_assert(offsetof(TR_RelocationRecordBinaryTemplate, _type)
-              == offsetof(TR_RelocationRecordHelperAddressBinaryTemplate, _type),
-              "TR_RelocationRecordHelperAddressBinaryTemplate::_type not the same offset as TR_RelocationRecordBinaryTemplate::_type");
-static_assert(offsetof(TR_RelocationRecordBinaryTemplate, _flags)
-              == offsetof(TR_RelocationRecordHelperAddressBinaryTemplate, _flags),
-              "TR_RelocationRecordHelperAddressBinaryTemplate::_flags not the same offset as TR_RelocationRecordBinaryTemplate::_flags");
 
-// This struct must be identical to TR_RelocationRecordBinaryTemplate
-// in at least the first three (_size, _type, and _flags) fields
-struct TR_RelocationRecordPicTrampolineBinaryTemplate
+struct TR_RelocationRecordPicTrampolineBinaryTemplate : public TR_RelocationRecordBinaryTemplate
    {
-   uint16_t _size;
-   uint8_t _type;
-   uint8_t _flags;
    uint32_t _numTrampolines;
    };
-static_assert(offsetof(TR_RelocationRecordBinaryTemplate, _size)
-              == offsetof(TR_RelocationRecordPicTrampolineBinaryTemplate, _size),
-              "TR_RelocationRecordPicTrampolineBinaryTemplate::_size not the offset same as TR_RelocationRecordBinaryTemplate::_size");
-static_assert(offsetof(TR_RelocationRecordBinaryTemplate, _type)
-              == offsetof(TR_RelocationRecordPicTrampolineBinaryTemplate, _type),
-              "TR_RelocationRecordPicTrampolineBinaryTemplate::_type not the offset same as TR_RelocationRecordBinaryTemplate::_type");
-static_assert(offsetof(TR_RelocationRecordBinaryTemplate, _flags)
-              == offsetof(TR_RelocationRecordPicTrampolineBinaryTemplate, _flags),
-              "TR_RelocationRecordPicTrampolineBinaryTemplate::_flags not the offset same as TR_RelocationRecordBinaryTemplate::_flags");
 
 struct TR_RelocationRecordWithInlinedSiteIndexBinaryTemplate : public TR_RelocationRecordBinaryTemplate
    {
