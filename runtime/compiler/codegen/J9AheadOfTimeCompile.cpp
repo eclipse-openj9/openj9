@@ -271,8 +271,8 @@ J9::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::IteratedExternalReloca
    TR_RelocationRecord storage;
    TR_RelocationRecord *reloRecord = TR_RelocationRecord::create(&storage, reloRuntime, targetKind, reinterpret_cast<TR_RelocationRecordBinaryTemplate *>(cursor));
 
-   reloRecord->setSize(reloTarget, sizeOfReloData);
    reloRecord->setType(reloTarget, static_cast<TR_RelocationRecordType>(targetKind));
+   reloRecord->setSize(reloTarget, sizeOfReloData);
    if (relocation->needsWideOffsets())
       reloRecord->setWideOffsets(reloTarget);
 

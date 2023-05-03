@@ -81,9 +81,9 @@ struct TR_RelocationRecordBinaryTemplate
    {
    uint8_t type(TR_RelocationTarget *reloTarget);
 
-   uint16_t _size;
    uint8_t _type;
-   uint8_t _flags;
+   uint16_t _size;
+   uint16_t _flags;
    };
 
 struct TR_RelocationRecordHelperAddressBinaryTemplate : public TR_RelocationRecordBinaryTemplate
@@ -929,14 +929,15 @@ TR_RelocationRecord::eipRelative(TR_RelocationTarget *reloTarget)
 void
 TR_RelocationRecord::setFlag(TR_RelocationTarget *reloTarget, uint8_t flag)
    {
-   uint8_t flags = reloTarget->loadUnsigned8b((uint8_t *) &_record->_flags) | (flag & RELOCATION_CROSS_PLATFORM_FLAGS_MASK);
-   reloTarget->storeUnsigned8b(flags, (uint8_t *) &_record->_flags);
+   TR_ASSERT_FATAL((flag >> RELOCATION_RELOC_FLAGS_SHIFT) == 0, "flag %d is larger than %d bits", flag, RELOCATION_RELOC_FLAGS_SHIFT);
+   uint16_t flags = reloTarget->loadUnsigned16b((uint8_t *) &_record->_flags) | (flag & RELOCATION_CROSS_PLATFORM_FLAGS_MASK);
+   reloTarget->storeUnsigned16b(flags, (uint8_t *) &_record->_flags);
    }
 
 uint8_t
 TR_RelocationRecord::flags(TR_RelocationTarget *reloTarget)
    {
-   return reloTarget->loadUnsigned8b((uint8_t *) &_record->_flags) & RELOCATION_CROSS_PLATFORM_FLAGS_MASK;
+   return reloTarget->loadUnsigned16b((uint8_t *) &_record->_flags) & RELOCATION_CROSS_PLATFORM_FLAGS_MASK;
    }
 
 void
@@ -947,13 +948,13 @@ TR_RelocationRecord::setReloFlags(TR_RelocationTarget *reloTarget, uint8_t reloF
 
    uint8_t crossPlatFlags = flags(reloTarget);
    uint8_t flags = crossPlatFlags | (reloFlags & RELOCATION_RELOC_FLAGS_MASK);
-   reloTarget->storeUnsigned8b(flags, (uint8_t *) &_record->_flags);
+   reloTarget->storeUnsigned16b(flags, (uint8_t *) &_record->_flags);
    }
 
 uint8_t
 TR_RelocationRecord::reloFlags(TR_RelocationTarget *reloTarget)
    {
-   return (reloTarget->loadUnsigned8b((uint8_t *) &_record->_flags) & RELOCATION_RELOC_FLAGS_MASK) >> RELOCATION_RELOC_FLAGS_SHIFT;
+   return (reloTarget->loadUnsigned16b((uint8_t *) &_record->_flags) & RELOCATION_RELOC_FLAGS_MASK) >> RELOCATION_RELOC_FLAGS_SHIFT;
    }
 
 void
