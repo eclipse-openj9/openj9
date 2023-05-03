@@ -942,7 +942,9 @@ TR_RelocationRecord::flags(TR_RelocationTarget *reloTarget)
 void
 TR_RelocationRecord::setReloFlags(TR_RelocationTarget *reloTarget, uint8_t reloFlags)
    {
+   reloFlags <<= RELOCATION_RELOC_FLAGS_SHIFT;
    TR_ASSERT_FATAL((reloFlags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
+
    uint8_t crossPlatFlags = flags(reloTarget);
    uint8_t flags = crossPlatFlags | (reloFlags & RELOCATION_RELOC_FLAGS_MASK);
    reloTarget->storeUnsigned8b(flags, (uint8_t *) &_record->_flags);
@@ -951,7 +953,7 @@ TR_RelocationRecord::setReloFlags(TR_RelocationTarget *reloTarget, uint8_t reloF
 uint8_t
 TR_RelocationRecord::reloFlags(TR_RelocationTarget *reloTarget)
    {
-   return reloTarget->loadUnsigned8b((uint8_t *) &_record->_flags) & RELOCATION_RELOC_FLAGS_MASK;
+   return (reloTarget->loadUnsigned8b((uint8_t *) &_record->_flags) & RELOCATION_RELOC_FLAGS_MASK) >> RELOCATION_RELOC_FLAGS_SHIFT;
    }
 
 void
