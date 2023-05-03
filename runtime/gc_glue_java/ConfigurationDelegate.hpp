@@ -63,6 +63,7 @@ class MM_ConfigurationDelegate
 private:
 	uintptr_t _maximumDefaultNumberOfGCThreads;
 	const MM_GCPolicy _gcPolicy;
+	MM_GCExtensions *_extensions;
 
 protected:
 public:
@@ -71,33 +72,93 @@ public:
  * Member functions
  */
 private:
+	MM_HeapRegionDescriptorStandardExtension *
+	allocateHeapRegionDescriptorExtension(MM_EnvironmentBase *env, uintptr_t listCount) {
+		uintptr_t allocSize = sizeof(MM_HeapRegionDescriptorStandardExtension) + (listCount * (sizeof(MM_UnfinalizedObjectList) + sizeof(MM_OwnableSynchronizerObjectList) + sizeof(MM_ContinuationObjectList) + sizeof(MM_ReferenceObjectList)));
+
+		MM_HeapRegionDescriptorStandardExtension *regionExtension = (MM_HeapRegionDescriptorStandardExtension *)env->getForge()->allocate(allocSize, MM_AllocationCategory::FIXED, J9_GET_CALLSITE());
+
+		if (NULL == regionExtension) {
+			return NULL;
+		}
+
+		regionExtension->_maxListIndex = listCount;
+		regionExtension->_unfinalizedObjectLists = (MM_UnfinalizedObjectList *) ((uintptr_t)regionExtension + sizeof(MM_HeapRegionDescriptorStandardExtension));
+		regionExtension->_ownableSynchronizerObjectLists = (MM_OwnableSynchronizerObjectList *) (regionExtension->_unfinalizedObjectLists + listCount);
+		regionExtension->_continuationObjectLists = (MM_ContinuationObjectList *) (regionExtension->_ownableSynchronizerObjectLists + listCount);
+		regionExtension->_referenceObjectLists = (MM_ReferenceObjectList *) (regionExtension->_continuationObjectLists + listCount);
+
+		return regionExtension;
+	}
+
+	void
+	initalizeUnfinalizedObjectList(MM_EnvironmentBase *env, MM_UnfinalizedObjectList *list)
+	{
+		new(list) MM_UnfinalizedObjectList();
+		list->setNextList(_extensions->unfinalizedObjectLists);
+		list->setPreviousList(NULL);
+		if (NULL != _extensions->unfinalizedObjectLists) {
+			_extensions->unfinalizedObjectLists->setPreviousList(list);
+		}
+		_extensions->unfinalizedObjectLists = list;
+	}
+
+	void
+	initalizeOwnableSynchronizerObjectList(MM_EnvironmentBase *env, MM_OwnableSynchronizerObjectList *list)
+	{
+		new(list) MM_OwnableSynchronizerObjectList();
+		list->setNextList(_extensions->getOwnableSynchronizerObjectLists());
+		list->setPreviousList(NULL);
+		if (NULL != _extensions->getOwnableSynchronizerObjectLists()) {
+			_extensions->getOwnableSynchronizerObjectLists()->setPreviousList(list);
+		}
+		_extensions->setOwnableSynchronizerObjectLists(list);
+	}
+
+	void
+	initalizeContinuationObjectList(MM_EnvironmentBase *env, MM_ContinuationObjectList *list)
+	{
+		new(list) MM_ContinuationObjectList();
+		list->setNextList(_extensions->getContinuationObjectLists());
+		list->setPreviousList(NULL);
+		if (NULL != _extensions->getContinuationObjectLists()) {
+			_extensions->getContinuationObjectLists()->setPreviousList(list);
+		}
+		_extensions->setContinuationObjectLists(list);
+	}
+
+	void
+	initalizeReferenceObjectList(MM_EnvironmentBase *env, MM_ReferenceObjectList *list)
+	{
+		new(list) MM_ReferenceObjectList();
+	}
 protected:
 
 public:
 	bool
-	initialize(MM_EnvironmentBase* env, MM_GCWriteBarrierType writeBarrierType, MM_GCAllocationType allocationType)
+	initialize(MM_EnvironmentBase *env, MM_GCWriteBarrierType writeBarrierType, MM_GCAllocationType allocationType)
 	{
 		/* sync J9 VM arraylet size with OMR VM */
-		OMR_VM* omrVM = env->getOmrVM();
-		J9JavaVM* javaVM = (J9JavaVM*)omrVM->_language_vm;
+		OMR_VM *omrVM = env->getOmrVM();
+		J9JavaVM *javaVM = (J9JavaVM*)omrVM->_language_vm;
 		javaVM->arrayletLeafSize = omrVM->_arrayletLeafSize;
 		javaVM->arrayletLeafLogSize = omrVM->_arrayletLeafLogSize;
 
 		/* set write barrier for J9 VM -- catch -Xgc:alwayscallwritebarrier first */
-		MM_GCExtensions* extensions = MM_GCExtensions::getExtensions(javaVM);
-		if (extensions->alwaysCallWriteBarrier) {
+		_extensions = MM_GCExtensions::getExtensions(javaVM);
+		if (_extensions->alwaysCallWriteBarrier) {
 			writeBarrierType = gc_modron_wrtbar_always;
 		}
 
 		Assert_MM_true(gc_modron_wrtbar_illegal != writeBarrierType);
 		javaVM->gcWriteBarrierType = writeBarrierType;
 
-		if (extensions->alwaysCallReadBarrier) {
+		if (_extensions->alwaysCallReadBarrier) {
 			/* AlwaysCallReadBarrier takes precedence over other read barrier types */
 			javaVM->gcReadBarrierType = gc_modron_readbar_always;
-		} else if (extensions->isScavengerEnabled() && extensions->isConcurrentScavengerEnabled()) {
+		} else if (_extensions->isScavengerEnabled() && _extensions->isConcurrentScavengerEnabled()) {
 			javaVM->gcReadBarrierType = gc_modron_readbar_range_check;
-		} else if (extensions->isVLHGC() && extensions->isConcurrentCopyForwardEnabled()) {
+		} else if (_extensions->isVLHGC() && _extensions->isConcurrentCopyForwardEnabled()) {
 			javaVM->gcReadBarrierType = gc_modron_readbar_region_check;
 		} else {
 			javaVM->gcReadBarrierType = gc_modron_readbar_none;
@@ -106,12 +167,12 @@ public:
 		/* set allocation type for J9 VM */
 		javaVM->gcAllocationType = allocationType;
 
-		if (!extensions->dynamicClassUnloadingSet) {
-			extensions->dynamicClassUnloading = MM_GCExtensions::DYNAMIC_CLASS_UNLOADING_ON_CLASS_LOADER_CHANGES;
+		if (!_extensions->dynamicClassUnloadingSet) {
+			_extensions->dynamicClassUnloading = MM_GCExtensions::DYNAMIC_CLASS_UNLOADING_ON_CLASS_LOADER_CHANGES;
 		}
 
 		/* Enable string constant collection by default if we support class unloading */
-		extensions->collectStringConstants = true;
+		_extensions->collectStringConstants = true;
 
 		/*
 		 *  note that these are the default thresholds but Realtime Configurations override these values, in their initialize methods
@@ -120,45 +181,44 @@ public:
 #define DYNAMIC_CLASS_UNLOADING_THRESHOLD			6
 #define DYNAMIC_CLASS_UNLOADING_KICKOFF_THRESHOLD	80000
 
-		if (!extensions->dynamicClassUnloadingThresholdForced) {
-			extensions->dynamicClassUnloadingThreshold = DYNAMIC_CLASS_UNLOADING_THRESHOLD;
+		if (!_extensions->dynamicClassUnloadingThresholdForced) {
+			_extensions->dynamicClassUnloadingThreshold = DYNAMIC_CLASS_UNLOADING_THRESHOLD;
 		}
-		if (!extensions->dynamicClassUnloadingKickoffThresholdForced) {
-			extensions->dynamicClassUnloadingKickoffThreshold = DYNAMIC_CLASS_UNLOADING_KICKOFF_THRESHOLD;
+		if (!_extensions->dynamicClassUnloadingKickoffThresholdForced) {
+			_extensions->dynamicClassUnloadingKickoffThreshold = DYNAMIC_CLASS_UNLOADING_KICKOFF_THRESHOLD;
 		}
 		return true;
 	}
 
 	void
-	tearDown(MM_EnvironmentBase* env)
+	tearDown(MM_EnvironmentBase *env)
 	{
-		J9JavaVM* vm = (J9JavaVM*)env->getOmrVM()->_language_vm;
-		MM_GCExtensions* extensions = MM_GCExtensions::getExtensions(env);
+		J9JavaVM *vm = (J9JavaVM *)env->getOmrVM()->_language_vm;
 
 		if (NULL != vm->identityHashData) {
 			env->getForge()->free(vm->identityHashData);
 			vm->identityHashData = NULL;
 		}
 
-		if (NULL != extensions->classLoaderManager) {
-			extensions->classLoaderManager->kill(env);
-			extensions->classLoaderManager = NULL;
+		if (NULL != _extensions->classLoaderManager) {
+			_extensions->classLoaderManager->kill(env);
+			_extensions->classLoaderManager = NULL;
 		}
 
-		if (NULL != extensions->stringTable) {
-			extensions->stringTable->kill(env);
-			extensions->stringTable = NULL;
+		if (NULL != _extensions->stringTable) {
+			_extensions->stringTable->kill(env);
+			_extensions->stringTable = NULL;
 		}
 	}
 
-	OMR_SizeClasses *getSegregatedSizeClasses(MM_EnvironmentBase* env)
+	OMR_SizeClasses *getSegregatedSizeClasses(MM_EnvironmentBase *env)
 	{
-		J9JavaVM* javaVM = (J9JavaVM*)env->getOmrVM()->_language_vm;
-		return (OMR_SizeClasses*)(javaVM->realtimeSizeClasses);
+		J9JavaVM *javaVM = (J9JavaVM*)env->getOmrVM()->_language_vm;
+		return (OMR_SizeClasses *)(javaVM->realtimeSizeClasses);
 	}
 
 	static MM_HeapRegionDescriptorStandardExtension *
-	getHeapRegionDescriptorStandardExtension(MM_EnvironmentBase* env, MM_HeapRegionDescriptor *region)
+	getHeapRegionDescriptorStandardExtension(MM_EnvironmentBase *env, MM_HeapRegionDescriptor *region)
 	{
 		MM_HeapRegionDescriptorStandardExtension *regionExtension = NULL;
 		if (env->getExtensions()->isStandardGC()) {
@@ -168,48 +228,21 @@ public:
 	}
 
 	bool
-	initializeHeapRegionDescriptorExtension(MM_EnvironmentBase* env, MM_HeapRegionDescriptor *region)
+	initializeHeapRegionDescriptorExtension(MM_EnvironmentBase *env, MM_HeapRegionDescriptor *region)
 	{
-		MM_GCExtensions* extensions = MM_GCExtensions::getExtensions(env);
+		if (_extensions->isStandardGC()) {
+			uintptr_t listCount = _extensions->gcThreadCount;
 
-		if (extensions->isStandardGC()) {
-			uintptr_t listCount = extensions->gcThreadCount;
-			uintptr_t allocSize = sizeof(MM_HeapRegionDescriptorStandardExtension) + (listCount * (sizeof(MM_UnfinalizedObjectList) + sizeof(MM_OwnableSynchronizerObjectList) + sizeof(MM_ContinuationObjectList) + sizeof(MM_ReferenceObjectList)));
-			MM_HeapRegionDescriptorStandardExtension *regionExtension = (MM_HeapRegionDescriptorStandardExtension *)env->getForge()->allocate(allocSize, MM_AllocationCategory::FIXED, J9_GET_CALLSITE());
+			MM_HeapRegionDescriptorStandardExtension *regionExtension = allocateHeapRegionDescriptorExtension(env, listCount);
 			if (NULL == regionExtension) {
 				return false;
 			}
 
-			regionExtension->_maxListIndex = listCount;
-			regionExtension->_unfinalizedObjectLists = (MM_UnfinalizedObjectList *) ((uintptr_t)regionExtension + sizeof(MM_HeapRegionDescriptorStandardExtension));
-			regionExtension->_ownableSynchronizerObjectLists = (MM_OwnableSynchronizerObjectList *) (regionExtension->_unfinalizedObjectLists + listCount);
-			regionExtension->_continuationObjectLists = (MM_ContinuationObjectList *) (regionExtension->_ownableSynchronizerObjectLists + listCount);
-			regionExtension->_referenceObjectLists = (MM_ReferenceObjectList *) (regionExtension->_continuationObjectLists + listCount);
-
 			for (uintptr_t list = 0; list < listCount; list++) {
-				new(&regionExtension->_unfinalizedObjectLists[list]) MM_UnfinalizedObjectList();
-				regionExtension->_unfinalizedObjectLists[list].setNextList(extensions->unfinalizedObjectLists);
-				regionExtension->_unfinalizedObjectLists[list].setPreviousList(NULL);
-				if (NULL != extensions->unfinalizedObjectLists) {
-					extensions->unfinalizedObjectLists->setPreviousList(&regionExtension->_unfinalizedObjectLists[list]);
-				}
-				extensions->unfinalizedObjectLists = &regionExtension->_unfinalizedObjectLists[list];
-
-				new(&regionExtension->_ownableSynchronizerObjectLists[list]) MM_OwnableSynchronizerObjectList();
-				regionExtension->_ownableSynchronizerObjectLists[list].setNextList(extensions->getOwnableSynchronizerObjectLists());
-				regionExtension->_ownableSynchronizerObjectLists[list].setPreviousList(NULL);
-				if (NULL != extensions->getOwnableSynchronizerObjectLists()) {
-					extensions->getOwnableSynchronizerObjectLists()->setPreviousList(&regionExtension->_ownableSynchronizerObjectLists[list]);
-				}
-				extensions->setOwnableSynchronizerObjectLists(&regionExtension->_ownableSynchronizerObjectLists[list]);
-				new(&regionExtension->_continuationObjectLists[list]) MM_ContinuationObjectList();
-				regionExtension->_continuationObjectLists[list].setNextList(extensions->getContinuationObjectLists());
-				regionExtension->_continuationObjectLists[list].setPreviousList(NULL);
-				if (NULL != extensions->getContinuationObjectLists()) {
-					extensions->getContinuationObjectLists()->setPreviousList(&regionExtension->_continuationObjectLists[list]);
-				}
-				extensions->setContinuationObjectLists(&regionExtension->_continuationObjectLists[list]);
-				new(&regionExtension->_referenceObjectLists[list]) MM_ReferenceObjectList();
+				initalizeUnfinalizedObjectList(env, &regionExtension->_unfinalizedObjectLists[list]);
+				initalizeOwnableSynchronizerObjectList(env, &regionExtension->_ownableSynchronizerObjectLists[list]);
+				initalizeContinuationObjectList(env, &regionExtension->_continuationObjectLists[list]);
+				initalizeReferenceObjectList(env, &regionExtension->_referenceObjectLists[list]);
 			}
 
 			region->_heapRegionDescriptorExtension = regionExtension;
@@ -219,7 +252,7 @@ public:
 	}
 
 	void
-	teardownHeapRegionDescriptorExtension(MM_EnvironmentBase* env, MM_HeapRegionDescriptor *region)
+	teardownHeapRegionDescriptorExtension(MM_EnvironmentBase *env, MM_HeapRegionDescriptor *region)
 	{
 		if (env->getExtensions()->isStandardGC()) {
 			if (NULL != region->_heapRegionDescriptorExtension) {
@@ -230,7 +263,7 @@ public:
 	}
 
 	bool
-	heapInitialized(MM_EnvironmentBase* env)
+	heapInitialized(MM_EnvironmentBase *env)
 	{
 		MM_Heap *heap = env->getExtensions()->getHeap();
 		MM_HeapRegionManager *heapRegionManager = heap->getHeapRegionManager();
@@ -257,12 +290,12 @@ public:
 			break;
 		}
 
-		J9JavaVM* javaVM = (J9JavaVM*)env->getOmrVM()->_language_vm;
+		J9JavaVM *javaVM = (J9JavaVM*)env->getOmrVM()->_language_vm;
 		uintptr_t size = offsetof(J9IdentityHashData, hashSaltTable) + (sizeof(U_32) * hashSaltCount);
 		javaVM->identityHashData = (J9IdentityHashData*)env->getForge()->allocate(size, MM_AllocationCategory::FIXED, J9_GET_CALLSITE());
 		bool result = NULL != javaVM->identityHashData;
 		if (result) {
-			J9IdentityHashData* hashData = javaVM->identityHashData;
+			J9IdentityHashData *hashData = javaVM->identityHashData;
 			hashData->hashData1 = UDATA_MAX;
 			hashData->hashData2 = 0;
 			hashData->hashData3 = 0;
@@ -292,37 +325,36 @@ public:
 	}
 
 	uint32_t
-	getInitialNumberOfPooledEnvironments(MM_EnvironmentBase* env)
+	getInitialNumberOfPooledEnvironments(MM_EnvironmentBase *env)
 	{
 		return 0;
 	}
 
 	bool
-	environmentInitialized(MM_EnvironmentBase* env)
+	environmentInitialized(MM_EnvironmentBase *env)
 	{
-		MM_GCExtensions* extensions = MM_GCExtensions::getExtensions(env);
-		J9VMThread* vmThread = (J9VMThread *)env->getLanguageVMThread();
+		J9VMThread *vmThread = (J9VMThread *)env->getLanguageVMThread();
 		OMR_VM *omrVM = env->getOmrVM();
 
 		/* only assign this parent list if we are going to use it */
-		if (extensions->isStandardGC()) {
-			vmThread->gcRememberedSet.parentList = &extensions->rememberedSet;
+		if (_extensions->isStandardGC()) {
+			vmThread->gcRememberedSet.parentList = &_extensions->rememberedSet;
 		}
 
-		extensions->accessBarrier->initializeForNewThread(env);
+		_extensions->accessBarrier->initializeForNewThread(env);
 
-		if ((extensions->isConcurrentMarkEnabled()) && (!extensions->usingSATBBarrier())) {
+		if ((_extensions->isConcurrentMarkEnabled()) && (!_extensions->usingSATBBarrier())) {
 #if defined(OMR_GC_MODRON_CONCURRENT_MARK)
 			vmThread->cardTableVirtualStart = (U_8*)j9gc_incrementalUpdate_getCardTableVirtualStart(omrVM);
 			vmThread->cardTableShiftSize = j9gc_incrementalUpdate_getCardTableShiftValue(omrVM);
-			MM_ConcurrentGC *concurrentGC = (MM_ConcurrentGC *)extensions->getGlobalCollector();
-			if (!extensions->optimizeConcurrentWB || (CONCURRENT_OFF < concurrentGC->getConcurrentGCStats()->getExecutionMode())) {
+			MM_ConcurrentGC *concurrentGC = (MM_ConcurrentGC *)_extensions->getGlobalCollector();
+			if (!_extensions->optimizeConcurrentWB || (CONCURRENT_OFF < concurrentGC->getConcurrentGCStats()->getExecutionMode())) {
 				vmThread->privateFlags |= J9_PRIVATE_FLAGS_CONCURRENT_MARK_ACTIVE;
 			}
 #else
 			Assert_MM_unreachable();
 #endif /* OMR_GC_MODRON_CONCURRENT_MARK */
-		} else if (extensions->isVLHGC()) {
+		} else if (_extensions->isVLHGC()) {
 #if defined(OMR_GC_VLHGC)
 			vmThread->cardTableVirtualStart = (U_8 *)j9gc_incrementalUpdate_getCardTableVirtualStart(omrVM);
 			vmThread->cardTableShiftSize = j9gc_incrementalUpdate_getCardTableShiftValue(omrVM);
@@ -334,7 +366,7 @@ public:
 			vmThread->cardTableShiftSize = 0;
 		}
 
-		if (extensions->fvtest_disableInlineAllocation) {
+		if (_extensions->fvtest_disableInlineAllocation) {
 			env->_objectAllocationInterface->disableCachedAllocations(env);
 		}
 
@@ -343,18 +375,18 @@ public:
 
 	bool canCollectFragmentationStats(MM_EnvironmentBase *env)
 	{
-		J9JavaVM* javaVM = (J9JavaVM*)env->getOmrVM()->_language_vm;
+		J9JavaVM *javaVM = (J9JavaVM*)env->getOmrVM()->_language_vm;
 		/* processing estimate Fragmentation only is on non startup stage to avoid startup regression(fragmentation during startup is not meaningful for the estimation)
 		   it is only for jit mode(for int mode javaVM->phase is always J9VM_PHASE_NOT_STARTUP) */
 		return (J9VM_PHASE_NOT_STARTUP == javaVM->phase);
 	}
 
-	uintptr_t getMaxGCThreadCount(MM_EnvironmentBase* env)
+	uintptr_t getMaxGCThreadCount(MM_EnvironmentBase *env)
 	{
 		return _maximumDefaultNumberOfGCThreads;
 	}
 
-	void setMaxGCThreadCount(MM_EnvironmentBase* env, uintptr_t maxGCThreads)
+	void setMaxGCThreadCount(MM_EnvironmentBase *env, uintptr_t maxGCThreads)
 	{
 		_maximumDefaultNumberOfGCThreads = maxGCThreads;
 	}
