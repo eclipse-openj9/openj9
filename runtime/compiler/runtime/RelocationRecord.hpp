@@ -41,9 +41,6 @@ typedef TR_ExternalRelocationTargetKind TR_RelocationRecordType;
 namespace TR { class AheadOfTimeCompile; }
 class AOTCacheClassChainRecord;
 
-
-#define TR_VALIDATE_STATIC_OR_SPECIAL_METHOD_FROM_CP_IS_SPLIT 0x01
-
 class TR_RelocationRecordGroup
    {
    public:

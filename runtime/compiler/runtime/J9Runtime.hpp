@@ -121,21 +121,6 @@ typedef struct TR_InlinedSiteHastTableEntry
    TR_InlinedSiteLinkedListEntry *last;
    } TR_InlinedSiteHastTableEntry;
 
-
-typedef enum
-   {
-   inlinedMethodIsStatic = 1,
-   inlinedMethodIsSpecial = 2,
-   inlinedMethodIsVirtual = 3
-   } TR_InlinedMethodKind;
-
-
-typedef enum
-   {
-   needsFullSizeRuntimeAssumption = 1
-   } TR_HCRAssumptionFlags;
-
-
 typedef enum
    {
    noPerfAssumptions = 0,
@@ -144,7 +129,16 @@ typedef enum
    tooManyFailedInlinedAllocRelos = 3
    } TR_FailedPerfAssumptionCode;
 
+typedef enum
+   {
+   inlinedMethodIsStatic            = 0x01,
+   inlinedMethodIsSpecial           = 0x02,
+   inlinedMethodIsVirtual           = 0x04,
 
+   staticSpecialMethodFromCpIsSplit = 0x08,
+
+   needsFullSizeRuntimeAssumption   = 0x10,
+   } TR_RelocationFlags;
 
 /* TR_AOTMethodHeader Versions:
 *     1.0    Java6 GA
