@@ -334,13 +334,13 @@ JVM_VirtualThreadMountEnd(JNIEnv *env, jobject thread, jboolean firstMount)
 				J9VMJDKINTERNALVMCONTINUATION_VMREF(currentThread, continuationObj));
 	}
 
-	/* If isSuspendedByJVMTI is non-zero, J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND is set
-	 * in currentThread->publicFlags while resetting isSuspendedByJVMTI to zero. During
-	 * mount, this suspends the thread if the thread was unmounted when JVMTI suspended it.
+	/* Virtual thread is being mounted but it has been suspended. Thus,
+	 * set J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND flag. At this
+	 * point, virtual thread object is stored in targetThread->threadObject.
 	 */
-	if (0 != J9OBJECT_U32_LOAD(currentThread, threadObj, vm->isSuspendedByJVMTIOffset)) {
+	if (0 != J9OBJECT_U32_LOAD(currentThread, threadObj, vm->isSuspendedInternalOffset)) {
+		Assert_SC_true(threadObj == currentThread->threadObject);
 		vmFuncs->setHaltFlag(currentThread, J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND);
-		J9OBJECT_U32_STORE(currentThread, threadObj, vm->isSuspendedByJVMTIOffset, 0);
 	}
 
 	/* Allow thread to be inspected again. */
@@ -428,6 +428,15 @@ JVM_VirtualThreadUnmountEnd(JNIEnv *env, jobject thread, jboolean lastUnmount)
 
 	if (lastUnmount) {
 		vmFuncs->freeTLS(currentThread, threadObj);
+	}
+
+	j9object_t carrierThreadObject = currentThread->carrierThreadObject;
+	/* The J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND will be set for the virtual
+	 * thread's carrier thread if it was suspended while the virtual thread was mounted.
+	 */
+	if (0 != J9OBJECT_U32_LOAD(currentThread, carrierThreadObject, vm->isSuspendedInternalOffset)) {
+		Assert_SC_true((currentThread->threadObject == carrierThreadObject) && (NULL == currentThread->currentContinuation));
+		vmFuncs->setHaltFlag(currentThread, J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND);
 	}
 
 	/* Allow thread to be inspected again. */
