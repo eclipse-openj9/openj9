@@ -68,6 +68,10 @@
 #include "jitserver_error.h"
 #endif /* J9VM_OPT_JITSERVER */
 
+#if JAVA_SPEC_VERSION < 15
+#include <assert.h>
+#endif /* JAVA_SPEC_VERSION < 15 */
+
 #if defined(AIXPPC)
 #include <procinfo.h>
 #include <sys/types.h>
@@ -3967,6 +3971,13 @@ JVM_LoadLibrary(const char *libName, jboolean throwOnFailure)
 		{
 			UDATA handle = 0;
 			UDATA flags = J9_ARE_ANY_BITS_SET(javaVM->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_LAZY_SYMBOL_RESOLUTION) ? J9PORT_SLOPEN_LAZY : 0;
+
+#if defined(J9VM_ZOS_3164_INTEROPERABILITY)
+			if (J9_ARE_ALL_BITS_SET(javaVM->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_3164_INTEROPERABILITY)) {
+				flags |= OMRPORT_SLOPEN_ATTEMPT_31BIT_OPEN;
+			}
+#endif /* defined(J9VM_ZOS_3164_INTEROPERABILITY) */
+
 			UDATA slOpenResult = j9sl_open_shared_library((char *)libName, &handle, flags);
 
 			Trc_SC_LoadLibrary_OpenShared(libName);
@@ -4004,6 +4015,41 @@ JVM_LoadLibrary(const char *libName, jboolean throwOnFailure)
 	return result;
 }
 
+/* NOTE this is required by JDK15+ jdk.internal.loader.NativeLibraries.unload().
+ */
+#if JAVA_SPEC_VERSION >= 15
+void JNICALL JVM_UnloadLibrary(void *handle)
+#else /* JAVA_SPEC_VERSION >= 15 */
+jobject JNICALL JVM_UnloadLibrary(jint arg0)
+#endif /* JAVA_SPEC_VERSION >= 15 */
+{
+#if JAVA_SPEC_VERSION >= 15
+	Trc_SC_UnloadLibrary_Entry(handle);
+
+#if defined(J9VM_OPT_JAVA_OFFLOAD_SUPPORT) && (JAVA_SPEC_VERSION >= 17)
+	{
+		UDATA doSwitching = ((UDATA)handle) & J9_NATIVE_LIBRARY_SWITCH_MASK;
+		handle = (void *)(((UDATA)handle) ^ doSwitching);
+	}
+#endif /* defined(J9VM_OPT_JAVA_OFFLOAD_SUPPORT) && (JAVA_SPEC_VERSION >= 17) */
+
+#if defined(WIN32)
+	FreeLibrary((HMODULE)handle);
+#elif defined(J9ZOS390) /* defined(WIN32) */
+	PORT_ACCESS_FROM_JAVAVM(BFUjavaVM);
+	/* Call j9sl_close_shared_library to handle potential 31-bit interoperability handles. */
+	j9sl_close_shared_library((UDATA)handle);
+#elif defined(J9UNIX) /* defined(J9ZOS390) */
+	dlclose(handle);
+#else /* defined(J9UNIX) */
+#error "Please implement jvm.c:JVM_UnloadLibrary(void *handle)"
+#endif /* defined(WIN32) */
+	Trc_SC_UnloadLibrary_Exit();
+#else /* JAVA_SPEC_VERSION >= 15 */
+	assert(!"JVM_UnloadLibrary() stubbed!");
+	return NULL;
+#endif /* JAVA_SPEC_VERSION >= 15 */
+}
 
 #if defined(J9VM_OPT_JAVA_OFFLOAD_SUPPORT) && (JAVA_SPEC_VERSION >= 17)
 /**
@@ -4073,9 +4119,13 @@ JVM_FindLibraryEntry(void* handle, const char *functionName)
 
 #if defined(WIN32)
 	result = GetProcAddress ((HINSTANCE)handle, (LPCSTR)functionName);
-#elif defined(J9UNIX) || defined(J9ZOS390) /* defined(WIN32) */
-	result = (void*)dlsym( (void*)handle, (char *)functionName );
-#else /* defined(WIN32) */
+#elif defined(J9ZOS390) /* defined(WIN32) */
+	PORT_ACCESS_FROM_JAVAVM(BFUjavaVM);
+	/* Call j9sl_lookup_name to handle potential 31-bit interoperability targets. */
+	j9sl_lookup_name((UDATA)handle, (char *)functionName, (void *)&result, "");
+#elif defined(J9UNIX) /* defined(J9ZOS390) */
+	result = (void *)dlsym((void *)handle, (char *)functionName);
+#else /* defined(J9UNIX) */
 #error "Please implement jvm.c:JVM_FindLibraryEntry(void* handle, const char *functionName)"
 #endif /* defined(WIN32) */
 
@@ -6465,3 +6515,35 @@ JVM_BeforeHalt()
 {
 	/* To be implemented via https://github.com/eclipse-openj9/openj9/issues/1459 */
 }
+
+#if defined(J9VM_ZOS_3164_INTEROPERABILITY) && (JAVA_SPEC_VERSION >= 17)
+/*
+ * Utility function used by NativeLibraries to invoke JNI_OnLoad or JNI_OnUnload
+ * functions in 31-bit native interoperability targets. This requires mapping to
+ * the corresponding 31-bit JavaVM object handle, along with invoking CEL4RO31
+ * (via FFI) to the corresponding target function.
+ *
+ * @param vm The JavaVM pointer first parameter for JNI_OnXLoad function
+ * @param handle The target function pointer to invoke - should be a 31-bit interop target
+ * @param isOnLoad TRUE if invoking JNI_OnLoad, FALSE if invoking JNI_OnUnload
+ * @param reserved The reserved second parameter for JNI_OnXLoad function
+ *
+ * @return the return value for JNI_OnLoad, or 0 for JNI_OnUnload
+ */
+jint JNICALL
+JVM_Invoke31BitJNI_OnXLoad(JavaVM *vm, void *handle, jboolean isOnLoad, void *reserved)
+{
+	J9JavaVM *javaVM = (J9JavaVM *)vm;
+	jint result = isOnLoad ? JNI_VERSION_1_1 : 0;
+
+	Trc_SC_Invoke31BitJNI_OnXLoad_Entry(vm, handle, isOnLoad, reserved);
+
+	if (J9_IS_31BIT_INTEROP_TARGET(handle)) {
+		result = javaVM->internalVMFunctions->invoke31BitJNI_OnXLoad(javaVM, handle, isOnLoad, reserved);
+	}
+
+	Trc_SC_Invoke31BitJNI_OnXLoad_Exit(result);
+
+	return result;
+}
+#endif /* defined(J9VM_ZOS_3164_INTEROPERABILITY) && (JAVA_SPEC_VERSION >= 17) */

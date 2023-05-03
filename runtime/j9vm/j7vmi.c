@@ -2328,38 +2328,6 @@ JVM_SuspendThread(jint arg0, jint arg1)
 }
 #endif /* JAVA_SPEC_VERSION < 20 */
 
-/* NOTE this is required by JDK15+ jdk.internal.loader.NativeLibraries.unload().
- */
-#if JAVA_SPEC_VERSION >= 15
-void JNICALL JVM_UnloadLibrary(void *handle)
-#else /* JAVA_SPEC_VERSION >= 15 */
-jobject JNICALL JVM_UnloadLibrary(jint arg0)
-#endif /* JAVA_SPEC_VERSION >= 15 */
-{
-#if JAVA_SPEC_VERSION >= 15
-	Trc_SC_UnloadLibrary_Entry(handle);
-
-#if defined(J9VM_OPT_JAVA_OFFLOAD_SUPPORT) && (JAVA_SPEC_VERSION >= 17)
-	{
-		UDATA doSwitching = ((UDATA)handle) & J9_NATIVE_LIBRARY_SWITCH_MASK;
-		handle = (void *)(((UDATA)handle) ^ doSwitching);
-	}
-#endif /* defined(J9VM_OPT_JAVA_OFFLOAD_SUPPORT) && (JAVA_SPEC_VERSION >= 17) */
-
-#if defined(WIN32)
-	FreeLibrary((HMODULE)handle);
-#elif defined(J9UNIX) || defined(J9ZOS390) /* defined(WIN32) */
-	dlclose(handle);
-#else /* defined(WIN32) */
-#error "Please implement J7vmi.c:JVM_UnloadLibrary(void *handle)"
-#endif /* defined(WIN32) */
-#else /* JAVA_SPEC_VERSION >= 15 */
-	assert(!"JVM_UnloadLibrary() stubbed!");
-	return NULL;
-#endif /* JAVA_SPEC_VERSION >= 15 */
-}
-
-
 
 jobject JNICALL
 JVM_Yield(jint arg0, jint arg1)
