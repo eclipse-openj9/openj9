@@ -62,7 +62,7 @@ static char const *statusNames[] = {
 static j9object_t setInitStatus(J9VMThread *currentThread, J9Class *clazz, UDATA status, j9object_t initializationLock);
 static void classInitStateMachine(J9VMThread *currentThread, J9Class *clazz, J9ClassInitState desiredState);
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 static BOOLEAN
 compareRAMClasses(void *item, J9StackElement *currentElement)
 {
@@ -87,7 +87,7 @@ popFromVerificationStack(J9VMThread *currentThread)
 {
 	popLoadingOrLinkingStack(currentThread, &currentThread->verificationStack, currentThread->javaVM->valueTypeVerificationStackPool);
 }
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 
 void
 initializeImpl(J9VMThread *currentThread, J9Class *clazz)
@@ -408,7 +408,7 @@ doVerify:
 					}
 				}
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 				/* verify flattenable fields */
 				if (NULL != clazz->flattenedClassCache) {
 					UDATA numberOfFlattenedFields = clazz->flattenedClassCache->numberOfEntries;
@@ -488,7 +488,7 @@ doVerify:
 						}
 					}
 				}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 
 				/* Verify this class */
 				PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, initializationLock);
@@ -588,7 +588,7 @@ doVerify:
 					iTable = iTable->next;
 				}
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 				/* prepare flattenable fields */
 				if (NULL != clazz->flattenedClassCache) {
 					UDATA numberOfFlattenedFields = clazz->flattenedClassCache->numberOfEntries;
@@ -640,7 +640,7 @@ doVerify:
 					}
 				}
 
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 
 				/* Prepare this class */
 				initializationLock = enterInitializationLock(currentThread, initializationLock);
@@ -739,7 +739,7 @@ doVerify:
 					}
 				}
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 				/* init flattenable fields */
 				if (NULL != clazz->flattenedClassCache) {
 					UDATA numberOfFlattenedFields = clazz->flattenedClassCache->numberOfEntries;
@@ -758,7 +758,7 @@ doVerify:
 						}
 					}
 				}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 
 				/* Initialize this class */
 				PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, initializationLock);

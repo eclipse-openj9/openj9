@@ -1833,8 +1833,12 @@ Only available on zOS</description>
 		<ifRemoved>No support for Foreign Linker API</ifRemoved>
 	</flag>
 	<flag id="opt_valhallaValueTypes">
-		<description>Enables support for Project Valhalla L-World Value Types</description>
-		<ifRemoved>No support for Project Valhalla L-World Value Types</ifRemoved>
+		<description>Enables support for Project Valhalla Value Objects</description>
+		<ifRemoved>No support for Project Valhalla Value Objects</ifRemoved>
+	</flag>
+	<flag id="opt_valhallaFlattenableValueTypes">
+		<description>Enables support for Project Valhalla L-World Flattenable Value Types</description>
+		<ifRemoved>No support for Project Valhalla L-World Flattenable Value Types</ifRemoved>
 	</flag>
 	<flag id="opt_phpSupport">
 		<description>Support for PHP interpreter.</description>

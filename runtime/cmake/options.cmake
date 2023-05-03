@@ -140,7 +140,8 @@ option(J9VM_OPT_MULTI_VM "Decides if multiple VMs can be created in the same add
 option(J9VM_OPT_OPENJDK_METHODHANDLE "Enables support for OpenJDK MethodHandles. J9VM_OPT_METHOD_HANDLE should be disabled.")
 
 option(J9VM_OPT_PANAMA "Enables support for Project Panama features such as native method handles")
-option(J9VM_OPT_VALHALLA_VALUE_TYPES "Enables support for Project Valhalla Value Types")
+option(J9VM_OPT_VALHALLA_VALUE_TYPES "Enables support for Project Valhalla Value Object")
+option(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES "Enables support for Project Valhalla Flattenable Value Types")
 
 option(J9VM_OPT_ROM_IMAGE_SUPPORT "Controls if the VM includes basic support for linked rom images")
 option(J9VM_OPT_SHARED_CLASSES "Support for class sharing")

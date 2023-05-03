@@ -84,9 +84,9 @@ checkNameImpl (J9CfrConstantPoolInfo * info, BOOLEAN isClass, BOOLEAN isMethod, 
 			return -1;
 		case ';':
 			if (isClass) {
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-				if (J9_ARE_ALL_BITS_SET(info->flags1, CFR_CLASS_FILE_VERSION_SUPPORT_VALUE_TYPE)) {
-					/* If CFR_CLASS_FILE_VERSION_SUPPORT_VALUE_TYPE is set (class major file version >= 62)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+				if (J9_ARE_ALL_BITS_SET(info->flags1, CFR_CLASS_FILE_VERSION_SUPPORT_FLATTENABLE_VALUE_TYPE)) {
+					/* If CFR_CLASS_FILE_VERSION_SUPPORT_FLATTENABLE_VALUE_TYPE is set (class major file version >= 62)
 					 * Valid at the end of array classes
 					 * or descriptors of form "LClassName;" or "QClassName;".
 					 */
@@ -96,16 +96,16 @@ checkNameImpl (J9CfrConstantPoolInfo * info, BOOLEAN isClass, BOOLEAN isMethod, 
 						break;
 					}
 				} else {
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 					/* Valid at the end of array classes */
 					if ((arity)
 						&& ((c + 1) == end)
 					) {
 						break;
 					}
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 				}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 			}
 			return -1;
 		case '<': /* Fall through */
@@ -208,7 +208,7 @@ bcvCheckName (J9CfrConstantPoolInfo * info) {
 	return checkNameImpl(info, FALSE, FALSE, FALSE);
 }
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 /**
  * Determines if the info parameter is a referencetype descriptor
  *
@@ -232,4 +232,4 @@ bcvIsReferenceTypeDescriptor(J9CfrConstantPoolInfo * info) {
 
 	return result;
 }
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */

@@ -45,7 +45,7 @@ ObjectFieldInfo::countInstanceFields(void)
 		const U_32 modifiers = field->modifiers;
 		if (J9_ARE_NO_BITS_SET(modifiers, J9AccStatic) ) {
 			if (modifiers & J9FieldFlagObject) {
-#ifdef J9VM_OPT_VALHALLA_VALUE_TYPES
+#ifdef J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES
 				J9UTF8 *fieldSig = J9ROMFIELDSHAPE_SIGNATURE(field);
 				U_8 *fieldSigBytes = J9UTF8_DATA(J9ROMFIELDSHAPE_SIGNATURE(field));
 				if ('Q' == *fieldSigBytes) {
@@ -82,7 +82,7 @@ ObjectFieldInfo::countInstanceFields(void)
 						}
 					}
 				} else
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES */
 				{
 					_instanceObjectCount += 1;
 					_totalObjectCount += 1;
@@ -152,12 +152,12 @@ ObjectFieldInfo::calculateTotalFieldsSizeAndBackfill()
 		accumulator = ROUND_UP_TO_POWEROF2((UDATA)accumulator, (UDATA)_cacheLineSize) - _objectHeaderSize; /* Rounding takes care of the odd number of 4-byte fields. Remove the header */
 	} else {
 		accumulator = _superclassFieldsSize + (_totalObjectCount * _referenceSize) + (_totalSingleCount * sizeof(U_32)) + (_totalDoubleCount * sizeof(U_64));
-#ifdef J9VM_OPT_VALHALLA_VALUE_TYPES
+#ifdef J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES
 		accumulator += _totalFlatFieldDoubleBytes + _totalFlatFieldRefBytes + _totalFlatFieldSingleBytes;
 
 		/* ValueTypes cannot be subtyped and their superClass contains no fields */
 		if (!isValue()) {
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES */
 			/* if the superclass is not end aligned but we have doubleword fields, use the space before the first field as the backfill */
 			if (
 					((getSuperclassObjectSize() % OBJECT_SIZE_INCREMENT_IN_BYTES) != 0) && /* superclass is not end-aligned */
@@ -179,7 +179,7 @@ ObjectFieldInfo::calculateTotalFieldsSizeAndBackfill()
 			} else {
 				_subclassBackfillOffset = _superclassBackfillOffset;
 			}
-#ifdef J9VM_OPT_VALHALLA_VALUE_TYPES
+#ifdef J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES
 		} else {
 			/* If the first field does not start at zero, this means we added padding to satisfy
 			 * alignment requirements of double slot fields. We will use the J9ClassHasPrePadding flag
@@ -208,7 +208,7 @@ ObjectFieldInfo::calculateTotalFieldsSizeAndBackfill()
 				}
 			}
 		}
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES */
 	}
 	return accumulator;
 }
