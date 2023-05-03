@@ -42,7 +42,10 @@ suspendThread(J9VMThread *currentThread, jthread thread, BOOLEAN allowNull, BOOL
 		J9JavaVM *vm = currentThread->javaVM;
 #if JAVA_SPEC_VERSION >= 19
 		j9object_t threadObject = (NULL == thread) ? currentThread->threadObject : J9_JNI_UNWRAP_REFERENCE(thread);
-		if (NULL != targetThread)
+		/* The J9 PUBLIC FLAGS HALT THREAD JAVA SUSPEND flag will be set
+		 * if the thread is mounted.
+		 */
+		if ((NULL != targetThread) && (threadObject == targetThread->threadObject))
 #endif /* JAVA_SPEC_VERSION >= 19 */
 		{
 			if (OMR_ARE_ANY_BITS_SET(targetThread->publicFlags, J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND)) {
@@ -71,13 +74,12 @@ suspendThread(J9VMThread *currentThread, jthread thread, BOOLEAN allowNull, BOOL
 			}
 		}
 #if JAVA_SPEC_VERSION >= 19
-		else {
-			/* targetThread is NULL only for virtual threads as per the assertion in getVMThread. */
-			if (0 != J9OBJECT_U32_LOAD(currentThread, threadObject, vm->isSuspendedByJVMTIOffset)) {
-				rc = JVMTI_ERROR_THREAD_SUSPENDED;
-			} else {
-				J9OBJECT_U32_STORE(currentThread, threadObject, vm->isSuspendedByJVMTIOffset, 1);
-			}
+		/* Re-fetch object to correctly set the field since VM access was re-acquired. */
+		threadObject = (NULL == thread) ? currentThread->threadObject : J9_JNI_UNWRAP_REFERENCE(thread);
+		if (0 != J9OBJECT_U32_LOAD(currentThread, threadObject, vm->isSuspendedInternalOffset)) {
+			rc = JVMTI_ERROR_THREAD_SUSPENDED;
+		} else {
+			J9OBJECT_U32_STORE(currentThread, threadObject, vm->isSuspendedInternalOffset, 1);
 		}
 #endif /* JAVA_SPEC_VERSION >= 19 */
 		releaseVMThread(currentThread, targetThread, thread);
