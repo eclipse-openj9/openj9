@@ -429,7 +429,7 @@ cd /cygdrive/c/temp
 
 - Run the following command:
 ```
-wget http://download.savannah.gnu.org/releases/freetype/freetype-2.5.3.tar.gz
+wget https://download.savannah.gnu.org/releases/freetype/freetype-old/freetype-2.5.3.tar.gz
 ```
 
 - To unpack the Freetype archive, run:
