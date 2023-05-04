@@ -696,8 +696,7 @@ final class Access implements JavaLangAccess {
 	}
 /*[ENDIF] JAVA_SPEC_VERSION >= 19 */
 
-/*[IF JAVA_SPEC_VERSION >= 21]*/
-	@Override
+/*[IF (JAVA_SPEC_VERSION >= 11) & (JAVA_SPEC_VERSION != 20)]*/
 	public String getLoaderNameID(ClassLoader loader) {
 		StringBuilder buffer = new StringBuilder();
 		String name = loader.getName();
@@ -714,7 +713,7 @@ final class Access implements JavaLangAccess {
 
 		return buffer.toString();
 	}
-/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
+/*[ENDIF] (JAVA_SPEC_VERSION >= 11) & (JAVA_SPEC_VERSION != 20) */
 
 /*[IF INLINE-TYPES]*/
 	@Override
