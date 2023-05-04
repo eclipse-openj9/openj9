@@ -3373,6 +3373,7 @@ void TR_ResolvedJ9Method::construct()
       {
       {x(TR::java_lang_ref_Reference_getImpl, "getImpl", "()Ljava/lang/Object;")},
       {x(TR::java_lang_ref_Reference_reachabilityFence, "reachabilityFence", "(Ljava/lang/Object;)V")},
+      {x(TR::java_lang_ref_Reference_refersTo, "refersTo", "(Ljava/lang/Object;)Z")},
       {TR::unknownMethod}
       };
 
