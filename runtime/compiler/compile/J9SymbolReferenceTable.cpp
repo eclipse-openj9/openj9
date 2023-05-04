@@ -418,18 +418,7 @@ TR::SymbolReference *
 J9::SymbolReferenceTable::findOrCreateInterfaceMethodSymbol(TR::ResolvedMethodSymbol * owningMethodSymbol, int32_t cpIndex)
    {
    owningMethodSymbol->setMayHaveInlineableCall(true);
-
-   TR::SymbolReference * symRef = findOrCreateMethodSymbol(owningMethodSymbol->getResolvedMethodIndex(), cpIndex, 0, TR::MethodSymbol::Interface);
-
-   // javasoft.sqe.tests.vm.instr.invokeinterface.invokeinterface019.invokeinterface01910m1.invokeinterface01910m1
-   // has an invoke interface on a final method in object.
-   //
-   if (symRef->getSymbol()->castToMethodSymbol()->getMethod()->isFinalInObject())
-      {
-      comp()->failCompilation<TR::CompilationException>("Method symbol reference is final in object");
-      }
-
-   return symRef;
+   return findOrCreateMethodSymbol(owningMethodSymbol->getResolvedMethodIndex(), cpIndex, 0, TR::MethodSymbol::Interface);
    }
 
 
