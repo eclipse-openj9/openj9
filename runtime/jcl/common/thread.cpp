@@ -197,15 +197,7 @@ Java_java_lang_Thread_resumeImpl(JNIEnv *env, jobject rcv)
 	Trc_JCL_threadResume(currentThread, targetThread);
 	if (J9VMJAVALANGTHREAD_STARTED(currentThread, receiverObject)) {
 		if (NULL != targetThread) {
-#if JAVA_SPEC_VERSION >= 19
-			if (receiverObject == targetThread->threadObject)
-#endif /* JAVA_SPEC_VERSION >= 19 */
-			{
-				vmFuncs->clearHaltFlag(targetThread, J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND);
-			}
-#if JAVA_SPEC_VERSION >= 19
-			J9OBJECT_U32_STORE(currentThread, receiverObject, vm->isSuspendedInternalOffset, 0);
-#endif /* JAVA_SPEC_VERSION >= 19 */
+			vmFuncs->clearHaltFlag(targetThread, J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND);
 		}
 	}
 	vmFuncs->internalExitVMToJNI(currentThread);
@@ -224,24 +216,18 @@ Java_java_lang_Thread_suspendImpl(JNIEnv *env, jobject rcv)
 	Trc_JCL_threadSuspend(currentThread, targetThread);
 	if (J9VMJAVALANGTHREAD_STARTED(currentThread, receiverObject)) {
 		if (NULL != targetThread) {
-#if JAVA_SPEC_VERSION >= 19
-			J9OBJECT_U32_STORE(currentThread, receiverObject, vm->isSuspendedInternalOffset, 1);
-			if (receiverObject == targetThread->threadObject)
-#endif /* JAVA_SPEC_VERSION >= 19 */
-			{
-				if (currentThread == targetThread) {
+			if (currentThread == targetThread) {
 				/* Suspending the current thread will take place upon re-entering the VM after returning from
 				 * this native.
 				 */
-					vmFuncs->setHaltFlag(targetThread, J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND);
-				} else {
-					vmFuncs->internalExitVMToJNI(currentThread);
-					omrthread_monitor_enter(targetThread->publicFlagsMutex);
-					VM_VMAccess::setHaltFlagForVMAccessRelease(targetThread, J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND);
-					if (VM_VMAccess::mustWaitForVMAccessRelease(targetThread)) {
-						while (J9_ARE_ALL_BITS_SET(targetThread->publicFlags, J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND | J9_PUBLIC_FLAGS_VM_ACCESS)) {
-							omrthread_monitor_wait(targetThread->publicFlagsMutex);
-						}
+				vmFuncs->setHaltFlag(targetThread, J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND);
+			} else {
+				vmFuncs->internalExitVMToJNI(currentThread);
+				omrthread_monitor_enter(targetThread->publicFlagsMutex);
+				VM_VMAccess::setHaltFlagForVMAccessRelease(targetThread, J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND);
+				if (VM_VMAccess::mustWaitForVMAccessRelease(targetThread)) {
+					while (J9_ARE_ALL_BITS_SET(targetThread->publicFlags, J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND | J9_PUBLIC_FLAGS_VM_ACCESS)) {
+						omrthread_monitor_wait(targetThread->publicFlagsMutex);
 					}
 				}
 				omrthread_monitor_exit(targetThread->publicFlagsMutex);
