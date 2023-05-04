@@ -584,7 +584,7 @@ done:
 	}
 
 	VMINLINE VM_BytecodeAction
-	j2iTransition(REGISTER_ARGS_LIST)
+	j2iTransition(REGISTER_ARGS_LIST, bool immediatelyRunCompiledMethod = false)
 	{
 		VM_JITInterface::disableRuntimeInstrumentation(_currentThread);
 		VM_BytecodeAction rc = GOTO_RUN_METHOD;
@@ -620,15 +620,20 @@ done:
 			UDATA result = 0;
 			do {
 				preCount = (UDATA)_sendMethod->extra;
-				postCount = preCount - _currentThread->jitCountDelta;
-				if (J9_ARE_NO_BITS_SET(preCount, J9_STARTPC_NOT_TRANSLATED)) {
-					/* Already compiled */
+				if (startAddressIsCompiled(preCount)) {
+					if (immediatelyRunCompiledMethod) {
+						if (methodCanBeRunCompiled(_sendMethod)) {
+							rc = promotedMethodOnTransitionFromJIT(REGISTER_ARGS, (void*)_pc, (void*)preCount);
+							goto done;
+						}
+					}
 					break;
 				}
 				if ((IDATA)preCount < 0) {
 					/* This method should not be translated (already enqueued, already failed, etc) */
 					break;
 				}
+				postCount = preCount - _currentThread->jitCountDelta;
 				if ((IDATA)postCount < 0) {
 					/* Attempt to compile the method */
 					_arg0EA = _sp;
@@ -9003,7 +9008,7 @@ done:
 
 		if (fromJIT) {
 			VM_JITInterface::restoreJITReturnAddress(_currentThread, _sp, (void *)_literals);
-			rc = j2iTransition(REGISTER_ARGS);
+			rc = j2iTransition(REGISTER_ARGS, true);
 		}
 
 		return rc;
@@ -9071,7 +9076,7 @@ done:
 			_sp[methodArgCount] = (UDATA)memberNameObject;
 
 			VM_JITInterface::restoreJITReturnAddress(_currentThread, _sp, (void *)_literals);
-			rc = j2iTransition(REGISTER_ARGS);
+			rc = j2iTransition(REGISTER_ARGS, true);
 		}
 
 		return rc;
@@ -9189,7 +9194,7 @@ foundITable:
 			_sp[methodArgCount] = (UDATA)memberNameObject;
 
 			VM_JITInterface::restoreJITReturnAddress(_currentThread, _sp, (void *)_literals);
-			rc = j2iTransition(REGISTER_ARGS);
+			rc = j2iTransition(REGISTER_ARGS, true);
 		}
 
 		return rc;
@@ -9299,7 +9304,7 @@ foundITable:
 			_sp[methodArgCount] = (UDATA)memberNameObject;
 
 			VM_JITInterface::restoreJITReturnAddress(_currentThread, _sp, (void *)_literals);
-			rc = j2iTransition(REGISTER_ARGS);
+			rc = j2iTransition(REGISTER_ARGS, true);
 		}
 
 done:
