@@ -261,16 +261,7 @@ buildStackFromMethodSignature( J9BytecodeVerificationData *verifyData, UDATA **s
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 			)
 		) {
-			/* This is <init>, not java/lang/Object */
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-			/* This is temporary and will have to be changed when <vnew> is introduced (along with all other code that references J9VM_OPT_VALHALLA_NEW_FACTORY_METHOD) */
-			if (J9ROMCLASS_IS_PRIMITIVE_VALUE_TYPE(romClass)) {
-				PUSH(BCV_PRIMITIVE_VALUETYPE | BCV_SPECIAL_INIT | (classIndex << BCV_CLASS_INDEX_SHIFT));
-			} else
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
-			{
-				PUSH(BCV_SPECIAL_INIT | (classIndex << BCV_CLASS_INDEX_SHIFT));
-			}
+			PUSH(BCV_SPECIAL_INIT | (classIndex << BCV_CLASS_INDEX_SHIFT));
 			isUninitializedThis = TRUE;
 		} else {
 			PUSH(BCV_GENERIC_OBJECT | (classIndex << BCV_CLASS_INDEX_SHIFT));
@@ -296,7 +287,6 @@ buildStackFromMethodSignature( J9BytecodeVerificationData *verifyData, UDATA **s
 		if (IS_REF_OR_VAL_SIGNATURE(args[i])) {
 			U_8 *string;
 			U_16 length = 0;
-			UDATA type = BCV_GET_TYPE_FROM_CHAR(args[i]);
 
 			i++;
 			string = &args[i];	/* remember the start of the string */
@@ -304,7 +294,7 @@ buildStackFromMethodSignature( J9BytecodeVerificationData *verifyData, UDATA **s
 				i++;
 				length++;
 			}
-			classIndex = convertClassNameToStackMapType(verifyData, string, length, type, arity);
+			classIndex = convertClassNameToStackMapType(verifyData, string, length, 0, arity);
 			PUSH(classIndex | (arity << BCV_ARITY_SHIFT));
 		} else {
 			if (arity) {
@@ -370,8 +360,7 @@ pushClassType(J9BytecodeVerificationData * verifyData, J9UTF8 * utf8string, UDAT
 		UDATA arrayType = parseObjectOrArrayName(verifyData, J9UTF8_DATA(utf8string));
 		PUSH(arrayType);
 	} else {
-		UDATA type = BCV_GET_TYPE_FROM_CHAR(firstChar);
-		PUSH(convertClassNameToStackMapType(verifyData, J9UTF8_DATA(utf8string),J9UTF8_LENGTH(utf8string), type, 0));
+		PUSH(convertClassNameToStackMapType(verifyData, J9UTF8_DATA(utf8string),J9UTF8_LENGTH(utf8string), BCV_OBJECT_OR_ARRAY, 0));
 	}
 
 	return stackTop;
@@ -483,13 +472,8 @@ isClassCompatible(J9BytecodeVerificationData *verifyData, UDATA sourceClass, UDA
 		return (IDATA) TRUE;
 	}
 
-	/* NULL is compatible with all non primitive classes */
+	/* NULL is compatible with all classes */
 	if( sourceClass == BCV_BASE_TYPE_NULL ) {
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-		if (J9_ARE_ALL_BITS_SET(targetClass, BCV_PRIMITIVE_VALUETYPE)) {
-			return (IDATA) FALSE;
-		}
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 		return (IDATA) TRUE;
 	}
 
@@ -770,11 +754,6 @@ isClassCompatibleByName(J9BytecodeVerificationData *verifyData, UDATA sourceClas
 
 	*reasonCode = 0;
 
-	/* NULL is compatible with non Q type classes */
-	if(sourceClass == BCV_BASE_TYPE_NULL) {
-		return (IDATA) !IS_QTYPE(*targetClassName);
-	}
-
 	/* If the source is special, or a base type -- fail */
 	if( sourceClass & BCV_BASE_OR_SPECIAL ) 
 		return (IDATA) FALSE;
@@ -782,8 +761,7 @@ isClassCompatibleByName(J9BytecodeVerificationData *verifyData, UDATA sourceClas
 	if (*targetClassName == '[') {
 		index = parseObjectOrArrayName(verifyData, targetClassName);
 	} else {
-		UDATA type = BCV_GET_TYPE_FROM_CHAR(*targetClassName);
-		index = convertClassNameToStackMapType(verifyData, targetClassName, (U_16)targetClassNameLength, type, 0);
+		index = convertClassNameToStackMapType(verifyData, targetClassName, (U_16)targetClassNameLength, 0, 0);
 	}
 
 	return isClassCompatible(verifyData, sourceClass, index, reasonCode);
