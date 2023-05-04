@@ -43,9 +43,9 @@ private:
 protected:
 	j9object_t _head; /**< the head of the linked list of OwnableSynchronizer objects */
 	j9object_t _tail; /**< the tail of the linked list of OwnableSynchronizer objects */
-	MM_HeapRegionDescriptor* _region;  /**< the region in which all buffered objects are located */
-	UDATA _objectCount; /**< the number of buffered objects */
-	const UDATA _maxObjectCount; /**< the maximum number of objects permitted before a forced flush */
+	MM_HeapRegionDescriptor *_region;  /**< the region in which all buffered objects are located */
+	uintptr_t _objectCount; /**< the number of buffered objects */
+	uintptr_t _maxObjectCount; /**< the maximum number of objects permitted before a forced flush */
 	MM_GCExtensions * const _extensions; /**< a cached pointer to the extensions structure */
 public:
 	
@@ -66,7 +66,7 @@ protected:
 	 * Subclasses must override.
 	 * @param env[in] the current thread
 	 */
-	virtual void flushImpl(MM_EnvironmentBase* env);
+	virtual void flushImpl(MM_EnvironmentBase *env);
 	
 public:
 	void kill(MM_EnvironmentBase *env);
@@ -75,20 +75,37 @@ public:
 	 * @param env[in] the current thread
 	 * @param object[in] the object to add
 	 */
-	void add(MM_EnvironmentBase* env, j9object_t object);
+	void add(MM_EnvironmentBase *env, j9object_t object);
 	
 	/**
 	 * Flush the contents of the buffer to the appropriate global buffers.
 	 * @param env[in] the current thread
 	 */
-	void flush(MM_EnvironmentBase* env);
+	void flush(MM_EnvironmentBase *env);
 
 	/**
 	 * Construct a new buffer.
 	 * @param extensions[in] the GC extensions
 	 * @param maxObjectCount the maximum number of objects permitted before a forced flush 
 	 */
-	MM_OwnableSynchronizerObjectBuffer(MM_GCExtensions *extensions, UDATA maxObjectCount);
+	MM_OwnableSynchronizerObjectBuffer(MM_GCExtensions *extensions, uintptr_t maxObjectCount);
+
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+	/**
+	 * Update the buffer based on the restore configuration.
+	 *
+	 * Currently, only the standard configurations support CRIU and therefore
+	 * only the standard buffers are expected to implement and invoke this method.
+	 *
+	 * @param[in] env the current environment.
+	 * @return boolean indicating whether the buffer was successfully updated.
+	 */
+	virtual bool reinitializeForRestore(MM_EnvironmentBase *env)
+	{
+		Assert_MM_unreachable();
+		return false;
+	}
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 };
 
 #endif /* OWNABLESYNCHRONIZEROBJECTBUFFER_HPP_ */

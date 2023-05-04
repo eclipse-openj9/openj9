@@ -36,7 +36,7 @@
 class MM_UnfinalizedObjectBufferStandard : public MM_UnfinalizedObjectBuffer
 {
 private:
-	UDATA _unfinalizedObjectListIndex;
+	uintptr_t _unfinalizedObjectListIndex;
 protected:
 public:
 	
@@ -51,7 +51,7 @@ protected:
 	 * Subclasses must override.
 	 * @param env[in] the current thread
 	 */
-	virtual void flushImpl(MM_EnvironmentBase* env);
+	virtual void flushImpl(MM_EnvironmentBase *env);
 	
 public:
 	static MM_UnfinalizedObjectBufferStandard *newInstance(MM_EnvironmentBase *env);
@@ -60,7 +60,18 @@ public:
 	 * @param extensions[in] the GC extensions
 	 * @param maxObjectCount the maximum number of objects permitted before a forced flush 
 	 */
-	MM_UnfinalizedObjectBufferStandard(MM_GCExtensions *extensions, UDATA maxObjectCount);
+	MM_UnfinalizedObjectBufferStandard(MM_GCExtensions *extensions, uintptr_t maxObjectCount);
+
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+	/**
+	 * Reinitialize the buffer's _maxObjectCount to account for the new restore GC thread count.
+	 * _maxObjectCount was initially set based on the GC thread count at VM startup.
+	 *
+	 * @param[in] env the current environment.
+	 * @return boolean indicating whether the buffer was successfully reinitialized.
+	 */
+	virtual bool reinitializeForRestore(MM_EnvironmentBase *env);
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 };
 
 #endif /* UNFINALIZEDOBJECTBUFFERSTANDARD_HPP_ */
