@@ -4686,7 +4686,7 @@ J9::Z::TreeEvaluator::multianewArrayEvaluator(TR::Node * node, TR::CodeGenerator
    TR::Compilation *comp = cg->comp();
    TR_Debug *compDebug = comp->getDebug();
    TR_ASSERT_FATAL(comp->target().is64Bit(), "multianewArrayEvaluator is only supported on 64-bit JVMs!");
-   TR_J9VMBase *fej9 = static_cast<TR_J9VMBase *>(comp->fe());
+   TR_J9VMBase *fej9 = comp->fej9();
    TR::Register *targetReg = cg->allocateRegister();
    TR::Instruction *cursor = NULL;
 
@@ -4696,8 +4696,13 @@ J9::Z::TreeEvaluator::multianewArrayEvaluator(TR::Node * node, TR::CodeGenerator
 
    TR::LabelSymbol *cFlowRegionStart = generateLabelSymbol(cg);
    TR::LabelSymbol *nonZeroFirstDimLabel = generateLabelSymbol(cg);
-   TR::LabelSymbol *cFlowRegionEnd = generateLabelSymbol(cg);
+   TR::LabelSymbol *cFlowRegionDone = generateLabelSymbol(cg);
    TR::LabelSymbol *oolFailLabel = generateLabelSymbol(cg);
+
+#if defined(TR_TARGET_64BIT)
+   bool isIndexableDataAddrPresent = TR::Compiler->om.isIndexableDataAddrPresent();
+   TR::LabelSymbol *populateFirstDimDataAddrSlot = isIndexableDataAddrPresent ? generateLabelSymbol(cg) : NULL;
+#endif /* defined(TR_TARGET_64BIT) */
 
    // oolJumpLabel is a common point that all branches will jump to. From this label, we branch to OOL code.
    // We do this instead of jumping directly to OOL code from mainline because the RA can only handle the case where there's
@@ -4705,7 +4710,7 @@ J9::Z::TreeEvaluator::multianewArrayEvaluator(TR::Node * node, TR::CodeGenerator
    TR::LabelSymbol *oolJumpLabel = generateLabelSymbol(cg);
 
    cFlowRegionStart->setStartInternalControlFlow();
-   cFlowRegionEnd->setEndInternalControlFlow();
+   cFlowRegionDone->setEndInternalControlFlow();
 
    generateS390LabelInstruction(cg, TR::InstOpCode::label, node, cFlowRegionStart);
 
@@ -4758,10 +4763,33 @@ J9::Z::TreeEvaluator::multianewArrayEvaluator(TR::Node * node, TR::CodeGenerator
 
    bool use64BitClasses = comp->target().is64Bit() && !TR::Compiler->om.generateCompressedObjectHeaders();
 
-   // Init class field, then jump to end of ICF
    generateRXInstruction(cg, use64BitClasses ? TR::InstOpCode::STG : TR::InstOpCode::ST, node, classReg, generateS390MemoryReference(targetReg, TR::Compiler->om.offsetOfObjectVftField(), cg));
-   cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, cFlowRegionEnd);
-   iComment("Init class field and jump to end of ICF.");
+#if defined(TR_TARGET_64BIT)
+   if (isIndexableDataAddrPresent)
+      {
+      TR_ASSERT_FATAL_WITH_NODE(node,
+         (TR::Compiler->om.compressObjectReferences()
+               && (fej9->getOffsetOfDiscontiguousDataAddrField() - fej9->getOffsetOfContiguousDataAddrField()) == 8)
+            || (!TR::Compiler->om.compressObjectReferences()
+               && fej9->getOffsetOfDiscontiguousDataAddrField() == fej9->getOffsetOfContiguousDataAddrField()),
+         "Offset of dataAddr field in discontiguous array is expected to be 8 bytes more than contiguous array if using compressed refs, "
+         "or same if using full refs. But was %d bytes for discontiguous and %d bytes for contiguous array.\n",
+         fej9->getOffsetOfDiscontiguousDataAddrField(), fej9->getOffsetOfContiguousDataAddrField());
+
+      // Load dataAddr slot offset difference since 0 size arrays are treated as discontiguous.
+      generateRIInstruction(cg,
+         TR::InstOpCode::LGHI,
+         node,
+         temp1Reg,
+         static_cast<int32_t>(fej9->getOffsetOfDiscontiguousDataAddrField() - fej9->getOffsetOfContiguousDataAddrField()));
+      cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, populateFirstDimDataAddrSlot);
+      }
+   else
+#endif /* TR_TARGET_64BIT */
+      {
+      cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, cFlowRegionDone);
+      }
+   iComment("Init class field and jump.");
 
    // We end up in this region of the ICF if the first dimension is non-zero and the second dimension is zero.
    cursor = generateS390LabelInstruction(cg, TR::InstOpCode::label, node, nonZeroFirstDimLabel);
@@ -4835,8 +4863,26 @@ J9::Z::TreeEvaluator::multianewArrayEvaluator(TR::Node * node, TR::CodeGenerator
    cursor = generateRXInstruction(cg, use64BitClasses ? TR::InstOpCode::STG : TR::InstOpCode::ST, node, componentClassReg, generateS390MemoryReference(temp2Reg, TR::Compiler->om.offsetOfObjectVftField(), cg));
    iComment("Init 2nd dim class field.");
 
-   // Store 2nd dim element into 1st dim array slot, compress temp2 if needed
    TR::Register *temp3Reg = cg->allocateRegister();
+
+#if defined(TR_TARGET_64BIT)
+   if (isIndexableDataAddrPresent)
+      {
+      // Populate dataAddr slot for 2nd dimension zero size array.
+      generateRXInstruction(cg,
+         TR::InstOpCode::LA,
+         node,
+         temp3Reg,
+         generateS390MemoryReference(temp2Reg, TR::Compiler->om.discontiguousArrayHeaderSizeInBytes(), cg));
+      generateRXInstruction(cg,
+         TR::InstOpCode::STG,
+         node,
+         temp3Reg,
+         generateS390MemoryReference(temp2Reg, fej9->getOffsetOfDiscontiguousDataAddrField(), cg));
+      }
+#endif /* TR_TARGET_64BIT */
+
+   // Store 2nd dim element into 1st dim array slot, compress temp2 if needed
    if (comp->target().is64Bit() && comp->useCompressedPointers())
       {
       int32_t shiftAmount = TR::Compiler->om.compressedReferenceShift();
@@ -4858,7 +4904,19 @@ J9::Z::TreeEvaluator::multianewArrayEvaluator(TR::Node * node, TR::CodeGenerator
 
    generateRILInstruction(cg, TR::InstOpCode::SLFI, node, firstDimLenReg, 1);
    generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::CL, node, firstDimLenReg, 0, TR::InstOpCode::COND_BNE, loopLabel, false);
-   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, cFlowRegionEnd);
+
+#if defined(TR_TARGET_64BIT)
+   if (isIndexableDataAddrPresent)
+      {
+      // No offset is needed since 1st dimension array is contiguous.
+      generateRRInstruction(cg, TR::InstOpCode::getXORRegOpCode(), node, temp1Reg, temp1Reg);
+      generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, populateFirstDimDataAddrSlot);
+      }
+   else
+#endif /* TR_TARGET_64BIT */
+      {
+      generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, cFlowRegionDone);
+      }
 
    TR::RegisterDependencyConditions *dependencies = generateRegisterDependencyConditions(0,10,cg);
    dependencies->addPostCondition(dimReg, TR::RealRegister::AssignAny);
@@ -4875,13 +4933,35 @@ J9::Z::TreeEvaluator::multianewArrayEvaluator(TR::Node * node, TR::CodeGenerator
    generateS390LabelInstruction(cg, TR::InstOpCode::label, node, oolJumpLabel);
    generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, oolFailLabel);
 
-   generateS390LabelInstruction(cg, TR::InstOpCode::label, node, cFlowRegionEnd, dependencies);
+#if defined(TR_TARGET_64BIT)
+   if (isIndexableDataAddrPresent)
+      {
+      /* Populate dataAddr slot of 1st dimension array. Arrays of non-zero size
+       * use contiguous header layout while zero size arrays use discontiguous header layout.
+       */
+      cursor = generateS390LabelInstruction(cg, TR::InstOpCode::label, node, populateFirstDimDataAddrSlot);
+      iComment("populateFirstDimDataAddrSlot.");
+
+      generateRXInstruction(cg,
+         TR::InstOpCode::LA,
+         node,
+         temp3Reg,
+         generateS390MemoryReference(targetReg, temp1Reg, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg));
+      generateRXInstruction(cg,
+         TR::InstOpCode::STG,
+         node,
+         temp3Reg,
+         generateS390MemoryReference(targetReg, temp1Reg, fej9->getOffsetOfContiguousDataAddrField(), cg));
+      }
+#endif /* TR_TARGET_64BIT */
+
+   generateS390LabelInstruction(cg, TR::InstOpCode::label, node, cFlowRegionDone, dependencies);
 
    TR::Register *targetRegisterFinal = cg->allocateCollectedReferenceRegister();
    generateRRInstruction(cg, TR::InstOpCode::LGR, node, targetRegisterFinal, targetReg);
 
    // Generate the OOL code before final bookkeeping.
-   TR_S390OutOfLineCodeSection *outlinedSlowPath = new (cg->trHeapMemory()) TR_S390OutOfLineCodeSection(oolFailLabel, cFlowRegionEnd, cg);
+   TR_S390OutOfLineCodeSection *outlinedSlowPath = new (cg->trHeapMemory()) TR_S390OutOfLineCodeSection(oolFailLabel, cFlowRegionDone, cg);
    cg->getS390OutOfLineCodeSectionList().push_front(outlinedSlowPath);
    outlinedSlowPath->swapInstructionListsWithCompilation();
    generateS390LabelInstruction(cg, TR::InstOpCode::label, node, oolFailLabel);
@@ -4892,7 +4972,7 @@ J9::Z::TreeEvaluator::multianewArrayEvaluator(TR::Node * node, TR::CodeGenerator
    TR::Node::recreate(node, opCode);
 
    generateRRInstruction(cg, TR::InstOpCode::LGR, node, targetReg, targetReg2);
-   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, cFlowRegionEnd);
+   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, cFlowRegionDone);
    outlinedSlowPath->swapInstructionListsWithCompilation();
 
    // Note: We don't decrement the ref count node's children here (i.e. cg->decReferenceCount(node->getFirstChild())) because it is done by the performCall in the OOL code above.
@@ -9948,13 +10028,18 @@ genHeapAlloc(TR::Node * node, TR::Instruction *& iCursor, bool isVariableLen, TR
          roundArrayLengthToObjectAlignment(cg, node, iCursor, dataSizeReg, conditions, litPoolBaseReg, allocSize, elementSize, sizeReg);
 
    #if defined(J9VM_INTERP_FLAGS_IN_CLASS_SLOT)
-         // All arrays in combo builds will always be at least 12 bytes in size in all specs:
+         // All arrays in combo builds will always be at least 12 bytes in size in all specs if
+         // dual header shape is enabled and 20 bytes otherwise:
          //
+         // Dual header shape is enabled:
          // 1)  class pointer + contig length + one or more elements
          // 2)  class pointer + 0 + 0 (for zero length arrays)
          //
-         //Since objects are aligned to 8 bytes then the minimum size for an array must be 16 after rounding
-
+         // Dual header shape is disabled:
+         // 1)  class pointer + contig length + dataAddr + one or more elements
+         // 2)  class pointer + 0 + 0 (for zero length arrays) + dataAddr
+         //
+         // Since objects are aligned to 8 bytes then the minimum size for an array must be 16 and 24 after rounding
          static_assert(J9_GC_MINIMUM_OBJECT_SIZE >= 8, "Expecting a minimum object size >= 8");
    #endif
          }
@@ -10408,7 +10493,7 @@ J9::Z::TreeEvaluator::VMnewEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    int32_t litPoolRegTotalUse, temp2RegTotalUse;
    int32_t elementSize;
    TR::Compilation *comp = cg->comp();
-   TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
+   TR_J9VMBase *fej9 = comp->fej9();
 
 
    /* New Evaluator Optimization: Using OOL instead of snippet for heap alloc
@@ -10480,7 +10565,6 @@ J9::Z::TreeEvaluator::VMnewEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       else
          {
          isArray = true;
-         TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
          if (generateArraylets || TR::Compiler->om.useHybridArraylets())
             {
             if (node->getOpCodeValue() == TR::newarray)
@@ -10798,82 +10882,86 @@ J9::Z::TreeEvaluator::VMnewEvaluator(TR::Node * node, TR::CodeGenerator * cg)
                enumReg, dataSizeReg, temp1Reg, litPoolBaseReg, conditions, cg);
 
 #ifdef TR_TARGET_64BIT
-         /* Here we'll update dataAddr slot for both fixed and variable length arrays. Fixed length arrays are
-          * simple as we just need to check first child of the node for array size. For variable length arrays
-          * runtime size checks are needed to determine whether to use contiguous or discontiguous header layout.
-          *
-          * In both scenarios, arrays of non-zero size use contiguous header layout while zero size arrays use
-          * discontiguous header layout.
-          */
-         TR::Register *offsetReg = NULL;
-         TR::MemoryReference *dataAddrMR = NULL;
-         TR::MemoryReference *dataAddrSlotMR = NULL;
-
-         if (isVariableLen && TR::Compiler->om.compressObjectReferences())
+         if (TR::Compiler->om.isIndexableDataAddrPresent())
             {
-            /* We need to check enumReg (array size) at runtime to determine correct offset of dataAddr field.
-             * Here we deal only with compressed refs because dataAddr offset for discontiguous
-             * and contiguous arrays is the same in full refs.
+            /* Here we'll update dataAddr slot for both fixed and variable length arrays. Fixed length arrays are
+             * simple as we just need to check first child of the node for array size. For variable length arrays
+             * runtime size checks are needed to determine whether to use contiguous or discontiguous header layout.
+             *
+             * In both scenarios, arrays of non-zero size use contiguous header layout while zero size arrays use
+             * discontiguous header layout.
              */
-            if (comp->getOption(TR_TraceCG))
-               traceMsg(comp, "Node (%p): Dealing with compressed refs variable length array.\n", node);
+            TR::Register *offsetReg = NULL;
+            TR::MemoryReference *dataAddrMR = NULL;
+            TR::MemoryReference *dataAddrSlotMR = NULL;
 
-            TR_ASSERT_FATAL_WITH_NODE(node,
-               (fej9->getOffsetOfDiscontiguousDataAddrField() - fej9->getOffsetOfContiguousDataAddrField()) == 8,
-               "Offset of dataAddr field in discontiguous array is expected to be 8 bytes more than contiguous array. "
-               "But was %d bytes for discontigous and %d bytes for contiguous array.\n",
-               fej9->getOffsetOfDiscontiguousDataAddrField(), fej9->getOffsetOfContiguousDataAddrField());
-
-            offsetReg = cg->allocateRegister();
-            // Invert enumReg sign. 0 and negative numbers remain unchanged.
-            iCursor = generateRREInstruction(cg, TR::InstOpCode::LNGFR, node, offsetReg, enumReg, iCursor);
-            iCursor = generateRSInstruction(cg, TR::InstOpCode::SRLG, node, temp1Reg, offsetReg, 63, iCursor);
-            iCursor = generateRSInstruction(cg, TR::InstOpCode::SLLG, node, offsetReg, temp1Reg, 3, iCursor);
-            // Inverting the sign bit will leave us with either -8 (if enumCopyReg > 0) or 0 (if enumCopyReg == 0).
-            iCursor = generateRREInstruction(cg, TR::InstOpCode::LNGR, node, offsetReg, offsetReg, iCursor);
-
-            dataAddrMR = generateS390MemoryReference(resReg, offsetReg, TR::Compiler->om.discontiguousArrayHeaderSizeInBytes(), cg);
-            dataAddrSlotMR = generateS390MemoryReference(resReg, offsetReg, fej9->getOffsetOfDiscontiguousDataAddrField(), cg);
-            }
-         else if (!isVariableLen && node->getFirstChild()->getOpCode().isLoadConst() && node->getFirstChild()->getInt() == 0)
-            {
-            if (comp->getOption(TR_TraceCG))
-               traceMsg(comp, "Node (%p): Dealing with full/compressed refs fixed length zero size array.\n", node);
-
-            dataAddrMR = generateS390MemoryReference(resReg, TR::Compiler->om.discontiguousArrayHeaderSizeInBytes(), cg);
-            dataAddrSlotMR = generateS390MemoryReference(resReg, fej9->getOffsetOfDiscontiguousDataAddrField(), cg);
-            }
-         else
-            {
-            if (comp->getOption(TR_TraceCG))
+            if (isVariableLen && TR::Compiler->om.compressObjectReferences())
                {
-               traceMsg(comp,
-                  "Node (%p): Dealing with either full/compressed refs fixed length non-zero size array or full refs variable length array.\n",
-                  node);
-               }
+               /* We need to check enumReg (array size) at runtime to determine correct offset of dataAddr field.
+                * Here we deal only with compressed refs because dataAddr offset for discontiguous
+                * and contiguous arrays is the same in full refs.
+                */
+               if (comp->getOption(TR_TraceCG))
+                  traceMsg(comp, "Node (%p): Dealing with compressed refs variable length array.\n", node);
 
-            if (!TR::Compiler->om.compressObjectReferences())
-               {
                TR_ASSERT_FATAL_WITH_NODE(node,
-               fej9->getOffsetOfDiscontiguousDataAddrField() == fej9->getOffsetOfContiguousDataAddrField(),
-               "dataAddr field offset is expected to be same for both contiguous and discontiguous arrays in full refs. "
-               "But was %d bytes for discontiguous and %d bytes for contiguous array.\n",
-               fej9->getOffsetOfDiscontiguousDataAddrField(), fej9->getOffsetOfContiguousDataAddrField());
+                  (fej9->getOffsetOfDiscontiguousDataAddrField() - fej9->getOffsetOfContiguousDataAddrField()) == 8,
+                  "Offset of dataAddr field in discontiguous array is expected to be 8 bytes more than contiguous array. "
+                  "But was %d bytes for discontiguous and %d bytes for contiguous array.\n",
+                  fej9->getOffsetOfDiscontiguousDataAddrField(), fej9->getOffsetOfContiguousDataAddrField());
+
+               offsetReg = cg->allocateRegister();
+               // Invert enumReg sign. 0 and negative numbers remain unchanged.
+               iCursor = generateRREInstruction(cg, TR::InstOpCode::LNGFR, node, offsetReg, enumReg, iCursor);
+               iCursor = generateRSInstruction(cg, TR::InstOpCode::SRLG, node, temp1Reg, offsetReg, 63, iCursor);
+               iCursor = generateRSInstruction(cg, TR::InstOpCode::SLLG, node, offsetReg, temp1Reg, 3, iCursor);
+               // Inverting the sign bit will leave us with either -8 (if enumCopyReg > 0) or 0 (if enumCopyReg == 0).
+               iCursor = generateRREInstruction(cg, TR::InstOpCode::LNGR, node, offsetReg, offsetReg, iCursor);
+
+               dataAddrMR = generateS390MemoryReference(resReg, offsetReg, TR::Compiler->om.discontiguousArrayHeaderSizeInBytes(), cg);
+               dataAddrSlotMR = generateS390MemoryReference(resReg, offsetReg, fej9->getOffsetOfDiscontiguousDataAddrField(), cg);
+               }
+            else if (!isVariableLen && node->getFirstChild()->getOpCode().isLoadConst() && node->getFirstChild()->getInt() == 0)
+               {
+               if (comp->getOption(TR_TraceCG))
+                  traceMsg(comp, "Node (%p): Dealing with full/compressed refs fixed length zero size array.\n", node);
+
+               dataAddrMR = generateS390MemoryReference(resReg, TR::Compiler->om.discontiguousArrayHeaderSizeInBytes(), cg);
+               dataAddrSlotMR = generateS390MemoryReference(resReg, fej9->getOffsetOfDiscontiguousDataAddrField(), cg);
+               }
+            else
+               {
+               if (comp->getOption(TR_TraceCG))
+                  {
+                  traceMsg(comp,
+                     "Node (%p): Dealing with either full/compressed refs fixed length non-zero size array or full refs variable length array.\n",
+                     node);
+                  }
+
+               if (!TR::Compiler->om.compressObjectReferences())
+                  {
+                  TR_ASSERT_FATAL_WITH_NODE(node,
+                     fej9->getOffsetOfDiscontiguousDataAddrField() == fej9->getOffsetOfContiguousDataAddrField(),
+                     "dataAddr field offset is expected to be same for both contiguous and discontiguous arrays in full refs. "
+                     "But was %d bytes for discontiguous and %d bytes for contiguous array.\n",
+                     fej9->getOffsetOfDiscontiguousDataAddrField(), fej9->getOffsetOfContiguousDataAddrField());
+                  }
+
+               dataAddrMR = generateS390MemoryReference(resReg, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg);
+               dataAddrSlotMR = generateS390MemoryReference(resReg, fej9->getOffsetOfContiguousDataAddrField(), cg);
                }
 
-            dataAddrMR = generateS390MemoryReference(resReg, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg);
-            dataAddrSlotMR = generateS390MemoryReference(resReg, fej9->getOffsetOfContiguousDataAddrField(), cg);
-            }
-
-            iCursor = generateRXInstruction(cg, TR::InstOpCode::LAY, node, temp1Reg, dataAddrMR, iCursor);
+            iCursor = generateRXInstruction(cg, TR::InstOpCode::LA, node, temp1Reg, dataAddrMR, iCursor);
             iCursor = generateRXInstruction(cg, TR::InstOpCode::STG, node, temp1Reg, dataAddrSlotMR, iCursor);
 
-         if (offsetReg)
-            {
-            conditions->addPostCondition(offsetReg, TR::RealRegister::AssignAny);
-            cg->stopUsingRegister(offsetReg);
+            if (offsetReg)
+               {
+               conditions->addPostCondition(offsetReg, TR::RealRegister::AssignAny);
+               cg->stopUsingRegister(offsetReg);
+               }
             }
 #endif /* TR_TARGET_64BIT */
+
          // Write Arraylet Pointer
          if (generateArraylets)
             {
@@ -10931,7 +11019,7 @@ J9::Z::TreeEvaluator::VMnewEvaluator(TR::Node * node, TR::CodeGenerator * cg)
             // In the evaluator we directly refer to the array class.  In AOT with SVM we need to remember to validate the component class since relocation infrastructure is
             // expecting component class.
             if (comp->getOption(TR_UseSymbolValidationManager))
-               classToValidate = comp->fej9()->getComponentClassFromArrayClass(classToValidate);
+               classToValidate = fej9->getComponentClassFromArrayClass(classToValidate);
             }
          if (comp->getOption(TR_UseSymbolValidationManager))
             {

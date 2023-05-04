@@ -277,6 +277,9 @@ public:
       bool _reportByteCodeInfoAtCatchBlock;
       TR_OpaqueClassBlock *_arrayTypeClasses[8];
       TR_OpaqueClassBlock *_byteArrayClass;
+      bool _isIndexableDataAddrPresent;
+      uintptr_t _contiguousIndexableHeaderSize;
+      uintptr_t _discontiguousIndexableHeaderSize;
       MM_GCReadBarrierType _readBarrierType;
       MM_GCWriteBarrierType _writeBarrierType;
       bool _compressObjectReferences;
