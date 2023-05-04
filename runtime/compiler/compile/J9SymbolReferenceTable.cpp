@@ -1360,10 +1360,6 @@ J9::SymbolReferenceTable::findOrCreateCurrentThreadSymbolRef()
          {
          sym->setImmutableField();
          }
-      else
-         {
-         sym->setVolatile();
-         }
       element(currentThreadSymbol) = new (trHeapMemory()) TR::SymbolReference(self(), currentThreadSymbol, sym);
       element(currentThreadSymbol)->setOffset(fej9->thisThreadGetCurrentThreadOffset());
       }
