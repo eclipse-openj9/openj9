@@ -307,6 +307,13 @@ J9::ObjectModel::generateCompressedObjectHeaders()
 uintptr_t
 J9::ObjectModel::contiguousArrayHeaderSizeInBytes()
    {
+#if defined(J9VM_OPT_JITSERVER)
+   if (auto stream = TR::CompilationInfo::getStream())
+      {
+      auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(stream);
+      return vmInfo->_contiguousIndexableHeaderSize;
+      }
+#endif /* defined(J9VM_OPT_JITSERVER) */
    return TR::Compiler->javaVM->contiguousIndexableHeaderSize;
    }
 
@@ -314,6 +321,13 @@ J9::ObjectModel::contiguousArrayHeaderSizeInBytes()
 uintptr_t
 J9::ObjectModel::discontiguousArrayHeaderSizeInBytes()
    {
+#if defined(J9VM_OPT_JITSERVER)
+   if (auto stream = TR::CompilationInfo::getStream())
+      {
+      auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(stream);
+      return vmInfo->_discontiguousIndexableHeaderSize;
+      }
+#endif /* defined(J9VM_OPT_JITSERVER) */
    return TR::Compiler->javaVM->discontiguousIndexableHeaderSize;
    }
 
@@ -705,6 +719,27 @@ J9::ObjectModel::arrayletLeafLogSize()
       }
 #endif /* defined(J9VM_OPT_JITSERVER) */
    return _arrayLetLeafLogSize;
+   }
+
+/**
+ * Query if the indexable data address field is present within the indexable object header.
+ * @return true if isIndexableDualHeaderShapeEnabled is false OR if option -Xgcpolicy:balanced is specified at runtime, false otherwise
+ */
+bool
+J9::ObjectModel::isIndexableDataAddrPresent()
+   {
+#if defined(J9VM_OPT_JITSERVER)
+   if (auto stream = TR::CompilationInfo::getStream())
+      {
+      auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(stream);
+      return vmInfo->_isIndexableDataAddrPresent;
+      }
+#endif /* defined(J9VM_OPT_JITSERVER) */
+#if defined(J9VM_ENV_DATA64)
+   return FALSE != TR::Compiler->javaVM->isIndexableDataAddrPresent;
+#else
+   return false;
+#endif /* defined(J9VM_ENV_DATA64) */
    }
 
 MM_GCReadBarrierType

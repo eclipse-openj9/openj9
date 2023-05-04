@@ -6365,7 +6365,7 @@ static void genZeroInit(TR::CodeGenerator *cg, TR::Node *node, TR::Register *obj
 
 TR::Register *J9::Power::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   TR_J9VMBase *fej9 = (TR_J9VMBase *) (cg->fe());
+   TR_J9VMBase *fej9 = cg->fej9();
    int32_t allocateSize, objectSize, dataBegin, idx;
    TR::ILOpCodes opCode;
    TR_OpaqueClassBlock *clazz;
@@ -6597,61 +6597,76 @@ TR::Register *J9::Power::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeG
                   tmp5Reg, tmp4Reg, conditions, needZeroInit, cg);
 
 #ifdef TR_TARGET_64BIT
-         /* Here we'll update dataAddr slot for both fixed and variable length arrays. Fixed length arrays are
-          * simple as we just need to check first child of the node for array size. For variable length arrays
-          * runtime size checks are needed to determine whether to use contiguous or discontiguous header layout.
-          *
-          * In both scenarios, arrays of non-zero size use contiguous header layout while zero size arrays use
-          * discontiguous header layout.
-          */
-         TR::Register *offsetReg = tmp5Reg;
-         TR::Register *firstDataElementReg = tmp4Reg;
-         TR::MemoryReference *dataAddrSlotMR = NULL;
-
-         if (isVariableLen && TR::Compiler->om.compressObjectReferences())
+         if (TR::Compiler->om.isIndexableDataAddrPresent())
             {
-            /* We need to check enumReg at runtime to determine correct offset of dataAddr field.
-             * Here we deal only with compressed refs because dataAddr offset for discontiguous
-             * and contiguous arrays is the same in full refs.
+            /* Here we'll update dataAddr slot for both fixed and variable length arrays. Fixed length arrays are
+             * simple as we just need to check first child of the node for array size. For variable length arrays,
+             * runtime size checks are needed to determine whether to use contiguous or discontiguous header layout.
+             *
+             * In both scenarios, arrays of non-zero size use contiguous header layout while zero size arrays use
+             * discontiguous header layout.
              */
-            if (comp->getOption(TR_TraceCG))
-               traceMsg(comp, "Node (%p): Dealing with compressed refs variable length array.\n", node);
+            TR::Register *offsetReg = tmp5Reg;
+            TR::Register *firstDataElementReg = tmp4Reg;
+            TR::MemoryReference *dataAddrSlotMR = NULL;
 
-            TR_ASSERT_FATAL_WITH_NODE(node, (fej9->getOffsetOfDiscontiguousDataAddrField() - fej9->getOffsetOfContiguousDataAddrField()) == 8,
-            "Offset of dataAddr field in discontiguous array is expected to be 8 bytes more than contiguous array. But was %d bytes for discontigous and %d bytes for contiguous array.\n", fej9->getOffsetOfDiscontiguousDataAddrField(), fej9->getOffsetOfContiguousDataAddrField());
+            if (isVariableLen && TR::Compiler->om.compressObjectReferences())
+               {
+               /* We need to check enumReg at runtime to determine correct offset of dataAddr field.
+                * Here we deal only with compressed refs because dataAddr offset for discontiguous
+                * and contiguous arrays is the same in full refs.
+                */
+               if (comp->getOption(TR_TraceCG))
+                  traceMsg(comp, "Node (%p): Dealing with compressed refs variable length array.\n", node);
 
-            iCursor = generateTrg1Src1Instruction(cg, TR::InstOpCode::cntlzd, node, offsetReg, enumReg, iCursor);
-            iCursor = generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rlwinm, node, offsetReg, offsetReg, 29, 8, iCursor);
-            // offsetReg should either be 0 (if enumReg > 0) or 8 (if enumReg == 0)
-            iCursor = generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, offsetReg, resReg, offsetReg, iCursor);
+               TR_ASSERT_FATAL_WITH_NODE(node,
+                  (fej9->getOffsetOfDiscontiguousDataAddrField() - fej9->getOffsetOfContiguousDataAddrField()) == 8,
+                  "Offset of dataAddr field in discontiguous array is expected to be 8 bytes more than contiguous array. "
+                  "But was %d bytes for discontigous and %d bytes for contiguous array.\n",
+                  fej9->getOffsetOfDiscontiguousDataAddrField(), fej9->getOffsetOfContiguousDataAddrField());
 
-            iCursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, firstDataElementReg, offsetReg, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), iCursor);
-            dataAddrSlotMR = TR::MemoryReference::createWithDisplacement(cg, offsetReg, fej9->getOffsetOfContiguousDataAddrField(), TR::Compiler->om.sizeofReferenceAddress());
+               iCursor = generateTrg1Src1Instruction(cg, TR::InstOpCode::cntlzd, node, offsetReg, enumReg, iCursor);
+               iCursor = generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rlwinm, node, offsetReg, offsetReg, 29, 8, iCursor);
+               // offsetReg should either be 0 (if enumReg > 0) or 8 (if enumReg == 0)
+               iCursor = generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, offsetReg, resReg, offsetReg, iCursor);
+
+               iCursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, firstDataElementReg, offsetReg, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), iCursor);
+               dataAddrSlotMR = TR::MemoryReference::createWithDisplacement(cg, offsetReg, fej9->getOffsetOfContiguousDataAddrField(), TR::Compiler->om.sizeofReferenceAddress());
+               }
+            else if (!isVariableLen && node->getFirstChild()->getOpCode().isLoadConst() && node->getFirstChild()->getInt() == 0)
+               {
+               if (comp->getOption(TR_TraceCG))
+                  traceMsg(comp, "Node (%p): Dealing with full/compressed refs fixed length zero size array.\n", node);
+
+               iCursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, firstDataElementReg, resReg, TR::Compiler->om.discontiguousArrayHeaderSizeInBytes(), iCursor);
+               dataAddrSlotMR = TR::MemoryReference::createWithDisplacement(cg, resReg, fej9->getOffsetOfDiscontiguousDataAddrField(), TR::Compiler->om.sizeofReferenceAddress());
+               }
+            else
+               {
+               if (comp->getOption(TR_TraceCG))
+                  {
+                  traceMsg(comp,
+                     "Node (%p): Dealing with either full/compressed refs fixed length non-zero size array or full refs variable length array.\n",
+                     node);
+                  }
+
+               if (!TR::Compiler->om.compressObjectReferences())
+                  {
+                  TR_ASSERT_FATAL_WITH_NODE(node,
+                     fej9->getOffsetOfDiscontiguousDataAddrField() == fej9->getOffsetOfContiguousDataAddrField(),
+                     "dataAddr field offset is expected to be same for both contiguous and discontiguous arrays in full refs. "
+                     "But was %d bytes for discontiguous and %d bytes for contiguous array.\n",
+                     fej9->getOffsetOfDiscontiguousDataAddrField(), fej9->getOffsetOfContiguousDataAddrField());
+                  }
+
+               iCursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, firstDataElementReg, resReg, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), iCursor);
+               dataAddrSlotMR = TR::MemoryReference::createWithDisplacement(cg, resReg, fej9->getOffsetOfContiguousDataAddrField(), TR::Compiler->om.sizeofReferenceAddress());
+               }
+
+            // store the first data element address to dataAddr slot
+            iCursor = generateMemSrc1Instruction(cg, TR::InstOpCode::std, node, dataAddrSlotMR, firstDataElementReg, iCursor);
             }
-         else if (!isVariableLen && node->getFirstChild()->getOpCode().isLoadConst() && node->getFirstChild()->getInt() == 0)
-            {
-            if (comp->getOption(TR_TraceCG))
-               traceMsg(comp, "Node (%p): Dealing with full/compressed refs fixed length zero size array.\n", node);
-
-            iCursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, firstDataElementReg, resReg, TR::Compiler->om.discontiguousArrayHeaderSizeInBytes(), iCursor);
-            dataAddrSlotMR = TR::MemoryReference::createWithDisplacement(cg, resReg, fej9->getOffsetOfDiscontiguousDataAddrField(), TR::Compiler->om.sizeofReferenceAddress());
-            }
-         else
-            {
-            if (comp->getOption(TR_TraceCG))
-               traceMsg(comp, "Node (%p): Dealing with either full/compressed refs fixed length non-zero size array or full refs variable length array.\n", node);
-
-            if (!TR::Compiler->om.compressObjectReferences())
-               TR_ASSERT_FATAL_WITH_NODE(node, fej9->getOffsetOfDiscontiguousDataAddrField() == fej9->getOffsetOfContiguousDataAddrField(), "dataAddr field offset is expected to be same for both contiguous and discontiguous arrays in full refs. But was %d bytes for discontiguous and %d bytes for contiguous array.\n", fej9->getOffsetOfDiscontiguousDataAddrField(), fej9->getOffsetOfContiguousDataAddrField());
-
-            iCursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, firstDataElementReg, resReg, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), iCursor);
-            dataAddrSlotMR = TR::MemoryReference::createWithDisplacement(cg, resReg, fej9->getOffsetOfContiguousDataAddrField(), TR::Compiler->om.sizeofReferenceAddress());
-            }
-
-         // store the first data element address to dataAddr slot
-         iCursor = generateMemSrc1Instruction(cg, TR::InstOpCode::std, node, dataAddrSlotMR, firstDataElementReg, iCursor);
 #endif /* TR_TARGET_64BIT */
-
          if (generateArraylets)
             {
             //write arraylet pointer to object header
@@ -6978,7 +6993,7 @@ TR::Register *J9::Power::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeG
             reloKind = TR_VerifyRefArrayForAlloc;
 
             if (comp->getOption(TR_UseSymbolValidationManager))
-               classToValidate = comp->fej9()->getComponentClassFromArrayClass(classToValidate);
+               classToValidate = fej9->getComponentClassFromArrayClass(classToValidate);
             }
 
          if (comp->getOption(TR_UseSymbolValidationManager))

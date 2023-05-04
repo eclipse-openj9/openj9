@@ -1083,6 +1083,8 @@ TR_SharedCacheRelocationRuntime::checkAOTHeaderFlags(const TR_AOTHeader *hdrInCa
       defaultMessage = generateError(J9NLS_RELOCATABLE_CODE_HEAP_SIZE_FOR_BARRIER_RANGE_MISMATCH, "AOT header validation failed: Heap Size for Barrier Range feature mismatch.");
    if ((featureFlags & TR_FeatureFlag_IsVariableActiveCardTableBase) != (hdrInCache->featureFlags & TR_FeatureFlag_IsVariableActiveCardTableBase))
       defaultMessage = generateError(J9NLS_RELOCATABLE_CODE_ACTIVE_CARD_TABLE_BASE_MISMATCH, "AOT header validation failed: Active Card Table Base feature mismatch.");
+   if ((featureFlags & TR_FeatureFlag_ArrayHeaderShape) != (hdrInCache->featureFlags & TR_FeatureFlag_ArrayHeaderShape))
+      defaultMessage = generateError(J9NLS_RELOCATABLE_CODE_ARRAY_HEADER_SHAPE_MISMATCH, "AOT header validation failed: Array header shape mismatch.");
    if ((featureFlags & TR_FeatureFlag_SanityCheckEnd) != (hdrInCache->featureFlags & TR_FeatureFlag_SanityCheckEnd))
       defaultMessage = generateError(J9NLS_RELOCATABLE_CODE_HEADER_END_SANITY_BIT_MANGLED, "AOT header validation failed: Trailing sanity bit mismatch.");
 
@@ -1393,6 +1395,8 @@ TR_SharedCacheRelocationRuntime::generateFeatureFlags(TR_FrontEnd *fe)
 #endif
       }
 
+   if (TR::Compiler->om.isIndexableDataAddrPresent())
+      featureFlags |= TR_FeatureFlag_ArrayHeaderShape;
 
    if (fej9->isAsyncCompilation())
       featureFlags |= TR_FeatureFlag_AsyncCompilation;

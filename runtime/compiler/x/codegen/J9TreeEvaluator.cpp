@@ -1466,18 +1466,18 @@ TR::Register *J9::X86::TreeEvaluator::multianewArrayEvaluator(TR::Node *node, TR
    // 2-dimensional MultiANewArray
    TR::Compilation *comp = cg->comp();
    TR_ASSERT_FATAL(comp->target().is64Bit(), "multianewArrayEvaluator is only supported on 64-bit JVMs!");
-   TR_J9VMBase *fej9 = static_cast<TR_J9VMBase *>(comp->fe());
+   TR_J9VMBase *fej9 = comp->fej9();
 
-   TR::Register *dimsPtrReg       = NULL;
-   TR::Register *dimReg      = NULL;
-   TR::Register *classReg       = NULL;
-   TR::Register *firstDimLenReg         = NULL;
-   TR::Register *secondDimLenReg       = NULL;
-   TR::Register *targetReg       = NULL;
-   TR::Register *temp1Reg       = NULL;
-   TR::Register *temp2Reg       = NULL;
-   TR::Register *temp3Reg       = NULL;
-   TR::Register *componentClassReg       = NULL;
+   TR::Register *dimsPtrReg = NULL;
+   TR::Register *dimReg = NULL;
+   TR::Register *classReg = NULL;
+   TR::Register *firstDimLenReg = NULL;
+   TR::Register *secondDimLenReg = NULL;
+   TR::Register *targetReg = NULL;
+   TR::Register *temp1Reg = NULL;
+   TR::Register *temp2Reg = NULL;
+   TR::Register *temp3Reg = NULL;
+   TR::Register *componentClassReg = NULL;
 
    TR::Register *vmThreadReg = cg->getVMThreadRegister();
    targetReg = cg->allocateRegister();
@@ -1489,11 +1489,16 @@ TR::Register *J9::X86::TreeEvaluator::multianewArrayEvaluator(TR::Node *node, TR
    componentClassReg = cg->allocateRegister();
 
    TR::LabelSymbol *startLabel = generateLabelSymbol(cg);
-   TR::LabelSymbol *fallThru = generateLabelSymbol(cg);
+   TR::LabelSymbol *doneLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *loopLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *nonZeroFirstDimLabel = generateLabelSymbol(cg);
+#if defined(TR_TARGET_64BIT)
+   bool isIndexableDataAddrPresent = TR::Compiler->om.isIndexableDataAddrPresent();
+   TR::LabelSymbol *populateFirstDimDataAddrSlot = isIndexableDataAddrPresent ? generateLabelSymbol(cg) : NULL;
+#endif /* defined(TR_TARGET_64BIT) */
+
    startLabel->setStartInternalControlFlow();
-   fallThru->setEndInternalControlFlow();
+   doneLabel->setEndInternalControlFlow();
 
    TR::LabelSymbol *oolFailLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *oolJumpPoint = generateLabelSymbol(cg);
@@ -1501,7 +1506,7 @@ TR::Register *J9::X86::TreeEvaluator::multianewArrayEvaluator(TR::Node *node, TR
    generateLabelInstruction(TR::InstOpCode::label, node, startLabel, cg);
 
    // Generate the heap allocation, and the snippet that will handle heap overflow.
-   TR_OutlinedInstructions *outlinedHelperCall = new (cg->trHeapMemory()) TR_OutlinedInstructions(node, TR::acall, targetReg, oolFailLabel, fallThru, cg);
+   TR_OutlinedInstructions *outlinedHelperCall = new (cg->trHeapMemory()) TR_OutlinedInstructions(node, TR::acall, targetReg, oolFailLabel, doneLabel, cg);
    cg->getOutlinedInstructionsList().push_front(outlinedHelperCall);
 
    dimReg = cg->evaluate(secondChild);
@@ -1541,11 +1546,40 @@ TR::Register *J9::X86::TreeEvaluator::multianewArrayEvaluator(TR::Node *node, TR
    bool use64BitClasses = comp->target().is64Bit() && !TR::Compiler->om.generateCompressedObjectHeaders();
    generateMemRegInstruction(TR::InstOpCode::SMemReg(use64BitClasses), node, generateX86MemoryReference(targetReg, TR::Compiler->om.offsetOfObjectVftField(), cg), classReg, cg);
 
-   // Init size and '0' fields to 0
+   // Init size and mustBeZero ('0') fields to 0
    generateMemImmInstruction(TR::InstOpCode::S4MemImm4, node, generateX86MemoryReference(targetReg, fej9->getOffsetOfContiguousArraySizeField(), cg), 0, cg);
    generateMemImmInstruction(TR::InstOpCode::S4MemImm4, node, generateX86MemoryReference(targetReg, fej9->getOffsetOfDiscontiguousArraySizeField(), cg), 0, cg);
 
-   generateLabelInstruction(TR::InstOpCode::JMP4, node, fallThru, cg);
+#if defined(TR_TARGET_64BIT)
+   if (isIndexableDataAddrPresent)
+      {
+      // Load dataAddr slot offset difference since 0 size arrays are treated as discontiguous.
+      TR_ASSERT_FATAL_WITH_NODE(node,
+         IS_32BIT_SIGNED(fej9->getOffsetOfDiscontiguousDataAddrField() - fej9->getOffsetOfContiguousDataAddrField()),
+         "dataAddrFieldOffset is too big for the instruction.");
+
+      TR_ASSERT_FATAL_WITH_NODE(node,
+         (TR::Compiler->om.compressObjectReferences()
+               && (fej9->getOffsetOfDiscontiguousDataAddrField() - fej9->getOffsetOfContiguousDataAddrField()) == 8)
+            || (!TR::Compiler->om.compressObjectReferences()
+               && fej9->getOffsetOfDiscontiguousDataAddrField() == fej9->getOffsetOfContiguousDataAddrField()),
+         "Offset of dataAddr field in discontiguous array is expected to be 8 bytes more than contiguous array if using compressed refs, "
+         "or same if using full refs. But was %d bytes for discontiguous and %d bytes for contiguous array.\n",
+         fej9->getOffsetOfDiscontiguousDataAddrField(), fej9->getOffsetOfContiguousDataAddrField());
+
+      generateRegImm64Instruction(TR::InstOpCode::MOV8RegImm4,
+         node,
+         temp3Reg,
+         static_cast<int32_t>(fej9->getOffsetOfDiscontiguousDataAddrField() - fej9->getOffsetOfContiguousDataAddrField()),
+         cg);
+
+      generateLabelInstruction(TR::InstOpCode::JMP4, node, populateFirstDimDataAddrSlot, cg);
+      }
+   else
+#endif /* TR_TARGET_64BIT */
+      {
+      generateLabelInstruction(TR::InstOpCode::JMP4, node, doneLabel, cg);
+      }
 
    //First dim length not 0
    generateLabelInstruction(TR::InstOpCode::label, node, nonZeroFirstDimLabel, cg);
@@ -1605,9 +1639,27 @@ TR::Register *J9::X86::TreeEvaluator::multianewArrayEvaluator(TR::Node *node, TR
    generateLabelInstruction(TR::InstOpCode::label, node, loopLabel, cg);
    // Init 2nd dim element's class
    generateMemRegInstruction(TR::InstOpCode::SMemReg(use64BitClasses), node, generateX86MemoryReference(temp2Reg, TR::Compiler->om.offsetOfObjectVftField(), cg), componentClassReg, cg);
-   // Init 2nd dim element's size and '0' fields to 0
+   // Init 2nd dim element's size and mustBeZero ('0') fields to 0
    generateMemImmInstruction(TR::InstOpCode::S4MemImm4, node, generateX86MemoryReference(temp2Reg, fej9->getOffsetOfContiguousArraySizeField(), cg), 0, cg);
    generateMemImmInstruction(TR::InstOpCode::S4MemImm4, node, generateX86MemoryReference(temp2Reg, fej9->getOffsetOfDiscontiguousArraySizeField(), cg), 0, cg);
+
+#if defined(TR_TARGET_64BIT)
+   if (isIndexableDataAddrPresent)
+      {
+      // Populate dataAddr slot for 2nd dimension zero size array.
+      generateRegMemInstruction(TR::InstOpCode::LEARegMem(),
+         node,
+         temp3Reg,
+         generateX86MemoryReference(temp2Reg, TR::Compiler->om.discontiguousArrayHeaderSizeInBytes(), cg),
+         cg);
+      generateMemRegInstruction(TR::InstOpCode::SMemReg(),
+         node,
+         generateX86MemoryReference(temp2Reg, fej9->getOffsetOfDiscontiguousDataAddrField(), cg),
+         temp3Reg,
+         cg);
+      }
+#endif /* TR_TARGET_64BIT */
+
    // Store 2nd dim element into 1st dim array slot, compress temp2 if needed
    if (comp->target().is64Bit() && comp->useCompressedPointers())
       {
@@ -1630,7 +1682,19 @@ TR::Register *J9::X86::TreeEvaluator::multianewArrayEvaluator(TR::Node *node, TR
 
    generateRegInstruction(TR::InstOpCode::DEC4Reg, node, firstDimLenReg, cg);
    generateLabelInstruction(TR::InstOpCode::JA4, node, loopLabel, cg);
-   generateLabelInstruction(TR::InstOpCode::JMP4, node, fallThru, cg);
+
+#if defined(TR_TARGET_64BIT)
+   if (isIndexableDataAddrPresent)
+      {
+      // No offset is needed since 1st dimension array is contiguous.
+      generateRegRegInstruction(TR::InstOpCode::XORRegReg(), node, temp3Reg, temp3Reg, cg);
+      generateLabelInstruction(TR::InstOpCode::JMP4, node, populateFirstDimDataAddrSlot, cg);
+      }
+   else
+#endif /* TR_TARGET_64BIT */
+      {
+      generateLabelInstruction(TR::InstOpCode::JMP4, node, doneLabel, cg);
+      }
 
    TR::RegisterDependencyConditions  *deps = generateRegisterDependencyConditions((uint8_t)0, 13, cg);
 
@@ -1677,7 +1741,27 @@ TR::Register *J9::X86::TreeEvaluator::multianewArrayEvaluator(TR::Node *node, TR
    generateLabelInstruction(TR::InstOpCode::label, node, oolJumpPoint, cg);
    generateLabelInstruction(TR::InstOpCode::JMP4, node, oolFailLabel, cg);
 
-   generateLabelInstruction(TR::InstOpCode::label, node, fallThru, deps, cg);
+#if defined(TR_TARGET_64BIT)
+   if (isIndexableDataAddrPresent)
+      {
+      /* Populate dataAddr slot of 1st dimension array. Arrays of non-zero size
+       * use contiguous header layout while zero size arrays use discontiguous header layout.
+       */
+      generateLabelInstruction(TR::InstOpCode::label, node, populateFirstDimDataAddrSlot, cg);
+      generateRegMemInstruction(TR::InstOpCode::LEARegMem(),
+         node,
+         temp2Reg,
+         generateX86MemoryReference(targetReg, temp3Reg, 0, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg),
+         cg);
+      generateMemRegInstruction(TR::InstOpCode::SMemReg(),
+         node,
+         generateX86MemoryReference(targetReg, temp3Reg, 0, fej9->getOffsetOfContiguousDataAddrField(), cg),
+         temp2Reg,
+         cg);
+      }
+#endif /* TR_TARGET_64BIT */
+
+   generateLabelInstruction(TR::InstOpCode::label, node, doneLabel, deps, cg);
 
    // Copy the newly allocated object into a collected reference register now that it is a valid object.
    //
@@ -6025,11 +6109,18 @@ static void genHeapAlloc(
 #ifdef J9VM_INTERP_FLAGS_IN_CLASS_SLOT
          if ( (node->getOpCodeValue() == TR::anewarray || node->getOpCodeValue() == TR::newarray))
             {
-            // All arrays in combo builds will always be at least 20 bytes in size in all specs:
+            // All arrays in combo builds will always be at least 12 bytes in size in all specs if
+            // dual header shape is enabled and 20 bytes otherwise:
             //
+            // Dual header shape is enabled:
+            // 1)  class pointer + contig length + one or more elements
+            // 2)  class pointer + 0 + 0 (for zero length arrays)
+            //
+            // Dual header shape is disabled:
             // 1)  class pointer + contig length + dataAddr + one or more elements
             // 2)  class pointer + 0 + 0 (for zero length arrays) + dataAddr
             //
+            // Since objects are aligned to 8 bytes then the minimum size for an array must be 16 and 24 after rounding
             TR_ASSERT(J9_GC_MINIMUM_OBJECT_SIZE >= 8, "Expecting a minimum indexable object size >= 8 (actual minimum is %d)\n", J9_GC_MINIMUM_OBJECT_SIZE);
 
             generateRegMemInstruction(
@@ -6863,12 +6954,18 @@ static void genInitArrayHeader(
    // for zero sized arrays we unconditionally store 0 in the third dword of the array object header. That is
    // safe because the 3rd dword is either array size of a zero sized array or will contain the first elements
    // of an array:
-   // - Zero sized arrays have the following layout:
+   // - When dual header shape is enabled zero sized arrays have the following layout:
    // - The smallest array possible is a byte array with 1 element which would have a layout:
+   //   #bits per section (compressed refs): | 32 bits |  32 bits   | 32 bits | 32 bits |   32 bits   |   32 bits    |
+   //   zero sized arrays:                   |  class  | mustBeZero |  size   | padding |            other           |
+   //   smallest contiguous array:           |  class  |    size    | padding |           other                      |
+   //
+   // - When dual header shape is disabled zero sized arrays have the following layout:
    //   #bits per section (compressed refs): | 32 bits |  32 bits   | 32 bits | 32 bits |   32 bits   |   32 bits    |
    //   zero sized arrays:                   |  class  | mustBeZero |  size   | padding |          dataAddr          |
    //   smallest contiguous array:           |  class  |    size    |      dataAddr     | 1 byte + padding |  other  |
-   //   This also reflects the minimum object size which is 16 bytes.
+   //
+   // Refer to J9IndexableObject(Dis)contiguousCompressed structs runtime/oti/j9nonbuilder.h for more detail
    int32_t arrayDiscontiguousSizeOffset = fej9->getOffsetOfDiscontiguousArraySizeField();
    TR::MemoryReference *arrayDiscontiguousSizeMR = generateX86MemoryReference(objectReg, arrayDiscontiguousSizeOffset, cg);
 
@@ -6981,22 +7078,27 @@ static bool genZeroInitObject2(
    bool isArrayNew = (node->getOpCodeValue() != TR::New);
    comp->canAllocateInline(node, clazz);
    auto headerSize = isArrayNew ? TR::Compiler->om.contiguousArrayHeaderSizeInBytes() : TR::Compiler->om.objectHeaderSizeInBytes();
-   // If we are using full refs both contiguous and discontiguous array header have the same size, in which case we must adjust header size
-   // slightly so that rep stosb can initialize the size field of zero sized arrays appropriately
-   //   #bits per section (compressed refs): | 32 bits |  32 bits   | 32 bits | 32 bits |   32 bits   |   32 bits    |
-   //   zero sized arrays:                   |  class  | mustBeZero |   size  | padding |          dataAddr          |
-   //   smallest contiguous array:           |  class  |    size    |      dataAddr     | 1 byte + padding |  other  |
-   //   In order for us to successfully initialize the size field of a zero sized array in compressed refs
-   //   we must subtract 8 bytes (sizeof(dataAddr)) from header size. And in case of full refs we must
-   //   subtract 16 bytes from the header in order to properly initialize the zero sized field. We can
-   //   accomplish that by simply subtracting the offset of dataAddr field, which is 8 for compressed refs
-   //   and 16 for full refs.
-#if defined(TR_TARGET_64BIT)
-   if (!cg->comp()->target().is32Bit() && isArrayNew)
+
+   // In order for us to successfully initialize the size field of a zero sized array
+   // we must set headerSize to 8 bytes for compressed refs and 12 bytes for full refs.
+   // This can be accomplished by using offset of discontiguous array size field.
+   // However, when dealing with compressed refs with dual header shape enabled we don't
+   // need to change the headerSize because contiguous header size is equal to the offset
+   // of discontiguous array size field.
+   // This allows rep stosb to initialize the size field of zero sized arrays appropriately.
+   //
+   // Refer to J9IndexableObject(Dis)contiguousCompressed structs in runtime/oti/j9nonbuilder.h for more detail
+   if (!cg->comp()->target().is32Bit() && isArrayNew
+         && (TR::Compiler->om.isIndexableDataAddrPresent() || !TR::Compiler->om.compressObjectReferences()))
       {
-      headerSize -= static_cast<TR_J9VMBase *>(cg->fe())->getOffsetOfContiguousDataAddrField();
+      TR_ASSERT_FATAL_WITH_NODE(node,
+         (cg->fej9()->getOffsetOfDiscontiguousArraySizeField() - cg->fe()->getOffsetOfContiguousArraySizeField()) == 4,
+         "Offset of size field in discontiguous array header is expected to be 4 bytes more than contiguous array header. "
+         "But size field offset for contiguous array header was %d bytes and %d bytes for discontiguous array header.\n",
+         cg->fe()->getOffsetOfContiguousArraySizeField(), cg->fe()->getOffsetOfDiscontiguousArraySizeField());
+
+      headerSize = static_cast<uint32_t>(cg->fej9()->getOffsetOfDiscontiguousArraySizeField());
       }
-#endif /* TR_TARGET_64BIT */
    TR_ASSERT(headerSize >= 4, "Object/Array header must be >= 4.");
    objectSize -= headerSize;
 
@@ -7448,7 +7550,7 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
    // JVMPI needs to know about the allocation.
    //
    TR::Compilation *comp = cg->comp();
-   TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
+   TR_J9VMBase *fej9 = comp->fej9();
 
    if (comp->suppressAllocationInlining())
       return NULL;
@@ -7917,12 +8019,13 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
       {
       genInitObjectHeader(node, clazz, classReg, targetReg, tempReg, monitorSlotIsInitialized, false, cg);
       }
+
    TR::Register *discontiguousDataAddrOffsetReg = NULL;
 #ifdef TR_TARGET_64BIT
-   if (isArrayNew)
+   if (isArrayNew && TR::Compiler->om.isIndexableDataAddrPresent())
       {
       /* Here we'll update dataAddr slot for both fixed and variable length arrays. Fixed length arrays are
-       * simple as we just need to check first child of the node for array size. For variable length arrays
+       * simple as we just need to check first child of the node for array size. For variable length arrays,
        * runtime size checks are needed to determine whether to use contiguous or discontiguous header layout.
        *
        * In both scenarios, arrays of non-zero size use contiguous header layout while zero size arrays use
@@ -7940,10 +8043,10 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
             traceMsg(comp, "Node (%p): Dealing with compressed refs variable length array.\n", node);
 
          TR_ASSERT_FATAL_WITH_NODE(node,
-               (fej9->getOffsetOfDiscontiguousDataAddrField() - fej9->getOffsetOfContiguousDataAddrField()) == 8,
-               "Offset of dataAddr field in discontiguous array is expected to be 8 bytes more than contiguous array. "
-               "But was %d bytes for discontigous and %d bytes for contiguous array.\n",
-               fej9->getOffsetOfDiscontiguousDataAddrField(), fej9->getOffsetOfContiguousDataAddrField());
+            (fej9->getOffsetOfDiscontiguousDataAddrField() - fej9->getOffsetOfContiguousDataAddrField()) == 8,
+            "Offset of dataAddr field in discontiguous array is expected to be 8 bytes more than contiguous array. "
+            "But was %d bytes for discontiguous and %d bytes for contiguous array.\n",
+            fej9->getOffsetOfDiscontiguousDataAddrField(), fej9->getOffsetOfContiguousDataAddrField());
 
          discontiguousDataAddrOffsetReg = cg->allocateRegister();
          generateRegRegInstruction(TR::InstOpCode::XORRegReg(), node, discontiguousDataAddrOffsetReg, discontiguousDataAddrOffsetReg, cg);
@@ -7965,8 +8068,7 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
          if (comp->getOption(TR_TraceCG))
             {
             traceMsg(comp,
-               "Node (%p): Dealing with either full/compressed refs fixed length non-zero size array "
-               "or full refs variable length array.\n",
+               "Node (%p): Dealing with either full/compressed refs fixed length non-zero size array or full refs variable length array.\n",
                node);
             }
 

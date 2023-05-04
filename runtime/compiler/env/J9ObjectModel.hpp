@@ -104,6 +104,8 @@ public:
    int32_t arrayletLeafSize();
    int32_t arrayletLeafLogSize();
 
+   bool isIndexableDataAddrPresent();
+
    int32_t compressedReferenceShiftOffset();
    int32_t compressedReferenceShift();
 
