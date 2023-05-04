@@ -722,16 +722,6 @@ getThreadState(J9VMThread *currentThread, j9object_t threadObject)
 		if (vmstate & J9VMTHREAD_STATE_SUSPENDED) {
 			state |= JVMTI_THREAD_STATE_SUSPENDED;
 		}
-#if JAVA_SPEC_VERSION >= 19
-		/* Based on the isSuspendedInternal field, set the JVMTI
-		 * thread state to suspended for the corresponding thread.
-		 */
-		if (0 != J9OBJECT_U32_LOAD(currentThread, threadObject, currentThread->javaVM->isSuspendedInternalOffset)) {
-			state |= JVMTI_THREAD_STATE_SUSPENDED;
-		} else {
-			state &= ~JVMTI_THREAD_STATE_SUSPENDED;
-		}
-#endif /* JAVA_SPEC_VERSION >= 19 */
 		if (vmstate & J9VMTHREAD_STATE_INTERRUPTED) {
 			state |= JVMTI_THREAD_STATE_INTERRUPTED;
 		}
@@ -794,12 +784,12 @@ getVirtualThreadState(J9VMThread *currentThread, jthread thread)
 			currentThread, thread, &targetThread, JVMTI_ERROR_NONE,
 			J9JVMTI_GETVMTHREAD_ERROR_ON_NULL_JTHREAD);
 	if (JVMTI_ERROR_NONE == rc) {
-		j9object_t vThreadObject = J9_JNI_UNWRAP_REFERENCE(thread);
 		if (NULL != targetThread) {
 			vm->internalVMFunctions->haltThreadForInspection(currentThread, targetThread);
 			rc = getThreadState(currentThread, targetThread->carrierThreadObject);
 			vm->internalVMFunctions->resumeThreadForInspection(currentThread, targetThread);
 		} else {
+			j9object_t vThreadObject = J9_JNI_UNWRAP_REFERENCE(thread);
 			jint vThreadState = (jint) J9VMJAVALANGVIRTUALTHREAD_STATE(currentThread, vThreadObject);
 			/* The mapping from JVMTI_VTHREAD_STATE_XXX to JVMTI_JAVA_LANG_THREAD_STATE_XXX is based
 			 * on j.l.VirtualThread.threadState().
@@ -827,7 +817,7 @@ getVirtualThreadState(J9VMThread *currentThread, jthread thread)
 					rc = JVMTI_JAVA_LANG_THREAD_STATE_RUNNABLE;
 				}
 				vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
-				/* Re-fetch object to correctly set the isSuspendedInternal field. */
+				/* Re-fetch object to correctly set the isSuspendedByJVMTI field. */
 				vThreadObject = J9_JNI_UNWRAP_REFERENCE(thread);
 				break;
 			}
@@ -861,13 +851,9 @@ getVirtualThreadState(J9VMThread *currentThread, jthread thread)
 				Assert_JVMTI_unreachable();
 				rc = JVMTI_ERROR_INTERNAL;
 			}
-		}
-		/* Re-fetch object to correctly set the isSuspendedInternal field. */
-		vThreadObject = J9_JNI_UNWRAP_REFERENCE(thread);
-		if (0 != J9OBJECT_U32_LOAD(currentThread, vThreadObject, vm->isSuspendedInternalOffset)) {
-			rc |= JVMTI_THREAD_STATE_SUSPENDED;
-		} else {
-			rc &= ~JVMTI_THREAD_STATE_SUSPENDED;
+			if (0 != J9OBJECT_U32_LOAD(currentThread, vThreadObject, vm->isSuspendedByJVMTIOffset)) {
+				rc |= JVMTI_THREAD_STATE_SUSPENDED;
+			}
 		}
 		releaseVMThread(currentThread, targetThread, thread);
 	} else {
