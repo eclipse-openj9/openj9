@@ -64,6 +64,9 @@ if  [ "$7" != true ]; then
     echo "Removed testOutput file"
 fi
 
+echo "Checking that JITServer Process is still alive"
+ps -ef | grep $JITSERVER_PID
+
 echo "Terminating $2/jitserver $JITSERVER_OPTIONS"
 kill -9 $JITSERVER_PID
 # For consistency with the jitserver cmdline tests, use kill
