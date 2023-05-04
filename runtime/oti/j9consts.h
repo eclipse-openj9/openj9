@@ -482,7 +482,6 @@ extern "C" {
 #define J9_GC_POLICY_METRONOME OMR_GC_POLICY_METRONOME
 #define J9_GC_POLICY_NOGC OMR_GC_POLICY_NOGC
 
-// J9_GC_MINIMUM_OBJECT_SIZE does not include dataAddr field
 #define J9_GC_MINIMUM_OBJECT_SIZE 0x10
 #define J9_GC_INDEXABLE_DATA_FIELD_SIZE sizeof(void *)
 #if defined(J9VM_ENV_DATA64)
