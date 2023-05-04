@@ -651,11 +651,6 @@ convertBcvToCfrType(MethodContextInfo* methodInfo, StackMapFrame* stackMapFrame,
 	default:
 		{
 			U_8 objTypeTag = CFR_STACKMAP_TYPE_OBJECT;
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-			if (J9_ARE_ALL_BITS_SET(bcvType, BCV_PRIMITIVE_VALUETYPE)) {
-				objTypeTag = CFR_STACKMAP_TYPE_PRIMITIVE_OBJECT;
-			}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 			*currentVerificationTypeEntry = pushVerificationTypeInfo(methodInfo, stackMapFrame, *currentVerificationTypeEntry, objTypeTag, INDEX_CLASSNAMELIST, bcvType);
 			break;
 		}
@@ -868,9 +863,6 @@ mapDataTypeToUTF8String(J9UTF8Ref* dataType, StackMapFrame* stackMapFrame, Metho
 		dataType->arity = (U_8)typeValue;
 		break;
 	case CFR_STACKMAP_TYPE_OBJECT:
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-	case CFR_STACKMAP_TYPE_PRIMITIVE_OBJECT:
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	{
 		/* Set the name string for object reference.
 		 * Identify what the type index value is according to the index attribute.
@@ -1010,16 +1002,6 @@ printTypeInfoToBuffer(MessageBuffer* buf, U_8 tag, J9UTF8Ref* dataType, BOOLEAN 
 				(dataType->arity > 0) ? 1 : 0, ";"	/* class suffix ';' only when arity > 0 */
 				);
 		break;
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-	case CFR_STACKMAP_TYPE_PRIMITIVE_OBJECT:
-		/* Object, init/new object and object 'reference' */
-		printMessage(buf, "'%.*s%.*s%.*s'",
-				 1, "Q",	/* class prefix 'Q' for the primitive object */
-				dataType->length, dataType->bytes,	/* class name */
-				 1, ";"	/* class suffix ';' */
-				);
-		break;
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	default:
 		Assert_VRB_ShouldNeverHappen();
 		break;
