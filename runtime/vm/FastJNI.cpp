@@ -51,6 +51,7 @@ J9_FAST_JNI_METHOD_TABLE_EXTERN(java_lang_Throwable);
 J9_FAST_JNI_METHOD_TABLE_EXTERN(java_lang_invoke_MethodHandle);
 #if JAVA_SPEC_VERSION >= 20
 J9_FAST_JNI_METHOD_TABLE_EXTERN(java_lang_VirtualThread);
+J9_FAST_JNI_METHOD_TABLE_EXTERN(jdk_internal_vm_Continuation);
 #endif /* JAVA_SPEC_VERSION >= 20 */
 
 J9_FAST_JNI_CLASS_TABLE(fastJNINatives)
@@ -70,6 +71,7 @@ J9_FAST_JNI_CLASS_TABLE(fastJNINatives)
 	J9_FAST_JNI_CLASS("java/lang/invoke/MethodHandle", java_lang_invoke_MethodHandle)
 #if JAVA_SPEC_VERSION >= 20
 	J9_FAST_JNI_CLASS("java/lang/VirtualThread", java_lang_VirtualThread)
+	J9_FAST_JNI_CLASS("jdk/internal/vm/Continuation", jdk_internal_vm_Continuation)
 #endif /* JAVA_SPEC_VERSION >= 20 */
 J9_FAST_JNI_CLASS_TABLE_END
 
