@@ -23,20 +23,18 @@
 #include "fastJNI.h"
 #include "j9protos.h"
 #include "j9vmnls.h"
-#include "AtomicSupport.hpp"
-#include "VMHelpers.hpp"
 #include "ContinuationHelpers.hpp"
 
 extern "C" {
 
-void JNICALL
-Fast_java_lang_VirtualThread_notifyJvmtiMountBegin(J9VMThread *currentThread, jobject thread, jboolean firstMount)
+VMINLINE void
+VirtualThreadMountBegin(J9VMThread *currentThread, jobject thread)
 {
 	VM_ContinuationHelpers::enterVThreadTransitionCritical(currentThread, thread);
 }
 
-void JNICALL
-Fast_java_lang_VirtualThread_notifyJvmtiMountEnd(J9VMThread *currentThread, j9object_t threadObj, jboolean firstMount)
+VMINLINE void
+VirtualThreadMountEnd(J9VMThread *currentThread, j9object_t threadObj, jboolean firstMount)
 {
 	J9JavaVM *vm = currentThread->javaVM;
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
@@ -58,8 +56,8 @@ Fast_java_lang_VirtualThread_notifyJvmtiMountEnd(J9VMThread *currentThread, j9ob
 	TRIGGER_J9HOOK_VM_VIRTUAL_THREAD_MOUNT(vm->hookInterface, currentThread);
 }
 
-void JNICALL
-Fast_java_lang_VirtualThread_notifyJvmtiUnmountBegin(J9VMThread *currentThread, jobject thread, jboolean lastUnmount)
+VMINLINE void
+VirtualThreadUnmountBegin(J9VMThread *currentThread, jobject thread, jboolean lastUnmount)
 {
 	J9JavaVM *vm = currentThread->javaVM;
 
@@ -80,13 +78,11 @@ Fast_java_lang_VirtualThread_notifyJvmtiUnmountBegin(J9VMThread *currentThread, 
 	}
 }
 
-void JNICALL
-Fast_java_lang_VirtualThread_notifyJvmtiUnmountEnd(J9VMThread *currentThread, j9object_t threadObj, jboolean lastUnmount)
+VMINLINE void
+VirtualThreadUnmountEnd(J9VMThread *currentThread, j9object_t threadObj, jboolean lastUnmount)
 {
-	J9InternalVMFunctions *vmFuncs = currentThread->javaVM->internalVMFunctions;
-
 	if (lastUnmount) {
-		vmFuncs->freeTLS(currentThread, threadObj);
+		currentThread->javaVM->internalVMFunctions->freeTLS(currentThread, threadObj);
 	}
 
 	j9object_t carrierThreadObject = currentThread->carrierThreadObject;
@@ -99,10 +95,63 @@ Fast_java_lang_VirtualThread_notifyJvmtiUnmountEnd(J9VMThread *currentThread, j9
 
 	/* Allow thread to be inspected again. */
 	VM_ContinuationHelpers::exitVThreadTransitionCritical(currentThread, threadObj);
+}
+
+#if JAVA_SPEC_VERSION == 20
+void JNICALL
+Fast_java_lang_VirtualThread_notifyJvmtiMountBegin(J9VMThread *currentThread, jobject thread, jboolean firstMount)
+{
+	VirtualThreadMountBegin(currentThread, thread);
+}
+
+void JNICALL
+Fast_java_lang_VirtualThread_notifyJvmtiMountEnd(J9VMThread *currentThread, j9object_t threadObj, jboolean firstMount)
+{
+	VirtualThreadMountEnd(currentThread, threadObj, firstMount);
+}
+
+void JNICALL
+Fast_java_lang_VirtualThread_notifyJvmtiUnmountBegin(J9VMThread *currentThread, jobject thread, jboolean lastUnmount)
+{
+	VirtualThreadUnmountBegin(currentThread, thread, lastUnmount);
+}
+
+void JNICALL
+Fast_java_lang_VirtualThread_notifyJvmtiUnmountEnd(J9VMThread *currentThread, j9object_t threadObj, jboolean lastUnmount)
+{
+	VirtualThreadUnmountEnd(currentThread, threadObj, lastUnmount);
+}
+
+#elif JAVA_SPEC_VERSION >= 21
+void JNICALL
+Fast_java_lang_VirtualThread_notifyJvmtiMount(J9VMThread *currentThread, jobject thread, jboolean hide, jboolean firstMount)
+{
+	if (hide) {
+		VirtualThreadMountBegin(currentThread, thread);
+	} else {
+		VirtualThreadMountEnd(currentThread, J9_JNI_UNWRAP_REFERENCE(thread), firstMount);
+	}
+}
+
+void JNICALL
+Fast_java_lang_VirtualThread_notifyJvmtiUnmount(J9VMThread *currentThread, jobject thread, jboolean hide, jboolean lastUnmount)
+{
+	if (hide) {
+		VirtualThreadUnmountBegin(currentThread, thread, lastUnmount);
+	} else {
+		VirtualThreadUnmountEnd(currentThread, J9_JNI_UNWRAP_REFERENCE(thread), lastUnmount);
+	}
+}
+#endif /* JAVA_SPEC_VERSION == 20 */
+
+void JNICALL
+Fast_java_lang_VirtualThread_notifyJvmtiHideFrames(J9VMThread *currentThread, jboolean hide)
+{
 
 }
 
 J9_FAST_JNI_METHOD_TABLE(java_lang_VirtualThread)
+#if JAVA_SPEC_VERSION == 20
 	J9_FAST_JNI_METHOD("notifyJvmtiMountBegin", "(Z)V", Fast_java_lang_VirtualThread_notifyJvmtiMountBegin,
 		J9_FAST_JNI_RETAIN_VM_ACCESS | J9_FAST_JNI_NO_EXCEPTION_THROW)
 	J9_FAST_JNI_METHOD("notifyJvmtiMountEnd", "(Z)V", Fast_java_lang_VirtualThread_notifyJvmtiMountEnd,
@@ -113,6 +162,15 @@ J9_FAST_JNI_METHOD_TABLE(java_lang_VirtualThread)
 	J9_FAST_JNI_METHOD("notifyJvmtiUnmountEnd", "(Z)V", Fast_java_lang_VirtualThread_notifyJvmtiUnmountEnd,
 		J9_FAST_JNI_RETAIN_VM_ACCESS | J9_FAST_JNI_NOT_GC_POINT | J9_FAST_JNI_NO_NATIVE_METHOD_FRAME | J9_FAST_JNI_NO_EXCEPTION_THROW |
 		J9_FAST_JNI_NO_SPECIAL_TEAR_DOWN | J9_FAST_JNI_DO_NOT_WRAP_OBJECTS)
+#elif JAVA_SPEC_VERSION >= 21
+	J9_FAST_JNI_METHOD("notifyJvmtiMount", "(ZZ)V", Fast_java_lang_VirtualThread_notifyJvmtiMount,
+		J9_FAST_JNI_RETAIN_VM_ACCESS | J9_FAST_JNI_NO_EXCEPTION_THROW)
+	J9_FAST_JNI_METHOD("notifyJvmtiUnmount", "(ZZ)V", Fast_java_lang_VirtualThread_notifyJvmtiUnmount,
+		J9_FAST_JNI_RETAIN_VM_ACCESS | J9_FAST_JNI_NO_EXCEPTION_THROW)
+#endif /* JAVA_SPEC_VERSION == 20 */
+	J9_FAST_JNI_METHOD("notifyJvmtiHideFrames", "(Z)V", Fast_java_lang_VirtualThread_notifyJvmtiHideFrames,
+		J9_FAST_JNI_RETAIN_VM_ACCESS | J9_FAST_JNI_NOT_GC_POINT | J9_FAST_JNI_NO_NATIVE_METHOD_FRAME | J9_FAST_JNI_NO_EXCEPTION_THROW |
+		J9_FAST_JNI_NO_SPECIAL_TEAR_DOWN | J9_FAST_JNI_DO_NOT_WRAP_OBJECTS | J9_FAST_JNI_DO_NOT_PASS_RECEIVER)
 J9_FAST_JNI_METHOD_TABLE_END
 
 }
