@@ -508,8 +508,8 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          vmInfo._isHotReferenceFieldRequired = TR::Compiler->om.isHotReferenceFieldRequired();
          vmInfo._osrGlobalBufferSize = javaVM->osrGlobalBufferSize;
          vmInfo._needsMethodTrampolines = TR::CodeCacheManager::instance()->codeCacheConfig().needsMethodTrampolines();
-         vmInfo._objectAlignmentInBytes = TR::Compiler->om.getObjectAlignmentInBytes();
-         vmInfo._isGetImplInliningSupported = fe->isGetImplInliningSupported();
+         vmInfo._objectAlignmentInBytes = TR::Compiler->om.objectAlignmentInBytes();
+         vmInfo._isGetImplAndRefersToInliningSupported = fe->isGetImplAndRefersToInliningSupported();
          vmInfo._isAllocateZeroedTLHPagesEnabled = fe->tlhHasBeenCleared();
          vmInfo._staticObjectAllocateFlags = fe->getStaticObjectFlags();
          vmInfo._referenceArrayCopyHelperAddress = fe->getReferenceArrayCopyHelperAddress();
