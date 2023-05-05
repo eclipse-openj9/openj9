@@ -58,6 +58,9 @@ if [ "$METRICS" == true ]; then
     curl http://localhost:$METRICS_PORT/metrics
 fi
 
+echo "Checking that JITServer Process is still alive"
+ps -ef | grep $JITSERVER_PID
+
 echo "Terminating $TEST_JDK_BIN/jitserver $JITSERVER_OPTIONS"
 kill -9 $JITSERVER_PID
 # Running pkill seems to cause a hang...

@@ -44,6 +44,7 @@ JITSERVER_OPTIONS="-XX:JITServerPort=$JITSERVER_PORT"
 
 echo "Starting $2/jitserver $JITSERVER_OPTIONS"
 $2/jitserver $JITSERVER_OPTIONS &
+JITSERVER_PID=$!
 sleep 2
 
 $2/java -XX:+EnableCRIUSupport -XX:JITServerPort=$JITSERVER_PORT $3 -cp "$1/criu.jar" $4 $5 -XX:JITServerPort=$JITSERVER_PORT $6 >testOutput 2>&1;
@@ -63,8 +64,13 @@ if  [ "$7" != true ]; then
     echo "Removed testOutput file"
 fi
 
+echo "Checking that JITServer Process is still alive"
+ps -ef | grep $JITSERVER_PID
+
 echo "Terminating $2/jitserver $JITSERVER_OPTIONS"
-pkill -9 -xf "$2/jitserver $JITSERVER_OPTIONS"
+kill -9 $JITSERVER_PID
+# For consistency with the jitserver cmdline tests, use kill
+#pkill -9 -xf "$2/jitserver $JITSERVER_OPTIONS"
 sleep 2
 
 echo "finished script";

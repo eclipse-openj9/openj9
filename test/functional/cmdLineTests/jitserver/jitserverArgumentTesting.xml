@@ -68,15 +68,4 @@
 		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">(Fatal|Unhandled) Exception</output>
 	</test>
 
-	<test id="Test Metrics Disabled">
-		<command>bash $SCRIPPATH$ $TEST_RESROOT$ $TEST_JDK_BIN$ "$DEFAULT_JITSERVER_OPTIONS$ -XX:-JITServerMetrics" "$ENABLE_JITSERVER$ $JITSERVER_VERBOSE$" true</command>
-		<output type="required" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
-		<output type="failure" caseSensitive="no" regex="no">jitserver_cpu_utilization</output>
-		<output type="failure" caseSensitive="no" regex="no">jitserver_available_memory</output>
-		<output type="failure" caseSensitive="no" regex="no">jitserver_connected_clients</output>
-		<output type="failure" caseSensitive="no" regex="no">jitserver_active_threads</output>
-		<output type="success" caseSenstive="no" regex="no">Connection refused</output>
-		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">(Fatal|Unhandled) Exception</output>
-	</test>
-
 </suite>

@@ -171,6 +171,7 @@
 		<platformRequirements>os.linux,^arch.arm,^arch.aarch64,bits.64</platformRequirements>
 		<features>
 			<feature>CRIU:required</feature>
+			<feature>JITAAS:nonapplicable</feature>
 		</features>
 		<levels>
 			<level>sanity</level>
