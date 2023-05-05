@@ -37,6 +37,7 @@
 #include "GlobalAllocationManager.hpp"
 #include "Heap.hpp"
 #include "HeapRegionDescriptor.hpp"
+#include "HeapRegionIterator.hpp"
 #include "HeapRegionManager.hpp"
 #include "ObjectAccessBarrier.hpp"
 #include "ObjectAllocationInterface.hpp"
@@ -92,9 +93,13 @@ private:
 	}
 
 	void
-	initalizeUnfinalizedObjectList(MM_EnvironmentBase *env, MM_UnfinalizedObjectList *list)
+	initalizeUnfinalizedObjectList(MM_EnvironmentBase* env, MM_UnfinalizedObjectList *list, MM_UnfinalizedObjectList *listToCopy)
 	{
-		new(list) MM_UnfinalizedObjectList();
+		if (NULL == listToCopy) {
+			new(list) MM_UnfinalizedObjectList();
+		} else {
+			*list = *listToCopy;
+		}
 		list->setNextList(_extensions->unfinalizedObjectLists);
 		list->setPreviousList(NULL);
 		if (NULL != _extensions->unfinalizedObjectLists) {
@@ -104,9 +109,13 @@ private:
 	}
 
 	void
-	initalizeOwnableSynchronizerObjectList(MM_EnvironmentBase *env, MM_OwnableSynchronizerObjectList *list)
+	initalizeOwnableSynchronizerObjectList(MM_EnvironmentBase* env, MM_OwnableSynchronizerObjectList *list, MM_OwnableSynchronizerObjectList *listToCopy)
 	{
-		new(list) MM_OwnableSynchronizerObjectList();
+		if (NULL == listToCopy) {
+			new(list) MM_OwnableSynchronizerObjectList();
+		} else {
+			*list = *listToCopy;
+		}
 		list->setNextList(_extensions->getOwnableSynchronizerObjectLists());
 		list->setPreviousList(NULL);
 		if (NULL != _extensions->getOwnableSynchronizerObjectLists()) {
@@ -116,9 +125,13 @@ private:
 	}
 
 	void
-	initalizeContinuationObjectList(MM_EnvironmentBase *env, MM_ContinuationObjectList *list)
+	initalizeContinuationObjectList(MM_EnvironmentBase* env, MM_ContinuationObjectList *list, MM_ContinuationObjectList *listToCopy)
 	{
-		new(list) MM_ContinuationObjectList();
+		if (NULL == listToCopy) {
+			new(list) MM_ContinuationObjectList();
+		} else {
+			*list = *listToCopy;
+		}
 		list->setNextList(_extensions->getContinuationObjectLists());
 		list->setPreviousList(NULL);
 		if (NULL != _extensions->getContinuationObjectLists()) {
@@ -128,9 +141,13 @@ private:
 	}
 
 	void
-	initalizeReferenceObjectList(MM_EnvironmentBase *env, MM_ReferenceObjectList *list)
+	initalizeReferenceObjectList(MM_EnvironmentBase* env, MM_ReferenceObjectList *list, MM_ReferenceObjectList *listToCopy)
 	{
-		new(list) MM_ReferenceObjectList();
+		if (NULL == listToCopy) {
+			new(list) MM_ReferenceObjectList();
+		} else {
+			*list = *listToCopy;
+		}
 	}
 protected:
 
@@ -239,10 +256,10 @@ public:
 			}
 
 			for (uintptr_t list = 0; list < listCount; list++) {
-				initalizeUnfinalizedObjectList(env, &regionExtension->_unfinalizedObjectLists[list]);
-				initalizeOwnableSynchronizerObjectList(env, &regionExtension->_ownableSynchronizerObjectLists[list]);
-				initalizeContinuationObjectList(env, &regionExtension->_continuationObjectLists[list]);
-				initalizeReferenceObjectList(env, &regionExtension->_referenceObjectLists[list]);
+				initalizeUnfinalizedObjectList(env, &regionExtension->_unfinalizedObjectLists[list], NULL);
+				initalizeOwnableSynchronizerObjectList(env, &regionExtension->_ownableSynchronizerObjectLists[list], NULL);
+				initalizeContinuationObjectList(env, &regionExtension->_continuationObjectLists[list], NULL);
+				initalizeReferenceObjectList(env, &regionExtension->_referenceObjectLists[list], NULL);
 			}
 
 			region->_heapRegionDescriptorExtension = regionExtension;
@@ -250,6 +267,87 @@ public:
 
 		return true;
 	}
+
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+	bool
+	reinitializeForRestore(MM_EnvironmentBase* env)
+	{
+		Assert_MM_true(_extensions->isStandardGC());
+
+		MM_HeapRegionDescriptor *region = NULL;
+		GC_HeapRegionIterator regionIterator(_extensions->heap->getHeapRegionManager());
+
+		_extensions->unfinalizedObjectLists = NULL;
+		_extensions->setOwnableSynchronizerObjectLists(NULL);
+		_extensions->setContinuationObjectLists(NULL);
+
+		while (NULL != (region = regionIterator.nextRegion())) {
+			if (!reinitializeHeapRegionDescriptorExtensionForRestore(env, region)) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	bool
+	reinitializeHeapRegionDescriptorExtensionForRestore(MM_EnvironmentBase* env, MM_HeapRegionDescriptor *region)
+	{
+		if (_extensions->isStandardGC()) {
+			uintptr_t newListCount = _extensions->gcThreadCount;
+
+			MM_HeapRegionDescriptorStandardExtension *prevRegionExtension = getHeapRegionDescriptorStandardExtension(env, region);
+			Assert_MM_true(NULL != prevRegionExtension);
+
+			uintptr_t prevListCount = prevRegionExtension->_maxListIndex;
+			Assert_MM_true(prevListCount > 0);
+
+			if (newListCount > prevListCount) {
+
+				MM_HeapRegionDescriptorStandardExtension *newRegionExtension = allocateHeapRegionDescriptorExtension(env, newListCount);
+
+				if (NULL == newRegionExtension) {
+					return false;
+				}
+
+				for (uintptr_t list = 0; list < prevListCount; list++) {
+					initalizeUnfinalizedObjectList(
+							env,
+							&newRegionExtension->_unfinalizedObjectLists[list],
+							&prevRegionExtension->_unfinalizedObjectLists[list]);
+
+					initalizeOwnableSynchronizerObjectList(
+							env,
+							&newRegionExtension->_ownableSynchronizerObjectLists[list],
+							&prevRegionExtension->_ownableSynchronizerObjectLists[list]);
+
+					initalizeContinuationObjectList(
+							env,
+							&newRegionExtension->_continuationObjectLists[list],
+							&prevRegionExtension->_continuationObjectLists[list]);
+
+					initalizeReferenceObjectList(
+							env,
+							&newRegionExtension->_referenceObjectLists[list],
+							&prevRegionExtension->_referenceObjectLists[list]);
+				}
+
+				for (uintptr_t list = prevListCount; list < newListCount; list++) {
+					initalizeUnfinalizedObjectList(env, &newRegionExtension->_unfinalizedObjectLists[list], NULL);
+					initalizeOwnableSynchronizerObjectList(env, &newRegionExtension->_ownableSynchronizerObjectLists[list], NULL);
+					initalizeContinuationObjectList(env, &newRegionExtension->_continuationObjectLists[list], NULL);
+					initalizeReferenceObjectList(env, &newRegionExtension->_referenceObjectLists[list], NULL);
+				}
+
+				teardownHeapRegionDescriptorExtension(env, region);
+				Assert_MM_true(NULL == region->_heapRegionDescriptorExtension);
+				region->_heapRegionDescriptorExtension = newRegionExtension;
+			}
+		}
+
+		return true;
+	}
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
 	void
 	teardownHeapRegionDescriptorExtension(MM_EnvironmentBase *env, MM_HeapRegionDescriptor *region)
