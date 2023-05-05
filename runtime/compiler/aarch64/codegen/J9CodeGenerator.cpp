@@ -262,7 +262,7 @@ J9::ARM64::CodeGenerator::suppressInliningOfRecognizedMethod(TR::RecognizedMetho
    if (method == TR::java_util_zip_CRC32C_updateBytes ||
        method == TR::java_util_zip_CRC32C_updateDirectByteBuffer)
       {
-      return (!TR::Compiler->om.canGenerateArraylets()) && comp->target().cpu.supportsFeature(OMR_FEATURE_ARM64_CRC32) && (!disableCRC32);
+      return (!TR::Compiler->om.canGenerateArraylets() && !TR::Compiler->om.isOffHeapAllocationEnabled()) && comp->target().cpu.supportsFeature(OMR_FEATURE_ARM64_CRC32) && (!disableCRC32);
       }
    return false;
    }
