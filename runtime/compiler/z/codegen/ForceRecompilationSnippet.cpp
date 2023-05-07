@@ -90,8 +90,15 @@ TR::S390ForceRecompilationSnippet::emitSnippetBody()
 
    *(int32_t *) cursor = (int32_t)((destAddr - (intptr_t)(cursor - 2)) / 2);
 
-   cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, (uint8_t*) glueRef, TR_HelperAddress, cg()),
-                             __FILE__, __LINE__, getNode());
+   cg()->addExternalRelocation(
+      TR::ExternalRelocation::create(
+         cursor,
+         (uint8_t*) glueRef,
+         TR_HelperAddress,
+         cg()),
+      __FILE__,
+      __LINE__,
+      getNode());
 
    cursor += sizeof(int32_t);
 
@@ -153,14 +160,28 @@ TR::S390ForceRecompilationDataSnippet::emitSnippetBody()
 
    // Return Address
    *(intptr_t *) cursor = (intptr_t)getRestartLabel()->getCodeLocation();
-   cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, NULL, TR_AbsoluteMethodAddress, cg()),
-                             __FILE__, __LINE__, getNode());
+   cg()->addExternalRelocation(
+      TR::ExternalRelocation::create(
+         cursor,
+         NULL,
+         TR_AbsoluteMethodAddress,
+         cg()),
+      __FILE__,
+      __LINE__,
+      getNode());
    cursor += sizeof(intptr_t);
 
    // Start PC
    *(intptr_t *) cursor = (intptr_t)cg()->getCodeStart();
-   cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, NULL, TR_AbsoluteMethodAddress, cg()),
-                             __FILE__, __LINE__, getNode());
+   cg()->addExternalRelocation(
+      TR::ExternalRelocation::create(
+         cursor,
+         NULL,
+         TR_AbsoluteMethodAddress,
+         cg()),
+      __FILE__,
+      __LINE__,
+      getNode());
    cursor += sizeof(intptr_t);
 
    return cursor;
