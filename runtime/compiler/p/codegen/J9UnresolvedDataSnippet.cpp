@@ -178,13 +178,16 @@ uint8_t *J9::Power::UnresolvedDataSnippet::emitSnippetBody()
    cursor += 4;
 
    *(intptr_t *)cursor = (intptr_t)getDataSymbolReference()->getOwningMethod(comp)->constantPool();
-   cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,*(uint8_t **)cursor,
-                                                                          getNode() ? (uint8_t *)getNode()->getInlinedSiteIndex() : (uint8_t *)-1,
-                                                                          TR_ConstantPool,
-                                                                          cg()),
-                          __FILE__,
-                          __LINE__,
-                          getNode());
+   cg()->addExternalRelocation(
+      TR::ExternalRelocation::create(
+         cursor,
+         *(uint8_t **)cursor,
+         getNode() ? (uint8_t *)getNode()->getInlinedSiteIndex() : (uint8_t *)-1,
+         TR_ConstantPool,
+         cg()),
+      __FILE__,
+      __LINE__,
+      getNode());
    cursor += TR::Compiler->om.sizeofReferenceAddress();
 
    if (getMemoryReference()->isTOCAccess())
