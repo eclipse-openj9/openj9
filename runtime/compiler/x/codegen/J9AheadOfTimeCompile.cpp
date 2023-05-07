@@ -51,12 +51,15 @@ void J9::X86::AheadOfTimeCompile::processRelocations()
        && TR::CodeCacheManager::instance()->codeCacheConfig().needsMethodTrampolines()
        && _cg->getPicSlotCount())
       {
-      _cg->addExternalRelocation(new (_cg->trHeapMemory()) TR::ExternalRelocation(NULL,
-                                                                                 (uint8_t *)(uintptr_t)_cg->getPicSlotCount(),
-                                                                                 TR_PicTrampolines, _cg),
-                            __FILE__,
-                            __LINE__,
-                            NULL);
+      _cg->addExternalRelocation(
+         TR::ExternalRelocation::create(
+            NULL,
+            (uint8_t *)(uintptr_t)_cg->getPicSlotCount(),
+            TR_PicTrampolines,
+            _cg),
+         __FILE__,
+         __LINE__,
+         NULL);
       }
 
    J9::AheadOfTimeCompile::processRelocations();

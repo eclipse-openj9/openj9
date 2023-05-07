@@ -91,7 +91,7 @@ uint8_t *TR::X86PicDataSnippet::encodeConstantPoolInfo(uint8_t *cursor)
       info->data3 = offsetToJ2IVirtualThunk;
 
       cg()->addExternalRelocation(
-         new (cg()->trHeapMemory()) TR::ExternalRelocation(
+         TR::ExternalRelocation::create(
             cursor,
             (uint8_t *)info,
             NULL,
@@ -104,24 +104,29 @@ uint8_t *TR::X86PicDataSnippet::encodeConstantPoolInfo(uint8_t *cursor)
    else if (_thunkAddress)
       {
       TR_ASSERT(comp->target().is64Bit(), "expecting a 64-bit target for thunk relocations");
-      cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
-                                                                             *(uint8_t **)cursor,
-                                                                             (uint8_t *)inlinedSiteIndex,
-                                                                             TR_Thunks, cg()),
-                             __FILE__,
-                             __LINE__,
-                             _startOfPicInstruction->getNode());
+      cg()->addExternalRelocation(
+         TR::ExternalRelocation::create(
+            cursor,
+            *(uint8_t **)cursor,
+            (uint8_t *)inlinedSiteIndex,
+            TR_Thunks,
+            cg()),
+         __FILE__,
+         __LINE__,
+         _startOfPicInstruction->getNode());
       }
    else
       {
-      cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
-                                                                                  (uint8_t *)cpAddr,
-                                                                                   (uint8_t *)inlinedSiteIndex,
-                                                                                   TR_ConstantPool,
-                                                                                   cg()),
-                             __FILE__,
-                             __LINE__,
-                             _startOfPicInstruction->getNode());
+      cg()->addExternalRelocation(
+         TR::ExternalRelocation::create(
+            cursor,
+            (uint8_t *)cpAddr,
+            (uint8_t *)inlinedSiteIndex,
+            TR_ConstantPool,
+            cg()),
+         __FILE__,
+         __LINE__,
+         _startOfPicInstruction->getNode());
       }
 
    // DD/DQ cpIndex
@@ -186,11 +191,15 @@ uint8_t *TR::X86PicDataSnippet::emitSnippetBody()
       disp32 = cg()->branchDisplacementToHelperOrTrampoline(cursor, _dispatchSymRef);
       *(int32_t *)(++cursor) = disp32;
 
-      cg()->addExternalRelocation(new (cg()->trHeapMemory())
-         TR::ExternalRelocation(cursor,
-                                    (uint8_t *)_dispatchSymRef,
-                                    TR_HelperAddress,
-                                    cg()), __FILE__, __LINE__, _startOfPicInstruction->getNode());
+      cg()->addExternalRelocation(
+         TR::ExternalRelocation::create(
+            cursor,
+            (uint8_t *)_dispatchSymRef,
+            TR_HelperAddress,
+            cg()),
+         __FILE__,
+         __LINE__,
+         _startOfPicInstruction->getNode());
       cursor += 4;
 
       // Lookup dispatch needs its stack map here.
@@ -362,11 +371,15 @@ uint8_t *TR::X86PicDataSnippet::emitSnippetBody()
       disp32 = cg()->branchDisplacementToHelperOrTrampoline(cursor, _dispatchSymRef);
       *(int32_t *)(++cursor) = disp32;
 
-      cg()->addExternalRelocation(new (cg()->trHeapMemory())
-         TR::ExternalRelocation(cursor,
-                                    (uint8_t *)_dispatchSymRef,
-                                    TR_HelperAddress,
-                                    cg()), __FILE__, __LINE__, _startOfPicInstruction->getNode());
+      cg()->addExternalRelocation(
+         TR::ExternalRelocation::create(
+            cursor,
+            (uint8_t *)_dispatchSymRef,
+            TR_HelperAddress,
+            cg()),
+         __FILE__,
+         __LINE__,
+         _startOfPicInstruction->getNode());
       cursor += 4;
 
       // Populate vtable dispatch needs its stack map here.
@@ -426,11 +439,15 @@ uint8_t *TR::X86PicDataSnippet::emitSnippetBody()
       disp32 = cg()->branchDisplacementToHelperOrTrampoline(picSlotCursor, resolveSlotHelperSymRef);
       *(int32_t *)(++picSlotCursor) = disp32;
 
-      cg()->addExternalRelocation(new (cg()->trHeapMemory())
-         TR::ExternalRelocation(picSlotCursor,
-                                    (uint8_t *)resolveSlotHelperSymRef,
-                                    TR_HelperAddress,
-                                    cg()),  __FILE__, __LINE__, _startOfPicInstruction->getNode());
+      cg()->addExternalRelocation(
+         TR::ExternalRelocation::create(
+            picSlotCursor,
+            (uint8_t *)resolveSlotHelperSymRef,
+            TR_HelperAddress,
+            cg()),
+         __FILE__,
+         __LINE__,
+         _startOfPicInstruction->getNode());
 
          picSlotCursor = (uint8_t *)(picSlotCursor - 1 + sizeofPicSlot);
 
@@ -442,11 +459,15 @@ uint8_t *TR::X86PicDataSnippet::emitSnippetBody()
             disp32 = cg()->branchDisplacementToHelperOrTrampoline(picSlotCursor, populateSlotHelperSymRef);
             *(int32_t *)(++picSlotCursor) = disp32;
 
-            cg()->addExternalRelocation(new (cg()->trHeapMemory())
-               TR::ExternalRelocation(picSlotCursor,
-                                          (uint8_t *)populateSlotHelperSymRef,
-                                          TR_HelperAddress,
-                                          cg()), __FILE__, __LINE__, _startOfPicInstruction->getNode());
+            cg()->addExternalRelocation(
+               TR::ExternalRelocation::create(
+                  picSlotCursor,
+                  (uint8_t *)populateSlotHelperSymRef,
+                  TR_HelperAddress,
+                  cg()),
+               __FILE__,
+               __LINE__,
+               _startOfPicInstruction->getNode());
             picSlotCursor = (uint8_t *)(picSlotCursor - 1 + sizeofPicSlot);
             }
       }
@@ -864,11 +885,15 @@ uint8_t *TR::X86CallSnippet::emitSnippetBody()
       int32_t disp32 = cg()->branchDisplacementToHelperOrTrampoline(cursor, helperSymRef);
       *(int32_t *)(++cursor) = disp32;
 
-      cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
-                                                                                    (uint8_t *)helperSymRef,
-                                                                                    TR_HelperAddress,
-                                                                                    cg()),
-                                  __FILE__, __LINE__, getNode());
+      cg()->addExternalRelocation(
+         TR::ExternalRelocation::create(
+            cursor,
+            (uint8_t *)helperSymRef,
+            TR_HelperAddress,
+            cg()),
+         __FILE__,
+         __LINE__,
+         getNode());
       cursor += 4;
 
       if (comp->target().is64Bit())
@@ -894,11 +919,15 @@ uint8_t *TR::X86CallSnippet::emitSnippetBody()
       disp32 = cg()->branchDisplacementToHelperOrTrampoline(cursor, helperSymRef);
       *(int32_t *)(++cursor) = disp32;
 
-      cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
-                                                                                    (uint8_t*)helperSymRef,
-                                                                                    TR_HelperAddress,
-                                                                                    cg()),
-                                  __FILE__, __LINE__, getNode());
+      cg()->addExternalRelocation(
+         TR::ExternalRelocation::create(
+            cursor,
+            (uint8_t*)helperSymRef,
+            TR_HelperAddress,
+            cg()),
+         __FILE__,
+         __LINE__,
+         getNode());
       cursor += 4;
 
       // DW dispatch helper index for the method's return type.
@@ -910,12 +939,16 @@ uint8_t *TR::X86CallSnippet::emitSnippetBody()
       intptr_t cpAddr = (intptr_t)methodSymRef->getOwningMethod(comp)->constantPool();
       *(intptr_t *)cursor = cpAddr;
 
-      cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
-                                                                                    *(uint8_t **)cursor,
-                                                                                    getNode() ? (uint8_t *)(uintptr_t)getNode()->getInlinedSiteIndex() : (uint8_t *)-1,
-                                                                                    TR_ConstantPool,
-                                                                                    cg()),
-                                  __FILE__, __LINE__, getNode());
+      cg()->addExternalRelocation(
+         TR::ExternalRelocation::create(
+            cursor,
+            *(uint8_t **)cursor,
+            getNode() ? (uint8_t *)(uintptr_t)getNode()->getInlinedSiteIndex() : (uint8_t *)-1,
+            TR_ConstantPool,
+            cg()),
+         __FILE__,
+         __LINE__,
+         getNode());
       cursor += sizeof(intptr_t);
 
       // DD cpIndex
@@ -976,12 +1009,16 @@ uint8_t *TR::X86CallSnippet::emitSnippetBody()
 
          if (comp->getOption(TR_UseSymbolValidationManager))
             {
-            cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
-                                                                                          (uint8_t *)ramMethod,
-                                                                                          (uint8_t *)TR::SymbolType::typeMethod,
-                                                                                          TR_SymbolFromManager,
-                                                                                          cg()),
-                                        __FILE__, __LINE__, getNode());
+            cg()->addExternalRelocation(
+               TR::ExternalRelocation::create(
+                  cursor,
+                  (uint8_t *)ramMethod,
+                  (uint8_t *)TR::SymbolType::typeMethod,
+                  TR_SymbolFromManager,
+                  cg()),
+               __FILE__,
+               __LINE__,
+               getNode());
             }
 
          // HCR in TR::X86CallSnippet::emitSnippetBody register the method address
@@ -1003,11 +1040,15 @@ uint8_t *TR::X86CallSnippet::emitSnippetBody()
       int32_t disp32 = cg()->branchDisplacementToHelperOrTrampoline(cursor, dispatchSymRef);
       *(int32_t *)(++cursor) = disp32;
 
-      cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
-                                                                                    (uint8_t *)dispatchSymRef,
-                                                                                    TR_HelperAddress,
-                                                                                    cg()),
-                                  __FILE__, __LINE__, getNode());
+      cg()->addExternalRelocation(
+         TR::ExternalRelocation::create(
+            cursor,
+            (uint8_t *)dispatchSymRef,
+            TR_HelperAddress,
+            cg()),
+         __FILE__,
+         __LINE__,
+         getNode());
       cursor += 4;
       }
 
