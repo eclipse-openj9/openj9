@@ -126,11 +126,15 @@ J9::ARM64::CodeGenerator::encodeHelperBranchAndLink(TR::SymbolReference *symRef,
                       "Target address is out of range");
       }
 
-   cg->addExternalRelocation(new (cg->trHeapMemory()) TR::ExternalRelocation(
-                             cursor,
-                             (uint8_t *)symRef,
-                             TR_HelperAddress, cg),
-                             __FILE__, __LINE__, node);
+   cg->addExternalRelocation(
+      TR::ExternalRelocation::create(
+         cursor,
+         (uint8_t *)symRef,
+         TR_HelperAddress,
+         cg),
+      __FILE__,
+      __LINE__,
+      node);
 
    uintptr_t distance = target - (uintptr_t)cursor;
    return TR::InstOpCode::getOpCodeBinaryEncoding(omitLink ? (TR::InstOpCode::b) : (TR::InstOpCode::bl)) | ((distance >> 2) & 0x3ffffff); /* imm26 */
