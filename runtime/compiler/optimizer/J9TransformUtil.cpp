@@ -1421,7 +1421,9 @@ J9::TransformUtil::transformIndirectLoadChainImpl(TR::Compilation *comp, TR::Nod
    bool isBaseStableArray = baseStableArrayRank > 0;
 
    TR_J9VMBase *fej9 = comp->fej9();
-
+#if defined(J9VM_OPT_JITSERVER)
+   TR_ASSERT_FATAL(!comp->isOutOfProcessCompilation(), "It's not safe to call transformIndirectLoadChainImpl() in JITServer mode");
+#endif
    TR_ASSERT(TR::Compiler->vm.hasAccess(comp), "transformIndirectLoadChain requires VM access");
    TR_ASSERT(node->getOpCode().isLoadIndirect(), "Expecting indirect load; found %s %p", node->getOpCode().getName(), node);
    TR_ASSERT(node->getNumChildren() == 1, "Expecting indirect load %s %p to have one child; actually has %d", node->getOpCode().getName(), node, node->getNumChildren());
