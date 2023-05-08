@@ -2601,11 +2601,16 @@ static void addValidationRecords(TR::CodeGenerator *cg)
 
          TR_ASSERT(siteIndex < (int32_t) cg->comp()->getNumInlinedCallSites(), "did not find AOTClassInfo %p method in inlined site table", *info);
 
-         cg->addExternalRelocation(new (cg->trHeapMemory()) TR::ExternalRelocation(NULL,
-                                                                          (uint8_t *)(intptr_t)siteIndex,
-                                                                          (uint8_t *)(*info),
-                                                                          (*info)->_reloKind, cg),
-                                                                          __FILE__, __LINE__, NULL);
+         cg->addExternalRelocation(
+            TR::ExternalRelocation::create(
+               NULL,
+               (uint8_t *)(intptr_t)siteIndex,
+               (uint8_t *)(*info),
+               (*info)->_reloKind,
+               cg),
+            __FILE__,
+            __LINE__,
+            NULL);
          }
       }
    }
@@ -2621,10 +2626,15 @@ static void addSVMValidationRecords(TR::CodeGenerator *cg)
 
       for (auto it = validationRecords.begin(); it != validationRecords.end(); it++)
          {
-         cg->addExternalRelocation(new (cg->trHeapMemory()) TR::ExternalRelocation(NULL,
-                                                                          (uint8_t *)(*it),
-                                                                          (*it)->_kind, cg),
-                                                                          __FILE__, __LINE__, NULL);
+         cg->addExternalRelocation(
+            TR::ExternalRelocation::create(
+               NULL,
+               (uint8_t *)(*it),
+               (*it)->_kind,
+               cg),
+            __FILE__,
+            __LINE__,
+            NULL);
          }
       }
    }
@@ -2772,18 +2782,28 @@ static void processAOTGuardSites(TR::CodeGenerator *cg, uint32_t inlinedCallSize
          case TR_CheckMethodEnter:
          case TR_CheckMethodExit:
          case TR_HCR:
-            cg->addExternalRelocation(new (cg->trHeapMemory()) TR::ExternalRelocation((uint8_t *)(*it)->getLocation(),
-                                                                             (uint8_t *)(*it)->getDestination(),
-                                                                             type, cg),
-                             __FILE__, __LINE__, NULL);
+            cg->addExternalRelocation(
+               TR::ExternalRelocation::create(
+                  (uint8_t *)(*it)->getLocation(),
+                  (uint8_t *)(*it)->getDestination(),
+                  type,
+                  cg),
+               __FILE__,
+               __LINE__,
+               NULL);
             break;
 
          case TR_Breakpoint:
-            cg->addExternalRelocation(new (cg->trHeapMemory()) TR::ExternalRelocation((uint8_t *)(*it)->getLocation(),
-                                                                             (uint8_t *)(intptr_t)(*it)->getGuard()->getCurrentInlinedSiteIndex(),
-                                                                             (uint8_t *)(*it)->getDestination(),
-                                                                             type, cg),
-                             __FILE__, __LINE__, NULL);
+            cg->addExternalRelocation(
+               TR::ExternalRelocation::create(
+                  (uint8_t *)(*it)->getLocation(),
+                  (uint8_t *)(intptr_t)(*it)->getGuard()->getCurrentInlinedSiteIndex(),
+                  (uint8_t *)(*it)->getDestination(),
+                  type,
+                  cg),
+               __FILE__,
+               __LINE__,
+               NULL);
             break;
 
          case TR_NoRelocation:
@@ -2814,8 +2834,15 @@ static void addInlinedSiteRelocation(TR::CodeGenerator *cg,
    info->data3 = reinterpret_cast<uintptr_t>(receiver);
    info->data4 = reinterpret_cast<uintptr_t>(destinationAddress);
 
-   cg->addExternalRelocation(new (cg->trHeapMemory()) TR::ExternalRelocation(reloLocation, (uint8_t *)info, reloType, cg),
-                   __FILE__,__LINE__, NULL);
+   cg->addExternalRelocation(
+      TR::ExternalRelocation::create(
+         reloLocation,
+         (uint8_t *)info,
+         reloType,
+         cg),
+      __FILE__,
+      __LINE__,
+      NULL);
    }
 
 static void addInliningTableRelocations(TR::CodeGenerator *cg, uint32_t inlinedCallSize, TR_InlinedSiteHastTableEntry *orderedInlinedSiteListTable)
@@ -2946,10 +2973,25 @@ void J9::CodeGenerator::addProjectSpecializedRelocation(uint8_t *location, uint8
       TR_ExternalRelocationTargetKind kind, char *generatingFileName, uintptr_t generatingLineNumber, TR::Node *node)
    {
    (target2 == NULL) ?
-         self()->addExternalRelocation(new (self()->trHeapMemory()) TR::ExternalRelocation(location, target, kind, self()),
-               generatingFileName, generatingLineNumber, node) :
-         self()->addExternalRelocation(new (self()->trHeapMemory()) TR::ExternalRelocation(location, target, target2, kind, self()),
-               generatingFileName, generatingLineNumber, node);
+         self()->addExternalRelocation(
+            TR::ExternalRelocation::create(
+               location,
+               target,
+               kind,
+               self()),
+            generatingFileName,
+            generatingLineNumber,
+            node) :
+         self()->addExternalRelocation(
+            TR::ExternalRelocation::create(
+               location,
+               target,
+               target2,
+               kind,
+               self()),
+            generatingFileName,
+            generatingLineNumber,
+            node);
    }
 
 void J9::CodeGenerator::addProjectSpecializedRelocation(TR::Instruction *instr, uint8_t *target, uint8_t *target2,
@@ -3000,8 +3042,15 @@ J9::CodeGenerator::jitAddUnresolvedAddressMaterializationToPatchOnClassRedefinit
    if (self()->comp()->compileRelocatableCode())
 #endif /* defined(J9VM_OPT_JITSERVER) */
       {
-      self()->addExternalRelocation(new (self()->trHeapMemory()) TR::ExternalRelocation((uint8_t *)firstInstruction, 0, TR_HCR, self()),
-                                 __FILE__,__LINE__, NULL);
+      self()->addExternalRelocation(
+         TR::ExternalRelocation::create(
+            (uint8_t *)firstInstruction,
+            0,
+            TR_HCR,
+            self()),
+         __FILE__,
+         __LINE__,
+         NULL);
       }
    else
       {

@@ -842,14 +842,16 @@ TR_HWProfiler::createRecords(TR::Compilation *comp)
       if (!TR::Options::getCmdLineOptions()->getOption(TR_HWProfilerDisableAOT) &&
           fej9->hardwareProfilingInstructionsNeedRelocation())
          {
-         TR::ExternalRelocation *relocation =
-               new (comp->trHeapMemory()) TR::ExternalRelocation(ia,
-                                                                target,
-                                                                target2,
-                                                                relocationTargetKind,
-                                                                cg);
-
-         cg->addExternalRelocation(relocation, __FILE__, __LINE__, node);
+         cg->addExternalRelocation(
+            TR::ExternalRelocation::create(
+               ia,
+               target,
+               target2,
+               relocationTargetKind,
+               cg),
+            __FILE__,
+            __LINE__,
+            node);
          }
       }
    }

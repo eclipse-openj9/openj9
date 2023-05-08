@@ -59,14 +59,27 @@ uint8_t *TR::J9WatchedStaticFieldSnippet::emitSnippetBody()
    if (cg()->comp()->getOption(TR_UseSymbolValidationManager))
       {
       cg()->addExternalRelocation(
-         new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor + offsetof(J9JITWatchedStaticFieldData, method), reinterpret_cast<uint8_t *>(staticFieldData.method), reinterpret_cast<uint8_t *>(TR::SymbolType::typeMethod), TR_SymbolFromManager, cg()),
+         TR::ExternalRelocation::create(
+            cursor + offsetof(J9JITWatchedStaticFieldData, method),
+            reinterpret_cast<uint8_t *>(staticFieldData.method),
+            reinterpret_cast<uint8_t *>(TR::SymbolType::typeMethod),
+            TR_SymbolFromManager,
+            cg()),
          __FILE__,
          __LINE__,
          node);
       }
    else if (cg()->needClassAndMethodPointerRelocations())
       {
-      cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor + offsetof(J9JITWatchedStaticFieldData, method), NULL, TR_RamMethod, cg()), __FILE__, __LINE__, node);
+      cg()->addExternalRelocation(
+         TR::ExternalRelocation::create(
+            cursor + offsetof(J9JITWatchedStaticFieldData, method),
+            NULL,
+            TR_RamMethod,
+            cg()),
+         __FILE__,
+         __LINE__,
+         node);
       }
 
    bool isResolved = !node->getSymbolReference()->isUnresolved();
@@ -77,7 +90,12 @@ uint8_t *TR::J9WatchedStaticFieldSnippet::emitSnippetBody()
       if (cg()->needRelocationsForStatics())
          {
          cg()->addExternalRelocation(
-            new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor + offsetof(J9JITWatchedStaticFieldData, fieldAddress), reinterpret_cast<uint8_t *>(node->getSymbolReference()), reinterpret_cast<uint8_t *>(node->getInlinedSiteIndex()), TR_DataAddress, cg()),
+            TR::ExternalRelocation::create(
+               cursor + offsetof(J9JITWatchedStaticFieldData, fieldAddress),
+               reinterpret_cast<uint8_t *>(node->getSymbolReference()),
+               reinterpret_cast<uint8_t *>(node->getInlinedSiteIndex()),
+               TR_DataAddress,
+               cg()),
             __FILE__,
             __LINE__,
             node);
@@ -86,12 +104,17 @@ uint8_t *TR::J9WatchedStaticFieldSnippet::emitSnippetBody()
       if (cg()->comp()->getOption(TR_UseSymbolValidationManager))
          {
          cg()->addExternalRelocation(
-            new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor + offsetof(J9JITWatchedStaticFieldData, fieldClass), reinterpret_cast<uint8_t *>(staticFieldData.fieldClass), reinterpret_cast<uint8_t *>(TR::SymbolType::typeClass), TR_SymbolFromManager, cg()),
+            TR::ExternalRelocation::create(
+               cursor + offsetof(J9JITWatchedStaticFieldData, fieldClass),
+               reinterpret_cast<uint8_t *>(staticFieldData.fieldClass),
+               reinterpret_cast<uint8_t *>(TR::SymbolType::typeClass),
+               TR_SymbolFromManager,
+               cg()),
             __FILE__,
             __LINE__,
             node);
          }
-      // relocations for TR_ClassAddress are needed for AOT/AOTaaS compiles and not needed for regular JIT and JITServer compiles. 
+      // relocations for TR_ClassAddress are needed for AOT/AOTaaS compiles and not needed for regular JIT and JITServer compiles.
       // cg->needClassAndMethodPointerRelocations() tells us whether a relocation is needed depending on the type of compile being performed.
       else if (cg()->needClassAndMethodPointerRelocations())
          {
@@ -99,7 +122,12 @@ uint8_t *TR::J9WatchedStaticFieldSnippet::emitSnippetBody()
          // A short-term solution would be to use TR_ClassPointer. However this is hacky because TR_ClassPointer expects an aconst node (so we would have to create a dummy node). The proper solution would be to implement the functionality in the power
          // codegenerator to be able to patch TR_ClassAddress contiguous word.
          cg()->addExternalRelocation(
-            new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor + offsetof(J9JITWatchedStaticFieldData, fieldClass), reinterpret_cast<uint8_t *>(node->getSymbolReference()), reinterpret_cast<uint8_t *>(node->getInlinedSiteIndex()), TR_ClassAddress, cg()),
+            TR::ExternalRelocation::create(
+               cursor + offsetof(J9JITWatchedStaticFieldData, fieldClass),
+               reinterpret_cast<uint8_t *>(node->getSymbolReference()),
+               reinterpret_cast<uint8_t *>(node->getInlinedSiteIndex()),
+               TR_ClassAddress,
+               cg()),
             __FILE__,
             __LINE__,
             node);
