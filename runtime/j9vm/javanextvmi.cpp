@@ -464,7 +464,16 @@ JVM_GetClassFileVersion(JNIEnv *env, jclass cls)
 JNIEXPORT void JNICALL
 JVM_VirtualThreadHideFrames(JNIEnv *env, jobject vthread, jboolean hide)
 {
-	/* TODO toggle hiding of stack frames for JVMTI */
+	J9VMThread *currentThread = (J9VMThread *)env;
+	Assert_SC_true(IS_JAVA_LANG_VIRTUALTHREAD(currentThread, currentThread->threadObject));
+
+	if (hide) {
+		Assert_SC_true(J9_ARE_NO_BITS_SET(currentThread->privateFlags, J9_PRIVATE_FLAGS_VIRTUAL_THREAD_HIDDEN_FRAMES));
+		currentThread->privateFlags |= J9_PRIVATE_FLAGS_VIRTUAL_THREAD_HIDDEN_FRAMES;
+	} else {
+		Assert_SC_true(J9_ARE_ALL_BITS_SET(currentThread->privateFlags, J9_PRIVATE_FLAGS_VIRTUAL_THREAD_HIDDEN_FRAMES));
+		currentThread->privateFlags &= ~(UDATA)J9_PRIVATE_FLAGS_VIRTUAL_THREAD_HIDDEN_FRAMES;
+	}
 }
 #endif /* JAVA_SPEC_VERSION >= 20 */
 
