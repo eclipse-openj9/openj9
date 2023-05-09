@@ -65,7 +65,7 @@ If you want to build a binary by using a Docker container, follow these steps to
 
 2. Obtain the [docker build script](https://github.com/eclipse-openj9/openj9/blob/master/buildenv/docker/mkdocker.sh) to build and run a container that has all the correct software pre-requisites.
 
-Download the docker build script to your local system or copy and paste the following command:```
+Download the docker build script to your local system or copy and paste the following command:
 
 ```
 wget https://raw.githubusercontent.com/eclipse-openj9/openj9/master/buildenv/docker/mkdocker.sh
