@@ -4834,12 +4834,12 @@ MM_CopyForwardScheme::verifyClassObjectSlots(MM_EnvironmentVLHGC *env, J9Object 
 			 * scan MethodTypes
 			 */
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
-			GC_MethodTypesIterator methodTypesIterator(classPtr->romClass->invokeCacheCount, classPtr->invokeCache);
+			GC_InvokeCacheIterator invokeCacheIterator(classPtr->romClass->invokeCacheCount, classPtr->invokeCache);
 #else /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
-			GC_MethodTypesIterator methodTypesIterator(classPtr->romClass->methodTypeCount, classPtr->methodTypes);
+			GC_InvokeCacheIterator invokeCacheIterator(classPtr->romClass->methodTypeCount, classPtr->methodTypes);
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 
-			while (NULL != (slotPtr = methodTypesIterator.nextSlot())) {
+			while (NULL != (slotPtr = invokeCacheIterator.nextSlot())) {
 				J9Object *dstObject = *slotPtr;
 				if (!_abortInProgress && !isObjectInNoEvacuationRegions(env, dstObject) && verifyIsPointerInEvacute(env, dstObject)) {
 					PORT_ACCESS_FROM_ENVIRONMENT(env);
@@ -4859,8 +4859,8 @@ MM_CopyForwardScheme::verifyClassObjectSlots(MM_EnvironmentVLHGC *env, J9Object 
 			 * scan VarHandle MethodTypes
 			 */
 #if defined(J9VM_OPT_METHOD_HANDLE)
-			GC_MethodTypesIterator varHandleMethodTypesIterator(classPtr->romClass->varHandleMethodTypeCount, classPtr->varHandleMethodTypes);
-			while (NULL != (slotPtr = varHandleMethodTypesIterator.nextSlot())) {
+			GC_InvokeCacheIterator varHandleinvokeCacheIterator(classPtr->romClass->varHandleMethodTypeCount, classPtr->varHandleMethodTypes);
+			while (NULL != (slotPtr = varHandleinvokeCacheIterator.nextSlot())) {
 				J9Object *dstObject = *slotPtr;
 				if (!_abortInProgress && !isObjectInNoEvacuationRegions(env, dstObject) && verifyIsPointerInEvacute(env, dstObject)) {
 					PORT_ACCESS_FROM_ENVIRONMENT(env);

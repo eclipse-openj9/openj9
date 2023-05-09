@@ -26,8 +26,8 @@
  * @ingroup GC_Structs
  */
 
-#if !defined(METHODTYPESITERATOR_HPP_)
-#define METHODTYPESITERATOR_HPP_
+#if !defined(INVOKECACHEITERATOR_HPP_)
+#define INVOKECACHEITERATOR_HPP_
 
 #include "j9.h"
 #include "j9cfg.h"
@@ -37,14 +37,14 @@
  * Iterate over all MethodType slots in a class which contain an object reference.
  * @ingroup GC_Structs
  */
-class GC_MethodTypesIterator
+class GC_InvokeCacheIterator
 {
 	U_32 _methodTypeTotal;
 	U_32 _methodTypeCount;
 	j9object_t *_methodTypePtr;
 	
 public:
-	GC_MethodTypesIterator(U_32 methodTypeCount, j9object_t *methodTypes) :
+	GC_InvokeCacheIterator(U_32 methodTypeCount, j9object_t *methodTypes) :
 		_methodTypeCount(methodTypeCount),
 		_methodTypePtr(methodTypes)
 	{
@@ -86,5 +86,5 @@ public:
 	}
 };
 
-#endif /* METHODTYPESITERATOR_HPP_ */
+#endif /* INVOKECACHEITERATOR_HPP_ */
 
