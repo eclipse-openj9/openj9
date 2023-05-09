@@ -1081,6 +1081,31 @@ class TR_VectorAPIExpansion : public TR::Optimization
    */
    static TR::Node *testIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, TR::VectorLength vectorLength, int32_t numLanes, handlerMode mode);
 
+
+  /** \brief
+   *    Transforms rotation amount from rotate right to rotate left
+   *
+   *   \param opt
+   *      This optimization object
+   *
+   *   \param node
+   *      Amount to rotate right
+   *
+   *   \param elementType
+   *      Element type
+   *
+   *   \param vectorLength
+   *      Vector length
+   *
+   *   \param opCodeType
+   *      opcode type
+   *
+   *   \return
+   *      New node that can be used to rotate left and achieve the same result
+   */
+   static TR::Node *transformRORtoROL(TR_VectorAPIExpansion *opt, TR::Node *node, TR::DataType elementType, TR::VectorLength vectorLength, vapiOpCodeType opCodeType);
+
+
   /** \brief
    *    Scalarizes or vectorizes a node that is a call to \c VectorSupport.unaryOp(),binaryOp(), etc. intrinsic.
    *    In both cases, the node is modified in place.
@@ -1428,9 +1453,12 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *   \param opCodeType
    *      opcode type
    *
+   *   \param transformRORtoROL
+   *      true if rotate right has to be transformed into rotate left
+   *
    *   \return
    *      Transformed node
    */
-   static TR::Node *transformNary(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, TR::VectorLength vectorLength, int32_t numLanes, handlerMode mode, TR::ILOpCodes scalarOpCode, TR::ILOpCodes vectorOpCode, int32_t firstOperand, int32_t numOperands, vapiOpCodeType opCodeType);
+   static TR::Node *transformNary(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, TR::VectorLength vectorLength, int32_t numLanes, handlerMode mode, TR::ILOpCodes scalarOpCode, TR::ILOpCodes vectorOpCode, int32_t firstOperand, int32_t numOperands, vapiOpCodeType opCodeType, bool transformRORtoROL);
    };
 #endif /* VECTORAPIEXPANSION_INCL */
