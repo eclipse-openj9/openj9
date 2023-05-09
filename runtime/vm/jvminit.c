@@ -1360,10 +1360,10 @@ initializeDllLoadTable(J9PortLibrary *portLibrary, J9VMInitArgs* j9vm_args, UDAT
 #endif /* defined(OMR_MIXED_REFERENCES_MODE_STATIC) */
 
 	JVMINIT_VERBOSE_INIT_TRACE(verboseFlags, "\nInitializing DLL load table:\n");
-#if defined(J9ZOS390)
-	if(NULL == createLoadInfo(portLibrary, returnVal, J9_IFA_DLL_NAME, 0, NULL, verboseFlags))
+#if defined(J9VM_OPT_JAVA_OFFLOAD_SUPPORT)
+	if (NULL == createLoadInfo(portLibrary, returnVal, J9_IFA_DLL_NAME, 0, NULL, verboseFlags))
 		goto _error;
-#endif
+#endif /* defined(J9VM_OPT_JAVA_OFFLOAD_SUPPORT) */
 
 	if (NULL == createLoadInfo(portLibrary, returnVal, J9_JIT_DLL_NAME, 0, NULL, verboseFlags))
 		goto _error;
@@ -3541,7 +3541,7 @@ modifyDllLoadTable(J9JavaVM * vm, J9Pool* loadTable, J9VMInitArgs* j9vm_args)
 	entry = findDllLoadInfo(loadTable, J9_IFA_DLL_NAME);
 	entry->loadFlags |= LOAD_BY_DEFAULT;
 	JVMINIT_VERBOSE_INIT_VM_TRACE(vm, "IFA support required... whacking table\n");
-#endif
+#endif /* defined(J9VM_OPT_JAVA_OFFLOAD_SUPPORT) */
 
 	rc = processXCheckOptions(vm, loadTable, j9vm_args);
 	JVMINIT_VERBOSE_INIT_TRACE_WORKING_SET(vm);
