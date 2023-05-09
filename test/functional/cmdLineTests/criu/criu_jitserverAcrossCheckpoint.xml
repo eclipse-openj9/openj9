@@ -24,7 +24,7 @@
 
 <!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
 
-<suite id="J9 Criu Command-Line Post Restore JIT Option Tests" timeout="300">
+<suite id="J9 Criu Command-Line Across Restore JITServer Option Tests" timeout="300">
 	<variable name="MAINCLASS_OPTIONSFILE_TEST" value="org.openj9.criu.OptionsFileTest" />
 	<variable name="ENABLE_JITSERVER" value="-XX:+UseJITServer" />
 	<variable name="PRE_CRIU_VERBOSE" value="-Xjit:verbose={compilePerformance},verbose={JITServer},verbose={JITServerConns},vlog=preCheckpointVlog" />
@@ -42,6 +42,10 @@
 		<output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
 		<output type="success" caseSensitive="yes" regex="no">do not match expected</output>
 		<output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+		<output type="success" caseSensitive="yes" regex="no">JITSERVER EXISTS</output>
+		<output type="success" caseSensitive="yes" regex="no">JITSERVER STILL EXISTS</output>
+		<output type="failure" caseSensitive="yes" regex="no">JITSERVER DOES NOT EXIST</output>
+		<output type="failure" caseSensitive="yes" regex="no">JITSERVER NO LONGER EXISTS</output>
 	</test>
 
 	<test id="Check Connection in Pre-Checkpoint Verbose Log">
@@ -67,6 +71,10 @@
 		<output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
 		<output type="success" caseSensitive="yes" regex="no">do not match expected</output>
 		<output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+		<output type="success" caseSensitive="yes" regex="no">JITSERVER EXISTS</output>
+		<output type="success" caseSensitive="yes" regex="no">JITSERVER STILL EXISTS</output>
+		<output type="failure" caseSensitive="yes" regex="no">JITSERVER DOES NOT EXIST</output>
+		<output type="failure" caseSensitive="yes" regex="no">JITSERVER NO LONGER EXISTS</output>
 	</test>
 
 	<test id="JITServer not explicitly enabled Post-Restore: Check no connection in Post-Restore Verbose Log">
@@ -86,6 +94,10 @@
 		<output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
 		<output type="success" caseSensitive="yes" regex="no">do not match expected</output>
 		<output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+		<output type="success" caseSensitive="yes" regex="no">JITSERVER EXISTS</output>
+		<output type="success" caseSensitive="yes" regex="no">JITSERVER STILL EXISTS</output>
+		<output type="failure" caseSensitive="yes" regex="no">JITSERVER DOES NOT EXIST</output>
+		<output type="failure" caseSensitive="yes" regex="no">JITSERVER NO LONGER EXISTS</output>
 	</test>
 
 	<test id="Portable CRIU Mode; JITServer not explicitly enabled Post-Restore: Check no connection in Post-Restore Verbose Log">
@@ -105,6 +117,10 @@
 		<output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
 		<output type="success" caseSensitive="yes" regex="no">do not match expected</output>
 		<output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+		<output type="success" caseSensitive="yes" regex="no">JITSERVER EXISTS</output>
+		<output type="success" caseSensitive="yes" regex="no">JITSERVER STILL EXISTS</output>
+		<output type="failure" caseSensitive="yes" regex="no">JITSERVER DOES NOT EXIST</output>
+		<output type="failure" caseSensitive="yes" regex="no">JITSERVER NO LONGER EXISTS</output>
 	</test>
 
 	<test id="Enable JITServer specified Pre-Checkpoint: Check no connection in Pre-Checkpoint Verbose Log">
@@ -130,6 +146,10 @@
 		<output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
 		<output type="success" caseSensitive="yes" regex="no">do not match expected</output>
 		<output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+		<output type="success" caseSensitive="yes" regex="no">JITSERVER EXISTS</output>
+		<output type="success" caseSensitive="yes" regex="no">JITSERVER STILL EXISTS</output>
+		<output type="failure" caseSensitive="yes" regex="no">JITSERVER DOES NOT EXIST</output>
+		<output type="failure" caseSensitive="yes" regex="no">JITSERVER NO LONGER EXISTS</output>
 	</test>
 
 	<test id="Portable CRIU Mode; Enable JITServer specified Pre-Checkpoint: Check connection in Pre-Checkpoint Verbose Log">

@@ -52,19 +52,33 @@ $TEST_JDK_BIN/jitserver $JITSERVER_OPTIONS &
 JITSERVER_PID=$!
 sleep 2
 
-$TEST_JDK_BIN/java -XX:JITServerPort=$JITSERVER_PORT $JVM_OPTS -version;
+ps | grep $JITSERVER_PID | grep 'jitserver'
+JITSERVER_EXISTS=$?
 
-if [ "$METRICS" == true ]; then
-    curl http://localhost:$METRICS_PORT/metrics
+if [ "$JITSERVER_EXISTS" == 0 ]; then
+    echo "JITSERVER EXISTS"
+
+    $TEST_JDK_BIN/java -XX:JITServerPort=$JITSERVER_PORT $JVM_OPTS -version;
+
+    if [ "$METRICS" == true ]; then
+        curl http://localhost:$METRICS_PORT/metrics
+    fi
+
+    ps | grep $JITSERVER_PID | grep 'jitserver'
+    JITSERVER_STILL_EXISTS=$?
+    if [ "$JITSERVER_STILL_EXISTS" == 0 ]; then
+        echo "JITSERVER STILL EXISTS"
+    else
+        echo "JITSERVER NO LONGER EXISTS"
+    fi
+
+    echo "Terminating $TEST_JDK_BIN/jitserver $JITSERVER_OPTIONS"
+    kill -9 $JITSERVER_PID
+    # Running pkill seems to cause a hang...
+    #pkill -9 -xf "$TEST_JDK_BIN/jitserver $JITSERVER_OPTIONS"
+    sleep 2
+else
+    echo "JITSERVER DOES NOT EXIST"
 fi
-
-echo "Checking that JITServer Process is still alive"
-ps -ef | grep $JITSERVER_PID
-
-echo "Terminating $TEST_JDK_BIN/jitserver $JITSERVER_OPTIONS"
-kill -9 $JITSERVER_PID
-# Running pkill seems to cause a hang...
-#pkill -9 -xf "$TEST_JDK_BIN/jitserver $JITSERVER_OPTIONS"
-sleep 2
 
 echo "finished script";
