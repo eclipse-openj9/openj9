@@ -34,6 +34,10 @@
 		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="required" caseSesnsitive="no" regex="no">Connected to a server</output>
 		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">(Fatal|Unhandled) Exception</output>
+		<output type="success" caseSensitive="yes" regex="no">JITSERVER EXISTS</output>
+		<output type="success" caseSensitive="yes" regex="no">JITSERVER STILL EXISTS</output>
+		<output type="failure" caseSensitive="yes" regex="no">JITSERVER DOES NOT EXIST</output>
+		<output type="failure" caseSensitive="yes" regex="no">JITSERVER NO LONGER EXISTS</output>
 	</test>
 
 	<test id="Test JITServer disabled">
@@ -41,6 +45,10 @@
 		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="failure" caseSesnsitive="no" regex="no">Connected to a server</output>
 		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">(Fatal|Unhandled) Exception</output>
+		<output type="success" caseSensitive="yes" regex="no">JITSERVER EXISTS</output>
+		<output type="success" caseSensitive="yes" regex="no">JITSERVER STILL EXISTS</output>
+		<output type="failure" caseSensitive="yes" regex="no">JITSERVER DOES NOT EXIST</output>
+		<output type="failure" caseSensitive="yes" regex="no">JITSERVER NO LONGER EXISTS</output>
 	</test>
 
 	<test id="Test bad port">
@@ -48,6 +56,10 @@
 		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="failure" caseSesnsitive="no" regex="no">Connected to a server</output>
 		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">(Fatal|Unhandled) Exception</output>
+		<output type="success" caseSensitive="yes" regex="no">JITSERVER EXISTS</output>
+		<output type="success" caseSensitive="yes" regex="no">JITSERVER STILL EXISTS</output>
+		<output type="failure" caseSensitive="yes" regex="no">JITSERVER DOES NOT EXIST</output>
+		<output type="failure" caseSensitive="yes" regex="no">JITSERVER NO LONGER EXISTS</output>
 	</test>
 
 	<test id="Test bad hostname">
@@ -55,6 +67,10 @@
 		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="failure" caseSesnsitive="no" regex="no">Connected to a server</output>
 		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">(Fatal|Unhandled) Exception</output>
+		<output type="success" caseSensitive="yes" regex="no">JITSERVER EXISTS</output>
+		<output type="success" caseSensitive="yes" regex="no">JITSERVER STILL EXISTS</output>
+		<output type="failure" caseSensitive="yes" regex="no">JITSERVER DOES NOT EXIST</output>
+		<output type="failure" caseSensitive="yes" regex="no">JITSERVER NO LONGER EXISTS</output>
 	</test>
 
 	<test id="Test Metrics">
@@ -66,6 +82,10 @@
 		<output type="success" caseSensitive="no" regex="no">jitserver_active_threads</output>
 		<output type="failure" caseSenstive="no" regex="no">Connection refused</output>
 		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">(Fatal|Unhandled) Exception</output>
+		<output type="success" caseSensitive="yes" regex="no">JITSERVER EXISTS</output>
+		<output type="success" caseSensitive="yes" regex="no">JITSERVER STILL EXISTS</output>
+		<output type="failure" caseSensitive="yes" regex="no">JITSERVER DOES NOT EXIST</output>
+		<output type="failure" caseSensitive="yes" regex="no">JITSERVER NO LONGER EXISTS</output>
 	</test>
 
 </suite>

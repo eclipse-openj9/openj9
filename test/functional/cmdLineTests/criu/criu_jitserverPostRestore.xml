@@ -24,7 +24,7 @@
 
 <!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
 
-<suite id="J9 Criu Command-Line Post Restore JIT Option Tests" timeout="300">
+<suite id="J9 Criu Command-Line Post Restore JITServer Option Tests" timeout="300">
 	<variable name="MAINCLASS_OPTIONSFILE_TEST" value="org.openj9.criu.OptionsFileTest" />
 	<variable name="ENABLE_JITSERVER" value="-XX:+UseJITServer" />
 	<variable name="CRIU_VERBOSE" value="-Xjit:verbose={compilePerformance},verbose={CheckpointRestore},verbose={JITServer},verbose={JITServerConns},vlog=vlog" />
@@ -40,6 +40,10 @@
 		<output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
 		<output type="success" caseSensitive="yes" regex="no">do not match expected</output>
 		<output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+		<output type="success" caseSensitive="yes" regex="no">JITSERVER EXISTS</output>
+		<output type="success" caseSensitive="yes" regex="no">JITSERVER STILL EXISTS</output>
+		<output type="failure" caseSensitive="yes" regex="no">JITSERVER DOES NOT EXIST</output>
+		<output type="failure" caseSensitive="yes" regex="no">JITSERVER NO LONGER EXISTS</output>
 	</test>
 
 	<test id="Check Verbose Log">
@@ -62,6 +66,10 @@
 		<output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
 		<output type="success" caseSensitive="yes" regex="no">do not match expected</output>
 		<output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+		<output type="success" caseSensitive="yes" regex="no">JITSERVER EXISTS</output>
+		<output type="success" caseSensitive="yes" regex="no">JITSERVER STILL EXISTS</output>
+		<output type="failure" caseSensitive="yes" regex="no">JITSERVER DOES NOT EXIST</output>
+		<output type="failure" caseSensitive="yes" regex="no">JITSERVER NO LONGER EXISTS</output>
 	</test>
 
 	<test id="Test -Xnoaot">
@@ -78,6 +86,10 @@
 		<output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
 		<output type="success" caseSensitive="yes" regex="no">do not match expected</output>
 		<output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+		<output type="success" caseSensitive="yes" regex="no">JITSERVER EXISTS</output>
+		<output type="success" caseSensitive="yes" regex="no">JITSERVER STILL EXISTS</output>
+		<output type="failure" caseSensitive="yes" regex="no">JITSERVER DOES NOT EXIST</output>
+		<output type="failure" caseSensitive="yes" regex="no">JITSERVER NO LONGER EXISTS</output>
 	</test>
 
 	<test id="Test -Xjit:exclude={*}">
@@ -94,5 +106,9 @@
 		<output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
 		<output type="success" caseSensitive="yes" regex="no">do not match expected</output>
 		<output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+		<output type="success" caseSensitive="yes" regex="no">JITSERVER EXISTS</output>
+		<output type="success" caseSensitive="yes" regex="no">JITSERVER STILL EXISTS</output>
+		<output type="failure" caseSensitive="yes" regex="no">JITSERVER DOES NOT EXIST</output>
+		<output type="failure" caseSensitive="yes" regex="no">JITSERVER NO LONGER EXISTS</output>
 	</test>
 </suite>

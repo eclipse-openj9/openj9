@@ -47,30 +47,44 @@ $2/jitserver $JITSERVER_OPTIONS &
 JITSERVER_PID=$!
 sleep 2
 
-$2/java -XX:+EnableCRIUSupport -XX:JITServerPort=$JITSERVER_PORT $3 -cp "$1/criu.jar" $4 $5 -XX:JITServerPort=$JITSERVER_PORT $6 >testOutput 2>&1;
+ps | grep $JITSERVER_PID | grep 'jitserver'
+JITSERVER_EXISTS=$?
 
-if [ "$7" != true ]; then
-    NUM_CHECKPOINT=$6
-    for ((i=0; i<$NUM_CHECKPOINT; i++)); do
-        sleep 2;
-        criu restore -D ./cpData --shell-job;
-    done
+if [ "$JITSERVER_EXISTS" == 0 ]; then
+    echo "JITSERVER EXISTS"
+
+    $2/java -XX:+EnableCRIUSupport -XX:JITServerPort=$JITSERVER_PORT $3 -cp "$1/criu.jar" $4 $5 -XX:JITServerPort=$JITSERVER_PORT $6 >testOutput 2>&1;
+
+    if [ "$7" != true ]; then
+        NUM_CHECKPOINT=$6
+        for ((i=0; i<$NUM_CHECKPOINT; i++)); do
+            sleep 2;
+            criu restore -D ./cpData --shell-job;
+        done
+    fi
+
+    cat testOutput;
+
+    if  [ "$7" != true ]; then
+        rm -rf testOutput
+        echo "Removed testOutput file"
+    fi
+
+    ps | grep $JITSERVER_PID | grep 'jitserver'
+    JITSERVER_STILL_EXISTS=$?
+    if [ "$JITSERVER_STILL_EXISTS" == 0 ]; then
+        echo "JITSERVER STILL EXISTS"
+    else
+        echo "JITSERVER NO LONGER EXISTS"
+    fi
+
+    echo "Terminating $2/jitserver $JITSERVER_OPTIONS"
+    kill -9 $JITSERVER_PID
+    # For consistency with the jitserver cmdline tests, use kill
+    #pkill -9 -xf "$2/jitserver $JITSERVER_OPTIONS"
+    sleep 2
+else
+    echo "JITSERVER DOES NOT EXIST"
 fi
-
-cat testOutput;
-
-if  [ "$7" != true ]; then
-    rm -rf testOutput
-    echo "Removed testOutput file"
-fi
-
-echo "Checking that JITServer Process is still alive"
-ps -ef | grep $JITSERVER_PID
-
-echo "Terminating $2/jitserver $JITSERVER_OPTIONS"
-kill -9 $JITSERVER_PID
-# For consistency with the jitserver cmdline tests, use kill
-#pkill -9 -xf "$2/jitserver $JITSERVER_OPTIONS"
-sleep 2
 
 echo "finished script";
