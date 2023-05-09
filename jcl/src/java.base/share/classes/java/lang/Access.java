@@ -697,7 +697,6 @@ final class Access implements JavaLangAccess {
 /*[ENDIF] JAVA_SPEC_VERSION >= 19 */
 
 /*[IF (JAVA_SPEC_VERSION >= 11) & (JAVA_SPEC_VERSION != 20)]*/
-	@Override
 	public String getLoaderNameID(ClassLoader loader) {
 		StringBuilder buffer = new StringBuilder();
 		String name = loader.getName();
