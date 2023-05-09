@@ -4013,8 +4013,41 @@ JVM_LoadLibrary(const char *libName, jboolean throwOnFailure)
 }
 
 
+#if defined(J9VM_OPT_JAVA_OFFLOAD_SUPPORT) && (JAVA_SPEC_VERSION >= 17)
 /**
- *  void* JNICALL JVM_FindLibraryEntry(UDATA handle, char *functionName)
+ * Validates the JNI library for offload.
+ * If successful, returns a library handle which may be modified from the handle passed in,
+ * otherwise returns NULL.
+ *
+ * @param libName a null terminated string containing the library name.
+ * @param handle the handle of a JNI library providing the libName.
+ * @param isStatic indicates if the library is a static JNI library.
+ *
+ * @return the shared library's handle if successful, which may be modified, NULL if out of memory.
+ *
+ * DLL: jvm
+ */
+void * JNICALL
+JVM_ValidateJNILibrary(const char *libName, void *handle, jboolean isStatic)
+{
+	void *result = NULL;
+	UDATA doSwitching = 0;
+	PORT_ACCESS_FROM_JAVAVM(BFUjavaVM);
+
+	Trc_SC_ValidateJNILibrary_Entry(libName, handle, isStatic);
+
+	doSwitching = validateLibrary(BFUjavaVM, libName, (UDATA)handle, isStatic);
+	result = (void *)(((UDATA)handle) | doSwitching);
+	/* Ensure there are no switching bits out of range of the mask. */
+	Assert_SC_true((UDATA)handle == (((UDATA)result) & ~(UDATA)J9_NATIVE_LIBRARY_SWITCH_MASK));
+
+	Trc_SC_ValidateJNILibrary_Exit(result);
+	return result;
+}
+#endif /* defined(J9VM_OPT_JAVA_OFFLOAD_SUPPORT) && (JAVA_SPEC_VERSION >= 17) */
+
+
+/**
  *  Returns a pointer to a function specified by the string
  *  functionName within a given library specified by handle.
  *
@@ -4031,9 +4064,20 @@ JVM_LoadLibrary(const char *libName, jboolean throwOnFailure)
 void* JNICALL
 JVM_FindLibraryEntry(void* handle, const char *functionName)
 {
-	void* result;
+	void *result = NULL;
+#if defined(J9VM_OPT_JAVA_OFFLOAD_SUPPORT) && (JAVA_SPEC_VERSION >= 17)
+	UDATA doSwitching = ((UDATA)handle) & J9_NATIVE_LIBRARY_SWITCH_MASK;
+	BOOLEAN decorate = FALSE;
+#endif /* defined(J9VM_OPT_JAVA_OFFLOAD_SUPPORT) && (JAVA_SPEC_VERSION >= 17) */
 
 	Trc_SC_FindLibraryEntry_Entry(handle, functionName);
+
+#if defined(J9VM_OPT_JAVA_OFFLOAD_SUPPORT) && (JAVA_SPEC_VERSION >= 17)
+	handle = (void *)(((UDATA)handle) ^ doSwitching);
+#define JNI_PREFIX "Java_"
+	decorate = (0 != doSwitching) && (0 == strncmp(JNI_PREFIX, functionName, LITERAL_STRLEN(JNI_PREFIX)));
+#undef JNI_PREFIX
+#endif /* defined(J9VM_OPT_JAVA_OFFLOAD_SUPPORT) && (JAVA_SPEC_VERSION >= 17) */
 
 #if defined(WIN32)
 	result = GetProcAddress ((HINSTANCE)handle, (LPCSTR)functionName);
@@ -4042,6 +4086,15 @@ JVM_FindLibraryEntry(void* handle, const char *functionName)
 #else /* defined(WIN32) */
 #error "Please implement jvm.c:JVM_FindLibraryEntry(void* handle, const char *functionName)"
 #endif /* defined(WIN32) */
+
+#if defined(J9VM_OPT_JAVA_OFFLOAD_SUPPORT) && (JAVA_SPEC_VERSION >= 17)
+	if ((NULL != result) && decorate) {
+		UDATA newResult = ((UDATA)result) | doSwitching;
+		/* Ensure there are no switching bits out of range of the mask. */
+		Assert_SC_true(((UDATA)result) == (newResult & ~(UDATA)J9_NATIVE_LIBRARY_SWITCH_MASK));
+		result = (void *)newResult;
+	}
+#endif /* defined(J9VM_OPT_JAVA_OFFLOAD_SUPPORT) && (JAVA_SPEC_VERSION >= 17) */
 
 	Trc_SC_FindLibraryEntry_Exit(result);
 

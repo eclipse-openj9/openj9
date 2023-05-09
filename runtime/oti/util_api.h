@@ -1310,11 +1310,14 @@ isObjectStackAllocated(J9VMThread *targetThread, j9object_t aObj);
 
 /**
 * @brief
-* @param *javaVM
-* @param *library
-* @return void
+* @param *javaVM the J9JavaVM.
+* @param *libraryName a null terminated string containing the library name.
+* @param *libraryHandle the handle of a JNI library providing the libraryName.
+* @param isStatic indicates if the library is a static JNI library.
+* @return UDATA the J9_NATIVE_LIBRARY_SWITCH bits.
 */
-void validateLibrary(J9JavaVM *javaVM, J9NativeLibrary *library);
+UDATA
+validateLibrary(struct J9JavaVM *javaVM, const char *libraryName, UDATA libraryHandle, jboolean isStatic);
 #endif
 
 /* ---------------- optinfo.c ---------------- */

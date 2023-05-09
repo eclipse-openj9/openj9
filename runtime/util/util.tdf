@@ -71,7 +71,7 @@ TraceAssert=Assert_Util_signalProtectionFailed noEnv Overhead=1 Level=1 Assert="
 TraceAssert=Assert_Util_notNull noEnv Overhead=1 Level=1 Assert="(P1) != NULL"
 TraceAssert=Assert_Util_unreachable noEnv Overhead=1 Level=1 Assert="(0 /* unreachable */)"
 
-TraceEntry=Trc_Util_validateLibrary_Entry Noenv Overhead=1 Level=5 Template="validateLibrary entered (library=%p, name=%s)"
+TraceEntry=Trc_Util_validateLibrary_Entry Obsolete Noenv Overhead=1 Level=5 Template="validateLibrary entered (library=%p, name=%s)"
 TraceEvent=Trc_Util_validateLibrary_onLoadNotFound NoEnv Overhead=1 Level=4 Template="validateLibrary __OnLoad not implemented in %s"
 TraceEvent=Trc_Util_validateLibrary_onLoadFound NoEnv Overhead=1 Level=5 Template="validateLibrary __OnLoad implemented (library=%s at=%p)"
 TraceException=Trc_Util_validateLibrary_invalidLibraryNameLength Noenv Overhead=1 Level=1 Template="validateLibrary received invalid library name (length=%d)"
@@ -84,3 +84,5 @@ TraceEvent=Trc_Util_thrhelp_initializeCurrentOSStackFree Overhead=1 Level=1 Temp
 
 TraceEntry=Trc_Util_getDefinedArgumentFromJavaVMInitArgs_Entry Noenv Overhead=1 Level=3 Template="getDefinedArgumentFromJavaVMInitArgs (vmInitArgs=%p, defArg=%s)"
 TraceExit=Trc_Util_getDefinedArgumentFromJavaVMInitArgs_Exit Noenv Overhead=1 Level=3 Template="getDefinedArgumentFromJavaVMInitArgs (result=%s)"
+
+TraceEntry=Trc_Util_validateLibrary_Entry Noenv Overhead=1 Level=5 Template="validateLibrary entered (library=%p, name=%s, isStatic=%d)"

@@ -1098,6 +1098,9 @@ lookupJNINative(J9VMThread *currentThread, J9NativeLibrary *nativeLibrary, J9Met
 	UDATA lookupResult = 0;
 	void *functionAddress = NULL;
 	J9JavaVM *vm = currentThread->javaVM;
+#if defined(J9VM_OPT_JAVA_OFFLOAD_SUPPORT)
+	UDATA doSwitching = 0;
+#endif /* defined(J9VM_OPT_JAVA_OFFLOAD_SUPPORT) */
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
 	Trc_VM_lookupJNINative_Entry(currentThread, nativeLibrary, nativeMethod, symbolName, signature);
@@ -1111,6 +1114,10 @@ lookupJNINative(J9VMThread *currentThread, J9NativeLibrary *nativeLibrary, J9Met
 			UDATA args[] = {(UDATA)classLoaderObject, (UDATA)entryName};
 			internalRunStaticMethod(currentThread, findNativeMethod, TRUE, (sizeof(args) / sizeof(UDATA)), args);
 			functionAddress = (UDATA*)(*(U_64*)&(currentThread->returnValue));
+#if defined(J9VM_OPT_JAVA_OFFLOAD_SUPPORT)
+			doSwitching = ((UDATA)functionAddress) & J9_NATIVE_LIBRARY_SWITCH_MASK;
+			functionAddress = (UDATA *)(((UDATA)functionAddress) & ~(UDATA)J9_NATIVE_LIBRARY_SWITCH_MASK);
+#endif /* defined(J9VM_OPT_JAVA_OFFLOAD_SUPPORT) */
 		}
 		/* always clear pending exception, might retry later */
 		VM_VMHelpers::clearException(currentThread);
@@ -1123,6 +1130,9 @@ lookupJNINative(J9VMThread *currentThread, J9NativeLibrary *nativeLibrary, J9Met
 #endif /* JAVA_SPEC_VERSION >= 17 */
 	{
 		lookupResult = j9sl_lookup_name(nativeLibrary->handle, symbolName, (UDATA*)&functionAddress, signature);
+#if defined(J9VM_OPT_JAVA_OFFLOAD_SUPPORT)
+		doSwitching = nativeLibrary->doSwitching;
+#endif /* defined(J9VM_OPT_JAVA_OFFLOAD_SUPPORT) */
 	}
 	if (0 == lookupResult) {
 		UDATA cpFlags = J9_STARTPC_JNI_NATIVE;
@@ -1133,11 +1143,11 @@ lookupJNINative(J9VMThread *currentThread, J9NativeLibrary *nativeLibrary, J9Met
 		internalReleaseVMAccess(currentThread);
 #endif
 #if defined(J9VM_OPT_JAVA_OFFLOAD_SUPPORT)
-		if ((NULL != nativeLibrary) && (0 != nativeLibrary->doSwitching)) {
+		if (0 != doSwitching) {
 			cpFlags |= J9_STARTPC_NATIVE_REQUIRES_SWITCHING;
-			if (J9_ARE_ANY_BITS_SET(nativeLibrary->doSwitching, J9_NATIVE_LIBRARY_SWITCH_JDBC | J9_NATIVE_LIBRARY_SWITCH_WITH_SUBTASKS)) {
+			if (J9_ARE_ANY_BITS_SET(doSwitching, J9_NATIVE_LIBRARY_SWITCH_JDBC | J9_NATIVE_LIBRARY_SWITCH_WITH_SUBTASKS)) {
 				J9Class *ramClass = J9_CLASS_FROM_METHOD(nativeMethod);
-				if (J9_ARE_ANY_BITS_SET(nativeLibrary->doSwitching, J9_NATIVE_LIBRARY_SWITCH_JDBC)) {
+				if (J9_ARE_ANY_BITS_SET(doSwitching, J9_NATIVE_LIBRARY_SWITCH_JDBC)) {
 					ramClass->classDepthAndFlags |= J9AccClassHasJDBCNatives;
 				} else {
 					ramClass->classFlags |= J9ClassHasOffloadAllowSubtasksNatives;
