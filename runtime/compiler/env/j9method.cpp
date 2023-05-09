@@ -3377,27 +3377,6 @@ void TR_ResolvedJ9Method::construct()
       {TR::unknownMethod}
       };
 
-   static X JavaUtilConcurrentAtomicFencesMethods[] =
-      {
-      {x(TR::java_util_concurrent_atomic_Fences_postLoadFence,                            "postLoadFence",         "()V")},
-      {x(TR::java_util_concurrent_atomic_Fences_preStoreFence,                            "preStoreFence",         "()V")},
-      {x(TR::java_util_concurrent_atomic_Fences_postStorePreLoadFence,                    "postStorePreLoadFence", "()V")},
-      {x(TR::java_util_concurrent_atomic_Fences_postLoadFence_jlObject,                   "postLoadFence",         "(Ljava/lang/Object;)V")},
-      {x(TR::java_util_concurrent_atomic_Fences_preStoreFence_jlObject,                   "preStoreFence",         "(Ljava/lang/Object;)V")},
-      {x(TR::java_util_concurrent_atomic_Fences_postStorePreLoadFence_jlObject,           "postStorePreLoadFence", "(Ljava/lang/Object;)V")},
-      {x(TR::java_util_concurrent_atomic_Fences_postLoadFence_jlObjectjlrField,           "postLoadFence",         "(Ljava/lang/Object;Ljava/lang/reflect/Field;)V")},
-      {x(TR::java_util_concurrent_atomic_Fences_preStoreFence_jlObjectjlrField,           "preStoreFence",         "(Ljava/lang/Object;Ljava/lang/reflect/Field;)V")},
-      {x(TR::java_util_concurrent_atomic_Fences_postStorePreLoadFence_jlObjectjlrField,   "postStorePreLoadFence", "(Ljava/lang/Object;Ljava/lang/reflect/Field;)V")},
-      {x(TR::java_util_concurrent_atomic_Fences_postLoadFence_jlObjectI,                  "postLoadFence",         "([Ljava/lang/Object;I)V")},
-      {x(TR::java_util_concurrent_atomic_Fences_preStoreFence_jlObjectI,                  "preStoreFence",         "([Ljava/lang/Object;I)V")},
-      {x(TR::java_util_concurrent_atomic_Fences_postStorePreLoadFence_jlObjectI,          "postStorePreLoadFence", "([Ljava/lang/Object;I)V")},
-      {x(TR::java_util_concurrent_atomic_Fences_orderAccesses,                            "orderAccesses",         "(Ljava/lang/Object;)V")},
-      {x(TR::java_util_concurrent_atomic_Fences_orderReads,                               "orderReads",            "(Ljava/lang/Object;)V")},
-      {x(TR::java_util_concurrent_atomic_Fences_orderWrites,                              "orderWrites",           "(Ljava/lang/Object;)V")},
-      {x(TR::java_util_concurrent_atomic_Fences_reachabilityFence,                        "reachabilityFence",     "(Ljava/lang/Object;)V")},
-      {  TR::unknownMethod}
-      };
-
    //1421
    static X JavaUtilConcurrentAtomicIntegerMethods[] =
       {
@@ -4134,7 +4113,6 @@ void TR_ResolvedJ9Method::construct()
    static Y class34[] =
       {
       { "java/util/Hashtable$HashEnumerator", HashtableHashEnumeratorMethods },
-      { "java/util/concurrent/atomic/Fences", JavaUtilConcurrentAtomicFencesMethods },
       { "com/ibm/Compiler/Internal/Prefetch", PrefetchMethods },
       { "java/lang/invoke/VarHandleInternal", VarHandleMethods },
       { 0 }
@@ -4641,11 +4619,6 @@ TR_ResolvedJ9Method::setRecognizedMethodInfo(TR::RecognizedMethod rm)
             case TR::java_lang_Long_reverseBytes:
             case TR::java_lang_Integer_reverseBytes:
             case TR::java_lang_Short_reverseBytes:
-
-            case TR::java_util_concurrent_atomic_Fences_reachabilityFence:
-            case TR::java_util_concurrent_atomic_Fences_orderAccesses:
-            case TR::java_util_concurrent_atomic_Fences_orderReads:
-            case TR::java_util_concurrent_atomic_Fences_orderWrites:
 
             case TR::java_util_concurrent_atomic_AtomicBoolean_getAndSet:
             case TR::java_util_concurrent_atomic_AtomicInteger_addAndGet:
