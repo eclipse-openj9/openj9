@@ -847,6 +847,13 @@ jint JNICALL DestroyJavaVM(JavaVM * javaVM)
 
 		freeGlobals();
 
+#ifdef WIN32
+		FreeLibrary(j9vm_dllHandle);
+		FreeLibrary(thread_dllHandle);
+#else /* WIN32 */
+		dlclose(j9vm_dllHandle);
+		dlclose(thread_dllHandle);
+#endif /* WIN32 */
 		j9vm_dllHandle = 0;
 		thread_dllHandle = 0;
 
