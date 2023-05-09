@@ -44,7 +44,7 @@ static U_64 JNICALL native2InterpJavaUpcallImpl(J9UpcallMetaData *data, void *ar
 static J9VMThread * getCurrentThread(J9UpcallMetaData *data, bool *isCurThrdAllocated);
 static void convertUpcallReturnValue(J9UpcallMetaData *data, U_8 returnType, U_64 *returnStorage);
 static bool storeMemArgObjectsToJavaArray(J9UpcallMetaData *data, void *argsListPointer, J9VMThread *currentThread);
-static j9object_t createMemSegmentObject(J9UpcallMetaData *data, I_64 offset, U_32 sigTypeSize);
+static j9object_t createMemSegmentObject(J9UpcallMetaData *data, I_64 offset, I_64 sigTypeSize);
 static I_64 getNativeAddrFromMemSegmentObject(J9UpcallMetaData *data, j9object_t memSegmtObject);
 #if JAVA_SPEC_VERSION <= 19
 static j9object_t createMemAddressObject(J9UpcallMetaData *data, I_64 offset);
@@ -231,7 +231,7 @@ getInternalTypeFromSignature(J9JavaVM *vm, J9Class *typeClass, U_8 sigType)
  *
  * Note:
  * The argument normalization is only intended for the type less then 4 bytes
- * in java, which include boolean(1 byte), byte, char(2 bytes), short.
+ * in java, which include boolean (1 byte), byte, char (2 bytes), short.
  */
 static U_32
 getNormalizedArgValue(U_8 argType, I_32 argValue)
@@ -351,8 +351,8 @@ native2InterpJavaUpcallImpl(J9UpcallMetaData *data, void *argsListPointer)
 				 */
 				I_64 argValue = *(I_64*)getArgPointer(nativeSig, argsListPointer, argIndex);
 #if !defined(J9VM_ENV_LITTLE_ENDIAN)
-				/* Right shift the 64-bit float argument by 4 bytes(32 bits) given the actual value
-				 * is placed on the higher 4 bytes on the Big-Endian(BE) platforms.
+				/* Right shift the 64-bit float argument by 4 bytes (32 bits) given the actual value
+				 * is placed on the higher 4 bytes on the Big-Endian (BE) platforms.
 				 */
 				if (J9_FFI_UPCALL_SIG_TYPE_FLOAT == argSigType) {
 					argValue = argValue >> J9_FFI_UPCALL_SIG_TYPE_32_BIT;
@@ -507,9 +507,9 @@ convertUpcallReturnValue(J9UpcallMetaData *data, U_8 returnType, U_64 *returnSto
 	case J9NtcFloat:
 	{
 #if !defined(J9VM_ENV_LITTLE_ENDIAN)
-		/* Right shift the returned value from the upcall method by 4 bytes(32 bits) for the signature type
+		/* Right shift the returned value from the upcall method by 4 bytes (32 bits) for the signature type
 		 * less than or equal to 4 bytes in size given the actual value is placed on the higher 4 bytes
-		 * on the Big-Endian(BE) platforms.
+		 * on the Big-Endian (BE) platforms.
 		 */
 		*returnStorage = *returnStorage >> J9_FFI_UPCALL_SIG_TYPE_32_BIT;
 #endif /* !defined(J9VM_ENV_LITTLE_ENDIAN) */
@@ -568,7 +568,7 @@ storeMemArgObjectsToJavaArray(J9UpcallMetaData *data, void *argsListPointer, J9V
 				/* A pointer argument is wrapped as an unbounded memory segment in upcall
 				 * to pass the access check on the boundary as specified in JDK20+.
 				 */
-				memArgObject = createMemSegmentObject(data, offset, (U_32)LONG_MAX);
+				memArgObject = createMemSegmentObject(data, offset, LONG_MAX);
 #else /* JAVA_SPEC_VERSION => 20 */
 				memArgObject = createMemAddressObject(data, offset);
 #endif /* JAVA_SPEC_VERSION => 20 */
@@ -587,7 +587,7 @@ storeMemArgObjectsToJavaArray(J9UpcallMetaData *data, void *argsListPointer, J9V
 		}
 
 		/* Store the struct/pointer object (or null in the case of the primitive types) in the
-		 * java array so as to avoid being updated by GC(which is triggered by J9AllocateObject
+		 * java array so as to avoid being updated by GC (which is triggered by J9AllocateObject
 		 * in createMemAddressObject/createMemSegmentObject) when allocating memory for the next
 		 * struct/pointer of the argument list.
 		 */
@@ -620,7 +620,7 @@ createMemAddressObject(J9UpcallMetaData *data, I_64 offset)
 	j9object_t memAddrObject = NULL;
 
 	/* To wrap up an object of the MemoryAddress's subclass as an argument on the java stack,
-	 * this object is directly allocated on the heap with the passed-in native address(offset)
+	 * this object is directly allocated on the heap with the passed-in native address (offset)
 	 * set to this object.
 	 */
 	memAddrObject = objectAllocate.inlineAllocateObject(currentThread, memAddrClass, true, false);
@@ -649,15 +649,15 @@ done:
 
 /**
  * @brief Generate an object of the MemorySegment's subclass on the heap with the specified
- * native address to the requested struct or the unbounded pointer(JDK20+).
+ * native address to the requested struct or the unbounded pointer (JDK20+).
  *
  * @param data a pointer to J9UpcallMetaData
- * @param offset the native address to the requested struct or the unbounded pointer(JDK20+)
- * @param sigTypeSize the byte size of the requested struct or the unbounded pointer(JDK20+)
+ * @param offset the native address to the requested struct or the unbounded pointer (JDK20+)
+ * @param sigTypeSize the byte size of the requested struct or the unbounded pointer (JDK20+)
  * @return a MemorySegment object
  */
 static j9object_t
-createMemSegmentObject(J9UpcallMetaData *data, I_64 offset, U_32 sigTypeSize)
+createMemSegmentObject(J9UpcallMetaData *data, I_64 offset, I_64 sigTypeSize)
 {
 	J9JavaVM *vm = data->vm;
 	J9VMThread *downCallThread = data->downCallThread;
@@ -668,7 +668,7 @@ createMemSegmentObject(J9UpcallMetaData *data, I_64 offset, U_32 sigTypeSize)
 	J9Class *memSegmtClass = J9VMJDKINTERNALFOREIGNNATIVEMEMORYSEGMENTIMPL(vm);
 
 	/* To wrap up an object of the MemorySegment's subclass as an argument on the java stack,
-	 * this object is directly allocated on the heap with the passed-in native address(offset)
+	 * this object is directly allocated on the heap with the passed-in native address (offset)
 	 * set to this object.
 	 */
 	memSegmtObject = objectAllocate.inlineAllocateObject(currentThread, memSegmtClass, true, false);
