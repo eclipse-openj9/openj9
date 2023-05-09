@@ -77,8 +77,9 @@ JIT_HELPER(jitInduceOSRAtCurrentPCAndRecompile);  // asm calling-convention help
 JIT_HELPER(jitInstanceOf);  // asm calling-convention helper
 JIT_HELPER(jitInterpretNewInstanceMethod);  // asm calling-convention helper
 JIT_HELPER(jitLookupInterfaceMethod);  // asm calling-convention helper
-JIT_HELPER(jitLookupDynamicInterfaceMethod);  // asm calling-convention helper
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
 JIT_HELPER(jitLookupDynamicPublicInterfaceMethod);  // asm calling-convention helper
+#endif
 JIT_HELPER(jitMethodIsNative);  // asm calling-convention helper
 JIT_HELPER(jitMethodIsSync);  // asm calling-convention helper
 JIT_HELPER(jitMethodMonitorEntry);  // asm calling-convention helper

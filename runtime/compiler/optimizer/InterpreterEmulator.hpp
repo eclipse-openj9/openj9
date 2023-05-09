@@ -344,7 +344,12 @@ class InterpreterEmulator : public TR_ByteCodeIteratorWithState<TR_J9ByteCode, J
       /*
        * \brief refine invokestatic callee method based on operands when possible
        */
-      void refineResolvedCalleeForInvokestatic(TR_ResolvedMethod *&callee, TR::KnownObjectTable::Index & mcsIndex, TR::KnownObjectTable::Index & mhIndex, bool & isIndirectCall);
+      void refineResolvedCalleeForInvokestatic(
+         TR_ResolvedMethod *&callee,
+         TR::KnownObjectTable::Index & mcsIndex,
+         TR::KnownObjectTable::Index & mhIndex,
+         bool & isIndirectCall,
+         TR_OpaqueClassBlock *&receiverClass);
       /*
        * \brief refine invokevirtual callee method based on operands when possible
        */

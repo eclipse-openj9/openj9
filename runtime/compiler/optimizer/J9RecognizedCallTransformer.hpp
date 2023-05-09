@@ -217,6 +217,47 @@ class RecognizedCallTransformer : public OMR::RecognizedCallTransformer
     *     the call node representing the linkToVirtual call
     */
    void process_java_lang_invoke_MethodHandle_linkToVirtual(TR::TreeTop * treetop, TR::Node * node);
+
+   /** \brief
+    *     Transforms java/lang/MethodHandle.linkToInterface when the MemberName object (last arg) is not a known object.
+    *
+    *     linkToInterface is a VM INL call that would construct the call frame for the target method invocation.
+    *     This would be the case even if the method to be invoked is compiled, resulting in j2i and i2j transitions.
+    *     This transformation creates an interface dispatch to find the vtable offset and then uses it to do a computed
+    *     virtual call (represented by JITHelpers.dispatchVirtual).
+    *
+    *     linkToInterface only needs to handle regular interface dispatch. Directly-dispatched methods (e.g. private
+    *     interface instance methods, final methods of Object) will be handled by linkToSpecial(). Non-interface
+    *     virtual methods (e.g. non-final methods of Object) will be handled by linkToVirtual().
+    *
+    *  \param treetop
+    *     the TreeTop anchoring the call node
+    *
+    *  \param node
+    *     the call node representing the linkToInterface call
+    */
+   void process_java_lang_invoke_MethodHandle_linkToInterface(TR::TreeTop * treetop, TR::Node * node);
+
+   /** \brief
+    *     Transforms \p node into a call to \c JITHelpers.dispatchVirtual(), calling the method whose (interpreter)
+    *     vTable offset is the result \p vftOffset.
+    *
+    *  Additional parameters beyond \p node and \p vftOffset are not strictly necessary, but callers have already
+    *  either identified or created nodes to compute them anyway.
+    *
+    *  \param node
+    *     the linkToVirtual() or linkToInterface() call node to modify
+    *
+    *  \param vftOffset
+    *     the (interpreter) VFT offset to use for the call
+    *
+    *  \param vftNode
+    *     the vTable of the receiver
+    *
+    *  \param memberNameNode
+    *     the MemberName (last argument)
+    */
+   void makeIntoDispatchVirtualCall(TR::Node *node, TR::Node *vftOffset, TR::Node *vftNode, TR::Node *memberNameNode);
 #endif
 
    private:

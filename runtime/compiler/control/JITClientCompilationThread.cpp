@@ -1135,10 +1135,12 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(response, fe->isLambdaFormGeneratedMethod(std::get<0>(recv)));
          }
          break;
-      case MessageType::VM_vTableOrITableIndexFromMemberName:
+      case MessageType::VM_getMemberNameMethodInfo:
          {
          auto recv = client->getRecvData<TR::KnownObjectTable::Index>();
-         client->write(response, fe->vTableOrITableIndexFromMemberName(comp, std::get<0>(recv)));
+         TR_J9VMBase::MemberNameMethodInfo info = {};
+         uintptr_t ok = fe->getMemberNameMethodInfo(comp, std::get<0>(recv), &info);
+         client->write(response, ok, info.vmtarget, info.vmindex, info.clazz, info.refKind);
          }
          break;
       case MessageType::VM_delegatingMethodHandleTarget:

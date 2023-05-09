@@ -188,7 +188,7 @@ enum MessageType : uint16_t
    VM_targetMethodFromInvokeCacheArrayMemberNameObj,
    VM_refineInvokeCacheElementSymRefWithKnownObjectIndex,
    VM_isLambdaFormGeneratedMethod,
-   VM_vTableOrITableIndexFromMemberName,
+   VM_getMemberNameMethodInfo,
    VM_getMemberNameFieldKnotIndexFromMethodHandleKnotIndex,
    VM_isMethodHandleExpectedType,
    VM_isStable,

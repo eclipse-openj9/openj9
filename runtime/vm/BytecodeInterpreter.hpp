@@ -9184,10 +9184,10 @@ throw_npe:
 			return THROW_NPE;
 		}
 
-		J9JNIMethodID *methodID = (J9JNIMethodID *)(UDATA)J9OBJECT_U64_LOAD(_currentThread, memberNameObject, _vm->vmindexOffset);
-		J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(methodID->method);
+		J9Method *method = (J9Method *)(UDATA)J9OBJECT_U64_LOAD(_currentThread, memberNameObject, _vm->vmtargetOffset);
+		J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
 		UDATA methodArgCount = 0;
-		bool isInvokeBasic = (J9_BCLOOP_SEND_TARGET_METHODHANDLE_INVOKEBASIC == J9_BCLOOP_DECODE_SEND_TARGET(methodID->method->methodRunAddress));
+		bool isInvokeBasic = (J9_BCLOOP_SEND_TARGET_METHODHANDLE_INVOKEBASIC == J9_BCLOOP_DECODE_SEND_TARGET(method->methodRunAddress));
 
 		/* In MethodHandle.loop API it may generate a invokeBasic NamedFunction (see LambdaForm$NamedFunction(MethodType basicInvokerType))
 		 * that is linked by linkToVirtual. As invokeBasic is signature polymorphic, the romMethod->argCount may not match the actual
@@ -9211,43 +9211,17 @@ throw_npe:
 			return THROW_NPE;
 		}
 
-		/* vmindexOffset (J9JNIMethodID) is initialized using jnicsup.cpp::initializeMethodID.
-		 * initializeMethodID will set J9JNIMethodID->vTableIndex to 0 for private interface
-		 * methods and j.l.Object methods. When J9JNIMethodID->vTableIndex is 0, then
-		 * vmtargetOffset (J9Method) is the _sendMethod, and it will point to the private
-		 * interface method or j.l.Object method. When J9JNIMethodID->vTableIndex is not 0,
-		 * then it is either a vTable offset or an iTable index.
+		/* The vTable offset has been stored in memberNameObject.vmindex.
+		 *
+		 * Directly-dispatched instance methods don't reach here because they will go through linkToSpecial() instead.
+		 *
+		 * An interface method can reach here, but only when it was found via some non-interface class C that inherits it.
+		 * In that case, MemberName resolution has already done the iTable walk to get the corresponding vTable offset in
+		 * C and stored it in vmindex. The receiver is always an instance of C (or a subclass).
 		 */
-		UDATA vTableOffset = methodID->vTableIndex;
-		if (0 == vTableOffset) {
-			_sendMethod = (J9Method *)(UDATA)J9OBJECT_U64_LOAD(_currentThread, memberNameObject, _vm->vmtargetOffset);
-		} else {
-			J9Class *receiverClass = J9OBJECT_CLAZZ(_currentThread, receiverObject);
-
-			if (J9_ARE_ANY_BITS_SET(vTableOffset, J9_JNI_MID_INTERFACE)) {
-				/* Treat as iTable index for the method if J9_JNI_MID_INTERFACE is set. */
-				UDATA iTableIndex = vTableOffset & ~(UDATA)J9_JNI_MID_INTERFACE;
-				J9Class *interfaceClass = J9_CLASS_FROM_METHOD(methodID->method);
-				/* Get the latest version of the class for the iTable search. */
-				interfaceClass = VM_VMHelpers::currentClass(interfaceClass);
-				vTableOffset = 0;
-				J9ITable * iTable = receiverClass->lastITable;
-				if (interfaceClass == iTable->interfaceClass) {
-					goto foundITable;
-				}
-				iTable = (J9ITable*)receiverClass->iTable;
-				while (NULL != iTable) {
-					if (interfaceClass == iTable->interfaceClass) {
-						receiverClass->lastITable = iTable;
-foundITable:
-						vTableOffset = ((UDATA*)(iTable + 1))[iTableIndex];
-						break;
-					}
-					iTable = iTable->next;
-				}
-			}
-			_sendMethod = *(J9Method **)(((UDATA)receiverClass) + vTableOffset);
-		}
+		UDATA vTableOffset = (UDATA)J9OBJECT_U64_LOAD(_currentThread, memberNameObject, _vm->vmindexOffset);
+		J9Class *receiverClass = J9OBJECT_CLAZZ(_currentThread, receiverObject);
+		_sendMethod = *(J9Method **)(((UDATA)receiverClass) + vTableOffset);
 
 		/* The invokeBasic INL uses the methodArgCount from ramCP to locate the receiver object,
 		 * so when dispatched using linkToVirtual, it will still access the ramCP of the linkToVirtual call
@@ -9282,13 +9256,15 @@ foundITable:
 	{
 		VM_BytecodeAction rc = GOTO_RUN_METHOD;
 		bool fromJIT = J9_ARE_ANY_BITS_SET(jitStackFrameFlags(REGISTER_ARGS, 0), J9_SSF_JIT_NATIVE_TRANSITION_FRAME);
-		J9JNIMethodID *methodID = NULL;
 		J9ROMMethod *romMethod = NULL;
 		UDATA methodArgCount = 0;
 		j9object_t receiverObject = NULL;
 		J9Class *receiverClass = NULL;
 		J9Method *method = NULL;
 		UDATA vTableOffset = 0;
+		UDATA iTableIndex = 0;
+		J9Class *interfaceClass = NULL;
+		J9ITable *iTable = NULL;
 
 		/* Pop memberNameObject from the stack. */
 		j9object_t memberNameObject = *(j9object_t *)_sp++;
@@ -9302,8 +9278,8 @@ foundITable:
 			goto done;
 		}
 
-		methodID = (J9JNIMethodID *)(UDATA)J9OBJECT_U64_LOAD(_currentThread, memberNameObject, _vm->vmindexOffset);
-		romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(methodID->method);
+		method = (J9Method *)(UDATA)J9OBJECT_U64_LOAD(_currentThread, memberNameObject, _vm->vmtargetOffset);
+		romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
 		methodArgCount = romMethod->argCount;
 
 		receiverObject = ((j9object_t *)_sp)[methodArgCount - 1];
@@ -9318,45 +9294,42 @@ foundITable:
 		}
 
 		receiverClass = J9OBJECT_CLAZZ(_currentThread, receiverObject);
-		method = (J9Method *)(UDATA)J9OBJECT_U64_LOAD(_currentThread, memberNameObject, _vm->vmtargetOffset);
-		vTableOffset = methodID->vTableIndex;
 
-		/* vmindexOffset (J9JNIMethodID) is initialized using jnicsup.cpp::initializeMethodID.
-		 * initializeMethodID will set J9JNIMethodID->vTableIndex to 0 for private interface
-		 * methods and j.l.Object methods. When J9JNIMethodID->vTableIndex is 0, then
-		 * vmtargetOffset (J9Method) is the _sendMethod, and it will point to the private
-		 * interface method or j.l.Object method. When J9JNIMethodID->vTableIndex is not 0,
-		 * then it is either a vTable offset or an iTable index.
+		/* Here MemberName.vmindex is always an iTable index. If an instance method is supposed
+		 * to be dispatched directly, then it will go through linkToSpecial() instead. If it's
+		 * supposed to go through non-interface virtual dispatch, like e.g. a non-final method
+		 * of Object, it will go through linkToVirtual() instead.
 		 */
-		if (0 == vTableOffset) {
-			/* Private interface method or j.l.Object method. */
-			_sendMethod = method;
-		} else {
-			/* Treat as vTable offset for the method if J9_JNI_MID_INTERFACE is not set. */
-			if (J9_ARE_ANY_BITS_SET(vTableOffset, J9_JNI_MID_INTERFACE)) {
-				/* Treat as iTable index for the method if J9_JNI_MID_INTERFACE is set. */
-				UDATA iTableIndex = vTableOffset & ~(UDATA)J9_JNI_MID_INTERFACE;
-				J9Class *interfaceClass = J9_CLASS_FROM_METHOD(method);
-				/* Get the latest version of the class for the iTable search. */
-				interfaceClass = VM_VMHelpers::currentClass(interfaceClass);
-				vTableOffset = 0;
-				J9ITable * iTable = receiverClass->lastITable;
-				if (interfaceClass == iTable->interfaceClass) {
-					goto foundITable;
-				}
-				iTable = (J9ITable*)receiverClass->iTable;
-				while (NULL != iTable) {
-					if (interfaceClass == iTable->interfaceClass) {
-						receiverClass->lastITable = iTable;
-foundITable:
-						vTableOffset = ((UDATA*)(iTable + 1))[iTableIndex];
-						break;
-					}
-					iTable = iTable->next;
-				}
-			}
-			_sendMethod = *(J9Method **)(((UDATA)receiverClass) + vTableOffset);
+		iTableIndex = (UDATA)J9OBJECT_U64_LOAD(_currentThread, memberNameObject, _vm->vmindexOffset);
+		interfaceClass = J9_CLASS_FROM_METHOD(method);
+		vTableOffset = 0;
+		iTable = receiverClass->lastITable;
+		if (interfaceClass == iTable->interfaceClass) {
+			goto foundITable;
 		}
+		iTable = (J9ITable *)receiverClass->iTable;
+		while (NULL != iTable) {
+			if (interfaceClass == iTable->interfaceClass) {
+				receiverClass->lastITable = iTable;
+foundITable:
+				vTableOffset = ((UDATA *)(iTable + 1))[iTableIndex];
+				break;
+			}
+			iTable = iTable->next;
+		}
+
+		/* The bytecode guarantees with an explicit type test that the receiver is an instance
+		 * of the expected interface.
+		 *
+		 * Nevertheless, this assertion can fail if interfaceClass is obsolete and therefore has
+		 * no corresponding iTable. This situation can only arise if interfaceClass has been
+		 * redefined in such a way as to remove method from it, in which case iTableIndex no
+		 * longer meaningfully corresponds to method, and a crash is highly likely were dispatch
+		 * to proceed as usual. Better to crash eagerly by failing the assertion here.
+		 */
+		Assert_VM_false(0 == vTableOffset);
+
+		_sendMethod = *(J9Method **)(((UDATA)receiverClass) + vTableOffset);
 
 		romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(_sendMethod);
 		if (J9_ARE_NO_BITS_SET(romMethod->modifiers, J9AccPublic | J9AccPrivate)) {

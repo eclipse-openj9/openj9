@@ -888,7 +888,7 @@ void J9::RecognizedCallTransformer::processVMInternalNativeFunction(TR::TreeTop*
    TR::TreeTop * computedCallTreeTop = TR::TreeTop::create(comp(), TR::Node::create(node, TR::treetop, 1, computedCallNode));
    TR::RecognizedMethod rm = node->getSymbol()->castToMethodSymbol()->getMandatoryRecognizedMethod();
    TR::Node *nullChkNode = NULL;
-   if (rm == TR::java_lang_invoke_MethodHandle_linkToSpecial || rm == TR::java_lang_invoke_MethodHandle_linkToVirtual)
+   if (rm == TR::java_lang_invoke_MethodHandle_linkToSpecial)
       {
       TR::Node *passthroughNode = TR::Node::create(node, TR::PassThrough, 1);
       passthroughNode->setAndIncChild(0, TR::Node::createLoad(node, argsList->front()));
@@ -904,246 +904,159 @@ void J9::RecognizedCallTransformer::processVMInternalNativeFunction(TR::TreeTop*
 
 void J9::RecognizedCallTransformer::process_java_lang_invoke_MethodHandle_linkToVirtual(TR::TreeTop * treetop, TR::Node * node)
    {
-   TR_J9VMBase* fej9 = static_cast<TR_J9VMBase*>(comp()->fe());
-   TR::Node * placeholderINLCallNode = node->duplicateTree(false); // this will be eventually removed once the second diamond is created
-   TR::Node* duplicatedINLCallNode = node->duplicateTree(false);
-   TR::list<TR::SymbolReference *>* argsList = new (comp()->trStackMemory()) TR::list<TR::SymbolReference*>(getTypedAllocator<TR::SymbolReference*>(comp()->allocator()));
-   for (int i = 0; i < node->getNumChildren(); i++)
-      {
-      TR::Node * currentChild = node->getChild(i);
-      TR::SymbolReference *newSymbolReference = comp()->getSymRefTab()->createTemporary(comp()->getMethodSymbol(), currentChild->getDataType());
-      newSymbolReference->getSymbol()->setNotCollected();
-      argsList->push_back(newSymbolReference);
-      TR::Node * storeNode = TR::Node::createStore(node, newSymbolReference, currentChild);
-      treetop->insertBefore(TR::TreeTop::create(comp(),storeNode));
-      placeholderINLCallNode->setAndIncChild(i, TR::Node::createLoad(node, newSymbolReference));
-      duplicatedINLCallNode->setAndIncChild(i, TR::Node::createLoad(node, newSymbolReference));
-      currentChild->recursivelyDecReferenceCount();
-      currentChild->recursivelyDecReferenceCount(); // ref count has to be decremented twice as there were two duplicates of the parent made
-      }
+   TR::Node *receiver = node->getChild(0);
+   TR::Node *memberNameNode = node->getChild(node->getNumChildren() - 1);
 
-   TR::SymbolReference *receiverSymRef = argsList->front();
-   TR::SymbolReference *mnSymRef = argsList->back();
+   TR::SymbolReference *vftSymRef = comp()->getSymRefTab()->findOrCreateVftSymbolRef();
+   TR::Node *vftNode =
+      TR::Node::createWithSymRef(node, TR::aloadi, 1, receiver, vftSymRef);
 
-   // -------- construct trees to obtain and check if vTableIndex > 0 --------
-   // get JIT Vtable index from membername.vmindex
-   TR::SymbolReference* vmindexSymRef = comp()->getSymRefTab()->findOrFabricateShadowSymbol(comp()->getMethodSymbol(),
-                                                                              TR::Symbol::Java_lang_invoke_MemberName_vmindex,
-                                                                              TR::Address,
-                                                                              fej9->getVMIndexOffset(),
-                                                                              false,
-                                                                              false,
-                                                                              true,
-                                                                              "java/lang/invoke/MemberName.vmindex J");
-   vmindexSymRef->getSymbol()->setNotCollected();
+   // Null check the receiver
 
-   // construct trees to check if vtable index is zero (NOT MemberName.vmindex, but MN.vmindex.vtableindex). if zero, then call will be dispatched similar to linkToStatic.
-   TR::Node * j9JNIMethodIdNode = TR::Node::createWithSymRef(node, TR::aloadi, 1, TR::Node::createLoad(node, mnSymRef), vmindexSymRef);
-   TR::SymbolReference* vtableIndexSymRef = comp()->getSymRefTab()->findOrCreateJ9JNIMethodIDvTableIndexFieldSymbol(offsetof(struct J9JNIMethodID, vTableIndex));
-   vtableIndexSymRef->getSymbol()->setNotCollected();
-   TR::Node* vtableIndexNode = TR::Node::createWithSymRef(node, comp()->il.opCodeForIndirectLoad(vtableIndexSymRef->getSymbol()->getDataType()), 1, j9JNIMethodIdNode , vtableIndexSymRef);
-   TR::SymbolReference* vtableOffsetTempSlotSymRef = comp()->getSymRefTab()->createTemporary(comp()->getMethodSymbol(),vtableIndexNode->getSymbol()->getDataType());
-   vtableOffsetTempSlotSymRef->getSymbol()->setNotCollected();
-   treetop->insertBefore(TR::TreeTop::create(comp(), TR::Node::createStore(node, vtableOffsetTempSlotSymRef, vtableIndexNode)));
-   TR::ILOpCodes ifxcmpne = comp()->target().is64Bit()? TR::iflcmpne : TR::ificmpne;
-   TR::Node *zero = comp()->target().is64Bit()? TR::Node::lconst(node, 0) : TR::Node::iconst(node, 0);
+   TR::SymbolReference *nullCheckSymRef =
+      comp()->getSymRefTab()->findOrCreateNullCheckSymbolRef(
+         comp()->getMethodSymbol());
 
-   TR::Node* vTableOffsetIsNotZero = TR::Node::createif(ifxcmpne,
-                                                         TR::Node::createLoad(node, vtableOffsetTempSlotSymRef),
-                                                         zero,
-                                                         NULL);
-   TR::TreeTop* vtableOffsetIsNotZeroTreeTop = TR::TreeTop::create(comp(), vTableOffsetIsNotZero);
+   TR::Node *nullCheck = TR::Node::createWithSymRef(
+      node, TR::NULLCHK, 1, vftNode, nullCheckSymRef);
 
-   // -------- construct trees for path to take when vtable index > 0 --------
+   treetop->insertBefore(TR::TreeTop::create(comp(), nullCheck));
 
-   // construct a dummy "resolved method" for dispatch virtual:
-   TR_OpaqueMethodBlock *dummyInvoke = fej9->getMethodFromName("com/ibm/jit/JITHelpers", "dispatchVirtual", "()V");
+   // Get the VFT offset from MemberName.vmindex
+   TR::SymbolReference* vmIndexSymRef = comp()->getSymRefTab()->findOrFabricateShadowSymbol(
+      comp()->getMethodSymbol(),
+      TR::Symbol::Java_lang_invoke_MemberName_vmindex,
+      TR::Int64,
+      comp()->fej9()->getVMIndexOffset(),
+      false,
+      false,
+      true,
+      "java/lang/invoke/MemberName.vmindex J");
+
+   TR::Node *vftOffset =
+      TR::Node::createWithSymRef(node, TR::aloadi, 1, memberNameNode, vmIndexSymRef);
+
+   if (!comp()->target().is64Bit())
+      vftOffset = TR::Node::create(node, TR::l2i, 1, vftOffset);
+
+   makeIntoDispatchVirtualCall(node, vftOffset, vftNode, memberNameNode);
+   }
+
+void J9::RecognizedCallTransformer::makeIntoDispatchVirtualCall(
+   TR::Node *node, TR::Node *vftOffset, TR::Node *vftNode, TR::Node *memberNameNode)
+   {
+   // Construct a dummy "resolved method" for JITHelpers.dispatchVirtual()V to
+   // dispatch through the VFT.
+   TR_J9VMBase *fej9 = comp()->fej9();
+   TR_OpaqueMethodBlock *dispatchVirtual =
+      fej9->getMethodFromName("com/ibm/jit/JITHelpers", "dispatchVirtual", "()V");
+
    int signatureLength;
-   char * signature = getSignatureForComputedCall(
+   char *signature = getSignatureForComputedCall(
       "JJ",
       "",
       comp(),
       node->getSymbol()->castToMethodSymbol()->getMethod()->signatureChars(),
       signatureLength);
-   TR::ResolvedMethodSymbol * owningMethodSymbol = node->getSymbolReference()->getOwningMethodSymbol(comp());
-   TR_ResolvedMethod * dummyMethod = fej9->createResolvedMethodWithSignature(comp()->trMemory(),dummyInvoke, NULL, signature, signatureLength, owningMethodSymbol->getResolvedMethod());
-   TR::SymbolReference * methodSymRef = comp()->getSymRefTab()->findOrCreateMethodSymbol(owningMethodSymbol->getResolvedMethodIndex(), -1, dummyMethod, TR::MethodSymbol::ComputedStatic);
 
-   // construct trees to load target method address (which will either be a thunk or compiled method address) from VFT, but for simplicity let's call it a jitted method entry point
-   TR::Node * xconstSizeofJ9Class = comp()->target().is64Bit()
+   TR::ResolvedMethodSymbol *owningMethodSymbol =
+      node->getSymbolReference()->getOwningMethodSymbol(comp());
+
+   TR_ResolvedMethod *dispatchVirtualResolvedMethod =
+      fej9->createResolvedMethodWithSignature(
+         comp()->trMemory(),
+         dispatchVirtual,
+         NULL,
+         signature,
+         signatureLength,
+         owningMethodSymbol->getResolvedMethod());
+
+   TR::SymbolReference * dispatchVirtualSymRef =
+      comp()->getSymRefTab()->findOrCreateMethodSymbol(
+         owningMethodSymbol->getResolvedMethodIndex(),
+         -1,
+         dispatchVirtualResolvedMethod,
+         TR::MethodSymbol::ComputedStatic);
+
+   TR::ILOpCodes indirectCallOp =
+      node->getSymbol()->castToMethodSymbol()->getMethod()->indirectCallOpCode();
+
+   TR::Node::recreateWithSymRef(node, indirectCallOp, dispatchVirtualSymRef);
+
+   // 2 extra args prepended (address in vtable entry and vtable slot index),
+   // and last arg (MemberName object) removed, so net 1 extra child.
+   TR::Node *dummyExtraChild = NULL;
+   node->addChildren(&dummyExtraChild, 1);
+   for (int32_t i = node->getNumChildren() - 1; i >= 2; i--)
+      node->setChild(i, node->getChild(i - 2));
+
+   TR::Node *xconstSizeofJ9Class = comp()->target().is64Bit()
       ? TR::Node::lconst(node, sizeof(J9Class))
       : TR::Node::iconst(node, sizeof(J9Class));
 
    TR::ILOpCodes subOp = comp()->target().is64Bit() ? TR::lsub : TR::isub;
    TR::ILOpCodes axadd = comp()->target().is64Bit() ? TR::aladd : TR::aiadd;
-   TR::Node* jitVFTOffset = TR::Node::create(subOp, 2, xconstSizeofJ9Class, TR::Node::createLoad(node, vtableOffsetTempSlotSymRef));
-   TR::SymbolReference * vftSymRef = comp()->getSymRefTab()->findOrCreateVftSymbolRef();
-   TR::Node * vftNode = TR::Node::createWithSymRef(node, TR::aloadi, 1, TR::Node::createLoad(node, receiverSymRef), vftSymRef);
-   TR::Node * jitVFTSlotPtr = TR::Node::create(axadd, 2, vftNode, jitVFTOffset);
-   TR::SymbolReference *tSymRef = comp()->getSymRefTab()->findOrCreateGenericIntShadowSymbolReference(0);
-   tSymRef->getSymbol()->setNotCollected();
-   TR::ILOpCodes loadOp = comp()->target().is64Bit() ? TR::lloadi : TR::iloadi;
-   // arg0 ---> jitted method address (in JIT vtable)
-   TR::Node * jittedMethodEntryPoint = TR::Node::createWithSymRef(loadOp, 1, 1, jitVFTSlotPtr, tSymRef);
 
-   // arg1 ---> vtable slot index (jitVFTOffset)
+   TR::SymbolReference *genericIntShadow =
+      comp()->getSymRefTab()->createGenericIntShadowSymbolReference(0);
 
-   // 2 additional args prepended (address in vtable entry and vtable slot index), and last arg (MemberName object) removed, so net 1 extra child
-   uint32_t numChildren = node->getNumChildren() + 1;
-   TR::Node * dispatchVirtualCallNode = TR::Node::createWithSymRef(node, node->getSymbol()->castToMethodSymbol()->getMethod()->indirectCallOpCode(), numChildren, methodSymRef);
+   genericIntShadow->getSymbol()->setNotCollected();
 
-   // set children for the dispatchVirtual call node
-   dispatchVirtualCallNode->setAndIncChild(0, jittedMethodEntryPoint);
-   dispatchVirtualCallNode->setAndIncChild(1, jitVFTOffset);
-   argsList->pop_back(); //remove MemberName object
-   int32_t child_i = 2;
-   for (auto symRefIt = argsList->begin(); symRefIt != argsList->end(); ++symRefIt)
-      {
-      TR::SymbolReference * currentArg = *symRefIt;
-      dispatchVirtualCallNode->setAndIncChild(child_i, TR::Node::createLoad(node, currentArg));
-      child_i++;
-      }
+   TR::Node *jitVftOffset = TR::Node::create(subOp, 2, xconstSizeofJ9Class, vftOffset);
+   TR::Node *jitVftSlotPtr = TR::Node::create(axadd, 2, vftNode, jitVftOffset);
 
-   TR::TreeTop * dispatchVirtualTreeTop = TR::TreeTop::create(comp(), TR::Node::create(node, TR::treetop, 1, dispatchVirtualCallNode));
-   TR::TreeTop * placeholderINLCallTreeTop = TR::TreeTop::create(comp(), TR::Node::create(node, TR::treetop, 1, placeholderINLCallNode));
+   TR::ILOpCodes vftEntryLoadOp = comp()->target().is64Bit() ? TR::lloadi : TR::iloadi;
+   TR::Node *jittedMethodEntryPoint =
+      TR::Node::createWithSymRef(vftEntryLoadOp, 1, 1, jitVftSlotPtr, genericIntShadow);
 
-   TR::Node *passthroughNode = TR::Node::create(node, TR::PassThrough, 1);
-   passthroughNode->setAndIncChild(0, TR::Node::createLoad(node, argsList->front()));
-   TR::SymbolReference *nullSymRef = comp()->getSymRefTab()->findOrCreateNullCheckSymbolRef(comp()->getMethodSymbol());
-   TR::Node* nullChkNode = TR::Node::createWithSymRef(TR::NULLCHK, 1, 1, passthroughNode, nullSymRef);
+   node->setAndIncChild(0, jittedMethodEntryPoint);
+   node->setAndIncChild(1, jitVftOffset);
 
-   node->removeAllChildren();
-   TR::TransformUtil::createDiamondForCall(this, treetop, vtableOffsetIsNotZeroTreeTop, dispatchVirtualTreeTop, placeholderINLCallTreeTop, false, false);
-   TR::TreeTop *virtualNullCheckTreeTop = TR::TreeTop::create(comp(), nullChkNode);
-   dispatchVirtualTreeTop->insertBefore(virtualNullCheckTreeTop);
+   memberNameNode->decReferenceCount(); // no longer a child of node
+   }
 
-   // Insert a conditional at the beginning of the virtual call path to
-   // determine the VFT offset for interface methods.
-   TR::Block *virtualNullCheckBlock = virtualNullCheckTreeTop->getEnclosingBlock();
-   TR::CFG *cfg = comp()->getFlowGraph();
-   TR::Block *itableLookupBlock = virtualNullCheckBlock->split(dispatchVirtualTreeTop, cfg, true);
-   TR::Block *virtualDispatchBlock = itableLookupBlock->split(dispatchVirtualTreeTop, cfg, true);
+void J9::RecognizedCallTransformer::process_java_lang_invoke_MethodHandle_linkToInterface(TR::TreeTop *treetop, TR::Node *node)
+   {
+   TR::Node *receiverNode = node->getChild(0);
+   TR::Node *memberNameNode = node->getChild(node->getNumChildren() - 1);
 
-   TR::ILOpCodes andOp = comp()->target().is64Bit() ? TR::land : TR::iand;
-   TR::Node * xconstITableFlagBit = comp()->target().is64Bit()
-      ? TR::Node::lconst(node, J9_JNI_MID_INTERFACE)
-      : TR::Node::iconst(node, (int32_t)J9_JNI_MID_INTERFACE);
+   // NOTE: There's no need for a null check, since null won't get past the
+   // type check in DirectMethodHandle$Interface.checkReceiver() anyway.
 
-   TR::ILOpCodes ifxcmpeq = TR::ILOpCode(ifxcmpne).getOpCodeForReverseBranch();
-   // The offset is a VFT offset iff it is not an itable index
-   TR::Node * ifIsVFTOffset = TR::Node::createif(
-      ifxcmpeq,
-      TR::Node::create(
-         node,
-         andOp,
-         2,
-         TR::Node::createLoad(node, vtableOffsetTempSlotSymRef),
-         xconstITableFlagBit),
-      zero->duplicateTree(), // safe because zero is a constant
-      virtualDispatchBlock->getEntry());
+   // Call a VM helper to do the interface dispatch. It finds the declaring
+   // interface and the iTable index from the MemberName. The helper throws
+   // IllegalAccessError when the found method is non-public. It won't throw
+   // ICCE because the bytecode has already done a type check on the receiver,
+   // so we'll always find an itable.
 
-   virtualNullCheckBlock->append(TR::TreeTop::create(comp(), ifIsVFTOffset));
-   cfg->addEdge(virtualNullCheckBlock, virtualDispatchBlock);
+   // This produces a VFT offset (to the interpreter VFT slot from the start of
+   // the J9Class) that we can use to call through the vtable.
 
-   // TODO: For linkToInterface() we should instead use
-   // findOrCreateLookupDynamicPublicInterfaceMethodSymbolRef(), which will
-   // throw IllegalAccessError when the dispatched method is non-public.
-   TR::Node *vftOffsetFromITable = TR::Node::createWithSymRef(
+   TR::SymbolReference *lookupDynamicInterfaceMethod =
+      comp()->getSymRefTab()->findOrCreateLookupDynamicPublicInterfaceMethodSymbolRef();
+
+   TR::Node *vftOffset = TR::Node::createWithSymRef(
       node,
       comp()->target().is64Bit() ? TR::lcall : TR::icall,
-      3,
-      comp()->getSymRefTab()->findOrCreateLookupDynamicInterfaceMethodSymbolRef());
-
-   // The first argument to the itable lookup helper is the receiver class.
-   // It's safe to duplicate vftNode here because it is just a load of
-   // <vft-symbol> from a load of a temp, and the temp has been created
-   // specifically to hold the receiver reference - there are no other defs.
-   //
-   // NOTE: This child is actually last because helper arguments are passed in
-   // reverse order.
-   //
-   vftOffsetFromITable->setAndIncChild(2, vftNode->duplicateTree());
-
-   // The next argument to the itable lookup helper is the interface class.
-   const bool vmtargetIsVolatile = false;
-   const bool vmtargetIsPrivate = false; // could be true? It's a hidden field
-   const bool vmtargetIsFinal = true;
-   TR::SymbolReference * vmtargetSymRef =
-      comp()->getSymRefTab()->findOrFabricateMemberNameVmTargetShadow();
-
-   TR::Node * vmTargetNode = TR::Node::createWithSymRef(
-      node, TR::aloadi, 1, TR::Node::createLoad(node, mnSymRef), vmtargetSymRef);
-
-   TR::SymbolReference *cpField =
-      comp()->getSymRefTab()->findOrCreateJ9MethodConstantPoolFieldSymbolRef(
-         offsetof(struct J9Method, constantPool));
-
-   TR::Node *cpAddrIntWithFlags = TR::Node::createWithSymRef(
-      node, loadOp, 1, vmTargetNode, cpField);
-
-   TR::Node *cpAddrMask = comp()->target().is64Bit()
-      ? TR::Node::lconst(~(int64_t)J9_STARTPC_STATUS)
-      : TR::Node::iconst(~(int32_t)J9_STARTPC_STATUS);
-
-   TR::Node *cpAddrInt = TR::Node::create(
-      node, andOp, 2, cpAddrIntWithFlags, cpAddrMask);
-
-   TR::ILOpCodes x2a = comp()->target().is64Bit() ? TR::l2a : TR::i2a;
-   TR::Node *cpAddr = TR::Node::create(node, x2a, 1, cpAddrInt);
-
-   TR::Node *ramClassFieldOffset = comp()->target().is64Bit()
-      ? TR::Node::lconst(offsetof (struct J9ConstantPool, ramClass))
-      : TR::Node::iconst(offsetof (struct J9ConstantPool, ramClass));
-
-   TR::Node *ramClassFieldAddr = TR::Node::create(
-      node, axadd, 2, cpAddr, ramClassFieldOffset);
-
-   TR::Node *interfaceClassInt = TR::Node::createWithSymRef(
-      node, loadOp, 1, ramClassFieldAddr, tSymRef);
-
-   TR::Node *interfaceClass = TR::Node::create(node, x2a, 1, interfaceClassInt);
-   vftOffsetFromITable->setAndIncChild(1, interfaceClass);
-
-   // The final argument to the itable lookup helper is the itable index.
-   // NOTE: This child is actually first because helper arguments are passed in
-   // reverse order.
-   TR::Node *xconstClearITableFlagMask = comp()->target().is64Bit()
-      ? TR::Node::lconst(node, ~(int64_t)J9_JNI_MID_INTERFACE)
-      : TR::Node::iconst(node, ~(int32_t)J9_JNI_MID_INTERFACE);
-
-   // Duplicate xconstITableFlagBit to prevent commoning between blocks. The
-   // duplication is safe because it's a constant.
-   xconstITableFlagBit = xconstITableFlagBit->duplicateTree();
-   TR::Node *itableIndex = TR::Node::create(
-      andOp,
       2,
-      TR::Node::createLoad(node, vtableOffsetTempSlotSymRef),
-      xconstClearITableFlagMask);
+      lookupDynamicInterfaceMethod);
 
-   vftOffsetFromITable->setAndIncChild(0, itableIndex);
+   // The helper takes (receiver J9Class, MemberName reference), but helper
+   // arguments are passed in reverse order.
+   vftOffset->setAndIncChild(0, memberNameNode);
 
-   itableLookupBlock->append(
+   TR::SymbolReference *vftSymRef = comp()->getSymRefTab()->findOrCreateVftSymbolRef();
+   TR::Node *vftNode =
+      TR::Node::createWithSymRef(node, TR::aloadi, 1, receiverNode, vftSymRef);
+
+   vftOffset->setAndIncChild(1, vftNode);
+
+   treetop->insertBefore(
       TR::TreeTop::create(
          comp(),
-         TR::Node::create(node, TR::treetop, 1, vftOffsetFromITable)));
+         TR::Node::create(node, TR::treetop, 1, vftOffset)));
 
-   itableLookupBlock->append(
-      TR::TreeTop::create(
-         comp(),
-         TR::Node::createStore(
-            node, vtableOffsetTempSlotSymRef, vftOffsetFromITable)));
-
-   // -------- path if vmIndex == 0 --------
-   // now let's work with just the placeholder INL call as the main node, as if this is a linkToStatic/Special call. the original treetop was removed.
-   treetop = placeholderINLCallTreeTop;
-   node = treetop->getNode()->getFirstChild();
-
-   // It's safe to duplicate vmTargetNode because it's just a load of vmtarget
-   // from a load of a temp, and the temp has been created specifically to hold
-   // the MemberName reference - there are no other defs
-   vmTargetNode = vmTargetNode->duplicateTree();
-
-   processVMInternalNativeFunction(treetop, node, vmTargetNode, argsList, duplicatedINLCallNode);
+   makeIntoDispatchVirtualCall(node, vftOffset, vftNode, memberNameNode);
    }
 #endif // J9VM_OPT_OPENJDK_METHODHANDLE
 
@@ -1240,10 +1153,8 @@ bool J9::RecognizedCallTransformer::isInlineable(TR::TreeTop* treetop)
             else
                return true;
          case TR::java_lang_invoke_MethodHandle_linkToVirtual:
-             if (_processedINLCalls->get(node->getGlobalIndex()))
-               return false;
-            else
-               return true;
+         case TR::java_lang_invoke_MethodHandle_linkToInterface:
+            return true;
          default:
             return false;
          }
@@ -1369,6 +1280,9 @@ void J9::RecognizedCallTransformer::transform(TR::TreeTop* treetop)
             break;
          case TR::java_lang_invoke_MethodHandle_linkToVirtual:
             process_java_lang_invoke_MethodHandle_linkToVirtual(treetop, node);
+            break;
+         case TR::java_lang_invoke_MethodHandle_linkToInterface:
+            process_java_lang_invoke_MethodHandle_linkToInterface(treetop, node);
             break;
          default:
             break;
