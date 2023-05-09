@@ -124,6 +124,8 @@ _X(JVM_TotalMemory,JNICALL,true,jlong,void)
 _X(JVM_TraceInstructions,JNICALL,true,void,jboolean on)
 _X(JVM_TraceMethodCalls,JNICALL,true,void,jboolean on)
 _X(JVM_UcsOpen,JNICALL,true,jint,const jchar *filename, jint flags, jint mode)
+_IF([defined(J9VM_OPT_JAVA_OFFLOAD_SUPPORT) && (JAVA_SPEC_VERSION >= 17)],
+	[_X(JVM_ValidateJNILibrary,JNICALL,true,void *,const char *libName, void *handle, jboolean isStatic)])
 _X(JVM_Write,JNICALL,true,jint,jint descriptor, const char *buffer, jint length)
 _IF([defined(J9ZOS390)],
 	[_X(NewStringPlatform,,false,jint,JNIEnv *env, const char *instr, jstring *outstr, const char *encoding)])

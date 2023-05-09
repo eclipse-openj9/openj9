@@ -366,3 +366,6 @@ TraceExit=Trc_SC_VirtualThreadUnmountEnd_Exit Overhead=1 Level=3 Template="threa
 TraceEvent=Trc_SC_VirtualThread_Info Overhead=1 Level=3 Test Template="virtualThreadObj = 0x%p, virtualThreadState = 0x%p, virtualThreadInspectorCount = %lld, carrierThreadObj = 0x%p, continuationObj = 0x%p, J9VMContinuation = 0x%p"
 
 TraceEvent=Trc_SC_VirtualThread_RootNodeSet Overhead=1 Level=1 Test Template="Virtual threadlist root node set, global ref = 0x%p"
+
+TraceEntry=Trc_SC_ValidateJNILibrary_Entry NoEnv Overhead=1 Level=1 Template="JVM_ValidateJNILibrary(name=%s, handle=%p, isStatic=%d)"
+TraceExit=Trc_SC_ValidateJNILibrary_Exit NoEnv Overhead=1 Level=1 Template="JVM_ValidateJNILibrary -- return %p"

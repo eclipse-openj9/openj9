@@ -394,6 +394,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<!-- Additions for Java 17 (General) -->
 		<export name="JVM_DumpClassListToFile"/>
 		<export name="JVM_DumpDynamicArchive"/>
+		<export name="JVM_ValidateJNILibrary">
+			<include-if condition="spec.flags.opt_javaOffloadSupport"/>
+		</export>
 	</exports>
 
 	<exports group="jdk18">
