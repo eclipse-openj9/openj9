@@ -31,7 +31,7 @@
 #include "UnfinalizedObjectBufferStandard.hpp"
 #include "UnfinalizedObjectList.hpp"
 
-MM_UnfinalizedObjectBufferStandard::MM_UnfinalizedObjectBufferStandard(MM_GCExtensions *extensions, UDATA maxObjectCount)
+MM_UnfinalizedObjectBufferStandard::MM_UnfinalizedObjectBufferStandard(MM_GCExtensions *extensions, uintptr_t maxObjectCount)
 	: MM_UnfinalizedObjectBuffer(extensions, maxObjectCount)
 	,_unfinalizedObjectListIndex(0)
 {
@@ -69,7 +69,7 @@ MM_UnfinalizedObjectBufferStandard::tearDown(MM_EnvironmentBase *base)
 }
 
 void 
-MM_UnfinalizedObjectBufferStandard::flushImpl(MM_EnvironmentBase* env)
+MM_UnfinalizedObjectBufferStandard::flushImpl(MM_EnvironmentBase *env)
 {
 	MM_HeapRegionDescriptorStandard *region = (MM_HeapRegionDescriptorStandard*)_region;
 	MM_HeapRegionDescriptorStandardExtension *regionExtension = MM_ConfigurationDelegate::getHeapRegionDescriptorStandardExtension(env, region);
@@ -80,3 +80,18 @@ MM_UnfinalizedObjectBufferStandard::flushImpl(MM_EnvironmentBase* env)
 		_unfinalizedObjectListIndex = 0;
 	}
 }
+
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+bool
+MM_UnfinalizedObjectBufferStandard::reinitializeForRestore(MM_EnvironmentBase *env)
+{
+	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
+
+	Assert_MM_true(_maxObjectCount > 0);
+	Assert_MM_true(extensions->objectListFragmentCount > 0);
+
+	_maxObjectCount = extensions->objectListFragmentCount;
+
+	return true;
+}
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */

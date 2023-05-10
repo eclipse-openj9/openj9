@@ -277,6 +277,16 @@ public:
 
 #endif /* OMR_GC_THREAD_LOCAL_HEAP */
 
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+	/**
+	 * Reinitialize the Env Delegate by updating the thread local obj buffers.
+	 *
+	 * @param[in] env the current environment.
+	 * @return boolean indicating whether the Env Delegate was successfully updated.
+	 */
+	virtual bool reinitializeForRestore(MM_EnvironmentBase* env);
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+
 	MM_EnvironmentDelegate()
 		
 	

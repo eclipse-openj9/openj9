@@ -60,7 +60,7 @@ MM_ContinuationObjectBuffer::reset()
 }
 
 void
-MM_ContinuationObjectBuffer::flush(MM_EnvironmentBase* env)
+MM_ContinuationObjectBuffer::flush(MM_EnvironmentBase *env)
 {
 	if (NULL != _head) {
 		/* call the virtual flush implementation function */
@@ -70,7 +70,7 @@ MM_ContinuationObjectBuffer::flush(MM_EnvironmentBase* env)
 }
 
 void
-MM_ContinuationObjectBuffer::add(MM_EnvironmentBase* env, j9object_t object)
+MM_ContinuationObjectBuffer::add(MM_EnvironmentBase *env, j9object_t object)
 {
 	Assert_MM_true(object != _head);
 	Assert_MM_true(object != _tail);
@@ -109,7 +109,7 @@ MM_ContinuationObjectBuffer::add(MM_EnvironmentBase* env, j9object_t object)
  * temporary place holder implementation - just delegate to the old fragment code.
  */
 void
-MM_ContinuationObjectBuffer::flushImpl(MM_EnvironmentBase* env)
+MM_ContinuationObjectBuffer::flushImpl(MM_EnvironmentBase *env)
 {
 	Assert_MM_unreachable();
 }

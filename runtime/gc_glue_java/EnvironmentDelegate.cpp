@@ -394,3 +394,22 @@ MM_EnvironmentDelegate::getAllocatedSizeInsideTLH()
 
 #endif /* J9VM_GC_THREAD_LOCAL_HEAP */
 
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+bool
+MM_EnvironmentDelegate::reinitializeForRestore(MM_EnvironmentBase *env)
+{
+	bool rc = true;
+
+	Assert_MM_true(_extensions->isStandardGC());
+
+	if (!_gcEnv._referenceObjectBuffer->reinitializeForRestore(env)
+		|| !_gcEnv._unfinalizedObjectBuffer->reinitializeForRestore(env)
+		|| !_gcEnv._ownableSynchronizerObjectBuffer->reinitializeForRestore(env)
+		|| !_gcEnv._continuationObjectBuffer->reinitializeForRestore(env)
+	) {
+		rc = false;
+	}
+
+	return rc;
+}
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
