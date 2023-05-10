@@ -383,7 +383,6 @@ You must install a number of software dependencies to create a suitable build en
 - [Microsoft Visual Studio 2013 Professional](https://www.visualstudio.com/vs/older-downloads/) OR
 - [Microsoft Visual Studio 2017](https://visualstudio.microsoft.com/thank-you-downloading-visual-studio/?sku=Community&rel=15), the OpenJ9 project is using this level.
 - [Freemarker V2.3.8](https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download) - only when building with `--with-cmake=no`
-- [Freetype2 V2.5.3](https://www.freetype.org/)
 - [LLVM/Clang 64bit](http://releases.llvm.org/7.0.0/LLVM-7.0.0-win64.exe) or [LLVM/Clang 32bit](http://releases.llvm.org/7.0.0/LLVM-7.0.0-win32.exe)
 - [NASM Assembler v2.13.03 or newer](https://www.nasm.us/pub/nasm/releasebuilds/?C=M;O=D)
 
@@ -418,23 +417,6 @@ VS2017:
 ```
 regsvr32 "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\DIA SDK\bin\msdia140.dll"
 regsvr32 "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\DIA SDK\bin\amd64\msdia140.dll"
-```
-
-You can download Freetype manually or obtain it using the [wget](http://www.gnu.org/software/wget/faq.html#download) utility. If you choose to use `wget`, follow these steps:
-
-- Open a cygwin64 terminal and change to the `/temp` directory:
-```
-cd /cygdrive/c/temp
-```
-
-- Run the following command:
-```
-wget http://download.savannah.gnu.org/releases/freetype/freetype-2.5.3.tar.gz
-```
-
-- To unpack the Freetype archive, run:
-```
-tar --one-top-level=/cygdrive/c/temp/freetype --strip-components=1 -xzf freetype-2.5.3.tar.gz
 ```
 
 - When building with `--with-cmake=no`, unpack the Freemarker archive:
@@ -481,8 +463,6 @@ bash configure --disable-ccache \
                --with-target-bits=32
 ```
 Note: If you have multiple versions of Visual Studio installed, you can enforce a specific version to be used by setting `--with-toolchain-version`, i.e., by including `--with-toolchain-version=2013` option in the configure command.
-
-:pencil: Modify the path for freetype if you manually downloaded and unpacked this dependency into a different directory.
 
 :pencil: Configuring and building is not specific to OpenJ9 but uses the OpenJDK build infrastructure with OpenJ9 added.
 Many other configuration options are available, including options to increase the verbosity of the build output to include command lines (`LOG=cmdlines`), more info or debug information.
@@ -602,7 +582,6 @@ The following dependencies can be installed by using [Homebrew](https://brew.sh/
 - [bash 4.4.23](https://formulae.brew.sh/formula/bash)
 - [binutils 2.32](https://formulae.brew.sh/formula/binutils)
 - [cmake 3.4](https://formulae.brew.sh/formula/cmake)
-- [freetype 2.9.1](https://formulae.brew.sh/formula/freetype)
 - [git 2.19.2](https://formulae.brew.sh/formula/git)
 - [gnu-tar 1.3](https://formulae.brew.sh/formula/gnu-tar)
 - [nasm 2.13.03](https://formulae.brew.sh/formula/nasm)
