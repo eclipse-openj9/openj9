@@ -31,7 +31,7 @@
 #include "OwnableSynchronizerObjectBufferStandard.hpp"
 #include "OwnableSynchronizerObjectList.hpp"
 
-MM_OwnableSynchronizerObjectBufferStandard::MM_OwnableSynchronizerObjectBufferStandard(MM_GCExtensions *extensions, UDATA maxObjectCount)
+MM_OwnableSynchronizerObjectBufferStandard::MM_OwnableSynchronizerObjectBufferStandard(MM_GCExtensions *extensions, uintptr_t maxObjectCount)
 	: MM_OwnableSynchronizerObjectBuffer(extensions, maxObjectCount)
 	,_ownableSynchronizerObjectListIndex(0)
 {
@@ -69,7 +69,7 @@ MM_OwnableSynchronizerObjectBufferStandard::tearDown(MM_EnvironmentBase *base)
 }
 
 void 
-MM_OwnableSynchronizerObjectBufferStandard::flushImpl(MM_EnvironmentBase* env)
+MM_OwnableSynchronizerObjectBufferStandard::flushImpl(MM_EnvironmentBase *env)
 {
 	MM_HeapRegionDescriptorStandard *region = (MM_HeapRegionDescriptorStandard*)_region;
 	MM_HeapRegionDescriptorStandardExtension *regionExtension = MM_ConfigurationDelegate::getHeapRegionDescriptorStandardExtension(env, region);
@@ -81,3 +81,18 @@ MM_OwnableSynchronizerObjectBufferStandard::flushImpl(MM_EnvironmentBase* env)
 		_ownableSynchronizerObjectListIndex = 0;
 	}
 }
+
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+bool
+MM_OwnableSynchronizerObjectBufferStandard::reinitializeForRestore(MM_EnvironmentBase *env)
+{
+	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
+
+	Assert_MM_true(_maxObjectCount > 0);
+	Assert_MM_true(extensions->objectListFragmentCount > 0);
+
+	_maxObjectCount = extensions->objectListFragmentCount;
+
+	return true;
+}
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */

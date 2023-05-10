@@ -33,7 +33,7 @@
 #include "HeapRegionManager.hpp"
 #include "ObjectAccessBarrier.hpp"
 
-MM_OwnableSynchronizerObjectBuffer::MM_OwnableSynchronizerObjectBuffer(MM_GCExtensions *extensions, UDATA maxObjectCount)
+MM_OwnableSynchronizerObjectBuffer::MM_OwnableSynchronizerObjectBuffer(MM_GCExtensions *extensions, uintptr_t maxObjectCount)
 	: MM_BaseVirtual()
 	, _maxObjectCount(maxObjectCount)
 	, _extensions(extensions)
@@ -60,7 +60,7 @@ MM_OwnableSynchronizerObjectBuffer::reset()
 }
 
 void 
-MM_OwnableSynchronizerObjectBuffer::flush(MM_EnvironmentBase* env)
+MM_OwnableSynchronizerObjectBuffer::flush(MM_EnvironmentBase *env)
 {
 	if (NULL != _head) {
 		/* call the virtual flush implementation function */
@@ -70,7 +70,7 @@ MM_OwnableSynchronizerObjectBuffer::flush(MM_EnvironmentBase* env)
 }
 
 void
-MM_OwnableSynchronizerObjectBuffer::add(MM_EnvironmentBase* env, j9object_t object)
+MM_OwnableSynchronizerObjectBuffer::add(MM_EnvironmentBase *env, j9object_t object)
 {
 	Assert_MM_true(object != _head);
 	Assert_MM_true(object != _tail);
@@ -108,7 +108,7 @@ MM_OwnableSynchronizerObjectBuffer::add(MM_EnvironmentBase* env, j9object_t obje
  * temporary place holder implementation - just delegate to the old fragment code.
  */
 void 
-MM_OwnableSynchronizerObjectBuffer::flushImpl(MM_EnvironmentBase* env)
+MM_OwnableSynchronizerObjectBuffer::flushImpl(MM_EnvironmentBase *env)
 {
 	Assert_MM_unreachable();
 }

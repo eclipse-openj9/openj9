@@ -51,7 +51,7 @@ protected:
 	 * Subclasses must override.
 	 * @param env[in] the current thread
 	 */
-	virtual void flushImpl(MM_EnvironmentBase* env);
+	virtual void flushImpl(MM_EnvironmentBase *env);
 
 public:
 	static MM_ContinuationObjectBufferStandard *newInstance(MM_EnvironmentBase *env);
@@ -61,5 +61,16 @@ public:
 	 * @param maxObjectCount the maximum number of objects permitted before a forced flush
 	 */
 	MM_ContinuationObjectBufferStandard(MM_GCExtensions *extensions, uintptr_t maxObjectCount);
+
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+	/**
+	 * Reinitialize the buffer's _maxObjectCount to account for the new restore GC thread count.
+	 * _maxObjectCount was initially set based on the GC thread count at VM startup.
+	 *
+	 * @param[in] env the current environment.
+	 * @return boolean indicating whether the buffer was successfully reinitialized.
+	 */
+	virtual bool reinitializeForRestore(MM_EnvironmentBase *env);
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 };
 #endif /* CONTINUATIONOBJECTBUFFERSTANDARD_HPP_ */
