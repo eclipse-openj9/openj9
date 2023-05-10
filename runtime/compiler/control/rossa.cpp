@@ -1227,12 +1227,25 @@ onLoadInternal(
       }
    else
       {
+
 #if defined(TR_TARGET_64BIT)
+      bool incomplete;
+      uint64_t freePhysicalMemory = getCompilationInfo(jitConfig)->computeFreePhysicalMemory(incomplete);
+
+      if (freePhysicalMemory != OMRPORT_MEMINFO_NOT_AVAILABLE &&
+          freePhysicalMemory <= 256)
+         {
+         // For low memory assign only 50% for code cache
+         jitConfig->codeCacheTotalKB = (freePhysicalMemory/2) * 1024;
+         if (TR::Options::isAnyVerboseOptionSet(TR_VerbosePerformance,TR_VerboseCodeCache))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_CODECACHE, "Available freePhysicalMemory=%llu MB, hence allocating code cache total=%llu MB", freePhysicalMemory >> 20,jitConfig->codeCacheTotalKB >> 20);
+	 }
+      else
          jitConfig->codeCacheTotalKB = 256 * 1024;
-         jitConfig->dataCacheTotalKB = 384 * 1024;
+      jitConfig->dataCacheTotalKB = 384 * 1024;
 #else
-         jitConfig->codeCacheTotalKB = 64 * 1024;
-         jitConfig->dataCacheTotalKB = 192 * 1024;
+      jitConfig->codeCacheTotalKB = 64 * 1024;
+      jitConfig->dataCacheTotalKB = 192 * 1024;
 #endif
 
 #if defined(J9ZTPF)
@@ -1250,7 +1263,7 @@ onLoadInternal(
          /* then take 20% of that value to use for the code cache size. */
          const uint16_t physMemory = *(static_cast<uint16_t*>(cinfc_fast(CINFC_CMMMMES)) + 4) / ZTPF_CODE_CACHE_DIVISOR;
 
-         /* Provide a 1MB floor and 256MB ceiling for the code cache size */
+	 /* Provide a 1MB floor and 256MB ceiling for the code cache size */
          if (physMemory <= 1)
             {
             jitConfig->codeCacheKB = 1024;
@@ -1487,6 +1500,7 @@ onLoadInternal(
       }
 
    jitConfig->thunkLookUpNameAndSig = &j9ThunkLookupNameAndSig;
+
 
    TR::CompilationInfo * compInfo = TR::CompilationInfo::get();
 

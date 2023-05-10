@@ -29,6 +29,7 @@
 #include "compile/CompilationTypes.hpp"
 #include "control/CompilationPriority.hpp"
 #include "control/ClassHolder.hpp"
+#include "control/CompilationController.hpp"
 #include "control/MethodToBeCompiled.hpp"
 #include "env/CpuUtilization.hpp"
 #include "env/Processors.hpp"
@@ -57,6 +58,7 @@ struct J9SharedClassJavacoreDataDescriptor;
 class CpuUtilization;
 namespace TR { class CompilationInfoPerThread; }
 namespace TR { class CompilationInfoPerThreadBase; }
+namespace TR { typedef OMR::CompilationInfo CompilationInfoConnector; }
 class TR_FilterBST;
 class TR_FrontEnd;
 class TR_HWProfiler;
@@ -331,7 +333,7 @@ class DLTTracking : public J9Method_HT
 namespace TR
 {
 
-class CompilationInfo
+class CompilationInfo : public OMR::CompilationInfoConnector
    {
 public:
    friend class TR::CompilationInfoPerThreadBase;
@@ -1192,15 +1194,6 @@ public:
 
    int32_t calculateCodeSize(TR_MethodMetaData *metaData);
    void increaseUnstoredBytes(U_32 aotBytes, U_32 jitBytes);
-
-   /**
-   * @brief Compute free physical memory taking into account container limits
-   *
-   * @param incompleteInfo   [OUTPUT] Boolean indicating that cached/buffered memory couldn't be read
-   * @return                 A value representing the free physicalMemory
-                             or OMRPORT_MEMINFO_NOT_AVAILABLE in case of error
-   */
-   uint64_t computeFreePhysicalMemory(bool &incompleteInfo);
 
    /**
    * @brief Compute free physical memory taking into account container limits and caches it for later use
