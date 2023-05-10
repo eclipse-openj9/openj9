@@ -38,6 +38,7 @@ namespace J9 { typedef J9::ClassEnv ClassEnvConnector; }
 #include "env/jittypes.h"
 #include "env/OMRClassEnv.hpp"
 #include "infra/Annotations.hpp"
+#include "il/DataTypes.hpp"
 #include "j9.h"
 
 namespace TR { class SymbolReference; }
@@ -158,6 +159,7 @@ public:
    bool isPrimitiveClass(TR::Compilation *comp, TR_OpaqueClassBlock *clazz);
    bool isAnonymousClass(TR::Compilation *comp, TR_OpaqueClassBlock *clazz);
    bool isPrimitiveArray(TR::Compilation *comp, TR_OpaqueClassBlock *);
+   TR::DataTypes primitiveArrayComponentType(TR::Compilation *comp, TR_OpaqueClassBlock *);
    bool isReferenceArray(TR::Compilation *comp, TR_OpaqueClassBlock *);
    bool isClassArray(TR::Compilation *comp, TR_OpaqueClassBlock *);
    bool isClassFinal(TR::Compilation *comp, TR_OpaqueClassBlock *);

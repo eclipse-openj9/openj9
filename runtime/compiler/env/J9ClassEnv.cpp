@@ -315,6 +315,38 @@ J9::ClassEnv::isPrimitiveArray(TR::Compilation *comp, TR_OpaqueClassBlock *clazz
    return comp->fej9()->isPrimitiveArray(clazz);
    }
 
+TR::DataTypes
+J9::ClassEnv::primitiveArrayComponentType(TR::Compilation *comp, TR_OpaqueClassBlock *clazz)
+   {
+   TR_ASSERT_FATAL(
+      self()->isPrimitiveArray(comp, clazz), "not a primitive array: %p", clazz);
+
+   static const int32_t firstNewArrayTypeCode = 4;
+   static const TR::DataTypes newArrayTypes[] =
+      {
+      TR::Int8, // boolean
+      TR::Int16, // char
+      TR::Float,
+      TR::Double,
+      TR::Int8,
+      TR::Int16,
+      TR::Int32,
+      TR::Int64,
+      };
+
+   TR_J9VMBase *fej9 = comp->fej9();
+   for (int32_t i = 0; i < sizeof(newArrayTypes) / sizeof(newArrayTypes[0]); i++)
+      {
+      TR_OpaqueClassBlock *primitiveArrayClass =
+         fej9->getClassFromNewArrayTypeNonNull(firstNewArrayTypeCode + i);
+
+      if (clazz == primitiveArrayClass)
+         return newArrayTypes[i];
+      }
+
+   return TR::NoType;
+   }
+
 bool
 J9::ClassEnv::isReferenceArray(TR::Compilation *comp, TR_OpaqueClassBlock *clazz)
    {
