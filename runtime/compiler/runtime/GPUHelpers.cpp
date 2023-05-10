@@ -1782,9 +1782,9 @@ int flushGPUDatatoCPU(CudaInfo *cudaInfo)
 
    TR_ASSERT(cudaInfo, "cudaInfo should not be NULL");
 
-   //////////////////////////////////////////////////////////////////////
+
    // Copy back from GPU all data that is CPU stale
-   //////////////////////////////////////////////////////////////////////
+
 
    for (int32_t i = 0; i < cudaInfo->hashSize; i++)
       {
@@ -1819,8 +1819,8 @@ int resetAccessModeFlags(CudaInfo *cudaInfo)
 
    TR_ASSERT(cudaInfo, "cudaInfo should not be NULL");
 
-   //////////////////////////////////////////////////////////////////////
-   //////////////////////////////////////////////////////////////////////
+
+
 
    for (int32_t i = 0; i < cudaInfo->hashSize; i++)
       {
@@ -1881,9 +1881,9 @@ bool freeGPUScope(CudaInfo *cudaInfo)
          }
       }
 
-   //////////////////////////////////////////////////////////////////////
+
    // Free hash table and cudaInfo handle
-   //////////////////////////////////////////////////////////////////////
+
 
    bool failedGPUSession = isGPUFailed(cudaInfo);
 

@@ -34,9 +34,9 @@
 #include "x/codegen/X86Instruction.hpp"
 #include "codegen/InstOpCode.hpp"
 
-////////////////////////////////////////////////////////////////////////////////
+
 // TR::X86MemImmSnippetInstruction:: member functions
-////////////////////////////////////////////////////////////////////////////////
+
 
 TR::X86MemImmSnippetInstruction::X86MemImmSnippetInstruction(TR::InstOpCode::Mnemonic                op,
                                                              TR::Node                     *node,

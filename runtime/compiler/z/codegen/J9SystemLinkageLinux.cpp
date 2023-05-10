@@ -52,18 +52,18 @@
 #include "z/codegen/S390J9CallSnippet.hpp"
 #include "z/codegen/S390StackCheckFailureSnippet.hpp"
 
-////////////////////////////////////////////////////////////////////////////////
+
 //  J9::Z::zLinuxSystemLinkage Implementations
-////////////////////////////////////////////////////////////////////////////////
+
 J9::Z::zLinuxSystemLinkage::zLinuxSystemLinkage(TR::CodeGenerator * codeGen)
    : TR::S390zLinuxSystemLinkage(codeGen)
    {
    }
 
-/////////////////////////////////////////////////////////////////////////////////
+
 // J9::Z::zLinuxSystemLinkage::generateInstructionsForCall - Front-end
 //  customization of callNativeFunction
-////////////////////////////////////////////////////////////////////////////////
+
 void
 J9::Z::zLinuxSystemLinkage::generateInstructionsForCall(TR::Node * callNode,
 	TR::RegisterDependencyConditions * deps, intptr_t targetAddress,

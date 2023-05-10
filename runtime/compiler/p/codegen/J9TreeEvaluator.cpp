@@ -13046,10 +13046,10 @@ J9::Power::TreeEvaluator::evaluateNULLCHKWithPossibleResolve(TR::Node *node, boo
    // before the null check, so that exceptions are handled in the correct
    // order.
    //
-   ///// if (needsResolve)
-   /////    {
-   /////    ...
-   /////    }
+   /* if (needsResolve)
+          {
+       ...
+           }*/
 
    TR::Register *trgReg = cg->evaluate(reference);
    TR::Instruction *gcPoint;

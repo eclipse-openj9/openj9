@@ -55,9 +55,9 @@
 
 #define MIN_PROFILED_CALL_FREQUENCY (.075f)
 
-////////////////////////////////////////////////////////////////////////////////
+
 // J9::Z::PrivateLinkage for J9
-////////////////////////////////////////////////////////////////////////////////
+
 J9::Z::PrivateLinkage::PrivateLinkage(TR::CodeGenerator * codeGen,TR_LinkageConventions lc)
    : J9::PrivateLinkage(codeGen)
    {
@@ -154,10 +154,10 @@ J9::Z::PrivateLinkage::PrivateLinkage(TR::CodeGenerator * codeGen,TR_LinkageConv
    setLargestOutgoingArgumentAreaSize(0);
    }
 
-////////////////////////////////////////////////////////////////////////////////
+
 // J9::Z::PrivateLinkage::initS390RealRegisterLinkage - initialize the state
 //    of real register for register allocator
-////////////////////////////////////////////////////////////////////////////////
+
 void
 J9::Z::PrivateLinkage::initS390RealRegisterLinkage()
    {
@@ -233,10 +233,10 @@ void J9::Z::PrivateLinkage::alignLocalsOffset(uint32_t &stackIndex, uint32_t loc
    }
 
 
-////////////////////////////////////////////////////////////////////////////////
+
 // J9::Z::PrivateLinkage::mapCompactedStack - maps variables onto the stack, sharing
 //     stack slots for automatic variables with non-interfering live ranges.
-////////////////////////////////////////////////////////////////////////////////
+
 void
 J9::Z::PrivateLinkage::mapCompactedStack(TR::ResolvedMethodSymbol * method)
    {
@@ -784,10 +784,10 @@ J9::Z::PrivateLinkage::mapStack(TR::ResolvedMethodSymbol * method)
 
    }
 
-////////////////////////////////////////////////////////////////////////////////
+
 // J9::Z::PrivateLinkage::mapSingleAutomatic - maps an automatic onto the stack
 // with size p->getRoundedSize()
-////////////////////////////////////////////////////////////////////////////////
+
 void
 J9::Z::PrivateLinkage::mapSingleAutomatic(TR::AutomaticSymbol * p, uint32_t & stackIndex)
    {
@@ -795,9 +795,9 @@ J9::Z::PrivateLinkage::mapSingleAutomatic(TR::AutomaticSymbol * p, uint32_t & st
    mapSingleAutomatic(p, p->getRoundedSize(), stackIndex);
    }
 
-////////////////////////////////////////////////////////////////////////////////
+
 // J9::Z::PrivateLinkage::mapSingleAutomatic - maps an automatic onto the stack
-////////////////////////////////////////////////////////////////////////////////
+
 void
 J9::Z::PrivateLinkage::mapSingleAutomatic(TR::AutomaticSymbol * p, uint32_t size, uint32_t & stackIndex)
    {
@@ -1064,9 +1064,9 @@ J9::Z::PrivateLinkage::setupLiteralPoolRegister(TR::Snippet *firstSnippet)
    return -1;
    }
 
-////////////////////////////////////////////////////////////////////////////////
+
 // TS_390PrivateLinkage::createPrologue() - create prolog for private linkage
-////////////////////////////////////////////////////////////////////////////////
+
 void
 J9::Z::PrivateLinkage::createPrologue(TR::Instruction * cursor)
    {
@@ -1203,7 +1203,7 @@ J9::Z::PrivateLinkage::createPrologue(TR::Instruction * cursor)
 
    if (!comp()->isDLT())
       {
-      // Check stackoverflow /////////////////////////////////////
+      // Check stackoverflow
       //Load the stack limit in a temporary reg ( use R14, as it is killed later anyways )
       TR::RealRegister * stackLimitReg = getRealRegister(TR::RealRegister::GPR14);
       TR::RealRegister * mdReg = getMethodMetaDataRealRegister();
@@ -1230,7 +1230,7 @@ J9::Z::PrivateLinkage::createPrologue(TR::Instruction * cursor)
       cursor = generateS390LabelInstruction(cg(), TR::InstOpCode::label, firstNode, reStartLabel, cursor);
       }
 
-      // End of stack overflow checking code ////////////////////////
+      // End of stack overflow checking code
    static bool bppoutline = (feGetEnv("TR_BPRP_Outline")!=NULL);
 
    if (bppoutline && cg()->_outlineCall._frequency != -1)
@@ -1390,14 +1390,14 @@ J9::Z::PrivateLinkage::createPrologue(TR::Instruction * cursor)
    }
 
 
-////////////////////////////////////////////////////////////////////////////////
+
 // TS_390PrivateLinkage::createEpilog() - create epilog for private linkage
 //
 //  Here is the sample epilog that we are currently generated
 //
 //  10 c0 d0 00                    LM      GPR6, GPR15,  40(,GPR11)
 //  47 00 b0 00                    BC      GPR14
-////////////////////////////////////////////////////////////////////////////////
+
 void
 J9::Z::PrivateLinkage::createEpilogue(TR::Instruction * cursor)
    {
@@ -1526,9 +1526,9 @@ J9::Z::PrivateLinkage::createEpilogue(TR::Instruction * cursor)
 
    }
 
-////////////////////////////////////////////////////////////////////////////////
+
 // J9::Z::PrivateLinkage::buildVirtualDispatch - build virtual function call
-////////////////////////////////////////////////////////////////////////////////
+
 void
 J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDependencyConditions * dependencies,
    TR::Register * vftReg, uint32_t sizeOfArguments)
@@ -3066,10 +3066,10 @@ TR::Register * J9::Z::JNILinkage::buildDirectDispatch(TR::Node * callNode)
    return javaReturnRegister;
    }
 
-////////////////////////////////////////////////////////////////////////////////
+
 // J9::Z::PrivateLinkage::doNotKillSpecialRegsForBuildArgs -  Do not kill
 // special regs (java stack ptr, system stack ptr, and method metadata reg)
-////////////////////////////////////////////////////////////////////////////////
+
 void
 J9::Z::PrivateLinkage::doNotKillSpecialRegsForBuildArgs (TR::Linkage *linkage, bool isFastJNI, int64_t &killMask)
    {
@@ -3105,10 +3105,10 @@ J9::Z::PrivateLinkage::doNotKillSpecialRegsForBuildArgs (TR::Linkage *linkage, b
       }
    }
 
-////////////////////////////////////////////////////////////////////////////////
+
 // J9::Z::PrivateLinkage::addSpecialRegDepsForBuildArgs -  add special argument
 // register dependencies for buildArgs
-////////////////////////////////////////////////////////////////////////////////
+
 void
 J9::Z::PrivateLinkage::addSpecialRegDepsForBuildArgs(TR::Node * callNode, TR::RegisterDependencyConditions * dependencies, int32_t& from, int32_t step)
    {
@@ -3148,10 +3148,10 @@ J9::Z::PrivateLinkage::addSpecialRegDepsForBuildArgs(TR::Node * callNode, TR::Re
       }
    }
 
-////////////////////////////////////////////////////////////////////////////////
+
 // J9::Z::PrivateLinkage::storeExtraEnvRegForBuildArgs -  JNI specific,
 // account for extra env param. Return stackOffset.
-////////////////////////////////////////////////////////////////////////////////
+
 int32_t
 J9::Z::PrivateLinkage::storeExtraEnvRegForBuildArgs(TR::Node * callNode, TR::Linkage* linkage, TR::RegisterDependencyConditions * dependencies,
       bool isFastJNI, int32_t stackOffset, int8_t gprSize, uint32_t &numIntegerArgs)
@@ -3175,10 +3175,10 @@ J9::Z::PrivateLinkage::storeExtraEnvRegForBuildArgs(TR::Node * callNode, TR::Lin
    return stackOffset;
    }
 
-////////////////////////////////////////////////////////////////////////////////
+
 // J9::Z::PrivateLinkage::addFECustomizedReturnRegDependency -  add extra
 // linkage specific return register dependency
-////////////////////////////////////////////////////////////////////////////////
+
 int64_t
 J9::Z::PrivateLinkage::addFECustomizedReturnRegDependency(int64_t killMask, TR::Linkage* linkage, TR::DataType resType,
       TR::RegisterDependencyConditions * dependencies)
@@ -3196,10 +3196,10 @@ J9::Z::PrivateLinkage::addFECustomizedReturnRegDependency(int64_t killMask, TR::
    return killMask;
    }
 
-////////////////////////////////////////////////////////////////////////////////
+
 // J9::Z::PrivateLinkage::buildDirectDispatch - build direct function call
 //   eg. Static, helpers... etc.
-////////////////////////////////////////////////////////////////////////////////
+
 TR::Register *
 J9::Z::PrivateLinkage::buildDirectDispatch(TR::Node * callNode)
    {
@@ -3278,11 +3278,11 @@ J9::Z::PrivateLinkage::buildDirectDispatch(TR::Node * callNode)
    return returnRegister;
    }
 
-////////////////////////////////////////////////////////////////////////////////
+
 // J9::Z::PrivateLinkage::buildIndirectDispatch - build indirect function call.
 //   This function handles the arguments setup and the return register. It will
 //   buildVirtualDispatch() to handle the call sequence.
-////////////////////////////////////////////////////////////////////////////////
+
 TR::Register *
 J9::Z::PrivateLinkage::buildIndirectDispatch(TR::Node * callNode)
    {

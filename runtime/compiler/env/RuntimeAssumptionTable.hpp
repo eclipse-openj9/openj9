@@ -74,7 +74,7 @@ struct TR_RatHT
    size_t                  _spineArraySize;
    };
 
-/// prime number
+// prime number
 //#define ASSUMPTIONTABLE_SIZE 251
 //#define CLASS_EXTEND_ASSUMPTIONTABLE_SIZE 1543  // other choices: 3079 6151
 class TR_RuntimeAssumptionTable

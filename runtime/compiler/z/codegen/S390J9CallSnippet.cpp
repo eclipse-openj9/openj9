@@ -1152,9 +1152,9 @@ TR_Debug::print(TR::FILE *pOutFile, TR::J9S390InterfaceCallDataSnippet * snippet
    return;
    }
 
-///////////////////////////////////////////////////////////////////////////////
+
 // TR::J9S390InterfaceCallDataSnippet member functions
-///////////////////////////////////////////////////////////////////////////////
+
 TR::J9S390InterfaceCallDataSnippet::J9S390InterfaceCallDataSnippet(TR::CodeGenerator * cg,
                                                                  TR::Node * node,
                                                                  uint8_t n,

@@ -3086,7 +3086,7 @@ J9::CodeGenerator::compressedReferenceRematerialization()
                   {
                   if (!rematerializedNodes.find(node->getFirstChild()))
                      {
-                     ////traceMsg(comp(), "Adding %p\n", node->getFirstChild());
+                     //traceMsg(comp(), "Adding %p\n", node->getFirstChild());
                      rematerializedNodes.add(node->getFirstChild());
                      }
                   node->getFirstChild()->setVisitCount(visitCount-1);
@@ -3102,7 +3102,7 @@ J9::CodeGenerator::compressedReferenceRematerialization()
 
                   TR::Node *ttNode = TR::Node::create(TR::treetop, 1, cursorNode);
 
-                  ///traceMsg(comp(), "5 ttNode %p\n", ttNode);
+                  //traceMsg(comp(), "5 ttNode %p\n", ttNode);
                   TR::TreeTop *treeTop = TR::TreeTop::create(self()->comp(), ttNode);
                   TR::TreeTop *prevTreeTop = tt->getPrevTreeTop();
                   prevTreeTop->join(treeTop);
@@ -3126,7 +3126,7 @@ J9::CodeGenerator::compressedReferenceRematerialization()
                   rematNode->setVisitCount(visitCount);
                   TR::Node *ttNode = TR::Node::create(TR::treetop, 1, rematNode);
 
-                  ///traceMsg(comp(), "5 ttNode %p\n", ttNode);
+                  //traceMsg(comp(), "5 ttNode %p\n", ttNode);
                   TR::TreeTop *treeTop = TR::TreeTop::create(self()->comp(), ttNode);
                   TR::TreeTop *prevTree = tt->getPrevTreeTop();
                   prevTree->join(treeTop);
@@ -3699,7 +3699,7 @@ J9::CodeGenerator::yankCompressedRefs(
          {
          TR_BitVector symbolReferencesInNode(self()->comp()->getSymRefCount(), self()->comp()->trMemory(), stackAlloc);
 
-         ////bool canYank = collectSymRefs(node, &symbolReferencesInNode, secondVisitCount);
+         /**bool canYank = collectSymRefs(node, &symbolReferencesInNode, secondVisitCount);*/
          // since symRefs need to be collected for each treetop, we'll need a fresh visitCount
          // for every walk of a tree
          //
@@ -3788,7 +3788,7 @@ J9::CodeGenerator::yankCompressedRefs(
 
             if (cursorTree != firstTree->getPrevTreeTop())
                {
-               /////printf("Yanking l2a node %p past %d trees in %s\n", node, numTrees, comp()->signature()); fflush(stdout);
+               /**printf("Yanking l2a node %p past %d trees in %s\n", node, numTrees, comp()->signature()); fflush(stdout);*/
                TR::TreeTop *nextTree = cursorTree->getNextTreeTop();
                TR::TreeTop *prevTreeAtSrc = firstTree->getPrevTreeTop();
                TR::TreeTop *nextTreeAtSrc = lastTree->getNextTreeTop();

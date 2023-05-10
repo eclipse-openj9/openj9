@@ -69,7 +69,7 @@ class UnresolvedDataSnippet : public J9::UnresolvedDataSnippet
    TR::Instruction         *_dataReferenceInstruction;
    TR::S390WritableDataSnippet *_unresolvedData;
    uint8_t                    *_literalPoolPatchAddress;
-   uint8_t                    *_literalPoolSlot;         ///< For trace file generation
+   uint8_t                    *_literalPoolSlot;         //< For trace file generation
 
    public:
 

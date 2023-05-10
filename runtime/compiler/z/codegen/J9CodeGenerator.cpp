@@ -924,17 +924,17 @@ J9::Z::CodeGenerator::allocatePseudoRegister(TR::DataType dt)
 
 #define TR_ACCUMULATOR_NODE_BUDGET 50
 
-/// canUseSingleStoreAsAnAccumulator does not use visitCounts (as they are
-/// already in use at this point) but instead the slightly less / exact
-/// getRegister() == NULL checks
-///
-/// In a pathological case, such as doubly commoned nodes under the same store
-/// there is a potential for an exponential number of nodes to / be visited. To
-/// guard against this maintain a count of nodes visited under one store and
-/// compare against the budget below.
-///
-/// \note Today, it should be relatively easy to insert a Checklist, which
-///       addresses the concern about visit counts above.
+// canUseSingleStoreAsAnAccumulator does not use visitCounts (as they are
+// already in use at this point) but instead the slightly less / exact
+// getRegister() == NULL checks
+//
+// In a pathological case, such as doubly commoned nodes under the same store
+// there is a potential for an exponential number of nodes to / be visited. To
+// guard against this maintain a count of nodes visited under one store and
+// compare against the budget below.
+//
+// \note Today, it should be relatively easy to insert a Checklist, which
+//       addresses the concern about visit counts above.
 template <class TR_AliasSetInterface>
 bool
 J9::Z::CodeGenerator::canUseSingleStoreAsAnAccumulator(TR::Node *parent, TR::Node *node, TR::Node *store,TR_AliasSetInterface &storeAliases, TR::list<TR::Node*> *conflictingAddressNodes, bool justLookForConflictingAddressNodes, bool isChainOfFirstChildren, bool mustCheckAllNodes)
@@ -1279,16 +1279,16 @@ J9::Z::CodeGenerator::isAcceptableDestructivePDShiftRight(TR::Node *storeNode, T
    }
 
 
-///
-///    pdstorei s=5
-///        addr+3
-///        pdModPrec s=5
-///           pdX (with nodeForAliasing address : addr) s=8
-///
-/// The above IL is truncating the sourceNode (pdX) and storing the result back
-/// to the same field right aligned / In this case it is ok to accumulate as an
-/// exact right aligned subfield of the source is being operated on
-///
+/*
+    pdstorei s=5
+        addr+3
+        pdModPrec s=5
+           pdX (with nodeForAliasing address : addr) s=8
+*/
+// The above IL is truncating the sourceNode (pdX) and storing the result back
+// to the same field right aligned / In this case it is ok to accumulate as an
+// exact right aligned subfield of the source is being operated on
+//
 bool
 J9::Z::CodeGenerator::isAcceptableDestructivePDModPrecision(TR::Node *storeNode, TR::Node *nodeForAliasing)
    {
@@ -1925,20 +1925,20 @@ J9::Z::CodeGenerator::markStoreAsAnAccumulator(TR::Node *node)
    }
 
 
-/// If true, this node's operation might overwrite an accumulator by evaluating one child before loading
-/// the value from another, if we choose to accumulate. (Accumulation may still be safe, but we'll need
-/// to investigate all child nodes to be sure).
-/// eg.
+// If true, this node's operation might overwrite an accumulator by evaluating one child before loading
+// the value from another, if we choose to accumulate. (Accumulation may still be safe, but we'll need
+// to investigate all child nodes to be sure).
+// eg.
+
+// pdstore "a"
+//   pdsub
+//     pdconst
+//     zd2pd
+//       zdload "a"
 //
-/// pdstore "a"
-///   pdsub
-///     pdconst
-///     zd2pd
-///       zdload "a"
-///
-/// Accumulating to "a" is incorrect here because the pdconst will get evaluated into "a" before the
-/// zdload is evaluated, so when we encounter the pdsub, we need to check all children.
-///
+// Accumulating to "a" is incorrect here because the pdconst will get evaluated into "a" before the
+// zdload is evaluated, so when we encounter the pdsub, we need to check all children.
+//
 bool nodeMightClobberAccumulatorBeforeUse(TR::Node *node)
    {
    TR_ASSERT(node != NULL, "NULL node in nodeMightClobberAccumulatorBeforeUse\n");

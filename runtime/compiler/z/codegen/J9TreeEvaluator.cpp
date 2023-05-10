@@ -859,7 +859,7 @@ J9::Z::TreeEvaluator::pdclearSetSignEvaluator(TR::Node *node, TR::CodeGenerator 
    }
 
 /* Moved from Codegen to FE */
-///////////////////////////////////////////////////////////////////////////////////
+
 // Generate code to perform a comparison and branch to a snippet.
 // This routine is used mostly by bndchk evaluator.
 //
@@ -869,7 +869,7 @@ J9::Z::TreeEvaluator::pdclearSetSignEvaluator(TR::Node *node, TR::CodeGenerator 
 //
 // TODO - avoid code duplication, this routine may be able to merge with the one
 //        above which has the similar logic.
-///////////////////////////////////////////////////////////////////////////////////
+
 TR::Instruction *
 generateS390CompareBranchLabel(TR::Node * node, TR::CodeGenerator * cg, TR::InstOpCode::Mnemonic branchOp, TR::InstOpCode::S390BranchCondition fBranchOpCond, TR::InstOpCode::S390BranchCondition rBranchOpCond,
    TR::LabelSymbol * label)
@@ -3861,27 +3861,27 @@ VMwrtbarEvaluator(
    generateS390LabelInstruction(cg, TR::InstOpCode::label, node, doneLabel, conditions);
    }
 
-///////////////////////////////////////////////////////////////////////////////////////
+
 // monentEvaluator:  acquire lock for synchronising method
-///////////////////////////////////////////////////////////////////////////////////////
+
 TR::Register *
 J9::Z::TreeEvaluator::monentEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
    return TR::TreeEvaluator::VMmonentEvaluator(node, cg);
    }
 
-///////////////////////////////////////////////////////////////////////////////////////
+
 // monexitEvaluator:  release lock for synchronising method
-///////////////////////////////////////////////////////////////////////////////////////
+
 TR::Register *
 J9::Z::TreeEvaluator::monexitEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
    return TR::TreeEvaluator::VMmonexitEvaluator(node, cg);
    }
 
-///////////////////////////////////////////////////////////////////////////////////////
+
 // asynccheckEvaluator: GC point
-///////////////////////////////////////////////////////////////////////////////////////
+
 TR::Register *
 J9::Z::TreeEvaluator::asynccheckEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
@@ -4180,10 +4180,10 @@ bool genInstanceOfOrCheckcastSuperClassTest(TR::Node *node, TR::CodeGenerator *c
    //We expect Result of the test reflects in Condition Code. Callee should react on this.
    }
 
-///////////////////////////////////////////////////////////////////////////////////////
+
 // instanceofEvaluator: symref is the class object, cp index is in the "int" field,
 //   child is the object reference
-///////////////////////////////////////////////////////////////////////////////////////
+
 TR::Register *
 J9::Z::TreeEvaluator::instanceofEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
@@ -4248,9 +4248,9 @@ genInstanceOfOrCheckCastNullTest(TR::Node* node, TR::CodeGenerator* cg, TR::Regi
       }
    }
 
-///////////////////////////////////////////////////////////////////////////////////////
+
 //  checkcastEvaluator - checkcast
-///////////////////////////////////////////////////////////////////////////////////////
+
 TR::Register *
 J9::Z::TreeEvaluator::checkcastEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
@@ -4549,9 +4549,9 @@ J9::Z::TreeEvaluator::checkcastEvaluator(TR::Node * node, TR::CodeGenerator * cg
    return NULL;
    }
 
-///////////////////////////////////////////////////////////////////////////////////////
+
 //  checkcastAndNULLCHKEvaluator - checkcastAndNULLCHK
-///////////////////////////////////////////////////////////////////////////////////////
+
 TR::Register *
 J9::Z::TreeEvaluator::checkcastAndNULLCHKEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
@@ -4638,9 +4638,9 @@ J9::Z::TreeEvaluator::generateHelperCallForVMNewEvaluators(TR::Node *node, TR::C
    return resReg;
    }
 
-///////////////////////////////////////////////////////////////////////////////////////
+
 // newObjectEvaluator: new symref is the class object
-///////////////////////////////////////////////////////////////////////////////////////
+
 TR::Register *
 J9::Z::TreeEvaluator::newObjectEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
@@ -4652,9 +4652,9 @@ J9::Z::TreeEvaluator::newObjectEvaluator(TR::Node * node, TR::CodeGenerator * cg
       return TR::TreeEvaluator::VMnewEvaluator(node, cg);
    }
 
-///////////////////////////////////////////////////////////////////////////////////////
+
 // newArrayEvaluator: new array of primitives
-///////////////////////////////////////////////////////////////////////////////////////
+
 TR::Register *
 J9::Z::TreeEvaluator::newArrayEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
@@ -4664,9 +4664,9 @@ J9::Z::TreeEvaluator::newArrayEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       return TR::TreeEvaluator::VMnewEvaluator(node, cg);
    }
 
-///////////////////////////////////////////////////////////////////////////////////////
+
 // newArrayEvaluator: new array of objects
-///////////////////////////////////////////////////////////////////////////////////////
+
 TR::Register *
 J9::Z::TreeEvaluator::anewArrayEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
@@ -4676,9 +4676,9 @@ J9::Z::TreeEvaluator::anewArrayEvaluator(TR::Node * node, TR::CodeGenerator * cg
       return TR::TreeEvaluator::VMnewEvaluator(node, cg);
    }
 
-///////////////////////////////////////////////////////////////////////////////////////
+
 // multianewArrayEvaluator:  multi-dimensional new array of objects
-///////////////////////////////////////////////////////////////////////////////////////
+
 TR::Register *
 J9::Z::TreeEvaluator::multianewArrayEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
@@ -5049,10 +5049,10 @@ J9::Z::TreeEvaluator::arraylengthEvaluator(TR::Node *node, TR::CodeGenerator *cg
    }
 
 
-///////////////////////////////////////////////////////////////////////////////////////
+
 // DIVCHKEvaluator - Divide by zero check. child 1 is the divide. Symbolref indicates
 //    failure action/destination
-///////////////////////////////////////////////////////////////////////////////////////
+
 TR::Register *
 J9::Z::TreeEvaluator::DIVCHKEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
@@ -5183,10 +5183,10 @@ J9::Z::TreeEvaluator::DIVCHKEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    }
 
 
-///////////////////////////////////////////////////////////////////////////////////////
+
 // BNDCHKEvaluator - Array bounds check, checks that child 1 > child 2 >= 0
 //   (child 1 is bound, 2 is index). Symbolref indicates failure action/destination
-///////////////////////////////////////////////////////////////////////////////////////
+
 TR::Register *
 J9::Z::TreeEvaluator::BNDCHKEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
@@ -5512,9 +5512,9 @@ J9::Z::TreeEvaluator::BNDCHKEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 
 
 
-///////////////////////////////////////////////////////////////////////////////////////
+
 // ArrayCopyBNDCHKEvaluator - Array bounds check for arraycopy, checks that child 1 >= child 2
-///////////////////////////////////////////////////////////////////////////////////////
+
 TR::Register *
 J9::Z::TreeEvaluator::ArrayCopyBNDCHKEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
@@ -6993,10 +6993,10 @@ VMarrayStoreCHKEvaluator(
    arrayStoreCHKOOL->swapInstructionListsWithCompilation();
    }
 
-///////////////////////////////////////////////////////////////////////////////////////
+
 // ArrayStoreCHKEvaluator - Array store check. child 1 is object, 2 is array.
 //   Symbolref indicates failure action/destination
-///////////////////////////////////////////////////////////////////////////////////////
+
 TR::Register *
 J9::Z::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
@@ -7260,10 +7260,10 @@ J9::Z::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node * node, TR::CodeGenerator 
    return NULL;
    }
 
-///////////////////////////////////////////////////////////////////////////////////////
+
 // ArrayCHKEvaluator -  Array compatibility check. child 1 is object1, 2 is object2.
 //    Symbolref indicates failure action/destination
-///////////////////////////////////////////////////////////////////////////////////////
+
 TR::Register *
 J9::Z::TreeEvaluator::ArrayCHKEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
@@ -7824,12 +7824,12 @@ reservationLockEnter(TR::Node *node, int32_t lwOffset, TR::Register *objectClass
    TR::InstOpCode::Mnemonic andOp = use64b ? TR::InstOpCode::NGR : TR::InstOpCode::NR;
 
    //ICF RA constraints
-   //////////////
+
    ICFConditions->addPostConditionIfNotAlreadyInserted(objReg, TR::RealRegister::AssignAny);
    ICFConditions->addPostConditionIfNotAlreadyInserted(monitorReg, TR::RealRegister::AssignAny);
    ICFConditions->addPostConditionIfNotAlreadyInserted(valReg, TR::RealRegister::AssignAny);
    ICFConditions->addPostConditionIfNotAlreadyInserted(tempReg, TR::RealRegister::AssignAny);
-   //////////////
+
 
    // Main path instruction sequence (non-primitive).
    //    L     monitorReg, #lwOffset(objectReg)
@@ -8047,7 +8047,7 @@ reservationLockExit(TR::Node *node, int32_t lwOffset, TR::Register *objectClassR
 
 
    //ICF RA constraints
-   //////////////
+
    ICFConditions->addPostConditionIfNotAlreadyInserted(objReg, TR::RealRegister::AssignAny);
    ICFConditions->addPostConditionIfNotAlreadyInserted(monitorReg, TR::RealRegister::AssignAny);
    ICFConditions->addPostConditionIfNotAlreadyInserted(valReg, TR::RealRegister::AssignAny);
@@ -9755,7 +9755,7 @@ J9::Z::TreeEvaluator::VMmonexitEvaluator(TR::Node * node, TR::CodeGenerator * cg
       cg->stopUsingRegister(monitorReg);
       return reservationLockExit(node, lwOffset, objectClassReg, cg, helperLink);
       }
-   ////////////
+
    // Opcodes:
    bool use64b = true;
    if (comp->target().is64Bit() && fej9->generateCompressedLockWord())
@@ -10554,9 +10554,9 @@ J9::Z::TreeEvaluator::VMnewEvaluator(TR::Node * node, TR::CodeGenerator * cg)
          litPoolRegTotalUse = litPoolBaseReg->getTotalUseCount();
          }
 
-      //////////////////////////////////////////////////////////////////////////////////////////////////////
-      ///============================ STAGE 1: Evaluate Children ========================================///
-      //////////////////////////////////////////////////////////////////////////////////////////////////////
+
+      //STAGE 1: Evaluate Children ========================================
+
       if (opCode == TR::New)
          {
          classReg = cg->evaluate(firstChild);
@@ -10615,9 +10615,9 @@ J9::Z::TreeEvaluator::VMnewEvaluator(TR::Node * node, TR::CodeGenerator * cg)
             }
          }
 
-      //////////////////////////////////////////////////////////////////////////////////////////////////////
-      ///============================ STAGE 1: Setup Register Dependencies===============================///
-      //////////////////////////////////////////////////////////////////////////////////////////////////////
+
+      //============================ STAGE 1: Setup Register Dependencies===============================
+
 
       temp1Reg = srm->findOrCreateScratchRegister();
       resReg = cg->allocateCollectedReferenceRegister();
@@ -10639,9 +10639,9 @@ J9::Z::TreeEvaluator::VMnewEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       TR::Register *copyEnumReg = enumReg;
       TR::Register *copyClassReg = classReg;
 
-      //////////////////////////////////////////////////////////////////////////////////////////////////////
-      ///============================ STAGE 2: Calculate Allocation Size ================================///
-      //////////////////////////////////////////////////////////////////////////////////////////////////////
+
+      //============================ STAGE 2: Calculate Allocation Size ================================
+
       // Three possible outputs:
       // if variable-length array   - dataSizeReg will contain the (calculated) size
       // if outlined                - tmpReg will contain the value of
@@ -10797,9 +10797,9 @@ J9::Z::TreeEvaluator::VMnewEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 
          }
 
-      //////////////////////////////////////////////////////////////////////////////////////////////////////
-      ///============================ STAGE 3: Generate HeapTop Test=====================================///
-      //////////////////////////////////////////////////////////////////////////////////////////////////////
+
+      //============================ STAGE 3: Generate HeapTop Test=====================================
+
       TR::Instruction *current;
       TR::Instruction *firstInstruction;
       srm->addScratchRegistersToDependencyList(conditions);
@@ -10837,9 +10837,9 @@ J9::Z::TreeEvaluator::VMnewEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       genHeapAlloc(node, iCursor, isVariableLen, enumReg, resReg, zeroReg, dataSizeReg, temp1Reg, callLabel, allocateSize, elementSize, cg,
             litPoolBaseReg, conditions, firstBRCToOOL, secondBRCToOOL, exitOOLLabel);
 
-      //////////////////////////////////////////////////////////////////////////////////////////////////////
-      ///============================ STAGE 4: Generate Fall-back Path ==================================///
-      //////////////////////////////////////////////////////////////////////////////////////////////////////
+
+      //============================ STAGE 4: Generate Fall-back Path ==================================
+
          /* New Evaluator Optimization: Using OOL instead of snippet for heap alloc */
 
          /* Example of the OOL for newarray
@@ -10869,9 +10869,9 @@ J9::Z::TreeEvaluator::VMnewEvaluator(TR::Node * node, TR::CodeGenerator * cg)
        * BRCL    J(0xf), Label L00YZ, labelTargetAddr=0xZZZZZZZZ*/
       generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, cFlowRegionEnd);
       heapAllocOOL->swapInstructionListsWithCompilation();
-      //////////////////////////////////////////////////////////////////////////////////////////////////////
-      ///============================ STAGE 5: Initialize the new object header ==========================///
-      //////////////////////////////////////////////////////////////////////////////////////////////////////
+
+      //============================ STAGE 5: Initialize the new object header ==========================
+
       if (isArray)
          {
          if ( comp->compileRelocatableCode() && opCode == TR::anewarray)
@@ -10982,17 +10982,17 @@ J9::Z::TreeEvaluator::VMnewEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 
       TR_ASSERT((fej9->tlhHasBeenCleared() || J9JIT_TOSS_CODE), "");
 
-      //////////////////////////////////////////////////////////////////////////////////////////////////////
-      ///============================ STAGE 5b: Prefetch after stores ===================================///
-      //////////////////////////////////////////////////////////////////////////////////////////////////////
+
+      //============================ STAGE 5b: Prefetch after stores ===================================
+
       if (cg->enableTLHPrefetching())
          {
          iCursor = generateS390MemInstruction(cg, TR::InstOpCode::PFD, node, 2, generateS390MemoryReference(resReg, 0x100, cg), iCursor);
          }
 
-      //////////////////////////////////////////////////////////////////////////////////////////////////////
-      ///============================ STAGE 6: AOT Relocation Records ===================================///
-      //////////////////////////////////////////////////////////////////////////////////////////////////////
+
+      //============================ STAGE 6: AOT Relocation Records ===================================
+
       if (comp->compileRelocatableCode() && (opCode == TR::New || opCode == TR::anewarray) )
          {
          firstInstruction = current->getNext();
@@ -11034,9 +11034,9 @@ J9::Z::TreeEvaluator::VMnewEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 
          }
 
-      //////////////////////////////////////////////////////////////////////////////////////////////////////
-      ///============================ STAGE 7: Done. Housekeeping items =================================///
-      //////////////////////////////////////////////////////////////////////////////////////////////////////
+
+      //============================ STAGE 7: Done. Housekeeping items =================================
+
 
       // Add these registers to the dep list if they are actually used in the evaluator body
       // We detect use by observing if the totalUseCounts on the registers increased since their first
@@ -11344,8 +11344,8 @@ J9::Z::TreeEvaluator::VMarrayCheckEvaluator(TR::Node *node, TR::CodeGenerator *c
 
 
 
-/////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////
+
+
 static bool inlineIsAssignableFrom(TR::Node *node, TR::CodeGenerator *cg)
    {
    static char *disable = feGetEnv("TR_disableInlineIsAssignableFrom");
@@ -12046,10 +12046,10 @@ J9::Z::TreeEvaluator::VMinlineCompareAndSwap(TR::Node *node, TR::CodeGenerator *
    }
 
 
-/////////////////////////////////////////////////////////////////////////////////
+
 //  getTOCOffset()
 //     return codertTOC offset from vmThread (R13)
-////////////////////////////////////////////////////////////////////////////////
+
 int
 getTOCOffset()
    {
@@ -13638,21 +13638,23 @@ J9::Z::TreeEvaluator::tstartEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       }
    else
       {
-      /// Immediate field of TBEGIN:
-      /// bits 0-7:  FF - General Register Save Mask used to tell the hardware which pairs of registers need to be rolled back.
-      ///                 always set to FF here because GRA will later decide which registers we actually need to roll back.
-      /// bits 8-11:  0 - not used by hardware, always zero.
-      /// bit 12:     0 - Allow access register modification
-      /// bit 13:     0 - Allow floating-point operation
-      /// bits 14-15: 2 - Program-Interruption-Filtering Control
-      ///        PIFC bits needs to be set to 2, to allow 0C4 and 0C7 interrupts to resume, instead of being thrown.
-      ///        Since all interrupts cause aborts, the PSW is rolled back to TBEGIN on interrupts. The 0C7 interrupts
-      ///        are generated by trap instructions for Java exception handling. The 0C4 interrupts are used by z/OS LE to
-      ///        detect guarded page exceptions which are used to trigger XPLINK stack growth. In both cases, either the
-      ///        LE or JIT signal handler need the PSW of the actual instruction that generated the interrupt, not the
-      ///        rolled back PSW pointing to TBEGIN. Without filtering these interrupts, the program will crash. Filtering
-      ///        the interrupts allows us to resume execution following the abort and go to slow path so the exceptions
-      ///        can be properly caught and handled.
+      /*
+       Immediate field of TBEGIN:
+       bits 0-7:  FF - General Register Save Mask used to tell the hardware which pairs of registers need to be rolled back.
+                       always set to FF here because GRA will later decide which registers we actually need to roll back.
+       bits 8-11:  0 - not used by hardware, always zero.
+       bit 12:     0 - Allow access register modification
+       bit 13:     0 - Allow floating-point operation
+       bits 14-15: 2 - Program-Interruption-Filtering Control
+              PIFC bits needs to be set to 2, to allow 0C4 and 0C7 interrupts to resume, instead of being thrown.
+              Since all interrupts cause aborts, the PSW is rolled back to TBEGIN on interrupts. The 0C7 interrupts
+              are generated by trap instructions for Java exception handling. The 0C4 interrupts are used by z/OS LE to
+              detect guarded page exceptions which are used to trigger XPLINK stack growth. In both cases, either the
+             LE or JIT signal handler need the PSW of the actual instruction that generated the interrupt, not the
+            rolled back PSW pointing to TBEGIN. Without filtering these interrupts, the program will crash. Filtering
+              the interrupts allows us to resume execution following the abort and go to slow path so the exceptions
+              can be properly caught and handled.
+      */
 
       cursor = generateSILInstruction(cg, TR::InstOpCode::TBEGIN, node, TDBmemRef, 0xFF02);
       }

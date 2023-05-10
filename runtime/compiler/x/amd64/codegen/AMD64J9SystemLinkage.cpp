@@ -31,7 +31,7 @@
 
 #if defined(TR_TARGET_64BIT)
 
-////////////////////////////////////////////////
+
 //
 // Helpful definitions
 //

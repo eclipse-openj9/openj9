@@ -48,7 +48,7 @@
 #include "x/codegen/X86Instruction.hpp"
 #include "codegen/InstOpCode.hpp"
 
-////////////////////////////////////////////////
+
 //
 // Helpful definitions
 //
@@ -63,7 +63,7 @@ enum
    NUM_FLOAT_LINKAGE_REGS=8,
    };
 
-////////////////////////////////////////////////
+
 //
 // Hack markers
 //
@@ -79,7 +79,7 @@ enum
 #define VM_NEEDS_8_BYTE_CPINDEX            (0)
 
 
-////////////////////////////////////////////////
+
 //
 // Initialization
 //
@@ -260,7 +260,7 @@ J9::X86::AMD64::PrivateLinkage::PrivateLinkage(TR::CodeGenerator *cg)
    }
 
 
-////////////////////////////////////////////////
+
 //
 // Argument manipulation
 //
@@ -765,7 +765,7 @@ TR::Instruction *J9::X86::AMD64::PrivateLinkage::restorePreservedRegisters(TR::I
    return cursor;
    }
 
-////////////////////////////////////////////////
+
 //
 // Call node evaluation
 //
@@ -1063,7 +1063,7 @@ int32_t J9::X86::AMD64::PrivateLinkage::buildPrivateLinkageArgs(TR::Node        
       if (vreg)
          {
          cg()->decReferenceCount(child);
-         ////if (child->getOpCode().isLoadConst() && !childReg)
+         /*if (child->getOpCode().isLoadConst() && !childReg)*/
          if (!willKeepConstRegLiveAcrossCall)
             {
             child->setReferenceCount(oldRefCount-1);

@@ -4953,7 +4953,7 @@ isDecimalFormatPattern(TR::Compilation *comp, TR_ResolvedMethod *method)
    if (bc != J9BCgenericReturn)
       return false; // matched 6th (or 7th) bc
 
-   ///traceMsg(comp, "pattern matched successfully\n");
+   /*traceMsg(comp, "pattern matched successfully\n");*/
    return true;
    }
 

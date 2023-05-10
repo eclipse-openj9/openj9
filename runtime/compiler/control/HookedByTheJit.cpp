@@ -98,25 +98,25 @@ struct J9JavaVM;
 #if defined(J9ZOS390) && defined(TR_TARGET_32BIT)
 #include <stdlib.h>
 
-#define PSAAOLD  0x224 ///< offset of current ASCB in prefixed save area (located at address 0x0)
-#define ASCBLDA  0x30  ///< offset of LDA field in ASCB
-#define LDASTRTA 0x3c  ///< offset of user region start in LDA
-#define LDASIZA  0x40  ///< offset of maximum user region size in LDA
-#define LDAESTRA 0x4c  ///< offset of extended user region start in LDA
-#define LDAESIZA 0x50  ///< offset of maximum extended user region size in LDA
-#define LDACRGTP 0x98  ///< offset of user region top in LDA
-#define LDAERGTP 0x9c  ///< offset of extended user region top in LDA
+#define PSAAOLD  0x224 /*< offset of current ASCB in prefixed save area (located at address 0x0)*/
+#define ASCBLDA  0x30  /*< offset of LDA field in ASCB*/
+#define LDASTRTA 0x3c  /*< offset of user region start in LDA*/
+#define LDASIZA  0x40  /*< offset of maximum user region size in LDA*/
+#define LDAESTRA 0x4c  /*< offset of extended user region start in LDA*/
+#define LDAESIZA 0x50  /*< offset of maximum extended user region size in LDA*/
+#define LDACRGTP 0x98  /*< offset of user region top in LDA*/
+#define LDAERGTP 0x9c  /*< offset of extended user region top in LDA*/
 
 struct LDA {
-   uint32_t padding1[15];   ///< Padding
-   void *   strta;          ///< User Region Start
-   uint32_t siza;           ///< Max size of the User Region
-   uint32_t padding2[2];    ///< Padding
-   void *   estra;          ///< Extended User Region Start
-   uint32_t esiza;          ///< Max size of the Extended User Region
-   uint32_t padding3[17];   ///< Padding
-   void *   crgtp;          ///< User Region Top
-   void *   ergtp;          ///< Extended User Region Top
+   uint32_t padding1[15];   /*< Padding*/
+   void *   strta;          /*< User Region Start*/
+   uint32_t siza;           /*< Max size of the User Region*/
+   uint32_t padding2[2];    /*< Padding*/
+   void *   estra;          /*< Extended User Region Start*/
+   uint32_t esiza;          /*< Max size of the Extended User Region*/
+   uint32_t padding3[17];   /*< Padding*/
+   void *   crgtp;          /*< User Region Top*/
+   void *   ergtp;          /*< Extended User Region Top*/
 };
 #endif
 
@@ -328,14 +328,14 @@ bool sharedCacheContainsProfilingInfoForMethod(J9VMThread *vmThread, TR::Compila
    }
 
 
-/// This is a helper function used by jitHookInitializeSendTarget().
-/// This function calculates for the hash value for methods using method names.
-/// The hash value will be eventually added to variable `count` in `jitHookInitializeSendTarget()` under some conditions.
-/// The formula for the hash value is:
-///
-///       hashValue[0] = HASH_INIT_VALUE;
-///       hashValue[i+1] = hashValue[i] * HASH_BASE_VALUE + name[i];
-///       hashValue[length(name)] will be used as the hash value
+// This is a helper function used by jitHookInitializeSendTarget().
+// This function calculates for the hash value for methods using method names.
+// The hash value will be eventually added to variable `count` in `jitHookInitializeSendTarget()` under some conditions.
+// The formula for the hash value is:
+//
+/*      hashValue[0] = HASH_INIT_VALUE;*/
+/*       hashValue[i+1] = hashValue[i] * HASH_BASE_VALUE + name[i];*/
+/*       hashValue[length(name)] will be used as the hash value*/
 static uint32_t initializeSendTargetHelperFuncHashValueForSpreading(J9Method* method)
    {
    // extract class name, method name, and signature
@@ -1966,9 +1966,9 @@ static void jitHookClassesUnload(J9HookInterface * * hookInterface, UDATA eventN
    return;
    }
 
-/// Side effect
-/// 1. Every anon class to be unloaded will have j9clazz->classLoader = NULL
-/// 2. Every j9clazz->jitMetaDataList will be set to NULL
+// Side effect
+// 1. Every anon class to be unloaded will have j9clazz->classLoader = NULL
+// 2. Every j9clazz->jitMetaDataList will be set to NULL
 static void jitHookAnonClassesUnload(J9HookInterface * * hookInterface, UDATA eventNum, void * eventData, void * userData)
    {
    J9VMAnonymousClassesUnloadEvent * unloadedEvent = (J9VMAnonymousClassesUnloadEvent *)eventData;
@@ -3887,15 +3887,15 @@ void jitHookClassPreinitializeHelper(J9VMThread *vmThread,
    }
 
 
-/// This routine is used to indicate successful initialization of the J9Class
-/// before any Java code (<clinit>) is run. When analyzing code in the <clinit>
-/// with CHTable assumptions, this ensures that the CHTable is updated correctly.
-/// Otherwise a class will not be seen as having been initialized in the Java code
-/// reachable from the <clinit>; causing possibly incorrect devirtualization or other
-/// CHTable opts to be applied in a method called by <clinit> (if the <clinit> for class C calls a
-/// virtual method on an object of class C which is instantiated in the code reachable
-/// from <clinit> (this was an actual WSAD scenario)).
-///
+// This routine is used to indicate successful initialization of the J9Class
+// before any Java code (<clinit>) is run. When analyzing code in the <clinit>
+// with CHTable assumptions, this ensures that the CHTable is updated correctly.
+// Otherwise a class will not be seen as having been initialized in the Java code
+// reachable from the <clinit>; causing possibly incorrect devirtualization or other
+// CHTable opts to be applied in a method called by <clinit> (if the <clinit> for class C calls a
+// virtual method on an object of class C which is instantiated in the code reachable
+// from <clinit> (this was an actual WSAD scenario)).
+//
 static void jitHookClassPreinitialize(J9HookInterface * * hookInterface, UDATA eventNum, void * eventData, void * userData)
    {
    J9VMClassPreinitializeEvent * classPreinitializeEvent = (J9VMClassPreinitializeEvent *)eventData;
@@ -3968,9 +3968,9 @@ void turnOffInterpreterProfiling(J9JITConfig *jitConfig)
       }
    }
 
-/// The following two methods (stopInterpreterProfiling and restartInterpreterProfiling)
-/// are used when we disable/enable JIT compilation at runtime
-/// @{
+// The following two methods (stopInterpreterProfiling and restartInterpreterProfiling)
+// are used when we disable/enable JIT compilation at runtime
+// @{
 void stopInterpreterProfiling(J9JITConfig *jitConfig)
    {
    // Turn off interpreter profiling
@@ -3993,7 +3993,7 @@ void restartInterpreterProfiling()
       }
    }
 
-/// @}
+// @}
 
 static bool checkAndTurnOffProfilingHook(TR::CompilationInfo * compInfo)
    {
@@ -4233,7 +4233,7 @@ void printIprofilerStats(TR::Options *options, J9JITConfig * jitConfig, TR_IProf
 #endif
 
 
-/// JIT cleanup code
+// JIT cleanup code
 void JitShutdown(J9JITConfig * jitConfig)
    {
    static bool jitShutdownCalled = false;
@@ -5152,8 +5152,8 @@ static void jitStateLogic(J9JITConfig * jitConfig, TR::CompilationInfo * compInf
       compInfo->_intervalStats.reset(); // if we are going to sleep for seconds, do not keep any history
    }
 
-/// Determine if CPU throttling may be enabled at this time.
-/// We use this to determine if we need to bother calculating CPU usage.
+// Determine if CPU throttling may be enabled at this time.
+// We use this to determine if we need to bother calculating CPU usage.
 bool CPUThrottleEnabled(TR::CompilationInfo *compInfo, uint64_t crtTime)
    {
    // test if feature is enabled
@@ -5183,8 +5183,8 @@ bool CPUThrottleEnabled(TR::CompilationInfo *compInfo, uint64_t crtTime)
    return true;
    }
 
-/// Sums up CPU utilization of all compilation thread and write this
-/// value in the compilation info (or -1 in case of error)
+// Sums up CPU utilization of all compilation thread and write this
+// value in the compilation info (or -1 in case of error)
 static void DoCalculateOverallCompCPUUtilization(TR::CompilationInfo *compInfo, uint64_t crtTime, J9VMThread *currentThread, int32_t *cpuUtilizationValues)
    {
    // Sum up the CPU utilization of all the compilation threads
@@ -5258,7 +5258,7 @@ void CalculateOverallCompCPUUtilization(TR::CompilationInfo *compInfo, uint64_t 
       }
    }
 
-/// Sets a exceedsCompCpuEntitlement flag according to whether the CPU should be throttled
+// Sets a exceedsCompCpuEntitlement flag according to whether the CPU should be throttled
 void CPUThrottleLogic(TR::CompilationInfo *compInfo, uint64_t crtTime)
    {
    const int32_t totalCompCPUUtilization = compInfo->getOverallCompCpuUtilization();
@@ -5293,10 +5293,10 @@ void CPUThrottleLogic(TR::CompilationInfo *compInfo, uint64_t crtTime)
       }
    }
 
-/// When many classes are loaded per second (like in Websphere startup)
-/// we would like to decrease the initial level of compilation from warm to cold
-/// The following fragment of code uses a heuristic to detect when we are
-/// in a class loading phase and sets a global variable accordingly
+// When many classes are loaded per second (like in Websphere startup)
+// we would like to decrease the initial level of compilation from warm to cold
+// The following fragment of code uses a heuristic to detect when we are
+// in a class loading phase and sets a global variable accordingly
 static void classLoadPhaseLogic(J9JITConfig * jitConfig, TR::CompilationInfo * compInfo, uint32_t diffTime)
    {
    //static uint64_t oldElapsedTime = 0;
@@ -5549,10 +5549,10 @@ char* samplerThreadStateNames[TR::CompilationInfo::SAMPLER_LAST_STATE+1] =
                                    "INVALID",
                                  };
 
-/// Method executed by various hooks on application thread
-/// when we should take the samplerThread out of DEEPIDLE/IDLE state
-/// This version does not acquire the vmThreadListMutex assuming that
-/// its caller has already done that
+// Method executed by various hooks on application thread
+// when we should take the samplerThread out of DEEPIDLE/IDLE state
+// This version does not acquire the vmThreadListMutex assuming that
+// its caller has already done that
 void getOutOfIdleStatesUnlocked(TR::CompilationInfo::TR_SamplerStates expectedState, TR::CompilationInfo *compInfo, const char* reason)
    {
    if (compInfo->getSamplerState() != expectedState) // state may have changed when not checked under monitor
@@ -5599,19 +5599,19 @@ void getOutOfIdleStatesUnlocked(TR::CompilationInfo::TR_SamplerStates expectedSt
       }
    }
 
-/// Method executed by various hooks on application thread
-/// when we should take the samplerThread out of DEEPIDLE state
-/// Side-effect: will acquire/release vmThreadListMutex; note that we should
-/// not use this version in GC hooks because a deadlock may happen
-///
-/// In Balanced, once a mutator thread hits AF it will (only) trigger GC, but will not act as main thread.
-/// However, it is still the one that will request (and wait while the request is completed) exclusive VM access.
-/// Once it acquires it will notify main GC thread (which is sleeping). Main GC wakes up and takes control
-/// driving GC till completion. The mutator thread will just wait on 'control mutex' for notification back
-/// from GC main thread that GC has completed. When resumed, the mutator thread will
-/// release the exclusive VM access and proceed with allocation, and program execution.
-/// It is main GC thread that will invoke the hooks (start/end), but it does not directly hold
-/// 'VM thread list' lock. Mutator thread does it.
+// Method executed by various hooks on application thread
+// when we should take the samplerThread out of DEEPIDLE state
+// Side-effect: will acquire/release vmThreadListMutex; note that we should
+// not use this version in GC hooks because a deadlock may happen
+//
+// In Balanced, once a mutator thread hits AF it will (only) trigger GC, but will not act as main thread.
+// However, it is still the one that will request (and wait while the request is completed) exclusive VM access.
+// Once it acquires it will notify main GC thread (which is sleeping). Main GC wakes up and takes control
+// driving GC till completion. The mutator thread will just wait on 'control mutex' for notification back
+// from GC main thread that GC has completed. When resumed, the mutator thread will
+// release the exclusive VM access and proceed with allocation, and program execution.
+// It is main GC thread that will invoke the hooks (start/end), but it does not directly hold
+// 'VM thread list' lock. Mutator thread does it.
 void getOutOfIdleStates(TR::CompilationInfo::TR_SamplerStates expectedState, TR::CompilationInfo *compInfo, const char* reason)
    {
    // First a cheap test without holding a monitor
@@ -5625,7 +5625,7 @@ void getOutOfIdleStates(TR::CompilationInfo::TR_SamplerStates expectedState, TR:
       }
    }
 
-/// This routine is executed with vm->vmThreadListMutex in hand
+// This routine is executed with vm->vmThreadListMutex in hand
 void samplerThreadStateLogic(TR::CompilationInfo *compInfo, TR_FrontEnd *fe, int32_t numActiveThreads)
    {
    static bool foundThreadActiveDuringIdleMode = false;
@@ -5807,14 +5807,14 @@ void samplerThreadStateLogic(TR::CompilationInfo *compInfo, TR_FrontEnd *fe, int
    // Debug ext for the new fields
    }
 
-/// Change inlining aggressiveness based on 'time' since we last entered
-/// JIT startup phase. Inlining aggressiveness is a number between 100 and 0
-/// with 100 meaning 'be very aggressive' and 0 meaning 'be very conservative'
-/// 'time' is not wall clock time because the algorithm would be dependent on
-/// machine speed/capability and load. Instead 'time' can be expressed in
-/// terms of CPU cycles consumed by the JVM or number of samples taken
-/// by application threads. Both are a loose measure of how much work the
-/// JVM has done.
+// Change inlining aggressiveness based on 'time' since we last entered
+// JIT startup phase. Inlining aggressiveness is a number between 100 and 0
+// with 100 meaning 'be very aggressive' and 0 meaning 'be very conservative'
+// 'time' is not wall clock time because the algorithm would be dependent on
+// machine speed/capability and load. Instead 'time' can be expressed in
+// terms of CPU cycles consumed by the JVM or number of samples taken
+// by application threads. Both are a loose measure of how much work the
+// JVM has done.
 void inlinerAggressivenessLogic(TR::CompilationInfo *compInfo)
    {
     uint64_t crtAbstractTime, abstractTimeStartPoint;
@@ -6865,7 +6865,7 @@ static void jitHookReleaseCodeLocalGCEnd(J9HookInterface **hook, UDATA eventNum,
    }
 
 
-/// setupHooks is used in ABOUT_TO_BOOTSTRAP stage (13)
+// setupHooks is used in ABOUT_TO_BOOTSTRAP stage (13)
 int32_t setUpHooks(J9JavaVM * javaVM, J9JITConfig * jitConfig, TR_FrontEnd * vm)
    {
    TR::CompilationInfo *compInfo = getCompilationInfo(jitConfig);

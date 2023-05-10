@@ -157,7 +157,7 @@ protected:
       bool _aotCompile;
       } _data;
 
-   /// A cached options object from the original (crashed) compilation thread
+   // A cached options object from the original (crashed) compilation thread
    TR::Options *_optionsFromOriginalCompile;
    };
 

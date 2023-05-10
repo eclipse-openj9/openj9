@@ -1004,7 +1004,7 @@ LoadArrayElementTransformer::lower(TR::Node* const node, TR::TreeTop* const tt)
    TR::CFG *cfg = comp->getFlowGraph();
    cfg->invalidateStructure();
 
-   ///////////////////////////////////////
+
    // 1. Anchor helper call node after the helper call
    //    Anchor elementIndex and arrayBaseAddress before the helper call
 
@@ -1021,7 +1021,7 @@ LoadArrayElementTransformer::lower(TR::Node* const node, TR::TreeTop* const tt)
             anchoredArrayBaseAddressTT->getNode()->getGlobalIndex(), anchoredArrayBaseAddressTT->getNode());
 
 
-   ///////////////////////////////////////
+
    // 2. Split (1) after the helper call
    TR::Block *blockAfterHelperCall = originalBlock->splitPostGRA(anchoredCallTT, cfg, true, NULL);
 
@@ -1029,7 +1029,7 @@ LoadArrayElementTransformer::lower(TR::Node* const node, TR::TreeTop* const tt)
       traceMsg(comp, "Isolated the anchored call treetop n%dn in block_%d\n", anchoredCallTT->getNode()->getGlobalIndex(), blockAfterHelperCall->getNumber());
 
 
-   ///////////////////////////////////////
+
    // 3. Save the GlRegDeps of the originalBlock's BBExit
    //
    // The GlRegDeps for the BBExit of the originalBlock after the first split is what is required for
@@ -1043,12 +1043,12 @@ LoadArrayElementTransformer::lower(TR::Node* const node, TR::TreeTop* const tt)
    TR::Node *tmpGlRegDeps = cloneAndTweakGlRegDepsFromBBExit(originalBlock->getExit()->getNode(), comp, enableTrace, registerToSkip);
 
 
-   ///////////////////////////////////////
+
    // 4. Move the helper call and the aRegStore/astore of the call (if exist) to the end of the block before next split
    moveNodeToEndOfBlock(originalBlock, tt, node, true /* isAddress */);
 
 
-   ///////////////////////////////////////
+
    // 5. Split (2) at the helper call
    TR::Block *helperCallBlock = originalBlock->splitPostGRA(tt, cfg, true, NULL);
 
@@ -1056,7 +1056,7 @@ LoadArrayElementTransformer::lower(TR::Node* const node, TR::TreeTop* const tt)
       traceMsg(comp, "Isolated helper call treetop n%dn node n%dn in block_%d\n", tt->getNode()->getGlobalIndex(), node->getGlobalIndex(), helperCallBlock->getNumber());
 
 
-   ///////////////////////////////////////
+
    // 6. Create array element load node and append to the originalBlock
    TR::Node *anchoredArrayBaseAddressNode = anchoredArrayBaseAddressTT->getNode()->getFirstChild();
    TR::Node *anchoredElementIndexNode = anchoredElementIndexTT->getNode()->getFirstChild();
@@ -1076,7 +1076,7 @@ LoadArrayElementTransformer::lower(TR::Node* const node, TR::TreeTop* const tt)
       traceMsg(comp, "Created array element load treetop n%dn node n%dn\n", elementLoadTT->getNode()->getGlobalIndex(), elementLoadNode->getGlobalIndex());
 
 
-   ///////////////////////////////////////
+
    // 7. Store the return value from the array element load to the same register or temp used by the anchored node
    TR::Node *storeArrayElementNode = createStoreNodeForAnchoredNode(anchoredNode, elementLoadNode, comp, enableTrace, "array element load");
 
@@ -1086,7 +1086,7 @@ LoadArrayElementTransformer::lower(TR::Node* const node, TR::TreeTop* const tt)
       traceMsg(comp, "Store array element load node n%dn to n%dn %s\n", elementLoadNode->getGlobalIndex(), storeArrayElementNode->getGlobalIndex(), storeArrayElementNode->getOpCode().getName());
 
 
-   ///////////////////////////////////////
+
    // 8. Split (3) at the array element load node
    TR::Block *arrayElementLoadBlock = originalBlock->split(elementLoadTT, cfg);
 
@@ -1117,7 +1117,7 @@ LoadArrayElementTransformer::lower(TR::Node* const node, TR::TreeTop* const tt)
       }
 
 
-   ///////////////////////////////////////
+
    // 9. Create ificmpne node that checks classFlags
 
    // The branch destination will be set up later
@@ -1133,7 +1133,7 @@ LoadArrayElementTransformer::lower(TR::Node* const node, TR::TreeTop* const tt)
       traceMsg(comp, "Append ifNode n%dn to block_%d\n", ifNode->getGlobalIndex(), originalBlock->getNumber());
 
 
-   ///////////////////////////////////////
+
    // 10. Copy tmpGlRegDeps to arrayElementLoadBlock
 
    // Adjust the reference count of the GlRegDeps of the BBExit since it will be replaced by
@@ -1163,7 +1163,7 @@ LoadArrayElementTransformer::lower(TR::Node* const node, TR::TreeTop* const tt)
       }
 
 
-   ///////////////////////////////////////
+
    // 11. Set up the edges between the blocks
    ifNode->setBranchDestination(helperCallBlock->getEntry());
 
@@ -1337,7 +1337,7 @@ StoreArrayElementTransformer::lower(TR::Node* const node, TR::TreeTop* const tt)
    cfg->invalidateStructure();
 
 
-   ///////////////////////////////////////
+
    // 1. Anchor all the children nodes before the helper call
    TR::TreeTop *anchoredArrayBaseAddressTT = TR::TreeTop::create(comp, tt->getPrevTreeTop(), TR::Node::create(TR::treetop, 1, arrayBaseAddressNode));
    TR::TreeTop *anchoredElementIndexTT = TR::TreeTop::create(comp, anchoredArrayBaseAddressTT, TR::Node::create(TR::treetop, 1, elementIndexNode));
@@ -1350,7 +1350,7 @@ StoreArrayElementTransformer::lower(TR::Node* const node, TR::TreeTop* const tt)
             anchoredValueTT->getNode()->getGlobalIndex(), anchoredValueTT->getNode());
 
 
-   ///////////////////////////////////////
+
    // 2. Split (1) after the helper call
    TR::Block *blockAfterHelperCall = originalBlock->splitPostGRA(tt->getNextTreeTop(), cfg, true, NULL);
 
@@ -1358,12 +1358,12 @@ StoreArrayElementTransformer::lower(TR::Node* const node, TR::TreeTop* const tt)
       traceMsg(comp, "Isolated the trees after the helper call in block_%d\n", blockAfterHelperCall->getNumber());
 
 
-   ///////////////////////////////////////
+
    // 3. Clone the GlRegDeps of the originalBlock's BBExit
    TR::Node *tmpGlRegDeps = cloneAndTweakGlRegDepsFromBBExit(originalBlock->getExit()->getNode(), comp, enableTrace, -1 /* registerToSkip */);
 
 
-   ///////////////////////////////////////
+
    // 4. Move the helper call node to the end of the originalBlock
    TR::TreeTop *originalBlockExit = originalBlock->getExit();
    if (tt->getNextTreeTop() != originalBlockExit)
@@ -1374,7 +1374,7 @@ StoreArrayElementTransformer::lower(TR::Node* const node, TR::TreeTop* const tt)
       }
 
 
-   ///////////////////////////////////////
+
    // 5. Split (2) at the helper call node into its own helperCallBlock
 
    // Insert NULLCHK for Primitive VT
@@ -1387,7 +1387,7 @@ StoreArrayElementTransformer::lower(TR::Node* const node, TR::TreeTop* const tt)
       traceMsg(comp, "Isolated helper call treetop n%dn node n%dn in block_%d\n", tt->getNode()->getGlobalIndex(), node->getGlobalIndex(), helperCallBlock->getNumber());
 
 
-   ///////////////////////////////////////
+
    // 6. Create the new ArrayStoreCHK
    TR::Node *anchoredElementIndexNode = anchoredElementIndexTT->getNode()->getFirstChild();
    TR::Node *anchoredArrayBaseAddressNode = anchoredArrayBaseAddressTT->getNode()->getFirstChild();
@@ -1423,7 +1423,7 @@ StoreArrayElementTransformer::lower(TR::Node* const node, TR::TreeTop* const tt)
          traceMsg(comp, "Created treetop node with awrtbari child as treetop n%dn elementStoreNode n%dn\n", arrayStoreTT->getNode()->getGlobalIndex(), elementStoreNode->getGlobalIndex());
       }
 
-   ///////////////////////////////////////
+
    // 7. Split (3) at the regular array element store
    TR::Block *arrayElementStoreBlock = originalBlock->split(arrayStoreTT, cfg);
 
@@ -1473,7 +1473,7 @@ StoreArrayElementTransformer::lower(TR::Node* const node, TR::TreeTop* const tt)
       }
 
 
-   ///////////////////////////////////////
+
    // 8. Create the ificmpne node that checks classFlags
 
    // The branch destination will be set up later
@@ -1489,7 +1489,7 @@ StoreArrayElementTransformer::lower(TR::Node* const node, TR::TreeTop* const tt)
       traceMsg(comp, "Append ifNode n%dn to block_%d\n", ifNode->getGlobalIndex(), originalBlock->getNumber());
 
 
-   ///////////////////////////////////////
+
    // 9. Fix the register dependency after ifNode copying
 
    // Adjust the reference count of the GlRegDeps of the BBExit for arrayElementStoreBlock since it will be replaced by
@@ -1509,7 +1509,7 @@ StoreArrayElementTransformer::lower(TR::Node* const node, TR::TreeTop* const tt)
       }
 
 
-   ///////////////////////////////////////
+
    // 10. Set up the edges between the blocks
    ifNode->setBranchDestination(helperCallBlock->getEntry());
 

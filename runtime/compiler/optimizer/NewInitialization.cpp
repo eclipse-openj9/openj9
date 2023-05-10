@@ -597,14 +597,14 @@ TR::ResolvedMethodSymbol *TR_NewInitialization::findInlinableMethod(TR::TreeTop 
     uint32_t bytecodeSize = method->maxBytecodeIndex();
     if (bytecodeSize > (uint32_t) _maxInlinedBytecodeSize)
       {
-      /////if (trace())
-      /////   printf("secs Single inline too big in %s\n", comp()->signature());
+      /*if (trace())
+         printf("secs Single inline too big in %s\n", comp()->signature());*/
       return NULL;
       }
     if (_totalInlinedBytecodeSize + bytecodeSize > (uint32_t) _maxTotalInlinedBytecodeSize)
       {
-      /////if (trace())
-      /////   printf("secs Total inline too big in %s\n", comp()->signature());
+      /*if (trace())
+         printf("secs Total inline too big in %s\n", comp()->signature());*/
       return NULL;
       }
 
@@ -1302,7 +1302,7 @@ void TR_NewInitialization::inlineCalls()
       if (trace())
          {
          traceMsg(comp(), "\nInlining method %s into treetop at [%p], total inlined size = %d\n", method->signature(trMemory()), treeTop->getNode(), _totalInlinedBytecodeSize+method->maxBytecodeIndex());
-         /////printf("secs Inlining method %s in %s\n", method->signature(trMemory()), comp()->signature());
+         /*printf("secs Inlining method %s in %s\n", method->signature(trMemory()), comp()->signature());*/
          }
 
       // Now inline the call

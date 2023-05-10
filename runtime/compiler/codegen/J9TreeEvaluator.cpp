@@ -1018,9 +1018,9 @@ J9::TreeEvaluator::lrdbariEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    return TR::TreeEvaluator::lloadEvaluator(node, cg);
    }
 
-///////////////////////////////////////////////////////////////////////////////////////
-// monexitfence -- do nothing, just a placeholder for live monitor meta data
-///////////////////////////////////////////////////////////////////////////////////////
+
+/* monexitfence -- do nothing, just a placeholder for live monitor meta data*/
+
 TR::Register *
 J9::TreeEvaluator::monexitfenceEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
@@ -2204,10 +2204,10 @@ void J9::TreeEvaluator::preEvaluateEscapingNodesForSpineCheck(TR::Node *root, TR
    }
 
 
-///////////////////////////////////////////////////////////////////////////////////////
+
 // resolveCHKEvaluator - Resolve check a static, field or method. child 1 is reference
 //   to be resolved. Symbolref indicates failure action/destination
-///////////////////////////////////////////////////////////////////////////////////////
+
 TR::Register *J9::TreeEvaluator::resolveCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    // No code is generated for the resolve check. The child will reference an

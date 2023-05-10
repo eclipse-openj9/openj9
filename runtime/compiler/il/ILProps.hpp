@@ -52,7 +52,7 @@ namespace ILProp4
       {
       // Available                     = 0x00000001,
       SetSign                          = 0x00000002,
-      SetSignOnNode                    = 0x00000004, ///< the setSign value is tracked in a field on the node vs as a child (SetSign has the setSign value in a child)
+      SetSignOnNode                    = 0x00000004, //< the setSign value is tracked in a field on the node vs as a child (SetSign has the setSign value in a child)
       ModifyPrecision                  = 0x00000008,
       BinaryCodedDecimalOp             = 0x00000010,
       ConversionHasFraction            = 0x00000020,
@@ -62,7 +62,7 @@ namespace ILProp4
       CanHaveStorageReferenceHint      = 0x00000200,
       CanHavePaddingAddress            = 0x00000400,
       CanUseStoreAsAnAccumulator       = 0x00000800,
-      TrackLineNo                      = 0x00001000, ///< Indicates if the node's line number should be retained when the node is commoned
+      TrackLineNo                      = 0x00001000, //< Indicates if the node's line number should be retained when the node is commoned
       // Available                     = 0x00002000,
       // Available                     = 0x00004000,
       // Available                     = 0x00008000,

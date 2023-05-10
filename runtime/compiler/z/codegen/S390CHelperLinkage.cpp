@@ -52,9 +52,9 @@
 #include "runtime/J9Profiler.hpp"
 #include "runtime/J9ValueProfiler.hpp"
 
-////////////////////////////////////////////////////////////////////////////////
+
 // J9::Z::CHelperLinkage for J9
-////////////////////////////////////////////////////////////////////////////////
+
 J9::Z::CHelperLinkage::CHelperLinkage(TR::CodeGenerator * codeGen,TR_LinkageConventions elc)
    : TR::Linkage(codeGen,elc)
    {

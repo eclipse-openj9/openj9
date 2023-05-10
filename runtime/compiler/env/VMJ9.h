@@ -244,13 +244,13 @@ public:
    virtual bool supportsJitMethodEntryAlignment() { return true; }
    virtual bool canUseSymbolValidationManager() { return false; }
 
-/////
+//
    // Inlining optimization
    //
    virtual void setInlineThresholds ( TR::Compilation *comp, int32_t &callerWeightLimit, int32_t &maxRecursiveCallByteCodeSizeEstimate, int32_t &methodByteCodeSizeThreshold, int32_t &methodInWarmBlockByteCodeSizeThreshold, int32_t &methodInColdBlockByteCodeSizeThreshold, int32_t &nodeCountThreshold, int32_t size);
    virtual int32_t adjustedInliningWeightBasedOnArgument(int32_t origWeight, TR::Node *argNode, TR::ParameterSymbol *parmSymbol,  TR::Compilation *comp);
    virtual bool canAllowDifferingNumberOrTypesOfArgsAndParmsInInliner();
-/////
+//
    virtual bool isGetImplInliningSupported();
 
    /**

@@ -51,13 +51,13 @@ struct ILOfCrashedThreadParamenters
    : vmThread(vmThread), comp(comp), jitdumpFile(jitdumpFile)
       {}
 
-   /// The JVM thread backing the crashed thread
+   // The JVM thread backing the crashed thread
    J9VMThread *vmThread;
 
-   /// The compilation object extracted from the crashed thread
+   // The compilation object extracted from the crashed thread
    TR::Compilation *comp;
 
-   /// The jitdump file to trace the IL of the crashed thread to
+   // The jitdump file to trace the IL of the crashed thread to
    TR::FILE *jitdumpFile;
    };
 

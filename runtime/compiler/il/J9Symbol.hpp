@@ -199,7 +199,7 @@ public:
 
 private:
 
-   /// This recognized field is currently only used for RecognizedShadows.
+   // This recognized field is currently only used for RecognizedShadows.
    RecognizedField _recognizedField;
    /** @} */
 

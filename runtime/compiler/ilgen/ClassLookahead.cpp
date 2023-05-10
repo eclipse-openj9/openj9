@@ -133,7 +133,7 @@ TR_ClassLookahead::perform()
       _inClassInitializerMethod = true;
       _inInitializerMethod = true;
       _inFirstBlock = true;
-      ///fprintf(stderr, "looking at method %s\n", classInitializer->getResolvedMethod()->nameChars()); fflush(stderr);
+      /*fprintf(stderr, "looking at method %s\n", classInitializer->getResolvedMethod()->nameChars()); fflush(stderr);*/
 
       vcount_t visitCount = comp()->incVisitCount();
       TR::TreeTop *tt;
@@ -177,7 +177,7 @@ TR_ClassLookahead::perform()
                initializeFieldInfo();
             }
 
-            /////fprintf(stderr, "looking at method %s\n", resolvedMethod->nameChars()); fflush(stderr);
+            /*fprintf(stderr, "looking at method %s\n", resolvedMethod->nameChars()); fflush(stderr);*/
          TR::TreeTop *startTree = resolvedMethodSymbol->getFirstTreeTop();
          _inFirstBlock = true;
          vcount_t visitCount = comp()->incVisitCount();
@@ -215,7 +215,7 @@ TR_ClassLookahead::perform()
          {
          if (!findMethod(&initializerMethodsInClass, resolvedMethodSymbol))
             {
-            ////fprintf(stderr, "looking at method %s\n", resolvedMethod->nameChars()); fflush(stderr);
+            /*fprintf(stderr, "looking at method %s\n", resolvedMethod->nameChars()); fflush(stderr);*/
             _inInitializerMethod = false;
             _inFirstInitializerMethod = false;
 
@@ -228,7 +228,7 @@ TR_ClassLookahead::perform()
                {
                TR::Node *node = tt->getNode();
                //dumpOptDetails("Node = %p node vc %d comp vc %d\n", node, node->getVisitCount(), visitCount);
-               ////fprintf(stderr, "looking at node in method %s\n", resolvedMethod->nameChars()); fflush(stderr);
+               /*fprintf(stderr, "looking at node in method %s\n", resolvedMethod->nameChars()); fflush(stderr);*/
                if (!examineNode(tt->getNextTreeTop(), NULL, NULL, -1, node, visitCount))
                   {
                   _classFieldInfo->setFirst(0);
@@ -372,7 +372,7 @@ TR_ClassLookahead::findInitializerMethods(List<TR_ResolvedMethod> *resolvedMetho
             //if (!initializerMethodsInClass->find(initializerMethodSymbol))
             if (!findMethod(initializerMethodsInClass, initializerMethodSymbol))
                initializerMethodsInClass->add(initializerMethodSymbol);
-               ///initializerMethodsInClass->addAfter(initializerMethodSymbol, initializerMethodsInClass->getListHead());
+               /*initializerMethodsInClass->addAfter(initializerMethodSymbol, initializerMethodsInClass->getListHead());*/
             }
          }
       }
@@ -1102,7 +1102,7 @@ void TR_ClassLookahead::invalidateIfEscapingLoad(TR::TreeTop *nextTree, TR::Node
           {
           int32_t length;
           char *sig = getFieldSignature(comp(), sym, storedSymRef, length);
-          /////fprintf(stderr, "Check NOT read for field sig %s\n", sig); fflush(stderr);
+          /*fprintf(stderr, "Check NOT read for field sig %s\n", sig); fflush(stderr);*/
 
           bool knownRead = false;
           bool isBigDecimal = false;
@@ -1158,10 +1158,10 @@ void TR_ClassLookahead::invalidateIfEscapingLoad(TR::TreeTop *nextTree, TR::Node
 
            if (!knownRead)
              {
-             ////int32_t length;
-             ////char *sig = getFieldSignature(comp(), sym, storedSymRef, length);
-             ////fprintf(stderr, "%s is read after all\n", sig); fflush(stderr);
-             ////traceMsg(comp(), "Field %s is read after all in node %p\n", sig, node);
+             /*int32_t length;*/
+             /*char *sig = getFieldSignature(comp(), sym, storedSymRef, length);*/
+             /*fprintf(stderr, "%s is read after all\n", sig); fflush(stderr);*/
+             /*traceMsg(comp(), "Field %s is read after all in node %p\n", sig, node);*/
 
              fieldInfo->setNotRead(false);
              }

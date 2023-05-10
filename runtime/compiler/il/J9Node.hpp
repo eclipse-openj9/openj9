@@ -72,8 +72,8 @@ public:
 
    bool dontEliminateStores(bool isForLocalDeadStore = false);
 
-   /// given a direct call to Object.clone node, return the class of the receiver.
-   ///
+   // given a direct call to Object.clone node, return the class of the receiver.
+   //
    TR_OpaqueClassBlock* getCloneClassInNode();
 
    /**
@@ -381,27 +381,28 @@ public:
 
 protected:
 
-   /// \note update the following routines when adding field to DecimalInfo
-   ///       isDecimalSizeAndShapeEquivalent()
-   ///       isSignStateEquivalent()
-   ///       resetDecimalSignFlags()
-   ///       transferSignState()
-   /// Also be sure to initialize any new field in the Node.cpp constructor
+   /* \note update the following routines when adding field to DecimalInfo
+          isDecimalSizeAndShapeEquivalent()
+          isSignStateEquivalent()
+          resetDecimalSignFlags()
+         transferSignState()
+    Also be sure to initialize any new field in the Node.cpp constructor
+   */
    struct DecimalInfo
       {
-      uint32_t  _decimalPrecision                  : 6;  ///< range 0->63
-      int32_t   _decimalAdjustOrFractionOrDivisor  : 7;  ///< range as Adjust -63->63 (on all except conversion nodes)
-                                                         ///< range as Fraction -63->63 (only on isConversionWithFraction nodes)
-                                                         ///< range as divisorPrecision 0->63 (on select nodes)
-                                                         ///< range as extFloatSrcIntDigits 0->63 (but should only need 16, on extFloat to other conversions, e.g. zf2uf,zf2d)
-      uint32_t  _decimalSourcePrecisionOrDividend  : 6;  ///< range as source precision (on non-BCD-to-BCD conversions) 0->63, as dividendPrecision 0->63 (on select nodes)
-      TR_RawBCDSignCode _setSign                   : 3;  ///< range on isSetSign opcodes
-      uint32_t  _signStateIsKnown                  : 1;  ///< true (known) or false (assumed)
-      uint32_t  _hasCleanSign                      : 1;  ///< true/false
-      uint32_t  _hasPreferredSign                  : 1;  ///< true/false
-      uint32_t  _round                             : 1;  ///< true/false
-      uint32_t  _hasNoSignStateOnLoad              : 1;  ///< true/false // for BCD loads : false for PRE created loads that must preserve sign state (conservative setting), true for FE created loads
-      uint32_t  _castedToBCD                       : 1;  ///< true/false // if true node was not originally a BCD type but casted to BCD by the optimizer from a non-BCD type (e.g. aggr or int)
+      uint32_t  _decimalPrecision                  : 6;  //< range 0->63
+      int32_t   _decimalAdjustOrFractionOrDivisor  : 7;  //< range as Adjust -63->63 (on all except conversion nodes)
+                                                         //< range as Fraction -63->63 (only on isConversionWithFraction nodes)
+                                                         //< range as divisorPrecision 0->63 (on select nodes)
+                                                         //< range as extFloatSrcIntDigits 0->63 (but should only need 16, on extFloat to other conversions, e.g. zf2uf,zf2d)
+      uint32_t  _decimalSourcePrecisionOrDividend  : 6;  //< range as source precision (on non-BCD-to-BCD conversions) 0->63, as dividendPrecision 0->63 (on select nodes)
+      TR_RawBCDSignCode _setSign                   : 3;  //< range on isSetSign opcodes
+      uint32_t  _signStateIsKnown                  : 1;  //< true (known) or false (assumed)
+      uint32_t  _hasCleanSign                      : 1;  //< true/false
+      uint32_t  _hasPreferredSign                  : 1;  //< true/false
+      uint32_t  _round                             : 1;  //< true/false
+      uint32_t  _hasNoSignStateOnLoad              : 1;  //< true/false // for BCD loads : false for PRE created loads that must preserve sign state (conservative setting), true for FE created loads
+      uint32_t  _castedToBCD                       : 1;  //< true/false // if true node was not originally a BCD type but casted to BCD by the optimizer from a non-BCD type (e.g. aggr or int)
       TR_RawBCDSignCode  _signCode                 : 3;
       };
 
@@ -411,19 +412,19 @@ protected:
       {
       // field exists when following is true: only one of these should be true for a given node
       // eventually should replace by exclusive representation (eg. enum)
-      DecimalInfo _decimalInfo;    ///< hasDecimalInfo()
+      DecimalInfo _decimalInfo;    //< hasDecimalInfo()
       // overflow/rounding option
       UnionPropertyB()
          {
-         memset(this, 0, sizeof(UnionPropertyB)); ///< in C++11 notation: _unionPropertyB = {0};
+         memset(this, 0, sizeof(UnionPropertyB)); //< in C++11 notation: _unionPropertyB = {0};
          }
       };
 
    enum UnionPropertyB_Type
       {
       HasNoUnionPropertyB = 0,
-      HasDecimalInfo,          ///< hasDecimalInfo()
-      HasBcdFlags              ///< hasBCDFlags()
+      HasDecimalInfo,          //< hasDecimalInfo()
+      HasBcdFlags              //< hasBCDFlags()
       };
 
    bool hasDecimalInfo();
@@ -441,7 +442,7 @@ protected:
 private:
 
 #ifdef TR_TARGET_S390
-   ///< hasStorageReferenceHint()
+   //< hasStorageReferenceHint()
    TR_StorageReference * _storageReferenceHint;
 #endif
 
@@ -456,10 +457,10 @@ protected:
       spineCHKWithArrayElementChild         = 0x00004000,
 
       // Flags used by call nodes
-      dontInlineUnsafePutOrderedCall        = 0x00000800, ///< unsafe putOrdered calls
+      dontInlineUnsafePutOrderedCall        = 0x00000800, //< unsafe putOrdered calls
       processedByCallCloneConstrain         = 0x00100000,
       unsafeGetPutOnNonArray                = 0x00200000,
-      DAAVariableSlowCall                   = 0x00400000, ///< Used to avoid Variable precision DAA optimization
+      DAAVariableSlowCall                   = 0x00400000, //< Used to avoid Variable precision DAA optimization
 
       // Flag used by binary coded decimal load nodes
       IsBCDStoreTemporarilyALoad            = 0x00400000,

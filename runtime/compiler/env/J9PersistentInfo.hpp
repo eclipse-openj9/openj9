@@ -439,13 +439,13 @@ class PersistentInfo : public OMR::PersistentInfoConnector
    bool _runtimeInstrumentationEnabled;
    bool _runtimeInstrumentationRecompilationEnabled;
 
-   bool _classLoadingPhase;            ///< true, if we detect a large number of classes loaded per second
-   bool _inlinerTemporarilyRestricted; ///< do not inline when true; used to restrict cold inliner during startup
+   bool _classLoadingPhase;            //< true, if we detect a large number of classes loaded per second
+   bool _inlinerTemporarilyRestricted; //< do not inline when true; used to restrict cold inliner during startup
 
-   volatile uint64_t _elapsedTime; ///< elapsed time as computed by the sampling thread (ms)
-                                   ///< May need adjustment if sampling thread goes to sleep
+   volatile uint64_t _elapsedTime; //< elapsed time as computed by the sampling thread (ms)
+                                   //< May need adjustment if sampling thread goes to sleep
 
-   int32_t _numLoadedClasses; ///< always increasing
+   int32_t _numLoadedClasses; //< always increasing
 
 #if defined(J9VM_OPT_JITSERVER)
    std::string _JITServerAddress;

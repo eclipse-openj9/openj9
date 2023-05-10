@@ -97,7 +97,7 @@ const TR::X86LinkageProperties& J9::X86::PrivateLinkage::getProperties()
    return _properties;
    }
 
-////////////////////////////////////////////////
+
 //
 // Argument manipulation
 //

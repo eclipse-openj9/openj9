@@ -255,9 +255,9 @@ ChangeAlignmentOfRegion(TR_CISCTransformer *trans)
          }
       }
 
-   /////////////////////////////
+
    // From here, success path //
-   /////////////////////////////
+
    T->duplicateListsDuplicator();
    changed = true;
    TR_CISCNode *from = r.getListHead()->getData();
@@ -739,7 +739,7 @@ IANDSpecialNodeTransformer(TR_CISCTransformer *trans)
    return ret;
    }
 
-//////////////////////////////////////////////////////////////////////////
+
 // utility routines
 
 static void
@@ -1641,13 +1641,13 @@ CISCTransform2FindBytes(TR_CISCTransformer *trans)
 
    TR::Node *alenNode   = TR::Node::create( baseRepNode, TR::arraylength, 1);
    alenNode->setAndIncChild(0, baseNode);
-   ////findBytesNode->setSymbolReference(comp->getSymRefTab()->findOrCreateFindBytesSymbol());
+   /*findBytesNode->setSymbolReference(comp->getSymRefTab()->findOrCreateFindBytesSymbol());*/
    findBytesNode->setSymbolReference(comp->getSymRefTab()->findOrCreateArrayTranslateAndTestSymbol());
    findBytesNode->setAndIncChild(0, baseNode);
    findBytesNode->setAndIncChild(1, createI2LIfNecessary(comp, trans->isGenerateI2L(), indexNode));
    findBytesNode->setAndIncChild(2, tableNode);
    findBytesNode->setAndIncChild(3, createI2LIfNecessary(comp, trans->isGenerateI2L(), alenNode));
-   ////findBytesNode->setElementChar(isTRT2Byte);
+   /*findBytesNode->setElementChar(isTRT2Byte);*/
    findBytesNode->setCharArrayTRT(isTRT2Char);
 
    TR_CISCNode *icmpgeCISCnode = NULL;
@@ -1760,8 +1760,8 @@ CISCTransform2FindBytes(TR_CISCTransformer *trans)
       //   PassThrough
       //      baseNode
       //
-      ///TR_CISCNode *nullNode = listT->getListHead()->getData();
-      ///TR::Node *nullRepNode = nullNode->getHeadOfTrNodeInfo()->_node;
+      /*TR_CISCNode *nullNode = listT->getListHead()->getData();*/
+      /*TR::Node *nullRepNode = nullNode->getHeadOfTrNodeInfo()->_node;*/
       TR::Node *dupNullRepNode = baseNode->duplicateTree();
       dupNullRepNode = TR::Node::create(TR::PassThrough, 1, dupNullRepNode);
       dupNullRepNode = TR::Node::createWithSymRef(TR::NULLCHK, 1, 1, dupNullRepNode, comp->getSymRefTab()->findOrCreateNullCheckSymbolRef(comp->getMethodSymbol()));
@@ -2008,9 +2008,7 @@ makeTRT2ByteGraph(TR::Compilation *c, int32_t ctrl)
    }
 
 
-//////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////
+
 
 //*****************************************************************************************
 // IL code generation for exploiting the TRT (or SRST) instruction
@@ -2137,7 +2135,7 @@ CISCTransform2NestedArrayFindBytes(TR_CISCTransformer *trans)
       {
       tableNode = TR::Node::create( baseRepNode, TR::aconst, (uintptr_t)tableOuterResult);
       }
-   ////findBytesNode->setSymbolReference(comp->getSymRefTab()->findOrCreateFindBytesSymbol());
+   /*findBytesNode->setSymbolReference(comp->getSymRefTab()->findOrCreateFindBytesSymbol());*/
    findBytesNode->setSymbolReference(comp->getSymRefTab()->findOrCreateArrayTranslateAndTestSymbol());
    findBytesNode->setAndIncChild(0, baseNode);
    findBytesNode->setAndIncChild(1, createI2LIfNecessary(comp, trans->isGenerateI2L(), indexNode));
@@ -2224,8 +2222,8 @@ CISCTransform2NestedArrayFindBytes(TR_CISCTransformer *trans)
       //   PassThrough
       //      baseNode
       //
-      ///TR_CISCNode *nullNode = listT->getListHead()->getData();
-      ///TR::Node *nullRepNode = nullNode->getHeadOfTrNodeInfo()->_node;
+      /*TR_CISCNode *nullNode = listT->getListHead()->getData();*/
+      /*TR::Node *nullRepNode = nullNode->getHeadOfTrNodeInfo()->_node;*/
       TR::Node *dupNullRepNode = baseNode->duplicateTree();
       dupNullRepNode = TR::Node::create(TR::PassThrough, 1, dupNullRepNode);
       dupNullRepNode = TR::Node::createWithSymRef(TR::NULLCHK, 1, 1, dupNullRepNode, comp->getSymRefTab()->findOrCreateNullCheckSymbolRef(comp->getMethodSymbol()));
@@ -2330,9 +2328,9 @@ makeTRT4NestedArrayGraph(TR::Compilation *c, int32_t ctrl)
    }
 
 
-//////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////
+
+
+
 
 bool
 CISCTransform2NestedArrayIfFindBytes(TR_CISCTransformer *trans)
@@ -2410,9 +2408,9 @@ makeTRT4NestedArrayIfGraph(TR::Compilation *c, int32_t ctrl)
    }
 
 
-//////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////
+
+
+
 
 //*****************************************************************************************
 // IL code generation for exploiting the TROT or TROO instruction
@@ -2858,12 +2856,12 @@ CISCTransform2CopyingTROx(TR_CISCTransformer *trans)
          }
       if (jstore)
          {
-         ///traceMsg(comp, "found jstore %p to be %d\n", jstore, jstore->getID());
+         /*traceMsg(comp, "found jstore %p to be %d\n", jstore, jstore->getID());*/
          TR_CISCNode *matchJ = trans->getP2TRepInLoop(jstore);
          if (matchJ)
             {
-            ///traceMsg(comp, "found matching jstore %p to be %d\n", matchJ, matchJ->getID());
-            ///traceMsg(comp, "actual store node is %p\n", matchJ->getHeadOfTrNodeInfo()->_node);
+            /*traceMsg(comp, "found matching jstore %p to be %d\n", matchJ, matchJ->getID());*/
+            /*traceMsg(comp, "actual store node is %p\n", matchJ->getHeadOfTrNodeInfo()->_node);*/
             dstIVStore = matchJ->getHeadOfTrNodeInfo()->_node;
             }
          }
@@ -3391,9 +3389,9 @@ makeCopyingTROTInduction1Graph(TR::Compilation *c, int32_t ctrl, int32_t pattern
    }
 
 
-//////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////
+
+
+
 
 //*****************************************************************************************
 // IL code generation for exploiting the TROT instruction
@@ -3691,9 +3689,9 @@ makeTROTArrayGraph(TR::Compilation *c, int32_t ctrl)
    }
 
 
-//////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////
+
+
+
 //*****************************************************************************************
 // IL code generation for exploiting the TRTx instruction
 // This is the case where the compiler will create the function table by analyzing booltable.
@@ -4801,9 +4799,9 @@ makeCopyingTRTTSpecialGraph(TR::Compilation *c, int32_t ctrl)
    return tgt;
    }
 
-//////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////
+
+
+
 
 //*****************************************************************************************
 // IL code generation for exploiting the TRTO instruction
@@ -4879,7 +4877,7 @@ CISCTransform2TRTOArray(TR_CISCTransformer *trans)
    if (0 && boolTableExit)
       {
       TR::Node *boolTableNode = boolTableExit->getHeadOfTrNodeInfo()->_node;
-      ///traceMsg(comp, "boolTableNode : %p of loop %d\n", boolTableNode, block->getNumber());
+      /*traceMsg(comp, "boolTableNode : %p of loop %d\n", boolTableNode, block->getNumber());*/
       ivNeedsUpdate = ivIncrementedBeforeBoolTableExit(comp, boolTableNode, block, indexVarSymRef);
       if (dstIndexVarSymRef)
          dstIvNeedsUpdate = ivIncrementedBeforeBoolTableExit(comp, boolTableNode, block, dstIndexVarSymRef);
@@ -5089,9 +5087,9 @@ CISCTransform2TRTOArray(TR_CISCTransformer *trans)
       TR::TreeTop *ifeqTTop = TR::TreeTop::create(comp, ifeqNode);
       // Fix up the IV value by adding 1 if translateNode == lengthNode (where no test char was found).  See comment above.
       TR::Node *incIndex = createStoreOP2(comp, indexVarSymRef, TR::iadd, indexVarSymRef, lengthTRxx->getChild(1), indexRepNode);
-      ///TR::Node *icmpeqNode = TR::Node::create(TR::icmpeq, 2, TR::Node::createLoad(indexNode, statusCheckTemp), TR::Node::iconst(indexNode, 0));
-      ///TR::Node *incNode = TR::Node::create(TR::iadd, 2, TR::Node::createLoad(indexNode, indexVarSymRef), icmpeqNode);
-      ///TR::Node *incIndex = TR::Node::createStore(indexVarSymRef, incNode);
+      /*TR::Node *icmpeqNode = TR::Node::create(TR::icmpeq, 2, TR::Node::createLoad(indexNode, statusCheckTemp), TR::Node::iconst(indexNode, 0));*/
+      /*TR::Node *incNode = TR::Node::create(TR::iadd, 2, TR::Node::createLoad(indexNode, indexVarSymRef), icmpeqNode);*/
+      /*TR::Node *incIndex = TR::Node::createStore(indexVarSymRef, incNode);*/
       TR::TreeTop *incIndexTTop = TR::TreeTop::create(comp, incIndex);
 
       TR::TreeTop *last = block->getLastRealTreeTop();
@@ -5598,9 +5596,9 @@ namespace
       }
    }
 
-//////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////
+
+
+
 //*****************************************************************************************
 // IL code generation for copying memory
 // Input: ImportantNode(0) - array load
@@ -6115,9 +6113,9 @@ makeMemCpyDecGraph(TR::Compilation *c, int32_t ctrl)
    }
 
 
-//////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////
+
+
+
 //*****************************************************************************************
 // IL code generation for copying memory (ByteToChar or CharToByte version)
 // Input: ImportantNodes(0) - array load
@@ -6250,9 +6248,9 @@ CISCTransform2ArrayCopyB2CorC2B(TR_CISCTransformer *trans)
       }
    else
       {
-      ///TR::Node * div2 = TR::Node::create(TR::idiv, 2, lengthNode, c2);
+      /*TR::Node * div2 = TR::Node::create(TR::idiv, 2, lengthNode, c2);*/
       lengthNode = TR::Node::create(TR::idiv, 2, lengthNode, c2);
-      ///lengthNode = TR::Node::create(TR::imul, 2, div2, c2); // to make the length even
+      /*lengthNode = TR::Node::create(TR::imul, 2, div2, c2); // to make the length even*/
       // lengthNode has the byte size, and div2 has the char-based size (that is, lengthNode = div2 * 2)
       updateTree1 = createStoreOP2(comp, indexVarSymRef, TR::iadd, indexVarSymRef, lengthNode, trNode);
       updateTree2 = createStoreOP2(comp, dstIndexVarSymRef, TR::iadd, dstIndexVarSymRef,
@@ -6376,9 +6374,9 @@ makeMemCpyByteToCharGraph(TR::Compilation *c, int32_t ctrl)
    }
 
 
-//////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////
+
+
+
 
 
 /****************************************************************************************
@@ -6474,9 +6472,9 @@ makeMemCpyCharToByteGraph(TR::Compilation *c, int32_t ctrl)
    }
 
 
-//////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////
+
+
+
 //*****************************************************************************************
 // IL code generation for copying memory (ByteToChar or CharToByte version)
 // Input: ImportantNode(0) - array load
@@ -6687,9 +6685,9 @@ makeMemCpyByteToCharBndchkGraph(TR::Compilation *c, int32_t ctrl)
 
 
 
-//////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////
+
+
+
 //*****************************************************************************************
 // IL code generation for copying memory (ByteToChar or CharToByte version)
 // Input: ImportantNode(0) - array load in the little endian path
@@ -7017,9 +7015,9 @@ makeMEMCPYChar2ByteMixedGraph(TR::Compilation *c, int32_t ctrl)
 
 
 
-//////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////
+
+
+
 //*****************************************************************************************
 // IL code generation for copying memory for CharToByte with two if-statements version
 // Input: ImportantNodes(0) - array load
@@ -7303,9 +7301,9 @@ makeMEMCPYChar2ByteGraph2(TR::Compilation *c, int32_t ctrl)
 
 
 
-//////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////
+
+
+
 //*****************************************************************************************
 // IL code generation for copying memory (ByteToInt or IntToByte version)
 // Input: ImportantNodes(0) - array load
@@ -7571,9 +7569,9 @@ makeMEMCPYInt2ByteGraph(TR::Compilation *c, int32_t ctrl)
    }
 
 
-//////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////
+
+
+
 //*****************************************************************************************
 // IL code generation for filling memory
 // Input: ImportantNode(0) - astore of aiadd or aladd for address induction variable
@@ -7778,9 +7776,9 @@ CISCTransform2PtrArraySet(TR_CISCTransformer *trans)
    return true;
    }
 
-//////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////
+
+
+
 //*****************************************************************************************
 // IL code generation for filling memory
 // Input: ImportantNode(0) - array store
@@ -8443,9 +8441,9 @@ makeMemSetGraph(TR::Compilation *c, int32_t ctrl)
    return tgt;
    }
 
-//////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////
+
+
+
 
 //*****************************************************************************************
 // IL code generation for filling memory
@@ -8758,8 +8756,8 @@ makeMixedMemSetGraph(TR::Compilation *c, int32_t ctrl)
 
 
 
-//////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////
+
+
 //*****************************************************************************************
 // IL code generation for 2 if-statement version of comparing memory (using CLCL)
 // Input: ImportantNode(0) - array load for src1
@@ -9970,9 +9968,9 @@ makeMemCmpSpecialGraph(TR::Compilation *c, int32_t ctrl)
    }
 
 
-//////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////
+
+
+
 // Utilities for BitOpMem
 
 static void
@@ -10258,7 +10256,7 @@ CISCTransform2BitOpMem(TR_CISCTransformer *trans)
                                            lengthNode->duplicateTree());
       bitOpMem1->setSymbolReference(comp->getSymRefTab()->findOrCreatebitOpMemSymbol());
       setSubopBitOpMem(comp, bitOpMem1, opCISCNode);
-      ///fastpath1 = trans->insertBeforeNodes(fastpath1);
+      /*fastpath1 = trans->insertBeforeNodes(fastpath1);*/
       fastpath1->append(TR::TreeTop::create(comp, TR::Node::create(TR::treetop, 1, bitOpMem1)));
       fastpath1->append(TR::TreeTop::create(comp, TR::Node::create(trNode, TR::Goto, 0, lastpath->getEntry())));
 
@@ -10275,7 +10273,7 @@ CISCTransform2BitOpMem(TR_CISCTransformer *trans)
                                            lengthNode->duplicateTree());
       bitOpMem2->setSymbolReference(comp->getSymRefTab()->findOrCreatebitOpMemSymbol());
       setSubopBitOpMem(comp, bitOpMem2, opCISCNode);
-      ///fastpath2 = trans->insertBeforeNodes(fastpath2);
+      /*fastpath2 = trans->insertBeforeNodes(fastpath2);*/
       fastpath2->append(TR::TreeTop::create(comp, TR::Node::create(TR::treetop, 1, bitOpMem2)));
       fastpath2->append(TR::TreeTop::create(comp, TR::Node::create(trNode, TR::Goto, 0, lastpath->getEntry())));
 
@@ -10300,7 +10298,7 @@ CISCTransform2BitOpMem(TR_CISCTransformer *trans)
                                  lengthNode->duplicateTree());
       bitOpMem->setSymbolReference(comp->getSymRefTab()->findOrCreatebitOpMemSymbol());
       setSubopBitOpMem(comp, bitOpMem, opCISCNode);
-      ///fastpath3 = trans->insertBeforeNodes(fastpath3);
+      /*fastpath3 = trans->insertBeforeNodes(fastpath3);*/
       fastpath3->append(TR::TreeTop::create(comp, TR::Node::create(TR::treetop, 1, bitOpMem)));
 
       // Insert new blocks
@@ -10437,9 +10435,9 @@ makeBitOpMemGraph(TR::Compilation *c, int32_t ctrl)
 
 
 
-//////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////
+
+
+
 // Counts number of digits (Not count the character '-' (minus))
 //
 //       e.g.   do { count ++; } while((l /= 10) != 0);
@@ -10849,9 +10847,9 @@ makeCountDecimalDigitIntGraph(TR::Compilation *c, int32_t ctrl, bool isDiv2Mul)
 
 
 
-//////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////
+
+
+
 // Convert long to string
 /* Example
 int v2, v3;

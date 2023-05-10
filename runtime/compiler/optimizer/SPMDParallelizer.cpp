@@ -2294,9 +2294,9 @@ void TR_SPMDKernelParallelizer::insertGPUEstimate(TR::Node *firstNode, TR::Block
    int gpuPtxId = comp()->getGPUPtxCount()-1;
    TR::CFG *cfg = comp()->getFlowGraph();
 
-   /////////////////////////////////////////////////////////////////////////////////////////
+
    // generate code segment for calculating dataCost and lambdaCost
-   /////////////////////////////////////////////////////////////////////////////////////////
+
    CS2::ArrayOf<gpuMapElement, TR::Allocator> &gpuSymbolMap = comp()->cg()->_gpuSymbolMap;
    CS2::ArrayOf<gpuMapElement, TR::Allocator>::Cursor nc(gpuSymbolMap);
 
@@ -2341,9 +2341,9 @@ void TR_SPMDKernelParallelizer::insertGPUEstimate(TR::Node *firstNode, TR::Block
       dataCostBlock->append(TR::TreeTop::create(comp(), TR::Node::createStore(dataCost, addNode)));
       }
 
-   ///////////////////////////////////////////////////////////////////////////////////////////////
+
    // Generate call that will take in dataCost and lambdaCost to determine if GPU or CPU should be used
-   ///////////////////////////////////////////////////////////////////////////////////////////////
+
    TR::ILOpCodes addressLoadOpCode = TR::lload;
 
    TR::Node *estimateGPUNode = TR::Node::create(firstNode, TR::icall, 7);
@@ -2832,11 +2832,11 @@ TR::Node* TR_SPMDKernelParallelizer::insertFlushGPU(TR::Block* flushGPUBlock, TR
    return flushGPUNode;
    }
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 // Inserts fake code to keep GPU SymRefs alive for the duration of the GPU execution, if this code is not inserted
 // various optimizations will try to remove these variables since they look dead to the JIT - but they are still being
 // used by the various GPU helpers. The JIT doesn't account for variables that are live only within the GPU helpers
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 void TR_SPMDKernelParallelizer::insertGPUTemporariesLivenessCode(List<TR::TreeTop> *exitPointsList, TR::SymbolReference *liveSymRef, bool firstKernel)
    {
    CS2::ArrayOf<gpuMapElement, TR::Allocator> &gpuSymbolMap = comp()->cg()->_gpuSymbolMap;
@@ -3333,7 +3333,7 @@ bool TR_SPMDKernelParallelizer::processGPULoop(TR_RegionStructure *loop, TR_SPMD
    comp()->incGPUPtxCount();
 #endif
 
-   /////////////////////////////////////////////////////////////////////////////////
+
    // GPU_TODO: handle 32-bit
    TR::ILOpCodes addressCallOpCode = TR::lcall;
    TR::ILOpCodes addressCmpeqOpCode = TR::iflcmpeq;
@@ -3363,9 +3363,9 @@ bool TR_SPMDKernelParallelizer::processGPULoop(TR_RegionStructure *loop, TR_SPMD
          }
       }
 
-   //////////////////////////////////////////////////////////////////////////////////////
+
    // Construct block structure for GPU session
-   //////////////////////////////////////////////////////////////////////////////////////
+
 
    // Important to insert some tree tops into loopInvariantBlock before splitting
    TR::Node *lastNode = loopInvariantBlock->getLastRealTreeTop()->getNode();
@@ -3405,9 +3405,9 @@ bool TR_SPMDKernelParallelizer::processGPULoop(TR_RegionStructure *loop, TR_SPMD
    TR::Block *errorHandleBlock    = insertBlock(comp(), cfg, kernelExitBlock,  gotoBlock);
 
 
-   //////////////////////////////////////////////////////////////////////////////////////
+
    // Create symbols for GPU session
-   //////////////////////////////////////////////////////////////////////////////////////
+
 
    // contains the return CudaInfo from invalidateGPU
    TR::SymbolReference *scopeSymRef;
@@ -3440,9 +3440,9 @@ bool TR_SPMDKernelParallelizer::processGPULoop(TR_RegionStructure *loop, TR_SPMD
       gpuSymbolMap[nc]._devSymRef = comp()->getSymRefTab()->createTemporary(comp()->getMethodSymbol(), addressType);
       }
 
-   //////////////////////////////////////////////////////////////////////////////////////
+
    // Check if the enveloping loop was transformed, if not transform it
-   //////////////////////////////////////////////////////////////////////////////////////
+
 
    TR_RegionStructure *parentLoop;
    TR::Block *hoistRegionInvariantBlock;
@@ -3503,9 +3503,9 @@ bool TR_SPMDKernelParallelizer::processGPULoop(TR_RegionStructure *loop, TR_SPMD
        break;
       }
 
-   //////////////////////////////////////////////////////////////////////////////////////
+
    // Inserting code for handling the GPU session
-   //////////////////////////////////////////////////////////////////////////////////////
+
 
    insertGPUParmsAllocate(firstNode,allocateParmsBlock,allocSymRef, scopeSymRef);
    generateGPUParmsBlock(allocSymRef,populateParmsBlock,firstNode);
@@ -3524,7 +3524,7 @@ bool TR_SPMDKernelParallelizer::processGPULoop(TR_RegionStructure *loop, TR_SPMD
       }
 
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 
    TR::Node *ibmTryGPUNode = ibmTryGPUBlock->getLastRealTreeTop()->getNode();
 

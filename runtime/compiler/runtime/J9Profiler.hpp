@@ -64,9 +64,9 @@ struct TR_ByteCodeInfo;
 struct TR_InlinedCallSite;
 template <typename ListKind> class List;
 
-//////////////////////////
+
 // PersistentProfileInfos
-//////////////////////////
+
 
 /**
  * Persistent storage for profiling information.
@@ -253,9 +253,9 @@ class TR_PersistentProfileInfo
    };
 
 
-///////////////////////////
+
 // TR_RecompilationModifier
-///////////////////////////
+
 
 class TR_RecompilationModifier : public TR::Optimization
    {
@@ -274,9 +274,9 @@ class TR_RecompilationModifier : public TR::Optimization
    };
 
 
-///////////////////////////
+
 // Recompilation Profilers
-///////////////////////////
+
 
 class TR_RecompilationProfiler : public TR_Link<TR_RecompilationProfiler>
    {
@@ -530,9 +530,9 @@ class TR_ValueProfileInfoManager
 
    enum
       {
-      allProfileInfo                   = 0x00000001, ///< Search all profile info types
-      justJITProfileInfo               = 0x00000002, ///< Only return JIT Profile info
-      justInterpreterProfileInfo       = 0x00000003  ///< Only return IProfiler info
+      allProfileInfo                   = 0x00000001, //< Search all profile info types
+      justJITProfileInfo               = 0x00000002, //< Only return JIT Profile info
+      justInterpreterProfileInfo       = 0x00000003  //< Only return IProfiler info
       };
 
    /**

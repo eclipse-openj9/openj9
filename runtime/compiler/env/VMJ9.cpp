@@ -6251,9 +6251,9 @@ TR_J9VMBase::getROMMethodFromRAMMethod(J9Method *ramMethod)
    return fsdIsEnabled() ? getOriginalROMMethod(ramMethod) : J9_ROM_METHOD_FROM_RAM_METHOD(ramMethod);
    }
 
-/////////////////////////////////////////////////////
+
 // TR_J9VM
-/////////////////////////////////////////////////////
+
 
 TR_J9VM::TR_J9VM(J9JITConfig * jitConfig, TR::CompilationInfo * compInfo, J9VMThread * vmThread)
    : TR_J9VMBase(jitConfig, compInfo, vmThread)
@@ -7979,7 +7979,7 @@ TR_J9VM::inlineNativeCall(TR::Compilation * comp, TR::TreeTop * callNodeTreeTop,
       case TR::java_lang_J9VMInternals_getSuperclass:
          {
          TR_OpaqueClassBlock *jitHelpersClass = comp->getJITHelpersClassPointer();
-         ///traceMsg(comp, "jithelpersclass = %p\n", jitHelpersClass);
+         /*traceMsg(comp, "jithelpersclass = %p\n", jitHelpersClass);*/
          if (jitHelpersClass && isClassInitialized(jitHelpersClass))
             {
             // fish for the getSuperclass method in JITHelpers
@@ -7999,7 +7999,7 @@ TR_J9VM::inlineNativeCall(TR::Compilation * comp, TR::TreeTop * callNodeTreeTop,
                   {
                   getSuperclassSymRef = comp->getSymRefTab()->findOrCreateMethodSymbol(callNode->getSymbolReference()->getOwningMethodIndex(), -1, m, TR::MethodSymbol::Virtual);
                   getSuperclassSymRef->setOffset(getVTableSlot(m->getPersistentIdentifier(), jitHelpersClass));
-                  ///break;
+                  //break;
                   }
                else if (!strncmp(sig, getHelpersSig, getHelpersSigLength))
                   {
@@ -8029,7 +8029,7 @@ TR_J9VM::inlineNativeCall(TR::Compilation * comp, TR::TreeTop * callNodeTreeTop,
                //callNode->setAndIncChild(0, vftLoad);
                callNode->setAndIncChild(0, helpersCallNode);
                callNode->setAndIncChild(1, firstChild);
-               ///traceMsg(comp, "replaced call node for getSuperclass at node = %p\n", callNode);
+               /*traceMsg(comp, "replaced call node for getSuperclass at node = %p\n", callNode);*/
                callNode->setSymbolReference(getSuperclassSymRef);
                }
             }
@@ -8467,9 +8467,9 @@ TR_J9VM::dereferenceStaticFinalAddress(void *staticAddress, TR::DataType address
    return data;
    }
 
-//////////////////////////////////////////////////////////
+
 // TR_J9SharedCacheVM
-//////////////////////////////////////////////////////////
+
 
 #if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT)
 
@@ -9201,7 +9201,7 @@ TR_J9SharedCacheVM::getObjectNewInstanceImplMethod(TR_Memory *)
    return NULL;
    }
 
-////////////////// Under evaluation
+// Under evaluation
 
 
 TR::CodeCache *
@@ -9362,9 +9362,9 @@ TR_J9SharedCacheVM::ensureOSRBufferSize(TR::Compilation *comp, uintptr_t osrFram
    return valid;
    }
 
-//////////////////////////////////////////////////////////
+
 // TR_J9SharedCacheVM
-//////////////////////////////////////////////////////////
+
 
 #if defined(J9VM_OPT_SHARED_CLASSES)
 

@@ -2009,7 +2009,7 @@ void
 TR_J9ByteCodeIlGenerator::inlineJitCheckIfFinalizeObject(TR::Block *firstBlock)
    {
 
-   ///comp()->dumpMethodTrees("before inlineJitCheckIfFinalizeObject", _methodSymbol);
+   /*comp()->dumpMethodTrees("before inlineJitCheckIfFinalizeObject", _methodSymbol);*/
    TR::SymbolReference *finalizeSymRef = comp()->getSymRefTab()->findOrCreateRuntimeHelper(TR_jitCheckIfFinalizeObject, true, true, true);
    int32_t origNumBlocks = cfg()->getNextNodeNumber();
 
@@ -2077,7 +2077,7 @@ TR_J9ByteCodeIlGenerator::inlineJitCheckIfFinalizeObject(TR::Block *firstBlock)
             TR::Block *callBlock = cmp->getBranchDestination()->getNode()->getBlock();
             callBlock->setIsCold(false);
             callBlock->setFrequency(MAX_COLD_BLOCK_COUNT+1);
-            ///comp()->dumpMethodTrees("after inlineJitCheckIfFinalizeObject", _methodSymbol);
+            /*comp()->dumpMethodTrees("after inlineJitCheckIfFinalizeObject", _methodSymbol);*/
             break;
             }
          }

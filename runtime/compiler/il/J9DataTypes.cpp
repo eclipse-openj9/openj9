@@ -128,16 +128,16 @@ const TR_BCDSignCode rawToBCDSignCodeMap[num_raw_bcd_sign_codes] = {
                                                                    bcd_unsigned      // raw_bcd_sign_0xf
                                                                    };
 
-/// `packedDecimalPrecisionToByteLengthMap` is calculated from the formula:
-///
-///      int32_t n = precision + 1;
-///      if (n is odd)
-///         byteLength = (n/2) + 1;
-///      else
-///         byteLength = (n/2);
-///
-/// EXCEPT for precision=0 that returns a byteLength of zero (a sign code alone
-/// does not a number make)
+/* `packedDecimalPrecisionToByteLengthMap` is calculated from the formula:
+
+      int32_t n = precision + 1;
+      if (n is odd)
+         byteLength = (n/2) + 1;
+      else
+         byteLength = (n/2);
+
+ EXCEPT for precision=0 that returns a byteLength of zero (a sign code alone
+ does not a number make)*/
 const int32_t packedDecimalPrecisionToByteLengthMap[TR_MAX_DECIMAL_PRECISION+1]
 =
 // prec 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31
