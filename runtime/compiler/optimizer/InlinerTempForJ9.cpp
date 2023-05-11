@@ -3373,7 +3373,7 @@ void TR_MultipleCallTargetInliner::weighCallSite( TR_CallStack * callStack , TR_
 
          size = ecs->getSize();
 
-         if (!inlineit && !callMustBeInlinedRegardlessOfSize(callsite))
+         if (!inlineit)
             {
             if (isWarm(comp()))
                {
@@ -3413,13 +3413,6 @@ void TR_MultipleCallTargetInliner::weighCallSite( TR_CallStack * callStack , TR_
 
             heuristicTrace(tracer(),"Setting size to %d because current block has exception successors and want to aggressively inline throws 2",size);
             }
-         if (callMustBeInlinedRegardlessOfSize(calltarget->_myCallSite))
-            {
-            heuristicTrace(tracer(), "calltarget->_fullSize: %d size: %d", calltarget->_fullSize, size);
-            size = 0;
-            heuristicTrace(tracer(), "Setting size to %d because call is dominate hot based on PDF", size);
-            }
-
 
          wouldBenefitFromInlining = false;
          possiblyVeryHotLargeCallee = false;
