@@ -254,7 +254,7 @@ _IF([JAVA_SPEC_VERSION < 17],
 _IF([JAVA_SPEC_VERSION < 17],
 	[_X(JVM_DTraceIsProbeEnabled,JNICALL,true,jobject,jint arg0, jint arg1)])
 _IF([JAVA_SPEC_VERSION < 17],
-	[_X(JVM_DTraceIsSupported,JNICALL,true,jobject,jint arg0)])
+	[_X(JVM_DTraceIsSupported,JNICALL,true,jboolean,JNIEnv *env)])
 _X(JVM_DefineClass,JNICALL,true,jobject,jint arg0, jint arg1, jint arg2, jint arg3, jint arg4, jint arg5)
 _X(JVM_DefineClassWithSourceCond,JNICALL,true,jobject,jint arg0, jint arg1, jint arg2, jint arg3, jint arg4, jint arg5, jint arg6, jint arg7)
 _X(JVM_EnqueueOperation,JNICALL,true,jobject,jint arg0, jint arg1, jint arg2, jint arg3, jint arg4)
