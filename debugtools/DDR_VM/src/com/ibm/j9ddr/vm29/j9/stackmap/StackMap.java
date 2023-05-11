@@ -553,52 +553,12 @@ public class StackMap
 						|| (bc == JBinvokespecial) 
 						|| (bc == JBinvokespecialsplit)
 						|| (bc == JBinvokeinterface)
-					) {
-						POP();
-						index = PARAM_16(bcIndex, 1).intValue();
-						if (bc == JBinvokestaticsplit) {
-							index = romClass.staticSplitMethodRefIndexes().at(index).intValue();
-						} else if (bc == JBinvokespecialsplit) {
-							index = romClass.specialSplitMethodRefIndexes().at(index).intValue();
-						}
-						utf8Signature = J9ROMMethodRefPointer.cast(pool.add(index)).nameAndSignature().signature();
-						char[] args = J9UTF8Helper.stringValue(utf8Signature).toCharArray();
-						int i = 0;
-						
-						for (i = 1; args[i] != ')'; i++) {
-							POP();
-							if (args[i] == '[') {
-								while (args[++i] == '[');
-								if (J9ClassHelper.isRefOrValSignature(args[i])) {
-									continue;
-								}
-							}
-							if (J9ClassHelper.isRefOrValSignature(args[i])) {
-								while (args[++i] != ';');
-								continue;
-							}
-							if ((args[i] == 'D') || (args[i] == 'J')) {
-								POP();
-							}
-						}
-
-						signature = args[i + 1];
-						if (signature != 'V') {
-							if (J9ClassHelper.isRefOrValSignature(signature) || (signature == '[')) {
-								PUSH(OBJ);
-							} else {
-								PUSH(INT);
-								if ((signature == 'J') || (signature == 'D')) {
-									PUSH(INT);
-								}
-							}
-						}
-						if (bc == JBinvokeinterface2) {
-							bcIndex = bcIndex.sub(2);
-						}
-					} else if ((bc == JBinvokestatic)
+						|| (bc == JBinvokestatic)
 						|| (bc == JBinvokestaticsplit)
 					) {
+						if ((bc != JBinvokestatic) && (bc != JBinvokestaticsplit)) {
+							POP();
+						}
 						index = PARAM_16(bcIndex, 1).intValue();
 						if (bc == JBinvokestaticsplit) {
 							index = romClass.staticSplitMethodRefIndexes().at(index).intValue();
@@ -611,18 +571,17 @@ public class StackMap
 						
 						for (i = 1; args[i] != ')'; i++) {
 							POP();
-							if (args[i] == '[') {
-								while (args[++i] == '[');
-								if (J9ClassHelper.isRefOrValSignature(args[i])) {
-									continue;
-								}
-							}
-							if (J9ClassHelper.isRefOrValSignature(args[i])) {
-								while (args[++i] != ';');
-								continue;
-							}
 							if ((args[i] == 'D') || (args[i] == 'J')) {
 								POP();
+								continue;
+							}
+							while (args[i] == '[') {
+								i += 1;
+							}
+							if (J9ClassHelper.isRefOrValSignature(args[i])) {
+								do {
+									i += 1;
+								} while (args[i] != ';');
 							}
 						}
 
