@@ -5014,7 +5014,8 @@ typedef struct J9InternalVMFunctions {
 #endif /* JAVA_SPEC_VERSION >= 16 */
 #if JAVA_SPEC_VERSION >= 19
 	void (*copyFieldsFromContinuation)(struct J9VMThread *currentThread, struct J9VMThread *vmThread, struct J9VMEntryLocalStorage *els, struct J9VMContinuation *continuation);
-	void (*freeContinuation)(struct J9VMThread *currentThread, j9object_t continuationObject);
+	void (*freeContinuation)(struct J9VMThread *currentThread, j9object_t continuationObject, BOOLEAN skipLocalCache);
+	void (*recycleContinuation)(struct J9JavaVM *vm, struct J9VMThread *vmThread, struct J9VMContinuation *continuation, BOOLEAN skipLocalCache);
 	void (*freeTLS)(struct J9VMThread *currentThread, j9object_t threadObj);
 	UDATA (*walkContinuationStackFrames)(struct J9VMThread *currentThread, struct J9VMContinuation *continuation, J9StackWalkState *walkState);
 	UDATA (*walkAllStackFrames)(struct J9VMThread *currentThread, J9StackWalkState *walkState);
@@ -5367,6 +5368,7 @@ typedef struct J9VMThread {
 	UDATA callOutCount;
 	j9object_t carrierThreadObject;
 	j9object_t scopedValueCache;
+	J9VMContinuation *cachedContinuation;
 #endif /* JAVA_SPEC_VERSION >= 19 */
 } J9VMThread;
 
@@ -5912,6 +5914,8 @@ typedef struct J9JavaVM {
 	struct J9Pool *tlsPool;
 	omrthread_monitor_t tlsPoolMutex;
 	jobject vthreadGroup;
+	J9VMContinuation **globalContinuationCacheArray;
+	U_32 continuationArraySize;
 #endif /* JAVA_SPEC_VERSION >= 19 */
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 	omrthread_monitor_t delayedLockingOperationsMutex;
