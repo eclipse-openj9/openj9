@@ -2738,11 +2738,10 @@ JVM_DTraceIsProbeEnabled(jint arg0, jint arg1)
 	return NULL;
 }
 
-jobject JNICALL
-JVM_DTraceIsSupported(jint arg0)
+jboolean JNICALL
+JVM_DTraceIsSupported(JNIEnv *env)
 {
-	assert(!"JVM_DTraceIsSupported() stubbed!");
-	return NULL;
+	return JNI_FALSE;
 }
 
 #endif /* JAVA_SPEC_VERSION < 17 */
