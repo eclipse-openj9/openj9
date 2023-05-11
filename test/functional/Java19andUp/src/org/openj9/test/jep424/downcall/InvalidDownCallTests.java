@@ -27,10 +27,18 @@ import org.testng.AssertJUnit;
 import static org.testng.Assert.fail;
 
 import java.lang.invoke.MethodHandle;
+import java.lang.invoke.VarHandle;
+import java.lang.invoke.WrongMethodTypeException;
+
 import java.lang.foreign.Addressable;
 import java.lang.foreign.Linker;
 import java.lang.foreign.FunctionDescriptor;
+import java.lang.foreign.GroupLayout;
+import java.lang.foreign.MemoryAddress;
 import java.lang.foreign.MemoryLayout;
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.MemorySession;
+import java.lang.foreign.SegmentAllocator;
 import java.lang.foreign.SymbolLookup;
 import static java.lang.foreign.ValueLayout.*;
 
@@ -72,5 +80,109 @@ public class InvalidDownCallTests {
 		FunctionDescriptor fd = FunctionDescriptor.of(MemoryLayout.paddingLayout(64), JAVA_LONG);
 		MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
 		fail("Failed to throw out IllegalArgumentException in the case of the invalid MemoryLayout");
+	}
+
+	@Test(expectedExceptions = NullPointerException.class)
+	public void test_nullValueForPtrArgument() throws Throwable {
+		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_INT.withName("elem1"), JAVA_INT.withName("elem2"));
+		VarHandle intHandle1 = structLayout.varHandle(PathElement.groupElement("elem1"));
+		VarHandle intHandle2 = structLayout.varHandle(PathElement.groupElement("elem2"));
+
+		FunctionDescriptor fd = FunctionDescriptor.of(JAVA_INT, JAVA_INT, ADDRESS);
+		Addressable functionSymbol = nativeLibLookup.lookup("addIntAndIntsFromStructPointer").get();
+		MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
+
+		int result = (int)mh.invoke(19202122, null);
+		fail("Failed to throw out NullPointerException in the case of the null value");
+	}
+
+	@Test(expectedExceptions = WrongMethodTypeException.class)
+	public void test_nullValueForStructArgument() throws Throwable {
+		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_INT.withName("elem1"), JAVA_INT.withName("elem2"));
+		VarHandle intHandle1 = structLayout.varHandle(PathElement.groupElement("elem1"));
+		VarHandle intHandle2 = structLayout.varHandle(PathElement.groupElement("elem2"));
+
+		FunctionDescriptor fd = FunctionDescriptor.of(structLayout, structLayout, structLayout);
+		Addressable functionSymbol = nativeLibLookup.lookup("add2IntStructs_returnStruct").get();
+		MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
+
+		try (MemorySession session = MemorySession.openConfined()) {
+			SegmentAllocator allocator = SegmentAllocator.newNativeArena(session);
+			MemorySegment structSegmt1 = allocator.allocate(structLayout);
+			intHandle1.set(structSegmt1, 11223344);
+			intHandle2.set(structSegmt1, 55667788);
+
+			MemorySegment resultSegmt = (MemorySegment)mh.invokeExact(allocator, structSegmt1, null);
+			fail("Failed to throw out WrongMethodTypeException in the case of the null value");
+		}
+	}
+
+	@Test(expectedExceptions = NullPointerException.class)
+	public void test_nullSegmentForPtrArgument() throws Throwable {
+		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_INT.withName("elem1"), JAVA_INT.withName("elem2"));
+		VarHandle intHandle1 = structLayout.varHandle(PathElement.groupElement("elem1"));
+		VarHandle intHandle2 = structLayout.varHandle(PathElement.groupElement("elem2"));
+
+		FunctionDescriptor fd = FunctionDescriptor.of(JAVA_INT, JAVA_INT, ADDRESS);
+		Addressable functionSymbol = nativeLibLookup.lookup("addIntAndIntsFromStructPointer").get();
+		MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
+
+		int result = (int)mh.invoke(19202122, MemoryAddress.NULL);
+		fail("Failed to throw out NullPointerException in the case of the null address");
+	}
+
+	@Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "Heap segment not allowed.*")
+	public void test_heapSegmentForPtrArgument_1() throws Throwable {
+		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_INT.withName("elem1"), JAVA_INT.withName("elem2"));
+		VarHandle intHandle1 = structLayout.varHandle(PathElement.groupElement("elem1"));
+		VarHandle intHandle2 = structLayout.varHandle(PathElement.groupElement("elem2"));
+
+		FunctionDescriptor fd = FunctionDescriptor.of(JAVA_INT, JAVA_INT, ADDRESS);
+		Addressable functionSymbol = nativeLibLookup.lookup("addIntAndIntsFromStructPointer").get();
+		MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
+
+		MemorySegment structSegmt = MemorySegment.ofArray(new int[]{11121314, 15161718});
+		int result = (int)mh.invoke(19202122, structSegmt);
+		fail("Failed to throw out IllegalArgumentException in the case of the heap segment");
+	}
+
+	/* An UnsupportedOperationException is thrown out by MemorySegment.address() in the case of
+	 * the on-heap segment in JDK19.
+	 */
+	@Test(expectedExceptions = UnsupportedOperationException.class, expectedExceptionsMessageRegExp = "Cannot obtain address of on-heap segment.*")
+	public void test_heapSegmentForPtrArgument_2() throws Throwable {
+		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_INT.withName("elem1"), JAVA_INT.withName("elem2"));
+		VarHandle intHandle1 = structLayout.varHandle(PathElement.groupElement("elem1"));
+		VarHandle intHandle2 = structLayout.varHandle(PathElement.groupElement("elem2"));
+
+		FunctionDescriptor fd = FunctionDescriptor.of(JAVA_INT, JAVA_INT, ADDRESS);
+		Addressable functionSymbol = nativeLibLookup.lookup("addIntAndIntsFromStructPointer").get();
+		MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
+
+		MemorySegment structSegmt = MemorySegment.ofArray(new int[]{11121314, 15161718});
+		int result = (int)mh.invokeExact(19202122, structSegmt.address());
+		fail("Failed to throw out UnsupportedOperationException in the case of the heap address");
+	}
+
+	public void test_heapSegmentForStructArgument() throws Throwable {
+		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_INT.withName("elem1"), JAVA_INT.withName("elem2"));
+		VarHandle intHandle1 = structLayout.varHandle(PathElement.groupElement("elem1"));
+		VarHandle intHandle2 = structLayout.varHandle(PathElement.groupElement("elem2"));
+
+		FunctionDescriptor fd = FunctionDescriptor.of(structLayout, structLayout, structLayout);
+		Addressable functionSymbol = nativeLibLookup.lookup("add2IntStructs_returnStruct").get();
+		MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
+
+		try (MemorySession session = MemorySession.openConfined()) {
+			SegmentAllocator allocator = SegmentAllocator.newNativeArena(session);
+			MemorySegment structSegmt1 = allocator.allocate(structLayout);
+			intHandle1.set(structSegmt1, 11223344);
+			intHandle2.set(structSegmt1, 55667788);
+			MemorySegment structSegmt2 = MemorySegment.ofArray(new int[]{99001122, 33445566});
+
+			MemorySegment resultSegmt = (MemorySegment)mh.invokeExact(allocator, structSegmt1, structSegmt2);
+			Assert.assertEquals(intHandle1.get(resultSegmt), 110224466);
+			Assert.assertEquals(intHandle2.get(resultSegmt), 89113354);
+		}
 	}
 }

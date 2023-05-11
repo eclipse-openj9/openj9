@@ -481,6 +481,11 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 
 	<!-- Static method references needed to support Foreign Linker API. -->
 	<staticmethodref class="java/lang/invoke/MethodHandleResolver" name="upcallLinkCallerMethod" signature="(Ljava/lang/Class;Ljava/lang/invoke/MethodType;)Ljava/lang/Object;" versions="16-"/>
+	<staticmethodref class="openj9/internal/foreign/abi/UpcallMHMetaData" name="getNativeArgRetAddrOfPtr" signature="(Ljdk/incubator/foreign/MemoryAddress;)J" flags="opt_openjdkFfi" versions="16-18"/>
+	<staticmethodref class="openj9/internal/foreign/abi/UpcallMHMetaData" name="getNativeArgRetAddrOfPtr" signature="(Ljava/lang/foreign/MemoryAddress;)J" flags="opt_openjdkFfi" versions="19"/>
+	<staticmethodref class="openj9/internal/foreign/abi/UpcallMHMetaData" name="getNativeArgRetSegmentOfPtr" signature="(Ljava/lang/foreign/MemorySegment;)J" flags="opt_openjdkFfi" versions="20-"/>
+	<staticmethodref class="openj9/internal/foreign/abi/UpcallMHMetaData" name="getNativeArgRetSegment" signature="(Ljdk/incubator/foreign/MemorySegment;)J" flags="opt_openjdkFfi" versions="16-18"/>
+	<staticmethodref class="openj9/internal/foreign/abi/UpcallMHMetaData" name="getNativeArgRetSegment" signature="(Ljava/lang/foreign/MemorySegment;)J" flags="opt_openjdkFfi" versions="19-"/>
 
 	<staticmethodref class="jdk/internal/loader/NativeLibraries" name="load" signature="(Ljdk/internal/loader/NativeLibraries$NativeLibraryImpl;Ljava/lang/String;ZZZ)Z" versions="15-18"/>
 	<staticmethodref class="jdk/internal/loader/NativeLibraries" name="load" signature="(Ljdk/internal/loader/NativeLibraries$NativeLibraryImpl;Ljava/lang/String;ZZ)Z" versions="19-"/>
