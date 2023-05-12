@@ -21,9 +21,9 @@
  *******************************************************************************/
 package com.ibm.j9ddr.vm29.view.dtfj;
 
-import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Properties;
@@ -45,86 +45,91 @@ import com.ibm.j9ddr.vm29.pointer.generated.J9RASSystemInfoPointer;
 import com.ibm.j9ddr.vm29.structure.RasdumpInternalConstants;
 
 /**
- * Bootstrap shim for extracting information from the J9RAS structure
- * 
- * @see J9DDRImageProcess
- * @author andhall
+ * Bootstrap shim for extracting information from the J9RAS structure.
  *
+ * @see J9DDRImageProcess
+ *
+ * @author andhall
  */
-public class J9RASInfoBootstrapShim implements IBootstrapRunnable
-{
+public class J9RASInfoBootstrapShim implements IBootstrapRunnable {
 
 	/* (non-Javadoc)
 	 * @see com.ibm.j9ddr.IBootstrapRunnable#run(com.ibm.j9ddr.IVMData, java.lang.Object[])
 	 */
-	public void run(IVMData vmData, Object[] userData)
-	{
+	@Override
+	public void run(IVMData vmData, Object[] userData) {
 		Object[] passbackArray = (Object[]) userData[0];
-		
+
 		passbackArray[0] = new J9RASInfoObject();
 	}
 
-	private static class J9RASInfoObject implements MachineData, ProcessData
-	{
-		private final J9RASPointer ptr = DataType.getJ9RASPointer();
-		
-		public int version() throws CorruptDataException
-		{
-			// Return the J9RAS major version, which is the top half of the 32-bit version field in the J9RAS structure
+	private static final class J9RASInfoObject implements MachineData, ProcessData {
+
+		private final J9RASPointer ptr;
+
+		J9RASInfoObject() {
+			super();
+			ptr = DataType.getJ9RASPointer();
+		}
+
+		@Override
+		public int version() throws CorruptDataException {
+			// Return the J9RAS major version, which is the top half
+			// of the 32-bit version field in the J9RAS structure.
 			return ptr.version().intValue() >> 16;
 		}
-		
-		public int cpus() throws CorruptDataException
-		{
+
+		@Override
+		public int cpus() throws CorruptDataException {
 			try {
 				return ptr.cpus().intValue();
 			} catch (InvalidDataTypeException e) {
-				//it is possible that due to corruption or there is an installed amount of memory > Long.MAX_VALUE it cannot be represented in Java
+				// it is possible that due to corruption it cannot be represented in Java
 				throw new CorruptDataException("This value cannot be expressed : " + ptr.cpus().getHexValue(), e);
 			}
 		}
 
-		public long memoryBytes() throws CorruptDataException
-		{
+		@Override
+		public long memoryBytes() throws CorruptDataException {
 			try {
 				return ptr.memory().longValue();
 			} catch (InvalidDataTypeException e) {
-				//it is possible that due to corruption or there is an installed amount of memory > Long.MAX_VALUE it cannot be represented in Java
+				// it is possible that due to corruption or there is an installed amount of memory > Long.MAX_VALUE it cannot be represented in Java
 				throw new CorruptDataException("This value cannot be expressed : " + ptr.memory().getHexValue(), e);
 			}
 		}
 
-		public String osArch() throws CorruptDataException
-		{
+		@Override
+		public String osArch() throws CorruptDataException {
 			return ptr.osarchEA().getCStringAtOffset(0);
 		}
 
-		public String osName() throws CorruptDataException
-		{
+		@Override
+		public String osName() throws CorruptDataException {
 			return ptr.osnameEA().getCStringAtOffset(0);
 		}
 
-		public String osVersion() throws CorruptDataException
-		{
+		@Override
+		public String osVersion() throws CorruptDataException {
 			return ptr.osversionEA().getCStringAtOffset(0);
 		}
 
-		public long pid() throws CorruptDataException
-		{
+		@Override
+		public long pid() throws CorruptDataException {
 			try {
 				return ptr.pid().longValue();
 			} catch (InvalidDataTypeException e) {
-				//it is possible that due to corruption or there is an installed amount of memory > Long.MAX_VALUE it cannot be represented in Java
+				// it is possible that due to corruption it cannot be represented in Java
 				throw new CorruptDataException("This value cannot be expressed : " + ptr.pid().getHexValue(), e);
 			}
 		}
 
-		public long tid() throws CorruptDataException
-		{
+		@Override
+		public long tid() throws CorruptDataException {
 			try {
 				return ptr.tid().longValue();
 			} catch (InvalidDataTypeException e) {
-				//it is possible that due to corruption or there is an installed amount of memory > Long.MAX_VALUE it cannot be represented in Java
+				// it is possible that due to corruption it cannot be represented in Java
 				throw new CorruptDataException("This value cannot be expressed : " + ptr.tid().getHexValue(), e);
 			}
 		}
@@ -132,102 +137,106 @@ public class J9RASInfoBootstrapShim implements IBootstrapRunnable
 		/* (non-Javadoc)
 		 * @see com.ibm.j9ddr.view.dtfj.image.J9RASImageDataFactory.ProcessData#gpInfo()
 		 */
-		public String gpInfo() throws CorruptDataException
-		{
-			if (ptr.crashInfo().notNull()) {				//there is a pointer to a crash info structure
-				if(ptr.crashInfo().gpInfo().notNull()) {	//can read the string
-					return ptr.crashInfo().gpInfo().getCStringAtOffset(0);
-				} else {									//return null as we cannot process the string
-					return null;
-				}
-			} else {										//there is no crash info
-				return "";									//return an empty string
+		@Override
+		public String gpInfo() throws CorruptDataException {
+			if (ptr.crashInfo().isNull()) {
+				// there is no crash info - return an empty string
+				return "";
+			} else if (ptr.crashInfo().gpInfo().isNull()) {
+				// return null as we cannot process the string
+				return null;
+			} else {
+				return ptr.crashInfo().gpInfo().getCStringAtOffset(0);
 			}
 		}
-		
+
+		@Override
 		public String hostName() throws DataUnavailableException, CorruptDataException {
-			if(ptr.hostnameEA().notNull()) {
+			if (ptr.hostnameEA().notNull()) {
 				return ptr.hostnameEA().getCStringAtOffset(0);
 			} else {
 				throw new DataUnavailableException("Host name not available");
 			}
 		}
-		
+
+		@Override
 		public Iterator<Object> ipaddresses() throws DataUnavailableException, CorruptDataException {
-			ArrayList<Object> addresses = new ArrayList<Object>();
+			ArrayList<Object> addresses = new ArrayList<>();
 			U8Pointer ip = ptr.ipAddressesEA();
-			if(ip.isNull()) {
+			if (ip.isNull()) {
 				throw new DataUnavailableException("IP addresses not available");
 			}
-			int type = ip.at(0).intValue();
 			byte[] ipv4 = new byte[4];
 			byte[] ipv6 = new byte[16];
-			InetAddress address = null;
-ADDRESS_PROCESSING : while(0 != type) {
+ADDRESS_PROCESSING:
+			for (;;) {
+				InetAddress address;
+				int type = ip.at(0).intValue();
+				ip = ip.add(1);
 				try {
-					switch(type) {
-						case 4 :	//IPv4
-							DataType.getProcess().getBytesAt(ip.getAddress() + 1, ipv4);
-							ip = ip.add(5);		//increment before getting address in case an UnknownHostException is thrown
-							address = InetAddress.getByAddress(ipv4);
-							break;
-						case 6 :	//IPv6
-							DataType.getProcess().getBytesAt(ip.getAddress() + 1, ipv6);
-							ip = ip.add(7);		//increment before getting address in case an UnknownHostException is thrown
-							address = InetAddress.getByAddress(ipv6);
-							break;
-						default :	//unknown type, so add a corrupt data
-							addresses.add(J9DDRDTFJUtils.newCorruptData(DTFJContext.getProcess(), "Unknown IP address type identifier : " + type));
-							break ADDRESS_PROCESSING;		//and exit loop as do not know how big the address is to skip to the next one
+					switch (type) {
+					case 0:
+						break ADDRESS_PROCESSING;
+					case 4: // IPv4
+						DataType.getProcess().getBytesAt(ip.getAddress(), ipv4);
+						ip = ip.add(ipv4.length); // increment before getting address in case an UnknownHostException is thrown
+						address = InetAddress.getByAddress(ipv4);
+						break;
+					case 6: // IPv6
+						DataType.getProcess().getBytesAt(ip.getAddress(), ipv6);
+						ip = ip.add(ipv6.length); // increment before getting address in case an UnknownHostException is thrown
+						address = InetAddress.getByAddress(ipv6);
+						break;
+					default: // unknown type, so add a corrupt data
+						addresses.add(J9DDRDTFJUtils.newCorruptData(DTFJContext.getProcess(), "Unknown IP address type identifier : " + type));
+						break ADDRESS_PROCESSING; // and exit loop as do not know how big the address is to skip to the next one
 					}
-					if(!addresses.contains(address)) {
+					if (!addresses.contains(address)) {
 						addresses.add(address);
 					}
 				} catch (UnknownHostException e) {
 					addresses.add(J9DDRDTFJUtils.newCorruptData(DTFJContext.getProcess(), "Corrupt IP address : " + e.getMessage()));
 				}
-				type = ip.at(0).intValue();
 			}
-			if(0 == addresses.size()) {
+			if (addresses.isEmpty()) {
 				throw new DataUnavailableException("IP addresses not available");
 			}
 			return addresses.iterator();
 		}
 
-		public IProcess getProcess()
-		{
+		@Override
+		public IProcess getProcess() {
 			return DataType.getProcess();
 		}
 
-		public long getEnvironment() throws CorruptDataException
-		{
+		@Override
+		public long getEnvironment() throws CorruptDataException {
 			return ptr.environment().longValue();
 		}
-		
+
 		/**
-		 * Return OS properties. OS properties obtained by the JVM are stored as a linked list of system information
-		 * key/value pairs, off the J9RAS structure
-		 * 
+		 * Return OS properties. OS properties obtained by the JVM are stored
+		 * as a linked list of system information key/value pairs, off the
+		 * J9RAS structure.
+		 *
 		 * @return Properties (may be empty)
 		 */
+		@Override
 		public Properties systemInfo() throws DataUnavailableException, CorruptDataException {
 			Properties properties = new Properties();
-			
+
 			J9RASSystemInfoPointer systemInfo = ptr.systemInfo();
 			if (systemInfo.notNull()) {
 				J9RASSystemInfoPointer firstSystemInfo = systemInfo;
 				do {
-					// Walk the linked list, converting the key/values pairs into property strings
+					// Walk the linked list, converting the key/values pairs into property strings.
 					int key = systemInfo.key().intValue();
-					if (key == (int)RasdumpInternalConstants.J9RAS_SYSTEMINFO_SCHED_COMPAT_YIELD) {
-						try {
-							// Since sched_compat_yield is just one character we actually write that
-							// into the data field instead of a pointer to a string.
-							byte[] data = new byte[1];
-							systemInfo.dataEA().getBytesAtOffset(0, data);
-							properties.put("/proc/sys/kernel/sched_compat_yield", new String(data, "UTF-8") );
-						} catch (UnsupportedEncodingException e) {
-						}
+					if (key == (int) RasdumpInternalConstants.J9RAS_SYSTEMINFO_SCHED_COMPAT_YIELD) {
+						// Since sched_compat_yield is just one character we actually write
+						// that into the data field instead of a pointer to a string.
+						byte[] data = new byte[1];
+						systemInfo.dataEA().getBytesAtOffset(0, data);
+						properties.put("/proc/sys/kernel/sched_compat_yield", new String(data, StandardCharsets.UTF_8));
 					} else if (key == (int)RasdumpInternalConstants.J9RAS_SYSTEMINFO_HYPERVISOR) {
 						properties.put("Hypervisor", U8Pointer.cast(systemInfo.data()).getCStringAtOffset(0));
 					} else if (key == (int)RasdumpInternalConstants.J9RAS_SYSTEMINFO_CORE_PATTERN) {
@@ -238,20 +247,20 @@ ADDRESS_PROCESSING : while(0 != type) {
 						// ignore any unknown/unsupported values
 					}
 					systemInfo = systemInfo.linkNext();
-				} while(!systemInfo.equals(firstSystemInfo));
+				} while (!systemInfo.equals(firstSystemInfo));
 			}
 			return properties;
 		}
-		
+
 		/**
 		 * Return the dump creation time. If this was not set by the dump agent when the dump was
 		 * triggered (for example if the dump was triggered externally using Linux gcore or Windows
 		 * task manager) we throw a DataUnavailableException.
-		 * 
+		 *
 		 * @return long - dump creation time (milliseconds since 1970)
 		 */
-		public long dumpTimeMillis() throws DataUnavailableException, CorruptDataException
-		{
+		@Override
+		public long dumpTimeMillis() throws DataUnavailableException, CorruptDataException {
 			long timestamp = ptr.dumpTimeMillis().longValue();
 			if (timestamp == 0) {
 				throw new DataUnavailableException("Dump creation time (millisecs) not set");
@@ -259,16 +268,16 @@ ADDRESS_PROCESSING : while(0 != type) {
 				return timestamp;
 			}
 		}
-		
+
 		/**
 		 * Return the value of the system nanotime (high resolution timer) at dump creation time. If this
 		 * was not set by the dump agent when the dump was triggered (for example if the dump was triggered
 		 * externally using Linux gcore or Windows task manager) we throw a DataUnavailableException.
-		 * 
+		 *
 		 * @return long - system nanotime
 		 */
-		public long dumpTimeNanos() throws DataUnavailableException, CorruptDataException
-		{
+		@Override
+		public long dumpTimeNanos() throws DataUnavailableException, CorruptDataException {
 			long timestamp = ptr.dumpTimeNanos().longValue();
 			if (timestamp == 0) {
 				throw new DataUnavailableException("Dump creation time (nanosecs) not set");
