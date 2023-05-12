@@ -309,7 +309,7 @@ MM_GCExtensions::releaseNativesForContinuationObject(MM_EnvironmentBase* env, j9
 			Assert_GC_true_with_message2(env, (NULL == continuation), "Continuation expected to be NULL, but it is %p, from Continuation object %p\n", continuation, objectPtr);
 		}
 	} else {
-		getJavaVM()->internalVMFunctions->freeContinuation(vmThread, objectPtr, true);
+		getJavaVM()->internalVMFunctions->freeContinuation(vmThread, objectPtr, TRUE);
 	}
 #endif /* JAVA_SPEC_VERSION >= 19 */
 }
