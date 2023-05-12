@@ -34,7 +34,6 @@
 
 #if defined(LINUX)
 /* Copy the system properties names and values into malloced memory */
-static char* copyToMem(J9JavaVM * vm, char * source);
 static void copySystemProperties(J9JavaVM* vm);
 #endif /* defined(LINUX) */
 
@@ -52,37 +51,79 @@ static UDATA addPropertiesForOptionWithAssignArg(J9JavaVM *vm, const char *optio
 static UDATA addPropertyForOptionWithEqualsArg(J9JavaVM *vm, const char *optionName, UDATA optionNameLen, const char *propName);
 static UDATA addModularitySystemProperties(J9JavaVM * vm);
 
-#if defined(LINUX)
-/* Copy the system properties names and values into malloced memory */
-static char*
-copyToMem(J9JavaVM * vm, char * source)
+/*
+ * Create a copy of the given string in allocated memory.
+ *
+ * @param [in] vm the J9JavaVM
+ * @param [in] source the null-terminated string to be copied
+ *
+ * @return a copy of the string in allocated memory
+ *         or NULL if space could not be allocated
+ */
+static char *
+copyToMem(J9JavaVM *vm, const char *source)
 {
-	char* dest;
-	UDATA length;
 	PORT_ACCESS_FROM_JAVAVM(vm);
-
-	length = strlen(source);
-	dest = j9mem_allocate_memory(length + 1, OMRMEM_CATEGORY_VM);
-	if (dest != NULL) {
+	UDATA length = strlen(source);
+	char *dest = (char *)j9mem_allocate_memory(length + 1, OMRMEM_CATEGORY_VM);
+	if (NULL != dest) {
 		strcpy(dest, source);
 	}
 	return dest;
 }
 
+/**
+ * Adds a system property, attempting to ensure that both the
+ * name and the value are in allocated memory (if not already
+ * there according to the supplied flags).
+ *
+ * The motivation for this is to improve the likelihood that
+ * DDR will be able to access these strings, even without the
+ * benefit of augmented information collected via jpackcore.
+ *
+ * @param [in] vm the J9JavaVM
+ * @param [in] name null-terminated property name to be added
+ * @param [in] value null-terminated property value to be added
+ * @param [in] flags flags as speicified by addSystemProperty()
+ *
+ * @return J9SYSPROP_ERROR_NONE on success, or a J9SYSPROP_ERROR_* value on failure.
+ */
+static UDATA
+addAllocatedSystemProperty(J9JavaVM *vm, const char *name, const char *value, UDATA flags)
+{
+	if (J9_ARE_NO_BITS_SET(flags, J9SYSPROP_FLAG_NAME_ALLOCATED)) {
+		char *copy = copyToMem(vm, name);
+		if (NULL != copy) {
+			flags |= J9SYSPROP_FLAG_NAME_ALLOCATED;
+			name = copy;
+		}
+	}
+
+	if (J9_ARE_NO_BITS_SET(flags, J9SYSPROP_FLAG_VALUE_ALLOCATED)) {
+		char *copy = copyToMem(vm, value);
+		if (NULL != copy) {
+			flags |= J9SYSPROP_FLAG_VALUE_ALLOCATED;
+			value = copy;
+		}
+	}
+
+	return addSystemProperty(vm, name, value, flags);
+}
+
+#if defined(LINUX)
+/* Copy the system properties names and values into malloced memory. */
 static void
 copySystemProperties(J9JavaVM* vm)
 {
 	pool_state walkState;
-	char* copied;
 
-	J9VMSystemProperty* property = pool_startDo(vm->systemProperties, &walkState);
-	while (property != NULL) {
-
+	J9VMSystemProperty *property = pool_startDo(vm->systemProperties, &walkState);
+	while (NULL != property) {
 		/* copy the name */
-		if ((property->flags & J9SYSPROP_FLAG_NAME_ALLOCATED) == 0) {
-			copied = copyToMem(vm, property->name);
+		if (J9_ARE_NO_BITS_SET(property->flags, J9SYSPROP_FLAG_NAME_ALLOCATED)) {
+			char *copied = copyToMem(vm, property->name);
 
-			if (copied == NULL) {
+			if (NULL == copied) {
 				/* Give up at this point as the memory allocation will probably continue to fail */
 				return;
 			}
@@ -91,17 +132,16 @@ copySystemProperties(J9JavaVM* vm)
 		}
 
 		/* copy the value */
-		if ((property->flags & J9SYSPROP_FLAG_VALUE_ALLOCATED) == 0) {
-			copied = copyToMem(vm, property->value);
+		if (J9_ARE_NO_BITS_SET(property->flags, J9SYSPROP_FLAG_VALUE_ALLOCATED)) {
+			char *copied = copyToMem(vm, property->value);
 
-			if (copied == NULL) {
+			if (NULL == copied) {
 				/* Give up at this point as the memory allocation will probably continue to fail */
 				return;
 			}
 			property->value = copied;
 			property->flags |= J9SYSPROP_FLAG_VALUE_ALLOCATED;
 		}
-
 
 		property = pool_nextDo(&walkState);
 	}
@@ -608,7 +648,7 @@ initializeSystemProperties(J9JavaVM * vm)
 		if (JAVA_SPEC_VERSION == 8) {
 			classVersion = "52.0";
 		} else {
-			classVersion = "55.0";	/* Java 11 */
+			classVersion = "55.0"; /* Java 11 */
 		}
 		rc = addSystemProperty(vm, "java.class.version", classVersion, 0);
 		if (J9SYSPROP_ERROR_NONE != rc) {
@@ -644,11 +684,6 @@ initializeSystemProperties(J9JavaVM * vm)
 		goto fail;
 	}
 
-	rc = addSystemProperty(vm, "java.fullversion", EsBuildVersionString, J9SYSPROP_FLAG_WRITEABLE);
-	if (J9SYSPROP_ERROR_NONE != rc) {
-		goto fail;
-	}
-
 	rc = addSystemProperty(vm, "java.vm.info", EsBuildVersionString, J9SYSPROP_FLAG_WRITEABLE);
 	if (J9SYSPROP_ERROR_NONE != rc) {
 		goto fail;
@@ -664,12 +699,26 @@ initializeSystemProperties(J9JavaVM * vm)
 		goto fail;
 	}
 
-	rc = addSystemProperty(vm, "java.vm.version", J9JVM_VERSION_STRING, 0);
+	/*
+	 * For each of the system properties "java.fullversion", "java.vm.name"
+	 * and "java.vm.version", we try to put both the name and value in
+	 * allocated memory so DDR can more reliably have access to those strings.
+	 *
+	 * See:
+	 *   - com.ibm.jvm.dtfjview.commands.OpenCommand#createContexts()
+	 *   - com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.CoreInfoCommand#run()
+	 */
+	rc = addAllocatedSystemProperty(vm, "java.fullversion", EsBuildVersionString, J9SYSPROP_FLAG_WRITEABLE);
 	if (J9SYSPROP_ERROR_NONE != rc) {
 		goto fail;
 	}
 
-	rc = addSystemProperty(vm, "java.vm.name", JAVA_VM_NAME, 0);
+	rc = addAllocatedSystemProperty(vm, "java.vm.name", JAVA_VM_NAME, 0);
+	if (J9SYSPROP_ERROR_NONE != rc) {
+		goto fail;
+	}
+
+	rc = addAllocatedSystemProperty(vm, "java.vm.version", J9JVM_VERSION_STRING, 0);
 	if (J9SYSPROP_ERROR_NONE != rc) {
 		goto fail;
 	}
@@ -1110,23 +1159,19 @@ setSystemProperty(J9JavaVM * vm, J9VMSystemProperty * property, const char * val
 {
 	/* Make sure the property is writeable */
 
-	if (!(property->flags & J9SYSPROP_FLAG_WRITEABLE)) {
+	if (J9_ARE_NO_BITS_SET(property->flags, J9SYSPROP_FLAG_WRITEABLE)) {
 		return J9SYSPROP_ERROR_READ_ONLY;
 	}
 
 	/* If value is NULL, don't write it (used to check for read-only without modifying) */
 
-	if (value != NULL) {
-		PORT_ACCESS_FROM_JAVAVM(vm);
-		char * copiedValue;
-
+	if (NULL != value) {
 		/* Make a copy of the value */
+		char * copiedValue = copyToMem(vm, value);
 
-		copiedValue = j9mem_allocate_memory(strlen(value) + 1, OMRMEM_CATEGORY_VM);
-		if (copiedValue == NULL) {
+		if (NULL == copiedValue) {
 			return J9SYSPROP_ERROR_OUT_OF_MEMORY;
 		}
-		strcpy(copiedValue, value);
 		setSystemPropertyValue(vm, property, copiedValue, TRUE);
 	}
 
