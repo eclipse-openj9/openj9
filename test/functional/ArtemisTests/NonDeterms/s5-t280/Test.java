@@ -437,7 +437,7 @@ public class Test {
                                         Test.iFld = 207 % i27;
                                     } catch (ArithmeticException a_e) {
                                     }
-                                } 
+                                }
                                 i28 += i29 * i29;
                                 for (i34 = 2; i34 > 1; i34 -= 3) {
                                     Test.iArrFld = Test.iArrFld;

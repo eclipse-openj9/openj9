@@ -102,9 +102,9 @@ public class Test {
                     i14 *= i12;
                     i9 = i12;
                     i11 -= ((int) (-1.51334));
-                } 
+                }
             }
-        } 
+        }
         vMeth1_check_sum += (((((((((((((((((((i4 + i5) + l2) + l3) + i6) + i7) + by) + i8) + i9) + i10) + i11) + Double.doubleToLongBits(d1)) + i12) + i13) + i14) + i15) + i16) + i17) + Double.doubleToLongBits(FuzzerUtils.checkSum(fArr))) + FuzzerUtils.checkSum(iArr)) + FuzzerUtils.checkSum(lArr);
     }
 

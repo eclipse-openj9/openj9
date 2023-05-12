@@ -100,7 +100,7 @@ public class Test {
                     i8 <<= i10;
                     i8 &= ((int) (Test.instanceCount));
                     i13 = by;
-                } 
+                }
                 Test.instanceCount >>= -7;
                 for (i14 = 1; i14 < 1; i14++) {
                     i13 += (-20378) + (i14 * i14);

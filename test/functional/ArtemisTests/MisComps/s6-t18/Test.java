@@ -172,7 +172,7 @@ public class Test {
                     default :
                         bArr[i9][i9 - 1] = Test.bFld;
                 }
-            } 
+            }
         }
         long meth_res = (((((((((((((((s + i5) + Float.floatToIntBits(f1)) + i6) + i7) + i8) + i9) + i10) + i11) + i12) + by) + i13) + i14) + (b2 ? 1 : 0)) + FuzzerUtils.checkSum(iArr1)) + FuzzerUtils.checkSum(lArr)) + FuzzerUtils.checkSum(bArr);
         lMeth_check_sum += meth_res;
@@ -277,7 +277,7 @@ public class Test {
                             Test.instanceCount /= ((long) (46.843F));
                     }
                 }
-            } 
+            }
         }
         vMeth1_check_sum += ((((((((((((i1 + i2) + i3) + i4) + (b1 ? 1 : 0)) + Float.floatToIntBits(f2)) + i15) + i16) + i17) + i18) + i19) + i20) + i21) + FuzzerUtils.checkSum(iArr);
     }

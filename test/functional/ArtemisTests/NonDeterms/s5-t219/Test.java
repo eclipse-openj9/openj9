@@ -114,7 +114,7 @@ public class Test {
                         }
                     }
                 }
-            } 
+            }
         } catch (ArithmeticException exc1) {
             b = b;
         }
@@ -260,7 +260,7 @@ public class Test {
                             int ax$12 = ax$7.write(ax$9);
                             if (ax$12 < 0);
                             ax$11 += ax$12;
-                        } 
+                        }
                         ByteBuffer ax$13 = ByteBuffer.allocateDirect(10);
                         int ax$14 = 0;
                         do {
@@ -539,7 +539,7 @@ public class Test {
                                                                         iMeth1_check_sum = iMeth1_check_sum % iMeth_check_sum;
                                                                         ax$36[i36++] = ((byte) (iMeth1_check_sum + byFld));
                                                                     }
-                                                                } 
+                                                                }
                                                             } catch (Throwable ax$43) {
                                                             } finally {
                                                             }

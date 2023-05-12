@@ -165,7 +165,7 @@ public class Test {
                 while (true) {
                     ax$13.add(new byte[1048576]);
                     i3++;
-                } 
+                }
             } catch (Throwable ax$14) {
             } finally {
             }
@@ -199,7 +199,7 @@ public class Test {
                 Test.iFld = i4 % i4;
             } catch (ArithmeticException a_e) {
             }
-        } 
+        }
         d = by1;
         by1 = ((byte) (i3));
         i14 = 1;
@@ -427,7 +427,7 @@ public class Test {
                                 default :
                                     s2 = ((short) (i25));
                             }
-                        } 
+                        }
                     } else if (b2) {
                         Test.iFld1 = Test.iFld2;
                     } else if (b2) {

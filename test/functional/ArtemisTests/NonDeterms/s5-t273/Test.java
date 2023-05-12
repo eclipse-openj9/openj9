@@ -166,7 +166,7 @@ public class Test {
                     Test.byArrFld = Test.byArrFld;
                     break;
             }
-        } 
+        }
         vMeth1_check_sum += (((((((((Double.doubleToLongBits(d) + i3) + i4) + i5) + i6) + (b ? 1 : 0)) + i7) + i8) + i9) + FuzzerUtils.checkSum(lArr)) + Double.doubleToLongBits(FuzzerUtils.checkSum(dArr));
     }
 
@@ -249,7 +249,7 @@ public class Test {
                                 f = f;
                                 i2 = 58670;
                             }
-                        } 
+                        }
                     } while ((++i16) < 2 );
                     break;
                 case 126 :

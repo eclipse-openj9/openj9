@@ -161,7 +161,7 @@ public class Test {
 
                     f += i8;
                     f += l1;
-                } 
+                }
                 for (i10 = 1; i10 < 3; i10++) {
                     i9 *= ((int) (Test.instanceCount));
                     Test.dFld = l1;
@@ -489,7 +489,7 @@ public class Test {
                                     case 24 :
                                 }
                             }
-                        } 
+                        }
                     }
                 } else if (false) {
                     Test.iFld = i24;

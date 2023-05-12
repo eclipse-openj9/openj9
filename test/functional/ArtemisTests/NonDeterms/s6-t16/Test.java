@@ -145,7 +145,7 @@ public class Test {
                                 f = Test.instanceCount;
                                 break;
                         }
-                    } 
+                    }
                 }
             }
         } catch (ArithmeticException exc1) {
@@ -572,8 +572,8 @@ public class Test {
                         f2 = i42;
                         break;
                 }
-            } 
-        } 
+            }
+        }
         FuzzerUtils.out.println((((("i i32 i33 = " + i) + ",") + i32) + ",") + i33);
         FuzzerUtils.out.println((((("i34 i35 i36 = " + i34) + ",") + i35) + ",") + i36);
         FuzzerUtils.out.println((((("i37 i38 i40 = " + i37) + ",") + i38) + ",") + i40);

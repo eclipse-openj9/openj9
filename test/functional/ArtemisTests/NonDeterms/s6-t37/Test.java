@@ -203,7 +203,7 @@ public class Test {
                     }
                 }
             }
-        } 
+        }
         vMeth1_check_sum += ((((((((((((i2 + l) + i3) + i4) + Double.doubleToLongBits(d)) + Float.floatToIntBits(f)) + (b1 ? 1 : 0)) + i13) + i14) + by1) + i15) + i16) + FuzzerUtils.checkSum(iArr)) + FuzzerUtils.checkSum(lArr);
     }
 
@@ -289,8 +289,8 @@ public class Test {
                     Test.instanceCount += i18;
                     i19 += ((int) (((f1 * i21) + i23) - i21));
                     lArr1[i23 - 1] -= i23;
-                } 
-            } 
+                }
+            }
         }
         vMeth_check_sum += (((((((i18 + i19) + i20) + i21) + i22) + i23) + Float.floatToIntBits(f1)) + (b2 ? 1 : 0)) + FuzzerUtils.checkSum(lArr1);
     }

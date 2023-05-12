@@ -155,8 +155,8 @@ public class Test {
                     Test.iArrFld = FuzzerUtils.int1array(N, ((int) (52)));
                     Test.byFld = ((byte) (Test.instanceCount));
                 }
-            } 
-        } 
+            }
+        }
         long meth_res = (((((((((((i11 + i12) + i13) + i14) + i15) + i16) + i17) + i18) + i19) + i20) + Float.floatToIntBits(f1)) + Double.doubleToLongBits(d2)) + i21;
         dMeth1_check_sum += meth_res;
         return ((double) (meth_res));
@@ -704,7 +704,7 @@ public class Test {
                                     i35 += i43 ^ i28;
                                     i41 = i43;
                                     Test.iFld2 += ((i43 * Test.iFld1) + i43) - fFld;
-                                } 
+                                }
                                 fFld = Test.byFld;
                                 Test.iFld1 = i31;
                                 if (Test.bFld)

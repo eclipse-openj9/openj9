@@ -196,7 +196,7 @@ public class Test {
                             Test.instanceCount *= 5;
                             iArr1[((int) (l1 + 1))][((int) (l1))] -= i11;
                     }
-                } 
+                }
             }
         }
         vMeth_check_sum += ((((((((((Float.floatToIntBits(f) + i10) + by) + i11) + i12) + l1) + i13) + i14) + Double.doubleToLongBits(d1)) + FuzzerUtils.checkSum(iArr1)) + FuzzerUtils.checkSum(lArr)) + FuzzerUtils.checkSum(sArr);
@@ -556,7 +556,7 @@ public class Test {
                             }
                         }
                     }
-                } 
+                }
                 break;
             case 106 :
                 Test.fArrFld[(i22 >>> 1) % N] -= -2;

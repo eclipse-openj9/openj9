@@ -250,7 +250,7 @@ public class Test {
                 Test.iFld2 += i10 * Test.instanceCount;
                 iArr3[((int) (d1 + 1))] -= Test.byFld;
             }
-        } 
+        }
         for (i12 = 221; 4 < i12; i12 -= 2) {
             iArr2[i12 - 1] -= ((int) (f));
             for (i14 = 1; 5 > i14; ++i14) {
@@ -440,7 +440,7 @@ public class Test {
             } else if (b) {
                 i23 += ((int) (f2 - Test.sFld));
             }
-        } 
+        }
         vMeth_check_sum += (((((((((((i + (b ? 1 : 0)) + s) + Float.floatToIntBits(f2)) + i20) + i21) + i22) + i23) + i24) + i25) + Double.doubleToLongBits(d2)) + Float.floatToIntBits(f3)) + FuzzerUtils.checkSum(iArr4);
     }
 

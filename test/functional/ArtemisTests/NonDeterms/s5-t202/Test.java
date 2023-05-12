@@ -103,7 +103,7 @@ public class Test {
                     }
                 } while ((++i10) < 2 );
             }
-        } 
+        }
         vMeth2_check_sum += ((((((((((((((l1 + i4) + (b1 ? 1 : 0)) + Double.doubleToLongBits(d1)) + i5) + i6) + i7) + i8) + i9) + Float.floatToIntBits(f)) + Double.doubleToLongBits(d2)) + i10) + s1) + FuzzerUtils.checkSum(byArr)) + Double.doubleToLongBits(FuzzerUtils.checkSum(dArr))) + FuzzerUtils.checkSum(lArr);
     }
 

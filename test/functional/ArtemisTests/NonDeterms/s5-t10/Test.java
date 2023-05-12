@@ -137,7 +137,7 @@ public class Test {
                     }
                 }
             }
-        } 
+        }
         i12 -= i8;
         vMeth1_check_sum += ((((((((((((((((i5 + (b ? 1 : 0)) + Float.floatToIntBits(f1)) + i6) + i7) + i8) + by) + i9) + i10) + s1) + i11) + i12) + i13) + FuzzerUtils.checkSum(sArr)) + FuzzerUtils.checkSum(iArr1)) + Double.doubleToLongBits(FuzzerUtils.checkSum(fArr1))) + FuzzerUtils.checkSum(iArr2)) + FuzzerUtils.checkSum(lArr1);
     }
@@ -357,7 +357,7 @@ public class Test {
                         i21 = 9;
                         Test.instanceCount += i22 * i22;
                         Test.instanceCount = i4;
-                    } 
+                    }
                     by2 ^= ((byte) (Test.instanceCount));
                     iArr[((int) (l + 1))] >>= ((int) (l));
                     break;
@@ -379,7 +379,7 @@ public class Test {
                     }
                     break;
             }
-        } 
+        }
         vMeth_check_sum += (((((((((((((s + i4) + Float.floatToIntBits(f3)) + by2) + i20) + i21) + l) + i22) + i23) + i24) + i25) + i26) + i27) + i28) + FuzzerUtils.checkSum(iArr);
     }
 
@@ -563,7 +563,7 @@ public class Test {
                                     default :
                                         Test.instanceCount = i2;
                                 }
-                            } 
+                            }
                             break;
                         case 18 :
                             i31 += ((int) (2.631F));

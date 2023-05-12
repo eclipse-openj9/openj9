@@ -148,7 +148,7 @@ public class Test {
                     }
                 }
             }
-        } 
+        }
         long meth_res = ((((((((((i8 + i9) + Double.doubleToLongBits(d1)) + i10) + i11) + i12) + by) + i13) + i14) + s) + FuzzerUtils.checkSum(iArr2)) + FuzzerUtils.checkSum(lArr1);
         iMeth1_check_sum += meth_res;
         return ((int) (meth_res));
@@ -273,7 +273,7 @@ public class Test {
                     }
                     i17 %= ((int) (((long) (d2)) | 1));
                 }
-            } 
+            }
         } catch (UserDefinedExceptionTest exc1) {
             iArr1 = iArr1;
         } finally {
@@ -409,7 +409,7 @@ public class Test {
                                 vMeth_check_sum += ((((((((((((((i5 + Float.floatToIntBits(f)) + i20) + i21) + i22) + i23) + i24) + Double.doubleToLongBits(d3)) + (b2 ? 1 : 0)) + i25) + i26) + i27) + i28) + s1) + FuzzerUtils.checkSum(sArr)) + FuzzerUtils.checkSum(iArr3);
                                 return;
                             }
-                        } 
+                        }
                         break;
                     case 108 :
                 }

@@ -82,7 +82,7 @@ public class Test {
                     if (b)
                         break;
 
-                } 
+                }
                 i3 *= ((int) (Test.instanceCount));
                 i3 <<= i2;
                 i3 = i4;
@@ -244,7 +244,7 @@ public class Test {
                             break;
                     }
                 }
-            } 
+            }
         }
         vMeth1_check_sum += (((((((((((Double.doubleToLongBits(d) + i9) + s1) + i10) + i11) + i12) + i13) + i14) + by1) + (b1 ? 1 : 0)) + i15) + Double.doubleToLongBits(FuzzerUtils.checkSum(dArr))) + FuzzerUtils.checkSum(bArr);
     }
@@ -282,7 +282,7 @@ public class Test {
             i16 = iFld;
             Test.iFld1 = ((int) (f4));
             f4 -= i;
-        } 
+        }
         Test.instanceCount >>>= s2;
         Test.iFld1 = 129;
         for (int i17 : Test.iArrFld) {
@@ -559,7 +559,7 @@ public class Test {
                     }
                 }
             }
-        } 
+        }
         FuzzerUtils.out.println((((("f f1 i24 = " + Float.floatToIntBits(f)) + ",") + Float.floatToIntBits(f1)) + ",") + i24);
         FuzzerUtils.out.println((((("i25 i26 i27 = " + i25) + ",") + i26) + ",") + i27);
         FuzzerUtils.out.println((((("i28 i29 i30 = " + i28) + ",") + i29) + ",") + i30);
@@ -606,7 +606,7 @@ public class Test {
                                     while (true) {
                                         ax$11 = ax$10.accept();
                                         ax$11.close();
-                                    } 
+                                    }
                                 } catch (IOException ax$12) {
                                 }
                             } catch (Throwable ax$13) {

@@ -267,7 +267,7 @@ public class Test {
                                         for (BlockingQueue ax$4 : ax$2) {
                                             ax$4.poll(1, TimeUnit.NANOSECONDS);
                                         }
-                                    } 
+                                    }
                                 } catch (Throwable ax$5) {
                                 } finally {
                                 }
@@ -303,7 +303,7 @@ public class Test {
                         i16 = ((int) (l1));
                     } while ((--i23) > 0 );
                     Test.instanceCount -= i16;
-                } 
+                }
             } else {
                 l1 -= ((long) (f1));
             }

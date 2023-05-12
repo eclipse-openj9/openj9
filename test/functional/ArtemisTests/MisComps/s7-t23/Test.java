@@ -67,7 +67,7 @@ public class Test {
                     Test.iArrFld[i6 + 1] >>= ((int) (l1));
                     i5 >>= i5;
                     l1 += ((i7 * i4) + i7) - l1;
-                } 
+                }
                 l1 -= 36484L;
                 b1 = b1;
                 i5 -= ((int) (10L));
@@ -81,7 +81,7 @@ public class Test {
                 i5 *= i5;
                 l += i6;
                 d -= Test.instanceCount;
-            } 
+            }
             for (i8 = 1; i8 < 4; i8++) {
                 boolean b2 = false;
                 s *= ((short) (l));
@@ -105,7 +105,7 @@ public class Test {
                                 i9 <<= i10;
                                 i9 = i8;
                                 Test.iArrFld[i10 - 1] = i4;
-                            } 
+                            }
                         }
                     }
                 case 105 :
@@ -320,7 +320,7 @@ public class Test {
                             break;
                     }
                 }
-            } 
+            }
         }
         vMeth_check_sum += (((((((((((((Float.floatToIntBits(f1) + i15) + i16) + i17) + i18) + by2) + i19) + i20) + l2) + i21) + i22) + i23) + i24) + i25) + Double.doubleToLongBits(FuzzerUtils.checkSum(fArr));
     }

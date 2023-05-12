@@ -77,7 +77,7 @@ public class Test {
                                 Test.iFld >>= i3;
                                 Test.instanceCount -= Test.iFld;
                                 Test.bFld = Test.bFld;
-                            } 
+                            }
                             switch (((i5 >>> 1) % 1) + 81) {
                                 case 81 :
                             }
@@ -457,7 +457,7 @@ public class Test {
                             i28 = 1;
                             while ((++i28) < 2) {
                                 iArr4[i24] |= i25;
-                            } 
+                            }
                             for (d2 = 1; d2 < 2; ++d2) {
                                 Test.iFld1 = i25;
                                 if (Test.bFld)
@@ -507,7 +507,7 @@ public class Test {
                                     Test.fFld1 -= i25;
                                     iArr4[i24 + 1] <<= ((int) (Test.lFld));
                                     Test.sArrFld[i24 - 1] *= ((short) (Test.instanceCount));
-                                } 
+                                }
                                 iArr4[i24 - 1] = Test.iFld;
                                 for (i33 = 1; i33 < 2; ++i33) {
                                     iArr4[i24 + 1] = ((int) (Test.fFld1));

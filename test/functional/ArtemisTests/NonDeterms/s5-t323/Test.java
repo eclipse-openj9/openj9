@@ -198,7 +198,7 @@ public class Test {
                             default :
                                 iArr1[i5 + 1] <<= i12;
                         }
-                    } 
+                    }
                 }
             }
         } while ((++i5) < 211 );
@@ -312,7 +312,7 @@ public class Test {
 
                 }
             }
-        } 
+        }
         long meth_res = (((((((((((i + i1) + i2) + s2) + i14) + i15) + i16) + i17) + Float.floatToIntBits(f2)) + by2) + i18) + FuzzerUtils.checkSum(byArr1)) + FuzzerUtils.checkSum(lArr1);
         lMeth_check_sum += meth_res;
         return ((long) (meth_res));
@@ -401,7 +401,7 @@ public class Test {
                                 i21 = 2855 / i21;
                             } catch (ArithmeticException a_e) {
                             }
-                        } 
+                        }
                         i23 += ((i20 * i22) + i24) - i22;
                         break;
                     case 58 :

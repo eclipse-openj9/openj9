@@ -344,7 +344,7 @@ public class Test {
                 return;
             }
             i1 -= i23;
-        } 
+        }
         i25 = 1;
         do {
             i26 = 1;
@@ -361,7 +361,7 @@ public class Test {
                     lArr2[i27 - 1] = Test.lFld;
                     i23 |= -17;
                 } while ((i27 -= 2) > 0 );
-            } 
+            }
         } while ((++i25) < 151 );
         vMeth_check_sum += (((((((((((s + i1) + Double.doubleToLongBits(d)) + i21) + i22) + i23) + i24) + i25) + i26) + Double.doubleToLongBits(d1)) + i27) + (b2 ? 1 : 0)) + FuzzerUtils.checkSum(lArr2);
     }

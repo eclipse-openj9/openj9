@@ -72,7 +72,7 @@ public class Test {
                 i7 *= i7;
                 Test.sFld = Test.byFld;
                 i9 = i9;
-            } 
+            }
             for (d2 = d; 5 > d2; d2++) {
                 Test.bArrFld[((int) (d2))] = b;
             }
@@ -80,7 +80,7 @@ public class Test {
                 i14 = 1;
                 while ((++i14) < 1) {
                     i9 = i10;
-                } 
+                }
                 i13 = ((int) (f2));
                 for (i15 = 1; i15 < 1; ++i15) {
                     i7 = ((int) (Test.instanceCount));
@@ -195,7 +195,7 @@ public class Test {
                         return;
                     }
                 }
-            } 
+            }
         } while ((++f3) < 198 );
         vMeth1_check_sum += ((((((((((((i4 + i5) + i6) + Float.floatToIntBits(f3)) + i18) + i19) + i20) + Float.floatToIntBits(f4)) + (b1 ? 1 : 0)) + i21) + i22) + FuzzerUtils.checkSum(iArr2)) + FuzzerUtils.checkSum(sArr)) + FuzzerUtils.checkSum(lArr2);
     }
@@ -291,7 +291,7 @@ public class Test {
                     }
                 }
             }
-        } 
+        }
         vMeth_check_sum += ((((((((((((((((i1 + Float.floatToIntBits(f1)) + s) + i2) + i3) + Double.doubleToLongBits(d3)) + i23) + i24) + i25) + i26) + i27) + i28) + Float.floatToIntBits(f5)) + (b2 ? 1 : 0)) + i29) + FuzzerUtils.checkSum(lArr)) + FuzzerUtils.checkSum(iArr)) + FuzzerUtils.checkSum(byArr);
     }
 

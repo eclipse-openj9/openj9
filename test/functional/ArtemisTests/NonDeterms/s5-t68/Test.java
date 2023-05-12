@@ -82,7 +82,7 @@ public class Test {
                     i3 += 3 + (i8 * i8);
                     Test.iArrFld[i8 - 1] = i5;
                     Test.instanceCount += 10;
-                } 
+                }
                 i6 >>= i7;
                 by += ((byte) (d2));
                 Test.instanceCount <<= i5;
@@ -126,7 +126,7 @@ public class Test {
                         break;
                 }
             }
-        } 
+        }
         vMeth_check_sum += ((((((((((((Float.floatToIntBits(f2) + i3) + i4) + Double.doubleToLongBits(d1)) + i5) + Double.doubleToLongBits(d2)) + i6) + i7) + i8) + by) + i9) + i10) + (b ? 1 : 0)) + FuzzerUtils.checkSum(lArr);
     }
 
@@ -240,7 +240,7 @@ public class Test {
                         i17 = ((int) (-2.35963));
                 }
             } while ((++i2) < 5 );
-        } 
+        }
         long meth_res = ((((((((((((i1 + Float.floatToIntBits(f1)) + i2) + i11) + (b1 ? 1 : 0)) + i12) + i13) + s1) + i14) + i15) + i16) + i17) + FuzzerUtils.checkSum(iArr)) + FuzzerUtils.checkSum(lArr1);
         iMeth_check_sum += meth_res;
         return ((int) (meth_res));

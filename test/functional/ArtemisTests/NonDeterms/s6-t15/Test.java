@@ -101,8 +101,8 @@ public class Test {
                                 while ((++i5) < 1) {
                                     i3 -= i4;
                                     f1 += ((long) (i5)) | ((long) (i5));
-                                } 
-                            } 
+                                }
+                            }
                             break;
                     }
                     break;
@@ -173,7 +173,7 @@ public class Test {
                         while (ax$8.hasNext()) {
                             Integer ax$9 = ((Integer) (ax$8.next()));
                             ax$8.set(new Integer(ax$9.intValue()));
-                        } 
+                        }
                     } catch (Throwable ax$10) {
                     } finally {
                     }

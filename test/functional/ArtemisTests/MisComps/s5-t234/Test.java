@@ -383,7 +383,7 @@ public class Test {
             } catch (ArithmeticException a_e) {
             }
             i1 += (-205) + (i * i);
-        } 
+        }
         fArr[(i1 >>> 1) % N] += fFld = iMeth(i, i);
         i1 = i;
         fArr[(i >>> 1) % N] *= 7063;

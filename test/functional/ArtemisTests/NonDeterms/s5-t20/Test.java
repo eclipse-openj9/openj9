@@ -141,7 +141,7 @@ public class Test {
         i20 = 1;
         while ((++i20) < 212) {
             Test.instanceCount *= ((long) (-57.89507));
-        } 
+        }
         for (i21 = 7; i21 < 202; i21 += 2) {
             i19 += -1;
         }
@@ -186,7 +186,7 @@ public class Test {
                             i29 += 9;
                             i19 += i30 | i22;
                             i29 >>= i28;
-                        } 
+                        }
                     }
                 case 88 :
                     i27 += i23;
@@ -194,7 +194,7 @@ public class Test {
                 default :
                     i19 *= ((int) (f1));
             }
-        } 
+        }
         long meth_res = ((((((((((((((Float.floatToIntBits(f1) + i19) + i20) + i21) + i22) + i23) + i24) + i25) + i26) + i27) + Double.doubleToLongBits(d1)) + i28) + i29) + by) + i30) + FuzzerUtils.checkSum(lArr2);
         lMeth_check_sum += meth_res;
         return ((long) (meth_res));
@@ -224,7 +224,7 @@ public class Test {
             i33 = 1;
             while ((++i33) < 3) {
                 i32 /= ((int) (-48.15552));
-            } 
+            }
         }
         f2 *= ((float) (d2));
         i32 = ((int) (f2));

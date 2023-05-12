@@ -291,12 +291,12 @@ public class Test {
                             continue;
 
                         Test.instanceCount -= Test.byFld;
-                    } 
+                    }
                 }
             } else {
                 Test.bFld = Test.bFld;
             }
-        } 
+        }
         vMeth_check_sum += ((((((((((Double.doubleToLongBits(d1) + i15) + i16) + i17) + Float.floatToIntBits(f1)) + i18) + i19) + i20) + Float.floatToIntBits(f2)) + i21) + i22) + FuzzerUtils.checkSum(iArr1);
     }
 

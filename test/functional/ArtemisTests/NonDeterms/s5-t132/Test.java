@@ -208,7 +208,7 @@ public class Test {
             while ((--i17) > 0) {
                 iArr1[i17 - 1] <<= i7;
                 i7 = ((int) (Test.dFld));
-            } 
+            }
             for (i18 = 1; i18 < 4; ++i18) {
                 i19 = i19;
                 for (i20 = 1; i20 < 2; ++i20) {
@@ -365,7 +365,7 @@ public class Test {
                             Test.instanceCount += ((i4 * Test.byFld) + Test.byFld) - Test.instanceCount;
                     }
                 }
-            } 
+            }
         } else {
             l2 = -8;
         }

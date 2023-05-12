@@ -162,7 +162,7 @@ public class Test {
                         default :
                             f += i12;
                     }
-                } 
+                }
             }
         }
         vMeth_check_sum += ((((((((((s + l1) + by) + i7) + i8) + Float.floatToIntBits(f)) + Double.doubleToLongBits(d2)) + i10) + Float.floatToIntBits(f1)) + i11) + i12) + i13;
@@ -415,7 +415,7 @@ public class Test {
                                                 i18 <<= ((int) (l3));
                                                 break;
                                         }
-                                    } 
+                                    }
                                 } else if (b2) {
                                     d1 = i1;
                                 } else {

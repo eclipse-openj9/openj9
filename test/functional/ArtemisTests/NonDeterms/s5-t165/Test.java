@@ -291,7 +291,7 @@ public class Test {
                         Test.instanceCount = Test.instanceCount;
                 }
             }
-        } 
+        }
         long meth_res = ((((((((l1 + i) + i15) + (b ? 1 : 0)) + i16) + i17) + i18) + l2) + i19) + FuzzerUtils.checkSum(bArr);
         iMeth_check_sum += meth_res;
         return ((int) (meth_res));
@@ -640,7 +640,7 @@ public class Test {
                     }
                 }
             }
-        } 
+        }
         FuzzerUtils.out.println((((("d3 f i27 = " + Double.doubleToLongBits(d3)) + ",") + Float.floatToIntBits(f)) + ",") + i27);
         FuzzerUtils.out.println((((("i28 i29 d4 = " + i28) + ",") + i29) + ",") + Double.doubleToLongBits(d4));
         FuzzerUtils.out.println((((("i30 i31 i32 = " + i30) + ",") + i31) + ",") + i32);

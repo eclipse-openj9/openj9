@@ -108,7 +108,7 @@ public class Test {
                     }
                 }
             } while ((++i7) < 4 );
-        } 
+        }
         long meth_res = ((((((((((((by + i5) + i6) + Float.floatToIntBits(f)) + i7) + i8) + i9) + s) + i10) + i11) + l) + Double.doubleToLongBits(d1)) + (b ? 1 : 0)) + FuzzerUtils.checkSum(iArr1);
         iMeth1_check_sum += meth_res;
         return ((int) (meth_res));
@@ -184,7 +184,7 @@ public class Test {
                                 Test.iFld = ((int) (2.884F));
                                 i4 = i12;
                                 i4 >>>= i4;
-                            } 
+                            }
                             i4 += i13;
                             break;
                         case 83 :

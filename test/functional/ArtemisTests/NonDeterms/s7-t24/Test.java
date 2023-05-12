@@ -123,7 +123,7 @@ public class Test {
                                 i11 = 1;
                                 while ((++i11) < 1) {
                                     s = by;
-                                } 
+                                }
                                 i1 += i8;
                                 i1 += i11;
                                 i5 = i1;

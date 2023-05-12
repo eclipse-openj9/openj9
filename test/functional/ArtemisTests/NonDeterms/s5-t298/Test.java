@@ -127,7 +127,7 @@ public class Test {
                                 Test.instanceCount ^= i4;
                                 by = ((byte) (-52555));
                                 Test.instanceCount ^= i8;
-                            } 
+                            }
                             i9 -= i8;
                             s1 <<= ((short) (i5));
                             Test.instanceCount <<= -121;
@@ -157,7 +157,7 @@ public class Test {
                         Test.instanceCount += i6;
                 }
             }
-        } 
+        }
         vMeth1_check_sum += (((((((((((((b ? 1 : 0) + i4) + i5) + s1) + i6) + Float.floatToIntBits(f)) + i7) + i8) + i9) + i10) + by) + i11) + FuzzerUtils.checkSum(iArr)) + FuzzerUtils.checkSum(lArr1);
     }
 

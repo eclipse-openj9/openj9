@@ -98,9 +98,9 @@ public class Test {
                             Test.iArrFld[i4] = Test.iFld1;
                             Test.iArrFld = iArr;
                     }
-                } 
+                }
             }
-        } 
+        }
         vMeth1_check_sum += (((((((i1 + i2) + i3) + i4) + by) + Double.doubleToLongBits(d1)) + Float.floatToIntBits(f)) + FuzzerUtils.checkSum(lArr)) + FuzzerUtils.checkSum(iArr);
     }
 
@@ -268,7 +268,7 @@ public class Test {
                     Test.iFld1 &= Test.iFld1;
                     Test.instanceCount += i19;
                     Test.iFld += ((i19 * f2) + Test.instanceCount) - s1;
-                } 
+                }
                 Test.instanceCount <<= Test.instanceCount;
                 i16 += ((i17 * i15) + f2) - i17;
             }
@@ -295,7 +295,7 @@ public class Test {
                     default :
                         i18 += ((int) (Test.instanceCount));
                 }
-            } 
+            }
         }
         vMeth_check_sum += ((((((((((((i15 + i16) + i17) + i18) + i19) + s1) + Float.floatToIntBits(f2)) + by1) + i20) + i21) + i22) + (b1 ? 1 : 0)) + Double.doubleToLongBits(FuzzerUtils.checkSum(dArr1))) + FuzzerUtils.checkSum(lArr2);
     }

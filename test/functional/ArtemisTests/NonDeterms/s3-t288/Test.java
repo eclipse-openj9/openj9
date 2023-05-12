@@ -605,4 +605,3 @@ public class Test {
 // DEBUG  Depth = 3
 // DEBUG  Classes = 1
 // DEBUG  static objects = {}
-

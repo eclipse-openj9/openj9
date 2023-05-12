@@ -229,7 +229,7 @@ public class Test {
                         } else {
                             Test.iFld = i8;
                         }
-                    } 
+                    }
                 } else if (b1) {
                     Test.iFld = -9;
                 } else {
@@ -386,7 +386,7 @@ public class Test {
                         Test.dFld += 16672;
                         break;
                 }
-            } 
+            }
         }
         long meth_res = ((((((((((((((i1 + l) + i19) + i20) + i21) + i22) + s2) + by1) + Float.floatToIntBits(f4)) + i23) + i24) + i25) + l4) + FuzzerUtils.checkSum(iArr)) + FuzzerUtils.checkSum(lArr1)) + Double.doubleToLongBits(FuzzerUtils.checkSum(fArr1));
         iMeth_check_sum += meth_res;

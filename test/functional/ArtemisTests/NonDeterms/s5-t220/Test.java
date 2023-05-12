@@ -141,7 +141,7 @@ public class Test {
                             default :
                                 Test.iFld1 *= ((int) (-138L));
                         }
-                    } 
+                    }
                 } else {
                     Test.fFld += -67;
                 }
@@ -715,7 +715,7 @@ public class Test {
                                     default :
                                         Test.byFld = ((byte) (Test.instanceCount));
                                 }
-                            } 
+                            }
                         } else {
                             i25 += ((i24 * l2) + l2) - Test.iFld3;
                         }
@@ -758,7 +758,7 @@ public class Test {
                                         if (Integer.valueOf(iFld2) != Integer.valueOf(iFld2));
                                     }
                                     iFld2++;
-                                } 
+                                }
                             } catch (Throwable ax$27) {
                             } finally {
                             }

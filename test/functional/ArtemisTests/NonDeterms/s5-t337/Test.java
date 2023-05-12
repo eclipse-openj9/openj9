@@ -136,7 +136,7 @@ public class Test {
                     } else {
                         Test.instanceCount <<= i3;
                     }
-                } 
+                }
             }
         }
         long meth_res = ((((((((i3 + i4) + i5) + i6) + Double.doubleToLongBits(d)) + s) + by1) + i7) + FuzzerUtils.checkSum(iArr)) + FuzzerUtils.checkSum(iArr1);
@@ -211,7 +211,7 @@ public class Test {
                             Test.iFld -= i8;
                             l1 = i8;
                             l1 = l1;
-                        } 
+                        }
                         Test.iFld += i10;
                     } while ((i10 += 2) < 3 );
                     for (i14 = i8; i14 < 3; i14++) {
@@ -349,14 +349,14 @@ public class Test {
                     if (Test.bFld)
                         continue;
 
-                } 
+                }
                 f3 = 1;
                 while ((--f3) > 0) {
                     Test.dFld += Test.instanceCount;
                     l -= i21;
                     Test.iFld = ((int) (13L));
                     l -= s2;
-                } 
+                }
             }
         }
         vMeth_check_sum += (((((((((((i2 + l) + Float.floatToIntBits(f2)) + i18) + i19) + i20) + i21) + Double.doubleToLongBits(d1)) + s2) + i22) + i23) + l2) + Float.floatToIntBits(f3);
@@ -505,7 +505,7 @@ public class Test {
                                 } else {
                                     i24 += i;
                                 }
-                            } 
+                            }
                             break;
                         case 141 :
                             i1 = ((int) (Test.lFld));

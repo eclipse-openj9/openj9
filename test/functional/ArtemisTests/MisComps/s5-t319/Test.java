@@ -293,7 +293,7 @@ public class Test {
                                     break;
                             }
                         }
-                    } 
+                    }
                     break;
             }
         }
@@ -552,7 +552,7 @@ public class Test {
                     i22 &= -23435;
                     Test.instanceCount = Test.byFld;
                     iArrFld[i26 + 1] = i21;
-                } 
+                }
                 if (b3) {
                     Test.iFld1 <<= ((int) (-6L));
                     i25 = ((int) (3L));

@@ -134,7 +134,7 @@ public class Test {
                     default :
                         i7 += i5 | i4;
                 }
-            } 
+            }
         }
         vMeth1_check_sum += ((((((((((((Double.doubleToLongBits(d1) + i4) + i5) + i6) + i7) + by) + i8) + i9) + i10) + Double.doubleToLongBits(d2)) + s1) + FuzzerUtils.checkSum(iArr1)) + FuzzerUtils.checkSum(byArr)) + Double.doubleToLongBits(FuzzerUtils.checkSum(dArr1));
     }

@@ -213,7 +213,7 @@ public class Test {
                 i22 = 1;
                 while ((++i22) < 2) {
                     i19 += ((i22 * i21) + i22) - f3;
-                } 
+                }
                 i23 = 1;
                 do {
                     i17 -= i17;
@@ -456,7 +456,7 @@ public class Test {
                 if (Test.bFld)
                     break;
 
-            } 
+            }
             Test.dFld = i27;
             i29 = 1;
             do {
@@ -570,8 +570,8 @@ public class Test {
                             i3 *= ((int) (Test.instanceCount));
                     }
                 }
-            } 
-        } 
+            }
+        }
         FuzzerUtils.out.println((((("f i i1 = " + Float.floatToIntBits(f)) + ",") + i) + ",") + i1);
         FuzzerUtils.out.println((((("i2 i3 d = " + i2) + ",") + i3) + ",") + Double.doubleToLongBits(d));
         FuzzerUtils.out.println((((("i4 i27 i28 = " + i4) + ",") + i27) + ",") + i28);

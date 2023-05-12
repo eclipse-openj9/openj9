@@ -226,7 +226,7 @@ public class Test {
                                 } catch (ArithmeticException a_e) {
                                 }
                             }
-                        } 
+                        }
                     }
                     break;
                 case 77 :
@@ -322,9 +322,9 @@ public class Test {
                     } else {
                         i27 *= i28;
                     }
-                } 
+                }
             }
-        } 
+        }
         vMeth_check_sum += (((((((((((((i + Double.doubleToLongBits(d)) + l) + Float.floatToIntBits(f2)) + i24) + i25) + i26) + i27) + i28) + i29) + i30) + Double.doubleToLongBits(d4)) + i31) + i32) + FuzzerUtils.checkSum(lArr2);
     }
 
@@ -466,7 +466,7 @@ public class Test {
                         break;
                 }
                 lArr3[i34 + 1] = Test.sFld;
-            } 
+            }
             Test.iFld = i39;
             i38 += i33;
         } while ((++i33) < 90 );

@@ -254,7 +254,7 @@ public class Test {
                     Test.instanceCount = i15;
                     Test.iArrFld[i14] = ((int) (f1));
                     i -= i13;
-                } 
+                }
             }
             Test.instanceCount = 436451243L;
             for (l = 1; l < 2; l++) {
@@ -414,7 +414,7 @@ public class Test {
                                 break;
                         }
                     }
-                } 
+                }
             }
         } catch (UserDefinedExceptionTest exc1) {
             Test.iArrFld[(i19 >>> 1) % N] <<= ((int) (Test.instanceCount));

@@ -239,7 +239,7 @@ public class Test {
                     i18 >>>= s3;
                     break;
             }
-        } 
+        }
         vMeth1_check_sum += ((((((((((((((l + Float.floatToIntBits(f1)) + i5) + Double.doubleToLongBits(d)) + i6) + i17) + i18) + s3) + i19) + i20) + i21) + FuzzerUtils.checkSum(sArr1)) + FuzzerUtils.checkSum(iArr1)) + Double.doubleToLongBits(FuzzerUtils.checkSum(fArr))) + FuzzerUtils.checkSum(byArr)) + Double.doubleToLongBits(FuzzerUtils.checkSum(dArr1));
     }
 
@@ -508,7 +508,7 @@ public class Test {
                                     }
                                 }
                             }
-                        } 
+                        }
                         break;
                     case 63 :
                         i31 += i34;
@@ -526,7 +526,7 @@ public class Test {
                         Test.byFld += ((byte) (2479 + (i33 * i33)));
                         break;
                 }
-            } 
+            }
         }
         FuzzerUtils.out.println((((("i29 f4 i30 = " + i29) + ",") + Float.floatToIntBits(f4)) + ",") + i30);
         FuzzerUtils.out.println((((("i31 l1 i32 = " + i31) + ",") + l1) + ",") + i32);

@@ -165,7 +165,7 @@ public class Test {
                 Test.fFld += i1;
                 Test.sFld += ((short) (i1));
                 Test.fFld = 111;
-            } 
+            }
             i1 <<= i1;
             Test.sFld = ((short) (Test.instanceCount));
             i2 -= i1;
@@ -177,7 +177,7 @@ public class Test {
                 Test.fFld = -179310148L;
             }
             i1 = ((int) (26928L));
-        } 
+        }
         for (i17 = 4; i17 < 125; i17++) {
             i2 -= ((int) (d1));
             by3 += ((byte) (8 + (i17 * i17)));
@@ -361,7 +361,7 @@ public class Test {
                                         iFld = (-33367) % iFld;
                                     } catch (ArithmeticException a_e) {
                                     }
-                                } 
+                                }
                                 break;
                             case 29 :
                                 d2 = -145;
@@ -450,7 +450,7 @@ public class Test {
                         iArr3[i23][i23] >>= iFld;
                     case 120 :
                 }
-            } 
+            }
         }
         FuzzerUtils.out.println((((("by i23 i24 = " + by) + ",") + i23) + ",") + i24);
         FuzzerUtils.out.println((((("i25 d2 f1 = " + i25) + ",") + Double.doubleToLongBits(d2)) + ",") + Float.floatToIntBits(f1));

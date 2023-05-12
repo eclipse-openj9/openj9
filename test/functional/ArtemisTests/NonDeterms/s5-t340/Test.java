@@ -147,7 +147,7 @@ public class Test {
                         default :
                             iArr[i3] = i4;
                     }
-                } 
+                }
             }
         }
         vMeth_check_sum += ((((((((((((l1 + by) + i2) + Double.doubleToLongBits(d)) + i3) + i4) + i5) + i6) + i7) + Float.floatToIntBits(f1)) + i8) + FuzzerUtils.checkSum(lArr)) + FuzzerUtils.checkSum(iArr)) + Double.doubleToLongBits(FuzzerUtils.checkSum(fArr));
@@ -465,7 +465,7 @@ public class Test {
                 i28 += ((int) (f3));
                 Test.iFld += ((i31 * Test.iFld) + Test.iFld1) - Test.iFld;
                 Test.lArrFld[((int) (d2 - 1))] = ((long) (Test.dFld));
-            } 
+            }
             i30 = ((int) (10691L));
             for (i32 = 1; i32 < 23; ++i32) {
                 Test.lFld += -6169;
@@ -525,7 +525,7 @@ public class Test {
                     Test.sFld *= ((short) (Test.dFld));
                 }
             }
-        } 
+        }
         FuzzerUtils.out.println((((("f3 i26 i27 = " + Float.floatToIntBits(f3)) + ",") + i26) + ",") + i27);
         FuzzerUtils.out.println((((("d2 i28 i29 = " + Double.doubleToLongBits(d2)) + ",") + i28) + ",") + i29);
         FuzzerUtils.out.println((((("i30 i31 i32 = " + i30) + ",") + i31) + ",") + i32);

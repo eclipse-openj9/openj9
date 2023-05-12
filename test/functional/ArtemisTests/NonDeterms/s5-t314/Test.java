@@ -454,7 +454,7 @@ public class Test {
             i38 = ((int) (Test.instanceCount));
             Test.instanceCount = i32;
             i33 = ((int) (Test.instanceCount));
-        } 
+        }
         FuzzerUtils.out.println((((("i28 i29 f4 = " + i28) + ",") + i29) + ",") + Float.floatToIntBits(f4));
         FuzzerUtils.out.println((((("i30 i31 d2 = " + i30) + ",") + i31) + ",") + Double.doubleToLongBits(d2));
         FuzzerUtils.out.println((((("i32 i33 i34 = " + i32) + ",") + i33) + ",") + i34);

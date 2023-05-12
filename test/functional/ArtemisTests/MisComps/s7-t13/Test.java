@@ -146,7 +146,7 @@ public class Test {
                             Test.byArrFld[i9 + 1] += ((byte) (Test.fFld));
                             i6 *= ((int) (Test.instanceCount));
                             i10 = ((int) (-42195L));
-                        } 
+                        }
                         break;
                     case 16 :
                         Test.instanceCount -= -11829;
@@ -265,7 +265,7 @@ public class Test {
                     }
                     i21 ^= i14;
                     Test.instanceCount = i4;
-                } 
+                }
             }
         } else if (true) {
             i15 += ((int) (Test.instanceCount));

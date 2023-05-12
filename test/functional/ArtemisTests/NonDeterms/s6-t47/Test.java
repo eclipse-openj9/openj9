@@ -142,9 +142,9 @@ public class Test {
                                     iArr[i6 + 1][i6 - 1] = -56727;
                             }
                     }
-                } 
+                }
             }
-        } 
+        }
         vMeth_check_sum += (((((((((Float.floatToIntBits(f1) + i1) + i2) + i3) + i4) + i5) + i6) + s) + Double.doubleToLongBits(FuzzerUtils.checkSum(fArr))) + FuzzerUtils.checkSum(lArr1)) + FuzzerUtils.checkSum(iArr);
     }
 
@@ -371,7 +371,7 @@ public class Test {
                     i17 += ((int) (d3 * d3));
                     Test.instanceCount = Test.instanceCount;
                 }
-            } 
+            }
             d1 += 62;
             Test.instanceCount = i18;
             i24 += i18 * i18;

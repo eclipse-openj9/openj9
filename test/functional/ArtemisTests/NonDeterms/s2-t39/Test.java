@@ -756,4 +756,3 @@ class UserDefinedExceptionTest extends RuntimeException {
 // DEBUG  Depth = 3
 // DEBUG  Classes = 1
 // DEBUG  static objects = {}
-

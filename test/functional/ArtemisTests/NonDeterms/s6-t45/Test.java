@@ -256,7 +256,7 @@ public class Test {
                                         Test.iFld *= ((int) (-2987537068L));
                                 }
                             }
-                        } 
+                        }
                         break;
                     case 110 :
                         i2 += i32;

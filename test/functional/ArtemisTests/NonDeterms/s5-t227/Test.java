@@ -89,7 +89,7 @@ public class Test {
                     iArr2[i3] &= i6;
                     Test.fFld -= i9;
                     Test.sFld += ((short) (((i10 * i7) + i6) - i6));
-                } 
+                }
                 i9 *= i8;
                 i4 *= i10;
                 d = -2852;
@@ -324,7 +324,7 @@ public class Test {
                     by2 |= ((byte) (i21));
                     i19 -= ((int) (Test.instanceCount));
                     Test.instanceCount += Test.instanceCount;
-                } 
+                }
                 i19 -= i16;
                 i19 += ((int) (Test.fFld));
                 i19 >>= i17;

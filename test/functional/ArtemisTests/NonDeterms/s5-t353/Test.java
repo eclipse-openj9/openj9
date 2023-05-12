@@ -140,7 +140,7 @@ public class Test {
                     iArrFld[i11 + 1] = Test.iFld;
                     i8 = ((int) (1.22467));
                     i8 |= -232;
-                } 
+                }
                 i1 += 28798;
                 i12 = 1;
                 do {
@@ -438,11 +438,11 @@ public class Test {
                     if (false)
                         continue;
 
-                } 
+                }
                 i24 ^= ((int) (Test.instanceCount));
                 iArrFld[i19 + 1] <<= i20;
                 i27 += ((int) (f3 * f3));
-            } 
+            }
         }
         FuzzerUtils.out.println((((("i19 i20 i21 = " + i19) + ",") + i20) + ",") + i21);
         FuzzerUtils.out.println((((("i22 i23 i24 = " + i22) + ",") + i23) + ",") + i24);

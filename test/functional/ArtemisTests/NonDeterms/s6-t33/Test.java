@@ -57,7 +57,7 @@ public class Test {
                         while (ax$11.get()) {
                             if ((System.nanoTime() - instanceCount) >= TimeUnit.SECONDS.toNanos(10)) {
                             }
-                        } 
+                        }
                     } catch (Throwable ax$12) {
                     } finally {
                     }
@@ -119,7 +119,7 @@ public class Test {
                     i5 += ((int) (f));
                     Test.byFld += ((byte) ((-6) + (i9 * i9)));
                 } while ((++i9) < 1 );
-            } 
+            }
         } while ((++i7) < 197 );
         vMeth_check_sum += ((((((i4 + i5) + i6) + i7) + i8) + Float.floatToIntBits(f)) + i9) + FuzzerUtils.checkSum(iArr);
     }
@@ -226,7 +226,7 @@ public class Test {
                 iFld <<= -19995;
                 fFld -= 0.544F;
                 fFld *= i1;
-            } 
+            }
             Test.instanceCount = i18;
             for (i22 = 1; 10 > i22; i22++) {
                 Test.sFld = ((short) (i18));
@@ -493,7 +493,7 @@ public class Test {
         i = 201;
         while ((i -= 2) > 0) {
             fArr[i] -= iMeth(i);
-        } 
+        }
         for (i27 = 3; i27 < 117; ++i27) {
             switch (((13 >>> 1) % 8) + 68) {
                 case 68 :

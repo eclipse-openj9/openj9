@@ -211,7 +211,7 @@ public class Test {
                 i1 += i13 * i13;
             }
             Test.instanceCount -= ((long) (Test.fFld));
-        } 
+        }
         Test.iFld = i12;
         Test.iFld >>>= s;
         vMeth1_check_sum += ((((((l1 + i1) + l2) + (b1 ? 1 : 0)) + i12) + i13) + i14) + s;
@@ -284,7 +284,7 @@ public class Test {
                             i19 = 1;
                             while ((++i19) < 6) {
                                 Test.lArrFld[((int) (d1 - 1))] -= ((long) (f));
-                            } 
+                            }
                             i18 -= ((int) (f));
                             Test.iFld = ((int) (Test.fFld));
                             if (b2)

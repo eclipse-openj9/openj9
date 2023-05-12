@@ -425,7 +425,7 @@ public class Test {
                     }
                 }
             }
-        } 
+        }
         long meth_res = ((((((((i1 + i17) + i18) + i19) + (b3 ? 1 : 0)) + i20) + i21) + i22) + l2) + FuzzerUtils.checkSum(sArr);
         lMeth_check_sum += meth_res;
         return ((long) (meth_res));
@@ -559,7 +559,7 @@ public class Test {
                                     i25 &= 6;
                                     break;
                             }
-                        } 
+                        }
                 }
             }
         } while ((i23 += 3) < 179 );
