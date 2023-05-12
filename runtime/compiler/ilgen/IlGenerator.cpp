@@ -790,7 +790,7 @@ TR_J9ByteCodeIlGenerator::genExceptionHandlers(TR::Block * lastBlock)
    for (auto handlerInfoIter = _tryCatchInfo.begin(); handlerInfoIter != _tryCatchInfo.end(); ++handlerInfoIter)
       {
       TryCatchInfo & handlerInfo = *handlerInfoIter;
-      uint16_t firstIndex = handlerInfo._handlerIndex;
+      int32_t firstIndex = handlerInfo._handlerIndex;
 
       // Two exception data entries can have ranges pointing at the same handler.
       // If the types are different then we have to clone the handler.
@@ -1004,15 +1004,18 @@ TR_J9ByteCodeIlGenerator::genExceptionHandlers(TR::Block * lastBlock)
          }
       TR::Block *catchBlock   = handlerInfo._catchBlock;
       TR::Block *restartBlock = _blocksToInline? _blocksToInline->getGeneratedRestartTree()->getEnclosingBlock() : NULL;
-      uint8_t precedingOpcode = _code[handlerInfo._startIndex-1];
-      TR_J9ByteCode precedingBytecode = convertOpCodeToByteCodeEnum(precedingOpcode);
-      uint8_t lastOpcode = _code[handlerInfo._endIndex];
-      TR_J9ByteCode lastBytecode = convertOpCodeToByteCodeEnum(lastOpcode);
-      bool isSynchronizedRegion = (precedingBytecode == J9BCmonitorenter && lastBytecode == J9BCmonitorexit);
-      if (isSynchronizedRegion) // monitorenter preceding try region that ends in monitorexit means synchronized
-         catchBlock->setIsSynchronizedHandler();
+      // Checking for a preceding J9BCmonitorenter only make sense when the try region starts at a bytecode index above 0
+      if (handlerInfo._startIndex > 0)
+         {
+         uint8_t precedingOpcode = _code[handlerInfo._startIndex-1];
+         TR_J9ByteCode precedingBytecode = convertOpCodeToByteCodeEnum(precedingOpcode);
+         uint8_t lastOpcode = _code[handlerInfo._endIndex];
+         TR_J9ByteCode lastBytecode = convertOpCodeToByteCodeEnum(lastOpcode);
+         if (precedingBytecode == J9BCmonitorenter && lastBytecode == J9BCmonitorexit)
+            catchBlock->setIsSynchronizedHandler(); // monitorenter preceding try region that ends in monitorexit means synchronized
+         }
 
-      for (uint16_t j = handlerInfo._startIndex; j <= handlerInfo._endIndex; ++j)
+      for (int32_t j = handlerInfo._startIndex; j <= handlerInfo._endIndex; ++j)
          if (blocks(j) && cfg()->getNodes().find(blocks(j)))
             {
             if (blocks(j) == catchBlock)

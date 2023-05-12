@@ -853,8 +853,7 @@ TR_J9EstimateCodeSize::processBytecodeAndGenerateCFG(TR_CallTarget *calltarget, 
       flags[end + 1].set(InterpreterEmulator::BytecodePropertyFlag::bbStart);
       flags[handler].set(InterpreterEmulator::BytecodePropertyFlag::bbStart);
 
-      tryCatchInfo[i].initialize((uint16_t) start, (uint16_t) end,
-            (uint16_t) handler, (uint32_t) type);
+      tryCatchInfo[i].initialize(start, end, handler, (uint32_t) type);
       }
 
       calltarget->_cfg = new (cfgRegion) TR::CFG(comp(), calltarget->_calleeSymbol, cfgRegion);
