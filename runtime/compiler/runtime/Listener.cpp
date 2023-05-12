@@ -33,7 +33,7 @@
 #include <sys/un.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h> /// gethostname, read, write
+#include <unistd.h> // gethostname, read, write
 #include "control/CompilationRuntime.hpp"
 #include "env/TRMemory.hpp"
 #include "env/VMJ9.h"

@@ -1973,7 +1973,7 @@ TR_CISCTransformer::isInsideOfFastVersionedLoop(TR_RegionStructure *l)
    TR_RegionStructure *parent = l;
    while(true)
       {
-      if (////parent->getVersionedLoop() &&
+      if (//parent->getVersionedLoop() &&
           !parent->getEntryBlock()->isCold()
 #if 0   // We should optimize a fail path of value profiling
           && !parent->getEntryBlock()->isRare()
@@ -3005,7 +3005,7 @@ int32_t TR_CISCTransformer::perform()
    {
 
    //TO_BE_ENABLED
-   ///return 0;
+   //return 0;
 
    static int enable = -1;
    if (enable < 0)
@@ -4849,7 +4849,7 @@ TR_CISCTransformer::analyzeArrayHeaderConst()
                                     invalidate = false;
                                     found = true;
                                     break;
-                                    ////goto find;
+                                    //goto find;
                                     }
                                  }
                               if (found)
@@ -4858,7 +4858,7 @@ TR_CISCTransformer::analyzeArrayHeaderConst()
                            }
                         }
                      }
-                  ////find:;
+                  //find:;
 
                   if (invalidate) break;
                   else

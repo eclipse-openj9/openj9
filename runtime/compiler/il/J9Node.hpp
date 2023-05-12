@@ -71,9 +71,9 @@ public:
    uint32_t getSize();
 
    bool dontEliminateStores(bool isForLocalDeadStore = false);
-
-   /// given a direct call to Object.clone node, return the class of the receiver.
-   ///
+  /**
+   * given a direct call to Object.clone node, return the class of the receiver.
+   */
    TR_OpaqueClassBlock* getCloneClassInNode();
 
    /**
@@ -381,12 +381,14 @@ public:
 
 protected:
 
-   /// \note update the following routines when adding field to DecimalInfo
-   ///       isDecimalSizeAndShapeEquivalent()
-   ///       isSignStateEquivalent()
-   ///       resetDecimalSignFlags()
-   ///       transferSignState()
-   /// Also be sure to initialize any new field in the Node.cpp constructor
+  /**
+   * \note update the following routines when adding field to DecimalInfo
+   *       isDecimalSizeAndShapeEquivalent()
+   *       isSignStateEquivalent()
+   *       resetDecimalSignFlags()
+   *       transferSignState()
+   * Also be sure to initialize any new field in the Node.cpp constructor
+   */
    struct DecimalInfo
       {
       uint32_t  _decimalPrecision                  : 6;  ///< range 0->63
@@ -441,8 +443,8 @@ protected:
 private:
 
 #ifdef TR_TARGET_S390
-   ///< hasStorageReferenceHint()
-   TR_StorageReference * _storageReferenceHint;
+   //< hasStorageReferenceHint()
+      TR_StorageReference * _storageReferenceHint;     ///< hasStorageReferenceHint()
 #endif
 
    // Holds DecimalInfo and BCDFlags

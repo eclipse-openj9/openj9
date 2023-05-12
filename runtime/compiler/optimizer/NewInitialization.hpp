@@ -35,19 +35,20 @@ namespace TR { class ResolvedMethodSymbol; }
 namespace TR { class TreeTop; }
 template <class T> class TR_Array;
 template <class T> class TR_ScratchList;
-
-/// Attempts to skip zero initializations of objects where possible. Basically
-/// scans forward in the basic block from the point of the allocation and tries
-/// to find explicit definitions of fields (say in constructors) that occur
-/// before any use of the field. In these cases the zero initialization of
-/// fields (required according to Java spec, so no field is uninitialized) can
-/// be skipped. Note that for reference fields the presence of a GC point
-/// before any user-specified definition means that the field must be zero
-/// initialized. Peeking inside calls is done to maximize the number of explicit
-/// field initializations seen by the analysis. In addition, for some special
-/// array allocations (e.g. char arrays that are used by String, often do not
-/// need zero initialization as they are filled in by arraycopy calls
-/// immediately), we can skip zero initializations completely.
+/**
+ * Attempts to skip zero initializations of objects where possible. Basically
+ * scans forward in the basic block from the point of the allocation and tries
+ * to find explicit definitions of fields (say in constructors) that occur
+ * before any use of the field. In these cases the zero initialization of
+ * fields (required according to Java spec, so no field is uninitialized) can
+ * be skipped. Note that for reference fields the presence of a GC point
+ * before any user-specified definition means that the field must be zero
+ * initialized. Peeking inside calls is done to maximize the number of explicit
+ * field initializations seen by the analysis. In addition, for some special
+ * array allocations (e.g. char arrays that are used by String, often do not
+ * need zero initialization as they are filled in by arraycopy calls
+ * immediately), we can skip zero initializations completely.
+ */
 class TR_NewInitialization : public TR::Optimization
    {
    public:

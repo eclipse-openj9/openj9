@@ -1985,12 +1985,13 @@ TR_J9Method::TR_J9Method()
    {
    }
 #endif /* defined(J9VM_OPT_JITSERVER) */
-
 //////////////////////////////
 //
 //  TR_ResolvedMethod
 //
 /////////////////////////
+
+
 
 static bool supportsFastJNI(TR_FrontEnd *fe)
    {
@@ -4591,7 +4592,7 @@ TR_ResolvedJ9Method::setRecognizedMethodInfo(TR::RecognizedMethod rm)
             case TR::org_apache_harmony_luni_platform_OSMemory_putShort_JS_V:
             case TR::sun_misc_Unsafe_putInt_JI_V:
             case TR::org_apache_harmony_luni_platform_OSMemory_putInt_JI_V:
-            case TR::sun_misc_Unsafe_putLong_JJ_V: ///////////////////////////
+            case TR::sun_misc_Unsafe_putLong_JJ_V:
             case TR::org_apache_harmony_luni_platform_OSMemory_putLong_JJ_V:
             case TR::sun_misc_Unsafe_putFloat_JF_V:
             case TR::org_apache_harmony_luni_platform_OSMemory_putFloat_JF_V:
@@ -7409,10 +7410,10 @@ void TR_J9MethodParameterIterator::advanceCursor()
    _nextIncrBy = 0;
    return;
    }
-
 //////////////////////////////////////////////////////////
 // ILGen
 //////////////////////////////////////////////////////////
+
 
 static J9::MethodHandleThunkDetails *
 getMethodHandleThunkDetails(TR_J9ByteCodeIlGenerator *ilgen, TR::Compilation *comp, TR::SymbolReference *macro)

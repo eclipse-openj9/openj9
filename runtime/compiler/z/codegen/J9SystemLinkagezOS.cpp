@@ -63,7 +63,7 @@ J9::Z::zOSSystemLinkage::zOSSystemLinkage(TR::CodeGenerator * cg)
 /////////////////////////////////////////////////////////////////////////////////
 // J9::Z::zOSSystemLinkage::generateInstructionsForCall - Front-end
 //  customization of callNativeFunction
-////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////
 void
 J9::Z::zOSSystemLinkage::generateInstructionsForCall(TR::Node * callNode, TR::RegisterDependencyConditions * deps, intptr_t targetAddress,
       TR::Register * methodAddressReg, TR::Register * javaLitOffsetReg, TR::LabelSymbol * returnFromJNICallLabel,

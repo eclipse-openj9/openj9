@@ -34,7 +34,7 @@
 #include <arpa/inet.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h> /// gethostname, read, write
+#include <unistd.h> // gethostname, read, write
 #include <openssl/err.h>
 
 namespace JITServer

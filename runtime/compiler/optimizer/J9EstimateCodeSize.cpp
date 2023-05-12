@@ -602,7 +602,7 @@ TR_J9EstimateCodeSize::processBytecodeAndGenerateCFG(TR_CallTarget *calltarget, 
             auto calleeMethod = (TR_ResolvedJ9Method*)calltarget->_calleeMethod;
             resolvedMethod = calleeMethod->getResolvedPossiblyPrivateVirtualMethod(comp(), cpIndex, true, &isUnresolvedInCP);
 
-            ///if (!resolvedMethod || isUnresolvedInCP || resolvedMethod->isCold(comp(), true))
+            //if (!resolvedMethod || isUnresolvedInCP || resolvedMethod->isCold(comp(), true))
             if ((isUnresolvedInCP && !resolvedMethod) || (resolvedMethod
                   && resolvedMethod->isCold(comp(), true)))
                {
@@ -1435,7 +1435,7 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
    int32_t sizeThreshold = _sizeThreshold;
    if (isCandidate)
       sizeThreshold = std::max(4096, sizeThreshold);
-   ///if(_optimisticSize > _sizeThreshold)   // even optimistically we've blown our budget
+   //if(_optimisticSize > _sizeThreshold)   // even optimistically we've blown our budget
    heuristicTrace(tracer(),"--- Depth %d: Checking Optimistic size vs Size Threshold: _optimisticSize %d _sizeThreshold %d sizeThreshold %d ",_recursionDepth, _optimisticSize, _sizeThreshold, sizeThreshold);
 
    if (_optimisticSize > sizeThreshold) // even optimistically we've blown our budget
@@ -1599,7 +1599,7 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
 
                   if (_optimisticSize - origOptimisticSize > bigCalleeThreshold)
                      {
-                     ///printf("set warmcallgraphtoobig for method %s at index %d\n", calleeName, newBCInfo._byteCodeIndex);fflush(stdout);
+                     //printf("set warmcallgraphtoobig for method %s at index %d\n", calleeName, newBCInfo._byteCodeIndex);fflush(stdout);
                      calltarget->_calleeMethod->setWarmCallGraphTooBig( newBCInfo.getByteCodeIndex(), comp());
                      heuristicTrace(tracer(), "set warmcallgraphtoobig for method %s at index %d\n", calleeName, newBCInfo.getByteCodeIndex());
                      //_optimisticSize = origOptimisticSize;

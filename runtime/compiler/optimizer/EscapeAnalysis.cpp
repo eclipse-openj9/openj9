@@ -294,7 +294,7 @@ int32_t TR_EscapeAnalysis::perform()
       {
       if (trace())
          {
-         /////printf("secs Performing pass %d of Escape Analysis for %s\n", _currentPass, comp()->signature());
+         //printf("secs Performing pass %d of Escape Analysis for %s\n", _currentPass, comp()->signature());
          }
       }
 
@@ -2549,13 +2549,13 @@ bool TR_EscapeAnalysis::checkDefsAndUses(TR::Node *node, Candidate *candidate)
                            //
                            if (trace())
                               traceMsg(comp(), "   Look at other defs for use node %p of candidate %p\n", useNode, candidate->_node);
-                           ////_otherDefsForLoopAllocation->set(udIndex);
+                           //_otherDefsForLoopAllocation->set(udIndex);
 
                            if (!checkOverlappingLoopAllocation(useNode, candidate))
                               {
                               if (trace())
                                  traceMsg(comp(), "   Make [%p] non-local because it overlaps with use [%p]\n", candidate->_node, useNode);
-                              /////printf("secs Overlapping loop allocation in %s\n", comp()->signature());
+                              //printf("secs Overlapping loop allocation in %s\n", comp()->signature());
                               returnValue = false;
                               }
                            if (!checkOtherDefsOfLoopAllocation(useNode, candidate, (next->getFirstChild() == candidate->_node)))
@@ -2633,7 +2633,7 @@ bool TR_EscapeAnalysis::checkOtherDefsOfLoopAllocation(TR::Node *useNode, Candid
       if (!seenOtherDef &&
           isImmediateUse &&
           _valueNumberInfo->getValueNumber(defNode) == _valueNumberInfo->getValueNumber(candidate->_node))
-         ///_valueNumberInfo->getValueNumber(defNode) == _valueNumberInfo->getValueNumber(useNode))
+         //_valueNumberInfo->getValueNumber(defNode) == _valueNumberInfo->getValueNumber(useNode))
          {
          if (trace())
             traceMsg(comp(), "      Ignoring def node [%p] for use node [%p]\n", defNode, useNode);
@@ -4597,7 +4597,7 @@ void TR_EscapeAnalysis::checkEscapeViaNonCall(TR::Node *node, TR::NodeChecklist&
       {
       if (trace())
          {
-         /////printf("secs Object referenced via %s in %s\n", node->getOpCode().getName(), comp()->signature());
+         //printf("secs Object referenced via %s in %s\n", node->getOpCode().getName(), comp()->signature());
          traceMsg(comp(), "Object referenced via %s\n", node->getOpCode().getName());
          }
       }
@@ -5165,10 +5165,6 @@ int32_t TR_EscapeAnalysis::sniffCall(TR::Node *callNode, TR::ResolvedMethodSymbo
    _inBigDecimalAdd = oldInBigDecimalAdd;
 
    _curTree = curTree;
-   ///// FIXME : This line should be uncommented
-   ////// It is checked in commented out only temporarily
-   //////
-   /////
    _inColdBlock = inColdBlock;
    _parms = oldParms;
    --_sniffDepth;
@@ -5214,7 +5210,7 @@ void TR_EscapeAnalysis::checkObjectSizes()
          if (candidate->_size > MAX_SIZE_FOR_ONE_CONTIGUOUS_OBJECT)
             {
             if (trace())
-               /////printf("secs   Fail [%p] because object size is too big in %s\n", candidate->_node, comp()->signature());
+               //printf("secs   Fail [%p] because object size is too big in %s\n", candidate->_node, comp()->signature());
                ;
             if (trace())
                traceMsg(comp(), "   Fail [%p] because object size %d is too big\n", candidate->_node, candidate->_size);
@@ -5285,7 +5281,7 @@ void TR_EscapeAnalysis::checkObjectSizes()
 
       if (trace())
          {
-         /////printf("secs   Fail [%p] because total object size is too big in %s\n", candidate->_node, comp()->signature());
+         //printf("secs   Fail [%p] because total object size is too big in %s\n", candidate->_node, comp()->signature());
          traceMsg(comp(), "   Fail [%p] because total object size is too big\n", candidate->_node);
          }
 
@@ -5909,7 +5905,7 @@ bool TR_EscapeAnalysis::fixupNode(TR::Node *node, TR::Node *parent, TR::NodeChec
                {
                if (trace())
                   {
-                  /////printf("sec Opportunity to desynchronize call to %s (size %d) in %s\n", calledMethod->getResolvedMethod()->signature(trMemory()), maxBytecodeIndex(calledMethod->getResolvedMethod()), comp()->signature());
+                  //printf("sec Opportunity to desynchronize call to %s (size %d) in %s\n", calledMethod->getResolvedMethod()->signature(trMemory()), maxBytecodeIndex(calledMethod->getResolvedMethod()), comp()->signature());
                   traceMsg(comp(), "Mark call node [%p] as desynchronized\n", node);
                   }
                node->setDesynchronizeCall(true);
@@ -6490,7 +6486,7 @@ void TR_EscapeAnalysis::makeLocalObject(Candidate *candidate)
       int32_t numSlots = 0;
 #if LOCAL_OBJECTS_COLLECTABLE
       if (candidate->isContiguousAllocation())
-         ////numSlots = (candidate->_size - TR::Compiler->om.contiguousArrayHeaderSizeInBytes()) / _cg->sizeOfJavaPointer();
+         //numSlots = (candidate->_size - TR::Compiler->om.contiguousArrayHeaderSizeInBytes()) / _cg->sizeOfJavaPointer();
          numSlots = (candidate->_size - TR::Compiler->om.contiguousArrayHeaderSizeInBytes()) / TR::Compiler->om.sizeofReferenceField();
 #endif
       if (numSlots == 0)
@@ -6498,7 +6494,7 @@ void TR_EscapeAnalysis::makeLocalObject(Candidate *candidate)
       else
          {
          referenceSlots = (int32_t *)trMemory()->allocateHeapMemory((numSlots+1)*4, TR_Memory::EscapeAnalysis);
-         ////int32_t hdrSlots = TR::Compiler->om.contiguousArrayHeaderSizeInBytes()/_cg->sizeOfJavaPointer();
+         //int32_t hdrSlots = TR::Compiler->om.contiguousArrayHeaderSizeInBytes()/_cg->sizeOfJavaPointer();
          int32_t hdrSlots = TR::Compiler->om.contiguousArrayHeaderSizeInBytes()/TR::Compiler->om.sizeofReferenceField();
          for (i = 0; i < numSlots; i++)
             referenceSlots[i] = hdrSlots + i;
@@ -6722,7 +6718,7 @@ void TR_EscapeAnalysis::makeContiguousLocalAllocation(Candidate *candidate)
             {
             for (j = 0; referenceSlots[j]; j++)
                {
-               ////if (zeroInitOffset == referenceSlots[j]*_cg->sizeOfJavaPointer())
+               //if (zeroInitOffset == referenceSlots[j]*_cg->sizeOfJavaPointer())
                if (zeroInitOffset == referenceSlots[j]*TR::Compiler->om.sizeofReferenceField())
                   {
                   TR::TransformUtil::removeTree(comp(), initTree);
@@ -6785,7 +6781,7 @@ void TR_EscapeAnalysis::makeContiguousLocalAllocation(Candidate *candidate)
       // Changes for new 64-bit object model
       i = headerSize;
       //for (i = headerSize; i < candidate->_size; i += _cg->sizeOfJavaPointer())
-      int32_t refIncrVal = TR::Compiler->om.sizeofReferenceField();////TR::Symbol::convertTypeToSize(TR::Address);
+      int32_t refIncrVal = TR::Compiler->om.sizeofReferenceField();//TR::Symbol::convertTypeToSize(TR::Address);
       int32_t intIncrVal = 4; //TR::Symbol::convertTypeToSize(TR_SInt32)
 
       while (i < candidate->_size)
@@ -6848,7 +6844,7 @@ void TR_EscapeAnalysis::makeContiguousLocalAllocation(Candidate *candidate)
 
       for (i = 0; referenceSlots[i]; i++)
          {
-         ////int32_t offset = referenceSlots[i] * _cg->sizeOfJavaPointer();
+         //int32_t offset = referenceSlots[i] * _cg->sizeOfJavaPointer();
          int32_t offset = referenceSlots[i] * TR::Compiler->om.sizeofReferenceField();
 
          // See if the slot can be initialized using a field reference
@@ -6997,7 +6993,7 @@ void TR_EscapeAnalysis::makeNonContiguousLocalAllocation(Candidate *candidate)
          //
          TR::ResolvedMethodSymbol *owningMethodSymbol = candidate->_node->getSymbolReference()->getOwningMethodSymbol(comp());
          TR_OpaqueClassBlock *classObject = comp()->getObjectClassPointer();
-         ////the call to findOrCreateClassSymbol is safe even though we pass CPI of -1 it is guarded by another check (see the first occurrence of findOrCreateClassSymbol in EA; dememoizedConstructorCall
+         //the call to findOrCreateClassSymbol is safe even though we pass CPI of -1 it is guarded by another check (see the first occurrence of findOrCreateClassSymbol in EA; dememoizedConstructorCall
          TR::SymbolReference *classSymRef = getSymRefTab()->findOrCreateClassSymbol(owningMethodSymbol, -1, classObject, false);
          TR::Node *classNode = TR::Node::createWithSymRef(candidate->_node, TR::loadaddr, 0, classSymRef);
          candidate->_node->removeAllChildren();
@@ -7779,7 +7775,7 @@ bool TR_EscapeAnalysis::inlineCallSites()
 
       if (trace())
          {
-         /////printf("secs Inlining method %s in %s\n", method->signature(trMemory()), comp()->signature());
+         //printf("secs Inlining method %s in %s\n", method->signature(trMemory()), comp()->signature());
          traceMsg(comp(), "\nInlining method %s into treetop at [%p], total inlined size = %d\n", method->signature(trMemory()), treeTop->getNode(), getOptData()->_totalInlinedBytecodeSize+size);
          }
 

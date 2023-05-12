@@ -7979,7 +7979,7 @@ TR_J9VM::inlineNativeCall(TR::Compilation * comp, TR::TreeTop * callNodeTreeTop,
       case TR::java_lang_J9VMInternals_getSuperclass:
          {
          TR_OpaqueClassBlock *jitHelpersClass = comp->getJITHelpersClassPointer();
-         ///traceMsg(comp, "jithelpersclass = %p\n", jitHelpersClass);
+         //traceMsg(comp, "jithelpersclass = %p\n", jitHelpersClass);
          if (jitHelpersClass && isClassInitialized(jitHelpersClass))
             {
             // fish for the getSuperclass method in JITHelpers
@@ -7999,7 +7999,7 @@ TR_J9VM::inlineNativeCall(TR::Compilation * comp, TR::TreeTop * callNodeTreeTop,
                   {
                   getSuperclassSymRef = comp->getSymRefTab()->findOrCreateMethodSymbol(callNode->getSymbolReference()->getOwningMethodIndex(), -1, m, TR::MethodSymbol::Virtual);
                   getSuperclassSymRef->setOffset(getVTableSlot(m->getPersistentIdentifier(), jitHelpersClass));
-                  ///break;
+                  //break;
                   }
                else if (!strncmp(sig, getHelpersSig, getHelpersSigLength))
                   {
@@ -8029,7 +8029,7 @@ TR_J9VM::inlineNativeCall(TR::Compilation * comp, TR::TreeTop * callNodeTreeTop,
                //callNode->setAndIncChild(0, vftLoad);
                callNode->setAndIncChild(0, helpersCallNode);
                callNode->setAndIncChild(1, firstChild);
-               ///traceMsg(comp, "replaced call node for getSuperclass at node = %p\n", callNode);
+               //traceMsg(comp, "replaced call node for getSuperclass at node = %p\n", callNode);
                callNode->setSymbolReference(getSuperclassSymRef);
                }
             }
@@ -9201,7 +9201,7 @@ TR_J9SharedCacheVM::getObjectNewInstanceImplMethod(TR_Memory *)
    return NULL;
    }
 
-////////////////// Under evaluation
+// Under evaluation
 
 
 TR::CodeCache *

@@ -561,10 +561,9 @@ J9::Recompilation::getCounterSymRef()
    }
 
 
-/////////////////////////
+
 // DEBUG
 //////////////////////////
-
 void
 J9::Recompilation::shutdown()
    {
