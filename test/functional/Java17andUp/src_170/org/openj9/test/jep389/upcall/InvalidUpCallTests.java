@@ -170,7 +170,6 @@ public class InvalidUpCallTests {
 		}
 	}
 
-	@Test(expectedExceptions = NullPointerException.class, expectedExceptionsMessageRegExp = "A NULL memory address is not allowed for pointer.*")
 	public void test_nullAddrForReturnPtr() throws Throwable {
 		GroupLayout structLayout = MemoryLayout.structLayout(C_INT.withName("elem1"), C_INT.withName("elem2"));
 		VarHandle intHandle1 = structLayout.varHandle(int.class, PathElement.groupElement("elem1"));
@@ -178,7 +177,7 @@ public class InvalidUpCallTests {
 
 		MethodType mt = MethodType.methodType(MemoryAddress.class, MemoryAddress.class, MemorySegment.class, MemoryAddress.class);
 		FunctionDescriptor fd = FunctionDescriptor.of(C_POINTER, C_POINTER, structLayout, C_POINTER);
-		Addressable functionSymbol = nativeLibLookup.lookup("add2IntStructs_returnStructPointerByUpcallMH").get();
+		Addressable functionSymbol = nativeLibLookup.lookup("validateReturnNullAddrByUpcallMH").get();
 		MethodHandle mh = clinker.downcallHandle(functionSymbol, mt, fd);
 
 		try (ResourceScope scope = ResourceScope.newConfinedScope()) {
@@ -193,7 +192,9 @@ public class InvalidUpCallTests {
 			intHandle2.set(structSegmt2, 33445566);
 
 			MemoryAddress resultAddr = (MemoryAddress)mh.invokeExact(structSegmt1.address(), structSegmt2, upcallFuncAddr);
-			fail("Failed to throw out NullPointerException in the case of the null pointer upon return");
+			MemorySegment resultSegmt = resultAddr.asSegment(structLayout.byteSize(), scope);
+			Assert.assertEquals(intHandle1.get(resultSegmt), 11223344);
+			Assert.assertEquals(intHandle2.get(resultSegmt), 55667788);
 		}
 	}
 
