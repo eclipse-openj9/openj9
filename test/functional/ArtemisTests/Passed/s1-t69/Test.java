@@ -46,7 +46,7 @@ public class Test {
             try {
                 java.math.BigDecimal ax$22 = new BigDecimal("2");
                 try {
-                    // 
+                    //
                     // The string representation "1e2147483647", which is equivalent
                     // to 10^Integer.MAX_VALUE, is used to create an augend with an
                     // unscaled value of 1 and a scale of -Integer.MAX_VALUE. The
@@ -56,7 +56,7 @@ public class Test {
                     // of the result is 0, a value with Integer.MAX_VALUE + 1 digits
                     // would need to be created. Therefore the next statement is
                     // expected to overflow with an ArithmeticException.
-                    // 
+                    //
                     ax$22 = new BigDecimal("1e2147483647").add(new BigDecimal(1));
                     i6++;
                 } catch (ArithmeticException ae) {
