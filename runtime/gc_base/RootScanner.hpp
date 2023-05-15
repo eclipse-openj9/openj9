@@ -94,9 +94,9 @@ protected:
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
 	bool _includeDoubleMap; /**< Enables doublemap should the GC policy be balanced. Default is false. */
 #endif /* defined(J9VM_GC_ENABLE_DOUBLE_MAP) */
-#if defined(J9VM_ENV_DATA64)
+#if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
 	bool _includeVirtualLargeObjectHeap; /**< Enables scanning of objects that has been allocated at sparse heap. Default is false */
-#endif /* defined(J9VM_ENV_DATA64) */
+#endif /* defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION) */
 	bool _trackVisibleStackFrameDepth; /**< Should the stack walker be told to track the visible frame depth. Default false, should set to true when doing JVMTI walks that report stack slots */
 
 	U_64 _entityStartScanTime; /**< The start time of the scan of the current scanning entity, or 0 if no entity is being scanned.  Defaults to 0. */
@@ -322,9 +322,9 @@ public:
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
 		, _includeDoubleMap(_extensions->indexableObjectModel.isDoubleMappingEnabled())
 #endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
-#if defined(J9VM_ENV_DATA64)
+#if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
 		, _includeVirtualLargeObjectHeap(_extensions->indexableObjectModel.isVirtualLargeObjectHeapEnabled())
-#endif /* defined(J9VM_ENV_DATA64) */
+#endif /* defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION) */
 		, _trackVisibleStackFrameDepth(false)
 		, _entityStartScanTime(0)
 		, _entityIncrementStartTime(0)
@@ -486,7 +486,7 @@ public:
 	void scanDoubleMappedObjects(MM_EnvironmentBase *env);
 #endif /* defined(J9VM_GC_ENABLE_DOUBLE_MAP) */
 
-#if defined(J9VM_ENV_DATA64)
+#if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
 	/**
 	 * Scans each heap region for arraylet leaves that contains a non-NULL
 	 * contiguous address due to off-heap allocation. This address points to the contiguous representation
@@ -497,7 +497,7 @@ public:
 	 * @param env thread GC Environment
 	 */
 	void scanObjectsInVirtualLargeObjectHeap(MM_EnvironmentBase *env);
-#endif /* defined(J9VM_ENV_DATA64) */
+#endif /* defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION) */
 
 	virtual void doClassLoader(J9ClassLoader *classLoader);
 
@@ -571,7 +571,7 @@ public:
 	virtual void doDoubleMappedObjectSlot(J9Object *objectPtr, struct J9PortVmemIdentifier *identifier);
 #endif /* defined(J9VM_GC_ENABLE_DOUBLE_MAP) */
 
-#if defined(J9VM_ENV_DATA64)
+#if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
 	/**
 	 * Frees the region used for off-heap allocation associated to the objectPtr (arraylet spine) if the objectPtr
 	 * is not live.
@@ -579,7 +579,7 @@ public:
 	 * @param objectPtr[in] indexable object's spine
 	 */
 	virtual void doObjectInVirtualLargeObjectHeap(J9Object *objectPtr);
-#endif /* defined(J9VM_ENV_DATA64) */
+#endif /* defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION) */
 	
 	/**
 	 * Called for each object stack slot. Subclasses may override.

@@ -79,27 +79,27 @@ class GCArrayletObjectModel_V2 extends GCArrayletObjectModelBase
 	 * @return true if the data address of arrayPtr is valid, false otherwise
 	 */
 	@Override
-	public boolean isCorrectDataAddrPointer(J9IndexableObjectPointer arrayPtr) throws CorruptDataException, NoSuchFieldException
+	public boolean hasCorrectDataAddrPointer(J9IndexableObjectPointer arrayPtr) throws CorruptDataException, NoSuchFieldException
 	{
-		boolean isCorrectDataAddrPointer;
+		boolean hasCorrectDataAddrPointer;
 		UDATA dataSizeInBytes = getDataSizeInBytes(arrayPtr);
 		VoidPointer dataAddr = J9IndexableObjectHelper.getDataAddrForIndexable(arrayPtr);
 		boolean isValidDataAddrForDoubleMappedObject = isIndexableObjectDoubleMapped(dataAddr, dataSizeInBytes);
 
 		if (dataSizeInBytes.isZero()) {
 			VoidPointer discontiguousDataAddr = VoidPointer.cast(arrayPtr.addOffset(J9IndexableObjectHelper.discontiguousHeaderSize()));
-			isCorrectDataAddrPointer = (dataAddr.isNull() || dataAddr.equals(discontiguousDataAddr));
+			hasCorrectDataAddrPointer = (dataAddr.isNull() || dataAddr.equals(discontiguousDataAddr));
 		} else if (dataSizeInBytes.lt(arrayletLeafSize)) {
 			VoidPointer contiguousDataAddr = VoidPointer.cast(arrayPtr.addOffset(J9IndexableObjectHelper.contiguousHeaderSize()));
-			isCorrectDataAddrPointer = dataAddr.equals(contiguousDataAddr);
+			hasCorrectDataAddrPointer = dataAddr.equals(contiguousDataAddr);
 		} else {
 			if (enableVirtualLargeObjectHeap || enableDoubleMapping) {
-				isCorrectDataAddrPointer = isValidDataAddrForDoubleMappedObject;
+				hasCorrectDataAddrPointer = isValidDataAddrForDoubleMappedObject;
 			} else {
-				isCorrectDataAddrPointer = dataAddr.isNull();
+				hasCorrectDataAddrPointer = dataAddr.isNull();
 			}
 		}
 
-		return isCorrectDataAddrPointer;
+		return hasCorrectDataAddrPointer;
 	}
 }

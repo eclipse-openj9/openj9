@@ -247,13 +247,13 @@ MM_RootScanner::doDoubleMappedObjectSlot(J9Object *objectPtr, struct J9PortVmemI
 }
 #endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
 
-#if defined(J9VM_ENV_DATA64)
+#if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
 void
 MM_RootScanner::doObjectInVirtualLargeObjectHeap(J9Object *objectPtr)
 {
 	/* No need to call doSlot() here since there's nothing to update */
 }
-#endif /* defined(J9VM_ENV_DATA64) */
+#endif /* defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION) */
 
 /**
  * @Perform operation on the given string cache table slot.
@@ -943,7 +943,7 @@ MM_RootScanner::scanDoubleMappedObjects(MM_EnvironmentBase *env)
 }
 #endif /* defined(J9VM_GC_ENABLE_DOUBLE_MAP) */
 
-#if defined(J9VM_ENV_DATA64)
+#if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
 void
 MM_RootScanner::scanObjectsInVirtualLargeObjectHeap(MM_EnvironmentBase *env)
 {
@@ -961,7 +961,7 @@ MM_RootScanner::scanObjectsInVirtualLargeObjectHeap(MM_EnvironmentBase *env)
 		reportScanningEnded(RootScannerEntity_DoubleMappedOrVirtualLargeObjectHeapObjects);
 	}
 }
-#endif /* defined(J9VM_ENV_DATA64) */
+#endif /* defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION) */
 
 /**
  * Scan all root set references from the VM into the heap.
@@ -1106,11 +1106,11 @@ MM_RootScanner::scanClearable(MM_EnvironmentBase *env)
 	}
 #endif /* defined(J9VM_GC_ENABLE_DOUBLE_MAP) */
 
-#if defined(J9VM_ENV_DATA64) && !defined(J9VM_GC_DOUBLE_MAPPING_FOR_SPARSE_HEAP_ALLOCATION)
+#if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
 	if (_includeVirtualLargeObjectHeap) {
 		scanObjectsInVirtualLargeObjectHeap(env);
 	}
-#endif /* defined(J9VM_ENV_DATA64) && !defined(J9VM_GC_DOUBLE_MAPPING_FOR_SPARSE_HEAP_ALLOCATION) */
+#endif /* defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION) */
 }
 
 /**
@@ -1166,11 +1166,11 @@ MM_RootScanner::scanAllSlots(MM_EnvironmentBase *env)
 	}
 #endif /* defined(J9VM_GC_ENABLE_DOUBLE_MAP) */
 
-#if defined(J9VM_ENV_DATA64) && !defined(J9VM_GC_DOUBLE_MAPPING_FOR_SPARSE_HEAP_ALLOCATION)
+#if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
 	if (_includeVirtualLargeObjectHeap) {
 		scanObjectsInVirtualLargeObjectHeap(env);
 	}
-#endif /* defined(J9VM_ENV_DATA64) && !defined(J9VM_GC_DOUBLE_MAPPING_FOR_SPARSE_HEAP_ALLOCATION) */
+#endif /* defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION) */
 
 	scanOwnableSynchronizerObjects(env);
 	scanContinuationObjects(env);
