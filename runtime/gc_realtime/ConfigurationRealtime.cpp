@@ -109,14 +109,14 @@ MM_ConfigurationRealtime::createHeapWithManager(MM_EnvironmentBase *env, uintptr
 {
 	MM_GCExtensionsBase *extensions = env->getExtensions();
 
-#if defined(J9VM_ENV_DATA64) || defined(J9VM_GC_ENABLE_DOUBLE_MAP)
+#if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION) || defined(J9VM_GC_ENABLE_DOUBLE_MAP)
 	PORT_ACCESS_FROM_ENVIRONMENT(env);
 
-#if defined(J9VM_ENV_DATA64)
+#if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
 	if (extensions->isVirtualLargeObjectHeapRequested) {
 		j9nls_printf(PORTLIB, J9NLS_WARNING, J9NLS_GC_OPTIONS_VIRTUAL_LARGE_OBJECT_HEAP_NOT_SUPPORTED_WARN, "metronome");
 	}
-#endif /* defined(J9VM_ENV_DATA64) */
+#endif /* defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION) */
 
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
 	if (extensions->isArrayletDoubleMapRequested) {
@@ -124,7 +124,7 @@ MM_ConfigurationRealtime::createHeapWithManager(MM_EnvironmentBase *env, uintptr
 	}
 #endif /* defined(J9VM_GC_ENABLE_DOUBLE_MAP) */
 
-#endif /* defined(J9VM_ENV_DATA64) || defined(J9VM_GC_ENABLE_DOUBLE_MAP) */
+#endif /* defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION) || defined(J9VM_GC_ENABLE_DOUBLE_MAP) */
 
 	return MM_HeapVirtualMemory::newInstance(env, extensions->heapAlignment, heapBytesRequested, regionManager);
 }

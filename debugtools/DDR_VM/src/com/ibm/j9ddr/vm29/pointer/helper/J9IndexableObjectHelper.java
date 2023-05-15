@@ -305,9 +305,9 @@ public class J9IndexableObjectHelper extends J9ObjectHelper
 	 * @throws NoSuchFieldException if the indexable object dataAddr field does not exist on the build that generated the core file
 	 * @return true if the data address of objPointer is valid, false otherwise
 	 */
-	public static boolean isCorrectDataAddrPointer(J9IndexableObjectPointer objPointer) throws CorruptDataException, NoSuchFieldException
+	public static boolean hasCorrectDataAddrPointer(J9IndexableObjectPointer objPointer) throws CorruptDataException, NoSuchFieldException
 	{
-		return ObjectModel.isCorrectDataAddrPointer(objPointer);
+		return ObjectModel.hasCorrectDataAddrPointer(objPointer);
 	}
 
 	/**

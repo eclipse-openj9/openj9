@@ -1047,7 +1047,7 @@ gcParseXXgcArguments(J9JavaVM *vm, char *optArg)
 			continue;
 		}
 
-#if defined(J9VM_ENV_DATA64)
+#if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
 		if (try_scan(&scan_start, "enableVirtualLargeObjectHeap")) {
 			extensions->isVirtualLargeObjectHeapRequested = true;
 			continue;
@@ -1057,7 +1057,7 @@ gcParseXXgcArguments(J9JavaVM *vm, char *optArg)
 			extensions->isVirtualLargeObjectHeapRequested = false;
 			continue;
 		}
-#endif /* defined(J9VM_ENV_DATA64) */
+#endif /* defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION) */
 
 		if (try_scan(&scan_start, "largeObjectAllocationProfilingThreshold=")) {
 			if (!scan_udata_helper(vm, &scan_start, &extensions->largeObjectAllocationProfilingThreshold, "largeObjectAllocationProfilingThreshold=")) {

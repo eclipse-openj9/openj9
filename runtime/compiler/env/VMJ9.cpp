@@ -2412,11 +2412,11 @@ TR_J9VMBase::isHotReferenceFieldRequired()
 bool
 TR_J9VMBase::isIndexableDataAddrPresent()
    {
-#if defined(J9VM_ENV_DATA64)
+#if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
    return FALSE != _jitConfig->javaVM->isIndexableDataAddrPresent;
 #else
    return false;
-#endif /* defined(J9VM_ENV_DATA64) */
+#endif /* defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION) */
    }
 
 /**

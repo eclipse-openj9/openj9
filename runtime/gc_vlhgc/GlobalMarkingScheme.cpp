@@ -1371,9 +1371,9 @@ private:
 
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
 	virtual void doDoubleMappedObjectSlot(J9Object *objectPtr, struct J9PortVmemIdentifier *identifier) {
-		MM_EnvironmentVLHGC *env = MM_EnvironmentVLHGC::getEnvironment(_env);
-		env->_markVLHGCStats._doubleMappedOrVirtualLargeObjectHeapArrayletCandidates += 1;
+		MM_EnvironmentVLHGC::getEnvironment(_env)->_markVLHGCStats._offHeapRegionCandidates += 1;
 		if (!_markingScheme->isMarked(objectPtr)) {
+<<<<<<< Upstream, based on Upstream/master
 			env->_markVLHGCStats._doubleMappedOrVirtualLargeObjectHeapArrayletsCleared += 1;
 			OMRPORT_ACCESS_FROM_OMRVM(_javaVM->omrVM);
 			if (_extensions->indexableObjectModel.isVirtualLargeObjectHeapEnabled()) {
@@ -1385,24 +1385,28 @@ private:
 			} else {
 				omrvmem_release_double_mapped_region(identifier->address, identifier->size, identifier);
 			}
+=======
+			MM_EnvironmentVLHGC::getEnvironment(_env)->_markVLHGCStats._offHeapRegionsCleared += 1;
+			OMRPORT_ACCESS_FROM_OMRVM(_omrVM);
+			omrvmem_release_double_mapped_region(identifier->address, identifier->size, identifier);
+>>>>>>> 9c262fd Updated PR Changes
 		}
     }
 #endif /* defined(J9VM_GC_ENABLE_DOUBLE_MAP) */
 
-#if defined(J9VM_ENV_DATA64)
+#if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
 	virtual void doObjectInVirtualLargeObjectHeap(J9Object *objectPtr) {
 		MM_EnvironmentVLHGC *env = MM_EnvironmentVLHGC::getEnvironment(_env);
-		env->_markVLHGCStats._doubleMappedOrVirtualLargeObjectHeapArrayletCandidates += 1;
+		env->_markVLHGCStats._offHeapRegionCandidates += 1;
 		if (!_markingScheme->isMarked(objectPtr)) {
-			env->_markVLHGCStats._doubleMappedOrVirtualLargeObjectHeapArrayletsCleared += 1;
+			env->_markVLHGCStats._offHeapRegionsCleared += 1;
 			void *dataAddr = _extensions->indexableObjectModel.getDataAddrForContiguous((J9IndexableObject *)objectPtr);
 			if (NULL != dataAddr) {
 				_extensions->largeObjectVirtualMemory->freeSparseRegionAndUnmapFromHeapObject(_env, dataAddr);
-				_extensions->indexableObjectModel.setDataAddrForContiguous((J9IndexableObject *)objectPtr, NULL);
 			}
 		}
 	}
-#endif /* defined(J9VM_ENV_DATA64) */
+#endif /* defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION) */
 
 	/**
 	 * @Clear the string table cache slot if the object is not marked

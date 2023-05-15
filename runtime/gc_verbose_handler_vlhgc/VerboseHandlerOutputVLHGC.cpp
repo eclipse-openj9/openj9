@@ -283,6 +283,16 @@ MM_VerboseHandlerOutputVLHGC::outputContinuationInfo(MM_EnvironmentBase *env, UD
 	}
 }
 
+#if defined(J9VM_GC_ENABLE_DOUBLE_MAP) || defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
+void
+MM_VerboseHandlerOutputVLHGC::outputOffHeapInfo(MM_EnvironmentBase *env, UDATA indent, UDATA offHeapRegionCandidates, UDATA offHeapRegionsCleared)
+{
+	if (0 != offHeapRegionCandidates) {
+		_manager->getWriterChain()->formatAndOutput(env, indent, "<offheap-regions candidates=\"%zu\" cleared=\"%zu\" />", offHeapRegionCandidates, offHeapRegionsCleared);
+	}
+}
+#endif /* defined(J9VM_GC_ENABLE_DOUBLE_MAP) || defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION) */
+
 void
 MM_VerboseHandlerOutputVLHGC::outputReferenceInfo(MM_EnvironmentBase *env, UDATA indent, const char *referenceType, MM_ReferenceStats *referenceStats, UDATA dynamicThreshold, UDATA maxThreshold)
 {
@@ -339,13 +349,13 @@ MM_VerboseHandlerOutputVLHGC::outputMemoryInfoInnerStanza(MM_EnvironmentBase *en
 				stats->_edenFreeHeapSize, stats->_edenHeapSize,
 				((UDATA)(((U_64)stats->_edenFreeHeapSize*100) / (U_64)stats->_edenHeapSize)));
 	}
-#if defined(J9VM_ENV_DATA64)
+#if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env->getOmrVM());
 	if (extensions->isVirtualLargeObjectHeapEnabled) {
 		writer->formatAndOutput(env, indent, "<mem type=\"offheap\" allocatedBytes=\"%zu\"/>",
 				extensions->largeObjectVirtualMemory->getSparseDataPool()->getFreeListPoolAllocBytes());
 	}
-#endif /* defined(J9VM_ENV_DATA64) */
+#endif /* defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION) */
 	if (0 != stats->_arrayletReferenceObjects) {
 		writer->formatAndOutput(env, indent, "<arraylet-reference objects=\"%zu\" leaves=\"%zu\" largest=\"%zu\" />",
 				stats->_arrayletReferenceObjects, stats->_arrayletReferenceLeaves, stats->_largestReferenceArraylet);
@@ -437,6 +447,9 @@ MM_VerboseHandlerOutputVLHGC::handleCopyForwardEnd(J9HookInterface** hook, UDATA
 	}
 	outputRememberedSetClearedInfo(env, irrsStats);
 
+#if defined(J9VM_GC_ENABLE_DOUBLE_MAP) || defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
+	outputOffHeapInfo(env, 1, copyForwardStats->_offHeapRegionCandidates, copyForwardStats->_offHeapRegionsCleared);
+#endif /* defined(J9VM_GC_ENABLE_DOUBLE_MAP) || defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION) */
 	outputUnfinalizedInfo(env, 1, copyForwardStats->_unfinalizedCandidates, copyForwardStats->_unfinalizedEnqueued);
 	outputOwnableSynchronizerInfo(env, 1, copyForwardStats->_ownableSynchronizerCandidates, (copyForwardStats->_ownableSynchronizerCandidates-copyForwardStats->_ownableSynchronizerSurvived));
 	outputContinuationInfo(env, 1, copyForwardStats->_continuationCandidates, copyForwardStats->_continuationCleared);
@@ -585,6 +598,9 @@ MM_VerboseHandlerOutputVLHGC::outputMarkSummary(MM_EnvironmentBase *env, const c
 		outputRememberedSetClearedInfo(env, irrsStats);
 	}
 
+#if defined(J9VM_GC_ENABLE_DOUBLE_MAP) || defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
+	outputOffHeapInfo(env, 1, markStats->_offHeapRegionCandidates, markStats->_offHeapRegionsCleared);
+#endif /* defined(J9VM_GC_ENABLE_DOUBLE_MAP) || defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION) */
 	outputUnfinalizedInfo(env, 1, markStats->_unfinalizedCandidates, markStats->_unfinalizedEnqueued);
 	outputOwnableSynchronizerInfo(env, 1, markStats->_ownableSynchronizerCandidates, markStats->_ownableSynchronizerCleared);
 	outputContinuationInfo(env, 1, markStats->_continuationCandidates, markStats->_continuationCleared);

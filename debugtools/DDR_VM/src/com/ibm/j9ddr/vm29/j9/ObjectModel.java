@@ -488,9 +488,9 @@ public final class ObjectModel
 	 * @throws NoSuchFieldException if the indexable object dataAddr field does not exist on the build that generated the core file
 	 * @return true if the data address of arrayPtr is valid, false otherwise
 	 */
-	public static boolean isCorrectDataAddrPointer(J9IndexableObjectPointer arrayPtr) throws CorruptDataException, NoSuchFieldException
+	public static boolean hasCorrectDataAddrPointer(J9IndexableObjectPointer arrayPtr) throws CorruptDataException, NoSuchFieldException
 	{
-		return gcObjectModel.isCorrectDataAddrPointer(arrayPtr);
+		return gcObjectModel.hasCorrectDataAddrPointer(arrayPtr);
 	}
 }
 
