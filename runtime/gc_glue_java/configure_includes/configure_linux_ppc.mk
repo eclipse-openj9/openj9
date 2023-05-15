@@ -32,6 +32,7 @@ ifeq (linux_ppc-64_cmprssptrs_le, $(SPEC))
 		--enable-OMRTHREAD_LIB_UNIX \
 		--enable-OMR_ARCH_POWER \
 		--enable-OMR_ENV_DATA64 \
+		--enable-OMR_GC_SPARSE_HEAP_ALLOCATION \
 		--enable-OMR_GC_DOUBLE_MAP_ARRAYLETS \
 		--enable-OMR_ENV_LITTLE_ENDIAN \
 		--enable-OMR_GC_CONCURRENT_SCAVENGER \
@@ -46,6 +47,7 @@ ifeq (linux_ppc-64_cmprssptrs, $(SPEC))
 		--enable-OMRTHREAD_LIB_UNIX \
 		--enable-OMR_ARCH_POWER \
 		--enable-OMR_ENV_DATA64 \
+		--enable-OMR_GC_SPARSE_HEAP_ALLOCATION \
 		--enable-OMR_GC_DOUBLE_MAP_ARRAYLETS \
 		--enable-OMR_GC_CONCURRENT_SCAVENGER \
 		--enable-OMR_GC_IDLE_HEAP_MANAGER \
@@ -59,6 +61,7 @@ ifeq (linux_ppc-64_le, $(SPEC))
 		--enable-OMRTHREAD_LIB_UNIX \
 		--enable-OMR_ARCH_POWER \
 		--enable-OMR_ENV_DATA64 \
+		--enable-OMR_GC_SPARSE_HEAP_ALLOCATION \
 		--enable-OMR_GC_DOUBLE_MAP_ARRAYLETS \
 		--enable-OMR_ENV_LITTLE_ENDIAN \
 		--enable-OMR_GC_CONCURRENT_SCAVENGER \
@@ -73,6 +76,7 @@ ifeq (linux_ppc-64, $(SPEC))
 		--enable-OMRTHREAD_LIB_UNIX \
 		--enable-OMR_ARCH_POWER \
 		--enable-OMR_ENV_DATA64 \
+		--enable-OMR_GC_SPARSE_HEAP_ALLOCATION \
 		--enable-OMR_GC_DOUBLE_MAP_ARRAYLETS \
 		--enable-OMR_GC_CONCURRENT_SCAVENGER \
 		--enable-OMR_GC_IDLE_HEAP_MANAGER \

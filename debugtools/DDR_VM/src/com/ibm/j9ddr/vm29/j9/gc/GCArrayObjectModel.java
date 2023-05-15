@@ -135,7 +135,7 @@ abstract class GCArrayObjectModel extends GCBase
 	 * @throws NoSuchFieldException if the indexable object dataAddr field does not exist on the build that generated the core file
 	 * @return true if the data address of arrayPtr is valid, false otherwise
 	 */
-	public abstract boolean isCorrectDataAddrPointer(J9IndexableObjectPointer arrayPtr) throws CorruptDataException, NoSuchFieldException;
+	public abstract boolean hasCorrectDataAddrPointer(J9IndexableObjectPointer arrayPtr) throws CorruptDataException, NoSuchFieldException;
 
 	/**
 	 * Returns the address of first arraylet leaf slot in the spine

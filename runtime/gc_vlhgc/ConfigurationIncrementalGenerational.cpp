@@ -94,12 +94,6 @@ MM_ConfigurationIncrementalGenerational::createHeapWithManager(MM_EnvironmentBas
 {
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
 
-#if defined(J9VM_GC_DOUBLE_MAPPING_FOR_SPARSE_HEAP_ALLOCATION)
-	if (extensions->isVirtualLargeObjectHeapRequested) {
-		extensions->isArrayletDoubleMapRequested = true;
-	}
-#endif /* defined(J9VM_GC_DOUBLE_MAPPING_FOR_SPARSE_HEAP_ALLOCATION) */
-
 	MM_Heap *heap = MM_HeapVirtualMemory::newInstance(env, extensions->heapAlignment, heapBytesRequested, regionManager);
 	if (NULL == heap) {
 		return NULL;
@@ -121,11 +115,7 @@ MM_ConfigurationIncrementalGenerational::createHeapWithManager(MM_EnvironmentBas
 	 * If both double mapping and sparse heap are requested, sparse heap takes precedence
 	 * over double mapping.
 	 */
-#if defined(J9VM_GC_DOUBLE_MAPPING_FOR_SPARSE_HEAP_ALLOCATION)
-	if ((extensions->isArrayletDoubleMapRequested || extensions->isVirtualLargeObjectHeapRequested) && (extensions->isArrayletDoubleMapAvailable)) {
-#else /* defined(J9VM_GC_DOUBLE_MAPPING_FOR_SPARSE_HEAP_ALLOCATION) */
 	if ((extensions->isArrayletDoubleMapRequested) && (!extensions->isVirtualLargeObjectHeapRequested) && (extensions->isArrayletDoubleMapAvailable)) {
-#endif /* defined(J9VM_GC_DOUBLE_MAPPING_FOR_SPARSE_HEAP_ALLOCATION) */
 		uintptr_t pagesize = heap->getPageSize();
 		if (!extensions->memoryManager->isLargePage(env, pagesize) || (pagesize <= extensions->getOmrVM()->_arrayletLeafSize)) {
 			extensions->indexableObjectModel.setEnableDoubleMapping(true);
@@ -168,7 +158,7 @@ MM_ConfigurationIncrementalGenerational::createHeapWithManager(MM_EnvironmentBas
 	}
 #endif /* defined(OMR_GC_VLHGC_CONCURRENT_COPY_FORWARD) */
 
-#if defined(J9VM_ENV_DATA64)
+#if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
 	extensions->indexableObjectModel.setIsDataAddressPresent(true);
 	if (extensions->isVirtualLargeObjectHeapRequested) {
 		/* Create off-heap */
@@ -190,7 +180,7 @@ MM_ConfigurationIncrementalGenerational::createHeapWithManager(MM_EnvironmentBas
 			return NULL;
 		}
 	}
-#endif /* defined(J9VM_ENV_DATA64) */
+#endif /* defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION) */
 
 	return heap;
 }

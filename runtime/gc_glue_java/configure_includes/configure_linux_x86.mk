@@ -33,6 +33,7 @@ ifeq (linux_x86-64_cmprssptrs, $(SPEC))
 		--enable-OMRTHREAD_LIB_UNIX \
 		--enable-OMR_ARCH_X86 \
 		--enable-OMR_ENV_DATA64 \
+		--enable-OMR_GC_SPARSE_HEAP_ALLOCATION \
 		--enable-OMR_GC_DOUBLE_MAP_ARRAYLETS \
 		--enable-OMR_ENV_LITTLE_ENDIAN \
 		--enable-OMR_GC_IDLE_HEAP_MANAGER \
@@ -48,6 +49,7 @@ ifeq (linux_x86-64_cmprssptrs_panama, $(SPEC))
 		--enable-OMRTHREAD_LIB_UNIX \
 		--enable-OMR_ARCH_X86 \
 		--enable-OMR_ENV_DATA64 \
+		--enable-OMR_GC_SPARSE_HEAP_ALLOCATION \
 		--enable-OMR_GC_DOUBLE_MAP_ARRAYLETS \
 		--enable-OMR_ENV_LITTLE_ENDIAN \
 		--enable-OMR_GC_IDLE_HEAP_MANAGER \
@@ -63,6 +65,7 @@ ifeq (linux_x86-64, $(SPEC))
 		--enable-OMRTHREAD_LIB_UNIX \
 		--enable-OMR_ARCH_X86 \
 		--enable-OMR_ENV_DATA64 \
+		--enable-OMR_GC_SPARSE_HEAP_ALLOCATION \
 		--enable-OMR_GC_DOUBLE_MAP_ARRAYLETS \
 		--enable-OMR_ENV_LITTLE_ENDIAN \
 		--enable-OMR_GC_IDLE_HEAP_MANAGER \

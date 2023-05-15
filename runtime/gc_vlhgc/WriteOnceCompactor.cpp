@@ -1662,18 +1662,17 @@ public:
 		scanJVMTIObjectTagTables(env);
 #endif /* J9VM_OPT_JVMTI */
 
-/* Are below calls to scanDoubleMappedObjects and scanObjectsInVirtualLargeObjectHeap needed? */
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
 	if (_includeDoubleMap) {
 		scanDoubleMappedObjects(env);
 	}
 #endif /* defined(J9VM_GC_ENABLE_DOUBLE_MAP) */
 
-#if defined(J9VM_ENV_DATA64) && !defined(J9VM_GC_DOUBLE_MAPPING_FOR_SPARSE_HEAP_ALLOCATION)
+#if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
 	if (_includeVirtualLargeObjectHeap) {
 		scanObjectsInVirtualLargeObjectHeap(env);
 	}
-#endif /* defined(J9VM_ENV_DATA64) && !defined(J9VM_GC_DOUBLE_MAPPING_FOR_SPARSE_HEAP_ALLOCATION) */
+#endif /* defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION) */
 
 	}
 	

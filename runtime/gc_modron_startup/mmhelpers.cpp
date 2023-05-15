@@ -173,11 +173,11 @@ j9gc_hot_reference_field_required(J9JavaVM *javaVM)
 BOOLEAN
 j9gc_off_heap_allocation_enabled(J9JavaVM *javaVM)
 {
-#if defined(J9VM_ENV_DATA64)
+#if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
 	return MM_GCExtensions::getExtensions(javaVM)->isVirtualLargeObjectHeapEnabled;
-#else /* defined(J9VM_ENV_DATA64) */
+#else /* defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION) */
 	return FALSE;
-#endif /* defined(J9VM_ENV_DATA64) */
+#endif /* defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION) */
 }
 
 /**

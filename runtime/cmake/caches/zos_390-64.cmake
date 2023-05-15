@@ -24,6 +24,7 @@ set(J9VM_ARCH_S390 ON CACHE BOOL "")
 set(J9VM_ENV_CALL_VIA_TABLE ON CACHE BOOL "")
 set(J9VM_ENV_DATA64 ON CACHE BOOL "")
 set(J9VM_ENV_LITTLE_ENDIAN OFF CACHE BOOL "")
+set(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION ON CACHE BOOL "")
 
 # We need to modify the c/c++ compile rules to tweak the order of options for a2e.
 # Namely we need to make sure that the nosearch flag appears before our include paths.

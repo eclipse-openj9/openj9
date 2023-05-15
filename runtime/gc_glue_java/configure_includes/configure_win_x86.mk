@@ -32,6 +32,7 @@ ifeq (win_x86-64_cmprssptrs, $(SPEC))
 		--enable-OMRTHREAD_LIB_WIN32 \
 		--enable-OMR_ARCH_X86 \
 		--enable-OMR_ENV_DATA64 \
+		--enable-OMR_GC_SPARSE_HEAP_ALLOCATION \
 		--enable-OMR_ENV_LITTLE_ENDIAN \
 		--enable-OMR_GC_TLH_PREFETCH_FTA \
 		--enable-OMR_GC_CONCURRENT_SCAVENGER \
@@ -45,6 +46,7 @@ ifeq (win_x86-64, $(SPEC))
 		--enable-OMRTHREAD_LIB_WIN32 \
 		--enable-OMR_ARCH_X86 \
 		--enable-OMR_ENV_DATA64 \
+		--enable-OMR_GC_SPARSE_HEAP_ALLOCATION \
 		--enable-OMR_ENV_LITTLE_ENDIAN \
 		--enable-OMR_GC_TLH_PREFETCH_FTA \
 		--enable-OMR_GC_CONCURRENT_SCAVENGER \
