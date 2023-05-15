@@ -1000,7 +1000,7 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
             }
 
          if (!canTransformIdentityArrayElementLoadStoreUseTypeHint &&
-             TR::Compiler->cls.isValueTypeClass(hintComponentClass))
+             TR::Compiler->cls.isPrimitiveValueTypeClass(hintComponentClass))
             {
             if (TR::Compiler->cls.isValueTypeClassFlattened(hintComponentClass))
                {
@@ -1153,7 +1153,7 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
 
             flagsForTransform.set(ValueTypesHelperCallTransform::InsertDebugCounter);
 
-            if (isStoreFlattenableArrayElement && !owningMethodDoesNotContainStoreChecks(this, node))
+            if (isStoreFlattenableArrayElement)
                {
                // Determine whether the value is being copied from the same array that is the target
                // of the array element store.  If so, there's no need for an ArrayStoreCHK or a call
@@ -1173,20 +1173,21 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
                   // otherwise, only the ArrayStoreCHK is required.
                   //
                   bool mustFail = false;
-                  if (isArrayStoreCheckNeeded(arrayRefNode, storeValueNode, mustFail, storeClassForCheck, componentClassForCheck))
+                  if (!owningMethodDoesNotContainStoreChecks(this, node) &&
+                     isArrayStoreCheckNeeded(arrayRefNode, storeValueNode, mustFail, storeClassForCheck, componentClassForCheck))
                      {
                      flagsForTransform.set(ValueTypesHelperCallTransform::RequiresStoreCheck);
                      }
 
-                  if ((isCompTypePrimVT != TR_no) && (storeValueConstraint == NULL || !storeValueConstraint->isNonNullObject()))
+                   //TODO: Require the <nonNullableArrayNullStoreCheck> non-helper if !canSkipNonNullableArrayNullValueChecks(...)
+                   if (canTransformUnflattenedArrayElementLoadStore &&
+                      (isCompTypePrimVT != TR_no) &&
+                      (storeValueConstraint == NULL || !storeValueConstraint->isNonNullObject()))
                      {
                      flagsForTransform.set(ValueTypesHelperCallTransform::RequiresNullValueCheck);
                      }
                   }
-               }
 
-            if (isStoreFlattenableArrayElement)
-               {
                callToTransform =
                      new (trStackMemory()) ArrayElementStoreHelperCallTransform(_curTree, node, flagsForTransform, arrayLength, NULL,
                                                  storeClassForCheck, componentClassForCheck);
@@ -1204,7 +1205,7 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
             TR_OpaqueClassBlock *storeClassForCheck = NULL;
             TR_OpaqueClassBlock *componentClassForCheck = NULL;
 
-            if (isStoreFlattenableArrayElement && !owningMethodDoesNotContainStoreChecks(this, node))
+            if (isStoreFlattenableArrayElement)
                {
                TR::Node *storeValueBaseNode = getStoreValueBaseNode(storeValueNode, symRefTab);
 
@@ -1220,20 +1221,20 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
                   // otherwise, only the ArrayStoreCHK is required.
                   //
                   bool mustFail = false;
-                  if (isArrayStoreCheckNeeded(arrayRefNode, storeValueNode, mustFail, storeClassForCheck, componentClassForCheck))
+                  if (!owningMethodDoesNotContainStoreChecks(this, node) &&
+                     isArrayStoreCheckNeeded(arrayRefNode, storeValueNode, mustFail, storeClassForCheck, componentClassForCheck))
                      {
                      flagsForTransform.set(ValueTypesHelperCallTransform::RequiresStoreCheck);
                      }
 
-                  if (canTransformUnflattenedArrayElementLoadStoreUseTypeHint && (!storeValueConstraint || !storeValueConstraint->isNonNullObject()))
+                  //TODO: Require the <nonNullableArrayNullStoreCheck> non-helper if !canSkipNonNullableArrayNullValueChecks(...)
+                  if (canTransformUnflattenedArrayElementLoadStoreUseTypeHint &&
+                     (!storeValueConstraint || !storeValueConstraint->isNonNullObject()))
                      {
                      flagsForTransform.set(ValueTypesHelperCallTransform::RequiresNullValueCheck);
                      }
                   }
-               }
 
-            if (isStoreFlattenableArrayElement)
-               {
                callToTransform =
                      new (trStackMemory()) ArrayElementStoreHelperCallTransform(_curTree, node, flagsForTransform, arrayLength, typeHintClass, storeClassForCheck, componentClassForCheck);
                }
@@ -2621,7 +2622,8 @@ J9::ValuePropagation::transformUnflattenedArrayElementLoadStoreUseTypeHint(TR_Op
 TR_YesNoMaybe
 J9::ValuePropagation::isArrayElementFlattened(TR::VPConstraint *arrayConstraint)
    {
-   if (!TR::Compiler->om.areValueTypesEnabled())
+   if (!TR::Compiler->om.areValueTypesEnabled() ||
+       !TR::Compiler->om.isValueTypeArrayFlatteningEnabled()) // isValueTypeArrayFlatteningEnabled() checks areFlattenableValueTypesEnabled()
       {
       return TR_no;
       }
@@ -2648,7 +2650,8 @@ J9::ValuePropagation::isArrayElementFlattened(TR::VPConstraint *arrayConstraint)
 TR_YesNoMaybe
 J9::ValuePropagation::isArrayCompTypePrimitiveValueType(TR::VPConstraint *arrayConstraint)
    {
-   if (!TR::Compiler->om.areValueTypesEnabled())
+   if (!TR::Compiler->om.areValueTypesEnabled() ||
+       !TR::Compiler->om.areFlattenableValueTypesEnabled()) // Only null restricted or primitive value type are flattenable
       {
       return TR_no;
       }
