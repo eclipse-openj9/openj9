@@ -710,13 +710,13 @@ jvmtiGetClassFields(jvmtiEnv* env,
 
 			i = 0;
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 			result = vmFuncs->fieldOffsetsStartDo(vm, romClass, GET_SUPERCLASS(clazz), &state,
 					J9VM_FIELD_OFFSET_WALK_INCLUDE_STATIC | J9VM_FIELD_OFFSET_WALK_INCLUDE_INSTANCE, clazz->flattenedClassCache);
-#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#else /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 			result = vmFuncs->fieldOffsetsStartDo(vm, romClass, GET_SUPERCLASS(clazz), &state,
 					J9VM_FIELD_OFFSET_WALK_INCLUDE_STATIC | J9VM_FIELD_OFFSET_WALK_INCLUDE_INSTANCE );
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 
 			while (NULL != result->field) {
 				UDATA inconsistentData = 0;

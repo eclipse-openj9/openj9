@@ -385,9 +385,9 @@ jvmtiGetOrSetLocal(jvmtiEnv *env,
 										memcpy(slotAddress - 1, value_ptr, sizeof(U_64));
 										break;
 									case 'L':
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 									case 'Q':
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 										/* Perform type check? */
 										*((j9object_t *)slotAddress) = (NULL == value_ptr) ? NULL : *((j9object_t *)value_ptr);
 										break;
@@ -412,9 +412,9 @@ jvmtiGetOrSetLocal(jvmtiEnv *env,
 									}
 									break;
 								case 'L':
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 								case 'Q':
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 									/* CMVC 109592 - Must not modify the stack while a thread is halted for inspection - this includes creation of JNI local refs */
 									objectFetched = TRUE;
 									PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, slotValid ? *((j9object_t *)slotAddress) : NULL);

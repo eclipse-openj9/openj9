@@ -1474,11 +1474,11 @@ old_fast_jitCheckCast(J9VMThread *currentThread)
 			slowPath = (void*)old_slow_jitCheckCast;
 		}
 	}
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 	else if (J9_IS_J9CLASS_PRIMITIVE_VALUETYPE(castClass)) {
 		slowPath = (void*)old_slow_jitThrowNullPointerException;
 	}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 	return slowPath;
 }
 
@@ -1504,11 +1504,11 @@ old_fast_jitCheckCastForArrayStore(J9VMThread *currentThread)
 			slowPath = (void*)old_slow_jitCheckCastForArrayStore;
 		}
 	}
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 	else if (J9_IS_J9CLASS_PRIMITIVE_VALUETYPE(castClass)) {
 		slowPath = (void*)old_slow_jitThrowNullPointerException;
 	}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 	return slowPath;
 }
 
@@ -2544,7 +2544,7 @@ old_slow_jitResolveFlattenableField(J9VMThread *currentThread)
 {
 	void *addr = NULL;
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 	OLD_SLOW_ONLY_JIT_HELPER_PROLOGUE(3);
 	DECLARE_JIT_PARM(J9Method*, method, 1);
 	DECLARE_JIT_INT_PARM(cpIndex, 2);
@@ -2577,7 +2577,7 @@ old_slow_jitResolveFlattenableField(J9VMThread *currentThread)
 		addr = restoreJITResolveFrame(currentThread, oldPC);
 	}
 	SLOW_JIT_HELPER_EPILOGUE();
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 
 	return addr;
 }
@@ -3616,11 +3616,11 @@ fast_jitCheckCast(J9VMThread *currentThread, J9Class *castClass, j9object_t obje
 			slowPath = (void*)old_slow_jitCheckCast;
 		}
 	}
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 	else if (J9_IS_J9CLASS_PRIMITIVE_VALUETYPE(castClass)) {
 		slowPath = (void*)old_slow_jitThrowNullPointerException;
 	}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 	return slowPath;
 }
 
@@ -3643,11 +3643,11 @@ fast_jitCheckCastForArrayStore(J9VMThread *currentThread, J9Class *castClass, j9
 			slowPath = (void*)old_slow_jitCheckCastForArrayStore;
 		}
 	}
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 	else if (J9_IS_J9CLASS_PRIMITIVE_VALUETYPE(castClass)) {
 		slowPath = (void*)old_slow_jitThrowNullPointerException;
 	}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 	return slowPath;
 }
 

@@ -1582,9 +1582,9 @@ typedef struct J9ROMFieldOffsetWalkResult {
 	UDATA superTotalInstanceSize;
 	UDATA index;
 	IDATA backfillOffset;
-#ifdef J9VM_OPT_VALHALLA_VALUE_TYPES
+#ifdef J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES
 	struct J9Class* flattenedClass;
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES */
 } J9ROMFieldOffsetWalkResult;
 
 typedef struct J9HiddenInstanceField {
@@ -1620,7 +1620,7 @@ typedef struct J9ROMFieldOffsetWalkState {
 	struct J9HiddenInstanceField* hiddenInstanceFields[J9VM_MAX_HIDDEN_FIELDS_PER_CLASS];
 	UDATA hiddenInstanceFieldCount;
 	UDATA hiddenInstanceFieldWalkIndex;
-#ifdef J9VM_OPT_VALHALLA_VALUE_TYPES
+#ifdef J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES
 	struct J9FlattenedClassCache *flattenedClassCache;
 	UDATA firstFlatSingleOffset;
 	UDATA firstFlatObjectOffset;
@@ -1630,7 +1630,7 @@ typedef struct J9ROMFieldOffsetWalkState {
 	UDATA currentFlatDoubleOffset;
 	BOOLEAN classRequiresPrePadding;
 	UDATA flatBackFillSize;
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES */
 } J9ROMFieldOffsetWalkState;
 
 #define J9VM_FIELD_OFFSET_WALK_MAXIMUM_HIDDEN_FIELDS_PER_CLASS  J9VM_MAX_HIDDEN_FIELDS_PER_CLASS
@@ -2273,9 +2273,9 @@ typedef struct J9ROMMethodHandleRef {
 #define MN_IS_TYPE			0x00080000
 #define MN_CALLER_SENSITIVE	0x00100000
 #define MN_TRUSTED_FINAL	0x00200000
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 #define MN_FLATTENED		0x00400000
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 
 typedef struct J9ROMMethodRef {
 	U_32 classRefCPIndex;
@@ -3309,7 +3309,7 @@ typedef struct J9Class {
 #define J9ARRAYCLASS_SET_STRIDE(clazz, strideLength) ((clazz)->flattenedClassCache) = (J9FlattenedClassCache*)(UDATA)(strideLength)
 #define J9ARRAYCLASS_GET_STRIDE(clazz) ((UDATA)((clazz)->flattenedClassCache))
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 #define J9CLASS_HAS_REFERENCES(clazz) (J9_ARE_ALL_BITS_SET((clazz)->classFlags, J9ClassHasReferences))
 #define J9CLASS_HAS_4BYTE_PREPADDING(clazz) (J9_ARE_ALL_BITS_SET((clazz)->classFlags, J9ClassRequiresPrePadding))
 #define J9CLASS_PREPADDING_SIZE(clazz) (J9CLASS_HAS_4BYTE_PREPADDING((clazz)) ? sizeof(U_32) : 0)
@@ -3317,7 +3317,7 @@ typedef struct J9Class {
 #define J9CLASS_HAS_REFERENCES(clazz) TRUE
 #define J9CLASS_HAS_4BYTE_PREPADDING(clazz) FALSE
 #define J9CLASS_PREPADDING_SIZE(clazz) 0
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 
 /* For the following, J9_ARE_ANY_BITS_SET fails on zOS, currently under investigation. Issue: #14043 */
 #define J9CLASS_IS_ENSUREHASHED(clazz) (J9_ARE_ALL_BITS_SET((clazz)->classFlags, J9ClassEnsureHashed))
@@ -4805,11 +4805,11 @@ typedef struct J9InternalVMFunctions {
 	UDATA  ( *structuredSignalHandlerVM)(struct J9PortLibrary* portLibrary, U_32 gpType, void* gpInfo, void* userData) ;
 	UDATA  ( *addHiddenInstanceField)(struct J9JavaVM *vm, const char *className, const char *fieldName, const char *fieldSignature, UDATA *offsetReturn) ;
 	void  ( *reportHotField)(struct J9JavaVM *javaVM, int32_t reducedCpuUtil, J9Class* clazz, uint8_t fieldOffset,  uint32_t reducedFrequency) ;
-#ifdef J9VM_OPT_VALHALLA_VALUE_TYPES
+#ifdef J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES
 	struct J9ROMFieldOffsetWalkResult*  ( *fieldOffsetsStartDo)(struct J9JavaVM *vm, struct J9ROMClass *romClass, struct J9Class *superClazz, struct J9ROMFieldOffsetWalkState *state, U_32 flags, J9FlattenedClassCache *flattenedClassCache) ;
-#else
+#else /* J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES */
 	struct J9ROMFieldOffsetWalkResult*  ( *fieldOffsetsStartDo)(struct J9JavaVM *vm, struct J9ROMClass *romClass, struct J9Class *superClazz, struct J9ROMFieldOffsetWalkState *state, U_32 flags) ;
-#endif
+#endif /* J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES */
 	void ( *defaultValueWithUnflattenedFlattenables)(struct J9VMThread *currentThread, struct J9Class *clazz, j9object_t instance) ;
 	struct J9ROMFieldOffsetWalkResult*  ( *fieldOffsetsNextDo)(struct J9ROMFieldOffsetWalkState *state) ;
 	struct J9ROMFieldShape*  ( *fullTraversalFieldOffsetsStartDo)(struct J9JavaVM *vm, struct J9Class *clazz, struct J9ROMFullTraversalFieldOffsetWalkState *state, U_32 flags) ;
@@ -5237,9 +5237,9 @@ typedef struct J9VMThread {
 	UDATA debugEventData7;
 	UDATA debugEventData8;
 	struct J9StackElement* classLoadingStack;
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 	struct J9StackElement* verificationStack;
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 	UDATA jitTransitionJumpSlot;
 	omrthread_monitor_t gcClassUnloadingMutex;
 	struct J9VMThread* gcClassUnloadingThreadPrevious;
@@ -5864,12 +5864,12 @@ typedef struct J9JavaVM {
 #endif /* WIN32 */
 #endif /* J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH */
 	omrthread_monitor_t constantDynamicMutex;
-#ifdef J9VM_OPT_VALHALLA_VALUE_TYPES
+#ifdef J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES
 	UDATA valueFlatteningThreshold;
 	omrthread_monitor_t valueTypeVerificationMutex;
 	struct J9Pool* valueTypeVerificationStackPool;
 	UDATA verificationMaxStack;
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 	UDATA dCacheLineSize;
 	/* Indicates processor support for committing cache lines to memory. On X86,
 	 * examples would be CLFLUSH or CLWB instructions. This field takes the value

@@ -384,16 +384,16 @@ ROMClassBuilder::handleAnonClassName(J9CfrClassFile *classfile, bool *isLambda, 
 	if (newCPEntry) {
 		anonClassName->slot2 = 0;
 		anonClassName->tag = CFR_CONSTANT_Utf8;
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 		/**
 		 * The following line should be put inside if (classfile->majorVersion > 61) according to the SPEC. However, the current
 		 * OpenJDK Valhalla implementation is not updated on this yet. There are cases that the new VT form is used in old classes
 		 * from OpenJDK Valhalla JCL.
 		 */
-		anonClassName->flags1 |= CFR_CLASS_FILE_VERSION_SUPPORT_VALUE_TYPE;
-#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+		anonClassName->flags1 |= CFR_CLASS_FILE_VERSION_SUPPORT_FLATTENABLE_VALUE_TYPE;
+#else /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 		anonClassName->flags1 = 0;
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 		anonClassName->nextCPIndex = 0;
 		anonClassName->romAddress = 0;
 	}
