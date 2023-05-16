@@ -655,8 +655,8 @@ initializeRequiredClasses(J9VMThread *vmThread, char* dllName)
 		return 1;
 	}
 
-	/* Stores a non-zero value if the virtual thread is suspended by JVMTI. */
-	if (0 != vmFuncs->addHiddenInstanceField(vm, "java/lang/VirtualThread", "isSuspendedByJVMTI", "I", &vm->isSuspendedByJVMTIOffset)) {
+	/* Stores a non-zero value if the virtual or carrier thread is suspended by JVMTI. */
+	if (0 != vmFuncs->addHiddenInstanceField(vm, "java/lang/Thread", "isSuspendedInternal", "I", &vm->isSuspendedInternalOffset)) {
 		return 1;
 	}
 #endif /* JAVA_SPEC_VERSION >= 19 */
