@@ -251,6 +251,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<flag id="opt_useFfi" value="true"/>
 		<flag id="opt_useFfiOnly" value="true"/>
 		<flag id="opt_valhallaValueTypes" value="false"/>
+		<flag id="opt_valhallaFlattenableValueTypes" value="false"/>
 		<flag id="opt_zero" value="true"/>
 		<flag id="opt_zipSupport" value="true"/>
 		<flag id="opt_zlibCompression" value="true"/>

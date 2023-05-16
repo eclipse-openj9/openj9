@@ -324,29 +324,34 @@ static const struct { \
 #define J9_CLASS_ALLOWS_LOCKING(clazz) J9_ARE_NO_BITS_SET((clazz)->classFlags, J9_CLASS_DISALLOWS_LOCKING_FLAGS)
 #define J9_IS_J9CLASS_VALUEBASED(clazz) J9_ARE_ALL_BITS_SET((clazz)->classFlags, J9ClassIsValueBased)
 #ifdef J9VM_OPT_VALHALLA_VALUE_TYPES
-#define J9CLASS_UNPADDED_INSTANCE_SIZE(clazz) J9_VALUETYPE_FLATTENED_SIZE(clazz)
 #define J9_IS_J9CLASS_VALUETYPE(clazz) J9_ARE_ALL_BITS_SET((clazz)->classFlags, J9ClassIsValueType)
+#else /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#define J9_IS_J9CLASS_VALUETYPE(clazz) FALSE
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+#define J9CLASS_UNPADDED_INSTANCE_SIZE(clazz) J9_VALUETYPE_FLATTENED_SIZE(clazz)
 #define J9_IS_J9CLASS_PRIMITIVE_VALUETYPE(clazz) J9_ARE_ALL_BITS_SET((clazz)->classFlags, J9ClassIsPrimitiveValueType)
 #define J9_IS_J9CLASS_FLATTENED(clazz) J9_ARE_ALL_BITS_SET((clazz)->classFlags, J9ClassIsFlattened)
 /**
  * Disable flattening of volatile field that is > 8 bytes for now, as the current implementation of copyObjectFields() will tear this field.
  */
 #define J9_IS_FIELD_FLATTENED(fieldClazz, romFieldShape) \
-	(J9_IS_J9CLASS_FLATTENED(fieldClazz) && \
-	(J9_ARE_NO_BITS_SET((romFieldShape)->modifiers, J9AccVolatile) || (J9CLASS_UNPADDED_INSTANCE_SIZE(fieldClazz) <= sizeof(U_64))))
+		(J9_IS_J9CLASS_FLATTENED(fieldClazz) && \
+		(J9_ARE_NO_BITS_SET((romFieldShape)->modifiers, J9AccVolatile) || (J9CLASS_UNPADDED_INSTANCE_SIZE(fieldClazz) <= sizeof(U_64))))
 #define J9_VALUETYPE_FLATTENED_SIZE(clazz) (J9CLASS_HAS_4BYTE_PREPADDING((clazz)) ? ((clazz)->totalInstanceSize - sizeof(U_32)) : (clazz)->totalInstanceSize)
 #define IS_REF_OR_VAL_SIGNATURE(firstChar) ('L' == (firstChar) || 'Q' == (firstChar))
 #define IS_QTYPE(firstChar) ('Q' == (firstChar))
-#else /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#else /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 #define J9CLASS_UNPADDED_INSTANCE_SIZE(clazz) ((clazz)->totalInstanceSize)
-#define J9_IS_J9CLASS_VALUETYPE(clazz) FALSE
 #define J9_IS_J9CLASS_PRIMITIVE_VALUETYPE(clazz) FALSE
 #define J9_IS_J9CLASS_FLATTENED(clazz) FALSE
 #define J9_IS_FIELD_FLATTENED(fieldClazz, romFieldShape) FALSE
 #define J9_VALUETYPE_FLATTENED_SIZE(clazz)((UDATA) 0) /* It is not possible for this macro to be used since we always check J9_IS_J9CLASS_FLATTENED before ever using it. */
 #define IS_REF_OR_VAL_SIGNATURE(firstChar) ('L' == (firstChar))
 #define IS_QTYPE(firstChar) FALSE
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
+
 #define IS_LTYPE(firstChar) ('L' == (firstChar))
 
 #define J9_IS_STRING_DESCRIPTOR(str, strLen) (((strLen) > 2) && (IS_REF_OR_VAL_SIGNATURE(*(str))) && (';' == *((str) + (strLen) - 1)))

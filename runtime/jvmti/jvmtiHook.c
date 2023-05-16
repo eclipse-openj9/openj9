@@ -1321,11 +1321,11 @@ findFieldIndexFromOffset(J9VMThread *currentThread, J9Class *clazz, UDATA offset
 		J9ROMFieldOffsetWalkState state;
 		J9ROMFieldOffsetWalkResult *result = NULL;
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 		result = vmFuncs->fieldOffsetsStartDo(vm, romClass, superclazz, &state, walkFlags, clazz->flattenedClassCache);
-#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#else /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 		result = vmFuncs->fieldOffsetsStartDo(vm, romClass, superclazz, &state, walkFlags);
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 
 		while (NULL != result->field) {
 			if (staticBit == (result->field->modifiers & J9AccStatic)) {

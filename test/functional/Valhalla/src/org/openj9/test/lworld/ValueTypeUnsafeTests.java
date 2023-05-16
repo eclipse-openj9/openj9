@@ -41,6 +41,8 @@ import static org.openj9.test.lworld.ValueTypeTestClasses.*;
 public class ValueTypeUnsafeTests {
 	static Unsafe myUnsafe = Unsafe.getUnsafe();
 	static boolean isCompressedRefsEnabled = false;
+	static boolean isDualHeaderShapeDisabled = false;
+	static boolean isGcPolicyGencon = false;
 	static boolean isFlatteningEnabled = false;
 	static boolean isArrayFlatteningEnabled = false;
 
@@ -63,6 +65,14 @@ public class ValueTypeUnsafeTests {
 		isFlatteningEnabled = arguments.contains("-XX:ValueTypeFlatteningThreshold=99999");
 		isArrayFlatteningEnabled = arguments.contains("-XX:+EnableArrayFlattening");
 		isCompressedRefsEnabled = arguments.contains("-Xcompressedrefs");
+		// If dual header shape is disabled array header will have dataAddr field, 8 bytes in size, regardless of GC policy
+		isDualHeaderShapeDisabled = arguments.contains("-XXgc:disableIndexableDualHeaderShape");
+		// Dual header shape affects Gencon GC only
+		isGcPolicyGencon = arguments.contains("-Xgcpolicy:gencon")
+			|| (!arguments.contains("-Xgcpolicy:optthruput")
+				&& !arguments.contains("-Xgcpolicy:balanced")
+				&& !arguments.contains("-Xgcpolicy:metronome")
+				&& !arguments.contains("-Xgcpolicy:optavgpause"));
 
 		vtPointOffsetX = myUnsafe.objectFieldOffset(ValueTypePoint2D.class.getDeclaredField("x"));
 		vtPointOffsetY = myUnsafe.objectFieldOffset(ValueTypePoint2D.class.getDeclaredField("y"));
@@ -499,10 +509,12 @@ public class ValueTypeUnsafeTests {
 	@Test
 	static public void testGetSizeOfArray() {
 		long size = myUnsafe.getObjectSize(vtIntAry);
+
+		int headerSizeAdjustment = (!isDualHeaderShapeDisabled && isGcPolicyGencon) ? 8 : 0;
 		if (isCompressedRefsEnabled) {
-			assertEquals(size, 24);
+			assertEquals(size, 24 - headerSizeAdjustment);
 		} else {
-			assertEquals(size, 40);
+			assertEquals(size, 40 - headerSizeAdjustment);
 		}
 	}
 

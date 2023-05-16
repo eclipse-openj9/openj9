@@ -85,8 +85,10 @@ static inlMapping mappings[] = {
 	{ "Java_java_lang_Class_isAssignableFrom__Ljava_lang_Class_2", J9_BCLOOP_SEND_TARGET_INL_CLASS_IS_ASSIGNABLE_FROM },
 	{ "Java_java_lang_Class_isArray__", J9_BCLOOP_SEND_TARGET_INL_CLASS_IS_ARRAY },
 	{ "Java_java_lang_Class_isPrimitive__", J9_BCLOOP_SEND_TARGET_INL_CLASS_IS_PRIMITIVE },
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 	{ "Java_java_lang_Class_isPrimitiveClass__", J9_BCLOOP_SEND_TARGET_INL_CLASS_IS_PRIMITIVE_CLASS },
+#endif /* J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES */
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 	{ "Java_java_lang_Class_isValue__", J9_BCLOOP_SEND_TARGET_INL_CLASS_IS_VALUE },
 	{ "Java_java_lang_Class_isIdentity__", J9_BCLOOP_SEND_TARGET_INL_CLASS_IS_IDENTITY },
 	{ "Java_java_lang_J9VMInternals_positiveOnlyHashcodes__", J9_BCLOOP_SEND_TARGET_INL_INTERNALS_POSITIVE_ONLY_HASHCODES },
@@ -279,15 +281,17 @@ static inlMapping mappings[] = {
 	{ "Java_jdk_internal_misc_Unsafe_compareAndSetInt__Ljava_lang_Object_2JII", J9_BCLOOP_SEND_TARGET_INL_UNSAFE_COMPAREANDSWAPINT },
 	{ "Java_jdk_internal_misc_Unsafe_allocateInstance__Ljava_lang_Class_2", J9_BCLOOP_SEND_TARGET_INL_UNSAFE_ALLOCATE_INSTANCE },
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-	{ "Java_jdk_internal_misc_Unsafe_getValue__Ljava_lang_Object_2JLjava_lang_Class_2", J9_BCLOOP_SEND_TARGET_INL_UNSAFE_GETVALUE },
-	{ "Java_jdk_internal_misc_Unsafe_putValue__Ljava_lang_Object_2JLjava_lang_Class_2Ljava_lang_Object_2", J9_BCLOOP_SEND_TARGET_INL_UNSAFE_PUTVALUE },
 	{ "Java_jdk_internal_misc_Unsafe_uninitializedDefaultValue__Ljava_lang_Class_2", J9_BCLOOP_SEND_TARGET_INL_UNSAFE_UNINITIALIZEDDEFAULTVALUE },
 	{ "Java_jdk_internal_misc_Unsafe_valueHeaderSize__Ljava_lang_Class_2", J9_BCLOOP_SEND_TARGET_INL_UNSAFE_VALUEHEADERSIZE },
+	{ "Java_jdk_internal_misc_Unsafe_getObjectSize__Ljava_lang_Object_2", J9_BCLOOP_SEND_TARGET_INL_UNSAFE_GETOBJECTSIZE },
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+	{ "Java_jdk_internal_misc_Unsafe_getValue__Ljava_lang_Object_2JLjava_lang_Class_2", J9_BCLOOP_SEND_TARGET_INL_UNSAFE_GETVALUE },
+	{ "Java_jdk_internal_misc_Unsafe_putValue__Ljava_lang_Object_2JLjava_lang_Class_2Ljava_lang_Object_2", J9_BCLOOP_SEND_TARGET_INL_UNSAFE_PUTVALUE },
 	{ "Java_jdk_internal_misc_Unsafe_isFlattenedArray__Ljava_lang_Class_2", J9_BCLOOP_SEND_TARGET_INL_UNSAFE_ISFLATTENEDARRAY },
 	{ "Java_jdk_internal_misc_Unsafe_isFlattened__Ljava_lang_reflect_Field_2", J9_BCLOOP_SEND_TARGET_INL_UNSAFE_ISFLATTENED },
-	{ "Java_jdk_internal_misc_Unsafe_getObjectSize__Ljava_lang_Object_2", J9_BCLOOP_SEND_TARGET_INL_UNSAFE_GETOBJECTSIZE },
 	{ "Java_jdk_internal_misc_Unsafe_isFieldAtOffsetFlattened__Ljava_lang_Class_2J", J9_BCLOOP_SEND_TARGET_INL_UNSAFE_ISFIELDATOFFSETFLATTENED },
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES */
 	{ "Java_java_lang_Thread_onSpinWait__", J9_BCLOOP_SEND_TARGET_INL_THREAD_ON_SPIN_WAIT },
 #if JAVA_SPEC_VERSION >= 11
 	{ "Java_jdk_internal_reflect_Reflection_getClassAccessFlags__Ljava_lang_Class_2", J9_BCLOOP_SEND_TARGET_INL_REFLECTION_GETCLASSACCESSFLAGS },

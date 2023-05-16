@@ -369,3 +369,9 @@ TraceEvent=Trc_SC_VirtualThread_RootNodeSet Overhead=1 Level=1 Test Template="Vi
 
 TraceEntry=Trc_SC_ValidateJNILibrary_Entry NoEnv Overhead=1 Level=1 Template="JVM_ValidateJNILibrary(name=%s, handle=%p, isStatic=%d)"
 TraceExit=Trc_SC_ValidateJNILibrary_Exit NoEnv Overhead=1 Level=1 Template="JVM_ValidateJNILibrary -- return %p"
+
+TraceExit=Trc_SC_UnloadLibrary_Exit NoEnv Overhead=1 Level=2 Template="JVM_UnloadLibrary()"
+
+// z/OS only
+TraceEntry=Trc_SC_Invoke31BitJNI_OnXLoad_Entry NoEnv Overhead=1 Level=3 Template="JVM_Invoke31BitJNI_OnXLoad(vm=%p, handle=%p, isOnLoad=%d, reserved=%p)"
+TraceExit=Trc_SC_Invoke31BitJNI_OnXLoad_Exit NoEnv Overhead=1 Level=3 Template="JVM_Invoke31BitJNI_OnXLoad -- return %d"

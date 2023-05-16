@@ -1249,14 +1249,14 @@ readPool(J9CfrClassFile* classfile, U_8* data, U_8* dataEnd, U_8* segment, U_8* 
 				previousUTF8 = info;
 			}
 			classfile->lastUTF8CPIndex = i;
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 			/**
 			 * The following line should be put inside if (classfile->majorVersion > 61) according to the SPEC. However, the current
 			 * OpenJDK Valhalla implementation is not updated on this yet. There are cases that the new VT form is used in old classes
 			 * from OpenJDK Valhalla JCL.
 			 */
-			info->flags1 |= CFR_CLASS_FILE_VERSION_SUPPORT_VALUE_TYPE;
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+			info->flags1 |= CFR_CLASS_FILE_VERSION_SUPPORT_FLATTENABLE_VALUE_TYPE;
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 			i++;
 			break;
 
@@ -2060,14 +2060,14 @@ checkAttributes(J9PortLibrary* portLib, J9CfrClassFile* classfile, J9CfrAttribut
 					errorCode = J9NLS_CFR_ERR_CATCH_NOT_CLASS__ID;
 					goto _errorFound;
 				}
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 				if (CFR_CONSTANT_Class == cpBase[value].tag) {
 					if (bcvIsReferenceTypeDescriptor(&cpBase[cpBase[value].slot1])) {
 						errorCode = J9NLS_CFR_ERR_CATCH_IS_REFERENCETYPE_DESCRIPTOR__ID;
 						goto _errorFound;
 					}
 				}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 			}
 					
 			if(checkAttributes(portLib, classfile, code->attributes, code->attributesCount, segment, -1, code->codeLength, flags)) {
@@ -2087,12 +2087,12 @@ checkAttributes(J9PortLibrary* portLib, J9CfrClassFile* classfile, J9CfrAttribut
 					errorCode = J9NLS_CFR_ERR_EXCEPTION_NOT_CLASS__ID;
 					goto _errorFound;
 				}
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 				if (bcvIsReferenceTypeDescriptor(&cpBase[cpBase[value].slot1])) {
 					errorCode = J9NLS_CFR_ERR_EXCEPTION_IS_REFERENCETYPE_DESCRIPTOR__ID;
 					goto _errorFound;
 				}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 			}
 			break;
 
@@ -2231,13 +2231,13 @@ checkAttributes(J9PortLibrary* portLib, J9CfrClassFile* classfile, J9CfrAttribut
 					errorCode = J9NLS_CFR_ERR_INNER_CLASS_NOT_CLASS__ID;
 					goto _errorFound;
 				}
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 				classInfoUtf8 = &cpBase[cpBase[value].slot1];
 				if (bcvIsReferenceTypeDescriptor(classInfoUtf8)) {
 					errorCode = J9NLS_CFR_ERR_INNER_CLASS_REFERENCETYPE__ID;
 					goto _errorFound;
 				}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 				/* Check class name integrity? */
 
 				innerClassArrayIndexTable[value] = j;
@@ -2263,11 +2263,11 @@ checkAttributes(J9PortLibrary* portLib, J9CfrClassFile* classfile, J9CfrAttribut
 					}
 					/* Capture the error if the outer_class_info_index points to an array class or other referencetype descriptor */
 					if (
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 						bcvIsReferenceTypeDescriptor(classInfoUtf8)
-#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#else /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 						('[' == classInfoUtf8->bytes[0])
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 					) {
 						errorCode = J9NLS_CFR_ERR_OUTER_CLASS_REFERENCETYPE_DESCRIPTOR__ID;
 						goto _errorFound;
@@ -2344,12 +2344,12 @@ checkAttributes(J9PortLibrary* portLib, J9CfrClassFile* classfile, J9CfrAttribut
 				errorCode = J9NLS_CFR_ERR_ENCLOSING_METHOD_CLASS_INDEX_NOT_CLASS__ID;
 				goto _errorFound;
 			}
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 			if (bcvIsReferenceTypeDescriptor(&cpBase[cpBase[value].slot1])) {
 				errorCode = J9NLS_CFR_ERR_ENCLOSING_METHOD_CLASS_INDEX_IS_REFERENCETYPE__ID;
 				goto _errorFound;
 			}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 
 			value = enclosing->methodIndex;
 			if(value >= cpCount) {
@@ -2535,12 +2535,12 @@ checkAttributes(J9PortLibrary* portLib, J9CfrClassFile* classfile, J9CfrAttribut
 				errorCode = J9NLS_CFR_ERR_BAD_NEST_HOST_INDEX__ID;
 				goto _errorFound;
 			}
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 			if (bcvIsReferenceTypeDescriptor(&cpBase[cpBase[value].slot1])) {
 				errorCode = J9NLS_CFR_ERR_NEST_HOST_INVALID_REFERENCETYPE_DESCRIPTOR__ID;
 				goto _errorFound;
 			}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 			break;
 
 		case CFR_ATTRIBUTE_NestMembers: {
@@ -2555,12 +2555,12 @@ checkAttributes(J9PortLibrary* portLib, J9CfrClassFile* classfile, J9CfrAttribut
 					errorCode = J9NLS_CFR_ERR_NEST_MEMBERS_NAME_NOT_CONSTANT_CLASS__ID;
 					goto _errorFound;
 				}
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 				if (bcvIsReferenceTypeDescriptor(&cpBase[cpBase[value].slot1])) {
 					errorCode = J9NLS_CFR_ERR_NEST_MEMBER_INVALID_REFERENCETYPE_DESCRIPTOR__ID;
 					goto _errorFound;
 				}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 			}
 			break;
 		}
@@ -2728,13 +2728,13 @@ checkClass(J9PortLibrary *portLib, J9CfrClassFile* classfile, U_8* segment, U_32
 			goto _errorFound;
 		}
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 		if (bcvIsReferenceTypeDescriptor(&classfile->constantPool[value])) {
 			errorCode = J9NLS_INVALID_REFERENCETYPE_DESCRIPTOR_ON_CLASS__ID;
 			offset = endOfConstantPool + 2;
 			goto _errorFound;
 		}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 	}
 
 	value = classfile->superClass;
@@ -2760,13 +2760,13 @@ checkClass(J9PortLibrary *portLib, J9CfrClassFile* classfile, U_8* segment, U_32
 			goto _errorFound;
 		}
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 		if (bcvIsReferenceTypeDescriptor(&classfile->constantPool[superClassInfo->slot1])) {
 			errorCode = J9NLS_INVALID_REFERENCETYPE_DESCRIPTOR_ON_SUPER_CLASS__ID;
 			offset = endOfConstantPool + 4;
 			goto _errorFound;
 		}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 	}
 
 	for (i = 0; i < classfile->interfacesCount; i++) {
@@ -2794,13 +2794,13 @@ checkClass(J9PortLibrary *portLib, J9CfrClassFile* classfile, U_8* segment, U_32
 				goto _errorFound;
 			}
 		}
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 		if (bcvIsReferenceTypeDescriptor(&classfile->constantPool[cpInfo->slot1])) {
 			errorCode = J9NLS_INVALID_REFERENCETYPE_DESCRIPTOR_ON_INTERFACE__ID;
 			offset = endOfConstantPool + 4 + (i << 1);
 			goto _errorFound;
 		}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 	}
 
 	/* Check that interfaces subclass object. */
@@ -3014,6 +3014,7 @@ j9bcutil_readClassFileBytes(J9PortLibrary *portLib,
 	if ((flags & BCT_MajorClassFileVersionMask) < BCT_JavaMajorVersionShifted(20)) {
 		classfile->accessFlags &= ~(CFR_ACC_VALUE_TYPE | CFR_ACC_PRIMITIVE_VALUE_TYPE | CFR_ACC_IDENTITY);
 	}
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 	if (J9_ARE_ALL_BITS_SET(classfile->accessFlags, CFR_ACC_PRIMITIVE_VALUE_TYPE)) {
 		if (J9_ARE_NO_BITS_SET(classfile->accessFlags, CFR_ACC_VALUE_TYPE)) {
 			errorCode = J9NLS_CFR_ERR_VALUE_FLAG_MISSING_ON_PRIMITIVE_CLASS__ID;
@@ -3021,6 +3022,7 @@ j9bcutil_readClassFileBytes(J9PortLibrary *portLib,
 			goto _errorFound;
 		}
 	}
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 	if (J9_ARE_ALL_BITS_SET(classfile->accessFlags, CFR_ACC_VALUE_TYPE)) {
 		if (J9_ARE_NO_BITS_SET(classfile->accessFlags, CFR_ACC_ABSTRACT | CFR_ACC_FINAL)) {
 			errorCode = J9NLS_CFR_ERR_FINAL_ABSTRACT_FLAG_MISSING_ON_VALUE_CLASS__ID;
